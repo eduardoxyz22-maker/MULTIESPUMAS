@@ -1683,7 +1683,7 @@ Los reproductores de los agentes para A1-A4 dan todo en verde. **Batería: 116 s
 **Sigue pendiente:** M1, M3-M8 y las otras BAJA de §20.3. Para la próxima versión del `.gs` se juntan tres cosas: los
 feriados en el portero, el sello de los retiros y la respuesta que diga de qué lectura sale (M1, M8).
 
-## 22 · La revisión en tres niveles de lo hecho el 29/09 — NADA ARREGLADO TODAVÍA
+## 22 · La revisión en tres niveles de lo hecho el 29/09 — arreglada en §23 (en la rama, sin publicar)
 
 El dueño: *«Quiero agentes que revisen todo lo de hoy, y otros agentes que revisen a los agentes y esos agentes revisen a
 los agentes. Promueve cada vez hay “errores que se te escapan” y también mejoras que podamos implementar»*.
@@ -1970,6 +1970,79 @@ Nada de §22 está arreglado: espera el OK del dueño. Orden propuesto: las ALTA
 29/09, con A2-1 y R2-4, con la versión del meta-auditor), el renglón que se pierde (A4-1/X-3), el código del almacén de
 otra medida (R4-1), Multicenter (R4-3, ya decidido), el aviso «Quedaron en un día sin camión» (R1-2) y los retiros (R2-3,
 R2-5). R4-5 (el producto agotado que el panel olvida) es más grande y toca la celda de 50.000 del stock: va aparte.
+
+> **30/09: el dueño dijo «hazlo todo». Los 24 están arreglados en la rama: §23.**
+
+## 23 · Los 24 arreglos de §22 (30/09) — EN LA RAMA, SIN PUBLICAR
+
+El dueño: *«hazlo todo»*. Cada arreglo lleva su prueba, y cada prueba se corrió también contra la página publicada
+(`2207922`) para ver que ahí falla: si una prueba pasa en las dos, no prueba nada. Bitácora §4hd (lo técnico).
+
+### 23.1 · Qué cambia para el equipo
+
+**Plata (Contabilidad y el formulario)**
+| # | Antes | Ahora |
+|---|---|---|
+| R2-1 | Adelanto en dos pagos del mismo método: «SÍ, pagado» proponía 3.500 en una venta de 3.000 | Propone 3.000. Corregir ese adelanto desde el formulario manda a Contabilidad |
+| A2-1 | Venta cargada «SÍ, pagado» a la que se agrega una almohada: «Usar como total» ponía de saldo el total entero (quedaba en 5.300) | Pone de saldo solo la almohada (queda en 2.800) |
+| R2-4 | Corregir el banco del 2° pago bajaba el «A cuenta» | «A cuenta» queda igual |
+| X-2 | (el arreglo que había propuesto un auditor apagaba el freno «poné el saldo») | El freno sigue andando: se prueba |
+
+**Formulario y stock**
+| # | Antes | Ahora |
+|---|---|---|
+| A4-1, X-3 | Un renglón con solo el código se perdía al guardar, sin aviso | No deja guardar y dice qué pasa. Vaciarle el nombre a un producto que ya estaba en el pedido lo sigue sacando, como siempre |
+| X-3 | El código de un producto agotado (ya no está en el Excel) no completaba nada | Se completa con el histórico del sistema y avisa «su saldo es 0». Un código que no está en ningún lado se avisa al salir del campo |
+| R4-2 | Al llegar el saldo, el panel cambiaba la medida que la vendedora eligió y devolvía un producto que ella había sacado | Completa solo el renglón que esperaba el saldo, una vez, y no toca la medida elegida |
+| R4-1 | Código del almacén con otra medida: ✅ DISPONIBLE con el stock del otro colchón | «EL CÓDIGO ES DE OTRA MEDIDA» y cuál es el bueno; pregunta al guardar; la revisión automática no lo tilda |
+| R4-4 | El nombre del histórico traía «1,5», «[Pr.]» o «- T.A.» colgados | Sale limpio |
+| R4-5, A4-2 | Un producto fuera de la lista que se agotaba pasaba a ser el «parecido» (el PARRILLA NEGRO → SOMIER NEGRO): sus pedidos, lo pedido a fábrica y lo que llegaba | Sigue siendo él. El panel recuerda su código mientras algo lo nombre, y lo olvida cuando nadie lo nombra (la celda del stock no crece) |
+| X-4 | «Qué producir» sumaba al producto de la lista las ventas viejas de OTROS códigos | Ya no. Lo que más se nota: las medidas especiales 160x200 ya no suman al 160x190 (se fabrican a pedido). Ejemplo de las pruebas: el TITANIO ICE 160x190 de octubre del año pasado pasa de 8 a 6, y su plan de octubre baja un colchón |
+| A4-3 | En una RPT el aviso pedía «poné el precio a mano» | No lo pide |
+| R4-3 | Multicenter: en 30 días juntaba por el día de CARGA | Junta por el día de ENTREGA, como dijiste el 29/09 |
+
+**Días sin camión**
+| # | Antes | Ahora |
+|---|---|---|
+| R1-3 | La víspera de un feriado, «＋ Nuevo pedido» proponía el feriado | Propone el próximo día con camión |
+| R1-2 | Un pedido que quedó en un feriado o domingo no aparecía en ningún «Mañana» | Administración y la lista de carga lo muestran arriba, con 📅 Reprogramar; el importador de ROHO dice que ese día no sale el camión |
+| A1-1 | «Cerrar día» decía que el feriado «está abierto» | Dice «no sale el camión» y cuál es el que sigue; y hay un botón «🚚 Próximo camión» |
+| R1-4 | Cambiar solo el turno de un pedido en un feriado decía «turno lleno» | Dice «es feriado: cambiale el DÍA» |
+| A1-2 | En un feriado, el cuadrito pedía «el corte de hoy» | Mide contra el último día hábil |
+| R1-1 | La devolución de una ATC se iba a buscar el mismo feriado | 2 días HÁBILES antes |
+| R1-5 | Varias pruebas daban rojo la víspera de cada feriado (y dos, el día 31) | Ya no (probadas con el reloj en 31/10 y 24/12) |
+
+**Retiros de efectivo**
+| # | Antes | Ahora |
+|---|---|---|
+| R2-5 | Al abrir el panel sin conexión, los retiros desaparecían (también el que esperaba subir), y se podía cargar dos veces | Se ven, el que espera dice «⏳ todavía no está en la planilla», y cargar uno igual pregunta |
+| R2-3 | Un retiro corregido volvía al monto viejo a los 2 minutos | Queda el corregido |
+| R2-2 | Corregir un retiro que otro equipo borró lo volvía a crear | No lo crea y lo dice |
+
+**Proyección**
+| # | Antes | Ahora |
+|---|---|---|
+| R3-1 | Un domingo o feriado, la proyección cambiaba sola de la mañana a la noche | Igual todo el día |
+| R3-2 | Algunos días hábiles la curva se movía hasta 4 % entre la mañana y la noche | Corta cada mes cerrado en el día hábil que corresponde |
+| R3-3 | «Qué días se vende más» contaba los feriados como días sin ventas | No los cuenta, lo dice, y si la diferencia es menor al 10 % dice «parejo» |
+| A3-1, R3-4 | «PATAS P/SOMIER» ×4 contaba 4 somieres; «TITANIO LATEX ENTREGA INMEDIATA» no contaba | Los 29 renglones que armó el auditor dan lo que son |
+
+### 23.2 · Las pruebas
+- Cinco nuevas, todas con datos inventados y el reloj clavado: `test_rev30_plata` (17 comprobaciones; 11 fallan contra la
+  publicada), `test_rev30_stock` (36; 28), `test_rev30_dias` (21; 13), `test_rev30_retiros` (15; 9) y
+  `test_rev30_proyeccion` (12; 8). Las que pasan también contra la publicada son las que cuidan que algo NO se rompa (el
+  freno de plata, sacar un producto vaciándole el nombre, el código mal tipeado…).
+- Cambiaron a conciencia, con el porqué escrito en cada una: `test_producir`, `test_adm_alta` y `test_eduardo_multicenter`
+  (los números del histórico, X-4), `test_proyeccion` (el texto «los feriados no cuentan»), y 20 pruebas que ahora saltean
+  los feriados al buscar el primer día de entrega.
+- **Batería completa: 122 de 122 en verde, 4.554 comprobaciones.**
+
+### 23.3 · Para publicar
+- Cuando digas, se publica la página (el servidor no cambia: sigue el `.gs` 2026-09-28-a).
+- **Después de publicar, todos F5.** Una página vieja sigue funcionando con la nueva (no cambió nada de lo que se guarda),
+  pero sin F5 no tiene los arreglos.
+- Lo que queda para otra vez: la próxima versión del servidor (el portero con los feriados, el sello de los retiros, una
+  lectura que diga de cuándo es, feriados «puente» cargables), M3-M8 y las BAJA de §20.3, y lo de la conexión del 30/09.
 
 ## Primera vuelta (`d890468`), resumida
 

@@ -31,7 +31,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
     window._toasts=[]; if(!window._toastOrig) window._toastOrig=window.toast;
     window.toast=function(m,k){ window._toasts.push(k+': '+m); return window._toastOrig.apply(null,arguments); };
-    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while(diaDomingo(F));
+    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F))));
     var hist=textoCobros([
       {anticipo:true,  metodo:'QR', banco:banco, monto:500, fecha:'2026-08-20', nota:'11', comps:['ID1']},
       {anticipo:false, metodo:'Efectivo',        monto:300, fecha:'2026-08-22', nota:'12', comps:[]}

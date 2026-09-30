@@ -1884,7 +1884,9 @@ function atcRecogidoFab(p){ var a=atcDe(p); return (a&&a.rf)||''; }
 function atcRecogerFabDesde(p){
   var f=atcDevProg(p); if(!f) return '';
   var d=f, n=0;
-  while(n<2){ d=stockSumarDias(d,-1); var x=d.split('-'); if(new Date(+x[0],+x[1]-1,+x[2]).getDay()!==0) n++; }
+  /* (30/09, R1-1) Dos días HÁBILES antes: sin domingo NI feriado (`diaHabil`). Con Carnaval el aviso salía el mismo día de la
+     devolución, sin ningún día de margen para ir a buscarlo. */
+  while(n<2){ d=stockSumarDias(d,-1); if(diaHabil(d)) n++; }
   return d;
 }
 /* ¿Hay que ir a buscarlo a la fábrica (o ya se pasó y nadie lo tildó)? Desde dos días hábiles
@@ -3180,6 +3182,7 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   otro.addEventListener('change',function(){ codigoEspecialBorrar([card], EDIT_ID ? findById(EDIT_ID) : null); });
   // Autollenado por codigo: al escribir/pegar un codigo conocido, completa producto y medida.
   cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase();
+    card.removeAttribute('data-de-pedido');   // (30/09) con otro código ya no es el producto que traía el pedido (ver `submitPedido`)
     var hit=CODIGOS[code];
     // Primero se resuelve el código: si ya se sabe qué combo es, el aviso lo nombra.
     // Recién si no resuelve (lo están escribiendo) alcanza con que empiece con CMB.
@@ -3188,12 +3191,27 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
       if(esCodigoCombo(code)){ rechazarCombo(code, d, cIn); return; }
       /* 🏷️ (29/09) No está en la lista de precios: si está en el Excel de algún almacén, el producto sale de ahí
          (`productoDeAlmacen`) y el cuadrito ya puede decir si hay. El precio lo pone la vendedora. */
-      var alm=productoDeAlmacen(code); if(!alm) return;
+      var alm=productoDeAlmacen(code);
+      /* (30/09, R4-2) Sin el saldo cargado —o sin ningún Excel del almacén todavía— no se sabe: se marca el renglón y lo completa
+         la lectura (una vez). */
+      if(!alm){ if(code && ((typeof STOCK_CARGADO!=='undefined' && !STOCK_CARGADO) || !stockHayAlgunExcel())) card.setAttribute('data-alm-pend', code); else card.removeAttribute('data-alm-pend'); return; }
+      card.removeAttribute('data-alm-pend');
       if(rechazarCombo(alm.d+(alm.m?(' '+alm.m):''), d, cIn)) return;
       hit={ d:alm.d, m:alm.m };
-      toast('📦 '+code+' no está en la lista de precios, pero sí en el almacén: '+alm.d+(alm.m?(' '+alm.m):'')+'. Poné el precio a mano.','ok');
+      var _prec=(docTipoSel()==='RPT') ? '' : ' Poné el precio a mano.';   // (30/09, A4-3) la RPT no lleva precio
+      toast(alm.hist
+        ? ('📦 '+code+' no está en la lista de precios ni en el Excel de hoy (se agotó): lo completé con el histórico del sistema, '+alm.d+(alm.m?(' '+alm.m):'')+'. Su saldo es 0.'+_prec)
+        : ('📦 '+code+' no está en la lista de precios, pero sí en el almacén: '+alm.d+(alm.m?(' '+alm.m):'')+'.'+_prec),'ok');
     }
     d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
+  /* (30/09, X-3) Al SALIR del campo (no letra por letra): un código que no está en la lista, ni en ningún almacén, ni en el
+     histórico del sistema no completa nada. Se dice, en vez de dejar un renglón con solo el código que no se guarda. */
+  cIn.addEventListener('change',function(){ var code=cIn.value.trim().toUpperCase();
+    if(!code || String(d.value||'').trim() || CODIGOS[code] || esCodigoCombo(code)) return;
+    if((typeof STOCK_CARGADO!=='undefined' && !STOCK_CARGADO) || !stockHayAlgunExcel()) return;   // lo completa la lectura (data-alm-pend)
+    if(productoDeAlmacen(code)) return;
+    toast('🔎 El código '+code+' no está en la lista de precios, ni en ningún almacén, ni en el histórico: revisá que esté bien escrito, o escribí el producto a mano.','err',9000);
+  });
   // Elegir por NOMBRE (lista emergente): al elegir un 'NOMBRE MEDIDA', llena codigo y medida.
   d.addEventListener('input',function(){ var etiqueta=d.value.trim();
     if(rechazarCombo(etiqueta, d, cIn)) return;   // salta ya con "comb", sin esperar a que termine
@@ -3252,7 +3270,7 @@ function usarTotalProds(){
   var acu=montoForm('f-acuenta');
   /* (27/09) Corregir el precio CONSERVA los pagos ya registrados (decisión del dueño): lo cobrado aparte —que «A cuenta» no
      muestra— también se descuenta. Sin esto, una venta con un QR de 1.000 registrado pasaba a «deber» 1.000 de más. */
-  var _pv=EDIT_ID?findById(EDIT_ID):null, otros=_pv?cobradoFueraDeAcuenta(_pv):0, ya=r2(acu+otros);
+  var _pv=EDIT_ID?findById(EDIT_ID):null, otros=_pv?cobradoNoMostrado(_pv, acu):0, ya=r2(acu+otros);   // (30/09) A2-1, R2-1
   if(ya>t){ toast('Lo que ya pagó ('+fmtBs(ya)+') es más que la suma de los ítems ('+fmtBs(t)+'). Revisá los precios.','err'); return; }
   document.getElementById('f-saldo').value=r2(t-ya);
   updateMetodoVisibility();
@@ -3490,10 +3508,28 @@ function montoForm(el){
 /* 💵 (27/09) LO QUE ENTRÓ POR LA VENTA FUERA DE «A CUENTA»: los cobros registrados (Contabilidad, el chofer), que el
    formulario no muestra. El 2° método del pago mixto NO va: `p.acuenta` ya es TODO el adelanto (§4eu), y sumándolo otra vez
    «SÍ, pagado» proponía Bs 3.200 para una venta de 3.000 con 300 + 200 a cuenta. */
+/* (30/09, revisión en tres niveles, R2-1) Lo que «A cuenta» tiene DE MÁS sobre el anticipo escrito es el 2° método, se
+   reconozca como mixto o no: desde §4gy (A2) `mixtoEn` no reconoce un 2° pago del MISMO método que el anticipo (lo deja
+   Contabilidad al corregir), pero `p.acuenta` lo sigue sumando, y se contaba dos veces («SÍ, pagado» 3.000 → 3.500). Lo usa
+   el freno «poné el saldo» (`_cobAparte`): solo cobros registrados, nunca el anticipo. */
 function cobradoFueraDeAcuenta(p){
   if(!p) return 0;
-  var mx=mixtoDe(p), dentro=(mx && (Number(p.acuenta)||0)>0.01) ? (Number(mx.monto)||0) : 0;
-  return r2(totalCobrado(p)-dentro);
+  var ant=anticipoEscrito(p), tc=totalCobrado(p), dentro=ant ? Math.max(0, (Number(p.acuenta)||0)-(Number(ant.monto)||0)) : 0;
+  return r2(tc-Math.min(tc, dentro));
+}
+/* (30/09, R2-1 y A2-1) Para PROPONER montos («Usar como total», «SÍ, pagado»): TODO lo que ya entró por la venta y el campo
+   «A cuenta» no muestra, con `contaCobrado` (anticipo + cobros), no con `totalCobrado` (solo cobros). Una venta cargada «SÍ,
+   pagado» lleva el pago en el anticipo con «A cuenta» en 0 (§4cb): `totalCobrado` daba 0 y «Usar como total» ponía de saldo
+   el total entero (2.500 cobrados + 2.800 de saldo = 5.300, A2-1).
+   · Si «A cuenta» no se tocó, se guarda tal cual: lo que no muestra es todo lo cobrado menos lo que dice el campo.
+   · Si se tocó, el adelanto registrado (anticipo + 2° método) se reescribe con lo del campo y los otros cobros quedan
+     (`_rehaceAdel`, §4fr): lo que no muestra es lo cobrado menos ese adelanto. */
+function cobradoNoMostrado(p, acuForm){
+  if(!p) return 0;
+  var c=contaCobrado(p), acuG=Number(p.acuenta)||0, af=Number(acuForm)||0;
+  if(Math.abs(af-acuG)<0.01) return r2(Math.max(0, c-af));
+  var ant=anticipoEscrito(p), adel=Math.max(acuG, ant ? (Number(ant.monto)||0) : 0);
+  return r2(Math.max(0, c-adel));
 }
 /* 💵 (27/09, decisión del dueño del 26/09 20:37) «SÍ, PAGADO» SOBRE UNA VENTA QUE YA TENÍA PAGOS Y NO ESTABA SALDADA. Lo que ya
    entró queda como está —el adelanto en SU día (escrito, o el suelto tal como lo arma `anticipoDe`: día y recibo de la venta),
@@ -3514,7 +3550,7 @@ function pagoRestoPrev(){
 function pagadoSugerirTotal(){
   var cb=document.getElementById('f-cobrado'); if(!cb) return;
   var prev=EDIT_ID?findById(EDIT_ID):null;
-  var tot=r2(montoForm('f-acuenta')+montoForm('f-saldo')+(prev?cobradoFueraDeAcuenta(prev):0));
+  var tot=r2(montoForm('f-acuenta')+montoForm('f-saldo')+(prev?cobradoNoMostrado(prev, montoForm('f-acuenta')):0));   // (30/09) R2-1, A2-1
   if(!(tot>0)) return;
   var delPanel=!!(EDIT_PLATA0 && EDIT_PLATA0.pagado!=='SI' && r2(montoForm(cb))===EDIT_PLATA0.cobrado);
   if(!cb.value.trim() || delPanel){ cb.value=r2(tot); if(typeof pintarMixto==='function') pintarMixto(); }
@@ -4429,6 +4465,9 @@ var PRY_ES_COLCHON=/\b(COLCHON(ES)?|COLCHONETAS?)\b/, PRY_ES_SOMIER=/\b(SOM+IER(
    el renglón y «SOMIER» sumaba un somier que no hay: revisión del 29/09). */
 var PRY_SIN=/(?:\bS\/\s*|\bSIN\s+)(?:COLCHON(?:ES)?|COLCHONETAS?|SOM+IER(?:ES|S)?)\b/g;
 var PRY_PEDAZOS=/\s*(?:\+|,|;|\/|\bC\/|\bCON\b|\bMAS\b|\bY\b)\s*/;
+/* (30/09, A3-1 y R3-4) Lo que en el MEDIO de un pedazo es un servicio o un mueble («TITANIO LATEX ENTREGA INMEDIATA», «SEMIPEDIC
+   LITERA») ya no es el producto: se corta ahí. */
+var PRY_CORTE=/\b(ENTREGAS?|ENVIOS?|FLETES?|TRANSPORTES?|DELIVERY|TRASLADOS?|RECARGOS?|DESCUENTOS?|REGALOS?|INSTALACION(?:ES)?|ARMADO|SERVICIOS?|CAMAS?|CAMAROTES?|LITERAS?|CATRES?)\b/;
 /* Qué es un pedazo de texto: la primera palabra que lo dice ('colchon' | 'somier' | 'combo' | 'no'), o '' si ninguna. */
 function pryPedazoTipo(s){
   var m=null;
@@ -4444,11 +4483,23 @@ function pryTipoProd(x){
   if(!x) return '';
   var cod=String(x.codigo||'').trim().toUpperCase(), enCat=!!(cod && CODIGOS[cod]);
   if(enCat) return (function(t){ return t==='no' ? '' : (t || 'colchon'); })(pryPedazoTipo(prodAlias(stockNorm(CODIGOS[cod].d))));
-  var s=prodAlias(stockNorm(x.desc)).replace(PRY_SIN, ' ');
+  /* (30/09, A3-1) «P/ SOMIER», «P/COLCHON» es «PARA»: lo que sigue es el USO, no el producto («PATAS P/SOMIER» por 4 contaba
+     4 somieres). */
+  var s=prodAlias(stockNorm(x.desc)).replace(PRY_SIN, ' ').replace(/\bP\/\s*/g, ' PARA ');
   if(!s || PROD_NO_STOCK.test(s)) return '';                           // «VARIOS», «RECOGER…», tapizado: no son ventas de un producto
-  var c=false, so=false;
+  var c=false, so=false, acc=false;
   s.split(PRY_PEDAZOS).filter(function(p){ return /[A-Z]/.test(p); }).forEach(function(p, i){
+    /* (30/09) Después de un accesorio «DE / PARA COLCHON» («FORRO DE COLCHON Y SOMIER», «PROTECTOR PARA COLCHON Y SOMIER»), la
+       palabra SOLA que sigue es parte del accesorio, no otro producto. Con un modelo sí es otro («ALMOHADA Y COLCHON TITANIO»). */
+    if(acc && /^\s*(COLCHON(ES)?|SOM+IER(ES|S)?)\s*$/.test(p)) return;
+    var orig=p;
+    /* (30/09, A3-1 y R3-4) «PARA COLCHON», «PARA CAMAROTE»: lo que sigue a PARA es el uso; y un servicio o un mueble en el medio
+       corta el pedazo. «SABANAS CON ELASTICO PARA COLCHON» ya no suma un colchón, y «TITANIO LATEX PARA CAMAROTE» sí. */
+    p=p.replace(/\s*\bPARA\b.*$/, '');
+    var mc=PRY_CORTE.exec(p); if(mc && mc.index>0 && /[A-Z]/.test(p.slice(0, mc.index))) p=p.slice(0, mc.index);
+    if(!/[A-Z]/.test(p)) return;
     var t=pryPedazoTipo(p);
+    if(t==='no' && /\b(DE|PARA)\s+(COLCHON(ES)?|SOM+IER(ES|S)?)\b/.test(orig)) acc=true;
     if(!t && i===0) t='colchon';                                       // el colchón se reconoce por descarte (TITANIO LATEX)
     if(t==='colchon' || t==='combo') c=true;
     if(t==='somier' || t==='combo') so=true;
@@ -4506,7 +4557,11 @@ function pryCurva(V, g, meses){
 function pryCurvaF(c, r, min){
   if(!c || !c.ok) return 0;
   var K=0;
-  c.meses.forEach(function(m){ var d=pryAlDia(m, r); c.por[m].forEach(function(x){ if(pryCargadaAl(x, d, min)) K+=x.bs; }); });
+  c.meses.forEach(function(m){ var d=pryAlDia(m, r);
+    /* (30/09, R3-2) Con hora, el día equivalente es el último HÁBIL: si el que cae es un domingo o un feriado, ese día hábil entraba
+       ENTERO (la curva de la mañana quedaba hasta 4 % abajo de la de la noche en 4 de cada 10 días hábiles). */
+    if(min!=null) for(var i=0;i<10 && !pryDiaHabil(d);i++) d=stockSumarDias(d,-1);
+    c.por[m].forEach(function(x){ if(pryCargadaAl(x, d, min)) K+=x.bs; }); });
   return K/c.T;
 }
 /* Las dos cuentas del total del mes y cómo se mezclan (ver la cabecera): K = lo ya vendido para el mes, f = la parte que
@@ -4545,7 +4600,9 @@ function proyeccionMes(ym){
         if(!c.ok) o.porque='historia';
         else{
           var K=0; Object.keys(filas).forEach(function(k){ if(filas[k].g===g) K+=r2(filas[k].a+filas[k].b); });
-          var f=pryCurvaF(c, dr, pryMinBo(Date.now())), z=pryMezcla(K, f, c.prom), e=errores[g];
+          /* (30/09, R3-1) La hora solo en un día hábil: un domingo o un feriado no se vende, y la curva «a esta hora» subía sola
+             de la mañana a la noche (hasta 3,6 %) sin que entrara ninguna venta. */
+          var f=pryCurvaF(c, dr, pryDiaHabil(hoy) ? pryMinBo(Date.now()) : null), z=pryMezcla(K, f, c.prom), e=errores[g];
           o={ m:'curva', f:f, meses:c.meses, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
           if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
         }
@@ -4761,8 +4818,11 @@ function pryPatron(V, ym, g, hist, hoy){
   var sem=[0,0,0,0,0,0,0], cnt=[0,0,0,0,0,0,0];
   if(hist.length){
     var d0=hist[0]+'-01', d1=pryFinDeMes(hist[hist.length-1]);
-    for(d=d0, i=0; i<1500 && d<=d1; i++, d=stockSumarDias(d,1)) cnt[dowDe(d)]++;
-    V.forEach(function(x){ if(x.g===g && x.reg>=d0 && x.reg<=d1){ var w=dowDe(x.reg); if(w>=0) sem[w]+=x.bs; } });
+    /* (30/09, R3-3) Un feriado no es «un viernes sin ventas»: ni el día ni lo cargado ese día entran en el promedio. Con el 6 y
+       el 7/08 y el 25/09, el viernes salía 25 % abajo y el jueves 12,5 %. */
+    var noFer=function(f){ return !FERIADOS[f] && !FERIADOS_PASADOS[f]; };
+    for(d=d0, i=0; i<1500 && d<=d1; i++, d=stockSumarDias(d,1)) if(noFer(d)) cnt[dowDe(d)]++;
+    V.forEach(function(x){ if(x.g===g && x.reg>=d0 && x.reg<=d1 && noFer(x.reg)){ var w=dowDe(x.reg); if(w>=0) sem[w]+=x.bs; } });
   }
   return { ym:ym, g:g, cerrado:cerrado, T:T, dias:dias, ult:ult, fin3:fin3, llen:llen,
            sem:sem.map(function(s,k){ return cnt[k] ? s/cnt[k] : 0; }), semMeses:hist.slice() };
@@ -5005,8 +5065,12 @@ function prySemanaHtml(P, g){
   if(!(max>0.009)) return '';
   var orden=[1,2,3,4,5,6,0], mas=orden[0], menos=orden[0];
   orden.forEach(function(w){ if(P.sem[w]>P.sem[mas]) mas=w; if(w!==0 && P.sem[w]<P.sem[menos]) menos=w; });
+  /* (30/09, R3-3) Con menos de ~10 % entre el que más y el que menos (de lunes a sábado), se dice «parejo»: con dos o tres meses
+     de historia, una diferencia así es ruido y no alcanza para decidir una promo o el personal de un día. */
+  var parejo=(P.sem[mas]>0.009 && (P.sem[mas]-P.sem[menos])/P.sem[mas] < 0.10);
   return '<div class="pry-linea pry-semtxt"><b>Qué días se vende más</b> — promedio por día, por el día en que se cargó la venta ('+esc(pryMesesTxt(P.semMeses))+
-    '). El que más: <b>'+DIAS_SEM[mas]+'</b>; el que menos (de lunes a sábado): <b>'+DIAS_SEM[menos]+'</b>.</div>'+
+    '; los feriados no cuentan). '+(parejo ? 'Es <b>parejo</b>: entre el día que más y el que menos hay menos de un 10 %.'
+                                          : ('El que más: <b>'+DIAS_SEM[mas]+'</b>; el que menos (de lunes a sábado): <b>'+DIAS_SEM[menos]+'</b>.'))+'</div>'+
     orden.map(function(w){
       return '<div class="pry-sem"><span>'+DIAS_SEM[w].slice(0,3)+'</span><div><i style="width:'+Math.round(P.sem[w]/max*100)+'%;background:'+g.col+'"></i></div><b>'+fmtBs0(P.sem[w])+'</b></div>';
     }).join('');
@@ -6104,6 +6168,8 @@ function saveRetirosMirror(){ try{ localStorage.setItem(LS_RETIROS, JSON.stringi
 function loadRetirosMirror(){
   try{ var a=JSON.parse(localStorage.getItem(LS_RETIROS)||'[]'); RETIROS=Array.isArray(a)?a:[]; }catch(e){ RETIROS=[]; }
 }
+/* (30/09, R2-5) ¿Este retiro espera en la cola de este dispositivo (todavía no está en la planilla)? */
+function retEnCola(id){ try{ return getPending().some(function(q){ return q && String(q.id)===String(id); }); }catch(e){ return false; } }
 /* Todos los retiros, ya legibles y del más nuevo al más viejo. */
 function retirosTodos(){
   return RETIROS.map(retiroDe).sort(function(a,b){ return a.fecha<b.fecha?1:(a.fecha>b.fecha?-1:0); });
@@ -6125,8 +6191,15 @@ function persistRetiro(fila){
   if(i>=0) RETIROS[i]=fila; else RETIROS.push(fila);
   saveRetirosMirror();
   if(!CONNECTED){ queuePending(fila); return Promise.resolve({ ok:false, local:true }); }
-  return apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); return res||{ ok:false, local:true }; },
-                            function(){ queuePending(fila); return { ok:false, local:true }; });
+  /* (30/09, R2-3) Las versiones de ESTE retiro que ya esperaban en la cola son más viejas que esta. Si esta entra, se sacan: si
+     no, a los 2 minutos la cola mandaba la vieja y, como el servidor no compara el sello de los retiros, el monto volvía al de
+     antes sin aviso. Solo las que estaban ANTES de este guardado: una más nueva que entre mientras tanto se queda. */
+  var viejas={}; getPending().forEach(function(q){ if(q && String(q.id)===String(fila.id)) viejas[JSON.stringify(q)]=1; });
+  return apiSave(fila).then(function(res){
+      if(res && res.ok){ if(Object.keys(viejas).length) setPending(getPending().filter(function(q){ return !(q && String(q.id)===String(fila.id) && viejas[JSON.stringify(q)]); })); }
+      else queuePending(fila);
+      return res||{ ok:false, local:true }; },
+    function(){ queuePending(fila); return { ok:false, local:true }; });
 }
 function borrarRetiro(id){
   var f=null; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(id)){ f=RETIROS[k]; break; }
@@ -6303,7 +6376,10 @@ function guardarRetiroForm(){
      ventana abre en el mes actual, no los vio y los volvió a cargar: Bs 3.050 de más en el
      cuadre. Misma vendedora, mismo monto y alguna nota en común = casi seguro el mismo. */
   if(esNuevo){
-    var dup=retirosTodos().filter(function(x){
+    /* (30/09, R2-5) …también contra lo que espera en la cola de este dispositivo (sin señal todavía no está en la lista). */
+    var _vistosR={}, _candR=retirosTodos().concat(getPending().filter(function(q){ return q && esFilaRetiro(q); }).map(retiroDe))
+                                          .filter(function(x){ var k=String(x.id); if(_vistosR[k]) return false; _vistosR[k]=1; return true; });
+    var dup=_candR.filter(function(x){
       return mismoVendedor(x.entrega, r.entrega) && r2(x.monto)===r2(monto) &&
              x.notas.some(function(n){ return r.notas.indexOf(n)>=0; });
     })[0];
@@ -6318,7 +6394,16 @@ function guardarRetiroForm(){
      efectivo se restaba otra vez en el cuadre (revisión del 29/09, A4). Con el sello, la 2026-09-28-a contesta `borrado`. */
   if(!esNuevo){
     var _prevR=null; for(var _k=0;_k<RETIROS.length;_k++){ if(String(RETIROS[_k].id)===String(fila.id)){ _prevR=RETIROS[_k]; break; } }
-    var _revR=Math.max(Number(_prevR && _prevR.rev)||0, Number(SAVE_REV[fila.id])||0);
+    /* (30/09, R2-2) Si mientras estaba abierto ✏️ una lectura lo sacó de la lista (lo borraron desde otro equipo), no se guarda
+       a ciegas: sin la fila, el sello no salía y el servidor lo volvía a crear (el efectivo se restaba otra vez). */
+    if(!_prevR && !getPending().some(function(q){ return q && String(q.id)===String(fila.id); })){
+      toast('❌ Ese retiro ya no está en la lista: lo borraron desde otro equipo mientras lo corregías. Tu corrección NO se guardó y el retiro no se vuelve a crear. '+
+            'Si de verdad hay que anotarlo, confirmalo con administración antes de cargarlo de nuevo.','err',12000);
+      RET_FORM=retFormVacio(); renderRetiros();
+      return false;
+    }
+    /* …y el sello es el que se VIO al abrir ✏️ (`RET_FORM.rev`), o uno más nuevo de acá: el de la lista pudo cambiar después. */
+    var _revR=Math.max(Number(r.rev)||0, Number(_prevR && _prevR.rev)||0, Number(SAVE_REV[fila.id])||0);
     if(_revR>0) fila.rev=_revR;
   }
   var guardando=persistRetiro(fila);
@@ -6357,7 +6442,8 @@ function editarRetiro(id){
   var r=retiroDe(f);
   // r2 (26/09): con más de dos decimales («1500.125») `parseMonto` lo leía 1.500.125 y `montoError` lo frena
   RET_FORM={ id:r.id, fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:String(r2(r.monto)),
-             notas:r.notas.slice(), tipo:r.tipo, fotos:compsArr(r.fotos), obs:r.obs };
+             notas:r.notas.slice(), tipo:r.tipo, fotos:compsArr(r.fotos), obs:r.obs,
+             rev:Math.max(Number(f.rev)||0, Number(SAVE_REV[f.id])||0) };   // (30/09, R2-2) el sello con el que se abrió
   renderRetiros();
   var box=document.getElementById('ret-form'); if(box) box.scrollIntoView({block:'start'});
 }
@@ -6442,7 +6528,7 @@ function renderRetiros(){
             '<td>'+esc(r.retira||'—')+'</td>'+
             '<td>'+(r.notas.length?r.notas.map(function(n){ return '<span class="badge b-gray">🧾 '+esc(n)+'</span>'; }).join(' '):'<span style="color:var(--amber)">sin notas</span>')+'</td>'+
             '<td style="white-space:nowrap">'+(r.tipo==='Facturado'?'<span class="badge b-verif">🧾 Facturado</span>':'<span class="badge b-gray">📄 No facturado</span>')+'</td>'+
-            '<td style="text-align:right"><b>'+fmtBs(r.monto)+'</b></td>'+
+            '<td style="text-align:right"><b>'+fmtBs(r.monto)+'</b>'+(retEnCola(r.id)?'<br><span class="badge b-amber" title="Está guardado solo en este dispositivo: se manda solo al reconectar">⏳ todavía no está en la planilla</span>':'')+'</td>'+
             '<td style="white-space:nowrap">'+(r.fotos.length
                 ? r.fotos.map(function(fid,k){ return fotoImgHtml(fid,{alt:'Imagen '+(k+1), title:'Ver en grande',
                     style:'height:34px;border-radius:6px;border:1px solid var(--gray-md);cursor:pointer;margin-right:4px',
@@ -7027,7 +7113,12 @@ function ctaGuardarPago(id, i, igual){
     arr[idx].fecha=f; arr[idx].monto=monto; arr[idx].nota=nota;
     arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco; arr[idx].recibio=recibio;
     delete arr[idx].sinMonto;   // §4fg: corregirle el monto es volverlo un pago de verdad
-    var _mxDesp=mixtoEn(_antX, arr), _sigue=!!(_mxDesp && arr.indexOf(_mxDesp)===idx);
+    /* (30/09, R2-4) ¿Sigue siendo el 2° método? Se mira EL PROPIO renglón —mismo día y recibo que el anticipo, con monto y
+       otro método—, no `mixtoEn(_antX, arr)` sin `p`: con otro cobro del mismo día y recibo (un flete pasado a pago) había
+       dos candidatos, daba null y «A cuenta» bajaba de 1.500 a 1.000 por corregirle el banco. Si pasa a ser del MISMO método
+       que el anticipo, sale del adelanto (como al cambiarle el día): así no queda un mixto que nadie reconoce (R2-1). */
+    var _rX=arr[idx], _sigue=!!(_antX && _rX && !esEnvio(_rX) && _rX.fecha===_antX.fecha && limpiaNota(_rX.nota)===limpiaNota(_antX.nota) &&
+                                (Number(_rX.monto)||0)>0 && !mixtoMismoMetodo(_rX, _antX));
     if(_eraMixto && !_acuFija) p.acuenta=r2((Number(_antX.monto)||0) + (_sigue?monto:0));
     aplicarCobros(p, arr, objetivo);
   }
@@ -8316,6 +8407,26 @@ function submitPedido(){
   /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
      guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
   try{ codigoEspecialBorrar(null, EDIT_ID ? findById(EDIT_ID) : null); }catch(e){}
+  /* (30/09, A4-1 y X-3) Un renglón con CÓDIGO o PRECIO y SIN producto no se descarta callado: `getProductos` saltea el renglón sin
+     nombre, así que el pedido se guardaba sin ese producto (y a veces la pregunta del saldo lo nombraba igual). Pasa con un código
+     del almacén escrito antes de que llegue el saldo, o de un producto agotado que no está en el Excel de hoy. */
+  /* Un renglón que ya traía el pedido (`data-de-pedido`, lo pone `editPedido`) y al que se le vació el nombre es SACARLO, como
+     siempre: se deja pasar (el aviso ➖ de «pedido modificado» lo cuenta). */
+  var _sinNombre=Array.prototype.filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    if(c.getAttribute('data-de-pedido')) return false;
+    var d=c.querySelector('.prod-desc'), co=c.querySelector('.prod-codigo'), pr=c.querySelector('.prod-precio');
+    return d && !String(d.value||'').trim() && ((co && String(co.value||'').trim()) || (pr && String(pr.value||'').trim()));
+  });
+  if(_sinNombre.length){
+    _sinNombre.forEach(function(c){ c.querySelector('.prod-desc').classList.add('err'); });
+    var _pend=_sinNombre.some(function(c){ return !!c.getAttribute('data-alm-pend'); });
+    toast('Hay '+(_sinNombre.length===1?'un renglón':(_sinNombre.length+' renglones'))+' con código o precio pero SIN producto: escribí qué producto es, o borrá el renglón (×). '+
+          ((_pend && !STOCK_CARGADO) ? 'Todavía no llegó el saldo del almacén: esperá unos segundos y se completa solo.'
+           : (!stockHayAlgunExcel() ? 'Todavía no hay ningún Excel del almacén cargado: escribí el producto a mano.'
+                                    : 'Si es un código del almacén, puede que ese producto no esté en el Excel de hoy.')),'err',10000);
+    try{ _sinNombre[0].querySelector('.prod-desc').focus(); _sinNombre[0].scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
   var vendedor=document.getElementById('f-vendedor').value.trim();
   /* 🏪 En una reposición el «cliente» es la SUCURSAL de destino, y se escribe en su propio
      campo (§4dk): el de cliente está escondido y traería lo que quedó de antes. */
@@ -8651,6 +8762,13 @@ function submitPedido(){
   var _cobPrevR = prev ? cobrosReales(prev) : [];
   var _mxPrevR = _mxPrev ? mixtoEn(anticipoEscrito(prev), _cobPrevR, prev) : null;
   var _cobOtros = _cobPrevR.filter(function(c){ return c!==_mxPrevR; });   // los cobros que NO son parte del adelanto
+  /* (30/09, R2-1 b) Un adelanto registrado en DOS pagos que ya no se reconocen como mixto (el 2° quedó del mismo método que el
+     anticipo, §4gy A2) no se corrige desde acá: rehacerlo dejaba el 2° pago como «otro cobro» y la venta en 3.500. Como el
+     adelanto en dos métodos de §4gh B, va a Contabilidad. */
+  if(_rehaceAdel && prev && _antPrev && !_mxPrevR && (Number(prev.acuenta)||0) > (Number(_antPrev.monto)||0)+0.009){
+    toast('💳 El adelanto de esta venta ('+fmtBs(Number(prev.acuenta)||0)+') está registrado en más de un pago y no se corrige desde acá. Corregilo en Contabilidad → ✏️ Corregir este pago.','err',12000);
+    return;
+  }
   var _seBorran = [];
   if(_rehaceAdel){
     if(_antPrev && !(_acuVal>0)) _seBorran.push(_antPrev);
@@ -8885,6 +9003,13 @@ function submitPedido(){
       return;
     }
     if(!confirm('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Mover igual el pedido a ese día?')) return;
+  }
+  /* (30/09, R1-4) Un pedido que ya estaba en un feriado o un domingo y se le cambia SOLO el turno: el «lleno (0/0), probá el otro
+     turno» mandaba a probar un turno que tampoco existe. Lo que hay que hacer es cambiarle el día. */
+  if(_mueveVend && !_nuevo && (feriadoDe(fechaSel) || diaDomingo(fechaSel)) && !(UNLOCKED && isEdit)){
+    toast('🚫 El '+fmtFecha(fechaSel)+' '+(feriadoDe(fechaSel)?('es feriado ('+feriadoDe(fechaSel)+')'):'es domingo')+': el camión no sale, en ningún turno. Cambiale el DÍA (📅 Reprogramar o la fecha de entrega).','err',9000);
+    var feT=document.getElementById('f-fecha'); if(feT){ feT.classList.add('err'); feT.scrollIntoView({block:'center'}); }
+    return;
   }
   if((_nuevo || _mueveVend) && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
     var lim=limTurno(fechaSel, turnoSel);
@@ -9638,7 +9763,9 @@ function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; PAGO_NO_VISTO=null;
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
-  var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
+  /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
+     proponía el feriado y el formulario lo frenaba al guardar. El mínimo sigue siendo mañana. */
+  var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=proximoDiaEntrega();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
   segSet('f-doc-tipo','OC');
@@ -9710,6 +9837,9 @@ function editPedido(id){
   document.getElementById('f-cliente').value=rec.cliente||'';
   var box=document.getElementById('f-productos'); box.innerHTML='';
   if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio,pr.rtipo,pr.robs); } } else addProdRow();
+  /* (30/09) Los renglones que YA traía el pedido: vaciarle el nombre a uno es sacarlo (como siempre); el freno de «código sin
+     producto» de `submitPedido` es para un renglón nuevo al que nunca se le completó el nombre. */
+  Array.prototype.forEach.call(box.querySelectorAll('.prod-card'), function(c){ if(String((c.querySelector('.prod-desc')||{}).value||'').trim()) c.setAttribute('data-de-pedido','1'); });
   document.getElementById('f-celular').value=rec.celular||'';
   /* (27/09, revisión en el celular) SIN TURNO sigue sin turno: `rec.turno||'AM'` dejaba marcado «AM» y guardar la dirección
      le ponía turno AM a un pedido que nadie eligió (la ficha pasaba de «🕗 Sin turno» a «🌅 AM» y el atraso se medía a las 13
@@ -11114,8 +11244,12 @@ function leerCierresDeLista(lista, esDelServidor){
   else if(!stk && esDelServidor && !STOCK_CARGADO) STOCK_CARGADO=true;   // la planilla no tiene stock todavía: la memoria vacía ES el stock
   // (26/09) Lo tildado acá y todavía sin confirmar manda sobre la fila (antes un refresco entre el toque y el guardado se lo llevaba)
   if(car){ reescritaRevAnotar(car); CARGA_CHK=reescritaAplicar(Object.keys(parseCargaChk(car.observaciones)), reescritaCambios(CARGA_ID, CARGA_CAMBIOS)); saveCargaMirror(); renderCargaSiActiva(); }
-  RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
-  BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
+  /* (30/09, R2-5) Solo la lista del SERVIDOR reemplaza los retiros y los borradores. Al arrancar, `loadMirror` pasa la copia
+     de los PEDIDOS —que no trae retiros: `mergePending` no guarda filas del sistema en STATE— y la copia de los retiros se
+     vaciaba ANTES de leerla: sin conexión, Contabilidad no veía ninguno (ni el que esperaba en la cola), el cuadre daba a cada
+     vendedora más efectivo en la mano del real, y se podía cargar dos veces el mismo retiro sin aviso. */
+  if(esDelServidor || rets.length){ RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo(); }
+  if(esDelServidor || borr.length){ BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo(); }
   if(cie){
     reescritaRevAnotar(cie);                                   // (26/09) el sello, para el próximo guardado
     var crudoCie=String(cie.observaciones||'').trim();
@@ -11300,11 +11434,16 @@ function renderCierreDias(abrir){
         '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+
           '<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+todayStr()+'\')">Hoy</button>'+
           '<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+tomorrowStr()+'\')">Mañana</button>'+
+          /* (30/09, A1-1) La víspera de un feriado (o el sábado) «mañana» no tiene camión: el botón del camión de verdad. */
+          (proximoDiaEntrega()!==tomorrowStr() ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+proximoDiaEntrega()+'\')">🚚 Próximo camión: '+esc(fmtFecha(proximoDiaEntrega()))+'</button>') : '')+
         '</div></div>'+
       cierreCandadoHtml()+
       '<div style="background:'+(cerrado?'var(--red-lt);border:1px solid var(--red-border)':'var(--green-lt);border:1px solid var(--green-border)')+';border-radius:10px;padding:11px 14px;margin-top:13px;font-size:.85rem">'+
         (cerrado ? '<b style="color:var(--red)">🔒 '+esc(fmtFecha(f))+' está CERRADO</b><br><span style="color:var(--muted)">No entran pedidos nuevos para ese día. Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'.</span>'
-                 : '<b style="color:var(--green)">🔓 '+esc(fmtFecha(f))+' está abierto</b><br><span style="color:var(--muted)">Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'. Se pueden seguir agregando.</span>')+
+                 /* (30/09, A1-1) Un feriado o un domingo no «se puede seguir agregando»: el camión no sale (§4gy). */
+                 : ((feriadoDe(f)||diaDomingo(f))
+                    ? '<b style="color:#a67c00">🚫 '+esc(fmtFecha(f))+' '+(feriadoDe(f)?('es feriado ('+esc(feriadoDe(f))+')'):'es domingo')+': no sale el camión</b><br><span style="color:var(--muted)">Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+(n?': hay que pasarlos a otro día.':'.')+' El camión que sigue es el del '+esc(fmtFecha(sigDiaHabil(f)))+'.</span>'
+                    : '<b style="color:var(--green)">🔓 '+esc(fmtFecha(f))+' está abierto</b><br><span style="color:var(--muted)">Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'. Se pueden seguir agregando.</span>'))+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px;'+(cerrado?'background:var(--green)':'background:#8a1c24')+'" onclick="'+(cerrado?('abrirDia(\''+f+'\')'):('cerrarDia(\''+f+'\')'))+'">'+
         (cerrado?'🔓 Reabrir este día':'🔒 Cerrar este día')+'</button>'+
@@ -11686,16 +11825,41 @@ function pedidoIssues(p){
   if(!(p.celular&&String(p.celular).trim())) m.push('sin celular');
   return m;
 }
+/* 🚫 (30/09, R1-2) LOS PEDIDOS QUE QUEDARON EN UN DÍA SIN CAMIÓN (feriado o domingo). Desde §4gy el «mañana» del camión
+   (`proximoDiaEntrega`) saltea esos días, así que la víspera un pedido con esa fecha no aparece en ningún «Mañana» —carga,
+   ruta, chofer, revisar— y después solo figura entre los atrasados: logística no se enteraba y el cliente, cuando no llegaba.
+   Pueden quedar así: el Excel de ROHO los trae con esa fecha, Administración los movió con la clave, o se cargaron antes del
+   29/09. Se listan (también los de la última semana que siguen sin entregar), cada uno con 📅 Reprogramar. */
+function pedidosEnDiaSinCamion(){
+  var hoy=todayStr(), desde=stockSumarDias(hoy,-7), hasta=stockSumarDias(hoy,90);
+  return (STATE||[]).filter(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado || esVentaTienda(p)) return false;
+    var f=String(p.fecha||''); if(!f || f<desde || f>hasta) return false;
+    return !!(feriadoDe(f) || diaDomingo(f));
+  }).sort(function(a,b){ return String(a.fecha).localeCompare(String(b.fecha)); });
+}
+function sinCamionHtml(){
+  var L=pedidosEnDiaSinCamion(); if(!L.length) return '';
+  return '<div class="sin-camion" style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.84rem;color:#7c4b00">'+
+    '⚠️ <b>'+L.length+' pedido'+(L.length===1?'':'s')+' '+(L.length===1?'quedó':'quedaron')+' en un día sin camión</b> (feriado o domingo): no '+(L.length===1?'aparece':'aparecen')+' en ningún «Mañana». Pasal'+(L.length===1?'o':'os')+' a otro día.'+
+    L.slice(0,15).map(function(p){
+      return '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">'+
+        '<b>'+esc(fmtFecha(p.fecha))+'</b> <span>'+esc(feriadoDe(p.fecha)||'domingo')+'</span> · '+esc(ocEtiq(p.oc)||'')+' · '+esc(p.cliente||'')+
+        '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="reprogramarPedido(\''+esc(p.id)+'\')">📅 Reprogramar</button></div>';
+    }).join('')+
+    (L.length>15?('<div style="margin-top:6px">… y '+(L.length-15)+' más</div>'):'')+
+  '</div>';
+}
 function renderRevisar(){
   var el=document.getElementById('adm-revisar'); if(!el) return;
   var man=proximoDiaEntrega();
   var manList=STATE.filter(function(p){return p.fecha===man;});
   var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
-  var avisoOc = avisoOcRepetidasHtml();
+  var avisoOc = avisoOcRepetidasHtml(), sinCam = sinCamionHtml();   // (30/09, R1-2)
   if(!manList.length || !probl.length){
-    // Aunque no haya nada que revisar de mañana, una OC repetida SÍ hay que mostrarla.
-    el.className = avisoOc ? 'revisar' : '';
-    el.innerHTML = avisoOc;
+    // Aunque no haya nada que revisar de mañana, una OC repetida SÍ hay que mostrarla (y los pedidos en un día sin camión).
+    el.className = (avisoOc||sinCam) ? 'revisar' : '';
+    el.innerHTML = sinCam+avisoOc;
     return;
   }
   var cnt={'sin chofer':0,'sin Maps':0,'sin dirección':0,'sin celular':0};
@@ -11712,7 +11876,7 @@ function renderRevisar(){
         '<button class="rowbtn" style="margin-left:auto" onclick="showPedidoModal(\''+p.id+'\')">Abrir</button></div>';
     }).join('');
   }
-  el.className='revisar'; el.innerHTML=head+detail+avisoOc;
+  el.className='revisar'; el.innerHTML=sinCam+head+detail+avisoOc;
 }
 function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
 /* ============================================================================
@@ -12234,7 +12398,8 @@ function renderCarga(){
         cargaBloquesHtml(sub, f)+'</div>';
     }).join('');
   }
-  document.getElementById('carga-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
+  var sinCam=sinCamionHtml();   // (30/09, R1-2) arriba de la carga: los que quedaron en un feriado o domingo
+  document.getElementById('carga-body').innerHTML=sinCam+(html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>');
 }
 function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
 
@@ -15892,6 +16057,13 @@ function esProdDeTienda(x){
   return !(cod && CODIGOS[cod]) && PROD_NO_STOCK.test(stockNorm(t));
 }
 function stockVacio(){ return { c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{}, h:[] }; }
+/* (30/09) ¿Hay ALGÚN Excel del almacén cargado (el de acá o el de otro almacén)? Sin ninguno, que un código no esté en el stock
+   no dice que se agotó: no se sabe nada todavía (`productoDeAlmacen`, `prodCodigosDelAlmacen`). */
+function stockHayAlgunExcel(){
+  if(typeof STOCK==='undefined' || !STOCK) return false;
+  if(STOCK.c && STOCK.c.f) return true;
+  var g=STOCK.g||{}; return Object.keys(g).some(function(nm){ return !!(g[nm] && g[nm].f); });
+}
 function leerStock(p){
   var d=stockVacio();
   try{
@@ -15998,6 +16170,36 @@ function stockLeerDePanelViejo(d, o){
    nueva en vez de quedar huérfano. Dos claves viejas que caen en la misma nueva se SUMAN:
    eran dos renglones del mismo conteo. Es idempotente, una clave canónica se resuelve a sí
    misma. */
+/* 🧠 (30/09, R4-5 · A4-2) EL EXCEL NUEVO NO BORRA LOS CÓDIGOS QUE ALGO SIGUE NOMBRANDO. El mapa `cod` de cada almacén (código →
+   clave, §4cv) se REEMPLAZABA con el del Excel nuevo, que no trae lo agotado: el código del producto que la lista no conoce se
+   olvidaba, `stockMigrar` volvía a resolver su clave por el nombre y sus pedidos, lo pedido a fábrica y lo que llegaba pasaban
+   al producto parecido de la lista (CH1296 SOMIER PARRILLA NEGRO → SOMIER NEGRO), y así quedaba guardado. Ahora se conservan
+   los códigos viejos que la lista no conoce MIENTRAS algo los nombre: un pedido sin entregar (o entregado en los últimos 31
+   días) con ese código, o un pedido a fábrica / entrada / recepción con esa clave. Lo que nadie nombra se va con el Excel
+   siguiente: la celda del stock (50.000 letras) no crece para siempre. */
+function stockCodRefs(){
+  var cods={}, ks={}, lim=stockSumarDias(todayStr(), -31);
+  (STATE||[]).forEach(function(p){
+    if(!p || !stockCuenta(p)) return;
+    if(p.entregado && !(String(fechaSalida(p)||'')>=lim)) return;
+    (p.productos||[]).forEach(function(x){ var c=String((x&&x.codigo)||'').trim().toUpperCase(); if(c) cods[c]=1; });
+  });
+  (STOCK.p||[]).forEach(function(q){ if(q && q.k) ks[q.k]=1; });
+  (STOCK.e||[]).forEach(function(q){ if(q && q.k) ks[q.k]=1; });
+  Object.keys(STOCK.g||{}).forEach(function(nm){ var rs=((STOCK.g[nm]||{}).rs)||{}; Object.keys(rs).forEach(function(r){ if(rs[r] && rs[r].k) ks[rs[r].k]=1; }); });
+  return { cods:cods, ks:ks };
+}
+function stockCodRecordar(viejo, nuevo){
+  var out={}, R=null;
+  Object.keys(nuevo||{}).forEach(function(c){ out[c]=nuevo[c]; });
+  Object.keys(viejo||{}).forEach(function(c){
+    var cc=String(c).toUpperCase();
+    if(out[c]!=null || out[cc]!=null || !viejo[c] || CODIGOS[cc]) return;
+    R=R||stockCodRefs();
+    if(R.cods[cc] || R.ks[viejo[c]] || R.ks[stockAliasDe(viejo[c])]) out[c]=viejo[c];
+  });
+  return out;
+}
 function stockMigrar(d){
   /* ⚠️ (25/09) La clave que el Excel dejó CRUDA porque su código no está en el catálogo (§4cy:
      dos códigos son dos productos) NO se vuelve a resolver por nombre. Esto corre en CADA lectura
@@ -16752,6 +16954,13 @@ function nombreSinMedida(t){
   return String(t||'')
     .replace(/\d{2,3}\s*[X×✕✖*]\s*\d{2,3}(\s*[X×✕✖*]\s*\d+)?\s*(CM)?/gi,' ')
     .replace(/(^|\s)\d(?:[.,]\d)?\s*(?:PLZ|PLAZAS?)\b\.?/gi,' ')
+    /* (30/09, R4-4) Lo que el histórico del sistema cuelga de la medida: «1,5» suelto (las plazas sin «PLZ»), «[Pr.]» o
+       unos corchetes vacíos, y una abreviatura colgada con guion («- T.A.»). `stockClaveCruda` ya los sacaba para la clave;
+       el nombre del renglón los mostraba («SOMIER PARRILLA NEGRO 1,5» con 105x190 al lado). */
+    .replace(/\s*\[[^\]]*\]/g,' ')
+    .replace(/(^|\s)\d[.,]\d(?=\s|$)/g,' ')
+    .replace(/\s+-\s+(?:[A-Za-z]\.){1,3}\s*$/,' ')
+    .replace(/\s+-\s*$/,' ')
     .replace(/\s+/g,' ').trim();
 }
 /* El producto de un código que la lista de precios no tiene y el almacén sí: `{d, m, k, code}`, o null. */
@@ -16759,7 +16968,17 @@ function productoDeAlmacen(code){
   code=String(code||'').trim().toUpperCase();
   if(!code || CODIGOS[code] || typeof STOCK==='undefined' || !STOCK) return null;
   var k; try{ k=stockIndiceApretado().cod[code]; }catch(e){ return null; }
-  if(!k) return null;
+  if(!k){
+    /* (30/09, X-3) AGOTADO: ya no está en ningún Excel (y nada lo nombra, así que el panel no lo recuerda: `stockCodRecordar`).
+       Si el sistema lo vendió alguna vez (el histórico), el renglón se completa con ese nombre y esa medida, marcado `hist`: su
+       stock es 0 y `stockInfo` lo deja en su clave cruda, no en el parecido de la lista. Sin esto no se completaba nada, no se
+       avisaba nada y el renglón se perdía al guardar. Solo con el saldo cargado: sin él, «agotado» no se sabe todavía. */
+    if((typeof STOCK_CARGADO!=='undefined' && !STOCK_CARGADO) || !stockHayAlgunExcel()) return null;
+    var h0=ventasHistPorCodigo()[code]; if(!h0) return null;
+    var hm=normMedida(h0.m||'')||normMedida(medidaDeTexto(h0.n)), hd=nombreSinMedida(h0.n)||String(h0.n||'').trim();
+    if(!hd || !hm) return null;
+    return { d:hd, m:hm, k:stockClaveCruda({ desc:hd, medida:hm }), code:code, hist:true };
+  }
   k=stockAliasDe(k);
   var pa=String(k).split('|'), m=normMedida(pa[1]||''), h=ventasHistPorCodigo()[code], d='';
   if(h){ var hn=nombreSinMedida(h.n); if(hn && stockClaveCruda({ desc:hn, medida:m }).split('|')[0]===String(pa[0]||'')) d=hn; }
@@ -16769,15 +16988,34 @@ function productoDeAlmacen(code){
 }
 /* Los renglones que tienen un código del almacén y todavía no tienen nombre (se escribió el código antes de que llegara el
    saldo, en un equipo sin copia guardada): se completan cuando llega la lectura. Devuelve cuántos. */
+/* ⚠️ (30/09, R4-2) SOLO el renglón cuyo código se escribió SIN el saldo cargado (`data-alm-pend`, lo pone el campo del código) y
+   UNA sola vez. Antes corría sobre todo renglón con código y sin nombre en CADA lectura: al editar, vaciar el nombre para
+   sacar un producto lo hacía volver con el refresco (y se guardaba), y la medida elegida a mano se cambiaba sin avisar. La
+   medida se pone solo si está vacía: si la vendedora ya eligió otra, queda la suya y el cuadrito dice «el código es de otra
+   medida». */
 function prodCodigosDelAlmacen(){
-  var cards=document.querySelectorAll('#f-productos .prod-card'), n=0;
+  var cards=document.querySelectorAll('#f-productos .prod-card'), n=0, hechos=[];
+  if(typeof STOCK_CARGADO!=='undefined' && !STOCK_CARGADO) return 0;
+  var hayExcel=stockHayAlgunExcel(), deHist=0;
   for(var i=0;i<cards.length;i++){
-    var c=cards[i], d=c.querySelector('.prod-desc'), cIn=c.querySelector('.prod-codigo'), mSel=c.querySelector('.prod-medida'), otro=c.querySelector('.prod-medida-otro');
-    if(!d || !cIn || !mSel || !otro || String(d.value||'').trim()) continue;
-    var alm=productoDeAlmacen(cIn.value); if(!alm || esCombo(alm.d)) continue;
+    var c=cards[i], pend=c.getAttribute('data-alm-pend'); if(!pend) continue;
+    var d=c.querySelector('.prod-desc'), cIn=c.querySelector('.prod-codigo'), mSel=c.querySelector('.prod-medida'), otro=c.querySelector('.prod-medida-otro');
+    if(!d || !cIn || !mSel || !otro || String(d.value||'').trim() || String(cIn.value||'').trim().toUpperCase()!==pend){ c.removeAttribute('data-alm-pend'); continue; }
+    var alm=productoDeAlmacen(cIn.value);
+    /* Sin ningún Excel del almacén todavía (la planilla no tiene stock), la marca se queda: la completa la lectura que lo traiga. */
+    if(!alm){ if(hayExcel) c.removeAttribute('data-alm-pend'); continue; }
+    c.removeAttribute('data-alm-pend');
+    if(esCombo(alm.d)) continue;
     d.value=alm.d; var m=alm.m;
-    if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; }
+    var medVacia=!mSel.value || (mSel.value==='Otros' && !String(otro.value||'').trim());
+    if(m && medVacia){ if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } }
+    hechos.push(alm.code+' = '+alm.d+(m?(' '+m):'')+(alm.hist?' (del histórico: se agotó, su saldo es 0)':''));
+    if(alm.hist) deHist++;
     n++;
+  }
+  if(n){
+    try{ pintarTotalProds(); }catch(e){}
+    toast('📦 Llegó el saldo: completé '+(n===1?'el renglón':(n+' renglones'))+' con el código '+(deHist===n?'y el histórico del sistema':'del almacén')+' ('+hechos.join(' · ')+').'+(docTipoSel()==='RPT'?'':' Poné el precio a mano.'),'ok');
   }
   return n;
 }
@@ -16825,9 +17063,18 @@ function stockInfo(x){
        SOMIER NEGRO del catálogo. Solo cuando el nombre crudo no está en ningún almacén se
        usa lo que dice el catálogo. */
     var kc=stockClaveInv(stockAliasDe(m.cruda), cod);
-    k = stockHayEnInventario(kc) ? kc : stockClaveInv(stockAliasDe(m.auto), cod);
+    /* (30/09, R4-5 y X-4) …y un código que el SISTEMA conoce (está en el histórico) pero la lista no, tampoco se adivina por
+       nombre aunque hoy no esté en ningún Excel (agotado): dos códigos son dos productos (§4cy). Así el «CH1296 SOMIER PARRILLA
+       NEGRO» agotado no pasa a ser el SOMIER NEGRO de la lista, ni en el cuadrito ni en «Qué producir». Un código que nadie
+       conoce (mal tipeado: «CH1O37») sigue buscándose por el nombre. */
+    k = (stockHayEnInventario(kc) || stockCodigoDelSistema(cod)) ? kc : stockClaveInv(stockAliasDe(m.auto), cod);
   }
   return { k:k, auto:m.auto, cat:m.cat };
+}
+function stockCodigoDelSistema(cod){
+  cod=String(cod||'').trim().toUpperCase();
+  if(!cod || CODIGOS[cod] || typeof VENTAS_HIST==='undefined') return false;
+  try{ return !!ventasHistPorCodigo()[cod]; }catch(e){ return false; }
 }
 function stockClaveAuto(x){ return stockInfo(x).auto; }
 function stockClave(x){ return stockInfo(x).k; }
@@ -17177,7 +17424,10 @@ function stockData(extra){
          mes tiene que cuadrar con él. La rotación de 15 días sigue por fecha de salida. */
       var fv=contaFecha(p)||fs;
       if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
-        var ek30=stockEntregaClave(p, fv);        // 🏬 (29/09) ver `stockEntregaClave`
+        /* 🏬 (30/09, decisión del dueño: «cuando se entrega es la fecha que yo coloco de entrega») Los pedidos de Multicenter del
+           mismo día se juntan por la FECHA DE ENTREGA también acá, como en los 15 días (R4-3): con la de venta, los mismos pedidos
+           daban 1 entrega en la tabla y 3-4 en el plan del mes. La ventana se sigue midiendo por fecha de venta (§4dv). */
+        var ek30=stockEntregaClave(p, fs);
         o.v30+=c; if(!o.ventas30[ek30]){ o.ventas30[ek30]=1; o.n30++; }
         if(stockEduardoMulticenter(p)) o.v30EduMc+=c;          // 🏬 (28/09)
       }
@@ -17680,16 +17930,37 @@ function saldoMedidaEspecial(x){
 /* 🏷️ ¿El código es de OTRA medida u OTRO producto? Devuelve qué es ese código (y cuál sería el bueno), o null.
    Lo de otro producto va con cuidado —el nombre se busca en el catálogo sin el código—: solo si el nombre es CLARAMENTE
    otro producto del catálogo y no contiene el del código (un «TITANIO ICE PLUS» contiene al «TITANIO ICE»). */
+/* (30/09, R4-1) El código de un producto del ALMACÉN que la lista de precios no conoce (§4ha) lleva las mismas protecciones: el
+   stock identifica POR EL CÓDIGO, así que con otra medida u otro producto en el renglón el cuadrito daba ✅ con el stock del
+   producto del código, sin aviso, y el pedido apartaba ese otro. Lo que se completó desde el histórico (`hist`) no cuenta: no
+   está en ningún Excel, así que no identifica nada. */
+function saldoCatDeCodigo(cod){
+  cod=String(cod||'').trim().toUpperCase(); if(!cod) return null;
+  if(CODIGOS[cod]) return CODIGOS[cod];
+  var a=null; try{ a=productoDeAlmacen(cod); }catch(e){ a=null; }
+  return (a && !a.hist) ? { d:a.d, m:a.m, alm:true } : null;
+}
+/* Los códigos del ALMACÉN de ese producto en esa medida (el bueno, para decírselo a la vendedora). */
+function saldoCodigosAlmDe(d, medida){
+  var nd=stockNorm(d), out=[], idx; try{ idx=stockIndiceApretado().cod||{}; }catch(e){ return out; }
+  Object.keys(idx).forEach(function(c){
+    if(CODIGOS[c]) return;
+    var pa=String(stockAliasDe(idx[c])||'').split('|');
+    if(pa[1] && stockNorm(nombreSinMedida(pa[0]))===nd && saldoMismaMedida(normMedida(pa[1]), medida)) out.push(c);
+  });
+  return out;
+}
 function saldoCodigoOtro(x){
-  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod]; if(!cat) return null;
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=saldoCatDeCodigo(cod); if(!cat) return null;
   var med=String((x&&x.medida)||'').trim();
   if(normMedida(cat.m)==='especial') return null;      // un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL») va con cualquiera
-  if(cat.m && med && !saldoMismaMedida(cat.m, med)) return { code:cod, d:cat.d, m:cat.m, por:'medida', bien:saldoCodigosDe(cat.d, med) };
+  if(cat.m && med && !saldoMismaMedida(cat.m, med))
+    return { code:cod, d:cat.d, m:cat.m, por:'medida', alm:!!cat.alm, bien:(cat.alm ? saldoCodigosAlmDe(cat.d, med) : saldoCodigosDe(cat.d, med)) };
   var n=stockEnCatalogo({ desc:x.desc, medida:med });
   if(n && n.por==='nombre' && stockNorm(n.d)!==stockNorm(cat.d)){
     var tc=stockTokens(cat.d).set, td=stockTokens(x.desc).set, todas=true;
     for(var w in tc){ if(!td[w]){ todas=false; break; } }
-    if(!todas) return { code:cod, d:cat.d, m:cat.m, por:'producto', bien:(n.code ? [n.code] : []), otro:n.d+(n.m?(' '+n.m):'') };
+    if(!todas) return { code:cod, d:cat.d, m:cat.m, por:'producto', alm:!!cat.alm, bien:(n.code ? [n.code] : []), otro:n.d+(n.m?(' '+n.m):'') };
   }
   return null;
 }
@@ -17697,7 +17968,7 @@ function saldoCodigoOtro(x){
    código, o null. No cuenta un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL»), uno sin medida, uno que
    el catálogo no conoce ni un renglón sin nombre (borrarlo lo dejaría sin producto). */
 function saldoCodigoDeEstandar(x){
-  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod];
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=saldoCatDeCodigo(cod);   // (30/09, R4-1) también el del almacén
   if(!cat || !cat.m || normMedida(cat.m)==='especial' || !String((x&&x.desc)||'').trim()) return null;
   if(saldoMismaMedida(cat.m, x.medida) || !saldoMedidaEspecial(x)) return null;
   return { code:cod, d:cat.d, m:cat.m };
@@ -17943,7 +18214,7 @@ function saldoCodNombre(c){ return String((c&&c.d)||'')+((c&&c.m)?(' '+c.m):'');
 /* 🏷️ Cuál sería el código bueno (o que no hay), para el renglón con el código de otro. */
 function saldoCodBienTxt(v){
   var c=v.cod||{}, x=v.x||{}, b=c.bien||[];
-  if(c.por==='medida') return b.length ? ('El de '+x.medida+' es '+b.slice(0,2).join(' o ')+'.') : ('En el catálogo no hay '+c.d+' en '+x.medida+': si es a medida, borrá el código.');
+  if(c.por==='medida') return b.length ? ('El de '+x.medida+' es '+b.slice(0,2).join(' o ')+'.') : ((c.alm ? 'En el almacén' : 'En el catálogo')+' no hay '+c.d+' en '+x.medida+': si es a medida, borrá el código.');
   return b.length ? ('El de '+(c.otro||saldoNombre(x))+' es '+b[0]+'.') : '';
 }
 /* 📐 con el código de la medida estándar pegado: ese código es OTRO colchón. */
@@ -18025,7 +18296,11 @@ function saldoDetalleTxt(v){
 /* En ámbar, cuando lo que se ve NO es confiable: el corte no es de hoy, o no hay conexión (o hace mucho que no se lee). */
 function saldoAvisos(){
   var out=[], c=STOCK.c||{}, hoy=todayStr();
-  if(c.f && c.f<hoy) out.push('⚠️ El último corte es del '+fmtFechaCorta(c.f)+': pedile a logística que suba el de hoy');
+  /* (30/09, A1-2) Contra el último día HÁBIL, no contra hoy: en un feriado o un domingo logística no trabaja, y el cuadrito le
+     pedía a la vendedora que le pidiera «el de hoy». */
+  var ultH=hoy; for(var ih=0; ih<10 && !diaHabil(ultH); ih++) ultH=stockSumarDias(ultH,-1);
+  if(c.f && c.f<ultH) out.push('⚠️ El último corte es del '+fmtFechaCorta(c.f)+': '+(ultH===hoy ? 'pedile a logística que suba el de hoy'
+      : ('falta el del '+fmtFechaCorta(ultH)+' (hoy '+(feriadoDe(hoy)?'es feriado':'es domingo')+' y logística no trabaja)')));
   if(CONNECTED){
     var falla=(CARGA_ESTADO==='error' || CARGA_ESTADO==='reintento' || !!ULTIMO_ERROR), ms=ULTIMO_REFRESCO ? (Date.now()-ULTIMO_REFRESCO) : null;
     if(falla) out.push('⚠️ Sin conexión'+(ms==null ? ' con la planilla' : (' desde hace '+saldoHaceTxt(ms)))+': el saldo puede no estar al día');
@@ -18589,6 +18864,7 @@ function renderRevisionFija(){
       ficha('#7c3aed',A.tot.atc,'🎧 ATC — reclamos, no entran')+
       ficha('#92400e',A.tot.tienda,'🏪 se entregan en tienda')+
       ficha('#7f1d1d',A.tot.descont,'🛑 sin stock y ya no se fabrica')+
+      ficha('#b45309',A.tot.codOtro,'🏷️ con el código de otra medida u otro producto — corregilos en el pedido')+
     '</div>'+
     '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">'+
       (cambian?('<button class="btn btn-primary btn-sm" style="background:#0f766e" onclick="abrirStockRevisar()">🤖 Ver y aplicar '+cambian+' cambio'+(cambian===1?'':'s')+'</button>')
@@ -19660,6 +19936,10 @@ function stockAsignar(){
         revisadas.push({id:p.id,cliente:p.cliente||'',fecha:p.fecha||'',k:kr,nom:ir.desc?stockNombre(ir):(x.desc||''),u:c,marca:marcaR,alm:(marcaR!=='no'?prodPartes(x):null)});
         return;
       }
+      /* 🏷️ (30/09, R4-1) El código es de OTRA medida u OTRO producto (de la lista o del almacén): el stock identifica por el
+         código, así que acá se reservaba —y se proponía ✔— el producto del código, no el del renglón. No se propone nada; la
+         revisión lo cuenta y la vendedora lo corrige en el pedido (su cuadrito ya lo dice). */
+      if(saldoCodigoOtro(x)){ tot.codOtro=(tot.codOtro||0)+1; return; }
       var k=stockClave(x), o=info[k]||{};
       tot.lineas++;
       if(dep[k]==null && !im[k]){                          // nunca se contó: no se inventa
@@ -19870,6 +20150,7 @@ function renderStockRevisar(){
       (R.tot.atc?mc2('#7c3aed','🎧 ATC',R.tot.atc,'reclamos: no se fabrican'):'')+
       (R.tot.tienda?mc2('#92400e','🏪 De tienda',R.tot.tienda,'protectores, sábanas, mantas'):'')+
       (R.tot.descont?mc2('#7f1d1d','🛑 No se fabrica más',R.tot.descont,'sin stock, y la fábrica ya no lo hace'):'')+
+      (R.tot.codOtro?mc2('#b45309','🏷️ Código de otro',R.tot.codOtro,'otra medida u otro producto: no se revisan, corregilos en el pedido'):'')+
     '</div>'+
     (R.tot.contra?('<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.82rem;color:#7c4b00">'+
       '⚠️ En <b>'+R.tot.contra+'</b> línea'+(R.tot.contra===1?'':'s')+' el panel dice algo <b>distinto de lo que alguien ya había marcado a mano</b>. Están resaltadas abajo. '+
@@ -20484,12 +20765,12 @@ function confirmarImportExist(){
     /* Si este almacén era «otro» hasta ahora, se saca de la lista de otros: es uno solo. */
     delete STOCK.g[R.almacen];
     Object.keys(STOCK.g).forEach(function(nm){ if(STOCK.al[nm]==='log') delete STOCK.g[nm]; });
-    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0, cod:R.cods||{}, t:Date.now() };
+    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0, cod:stockCodRecordar((STOCK.c||{}).cod, R.cods||{}), t:Date.now() };
     STOCK.e=[];                     // el conteo ya incluye todo lo que llegó hasta esa fecha
   }else{
     /* §4fz-b: `t` = cuándo se subió esta foto (una recepción anotada antes ya está adentro del
        Excel: no se le resta), `rs` = qué recepciones se le restaron después. */
-    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0, cod:R.cods||{}, t:Date.now(), rs:{} };
+    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0, cod:stockCodRecordar((STOCK.g[R.almacen]||{}).cod, R.cods||{}), t:Date.now(), rs:{} };
     /* 🚚 (26/09) De Banzer también sale el camión: lo entregado desde allá baja su conteo con la misma
        regla que el de acá, así que también se anota si este Excel ya incluye las entregas del día. */
     if(inc) STOCK.g[R.almacen].inc=true;
@@ -21004,13 +21285,14 @@ function renderImportRohoFin(creados, pendientes, fallos){
   var dias=Object.keys(porDia).sort().map(function(k){ return porDia[k]; });
   var filas=dias.map(function(d){
     var lim=limTurno(d.fecha,d.turno), usados=cuposUsadosTurno(d.fecha,d.turno);
-    var lleno=(usados>=lim);
+    var lleno=(usados>=lim), sinCam=!!(feriadoDe(d.fecha)||diaDomingo(d.fecha));   // (30/09, R1-2)
     return '<tr>'+
       '<td><b>'+esc(fmtFecha(d.fecha))+'</b></td>'+
       '<td>'+esc(d.turno)+'</td>'+
       '<td><b>'+d.n+'</b></td>'+
-      '<td style="color:'+(lleno?'var(--red)':'var(--muted)')+'">'+usados+' de '+lim+
-        (lleno?' · <b>lleno</b>':(' · quedan '+Math.max(0,lim-usados)))+'</td>'+
+      (sinCam ? ('<td style="color:#a67c00"><b>🚫 '+esc(feriadoDe(d.fecha)||'domingo')+': el camión no sale</b> · pasalos a otro día</td>')
+              : ('<td style="color:'+(lleno?'var(--red)':'var(--muted)')+'">'+usados+' de '+lim+
+                 (lleno?' · <b>lleno</b>':(' · quedan '+Math.max(0,lim-usados)))+'</td>'))+
       '<td style="color:var(--muted)">'+esc(d.notas.join(', '))+'</td></tr>';
   }).join('');
   var primero=(creados[0]||pendientes[0]||{});
@@ -21031,6 +21313,10 @@ function renderImportRohoFin(creados, pendientes, fallos){
       (creados.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">'+
         (pendientes.length?'Los <b>'+creados.length+'</b> que sí entraron ya están':'Ya están')+
         ' en la planilla y <b>ocupan lugar en el camión</b> de su día. Así quedó cada turno:</p>'+
+        /* (30/09, R1-2) Los que vinieron para un feriado o un domingo NO tienen camión: se dice acá, no «ocupan lugar». */
+        (dias.some(function(d){ return feriadoDe(d.fecha)||diaDomingo(d.fecha); })
+          ? '<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.84rem;color:#7c4b00">⚠️ Algunos vinieron para un <b>día sin camión</b> (feriado o domingo): no salen ese día. Pasalos a otro día — Administración los lista en «Quedaron en un día sin camión».</div>'
+          : '')+
         '<div class="roho-wrap" style="min-width:0"><table class="roho-tabla" style="min-width:560px">'+
         '<colgroup><col style="width:100px"><col style="width:62px"><col style="width:72px"><col style="width:150px"><col style="width:176px"></colgroup>'+
         '<thead><tr><th>Entrega</th><th>Turno</th><th>Nuevos</th><th>Cupo del turno</th><th>Notas</th></tr></thead>'+

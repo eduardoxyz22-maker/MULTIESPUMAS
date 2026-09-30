@@ -54,7 +54,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     showView('form'); resetForm();
     /* La fecha, al primer día entregable: sin esto queda en «mañana» y los sábados eso es
        domingo → «No se agenda los DOMINGOS» y toda la suite en rojo (regla del LEEME). */
-    var _d=new Date(), _f; do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while(diaDomingo(_f));
+    var _d=new Date(), _f; do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while((diaDomingo(_f)||(typeof feriadoDe==='function'&&!!feriadoDe(_f))));
     document.getElementById('f-fecha').value=_f; segSet('f-turno','AM');
     segSet('f-doc-tipo', o.tipo||'RPT'); setDocTipo();
     document.getElementById('f-vendedor').value=o.vendedor||'Mirian Salazar'; applyVendedorLite();
@@ -462,7 +462,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   console.log('\n── 7. Editarla no la convierte en otra cosa ──');
   const ed = await page.evaluate(async () => {
     STATE=[]; window._pl=[];
-    var _d=new Date(), _f; do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while(diaDomingo(_f));
+    var _d=new Date(), _f; do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while((diaDomingo(_f)||(typeof feriadoDe==='function'&&!!feriadoDe(_f))));
     var p={id:'e1',oc:'RPT 09-020',cliente:'Buenos Aires',vendedor:'Mirian Salazar',fecha:_f,turno:'AM',
       zona:'Centro',direccion:'Av. 2',observaciones:'obs general',ts:Date.now(),
       productos:[{desc:'ALMOHADA',medida:'',codigo:'CD1403',cant:4,rtipo:'Adicional',robs:'las blancas'}]};

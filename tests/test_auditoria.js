@@ -62,7 +62,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     if(opts.vacio){ STATE=[]; saveMirror(); MAPA_COORDS={}; return 0; }
     var hoy=todayStr(), man=proximoDiaEntrega(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
     var ay=new Date(); ay.setDate(ay.getDate()-3); var ayer=isoLocal(ay);
-    var mp=new Date(); mp.setMonth(mp.getMonth()-1); mp.setDate(10); var mesPas=isoLocal(mp);
+    var mp=new Date(); mp.setDate(10); mp.setMonth(mp.getMonth()-1); var mesPas=isoLocal(mp);   // (30/09) el día ANTES del mes: el 31 no se pasa al mes que viene
     var sig=new Date(); sig.setMonth(sig.getMonth()+1); sig.setDate(3); var mesSig=isoLocal(sig);
     var b={celular:'70011122',nit:'1023456',zona:'Norte',direccion:'Av. Banzer 5to anillo',
            maps:'https://www.google.com/maps?q=-17.75,-63.15',ts:ts,garantia:'',facturarA:'',observaciones:'',

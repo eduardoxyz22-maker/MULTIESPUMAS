@@ -392,7 +392,7 @@ function PREPARAR(){
   chk('cómo se fue llenando: el 10/08 el 40 %, el 20/08 el 70 %, el 27/08 el 70 % y el 30/08 el 100 %',
       /Cómo se fue llenando — de lo que terminó vendiendo el mes, el 10\/08 ya estaba vendido el 40% · el 20\/08 ya estaba vendido el 70% · el 27\/08 ya estaba vendido el 70% · el 30\/08 ya estaba vendido el 100%\./.test(r.hea), r.hea);
   chk('qué días se vende más (agosto y septiembre, por el día en que se cargó): el jueves, Bs 6.750 por día; el que menos, el martes',
-      /Qué días se vende más — promedio por día, por el día en que se cargó la venta \(agosto y septiembre\)\. El que más: jueves; el que menos \(de lunes a sábado\): martes\./.test(r.hea) &&
+      /Qué días se vende más — promedio por día, por el día en que se cargó la venta \(agosto y septiembre; los feriados no cuentan\)\. El que más: jueves; el que menos \(de lunes a sábado\): martes\./.test(r.hea) &&
       /lun Bs 6\.667 mar Bs 0 mié Bs 5\.333 jue Bs 6\.750 vie Bs 2\.250 sáb Bs 0 dom Bs 0/.test(r.hea), r.hea);
   chk('Sueña tiene su propio cuadro (en sus últimos 3 días hábiles no entregó nada: el 0%)', /Sueña Bs 100\.000 en el mes/.test(r.sue) && /→ Bs 0, el 0% del mes\./.test(r.sue) && !/De eso/.test(r.sue), r.sue);
   chk('la prueba no depende del mes elegido arriba (con agosto elegido, siguen los 6 cuadros)', r.prueba===6, r.prueba);

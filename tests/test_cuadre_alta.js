@@ -89,7 +89,8 @@ const r2=n=>Math.round((Number(n)||0)*100)/100;
 
   // ══ §4fn · un pago SIN FECHA de otra venta no es de ningún mes: se avisa siempre ══
   r = await page.evaluate(async () => {
-    var d=new Date(); d.setMonth(d.getMonth()-1); var mesAntes=isoLocal(d);
+    /* (30/09) El día 15 ANTES de restar el mes: el 31/10, `setMonth(-1)` daba el «31/09» = 01/10, este mismo mes. */
+    var d=new Date(); d.setDate(15); d.setMonth(d.getMonth()-1); var mesAntes=isoLocal(d);
     STATE=[
       P({ id:'n1', nota:'31', oc:'08-031', cliente:'DEL MES PASADO', fecha:mesAntes, ts:new Date(mesAntes+'T12:00:00').getTime(),
           acuenta:0, saldo:0, pagado:true, metodoPago:'Efectivo 1500 #31 %A', productos:[{desc:'C',cant:1,precio:1500}] }),
@@ -222,7 +223,7 @@ const r2=n=>Math.round((Number(n)||0)*100)/100;
     out.mano=cuadreEfectivo?1:1;
     // ⚠️ y una venta NUEVA con «A cuenta» sigue guardándose como método suelto, como siempre
     resetForm(); EDIT_ID=null;
-    var d=new Date(); do { d.setDate(d.getDate()+1); } while(diaDomingo(isoLocal(d))||diaCerrado(isoLocal(d)));
+    var d=new Date(); do { d.setDate(d.getDate()+1); } while((diaDomingo(isoLocal(d))||(typeof feriadoDe==='function'&&!!feriadoDe(isoLocal(d))))||diaCerrado(isoLocal(d)));
     document.getElementById('f-fecha').value=isoLocal(d);
     document.getElementById('f-vendedor').value='Carola Chavez';
     document.getElementById('f-cliente').value='NUEVA CON ADELANTO';

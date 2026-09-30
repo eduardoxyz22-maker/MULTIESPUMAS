@@ -33,7 +33,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
        a mitad de la prueba y borraba los pedidos del ejemplo (§4fy). Se apaga al arrancar. */
     CARGA_GEN++; CARGA_ESTADO='ok'; if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; } if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; } if(AUTO_TIMER) clearInterval(AUTO_TIMER); if(MIS_TIMER) clearInterval(MIS_TIMER);
     STATE=[];
-    var d=new Date(), F; do { d.setDate(d.getDate()+1); F=isoLocal(d); } while(diaDomingo(F));
+    var d=new Date(), F; do { d.setDate(d.getDate()+1); F=isoLocal(d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F))));
     var out=[];
     for (var k=0;k<VENDEDORES.length;k++) {
       var v=VENDEDORES[k];
@@ -111,7 +111,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ============ 5. el combo igual NO se guarda ============
   const bloqueado = await page.evaluate(async () => {
     closeModal(); resetForm(); STATE=[];
-    var d=new Date(), F; do { d.setDate(d.getDate()+1); F=isoLocal(d); } while(diaDomingo(F));
+    var d=new Date(), F; do { d.setDate(d.getDate()+1); F=isoLocal(d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F))));
     document.getElementById('f-vendedor').value='Isabel Robledo'; applyVendedorLite();
     document.getElementById('f-cliente').value='X'; document.getElementById('f-celular').value='70000000';
     document.getElementById('f-zona').value='Norte'; document.getElementById('f-direccion').value='Av';

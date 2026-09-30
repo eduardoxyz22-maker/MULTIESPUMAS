@@ -914,14 +914,37 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
-## 🔎 La revisión en TRES niveles del 29-30/09 (§4hc) — 24 hallazgos, NADA ARREGLADO TODAVÍA
-Lista, dónde y arreglo propuesto en `RESPUESTA_CLAUDE.md` §22 (5 ALTA, 7 MEDIA, 12 BAJA). Antes de tocar estas zonas, leerla:
-- **R2-1 es regresión de §4gy A2**: un 2° pago del MISMO método que el anticipo sigue dentro de `p.acuenta` pero `mixtoEn` ya
-  no lo reconoce, y `cobradoFueraDeAcuenta` lo cuenta dos veces («SÍ, pagado» 3.000 → 3.500). El arreglo que propuso el
-  auditor apaga el freno «poné el saldo» (X-2): usar la versión del meta-auditor.
-- **Un renglón con solo el código se descarta al guardar** (A4-1/X-3, `getProductos` saltea sin nombre).
-- **Los códigos del almacén no tienen el aviso de §4gk** (R4-1: `saldoCodigoOtro` solo mira `CODIGOS`).
-- **El producto fuera de la lista que se agota se va al parecido** (R4-5/A4-2/X-4, ya en §4ga-6, peor de lo anotado).
+## 🔧 Los 24 arreglos de la revisión en TRES niveles (§4hc → §4hd, 30/09) — EN LA RAMA, SIN PUBLICAR
+Hallazgos en `RESPUESTA_CLAUDE.md` §22, arreglos en §23 y bitácora §4hd. El dueño: *«hazlo todo»*. Lo que hay que respetar:
+- **Plata: dos funciones, dos usos.** `cobradoFueraDeAcuenta(p)` = solo cobros registrados, para el freno «poné el saldo»
+  (lo que «A cuenta» tiene de más sobre el anticipo escrito es el 2° método, se reconozca como mixto o no).
+  **`cobradoNoMostrado(p, acuForm)`** = para PROPONER montos («Usar como total», «SÍ, pagado»), con `contaCobrado` (una venta
+  «SÍ, pagado» tiene el pago en el anticipo con «A cuenta» 0, §4cb). ⚠️ No mezclarlas: con la segunda el freno se apaga (X-2).
+  Un adelanto en dos pagos que ya no se reconocen como mixto no se corrige desde el formulario (va a Contabilidad), y
+  `ctaGuardarPago` decide «¿sigue siendo el 2° método?» mirando el PROPIO renglón.
+- **Renglones del formulario**: uno con código o precio y SIN producto FRENA el guardado. Excepción: `data-de-pedido` (lo
+  pone `editPedido`, se va al cambiar el código): vaciarle el nombre a un producto que ya traía el pedido lo SACA. `data-alm-pend`
+  = el código se escribió sin saldo o sin ningún Excel (`stockHayAlgunExcel`); `prodCodigosDelAlmacen` completa SOLO esos, una
+  vez, y la medida solo si está vacía. ⚠️ Nunca volver a completar en cada lectura todo renglón sin nombre (R4-2).
+- **Código del almacén** = mismas protecciones que la lista de precios (`saldoCatDeCodigo`): «código de otra medida/producto»
+  en el cuadrito, la pregunta al guardar y `stockAsignar` (no tilda ni reserva, `tot.codOtro`). Un código agotado se completa
+  desde el histórico (`productoDeAlmacen` → `hist:true`, saldo 0).
+- **El producto fuera de la lista que se agota sigue siendo él**: `stockCodRecordar` (en `confirmarImportExist`) conserva
+  los códigos viejos mientras `stockCodRefs` los encuentre (pedido sin entregar o entregado ≤31 días, `STOCK.p`/`e`/`rs`), y
+  `stockInfo` no adivina por nombre un código que el sistema conoce (`stockCodigoDelSistema`, está en `VENTAS_HIST`). ⚠️ Eso
+  cambió el histórico de «Qué producir» (37/430 filas: las «Med.Esp. 160X200» ya no suman al 160x190): es a propósito (X-4).
+- **Multicenter**: `ek30=stockEntregaClave(p, fs)` (30 días por fecha de ENTREGA, como los 15).
+- **Días sin camión**: `resetForm` propone `proximoDiaEntrega()`; `sinCamionHtml()` arriba de Revisar y de la carga;
+  «🚚 Próximo camión» en Cerrar día; «cambiale el DÍA» al cambiar solo el turno en un feriado; `saldoAvisos` contra el
+  último día hábil; `atcRecogerFabDesde` con `diaHabil`.
+- **Retiros**: `RETIROS`/`BORRADORES` se reemplazan SOLO con la lista del servidor (`leerCierresDeLista(…, true)`);
+  `persistRetiro` saca de la cola las versiones viejas de ese retiro al guardar bien; un retiro borrado desde otro equipo no
+  se vuelve a crear desde ✏️.
+- **Proyección**: la curva va sin hora en domingo o feriado y, con hora, cada mes cerrado corta en su último día HÁBIL;
+  `pryPatron` sin feriados; unidades: «P/» = «PARA», `PRY_CORTE`, y la palabra sola después de «FORRO/PROTECTOR DE COLCHON».
+- **Pruebas**: `tests/test_rev30_{plata,stock,dias,retiros,proyeccion}.js`. ⚠️ Un bucle que busque «el primer día de entrega»
+  saltea domingo Y feriado (`typeof feriadoDe==='function' && feriadoDe(f)`), y para «el mes pasado» se fija el día ANTES de
+  `setMonth(-1)` (el 31/10, «31/09» es el 01/10).
 
 ## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, PUBLICADA 29/09 10:02, `72aa862`)
 Informe completo en `RESPUESTA_CLAUDE.md` §20 (hallazgos) y §21 (arreglos). Respuestas del dueño (29/09): *«No sale en

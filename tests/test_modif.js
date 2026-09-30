@@ -34,7 +34,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     };
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._planilla))}); };
     var _d=new Date(), F;
-    do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while(diaDomingo(F));
+    do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F))));
     var p={ id:'PX', fecha:F, turno:'AM', oc:'08-500', nota:'99', vendedor:'Carola Chavez',
       cliente:'DOÑA MARTA', celular:'70000000', zona:'Norte', direccion:'Av. Uno 100',
       maps:'', pagado:false, saldo:1000, acuenta:0, cobradoBs:0, metodoPago:'',

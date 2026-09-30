@@ -133,7 +133,7 @@ const BASE = `
     const page = await nueva();
     const r = await page.evaluate(async (base) => {
       eval(base);
-      var f=window._adel(2); while(diaDomingo(f)||diaSabado(f)) f=isoLocal(new Date(new Date(f+'T12:00:00').getTime()+86400000));
+      var f=window._adel(2); while((diaDomingo(f)||(typeof feriadoDe==='function'&&!!feriadoDe(f)))||diaSabado(f)) f=isoLocal(new Date(new Date(f+'T12:00:00').getTime()+86400000));
       STATE=[ window._P({id:'t', fecha:f, turno:'AM', productos:[{desc:'T',cant:1}]}),
               window._P({id:'u', fecha:f, turno:'AM', productos:[{desc:'U',cant:1}]}) ];
       DIAS_CERRADOS=[f];

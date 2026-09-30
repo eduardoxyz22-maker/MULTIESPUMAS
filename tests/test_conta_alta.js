@@ -47,7 +47,7 @@ const J = (o) => JSON.stringify(o);
     window.hoy=todayStr();
     var d1=new Date(); d1.setDate(d1.getDate()-1); window.ayer=isoLocal(d1);
     var d2=new Date(); d2.setDate(d2.getDate()+2); window.pasado=isoLocal(d2);
-    while(diaDomingo(window.pasado) || diaCerrado(window.pasado)){ d2.setDate(d2.getDate()+1); window.pasado=isoLocal(d2); }
+    while((diaDomingo(window.pasado)||(typeof feriadoDe==='function'&&!!feriadoDe(window.pasado))) || diaCerrado(window.pasado)){ d2.setDate(d2.getDate()+1); window.pasado=isoLocal(d2); }
     window.ts0=new Date(new Date().setHours(12,0,0,0)).getTime();
     window.P=function(o){
       var b={ turno:'AM', celular:'7', nit:'1', zona:'Norte', direccion:'X', fecha:window.pasado, maps:'', observaciones:'', garantia:'', facturarA:'',

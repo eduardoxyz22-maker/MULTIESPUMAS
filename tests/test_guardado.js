@@ -39,7 +39,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
     apiPost=function(){ return Promise.resolve({ok:true}); };
     window._toasts=[]; toast=function(m,k){ window._toasts.push(String(k)+': '+m); }; confirm=function(){ return true; };
-    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while(diaDomingo(F)||diaCerrado(F));
+    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F)))||diaCerrado(F));
     var base=function(extra){ return Object.assign({ id:'PG', fecha:F, turno:'AM', oc:'09-800', nota:'1900', vendedor:'Carola Chavez', cliente:'DON GUARDADO', celular:'70000000', zona:'Norte', direccion:'Av. X', maps:'',
       pagado:false, saldo:400, acuenta:1000, cobradoBs:0, metodoPago:'', observaciones:'', garantia:'', facturarA:'', nit:'', estado:'En stock', entregado:false, verificado:true, vehiculo:'Camión 1', chofer:'Pepe', nroDia:1, ts:Date.now(), rev:1000, fotos:['FOTO_ENTREGA'],
       productos:[{desc:'SOFT ICE', medida:'140x190', codigo:'A1', cant:1, chk:'ok'}] }, extra||{}); };

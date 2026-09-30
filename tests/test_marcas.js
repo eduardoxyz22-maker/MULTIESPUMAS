@@ -36,7 +36,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     apiSave=function(r){ var g=JSON.parse(JSON.stringify(r));
       window._pl=window._pl.filter(function(p){return p.id!==g.id;}).concat([g]); return Promise.resolve({ok:true}); };
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
-    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while(diaDomingo(F));
+    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F))));
     var p={ id:'PE', fecha:F, turno:'AM', oc:'08-500', nota:'44', vendedor:'Carola Chavez',
       cliente:'DOÑA ELSA', celular:'70000000', zona:'Norte', direccion:'Av. Vieja', maps:'',
       pagado:false, saldo:1000, acuenta:0, cobradoBs:0, metodoPago:'', observaciones:'',

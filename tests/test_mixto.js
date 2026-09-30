@@ -39,7 +39,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     apiPost=function(){ return Promise.resolve({ok:true}); };
     window._toasts=[]; toast=function(m,k){ window._toasts.push(String(k)+': '+m); };
     confirm=function(){ return true; };            // «el historial se rehace, ¿guardar igual?» → sí (Playwright también lo acepta)
-    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while(diaDomingo(F)||diaCerrado(F));
+    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F)))||diaCerrado(F));
     var llenar=function(o){
       resetForm(); EDIT_ID=null; window._pl=[];
       document.getElementById('f-vendedor').value='Carola Chavez';

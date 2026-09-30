@@ -375,7 +375,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   console.log('\n── 11. Reparto AM/PM: cada pedido se cuenta UNA vez ──');
   let rep = await page.evaluate(async () => {
-    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6||(typeof feriadoDe==='function'&&!!feriadoDe(isoLocal(d))));
     var F=isoLocal(d), lista=[];
     for(var i=0;i<12;i++) lista.push({ oc:'N'+i, fecha:F, cliente:'C', celular:'70000000',
       direccion:'x', zona:'Norte', nit:'', pagado:true, obs:'', combos:0,
@@ -412,7 +412,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   let parcial = await page.evaluate(async () => {
     /* El AM ya tiene 10 de 12 ocupados por pedidos de otras vendedoras: solo 2 caben. */
-    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6||(typeof feriadoDe==='function'&&!!feriadoDe(isoLocal(d))));
     var F=isoLocal(d);
     STATE=[];
     for(var k=0;k<10;k++) STATE.push({id:'otro'+k,fecha:F,turno:'AM',vendedor:'Mirian Salazar',
@@ -436,7 +436,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   console.log('\n── 12. Creado ≠ guardado en la planilla ──');
   let red = await page.evaluate(async () => {
-    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6||(typeof feriadoDe==='function'&&!!feriadoDe(isoLocal(d))));
     STATE=[]; saveMirror(); try{ localStorage.removeItem(LS_PEND); }catch(e){}
     window._g=[]; CONNECTED=true;
     apiSave=function(){ return Promise.reject(new Error('sin señal')); };
@@ -462,7 +462,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y dice qué nota quedó pendiente', /R1/.test(red.txt), '');
 
   let local = await page.evaluate(async () => {
-    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6||(typeof feriadoDe==='function'&&!!feriadoDe(isoLocal(d))));
     STATE=[]; saveMirror(); try{ localStorage.removeItem(LS_PEND); }catch(e){}
     CONNECTED=false;
     ROHO_IMP={nuevos:[{ oc:'R2', fecha:isoLocal(d), cliente:'SIN PLANILLA', celular:'70000000',
