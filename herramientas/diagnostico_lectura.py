@@ -115,6 +115,49 @@ def leer(nombre, base, comprimido=True):
     contar(crudo)
 
 
+class _SinSeguir(_rq.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+def en_dos_tramos(base, veces=5):
+    """La lectura en sus DOS tramos, medidos por separado: (1) el POST a script.google.com, que corre
+       el script y contesta con un redirect, y (2) el GET a googleusercontent, que entrega los datos.
+       Así se sabe si lo lento es Google corriendo el script (o haciéndolo esperar) o Google
+       entregando la respuesta."""
+    abrir = _rq.build_opener(_SinSeguir)
+    sep = "&" if "?" in base else "?"
+    print(f"\n── la lectura en dos tramos, {veces} veces ──")
+    for n in range(veces):
+        cuerpo = json.dumps({"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []}).encode()
+        req = _rq.Request(base + sep + "_=" + str(int(time.time() * 1000)), data=cuerpo, method="POST",
+                          headers={"Content-Type": "text/plain;charset=utf-8", "Origin": ORIGEN})
+        t0 = time.time()
+        destino = None
+        try:
+            abrir.open(req, timeout=120)
+            print(f"   {n + 1}. el POST no redirigió")
+            continue
+        except _er.HTTPError as e:
+            if e.code in (301, 302, 303, 307, 308):
+                destino = e.headers.get("Location")
+            else:
+                print(f"   {n + 1}. POST: HTTP {e.code} en {time.time() - t0:.1f} s")
+                continue
+        except Exception as ex:
+            print(f"   {n + 1}. POST: {type(ex).__name__} en {time.time() - t0:.1f} s")
+            continue
+        t1 = time.time()
+        try:
+            with _rq.urlopen(_rq.Request(destino, headers={"Origin": ORIGEN}), timeout=120) as r:
+                datos = r.read()
+            t2 = time.time()
+            print(f"   {n + 1}. correr el script: {t1 - t0:.1f} s · entregar los datos: {t2 - t1:.1f} s ({len(datos):,} bytes)".replace(",", "."))
+        except Exception as ex:
+            print(f"   {n + 1}. correr el script: {t1 - t0:.1f} s · entregar: {type(ex).__name__} a los {time.time() - t1:.1f} s")
+        time.sleep(3)
+
+
 def main():
     pagina = url_de_la_pagina()
     if not PANEL_URL and not pagina:
@@ -131,6 +174,8 @@ def main():
         leer("lectura con la dirección del SECRETO (POST list)", PANEL_URL)
     # 3) La puerta GET (doGet), la misma dirección sin cuerpo.
     contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
+    # 4) Dónde se va el tiempo: correr el script o entregar los datos.
+    en_dos_tramos(pagina or PANEL_URL)
 
 
 if __name__ == "__main__":
