@@ -92,6 +92,48 @@ var CELDA_TOPE = 50000, CELDA_AVISO = 35000, CELDA_AVISO_ROJO = 42000;
    entera o borraba lo que otro acababa de cambiar (auditoría del 23/09 + Codex). */
 var NRO_COL = HEADERS.indexOf('N° del día') + 1; // N° del día ya NO es la última col (Verificado va después)
 
+/* 🚫 (2026-09-30-a) LOS FERIADOS: el camión no sale (dueño, 29/09: «no sale en feriados»). La página no deja cargar ni mover
+   un pedido a un feriado desde el 29/09 (§4gy), pero una página vieja sin F5, o el importador de ROHO, sí: el portero de
+   acá es el que dice que no de verdad (`porteroFecha_`, error `feriado`). Administración lo sigue pudiendo MOVER con
+   `forzar`, como a un día cerrado.
+   ⚠️ Es la MISMA lista que `FERIADOS` de pedidos.html (tests/test_servidor.js §15 las compara): si se agrega un feriado,
+   van los dos. Revisar cada año (Carnaval, Viernes Santo y Corpus Christi cambian de fecha). */
+var FERIADOS_GS = {
+  '2026-11-02':'Todos Santos', '2026-12-25':'Navidad',
+  '2027-01-01':'Año Nuevo', '2027-01-22':'Día del Estado Plurinacional', '2027-02-08':'Carnaval', '2027-02-09':'Carnaval',
+  '2027-03-26':'Viernes Santo', '2027-05-01':'Día del Trabajo', '2027-05-27':'Corpus Christi', '2027-06-21':'Año Nuevo Andino',
+  '2027-08-06':'Día de la Independencia', '2027-09-24':'Día de Santa Cruz', '2027-11-02':'Todos Santos', '2027-12-25':'Navidad'
+};
+function feriadoGs_(fecha) { var f = String(fecha || ''); return FERIADOS_GS.hasOwnProperty(f) ? FERIADOS_GS[f] : ''; }
+
+/* 📦 (2026-09-30-a) LA LECTURA: DE CUÁNDO ES, COMPRIMIDA Y SOLO LO CAMBIADO (bitácora §4hb → §4he).
+   El 29/09 a la noche el panel no conectaba: Google tardaba a ratos y cada equipo bajaba la planilla ENTERA (900 KB sin
+   comprimir: Google no comprime aunque el navegador lo pida) cada 2 minutos. Tres cosas, todas a pedido del panel:
+   · `ahora`: cada lectura dice en qué momento se leyó la hoja (y cada guardado, en qué momento quedó escrito), con el reloj
+     de Google. El panel ya no adivina si una lectura es vieja (§4gl/§4gn/§4go): lo compara.
+   · `z`: la respuesta va comprimida (gzip + base64, ~7 veces menos). Solo si este Google escribe el texto en UTF-8
+     (`zOk_`), y el panel verifica la marca `zc` al abrirla: si algo no cierra, vuelve a pedir sin comprimir.
+   · `desde`: solo las filas con sello posterior a `desde − DELTA_MARGEN_MS` y los borrados desde entonces, más la cuenta
+     de control (`n` filas y `huella` = suma de un número por cada `id:sello`). El panel la rehace con su copia y, si no
+     da lo mismo, pide la planilla entera. Una corrección escrita A MANO en la hoja no cambia el sello: por eso el panel
+     lee entero al abrir y cada 15 minutos. */
+var DELTA_MARGEN_MS = 5 * 60 * 1000;   // un guardado que corre mientras se lee (la lectura no toma el candado) entra en la próxima
+var DELTA_MAX_FILAS = 40;              // más filas cambiadas que esto: se manda la planilla entera (una sola lectura de la hoja)
+var DELTA_MAX_GRUPOS = 8;              // filas cambiadas desparramadas: más lecturas de la hoja que esto no conviene
+var DELTA_HUECO = 15;                  // dos filas cambiadas a menos de esto se leen de una vez, con las del medio
+var Z_MIN = 20000;                     // una respuesta más chica que esto no vale la pena comprimirla
+var Z_CHECK = '\u00f1\uD83D\uDD12\u20ac';   // «ñ🔒€»: en UTF-8 son 2 + 4 + 3 bytes; el panel lo compara al abrir la respuesta
+/* 🗑 Los borrados: `doDelete` los anota (`borradoAnotar_`) en la propiedad BORRADOS_RECIENTES —la lectura de lo cambiado
+   los necesita— y en la hoja «Borrados», para que el dueño vea qué se borró, cuándo y desde qué equipo.
+   ✍️ En la MISMA propiedad (lista `r`) van las filas que cambian SIN sello nuevo: el nombre que se le corrige a un borrador de
+   Kommo (`repararNombreAplicar_`, que no toca el sello a propósito). La lectura de lo cambiado las manda igual. Las
+   correcciones a mano en la hoja sí cambian el sello (`onEdit`). */
+var BORRADOS_VIGENCIA_MS = 6 * 3600000;    // lo que recuerda la propiedad; una lectura `desde` más vieja que esto va entera
+var BORRADOS_TOPE_LETRAS = 8000;           // una propiedad aguanta 9 KB: lo más viejo se olvida (y `desde` lo dice)
+var BORRADOS_HOJA = 'Borrados';
+var BORRADOS_HEADERS = ['Fecha', 'Id', 'Cliente', 'Vendedor', 'Entrega', 'N° OC', 'Quién borró', 'Dispositivo', 'Hora (ms)'];
+var BORRADOS_HOJA_MAX = 2000;              // filas como mucho en la hoja; después se borran las más viejas
+
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(SHEET_NAME);
@@ -111,7 +153,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-09-28-a';   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-30-a';   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -141,7 +183,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-09-28-a';
+  var ESTA_VERSION = '2026-09-30-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -158,6 +200,9 @@ function probarAntesDeImplementar() {
     barrerFotosHuerfanas: typeof barrerFotosHuerfanas, kommoHook: typeof kommoHook,
     kommoProcesarCola: typeof kommoProcesarCola, kommoRepaso: typeof kommoRepaso,
     instalarDisparadores: typeof instalarDisparadores, estadoKommo: typeof estadoKommo,
+    leerLista_: typeof leerLista_, leerCambiado_: typeof leerCambiado_, listaResponder_: typeof listaResponder_,   // (2026-09-30-a)
+    huellaFila_: typeof huellaFila_, borradoAnotar_: typeof borradoAnotar_, feriadoGs_: typeof feriadoGs_,
+    recientesAnotar_: typeof recientesAnotar_, onEdit: typeof onEdit,
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -253,6 +298,34 @@ function probarAntesDeImplementar() {
     });
   }
 
+  /* 7. 📦 (2026-09-30-a) La lectura comprimida, con la planilla de verdad: se comprime, se vuelve a abrir y tiene que dar
+        EXACTAMENTE el mismo texto (acentos y emojis incluidos). Si no, el servidor no comprime y el panel lee como hasta
+        hoy: avisa, no frena. */
+  if (vals && vals.length && String(vals[0][0]) === 'id' && fns.rowToRec_ === 'function') {
+    try {
+      if (!zOk_()) ojo('La lectura comprimida no se puede usar en este Google (no escribe el texto en UTF-8): el panel va a leer ' +
+                       'sin comprimir, como hasta hoy. No frena nada.');
+      else {
+        var recsZ = [];
+        for (var iz = 1; iz < vals.length; iz++) if (vals[iz][0]) recsZ.push(rowToRec_(vals[iz]));
+        var txtZ = JSON.stringify({ ok:true, pedidos:recsZ, zc:Z_CHECK });
+        var b64Z = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(txtZ, 'application/json')).getBytes());
+        var vuelta = Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(b64Z), 'application/x-gzip')).getDataAsString();
+        if (vuelta !== txtZ) ojo('La lectura comprimida NO devuelve lo mismo que entra: el panel la va a descartar y leer sin comprimir. Mandá una captura.');
+        else bien('La lectura viaja comprimida: ' + txtZ.length + ' letras → ' + b64Z.length + ' (' +
+                  Math.max(1, Math.round(txtZ.length / Math.max(1, b64Z.length))) + ' veces menos). Cuenta de control: ' + recsZ.length + ' filas.');
+      }
+    } catch (e) { ojo('No pude probar la lectura comprimida: ' + motivo(e) + '. El panel va a leer sin comprimir, como hasta hoy.'); }
+  }
+
+  /* 8. 🚫 (2026-09-30-a) Los feriados que conoce el portero: que haya alguno por venir (la lista se revisa cada año). */
+  try {
+    var hoyF = new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10);   // hoy en Bolivia (UTC−4 fijo, §4fu)
+    var futuros = Object.keys(FERIADOS_GS).filter(function (f) { return f >= hoyF; }).sort();
+    if (!futuros.length) ojo('El portero no conoce ningún feriado de acá en adelante: hay que cargar los del año nuevo (FERIADOS_GS, y los mismos en pedidos.html).');
+    else bien('El portero no deja entregar en feriados: ' + futuros.length + ' por venir (el próximo, ' + futuros[0] + ', ' + FERIADOS_GS[futuros[0]] + ').');
+  } catch (e) { ojo('No pude mirar los feriados: ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
@@ -337,7 +410,9 @@ function doGet(e) {
   var txt = getCacheLeer_();
   getRegistrar_(e, txt ? 'cache' : 'hoja');
   if (!txt) {
-    txt = jsonTexto_({ ok: true, version:SCRIPT_VERSION, pedidos: readAll() });
+    /* (2026-09-30-a) Con `ahora`: la hora en que se leyó la hoja viaja con la copia de la caché. Si Google convierte la
+       lectura del panel en un GET (§4fx) y contesta esta copia, el panel sabe de cuándo es y no la toma por nueva. */
+    txt = jsonTexto_(leerEntera_(getSheet()));
     getCacheGuardar_(txt);
   }
   return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
@@ -483,7 +558,7 @@ function getCacheOlvidar_() {
    ========================================================================== */
 var RECHAZOS_HOJA = 'Rechazos';
 var RECHAZOS_HEADERS = ['Fecha', 'Acción', 'Motivo', 'Id', 'Cliente', 'Vendedor', 'Quién guardaba', 'Detalle', 'Dispositivo'];
-var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1, borrado:1 };
+var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1, borrado:1, feriado:1 };
 var RECHAZOS_MAX = 2000;          // filas como mucho en la hoja; después se borran las más viejas
 var LATIDOS_MAX = 40;             // dispositivos con cola que se recuerdan
 
@@ -507,6 +582,7 @@ function rechazoDetalle_(body, o) {
   if (o.error === 'conflicto') d.push('rev enviado ' + (p.rev || (body && body.rev) || '—') + ' / rev hoja ' + ((o.pedido && o.pedido.rev) || '—'));
   if (o.error === 'oc_repetida' && o.otro) d.push('la tiene ' + (o.otro.cliente || 'otro pedido'));
   if (o.error === 'cupos_llenos' && o.turno) d.push('turno ' + o.turno + ' lleno');
+  if (o.error === 'feriado') d.push('feriado' + (o.nombre ? (': ' + o.nombre) : '') + ' (el camión no sale)');
   if (o.error === 'actualizar') d.push('panel viejo (de antes del ' + SCRIPT_VERSION + '): esa computadora tiene que recargar la página');
   if (o.motivo) d.push(String(o.motivo));
   if (String(p.id || '').indexOf('__ret_') === 0) d.push('RETIRO DE EFECTIVO ' + (p.acuenta != null ? ('Bs ' + p.acuenta) : ''));
@@ -581,7 +657,11 @@ function doPost(e) {
   var out = doPostCuerpo_(e);
   try {
     var txt = (out && typeof out.getContent === 'function') ? out.getContent() : (out && out._t);
-    var o = txt ? JSON.parse(txt) : null;
+    /* (2026-09-30-a) Solo un «no» se anota, y todo «no» empieza con {"ok":false (jsonOut). Antes se leía ENTERA cada
+       respuesta —la planilla de 900 KB en cada lectura— para ver si era un «no». Un texto con «"ok":false» adentro de un
+       dato va escapado (\"ok\"), así que no se confunde; y si se confundiera, solo se lee, como antes. */
+    if (!txt || txt.indexOf('"ok":false') < 0) return out;
+    var o = JSON.parse(txt);
     if (o && o.ok === false && o.error && RECHAZOS_REGISTRAR[o.error]) {
       var body = {}; try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
       var action = body.action || 'save';
@@ -634,7 +714,9 @@ function doPostCuerpo_(e) {
      equipo se hacían de a una Y hacían esperar a cualquiera que quisiera guardar.
      El dueño, con el botón clavado en «Enviando…»: *"que pasa con el servidor al subir
      fotos, al entrar, al cambiar algo tarda minutos"*. */
-  if (action === 'list') { latidoAnotar_(body); return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() }); }
+  /* 📦 (2026-09-30-a) Con `ahora`, y a pedido del panel comprimida (`z`) o solo lo cambiado (`desde`): ver leerLista_. Un
+     panel que no manda nada de eso recibe lo de siempre (la planilla entera), con tres datos de más que no usa. */
+  if (action === 'list') { latidoAnotar_(body); return listaResponder_(leerLista_(body), body); }
   // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
   if (action === 'rechazos') return jsonOut({ ok:true, version:SCRIPT_VERSION, rechazos: rechazosInforme_() });
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
@@ -642,7 +724,7 @@ function doPostCuerpo_(e) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    if (action === 'delete') return doDelete(body.id, body.rev);
+    if (action === 'delete') return doDelete(body.id, body.rev, body);
     return doSave(body.pedido, !!body.forzar, !!body.juntar);
   } finally {
     lock.releaseLock();
@@ -912,6 +994,39 @@ function saveGeoCache(rows) {
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
 }
 
+/* ✍️ (2026-09-30-a) UNA CORRECCIÓN A MANO EN LA HOJA «Pedidos» TAMBIÉN CAMBIA EL SELLO (revisión de §4he).
+   Google corre esta función sola cada vez que ALGUIEN escribe a mano en la planilla (no con lo que escribe este script, ni
+   el panel). Antes, una corrección a mano no cambiaba la columna Revisión: el panel (con la lectura de lo cambiado) no la
+   veía hasta la lectura entera, y cualquiera que guardara esa fila con su copia de antes la PISABA sin aviso (el sello
+   coincidía). Ahora la fila corregida estrena sello: la lectura de lo cambiado la trae, y un guardado con una copia vieja
+   recibe «conflicto» con la fila corregida, en vez de borrarla.
+   · Solo la hoja «Pedidos» y solo desde la fila 2 (los encabezados, no).
+   · Si lo que se tocó es SOLO la columna Revisión, se respeta (alguien la está arreglando a propósito).
+   · Una fila sin id no se toca. Borrar filas a mano no pasa por acá: eso lo ve la cuenta de control del panel.
+   ⚠️ Es un disparador «simple» de Google: no hay que instalar nada y anda apenas se GUARDA el código (antes de implementar).
+   No puede fallar hacia afuera: cualquier error se traga (lo peor es que esa corrección no estrene sello, como antes). */
+function onEdit(e) {
+  try {
+    if (!e || !e.range) return;
+    var sh = e.range.getSheet();
+    if (!sh || sh.getName() !== SHEET_NAME) return;
+    var f0 = e.range.getRow(), n = e.range.getNumRows(), c0 = e.range.getColumn(), nc = e.range.getNumColumns();
+    if (c0 === REV_COL && nc === 1) return;
+    if (f0 < 2) { n -= (2 - f0); f0 = 2; }
+    if (n < 1) return;
+    var ids = sh.getRange(f0, 1, n, 1).getValues();
+    var revs = sh.getRange(f0, REV_COL, n, 1).getValues();
+    var ahora = Date.now(), out = [], alguna = false;
+    for (var i = 0; i < n; i++) {
+      if (ids[i][0]) { out.push([Math.max((Number(revs[i][0]) || 0) + 1, ahora)]); alguna = true; }
+      else out.push([revs[i][0]]);
+    }
+    if (!alguna) return;
+    sh.getRange(f0, REV_COL, n, 1).setValues(out);
+    getCacheOlvidar_();
+  } catch (err) {}
+}
+
 function readAll() {
   var sh = getSheet();
   var values = sh.getDataRange().getValues();
@@ -921,6 +1036,163 @@ function readAll() {
     out.push(rowToRec_(values[i]));
   }
   return out;
+}
+
+/* ── 📦 (2026-09-30-a) La lectura del panel: entera o solo lo cambiado (ver las constantes DELTA_…) ─────────────── */
+/* El número de control de UNA fila: FNV-1a de 32 bits sobre «id:sello», escrito con sumas y corrimientos para que dé
+   lo mismo en cualquier motor de Apps Script. La `huella` de la planilla es la SUMA de todas (módulo 2^32): no depende
+   del orden y no pasa de 2^53. ⚠️ La página tiene la MISMA función (`huellaFila`): test_servidor.js §16 las compara. */
+function huellaFila_(id, rev) {
+  var s = String(id) + ':' + String(Number(rev) || 0), h = 2166136261;
+  for (var i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
+  }
+  return h;
+}
+function huellaDeRecs_(recs) {
+  var h = 0;
+  for (var i = 0; i < recs.length; i++) h = (h + huellaFila_(recs[i].id, recs[i].rev)) % 4294967296;
+  return h;
+}
+/* La planilla entera, con la hora en que se leyó (`ahora`, ANTES de leer: todo lo escrito antes de esa hora está adentro)
+   y su cuenta de control. La usan el `list` y el `doGet`. */
+function leerEntera_(sh) {
+  var ahora = Date.now();
+  var values = sh.getDataRange().getValues();
+  var out = [];
+  for (var i = 1; i < values.length; i++) {
+    if (!values[i][0]) continue; // sin id -> ignorar
+    out.push(rowToRec_(values[i]));
+  }
+  return { ok:true, version:SCRIPT_VERSION, ahora:ahora, n:out.length, huella:huellaDeRecs_(out), pedidos:out };
+}
+/* Lo pedido por el panel: solo lo cambiado desde `desde` (si se puede) o la planilla entera. */
+function leerLista_(body) {
+  var sh = getSheet();
+  var desde = Number(body && body.desde) || 0, ahora = Date.now();
+  if (desde > 0 && desde <= ahora + DELTA_MARGEN_MS && ahora - desde < BORRADOS_VIGENCIA_MS - DELTA_MARGEN_MS) {
+    var d = null;
+    try { d = leerCambiado_(sh, desde); } catch (e) { d = null; }
+    if (d) return d;
+  }
+  return leerEntera_(sh);
+}
+/* SOLO LO CAMBIADO. Primero dos columnas angostas —el id y el sello de cada fila, que alcanzan para la cuenta de
+   control—, y después solo las filas con sello posterior al corte (las cercanas, de una vez). Devuelve null cuando no
+   conviene (muchas filas, o desparramadas, o un borrado que ya no se recuerda): entonces va la planilla entera.
+   ⚠️ Sin candado, como toda lectura (§4dt): si justo se agrega o se borra una fila entre una columna y la otra, la cuenta
+   de control no le da al panel y el panel pide la entera. Nunca queda una copia mal armada. */
+function leerCambiado_(sh, desde) {
+  var ahora = Date.now();                                // antes de leer nada: todo lo escrito antes está adentro
+  var corte = desde - DELTA_MARGEN_MS;
+  var log = borradosLeer_();
+  if (corte <= log.desde) return null;                   // se olvidaron borrados de esa época: la entera
+  var last = sh.getLastRow();
+  var borrados = log.b.filter(function (x) { return Number(x[1]) > corte; });
+  var retoc = {};                                        // ✍️ cambiadas sin sello nuevo (el nombre de un borrador de Kommo)
+  log.r.forEach(function (x) { if (x && Number(x[1]) > corte) retoc[String(x[0])] = 1; });
+  if (last < 2) return { ok:true, version:SCRIPT_VERSION, delta:true, desde:desde, ahora:ahora, n:0, huella:0, pedidos:[], borrados:borrados };
+  var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  var revs = sh.getRange(2, REV_COL, last - 1, 1).getValues();
+  var n = 0, h = 0, filas = [];
+  for (var i = 0; i < ids.length; i++) {
+    if (!ids[i][0]) continue;
+    var rev = Number(revs[i] && revs[i][0]) || 0;
+    n++; h = (h + huellaFila_(String(ids[i][0]), rev)) % 4294967296;
+    if (rev > corte || retoc[String(ids[i][0])]) { filas.push(i + 2); if (filas.length > DELTA_MAX_FILAS) return null; }
+  }
+  var grupos = [], g = null;
+  for (var k = 0; k < filas.length; k++) {
+    if (g && filas[k] - g[1] <= DELTA_HUECO) g[1] = filas[k];
+    else { g = [filas[k], filas[k]]; grupos.push(g); }
+  }
+  if (grupos.length > DELTA_MAX_GRUPOS) return null;
+  var pedidos = [];
+  for (var q = 0; q < grupos.length; q++) {
+    var vs = sh.getRange(grupos[q][0], 1, grupos[q][1] - grupos[q][0] + 1, HEADERS.length).getValues();
+    for (var j = 0; j < vs.length; j++) if (vs[j][0] && ((Number(vs[j][REV_COL - 1]) || 0) > corte || retoc[String(vs[j][0])])) pedidos.push(rowToRec_(vs[j]));
+  }
+  return { ok:true, version:SCRIPT_VERSION, delta:true, desde:desde, ahora:ahora, n:n, huella:h, pedidos:pedidos, borrados:borrados };
+}
+/* ¿Este Google escribe el texto en UTF-8? Sin eso, comprimir cambiaría las letras con acento: no se comprime. Una vez
+   por ejecución. */
+var Z_OK_ = null;
+function zOk_() {
+  if (Z_OK_ !== null) return Z_OK_;
+  try {
+    var b = Utilities.newBlob(Z_CHECK).getBytes();
+    Z_OK_ = !!(b && b.length === 9 && typeof Utilities.gzip === 'function' && typeof Utilities.base64Encode === 'function');
+  } catch (e) { Z_OK_ = false; }
+  return Z_OK_;
+}
+/* La respuesta de la lectura: comprimida si el panel la pide (`z`), si vale la pena y si este Google puede. Si algo falla
+   al comprimir, sale sin comprimir: nunca se queda sin contestar por esto. */
+function listaResponder_(obj, body) {
+  var quiereZ = !!(body && body.z) && zOk_();
+  if (quiereZ) obj.zc = Z_CHECK;
+  var txt = jsonTexto_(obj);
+  if (quiereZ && txt.length >= Z_MIN) {
+    try {
+      var d = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(txt, 'application/json')).getBytes());
+      // `auth`/`adminAuth` ya los calculó jsonTexto_: se copian, así jsonOut no vuelve a leer las propiedades.
+      return jsonOut({ ok:true, version:SCRIPT_VERSION, z:'gzip64', d:d, largo:txt.length, auth:obj.auth, adminAuth:obj.adminAuth });
+    } catch (e) {}
+  }
+  return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
+}
+/* 🗑 Lo que recuerda la lectura de lo cambiado: { desde, b:[[id, hora], …] (borrados), r:[[id, hora], …] (retocados sin
+   sello) }. `desde` = hasta dónde NO se recuerda (lo que se olvidó por viejo o por el tope): una lectura con corte anterior
+   a eso va entera. */
+function borradosLeer_() {
+  try {
+    var o = JSON.parse(prop_('BORRADOS_RECIENTES') || 'null');
+    if (o && Array.isArray(o.b)) return { desde: Number(o.desde) || 0, b: o.b, r: Array.isArray(o.r) ? o.r : [] };
+  } catch (e) {}
+  return { desde: 0, b: [], r: [] };
+}
+/* Suma una entrada a la lista `que` ('b' o 'r'), olvida lo vencido y, si no entra en la propiedad, lo más viejo de las dos
+   listas (corriendo `desde`). Adentro del candado. */
+function recientesAnotar_(que, id, ms) {
+  var log = borradosLeer_(), lim = ms - BORRADOS_VIGENCIA_MS, desde = log.desde;
+  var vivo = function (x) { return x && Number(x[1]) > lim; };
+  var b = log.b.filter(vivo), r = log.r.filter(vivo);
+  if (b.length < log.b.length || r.length < log.r.length) desde = Math.max(desde, lim);
+  (que === 'r' ? r : b).push([String(id), ms]);
+  var txt = JSON.stringify({ desde: desde, b: b, r: r });
+  while (txt.length > BORRADOS_TOPE_LETRAS && (b.length || r.length)) {
+    var deB = b.length && (!r.length || Number(b[0][1]) <= Number(r[0][1]));
+    var ido = deB ? b.shift() : r.shift();
+    desde = Math.max(desde, Number(ido[1]) || 0);
+    txt = JSON.stringify({ desde: desde, b: b, r: r });
+  }
+  PropertiesService.getScriptProperties().setProperty('BORRADOS_RECIENTES', txt);
+}
+/* Anota un borrado (adentro del candado de doDelete). La propiedad, para la lectura de lo cambiado; la hoja «Borrados»,
+   para que el dueño vea qué se borró y desde qué equipo. Ni celulares ni direcciones. Si algo falla, el borrado vale igual:
+   en el peor caso la cuenta de control no le da al panel y lee la planilla entera. */
+function borradoAnotar_(id, fila, body, ms) {
+  try { recientesAnotar_('b', id, ms); } catch (e) {}
+  try {
+    var hb = hojaBorrados_();
+    if (!hb) return;
+    var f = fila || [];
+    hb.appendRow([new Date(ms), String(id), String(f[4] || ''), String(f[3] || ''), fmtDate(f[1]), ocTexto_(f[2]),
+                  String((body && body.quien) || ''), dispositivoDe_(body), ms]);
+    if (hb.getLastRow() - 1 > BORRADOS_HOJA_MAX) hb.deleteRow(2);     // la más vieja
+  } catch (e2) {}
+}
+/* La hoja «Borrados»: se crea sola. ⚠️ Solo se escribe si su primera fila es la de ESTOS encabezados: nunca en otra hoja
+   (una renombrada a mano, o la planilla de mentira de las pruebas). */
+function hojaBorrados_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(BORRADOS_HOJA);
+  if (!sh) sh = ss.insertSheet(BORRADOS_HOJA);
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, BORRADOS_HEADERS.length).setValues([BORRADOS_HEADERS]);
+    sh.setFrozenRows(1);
+  }
+  return (String(sh.getRange(1, 1).getValue()) === BORRADOS_HEADERS[0] && String(sh.getRange(1, 2).getValue()) === BORRADOS_HEADERS[1]) ? sh : null;
 }
 
 /** Una fila de la hoja -> el pedido como lo entiende el panel. */
@@ -1033,8 +1305,15 @@ function ocSiguienteGs_(sh, last, oc, ts) {
    a un turno lleno entraba sin que nadie lo aprobara. `excluir` es la fila del propio
    pedido, para que no se cuente a sí mismo. Devuelve el rechazo (jsonOut) o null, y si
    pasa deja en p.nroDia el correlativo del día cuando corresponde. */
-function porteroFecha_(sh, last, ids, p, excluir, asignarNro) {
-  if (diaCerradoGs(sh, last, ids, p.fecha)) return jsonOut({ ok:false, error:'dia_cerrado', fecha:p.fecha });
+/* (2026-09-30-a) `sinFreno`: solo el número del día, sin frenar nada. Es lo que usa doSave cuando Administración FORZÓ
+   el cambio de día: antes el portero cortaba en «día cerrado» o «turno lleno» ANTES de asignar el número, y el pedido
+   quedaba con el N° del día viejo. */
+function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
+  /* 🚫 (2026-09-30-a) El camión no sale en feriados (ver FERIADOS_GS). Como el domingo, pero con su propio «no»: el panel
+     dice cuál feriado es, en vez de «turno lleno (0/0)». */
+  var fer = sinFreno ? '' : feriadoGs_(p.fecha);
+  if (fer) return jsonOut({ ok:false, error:'feriado', fecha:p.fecha, nombre:fer, version:SCRIPT_VERSION });
+  if (!sinFreno && diaCerradoGs(sh, last, ids, p.fecha)) return jsonOut({ ok:false, error:'dia_cerrado', fecha:p.fecha });
   var usados = 0, usadosAM = 0, usadosPM = 0, maxNro = 0;
   if (last >= 2) {
     var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
@@ -1056,7 +1335,7 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro) {
   else if (dow === 6) limT = (tSel === 'AM') ? 15 : 0;         // sábado: 15 AM, sin PM
   else limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;           // resto: 12 AM / 13 PM
   var usadosT = (tSel === 'PM') ? usadosPM : usadosAM;
-  if (usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
+  if (!sinFreno && usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
   if (asignarNro) p.nroDia = Math.max(maxNro, usados) + 1;   // correlativo del día (atómico por el lock)
   return null;
 }
@@ -1108,11 +1387,15 @@ function doSave(p, forzar, juntar) {
        manda `juntar` recibe `actualizar` y no se toca nada: tiene que recargar la página. */
     var sisSello = filaSistema && SISTEMA_CON_SELLO[String(p.id)];
     var juntaSello = filaSistema && !!juntar && !!SISTEMA_JUNTA_OPCIONAL[String(p.id)];   // (2026-09-26-a) ver arriba
+    /* 💵 (2026-09-30-a) LOS RETIROS TAMBIÉN PIDEN SELLO. Son plata de una persona, y dos computadoras que corregían el mismo
+       retiro a la vez se pisaban: ganaba el último, sin aviso (revisión del 29/09, A4). Como un pedido: el sello con el que
+       se vio, o `conflicto` con la fila actual. Un retiro NUEVO no trae sello y la fila no existe: entra como siempre. */
+    var filaRetiro = String(p.id).indexOf('__ret_') === 0;
     if (sisSello && revHoja && !juntar) {
       return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
     }
-    if (revHoja && (!filaSistema || sisSello || juntaSello) && (Number(p.rev) || 0) !== revHoja) {
-      return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
+    if (revHoja && (!filaSistema || sisSello || juntaSello || filaRetiro) && (Number(p.rev) || 0) !== revHoja) {
+      return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo), ahora: Date.now() });
     }
   }
   /* 🗑 UN GUARDADO CON SELLO DE UNA FILA QUE YA NO ESTÁ (2026-09-28-a, revisión de Codex del 28/09). El panel manda
@@ -1124,7 +1407,7 @@ function doSave(p, forzar, juntar) {
        tampoco trae sello (el panel lo anota recién con la respuesta) y la fila ya existe: sigue siendo el «ok tardío».
      · Las filas fijas del sistema (`filaFijaSistema_`) pueden volver a nacer. Los retiros no: son plata. */
   if (foundRow < 0 && (Number(p.rev) || 0) > 0 && !filaFijaSistema_(p.id)) {
-    return jsonOut({ ok:false, error:'borrado', version:SCRIPT_VERSION, id:String(p.id) });
+    return jsonOut({ ok:false, error:'borrado', version:SCRIPT_VERSION, id:String(p.id), ahora: Date.now() });
   }
   // PORTERO DE DÍAS CERRADOS Y CUPOS. Administración cierra una fecha cuando ese camión ya
   // está armado (fila __dias_cerrados__ de esta hoja). Se revisa ACÁ y no solo en el panel
@@ -1141,8 +1424,8 @@ function doSave(p, forzar, juntar) {
       var no = porteroFecha_(sh, last, ids, p, foundRow, esNuevo || cambiaFecha);
       if (no) return no;
     } else if (cambiaFecha) {
-      // Administración forzó el cambio de día: igual necesita su número en el día nuevo.
-      porteroFecha_(sh, last, ids, p, foundRow, true);
+      // Administración forzó el cambio de día: igual necesita su número en el día nuevo (2026-09-30-a: sin frenar, ver arriba).
+      porteroFecha_(sh, last, ids, p, foundRow, true, true);
     }
   }
   // 🔢 N° DE OC REPETIDO. El panel calcula el siguiente con la planilla que tiene en
@@ -1182,10 +1465,12 @@ function doSave(p, forzar, juntar) {
   else { sh.appendRow(row); filaEco = sh.getLastRow(); }
   var eco = p;
   try { eco = rowToRec_(sh.getRange(filaEco, 1, 1, HEADERS.length).getValues()[0]); if (p.ocCambiada) eco.ocCambiada = p.ocCambiada; } catch (e) { eco = p; }
-  return jsonOut({ ok:true, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add') });
+  /* (2026-09-30-a) `ahora` = cuándo quedó escrito, con el reloj de Google, DESPUÉS de releer la fila. Una lectura con un
+     `ahora` posterior lo tiene adentro: si no lo trae, lo borraron (el panel ya no lo adivina, §4he). */
+  return jsonOut({ ok:true, version:SCRIPT_VERSION, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add'), ahora: Date.now() });
 }
 
-function doDelete(id, rev) {
+function doDelete(id, rev, body) {
   var sh = getSheet();
   var last = sh.getLastRow();
   if (last >= 2) {
@@ -1208,14 +1493,18 @@ function doDelete(id, rev) {
           return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
         }
         if (revHoja && (Number(rev) || 0) !== revHoja) {
-          return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(fila) });
+          return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(fila), ahora: Date.now() });
         }
         sh.deleteRow(i + 2); getCacheOlvidar_();
+        /* 🗑 (2026-09-30-a) Queda anotado: para la lectura de lo cambiado (el panel saca la fila de su copia) y en la hoja
+           «Borrados», que dice qué se borró y desde qué equipo. La hora va DESPUÉS de borrar. */
+        var ahoraB = Date.now();
+        borradoAnotar_(String(id), fila, body, ahoraB);
         /* 📥 Borrar una fila `kommo-<lead>` es DESCARTAR esa venta de Kommo (§4et): se anota
            el lead para que ni el repaso de 5 minutos ni el de GitHub la vuelvan a traer.
            Antes «Descartar» solo borraba la fila y el repaso siguiente la recreaba. */
         if (String(id).indexOf(BORRADOR_PREF) === 0) kDescartar_(String(id).slice(BORRADOR_PREF.length));
-        return jsonOut({ ok:true });
+        return jsonOut({ ok:true, version:SCRIPT_VERSION, ahora:ahoraB });
       }
     }
   }
@@ -1782,6 +2071,7 @@ function kommoProcesarObj_(ids, origen) {
     var sh = getSheet(), hechos = [], reparados = [];
     for (var i = 0; i < listos.length; i++) {
       if (leadYaCargado_(sh, listos[i].id)) { saltados.push(listos[i].id + ':ya estaba'); continue; }
+      listos[i].rec.rev = Date.now();          // (2026-09-30-a) nace sellado: si no, la lectura de lo cambiado no lo ve (§4he)
       sh.appendRow(recToRow(listos[i].rec));
       hechos.push(listos[i].id);
     }
@@ -1834,8 +2124,10 @@ function leadEnEtapa_(lead) {
 /* Le corrige el nombre a un borrador que YA existe y quedó con el número de Kommo.
    Se toca ÚNICAMENTE la celda del cliente, y solo si el borrador sigue sin completar y su
    nombre sigue siendo genérico: si alguien ya lo escribió a mano, no se toca nada.
-   ⚠️ NO se le pone sello de revisión a propósito. El borrador nace con sello 0 («nunca
-   guardado»), y así quien lo complete no choca contra un conflicto por esta corrección. */
+   ⚠️ NO se le cambia el sello de revisión a propósito: así quien ya lo tenía abierto para completarlo no choca contra
+   un conflicto por esta corrección (y perdería lo que escribió). Desde 2026-09-30-a el borrador NACE sellado (la lectura
+   de lo cambiado lo necesita para verlo llegar); esta corrección sigue sin tocar el sello, así que el nombre nuevo le
+   llega al panel con la próxima lectura ENTERA (al abrir y cada 15 minutos), no con la de lo cambiado. */
 function repararNombreBorrador_(sh, leadId) {
   var rep = repararNombrePrep_(sh, leadId);
   return !!(rep && repararNombreAplicar_(sh, rep));
@@ -1872,6 +2164,10 @@ function repararNombreAplicar_(sh, rep) {
   var b = borradorGenerico_(sh, rep.id);
   if (!b || rep.nombre === b.actual) return false;
   sh.getRange(b.fila, HEADERS.indexOf('Cliente') + 1).setValue(rep.nombre);
+  /* ✍️ (2026-09-30-a) El sello no cambia (ver arriba), así que se anota que la fila cambió: la lectura de lo cambiado la manda
+     igual y el panel ve el nombre bueno en la próxima vuelta (revisión de §4he: si no, la vendedora completaba el borrador
+     con «Lead #…» y quedaba así para siempre). */
+  try { getCacheOlvidar_(); recientesAnotar_('r', BORRADOR_PREF + rep.id, Date.now()); } catch (e) {}
   return true;
 }
 
@@ -1903,6 +2199,7 @@ function crearBorradorDeLead_(leadId) {
   if (kDescartado_(leadId)) return 'descartado';
   var rec = borradorDeLead_(leadId);
   if (typeof rec === 'string') return rec;
+  rec.rev = Date.now();                        // (2026-09-30-a) nace sellado, como en kommoProcesarObj_
   getSheet().appendRow(recToRow(rec));
   return true;
 }

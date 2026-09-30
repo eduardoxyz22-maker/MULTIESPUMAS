@@ -147,6 +147,95 @@ def leer(nombre, base, comprimido=True):
     contar(crudo)
 
 
+def huella_fila(ident, rev):
+    """La cuenta de control de UNA fila, igual que `huellaFila_` del .gs y `huellaFila` de la página (FNV-1a de 32 bits
+       sobre «id:sello»). La de la planilla es la suma de todas, módulo 2^32 (30/09, §4he)."""
+    try:
+        r = int(rev) if rev not in (None, "") else 0
+    except Exception:
+        r = 0
+    h = 2166136261
+    for ch in f"{ident}:{r}":
+        h ^= ord(ch)
+        h = (h * 16777619) & 0xFFFFFFFF
+    return h
+
+
+def _abrir(j):
+    """Una respuesta comprimida (`z:'gzip64'`) → el JSON de adentro; una sin comprimir pasa tal cual."""
+    if isinstance(j, dict) and j.get("z") == "gzip64" and isinstance(j.get("d"), str):
+        import base64
+        import gzip
+        return json.loads(gzip.decompress(base64.b64decode(j["d"])).decode("utf-8"))
+    return j
+
+
+def lectura_nueva(base):
+    """🗜️ La lectura del servidor 2026-09-30-a (§4he): comprimida (`z`) y solo lo cambiado (`desde`), con la cuenta de
+       control rehecha acá como la rehace el panel. Con un servidor de antes, lo dice y listo. Solo tamaños y cuentas."""
+    sep = "&" if "?" in base else "?"
+    cuerpo = {"action": "list", "z": 1, "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []}
+    crudo = pedir("lectura COMPRIMIDA (z:1), como el panel nuevo", base + sep + "_=" + str(int(time.time() * 1000)), cuerpo)
+    if crudo is None:
+        return
+    try:
+        j = json.loads(crudo.decode("utf-8"))
+    except Exception:
+        print("   ⚠️ no es JSON")
+        return
+    if not isinstance(j, dict) or j.get("z") != "gzip64":
+        print(f"   el servidor NO la comprimió (versión {j.get('version')!r}): eso llega con el .gs 2026-09-30-a" if isinstance(j, dict) else "   respuesta rara")
+        if isinstance(j, dict) and "ahora" not in j:
+            return
+    try:
+        t0 = time.time()
+        adentro = _abrir(j)
+        abrir_s = time.time() - t0
+    except Exception as ex:
+        print(f"   ❌ no se pudo abrir la comprimida: {type(ex).__name__}")
+        return
+    ped = adentro.get("pedidos") if isinstance(adentro, dict) else None
+    if not isinstance(ped, list):
+        print(f"   ⚠️ sin lista: ok={adentro.get('ok')!r} error={adentro.get('error')!r}")
+        return
+    plano = len(json.dumps(adentro, ensure_ascii=False).encode("utf-8"))
+    marca = "bien" if adentro.get("zc") == "ñ\U0001F512€" else "MAL (el panel la descartaría y leería sin comprimir)"
+    print(f"   la comprime el servidor (gzip adentro de la respuesta): viajaron {len(crudo):,} bytes en vez de {plano:,} ({plano / max(1, len(crudo)):.1f} veces menos) · abrirla: {abrir_s:.2f} s · marca de las letras: {marca}".replace(",", "."))
+    base_filas = {str(p.get("id")): p.get("rev") for p in ped if isinstance(p, dict) and p.get("id")}
+    h = sum(huella_fila(i, r) for i, r in base_filas.items()) % 4294967296
+    print(f"   filas: {len(ped)} (el servidor dice {adentro.get('n')}) · cuenta de control: {'da ✅' if h == adentro.get('huella') and len(base_filas) == adentro.get('n') else 'NO da ❌'}")
+    repetidos = len([p for p in ped if isinstance(p, dict) and p.get("id")]) - len(base_filas)
+    if repetidos:
+        # Solo la cuenta: el panel apaga la de lo cambiado con ids repetidos (lee entera, comprimida).
+        print(f"   ⚠️ {repetidos} fila(s) con un id REPETIDO en la hoja: el panel no usa la lectura de lo cambiado (lee entera, comprimida)")
+    ahora = adentro.get("ahora")
+    if not ahora:
+        print("   (el servidor no dice de cuándo es la lectura: la de lo cambiado llega con el .gs 2026-09-30-a)")
+        return
+    time.sleep(3)
+    cuerpo2 = dict(cuerpo, desde=ahora)
+    crudo2 = pedir("lectura de LO CAMBIADO (desde = la hora de la anterior)", base + sep + "_=" + str(int(time.time() * 1000)), cuerpo2)
+    if crudo2 is None:
+        return
+    try:
+        d = _abrir(json.loads(crudo2.decode("utf-8")))
+    except Exception as ex:
+        print(f"   ❌ no se pudo leer: {type(ex).__name__}")
+        return
+    if not d.get("delta"):
+        print(f"   vino la planilla ENTERA ({len(d.get('pedidos') or [])} filas): muchas filas cambiadas, o el servidor no la hace")
+        return
+    for b in d.get("borrados") or []:
+        if b and str(b[0]) in base_filas and not (base_filas[str(b[0])] or 0) > (b[1] or 0):
+            base_filas.pop(str(b[0]), None)
+    for p in d.get("pedidos") or []:
+        if isinstance(p, dict) and p.get("id"):
+            base_filas[str(p.get("id"))] = p.get("rev")
+    h2 = sum(huella_fila(i, r) for i, r in base_filas.items()) % 4294967296
+    print(f"   {len(d.get('pedidos') or [])} fila(s) cambiada(s) y {len(d.get('borrados') or [])} borrada(s) desde la anterior · "
+          f"cuenta de control con la copia + lo cambiado: {'da ✅' if h2 == d.get('huella') and len(base_filas) == d.get('n') else 'NO da ❌ (el panel leería entera)'}")
+
+
 class _SinSeguir(_rq.HTTPRedirectHandler):
     def redirect_request(self, *a, **k):
         return None
@@ -204,6 +293,8 @@ def main():
     # 2) Con la del secreto (la que usa el respaldo de Kommo), si es otra.
     if PANEL_URL and PANEL_URL != pagina:
         leer("lectura con la dirección del SECRETO (POST list)", PANEL_URL)
+    # 2b) La lectura nueva (servidor 2026-09-30-a, §4he): comprimida y solo lo cambiado.
+    lectura_nueva(pagina or PANEL_URL)
     # 3) La puerta GET (doGet), la misma dirección sin cuerpo.
     contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
     # 4) Dónde se va el tiempo: correr el script o entregar los datos.
