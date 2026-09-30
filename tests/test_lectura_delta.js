@@ -293,6 +293,43 @@ function sacarDeGit(ref, archivo){
   chk('8. …y de ahí en más, sin comprimir', r8 && r8.fallo===true && r8.l2.every(function(x){ return x.z===false; }), r8 && r8.l2);
   chk('1-8. sin errores de JavaScript', A.__errores.length===0, A.__errores.slice(0,3));
 
+  // ═══ 11-12. Lo que cambia sin que el panel guarde (revisión de §4he) ═══════════════════════════════════════════
+  console.log('\n── 11-12. El nombre corregido de un borrador de Kommo y una corrección a mano en la hoja llegan por la de lo cambiado ──');
+  {
+    const K = servidor(); poblar(K, 20);
+    const iEst = HDR.indexOf('Estado stock'), iRev = HDR.indexOf('Revisión');
+    const borr = pedido(700, '', { id:'kommo-555', cliente:'Lead #555', turno:'', estado:'Borrador Kommo', rev: Date.now() - 3600000 });
+    K.sh._datos.push(K.ctx.recToRow(borr));
+    const D = await equipo(browser, K);
+    const r11a = await D.evaluate(async () => { await refrescarEstado(); return (BORRADORES.filter(function(b){ return b.id==='kommo-555'; })[0]||{}).cliente||''; });
+    K.ctx.repararNombreAplicar_(K.sh, { id:'555', nombre:'JUAN INVENTADO' });       // el repaso de Kommo le pone el nombre de verdad
+    const r11 = await D.evaluate(async () => {
+      __ctl.log=[]; await refrescarEstado();
+      return { l:_lecturas(), cli:(BORRADORES.filter(function(b){ return b.id==='kommo-555'; })[0]||{}).cliente||'' };
+    });
+    chk('11. (partida) la bandeja tiene el borrador «Lead #555»', r11a==='Lead #555', r11a);
+    chk('11. (diente) el repaso le corrige el nombre SIN cambiarle el sello, y la lectura de lo cambiado igual lo trae: «JUAN INVENTADO»',
+        r11 && r11.cli==='JUAN INVENTADO' && r11.l.length===1 && r11.l[0].delta===true, r11);
+    // 12. Una corrección A MANO en la hoja: Google corre onEdit y la fila estrena sello
+    const hoja = Object.assign({}, K.sh, { getName: () => 'Pedidos' });
+    const iP4 = K.sh._datos.findIndex(f => f[0]==='p4');
+    const r12a = await D.evaluate(async () => JSON.parse(JSON.stringify(findById('p4'))));      // la copia que tiene el panel ANTES
+    K.sh._datos[iP4][HDR.indexOf('Dirección')] = 'CORREGIDA A MANO';
+    if (typeof K.ctx.onEdit === 'function') K.ctx.onEdit({ range: { getSheet: () => hoja, getRow: () => iP4 + 1, getNumRows: () => 1, getColumn: () => HDR.indexOf('Dirección') + 1, getNumColumns: () => 1 } });   // (un .gs sin onEdit: nada)
+    const r12 = await D.evaluate(async (vieja) => {
+      __ctl.log=[]; await refrescarEstado();
+      var vista=(findById('p4')||{}).direccion;
+      // un equipo que no leyó todavía guarda el p4 con su copia de ANTES (cambia el chofer)
+      window._toasts=[]; vieja.chofer='Luis Pierre'; var res=await persistPedido(vieja); await quieto();
+      return { l:_lecturas(), vista:vista, error:res && res.error, trasGuardar:(findById('p4')||{}).direccion };
+    }, r12a);
+    const p4 = K.fila('p4');
+    chk('12. (diente) la corrección a mano estrena sello y la lectura de lo cambiado la trae', r12 && r12.vista==='CORREGIDA A MANO' && r12.l[0].delta===true, r12 && { vista:r12.vista, l:r12.l });
+    chk('12. (diente) un guardado con la copia de antes NO la pisa: «conflicto», y la pantalla queda con la corregida',
+        r12 && r12.error==='conflicto' && p4.direccion==='CORREGIDA A MANO' && r12.trasGuardar==='CORREGIDA A MANO', { error:r12 && r12.error, planilla:p4.direccion, pantalla:r12 && r12.trasGuardar });
+    chk('11-12. sin errores de JavaScript', D.__errores.length===0, D.__errores.slice(0,3));
+  }
+
   // ═══ 9. Con el servidor de antes ════════════════════════════════════════════════════════════════════════════════
   console.log('\n── 9. Con el servidor de antes (2026-09-28-a): como siempre ──');
   let gsViejo = null;

@@ -80,6 +80,14 @@ function INIT(){
     var P = {}; try { P = JSON.parse(body); } catch(e) {}
     window.__ctl.log.push({ act: P.action || 'save', id: String((P.pedido && P.pedido.id) || P.id || ''), rev: P.pedido ? P.pedido.rev : P.rev, forzar: !!P.forzar });
     var resp = function(t){ return { ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(t)); }, text:function(){ return Promise.resolve(t); } }; };
+    /* Reglas: `drop` = sin señal (no llega); `procesa_y_pierde` = el servidor lo guarda pero la respuesta se pierde (§4fa). */
+    for (var i=0;i<window.__ctl.rules.length;i++){
+      var r=window.__ctl.rules[i];
+      if (r.n>0 && r.act===(P.action||'save')){ r.n--;
+        if (r.mode==='drop') return Promise.reject(new TypeError('Failed to fetch'));
+        if (r.mode==='procesa_y_pierde') return window.__gs(body).then(function(){ throw new TypeError('Failed to fetch'); });
+      }
+    }
     return window.__gs(body).then(resp);
   };
 }
@@ -205,6 +213,36 @@ const retiro = (id, monto) => ({ id, fecha:'', turno:'', vendedor:'Carola Chavez
   const mov = S2.fila('pmov');
   chk('2c. Administración lo MUEVE a un feriado con `forzar` (como a un día cerrado): entra, con su N° del día', r2c && r2c.ok && r2c.forzo===1 && mov && mov.fecha==='2026-11-02' && Number(mov.nroDia)>=1, { r2c, fecha:mov && mov.fecha, nro:mov && mov.nroDia });
   chk('2. sin errores de JavaScript', !C.__errores.length, C.__errores.slice(0,3));
+
+  // ═══ 3. Corregir un retiro propio cuya alta se quedó sin respuesta ═══════════════════════════════════════════════
+  console.log('\n── 3. Un retiro nuevo cuya respuesta se perdió, corregido enseguida: la corrección entra (no «lo corrigió otra persona») ──');
+  const S3 = servidor();
+  const E = await equipo(browser, S3);
+  const r3 = await E.evaluate(async () => {
+    abrirRetiros(); await esperar(100);
+    var R=RET_FORM; R.entrega='Carola Chavez'; R.retira='Contabilidad'; R.monto='400'; R.notas=['771']; R.fecha=todayStr();
+    renderRetiros(); await esperar(50); document.getElementById('ret-entrega').value='Carola Chavez';
+    // El alta llega a la planilla pero la respuesta se pierde, y el reintento (1,5 s después) no tiene señal: queda en la cola.
+    __ctl.rules.push({ act:'save', mode:'procesa_y_pierde', n:1 }, { act:'save', mode:'drop', n:1 });
+    guardarRetiroForm(); await esperar(2600); await quieto();
+    var id=(getPending().filter(function(q){ return String(q.id).indexOf('__ret_')===0; })[0]||{}).id||'';
+    var enCola=!!id;
+    editarRetiro(id); await esperar(100);
+    document.getElementById('ret-monto').value='450';
+    window._toasts=[]; __ctl.log=[];
+    guardarRetiroForm(); await esperar(1500); await quieto();
+    var ret=RETIROS.filter(function(x){ return x.id===id; })[0]||{};
+    return { id:id, enCola:enCola, pantalla:ret.acuenta, avisoOtro:window._toasts.filter(function(t){ return /lo corrigió otra persona/.test(t); }).length,
+             ok:window._toasts.filter(function(t){ return /Retiro actualizado en la planilla/.test(t); }).length,
+             cola:getPending().filter(function(q){ return String(q.id).indexOf('__ret_')===0; }).length };
+  });
+  const f3 = r3 && S3.fila(r3.id);
+  chk('3. (partida) el alta de 400 llegó a la planilla y además quedó en la cola (su respuesta se perdió)', r3 && r3.enCola && !!f3, r3 && { enCola:r3.enCola });
+  chk('3. la corrección a 450 ENTRA (es la propia alta, no otra persona) y la cola queda vacía',
+      !!f3 && Number(f3.acuenta)===450 && r3.cola===0 && Number(r3.pantalla)===450, { planilla:f3 && f3.acuenta, pantalla:r3 && r3.pantalla, cola:r3 && r3.cola });
+  chk('3. …sin el aviso «lo corrigió otra persona», con el ✓ de siempre', r3 && r3.avisoOtro===0 && r3.ok===1, r3);
+  chk('3. …y en la planilla hay UN retiro, no dos', S3.sh._datos.filter(f => String(f[0]).indexOf('__ret_')===0).length===1);
+  chk('3. sin errores de JavaScript', !E.__errores.length, E.__errores.slice(0,3));
 
   await browser.close();
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

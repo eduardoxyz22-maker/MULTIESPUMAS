@@ -7477,13 +7477,20 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   ⚠️ Sin candado, como toda lectura (§4dt): si se agrega o se borra una fila entre las dos columnas, la cuenta no le da al
   panel y el panel lee entera. Nunca queda una copia mal armada.
 - **🗑 Los borrados se anotan** (`borradoAnotar_`, adentro del candado de `doDelete`): (1) la propiedad
-  `BORRADOS_RECIENTES` = `{desde, b:[[id, hora]…]}` (48 h, tope 150, entra en 9 KB), para la de lo cambiado; (2) la hoja
+  `BORRADOS_RECIENTES` = `{desde, b:[[id, hora]…], r:[…]}` (6 h, hasta 8.000 letras: se olvida lo más viejo y `desde` lo
+  dice; `recientesAnotar_`), para la de lo cambiado; la lista `r` son las filas retocadas SIN sello (ver abajo); (2) la hoja
   **«Borrados»** (Fecha, Id, Cliente, Vendedor, Entrega, N° OC, Quién borró, Dispositivo, Hora) para que el dueño vea qué
   se borró y desde qué equipo (sin celular ni dirección; tope 2.000 filas). ⚠️ `hojaBorrados_` solo escribe en una hoja
   cuyos encabezados son ESOS (en las pruebas, `getSheetByName` devuelve la de pedidos para cualquier nombre).
 - **📥 Los borradores de Kommo nacen sellados** (`rev = Date.now()` en `kommoProcesarObj_` y `crearBorradorDeLead_`): si no,
   la de lo cambiado no los veía llegar. `repararNombreAplicar_` sigue SIN tocar el sello, a propósito: quien ya tenía el
-  borrador abierto para completarlo no choca (y no pierde lo que escribió); el nombre nuevo llega con la lectura ENTERA.
+  borrador abierto para completarlo no choca (y no pierde lo que escribió). **Revisión**: la corrección se anota en
+  `BORRADOS_RECIENTES.r` y `leerCambiado_` manda esa fila igual (con el mismo sello: el panel la toma).
+- **✍️ `onEdit(e)`** (revisión, disparador simple de Google: anda apenas se GUARDA el código): una corrección A MANO en la
+  hoja «Pedidos» estrena sello en esas filas (`max(sello+1, ahora)`), salvo que se haya tocado SOLO la columna Revisión, los
+  encabezados o una fila sin id; y borra la caché de `doGet`. Así la de lo cambiado la ve, y un guardado con una copia de
+  antes recibe `conflicto` en vez de pisarla (antes la pisaba, también con el 28-a). No toma el candado (la corrección a
+  mano tampoco); un error se traga.
   El panel completa y descarta con el sello que trae la lista (`EDIT_REV`, `borrarEnServidor`): anda igual con la página
   publicada. `test_servidor` §10A cambió a conciencia: descarta con el sello, como el panel.
 - **`probarAntesDeImplementar`**: 7 = la comprimida con la planilla de VERDAD (comprime, abre con `Utilities.ungzip` y
@@ -7527,15 +7534,17 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   (feriado)» y no se encola; por `persistPedido` se encolaría, pero la página publicada ya no manda feriados sin `forzar`
   (§4gy). **Todos F5** igual.
 - **Guardar el código nuevo sin implementarlo** (paso 2 del procedimiento) ya cambia los disparadores: los borradores de
-  Kommo nacen sellados desde ese momento. Con el servidor 28-a implementado y la página publicada eso anda (completar y
-  descartar mandan el sello de la lista).
+  Kommo nacen sellados desde ese momento, y `onEdit` sella las correcciones a mano. Con el servidor 28-a implementado y la
+  página publicada eso anda (completar y descartar mandan el sello de la lista; un guardado sobre una fila corregida a mano
+  recibe `conflicto`, que la página publicada ya maneja).
 
 ### Pruebas
-- `tests/test_servidor.js` §15-§19 (+35; **21 rojas contra el `.gs` 28-a**) y su `Utilities` de mentira pasa a ser de
-  verdad (UTF-8, gzip de Node, bytes con signo como `getBytes()`); `Borrados` en las hojas aparte del arnés.
-- `tests/test_lectura_delta.js` (nueva, 24): el panel real contra el `.gs` real con gzip de verdad. **13 rojas contra la
-  página publicada, 11 contra el `.gs` 28-a.**
-- `tests/test_retiro_feriado.js` (nueva, 11): **4 rojas contra la página, 5 contra el `.gs`.**
+- `tests/test_servidor.js` §15-§20 (+46, y 1 en §10A; **24 rojas contra el `.gs` 28-a**; 323 en total) y su `Utilities` de
+  mentira pasa a ser de verdad (UTF-8, gzip de Node, bytes con signo como `getBytes()`); `Borrados` en las hojas aparte del
+  arnés.
+- `tests/test_lectura_delta.js` (nueva, 29): el panel real contra el `.gs` real con gzip de verdad. **15 rojas contra la
+  página publicada, 14 contra el `.gs` 28-a.**
+- `tests/test_retiro_feriado.js` (nueva, 16): **6 rojas contra la página publicada, 5 contra el `.gs` 28-a.**
 - `tests/test_lectura_vieja.js`: dos vueltas (con la hora y «sin la hora, como un servidor de antes», que quita `ahora` en el
   camino): la ventana y la sospecha se siguen probando, y el 4 con la hora prueba lo nuevo (36).
 - `tests/test_codex28_flujos.js` §1: los avisos se juntan desde antes de `pasaElTiempo` (con la hora, el borrado se ve en
@@ -7544,11 +7553,34 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   control (la misma cuenta en Python). Con el 28-a dice «el servidor no la comprimió».
 - Batería: ver RESPUESTA §24.
 
+### La revisión independiente (antes de pasarle el `.gs` al dueño)
+Un agente revisor con el diff de `2c36ff0`, reproduciendo cada cosa con el `.gs` y la página de verdad (scripts en el
+scratchpad de la sesión: se pierden con el contenedor). Sin ALTA. Lo que encontró y lo que se hizo:
+- **MEDIA (arreglada)**: lo que cambia SIN sello nuevo —el nombre que el repaso le corrige a un borrador de Kommo, y una
+  corrección a mano en la hoja— la de lo cambiado no lo veía hasta la lectura entera (15 min), y un guardado con la copia de
+  antes lo PISABA: la vendedora completaba el borrador como «Lead #555» y quedaba así para siempre (con el 28-a se veía en
+  2 min). Arreglo: la lista `r` de `BORRADOS_RECIENTES` (el nombre) y `onEdit` (la corrección a mano). `test_servidor` §20,
+  `test_lectura_delta` §11-12 (rojas contra `2c36ff0` y contra el 28-a).
+- **BAJA (arreglada)**: un retiro NUEVO cuya respuesta se perdió (entró a la planilla y quedó en la cola sin sello) y que se
+  corregía enseguida: la corrección iba sin sello → `conflicto` → «lo corrigió otra persona… NO se guardó» (con el 28-a
+  entraba). `apiSaveAhora`: si la fila de la planilla es EXACTAMENTE el alta que espera en la cola de este dispositivo, el
+  alta sale de la cola y la corrección se vuelve a mandar una vez con ese sello. `test_retiro_feriado` §3 (2 rojas contra
+  `2c36ff0`).
+- **BAJA (dicha, se queda)**: la página publicada contra el servidor nuevo, con un `conflicto` de retiro, lo mete un rato en
+  la lista de pedidos y todavía manda el sello de la lista. Por eso **todos F5**.
+- **BAJA (arreglada en parte)**: más lecturas de propiedades por cada `list`. La comprimida ya no vuelve a leer `PANEL_KEY`
+  y `ADMIN_KEY` para el sobre (`listaResponder_` los copia); la de lo cambiado lee `BORRADOS_RECIENTES` (una).
+- Notas: una cuenta que no da relee entera dentro del mismo tope de tiempo; dos lecturas paralelas que fallan cuentan como
+  dos (la pausa de 30 min); ids repetidos apagan la de lo cambiado en silencio (el diagnóstico lo dice).
+- Lo que dio bien: el `.gs` es ES5 (acorn); 6 semillas × 60 vueltas de un «fuzz» con cambios antes y después de cada lectura,
+  copias viejas de `doGet` y lecturas superpuestas: cada lista que entregó la página fue igual a la foto del servidor de su
+  `ahora`; las carreras entre las lecturas angostas terminan en «la cuenta no da» y lectura entera; `localManda` compara bien;
+  feriados, borradores sellados y la transición, bien.
+
 ### Lo que esto NO arregla (dicho al dueño)
 - Si Google tarda en CORRER el script (los 59 s del 29/09), esto no lo evita: hace que la respuesta sea chica y llegue.
-- Una corrección escrita A MANO en la hoja (o una fila borrada a mano) se ve con la lectura entera: al abrir y cada 15 min.
-  Una fila borrada a mano hace fallar la cuenta y fuerza la entera en el acto.
-- El nombre reparado de un borrador de Kommo («Lead #123» → el cliente) llega con la lectura entera (hasta 15 min).
+- Una fila BORRADA a mano en la hoja no queda anotada: hace fallar la cuenta y el panel lee entera en el acto. (Una
+  corrección a mano sí estrena sello desde la revisión: `onEdit`.)
 - Una página sin F5 todavía puede pisar un retiro corregido por otro equipo (manda el sello de la lista).
 - ROHO en un feriado: el importador lo dice y no lo carga; hay que cargarlo con otra fecha.
 

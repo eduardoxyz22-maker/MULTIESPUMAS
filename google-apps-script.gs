@@ -124,9 +124,12 @@ var DELTA_HUECO = 15;                  // dos filas cambiadas a menos de esto se
 var Z_MIN = 20000;                     // una respuesta más chica que esto no vale la pena comprimirla
 var Z_CHECK = '\u00f1\uD83D\uDD12\u20ac';   // «ñ🔒€»: en UTF-8 son 2 + 4 + 3 bytes; el panel lo compara al abrir la respuesta
 /* 🗑 Los borrados: `doDelete` los anota (`borradoAnotar_`) en la propiedad BORRADOS_RECIENTES —la lectura de lo cambiado
-   los necesita— y en la hoja «Borrados», para que el dueño vea qué se borró, cuándo y desde qué equipo. */
-var BORRADOS_VIGENCIA_MS = 48 * 3600000;   // lo que recuerda la propiedad; una lectura `desde` más vieja que esto va entera
-var BORRADOS_TOPE = 150;                   // una propiedad aguanta 9 KB
+   los necesita— y en la hoja «Borrados», para que el dueño vea qué se borró, cuándo y desde qué equipo.
+   ✍️ En la MISMA propiedad (lista `r`) van las filas que cambian SIN sello nuevo: el nombre que se le corrige a un borrador de
+   Kommo (`repararNombreAplicar_`, que no toca el sello a propósito). La lectura de lo cambiado las manda igual. Las
+   correcciones a mano en la hoja sí cambian el sello (`onEdit`). */
+var BORRADOS_VIGENCIA_MS = 6 * 3600000;    // lo que recuerda la propiedad; una lectura `desde` más vieja que esto va entera
+var BORRADOS_TOPE_LETRAS = 8000;           // una propiedad aguanta 9 KB: lo más viejo se olvida (y `desde` lo dice)
 var BORRADOS_HOJA = 'Borrados';
 var BORRADOS_HEADERS = ['Fecha', 'Id', 'Cliente', 'Vendedor', 'Entrega', 'N° OC', 'Quién borró', 'Dispositivo', 'Hora (ms)'];
 var BORRADOS_HOJA_MAX = 2000;              // filas como mucho en la hoja; después se borran las más viejas
@@ -199,6 +202,7 @@ function probarAntesDeImplementar() {
     instalarDisparadores: typeof instalarDisparadores, estadoKommo: typeof estadoKommo,
     leerLista_: typeof leerLista_, leerCambiado_: typeof leerCambiado_, listaResponder_: typeof listaResponder_,   // (2026-09-30-a)
     huellaFila_: typeof huellaFila_, borradoAnotar_: typeof borradoAnotar_, feriadoGs_: typeof feriadoGs_,
+    recientesAnotar_: typeof recientesAnotar_, onEdit: typeof onEdit,
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -990,6 +994,39 @@ function saveGeoCache(rows) {
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
 }
 
+/* ✍️ (2026-09-30-a) UNA CORRECCIÓN A MANO EN LA HOJA «Pedidos» TAMBIÉN CAMBIA EL SELLO (revisión de §4he).
+   Google corre esta función sola cada vez que ALGUIEN escribe a mano en la planilla (no con lo que escribe este script, ni
+   el panel). Antes, una corrección a mano no cambiaba la columna Revisión: el panel (con la lectura de lo cambiado) no la
+   veía hasta la lectura entera, y cualquiera que guardara esa fila con su copia de antes la PISABA sin aviso (el sello
+   coincidía). Ahora la fila corregida estrena sello: la lectura de lo cambiado la trae, y un guardado con una copia vieja
+   recibe «conflicto» con la fila corregida, en vez de borrarla.
+   · Solo la hoja «Pedidos» y solo desde la fila 2 (los encabezados, no).
+   · Si lo que se tocó es SOLO la columna Revisión, se respeta (alguien la está arreglando a propósito).
+   · Una fila sin id no se toca. Borrar filas a mano no pasa por acá: eso lo ve la cuenta de control del panel.
+   ⚠️ Es un disparador «simple» de Google: no hay que instalar nada y anda apenas se GUARDA el código (antes de implementar).
+   No puede fallar hacia afuera: cualquier error se traga (lo peor es que esa corrección no estrene sello, como antes). */
+function onEdit(e) {
+  try {
+    if (!e || !e.range) return;
+    var sh = e.range.getSheet();
+    if (!sh || sh.getName() !== SHEET_NAME) return;
+    var f0 = e.range.getRow(), n = e.range.getNumRows(), c0 = e.range.getColumn(), nc = e.range.getNumColumns();
+    if (c0 === REV_COL && nc === 1) return;
+    if (f0 < 2) { n -= (2 - f0); f0 = 2; }
+    if (n < 1) return;
+    var ids = sh.getRange(f0, 1, n, 1).getValues();
+    var revs = sh.getRange(f0, REV_COL, n, 1).getValues();
+    var ahora = Date.now(), out = [], alguna = false;
+    for (var i = 0; i < n; i++) {
+      if (ids[i][0]) { out.push([Math.max((Number(revs[i][0]) || 0) + 1, ahora)]); alguna = true; }
+      else out.push([revs[i][0]]);
+    }
+    if (!alguna) return;
+    sh.getRange(f0, REV_COL, n, 1).setValues(out);
+    getCacheOlvidar_();
+  } catch (err) {}
+}
+
 function readAll() {
   var sh = getSheet();
   var values = sh.getDataRange().getValues();
@@ -1053,6 +1090,8 @@ function leerCambiado_(sh, desde) {
   if (corte <= log.desde) return null;                   // se olvidaron borrados de esa época: la entera
   var last = sh.getLastRow();
   var borrados = log.b.filter(function (x) { return Number(x[1]) > corte; });
+  var retoc = {};                                        // ✍️ cambiadas sin sello nuevo (el nombre de un borrador de Kommo)
+  log.r.forEach(function (x) { if (x && Number(x[1]) > corte) retoc[String(x[0])] = 1; });
   if (last < 2) return { ok:true, version:SCRIPT_VERSION, delta:true, desde:desde, ahora:ahora, n:0, huella:0, pedidos:[], borrados:borrados };
   var ids = sh.getRange(2, 1, last - 1, 1).getValues();
   var revs = sh.getRange(2, REV_COL, last - 1, 1).getValues();
@@ -1061,7 +1100,7 @@ function leerCambiado_(sh, desde) {
     if (!ids[i][0]) continue;
     var rev = Number(revs[i] && revs[i][0]) || 0;
     n++; h = (h + huellaFila_(String(ids[i][0]), rev)) % 4294967296;
-    if (rev > corte) { filas.push(i + 2); if (filas.length > DELTA_MAX_FILAS) return null; }
+    if (rev > corte || retoc[String(ids[i][0])]) { filas.push(i + 2); if (filas.length > DELTA_MAX_FILAS) return null; }
   }
   var grupos = [], g = null;
   for (var k = 0; k < filas.length; k++) {
@@ -1072,7 +1111,7 @@ function leerCambiado_(sh, desde) {
   var pedidos = [];
   for (var q = 0; q < grupos.length; q++) {
     var vs = sh.getRange(grupos[q][0], 1, grupos[q][1] - grupos[q][0] + 1, HEADERS.length).getValues();
-    for (var j = 0; j < vs.length; j++) if (vs[j][0] && (Number(vs[j][REV_COL - 1]) || 0) > corte) pedidos.push(rowToRec_(vs[j]));
+    for (var j = 0; j < vs.length; j++) if (vs[j][0] && ((Number(vs[j][REV_COL - 1]) || 0) > corte || retoc[String(vs[j][0])])) pedidos.push(rowToRec_(vs[j]));
   }
   return { ok:true, version:SCRIPT_VERSION, delta:true, desde:desde, ahora:ahora, n:n, huella:h, pedidos:pedidos, borrados:borrados };
 }
@@ -1096,32 +1135,44 @@ function listaResponder_(obj, body) {
   if (quiereZ && txt.length >= Z_MIN) {
     try {
       var d = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(txt, 'application/json')).getBytes());
-      return jsonOut({ ok:true, version:SCRIPT_VERSION, z:'gzip64', d:d, largo:txt.length });
+      // `auth`/`adminAuth` ya los calculó jsonTexto_: se copian, así jsonOut no vuelve a leer las propiedades.
+      return jsonOut({ ok:true, version:SCRIPT_VERSION, z:'gzip64', d:d, largo:txt.length, auth:obj.auth, adminAuth:obj.adminAuth });
     } catch (e) {}
   }
   return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
 }
-/* 🗑 Los borrados que recuerda la lectura de lo cambiado: { desde, b:[[id, hora], …] }. `desde` = hasta dónde NO se
-   recuerda (lo que se olvidó por viejo o por el tope): una lectura con corte anterior a eso va entera. */
+/* 🗑 Lo que recuerda la lectura de lo cambiado: { desde, b:[[id, hora], …] (borrados), r:[[id, hora], …] (retocados sin
+   sello) }. `desde` = hasta dónde NO se recuerda (lo que se olvidó por viejo o por el tope): una lectura con corte anterior
+   a eso va entera. */
 function borradosLeer_() {
   try {
     var o = JSON.parse(prop_('BORRADOS_RECIENTES') || 'null');
-    if (o && Array.isArray(o.b)) return { desde: Number(o.desde) || 0, b: o.b };
+    if (o && Array.isArray(o.b)) return { desde: Number(o.desde) || 0, b: o.b, r: Array.isArray(o.r) ? o.r : [] };
   } catch (e) {}
-  return { desde: 0, b: [] };
+  return { desde: 0, b: [], r: [] };
+}
+/* Suma una entrada a la lista `que` ('b' o 'r'), olvida lo vencido y, si no entra en la propiedad, lo más viejo de las dos
+   listas (corriendo `desde`). Adentro del candado. */
+function recientesAnotar_(que, id, ms) {
+  var log = borradosLeer_(), lim = ms - BORRADOS_VIGENCIA_MS, desde = log.desde;
+  var vivo = function (x) { return x && Number(x[1]) > lim; };
+  var b = log.b.filter(vivo), r = log.r.filter(vivo);
+  if (b.length < log.b.length || r.length < log.r.length) desde = Math.max(desde, lim);
+  (que === 'r' ? r : b).push([String(id), ms]);
+  var txt = JSON.stringify({ desde: desde, b: b, r: r });
+  while (txt.length > BORRADOS_TOPE_LETRAS && (b.length || r.length)) {
+    var deB = b.length && (!r.length || Number(b[0][1]) <= Number(r[0][1]));
+    var ido = deB ? b.shift() : r.shift();
+    desde = Math.max(desde, Number(ido[1]) || 0);
+    txt = JSON.stringify({ desde: desde, b: b, r: r });
+  }
+  PropertiesService.getScriptProperties().setProperty('BORRADOS_RECIENTES', txt);
 }
 /* Anota un borrado (adentro del candado de doDelete). La propiedad, para la lectura de lo cambiado; la hoja «Borrados»,
    para que el dueño vea qué se borró y desde qué equipo. Ni celulares ni direcciones. Si algo falla, el borrado vale igual:
    en el peor caso la cuenta de control no le da al panel y lee la planilla entera. */
 function borradoAnotar_(id, fila, body, ms) {
-  try {
-    var log = borradosLeer_(), lim = ms - BORRADOS_VIGENCIA_MS;
-    var b = log.b.filter(function (x) { return x && Number(x[1]) > lim; });
-    var desde = Math.max(log.desde, b.length < log.b.length ? lim : 0);
-    b.push([String(id), ms]);
-    if (b.length > BORRADOS_TOPE) { desde = Math.max(desde, Number(b[b.length - BORRADOS_TOPE - 1][1]) || 0); b = b.slice(b.length - BORRADOS_TOPE); }
-    PropertiesService.getScriptProperties().setProperty('BORRADOS_RECIENTES', JSON.stringify({ desde: desde, b: b }));
-  } catch (e) {}
+  try { recientesAnotar_('b', id, ms); } catch (e) {}
   try {
     var hb = hojaBorrados_();
     if (!hb) return;
@@ -2113,6 +2164,10 @@ function repararNombreAplicar_(sh, rep) {
   var b = borradorGenerico_(sh, rep.id);
   if (!b || rep.nombre === b.actual) return false;
   sh.getRange(b.fila, HEADERS.indexOf('Cliente') + 1).setValue(rep.nombre);
+  /* ✍️ (2026-09-30-a) El sello no cambia (ver arriba), así que se anota que la fila cambió: la lectura de lo cambiado la manda
+     igual y el panel ve el nombre bueno en la próxima vuelta (revisión de §4he: si no, la vendedora completaba el borrador
+     con «Lead #…» y quedaba así para siempre). */
+  try { getCacheOlvidar_(); recientesAnotar_('r', BORRADOR_PREF + rep.id, Date.now()); } catch (e) {}
   return true;
 }
 

@@ -1466,13 +1466,15 @@ console.log('\n── 17. La lectura: con hora, comprimida y solo lo cambiado �
   // d. `desde` más viejo de lo que se recuerdan los borrados: entera
   const Dv = listar(a, { desde: Date.now() - 49*3600000 });
   chk('d. con `desde` de hace más de 48 horas: la planilla entera (los borrados de entonces ya no se recuerdan)', Dv.ok===true && !Dv.delta && Dv.pedidos.length===79, JSON.stringify({ delta:Dv.delta, n:Dv.pedidos.length }));
-  // e. el tope de la memoria de borrados: 150, y lo que se olvidó obliga a leer entera
+  // e. el tope de la memoria de borrados (8.000 letras: una propiedad aguanta 9 KB), y lo que se olvidó obliga a leer entera
   const b = cargar([HDR30], {});
-  for (let i = 0; i < 160; i++) { b.sh._datos.push(filaS({ id:'b'+i }, 1000 + i)); }
+  for (let i = 0; i < 400; i++) { b.sh._datos.push(filaS({ id:'pborrado-' + String(i).padStart(6,'0') }, 1000 + i)); }
   const Lb = listar(b);
-  for (let i = 0; i < 160; i++) b.post({ action:'delete', id:'b'+i, rev:1000 + i });
-  const memo = JSON.parse(b.ctx.PropertiesService.getScriptProperties().getProperty('BORRADOS_RECIENTES') || '{}');
-  chk('e. la memoria de borrados guarda los últimos 150 y entra en una propiedad (9 KB)', memo.b && memo.b.length===150 && memo.desde>0 && JSON.stringify(memo).length < 9000, JSON.stringify({ n:memo.b && memo.b.length, desde:memo.desde, largo:JSON.stringify(memo).length }));
+  for (let i = 0; i < 400; i++) b.post({ action:'delete', id:'pborrado-' + String(i).padStart(6,'0'), rev:1000 + i });
+  const memoTxt = b.ctx.PropertiesService.getScriptProperties().getProperty('BORRADOS_RECIENTES') || '{}', memo = JSON.parse(memoTxt);
+  chk('e. la memoria de borrados entra en una propiedad (hasta 8.000 letras), olvida lo más viejo y lo dice (`desde`)',
+      memo.b && memo.b.length > 100 && memo.b.length < 400 && memo.desde > 0 && memoTxt.length <= 8000 && memo.b[memo.b.length-1][0]==='pborrado-000399',
+      JSON.stringify({ n:memo.b && memo.b.length, desde:memo.desde, largo:memoTxt.length }));
   const Db = listar(b, { desde: Lb.ahora });
   chk('e. …y una lectura `desde` antes de lo olvidado va entera (sin borrados de menos)', Db.ok===true && !Db.delta && Db.pedidos.length===0, JSON.stringify({ delta:Db.delta, n:Db.pedidos.length }));
   // f. muchas filas cambiadas: entera
@@ -1532,6 +1534,58 @@ console.log('\n── 19. Los borradores de Kommo nacen sellados; la corrección
     const r = a.post({ action:'save', pedido: comp });
     chk('completarlo con el sello que trajo la lista entra (como lo hace el panel: EDIT_REV)', r.ok===true && r.pedido.fecha==='2026-10-26', JSON.stringify(r).slice(0,120));
   }
+}
+
+/* ── ✍️ 20. Lo que cambia SIN que el panel guarde (revisión de §4he): una corrección a mano en la hoja y el nombre que se le
+      corrige a un borrador de Kommo. Antes de este arreglo, la lectura de lo cambiado no los veía (hasta 15 min) y un guardado
+      con una copia vieja los PISABA sin aviso. ── */
+console.log('\n── 20. Correcciones a mano (onEdit) y el nombre de un borrador de Kommo: la de lo cambiado los ve ──');
+{
+  const a = cargar([HDR30, filaS({ id:'p1' }, 1000), filaS({ id:'p2' }, 2000), filaS({ id:'p3' }, 3000)], {});
+  const hoja = Object.assign({}, a.sh, { getName: () => 'Pedidos' });
+  const rango = (fila, col, nf, nc, h) => ({ getSheet: () => h || hoja, getRow: () => fila, getNumRows: () => nf || 1, getColumn: () => col, getNumColumns: () => nc || 1 });
+  const revDe = (id) => Number(a.sh._datos.find(f => f[0]===id)[iREV]);
+  if (typeof a.ctx.onEdit !== 'function') chk('⚠️ el .gs tiene onEdit (una corrección a mano cambia el sello)', false, 'no está');
+  else {
+    const L0 = listar(a);
+    const vieja = L0.pedidos.find(p => p.id==='p2');
+    a.get({});                                            // la caché de doGet queda con la planilla de ahora
+    // alguien corrige A MANO la dirección del p2 en la hoja
+    a.sh._datos.find(f => f[0]==='p2')[HDR.indexOf('Dirección')] = 'CALLE CORREGIDA A MANO';
+    const t0 = Date.now();
+    a.ctx.onEdit({ range: rango(3, HDR.indexOf('Dirección') + 1) });
+    chk('⚠️ a. una corrección a mano en «Pedidos» estrena sello en ESA fila (y las otras quedan igual)', revDe('p2') >= t0 && revDe('p1')===1000 && revDe('p3')===3000, JSON.stringify([revDe('p1'), revDe('p2'), revDe('p3')]));
+    chk('a. …y borra la caché de doGet (el próximo GET lee la hoja)', a.ctx.getCacheLeer_()==='');
+    const D = listar(a, { desde: L0.ahora });
+    chk('⚠️ b. la lectura de lo cambiado la trae', D.delta===true && D.pedidos.length===1 && D.pedidos[0].id==='p2' && D.pedidos[0].direccion==='CALLE CORREGIDA A MANO', JSON.stringify(D.pedidos && D.pedidos.map(p => p.id)));
+    vieja.chofer = 'Luis Pierre';                          // un equipo con la copia de ANTES de la corrección guarda el p2
+    const r = a.post({ action:'save', pedido: vieja });
+    chk('⚠️ c. un guardado con la copia de antes NO pisa la corrección: «conflicto» con la fila corregida',
+        r.ok===false && r.error==='conflicto' && r.pedido.direccion==='CALLE CORREGIDA A MANO' && a.sh._datos.find(f => f[0]==='p2')[HDR.indexOf('Dirección')]==='CALLE CORREGIDA A MANO', JSON.stringify(r).slice(0,140));
+    const antes = JSON.stringify(a.sh._datos);
+    a.ctx.onEdit({ range: rango(3, iREV + 1) });
+    chk('d. si lo que se tocó es SOLO la columna Revisión, se respeta (no se vuelve a sellar)', JSON.stringify(a.sh._datos)===antes);
+    a.ctx.onEdit({ range: rango(2, 5, 1, 1, Object.assign({}, a.sh, { getName: () => 'Rechazos' })) });
+    chk('d. …ni una corrección en otra hoja', JSON.stringify(a.sh._datos)===antes);
+    a.ctx.onEdit({ range: rango(1, 1, 1, 5) });
+    chk('d. …ni tocar los encabezados', JSON.stringify(a.sh._datos)===antes);
+    a.ctx.onEdit({ range: rango(1, 4, 3, 2) });            // de la fila 1 a la 3: se sellan la 2 y la 3 (p1 y p2)
+    chk('d. un rango que empieza en los encabezados sella solo las filas de pedidos', revDe('p1') > 1000 && revDe('p3')===3000, JSON.stringify([revDe('p1'), revDe('p3')]));
+    a.ctx.onEdit();                                        // corrida a mano desde el editor, sin evento: no revienta
+    chk('d. sin evento (corrida a mano desde el editor) no hace nada ni revienta', true);
+  }
+  // e. El nombre que se le corrige a un borrador de Kommo (sin tocar el sello, a propósito) también viaja
+  const k = cargar([HDR30], {});
+  const BORR = filaS({ id:'kommo-555', cli:'Lead #555', fecha:'', turno:'' }, Date.now() - 3600000); BORR[HDR.indexOf('Estado stock')] = 'Borrador Kommo';
+  k.sh._datos.push(BORR);
+  const K0 = listar(k);
+  const rev0 = K0.pedidos[0].rev;
+  k.ctx.repararNombreAplicar_(k.sh, { id:'555', nombre:'JUAN INVENTADO' });
+  const KD = listar(k, { desde: K0.ahora });
+  chk('⚠️ e. el nombre corregido de un borrador de Kommo viaja en la de lo cambiado (sin cambiarle el sello)',
+      KD.delta===true && KD.pedidos.length===1 && KD.pedidos[0].cliente==='JUAN INVENTADO' && KD.pedidos[0].rev===rev0, JSON.stringify(KD.pedidos));
+  const memoK = JSON.parse(k.ctx.PropertiesService.getScriptProperties().getProperty('BORRADOS_RECIENTES') || '{}');
+  chk('e. …queda anotado entre los retocados (lista `r`), no entre los borrados', Array.isArray(memoK.r) && memoK.r.some(x => x[0]==='kommo-555') && !(memoK.b||[]).length, JSON.stringify(memoK));
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

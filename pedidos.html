@@ -2467,6 +2467,21 @@ function apiSaveAhora(rec, opts){
         }
         return sisFusionarYGuardar(rec, res, opts);
       }
+      /* 💵 (30/09, revisión de §4he) Un retiro NUEVO cuya respuesta se perdió (entró a la planilla, pero acá quedó en la cola sin
+         sello) y que se corrige antes de que la cola salga: la corrección va sin sello, y el servidor 2026-09-30-a contesta
+         `conflicto` con la fila de la planilla. Si esa fila es EXACTAMENTE el alta que espera en la cola de este dispositivo, no
+         la corrigió nadie: es la propia. El alta sale de la cola y la corrección se vuelve a mandar, una vez, con ese sello. */
+      else if(res && res.ok===false && res.error==='conflicto' && res.pedido && !(opts && opts._altaPropia) &&
+              esFilaRetiro(rec) && !(Number(rec.rev)>0)){
+        var altaP=getPending().filter(function(q){ return q && String(q.id)===String(rec.id) && !(Number(q.rev)>0) && mismoContenido(q, res.pedido); })[0];
+        if(altaP){
+          var altaTxt=JSON.stringify(altaP);
+          setPending(getPending().filter(function(q){ return !(q && String(q.id)===String(rec.id) && JSON.stringify(q)===altaTxt); }));
+          rec.rev=res.pedido.rev;
+          return apiSaveAhora(rec, Object.assign({}, opts||{}, { _altaPropia:1 }));
+        }
+        if(rechazoFirme(rec, res)) return { ok:true, pedido:res.pedido, tardio:true };
+      }
       // El servidor ya no deja guardar estas filas a un panel viejo: queda en la cola, y se avisa.
       else if(sis && res && res.ok===false && res.error==='actualizar'){
         toast('🔄 El '+SIS_FUSION[String(rec.id)].nombre+' no se guardó: '+motivoDelServidor('actualizar')+'. Quedó en la cola de este dispositivo.','err',10000);

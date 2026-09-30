@@ -925,18 +925,21 @@ El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el avi
   cuenta: `test_servidor` §16 compara las dos primeras. Si se toca una, van las tres.
 - **Con `_ahora` y `okAhora` (servidor nuevo) `localManda` compara, no adivina**; sin ellos, la ventana (`LECTURA_VIEJA_MS`) y la
   sospecha (`BORRADO_CONFIRMA_MS`) de siempre, que siguen para el servidor de antes. `test_lectura_vieja` corre las dos vueltas.
-- **Todo lo que escriba la hoja tiene que dejar sello** (si no, la de lo cambiado no lo ve): los borradores de Kommo nacen con
-  `rev`. La corrección del nombre del borrador (`repararNombreAplicar_`) NO toca el sello a propósito (no hacer chocar a quien lo
-  completa): llega con la lectura entera. **Todo borrado pasa por `doDelete`** (anota en `BORRADOS_RECIENTES` y en la hoja
-  «Borrados»); una fila borrada a mano hace fallar la cuenta y se lee entera.
+- **Todo lo que escriba la hoja tiene que dejar sello, o anotarse** (si no, la de lo cambiado no lo ve y una copia vieja lo
+  pisa): los borradores de Kommo nacen con `rev`; la corrección del nombre del borrador (`repararNombreAplicar_`) NO toca el
+  sello a propósito (no hacer chocar a quien lo completa) y se anota en `BORRADOS_RECIENTES.r` (`recientesAnotar_`), que
+  `leerCambiado_` manda igual; **una corrección A MANO en «Pedidos» estrena sello con `onEdit`** (disparador simple: anda
+  apenas se guarda el código). **Todo borrado pasa por `doDelete`** (anota en `BORRADOS_RECIENTES.b` y en la hoja
+  «Borrados»); una fila borrada a mano hace fallar la cuenta y se lee entera. Un camino NUEVO que escriba la hoja entra acá.
 - **Retiros con sello**: el `.gs` compara el `rev` de `__ret_…`. El panel manda el sello con que se abrió ✏️ (`RET_FORM.rev`) o
   uno guardado desde acá (`SAVE_REV`), **nunca el de la lista de ahora** (pisaría la corrección de otro). El `conflicto` de un
-  retiro va a `RETIROS`, no a `STATE`.
+  retiro va a `RETIROS`, no a `STATE`; si la fila del `conflicto` es EXACTAMENTE el alta propia que espera en la cola (su
+  respuesta se perdió), `apiSaveAhora` saca el alta de la cola y reenvía la corrección con ese sello (una vez, `_altaPropia`).
 - **Feriados**: `FERIADOS_GS` (.gs) = `FERIADOS` (página), fecha y nombre (`test_servidor` §15a). Un feriado nuevo va en los dos.
   `feriado` es un «no» firme (`RECHAZOS_FIRMES`); con `forzar` Administración lo mueve igual.
 - `zOk_()` / la marca `zc` («ñ🔒€»): si Google no escribe en UTF-8, no se comprime; si la marca no llega bien, el panel descarta
   la comprimida y lee sin comprimir. Nunca se muestra una lectura con letras cambiadas.
-- Pruebas: `test_lectura_delta.js` (24), `test_retiro_feriado.js` (11), `test_servidor.js` §15-§19. Su `Utilities` es de verdad
+- Pruebas: `test_lectura_delta.js` (29), `test_retiro_feriado.js` (16), `test_servidor.js` §15-§20. Su `Utilities` es de verdad
   (gzip de Node, bytes con signo): los otros arneses siguen con el de mentira y ahí el `.gs` contesta sin comprimir.
 - **Publicar**: el dueño anota la versión activa (la del 28/09), pega el `.gs` del enlace fijo y corre `probarAntesDeImplementar`;
   con su OK se publica la página y todos F5; recién ahí ✏️ Nueva versión. Volver atrás = ✏️ a la anotada Y pegar la 28-a
