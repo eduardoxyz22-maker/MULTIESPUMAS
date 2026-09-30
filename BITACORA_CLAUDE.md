@@ -7673,6 +7673,11 @@ a veces hasta 4 pedidos en el mismo día para su bodega.»*
 - **`stockEntregaClave(p, f)`**: para Eduardo → Multicenter la clave de la entrega es la FECHA (`'mc|'+f`); para todo lo
   demás, el pedido. La usan `nVentasRotacion` y `nVentas` (15 días, por fecha de salida) y `n30` (30 días, por fecha de
   venta). Las unidades se suman igual.
+  ⚠️ **Decidido por el dueño el 29/09 a la noche: «el mismo día» es la FECHA DE ENTREGA** (*«cuando se entrega es la fecha
+  que yo coloco de entrega, a veces cargo el pedido el mismo día para entregar ese mismo día — recuerda que yo y logística
+  solo pueden hacer eso, agendar para el mismo día»*). La revisión del 29/09 (R4-3) vio que `n30` junta por `fv` (fecha de
+  VENTA): los mismos pedidos daban 1 entrega en los 15 días y 3-4 en los 30. Falta: `ek30 = stockEntregaClave(p, fs)` (la
+  ventana de 30 días se sigue midiendo por `fv`, §4dv). No se tocó `pedidos.html` mientras los agentes lo revisaban.
 - **Lo que NO cambia:**
   - los umbrales;
   - las dos mitades de la regla de §4dj;

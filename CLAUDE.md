@@ -1007,6 +1007,11 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   veces hasta 4 pedidos en el mismo día para su bodega»*. `stockEntregaClave(p, f)` usa la fecha como clave de la
   entrega para Eduardo → Multicenter (`nVentasRotacion`, `nVentas`, `n30`); lo demás sigue por pedido. Las unidades se
   suman igual, y los umbrales no cambian. `test_eduardo_multicenter` §8.
+  ⚠️ **«El mismo día» es la FECHA DE ENTREGA que pone el dueño** (dueño, 29/09 a la noche: *«cuando se entrega es la fecha
+  que yo coloco de entrega, a veces cargo el pedido el mismo día para entregar ese mismo día»*; solo él y ROHO pueden
+  agendar para hoy, `esVendedorLite`). La ventana de 15 días ya junta por `fs` (fecha de salida); la de 30 días (`n30`)
+  junta por `fv` (fecha de venta) — **falta cambiar esa clave a `fs`** (revisión del 29/09, R4-3). La ventana de 30 días
+  se sigue MIDIENDO por fecha de venta (§4dv); lo que cambia es solo cómo se juntan los pedidos de Multicenter.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;
