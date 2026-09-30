@@ -71,6 +71,37 @@ def pedir(nombre, url, cuerpo=None, comprimido=False):
         return None
 
 
+def feriados_de_la_pagina():
+    """Las fechas de `FERIADOS` de pedidos.html (el camión no sale, §4gy)."""
+    try:
+        with open("pedidos.html", encoding="utf-8") as f:
+            m = re.search(r"var FERIADOS\s*=\s*\{(.*?)\};", f.read(), re.S)
+        return sorted(set(re.findall(r"'(\d{4}-\d{2}-\d{2})'", m.group(1)))) if m else []
+    except Exception:
+        return []
+
+
+def pedidos_en_feriados(ped):
+    """Cuántos pedidos hay agendados para un feriado que todavía no pasó (solo la cuenta por fecha: el
+       registro es público). La víspera no aparecen en ningún «Mañana» (revisión del 29/09, R1-2)."""
+    fer = feriados_de_la_pagina()
+    if not fer:
+        print("   (no encontré FERIADOS en pedidos.html)")
+        return
+    hoy = time.strftime("%Y-%m-%d", time.gmtime(time.time() - 4 * 3600))   # Bolivia, UTC−4
+    cuenta = {}
+    for p in ped:
+        if not isinstance(p, dict) or str(p.get("id", "")).startswith("__"):
+            continue
+        f = str(p.get("fecha") or "")[:10]
+        if f in fer and f >= hoy:
+            cuenta[f] = cuenta.get(f, 0) + 1
+    if cuenta:
+        print("   ⚠️ pedidos agendados para un FERIADO: " + ", ".join(f"{f}: {n}" for f, n in sorted(cuenta.items())))
+    else:
+        print(f"   pedidos agendados para un feriado de acá en adelante: ninguno ({len([f for f in fer if f >= hoy])} feriados por venir)")
+
+
 def contar(crudo):
     if crudo is None:
         return
@@ -94,6 +125,7 @@ def contar(crudo):
         for n, i in sistema:
             if i in ("__stock__", "__arqueo_cuadre__", "__dias_cerrados__", "__carga_chk__"):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
+        pedidos_en_feriados(ped)
 
 
 def url_de_la_pagina():
