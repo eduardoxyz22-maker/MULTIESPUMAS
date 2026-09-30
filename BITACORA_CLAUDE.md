@@ -7445,6 +7445,66 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hb. 29/09, noche: «no conecta» — no era el panel ni el servidor: Google entregando lento a ratos, y la planilla que viaja entera
+
+> NADA publicado ni cambiado en el panel ni en el servidor. En la rama quedó una herramienta de diagnóstico
+> (`herramientas/diagnostico_lectura.py` + `.github/workflows/diagnostico-lectura.yml`, commits `375a3e7`…`1013226`).
+
+**Qué pasó.** A las 22:21 el iPad del dueño quedó en «⏳ Conectando con la planilla del equipo… 17 s» y a las 22:26 el
+cartel rojo decía «no hay conexión con Google (sin internet, o esta red o un bloqueador…)», con «Nunca se pudo leer la
+planilla en este dispositivo». El dueño lo atribuyó a §4ha (publicada 17:19) y recordó que Carola tampoco conectaba.
+Conectó solo ~22:35-22:40.
+
+**Lo que se midió (y descarta el código):**
+- **La página no se traba**: con 1.300 pedidos inventados, `6146f6d`, `f722163` y `2207922` procesan la lectura en
+  20-66 ms (con la CPU 6 veces más lenta, 160-370 ms), sin errores (`scratchpad/diag_conexion/perf.js`). Ningún commit del
+  29/09 tocó `apiPost`/`apiList`/`fetch`/`cargaInicial`. `ULTIMO_REFRESCO` vive en memoria: «Nunca se pudo leer la planilla
+  en este dispositivo» quiere decir «desde que se abrió la página», no «nunca» (texto engañoso, anotado como mejora).
+- **El cartel era de red de verdad**: «no hay conexión» sale solo si el mensaje del error es `Failed to fetch`/`Load
+  failed`/`NetworkError`/`network`/`aborted`, o sea `fetch` rechazado; un error del panel al procesar diría «error: …».
+- **Lo de Carola fue ANTES de §4ha**: el mensaje del dueño llegó a las 17:05 y §4ha se publicó a las 17:19.
+- **El servidor contestaba**: respaldo de Kommo 173 (19:46) y 174 (22:27) con «versión 2026-09-28-a»; las Ejecuciones que
+  mandó el dueño (22:25-22:27) todas «Completada» en 1,4-3,6 s. Pero el respaldo usa `kommoLeads`, que el `.gs` atiende
+  ANTES que todo: no prueba que `list` ande. Por eso la herramienta nueva.
+- **La herramienta** (corre en GitHub al pushear sus archivos; en `main`, también a mano): hace la MISMA lectura que el
+  navegador (`POST {action:'list', quien, dispositivo, cola, colaIds}` a la dirección escrita en `pedidos.html`, con
+  `?_=<ms>`, texto plano, `Origin` de github.io) y dice código, tiempo, tamaño, CORS, filas y el tamaño de las filas del
+  sistema — sin imprimir un solo dato de clientes (el registro es público). Resultados:
+  · 22:31 y 22:34: HTTP 200 en 1,9-2,7 s, JSON, `Access-Control-Allow-Origin: *`, 1.096 filas, **901.361 bytes**, versión
+    28-a; `__stock__` 25.437 letras; la fila más grande de un pedido, 3.157. La dirección de `pedidos.html` y el secreto
+    `PANEL_URL` son LA MISMA.
+  · 22:36: la misma lectura tardó **9,7 s** y la siguiente **59,0 s** (también desde GitHub): Google lento a ratos, no la
+    red del dueño.
+  · **Google NO comprime** la respuesta aunque se pida `Accept-Encoding: gzip`: viajan los 901.361 bytes enteros.
+  · 22:39, en dos tramos, 5 veces: correr el script 1,7-3,7 s · entregar los datos 0,2-0,4 s.
+- A las 22:45 el dueño abrió la dirección del `/exec` en incógnito y el iPad recibió la planilla entera.
+
+**Conclusión.** Ni el panel ni el `.gs`: a ratos Google tarda mucho en contestar (o en entregar), y cada equipo baja la
+planilla ENTERA (900 KB sin comprimir) cada 2 minutos (`AUTO_MS`), así que cuando Google se traba lo grande es lo que no
+llega. Mientras tanto no se pierde nada: los guardados son chicos y la cola reintenta.
+
+**Propuesto al dueño (lo ve el 30/09; no se tocó nada):**
+1. **El cartel**: que no diga «si le pasa a todo el equipo es el servidor… volvé a la versión anterior» cuando el servidor
+   anda (esta noche hizo sospechar de lo publicado), y que «Nunca se pudo leer» diga «desde que abriste la página». Solo
+   página.
+2. **La lectura comprimida**: `list` con `z:1` → el `.gs` devuelve `Utilities.gzip` + base64 y la página descomprime con
+   `DecompressionStream` (iOS 16.4+; sin eso, pide como hoy). ~7 veces menos. Exige versión nueva del `.gs`.
+3. **La lectura de lo cambiado** (el dueño preguntó cómo sería y cómo se sabría que llegó todo):
+   · el sello `rev` ya es la hora del servidor de cada guardado (`doSave`: `max(rev+1, Date.now())`); `list` con `desde`
+     devuelve las filas con `rev > desde − 5 min` (margen por un guardado que corre durante la lectura: la lectura no toma
+     el candado) + `ahora` (hora del servidor);
+   · **los caminos que escriben SIN sello** hoy: los borradores de Kommo (`appendRow(recToRow(...))`, líneas ~1785 y
+     ~1906) y `repararNombreAplicar_` (`setValue` del Cliente, ~1874) — hay que sellarlos; la herramienta de agosto ya
+     sella;
+   · **los borrados**: `doDelete` hace `deleteRow` y no deja rastro → hoja «Borrados» (id + hora, 30 días);
+   · **la cuenta de control**: el servidor manda cuántas filas hay y un número hecho con todos los `id:rev` (módulo, no
+     una suma: pasaría 2^53); la página la rehace con su copia y, si no coincide, lee todo;
+   · lectura completa al abrir y cada 15 minutos (una edición a mano en la hoja no cambia el sello);
+   · con la hoja de Borrados, «lo borraron desde otro equipo» deja de deducirse de una ausencia (§4gl/§4gn/§4go);
+   · la página lo usa solo si el servidor contesta `ahora`/huella: se puede publicar antes que el `.gs`.
+   Sugerido: 2 primero; 1 y 3 juntas en UNA versión del `.gs`. Límite dicho al dueño: si Google tarda en CORRER el script
+   (los 59 s), esto no lo arregla; hace que la respuesta sea chica y llegue.
+
 ## 4ha. 29/09, tarde: un código que no está en la lista de precios pero sí en el almacén — PUBLICADA 29/09 17:19 (`2207922`)
 
 > **Publicada el 29/09 a las 17:19 de Bolivia** (`main` = `2207922`), con el OK del dueño (*«publicá lo que había

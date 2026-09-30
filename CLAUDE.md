@@ -402,6 +402,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   Desde §4fz-b también **falla si el «último repaso del script» tiene más de 30 minutos**
   (`REPASO_PARADO_MIN`; encola igual): el 23/09 las corridas 137 y 138 lo imprimieron parado desde
   las 11:24 y salieron en verde.
+- **🩺 «No conecta» pero el servidor anda (§4hb, 29/09)**: el respaldo de Kommo usa `kommoLeads`, que el `.gs` atiende
+  ANTES que todo, así que NO prueba la lectura. Para eso está «Diagnóstico de la lectura del panel»
+  (`herramientas/diagnostico_lectura.py`; corre al pushear sus archivos, y a mano cuando esté en `main`): hace la MISMA
+  lectura que el navegador y dice código, tiempo, tamaño, CORS y filas, sin datos de clientes. El 29/09 22:31-22:39: 200 en
+  2-3 s, 901 KB **sin comprimir** (Google no comprime aunque se pida gzip), y a las 22:36 una lectura tardó 59 s también
+  desde GitHub: Google lento a ratos. «Nunca se pudo leer la planilla en este dispositivo» = desde que se abrió la página
+  (`ULTIMO_REFRESCO` vive en memoria). Propuesto (el dueño lo ve el 30/09): cartel que no culpe a la versión, lectura
+  comprimida y lectura de lo cambiado (diseño en §4hb).
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
