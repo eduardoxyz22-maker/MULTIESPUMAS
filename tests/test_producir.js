@@ -141,9 +141,14 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   /* octubre: la regla es la de §4ec/§4ds (revisada en §4er: coherente): se necesita lo PROBABLE del
      rango (mediana de 30 d / 60 d / 90 d / año pasado / tendencia), EN ENTEROS para arriba. Sin
      historia del TITANIO ICE, el rango sale del ritmo de 30 d: 0,6×31 = 18,6 → 19; quedan 0 el
-     1/10 (5 − 0,6×21 días de septiembre) → producir 19; 70% → 14 y 5 */
-  chk('octubre necesita 19 (0,6 × 31 = 18,6, entero para arriba), no queda nada el 1/10 → producir 19', r.H && r.H.mesNec===19 && r.H.mesQueda===0 && r.H.mes===19, r.H && JSON.stringify([r.H.mesNec,r.H.mesQueda,r.H.mes]));
-  chk('el 70% (14) para la 1ª quincena y el resto (5) para la 2ª', r.H && r.H.mes1===14 && r.H.mes2===5, r.H && (r.H.mes1+' · '+r.H.mes2));
+     1/10 (5 − 0,6×21 días de septiembre) → producir 19; 70% → 14 y 5
+     ⚠️ (30/09, §4hd, a conciencia) Cambió la HISTORIA, no la regla: el histórico del sistema sumaba al TITANIO ICE 160x190 las
+     ventas del «TITANIO ICE Med.Esp. 160X200» (CH1389, otro código: una medida especial, que se fabrica a pedido). Desde §4hd
+     un código que la lista no conoce no se suma «por parecerse» (§4cy, X-4), así que oct-25 = 6 (antes 8) y la tendencia
+     6 × 3 = 18 (antes 24). El rango es {30 d 18,6 · oct-25 6 · tendencia 18}: la mediana es 18 → producir 18; 70% → 13 y 5;
+     rango 6–19. */
+  chk('octubre necesita 18 (mediana de 30 d 18,6 · oct-25 6 · tendencia 18), no queda nada el 1/10 → producir 18', r.H && r.H.mesNec===18 && r.H.mesQueda===0 && r.H.mes===18, r.H && JSON.stringify([r.H.mesNec,r.H.mesQueda,r.H.mes]));
+  chk('el 70% (13) para la 1ª quincena y el resto (5) para la 2ª', r.H && r.H.mes1===13 && r.H.mes2===5, r.H && (r.H.mes1+' · '+r.H.mes2));
   // Sueña: nada en 15 días (no rota), 6 en 3 entregas en 30 → 0,2/día. Solo el mes
   chk('COLCHON SOFT: sin rotación en 15 días → 7 y 15 días en cero', r.S && r.S.o.rota===false && r.S.sem===0 && r.S.quin===0, r.S && JSON.stringify([r.S.sem,r.S.quin]));
   /* El SOFT (COLT0048) SÍ tiene historia en VENTAS_HIST (oct-25 = 34): el rango junta 30 d (6,2), el
@@ -162,7 +167,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('la quincena nunca pide menos que la semana', [r.H,r.S,r.M,r.F].every(function(f){ return f && f.quin>=f.sem; }));
   // XYZ PLUS: 4 en 4 entregas en 15 días (0,27/día, media) → 0,27×8=2,1 → 3; 0,27×20=5,3 → 6; mes 0,13×31=4,1 → 5; el 70% de 5 es 3,5 → 4 y 1 (§4ds, enteros para arriba)
   chk('XYZ PLUS (nombre suelto, medida «130X190CM»): 3 · 6 · 5 (4+1), en «sin fábrica asignada», y la medida queda 130x190', r.X && r.X.sem===3 && r.X.quin===6 && r.X.mes===5 && r.X.mes1===4 && r.X.mes2===1 && r.X.bloque==='otros' && r.X.md==='130x190', r.X && JSON.stringify([r.X.sem,r.X.quin,r.X.mes,r.X.mes1,r.X.mes2,r.X.bloque,r.X.md]));
-  chk('totales por bloque: Heaven 1 · 9 · 19 (14+5); Sueña 0 · 0 · 17 (12+5); sin asignar 7 · 10 · 5 (4+1)', r.tot.heaven.sem===1 && r.tot.heaven.quin===9 && r.tot.heaven.mes===19 && r.tot.heaven.mes1===14 && r.tot.heaven.mes2===5 && r.tot.suena.mes===17 && r.tot.suena.mes1===12 && r.tot.suena.mes2===5 && r.tot.suena.sem===0 && r.tot.otros.sem===7 && r.tot.otros.quin===10 && r.tot.otros.mes===5 && r.tot.otros.mes1===4 && r.tot.otros.mes2===1, JSON.stringify(r.tot));
+  chk('totales por bloque: Heaven 1 · 9 · 18 (13+5); Sueña 0 · 0 · 17 (12+5); sin asignar 7 · 10 · 5 (4+1)', r.tot.heaven.sem===1 && r.tot.heaven.quin===9 && r.tot.heaven.mes===18 && r.tot.heaven.mes1===13 && r.tot.heaven.mes2===5 && r.tot.suena.mes===17 && r.tot.suena.mes1===12 && r.tot.suena.mes2===5 && r.tot.suena.sem===0 && r.tot.otros.sem===7 && r.tot.otros.quin===10 && r.tot.otros.mes===5 && r.tot.otros.mes1===4 && r.tot.otros.mes2===1, JSON.stringify(r.tot));
   chk('⚠️ …y el PILLOW FLEX ya no está en «sin asignar»: hace bloque aparte con sus 7 de octubre (2+5)', r.tot.roho && r.tot.roho.n===1 && r.tot.roho.sem===0 && r.tot.roho.quin===0 && r.tot.roho.mes===7 && r.tot.roho.mes1===2 && r.tot.roho.mes2===5, JSON.stringify(r.tot.roho));
   chk('el pie de «sin asignar» reparte por medida: 130x190 y 140x190', r.tot.otros.medidas.length===2 && r.tot.otros.medidas.indexOf('130x190')>=0 && r.tot.otros.medidas.indexOf('140x190')>=0, JSON.stringify(r.tot.otros.medidas));
   chk('el ORO BI RELAX rota pero tiene 60: queda como cubierto y no suma nada a Heaven', r.cubiertos===1 && r.tot.heaven.n===1 && r.claves.some(function(k){ return /ORO BI RELAX/.test(k); }), r.cubiertos+' cubiertos');
@@ -195,8 +200,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('la pantalla de stock muestra el cuadro «🏭 Qué producir» con los cuatro bloques', r && r.bloques===4 && /Industrias Moreno · Heaven/.test(r.t) && /Industrias Moreno · ROHO \(FLEX \/ PEDIC\)/.test(r.t) && /Multiespumas · Sueña/.test(r.t) && /Sin fábrica asignada/.test(r.t), r && r.t.slice(0,240));
   chk('el título nombra la semana, los 15 días y octubre', r && /esta semana, los próximos 15 días y octubre/.test(r.t));
-  // Desde §4du el resumen del bloque trae el RANGO del mes: «octubre: 19 (rango 8–24)».
-  chk('el bloque Heaven resume 7 días: 1 · 15 días: 9 · octubre: 19 (rango 8–24) · 1ª quincena 14 · 2ª 5', r && /7 días: 1 · 15 días: 9 · octubre: 19 \(rango 8–24\) · 1ª quincena 14 · 2ª 5/.test(r.t), r && r.t.slice(0,600));
+  // Desde §4du el resumen del bloque trae el RANGO del mes: «octubre: 18 (rango 6–19)» (§4hd: sin la medida especial CH1389).
+  chk('el bloque Heaven resume 7 días: 1 · 15 días: 9 · octubre: 18 (rango 6–19) · 1ª quincena 13 · 2ª 5', r && /7 días: 1 · 15 días: 9 · octubre: 18 \(rango 6–19\) · 1ª quincena 13 · 2ª 5/.test(r.t), r && r.t.slice(0,600));
   chk('las columnas dicen hasta qué día llega cada horizonte (17/09 y 25/09) y qué queda el 01/10', r && /hasta el 17\/09/.test(r.t) && /hasta el 25\/09/.test(r.t) && /queda el 01\/10/.test(r.t));
   chk('la fila del TITANIO ICE muestra ritmo, hay 5 (3 acá · 2 Moreno) y los cinco números', r && /TITANIO ICE/.test(r.filaH) && /3 acá · 2 Moreno/.test(r.filaH) && /15 d: 10 en 5 entregas/.test(r.filaH) && /30 d: 18 en 9 entregas/.test(r.filaH), r && r.filaH);
   chk('hay botones para copiar cada horizonte por fábrica (7 días, 15 días, octubre)', r && r.botones.some(function(b){ return /📋 7 días/.test(b); }) && r.botones.some(function(b){ return /📋 15 días/.test(b); }) && r.botones.some(function(b){ return /📋 octubre/.test(b); }), r && r.botones.join(' | '));
@@ -221,7 +226,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     document.getElementById('producir').querySelector('tr.producir-med[data-b="heaven"][data-md="160x190"]').click();
     return document.getElementById('producir').querySelectorAll('tr.producir-modelo').length;
   });
-  chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus cinco números (1 · 9 · 19 · 14 · 5) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='1 9 19 14 5', JSON.stringify(r5b.sub));
+  chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus cinco números (1 · 9 · 18 · 13 · 5) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='1 9 18 13 5', JSON.stringify(r5b.sub));
   chk('la fila abierta marca ▾ y las otras medidas siguen cerradas', /▾ por medida · 160x190/.test(r5b.med) && r5b.otrosCerrado===true, r5b.med);
   chk('tocarla de nuevo la cierra', r5c===0, String(r5c));
 
@@ -244,7 +249,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('la tabla scrollea dentro de su propia caja (si no, el encabezado clavado no sirve de nada)', rf && !rf.sinCaja && /vh|px/.test(rf.alto) && (rf.scroll==='auto'||rf.scroll==='scroll'), JSON.stringify(rf&&{alto:rf.alto,scroll:rf.scroll}));
   chk('el encabezado queda clavado arriba, con fondo propio y por encima de las filas', rf && rf.thPos==='sticky' && rf.thTop==='0px' && Number(rf.thZ)>=2 && /rgb/.test(rf.thFondo), JSON.stringify(rf&&{p:rf.thPos,t:rf.thTop,z:rf.thZ,f:rf.thFondo}));
   chk('la fila del TOTAL queda clavada abajo mientras se recorre la lista', rf && rf.totPos==='sticky' && rf.totBottom==='0px' && /rgb/.test(rf.totFondo), JSON.stringify(rf&&{p:rf.totPos,b:rf.totBottom,f:rf.totFondo}));
-  chk('el TOTAL dice de qué fábrica es y repite qué es cada número (7 d · 15 d · octubre · 1ª q · 2ª q)', rf && /TOTAL Industrias Moreno · Heaven/.test(rf.totTxt) && /1 7 d/.test(rf.totTxt) && /9 15 d/.test(rf.totTxt) && /19 octubre/.test(rf.totTxt) && /14 1ª q/.test(rf.totTxt) && /5 2ª q/.test(rf.totTxt), rf && rf.totTxt);
+  chk('el TOTAL dice de qué fábrica es y repite qué es cada número (7 d · 15 d · octubre · 1ª q · 2ª q)', rf && /TOTAL Industrias Moreno · Heaven/.test(rf.totTxt) && /1 7 d/.test(rf.totTxt) && /9 15 d/.test(rf.totTxt) && /18 octubre/.test(rf.totTxt) && /13 1ª q/.test(rf.totTxt) && /5 2ª q/.test(rf.totTxt), rf && rf.totTxt);
   chk('el bloque «sin fábrica asignada» pide que el dueño diga dónde se hacen', r && /Decí en cuál se hacen/.test(r.t) && /nombres fuera del catálogo/.test(r.t) && !/Flex y Pedic/.test(r.t));
   chk('nada de plata en el cuadro: ni Bs ni montos', r && !/Bs\b/.test(r.t) && !/\$/.test(r.t));
   chk('la pantalla no tiró errores', errors.length===0, errors.join(' | '));
@@ -260,8 +265,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { mes:mes, sem:sem, nada:nada, otros:otros };
   });
   chk('el texto de «sin asignar» reparte por medida con la escritura unificada (130x190 3 · 140x190 4)', /MORFEO · 140x190: 4/.test(r.otros) && /XYZ PLUS · 130X190(CM)?: 3/.test(r.otros) && /Total: 7 unidades · por medida: 130x190 3 · 140x190 4/.test(r.otros), r.otros);
-  chk('el texto de octubre lleva el producto con su código, la cantidad y el reparto por quincena', /PRODUCIR PARA OCTUBRE \(TODO EL MES\) — INDUSTRIAS MORENO · HEAVEN/.test(r.mes) && /TITANIO ICE · 160x190 \(cód CH1201\): 19 — 1ª quincena 14 · 2ª quincena 5/.test(r.mes), r.mes);
-  chk('…y cierra con el total y el reparto por medida, sin plata', /Total: 19 unidades · por medida: 160x190 19/.test(r.mes) && !/Bs/.test(r.mes));
+  chk('el texto de octubre lleva el producto con su código, la cantidad y el reparto por quincena', /PRODUCIR PARA OCTUBRE \(TODO EL MES\) — INDUSTRIAS MORENO · HEAVEN/.test(r.mes) && /TITANIO ICE · 160x190 \(cód CH1201\): 18 — 1ª quincena 13 · 2ª quincena 5/.test(r.mes), r.mes);
+  chk('…y cierra con el total y el reparto por medida, sin plata', /Total: 18 unidades · por medida: 160x190 18/.test(r.mes) && !/Bs/.test(r.mes));
   chk('el de la semana dice 1 para el TITANIO ICE y explica qué cubre', /PRODUCIR PARA ESTA SEMANA/.test(r.sem) && /TITANIO ICE · 160x190 \(cód CH1201\): 1 —/.test(r.sem) && /Total: 1 unidad ·/.test(r.sem) && /Cubre lo vendido sin entregar/.test(r.sem), r.sem);
   chk('si no hay nada que producir no copia nada (avisa)', r.nada==='');
 

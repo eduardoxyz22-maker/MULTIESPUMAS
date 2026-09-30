@@ -55,7 +55,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     /* ⚠️ La fecha, al primer día entregable: sin esto el formulario queda en «mañana» y
        los sábados eso es domingo → «No se agenda los DOMINGOS» y 45 checks en rojo
        (pasó el 05/09/2026). Es la regla del LEEME sobre `tomorrowStr()` a secas. */
-    var _d=new Date(), _f; do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while(diaDomingo(_f));
+    var _d=new Date(), _f; do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while((diaDomingo(_f)||(typeof feriadoDe==='function'&&!!feriadoDe(_f))));
     document.getElementById('f-fecha').value=_f; segSet('f-turno','AM');
     segSet('f-doc-tipo', o.tipo||'ATC'); setDocTipo();
     if((o.tipo||'ATC')!=='ATC') document.getElementById('f-nota').value=o.nota||'1';

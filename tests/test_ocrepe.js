@@ -31,7 +31,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     /* ⚠️ resetForm() pone MAÑANA, y si mañana cae DOMINGO el panel no agenda: el test se
        caería solo los sábados. Se corre al primer día entregable. Ver tests/LEEME.md. */
     var _d=new Date(), _f;
-    do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while(diaDomingo(_f));
+    do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while((diaDomingo(_f)||(typeof feriadoDe==='function'&&!!feriadoDe(_f))));
     document.getElementById('f-fecha').value=_f;
     var pd=document.querySelector('#f-productos .prod-desc'); if(pd) pd.value='SOFT ICE';
     var pm=document.querySelector('#f-productos .prod-medida'); if(pm) pm.value='140x190';
@@ -126,7 +126,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     document.getElementById('f-direccion').value='Av. Z';
     document.getElementById('f-nota').value='3';
     var _d=new Date(), _f;                                   // el primer día entregable (no domingo)
-    do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while(diaDomingo(_f));
+    do { _d.setDate(_d.getDate()+1); _f=isoLocal(_d); } while((diaDomingo(_f)||(typeof feriadoDe==='function'&&!!feriadoDe(_f))));
     document.getElementById('f-fecha').value=_f;
     var pd=document.querySelector('#f-productos .prod-desc'); if(pd) pd.value='SOFT ICE';
     var pm=document.querySelector('#f-productos .prod-medida'); if(pm) pm.value='140x190';

@@ -32,9 +32,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       window._pl=window._pl.filter(function(p){return p.id!==g.id;}).concat([g]); return Promise.resolve({ok:true}); };
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
     var _d=new Date(), F1,F2,F3;
-    do { _d.setDate(_d.getDate()+1); F1=isoLocal(_d); } while(diaDomingo(F1)||diaSabado(F1));
-    do { _d.setDate(_d.getDate()+1); F2=isoLocal(_d); } while(diaDomingo(F2)||diaSabado(F2));
-    do { _d.setDate(_d.getDate()+1); F3=isoLocal(_d); } while(diaDomingo(F3)||diaSabado(F3));
+    do { _d.setDate(_d.getDate()+1); F1=isoLocal(_d); } while((diaDomingo(F1)||(typeof feriadoDe==='function'&&!!feriadoDe(F1)))||diaSabado(F1));
+    do { _d.setDate(_d.getDate()+1); F2=isoLocal(_d); } while((diaDomingo(F2)||(typeof feriadoDe==='function'&&!!feriadoDe(F2)))||diaSabado(F2));
+    do { _d.setDate(_d.getDate()+1); F3=isoLocal(_d); } while((diaDomingo(F3)||(typeof feriadoDe==='function'&&!!feriadoDe(F3)))||diaSabado(F3));
     DIAS_CERRADOS=[F2]; saveCierresMirror();
     var mk=function(id,fecha,turno,extra){ return Object.assign({ id:id, fecha:fecha, turno:turno,
       oc:'', nota:'9', vendedor:'Maria Flores', cliente:'C-'+id, celular:'7', zona:'N',
@@ -96,7 +96,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ============ 6. SIN clave: mover a un día VÁLIDO → pasa, y avisa 📅 ============
   await prep(false);
   const F4 = await page.evaluate((f3) => { var d=new Date(f3+'T12:00:00'), f;
-    do { d.setDate(d.getDate()+1); f=isoLocal(d); } while(diaDomingo(f)); return f; }, F.F3);
+    do { d.setDate(d.getDate()+1); f=isoLocal(d); } while((diaDomingo(f)||(typeof feriadoDe==='function'&&!!feriadoDe(f)))); return f; }, F.F3);
   r = await mover("document.getElementById('f-fecha').value='"+F4+"';");
   chk('a un día abierto y con lugar SÍ se mueve', r.fecha===F4, r.fecha+' · '+JSON.stringify(r.toasts));
   chk('…y a logística le llega el 📅 en el aviso de modificado',

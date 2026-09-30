@@ -402,6 +402,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   Desde §4fz-b también **falla si el «último repaso del script» tiene más de 30 minutos**
   (`REPASO_PARADO_MIN`; encola igual): el 23/09 las corridas 137 y 138 lo imprimieron parado desde
   las 11:24 y salieron en verde.
+- **🩺 «No conecta» pero el servidor anda (§4hb, 29/09)**: el respaldo de Kommo usa `kommoLeads`, que el `.gs` atiende
+  ANTES que todo, así que NO prueba la lectura. Para eso está «Diagnóstico de la lectura del panel»
+  (`herramientas/diagnostico_lectura.py`; corre al pushear sus archivos, y a mano cuando esté en `main`): hace la MISMA
+  lectura que el navegador y dice código, tiempo, tamaño, CORS y filas, sin datos de clientes. El 29/09 22:31-22:39: 200 en
+  2-3 s, 901 KB **sin comprimir** (Google no comprime aunque se pida gzip), y a las 22:36 una lectura tardó 59 s también
+  desde GitHub: Google lento a ratos. «Nunca se pudo leer la planilla en este dispositivo» = desde que se abrió la página
+  (`ULTIMO_REFRESCO` vive en memoria). Propuesto (el dueño lo ve el 30/09): cartel que no culpe a la versión, lectura
+  comprimida y lectura de lo cambiado (diseño en §4hb).
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
@@ -763,7 +771,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   **PTF** · Banzer · Moreno y de qué corte y consulta es. ⚠️ «PTF» (productos terminados fábrica), NO «acá» (dueño,
   29/09, §4gz, publicada 11:43, `f722163`): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
   cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
-- **🏷️ Un código que NO está en la lista de precios pero SÍ en el Excel de un almacén** (dueño, 29/09, §4ha): al
+- **🏷️ Un código que NO está en la lista de precios pero SÍ en el Excel de un almacén** (dueño, 29/09, §4ha, publicada
+  29/09 17:19, `2207922`): al
   escribirlo, `productoDeAlmacen(code)` completa el nombre y la medida. La medida sale de la clave del Excel. El nombre
   sale de `VENTAS_HIST` sin la medida si ese código está ahí y coincide; si no, de la clave. Un aviso dice «no está en la
   lista de precios… poné el precio a mano».
@@ -905,6 +914,38 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
+## 🔧 Los 24 arreglos de la revisión en TRES niveles (§4hc → §4hd, 30/09) — EN LA RAMA, SIN PUBLICAR
+Hallazgos en `RESPUESTA_CLAUDE.md` §22, arreglos en §23 y bitácora §4hd. El dueño: *«hazlo todo»*. Lo que hay que respetar:
+- **Plata: dos funciones, dos usos.** `cobradoFueraDeAcuenta(p)` = solo cobros registrados, para el freno «poné el saldo»
+  (lo que «A cuenta» tiene de más sobre el anticipo escrito es el 2° método, se reconozca como mixto o no).
+  **`cobradoNoMostrado(p, acuForm)`** = para PROPONER montos («Usar como total», «SÍ, pagado»), con `contaCobrado` (una venta
+  «SÍ, pagado» tiene el pago en el anticipo con «A cuenta» 0, §4cb). ⚠️ No mezclarlas: con la segunda el freno se apaga (X-2).
+  Un adelanto en dos pagos que ya no se reconocen como mixto no se corrige desde el formulario (va a Contabilidad), y
+  `ctaGuardarPago` decide «¿sigue siendo el 2° método?» mirando el PROPIO renglón.
+- **Renglones del formulario**: uno con código o precio y SIN producto FRENA el guardado. Excepción: `data-de-pedido` (lo
+  pone `editPedido`, se va al cambiar el código): vaciarle el nombre a un producto que ya traía el pedido lo SACA. `data-alm-pend`
+  = el código se escribió sin saldo o sin ningún Excel (`stockHayAlgunExcel`); `prodCodigosDelAlmacen` completa SOLO esos, una
+  vez, y la medida solo si está vacía. ⚠️ Nunca volver a completar en cada lectura todo renglón sin nombre (R4-2).
+- **Código del almacén** = mismas protecciones que la lista de precios (`saldoCatDeCodigo`): «código de otra medida/producto»
+  en el cuadrito, la pregunta al guardar y `stockAsignar` (no tilda ni reserva, `tot.codOtro`). Un código agotado se completa
+  desde el histórico (`productoDeAlmacen` → `hist:true`, saldo 0).
+- **El producto fuera de la lista que se agota sigue siendo él**: `stockCodRecordar` (en `confirmarImportExist`) conserva
+  los códigos viejos mientras `stockCodRefs` los encuentre (pedido sin entregar o entregado ≤31 días, `STOCK.p`/`e`/`rs`), y
+  `stockInfo` no adivina por nombre un código que el sistema conoce (`stockCodigoDelSistema`, está en `VENTAS_HIST`). ⚠️ Eso
+  cambió el histórico de «Qué producir» (37/430 filas: las «Med.Esp. 160X200» ya no suman al 160x190): es a propósito (X-4).
+- **Multicenter**: `ek30=stockEntregaClave(p, fs)` (30 días por fecha de ENTREGA, como los 15).
+- **Días sin camión**: `resetForm` propone `proximoDiaEntrega()`; `sinCamionHtml()` arriba de Revisar y de la carga;
+  «🚚 Próximo camión» en Cerrar día; «cambiale el DÍA» al cambiar solo el turno en un feriado; `saldoAvisos` contra el
+  último día hábil; `atcRecogerFabDesde` con `diaHabil`.
+- **Retiros**: `RETIROS`/`BORRADORES` se reemplazan SOLO con la lista del servidor (`leerCierresDeLista(…, true)`);
+  `persistRetiro` saca de la cola las versiones viejas de ese retiro al guardar bien; un retiro borrado desde otro equipo no
+  se vuelve a crear desde ✏️.
+- **Proyección**: la curva va sin hora en domingo o feriado y, con hora, cada mes cerrado corta en su último día HÁBIL;
+  `pryPatron` sin feriados; unidades: «P/» = «PARA», `PRY_CORTE`, y la palabra sola después de «FORRO/PROTECTOR DE COLCHON».
+- **Pruebas**: `tests/test_rev30_{plata,stock,dias,retiros,proyeccion}.js`. ⚠️ Un bucle que busque «el primer día de entrega»
+  saltea domingo Y feriado (`typeof feriadoDe==='function' && feriadoDe(f)`), y para «el mes pasado» se fija el día ANTES de
+  `setMonth(-1)` (el 31/10, «31/09» es el 01/10).
+
 ## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, PUBLICADA 29/09 10:02, `72aa862`)
 Informe completo en `RESPUESTA_CLAUDE.md` §20 (hallazgos) y §21 (arreglos). Respuestas del dueño (29/09): *«No sale en
 feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO sube el Excel de Moreno después de cargar
@@ -998,6 +1039,11 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   veces hasta 4 pedidos en el mismo día para su bodega»*. `stockEntregaClave(p, f)` usa la fecha como clave de la
   entrega para Eduardo → Multicenter (`nVentasRotacion`, `nVentas`, `n30`); lo demás sigue por pedido. Las unidades se
   suman igual, y los umbrales no cambian. `test_eduardo_multicenter` §8.
+  ⚠️ **«El mismo día» es la FECHA DE ENTREGA que pone el dueño** (dueño, 29/09 a la noche: *«cuando se entrega es la fecha
+  que yo coloco de entrega, a veces cargo el pedido el mismo día para entregar ese mismo día»*; solo él y ROHO pueden
+  agendar para hoy, `esVendedorLite`). La ventana de 15 días ya junta por `fs` (fecha de salida); la de 30 días (`n30`)
+  junta por `fv` (fecha de venta) — **falta cambiar esa clave a `fs`** (revisión del 29/09, R4-3). La ventana de 30 días
+  se sigue MIDIENDO por fecha de venta (§4dv); lo que cambia es solo cómo se juntan los pedidos de Multicenter.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;

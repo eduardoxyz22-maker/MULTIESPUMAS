@@ -53,7 +53,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
          de reventar contra el JSON. Sin ellos, este doble simula un 404 sin querer. */
       return Promise.resolve({ ok:true, status:200, json:function(){ return Promise.resolve(r); } });
     };
-    var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
+    var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6||(typeof feriadoDe==='function'&&!!feriadoDe(isoLocal(d)))) d.setDate(d.getDate()+1);
     window._F=isoLocal(d);
     var P=function(o){ return Object.assign({id:'x'+Math.random(),fecha:window._F,oc:'',vendedor:'Mirian Salazar',
       cliente:'C',productos:[{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:1,precio:1000}],

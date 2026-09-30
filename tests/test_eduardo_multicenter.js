@@ -98,6 +98,11 @@ function NUMEROS(k){
     await page.evaluate(() => { var c=document.getElementById('conn-form'); if(c) c.style.display='none'; CONNECTED=false; UNLOCKED=true;
       if(typeof AUTO_TIMER!=='undefined' && AUTO_TIMER) clearInterval(AUTO_TIMER); if(typeof MIS_TIMER!=='undefined' && MIS_TIMER) clearInterval(MIS_TIMER); });
     await page.evaluate('window.ESCENARIO='+ESCENARIO.toString()+'; window.NUMEROS='+NUMEROS.toString()+';');
+    /* (30/09, §4hd) La página nueva ya no suma al producto de la lista las ventas viejas de OTRO código (X-4: el «TITANIO ICE
+       Med.Esp. 160X200» sumaba al 160x190). Esta prueba compara la regla de Multicenter con la publicada, no el histórico: se
+       sacan del histórico las filas de códigos que la lista no conoce en las DOS páginas, y lo demás sigue siendo literal. */
+    await page.evaluate(() => { VENTAS_HIST.filas=VENTAS_HIST.filas.filter(function(f){ return !!CODIGOS[String(f[0]).toUpperCase()]; });
+      VENTAS_HIST_IDX=null; if(typeof stockOlvidarIndice==='function') stockOlvidarIndice(); });
     return page;
   };
   const viejoArch = path.join(os.tmpdir(), 'pedidos_antes_'+ANTES_SHA+'.html');
@@ -155,8 +160,10 @@ function NUMEROS(k){
   chk('7 días de «Qué producir» 1 → 12 = fabricar de la tabla; pedir 3 → 14 (recoger 2 de Moreno + fabricar 12)',
       nBase.T.sem===1 && nBase.T.pedir===3 && nBase.T.recoger===2 && nMc.T.sem===12 && nMc.T.pedir===14 && nMc.T.recoger===2 && nMc.T.fabricar===12,
       { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem] });
-  chk('15 días 9 → 22 y octubre 15 → 22 (rango 8–24 → 8–34)',
-      nBase.T.quin===9 && nMc.T.quin===22 && nBase.T.mesNec===15 && nMc.T.mesNec===22 && nBase.T.mesMax===24 && nMc.T.mesMax===34,
+  /* (30/09, §4hd) Sin la medida especial CH1389 en el histórico: oct-25 = 6 y tendencia 18 (antes 8 y 24), así que el rango
+     arranca en 6, el máximo sin Multicenter es el ritmo de 30 d (18,6 → 19) y con Multicenter la mediana es el 90 d (20,4 → 21). */
+  chk('15 días 9 → 22 y octubre 15 → 21 (rango 6–19 → 6–34)',
+      nBase.T.quin===9 && nMc.T.quin===22 && nBase.T.mesNec===15 && nMc.T.mesNec===21 && nBase.T.mesMin===6 && nBase.T.mesMax===19 && nMc.T.mesMin===6 && nMc.T.mesMax===34,
       { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.mesMin, nBase.T.mesMax], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.mesMin, nMc.T.mesMax] });
   // En la publicada esas ventas SÍ se veían, pero solo en los carteles de «no cuentan» (únicos de Eduardo y puntuales):
   // ningún número de la proyección se movía. Se comparan solo los de la proyección.

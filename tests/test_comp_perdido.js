@@ -34,7 +34,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
     apiPost=function(){ return Promise.resolve({ok:true}); };
     window._toasts=[]; toast=function(m,k){ window._toasts.push(String(k)+': '+m); }; confirm=function(){ return true; };
-    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while(diaDomingo(F)||diaCerrado(F));
+    var _d=new Date(), F; do { _d.setDate(_d.getDate()+1); F=isoLocal(_d); } while((diaDomingo(F)||(typeof feriadoDe==='function'&&!!feriadoDe(F)))||diaCerrado(F));
     var armar=function(hist, extra){
       var p=Object.assign({ id:'PC', fecha:F, turno:'AM', oc:'09-700', nota:'1800', vendedor:'Carola Chavez', cliente:'DON COMPROBANTE', celular:'70000000', zona:'Norte', direccion:'Av. X', maps:'',
         pagado:false, saldo:400, acuenta:1000, cobradoBs:0, metodoPago:hist, observaciones:'', garantia:'', facturarA:'', nit:'', estado:'', entregado:false, verificado:false, vehiculo:'', chofer:'', nroDia:1, ts:Date.now(),

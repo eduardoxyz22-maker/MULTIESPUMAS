@@ -61,7 +61,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
        test se cae solo los sábados. Se busca el primer día entregable de acá en adelante.
        (Es la misma trampa de las fechas fijas, disfrazada de "mañana".) */
     var d=new Date(); var f;
-    do { d.setDate(d.getDate()+1); f=isoLocal(d); } while(diaDomingo(f));
+    do { d.setDate(d.getDate()+1); f=isoLocal(d); } while((diaDomingo(f)||(typeof feriadoDe==='function'&&!!feriadoDe(f))));
     return f;
   });
 

@@ -7445,7 +7445,206 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ha. 29/09, tarde: un código que no está en la lista de precios pero sí en el almacén — EN LA RAMA
+## 4hd. 30/09: los 24 hallazgos de §4hc, arreglados — en la rama, SIN publicar (espera el OK del dueño)
+
+> El dueño: *«hazlo todo»*, a la propuesta de arreglar primero las 5 ALTA y Multicenter, después las otras, cada una con su
+> prueba, y pedirle el OK antes de publicar. Para el dueño y para Codex: **RESPUESTA_CLAUDE.md §23**.
+
+### 💰 Plata (R2-1, A2-1, R2-4) sin apagar el freno (X-2)
+- `cobradoFueraDeAcuenta(p)` (lo usa el freno «poné el saldo», `_cobAparte`): lo que «A cuenta» tiene DE MÁS sobre el anticipo
+  escrito es el 2° método, se reconozca como mixto o no (§4gy A2 dejó de reconocer el del mismo método).
+- **`cobradoNoMostrado(p, acuForm)`** (nueva) es la que PROPONE montos («Usar como total», «SÍ, pagado»): parte de
+  `contaCobrado` (anticipo + cobros) —una venta «SÍ, pagado» tiene el pago en el anticipo con «A cuenta» 0 (§4cb)—. Con «A
+  cuenta» sin tocar: lo cobrado menos el campo. Tocado: lo cobrado menos el adelanto registrado (anticipo + 2° método), y
+  los otros cobros quedan (§4fr).
+  ⚠️ Ni el arreglo del auditor (apagaba el freno, X-2) ni el del meta-auditor (subir el anticipo de 500 a 800 con un QR de
+  1.000 aparte daba 1.500 de saldo, no 1.200) entraron tal cual.
+- `submitPedido`: un adelanto registrado en DOS pagos que ya no se reconocen como mixto no se corrige desde el formulario:
+  manda a Contabilidad (como el mixto de §4gh B).
+- `ctaGuardarPago` (R2-4): «¿sigue siendo el 2° método?» mira el PROPIO renglón (mismo día y recibo que el anticipo, con
+  monto, otro método); `mixtoEn(_antX, arr)` sin `p` daba null con dos candidatos y «A cuenta» bajaba de 1.500 a 1.000.
+- `tests/test_rev30_plata.js` (17; 11 rojas contra `2207922`), con el `.gs` real.
+
+### 📦 Formulario y stock (A4-1, X-3, R4-1, R4-2, R4-4, R4-5, A4-2, X-4, A4-3)
+- **Renglón con código o precio y SIN producto**: `submitPedido` frena y lo marca (antes `getProductos` lo salteaba
+  callado). ⚠️ Un renglón que YA traía el pedido (`data-de-pedido`, lo pone `editPedido` y se va si cambia el código) al
+  que se le vacía el nombre se SACA, como siempre (`test_modif`). El aviso dice si falta el saldo, si no hay ningún Excel
+  todavía o si el código no está en el de hoy; y al salir del campo, un código que no está en la lista, ni en ningún
+  almacén, ni en el histórico se avisa.
+- **Producto agotado**: `productoDeAlmacen` lo completa desde el histórico del sistema (`hist:true`, saldo 0) cuando hay
+  algún Excel cargado (**`stockHayAlgunExcel`**, nueva: sin ninguno, «no está» no dice nada) y el código está en `VENTAS_HIST`.
+- **La lectura que completa el código (R4-2)**: `prodCodigosDelAlmacen` toca SOLO el renglón marcado `data-alm-pend` (lo
+  pone el campo del código cuando no hay saldo o no hay ningún Excel) y una sola vez; la medida solo si está vacía; sin
+  Excel todavía, la marca espera la próxima lectura. Antes corría en CADA lectura sobre todo renglón sin nombre: pisaba la
+  medida elegida y devolvía el producto que se había sacado.
+- **Código del almacén de otra medida u otro producto (R4-1)**: `saldoCatDeCodigo` (lista de precios o almacén, no el
+  histórico) en `saldoCodigoOtro`/`saldoCodigoDeEstandar`, con el código bueno (`saldoCodigosAlmDe`); `stockAsignar` no lo
+  tilda ✔ ni le reserva nada y lo cuenta aparte (`tot.codOtro`, «🏷️ código de otro»).
+- **Nombre del histórico (R4-4)**: `nombreSinMedida` saca el «1,5» suelto, «[Pr.]» y «- T.A.».
+- **Producto fuera de la lista que se agota (R4-5, A4-2, X-4)**:
+  · **`stockCodRecordar(viejo, nuevo)`** en `confirmarImportExist`: el Excel nuevo conserva los códigos viejos que la lista
+    no conoce MIENTRAS algo los nombra (**`stockCodRefs`**: un pedido sin entregar o entregado hace ≤31 días, o una clave de
+    `STOCK.p`/`e`/`g[..].rs`). Lo que nadie nombra se va con ese Excel: la celda de 50.000 no crece para siempre.
+  · `stockInfo`: un código que el SISTEMA conoce (**`stockCodigoDelSistema`**: en `VENTAS_HIST`, no en `CODIGOS`) no se
+    adivina por nombre aunque hoy no esté en ningún Excel. Uno que nadie conoce (mal tipeado, «CH1O37») sigue por nombre.
+  · ⚠️ **Efecto en «Qué producir» (X-4, a conciencia)**: 37 de las 430 filas del histórico dejan de sumarse al producto de
+    la lista: las medidas especiales «Med.Esp. 160X200» ya no suman al 160x190 (se fabrican a pedido, §4gk), el CARIOCA
+    RIO/BAHIA ya no suma al PREMIER, el SOMIER PARRILLA NEGRO al SOMIER NEGRO, etc. El TITANIO ICE 160x190 de oct-25 pasa
+    de 8 a 6. `test_producir`, `test_adm_alta` y `test_eduardo_multicenter` cambiaron sus números con el porqué escrito; el
+    último compara con la publicada sacando esas filas en las DOS páginas (lo que compara es la regla de Multicenter).
+- **RPT (A4-3)**: el aviso del código del almacén no pide precio.
+- `tests/test_rev30_stock.js` (36; 28 rojas contra `2207922`).
+
+### 🏬 Multicenter (R4-3, decisión del dueño del 29/09)
+- `stockData`: `ek30=stockEntregaClave(p, fs)`. Los 30 días juntan los pedidos de Multicenter por FECHA DE ENTREGA, como los
+  15. La ventana se sigue midiendo por fecha de venta (§4dv). `test_rev30_stock` §6.
+
+### 🚫 Días sin camión (R1-1…R1-5, A1-1, A1-2)
+- R1-3: `resetForm` propone `proximoDiaEntrega()`; el mínimo sigue en mañana.
+- R1-2: **`pedidosEnDiaSinCamion()` / `sinCamionHtml()`**: bloque ámbar arriba de Revisar (Administración) y de la lista de
+  carga, con 📅 Reprogramar por pedido (sin entregar, de hoy−7 a hoy+90); el final del importador de ROHO dice «el camión no
+  sale» en vez de «0 de 0 · lleno».
+- A1-1: «🔒 Cerrar día» con el botón «🚚 Próximo camión» (cuando mañana no tiene), y un feriado o domingo dice «no sale el
+  camión», cuántos pedidos hay que pasar y cuál es el camión que sigue.
+- R1-4: la vendedora que cambia SOLO el turno de un pedido en un feriado o domingo recibe «cambiale el DÍA» (Administración
+  con la clave lo sigue moviendo).
+- A1-2: `saldoAvisos` mide el corte contra el último día HÁBIL.
+- R1-1: `atcRecogerFabDesde` cuenta 2 días hábiles (`diaHabil`).
+- **R1-5 (las pruebas)**: 29 bucles en 20 pruebas buscaban «el primer día entregable» salteando solo el domingo: ahora
+  también el feriado (`typeof feriadoDe==='function' && feriadoDe(f)`, para poder correrlas contra páginas viejas). Y
+  `test_cuadre_alta` y `test_auditoria` restaban un mes con `setMonth(-1)` SIN fijar antes el día: el 31/10 daba el 01/10
+  (septiembre no tiene 31). ⚠️ En una prueba nueva: el día primero (`setDate(15)`), el mes después. Las 20 corridas con el
+  reloj en 31/10 y en 24/12: todo verde.
+- `tests/test_rev30_dias.js` (21; 13 rojas contra `2207922`).
+
+### 💵 Retiros (R2-5, R2-3, R2-2)
+- R2-5: `leerCierresDeLista` reemplaza `RETIROS` y `BORRADORES` solo con la lista del SERVIDOR (al abrir, `loadMirror` le pasa
+  la copia de los pedidos, que no trae retiros, y la copia de los retiros se vaciaba). `retEnCola` + «⏳ todavía no está en la
+  planilla»; el aviso de duplicado mira también la cola. (Con una lectura buena, `mergePending` ya volvía a sumar los de la
+  cola, §4ek.)
+- R2-3: `persistRetiro` saca de la cola las versiones de ESE retiro que estaban antes de un guardado bueno (las que entran
+  mientras tanto se quedan).
+- R2-2: `editarRetiro` guarda el sello visto (`RET_FORM.rev`); `guardarRetiroForm` no guarda un retiro que ya no está ni en
+  la lista ni en la cola (lo borraron desde otro equipo) y lo dice. El sello de `__ret_` en el `.gs` sigue pendiente.
+- `tests/test_rev30_retiros.js` (15; 9 rojas contra `2207922`), con el `.gs` real y dos equipos.
+
+### 📈 Proyección (R3-1…R3-4, A3-1)
+- R3-1: en domingo o feriado la curva va SIN hora (`pryDiaHabil(hoy)`).
+- R3-2: con hora, el día equivalente de cada mes cerrado se corre al último día HÁBIL (`pryCurvaF`).
+- R3-3: `pryPatron` saca los feriados (`FERIADOS` + `FERIADOS_PASADOS`) del promedio por día; `prySemanaHtml` dice «los
+  feriados no cuentan» y, con menos de 10 % entre el día que más y el que menos, «parejo».
+- A3-1/R3-4: «P/» = «PARA», y lo que sigue a PARA es el uso; `PRY_CORTE` corta el pedazo en un servicio o un mueble del
+  medio (ENTREGA, CAMAROTE, LITERA, REGALO, CAMA…); después de un accesorio «DE/PARA COLCHON», la palabra sola que sigue es
+  del accesorio («FORRO DE COLCHON Y SOMIER»). Los 29 renglones del auditor dan lo esperado.
+- `tests/test_rev30_proyeccion.js` (12; 8 rojas contra `2207922`).
+
+### Batería
+- `./tests/correr.sh` → **122/122 suites en verde, 4.554 comprobaciones** (revisada con `revisar_bateria.sh`, que mira todas
+  las formas de falla). La primera corrida, antes de ajustar, dio 6 rojas, todas explicadas arriba: el histórico de X-4
+  (`test_producir`, `test_adm_alta`, `test_eduardo_multicenter`), el texto de R3-3 (`test_proyeccion`), el freno de A4-1
+  contra «vaciar el nombre para sacar» (`test_modif`, de ahí `data-de-pedido`) y el histórico sin ningún Excel
+  (`test_codigo_almacen`, de ahí `stockHayAlgunExcel`).
+
+### Lo que queda
+- Próxima versión del `.gs` (decide el dueño): el portero con los feriados, el sello de `__ret_`, una lectura que diga de
+  cuándo es, feriados «puente» cargables (M1, M5, M8).
+- M3-M8 y las otras BAJA de §20.3. X-1 se va con R2-1/A2-1 (el formulario ya no infla ventas).
+- Lo del 30/09 que el dueño dejó para verlo con calma (§4hb): cartel de conexión, lectura comprimida, lectura de lo cambiado.
+
+## 4hc. 29-30/09, noche: revisión en TRES niveles de lo publicado el 29/09 — 24 hallazgos (arreglados en §4hd)
+
+> El dueño: *«Quiero agentes que revisen todo lo de hoy, y otros agentes que revisen a los agentes y esos agentes revisen a
+> los agentes»*. Informe completo (lista, dónde, arreglo propuesto, cruces, mejoras) en **RESPUESTA_CLAUDE.md §22**.
+
+- **Cómo**: un Workflow (`wf_b5dff79d-15b`, 9 agentes, ~2,6 h, 4,4 M tokens, 901 herramientas): 4 revisores por área (días ·
+  plata · proyección · formulario y stock) → un auditor por revisor que reproduce cada hallazgo y busca lo que se escapó →
+  un meta-auditor que re-verifica lo ALTA/MEDIA, busca cruces y arma la lista. Alcance `6146f6d..2207922`. Scripts en el
+  scratchpad de la sesión (`rev30/r1-dias` … `rev30/meta`): **se pierden con el contenedor**; lo que se arregle tiene que
+  llevar su prueba al repo.
+- **Números**: nivel 1, 19 hallazgos; nivel 2, 19/19 confirmados (6 con otra severidad) + 7 nuevos; nivel 3, 4 cruces y la
+  lista final de **24: 5 ALTA, 7 MEDIA, 12 BAJA** (13 del 29/09, 11 previos). Yo re-corrí las 5 ALTA: se reproducen.
+- **Las ALTA**:
+  · **R2-1 (regresión del 29/09, §4gy A2)**: `mixtoEn` ya no reconoce un 2° pago del MISMO método que el anticipo, pero
+    `p.acuenta` lo sigue sumando → `cobradoFueraDeAcuenta` lo cuenta afuera y «SÍ, pagado»/«Usar como total» proponen ±500
+    (3.000 → 3.500). Con `6146f6d` daba 3.000.
+  · **A2-1 (previo)**: venta cargada «SÍ, pagado» (`acuenta` 0, §4cb) a la que se agrega algo: «Usar como total» pone de
+    saldo el total entero y se guarda 2.500 + 2.800 = 5.300.
+  · **A4-1 + X-3 (§4ha)**: un renglón con SOLO el código (sin saldo cargado, o producto agotado que ya no está en el Excel)
+    se descarta al guardar (`getProductos` saltea sin nombre), y a veces la pregunta del saldo lo nombra igual.
+  · **R4-1 (previo, §4ha lo volvió habitual)**: código del almacén en un renglón de otra medida → ✅ con el stock del
+    producto del código, sin el aviso de §4gk (`saldoCodigoOtro` solo mira `CODIGOS`), y el pedido aparta el otro.
+  · **R4-5 + A4-2 + X-4 (previo, §4ga-6)**: producto fuera de la lista que se agota → el Excel nuevo pisa `cod`, `stockInfo`
+    cae en el parecido, `stockMigrar` reescribe `STOCK.p`/`e`/`rs` al parecido y la llegada suma al otro.
+- **Decidido por el dueño esa noche**: Multicenter «el mismo día» = FECHA DE ENTREGA (R4-3; `00b0c68`).
+- **Comprobado esa noche** (herramienta de §4hb, 00:57): ningún pedido agendado para un feriado de acá en adelante.
+- **Lo que no se hizo a propósito**: no se tocó `pedidos.html` mientras los agentes lo revisaban; nada se arregla ni se
+  publica sin el OK del dueño. Orden propuesto en RESPUESTA §22.7.
+
+## 4hb. 29/09, noche: «no conecta» — no era el panel ni el servidor: Google entregando lento a ratos, y la planilla que viaja entera
+
+> NADA publicado ni cambiado en el panel ni en el servidor. En la rama quedó una herramienta de diagnóstico
+> (`herramientas/diagnostico_lectura.py` + `.github/workflows/diagnostico-lectura.yml`, commits `375a3e7`…`1013226`).
+
+**Qué pasó.** A las 22:21 el iPad del dueño quedó en «⏳ Conectando con la planilla del equipo… 17 s» y a las 22:26 el
+cartel rojo decía «no hay conexión con Google (sin internet, o esta red o un bloqueador…)», con «Nunca se pudo leer la
+planilla en este dispositivo». El dueño lo atribuyó a §4ha (publicada 17:19) y recordó que Carola tampoco conectaba.
+Conectó solo ~22:35-22:40.
+
+**Lo que se midió (y descarta el código):**
+- **La página no se traba**: con 1.300 pedidos inventados, `6146f6d`, `f722163` y `2207922` procesan la lectura en
+  20-66 ms (con la CPU 6 veces más lenta, 160-370 ms), sin errores (`scratchpad/diag_conexion/perf.js`). Ningún commit del
+  29/09 tocó `apiPost`/`apiList`/`fetch`/`cargaInicial`. `ULTIMO_REFRESCO` vive en memoria: «Nunca se pudo leer la planilla
+  en este dispositivo» quiere decir «desde que se abrió la página», no «nunca» (texto engañoso, anotado como mejora).
+- **El cartel era de red de verdad**: «no hay conexión» sale solo si el mensaje del error es `Failed to fetch`/`Load
+  failed`/`NetworkError`/`network`/`aborted`, o sea `fetch` rechazado; un error del panel al procesar diría «error: …».
+- **Lo de Carola fue ANTES de §4ha**: el mensaje del dueño llegó a las 17:05 y §4ha se publicó a las 17:19.
+- **El servidor contestaba**: respaldo de Kommo 173 (19:46) y 174 (22:27) con «versión 2026-09-28-a»; las Ejecuciones que
+  mandó el dueño (22:25-22:27) todas «Completada» en 1,4-3,6 s. Pero el respaldo usa `kommoLeads`, que el `.gs` atiende
+  ANTES que todo: no prueba que `list` ande. Por eso la herramienta nueva.
+- **La herramienta** (corre en GitHub al pushear sus archivos; en `main`, también a mano): hace la MISMA lectura que el
+  navegador (`POST {action:'list', quien, dispositivo, cola, colaIds}` a la dirección escrita en `pedidos.html`, con
+  `?_=<ms>`, texto plano, `Origin` de github.io) y dice código, tiempo, tamaño, CORS, filas y el tamaño de las filas del
+  sistema — sin imprimir un solo dato de clientes (el registro es público). Resultados:
+  · 22:31 y 22:34: HTTP 200 en 1,9-2,7 s, JSON, `Access-Control-Allow-Origin: *`, 1.096 filas, **901.361 bytes**, versión
+    28-a; `__stock__` 25.437 letras; la fila más grande de un pedido, 3.157. La dirección de `pedidos.html` y el secreto
+    `PANEL_URL` son LA MISMA.
+  · 22:36: la misma lectura tardó **9,7 s** y la siguiente **59,0 s** (también desde GitHub): Google lento a ratos, no la
+    red del dueño.
+  · **Google NO comprime** la respuesta aunque se pida `Accept-Encoding: gzip`: viajan los 901.361 bytes enteros.
+  · 22:39, en dos tramos, 5 veces: correr el script 1,7-3,7 s · entregar los datos 0,2-0,4 s.
+- A las 22:45 el dueño abrió la dirección del `/exec` en incógnito y el iPad recibió la planilla entera.
+
+**Conclusión.** Ni el panel ni el `.gs`: a ratos Google tarda mucho en contestar (o en entregar), y cada equipo baja la
+planilla ENTERA (900 KB sin comprimir) cada 2 minutos (`AUTO_MS`), así que cuando Google se traba lo grande es lo que no
+llega. Mientras tanto no se pierde nada: los guardados son chicos y la cola reintenta.
+
+**Propuesto al dueño (lo ve el 30/09; no se tocó nada):**
+1. **El cartel**: que no diga «si le pasa a todo el equipo es el servidor… volvé a la versión anterior» cuando el servidor
+   anda (esta noche hizo sospechar de lo publicado), y que «Nunca se pudo leer» diga «desde que abriste la página». Solo
+   página.
+2. **La lectura comprimida**: `list` con `z:1` → el `.gs` devuelve `Utilities.gzip` + base64 y la página descomprime con
+   `DecompressionStream` (iOS 16.4+; sin eso, pide como hoy). ~7 veces menos. Exige versión nueva del `.gs`.
+3. **La lectura de lo cambiado** (el dueño preguntó cómo sería y cómo se sabría que llegó todo):
+   · el sello `rev` ya es la hora del servidor de cada guardado (`doSave`: `max(rev+1, Date.now())`); `list` con `desde`
+     devuelve las filas con `rev > desde − 5 min` (margen por un guardado que corre durante la lectura: la lectura no toma
+     el candado) + `ahora` (hora del servidor);
+   · **los caminos que escriben SIN sello** hoy: los borradores de Kommo (`appendRow(recToRow(...))`, líneas ~1785 y
+     ~1906) y `repararNombreAplicar_` (`setValue` del Cliente, ~1874) — hay que sellarlos; la herramienta de agosto ya
+     sella;
+   · **los borrados**: `doDelete` hace `deleteRow` y no deja rastro → hoja «Borrados» (id + hora, 30 días);
+   · **la cuenta de control**: el servidor manda cuántas filas hay y un número hecho con todos los `id:rev` (módulo, no
+     una suma: pasaría 2^53); la página la rehace con su copia y, si no coincide, lee todo;
+   · lectura completa al abrir y cada 15 minutos (una edición a mano en la hoja no cambia el sello);
+   · con la hoja de Borrados, «lo borraron desde otro equipo» deja de deducirse de una ausencia (§4gl/§4gn/§4go);
+   · la página lo usa solo si el servidor contesta `ahora`/huella: se puede publicar antes que el `.gs`.
+   Sugerido: 2 primero; 1 y 3 juntas en UNA versión del `.gs`. Límite dicho al dueño: si Google tarda en CORRER el script
+   (los 59 s), esto no lo arregla; hace que la respuesta sea chica y llegue.
+
+## 4ha. 29/09, tarde: un código que no está en la lista de precios pero sí en el almacén — PUBLICADA 29/09 17:19 (`2207922`)
+
+> **Publicada el 29/09 a las 17:19 de Bolivia** (`main` = `2207922`), con el OK del dueño (*«publicá lo que había
+> pendiente»*). No había ninguna corrida en curso ni en cola: la programada de las 17:00 todavía no había arrancado.
+> Pages desplegó bien a las 17:20 (corrida 36632546483). Batería sobre `4b194bd`: 117 suites, 4.453 bien · 0 mal.
 
 **El pedido**, con una captura del celular (código «Ch1158», sin producto ni medida, y sin cuadrito): *«¿Qué pasa si ponen
 un código que no está en lista de precios y sí en almacén? Ejemplo: puse ese código que no está en lista de precio pero sí
@@ -7609,6 +7808,11 @@ a veces hasta 4 pedidos en el mismo día para su bodega.»*
 - **`stockEntregaClave(p, f)`**: para Eduardo → Multicenter la clave de la entrega es la FECHA (`'mc|'+f`); para todo lo
   demás, el pedido. La usan `nVentasRotacion` y `nVentas` (15 días, por fecha de salida) y `n30` (30 días, por fecha de
   venta). Las unidades se suman igual.
+  ⚠️ **Decidido por el dueño el 29/09 a la noche: «el mismo día» es la FECHA DE ENTREGA** (*«cuando se entrega es la fecha
+  que yo coloco de entrega, a veces cargo el pedido el mismo día para entregar ese mismo día — recuerda que yo y logística
+  solo pueden hacer eso, agendar para el mismo día»*). La revisión del 29/09 (R4-3) vio que `n30` junta por `fv` (fecha de
+  VENTA): los mismos pedidos daban 1 entrega en los 15 días y 3-4 en los 30. Falta: `ek30 = stockEntregaClave(p, fs)` (la
+  ventana de 30 días se sigue midiendo por `fv`, §4dv). No se tocó `pedidos.html` mientras los agentes lo revisaban.
 - **Lo que NO cambia:**
   - los umbrales;
   - las dos mitades de la regla de §4dj;
