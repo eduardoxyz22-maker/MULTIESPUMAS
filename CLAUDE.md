@@ -914,6 +914,15 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
+## 🔎 La revisión en TRES niveles del 29-30/09 (§4hc) — 24 hallazgos, NADA ARREGLADO TODAVÍA
+Lista, dónde y arreglo propuesto en `RESPUESTA_CLAUDE.md` §22 (5 ALTA, 7 MEDIA, 12 BAJA). Antes de tocar estas zonas, leerla:
+- **R2-1 es regresión de §4gy A2**: un 2° pago del MISMO método que el anticipo sigue dentro de `p.acuenta` pero `mixtoEn` ya
+  no lo reconoce, y `cobradoFueraDeAcuenta` lo cuenta dos veces («SÍ, pagado» 3.000 → 3.500). El arreglo que propuso el
+  auditor apaga el freno «poné el saldo» (X-2): usar la versión del meta-auditor.
+- **Un renglón con solo el código se descarta al guardar** (A4-1/X-3, `getProductos` saltea sin nombre).
+- **Los códigos del almacén no tienen el aviso de §4gk** (R4-1: `saldoCodigoOtro` solo mira `CODIGOS`).
+- **El producto fuera de la lista que se agota se va al parecido** (R4-5/A4-2/X-4, ya en §4ga-6, peor de lo anotado).
+
 ## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, PUBLICADA 29/09 10:02, `72aa862`)
 Informe completo en `RESPUESTA_CLAUDE.md` §20 (hallazgos) y §21 (arreglos). Respuestas del dueño (29/09): *«No sale en
 feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO sube el Excel de Moreno después de cargar

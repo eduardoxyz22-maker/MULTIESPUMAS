@@ -7445,6 +7445,35 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hc. 29-30/09, noche: revisión en TRES niveles de lo publicado el 29/09 — 24 hallazgos, NADA ARREGLADO TODAVÍA
+
+> El dueño: *«Quiero agentes que revisen todo lo de hoy, y otros agentes que revisen a los agentes y esos agentes revisen a
+> los agentes»*. Informe completo (lista, dónde, arreglo propuesto, cruces, mejoras) en **RESPUESTA_CLAUDE.md §22**.
+
+- **Cómo**: un Workflow (`wf_b5dff79d-15b`, 9 agentes, ~2,6 h, 4,4 M tokens, 901 herramientas): 4 revisores por área (días ·
+  plata · proyección · formulario y stock) → un auditor por revisor que reproduce cada hallazgo y busca lo que se escapó →
+  un meta-auditor que re-verifica lo ALTA/MEDIA, busca cruces y arma la lista. Alcance `6146f6d..2207922`. Scripts en el
+  scratchpad de la sesión (`rev30/r1-dias` … `rev30/meta`): **se pierden con el contenedor**; lo que se arregle tiene que
+  llevar su prueba al repo.
+- **Números**: nivel 1, 19 hallazgos; nivel 2, 19/19 confirmados (6 con otra severidad) + 7 nuevos; nivel 3, 4 cruces y la
+  lista final de **24: 5 ALTA, 7 MEDIA, 12 BAJA** (13 del 29/09, 11 previos). Yo re-corrí las 5 ALTA: se reproducen.
+- **Las ALTA**:
+  · **R2-1 (regresión del 29/09, §4gy A2)**: `mixtoEn` ya no reconoce un 2° pago del MISMO método que el anticipo, pero
+    `p.acuenta` lo sigue sumando → `cobradoFueraDeAcuenta` lo cuenta afuera y «SÍ, pagado»/«Usar como total» proponen ±500
+    (3.000 → 3.500). Con `6146f6d` daba 3.000.
+  · **A2-1 (previo)**: venta cargada «SÍ, pagado» (`acuenta` 0, §4cb) a la que se agrega algo: «Usar como total» pone de
+    saldo el total entero y se guarda 2.500 + 2.800 = 5.300.
+  · **A4-1 + X-3 (§4ha)**: un renglón con SOLO el código (sin saldo cargado, o producto agotado que ya no está en el Excel)
+    se descarta al guardar (`getProductos` saltea sin nombre), y a veces la pregunta del saldo lo nombra igual.
+  · **R4-1 (previo, §4ha lo volvió habitual)**: código del almacén en un renglón de otra medida → ✅ con el stock del
+    producto del código, sin el aviso de §4gk (`saldoCodigoOtro` solo mira `CODIGOS`), y el pedido aparta el otro.
+  · **R4-5 + A4-2 + X-4 (previo, §4ga-6)**: producto fuera de la lista que se agota → el Excel nuevo pisa `cod`, `stockInfo`
+    cae en el parecido, `stockMigrar` reescribe `STOCK.p`/`e`/`rs` al parecido y la llegada suma al otro.
+- **Decidido por el dueño esa noche**: Multicenter «el mismo día» = FECHA DE ENTREGA (R4-3; `00b0c68`).
+- **Comprobado esa noche** (herramienta de §4hb, 00:57): ningún pedido agendado para un feriado de acá en adelante.
+- **Lo que no se hizo a propósito**: no se tocó `pedidos.html` mientras los agentes lo revisaban; nada se arregla ni se
+  publica sin el OK del dueño. Orden propuesto en RESPUESTA §22.7.
+
 ## 4hb. 29/09, noche: «no conecta» — no era el panel ni el servidor: Google entregando lento a ratos, y la planilla que viaja entera
 
 > NADA publicado ni cambiado en el panel ni en el servidor. En la rama quedó una herramienta de diagnóstico

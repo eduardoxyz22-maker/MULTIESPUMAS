@@ -1,5 +1,8 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 30/09, madrugada — LO NUEVO ESTÁ EN §22.** Revisión en tres niveles de todo lo publicado el 29/09
+> (4 revisores → 4 auditores → 1 meta-auditor): 24 hallazgos confirmados (5 ALTA, 7 MEDIA, 12 BAJA), 4 cruces y 10
+> mejoras. **Nada arreglado todavía**: espera el OK del dueño. La ALTA R2-1 es regresión del arreglo del mixto (§21).
 > **ACTUALIZACIÓN 29/09, 10:02 de Bolivia — §21 PUBLICADO** (`main` = `72aa862`, con el OK del dueño), junto con
 > Multicenter: los pedidos del mismo día son una entrega. Servidor sin cambios (2026-09-28-a). Batería: 116 suites,
 > 4.440 bien · 0 mal.
@@ -1679,6 +1682,294 @@ Los reproductores de los agentes para A1-A4 dan todo en verde. **Batería: 116 s
 
 **Sigue pendiente:** M1, M3-M8 y las otras BAJA de §20.3. Para la próxima versión del `.gs` se juntan tres cosas: los
 feriados en el portero, el sello de los retiros y la respuesta que diga de qué lectura sale (M1, M8).
+
+## 22 · La revisión en tres niveles de lo hecho el 29/09 — NADA ARREGLADO TODAVÍA
+
+El dueño: *«Quiero agentes que revisen todo lo de hoy, y otros agentes que revisen a los agentes y esos agentes revisen a
+los agentes. Promueve cada vez hay “errores que se te escapan” y también mejoras que podamos implementar»*.
+
+### 22.1 · Cómo se revisó
+- **Alcance**: lo publicado el 29/09, de `6146f6d` a `2207922`: §4gu, §4gv, §4gw, §4gy (A1-A4, unidades, Multicenter), §4gz y §4ha.
+- **Nivel 1**: cuatro revisores, uno por área (días y feriados · plata · proyección · formulario y stock). 19 hallazgos.
+- **Nivel 2**: un auditor por revisor. Reprodujo cada hallazgo por su cuenta (19 de 19 confirmados; 6 con otra severidad) y
+  buscó lo que se le había escapado al revisor: 7 nuevos.
+- **Nivel 3**: un meta-auditor volvió a verificar todo lo ALTA y MEDIA (y una BAJA por área), buscó los cruces entre áreas
+  (4) y armó la lista final: **24 (5 ALTA, 7 MEDIA, 12 BAJA)** y 10 mejoras.
+- **Yo** volví a correr los scripts de las 5 ALTA: las 5 se reproducen. Chromium con el reloj clavado y datos inventados;
+  nada se escribió en el repo ni en la planilla.
+
+### 22.2 · La lista final
+
+| # | Sev. | Lo encontró | ¿Del 29/09? | Qué pasa |
+|---|---|---|---|---|
+| A4-1 (+X-3) | ALTA | auditor | sí | Un renglón con solo el código se pierde al guardar, y a veces la pregunta del saldo lo nombra igual |
+| R4-1 | ALTA | revisor | no (previo) | Código del almacén en un renglón de otra medida u otro producto: ✅ DISPONIBLE con el stock del producto del código, sin aviso, y el pedido reserva ese otro |
+| R2-1 | ALTA | revisor | sí | Pago en dos métodos con el 2° del mismo método que el anticipo: «A cuenta» lo suma pero el formulario ya no lo reconoce y cuenta Bs 500 de más o de menos, sin preguntar |
+| A2-1 | ALTA | auditor | no (previo) | Venta cargada «SÍ, pagado» que vuelve a deber: «Usar como total» pone de saldo el total entero y la venta se guarda al doble |
+| R4-5 + A4-2 (+X-4) | ALTA | revisor | no (previo) | Producto del almacén fuera de la lista que se agota: el panel olvida su código y pasan al producto parecido sus pedidos, lo pedido a fábrica y lo que llega (ya anotado el 25/09, pero es peor) |
+| R1-2 | MEDIA | revisor | sí | Un pedido que queda con fecha de feriado desaparece de todo lo que es «Mañana» y de «Hoy» después; nada avisa que hay que reprogramarlo |
+| R4-3 | MEDIA | revisor | sí | Multicenter: «el mismo día» es la entrega en los 15 días y la carga en los 30; los mismos pedidos dan 1 entrega en un lado y 3-4 en el otro |
+| R2-5 | MEDIA | revisor | no (previo) | Al abrir el panel sin conexión con la planilla, los retiros desaparecen (incluso el que espera en la cola), y se pueden cargar dos veces sin aviso |
+| R2-3 | MEDIA | revisor | no (previo) | Retiros: la versión que quedó en la cola pisa, a los 2 minutos, la corrección que se guardó después con conexión |
+| R4-2 | MEDIA | revisor | sí | La lectura que completa un código del almacén pisa la medida elegida a mano y vuelve a poner un producto que la vendedora sacó |
+| A3-1 | MEDIA | auditor | sí | Unidades: un accesorio escrito «P/ COLCHÓN», «P/ SOMIER» o «CON ELÁSTICO PARA COLCHÓN» cuenta como colchón o somier, por su cantidad |
+| R3-3 | MEDIA | revisor | sí | «Qué días se vende más» cuenta los feriados como días sin ventas: el viernes y el jueves salen más flojos de lo que son |
+| R1-1 | BAJA | revisor | no (previo) | El aviso «🏭 Recoger de fábrica» de una ATC cuenta los 2 días hábiles salteando solo el domingo |
+| A1-1 | BAJA | auditor | sí | «🔒 Cerrar día» la víspera de un feriado propone el feriado y dice que «se pueden seguir agregando» pedidos |
+| R1-4 | BAJA | revisor | sí | Cambiar solo el turno de un pedido que quedó en feriado dice «Turno lleno (0/0)» en vez de «es feriado» |
+| R1-3 | BAJA | revisor | no (previo) | La víspera de un feriado, el formulario de pedido nuevo propone el feriado como fecha de entrega |
+| A1-2 | BAJA | auditor | no (previo) | En un feriado o domingo, el cuadrito pide «que suba el de hoy» a logística, que ese día no trabaja |
+| R2-2 | BAJA | revisor | no (previo) | Retiros: si la lista se relee entre ✏️ y Guardar, el retiro que otro equipo borró vuelve a la planilla |
+| R2-4 | BAJA | revisor | sí | Adelanto en dos métodos más un tercer cobro del mismo día y recibo: corregir el banco del 2° pago baja el «A cuenta» que se ve |
+| R3-1 + R3-2 | BAJA | revisor | sí | La proyección de cada marca se mueve sola durante el día: domingos y feriados a la mañana, y días hábiles cuyo día equivalente cae en domingo o feriado |
+| R3-4 | BAJA | revisor | sí | Unidades: un colchón escrito a mano con ENTREGA, CAMAROTE, LITERA, REGALO o CAMA en el renglón no cuenta |
+| R4-4 | BAJA | revisor | sí | El nombre que se completa desde el histórico conserva la medida en plazas o unos corchetes vacíos |
+| A4-3 | BAJA | auditor | sí | En una RPT, el aviso del código del almacén pide «Poné el precio a mano» |
+| R1-5 | BAJA | revisor | sí | Nueve o más pruebas de la batería dan rojo la víspera de cada feriado (la próxima: 31/10 y 1/11) |
+
+Detalle de cada uno (dónde está y el arreglo propuesto, que NO se aplicó):
+
+**A4-1 (+X-3) · ALTA · Un renglón con solo el código se pierde al guardar, y a veces la pregunta del saldo lo nombra igual**
+- *Para el dueño*: Si la vendedora escribe solo el código de un producto del almacén que no está en la lista de precios y el renglón no se completa, el pedido se guarda sin ese producto. Pasa con el panel recién abierto, sin conexión, o si ese producto se agotó y no figura en el Excel del día. A veces, encima, el panel le pregunta por el saldo de ese producto como si estuviera en el pedido.
+- *Dónde*: - `submitPedido` arma `productos` con `getProductos()` (8325) ANTES de la lectura (9084). `getProductos` saltea el renglón sin nombre (3284).
+  - Después `saldoTrasLectura` → `prodCodigosDelAlmacen` completa ese renglón en pantalla, y `saldoConfirmarAlGuardar` (vía `saldoFilasForm`) pregunta por lo que hay en pantalla, no por `rec.productos`.
+  - Con la lectura lenta (más de 4 s) se guarda sin ninguna pregunta.
+  - Con el saldo cargado y el producto agotado (X-3), el manejador del código no avisa nada y el renglón se descarta igual.
+  - Descartar un renglón sin nombre es previo; §4ha (4b194bd) sumó la pregunta engañosa y la costumbre de escribir solo el código.
+- *Arreglo propuesto*: Al empezar `submitPedido`, frenar si hay un renglón con código o precio y sin producto: marcarlo en rojo y decir qué hacer.
+  Probado en …/rev30/meta/pedidos_fix_meta_stock.html:
+  - t_n3 y x_stock ya no guardan y lo dicen;
+  - test_codigo_almacen 13/0, test_saldo_almacen 84/0, test_rev8_saldo 66/0, test_guardado 14/0 y test_rev7_celular 35/0.
+  Completar desde el histórico un código que no está en ningún Excel, y que la pregunta del saldo mire solo lo que se va a guardar.
+
+**R4-1 · ALTA · Código del almacén en un renglón de otra medida u otro producto: ✅ DISPONIBLE con el stock del producto del código, sin aviso, y el pedido reserva ese otro**
+- *Para el dueño*: Si una vendedora pone el código de un producto del almacén y después le cambia la medida o el nombre (al cargar o al editar), el cuadrito dice ✅ DISPONIBLE con el stock del producto del código; por ejemplo, un somier 200x200 para uno de 160x190. No avisa nada, el pedido queda reservando el otro producto y logística ve «✔ hay» del equivocado. Con la lista de precios, en el mismo caso, el panel avisa.
+- *Dónde*: - `saldoCodigoOtro` y `saldoCodigoDeEstandar` (y por eso `codigoEspecialBorrar`) solo miran `CODIGOS`.
+  - `stockInfo`/`stockClaveInv` identifican por el código del almacén.
+  - En medida especial el código queda puesto, cuenta como pendiente del 200x200, y `stockAsignar` propone ✔.
+  - Es previo (identidad por código §4cv, protección de §4gk solo para la lista); §4ha (2207922) lo volvió el camino habitual.
+- *Arreglo propuesto*: - En `saldoCodigoOtro` y `saldoCodigoDeEstandar`, usar también `productoDeAlmacen(cod)`: aviso «el código es de otra medida / de otro producto», pregunta al guardar, y borrarlo solo en medida especial (decisión del dueño del 27/09).
+  - Que la revisión automática no proponga ✔ en esos renglones.
+  - Sumar los casos a test_codigo_almacen.
+
+**R2-1 · ALTA · Pago en dos métodos con el 2° del mismo método que el anticipo: «A cuenta» lo suma pero el formulario ya no lo reconoce y cuenta Bs 500 de más o de menos, sin preguntar**
+- *Para el dueño*: Desde ayer, si una venta tiene el adelanto pagado con dos métodos y Contabilidad corrige uno para que queden iguales (por ejemplo, todo por QR del mismo banco), el formulario de la vendedora cuenta el segundo pago dos veces. «SÍ, pagado» deja una venta de 3.000 en 3.500 cobrados, y «Usar como total» le cobra 500 de menos al cliente. Pasa también con ventas que ya estaban así desde antes.
+- *Dónde*: `mixtoMismoMetodo`/`mixtoEn` (8163-8181, 72aa862) descartan el renglón del mismo método. Pero:
+  - `p.acuenta` sigue incluyéndolo: `ctaGuardarPago`, rama del anticipo, hace `acuenta = monto + mxM`;
+  - `cobradoFueraDeAcuenta` (3493-3497) lo cuenta «afuera»;
+  - `pagadoSugerirTotal` y `usarTotalProds` suman 500 de más;
+  - `_rehaceAdel` lo deja como «otro pago».
+  Resultado: a) 3.500, b) 3.500, c) 2.500.
+  Antes de hoy: a) daba 3.000, y b/c frenaban. El número inflado entra además en la proyección (X-1).
+- *Arreglo propuesto*: Lo probado en …/rev30/meta/pedidos_fix_meta.html:
+  1. Una función para PROPONER montos (lo cobrado − mín(lo cobrado, máx(A cuenta guardado, A cuenta del formulario))), solo en «Usar como total» y «SÍ, pagado».
+  2. `cobradoFueraDeAcuenta` (el freno) cuenta como del adelanto lo que «A cuenta» tiene de más sobre el anticipo.
+  3. Frenar la corrección de «A cuenta» cuando el adelanto está en dos pagos sin reconocer, y mandar a Contabilidad.
+  Resultado: a/b/c y A2-1 bien, freno intacto, 6 suites en verde.
+  Falta:
+  - en Contabilidad, al dejar el anticipo con el mismo método que el 2° pago, `acuenta = monto` (o juntar los dos renglones);
+  - el arreglo de R2-4;
+  - una prueba de invariantes de la plata del formulario.
+  NO aplicar tal cual el arreglo del auditor (X-2).
+
+**A2-1 · ALTA · Venta cargada «SÍ, pagado» que vuelve a deber: «Usar como total» pone de saldo el total entero y la venta se guarda al doble**
+- *Para el dueño*: Si una venta se cargó «SÍ, pagado» y después se le agrega algo (por ejemplo, una almohada de 300), al tocar «Usar como total» el panel pone de saldo el total entero (2.800) en vez de 300, y guarda sin preguntar. La venta queda en 5.300 y el chofer saldría a cobrar 2.800. Viene de antes.
+- *Dónde*: Una venta nueva «SÍ, pagado» se guarda como `~Efectivo 2500 @fecha #nota %img` con `acuenta` 0 (§4cb).
+  - `cobradoFueraDeAcuenta` solo suma `totalCobrado` (los cobros, no el anticipo): da 0.
+  - `usarTotalProds` hace saldo = total − A cuenta (0) − 0 = 2.800, y se guarda por `_soloPrecio`.
+  - «SÍ, pagado» propone 300: pregunta, y si se acepta queda en 300, «cobrada de más».
+- *Arreglo propuesto*: El mismo de R2-1 (función para proponer montos con todo lo cobrado que «A cuenta» no muestra). Probado en …/rev30/meta/pedidos_fix_meta.html: saldo 300, total 2.800, y el freno «poné el saldo» sigue. Sumar el caso a las pruebas.
+
+**R4-5 + A4-2 (+X-4) · ALTA · Producto del almacén fuera de la lista que se agota: el panel olvida su código y pasan al producto parecido sus pedidos, lo pedido a fábrica y lo que llega (ya anotado el 25/09, pero es peor)**
+- *Para el dueño*: Cuando un producto que no está en la lista de precios se agota y deja de figurar en el Excel, el panel lo confunde con uno parecido de la lista (por ejemplo, el somier parrilla negro con el somier negro). Sus pedidos y lo que logística ya pidió a fábrica pasan al otro, queda guardado así, y cuando llega se suma al otro. A la vendedora el cuadrito le promete con el stock del otro producto. Estaba anotado como pendiente el 25/09, pero es peor de lo que se anotó.
+- *Dónde*: - `confirmarImportExist` reemplaza el mapa `cod` del almacén con el del Excel nuevo (20487/20492), que no trae lo agotado.
+  - `stockInfo` cae en el parecido del catálogo.
+  - `stockMigrar` vuelve a resolver por nombre las claves de `STOCK.p`/`STOCK.e`/`rs`, y `filaStock` lo escribe en la planilla (A4-2). No se revierte si el producto vuelve.
+  - El histórico de «Qué producir» también se suma al parecido (X-4: 42 de 249 códigos, poco efecto hoy).
+  - Previo; en la bitácora §4ga, «Quedan para decidir» (6).
+- *Arreglo propuesto*: - Recordar las claves de los códigos del almacén mientras algo las nombre (pedidos pendientes, `STOCK.p` sin cerrar, `STOCK.e`, `rs`), y podarlas después, cuidando la celda de 50.000.
+  - Completar el renglón desde el histórico si el código no está en ningún Excel.
+  - En el histórico, usar la clave cruda para códigos que la lista no conoce.
+  - No usar «no adivinar por nombre» a secas: rompe un caso que hoy anda (…/rev30/a4-stock/t_riesgo_arreglo2.js).
+
+**R1-2 · MEDIA · Un pedido que queda con fecha de feriado desaparece de todo lo que es «Mañana» y de «Hoy» después; nada avisa que hay que reprogramarlo**
+- *Para el dueño*: Si un pedido queda con fecha de feriado, la víspera no aparece en el «Mañana» de nadie y después solo figura entre los atrasados. Puede pasar porque vino así en el Excel de ROHO, porque lo movió Administración o porque se cargó antes del 29/09 para el 2/11 o el 25/12. Logística no lo ve para cambiarle el día, y el cliente se entera cuando no llega. Conviene revisar ya si hay pedidos cargados para el 2/11 y el 25/12.
+- *Dónde*: `proximoDiaEntrega()` (1675) saltea el feriado. Carga, ruta, chofer, Mis pedidos, mapa, faltantes, parte, WhatsApp, `renderRevisar` y la revisión de stock en «Mañana» miran solo ese día.
+  El importador de ROHO:
+  - los crea en el feriado, con un aviso;
+  - dice «ocupan lugar en el camión… 2 de 0 · lleno».
+  Después del feriado, el stock los da por salidos (§4co) y vuelven a quedar «libres» con el Excel siguiente. Con 040e1df salían en «Mañana».
+- *Arreglo propuesto*: - Un bloque ámbar «⚠️ Quedaron en un día sin camión», con los no entregados en feriado o domingo (también los ya pasados desde el último camión), arriba de la carga y de «Revisar entregas», cada uno con 📅 Reprogramar.
+  - El importador de ROHO no dice «ocupan lugar» en un feriado.
+  - Mover esos pedidos solos al próximo camión lo decide el dueño.
+
+**R4-3 · MEDIA · Multicenter: «el mismo día» es la entrega en los 15 días y la carga en los 30; los mismos pedidos dan 1 entrega en un lado y 3-4 en el otro**
+- *Para el dueño*: Para los pedidos de Eduardo a Multicenter, la tabla de stock junta los del mismo día por la fecha de ENTREGA (como decidiste), pero el plan del mes que viene los junta por el día en que se cargaron. Con los mismos pedidos, uno dice «pedido único» y el otro manda producir 5. Se arregla cambiando una línea.
+- *Dónde*: `stockEntregaClave` se llama con `fs` en la ventana de 15 días (17164) y con `fv` en la de 30 (17180).
+  - Caso A: 4 entregas en 15 días y 1 en 30.
+  - Caso B: 1 en 15 días y 3 en 30 («mes» 5).
+  34ecbab, publicado en 72aa862.
+- *Arreglo propuesto*: - `ek30 = stockEntregaClave(p, fs)`, la decisión del dueño (00b0c68). La ventana de 30 días se sigue midiendo por fecha de venta. Probado: A 4/4, B 1/1, test_eduardo_multicenter 40/0.
+  - Sumar a su §8 un caso con fecha de carga distinta de la de entrega.
+
+**R2-5 · MEDIA · Al abrir el panel sin conexión con la planilla, los retiros desaparecen (incluso el que espera en la cola), y se pueden cargar dos veces sin aviso**
+- *Para el dueño*: Si Contabilidad abre el panel cuando Google no responde, los retiros de efectivo desaparecen de la ventana y del cuadre hasta que vuelve la conexión; también el que acababa de cargar y esperaba para subir. Si lo vuelve a cargar porque no lo ve, el panel no avisa que ya existe y queda dos veces: a la vendedora se le descuenta dos veces.
+- *Dónde*: `loadMirror` (1633-1639) llama a `leerCierresDeLista(STATE)` antes de `loadRetirosMirror()`. Adentro:
+  - `RETIROS=rets` ([]);
+  - `saveRetirosMirror()` graba la copia vacía (lo mismo con `BORRADORES`).
+  Los pendientes de la cola solo se suman en `mergePending`, después de una lectura buena. El aviso de «retiro igual» (§4ek) mira `RETIROS`. Previo.
+- *Arreglo propuesto*: - Que `leerCierresDeLista` reemplace RETIROS y BORRADORES solo cuando la lista viene del servidor. Probado por el auditor en …/rev30/a2-plata/pedidos_fix_ret.html: se ven los 2 y avisa «YA HAY UN RETIRO IGUAL».
+  - Que el aviso de duplicado mire también la cola.
+  - Marcar «⏳ todavía no está en la planilla».
+
+**R2-3 · MEDIA · Retiros: la versión que quedó en la cola pisa, a los 2 minutos, la corrección que se guardó después con conexión**
+- *Para el dueño*: Si un retiro no se pudo guardar (sin conexión o con el servidor ocupado) y enseguida lo corrigen con conexión, a los dos minutos el panel manda la versión vieja que había quedado esperando. El retiro vuelve al monto anterior, sin aviso.
+- *Dónde*: Cuando un guardado posterior sale bien, `persistRetiro` no saca de la cola la versión vieja, y `flushPending` la manda. El .gs no compara el sello de `__ret_` y la acepta. Un pedido en el mismo caso choca con «conflicto» y no pisa. Previo (§4ek).
+- *Arreglo propuesto*: Cuando un guardado de un id sale bien, sacar de la cola sus versiones anteriores, o no mandar lo encolado antes de la última confirmación. El sello en `__ret_` del .gs (pendiente del servidor) también lo cubriría.
+
+**R4-2 · MEDIA · La lectura que completa un código del almacén pisa la medida elegida a mano y vuelve a poner un producto que la vendedora sacó**
+- *Para el dueño*: Si la vendedora escribe un código del almacén antes de que termine de cargar el saldo y elige la medida a mano, cuando llega el saldo el panel le cambia la medida sin avisar. Y si al editar saca un producto borrándole el nombre, con la actualización automática vuelve a aparecer y se guarda en el pedido.
+- *Dónde*: `prodCodigosDelAlmacen` (16772-16783) corre en cada lectura (`saldoTrasLectura`). Completa todo renglón con código y sin nombre y escribe la medida sin mirar la que había. No avisa ni repinta la suma. 4b194bd.
+- *Arreglo propuesto*: Completar solo el renglón cuyo código se escribió sin saldo (con una marca), solo si la medida está vacía o coincide, una sola vez, con el mismo aviso del campo código y repintando la suma.
+
+**A3-1 · MEDIA · Unidades: un accesorio escrito «P/ COLCHÓN», «P/ SOMIER» o «CON ELÁSTICO PARA COLCHÓN» cuenta como colchón o somier, por su cantidad**
+- *Para el dueño*: En las unidades de la proyección y de las fichas de Heaven y Sueña, un accesorio escrito a mano con «p/» o «para colchón» cuenta como colchón o somier; por ejemplo, «PATAS P/SOMIER» por 4 o «sábanas con elástico para colchón». Una venta de un colchón con protector y 4 patas figura con 6 unidades, y el «Bs por unidad» baja mucho.
+- *Dónde*: `PRY_PEDAZOS` (4431) parte el renglón en «/» y «CON», y en `pryTipoProd` (4443-4457) un pedazo que no es el primero cuenta si dice COLCHON o SOMIER. `pryUnidadesDe` multiplica por la cantidad. Los accesorios no están en `CODIGOS`, así que siempre se escriben a mano. 040e1df (§4gv); 72aa862 arregló solo «S/» y «SIN».
+- *Arreglo propuesto*: - «P/» → «PARA», y cortar lo que sigue a «PARA» y a una palabra de servicio o mueble (lo que también arregla R3-4). Probado por el auditor en …/rev30/a3-proyeccion/pedidos_fix_a3.html: 28 de 29 casos, test_proyeccion 126/0, catálogo sin cambios.
+  - Sumar los casos a test_proyeccion §15.
+
+**R3-3 · MEDIA · «Qué días se vende más» cuenta los feriados como días sin ventas: el viernes y el jueves salen más flojos de lo que son**
+- *Para el dueño*: En «Qué días se vende más», el viernes y el jueves salen más flojos de lo que son. El panel cuenta el 6 y el 7 de agosto y el 25 de septiembre, que fueron feriados, como días de semana sin ventas. Si decidís promociones o personal por día de la semana con ese cuadro, hoy te lleva a una conclusión equivocada.
+- *Dónde*: `pryPatron` (~4764-4765) cuenta todos los días del período en `cnt[dowDe(d)]`, también los de `FERIADOS_PASADOS`/`FERIADOS`. Con 2 meses de historia, el viernes queda 25 % abajo y el jueves 12,5 %. Nació con el cuadro (a904137, hoy).
+- *Arreglo propuesto*: Dejar afuera los feriados en el conteo y en lo cargado ese día. Probado en …/rev30/r3-proyeccion/pedidos_fix_r3.html (test_proyeccion 126/0). Y decir «parejo» cuando la diferencia es menor a ~10 %.
+
+**R1-1 · BAJA · El aviso «🏭 Recoger de fábrica» de una ATC cuenta los 2 días hábiles salteando solo el domingo**
+- *Para el dueño*: El aviso para ir a buscar a fábrica el producto de una ATC dos días hábiles antes de devolverla no salta los feriados. Con Carnaval, la pestaña ATC y la carga de «Hoy» lo muestran recién el mismo día; la carga de «Mañana» sí lo muestra antes.
+- *Dónde*: `atcRecogerFabDesde` (1884-1889) resta días salteando solo el domingo. Previo (§4eb).
+- *Arreglo propuesto*: Usar `diaHabil(d)` en el bucle. Probado por el revisor en …/rev30/r1-dias/arreglo/pedidos.html, con test_rev2_atc, test_rev4_atc_flete y test_rev_entregas en verde.
+
+**A1-1 · BAJA · «🔒 Cerrar día» la víspera de un feriado propone el feriado y dice que «se pueden seguir agregando» pedidos**
+- *Para el dueño*: La víspera de un feriado, «Cerrar día» ofrece cerrar el feriado y dice que ese día se pueden seguir agregando pedidos. Si logística cierra lo que le ofrece, el camión de verdad (el del día siguiente al feriado) queda abierto.
+- *Dónde*: `abrirCierreDias`/`renderCierreDias` (11245-11311) usan `tomorrowStr()`, y el cartel verde no mira `feriadoDe`. El resto del panel empezó a saltear feriados en 72aa862.
+- *Arreglo propuesto*: Botón «Próximo camión» con `proximoDiaEntrega()`, y en un feriado el texto «es feriado: no sale el camión». La fecha por defecto puede quedar como está (§4ex).
+
+**R1-4 · BAJA · Cambiar solo el turno de un pedido que quedó en feriado dice «Turno lleno (0/0)» en vez de «es feriado»**
+- *Para el dueño*: Si una vendedora le cambia solo el turno a un pedido que quedó en un feriado, el panel le dice «turno lleno, probá el otro turno» en vez de «es feriado, cambiale el día».
+- *Dónde*: El freno de feriado de `submitPedido` (8865) mira solo `_nuevo`/`_mueveFecha`; el de cupo (8889-8891) arma «(0/0)». `renderCupoForm` agrega «se puede guardar igual».
+- *Arreglo propuesto*: Si `_mueveVend` y `limTurno` da 0, usar el texto de feriado o domingo de `cambiarTurno`. «Se puede guardar igual» solo si no se cambia fecha ni turno.
+
+**R1-3 · BAJA · La víspera de un feriado, el formulario de pedido nuevo propone el feriado como fecha de entrega**
+- *Para el dueño*: La víspera de un feriado, el formulario de pedido nuevo trae el feriado como día de entrega. La vendedora ve el cartel rojo y tiene que cambiarlo a mano.
+- *Dónde*: `resetForm` (~9641) usa `tomorrowStr()`. Desde 72aa862 ya no se guarda, pero la propuesta quedó.
+- *Arreglo propuesto*: En `resetForm`, `_ff.value = proximoDiaEntrega()`; el mínimo sigue en `tomorrowStr()`.
+
+**A1-2 · BAJA · En un feriado o domingo, el cuadrito pide «que suba el de hoy» a logística, que ese día no trabaja**
+- *Para el dueño*: En un feriado o un domingo, el cuadrito le dice a la vendedora que le pida a logística el Excel de hoy, aunque logística ese día no trabaja. Los números están bien.
+- *Dónde*: `saldoAvisos` (18026-18028) compara el corte con `todayStr()`. Previo (§4gj).
+- *Arreglo propuesto*: Avisar solo si el corte es anterior al último día hábil.
+
+**R2-2 · BAJA · Retiros: si la lista se relee entre ✏️ y Guardar, el retiro que otro equipo borró vuelve a la planilla**
+- *Para el dueño*: Si alguien borra un retiro mientras otra persona lo está corrigiendo, y justo la pantalla de la segunda se actualiza, al guardar el retiro borrado vuelve. Es muy poco probable.
+- *Dónde*: `guardarRetiroForm` busca el sello recién al guardar (6319-6323), y `editarRetiro` no lo guarda. Después de una relectura se manda sin `rev` y el .gs 28-a lo crea. Previo; el arreglo de A4 no cubre este orden.
+- *Arreglo propuesto*: Guardar el sello al abrir ✏️, y si el retiro ya no está en la lista, no guardar a ciegas.
+
+**R2-4 · BAJA · Adelanto en dos métodos más un tercer cobro del mismo día y recibo: corregir el banco del 2° pago baja el «A cuenta» que se ve**
+- *Para el dueño*: En una venta con el adelanto en dos métodos y otro pago del mismo día y recibo, corregir el banco del segundo método baja el «A cuenta» que se ve (de 1.500 a 1.000). Lo que falta cobrar no cambia.
+- *Dónde*: En la rama de cobro de `ctaGuardarPago`, `_mxDesp = mixtoEn(_antX, arr)` va sin `p` (~7030). Con dos candidatos da null y `p.acuenta` queda solo el anticipo.
+- *Arreglo propuesto*: Decidir `_sigue` mirando el propio renglón: misma fecha y recibo que el anticipo, y otro método.
+
+**R3-1 + R3-2 · BAJA · La proyección de cada marca se mueve sola durante el día: domingos y feriados a la mañana, y días hábiles cuyo día equivalente cae en domingo o feriado**
+- *Para el dueño*: La proyección de Heaven o Sueña se mueve sola hasta un 4 % durante el día, sin que entre ninguna venta: los domingos y feriados a la mañana sale más alta, y algunos días hábiles a la mañana más baja. Está dentro del error propio del método, pero confunde.
+- *Dónde*: - `proyeccionMes` pasa la hora a `pryCurvaF` también en un día no hábil (R3-1, 72aa862).
+  - `pryAlDia` puede devolver un domingo o feriado, y `pryCargadaAl` cuenta entero el hábil anterior (R3-2, nació con la curva en a904137; A3 lo achicó).
+- *Arreglo propuesto*: - Hora solo si hoy es hábil, y como día equivalente el último hábil (arreglo del revisor, probado: 0,0 % de movimiento y test_proyeccion 126/0).
+  - Una prueba que exija el mismo número a las 08:00 y a las 21:00.
+
+**R3-4 · BAJA · Unidades: un colchón escrito a mano con ENTREGA, CAMAROTE, LITERA, REGALO o CAMA en el renglón no cuenta**
+- *Para el dueño*: Si una vendedora escribe un colchón a mano y en el mismo renglón pone «entrega», «camarote», «litera», «regalo» o «cama», ese colchón no se suma a las unidades.
+- *Dónde*: `PRY_NO_UNIDAD` (4420-4426) sumó ENTREGAS, CAMAROTES y LITERAS en 72aa862, y `pryPedazoTipo` toma la primera palabra con significado.
+- *Arreglo propuesto*: El mismo de A3-1 (cortar en palabras de servicio o mueble y después de «PARA»).
+
+**R4-4 · BAJA · El nombre que se completa desde el histórico conserva la medida en plazas o unos corchetes vacíos**
+- *Para el dueño*: Cuando el código se completa desde el almacén, a veces el nombre trae la medida en plazas adentro («SOMIER PARRILLA NEGRO 1,5») o unos corchetes vacíos. Es solo de forma: el stock lo cuenta bien.
+- *Dónde*: `nombreSinMedida` (16751-16756) solo saca «NNNxNNN» y «N,N PLZ». 4b194bd.
+- *Arreglo propuesto*: Sacar los mismos patrones que `stockClaveCruda` («N,N» suelto, « - T.A.», corchetes).
+
+**A4-3 · BAJA · En una RPT, el aviso del código del almacén pide «Poné el precio a mano»**
+- *Para el dueño*: En una reposición de tienda (RPT), el aviso del código del almacén dice «poné el precio a mano», pero la RPT no lleva precio.
+- *Dónde*: El texto del manejador del campo código (~3194) no mira `docTipoSel()`.
+- *Arreglo propuesto*: Agregar esa frase solo si no es RPT.
+
+**R1-5 · BAJA · Nueve o más pruebas de la batería dan rojo la víspera de cada feriado (la próxima: 31/10 y 1/11)**
+- *Para el dueño*: Algunas pruebas automáticas del panel dan rojo la víspera de cada feriado, aunque el panel ande bien. La próxima vez es el 31/10 y el 1/11.
+- *Dónde*: Las pruebas buscan «el primer día entregable» salteando solo el domingo, y desde 72aa862 el formulario frena ese día si es feriado. El auditor cuenta 21 archivos con ese patrón.
+- *Arreglo propuesto*: Un ayudante común para las pruebas: primer día que no sea domingo, feriado ni día cerrado, o usar `proximoDiaEntrega()`.
+
+### 22.3 · Los cruces entre áreas (los encontró el meta-auditor)
+- **X-1 · BAJA** — Las ventas que el formulario deja infladas (R2-1, A2-1) inflan también lo vendido de la marca en la proyección y en las fichas de Contabilidad. Cuando el formulario deja una venta inflada, ese número también entra en lo vendido de Heaven o Sueña en la proyección y en las fichas de Contabilidad. Frente al mes es poco, pero no es real.
+- **X-2 · ALTA** — El arreglo que propuso el auditor para R2-1 y A2-1 apaga el freno «poné el saldo» y deja reescribir el adelanto de una venta pagada sin preguntar. No es un error del panel publicado, sino del arreglo que propuso un auditor para los errores de plata. Tal como está, dejaría bajar el adelanto de una venta pagada de 2.500 a 2.000 sin preguntar. Hay una versión probada sin ese problema.
+- **X-3 · ALTA** — Con el saldo cargado, el código de un producto del almacén que se agotó no completa nada ni avisa, y el renglón se pierde al guardar (R4-5 × A4-1). Aunque el panel esté bien cargado, si un producto que no está en la lista de precios se agotó y ya no figura en el Excel del día, su código no completa nada y no avisa. Si la vendedora no escribe el nombre, el pedido se guarda sin ese producto, justo cuando hay que mandarlo a fabricar.
+- **X-4 · BAJA** — En «Qué producir», la historia del sistema de un producto fuera de la lista que no está en el Excel de hoy se suma a otro parecido del catálogo. En «Qué producir», las ventas viejas de un producto que no está en la lista de precios (y hoy no está en el Excel) se suman a otro parecido; por ejemplo, las medidas especiales 160x200 al 160x190. Con los datos de hoy son pocas unidades.
+
+⚠️ X-2 no es un error del panel publicado: es del arreglo que propuso el auditor de plata para R2-1 y A2-1, que apagaba el
+freno «poné el saldo». El meta-auditor dejó probada otra versión que no lo toca (su carpeta, `pedidos_fix_meta.html`).
+
+### 22.4 · Las mejoras, en el orden del meta-auditor
+1. **Frenar al guardar un renglón que tiene código o precio pero no tiene producto (y que la pregunta del saldo mire solo lo que se guarda)** (esfuerzo chico, riesgo bajo). Arregla A4-1 y X-3: pedidos que se guardan sin un producto, sin que nadie lo note. Está probado en …/rev30/meta/pedidos_fix_meta_stock.html, con 5 suites en verde.
+2. **Plata del formulario: proponer montos con todo lo ya cobrado que «A cuenta» no muestra, sin tocar el freno; frenar la corrección de un adelanto registrado en dos pagos; y una prueba que exija que el total no cambie** (esfuerzo medio, riesgo medio). Arregla R2-1 (regresión de hoy), A2-1 y R2-4, y evita el efecto lateral del arreglo del auditor (X-2). Está probado en …/rev30/meta/pedidos_fix_meta.html, con 6 suites en verde.
+3. **Que los códigos del almacén tengan las mismas protecciones que la lista de precios, y que la revisión automática no proponga «✔ hay» en esos renglones** (esfuerzo chico, riesgo bajo). Arregla R4-1. El dueño ya decidió esta regla para la lista de precios el 27/09.
+4. **Multicenter: la ventana de 30 días junta los pedidos por fecha de entrega, más un caso de prueba donde la carga y la entrega son días distintos** (esfuerzo chico, riesgo bajo). Arregla R4-3 con una línea. El dueño ya lo decidió (00b0c68) y está probado (test_eduardo_multicenter 40/0).
+5. **Feriados: revisar ya si hay pedidos para el 02/11 y el 25/12, y agregar el aviso «Quedaron en un día sin camión» (también para los días ya pasados)** (esfuerzo chico, riesgo bajo). Arregla R1-2. Los pedidos cargados antes del 29/09 para esos días no aparecen en ningún «Mañana»; revisarlos es un minuto en Administración. Que el importador de ROHO los mueva solo al próximo camión lo decide el dueño.
+6. **Que el panel no olvide el código de un producto agotado: recordar sus claves mientras algo las nombre y completar el renglón desde el histórico** (esfuerzo medio, riesgo medio). Arregla R4-5, A4-2 y X-4: pedidos, pedidos a fábrica y llegadas que pasan al producto parecido. Hay que cuidar la celda de 50.000 del stock, sin guardar todo para siempre.
+7. **Retiros: sacar de la cola la versión vieja, no vaciar los retiros al abrir sin conexión, avisar un duplicado también contra la cola, y tomar el sello al abrir ✏️** (esfuerzo chico, riesgo bajo). Arregla R2-3, R2-5 y R2-2, casos donde la plata vuelve atrás o se descuenta dos veces. Ya pasó una vez (§4ek). El sello de `__ret_` en el .gs sigue pendiente del servidor.
+8. **Proyección: corregir la curva de una sola vez, sacar los feriados de «Qué días se vende más», contar bien las unidades escritas con «P/» o «PARA», y sumar una lista plegable para revisar unidades** (esfuerzo chico, riesgo bajo). Arregla R3-1, R3-2, R3-3, A3-1 y R3-4. Los arreglos del revisor y del auditor están probados (test_proyeccion 126/0). La lista deja ver con datos reales cómo se cuentan los renglones escritos a mano.
+9. **Días: arreglos chicos que van juntos** (esfuerzo chico, riesgo bajo). Van en un solo cambio: - fecha por defecto = próximo día con camión (R1-3); - mensaje de feriado al cambiar el turno (R1-4); - «Próximo camión» en Cerrar día (A1-1); - aviso de ATC contando días hábiles (R1-1); - aviso del corte solo en día hábil (A1-2); - un ayudante común en las pruebas (R1-5).
+10. **Próxima versión del .gs y feriados que se puedan cargar** (esfuerzo medio, riesgo medio; exige el `.gs`, decide el dueño). Van juntos: - el portero con los feriados; - el sello en los retiros; - una lectura que diga de cuándo es (M1, M8); - feriados «puente» cargables desde Administración, porque un decreto no se puede prever (M5).
+
+### 22.5 · Qué se le escapó a cada nivel (del meta-auditor)
+**Al que escribió el código:**
+- El arreglo A2 dejó sin reconocer el 2° pago del mismo método dentro de «A cuenta», y el formulario lo cuenta dos veces (R2-1, R2-4).
+- A1 escondió de «Mañana» los pedidos que quedan en un feriado (R1-2), desfasó «Cerrar día» (A1-1) y pudre pruebas en las vísperas (R1-5).
+- A3 hizo que la curva se mueva sola en domingos y feriados (R3-1). La curva nueva ya traía el día equivalente no hábil (R3-2) y cuenta los feriados en los días de la semana (R3-3).
+- Las unidades cuentan accesorios escritos con «P/» y pierden colchones que dicen ENTREGA o CAMAROTE (A3-1, R3-4).
+- Multicenter quedó con dos claves distintas (R4-3).
+- §4ha no llevó a los códigos del almacén las protecciones de §4gk (R4-1). Pisa lo elegido con la lectura (R4-2), deja perder un renglón con solo el código (A4-1, X-3) y no contempló el producto agotado (R4-5, A4-2, anotado en §4ga-6).
+- Además hay tres cosas previas, no de hoy: A2-1, R2-3 y R2-5.
+
+**A los revisores:**
+- No vieron A2-1, que está en la misma función que R2-1.
+- A1-1 lo vieron y lo dejaron como mejora; A1-2 no lo vieron.
+- A3-1 se les pasó porque solo miraron colchones que no cuentan.
+- A4-1, A4-2 y A4-3 tampoco los vieron.
+- Inflaron R1-1, R2-2, R3-1 y R3-2, y bajaron R2-5 y R4-2.
+- R4-5 ya estaba en la bitácora y no lo dijeron.
+
+**A los auditores:**
+- No refutaron nada mal, pero nadie conectó la plata con la proyección: la venta inflada entra en lo vendido (X-1).
+- El arreglo del auditor A2 apaga el freno «poné el saldo» y deja bajar un adelanto de 2.500 a 2.000 sin preguntar (X-2). Sus tres suites no pasan por ahí.
+- El auditor A4 limitó A4-1 a «sin saldo»; también pasa con el saldo cargado si el producto se agotó (X-3). No midió el efecto en «Qué producir» (X-4).
+- El script de R2-5 no es del todo estable: 1 de 4 corridas salió distinta.
+
+**Lo que se pidió mirar y está bien:**
+- los feriados futuros en los días hábiles de la proyección;
+- «PTF» frente a los otros textos;
+- los feriados del cuadrito contra los cupos y la fábrica (474 cuadritos sin días imposibles, fuera de M4, que ya se conocía);
+- el feriado, que frena antes de la lectura al guardar.
+
+### 22.6 · Lo que dijo el dueño esa noche
+- **Multicenter**: «el mismo día» es la **fecha de entrega** que pone él (*«cuando se entrega es la fecha que yo coloco de
+  entrega, a veces cargo el pedido el mismo día para entregar ese mismo día»*). Anotado en `00b0c68`; R4-3 se arregla con
+  `ek30 = stockEntregaClave(p, fs)` (la ventana de 30 días se sigue midiendo por fecha de venta, §4dv).
+- **Feriados**: con la herramienta de diagnóstico (bitácora §4hb), a las 00:57 del 30/09 **no había ningún pedido agendado
+  para un feriado** de acá en adelante (el meta-auditor recomendaba revisar el 02/11 y el 25/12).
+- **«No conecta» (22:21-22:40)**: no era el panel ni el servidor, sino Google lento a ratos con la planilla entera sin
+  comprimir (901 KB). Bitácora §4hb; propuesto para el 30/09: el cartel, la lectura comprimida y la de lo cambiado.
+
+### 22.7 · Qué sigue
+Nada de §22 está arreglado: espera el OK del dueño. Orden propuesto: las ALTA de plata juntas (R2-1, que es regresión del
+29/09, con A2-1 y R2-4, con la versión del meta-auditor), el renglón que se pierde (A4-1/X-3), el código del almacén de
+otra medida (R4-1), Multicenter (R4-3, ya decidido), el aviso «Quedaron en un día sin camión» (R1-2) y los retiros (R2-3,
+R2-5). R4-5 (el producto agotado que el panel olvida) es más grande y toca la celda de 50.000 del stock: va aparte.
 
 ## Primera vuelta (`d890468`), resumida
 
