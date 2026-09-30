@@ -1973,7 +1973,7 @@ R2-5). R4-5 (el producto agotado que el panel olvida) es más grande y toca la c
 
 > **30/09: el dueño dijo «hazlo todo». Los 24 están arreglados en la rama: §23.**
 
-## 23 · Los 24 arreglos de §22 (30/09) — EN LA RAMA, SIN PUBLICAR
+## 23 · Los 24 arreglos de §22 (30/09) — PUBLICADOS 30/09 10:52 (`4ded824`)
 
 El dueño: *«hazlo todo»*. Cada arreglo lleva su prueba, y cada prueba se corrió también contra la página publicada
 (`2207922`) para ver que ahí falla: si una prueba pasa en las dos, no prueba nada. Bitácora §4hd (lo técnico).
@@ -2043,6 +2043,21 @@ El dueño: *«hazlo todo»*. Cada arreglo lleva su prueba, y cada prueba se corr
   pero sin F5 no tiene los arreglos.
 - Lo que queda para otra vez: la próxima versión del servidor (el portero con los feriados, el sello de los retiros, una
   lectura que diga de cuándo es, feriados «puente» cargables), M3-M8 y las BAJA de §20.3, y lo de la conexión del 30/09.
+
+### 23.4 · Publicado, y la revisión de esta sección
+- **Publicado el 30/09 a las 10:52** (`main` = `4ded824`), con el OK del dueño después de leer una revisión de §23 hecha con
+  otra herramienta. El servidor no cambió. **Todos F5.**
+- Esa revisión corrió 8 suites (las 5 nuevas, `test_modif`, `test_codigo_almacen` y `test_proyeccion`): **278 bien, 0 mal**.
+  Aclara, con razón, que son datos inventados: respaldan los casos probados, no garantizan que no haya otros errores.
+- Marcó una limitación que queda **pendiente**: el aviso «Quedaron en un día sin camión» mira desde hace 7 días, así que un
+  pendiente de un domingo o feriado de hace 8 días o más no entra (sigue entre los atrasados), y pone botón solo a los
+  primeros 15. Propone todos los pendientes atrasados y un «Ver todos».
+- Y repite los tres pendientes del servidor: el sello de los retiros (dos equipos que corrigen el mismo retiro a la vez:
+  gana el último), los feriados en el portero, y que la lectura diga de cuándo es. **«24 arreglos» no cierra esos
+  pendientes.**
+- El diagnóstico que corrió con la publicación (10:52): servidor `2026-09-28-a`, ningún pedido agendado para un feriado de
+  acá en adelante, la celda del stock en 25.437 de 50.000 letras (el 28/09 eran 22.642), y la primera lectura tardó 29 s
+  (las siguientes, 2-4 s).
 
 ## Primera vuelta (`d890468`), resumida
 

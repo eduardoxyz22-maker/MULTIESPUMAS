@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hd. 30/09: los 24 hallazgos de §4hc, arreglados — en la rama, SIN publicar (espera el OK del dueño)
+## 4hd. 30/09: los 24 hallazgos de §4hc, arreglados — PUBLICADA 30/09 10:52 (`4ded824`)
 
 > El dueño: *«hazlo todo»*, a la propuesta de arreglar primero las 5 ALTA y Multicenter, después las otras, cada una con su
 > prueba, y pedirle el OK antes de publicar. Para el dueño y para Codex: **RESPUESTA_CLAUDE.md §23**.
@@ -7545,9 +7545,26 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   contra «vaciar el nombre para sacar» (`test_modif`, de ahí `data-de-pedido`) y el histórico sin ningún Excel
   (`test_codigo_almacen`, de ahí `stockHayAlgunExcel`).
 
+### Publicado (30/09, 10:52 de Bolivia)
+- El dueño leyó una revisión de §23 hecha con otra herramienta y dijo *«creo que ya puedes publicar»*. `main` = `4ded824`
+  (merge de `72ec6cf`), Pages en verde a las 10:52. El servidor NO cambió (sigue `2026-09-28-a`). **Todos F5.**
+- **La revisión de §23** (otra herramienta, sobre `72ec6cf`): corrió 8 suites en su compu (las 5 nuevas, `test_modif`,
+  `test_codigo_almacen`, `test_proyeccion`): 278/0. Marcó una limitación, por inspección:
+  · `pedidosEnDiaSinCamion` mira de hoy−7 a hoy+90: un pedido pendiente en un domingo o feriado de hace 8 días o más no
+    entra en el aviso (sigue entre los atrasados); y `sinCamionHtml` pone botón solo a los primeros 15. Propone todos los
+    pendientes atrasados y «Ver todos». **Pendiente, a decisión del dueño.**
+  · Repite como pendientes del servidor: el sello de `__ret_`, los feriados en el portero y una lectura que diga de cuándo es.
+- **El diagnóstico de la lectura** corrió solo con el merge (sus archivos entraron a `main`): servidor `2026-09-28-a`, 1.099
+  filas, 903.589 bytes sin comprimir; la primera lectura tardó **29,3 s** y las siguientes 2-4 s (Google lento a ratos, como
+  el 29/09, §4hb); **`__stock__` = 25.437 letras (51 % de las 50.000; el 28/09 eran 22.642)**; ningún pedido agendado para un
+  feriado de acá en adelante (14 feriados por venir).
+  ⚠️ `stockCodRecordar` suma códigos viejos a `cod` mientras algo los nombre: poco, pero la celda crece. La poda de
+  `STOCK.p` recibidos sigue pendiente (§4ga).
+
 ### Lo que queda
 - Próxima versión del `.gs` (decide el dueño): el portero con los feriados, el sello de `__ret_`, una lectura que diga de
   cuándo es, feriados «puente» cargables (M1, M5, M8).
+- El aviso de pedidos en un día sin camión: todos los pendientes atrasados y «Ver todos» (la revisión de §23).
 - M3-M8 y las otras BAJA de §20.3. X-1 se va con R2-1/A2-1 (el formulario ya no infla ventas).
 - Lo del 30/09 que el dueño dejó para verlo con calma (§4hb): cartel de conexión, lectura comprimida, lectura de lo cambiado.
 

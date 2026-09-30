@@ -914,7 +914,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
-## 🔧 Los 24 arreglos de la revisión en TRES niveles (§4hc → §4hd, 30/09) — EN LA RAMA, SIN PUBLICAR
+## 🔧 Los 24 arreglos de la revisión en TRES niveles (§4hc → §4hd) — PUBLICADA 30/09 10:52 (`4ded824`)
 Hallazgos en `RESPUESTA_CLAUDE.md` §22, arreglos en §23 y bitácora §4hd. El dueño: *«hazlo todo»*. Lo que hay que respetar:
 - **Plata: dos funciones, dos usos.** `cobradoFueraDeAcuenta(p)` = solo cobros registrados, para el freno «poné el saldo»
   (lo que «A cuenta» tiene de más sobre el anticipo escrito es el 2° método, se reconozca como mixto o no).
@@ -942,6 +942,8 @@ Hallazgos en `RESPUESTA_CLAUDE.md` §22, arreglos en §23 y bitácora §4hd. El 
   se vuelve a crear desde ✏️.
 - **Proyección**: la curva va sin hora en domingo o feriado y, con hora, cada mes cerrado corta en su último día HÁBIL;
   `pryPatron` sin feriados; unidades: «P/» = «PARA», `PRY_CORTE`, y la palabra sola después de «FORRO/PROTECTOR DE COLCHON».
+- **Pendiente (revisión de §23 con otra herramienta)**: `pedidosEnDiaSinCamion` mira de hoy−7 a hoy+90 y `sinCamionHtml` pone
+  botón solo a los primeros 15; proponen todos los pendientes atrasados y «Ver todos». Y los tres del servidor de siempre.
 - **Pruebas**: `tests/test_rev30_{plata,stock,dias,retiros,proyeccion}.js`. ⚠️ Un bucle que busque «el primer día de entrega»
   saltea domingo Y feriado (`typeof feriadoDe==='function' && feriadoDe(f)`), y para «el mes pasado» se fija el día ANTES de
   `setMonth(-1)` (el 31/10, «31/09» es el 01/10).
@@ -1041,9 +1043,9 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   suman igual, y los umbrales no cambian. `test_eduardo_multicenter` §8.
   ⚠️ **«El mismo día» es la FECHA DE ENTREGA que pone el dueño** (dueño, 29/09 a la noche: *«cuando se entrega es la fecha
   que yo coloco de entrega, a veces cargo el pedido el mismo día para entregar ese mismo día»*; solo él y ROHO pueden
-  agendar para hoy, `esVendedorLite`). La ventana de 15 días ya junta por `fs` (fecha de salida); la de 30 días (`n30`)
-  junta por `fv` (fecha de venta) — **falta cambiar esa clave a `fs`** (revisión del 29/09, R4-3). La ventana de 30 días
-  se sigue MIDIENDO por fecha de venta (§4dv); lo que cambia es solo cómo se juntan los pedidos de Multicenter.
+  agendar para hoy, `esVendedorLite`). Las dos ventanas (15 y 30 días) juntan por `fs` (fecha de salida) desde §4hd (R4-3,
+  publicada 30/09). La ventana de 30 días se sigue MIDIENDO por fecha de venta (§4dv); lo que cambió es solo cómo se
+  juntan los pedidos de Multicenter.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;
