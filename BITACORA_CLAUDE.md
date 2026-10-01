@@ -7445,7 +7445,24 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4he. 30/09, tarde: servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado — EN LA RAMA, sin publicar
+## 4hf. 01/10: «Faltan N» del cuadrito del saldo, con la cuenta escrita
+
+> El dueño, con una captura del formulario (COLCHON SEMIORTOP 140x190, cantidad 1: «En almacén 2 · Pendientes de entrega 3 ·
+> Faltan 2»): *«hay 2 en almacén, pendiente de entrega 3 y faltan 2? dice que faltan 2 porque está tomando el pedido nuevo que
+> va a entrar o qué pasa con las matemáticas?»*. Respuesta: sí, cuenta el pedido nuevo (3 pendientes + 1 de este − 2 en
+> almacén = 2; ya faltaba 1 antes de este pedido). Lo que confundía: `saldoNumerosHtml` no muestra «Libres» cuando da
+> negativo (−1), así que no se ve que el stock ya estaba vendido de más. Propuse escribir la cuenta; el dueño: *«hazlo»*.
+
+- **`saldoFaltanCuentaTxt(v)`** (nueva, al lado de `saldoNumerosHtml`): «Faltan 2 **(3 pendientes + 1 de este pedido − 2 en
+  almacén)**». Es exactamente `v.faltan` (= `cant − libres` = `pend + cant − alm`), no otra cuenta. Con 0 pendientes se omite
+  esa parte («(3 de este pedido − 1 en almacén)»); «1 pendiente» en singular. El guion es «−» con espacio a cada lado: la
+  comprobación «ningún cuadrito dice un número negativo» (`/−\d/`) sigue valiendo.
+- Solo texto: ninguna cuenta ni color cambia. La pregunta al guardar no cambia.
+- `tests/test_saldo_almacen.js` §1: las dos comprobaciones de «Faltan» llevan la cuenta (**2 rojas contra `3606980`**, 84 en
+  total); `test_rev8_saldo` (66) y `test_corte_horario` (35) siguen en verde.
+- Publicada el 01/10 (ver abajo la hora y el commit en CLAUDE.md §4gj).
+
+## 4he. 30/09: servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado — PUBLICADO: servidor ~12:40 (el dueño), página 12:46 (`3606980`)
 
 > El dueño, a las tres propuestas del 30/09 (después de publicar §4hd): *«1 no / 2 ok lo hago. / 3 hazlo»*.
 > (1) El aviso «día sin camión» NO se amplía (la limitación de la revisión de §23 queda como está). (2) El servidor nuevo lo
@@ -7592,6 +7609,26 @@ scratchpad de la sesión: se pierden con el contenedor). Sin ALTA. Lo que encont
 2. Publicar la página (con el OK del dueño) → todos F5.
 3. ✏️ → Nueva versión → Implementar. Verificar: 🔒 Cerrar día dice «versión 2026-09-30-a» sin la línea gris, y el
    «Diagnóstico de la lectura del panel» (Actions, a mano) muestra la comprimida y la de lo cambiado con la cuenta «da ✅».
+
+### Publicación (30/09, mediodía)
+- **Mi mensaje con el enlace fijo** (`db67076`, 2.277 líneas) salió ~12:35. El dueño mandó dos capturas: `probarAntesDeImplementar`
+  todo ✅ (1.108 filas; stock 22.638/50.000 = 45 %; arqueo 0/50.000; «La lectura viaja comprimida: 908.391 letras → 259.788 (3
+  veces menos)»; 14 feriados por venir) y «Administrar implementaciones» con la activa = **Versión 34 del 28/09 3:23 p. m.**
+  (`2026-09-28-a`), con *«y esta era la anterior antes de implementar ahurita»*: la implementó ANTES de que yo publicara la
+  página (pasos 3 y 4 al revés). Está probado que anda (`test_lectura_delta` §10: la página vieja lee entera y guarda igual).
+- **La página**: 12:46, merge `3606980` (= `4ded824` + `db67076`, como las anteriores), con Actions quieto (el cron de las
+  14:00 UTC del panel no había corrido). `pedidos.html` y el `.gs` de `main` iguales byte a byte a los de la rama. Pages 12:47 ✅.
+- **El diagnóstico** (corrida 8, sola al subir `diagnostico_lectura.py` a `main`, 12:46-12:47): **versión `2026-09-30-a`**;
+  la primera lectura 27,9 s (Google despertando) y las demás 2-3 s; entera = 910.829 bytes; **comprimida = 259.990 bytes
+  (3,5 veces menos), marca bien, 1.108 filas, cuenta «da ✅»**; **de lo cambiado = 1.017 bytes, 1 fila, 0 borradas, cuenta
+  «da ✅»**; `doGet` también dice la versión nueva; ningún pedido agendado para un feriado.
+  ⚠️ **Yo había estimado «unas 7 veces menos»** (en el mensaje al dueño, RESPUESTA §24.1 y los comentarios de `apiList` y
+  del `.gs`): es ~3,5. La ganancia grande es la de lo cambiado (1 KB en vez de 911 KB cada 2 minutos). Los comentarios de
+  código se corrigen con el próximo cambio de cada archivo (el `.gs` no se toca: sería distinto del implementado).
+- **El arqueo en 0**: probar mide solo «Observaciones» (donde `filaArqueo` lo guarda) y el diagnóstico la fila entera en
+  JSON (496 = campos + el título «🧮 ARQUEO DEL CUADRE…»): el arqueo está vacío desde antes, no se perdió nada.
+- **Volver atrás**: ✏️ a la **versión 34** Y pegar la 28-a (enlace fijo a `4ded824…`, 1980 líneas).
+- Falta: todos F5; el dueño mira 🔒 Cerrar día («versión 2026-09-30-a» sin la línea gris).
 
 ## 4hd. 30/09: los 24 hallazgos de §4hc, arreglados — PUBLICADA 30/09 10:52 (`4ded824`)
 

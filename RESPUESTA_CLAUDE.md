@@ -2059,7 +2059,7 @@ El dueño: *«hazlo todo»*. Cada arreglo lleva su prueba, y cada prueba se corr
   acá en adelante, la celda del stock en 25.437 de 50.000 letras (el 28/09 eran 22.642), y la primera lectura tardó 29 s
   (las siguientes, 2-4 s).
 
-## 24 · El servidor nuevo (`2026-09-30-a`) y la lectura más liviana (30/09) — en la rama, sin publicar
+## 24 · El servidor nuevo (`2026-09-30-a`) y la lectura más liviana (30/09) — publicado: servidor ~12:40, página 12:46 (`3606980`)
 
 Tus respuestas a las tres propuestas: *«1 no / 2 ok lo hago. / 3 hazlo»*. El aviso de «día sin camión» queda como está; el
 servidor nuevo lo implementás vos; la conexión la hice yo. Las dos cosas del servidor van en UNA sola versión, así
@@ -2068,7 +2068,7 @@ implementás una vez. Bitácora §4he (lo técnico).
 ### 24.1 · Qué cambia para el equipo
 | | Antes | Ahora |
 |---|---|---|
-| Leer la planilla | Cada equipo bajaba la planilla ENTERA (unos 900 KB) cada 2 minutos. Con Google lento, era lo que no llegaba | La primera lectura va comprimida (unas 7 veces menos). Las siguientes traen solo lo que cambió desde la anterior (unas pocas filas), y cada 15 minutos entera de nuevo |
+| Leer la planilla | Cada equipo bajaba la planilla ENTERA (unos 900 KB) cada 2 minutos. Con Google lento, era lo que no llegaba | La primera lectura va comprimida: 260 KB en vez de 911 KB (unas 3,5 veces menos; yo había calculado 7, medido en vivo es 3,5). Las siguientes traen solo lo que cambió desde la anterior (1 KB en la prueba del 30/09), y cada 15 minutos entera de nuevo |
 | ¿Llegó todo? | — | Cada lectura trae una cuenta de control (cuántas filas y un número hecho con todas). El panel la rehace con lo que tiene: si no da igual, lee la planilla entera en el acto |
 | «Lo borraron desde otro equipo» | El panel lo deducía: esperaba, sospechaba, volvía a leer 25 s después | La planilla dice de cuándo es cada lectura y cuándo quedó escrito cada guardado: el panel compara y lo sabe en la primera lectura. Una copia vieja de Google no saca nada de la pantalla |
 | Dos equipos corrigen el mismo retiro | Ganaba el último, sin aviso | El segundo recibe «lo corrigió otra persona: tu cambio NO se guardó» y ve el retiro como quedó |
@@ -2135,6 +2135,23 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 - El «Diagnóstico de la lectura del panel» corrió solo al subir sus cambios (contra el servidor de hoy): 1.101 filas, 905.577
   bytes, «el servidor NO la comprimió (versión 2026-09-28-a)» — lo esperado hasta que implementes. La primera lectura tardó
   18 s y las siguientes 2-4 s: Google lento al arrancar, como siempre.
+
+### 24.6 · Publicado y verificado (30/09, mediodía)
+- Pegaste el servidor, «probar» dio todo ✅ y lo implementaste (antes estaba activa la **Versión 34**, la del 28/09). La
+  página se publicó a las 12:46. Implementar antes de publicar la página no rompe nada: estaba probado.
+- El diagnóstico corrió solo a las 12:46, contra el servidor de verdad:
+  | | Resultado |
+  |---|---|
+  | Versión que contesta | 2026-09-30-a ✅ |
+  | Lectura entera (como hasta hoy) | 911 KB |
+  | Lectura comprimida (la primera, y cada 15 min) | 260 KB, 1.108 filas, cuenta de control ✅ |
+  | Lectura de lo cambiado (cada 2 min) | 1 KB (1 fila cambiada), cuenta de control ✅ |
+  | Pedidos agendados para un feriado | ninguno |
+  | Tiempo | la primera 28 s (Google despertando), las demás 2-3 s |
+- **Volver atrás**: ✏️ a la **versión 34** y pegar el código de antes (enlace fijo a `4ded824…`, 1.980 líneas).
+- Falta: **todos F5**, y mirar que 🔒 Cerrar día diga «versión 2026-09-30-a» sin la línea gris.
+- El arqueo en 0 letras que mostró «probar» está bien: el arqueo del Cuadre está vacío desde antes (el diagnóstico cuenta la
+  fila entera, por eso ahí dice 496).
 
 ## Primera vuelta (`d890468`), resumida
 
