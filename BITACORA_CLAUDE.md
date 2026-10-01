@@ -7445,6 +7445,23 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hf. 01/10: «Faltan N» del cuadrito del saldo, con la cuenta escrita
+
+> El dueño, con una captura del formulario (COLCHON SEMIORTOP 140x190, cantidad 1: «En almacén 2 · Pendientes de entrega 3 ·
+> Faltan 2»): *«hay 2 en almacén, pendiente de entrega 3 y faltan 2? dice que faltan 2 porque está tomando el pedido nuevo que
+> va a entrar o qué pasa con las matemáticas?»*. Respuesta: sí, cuenta el pedido nuevo (3 pendientes + 1 de este − 2 en
+> almacén = 2; ya faltaba 1 antes de este pedido). Lo que confundía: `saldoNumerosHtml` no muestra «Libres» cuando da
+> negativo (−1), así que no se ve que el stock ya estaba vendido de más. Propuse escribir la cuenta; el dueño: *«hazlo»*.
+
+- **`saldoFaltanCuentaTxt(v)`** (nueva, al lado de `saldoNumerosHtml`): «Faltan 2 **(3 pendientes + 1 de este pedido − 2 en
+  almacén)**». Es exactamente `v.faltan` (= `cant − libres` = `pend + cant − alm`), no otra cuenta. Con 0 pendientes se omite
+  esa parte («(3 de este pedido − 1 en almacén)»); «1 pendiente» en singular. El guion es «−» con espacio a cada lado: la
+  comprobación «ningún cuadrito dice un número negativo» (`/−\d/`) sigue valiendo.
+- Solo texto: ninguna cuenta ni color cambia. La pregunta al guardar no cambia.
+- `tests/test_saldo_almacen.js` §1: las dos comprobaciones de «Faltan» llevan la cuenta (**2 rojas contra `3606980`**, 84 en
+  total); `test_rev8_saldo` (66) y `test_corte_horario` (35) siguen en verde.
+- Publicada el 01/10 (ver abajo la hora y el commit en CLAUDE.md §4gj).
+
 ## 4he. 30/09: servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado — PUBLICADO: servidor ~12:40 (el dueño), página 12:46 (`3606980`)
 
 > El dueño, a las tres propuestas del 30/09 (después de publicar §4hd): *«1 no / 2 ok lo hago. / 3 hazlo»*.

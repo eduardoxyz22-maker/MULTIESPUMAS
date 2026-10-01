@@ -267,12 +267,16 @@ function INIT_DOS(vend){
   chk('…«En almacén 5 · Pendientes de entrega 0 · Libres 5», igual que la tabla', /En almacén 5 · Pendientes de entrega 0 · Libres 5/.test((T.alm||{}).txt||'') && T.tAlm && T.tAlm.alm===5, [(T.alm||{}).txt, T.tAlm]);
   chk('⏳ PILLOW PEDIC 140x190 (acá 1, 3 pendientes, 6 en producción, pedidos el martes 22): ÁMBAR «EN PRODUCCIÓN · decile al cliente que espere ~2 días (llega el 24/09)» — sale a las 48 h (§4gs)',
       T.pil && /ps-ambar/.test(T.pil.cls) && /EN PRODUCCIÓN · decile al cliente que espere ~2 días \(llega el 24\/09\)/.test(T.pil.txt) && /programá desde el viernes 25\/09/.test(T.pil.txt), T.pil && [T.pil.cls, T.pil.txt]);
-  chk('…«En almacén 1 · Pendientes de entrega 3 · Faltan 3 · En producción 6»', /En almacén 1 · Pendientes de entrega 3 · Faltan 3 · En producción 6/.test((T.pil||{}).txt||''), (T.pil||{}).txt);
+  /* (01/10) «Faltan N» lleva la cuenta escrita: el dueño vio «En almacén 2 · Pendientes 3 · Faltan 2» y preguntó por las
+     matemáticas (el libre negativo no se muestra). faltan = pendientes + este pedido − en almacén. Rojo contra `3606980`. */
+  chk('…«En almacén 1 · Pendientes de entrega 3 · Faltan 3 (3 pendientes + 1 de este pedido − 1 en almacén) · En producción 6»',
+      /En almacén 1 · Pendientes de entrega 3 · Faltan 3 \(3 pendientes \+ 1 de este pedido − 1 en almacén\) · En producción 6/.test((T.pil||{}).txt||''), (T.pil||{}).txt);
   chk('🏭 ORO BI RELAX 180x190 (no hay en ningún lado): ROJO «NO HAY · decile al cliente que espere ~3 días: hay que mandar a producir (avisá a logística)»',
       T.oro && /ps-rojo/.test(T.oro.cls) && /NO HAY · decile al cliente que espere ~3 días: hay que mandar a producir \(avisá a logística\)/.test(T.oro.txt), T.oro && [T.oro.cls, T.oro.txt]);
   chk('…se manda a producir hoy (antes de las 17), sale el viernes 25/09 (48 h) y ese día se recoge: «programá desde el sábado 26/09 (sábado: solo AM)»',
       /🏭 Se manda a producir hoy, sale de fábrica el viernes 25\/09 \(48 h\) y ese día se recoge\./.test((T.oro||{}).txt||'') && /programá desde el sábado 26\/09 \(sábado: solo AM\)/.test((T.oro||{}).txt||''), (T.oro||{}).txt);
-  chk('…«En almacén 0 · Pendientes de entrega 1 · Faltan 2»', /En almacén 0 · Pendientes de entrega 1 · Faltan 2/.test((T.oro||{}).txt||''), (T.oro||{}).txt);
+  chk('…«En almacén 0 · Pendientes de entrega 1 · Faltan 2 (1 pendiente + 1 de este pedido − 0 en almacén)» (01/10: en singular)',
+      /En almacén 0 · Pendientes de entrega 1 · Faltan 2 \(1 pendiente \+ 1 de este pedido − 0 en almacén\)/.test((T.oro||{}).txt||''), (T.oro||{}).txt);
   chk('🛑 ESPECIAL JUNIOR (ya no se fabrica), con 2 acá: VERDE y dice «ya no se fabrica: quedan 2»',
       T.jun && /ps-verde/.test(T.jun.cls) && /ya no se fabrica: quedan 2/.test(T.jun.txt), T.jun && [T.jun.cls, T.jun.txt]);
   chk('🚚 lo entregado DESPUÉS del corte ya está descontado: SOMIER TITANIO ICE 140x190 acá 3 − 2 entregados hoy = 1',

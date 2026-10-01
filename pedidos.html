@@ -18456,13 +18456,22 @@ function saldoTitulo(v){
     default: return 'Sin saldo cargado: consultá con logística';
   }
 }
+/* 🧮 (01/10) «Faltan 2» con «En almacén 2 · Pendientes de entrega 3» confundía al dueño («¿qué pasa con las matemáticas?»):
+   el libre negativo no se muestra, así que no se ve que ya se había vendido 1 de más ANTES de este pedido. La cuenta, con
+   todas las letras: faltan = pendientes + lo de este pedido − en almacén (es exactamente `v.faltan`). */
+function saldoFaltanCuentaTxt(v){
+  var partes=[];
+  if(v.pend>0) partes.push(stockUnid(v.pend)+' pendiente'+(v.pend===1?'':'s'));
+  partes.push(stockUnid(v.cant)+' de este pedido');
+  return '('+partes.join(' + ')+' − '+stockUnid(v.alm)+' en almacén)';
+}
 function saldoNumerosHtml(v){
   var h=[];
   if(v.alm!=null) h.push('En almacén <b>'+stockUnid(v.alm)+'</b>');
   if(v.pend!=null) h.push('Pendientes de entrega <b>'+stockUnid(v.pend)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
   if(v.alm!=null){
     if(v.libres>=v.cant) h.push('Libres <b>'+stockUnid(v.libres)+'</b>');
-    else { if(v.libres>0) h.push('Libres <b>'+stockUnid(v.libres)+'</b>'); h.push('Faltan <b>'+stockUnid(v.faltan)+'</b>'); }
+    else { if(v.libres>0) h.push('Libres <b>'+stockUnid(v.libres)+'</b>'); h.push('Faltan <b>'+stockUnid(v.faltan)+'</b> '+saldoFaltanCuentaTxt(v)); }
   }
   if(v.prod>0) h.push('En producción <b>'+stockUnid(v.prod)+'</b>');
   if(v.nRen>1) h.push('este pedido lleva <b>'+stockUnid(v.cant)+'</b> (en '+v.nRen+' renglones)');
