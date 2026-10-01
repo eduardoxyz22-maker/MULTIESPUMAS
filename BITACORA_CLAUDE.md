@@ -7460,7 +7460,8 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - Solo texto: ninguna cuenta ni color cambia. La pregunta al guardar no cambia.
 - `tests/test_saldo_almacen.js` §1: las dos comprobaciones de «Faltan» llevan la cuenta (**2 rojas contra `3606980`**, 84 en
   total); `test_rev8_saldo` (66) y `test_corte_horario` (35) siguen en verde.
-- Publicada el 01/10 (ver abajo la hora y el commit en CLAUDE.md §4gj).
+- **Publicada el 01/10 a las 12:29 de Bolivia** (`main` = `3b72cab`), con Actions quieto (el panel había corrido a mano a las
+  10:36). Sin tocar el servidor (sigue `2026-09-30-a`). Para verla hay que recargar la página.
 
 ## 4he. 30/09: servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado — PUBLICADO: servidor ~12:40 (el dueño), página 12:46 (`3606980`)
 

@@ -772,7 +772,7 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   **PTF** · Banzer · Moreno y de qué corte y consulta es. ⚠️ «PTF» (productos terminados fábrica), NO «acá» (dueño,
   29/09, §4gz, publicada 11:43, `f722163`): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
   cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
-  - **«Faltan N» lleva la cuenta escrita** (§4hf, dueño 01/10 «hazlo»): «Faltan 2 (3 pendientes + 1 de este pedido − 2 en
+  - **«Faltan N» lleva la cuenta escrita** (§4hf, dueño 01/10 «hazlo», publicada 01/10 12:29, `3b72cab`): «Faltan 2 (3 pendientes + 1 de este pedido − 2 en
     almacén)» = `v.faltan` = pend + cant − alm (`saldoFaltanCuentaTxt`). Hacía falta porque «Libres» no se muestra cuando da
     negativo y el dueño no veía que ya faltaba 1 antes de su pedido. Solo texto. `test_saldo_almacen` §1 (2 rojas contra `3606980`).
 - **🏷️ Un código que NO está en la lista de precios pero SÍ en el Excel de un almacén** (dueño, 29/09, §4ha, publicada
