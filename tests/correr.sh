@@ -17,7 +17,10 @@ uno(){
   f="$1"; n=$(basename "$f" .js)
   out=$(timeout 400 node "$f" 2>&1); rc=$?
   bad=$(echo "$out" | grep -c '^✗')
-  line=$(echo "$out" | grep -oE '[0-9]+ bien · [0-9]+ mal' | tail -1)
+  # (02/10) las pruebas de Codex cierran con «62 bien / 0 mal» (barra, no punto medio): se aceptan las dos formas,
+  # si no salían como «ok (sin resumen)» y el total de la batería no las contaba.
+  # ⚠️ Con alternación, no con corchetes: «·» son dos bytes y adentro de [...] no casan (quedaba todo «sin resumen»).
+  line=$(echo "$out" | grep -oE '[0-9]+ bien (·|/) [0-9]+ mal' | tail -1 | sed 's# / # · #')
   if [ "$rc" -eq 124 ]; then echo "$n :: CORTADO POR TIEMPO (400 s)${line:+ · llegó a $line}"
   elif [ -n "$line" ]; then echo "$n :: $line"
   elif [ "$bad" -gt 0 ]; then echo "$n :: SIN RESUMEN · $bad fallas"

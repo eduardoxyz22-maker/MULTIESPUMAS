@@ -39,6 +39,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   nuevo cuya respuesta se perdió; no se manda a Apps Script. Sin almacenamiento no envía y avisa.
   `tests/test_guardado_operaciones.js`: 62/62; contra `92ff404`, 33 rojos. Diez suites existentes:
   454 comprobaciones. No cambian permisos, reglas ni `.gs` (`2026-09-30-a`). Recargar tras publicar.
+  - **Revisado el 02/10 a la tarde (§4hi, batería entera 126/126, 4.764) y corregido**: **`colaEsperando()`** = la cola
+    SIN los ids con envío en vuelo o en espera; la usan el pie (`updateFooter`), `renderColaAviso`, `misReintentarCola` y el
+    modal «Quedó en cola». Sin eso, como la fila entra a la cola ANTES de mandarse, cada guardado normal decía «1 sin
+    enviar · reintentar» y «todavía NO llegó a la planilla» mientras viajaba. `apiSave` repinta el pie en `fin`. ⚠️
+    `flushPending`, `autoRefrescar` y `filaSistemaEnVuelo` siguen con `getPending()` entera, a propósito. `prepararDurable`
+    borra `NO_ENCOLAR[id]` (un «en espera» detrás de un rechazo firme decía «liberá espacio»). `test_guardado` M7.
+    ⚠️ Codex publica en `main` sin la batería entera: correrla acá antes de dar por bueno lo suyo.
 - **02/10, §4hg — guardado durable, borrador y reintento (autorizado por el dueño).** El formulario
   conserva en `LS_PEND` la misma fila/id/revisión ANTES de `apiSave`; si no puede verificar la copia,
   no envía. Una respuesta definitiva retira SOLO el JSON enviado; un error de red no pisa una

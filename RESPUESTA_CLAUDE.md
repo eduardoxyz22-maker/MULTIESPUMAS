@@ -1,5 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 02/10, tarde — §27 / BITÁCORA §4hi.** Revisión de lo que Codex publicó (§25, §26): lo central está bien;
+> batería entera 126/126; dos correcciones (el pie decía «1 sin enviar» durante cada guardado normal, y un mensaje de
+> «liberá espacio» con otro motivo).
+
 > **ACTUALIZACIÓN DE CODEX 02/10 — §26 / BITÁCORA §4hh.** Por autorización del dueño se
 > extiende la protección previa al envío a pagos, retiros, arqueos, entregas y llegadas de stock.
 > Se conservan revisiones/fusiones y se limpia la cola por versión exacta. Sin cambios al `.gs`.
@@ -2161,6 +2165,25 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 - Falta: **todos F5**, y mirar que 🔒 Cerrar día diga «versión 2026-09-30-a» sin la línea gris.
 - El arqueo en 0 letras que mostró «probar» está bien: el arqueo del Cuadre está vacío desde antes (el diagnóstico cuenta la
   fila entera, por eso ahí dice 496).
+
+## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
+
+Me pediste revisar lo que hizo. En lo central está bien: la fila queda guardada en el dispositivo ANTES de mandarla
+(pedidos, pagos del chofer, retiros, arqueo, stock, ✅ entregado), al recargar se reenvía con el mismo número sin
+duplicar, y «Reintentar» ya no dice «✓ llegó» cuando el servidor rechazó. Comprobé el punto más delicado: el sello del
+servidor sí llega al pedido que queda en pantalla, así que dos cambios seguidos en el mismo pedido no chocan.
+
+- **Corrí la batería entera** (Codex corrió 10 suites de 126): 126 suites, 4.764 comprobaciones. Solo 2 se pusieron rojas,
+  y las dos por el texto nuevo del aviso («NO se guardó en la planilla todavía» en vez de «NO está en la planilla»). Las
+  ajusté.
+- **Lo que no estaba bien y corregí**: como la fila entra a la cola antes de mandarse, el pie decía «1 sin enviar ·
+  reintentar» y Mis pedidos «todavía NO llegó a la planilla (el servidor no contestó)… no cierres esto sin que diga 0»
+  **durante cada guardado normal**. Con Google lento son 20-30 segundos de un aviso que parece una falla. Ahora se cuenta
+  solo lo que de verdad espera: lo que está viajando no se muestra, y lo que falló aparece en el acto. Y un mensaje que
+  decía «liberá espacio del navegador» cuando el motivo era otro.
+- **Lo que dejé como está**: cuando un guardado del stock no entra, ahora sale un aviso rojo (antes se encolaba callado).
+  Si a logística le molesta, se cambia.
+- **Para la próxima vez que Codex publique**: que corra `./tests/correr.sh` entero antes, o avisame y la corro acá.
 
 ## 26 · Codex: las otras cinco rutas de guardado, protegidas (02/10)
 
