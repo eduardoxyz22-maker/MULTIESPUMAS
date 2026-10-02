@@ -157,7 +157,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   usa de base el espejo (`ARQUEO_ESPEJO_TXT`). `tests/test_transicion.js` monta la página vieja
   desde git (`ebc3eab`).
   · 📏 **El stock va en UNA celda y Google corta en 50.000 letras**: el `.gs` contesta `celda_llena`,
-  `probarAntesDeImplementar` lo mide y el panel avisa pasadas las 45.000. **Medido el 02/10 (§4hl)** con el catálogo
+  `probarAntesDeImplementar` lo mide y el panel avisa pasadas las 45.000. **Medido el 02/10 (§4hl, PUBLICADA 02/10 17:26, `5caebd6`)** con el catálogo
   real en tres almacenes: el **82 % son las fotos** (`u` + `cod` de PTF, Banzer e IM), que no crecen con el tiempo; lo único
   que crecía eran los pedidos a fábrica recibidos (`p`, ~10 %). **`stockPodar(S, hoy)`** (02/10, dueño: «hazlo»): recibido
   hace < `STOCK_RECIBIDOS_DIAS`=45 entero; más viejo, solo como MUESTRA (`stockMuestraDe`: id, k, u, tipo, de, fab, f, r,
@@ -510,7 +510,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   - Le pasa `cobrosDe`, no `cobrosReales`: en una «PAGADA sin monto», las fotos del método suelto se mudan al pago nuevo.
   - No aparece en un recargo pactado, ni en una ATC o RPT.
   - `tests/test_envio_a_pago.js` (28; 20 rojas contra `7fe7551`).
-- **🗑 Borrar un pago registrado, ✅→📥 el pago nuevo saca la marca, 💵 quién recibió el efectivo** (§4hk, 02/10, dueño: *«hazlo»*;
+- **🗑 Borrar un pago registrado, ✅→📥 el pago nuevo saca la marca, 💵 quién recibió el efectivo** (§4hk, 02/10, dueño: *«hazlo»*, PUBLICADA 02/10 17:26, `5caebd6`;
   `tests/test_plata_borrar.js`, 39, 33 rojas contra `f491137`):
   - **`ctaBorrarPago(id, i)`**, botón «🗑 Borrar este pago» dentro de «✏️ Corregir este pago» (solo con monto > 0 y sin `sinMonto`).
     Un COBRO: `aplicarCobros` con el objetivo de antes (el total no cambia, lo borrado vuelve a «falta cobrar»); si era el 2° método
@@ -969,7 +969,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
-## 📦 Servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera (§4hj) — EN LA RAMA (`6b76e7a`), SIN implementar ni publicar
+## 📦 Servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera (§4hj) — IMPLEMENTADO 02/10 ~17:21 (el dueño, probar ✅ 17:19, stock 22.166/50.000 = 44 %) y PÁGINA PUBLICADA 02/10 17:26 (`5caebd6`)
 El dueño (02/10): *«Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del
 saldo tendría que estar también en el servidor. hazlo»*. Lo que hay que respetar:
 - **El servidor NUNCA frena una venta, no reparte stock y no sabe de catálogos ni de Excel**: la cuenta del saldo vive en UN
@@ -993,7 +993,8 @@ saldo tendría que estar también en el servidor. hazlo»*. Lo que hay que respe
   servidor 30-a la página manda `reserva` igual y no pasa nada: se puede publicar la página antes de implementar.
 - Pruebas: `test_servidor.js` §21 (24; 16 rojas contra `4a950cc`), `tests/test_saldo_servidor.js` (24; dos celulares contra el `.gs`
   real; 10 rojas contra `4a950cc`). El `.gs`: **2.430 líneas**, termina en `}` con `return borrador;` antes. Volver atrás = ✏️ a la
-  versión anotada al implementar (la 35 = 30-a) Y pegar la 30-a (`4a950cc…`, 2.277 líneas). Procedimiento: §4fz-b «Publicar».
+  **versión 35** (= 30-a) Y pegar la 30-a (`4a950cc354f88451555e2332fde09a4ae8f45f42`, 2.277 líneas). Procedimiento: §4fz-b «Publicar».
+  ⚠️ Al dueño el enlace raw va PELADO en una línea (entre comillas de código no le sale tocable en su app: 02/10).
 
 ## 📦 Servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado (§4he) — PUBLICADO 30/09: servidor ~12:40 (lo implementó el dueño), página 12:46 (`3606980`)
 El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el aviso «día sin camión»; el servidor nuevo lo implementa
