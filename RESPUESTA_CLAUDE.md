@@ -1,5 +1,10 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN DE CODEX 02/10 — §25 / BITÁCORA §4hg.** El dueño autorizó corregir y publicar
+> los tres hallazgos de la auditoría del circuito de pedidos: envío perdido al recargar, borrador
+> reemplazado sin confirmar y reintento con mensaje verde pese a seguir pendiente. Regresiones: 41/41.
+> Las notas de «sin publicar» o «nada arreglado» de fechas anteriores son historia; leer su cierre posterior.
+
 > **ACTUALIZACIÓN 30/09, madrugada — LO NUEVO ESTÁ EN §22.** Revisión en tres niveles de todo lo publicado el 29/09
 > (4 revisores → 4 auditores → 1 meta-auditor): 24 hallazgos confirmados (5 ALTA, 7 MEDIA, 12 BAJA), 4 cruces y 10
 > mejoras. **Nada arreglado todavía**: espera el OK del dueño. La ALTA R2-1 es regresión del arreglo del mixto (§21).
@@ -2152,6 +2157,21 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 - Falta: **todos F5**, y mirar que 🔒 Cerrar día diga «versión 2026-09-30-a» sin la línea gris.
 - El arqueo en 0 letras que mostró «probar» está bien: el arqueo del Cuadre está vacío desde antes (el diagnóstico cuenta la
   fila entera, por eso ahí dice 496).
+
+## 25 · Codex: los tres fallos del circuito de pedidos, corregidos (02/10)
+
+- La fila del formulario se conserva antes de enviarla, con su mismo id y revisión. Recargar antes
+  de que llegue al servidor la recupera; recargar después de guardar pero sin respuesta no duplica.
+  Una confirmación solo retira su propia foto de la cola. Sin espacio local no se inicia el envío.
+- Abrir otra edición o completar Kommo pregunta antes de descartar un pedido nuevo a medio llenar.
+  Cancelar conserva los datos y vuelve al formulario; Aceptar abre la venta elegida. Esto resuelve
+  el pendiente de formulario nuevo anotado en §15.5.
+- El reintento del pie distingue «sigue en cola», «llegó» y «rechazado». Cola vacía por un rechazo
+  definitivo no se informa como éxito.
+- `tests/test_guardado_durable.js`: **41/41**, datos ficticios y backend simulado, sin tráfico a la
+  planilla real. Detalles en BITACORA §4hg. El `.gs` sigue `2026-09-30-a`; no requiere implementación.
+- El dueño autorizó la publicación de estos tres arreglos. No se cambian reglas de stock, fechas,
+  cupos ni pagos. La recarga de la página recibe los cambios.
 
 ## Primera vuelta (`d890468`), resumida
 

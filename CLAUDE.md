@@ -31,6 +31,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - Token: secret `KOMMO_TOKEN` de GitHub Actions (env var; NO está en el código). Expira ~2026-10-28.
 
 ## Panel de pedidos (`pedidos.html` + `google-apps-script.gs`)
+- **02/10, §4hg — guardado durable, borrador y reintento (autorizado por el dueño).** El formulario
+  conserva en `LS_PEND` la misma fila/id/revisión ANTES de `apiSave`; si no puede verificar la copia,
+  no envía. Una respuesta definitiva retira SOLO el JSON enviado; un error de red no pisa una
+  corrección más nueva. `flushPending` no duplica ids en vuelo y devuelve cuántos rechazó el servidor.
+  El pie usa `misReintentarCola`: cola vacía por rechazo NO es éxito. `confirmarReemplazoForm` pregunta
+  antes de sustituir un pedido nuevo a medio llenar al editar o completar uno de Kommo; Cancelar
+  vuelve al formulario intacto. `tests/test_guardado_durable.js`: 41 comprobaciones aisladas.
+  No cambia el `.gs`: sigue `2026-09-30-a`; basta recargar la página publicada.
 - El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
   sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
   no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además

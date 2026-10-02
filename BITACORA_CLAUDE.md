@@ -1,6 +1,6 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-09-23** (§4fz-b).
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-10-02** (§4hg).
 ⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
 mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz-b`, `## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
@@ -7444,6 +7444,39 @@ solo si hay, «Recogido de fábrica», y limpiar `dev` antes de probar la caja e
 Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabilidad (el
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
+
+## 4hg. 02/10: conservar el envío al recargar, proteger el pedido nuevo y decir la verdad al reintentar
+
+El dueño autorizó corregir y publicar los tres fallos reproducidos en la auditoría de Codex.
+Cambios limitados a `pedidos.html`, pruebas y documentación. Sin pedidos reales ni cambios al `.gs`.
+
+1. **Guardado en curso**: antes había una copia optimista en pantalla, pero la cola se llenaba recién
+   en el `catch`. Recargar sin respuesta perdía el pedido si aún no había llegado al servidor.
+   `guardarYa` ahora conserva la fila con el MISMO id y revisión antes de `apiSave`, y comprueba
+   que la copia se pudo escribir. Si el almacenamiento falla, conserva el formulario y no envía.
+   La respuesta retira solo el JSON que se mandó; nunca una corrección posterior. Los rechazos
+   definitivos se corrigen en el formulario, como antes. El error de red deja la copia ya encolada.
+   `flushPending` saltea ids con envío en vuelo/en espera para no duplicar solicitudes. Al recargar,
+   se reenvía el mismo id; si ya se guardó y solo se perdió la respuesta, aplica el «ok tardío» existente.
+2. **Pedido nuevo a medio llenar**: `formNuevoHuella` compara los campos con el formulario vacío
+   al terminar `resetForm`. `editPedido` y `completarBorrador` preguntan antes de reemplazarlo.
+   Cancelar vuelve con los campos intactos; Aceptar descarta lo escrito y las imágenes sin pegar.
+   Un formulario vacío no pregunta. Mientras se está enviando no se abre otra edición.
+3. **Reintentar**: el pie llama a `misReintentarCola`, que distingue pendiente, confirmado y rechazado.
+   `flushPending` devuelve el número de rechazos firmes: vaciar la cola por rechazo NO dice que llegó.
+
+**Pruebas**: `tests/test_guardado_durable.js`, 41/41 en Chromium con página y `.gs` reales contra
+planilla ficticia en memoria, `fetch` sustituido y HTTP bloqueado. Incluye recarga antes/después de
+guardar, doble clic, edición y revisión, rechazo por día/cupo/OC/feriado/busy, corrección más nueva,
+almacenamiento lleno, Cancelar/Aceptar, Kommo y los tres resultados del reintento.
+Las pruebas aceptan `PEDIDOS` para comparar con el archivo sin arreglar y `CHROMIUM` para el navegador.
+Contra `21b6070` dan 26 verdes y 15 rojos; con el arreglo, 41 verdes. Las 20 suites existentes
+seleccionadas suman 615 comprobaciones verdes (656 contando las nuevas). `mispedidos` se repitió
+aislada: 33/33; en paralelo había fallado una expectativa de temporización (2 consultas en vez de 1).
+
+**Publicación**: autorizada por el dueño el 02/10. No se necesita implementar Apps Script: su versión
+continúa en `2026-09-30-a`. Recargar/F5 para recibir la página nueva. La verificación del despliegue
+se hace contra el commit de publicación; esta sección no afirma una prueba con pedidos de producción.
 
 ## 4hf. 01/10: «Faltan N» del cuadrito del saldo, con la cuenta escrita
 
