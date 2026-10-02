@@ -96,7 +96,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     // M5 — un guardado del chofer sin respuesta sale en rojo
     setPending([]); var p6=base(); STATE=[p6]; apiSave=function(){ return Promise.reject(new Error('Failed to fetch')); };
     window._toasts=[]; p6.entregado=true; await persistPedido(p6);
-    chk('M5 ⚠️ el guardado del chofer sin respuesta avisa en rojo y queda en cola', window._toasts.some(function(t){ return /^err: /.test(t) && /NO está en la planilla/.test(t) && /DON GUARDADO/.test(t); }) && getPending().length===1, window._toasts.join(' | ').slice(0,140));
+    // (02/10, §4hh de Codex) el aviso ahora dice «NO se guardó en la planilla todavía»; vale cualquiera de las dos frases
+    chk('M5 ⚠️ el guardado del chofer sin respuesta avisa en rojo y queda en cola', window._toasts.some(function(t){ return /^err: /.test(t) && /NO (está|se guardó) en la planilla/.test(t) && /DON GUARDADO/.test(t); }) && getPending().length===1, window._toasts.join(' | ').slice(0,140));
     apiSave=apiSaveBien; setPending([]);
 
     // M6 — conflicto con la misma fila = ok tardío
