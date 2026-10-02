@@ -1674,6 +1674,10 @@ function colaQuitarExacta(txt){
   updateFooter();
 }
 function prepararDurable(rec){
+  /* (02/10, revisión de §4hh) Un intento durable es un intento NUEVO: nunca es la foto que el servidor rechazó. Sin esto,
+     un guardado que esperaba turno detrás de uno rechazado en firme (NO_ENCOLAR, 10 s) no entraba a la cola y el aviso
+     decía «liberá espacio del navegador», que no era el motivo. */
+  delete NO_ENCOLAR[rec.id];
   var q=queuePending(rec), txt=q && JSON.stringify(q);
   if(txt && getPending().some(function(p){ return JSON.stringify(p)===txt; })) return q;
   return null;
@@ -2446,7 +2450,11 @@ function apiSave(rec, opts){
   if(!SAVE_EN_VUELO[id]){
     var p=apiSaveAhora(rec, opts);
     SAVE_EN_VUELO[id]=p;
-    var fin=function(){ if(SAVE_EN_VUELO[id]===p) delete SAVE_EN_VUELO[id]; };
+    /* (02/10, §4hi) El pie cuenta solo lo que espera SIN envío en curso (`colaEsperando`). La fila entró a la cola
+       antes de llegar acá (`guardarDurable`/`guardarYa`, con el pie ya pintado): recién ahora se sabe que viaja, así que
+       se repinta; y al terminar (`fin`) otra vez, para que lo que falló se cuente en el acto. */
+    try{ updateFooter(); }catch(e){}
+    var fin=function(){ if(SAVE_EN_VUELO[id]===p) delete SAVE_EN_VUELO[id]; try{ updateFooter(); }catch(e){} };
     p.then(fin, fin);
     return p;
   }
@@ -2459,6 +2467,7 @@ function apiSave(rec, opts){
   };
   var q=SAVE_EN_VUELO[id].then(run, run);
   SAVE_EN_ESPERA[id]=q;
+  try{ updateFooter(); }catch(e){}            // (02/10, §4hi) lo que espera turno tampoco es «sin enviar»
   return q;
 }
 function apiSaveAhora(rec, opts){
@@ -9639,7 +9648,7 @@ function submitPedido(){
       '<p><b>'+esc(rec.cliente||'')+'</b> todavía <b>NO está en la planilla</b>: '+esc(motivo||'sin conexión')+'.</p>'+
       '<p>Se manda solo cuando vuelva la conexión (o cuando ingreses la clave del equipo, si la pide). Hasta entonces <b>las demás computadoras no lo ven</b> y <b>no lo pases al grupo todavía</b>.</p>'+
       '<p>Lo vas a ver arriba de todo en <b>Mis pedidos</b>, con «Reintentar ahora».</p>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-primary" style="width:auto" onclick="closeModal();flushPending().then(function(){ renderColaAviso(); toast(getPending().length?\'Sigue en cola: todavía sin conexión\':\'✓ Ya llegó a la planilla\', getPending().length?\'err\':\'ok\'); })">🔄 Reintentar ahora</button><button class="btn btn-ghost" style="width:auto" onclick="closeModal()">Cerrar</button></div></div>');
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-primary" style="width:auto" onclick="closeModal();flushPending().then(function(){ renderColaAviso(); toast(colaEsperando().length?\'Sigue en cola: todavía sin conexión\':\'✓ Ya llegó a la planilla\', colaEsperando().length?\'err\':\'ok\'); })">🔄 Reintentar ahora</button><button class="btn btn-ghost" style="width:auto" onclick="closeModal()">Cerrar</button></div></div>');
   }
   function after(wasEdit){
     var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
@@ -10748,9 +10757,17 @@ function rechazoTxt(err){
            borrado:'lo habían borrado desde otro equipo (no se volvió a crear)',
            feriado:'era para un feriado (el camión no sale)' }[err] || err;
 }
+/* (02/10, revisión de §4hg/§4hh de Codex) Desde Codex la fila entra a la cola ANTES de mandarse. Mientras el envío está en
+   vuelo (o espera turno) la fila está en la cola, pero NO está «sin enviar»: el pie decía «1 sin enviar · reintentar» y Mis
+   pedidos «todavía NO llegó a la planilla (el servidor no contestó)» durante CADA guardado normal — con Google lento, 20 s
+   de un aviso que parece una falla. Acá se cuenta solo lo que de verdad espera: lo que no tiene un envío en curso.
+   `apiSave` repinta el pie cuando el envío termina (`fin`), así lo que falló aparece en el acto. */
+function colaEsperando(){
+  return getPending().filter(function(p){ var id=p && p.id; return !(id && (SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id])); });
+}
 function renderColaAviso(){
   var el=document.getElementById('mis-cola'); if(!el) return;
-  var pend=getPending(), rech=rechazosLocales().filter(function(r){ return Date.now()-r.ts<7*86400000; });
+  var pend=colaEsperando(), rech=rechazosLocales().filter(function(r){ return Date.now()-r.ts<7*86400000; });
   if(!pend.length && !rech.length){ el.innerHTML=''; return; }
   var h='';
   if(pend.length){
@@ -10775,7 +10792,7 @@ function renderColaAviso(){
    que pasó, como el botón del cartel «Quedó en cola» (§4eo). */
 function misReintentarCola(){
   return flushPending().then(function(res){
-    var n=getPending().length;
+    var n=colaEsperando().length;
     var rechazados=res && res.rechazados || 0;
     toast(rechazados ? ('❌ El servidor rechazó '+rechazados+' guardado'+(rechazados===1?'':'s')+': revisá los rechazos en Mis pedidos.'+(n?(' Todavía hay '+n+' en cola.'):' No se guardaron.'))
       : n ? ('⏳ Sigue sin llegar a la planilla: '+n+' en la cola de este dispositivo. Se reintenta solo.') : '✓ Ya llegó a la planilla', (n||rechazados)?'err':'ok', (n||rechazados)?7000:undefined);
@@ -10787,7 +10804,7 @@ function misReintentarCola(){
 }
 function updateFooter(){
   renderColaAviso();
-  var pend=getPending().length;
+  var pend=colaEsperando().length;
   var base='MultiEspumas · Registro de pedidos';
   document.getElementById('footer').innerHTML = (pend
     ? (base+' · <b style="color:var(--amber)">'+pend+' sin enviar</b> <a onclick="misReintentarCola()">reintentar</a>')

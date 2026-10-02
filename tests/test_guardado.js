@@ -96,7 +96,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     // M5 — un guardado del chofer sin respuesta sale en rojo
     setPending([]); var p6=base(); STATE=[p6]; apiSave=function(){ return Promise.reject(new Error('Failed to fetch')); };
     window._toasts=[]; p6.entregado=true; await persistPedido(p6);
-    chk('M5 ⚠️ el guardado del chofer sin respuesta avisa en rojo y queda en cola', window._toasts.some(function(t){ return /^err: /.test(t) && /NO está en la planilla/.test(t) && /DON GUARDADO/.test(t); }) && getPending().length===1, window._toasts.join(' | ').slice(0,140));
+    // (02/10, §4hh de Codex) el aviso ahora dice «NO se guardó en la planilla todavía»; vale cualquiera de las dos frases
+    chk('M5 ⚠️ el guardado del chofer sin respuesta avisa en rojo y queda en cola', window._toasts.some(function(t){ return /^err: /.test(t) && /NO (está|se guardó) en la planilla/.test(t) && /DON GUARDADO/.test(t); }) && getPending().length===1, window._toasts.join(' | ').slice(0,140));
     apiSave=apiSaveBien; setPending([]);
 
     // M6 — conflicto con la misma fila = ok tardío
@@ -110,6 +111,23 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     window._toasts=[]; await persistPedido(p7);
     chk('…pero un conflicto de verdad (la fila cambió) sigue avisando', window._toasts.some(function(t){ return /modificó otra persona/.test(t); }) && findById('PG').chofer==='OTRO', window._toasts.join(' | ').slice(0,100));
     apiSave=apiSaveBien; setPending([]);
+
+    // M7 — (02/10, revisión de §4hh de Codex) la fila entra a la cola ANTES de mandarse. Mientras viaja, el pie y Mis
+    // pedidos NO la cuentan como «sin enviar» (con Google lento eran 20 s de «1 sin enviar · reintentar» en cada guardado
+    // normal); si el envío falla, el pie la cuenta en el acto; si entra, queda en 0. Con el apiSave y el apiSaveAhora reales.
+    apiSave=apiSaveOrig; apiSaveAhora=apiSaveAhoraOrig; var apiPostOrig=apiPost, liberar=null;
+    apiPost=function(payload){ return new Promise(function(res){ liberar=function(){ var eco=JSON.parse(JSON.stringify(payload.pedido)); eco.rev=777; res({ok:true, pedido:eco, ahora:Date.now()}); }; }); };
+    setPending([]); var p8=base({ rev:700 }); STATE=[p8]; window._toasts=[]; p8.chofer='Nico';
+    var env8=persistPedido(p8);
+    var pie=document.getElementById('footer').innerText, mc=(document.getElementById('mis-cola')||{}).innerHTML||'';
+    chk('M7 ⚠️ mientras el guardado viaja, la fila está en la cola del dispositivo (durable, Codex §4hh)', getPending().length===1 && !!SAVE_EN_VUELO['PG'], getPending().length+' vuelo '+!!SAVE_EN_VUELO['PG']);
+    chk('…pero el pie NO dice «sin enviar» ni Mis pedidos «NO llegó a la planilla»', !/sin enviar/.test(pie) && !/NO llegó/.test(mc), pie.slice(0,80)+' | '+mc.slice(0,60));
+    liberar(); await env8; await new Promise(r=>setTimeout(r,50));
+    chk('…al entrar, sale de la cola y el pie queda limpio', getPending().length===0 && !/sin enviar/.test(document.getElementById('footer').innerText) && findById('PG').rev===777, getPending().length+' rev '+findById('PG').rev);
+    apiPost=function(){ return Promise.reject(new Error('Failed to fetch')); };
+    p8.chofer='Lalo'; await persistPedido(p8); await new Promise(r=>setTimeout(r,50));
+    chk('…y si el envío falla, el pie lo cuenta en el acto («1 sin enviar»)', getPending().length===1 && /1 sin enviar/.test(document.getElementById('footer').innerText), document.getElementById('footer').innerText.slice(0,80));
+    apiPost=apiPostOrig; apiSave=apiSaveBien; setPending([]);
     return casos;
   });
   console.log('\n── El guardado de punta a punta ──');

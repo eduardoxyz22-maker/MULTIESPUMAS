@@ -1,6 +1,6 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-10-02** (§4hh).
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-10-02** (§4hi).
 ⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
 mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz-b`, `## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
@@ -7445,6 +7445,69 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hi. 02/10, tarde: revisión de los dos commits de Codex en `main` (§4hg `92ff404` 12:52, §4hh `e0c5b90` 15:50) — batería entera y dos correcciones
+
+> El dueño: *«revisa el md del repo, chat gpt hizo modificaciones y arreglos»*. Codex publicó directo en `main` (sin pasar
+> por la rama) dos veces el 02/10; su nota está en §4hg/§4hh y en RESPUESTA §25/§26. Esta sección es la revisión. La rama
+> se puso al día con `main` (merge `2ba568d`).
+
+### Lo que hizo Codex (resumen, para no leer el diff)
+- `guardarYa` (formulario) mete la fila en `LS_PEND` ANTES de `apiSave`, con el mismo id y sello; una respuesta definitiva
+  (`ok` true o false) saca SOLO esa foto (`sacarEnvioForm`); el `catch` ya no vuelve a encolar (ya estaba).
+- `guardarDurable(rec, opts)` hace lo mismo para `persistPedido` (cobros, chofer, ATC…), `persistRetiro`, `guardarArqueo`,
+  `guardarStock` y `toggleEntregado`. `apiSaveAhora` con `_durable` trabaja sobre una COPIA y vuelve a encolar lo que de
+  verdad sale (`prepararDurable`); `colaQuitarExacta(txt)` reemplaza a `sisColaLimpiar` (quedó sin uso) y a los
+  `setPending(filter id)`.
+- `flushPending` saltea ids con envío en vuelo o en espera (`SAVE_EN_VUELO`/`SAVE_EN_ESPERA`) y devuelve `{rechazados}`;
+  `misReintentarCola` distingue rechazado / en cola / llegó, y el pie lo usa.
+- `confirmarReemplazoForm` (en `editPedido` y `completarBorrador`): con un pedido NUEVO a medio llenar pregunta antes de
+  reemplazarlo (`FORM_NUEVO_BASE` = huella del formulario vacío al terminar `resetForm`); con un envío en curso
+  (`f-submit` deshabilitado) no abre otra edición.
+- Retiros: `persistRetiro` ya no saca «las versiones viejas» de la cola (`queuePending` guarda UNA por id); un retiro nuevo
+  corregido sin respuesta lleva el alta anterior en `_altaPendiente` (metadato local, fuera del envío y de
+  `mismoContenido`) para que el `_altaPropia` de §4he la reconozca.
+- `rechazoFirme(rec, res, colaTxt)`: saca de la cola solo esa foto, y borra `SAVE_ULTIMO`/`SAVE_REV` solo si lo último
+  tocado es lo rechazado.
+- Pruebas nuevas: `test_guardado_durable.js` (41) y `test_guardado_operaciones.js` (62; reloj clavado el 16/09/2026; el
+  `.gs` real con planilla en memoria).
+
+### Lo revisado (está bien)
+- **El sello llega al pedido vivo aunque `apiSaveAhora` trabaje sobre una copia**: `aplicarSello` lo aplica a `[rec,
+  findById(id), borradorDe(id), RETIROS[id]]` y a `SAVE_REV`, y el «en espera» de `apiSave` manda `SAVE_ULTIMO[id].rec` con
+  `SAVE_REV`. Un ✅ seguido de un 💵 en el mismo pedido no choca.
+- `flushPending` no duplica el envío del formulario (lo saltea mientras viaja), y el «ok tardío» de siempre cubre el reenvío
+  después de recargar (fila sin sello → `conflicto` con la misma fila → tardío, §4fa).
+- `_altaPendiente` es coherente con §4he; `mismoContenido` lo saltea; no viaja a la hoja.
+- `confirmarReemplazoForm` no molesta al reabrir por `conflicto`: la edición y `completarBorrador` tienen `EDIT_ID`.
+- **Batería ENTERA** (Codex corrió 10 suites de 126): 126 suites, **4.764 comprobaciones**; solo 2 rojas, las dos por el
+  TEXTO del aviso nuevo (`test_guardado` M5 y `test_lectura`: «NO está en la planilla» → «NO se guardó en la planilla
+  todavía»); se aceptan las dos frases. `test_guardado_operaciones` salía «ok (sin resumen)» porque cierra con «62 bien / 0
+  mal» (barra): `correr.sh` acepta las dos formas.
+- La página publicada (`e0c5b90`) es byte a byte la de `main`; Pages OK 15:50.
+
+### Lo que no estaba bien y se corrigió acá
+1. **El pie y Mis pedidos contaban el guardado EN VUELO como «sin enviar»** (regresión visible de §4hg/§4hh). Como la fila
+   entra a la cola antes de mandarse, `updateFooter` decía «1 sin enviar · reintentar» y `renderColaAviso` «⏳ 1 guardado…
+   todavía NO llegó a la planilla (el servidor no contestó)… No cierres esto sin que diga 0» durante CADA guardado normal;
+   con Google lento (20-30 s) parecía una falla, y «Reintentar» contestaba «sigue sin llegar». Ahora **`colaEsperando()`** =
+   la cola sin los ids con envío en vuelo o en espera, y la usan `updateFooter`, `renderColaAviso`, `misReintentarCola` y el
+   modal «Quedó en cola»; `apiSave` repinta el pie al terminar cada envío (`fin`), así lo que falló se cuenta en el acto.
+   ⚠️ `autoRefrescar`, `flushPending` y `filaSistemaEnVuelo` siguen mirando la cola ENTERA, a propósito. ⚠️ La fila entra a
+   la cola (y el pie se pinta) ANTES de que `apiSave` marque el envío en vuelo: por eso `apiSave` repinta también al marcar
+   `SAVE_EN_VUELO`/`SAVE_EN_ESPERA` — sin eso el pie seguía diciendo «1 sin enviar» mientras viajaba (lo atajó M7).
+   `test_guardado` M7 (4 comprobaciones; 1 roja contra `e0c5b90`: «el pie NO dice sin enviar»).
+2. **`prepararDurable` contra `NO_ENCOLAR`**: un guardado que esperaba turno detrás de uno rechazado en firme (10 s de
+   `NO_ENCOLAR`) no entraba a la cola y `errorCopiaDurable` decía «liberá espacio del navegador», que no era el motivo. Un
+   intento durable es un intento nuevo: `prepararDurable` borra `NO_ENCOLAR[id]` (como ya hacían `guardarDurable` y
+   `guardarYa`).
+
+### Dicho, sin tocar
+- Cada guardado del stock o del arqueo que no entra ahora tira un toast rojo («⏳ stock: NO se guardó en la planilla
+  todavía (…)»); antes se encolaban callados. Es información; si molesta en logística, se baja a un aviso en la pantalla.
+- `sisColaLimpiar` quedó sin uso.
+- Codex publica directo en `main` sin correr la batería entera. Esta vez no rompió nada de fondo, pero las 116 suites que no
+  corrió son las que cuidan el resto del panel: correrla acá antes de dar por bueno lo suyo.
+
 ## 4hh. 02/10: pagos, retiros, arqueos, entregas y stock sobreviven a recargar durante el envío
 
 La auditoría ampliada de `92ff404` reprodujo cinco operaciones que aún encolaban solo DESPUÉS
@@ -7537,7 +7600,8 @@ se hace contra el commit de publicación; esta sección no afirma una prueba con
 - Solo texto: ninguna cuenta ni color cambia. La pregunta al guardar no cambia.
 - `tests/test_saldo_almacen.js` §1: las dos comprobaciones de «Faltan» llevan la cuenta (**2 rojas contra `3606980`**, 84 en
   total); `test_rev8_saldo` (66) y `test_corte_horario` (35) siguen en verde.
-- Publicada el 01/10 (ver abajo la hora y el commit en CLAUDE.md §4gj).
+- **Publicada el 01/10 a las 12:29 de Bolivia** (`main` = `3b72cab`), con Actions quieto (el panel había corrido a mano a las
+  10:36). Sin tocar el servidor (sigue `2026-09-30-a`). Para verla hay que recargar la página.
 
 ## 4he. 30/09: servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado — PUBLICADO: servidor ~12:40 (el dueño), página 12:46 (`3606980`)
 

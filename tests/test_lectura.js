@@ -82,7 +82,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     return { ok:res&&res.ok, cola:getPending().map(function(x){ return x.id; }), toasts:window._toasts.slice() };
   });
   chk('⚠️ si Google insiste, NO hay ✓: el guardado queda en la cola del dispositivo', r.ok!==true && r.cola.indexOf('s2')>=0, J(r.cola));
-  chk('  …y el aviso dice que NO está en la planilla', r.toasts.some(function(t){ return /NO está en la planilla/.test(t); }), J(r.toasts));
+  // (02/10, §4hh de Codex) el aviso ahora dice «NO se guardó en la planilla todavía»; vale cualquiera de las dos frases
+  chk('  …y el aviso dice que NO está en la planilla', r.toasts.some(function(t){ return /NO (está|se guardó) en la planilla/.test(t); }), J(r.toasts));
 
   // ── 4. el `get_cerrado` de §4dv es la misma puerta: tampoco es un guardado ──
   r = await page.evaluate(async () => {
