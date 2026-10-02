@@ -111,7 +111,8 @@ function feriadoGs_(fecha) { var f = String(fecha || ''); return FERIADOS_GS.has
    comprimir: Google no comprime aunque el navegador lo pida) cada 2 minutos. Tres cosas, todas a pedido del panel:
    · `ahora`: cada lectura dice en qué momento se leyó la hoja (y cada guardado, en qué momento quedó escrito), con el reloj
      de Google. El panel ya no adivina si una lectura es vieja (§4gl/§4gn/§4go): lo compara.
-   · `z`: la respuesta va comprimida (gzip + base64, ~7 veces menos). Solo si este Google escribe el texto en UTF-8
+   · `z`: la respuesta va comprimida (gzip + base64, ~3,5 veces menos: 260 KB en vez de 911, medido el 30/09 con la planilla real —no
+     las 7 que se estimaron—). Solo si este Google escribe el texto en UTF-8
      (`zOk_`), y el panel verifica la marca `zc` al abrirla: si algo no cierra, vuelve a pedir sin comprimir.
    · `desde`: solo las filas con sello posterior a `desde − DELTA_MARGEN_MS` y los borrados desde entonces, más la cuenta
      de control (`n` filas y `huella` = suma de un número por cada `id:sello`). El panel la rehace con su copia y, si no
@@ -134,6 +135,39 @@ var BORRADOS_HOJA = 'Borrados';
 var BORRADOS_HEADERS = ['Fecha', 'Id', 'Cliente', 'Vendedor', 'Entrega', 'N° OC', 'Quién borró', 'Dispositivo', 'Hora (ms)'];
 var BORRADOS_HOJA_MAX = 2000;              // filas como mucho en la hoja; después se borran las más viejas
 
+/* 📦 (2026-10-02-a) LAS RESERVAS DE STOCK: EL QUE GUARDA SEGUNDO SE ENTERA (bitácora §4hj).
+   El dueño (02/10): «Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del
+   saldo tendría que estar también en el servidor». El cuadrito del formulario (§4gj) pregunta con la planilla recién leída,
+   pero si A y B leen «Libres 1» y guardan en los mismos 1-3 segundos, entran los dos sin aviso y se enteran recién en la
+   lectura siguiente. Lo que se hace, y lo que NO:
+   · El servidor NUNCA frena una venta (dueño, §4gj «nunca frena la venta»): esto corre con la fila YA escrita. Tampoco
+     reparte el stock (lo decide logística, §4gq) ni sabe de catálogos ni de Excel: la cuenta del saldo vive en UN solo
+     lugar, la página (`stockData`). Acá solo se recuerda QUIÉN apartó CUÁNTO de QUÉ clave y CUÁNDO: un libro de reservas.
+   · El panel manda con el guardado del formulario `reserva:{ visto, lineas:[{k, u, libres, conocidos}] }`: `visto` = el
+     `ahora` (reloj de Google) de la lectura con la que calculó el saldo; por línea, la clave del producto (la misma que usa
+     la página), las unidades, cuántas quedaban libres según esa lectura (puede ser negativo) y los ids de los pedidos que
+     esa cuenta YA tuvo en cuenta (o descartó a propósito).
+   · El libro vive en la propiedad RESERVAS: {por:{<id>:[{k,u,t}]}}. Lo de más de RESERVAS_VIGENCIA_MS se poda en cada
+     escritura; si pasa de RESERVAS_TOPE_LETRAS se olvida lo más viejo. Se escribe ADENTRO del candado de doPost (es una
+     escritura: dos a la vez se pisarían). Un pedido que se vuelve a guardar REEMPLAZA su reserva con cuidado
+     (`reservaAnotar_`): por clave, si pide lo mismo o menos se conservan las entradas viejas (recortando desde la más nueva);
+     si pide más, una entrada nueva solo por la diferencia. Así corregir la dirección no le cambia la hora a la reserva: si
+     la cambiara, otro que leyó entre el alta y la corrección lo contaría dos veces (una en su `libres`, otra acá).
+   · Por cada línea, `otros` = lo que apartaron OTROS pedidos que el panel no conoce (ni el propio), anotados después de
+     `visto` − RESERVAS_MARGEN_MS (el margen solo acota: lo que evita contar dos veces es `conocidos`). Si otros > 0 y
+     libres − otros < u, la respuesta del guardado lleva `saldo:[{k,u,libres,otros,faltan}]` y el panel se lo dice a quien
+     guardó. Sin `visto` o sin `libres` no se avisa, pero la reserva se anota igual, para los demás.
+   · `doDelete` borra la reserva del pedido. Un pedido entregado puede quedar: se poda a las 6 horas.
+   · Un guardado SIN `reserva` (un panel viejo, la cola, el chofer, Kommo, las filas del sistema) no toca nada y la
+     respuesta es la de siempre.
+   Lo que NO cubre: un guardado que salió de la cola (sin señal) no lleva reserva; y si la clave que calculó una página no es
+   la que calculó la otra (un Excel recién subido en una sola), no se cruzan.
+   ↩️ Volver atrás = ✏️ a la versión ANOTADA al implementar (la de la 2026-09-30-a) Y pegar la 30-a (enlace raw FIJO al commit
+   4a950cc…, 2277 líneas, termina en «}» con «return borrador;» antes). */
+var RESERVAS_VIGENCIA_MS = 6 * 3600000;    // cuánto se recuerda una reserva (una entrega ya salió mucho antes)
+var RESERVAS_TOPE_LETRAS = 8000;           // una propiedad aguanta 9 KB: lo más viejo se olvida
+var RESERVAS_MARGEN_MS = 30 * 60000;       // cuánto antes de `visto` se mira: acota, nada más (`conocidos` evita contar dos veces)
+
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(SHEET_NAME);
@@ -153,7 +187,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-09-30-a';   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-02-a';   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -183,7 +217,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-09-30-a';
+  var ESTA_VERSION = '2026-10-02-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -203,6 +237,7 @@ function probarAntesDeImplementar() {
     leerLista_: typeof leerLista_, leerCambiado_: typeof leerCambiado_, listaResponder_: typeof listaResponder_,   // (2026-09-30-a)
     huellaFila_: typeof huellaFila_, borradoAnotar_: typeof borradoAnotar_, feriadoGs_: typeof feriadoGs_,
     recientesAnotar_: typeof recientesAnotar_, onEdit: typeof onEdit,
+    reservasLeer_: typeof reservasLeer_, reservaAnotar_: typeof reservaAnotar_, reservaProcesar_: typeof reservaProcesar_,   // (2026-10-02-a)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -325,6 +360,18 @@ function probarAntesDeImplementar() {
     if (!futuros.length) ojo('El portero no conoce ningún feriado de acá en adelante: hay que cargar los del año nuevo (FERIADOS_GS, y los mismos en pedidos.html).');
     else bien('El portero no deja entregar en feriados: ' + futuros.length + ' por venir (el próximo, ' + futuros[0] + ', ' + FERIADOS_GS[futuros[0]] + ').');
   } catch (e) { ojo('No pude mirar los feriados: ' + motivo(e)); }
+
+  /* 9. 📦 (2026-10-02-a) Las reservas de stock que recuerda el servidor: solo se leen (se podan solas a las 6 horas, con el
+        próximo guardado). Informa, no frena. */
+  try {
+    if (typeof reservasLeer_ !== 'function') ojo('Este código no tiene el libro de reservas de stock (reservasLeer_): ¿es un pegado viejo?');
+    else {
+      var Rz = reservasLeer_(), idsR = Object.keys(Rz.por || {}), nR = 0;
+      for (var ir = 0; ir < idsR.length; ir++) nR += (Rz.por[idsR[ir]] || []).length;
+      if (!idsR.length) bien('Reservas de stock anotadas: ninguna todavía (se anotan con cada pedido guardado desde el formulario con el saldo a la vista).');
+      else bien('Reservas de stock anotadas: ' + nR + ' línea(s) de ' + idsR.length + ' pedido(s) en las últimas ' + Math.round(RESERVAS_VIGENCIA_MS / 3600000) + ' horas.');
+    }
+  } catch (e) { ojo('No pude leer las reservas de stock: ' + motivo(e)); }
 
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
@@ -725,7 +772,7 @@ function doPostCuerpo_(e) {
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
     if (action === 'delete') return doDelete(body.id, body.rev, body);
-    return doSave(body.pedido, !!body.forzar, !!body.juntar);
+    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva);   // (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS)
   } finally {
     lock.releaseLock();
   }
@@ -1168,6 +1215,102 @@ function recientesAnotar_(que, id, ms) {
   }
   PropertiesService.getScriptProperties().setProperty('BORRADOS_RECIENTES', txt);
 }
+
+/* ── 📦 (2026-10-02-a) El libro de reservas de stock (ver las constantes RESERVAS_… y la explicación arriba de ellas) ── */
+/* { por:{ <id>:[{k,u,t}] } }: por cada pedido, qué clave apartó, cuántas unidades y cuándo (reloj de Google). */
+function reservasLeer_() {
+  try {
+    var o = JSON.parse(prop_('RESERVAS') || 'null');
+    if (o && o.por && typeof o.por === 'object') return { por: o.por };
+  } catch (e) {}
+  return { por: {} };
+}
+/* Escribe el libro: antes poda lo vencido (y lo que no tiene forma) y, si no entra en la propiedad, lo más viejo de todos los
+   pedidos, de a una entrada. Adentro del candado. */
+function reservasGuardar_(R, ms) {
+  var lim = ms - RESERVAS_VIGENCIA_MS, por = {}, id, i;
+  for (id in R.por) {
+    var lista = R.por[id] || [], vivas = [];
+    for (i = 0; i < lista.length; i++) {
+      var e = lista[i];
+      if (e && e.k && Number(e.u) > 0 && Number(e.t) > lim) vivas.push({ k: String(e.k), u: Number(e.u), t: Number(e.t) });
+    }
+    if (vivas.length) por[id] = vivas;
+  }
+  var txt = JSON.stringify({ por: por });
+  while (txt.length > RESERVAS_TOPE_LETRAS) {
+    var vId = null, vI = -1, vT = Infinity;
+    for (id in por) for (i = 0; i < por[id].length; i++) if (por[id][i].t < vT) { vT = por[id][i].t; vId = id; vI = i; }
+    if (vId === null) break;
+    por[vId].splice(vI, 1);
+    if (!por[vId].length) delete por[vId];
+    txt = JSON.stringify({ por: por });
+  }
+  PropertiesService.getScriptProperties().setProperty('RESERVAS', txt);
+  R.por = por;
+}
+/* La reserva de UN pedido, reemplazada con cuidado: por clave, si pide lo mismo o menos quedan las entradas viejas (recortando
+   desde la más nueva); si pide más, una entrada nueva solo por la diferencia, con la hora de ahora. Una clave que ya no está
+   en el pedido se va. Así corregir la dirección no le cambia la hora a la reserva (ver arriba por qué importa). */
+function reservaAnotar_(R, id, lineas, ms) {
+  var prev = R.por[id] || [], porK = {}, out = [], vistos = {}, i, j;
+  for (i = 0; i < prev.length; i++) { var e = prev[i]; if (!e || !e.k) continue; if (!porK[e.k]) porK[e.k] = []; porK[e.k].push(e); }
+  for (i = 0; i < (lineas || []).length; i++) {
+    var l = lineas[i] || {}, k = String(l.k || ''), u = Number(l.u) || 0;
+    if (!k || !(u > 0) || vistos[k]) continue;
+    vistos[k] = 1;
+    var viejas = (porK[k] || []).slice().sort(function (a, b) { return Number(a.t) - Number(b.t); }), tot = 0;   // de la más vieja a la más nueva
+    for (j = 0; j < viejas.length; j++) tot += Number(viejas[j].u) || 0;
+    if (u >= tot) {
+      for (j = 0; j < viejas.length; j++) out.push(viejas[j]);
+      if (u > tot) out.push({ k: k, u: u - tot, t: ms });
+    } else {
+      var sobra = tot - u;
+      for (j = viejas.length - 1; j >= 0 && sobra > 0; j--) {
+        var q = Number(viejas[j].u) || 0;
+        if (q <= sobra) { sobra -= q; viejas[j] = null; }
+        else { viejas[j] = { k: k, u: q - sobra, t: viejas[j].t }; sobra = 0; }
+      }
+      for (j = 0; j < viejas.length; j++) if (viejas[j]) out.push(viejas[j]);
+    }
+  }
+  if (out.length) R.por[id] = out; else delete R.por[id];
+  return out;
+}
+/* Lo que apartaron OTROS pedidos de esa clave que el panel no conoce (ni el propio), anotados después de `visto` − margen. */
+function reservaOtros_(R, id, k, conocidos, visto) {
+  var con = {}, i, tot = 0, corte = Number(visto) - RESERVAS_MARGEN_MS;
+  for (i = 0; i < (conocidos || []).length; i++) con[String(conocidos[i])] = 1;
+  for (var otro in R.por) {
+    if (otro === String(id) || con[otro]) continue;
+    var lista = R.por[otro] || [];
+    for (i = 0; i < lista.length; i++) if (lista[i] && String(lista[i].k) === k && Number(lista[i].t) > corte) tot += Number(lista[i].u) || 0;
+  }
+  return tot;
+}
+/* Lo que hace doSave con la `reserva` del panel, DESPUÉS de escribir la fila (nunca frena): primero mira —con lo que había
+   antes de anotar lo propio: lo propio nunca es «otros»—, después anota y guarda. Devuelve las líneas que quedaron sin saldo
+   por culpa de otro, o null. Sin `visto` o sin `libres` en la línea, no se avisa (pero se anota igual). */
+function reservaProcesar_(id, reserva, ms) {
+  if (!reserva || typeof reserva !== 'object' || !Array.isArray(reserva.lineas)) return null;
+  var R = reservasLeer_(), visto = Number(reserva.visto) || 0, lineas = reserva.lineas, avisos = [], i;
+  for (i = 0; i < lineas.length; i++) {
+    var l = lineas[i] || {}, k = String(l.k || ''), u = Number(l.u) || 0;
+    if (!k || !(u > 0) || !(visto > 0) || l.libres == null || !isFinite(Number(l.libres))) continue;
+    var libres = Number(l.libres), otros = reservaOtros_(R, id, k, l.conocidos, visto);
+    if (otros > 0 && libres - otros < u) avisos.push({ k: k, u: u, libres: libres, otros: otros, faltan: u - (libres - otros) });
+  }
+  reservaAnotar_(R, String(id), lineas, ms);
+  reservasGuardar_(R, ms);
+  return avisos.length ? avisos : null;
+}
+/* Un pedido borrado ya no aparta nada (adentro del candado de doDelete). */
+function reservaBorrar_(id) {
+  var R = reservasLeer_();
+  if (!R.por[String(id)]) return;
+  delete R.por[String(id)];
+  reservasGuardar_(R, Date.now());
+}
 /* Anota un borrado (adentro del candado de doDelete). La propiedad, para la lectura de lo cambiado; la hoja «Borrados»,
    para que el dueño vea qué se borró y desde qué equipo. Ni celulares ni direcciones. Si algo falla, el borrado vale igual:
    en el peor caso la cuenta de control no le da al panel y lee la planilla entera. */
@@ -1343,7 +1486,9 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
 /* `forzar` lo manda el panel SOLO cuando quien mueve el pedido tiene la clave de
    administración y confirmó el aviso: es la que arma el camión y puede meterle un bulto
    más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
-function doSave(p, forzar, juntar) {
+/* (2026-10-02-a) `reserva`: lo que este pedido saca del saldo del almacén, según el panel (ver RESERVAS). Se mira al FINAL,
+   con la fila ya escrita: nunca frena ni cambia nada de lo de arriba. */
+function doSave(p, forzar, juntar, reserva) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -1465,9 +1610,16 @@ function doSave(p, forzar, juntar) {
   else { sh.appendRow(row); filaEco = sh.getLastRow(); }
   var eco = p;
   try { eco = rowToRec_(sh.getRange(filaEco, 1, 1, HEADERS.length).getValues()[0]); if (p.ocCambiada) eco.ocCambiada = p.ocCambiada; } catch (e) { eco = p; }
+  /* 📦 (2026-10-02-a) El libro de reservas: con la fila YA escrita (esto nunca frena), se anota lo que apartó este pedido y se
+     mira si otro pedido, que el panel que guardó no conocía, apartó lo mismo. Solo con lo que manda el formulario (`reserva`),
+     nunca para una fila del sistema; si algo falla acá, el guardado vale igual y la respuesta sale sin `saldo`. */
+  var saldoR = null;
+  if (reserva && String(p.id).indexOf('__') !== 0) { try { saldoR = reservaProcesar_(String(p.id), reserva, Date.now()); } catch (eR) { saldoR = null; } }
   /* (2026-09-30-a) `ahora` = cuándo quedó escrito, con el reloj de Google, DESPUÉS de releer la fila. Una lectura con un
      `ahora` posterior lo tiene adentro: si no lo trae, lo borraron (el panel ya no lo adivina, §4he). */
-  return jsonOut({ ok:true, version:SCRIPT_VERSION, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add'), ahora: Date.now() });
+  var outS = { ok:true, version:SCRIPT_VERSION, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add'), ahora: Date.now() };
+  if (saldoR) outS.saldo = saldoR;
+  return jsonOut(outS);
 }
 
 function doDelete(id, rev, body) {
@@ -1500,6 +1652,7 @@ function doDelete(id, rev, body) {
            «Borrados», que dice qué se borró y desde qué equipo. La hora va DESPUÉS de borrar. */
         var ahoraB = Date.now();
         borradoAnotar_(String(id), fila, body, ahoraB);
+        try { reservaBorrar_(String(id)); } catch (eR) {}      // 📦 (2026-10-02-a) un pedido borrado ya no aparta stock
         /* 📥 Borrar una fila `kommo-<lead>` es DESCARTAR esa venta de Kommo (§4et): se anota
            el lead para que ni el repaso de 5 minutos ni el de GitHub la vuelvan a traer.
            Antes «Descartar» solo borraba la fila y el repaso siguiente la recreaba. */

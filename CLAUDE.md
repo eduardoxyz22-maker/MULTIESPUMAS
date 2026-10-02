@@ -39,7 +39,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   nuevo cuya respuesta se perdió; no se manda a Apps Script. Sin almacenamiento no envía y avisa.
   `tests/test_guardado_operaciones.js`: 62/62; contra `92ff404`, 33 rojos. Diez suites existentes:
   454 comprobaciones. No cambian permisos, reglas ni `.gs` (`2026-09-30-a`). Recargar tras publicar.
-  - **Revisado el 02/10 a la tarde (§4hi, batería entera 126/126, 4.764) y corregido**: **`colaEsperando()`** = la cola
+  - **Revisado el 02/10 a la tarde (§4hi, batería entera 126/126, 4.764) y corregido — publicado 02/10 16:21, `f491137`**: **`colaEsperando()`** = la cola
     SIN los ids con envío en vuelo o en espera; la usan el pie (`updateFooter`), `renderColaAviso`, `misReintentarCola` y el
     modal «Quedó en cola». Sin eso, como la fila entra a la cola ANTES de mandarse, cada guardado normal decía «1 sin
     enviar · reintentar» y «todavía NO llegó a la planilla» mientras viajaba. `apiSave` repinta el pie en `fin`. ⚠️
@@ -157,8 +157,18 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   usa de base el espejo (`ARQUEO_ESPEJO_TXT`). `tests/test_transicion.js` monta la página vieja
   desde git (`ebc3eab`).
   · 📏 **El stock va en UNA celda y Google corta en 50.000 letras**: el `.gs` contesta `celda_llena`,
-  `probarAntesDeImplementar` lo mide y el panel avisa pasadas las 45.000. El tamaño real todavía no
-  se midió.
+  `probarAntesDeImplementar` lo mide y el panel avisa pasadas las 45.000. **Medido el 02/10 (§4hl)** con el catálogo
+  real en tres almacenes: el **82 % son las fotos** (`u` + `cod` de PTF, Banzer e IM), que no crecen con el tiempo; lo único
+  que crecía eran los pedidos a fábrica recibidos (`p`, ~10 %). **`stockPodar(S, hoy)`** (02/10, dueño: «hazlo»): recibido
+  hace < `STOCK_RECIBIDOS_DIAS`=45 entero; más viejo, solo como MUESTRA (`stockMuestraDe`: id, k, u, tipo, de, fab, f, r,
+  enConteo —sin `recs/ru/total/esp`—) y solo si lo mira alguna cuenta (últimas `STOCK_MUESTRAS` llegadas de su fábrica con
+  empates, el pedido más nuevo de su producto, o una recogida que `g[de].rs` todavía nombra); a `STOCK_RECIBIDOS_TOPE`=120,
+  nada. ⚠️ **La misma poda en los tres caminos** (`leerStock`, final de `stockFusionar`, `filaStock`): la junta por id revive
+  lo que un lado sacó y sale podado otra vez. `STOCK_MUESTRA_DIAS`=60 reemplaza el 60 a mano. **No se podan `cod`**
+  (`stockClaveInv` los usa también para códigos del catálogo, `stockCorteViejo`, `productoDeAlmacen`, `saldoCodigosAlmDe`,
+  `stockCodRecordar`) **ni `rs`**: si hay que bajar de verdad, la decisión siguiente es `cod`. Hoy la poda achica poco (el
+  stock se usa desde el 07/09): acota el crecimiento. `tests/test_stock_podar.js` (39; las cuentas dan lo mismo que la
+  regla vieja hoy y a +50 días).
   · **Publicar = pegar y probar el `.gs` ANTES de publicar la página, todos F5, recién ahí
   implementar** (bitácora §4fz-b «Publicar»).
   ⚠️ **Los disparadores (`kommoRepaso` cada 5 min, `kommoProcesarCola`, el barrido de fotos) corren
@@ -500,7 +510,24 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   - Le pasa `cobrosDe`, no `cobrosReales`: en una «PAGADA sin monto», las fotos del método suelto se mudan al pago nuevo.
   - No aparece en un recargo pactado, ni en una ATC o RPT.
   - `tests/test_envio_a_pago.js` (28; 20 rojas contra `7fe7551`).
-  - ⚠️ Todavía NO hay cómo borrar un pago de la venta ya registrado: «Corregir» exige monto > 0.
+- **🗑 Borrar un pago registrado, ✅→📥 el pago nuevo saca la marca, 💵 quién recibió el efectivo** (§4hk, 02/10, dueño: *«hazlo»*;
+  `tests/test_plata_borrar.js`, 39, 33 rojas contra `f491137`):
+  - **`ctaBorrarPago(id, i)`**, botón «🗑 Borrar este pago» dentro de «✏️ Corregir este pago» (solo con monto > 0 y sin `sinMonto`).
+    Un COBRO: `aplicarCobros` con el objetivo de antes (el total no cambia, lo borrado vuelve a «falta cobrar»); si era el 2° método
+    del mixto, `p.acuenta` baja al anticipo (la regla de `ctaGuardarPago`). El ADELANTO: se reescribe `metodoPago` sin él, **`p.acuenta=0`**
+    (si no, `anticipoDe` lo rearma) y `aplicarCobros(p, cobrosReales, ventaTotal de antes)`; una «SÍ, pagado» (§4cb) vuelve a deber
+    el total. Un RECARGO: solo ese renglón (`ctaIdxEnvio`). Fotos a la papelera DESPUÉS y con `borrarFotoSiNadieLaUsa`. El pago de
+    mentira (§4fg) se niega. La marca ✅ no se toca y la pregunta lo avisa. No se puede deshacer.
+  - **`registradoSigue(p, nuevo)`** (MEDIA-5): `aplicarCobros` compara `cobros.length` con **`cobrosDe(p).length`** (el de mentira
+    incluido: anotarle el monto no es un pago nuevo; si el de mentira llegó, `huboSuelto`, cualquier real que lo acompañe sí lo es) y
+    `aplicarEnvios` cuenta los cobrados; un pago/recargo NUEVO sobre una venta ✅ la deja «📥 sin cargar» con aviso rojo. Corregir,
+    borrar y `ctaEnvioAPago` (**`opts.mismaPlata`**, 4° argumento de `aplicarCobros`) la conservan. En el formulario, `_regFin`
+    (`submitPedido`): «SÍ, pagado» con `_nuevos`, un flete cobrado nuevo o un adelanto recién anotado la sacan, y `_avisoPlata` lo dice.
+    ⚠️ Una fuente NUEVA de cobros tiene que pasar por `aplicarCobros`/`aplicarEnvios` para heredar esto.
+  - **`admQuienRecibio(id, desde)`** (MEDIA-4): `quickCobrado` (tabla) y `markPaid(…,'Efectivo')` (ficha) preguntan quién recibió
+    SOLO con `admEfectivoConDuda(p)` = hay chofer y el camión ya salió (`entregado`, o `fechaSalida(p) <= hoy`); «🚚 El chofer» /
+    «🧑‍💼 la vendedora» / otro chofer (`choferesParaSelect`) → `admCobrarEfectivo` → **`applyPaid(p, metodo, banco, recibio)`** (4°
+    argumento nuevo, `>Nombre` §4eq). Sin chofer o con la entrega por delante, directo como siempre (los fixtures viejos no cambian).
 - **🧾 El pago de MENTIRA de una venta «PAGADA sin monto»** (§4fg): esas ventas no tienen
   renglón —el campo guarda el método suelto, `Efectivo %IMG`— y `cobrosDe` fabrica uno con el
   monto de **`p.cobradoBs`**, que NO viaja en la planilla (vale 0 apenas se relee la lista).
@@ -573,8 +600,8 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   · `submitPedido` repone ✅ REGISTRADO si el pedido ya la tenía.
   · Ni una ATC ni una RPT se cobran (`noSeCobraTxt`), y el 📱 QR de la ficha de Administración va
   con banco (`bancosParaCobrar`).
-  · **Esperan al dueño**: MEDIA-4 (💵 de Administración deja el efectivo en la vendedora aunque haya
-  cobrado el chofer) y MEDIA-5 (un cobro nuevo sobre una venta ya ✅ no avisa).
+  · MEDIA-4 (💵 de Administración dejaba el efectivo en la vendedora aunque hubiera cobrado el chofer) y MEDIA-5 (un cobro
+  nuevo sobre una venta ya ✅ no avisaba) quedaron hechos el 02/10 (§4hk, arriba: `admQuienRecibio`, `registradoSigue`).
 - **§4fz (informe de la otra herramienta)**: corregir el **2° método del pago mixto** actualiza
   `p.acuenta` (`mixtoEn`, antes y después del cambio; «SÍ, pagado» sigue en 0, §4cb) — el
   formulario sumaba 4.790 en vez de 4.990. ⚠️ **§4fz-b: el pago mixto es SOLO con el anticipo
@@ -825,8 +852,9 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   con la lista; Aceptar guarda igual (nunca frena la venta). Usa la planilla recién leída (la última lectura de antes de
   guardar, la de cupos; una edición que cambia productos también lee). Al editar pregunta solo si cambió un producto, su
   cantidad o la fecha.
-- **Ventana que queda** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
-  servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos.
+- **Ventana que quedaba** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
+  servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos. **Desde §4hj (02/10, dueño: «hazlo») el servidor
+  `2026-10-02-a` lleva el libro de reservas y el que guarda segundo se entera** (ver «📦 Servidor `2026-10-02-a`» más abajo).
 - `tests/test_saldo_almacen.js` (83; 73 rojas contra `bd5dde3`), con el caso de dos vendedores contra el `.gs` real.
 - **La revisión del 27/09 (§4gk, `8550355`+`89512b1`+`baa7e81`, publicada 12:58, `2040720`)** — tres renglones que NO salen del saldo del almacén, y a los que
   el cuadrito contestaba con el saldo de otro colchón. `saldoClasificar` les pone su grupo `f.g` (`esp|`/`cod|`/`fab|`),
@@ -941,6 +969,32 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
+## 📦 Servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera (§4hj) — EN LA RAMA (`6b76e7a`), SIN implementar ni publicar
+El dueño (02/10): *«Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del
+saldo tendría que estar también en el servidor. hazlo»*. Lo que hay que respetar:
+- **El servidor NUNCA frena una venta, no reparte stock y no sabe de catálogos ni de Excel**: la cuenta del saldo vive en UN
+  lugar, `stockData` (§4gj, §4gq). El `.gs` solo lleva un **libro de reservas**: propiedad `RESERVAS` = `{por:{<id>:[{k,u,t}]}}`,
+  escrita ADENTRO del candado de `doPost`, poda a `RESERVAS_VIGENCIA_MS` (6 h) y tope `RESERVAS_TOPE_LETRAS` (8.000).
+- **`doSave(p, forzar, juntar, reserva)`** la mira al FINAL, con la fila ya escrita y releída (`reservaProcesar_`; si falla, el
+  guardado vale igual). `reserva` = `{visto, lineas:[{k,u,libres,conocidos}]}`: `visto` = `ahora` de la lectura con la que la
+  página calculó el saldo; `conocidos` = ids que esa cuenta ya miró. `otros` (`reservaOtros_`) = lo que apartaron otros pedidos
+  de esa clave fuera de `conocidos` después de `visto − RESERVAS_MARGEN_MS` (30 min: solo acota). Si `otros>0 && libres−otros<u`
+  → la respuesta trae **`saldo:[{k,u,libres,otros,faltan}]`**. Sin `visto` o sin `libres` anota y calla. Sin `reserva` (cola,
+  chofer, Contabilidad, Kommo, filas `__`) nada cambia. **Volver a guardar reemplaza con cuidado** (`reservaAnotar_`: misma
+  cantidad conserva la hora; más, entrada nueva por la diferencia); **`doDelete` → `reservaBorrar_`**. `probarAntesDeImplementar`
+  §9 informa cuántas hay. `SCRIPT_VERSION`/`ESTA_VERSION`/`SCRIPT_VERSION_ESPERADA` = `2026-10-02-a`.
+- **Página**: `saldoReservaArmar()` en `submitPedido` **ANTES del `upsert(rec)` optimista** (si no, `libres` descuenta al propio
+  pedido y `conocidos` trae su id); una línea por grupo `f.g` que pase `saldoDelAlmacen`; `SALDO_VISTO` lo deja `mergePending`
+  (0 con un servidor viejo → sin `visto`); viaja por `opts.reserva` de `apiSaveAhora`; **la cola no lo manda**. Con `res.saldo`,
+  después de lo de siempre, `saldoAvisoServidor` (ventana ámbar «Mientras guardabas, otro vendedor vendió N de …: faltan M. Tu
+  pedido quedó guardado igual»; «Entendido» devuelve la ventana tapada, `SALDO_MODAL_PREVIO`; «✏️ Abrir el pedido» relee con
+  `conTope` 4 s y `editPedido`).
+- **No cubre**: lo que sale de la cola (sin reserva); claves distintas entre páginas (un Excel recién subido en una sola). Con el
+  servidor 30-a la página manda `reserva` igual y no pasa nada: se puede publicar la página antes de implementar.
+- Pruebas: `test_servidor.js` §21 (24; 16 rojas contra `4a950cc`), `tests/test_saldo_servidor.js` (24; dos celulares contra el `.gs`
+  real; 10 rojas contra `4a950cc`). El `.gs`: **2.430 líneas**, termina en `}` con `return borrador;` antes. Volver atrás = ✏️ a la
+  versión anotada al implementar (la 35 = 30-a) Y pegar la 30-a (`4a950cc…`, 2.277 líneas). Procedimiento: §4fz-b «Publicar».
+
 ## 📦 Servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado (§4he) — PUBLICADO 30/09: servidor ~12:40 (lo implementó el dueño), página 12:46 (`3606980`)
 El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el aviso «día sin camión»; el servidor nuevo lo implementa
 él; la conexión (cartel, comprimida, de lo cambiado) la hice yo. Detalle en bitácora §4he y RESPUESTA §24. Lo que hay que respetar:
@@ -971,8 +1025,8 @@ El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el avi
   publicara la página (probado que anda: `test_lectura_delta` §10); la página salió a las 12:46. El diagnóstico de las 12:46:
   versión 2026-09-30-a, la comprimida viaja **260 KB en vez de 911 KB (~3,5 veces menos, no 7 como estimé)** y la de lo
   cambiado **1 KB**, las dos cuentas «da ✅». Volver atrás = ✏️ a la **versión 34** Y pegar la 28-a (enlace fijo a
-  `4ded824…`, 1980 líneas). ⚠️ Los comentarios «~7 veces menos» de `pedidos.html` y del `.gs` quedaron así: se corrigen con
-  el próximo cambio de cada uno (tocar el `.gs` ahora lo haría distinto del implementado).
+  `4ded824…`, 1980 líneas). Los comentarios «~7 veces menos» de `pedidos.html` y del `.gs` ya dicen «~3,5» desde el `.gs`
+  2026-10-02-a (§4hj).
   · El arqueo: probar mide SOLO la celda «Observaciones», que es donde vive (`filaArqueo` → `filaSistema`): 0 letras = vacío.
   El diagnóstico mide la fila ENTERA en JSON (496 = los nombres de los campos + el título «🧮 ARQUEO DEL CUADRE…» en
   `cliente`; una fila de sistema vacía da ~460 más el título). Dicen lo mismo: no es una pérdida.

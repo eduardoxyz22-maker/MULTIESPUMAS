@@ -1588,5 +1588,120 @@ console.log('\n── 20. Correcciones a mano (onEdit) y el nombre de un borrado
   chk('e. …queda anotado entre los retocados (lista `r`), no entre los borrados', Array.isArray(memoK.r) && memoK.r.some(x => x[0]==='kommo-555') && !(memoK.b||[]).length, JSON.stringify(memoK));
 }
 
+/* ── 📦 21. El libro de reservas de stock (2026-10-02-a, §4hj). El dueño: «Dos vendedores que guardan la última unidad en los
+      mismos segundos la venden dos veces: la revisión del saldo tendría que estar también en el servidor». El panel manda con el
+      guardado `reserva:{visto, lineas:[{k,u,libres,conocidos}]}`; el servidor anota (propiedad RESERVAS, adentro del candado) y,
+      si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo`. NUNCA frena. Los marcados ⚠️ fallan contra el
+      .gs 2026-09-30-a (`GS=… node tests/test_servidor.js`). ── */
+console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se entera (2026-10-02-a) ──');
+{
+  const a = cargar([HDR30], {});
+  const K = 'TITANIO ICE|160X190', K2 = 'ALMOHADA|50X70';
+  const prop = () => { try { return JSON.parse(a.ctx.PropertiesService.getScriptProperties().getProperty('RESERVAS') || 'null'); } catch (e) { return null; } };
+  const de = (id) => ((prop() || {}).por || {})[id] || [];      // siempre una lista: contra el .gs viejo no hay nada
+  const hay = (id) => de(id).length > 0;
+  const esperar = (ms) => { const f = Date.now() + ms; while (Date.now() < f) {} };     // que la hora de dos guardados no coincida
+  // sin fecha (venta de tienda): el portero de cupos no mira, y acá se guardan más de 12 pedidos en el mismo día
+  const guardar = (id, cli, reserva, extra) => a.post(Object.assign({ action:'save', pedido: nuevo(Object.assign({ id, cliente: cli, fecha:'', turno:'' }, extra || {})) }, reserva ? { reserva } : {}));
+  const vistoViejo = Date.now() - 5000;          // B leyó la planilla hace 5 segundos: ANTES de que A guardara
+  // a. A guarda la última unidad
+  const rA = guardar('A1', 'CLIENTE A', { visto: vistoViejo, lineas: [{ k:K, u:1, libres:1, conocidos:[] }] });
+  chk('⚠️ a. A guarda la última unidad con `reserva`: entra, sin `saldo` (nadie más la vendió), y su reserva queda anotada en RESERVAS (clave, 1 unidad, hora)',
+      rA.ok===true && rA.saldo===undefined && hay('A1') && de('A1').length===1 && de('A1')[0].k===K && de('A1')[0].u===1 && de('A1')[0].t>=rA.ahora-5000 && de('A1')[0].t<=rA.ahora, JSON.stringify(prop()));
+  const tA = hay('A1') ? de('A1')[0].t : 0;
+  // b. B guarda la misma unidad con una lectura de antes de A, sin conocerlo
+  const rB = guardar('B1', 'CLIENTE B', { visto: vistoViejo, lineas: [{ k:K, u:1, libres:1, conocidos:[] }] });
+  chk('⚠️ b. B guarda la misma unidad con una lectura de ANTES de A (no lo tiene en `conocidos`): entra IGUAL, y la respuesta trae `saldo` con otros:1 y faltan:1',
+      rB.ok===true && rB.pedido && rB.pedido.id==='B1' && Array.isArray(rB.saldo) && rB.saldo.length===1 && rB.saldo[0].k===K && rB.saldo[0].u===1 &&
+      rB.saldo[0].libres===1 && rB.saldo[0].otros===1 && rB.saldo[0].faltan===1, JSON.stringify(rB.saldo || rB).slice(0,200));
+  chk('b. …las dos filas están en la planilla (el servidor nunca frena una venta) y la reserva de B también quedó anotada',
+      a.sh._datos.filter(f => f[0]==='A1' || f[0]==='B1').length===2 && hay('B1') && de('B1')[0].u===1, JSON.stringify(prop()));
+  // c. C leyó DESPUÉS de A y de B: los dos van en `conocidos` y su `libres` ya los descuenta
+  const rC = guardar('C1', 'CLIENTE C', { visto: Date.now(), lineas: [{ k:K, u:1, libres:-1, conocidos:['A1','B1'] }] });
+  chk('c. C leyó después de A y de B (los dos en `conocidos`, libres −1 ya los descuenta): sin `saldo` (el aviso de ese caso lo dio el formulario antes de guardar)',
+      rC.ok===true && rC.saldo===undefined, JSON.stringify(rC).slice(0,160));
+  // c2. D conoce a A pero no a B (leyó entre los dos): solo B cuenta como «otros»
+  const rD = guardar('D1', 'CLIENTE D', { visto: Date.now(), lineas: [{ k:K, u:2, libres:3, conocidos:['A1'] }] });
+  chk('c. D leyó entre A y B (conoce a A, no a B ni a C): cuentan solo los que no conoce (otros:2), y como 3 − 2 < 2 avisa faltan:1',
+      rD.ok===true && rD.saldo && rD.saldo.length===1 && rD.saldo[0].otros===2 && rD.saldo[0].faltan===1 && rD.saldo[0].libres===3, JSON.stringify(rD.saldo));
+  const rE = guardar('E1', 'CLIENTE E', { visto: Date.now(), lineas: [{ k:K, u:1, libres:9, conocidos:[] }] });
+  chk('c. …y si con lo de los otros igual alcanza (libres 9, otros 5, pide 1): sin `saldo`', rE.ok===true && rE.saldo===undefined, JSON.stringify(rE).slice(0,120));
+  // d. A corrige la dirección sin tocar productos: su reserva conserva la hora
+  esperar(3);
+  const A1 = listar(a).pedidos.find(p => p.id==='A1'); A1.direccion = 'OTRA CALLE';
+  const rA2 = a.post({ action:'save', pedido: A1, reserva: { visto: Date.now(), lineas: [{ k:K, u:1, libres:0, conocidos:['A1','B1','C1','D1','E1'] }] } });
+  chk('⚠️ d. A corrige la dirección sin tocar productos: su reserva conserva la HORA de antes (otro que leyó entre el alta y la corrección no lo cuenta dos veces)',
+      rA2.ok===true && rA2.saldo===undefined && de('A1').length===1 && de('A1')[0].t===tA && de('A1')[0].u===1, JSON.stringify(de('A1')));
+  // e. A sube de 1 a 3: entrada nueva solo por 2; baja a 2: se recorta desde la más nueva
+  esperar(3);
+  const A1b = listar(a).pedidos.find(p => p.id==='A1'); A1b.productos[0].cant = 3;
+  const rA3 = a.post({ action:'save', pedido: A1b, reserva: { visto: Date.now(), lineas: [{ k:K, u:3, libres:0, conocidos:['A1','B1','C1','D1','E1'] }] } });
+  chk('⚠️ e. A sube de 1 a 3: queda la entrada vieja (1, con su hora) más una NUEVA de 2 con la hora de ahora',
+      rA3.ok===true && de('A1').length===2 && de('A1')[0].t===tA && de('A1')[0].u===1 && de('A1')[1].u===2 && de('A1')[1].t>tA, JSON.stringify(de('A1')));
+  const tA2 = de('A1')[1] ? de('A1')[1].t : 0;
+  esperar(3);
+  const A1c = listar(a).pedidos.find(p => p.id==='A1'); A1c.productos[0].cant = 2;
+  a.post({ action:'save', pedido: A1c, reserva: { visto: Date.now(), lineas: [{ k:K, u:2, libres:0, conocidos:['A1'] }] } });
+  chk('e. …baja de 3 a 2: se recorta desde la más NUEVA (queda 1 de antes + 1 de la segunda, cada una con su hora)',
+      de('A1').length===2 && de('A1')[0].u===1 && de('A1')[0].t===tA && de('A1')[1].u===1 && de('A1')[1].t===tA2, JSON.stringify(de('A1')));
+  // e2. A cambia el producto por otro: la clave vieja se va, la nueva entra
+  esperar(3);
+  const A1d = listar(a).pedidos.find(p => p.id==='A1'); A1d.productos = [{ desc:'ALMOHADA', medida:'50x70', codigo:'CD1403', cant:4 }];
+  a.post({ action:'save', pedido: A1d, reserva: { visto: Date.now(), lineas: [{ k:K2, u:4, libres:10, conocidos:['A1'] }] } });
+  chk('e. …cambia el producto por otro: la clave vieja se va de su reserva y entra la nueva (4 almohadas)',
+      de('A1').length===1 && de('A1')[0].k===K2 && de('A1')[0].u===4, JSON.stringify(de('A1')));
+  chk('e. …y a partir de ahí nadie que pida TITANIO cuenta a A como «otros»',
+      guardar('F1', 'CLIENTE F', { visto: Date.now(), lineas: [{ k:K, u:1, libres:4, conocidos:['B1','C1','D1','E1'] }] }).saldo===undefined);
+  // f. doDelete borra la reserva del pedido
+  const revB = listar(a).pedidos.find(p => p.id==='B1').rev;
+  const dB = a.post({ action:'delete', id:'B1', rev:revB });
+  chk('⚠️ f. borrar el pedido de B borra su reserva (las otras quedan)', dB.ok===true && !hay('B1') && hay('A1') && hay('C1'), JSON.stringify(prop()));
+  // g. lo de más de 6 horas se poda con el próximo guardado, y lo de antes de `visto` − 30 min no cuenta como «otros»
+  const PS = a.ctx.PropertiesService.getScriptProperties();
+  PS.setProperty('RESERVAS', JSON.stringify({ por: { VIEJO: [{ k:K, u:5, t: Date.now() - 7*3600000 }], LEJOS: [{ k:K, u:5, t: Date.now() - 40*60000 }], A1: de('A1') } }));
+  const rG = guardar('G1', 'CLIENTE G', { visto: Date.now() - 60000, lineas: [{ k:K, u:1, libres:1, conocidos:[] }] });
+  chk('⚠️ g. una reserva de hace 7 horas se poda con el próximo guardado, y una de hace 40 minutos (antes de `visto` − 30 min) no cuenta como «otros»: sin `saldo`',
+      rG.ok===true && rG.saldo===undefined && !hay('VIEJO') && hay('LEJOS') && hay('G1'), JSON.stringify(prop()));
+  // h. sin `reserva` en el body, nada cambia
+  const antesP = JSON.stringify(prop());
+  const rH = guardar('H1', 'CLIENTE H', null);
+  chk('h. un guardado SIN `reserva` (un panel viejo, la cola, el chofer): no toca el libro y la respuesta no trae `saldo`',
+      rH.ok===true && rH.saldo===undefined && JSON.stringify(prop())===antesP && rH.pedido.id==='H1', JSON.stringify(rH).slice(0,120));
+  const stk = HDR30.map(() => ''); stk[0] = '__stock__'; stk[HDR.indexOf('Observaciones')] = '{"c":{"f":"","u":{}}}';
+  const rS = a.post({ action:'save', pedido: { id:'__stock__', observaciones:'{"c":{"f":"","u":{}}}' }, reserva: { visto: Date.now(), lineas: [{ k:K, u:1, libres:0, conocidos:[] }] } });
+  chk('h. …y una fila del sistema con `reserva` (no debería pasar) tampoco: ni se anota ni se avisa', rS.ok===true && rS.saldo===undefined && !hay('__stock__'), JSON.stringify(rS).slice(0,120));
+  // i. sin `visto` o sin `libres`: se anota pero no se avisa
+  const rI = guardar('I1', 'CLIENTE I', { lineas: [{ k:K, u:1, libres:0, conocidos:[] }] });
+  chk('i. con `reserva` pero SIN `visto` (la lectura vino de un servidor de antes, sin hora): se anota para los demás y no se avisa',
+      rI.ok===true && rI.saldo===undefined && hay('I1') && de('I1')[0].u===1, JSON.stringify(rI).slice(0,120));
+  const rJ = guardar('J1', 'CLIENTE J', { visto: Date.now(), lineas: [{ k:K, u:1, conocidos:[] }] });
+  chk('i. …y sin `libres` en la línea (el cuadrito no tenía número: sin contar, producto desconocido) tampoco avisa, pero anota',
+      rJ.ok===true && rJ.saldo===undefined && hay('J1'), JSON.stringify(rJ).slice(0,120));
+  // j. el tope de la propiedad: 8.000 letras, se olvida lo más viejo
+  const b = cargar([HDR30], {});
+  for (let i = 0; i < 300; i++) b.post({ action:'save', pedido: nuevo({ id:'t' + String(i).padStart(4,'0'), cliente:'T' + i, fecha:'', turno:'' }), reserva: { visto: Date.now(), lineas: [{ k:K, u:1, libres:500, conocidos:[] }] } });
+  const txtB = b.ctx.PropertiesService.getScriptProperties().getProperty('RESERVAS') || '{}', RB = JSON.parse(txtB);
+  const idsB = Object.keys(RB.por || {}).sort();
+  chk('j. el libro entra en una propiedad (hasta 8.000 letras): con 300 pedidos olvida los más VIEJOS y conserva los últimos',
+      txtB.length <= 8000 && idsB.length > 50 && idsB.length < 300 && idsB[idsB.length-1]==='t0299' && !RB.por.t0000, JSON.stringify({ n: idsB.length, largo: txtB.length, primero: idsB[0] }));
+  // k. probarAntesDeImplementar nombra las reservas, sin escribir
+  if (typeof a.ctx.probarAntesDeImplementar === 'function') {
+    const antesK = a.ctx.PropertiesService.getScriptProperties().getProperty('RESERVAS');
+    const pr = a.ctx.probarAntesDeImplementar();
+    chk('⚠️ k. probarAntesDeImplementar dice cuántas reservas hay («Reservas de stock anotadas: N línea(s) de M pedido(s)») y no las toca',
+        pr.lineas.some(l => /✅ Reservas de stock anotadas: \d+ línea\(s\) de \d+ pedido\(s\)/.test(l)) && a.ctx.PropertiesService.getScriptProperties().getProperty('RESERVAS')===antesK, pr.lineas.filter(l => /Reservas/.test(l)).join(' | '));
+    const vacio = cargar([HDR30], {});
+    chk('k. …y sin ninguna, lo dice («ninguna todavía») sin frenar', vacio.ctx.probarAntesDeImplementar().lineas.some(l => /✅ Reservas de stock anotadas: ninguna todavía/.test(l)));
+  } else chk('k. está probarAntesDeImplementar', false);
+  // l. las tres versiones iguales
+  const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
+  const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-02-a',
+      vG==='2026-10-02-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
+  const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
+  chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
+      !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
+}
+
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
 process.exit(FAIL?1:0);
