@@ -16442,6 +16442,13 @@ var STOCK_CUBRIR=7;           // al pedir, cuántos días de venta cubrir despu�
 var STOCK_DIAS_SOBRA=60;      // stock para más de esto = plata parada
 var STOCK_RECONTAR=21;        // un conteo más viejo que esto pide que se cuente de nuevo
 var STOCK_MUESTRAS=6;         // cuántas llegadas se miran para medir lo que tarda cada fábrica
+var STOCK_MUESTRA_DIAS=60;    // una llegada que tardó más que esto no mide nada (es un pedido olvidado, no la fábrica)
+/* ✂️ CUÁNTO SE GUARDA DE UN PEDIDO A FÁBRICA YA RECIBIDO (02/10, pedido del dueño: «la celda del stock va 45 % de las
+   50.000 letras que aguanta Google: podar lo ya recibido antes de que llegue»). Entero —con sus recepciones— estos días;
+   después queda solo la MUESTRA (`stockMuestraDe`: id, producto, cuántos, fábrica, pedido el, llegó el), y pasado el tope
+   no queda nada. Ver `stockPodar`. */
+var STOCK_RECIBIDOS_DIAS=45;
+var STOCK_RECIBIDOS_TOPE=120; // los 4 meses de siempre
 var STOCK_VENTA_MIN=8;
 /* 🏭 QUÉ PRODUCIR (§4dr): la semana, los próximos 15 días y el mes que viene. */
 var PRODUCIR_SEMANA=7;        // «para la semana»
@@ -16604,6 +16611,7 @@ function leerStock(p){
   stockOlvidarIndice();
   d=stockMigrar(d);
   stockNormalizarRecepciones(d);                  // §4fz-b: lo derivado de las recepciones, siempre al día
+  stockPodar(d);                                  // ✂️ (02/10) la misma poda en todos los dispositivos: al leer, al juntar y al guardar
   return d;
 }
 /* 🧓 LO QUE ESCRIBIÓ UN PANEL VIEJO (revisión del 24/09, antes de publicar). La página de antes de
@@ -16722,14 +16730,88 @@ function stockEntradaVale(S, f, ts){
   if(String(f||'')<((c.inc && !conHora) ? stockSumarDias(c.f,1) : c.f)) return false;
   return !(conHora && Number(ts)<=Number(c.t));
 }
+/* ✂️ LA PODA DE LOS PEDIDOS A FÁBRICA YA RECIBIDOS (02/10). El stock entero viaja en UNA celda de la planilla y Google
+   corta en 50.000 letras (`stockAvisarTamano`). Las fotos de los almacenes (`c`, `g`) no crecen con el tiempo —son del
+   tamaño del Excel—, las entradas se podan con el conteo y el historial tiene tope; lo ÚNICO que crecía sin parar eran
+   los pedidos a fábrica recibidos, que se guardaban 4 meses enteros, con sus recepciones, «porque miden cuánto tarda
+   la fábrica». Pero la medición (`stockMuestrasFabrica`) mira solo las últimas `STOCK_MUESTRAS` llegadas de cada
+   fábrica, y de cada una solo cuándo se pidió y cuándo llegó. Entonces:
+     · recibido hace menos de `STOCK_RECIBIDOS_DIAS` días: se guarda ENTERO (la junta entre dispositivos todavía puede
+       necesitar sus recepciones, §4fz-b);
+     · más viejo: queda solo si alguna cuenta lo mira, y queda como MUESTRA (`stockMuestraDe`, sin recepciones):
+         (a) las últimas `STOCK_MUESTRAS` llegadas de su fábrica (con los empates del mismo día: la medición desempata por
+             orden de lista, y acá no hay que adivinar cuál hubiera elegido) — las que `stockMuestrasFabrica` mira: no
+             recogidas, no dados por llegados con un Excel (`enConteo`), y que tardaron de 0 a `STOCK_MUESTRA_DIAS` días;
+         (b) el pedido MÁS NUEVO de cada producto (por fecha de pedido): sostiene el renglón del producto en la tabla
+             (`stockData` hace `grupo(q.k)` con cada pedido) y, si es de fábrica, la «última fábrica pedida» (`fabUlt`
+             → `o.fab` → el tiempo de fábrica del renglón). Con esto `stockCodRefs` tampoco cambia: cada producto que
+             tenía pedidos sigue teniendo uno, y el código que esos pedidos sostenían sigue sostenido;
+         (c) una recogida que la foto de su almacén todavía nombra (`g[de].rs` con unidades): la mira
+             `saleRecogidaViva` para una marca vieja «📥 Banzer»;
+     · pasado `STOCK_RECIBIDOS_TOPE`: nada, como siempre. Lo pendiente (`r` vacío) no se toca nunca.
+   ⚠️ LA MISMA REGLA EN TODOS LOS DISPOSITIVOS, AL LEER (`leerStock`), AL JUNTAR (`stockFusionar`) Y AL GUARDAR
+   (`filaStock`). La junta va por id y una unión sin base re-agrega lo que un lado sacó (§4fz-b): si solo podara el que
+   guarda, el otro dispositivo —o una página de antes de esto— lo traería de vuelta y la celda no bajaría nunca. Podado
+   en los tres caminos, lo que vuelve se va otra vez en el acto, y nunca de forma permanente. Determinista: depende de
+   la fecha y del contenido, nada más; correrla dos veces da lo mismo (idempotente), y con los días solo saca, nunca
+   repone. Una página vieja lee una muestra sin problema: tiene id, clave, `f`, `r` y `fab`, que es todo lo que sus
+   cuentas miran de un pedido recibido; sin `recs` ni `ru`, `stockNormalizarRecepciones` la saltea.
+   ⚠️ NO poda las fotos (`u`, `cod`): el mapa de códigos lo miran `stockClaveInv` («el código gana sobre cualquier
+   nombre», también para los códigos del catálogo), `stockMigrar` (qué claves son crudas), `productoDeAlmacen`,
+   `saldoCodigosAlmDe`, `stockCorteViejo` y `stockCodRecordar`; ni `g[nm].rs`, que es lo que frena restarle dos veces una
+   recogida a un almacén y se vacía solo con el Excel siguiente de ese almacén. */
+function stockMuestraDe(q){
+  var m={ id:q.id, k:q.k, u:Math.round(Number(q.u)||0) };     // el orden de las claves es fijo: dos dispositivos → el mismo texto
+  if(q.tipo) m.tipo=String(q.tipo);
+  if(q.de) m.de=String(q.de);
+  if(q.fab) m.fab=String(q.fab);
+  m.f=String(q.f||''); m.r=String(q.r||'');
+  if(q.enConteo) m.enConteo=true;
+  return m;
+}
+function stockPodar(S, hoy){
+  if(!S) return S;
+  hoy=hoy||todayStr();
+  var tope=stockSumarDias(hoy, -STOCK_RECIBIDOS_TOPE), corte=stockSumarDias(hoy, -STOCK_RECIBIDOS_DIAS);
+  var P=(S.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=tope); });
+  var viejo=function(q){ return !!q.r && String(q.r)<corte; };
+  var fabDe=function(q){ return q.tipo==='recogida' ? '' : stockFabNorm(q.fab); };
+  // (b) por producto: la fecha del pedido más nuevo, y la del pedido a fábrica más nuevo CON fábrica (como `ultFab`)
+  var ultK={}, ultFab={};
+  P.forEach(function(q){
+    var f=String(q.f||'');
+    if(!(f<=(ultK[q.k]||''))) ultK[q.k]=f;
+    if(fabDe(q) && f && !(f<=(ultFab[q.k]||''))) ultFab[q.k]=f;
+  });
+  // (a) por fábrica: desde qué llegada para adelante entran las últimas STOCK_MUESTRAS (empates incluidos)
+  var mide=function(q){ if(q.tipo==='recogida' || q.enConteo || !q.f || !q.r) return false; var d=stockDias(q.f, q.r); return d>=0 && d<=STOCK_MUESTRA_DIAS; };
+  var porFab={};
+  P.forEach(function(q){ if(mide(q)){ var fb=stockFabNorm(q.fab); (porFab[fb]=porFab[fb]||[]).push(String(q.r)); } });
+  var rMin={};
+  Object.keys(porFab).forEach(function(fb){ var rs=porFab[fb].sort().reverse(); rMin[fb]=rs[Math.min(STOCK_MUESTRAS, rs.length)-1]; });
+  var muestra=function(q){ return mide(q) && String(q.r)>=rMin[stockFabNorm(q.fab)]; };
+  // (c) una recogida que la foto de su almacén todavía nombra
+  var rsVivo=function(q){
+    if(q.tipo!=='recogida') return false;
+    var rs=(((S.g||{})[q.de||stockAlmPorDefectoDe(S)])||{}).rs||{};
+    return Object.keys(rs).some(function(rid){ var e=rs[rid]; return !!e && e.q===q.id && (Number(e.u)||0)>0; });
+  };
+  S.p=P.map(function(q){
+    if(!viejo(q)) return q;
+    var f=String(q.f||'');
+    if(muestra(q) || f===ultK[q.k] || (fabDe(q) && f===ultFab[q.k]) || rsVivo(q)) return stockMuestraDe(q);
+    return null;
+  }).filter(function(q){ return !!q; });
+  return S;
+}
 function filaStock(){
   stockOlvidarIndice();
   /* Las entradas anteriores al último conteo ya están DENTRO del conteo: dejarlas las
      sumaría dos veces. Se podan al guardar, que es cuando se sabe cuál es el conteo. */
   STOCK.e=(STOCK.e||[]).filter(function(x){ return x && stockEntradaVale(STOCK, x.f, x.ts); });
-  /* Los pedidos a fábrica ya recibidos se guardan 4 meses: son los que miden cuánto tarda. */
-  var lim=diasAtras(120);
-  STOCK.p=(STOCK.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=lim); });
+  /* ✂️ (02/10) Los pedidos a fábrica ya recibidos, con la misma regla que al leer y al juntar (`stockPodar`): antes
+     se guardaban 4 meses enteros «porque miden cuánto tarda la fábrica», y era lo único de la celda que crecía. */
+  stockPodar(STOCK);
   STOCK.a=STOCK.a||{}; STOCK.g=STOCK.g||{}; STOCK.al=STOCK.al||{};
   STOCK.h=(STOCK.h||[]).slice(0,STOCK_HIST);   // el historial guarda el RESUMEN, no los items
   // §4fz-b: cada entrada con su id, para que juntar dos veces la MISMA no la cuente dos (ver abajo).
@@ -17026,6 +17108,7 @@ function stockFusionar(b, m, s, modo){
   out=JSON.parse(JSON.stringify(out));            // que no comparta objetos con ninguna de las tres
   out=stockMigrar(out);                           // primero las claves nuevas (uniones), después las recepciones
   stockNormalizarRecepciones(out);
+  stockPodar(out);                                // ✂️ (02/10) una unión sin base trae de vuelta lo que un lado podó: sale podado igual
   return out;
 }
 function sisAvisarRecortes(){
@@ -17720,7 +17803,7 @@ function stockFabNorm(f){
 }
 function stockMuestrasFabrica(){
   var m={};
-  var add=function(fab,f,r){ if(!f||!r) return; var d=stockDias(f,r); if(!(d>=0)||d>60) return; fab=stockFabNorm(fab); (m[fab]=m[fab]||[]).push({f:f,r:r,d:d}); };
+  var add=function(fab,f,r){ if(!f||!r) return; var d=stockDias(f,r); if(!(d>=0)||d>STOCK_MUESTRA_DIAS) return; fab=stockFabNorm(fab); (m[fab]=m[fab]||[]).push({f:f,r:r,d:d}); };
   /* `enConteo` = se dio por llegado al subir un Excel de existencias: se sabe que ya estaba,
      NO cuándo llegó. Medir con eso inventaría un tiempo de fábrica que nadie observó. */
   (STOCK.p||[]).forEach(function(q){ if(q&&q.r&&!q.enConteo&&q.tipo!=='recogida') add(q.fab,q.f,q.r); });
