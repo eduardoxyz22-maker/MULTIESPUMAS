@@ -16155,9 +16155,12 @@ function admQuienRecibio(id, desde){
   var p=findById(id); if(!p) return;
   var vend=nombreCanonico(p.vendedor)||'la vendedora', ch=String(p.chofer||'').trim();
   var otros=choferesParaSelect(p).filter(function(x){ return x && x!==ch; });
-  var fn=function(quien){ return esc('admCobrarEfectivo('+JSON.stringify(String(id))+','+JSON.stringify(quien)+','+JSON.stringify(desde||'')+')'); };
+  /* El `onclick` se arma en una variable aparte (`accion`) a propósito: `test_onclicks` lee el HTML crudo y toma por función
+     cualquier nombre seguido de «(» dentro de un onclick="…" — con `'+fn(quien)+'` adentro de las comillas decía que «fn» no existe. */
+  var accionDe=function(quien){ return esc('admCobrarEfectivo('+JSON.stringify(String(id))+','+JSON.stringify(quien)+','+JSON.stringify(desde||'')+')'); };
   var b=function(quien, txt, primario){
-    return '<button class="btn'+(primario?' btn-primary':'')+'" style="width:auto;padding:9px 14px'+(primario?'':';background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" onclick="'+fn(quien)+'">'+txt+'</button>';
+    var accion=accionDe(quien);
+    return '<button class="btn'+(primario?' btn-primary':'')+'" style="width:auto;padding:9px 14px'+(primario?'':';background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" onclick="'+accion+'">'+txt+'</button>';
   };
   openModal('<div class="modal-h"><h3>💵 Cobrar '+fmtBs(p.saldo)+' en efectivo</h3></div>'+
     '<div style="padding:14px 16px;font-size:.9rem;line-height:1.5">'+

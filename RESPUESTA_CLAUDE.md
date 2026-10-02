@@ -2173,7 +2173,7 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 
 ## 28 · Los tres «hazlo» del 02/10: plata, la celda del stock y el saldo en el servidor — hechos en la rama, esperan tu OK para publicar
 
-Los tres están en la rama (`claude/pedidos-fecha-entrega-bgt0em`), probados con la batería entera (la batería entera corrió el 02/10 a la noche; el resultado, suite por suite, queda en la bitácora §4hj), y **sin publicar**:
+Los tres están en la rama (`claude/pedidos-fecha-entrega-bgt0em`), probados con la batería entera (batería entera: 129 suites, 4.891 comprobaciones en verde), y **sin publicar**:
 la página no cambia hasta que me digas «publica». El tercero además trae un servidor nuevo (`2026-10-02-a`) que implementás vos.
 
 ### 1. Plata (Contabilidad y Administración) — bitácora §4hk

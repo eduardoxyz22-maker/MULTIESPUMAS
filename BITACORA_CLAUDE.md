@@ -7644,6 +7644,11 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   A y B leen «Libres 1», guardan uno detrás del otro, A no ve nada, **B ve la ventana** con el producto y «faltan 1», «Entendido»
   devuelve el WhatsApp, «✏️ Abrir el pedido» relee y abre la edición; y la vuelta con el `.gs` viejo (manda `reserva`, no pasa nada).
 - Las 14 suites del circuito (saldo, guardado, lectura, cola, conflicto, concurrencia, kommo, traer) en verde.
+- **Batería entera del 02/10 a la noche**, sobre la rama con los tres cambios (§4hj + §4hk + §4hl): **129 suites, 4.891
+  comprobaciones en verde**. La única roja fue `test_onclicks` (4/1): en `admQuienRecibio` el `onclick` se armaba con una variable
+  `fn` adentro de las comillas y el escáner estático la tomó por una función que no existe; se renombró (`accionDe`/`accion`) y
+  la suite dio 5/5. ⚠️ Un `onclick="…"` que se arma concatenando no puede llevar `nombre(` adentro de las comillas salvo que sea
+  una función de verdad.
 
 ### Para implementar (cuando el dueño lo pida; procedimiento de §4fz-b «Publicar»)
 1. Anotar la versión que está activa (la 35 = 2026-09-30-a) en Implementar → Administrar implementaciones → ✏️.
