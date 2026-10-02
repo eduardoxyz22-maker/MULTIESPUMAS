@@ -1,6 +1,6 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-09-23** (§4fz-b).
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-10-02** (§4hh).
 ⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
 mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz-b`, `## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
@@ -7444,6 +7444,83 @@ solo si hay, «Recogido de fábrica», y limpiar `dev` antes de probar la caja e
 Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabilidad (el
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
+
+## 4hh. 02/10: pagos, retiros, arqueos, entregas y stock sobreviven a recargar durante el envío
+
+La auditoría ampliada de `92ff404` reprodujo cinco operaciones que aún encolaban solo DESPUÉS
+del error de red. Recargar antes de que el POST llegara a Apps Script perdía el pago, retiro,
+entrega o llegada; el arqueo quedaba solo en el espejo del primer equipo. Cuando el servidor
+ya había escrito y faltaba únicamente su respuesta, el control sí funcionaba. El dueño
+autorizó arreglar y publicar las cinco rutas («Ok arregla lo que hay que arreglar»).
+
+**Implementación:** `guardarDurable` escribe y relee `LS_PEND` antes de llamar a `apiSave`.
+Lo usan `persistPedido` (incluidos pagos/chofer), `persistRetiro`, `guardarArqueo`, `guardarStock`
+y `toggleEntregado`. Si otro envío está en vuelo, la corrección queda respaldada mientras
+espera. `apiSaveAhora` respalda nuevamente la versión que realmente sale, con sello y fusiones
+actuales. Sin espacio local no manda una operación desprotegida: avisa que no se envió y pide
+conservar/copiar los datos antes de cerrar. Un error no vuelve a encolar una foto vieja sobre
+lo que se corrigió después; el motivo del fallo se conserva en el aviso.
+
+**Invariantes:** mismo id para reintentar; los pagos se guardan como historial de la misma fila,
+no como un cobro nuevo por POST. `colaQuitarExacta` elimina solo la instantánea confirmada o
+rechazada. El ok tardío, el rechazo firme y el cierre de stock/arqueo no borran la versión nueva
+por compartir id u hora (dos cambios pueden ocurrir en el mismo milisegundo). Se conservan los
+sellos, bases y fusiones del servidor. Los conflictos reales se avisan y el dinero rechazado
+no se reaplica a ciegas. `busy` y errores temporales conservan la cola.
+
+**Retiro nuevo corregido sin respuesta:** antes de sustituir su alta en la cola, se conserva
+la prueba en `_altaPendiente`. Así se reconoce el alta propia ya escrita y se corrige con su
+sello, sin duplicarla ni autorizar pisar una corrección ajena. Es metadato local: excluido del
+transporte y de la comparación de contenido con la hoja.
+
+**Pruebas finales:** `tests/test_guardado_operaciones.js`, **62/62** con HTML y Apps Script reales,
+planilla ficticia en memoria y HTTP bloqueado. Contra el HTML original `92ff404`: **29 verdes /
+33 rojos**. Cubre recarga antes/después de llegar al servidor, cola con versión más nueva,
+dos equipos fusionando stock/arqueo, pagos en conflicto, retiro corregido antes de recibir su
+alta, rechazo firme frente a `busy`, almacenamiento lleno y doble clic real sobre los botones.
+El reloj está fijado en septiembre de 2026: las fechas no dependen del día de ejecución.
+Regresión existente: guardado_durable41, rev30_retiros15, conflicto45, chofer_sin_senal8,
+rev2_cuadre55, rev30_stock36, concurrencia44, cola16, rev3_plata18, auditoria176: **454**.
+La sección histórica de concurrencia que requiere `git show` se omite en la copia QA; no se
+declara validada esa compatibilidad. Total de comprobaciones ejecutadas: **516 aprobadas**.
+
+**Alcance/publicación:** frontend, pruebas y notas; sin cambios a permisos, autenticación ni
+reglas comerciales. El `.gs` continúa `2026-09-30-a`, sin nueva implementación. No se ejecutaron
+operaciones reales; estas pruebas no certifican saldos reales ni ausencia de todo fallo posible.
+Verificar despliegue y bytes de la página contra el commit publicado; recargar el panel.
+
+## 4hg. 02/10: conservar el envío al recargar, proteger el pedido nuevo y decir la verdad al reintentar
+
+El dueño autorizó corregir y publicar los tres fallos reproducidos en la auditoría de Codex.
+Cambios limitados a `pedidos.html`, pruebas y documentación. Sin pedidos reales ni cambios al `.gs`.
+
+1. **Guardado en curso**: antes había una copia optimista en pantalla, pero la cola se llenaba recién
+   en el `catch`. Recargar sin respuesta perdía el pedido si aún no había llegado al servidor.
+   `guardarYa` ahora conserva la fila con el MISMO id y revisión antes de `apiSave`, y comprueba
+   que la copia se pudo escribir. Si el almacenamiento falla, conserva el formulario y no envía.
+   La respuesta retira solo el JSON que se mandó; nunca una corrección posterior. Los rechazos
+   definitivos se corrigen en el formulario, como antes. El error de red deja la copia ya encolada.
+   `flushPending` saltea ids con envío en vuelo/en espera para no duplicar solicitudes. Al recargar,
+   se reenvía el mismo id; si ya se guardó y solo se perdió la respuesta, aplica el «ok tardío» existente.
+2. **Pedido nuevo a medio llenar**: `formNuevoHuella` compara los campos con el formulario vacío
+   al terminar `resetForm`. `editPedido` y `completarBorrador` preguntan antes de reemplazarlo.
+   Cancelar vuelve con los campos intactos; Aceptar descarta lo escrito y las imágenes sin pegar.
+   Un formulario vacío no pregunta. Mientras se está enviando no se abre otra edición.
+3. **Reintentar**: el pie llama a `misReintentarCola`, que distingue pendiente, confirmado y rechazado.
+   `flushPending` devuelve el número de rechazos firmes: vaciar la cola por rechazo NO dice que llegó.
+
+**Pruebas**: `tests/test_guardado_durable.js`, 41/41 en Chromium con página y `.gs` reales contra
+planilla ficticia en memoria, `fetch` sustituido y HTTP bloqueado. Incluye recarga antes/después de
+guardar, doble clic, edición y revisión, rechazo por día/cupo/OC/feriado/busy, corrección más nueva,
+almacenamiento lleno, Cancelar/Aceptar, Kommo y los tres resultados del reintento.
+Las pruebas aceptan `PEDIDOS` para comparar con el archivo sin arreglar y `CHROMIUM` para el navegador.
+Contra `21b6070` dan 26 verdes y 15 rojos; con el arreglo, 41 verdes. Las 20 suites existentes
+seleccionadas suman 615 comprobaciones verdes (656 contando las nuevas). `mispedidos` se repitió
+aislada: 33/33; en paralelo había fallado una expectativa de temporización (2 consultas en vez de 1).
+
+**Publicación**: autorizada por el dueño el 02/10. No se necesita implementar Apps Script: su versión
+continúa en `2026-09-30-a`. Recargar/F5 para recibir la página nueva. La verificación del despliegue
+se hace contra el commit de publicación; esta sección no afirma una prueba con pedidos de producción.
 
 ## 4hf. 01/10: «Faltan N» del cuadrito del saldo, con la cuenta escrita
 

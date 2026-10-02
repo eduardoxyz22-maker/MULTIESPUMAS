@@ -1663,6 +1663,49 @@ function queuePending(rec){
     else if(sisFilaEnMemoria(rec) && SIS_FUSION[String(rec.id)].cargado()) rec=SIS_FUSION[String(rec.id)].fila();
   }
   var a=getPending().filter(function(p){return p.id!==rec.id;}); a.push(rec); setPending(a); updateFooter();
+  return rec;
+}
+
+/* 02/10, §4hh: pagos, retiros, entregas, stock y arqueos conservan el intento ANTES
+   del transporte, incluso mientras esperan otro guardado del mismo id. */
+function colaQuitarExacta(txt){
+  if(!txt) return;
+  setPending(getPending().filter(function(p){ return JSON.stringify(p)!==txt; }));
+  updateFooter();
+}
+function prepararDurable(rec){
+  var q=queuePending(rec), txt=q && JSON.stringify(q);
+  if(txt && getPending().some(function(p){ return JSON.stringify(p)===txt; })) return q;
+  return null;
+}
+function errorCopiaDurable(){
+  toast('No se pudo conservar una copia segura: este cambio NO se envió. No recargues ni cierres; copiá los datos y liberá espacio del navegador antes de volver a guardar.','err',15000);
+  return { ok:false, local:false, error:'almacenamiento' };
+}
+function guardarDurable(rec, opts){
+  delete NO_ENCOLAR[rec.id];                  // un nuevo intento explícito, no el rechazo anterior
+  /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
+     propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
+  if(esFilaRetiro(rec) && !(Number(rec.rev)>0)){
+    var anterior=getPending().filter(function(q){ return q && q.id===rec.id && !(Number(q.rev)>0); })[0];
+    if(anterior && !mismoContenido(rec, anterior)) rec._altaPendiente=anterior._altaPendiente||anterior;
+  }
+  var copia=prepararDurable(rec);
+  if(!copia) return Promise.resolve().then(errorCopiaDurable);
+  var txt=JSON.stringify(copia);
+  if(!CONNECTED) return Promise.resolve({ ok:false, local:true });
+  var quien=(typeof SIS_FUSION!=='undefined' && SIS_FUSION[rec.id]) ? SIS_FUSION[rec.id].nombre :
+    (esFilaRetiro(rec) ? 'el retiro de '+(rec.vendedor||'') : (rec.cliente||rec.id));
+  var pendiente=function(res){
+    if(res && (res.ok || RECHAZOS_FIRMES[res.error])) colaQuitarExacta(txt);
+    else if(!(res && res.error==='almacenamiento')) toast('⏳ '+quien+': NO se guardó en la planilla todavía'+
+      (res && (res.motivo||res.error) ? ' ('+(res.motivo||res.error)+')' : ' (sin respuesta)')+
+      '. Quedó en cola en este dispositivo y se reintenta solo.','err',8000);
+    return res||{ ok:false, local:true };
+  };
+  return apiSave(copia, Object.assign({}, opts||{}, { _durable:true })).then(pendiente, function(e){
+    return pendiente({ ok:false, local:true, error:String(e&&e.message||e), motivo:motivoCorto(e) });
+  });
 }
 
 function todayStr(){ return isoLocal(new Date()); }
@@ -2419,6 +2462,7 @@ function apiSave(rec, opts){
   return q;
 }
 function apiSaveAhora(rec, opts){
+  if(opts && opts._durable) rec=JSON.parse(JSON.stringify(rec));  // respuesta vs foto enviada, no objeto que siguió editándose
   /* §4fz-b: el stock y el arqueo mandan la MEMORIA (`sisPlegar`), sin lo que es solo del panel
      (`_base`, `_dev`, `_t`), y le dicen al servidor que saben juntar (`juntar`): el `.gs`
      2026-09-23-b no deja guardar esas filas a un panel que no sepa (`actualizar`). */
@@ -2426,8 +2470,14 @@ function apiSaveAhora(rec, opts){
   // 🔁 (26/09, revisión de Codex) Días cerrados y tildes de la carga, armados por este panel: van con su sello y `juntar` (ver REESCRITAS).
   var re=!!(opts && opts.juntar && rec && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]);
   if(sis) rec=sisPlegar(rec);
+  if(opts && opts._durable){
+    rec=prepararDurable(rec);
+    if(!rec) return Promise.resolve().then(errorCopiaDurable);
+  }
+  var cola=getPending().filter(function(q){ return q && q.id===rec.id && (sis ? q.observaciones===rec.observaciones : JSON.stringify(q)===JSON.stringify(rec)); })[0];
+  var colaTxt=cola ? JSON.stringify(cola) : '';
   var envio=rec;
-  if(sis){ envio={}; for(var _k in rec){ if(Object.prototype.hasOwnProperty.call(rec,_k) && _k!=='_base' && _k!=='_dev' && _k!=='_t') envio[_k]=rec[_k]; } }
+  if(sis || rec._altaPendiente){ envio={}; for(var _k in rec){ if(Object.prototype.hasOwnProperty.call(rec,_k) && _k!=='_base' && _k!=='_dev' && _k!=='_t' && _k!=='_altaPendiente') envio[_k]=rec[_k]; } }
   var payload={action:'save', pedido:envio};
   if(sis || re) payload.juntar=1;
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
@@ -2447,7 +2497,7 @@ function apiSaveAhora(rec, opts){
     return apiPost(payload).then(function(res){
       if(res && res.ok && res.pedido){
         aplicarSello(rec, res.pedido, res.ahora); verificarEco(rec, res.pedido);   // 🔍 §4en · (30/09) cuándo quedó escrito
-        if(sis){ sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec); }   // §4fz: lo guardado es la nueva base; §4fz-b: y lo de la cola ya está adentro
+        if(sis){ sisBaseAnotar(rec.id, res.pedido); colaQuitarExacta(colaTxt); }
         if(re) reescritaRevAnotar(res.pedido);                              // (26/09) el sello nuevo es la base del próximo guardado
       }
       /* 🔁 (26/09) Otra computadora guardó los días cerrados o las tildes después de que esta los leyó (el
@@ -2462,7 +2512,7 @@ function apiSaveAhora(rec, opts){
          que entró y cuya respuesta se perdió (§4fa): un ok tardío, no un choque. */
       else if(sis && res && res.ok===false && res.error==='conflicto' && res.pedido){
         if(String(res.pedido.observaciones||'')===String(envio.observaciones||'')){
-          aplicarSello(rec, res.pedido, res.ahora); sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec);
+          aplicarSello(rec, res.pedido, res.ahora); sisBaseAnotar(rec.id, res.pedido); colaQuitarExacta(colaTxt);
           return { ok:true, pedido:res.pedido, tardio:true };
         }
         return sisFusionarYGuardar(rec, res, opts);
@@ -2473,14 +2523,14 @@ function apiSaveAhora(rec, opts){
          la corrigió nadie: es la propia. El alta sale de la cola y la corrección se vuelve a mandar, una vez, con ese sello. */
       else if(res && res.ok===false && res.error==='conflicto' && res.pedido && !(opts && opts._altaPropia) &&
               esFilaRetiro(rec) && !(Number(rec.rev)>0)){
-        var altaP=getPending().filter(function(q){ return q && String(q.id)===String(rec.id) && !(Number(q.rev)>0) && mismoContenido(q, res.pedido); })[0];
+        var altaP=getPending().map(function(q){ return q && q._altaPendiente ? q._altaPendiente : q; }).filter(function(q){ return q && String(q.id)===String(rec.id) && !(Number(q.rev)>0) && mismoContenido(q, res.pedido); })[0];
         if(altaP){
           var altaTxt=JSON.stringify(altaP);
           setPending(getPending().filter(function(q){ return !(q && String(q.id)===String(rec.id) && JSON.stringify(q)===altaTxt); }));
           rec.rev=res.pedido.rev;
           return apiSaveAhora(rec, Object.assign({}, opts||{}, { _altaPropia:1 }));
         }
-        if(rechazoFirme(rec, res)) return { ok:true, pedido:res.pedido, tardio:true };
+        if(rechazoFirme(rec, res, colaTxt)) return { ok:true, pedido:res.pedido, tardio:true };
       }
       // El servidor ya no deja guardar estas filas a un panel viejo: queda en la cola, y se avisa.
       else if(sis && res && res.ok===false && res.error==='actualizar'){
@@ -2492,7 +2542,7 @@ function apiSaveAhora(rec, opts){
            Hay que DECÍRSELO a quien llamó: si no, `submitPedido` cae en la rama de conflicto
            y reabre el formulario EN SILENCIO, sin ✓ y sin aviso. Es justo el síntoma que el
            dueño reclamó («reviso 2-3 veces si subió») y quedaba peor que antes del reintento. */
-        if(rechazoFirme(rec, res)) return { ok:true, pedido:res.pedido, tardio:true };
+        if(rechazoFirme(rec, res, colaTxt)) return { ok:true, pedido:res.pedido, tardio:true };
       }
       return res;
     });
@@ -2500,6 +2550,9 @@ function apiSaveAhora(rec, opts){
   return pedir().catch(function(e){
     if(!errorPasajero(e)) throw e;
     return new Promise(function(r){ setTimeout(r, 1500); }).then(pedir);
+  }).then(function(res){
+    if(res && (res.ok || RECHAZOS_FIRMES[res.error])) colaQuitarExacta(colaTxt);
+    return res;
   });
 }
 /* Lo que el servidor decidió sobre el pedido y el panel tiene que quedarse: el sello de
@@ -2653,7 +2706,7 @@ function rechazoRecordar(rec, res){
    persona lo hacía de nuevo → duplicado (§4eo). */
 function mismoContenido(a, b){
   if(!a||!b) return false;
-  var salta={rev:1, nroDia:1, ts:1, ocCambiada:1, _deBorrador:1, cobradoBs:1, oc:1};
+  var salta={rev:1, nroDia:1, ts:1, ocCambiada:1, _deBorrador:1, _altaPendiente:1, cobradoBs:1, oc:1};
   var norm=function(v){ if(v==null) return ''; if(typeof v==='boolean') return v?'S':''; if(typeof v==='number') return String(r2(v)); if(typeof v==='string') return v.trim(); return JSON.stringify(v); };
   for(var k in a){
     if(salta[k] || !a.hasOwnProperty(k)) continue;
@@ -2666,7 +2719,7 @@ function mismoContenido(a, b){
 }
 /* Devuelve TRUE cuando el «conflicto» era en realidad MI PROPIO guardado que ya había
    entrado (un «ok» tardío), para que quien llamó lo trate como éxito y no como choque. */
-function rechazoFirme(rec, res){
+function rechazoFirme(rec, res, colaTxt){
   if(res.error==='conflicto' && res.pedido && mismoContenido(rec, res.pedido)){
     /* 🔢 `mismoContenido` saltea la OC a propósito: el servidor pudo haberla RENUMERADO (otra
        vendedora ya tenía ese número) y esa respuesta fue justo la que se perdió. La fila de la
@@ -2676,7 +2729,7 @@ function rechazoFirme(rec, res){
     var _ocS=cleanOC(res.pedido.oc), _ocL=cleanOC(rec.oc);
     if(_ocS && _ocL && _ocS!==_ocL && !res.pedido.ocCambiada) res.pedido.ocCambiada={ de:_ocL, a:_ocS, con:'' };
     aplicarSello(rec, res.pedido, res.ahora);      // ya estaba guardado igual: es un «ok» tardío, no un choque
-    setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
+    colaQuitarExacta(colaTxt);
     return true;
   }
   rechazoRecordar(rec, res);                       // que quede en ESTE dispositivo, no solo en un cartel (§4el)
@@ -2686,8 +2739,8 @@ function rechazoFirme(rec, res){
      abajo lo respetaría 90 s (`saveReciente`) y la pantalla seguiría mostrando la fecha o el
      turno rechazados, contándolos en los cupos y reenviándolos con el próximo toque (§4es;
      era el rojo de test_conflicto «vuelve a su fecha de antes»). */
-  delete SAVE_ULTIMO[rec.id]; delete SAVE_REV[rec.id];
-  setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
+  if(!SAVE_ULTIMO[rec.id] || mismoContenido(SAVE_ULTIMO[rec.id].rec,rec)){ delete SAVE_ULTIMO[rec.id]; delete SAVE_REV[rec.id]; }
+  colaQuitarExacta(colaTxt);
   if(res.error==='conflicto' && esFilaRetiro(rec)){
     /* 💵 (30/09, §4he) Desde el servidor 2026-09-30-a los retiros piden sello: otra computadora corrigió este retiro después
        de que acá se lo vio. La versión de la planilla va a la lista de RETIROS —no a los pedidos: ahí se dibujaba como una
@@ -2868,10 +2921,13 @@ function flushPending(){
      pedido— se borraba sin haberse mandado nunca, y la persona ya había leído «quedó en cola, se
      manda solo». Ahora sale lo que llegó (o lo que el servidor rechazó en firme) y solo si lo que
      espera en la cola sigue siendo EXACTAMENTE lo que se mandó. */
-  var listos={};
+  var listos={}, rechazados=0;
   return a.reduce(function(chain,rec){
     var enviado=JSON.stringify(rec);          // antes de mandarlo: `aplicarSello` le cambia el sello
     return chain.then(function(){
+      // (02/10, §4hg) El formulario ya está en cola ANTES del envío: no duplicar ese envío ni
+      // poner su foto vieja detrás de una corrección que esté esperando turno.
+      if(SAVE_EN_VUELO[rec.id] || SAVE_EN_ESPERA[rec.id]) return;
       /* (26/09) Los días cerrados y las tildes de la carga se reescriben ENTERAS: lo que quedó acá sin señal
          se rearma con la planilla de ahora (`mandarReescritaDeCola`); mandado tal cual pisaba lo que otra
          computadora cambió mientras tanto. Las demás filas, como siempre. */
@@ -2879,11 +2935,13 @@ function flushPending(){
       return envio.then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
         if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])) listos[String(rec.id)]=enviado;
+        if(res && !res.ok && RECHAZOS_FIRMES[res.error]) rechazados++;
       }, function(){});
     });
   },Promise.resolve()).then(function(){
     setPending(getPending().filter(function(p){ var e=listos[String(p&&p.id)]; return !(e && JSON.stringify(p)===e); }));
     updateFooter();
+    return { rechazados:rechazados };
   });
 }
 
@@ -5421,9 +5479,9 @@ function filaArqueo(){
 function guardarArqueo(sinPintar){
   saveArqueoMirror();
   var fila=filaArqueo();
-  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
-  else queuePending(fila);
+  var envio=guardarDurable(fila);
   if(!sinPintar) renderCuadre();
+  return envio;
 }
 function cuadreArqueoTodo(){ return ARQUEO; }
 /* 🧮 EL CIERRE POR FORMA DE PAGO, CALCULADO UNA SOLA VEZ (§4fz). La pantalla, el texto de
@@ -6363,16 +6421,7 @@ function persistRetiro(fila){
   var i=-1; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(fila.id)){ i=k; break; }
   if(i>=0) RETIROS[i]=fila; else RETIROS.push(fila);
   saveRetirosMirror();
-  if(!CONNECTED){ queuePending(fila); return Promise.resolve({ ok:false, local:true }); }
-  /* (30/09, R2-3) Las versiones de ESTE retiro que ya esperaban en la cola son más viejas que esta. Si esta entra, se sacan: si
-     no, a los 2 minutos la cola mandaba la vieja y, como el servidor no compara el sello de los retiros, el monto volvía al de
-     antes sin aviso. Solo las que estaban ANTES de este guardado: una más nueva que entre mientras tanto se queda. */
-  var viejas={}; getPending().forEach(function(q){ if(q && String(q.id)===String(fila.id)) viejas[JSON.stringify(q)]=1; });
-  return apiSave(fila).then(function(res){
-      if(res && res.ok){ if(Object.keys(viejas).length) setPending(getPending().filter(function(q){ return !(q && String(q.id)===String(fila.id) && viejas[JSON.stringify(q)]); })); }
-      else queuePending(fila);
-      return res||{ ok:false, local:true }; },
-    function(){ queuePending(fila); return { ok:false, local:true }; });
+  return guardarDurable(fila);
 }
 function borrarRetiro(id){
   var f=null; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(id)){ f=RETIROS[k]; break; }
@@ -6607,6 +6656,8 @@ function guardarRetiroForm(){
     }else if(res && res.error==='conflicto'){
       /* (30/09, §4he) Otra computadora lo corrigió mientras estaba abierto: `rechazoFirme` ya lo dijo y dejó en la lista la
          versión de la planilla. Acá no se tapa ese aviso con uno genérico. */
+    }else if(res && res.error==='almacenamiento'){
+      errorCopiaDurable();
     }else if(res && RECHAZOS_FIRMES[res.error]){
       toast('❌ El servidor NO aceptó el retiro ('+res.error+'). Revisá la lista: no quedó guardado.','err',9000);
     }else{
@@ -9435,6 +9486,24 @@ function submitPedido(){
   guardarYa();
 
   function guardarYa(){
+  /* (02/10, §4hg) Un envío sin respuesta se perdía al recargar: todavía no había llegado al
+     catch que lo encola. Guardar la MISMA fila/id/revisión antes de tocar la red. No avanzar
+     si el navegador no pudo conservarla. El reenvío usa el «ok tardío» de apiSave, no otro id. */
+  var _enviadoForm=JSON.stringify(rec);
+  if(CONNECTED){
+    delete NO_ENCOLAR[rec.id];                  // un NUEVO intento explícito, tras corregir un rechazo
+    queuePending(rec);
+    if(!getPending().some(function(p){ return JSON.stringify(p)===_enviadoForm; })){
+      setSubmitting(false);
+      toast('No se pudo guardar una copia segura en este navegador. El pedido NO se envió y sigue en el formulario. No recargues: liberá espacio del dispositivo o copiá los datos antes de cerrar.','err',12000);
+      return;
+    }
+  }
+  var sacarEnvioForm=function(){
+    // Solo esta foto. Otra pestaña puede haber dejado una corrección más nueva del mismo id.
+    setPending(getPending().filter(function(p){ return JSON.stringify(p)!==_enviadoForm; }));
+    updateFooter();
+  };
   // Optimista: actualizamos la vista ya
   upsert(rec); saveMirror(); updateStats();
   if(UNLOCKED) renderAdmin();
@@ -9446,6 +9515,9 @@ function submitPedido(){
        administración del servidor, si la pide). Sin la clave, no. */
     apiSave(rec, {forzar: _forzar}).then(function(res){
       setSubmitting(false);
+      // Una respuesta definitiva conserva el comportamiento del formulario: el rechazo
+      // se corrige acá; no dejarlo en cola como un pedido que se mandará a escondidas.
+      if(res && (res.ok===true || res.ok===false)) sacarEnvioForm();
       /* 🛡️ El servidor no dejó forzar (sin ADMIN_KEY configurada, o clave equivocada).
          `rechazoFirme` ya avisó y recargó; acá solo se deshace lo optimista. */
       if(res && res.error==='admin'){
@@ -9532,11 +9604,11 @@ function submitPedido(){
         renderCupoForm();
         return;
       }
-      else { queuePending(rec); afterEnCola(isEdit, 'el servidor no contestó como se esperaba'); return; }
+      else { afterEnCola(isEdit, 'el servidor no contestó como se esperaba'); return; }
       after(isEdit);
     }).catch(function(e){
       setSubmitting(false);
-      queuePending(rec);
+      // Ya estaba en cola antes de enviar. No reemplazar una corrección más nueva por esta foto.
       /* ⚠️ ANTES: «Sin internet: guardado» y acto seguido el modal verde «✓ Pedido guardado»
          con el botón para pasar la venta al grupo (§4eo). La venta se «pasaba» sin estar en
          la planilla. Ahora se dice dónde quedó y qué NO hacer todavía. */
@@ -9948,6 +10020,30 @@ function pintarAntiguedadAtc(){
   if(f>todayStr()){ el.innerHTML='<span style="color:var(--red);font-weight:700">⚠️ esa fecha es del futuro</span>'; return; }
   el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
+/* (02/10, §4hg) La pestaña conserva un pedido NUEVO a medio llenar, pero abrir otra edición
+   lo reemplazaba sin preguntar. Comparar con el formulario vacío, no con STATE; incluir
+   productos, montos y campos de ATC/RPT, aun cuando se completaron automáticamente. */
+var FORM_NUEVO_BASE='';
+function formNuevoHuella(){
+  var campos=Array.prototype.map.call(document.querySelectorAll('#view-form input, #view-form textarea, #view-form select'), function(e){
+    if(e.type==='file' || e.id==='f-vendedor') return null;
+    return [e.id||e.tagName, e.type==='checkbox'?e.checked:e.value];
+  });
+  return JSON.stringify([campos, VENTA_TIENDA, docTipoSel(), segVal('f-pagado'), segVal('f-turno'), FORM_COMPS, FORM_COMPS2]);
+}
+function confirmarReemplazoForm(){
+  var b=document.getElementById('f-submit');
+  if(b && b.disabled){
+    toast('Hay un pedido enviándose. Esperá el resultado antes de abrir otra edición.','err',7000);
+    showViewAhora('form'); return false;
+  }
+  if(EDIT_ID || !FORM_NUEVO_BASE || formNuevoHuella()===FORM_NUEVO_BASE) return true;
+  if(!confirm('Tenés un pedido NUEVO a medio llenar y SIN GUARDAR.\n\nAceptar: descartar lo escrito y las imágenes sin guardar para abrir la otra venta.\nCancelar: volver al pedido nuevo y conservarlo.')){
+    showViewAhora('form'); return false;
+  }
+  descartarImagenesSinPegar();
+  return true;
+}
 function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; PAGO_NO_VISTO=null;
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
@@ -9998,11 +10094,13 @@ function resetForm(){
   VENTA_TIENDA=false; pintarModoTienda();
   clearErr();
   renderCupoForm();
+  FORM_NUEVO_BASE=formNuevoHuella();
 }
 
 function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
+  if(!confirmarReemplazoForm()) return;
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null;
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
@@ -10676,10 +10774,15 @@ function renderColaAviso(){
    servidor caído): el cartel ámbar seguía con el mismo número y el ✓ decía otra cosa. Ahora dice lo
    que pasó, como el botón del cartel «Quedó en cola» (§4eo). */
 function misReintentarCola(){
-  return flushPending().then(function(){
+  return flushPending().then(function(res){
     var n=getPending().length;
-    toast(n ? ('⏳ Sigue sin llegar a la planilla: '+n+' en la cola de este dispositivo. Se reintenta solo.') : '✓ Ya llegó a la planilla', n?'err':'ok', n?7000:undefined);
+    var rechazados=res && res.rechazados || 0;
+    toast(rechazados ? ('❌ El servidor rechazó '+rechazados+' guardado'+(rechazados===1?'':'s')+': revisá los rechazos en Mis pedidos.'+(n?(' Todavía hay '+n+' en cola.'):' No se guardaron.'))
+      : n ? ('⏳ Sigue sin llegar a la planilla: '+n+' en la cola de este dispositivo. Se reintenta solo.') : '✓ Ya llegó a la planilla', (n||rechazados)?'err':'ok', (n||rechazados)?7000:undefined);
     renderColaAviso(); if(!n) renderMis();
+  }).catch(function(){
+    toast('No se pudo completar el reintento. Revisá los pedidos sin enviar y los rechazos en Mis pedidos.','err',8000);
+    renderColaAviso();
   });
 }
 function updateFooter(){
@@ -10687,7 +10790,7 @@ function updateFooter(){
   var pend=getPending().length;
   var base='MultiEspumas · Registro de pedidos';
   document.getElementById('footer').innerHTML = (pend
-    ? (base+' · <b style="color:var(--amber)">'+pend+' sin enviar</b> <a onclick="flushPending().then(function(){toast(\'Reintentado\',\'ok\');})">reintentar</a>')
+    ? (base+' · <b style="color:var(--amber)">'+pend+' sin enviar</b> <a onclick="misReintentarCola()">reintentar</a>')
     : base) + autoSelloHtml();
 }
 
@@ -13365,6 +13468,7 @@ function renderBorradoresHuerfanos(){
    así el pedido sigue atado a su lead y el robot no lo vuelve a crear. */
 function completarBorrador(id){
   var rec=borradorDe(id); if(!rec){ toast('Ese borrador ya no está.','err'); return; }
+  if(!confirmarReemplazoForm()) return;
   /* (26/09) Al guardar se vuelve a donde se tocó «Completar»: el «sin vendedora» vive en Administración
      y terminaba en Mis pedidos. Reabierto por un choque (ya en el formulario), sigue a donde iba. */
   var _vf=document.getElementById('view-form'), _va=document.getElementById('view-admin');
@@ -16482,8 +16586,7 @@ function stockAvisarTamano(largo){
 function guardarStock(){
   SALDO_GEN++;                                  // (27/09) ver `saldoDatos` (§4gj)
   var fila=filaStock();
-  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
-  else queuePending(fila);
+  return guardarDurable(fila);
 }
 /* 📦 LA MEMORIA DEL STOCK Y DEL ARQUEO ES DE CADA PESTAÑA (§4fz-b). Antes el stock arrancaba
    VACÍO en cada carga y se llenaba con la planilla; con un guardado en la cola, la lista no lo
@@ -21856,7 +21959,7 @@ function toggleEntregado(id){
   var p=findById(id); if(!p) return;
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
   reabrirFicha(id);
 }
@@ -22462,20 +22565,7 @@ function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=v
    servidor no lo aceptó o no contestó, cartel rojo con el cliente y qué pasó (§4eo). */
 function persistPedido(p, opts){
   upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();
-  if(!CONNECTED) return Promise.resolve({ ok:false, local:true });
-  var quien=String(p.id||'').indexOf('__ret_')===0 ? ('el retiro de '+(p.vendedor||'')) : (p.cliente||p.id||'');
-  return apiSave(p, opts).then(function(res){
-    if(res&&res.ok) return res;
-    if(res && RECHAZOS_FIRMES[res.error]) return res;          // `rechazoFirme` ya lo dijo
-    queuePending(p);
-    toast('⚠️ '+quien+': NO se guardó en la planilla todavía'+(res&&res.error?(' ('+res.error+')'):' (sin respuesta)')+'. Quedó en cola en este dispositivo y se reintenta solo.','err',8000);
-    return res||{ ok:false };
-  }, function(e){
-    queuePending(p);
-    // El motivo real (§4fx): «sin conexión» a secas mentía cuando lo que pasó es que Google cambió el envío por una lectura.
-    toast('⚠️ '+quien+': '+((typeof motivoCorto==='function')?motivoCorto(e):'sin conexión')+' — quedó en cola en este dispositivo, NO está en la planilla. Se manda solo.','err',8000);
-    return { ok:false, local:true, error:String(e&&e.message||e) };
-  });
+  return guardarDurable(p, opts);
 }
 
 /* ============================================================================
