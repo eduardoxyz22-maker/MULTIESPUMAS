@@ -1,5 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN DE CODEX 02/10 — §26 / BITÁCORA §4hh.** Por autorización del dueño se
+> extiende la protección previa al envío a pagos, retiros, arqueos, entregas y llegadas de stock.
+> Se conservan revisiones/fusiones y se limpia la cola por versión exacta. Sin cambios al `.gs`.
+
 > **ACTUALIZACIÓN DE CODEX 02/10 — §25 / BITÁCORA §4hg.** El dueño autorizó corregir y publicar
 > los tres hallazgos de la auditoría del circuito de pedidos: envío perdido al recargar, borrador
 > reemplazado sin confirmar y reintento con mensaje verde pese a seguir pendiente. Regresiones: 41/41.
@@ -2157,6 +2161,25 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 - Falta: **todos F5**, y mirar que 🔒 Cerrar día diga «versión 2026-09-30-a» sin la línea gris.
 - El arqueo en 0 letras que mostró «probar» está bien: el arqueo del Cuadre está vacío desde antes (el diagnóstico cuenta la
   fila entera, por eso ahí dice 496).
+
+## 26 · Codex: las otras cinco rutas de guardado, protegidas (02/10)
+
+La auditoría ampliada de 92ff404 encontró cinco vías que guardaban solo en memoria hasta
+recibir un error. Recargar antes de que el POST llegara al servidor podía perder la operación;
+el arqueo quedaba visible localmente pero ausente en otro dispositivo. El dueño autorizó
+corregir y publicar. No se hicieron operaciones reales para probarlo.
+
+guardarDurable respalda antes del transporte y mientras espera otro envío. Verifica la
+copia local; sin espacio no envía y avisa. Confirmación/rechazo retiran solo la versión enviada.
+Se mantienen ids, sellos y fusiones, sin reaplicar pagos rechazados. Un retiro corregido antes
+de recibir su alta conserva una prueba local para reconocerla sin duplicar ni pisar datos ajenos.
+
+tests/test_guardado_operaciones.js: **62/62**; contra el original **29 verdes / 33 rojos**.
+Diez suites existentes: **454** comprobaciones, total **516 aprobadas**. Incluye las cinco rutas,
+recargas, respuesta tardía, doble clic, dos equipos, cambios posteriores, conflictos, busy y
+almacenamiento lleno. La compatibilidad histórica dependiente de git show queda fuera del conteo.
+Detalle en BITÁCORA §4hh. El servidor sigue en 2026-09-30-a, sin nueva implementación;
+recargar el panel después de publicar. No es certificación de cifras reales ni de todo el sistema.
 
 ## 25 · Codex: los tres fallos del circuito de pedidos, corregidos (02/10)
 

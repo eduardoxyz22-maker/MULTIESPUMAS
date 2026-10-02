@@ -31,6 +31,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - Token: secret `KOMMO_TOKEN` de GitHub Actions (env var; NO está en el código). Expira ~2026-10-28.
 
 ## Panel de pedidos (`pedidos.html` + `google-apps-script.gs`)
+- **02/10, §4hh — pagos, retiros, arqueos, entregas y stock durables.** `guardarDurable`
+  conserva y verifica el intento ANTES del transporte para `persistPedido`, `persistRetiro`,
+  `guardarArqueo`, `guardarStock` y `toggleEntregado`; también mientras espera otro envío.
+  La confirmación o rechazo retira solo el JSON enviado, nunca una corrección posterior por id
+  u hora. Se mantienen sellos/bases/fusiones. `_altaPendiente` es prueba LOCAL de un retiro
+  nuevo cuya respuesta se perdió; no se manda a Apps Script. Sin almacenamiento no envía y avisa.
+  `tests/test_guardado_operaciones.js`: 62/62; contra `92ff404`, 33 rojos. Diez suites existentes:
+  454 comprobaciones. No cambian permisos, reglas ni `.gs` (`2026-09-30-a`). Recargar tras publicar.
 - **02/10, §4hg — guardado durable, borrador y reintento (autorizado por el dueño).** El formulario
   conserva en `LS_PEND` la misma fila/id/revisión ANTES de `apiSave`; si no puede verificar la copia,
   no envía. Una respuesta definitiva retira SOLO el JSON enviado; un error de red no pisa una
