@@ -1,5 +1,10 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 02/10, noche — §28 / BITÁCORA §4hj, §4hk, §4hl.** Los tres «hazlo» del dueño: plata (borrar un pago
+> registrado, el pago nuevo saca la marca ✅, el 💵 de Administración pregunta quién recibió), la poda de la celda del stock
+> (medida: el 82 % son las fotos de los almacenes) y el saldo también en el servidor (`.gs` `2026-10-02-a`, libro de reservas,
+> nunca frena). En la rama, SIN publicar: esperan el OK; el `.gs` lo implementa el dueño.
+
 > **ACTUALIZACIÓN 02/10, tarde — §27 / BITÁCORA §4hi.** Revisión de lo que Codex publicó (§25, §26): lo central está bien;
 > batería entera 126/126; dos correcciones (el pie decía «1 sin enviar» durante cada guardado normal, y un mensaje de
 > «liberá espacio» con otro motivo).
@@ -2165,6 +2170,68 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 - Falta: **todos F5**, y mirar que 🔒 Cerrar día diga «versión 2026-09-30-a» sin la línea gris.
 - El arqueo en 0 letras que mostró «probar» está bien: el arqueo del Cuadre está vacío desde antes (el diagnóstico cuenta la
   fila entera, por eso ahí dice 496).
+
+## 28 · Los tres «hazlo» del 02/10: plata, la celda del stock y el saldo en el servidor — hechos en la rama, esperan tu OK para publicar
+
+Los tres están en la rama (`claude/pedidos-fecha-entrega-bgt0em`), probados con la batería entera (la batería entera corrió el 02/10 a la noche; el resultado, suite por suite, queda en la bitácora §4hj), y **sin publicar**:
+la página no cambia hasta que me digas «publica». El tercero además trae un servidor nuevo (`2026-10-02-a`) que implementás vos.
+
+### 1. Plata (Contabilidad y Administración) — bitácora §4hk
+- **🗑 Borrar este pago.** En la ficha de Contabilidad, tocás «✏️ Corregir» en un pago y ahora, al lado de 💾 Guardar, está «🗑 Borrar
+  este pago». Sirve para un pago de la venta, para el adelanto y para un recargo por entrega. Antes de borrar te pregunta qué se va
+  (monto, método, fecha, recibo, quién lo recibió), de cuánto a cuánto pasa lo que falta cobrar, y te avisa si la venta ya figura
+  ✅ cargada en el sistema contable (ahí también hay que corregirlo). **El total de la venta no cambia**: lo borrado vuelve a «falta
+  cobrar». Las fotos del pago van a la papelera solo si ningún otro pago las usa. **No se puede deshacer**: para recuperarlo hay que
+  registrarlo de nuevo. El pago «de mentira» de una venta marcada PAGADA sin monto no se borra (no existe): para eso está «💵 Anotar
+  el monto» o editar la venta como no pagada.
+- **Un pago nuevo sobre una venta ya ✅ cargada en el sistema contable.** Ya avisaba «ya estaba saldada» (Contabilidad pregunta, el
+  chofer ve «te estás pasando»); lo que de verdad faltaba era peor: ese pago quedaba **escondido detrás de la marca ✅** y nunca se
+  cargaba en el sistema. Ahora cualquier pago o recargo cobrado NUEVO (Contabilidad, chofer, 💵 de Administración, el formulario
+  con «SÍ, pagado» o un flete cobrado) **devuelve la venta a «📥 sin cargar al sistema contable»** y lo dice en rojo, para que lo
+  carguen también. Corregir un pago, anotarle el monto a una «PAGADA sin monto», borrar uno o pasar un recargo a pago NO la sacan.
+- **El 💵 de Administración pregunta quién recibió el efectivo**, pero solo cuando hay duda: el pedido tiene chofer y el camión ya
+  salió (entregado, o la fecha de entrega es hoy o pasada). Opciones: «🚚 El chofer …», «🧑‍💼 … (la vendedora)» u otro chofer de la
+  lista. Sin chofer, o con la entrega por delante, cobra directo como siempre. Así el Cuadre se la pide al que la tiene.
+- Prueba nueva: `tests/test_plata_borrar.js` (39 comprobaciones; 33 fallan contra la página publicada). Las 15 pruebas de plata de
+  siempre siguen en verde.
+
+### 2. La celda del stock (45 % de las 50.000 letras) — bitácora §4hl
+- **Primero la medí** con tu catálogo en los tres almacenes: **el 82 % de la celda son las fotos de los almacenes** (los Excel de
+  PTF, Banzer e IM: cantidades y códigos). Eso **no crece con el tiempo**: pesa lo que pesa el Excel. Lo único que crecía sin parar
+  eran los pedidos a fábrica ya recibidos (más o menos el 10 %), que se guardaban 4 meses enteros «para medir cuánto tarda la fábrica».
+- **La poda**: un pedido recibido se guarda entero 45 días; después queda solo una muestra chiquita (producto, cuántos, fábrica,
+  cuándo se pidió y cuándo llegó) y solo si alguna cuenta la mira (las últimas 6 llegadas de cada fábrica, el pedido más nuevo de
+  cada producto, una recogida que el almacén todavía nombra); a los 120 días, nada. Se poda igual al leer, al juntar entre
+  dispositivos y al guardar, así nada «vuelve». Probé que todas las cuentas (stock, tiempos de fábrica, qué producir) dan lo mismo
+  que antes, hoy y 50 días más adelante.
+- **Lo honesto**: **hoy la celda baja poco** (el stock se usa desde el 07/09, hay pocos recibidos viejos); lo que hace la poda es
+  **frenar el crecimiento**. Si querés que baje de verdad, la siguiente decisión es el mapa de códigos de cada almacén (41 % de la
+  celda), pero lo usan varias cuentas del panel y hay que revisarlo con cuidado antes: no lo toqué sin preguntarte.
+- Prueba nueva: `tests/test_stock_podar.js` (39). Las 28 pruebas del stock siguen en verde.
+
+### 3. El saldo también en el servidor — bitácora §4hj — servidor `2026-10-02-a` (lo implementás vos)
+- **Qué hace**: cada pedido que se guarda desde el formulario le dice al servidor qué aparta del saldo y con qué lectura lo calculó.
+  El servidor lleva un **libro de reservas** y, si otro vendedor apartó lo mismo en el medio (lo que tu lectura no podía ver), el que
+  guarda segundo ve una ventana: **«⚠️ Mientras guardabas, otro vendedor vendió 1 de SOFT 140x190: faltan 1. Tu pedido quedó guardado
+  igual»**, con «✏️ Abrir el pedido» (relee y abre la edición: el cuadrito ya cuenta al otro y dice desde qué día llega) y «Entendido».
+- **Qué NO hace, a propósito**: **nunca frena la venta** (como pediste en §4gj) ni reparte el stock (lo decide logística): avisa, con
+  el pedido ya guardado. La cuenta del saldo sigue viviendo en el panel, en un solo lugar.
+- **Lo que no cubre**: un pedido que se guardó sin señal y salió de la cola después no lleva reserva. Y si en una tienda subieron un
+  Excel nuevo y en la otra no, las dos páginas pueden no estar hablando del mismo producto.
+- **Con el servidor de ahora (30-a) no pasa nada**: la página manda la reserva, el servidor la ignora y todo sigue igual. El aviso
+  existe recién con la 02-a. Pruebas: `test_servidor` §21 (24) y `tests/test_saldo_servidor.js` (24: dos celulares contra el
+  servidor real; el segundo ve la ventana).
+
+### Lo que necesito de vos
+1. **«publica»** para la página (los tres juntos; después todos F5).
+2. **El servidor `2026-10-02-a`**, cuando quieras, con el procedimiento de siempre (§4fz-b «Publicar»):
+   - anotá qué versión está activa (Implementar → Administrar implementaciones → ✏️: hoy la **35** = 2026-09-30-a);
+   - pegá el código desde este enlace (texto plano entero, fijo a un commit; nunca desde el chat):
+     `https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/6b76e7aa06d9168ff1dbfd8836585c8895b029b6/google-apps-script.gs`
+     — **2.430 líneas**, termina en `}` y la línea anterior es `return borrador;`;
+   - ▶ `probarAntesDeImplementar()` tiene que decir «✅ Se puede implementar» y «Reservas de stock anotadas: ninguna todavía»;
+   - recién ahí ✏️ → Nueva versión → Implementar (NO «Nueva implementación»). 🔒 Cerrar día tiene que decir «versión 2026-10-02-a».
+   - Volver atrás = ✏️ a la versión 35 **y** pegar la 30-a (`4a950cc…`, 2.277 líneas).
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
 
