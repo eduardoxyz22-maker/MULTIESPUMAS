@@ -2142,7 +2142,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-30-a';   // (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-02-a';   // (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -2284,7 +2284,8 @@ function relojMs(){ try{ if(window.performance && typeof performance.now==='func
    📦 LA LECTURA: DE CUÁNDO ES, COMPRIMIDA Y SOLO LO CAMBIADO (30/09, §4he; el diseño, §4hb)
    El 29/09 a la noche el panel no conectaba: Google tardaba a ratos y cada equipo bajaba la planilla ENTERA (900 KB sin
    comprimir: Google no comprime aunque el navegador lo pida) cada 2 minutos. Con el servidor 2026-09-30-a:
-   · la lectura viaja COMPRIMIDA (`z`: ~7 veces menos). Se abre con `DecompressionStream` (iPad/iPhone con iOS 16.4 o más,
+   · la lectura viaja COMPRIMIDA (`z`: ~3,5 veces menos, medido el 30/09 con la planilla real: 260 KB en vez de 911; no las 7 que se
+     estimaron). Se abre con `DecompressionStream` (iPad/iPhone con iOS 16.4 o más,
      Chrome, Edge); sin eso, o si algo no cierra (la marca `zc`), se pide sin comprimir, como siempre;
    · después de la primera, se pide SOLO LO CAMBIADO (`desde`): las filas con sello nuevo y lo borrado, más la cuenta de
      control (`n` filas y `huella`). El panel la rehace con su copia (`LISTA_BASE`) y, si no da lo mismo, pide la entera.
@@ -2490,6 +2491,9 @@ function apiSaveAhora(rec, opts){
   var payload={action:'save', pedido:envio};
   if(sis || re) payload.juntar=1;
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
+  /* 📦 (02/10, §4hj) Lo que este pedido saca del saldo del almacén, para el libro de reservas del servidor 2026-10-02-a
+     (`saldoReservaArmar`). Viaja SOLO desde el formulario: la cola, el chofer y Contabilidad no lo mandan. */
+  if(opts && opts.reserva) payload.reserva=opts.reserva;
   /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
      redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
      petición. Si el guardado tarda —el servidor puede esperar hasta 30 s el candado cuando
@@ -9495,6 +9499,10 @@ function submitPedido(){
   guardarYa();
 
   function guardarYa(){
+  /* 📦 (02/10, §4hj) Lo que este pedido saca del saldo del almacén, para el libro de reservas del servidor 2026-10-02-a.
+     ⚠️ Se arma ACÁ, antes del `upsert(rec)` optimista de abajo: con el pedido nuevo ya en STATE, `libres` lo descontaba a él
+     mismo (1 libre decía 0) y `conocidos` traía su propio id. Es la misma foto con la que preguntó `saldoConfirmarAlGuardar`. */
+  var _reserva=saldoReservaArmar();
   /* (02/10, §4hg) Un envío sin respuesta se perdía al recargar: todavía no había llegado al
      catch que lo encola. Guardar la MISMA fila/id/revisión antes de tocar la red. No avanzar
      si el navegador no pudo conservarla. El reenvío usa el «ok tardío» de apiSave, no otro id. */
@@ -9522,7 +9530,10 @@ function submitPedido(){
     /* Con la clave de administración, mover a un día cerrado o a un turno lleno ya se
        confirmó arriba: se le dice al servidor que lo deje pasar (y va la clave de
        administración del servidor, si la pide). Sin la clave, no. */
-    apiSave(rec, {forzar: _forzar}).then(function(res){
+    /* 📦 (02/10, §4hj) La reserva (armada arriba) viaja con el guardado: el servidor 2026-10-02-a la anota y, si otro vendedor
+       que ESTA lectura no conocía apartó lo mismo en el medio, lo contesta en `saldo` y se le dice abajo, después de lo de
+       siempre. Con un servidor de antes no vuelve nada y no cambia nada. */
+    apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null)}).then(function(res){
       setSubmitting(false);
       // Una respuesta definitiva conserva el comportamiento del formulario: el rechazo
       // se corrige acá; no dejarlo en cola como un pedido que se mandará a escondidas.
@@ -9615,6 +9626,10 @@ function submitPedido(){
       }
       else { afterEnCola(isEdit, 'el servidor no contestó como se esperaba'); return; }
       after(isEdit);
+      /* 📦 (02/10) El servidor dice que otro apartó lo mismo mientras se guardaba: se avisa DESPUÉS de lo de siempre (el pedido
+         quedó guardado, el formulario vacío o la edición cerrada, y la ventana de siempre abierta). Con un servidor de antes no
+         viene `saldo`. */
+      if(res && res.ok && Array.isArray(res.saldo) && res.saldo.length) saldoAvisoServidor(rec, res.saldo, _reserva);
     }).catch(function(e){
       setSubmitting(false);
       // Ya estaba en cola antes de enviar. No reemplazar una corrección más nueva por esta foto.
@@ -11045,6 +11060,7 @@ function mergePending(serverList){
   var t0=(serverList && serverList._pedidaN!=null) ? Number(serverList._pedidaN) : Infinity;
   var tPed=(serverList && serverList._pedidaT!=null) ? Number(serverList._pedidaT) : null;   // (28/09, 2ª revisión) ver `localManda`
   var ahS=(serverList && serverList._ahora!=null) ? Number(serverList._ahora) : null;         // (30/09, §4he) de cuándo es, con el reloj de Google
+  SALDO_VISTO=ahS||0;                      // 📦 (02/10) la lectura con la que se va a calcular el saldo: su hora viaja con el guardado (`saldoReservaArmar`)
   serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
@@ -18809,6 +18825,95 @@ function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
                  '\n\n¿Le avisaste '+aQuien+' cuánto tiene que esperar?\n\n• Aceptar: guardar el pedido igual.\n• Cancelar: volver al pedido sin guardar.');
   if(!si && primero){ try{ primero.scrollIntoView({block:'center'}); }catch(e){} }
   return si;
+}
+
+/* ---- 📦 El libro de reservas del servidor (02/10, §4hj) ----
+   El dueño: *«Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del saldo
+   tendría que estar también en el servidor»*. La pregunta de arriba sale con la planilla recién leída, pero si A y B leen
+   «Libres 1» y guardan en los mismos 1-3 s, entran los dos sin aviso y se enteran recién en la lectura siguiente.
+   Con el servidor 2026-10-02-a, cada guardado desde el formulario lleva `reserva`: `visto` (el `ahora` de la lectura con la
+   que se calculó el saldo, reloj de Google; `SALDO_VISTO`, lo deja `mergePending`) y, por cada producto que sale del saldo
+   del almacén (`saldoDelAlmacen`: ni 📐 ni 🏷️ ni 🏭 ni los de tienda), la clave, las unidades, cuántas quedaban libres según
+   esa lectura (puede ser negativo) y los ids de los pedidos que esta cuenta YA tuvo en cuenta —o descartó a propósito—
+   (`conocidos`). El servidor lo anota adentro de su candado y, si otro pedido que acá no se conocía apartó lo mismo,
+   contesta `saldo` y se le dice a quien guardó (`saldoAvisoServidor`), con el pedido ya guardado.
+   ⚠️ El servidor NUNCA frena la venta ni reparte el stock (dueño, §4gj y §4gq): la cuenta del saldo sigue viviendo acá, en
+   `stockData` (UNA sola cuenta); el servidor no sabe de catálogos ni de Excel. Sin stock cargado o sin ningún Excel no se
+   manda nada; con un servidor de antes no vuelve `saldo` y no pasa nada. Lo que sale de la cola no lleva reserva. */
+var SALDO_VISTO=0;              // de cuándo es la lectura con la que se calcula el saldo (reloj de Google); 0 con un servidor de antes
+var SALDO_MODAL_PREVIO=null;    // la ventana que dejó lo de siempre (el mensaje para el grupo), para devolverla con «Entendido»
+/* Los ids de los pedidos de STATE (sin filas del sistema ni borradores) con alguna línea de esa clave: lo que `stockData` ya miró
+   (lo contó como pendiente, o lo descartó a propósito: entregado, ATC, de fecha pasada). El servidor no los cuenta como «otros». */
+function saldoIdsConClave(k){
+  var out=[];
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p)) return;
+    var hay=false;
+    (p.productos||[]).forEach(function(x){ if(!hay && x){ try{ if(stockClave(x)===k) hay=true; }catch(e){} } });
+    if(hay) out.push(String(p.id));
+  });
+  return out;
+}
+/* Lo que viaja con el guardado, o null si no corresponde (ATC, venta de tienda, entregado, sin stock, sin Excel, nada del
+   almacén). Devuelve { envio, lineas }: `lineas` conserva el nombre de cada producto para el aviso de vuelta; al servidor no va.
+   Editando se mandan igual todas las líneas (el servidor reemplaza la reserva del pedido con cuidado). */
+function saldoReservaArmar(){
+  try{
+    if(!saldoAvisoActivo() || !STOCK_CARGADO || !stockHayAlgunExcel()) return null;
+    var sinId=saldoSinId(), fecha=saldoFechaForm(), vistos={}, lineas=[];
+    saldoFilasForm().forEach(function(f){
+      if(!saldoDelAlmacen(f) || vistos[f.g]) return; vistos[f.g]=1;
+      var l={ k:f.k, u:f.total, conocidos:saldoIdsConClave(f.k), nombre:saldoNombre(f.x) }, v=null;
+      try{ v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat); }catch(e){ v=null; }
+      if(v && v.libres!=null && isFinite(Number(v.libres))) l.libres=Number(v.libres);   // sin número (sin contar, desconocido): se anota, no se avisa
+      lineas.push(l);
+    });
+    if(!lineas.length) return null;
+    var envio={ lineas:lineas.map(function(l){ var o={ k:l.k, u:l.u, conocidos:l.conocidos }; if(l.libres!=null) o.libres=l.libres; return o; }) };
+    if(SALDO_VISTO>0) envio.visto=SALDO_VISTO;          // sin `_ahora` (servidor de antes al leer) va sin `visto`: el servidor anota y no avisa
+    return { envio:envio, lineas:lineas };
+  }catch(e){ return null; }
+}
+/* El aviso de vuelta: otro vendedor apartó lo mismo mientras se guardaba. Sale DESPUÉS de lo de siempre (el pedido ya está
+   guardado, el formulario vacío o la edición cerrada); la ventana que dejó lo de siempre (el mensaje para el grupo, o «✓ Cambios
+   guardados») se guarda y «Entendido» la devuelve. «✏️ Abrir el pedido» relee la planilla —recién ahí el cuadrito cuenta al otro y dice desde qué día llega— y abre
+   la edición para reprogramar la entrega. */
+function saldoAvisoServidor(rec, saldo, reserva){
+  try{
+    var nombres={}; ((reserva&&reserva.lineas)||[]).forEach(function(l){ nombres[l.k]=l.nombre; });
+    var aQuien=esRPT(rec&&rec.oc) ? 'a la sucursal' : 'al cliente';
+    var items=saldo.map(function(s){
+      var nom=nombres[s.k] || String(s.k||'').split('|').filter(function(t){ return t; }).join(' ');
+      return '<li><b>otro vendedor vendió '+esc(stockUnid(s.otros))+' de '+esc(nom)+'</b>: ya no hay saldo libre (faltan '+esc(stockUnid(s.faltan))+').</li>';
+    }).join('');
+    var m=document.getElementById('modal'), box=document.getElementById('modal-box');
+    SALDO_MODAL_PREVIO=(m && box && m.classList.contains('on')) ? { html:box.innerHTML, ancha:box.classList.contains('ancha') } : null;
+    var id=String((rec&&rec.id)||'').replace(/'/g,'');
+    openModal('<div class="modal-h" style="background:var(--amber)"><h3>⚠️ Mientras guardabas, otro vendedor vendió lo mismo</h3></div>'+
+      '<div class="modal-b" style="font-size:.9rem;line-height:1.5">'+
+        '<ul style="margin:0 0 10px 18px">'+items+'</ul>'+
+        '<p><b>Tu pedido quedó guardado igual.</b> Avisale '+aQuien+' que puede demorar (hay que mandar a producir) o reprogramá la entrega: '+
+        'abrí el pedido para ver desde qué día llega.</p>'+
+        '<div class="modal-actions" style="margin-top:12px">'+
+          '<button class="btn btn-primary btn-sm" style="flex:1;min-width:150px" onclick="saldoAvisoAbrir(\''+id+'\')">✏️ Abrir el pedido</button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="saldoAvisoCerrar()">Entendido</button>'+
+        '</div>'+
+      '</div>');
+  }catch(e){}
+}
+function saldoAvisoCerrar(){
+  var p=SALDO_MODAL_PREVIO; SALDO_MODAL_PREVIO=null;
+  if(p && p.html) openModal(p.html, p.ancha); else closeModal();
+}
+function saldoAvisoAbrir(id){
+  SALDO_MODAL_PREVIO=null; closeModal();
+  /* Con la planilla de AHORA: la lectura de antes no tenía al otro pedido, y el cuadrito tiene que decir el día contándolo.
+     `conTope` nunca falla: sin respuesta en 4 s se abre igual, con lo que hay. */
+  SALDO_LECTURA_T=0;
+  conTope(CONNECTED ? refrescarEstado() : Promise.resolve(false), 4000).then(function(){
+    if(findById(id)) editPedido(id);
+    else toast('Ese pedido ya no está en la lista de este dispositivo: buscalo en Mis pedidos.','err');
+  });
 }
 
 /* ---- El aviso en Administración: solo lo que hay que hacer, y nada más ---- */
