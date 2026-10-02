@@ -7501,6 +7501,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
    intento durable es un intento nuevo: `prepararDurable` borra `NO_ENCOLAR[id]` (como ya hacían `guardarDurable` y
    `guardarYa`).
 
+### Publicación
+- **Publicado el 02/10 a las 16:21 de Bolivia** (`main` = `f491137`, merge de la rama; el dueño: *«publica»*), con Actions
+  quieto. El servidor no cambia (sigue `2026-09-30-a`). Para verlo, recargar la página.
+
 ### Dicho, sin tocar
 - Cada guardado del stock o del arqueo que no entra ahora tira un toast rojo («⏳ stock: NO se guardó en la planilla
   todavía (…)»); antes se encolaban callados. Es información; si molesta en logística, se baja a un aviso en la pantalla.

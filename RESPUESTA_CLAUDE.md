@@ -2184,6 +2184,7 @@ servidor sí llega al pedido que queda en pantalla, así que dos cambios seguido
 - **Lo que dejé como está**: cuando un guardado del stock no entra, ahora sale un aviso rojo (antes se encolaba callado).
   Si a logística le molesta, se cambia.
 - **Para la próxima vez que Codex publique**: que corra `./tests/correr.sh` entero antes, o avisame y la corro acá.
+- **Publicado el 02/10 a las 16:21** (`f491137`), con tu «publica». Solo página; el servidor sigue `2026-09-30-a`.
 
 ## 26 · Codex: las otras cinco rutas de guardado, protegidas (02/10)
 
