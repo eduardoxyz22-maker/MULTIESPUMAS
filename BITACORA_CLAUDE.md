@@ -7578,7 +7578,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - El 💵 de Administración sigue sin pedir imagen ni recibo (como siempre): es el camino rápido; lo prolijo es Contabilidad.
 - El 💰✓ de Administración («deshacer») sigue deshaciendo solo cobros de la puerta (§4fy), con o sin `>chofer`.
 
-## 4hj. 02/10, noche: servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera — en la rama (`6b76e7a`), SIN implementar ni publicar
+## 4hj. 02/10, tarde: servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera — SERVIDOR IMPLEMENTADO 02/10 ~17:21 (el dueño); la página, en la rama (`f287bd5`), espera el «publica»
 
 > El dueño (02/10): *«Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del
 > saldo tendría que estar también en el servidor. hazlo»*. Era la «ventana que queda» dicha en §4gj: el cuadrito pregunta con la
@@ -7650,7 +7650,21 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   la suite dio 5/5. ⚠️ Un `onclick="…"` que se arma concatenando no puede llevar `nombre(` adentro de las comillas salvo que sea
   una función de verdad.
 
-### Para implementar (cuando el dueño lo pida; procedimiento de §4fz-b «Publicar»)
+### Implementación (02/10, el dueño)
+- 17:19 `probarAntesDeImplementar()` desde el editor, todo ✅: «Versión de este código: 2026-10-02-a», 29 funciones clave, 1.168
+  filas, disparadores instalados, repaso de Kommo hace 0 minutos, **stock 22.166/50.000 (44 %)**, arqueo 0, la lectura comprimida
+  962.056 → 276.052 letras (3 veces menos), portero con 14 feriados por venir (el próximo 02/11, Todos Santos), «Reservas de stock
+  anotadas: ninguna todavía», «Se puede implementar».
+- ~17:21 «implementado» (✏️ → Nueva versión sobre la implementación de siempre). La versión anotada para volver atrás es la **35**
+  (= 2026-09-30-a) + pegar la 30-a (`4a950cc354f88451555e2332fde09a4ae8f45f42`, 2.277 líneas).
+- El enlace que se le dio, fijo al commit: `https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/6b76e7aa06d9168ff1dbfd8836585c8895b029b6/google-apps-script.gs`
+  (verificado desde acá con `curl` + `cmp`: idéntico al de la rama, 2.430 líneas). ⚠️ El enlace entre comillas de código no le
+  salió como enlace tocable en su app: la primera vez hay que ponerlo pelado en una línea.
+- Con la página de ahora (`f491137`) el servidor nuevo no cambia nada (no llega `reserva`): el aviso existe recién al publicar.
+- Verificación desde acá: `actions_run_trigger` sigue dando 403 (no se puede disparar el diagnóstico ni el respaldo de Kommo
+  desde esta sesión); la próxima corrida programada del respaldo imprime la versión.
+
+### Para implementar (procedimiento de §4fz-b «Publicar»)
 1. Anotar la versión que está activa (la 35 = 2026-09-30-a) en Implementar → Administrar implementaciones → ✏️.
 2. Pegar el `.gs` desde el enlace raw FIJO al commit (nunca por el chat, §4fz-b): 2.430 líneas, termina en `}` con `return
    borrador;` antes. `probarAntesDeImplementar()` → «✅ Se puede implementar» y «Reservas de stock anotadas: ninguna todavía».
