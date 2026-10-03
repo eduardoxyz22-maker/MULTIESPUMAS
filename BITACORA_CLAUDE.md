@@ -7483,6 +7483,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   · `tests/test_halloween.js` §4 (+8, 22 en total; contra lo publicado, la sección 4 entera roja): no suena al abrir, el
     primer toque suena UNA vez aunque se toque dos, recargar el mismo día no, el dashboard ese día tampoco, al día siguiente sí,
     el 1/11 no, y el sonido grabado dura ~2 s sin saturar. En Sueña, su `tests/test_halloween.js` (+4, 9).
+  · Batería entera con la risa puesta (03/10): 130 suites, 4.914 comprobaciones, 0 rojas.
+  · ⚠️ **El dueño escuchó la sintetizada: *«¡qué risa más fea!»*.** Va a mandar un archivo grabado; el mecanismo (primer toque,
+    una vez por día, solo en octubre) queda igual y se cambia solo el sonido. El archivo va al repo público: tiene que ser de uso
+    libre o grabado por el equipo. NO publicar la sintetizada.
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
