@@ -450,6 +450,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:
   encabezado de noche + 🎃 + telaraña + cupos en naranja + pestaña elegida en morado (pedidos); caja de la marca y menú
   elegido (dashboard). También en el dashboard de **Sueña**, que vive en OTRO repo (`MULTIESPUMAS-VISCARRA`). ⚠️ No usar naranja para nada que se pueda confundir con los avisos en ámbar. `tests/test_halloween.js`.
+- **🧙‍♀️ Risa de bruja** (03/10): `window.hwRisa` (Web Audio, sin archivo) suena con el PRIMER toque o tecla del día —los
+  navegadores no dejan sonar al abrir— y UNA vez por día por aparato (`hw_risa_dia`, compartida entre pedidos y los dos
+  dashboards: la misma dirección). Solo con el tema. ⚠️ Un sonido nuevo en el panel NUNCA al cargar ni repetido: el equipo
+  lo abre todo el día, a veces delante de clientes.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)

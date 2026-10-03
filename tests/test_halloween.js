@@ -94,6 +94,57 @@ function armarDashboard(){
   r = await tablero('2026-11-01T00:01:00-04:00');
   chk('1/11: el dashboard como siempre (sin 🎃, sin el fondo de noche)', !r.on && !/🎃/.test(r.calabaza) && !/26, 11, 46/.test(r.fondo) && r.datos, [r.on, r.calabaza]);
 
+  // ═══ 4. La risa de bruja (dueño, 03/10: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?») ═══
+  console.log('\n── 4. La risa de bruja: con el primer toque del día, una vez por aparato, solo en octubre ──');
+  /* UN contexto del navegador para todo (el almacenamiento sigue de una página a la otra, como en un celular). Se cuenta
+     cada AudioContext que se arma: arma uno = intentó sonar. */
+  const ctxRisa = await browser.newContext({ viewport:{ width:1300, height:700 }, timezoneId:'UTC' });
+  await ctxRisa.addInitScript(() => {
+    window.__ctxs = 0; var O = window.AudioContext;
+    if (O) { window.AudioContext = function(){ window.__ctxs++; return new O(); }; window.AudioContext.prototype = O.prototype; }
+  });
+  const risa = async (archivo, cuando, tocar) => {
+    const page = await ctxRisa.newPage();
+    page.on('pageerror', e=>errores.push(e.message));
+    await page.route(/^https?:/, r=>r.abort());
+    await page.clock.setFixedTime(new Date(cuando));
+    await page.goto('file://' + archivo, { waitUntil:'load' });
+    await page.waitForTimeout(archivo===PEDIDOS ? 300 : 1200);
+    const antes = await page.evaluate(() => window.__ctxs);
+    for (let i=0; i<(tocar||0); i++) { await page.mouse.click(640, 400); await page.waitForTimeout(150); }
+    const r = await page.evaluate(() => { var k=null; try{ k=localStorage.getItem('hw_risa_dia'); }catch(e){} return { ctxs:window.__ctxs, dia:k, fn:typeof window.hwRisa }; });
+    await page.close();
+    return Object.assign({ antes }, r);
+  };
+  r = await risa(PEDIDOS, '2026-10-03T10:00:00-04:00', 0);
+  chk('3/10, recién abierto: NO suena (los navegadores no dejan sonar sin un toque)', r.antes===0 && r.ctxs===0 && r.dia===null && r.fn==='function', r);
+  r = await risa(PEDIDOS, '2026-10-03T10:00:00-04:00', 2);
+  chk('…el primer toque la hace sonar UNA vez (aunque toque dos veces) y anota el día', r.ctxs===1 && r.dia==='2026-10-03', r);
+  r = await risa(PEDIDOS, '2026-10-03T15:00:00-04:00', 2);
+  chk('…recargar el mismo día y tocar: ya no suena (una vez por día)', r.ctxs===0 && r.dia==='2026-10-03', r);
+  r = await risa(dash, '2026-10-03T16:00:00-04:00', 1);
+  chk('…tampoco en el dashboard ese día (la misma dirección: una vez por día en el aparato)', r.ctxs===0, r);
+  r = await risa(PEDIDOS, '2026-10-04T09:00:00-04:00', 1);
+  chk('4/10: vuelve a sonar con el primer toque', r.ctxs===1 && r.dia==='2026-10-04', r);
+  r = await risa(PEDIDOS, '2026-11-01T09:00:00-04:00', 2);
+  chk('1/11: no suena (sin el tema, sin risa)', r.ctxs===0 && r.dia==='2026-10-04' && r.fn==='undefined', r);
+  r = await risa(dash, '2026-10-05T09:00:00-04:00', 1);
+  chk('el dashboard también la tiene (5/10, primer toque)', r.ctxs===1 && r.dia==='2026-10-05', r);
+  await ctxRisa.close();
+  /* El sonido de verdad, grabado sin parlantes (OfflineAudioContext): dura ~2 s, se oye y no satura. */
+  {
+    const page = await abrir(PEDIDOS, '2026-10-03T10:00:00-04:00');
+    const s = await page.evaluate(async () => {
+      const sr=22050, c=new OfflineAudioContext(1, Math.ceil(sr*3.4), sr), fin=window.hwRisa(c, 0.05);
+      const d=(await c.startRendering()).getChannelData(0); let pk=0, q=0, nan=0, hasta=0;
+      for (let i=0;i<d.length;i++){ const v=d[i]; if(!isFinite(v)) nan++; const a=Math.abs(v); if(a>pk) pk=a; q+=v*v; if(a>0.02) hasta=i/sr; }
+      return { fin, pk, rms:Math.sqrt(q/d.length), nan, hasta };
+    });
+    await page.close();
+    chk('la risa: suena ~2 segundos, sin saturar (pico < 0,95) y sin huecos raros', s.nan===0 && s.pk>0.2 && s.pk<0.95 && s.rms>0.03 && s.hasta>1.7 && s.hasta<2.6 && s.fin>2 && s.fin<3.5,
+        { pico:+s.pk.toFixed(3), rms:+s.rms.toFixed(3), hasta:+s.hasta.toFixed(2), fin:+s.fin.toFixed(2) });
+  }
+
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

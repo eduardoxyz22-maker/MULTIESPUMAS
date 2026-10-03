@@ -7466,6 +7466,23 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   dashboard de Heaven para la cuenta de Kommo de Viscarra). Mismo bloque, con ajustes porque ahí la marca es TEXTO
   («MULTI» en blanco sobre la noche, menos espacio entre letras, la 🎃 abajo a la derecha). Su `tests/test_halloween.js` (5).
   ⚠️ Lo que se haga al dashboard de Heaven por pedido del dueño, preguntarse si va también al de Sueña.
+- **🧙‍♀️ La risa de bruja** (dueño, 03/10: *«¿no se puede añadir un sonido de una bruja riendo al entrar a la página?
+  jajaja»*), en las tres páginas, SIN publicar todavía:
+  · **Los navegadores no dejan sonar nada al abrir la página** (autoplay): suena con el PRIMER toque o tecla. Se arma UN
+    `AudioContext` en el primer `pointerup`/`touchend`/`click`/`keydown` (escuchados en captura sobre `document`) y se le pide
+    `resume()` con cada toque hasta que el navegador lo deja (en el iPhone/iPad cuenta el `touchend`); apenas está `running`,
+    suena una vez y se sueltan los escuchas.
+  · **Una vez por día por aparato**: `hw_risa_dia` en `localStorage` con la fecha de Bolivia. El panel de pedidos y los dos
+    dashboards están en la MISMA dirección (`eduardoxyz22-maker.github.io`), así que es una vez por día entre las tres. Sin
+    almacenamiento no suena (si no, sonaría con cada F5). Solo con `tema-halloween` (octubre).
+  · **El sonido se arma en el navegador** (`window.hwRisa(ctx, t0)`, Web Audio): «je-je-je, ja-ja-ja-ja-ja, jaaaa», cada
+    sílaba un diente de sierra agudo (700→980→520 Hz) con vibrato y aspereza (AM a 38 Hz), formantes anchos de la vocal, un
+    soplido de «j» al empezar y un eco corto generado. Sin archivo de sonido ni nada de afuera: no hay derechos de nadie y
+    no pesa. Volumen 0,4 (pico ~0,67 grabado sin parlantes con `OfflineAudioContext`).
+  · Freepik no sirvió: la cuenta conectada es la gratuita (0 créditos) y los efectos de sonido no están en ese plan.
+  · `tests/test_halloween.js` §4 (+8, 22 en total; contra lo publicado, la sección 4 entera roja): no suena al abrir, el
+    primer toque suena UNA vez aunque se toque dos, recargar el mismo día no, el dashboard ese día tampoco, al día siguiente sí,
+    el 1/11 no, y el sonido grabado dura ~2 s sin saturar. En Sueña, su `tests/test_halloween.js` (+4, 9).
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
