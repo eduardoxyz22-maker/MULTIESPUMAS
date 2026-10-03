@@ -102,7 +102,11 @@ function armarDashboard(){
   const ctxRisa = await browser.newContext({ viewport:{ width:1300, height:700 }, timezoneId:'UTC' });
   await ctxRisa.addInitScript(() => {
     window.__ctxs = 0; var P = HTMLMediaElement.prototype.play;
-    HTMLMediaElement.prototype.play = function(){ window.__ctxs++; window.__src = this.src; return P.apply(this, arguments); };
+    /* Cada `play` que queda en el aire se cuenta hasta que el navegador contesta (arrancó o no): con la máquina cargada
+       (la batería entera) bajar y arrancar el mp3 tarda, y el día se anota recién cuando arranca. */
+    window.__pend = 0;
+    HTMLMediaElement.prototype.play = function(){ window.__ctxs++; window.__src = this.src; window.__pend++;
+      var pr = P.apply(this, arguments); pr.then(function(){ window.__pend--; }, function(){ window.__pend--; }); return pr; };
   });
   const risa = async (archivo, cuando, tocar) => {
     const page = await ctxRisa.newPage();
@@ -113,6 +117,7 @@ function armarDashboard(){
     await page.waitForTimeout(archivo===PEDIDOS ? 300 : 1200);
     const antes = await page.evaluate(() => window.__ctxs);
     for (let i=0; i<(tocar||0); i++) { await page.mouse.click(640, 400); await page.waitForTimeout(150); }
+    await page.waitForFunction(() => window.__pend===0, null, { timeout:8000 }).catch(()=>{});
     const r = await page.evaluate(() => { var k=null; try{ k=localStorage.getItem('hw_risa_dia'); }catch(e){} return { ctxs:window.__ctxs, dia:k, fn:typeof window.hwRisaArchivo==='string'?'function':'undefined', src:String(window.__src||'').split('/').pop() }; });
     await page.close();
     return Object.assign({ antes }, r);
