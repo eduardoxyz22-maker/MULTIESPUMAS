@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos y en el dashboard — en la rama, SIN publicar
+## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 
 > El dueño (03/10): *«es mes de Halloween, deberíamos tener algo halloweenesco, ideas, opciones?»*. Se le mostraron tres
 > maquetas sobre el panel real (discreta; con murciélagos y cuenta regresiva; todo el panel en morado). Eligió: *«la 1 y sí
@@ -7462,6 +7462,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - ⚠️ **Los colores de aviso no cambian** (verde, ámbar, rojo): por eso el acento es morado y no naranja.
 - ⚠️ Los meses cerrados del dashboard (`panel_YYYY_MM.html`) se generan con la misma plantilla: mirados en octubre también
   llevan el tema (depende del día en que se mira, no del mes del panel). Es a propósito.
+- **Sueña** (dueño: *«te faltó el de Sueña»*): vive en OTRO repositorio, `eduardoxyz22-maker/MULTIESPUMAS-VISCARRA` (clon del
+  dashboard de Heaven para la cuenta de Kommo de Viscarra). Mismo bloque, con ajustes porque ahí la marca es TEXTO
+  («MULTI» en blanco sobre la noche, menos espacio entre letras, la 🎃 abajo a la derecha). Su `tests/test_halloween.js` (5).
+  ⚠️ Lo que se haga al dashboard de Heaven por pedido del dueño, preguntarse si va también al de Sueña.
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
