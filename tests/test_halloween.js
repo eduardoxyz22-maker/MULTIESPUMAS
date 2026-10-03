@@ -23,6 +23,7 @@ function armarDashboard(){
   const tpl = fs.readFileSync(TEMPLATE, 'utf8');
   const f = path.join(os.tmpdir(), 'test_halloween_dash.html');
   fs.writeFileSync(f, tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + m[1] + ';'));
+  try{ fs.copyFileSync(path.resolve('halloween-risa.mp3'), path.join(os.tmpdir(), 'halloween-risa.mp3')); }catch(e){}   // la risa va al lado de la página
   return f;
 }
 
@@ -97,11 +98,11 @@ function armarDashboard(){
   // ═══ 4. La risa de bruja (dueño, 03/10: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?») ═══
   console.log('\n── 4. La risa de bruja: con el primer toque del día, una vez por aparato, solo en octubre ──');
   /* UN contexto del navegador para todo (el almacenamiento sigue de una página a la otra, como en un celular). Se cuenta
-     cada AudioContext que se arma: arma uno = intentó sonar. */
+     cada vez que la página le pide al navegador que suene el archivo (`play`). */
   const ctxRisa = await browser.newContext({ viewport:{ width:1300, height:700 }, timezoneId:'UTC' });
   await ctxRisa.addInitScript(() => {
-    window.__ctxs = 0; var O = window.AudioContext;
-    if (O) { window.AudioContext = function(){ window.__ctxs++; return new O(); }; window.AudioContext.prototype = O.prototype; }
+    window.__ctxs = 0; var P = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function(){ window.__ctxs++; window.__src = this.src; return P.apply(this, arguments); };
   });
   const risa = async (archivo, cuando, tocar) => {
     const page = await ctxRisa.newPage();
@@ -112,14 +113,14 @@ function armarDashboard(){
     await page.waitForTimeout(archivo===PEDIDOS ? 300 : 1200);
     const antes = await page.evaluate(() => window.__ctxs);
     for (let i=0; i<(tocar||0); i++) { await page.mouse.click(640, 400); await page.waitForTimeout(150); }
-    const r = await page.evaluate(() => { var k=null; try{ k=localStorage.getItem('hw_risa_dia'); }catch(e){} return { ctxs:window.__ctxs, dia:k, fn:typeof window.hwRisa }; });
+    const r = await page.evaluate(() => { var k=null; try{ k=localStorage.getItem('hw_risa_dia'); }catch(e){} return { ctxs:window.__ctxs, dia:k, fn:typeof window.hwRisaArchivo==='string'?'function':'undefined', src:String(window.__src||'').split('/').pop() }; });
     await page.close();
     return Object.assign({ antes }, r);
   };
   r = await risa(PEDIDOS, '2026-10-03T10:00:00-04:00', 0);
   chk('3/10, recién abierto: NO suena (los navegadores no dejan sonar sin un toque)', r.antes===0 && r.ctxs===0 && r.dia===null && r.fn==='function', r);
   r = await risa(PEDIDOS, '2026-10-03T10:00:00-04:00', 2);
-  chk('…el primer toque la hace sonar UNA vez (aunque toque dos veces) y anota el día', r.ctxs===1 && r.dia==='2026-10-03', r);
+  chk('…el primer toque la hace sonar UNA vez (aunque toque dos veces), con el archivo del dueño, y anota el día', r.ctxs===1 && r.dia==='2026-10-03' && /^halloween-risa\.mp3\?v=\d+$/.test(r.src), r);
   r = await risa(PEDIDOS, '2026-10-03T15:00:00-04:00', 2);
   chk('…recargar el mismo día y tocar: ya no suena (una vez por día)', r.ctxs===0 && r.dia==='2026-10-03', r);
   r = await risa(dash, '2026-10-03T16:00:00-04:00', 1);
@@ -131,18 +132,20 @@ function armarDashboard(){
   r = await risa(dash, '2026-10-05T09:00:00-04:00', 1);
   chk('el dashboard también la tiene (5/10, primer toque)', r.ctxs===1 && r.dia==='2026-10-05', r);
   await ctxRisa.close();
-  /* El sonido de verdad, grabado sin parlantes (OfflineAudioContext): dura ~2 s, se oye y no satura. */
+  /* El sonido: el archivo que mandó el dueño, la primera de sus tres risas. Existe al lado de la página, dura ~3,5 s y se oye. */
   {
+    const mp3 = path.resolve('halloween-risa.mp3');
+    const existe = fs.existsSync(mp3), kb = existe ? Math.round(fs.statSync(mp3).size/1024) : 0;
     const page = await abrir(PEDIDOS, '2026-10-03T10:00:00-04:00');
-    const s = await page.evaluate(async () => {
-      const sr=22050, c=new OfflineAudioContext(1, Math.ceil(sr*3.4), sr), fin=window.hwRisa(c, 0.05);
-      const d=(await c.startRendering()).getChannelData(0); let pk=0, q=0, nan=0, hasta=0;
-      for (let i=0;i<d.length;i++){ const v=d[i]; if(!isFinite(v)) nan++; const a=Math.abs(v); if(a>pk) pk=a; q+=v*v; if(a>0.02) hasta=i/sr; }
-      return { fin, pk, rms:Math.sqrt(q/d.length), nan, hasta };
-    });
+    const s = existe ? await page.evaluate(async (b64) => {
+      const bin=atob(b64), u=new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+      const buf=await new OfflineAudioContext(2, 44100, 44100).decodeAudioData(u.buffer); const d=buf.getChannelData(0);
+      let pk=0, nan=0; for (let i=0;i<d.length;i++){ if(!isFinite(d[i])) nan++; pk=Math.max(pk,Math.abs(d[i])); }
+      return { dur:buf.duration, pk, nan, archivo:window.hwRisaArchivo };
+    }, fs.readFileSync(mp3).toString('base64')) : null;
     await page.close();
-    chk('la risa: suena ~2 segundos, sin saturar (pico < 0,95) y sin huecos raros', s.nan===0 && s.pk>0.2 && s.pk<0.95 && s.rms>0.03 && s.hasta>1.7 && s.hasta<2.6 && s.fin>2 && s.fin<3.5,
-        { pico:+s.pk.toFixed(3), rms:+s.rms.toFixed(3), hasta:+s.hasta.toFixed(2), fin:+s.fin.toFixed(2) });
+    chk('el archivo de la risa está al lado de la página, dura ~3,5 s, se oye y pesa poco', existe && s && s.nan===0 && s.dur>3 && s.dur<4 && s.pk>0.3 && kb<120 && /^halloween-risa\.mp3/.test(s.archivo),
+        { existe, kb, dur:s&&+s.dur.toFixed(2), pico:s&&+s.pk.toFixed(2), archivo:s&&s.archivo });
   }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));

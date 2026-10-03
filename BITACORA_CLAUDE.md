@@ -7487,6 +7487,19 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   · ⚠️ **El dueño escuchó la sintetizada: *«¡qué risa más fea!»*.** Va a mandar un archivo grabado; el mecanismo (primer toque,
     una vez por día, solo en octubre) queda igual y se cambia solo el sonido. El archivo va al repo público: tiene que ser de uso
     libre o grabado por el equipo. NO publicar la sintetizada.
+  · **El archivo del dueño** (03/10, adjuntado en el chat: «EFECTO DE SONIDO Risa BRUJA | witch laugh sound effect», mp3 de
+    9,5 s, 192 kbps estéreo, con tres risas seguidas; parece bajado de un video de efectos de sonido: el dueño lo eligió después
+    del aviso de que el repo es público). Se usa la **PRIMERA risa**, de 0,5 a 3,95 s del original = **`halloween-risa.mp3`**,
+    3,47 s, 81 KB, cortada POR CUADROS sin volver a codificar (sin ffmpeg en la sesión: script de Python que lee las cabeceras
+    MPEG-1 Layer III, saca la etiqueta ID3 y el cuadro «Info» —con otra cantidad de cuadros mentiría la duración— y se queda con
+    los cuadros 19 a 152). El corte del final cae en el silencio después del último «ja».
+  · Se REEMPLAZÓ la sintetizada (`window.hwRisa` ya no existe): ahora `new Audio('halloween-risa.mp3?v=1').play()` con el
+    primer `touchend`/`click`/`keydown` (los tres gestos con los que todos los navegadores dejan sonar), volumen 0,8 donde se
+    puede (en el iPhone/iPad lo manda el botón del aparato). El día se anota recién cuando `play()` arranca; si el navegador
+    dice que no, se prueba con el toque siguiente. El archivo se baja con ese primer toque, no al abrir. `window.hwRisaArchivo`
+    dice cuál es. ⚠️ **Si se cambia el archivo, subir el `?v=`** (si no, los celulares siguen con el viejo en caché).
+  · El mp3 vive en la raíz de los DOS repos (al lado de `pedidos.html` y de los `index.html`/`panel_YYYY_MM.html`, que lo
+    buscan con dirección relativa). Las pruebas copian el mp3 al lado del dashboard armado en la carpeta temporal.
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).

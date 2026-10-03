@@ -1349,77 +1349,37 @@ html.tema-halloween .rail .ni.active::before{ background:#ea580c; box-shadow:0 0
 (function(){ try{ if(new Date(Date.now()-4*3600000).getUTCMonth()===9) document.documentElement.classList.add('tema-halloween'); }catch(e){} })();
 </script>
 <script>
-/* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»).
+/* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»;
+   la sintetizada le pareció fea y mandó la suya: es `halloween-risa.mp3`, la PRIMERA de las tres risas de su archivo, 3,5 s,
+   cortada por cuadros sin volver a codificar).
    · Solo con el tema de Halloween prendido (octubre, fecha de Bolivia).
-   · Los navegadores NO dejan sonar nada apenas se abre la página: suena con el PRIMER toque (o tecla) del día.
+   · Los navegadores NO dejan sonar nada apenas se abre la página: suena con el PRIMER toque, clic o tecla del día.
    · UNA vez por día por aparato (`hw_risa_dia` en el almacenamiento del navegador, el mismo para el panel de pedidos y
      los dashboards: están en la misma dirección). Sin almacenamiento no suena (si no, sonaría con cada F5).
-   · La risa se arma acá mismo con el sintetizador del navegador (Web Audio): no hay archivo de sonido ni nada de afuera.
-   · Volumen moderado; si algo falla, no pasa nada (nunca frena ni rompe la página). */
+   · El archivo se baja recién con ese primer toque (no pesa al abrir la página). Si algo falla, no pasa nada. */
 (function(){
   if(!document.documentElement.classList.contains('tema-halloween')) return;
-  /* La risa: «je-je-je, ja-ja-ja-ja-ja, jaaaa». Cada sílaba es una voz aguda (diente de sierra con vibrato y aspereza)
-     pasada por los formantes de la vocal, con un soplido al empezar; todo con un poco de eco. Devuelve cuándo termina. */
-  window.hwRisa=function(ctx, t0){
-    var sal=ctx.createGain(); sal.gain.value=0.4; sal.connect(ctx.destination);
-    var bus=ctx.createGain(), seco=ctx.createGain(), hum=ctx.createGain(), eco=ctx.createConvolver();
-    var n=Math.floor(ctx.sampleRate*1.2), ir=ctx.createBuffer(2,n,ctx.sampleRate);
-    for(var c=0;c<2;c++){ var d=ir.getChannelData(c); for(var i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3); }
-    eco.buffer=ir; seco.gain.value=0.85; hum.gain.value=0.22;
-    bus.connect(seco); seco.connect(sal); bus.connect(eco); eco.connect(hum); hum.connect(sal);
-    var rb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate), rd=rb.getChannelData(0);
-    for(var j=0;j<rd.length;j++) rd[j]=Math.random()*2-1;
-    var VOC={ e:[[550,1.5,3],[1900,1,5],[2700,.6,7]], a:[[850,1,4],[1250,.7,5],[2650,.3,7]] };   // formantes anchos: voz aguda
-    var SIL=[[0.00,700,760,.09,'e'],[0.15,760,820,.09,'e'],[0.30,820,900,.09,'e'],
-             [0.47,980,900,.11,'a'],[0.64,940,860,.11,'a'],[0.81,900,820,.11,'a'],[0.98,860,780,.11,'a'],[1.15,820,740,.11,'a'],
-             [1.33,800,520,.62,'a']];
-    var fin=t0;
-    SIL.forEach(function(s){
-      var t=t0+s[0], d=s[3], largo=d>0.3, f1=s[1], f2=s[2];
-      var voz=ctx.createOscillator(); voz.type='sawtooth';
-      voz.frequency.setValueAtTime(f1,t); voz.frequency.exponentialRampToValueAtTime(f2,t+d);
-      var vib=ctx.createOscillator(), vibG=ctx.createGain(); vib.frequency.value=largo?7:11; vibG.gain.value=f1*(largo?0.045:0.025);
-      vib.connect(vibG); vibG.connect(voz.frequency);
-      var asp=ctx.createGain(), aspO=ctx.createOscillator(), aspG=ctx.createGain();
-      aspO.frequency.value=38; aspG.gain.value=0.35; asp.gain.value=0.65; aspO.connect(aspG); aspG.connect(asp.gain);
-      var env=ctx.createGain(); env.gain.setValueAtTime(0.0001,t); env.gain.exponentialRampToValueAtTime(1,t+0.015);
-      env.gain.setValueAtTime(1,t+d*0.6); env.gain.exponentialRampToValueAtTime(0.0001,t+d);
-      voz.connect(asp); asp.connect(env);
-      /* un poco de aire durante la vocal (voz de vieja, con soplido) */
-      var aire=ctx.createBufferSource(), aireG=ctx.createGain(); aire.buffer=rb; aireG.gain.value=0.12; aire.connect(aireG); aireG.connect(env);
-      VOC[s[4]].forEach(function(fm){ var bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=fm[0]; bp.Q.value=fm[2];
-        var g=ctx.createGain(); g.gain.value=fm[1]*3; env.connect(bp); bp.connect(g); g.connect(bus); });
-      /* la «j» del principio: un soplido corto */
-      var jo=ctx.createBufferSource(), joF=ctx.createBiquadFilter(), joG=ctx.createGain(); jo.buffer=rb;
-      joF.type='bandpass'; joF.frequency.value=2200; joF.Q.value=1.2;
-      joG.gain.setValueAtTime(0.0001,t-0.03); joG.gain.exponentialRampToValueAtTime(0.35,t-0.005); joG.gain.exponentialRampToValueAtTime(0.0001,t+0.03);
-      jo.connect(joF); joF.connect(joG); joG.connect(bus);
-      [voz,vib,aspO].forEach(function(o){ o.start(t); o.stop(t+d+0.02); });
-      aire.start(t); aire.stop(t+d+0.02); jo.start(Math.max(0,t-0.03)); jo.stop(t+0.04);
-      fin=Math.max(fin, t+d);
-    });
-    return fin+1.2;
-  };
+  var ARCHIVO='halloween-risa.mp3?v=1';   // ⚠️ si se cambia el archivo, subir el ?v= (si no, los celulares siguen con el viejo)
+  window.hwRisaArchivo=ARCHIVO;
   var CLAVE='hw_risa_dia', hoy=new Date(Date.now()-4*3600000).toISOString().slice(0,10);
   try{ if(localStorage.getItem(CLAVE)===hoy) return; }catch(e){ return; }    // ya sonó hoy en este aparato, o no hay dónde anotarlo
-  /* Se arma UN AudioContext con el primer toque y se le pide arrancar con cada toque siguiente hasta que el navegador lo
-     deje (en el iPhone/iPad cuenta el «touchend»; en la compu, el clic o una tecla). Apenas arranca, suena una vez. */
-  var EV=['pointerup','touchend','click','keydown'], ctx=null, hecho=false;
+  /* «touchend» (iPhone/iPad, Android), «click» y «keydown» son los gestos con los que todos los navegadores dejan sonar. Si
+     el navegador igual dice que no, se vuelve a probar con el toque siguiente. */
+  var EV=['touchend','click','keydown'], audio=null, hecho=false;
   function soltar(){ EV.forEach(function(ev){ document.removeEventListener(ev, tocar, true); }); }
-  function sonar(){
-    if(hecho || !ctx || ctx.state!=='running') return;
+  function sono(){
+    if(hecho) return;
     hecho=true; soltar();
     try{ localStorage.setItem(CLAVE, hoy); }catch(e){}
-    try{ var fin=window.hwRisa(ctx, ctx.currentTime+0.08); setTimeout(function(){ try{ ctx.close(); }catch(e){} }, (fin-ctx.currentTime)*1000+500); }catch(e){}
   }
   function tocar(){
     if(hecho) return;
-    var AC=window.AudioContext||window.webkitAudioContext;
-    if(!AC){ hecho=true; soltar(); return; }
-    try{ if(!ctx) ctx=new AC(); }catch(e){ hecho=true; soltar(); return; }
-    var p=null; try{ p=ctx.resume(); }catch(e){}
-    if(p && p.then) p.then(sonar, function(){});
-    sonar();
+    try{
+      if(!audio){ audio=new Audio(ARCHIVO); try{ audio.volume=0.8; }catch(e){} }
+      if(!audio.paused) return;            // ya arrancó con otro evento del mismo toque
+      var p=audio.play();
+      if(p && p.then) p.then(sono, function(){}); else sono();
+    }catch(e){ hecho=true; soltar(); }
   }
   EV.forEach(function(ev){ document.addEventListener(ev, tocar, true); });
 })();
