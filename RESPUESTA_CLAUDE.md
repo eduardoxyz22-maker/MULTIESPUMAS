@@ -3,7 +3,7 @@
 > **ACTUALIZACIÓN 02/10, noche — §28 / BITÁCORA §4hj, §4hk, §4hl.** Los tres «hazlo» del dueño: plata (borrar un pago
 > registrado, el pago nuevo saca la marca ✅, el 💵 de Administración pregunta quién recibió), la poda de la celda del stock
 > (medida: el 82 % son las fotos de los almacenes) y el saldo también en el servidor (`.gs` `2026-10-02-a`, libro de reservas,
-> nunca frena). En la rama, SIN publicar: esperan el OK; el `.gs` lo implementa el dueño.
+> nunca frena). Servidor `2026-10-02-a` implementado por el dueño 17:21; página publicada 17:26 (`5caebd6`). Todos F5.
 
 > **ACTUALIZACIÓN 02/10, tarde — §27 / BITÁCORA §4hi.** Revisión de lo que Codex publicó (§25, §26): lo central está bien;
 > batería entera 126/126; dos correcciones (el pie decía «1 sin enviar» durante cada guardado normal, y un mensaje de
@@ -2171,7 +2171,7 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
 - El arqueo en 0 letras que mostró «probar» está bien: el arqueo del Cuadre está vacío desde antes (el diagnóstico cuenta la
   fila entera, por eso ahí dice 496).
 
-## 28 · Los tres «hazlo» del 02/10: plata, la celda del stock y el saldo en el servidor — hechos en la rama, esperan tu OK para publicar
+## 28 · Los tres «hazlo» del 02/10: plata, la celda del stock y el saldo en el servidor — servidor implementado 17:21, página publicada 17:26 (`5caebd6`)
 
 Los tres están en la rama (`claude/pedidos-fecha-entrega-bgt0em`), probados con la batería entera (batería entera: 129 suites, 4.891 comprobaciones en verde), y **sin publicar**:
 la página no cambia hasta que me digas «publica». El tercero además trae un servidor nuevo (`2026-10-02-a`) que implementás vos.

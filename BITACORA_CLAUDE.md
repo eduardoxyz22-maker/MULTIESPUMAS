@@ -7445,7 +7445,28 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hl. 02/10, noche: ✂️ la poda de los pedidos a fábrica ya recibidos — la celda del stock deja de crecer — en la rama (`b833508`), SIN publicar
+## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos y en el dashboard — en la rama, SIN publicar
+
+> El dueño (03/10): *«es mes de Halloween, deberíamos tener algo halloweenesco, ideas, opciones?»*. Se le mostraron tres
+> maquetas sobre el panel real (discreta; con murciélagos y cuenta regresiva; todo el panel en morado). Eligió: *«la 1 y sí
+> también al dashboard»*.
+
+- **Solo apariencia** (CSS + 1 línea de script en el `<head>`): no toca datos, plata, cupos ni el servidor.
+- **Se prende sola en octubre y se apaga sola el 1/11**, con la fecha de Bolivia (`Date.now()−4 h`, `getUTCMonth()===9` →
+  clase `tema-halloween` en `<html>`), antes de Todos Santos. Vuelve sola cada octubre: no hay que acordarse de nada.
+- **Pedidos** (`pedidos.html`): `--grad-header` de noche (morado, negro y calabaza; sigue moviéndose como siempre), 🎃 antes
+  de MULTIESPUMAS (`.logo-h::before`), telaraña en SVG dentro de la página en la esquina del encabezado (`.header::after`,
+  más chica en el celular, `pointer-events:none`), el número de cupos en naranja y la pestaña elegida en morado.
+- **Dashboard** (`panel_template.html`, el bot lo regenera al pushear): la caja de la marca de noche con el logo en blanco,
+  🎃 y telaraña, y el ítem elegido del menú en morado con la rayita naranja. Igual en tema claro y oscuro.
+- ⚠️ **Los colores de aviso no cambian** (verde, ámbar, rojo): por eso el acento es morado y no naranja.
+- ⚠️ Los meses cerrados del dashboard (`panel_YYYY_MM.html`) se generan con la misma plantilla: mirados en octubre también
+  llevan el tema (depende del día en que se mira, no del mes del panel). Es a propósito.
+- `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
+  23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
+  y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
+
+## 4hl. 02/10, noche: ✂️ la poda de los pedidos a fábrica ya recibidos — la celda del stock deja de crecer — PUBLICADA 02/10 17:26 (`5caebd6`)
 
 > El dueño (02/10): *«6.- La celda del stock va 45 % de las 50.000 letras que aguanta Google: podar lo ya recibido antes de que
 > llegue. hazlo»*. Lo había dejado anotado §4fz-b («el tamaño real todavía no se midió»).
@@ -7499,7 +7520,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   18, `identidad` 45, `codigo_almacen` 13, `saldo_almacen` 84, `rev8_saldo` 66, `corte_horario` 35, `adm_alta` 19, `revstock` 37,
   `rev3_stock` 36, `eduardo_multicenter` 40, `ventas_panel` 15, `rev3_entregas` 17, y los `.cjs` del dueño).
 
-## 4hk. 02/10, noche: plata — 🗑 borrar un pago registrado, ✅→📥 el pago nuevo saca la marca del sistema contable, y el 💵 de Administración pregunta quién recibió el efectivo — en la rama (`684d1a7`), SIN publicar
+## 4hk. 02/10, noche: plata — 🗑 borrar un pago registrado, ✅→📥 el pago nuevo saca la marca del sistema contable, y el 💵 de Administración pregunta quién recibió el efectivo — PUBLICADA 02/10 17:26 (`5caebd6`)
 
 > El dueño (02/10, de la lista de mejoras de RESPUESTA §27): *«4. Plata (Contabilidad) · No hay cómo borrar un pago ya registrado
 > («Corregir» exige monto mayor a 0). · Un cobro nuevo sobre una venta ya pagada entra callado: tendría que avisar «esta venta
@@ -7578,7 +7599,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - El 💵 de Administración sigue sin pedir imagen ni recibo (como siempre): es el camino rápido; lo prolijo es Contabilidad.
 - El 💰✓ de Administración («deshacer») sigue deshaciendo solo cobros de la puerta (§4fy), con o sin `>chofer`.
 
-## 4hj. 02/10, tarde: servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera — SERVIDOR IMPLEMENTADO 02/10 ~17:21 (el dueño); la página, en la rama (`f287bd5`), espera el «publica»
+## 4hj. 02/10, tarde: servidor `2026-10-02-a` — el libro de reservas de stock: el que guarda segundo se entera — SERVIDOR IMPLEMENTADO 02/10 ~17:21 (el dueño), PÁGINA PUBLICADA 02/10 17:26 (`5caebd6`)
 
 > El dueño (02/10): *«Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del
 > saldo tendría que estar también en el servidor. hazlo»*. Era la «ventana que queda» dicha en §4gj: el cuadrito pregunta con la
@@ -7663,6 +7684,14 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - Con la página de ahora (`f491137`) el servidor nuevo no cambia nada (no llega `reserva`): el aviso existe recién al publicar.
 - Verificación desde acá: `actions_run_trigger` sigue dando 403 (no se puede disparar el diagnóstico ni el respaldo de Kommo
   desde esta sesión); la próxima corrida programada del respaldo imprime la versión.
+
+### Publicación de la página (02/10)
+- El dueño (17:24, después de ver «El candado está en el servidor (versión 2026-10-02-a)» y la línea ámbar «esta página espera
+  2026-09-30-a»): *«publica»*. Sin el panel corriendo (la corrida 487 terminó 18:51 UTC; la de las 21:00 UTC no había arrancado),
+  merge de la rama en `main` = **`5caebd6`**, 17:26 de Bolivia. Junto con §4hk (plata) y §4hl (poda del stock).
+- Batería entera antes de publicar: 129 suites, 4.891 comprobaciones en verde (§4hj «Pruebas»).
+- Falta del lado del equipo: **todos F5**. Una página vieja manda pedidos SIN `reserva` (el servidor no avisa nada por ellos, pero
+  tampoco los anota: el que guarda después no se entera de ese). La línea ámbar «esta página espera 2026-09-30-a» se va con el F5.
 
 ### Para implementar (procedimiento de §4fz-b «Publicar»)
 1. Anotar la versión que está activa (la 35 = 2026-09-30-a) en Implementar → Administrar implementaciones → ✏️.
