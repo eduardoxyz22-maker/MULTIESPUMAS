@@ -445,11 +445,16 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   «desde que abriste la página», la lectura va comprimida y solo con lo cambiado (con el `.gs` 2026-09-30-a). El
   diagnóstico también hace esas dos lecturas y rehace la cuenta de control.
 
-## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»)
+## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:
   encabezado de noche + 🎃 + telaraña + cupos en naranja + pestaña elegida en morado (pedidos); caja de la marca y menú
-  elegido (dashboard). ⚠️ No usar naranja para nada que se pueda confundir con los avisos en ámbar. `tests/test_halloween.js`.
+  elegido (dashboard). También en el dashboard de **Sueña**, que vive en OTRO repo (`MULTIESPUMAS-VISCARRA`). ⚠️ No usar naranja para nada que se pueda confundir con los avisos en ámbar. `tests/test_halloween.js`.
+- **🧙‍♀️ Risa de bruja** (03/10): `halloween-risa.mp3` (el archivo que mandó el dueño, la primera de sus tres risas, 3,5 s,
+  en la raíz de los DOS repos) suena con `new Audio(...).play()` en el PRIMER `touchend`/`click`/`keydown` del día —los
+  navegadores no dejan sonar al abrir— y UNA vez por día por aparato (`hw_risa_dia`, compartida entre pedidos y los dos
+  dashboards: la misma dirección). Solo con el tema. ⚠️ Cambiar el archivo = subir el `?v=` de `hwRisaArchivo`. ⚠️ Un sonido nuevo en el panel NUNCA al cargar ni repetido: el equipo
+  lo abre todo el día, a veces delante de clientes.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)

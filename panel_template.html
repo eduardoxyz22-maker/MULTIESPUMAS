@@ -1348,6 +1348,42 @@ html.tema-halloween .rail .ni.active::before{ background:#ea580c; box-shadow:0 0
    Santos. Los colores de aviso (verde, ámbar, rojo) no cambian. Para otro año no hay que tocar nada. */
 (function(){ try{ if(new Date(Date.now()-4*3600000).getUTCMonth()===9) document.documentElement.classList.add('tema-halloween'); }catch(e){} })();
 </script>
+<script>
+/* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»;
+   la sintetizada le pareció fea y mandó la suya: es `halloween-risa.mp3`, la PRIMERA de las tres risas de su archivo, 3,5 s,
+   cortada por cuadros sin volver a codificar).
+   · Solo con el tema de Halloween prendido (octubre, fecha de Bolivia).
+   · Los navegadores NO dejan sonar nada apenas se abre la página: suena con el PRIMER toque, clic o tecla del día.
+   · UNA vez por día por aparato (`hw_risa_dia` en el almacenamiento del navegador, el mismo para el panel de pedidos y
+     los dashboards: están en la misma dirección). Sin almacenamiento no suena (si no, sonaría con cada F5).
+   · El archivo se baja recién con ese primer toque (no pesa al abrir la página). Si algo falla, no pasa nada. */
+(function(){
+  if(!document.documentElement.classList.contains('tema-halloween')) return;
+  var ARCHIVO='halloween-risa.mp3?v=1';   // ⚠️ si se cambia el archivo, subir el ?v= (si no, los celulares siguen con el viejo)
+  window.hwRisaArchivo=ARCHIVO;
+  var CLAVE='hw_risa_dia', hoy=new Date(Date.now()-4*3600000).toISOString().slice(0,10);
+  try{ if(localStorage.getItem(CLAVE)===hoy) return; }catch(e){ return; }    // ya sonó hoy en este aparato, o no hay dónde anotarlo
+  /* «touchend» (iPhone/iPad, Android), «click» y «keydown» son los gestos con los que todos los navegadores dejan sonar. Si
+     el navegador igual dice que no, se vuelve a probar con el toque siguiente. */
+  var EV=['touchend','click','keydown'], audio=null, hecho=false;
+  function soltar(){ EV.forEach(function(ev){ document.removeEventListener(ev, tocar, true); }); }
+  function sono(){
+    if(hecho) return;
+    hecho=true; soltar();
+    try{ localStorage.setItem(CLAVE, hoy); }catch(e){}
+  }
+  function tocar(){
+    if(hecho) return;
+    try{
+      if(!audio){ audio=new Audio(ARCHIVO); try{ audio.volume=0.8; }catch(e){} }
+      if(!audio.paused) return;            // ya arrancó con otro evento del mismo toque
+      var p=audio.play();
+      if(p && p.then) p.then(sono, function(){}); else sono();
+    }catch(e){ hecho=true; soltar(); }
+  }
+  EV.forEach(function(ev){ document.addEventListener(ev, tocar, true); });
+})();
+</script>
 </head>
 <body>
 <div id="root"></div>

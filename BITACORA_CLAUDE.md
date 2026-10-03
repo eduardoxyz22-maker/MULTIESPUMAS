@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos y en el dashboard — en la rama, SIN publicar
+## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 
 > El dueño (03/10): *«es mes de Halloween, deberíamos tener algo halloweenesco, ideas, opciones?»*. Se le mostraron tres
 > maquetas sobre el panel real (discreta; con murciélagos y cuenta regresiva; todo el panel en morado). Eligió: *«la 1 y sí
@@ -7462,6 +7462,44 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - ⚠️ **Los colores de aviso no cambian** (verde, ámbar, rojo): por eso el acento es morado y no naranja.
 - ⚠️ Los meses cerrados del dashboard (`panel_YYYY_MM.html`) se generan con la misma plantilla: mirados en octubre también
   llevan el tema (depende del día en que se mira, no del mes del panel). Es a propósito.
+- **Sueña** (dueño: *«te faltó el de Sueña»*): vive en OTRO repositorio, `eduardoxyz22-maker/MULTIESPUMAS-VISCARRA` (clon del
+  dashboard de Heaven para la cuenta de Kommo de Viscarra). Mismo bloque, con ajustes porque ahí la marca es TEXTO
+  («MULTI» en blanco sobre la noche, menos espacio entre letras, la 🎃 abajo a la derecha). Su `tests/test_halloween.js` (5).
+  ⚠️ Lo que se haga al dashboard de Heaven por pedido del dueño, preguntarse si va también al de Sueña.
+- **🧙‍♀️ La risa de bruja** (dueño, 03/10: *«¿no se puede añadir un sonido de una bruja riendo al entrar a la página?
+  jajaja»*), en las tres páginas, SIN publicar todavía:
+  · **Los navegadores no dejan sonar nada al abrir la página** (autoplay): suena con el PRIMER toque o tecla. Se arma UN
+    `AudioContext` en el primer `pointerup`/`touchend`/`click`/`keydown` (escuchados en captura sobre `document`) y se le pide
+    `resume()` con cada toque hasta que el navegador lo deja (en el iPhone/iPad cuenta el `touchend`); apenas está `running`,
+    suena una vez y se sueltan los escuchas.
+  · **Una vez por día por aparato**: `hw_risa_dia` en `localStorage` con la fecha de Bolivia. El panel de pedidos y los dos
+    dashboards están en la MISMA dirección (`eduardoxyz22-maker.github.io`), así que es una vez por día entre las tres. Sin
+    almacenamiento no suena (si no, sonaría con cada F5). Solo con `tema-halloween` (octubre).
+  · **El sonido se arma en el navegador** (`window.hwRisa(ctx, t0)`, Web Audio): «je-je-je, ja-ja-ja-ja-ja, jaaaa», cada
+    sílaba un diente de sierra agudo (700→980→520 Hz) con vibrato y aspereza (AM a 38 Hz), formantes anchos de la vocal, un
+    soplido de «j» al empezar y un eco corto generado. Sin archivo de sonido ni nada de afuera: no hay derechos de nadie y
+    no pesa. Volumen 0,4 (pico ~0,67 grabado sin parlantes con `OfflineAudioContext`).
+  · Freepik no sirvió: la cuenta conectada es la gratuita (0 créditos) y los efectos de sonido no están en ese plan.
+  · `tests/test_halloween.js` §4 (+8, 22 en total; contra lo publicado, la sección 4 entera roja): no suena al abrir, el
+    primer toque suena UNA vez aunque se toque dos, recargar el mismo día no, el dashboard ese día tampoco, al día siguiente sí,
+    el 1/11 no, y el sonido grabado dura ~2 s sin saturar. En Sueña, su `tests/test_halloween.js` (+4, 9).
+  · Batería entera con la risa puesta (03/10): 130 suites, 4.914 comprobaciones, 0 rojas.
+  · ⚠️ **El dueño escuchó la sintetizada: *«¡qué risa más fea!»*.** Va a mandar un archivo grabado; el mecanismo (primer toque,
+    una vez por día, solo en octubre) queda igual y se cambia solo el sonido. El archivo va al repo público: tiene que ser de uso
+    libre o grabado por el equipo. NO publicar la sintetizada.
+  · **El archivo del dueño** (03/10, adjuntado en el chat: «EFECTO DE SONIDO Risa BRUJA | witch laugh sound effect», mp3 de
+    9,5 s, 192 kbps estéreo, con tres risas seguidas; parece bajado de un video de efectos de sonido: el dueño lo eligió después
+    del aviso de que el repo es público). Se usa la **PRIMERA risa**, de 0,5 a 3,95 s del original = **`halloween-risa.mp3`**,
+    3,47 s, 81 KB, cortada POR CUADROS sin volver a codificar (sin ffmpeg en la sesión: script de Python que lee las cabeceras
+    MPEG-1 Layer III, saca la etiqueta ID3 y el cuadro «Info» —con otra cantidad de cuadros mentiría la duración— y se queda con
+    los cuadros 19 a 152). El corte del final cae en el silencio después del último «ja».
+  · Se REEMPLAZÓ la sintetizada (`window.hwRisa` ya no existe): ahora `new Audio('halloween-risa.mp3?v=1').play()` con el
+    primer `touchend`/`click`/`keydown` (los tres gestos con los que todos los navegadores dejan sonar), volumen 0,8 donde se
+    puede (en el iPhone/iPad lo manda el botón del aparato). El día se anota recién cuando `play()` arranca; si el navegador
+    dice que no, se prueba con el toque siguiente. El archivo se baja con ese primer toque, no al abrir. `window.hwRisaArchivo`
+    dice cuál es. ⚠️ **Si se cambia el archivo, subir el `?v=`** (si no, los celulares siguen con el viejo en caché).
+  · El mp3 vive en la raíz de los DOS repos (al lado de `pedidos.html` y de los `index.html`/`panel_YYYY_MM.html`, que lo
+    buscan con dirección relativa). Las pruebas copian el mp3 al lado del dashboard armado en la carpeta temporal.
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
