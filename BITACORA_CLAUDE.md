@@ -7516,6 +7516,8 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     (9,6 s, 230 KB, `?v=2`), creado al abrir con `preload='auto'` como en SPADENTAL, y suena con el primer toque de CADA
     apertura, sin `hw_risa_dia`. `test_halloween` 22/22 y 9/9 (Sueña) con las comprobaciones cambiadas (vuelve a sonar al
     recargar; el archivo empieza con `ID3` y dura ~9,5 s). Sin ffmpeg con MP3 en la sesión (el de Playwright no lo trae).
+    **Publicado el 03/10 ~16:10** (MULTIESPUMAS `74bd4ed`, Sueña `654bfef`; Pages en verde en los dos) y **confirmado por
+    el dueño desde el iPad: «ya suena 10/10»**.
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
