@@ -96,7 +96,7 @@ function armarDashboard(){
   chk('1/11: el dashboard como siempre (sin 🎃, sin el fondo de noche)', !r.on && !/🎃/.test(r.calabaza) && !/26, 11, 46/.test(r.fondo) && r.datos, [r.on, r.calabaza]);
 
   // ═══ 4. La risa de bruja (dueño, 03/10: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?») ═══
-  console.log('\n── 4. La risa de bruja: con el primer toque del día, una vez por aparato, solo en octubre ──');
+  console.log('\n── 4. La risa de bruja: con el primer toque de cada apertura, entera, solo en octubre ──');
   /* UN contexto del navegador para todo (el almacenamiento sigue de una página a la otra, como en un celular). Se cuenta
      cada vez que la página le pide al navegador que suene el archivo (`play`). */
   const ctxRisa = await browser.newContext({ viewport:{ width:1300, height:700 }, timezoneId:'UTC' });
@@ -123,21 +123,22 @@ function armarDashboard(){
     return Object.assign({ antes }, r);
   };
   r = await risa(PEDIDOS, '2026-10-03T10:00:00-04:00', 0);
-  chk('3/10, recién abierto: NO suena (los navegadores no dejan sonar sin un toque)', r.antes===0 && r.ctxs===0 && r.dia===null && r.fn==='function', r);
+  chk('3/10, recién abierto: NO suena (los navegadores no dejan sonar sin un toque)', r.antes===0 && r.ctxs===0 && r.fn==='function', r);
   r = await risa(PEDIDOS, '2026-10-03T10:00:00-04:00', 2);
-  chk('…el primer toque la hace sonar UNA vez (aunque toque dos veces), con el archivo del dueño, y anota el día', r.ctxs===1 && r.dia==='2026-10-03' && /^halloween-risa\.mp3\?v=\d+$/.test(r.src), r);
+  chk('…el primer toque la hace sonar UNA vez (aunque toque dos veces), con el archivo del dueño', r.ctxs===1 && /^halloween-risa\.mp3\?v=\d+$/.test(r.src), r);
   r = await risa(PEDIDOS, '2026-10-03T15:00:00-04:00', 2);
-  chk('…recargar el mismo día y tocar: ya no suena (una vez por día)', r.ctxs===0 && r.dia==='2026-10-03', r);
+  chk('…recargar el mismo día y tocar: vuelve a sonar (cada apertura, como en SPADENTAL; sin tope por día, dueño 03/10)', r.ctxs===1 && r.dia===null, r);
   r = await risa(dash, '2026-10-03T16:00:00-04:00', 1);
-  chk('…tampoco en el dashboard ese día (la misma dirección: una vez por día en el aparato)', r.ctxs===0, r);
+  chk('…y en el dashboard ese mismo día también', r.ctxs===1, r);
   r = await risa(PEDIDOS, '2026-10-04T09:00:00-04:00', 1);
-  chk('4/10: vuelve a sonar con el primer toque', r.ctxs===1 && r.dia==='2026-10-04', r);
+  chk('4/10: suena con el primer toque', r.ctxs===1, r);
   r = await risa(PEDIDOS, '2026-11-01T09:00:00-04:00', 2);
-  chk('1/11: no suena (sin el tema, sin risa)', r.ctxs===0 && r.dia==='2026-10-04' && r.fn==='undefined', r);
+  chk('1/11: no suena (sin el tema, sin risa)', r.ctxs===0 && r.fn==='undefined', r);
   r = await risa(dash, '2026-10-05T09:00:00-04:00', 1);
-  chk('el dashboard también la tiene (5/10, primer toque)', r.ctxs===1 && r.dia==='2026-10-05', r);
+  chk('el dashboard también la tiene (5/10, primer toque)', r.ctxs===1, r);
   await ctxRisa.close();
-  /* El sonido: el archivo que mandó el dueño, la primera de sus tres risas. Existe al lado de la página, dura ~3,5 s y se oye. */
+  /* El sonido: el archivo que mandó el dueño ENTERO (dueño, 03/10: «mejor no la recortes, que suene entera»; el recorte por
+     cuadros no sonaba en el iPad). Existe al lado de la página, dura ~9,6 s y se oye. */
   {
     const mp3 = path.resolve('halloween-risa.mp3');
     const existe = fs.existsSync(mp3), kb = existe ? Math.round(fs.statSync(mp3).size/1024) : 0;
@@ -149,8 +150,10 @@ function armarDashboard(){
       return { dur:buf.duration, pk, nan, archivo:window.hwRisaArchivo };
     }, fs.readFileSync(mp3).toString('base64')) : null;
     await page.close();
-    chk('el archivo de la risa está al lado de la página, dura ~3,5 s, se oye y pesa poco', existe && s && s.nan===0 && s.dur>3 && s.dur<4 && s.pk>0.3 && kb<120 && /^halloween-risa\.mp3/.test(s.archivo),
-        { existe, kb, dur:s&&+s.dur.toFixed(2), pico:s&&+s.pk.toFixed(2), archivo:s&&s.archivo });
+    const bytes = existe ? fs.readFileSync(mp3) : Buffer.alloc(0);
+    chk('el archivo de la risa está al lado de la página, es el del dueño entero (ID3 al principio, ~9,6 s), se oye y pesa < 250 KB',
+        existe && s && s.nan===0 && s.dur>9 && s.dur<10.5 && s.pk>0.3 && kb<250 && bytes.slice(0,3).toString()==='ID3' && /^halloween-risa\.mp3\?v=2$/.test(s.archivo),
+        { existe, kb, dur:s&&+s.dur.toFixed(2), pico:s&&+s.pk.toFixed(2), archivo:s&&s.archivo, cabecera:bytes.slice(0,3).toString() });
   }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
