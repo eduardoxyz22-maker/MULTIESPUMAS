@@ -7498,6 +7498,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     puede (en el iPhone/iPad lo manda el botón del aparato). El día se anota recién cuando `play()` arranca; si el navegador
     dice que no, se prueba con el toque siguiente. El archivo se baja con ese primer toque, no al abrir. `window.hwRisaArchivo`
     dice cuál es. ⚠️ **Si se cambia el archivo, subir el `?v=`** (si no, los celulares siguen con el viejo en caché).
+  · **PUBLICADA el 03/10 a las 11:47** (dueño: «publica»): MULTIESPUMAS `529afcb`, Sueña `62e55bf`. Batería entera antes:
+    130 suites, 4.913 bien y 1 roja, que era la PRUEBA (`test_halloween` miraba el día anotado 150 ms después del toque y, con
+    la máquina cargada, el mp3 todavía no había arrancado); se corrigió esperando a que el navegador conteste `play()` y pasó
+    3 de 3 con la batería corriendo al lado.
   · El mp3 vive en la raíz de los DOS repos (al lado de `pedidos.html` y de los `index.html`/`panel_YYYY_MM.html`, que lo
     buscan con dirección relativa). Las pruebas copian el mp3 al lado del dashboard armado en la carpeta temporal.
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09

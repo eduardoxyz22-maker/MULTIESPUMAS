@@ -453,7 +453,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - **🧙‍♀️ Risa de bruja** (03/10): `halloween-risa.mp3` (el archivo que mandó el dueño, la primera de sus tres risas, 3,5 s,
   en la raíz de los DOS repos) suena con `new Audio(...).play()` en el PRIMER `touchend`/`click`/`keydown` del día —los
   navegadores no dejan sonar al abrir— y UNA vez por día por aparato (`hw_risa_dia`, compartida entre pedidos y los dos
-  dashboards: la misma dirección). Solo con el tema. ⚠️ Cambiar el archivo = subir el `?v=` de `hwRisaArchivo`. ⚠️ Un sonido nuevo en el panel NUNCA al cargar ni repetido: el equipo
+  dashboards: la misma dirección). Solo con el tema. ⚠️ Cambiar el archivo = subir el `?v=` de `hwRisaArchivo`. **Publicada 03/10 11:47** (`529afcb`; Sueña `62e55bf`).
+  ⚠️ En una prueba, esperar a que `play()` conteste antes de mirar `hw_risa_dia`: con la batería cargando la máquina tarda. ⚠️ Un sonido nuevo en el panel NUNCA al cargar ni repetido: el equipo
   lo abre todo el día, a veces delante de clientes.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
