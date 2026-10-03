@@ -445,6 +445,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   «desde que abriste la página», la lectura va comprimida y solo con lo cambiado (con el `.gs` 2026-09-30-a). El
   diagnóstico también hace esas dos lecturas y rehace la cuenta de control.
 
+## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»)
+- Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
+  `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:
+  encabezado de noche + 🎃 + telaraña + cupos en naranja + pestaña elegida en morado (pedidos); caja de la marca y menú
+  elegido (dashboard). ⚠️ No usar naranja para nada que se pueda confundir con los avisos en ámbar. `tests/test_halloween.js`.
+
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
 o un **chofer** (`>Nombre` pegado a la nota en `metodoPago`: `Efectivo 500 @… #1004 >Luis

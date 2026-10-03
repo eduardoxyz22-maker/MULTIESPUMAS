@@ -7445,6 +7445,27 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos y en el dashboard — en la rama, SIN publicar
+
+> El dueño (03/10): *«es mes de Halloween, deberíamos tener algo halloweenesco, ideas, opciones?»*. Se le mostraron tres
+> maquetas sobre el panel real (discreta; con murciélagos y cuenta regresiva; todo el panel en morado). Eligió: *«la 1 y sí
+> también al dashboard»*.
+
+- **Solo apariencia** (CSS + 1 línea de script en el `<head>`): no toca datos, plata, cupos ni el servidor.
+- **Se prende sola en octubre y se apaga sola el 1/11**, con la fecha de Bolivia (`Date.now()−4 h`, `getUTCMonth()===9` →
+  clase `tema-halloween` en `<html>`), antes de Todos Santos. Vuelve sola cada octubre: no hay que acordarse de nada.
+- **Pedidos** (`pedidos.html`): `--grad-header` de noche (morado, negro y calabaza; sigue moviéndose como siempre), 🎃 antes
+  de MULTIESPUMAS (`.logo-h::before`), telaraña en SVG dentro de la página en la esquina del encabezado (`.header::after`,
+  más chica en el celular, `pointer-events:none`), el número de cupos en naranja y la pestaña elegida en morado.
+- **Dashboard** (`panel_template.html`, el bot lo regenera al pushear): la caja de la marca de noche con el logo en blanco,
+  🎃 y telaraña, y el ítem elegido del menú en morado con la rayita naranja. Igual en tema claro y oscuro.
+- ⚠️ **Los colores de aviso no cambian** (verde, ámbar, rojo): por eso el acento es morado y no naranja.
+- ⚠️ Los meses cerrados del dashboard (`panel_YYYY_MM.html`) se generan con la misma plantilla: mirados en octubre también
+  llevan el tema (depende del día en que se mira, no del mes del panel). Es a propósito.
+- `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
+  23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
+  y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
+
 ## 4hl. 02/10, noche: ✂️ la poda de los pedidos a fábrica ya recibidos — la celda del stock deja de crecer — PUBLICADA 02/10 17:26 (`5caebd6`)
 
 > El dueño (02/10): *«6.- La celda del stock va 45 % de las 50.000 letras que aguanta Google: podar lo ya recibido antes de que

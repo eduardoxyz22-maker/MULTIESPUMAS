@@ -1328,7 +1328,26 @@ html[data-theme="dark"] .meter,html[data-theme="dark"] .mbar{box-shadow:inset 0 
 #hv-toast.ok{background:var(--green-ink)}
 #hv-toast.err{background:var(--red-ink)}
 
+/* 🎃 Tema de Halloween (octubre): ver el script de abajo. Solo la caja de la marca y el ítem elegido del menú. */
+html.tema-halloween .rail .brand{ position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#1a0b2e,#3b0d5c 45%,#12051f 72%,#7c2d12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 6px 18px rgba(26,11,46,.25); }
+html.tema-halloween .rail .brand img.logo-img{ filter:brightness(0) invert(1) drop-shadow(0 1px 4px rgba(0,0,0,.55)); opacity:1; }
+html.tema-halloween .rail .brand .s{ color:#fdba74; }
+html.tema-halloween .rail .brand::before{ content:'🎃'; position:absolute; left:14px; bottom:10px; font-size:1.1rem; line-height:1; pointer-events:none; }
+html.tema-halloween .rail .brand::after{ content:''; position:absolute; right:0; top:0; width:110px; height:113px; pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27165%27%20viewBox%3D%270%200%20160%20165%27%3E%3Cpath%20d%3D%27M160%2C0L160%2C165M160%2C0L98%2C153M160%2C0L43%2C117M160%2C0L8%2C64M160%2C0L-5%2C0M160%2C28Q155%2C25%20150%2C26M150%2C26Q146%2C21%20140%2C20M140%2C20Q139%2C14%20134%2C11M134%2C11Q135%2C5%20132%2C0M160%2C56Q150%2C49%20139%2C52M139%2C52Q132%2C42%20120%2C40M120%2C40Q118%2C28%20108%2C22M108%2C22Q111%2C10%20104%2C0M160%2C86Q145%2C76%20128%2C80M128%2C80Q117%2C65%2099%2C61M99%2C61Q96%2C43%2081%2C34M81%2C34Q84%2C15%2074%2C0M160%2C118Q140%2C104%20116%2C109M116%2C109Q101%2C89%2077%2C83M77%2C83Q72%2C59%2051%2C46M51%2C46Q56%2C21%2042%2C0M160%2C152Q134%2C134%20103%2C141M103%2C141Q84%2C114%2053%2C107M53%2C107Q47%2C76%2020%2C59M20%2C59Q26%2C27%208%2C0%27%20fill%3D%27none%27%20stroke%3D%27%23ffffff%27%20stroke-opacity%3D%270.38%27%20stroke-width%3D%271.1%27%2F%3E%3Cline%20x1%3D%27118%27%20y1%3D%270%27%20x2%3D%27118%27%20y2%3D%2758%27%20stroke%3D%27%23ffffff%27%20stroke-opacity%3D%270.38%27%2F%3E%3Ccircle%20cx%3D%27118%27%20cy%3D%2762%27%20r%3D%274.5%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.5800000000000001%27%2F%3E%3C%2Fsvg%3E") no-repeat right top; background-size:110px 113px; opacity:.85; }
+html.tema-halloween .rail .brand .s{ padding-left:26px; }
+html.tema-halloween .rail .ni.active{ background:linear-gradient(180deg,#5b21b6,#3b0d5c); color:#fff; box-shadow:0 8px 22px rgba(59,13,92,.34), inset 0 1px 0 rgba(255,255,255,.25); }
+html.tema-halloween .rail .ni.active::before{ background:#ea580c; box-shadow:0 0 10px rgba(234,88,12,.65); }
+
 </style>
+<script>
+/* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
+   ni el servidor. Se prende SOLO en octubre, con la fecha de Bolivia (UTC−4 fijo), y se apaga sola el 1/11, antes de Todos
+   Santos. Los colores de aviso (verde, ámbar, rojo) no cambian. Para otro año no hay que tocar nada. */
+(function(){ try{ if(new Date(Date.now()-4*3600000).getUTCMonth()===9) document.documentElement.classList.add('tema-halloween'); }catch(e){} })();
+</script>
 </head>
 <body>
 <div id="root"></div>
