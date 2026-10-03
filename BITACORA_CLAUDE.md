@@ -7504,6 +7504,18 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     3 de 3 con la batería corriendo al lado.
   · El mp3 vive en la raíz de los DOS repos (al lado de `pedidos.html` y de los `index.html`/`panel_YYYY_MM.html`, que lo
     buscan con dirección relativa). Las pruebas copian el mp3 al lado del dashboard armado en la carpeta temporal.
+  · 🚨 **«No suena nada» (dueño, 03/10 a la tarde, desde el iPad: *«actualizo y actualizo y no suena nada… esa misma risa ya
+    la publiqué en otros paneles y suena 10/10»*).** Se comparó con su panel de SPADENTAL (`sonidos/risa-bruja.mp3`, mismos
+    bytes que el archivo que me mandó, 230 KB, reproducido ENTERO al entrar con la clave, `preload='auto'`). La diferencia
+    estaba en MI archivo: el recorte por cuadros empezaba en el cuadro 20 del original, cuyo `main_data_begin` es 367 —el
+    MP3 guarda parte de cada cuadro en los anteriores (depósito de bits)— y esos cuadros ya no estaban. Chromium (las
+    pruebas, la compu) lo perdona; **Safari del iPad lo rechaza** y `play()` falla callado. Los cuadros 0-14 del original
+    sí arrancan limpios (`main_data_begin`=0): un recorte válido tenía que ir desde el principio. Además, la regla de «una vez
+    por día» lo dejaba sin poder probarla.
+    **Arreglo** (dueño: *«mejor no la recortes, que suene entera»*): `halloween-risa.mp3` pasa a ser el archivo ENTERO tal cual
+    (9,6 s, 230 KB, `?v=2`), creado al abrir con `preload='auto'` como en SPADENTAL, y suena con el primer toque de CADA
+    apertura, sin `hw_risa_dia`. `test_halloween` 22/22 y 9/9 (Sueña) con las comprobaciones cambiadas (vuelve a sonar al
+    recargar; el archivo empieza con `ID3` y dura ~9,5 s). Sin ffmpeg con MP3 en la sesión (el de Playwright no lo trae).
 - `tests/test_halloween.js` (14; contra la página y la plantilla de antes, 10 rojas): prendido el 3/10, apagado el 30/09
   23:59 y el 1/11 00:01 de Bolivia con el aparato en UTC, prendido el 31/10 23:59 y en octubre de 2027, el dashboard en claro
   y oscuro. Suites del encabezado y anchos en verde (humo, celular, carga, onclicks, proyección, marcas, saldo, cupos).
