@@ -7454,6 +7454,15 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   recogidas y líneas 🏭, avisar «sin pedido» / «faltan» / «reclamar a fábrica», historial compacto de diferencias por corte, y
   opcionalmente medir el tiempo real de fábrica con eso. Diseño completo, riesgos y preguntas en **`RESPUESTA_CLAUDE.md` §29**.
   **El dueño lo consulta con Codex antes de decidir.** Nada en la rama todavía.
+- **05/10, la respuesta: el PDF «Instrucción para Claude sobre cierre diario y stock»** (5 páginas; copia del texto en el scratchpad,
+  no en el repo). Pide: cierre de entregas a las 16:30 (lista de hoy con casillas propuestas, parciales por línea, registro de quién
+  y cuándo, revalidar antes de confirmar), conciliación por depósito con cortes comparables, `dif>0` = «entrada neta sin explicar»
+  (no «llegó»), nada de cerrar por fecha ni repartir por antigüedad, asignación automática solo con evidencia verificable, ids
+  derivados del corte (dos equipos → un efecto), anulación persistente que gane al fusionar, plazos de fábrica solo con
+  confirmadas, y cuatro etapas. **Diseño adaptado en `RESPUESTA_CLAUDE.md` §30**, con lo que el panel puede cumplir tal cual y lo
+  que no (no hay estado «cancelado»: se borra; no hay transacción entre pedido y stock: dos escrituras idempotentes con `opId`;
+  el registro de confirmación va ADENTRO de cada producto, `x.eF/eT/eQ/eU`, porque las columnas de la planilla son fijas).
+  Siete decisiones quedan para el dueño (§30.12). Sin implementar.
 
 ## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 
