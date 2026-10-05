@@ -182,8 +182,10 @@ const BASE = `
       var items=[{cod:'CH1201', desc:'TITANIO ICE 2.5PLZ 160X190CM', medida:'160x190', cant:7, cat:true, k:K}];
       EXIST_IMP={ fecha:todayStr(), sinFecha:false, almacen:'PRODUCTOS TERMINADOS FAB.', items:items, total:7, repetidos:0, malos:0, colCant:'G', solo0:true, cods:{CH1201:K}, esLog:true, conocido:true, hora:'16:00:00' };
       renderImportExist();
-      var chkCerrar=document.getElementById('exist-cerrar-ped');
-      var teniaCheck=!!chkCerrar && chkCerrar.checked;
+      /* (05/10, §4hn) Ya no hay «darlos por llegados» por fecha: el control del corte ve +5 sin explicar y SUGIERE la
+         recogida, destildada. Logística la tilda y recién ahí se cierra. */
+      var sug=document.querySelector('.exist-sug[data-q="rc1"]');
+      var teniaCheck=!!sug && !sug.checked; if(sug) sug.checked=true;
       confirmarImportExist();
       var q=STOCK.p[0];
       var desp=stockData().lista.filter(function(o){ return o.k===K; })[0];
@@ -191,7 +193,7 @@ const BASE = `
                despues:{ deposito:desp.deposito, enOtros:desp.enOtros, enCamino:desp.enCamino, hay:desp.deposito+desp.enOtros+desp.enCamino } };
     }, BASE);
     chk('antes: 2 acá + 5 libres en Moreno (10 − 5 en camino) + 5 en camino = 12 reales', r.antes.deposito===2 && r.antes.enOtros===5 && r.antes.enCamino===5, J(r.antes));
-    chk('la ventana ofrece «darlos por llegados» tildado y al confirmar cierra la recogida', r.teniaCheck===true && !!r.q.r && r.q.enConteo===true && r.q.ru===5, J(r.q));
+    chk('la ventana SUGIERE la recogida (destildada, §4hn) y al tildarla y confirmar la cierra', r.teniaCheck===true && !!r.q.r && r.q.enConteo===true && r.q.ru===5, J(r.q));
     chk('⚠️ …y Moreno queda en 5: 7 acá + 5 allá = 12 (antes seguía en 10 y el panel veía 17)', r.moreno===5 && r.despues.deposito===7 && r.despues.enOtros===5 && r.despues.enCamino===0 && r.despues.hay===12, J(r.despues)+' · moreno '+r.moreno);
     await page.close();
   }

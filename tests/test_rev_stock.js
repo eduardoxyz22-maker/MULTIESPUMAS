@@ -222,7 +222,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       var cb=document.getElementById('exist-inc'), marcada=!!(cb&&cb.checked);
       var texto=((document.getElementById('modal-box')||{}).textContent||'').replace(/\s+/g,' ');
       confirmarImportExist(); stockOlvidarIndice();
-      return { marcada:marcada, deposito:stockDeposito(K), inc:!!STOCK.c.inc, dice:(texto.match(/Si no estás seguro[^.]*\./)||[''])[0] };
+      return { marcada:marcada, deposito:stockDeposito(K), inc:!!STOCK.c.inc, dice:(texto.match(/no trae la hora[^.]*\./)||[''])[0] };   // (05/10, §4hn) el texto nuevo: la casilla es la convención
     };
     return { sinHora:subir(''), manana:subir('08:59:57'), tarde:subir('15:10:00') };
   });

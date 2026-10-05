@@ -516,9 +516,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   /* §4dc: con la ventana de 15 días (no 28), el mismo PILLOW (2 vendidos, 30 en depósito)
      da menos meses de cobertura — el ritmo crudo se mide sobre una ventana más corta, así
      que «2 ventas» pesan más por día. 30÷(2/15)÷30 = 7,5 meses, no ~14. Sigue siendo,
-     bien de sobra: no cambia que sea plata parada, cambia CUÁNTA. */
-  chk('⚠️ el PILLOW (30 para ~7,5 meses) y el TITANIO (6 sin ventas) son plata parada', r.n===2 && r.pill==='sobra' && r.tit==='sobra', r.n+' · '+r.pill+' · '+r.tit);
-  chk('…dice para cuántos meses', Math.abs(r.meses-7.5)<0.1, stockNumTxt(r.meses));
+     bien de sobra: no cambia que sea plata parada, cambia CUÁNTA.
+     (05/10, Codex R5) La línea 🏭 PILLOW de la §9 (`f3`: llegó hace 7 días, ✔ hay, sin entregar) ya está en
+     el conteo de 30 y queda RESERVADA para ese pedido (`prodUnidEnConteo`): lo parado son 29, 29÷(2/15)÷30 = 7,25. */
+  chk('⚠️ el PILLOW (30, 1 reservado para una línea 🏭 que ya llegó: ~7,3 meses) y el TITANIO (6 sin ventas) son plata parada', r.n===2 && r.pill==='sobra' && r.tit==='sobra', r.n+' · '+r.pill+' · '+r.tit);
+  chk('…dice para cuántos meses (29 parados, no 30)', Math.abs(r.meses-7.25)<0.1, stockNumTxt(r.meses));
   chk('…van al final de la lista, no molestan arriba', /PILLOW|TITANIO/.test(r.ultimo), r.ultimo);
   /* §4cp cambió el texto a propósito: «sin ENTREGAS en N días», no «sin ventas». Con el
      Excel del almacén entero cargado, casi todo figura sin movimiento porque las tiendas
