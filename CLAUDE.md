@@ -445,7 +445,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   «desde que abriste la página», la lectura va comprimida y solo con lo cambiado (con el `.gs` 2026-09-30-a). El
   diagnóstico también hace esas dos lecturas y rehace la cuenta de control.
 
-## ✅ Cierre de entregas y 🧮 control del corte (§4hn, 05/10 — EN LA RAMA, sin publicar; diseño en `RESPUESTA_CLAUDE.md` §30)
+## ✅ Cierre de entregas y 🧮 control del corte (§4hn, 05/10 — PUBLICADA 05/10 17:01 de Bolivia, `211705f`, con la revisión de Codex y la regla del dueño para los destildados; el `.gs` sigue `2026-10-02-a`; diseño en `RESPUESTA_CLAUDE.md` §30)
 El dueño (05/10): *«logística no marca que llegó de fábrica, solo lo que se pidió, y cada día solo suben las existencias de
 los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hechas la 1 y la 2.
 - **✅ Cierre de entregas** (etapa 1): botón en Administración + cartel desde las **16:30 de Bolivia** (`CIERRE_ENT_HORA`).

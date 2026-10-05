@@ -7592,7 +7592,13 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     conteo y queda reservada (29 parados y no 30 → 7,25 meses, no 7,5); sola, 106/106 después del ajuste. `test_stock_detalle`
     «sin resumen», como siempre.**
   · **El límite de autorización de Codex, respetado**: se pusheó SOLO a la rama `claude/pedidos-fecha-entrega-bgt0em` (lo de
-    siempre con el dueño); NADA en `main`, nada desplegado, ningún dato real tocado. Publicar sigue esperando el «publica».
+    siempre con el dueño); NADA en `main` hasta el «publica» del dueño.
+  · **PUBLICADA el 05/10 a las 17:01 de Bolivia** (`211705f`: merge `--no-ff` de la rama en `main` desde una rama local `pub`,
+    como las publicaciones anteriores; página sola, el `.gs` sigue `2026-10-02-a`), con el «publica» del dueño después de su
+    decisión sobre los destildados (`cf4b505`). Se pusheó a las 21:01 UTC, justo antes del cron de las 21:00 del dashboard y sin
+    ningún workflow corriendo (regla de oro: no pushear a `main` con el workflow del panel en marcha). Verificado por git que
+    `main` trae `cierreEntSincronizar`, `fusLapidas` y `prodUnidEnConteo` y no `cierreNoSalio`; desde esta sesión el proxy no deja
+    leer `github.io`, así que el deploy de Pages se mira en Actions (workflow `273388817`). Todos F5.
 
 ## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 
