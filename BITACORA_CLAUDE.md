@@ -7465,7 +7465,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   escribir adelante con el cursor en el medio no lo manda al final; borrar por el enlace y vaciando el campo; cerrar y volver a
   abrir conserva lo buscado; iPad parado (820 px). Contra `64bcb37` (la publicada): 13 verdes / **9 rojas** (el campo a 1.096 y
   1.428 px, los cuadros no se esconden, el cursor saltaba al final, el campo se perdía al reabrir).
-- Batería entera y publicación: ver el final de esta sección (se completa al correrla).
+- **Batería entera con el cambio (`56dc52d`): 134 suites (las 133 de §4ho + esta), 5.038 comprobaciones, 0 rojas**
+  (`test_stock_detalle` sin resumen, como siempre; `test_stock` 106, `test_existencias` 54 y `test_stock_buscador` 22 en verde).
+- En la rama `claude/pedidos-fecha-entrega-bgt0em`, **sin publicar**: espera el «publica» del dueño. Al publicar, todos F5
+  (la página vieja sigue con el campo abajo; no hay nada del servidor en esto).
 
 ## 4ho. 05/10: Catálogo — COLCHON SMART 140x190 (CH2522) y COLCHON SUEÑA LITE 105x190 (CH2531); el SMART es Sueña
 El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»): CH2521 SMART 105*190, CH2522 SMART 140*190, SMART
