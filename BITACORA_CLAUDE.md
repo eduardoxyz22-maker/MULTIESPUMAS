@@ -7445,6 +7445,16 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hn. 05/10: 📥 PROPUESTA (sin implementar) — el control del corte: las llegadas de fábrica se detectan con el Excel
+- El dueño pidió «qué otras mejoras» (05/10) y eligió mirar la 2: comparar lo que el panel esperaba con el Excel de existencias.
+  Su dato clave: *«logística no marca que llegó de fábrica, solo lo que se pidió, y cada día solo suben las existencias de los
+  almacenes»*. Hoy el panel cierra los pedidos a fábrica **por fecha** al subir el Excel (`existPedidosVencidos`, casilla «Darlos por
+  llegados» marcada): si llegó antes, cuenta dos veces (`enCamino` + el Excel); si no llegó, lo saca de «en camino» y lo vuelve a
+  pedir. La propuesta: cerrar **por unidades** (`dif = Excel − (previo + entradas − salidas)`), casar contra pedidos a fábrica,
+  recogidas y líneas 🏭, avisar «sin pedido» / «faltan» / «reclamar a fábrica», historial compacto de diferencias por corte, y
+  opcionalmente medir el tiempo real de fábrica con eso. Diseño completo, riesgos y preguntas en **`RESPUESTA_CLAUDE.md` §29**.
+  **El dueño lo consulta con Codex antes de decidir.** Nada en la rama todavía.
+
 ## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 
 > El dueño (03/10): *«es mes de Halloween, deberíamos tener algo halloweenesco, ideas, opciones?»*. Se le mostraron tres
