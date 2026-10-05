@@ -445,6 +445,33 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   «desde que abriste la página», la lectura va comprimida y solo con lo cambiado (con el `.gs` 2026-09-30-a). El
   diagnóstico también hace esas dos lecturas y rehace la cuenta de control.
 
+## ✅ Cierre de entregas y 🧮 control del corte (§4hn, 05/10 — EN LA RAMA, sin publicar; diseño en `RESPUESTA_CLAUDE.md` §30)
+El dueño (05/10): *«logística no marca que llegó de fábrica, solo lo que se pidió, y cada día solo suben las existencias de
+los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hechas la 1 y la 2.
+- **✅ Cierre de entregas** (etapa 1): botón en Administración + cartel desde las **16:30 de Bolivia** (`CIERRE_ENT_HORA`).
+  Lista de hoy (`cierreEntEntra`: sin sistema, retiros, borradores de Kommo ni tienda; ATC y RPT sí) **tildada como
+  propuesta**; atrasados (14 días) aparte y **destildados**, con «¿qué día se entregó?». Abrir no escribe. Confirmar
+  **relee la planilla** (`refrescarEstadoYa`) y saltea borrados, reprogramados y ya marcados, diciéndolo. Guarda
+  `p.entregado` + **`x.eF/eT/eQ` adentro de cada producto** (las columnas de la planilla son fijas; un panel viejo los ignora).
+  «Quién cierra» = `me_cierre_quien` por aparato. **Sin parciales por línea** (dueño: no pasa). `tests/test_cierre_entregas.js`.
+- **🧮 Control del corte** (etapa 2): al subir el Excel, `stockConciliar` compara **esperado = previo + llegadas anotadas −
+  salidas de la ventana** (`stockVentanaCorte`: UNA ventana; el día del corte entra solo con la casilla «ya incluye las
+  entregas») con el archivo. **Nada se cierra por fecha** (la casilla «Darlos por llegados» se fue; `existPedidosVencidos` es
+  solo informativo). `dif>0` = «entrada sin explicar» → queda como **detección** (`STOCK.det`) y se **sugiere** contra los
+  pedidos pendientes, **destildada**; tildar crea la recepción `x:<detección>|<pedido>` (`se:1`, `enConteo`: no mide plazos).
+  `dif<0` = «salida o ajuste sin explicar» → se puede anotar como salida sin pedido (`STOCK.sm`; también «📤 Salió sin
+  pedido» en la pantalla de stock). Líneas 🏭: su llegada se sugiere sellar (`prodR`), su entrega explica la baja.
+  ⚠️ **Ids derivados del corte** (`existCorteId` = almacén|fecha|hora|huella): dos equipos con el mismo archivo → la misma
+  recepción (3 de 10 dos veces = 3/7). ⚠️ **Deshacer = lápida `an`, nunca borrar** (la junta por id revive lo borrado):
+  `stockNormalizarRecepciones`, `fusRecs` y la poda la respetan. El mismo corte corregido anula lo que cerró la versión
+  anterior y lo vuelve a sugerir (`mismoCorte`). `o.detectado` → **`stockEnCaminoSeguro(o)`** en `libre`, `stockCuantoPedir`,
+  `stockMesesSobra`, `pedir`: lo «en camino» que una detección sin asignar ya podría ser no se cuenta como seguro. `o.reclamar`
+  → «🚚 Ya pedido · ⚠️ reclamar». Un campo nuevo de `STOCK` (`sm`, `det`, `v`, `h[].d/hu`) ya entra en `stockFusionar`,
+  `leerStock` y `filaStock` (tope 60 días). `tests/test_control_corte.js` (32); `test_existencias` §6, `test_rev_stock` y
+  `test_adm_alta` §2 cambiaron a conciencia (esperaban el cierre por fecha).
+- Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
+  patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
+
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:

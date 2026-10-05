@@ -2563,6 +2563,35 @@ Cada etapa: batería entera en verde, demo con capturas para el dueño, bitácor
 **Tamaño**: etapas 1 y 2, mediano cada una; 3, grande (pruebas con el servidor real); 4, chico. Todo en `pedidos.html` + pruebas;
 sin `.gs` nuevo.
 
+### 30.13 · Las respuestas del dueño (05/10) y lo HECHO: etapas 1 y 2, en la rama, sin publicar
+Respuestas a 30.12: (1) el Excel de fábrica, *«a veces antes, a veces después»* del camión → la casilla «ya incluye las entregas»
+sigue siendo la convención, y sin hora en el archivo se pide explícita; (2) *«solo saldos»* → el caso 0→5→0 queda ciego y se dice;
+(3) *«las reparadas no figuran en los saldos: no ingresan al almacén»* → las ATC no son causa de nada; (4) sin parte de producción
+ni traslado → Moreno/Banzer informativo; (5) salidas fuera del panel: *«también para anotarlas»* → botón; (6) revisa logística;
+(7) parciales: *«no; solo los grandes de Eduardo, y no los cargo al panel»* → sin parciales por línea.
+
+**Etapa 1** (`0e4fc75`): tal cual 30.2, sin parciales. `tests/test_cierre_entregas.js` (23): quién entra y quién no; el cartel
+desde las 16:30; abrir no escribe; destildar y confirmar; sin nombre no confirma; revalidación (reprogramado, borrado, ya marcado
+por otro: se saltean y se dice); repetir muestra lo que falta; atrasado con su día; la ATC en devolución se cierra; sin señal queda
+en la cola durable; la ficha dice quién y cuándo.
+
+**Etapa 2** (`04acca8`): 30.3 entero más lo que 30.4-30.6 necesitaban para que la vista previa pudiera cerrar algo sin cerrar por
+fecha: **detecciones** (`STOCK.det`: toda entrada sin explicar queda anotada aunque no se asigne; `u` sin asignar se recalcula de
+las recepciones vivas que la nombran), **ids derivados** (`x:<detección>|<pedido>`; dos equipos → una recepción, probado con
+`stockFusionar` en los dos sentidos), **lápida `an`** (`stockAnularRecepcion`, «↩️ no había llegado» en el historial; gana al
+juntar), **el mismo corte corregido** (anula lo que cerró la versión anterior y lo vuelve a sugerir), **salidas anotadas**
+(`STOCK.sm`, `pre:1` cuando ya está adentro del Excel), **`stockEnCaminoSeguro`** (30.8) y **`o.reclamar`**. Lo cerrado desde la
+vista previa lleva `enConteo` y no mide plazos (30.7, opción B). `tests/test_control_corte.js` (32). Tres pruebas viejas que
+esperaban el cierre por fecha cambiaron a conciencia (`test_existencias` §6, `test_rev_stock`, `test_adm_alta` §2).
+
+**Lo que Codex puede revisar con dientes**: (a) la ventana con la casilla (§1 de la prueba: la tarde con la casilla cuadra; sin
+la casilla «faltarían 2»); (b) que ninguna recepción nazca sin tilde; (c) la junta: dos equipos, el mismo archivo, 3 de 10 → 3/7;
+(d) la lápida en los dos sentidos de la junta; (e) 🏭 llega (+2 sugerido sellar) y sale (−2 explicado); (f) el corte corregido.
+
+**Lo que queda (etapas 3 y 4)**: la asignación automática con evidencia fuerte (hoy todo es «media»: sugerido y tildable), el
+intervalo de plazos estimados por planilla, «el que siempre falta» con `h[].d`, la conciliación de Moreno, y `STOCK_V2_DESDE`
+para marcar lo que una página vieja (sin F5) cierre por fecha mientras conviva con la nueva.
+
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
 
 Me pediste revisar lo que hizo. En lo central está bien: la fila queda guardada en el dispositivo ANTES de mandarla
