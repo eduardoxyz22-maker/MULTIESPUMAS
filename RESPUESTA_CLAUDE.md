@@ -2600,7 +2600,7 @@ rama, como siempre; publicar en `main` espera tu «publica».
 
 | # | Hallazgo de Codex | Qué cambió | Dónde se prueba |
 |---|---|---|---|
-| 1 | La ventana daba por salido lo marcado ✅ aunque el Excel fuera de antes de la entrega; y lo destildado en el cierre seguía contando como salido por la fecha | El día del corte lo decide SOLO la casilla «ya incluye las entregas» (`stockSalioVentana`). Lo destildado en el cierre, de hoy y atrasado, queda anotado adentro de cada producto como «no salió» (`x.eX` = día del cierre) y deja de ser salida hasta que se confirme o se reprograme (`cierreNoSalio`) | R1, R2, R10; `test_cierre_entregas` §2-§3 |
+| 1 | La ventana daba por salido lo marcado ✅ aunque el Excel fuera de antes de la entrega; y lo destildado en el cierre seguía contando como salido por la fecha | El día del corte lo decide SOLO la casilla «ya incluye las entregas» (`stockSalioVentana`). La segunda mitad (lo destildado como «no salió») se hizo y **el dueño la sacó el mismo día**: *«un pedido que queda como pasado y no fue tildado, logística lo entregó; lo que no entregan lo reprograman»*. Queda la convención de siempre: fecha pasada sin ✅ = salió; el cierre guarda solo lo tildado | R1, R2 (con la regla del dueño), R10; `test_cierre_entregas` §2-§3 |
 | 2 | Una línea 🏭 recibida en parte se sellaba entera | `x.prodU` (llegadas) y `x.prodC` (qué cortes las anotaron); «anotar 3 llegadas, faltan 7»; el sello (`prodR`) recién al completarse; la ficha y el cuadrito dicen «llegaron 3 de 10, faltan 7»; el mismo corte repetido no suma | R3 |
 | 3 | El stock y los pedidos se guardaban por separado y el aviso decía ✅ aunque uno no hubiera entrado | Se esperan las dos partes; el aviso dice «guardado N de M» y «pendiente de sincronizar» o «rechazado»; lo que no entró queda en la cola durable y converge sin duplicar (los ids llevan el corte) | R4 (los dos órdenes, con `flushPending`) |
 | 4 | `enProduccion(x)` excluía de las salidas también a lo ya sellado | `enProduccionPendiente(x)` = en producción y sin sello; una línea 🏭 sellada es un colchón más. Y lo llegado que ya está en el conteo se RESERVA para ese pedido y sale como cualquier colchón al entregarse (`prodUnidEnConteo`): antes el depósito quedaba inflado hasta el Excel siguiente | R5 (sellada desde el Excel, pendiente, sellada a mano); `test_control_corte` §5 |
@@ -2621,9 +2621,9 @@ del arreglo 4: su fixture tiene una línea 🏭 que llegó hace 7 días y sigue 
 `stockFusionar` en los dos sentidos y en modo «sin base», no con dos Chromium contra el `.gs`). (b) Las entradas anotadas a mano
 (`STOCK.e`) siguen con la regla de siempre al confirmar un corte de fábrica: se dan por incluidas en ese Excel (`STOCK.e=[]`), aunque
 se hayan anotado después de la hora del corte y antes de subirlo; la ventana del control sí las mira por hora, pero el depósito
-de la pantalla no. Cambiarlo toca `c.t` (§4fz-b, la junta de fotos) y no lo hice en esta vuelta. (c) El cierre anota «no salió»
-también a los atrasados que quedan destildados: es lo que pediste en R2, y cambia una convención (fecha pasada = salió) para los
-pedidos que un cierre tocó. Si logística prefiere que los atrasados sigan como antes, es una línea (`cierreEntPlan`).
+de la pantalla no. Cambiarlo toca `c.t` (§4fz-b, la junta de fotos) y no lo hice en esta vuelta. (c) Lo destildado en el cierre no lleva
+ninguna marca: el dueño decidió «como antes» (fecha pasada sin ✅ = entregado; lo que no sale se reprograma), así que R2 se
+prueba con esa regla y no con la que pedía el informe.
 
 **Para publicar**: tu «publica». Como siempre, la página sola; todos F5 después. Una página sin F5 sigue cerrando por fecha, y
 ahora la vista previa de la nueva lo avisa y deja deshacerlo.

@@ -17778,9 +17778,9 @@ function stockSalio(p,x){
   if(p.entregado || esVentaTienda(p)) return true;
   // (26/09) Lo que hay que ir a BUSCAR no salió solo por la fecha; lo de Banzer («✔», o la marca de antes «📥 Banzer») sí.
   if(x && (esRecoger(x)||x.chk==='no'||enProduccionPendiente(x))) return false;
-  /* ✅ (05/10, Codex H1) Si el cierre de entregas de ese día lo dejó SIN confirmar (`eX`), no salió: la fecha pasada
-     ya no lo prueba. Sin cierre, sigue la convención de siempre (fecha pasada = salió). */
-  if(cierreNoSalio(p)) return false;
+  /* (05/10, decisión del dueño) Un pedido con fecha pasada y sin ✅ SALIÓ: «logística lo entregó; lo que no entregan lo
+     reprograman». El cierre de entregas no le escribe nada a lo destildado: la marca «no salió» (`eX`) que pedía Codex en
+     R2 se hizo y se sacó el mismo día. No volver a ponerla sin que el dueño lo pida. */
   return !!p.fecha && p.fecha<todayStr();
 }
 /* 🚚 (26/09) Cuántas unidades de una línea salen de ACÁ (el depósito de fábrica): todo, menos lo que
@@ -21498,9 +21498,8 @@ function stockSalioVentana(p, x, v){
   if(!enProduccionPendiente(x) && (esRecoger(x) || x.chk==='no')) return false;   // una línea 🏭 vive con «✗ no hay» hasta que llega: su salida cuenta igual
   if(esVentaTienda(p)) return true;                       // la venta de tienda sale el día que se cargó
   /* ⚠️ (05/10, Codex H1) El DÍA DEL CORTE lo decide la casilla «ya incluye las entregas», no la marca ✅: una entrega
-     confirmada a las 15:00 no estaba en el Excel de las 09:00 aunque figure entregada. Y un pedido que el cierre dejó
-     sin confirmar (`eX`) no salió, tenga la fecha que tenga. */
-  if(cierreNoSalio(p)) return false;
+     confirmada a las 15:00 no estaba en el Excel de las 09:00 aunque figure entregada. Lo destildado en el cierre no lleva
+     ninguna marca (dueño, 05/10: fecha pasada sin ✅ = salió; lo que no sale se reprograma). */
   if(f===v.hasta) return v.incluyeHasta;
   if(p.entregado) return true;
   return true;                                             // fecha pasada dentro de la ventana y sin cierre que diga lo contrario: salió (convención de siempre)
@@ -22987,7 +22986,7 @@ function renderCierreEntregas(){
     '<div class="modal-b">'+
     '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px">Los de hoy vienen <b>tildados como propuesta</b>: destildá los que no salieron o el cliente no estaba, y tocá Confirmar. '+
       'Abrir esta lista no cambia nada. Antes de confirmar el panel <b>relee la planilla</b>: lo que otro equipo reprogramó, borró o ya marcó se saltea y se avisa. '+
-      'Los destildados quedan anotados como «no salió»: siguen pendientes, el stock no los descuenta y se pueden reprogramar.</p>'+
+      'Los destildados siguen pendientes: si no salieron, reprogramalos (un pedido con la fecha pasada y sin tildar se da por entregado).</p>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><label class="lb" for="cie-ent-quien" style="margin:0">¿Quién cierra?</label>'+
       '<input id="cie-ent-quien" type="text" value="'+esc(cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
     '<div style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
@@ -23006,39 +23005,29 @@ function cierreEntBotonTxt(){ var n=cierreEntTildados().length; return n ? ('✅
 function cierreEntToggle(id, on){ CIERRE_ENT_SEL[String(id)]=!!on; var b=document.getElementById('cie-ent-confirmar'); if(b) b.textContent=cierreEntBotonTxt(); }
 function cierreEntDia(id, v){ if(/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))) CIERRE_ENT_DIA[String(id)]=v; }
 /* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
-/* ✅ (05/10, Codex H1) Lo que un cierre dejó SIN confirmar queda anotado adentro de cada producto: `eX` = el día del cierre
-   en que no salió. Vale mientras el pedido siga agendado para ese día o antes; reprogramado para después, deja de valer. */
-function cierreNoSalio(p){
-  if(!p || p.entregado || !p.fecha) return false;
-  var xs=p.productos||[];
-  for(var i=0;i<xs.length;i++){ var x=xs[i]; if(x && x.eX && String(x.eX)>=String(p.fecha)) return true; }
-  return false;
-}
+/* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
+   que no entregan lo reprograman». La marca «no salió» (`eX`) que pedía Codex (R2) se hizo y se sacó el mismo día. */
 function cierreEntMarcar(p, quien, dia, ts){
   p.entregado=true; atcAlMarcarEntregado(p);
-  (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); delete x.eX; } });
+  (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); } });
 }
-function cierreEntNoSalio(p, dia){ (p.productos||[]).forEach(function(x){ if(x) x.eX=String(dia||todayStr()); }); }
 var CIERRE_ENT_EN_CURSO=false, CIERRE_ENT_ULT=null, LS_CIERRE_PEND='me_cierre_pend';
 /* ⏳ (05/10, Codex H6) Un cierre que no pudo releer la planilla NO confirma nada: queda PENDIENTE DE SINCRONIZAR en este
    aparato (`localStorage`) y se aplica solo, revalidado, con la próxima lectura buena (`cierreEntSincronizar`). */
 function cierreEntPendiente(){ try{ var j=JSON.parse(localStorage.getItem(LS_CIERRE_PEND)||'null'); return (j && j.ids && j.ids.length) ? j : null; }catch(e){ return null; } }
 function cierreEntPendienteGuardar(x){ try{ if(x) localStorage.setItem(LS_CIERRE_PEND, JSON.stringify(x)); else localStorage.removeItem(LS_CIERRE_PEND); }catch(e){} }
-/* El plan de un cierre: qué se tilda (con el día declarado), qué de hoy queda sin salir, y cómo estaba cada pedido al abrir. */
+/* El plan de un cierre: qué se tilda (con el día declarado) y cómo estaba cada pedido al abrir. Lo destildado no entra: no se
+   le escribe nada (dueño, 05/10). */
 function cierreEntPlan(quien){
-  var hoy=todayStr(), ids=cierreEntTildados(), noSalio=[], antes={}, dias={};
-  /* Lo que la lista muestra y queda destildado —de hoy y atrasado— es lo que este cierre dice que NO salió (Codex R2: un
-     atrasado destildado no es una salida). `cierreEntAplicar` lo anota una sola vez (`cierreNoSalio` ya lo dice). */
-  cierreEntHoy(hoy).concat(cierreEntAtrasados(hoy)).forEach(function(p){ if(!CIERRE_ENT_SEL[p.id]) noSalio.push(p.id); });
-  ids.concat(noSalio).forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; });
+  var hoy=todayStr(), ids=cierreEntTildados(), antes={}, dias={};
+  ids.forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; });
   ids.forEach(function(id){ var a=antes[id]||{}; dias[id]= a.hoy ? hoy : (CIERRE_ENT_DIA[id]||hoy); });
-  return { ids:ids, noSalio:noSalio, antes:antes, dias:dias, quien:String(quien||''), hoy:hoy, ts:Date.now() };
+  return { ids:ids, antes:antes, dias:dias, quien:String(quien||''), hoy:hoy, ts:Date.now() };
 }
-/* Aplica un plan sobre el STATE recién leído: saltea lo borrado, lo reprogramado y lo que otro equipo ya marcó; a lo de hoy
-   que quedó destildado le anota «no salió» (`eX`). Espera los guardados y dice cuántos entraron, cuántos quedaron en la cola
-   y cuántos rechazó el servidor (Codex H3/H6). */
+/* Aplica un plan sobre el STATE recién leído: saltea lo borrado, lo reprogramado y lo que otro equipo ya marcó. Espera los
+   guardados y dice cuántos entraron, cuántos quedaron en la cola y cuántos rechazó el servidor (Codex H3/H6). */
 function cierreEntAplicar(plan){
-  var ts=Date.now(), hechos=[], saltados=[], noSalio=[];
+  var ts=Date.now(), hechos=[], saltados=[];
   (plan.ids||[]).forEach(function(id){
     var p=findById(id), a=(plan.antes||{})[id]||{};
     if(!p){ saltados.push({ id:id, por:'ya no está en la planilla: lo borraron' }); return; }
@@ -23047,19 +23036,13 @@ function cierreEntAplicar(plan){
     if(!cierreEntEntra(p)){ saltados.push({ p:p, por:'ya no es una entrega del camión' }); return; }
     cierreEntMarcar(p, plan.quien, (plan.dias||{})[id]||plan.hoy, ts); hechos.push(p);
   });
-  (plan.noSalio||[]).forEach(function(id){
-    var p=findById(id), a=(plan.antes||{})[id]||{};
-    if(!p || p.entregado || (a.fecha && p.fecha!==a.fecha) || !cierreEntEntra(p)) return;   // cambió desde otro equipo: no se le anota nada
-    if(cierreNoSalio(p)) return;                                                             // ya lo decía
-    cierreEntNoSalio(p, plan.hoy); noSalio.push(p);
-  });
-  hechos.concat(noSalio).forEach(function(p){ upsert(p); });
+  hechos.forEach(function(p){ upsert(p); });
   saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();
-  var guardados=hechos.concat(noSalio).map(function(p){ return guardarDurable(p); });
+  var guardados=hechos.map(function(p){ return guardarDurable(p); });
   return Promise.all(guardados).then(function(rs){
     var ok=0, cola=0, rech=0;
     rs.forEach(function(r){ if(r && r.ok) ok++; else if(r && RECHAZOS_FIRMES[r.error]) rech++; else cola++; });
-    return { hechos:hechos, saltados:saltados, noSalio:noSalio, ok:ok, cola:cola, rechazados:rech, respuestas:rs };
+    return { hechos:hechos, saltados:saltados, ok:ok, cola:cola, rechazados:rech, respuestas:rs };
   });
 }
 function confirmarCierreEntregas(){
@@ -23126,7 +23109,6 @@ function renderCierreEntResultado(r){
     (hechos.length ? ('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+hechos.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||''); }).join('<br>')+'</div>') : '')+
     (saltados.length ? ('<div style="font-weight:700;font-size:.9rem;margin:8px 0 4px">No se marcaron · '+saltados.length+'</div>'+
       '<div style="font-size:.84rem">'+saltados.map(function(x){ return (x.p ? (esc(ocEtiq(x.p.oc)||'—')+' · '+esc(x.p.cliente||'')) : esc(String(x.id)))+': <b>'+esc(x.por)+'</b>'; }).join('<br>')+'</div>') : '')+
-    ((r.noSalio||[]).length ? ('<div style="font-size:.82rem;color:var(--muted);margin-top:8px">'+(r.noSalio.length===1 ? '1 destildado quedó anotado' : (r.noSalio.length+' destildados quedaron anotados'))+' como «no salió» (siguen pendientes; el stock no los descuenta hasta que se confirmen o se reprogramen).</div>') : '')+
     '<div style="font-size:.84rem;color:var(--muted);margin-top:12px">'+(quedan ? ('Quedan <b>'+quedan+'</b> de hoy sin confirmar. Podés volver a abrir el cierre más tarde: muestra solo lo que falta.') : 'No queda ninguno de hoy sin confirmar.')+'</div>'+
     '<div class="modal-actions" style="margin-top:14px">'+
       (quedan ? '<button class="btn btn-sm" style="flex:1" onclick="abrirCierreEntregas()">Ver lo que falta</button>' : '')+

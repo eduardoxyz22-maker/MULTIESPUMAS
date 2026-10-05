@@ -7528,12 +7528,12 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   Codex revisó las etapas 1 y 2, trajo 7 hallazgos y exigió 10 casos de prueba (R1–R10). Todo hecho; la respuesta punto por punto,
   con la evidencia, en `RESPUESTA_CLAUDE.md` §31. Lo que hay que respetar:
   · **H1 — la ventana y la marca ✅.** El DÍA DEL CORTE lo decide la casilla «ya incluye las entregas», no `p.entregado`
-    (`stockSalioVentana`: una entrega confirmada a las 15:00 no estaba en el Excel de las 09:00). Y lo que un cierre dejó
-    DESTILDADO —de hoy Y atrasado (R2)— queda anotado adentro de cada producto como **`x.eX` = el día del cierre** («no salió»):
-    `cierreNoSalio(p)` (vale mientras `p.fecha <= eX`; reprogramado para después, deja de pesar) lo saca de `stockSalio`, de
-    `stockSalioVentana` y por lo tanto de las salidas: sigue COMPROMETIDO. Se anota UNA vez (`cierreEntAplicar` saltea lo que ya
-    lo decía) y se guarda con `guardarDurable`. ⚠️ Con esto un atrasado destildado en el cierre deja de valer como «salió»: la
-    convención de §4co (fecha pasada = salió) sigue SOLO para lo que ningún cierre tocó.
+    (`stockSalioVentana`: una entrega confirmada a las 15:00 no estaba en el Excel de las 09:00). **Lo destildado en el cierre
+    NO lleva ninguna marca** — decisión del dueño (05/10, al ver el cambio): *«como antes, porque un pedido que queda como pasado
+    y no fue tildado, logística lo entregó; lo que ellos no entregan lo reprograman»*. La marca «no salió» (`x.eX`,
+    `cierreNoSalio`) que pedía Codex en R2 se hizo y se sacó el mismo día (`b67c4b5` la tenía): la convención de §4co (fecha
+    pasada sin ✅ = salió) sigue entera, el cierre guarda SOLO lo tildado, y el texto de la lista dice «si no salieron,
+    reprogramalos». ⚠️ No volver a ponerla sin que el dueño lo pida.
   · **H2 — 🏭 parcial.** La sugerencia «¿llegó lo hecho a pedido?» ofrece SOLO lo que falta (`cant − prodUnidEnStock(x)`); tildar
     anota **`x.prodU`** (llegadas) y **`x.prodC`** (los cortes que la anotaron, tope 6: idempotencia, el mismo corte no suma dos
     veces); la línea se SELLA (`prodR`, `prodRm='excel'`, `chk='ok'`) recién al completarse. Texto: «anotar 3 llegadas, faltan 7»
@@ -7580,14 +7580,14 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     (lo que una página sin F5 «dio por llegado» por la fecha) → aviso ámbar en la vista previa del Excel (`existRecsViejasHtml`,
     botón «↩️ anular» → `existAnularRecVieja`: lápida + repintar). Los `h[]` llevan id estable `alm|f|hora`.
   · **Pruebas.** `tests/test_rev_corte_codex.js` (45; R1–R10 con los números de Codex: Excel 09:00 y entrega 15:00; atrasado
-    destildado → 0 salida; 3 de 10 → 3/7 y repetir no suma; fallos de guardado en los dos órdenes + `flushPending`; reserva y
+    destildado → sigue como salido y el cierre no le escribe nada (la regla del dueño, no la de Codex); 3 de 10 → 3/7 y repetir no suma; fallos de guardado en los dos órdenes + `flushPending`; reserva y
     entrega de 2 🏭 (sellada por Excel, pendiente, sellada a mano); 16:00 → 09:00, repetido, corregido, sin hora; movimientos
     antes/en/después de las dos horas; cierre sin conexión → revalida borrado/reprogramado/entregado; copia vieja y cola (cuatro
     juntas) + el aviso y anular; regresión del cierre). **Dientes contra `94ce3e2` (la rama antes de esta vuelta): 6 verdes · 13 rojas, y 8 de las 10 secciones ni terminan (esa
     página no tiene `cierreNoSalio`, `prodUnidEnStock`, `prodUnidEnConteo`, `stockMovEnVentana`, `cierreEntPendiente`…; cada
     sección corre en su propia página y una función faltante cuenta como una roja, `seccion()`).**
-    `test_cierre_entregas` (26) y `test_control_corte` (32) cambiaron a conciencia (los destildados se guardan con `eX`; la 🏭
-    sellada y entregada cuadra; la salida manual de hoy mira la hora del corte). **Batería entera (`676089f`): 133 suites, 5.016 comprobaciones, UNA roja en la corrida — `test_stock` §11, ajustada a
+    `test_cierre_entregas` (26) y `test_control_corte` (32) cambiaron a conciencia (los destildados no se tocan ni se guardan;
+    la 🏭 sellada y entregada cuadra; la salida manual de hoy mira la hora del corte). **Batería entera (`676089f`): 133 suites, 5.016 comprobaciones, UNA roja en la corrida — `test_stock` §11, ajustada a
     conciencia: su fixture de la §9 tiene una línea 🏭 PILLOW sellada ✔ hay hace 7 días y sin entregar, que con R5 ya está en el
     conteo y queda reservada (29 parados y no 30 → 7,25 meses, no 7,5); sola, 106/106 después del ajuste. `test_stock_detalle`
     «sin resumen», como siempre.**

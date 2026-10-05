@@ -2,7 +2,8 @@
    Codex revisó las etapas 1 y 2 («corregir antes de publicar») y pidió diez casos de prueba, R1 a R10. Cada sección de
    abajo lleva su número y prueba el arreglo correspondiente:
      R1  hora del corte: Excel de las 09:00 y entrega de las 15:00 (la casilla manda, no la marca ✅)
-     R2  atrasado destildado en el cierre → 0 salida (queda «no salió», sigue comprometido)
+     R2  atrasado destildado en el cierre: Codex pedía «0 salida»; el dueño decidió (05/10) «como antes»: fecha pasada sin ✅ =
+         entregado, lo que no sale se reprograma. El cierre no le escribe nada a lo destildado, y la prueba mide ESA regla.
      R3  recepción parcial de una línea 🏭: 3 de 10 → recibido 3, pendiente 7; el mismo corte repetido no suma
      R4  fallos de guardado (stock sin pedido y pedido sin stock): nunca ✅ antes de tiempo; la cola converge sin duplicar
      R5  reserva y entrega de 2 unidades 🏭 (llegadas y contadas se reservan; al entregarse salen como cualquier colchón)
@@ -135,36 +136,31 @@ const BASE = `
     const r = await page.evaluate(async (base) => {
       eval(base); _base();
       STOCK.c.f='2026-10-03'; STOCK.c.t=_ts('2026-10-03','09:05:00');     // corte del sábado 03/10 a las 9: K 10
-      STATE.push(_P({id:'a1', oc:'10-010', fecha:'2026-10-05', productos:H(3)}));     // lunes, sin marcar: ¿salió?
+      STATE.push(_P({id:'a1', oc:'10-010', fecha:'2026-10-05', productos:H(3)}));     // lunes, sin marcar: salió (regla del dueño)
       STATE.push(_P({id:'h1', oc:'10-011', fecha:todayStr(), productos:H(1)}));       // hoy: sí salió
       saveMirror(); renderAdmin();
-      var R=_R(todayStr(),'09:00:00',{[K]:10,[K2]:4});
+      var R=_R(todayStr(),'09:00:00',{[K]:7,[K2]:4});
       var v=stockVentanaCorte(STOCK.c, R, false);
       var out={};
       out.antes={ salio:stockSalioVentana(findById('a1'), findById('a1').productos[0], v), salidas:stockSalidasVentana(K, v, ''), comp:_fila(K).comp, dep:_fila(K).deposito };
       /* El cierre: h1 tildado (propuesta), el atrasado a1 viene destildado y queda así. */
       abrirCierreEntregas(); document.getElementById('cie-ent-quien').value='Marisol';
       var res=await confirmarCierreEntregas();
-      out.res={ hechos:res.hechos, noSalio:(res.noSalio||[]).map(function(p){ return p.id; }), ok:res.ok };
-      out.a1=_ver('a1');
+      out.res={ hechos:res.hechos, ok:res.ok, cola:res.cola };
+      out.a1=_ver('a1'); out.a1Saves=_n('a1');
       out.despues={ salio:stockSalioVentana(findById('a1'), findById('a1').productos[0], v), salidas:stockSalidasVentana(K, v, ''), comp:_fila(K).comp, dep:_fila(K).deposito, stockSalio:stockSalio(findById('a1'), findById('a1').productos[0]) };
       var C=stockConciliar(R, 'log', false); var fk=C.filas.filter(function(z){ return z.k===K; })[0]||null; out.c={ fila:!!fk, cuadran:C.resumen.cuadran };
-      /* Un segundo cierre el mismo día no lo vuelve a guardar; sigue en la lista, destildado. */
-      out.guardadoUnaVez=_n('a1')===1;
+      /* Sigue en la lista de atrasados, destildado. Reprogramado para mañana deja de ser salida y vuelve a comprometido. */
       closeModal(); abrirCierreEntregas();
-      var sel=document.querySelector('.cie-ent-chk[data-id="a1"]'); out.sigueEnLista=!!sel && sel.checked===false;
-      document.getElementById('cie-ent-quien').value='Marisol';
-      out.segundo={ tildados:cierreEntTildados().length };
-      closeModal();
-      /* Reprogramado para mañana: la marca «no salió» deja de pesar (y con fecha futura tampoco cuenta como salido). */
-      findById('a1').fecha=_adel(1); out.reprog={ noSalio:cierreNoSalio(findById('a1')), comp:_fila(K).comp };
+      var sel=document.querySelector('.cie-ent-chk[data-id="a1"]'); out.sigueEnLista=!!sel && sel.checked===false; closeModal();
+      findById('a1').fecha=_adel(1); out.reprog={ salio:stockSalio(findById('a1'), findById('a1').productos[0]), comp:_fila(K).comp, dep:_fila(K).deposito };
       return out;
     }, BASE);
-    chk('R2 · antes del cierre, el atrasado sin marcar valía como salido (convención de siempre): 3 salidas en la ventana, depósito 7', r.antes.salio===true && r.antes.salidas===3 && r.antes.dep===7, J(r.antes));
-    chk('R2 · el cierre confirma el de hoy y anota el atrasado destildado como «no salió» (eX = hoy), guardado UNA vez', r.res.hechos===1 && J(r.res.noSalio)===J(['a1']) && r.res.ok===2 && J(r.a1.eX)===J(['2026-10-07']) && !r.a1.entregado && r.guardadoUnaVez, J([r.res, r.a1, r.guardadoUnaVez]));
-    chk('R2 · después: 0 salidas del atrasado en la ventana, el Excel de 10 cuadra, y en la pantalla de stock sigue COMPROMETIDO (3): depósito 10 − 1 (el de hoy) = 9',
-        r.despues.salio===false && r.despues.salidas===0 && r.despues.stockSalio===false && r.despues.comp===3 && r.despues.dep===9 && r.c.fila===false && r.c.cuadran===2, J([r.despues, r.c]));
-    chk('R2 · sigue en la lista de atrasados, destildado y sin nada tildado; reprogramado para mañana la marca deja de pesar', r.sigueEnLista===true && r.segundo.tildados===0 && r.reprog.noSalio===false && r.reprog.comp===3, J([r.sigueEnLista, r.segundo, r.reprog]));
+    chk('R2 · antes del cierre, el atrasado sin marcar vale como salido (regla de siempre): 3 salidas en la ventana, depósito 7', r.antes.salio===true && r.antes.salidas===3 && r.antes.dep===7, J(r.antes));
+    chk('R2 · el cierre confirma el de hoy y NO le escribe nada al atrasado destildado (dueño, 05/10): sin marca, sin guardado, sigue pendiente', r.res.hechos===1 && r.res.ok===1 && r.res.cola===0 && !r.a1.entregado && J(r.a1.eX)===J(['']) && r.a1Saves===0, J([r.res, r.a1, r.a1Saves]));
+    chk('R2 · después del cierre el atrasado sigue valiendo como salido (fecha pasada sin ✅ = entregado): 3 salidas en la ventana, el Excel de 7 cuadra; en la pantalla de stock, depósito 7 − 1 (el de hoy) = 6 y nada comprometido',
+        r.despues.salio===true && r.despues.salidas===3 && r.despues.stockSalio===true && r.despues.comp===0 && r.despues.dep===6 && r.c.fila===false && r.c.cuadran===2, J([r.despues, r.c]));
+    chk('R2 · sigue en la lista de atrasados, destildado; reprogramado para mañana deja de ser salida y vuelve a comprometido (3), depósito 9', r.sigueEnLista===true && r.reprog.salio===false && r.reprog.comp===3 && r.reprog.dep===9, J([r.sigueEnLista, r.reprog]));
   });
 
   // ═══ R3 ═══════════════════════════════════════════════════════════════════════════════
@@ -466,9 +462,9 @@ const BASE = `
       return out;
     }, BASE);
     chk('R10 · la lista de hoy (sin el de mañana ni la venta de tienda); abrir no escribe', J(r.hoy)===J(['h1','h2']) && r.abrirNoEscribe, J([r.hoy, r.abrirNoEscribe]));
-    chk('R10 · confirmar: 1 confirmada con registro (día, quién, cuándo), 1 «no salió», 2 guardados, 0 en cola, «guardado en la planilla: 2 de 2»',
-        r.res.hechos===1 && r.res.saltados===0 && r.res.ok===2 && r.res.cola===0 && r.res.pendiente===false && r.h1.entregado && r.h1.c && r.h1.c.q==='Marisol' && r.h1.c.f==='2026-10-07' && r.h1.c.t>0 &&
-        !r.h2.entregado && J(r.h2.eX)===J(['2026-10-07']) && !r.m1.entregado && J(r.saves)===J(['h1','h2']) && /guardado en la planilla: 2 de 2/.test(r.txt), J([r.res, r.h1, r.h2, r.saves]));
+    chk('R10 · confirmar: 1 confirmada con registro (día, quién, cuándo), el destildado queda como estaba (sin marca ni guardado), 1 guardado, 0 en cola, «guardado en la planilla: 1 de 1»',
+        r.res.hechos===1 && r.res.saltados===0 && r.res.ok===1 && r.res.cola===0 && r.res.pendiente===false && r.h1.entregado && r.h1.c && r.h1.c.q==='Marisol' && r.h1.c.f==='2026-10-07' && r.h1.c.t>0 &&
+        !r.h2.entregado && J(r.h2.eX)===J(['']) && !r.m1.entregado && J(r.saves)===J(['h1']) && /guardado en la planilla: 1 de 1/.test(r.txt), J([r.res, r.h1, r.h2, r.saves]));
     chk('R10 · la ficha dice «confirmado por Marisol», y al repetir queda solo el destildado', r.ficha && J(r.quedan)===J(['h2']), J([r.ficha, r.quedan]));
   });
 

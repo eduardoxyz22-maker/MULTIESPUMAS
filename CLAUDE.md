@@ -472,10 +472,10 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
-  · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). Lo que el cierre dejó DESTILDADO —de hoy y
-    atrasado— lleva **`x.eX`** («no salió», el día del cierre): `cierreNoSalio(p)` lo saca de las salidas y lo deja comprometido
-    hasta que se confirme o se reprograme. ⚠️ Un atrasado destildado en el cierre ya no vale como «salió» (§4co sigue solo para lo
-    que ningún cierre tocó).
+  · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). **Lo destildado en el cierre no lleva
+    ninguna marca** (dueño, 05/10: *«un pedido que queda como pasado y no fue tildado, logística lo entregó; lo que no entregan
+    lo reprograman»*): la convención de §4co (fecha pasada sin ✅ = salió) sigue entera y el cierre guarda SOLO lo tildado. La
+    marca «no salió» (`x.eX`) que pedía Codex en R2 se hizo y se sacó el mismo día; no volver a ponerla sin que el dueño lo pida.
   · **🏭 parcial**: `x.prodU` (llegadas) + `x.prodC` (cortes que las anotaron, idempotente); el sello `prodR`/`prodRm='excel'`/
     `chk='ok'` recién al completarse. **`enProduccionPendiente(x)`** = en producción y sin sello. **`prodUnidEnConteo(x)`** = lo
     llegado que YA está en el conteo (desde el control de un corte, o a mano con `prodR` anterior al corte vigente): se RESERVA
