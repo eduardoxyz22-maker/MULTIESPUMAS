@@ -7523,7 +7523,73 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   · **NO hecho (etapas 3 y 4 de §30)**: la asignación automática con evidencia fuerte (`cert`), el intervalo de plazos
     estimados por planilla, los patrones de diferencias («el que siempre falta»), la conciliación de Moreno. Tampoco
     `STOCK_V2_DESDE` (marcar recepciones de una página vieja): con la casilla fuera, una página vieja todavía cierra por fecha
-    hasta que haga F5; es la regla de siempre al publicar.
+    hasta que haga F5; es la regla de siempre al publicar. **(Lo de la página vieja quedó hecho en la segunda vuelta, abajo: `v2t`.)**
+- **05/10 a la tarde, SEGUNDA VUELTA: la revisión de Codex («corregir antes de publicar»), corregida en la rama y SIN publicar.**
+  Codex revisó las etapas 1 y 2, trajo 7 hallazgos y exigió 10 casos de prueba (R1–R10). Todo hecho; la respuesta punto por punto,
+  con la evidencia, en `RESPUESTA_CLAUDE.md` §31. Lo que hay que respetar:
+  · **H1 — la ventana y la marca ✅.** El DÍA DEL CORTE lo decide la casilla «ya incluye las entregas», no `p.entregado`
+    (`stockSalioVentana`: una entrega confirmada a las 15:00 no estaba en el Excel de las 09:00). Y lo que un cierre dejó
+    DESTILDADO —de hoy Y atrasado (R2)— queda anotado adentro de cada producto como **`x.eX` = el día del cierre** («no salió»):
+    `cierreNoSalio(p)` (vale mientras `p.fecha <= eX`; reprogramado para después, deja de pesar) lo saca de `stockSalio`, de
+    `stockSalioVentana` y por lo tanto de las salidas: sigue COMPROMETIDO. Se anota UNA vez (`cierreEntAplicar` saltea lo que ya
+    lo decía) y se guarda con `guardarDurable`. ⚠️ Con esto un atrasado destildado en el cierre deja de valer como «salió»: la
+    convención de §4co (fecha pasada = salió) sigue SOLO para lo que ningún cierre tocó.
+  · **H2 — 🏭 parcial.** La sugerencia «¿llegó lo hecho a pedido?» ofrece SOLO lo que falta (`cant − prodUnidEnStock(x)`); tildar
+    anota **`x.prodU`** (llegadas) y **`x.prodC`** (los cortes que la anotaron, tope 6: idempotencia, el mismo corte no suma dos
+    veces); la línea se SELLA (`prodR`, `prodRm='excel'`, `chk='ok'`) recién al completarse. Texto: «anotar 3 llegadas, faltan 7»
+    o «sellar la llegada». La ficha (`prodLugarTxt`) y el cuadrito (`saldoVeredictoFab` → `v.parcial`) dicen «llegaron 3 de 10,
+    faltan 7».
+  · **H3 — guardado pedido + stock.** `confirmarImportExist` devuelve `Promise.all([stock].concat(ctrl.guardados))` y el toast
+    dice la verdad: «✅» solo si entró todo; si no, «⏳ … Pendiente de sincronizar: N de M guardados no llegó a la planilla
+    todavía (queda en la cola de este dispositivo y se reintenta solo)» o «⚠️ N rechazados por el servidor». Nada queda en memoria
+    sin cola: cada parte va por `guardarDurable`/`persistPedido`, y la cola converge sin duplicar porque `prodC` y los ids de
+    recepción llevan el corte (R4, los dos órdenes, con `flushPending`).
+  · **H4 — `enProduccionPendiente(x)` = `enProduccion(x) && !x.prodR`.** Es lo que excluye de las salidas y del comprometido; una
+    línea 🏭 ya sellada es un colchón más. `prodUnidEnStock(x)` = lo llegado de la línea (todo, si está sellada).
+  · **R5 — lo 🏭 llegado y CONTADO se reserva y sale como cualquier colchón.** **`prodUnidEnConteo(x)`**: sellado o anotado desde el
+    control de un corte (`prodRm='excel'`, `prodC`) → ese Excel lo contó; sellado A MANO (✔ hay sobre la línea) → solo si `prodR`
+    es anterior al corte vigente (la regla por día de `stockEntradaVale`). En `stockData` va a **`comp`** (reserva, como un ✔ hay)
+    y, entregado, a **`salidas`**; lo que falta llegar sigue en `aFab`. Lo usan `stockComprometido` (cuadrito), `stockSalidas` y
+    `stockSalidasVentana`. ⚠️ Antes una línea 🏭 que ya estaba en el Excel NO reservaba ni descontaba al entregarse: el depósito
+    quedaba inflado hasta el Excel siguiente. En la conciliación, una sellada a mano después del corte anterior explica la entrada
+    (`causas` `fabLlego`, «✔ anotado a mano el …», `fila.explicado`: sin detección ni sugerencia); una pendiente (nunca sellada) que
+    se entregó explica la baja (`fabSalio`, ahora SOLO para pendientes: la sellada ya está en las salidas y no se explica dos veces).
+  · **H5 — orden de cortes y horas.** `stockConciliar` compara fecha Y hora (`rf<pf`; mismo día `rh<ph` → «MÁS VIEJO»; mismo día
+    con hora de un solo lado → `corteViejo` + `ambiguo`, «falta la hora»). `stockVentanaCorte` lleva `prevHora`/`prevInc`/`hora` y
+    los movimientos anotados con `ts` (entradas `STOCK.e`, salidas `STOCK.sm`) entran por **`stockMovEnVentana(f, ts, v)`**: por
+    día, y en los días límite por hora (`horaDeTs`, Bolivia): en el día del corte anterior después de su hora, en el de este corte
+    hasta su hora inclusive; sin hora de un lado, el día del corte entra solo con la casilla (R7). La pantalla de stock resta las
+    salidas a mano con **`stockMovDespuesDelCorte`** (la hora del CORTE, no la de subida `c.t`: un Excel de las 09:00 subido a las
+    15:00 no incluye la salida anotada a las 12:00). ⚠️ Las entradas `STOCK.e` siguen con `stockEntradaVale` (`c.t`, §4fz-b) y
+    `STOCK.e=[]` al confirmar un corte de fábrica: lo anotado entre la hora del corte y la subida se da por incluido. Es la regla
+    de siempre; queda dicha en §31 como límite.
+  · **H6 — cierre sin conexión.** `confirmarCierreEntregas` NO confirma sobre la copia del aparato: si `refrescarEstadoYa()`
+    falla, el plan (`cierreEntPlan`: ids tildados, días declarados, cómo estaba cada pedido, quién, hoy) queda en `localStorage`
+    **`me_cierre_pend`**, la ventana dice «No había señal: todavía NO se confirmó nada», el cartel de Administración dice
+    «pendiente de sincronizar» (con «🔄 intentar ahora» y «descartar»), y **`cierreEntSincronizar()`** lo aplica revalidado con la
+    próxima lectura buena (gancho en `refrescarEstadoYa`; saltea borrado, reprogramado y ya marcado; toast «sincronizado: N
+    confirmadas · M salteadas»; `CIERRE_ENT_ULT`). `cierreEntAplicar` espera los guardados y la ventana de resultado dice «guardado
+    en la planilla: ok de total», lo que quedó en cola y lo rechazado (encabezado ámbar). `confirmarCierreEntregas` devuelve
+    `{pendiente, leyo, hechos, saltados, noSalio, ok, cola, rechazados}`.
+  · **H7 — datos antiguos.** Las detecciones de una versión anterior del mismo corte quedan con LÁPIDA `an` («corte reemplazado»),
+    nunca se borran. `stockFusionar` trata una copia **sin `v`≥2** (página vieja) como que no tocó `det` ni `sm` (usa los de la
+    base) y **`fusLapidas`** hace las lápidas MONÓTONAS: una recepción o detección anulada en CUALQUIERA de las tres copias sigue
+    anulada en la junta, también cuando «acá no se tocó» y mandaba la copia de allá (era el agujero de R9-b: una página vieja que
+    leyó antes de la anulación y guardó después la revivía). **`STOCK.v2t`** = desde cuándo esta planilla la escribe una página
+    con el control (el mínimo al juntar); **`stockRecsPaginaVieja()`** = recepciones `se:1` sin `ev`, con id al azar y `ts > v2t`
+    (lo que una página sin F5 «dio por llegado» por la fecha) → aviso ámbar en la vista previa del Excel (`existRecsViejasHtml`,
+    botón «↩️ anular» → `existAnularRecVieja`: lápida + repintar). Los `h[]` llevan id estable `alm|f|hora`.
+  · **Pruebas.** `tests/test_rev_corte_codex.js` (45; R1–R10 con los números de Codex: Excel 09:00 y entrega 15:00; atrasado
+    destildado → 0 salida; 3 de 10 → 3/7 y repetir no suma; fallos de guardado en los dos órdenes + `flushPending`; reserva y
+    entrega de 2 🏭 (sellada por Excel, pendiente, sellada a mano); 16:00 → 09:00, repetido, corregido, sin hora; movimientos
+    antes/en/después de las dos horas; cierre sin conexión → revalida borrado/reprogramado/entregado; copia vieja y cola (cuatro
+    juntas) + el aviso y anular; regresión del cierre). **Dientes contra `94ce3e2` (la rama antes de esta vuelta): 6 verdes · 13 rojas, y 8 de las 10 secciones ni terminan (esa
+    página no tiene `cierreNoSalio`, `prodUnidEnStock`, `prodUnidEnConteo`, `stockMovEnVentana`, `cierreEntPendiente`…; cada
+    sección corre en su propia página y una función faltante cuenta como una roja, `seccion()`).**
+    `test_cierre_entregas` (26) y `test_control_corte` (32) cambiaron a conciencia (los destildados se guardan con `eX`; la 🏭
+    sellada y entregada cuadra; la salida manual de hoy mira la hora del corte). **Batería entera: corriendo al cerrar este commit (93 de 133 suites terminadas, 0 rojas); el total va en el commit siguiente.**
+  · **El límite de autorización de Codex, respetado**: se pusheó SOLO a la rama `claude/pedidos-fecha-entrega-bgt0em` (lo de
+    siempre con el dueño); NADA en `main`, nada desplegado, ningún dato real tocado. Publicar sigue esperando el «publica».
 
 ## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 

@@ -2590,7 +2590,41 @@ la casilla «faltarían 2»); (b) que ninguna recepción nazca sin tilde; (c) la
 
 **Lo que queda (etapas 3 y 4)**: la asignación automática con evidencia fuerte (hoy todo es «media»: sugerido y tildable), el
 intervalo de plazos estimados por planilla, «el que siempre falta» con `h[].d`, la conciliación de Moreno, y `STOCK_V2_DESDE`
-para marcar lo que una página vieja (sin F5) cierre por fecha mientras conviva con la nueva.
+para marcar lo que una página vieja (sin F5) cierre por fecha mientras conviva con la nueva (hecho en §31 como `v2t`).
+
+## 31 · Respuesta a la revisión de Codex del 05/10 («corregir antes de publicar») — bitácora §4hn, segunda vuelta
+
+Codex tenía razón en los siete. Están corregidos en la rama `claude/pedidos-fecha-entrega-bgt0em`, con los diez casos que pidió
+(R1–R10) en `tests/test_rev_corte_codex.js`. **Nada publicado, nada desplegado, ningún dato real tocado**: el push fue solo a la
+rama, como siempre; publicar en `main` espera tu «publica».
+
+| # | Hallazgo de Codex | Qué cambió | Dónde se prueba |
+|---|---|---|---|
+| 1 | La ventana daba por salido lo marcado ✅ aunque el Excel fuera de antes de la entrega; y lo destildado en el cierre seguía contando como salido por la fecha | El día del corte lo decide SOLO la casilla «ya incluye las entregas» (`stockSalioVentana`). Lo destildado en el cierre, de hoy y atrasado, queda anotado adentro de cada producto como «no salió» (`x.eX` = día del cierre) y deja de ser salida hasta que se confirme o se reprograme (`cierreNoSalio`) | R1, R2, R10; `test_cierre_entregas` §2-§3 |
+| 2 | Una línea 🏭 recibida en parte se sellaba entera | `x.prodU` (llegadas) y `x.prodC` (qué cortes las anotaron); «anotar 3 llegadas, faltan 7»; el sello (`prodR`) recién al completarse; la ficha y el cuadrito dicen «llegaron 3 de 10, faltan 7»; el mismo corte repetido no suma | R3 |
+| 3 | El stock y los pedidos se guardaban por separado y el aviso decía ✅ aunque uno no hubiera entrado | Se esperan las dos partes; el aviso dice «guardado N de M» y «pendiente de sincronizar» o «rechazado»; lo que no entró queda en la cola durable y converge sin duplicar (los ids llevan el corte) | R4 (los dos órdenes, con `flushPending`) |
+| 4 | `enProduccion(x)` excluía de las salidas también a lo ya sellado | `enProduccionPendiente(x)` = en producción y sin sello; una línea 🏭 sellada es un colchón más. Y lo llegado que ya está en el conteo se RESERVA para ese pedido y sale como cualquier colchón al entregarse (`prodUnidEnConteo`): antes el depósito quedaba inflado hasta el Excel siguiente | R5 (sellada desde el Excel, pendiente, sellada a mano); `test_control_corte` §5 |
+| 5 | Dos cortes del mismo día se ordenaban solo por fecha; los movimientos a mano no miraban la hora | Fecha y hora: 16:00 y después 09:00 = «más viejo»; con hora de un solo lado, «falta la hora» y exige el tilde. Los movimientos anotados entran a la ventana por día y, en los días límite, por hora (`stockMovEnVentana`); sin hora, el día del corte entra solo con la casilla. La pantalla de stock resta las salidas a mano por la hora del corte, no por la de subida del Excel | R6, R7; `test_control_corte` §6 |
+| 6 | Sin conexión el cierre confirmaba sobre la copia del aparato | No confirma nada: queda «pendiente de sincronizar» en el aparato, el cartel y la ventana lo dicen, y con la próxima lectura buena se aplica revalidado (borrado, reprogramado y marcado por otro se saltean y se cuentan) | R8; `test_cierre_entregas` §4 |
+| 7 | Una copia vieja (sin `det`/`sm`) borraba las detecciones al juntar; una detección anulada podía revivir; una página sin F5 sigue cerrando por fecha | La copia sin `v` no toca `det` ni `sm`; las lápidas son MONÓTONAS en la junta (`fusLapidas`: anulada en cualquiera de las tres copias, anulada en la junta, también cuando «acá no se tocó»); `v2t` marca desde cuándo la planilla la escribe una página con el control, y lo que una página vieja «dio por llegado» por la fecha después de eso se avisa en la vista previa con «↩️ anular» | R9 (cuatro juntas + el aviso) |
+
+**Cómo se probó.** `node tests/test_rev_corte_codex.js` → 45 comprobaciones en verde. Contra la versión anterior de la rama
+(`94ce3e2`, antes de esta vuelta): 6 verdes y 13 rojas, con 8 de las 10 secciones que ni terminan (esa página no tiene las
+funciones nuevas; la prueba lo cuenta como una roja por sección en vez de caerse). `test_cierre_entregas` 26/26 y `test_control_corte` 32/32 (dos
+comprobaciones cambiaron a conciencia: los destildados se guardan con `eX`; la línea 🏭 sellada y entregada cuadra en vez de
+explicarse como «salió lo hecho a pedido»). Batería entera: corriendo al cerrar este commit (93 de 133 suites terminadas, 0 rojas); el total va en el commit siguiente. Datos sintéticos, servidor simulado; el `.gs` no cambia
+(sigue `2026-10-02-a`): basta recargar la página cuando se publique.
+
+**Lo que NO queda probado y lo digo.** (a) Dos navegadores reales contra la planilla de verdad (la junta se probó con
+`stockFusionar` en los dos sentidos y en modo «sin base», no con dos Chromium contra el `.gs`). (b) Las entradas anotadas a mano
+(`STOCK.e`) siguen con la regla de siempre al confirmar un corte de fábrica: se dan por incluidas en ese Excel (`STOCK.e=[]`), aunque
+se hayan anotado después de la hora del corte y antes de subirlo; la ventana del control sí las mira por hora, pero el depósito
+de la pantalla no. Cambiarlo toca `c.t` (§4fz-b, la junta de fotos) y no lo hice en esta vuelta. (c) El cierre anota «no salió»
+también a los atrasados que quedan destildados: es lo que pediste en R2, y cambia una convención (fecha pasada = salió) para los
+pedidos que un cierre tocó. Si logística prefiere que los atrasados sigan como antes, es una línea (`cierreEntPlan`).
+
+**Para publicar**: tu «publica». Como siempre, la página sola; todos F5 después. Una página sin F5 sigue cerrando por fecha, y
+ahora la vista previa de la nueva lo avisa y deja deshacerlo.
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
 

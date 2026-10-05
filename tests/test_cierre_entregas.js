@@ -127,6 +127,9 @@ const BASE = `
       var res=await confirmarCierreEntregas();
       out.res=res;
       out.h1=_ver('h1'); out.h2=_ver('h2'); out.h3=_ver('h3'); out.a1=_ver('a1');
+      /* (05/10, Codex H1/R2) lo destildado —de hoy y atrasado— queda anotado como «no salió» (`eX`) y se guarda una vez */
+      out.h2x=(findById('h2').productos||[]).map(function(x){ return x.eX||''; }); out.h2NoSalio=cierreNoSalio(findById('h2'));
+      out.a1x=(findById('a1').productos||[]).map(function(x){ return x.eX||''; }); out.a1NoSalio=cierreNoSalio(findById('a1'));
       out.saves=window._saves.map(function(s){ return s.rec.id; });
       out.quien=cierreEntQuien();
       out.resultado=_modalTxt();
@@ -141,9 +144,13 @@ const BASE = `
         r.h1.entregado && r.h3.entregado && r.h1.c && r.h1.c.f==='2026-10-07' && r.h1.c.q==='Marisol' && r.h1.c.t>0 &&
         J(r.h1.xs)===J([['2026-10-07','Marisol',1]]), J([r.h1, r.h3]));
     chk('el destildado sigue pendiente, sin registro, igual que el atrasado', !r.h2.entregado && !r.h2.c && J(r.h2.xs)===J([['','',0],['','',0]]) && !r.a1.entregado, J([r.h2, r.a1]));
-    chk('se guardó exactamente UNA vez cada confirmado (h1, h3) y nada más', J(r.saves.slice().sort())===J(['h1','h3']), J(r.saves));
+    chk('⚠️ (Codex H1/R2) el destildado de hoy Y el atrasado destildado quedan anotados como «no salió» (eX = hoy) adentro de cada producto',
+        J(r.h2x)===J(['2026-10-07','2026-10-07']) && r.h2NoSalio===true && J(r.a1x)===J(['2026-10-07']) && r.a1NoSalio===true, J([r.h2x, r.h2NoSalio, r.a1x, r.a1NoSalio]));
+    chk('se guardó exactamente UNA vez cada confirmado (h1, h3) y cada «no salió» (h2, a1), y nada más', J(r.saves.slice().sort())===J(['a1','h1','h2','h3']), J(r.saves));
     chk('quién cierra queda recordado en el aparato', r.quien==='Marisol', r.quien);
-    chk('la respuesta dice 2 confirmadas y 0 salteadas, y la ventana de resultado lo cuenta', r.res && r.res.hechos===2 && r.res.saltados===0 && /2 entregas confirmadas/.test(r.resultado), J([r.res && [r.res.hechos, r.res.saltados], r.resultado.slice(0,120)]));
+    chk('la respuesta dice 2 confirmadas y 0 salteadas, y la ventana de resultado lo cuenta junto con «guardado en la planilla: 4 de 4»',
+        r.res && r.res.hechos===2 && r.res.saltados===0 && r.res.ok===4 && r.res.cola===0 && /2 entregas confirmadas/.test(r.resultado) && /guardado en la planilla: 4 de 4/.test(r.resultado) && /2 destildados quedaron anotados como «no salió»/.test(r.resultado),
+        J([r.res && [r.res.hechos, r.res.saltados, r.res.ok, r.res.cola], r.resultado.slice(0,200)]));
     chk('repetir: queda solo el destildado para después', J(r.quedan)===J(['h2']), J(r.quedan));
     await page.close();
   }
@@ -164,7 +171,7 @@ const BASE = `
       var res=await confirmarCierreEntregas();
       return { res:res, h1:_ver('h1'), h2:_ver('h2'), h3:_ver('h3'), saves:window._saves.map(function(s){ return s.rec.id; }), txt:_modalTxt(), fechaH1:(findById('h1')||{}).fecha };
     }, BASE);
-    chk('ninguno se marcó desde acá: 0 confirmadas, 3 salteadas, 0 guardados', r.res && r.res.hechos===0 && r.res.saltados===3 && r.saves.length===0, J([r.res && [r.res.hechos, r.res.saltados], r.saves]));
+    chk('ninguno se marcó desde acá: 0 confirmadas, 3 salteadas; lo único que se guarda es el «no salió» del atrasado destildado (a1)', r.res && r.res.hechos===0 && r.res.saltados===3 && J(r.saves)===J(['a1']), J([r.res && [r.res.hechos, r.res.saltados], r.saves]));
     chk('el reprogramado sigue sin marca y con la fecha nueva; el borrado ya no está; el que marcó otro equipo quedó como lo dejó él (sin registro de acá)',
         r.h1 && !r.h1.entregado && r.fechaH1==='2026-10-08' && r.h3===null && r.h2 && r.h2.entregado && !r.h2.c, J([r.h1, r.fechaH1, r.h3, r.h2]));
     chk('la ventana de resultado dice por qué cada uno', /reprogramaron para el 08\/10\/2026/.test(r.txt) && /lo borraron/.test(r.txt) && /ya lo marcó otro equipo/.test(r.txt), r.txt.slice(0,300));
@@ -199,19 +206,38 @@ const BASE = `
     await page.close();
   }
   {
+    /* ⏳ (05/10, Codex H6/R8) Sin señal NO se confirma sobre la copia del aparato: el cierre queda PENDIENTE DE SINCRONIZAR y se
+       aplica solo, revalidado, con la próxima lectura buena. */
     const page = await nueva(TARDE_17);
     const r = await page.evaluate(async (base) => {
       eval(base); _armar(); renderAdmin();
+      var apiListOk=apiList, apiSaveOk=apiSave;
       apiList=function(){ return Promise.reject(new TypeError('Failed to fetch')); };
       apiSave=function(){ return Promise.reject(new TypeError('Failed to fetch')); };
       abrirCierreEntregas();
       document.getElementById('cie-ent-quien').value='Marisol';
       var res=await confirmarCierreEntregas();
       await new Promise(function(r){ setTimeout(r,200); });
-      return { res:res, h1:_ver('h1'), cola:getPending().map(function(q){ return q.id; }).sort(), txt:_modalTxt(), toasts:window._toasts.filter(function(t){ return /NO se guardó/.test(t); }).length };
+      var out={ res:res, h1:_ver('h1'), cola:getPending().map(function(q){ return q.id; }).sort(), txt:_modalTxt(), pend:cierreEntPendiente(), saves:window._saves.length };
+      closeModal(); renderAdmin(); out.cartel=(document.getElementById('adm-cierre-ent')||{}).innerText||'';
+      /* Vuelve la señal. Mientras tanto otro equipo reprogramó h1 al jueves. */
+      var pl=JSON.parse(JSON.stringify(STATE)); pl.forEach(function(p){ if(p.id==='h1'){ p.fecha='2026-10-08'; p.rev=9; } });
+      window._planilla=pl; apiList=apiListOk; apiSave=apiSaveOk;
+      var leyo=await refrescarEstadoYa();
+      await new Promise(function(r){ setTimeout(r,400); });
+      out.sync={ leyo:leyo, h1:_ver('h1'), fechaH1:(findById('h1')||{}).fecha, h2:_ver('h2'), h3:_ver('h3'), pend:cierreEntPendiente(),
+                 saves:window._saves.map(function(s){ return s.rec.id; }).sort(), toast:window._toasts.filter(function(t){ return /sincronizado/.test(t); }).slice(-1)[0]||'',
+                 a1x:(findById('a1').productos||[]).map(function(x){ return x.eX||''; }) };
+      return out;
     }, BASE);
-    chk('sin señal: se confirma con la copia de acá, se avisa que no se releyó, y los 3 quedan en la cola durable',
-        r.res && r.res.hechos===3 && r.res.leyo===false && /No se pudo releer/.test(r.txt) && J(r.cola)===J(['h1','h2','h3']) && r.h1.entregado, J([r.res && [r.res.hechos, r.res.leyo], r.cola]));
+    chk('⏳ sin señal NO se confirma nada: queda pendiente de sincronizar en el aparato (nada marcado, nada en la cola, 0 guardados) y la ventana lo dice',
+        r.res && r.res.pendiente===true && r.res.hechos===0 && !r.h1.entregado && r.cola.length===0 && r.saves===0 && r.pend && J(r.pend.ids)===J(['h1','h3','h2']) && /No había señal/.test(r.txt),
+        J([r.res, r.cola, r.saves, r.pend && r.pend.ids, r.txt.slice(0,80)]));
+    chk('el cartel de Administración dice «pendiente de sincronizar»', /pendiente de sincronizar/i.test(r.cartel), r.cartel.slice(0,140));
+    chk('al volver la lectura se aplica solo y revalidado: h2 y h3 confirmados, h1 (reprogramado por otro equipo) salteado, el atrasado destildado anotado «no salió», y el pendiente se borra',
+        r.sync.leyo===true && r.sync.h2.entregado && r.sync.h3.entregado && !r.sync.h1.entregado && r.sync.fechaH1==='2026-10-08' && r.sync.pend===null &&
+        J(r.sync.saves)===J(['a1','h2','h3']) && J(r.sync.a1x)===J(['2026-10-07']) && /2 confirmadas/.test(r.sync.toast) && /1 salteada/.test(r.sync.toast),
+        J([r.sync.leyo, r.sync.h1, r.sync.fechaH1, r.sync.pend, r.sync.saves, r.sync.toast]));
     await page.close();
   }
 

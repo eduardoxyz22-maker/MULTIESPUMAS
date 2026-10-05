@@ -240,14 +240,15 @@ const BASE = `
       STOCK.c.f=todayStr(); STOCK.c.hora='09:00:00'; STOCK.c.u[K]=12;    // el corte vigente es el de hoy
       var C=stockConciliar(_R(_adel(2),'09:00:00',{[K]:10,[K2]:4}), 'log', false);
       var f=C.filas.filter(function(z){ return z.k===K; })[0]||{};
-      out.baja={ dif:f.dif, causas:(f.causas||[]).map(function(c){ return [c.t,c.u]; }), sinExplicar:f.sinExplicar };
+      /* (05/10, Codex H4) la línea sellada ya está en el conteo: su entrega es una salida común y el Excel siguiente CUADRA */
+      out.baja={ fila:!!f.k, cuadran:C.resumen.cuadran, con:C.resumen.con };
       return out;
     }, BASE);
     chk('+2 sin explicar y el panel sugiere «¿llegó lo hecho a pedido de OC 10-001 (2)?», destildado, sin inventar un pedido a fábrica',
         r.sug.length===1 && r.sug[0][0]==='fab' && r.sug[0][1]===2 && r.sug[0][2]===false && r.sinPedido===0 && r.dice, J(r.sug));
     chk('tildarlo sella la llegada (prodR = hoy) y guarda el pedido', r.prodR==='2026-10-07' && r.guardado===1, J([r.prodR, r.guardado]));
-    chk('cuando se entrega, la baja de 2 en el Excel siguiente queda explicada por lo hecho a pedido (sin «salida sin explicar»)',
-        r.baja.dif===-2 && J(r.baja.causas)===J([['fabSalio',2]]) && r.baja.sinExplicar===0, J(r.baja));
+    chk('cuando se entrega, la baja de 2 en el Excel siguiente es una salida común (la línea ya estaba contada en el depósito): cuadra, sin «salida sin explicar» ni doble explicación',
+        r.baja.fila===false && r.baja.cuadran===2 && r.baja.con===0, J(r.baja));
     await page.close();
   }
 

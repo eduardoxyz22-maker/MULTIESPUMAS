@@ -471,6 +471,32 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   `test_adm_alta` §2 cambiaron a conciencia (esperaban el cierre por fecha).
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
+- **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
+  · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). Lo que el cierre dejó DESTILDADO —de hoy y
+    atrasado— lleva **`x.eX`** («no salió», el día del cierre): `cierreNoSalio(p)` lo saca de las salidas y lo deja comprometido
+    hasta que se confirme o se reprograme. ⚠️ Un atrasado destildado en el cierre ya no vale como «salió» (§4co sigue solo para lo
+    que ningún cierre tocó).
+  · **🏭 parcial**: `x.prodU` (llegadas) + `x.prodC` (cortes que las anotaron, idempotente); el sello `prodR`/`prodRm='excel'`/
+    `chk='ok'` recién al completarse. **`enProduccionPendiente(x)`** = en producción y sin sello. **`prodUnidEnConteo(x)`** = lo
+    llegado que YA está en el conteo (desde el control de un corte, o a mano con `prodR` anterior al corte vigente): se RESERVA
+    (`comp`) y al entregarse SALE (`salidas`); lo que falta sigue en `aFab`. Lo usan `stockData`, `stockComprometido`,
+    `stockSalidas`, `stockSalidasVentana`. En la conciliación: sellada a mano después del corte → causa `fabLlego` (sin detección);
+    pendiente entregada → `fabSalio` (solo pendientes).
+  · **Guardado pedido + stock**: `confirmarImportExist` espera a las dos partes y el toast dice «guardado N de M / pendiente de
+    sincronizar / rechazado»; nunca ✅ antes de tiempo. La cola converge sin duplicar (los ids llevan el corte).
+  · **Orden de cortes por fecha Y hora**; mismo día con hora de un solo lado = `ambiguo` («falta la hora», exige el tilde). Los
+    movimientos anotados (`STOCK.e`, `STOCK.sm`) entran a la ventana por **`stockMovEnVentana(f, ts, v)`** (días límite por hora);
+    la pantalla de stock resta las salidas a mano con **`stockMovDespuesDelCorte`** (hora del corte, no la de subida). ⚠️ Las
+    entradas `STOCK.e` siguen con `stockEntradaVale` (`c.t`) y se vacían al confirmar un corte de fábrica: regla de siempre.
+  · **Cierre sin conexión**: NO confirma sobre la copia; queda en `localStorage` **`me_cierre_pend`** (plan: ids, días, cómo
+    estaba cada pedido) y **`cierreEntSincronizar()`** lo aplica revalidado con la próxima lectura buena (gancho en
+    `refrescarEstadoYa`). La ventana de resultado dice «guardado en la planilla: ok de total», cola y rechazados.
+  · **Lápidas monótonas** (`fusLapidas` en `stockFusionar`): una recepción o detección con `an` en cualquiera de las tres copias
+    sigue anulada en la junta. Una copia sin `v`≥2 (página vieja) no toca `det`/`sm`. **`STOCK.v2t`** + `stockRecsPaginaVieja()` →
+    aviso ámbar en la vista previa con «↩️ anular» para lo que una página sin F5 «dio por llegado» por la fecha.
+  · `tests/test_rev_corte_codex.js` (45). ⚠️ Una prueba del control del corte que anote movimientos con `ts` tiene que armarlos
+    con la hora de Bolivia (`new Date(f+'T'+h+'-04:00')`); con el reloj clavado, `Date.now()` es SIEMPRE el mismo instante (y
+    coincide con `c.t`): no sirve para «antes/después».
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
