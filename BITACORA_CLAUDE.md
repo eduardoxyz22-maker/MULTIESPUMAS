@@ -7445,6 +7445,18 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ho. 05/10: Catálogo — COLCHON SMART 140x190 (CH2522) y COLCHON SUEÑA LITE 105x190 (CH2531); el SMART es Sueña
+El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»): CH2521 SMART 105*190, CH2522 SMART 140*190, SMART
+160*190 **sin código**; CH2531 SUEÑA LITE 105*190, CH2532 SUEÑA LITE 140X190. *«añade esos productos a la lista de productos»*.
+- Dos entradas más al final de `CODIGOS` (`pedidos.html`), con el mismo formato que §4dw/§4dx:
+  `"CH2522":{d:"COLCHON SMART",m:"140x190"}` y `"CH2531":{d:"COLCHON SUEÑA LITE",m:"105x190"}`. CH2521 y CH2532 ya estaban.
+  `NOMBRES_LISTA` se arma sola; el reporte de existencias los encuentra por código.
+- **El SMART 160x190 NO entró**: el catálogo va por código y la tabla no lo trae. Queda pendiente de que el dueño pase el código.
+- **SMART → Sueña** (`stockMarcaDeNombre`): la tabla del dueño titula la familia «SUEÑA SMART», así que `SMART` entró al grupo
+  de Sueña y «🏭 Qué producir» lo manda al bloque Multiespumas · Sueña en vez de «❓ Sin fábrica asignada» (lo que §4dx dejó
+  pendiente «hasta que el dueño diga en cuál se hace»). Si el dueño dice otra fábrica, es una palabra en esa lista.
+- Sin publicar hasta el «publica» (la página publicada sigue `211705f`).
+
 ## 4hn. 05/10: 📥 PROPUESTA (sin implementar) — el control del corte: las llegadas de fábrica se detectan con el Excel
 - El dueño pidió «qué otras mejoras» (05/10) y eligió mirar la 2: comparar lo que el panel esperaba con el Excel de existencias.
   Su dato clave: *«logística no marca que llegó de fábrica, solo lo que se pidió, y cada día solo suben las existencias de los
@@ -7590,9 +7602,18 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     la 🏭 sellada y entregada cuadra; la salida manual de hoy mira la hora del corte). **Batería entera (`676089f`): 133 suites, 5.016 comprobaciones, UNA roja en la corrida — `test_stock` §11, ajustada a
     conciencia: su fixture de la §9 tiene una línea 🏭 PILLOW sellada ✔ hay hace 7 días y sin entregar, que con R5 ya está en el
     conteo y queda reservada (29 parados y no 30 → 7,25 meses, no 7,5); sola, 106/106 después del ajuste. `test_stock_detalle`
-    «sin resumen», como siempre.**
+    «sin resumen», como siempre.** **Y otra vez entera con la regla del dueño para los destildados (`cf4b505`, lo publicado):
+    133 suites, 5.016 comprobaciones, 0 rojas.**
   · **El límite de autorización de Codex, respetado**: se pusheó SOLO a la rama `claude/pedidos-fecha-entrega-bgt0em` (lo de
-    siempre con el dueño); NADA en `main`, nada desplegado, ningún dato real tocado. Publicar sigue esperando el «publica».
+    siempre con el dueño); NADA en `main` hasta el «publica» del dueño.
+  · **PUBLICADA el 05/10 a las 17:01 de Bolivia** (`211705f`: merge `--no-ff` de la rama en `main` desde una rama local `pub`,
+    como las publicaciones anteriores; página sola, el `.gs` sigue `2026-10-02-a`), con el «publica» del dueño después de su
+    decisión sobre los destildados (`cf4b505`). Se pusheó a las 21:01 UTC, justo antes del cron de las 21:00 del dashboard y sin
+    ningún workflow corriendo (regla de oro: no pushear a `main` con el workflow del panel en marcha). Verificado por git que
+    `main` trae `cierreEntSincronizar`, `fusLapidas` y `prodUnidEnConteo` y no `cierreNoSalio`; desde esta sesión el proxy no deja
+    leer `github.io`, así que el deploy de Pages se mira en Actions (workflow `273388817`). **Pages OK a las 17:21 de Bolivia**
+    (run 1583: el job estuvo 20 minutos EN COLA esperando un runner — a las 21:00 UTC en punto se disparan muchos crons en
+    GitHub; no era un atasco de Pages, no hizo falta destrabar nada). Todos F5.
 
 ## 4hm. 03/10: 🎃 tema de Halloween en el panel de pedidos, en el dashboard y en el de Sueña — PUBLICADO 03/10 11:06 (`093862f`; Sueña `ea830a1`)
 

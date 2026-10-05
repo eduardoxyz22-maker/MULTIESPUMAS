@@ -2614,7 +2614,8 @@ funciones nuevas; la prueba lo cuenta como una roja por sección en vez de caers
 comprobaciones cambiaron a conciencia: los destildados se guardan con `eX`; la línea 🏭 sellada y entregada cuadra en vez de
 explicarse como «salió lo hecho a pedido»). Batería entera: 133 suites, 5.016 comprobaciones; una sola roja en la corrida (`test_stock` §11), que es consecuencia directa
 del arreglo 4: su fixture tiene una línea 🏭 que llegó hace 7 días y sigue sin entregar, y ahora esa unidad cuenta como reservada
-(29 parados y no 30 → 7,25 meses de plata parada, no 7,5); la ajusté a conciencia y sola da 106/106. Datos sintéticos, servidor simulado; el `.gs` no cambia
+(29 parados y no 30 → 7,25 meses de plata parada, no 7,5); la ajusté a conciencia y sola da 106/106. Con la regla del dueño para los
+destildados (lo que se publicó), la batería entera otra vez: 133 suites, 5.016 comprobaciones, 0 rojas. Datos sintéticos, servidor simulado; el `.gs` no cambia
 (sigue `2026-10-02-a`): basta recargar la página cuando se publique.
 
 **Lo que NO queda probado y lo digo.** (a) Dos navegadores reales contra la planilla de verdad (la junta se probó con
