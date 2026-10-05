@@ -1105,6 +1105,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirCarga()">📦 Lista de carga</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#22A06B" onclick="abrirEntregas()">🚚 Entregado</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#0a6b47" onclick="abrirCierreEntregas()" title="A las 16:30: la lista de los pedidos de hoy tildada como propuesta; destildá los que no salieron y confirmá todos juntos.">✅ Cierre de entregas</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#b45309" onclick="abrirFaltantes()">🏭 Faltantes / producción</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirParte()">📋 Parte del día</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#128C7E" onclick="abrirEnvio('hoy')">📤 Cierre del día</button>
@@ -1139,6 +1140,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
              pegado al borde superior al hacer scroll: una tienda sin mercadería no es un
              detalle que se descubra bajando la tabla. -->
         <div id="adm-rpt"></div>
+        <!-- ✅ Cierre de entregas (§4hn): desde las 16:30 de Bolivia, cuántos de hoy siguen sin confirmar. -->
+        <div id="adm-cierre-ent"></div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
@@ -12139,7 +12142,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -22155,6 +22158,7 @@ function showCargaModal(id){
       '<div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">'+
         '<div class="lb">🚚 ¿Entregado?</div>'+
         '<button class="btn btn-sm" style="'+(p.entregado?'background:var(--green);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleEntregado(\''+p.id+'\')">'+(p.entregado?'✓ SÍ, entregado':'Marcar entregado')+'</button>'+
+        cierreEntTxt(p)+
       '</div>'+
     '</div>';
   var despachoSec=
@@ -22279,6 +22283,7 @@ function showPedidoModal(id){
       '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">'+
         '<div class="lb">🚚 ¿Entregado?</div>'+
         '<button class="btn btn-sm" style="'+(p.entregado?'background:var(--green);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleEntregado(\''+p.id+'\')">'+(p.entregado?'✓ SÍ, entregado':'Marcar entregado')+'</button>'+
+        cierreEntTxt(p)+
       '</div>'+
     '</div>';
   var despachoSec =
@@ -22361,6 +22366,176 @@ function toggleEntregado(id){
   guardarDurable(p);
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
   reabrirFicha(id);
+}
+
+/* ============================================================================
+   ✅ CIERRE DE ENTREGAS (§4hn, etapa 1 — 05/10/2026)
+   El dueño (05/10): logística se olvida de marcar las entregas una por una. Codex pidió un
+   cierre diario: a las 16:30 de Bolivia, UNA lista con los pedidos del día tildados como
+   propuesta; logística destilda los que no salieron y confirma todos juntos.
+   · Abrir la lista NO escribe nada. Se escribe recién con «Confirmar».
+   · Entran los pedidos con fecha = hoy y sin la marca, menos las filas del sistema, los retiros,
+     los borradores de Kommo y las ventas de tienda (no van en camión). ATC y RPT sí: una
+     devolución de ATC o una reposición a sucursal son entregas del camión.
+   · Los ATRASADOS (fecha pasada, sin marca, hasta CIERRE_ENT_ATRASO_DIAS para atrás) van aparte
+     y DESTILDADOS: nunca se confirman por omisión. Si se tilda uno, se le pregunta qué día se
+     entregó (por defecto hoy).
+   · Antes de confirmar se RELEE la planilla: lo borrado, lo reprogramado a otro día y lo que otro
+     equipo ya marcó se saltea y se dice. Nunca se marca sobre una copia vieja.
+   · Se guarda `entregado` como siempre (chofer, tabla, stock y «Entregado» lo leen igual) y,
+     ADENTRO de cada producto (viaja en `_productos_json`: sin columnas nuevas ni `.gs`, como
+     `prodEn` o `chkDe`): `eF` = día de entrega declarado, `eT` = cuándo se confirmó (ms), `eQ` =
+     quién. ⚠️ La hora de la confirmación NO es la hora de la entrega: no se inventa ninguna.
+     Un panel viejo ignora `eF/eT/eQ` y sigue viendo `entregado`.
+   · El panel no tiene usuarios: quién cierra se pregunta una vez por aparato (`me_cierre_quien`,
+     como la vendedora recordada) y se puede cambiar en la misma ventana.
+   · Se puede repetir: la lista muestra solo lo que falta. SIN parciales por línea (dueño, 05/10:
+     «no pasa; solo los grandes de Eduardo, y no los cargo al panel»): destildar = no salió nada.
+   · 16:30 es una ayuda, no una orden: desde esa hora un cartel en Administración cuenta lo que
+     sigue sin confirmar. Antes, nada.
+   ========================================================================== */
+var CIERRE_ENT_HORA='16:30';        // hora de Bolivia desde la que se avisa (dueño/Codex, 05/10)
+var CIERRE_ENT_ATRASO_DIAS=14;      // los atrasados se buscan hasta tantos días para atrás
+var CIERRE_ENT_SEL={};              // id → tildado, mientras la ventana está abierta
+var CIERRE_ENT_DIA={};              // id → día de entrega elegido para un atrasado tildado
+function cierreEntEntra(p){ return !!p && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && !!p.fecha && !p.entregado; }
+function cierreEntHoy(hoy){ hoy=hoy||todayStr(); return STATE.filter(function(p){ return cierreEntEntra(p) && p.fecha===hoy; }).sort(cierreEntOrden); }
+function cierreEntAtrasados(hoy){
+  hoy=hoy||todayStr(); var desde=stockSumarDias(hoy, -CIERRE_ENT_ATRASO_DIAS);
+  return STATE.filter(function(p){ return cierreEntEntra(p) && p.fecha<hoy && p.fecha>=desde; })
+              .sort(function(a,b){ return a.fecha<b.fecha?1:(a.fecha>b.fecha?-1:cierreEntOrden(a,b)); });
+}
+function cierreEntOrden(a,b){
+  var ta=normTurno(a.turno), tb=normTurno(b.turno); if(ta!==tb) return ta==='AM'?-1:1;
+  var va=vehiculoDe(a)||'', vb=vehiculoDe(b)||''; if(va!==vb) return va.localeCompare(vb,'es');
+  return (Number(a.nroDia)||0)-(Number(b.nroDia)||0);
+}
+/* ¿Ya son las 16:30 en Bolivia? `horaBolivia()` trae la hora de Bolivia sea cual sea la zona del aparato. */
+function cierreEntEsHora(){ var h=horaBolivia(); return (('0'+h.getHours()).slice(-2)+':'+('0'+h.getMinutes()).slice(-2))>=CIERRE_ENT_HORA; }
+function cierreEntQuien(){ try{ return localStorage.getItem('me_cierre_quien')||''; }catch(e){ return ''; } }
+function cierreEntSetQuien(q){ try{ localStorage.setItem('me_cierre_quien', String(q||'')); }catch(e){} }
+/* El registro de la confirmación, leído de los productos (el primero que lo tenga). */
+function cierreEntDe(p){
+  var xs=(p&&p.productos)||[];
+  for(var i=0;i<xs.length;i++){ var x=xs[i]; if(x && x.eT) return { f:String(x.eF||''), t:Number(x.eT)||0, q:String(x.eQ||'') }; }
+  return null;
+}
+function cierreEntTxt(p){
+  var c=p && p.entregado ? cierreEntDe(p) : null; if(!c) return '';
+  return '<span style="font-size:.78rem;color:var(--muted)">confirmado'+(c.q?(' por <b>'+esc(c.q)+'</b>'):'')+(c.t?(' el '+esc(tsFmt(c.t))):'')+
+         (c.f?(' · entrega del '+esc(fmtFechaCorta(c.f))):'')+'</span>';
+}
+/* Cartel de Administración desde las 16:30. */
+function renderCierreEntAviso(){
+  var el=document.getElementById('adm-cierre-ent'); if(!el) return;
+  var hoy=cierreEntHoy(), atr=cierreEntAtrasados();
+  if(!cierreEntEsHora() || (!hoy.length && !atr.length)){ el.className=''; el.innerHTML=''; return; }
+  el.className='revisar';
+  el.innerHTML='✅ <b>Cierre de entregas</b> — '+
+    (hoy.length ? ('<b>'+hoy.length+'</b> pedido'+(hoy.length===1?'':'s')+' de hoy sin confirmar') : 'los de hoy están confirmados')+
+    (atr.length ? (' · <b>'+atr.length+'</b> atrasado'+(atr.length===1?'':'s')+' sin resolver') : '')+'. '+
+    'Tildá los que salieron y confirmá todos juntos.'+
+    ' <button class="rv-toggle" style="margin-left:8px" onclick="abrirCierreEntregas()">hacer el cierre</button>';
+}
+function abrirCierreEntregas(){
+  CIERRE_ENT_SEL={}; CIERRE_ENT_DIA={};
+  cierreEntHoy().forEach(function(p){ CIERRE_ENT_SEL[p.id]=true; });   // propuesta: los de hoy tildados; los atrasados no
+  MODAL_KIND='admin';
+  renderCierreEntregas();
+}
+function cierreEntFila(p, atrasado){
+  var on=!!CIERRE_ENT_SEL[p.id], hoy=todayStr();
+  return '<label style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
+    '<input type="checkbox" class="cie-ent-chk" data-id="'+esc(String(p.id))+'"'+(on?' checked':'')+' onchange="cierreEntToggle(this.getAttribute(\'data-id\'), this.checked)" style="width:18px;height:18px">'+
+    '<b>'+esc(ocEtiq(p.oc)||'—')+'</b>'+
+    '<span>'+esc(p.cliente||'(sin cliente)')+'</span>'+
+    '<span style="color:var(--muted)">'+esc(p.zona||'')+'</span>'+
+    '<span class="badge b-gray">'+(normTurno(p.turno)==='PM'?'🌆 PM':'🌅 AM')+'</span>'+
+    '<span style="color:var(--muted)">'+esc(vehiculoDe(p)||'sin camión')+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>'+
+    (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>'+
+      '<span style="font-size:.8rem;color:var(--muted)">¿qué día se entregó? <input type="date" class="cie-ent-dia" data-id="'+esc(String(p.id))+'" value="'+esc(CIERRE_ENT_DIA[p.id]||hoy)+'" max="'+esc(hoy)+'" min="'+esc(p.fecha)+'" onchange="cierreEntDia(this.getAttribute(\'data-id\'), this.value)" style="width:140px;padding:3px 6px"></span>') : '')+
+    '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
+  '</label>';
+}
+function renderCierreEntregas(){
+  var hoy=todayStr(), H=cierreEntHoy(hoy), A=cierreEntAtrasados(hoy);
+  var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Cierre de entregas · '+esc(fmtFecha(hoy))+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+    '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px">Los de hoy vienen <b>tildados como propuesta</b>: destildá los que no salieron o el cliente no estaba, y tocá Confirmar. '+
+      'Abrir esta lista no cambia nada. Antes de confirmar el panel <b>relee la planilla</b>: lo que otro equipo reprogramó, borró o ya marcó se saltea y se avisa. '+
+      'Los destildados siguen pendientes y se pueden reprogramar.</p>'+
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><label class="lb" for="cie-ent-quien" style="margin:0">¿Quién cierra?</label>'+
+      '<input id="cie-ent-quien" type="text" value="'+esc(cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
+    '<div style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
+    (H.length ? H.map(function(p){ return cierreEntFila(p,false); }).join('') : '<div style="font-size:.86rem;color:var(--muted);padding:6px 0">No queda ninguno sin confirmar.</div>')+
+    (A.length ? ('<div style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
+      '<div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">Vienen destildados a propósito: nunca se confirman por omisión. Si uno sí se entregó, tildalo y decí qué día.</div>'+
+      A.map(function(p){ return cierreEntFila(p,true); }).join('')) : '')+
+    '<div class="modal-actions" style="margin-top:14px">'+
+      '<button id="cie-ent-confirmar" class="btn btn-primary btn-sm" style="flex:1;min-width:220px;background:#0a6b47" onclick="confirmarCierreEntregas()">'+cierreEntBotonTxt()+'</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
+    '</div></div>';
+  openModal(html, true);
+}
+function cierreEntTildados(){ return Object.keys(CIERRE_ENT_SEL).filter(function(id){ return CIERRE_ENT_SEL[id]; }); }
+function cierreEntBotonTxt(){ var n=cierreEntTildados().length; return n ? ('✅ Confirmar '+n+' entrega'+(n===1?'':'s')) : 'Nada tildado'; }
+function cierreEntToggle(id, on){ CIERRE_ENT_SEL[String(id)]=!!on; var b=document.getElementById('cie-ent-confirmar'); if(b) b.textContent=cierreEntBotonTxt(); }
+function cierreEntDia(id, v){ if(/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))) CIERRE_ENT_DIA[String(id)]=v; }
+/* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
+function cierreEntMarcar(p, quien, dia, ts){
+  p.entregado=true; atcAlMarcarEntregado(p);
+  (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); } });
+}
+var CIERRE_ENT_EN_CURSO=false;
+function confirmarCierreEntregas(){
+  if(CIERRE_ENT_EN_CURSO) return Promise.resolve(null);
+  var inp=document.getElementById('cie-ent-quien'), quien=String((inp&&inp.value)||'').trim();
+  if(!quien){ toast('Poné quién está cerrando.','err'); if(inp) inp.focus(); return Promise.resolve(null); }
+  cierreEntSetQuien(quien);
+  var ids=cierreEntTildados();
+  if(!ids.length){ toast('No hay ninguna entrega tildada.','err'); return Promise.resolve(null); }
+  var hoy=todayStr(), antes={};
+  ids.forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; });
+  var btn=document.getElementById('cie-ent-confirmar'); if(btn){ btn.disabled=true; btn.textContent='⏳ Releyendo la planilla…'; }
+  CIERRE_ENT_EN_CURSO=true;
+  /* La relectura puede fallar (sin señal): se avisa y se confirma sobre la copia de este aparato; lo
+     que se guarde queda en la cola durable (§4hh) y se reintenta solo. */
+  var relectura = CONNECTED ? refrescarEstadoYa().catch(function(){ return false; }) : Promise.resolve(false);
+  return relectura.then(function(leyo){
+    var ts=Date.now(), hechos=[], saltados=[];
+    ids.forEach(function(id){
+      var p=findById(id), a=antes[id]||{};
+      if(!p){ saltados.push({ id:id, por:'ya no está en la planilla: lo borraron' }); return; }
+      if(p.entregado){ saltados.push({ p:p, por:'ya lo marcó otro equipo' }); return; }
+      if(a.fecha && p.fecha!==a.fecha){ saltados.push({ p:p, por:'lo reprogramaron para el '+fmtFecha(p.fecha) }); return; }
+      if(!cierreEntEntra(p)){ saltados.push({ p:p, por:'ya no es una entrega del camión' }); return; }
+      var dia = a.hoy ? hoy : (CIERRE_ENT_DIA[id]||hoy);
+      cierreEntMarcar(p, quien, dia, ts); hechos.push(p);
+    });
+    hechos.forEach(function(p){ upsert(p); });
+    saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();
+    var guardados=hechos.map(function(p){ return guardarDurable(p); });
+    CIERRE_ENT_EN_CURSO=false;
+    renderCierreEntResultado(hechos, saltados, leyo);
+    return Promise.all(guardados).then(function(rs){ return { hechos:hechos.length, saltados:saltados.length, leyo:leyo, respuestas:rs }; });
+  }, function(){ CIERRE_ENT_EN_CURSO=false; if(btn){ btn.disabled=false; btn.textContent=cierreEntBotonTxt(); } return null; });
+}
+function renderCierreEntResultado(hechos, saltados, leyo){
+  var quedan=cierreEntHoy().length;
+  var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Cierre de entregas</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+    (leyo ? '' : '<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.82rem;color:#7c4b00">⚠️ No se pudo releer la planilla (sin señal): se confirmó con la copia de este aparato. Lo guardado queda en la cola y se reintenta solo.</div>')+
+    '<div style="font-size:.95rem;font-weight:700;margin-bottom:6px">'+hechos.length+' entrega'+(hechos.length===1?'':'s')+' confirmada'+(hechos.length===1?'':'s')+'</div>'+
+    (hechos.length ? ('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+hechos.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||''); }).join('<br>')+'</div>') : '')+
+    (saltados.length ? ('<div style="font-weight:700;font-size:.9rem;margin:8px 0 4px">No se marcaron · '+saltados.length+'</div>'+
+      '<div style="font-size:.84rem">'+saltados.map(function(s){ return (s.p ? (esc(ocEtiq(s.p.oc)||'—')+' · '+esc(s.p.cliente||'')) : esc(String(s.id)))+': <b>'+esc(s.por)+'</b>'; }).join('<br>')+'</div>') : '')+
+    '<div style="font-size:.84rem;color:var(--muted);margin-top:12px">'+(quedan ? ('Quedan <b>'+quedan+'</b> de hoy sin confirmar. Podés volver a abrir el cierre más tarde: muestra solo lo que falta.') : 'No queda ninguno de hoy sin confirmar.')+
+      ' Lo guardado viaja a la planilla; si algo no entra, queda en la cola de este dispositivo y se reintenta solo.</div>'+
+    '<div class="modal-actions" style="margin-top:14px">'+
+      (quedan ? '<button class="btn btn-sm" style="flex:1" onclick="abrirCierreEntregas()">Ver lo que falta</button>' : '')+
+      '<button class="btn btn-primary btn-sm" style="flex:1;background:#0a6b47" onclick="closeModal()">Listo</button>'+
+    '</div></div>';
+  openModal(html, true);
 }
 /* ---- Revisión producto por producto (logística): ✔ hay / ✗ no hay ----
    El estado vive en cada producto (x.chk) y viaja dentro del JSON de productos,
