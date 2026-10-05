@@ -328,14 +328,19 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     confirmarImportExist();
     var d=stockData(), t=d.lista.filter(function(o){ return o.k===KT; })[0];
     var T=stockTiemposFabrica();
-    return { avisa:/ya deber[íi]a/.test(txt), abiertos:(STOCK.p||[]).filter(function(q){ return !q.r; }).length,
+    return { control:/Control del corte/.test(txt), casillaVieja:!!document.getElementById('exist-cerrar-ped'),
+             abiertos:(STOCK.p||[]).filter(function(q){ return !q.r; }).length,
              cerrado:(STOCK.p||[]).filter(function(q){ return q.id==='fpA'; })[0],
+             reclamar:(t.reclamar||[]).map(function(q){ return q.id; }),
              enCamino:t.enCamino, deposito:t.deposito, medido:T.de('MORENO').medido };
   });
-  chk('la pantalla avisa que hay pedidos que ya deberían haber llegado', r.avisa===true);
-  chk('⚠️ …y al aplicar se cierran, así no se cuentan dos veces (ya están en el conteo)',
-      r.abiertos===1 && r.cerrado.r==='2026-09-07' && r.cerrado.enConteo===true, r.abiertos+' abiertos');
-  chk('…el que se pidió hoy sigue en camino', r.enCamino===7, r.enCamino);
+  /* (05/10, §4hn) Antes acá se «daban por llegados» POR FECHA los pedidos vencidos. Codex (PDF del 05/10): la fecha vencida no
+     prueba nada, dispara un RECLAMO. Ahora la ventana muestra el control del corte y no cierra nada sola. */
+  chk('⚠️ la ventana muestra el control del corte y ya no ofrece «darlos por llegados» a ciegas',
+      r.control===true && r.casillaVieja===false, JSON.stringify([r.control, r.casillaVieja]));
+  chk('⚠️ al aplicar NO se cierra ningún pedido por fecha: los dos siguen en camino, y el vencido queda para reclamar',
+      r.abiertos===2 && r.cerrado.r==='' && !r.cerrado.enConteo && r.enCamino===17 && JSON.stringify(r.reclamar)==='["fpA"]',
+      r.abiertos+' abiertos · reclamar '+JSON.stringify(r.reclamar));
   chk('…y el depósito es el del Excel, no el del Excel + lo pedido', r.deposito===4, r.deposito);
   chk('⚠️ cerrarlo así NO inventa un tiempo de fábrica: se sabe que estaba, no cuándo llegó',
       r.medido===false, 'medido: '+r.medido);
