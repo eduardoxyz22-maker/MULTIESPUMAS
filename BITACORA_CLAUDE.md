@@ -7470,7 +7470,8 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   de Eduardo cuando son grandes se entregan por partes, pero yo no los cargo al panel»*. Consecuencias: la casilla «ya
   incluye las entregas» sigue siendo la convención de la hora; el caso 0→5→0 queda ciego (solo saldos); las ATC no son causa
   de ninguna diferencia; Moreno/Banzer solo informativo; botón para anotar salidas sin pedido; **sin parciales por línea**.
-- **HECHO el 05/10, etapas 1 y 2, en la rama y SIN publicar** (commits `0e4fc75` y `04acca8`; batería entera abajo):
+- **HECHO el 05/10, etapas 1 y 2, en la rama y SIN publicar** (commits `0e4fc75` y `04acca8`; **batería entera con las dos
+  etapas: 132 suites, 4.968 comprobaciones, 0 rojas**; capturas de demo con datos inventados mandadas al dueño por el chat):
   · **Etapa 1, el cierre de entregas** (`abrirCierreEntregas`, `confirmarCierreEntregas`, `cierreEntMarcar`,
     `renderCierreEntAviso`; botón «✅ Cierre de entregas» en Administración y cartel desde las 16:30 de Bolivia,
     `CIERRE_ENT_HORA`). Lista de hoy = `cierreEntEntra(p)` (sin filas del sistema, retiros, borradores de Kommo ni ventas de
