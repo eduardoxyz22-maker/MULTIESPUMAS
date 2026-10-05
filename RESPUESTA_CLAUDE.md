@@ -2612,7 +2612,9 @@ rama, como siempre; publicar en `main` espera tu «publica».
 (`94ce3e2`, antes de esta vuelta): 6 verdes y 13 rojas, con 8 de las 10 secciones que ni terminan (esa página no tiene las
 funciones nuevas; la prueba lo cuenta como una roja por sección en vez de caerse). `test_cierre_entregas` 26/26 y `test_control_corte` 32/32 (dos
 comprobaciones cambiaron a conciencia: los destildados se guardan con `eX`; la línea 🏭 sellada y entregada cuadra en vez de
-explicarse como «salió lo hecho a pedido»). Batería entera: corriendo al cerrar este commit (93 de 133 suites terminadas, 0 rojas); el total va en el commit siguiente. Datos sintéticos, servidor simulado; el `.gs` no cambia
+explicarse como «salió lo hecho a pedido»). Batería entera: 133 suites, 5.016 comprobaciones; una sola roja en la corrida (`test_stock` §11), que es consecuencia directa
+del arreglo 4: su fixture tiene una línea 🏭 que llegó hace 7 días y sigue sin entregar, y ahora esa unidad cuenta como reservada
+(29 parados y no 30 → 7,25 meses de plata parada, no 7,5); la ajusté a conciencia y sola da 106/106. Datos sintéticos, servidor simulado; el `.gs` no cambia
 (sigue `2026-10-02-a`): basta recargar la página cuando se publique.
 
 **Lo que NO queda probado y lo digo.** (a) Dos navegadores reales contra la planilla de verdad (la junta se probó con
