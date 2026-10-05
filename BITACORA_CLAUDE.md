@@ -7590,7 +7590,8 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
     la 🏭 sellada y entregada cuadra; la salida manual de hoy mira la hora del corte). **Batería entera (`676089f`): 133 suites, 5.016 comprobaciones, UNA roja en la corrida — `test_stock` §11, ajustada a
     conciencia: su fixture de la §9 tiene una línea 🏭 PILLOW sellada ✔ hay hace 7 días y sin entregar, que con R5 ya está en el
     conteo y queda reservada (29 parados y no 30 → 7,25 meses, no 7,5); sola, 106/106 después del ajuste. `test_stock_detalle`
-    «sin resumen», como siempre.**
+    «sin resumen», como siempre.** **Y otra vez entera con la regla del dueño para los destildados (`cf4b505`, lo publicado):
+    133 suites, 5.016 comprobaciones, 0 rojas.**
   · **El límite de autorización de Codex, respetado**: se pusheó SOLO a la rama `claude/pedidos-fecha-entrega-bgt0em` (lo de
     siempre con el dueño); NADA en `main` hasta el «publica» del dueño.
   · **PUBLICADA el 05/10 a las 17:01 de Bolivia** (`211705f`: merge `--no-ff` de la rama en `main` desde una rama local `pub`,
