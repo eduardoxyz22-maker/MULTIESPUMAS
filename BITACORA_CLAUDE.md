@@ -7445,6 +7445,18 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ho. 05/10: Catálogo — COLCHON SMART 140x190 (CH2522) y COLCHON SUEÑA LITE 105x190 (CH2531); el SMART es Sueña
+El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»): CH2521 SMART 105*190, CH2522 SMART 140*190, SMART
+160*190 **sin código**; CH2531 SUEÑA LITE 105*190, CH2532 SUEÑA LITE 140X190. *«añade esos productos a la lista de productos»*.
+- Dos entradas más al final de `CODIGOS` (`pedidos.html`), con el mismo formato que §4dw/§4dx:
+  `"CH2522":{d:"COLCHON SMART",m:"140x190"}` y `"CH2531":{d:"COLCHON SUEÑA LITE",m:"105x190"}`. CH2521 y CH2532 ya estaban.
+  `NOMBRES_LISTA` se arma sola; el reporte de existencias los encuentra por código.
+- **El SMART 160x190 NO entró**: el catálogo va por código y la tabla no lo trae. Queda pendiente de que el dueño pase el código.
+- **SMART → Sueña** (`stockMarcaDeNombre`): la tabla del dueño titula la familia «SUEÑA SMART», así que `SMART` entró al grupo
+  de Sueña y «🏭 Qué producir» lo manda al bloque Multiespumas · Sueña en vez de «❓ Sin fábrica asignada» (lo que §4dx dejó
+  pendiente «hasta que el dueño diga en cuál se hace»). Si el dueño dice otra fábrica, es una palabra en esa lista.
+- Sin publicar hasta el «publica» (la página publicada sigue `211705f`).
+
 ## 4hn. 05/10: 📥 PROPUESTA (sin implementar) — el control del corte: las llegadas de fábrica se detectan con el Excel
 - El dueño pidió «qué otras mejoras» (05/10) y eligió mirar la 2: comparar lo que el panel esperaba con el Excel de existencias.
   Su dato clave: *«logística no marca que llegó de fábrica, solo lo que se pidió, y cada día solo suben las existencias de los
