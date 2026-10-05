@@ -5294,11 +5294,20 @@ function KPIStrip(_ref2) {
   var _prevLeads = _sv.reduce(function (s, v) {
     return s + (v.momLeads || 0);
   }, 0);
-  var _prevVentas = _sv.reduce(function (s, v) {
-    return s + (v.momVentas || 0);
-  }, 0);
-  var _prevConv = _prevLeads > 0 ? _prevVentas / _prevLeads : null;
-  var convMoM = _prevConv && g.conversion != null ? (g.conversion - _prevConv) / _prevConv : null;
+  // conversion comparable: solo vendedores con ventas cargadas en los dos meses
+  var _cmp = _sv.filter(function (v) {
+    return v.momVentas != null && v.ventasConcretadas != null;
+  });
+  var _cmpSum = function _cmpSum(k) {
+    return _cmp.reduce(function (s, v) {
+      return s + (v[k] || 0);
+    }, 0);
+  };
+  var _prevLeadsCmp = _cmpSum("momLeads"),
+    _curLeadsCmp = _cmpSum("leads");
+  var _prevConv = _prevLeadsCmp > 0 ? _cmpSum("momVentas") / _prevLeadsCmp : null;
+  var _curConv = _curLeadsCmp > 0 ? _cmpSum("ventasConcretadas") / _curLeadsCmp : null;
+  var convMoM = _prevConv && _curConv != null ? (_curConv - _prevConv) / _prevConv : null;
   var leadsMoM = _prevLeads > 0 && g.leads != null ? (g.leads - _prevLeads) / _prevLeads : null;
   var items = [{
     eyebrow: "Venta total · " + scopeLabel,
@@ -7422,6 +7431,16 @@ function PresentacionView(_ref2) {
       ventasT = sum("ventasConcretadas"),
       presT = sum("presupuesto"),
       metaT = sum("metaMin");
+    // conversion y ticket solo sobre vendedores con ventas cargadas
+    var conVentas = vends.filter(function (v) {
+      return v.ventasConcretadas != null;
+    });
+    var leadsCV = conVentas.reduce(function (s, v) {
+        return s + (v.leads || 0);
+      }, 0),
+      montoCV = conVentas.reduce(function (s, v) {
+        return s + (v.monto || 0);
+      }, 0);
     if (tienda) {
       if (tienda.presupuesto) presT = tienda.presupuesto;
       if (tienda.metaMin) metaT = tienda.metaMin;
@@ -7444,7 +7463,7 @@ function PresentacionView(_ref2) {
         };
       case "Conversión":
         return {
-          val: leadsT > 0 ? ventasT / leadsT : null,
+          val: leadsCV > 0 && ventasT != null ? ventasT / leadsCV : null,
           tipo: "pct1"
         };
       case "Monto vendido":
@@ -7454,7 +7473,7 @@ function PresentacionView(_ref2) {
         };
       case "Ticket promedio":
         return {
-          val: ventasT > 0 ? montoT / ventasT : null,
+          val: ventasT > 0 ? montoCV / ventasT : null,
           tipo: "money"
         };
       case "% Presupuesto":
@@ -7502,9 +7521,15 @@ function PresentacionView(_ref2) {
         }
       case "MoM Ventas":
         {
-          var c = ventasT,
-            p = vends.reduce(function (s, v) {
-              return s + (v.momVentas || 0);
+          // comparable: solo vendedores con ventas cargadas en los dos meses
+          var cmpV = vends.filter(function (v) {
+            return v.momVentas != null && v.ventasConcretadas != null;
+          });
+          var c = cmpV.length ? cmpV.reduce(function (s, v) {
+              return s + v.ventasConcretadas;
+            }, 0) : null,
+            p = cmpV.reduce(function (s, v) {
+              return s + v.momVentas;
             }, 0);
           return {
             val: p > 0 && c != null ? (c - p) / p : null,
