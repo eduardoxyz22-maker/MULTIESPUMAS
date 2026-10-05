@@ -1441,7 +1441,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <style>
@@ -19279,7 +19279,7 @@ function renderStockAviso(){
 }
 
 /* ---- La pantalla ---- */
-function abrirStock(){ document.getElementById('stock-overlay').style.display='flex'; renderStock(); }
+function abrirStock(){ document.getElementById('stock-overlay').style.display='flex'; var q=document.getElementById('stk-q'); if(q && q.value!==STOCK_FILTRO.q) q.value=STOCK_FILTRO.q; renderStock(); }
 function closeStock(){ var ov=document.getElementById('stock-overlay'); if(ov) ov.style.display='none'; }
 function stockFabricasTxt(T){
   return PROD_LUGARES.map(function(L){
@@ -19463,10 +19463,17 @@ function renderStock(){
     return '<button class="badge" style="'+estilo+';cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" '+
       'data-k="'+esc(o.k)+'" onclick="abrirStockPedido(this.getAttribute(\'data-k\'))" title="'+esc(tit)+'">'+txt+'</button>';
   };
-  html+=renderStockHoy(d);
-  html+=renderRevisionFija();
-  html+=renderProducir(d);
-  html+=renderTiendas(d, stockMesSiguiente(d.hoy));   // no depende del conteo: sale de las ventas y las reposiciones
+  /* (05/10) Con algo escrito en el buscador de la barra de arriba, los cuadros grandes (hoy, revisión, qué producir, tiendas)
+     se esconden: lo buscado tiene que verse al instante, no tres pantallas más abajo. Se borra la búsqueda y vuelven. */
+  if(stockNorm(STOCK_FILTRO.q)){
+    html+='<div id="stk-buscando" style="background:#f6fbfa;border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:10px;font-size:.84rem">🔎 Buscando <b>«'+esc(STOCK_FILTRO.q)+'»</b>: se muestra solo lo que coincide. '+
+      '<a style="cursor:pointer;color:#0f766e;font-weight:700" onclick="stockFiltroLimpiar()">Borrar la búsqueda</a> para volver a ver los cuadros de hoy, la revisión y qué producir.</div>';
+  }else{
+    html+=renderStockHoy(d);
+    html+=renderRevisionFija();
+    html+=renderProducir(d);
+    html+=renderTiendas(d, stockMesSiguiente(d.hoy));   // no depende del conteo: sale de las ventas y las reposiciones
+  }
   var badge=function(o){
     if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
@@ -19608,8 +19615,9 @@ function renderStock(){
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
   body.innerHTML=html;
-  // El buscador se redibuja con la tabla: que no pierda el cursor mientras se escribe.
-  if(STOCK_FILTRO.foco){ STOCK_FILTRO.foco=false; var q=document.getElementById('stk-q'); if(q){ q.focus(); try{ q.setSelectionRange(q.value.length,q.value.length); }catch(e){} } }
+  // (05/10) El buscador vive en la barra de arriba y NO se redibuja con la tabla: el cursor se queda donde está.
+  // Solo si por algún motivo perdió el foco mientras se escribía, se lo devuelve (sin mover el cursor al final).
+  if(STOCK_FILTRO.foco){ STOCK_FILTRO.foco=false; var q=document.getElementById('stk-q'); if(q && (!document.activeElement || document.activeElement===document.body)){ try{ q.focus({preventScroll:true}); }catch(e){ q.focus(); } } }
 }
 /* 🤖 LA REVISIÓN, SIEMPRE A LA VISTA (§4cr).
    Antes había que acordarse de abrir una ventana. Ahora el resultado está arriba de la
@@ -21188,7 +21196,7 @@ function stockFiltro(campo, valor){
 }
 var _stockQT=null;
 function stockBuscar(v){ clearTimeout(_stockQT); _stockQT=setTimeout(function(){ STOCK_FILTRO.q=String(v||''); STOCK_FILTRO.foco=true; renderStock(); },180); }
-function stockFiltroLimpiar(){ STOCK_FILTRO={ q:'', aviso:'', marca:'', medida:'', orden:'', dir:1 }; renderStock(); }
+function stockFiltroLimpiar(){ STOCK_FILTRO={ q:'', aviso:'', marca:'', medida:'', orden:'', dir:1 }; var q=document.getElementById('stk-q'); if(q) q.value=''; renderStock(); }
 var STOCK_AVISO_GRUPO={ pedir:{urgente:1,pedir:1}, traer:{traer:1}, revisar:{revisar:1,sincontar:1}, pedido:{pedido:1}, sobra:{sobra:1}, unico:{unico:1}, ok:{'':1} };
 function stockAplicarFiltro(lista){
   var F=STOCK_FILTRO, q=stockNorm(F.q);
@@ -21252,8 +21260,10 @@ function renderStockFiltros(d, total, visibles){
   var meds={}; d.lista.forEach(function(o){ if(o.vendidos>0||o.comp>0||o.deposito>0){ var m=producirMedidaEtq(o.medida); meds[m]=(meds[m]||0)+1; } });
   var medOpts=Object.keys(meds).sort(function(a,b){ return meds[b]-meds[a]; });
   var algo=F.q||F.aviso||F.marca||F.medida||F.orden;
+  /* (05/10) El buscador (`#stk-q`) vive en la barra de arriba de la pantalla, fija: acá abajo el dueño no lo encontraba.
+     Los chips de aviso, marca y medida siguen acá, pegados a la tabla. */
   return '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'+
-    '<input id="stk-q" type="search" placeholder="🔎 buscar producto o código" value="'+esc(F.q)+'" oninput="stockBuscar(this.value)" style="flex:1;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid var(--gray-md);border-radius:7px;font:inherit;font-size:.8rem">'+
+    (F.q ? '<span style="font-size:.8rem;font-weight:700;color:#0f766e">🔎 «'+esc(F.q)+'»</span>' : '')+
     chip('aviso','pedir','🚨 Pedir ('+(cnt.pedir||0)+')',F.aviso==='pedir','#8a1c24')+
     chip('aviso','traer','🚚 Traer ('+(cnt.traer||0)+')',F.aviso==='traer','#075985')+
     chip('aviso','revisar','⚠️ Revisar ('+(cnt.revisar||0)+')',F.aviso==='revisar','#7c4b00')+

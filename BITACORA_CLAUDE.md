@@ -7445,6 +7445,28 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hp. 05/10: 🔎 el buscador del stock pasa a la barra de arriba — el dueño: *«no hay un buscado en stock....»*
+- Captura del dueño de la pantalla 📦 Stock en el iPad: se veían los cuadros de hoy, la revisión automática y «qué producir»,
+  y ningún lugar donde buscar. **El buscador existía desde §4cp** (`#stk-q` → `stockBuscar` → `stockAplicarFiltro`: nombre,
+  código y los «también:», palabra por palabra) pero se dibujaba CON la tabla, debajo de todos los cuadros: en 1500×1000 quedaba
+  a 1.100 px del borde de arriba y en el iPad parado a 1.400. Tres pantallas más abajo, nadie lo encontraba.
+- Hecho en `pedidos.html` (solo qué se dibuja; ninguna cuenta cambia):
+  · **`<input id="stk-q">` fijo en la barra de arriba** de `#stock-overlay` (entre `#stock-info` y «🤖 Revisión automática»,
+    con `margin-left:auto`), fuera de `#stock-body`. `renderStockFiltros` ya no lo dibuja: deja un chip «🔎 «q»» al lado de los
+    de aviso, marca y medida, que siguen pegados a la tabla.
+  · **Con algo escrito** (`stockNorm(STOCK_FILTRO.q)`), `renderStock` **esconde** `renderStockHoy`, `renderRevisionFija`,
+    `renderProducir` y `renderTiendas` y pone el cartel `#stk-buscando` («se muestra solo lo que coincide · Borrar la búsqueda»):
+    lo buscado aparece al instante, arriba. La tabla, «🚚 En camino», «💤 Plata parada» y los otros almacenes siguen igual.
+  · Como la barra no se redibuja con la tabla, **el cursor se queda donde está**: el refoco del final de `renderStock` ya no
+    manda el cursor al final (solo devuelve el foco si se perdió, con `preventScroll`). `stockFiltroLimpiar` vacía también el
+    campo de arriba; `abrirStock` sincroniza el campo con `STOCK_FILTRO.q` (otra pantalla pudo tocarlo). La ✕ del
+    `type=search` dispara `input` vacío → vuelven los cuadros.
+- Prueba: **`tests/test_stock_buscador.js`** (22): arriba y uno solo; filtra por nombre y por código; esconde los cuadros;
+  escribir adelante con el cursor en el medio no lo manda al final; borrar por el enlace y vaciando el campo; cerrar y volver a
+  abrir conserva lo buscado; iPad parado (820 px). Contra `64bcb37` (la publicada): 13 verdes / **9 rojas** (el campo a 1.096 y
+  1.428 px, los cuadros no se esconden, el cursor saltaba al final, el campo se perdía al reabrir).
+- Batería entera y publicación: ver el final de esta sección (se completa al correrla).
+
 ## 4ho. 05/10: Catálogo — COLCHON SMART 140x190 (CH2522) y COLCHON SUEÑA LITE 105x190 (CH2531); el SMART es Sueña
 El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»): CH2521 SMART 105*190, CH2522 SMART 140*190, SMART
 160*190 **sin código**; CH2531 SUEÑA LITE 105*190, CH2532 SUEÑA LITE 140X190. *«añade esos productos a la lista de productos»*.

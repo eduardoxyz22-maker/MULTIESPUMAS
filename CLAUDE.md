@@ -331,6 +331,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
       Moreno pero pueden estar guardadas en Banzer o Multiespumas. La fábrica sale de
       `MARCA_FABRICA`, el lugar de `STOCK.g` + `x.chkDe`. No se mezclan.
     `tests/test_banzer.js` (55).
+  - **🔎 El buscador del stock vive en la barra de arriba** (§4hp, 05/10; dueño: *«no hay un buscado en stock»*): el
+    `<input id="stk-q">` está en la barra fija de `#stock-overlay`, fuera de `#stock-body`, y `renderStockFiltros` NO lo dibuja
+    (deja un chip «🔎 «q»»). Con algo escrito, `renderStock` esconde los cuadros grandes (`renderStockHoy`, `renderRevisionFija`,
+    `renderProducir`, `renderTiendas`) y pone el cartel `#stk-buscando`; se borra la búsqueda y vuelven. ⚠️ No volver a dibujar
+    el campo dentro de la tabla (quedaba 1.100-1.400 px abajo, nadie lo encontraba) ni a mover el cursor al final en el refoco
+    de `renderStock`: la barra no se redibuja, el cursor se queda donde está. `stockFiltroLimpiar` vacía también el campo de
+    arriba y `abrirStock` lo sincroniza con `STOCK_FILTRO.q`. `tests/test_stock_buscador.js` (22; 9 rojas contra `64bcb37`).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
