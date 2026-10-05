@@ -7455,7 +7455,8 @@ El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»)
 - **SMART → Sueña** (`stockMarcaDeNombre`): la tabla del dueño titula la familia «SUEÑA SMART», así que `SMART` entró al grupo
   de Sueña y «🏭 Qué producir» lo manda al bloque Multiespumas · Sueña en vez de «❓ Sin fábrica asignada» (lo que §4dx dejó
   pendiente «hasta que el dueño diga en cuál se hace»). Si el dueño dice otra fábrica, es una palabra en esa lista.
-- Sin publicar hasta el «publica» (la página publicada sigue `211705f`).
+- **PUBLICADA el 05/10 a las 17:33 de Bolivia** (`64bcb37`; dueño: *«si es de sueña, está bien publica»*). Pages OK a las 17:34
+  (run 1584 bis, esta vez sin cola). Sin workflow del panel corriendo (su cron de las 21:00 UTC había corrido 21:17-21:24).
 
 ## 4hn. 05/10: 📥 PROPUESTA (sin implementar) — el control del corte: las llegadas de fábrica se detectan con el Excel
 - El dueño pidió «qué otras mejoras» (05/10) y eligió mirar la 2: comparar lo que el panel esperaba con el Excel de existencias.
