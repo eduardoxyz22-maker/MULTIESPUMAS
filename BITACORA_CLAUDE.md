@@ -7457,7 +7457,16 @@ publicado es `2026-10-02-a`; el repaso de Kommo cada 5 min anda (09:39); baterí
 5.038 comprobaciones, 0 rojas. ⚠️ **El webhook de Kommo sigue sin avisar desde el 22/09 19:01 UTC** (las ventas entran por el
 repaso, hasta 5 min tarde): mirar Kommo → Configuración → Integraciones → Webhooks. ⚠️ **El token de Kommo vence ~28/10**: va en
 DOS lugares, el secreto `KOMMO_TOKEN` de GitHub (tablero, respaldo) y la propiedad `KOMMO_TOKEN` del Apps Script (borradores).
-Desde esta sesión no se puede lanzar un workflow a mano (403): el diagnóstico de la lectura se corrió pusheando su archivo.
+Desde esta sesión no se puede lanzar un workflow a mano (403): el diagnóstico de la lectura se corrió pusheando su archivo
+(que ahora mide la celda del stock por partes y dice qué página subió cada corte y de qué día es el saldo en uso).
+
+**🚨 Producción, 06/10 10:45 (diagnóstico `e50685b`/`dc1ea9a`):** la celda del stock mide **23.220 letras (46 %)**: fotos 20.894,
+historial 14 cortes, **sin `v`/`v2t`, 0 detecciones, 0 salidas sin pedido, 0 pedidos a fábrica (`p` vacío)**. Ningún Excel se
+subió con la página nueva desde la publicación (05/10 17:01): **todos los cortes son de página vieja (sin huella)**. Y **hoy a
+las 10:18 se volvieron a subir los tres Excel del SÁBADO 03/10** (PTF 09:55, Banzer 09:52, IM 09:55) desde un aparato sin F5:
+**el saldo que usa el panel es el del sábado**, pisando el del lunes 05/10 11:40 (subido 11:54-11:55). Lo que llegó de fábrica
+desde el sábado no figura → «NO HAY»/«PEDIR YA» que pueden ser falsos. Pedido al dueño: F5 en todos los aparatos y subir los
+Excel de HOY. La lectura anduvo en 2-4 s con picos (un 404 a los 88-99 s, una entrega de 61 s: Google a ratos, §4fx/§4hb).
 
 **✅ Cierre de entregas (§4hn etapa 1)** — `aud_cierre/t*.js`:
 - **ALTA** — a las 16:30 se proponen tildados también los 🌆 PM (pueden seguir en la calle). Si se confirma y después se
