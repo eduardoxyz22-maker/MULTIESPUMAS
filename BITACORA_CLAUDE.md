@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — EN LA RAMA, sin publicar
+## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), el servidor lo implementa el dueño después del F5
 El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.
 Que no permita subir corte de días anteriores tiene que ser del día. La hoja de Excel si marca día y hora si no me equivoco. Ni
 habíamos quedado que las celdas de corte solo almacenaban X días y lo anteriores se iban borrando para no llenarse? De que me
@@ -7554,6 +7554,18 @@ mañana» sin mover el reloj; R6 sin tilde), `test_existencias`, `test_rev2_stoc
 dos recibidos recientes, la junta con la misma poda) y `test_identidad` (el reporte es de hoy), `test_concurrencia` (el otro
 equipo guarda con `sf`), `test_saldo_servidor` (versión). **Batería entera (`84c2b74`): 136 suites, 5.114 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen, como siempre).
 **Con la revisión (`22e463b`): 136 suites, 5.125 comprobaciones, 0 rojas** (+4 de §16 después, solo prueba: 56/56).
+
+**Publicación (06/10, dueño: «Publica»)**: `main` = **`45d3108`** a las 16:56 de Bolivia (merge de la rama `a86abbd` sobre
+`93188df`, el panel automático de las 15:17; ninguna corrida de Actions en curso, 4 minutos antes del cron de las 17:00).
+Pages: corrida `37530190248`, ✅ a las 16:56:32. La página, el `.gs` y las pruebas de `main` son idénticos a la rama.
+- **El servidor `2026-10-06-a` todavía NO está implementado**: lo hace el dueño cuando todos hicieron F5. Enlace fijo:
+  `https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/45d3108e460241bed5791aac9911cc469824da31/google-apps-script.gs`
+  (2.449 líneas, termina en `}` con `return borrador;` antes; comprobado bajándolo). `probarAntesDeImplementar` puede dar el ⚠️
+  «el stock lo guardó por última vez una página VIEJA» hasta que alguien con la página nueva toque el stock: no frena.
+- **Volver atrás** = ✏️ a la versión ANOTADA antes de implementar (tendría que ser la 36, la `2026-10-02-a`) Y pegar la
+  10-02-a del enlace fijo a `6b76e7aa06d9168ff1dbfd8836585c8895b029b6` (2.430 líneas, comprobado).
+- Sin el servidor, la página ya protege: solo el Excel de hoy, el corte no vuelve atrás, la lectura junta lo que manda una
+  página vieja y lo reguarda. El servidor cierra lo que queda: una página que nunca hizo F5 ya no puede escribir el stock.
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar

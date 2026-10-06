@@ -476,7 +476,8 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   → «🚚 Ya pedido · ⚠️ reclamar». Un campo nuevo de `STOCK` (`sm`, `det`, `v`, `pv`, `h[].d/hu`) ya entra en `stockFusionar`,
   `leerStock` y `filaStock` (tope: `STOCK_CONTROL_DIAS`, §4hs). `tests/test_control_corte.js` (32); `test_existencias` §6, `test_rev_stock` y
   `test_adm_alta` §2 cambiaron a conciencia (esperaban el cierre por fecha).
-- **📅 Segunda parte, por el dueño (06/10, §4hs, EN LA RAMA)**: *«que no permita subir corte de días anteriores, tiene que ser del
+- **📅 Segunda parte, por el dueño (06/10, §4hs, PÁGINA PUBLICADA 06/10 16:56, `45d3108`; el servidor `2026-10-06-a` lo implementa el
+  dueño después del F5 — volver atrás: ✏️ a la versión anotada, la 36, Y pegar la 10-02-a de `6b76e7a…`)**: *«que no permita subir corte de días anteriores, tiene que ser del
   día… ¿de qué me sirve un stock de hace dos semanas? Si cada día te subo la lista actualizada»*.
   · **Solo el Excel del DÍA** (`existNoEsDeHoy`, día de Bolivia): «existencias al» y cuándo se sacó (pie o nombre) tienen que ser
   de hoy; sin fecha no entra; sin botón para usarlo. **Ya no hay «usarlo igual»**: un corte más viejo que el vigente no entra
