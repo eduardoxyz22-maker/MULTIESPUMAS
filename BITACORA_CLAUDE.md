@@ -7513,7 +7513,7 @@ rojas contra la publicada `3443703`); `test_servidor` §22 (9; 6 rojas contra la
 `test_control_corte` (ids cortos; sin «usarlo igual»), `test_rev_corte_codex` (`_otroDia` para los casos que suben «el de
 mañana» sin mover el reloj; R6 sin tilde), `test_existencias`, `test_rev2_stock`, `test_stock_podar` (3 días, el historial,
 dos recibidos recientes, la junta con la misma poda) y `test_identidad` (el reporte es de hoy), `test_concurrencia` (el otro
-equipo guarda con `sf`), `test_saldo_servidor` (versión). Batería entera: BATERIA_PENDIENTE.
+equipo guarda con `sf`), `test_saldo_servidor` (versión). **Batería entera (`84c2b74`): 136 suites, 5.114 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen, como siempre).
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
