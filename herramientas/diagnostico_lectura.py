@@ -180,6 +180,14 @@ def celda_stock(ped):
     print(f"      fotos de los almacenes (u + cod): {_n(fotos)} letras · detecciones {len(det)} ({sum(1 for x in det if x.get('an'))} anuladas, "
           f"{_n(_tam(det))} letras) · salidas sin pedido {len(sm)} ({_n(_tam(sm))} letras) · recepciones {len(recs)}, del control "
           f"{len(rx)} ({_n(_tam(rx))} letras) · cortes en el historial {len(s.get('h') or [])}")
+    # ¿Quién subió los últimos Excel? La página con el control del corte (desde el 05/10 17:01) marca la fila con `v: 2` y
+    # `v2t`, y cada corte con su huella (`hu`) y sus diferencias (`d`); una página sin F5 no deja nada de eso (§4hq).
+    print(f"      marca de la página nueva en la fila: v={s.get('v')!r} · v2t={'sí' if s.get('v2t') else 'no'}")
+    alm = lambda a: re.sub(r"^\s*[\d-]+\s+", "", str(a or ""))[:22] or "?"
+    for x in [y for y in (s.get("h") or []) if isinstance(y, dict)][:6]:
+        print(f"      corte {x.get('f') or '?'} {str(x.get('hora') or '')[:5] or '(sin hora)'} · {alm(x.get('alm'))} · rol {x.get('rol') or '?'} · "
+              f"{'página NUEVA (huella)' if x.get('hu') else 'página VIEJA (sin huella)'}"
+              f"{' · diferencias ' + str(len(x.get('d') or [])) if x.get('hu') else ''}")
 
 
 def url_de_la_pagina():
