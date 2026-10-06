@@ -7541,12 +7541,14 @@ la junta), B8 (`stockMigrar` lleva `det`, `sm` y `h[].d` a la clave unida).
   no perdió nada nuevo en ningún caso; `stockRepararLuego` guarda una vez por sello (sin bucle).
 - Pruebas nuevas en `test_corte_del_dia`: §7c-7d, §11-15 (11 más). §4b cambió a conciencia (la evidencia lleva `p` otra vez).
 
-**Pruebas**: `tests/test_corte_del_dia.js` (41; con archivos .xlsx armados en la prueba y subidos por el botón de verdad; 24
-rojas contra la publicada `3443703`); `test_servidor` §22 (9; 6 rojas contra la `2026-10-02-a`). Cambiaron a conciencia:
+**Pruebas**: `tests/test_corte_del_dia.js` (52; con archivos .xlsx armados en la prueba y subidos por el botón de verdad; 34
+rojas contra la publicada `3443703`, donde las secciones 3, 4 y 15 ni corren, y 9 contra `84c2b74`: las de la revisión);
+`test_servidor` §22 (9; 6 rojas contra la `2026-10-02-a`). Cambiaron a conciencia:
 `test_control_corte` (ids cortos; sin «usarlo igual»), `test_rev_corte_codex` (`_otroDia` para los casos que suben «el de
 mañana» sin mover el reloj; R6 sin tilde), `test_existencias`, `test_rev2_stock`, `test_stock_podar` (3 días, el historial,
 dos recibidos recientes, la junta con la misma poda) y `test_identidad` (el reporte es de hoy), `test_concurrencia` (el otro
 equipo guarda con `sf`), `test_saldo_servidor` (versión). **Batería entera (`84c2b74`): 136 suites, 5.114 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen, como siempre).
+**Con la revisión (`22e463b`): 136 suites, 5.125 comprobaciones, 0 rojas.**
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
