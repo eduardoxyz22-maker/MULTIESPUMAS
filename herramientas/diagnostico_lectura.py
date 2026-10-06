@@ -125,7 +125,61 @@ def contar(crudo):
         for n, i in sistema:
             if i in ("__stock__", "__arqueo_cuadre__", "__dias_cerrados__", "__carga_chk__"):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
+        celda_stock(ped)
         pedidos_en_feriados(ped)
+
+
+# 📏 (06/10, auditoría) Todo el stock vive en UNA celda y Google la corta en 50.000 letras: el .gs contesta `celda_llena`
+#    y el stock deja de guardarse (el panel avisa desde las 45.000). El control del corte (§4hn) suma detecciones (`det`),
+#    salidas sin pedido (`sm`), recepciones `x:` e historial (`h`) con cada Excel: esto dice cuánto mide HOY y QUÉ parte crece.
+#    Solo tamaños y cantidades, nunca nombres de productos ni unidades: este registro es público.
+TOPE_CELDA = 50000
+AVISO_CELDA = 45000
+_STOCK_MEDIDO = False
+
+
+def _letras(s):
+    """Letras como las cuenta JavaScript (y Google): unidades UTF-16, no caracteres de Python."""
+    return len(s.encode("utf-16-le")) // 2
+
+
+def _tam(v):
+    return _letras(json.dumps(v, ensure_ascii=False, separators=(",", ":")))
+
+
+def celda_stock(ped):
+    global _STOCK_MEDIDO
+    if _STOCK_MEDIDO:
+        return
+    fila = next((p for p in ped if isinstance(p, dict) and p.get("id") == "__stock__"), None)
+    if not fila:
+        return
+    _STOCK_MEDIDO = True
+    txt = str(fila.get("observaciones") or "")
+    n = _letras(txt)
+    marca = "❌ LLENA: el stock ya no se guarda" if n >= TOPE_CELDA else ("⚠️ pasó el aviso de 45.000" if n >= AVISO_CELDA else "ok")
+    print(f"   📏 celda del stock: {n:,} letras = {100 * n / TOPE_CELDA:.0f} % del tope de 50.000 · {marca}".replace(",", "."))
+    try:
+        s = json.loads(txt)
+    except Exception as ex:
+        print(f"      (no pude abrir el JSON del stock: {type(ex).__name__})")
+        return
+    if not isinstance(s, dict):
+        return
+    partes = sorted(((_tam(v), k, (f" ({len(v)})" if isinstance(v, (list, dict)) else "")) for k, v in s.items()), reverse=True)
+    print("      por parte (letras y, entre paréntesis, cuántos): " + " · ".join(f"{k} {t:,}".replace(",", ".") + c for t, k, c in partes))
+    fotos = 0
+    for alm in [s.get("c")] + list((s.get("g") or {}).values()):
+        if isinstance(alm, dict):
+            fotos += _tam(alm.get("u") or {}) + _tam(alm.get("cod") or {})
+    det = [x for x in (s.get("det") or []) if isinstance(x, dict)]
+    sm = [x for x in (s.get("sm") or []) if isinstance(x, dict)]
+    recs = [r for q in (s.get("p") or []) if isinstance(q, dict) for r in (q.get("recs") or []) if isinstance(r, dict)]
+    rx = [r for r in recs if str(r.get("id") or "").startswith("x:")]
+    _n = lambda x: f"{x:,}".replace(",", ".")
+    print(f"      fotos de los almacenes (u + cod): {_n(fotos)} letras · detecciones {len(det)} ({sum(1 for x in det if x.get('an'))} anuladas, "
+          f"{_n(_tam(det))} letras) · salidas sin pedido {len(sm)} ({_n(_tam(sm))} letras) · recepciones {len(recs)}, del control "
+          f"{len(rx)} ({_n(_tam(rx))} letras) · cortes en el historial {len(s.get('h') or [])}")
 
 
 def url_de_la_pagina():
