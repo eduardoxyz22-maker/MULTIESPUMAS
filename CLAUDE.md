@@ -331,7 +331,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
       Moreno pero pueden estar guardadas en Banzer o Multiespumas. La fábrica sale de
       `MARCA_FABRICA`, el lugar de `STOCK.g` + `x.chkDe`. No se mezclan.
     `tests/test_banzer.js` (55).
-  - **🔎 El buscador del stock vive en la barra de arriba** (§4hp, 05/10; dueño: *«no hay un buscado en stock»*): el
+  - **🔎 El buscador del stock vive en la barra de arriba** (§4hp, 05/10, PUBLICADO 06/10 12:37, `3443703`; dueño: *«no hay un buscado en stock»*): el
     `<input id="stk-q">` está en la barra fija de `#stock-overlay`, fuera de `#stock-body`, y `renderStockFiltros` NO lo dibuja
     (deja un chip «🔎 «q»»). Con algo escrito, `renderStock` esconde los cuadros grandes (`renderStockHoy`, `renderRevisionFija`,
     `renderProducir`, `renderTiendas`) y pone el cartel `#stk-buscando`; se borra la búsqueda y vuelven. ⚠️ No volver a dibujar
@@ -480,7 +480,8 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - 🚨 **Auditoría del 06/10 (bitácora §4hq): hallazgos verificados y SIN arreglar** (el dueño no pidió arreglarlos todavía):
   la celda del stock se llena en semanas con `det`/`sm`/`x:`; una página sin F5 borra el control de todos al guardar el stock
-  (la lectura adopta su copia); el cierre propone tildados los PM y un confirmado que se reprograma queda ✅ en la fecha nueva;
+  (la lectura adopta su copia); un pedido confirmado en el cierre que después se reprograma queda ✅ en la fecha nueva (los 🌆 PM
+  van tildados A PROPÓSITO: dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*);
   `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`; `stockMigrar` no migra `cod` (un código nuevo en `CODIGOS` parte el
   producto: el SUEÑA LITE 105 si un Excel viejo lo traía). Antes de tocar el cierre o el control del corte, leer §4hq.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
@@ -696,7 +697,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
   reescribe al reprogramar.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
-- **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
+- **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10, PUBLICADO 06/10 12:37, `3443703`; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
   «Falta cobrar» de Ventas, «⏳ Con saldo» del resumen y «Por cobrar» del Cuadre (`mcToca`) abren **`abrirPorCobrar(origen)`**
   con la MISMA cuenta que la ficha (`porCobrarDatos`: Ventas = `contaFaltaCobrar` sobre `contaLista()`; Cuadre =
   `cuadrePendientes()`), armada al abrir, de la más vieja a la más nueva. Un cliente abre su venta con «← Volver a la lista»

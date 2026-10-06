@@ -7475,7 +7475,11 @@ click llevar a esos clientes.»*
   `test_sinmonto` §6 cambió a conciencia: miraba que «DEBE DE VERDAD» no estuviera en NINGÚN aviso y ahora está, a propósito,
   en el de saldo por cobrar; mira el aviso de «sin ningún monto» y suma que la que debe sí salga en el nuevo (43).
 - **Batería entera con el cambio (`2e32b52`): 135 suites, 5.063 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen,
-  como siempre). En la rama, **sin publicar**: espera el «publica» del dueño (va junto con el buscador del stock, §4hp).
+  como siempre). **PUBLICADA el 06/10 a las 12:37 de Bolivia** (`3443703`, junto con el buscador del stock §4hp y el
+  diagnóstico que mide la celda del stock; dueño: *«publica todo y ya reviso y subo el almacén de ahora»*). Sin workflow del
+  panel corriendo (su cron de las 14:00 UTC todavía no había salido). Pages OK a las 12:38 (16:38:10 UTC). Pedido al dueño:
+  F5 en todos los aparatos ANTES de subir los Excel de hoy (§4hq: los del sábado se resubieron desde una página vieja) y, a
+  las 16:30, destildar en el cierre lo que no salió.
 
 ## 4hq. 06/10: 🔎 auditoría «auditores como va todo» — lo publicado el 05/10 tiene arreglos pendientes (NADA arreglado todavía)
 El dueño, el 06/10 a las 10:00: *«auditores como va todo»*. Se miró la operación y tres auditores (agentes) revisaron lo
@@ -7504,8 +7508,10 @@ Excel de HOY. La lectura anduvo en 2-4 s con picos (un 404 a los 88-99 s, una en
 - **ALTA** — a las 16:30 se proponen tildados también los 🌆 PM (pueden seguir en la calle). Si se confirma y después se
   reprograma (📅 Reprogramar `reproConfirmar` o ✏️ Editar, que hereda `entregado`), queda `entregado:true` en la fecha nueva: no
   vuelve al cierre, el chofer lo ve gris «Entregado», no sale en «Sin entregar», y el stock lo da por salido. Paliativo dicho al
-  dueño para el 06/10: destildar los PM que no volvieron o cerrar cuando vuelva el camión. **Para decidir:** PM destildados o
-  tildados con aviso.
+  dueño para el 06/10: destildar los PM que no volvieron o cerrar cuando vuelva el camión.
+  **Decidido por el dueño (06/10, 12:30): los PM siguen tildados y logística destilda lo que no se entregó** (*«Van tildados y
+  que logística destilde lo que no se entregó. Habíamos quedado»*). No volver a proponer PM destildados. Lo que sigue abierto
+  (espera su «hazlo») es lo otro: un pedido confirmado que después se reprograma queda ✅ en la fecha nueva.
 - MEDIA — un cierre pendiente (`me_cierre_pend`, sin señal) no se descarta cuando el siguiente cierre lee bien: se aplica igual y
   marca lo destildado después (`confirmarCierreEntregas` + `cierreEntSincronizar`).
 - MEDIA — los pedidos con un renglón ✗ no hay o 🏭 sin llegar se proponen tildados y la fila no lo muestra; al confirmar dejan
@@ -7535,7 +7541,7 @@ Excel de HOY. La lectura anduvo en 2-4 s con picos (un 404 a los 88-99 s, una en
   ventana sin tope de hora); Excel corregido no descuenta la salida anotada por la versión anterior; 🔗 Unir no mueve `det`/`sm`.
 - Bien: IM solo informa; mismo archivo y mismo nombre en dos equipos = una recepción; lápidas; la casilla «ya incluye».
 
-**📦 Catálogo (§4ho) y buscador (§4hp, solo en la rama)** — `aud_stock/`, `verif_split/`:
+**📦 Catálogo (§4ho) y buscador (§4hp, en la rama al auditar; publicado el 06/10 a las 12:37)** — `aud_stock/`, `verif_split/`:
 - **ALTA condicional — un código recién agregado a `CODIGOS` parte el producto en dos filas** si un Excel anterior ya lo traía:
   `stockMigrar` re-claviza `u` pero no los mapas `cod` (ni `sm`/`det`), y `stockClaveInv` va por `cod` a la clave vieja, vacía.
   El pedido ve 0 («🚨 PEDIR YA», el cuadrito dice «NO HAY») y el saldo queda en otra fila como «Sobra»; subir el Excel otra vez
@@ -7571,8 +7577,8 @@ Excel de HOY. La lectura anduvo en 2-4 s con picos (un 404 a los 88-99 s, una en
   1.428 px, los cuadros no se esconden, el cursor saltaba al final, el campo se perdía al reabrir).
 - **Batería entera con el cambio (`56dc52d`): 134 suites (las 133 de §4ho + esta), 5.038 comprobaciones, 0 rojas**
   (`test_stock_detalle` sin resumen, como siempre; `test_stock` 106, `test_existencias` 54 y `test_stock_buscador` 22 en verde).
-- En la rama `claude/pedidos-fecha-entrega-bgt0em`, **sin publicar**: espera el «publica» del dueño. Al publicar, todos F5
-  (la página vieja sigue con el campo abajo; no hay nada del servidor en esto).
+- **PUBLICADA el 06/10 a las 12:37 de Bolivia** (`3443703`, junto con «Falta cobrar» tocable, §4hr). Todos F5 (la página
+  vieja sigue con el campo abajo; no hay nada del servidor en esto).
 
 ## 4ho. 05/10: Catálogo — COLCHON SMART 140x190 (CH2522) y COLCHON SUEÑA LITE 105x190 (CH2531); el SMART es Sueña
 El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»): CH2521 SMART 105*190, CH2522 SMART 140*190, SMART
