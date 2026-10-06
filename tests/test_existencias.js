@@ -44,6 +44,9 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   page.on('dialog',d=>d.accept());
   await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });
   await page.waitForTimeout(300);
+  /* (06/10, §4hs) La página solo acepta el Excel del DÍA. Estos reportes son del 07/09 y el reloj está en el 08/09 a propósito
+     (ver arriba): lo que se mide acá es leer el reporte y unirlo con lo vendido, no esa regla (test_corte_del_dia §1). */
+  await page.evaluate(() => { window.existNoEsDeHoy=function(){ return null; }; });
 
   const faltan = await page.evaluate(() => ['existLeer','onExistArchivo','confirmarImportExist','stockOtrosTxt','stockUnid']
     .filter(f => typeof window[f] !== 'function'));

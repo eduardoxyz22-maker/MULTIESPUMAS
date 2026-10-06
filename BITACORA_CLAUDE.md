@@ -7445,6 +7445,76 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — EN LA RAMA, sin publicar
+El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.
+Que no permita subir corte de días anteriores tiene que ser del día. La hoja de Excel si marca día y hora si no me equivoco. Ni
+habíamos quedado que las celdas de corte solo almacenaban X días y lo anteriores se iban borrando para no llenarse? De que me
+sirve un stock de hace dos semana? Si cada día te subo la lista actualizadas..»*. Sí marca: «EXISTENCIAS ALMACEN AL dd/mm/aaaa»
+arriba y «Fecha : dd/mm/aaaa hh:mm:ss - usuario» al pie (cuándo se sacó); el nombre del archivo también trae día y hora.
+
+**📅 Solo el Excel del día** (`existNoEsDeHoy`, en la vista previa y otra vez al confirmar):
+- «existencias al» y el día en que se sacó (pie o nombre) tienen que ser de HOY, con el día de Bolivia (no el del aparato). Sin
+  ninguna fecha no entra («no dice de qué día es»). Vale para los tres almacenes. El de otro día abre «⛔ Este Excel no es de
+  hoy», dice de qué día es y cuál se puede subir, y no tiene botón para usarlo.
+- Consecuencia que hay que decir: un reporte sacado a la noche y subido a la mañana siguiente no entra; se saca de nuevo.
+- Sin «existencias al» pero con pie o nombre de hoy, entra con ese día (`fechaDeHora`, y lo dice). Antes suponía «hoy».
+
+**🕰️ La hora sale del pie primero** (`existPonerHora`): el pie está ADENTRO del archivo, igual en todas las copias; el nombre
+la tiene unos segundos después y WhatsApp lo cambia. El mismo Excel subido con dos nombres daba dos cortes (§4hq B4, «3 de 10 →
+6 recibidas»); ahora da el mismo. `r.sacado` y `r.horaDe` ('pie'/'nombre').
+
+**⛔ Un corte no vuelve atrás**:
+- Se fue «usarlo igual»: un Excel más viejo que el vigente de ese almacén no entra (`existCorteViejoTxt`, el botón se apaga con
+  `existBotonUsar`, y `confirmarImportExist` lo frena otra vez).
+- El mismo día con la hora de un solo lado: si el vigente no dice la hora pero se SUBIÓ antes de la hora del nuevo
+  (`stockSubidoAntesDe`: lo subido ya estaba contado), el nuevo es más nuevo y entra; si no, «falta la hora» y no entra.
+- `fusFoto` es monótono (`stockCompararCortes`): en cualquier junta gana el corte más nuevo, también cuando «acá no se tocó»
+  y la otra copia trae uno VIEJO. Así fue el 06/10: una página sin F5 volvió a subir los tres Excel del sábado.
+
+**✂️ La celda guarda 3 días** (`STOCK_CONTROL_DIAS=3`, `stockPodarControl` adentro de `stockPodar`, los tres caminos):
+- Detecciones y salidas del control de los últimos 3 días. Una salida anotada a mano que ningún Excel incluye todavía se queda.
+- El historial: los cortes de esos días y SIEMPRE el último de cada almacén (tope `STOCK_HIST` 15). Las diferencias (`h[].d`)
+  enteras solo del último corte de cada almacén (la corrección del mismo Excel las usa); de los anteriores, solo las que
+  tienen algo para deshacer. Las de Moreno no se guardan (son información, no hay nada que deshacer).
+- Los pedidos a fábrica recibidos, enteros 3 días (`STOCK_RECIBIDOS_DIAS`, eran 45); después la MUESTRA de siempre, que mide
+  la fábrica (`STOCK_RECIBIDOS_TOPE` sigue en 120: probado que con 60 cambiaba el tiempo medido de Moreno).
+- Nombres cortos: corte, detección, recepción y salida son huellas de 64 bits (`huellaId`: `c…`, `d:…`, `x:…`, `s:…`, ~15
+  letras). La evidencia de la recepción sin `p`, `m` ni `a` vacío; la detección sin `ts` ni `alm` vacío; el historial viaja
+  sin `id` (`leerStock` lo rearma). Una recepción ocupa ~150 letras (la auditoría midió ~358).
+- ⚠️ En producción no había nada del control todavía (ningún Excel subido con la página del 05/10): cambiar el formato de los
+  ids no deja nada viejo mezclado.
+- **Medido** con la simulación de la auditoría (`aud_corte/sim_tamano.js` del scratchpad, perfil medio = 3-15 diferencias por
+  corte, 1-3 pedidos a fábrica por día, 60 días hábiles): antes cruzaba las 50.000 letras el día 8; con 7 días de control, el
+  día 48; con 3 días, **máximo 39.573 (79 %) y nunca pasó el aviso de 45.000**. Lo único que sigue creciendo ahí son pedidos
+  a fábrica PENDIENTES que nadie asigna (la simulación tilda el 60 %): son datos reales y el «⚠️ reclamar» los muestra.
+
+**🧓 Una página vieja ya no rompe el control**:
+- `STOCK.pv=3` en cada guardado (`filaStock`, `stockFusionar`, la cola sin memoria): una página de antes lo pierde al guardar.
+- Al leer, si la copia no tiene `pv` y esta memoria (de una página al día) tiene un corte más nuevo o el control que la copia
+  perdió (`stockProtegerDePaginaVieja`), se JUNTA con la base en vez de adoptarla y se vuelve a guardar una vez por sello
+  (`stockRepararLuego`), con el aviso «una computadora con la página VIEJA…». Una copia vieja que no rompe nada se adopta.
+- `stockFusionar` trata una copia con `pv` como que conoce `det`/`sm` (antes solo `v≥2`).
+- **El arreglo de fondo es el servidor `2026-10-06-a`**: `__stock__` sellado sin `sf ≥ 3` (`STOCK_FORMATO_MIN`) → `actualizar`
+  sin tocar la hoja. La página nueva manda `sf` (`apiSaveAhora`). `probarAntesDeImplementar` dice quién guardó el stock por
+  última vez (con `pv` o sin). Solo el stock lo pide.
+- ⚠️ **Orden: primero la página, todos F5, recién después el servidor.** La página publicada hoy (3443703) no manda `sf`: con
+  el servidor nuevo antes, nadie podría guardar el stock hasta recargar. Volver atrás = ✏️ a la versión ANOTADA antes de
+  implementar (tendría que ser la 36, la 10-02-a) Y pegar la 10-02-a (enlace fijo a `6b76e7a…`).
+
+**Los otros hallazgos de §4hq**: B2 (`sugerir` no ofrece dos veces el mismo pedido; `pendQ` no deja pasar de lo pedido), B3
+(`stockRecYaEnFoto`: la recogida cerrada desde el control no se le resta otra vez a Moreno si su Excel es de ese momento o
+después: queda como `nr`), B5d (`stockMovEnVentana` mira las dos puntas el mismo día), B6 (el Excel corregido compara contra
+lo que dijo la versión anterior en `h[].d`, de más y de menos; sus salidas quedan con lápida «corte reemplazado», que gana en
+la junta), B8 (`stockMigrar` lleva `det`, `sm` y `h[].d` a la clave unida).
+- **Sigue sin arreglar** (no es del control del corte): lo del cierre de entregas (§4hq) y `stockMigrar` sin `cod`.
+
+**Pruebas**: `tests/test_corte_del_dia.js` (41; con archivos .xlsx armados en la prueba y subidos por el botón de verdad; 24
+rojas contra la publicada `3443703`); `test_servidor` §22 (9; 6 rojas contra la `2026-10-02-a`). Cambiaron a conciencia:
+`test_control_corte` (ids cortos; sin «usarlo igual»), `test_rev_corte_codex` (`_otroDia` para los casos que suben «el de
+mañana» sin mover el reloj; R6 sin tilde), `test_existencias`, `test_rev2_stock`, `test_stock_podar` (3 días, el historial,
+dos recibidos recientes, la junta con la misma poda) y `test_identidad` (el reporte es de hoy), `test_concurrencia` (el otro
+equipo guarda con `sf`), `test_saldo_servidor` (versión). Batería entera: BATERIA_PENDIENTE.
+
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
 Bs 7.810,00» en el Cuadre y «Revisar antes de cerrar» sin ninguna línea de deuda): *«en cuadre y conciliación los vendedores

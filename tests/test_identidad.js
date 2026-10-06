@@ -72,7 +72,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ══ 2. Dos códigos son dos productos ══════════════════════════════════════
   console.log('\n── 2. El Excel: un código que el catálogo no conoce es OTRO producto ──');
   r = await page.evaluate(() => {
-    var f=[{},{C:'MORENO',X:'EXISTENCIAS ALMACEN  AL ',AR:'07/09/2026',AZ:'(Productos con existencia <> 0)'},
+    /* (06/10, §4hs) La página solo acepta el Excel del día (de Bolivia): el reporte sintético es «de hoy». */
+    var f=[{},{C:'MORENO',X:'EXISTENCIAS ALMACEN  AL ',AR:fmtFecha(isoDeTsBolivia(Date.now())),AZ:'(Productos con existencia <> 0)'},
            {F:'Almacén Inicial :',P:'01-05-003  PRODUCTOS TERMINADOS FAB.'},
            {G:'Código Producto',W:'Nombre Producto'},
            {G:'SR2012',  W:'SOMIER ROHO PEDIC 140X190',AY:'3'},

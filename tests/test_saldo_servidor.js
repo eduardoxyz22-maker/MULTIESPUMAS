@@ -152,7 +152,7 @@ function INIT_DOS(vend){
   console.log('\n── 1. A y B leen «Libres 1», A guarda, B guarda con la copia de antes: a B se le dice, con el pedido guardado ──');
   const S = servidor(fs.readFileSync(GS, 'utf8'));
   const r0 = S.guardar(stockDe(1));
-  chk('⚠️ (partida) el servidor tiene el corte de las 09:00 con UN TITANIO ICE 160x190, y es la versión con reservas', !!(r0 && r0.ok) && S.version==='2026-10-02-a', [r0 && r0.ok, S.version]);
+  chk('⚠️ (partida) el servidor tiene el corte de las 09:00 con UN TITANIO ICE 160x190, y es la versión con reservas', !!(r0 && r0.ok) && S.version>='2026-10-02-a', [r0 && r0.ok, S.version]);   // (06/10) la 2026-10-06-a también las tiene
   const { context:cA, p:A } = await abrirDos(S, 'Mirian Salazar');
   const { context:cB, p:B } = await abrirDos(S, 'Carola Chavez');
   await nuevoForm(B);

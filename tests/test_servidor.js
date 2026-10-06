@@ -339,7 +339,7 @@ console.log('\n── 3. Dos personas sobre el mismo pedido ──');
      y el panel viejo lo tiraba (auditoría, #8). */
   const a = cargar([HDR], { PANEL_KEY: CLAVE });
   const stk = (obs, rev) => { const o = { id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:obs }; if (rev !== undefined) o.rev = rev; return o; };
-  const junta = (pedido) => conClave({ action:'save', pedido:pedido, juntar:1 });
+  const junta = (pedido) => conClave({ action:'save', pedido:pedido, juntar:1, sf:3 });   // (2026-10-06-a) la página al día manda `sf` (ver §22)
   let r = a.post(junta(stk('{"e":[]}', 0)));
   chk('§4fz · la fila del stock entra la primera vez (con rev 0)', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
   const base = r.pedido.rev;
@@ -1201,10 +1201,10 @@ console.log('\n── 12. Una celda que no entra: «no» claro, sin tocar la hoj
 {
   const a = cargar([HDR], {});
   const obs = (n) => '{"c":{"f":"","u":{}},"e":[],"p":[],"a":{},"al":{},"g":{},"h":[],"x":"' + 'y'.repeat(n) + '"}';
-  const r1 = a.post({ action:'save', juntar:1, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:0, observaciones:obs(49000) } });
+  const r1 = a.post({ action:'save', juntar:1, sf:3, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:0, observaciones:obs(49000) } });
   chk('un stock que entra en la celda se guarda', r1.ok===true && a.sh._datos.length===2, JSON.stringify(r1).slice(0,120));
   const antes = JSON.stringify(a.sh._datos);
-  const r2 = a.post({ action:'save', juntar:1, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:r1.pedido.rev, observaciones:obs(50100) } });
+  const r2 = a.post({ action:'save', juntar:1, sf:3, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:r1.pedido.rev, observaciones:obs(50100) } });
   chk('⚠️ uno que NO entra: «celda_llena» con el campo y el largo (antes: excepción de Google = «sin conexión»)',
       r2.ok===false && r2.error==='celda_llena' && r2.campo==='Observaciones' && r2.largo>50000, JSON.stringify(r2).slice(0,200));
   chk('…sin tocar la hoja', JSON.stringify(a.sh._datos)===antes);
@@ -1696,11 +1696,46 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-02-a',
-      vG==='2026-10-02-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-06-a',
+      vG==='2026-10-06-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
+}
+
+/* ── 🧓 22. El stock solo lo guarda una página al día (2026-10-06-a, §4hs). El 06/10 una computadora con la página de antes (sin
+      F5) volvió a subir los tres Excel del sábado y todos trabajaron el lunes con ese stock; esa página además borra el control del
+      corte al guardar. La página del 06/10 manda `sf` (STOCK_PV) y solo acepta el Excel del día; una que no lo manda recibe
+      `actualizar` sin tocar la hoja. Solo el stock lo pide. Los marcados ⚠️ fallan contra el .gs 2026-10-02-a. ── */
+console.log('\n── 22. 🧓 El stock solo lo guarda una página al día: sin `sf`, `actualizar` (2026-10-06-a) ──');
+{
+  const a = cargar([HDR30], {});
+  const stk = (obs, rev) => ({ id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:obs, rev: rev||0 });
+  let r = a.post({ action:'save', juntar:1, pedido: stk('{"c":{"f":"2026-10-06","hora":"09:00:00","u":{}},"pv":3}') });
+  chk('a. la primera vez (la fila no existe) entra aunque no mande `sf`: no hay nada que pisar', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,100));
+  const rev1 = r.pedido.rev, obs1 = pedido(a.ctx, a.sh, '__stock__').observaciones;
+  r = a.post({ action:'save', juntar:1, pedido: stk('{"c":{"f":"2026-10-03","hora":"09:55:00","u":{}}}', rev1) });
+  chk('⚠️ b. la página del 05/10 (juntar y sello, sin `sf`) quiere volver a subir el Excel del sábado: `actualizar`, la fila NO se toca',
+      r.ok===false && r.error==='actualizar' && pedido(a.ctx, a.sh, '__stock__').observaciones===obs1, JSON.stringify(r).slice(0,100));
+  r = a.post({ action:'save', juntar:1, sf:2, pedido: stk('{"c":{"f":"2026-10-03","hora":"09:55:00","u":{}}}', rev1) });
+  chk('⚠️ c. con un `sf` viejo (2), tampoco', r.ok===false && r.error==='actualizar' && pedido(a.ctx, a.sh, '__stock__').observaciones===obs1, JSON.stringify(r).slice(0,100));
+  const anot = a.shR._datos.filter(f => f[2]==='actualizar' && f[3]==='__stock__');
+  chk('d. …y queda en «Rechazos» que esa computadora tiene que recargar', anot.length===2 && /recargar la página/.test(String(anot[0][7])), anot.length ? String(anot[0][7]) : 'no se anotó');
+  r = a.post({ action:'save', juntar:1, sf:3, pedido: stk('{"c":{"f":"2026-10-07","hora":"09:00:00","u":{}},"pv":3}', rev1) });
+  chk('e. la página al día (`sf` 3, sello bueno) guarda', r.ok===true && /2026-10-07/.test(pedido(a.ctx, a.sh, '__stock__').observaciones), JSON.stringify(r).slice(0,100));
+  const rev2 = r.pedido.rev;
+  r = a.post({ action:'save', juntar:1, sf:3, pedido: stk('{"c":{"f":"2026-10-07","hora":"10:00:00","u":{}},"pv":3}', rev1) });
+  chk('f. …y el sello se sigue comparando: con el viejo, `conflicto` (para juntar), no `actualizar`', r.ok===false && r.error==='conflicto' && !!r.pedido && r.pedido.rev===rev2, JSON.stringify(r).slice(0,100));
+  const arq = { id:'__arqueo_cuadre__', fecha:'', cliente:'🧮 ARQUEO', observaciones:'mes|2026-10|Efectivo=900', rev:0 };
+  r = a.post({ action:'save', juntar:1, pedido: arq });
+  r = a.post({ action:'save', juntar:1, pedido: Object.assign({}, arq, { observaciones:'mes|2026-10|Efectivo=950', rev:r.pedido.rev }) });
+  chk('g. el arqueo no lo pide (solo el stock)', r.ok===true, JSON.stringify(r).slice(0,100));
+  if (typeof a.ctx.probarAntesDeImplementar === 'function') {
+    const lin = (ctx) => ctx.probarAntesDeImplementar().lineas.filter(l => /guardó por última vez/.test(l)).join(' | ');
+    chk('⚠️ h. probarAntesDeImplementar dice que el stock lo guardó una página al día (pv 3)', /✅ El stock lo guardó por última vez una página al día/.test(lin(a.ctx)), lin(a.ctx));
+    const v = cargar([HDR30], {}); v.post({ action:'save', juntar:1, pedido: stk('{"c":{"f":"2026-10-03","u":{}}}') });
+    chk('⚠️ h. …y si lo guardó una página VIEJA (sin pv), avisa que con esta versión ya no va a poder y que todos hagan F5', /⚠️ El stock lo guardó por última vez una página VIEJA/.test(lin(v.ctx)) && /F5/.test(lin(v.ctx)), lin(v.ctx));
+  } else chk('h. está probarAntesDeImplementar', false);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

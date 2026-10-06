@@ -133,7 +133,7 @@ const BASE = `
       confirmarImportExist();
       var q=STOCK.p.filter(function(x){ return x.id==='fp1'; })[0];
       out.cerrado={ r:q.r, enConteo:!!q.enConteo, ru:q.ru, recs:(q.recs||[]).map(function(x){ return [x.id, x.u, x.se, !!x.ev]; }) };
-      out.corte=existCorteId(R); out.k=K;
+      out.corte=existCorteId(R); out.k=K; out.rid=existRecId(existDetId(out.corte, K), 'fp1');
       var f2=_fila(K); out.final={ deposito:f2.deposito, enCamino:f2.enCamino };
       out.medido=stockTiemposFabrica().de('MORENO').medido;
       out.hist=(STOCK.h[0]||{}).d;
@@ -147,8 +147,8 @@ const BASE = `
         r.sinTildar.abiertos===2 && r.despues.enCamino===15 && r.despues.deposito===20 && !!r.sinTildar.hu && r.sinTildar.v===2 &&
         Array.isArray(r.sinTildar.d) && r.sinTildar.d.length===1 && r.sinTildar.d[0][1]===10, J(r.sinTildar));
     chk('…y el vencido sigue para reclamar: el renglón dice «Ya pedido · ⚠️ reclamar»', J(r.despues.reclamar)===J(['fp1']) && r.despues.badge===true, J(r.despues));
-    chk('la segunda subida del mismo Excel ofrece la detección anotada (10 sin asignar); tildar «es este pedido» lo cierra: recepción x:<detección>|fp1, se:1, con evidencia, enConteo',
-        r.cerrado.r==='2026-10-07' && r.cerrado.enConteo===true && r.cerrado.ru===10 && r.cerrado.recs.length===1 && r.cerrado.recs[0][0]==='x:d:'+r.corte+'|'+r.k+'|fp1' && r.cerrado.recs[0][1]===10 && r.cerrado.recs[0][2]===1 && r.cerrado.recs[0][3]===true, J(r.cerrado));
+    chk('la segunda subida del mismo Excel ofrece la detección anotada (10 sin asignar); tildar «es este pedido» lo cierra: recepción x:<huella de la detección y el pedido>, se:1, con evidencia, enConteo',
+        r.cerrado.r==='2026-10-07' && r.cerrado.enConteo===true && r.cerrado.ru===10 && r.cerrado.recs.length===1 && r.cerrado.recs[0][0]===r.rid && /^x:[0-9a-z]{8,16}$/.test(r.rid) && r.cerrado.recs[0][1]===10 && r.cerrado.recs[0][2]===1 && r.cerrado.recs[0][3]===true, J([r.cerrado, r.rid]));
     chk('…el depósito sigue siendo el del Excel (20) y en camino quedan solo los 5 de la recogida: nada se cuenta dos veces', r.final.deposito===20 && r.final.enCamino===5, J(r.final));
     chk('…y cerrarlo así NO mide el tiempo de fábrica (se sabe que estaba, no cuándo llegó)', r.medido===false, 'medido '+r.medido);
     chk('el historial del corte anota qué se cerró', Array.isArray(r.hist) && r.hist[0][2].length===1 && r.hist[0][2][0][0]==='cerro' && r.hist[0][2][0][1]==='fp1', J(r.hist));
@@ -194,7 +194,7 @@ const BASE = `
       var R=_R(todayStr(),'09:00:00',{[K]:20,[K2]:4});
       _subir(R, ['.exist-sug[data-q="fp1"]']); confirmarImportExist();
       var conRec=JSON.parse(JSON.stringify(STOCK));         // lo que tiene el OTRO equipo (sin la anulación)
-      var rid='x:d:'+existCorteId(R)+'|'+K+'|fp1';
+      var rid=existRecId(existDetId(existCorteId(R), K), 'fp1');
       var ok=stockAnularRecepcion('fp1', rid, 'no había llegado');
       var q=STOCK.p[0];
       var out={ ok:ok, abierto:q.r==='' && q.u===10 && q.ru===0, recs:(q.recs||[]).length, an:!!(q.recs[0]&&q.recs[0].an), enCamino:_fila(K).enCamino };
@@ -294,11 +294,15 @@ const BASE = `
       STOCK=stockVacio(); STOCK_CARGADO=true; STATE=[]; stockOlvidarIndice();
       var txt=_subir(_R(todayStr(),'09:00:00',{[K]:10})); out.primero=/sin conciliación previa/.test(txt);
       confirmarImportExist(); out.base=STOCK.c.u[K];
-      // un Excel de hace 3 días, después del de hoy: no reemplaza salvo el tilde
+      // (06/10) un Excel de hace 3 días: no es de hoy → no entra, ni con tilde (ya no existe «usarlo igual»)
       var viejo=_R(_atras(3),'09:00:00',{[K]:50});
-      txt=_subir(viejo); out.viejoAvisa=/MÁS VIEJO/.test(txt);
+      txt=_subir(viejo); out.viejoAvisa=/no es de hoy/.test(txt) && /Solo se puede subir el de HOY/.test(txt) && !document.getElementById('exist-usar') && !document.getElementById('exist-corte-viejo-ok');
       confirmarImportExist(); out.viejoFreno={ c:STOCK.c.f===todayStr() && STOCK.c.u[K]===10, toast:window._toasts.slice(-1)[0]||'' };
-      _subir(viejo, ['#exist-corte-viejo-ok']); confirmarImportExist(); out.viejoForzado=STOCK.c.f===_atras(3) && STOCK.c.u[K]===50;
+      // …y uno de HOY pero de una hora anterior a la del vigente (09:00): tampoco, y el botón se apaga
+      var antes=_R(todayStr(),'08:00:00',{[K]:50});
+      txt=_subir(antes); var bt=document.getElementById('exist-usar');
+      out.antesHoy={ dice:/más viejo que el que ya está cargado/.test(txt), apagado:!!(bt && bt.disabled), casilla:!!document.getElementById('exist-corte-viejo-ok') };
+      confirmarImportExist(); out.antesHoy.c=STOCK.c.hora==='09:00:00' && STOCK.c.u[K]===10; out.antesHoy.toast=window._toasts.slice(-1)[0]||'';
       // el mismo corte (hoy 09:00) subido corregido: lo que cerró la versión anterior se anula y se vuelve a sugerir
       _base(); STOCK.p=[{ id:'fp1', k:K, u:10, fab:'MORENO', f:_atras(2), esp:'', r:'' }];
       var R1=_R(todayStr(),'09:00:00',{[K]:20,[K2]:4}); _subir(R1, ['.exist-sug[data-q="fp1"]']); confirmarImportExist();
@@ -316,8 +320,8 @@ const BASE = `
       return out;
     }, BASE);
     chk('primer corte: «sin conciliación previa», y se toma como base', r.primero===true && r.base===10, J([r.primero, r.base]));
-    chk('⚠️ un Excel más viejo que el vigente avisa y NO reemplaza el conteo sin el tilde', r.viejoAvisa===true && r.viejoFreno.c===true && /más viejo/.test(r.viejoFreno.toast), J(r.viejoFreno));
-    chk('…con «usarlo igual» tildado sí reemplaza (sin conciliar)', r.viejoForzado===true);
+    chk('⚠️ (06/10) un Excel de otro día NO entra: «no es de hoy», sin botón para usarlo ni casilla «usarlo igual»; confirmar no reemplaza', r.viejoAvisa===true && r.viejoFreno.c===true && /Solo se puede subir el de HOY/.test(r.viejoFreno.toast), J(r.viejoFreno));
+    chk('⚠️ (06/10) uno de hoy pero más viejo que el vigente: lo dice, apaga el botón y no reemplaza (el stock no vuelve atrás)', r.antesHoy.dice && r.antesHoy.apagado && !r.antesHoy.casilla && r.antesHoy.c && /más viejo/.test(r.antesHoy.toast), J(r.antesHoy));
     chk('⚠️ el mismo corte subido corregido anula lo que cerró la versión anterior (lápida «corte reemplazado») y lo vuelve a sugerir con el número nuevo (+5)',
         r.cerradoV1===true && r.v2.anulada===true && r.v2.abierto===true && J(r.v2.sug)===J([['fp1',5]]) && r.v2.h===1, J(r.v2));
     chk('Banzer: la diferencia (+5) es solo información, sin sugerencias de cierre', r.banzer.dif===5 && r.banzer.sug===0 && r.banzer.sinExplicar===5, J(r.banzer));

@@ -80,6 +80,12 @@ var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
    aplica encima SOLO lo que tocó y vuelve a guardar. Un panel que no manda `juntar` (el de antes del 26/09)
    sigue como siempre: a estas filas NO se le contesta `actualizar`, para no trabar a nadie. */
 var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1 };
+/* 🧓 (2026-10-06-a) EL STOCK LO GUARDA SOLO UNA PÁGINA AL DÍA. El 06/10 una computadora con la página de antes (sin F5)
+   volvió a subir los tres Excel del sábado y el panel de todos trabajó el lunes con el stock de dos días antes; esa página
+   además borraba el control del corte (detecciones, salidas sin pedido) al guardar. La página del 06/10 manda `sf` (el
+   formato del stock que conoce, STOCK_PV de pedidos.html) y solo acepta el Excel del día. Una que no lo manda, o manda uno
+   viejo, recibe `actualizar` (tiene que recargar) sin tocar la hoja. El stock es la ÚNICA fila que lo pide. */
+var STOCK_FORMATO_MIN = 3;
 /* 🗑 (2026-09-28-a) Las filas FIJAS del sistema: todo `__…` salvo los retiros (`__ret_…`, que son plata de una
    persona). Se reescriben enteras y, si alguien las borra de la hoja, tienen que poder volver a nacer: a ellas no
    les toca el `borrado` de doSave. */
@@ -187,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-02-a';   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-06-a';   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -217,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-02-a';
+  var ESTA_VERSION = '2026-10-06-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -328,6 +334,15 @@ function probarAntesDeImplementar() {
         if (largo > CELDA_AVISO_ROJO) mal(txt + ': con la versión nueva crece y dejaría de entrar. NO implementar: primero hay que achicarlo.');
         else if (largo > CELDA_AVISO) ojo(txt + ': queda poco lugar. Avisá para achicarlo pronto.');
         else bien(txt + '.');
+        /* 🧓 (2026-10-06-a) Quién lo guardó por última vez: desde esta versión, una página sin F5 ya no puede (informa). */
+        if (par[0] === '__stock__') {
+          try {
+            var oS = JSON.parse(String(vals[i2][colObs] || '{}'));
+            if ((Number(oS && oS.pv) || 0) >= STOCK_FORMATO_MIN) bien('El stock lo guardó por última vez una página al día (la del 06/10 o más nueva).');
+            else ojo('El stock lo guardó por última vez una página VIEJA (sin F5). Con esta versión ya no va a poder: le va a pedir recargar. ' +
+                     'Que todos hagan F5 y suban los Excel de hoy.');
+          } catch (eS) {}
+        }
         break;
       }
     });
@@ -772,7 +787,7 @@ function doPostCuerpo_(e) {
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
     if (action === 'delete') return doDelete(body.id, body.rev, body);
-    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva);   // (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS)
+    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf);   // (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
   } finally {
     lock.releaseLock();
   }
@@ -1488,7 +1503,7 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
    más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
 /* (2026-10-02-a) `reserva`: lo que este pedido saca del saldo del almacén, según el panel (ver RESERVAS). Se mira al FINAL,
    con la fila ya escrita: nunca frena ni cambia nada de lo de arriba. */
-function doSave(p, forzar, juntar, reserva) {
+function doSave(p, forzar, juntar, reserva, formato) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -1537,6 +1552,10 @@ function doSave(p, forzar, juntar, reserva) {
        se vio, o `conflicto` con la fila actual. Un retiro NUEVO no trae sello y la fila no existe: entra como siempre. */
     var filaRetiro = String(p.id).indexOf('__ret_') === 0;
     if (sisSello && revHoja && !juntar) {
+      return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
+    }
+    // 🧓 (2026-10-06-a) El stock, además, solo de una página al día (ver STOCK_FORMATO_MIN).
+    if (String(p.id) === '__stock__' && revHoja && !((Number(formato) || 0) >= STOCK_FORMATO_MIN)) {
       return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
     }
     if (revHoja && (!filaSistema || sisSello || juntaSello || filaRetiro) && (Number(p.rev) || 0) !== revHoja) {

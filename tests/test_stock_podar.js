@@ -87,6 +87,9 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
       };
       var subir=function(filas, rol){
         var R=existLeer(filas); if(R.error) throw new Error(R.error);
+        /* (06/10, §4hs) La página solo acepta el Excel del día; estos cortes se subieron hace 1, 3 y 6 días, cuando eran los
+           del día: para armar la celda se apaga solo esa regla. */
+        window.existNoEsDeHoy=function(){ return null; };
         EXIST_IMP=R; renderImportExist();
         var sel=document.getElementById('exist-rol'); if(sel) sel.value=rol;
         var inc=document.getElementById('exist-inc'); if(inc) inc.checked=false;
@@ -112,6 +115,8 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
         if(i%11===3){ q.recs[q.recs.length-1].se=1; q.enConteo=true; }   // se dio por llegado al subir el Excel de acá
         P.push(q);
       }
+      // (06/10, §4hs) dos recibidos en los últimos STOCK_RECIBIDOS_DIAS días (3): esos quedan enteros
+      for(var i2=0;i2<2;i2++){ var f3=atras(4+i2), r3=atras(1+i2), tot3=3+i2; P.push({ id:'fpRN'+i2, k:K(30+i2), u:tot3, fab:'MORENO', f:f3, esp:'', r:'', total:tot3, recs:[{ id:'rRN'+i2, u:tot3, f:r3, ts:ts(r3), se:0 }] }); }
       // 6 recogidas de IM recibidas, sobre 3 productos (cada uno recogido dos veces): 3 de antes de la foto de IM (no se
       // le restan) y 3 de después (restadas, anotadas en `rs`)
       for(var j=0;j<6;j++){
@@ -181,7 +186,7 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
   // ══ 1. Medir ══════════════════════════════════════════════════════════════════════════════════
   console.log('\n── 1. Qué pesa cada sección de la celda, antes y después de la poda ──');
   const arm = await page.evaluate(() => _armar());
-  chk('el fixture se armó con el importador real: ~'+arm.keys+' claves en el depósito, '+arm.kIM+' en IM, '+arm.p+' pedidos a fábrica', arm.keys>200 && arm.kIM>200 && arm.p===40, arm);
+  chk('el fixture se armó con el importador real: ~'+arm.keys+' claves en el depósito, '+arm.kIM+' en IM, '+arm.p+' pedidos a fábrica', arm.keys>200 && arm.kIM>200 && arm.p===42, arm);   // (06/10, §4hs) 40 + los 2 recibidos en los últimos 3 días
   chk('sin errores de página al armar', errores.length===0, errores);
   const M0 = await page.evaluate(() => { window._RAW=JSON.stringify(STOCK); window._F0=_foto(); return _medir(_RAW); });
   const t1 = await page.evaluate(() => { var f=filaStock(); window._t1=f.observaciones; return f.observaciones; });
@@ -191,14 +196,20 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
   Object.keys(M0).filter(k=>!/^n/.test(k)).forEach(k => console.log('   '+k.padEnd(20)+String(M0[k]).padStart(9)+String(M1[k]).padStart(10)+'   '+pct(M0[k],M0.total)));
   console.log('   pedidos a fábrica: '+M0.nP+' → '+M1.nP+' (recibidos '+M0.nRecibidos+' → '+M1.nRecibidos+', de ellos muestras '+M1.nMuestras+'; pendientes '+M0.nPend+' → '+M1.nPend+')');
   chk('la celda achica: total '+M0.total+' → '+M1.total+' letras', M1.total<M0.total);
-  chk('lo que achica es `p`: '+M0.p+' → '+M1.p+' letras ('+pct(M0.p-M1.p, M0.p)+' menos)', M1.p<M0.p && (M0.total-M1.total)===(M0.p-M1.p));
+  chk('lo que achica es `p`: '+M0.p+' → '+M1.p+' letras ('+pct(M0.p-M1.p, M0.p)+' menos); desde §4hs también el historial (por días y sin id): '+M0.h+' → '+M1.h, M1.p<M0.p && M1.h<=M0.h);
   chk('los pendientes siguen todos ('+M1.nPend+')', M1.nPend===10);
-  chk('las fotos no se tocan: c, g (u, cod, rs), a, al, e y h pesan lo mismo', ['c','g','a','al','e','h'].every(k => M0[k]===M1[k]), ['c','g','a','al','e','h'].map(k=>k+':'+M0[k]+'/'+M1[k]).join(' '));
+  chk('las fotos no se tocan: c, g (u, cod, rs), a, al y e pesan lo mismo', ['c','g','a','al','e'].every(k => M0[k]===M1[k]), ['c','g','a','al','e'].map(k=>k+':'+M0[k]+'/'+M1[k]).join(' '));
   const sec = await page.evaluate(() => {
     var A=JSON.parse(_RAW), B=JSON.parse(_t1), J=JSON.stringify;
-    return { c:J(A.c)===J(B.c), g:J(A.g)===J(B.g), a:J(A.a)===J(B.a), al:J(A.al)===J(B.al), e:J(A.e)===J(B.e), h:J(A.h)===J(B.h) };
+    /* (06/10, §4hs) El historial: los cortes de los últimos STOCK_CONTROL_DIAS días y SIEMPRE el último de cada almacén, sin `id`. */
+    var lim=stockSumarDias(todayStr(), -STOCK_CONTROL_DIAS), visto={}, hOk=(B.h||[]).every(function(x){ var ult=!visto[x.alm]; visto[x.alm]=1; return x.id==null && (ult || x.f>=lim); });
+    var almA={}; (A.h||[]).forEach(function(x){ almA[x.alm]=1; });
+    return { c:J(A.c)===J(B.c), g:J(A.g)===J(B.g), a:J(A.a)===J(B.a), al:J(A.al)===J(B.al), e:J(A.e)===J(B.e),
+             h:{ ok:hOk, todos:Object.keys(almA).every(function(a){ return !!visto[a]; }), n:[(A.h||[]).length,(B.h||[]).length] } };
   });
+  var hh=sec.h; delete sec.h;
   chk('…y dicen exactamente lo mismo', Object.keys(sec).every(k=>sec[k]), sec);
+  chk('(06/10, §4hs) el historial: solo los cortes de los últimos 3 días y el último de cada almacén (ninguno se queda sin el suyo), sin id', hh.ok && hh.todos && hh.n[1]<=hh.n[0], hh);
   chk('el aviso de tamaño mira el largo de la fila (fixture '+M1.total+' letras; aviso a '+(await page.evaluate(() => STOCK_TAMANO_AVISO))+')', true);
 
   // ══ 2. Determinista e idempotente ═════════════════════════════════════════════════════════════
@@ -217,7 +228,7 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
   chk('podar dos veces es podar una', idem.podar2);
 
   // ══ 3. Qué quedó y cómo ═══════════════════════════════════════════════════════════════════════
-  console.log('\n── 3. Lo recibido hace menos de 45 días queda entero; lo más viejo, solo la muestra, y solo si alguna cuenta lo mira ──');
+  console.log('\n── 3. Lo recibido hace menos de STOCK_RECIBIDOS_DIAS días (3 desde §4hs) queda entero; lo más viejo, solo la muestra, y solo si alguna cuenta lo mira ──');
   const forma = await page.evaluate(() => {
     var A=JSON.parse(_RAW).p, B=JSON.parse(_t1).p, hoy=todayStr(), corte=stockSumarDias(hoy,-STOCK_RECIBIDOS_DIAS);
     var porId={}; B.forEach(function(q){ porId[q.id]=q; });
@@ -234,11 +245,11 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
     var ningunaMuestra=sacados.every(function(q){ return !mide(q) || top[stockFabNorm(q.fab)].indexOf(q.id)<0; });
     var hayMasNuevo=sacados.every(function(q){ return A.some(function(o){ return o.id!==q.id && o.k===q.k && String(o.f)>String(q.f); }); });
     var rcViva=porId['rcR3'], rcVieja=porId['rcR0'];
-    return { nRec:recientes.length, recientesIguales:recientesIguales, nViejos:viejos.length, nMuestras:muestras.length, nSacados:sacados.length,
+    return { dias:STOCK_RECIBIDOS_DIAS, nRec:recientes.length, recientesIguales:recientesIguales, nViejos:viejos.length, nMuestras:muestras.length, nSacados:sacados.length,
              muestrasLimpias:muestrasLimpias, conFab:conFab, ningunaMuestra:ningunaMuestra, hayMasNuevo:hayMasNuevo,
              rcViva:rcViva, rcViejaQuedo:!!rcVieja, ejemplo:muestras[0], sacados:sacados.map(function(q){ return q.id; }) };
   });
-  chk('los '+forma.nRec+' recibidos hace menos de 45 días quedan ENTEROS, con sus recepciones', forma.nRec>0 && forma.recientesIguales);
+  chk('los '+forma.nRec+' recibidos hace menos de '+forma.dias+' días quedan ENTEROS, con sus recepciones (eran 45 días; 3 desde §4hs)', forma.nRec>0 && forma.recientesIguales && forma.dias===3);
   chk('de los '+forma.nViejos+' más viejos quedan '+forma.nMuestras+' como muestra y se van '+forma.nSacados, forma.nViejos>0 && forma.nSacados>0 && forma.nMuestras+forma.nSacados===forma.nViejos, forma.sacados);
   chk('la recogida vieja que ya no está en `rs` (la foto de IM es posterior) y tiene otra más nueva del mismo producto se va', !forma.rcViejaQuedo);
   chk('la muestra es solo id, producto, cuántos, fábrica, pedido el, llegó el (sin recs, ru, total ni esp)', forma.muestrasLimpias, forma.ejemplo);
@@ -276,7 +287,10 @@ const IM='IM - PRODUCTOTERMINADO', BANZER='01-05-025  Almacen Distribucion Banze
     var nuevo={ id:'fpNUEVO', k:m.p[0].k, u:9, fab:'MORENO', f:todayStr(), esp:'', r:'' };
     m.p=m.p.concat([nuevo]);
     var out=stockFusionar(b, m, s), ids=_ids(out.p);
-    var a_ok = ids.indexOf('fpNUEVO')>=0 && sacados.every(function(id){ return ids.indexOf(id)<0; }) && J(ids.filter(function(id){ return id!=='fpNUEVO'; }))===J(idsPod);
+    /* (06/10, §4hs) Lo esperado es la MISMA poda sobre lo podado más el pedido nuevo: con 3 días, un recibido de hace 3
+       semanas queda solo como «el más nuevo de su producto», y el pedido nuevo de ese producto lo reemplaza (regla de §4hl). */
+    var T=JSON.parse(_t1); T.p=T.p.concat([JSON.parse(J(nuevo))]); var esperado=_ids(stockPodar(T).p);
+    var a_ok = ids.indexOf('fpNUEVO')>=0 && sacados.every(function(id){ return ids.indexOf(id)<0; }) && J(ids)===J(esperado);
     var a_dif = { deMas:ids.filter(function(id){ return id!=='fpNUEVO' && idsPod.indexOf(id)<0; }), deMenos:idsPod.filter(function(id){ return ids.indexOf(id)<0; }) };
     var kN=nuevo.k; STOCK=out; var Fa=_foto();
     var a_cuentas = J(Fa.lista.filter(function(o){ return o.k!==kN; }))===J(_F0.lista.filter(function(o){ return o.k!==kN; })) && J(Fa.tf)===J(_F0.tf);

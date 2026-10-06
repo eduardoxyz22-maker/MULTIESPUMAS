@@ -80,7 +80,7 @@ function servidor(){
   const post = (bodyTxt) => ctx.doPost({ postData:{ contents: bodyTxt }, parameter:{} })._t;
   const fila = (id) => { const r = sh._datos.find(f => f[0]===id); return r ? ctx.rowToRec_(r) : null; };
   /* Guarda como lo haría OTRO dispositivo con el panel nuevo (sello + `juntar`). */
-  const guardar = (rec) => JSON.parse(post(JSON.stringify({ action:'save', pedido:rec, juntar:1 })));
+  const guardar = (rec) => JSON.parse(post(JSON.stringify({ action:'save', pedido:rec, juntar:1, sf:3 })));   // (06/10) el panel nuevo manda `sf` (§4hs)
   const stock = () => { const f=fila('__stock__'); try{ return JSON.parse(f.observaciones); }catch(e){ return null; } };
   /* Otro dispositivo toca el stock (con el sello bueno): `cambiar` recibe el JSON y lo modifica. */
   const otroTocaStock = (cambiar) => { const f=fila('__stock__'); const st=JSON.parse(f.observaciones); cambiar(st);
