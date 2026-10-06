@@ -489,12 +489,21 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   cambiaba el tiempo medido). Ids de 64 bits (`huellaId`: `c…`/`d:`/`x:`/`s:`), el historial viaja sin `id`. Medido con la
   simulación de la auditoría: máx 39.573 en 60 días de uso pesado (antes, 50.000 el día 8).
   · **🧓 Página vieja**: `STOCK.pv=3` en cada guardado; una copia sin `pv` que vuelve atrás un corte o borra el control se JUNTA
-  al leer y se reguarda (`stockProtegerDePaginaVieja`/`stockRepararLuego`). De fondo, el **servidor `2026-10-06-a`**:
-  `__stock__` sellado sin `sf ≥ 3` → `actualizar`. ⚠️ **Primero la página y todos F5, después el servidor** (la página de hoy no
-  manda `sf`). ⚠️ Una prueba que suba un Excel de otro día a propósito apaga SOLO esa regla (`window.existNoEsDeHoy=…`, ver
-  `_otroDia` en `test_rev_corte_codex`); y un doble del servidor que guarde el stock «como el panel nuevo» manda `sf:3`.
+  al leer y se reguarda (`stockProtegerDePaginaVieja`/`stockRepararLuego`; sin pedirle `pv` a la memoria: si no, una copia vieja
+  inocente la apagaba). De fondo, el **servidor `2026-10-06-a`**: `__stock__` sellado sin `sf ≥ 3` → `actualizar`. ⚠️ **Primero
+  la página y todos F5, después el servidor** (la página de hoy no manda `sf`). ⚠️ **Lo que la página vieja deja en el navegador
+  no entra tal cual después del F5**: `sisCargarPestana` no carga una memoria sin `pv`, y `apiSaveAhora` manda SIN sello (`rev:0`)
+  una fila del stock sin `pv` (`stockTextoAlDia`) → `conflicto` → se junta. Sin eso, la página nueva le ponía su `sf` al Excel
+  del sábado que quedó en la cola y el servidor lo aceptaba. ⚠️ Una prueba que suba un Excel de otro día a propósito apaga SOLO
+  esa regla (`window.existNoEsDeHoy=…`, ver `_otroDia` en `test_rev_corte_codex`); y un doble del servidor que guarde el stock
+  «como el panel nuevo» manda `sf:3`.
   · B2 (`ofrecido`/`pendQ`), B3 (`stockRecYaEnFoto`), B5d, B6 (`difAnt` desde `h[].d` + lápida en `sm`), B8 (`stockMigrar`).
-  `tests/test_corte_del_dia.js` (41, con .xlsx armados en la prueba), `test_servidor` §22.
+  · **Revisión independiente (06/10 a la tarde)**: B3 mira el corte ANTERIOR de acá (`ev.p` en la recepción): Moreno del mismo
+  día sacado después de ese corte ya tiene la recogida descontada (Moreno 09:50 y acá 09:55 se le restaba otra vez). El mismo
+  archivo subido dos veces conserva las diferencias de la primera (`existJuntarDif`: si no, el corregido comparaba contra 0).
+  El mismo archivo ya subido con la hora del NOMBRE (página de antes) usa esa hora (`existAlinearHora`: misma huella, a menos de
+  2 min). Un «Conté a mano» más nuevo frena el Excel con su propio texto (`previoAMano`).
+  `tests/test_corte_del_dia.js` (52, con .xlsx armados en la prueba), `test_servidor` §22.
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).

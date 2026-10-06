@@ -7479,7 +7479,8 @@ la tiene unos segundos después y WhatsApp lo cambia. El mismo Excel subido con 
 - Los pedidos a fábrica recibidos, enteros 3 días (`STOCK_RECIBIDOS_DIAS`, eran 45); después la MUESTRA de siempre, que mide
   la fábrica (`STOCK_RECIBIDOS_TOPE` sigue en 120: probado que con 60 cambiaba el tiempo medido de Moreno).
 - Nombres cortos: corte, detección, recepción y salida son huellas de 64 bits (`huellaId`: `c…`, `d:…`, `x:…`, `s:…`, ~15
-  letras). La evidencia de la recepción sin `p`, `m` ni `a` vacío; la detección sin `ts` ni `alm` vacío; el historial viaja
+  letras). La evidencia de la recepción sin `m` ni `a` vacío (`p`, el corte anterior, volvió en la revisión: lo usa B3); la
+  detección sin `ts` ni `alm` vacío; el historial viaja
   sin `id` (`leerStock` lo rearma). Una recepción ocupa ~150 letras (la auditoría midió ~358).
 - ⚠️ En producción no había nada del control todavía (ningún Excel subido con la página del 05/10): cambiar el formato de los
   ids no deja nada viejo mezclado.
@@ -7507,6 +7508,38 @@ después: queda como `nr`), B5d (`stockMovEnVentana` mira las dos puntas el mism
 lo que dijo la versión anterior en `h[].d`, de más y de menos; sus salidas quedan con lápida «corte reemplazado», que gana en
 la junta), B8 (`stockMigrar` lleva `det`, `sm` y `h[].d` a la clave unida).
 - **Sigue sin arreglar** (no es del control del corte): lo del cierre de entregas (§4hq) y `stockMigrar` sin `cod`.
+
+**🔎 Revisión independiente (06/10 a la tarde)**: un agente, con la página publicada `3443703` y el `.gs` real (el arnés de
+`test_concurrencia`), encontró cuatro problemas, los cuatro reproducidos con scripts (`rev_4hs/` del scratchpad). Arreglados:
+1. **ALTA, después del F5 la página nueva mandaba el stock de la vieja con `sf`.** Con el servidor nuevo, la página vieja vuelve a
+   subir el Excel del sábado, el servidor contesta `actualizar` y la fila queda en la cola. La persona hace F5 (lo que dice el
+   aviso); la página nueva vacía la cola ANTES de la primera lectura y `sisPlegar` mandaba la memoria de la pestaña (la dejó la
+   vieja en `sessionStorage`) con `sf:3` y el sello: el servidor la aceptaba y el corte del sábado volvía, ahora con `pv` 3 (las
+   otras computadoras la adoptaban tal cual). Arreglo: `sisCargarPestana` no carga una memoria sin `pv`, y `apiSaveAhora` manda
+   SIN sello (`rev:0`) una fila del stock sin `pv` (`stockTextoAlDia`): `conflicto` → `sisFusionarYGuardar` → queda el corte de
+   hoy. Probado también con el `.gs` real (`b_f5_cola.js`: «la planilla sigue con el corte de hoy»).
+2. **MEDIA, la protección al leer se apagaba sola**: `stockProtegerDePaginaVieja` le pedía `pv` a la memoria. Una copia vieja
+   inocente (un pedido a fábrica anotado) se adoptaba, la memoria perdía el `pv`, y la siguiente que volvía atrás el corte entraba
+   callada. Arreglo: sin pedirle `pv` a la memoria («volvió atrás» y «borró el control» no lo necesitan).
+3. **MEDIA, B3 a medias**: miraba «Moreno ≥ la hora de acá» el mismo día. Con Moreno a las 09:50 y acá a las 09:55 (el orden
+   natural sacándolos de a uno) la recogida de ayer se le restaba otra vez. Arreglo: la recepción guarda el corte ANTERIOR de acá
+   (`ev.p`); el Excel de Moreno de un día posterior al corte ya la tiene; del mismo día, si se sacó después del corte anterior de
+   acá (el de ayer, o el de esta mañana si este es el de la tarde). `stockRecYaEnFoto`. La recepción sigue < 190 letras.
+4. **BAJA, el mismo archivo dos veces rompía B6**: la segunda subida (todo coincide) dejaba el renglón del historial sin `d`, y el
+   corregido comparaba contra 0 (esperado 6, +1 en vez de 10, −3): anulaba la salida, no dejaba anotar el −3 y se iban los «↩️ no
+   había llegado». Arreglo: el mismo archivo (misma huella, `_hPrev`) conserva las diferencias de la primera y suma lo tildado
+   ahora (`existJuntarDif`, sin repetir ids).
+- **Sospecha del período de transición, arreglada**: la página de antes toma la hora del NOMBRE (08:50:15) y esta la del PIE
+  (08:50:12). Si la vieja lo subió primero, la nueva rechazaba el mismo archivo como «más viejo». `existAlinearHora`: mismo
+  almacén y día, misma huella, a menos de 2 minutos → usa la hora con la que ya está. Otro contenido con hora anterior sigue
+  siendo más viejo.
+- **Texto**: un «📋 Conté a mano» más nuevo que el Excel lo frenaba con «otro Excel… falta la hora». Ahora `previoAMano`: «Ya hay
+  un conteo a mano de hoy de este depósito (anotado a las HH:MM), más nuevo que este Excel…».
+- Lo que miró y no encontró nada serio: el servidor no frena guardados legítimos (la cola y el reguardado tras `conflicto` pasan
+  por `apiSaveAhora`, el único que arma un `save`, y nada fuera del `.gs` escribe `__stock__`); los ids son los mismos entre dos
+  páginas nuevas; la poda depende solo de la fecha y corre en los tres caminos (las lápidas se van junto con lo suyo); `fusFoto`
+  no perdió nada nuevo en ningún caso; `stockRepararLuego` guarda una vez por sello (sin bucle).
+- Pruebas nuevas en `test_corte_del_dia`: §7c-7d, §11-15 (11 más). §4b cambió a conciencia (la evidencia lleva `p` otra vez).
 
 **Pruebas**: `tests/test_corte_del_dia.js` (41; con archivos .xlsx armados en la prueba y subidos por el botón de verdad; 24
 rojas contra la publicada `3443703`); `test_servidor` §22 (9; 6 rojas contra la `2026-10-02-a`). Cambiaron a conciencia:

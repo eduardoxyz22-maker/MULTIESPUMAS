@@ -17,6 +17,14 @@
      8  B5d: la ventana entre dos cortes del mismo día mira las dos puntas.
      9  B6: el Excel corregido compara contra lo que dijo la versión anterior (de más Y de menos) y anula sus salidas.
      10 B8: 🔗 Unir lleva también lo que anotó el control (detecciones, salidas, diferencias).
+   La revisión independiente del mismo 06/10 (§4hs «Revisión»):
+     11 Después del F5: la memoria de la pestaña que dejó la página vieja (sin `pv`) no se carga, y la fila del stock que
+        quedó en la cola sale SIN sello, choca y se junta (queda el corte de hoy).
+     12 La protección al leer no se apaga después de adoptar una copia vieja inocente.
+     13 El mismo Excel subido dos veces conserva sus diferencias: el corregido compara contra lo que dijo la primera.
+     14 El mismo archivo ya subido con la hora del NOMBRE (página de antes) no es «más viejo».
+     15 Con un conteo a mano más nuevo, el Excel de la mañana no entra y lo dice con esas palabras.
+     (7c-7d) Moreno sacado minutos antes que el de acá la misma mañana ya tenía la recogida descontada.
    Reloj clavado en el miércoles 07/10/2026 a las 15:00 de Bolivia. Red cortada, servidor simulado, datos sintéticos.
    Se corre:  node tests/test_corte_del_dia.js
    Dientes contra la página publicada:  PEDIDOS=/ruta/a/la/publicada.html node tests/test_corte_del_dia.js */
@@ -255,7 +263,7 @@ const BASE = `
                prodC:'', idDet:existDetId(existCorteId(R), K)===det.id && existRecId(det.id,'fp1')===rec.id };
     });
     chk('4a · corte, detección, recepción y salida con nombres de huella (c…, d:…, x:…, s:…), de hasta 16 letras', /^c[0-9a-z]{8,15}$/.test(r.corte) && /^d:[0-9a-z]{8,14}$/.test(r.did) && /^x:[0-9a-z]{8,14}$/.test(r.rid) && /^s:[0-9a-z]{8,14}$/.test(r.sid) && r.idDet, J([r.corte, r.did, r.rid, r.sid]));
-    chk('4b · la evidencia de la recepción guarda el corte, la detección y quién (sin `p` ni `m`; `a` vacío = acá, no se guarda)', J(r.ev)===J(['c','d','q']), J(r.ev));
+    chk('4b · la evidencia de la recepción guarda el corte, el corte anterior (`p`, para saber si Moreno ya la tenía restada), la detección y quién (sin `m`; `a` vacío = acá, no se guarda)', J(r.ev)===J(['c','d','p','q']), J(r.ev));
     chk('4c · la detección sin `ts` ni `alm` vacío; la salida sin `alm` vacío y con su corte (`c`)', r.detK.indexOf('ts')<0 && r.detK.indexOf('alm')<0 && r.salK.indexOf('alm')<0 && r.salK.indexOf('c')>=0, J([r.detK, r.salK]));
     chk('4d · cada cosa ocupa poco: recepción < 190 letras, detección < 140, salida < 170 (la auditoría midió ~358 / ~212 / ~213)', r.largoRec<190 && r.largoDet<140 && r.largoSal<170, J([r.largoRec, r.largoDet, r.largoSal]));
   });
@@ -349,10 +357,20 @@ const BASE = `
       };
       out.mismoMomento=await armar(todayStr(),'09:55:00');
       out.imViejo=await armar(_atras(1),'09:00:00');
+      out.im5minAntes=await armar(todayStr(),'09:50:00');          // (revisión) Moreno sacado 5 minutos ANTES que el de acá
+      /* (revisión) El de acá es el de la TARDE (16:00) y el corte anterior de acá es de esta mañana (09:00): la recogida pasó en el día;
+         el Excel de Moreno de esta mañana (09:00) todavía la tenía → se le resta. */
+      _base(); STOCK.c.f=todayStr(); STOCK.c.hora='09:00:00';
+      STOCK.p=[{ id:'rc1', k:K, u:5, tipo:'recogida', de:IM, fab:'', f:todayStr(), esp:todayStr(), r:'' }];
+      STOCK.g[IM]={ f:todayStr(), hora:'09:00:00', u:{}, solo0:true, t:_ts(todayStr(),'09:10:00'), rs:{} }; STOCK.g[IM].u[K]=20;
+      _subir(_R(todayStr(),'16:00:00',{[K]:15,[K2]:4}), ['.exist-sug[data-q="rc1"]']); await confirmarImportExist();
+      out.tarde={ im:STOCK.g[IM].u[K], cerrada:!!STOCK.p[0].r };
       return out;
     });
     chk('7a · el Excel de Moreno es de HOY a la misma hora (ya sin las 5): Moreno queda en 15, la marca dice «ya estaba» (0 unidades)', r.mismoMomento.cerrada && r.mismoMomento.im===15 && J(r.mismoMomento.rs)===J([[0,true]]), J(r.mismoMomento));
     chk('7b · el de Moreno es de AYER (todavía con las 5): se le restan, 10', r.imViejo.cerrada && r.imViejo.im===10 && J(r.imViejo.rs)===J([[5,false]]), J(r.imViejo));
+    chk('7c · (revisión) el de Moreno sacado 5 minutos ANTES que el de acá, la misma mañana: ya la tenía, queda en 15', r.im5minAntes.cerrada && r.im5minAntes.im===15, J(r.im5minAntes));
+    chk('7d · (revisión) el de acá es el de la tarde y el de Moreno el de esta mañana: la recogida pasó en el día, se le resta (20 → 15)', r.tarde.cerrada && r.tarde.im===15, J(r.tarde));
   });
 
   // ═══ 8 ═══════════════════════════════════════════════════════════════════════════════════
@@ -400,6 +418,110 @@ const BASE = `
       return { det:M.det[0].k===K, sm:M.sm[0].k===K, hd:M.h[0].d[0][0]===K };
     });
     chk('10 · la detección, la salida anotada y la diferencia del historial pasan a la clave unida', r.det && r.sm && r.hd, J(r));
+  });
+
+  // ═══ 11 ══════════════════════════════════════════════════════════════════════════════════
+  console.log('\n── 11. (revisión) Después del F5: la memoria y la cola que dejó la página vieja no entran tal cual ──');
+  await seccion('11', async (page) => {
+    const r = await page.evaluate(async () => {
+      var out={};
+      var viejo=JSON.parse(JSON.stringify(STOCK)); delete viejo.pv;
+      viejo.c={ f:_atras(4), hora:'09:55:00', u:{}, alm:LOG, solo0:true, t:Date.now() }; viejo.c.u[K]=50;
+      /* (a) la memoria de la pestaña: sin pv (la dejó la página vieja) no se carga; con pv sí */
+      sessionStorage.setItem(SS_SIS, JSON.stringify({ stock:viejo, arqueo:null, base:{} }));
+      STOCK=stockVacio(); STOCK_CARGADO=false; sisCargarPestana(); out.cargoVieja=STOCK_CARGADO;
+      var conPv=JSON.parse(JSON.stringify(viejo)); conPv.pv=3;
+      sessionStorage.setItem(SS_SIS, JSON.stringify({ stock:conPv, arqueo:null, base:{} }));
+      STOCK=stockVacio(); STOCK_CARGADO=false; sisCargarPestana(); out.cargoNueva=STOCK_CARGADO;
+      try{ sessionStorage.removeItem(SS_SIS); }catch(e){}
+      /* (b) la fila que dejó en la cola (sin pv, con el sello 8 que había leído): sale SIN sello, el servidor contesta conflicto con
+         la de hoy, se junta y se guarda con el sello: queda el corte de HOY */
+      STOCK=stockVacio(); STOCK.c={ f:todayStr(), hora:'09:00:00', u:{}, solo0:true, alm:LOG, t:_ts(todayStr(),'09:05:00') }; STOCK.c.u[K]=20; STOCK.c.u[K2]=4;
+      STOCK_CARGADO=true; var hoyFila=filaStock(); var servidorObs=hoyFila.observaciones;
+      STOCK=stockVacio(); STOCK_CARGADO=false; SIS_BASE={};
+      var filaVieja={ id:STOCK_ID, fecha:'', cliente:'📦 STOCK', observaciones:JSON.stringify(viejo), rev:8, _dev:pestanaId(), _t:Date.now(), _base:{ rev:8, obs:servidorObs } };
+      var enviados=[];
+      apiPost=function(pl){
+        var c=JSON.parse(JSON.stringify(pl)); enviados.push(c);
+        if(pl.action!=='save') return Promise.resolve({ ok:true });
+        if((Number(pl.pedido.rev)||0)!==8) return Promise.resolve({ ok:false, error:'conflicto', pedido:{ id:STOCK_ID, fecha:'', cliente:'📦 STOCK', observaciones:servidorObs, rev:8 }, ahora:Date.now() });
+        return Promise.resolve({ ok:true, pedido:Object.assign({}, pl.pedido, { rev:9 }) });
+      };
+      var res=await apiSaveAhora(filaVieja, {});
+      var saves=enviados.filter(function(e){ return e.action==='save'; });
+      var ult=saves.length ? JSON.parse(saves[saves.length-1].pedido.observaciones) : null;
+      out.b={ ok:!!(res&&res.ok), n:saves.length, primeroSinSello:saves[0] && saves[0].pedido.rev===0, sf:saves[0] && saves[0].sf, segundoConSello:saves[1] && saves[1].pedido.rev===8,
+              corte:ult && (ult.c.f+' '+ult.c.hora), uK:ult && ult.c.u[K], pv:ult && ult.pv };
+      return out;
+    });
+    chk('11a · la memoria que dejó la página vieja en la pestaña (sin pv) no se carga; una con pv sí', r.cargoVieja===false && r.cargoNueva===true, J([r.cargoVieja, r.cargoNueva]));
+    chk('11b · ⚠️ la fila de la página vieja que quedó en la cola sale SIN sello, choca, se junta y queda el corte de HOY (no el del sábado)',
+        r.b.ok && r.b.n===2 && r.b.primeroSinSello && r.b.sf===3 && r.b.segundoConSello && /^\d{4}-\d{2}-\d{2} 09:00:00$/.test(r.b.corte) && r.b.uK===20 && r.b.pv===3, J(r.b));
+  });
+
+  // ═══ 12 ══════════════════════════════════════════════════════════════════════════════════
+  console.log('\n── 12. (revisión) La protección al leer no se apaga después de adoptar una copia vieja inocente ──');
+  await seccion('12', async (page) => {
+    const r = await page.evaluate(async () => {
+      var out={};
+      STOCK.c={ f:todayStr(), hora:'09:00:00', u:{}, solo0:true, alm:LOG, t:_ts(todayStr(),'09:05:00') }; STOCK.c.u[K]=20; STOCK.c.u[K2]=4;
+      var f0=filaStock(); f0.rev=5; STOCK=stockVacio(); STOCK_CARGADO=false; _limpiarVuelo(); leerCierresDeLista([f0], true);
+      /* una página vieja anota un pedido a fábrica (inocente): se adopta y la memoria queda sin pv */
+      var o1=JSON.parse(f0.observaciones); delete o1.pv; o1.p=[{ id:'fpV', k:K, u:3, fab:'MORENO', f:todayStr(), esp:'', r:'' }];
+      window._guardadas=[]; window._toasts=[]; _limpiarVuelo(); leerCierresDeLista([Object.assign({}, f0, { observaciones:JSON.stringify(o1), rev:6 })], true);
+      await new Promise(function(res){ setTimeout(res, 50); });
+      out.inocente={ p:(STOCK.p||[]).length, pv:STOCK.pv||0, guardo:window._guardadas.length };
+      /* y después vuelve a subir el Excel del sábado */
+      var o2=JSON.parse(JSON.stringify(o1)); o2.c={ f:_atras(4), hora:'09:55:00', u:{}, solo0:true, alm:LOG, t:Date.now() }; o2.c.u[K]=50;
+      window._guardadas=[]; window._toasts=[]; _limpiarVuelo(); leerCierresDeLista([Object.assign({}, f0, { observaciones:JSON.stringify(o2), rev:7 })], true);
+      await new Promise(function(res){ setTimeout(res, 50); });
+      var st=window._guardadas.filter(function(g){ return String(g.id)===STOCK_ID; }).slice(-1)[0], so=st?JSON.parse(st.observaciones):null;
+      out.atras={ c:STOCK.c.f, uK:STOCK.c.u[K], p:(STOCK.p||[]).length, guardo: so ? (so.c.f+' pv'+so.pv) : null, aviso:window._toasts.some(function(t){ return /página VIEJA/.test(t); }) };
+      return out;
+    });
+    chk('12a · la copia vieja inocente (anotó un pedido a fábrica) se adopta, sin guardar', r.inocente.p===1 && r.inocente.guardo===0, J(r.inocente));
+    chk('12b · ⚠️ …y la siguiente que vuelve atrás el corte NO entra: queda el de hoy (con el pedido que anotó), se reguarda y avisa', /^\d{4}-\d{2}-\d{2}$/.test(r.atras.c) && r.atras.uK===20 && r.atras.p===1 && !!r.atras.guardo && / pv3$/.test(r.atras.guardo) && r.atras.aviso, J(r.atras));
+  });
+
+  // ═══ 13 ══════════════════════════════════════════════════════════════════════════════════
+  console.log('\n── 13. (revisión) El mismo Excel subido dos veces conserva sus diferencias: el corregido compara bien ──');
+  await seccion('13', async (page) => {
+    const r = await page.evaluate(async () => {
+      var R1=_R(todayStr(),'09:00:00',{[K]:6,[K2]:4});
+      _subir(R1, ['.exist-sal']); await confirmarImportExist();
+      var d1=JSON.stringify((STOCK.h[0]||{}).d||null);
+      _subir(_R(todayStr(),'09:00:00',{[K]:6,[K2]:4})); await confirmarImportExist();      // el MISMO archivo, desde otro equipo
+      var d2=JSON.stringify((STOCK.h[0]||{}).d||null);
+      var C=stockConciliar(_R(todayStr(),'09:00:00',{[K]:7,[K2]:4}),'log',false), f=C.filas.filter(function(x){ return x.k===K; })[0]||{};
+      return { d1:d1, igual:d1===d2, hn:STOCK.h.filter(function(x){ return x.alm===LOG && x.f===todayStr(); }).length, corregido:{ esperado:f.esperado, dif:f.dif, tipo:f.tipo } };
+    });
+    chk('13a · subir el mismo archivo otra vez deja las diferencias de la primera (con la salida anotada) y un solo corte', r.igual && r.d1!=='null' && r.hn===1, J([r.d1, r.hn]));
+    chk('13b · ⚠️ …y el Excel corregido compara contra lo esperado de ese corte: 10, −3 (antes: 6, +1)', r.corregido.esperado===10 && r.corregido.dif===-3 && r.corregido.tipo==='menos', J(r.corregido));
+  });
+
+  // ═══ 14 ══════════════════════════════════════════════════════════════════════════════════
+  console.log('\n── 14. (revisión) El mismo archivo ya subido con la hora del NOMBRE (página de antes) no es «más viejo» ──');
+  await seccion('14', async (page) => {
+    /* El corte vigente lo subió la página de antes: hora del nombre (08:50:15), con su huella en el historial. */
+    const prim = await subirArchivo(page, 'Excel_07102026_08_50_15_almacen_octubre.xlsx', reporte({ al:'07/10/2026', pie:'' }));
+    await page.evaluate(async () => { await confirmarImportExist(); });
+    const vig = await page.evaluate(() => STOCK.c.hora);
+    /* La página nueva sube el MISMO archivo, que tiene el pie 08:50:12 */
+    const otra = await subirArchivo(page, 'DOC-20261007-WA0007.xlsx', reporte({ al:'07/10/2026', pie:'07/10/2026 08:50:12' }));
+    const otroContenido = await subirArchivo(page, 'DOC-20261007-WA0008.xlsx', reporte({ al:'07/10/2026', pie:'07/10/2026 08:50:12', items:[['CH1201','TITANIO ICE 2.5PLZ 160X190CM',12],['CH1129','COLCHON TITANIO LATEX 140X190',4]] }));
+    chk('14a · el mismo contenido, 3 segundos de diferencia: se usa la hora con la que ya está (08:50:15), no «más viejo»', vig==='08:50:15' && !!otra.R && otra.R.hora==='08:50:15' && otra.boton.hay && !otra.boton.apagado, J([vig, otra.R && otra.R.hora, otra.boton]));
+    chk('14b · …pero OTRO contenido con una hora anterior sigue siendo más viejo (no se alinea)', !!otroContenido.R && otroContenido.R.hora==='08:50:12' && otroContenido.boton.apagado===true, J([otroContenido.R && otroContenido.R.hora, otroContenido.boton]));
+  });
+
+  // ═══ 15 ══════════════════════════════════════════════════════════════════════════════════
+  console.log('\n── 15. (revisión) Con un conteo a mano más nuevo, el Excel de la mañana no entra y lo dice así ──');
+  await seccion('15', async (page) => {
+    const r = await page.evaluate(() => {
+      STOCK.c={ f:todayStr(), u:{}, t:_ts(todayStr(),'14:00:00') }; STOCK.c.u[K]=9;   // 📋 Conté a mano, a las 14:00
+      var C=stockConciliar(_R(todayStr(),'09:00:00',{[K]:10,[K2]:4}),'log',false);
+      return { viejo:!!C.corteViejo, aMano:!!C.previoAMano, ambiguo:!!C.ambiguo, txt:existCorteViejoTxt(C) };
+    });
+    chk('15 · «Ya hay un conteo a mano de hoy (anotado a las 14:00), más nuevo que este Excel» (antes decía «otro Excel… falta la hora»)', r.viejo && r.aMano && !r.ambiguo && /conteo a mano de hoy de este depósito \(anotado a las 14:00\)/.test(r.txt), J(r));
   });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3).join(' | '));

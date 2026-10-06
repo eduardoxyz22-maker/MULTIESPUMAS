@@ -2652,7 +2652,18 @@ actualizada»*. Lo hecho (detalle y nombres de funciones en la bitácora §4hs y
    día con las dos puntas; el Excel corregido contra lo que dijo la versión anterior (`h[].d`) con lápida en sus salidas; Unir lleva
    `det`/`sm`/`h[].d`.
 
-**Para revisar**: `tests/test_corte_del_dia.js` (41) y `test_servidor` §22. Lo que no cambió y ojo: la regla de rotación, el cierre de
+5. **Revisión independiente (06/10 a la tarde)**, con la página publicada `3443703` y el `.gs` real; cuatro problemas, arreglados:
+   - **ALTA**: después del F5, la página nueva mandaba con su `sf` el stock que la vieja había dejado en la cola y en la memoria de
+     la pestaña (el Excel del sábado), y el servidor lo aceptaba. Ahora esa memoria no se carga y esa fila sale sin sello: choca y
+     se junta.
+   - La protección al leer se apagaba después de adoptar una copia vieja inocente: ya no le pide `pv` a la memoria.
+   - Moreno sacado minutos antes que el de acá la misma mañana: la recogida se le restaba otra vez. La recepción guarda el corte
+     anterior de acá (`ev.p`).
+   - El mismo archivo subido dos veces perdía sus diferencias y el corregido comparaba contra 0. Ahora las conserva.
+   - Además: el mismo archivo ya subido con la hora del nombre (página de antes) no es «más viejo», y un «Conté a mano» más nuevo
+     frena el Excel con su propio texto.
+
+**Para revisar**: `tests/test_corte_del_dia.js` (52) y `test_servidor` §22. Lo que no cambió y ojo: la regla de rotación, el cierre de
 entregas (sus hallazgos de §4hq siguen abiertos) y `stockMigrar` sin `cod`.
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
