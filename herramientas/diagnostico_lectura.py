@@ -184,10 +184,19 @@ def celda_stock(ped):
     # `v2t`, y cada corte con su huella (`hu`) y sus diferencias (`d`); una página sin F5 no deja nada de eso (§4hq).
     print(f"      marca de la página nueva en la fila: v={s.get('v')!r} · v2t={'sí' if s.get('v2t') else 'no'}")
     alm = lambda a: re.sub(r"^\s*[\d-]+\s+", "", str(a or ""))[:22] or "?"
-    for x in [y for y in (s.get("h") or []) if isinstance(y, dict)][:6]:
-        print(f"      corte {x.get('f') or '?'} {str(x.get('hora') or '')[:5] or '(sin hora)'} · {alm(x.get('alm'))} · rol {x.get('rol') or '?'} · "
-              f"{'página NUEVA (huella)' if x.get('hu') else 'página VIEJA (sin huella)'}"
+    # La hora en que se SUBIÓ cada Excel (`ts`, hora de Bolivia): el orden de la lista no alcanza para saberlo.
+    subido = lambda ts: time.strftime("%d/%m %H:%M", time.gmtime((float(ts) / 1000) - 4 * 3600)) if ts else "?"
+    hs = sorted([y for y in (s.get("h") or []) if isinstance(y, dict)], key=lambda y: -(float(y.get("ts") or 0)))
+    for x in hs[:8]:
+        print(f"      corte {x.get('f') or '?'} {str(x.get('hora') or '')[:5] or '(sin hora)'} · subido {subido(x.get('ts'))} · "
+              f"{alm(x.get('alm'))} · rol {x.get('rol') or '?'} · {'página NUEVA (huella)' if x.get('hu') else 'página VIEJA (sin huella)'}"
               f"{' · diferencias ' + str(len(x.get('d') or [])) if x.get('hu') else ''}")
+    # De qué día es lo que el panel usa HOY como saldo de cada almacén.
+    c = s.get("c") if isinstance(s.get("c"), dict) else {}
+    print(f"      saldo de acá (PTF) que usa el panel: corte del {c.get('f') or '?'} {str(c.get('hora') or '')[:5]} · subido {subido(c.get('t'))}")
+    for nm, g in (s.get("g") or {}).items():
+        if isinstance(g, dict):
+            print(f"      saldo de {alm(nm)}: corte del {g.get('f') or '?'} {str(g.get('hora') or '')[:5]}")
 
 
 def url_de_la_pagina():
