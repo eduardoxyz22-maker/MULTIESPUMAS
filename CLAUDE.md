@@ -331,6 +331,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
       Moreno pero pueden estar guardadas en Banzer o Multiespumas. La fábrica sale de
       `MARCA_FABRICA`, el lugar de `STOCK.g` + `x.chkDe`. No se mezclan.
     `tests/test_banzer.js` (55).
+  - **🔎 El buscador del stock vive en la barra de arriba** (§4hp, 05/10; dueño: *«no hay un buscado en stock»*): el
+    `<input id="stk-q">` está en la barra fija de `#stock-overlay`, fuera de `#stock-body`, y `renderStockFiltros` NO lo dibuja
+    (deja un chip «🔎 «q»»). Con algo escrito, `renderStock` esconde los cuadros grandes (`renderStockHoy`, `renderRevisionFija`,
+    `renderProducir`, `renderTiendas`) y pone el cartel `#stk-buscando`; se borra la búsqueda y vuelven. ⚠️ No volver a dibujar
+    el campo dentro de la tabla (quedaba 1.100-1.400 px abajo, nadie lo encontraba) ni a mover el cursor al final en el refoco
+    de `renderStock`: la barra no se redibuja, el cursor se queda donde está. `stockFiltroLimpiar` vacía también el campo de
+    arriba y `abrirStock` lo sincroniza con `STOCK_FILTRO.q`. `tests/test_stock_buscador.js` (22; 9 rojas contra `64bcb37`).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
@@ -471,6 +478,11 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   `test_adm_alta` §2 cambiaron a conciencia (esperaban el cierre por fecha).
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
+- 🚨 **Auditoría del 06/10 (bitácora §4hq): hallazgos verificados y SIN arreglar** (el dueño no pidió arreglarlos todavía):
+  la celda del stock se llena en semanas con `det`/`sm`/`x:`; una página sin F5 borra el control de todos al guardar el stock
+  (la lectura adopta su copia); el cierre propone tildados los PM y un confirmado que se reprograma queda ✅ en la fecha nueva;
+  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`; `stockMigrar` no migra `cod` (un código nuevo en `CODIGOS` parte el
+  producto: el SUEÑA LITE 105 si un Excel viejo lo traía). Antes de tocar el cierre o el control del corte, leer §4hq.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
   · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). **Lo destildado en el cierre no lleva
     ninguna marca** (dueño, 05/10: *«un pedido que queda como pasado y no fue tildado, logística lo entregó; lo que no entregan
@@ -684,6 +696,13 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
   reescribe al reprogramar.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
+- **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
+  «Falta cobrar» de Ventas, «⏳ Con saldo» del resumen y «Por cobrar» del Cuadre (`mcToca`) abren **`abrirPorCobrar(origen)`**
+  con la MISMA cuenta que la ficha (`porCobrarDatos`: Ventas = `contaFaltaCobrar` sobre `contaLista()`; Cuadre =
+  `cuadrePendientes()`), armada al abrir, de la más vieja a la más nueva. Un cliente abre su venta con «← Volver a la lista»
+  (`POR_COBRAR_VOLVER`, solo si se abrió desde la lista con la ventana abierta). «Revisar antes de cerrar» tiene el aviso
+  `k:'cobrar'` (`sev:'plata'`, abierto): antes la deuda solo salía como «entregada y sin cobrar», y los choferes no marcan ✅.
+  ⚠️ Una ficha NUEVA que tenga que abrir su detalle va con `mcToca`, no con un `onclick` pegado a mano. `tests/test_por_cobrar.js` (24).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo
   va a `p.chofer`; la foto de la entrega reintenta una vez tras `conflicto` y el «✓» sale con

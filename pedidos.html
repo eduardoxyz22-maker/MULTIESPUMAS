@@ -230,6 +230,10 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
    a la mitad ("Bs 1.750,0 / 0"): se corta entre palabras, como corresponde. */
 @media(max-width:560px){.mc{padding:13px 14px}.mc-val{font-size:clamp(1rem,3.8vw,1.25rem);white-space:normal;overflow:visible}}
 .mc-sub{font-size:.66rem;color:var(--muted);margin-top:3px}
+/* ⏳ (06/10, §4hr) Una ficha que se TOCA: abre la lista que hay detrás (los clientes que deben). */
+.mc.mc-toca{cursor:pointer}
+.mc.mc-toca:hover,.mc.mc-toca:focus-visible{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.18);outline:none}
+.mc-toca .mc-ver{display:inline-block;margin-top:5px;font-size:.72rem;font-weight:700;color:#b45309}
 
 /* Consolidados: 3 columnas de texto estiradas a 900px dejan huecos enormes
    entre el vendedor y su monto. Se limitan y quedan legibles */
@@ -1441,7 +1445,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <style>
@@ -4399,16 +4403,94 @@ function renderContaMetrics(list, vSel){
     mc(exceso>0.01?'var(--amber)':'var(--green)','Ya ingresó', fmtBs(cobrado),
        exceso>0.01 ? ('⚠️ '+fmtBs(exceso)+' de MÁS en '+nExceso+' venta'+(nExceso===1?'':'s')+' — revisalas')
        : vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
-    mc(falta>0.01?'var(--amber)':'var(--green)', 'Falta cobrar',
-       falta>0.01?fmtBs(falta):'✅ Nada',
-       falta>0.01 ? (nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas')
-                  : 'no queda saldo pendiente')+
+    /* ⏳ (06/10, §4hr) Con saldo, la ficha se TOCA y abre quiénes son (`abrirPorCobrar`). */
+    (falta>0.01
+      ? mcToca('var(--amber)', 'Falta cobrar', fmtBs(falta),
+          nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas', "abrirPorCobrar('ventas')")
+      : mc('var(--green)', 'Falta cobrar', '✅ Nada', 'no queda saldo pendiente'))+
     mc(porCargar>0?'var(--amber)':'var(--green)','Por cargar al sistema',
        porCargar>0?String(porCargar):'✅ Todo',
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
                    : ('las '+n+' están registradas'));
   renderContaMarcas(list, vSel, vendido);
   acomodarFichas();
+}
+/* ⏳ QUIÉN DEBE (06/10, §4hr). El dueño: *«los vendedores sale que tienen por cobrar pero contabilidad no sabe qué clientes
+   son, tampoco sale en el bot de revisar antes de cerrar y en ventas tampoco. En la ficha de falta por cobrar al dar click
+   debería abrir una pestaña que muestre los clientes y al dar otro click llevar a esos clientes»*.
+   · La ficha «Falta cobrar» de Ventas y la de «Por cobrar» del Cuadre abren esta lista con la MISMA cuenta que la ficha:
+     Ventas = `contaFaltaCobrar` sobre `contaLista()` (corte, período, vendedor y búsqueda de la pantalla); Cuadre =
+     `cuadrePendientes()` (su período y su vendedor). Se arma al abrir, así que después de cobrar ya no aparece.
+   · Del más viejo al más nuevo (lo que más cuesta cobrar primero), con los tramos de antigüedad de la deuda.
+   · Tocar un cliente abre su venta (`showContaModal`), y la ficha muestra «← Volver a la lista» (`POR_COBRAR_VOLVER`). */
+var POR_COBRAR_VOLVER=null;   // { origen, id }: la venta que se abrió desde la lista
+function mcToca(color, lbl, val, sub, onclick, ver){
+  return mc(color, lbl, val, sub+'<br><span class="mc-ver">'+(ver||'👆 Tocá para ver quiénes son')+'</span>')
+    .replace('<div class="mc">', '<div class="mc mc-toca" role="button" tabindex="0" onclick="'+esc(onclick)+'"'+
+      ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">');
+}
+function contaPeriodoTxt(){
+  var modo=segVal('cta-mode')||'mes';
+  if(modo==='dia') return fmtFecha((document.getElementById('cta-dia')||{}).value||todayStr());
+  if(modo==='mes') return mesNombre(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
+  return 'todo el historial';
+}
+function porCobrarDatos(origen){
+  var hoy=todayStr();
+  if(origen==='cuadre'){
+    var vc=cuadreVendedor();
+    return { items:cuadrePendientes(), quien:(vc||'todo el equipo'), periodo:cuadrePeriodoTxt(), corte:'por la fecha de la venta' };
+  }
+  var mayor=(contaAmbito()==='mayor');
+  var vv=mayor ? mayoristasTxt() : ((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  var q=((document.getElementById('cta-search')||{}).value||'').trim();
+  var items=contaLista().map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(contaFaltaCobrar(p)) }; })
+    .filter(function(x){ return x.saldo>0.01; })
+    .sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
+  return { items:items, quien:(vv||(mayor?'mayoristas':'todo el equipo'))+(q?(' · solo lo que coincide con «'+q+'»'):''),
+           periodo:contaPeriodoTxt(), corte:(contaBase()==='entrega'?'por la entrega agendada':'por la fecha de ingreso') };
+}
+function abrirPorCobrar(origen){
+  origen=(origen==='cuadre') ? 'cuadre' : 'ventas';
+  POR_COBRAR_VOLVER=null;
+  var D=porCobrarDatos(origen), it=D.items, tot=cuadreSuma(it), n=it.length;
+  var filas=it.map(function(x){
+    var p=x.p, col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
+    var ref=[p.nota?('nota '+p.nota):'', p.oc?(ocEtiq(p.oc)||''):'', p.celular||''].filter(Boolean).join(' · ');
+    return '<tr class="pc-fila" data-id="'+esc(String(p.id))+'" onclick="porCobrarAbrirVenta(\''+origen+'\', this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta para registrar el pago">'+
+      '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><span style="color:var(--muted);font-size:.86em">'+esc(ref)+'</span>'):'')+'</td>'+
+      '<td>'+esc(p.vendedor||'—')+'</td>'+
+      '<td><span style="color:'+col+'">'+esc(x.desde?fmtFechaCorta(x.desde):'sin fecha')+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+      '<td style="text-align:right;white-space:nowrap">'+fmtBs(ventaTotal(p))+'</td>'+
+      '<td style="text-align:right;white-space:nowrap"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
+  }).join('');
+  var html='<div class="modal-h" style="background:#b45309"><h3>⏳ Falta cobrar · '+fmtBs(tot)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" id="pc-lista">'+
+      '<div style="font-size:.86rem;margin-bottom:8px"><b>'+n+'</b> venta'+(n===1?'':'s')+' con saldo · '+esc(D.quien)+' · '+esc(D.periodo)+
+        ' <span style="color:var(--muted)">('+esc(D.corte)+')</span></div>'+
+      (n ? ('<div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">De la más vieja a la más nueva. 👆 Tocá un cliente para abrir su venta y registrar el pago.</div>'+
+            tramosDeudaHtml(it)+
+            '<div class="tw" style="max-height:60vh;overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Vendedor</th><th>Desde</th>'+
+            '<th style="text-align:right">Venta</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+filas+'</tbody></table></div>')
+         : '<div class="empty" style="padding:18px 0">✅ No queda nada por cobrar.</div>')+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+        (n?('<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarPorCobrar(\''+origen+'\')">📋 Copiar la lista</button>'):'')+
+        '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+    '</div>';
+  openModal(html, true);
+}
+function porCobrarAbrirVenta(origen, id){
+  POR_COBRAR_VOLVER={ origen:(origen==='cuadre'?'cuadre':'ventas'), id:String(id) };
+  showContaModal(id);
+}
+function copiarPorCobrar(origen){
+  var D=porCobrarDatos(origen), it=D.items;
+  var txt='⏳ *Falta cobrar* · '+D.quien+' · '+D.periodo+': *'+fmtBs(cuadreSuma(it))+'* en '+it.length+' venta'+(it.length===1?'':'s')+'\n'+
+    it.map(function(x){ var p=x.p;
+      return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
+        ' · desde el '+(x.desde?fmtFechaCorta(x.desde):'—')+' ('+(x.dias?(x.dias+' días'):'hoy')+')'+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
+  copyText(txt);
 }
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
    Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
@@ -4471,8 +4553,11 @@ function renderConta(){
   renderContaMetrics(list, vSel);
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
-    '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
-    (saldo>0?(' ('+fmtBs(saldo)+')'):'')+
+    '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; '+
+    /* ⏳ (06/10, §4hr) Tocable: abre los clientes que deben, como la ficha «Falta cobrar». */
+    (nDebe ? ('<a id="cta-con-saldo" style="cursor:pointer;color:inherit;text-decoration:underline dotted" onclick="abrirPorCobrar(\'ventas\')" title="Ver quiénes deben">⏳ Con saldo: <b>'+nDebe+'</b>'+
+              (saldo>0?(' ('+fmtBs(saldo)+')'):'')+'</a>')
+           : ('⏳ Con saldo: <b>0</b>'))+
     (nSinMonto?(' &nbsp;·&nbsp; ❓ Sin monto anotado: <b>'+nSinMonto+'</b>'):'')+
     (nSinMarcar?(' &nbsp;·&nbsp; ⚪ Cobradas sin marcar pagadas: <b>'+nSinMarcar+'</b>'):'')+
     (aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
@@ -5770,6 +5855,17 @@ function cuadreAlertas(pagos){
       det:entregadoDebe.slice().sort(function(a,b){ return (Number(b.saldo)||0)-(Number(a.saldo)||0); })
         .map(function(p){ return {txt:(p.cliente||'—')+' · '+fmtBs(p.saldo)+(p.vendedor?(' · '+p.vendedor):''), id:p.id}; })});
   }
+  /* ⏳ (06/10, §4hr) TODO lo que falta cobrar de lo vendido en el período, con nombre. El dueño: *«contabilidad no sabe qué
+     clientes son, tampoco sale en el bot de revisar antes de cerrar»*. El de arriba («ya entregada y sin cobrar») casi nunca
+     salía: los choferes no marcan ✅ (§4gp). Es la MISMA lista que la caja «⏳ Por cobrar» (`cuadrePendientes`), del más viejo
+     al más nuevo; no frena el cierre (vender a crédito no es un error), pero es plata en juego, así que arranca abierto.
+     Los primeros nombres abren su venta y «… y N más» abre la lista entera (`abrirPorCobrar`). */
+  var _pcAl=cuadrePendientes();
+  if(_pcAl.length){
+    A.push({k:'cobrar', sev:'plata', ico:'⏳', txt:'<b>'+_pcAl.length+'</b> venta'+(_pcAl.length===1?'':'s')+' con <b>saldo por cobrar</b> — '+
+      fmtBs(cuadreSuma(_pcAl))+' que todavía no entró',
+      det:_pcAl.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.saldo)+(x.p.vendedor?(' · '+x.p.vendedor):'')+' · '+(x.dias?(x.dias+' d'):'hoy'), id:x.p.id}; })});
+  }
   /* La venta cargada dos veces: infla el mes y hace facturar de más. Va arriba de todo
      lo demás en importancia, así que se lista con las dos ventas del par juntas para
      poder compararlas de un toque. */
@@ -5959,7 +6055,11 @@ function alertaDetHtml(det, k){
       JSON.stringify(String(d.id)).replace(/"/g,'&quot;')+')"'+
       (tip||' title="Abrir esta venta para corregirla"')+'>'+t+'</span>';
   }).join('');
-  if(det.length>ALERTA_DET_MAX) html+='<span class="cua-chip plano" title="Se muestran los primeros '+ALERTA_DET_MAX+'">… y '+(det.length-ALERTA_DET_MAX)+' más</span>';
+  if(det.length>ALERTA_DET_MAX){
+    // ⏳ (06/10, §4hr) Lo que falta cobrar se abre entero: es la lista con la que se sale a cobrar.
+    if(k==='cobrar') html+='<span class="cua-chip" onclick="event.stopPropagation();abrirPorCobrar(\'cuadre\')" title="Ver la lista entera">… y '+(det.length-ALERTA_DET_MAX)+' más ›</span>';
+    else html+='<span class="cua-chip plano" title="Se muestran los primeros '+ALERTA_DET_MAX+'">… y '+(det.length-ALERTA_DET_MAX)+' más</span>';
+  }
   return html;
 }
 function renderCuadre(){
@@ -6056,8 +6156,10 @@ function renderCuadre(){
            anotadas+' de '+CIE.filas.length+' forma'+(CIE.filas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
            // §4fo: el arqueo que quedó sin ningún pago detrás se nombra, o no se entiende la diferencia.
            (arqHuerfanos.length?(' · ⚠️ '+arqHuerfanos.map(function(h){ return esc(h.forma)+' '+fmtBs(h.monto); }).join(' + ')+' contado'+(arqHuerfanos.length===1?'':'s')+' a mano sin ningún pago detrás'):''))
-      : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),
-           pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt())));
+      : (pend.length   // ⏳ (06/10, §4hr) se toca y abre quiénes son
+          ? mcToca('var(--amber)','Por cobrar',fmtBs(pendTotal),
+              pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt()), "abrirPorCobrar('cuadre')")
+          : mc('var(--green)','Por cobrar','✅ Nada','no queda saldo de '+esc(cuadrePeriodoTxt()))));
 
   // ---- cierre por forma de pago (lo que se tilda contra caja y extracto)
   var cie=document.getElementById('cua-cierre');
@@ -6121,7 +6223,8 @@ function renderCuadre(){
             '<td><span style="color:'+col+'">'+esc(fmtFechaCorta(x.desde))+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
             '<td style="text-align:right"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
         }).join('')+'</tbody></table></div>'+
-        (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'.</div>'):'')
+        (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'. '+
+          '<a style="cursor:pointer;color:#b45309;font-weight:700" onclick="abrirPorCobrar(\'cuadre\')">Ver las '+pend.length+' ›</a></div>'):'')
       : '<div class="empty" style="padding:16px 0">✅ No queda nada por cobrar.</div>')+
     '</div>';
 
@@ -6319,7 +6422,8 @@ function cuadreTexto(){
   if(_rec>0) L.push('', '🚚 De eso, *'+fmtBs(_rec)+'* son recargos por entrega (flete, no es de la venta)');
   var pend=cuadrePendientes(), pt=cuadreSuma(pend);
   if(pend.length) L.push('', '⏳ Por cobrar de lo vendido en el período: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
-  var al=cuadreAlertas(pagos);
+  // (06/10, §4hr) «saldo por cobrar» ya va en la línea «⏳ Por cobrar» de arriba: no se repite en «Revisar».
+  var al=cuadreAlertas(pagos).filter(function(a){ return a.k!=='cobrar'; });
   if(al.length){ L.push('', '🔎 Revisar:'); al.forEach(function(a){ L.push('   '+a.ico+' '+a.txt.replace(/<[^>]+>/g,'')); }); }
   return L.join('\n');
 }
@@ -7744,6 +7848,10 @@ var CTA_ULTIMA='';
 var CTA_PAGO_POR_ID={};
 function showContaModal(id){
   var p=findById(id); if(!p) return;
+  /* ⏳ (06/10, §4hr) «← Volver a la lista» solo si esta venta se abrió desde la lista de lo que falta cobrar y la ventana
+     sigue abierta (un repintado de la misma ficha lo conserva; abrirla de nuevo desde otro lado, no). */
+  var _moPc=document.getElementById('modal');
+  if(POR_COBRAR_VOLVER && (POR_COBRAR_VOLVER.id!==String(id) || !(_moPc && _moPc.classList.contains('on')))) POR_COBRAR_VOLVER=null;
   MODAL_KIND='conta';
   /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
      un pago y el modo (pago / recargo) se arrastraban a la venta siguiente. */
@@ -7824,6 +7932,7 @@ function showContaModal(id){
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
+      (POR_COBRAR_VOLVER ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>') : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
@@ -19279,7 +19388,7 @@ function renderStockAviso(){
 }
 
 /* ---- La pantalla ---- */
-function abrirStock(){ document.getElementById('stock-overlay').style.display='flex'; renderStock(); }
+function abrirStock(){ document.getElementById('stock-overlay').style.display='flex'; var q=document.getElementById('stk-q'); if(q && q.value!==STOCK_FILTRO.q) q.value=STOCK_FILTRO.q; renderStock(); }
 function closeStock(){ var ov=document.getElementById('stock-overlay'); if(ov) ov.style.display='none'; }
 function stockFabricasTxt(T){
   return PROD_LUGARES.map(function(L){
@@ -19463,10 +19572,17 @@ function renderStock(){
     return '<button class="badge" style="'+estilo+';cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" '+
       'data-k="'+esc(o.k)+'" onclick="abrirStockPedido(this.getAttribute(\'data-k\'))" title="'+esc(tit)+'">'+txt+'</button>';
   };
-  html+=renderStockHoy(d);
-  html+=renderRevisionFija();
-  html+=renderProducir(d);
-  html+=renderTiendas(d, stockMesSiguiente(d.hoy));   // no depende del conteo: sale de las ventas y las reposiciones
+  /* (05/10) Con algo escrito en el buscador de la barra de arriba, los cuadros grandes (hoy, revisión, qué producir, tiendas)
+     se esconden: lo buscado tiene que verse al instante, no tres pantallas más abajo. Se borra la búsqueda y vuelven. */
+  if(stockNorm(STOCK_FILTRO.q)){
+    html+='<div id="stk-buscando" style="background:#f6fbfa;border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:10px;font-size:.84rem">🔎 Buscando <b>«'+esc(STOCK_FILTRO.q)+'»</b>: se muestra solo lo que coincide. '+
+      '<a style="cursor:pointer;color:#0f766e;font-weight:700" onclick="stockFiltroLimpiar()">Borrar la búsqueda</a> para volver a ver los cuadros de hoy, la revisión y qué producir.</div>';
+  }else{
+    html+=renderStockHoy(d);
+    html+=renderRevisionFija();
+    html+=renderProducir(d);
+    html+=renderTiendas(d, stockMesSiguiente(d.hoy));   // no depende del conteo: sale de las ventas y las reposiciones
+  }
   var badge=function(o){
     if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
@@ -19608,8 +19724,9 @@ function renderStock(){
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
   body.innerHTML=html;
-  // El buscador se redibuja con la tabla: que no pierda el cursor mientras se escribe.
-  if(STOCK_FILTRO.foco){ STOCK_FILTRO.foco=false; var q=document.getElementById('stk-q'); if(q){ q.focus(); try{ q.setSelectionRange(q.value.length,q.value.length); }catch(e){} } }
+  // (05/10) El buscador vive en la barra de arriba y NO se redibuja con la tabla: el cursor se queda donde está.
+  // Solo si por algún motivo perdió el foco mientras se escribía, se lo devuelve (sin mover el cursor al final).
+  if(STOCK_FILTRO.foco){ STOCK_FILTRO.foco=false; var q=document.getElementById('stk-q'); if(q && (!document.activeElement || document.activeElement===document.body)){ try{ q.focus({preventScroll:true}); }catch(e){ q.focus(); } } }
 }
 /* 🤖 LA REVISIÓN, SIEMPRE A LA VISTA (§4cr).
    Antes había que acordarse de abrir una ventana. Ahora el resultado está arriba de la
@@ -21188,7 +21305,7 @@ function stockFiltro(campo, valor){
 }
 var _stockQT=null;
 function stockBuscar(v){ clearTimeout(_stockQT); _stockQT=setTimeout(function(){ STOCK_FILTRO.q=String(v||''); STOCK_FILTRO.foco=true; renderStock(); },180); }
-function stockFiltroLimpiar(){ STOCK_FILTRO={ q:'', aviso:'', marca:'', medida:'', orden:'', dir:1 }; renderStock(); }
+function stockFiltroLimpiar(){ STOCK_FILTRO={ q:'', aviso:'', marca:'', medida:'', orden:'', dir:1 }; var q=document.getElementById('stk-q'); if(q) q.value=''; renderStock(); }
 var STOCK_AVISO_GRUPO={ pedir:{urgente:1,pedir:1}, traer:{traer:1}, revisar:{revisar:1,sincontar:1}, pedido:{pedido:1}, sobra:{sobra:1}, unico:{unico:1}, ok:{'':1} };
 function stockAplicarFiltro(lista){
   var F=STOCK_FILTRO, q=stockNorm(F.q);
@@ -21252,8 +21369,10 @@ function renderStockFiltros(d, total, visibles){
   var meds={}; d.lista.forEach(function(o){ if(o.vendidos>0||o.comp>0||o.deposito>0){ var m=producirMedidaEtq(o.medida); meds[m]=(meds[m]||0)+1; } });
   var medOpts=Object.keys(meds).sort(function(a,b){ return meds[b]-meds[a]; });
   var algo=F.q||F.aviso||F.marca||F.medida||F.orden;
+  /* (05/10) El buscador (`#stk-q`) vive en la barra de arriba de la pantalla, fija: acá abajo el dueño no lo encontraba.
+     Los chips de aviso, marca y medida siguen acá, pegados a la tabla. */
   return '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'+
-    '<input id="stk-q" type="search" placeholder="🔎 buscar producto o código" value="'+esc(F.q)+'" oninput="stockBuscar(this.value)" style="flex:1;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid var(--gray-md);border-radius:7px;font:inherit;font-size:.8rem">'+
+    (F.q ? '<span style="font-size:.8rem;font-weight:700;color:#0f766e">🔎 «'+esc(F.q)+'»</span>' : '')+
     chip('aviso','pedir','🚨 Pedir ('+(cnt.pedir||0)+')',F.aviso==='pedir','#8a1c24')+
     chip('aviso','traer','🚚 Traer ('+(cnt.traer||0)+')',F.aviso==='traer','#075985')+
     chip('aviso','revisar','⚠️ Revisar ('+(cnt.revisar||0)+')',F.aviso==='revisar','#7c4b00')+

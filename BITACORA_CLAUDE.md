@@ -7445,6 +7445,135 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
+El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
+Bs 7.810,00» en el Cuadre y «Revisar antes de cerrar» sin ninguna línea de deuda): *«en cuadre y conciliación los vendedores
+sale que tienen por cobrar pero contabilidad no sabe qué clientes son, tampoco sale en el bot de revisar antes de cerrar y en
+ventas tampoco. En la ficha de falta por cobrar al dar click debería abrir una pestaña que muestre los clientes y al dar otro
+click llevar a esos clientes.»*
+- **Por qué no salía en «Revisar antes de cerrar»:** el único aviso de deuda era «ya entregada y todavía sin cobrar»
+  (`p.entregado` + saldo), y los choferes no marcan ✅ (§4gp): casi nunca se disparaba. La caja «⏳ Por cobrar» del Cuadre sí
+  listaba los clientes, al costado (y abajo en pantallas angostas).
+- Hecho en `pedidos.html`:
+  · **`mcToca(...)`**: una ficha (`mc`) que se toca (clase `mc-toca`, `role=button`, Enter/espacio) con «👆 Tocá para ver
+    quiénes son». La usan «Falta cobrar» de Ventas (con saldo; sin saldo sigue «✅ Nada», no se toca) y «Por cobrar» del Cuadre
+    (sin arqueo anotado; sin saldo ahora dice «✅ Nada» en verde en vez de «Bs 0,00» en ámbar). «⏳ Con saldo» del resumen de
+    Ventas también abre la lista (`#cta-con-saldo`).
+  · **`abrirPorCobrar(origen)`** → ventana «⏳ Falta cobrar · Bs X» con la MISMA cuenta que la ficha: Ventas =
+    `contaFaltaCobrar` sobre `contaLista()` (corte, período, vendedor y búsqueda de la pantalla, `porCobrarDatos`); Cuadre =
+    `cuadrePendientes()`. Se arma al abrir (lo cobrado ya no aparece). De la más vieja a la más nueva, tramos de antigüedad
+    (`tramosDeudaHtml`), cliente + nota · OC · celular, vendedor, desde (días), venta y saldo. «📋 Copiar la lista»
+    (`copiarPorCobrar`) para mandarla por WhatsApp.
+  · **Tocar un cliente** (`porCobrarAbrirVenta`) abre su venta (`showContaModal`) con «← Volver a la lista de lo que falta
+    cobrar» (`POR_COBRAR_VOLVER`); el botón solo aparece si la ficha se abrió desde la lista con la ventana abierta (un repintado
+    lo conserva; abrir la venta desde otro lado, no).
+  · **«Revisar antes de cerrar»**: aviso nuevo `k:'cobrar'` en `cuadreAlertas`, `sev:'plata'` (arranca abierto con los nombres),
+    «⏳ N ventas con saldo por cobrar — Bs X que todavía no entró», mismos datos que `cuadrePendientes`; cada nombre abre su
+    venta y «… y N más ›» abre la lista entera. No frena el cierre (vender a crédito no es un error). `cuadreTexto` (📋 Copiar
+    del Cuadre) no lo repite: ya dice «⏳ Por cobrar» en su línea.
+- Pruebas: **`tests/test_por_cobrar.js`** (24; contra la página publicada falla desde la primera: no hay ficha tocable).
+  `test_sinmonto` §6 cambió a conciencia: miraba que «DEBE DE VERDAD» no estuviera en NINGÚN aviso y ahora está, a propósito,
+  en el de saldo por cobrar; mira el aviso de «sin ningún monto» y suma que la que debe sí salga en el nuevo (43).
+- **Batería entera con el cambio (`2e32b52`): 135 suites, 5.063 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen,
+  como siempre). En la rama, **sin publicar**: espera el «publica» del dueño (va junto con el buscador del stock, §4hp).
+
+## 4hq. 06/10: 🔎 auditoría «auditores como va todo» — lo publicado el 05/10 tiene arreglos pendientes (NADA arreglado todavía)
+El dueño, el 06/10 a las 10:00: *«auditores como va todo»*. Se miró la operación y tres auditores (agentes) revisaron lo
+publicado el 05/10; cada hallazgo de abajo está **reproducido en el navegador** (scripts en el scratchpad de la sesión:
+`aud_cierre/`, `aud_corte/`, `aud_stock/`, `verif_split/`) y **confirmado leyendo el código**. El dueño todavía no pidió
+arreglarlos: lo que sigue es el estado, no lo hecho.
+
+**Operación (bien):** `main` sin cambios del panel desde `64bcb37` (solo los tableros mensuales del dueño —de otra
+auditoría suya, *«esto es del panel que auditamos»*— y commits automáticos); todas las corridas de Actions en verde; el `.gs`
+publicado es `2026-10-02-a`; el repaso de Kommo cada 5 min anda (09:39); batería entera con la fecha del 06/10: 134 suites,
+5.038 comprobaciones, 0 rojas. ⚠️ **El webhook de Kommo sigue sin avisar desde el 22/09 19:01 UTC** (las ventas entran por el
+repaso, hasta 5 min tarde): mirar Kommo → Configuración → Integraciones → Webhooks. ⚠️ **El token de Kommo vence ~28/10**: va en
+DOS lugares, el secreto `KOMMO_TOKEN` de GitHub (tablero, respaldo) y la propiedad `KOMMO_TOKEN` del Apps Script (borradores).
+Desde esta sesión no se puede lanzar un workflow a mano (403): el diagnóstico de la lectura se corrió pusheando su archivo
+(que ahora mide la celda del stock por partes y dice qué página subió cada corte y de qué día es el saldo en uso).
+
+**🚨 Producción, 06/10 10:45 (diagnóstico `e50685b`/`dc1ea9a`):** la celda del stock mide **23.220 letras (46 %)**: fotos 20.894,
+historial 14 cortes, **sin `v`/`v2t`, 0 detecciones, 0 salidas sin pedido, 0 pedidos a fábrica (`p` vacío)**. Ningún Excel se
+subió con la página nueva desde la publicación (05/10 17:01): **todos los cortes son de página vieja (sin huella)**. Y **hoy a
+las 10:18 se volvieron a subir los tres Excel del SÁBADO 03/10** (PTF 09:55, Banzer 09:52, IM 09:55) desde un aparato sin F5:
+**el saldo que usa el panel es el del sábado**, pisando el del lunes 05/10 11:40 (subido 11:54-11:55). Lo que llegó de fábrica
+desde el sábado no figura → «NO HAY»/«PEDIR YA» que pueden ser falsos. Pedido al dueño: F5 en todos los aparatos y subir los
+Excel de HOY. La lectura anduvo en 2-4 s con picos (un 404 a los 88-99 s, una entrega de 61 s: Google a ratos, §4fx/§4hb).
+
+**✅ Cierre de entregas (§4hn etapa 1)** — `aud_cierre/t*.js`:
+- **ALTA** — a las 16:30 se proponen tildados también los 🌆 PM (pueden seguir en la calle). Si se confirma y después se
+  reprograma (📅 Reprogramar `reproConfirmar` o ✏️ Editar, que hereda `entregado`), queda `entregado:true` en la fecha nueva: no
+  vuelve al cierre, el chofer lo ve gris «Entregado», no sale en «Sin entregar», y el stock lo da por salido. Paliativo dicho al
+  dueño para el 06/10: destildar los PM que no volvieron o cerrar cuando vuelva el camión. **Para decidir:** PM destildados o
+  tildados con aviso.
+- MEDIA — un cierre pendiente (`me_cierre_pend`, sin señal) no se descarta cuando el siguiente cierre lee bien: se aplica igual y
+  marca lo destildado después (`confirmarCierreEntregas` + `cierreEntSincronizar`).
+- MEDIA — los pedidos con un renglón ✗ no hay o 🏭 sin llegar se proponen tildados y la fila no lo muestra; al confirmar dejan
+  de estar comprometidos y el panel deja de pedirlos a fábrica (sin cierre, la regla de siempre los mantenía).
+- MEDIA — «Ver» reemplaza la ventana del cierre; al reabrir, `abrirCierreEntregas` vuelve a tildar todo (se pierde lo destildado).
+- MEDIA — `heredarMarcas` no copia `prodU`/`prodC`/`prodRm` ni `eF/eT/eQ`: corregir un pedido desde ✏️ Editar borra la llegada
+  parcial de la línea 🏭 (deja de estar reservada) y quién confirmó la entrega.
+- BAJA — aparato en otra zona horaria (lista con `todayStr()` del aparato, cartel con la hora de Bolivia); cierre que cruza la
+  medianoche (`eF` con el día nuevo); ATC atrasada registra la fecha programada; la ventana con un rechazo no dice cuál.
+- Bien: el cartel a las 16:30 de Bolivia en cualquier zona; día cerrado 🔒 no frena el ✅ (`porteroFecha_` real); dos aparatos a
+  la vez; cierre sin señal con borrados/reprogramados de otro equipo; ATC y RPT.
+
+**🧮 Control del corte (§4hn etapa 2)** — `aud_corte/`:
+- **ALTA (con fecha) — la celda del stock se llena.** `det` (~212 letras por cada «+N»), `sm` (~213), las recepciones `x:` (~358:
+  el id repite almacén, fecha, hora, huella y clave, y `ev.d` otra vez) y el detalle de `h` crecen con cada Excel; la poda a
+  60 días frena el crecimiento recién en 55.000-120.000 letras. Simulado desde 21.364 letras: con 1-3 diferencias por corte pasa
+  50.000 el día hábil 40; con 3-6, el 23; con 3-15, el 13. Pasado 50.000 el `.gs` contesta `celda_llena` y el stock queda en la
+  cola de cada equipo. **Para decidir:** ids cortos, sin `ev.d` repetido, menos días para lo asignado/anulado.
+- **ALTA — una página sin F5 (de antes del 05/10 17:01) borra el control de todos.** Guarda el stock sin `det`/`sm`/`v`/`v2t`
+  (el servidor lo acepta: el sello es válido) y la página nueva, sin nada propio en vuelo, ADOPTA esa copia en su lectura
+  (`leerCierresDeLista`, `STOCK=leerStock(stk)`); después `v2t` se vuelve a sellar con la hora de ahora. Solo `stockFusionar`
+  (la junta ante un conflicto) lo conservaba. Además esa página vieja todavía cierra pedidos a fábrica por fecha.
+- MEDIA — la detección de ayer sin asignar y la de hoy sugieren el mismo pedido (tildar las dos: 10 de 5); recogida de Moreno
+  descontada dos veces si el Excel de IM se sube antes que el de fábrica (anterior al control); «↩️ no había llegado» desaparece
+  a los 6 cortes (`STOCK_DIF_CORTES`, ~2 días con 3 Excel).
+- BAJA — mismo archivo con la hora del nombre vs la del pie; dos Excel del mismo almacén el mismo día (ambiguo / sin hora / la
+  ventana sin tope de hora); Excel corregido no descuenta la salida anotada por la versión anterior; 🔗 Unir no mueve `det`/`sm`.
+- Bien: IM solo informa; mismo archivo y mismo nombre en dos equipos = una recepción; lápidas; la casilla «ya incluye».
+
+**📦 Catálogo (§4ho) y buscador (§4hp, solo en la rama)** — `aud_stock/`, `verif_split/`:
+- **ALTA condicional — un código recién agregado a `CODIGOS` parte el producto en dos filas** si un Excel anterior ya lo traía:
+  `stockMigrar` re-claviza `u` pero no los mapas `cod` (ni `sm`/`det`), y `stockClaveInv` va por `cod` a la clave vieja, vacía.
+  El pedido ve 0 («🚨 PEDIR YA», el cuadrito dice «NO HAY») y el saldo queda en otra fila como «Sobra»; subir el Excel otra vez
+  no lo arregla. **Con los nombres reales** (Excel de Banzer del 26/09: «COLCHON SUEÑA SMART 140X190», «COLCHON SUEÑA LITE
+  140X190»): el SMART 140 no se parte; **el SUEÑA LITE 105x190 (CH2531) sí**, si algún Excel de antes del 05/10 17:33 lo traía
+  (el de Banzer del 26/09 no). Comprobación del dueño: filtrar «LITE» en 📦 Stock. Arreglo: migrar `cod` (y `sm`/`det`) junto
+  con las claves. Va a pasar de nuevo con cada código que se agregue (el SMART 160x190, por ejemplo).
+- MEDIA (rama) — el buscador busca solo en «lo que se mueve»: un producto con saldo y sin ventas en 15 días no aparece
+  («ningún producto coincide»), y por código tampoco (`o.cod` vacío sin pedidos). BAJA: «Borrar la búsqueda» limpia también los
+  chips; el cartel dice «solo lo que coincide» pero En camino / Plata parada no se filtran; en el celular la barra crece (360 →
+  402 px); el `title` del campo tiene una nota interna.
+- Bien: ningún otro SMART fuera de Sueña; los códigos nuevos no chocan; el buscador anda en el iPad y mantiene el cursor.
+
+## 4hp. 05/10: 🔎 el buscador del stock pasa a la barra de arriba — el dueño: *«no hay un buscado en stock....»*
+- Captura del dueño de la pantalla 📦 Stock en el iPad: se veían los cuadros de hoy, la revisión automática y «qué producir»,
+  y ningún lugar donde buscar. **El buscador existía desde §4cp** (`#stk-q` → `stockBuscar` → `stockAplicarFiltro`: nombre,
+  código y los «también:», palabra por palabra) pero se dibujaba CON la tabla, debajo de todos los cuadros: en 1500×1000 quedaba
+  a 1.100 px del borde de arriba y en el iPad parado a 1.400. Tres pantallas más abajo, nadie lo encontraba.
+- Hecho en `pedidos.html` (solo qué se dibuja; ninguna cuenta cambia):
+  · **`<input id="stk-q">` fijo en la barra de arriba** de `#stock-overlay` (entre `#stock-info` y «🤖 Revisión automática»,
+    con `margin-left:auto`), fuera de `#stock-body`. `renderStockFiltros` ya no lo dibuja: deja un chip «🔎 «q»» al lado de los
+    de aviso, marca y medida, que siguen pegados a la tabla.
+  · **Con algo escrito** (`stockNorm(STOCK_FILTRO.q)`), `renderStock` **esconde** `renderStockHoy`, `renderRevisionFija`,
+    `renderProducir` y `renderTiendas` y pone el cartel `#stk-buscando` («se muestra solo lo que coincide · Borrar la búsqueda»):
+    lo buscado aparece al instante, arriba. La tabla, «🚚 En camino», «💤 Plata parada» y los otros almacenes siguen igual.
+  · Como la barra no se redibuja con la tabla, **el cursor se queda donde está**: el refoco del final de `renderStock` ya no
+    manda el cursor al final (solo devuelve el foco si se perdió, con `preventScroll`). `stockFiltroLimpiar` vacía también el
+    campo de arriba; `abrirStock` sincroniza el campo con `STOCK_FILTRO.q` (otra pantalla pudo tocarlo). La ✕ del
+    `type=search` dispara `input` vacío → vuelven los cuadros.
+- Prueba: **`tests/test_stock_buscador.js`** (22): arriba y uno solo; filtra por nombre y por código; esconde los cuadros;
+  escribir adelante con el cursor en el medio no lo manda al final; borrar por el enlace y vaciando el campo; cerrar y volver a
+  abrir conserva lo buscado; iPad parado (820 px). Contra `64bcb37` (la publicada): 13 verdes / **9 rojas** (el campo a 1.096 y
+  1.428 px, los cuadros no se esconden, el cursor saltaba al final, el campo se perdía al reabrir).
+- **Batería entera con el cambio (`56dc52d`): 134 suites (las 133 de §4ho + esta), 5.038 comprobaciones, 0 rojas**
+  (`test_stock_detalle` sin resumen, como siempre; `test_stock` 106, `test_existencias` 54 y `test_stock_buscador` 22 en verde).
+- En la rama `claude/pedidos-fecha-entrega-bgt0em`, **sin publicar**: espera el «publica» del dueño. Al publicar, todos F5
+  (la página vieja sigue con el campo abajo; no hay nada del servidor en esto).
+
 ## 4ho. 05/10: Catálogo — COLCHON SMART 140x190 (CH2522) y COLCHON SUEÑA LITE 105x190 (CH2531); el SMART es Sueña
 El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»): CH2521 SMART 105*190, CH2522 SMART 140*190, SMART
 160*190 **sin código**; CH2531 SUEÑA LITE 105*190, CH2532 SUEÑA LITE 140X190. *«añade esos productos a la lista de productos»*.
@@ -7455,7 +7584,12 @@ El dueño mandó dos recortes de su tabla de códigos (familia «SUEÑA SMART»)
 - **SMART → Sueña** (`stockMarcaDeNombre`): la tabla del dueño titula la familia «SUEÑA SMART», así que `SMART` entró al grupo
   de Sueña y «🏭 Qué producir» lo manda al bloque Multiespumas · Sueña en vez de «❓ Sin fábrica asignada» (lo que §4dx dejó
   pendiente «hasta que el dueño diga en cuál se hace»). Si el dueño dice otra fábrica, es una palabra en esa lista.
-- Sin publicar hasta el «publica» (la página publicada sigue `211705f`).
+- **PUBLICADA el 05/10 a las 17:33 de Bolivia** (`64bcb37`; dueño: *«si es de sueña, está bien publica»*). Pages OK a las 17:34
+  (run 1584 bis, esta vez sin cola). Sin workflow del panel corriendo (su cron de las 21:00 UTC había corrido 21:17-21:24).
+  Batería entera con el catálogo nuevo (`7a90602`): 133 suites, 5.016 comprobaciones, 0 rojas (`test_stock_detalle` sin
+  resumen, como siempre). Antes de publicar se habían corrido sueltas `test_producir` (62), `test_existencias` (54),
+  `test_identidad` (45), `test_codigo_almacen` (13) y `test_rpt` (110), y en el navegador se vio la lista con los cuatro
+  códigos y `stockMarcaDeNombre('COLCHON SMART')` = `suena`.
 
 ## 4hn. 05/10: 📥 PROPUESTA (sin implementar) — el control del corte: las llegadas de fábrica se detectan con el Excel
 - El dueño pidió «qué otras mejoras» (05/10) y eligió mirar la 2: comparar lo que el panel esperaba con el Excel de existencias.

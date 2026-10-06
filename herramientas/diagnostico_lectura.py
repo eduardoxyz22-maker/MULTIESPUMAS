@@ -125,7 +125,78 @@ def contar(crudo):
         for n, i in sistema:
             if i in ("__stock__", "__arqueo_cuadre__", "__dias_cerrados__", "__carga_chk__"):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
+        celda_stock(ped)
         pedidos_en_feriados(ped)
+
+
+# 📏 (06/10, auditoría) Todo el stock vive en UNA celda y Google la corta en 50.000 letras: el .gs contesta `celda_llena`
+#    y el stock deja de guardarse (el panel avisa desde las 45.000). El control del corte (§4hn) suma detecciones (`det`),
+#    salidas sin pedido (`sm`), recepciones `x:` e historial (`h`) con cada Excel: esto dice cuánto mide HOY y QUÉ parte crece.
+#    Solo tamaños y cantidades, nunca nombres de productos ni unidades: este registro es público.
+TOPE_CELDA = 50000
+AVISO_CELDA = 45000
+_STOCK_MEDIDO = False
+
+
+def _letras(s):
+    """Letras como las cuenta JavaScript (y Google): unidades UTF-16, no caracteres de Python."""
+    return len(s.encode("utf-16-le")) // 2
+
+
+def _tam(v):
+    return _letras(json.dumps(v, ensure_ascii=False, separators=(",", ":")))
+
+
+def celda_stock(ped):
+    global _STOCK_MEDIDO
+    if _STOCK_MEDIDO:
+        return
+    fila = next((p for p in ped if isinstance(p, dict) and p.get("id") == "__stock__"), None)
+    if not fila:
+        return
+    _STOCK_MEDIDO = True
+    txt = str(fila.get("observaciones") or "")
+    n = _letras(txt)
+    marca = "❌ LLENA: el stock ya no se guarda" if n >= TOPE_CELDA else ("⚠️ pasó el aviso de 45.000" if n >= AVISO_CELDA else "ok")
+    print(f"   📏 celda del stock: {n:,} letras = {100 * n / TOPE_CELDA:.0f} % del tope de 50.000 · {marca}".replace(",", "."))
+    try:
+        s = json.loads(txt)
+    except Exception as ex:
+        print(f"      (no pude abrir el JSON del stock: {type(ex).__name__})")
+        return
+    if not isinstance(s, dict):
+        return
+    partes = sorted(((_tam(v), k, (f" ({len(v)})" if isinstance(v, (list, dict)) else "")) for k, v in s.items()), reverse=True)
+    print("      por parte (letras y, entre paréntesis, cuántos): " + " · ".join(f"{k} {t:,}".replace(",", ".") + c for t, k, c in partes))
+    fotos = 0
+    for alm in [s.get("c")] + list((s.get("g") or {}).values()):
+        if isinstance(alm, dict):
+            fotos += _tam(alm.get("u") or {}) + _tam(alm.get("cod") or {})
+    det = [x for x in (s.get("det") or []) if isinstance(x, dict)]
+    sm = [x for x in (s.get("sm") or []) if isinstance(x, dict)]
+    recs = [r for q in (s.get("p") or []) if isinstance(q, dict) for r in (q.get("recs") or []) if isinstance(r, dict)]
+    rx = [r for r in recs if str(r.get("id") or "").startswith("x:")]
+    _n = lambda x: f"{x:,}".replace(",", ".")
+    print(f"      fotos de los almacenes (u + cod): {_n(fotos)} letras · detecciones {len(det)} ({sum(1 for x in det if x.get('an'))} anuladas, "
+          f"{_n(_tam(det))} letras) · salidas sin pedido {len(sm)} ({_n(_tam(sm))} letras) · recepciones {len(recs)}, del control "
+          f"{len(rx)} ({_n(_tam(rx))} letras) · cortes en el historial {len(s.get('h') or [])}")
+    # ¿Quién subió los últimos Excel? La página con el control del corte (desde el 05/10 17:01) marca la fila con `v: 2` y
+    # `v2t`, y cada corte con su huella (`hu`) y sus diferencias (`d`); una página sin F5 no deja nada de eso (§4hq).
+    print(f"      marca de la página nueva en la fila: v={s.get('v')!r} · v2t={'sí' if s.get('v2t') else 'no'}")
+    alm = lambda a: re.sub(r"^\s*[\d-]+\s+", "", str(a or ""))[:22] or "?"
+    # La hora en que se SUBIÓ cada Excel (`ts`, hora de Bolivia): el orden de la lista no alcanza para saberlo.
+    subido = lambda ts: time.strftime("%d/%m %H:%M", time.gmtime((float(ts) / 1000) - 4 * 3600)) if ts else "?"
+    hs = sorted([y for y in (s.get("h") or []) if isinstance(y, dict)], key=lambda y: -(float(y.get("ts") or 0)))
+    for x in hs[:8]:
+        print(f"      corte {x.get('f') or '?'} {str(x.get('hora') or '')[:5] or '(sin hora)'} · subido {subido(x.get('ts'))} · "
+              f"{alm(x.get('alm'))} · rol {x.get('rol') or '?'} · {'página NUEVA (huella)' if x.get('hu') else 'página VIEJA (sin huella)'}"
+              f"{' · diferencias ' + str(len(x.get('d') or [])) if x.get('hu') else ''}")
+    # De qué día es lo que el panel usa HOY como saldo de cada almacén.
+    c = s.get("c") if isinstance(s.get("c"), dict) else {}
+    print(f"      saldo de acá (PTF) que usa el panel: corte del {c.get('f') or '?'} {str(c.get('hora') or '')[:5]} · subido {subido(c.get('t'))}")
+    for nm, g in (s.get("g") or {}).items():
+        if isinstance(g, dict):
+            print(f"      saldo de {alm(nm)}: corte del {g.get('f') or '?'} {str(g.get('hora') or '')[:5]}")
 
 
 def url_de_la_pagina():
