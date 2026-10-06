@@ -478,6 +478,11 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   `test_adm_alta` §2 cambiaron a conciencia (esperaban el cierre por fecha).
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
+- 🚨 **Auditoría del 06/10 (bitácora §4hq): hallazgos verificados y SIN arreglar** (el dueño no pidió arreglarlos todavía):
+  la celda del stock se llena en semanas con `det`/`sm`/`x:`; una página sin F5 borra el control de todos al guardar el stock
+  (la lectura adopta su copia); el cierre propone tildados los PM y un confirmado que se reprograma queda ✅ en la fecha nueva;
+  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`; `stockMigrar` no migra `cod` (un código nuevo en `CODIGOS` parte el
+  producto: el SUEÑA LITE 105 si un Excel viejo lo traía). Antes de tocar el cierre o el control del corte, leer §4hq.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
   · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). **Lo destildado en el cierre no lleva
     ninguna marca** (dueño, 05/10: *«un pedido que queda como pasado y no fue tildado, logística lo entregó; lo que no entregan

@@ -7445,6 +7445,69 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hq. 06/10: 🔎 auditoría «auditores como va todo» — lo publicado el 05/10 tiene arreglos pendientes (NADA arreglado todavía)
+El dueño, el 06/10 a las 10:00: *«auditores como va todo»*. Se miró la operación y tres auditores (agentes) revisaron lo
+publicado el 05/10; cada hallazgo de abajo está **reproducido en el navegador** (scripts en el scratchpad de la sesión:
+`aud_cierre/`, `aud_corte/`, `aud_stock/`, `verif_split/`) y **confirmado leyendo el código**. El dueño todavía no pidió
+arreglarlos: lo que sigue es el estado, no lo hecho.
+
+**Operación (bien):** `main` sin cambios del panel desde `64bcb37` (solo los tableros mensuales del dueño —de otra
+auditoría suya, *«esto es del panel que auditamos»*— y commits automáticos); todas las corridas de Actions en verde; el `.gs`
+publicado es `2026-10-02-a`; el repaso de Kommo cada 5 min anda (09:39); batería entera con la fecha del 06/10: 134 suites,
+5.038 comprobaciones, 0 rojas. ⚠️ **El webhook de Kommo sigue sin avisar desde el 22/09 19:01 UTC** (las ventas entran por el
+repaso, hasta 5 min tarde): mirar Kommo → Configuración → Integraciones → Webhooks. ⚠️ **El token de Kommo vence ~28/10**: va en
+DOS lugares, el secreto `KOMMO_TOKEN` de GitHub (tablero, respaldo) y la propiedad `KOMMO_TOKEN` del Apps Script (borradores).
+Desde esta sesión no se puede lanzar un workflow a mano (403): el diagnóstico de la lectura se corrió pusheando su archivo.
+
+**✅ Cierre de entregas (§4hn etapa 1)** — `aud_cierre/t*.js`:
+- **ALTA** — a las 16:30 se proponen tildados también los 🌆 PM (pueden seguir en la calle). Si se confirma y después se
+  reprograma (📅 Reprogramar `reproConfirmar` o ✏️ Editar, que hereda `entregado`), queda `entregado:true` en la fecha nueva: no
+  vuelve al cierre, el chofer lo ve gris «Entregado», no sale en «Sin entregar», y el stock lo da por salido. Paliativo dicho al
+  dueño para el 06/10: destildar los PM que no volvieron o cerrar cuando vuelva el camión. **Para decidir:** PM destildados o
+  tildados con aviso.
+- MEDIA — un cierre pendiente (`me_cierre_pend`, sin señal) no se descarta cuando el siguiente cierre lee bien: se aplica igual y
+  marca lo destildado después (`confirmarCierreEntregas` + `cierreEntSincronizar`).
+- MEDIA — los pedidos con un renglón ✗ no hay o 🏭 sin llegar se proponen tildados y la fila no lo muestra; al confirmar dejan
+  de estar comprometidos y el panel deja de pedirlos a fábrica (sin cierre, la regla de siempre los mantenía).
+- MEDIA — «Ver» reemplaza la ventana del cierre; al reabrir, `abrirCierreEntregas` vuelve a tildar todo (se pierde lo destildado).
+- MEDIA — `heredarMarcas` no copia `prodU`/`prodC`/`prodRm` ni `eF/eT/eQ`: corregir un pedido desde ✏️ Editar borra la llegada
+  parcial de la línea 🏭 (deja de estar reservada) y quién confirmó la entrega.
+- BAJA — aparato en otra zona horaria (lista con `todayStr()` del aparato, cartel con la hora de Bolivia); cierre que cruza la
+  medianoche (`eF` con el día nuevo); ATC atrasada registra la fecha programada; la ventana con un rechazo no dice cuál.
+- Bien: el cartel a las 16:30 de Bolivia en cualquier zona; día cerrado 🔒 no frena el ✅ (`porteroFecha_` real); dos aparatos a
+  la vez; cierre sin señal con borrados/reprogramados de otro equipo; ATC y RPT.
+
+**🧮 Control del corte (§4hn etapa 2)** — `aud_corte/`:
+- **ALTA (con fecha) — la celda del stock se llena.** `det` (~212 letras por cada «+N»), `sm` (~213), las recepciones `x:` (~358:
+  el id repite almacén, fecha, hora, huella y clave, y `ev.d` otra vez) y el detalle de `h` crecen con cada Excel; la poda a
+  60 días frena el crecimiento recién en 55.000-120.000 letras. Simulado desde 21.364 letras: con 1-3 diferencias por corte pasa
+  50.000 el día hábil 40; con 3-6, el 23; con 3-15, el 13. Pasado 50.000 el `.gs` contesta `celda_llena` y el stock queda en la
+  cola de cada equipo. **Para decidir:** ids cortos, sin `ev.d` repetido, menos días para lo asignado/anulado.
+- **ALTA — una página sin F5 (de antes del 05/10 17:01) borra el control de todos.** Guarda el stock sin `det`/`sm`/`v`/`v2t`
+  (el servidor lo acepta: el sello es válido) y la página nueva, sin nada propio en vuelo, ADOPTA esa copia en su lectura
+  (`leerCierresDeLista`, `STOCK=leerStock(stk)`); después `v2t` se vuelve a sellar con la hora de ahora. Solo `stockFusionar`
+  (la junta ante un conflicto) lo conservaba. Además esa página vieja todavía cierra pedidos a fábrica por fecha.
+- MEDIA — la detección de ayer sin asignar y la de hoy sugieren el mismo pedido (tildar las dos: 10 de 5); recogida de Moreno
+  descontada dos veces si el Excel de IM se sube antes que el de fábrica (anterior al control); «↩️ no había llegado» desaparece
+  a los 6 cortes (`STOCK_DIF_CORTES`, ~2 días con 3 Excel).
+- BAJA — mismo archivo con la hora del nombre vs la del pie; dos Excel del mismo almacén el mismo día (ambiguo / sin hora / la
+  ventana sin tope de hora); Excel corregido no descuenta la salida anotada por la versión anterior; 🔗 Unir no mueve `det`/`sm`.
+- Bien: IM solo informa; mismo archivo y mismo nombre en dos equipos = una recepción; lápidas; la casilla «ya incluye».
+
+**📦 Catálogo (§4ho) y buscador (§4hp, solo en la rama)** — `aud_stock/`, `verif_split/`:
+- **ALTA condicional — un código recién agregado a `CODIGOS` parte el producto en dos filas** si un Excel anterior ya lo traía:
+  `stockMigrar` re-claviza `u` pero no los mapas `cod` (ni `sm`/`det`), y `stockClaveInv` va por `cod` a la clave vieja, vacía.
+  El pedido ve 0 («🚨 PEDIR YA», el cuadrito dice «NO HAY») y el saldo queda en otra fila como «Sobra»; subir el Excel otra vez
+  no lo arregla. **Con los nombres reales** (Excel de Banzer del 26/09: «COLCHON SUEÑA SMART 140X190», «COLCHON SUEÑA LITE
+  140X190»): el SMART 140 no se parte; **el SUEÑA LITE 105x190 (CH2531) sí**, si algún Excel de antes del 05/10 17:33 lo traía
+  (el de Banzer del 26/09 no). Comprobación del dueño: filtrar «LITE» en 📦 Stock. Arreglo: migrar `cod` (y `sm`/`det`) junto
+  con las claves. Va a pasar de nuevo con cada código que se agregue (el SMART 160x190, por ejemplo).
+- MEDIA (rama) — el buscador busca solo en «lo que se mueve»: un producto con saldo y sin ventas en 15 días no aparece
+  («ningún producto coincide»), y por código tampoco (`o.cod` vacío sin pedidos). BAJA: «Borrar la búsqueda» limpia también los
+  chips; el cartel dice «solo lo que coincide» pero En camino / Plata parada no se filtran; en el celular la barra crece (360 →
+  402 px); el `title` del campo tiene una nota interna.
+- Bien: ningún otro SMART fuera de Sueña; los códigos nuevos no chocan; el buscador anda en el iPad y mantiene el cursor.
+
 ## 4hp. 05/10: 🔎 el buscador del stock pasa a la barra de arriba — el dueño: *«no hay un buscado en stock....»*
 - Captura del dueño de la pantalla 📦 Stock en el iPad: se veían los cuadros de hoy, la revisión automática y «qué producir»,
   y ningún lugar donde buscar. **El buscador existía desde §4cp** (`#stk-q` → `stockBuscar` → `stockAplicarFiltro`: nombre,
