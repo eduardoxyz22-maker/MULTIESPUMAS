@@ -7474,6 +7474,8 @@ click llevar a esos clientes.»*
 - Pruebas: **`tests/test_por_cobrar.js`** (24; contra la página publicada falla desde la primera: no hay ficha tocable).
   `test_sinmonto` §6 cambió a conciencia: miraba que «DEBE DE VERDAD» no estuviera en NINGÚN aviso y ahora está, a propósito,
   en el de saldo por cobrar; mira el aviso de «sin ningún monto» y suma que la que debe sí salga en el nuevo (43).
+- **Batería entera con el cambio (`2e32b52`): 135 suites, 5.063 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen,
+  como siempre). En la rama, **sin publicar**: espera el «publica» del dueño (va junto con el buscador del stock, §4hp).
 
 ## 4hq. 06/10: 🔎 auditoría «auditores como va todo» — lo publicado el 05/10 tiene arreglos pendientes (NADA arreglado todavía)
 El dueño, el 06/10 a las 10:00: *«auditores como va todo»*. Se miró la operación y tres auditores (agentes) revisaron lo
