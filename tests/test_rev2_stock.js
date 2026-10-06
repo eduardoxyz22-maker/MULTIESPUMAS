@@ -71,7 +71,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
              {G:'CH1297',  W:'SOMIER PARRILLA NEGRO 140X190',AY:'10'},
              {G:'CH1201',  W:'TITANIO ICE 2.5PLZ 160X190CM',AY:'10'}].concat(extra||[]);
       var R=existLeer(f); if(R.error) return R.error;
-      EXIST_IMP=R; renderImportExist(); confirmarImportExist(); stockOlvidarIndice();
+      /* (06/10, §4hs) La página solo acepta el Excel del día. Este corte se subió hace 3 días, cuando ERA el del día: para
+         armarlo se apaga solo esa regla (lo que se mide acá es el conteo a mano de hoy, no la subida). */
+      var _regla=(typeof existNoEsDeHoy==='function') ? existNoEsDeHoy : null; window.existNoEsDeHoy=function(){ return null; };
+      try{ EXIST_IMP=R; renderImportExist(); confirmarImportExist(); } finally { if(_regla) window.existNoEsDeHoy=_regla; }
+      stockOlvidarIndice();
       return '';
     };
     window._inputs=function(){ return [].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')); };

@@ -331,7 +331,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
       Moreno pero pueden estar guardadas en Banzer o Multiespumas. La fábrica sale de
       `MARCA_FABRICA`, el lugar de `STOCK.g` + `x.chkDe`. No se mezclan.
     `tests/test_banzer.js` (55).
-  - **🔎 El buscador del stock vive en la barra de arriba** (§4hp, 05/10; dueño: *«no hay un buscado en stock»*): el
+  - **🔎 El buscador del stock vive en la barra de arriba** (§4hp, 05/10, PUBLICADO 06/10 12:37, `3443703`; dueño: *«no hay un buscado en stock»*): el
     `<input id="stk-q">` está en la barra fija de `#stock-overlay`, fuera de `#stock-body`, y `renderStockFiltros` NO lo dibuja
     (deja un chip «🔎 «q»»). Con algo escrito, `renderStock` esconde los cuadros grandes (`renderStockHoy`, `renderRevisionFija`,
     `renderProducir`, `renderTiendas`) y pone el cartel `#stk-buscando`; se borra la búsqueda y vuelven. ⚠️ No volver a dibujar
@@ -465,22 +465,51 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   salidas de la ventana** (`stockVentanaCorte`: UNA ventana; el día del corte entra solo con la casilla «ya incluye las
   entregas») con el archivo. **Nada se cierra por fecha** (la casilla «Darlos por llegados» se fue; `existPedidosVencidos` es
   solo informativo). `dif>0` = «entrada sin explicar» → queda como **detección** (`STOCK.det`) y se **sugiere** contra los
-  pedidos pendientes, **destildada**; tildar crea la recepción `x:<detección>|<pedido>` (`se:1`, `enConteo`: no mide plazos).
+  pedidos pendientes, **destildada**; tildar crea la recepción `x:<huella de detección y pedido>` (`se:1`, `enConteo`: no mide plazos).
   `dif<0` = «salida o ajuste sin explicar» → se puede anotar como salida sin pedido (`STOCK.sm`; también «📤 Salió sin
   pedido» en la pantalla de stock). Líneas 🏭: su llegada se sugiere sellar (`prodR`), su entrega explica la baja.
-  ⚠️ **Ids derivados del corte** (`existCorteId` = almacén|fecha|hora|huella): dos equipos con el mismo archivo → la misma
+  ⚠️ **Ids derivados del corte** (`existCorteId` = huella de almacén|fecha|hora|contenido, §4hs): dos equipos con el mismo archivo → la misma
   recepción (3 de 10 dos veces = 3/7). ⚠️ **Deshacer = lápida `an`, nunca borrar** (la junta por id revive lo borrado):
   `stockNormalizarRecepciones`, `fusRecs` y la poda la respetan. El mismo corte corregido anula lo que cerró la versión
   anterior y lo vuelve a sugerir (`mismoCorte`). `o.detectado` → **`stockEnCaminoSeguro(o)`** en `libre`, `stockCuantoPedir`,
   `stockMesesSobra`, `pedir`: lo «en camino» que una detección sin asignar ya podría ser no se cuenta como seguro. `o.reclamar`
-  → «🚚 Ya pedido · ⚠️ reclamar». Un campo nuevo de `STOCK` (`sm`, `det`, `v`, `h[].d/hu`) ya entra en `stockFusionar`,
-  `leerStock` y `filaStock` (tope 60 días). `tests/test_control_corte.js` (32); `test_existencias` §6, `test_rev_stock` y
+  → «🚚 Ya pedido · ⚠️ reclamar». Un campo nuevo de `STOCK` (`sm`, `det`, `v`, `pv`, `h[].d/hu`) ya entra en `stockFusionar`,
+  `leerStock` y `filaStock` (tope: `STOCK_CONTROL_DIAS`, §4hs). `tests/test_control_corte.js` (32); `test_existencias` §6, `test_rev_stock` y
   `test_adm_alta` §2 cambiaron a conciencia (esperaban el cierre por fecha).
+- **📅 Segunda parte, por el dueño (06/10, §4hs, EN LA RAMA)**: *«que no permita subir corte de días anteriores, tiene que ser del
+  día… ¿de qué me sirve un stock de hace dos semanas? Si cada día te subo la lista actualizada»*.
+  · **Solo el Excel del DÍA** (`existNoEsDeHoy`, día de Bolivia): «existencias al» y cuándo se sacó (pie o nombre) tienen que ser
+  de hoy; sin fecha no entra; sin botón para usarlo. **Ya no hay «usarlo igual»**: un corte más viejo que el vigente no entra
+  (`existBotonUsar`); el mismo día sin hora de un lado decide `stockSubidoAntesDe` (la hora de subida del vigente) o no entra.
+  · **La hora sale del PIE primero** (`existPonerHora`): el mismo archivo con dos nombres da el mismo corte.
+  · **`fusFoto` es monótono** (`stockCompararCortes`): ninguna junta vuelve atrás un corte.
+  · **La celda guarda 3 días** (`STOCK_CONTROL_DIAS`, `stockPodarControl` dentro de `stockPodar`: los tres caminos): `det`, `sm`
+  (salvo la manual que ningún Excel incluye), el historial (+ el último de cada almacén, `STOCK_HIST` 15; `h[].d` entero solo en
+  el último de cada almacén, nunca de Moreno) y los recibidos enteros (`STOCK_RECIBIDOS_DIAS`; la MUESTRA sigue a 120 días: con 60
+  cambiaba el tiempo medido). Ids de 64 bits (`huellaId`: `c…`/`d:`/`x:`/`s:`), el historial viaja sin `id`. Medido con la
+  simulación de la auditoría: máx 39.573 en 60 días de uso pesado (antes, 50.000 el día 8).
+  · **🧓 Página vieja**: `STOCK.pv=3` en cada guardado; una copia sin `pv` que vuelve atrás un corte o borra el control se JUNTA
+  al leer y se reguarda (`stockProtegerDePaginaVieja`/`stockRepararLuego`; sin pedirle `pv` a la memoria: si no, una copia vieja
+  inocente la apagaba). De fondo, el **servidor `2026-10-06-a`**: `__stock__` sellado sin `sf ≥ 3` → `actualizar`. ⚠️ **Primero
+  la página y todos F5, después el servidor** (la página de hoy no manda `sf`). ⚠️ **Lo que la página vieja deja en el navegador
+  no entra tal cual después del F5**: `sisCargarPestana` no carga una memoria sin `pv`, y `apiSaveAhora` manda SIN sello (`rev:0`)
+  una fila del stock sin `pv` (`stockTextoAlDia`) → `conflicto` → se junta. Sin eso, la página nueva le ponía su `sf` al Excel
+  del sábado que quedó en la cola y el servidor lo aceptaba. ⚠️ Una prueba que suba un Excel de otro día a propósito apaga SOLO
+  esa regla (`window.existNoEsDeHoy=…`, ver `_otroDia` en `test_rev_corte_codex`); y un doble del servidor que guarde el stock
+  «como el panel nuevo» manda `sf:3`.
+  · B2 (`ofrecido`/`pendQ`), B3 (`stockRecYaEnFoto`), B5d, B6 (`difAnt` desde `h[].d` + lápida en `sm`), B8 (`stockMigrar`).
+  · **Revisión independiente (06/10 a la tarde)**: B3 mira el corte ANTERIOR de acá (`ev.p` en la recepción): Moreno del mismo
+  día sacado después de ese corte ya tiene la recogida descontada (Moreno 09:50 y acá 09:55 se le restaba otra vez). El mismo
+  archivo subido dos veces conserva las diferencias de la primera (`existJuntarDif`: si no, el corregido comparaba contra 0).
+  El mismo archivo ya subido con la hora del NOMBRE (página de antes) usa esa hora (`existAlinearHora`: misma huella, a menos de
+  2 min). Un «Conté a mano» más nuevo frena el Excel con su propio texto (`previoAMano`).
+  ⚠️ El 06/10 a la mañana ya se subieron Excel con la página de antes: hay detecciones con el nombre largo. La página nueva
+  las lee y las ofrece por su nombre (§16). `tests/test_corte_del_dia.js` (56, con .xlsx armados en la prueba), `test_servidor` §22.
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
-- 🚨 **Auditoría del 06/10 (bitácora §4hq): hallazgos verificados y SIN arreglar** (el dueño no pidió arreglarlos todavía):
-  la celda del stock se llena en semanas con `det`/`sm`/`x:`; una página sin F5 borra el control de todos al guardar el stock
-  (la lectura adopta su copia); el cierre propone tildados los PM y un confirmado que se reprograma queda ✅ en la fecha nueva;
+- 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).
+  **Siguen SIN arreglar** (el dueño no pidió): un pedido confirmado en el cierre que después se reprograma queda ✅ en la fecha nueva (los 🌆 PM
+  van tildados A PROPÓSITO: dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*);
   `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`; `stockMigrar` no migra `cod` (un código nuevo en `CODIGOS` parte el
   producto: el SUEÑA LITE 105 si un Excel viejo lo traía). Antes de tocar el cierre o el control del corte, leer §4hq.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
@@ -696,7 +725,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
   reescribe al reprogramar.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
-- **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
+- **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10, PUBLICADO 06/10 12:37, `3443703`; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
   «Falta cobrar» de Ventas, «⏳ Con saldo» del resumen y «Por cobrar» del Cuadre (`mcToca`) abren **`abrirPorCobrar(origen)`**
   con la MISMA cuenta que la ficha (`porCobrarDatos`: Ventas = `contaFaltaCobrar` sobre `contaLista()`; Cuadre =
   `cuadrePendientes()`), armada al abrir, de la más vieja a la más nueva. Un cliente abre su venta con «← Volver a la lista»

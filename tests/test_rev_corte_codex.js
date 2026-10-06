@@ -77,6 +77,9 @@ const BASE = `
   window._fila=function(k){ return stockData().lista.filter(function(o){ return o.k===k; })[0]||null; };
   window._modalTxt=function(){ return ((document.getElementById('modal-box')||{}).textContent||'').replace(/\\s+/g,' '); };
   window._ver=function(id){ var p=findById(id); if(!p) return null; var c=cierreEntDe(p); return { entregado:!!p.entregado, c:c, eX:(p.productos||[]).map(function(x){ return x.eX||''; }) }; };
+  /* (06/10) La página ya no deja subir un Excel que no sea de HOY (§4hs). Los casos que suben «el de mañana» sin mover el
+     reloj miden otra cosa (la llegada parcial, lo sellado a mano, el aviso de la página vieja): ahí se apaga solo esa regla. */
+  window._otroDia=function(){ existNoEsDeHoy=function(){ return null; }; };
   window._n=function(id){ return window._guardadas.filter(function(s){ return String(s.id)===String(id); }).length; };
 `;
 
@@ -187,6 +190,7 @@ const BASE = `
       x=findById('fab').productos[0]; out.x2={ prodU:x.prodU, prodR:x.prodR||'', prodC:(x.prodC||[]).length };
       out.det=(STOCK.det||[]).length;
       /* Mañana llegan las otras 7: «sellar la llegada». */
+      _otroDia();
       var R2=_R(_adel(1),'09:00:00',{[K]:20,[K2]:4});
       var txt2=_subir(R2); out.sug3=Array.from(document.querySelectorAll('.exist-fab')).map(function(c){ return [c.getAttribute('data-id'), Number(c.getAttribute('data-u'))]; }); out.dice3=/sellar la llegada/.test(txt2);
       _subir(R2, ['.exist-fab[data-id="fab"]']); await confirmarImportExist();
@@ -275,7 +279,7 @@ const BASE = `
       out.mano={ comp:_fila(K).comp, aFab:_fila(K).aFab, enConteo:prodUnidEnConteo(findById('fab3').productos[0]), dep:_fila(K).deposito };
       var C3=stockConciliar(_R(_adel(1),'09:00:00',{[K]:12,[K2]:4}), 'log', false); var f3=C3.filas.filter(function(z){ return z.k===K; })[0]||{};
       out.mano.c={ dif:f3.dif, causas:(f3.causas||[]).map(function(c){ return [c.t,c.u]; }), sinExplicar:f3.sinExplicar, fab:(f3.fab||[]).length, sug:(f3.sug||[]).length };
-      var txt=_subir(_R(_adel(1),'09:00:00',{[K]:12,[K2]:4})); out.mano.dice=/anotado a mano/.test(txt); await confirmarImportExist();
+      _otroDia(); var txt=_subir(_R(_adel(1),'09:00:00',{[K]:12,[K2]:4})); out.mano.dice=/anotado a mano/.test(txt); await confirmarImportExist();
       out.mano.despues={ det:(STOCK.det||[]).length, comp:_fila(K).comp, aFab:_fila(K).aFab, enConteo:prodUnidEnConteo(findById('fab3').productos[0]) };
       return out;
     }, BASE);
@@ -298,7 +302,7 @@ const BASE = `
       var out={};
       var R9=_R(todayStr(),'09:00:00',{[K]:7,[K2]:4});
       var C9=stockConciliar(R9,'log',false); out.viejo={ corteViejo:C9.corteViejo, ambiguo:!!C9.ambiguo };
-      var txt=_subir(R9); out.viejoTxt=/MÁS VIEJO/.test(txt) && !/falta la hora/.test(txt);
+      var txt=_subir(R9); out.viejoTxt=/más viejo que el que ya está cargado/.test(txt) && !/falta la hora/.test(txt) && !document.getElementById('exist-corte-viejo-ok') && !!(document.getElementById('exist-usar')||{}).disabled;
       await confirmarImportExist(); out.noReemplaza={ hora:STOCK.c.hora, u:STOCK.c.u[K], toast:window._toasts.slice(-1)[0]||'' };
       /* El mismo corte de las 16:00 otra vez (repetido): mismo corte, cuadra, el historial no crece. */
       var R16=_R(todayStr(),'16:00:00',{[K]:5,[K2]:4});
@@ -314,10 +318,10 @@ const BASE = `
       var Cs=stockConciliar(Rsin,'log',false); out.ambiguo={ corteViejo:Cs.corteViejo, ambiguo:!!Cs.ambiguo, txt:/falta la hora/.test(_subir(Rsin)) };
       return out;
     }, BASE);
-    chk('R6 · un Excel de las 09:00 subido después del de las 16:00 del mismo día es MÁS VIEJO: avisa y no reemplaza sin el tilde', r.viejo.corteViejo===true && r.viejo.ambiguo===false && r.viejoTxt && r.noReemplaza.hora==='16:00:00' && r.noReemplaza.u===5 && /más viejo/.test(r.noReemplaza.toast), J([r.viejo, r.noReemplaza]));
+    chk('R6 · un Excel de las 09:00 subido después del de las 16:00 del mismo día es MÁS VIEJO: avisa, apaga el botón y no reemplaza (06/10: ya no hay «usarlo igual»)', r.viejo.corteViejo===true && r.viejo.ambiguo===false && r.viejoTxt && r.noReemplaza.hora==='16:00:00' && r.noReemplaza.u===5 && /más viejo/.test(r.noReemplaza.toast), J([r.viejo, r.noReemplaza]));
     chk('R6 · el mismo corte repetido: «mismo corte», cuadra, y el historial no crece', r.repetido.mismo===true && r.repetido.cuadran===2 && r.repetido.con===0 && r.h1===1, J([r.repetido, r.h1]));
     chk('R6 · el mismo corte corregido (6 en vez de 5): se compara contra lo que ese corte decía (+1), reemplaza su renglón del historial y el conteo', r.corregido.mismo===true && r.corregido.dif===1 && r.h2.n===1 && r.h2.huCambio===true && r.h2.u===6, J([r.corregido, r.h2]));
-    chk('R6 · mismo día y hora de un solo lado: exige el tilde y dice por qué («falta la hora»)', r.ambiguo.corteViejo===true && r.ambiguo.ambiguo===true && r.ambiguo.txt===true, J(r.ambiguo));
+    chk('R6 · mismo día y hora de un solo lado: no entra y dice por qué («falta la hora»)', r.ambiguo.corteViejo===true && r.ambiguo.ambiguo===true && r.ambiguo.txt===true, J(r.ambiguo));
   });
 
   // ═══ R7 ═══════════════════════════════════════════════════════════════════════════════
@@ -394,13 +398,13 @@ const BASE = `
       STOCK.p=[{ id:'fp1', k:K, u:10, fab:'MORENO', f:_atras(2), esp:'', r:'' }, { id:'fp2', k:K2, u:6, fab:'MORENO', f:_atras(2), esp:'', r:'' }];
       var R=_R(todayStr(),'09:00:00',{[K]:20,[K2]:4});     // +10 de K
       _subir(R, ['.exist-sug[data-q="fp1"]']); await confirmarImportExist();
-      var rid='x:d:'+existCorteId(R)+'|'+K+'|fp1';
+      var rid=existRecId(existDetId(existCorteId(R), K), 'fp1');
       /* Una detección de otro corte, anulada; y la recepción de fp1 anulada («no había llegado»). */
       STOCK.det.push({ id:'d:viejo|'+K2, k:K2, t:3, u:0, f:_atras(1), hora:'09:00:00', hu:'zz', alm:'', ts:Date.now()-86400000, an:{ t:Date.now(), m:'x' } });
       stockAnularRecepcion('fp1', rid, 'no había llegado');
       var actual=JSON.parse(JSON.stringify(STOCK));
       /* La copia de una PÁGINA VIEJA: leyó la planilla antes de las anulaciones (sin v/det/sm) y al subir su Excel «dio por llegado» fp2 con un id al azar. */
-      var vieja=JSON.parse(JSON.stringify(actual)); delete vieja.v; delete vieja.v2t; delete vieja.det; delete vieja.sm;
+      var vieja=JSON.parse(JSON.stringify(actual)); delete vieja.v; delete vieja.v2t; delete vieja.det; delete vieja.sm; delete vieja.pv;
       vieja.p.forEach(function(q){ (q.recs||[]).forEach(function(r){ delete r.an; }); });
       vieja.p[1].recs=[{ id:'r'+Math.random().toString(36).slice(2), u:6, f:todayStr(), ts:Date.now()+1000, se:1 }];
       var out={ rid:rid };
@@ -419,7 +423,7 @@ const BASE = `
       var Jd=stockFusionar(null, dup, cp(actual), 'viejo'); out.d={ recs:Jd.p[0].recs.length, an:!!Jd.p[0].recs[0].an, ru:Jd.p[0].ru, u:Jd.p[0].u };
       /* La vista previa del Excel siguiente avisa lo que la página vieja dio por llegado y deja anularlo ahí mismo. */
       STOCK=stockFusionar(cp(actual), cp(actual), cp(vieja)); STOCK_CARGADO=true; stockOlvidarIndice();
-      var R2=_R(_adel(1),'09:00:00',{[K]:20,[K2]:4});
+      _otroDia(); var R2=_R(_adel(1),'09:00:00',{[K]:20,[K2]:4});
       var txt=_subir(R2); out.aviso={ dice:/página vieja/.test(txt), n:document.querySelectorAll('.exist-rec-vieja').length, enCamino:_fila(K2).enCamino };
       document.querySelector('.exist-rec-vieja').click();
       var q2=STOCK.p.filter(function(q){ return q.id==='fp2'; })[0];

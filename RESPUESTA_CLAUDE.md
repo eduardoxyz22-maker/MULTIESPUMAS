@@ -1,5 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 06/10 — §32 / BITÁCORA §4hs.** El control del corte, arreglado por pedido del dueño: solo el Excel del día, la
+> celda guarda 3 días (medido: no se llena), una página sin F5 ya no lo rompe (y el servidor `2026-10-06-a` no la deja guardar el
+> stock), y B2-B8 de la auditoría. En la rama; espera el «publica» del dueño.
+
 > **ACTUALIZACIÓN 02/10, noche — §28 / BITÁCORA §4hj, §4hk, §4hl.** Los tres «hazlo» del dueño: plata (borrar un pago
 > registrado, el pago nuevo saca la marca ✅, el 💵 de Administración pregunta quién recibió), la poda de la celda del stock
 > (medida: el 82 % son las fotos de los almacenes) y el saldo también en el servidor (`.gs` `2026-10-02-a`, libro de reservas,
@@ -2628,6 +2632,39 @@ prueba con esa regla y no con la que pedía el informe.
 
 **Para publicar**: tu «publica». Como siempre, la página sola; todos F5 después. Una página sin F5 sigue cerrando por fecha, y
 ahora la vista previa de la nueva lo avisa y deja deshacerlo.
+
+## 32 · El control del corte, arreglado: solo el Excel del día, 3 días en la celda, página vieja y servidor `2026-10-06-a` — bitácora §4hs
+
+El dueño (06/10, después de la auditoría §4hq): *«que no permita subir corte de días anteriores, tiene que ser del día… ¿no habíamos
+quedado que las celdas de corte solo almacenaban X días…? ¿De qué me sirve un stock de hace dos semanas? Si cada día te subo la lista
+actualizada»*. Lo hecho (detalle y nombres de funciones en la bitácora §4hs y en CLAUDE.md):
+
+1. **Solo el Excel del día** (`existNoEsDeHoy`): «existencias al» y cuándo se sacó (pie/nombre) = hoy en Bolivia; sin fecha no entra.
+   Sin «usarlo igual»: un corte más viejo que el vigente no entra; el mismo día sin hora de un lado, decide la hora de SUBIDA del
+   vigente (`stockSubidoAntesDe`) o no entra. La hora sale del pie primero (`existPonerHora`): el mismo archivo con dos nombres da
+   el mismo corte. `fusFoto` monótono: ninguna junta vuelve atrás un corte.
+2. **La celda**: `STOCK_CONTROL_DIAS=3` en los tres caminos (`stockPodarControl`); recibidos enteros 3 días (la muestra sigue a 120:
+   con 60 cambiaba el tiempo medido); ids de 64 bits (`huellaId`); evidencia sin campos repetidos; historial sin `id` al guardar.
+   Simulación de la auditoría (perfil medio, 60 días hábiles): máx 39.573 letras (antes cruzaba 50.000 el día 8).
+3. **Página vieja**: `pv:3` en cada guardado; la lectura junta (no adopta) una copia sin `pv` que vuelve atrás un corte o borra el
+   control, y la reguarda. Servidor `2026-10-06-a`: `__stock__` sellado sin `sf≥3` → `actualizar`. Orden: página, F5, servidor.
+4. **B2-B8** de §4hq: sugerencias sin duplicar y tope por pedido; la recogida no se resta dos veces a Moreno; la ventana del mismo
+   día con las dos puntas; el Excel corregido contra lo que dijo la versión anterior (`h[].d`) con lápida en sus salidas; Unir lleva
+   `det`/`sm`/`h[].d`.
+
+5. **Revisión independiente (06/10 a la tarde)**, con la página publicada `3443703` y el `.gs` real; cuatro problemas, arreglados:
+   - **ALTA**: después del F5, la página nueva mandaba con su `sf` el stock que la vieja había dejado en la cola y en la memoria de
+     la pestaña (el Excel del sábado), y el servidor lo aceptaba. Ahora esa memoria no se carga y esa fila sale sin sello: choca y
+     se junta.
+   - La protección al leer se apagaba después de adoptar una copia vieja inocente: ya no le pide `pv` a la memoria.
+   - Moreno sacado minutos antes que el de acá la misma mañana: la recogida se le restaba otra vez. La recepción guarda el corte
+     anterior de acá (`ev.p`).
+   - El mismo archivo subido dos veces perdía sus diferencias y el corregido comparaba contra 0. Ahora las conserva.
+   - Además: el mismo archivo ya subido con la hora del nombre (página de antes) no es «más viejo», y un «Conté a mano» más nuevo
+     frena el Excel con su propio texto.
+
+**Para revisar**: `tests/test_corte_del_dia.js` (56; §16 = lo que subió hoy la página de antes) y `test_servidor` §22. Lo que no cambió y ojo: la regla de rotación, el cierre de
+entregas (sus hallazgos de §4hq siguen abiertos) y `stockMigrar` sin `cod`.
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
 
