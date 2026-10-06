@@ -7482,8 +7482,12 @@ la tiene unos segundos después y WhatsApp lo cambia. El mismo Excel subido con 
   letras). La evidencia de la recepción sin `m` ni `a` vacío (`p`, el corte anterior, volvió en la revisión: lo usa B3); la
   detección sin `ts` ni `alm` vacío; el historial viaja
   sin `id` (`leerStock` lo rearma). Una recepción ocupa ~150 letras (la auditoría midió ~358).
-- ⚠️ En producción no había nada del control todavía (ningún Excel subido con la página del 05/10): cambiar el formato de los
-  ids no deja nada viejo mezclado.
+- ⚠️ En producción ya HAY control con el formato de antes: el 06/10 a la mañana subieron los tres Excel (10:52 PTF, 10:55 IM,
+  11:16 Banzer) con la página del 05/10, y el diagnóstico de las 13:24 leyó 12 detecciones con el nombre largo (sin
+  recepciones ni salidas). Son compatibles: `existHuella` no cambió, el historial y las detecciones de antes traen `hu`, y la
+  evidencia vieja tiene la misma forma (`c`, `p`). Volver a subir ese Excel con la página nueva se alinea a la hora del nombre,
+  no duplica nada y ofrece la detección vieja por su propio nombre (`test_corte_del_dia` §16). Los dos formatos conviven hasta
+  que la poda los saca (3 días).
 - **Medido** con la simulación de la auditoría (`aud_corte/sim_tamano.js` del scratchpad, perfil medio = 3-15 diferencias por
   corte, 1-3 pedidos a fábrica por día, 60 días hábiles): antes cruzaba las 50.000 letras el día 8; con 7 días de control, el
   día 48; con 3 días, **máximo 39.573 (79 %) y nunca pasó el aviso de 45.000**. Lo único que sigue creciendo ahí son pedidos
@@ -7540,15 +7544,16 @@ la junta), B8 (`stockMigrar` lleva `det`, `sm` y `h[].d` a la clave unida).
   páginas nuevas; la poda depende solo de la fecha y corre en los tres caminos (las lápidas se van junto con lo suyo); `fusFoto`
   no perdió nada nuevo en ningún caso; `stockRepararLuego` guarda una vez por sello (sin bucle).
 - Pruebas nuevas en `test_corte_del_dia`: §7c-7d, §11-15 (11 más). §4b cambió a conciencia (la evidencia lleva `p` otra vez).
+  Y §16 (4): lo que subió hoy la página de antes, leído por la nueva.
 
-**Pruebas**: `tests/test_corte_del_dia.js` (52; con archivos .xlsx armados en la prueba y subidos por el botón de verdad; 34
+**Pruebas**: `tests/test_corte_del_dia.js` (56; con archivos .xlsx armados en la prueba y subidos por el botón de verdad; 34
 rojas contra la publicada `3443703`, donde las secciones 3, 4 y 15 ni corren, y 9 contra `84c2b74`: las de la revisión);
 `test_servidor` §22 (9; 6 rojas contra la `2026-10-02-a`). Cambiaron a conciencia:
 `test_control_corte` (ids cortos; sin «usarlo igual»), `test_rev_corte_codex` (`_otroDia` para los casos que suben «el de
 mañana» sin mover el reloj; R6 sin tilde), `test_existencias`, `test_rev2_stock`, `test_stock_podar` (3 días, el historial,
 dos recibidos recientes, la junta con la misma poda) y `test_identidad` (el reporte es de hoy), `test_concurrencia` (el otro
 equipo guarda con `sf`), `test_saldo_servidor` (versión). **Batería entera (`84c2b74`): 136 suites, 5.114 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen, como siempre).
-**Con la revisión (`22e463b`): 136 suites, 5.125 comprobaciones, 0 rojas.**
+**Con la revisión (`22e463b`): 136 suites, 5.125 comprobaciones, 0 rojas** (+4 de §16 después, solo prueba: 56/56).
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar

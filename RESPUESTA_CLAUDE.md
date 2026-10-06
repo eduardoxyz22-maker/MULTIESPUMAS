@@ -2663,7 +2663,7 @@ actualizada»*. Lo hecho (detalle y nombres de funciones en la bitácora §4hs y
    - Además: el mismo archivo ya subido con la hora del nombre (página de antes) no es «más viejo», y un «Conté a mano» más nuevo
      frena el Excel con su propio texto.
 
-**Para revisar**: `tests/test_corte_del_dia.js` (52) y `test_servidor` §22. Lo que no cambió y ojo: la regla de rotación, el cierre de
+**Para revisar**: `tests/test_corte_del_dia.js` (56; §16 = lo que subió hoy la página de antes) y `test_servidor` §22. Lo que no cambió y ojo: la regla de rotación, el cierre de
 entregas (sus hallazgos de §4hq siguen abiertos) y `stockMigrar` sin `cod`.
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi

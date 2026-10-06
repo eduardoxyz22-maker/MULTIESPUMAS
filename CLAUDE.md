@@ -503,7 +503,8 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   archivo subido dos veces conserva las diferencias de la primera (`existJuntarDif`: si no, el corregido comparaba contra 0).
   El mismo archivo ya subido con la hora del NOMBRE (página de antes) usa esa hora (`existAlinearHora`: misma huella, a menos de
   2 min). Un «Conté a mano» más nuevo frena el Excel con su propio texto (`previoAMano`).
-  `tests/test_corte_del_dia.js` (52, con .xlsx armados en la prueba), `test_servidor` §22.
+  ⚠️ El 06/10 a la mañana ya se subieron Excel con la página de antes: hay detecciones con el nombre largo. La página nueva
+  las lee y las ofrece por su nombre (§16). `tests/test_corte_del_dia.js` (56, con .xlsx armados en la prueba), `test_servidor` §22.
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).

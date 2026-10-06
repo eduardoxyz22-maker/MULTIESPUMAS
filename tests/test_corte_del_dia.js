@@ -25,6 +25,8 @@
      14 El mismo archivo ya subido con la hora del NOMBRE (página de antes) no es «más viejo».
      15 Con un conteo a mano más nuevo, el Excel de la mañana no entra y lo dice con esas palabras.
      (7c-7d) Moreno sacado minutos antes que el de acá la misma mañana ya tenía la recogida descontada.
+     16 Lo que subió la página de antes el 06/10 (detecciones con el nombre largo, hora del nombre): la página nueva lo
+        lee, lo ofrece por su propio nombre y no lo duplica al volver a subir el mismo Excel.
    Reloj clavado en el miércoles 07/10/2026 a las 15:00 de Bolivia. Red cortada, servidor simulado, datos sintéticos.
    Se corre:  node tests/test_corte_del_dia.js
    Dientes contra la página publicada:  PEDIDOS=/ruta/a/la/publicada.html node tests/test_corte_del_dia.js */
@@ -522,6 +524,42 @@ const BASE = `
       return { viejo:!!C.corteViejo, aMano:!!C.previoAMano, ambiguo:!!C.ambiguo, txt:existCorteViejoTxt(C) };
     });
     chk('15 · «Ya hay un conteo a mano de hoy (anotado a las 14:00), más nuevo que este Excel» (antes decía «otro Excel… falta la hora»)', r.viejo && r.aMano && !r.ambiguo && /conteo a mano de hoy de este depósito \(anotado a las 14:00\)/.test(r.txt), J(r));
+  });
+
+  // ═══ 16 ══════════════════════════════════════════════════════════════════════════════════
+  /* El 06/10 a la mañana logística subió los tres Excel con la página de ANTES (la del control del 05/10): la planilla tiene
+     detecciones con el nombre largo (`d:<almacén|fecha|hora|huella>|<clave>`, con `ts` y `alm` vacío) y el corte con la hora
+     del NOMBRE del archivo. La página nueva tiene que leerlas tal cual: volver a subir ese Excel no duplica nada, se alinea a
+     la hora con la que ya está, y la detección vieja se ofrece y se asigna por su propio nombre. */
+  console.log('\n── 16. Lo que subió la página de antes: la página nueva lo lee, lo ofrece y no lo duplica ──');
+  await seccion('16', async (page) => {
+    await page.evaluate(() => { STOCK.p=[{ id:'fp1', k:K, u:5, fab:'MORENO', f:_atras(2), esp:'', r:'' }]; });
+    /* la página de antes: la hora del NOMBRE (10:52:15), +3 de K sin explicar que queda detectado y sin asignar */
+    await subirArchivo(page, 'Excel_07102026_10_52_15_almacen_octubre.xlsx', reporte({ al:'07/10/2026', pie:'' }));
+    const antes = await page.evaluate(async () => {
+      var R=EXIST_IMP; await confirmarImportExist();
+      var d=STOCK.det[0]; if(!d) return null;
+      var largo='d:'+String(R.almacen)+'|'+String(R.fecha)+'|'+String(R.hora)+'|'+existHuella(R)+'|'+K;
+      d.id=largo; d.alm=''; d.ts=_ts(todayStr(),'10:53:00');                // como lo escribía la página de antes
+      return { hora:STOCK.c.hora, id:d.id, u:d.u, n:STOCK.det.length };
+    });
+    /* la página nueva sube el MISMO archivo, que trae el pie 10:52:12 */
+    const otra = await subirArchivo(page, 'DOC-20261007-WA0009.xlsx', reporte({ al:'07/10/2026', pie:'07/10/2026 10:52:12' }));
+    const r = await page.evaluate(async () => {
+      var cb=Array.from(document.querySelectorAll('.exist-sug[data-q="fp1"]'))[0];
+      var ofrecida = cb ? { d:cb.getAttribute('data-d'), u:Number(cb.getAttribute('data-u')) } : null;
+      if(cb) cb.checked=true;
+      await confirmarImportExist();
+      var q=STOCK.p[0], recs=(q.recs||[]).filter(function(x){ return !x.an; });
+      return { ofrecida:ofrecida, det:STOCK.det.map(function(x){ return { id:x.id, u:x.u, an:!!x.an }; }),
+               recs:recs.map(function(x){ return { u:x.u, d:x.ev && x.ev.d }; }), hHoy:STOCK.h.filter(function(x){ return x.alm===LOG && x.f===todayStr(); }).length,
+               corte:STOCK.c.hora, uK:STOCK.c.u[K] };
+    });
+    chk('16a · lo que dejó la página de antes: corte con la hora del nombre (10:52:15) y una detección de 3 con el nombre largo', !!antes && antes.hora==='10:52:15' && /^d:.+\|.+\|10:52:15\|/.test(antes.id) && antes.u===3 && antes.n===1, J(antes));
+    chk('16b · el mismo Excel con el pie (10:52:12) se alinea a 10:52:15 y se puede usar', !!otra.R && otra.R.hora==='10:52:15' && otra.boton.hay && !otra.boton.apagado, J([otra.R, otra.boton]));
+    chk('16c · la detección vieja se ofrece por su propio nombre contra el pedido pendiente (3 de 5)', !!r.ofrecida && !!antes && r.ofrecida.d===antes.id && r.ofrecida.u===3, J(r.ofrecida));
+    chk('16d · ⚠️ al confirmar: una sola detección (la vieja, asignada, sin lápida), la recepción la nombra, y un solo corte de hoy',
+        r.det.length===1 && r.det[0].u===0 && !r.det[0].an && r.recs.length===1 && r.recs[0].u===3 && !!antes && r.recs[0].d===antes.id && r.hHoy===1 && r.corte==='10:52:15' && r.uK===13, J(r));
   });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3).join(' | '));
