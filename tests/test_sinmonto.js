@@ -118,14 +118,19 @@ const chk=(l,c,extra)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, extra!
   r = await page.evaluate(()=>{
     segSet('cta-tab','cuadre'); setContaTab('cuadre'); segSet('cua-mode','todo'); setCuadreModo('todo');
     var A=cuadreAlertas(cuadrePagos());
+    var detDe=function(k){ var a=A.filter(function(x){ return x.k===k; })[0]; return JSON.stringify(a ? (a.det||[]).map(function(d){ return d.txt; }) : []); };
     return { txt:A.map(function(a){ return a.txt; }).join(' || '),
              det:JSON.stringify(A.map(function(a){ return (a.det||[]).map(function(d){ return d.txt; }); })),
+             sinnada:detDe('sinnada'), cobrar:detDe('cobrar'),
              panel:(document.getElementById('cua-alertas')||{}).textContent||'' };
   });
   chk('CUADRE · avisa de las ventas sin ningún monto', /sin ningún monto anotado/.test(r.txt), '');
   chk('  y las lista por cliente para poder abrirlas', /SIN NADA ANOTADO/.test(r.det), '');
   chk('  el aviso se ve en el panel', /sin ningún monto anotado/.test(r.panel), '');
-  chk('  no mete a las que sí tienen saldo', !/DEBE DE VERDAD/.test(r.det.split('sin ningún')[0]||''), '');
+  /* (06/10, §4hr) Antes miraba TODOS los avisos: desde que «Revisar antes de cerrar» lista también lo que falta cobrar, la
+     venta con saldo de verdad aparece ahí (a propósito). Lo que cuida esta comprobación es el aviso de «sin ningún monto». */
+  chk('  no mete a las que sí tienen saldo', /SIN NADA ANOTADO/.test(r.sinnada) && !/DEBE DE VERDAD/.test(r.sinnada), r.sinnada);
+  chk('  …y la que sí debe sale en «saldo por cobrar» (§4hr)', /DEBE DE VERDAD/.test(r.cobrar) && !/SIN NADA ANOTADO/.test(r.cobrar), r.cobrar);
 
   // ---------- 7. EL EXCEL DEL CONTADOR ----------
   /* La columna PAGADO del Excel es SÍ/NO. Un "NO" con saldo 0 y cobrado 0 le dice al

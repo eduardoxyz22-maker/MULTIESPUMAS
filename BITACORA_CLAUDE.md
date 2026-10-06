@@ -7445,6 +7445,36 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
+El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
+Bs 7.810,00» en el Cuadre y «Revisar antes de cerrar» sin ninguna línea de deuda): *«en cuadre y conciliación los vendedores
+sale que tienen por cobrar pero contabilidad no sabe qué clientes son, tampoco sale en el bot de revisar antes de cerrar y en
+ventas tampoco. En la ficha de falta por cobrar al dar click debería abrir una pestaña que muestre los clientes y al dar otro
+click llevar a esos clientes.»*
+- **Por qué no salía en «Revisar antes de cerrar»:** el único aviso de deuda era «ya entregada y todavía sin cobrar»
+  (`p.entregado` + saldo), y los choferes no marcan ✅ (§4gp): casi nunca se disparaba. La caja «⏳ Por cobrar» del Cuadre sí
+  listaba los clientes, al costado (y abajo en pantallas angostas).
+- Hecho en `pedidos.html`:
+  · **`mcToca(...)`**: una ficha (`mc`) que se toca (clase `mc-toca`, `role=button`, Enter/espacio) con «👆 Tocá para ver
+    quiénes son». La usan «Falta cobrar» de Ventas (con saldo; sin saldo sigue «✅ Nada», no se toca) y «Por cobrar» del Cuadre
+    (sin arqueo anotado; sin saldo ahora dice «✅ Nada» en verde en vez de «Bs 0,00» en ámbar). «⏳ Con saldo» del resumen de
+    Ventas también abre la lista (`#cta-con-saldo`).
+  · **`abrirPorCobrar(origen)`** → ventana «⏳ Falta cobrar · Bs X» con la MISMA cuenta que la ficha: Ventas =
+    `contaFaltaCobrar` sobre `contaLista()` (corte, período, vendedor y búsqueda de la pantalla, `porCobrarDatos`); Cuadre =
+    `cuadrePendientes()`. Se arma al abrir (lo cobrado ya no aparece). De la más vieja a la más nueva, tramos de antigüedad
+    (`tramosDeudaHtml`), cliente + nota · OC · celular, vendedor, desde (días), venta y saldo. «📋 Copiar la lista»
+    (`copiarPorCobrar`) para mandarla por WhatsApp.
+  · **Tocar un cliente** (`porCobrarAbrirVenta`) abre su venta (`showContaModal`) con «← Volver a la lista de lo que falta
+    cobrar» (`POR_COBRAR_VOLVER`); el botón solo aparece si la ficha se abrió desde la lista con la ventana abierta (un repintado
+    lo conserva; abrir la venta desde otro lado, no).
+  · **«Revisar antes de cerrar»**: aviso nuevo `k:'cobrar'` en `cuadreAlertas`, `sev:'plata'` (arranca abierto con los nombres),
+    «⏳ N ventas con saldo por cobrar — Bs X que todavía no entró», mismos datos que `cuadrePendientes`; cada nombre abre su
+    venta y «… y N más ›» abre la lista entera. No frena el cierre (vender a crédito no es un error). `cuadreTexto` (📋 Copiar
+    del Cuadre) no lo repite: ya dice «⏳ Por cobrar» en su línea.
+- Pruebas: **`tests/test_por_cobrar.js`** (24; contra la página publicada falla desde la primera: no hay ficha tocable).
+  `test_sinmonto` §6 cambió a conciencia: miraba que «DEBE DE VERDAD» no estuviera en NINGÚN aviso y ahora está, a propósito,
+  en el de saldo por cobrar; mira el aviso de «sin ningún monto» y suma que la que debe sí salga en el nuevo (43).
+
 ## 4hq. 06/10: 🔎 auditoría «auditores como va todo» — lo publicado el 05/10 tiene arreglos pendientes (NADA arreglado todavía)
 El dueño, el 06/10 a las 10:00: *«auditores como va todo»*. Se miró la operación y tres auditores (agentes) revisaron lo
 publicado el 05/10; cada hallazgo de abajo está **reproducido en el navegador** (scripts en el scratchpad de la sesión:

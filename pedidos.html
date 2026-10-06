@@ -230,6 +230,10 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
    a la mitad ("Bs 1.750,0 / 0"): se corta entre palabras, como corresponde. */
 @media(max-width:560px){.mc{padding:13px 14px}.mc-val{font-size:clamp(1rem,3.8vw,1.25rem);white-space:normal;overflow:visible}}
 .mc-sub{font-size:.66rem;color:var(--muted);margin-top:3px}
+/* ⏳ (06/10, §4hr) Una ficha que se TOCA: abre la lista que hay detrás (los clientes que deben). */
+.mc.mc-toca{cursor:pointer}
+.mc.mc-toca:hover,.mc.mc-toca:focus-visible{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.18);outline:none}
+.mc-toca .mc-ver{display:inline-block;margin-top:5px;font-size:.72rem;font-weight:700;color:#b45309}
 
 /* Consolidados: 3 columnas de texto estiradas a 900px dejan huecos enormes
    entre el vendedor y su monto. Se limitan y quedan legibles */
@@ -4399,16 +4403,94 @@ function renderContaMetrics(list, vSel){
     mc(exceso>0.01?'var(--amber)':'var(--green)','Ya ingresó', fmtBs(cobrado),
        exceso>0.01 ? ('⚠️ '+fmtBs(exceso)+' de MÁS en '+nExceso+' venta'+(nExceso===1?'':'s')+' — revisalas')
        : vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
-    mc(falta>0.01?'var(--amber)':'var(--green)', 'Falta cobrar',
-       falta>0.01?fmtBs(falta):'✅ Nada',
-       falta>0.01 ? (nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas')
-                  : 'no queda saldo pendiente')+
+    /* ⏳ (06/10, §4hr) Con saldo, la ficha se TOCA y abre quiénes son (`abrirPorCobrar`). */
+    (falta>0.01
+      ? mcToca('var(--amber)', 'Falta cobrar', fmtBs(falta),
+          nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas', "abrirPorCobrar('ventas')")
+      : mc('var(--green)', 'Falta cobrar', '✅ Nada', 'no queda saldo pendiente'))+
     mc(porCargar>0?'var(--amber)':'var(--green)','Por cargar al sistema',
        porCargar>0?String(porCargar):'✅ Todo',
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
                    : ('las '+n+' están registradas'));
   renderContaMarcas(list, vSel, vendido);
   acomodarFichas();
+}
+/* ⏳ QUIÉN DEBE (06/10, §4hr). El dueño: *«los vendedores sale que tienen por cobrar pero contabilidad no sabe qué clientes
+   son, tampoco sale en el bot de revisar antes de cerrar y en ventas tampoco. En la ficha de falta por cobrar al dar click
+   debería abrir una pestaña que muestre los clientes y al dar otro click llevar a esos clientes»*.
+   · La ficha «Falta cobrar» de Ventas y la de «Por cobrar» del Cuadre abren esta lista con la MISMA cuenta que la ficha:
+     Ventas = `contaFaltaCobrar` sobre `contaLista()` (corte, período, vendedor y búsqueda de la pantalla); Cuadre =
+     `cuadrePendientes()` (su período y su vendedor). Se arma al abrir, así que después de cobrar ya no aparece.
+   · Del más viejo al más nuevo (lo que más cuesta cobrar primero), con los tramos de antigüedad de la deuda.
+   · Tocar un cliente abre su venta (`showContaModal`), y la ficha muestra «← Volver a la lista» (`POR_COBRAR_VOLVER`). */
+var POR_COBRAR_VOLVER=null;   // { origen, id }: la venta que se abrió desde la lista
+function mcToca(color, lbl, val, sub, onclick, ver){
+  return mc(color, lbl, val, sub+'<br><span class="mc-ver">'+(ver||'👆 Tocá para ver quiénes son')+'</span>')
+    .replace('<div class="mc">', '<div class="mc mc-toca" role="button" tabindex="0" onclick="'+esc(onclick)+'"'+
+      ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">');
+}
+function contaPeriodoTxt(){
+  var modo=segVal('cta-mode')||'mes';
+  if(modo==='dia') return fmtFecha((document.getElementById('cta-dia')||{}).value||todayStr());
+  if(modo==='mes') return mesNombre(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
+  return 'todo el historial';
+}
+function porCobrarDatos(origen){
+  var hoy=todayStr();
+  if(origen==='cuadre'){
+    var vc=cuadreVendedor();
+    return { items:cuadrePendientes(), quien:(vc||'todo el equipo'), periodo:cuadrePeriodoTxt(), corte:'por la fecha de la venta' };
+  }
+  var mayor=(contaAmbito()==='mayor');
+  var vv=mayor ? mayoristasTxt() : ((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  var q=((document.getElementById('cta-search')||{}).value||'').trim();
+  var items=contaLista().map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(contaFaltaCobrar(p)) }; })
+    .filter(function(x){ return x.saldo>0.01; })
+    .sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
+  return { items:items, quien:(vv||(mayor?'mayoristas':'todo el equipo'))+(q?(' · solo lo que coincide con «'+q+'»'):''),
+           periodo:contaPeriodoTxt(), corte:(contaBase()==='entrega'?'por la entrega agendada':'por la fecha de ingreso') };
+}
+function abrirPorCobrar(origen){
+  origen=(origen==='cuadre') ? 'cuadre' : 'ventas';
+  POR_COBRAR_VOLVER=null;
+  var D=porCobrarDatos(origen), it=D.items, tot=cuadreSuma(it), n=it.length;
+  var filas=it.map(function(x){
+    var p=x.p, col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
+    var ref=[p.nota?('nota '+p.nota):'', p.oc?(ocEtiq(p.oc)||''):'', p.celular||''].filter(Boolean).join(' · ');
+    return '<tr class="pc-fila" data-id="'+esc(String(p.id))+'" onclick="porCobrarAbrirVenta(\''+origen+'\', this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta para registrar el pago">'+
+      '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><span style="color:var(--muted);font-size:.86em">'+esc(ref)+'</span>'):'')+'</td>'+
+      '<td>'+esc(p.vendedor||'—')+'</td>'+
+      '<td><span style="color:'+col+'">'+esc(x.desde?fmtFechaCorta(x.desde):'sin fecha')+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+      '<td style="text-align:right;white-space:nowrap">'+fmtBs(ventaTotal(p))+'</td>'+
+      '<td style="text-align:right;white-space:nowrap"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
+  }).join('');
+  var html='<div class="modal-h" style="background:#b45309"><h3>⏳ Falta cobrar · '+fmtBs(tot)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" id="pc-lista">'+
+      '<div style="font-size:.86rem;margin-bottom:8px"><b>'+n+'</b> venta'+(n===1?'':'s')+' con saldo · '+esc(D.quien)+' · '+esc(D.periodo)+
+        ' <span style="color:var(--muted)">('+esc(D.corte)+')</span></div>'+
+      (n ? ('<div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">De la más vieja a la más nueva. 👆 Tocá un cliente para abrir su venta y registrar el pago.</div>'+
+            tramosDeudaHtml(it)+
+            '<div class="tw" style="max-height:60vh;overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Vendedor</th><th>Desde</th>'+
+            '<th style="text-align:right">Venta</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+filas+'</tbody></table></div>')
+         : '<div class="empty" style="padding:18px 0">✅ No queda nada por cobrar.</div>')+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+        (n?('<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarPorCobrar(\''+origen+'\')">📋 Copiar la lista</button>'):'')+
+        '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+    '</div>';
+  openModal(html, true);
+}
+function porCobrarAbrirVenta(origen, id){
+  POR_COBRAR_VOLVER={ origen:(origen==='cuadre'?'cuadre':'ventas'), id:String(id) };
+  showContaModal(id);
+}
+function copiarPorCobrar(origen){
+  var D=porCobrarDatos(origen), it=D.items;
+  var txt='⏳ *Falta cobrar* · '+D.quien+' · '+D.periodo+': *'+fmtBs(cuadreSuma(it))+'* en '+it.length+' venta'+(it.length===1?'':'s')+'\n'+
+    it.map(function(x){ var p=x.p;
+      return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
+        ' · desde el '+(x.desde?fmtFechaCorta(x.desde):'—')+' ('+(x.dias?(x.dias+' días'):'hoy')+')'+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
+  copyText(txt);
 }
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
    Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
@@ -4471,8 +4553,11 @@ function renderConta(){
   renderContaMetrics(list, vSel);
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
-    '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
-    (saldo>0?(' ('+fmtBs(saldo)+')'):'')+
+    '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; '+
+    /* ⏳ (06/10, §4hr) Tocable: abre los clientes que deben, como la ficha «Falta cobrar». */
+    (nDebe ? ('<a id="cta-con-saldo" style="cursor:pointer;color:inherit;text-decoration:underline dotted" onclick="abrirPorCobrar(\'ventas\')" title="Ver quiénes deben">⏳ Con saldo: <b>'+nDebe+'</b>'+
+              (saldo>0?(' ('+fmtBs(saldo)+')'):'')+'</a>')
+           : ('⏳ Con saldo: <b>0</b>'))+
     (nSinMonto?(' &nbsp;·&nbsp; ❓ Sin monto anotado: <b>'+nSinMonto+'</b>'):'')+
     (nSinMarcar?(' &nbsp;·&nbsp; ⚪ Cobradas sin marcar pagadas: <b>'+nSinMarcar+'</b>'):'')+
     (aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
@@ -5770,6 +5855,17 @@ function cuadreAlertas(pagos){
       det:entregadoDebe.slice().sort(function(a,b){ return (Number(b.saldo)||0)-(Number(a.saldo)||0); })
         .map(function(p){ return {txt:(p.cliente||'—')+' · '+fmtBs(p.saldo)+(p.vendedor?(' · '+p.vendedor):''), id:p.id}; })});
   }
+  /* ⏳ (06/10, §4hr) TODO lo que falta cobrar de lo vendido en el período, con nombre. El dueño: *«contabilidad no sabe qué
+     clientes son, tampoco sale en el bot de revisar antes de cerrar»*. El de arriba («ya entregada y sin cobrar») casi nunca
+     salía: los choferes no marcan ✅ (§4gp). Es la MISMA lista que la caja «⏳ Por cobrar» (`cuadrePendientes`), del más viejo
+     al más nuevo; no frena el cierre (vender a crédito no es un error), pero es plata en juego, así que arranca abierto.
+     Los primeros nombres abren su venta y «… y N más» abre la lista entera (`abrirPorCobrar`). */
+  var _pcAl=cuadrePendientes();
+  if(_pcAl.length){
+    A.push({k:'cobrar', sev:'plata', ico:'⏳', txt:'<b>'+_pcAl.length+'</b> venta'+(_pcAl.length===1?'':'s')+' con <b>saldo por cobrar</b> — '+
+      fmtBs(cuadreSuma(_pcAl))+' que todavía no entró',
+      det:_pcAl.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.saldo)+(x.p.vendedor?(' · '+x.p.vendedor):'')+' · '+(x.dias?(x.dias+' d'):'hoy'), id:x.p.id}; })});
+  }
   /* La venta cargada dos veces: infla el mes y hace facturar de más. Va arriba de todo
      lo demás en importancia, así que se lista con las dos ventas del par juntas para
      poder compararlas de un toque. */
@@ -5959,7 +6055,11 @@ function alertaDetHtml(det, k){
       JSON.stringify(String(d.id)).replace(/"/g,'&quot;')+')"'+
       (tip||' title="Abrir esta venta para corregirla"')+'>'+t+'</span>';
   }).join('');
-  if(det.length>ALERTA_DET_MAX) html+='<span class="cua-chip plano" title="Se muestran los primeros '+ALERTA_DET_MAX+'">… y '+(det.length-ALERTA_DET_MAX)+' más</span>';
+  if(det.length>ALERTA_DET_MAX){
+    // ⏳ (06/10, §4hr) Lo que falta cobrar se abre entero: es la lista con la que se sale a cobrar.
+    if(k==='cobrar') html+='<span class="cua-chip" onclick="event.stopPropagation();abrirPorCobrar(\'cuadre\')" title="Ver la lista entera">… y '+(det.length-ALERTA_DET_MAX)+' más ›</span>';
+    else html+='<span class="cua-chip plano" title="Se muestran los primeros '+ALERTA_DET_MAX+'">… y '+(det.length-ALERTA_DET_MAX)+' más</span>';
+  }
   return html;
 }
 function renderCuadre(){
@@ -6056,8 +6156,10 @@ function renderCuadre(){
            anotadas+' de '+CIE.filas.length+' forma'+(CIE.filas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
            // §4fo: el arqueo que quedó sin ningún pago detrás se nombra, o no se entiende la diferencia.
            (arqHuerfanos.length?(' · ⚠️ '+arqHuerfanos.map(function(h){ return esc(h.forma)+' '+fmtBs(h.monto); }).join(' + ')+' contado'+(arqHuerfanos.length===1?'':'s')+' a mano sin ningún pago detrás'):''))
-      : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),
-           pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt())));
+      : (pend.length   // ⏳ (06/10, §4hr) se toca y abre quiénes son
+          ? mcToca('var(--amber)','Por cobrar',fmtBs(pendTotal),
+              pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt()), "abrirPorCobrar('cuadre')")
+          : mc('var(--green)','Por cobrar','✅ Nada','no queda saldo de '+esc(cuadrePeriodoTxt()))));
 
   // ---- cierre por forma de pago (lo que se tilda contra caja y extracto)
   var cie=document.getElementById('cua-cierre');
@@ -6121,7 +6223,8 @@ function renderCuadre(){
             '<td><span style="color:'+col+'">'+esc(fmtFechaCorta(x.desde))+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
             '<td style="text-align:right"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
         }).join('')+'</tbody></table></div>'+
-        (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'.</div>'):'')
+        (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'. '+
+          '<a style="cursor:pointer;color:#b45309;font-weight:700" onclick="abrirPorCobrar(\'cuadre\')">Ver las '+pend.length+' ›</a></div>'):'')
       : '<div class="empty" style="padding:16px 0">✅ No queda nada por cobrar.</div>')+
     '</div>';
 
@@ -6319,7 +6422,8 @@ function cuadreTexto(){
   if(_rec>0) L.push('', '🚚 De eso, *'+fmtBs(_rec)+'* son recargos por entrega (flete, no es de la venta)');
   var pend=cuadrePendientes(), pt=cuadreSuma(pend);
   if(pend.length) L.push('', '⏳ Por cobrar de lo vendido en el período: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
-  var al=cuadreAlertas(pagos);
+  // (06/10, §4hr) «saldo por cobrar» ya va en la línea «⏳ Por cobrar» de arriba: no se repite en «Revisar».
+  var al=cuadreAlertas(pagos).filter(function(a){ return a.k!=='cobrar'; });
   if(al.length){ L.push('', '🔎 Revisar:'); al.forEach(function(a){ L.push('   '+a.ico+' '+a.txt.replace(/<[^>]+>/g,'')); }); }
   return L.join('\n');
 }
@@ -7744,6 +7848,10 @@ var CTA_ULTIMA='';
 var CTA_PAGO_POR_ID={};
 function showContaModal(id){
   var p=findById(id); if(!p) return;
+  /* ⏳ (06/10, §4hr) «← Volver a la lista» solo si esta venta se abrió desde la lista de lo que falta cobrar y la ventana
+     sigue abierta (un repintado de la misma ficha lo conserva; abrirla de nuevo desde otro lado, no). */
+  var _moPc=document.getElementById('modal');
+  if(POR_COBRAR_VOLVER && (POR_COBRAR_VOLVER.id!==String(id) || !(_moPc && _moPc.classList.contains('on')))) POR_COBRAR_VOLVER=null;
   MODAL_KIND='conta';
   /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
      un pago y el modo (pago / recargo) se arrastraban a la venta siguiente. */
@@ -7824,6 +7932,7 @@ function showContaModal(id){
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
+      (POR_COBRAR_VOLVER ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>') : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+

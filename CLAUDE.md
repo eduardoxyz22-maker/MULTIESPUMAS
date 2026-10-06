@@ -696,6 +696,13 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
   reescribe al reprogramar.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
+- **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
+  «Falta cobrar» de Ventas, «⏳ Con saldo» del resumen y «Por cobrar» del Cuadre (`mcToca`) abren **`abrirPorCobrar(origen)`**
+  con la MISMA cuenta que la ficha (`porCobrarDatos`: Ventas = `contaFaltaCobrar` sobre `contaLista()`; Cuadre =
+  `cuadrePendientes()`), armada al abrir, de la más vieja a la más nueva. Un cliente abre su venta con «← Volver a la lista»
+  (`POR_COBRAR_VOLVER`, solo si se abrió desde la lista con la ventana abierta). «Revisar antes de cerrar» tiene el aviso
+  `k:'cobrar'` (`sev:'plata'`, abierto): antes la deuda solo salía como «entregada y sin cobrar», y los choferes no marcan ✅.
+  ⚠️ Una ficha NUEVA que tenga que abrir su detalle va con `mcToca`, no con un `onclick` pegado a mano. `tests/test_por_cobrar.js` (24).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo
   va a `p.chofer`; la foto de la entrega reintenta una vez tras `conflicto` y el «✓» sale con
