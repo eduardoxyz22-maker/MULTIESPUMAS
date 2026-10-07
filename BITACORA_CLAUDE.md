@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hv. 07/10 a la noche: 🗓️ «Banzer o PTF» — el plan desplegable de 7, 15 y 30 días: qué tener en cada depósito y qué llevar — EN LA RAMA, SIN PUBLICAR
+## 4hv. 07/10 a la noche: 🗓️ «Banzer o PTF» — el plan desplegable de 7, 15 y 30 días: qué tener en cada depósito y qué llevar — PUBLICADA 07/10 18:10 (`3f44b05`; el dueño: «sí, publica cuando terminen»; batería 138 suites, 0 rojas)
 El dueño, con la pantalla de §4ht publicada, en varios mensajes seguidos: *«falta una pestaña desplegable que muestre qué tener
 en Banzer y qué tener en PTF, porque ahí solo dice "llevar a Banzer" pero no muestra una lista… pensar a futuro y llevar en masa:
 llevar y tener en Banzer para los próximos 7-15-30 días estos productos, tener en PTF para los 7-15-30 días estos productos»*;

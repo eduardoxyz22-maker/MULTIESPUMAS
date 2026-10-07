@@ -362,7 +362,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     píxeles (15 px), `zoomSnap:0.25`.
     · `tests/test_banzer_ptf.js` (56, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado; §11 = la línea del
     dueño). Batería con la línea: 137 suites, 5.185, 0 rojas.
-    · **🗓️ El plan desplegable de 7, 15 y 30 días** (§4hv, 07/10 noche; EN LA RAMA, SIN PUBLICAR; dueño: *«qué tener en Banzer y
+    · **🗓️ El plan desplegable de 7, 15 y 30 días** (§4hv, 07/10 noche; PUBLICADA 07/10 18:10, `3f44b05`; dueño: *«qué tener en Banzer y
     qué tener en PTF para los próximos 7-15-30 días… sin cálculos de qué pedir a producción… mover más que todo a Banzer pero sin
     descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo: lo ya vendido
     para esos días en SU zona (`o.compIds`, nuevo en `stockData`, suma igual que `comp`; `almLadoPedido`) o `porDia`×días repartido

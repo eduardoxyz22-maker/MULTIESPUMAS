@@ -2720,7 +2720,7 @@ mapa real y eligió usarla: `ALM_DIVISION` (23 puntos de norte a sur), `almLadoD
 oeste → Banzer, este → PTF, franja de 0,5 km = mitad y mitad, puntas estiradas). Sin línea, vuelve «el más cerca». Cuando logística
 defina zona → depósito, esas zonas van a mandar sobre la línea. `test_banzer_ptf` §11. Publicado el 07/10 a las 17:33 (`faff9a0`).
 
-**🗓️ Agregado del 07/10 a la noche (§4hv, en la rama)**: el dueño pidió *«una pestaña desplegable que muestre qué tener en Banzer
+**🗓️ Agregado del 07/10 a la noche (§4hv, publicado 18:10, `3f44b05`)**: el dueño pidió *«una pestaña desplegable que muestre qué tener en Banzer
 y qué tener en PTF para los próximos 7-15-30 días»*, *«sin cálculos de qué pedir a producción»* y *«mover más que todo a Banzer
 pero sin descuidar las entregas de PTF»* (logística podría llevarse 30 a Banzer y dejar a PTF con 3 cuando necesita 13).
 `<details id="alm-plan">` arriba del mapa. Por producto y plazo (`almPlanDe`): lo ya vendido para esos días en SU zona
