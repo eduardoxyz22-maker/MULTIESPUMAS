@@ -376,9 +376,15 @@ def ubicacion_almacenes(base):
         print("   no es JSON")
         return
     geo = {g.get("link"): g for g in (j.get("geo") or []) if isinstance(g, dict)}
+    print(f"   el servidor ({j.get('version')!r}) devolvió {len(geo)} de {len(links)}")
     for ident, u in links:
-        g = geo.get(u) or {}
-        print(f"   {ident}: " + (f"{g.get('lat')}, {g.get('lng')}" if g.get("lat") is not None else f"no se pudo ({g.get('error') or 'sin respuesta'})"))
+        g = geo.get(u)
+        if g is None:
+            print(f"   {ident}: no vino en la respuesta")
+        elif g.get("lat") is None:
+            print(f"   {ident}: el servidor no la pudo abrir")
+        else:
+            print(f"   {ident}: {g.get('lat')}, {g.get('lng')}" + (" (aproximada)" if g.get("aprox") else ""))
 
 
 def main():
