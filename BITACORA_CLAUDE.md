@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega (EN LA RAMA, SIN PUBLICAR)
+## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega — PUBLICADA 07/10 15:10 (`2c5ad8c`), Pages OK 15:11
 El dueño, 07/10: *«Necesitamos saber, medir y determinar qué productos debemos tener en almacén banzer y que en almacén
 productos terminados fabrica, según los focos de calor de entrega y rotación para ser más eficientes y tener el stock a la
 mano según la zona de entrega»*. Se le propuso (60 días de entregas por el pin de Maps o la zona; cada entrega cuenta para el
@@ -7517,6 +7517,16 @@ Leaflet y en 390 px. Contra `main` (`88120f2`): no tiene la pantalla. **Batería
 0 mal** (`test_stock_detalle` «ok (sin resumen)», como siempre); después de «Tener en Banzer» y el mapa en píxeles (solo tocan
 funciones nuevas) se corrieron otra vez las de Banzer y de stock: todas en verde. Capturas de demo (datos inventados, Leaflet servido del paquete de npm
 porque el proxy no deja salir a unpkg ni a los mosaicos de OpenStreetMap): `cap_4ht/` del scratchpad.
+
+**Publicación.** El dueño, 07/10: *«publica y dejas el md para codex»*. Informe para Codex: `RESPUESTA_CLAUDE.md` §33 (`45a95b4`). Sin ningún workflow corriendo ni en cola, `main` = **`2c5ad8c`** (merge de la rama) a las **15:10** de Bolivia; **Pages OK 15:11** (corrida `37672517404`, build/deploy/report en verde; el `pedidos.html` de `2c5ad8c` trae `abrirAlm`). Sin cambios al `.gs`: no hace falta implementar nada. Basta F5 para ver el botón. Queda que el dueño mire si el punto de Banzer cae bien.
+
+**Decidido por el dueño (07/10, después de publicar)**: la revisión automática **NO** pasa a elegir el depósito más cerca *«aún no porque debemos definir bien con logística las zonas que abarca cada almacén»*. Sigue PTF → Banzer → IM (21/09). Cuando logística defina qué zonas atiende cada depósito, esa lista (zona → depósito) puede reemplazar la línea recta de esta pantalla y, si el dueño lo pide, alimentar la revisión automática. Para esa charla sirve el cuadro «🗺️ Las zonas escritas: de qué lado quedan» de la pantalla.
+
+**✏️ La línea del dueño (07/10, «probemos la A»; EN LA RAMA, SIN PUBLICAR).** Con la pantalla publicada mandó una captura del mapa real con una línea roja dibujada a mano: *«el corte de la línea y división no me convence, dame opciones, la línea debería ser más hacia la izquierda»*. La división «el más cerca en línea recta» con PTF y Banzer a solo 3,9 km es casi diagonal (suroeste→noreste) y la franja «en el medio» (diferencia de distancias < 1 km) se abre en abanico lejos de los depósitos: era la mancha violeta ancha del oeste. Se le ofreció **A · su línea** (dibujada sobre su propia captura, con los puntos recoloreados por lado: `opciones_4ht/` del scratchpad) o **B · por zonas de logística**, y eligió la A.
+- **`ALM_DIVISION`**: su trazo pasado a coordenadas tomando como referencia los dos marcadores de la captura (Banzer 467,5/106,8 px y PTF 509,5/169,9 px → 2.080 px por grado de longitud, ~2.174 por grado de latitud; zoom ~11,5): 23 puntos de norte a sur, a menos de 70 m de su trazo. Pasa entre los dos depósitos y baja por el centro (≈150 m al oeste de la plaza) hacia el sudoeste.
+- **`almLadoDeLinea(pt)`**: distancia con signo, en km y perpendicular al tramo que abarca la latitud del punto (más allá de las puntas, el tramo de la punta estirado): negativa = izquierda/oeste → **Banzer**; positiva = derecha/este → **PTF**; a menos de `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad («sobre la línea»). `almLado` la usa si hay línea (`almHayLinea`); vacía, vuelve «el más cerca» (`ALM_EMPATE_KM`). Todo lo demás (zonas aprendidas, reparto, acciones) sale de `almLado`, sin cambios.
+- Mapa: `almLineaDivision()` dibuja la línea estirada 25 km en las dos puntas; los textos dicen «del lado de…» / «sobre la línea» (`almReglaTxt`). Cuando logística defina las zonas de cada depósito, van a mandar sobre la línea (dueño, 07/10).
+- `test_banzer_ptf` §11 (8): una entrega al sudoeste más cerca de PTF pero a la izquierda → Banzer; una al noreste más cerca de Banzer pero a la derecha → PTF; la franja de 500 m; las puntas estiradas; sin línea, la regla de antes; el dibujo y los textos. 56/56. Contra `main` `2c5ad8c` la §11 revienta (`almHayLinea` no existe) y el título del mapa da rojo. Banzer, stock, `test_ubicar` y `test_auditoria`: en verde.
 
 ## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), SERVIDOR IMPLEMENTADO 06/10 ~20:30 (el dueño)
 El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.

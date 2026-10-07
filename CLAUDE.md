@@ -338,26 +338,30 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     el campo dentro de la tabla (quedaba 1.100-1.400 px abajo, nadie lo encontraba) ni a mover el cursor al final en el refoco
     de `renderStock`: la barra no se redibuja, el cursor se queda donde está. `stockFiltroLimpiar` vacía también el campo de
     arriba y `abrirStock` lo sincroniza con `STOCK_FILTRO.q`. `tests/test_stock_buscador.js` (22; 9 rojas contra `64bcb37`).
-  - **📍 Banzer o PTF: qué tener en cada depósito según dónde se entrega** (§4ht, 07/10, EN LA RAMA, SIN PUBLICAR; dueño: *«según
+  - **📍 Banzer o PTF: qué tener en cada depósito según dónde se entrega** (§4ht, 07/10, PUBLICADA 07/10 15:10, `2c5ad8c`; informe para Codex en `RESPUESTA_CLAUDE.md` §33; dueño: *«según
     los focos de calor de entrega y rotación… tener el stock a la mano según la zona de entrega»*). Botón en la barra de Stock →
     `abrirAlm` (`#alm-overlay`, z 3100). **Solo mira**: no marca pedidos ni toca stock ni planilla.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:
     Google no le da el pin de un LUGAR con nombre a un programa, ni al servidor). Si el dueño manda las coordenadas, se cambian ahí.
     · `almZonaData`: entregas de 60 días (`ALM_ZONA_DIAS`) con las reglas de la rotación de Stock (`stockCuenta`, sin venta de
-    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); lado = depósito más cerca en línea recta (`almLado`), «en el medio»
-    (< `ALM_EMPATE_KM`=1) mitad y mitad; sin pin, la zona escrita aprendida de los pedidos CON pin (`almZonas`, ≥3). Por unidades.
+    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DEL DUEÑO cae** (07/10, «probemos la
+    A»: `ALM_DIVISION`, 23 puntos de norte a sur pasados de su dibujo; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este →
+    PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
+    aprendida de los pedidos CON pin (`almZonas`, ≥3). Por unidades. Las zonas que defina logística van a mandar sobre la línea.
     · **Tener = `stockNecesario(o)`**, la MISMA cuenta de `stockCuantoPedir` (sacada a función: no la dupliques). La venta de
     tienda cuenta para el tener (es rotación) pero no para el lado. Se reparte con la proporción; lo que rota poco y lo
     discontinuado no (todo en PTF); < 3 unidades ubicadas = «pocos datos».
     · Acciones: «🚚 Pasar N a Banzer» solo con lo que a PTF le sobra de lo suyo; «🏭 lo próximo que llegue»; «✋ no mandar más».
-    🚫 **Nunca traer de Banzer a fábrica** (dueño, 26/09). La revisión automática NO cambió (PTF → Banzer → IM, 21/09).
+    🚫 **Nunca traer de Banzer a fábrica** (dueño, 26/09). La revisión automática NO cambió (PTF → Banzer → IM, 21/09) y **no se
+    cambia todavía** (dueño, 07/10: *«aún no porque debemos definir bien con logística las zonas que abarca cada almacén»*): cuando
+    logística defina zona → depósito, esa lista puede reemplazar la línea recta y, si el dueño lo pide, alimentar la revisión.
     · Los enlaces cortos que el panel no lee los abre el servidor en segundo plano (`almGeoPedir`: tandas de 20, los más nuevos
     primero, una vez por apertura de la página); lo abierto va a `MAPA_COORDS` y al teléfono. El 07/10 el servidor abrió 12 de 12
     enlaces de clientes: solo fallan los de lugares con nombre.
     · Filtro «🏪 Tener en Banzer» y el texto para logística arranca con «TENER EN BANZER (lo demás, en PTF)». Mapa: manchas en
     píxeles (15 px), `zoomSnap:0.25`.
-    · `tests/test_banzer_ptf.js` (48, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado). Batería: 137 suites,
-    5.175, 0 rojas.
+    · `tests/test_banzer_ptf.js` (56, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado; §11 = la línea del
+    dueño). Batería: 137 suites, 5.175, 0 rojas (antes de la línea).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

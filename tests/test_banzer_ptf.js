@@ -18,6 +18,7 @@
    8. «📋 Copiar para logística» con lo que hay que mover.
    9. Solo mira: no guarda nada ni cambia el stock.
    10. En el celular (390 px) no se sale de la pantalla.
+   11. La línea del dueño (07/10): izquierda Banzer, derecha PTF, 500 m de franja; sin línea, la regla de antes.
 
    Se corre:  node tests/test_banzer_ptf.js   (desde la raíz del repo; PEDIDOS=<ruta> para otra página) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -272,7 +273,7 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   await page.waitForTimeout(200);
   r = await page.evaluate(() => { var p=window._mapa.marcas.filter(function(m){ return !m.tip && m.o.interactive!==false; }); return { n:p.length, M:p.filter(function(m){ return m.o.fillColor===ALM_COLOR.M; }).length,
     tit:document.getElementById('alm-mapa-tit').textContent.replace(/\s+/g,' ') }; });
-  chk('sin producto elegido: las 18 entregas con mapa, una violeta (en el medio)', r.n===18 && r.M===1 && /más cerca de PTF 7/.test(r.tit) && /más cerca de Banzer 10/.test(r.tit) && /en el medio 1/.test(r.tit), J(r));
+  chk('sin producto elegido: las 18 entregas con mapa, una violeta (sobre la línea)', r.n===18 && r.M===1 && /del lado de PTF 7/.test(r.tit) && /del lado de Banzer 10/.test(r.tit) && /sobre la línea 1/.test(r.tit), J(r));
 
   // ══ 7. Los enlaces cortos ═══════════════════════════════════════════════════════════
   console.log('\n── 7. Los enlaces cortos los abre el servidor ──');
@@ -323,6 +324,35 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   });
   chk('⚠️ en el celular (390 px) nada se sale de la pantalla: la tabla scrollea adentro de su caja', r.pagina<=390 && r.ov<=390 && r.cuerpo<=r.body+1 && r.wrap>0 && r.wrap<=390 && r.q<=390, J(r));
   chk('sin errores de JS en toda la prueba', errors.length===0, errors.join(' | '));
+
+  // ══ 11. La línea del dueño (07/10, «probemos la A») ═════════════════════════════════
+  console.log('\n── 11. La línea del dueño: izquierda Banzer, derecha PTF ──');
+  r = await page.evaluate(() => {
+    var lado=function(lat,lng){ var l=almLado({lat:lat,lng:lng}); return l.medio?'medio':(l.B>0.5?'B':'P'); };
+    var km=function(lat,lng){ return Math.round(almKm({lat:lat,lng:lng},ALM_UBIC[0])*10)/10+'/'+Math.round(almKm({lat:lat,lng:lng},ALM_UBIC[1])*10)/10; };
+    var out={ hay:almHayLinea(), puntos:ALM_DIVISION.length,
+      so:lado(-17.82,-63.23), soKm:km(-17.82,-63.23),          // sudoeste: más cerca de PTF, pero a la izquierda de la línea
+      ne:lado(-17.69,-63.115), neKm:km(-17.69,-63.115),        // noreste: más cerca de Banzer, pero a la derecha
+      sobre:lado(-17.77228,-63.17561), a400:lado(-17.77228,-63.17561+0.4/106), a700:lado(-17.77228,-63.17561+0.7/106),
+      norte:lado(-17.60,-63.20), sur:lado(-18.00,-63.20) };
+    var L0=ALM_DIVISION; ALM_DIVISION=[];
+    out.sinLinea={ so:lado(-17.82,-63.23), ne:lado(-17.69,-63.115) };
+    ALM_DIVISION=L0;
+    var lm=almLineaDivision(); out.dibujo={ n:lm.length, norte:lm[0][0]>ALM_DIVISION[0][0], sur:lm[lm.length-1][0]<ALM_DIVISION[ALM_DIVISION.length-1][0] };
+    almRefrescar();
+    out.resumen=document.getElementById('alm-resumen').textContent.replace(/\s+/g,' ');
+    out.tit=document.getElementById('alm-mapa-tit').textContent.replace(/\s+/g,' ');
+    out.lineaMapa=(window._mapa.lineas[0]||{ll:[]}).ll.length;
+    return out;
+  });
+  chk('⚠️ hay línea del dueño (23 puntos, de norte a sur)', r.hay && r.puntos===23, J({hay:r.hay, puntos:r.puntos}));
+  chk('⚠️ una entrega al sudoeste, más cerca de PTF pero a la IZQUIERDA de la línea, va a Banzer', r.so==='B', J({so:r.so, km_ptf_banzer:r.soKm}));
+  chk('⚠️ una entrega al noreste, más cerca de Banzer pero a la DERECHA de la línea, va a PTF', r.ne==='P', J({ne:r.ne, km_ptf_banzer:r.neKm}));
+  chk('sobre la línea y a 400 m: mitad y mitad; a 700 m ya es de su lado', r.sobre==='medio' && r.a400==='medio' && r.a700==='P', J({sobre:r.sobre, a400:r.a400, a700:r.a700}));
+  chk('más allá de las puntas la línea sigue derecha (norte lejano a la izquierda: Banzer; sur lejano a la derecha: PTF)', r.norte==='B' && r.sur==='P', J({norte:r.norte, sur:r.sur}));
+  chk('sin línea vuelve la regla de antes (el más cerca): esas dos entregas cambian de lado', r.sinLinea.so==='P' && r.sinLinea.ne==='B', J(r.sinLinea));
+  chk('el mapa dibuja la línea del dueño estirada en las dos puntas', r.dibujo.n===25 && r.dibujo.norte && r.dibujo.sur && r.lineaMapa===25, J({dibujo:r.dibujo, lineaMapa:r.lineaMapa}));
+  chk('el resumen y el mapa lo dicen con palabras', /según de qué lado de la línea cae: a la izquierda \(oeste\), Banzer; a la derecha \(este\), PTF\. A menos de 500 m/.test(r.resumen) && /La línea punteada es la división: a la izquierda, Banzer; a la derecha, PTF/.test(r.tit), r.resumen.slice(0,400));
 
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
