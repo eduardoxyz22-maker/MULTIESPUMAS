@@ -19,6 +19,8 @@
    9. Solo mira: no guarda nada ni cambia el stock.
    10. En el celular (390 px) no se sale de la pantalla.
    11. La línea del dueño (07/10): izquierda Banzer, derecha PTF, 500 m de franja; sin línea, la regla de antes.
+   12. El plan desplegable de 7, 15 y 30 días (07/10 a la noche, §4hv): qué tener en cada depósito, qué llevar de PTF a Banzer
+       sin dejar a PTF debajo de lo suyo, qué traer de Moreno (primero a PTF), nunca de Banzer a PTF, y sin cuentas de producción.
 
    Se corre:  node tests/test_banzer_ptf.js   (desde la raíz del repo; PEDIDOS=<ruta> para otra página) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -353,6 +355,123 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   chk('sin línea vuelve la regla de antes (el más cerca): esas dos entregas cambian de lado', r.sinLinea.so==='P' && r.sinLinea.ne==='B', J(r.sinLinea));
   chk('el mapa dibuja la línea del dueño estirada en las dos puntas', r.dibujo.n===25 && r.dibujo.norte && r.dibujo.sur && r.lineaMapa===25, J({dibujo:r.dibujo, lineaMapa:r.lineaMapa}));
   chk('el resumen y el mapa lo dicen con palabras', /según de qué lado de la línea cae: a la izquierda \(oeste\), Banzer; a la derecha \(este\), PTF\. A menos de 500 m/.test(r.resumen) && /La línea punteada es la división: a la izquierda, Banzer; a la derecha, PTF/.test(r.tit), r.resumen.slice(0,400));
+
+  // ══ 12. El plan de 7, 15 y 30 días (07/10 a la noche) ═══════════════════════════════
+  /* El dueño: «una pestaña desplegable que muestre qué tener en Banzer y qué tener en PTF para los próximos 7-15-30 días»,
+     «sin cálculos de qué pedir a producción… mover más que todo a Banzer pero sin descuidar las entregas de PTF» y «por ahí
+     logística se lleva 30 colchones a Banzer y deja a PTF con 3 de ese modelo y necesita 13». Las cuentas, a mano:
+       TITANIO ICE: 0,93/día (14 en 15 d), 75 % Banzer, 2 ya vendidos para mañana del lado de Banzer; PTF 10, Banzer 0.
+         7 d → Banzer max(2; 6,53×0,75=4,9)=5 · PTF 6,53×0,25=1,6→2 · llevar 5 (PTF queda con 5).
+         15 d → Banzer 10,5→11 · PTF 3,5→4 · llevar 6 (PTF queda con 4: no baja de lo suyo, aunque a Banzer le falten 5).
+         30 d → Banzer 21 · PTF 7 · llevar 3 (PTF queda con 7).
+       ORO BI RELAX: 0,53/día, 12,5 % Banzer; PTF 2, Banzer 6. 15 d → Banzer 1 · PTF 7: a PTF le faltan 5 y a Banzer le sobran
+         5 → «5 de las entregas de PTF pueden salir de Banzer»; NUNCA llevar de Banzer a PTF.
+       TITANIO LATEX: 0,27/día, todo Banzer; nada en ningún lado. 7 d → Banzer 2 → «nada para mover» (sin cuentas de producción).
+       ORO ORTOPEDICO: no rota y nada vendido sin entregar → no entra al plan.
+       ORO ANATOMICO: 0,67/día, 50 %; 3 y 3. 7 d → 2 y 2 → «cada depósito tiene lo suyo». */
+  console.log('\n── 12. El plan de 7, 15 y 30 días: qué tener y qué llevar ──');
+  const hayPlan = await page.evaluate(() => typeof almPintarPlan==='function' && typeof almPlanDe==='function' && typeof almCopiarPlan==='function');
+  chk('⚠️ el panel tiene el plan desplegable de 7, 15 y 30 días', hayPlan);
+  if(hayPlan){
+  await page.setViewportSize({ width:1400, height:950 });
+  r = await page.evaluate(() => {
+    almRefrescar();
+    var A=ALM_DATA, out={}, nom=function(k){ return Object.keys(K).filter(function(x){ return K[x]===k; })[0]; };
+    A.filas.forEach(function(f){ var n=nom(f.k); if(!n) return; out[n]={};
+      [7,15,30].forEach(function(H){ var p=f.plan[H]; out[n][H]={ tB:p.tB, tP:p.tP, pasar:p.pasar, cubreB:p.cubreB, deM:p.deM.length, firmeB:p.firmeB, hP:p.hP, hB:p.hB }; }); });
+    /* `compIds` (nuevo en stockData) suma exactamente `comp`, producto por producto: no cambia ninguna cuenta. */
+    var igual=stockData().lista.every(function(o){ var s=0; (o.compIds||[]).forEach(function(e){ s+=e.c; }); return Math.abs(s-o.comp)<1e-9; });
+    var det=document.getElementById('alm-plan');
+    return { out:out, igual:igual, det:!!det, abierto:det?det.open:null, titulo:det?det.querySelector('summary').textContent:'', antesDelMapa:!!(det && det.nextElementSibling && det.nextElementSibling.id==='alm-mapa-caja') };
+  });
+  const pl=r.out;
+  chk('⚠️ hay un desplegable «🗓️ Qué tener en Banzer y en PTF para 7, 15 y 30 días, y qué llevar», cerrado, arriba del mapa',
+    r.det && r.abierto===false && /Qué tener en Banzer y en PTF para 7, 15 y 30 días/.test(r.titulo) && r.antesDelMapa, J({det:r.det, abierto:r.abierto, titulo:r.titulo, antes:r.antesDelMapa}));
+  chk('`compIds` (pedido por pedido) suma lo mismo que `comp` en todos los productos', r.igual===true);
+  chk('⚠️ TITANIO ICE 7 días: Banzer 5 (2 ya vendidos para mañana de su lado) · PTF 2 · llevar 5 de PTF',
+    pl.A && J(pl.A[7])===J({tB:5,tP:2,pasar:5,cubreB:0,deM:0,firmeB:2,hP:10,hB:0}), J(pl.A&&pl.A[7]));
+  chk('⚠️ TITANIO ICE 15 días: Banzer 11 · PTF 4 · llevar SOLO 6 (PTF queda con 4: «sin descuidar PTF»)',
+    pl.A && pl.A[15].tB===11 && pl.A[15].tP===4 && pl.A[15].pasar===6, J(pl.A&&pl.A[15]));
+  chk('…y 30 días: Banzer 21 · PTF 7 · llevar 3 (PTF queda con 7)', pl.A && pl.A[30].tB===21 && pl.A[30].tP===7 && pl.A[30].pasar===3, J(pl.A&&pl.A[30]));
+  chk('ORO BI RELAX 15 días: Banzer 1 · PTF 7 · a Banzer le sobran 5 y cubren entregas de PTF (no se lleva nada a PTF)',
+    pl.C && pl.C[15].tB===1 && pl.C[15].tP===7 && pl.C[15].pasar===0 && pl.C[15].cubreB===5 && pl.C[15].deM===0, J(pl.C&&pl.C[15]));
+  chk('TITANIO LATEX 7/15/30 días: Banzer 2 · 4 · 8, PTF 0, y nada para llevar (no hay en ningún lado)',
+    pl.D && pl.D[7].tB===2 && pl.D[15].tB===4 && pl.D[30].tB===8 && pl.D[7].tP===0 && pl.D[30].pasar===0 && pl.D[30].deM===0, J(pl.D));
+  chk('ORO ANATOMICO 7 días: 2 y 2 con 3 y 3 → nada que llevar', pl.F && pl.F[7].tB===2 && pl.F[7].tP===2 && pl.F[7].pasar===0 && pl.F[7].deM===0, J(pl.F&&pl.F[7]));
+  chk('ORO ORTOPEDICO (no rota, nada vendido) no tiene nada que tener', pl.E && pl.E[30].tB===0 && pl.E[30].tP===0, J(pl.E&&pl.E[30]));
+  chk('⚠️ 7 ≤ 15 ≤ 30 en cada depósito, y PTF NUNCA queda debajo de lo suyo por llevar a Banzer',
+    Object.keys(pl).every(k=>pl[k][7].tB<=pl[k][15].tB && pl[k][15].tB<=pl[k][30].tB && pl[k][7].tP<=pl[k][15].tP && pl[k][15].tP<=pl[k][30].tP &&
+      [7,15,30].every(H=>!pl[k][H].pasar || pl[k][H].hP-pl[k][H].pasar>=pl[k][H].tP)), J(pl));
+
+  // La pantalla: abrir, plazos, «Qué llevar» / «Todo el plan»
+  r = await page.evaluate(async () => {
+    var det=document.getElementById('alm-plan'); det.open=true;
+    await new Promise(function(x){ setTimeout(x,50); });
+    var leer=function(){ var el=document.getElementById('alm-plan-in');
+      return { chips:[].slice.call(el.querySelectorAll('button')).map(function(b){ return b.textContent.replace(/\s+/g,' ').trim(); }),
+               filas:[].slice.call(el.querySelectorAll('tbody tr')).map(function(tr){ return tr.textContent.replace(/\s+/g,' ').trim(); }),
+               texto:el.textContent.replace(/\s+/g,' ') }; };
+    var o={ v7:leer() };
+    almPlanSetVer('todo'); o.todo7=leer();
+    almPlanSetH(15); o.todo15=leer();
+    almRefrescar(); o.sigueAbierto=document.getElementById('alm-plan').open; o.despues=leer();   // repintar no lo cierra ni cambia el plazo
+    almPlanSetVer('llevar'); almPlanSetH(7);
+    return o;
+  });
+  chk('⚠️ arranca en 7 días y «Qué llevar», con los tres plazos (y hasta qué fecha) y el botón de copiar',
+    /^7 días · hasta el 14\/10$/.test(r.v7.chips[0]) && /^15 días · hasta el 22\/10$/.test(r.v7.chips[1]) && /^30 días · hasta el 06\/11$/.test(r.v7.chips[2]) &&
+    r.v7.chips.some(c=>/Copiar el plan de 7 días/.test(c)) && r.v7.chips.some(c=>/^Qué llevar \(1\)$/.test(c)) && r.v7.chips.some(c=>/^Todo el plan \(4\)$/.test(c)), J(r.v7.chips));
+  chk('«Qué llevar» de 7 días: solo el TITANIO ICE, con «Llevar 5 de PTF a Banzer · PTF queda con 5»',
+    r.v7.filas.length===1 && /TITANIO ICE/.test(r.v7.filas[0]) && /Llevar 5 de PTF a Banzer · PTF queda con 5/.test(r.v7.filas[0]), J(r.v7.filas));
+  chk('…con el total arriba: Banzer tener / hay y PTF tener / hay, y lo que hay que llevar',
+    /Para las entregas de los próximos 7 días: 🏪 Banzer tener 9 \(hay 9\) · 🏭 PTF tener 7 \(hay 15\) · 🚚 llevar 5 de PTF a Banzer/.test(r.v7.texto), r.v7.texto.slice(0,400));
+  chk('«Todo el plan» de 7 días: los 4 que hay que tener, el que lleva primero',
+    r.todo7.filas.length===4 && /TITANIO ICE/.test(r.todo7.filas[0]) && r.todo7.filas.some(f=>/ANATOMICO/.test(f) && /Cada depósito tiene lo suyo/.test(f)) &&
+    r.todo7.filas.some(f=>/TITANIO LATEX/.test(f) && /Nada para mover: no hay de más en PTF ni en Moreno/.test(f)), J(r.todo7.filas));
+  chk('15 días: el BI RELAX dice que sus entregas de PTF pueden salir de Banzer, y nadie dice «llevar de Banzer a PTF»',
+    r.todo15.filas.some(f=>/BI RELAX/.test(f) && /5 de las entregas de PTF pueden salir de Banzer/.test(f)) && !/de Banzer a PTF/i.test(r.todo15.texto), J(r.todo15.filas.filter(f=>/BI RELAX/.test(f))));
+  chk('⚠️ sin cuentas de producción: ni «producir», ni «no alcanza», ni «faltan» en la lista (solo la nota que manda a «Qué producir»)',
+    !/no alcanza|faltan \d|pedir a producción|fabricar/i.test(r.todo15.filas.join(' ')), J(r.todo15.filas));
+  chk('volver a pintar la pantalla (llega una lectura) no cierra el desplegable ni cambia el plazo', r.sigueAbierto===true && /^15 días/.test((r.despues.chips.filter(c=>/días · hasta/.test(c))[1]||'')) && r.despues.filas.length===r.todo15.filas.length, J({abierto:r.sigueAbierto, filas:r.despues.filas.length}));
+
+  // Moreno: primero lo que le falta a PTF (sin descuidar sus entregas), después Banzer
+  r = await page.evaluate(() => {
+    var IM='IM - PRODUCTOTERMINADO';
+    STOCK.g[IM]={ f:todayStr(), hora:'09:00:00', u:{}, solo0:true, cod:{}, t:Date.now()-3600000, rs:{} }; STOCK.al[IM]='trae';
+    STOCK.g[IM].u[K.D]=5; STOCK.g[IM].u[K.F]=3;
+    stockOlvidarIndice(); almRefrescar();
+    var f=function(k){ return ALM_DATA.filas.filter(function(x){ return x.k===k; })[0]; };
+    var d7=f(K.D).plan[7], f15=f(K.F).plan[15];
+    var o={ d7:d7.deM.map(function(m){ return stockAlmCorto(m.de)+'→'+m.a+' '+m.u; }), f15:f15.deM.map(function(m){ return stockAlmCorto(m.de)+'→'+m.a+' '+m.u; }),
+            txtD:almPlanMovTxt(d7,false).join(' | '), txtF:almPlanMovTxt(f15,false).join(' | ') };
+    ALM_PLAN_H=15; ALM_PLAN_VER='llevar'; almPintarPlan();
+    o.vista=document.getElementById('alm-plan-in').textContent.replace(/\s+/g,' ');
+    var t=''; var v=copyText; copyText=function(x){ t=x; }; try{ almCopiarPlan(); } finally { copyText=v; }
+    o.copia=t;
+    delete STOCK.g[IM]; delete STOCK.al[IM]; stockOlvidarIndice(); ALM_PLAN_H=7; almRefrescar();
+    return o;
+  });
+  chk('⚠️ TITANIO LATEX con 5 en Moreno, 7 días: «Traer 2 de Moreno a Banzer»', J(r.d7)===J(['Moreno→Banzer 2']) && /Traer 2 de Moreno a Banzer/.test(r.txtD), J(r));
+  chk('⚠️ ORO ANATOMICO 15 días con 3 en Moreno (a PTF le faltan 2, a Banzer 2): primero 2 a PTF, el que queda a Banzer',
+    J(r.f15)===J(['Moreno→PTF 2','Moreno→Banzer 1']), J(r.f15));
+  chk('«📋 Copiar el plan» de 15 días: llevar de PTF (con lo que queda en PTF), traer de Moreno, tener en Banzer y tener en PTF',
+    /PLAN DE STOCK · próximos 15 días \(hasta el 22\/10\)/.test(r.copia) &&
+    /🚚 LLEVAR DE PTF A BANZER \(PTF no baja de lo suyo\)\n• TITANIO ICE · 160x190: 6 \(PTF queda con 4\)/.test(r.copia) &&
+    /📥 TRAER DE MORENO\n[\s\S]*• TITANIO LATEX · 140x190: 4 a Banzer/.test(r.copia) && /• ORO ANATOMICO VISCOLASTICO · 140x190: 2 a PTF/.test(r.copia) &&
+    /🏪 TENER EN BANZER\n• TITANIO ICE · 160x190: 11 \(hay 0\)/.test(r.copia) && /🏭 TENER EN PTF \(no bajar de esto\)\n• ORO BI RELAX · 140x190: 7 \(hay 2\)/.test(r.copia), r.copia);
+  chk('…y el texto tampoco habla de producir ni de lo que no alcanza', !/no alcanza|producir|fabricar/i.test(r.copia), r.copia.slice(0,200));
+
+  // Celular
+  await page.setViewportSize({ width:390, height:844 });
+  r = await page.evaluate(async () => {
+    document.getElementById('alm-plan').open=true; almPlanSetVer('todo');
+    await new Promise(function(x){ setTimeout(x,80); });
+    var body=document.getElementById('alm-body'), w=document.querySelector('#alm-plan-in .prod-wrap');
+    return { pagina:document.documentElement.scrollWidth, body:body.clientWidth, cuerpo:body.scrollWidth, wrap:w?w.clientWidth:0 };
+  });
+  chk('en el celular (390 px) el plan abierto no se sale: la tabla scrollea adentro de su caja', r.pagina<=390 && r.cuerpo<=r.body+1 && r.wrap>0 && r.wrap<=390, J(r));
+  chk('sin errores de JS en el plan', errors.length===0, errors.join(' | '));
+  }
 
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

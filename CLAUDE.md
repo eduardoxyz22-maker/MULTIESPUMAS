@@ -362,6 +362,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     píxeles (15 px), `zoomSnap:0.25`.
     · `tests/test_banzer_ptf.js` (56, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado; §11 = la línea del
     dueño). Batería con la línea: 137 suites, 5.185, 0 rojas.
+    · **🗓️ El plan desplegable de 7, 15 y 30 días** (§4hv, 07/10 noche; EN LA RAMA, SIN PUBLICAR; dueño: *«qué tener en Banzer y
+    qué tener en PTF para los próximos 7-15-30 días… sin cálculos de qué pedir a producción… mover más que todo a Banzer pero sin
+    descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo: lo ya vendido
+    para esos días en SU zona (`o.compIds`, nuevo en `stockData`, suma igual que `comp`; `almLadoPedido`) o `porDia`×días repartido
+    con `sB`, lo más alto, cada lado. Llevar: a Banzer solo lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»), después
+    Moreno; a PTF, Moreno primero. Nunca de Banzer a PTF (`cubreB`: «pueden salir de Banzer»). Lo que no alcanza NO se muestra
+    (nada de producción). «📋 Copiar el plan de N días» (`almCopiarPlan`). `test_banzer_ptf` §12 (→ 80).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
@@ -950,7 +957,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   entregan hoy», «se entregan este mes», «saldo de lo que se entrega este mes»); las ventas de tienda no entran. Los
   botones de filtro (`#mis-chips`) van JUSTO ARRIBA de `#mis-lista`, debajo de los números.
 - **🧾 La nota de venta en Mis pedidos, SOLO para Eduardo** (§4hu, 07/10, dueño: *«que solo a eduardo muestre tb número de
-  nota»*; EN LA RAMA, SIN PUBLICAR): `MIS_VE_NOTA`/`misVeNota(v)` deciden por el nombre ELEGIDO en Mis pedidos (no por el
+  nota»*; PUBLICADA 07/10 17:50, `07c4db3`): `MIS_VE_NOTA`/`misVeNota(v)` deciden por el nombre ELEGIDO en Mis pedidos (no por el
   vendedor del pedido); `misNotaTxt` pone «· Nota N» al lado de la OC (o «· sin nota»; nada en ATC/RPT) y la ficha
   (`showMisModal`) lo dice arriba. Las vendedoras no lo ven. `tests/test_mis_nota.js` (19; 8 rojas contra `faff9a0`).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
