@@ -388,8 +388,23 @@ def ubicacion_almacenes(base):
     # El 07/10 el servidor no pudo con ninguno de los dos: se abren acá directo (GitHub sí sale a internet), y se dice
     # QUÉ contestó Google en cada salto, para saber por qué el servidor no puede.
     print("   ── abiertos directo desde GitHub ──")
+    textos = []
     for ident, u in links:
-        abrir_enlace_directo(ident, u)
+        t = abrir_enlace_directo(ident, u)
+        if t:
+            textos.append((ident, t))
+    # Lo que Google puso en `q=` (nombre/dirección del lugar), preguntado al geocodificador del servidor (aproximado).
+    if textos:
+        crudo2 = pedir("📍 los lugares por su dirección escrita (geocode de texto del servidor)", base,
+                       {"action": "geocode", "links": [t for _, t in textos]})
+        try:
+            j2 = json.loads((crudo2 or b"{}").decode("utf-8", "replace"))
+        except Exception:
+            j2 = {}
+        g2 = {g.get("link"): g for g in (j2.get("geo") or []) if isinstance(g, dict)}
+        for ident, t in textos:
+            g = g2.get(t) or {}
+            print(f"   {ident}: «{t[:70]}» → " + (f"{g.get('lat')}, {g.get('lng')}" if g.get("lat") is not None else "no la encontró"))
 
 
 _COORD_RES = [r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", r"@(-?\d+\.\d+),(-?\d+\.\d+)", r"[?&](?:q|ll|query|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)",
@@ -401,12 +416,19 @@ def _coords_en(texto):
         m = re.search(rx, texto or "")
         if m and abs(float(m.group(1))) < 90 and abs(float(m.group(2))) < 180:
             return m.group(1), m.group(2)
+    # La página de Maps abre centrada en el lugar: APP_INITIALIZATION_STATE=[[[zoom, lng, lat]
+    m = re.search(r"APP_INITIALIZATION_STATE=\[\[\[(-?\d+(?:\.\d+)?),(-?\d+\.\d+),(-?\d+\.\d+)\]", texto or "")
+    if m and abs(float(m.group(3))) < 90 and abs(float(m.group(2))) < 180:
+        return m.group(3), m.group(2)
     return None
 
 
 def abrir_enlace_directo(ident, u):
+    """Sigue los saltos de un enlace corto de Maps y dice qué contestó Google en cada uno. Devuelve el texto de `q=` del
+    lugar (nombre y dirección), si vino."""
     abrir = _rq.build_opener(_SinSeguir)
     cur = u
+    texto = ""
     for salto in range(6):
         req = _rq.Request(cur, headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
                                                        "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
@@ -418,7 +440,7 @@ def abrir_enlace_directo(ident, u):
             host = re.sub(r"^https?://([^/?#]+).*$", r"\1", cur)
             print(f"   {ident}: salto {salto} → HTTP {r.status} en {host} · {len(cuerpo)} letras · " +
                   (f"coordenadas {c[0]}, {c[1]}" if c else "sin coordenadas"))
-            return
+            return texto
         except _er.HTTPError as e:
             loc = e.headers.get("Location") if e.headers else None
             if e.code in (301, 302, 303, 307, 308) and loc:
@@ -426,14 +448,22 @@ def abrir_enlace_directo(ident, u):
                 c = _coords_en(cur)
                 destino = re.sub(r"^https?://([^/?#]+)(/[^?#]{0,40}).*$", r"\1\2", cur)
                 print(f"   {ident}: salto {salto} → {e.code} a {destino}" + (f" · coordenadas {c[0]}, {c[1]}" if c else ""))
+                mq = re.search(r"[?&]q=([^&]+)", cur)
+                if mq and not texto:
+                    try:
+                        import urllib.parse as _up
+                        texto = _up.unquote_plus(mq.group(1))
+                    except Exception:
+                        pass
                 if c:
-                    return
+                    return texto
                 continue
             print(f"   {ident}: salto {salto} → HTTP {e.code}")
-            return
+            return texto
         except Exception as ex:
             print(f"   {ident}: salto {salto} → {type(ex).__name__}: {str(ex)[:120]}")
-            return
+            return texto
+    return texto
 
 
 def main():
