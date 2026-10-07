@@ -3,6 +3,7 @@
 > **ACTUALIZACIÓN 07/10 — §33 / BITÁCORA §4ht.** «📍 Banzer o PTF» en Stock: qué productos tener en cada depósito según dónde
 > se entrega y cuánto rota, con mapa de calor y texto para logística. Solo mira (no marca pedidos ni toca stock ni planilla). Sin
 > cambios al `.gs`. Batería: 137 suites, 5.175 bien · 0 mal. Publicada a pedido del dueño («publica») el 07/10.
+> El mismo día, con la línea que dibujó el dueño (izquierda Banzer, derecha PTF): publicada 17:33 (`faff9a0`), 5.185 bien · 0 mal.
 
 > **ACTUALIZACIÓN 06/10 — §32 / BITÁCORA §4hs.** El control del corte, arreglado por pedido del dueño: solo el Excel del día, la
 > celda guarda 3 días (medido: no se llena), una página sin F5 ya no lo rompe (y el servidor `2026-10-06-a` no la deja guardar el
@@ -2717,7 +2718,7 @@ abrió los 12. Lo que falla es solo el enlace de un lugar con nombre.
 **✏️ Cambio del 07/10 (después de publicar, «probemos la A»)**: el lado ya no es «el más cerca». El dueño dibujó la división sobre el
 mapa real y eligió usarla: `ALM_DIVISION` (23 puntos de norte a sur), `almLadoDeLinea` (distancia con signo perpendicular al tramo:
 oeste → Banzer, este → PTF, franja de 0,5 km = mitad y mitad, puntas estiradas). Sin línea, vuelve «el más cerca». Cuando logística
-defina zona → depósito, esas zonas van a mandar sobre la línea. `test_banzer_ptf` §11.
+defina zona → depósito, esas zonas van a mandar sobre la línea. `test_banzer_ptf` §11. Publicado el 07/10 a las 17:33 (`faff9a0`).
 
 ### 3. La pantalla
 Resumen (entregas, % por lado, cómo se ubicaron, avisos de Banzer aproximado y de Excel faltante); mapa Leaflet (`preferCanvas`,
