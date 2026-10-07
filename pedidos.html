@@ -23555,6 +23555,13 @@ var RECOGER_EXTRA=[];                // almacenes de IR A BUSCAR conocidos aunqu
        «(cargar en Banzer)».
    Quién es de salida lo dice UNA sola función, `almEsSalida`, que usan todos. */
 var ALM_SALIDA=['Banzer'];
+/* 📍 DÓNDE QUEDAN LOS DOS DEPÓSITOS DE SALIDA (dueño, 07/10, §4ht): para saber de cuál queda más cerca cada entrega
+   («📍 Banzer o PTF» en Stock). Los enlaces los mandó el dueño; las coordenadas las abrió el servidor (`geocode`, el mismo
+   de los pedidos) y quedan escritas acá: la cuenta no depende de abrir nada. Si un almacén se muda, se cambia acá. */
+var ALM_UBIC=[
+  { id:'ptf',    nombre:'PTF',    largo:'Productos Terminados Fábrica', link:'https://maps.app.goo.gl/VfnJomaB3FNPUYzT6', lat:null, lng:null },
+  { id:'banzer', nombre:'Banzer', largo:'Almacén Banzer',               link:'https://maps.app.goo.gl/YSbmsC6GRi2d4HRu6', lat:null, lng:null }
+];
 function recogerDe(x){ return String((x&&x.chkDe)||'').trim(); }
 /* El rol que se eligió al subir el Excel (`STOCK.al`), buscado también con el nombre escrito de otra
    forma: «Banzer» a mano y «01-05-025  Almacen Distribucion Banzer» en el Excel son el mismo lugar. */

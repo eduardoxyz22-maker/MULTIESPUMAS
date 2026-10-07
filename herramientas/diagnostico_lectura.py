@@ -357,6 +357,30 @@ def en_dos_tramos(base, veces=5):
         time.sleep(3)
 
 
+def ubicacion_almacenes(base):
+    """📍 (07/10, §4ht) Dónde quedan los dos depósitos de salida, con el MISMO servidor que abre los enlaces cortos de
+    los pedidos (`geocode`). Los enlaces los mandó el dueño y están en pedidos.html (`ALM_UBIC`); desde la sesión de
+    Claude el proxy no abre maps.app.goo.gl. Son lugares de la empresa, no datos de clientes."""
+    try:
+        txt = open(os.path.join(os.path.dirname(__file__), "..", "pedidos.html"), encoding="utf-8").read()
+    except Exception:
+        return
+    links = re.findall(r"id:'(\w+)'[^\n]*?link:'(https://maps\.app\.goo\.gl/[^']+)'", txt)
+    if not links:
+        return
+    crudo = pedir("📍 ubicación de los almacenes (geocode de los enlaces de ALM_UBIC)", base,
+                  {"action": "geocode", "links": [u for _, u in links]})
+    try:
+        j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+    except Exception:
+        print("   no es JSON")
+        return
+    geo = {g.get("link"): g for g in (j.get("geo") or []) if isinstance(g, dict)}
+    for ident, u in links:
+        g = geo.get(u) or {}
+        print(f"   {ident}: " + (f"{g.get('lat')}, {g.get('lng')}" if g.get("lat") is not None else f"no se pudo ({g.get('error') or 'sin respuesta'})"))
+
+
 def main():
     pagina = url_de_la_pagina()
     if not PANEL_URL and not pagina:
@@ -377,6 +401,8 @@ def main():
     contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
     # 4) Dónde se va el tiempo: correr el script o entregar los datos.
     en_dos_tramos(pagina or PANEL_URL)
+    # 5) 📍 (§4ht) Dónde quedan los almacenes de salida.
+    ubicacion_almacenes(pagina or PANEL_URL)
 
 
 if __name__ == "__main__":
