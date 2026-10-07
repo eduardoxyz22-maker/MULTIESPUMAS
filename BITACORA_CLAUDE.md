@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hw. 07/10 a la noche: 🗓️ el plan de 7/15/30 días, segunda vuelta — «tener» = lo ya vendido + lo para tener, «TRAER DE MORENO» y la alerta «Recordá revisar la producción» — EN LA RAMA (espera el «publica» del dueño)
+## 4hw. 07/10 a la noche: 🗓️ el plan de 7/15/30 días, segunda vuelta — «tener» = lo ya vendido + lo para tener, «TRAER DE MORENO» y la alerta «Recordá revisar la producción» — PUBLICADA 07/10 18:46 (`0d20d04`; el dueño: «publica»; batería 138 suites, 1 roja de carga en `test_borradores`, sola 95/95)
 El dueño, mirando la pantalla de §4hv publicada con su caso real (ESPECIAL SEMIORTOPEDICO: PTF tener 7, hay 0, 6 ya vendidos;
 «Traer 2 de Moreno a PTF»): *«no me cuadra eso de traer 2 de Moreno y hay 6 vendidos y tenemos 0. Debería aclarar traer (que ya
 está vendido y debería estar en cada almacén) más lo que debería tener para los próximos días. Si 6 ya están vendidos y deberían

@@ -367,7 +367,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo, cada lado.
     Llevar: a Banzer solo lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»). Nunca de Banzer a PTF (`cubreB`:
     «pueden salir de Banzer»). «📋 Copiar el plan de N días» (`almCopiarPlan`).
-    · **✏️ Segunda vuelta (§4hw, 07/10 noche, EN LA RAMA, espera «publica»)**, con el caso real del dueño (ESPECIAL SEMIORTOPEDICO, 6
+    · **✏️ Segunda vuelta (§4hw, 07/10 noche, PUBLICADA 07/10 18:46, `0d20d04`)**, con el caso real del dueño (ESPECIAL SEMIORTOPEDICO, 6
     vendidos y 0 en PTF, «Traer 2»): *«traer lo que ya está vendido… MÁS lo que debería tener para los próximos días, y lo mismo
     Banzer»*, *«¿qué pasa cuando el saldo es 0 en ambos?»*, *«no "pedir"… TRAER DE MORENO»* y *«si el Excel de Moreno muestra menos,
     una alerta de "recordá revisar la producción"»*. **Tener = ya vendido en su zona (`o.compIds`, `almLadoPedido`) + `porDia`×H

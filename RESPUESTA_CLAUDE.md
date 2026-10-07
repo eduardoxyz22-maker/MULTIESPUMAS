@@ -2731,7 +2731,7 @@ contando lo que viene en camino; nunca de Banzer a PTF (si a Banzer le sobra, «
 muestra (el dueño no quiere producción acá). Para revisar: el redondeo por lado (`Math.round` de cada uno: el total puede pasar
 por 1 al de una sola cuenta), y que un pedido «sobre la línea» se asigne entero a PTF. `test_banzer_ptf` §12.
 
-**✏️ Segunda vuelta del plan (§4hw, 07/10 a la noche, en la rama)**: el dueño miró su caso real (ESPECIAL SEMIORTOPEDICO: PTF
+**✏️ Segunda vuelta del plan (§4hw, 07/10 a la noche, publicada 18:46, `0d20d04`)**: el dueño miró su caso real (ESPECIAL SEMIORTOPEDICO: PTF
 tener 7, hay 0, 6 ya vendidos, «Traer 2 de Moreno a PTF») y pidió: *«traer lo que ya está vendido… MÁS lo que debería tener para
 los próximos días, y lo mismo Banzer»*, *«¿qué pasa cuando el saldo es 0 en ambos almacenes?»*, *«no "pedir": se supone que el
 stock ya está pedido, si no TRAER DE MORENO»* y *«si el Excel de Moreno muestra menos, una alerta de "recordá revisar la
