@@ -2,7 +2,7 @@
 
 > **ACTUALIZACIÓN 06/10 — §32 / BITÁCORA §4hs.** El control del corte, arreglado por pedido del dueño: solo el Excel del día, la
 > celda guarda 3 días (medido: no se llena), una página sin F5 ya no lo rompe (y el servidor `2026-10-06-a` no la deja guardar el
-> stock), y B2-B8 de la auditoría. Página publicada el 06/10 a las 16:56 (`45d3108`); el servidor lo implementa el dueño después del F5.
+> stock), y B2-B8 de la auditoría. Página publicada el 06/10 a las 16:56 (`45d3108`); servidor `2026-10-06-a` implementado por el dueño ~20:30 (comprobado 20:34).
 
 > **ACTUALIZACIÓN 02/10, noche — §28 / BITÁCORA §4hj, §4hk, §4hl.** Los tres «hazlo» del dueño: plata (borrar un pago
 > registrado, el pago nuevo saca la marca ✅, el 💵 de Administración pregunta quién recibió), la poda de la celda del stock

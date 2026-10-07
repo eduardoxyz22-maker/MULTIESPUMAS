@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), el servidor lo implementa el dueño después del F5
+## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), SERVIDOR IMPLEMENTADO 06/10 ~20:30 (el dueño)
 El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.
 Que no permita subir corte de días anteriores tiene que ser del día. La hoja de Excel si marca día y hora si no me equivoco. Ni
 habíamos quedado que las celdas de corte solo almacenaban X días y lo anteriores se iban borrando para no llenarse? De que me
@@ -7574,6 +7574,13 @@ Pages: corrida `37530190248`, ✅ a las 16:56:32. La página, el `.gs` y las pru
   gris «Hay una versión más nueva del script sin publicar». Una página vieja que todavía intente guardar el stock recibe
   `actualizar`: lo deja en SU cola con el aviso de recargar (`rechazoSeReintentaSolo`), y con F5 la página nueva lo manda sin
   sello y se junta.
+- **~20:30 el dueño: «listo implementado y publicado».** Comprobado sin entrar a Google: el despacho a mano del diagnóstico da
+  403 desde esta sesión, así que se le agregó una línea útil (`78112f6`: «servidor: 🔒 una página sin F5 ya NO puede guardar el
+  stock») y el push a la rama lo corrió (corrida `37552586393`, 20:34): **versión `2026-10-06-a`** en las cuatro lecturas,
+  «🔒 una página sin F5 ya NO puede guardar el stock», stock 27.526 (55 %) todavía guardado por una página vieja (se va con el
+  primer guardado de la página nueva), lecturas de 2,4-4 s, comprimida 3,8 veces menos, la de lo cambiado 205 bytes, cuenta
+  de control ✅. El saldo sigue con los tres cortes del 06/10. Volver atrás, si hiciera falta: ✏️ a la versión anotada (la 36)
+  Y pegar la 10-02-a de `6b76e7a…`.
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
