@@ -338,7 +338,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     el campo dentro de la tabla (quedaba 1.100-1.400 px abajo, nadie lo encontraba) ni a mover el cursor al final en el refoco
     de `renderStock`: la barra no se redibuja, el cursor se queda donde está. `stockFiltroLimpiar` vacía también el campo de
     arriba y `abrirStock` lo sincroniza con `STOCK_FILTRO.q`. `tests/test_stock_buscador.js` (22; 9 rojas contra `64bcb37`).
-  - **📍 Banzer o PTF: qué tener en cada depósito según dónde se entrega** (§4ht, 07/10, EN LA RAMA, SIN PUBLICAR; dueño: *«según
+  - **📍 Banzer o PTF: qué tener en cada depósito según dónde se entrega** (§4ht, 07/10, PUBLICADA 07/10 15:10, `2c5ad8c`; informe para Codex en `RESPUESTA_CLAUDE.md` §33; dueño: *«según
     los focos de calor de entrega y rotación… tener el stock a la mano según la zona de entrega»*). Botón en la barra de Stock →
     `abrirAlm` (`#alm-overlay`, z 3100). **Solo mira**: no marca pedidos ni toca stock ni planilla.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:

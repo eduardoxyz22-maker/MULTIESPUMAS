@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega (EN LA RAMA, SIN PUBLICAR)
+## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega — PUBLICADA 07/10 15:10 (`2c5ad8c`), Pages OK 15:11
 El dueño, 07/10: *«Necesitamos saber, medir y determinar qué productos debemos tener en almacén banzer y que en almacén
 productos terminados fabrica, según los focos de calor de entrega y rotación para ser más eficientes y tener el stock a la
 mano según la zona de entrega»*. Se le propuso (60 días de entregas por el pin de Maps o la zona; cada entrega cuenta para el
@@ -7517,6 +7517,8 @@ Leaflet y en 390 px. Contra `main` (`88120f2`): no tiene la pantalla. **Batería
 0 mal** (`test_stock_detalle` «ok (sin resumen)», como siempre); después de «Tener en Banzer» y el mapa en píxeles (solo tocan
 funciones nuevas) se corrieron otra vez las de Banzer y de stock: todas en verde. Capturas de demo (datos inventados, Leaflet servido del paquete de npm
 porque el proxy no deja salir a unpkg ni a los mosaicos de OpenStreetMap): `cap_4ht/` del scratchpad.
+
+**Publicación.** El dueño, 07/10: *«publica y dejas el md para codex»*. Informe para Codex: `RESPUESTA_CLAUDE.md` §33 (`45a95b4`). Sin ningún workflow corriendo ni en cola, `main` = **`2c5ad8c`** (merge de la rama) a las **15:10** de Bolivia; **Pages OK 15:11** (corrida `37672517404`, build/deploy/report en verde; el `pedidos.html` de `2c5ad8c` trae `abrirAlm`). Sin cambios al `.gs`: no hace falta implementar nada. Basta F5 para ver el botón. Queda que el dueño mire si el punto de Banzer cae bien y decida si la revisión automática elige el depósito más cerca.
 
 ## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), SERVIDOR IMPLEMENTADO 06/10 ~20:30 (el dueño)
 El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.
