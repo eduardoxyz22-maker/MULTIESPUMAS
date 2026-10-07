@@ -7493,11 +7493,13 @@ clientes (un punto marcado) se abren bien. No hace falta tocar el `.gs`.
 
 **La pantalla** (botón «📍 Banzer o PTF» en la barra de Stock → `abrirAlm`, `#alm-overlay`, z-index 3100; las fichas de pedido
 van en 4000): resumen (entregas, % de cada lado, cómo se ubicaron, aviso de Banzer aproximado), **mapa** (Leaflet: los dos
-depósitos con su nombre, cada entrega con el color de su lado y una mancha de 600 m que se oscurece donde más se entrega, y la
-línea punteada donde los dos quedan a la misma distancia, `almLineaMedia`), **tabla** (filtros «Para hacer / Con entregas /
-Todos», búsqueda en la barra de arriba —no se redibuja, no pierde el foco—, el total a mover arriba, tocar un producto lo deja
-solo en el mapa), las **zonas escritas** y de qué lado quedan, y «📋 Copiar para logística» (pasar / lo próximo que llegue / no
-mandar más). En el celular la tabla scrollea adentro de su caja.
+depósitos con su nombre, cada entrega con el color de su lado y una mancha de 15 px —en píxeles, no en metros: se ve igual a
+cualquier zoom— que se oscurece donde más se entrega, y la línea punteada donde los dos quedan a la misma distancia,
+`almLineaMedia`; zoom de a cuartos, `zoomSnap:0.25`, para que el encuadre llene la caja), **tabla** (filtros «Para hacer / 🏪
+Tener en Banzer / Con entregas / Todos», búsqueda en la barra de arriba —no se redibuja, no pierde el foco—, el total a mover
+arriba, tocar un producto lo deja solo en el mapa), las **zonas escritas** y de qué lado quedan, y «📋 Copiar para logística»:
+arranca con **«🏪 TENER EN BANZER (lo demás, en PTF)»** —la respuesta a la pregunta del dueño, de mayor a menor y con lo que
+hay hoy— y sigue con pasar / lo próximo que llegue / no mandar más. En el celular la tabla scrollea adentro de su caja.
 
 **Los enlaces cortos** que el panel no lee (`T.pend`) los abre el servidor en segundo plano (`almGeoPedir`: de a `ALM_GEO_LOTE`=20,
 los más nuevos primero, hasta `ALM_GEO_VUELTAS`=5 tandas mientras abra alguno, con `conTopeDuro` de 150 s), UNA vez por apertura
@@ -7508,10 +7510,12 @@ mapa de entregas); lo que no, a `ALM_GEO_FALLO` (la sesión) y esa entrega va po
 Banzer → IM, 21/09). **Para decidir con el dueño**: (1) que el punto de Banzer está bien; (2) si quiere que la revisión
 automática reparta por cercanía (hoy no); (3) la ventana de 60 días y el margen de 1 km «en el medio».
 
-`tests/test_banzer_ptf.js` (46, reloj clavado en el 07/10/2026, ubicaciones y pedidos inventados, Leaflet de mentira que anota lo
-que se dibuja): qué cuenta y qué no, el lado/medio/zona, las cinco acciones con números exactos, la tabla, el mapa, los enlaces
-cortos (una vez, el más nuevo primero, lo que no abre se dice), el texto para logística, que no cambia nada, sin Leaflet y en
-390 px. Contra `main` (`88120f2`): no tiene la pantalla. Capturas de demo (datos inventados, Leaflet servido del paquete de npm
+`tests/test_banzer_ptf.js` (48, reloj clavado en el 07/10/2026, ubicaciones y pedidos inventados, Leaflet de mentira que anota lo
+que se dibuja): qué cuenta y qué no, el lado/medio/zona, las cinco acciones con números exactos, la tabla y sus filtros, el mapa,
+los enlaces cortos (una vez, el más nuevo primero, lo que no abre se dice), el texto para logística, que no cambia nada, sin
+Leaflet y en 390 px. Contra `main` (`88120f2`): no tiene la pantalla. **Batería entera sobre `58b1bfa`: 137 suites, 5.175 bien ·
+0 mal** (`test_stock_detalle` «ok (sin resumen)», como siempre); después de «Tener en Banzer» y el mapa en píxeles (solo tocan
+funciones nuevas) se corrieron otra vez las de Banzer y de stock: todas en verde. Capturas de demo (datos inventados, Leaflet servido del paquete de npm
 porque el proxy no deja salir a unpkg ni a los mosaicos de OpenStreetMap): `cap_4ht/` del scratchpad.
 
 ## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), SERVIDOR IMPLEMENTADO 06/10 ~20:30 (el dueño)

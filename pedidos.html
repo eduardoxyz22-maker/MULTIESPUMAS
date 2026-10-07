@@ -24574,6 +24574,7 @@ function almZonaData(){
 }
 function almVerFila(f){
   if(ALM_VER==='hacer') return f.acc==='pasar' || f.acc==='llega' || f.acc==='noMas';
+  if(ALM_VER==='banzer') return f.objB>0;            // lo que conviene tener en Banzer: la pregunta del dueño
   if(ALM_VER==='entregas') return f.u>0;
   return true;
 }
@@ -24679,9 +24680,9 @@ function almRotHtml(o){
 }
 function almPintarTabla(){
   var A=ALM_DATA, el=document.getElementById('alm-tabla'); if(!A || !el) return;
-  var cuenta={ hacer:0, entregas:0, todos:A.filas.length };
-  A.filas.forEach(function(f){ if(f.acc==='pasar'||f.acc==='llega'||f.acc==='noMas') cuenta.hacer++; if(f.u>0) cuenta.entregas++; });
-  var chips=[{k:'hacer',t:'Para hacer'},{k:'entregas',t:'Con entregas'},{k:'todos',t:'Todos'}].map(function(c){
+  var cuenta={ hacer:0, banzer:0, entregas:0, todos:A.filas.length };
+  A.filas.forEach(function(f){ if(f.acc==='pasar'||f.acc==='llega'||f.acc==='noMas') cuenta.hacer++; if(f.objB>0) cuenta.banzer++; if(f.u>0) cuenta.entregas++; });
+  var chips=[{k:'hacer',t:'Para hacer'},{k:'banzer',t:'🏪 Tener en Banzer'},{k:'entregas',t:'Con entregas'},{k:'todos',t:'Todos'}].map(function(c){
     var on=(ALM_VER===c.k);
     return '<button type="button" onclick="almSetVer(\''+c.k+'\')" style="border:1px solid '+(on?'#1e3a5f':'var(--gray-md)')+';background:'+(on?'#1e3a5f':'#fff')+';color:'+(on?'#fff':'#1e3a5f')+';border-radius:16px;padding:4px 11px;font-weight:700;font-size:.8rem;cursor:pointer">'+c.t+' ('+cuenta[c.k]+')</button>';
   }).join('');
@@ -24695,7 +24696,9 @@ function almPintarTabla(){
     (sel?('<div style="font-size:.8rem;margin-bottom:8px;color:#1e3a5f">🗺️ En el mapa: <b>'+esc(sel.nombre)+'</b> · <a href="#" onclick="almVerProducto(\'\');return false">ver todas las entregas</a></div>'):'')+
     (ALM_Q?('<div style="font-size:.8rem;margin-bottom:8px;color:#1e3a5f">🔎 Buscando «'+esc(ALM_Q)+'»</div>'):'');
   if(!filas.length){
-    h+='<div style="padding:12px;color:var(--muted);font-size:.86rem">'+(ALM_VER==='hacer'&&!ALM_Q?'Nada que mover: lo que hay está bien repartido, o se vende poco y queda en PTF. Mirá «Todos» para ver cada producto.':'Ningún producto con ese filtro.')+'</div></div>';
+    h+='<div style="padding:12px;color:var(--muted);font-size:.86rem">'+(ALM_Q?'Ningún producto con ese filtro.'
+      :ALM_VER==='hacer'?'Nada que mover: lo que hay está bien repartido, o se vende poco y queda en PTF. Mirá «Todos» para ver cada producto.'
+      :ALM_VER==='banzer'?'Por ahora ningún producto conviene tenerlo en Banzer: lo que rota se entrega más cerca de PTF.':'Ningún producto con ese filtro.')+'</div></div>';
     el.innerHTML=h; return;
   }
   h+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:820px"><thead><tr>'+
@@ -24784,7 +24787,7 @@ function almPintarMapa(encuadrar){
   }
   if(!window.L){ ensureLeaflet(function(){ if(almAbierto()) almPintarMapa(true); }); return; }
   if(!ALM_MAPA){
-    ALM_MAPA=L.map(el, { preferCanvas:true });
+    ALM_MAPA=L.map(el, { preferCanvas:true, zoomSnap:0.25, zoomDelta:0.5 });   // zoom de a cuartos: el encuadre llena la caja
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(ALM_MAPA);
     ALM_CAPA=L.layerGroup().addTo(ALM_MAPA);
   }
@@ -24792,7 +24795,8 @@ function almPintarMapa(encuadrar){
   var P=almUbic('ptf'), B=almUbic('banzer'), pts=[];
   lista.forEach(function(q){
     var col=q.lado.medio?ALM_COLOR.M:(q.lado.B>0.5?ALM_COLOR.B:ALM_COLOR.P);
-    L.circle([q.lat,q.lng], { radius:600, stroke:false, fillColor:col, fillOpacity:0.10, interactive:false }).addTo(ALM_CAPA);
+    /* La mancha va en PÍXELES (no en metros): se ve igual a cualquier zoom y, donde se juntan muchas, se oscurece. */
+    L.circleMarker([q.lat,q.lng], { radius:15, stroke:false, fillColor:col, fillOpacity:0.12, interactive:false }).addTo(ALM_CAPA);
     L.circleMarker([q.lat,q.lng], { radius:4, color:'#fff', weight:1, fillColor:col, fillOpacity:0.95 }).bindPopup(almPopup(q)).addTo(ALM_CAPA);
     pts.push([q.lat,q.lng]);
   });
@@ -24840,8 +24844,11 @@ function almCopiar(){
   var pasar=A.filas.filter(function(f){ return f.acc==='pasar'; });
   var llega=A.filas.filter(function(f){ return f.luego>0 && (f.acc==='pasar'||f.acc==='llega'); });
   var noMas=A.filas.filter(function(f){ return f.acc==='noMas'; });
-  if(!pasar.length && !llega.length && !noMas.length){ toast('No hay nada que mover: está bien repartido.','ok',5000); return; }
+  /* 🏪 Qué tener en Banzer: la respuesta a la pregunta del dueño, de mayor a menor. Lo demás, en PTF. */
+  var tener=A.filas.filter(function(f){ return f.objB>0; }).sort(function(a,b){ return (b.objB-a.objB) || a.nombre.localeCompare(b.nombre); });
+  if(!tener.length && !pasar.length && !llega.length && !noMas.length){ toast('Ningún producto conviene tenerlo en Banzer y no hay nada que mover.','ok',5000); return; }
   var t='📍 BANZER O PTF — '+fmtFecha(A.hoy)+'\nSegún dónde se entregó cada producto en los últimos '+ALM_ZONA_DIAS+' días.\n';
+  if(tener.length) t+='\n🏪 TENER EN BANZER (lo demás, en PTF)\n'+tener.map(function(f){ return '• '+f.nombre+': '+f.objB+' (hoy '+stockUnid(f.hoyB)+')'; }).join('\n')+'\n';
   if(pasar.length) t+='\n🚚 PASAR DE PTF A BANZER\n'+pasar.map(function(f){ return '• '+f.nombre+': '+stockUnid(f.mover); }).join('\n')+'\n';
   if(llega.length) t+='\n🏭 DE LO PRÓXIMO QUE LLEGUE DE FÁBRICA, MANDAR A BANZER\n'+llega.map(function(f){ return '• '+f.nombre+': '+stockUnid(f.luego); }).join('\n')+'\n';
   if(noMas.length) t+='\n✋ NO MANDAR MÁS A BANZER (que salga con las entregas)\n'+noMas.map(function(f){ return '• '+f.nombre+' (tiene '+stockUnid(f.hoyB)+(f.objB?(', conviene '+f.objB):'')+')'; }).join('\n')+'\n';

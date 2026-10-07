@@ -231,11 +231,15 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
     texto:document.getElementById('alm-tabla').textContent.replace(/\s+/g,' ') }));
   r = await tabla();
   chk('arranca en «Para hacer»: los 4 que hay que mover, primero los que se pasan', r.filas.length===4 && /TITANIO ICE/.test(r.filas[0]) && /TITANIO LATEX/.test(r.filas[1]), J(r.filas));
-  chk('…con los tres filtros y sus cuentas', J(r.chips)===J(['Para hacer (4)','Con entregas (5)','Todos (5)']), J(r.chips));
+  chk('…con los cuatro filtros y sus cuentas', J(r.chips)===J(['Para hacer (4)','🏪 Tener en Banzer (4)','Con entregas (5)','Todos (5)']), J(r.chips));
   chk('…y dice qué hacer con palabras', /Pasar 6 a Banzer/.test(r.texto) && /Lo próximo que llegue: 3 a Banzer/.test(r.texto) && /No mandar más a Banzer/.test(r.texto) && /se vende poco y tiene 3/.test(r.texto), r.texto.slice(0,300));
   chk('…con el total de lo que hay que mover arriba de la tabla',
     /pasar a Banzer 6 unidades de 1 producto · 🏭 de lo próximo que llegue, mandar a Banzer 3 de 1 producto · ✋ no mandar más a Banzer: 2 productos/.test(r.texto), r.texto.slice(0,500));
   chk('…sin proponer nunca traer de Banzer a PTF', !/(traer|pasar|llevar)[^.]{0,30}de Banzer/i.test(r.texto) && !/a PTF\b[^.]{0,10}(desde|de) Banzer/i.test(r.texto), r.texto.match(/[^.]{0,40}de Banzer[^.]{0,20}/i)||'');
+  await page.click('#alm-tabla button:has-text("Tener en Banzer")');
+  r = await tabla();
+  chk('⚠️ «🏪 Tener en Banzer» muestra lo que conviene tener allá (no el ORO ORTOPEDICO, que rota poco)',
+    r.filas.length===4 && !r.filas.some(f=>/ORTOPEDICO/.test(f)) && r.filas.some(f=>/TITANIO ICE/.test(f)) && r.filas.some(f=>/ANATOMICO/.test(f)), J(r.filas));
   await page.click('#alm-tabla button:has-text("Con entregas")');
   r = await tabla();
   chk('«Con entregas» muestra también el bien repartido', r.filas.length===5 && r.filas.some(f=>/ANATOMICO/.test(f)) && /Bien repartido/.test(r.texto), J(r.filas));
@@ -253,10 +257,11 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   // ══ 6. El mapa ══════════════════════════════════════════════════════════════════════
   console.log('\n── 6. El mapa ──');
   r = await page.evaluate(() => {
-    var M=window._mapa, tips=M.marcas.filter(function(m){ return m.tip; }), puntos=M.marcas.filter(function(m){ return !m.tip; });
+    var M=window._mapa, tips=M.marcas.filter(function(m){ return m.tip; }), puntos=M.marcas.filter(function(m){ return !m.tip && m.o.interactive!==false; });
+    var manchas=M.marcas.filter(function(m){ return m.o.interactive===false; }).length+M.circulos.length;
     var col=function(c){ return puntos.filter(function(m){ return m.o.fillColor===c; }).length; };
     return { tips:tips.map(function(m){ return m.tip; }), banzerPop:(tips.filter(function(m){ return /Banzer/.test(m.tip); })[0]||{}).pop||'',
-             puntos:puntos.length, P:col(ALM_COLOR.P), B:col(ALM_COLOR.B), M:col(ALM_COLOR.M), manchas:M.circulos.length, lineas:M.lineas.length,
+             puntos:puntos.length, P:col(ALM_COLOR.P), B:col(ALM_COLOR.B), M:col(ALM_COLOR.M), manchas:manchas, lineas:M.lineas.length,
              tit:document.getElementById('alm-mapa-tit').textContent.replace(/\s+/g,' ') };
   });
   chk('⚠️ los dos depósitos con su nombre: «🏭 PTF» y «🏪 Banzer»', J(r.tips)===J(['🏭 PTF','🏪 Banzer']), J(r.tips));
@@ -265,7 +270,7 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   chk('…y la línea punteada del medio', r.lineas===1);
   await page.evaluate(() => almVerProducto(''));
   await page.waitForTimeout(200);
-  r = await page.evaluate(() => { var p=window._mapa.marcas.filter(function(m){ return !m.tip; }); return { n:p.length, M:p.filter(function(m){ return m.o.fillColor===ALM_COLOR.M; }).length,
+  r = await page.evaluate(() => { var p=window._mapa.marcas.filter(function(m){ return !m.tip && m.o.interactive!==false; }); return { n:p.length, M:p.filter(function(m){ return m.o.fillColor===ALM_COLOR.M; }).length,
     tit:document.getElementById('alm-mapa-tit').textContent.replace(/\s+/g,' ') }; });
   chk('sin producto elegido: las 18 entregas con mapa, una violeta (en el medio)', r.n===18 && r.M===1 && /más cerca de PTF 7/.test(r.tit) && /más cerca de Banzer 10/.test(r.tit) && /en el medio 1/.test(r.tit), J(r));
 
@@ -287,7 +292,10 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   chk('⚠️ dice qué pasar a Banzer, qué mandar de lo próximo que llegue y qué no mandar más',
     /PASAR DE PTF A BANZER\n• TITANIO ICE · 160x190: 6/.test(r) && /LO PRÓXIMO QUE LLEGUE[^\n]*\n• TITANIO LATEX · 140x190: 3/.test(r) &&
     /NO MANDAR MÁS A BANZER[^\n]*\n(• [^\n]+\n?)*• ORO BI RELAX · 140x190 \(tiene 6, conviene 1\)/.test(r) && /ORO ORTOPEDICO · 140x190 \(tiene 3\)/.test(r), r);
-  chk('…sin el bien repartido ni nada para traer de Banzer', !/ANATOMICO/.test(r) && !/(TRAER|DE BANZER A)/.test(r), r);
+  chk('⚠️ arranca con qué TENER en Banzer, de mayor a menor, y cuánto hay hoy (lo demás, en PTF)',
+    /TENER EN BANZER \(lo demás, en PTF\)\n• TITANIO ICE · 160x190: 6 \(hoy 0\)\n• ORO ANATOMICO VISCOLASTICO · 140x190: 3 \(hoy 3\)\n• TITANIO LATEX · 140x190: 3 \(hoy 0\)\n• ORO BI RELAX · 140x190: 1 \(hoy 6\)\n/.test(r), r);
+  const mover = r.split('🚚')[1]||'';
+  chk('…y en lo que hay que mover no está el bien repartido, ni nada para traer de Banzer', !/ANATOMICO/.test(mover) && !/(TRAER|DE BANZER A)/.test(r), mover);
 
   // ══ 9. Solo mira ════════════════════════════════════════════════════════════════════
   console.log('\n── 9. Solo mira: no guarda ni cambia nada ──');

@@ -354,7 +354,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     · Los enlaces cortos que el panel no lee los abre el servidor en segundo plano (`almGeoPedir`: tandas de 20, los más nuevos
     primero, una vez por apertura de la página); lo abierto va a `MAPA_COORDS` y al teléfono. El 07/10 el servidor abrió 12 de 12
     enlaces de clientes: solo fallan los de lugares con nombre.
-    · `tests/test_banzer_ptf.js` (46, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado).
+    · Filtro «🏪 Tener en Banzer» y el texto para logística arranca con «TENER EN BANZER (lo demás, en PTF)». Mapa: manchas en
+    píxeles (15 px), `zoomSnap:0.25`.
+    · `tests/test_banzer_ptf.js` (48, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado). Batería: 137 suites,
+    5.175, 0 rojas.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
