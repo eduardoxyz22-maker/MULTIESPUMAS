@@ -7566,6 +7566,14 @@ Pages: corrida `37530190248`, ✅ a las 16:56:32. La página, el `.gs` y las pru
   10-02-a del enlace fijo a `6b76e7aa06d9168ff1dbfd8836585c8895b029b6` (2.430 líneas, comprobado).
 - Sin el servidor, la página ya protege: solo el Excel de hoy, el corte no vuelve atrás, la lectura junta lo que manda una
   página vieja y lo reguarda. El servidor cierra lo que queda: una página que nunca hizo F5 ya no puede escribir el stock.
+- **20:22, el dueño pegó la 06-a y corrió `probarAntesDeImplementar`** (captura): versión 2026-10-06-a, 29 funciones, 1.255
+  filas, disparadores y repaso de Kommo (hace 4 min) ✅, stock 27.526/50.000 (55 %), arqueo 0, lectura comprimida 1.039.561 →
+  297.116, 14 feriados por venir, 4 reservas de 3 pedidos, «✅ Se puede implementar» con UN ⚠️: el stock lo guardó por última
+  vez una página VIEJA (esperado: nadie lo guardó todavía con la página nueva). Se le dijo que implemente (✏️ → versión nueva,
+  anotando antes el número, tendría que ser la 36) y que lo compruebe en 🔒 Cerrar día: «versión 2026-10-06-a» sin la línea
+  gris «Hay una versión más nueva del script sin publicar». Una página vieja que todavía intente guardar el stock recibe
+  `actualizar`: lo deja en SU cola con el aviso de recargar (`rechazoSeReintentaSolo`), y con F5 la página nueva lo manda sin
+  sello y se junta.
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar
