@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hu. 07/10: 🧾 Mis pedidos — el número de nota en la tarjeta y en la ficha, solo para Eduardo — PUBLICADA 07/10 17:50 (`07c4db3`; el dueño: «cuando terminen publica»; batería 138 suites, 5.204 bien · 0 mal)
+## 4hu. 07/10: 🧾 Mis pedidos — el número de nota en la tarjeta y en la ficha, solo para Eduardo — PUBLICADA 07/10 17:50 (`07c4db3`, Pages OK 17:50, run 37692171570; el dueño: «cuando terminen publica»; batería 138 suites, 5.204 bien · 0 mal)
 El dueño, 07/10 a la noche, con una captura de «Mis pedidos» elegido como él (seis pedidos a MULTICENTER): *«en mis
 pedidos las fichas de mis pedidos no muestran el nro de nota, ejemplo eduardo no puede saber qué número de OC es. Que solo a
 eduardo muestre tb número de nota»*. La «OC 10-050» de la tarjeta es la serie del panel (`nextOcMes`); el número con el que
