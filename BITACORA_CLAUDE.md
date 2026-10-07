@@ -7445,6 +7445,27 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hu. 07/10: 🧾 Mis pedidos — el número de nota en la tarjeta y en la ficha, solo para Eduardo — EN LA RAMA, SIN PUBLICAR
+El dueño, 07/10 a la noche, con una captura de «Mis pedidos» elegido como él (seis pedidos a MULTICENTER): *«en mis
+pedidos las fichas de mis pedidos no muestran el nro de nota, ejemplo eduardo no puede saber qué número de OC es. Que solo a
+eduardo muestre tb número de nota»*. La «OC 10-050» de la tarjeta es la serie del panel (`nextOcMes`); el número con el que
+él identifica cada venta es el de «N° Nota de venta» (`p.nota`, que para él no es obligatorio: `req-lite`). La tarjeta no lo
+mostraba para nadie; la ficha (`showMisModal`) tampoco.
+- **`MIS_VE_NOTA=['Eduardo Añez']`** + **`misVeNota(v)`** (`mismoVendedor`: «Eduardo Anez» y «EDUARDO AÑEZ» son él): decide
+  el nombre ELEGIDO en Mis pedidos (`misVendedorSel`), no el vendedor del pedido. Con «👑 Ver todos» y su nombre elegido, la
+  ve en todas las tarjetas; con otro nombre, en ninguna. Las vendedoras siguen viendo lo de siempre.
+- **`misNotaTxt(p)`** en la línea de abajo del cliente: «… · OC 10-050 · **Nota 4567**», o «· sin nota» si no se cargó (si
+  no, una tarjeta sin el número se ve igual que antes y no se sabe si falta cargarlo). Ni la ATC ni la RPT llevan nota (el
+  formulario esconde el campo): ahí nada. El «·» va pegado a la nota (`white-space:nowrap`): con una zona larga la línea se
+  parte antes del «·».
+- La ficha que se abre al tocar la tarjeta dice arriba «MULTICENTER · OC 10-050 · Nota 4567» (solo con nota).
+- `misCardHtml(p, n, todos, verNota)`: `renderMis` calcula `verNota` una vez; quien la llama con 3 datos (`test_modif`)
+  decide por el campo.
+- `tests/test_mis_nota.js` (19; 8 rojas contra `faff9a0`): Eduardo con nota / sin nota / ATC / RPT, la ficha, Carola con
+  nota (no la ve), el nombre escrito distinto, «Ver todos» con uno y otro nombre, una nota con símbolos (texto, no HTML) y
+  la llamada con 3 datos. `test_modif`, `test_rev2_mis`, `test_rev3_atc_mis`, `test_rev7_celular`, `test_sinmonto`,
+  `test_rev4_atc_flete`: en verde.
+
 ## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega — PUBLICADA 07/10 15:10 (`2c5ad8c`), Pages OK 15:11; con la línea del dueño, PUBLICADA 07/10 17:33 (`faff9a0`), Pages OK 17:34
 El dueño, 07/10: *«Necesitamos saber, medir y determinar qué productos debemos tener en almacén banzer y que en almacén
 productos terminados fabrica, según los focos de calor de entrega y rotación para ser más eficientes y tener el stock a la

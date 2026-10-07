@@ -949,6 +949,10 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Mis pedidos** (dueño, 26/09): los números cuentan por la fecha de ENTREGA y el cartel lo dice («pedidos que se
   entregan hoy», «se entregan este mes», «saldo de lo que se entrega este mes»); las ventas de tienda no entran. Los
   botones de filtro (`#mis-chips`) van JUSTO ARRIBA de `#mis-lista`, debajo de los números.
+- **🧾 La nota de venta en Mis pedidos, SOLO para Eduardo** (§4hu, 07/10, dueño: *«que solo a eduardo muestre tb número de
+  nota»*; EN LA RAMA, SIN PUBLICAR): `MIS_VE_NOTA`/`misVeNota(v)` deciden por el nombre ELEGIDO en Mis pedidos (no por el
+  vendedor del pedido); `misNotaTxt` pone «· Nota N» al lado de la OC (o «· sin nota»; nada en ATC/RPT) y la ficha
+  (`showMisModal`) lo dice arriba. Las vendedoras no lo ven. `tests/test_mis_nota.js` (19; 8 rojas contra `faff9a0`).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
 - **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
