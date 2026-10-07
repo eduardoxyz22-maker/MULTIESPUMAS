@@ -18315,7 +18315,7 @@ function stockData(extra){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compIds:[], compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
       enSale:0, salePor:{}, salSale:{}, confSale:{},        // (26/09) los depósitos de salida (Banzer), aparte
@@ -18397,7 +18397,7 @@ function stockData(extra){
         /* (05/10, Codex R5) Lo llegado y contado se RESERVA para ese cliente (`comp`, como un «✔ hay»); lo que falta llegar
            sigue siendo «lo trae la fábrica» (`aFab`): no sale del depósito. */
         var ue2=prodUnidEnConteo(x);
-        if(ue2>0){ var fd2=p.fecha && p.fecha>hoy?p.fecha:hoy; o.comp+=ue2; o.compPor[fd2]=(o.compPor[fd2]||0)+ue2; }
+        if(ue2>0){ var fd2=p.fecha && p.fecha>hoy?p.fecha:hoy; o.comp+=ue2; o.compPor[fd2]=(o.compPor[fd2]||0)+ue2; o.compIds.push({ id:p.id, c:ue2, f:fd2 }); }
         o.aFab+=c-ue2; return;
       }
       /* Lo marcado «✔ hay» (o repartido) reserva de cada depósito lo suyo: se compara con lo contado
@@ -18407,7 +18407,9 @@ function stockData(extra){
         else if(e.tipo==='sale'){ var nm=almEnStock(e.de); if(nm) o.confSale[nm]=(o.confSale[nm]||0)+e.u; }
       });
       var fd=p.fecha && p.fecha>hoy?p.fecha:hoy; // lo vencido sigue consumiendo hoy
-      o.comp+=c; o.compPor[fd]=(o.compPor[fd]||0)+c;
+      /* `compIds` (07/10): lo mismo que `compPor`, pedido por pedido, para saber de qué ZONA es cada entrega pendiente (el
+         plan de 7/15/30 días de «Banzer o PTF», `almPlanDe`). No cambia ninguna cuenta. */
+      o.comp+=c; o.compPor[fd]=(o.compPor[fd]||0)+c; o.compIds.push({ id:p.id, c:c, f:fd });
     });
   });
   (STOCK.e||[]).forEach(function(x){ if(x&&x.k&&x.fab) ultFab(grupo(x.k), x.f, x.fab); });
@@ -24618,8 +24620,168 @@ function almZonaData(){
   });
   var pri={ pasar:5, llega:4, noMas:3, datos:2, bien:1, '':0, sinConteo:0 };
   filas.sort(function(a,b){ return (pri[b.acc]-pri[a.acc]) || ((b.mover+b.luego)-(a.mover+a.luego)) || (b.u-a.u) || a.nombre.localeCompare(b.nombre); });
+  /* 🗓️ El plan de 7, 15 y 30 días (`almPlanDe`): cada pedido pendiente, de qué zona es. */
+  var porId={}, ladoDe={};
+  STATE.forEach(function(p){ if(p && p.id!=null) porId[p.id]=p; });
+  filas.forEach(function(f){ f.plan={}; ALM_PLAN_DIAS.forEach(function(H){ f.plan[H]=almPlanDe(f, H, hoy, porId, Z, ladoDe); }); });
   return { D:D, T:T, Z:Z, filas:filas, puntos:puntos, hoy:hoy, desde:desde, hayB:hayB, hayP:!!(STOCK.c && STOCK.c.f),
            km:almKm(almUbic('ptf'), almUbic('banzer')) };
+}
+/* ============================================================================
+   🗓️ EL PLAN PARA 7, 15 Y 30 DÍAS: QUÉ TENER EN CADA DEPÓSITO Y QUÉ LLEVAR (07/10, dueño)
+   *«Falta una pestaña desplegable que muestre qué tener en Banzer y qué tener en PTF… ahí solo dice "llevar a Banzer" pero no
+   muestra una lista… llevar y tener en Banzer para los próximos 7-15-30 días estos productos; tener en PTF para los 7-15-30
+   días estos productos.»* Y enseguida: *«no necesariamente el "calcular qué producir": esta lista es para saber qué stock
+   tener en cada almacén para cubrir los pedidos… netamente para saber los movimientos entre almacenes»*, *«por ahí logística
+   se lleva 30 colchones a Banzer y deja a PTF con 3 de ese modelo y necesita 13»* y *«sin cálculos de qué pedir a producción:
+   como cada día actualizan los saldos de almacén, con eso trabajan; mover más que todo a Banzer, pero sin descuidar las
+   entregas de PTF»*. O sea: SOLO reparte lo que HAY (los Excel del día); no dice cuánto falta producir.
+   CÓMO SE CUENTA, por producto y por plazo (H días, hasta hoy+H):
+     · Lo YA VENDIDO para esos días (`compIds` de `stockData`, la misma cuenta de «pendientes»), cada pedido en SU zona: su
+       pin, o su zona escrita (la que gana); «sobre la línea» y sin zona, a PTF. Sin pin ni zona, con la proporción del producto.
+     · Lo que SE VA A VENDER: el ritmo de la tabla (`porDia`, últimos 15 días, con las reglas de rotación de Stock) × H,
+       repartido con la proporción de dónde se entregó (`sB`).
+     · Tener en cada depósito = lo más alto de las dos, redondeado. Lo que rota poco, lo discontinuado y lo de pocos datos:
+       todo en PTF, como en la tabla.
+   QUÉ LLEVAR: a Banzer, primero lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»: es lo que pidió el dueño);
+   después, de Moreno (los almacenes de donde se va a buscar, `otrosAlm`). A PTF, de Moreno, contando lo ya pedido que viene en
+   camino (`stockEnCaminoSeguro`), y ANTES que a Banzer: «sin descuidar las entregas de PTF». Si a Banzer le sobra, esas
+   entregas salen de Banzer (🚫 nunca se trae de Banzer a fábrica). Lo que no se puede cubrir con lo que hay queda en
+   `faltaB`/`faltaP` y NO se muestra: el dueño no quiere cuentas de producción acá («Qué producir» es otra pestaña).
+   Solo mira: no cambia nada.
+   ========================================================================== */
+var ALM_PLAN_DIAS=[7,15,30];
+var ALM_PLAN_H=7, ALM_PLAN_VER='llevar';
+/* De qué lado sale un pedido entero: 1 = Banzer, 0 = PTF, null = no se sabe. Un pedido sale de UN depósito: con la zona
+   escrita gana el lado que más tiene; sobre la línea, PTF (adonde llega la fábrica). */
+function almLadoPedido(p, Z, cache){
+  if(!p) return null;
+  if(cache && cache[p.id]!==undefined) return cache[p.id];
+  var pt=almPunto(p), B=null;
+  if(pt){ var l=almLado(pt); B=(l.B>0.5)?1:0; }
+  else { var z=Z[almZonaClave(p.zona)]; if(z && z.n>=ALM_ZONA_MIN) B=(z.B/z.n>0.5)?1:0; }
+  if(cache) cache[p.id]=B;
+  return B;
+}
+function almPlanDe(f, H, hoy, porId, Z, cache){
+  var o=f.o, hasta=stockSumarDias(hoy, H), cB=0, cP=0, cU=0;
+  (o.compIds||[]).forEach(function(e){
+    if(!(e.f<=hasta)) return;
+    var B=almLadoPedido(porId[e.id], Z, cache);
+    if(B==null) cU+=e.c; else if(B) cB+=e.c; else cP+=e.c;
+  });
+  var esperado=(o.descont?0:(o.porDia||0))*H, tB, tP;
+  if(f.por){ tB=0; tP=Math.round(Math.max(cB+cP+cU, esperado)); }
+  else {
+    var s=f.sB;
+    tB=Math.round(Math.max(cB+cU*s, esperado*s));
+    tP=Math.round(Math.max(cP+cU*(1-s), esperado*(1-s)));
+  }
+  var hB=f.hoyB||0, hP=f.hoyP, cam=stockEnCaminoSeguro(o);
+  var r={ H:H, hasta:hasta, tB:tB, tP:tP, firmeB:f.por?0:cB, firmeP:f.por?(cB+cP+cU):cP, firmeU:f.por?0:cU, hB:hB, hP:hP, cam:cam,
+          pasar:0, deM:[], cubreB:0, faltaB:0, faltaP:0, sinConteo:(hP==null) };
+  if(hP==null) return r;                       // sin el Excel de PTF no se sabe qué le sobra ni qué le falta
+  var faltaB=Math.max(0, tB-hB), sobraP=Math.max(0, hP-tP);
+  r.pasar=Math.min(faltaB, sobraP);            // solo lo que a PTF le SOBRA: nunca lo deja debajo de lo suyo
+  var faltaP=Math.max(0, tP-hP-cam), sobraB=Math.max(0, hB-tB);
+  r.cubreB=Math.min(faltaP, sobraB);           // a Banzer le sobra: esas entregas salen de Banzer, no se trae nada
+  var alms=Object.keys(o.otrosAlm||{}).filter(function(nm){ return (o.otrosAlm[nm]||0)>=1; })
+    .sort(function(a,b){ return (o.otrosAlm[b]-o.otrosAlm[a]) || (a<b?-1:1); });
+  var quedan={}; alms.forEach(function(nm){ quedan[nm]=Math.floor(o.otrosAlm[nm]+1e-9); });
+  var tomar=function(n, a){
+    alms.forEach(function(nm){ if(n<=0) return; var t=Math.min(n, quedan[nm]); if(t>0){ r.deM.push({ de:nm, a:a, u:t }); quedan[nm]-=t; n-=t; } });
+    return n;
+  };
+  r.faltaP=tomar(faltaP-r.cubreB, 'PTF');      // primero PTF: de ahí sale la mayoría de los camiones
+  r.faltaB=tomar(faltaB-r.pasar, 'Banzer');
+  return r;
+}
+function almPlanMovido(r){ var n=r.pasar; (r.deM||[]).forEach(function(m){ n+=m.u; }); return n; }
+function almPlanHace(r){ return !r.sinConteo && (r.pasar>0 || (r.deM||[]).length>0); }
+function almPlanSetH(H){ ALM_PLAN_H=H; almPintarPlan(); }
+function almPlanSetVer(v){ ALM_PLAN_VER=v; almPintarPlan(); }
+function almPlanFilas(A, H){
+  return A.filas.filter(function(f){ var r=f.plan&&f.plan[H]; return r && (r.tB+r.tP)>0 && almBuscaFila(f); })
+    .sort(function(a,b){
+      var ra=a.plan[H], rb=b.plan[H];
+      return (almPlanMovido(rb)-almPlanMovido(ra)) || (rb.pasar-ra.pasar) || ((rb.tB+rb.tP)-(ra.tB+ra.tP)) || a.nombre.localeCompare(b.nombre);
+    });
+}
+function almPlanMovTxt(r, html){
+  var b=function(t){ return html?('<b>'+t+'</b>'):t; }, L=[];
+  if(r.pasar>0) L.push('🚚 Llevar '+b(stockUnid(r.pasar))+' de PTF a Banzer · PTF queda con '+b(stockUnid(r.hP-r.pasar)));
+  (r.deM||[]).forEach(function(m){ L.push('📥 Traer '+b(stockUnid(m.u))+' de '+stockAlmCorto(m.de)+' a '+m.a); });
+  if(r.cubreB>0) L.push('↪️ '+stockUnid(r.cubreB)+' de las entregas de PTF pueden salir de Banzer (le sobran)');
+  return L;
+}
+/* Sin nada para mover: ¿cada uno tiene lo suyo, o no hay de dónde sacar? Solo con lo que HAY (sin producción). */
+function almPlanQuietoTxt(r){
+  return (r.faltaB+r.faltaP>0) ? 'Nada para mover: no hay de más en PTF ni en Moreno' : '✓ Cada depósito tiene lo suyo';
+}
+function almPintarPlan(){
+  var A=ALM_DATA, el=document.getElementById('alm-plan-in'); if(!A || !el) return;
+  var H=ALM_PLAN_H, todas=almPlanFilas(A, H), hacen=todas.filter(function(f){ return almPlanHace(f.plan[H]); });
+  var filas=(ALM_PLAN_VER==='llevar')?hacen:todas;
+  var t={ tB:0, hB:0, tP:0, hP:0, pasar:0, deM:0 };
+  todas.forEach(function(f){ var r=f.plan[H]; t.tB+=r.tB; t.hB+=r.hB; t.tP+=r.tP; t.hP+=(r.hP||0); t.pasar+=r.pasar; t.deM+=almPlanMovido(r)-r.pasar; });
+  var chipH=ALM_PLAN_DIAS.map(function(d){
+    var on=(d===H);
+    return '<button type="button" onclick="almPlanSetH('+d+')" style="border:1px solid '+(on?'#1e3a5f':'var(--gray-md)')+';background:'+(on?'#1e3a5f':'#fff')+';color:'+(on?'#fff':'#1e3a5f')+';border-radius:16px;padding:5px 12px;font-weight:800;font-size:.84rem;cursor:pointer">'+d+' días <span style="font-weight:600;opacity:.8">· hasta el '+fmtFechaCorta(stockSumarDias(A.hoy, d))+'</span></button>';
+  }).join('');
+  var chipV=[{k:'llevar',t:'Qué llevar',n:hacen.length},{k:'todo',t:'Todo el plan',n:todas.length}].map(function(c){
+    var on=(ALM_PLAN_VER===c.k);
+    return '<button type="button" onclick="almPlanSetVer(\''+c.k+'\')" style="border:1px solid '+(on?'#0f766e':'var(--gray-md)')+';background:'+(on?'#0f766e':'#fff')+';color:'+(on?'#fff':'#0f766e')+';border-radius:16px;padding:4px 11px;font-weight:700;font-size:.8rem;cursor:pointer">'+c.t+' ('+c.n+')</button>';
+  }).join('');
+  var h='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'+chipH+
+      '<button type="button" class="btn btn-sm" style="width:auto;margin-left:auto;background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="almCopiarPlan()">📋 Copiar el plan de '+H+' días</button></div>'+
+    '<div style="font-size:.85rem;color:#1e3a5f;line-height:1.55;margin-bottom:8px">Para las entregas de los próximos <b>'+H+' días</b>: '+
+      '<b style="color:'+ALM_COLOR.B+'">🏪 Banzer tener '+stockUnid(t.tB)+'</b> (hay '+stockUnid(t.hB)+') · '+
+      '<b style="color:'+ALM_COLOR.P+'">🏭 PTF tener '+stockUnid(t.tP)+'</b> (hay '+stockUnid(t.hP)+')'+
+      (t.pasar?(' · 🚚 llevar <b>'+stockUnid(t.pasar)+'</b> de PTF a Banzer'):'')+
+      (t.deM?(' · 📥 traer <b>'+stockUnid(t.deM)+'</b> de Moreno'):'')+'</div>'+
+    '<div style="font-size:.78rem;color:var(--muted);line-height:1.45;margin-bottom:8px">«Tener» = lo ya vendido para esos días en cada zona, o lo que se vende al ritmo de los últimos 15 días (lo más alto). '+
+      'Se reparte solo lo que hay hoy según los Excel del día: a Banzer va lo que a PTF le sobra de lo suyo, y PTF nunca baja de su «tener». Qué producir está en «Qué producir».</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+chipV+'</div>';
+  if(!filas.length){
+    el.innerHTML=h+'<div style="padding:10px;color:var(--muted);font-size:.86rem">'+(ALM_Q?'Ningún producto con esa búsqueda.'
+      :ALM_PLAN_VER==='llevar'?('✓ Para '+H+' días no hay nada que llevar: cada depósito tiene lo suyo. Mirá «Todo el plan» para ver qué tener en cada uno.')
+      :'Ningún producto para tener en estos días.')+'</div>';
+    return;
+  }
+  h+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:680px"><thead><tr>'+
+    '<th style="width:28%">Producto</th><th style="width:17%">🏪 Banzer</th><th style="width:17%">🏭 PTF (no bajar de)</th><th style="width:38%">Qué llevar</th></tr></thead><tbody>'+
+    filas.map(function(f){
+      var r=f.plan[H], o=f.o;
+      var lado=function(tener, hay, firme, col, extra){
+        return '<span style="color:'+col+'">tener <b style="font-size:1.05em">'+stockUnid(tener)+'</b></span><br><span style="font-size:.86em;color:var(--muted)">hay '+(hay==null?'?':stockUnid(hay))+
+          (firme>0?(' · '+stockUnid(firme)+' ya vendido'+(firme===1?'':'s')):'')+(extra||'')+'</span>';
+      };
+      var quieto=almPlanQuietoTxt(r);
+      var mov=r.sinConteo ? '<span style="color:var(--muted)">Sin el Excel de PTF: no se sabe qué sobra</span>'
+        : (almPlanMovTxt(r, true).join('<br>') || ('<span style="color:'+(/^✓/.test(quieto)?'#0a6b47':'var(--muted)')+'">'+quieto+'</span>'));
+      return '<tr><td><b>'+esc(f.nombre)+'</b>'+(o.cod?('<br><span style="font-size:.86em;color:var(--muted)">'+esc(o.cod)+'</span>'):'')+
+          (f.por==='poca'?'<br><span style="font-size:.84em;color:var(--muted)">se vende poco: todo en PTF</span>':f.por==='descont'?'<br><span style="font-size:.84em;color:#8a1c24">ya no se fabrica: todo en PTF</span>':f.por==='datos'?'<br><span style="font-size:.84em;color:var(--muted)">pocas entregas ubicadas: todo en PTF</span>':'')+'</td>'+
+        '<td>'+lado(r.tB, r.hB, r.firmeB, ALM_COLOR.B)+'</td>'+
+        '<td>'+lado(r.tP, r.hP, r.firmeP, ALM_COLOR.P, r.cam>0?(' · +'+stockUnid(r.cam)+' en camino'):'')+'</td>'+
+        '<td>'+mov+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  el.innerHTML=h;
+}
+/* El plan del plazo elegido, para mandar a logística: qué llevar, de dónde, y qué tener en cada depósito. */
+function almCopiarPlan(){
+  var A=ALM_DATA||almZonaData(), H=ALM_PLAN_H, filas=almPlanFilas(A, H);
+  if(!filas.length){ toast('Para '+H+' días no hay nada que tener en ningún depósito.','ok',5000); return; }
+  var con=function(fn){ return filas.filter(function(f){ return fn(f.plan[H]); }); };
+  var pasar=con(function(r){ return r.pasar>0; }), deM=con(function(r){ return (r.deM||[]).length>0; });
+  var tenerB=con(function(r){ return r.tB>0; }).sort(function(a,b){ return (b.plan[H].tB-a.plan[H].tB) || a.nombre.localeCompare(b.nombre); });
+  var tenerP=con(function(r){ return r.tP>0; }).sort(function(a,b){ return (b.plan[H].tP-a.plan[H].tP) || a.nombre.localeCompare(b.nombre); });
+  var t='🗓️ PLAN DE STOCK · próximos '+H+' días (hasta el '+fmtFechaCorta(stockSumarDias(A.hoy, H))+') — '+fmtFecha(A.hoy)+'\n'+
+    'Para las entregas de cada zona: lo ya vendido para esos días o lo que se vende al ritmo de los últimos 15 días (lo más alto).\n';
+  if(pasar.length) t+='\n🚚 LLEVAR DE PTF A BANZER (PTF no baja de lo suyo)\n'+pasar.map(function(f){ var r=f.plan[H]; return '• '+f.nombre+': '+stockUnid(r.pasar)+' (PTF queda con '+stockUnid(r.hP-r.pasar)+')'; }).join('\n')+'\n';
+  if(deM.length) t+='\n📥 TRAER DE MORENO\n'+deM.map(function(f){ return f.plan[H].deM.map(function(m){ return '• '+f.nombre+': '+stockUnid(m.u)+' a '+m.a+(recogerCanon(m.de)?(' (de '+stockAlmCorto(m.de)+')'):''); }).join('\n'); }).join('\n')+'\n';
+  if(tenerB.length) t+='\n🏪 TENER EN BANZER\n'+tenerB.map(function(f){ var r=f.plan[H]; return '• '+f.nombre+': '+stockUnid(r.tB)+' (hay '+stockUnid(r.hB)+')'; }).join('\n')+'\n';
+  if(tenerP.length) t+='\n🏭 TENER EN PTF (no bajar de esto)\n'+tenerP.map(function(f){ var r=f.plan[H]; return '• '+f.nombre+': '+stockUnid(r.tP)+' (hay '+(r.hP==null?'?':stockUnid(r.hP))+')'; }).join('\n')+'\n';
+  copyText(t.trim());
 }
 function almVerFila(f){
   if(ALM_VER==='hacer') return f.acc==='pasar' || f.acc==='llega' || f.acc==='noMas';
@@ -24647,7 +24809,7 @@ function almAbierto(){ var ov=document.getElementById('alm-overlay'); return !!(
 function almRefrescar(){ ALM_DATA=almZonaData(); almPintar(); }
 function almSetVer(v){ ALM_VER=v; almPintarTabla(); }
 var ALM_Q_TIMER=null;
-function almBuscar(v){ clearTimeout(ALM_Q_TIMER); ALM_Q_TIMER=setTimeout(function(){ ALM_Q=String(v||'').trim(); almPintarTabla(); }, 180); }
+function almBuscar(v){ clearTimeout(ALM_Q_TIMER); ALM_Q_TIMER=setTimeout(function(){ ALM_Q=String(v||'').trim(); almPintarTabla(); almPintarPlan(); }, 180); }
 function almVerProducto(k){
   ALM_K=(ALM_K===k)?'':k;
   almPintarTabla(); almPintarMapa(true);
@@ -24656,7 +24818,12 @@ function almVerProducto(k){
 function almPintar(){
   var A=ALM_DATA, body=document.getElementById('alm-body'); if(!A || !body) return;
   if(!document.getElementById('alm-mapa')){
+    /* 🗓️ (07/10) El plan de 7/15/30 días va desplegable («una pestaña desplegable», el dueño), arriba de todo para que se vea
+       sin bajar; el <details> se arma UNA vez y solo se repinta lo de adentro (`almPintarPlan`), así no se cierra solo. */
     body.innerHTML='<div id="alm-resumen"></div>'+
+      '<details id="alm-plan" style="background:#fff;border:2px solid #0f766e;border-radius:11px;margin-bottom:14px">'+
+        '<summary style="cursor:pointer;padding:11px 14px;font-weight:800;font-size:.98rem;color:#0f766e">🗓️ Qué tener en Banzer y en PTF para 7, 15 y 30 días, y qué llevar</summary>'+
+        '<div id="alm-plan-in" style="padding:0 14px 12px"></div></details>'+
       '<div id="alm-mapa-caja" style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:10px 12px;margin-bottom:14px">'+
         '<div id="alm-mapa-tit" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin-bottom:8px"></div>'+
         '<div id="alm-mapa" style="height:46vh;min-height:260px;border-radius:8px;background:#e5e7eb"></div></div>'+
@@ -24666,6 +24833,7 @@ function almPintar(){
   document.getElementById('alm-zonas').innerHTML=almZonasHtml(A);
   document.getElementById('alm-pie').innerHTML=almPieHtml(A);
   almPintarTabla();
+  almPintarPlan();
   almPintarMapa(true);
   var inf=document.getElementById('alm-info');
   if(inf) inf.textContent='entregas del '+fmtFechaCorta(A.desde)+' al '+fmtFechaCorta(A.hoy)+' · PTF y Banzer a '+almKmTxt(A.km)+' en línea recta';

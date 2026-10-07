@@ -7445,6 +7445,45 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hv. 07/10 a la noche: 🗓️ «Banzer o PTF» — el plan desplegable de 7, 15 y 30 días: qué tener en cada depósito y qué llevar — EN LA RAMA, SIN PUBLICAR
+El dueño, con la pantalla de §4ht publicada, en varios mensajes seguidos: *«falta una pestaña desplegable que muestre qué tener
+en Banzer y qué tener en PTF, porque ahí solo dice "llevar a Banzer" pero no muestra una lista… pensar a futuro y llevar en masa:
+llevar y tener en Banzer para los próximos 7-15-30 días estos productos, tener en PTF para los 7-15-30 días estos productos»*;
+*«no necesariamente el "calcular qué producir": esta lista es para saber qué stock tener en cada almacén para cubrir los
+pedidos… ya tenemos otra pestaña que nos dice qué producir»*; *«netamente para saber los movimientos entre almacenes y tener en
+almacén lo necesario para cubrir las entregas de las zonas que estamos armando»*; *«por ahí logística se lleva 30 colchones a
+Banzer y deja a PTF con 3 de ese modelo y necesita 13»*; *«sin cálculos de qué pedir a producción: como cada día actualizan los
+saldos de almacén, con eso trabajan; mover más que todo a Banzer, pero sin descuidar las entregas de PTF»*; *«no es que cada
+día llevan a Banzer: se prevén un día y llevan el stock para entregar miércoles, jueves, viernes»*; *«en resumen, según la
+rotación por entregas… qué tener para todo el mes o los próximos 15 días en cada almacén, previendo las entregas y zonas»*.
+- **Dónde**: `<details id="alm-plan">` arriba de todo en «📍 Banzer o PTF» (debajo del resumen, antes del mapa), cerrado; se
+  arma UNA vez con el esqueleto (`almPintar`) y solo se repinta lo de adentro (`#alm-plan-in`, `almPintarPlan`): una lectura
+  nueva no lo cierra ni cambia el plazo. La búsqueda de arriba lo filtra también (`almBuscar`).
+- **La cuenta, por producto y plazo** (`ALM_PLAN_DIAS=[7,15,30]`, `almPlanDe(f, H, hoy, porId, Z, cache)`):
+  · **Lo ya vendido para esos días, en SU zona**: `stockData` anota ahora `o.compIds` (`{id, c, f}`) donde suma `comp` (las DOS
+    líneas: lo de siempre y lo 🏭 llegado y contado); no cambia ninguna cuenta (`test_banzer_ptf` §12 verifica que suma igual
+    que `comp` en todos los productos). Cada pedido sale de UN depósito (`almLadoPedido`): su pin, o su zona escrita (gana el
+    lado mayor); «sobre la línea» = PTF; sin pin ni zona, con la proporción del producto.
+  · **Lo que se va a vender**: `porDia` (el ritmo de la tabla, 15 días, reglas de rotación de Stock) × H, repartido con `sB`.
+  · **Tener** en cada depósito = lo más alto de las dos, redondeado (`Math.round`, cada lado por su cuenta: 7 ≤ 15 ≤ 30).
+    `f.por` (rota poco, discontinuado, pocos datos): todo en PTF, como la tabla.
+- **Qué llevar** (con lo que HAY: los Excel del día; `f.hoyP`, `f.hoyB`, `o.otrosAlm`): a Banzer primero lo que a PTF le
+  **sobra de lo suyo** (`pasar = min(faltaB, hoyP − tP)`: PTF nunca baja de su «tener» — el «deja a PTF con 3 y necesita 13» del
+  dueño) y después de Moreno; a PTF, de Moreno, contando lo ya pedido en camino (`stockEnCaminoSeguro`), y ANTES que a Banzer
+  («sin descuidar las entregas de PTF»). Si a Banzer le sobra y a PTF le falta: «N de las entregas de PTF pueden salir de
+  Banzer» (`cubreB`; 🚫 nunca llevar de Banzer a PTF). Lo que no se cubre queda en `faltaB`/`faltaP` y **no se muestra**: el
+  dueño no quiere cuentas de producción acá; la fila dice «Nada para mover: no hay de más en PTF ni en Moreno».
+- **Pantalla**: plazos 7 / 15 / 30 días (con «hasta el …»), «Qué llevar» (las filas con algo que mover) / «Todo el plan»; total
+  arriba (Banzer tener/hay, PTF tener/hay, llevar, traer de Moreno); por fila «🏪 Banzer: tener · hay · N ya vendidos», «🏭 PTF
+  (no bajar de): tener · hay · +N en camino» y «Qué llevar» («🚚 Llevar 6 de PTF a Banzer · PTF queda con 4», «📥 Traer 2 de
+  Moreno a Banzer»). **«📋 Copiar el plan de N días»** (`almCopiarPlan`): LLEVAR DE PTF A BANZER (con lo que queda en PTF), TRAER
+  DE MORENO, TENER EN BANZER, TENER EN PTF (no bajar de esto). Sin «producir» ni «no alcanza».
+- La tabla de abajo («Conviene tener», «Pasar N a Banzer») no cambió: es la cuenta de Stock (fábrica + margen + reserva); el
+  plan es por plazo. Pueden dar números distintos a propósito.
+- `test_banzer_ptf` §12 (24 nuevas → 80; contra `07c4db3` la §12 no existe: 1 roja y se saltea): las cuentas a mano de los
+  cinco productos en los tres plazos, PTF nunca debajo de lo suyo, Moreno primero a PTF, nunca de Banzer a PTF, sin palabras de
+  producción, el desplegable que no se cierra solo, la copia, y 390 px.
+
 ## 4hu. 07/10: 🧾 Mis pedidos — el número de nota en la tarjeta y en la ficha, solo para Eduardo — PUBLICADA 07/10 17:50 (`07c4db3`, Pages OK 17:50, run 37692171570; el dueño: «cuando terminen publica»; batería 138 suites, 5.204 bien · 0 mal)
 El dueño, 07/10 a la noche, con una captura de «Mis pedidos» elegido como él (seis pedidos a MULTICENTER): *«en mis
 pedidos las fichas de mis pedidos no muestran el nro de nota, ejemplo eduardo no puede saber qué número de OC es. Que solo a

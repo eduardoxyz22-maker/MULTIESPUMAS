@@ -362,6 +362,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     píxeles (15 px), `zoomSnap:0.25`.
     · `tests/test_banzer_ptf.js` (56, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado; §11 = la línea del
     dueño). Batería con la línea: 137 suites, 5.185, 0 rojas.
+    · **🗓️ El plan desplegable de 7, 15 y 30 días** (§4hv, 07/10 noche; EN LA RAMA, SIN PUBLICAR; dueño: *«qué tener en Banzer y
+    qué tener en PTF para los próximos 7-15-30 días… sin cálculos de qué pedir a producción… mover más que todo a Banzer pero sin
+    descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo: lo ya vendido
+    para esos días en SU zona (`o.compIds`, nuevo en `stockData`, suma igual que `comp`; `almLadoPedido`) o `porDia`×días repartido
+    con `sB`, lo más alto, cada lado. Llevar: a Banzer solo lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»), después
+    Moreno; a PTF, Moreno primero. Nunca de Banzer a PTF (`cubreB`: «pueden salir de Banzer»). Lo que no alcanza NO se muestra
+    (nada de producción). «📋 Copiar el plan de N días» (`almCopiarPlan`). `test_banzer_ptf` §12 (→ 80).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
