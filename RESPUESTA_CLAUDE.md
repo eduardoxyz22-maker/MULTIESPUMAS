@@ -2745,8 +2745,9 @@ existe. Batería entera: 137 suites, 5.175 bien · 0 mal.
 
 ### 6. Esperan al dueño
 1. Confirmar el punto de Banzer en el mapa (si no cae bien, mandar las coordenadas → se cambian en `ALM_UBIC` y se saca `aprox`).
-2. Si la revisión automática debe elegir el depósito MÁS CERCA de cada entrega. Hoy no cambió: PTF → Banzer → IM (regla del dueño,
-   21/09, «no se toca sin que lo pida»).
+2. ~~Si la revisión automática debe elegir el depósito MÁS CERCA de cada entrega.~~ **Respondido (07/10): «aún no porque debemos definir
+   bien con logística las zonas que abarca cada almacén»**. Sigue PTF → Banzer → IM. Cuando logística defina zona → depósito, esa
+   lista puede reemplazar la línea recta de la pantalla (y, si el dueño lo pide, alimentar la revisión automática).
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
 

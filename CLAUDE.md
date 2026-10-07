@@ -350,7 +350,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     tienda cuenta para el tener (es rotación) pero no para el lado. Se reparte con la proporción; lo que rota poco y lo
     discontinuado no (todo en PTF); < 3 unidades ubicadas = «pocos datos».
     · Acciones: «🚚 Pasar N a Banzer» solo con lo que a PTF le sobra de lo suyo; «🏭 lo próximo que llegue»; «✋ no mandar más».
-    🚫 **Nunca traer de Banzer a fábrica** (dueño, 26/09). La revisión automática NO cambió (PTF → Banzer → IM, 21/09).
+    🚫 **Nunca traer de Banzer a fábrica** (dueño, 26/09). La revisión automática NO cambió (PTF → Banzer → IM, 21/09) y **no se
+    cambia todavía** (dueño, 07/10: *«aún no porque debemos definir bien con logística las zonas que abarca cada almacén»*): cuando
+    logística defina zona → depósito, esa lista puede reemplazar la línea recta y, si el dueño lo pide, alimentar la revisión.
     · Los enlaces cortos que el panel no lee los abre el servidor en segundo plano (`almGeoPedir`: tandas de 20, los más nuevos
     primero, una vez por apertura de la página); lo abierto va a `MAPA_COORDS` y al teléfono. El 07/10 el servidor abrió 12 de 12
     enlaces de clientes: solo fallan los de lugares con nombre.
