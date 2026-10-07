@@ -14858,7 +14858,8 @@ function renderMis(){
   empty.style.display='none'; tbl.style.display='';
   /* (26/09) El corte en 120 era callado: el chip decía «📋 Todos 300» y abajo no había nada que
      dijera que faltaban 180. Ahora lo dice y deja ver más. */
-  tbl.innerHTML=lista.slice(0,MIS_TOPE).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('')+
+  var verNota=misVeNota(v);                         // (07/10) la nota de venta, solo a Eduardo
+  tbl.innerHTML=lista.slice(0,MIS_TOPE).map(function(p,i){ return misCardHtml(p, i+1, todos, verNota); }).join('')+
     (lista.length>MIS_TOPE ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
       'Se ven los '+MIS_TOPE+' más nuevos de '+lista.length+'. '+
       '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="MIS_TOPE+=120;renderMis()">Ver '+Math.min(120, lista.length-MIS_TOPE)+' más</button></div>') : '');
@@ -14874,9 +14875,26 @@ function choferTexto(p){
 /* ⏳ (26/09) ¿Espera en la cola de ESTE dispositivo? El cartel de arriba contaba cuántos, pero la ficha
    era igual a las demás: nada decía CUÁL no está en la planilla (ni en la ventana, de donde se copia). */
 function enColaLocal(id){ var a=getPending(); for(var i=0;i<a.length;i++) if(a[i] && String(a[i].id)===String(id)) return true; return false; }
+/* 🧾 (07/10, dueño: «en mis pedidos las fichas no muestran el nro de nota… eduardo no puede saber qué número de OC es.
+   Que solo a Eduardo muestre también número de nota») La «OC 10-050» de la tarjeta es la serie del panel; el número que
+   él busca es el que se carga en «N° Nota de venta». Lo ven en la tarjeta y en la ficha de Mis pedidos SOLO los nombres
+   de esta lista (el que está elegido en Mis pedidos); las vendedoras siguen viendo lo de siempre. */
+var MIS_VE_NOTA=['Eduardo Añez'];
+function misVeNota(v){
+  if(v===undefined) v=misVendedorSel();
+  return MIS_VE_NOTA.some(function(n){ return mismoVendedor(v, n); });
+}
+/* Ni la ATC ni la RPT llevan nota de venta (el formulario esconde el campo, §4bt, §4dk). Sin nota se DICE: si no, una
+   tarjeta sin el número se ve igual que antes y no se sabe si falta cargarlo. */
+function misNotaTxt(p){
+  if(esATC(p.oc) || esRPT(p.oc)) return '';
+  // El «·» va pegado a la nota: con una zona larga la línea se parte ANTES del «·», no entre el «·» y la nota.
+  return ' <span style="white-space:nowrap">· '+(p.nota ? ('<b style="color:var(--text)">Nota '+esc(p.nota)+'</b>') : 'sin nota')+'</span>';
+}
 /* Tarjeta de "Mis pedidos", con la misma pinta que las del chofer: se lee de un vistazo
    en el celular, que es donde las vendedoras miran esto. */
-function misCardHtml(p, n, todos){
+function misCardHtml(p, n, todos, verNota){
+  if(verNota===undefined) verNota=misVeNota();
   var prod=(p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no')       t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
@@ -14902,7 +14920,7 @@ function misCardHtml(p, n, todos){
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
         '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(fechaSalida(p)))+   // (26/09) la de tienda, el día que se vendió
-          (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
+          (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+(verNota?misNotaTxt(p):'')+'</div></div>'+
       docChip(p)+
       (enColaLocal(p.id)?'<span class="badge b-amber" title="Todavía no llegó a la planilla: está en la cola de este dispositivo y se manda solo">⏳ sin enviar</span>':'')+   // (26/09)
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
@@ -15047,7 +15065,9 @@ function showMisModal(id){
       ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
       : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
-  var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+  var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
+      ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
+    '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+botonesRpt(p)+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+

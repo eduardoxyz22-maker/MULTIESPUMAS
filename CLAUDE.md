@@ -338,7 +338,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     el campo dentro de la tabla (quedaba 1.100-1.400 px abajo, nadie lo encontraba) ni a mover el cursor al final en el refoco
     de `renderStock`: la barra no se redibuja, el cursor se queda donde está. `stockFiltroLimpiar` vacía también el campo de
     arriba y `abrirStock` lo sincroniza con `STOCK_FILTRO.q`. `tests/test_stock_buscador.js` (22; 9 rojas contra `64bcb37`).
-  - **📍 Banzer o PTF: qué tener en cada depósito según dónde se entrega** (§4ht, 07/10, PUBLICADA 07/10 15:10, `2c5ad8c`; informe para Codex en `RESPUESTA_CLAUDE.md` §33; dueño: *«según
+  - **📍 Banzer o PTF: qué tener en cada depósito según dónde se entrega** (§4ht, 07/10, PUBLICADA 07/10 15:10, `2c5ad8c`; la línea del dueño, 17:33, `faff9a0`; informe para Codex en `RESPUESTA_CLAUDE.md` §33; dueño: *«según
     los focos de calor de entrega y rotación… tener el stock a la mano según la zona de entrega»*). Botón en la barra de Stock →
     `abrirAlm` (`#alm-overlay`, z 3100). **Solo mira**: no marca pedidos ni toca stock ni planilla.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:
@@ -361,7 +361,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     · Filtro «🏪 Tener en Banzer» y el texto para logística arranca con «TENER EN BANZER (lo demás, en PTF)». Mapa: manchas en
     píxeles (15 px), `zoomSnap:0.25`.
     · `tests/test_banzer_ptf.js` (56, reloj clavado en el 07/10, Leaflet de mentira que anota lo dibujado; §11 = la línea del
-    dueño). Batería: 137 suites, 5.175, 0 rojas (antes de la línea).
+    dueño). Batería con la línea: 137 suites, 5.185, 0 rojas.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
@@ -949,6 +949,10 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Mis pedidos** (dueño, 26/09): los números cuentan por la fecha de ENTREGA y el cartel lo dice («pedidos que se
   entregan hoy», «se entregan este mes», «saldo de lo que se entrega este mes»); las ventas de tienda no entran. Los
   botones de filtro (`#mis-chips`) van JUSTO ARRIBA de `#mis-lista`, debajo de los números.
+- **🧾 La nota de venta en Mis pedidos, SOLO para Eduardo** (§4hu, 07/10, dueño: *«que solo a eduardo muestre tb número de
+  nota»*; EN LA RAMA, SIN PUBLICAR): `MIS_VE_NOTA`/`misVeNota(v)` deciden por el nombre ELEGIDO en Mis pedidos (no por el
+  vendedor del pedido); `misNotaTxt` pone «· Nota N» al lado de la OC (o «· sin nota»; nada en ATC/RPT) y la ficha
+  (`showMisModal`) lo dice arriba. Las vendedoras no lo ven. `tests/test_mis_nota.js` (19; 8 rojas contra `faff9a0`).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
 - **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
