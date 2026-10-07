@@ -2714,6 +2714,11 @@ abrió los 12. Lo que falla es solo el enlace de un lugar con nombre.
   llegue»), `llega` (a PTF no le sobra), `noMas` (Banzer tiene más que lo suyo, o tiene algo de lo que no se reparte), `bien`,
   `datos`, `sinConteo`. **Nunca** se propone traer de Banzer a fábrica (regla del dueño, 26/09).
 
+**✏️ Cambio del 07/10 (después de publicar, «probemos la A»)**: el lado ya no es «el más cerca». El dueño dibujó la división sobre el
+mapa real y eligió usarla: `ALM_DIVISION` (23 puntos de norte a sur), `almLadoDeLinea` (distancia con signo perpendicular al tramo:
+oeste → Banzer, este → PTF, franja de 0,5 km = mitad y mitad, puntas estiradas). Sin línea, vuelve «el más cerca». Cuando logística
+defina zona → depósito, esas zonas van a mandar sobre la línea. `test_banzer_ptf` §11.
+
 ### 3. La pantalla
 Resumen (entregas, % por lado, cómo se ubicaron, avisos de Banzer aproximado y de Excel faltante); mapa Leaflet (`preferCanvas`,
 `zoomSnap:0.25`): los dos depósitos con tooltip permanente, cada entrega con el color de su lado + una mancha de 15 px (en
