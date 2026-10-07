@@ -7445,7 +7445,80 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — EN LA RAMA, sin publicar
+## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega (EN LA RAMA, SIN PUBLICAR)
+El dueño, 07/10: *«Necesitamos saber, medir y determinar qué productos debemos tener en almacén banzer y que en almacén
+productos terminados fabrica, según los focos de calor de entrega y rotación para ser más eficientes y tener el stock a la
+mano según la zona de entrega»*. Se le propuso (60 días de entregas por el pin de Maps o la zona; cada entrega cuenta para el
+depósito más cerca; el total sale de la cuenta de Stock y se reparte con la proporción; lo que rota poco no se reparte; tabla
+y mapa en Stock; nunca traer de Banzer a fábrica) y lo aprobó mandando los dos enlaces de Maps.
+
+**📍 Dónde quedan los depósitos (`ALM_UBIC`).** Los enlaces que mandó (`maps.app.goo.gl/…?g_st=ic`) son de LUGARES con nombre
+(negocios), y Google ya no le da el pin a un programa: redirige a `maps.google.com?q=<nombre y dirección>&ftid=…` y la página
+final (~800 KB) no trae ni un par de coordenadas. El servidor (`resolveLinks`) tampoco pudo abrirlos (corridas 17-20 del
+«Diagnóstico de la lectura del panel», que se usó para salir a internet: desde esta sesión el proxy no abre `maps.app.goo.gl`).
+- **PTF, exacto**: el `q=` trae su Plus Code (`7V24+CRP MULTIESPUMAS VISCARRA S.R.L., Av. Quinto Anillo`) → `olcCoords` =
+  −17.7489125, −63.1429219 (el geocodificador del servidor dio lo mismo a 1 m).
+- **Banzer, aproximado** (`aprox:true`): solo la dirección escrita («Vaca Fria 8vo anillo, Av Viru Viru 2») → geocodificador del
+  servidor = −17.7197548, −63.1631138. La pantalla lo dice y pide avisar si el punto del mapa no cae en su lugar. Si el dueño
+  manda las coordenadas (mantener apretado en Maps), se cambian en `ALM_UBIC` y se saca `aprox`.
+- El `ftid` NO es una celda S2 decodificable (probado: da 4-6 km de error). No volver a intentarlo.
+- Quedan a **3,9 km** en línea recta: PTF al este (5to anillo), Banzer al norte (8vo anillo).
+
+**📊 ¿Alcanzan las ubicaciones?** El diagnóstico cuenta (solo números, el registro es público): de **699** entregas con fecha en
+los últimos 60 días, **427** tienen enlace —311 con las coordenadas adentro (el panel las lee sin internet), 103 enlaces cortos
+y 13 de otra forma— y **272** no tienen, de las cuales **248** tienen zona escrita. Una muestra de los **12 enlaces cortos más
+nuevos**: el servidor abrió **12 de 12** en 5,4 s. O sea: lo que falla es solo el enlace de un LUGAR con nombre; los de los
+clientes (un punto marcado) se abren bien. No hace falta tocar el `.gs`.
+
+**Cómo mide** (`almZonaData`, todo en la página, solo mira):
+- Las entregas de los últimos `ALM_ZONA_DIAS`=60 días (por fecha de entrega, hasta hoy) que **miden la rotación**, con las
+  reglas de la tabla de Stock: `stockCuenta` (sin filas del sistema, borradores ni ATC), sin ventas de tienda (`esVentaTienda`:
+  no tienen dirección), sin `stockPedidoUnico` (RPT, puntuales, Eduardo salvo a Multicenter) y sin productos de tienda.
+- El lado de cada entrega: el pin (`almPunto` = `MAPA_COORDS` o `coordsDeLink`; a más de `KM_SOSPECHOSO` no cuenta) → el depósito
+  más cerca en línea recta (`almLado`, `almKm`); con menos de `ALM_EMPATE_KM`=1 km de diferencia, **mitad y mitad** («en el
+  medio»). Sin pin, la **zona escrita** repartida como sus pedidos CON pin (`almZonas`: toda la planilla, sin mayúsculas ni
+  acentos, mínimo `ALM_ZONA_MIN`=3 con pin). Sin pin ni zona conocida, no cuenta y se dice cuántas son.
+- Por **unidades** (el stock se gasta por unidad).
+- **Cuánto tener** = `stockNecesario(o)` = `max(comp, porDia × (fábrica + margen + reserva))`: la MISMA cuenta de
+  `stockCuantoPedir`, sacada a una función (el test comprueba que «cuánto pedir» da lo mismo que antes). ⚠️ Por eso la **venta de
+  tienda SÍ cuenta para el tener** (es rotación en Stock) aunque no cuente para el lado. Lo discontinuado: solo lo vendido.
+- **Reparto**: `objB = round(tener × proporción Banzer)`, `objP = tener − objB`. No se reparte (todo en PTF, que es a donde llega de
+  fábrica) lo que rota poco (`baja`) y lo discontinuado; con menos de `ALM_MIN_UNID`=3 unidades ubicadas, «pocos datos: queda como
+  está».
+- **Qué hacer**: `pasar` = «🚚 Pasar N a Banzer» solo con lo que a PTF le SOBRA de lo suyo (`hoyP − objP`), y lo que falta «de lo
+  próximo que llegue»; `llega` = «🏭 Lo próximo que llegue: N a Banzer» (a PTF no le sobra); `noMas` = «✋ No mandar más a Banzer»
+  (Banzer tiene más que lo suyo, o tiene algo de un producto que rota poco). 🚫 **Nunca** se propone traer de Banzer a fábrica
+  (dueño, 26/09). `bien`, `datos`, `sinConteo`. «Hoy» = `o.deposito` (PTF, sin negativos) y `salePor` de Banzer (`almHoyBanzer`,
+  `recogerMismo('Banzer', nm)`): lo del último Excel menos lo que salió después.
+
+**La pantalla** (botón «📍 Banzer o PTF» en la barra de Stock → `abrirAlm`, `#alm-overlay`, z-index 3100; las fichas de pedido
+van en 4000): resumen (entregas, % de cada lado, cómo se ubicaron, aviso de Banzer aproximado), **mapa** (Leaflet: los dos
+depósitos con su nombre, cada entrega con el color de su lado y una mancha de 15 px —en píxeles, no en metros: se ve igual a
+cualquier zoom— que se oscurece donde más se entrega, y la línea punteada donde los dos quedan a la misma distancia,
+`almLineaMedia`; zoom de a cuartos, `zoomSnap:0.25`, para que el encuadre llene la caja), **tabla** (filtros «Para hacer / 🏪
+Tener en Banzer / Con entregas / Todos», búsqueda en la barra de arriba —no se redibuja, no pierde el foco—, el total a mover
+arriba, tocar un producto lo deja solo en el mapa), las **zonas escritas** y de qué lado quedan, y «📋 Copiar para logística»:
+arranca con **«🏪 TENER EN BANZER (lo demás, en PTF)»** —la respuesta a la pregunta del dueño, de mayor a menor y con lo que
+hay hoy— y sigue con pasar / lo próximo que llegue / no mandar más. En el celular la tabla scrollea adentro de su caja.
+
+**Los enlaces cortos** que el panel no lee (`T.pend`) los abre el servidor en segundo plano (`almGeoPedir`: de a `ALM_GEO_LOTE`=20,
+los más nuevos primero, hasta `ALM_GEO_VUELTAS`=5 tandas mientras abra alguno, con `conTopeDuro` de 150 s), UNA vez por apertura
+de la página (después, botón «📍 Buscarlos»). Lo que abre va a `MAPA_COORDS` y al teléfono (`geoCacheSave`: sirve también al
+mapa de entregas); lo que no, a `ALM_GEO_FALLO` (la sesión) y esa entrega va por su zona.
+
+⚠️ **No cambia nada**: no marca pedidos, no toca el stock ni la planilla. La revisión automática sigue con el orden del dueño (PTF →
+Banzer → IM, 21/09). **Para decidir con el dueño**: (1) que el punto de Banzer está bien; (2) si quiere que la revisión
+automática reparta por cercanía (hoy no); (3) la ventana de 60 días y el margen de 1 km «en el medio».
+
+`tests/test_banzer_ptf.js` (48, reloj clavado en el 07/10/2026, ubicaciones y pedidos inventados, Leaflet de mentira que anota lo
+que se dibuja): qué cuenta y qué no, el lado/medio/zona, las cinco acciones con números exactos, la tabla y sus filtros, el mapa,
+los enlaces cortos (una vez, el más nuevo primero, lo que no abre se dice), el texto para logística, que no cambia nada, sin
+Leaflet y en 390 px. Contra `main` (`88120f2`): no tiene la pantalla. **Batería entera sobre `58b1bfa`: 137 suites, 5.175 bien ·
+0 mal** (`test_stock_detalle` «ok (sin resumen)», como siempre); después de «Tener en Banzer» y el mapa en píxeles (solo tocan
+funciones nuevas) se corrieron otra vez las de Banzer y de stock: todas en verde. Capturas de demo (datos inventados, Leaflet servido del paquete de npm
+porque el proxy no deja salir a unpkg ni a los mosaicos de OpenStreetMap): `cap_4ht/` del scratchpad.
+
+## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), SERVIDOR IMPLEMENTADO 06/10 ~20:30 (el dueño)
 El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.
 Que no permita subir corte de días anteriores tiene que ser del día. La hoja de Excel si marca día y hora si no me equivoco. Ni
 habíamos quedado que las celdas de corte solo almacenaban X días y lo anteriores se iban borrando para no llenarse? De que me
@@ -7554,6 +7627,33 @@ mañana» sin mover el reloj; R6 sin tilde), `test_existencias`, `test_rev2_stoc
 dos recibidos recientes, la junta con la misma poda) y `test_identidad` (el reporte es de hoy), `test_concurrencia` (el otro
 equipo guarda con `sf`), `test_saldo_servidor` (versión). **Batería entera (`84c2b74`): 136 suites, 5.114 comprobaciones, 0 rojas** (`test_stock_detalle` sin resumen, como siempre).
 **Con la revisión (`22e463b`): 136 suites, 5.125 comprobaciones, 0 rojas** (+4 de §16 después, solo prueba: 56/56).
+
+**Publicación (06/10, dueño: «Publica»)**: `main` = **`45d3108`** a las 16:56 de Bolivia (merge de la rama `a86abbd` sobre
+`93188df`, el panel automático de las 15:17; ninguna corrida de Actions en curso, 4 minutos antes del cron de las 17:00).
+Pages: corrida `37530190248`, ✅ a las 16:56:32. La página, el `.gs` y las pruebas de `main` son idénticos a la rama.
+- **El servidor `2026-10-06-a` todavía NO está implementado**: lo hace el dueño cuando todos hicieron F5. Enlace fijo:
+  `https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/45d3108e460241bed5791aac9911cc469824da31/google-apps-script.gs`
+  (2.449 líneas, termina en `}` con `return borrador;` antes; comprobado bajándolo). `probarAntesDeImplementar` puede dar el ⚠️
+  «el stock lo guardó por última vez una página VIEJA» hasta que alguien con la página nueva toque el stock: no frena.
+- **Volver atrás** = ✏️ a la versión ANOTADA antes de implementar (tendría que ser la 36, la `2026-10-02-a`) Y pegar la
+  10-02-a del enlace fijo a `6b76e7aa06d9168ff1dbfd8836585c8895b029b6` (2.430 líneas, comprobado).
+- Sin el servidor, la página ya protege: solo el Excel de hoy, el corte no vuelve atrás, la lectura junta lo que manda una
+  página vieja y lo reguarda. El servidor cierra lo que queda: una página que nunca hizo F5 ya no puede escribir el stock.
+- **20:22, el dueño pegó la 06-a y corrió `probarAntesDeImplementar`** (captura): versión 2026-10-06-a, 29 funciones, 1.255
+  filas, disparadores y repaso de Kommo (hace 4 min) ✅, stock 27.526/50.000 (55 %), arqueo 0, lectura comprimida 1.039.561 →
+  297.116, 14 feriados por venir, 4 reservas de 3 pedidos, «✅ Se puede implementar» con UN ⚠️: el stock lo guardó por última
+  vez una página VIEJA (esperado: nadie lo guardó todavía con la página nueva). Se le dijo que implemente (✏️ → versión nueva,
+  anotando antes el número, tendría que ser la 36) y que lo compruebe en 🔒 Cerrar día: «versión 2026-10-06-a» sin la línea
+  gris «Hay una versión más nueva del script sin publicar». Una página vieja que todavía intente guardar el stock recibe
+  `actualizar`: lo deja en SU cola con el aviso de recargar (`rechazoSeReintentaSolo`), y con F5 la página nueva lo manda sin
+  sello y se junta.
+- **~20:30 el dueño: «listo implementado y publicado».** Comprobado sin entrar a Google: el despacho a mano del diagnóstico da
+  403 desde esta sesión, así que se le agregó una línea útil (`78112f6`: «servidor: 🔒 una página sin F5 ya NO puede guardar el
+  stock») y el push a la rama lo corrió (corrida `37552586393`, 20:34): **versión `2026-10-06-a`** en las cuatro lecturas,
+  «🔒 una página sin F5 ya NO puede guardar el stock», stock 27.526 (55 %) todavía guardado por una página vieja (se va con el
+  primer guardado de la página nueva), lecturas de 2,4-4 s, comprimida 3,8 veces menos, la de lo cambiado 205 bytes, cuenta
+  de control ✅. El saldo sigue con los tres cortes del 06/10. Volver atrás, si hiciera falta: ✏️ a la versión anotada (la 36)
+  Y pegar la 10-02-a de `6b76e7a…`.
 
 ## 4hr. 06/10: ⏳ «Falta cobrar» se toca y dice quiénes son — el dueño: *«contabilidad no sabe qué clientes son»*
 El dueño, con capturas de Contabilidad (Carola, septiembre: «Falta cobrar Bs 7.810,00 · 3 ventas con saldo», «Por cobrar

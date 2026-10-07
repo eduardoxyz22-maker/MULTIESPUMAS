@@ -117,6 +117,8 @@ def contar(crudo):
     print(f"   ok={j.get('ok')!r} · error={j.get('error')!r} · versión={j.get('version')!r}")
     ped = j.get("pedidos")
     if isinstance(ped, list):
+        global _PEDIDOS
+        _PEDIDOS = ped
         tam = sorted(((len(json.dumps(p, ensure_ascii=False)), (p.get('id') if isinstance(p, dict) else '')) for p in ped), reverse=True)
         sistema = [t for t in tam if str(t[1]).startswith("__")]
         print(f"   filas: {len(ped)} · la más grande: {tam[0][0]:,} letras".replace(",", ".") if tam else "   filas: 0")
@@ -125,7 +127,7 @@ def contar(crudo):
         for n, i in sistema:
             if i in ("__stock__", "__arqueo_cuadre__", "__dias_cerrados__", "__carga_chk__"):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
-        celda_stock(ped)
+        celda_stock(ped, j.get('version'))
         pedidos_en_feriados(ped)
 
 
@@ -147,7 +149,7 @@ def _tam(v):
     return _letras(json.dumps(v, ensure_ascii=False, separators=(",", ":")))
 
 
-def celda_stock(ped):
+def celda_stock(ped, ver=None):
     global _STOCK_MEDIDO
     if _STOCK_MEDIDO:
         return
@@ -186,6 +188,10 @@ def celda_stock(ped):
     # (06/10, §4hs) Desde la página del 06/10, cada guardado del stock lleva `pv: 3`; una página sin F5 lo pierde al guardar.
     pv = s.get("pv")
     print(f"      la guardó por última vez: {'una página al día (pv ' + str(pv) + ')' if (pv or 0) >= 3 else 'una página VIEJA (sin pv): que todos hagan F5'}")
+    # Y si el servidor ya lo exige (`sf`, .gs 2026-10-06-a): con él, una página sin F5 recibe `actualizar` y no escribe el stock.
+    if isinstance(ver, str) and ver:
+        print("      servidor: " + (f"🔒 una página sin F5 ya NO puede guardar el stock ({ver})" if ver >= "2026-10-06-a"
+                                   else f"⚠️ todavía deja guardar el stock a una página sin F5 ({ver}; hace falta la 2026-10-06-a)"))
     alm = lambda a: re.sub(r"^\s*[\d-]+\s+", "", str(a or ""))[:22] or "?"
     # La hora en que se SUBIÓ cada Excel (`ts`, hora de Bolivia): el orden de la lista no alcanza para saberlo.
     subido = lambda ts: time.strftime("%d/%m %H:%M", time.gmtime((float(ts) / 1000) - 4 * 3600)) if ts else "?"
@@ -353,6 +359,177 @@ def en_dos_tramos(base, veces=5):
         time.sleep(3)
 
 
+def ubicacion_almacenes(base):
+    """📍 (07/10, §4ht) Dónde quedan los dos depósitos de salida, con el MISMO servidor que abre los enlaces cortos de
+    los pedidos (`geocode`). Los enlaces los mandó el dueño y están en pedidos.html (`ALM_UBIC`); desde la sesión de
+    Claude el proxy no abre maps.app.goo.gl. Son lugares de la empresa, no datos de clientes."""
+    try:
+        txt = open(os.path.join(os.path.dirname(__file__), "..", "pedidos.html"), encoding="utf-8").read()
+    except Exception:
+        return
+    links = re.findall(r"id:'(\w+)'[^\n]*?link:'(https://maps\.app\.goo\.gl/[^']+)'", txt)
+    if not links:
+        return
+    crudo = pedir("📍 ubicación de los almacenes (geocode de los enlaces de ALM_UBIC)", base,
+                  {"action": "geocode", "links": [u for _, u in links]})
+    try:
+        j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+    except Exception:
+        print("   no es JSON")
+        return
+    geo = {g.get("link"): g for g in (j.get("geo") or []) if isinstance(g, dict)}
+    print(f"   el servidor ({j.get('version')!r}) devolvió {len(geo)} de {len(links)}")
+    for ident, u in links:
+        g = geo.get(u)
+        if g is None:
+            print(f"   {ident}: no vino en la respuesta")
+        elif g.get("lat") is None:
+            print(f"   {ident}: el servidor no la pudo abrir")
+        else:
+            print(f"   {ident}: {g.get('lat')}, {g.get('lng')}" + (" (aproximada)" if g.get("aprox") else ""))
+    # El 07/10 el servidor no pudo con ninguno de los dos: se abren acá directo (GitHub sí sale a internet), y se dice
+    # QUÉ contestó Google en cada salto, para saber por qué el servidor no puede.
+    print("   ── abiertos directo desde GitHub ──")
+    textos = []
+    for ident, u in links:
+        t = abrir_enlace_directo(ident, u)
+        if t:
+            textos.append((ident, t))
+    # Lo que Google puso en `q=` (nombre/dirección del lugar), preguntado al geocodificador del servidor (aproximado).
+    if textos:
+        crudo2 = pedir("📍 los lugares por su dirección escrita (geocode de texto del servidor)", base,
+                       {"action": "geocode", "links": [t for _, t in textos]})
+        try:
+            j2 = json.loads((crudo2 or b"{}").decode("utf-8", "replace"))
+        except Exception:
+            j2 = {}
+        g2 = {g.get("link"): g for g in (j2.get("geo") or []) if isinstance(g, dict)}
+        for ident, t in textos:
+            g = g2.get(t) or {}
+            print(f"   {ident}: «{t[:70]}» → " + (f"{g.get('lat')}, {g.get('lng')}" if g.get("lat") is not None else "no la encontró"))
+
+
+_PEDIDOS = None   # la última lista leída: solo para CONTAR (nunca se imprime nada de un pedido)
+_PLUS = r"(^|[^0-9A-Za-z])[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}"
+
+
+def ubicacion_pedidos(base):
+    """📍 (07/10, §4ht) «Banzer o PTF» reparte cada entrega según su pin. ¿Cuántas entregas de los últimos 60 días se
+    pueden ubicar? Las que traen las coordenadas en el enlace salen sin internet; los enlaces CORTOS los tiene que abrir
+    el servidor, y el 07/10 no pudo con los de los almacenes (Google ahora redirige a `?q=<dirección>&ftid=…`).
+    Solo CUENTAS: ni enlaces, ni coordenadas, ni nombres (el registro es público)."""
+    print("\n── 📍 entregas de los últimos 60 días: ¿cuántas se pueden ubicar? (solo cuentas) ──")
+    ped = _PEDIDOS
+    if not isinstance(ped, list):
+        print("   (no hay lista leída)")
+        return
+    import datetime as _dt
+    hoy = (_dt.datetime.utcnow() - _dt.timedelta(hours=4)).date()
+    desde, hoy = (hoy - _dt.timedelta(days=59)).isoformat(), hoy.isoformat()
+    n = sin = coords = cortos = otros = zona = 0
+    lista = []
+    for p in ped:
+        if not isinstance(p, dict):
+            continue
+        i = str(p.get("id") or "")
+        if i.startswith("__") or i.startswith("kommo"):
+            continue
+        f = str(p.get("fecha") or "")
+        if not (desde <= f <= hoy):
+            continue
+        n += 1
+        u = str(p.get("maps") or "").strip()
+        if not u:
+            sin += 1
+            if str(p.get("zona") or "").strip():
+                zona += 1
+            continue
+        from urllib.parse import unquote as _uq
+        if _coords_en(u) or re.search(_PLUS, _uq(u)) or re.search(r"\d+\s*°", _uq(u)):
+            coords += 1
+        elif re.search(r"maps\.app\.goo\.gl|goo\.gl/maps", u):
+            cortos += 1
+            lista.append((f, u))
+        else:
+            otros += 1
+    print(f"   con fecha de entrega en la ventana: {n} · sin enlace: {sin} ({zona} con zona escrita)")
+    print(f"   con enlace: {n - sin} → con las coordenadas adentro: {coords} · enlaces cortos: {cortos} · otros: {otros}")
+    muestra = [u for _, u in sorted(lista, reverse=True)[:12]]
+    if not muestra:
+        return
+    t0 = time.time()
+    crudo = pedir(f"📍 el servidor abre {len(muestra)} enlaces cortos (los más nuevos)", base, {"action": "geocode", "links": muestra})
+    try:
+        j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+    except Exception:
+        print("   no es JSON")
+        return
+    geo = [g for g in (j.get("geo") or []) if isinstance(g, dict)]
+    ok = [g for g in geo if g.get("lat") is not None]
+    print(f"   abrió {len(ok)} de {len(muestra)} en {time.time() - t0:.1f} s · aproximados (por la dirección): "
+          f"{len([g for g in ok if g.get('aprox')])}")
+
+
+_COORD_RES = [r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", r"@(-?\d+\.\d+),(-?\d+\.\d+)", r"[?&](?:q|ll|query|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)",
+              r"\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]"]
+
+
+def _coords_en(texto):
+    for rx in _COORD_RES:
+        m = re.search(rx, texto or "")
+        if m and abs(float(m.group(1))) < 90 and abs(float(m.group(2))) < 180:
+            return m.group(1), m.group(2)
+    # La página de Maps abre centrada en el lugar: APP_INITIALIZATION_STATE=[[[zoom, lng, lat]
+    m = re.search(r"APP_INITIALIZATION_STATE=\[\[\[(-?\d+(?:\.\d+)?),(-?\d+\.\d+),(-?\d+\.\d+)\]", texto or "")
+    if m and abs(float(m.group(3))) < 90 and abs(float(m.group(2))) < 180:
+        return m.group(3), m.group(2)
+    return None
+
+
+def abrir_enlace_directo(ident, u):
+    """Sigue los saltos de un enlace corto de Maps y dice qué contestó Google en cada uno. Devuelve el texto de `q=` del
+    lugar (nombre y dirección), si vino."""
+    abrir = _rq.build_opener(_SinSeguir)
+    cur = u
+    texto = ""
+    for salto in range(6):
+        req = _rq.Request(cur, headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
+                                                       "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+                                        "Accept-Language": "es-BO,es;q=0.9"})
+        try:
+            r = abrir.open(req, timeout=30)
+            cuerpo = r.read().decode("utf-8", "replace")
+            c = _coords_en(cur) or _coords_en(cuerpo)
+            host = re.sub(r"^https?://([^/?#]+).*$", r"\1", cur)
+            print(f"   {ident}: salto {salto} → HTTP {r.status} en {host} · {len(cuerpo)} letras · " +
+                  (f"coordenadas {c[0]}, {c[1]}" if c else "sin coordenadas"))
+            # (07/10) Ni la página final trae el pin: Google no lo manda a un programa. Por eso, abajo, la dirección de `q=`.
+            return texto
+        except _er.HTTPError as e:
+            loc = e.headers.get("Location") if e.headers else None
+            if e.code in (301, 302, 303, 307, 308) and loc:
+                cur = loc if loc.startswith("http") else re.sub(r"^(https?://[^/]+).*$", r"\1", cur) + loc
+                c = _coords_en(cur)
+                destino = re.sub(r"^https?://([^/?#]+)(/[^?#]{0,40}).*$", r"\1\2", cur)
+                print(f"   {ident}: salto {salto} → {e.code} a {destino}" + (f" · coordenadas {c[0]}, {c[1]}" if c else ""))
+                mq = re.search(r"[?&]q=([^&]+)", cur)
+                if mq and not texto:
+                    try:
+                        import urllib.parse as _up
+                        texto = _up.unquote_plus(mq.group(1))
+                    except Exception:
+                        pass
+                if c:
+                    return texto
+                continue
+            print(f"   {ident}: salto {salto} → HTTP {e.code}")
+            return texto
+        except Exception as ex:
+            print(f"   {ident}: salto {salto} → {type(ex).__name__}: {str(ex)[:120]}")
+            return texto
+    return texto
+
+
 def main():
     pagina = url_de_la_pagina()
     if not PANEL_URL and not pagina:
@@ -373,6 +550,9 @@ def main():
     contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
     # 4) Dónde se va el tiempo: correr el script o entregar los datos.
     en_dos_tramos(pagina or PANEL_URL)
+    # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
+    ubicacion_almacenes(pagina or PANEL_URL)
+    ubicacion_pedidos(pagina or PANEL_URL)
 
 
 if __name__ == "__main__":

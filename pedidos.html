@@ -1445,7 +1445,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <style>
@@ -18664,12 +18665,16 @@ function stockAlmCorto(nm){
   }
   return t.length>22 ? t.slice(0,21)+'…' : t;
 }
+/* Cuánto TENER de un producto (entre acá y Banzer, más lo que viene): lo ya vendido sin entregar, o lo que cubre
+   fábrica + margen + la reserva por rotación, si es más. Una sola cuenta: la usan «cuánto pedir» y el reparto entre
+   Banzer y PTF (§4ht). */
+function stockNecesario(o){ return Math.max(o.comp, o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir))); }
 /* Cuánto pedir: lo que cubre fábrica + margen + una semana de venta (o todo lo ya vendido,
    si es más), menos lo que hay y lo que viene. */
 function stockCuantoPedir(o){
   var hay=stockHaySalir(o);
   if(hay==null || o.descont) return 0;               // lo discontinuado no se pide: no lo hacen más
-  var necesario=Math.max(o.comp, o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)));
+  var necesario=stockNecesario(o);
   // Una llegada atrasada requiere seguimiento, no duplicar la orden de fabricación.
   var camino=stockEnCaminoSeguro(o);   // 🧮 (§4hn) sin contar como seguro lo que una detección sin asignar ya podría ser
   /* Un depósito NEGATIVO (se entregó más de lo que decía el conteo) es un conteo viejo, no
@@ -23555,6 +23560,18 @@ var RECOGER_EXTRA=[];                // almacenes de IR A BUSCAR conocidos aunqu
        «(cargar en Banzer)».
    Quién es de salida lo dice UNA sola función, `almEsSalida`, que usan todos. */
 var ALM_SALIDA=['Banzer'];
+/* 📍 DÓNDE QUEDAN LOS DOS DEPÓSITOS DE SALIDA (dueño, 07/10, §4ht): para saber de cuál queda más cerca cada entrega
+   («📍 Banzer o PTF» en Stock). Los enlaces los mandó el dueño y las coordenadas quedan escritas acá: la cuenta no
+   depende de abrir nada. Si un almacén se muda, se cambia acá.
+   ⚠️ Google ya no le da el pin a un programa (07/10: el enlace lleva a `maps.google.com?q=<dirección>&ftid=…` y la
+   página no trae coordenadas; el servidor tampoco pudo abrirlos). PTF salió EXACTO de su Plus Code (7V24+CRP, viene en
+   el nombre del lugar). Banzer salió de su dirección escrita («Vaca Fria 8vo anillo, Av Viru Viru 2», geocodificador
+   del servidor): `aprox` = la cuadra, no la puerta. Si el dueño manda las coordenadas (mantener apretado en Maps), se
+   cambian acá y se saca `aprox`. */
+var ALM_UBIC=[
+  { id:'ptf',    nombre:'PTF',    largo:'Productos Terminados Fábrica', link:'https://maps.app.goo.gl/VfnJomaB3FNPUYzT6?g_st=ic', lat:-17.7489125, lng:-63.1429219 },
+  { id:'banzer', nombre:'Banzer', largo:'Almacén Banzer',               link:'https://maps.app.goo.gl/YSbmsC6GRi2d4HRu6?g_st=ic', lat:-17.7197548, lng:-63.1631138, aprox:true }
+];
 function recogerDe(x){ return String((x&&x.chkDe)||'').trim(); }
 /* El rol que se eligió al subir el Excel (`STOCK.al`), buscado también con el nombre escrito de otra
    forma: «Banzer» a mano y «01-05-025  Almacen Distribucion Banzer» en el Excel son el mismo lugar. */
@@ -24408,6 +24425,434 @@ function backupJson(){
   var data=JSON.stringify({app:'ME_PEDIDOS',version:2,exported:todayStr(),pedidos:STATE},null,2);
   downloadBlob(new TextEncoder().encode(data),'respaldo-pedidos-'+todayStr()+'.json','application/json');
   toast('Respaldo descargado ✓','ok');
+}
+
+/* ============================================================================
+   📍 BANZER O PTF: QUÉ TENER EN CADA DEPÓSITO, SEGÚN DÓNDE SE ENTREGA (§4ht, dueño 07/10)
+   *«Necesitamos saber, medir y determinar qué productos debemos tener en almacén Banzer y qué en almacén Productos
+   Terminados Fábrica, según los focos de calor de entrega y rotación, para ser más eficientes y tener el stock a la mano
+   según la zona de entrega.»* De los dos sale el camión (§4ge); de Moreno se va a buscar y acá no entra.
+   CÓMO SE MIDE (lo que se le propuso y aprobó al mandar las dos ubicaciones):
+     · Las entregas de los últimos `ALM_ZONA_DIAS` días que MIDEN LA ROTACIÓN, con las reglas de la tabla de Stock: el
+       equipo + Eduardo a Multicenter (`stockPedidoUnico` queda afuera: RPT, puntuales y las otras de Eduardo), sin ventas
+       de tienda, ATC ni borradores (`stockCuenta`), y sin lo que se entrega en tienda (`esProdDeTienda`).
+     · Dónde: el pin del pedido (`almPunto`: el enlace, o lo que el servidor ya abrió en `MAPA_COORDS`). Sin pin, su ZONA
+       escrita, repartida como se reparten los pedidos CON pin de esa zona (`almZonas`: toda la planilla, porque la
+       geografía no cambia con la fecha). Sin pin ni zona conocida no cuenta, y se dice cuántas son.
+     · Cada entrega cuenta para el depósito que le queda MÁS CERCA en línea recta; con menos de `ALM_EMPATE_KM` de
+       diferencia, mitad y mitad («en el medio»). Por UNIDADES: el stock se gasta por unidad.
+     · Cuánto tener en TOTAL es la cuenta de Stock (`stockNecesario`, la misma de «cuánto pedir»): lo vendido sin
+       entregar, o el ritmo × (fábrica + margen + reserva) si es más. Se reparte con la proporción de cada lado. Lo que
+       rota poco (`baja`) y lo discontinuado NO se reparte: va todo a PTF, que es a donde llega de fábrica (el dueño:
+       los que se venden poco quedan en un solo almacén). Con menos de `ALM_MIN_UNID` unidades ubicadas, tampoco: pocos
+       datos, queda como está.
+   QUÉ DICE: «Pasar N a Banzer» solo con lo que a PTF le SOBRA de lo suyo; si no le sobra, «lo próximo que llegue: N a
+   Banzer». Si Banzer tiene de más: «no mandar más». 🚫 NUNCA traer de Banzer a fábrica (dueño, 26/09).
+   ⚠️ Solo MIRA: no marca pedidos ni toca el stock o la planilla. La revisión automática sigue con el orden del dueño
+   (PTF → Banzer → IM, 21/09): que reparta por cercanía es una decisión suya, no de esta pantalla.
+   ⚠️ Los enlaces cortos que el panel no puede leer los abre el servidor (`apiGeocode`, sin candado), de a
+   `ALM_GEO_LOTE` y los más nuevos primero; lo que no puede abrir se recuerda en la sesión (`ALM_GEO_FALLO`) para no
+   volver a pedirlo, y esa entrega va por su zona.
+   ========================================================================== */
+var ALM_ZONA_DIAS=60;     // las entregas que se miran para saber de qué lado sale cada producto
+var ALM_EMPATE_KM=1;      // con menos de 1 km de diferencia entre los dos depósitos, la entrega es «del medio»
+var ALM_MIN_UNID=3;       // con menos unidades ubicadas en la ventana no se reparte: pocos datos
+var ALM_ZONA_MIN=3;       // una zona escrita ubica solo si tiene al menos 3 pedidos con pin
+var ALM_GEO_LOTE=20;      // enlaces cortos que se le piden al servidor por vez (los más nuevos primero)…
+var ALM_GEO_VUELTAS=5;    // …y cuántas veces seguidas, mientras abra alguno (si no abre ninguno, para)
+var ALM_COLOR={ P:'#0f766e', B:'#1d4ed8', M:'#7c3aed' };   // PTF como «🏭 Cargar en fábrica»; Banzer azul; en el medio, violeta
+var ALM_DATA=null, ALM_VER='hacer', ALM_Q='', ALM_K='', ALM_MAPA=null, ALM_CAPA=null;
+var ALM_GEO_FALLO={}, ALM_GEO_EN_CURSO=false, ALM_GEO_PEDIDO=false, ALM_GEO_OK=0, ALM_GEO_ERR='';
+
+function almUbic(id){ for(var i=0;i<ALM_UBIC.length;i++) if(ALM_UBIC[i].id===id) return ALM_UBIC[i]; return null; }
+function almNumOk(v){ return typeof v==='number' && isFinite(v); }
+function almUbicOk(){ var P=almUbic('ptf'), B=almUbic('banzer'); return !!(P && B && almNumOk(P.lat) && almNumOk(P.lng) && almNumOk(B.lat) && almNumOk(B.lng)); }
+/* Distancia en línea recta, en km con decimales (`kmDeSantaCruz` redondea a km enteros: acá no alcanza). */
+function almKm(a, b){
+  var R=6371, r=Math.PI/180, dLat=(b.lat-a.lat)*r, dLng=(b.lng-a.lng)*r;
+  var h=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
+}
+function almKmTxt(n){ return (Math.round(n*10)/10).toFixed(1).replace('.',',')+' km'; }
+/* El pin de un pedido sin salir a internet: lo que dice el enlace, o lo que el servidor ya abrió. Un punto a más de
+   `KM_SOSPECHOSO` del centro es un enlace mal leído (📍 Revisar ubicaciones): no cuenta. */
+function almPunto(p){
+  var u=String((p&&p.maps)||'').trim(); if(!u) return null;
+  var g=MAPA_COORDS[u] || coordsDeLink(u);
+  if(!g || g.lat==null || g.lng==null) return null;
+  var lat=Number(g.lat), lng=Number(g.lng);
+  if(!isFinite(lat) || !isFinite(lng) || kmDeSantaCruz(lat,lng)>KM_SOSPECHOSO) return null;
+  return { lat:lat, lng:lng, aprox:!!g.aprox || esUbicAprox(u) };
+}
+/* De qué lado queda un punto: `P` y `B` suman 1 (mitad y mitad en el medio). */
+function almLado(pt){
+  var dP=almKm(pt, almUbic('ptf')), dB=almKm(pt, almUbic('banzer'));
+  if(Math.abs(dP-dB)<=ALM_EMPATE_KM) return { P:0.5, B:0.5, dP:dP, dB:dB, medio:true };
+  return dP<dB ? { P:1, B:0, dP:dP, dB:dB } : { P:0, B:1, dP:dP, dB:dB };
+}
+function almZonaClave(z){ z=String(z||'').replace(/\s+/g,' ').trim(); return z ? normNombre(z) : ''; }
+/* La zona escrita → de qué lado cae, aprendido de los pedidos de esa zona que SÍ tienen pin (toda la planilla). Sin
+   mayúsculas ni acentos, rotulada con la escritura que más se repite (como «Concentración por zona», §4dn). */
+function almZonas(){
+  var Z={};
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p)) return;
+    var zk=almZonaClave(p.zona); if(!zk) return;
+    var pt=almPunto(p); if(!pt) return;
+    var l=almLado(pt), z=Z[zk]||(Z[zk]={ k:zk, n:0, P:0, B:0, medio:0, rot:{} });
+    z.n++; z.P+=l.P; z.B+=l.B; if(l.medio) z.medio++;
+    var t=String(p.zona).replace(/\s+/g,' ').trim(); z.rot[t]=(z.rot[t]||0)+1;
+  });
+  Object.keys(Z).forEach(function(k){ var r=Z[k].rot; Z[k].nombre=Object.keys(r).sort(function(a,b){ return (r[b]-r[a]) || (a<b?-1:1); })[0]||k; });
+  return Z;
+}
+/* Lo que hay HOY en Banzer de un producto: los depósitos de salida que son Banzer (el nombre largo del Excel o «Banzer»). */
+function almEsBanzer(nm){ return recogerMismo('Banzer', nm); }
+function almHoyBanzer(o){ var n=0; Object.keys((o&&o.salePor)||{}).forEach(function(nm){ if(almEsBanzer(nm)) n+=Number(o.salePor[nm])||0; }); return n; }
+/* Cuánto tener en total: la cuenta de Stock. Lo discontinuado no se repone: solo lo vendido sin entregar. */
+function almNivel(o){
+  var n=o.descont ? (o.comp||0) : stockNecesario(o);
+  return Math.max(0, Math.ceil((Number(n)||0)-1e-9));
+}
+function almZonaData(){
+  var D=stockData(), hoy=D.hoy, desde=diasAtras(ALM_ZONA_DIAS-1), Z=almZonas();
+  var porK={}, puntos=[], vistos={};
+  var T={ n:0, mapa:0, zona:0, sin:0, aprox:0, P:0, B:0, medio:0, pend:[], fallo:0 };
+  STATE.forEach(function(p){
+    if(!stockCuenta(p) || esVentaTienda(p) || stockPedidoUnico(p)) return;
+    var fs=fechaSalida(p); if(!fs || fs<desde || fs>hoy) return;
+    var lin=(p.productos||[]).filter(function(x){ return x && !esProdDeTienda(x) && Number(x.cant)>0 && stockClave(x)!=='|'; });
+    if(!lin.length) return;
+    var pt=almPunto(p), lado=null, como='sin';
+    if(pt){ lado=almLado(pt); como='mapa'; if(pt.aprox) T.aprox++; }
+    else {
+      var z=Z[almZonaClave(p.zona)];
+      if(z && z.n>=ALM_ZONA_MIN){ lado={ P:z.P/z.n, B:z.B/z.n }; como='zona'; }
+      var u=String(p.maps||'').trim();
+      if(u && !vistos[u] && !coordsDeLink(u)){ vistos[u]=1; if(ALM_GEO_FALLO[u]) T.fallo++; else T.pend.push({ u:u, f:fs }); }
+    }
+    T.n++; T[como]++;
+    if(lado){ T.P+=lado.P; T.B+=lado.B; if(lado.medio) T.medio++; }
+    var ks=[], uTot=0;
+    lin.forEach(function(x){
+      var k=stockClave(x), c=Number(x.cant)||0;
+      var r=porK[k]||(porK[k]={ k:k, u:0, P:0, B:0, sin:0, n:0, ids:{} });
+      r.u+=c; uTot+=c; if(!r.ids[p.id]){ r.ids[p.id]=1; r.n++; }
+      if(lado){ r.P+=c*lado.P; r.B+=c*lado.B; } else r.sin+=c;
+      if(ks.indexOf(k)<0) ks.push(k);
+    });
+    if(pt) puntos.push({ lat:pt.lat, lng:pt.lng, aprox:pt.aprox, lado:lado, id:p.id, f:fs, ks:ks, u:uTot });
+  });
+  T.pend.sort(function(a,b){ return a.f<b.f?1:(a.f>b.f?-1:0); });
+  var hayB=(D.saleAlm||[]).some(almEsBanzer), filas=[];
+  D.lista.forEach(function(o){
+    var r=porK[o.k]||null;
+    var hoyP=(o.deposito==null)?null:Math.max(0,o.deposito), hoyB=almHoyBanzer(o);
+    if(!(r && r.u>0) && !(hoyP>0) && !(hoyB>0) && !(o.comp>0)) return;
+    var ub=r?(r.P+r.B):0, sB=ub>0?r.B/ub:null, nivel=almNivel(o);
+    var por=o.descont?'descont':(!o.rota?'poca':(ub<ALM_MIN_UNID?'datos':''));
+    var objB=por?0:Math.round(nivel*sB), objP=nivel-objB;
+    var f={ o:o, k:o.k, nombre:stockNombre(o), u:r?r.u:0, n:r?r.n:0, uSin:r?r.sin:0, ub:ub, sB:sB, hoyP:hoyP, hoyB:hoyB,
+            nivel:nivel, objP:objP, objB:objB, por:por, acc:'', mover:0, luego:0 };
+    if(hoyP==null && !hayB) f.acc='sinConteo';
+    else if(por==='datos') f.acc='datos';
+    else if(por){ if(hoyB>0){ f.acc='noMas'; f.mover=hoyB; } }
+    else {
+      var faltaB=objB-hoyB, sobraP=(hoyP||0)-objP;
+      if(faltaB>=1){
+        f.mover=Math.max(0, Math.floor(Math.min(faltaB, sobraP)+1e-9)); f.luego=faltaB-f.mover;
+        f.acc=f.mover>=1?'pasar':'llega';
+      } else if(hoyB-objB>=1){ f.acc='noMas'; f.mover=hoyB-objB; }
+      else f.acc='bien';
+    }
+    filas.push(f);
+  });
+  var pri={ pasar:5, llega:4, noMas:3, datos:2, bien:1, '':0, sinConteo:0 };
+  filas.sort(function(a,b){ return (pri[b.acc]-pri[a.acc]) || ((b.mover+b.luego)-(a.mover+a.luego)) || (b.u-a.u) || a.nombre.localeCompare(b.nombre); });
+  return { D:D, T:T, Z:Z, filas:filas, puntos:puntos, hoy:hoy, desde:desde, hayB:hayB, hayP:!!(STOCK.c && STOCK.c.f),
+           km:almKm(almUbic('ptf'), almUbic('banzer')) };
+}
+function almVerFila(f){
+  if(ALM_VER==='hacer') return f.acc==='pasar' || f.acc==='llega' || f.acc==='noMas';
+  if(ALM_VER==='banzer') return f.objB>0;            // lo que conviene tener en Banzer: la pregunta del dueño
+  if(ALM_VER==='entregas') return f.u>0;
+  return true;
+}
+function almBuscaFila(f){
+  if(!ALM_Q) return true;
+  var t=sinTildes(String(f.nombre+' '+(f.o.cod||'')+' '+((f.o.otros||[]).join(' '))).toLowerCase());
+  return sinTildes(ALM_Q.toLowerCase()).split(/\s+/).filter(Boolean).every(function(w){ return t.indexOf(w)>=0; });
+}
+
+/* ---- Pantalla ---- */
+function abrirAlm(){
+  if(!almUbicOk()){ toast('Falta la ubicación de PTF o de Banzer.','err'); return; }
+  var ov=document.getElementById('alm-overlay'); if(!ov) return;
+  ov.style.display='flex';
+  var q=document.getElementById('alm-q'); if(q && q.value!==ALM_Q) q.value=ALM_Q;
+  almRefrescar();
+  if(!ALM_GEO_PEDIDO){ ALM_GEO_PEDIDO=true; almGeoPedir(1); }   // una vez por apertura de la página; después, con el botón
+}
+function cerrarAlm(){ var ov=document.getElementById('alm-overlay'); if(ov) ov.style.display='none'; }
+function almAbierto(){ var ov=document.getElementById('alm-overlay'); return !!(ov && ov.style.display==='flex'); }
+function almRefrescar(){ ALM_DATA=almZonaData(); almPintar(); }
+function almSetVer(v){ ALM_VER=v; almPintarTabla(); }
+var ALM_Q_TIMER=null;
+function almBuscar(v){ clearTimeout(ALM_Q_TIMER); ALM_Q_TIMER=setTimeout(function(){ ALM_Q=String(v||'').trim(); almPintarTabla(); }, 180); }
+function almVerProducto(k){
+  ALM_K=(ALM_K===k)?'':k;
+  almPintarTabla(); almPintarMapa(true);
+  var c=document.getElementById('alm-mapa-caja'); if(ALM_K && c && c.scrollIntoView) c.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function almPintar(){
+  var A=ALM_DATA, body=document.getElementById('alm-body'); if(!A || !body) return;
+  if(!document.getElementById('alm-mapa')){
+    body.innerHTML='<div id="alm-resumen"></div>'+
+      '<div id="alm-mapa-caja" style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:10px 12px;margin-bottom:14px">'+
+        '<div id="alm-mapa-tit" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin-bottom:8px"></div>'+
+        '<div id="alm-mapa" style="height:46vh;min-height:260px;border-radius:8px;background:#e5e7eb"></div></div>'+
+      '<div id="alm-tabla"></div><div id="alm-zonas"></div><div id="alm-pie"></div>';
+  }
+  document.getElementById('alm-resumen').innerHTML=almResumenHtml(A);
+  document.getElementById('alm-zonas').innerHTML=almZonasHtml(A);
+  document.getElementById('alm-pie').innerHTML=almPieHtml(A);
+  almPintarTabla();
+  almPintarMapa(true);
+  var inf=document.getElementById('alm-info');
+  if(inf) inf.textContent='entregas del '+fmtFechaCorta(A.desde)+' al '+fmtFechaCorta(A.hoy)+' · PTF y Banzer a '+almKmTxt(A.km)+' en línea recta';
+}
+function almPct(x, tot){ return tot>0 ? Math.round(100*x/tot) : 0; }
+function almBarra(P, B, ancho){
+  var t=P+B; if(!(t>0)) return '';
+  var pp=almPct(P,t);
+  return '<span style="display:inline-flex;width:'+(ancho||90)+'px;height:9px;border-radius:5px;overflow:hidden;vertical-align:middle;background:#e5e7eb">'+
+    '<span style="width:'+pp+'%;background:'+ALM_COLOR.P+'"></span><span style="width:'+(100-pp)+'%;background:'+ALM_COLOR.B+'"></span></span>';
+}
+function almGeoHtml(A){
+  var T=A.T, h='';
+  if(ALM_GEO_EN_CURSO) h+='<div style="color:#075985">📍 Buscando en el servidor la ubicación de '+T.pend.length+' enlace'+(T.pend.length===1?'':'s')+' de Maps… (las entregas siguen contando por su zona mientras tanto)</div>';
+  else if(T.pend.length) h+='<div>📍 Hay '+T.pend.length+' enlace'+(T.pend.length===1?'':'s')+' de Maps que todavía no se abrieron'+(CONNECTED?'':' (sin conexión con el servidor)')+'. '+
+    (CONNECTED?'<button class="btn btn-sm" style="width:auto;background:#e0f2fe;color:#075985;font-weight:700;padding:3px 10px" onclick="almGeoPedir(1)">📍 Buscarlos</button>':'')+'</div>';
+  if(ALM_GEO_OK) h+='<div style="color:#0a6b47">✓ El servidor ubicó '+ALM_GEO_OK+' enlace'+(ALM_GEO_OK===1?'':'s')+' más.</div>';
+  if(T.fallo) h+='<div style="color:#7c4b00">⚠️ El servidor no pudo abrir '+T.fallo+' enlace'+(T.fallo===1?'':'s')+': esas entregas cuentan por su zona escrita.</div>';
+  if(ALM_GEO_ERR) h+='<div style="color:#8a1c24">No se pudo preguntar al servidor: '+esc(ALM_GEO_ERR)+'.</div>';
+  return h ? ('<div id="alm-geo" style="margin-top:8px;font-size:.8rem;line-height:1.5">'+h+'</div>') : '<div id="alm-geo"></div>';
+}
+function almPintarGeo(){ var g=document.getElementById('alm-geo'); if(g && ALM_DATA) g.outerHTML=almGeoHtml(ALM_DATA); }
+function almResumenHtml(A){
+  var T=A.T, ub=T.mapa+T.zona, B=almUbic('banzer');
+  var h='<div style="background:#fff;border:2px solid #1e3a5f;border-radius:11px;padding:12px 14px;margin-bottom:14px">';
+  if(!T.n){
+    return h+'<b>No hay entregas en los últimos '+ALM_ZONA_DIAS+' días para medir.</b></div>';
+  }
+  h+='<div style="font-weight:800;font-size:.98rem;color:#1e3a5f;margin-bottom:6px">📍 '+T.n+' entrega'+(T.n===1?'':'s')+' en los últimos '+ALM_ZONA_DIAS+' días · de qué lado se entregó</div>'+
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.86rem">'+almBarra(T.P, T.B, 160)+
+      '<span><b style="color:'+ALM_COLOR.P+'">🏭 PTF '+almPct(T.P, ub)+' %</b> · <b style="color:'+ALM_COLOR.B+'">🏪 Banzer '+almPct(T.B, ub)+' %</b>'+
+      (T.medio?(' · <span style="color:'+ALM_COLOR.M+'">'+T.medio+' en el medio (mitad y mitad)</span>'):'')+'</span></div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-top:6px;line-height:1.5">Se ubicaron <b>'+T.mapa+'</b> por el mapa'+(T.aprox?(' ('+T.aprox+' por la dirección escrita, aproximadas)'):'')+
+      ', <b>'+T.zona+'</b> por la zona escrita'+(T.sin?(' y <b style="color:#7c4b00">'+T.sin+' no se pudieron ubicar</b> (sin mapa ni zona conocida: no cuentan)'):'')+'. '+
+      'Cada entrega cuenta para el depósito que le queda más cerca; si la diferencia es de menos de '+ALM_EMPATE_KM+' km, cuenta mitad y mitad. '+
+      'Cuentan las entregas que miden la rotación: las del equipo y las de Eduardo a Multicenter.</div>';
+  if(B && B.aprox) h+='<div style="font-size:.78rem;color:#7c4b00;margin-top:6px">≈ El punto de Banzer salió de su dirección escrita (Google no da el pin exacto). Si en el mapa no está en su lugar, avisá: se corrige con las coordenadas.</div>';
+  if(!A.hayB) h+='<div style="font-size:.8rem;color:#8a1c24;margin-top:6px">⚠️ No hay Excel de Banzer cargado: «hoy en Banzer» sale 0. Subí sus existencias en Stock.</div>';
+  if(!A.hayP) h+='<div style="font-size:.8rem;color:#8a1c24;margin-top:6px">⚠️ No hay Excel de PTF cargado: «hoy en PTF» no se sabe.</div>';
+  return h+almGeoHtml(A)+'</div>';
+}
+function almAccHtml(f){
+  var g=function(t){ return '<span style="color:var(--muted)">'+t+'</span>'; };
+  if(f.acc==='pasar') return '<b style="color:'+ALM_COLOR.B+'">🚚 Pasar '+stockUnid(f.mover)+' a Banzer</b>'+(f.luego>0?('<br><span style="font-size:.88em">y '+stockUnid(f.luego)+' más de lo próximo que llegue</span>'):'');
+  if(f.acc==='llega') return '<b style="color:'+ALM_COLOR.B+'">🏭 Lo próximo que llegue: '+stockUnid(f.luego)+' a Banzer</b><br><span style="font-size:.88em;color:var(--muted)">a PTF no le sobra para pasar</span>';
+  if(f.acc==='noMas') return '<b style="color:#7c4b00">✋ No mandar más a Banzer</b><br><span style="font-size:.88em;color:var(--muted)">'+
+    (f.por==='poca'?('se vende poco y tiene '+stockUnid(f.hoyB)):(f.por==='descont'?('ya no se fabrica y tiene '+stockUnid(f.hoyB)):('tiene '+stockUnid(f.mover)+' de más')))+' · que salga con las entregas</span>';
+  if(f.acc==='datos') return g('Pocas entregas ubicadas: queda como está');
+  if(f.acc==='bien') return '<span style="color:#0a6b47">✓ Bien repartido</span>';
+  if(f.acc==='sinConteo') return g('Sin conteo');
+  if(f.por==='poca') return g('Se vende poco: todo en PTF');
+  if(f.por==='descont') return g('Ya no se fabrica: no se reparte');
+  return g('—');
+}
+function almRotHtml(o){
+  var r=o.rotacion==='alta'?'alta':(o.rotacion==='media'?'media':'poca');
+  var col=o.rotacion==='alta'?'#0a6b47':(o.rotacion==='media'?'#155e75':'var(--muted)');
+  return '<b style="color:'+col+'">'+r+'</b>'+(o.rota?(' · '+stockNum(o.porDiaReal,1)+'/día'):'')+
+    '<br><span style="font-size:.86em;color:var(--muted)">'+stockUnid(o.vendidosRotacion||0)+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' (15 d)</span>'+
+    (o.descont?'<br><span style="font-size:.86em;color:#8a1c24">🛑 ya no se fabrica</span>':'');
+}
+function almPintarTabla(){
+  var A=ALM_DATA, el=document.getElementById('alm-tabla'); if(!A || !el) return;
+  var cuenta={ hacer:0, banzer:0, entregas:0, todos:A.filas.length };
+  A.filas.forEach(function(f){ if(f.acc==='pasar'||f.acc==='llega'||f.acc==='noMas') cuenta.hacer++; if(f.objB>0) cuenta.banzer++; if(f.u>0) cuenta.entregas++; });
+  var chips=[{k:'hacer',t:'Para hacer'},{k:'banzer',t:'🏪 Tener en Banzer'},{k:'entregas',t:'Con entregas'},{k:'todos',t:'Todos'}].map(function(c){
+    var on=(ALM_VER===c.k);
+    return '<button type="button" onclick="almSetVer(\''+c.k+'\')" style="border:1px solid '+(on?'#1e3a5f':'var(--gray-md)')+';background:'+(on?'#1e3a5f':'#fff')+';color:'+(on?'#fff':'#1e3a5f')+';border-radius:16px;padding:4px 11px;font-weight:700;font-size:.8rem;cursor:pointer">'+c.t+' ('+cuenta[c.k]+')</button>';
+  }).join('');
+  var filas=A.filas.filter(function(f){ return almVerFila(f) && almBuscaFila(f); });
+  var sel=ALM_K ? A.filas.filter(function(f){ return f.k===ALM_K; })[0] : null;
+  var h='<div style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:12px 14px;margin-bottom:14px">'+
+    '<div style="font-weight:800;font-size:.98rem;color:#1e3a5f;margin-bottom:4px">📦 Qué tener en cada depósito</div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;line-height:1.45">«Tener» es lo que pide la pantalla de Stock (lo vendido sin entregar, o el ritmo por los días de fábrica, margen y reserva), repartido según de qué lado se entregó cada producto. Lo que se vende poco no se reparte: queda todo en PTF. Tocá un producto para ver sus entregas en el mapa.</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+chips+'</div>'+
+    almTotalesHtml(A)+
+    (sel?('<div style="font-size:.8rem;margin-bottom:8px;color:#1e3a5f">🗺️ En el mapa: <b>'+esc(sel.nombre)+'</b> · <a href="#" onclick="almVerProducto(\'\');return false">ver todas las entregas</a></div>'):'')+
+    (ALM_Q?('<div style="font-size:.8rem;margin-bottom:8px;color:#1e3a5f">🔎 Buscando «'+esc(ALM_Q)+'»</div>'):'');
+  if(!filas.length){
+    h+='<div style="padding:12px;color:var(--muted);font-size:.86rem">'+(ALM_Q?'Ningún producto con ese filtro.'
+      :ALM_VER==='hacer'?'Nada que mover: lo que hay está bien repartido, o se vende poco y queda en PTF. Mirá «Todos» para ver cada producto.'
+      :ALM_VER==='banzer'?'Por ahora ningún producto conviene tenerlo en Banzer: lo que rota se entrega más cerca de PTF.':'Ningún producto con ese filtro.')+'</div></div>';
+    el.innerHTML=h; return;
+  }
+  h+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:820px"><thead><tr>'+
+    '<th style="width:26%">Producto</th><th style="width:13%">Rotación</th><th style="width:17%">Entregas '+ALM_ZONA_DIAS+' d</th>'+
+    '<th style="width:12%">Hoy</th><th style="width:12%">Conviene tener</th><th style="width:20%">Qué hacer</th></tr></thead><tbody>'+
+    filas.map(function(f){
+      var o=f.o, on=(f.k===ALM_K);
+      var ent=f.u>0 ? ('<b>'+stockUnid(f.u)+'</b> en '+f.n+' entrega'+(f.n===1?'':'s')+(f.ub>0?('<br>'+almBarra(f.ub-f.sB*f.ub, f.sB*f.ub, 80)+' <span style="font-size:.86em"><b style="color:'+ALM_COLOR.B+'">'+almPct(f.sB,1)+' %</b> Banzer</span>'):'')+
+                (f.uSin>0?('<br><span style="font-size:.86em;color:#7c4b00">'+stockUnid(f.uSin)+' sin ubicar</span>'):'')) : '<span style="color:var(--muted)">—</span>';
+      var hoy='<span style="color:'+ALM_COLOR.P+'">PTF <b>'+(f.hoyP==null?'?':stockUnid(f.hoyP))+'</b></span><br><span style="color:'+ALM_COLOR.B+'">Banzer <b>'+stockUnid(f.hoyB)+'</b></span>';
+      var obj=f.por==='datos' ? '<span style="color:var(--muted)">—</span>'
+        : (f.por ? ('<span style="color:'+ALM_COLOR.P+'">todo en PTF'+(f.nivel?(' (<b>'+f.nivel+'</b>)'):'')+'</span>')
+        : ('<span style="color:'+ALM_COLOR.P+'">PTF <b>'+f.objP+'</b></span><br><span style="color:'+ALM_COLOR.B+'">Banzer <b>'+f.objB+'</b></span>'));
+      return '<tr data-alm-k="'+esc(f.k)+'" style="cursor:pointer'+(on?';background:#eef2ff':'')+'" onclick="almVerProducto(this.getAttribute(\'data-alm-k\'))" title="Tener en total '+f.nivel+' (cuenta de Stock). Tocá para ver sus entregas en el mapa.">'+
+        '<td><b>'+esc(f.nombre)+'</b>'+(o.cod?('<br><span style="font-size:.86em;color:var(--muted)">'+esc(o.cod)+'</span>'):'')+'</td>'+
+        '<td>'+almRotHtml(o)+'</td><td>'+ent+'</td><td>'+hoy+'</td><td>'+obj+'</td><td>'+almAccHtml(f)+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+  el.innerHTML=h;
+}
+/* «Pasar 23 unidades (6 productos) · lo próximo que llegue: 18 (2) · no mandar más: 3 productos» — lo que hay que mover de un vistazo. */
+function almTotalesHtml(A){
+  var t={ pasar:0, np:0, llega:0, nl:0, noMas:0 };
+  A.filas.forEach(function(f){
+    if(f.acc==='pasar'){ t.pasar+=f.mover; t.np++; }
+    if(f.luego>0 && (f.acc==='pasar'||f.acc==='llega')){ t.llega+=f.luego; t.nl++; }
+    if(f.acc==='noMas') t.noMas++;
+  });
+  var p=[];
+  if(t.np) p.push('🚚 pasar a Banzer <b>'+stockUnid(t.pasar)+'</b> unidad'+(t.pasar===1?'':'es')+' de '+t.np+' producto'+(t.np===1?'':'s'));
+  if(t.nl) p.push('🏭 de lo próximo que llegue, mandar a Banzer <b>'+stockUnid(t.llega)+'</b> de '+t.nl+' producto'+(t.nl===1?'':'s'));
+  if(t.noMas) p.push('✋ no mandar más a Banzer: <b>'+t.noMas+'</b> producto'+(t.noMas===1?'':'s'));
+  return p.length ? ('<div style="font-size:.84rem;margin-bottom:8px;color:#1e3a5f;line-height:1.5">'+p.join(' · ')+'</div>') : '';
+}
+function almZonasHtml(A){
+  var ks=Object.keys(A.Z).filter(function(k){ return A.Z[k].n>=ALM_ZONA_MIN; }).sort(function(a,b){ return A.Z[b].n-A.Z[a].n; });
+  if(!ks.length) return '';
+  var otras=Object.keys(A.Z).length-ks.length;
+  return '<div style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:12px 14px;margin-bottom:14px">'+
+    '<div style="font-weight:800;font-size:.95rem;color:#1e3a5f;margin-bottom:4px">🗺️ Las zonas escritas: de qué lado quedan</div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Sacado de los pedidos de cada zona que tienen ubicación en el mapa. Así se ubican los pedidos que tienen zona pero no mapa.</div>'+
+    ks.slice(0,25).map(function(k){
+      var z=A.Z[k], pB=almPct(z.B, z.n);
+      return '<div class="occ-row"><span style="width:140px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(z.nombre)+'">'+esc(z.nombre)+'</span>'+
+        almBarra(z.P, z.B, 120)+
+        '<span style="flex:1;font-size:.76rem;color:var(--muted);padding-left:8px">'+(pB>=50?('<b style="color:'+ALM_COLOR.B+'">Banzer '+pB+' %</b>'):('<b style="color:'+ALM_COLOR.P+'">PTF '+(100-pB)+' %</b>'))+' · '+z.n+' pedido'+(z.n===1?'':'s')+' con mapa</span></div>';
+    }).join('')+
+    (ks.length>25||otras?('<div style="font-size:.76rem;color:var(--muted);margin-top:6px">'+(ks.length>25?((ks.length-25)+' zonas más. '):'')+(otras?(otras+' zona'+(otras===1?'':'s')+' con menos de '+ALM_ZONA_MIN+' pedidos con mapa no se usan para ubicar.'):'')+'</div>'):'')+
+    '</div>';
+}
+function almPieHtml(A){
+  return '<div style="font-size:.78rem;color:var(--muted);line-height:1.55;padding:2px 4px 18px">'+
+    '<b>Cómo se cuenta.</b> El lado sale de las entregas del '+fmtFecha(A.desde)+' al '+fmtFecha(A.hoy)+' por fecha de entrega. Para el lado no cuentan las ventas de tienda (no tienen dirección), las reposiciones (RPT), las ATC ni los pedidos puntuales (los de Eduardo, salvo Multicenter). «Conviene tener» sale de la pantalla de Stock, con sus reglas de siempre. '+
+    'La distancia es en línea recta. «Hoy» es lo del último Excel de cada depósito menos lo que salió después. '+
+    'Nunca se propone traer de Banzer a fábrica: si Banzer tiene de más, se deja de mandar y sale con las entregas. '+
+    'La revisión automática sigue usando PTF primero y después Banzer, como hasta hoy. Esta pantalla no cambia nada: solo mira.</div>';
+}
+/* ---- El mapa ---- */
+function almLineaMedia(P, B){
+  var lat0=(P.lat+B.lat)/2, kx=111.32*Math.cos(lat0*Math.PI/180), ky=110.57;
+  var bx=(B.lng-P.lng)*kx, by=(B.lat-P.lat)*ky, d=Math.sqrt(bx*bx+by*by); if(!(d>0)) return null;
+  var mx=bx/2, my=by/2, wx=-by/d, wy=bx/d;
+  return [-25,25].map(function(t){ return [P.lat+(my+wy*t)/ky, P.lng+(mx+wx*t)/kx]; });
+}
+function almPopup(q){
+  var p=findById(q.id), l=q.lado||{};
+  var lado=l.medio?('<span style="color:'+ALM_COLOR.M+'">en el medio</span>'):(l.B>0.5?('<b style="color:'+ALM_COLOR.B+'">del lado de Banzer</b>'):('<b style="color:'+ALM_COLOR.P+'">del lado de PTF</b>'));
+  var t=p ? ((p.oc?ocEtiq(p.oc):'Pedido')+(p.cliente?(' · '+esc(p.cliente)):'')) : 'Pedido';
+  return '<b>'+t+'</b><br>'+fmtFecha(q.f)+(p&&p.zona?(' · '+esc(p.zona)):'')+'<br>'+
+    (p?(esc(prodText((p.productos||[]).filter(function(x){ return !esProdDeTienda(x); })))+'<br>'):'')+
+    lado+' · PTF a '+almKmTxt(l.dP||0)+' · Banzer a '+almKmTxt(l.dB||0)+(q.aprox?'<br><span style="color:#7c4b00">≈ ubicado por la dirección escrita</span>':'')+
+    (p?('<br><a href="#" onclick="showPedidoModal(\''+esc(p.id)+'\');return false">Ver el pedido</a>'):'');
+}
+function almPintarMapa(encuadrar){
+  var A=ALM_DATA, el=document.getElementById('alm-mapa'); if(!A || !el) return;
+  var lista=A.puntos.filter(function(q){ return !ALM_K || q.ks.indexOf(ALM_K)>=0; });
+  var nP=0, nB=0, nM=0; lista.forEach(function(q){ if(q.lado.medio) nM++; else if(q.lado.B>0.5) nB++; else nP++; });
+  var tit=document.getElementById('alm-mapa-tit');
+  if(tit){
+    var sel=ALM_K ? (A.filas.filter(function(f){ return f.k===ALM_K; })[0]||{}).nombre : '';
+    var punto=function(c){ return '<span style="width:11px;height:11px;border-radius:50%;background:'+c+';display:inline-block;border:1px solid #fff;vertical-align:middle"></span>'; };
+    tit.innerHTML='<b style="color:#1e3a5f">🗺️ '+(sel?('Entregas de '+esc(sel)):'Dónde se entregó')+'</b>'+
+      '<span>'+punto(ALM_COLOR.P)+' más cerca de PTF <b>'+nP+'</b></span><span>'+punto(ALM_COLOR.B)+' más cerca de Banzer <b>'+nB+'</b></span>'+
+      (nM?('<span>'+punto(ALM_COLOR.M)+' en el medio <b>'+nM+'</b></span>'):'')+
+      '<span style="color:var(--muted)">La línea punteada: donde los dos quedan a la misma distancia. Las manchas más oscuras son donde más se entrega.</span>'+
+      (sel?'<a href="#" onclick="almVerProducto(\'\');return false" style="margin-left:auto">✕ ver todas</a>':'');
+  }
+  if(!window.L){ ensureLeaflet(function(){ if(almAbierto()) almPintarMapa(true); }); return; }
+  if(!ALM_MAPA){
+    ALM_MAPA=L.map(el, { preferCanvas:true, zoomSnap:0.25, zoomDelta:0.5 });   // zoom de a cuartos: el encuadre llena la caja
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(ALM_MAPA);
+    ALM_CAPA=L.layerGroup().addTo(ALM_MAPA);
+  }
+  ALM_CAPA.clearLayers();
+  var P=almUbic('ptf'), B=almUbic('banzer'), pts=[];
+  lista.forEach(function(q){
+    var col=q.lado.medio?ALM_COLOR.M:(q.lado.B>0.5?ALM_COLOR.B:ALM_COLOR.P);
+    /* La mancha va en PÍXELES (no en metros): se ve igual a cualquier zoom y, donde se juntan muchas, se oscurece. */
+    L.circleMarker([q.lat,q.lng], { radius:15, stroke:false, fillColor:col, fillOpacity:0.12, interactive:false }).addTo(ALM_CAPA);
+    L.circleMarker([q.lat,q.lng], { radius:4, color:'#fff', weight:1, fillColor:col, fillOpacity:0.95 }).bindPopup(almPopup(q)).addTo(ALM_CAPA);
+    pts.push([q.lat,q.lng]);
+  });
+  var lm=almLineaMedia(P,B); if(lm) L.polyline(lm, { color:'#475569', weight:2, dashArray:'6 6', interactive:false }).addTo(ALM_CAPA);
+  [P,B].forEach(function(w){
+    var esP=(w.id==='ptf');
+    L.circleMarker([w.lat,w.lng], { radius:12, color:'#fff', weight:3, fillColor:esP?ALM_COLOR.P:ALM_COLOR.B, fillOpacity:1 })
+      .bindTooltip((esP?'🏭 ':'🏪 ')+w.nombre, { permanent:true, direction:'top', offset:[0,-12] })
+      .bindPopup('<b>'+esc(w.largo)+'</b>'+(w.aprox?'<br><span style="color:#7c4b00">≈ ubicado por su dirección escrita</span>':'')+'<br><a href="'+esc(w.link)+'" target="_blank" rel="noopener">Abrir en Maps ↗</a>')
+      .addTo(ALM_CAPA);
+    pts.push([w.lat,w.lng]);
+  });
+  setTimeout(function(){
+    if(!ALM_MAPA) return;
+    ALM_MAPA.invalidateSize();
+    if(encuadrar){ if(pts.length>2) ALM_MAPA.fitBounds(pts,{padding:[30,30], maxZoom:14}); else ALM_MAPA.setView([(P.lat+B.lat)/2,(P.lng+B.lng)/2],12); }
+  }, 120);
+}
+/* ---- Los enlaces cortos que falta abrir ---- */
+function almGeoPedir(vuelta){
+  if(ALM_GEO_EN_CURSO || !CONNECTED) return;
+  if(!ALM_DATA) ALM_DATA=almZonaData();
+  var lote=ALM_DATA.T.pend.slice(0, ALM_GEO_LOTE).map(function(x){ return x.u; });
+  if(!lote.length) return;
+  ALM_GEO_EN_CURSO=true; ALM_GEO_ERR=''; almPintarGeo();
+  conTopeDuro(apiGeocode(lote), 150000, 'el servidor tardó demasiado').then(function(res){
+    ALM_GEO_EN_CURSO=false;
+    var ok=0;
+    if(res && res.ok && Array.isArray(res.geo)){
+      res.geo.forEach(function(g){ if(g && g.link && g.lat!=null && g.lng!=null){ MAPA_COORDS[g.link]={ link:g.link, lat:g.lat, lng:g.lng, aprox:!!g.aprox }; ok++; } });
+      if(ok) geoCacheSave();
+    } else ALM_GEO_ERR=String((res&&res.error)||'respuesta sin ubicaciones');
+    lote.forEach(function(u){ if(!MAPA_COORDS[u]) ALM_GEO_FALLO[u]=1; });
+    ALM_GEO_OK+=ok;
+    if(almAbierto()){ almRefrescar(); if(ok && vuelta<ALM_GEO_VUELTAS) almGeoPedir(vuelta+1); }
+    else ALM_DATA=null;
+  }, function(e){
+    ALM_GEO_EN_CURSO=false; ALM_GEO_ERR=String((e&&e.message)||e||'sin conexión');
+    if(almAbierto()) almPintarGeo();
+  });
+}
+/* ---- El texto para logística ---- */
+function almCopiar(){
+  var A=ALM_DATA||almZonaData();
+  var pasar=A.filas.filter(function(f){ return f.acc==='pasar'; });
+  var llega=A.filas.filter(function(f){ return f.luego>0 && (f.acc==='pasar'||f.acc==='llega'); });
+  var noMas=A.filas.filter(function(f){ return f.acc==='noMas'; });
+  /* 🏪 Qué tener en Banzer: la respuesta a la pregunta del dueño, de mayor a menor. Lo demás, en PTF. */
+  var tener=A.filas.filter(function(f){ return f.objB>0; }).sort(function(a,b){ return (b.objB-a.objB) || a.nombre.localeCompare(b.nombre); });
+  if(!tener.length && !pasar.length && !llega.length && !noMas.length){ toast('Ningún producto conviene tenerlo en Banzer y no hay nada que mover.','ok',5000); return; }
+  var t='📍 BANZER O PTF — '+fmtFecha(A.hoy)+'\nSegún dónde se entregó cada producto en los últimos '+ALM_ZONA_DIAS+' días.\n';
+  if(tener.length) t+='\n🏪 TENER EN BANZER (lo demás, en PTF)\n'+tener.map(function(f){ return '• '+f.nombre+': '+f.objB+' (hoy '+stockUnid(f.hoyB)+')'; }).join('\n')+'\n';
+  if(pasar.length) t+='\n🚚 PASAR DE PTF A BANZER\n'+pasar.map(function(f){ return '• '+f.nombre+': '+stockUnid(f.mover); }).join('\n')+'\n';
+  if(llega.length) t+='\n🏭 DE LO PRÓXIMO QUE LLEGUE DE FÁBRICA, MANDAR A BANZER\n'+llega.map(function(f){ return '• '+f.nombre+': '+stockUnid(f.luego); }).join('\n')+'\n';
+  if(noMas.length) t+='\n✋ NO MANDAR MÁS A BANZER (que salga con las entregas)\n'+noMas.map(function(f){ return '• '+f.nombre+' (tiene '+stockUnid(f.hoyB)+(f.objB?(', conviene '+f.objB):'')+')'; }).join('\n')+'\n';
+  copyText(t.trim());
 }
 
 /* ============================================================================
