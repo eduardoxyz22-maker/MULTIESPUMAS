@@ -440,6 +440,17 @@ def abrir_enlace_directo(ident, u):
             host = re.sub(r"^https?://([^/?#]+).*$", r"\1", cur)
             print(f"   {ident}: salto {salto} → HTTP {r.status} en {host} · {len(cuerpo)} letras · " +
                   (f"coordenadas {c[0]}, {c[1]}" if c else "sin coordenadas"))
+            # Los pares de números con forma de Santa Cruz que trae la página (el lugar es público: un almacén, no un
+            # cliente). El más repetido suele ser el pin.
+            pares = {}
+            for la, ln in re.findall(r"(-1[6-8]\.\d{4,})\s*,\s*(-6[2-4]\.\d{4,})", cuerpo):
+                k = f"{float(la):.6f}, {float(ln):.6f}"
+                pares[k] = pares.get(k, 0) + 1
+            for ln, la in re.findall(r"(-6[2-4]\.\d{4,})\s*,\s*(-1[6-8]\.\d{4,})", cuerpo):
+                k = f"{float(la):.6f}, {float(ln):.6f} (lng,lat)"
+                pares[k] = pares.get(k, 0) + 1
+            top = sorted(pares.items(), key=lambda kv: -kv[1])[:5]
+            print(f"   {ident}: pares lat,lng en la página: " + (" · ".join(f"{k} ×{n}" for k, n in top) if top else "ninguno"))
             return texto
         except _er.HTTPError as e:
             loc = e.headers.get("Location") if e.headers else None
