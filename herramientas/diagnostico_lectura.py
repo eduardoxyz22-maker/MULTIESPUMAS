@@ -125,7 +125,7 @@ def contar(crudo):
         for n, i in sistema:
             if i in ("__stock__", "__arqueo_cuadre__", "__dias_cerrados__", "__carga_chk__"):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
-        celda_stock(ped)
+        celda_stock(ped, j.get('version'))
         pedidos_en_feriados(ped)
 
 
@@ -147,7 +147,7 @@ def _tam(v):
     return _letras(json.dumps(v, ensure_ascii=False, separators=(",", ":")))
 
 
-def celda_stock(ped):
+def celda_stock(ped, ver=None):
     global _STOCK_MEDIDO
     if _STOCK_MEDIDO:
         return
@@ -186,6 +186,10 @@ def celda_stock(ped):
     # (06/10, §4hs) Desde la página del 06/10, cada guardado del stock lleva `pv: 3`; una página sin F5 lo pierde al guardar.
     pv = s.get("pv")
     print(f"      la guardó por última vez: {'una página al día (pv ' + str(pv) + ')' if (pv or 0) >= 3 else 'una página VIEJA (sin pv): que todos hagan F5'}")
+    # Y si el servidor ya lo exige (`sf`, .gs 2026-10-06-a): con él, una página sin F5 recibe `actualizar` y no escribe el stock.
+    if isinstance(ver, str) and ver:
+        print("      servidor: " + (f"🔒 una página sin F5 ya NO puede guardar el stock ({ver})" if ver >= "2026-10-06-a"
+                                   else f"⚠️ todavía deja guardar el stock a una página sin F5 ({ver}; hace falta la 2026-10-06-a)"))
     alm = lambda a: re.sub(r"^\s*[\d-]+\s+", "", str(a or ""))[:22] or "?"
     # La hora en que se SUBIÓ cada Excel (`ts`, hora de Bolivia): el orden de la lista no alcanza para saberlo.
     subido = lambda ts: time.strftime("%d/%m %H:%M", time.gmtime((float(ts) / 1000) - 4 * 3600)) if ts else "?"
