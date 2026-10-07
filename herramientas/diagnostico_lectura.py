@@ -385,6 +385,55 @@ def ubicacion_almacenes(base):
             print(f"   {ident}: el servidor no la pudo abrir")
         else:
             print(f"   {ident}: {g.get('lat')}, {g.get('lng')}" + (" (aproximada)" if g.get("aprox") else ""))
+    # El 07/10 el servidor no pudo con ninguno de los dos: se abren acá directo (GitHub sí sale a internet), y se dice
+    # QUÉ contestó Google en cada salto, para saber por qué el servidor no puede.
+    print("   ── abiertos directo desde GitHub ──")
+    for ident, u in links:
+        abrir_enlace_directo(ident, u)
+
+
+_COORD_RES = [r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", r"@(-?\d+\.\d+),(-?\d+\.\d+)", r"[?&](?:q|ll|query|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)",
+              r"\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]"]
+
+
+def _coords_en(texto):
+    for rx in _COORD_RES:
+        m = re.search(rx, texto or "")
+        if m and abs(float(m.group(1))) < 90 and abs(float(m.group(2))) < 180:
+            return m.group(1), m.group(2)
+    return None
+
+
+def abrir_enlace_directo(ident, u):
+    abrir = _rq.build_opener(_SinSeguir)
+    cur = u
+    for salto in range(6):
+        req = _rq.Request(cur, headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
+                                                       "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+                                        "Accept-Language": "es-BO,es;q=0.9"})
+        try:
+            r = abrir.open(req, timeout=30)
+            cuerpo = r.read().decode("utf-8", "replace")
+            c = _coords_en(cur) or _coords_en(cuerpo)
+            host = re.sub(r"^https?://([^/?#]+).*$", r"\1", cur)
+            print(f"   {ident}: salto {salto} → HTTP {r.status} en {host} · {len(cuerpo)} letras · " +
+                  (f"coordenadas {c[0]}, {c[1]}" if c else "sin coordenadas"))
+            return
+        except _er.HTTPError as e:
+            loc = e.headers.get("Location") if e.headers else None
+            if e.code in (301, 302, 303, 307, 308) and loc:
+                cur = loc if loc.startswith("http") else re.sub(r"^(https?://[^/]+).*$", r"\1", cur) + loc
+                c = _coords_en(cur)
+                destino = re.sub(r"^https?://([^/?#]+)(/[^?#]{0,40}).*$", r"\1\2", cur)
+                print(f"   {ident}: salto {salto} → {e.code} a {destino}" + (f" · coordenadas {c[0]}, {c[1]}" if c else ""))
+                if c:
+                    return
+                continue
+            print(f"   {ident}: salto {salto} → HTTP {e.code}")
+            return
+        except Exception as ex:
+            print(f"   {ident}: salto {salto} → {type(ex).__name__}: {str(ex)[:120]}")
+            return
 
 
 def main():
