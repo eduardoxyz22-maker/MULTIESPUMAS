@@ -364,11 +364,18 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     dueño). Batería con la línea: 137 suites, 5.185, 0 rojas.
     · **🗓️ El plan desplegable de 7, 15 y 30 días** (§4hv, 07/10 noche; PUBLICADA 07/10 18:10, `3f44b05`; dueño: *«qué tener en Banzer y
     qué tener en PTF para los próximos 7-15-30 días… sin cálculos de qué pedir a producción… mover más que todo a Banzer pero sin
-    descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo: lo ya vendido
-    para esos días en SU zona (`o.compIds`, nuevo en `stockData`, suma igual que `comp`; `almLadoPedido`) o `porDia`×días repartido
-    con `sB`, lo más alto, cada lado. Llevar: a Banzer solo lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»), después
-    Moreno; a PTF, Moreno primero. Nunca de Banzer a PTF (`cubreB`: «pueden salir de Banzer»). Lo que no alcanza NO se muestra
-    (nada de producción). «📋 Copiar el plan de N días» (`almCopiarPlan`). `test_banzer_ptf` §12 (→ 80).
+    descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo, cada lado.
+    Llevar: a Banzer solo lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»). Nunca de Banzer a PTF (`cubreB`:
+    «pueden salir de Banzer»). «📋 Copiar el plan de N días» (`almCopiarPlan`).
+    · **✏️ Segunda vuelta (§4hw, 07/10 noche, EN LA RAMA, espera «publica»)**, con el caso real del dueño (ESPECIAL SEMIORTOPEDICO, 6
+    vendidos y 0 en PTF, «Traer 2»): *«traer lo que ya está vendido… MÁS lo que debería tener para los próximos días, y lo mismo
+    Banzer»*, *«¿qué pasa cuando el saldo es 0 en ambos?»*, *«no "pedir"… TRAER DE MORENO»* y *«si el Excel de Moreno muestra menos,
+    una alerta de "recordá revisar la producción"»*. **Tener = ya vendido en su zona (`o.compIds`, `almLadoPedido`) + `porDia`×H
+    con `sB`, SUMADOS** (no el mayor: ya no es `stockNecesario`). Lo que falta se TRAE entero de la fábrica del producto
+    (`almPlanFuente`: Moreno; Sueña → Multiespumas), PTF primero, con cuánto ya está vendido (`uF`). ⚠️ `almPlanAlertaDe`: si
+    hay que traer más de lo que dicen los Excel de donde se trae, y existe el Excel de ESA fábrica (`almPlanAlmsDe`), «⚠️ Recordá
+    revisar la producción» en la fila, arriba (con «Ver cuáles»), en el filtro y en la copia. Nunca «pedir/producir/fabricar».
+    `test_banzer_ptf` §12 (→ 101; 30 rojas contra `3f44b05`).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

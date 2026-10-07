@@ -7445,6 +7445,42 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hw. 07/10 a la noche: 🗓️ el plan de 7/15/30 días, segunda vuelta — «tener» = lo ya vendido + lo para tener, «TRAER DE MORENO» y la alerta «Recordá revisar la producción» — EN LA RAMA (espera el «publica» del dueño)
+El dueño, mirando la pantalla de §4hv publicada con su caso real (ESPECIAL SEMIORTOPEDICO: PTF tener 7, hay 0, 6 ya vendidos;
+«Traer 2 de Moreno a PTF»): *«no me cuadra eso de traer 2 de Moreno y hay 6 vendidos y tenemos 0. Debería aclarar traer (que ya
+está vendido y debería estar en cada almacén) más lo que debería tener para los próximos días. Si 6 ya están vendidos y deberían
+salir de PTF, debería indicar traer de Moreno los 6 que ya están vendidos + x cantidad para tener en stock, y lo mismo Banzer»*;
+*«en tu imagen de prueba sí está bien, pero es porque tenemos saldo de stock… ¿qué pasa cuando el saldo es 0 en ambos
+almacenes?»*; *«no "pedir": se supone que el stock ya está pedido, si no TRAER DE MORENO»*; y *«si el Excel de Moreno muestra
+menos, una alerta de "recordá revisar la producción" o algo que alerte que deben traer para los próximos días esa cantidad y
+tener»*.
+- **Por qué «Traer 2» no cuadraba**: §4hv tomaba el MAYOR entre lo ya vendido y lo que se vende en el plazo, y lo que el Excel de
+  Moreno no tenía no se mostraba: con 0 en los dos depósitos y 2 en Moreno decía «Traer 2», sin decir que faltaban los otros.
+- **Tener = lo ya vendido + lo para tener, sumados** (`almPlanDe`: `firmeB/firmeP` = ya vendido en su zona; `xB/xP` = `porDia`×H
+  con `sB`; `tB=firmeB+xB`, `tP=firmeP+xP`). Lo que rota poco, lo discontinuado y lo de pocos datos: todo en PTF. La celda dice
+  «tener 7 · 6 ya vendidos + 1 para tener · hay 0» (`almPlanParteTxt`). ⚠️ Ya no es la cuenta de `stockNecesario` (el mayor, con
+  fábrica + margen + reserva): el plan suma a propósito, el dueño quiere ver lo vendido aparte de lo que hay que tener.
+- **Lo que falta se TRAE, entero** (`deM`): a PTF primero, después a Banzer, de la fábrica del producto (`almPlanFuente`: Moreno;
+  Sueña → Multiespumas, por `stockBloqueDe`/`MARCA_FABRICA`), con cuánto de eso ya está vendido (`uF`): «📥 Traer 7 de Moreno a
+  PTF (6 ya vendidos + 1 para tener)». Nunca «pedir», «producir», «fabricar» ni «no alcanza».
+- **⚠️ La alerta** (`almPlanAlertaDe`): lo que hay que traer es MÁS de lo que dicen los Excel de los almacenes de donde se trae
+  (`r.excel`: `o.otrosAlm`, libre de las recogidas programadas) y existe el Excel de ESA fábrica (`almPlanAlmsDe`: Moreno = los
+  almacenes de «ir a buscar» que no dicen Multiespumas, o sea `IM - PRODUCTOTERMINADO`; de Multiespumas no se sube ninguno, así
+  que Sueña no alerta). Texto (`almPlanAlertaTxt`): «⚠️ Recordá revisar la producción: para los próximos 7 días hay que traer 9 de
+  Moreno y tenerlos, y el Excel de Moreno de hoy tiene 5. Faltan 4.» (singular: «tenerlo», «Falta 1»); si ese Excel no es de
+  hoy, «el último Excel de Moreno, del 06/10». Va en la fila (caja ámbar), arriba del plan (`#alm-plan-alerta`: cuántos productos
+  y cuántos faltan en total, con «Ver cuáles»), en el filtro «⚠️ Revisar la producción (n)» (`ALM_PLAN_VER='prod'`, aparece solo
+  si hay alguna) y en la copia para logística («⚠️ RECORDÁ REVISAR LA PRODUCCIÓN…», después de TRAER). Compara, no calcula
+  producción: mira el total del producto (una fábrica abastece a los dos depósitos).
+- **Vistas**: «Qué hacer» (llevar o traer; antes «Qué llevar») · «⚠️ Revisar la producción» · «Todo el plan». Orden: primero lo que
+  más ya vendido hay que traer (`almPlanVendidoTraer`), después lo que más se mueve. Total de arriba: «📥 traer 11 de Moreno y 2
+  de Multiespumas (9 ya vendidos)».
+- `test_banzer_ptf` §12 reescrita (→ 101; contra `3f44b05` 30 rojas con la función nueva reemplazada por una vacía, o 1 roja y
+  se saltea sin ella): las cuentas a mano con la suma, el caso del dueño con 0 y 0 (ESPECIAL SEMIORTOPEDICO), Sueña de Multiespumas
+  sin alerta, la alerta con el Excel de hoy y el de ayer, el singular, el cartel y el filtro, la copia y 390 px. ⚠️ Las filas se
+  leen con `innerText`: con `textContent` los renglones de una celda salen pegados («tener 76 ya vendidos»). Capturas con datos
+  inventados en el scratchpad (`cap_4hv2/`, `demo_plan2.js`).
+
 ## 4hv. 07/10 a la noche: 🗓️ «Banzer o PTF» — el plan desplegable de 7, 15 y 30 días: qué tener en cada depósito y qué llevar — PUBLICADA 07/10 18:10 (`3f44b05`, Pages OK 18:11, run 37694489367; el dueño: «sí, publica cuando terminen»; batería 138 suites, 0 rojas)
 El dueño, con la pantalla de §4ht publicada, en varios mensajes seguidos: *«falta una pestaña desplegable que muestre qué tener
 en Banzer y qué tener en PTF, porque ahí solo dice "llevar a Banzer" pero no muestra una lista… pensar a futuro y llevar en masa:

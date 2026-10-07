@@ -2731,6 +2731,19 @@ contando lo que viene en camino; nunca de Banzer a PTF (si a Banzer le sobra, «
 muestra (el dueño no quiere producción acá). Para revisar: el redondeo por lado (`Math.round` de cada uno: el total puede pasar
 por 1 al de una sola cuenta), y que un pedido «sobre la línea» se asigne entero a PTF. `test_banzer_ptf` §12.
 
+**✏️ Segunda vuelta del plan (§4hw, 07/10 a la noche, en la rama)**: el dueño miró su caso real (ESPECIAL SEMIORTOPEDICO: PTF
+tener 7, hay 0, 6 ya vendidos, «Traer 2 de Moreno a PTF») y pidió: *«traer lo que ya está vendido… MÁS lo que debería tener para
+los próximos días, y lo mismo Banzer»*, *«¿qué pasa cuando el saldo es 0 en ambos almacenes?»*, *«no "pedir": se supone que el
+stock ya está pedido, si no TRAER DE MORENO»* y *«si el Excel de Moreno muestra menos, una alerta de "recordá revisar la
+producción"»*. Cambios: (1) **tener = ya vendido + para tener, sumados** (antes, el mayor de los dos); la celda dice «tener 7 · 6
+ya vendidos + 1 para tener · hay 0». (2) Lo que falta en cada depósito se **trae entero** de la fábrica del producto (Moreno;
+Sueña de Multiespumas), PTF primero, aunque el Excel de Moreno tenga menos: «📥 Traer 7 de Moreno a PTF (6 ya vendidos + 1 para
+tener)». (3) **⚠️ «Recordá revisar la producción»** (`almPlanAlertaDe`) cuando lo que hay que traer supera lo que dicen los Excel
+de donde se trae, solo si existe el Excel de esa fábrica: en la fila, en un cartel arriba con «Ver cuáles», en el filtro «⚠️
+Revisar la producción (n)» y en la copia para logística. Dice de qué día es el Excel si no es de hoy. Para revisar: el plan ya no
+coincide con `stockNecesario` (el «cuánto pedir» de Stock usa el mayor y suma fábrica + margen + reserva) — es a propósito; y la
+alerta mira el total del producto, no por depósito (una sola fábrica abastece a los dos). `test_banzer_ptf` §12 → 101.
+
 ### 3. La pantalla
 Resumen (entregas, % por lado, cómo se ubicaron, avisos de Banzer aproximado y de Excel faltante); mapa Leaflet (`preferCanvas`,
 `zoomSnap:0.25`): los dos depósitos con tooltip permanente, cada entrega con el color de su lado + una mancha de 15 px (en
