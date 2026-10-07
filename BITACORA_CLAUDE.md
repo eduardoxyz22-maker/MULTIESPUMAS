@@ -7445,6 +7445,75 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ht. 07/10: 📍 «Banzer o PTF» — qué tener en cada depósito según dónde se entrega (EN LA RAMA, SIN PUBLICAR)
+El dueño, 07/10: *«Necesitamos saber, medir y determinar qué productos debemos tener en almacén banzer y que en almacén
+productos terminados fabrica, según los focos de calor de entrega y rotación para ser más eficientes y tener el stock a la
+mano según la zona de entrega»*. Se le propuso (60 días de entregas por el pin de Maps o la zona; cada entrega cuenta para el
+depósito más cerca; el total sale de la cuenta de Stock y se reparte con la proporción; lo que rota poco no se reparte; tabla
+y mapa en Stock; nunca traer de Banzer a fábrica) y lo aprobó mandando los dos enlaces de Maps.
+
+**📍 Dónde quedan los depósitos (`ALM_UBIC`).** Los enlaces que mandó (`maps.app.goo.gl/…?g_st=ic`) son de LUGARES con nombre
+(negocios), y Google ya no le da el pin a un programa: redirige a `maps.google.com?q=<nombre y dirección>&ftid=…` y la página
+final (~800 KB) no trae ni un par de coordenadas. El servidor (`resolveLinks`) tampoco pudo abrirlos (corridas 17-20 del
+«Diagnóstico de la lectura del panel», que se usó para salir a internet: desde esta sesión el proxy no abre `maps.app.goo.gl`).
+- **PTF, exacto**: el `q=` trae su Plus Code (`7V24+CRP MULTIESPUMAS VISCARRA S.R.L., Av. Quinto Anillo`) → `olcCoords` =
+  −17.7489125, −63.1429219 (el geocodificador del servidor dio lo mismo a 1 m).
+- **Banzer, aproximado** (`aprox:true`): solo la dirección escrita («Vaca Fria 8vo anillo, Av Viru Viru 2») → geocodificador del
+  servidor = −17.7197548, −63.1631138. La pantalla lo dice y pide avisar si el punto del mapa no cae en su lugar. Si el dueño
+  manda las coordenadas (mantener apretado en Maps), se cambian en `ALM_UBIC` y se saca `aprox`.
+- El `ftid` NO es una celda S2 decodificable (probado: da 4-6 km de error). No volver a intentarlo.
+- Quedan a **3,9 km** en línea recta: PTF al este (5to anillo), Banzer al norte (8vo anillo).
+
+**📊 ¿Alcanzan las ubicaciones?** El diagnóstico cuenta (solo números, el registro es público): de **699** entregas con fecha en
+los últimos 60 días, **427** tienen enlace —311 con las coordenadas adentro (el panel las lee sin internet), 103 enlaces cortos
+y 13 de otra forma— y **272** no tienen, de las cuales **248** tienen zona escrita. Una muestra de los **12 enlaces cortos más
+nuevos**: el servidor abrió **12 de 12** en 5,4 s. O sea: lo que falla es solo el enlace de un LUGAR con nombre; los de los
+clientes (un punto marcado) se abren bien. No hace falta tocar el `.gs`.
+
+**Cómo mide** (`almZonaData`, todo en la página, solo mira):
+- Las entregas de los últimos `ALM_ZONA_DIAS`=60 días (por fecha de entrega, hasta hoy) que **miden la rotación**, con las
+  reglas de la tabla de Stock: `stockCuenta` (sin filas del sistema, borradores ni ATC), sin ventas de tienda (`esVentaTienda`:
+  no tienen dirección), sin `stockPedidoUnico` (RPT, puntuales, Eduardo salvo a Multicenter) y sin productos de tienda.
+- El lado de cada entrega: el pin (`almPunto` = `MAPA_COORDS` o `coordsDeLink`; a más de `KM_SOSPECHOSO` no cuenta) → el depósito
+  más cerca en línea recta (`almLado`, `almKm`); con menos de `ALM_EMPATE_KM`=1 km de diferencia, **mitad y mitad** («en el
+  medio»). Sin pin, la **zona escrita** repartida como sus pedidos CON pin (`almZonas`: toda la planilla, sin mayúsculas ni
+  acentos, mínimo `ALM_ZONA_MIN`=3 con pin). Sin pin ni zona conocida, no cuenta y se dice cuántas son.
+- Por **unidades** (el stock se gasta por unidad).
+- **Cuánto tener** = `stockNecesario(o)` = `max(comp, porDia × (fábrica + margen + reserva))`: la MISMA cuenta de
+  `stockCuantoPedir`, sacada a una función (el test comprueba que «cuánto pedir» da lo mismo que antes). ⚠️ Por eso la **venta de
+  tienda SÍ cuenta para el tener** (es rotación en Stock) aunque no cuente para el lado. Lo discontinuado: solo lo vendido.
+- **Reparto**: `objB = round(tener × proporción Banzer)`, `objP = tener − objB`. No se reparte (todo en PTF, que es a donde llega de
+  fábrica) lo que rota poco (`baja`) y lo discontinuado; con menos de `ALM_MIN_UNID`=3 unidades ubicadas, «pocos datos: queda como
+  está».
+- **Qué hacer**: `pasar` = «🚚 Pasar N a Banzer» solo con lo que a PTF le SOBRA de lo suyo (`hoyP − objP`), y lo que falta «de lo
+  próximo que llegue»; `llega` = «🏭 Lo próximo que llegue: N a Banzer» (a PTF no le sobra); `noMas` = «✋ No mandar más a Banzer»
+  (Banzer tiene más que lo suyo, o tiene algo de un producto que rota poco). 🚫 **Nunca** se propone traer de Banzer a fábrica
+  (dueño, 26/09). `bien`, `datos`, `sinConteo`. «Hoy» = `o.deposito` (PTF, sin negativos) y `salePor` de Banzer (`almHoyBanzer`,
+  `recogerMismo('Banzer', nm)`): lo del último Excel menos lo que salió después.
+
+**La pantalla** (botón «📍 Banzer o PTF» en la barra de Stock → `abrirAlm`, `#alm-overlay`, z-index 3100; las fichas de pedido
+van en 4000): resumen (entregas, % de cada lado, cómo se ubicaron, aviso de Banzer aproximado), **mapa** (Leaflet: los dos
+depósitos con su nombre, cada entrega con el color de su lado y una mancha de 600 m que se oscurece donde más se entrega, y la
+línea punteada donde los dos quedan a la misma distancia, `almLineaMedia`), **tabla** (filtros «Para hacer / Con entregas /
+Todos», búsqueda en la barra de arriba —no se redibuja, no pierde el foco—, el total a mover arriba, tocar un producto lo deja
+solo en el mapa), las **zonas escritas** y de qué lado quedan, y «📋 Copiar para logística» (pasar / lo próximo que llegue / no
+mandar más). En el celular la tabla scrollea adentro de su caja.
+
+**Los enlaces cortos** que el panel no lee (`T.pend`) los abre el servidor en segundo plano (`almGeoPedir`: de a `ALM_GEO_LOTE`=20,
+los más nuevos primero, hasta `ALM_GEO_VUELTAS`=5 tandas mientras abra alguno, con `conTopeDuro` de 150 s), UNA vez por apertura
+de la página (después, botón «📍 Buscarlos»). Lo que abre va a `MAPA_COORDS` y al teléfono (`geoCacheSave`: sirve también al
+mapa de entregas); lo que no, a `ALM_GEO_FALLO` (la sesión) y esa entrega va por su zona.
+
+⚠️ **No cambia nada**: no marca pedidos, no toca el stock ni la planilla. La revisión automática sigue con el orden del dueño (PTF →
+Banzer → IM, 21/09). **Para decidir con el dueño**: (1) que el punto de Banzer está bien; (2) si quiere que la revisión
+automática reparta por cercanía (hoy no); (3) la ventana de 60 días y el margen de 1 km «en el medio».
+
+`tests/test_banzer_ptf.js` (46, reloj clavado en el 07/10/2026, ubicaciones y pedidos inventados, Leaflet de mentira que anota lo
+que se dibuja): qué cuenta y qué no, el lado/medio/zona, las cinco acciones con números exactos, la tabla, el mapa, los enlaces
+cortos (una vez, el más nuevo primero, lo que no abre se dice), el texto para logística, que no cambia nada, sin Leaflet y en
+390 px. Contra `main` (`88120f2`): no tiene la pantalla. Capturas de demo (datos inventados, Leaflet servido del paquete de npm
+porque el proxy no deja salir a unpkg ni a los mosaicos de OpenStreetMap): `cap_4ht/` del scratchpad.
+
 ## 4hs. 06/10: 📅 el control del corte, arreglado — solo el Excel del día, la celda guarda 3 días, una página vieja ya no lo rompe (servidor `2026-10-06-a`) — PÁGINA PUBLICADA 06/10 16:56 (`45d3108`), SERVIDOR IMPLEMENTADO 06/10 ~20:30 (el dueño)
 El dueño, el 06/10 a las 13:00, después de la auditoría (§4hq): *«Pues arreglemos lo que hay que arreglar del control de corte.
 Que no permita subir corte de días anteriores tiene que ser del día. La hoja de Excel si marca día y hora si no me equivoco. Ni
