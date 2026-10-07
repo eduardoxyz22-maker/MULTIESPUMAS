@@ -117,6 +117,8 @@ def contar(crudo):
     print(f"   ok={j.get('ok')!r} · error={j.get('error')!r} · versión={j.get('version')!r}")
     ped = j.get("pedidos")
     if isinstance(ped, list):
+        global _PEDIDOS
+        _PEDIDOS = ped
         tam = sorted(((len(json.dumps(p, ensure_ascii=False)), (p.get('id') if isinstance(p, dict) else '')) for p in ped), reverse=True)
         sistema = [t for t in tam if str(t[1]).startswith("__")]
         print(f"   filas: {len(ped)} · la más grande: {tam[0][0]:,} letras".replace(",", ".") if tam else "   filas: 0")
@@ -407,6 +409,67 @@ def ubicacion_almacenes(base):
             print(f"   {ident}: «{t[:70]}» → " + (f"{g.get('lat')}, {g.get('lng')}" if g.get("lat") is not None else "no la encontró"))
 
 
+_PEDIDOS = None   # la última lista leída: solo para CONTAR (nunca se imprime nada de un pedido)
+_PLUS = r"(^|[^0-9A-Za-z])[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}"
+
+
+def ubicacion_pedidos(base):
+    """📍 (07/10, §4ht) «Banzer o PTF» reparte cada entrega según su pin. ¿Cuántas entregas de los últimos 60 días se
+    pueden ubicar? Las que traen las coordenadas en el enlace salen sin internet; los enlaces CORTOS los tiene que abrir
+    el servidor, y el 07/10 no pudo con los de los almacenes (Google ahora redirige a `?q=<dirección>&ftid=…`).
+    Solo CUENTAS: ni enlaces, ni coordenadas, ni nombres (el registro es público)."""
+    print("\n── 📍 entregas de los últimos 60 días: ¿cuántas se pueden ubicar? (solo cuentas) ──")
+    ped = _PEDIDOS
+    if not isinstance(ped, list):
+        print("   (no hay lista leída)")
+        return
+    import datetime as _dt
+    hoy = (_dt.datetime.utcnow() - _dt.timedelta(hours=4)).date()
+    desde, hoy = (hoy - _dt.timedelta(days=59)).isoformat(), hoy.isoformat()
+    n = sin = coords = cortos = otros = zona = 0
+    lista = []
+    for p in ped:
+        if not isinstance(p, dict):
+            continue
+        i = str(p.get("id") or "")
+        if i.startswith("__") or i.startswith("kommo"):
+            continue
+        f = str(p.get("fecha") or "")
+        if not (desde <= f <= hoy):
+            continue
+        n += 1
+        u = str(p.get("maps") or "").strip()
+        if not u:
+            sin += 1
+            if str(p.get("zona") or "").strip():
+                zona += 1
+            continue
+        from urllib.parse import unquote as _uq
+        if _coords_en(u) or re.search(_PLUS, _uq(u)) or re.search(r"\d+\s*°", _uq(u)):
+            coords += 1
+        elif re.search(r"maps\.app\.goo\.gl|goo\.gl/maps", u):
+            cortos += 1
+            lista.append((f, u))
+        else:
+            otros += 1
+    print(f"   con fecha de entrega en la ventana: {n} · sin enlace: {sin} ({zona} con zona escrita)")
+    print(f"   con enlace: {n - sin} → con las coordenadas adentro: {coords} · enlaces cortos: {cortos} · otros: {otros}")
+    muestra = [u for _, u in sorted(lista, reverse=True)[:12]]
+    if not muestra:
+        return
+    t0 = time.time()
+    crudo = pedir(f"📍 el servidor abre {len(muestra)} enlaces cortos (los más nuevos)", base, {"action": "geocode", "links": muestra})
+    try:
+        j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+    except Exception:
+        print("   no es JSON")
+        return
+    geo = [g for g in (j.get("geo") or []) if isinstance(g, dict)]
+    ok = [g for g in geo if g.get("lat") is not None]
+    print(f"   abrió {len(ok)} de {len(muestra)} en {time.time() - t0:.1f} s · aproximados (por la dirección): "
+          f"{len([g for g in ok if g.get('aprox')])}")
+
+
 _COORD_RES = [r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", r"@(-?\d+\.\d+),(-?\d+\.\d+)", r"[?&](?:q|ll|query|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)",
               r"\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]"]
 
@@ -440,17 +503,7 @@ def abrir_enlace_directo(ident, u):
             host = re.sub(r"^https?://([^/?#]+).*$", r"\1", cur)
             print(f"   {ident}: salto {salto} → HTTP {r.status} en {host} · {len(cuerpo)} letras · " +
                   (f"coordenadas {c[0]}, {c[1]}" if c else "sin coordenadas"))
-            # Los pares de números con forma de Santa Cruz que trae la página (el lugar es público: un almacén, no un
-            # cliente). El más repetido suele ser el pin.
-            pares = {}
-            for la, ln in re.findall(r"(-1[6-8]\.\d{4,})\s*,\s*(-6[2-4]\.\d{4,})", cuerpo):
-                k = f"{float(la):.6f}, {float(ln):.6f}"
-                pares[k] = pares.get(k, 0) + 1
-            for ln, la in re.findall(r"(-6[2-4]\.\d{4,})\s*,\s*(-1[6-8]\.\d{4,})", cuerpo):
-                k = f"{float(la):.6f}, {float(ln):.6f} (lng,lat)"
-                pares[k] = pares.get(k, 0) + 1
-            top = sorted(pares.items(), key=lambda kv: -kv[1])[:5]
-            print(f"   {ident}: pares lat,lng en la página: " + (" · ".join(f"{k} ×{n}" for k, n in top) if top else "ninguno"))
+            # (07/10) Ni la página final trae el pin: Google no lo manda a un programa. Por eso, abajo, la dirección de `q=`.
             return texto
         except _er.HTTPError as e:
             loc = e.headers.get("Location") if e.headers else None
@@ -497,8 +550,9 @@ def main():
     contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
     # 4) Dónde se va el tiempo: correr el script o entregar los datos.
     en_dos_tramos(pagina or PANEL_URL)
-    # 5) 📍 (§4ht) Dónde quedan los almacenes de salida.
+    # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
     ubicacion_almacenes(pagina or PANEL_URL)
+    ubicacion_pedidos(pagina or PANEL_URL)
 
 
 if __name__ == "__main__":
