@@ -19339,7 +19339,7 @@ function stockProyectar(o){
     var d=stockSumarDias(hoy,n);
     while(iF<fechas.length && fechas[iF]<=d){ comp+=o.compPor[fechas[iF]]; iF++; }
     while(iL<llegan.length && llegan[iL].llega<=d){ llega+=Number(llegan[iL].u)||0; iL++; }
-    var consumo=Math.max(comp, o.porDia*(n+1));
+    var consumo=comp + o.porDia*(n+1);   // ➕ lo vendido para ese día MÁS lo que se va a vender (§4ii): antes, el mayor de los dos
     var saldo=dep+llega-consumo;
     if(n===0) saldoHoy=saldo;
     if(sinCamino==null && dep-consumo < -1e-9) sinCamino=n;
@@ -19489,12 +19489,17 @@ function stockAlmCorto(nm){
   }
   return t.length>22 ? t.slice(0,21)+'…' : t;
 }
-/* Cuánto TENER de un producto (entre acá y Banzer, más lo que viene): lo ya vendido sin entregar, o lo que cubre
-   fábrica + margen + la reserva por rotación, si es más. Una sola cuenta: la usan «cuánto pedir» y el reparto entre
+/* Cuánto TENER de un producto (entre acá y Banzer, más lo que viene): lo ya vendido sin entregar MÁS lo que cubre
+   fábrica + margen + la reserva por rotación (§4ii). Una sola cuenta: la usan «cuánto pedir» y el reparto entre
    Banzer y PTF (§4ht). */
-function stockNecesario(o){ return Math.max(o.comp, o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir))); }
-/* Cuánto pedir: lo que cubre fábrica + margen + una semana de venta (o todo lo ya vendido,
-   si es más), menos lo que hay y lo que viene. */
+/* ➕ (§4ii, 08/10, dueño: *«especial semi ortopédico dice 9 sin entregar, hay 6 y solo pide 3 para los próximos 7 días… a un
+   ritmo de 1 por día… revisá la lógica para todos los productos, NO PUEDE PASAR ESTO»*). Antes era el MAYOR de los dos: con
+   más vendido sin entregar que ritmo × días, la reserva desaparecía y se pedía solo lo vendido (9 − 6 = 3), y la venta de la
+   semana quedaba sin colchón. Ahora se SUMAN: lo ya vendido sale de lo que hay, y lo que se va a vender necesita lo suyo
+   aparte (la misma regla que el dueño dio para Banzer o PTF, §4hw). Sin rotación `porDia` es 0: queda lo vendido, como antes. */
+function stockNecesario(o){ return (o.comp||0) + o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)); }
+/* Cuánto pedir: todo lo ya vendido MÁS lo que cubre fábrica + margen + una semana de venta (§4ii: antes «o», el mayor),
+   menos lo que hay y lo que viene. */
 function stockCuantoPedir(o){
   var hay=stockHaySalir(o);
   if(hay==null || o.descont) return 0;               // lo discontinuado no se pide: no lo hacen más
@@ -20408,7 +20413,7 @@ function stockSaldoDetalleHtml(o){
   var hayS=stockHaySalir(o), conocido=hayS!=null, aca=o.deposito!=null?Math.max(0,o.deposito):0, sale=o.enSale||0;
   var dep=conocido?hayS:0, comp=o.comp||0;
   var saldo=dep-comp, cobertura=o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir);
-  var previsto=o.porDia*cobertura, objetivo=Math.max(comp,previsto);
+  var previsto=o.porDia*cobertura, objetivo=stockNecesario(o);   // ➕ sumados (§4ii)
   var caminoVigente=o.enCamino||0;
   var bruto=conocido?Math.max(0,Math.ceil(objetivo-dep-caminoVigente-1e-9)):0;
   var tarjeta=function(t,v,sub){return '<div style="flex:1 1 145px;padding:12px;background:#fff;border:1px solid var(--gray-md);border-radius:9px"><div style="font-size:.76rem;color:var(--muted)">'+t+'</div><b style="font-size:1.5rem">'+v+'</b><div style="font-size:.75rem">'+sub+'</div></div>';};
@@ -20443,7 +20448,7 @@ function stockSaldoDetalleHtml(o){
     html+='<p><b>Este producto ya no se fabrica.</b> Se vende lo disponible; un faltante requiere revisar alternativas con ventas.</p>';
   }else{
     html+='<div style="margin-top:12px"><b>Cómo se calcula la reposición</b><p>'+stockUnid(comp)+' unidades ya vendidas';
-    if(o.porDia>0) html+=' frente a '+stockNum(previsto,2)+' estimadas para '+cobertura+' días ('+o.lead+' de fábrica + '+o.margen+' de margen + '+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)+' de reserva). Se toma el mayor; no se suman.';
+    if(o.porDia>0) html+=' frente a '+stockNum(previsto,2)+' estimadas para '+cobertura+' días ('+o.lead+' de fábrica + '+o.margen+' de margen + '+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)+' de reserva). Se suman: lo vendido sale de lo que hay y lo que se va a vender necesita lo suyo.';
     else html+='. Poca rotación: no se añade reserva por ventas futuras.';
     html+='</p><p>Necesidad '+stockNum(objetivo,2)+' − '+stockUnid(dep)+(conSale?(' para cargar (acá + '+dondeSale+')'):' acá')+' − '+stockUnid(caminoVigente)+' ya pedidas = <b>'+bruto+' unidades adicionales</b> (redondeado hacia arriba, mínimo cero). Lo atrasado sigue pendiente: hay que confirmar su llegada; no se considera recibido ni se vuelve a pedir.</p>';
     if(o.aviso==='traer') html+='<p><b>Recoger '+stockUnid(o.pedir)+' de Moreno / otros almacenes</b>: hay '+stockUnid(o.enOtros||0)+' allí.</p>';
@@ -20805,8 +20810,8 @@ function copiarStock(){
    Las tres columnas y de dónde sale cada una:
      · 7 DÍAS   = exactamente lo que ya dice la tabla de abajo (🚨 PEDIR YA / 🏭 Pedir esta
                   semana): `o.fabricar`. Una sola verdad para la semana.
-     · 15 DÍAS  = lo vendido sin entregar hasta hoy+15+fábrica, o el ritmo de 15 días ×
-                  (fábrica + margen + 15), lo que sea mayor; menos lo que hay. Nunca menor
+     · 15 DÍAS  = lo vendido sin entregar hasta hoy+15+fábrica MÁS el ritmo de 15 días ×
+                  (fábrica + margen + 15) (§4ii: antes, el mayor); menos lo que hay. Nunca menor
                   que la de 7 días: es acumulada.
      · EL MES   = ritmo de 30 días × los días del mes que viene (o lo ya vendido para ese
                   mes, si es más), menos lo que va a quedar el día 1 (lo que hay, menos lo
@@ -20965,7 +20970,7 @@ function stockProducirDe(o, MS, PI){
   var hay=stockHaySalir(o)+(o.enCamino||0)+(o.enOtros||0);
   r.hay=hay; r.ok=true;
   r.sem=Math.max(0, o.fabricar||0);
-  var nec15=Math.max(stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+o.lead)), o.porDia*(o.lead+o.margen+PRODUCIR_QUINCENA));
+  var nec15=stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+o.lead)) + o.porDia*(o.lead+o.margen+PRODUCIR_QUINCENA);   // ➕ sumados, no el mayor (§4ii)
   r.quin=Math.max(r.sem, Math.ceil(nec15-hay-1e-9), 0);
   var pdm=o.porDiaMes||0, diasResto=stockDias(hoy, MS.finActual)+1;
   var consumoResto=Math.max(stockCompHasta(o, MS.finActual), pdm*diasResto);
@@ -25288,7 +25293,7 @@ function backupJson(){
      · Cada entrega cuenta para el depósito que le queda MÁS CERCA en línea recta; con menos de `ALM_EMPATE_KM` de
        diferencia, mitad y mitad («en el medio»). Por UNIDADES: el stock se gasta por unidad.
      · Cuánto tener en TOTAL es la cuenta de Stock (`stockNecesario`, la misma de «cuánto pedir»): lo vendido sin
-       entregar, o el ritmo × (fábrica + margen + reserva) si es más. Se reparte con la proporción de cada lado. Lo que
+       entregar MÁS el ritmo × (fábrica + margen + reserva) (§4ii: antes, el mayor de los dos). Se reparte con la proporción de cada lado. Lo que
        rota poco (`baja`) y lo discontinuado NO se reparte: va todo a PTF, que es a donde llega de fábrica (el dueño:
        los que se venden poco quedan en un solo almacén). Con menos de `ALM_MIN_UNID` unidades ubicadas, tampoco: pocos
        datos, queda como está.
@@ -25863,7 +25868,7 @@ function almPintarTabla(){
   var sel=ALM_K ? A.filas.filter(function(f){ return f.k===ALM_K; })[0] : null;
   var h='<div style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:12px 14px;margin-bottom:14px">'+
     '<div style="font-weight:800;font-size:.98rem;color:#1e3a5f;margin-bottom:4px">📦 Qué tener en cada depósito</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;line-height:1.45">«Tener» es lo que pide la pantalla de Stock (lo vendido sin entregar, o el ritmo por los días de fábrica, margen y reserva), repartido según de qué lado se entregó cada producto. Lo que se vende poco no se reparte: queda todo en PTF. Tocá un producto para ver sus entregas en el mapa.</div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;line-height:1.45">«Tener» es lo que pide la pantalla de Stock (lo vendido sin entregar más el ritmo por los días de fábrica, margen y reserva), repartido según de qué lado se entregó cada producto. Lo que se vende poco no se reparte: queda todo en PTF. Tocá un producto para ver sus entregas en el mapa.</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+chips+'</div>'+
     almTotalesHtml(A)+
     (sel?('<div style="font-size:.8rem;margin-bottom:8px;color:#1e3a5f">🗺️ En el mapa: <b>'+esc(sel.nombre)+'</b> · <a href="#" onclick="almVerProducto(\'\');return false">ver todas las entregas</a></div>'):'')+
