@@ -13331,7 +13331,14 @@ function cvPintarPanel(D){
       return '<div class="cv-grupo">'+esc(g[1])+'</div>'+ls.map(function(l){ return cvFilaHtml(l, ''); }).join('');
     }).join('')+'</div>';
     if(c.est==='ok') h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
-  } else if(c.est==='nada') h+='<div class="cv-vacio">Este camión no tiene pedidos para '+(CV_DIA==='hoy'?'hoy':'mañana')+'.</div>';
+  } else if(c.est==='nada'){
+    /* (§4id, 08/10) El dueño vio los camiones vacíos y la lista solo en «Sin vehículo»: es que ningún pedido del día tenía el
+       camión asignado. Se dice eso, con cuántos esperan camión y un botón para verlos. */
+    var sv=D.porK['Sin vehículo'], dia=CV_DIA==='hoy'?'hoy':'mañana';
+    h+='<div class="cv-vacio">Ningún pedido de '+dia+' tiene asignado el <b>'+esc(c.k)+'</b>.'+
+      (sv ? (' Hay <b>'+sv.paradas+' pedido'+(sv.paradas===1?'':'s')+' sin camión</b>: se asigna en cada pedido (columna «Vehículo» de Administración o en su ficha).</div>'+
+        '<button type="button" class="cv-volver" style="margin-top:8px" onclick="cvElegir(\'Sin vehículo\')">⚠️ Ver los '+sv.paradas+' sin camión</button>') : '</div>');
+  }
   h+='<button type="button" class="cv-ir" onclick="cvIrALista()">📋 Ver sus paradas en la Lista de carga</button><div class="cv-nota">Los tildes son los de la Lista de carga: tildar acá es tildar allá, para todo el equipo.</div>';
   var sc=document.getElementById('cv-filas'), top=sc?sc.scrollTop:0;
   el.innerHTML=h;

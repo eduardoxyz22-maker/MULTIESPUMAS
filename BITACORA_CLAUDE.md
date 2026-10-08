@@ -7445,6 +7445,13 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4id. 08/10: 🚛 un camión vacío dice POR QUÉ (en la rama, SIN publicar)
+**El dueño** (captura de la página publicada): *«solo en "sin camión" aparece la lista lateral; en los demás camiones no sale»*.
+No era un error: ese día los 19 pedidos no tenían camión asignado (`vehiculoDe`: `p.vehiculo` o el camión del chofer), así que
+todo caía en «Sin vehículo». El panel decía solo «Este camión no tiene pedidos para hoy». Ahora dice «Ningún pedido de hoy tiene
+asignado el Carry. Hay N pedidos sin camión: se asigna en cada pedido…» con el botón «⚠️ Ver los N sin camión». `test_camiones_admin`
+→ 37.
+
 ## 4ic. 08/10: 🚛 Banzer y Moreno abren su panel al costado, como PTF (en la rama, SIN publicar)
 **El dueño**: *«si le doy al camión de Banzer abre otra cosa, no el lateral, como el PTF»*. Los tres carteles abrían la Lista de
 carga (`cvIrALista`). Ahora cambian el panel de la derecha (`CV_VISTA`, `cvVer`): PTF = el camión elegido; Banzer = lo que se carga

@@ -207,6 +207,15 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('§4ic: «← Volver al camión» y el cartel de PTF vuelven al camión elegido, sin abrir otra pantalla',
     r.volver.vista==='' && /CAMIÓN ELEGIDO/.test(r.volver.txt) && !r.ptf.lista && r.ptf.vista==='' && /Foton nuevo/.test(r.ptf.txt), J({volver:r.volver.vista, ptf:r.ptf}));
 
+  r = await page.evaluate(() => {
+    CV_DIA='hoy'; CV_VISTA=''; cvElegir('Carry');
+    var txt=document.getElementById('cv-panel').innerText.replace(/\s+/g,' '), b=[].slice.call(document.querySelectorAll('#cv-panel .cv-volver')).filter(function(x){ return /sin camión/.test(x.textContent); })[0];
+    if(b) b.click();
+    return { txt:txt, boton:!!b, sel:CV_SEL };
+  });
+  chk('§4id: un camión sin pedidos dice que ningún pedido lo tiene asignado, cuántos esperan camión, y lleva a «Sin vehículo»',
+    /Ningún pedido de hoy tiene asignado el Carry/.test(r.txt) && /1 pedido sin camión/.test(r.txt) && r.boton && r.sel==='Sin vehículo', J(r));
+
   // ══ 8. Plegar, celular, errores ══
   console.log('\n── 8. Dos botones separados (§4ib); celular; errores ──');
   r = await page.evaluate(() => {
