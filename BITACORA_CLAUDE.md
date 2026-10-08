@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) — EN LA RAMA (espera el «publica» del dueño)
+## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) y sin «🏭 Pedí a fábrica» — PUBLICADA 08/10 21:05 (`27c8d0d`, Pages OK 21:05, run 37711127971; el dueño: «sí… quítalos»; batería 138 suites, 5.254 bien · 0 mal)
 Codex revisó lo publicado el 07/10 (`0d20d04`) y reprodujo tres defectos; el dueño, al discutir el primero, fijó la regla: *«no usan
 ese botón [pedí a fábrica] y creo que lo vamos a quitar. Ellos no anotan que está en camino. Simplemente cargan los saldos de almacén
 cada día. Y si en Moreno aumenta el saldo de almacén, quiere decir que ese producto se fabricó y salió… hagamos las cosas bien»*.
