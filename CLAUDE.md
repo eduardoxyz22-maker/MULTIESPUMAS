@@ -344,8 +344,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:
     Google no le da el pin de un LUGAR con nombre a un programa, ni al servidor). Si el dueño manda las coordenadas, se cambian ahí.
     · `almZonaData`: entregas de 60 días (`ALM_ZONA_DIAS`) con las reglas de la rotación de Stock (`stockCuenta`, sin venta de
-    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DE LOGÍSTICA cae** (08/10, §4hy, EN
-    LA RAMA sin publicar; reemplaza la del dueño del 07/10: `ALM_DIVISION`, 41 puntos de norte a sur sacados de los píxeles negros
+    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DE LOGÍSTICA cae** (08/10, §4hy; reemplaza la del dueño del 07/10: `ALM_DIVISION`, 41 puntos de norte a sur sacados de los píxeles negros
     de su captura; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este → PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad).
     ⚠️ La línea tiene un tramo casi horizontal (El Trompillo): el lado sale del POLÍGONO del oeste (`almLineaGeo`) y la distancia
     del tramo más cercano; no volver a elegir el tramo «de la misma latitud» (daba el lado al revés en el quiebre); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
@@ -604,6 +603,17 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   («no suena nada»). Safari rechaza lo que Chromium perdona. Si hay que recortar, desde el cuadro 0 o codificando de nuevo, y
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
+
+## 🚛 Los camiones en Administración (§4hz, 08/10): lo que hay que respetar
+El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
+lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
+- `#carga-viva`, primero dentro de `#adm-resumen`, se pliega con el resumen. Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- La imagen `carga-viva/escena.jpg` es FIJA y lo vivo va en coordenadas de la imagen (`CV_POS`, 1212×800). ⚠️ Los carteles tapan
+  los textos que la imagen trae pintados: si se cambia la imagen, hay que volver a ubicarlos.
+- **Los tildes son LOS MISMOS de la Lista de carga** (`cargaChkKey`/`setCargaChk`), y la agrupación por camión es UNA:
+  `cargaAgrupar`, que usan la lista y `cargaVivaDatos`. No duplicar la cuenta.
+- Tiene su propio Hoy/Mañana (`CV_DIA`). La Lista de carga NO lleva la tira, por pedido del dueño.
+- `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
