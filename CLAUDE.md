@@ -376,6 +376,11 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     hay que traer más de lo que dicen los Excel de donde se trae, y existe el Excel de ESA fábrica (`almPlanAlmsDe`), «⚠️ Recordá
     revisar la producción» en la fila, arriba (con «Ver cuáles»), en el filtro y en la copia. Nunca «pedir/producir/fabricar».
     `test_banzer_ptf` §12 (→ 101; 30 rojas contra `3f44b05`).
+    · **🚫 Solo los Excel del día (§4hx, 08/10, EN LA RAMA; dueño: *«no usan ese botón… simplemente cargan los saldos de almacén
+    cada día; si en Moreno aumenta el saldo, ese producto se fabricó»*)**: el plan resta SOLO las recogidas de Moreno ya
+    programadas (`almPlanRecogidas`), nunca lo anotado como «pedí a fábrica» (Codex F1: daba por cubierta una entrega de mañana).
+    `cubreB` es acción («↪️ Cargar en Banzer…», en «Qué hacer» y en la copia, F2); sin el Excel de PTF, «⚠️ Falta el Excel de PTF»
+    y nunca «cada depósito tiene lo suyo» (F3). ⚠️ No volver a restar `stockEnCaminoSeguro` en el plan. `test_banzer_ptf` → 105.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

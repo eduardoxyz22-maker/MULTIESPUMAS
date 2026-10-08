@@ -429,15 +429,16 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   const v7 = await leerVista();
   chk('⚠️ arranca en 7 días y «Qué hacer», con los tres plazos (y hasta qué fecha) y el botón de copiar',
     /^7 días · hasta el 14\/10$/.test(v7.chips[0]) && /^15 días · hasta el 22\/10$/.test(v7.chips[1]) && /^30 días · hasta el 06\/11$/.test(v7.chips[2]) &&
-    v7.chips.some(c=>/Copiar el plan de 7 días/.test(c)) && v7.chips.some(c=>/^Qué hacer \(2\)$/.test(c)) && v7.chips.some(c=>/^Todo el plan \(4\)$/.test(c)), J(v7.chips));
+    v7.chips.some(c=>/Copiar el plan de 7 días/.test(c)) && v7.chips.some(c=>/^Qué hacer \(3\)$/.test(c)) && v7.chips.some(c=>/^Todo el plan \(4\)$/.test(c)), J(v7.chips));
   chk('…sin el botón ni el cartel de «Revisar la producción» cuando no hay nada que revisar', !v7.chips.some(c=>/Revisar la producción/.test(c)) && !v7.alerta, J(v7.chips));
-  chk('«Qué hacer» de 7 días: TITANIO ICE (llevar 7, PTF queda con 3) y TITANIO LATEX (traer 2 de Moreno a Banzer)',
-    v7.filas.length===2 && /TITANIO ICE/.test(v7.filas[0]) && /Llevar 7 de PTF a Banzer · PTF queda con 3/.test(v7.filas[0]) &&
-    /TITANIO LATEX/.test(v7.filas[1]) && /Traer 2 de Moreno a Banzer \(para tener\)/.test(v7.filas[1]), J(v7.filas));
+  chk('«Qué hacer» de 7 días: TITANIO ICE (llevar 7, PTF queda con 3), TITANIO LATEX (traer 2 de Moreno a Banzer) y ⚠️ (F2) el BI RELAX: cargar 1 en Banzer',
+    v7.filas.length===3 && /TITANIO ICE/.test(v7.filas[0]) && /Llevar 7 de PTF a Banzer · PTF queda con 3/.test(v7.filas[0]) &&
+    /TITANIO LATEX/.test(v7.filas[1]) && /Traer 2 de Moreno a Banzer \(para tener\)/.test(v7.filas[1]) &&
+    /BI RELAX/.test(v7.filas[2]) && /Cargar en Banzer 1 de las entregas de la zona de PTF/.test(v7.filas[2]), J(v7.filas));
   chk('…cada depósito dice cuánto tener y de qué es: «tener 7 · 2 ya vendidos + 5 para tener · hay 0»',
     /tener 7 2 ya vendidos \+ 5 para tener hay 0/.test(v7.filas[0]) && /tener 2 2 para tener hay 10/.test(v7.filas[0]), v7.filas[0]);
   chk('…con el total arriba: Banzer tener / hay, PTF tener / hay, lo que hay que llevar y lo que hay que traer de Moreno',
-    /Para las entregas de los próximos 7 días: 🏪 Banzer tener 11 \(hay 9\) · 🏭 PTF tener 7 \(hay 15\) · 🚚 llevar 7 de PTF a Banzer · 📥 traer 2 de Moreno/.test(v7.texto), v7.texto.slice(0,400));
+    /Para las entregas de los próximos 7 días: 🏪 Banzer tener 11 \(hay 9\) · 🏭 PTF tener 7 \(hay 15\) · 🚚 llevar 7 de PTF a Banzer · ↪️ 1 entrega de PTF sale de Banzer · 📥 traer 2 de Moreno/.test(v7.texto), v7.texto.slice(0,400));
   await page.evaluate(() => almPlanSetVer('todo'));
   const todo7 = await leerVista();
   chk('«Todo el plan» de 7 días: los 4 que hay que tener; el ORO ANATOMICO «cada depósito tiene lo suyo»',
@@ -445,7 +446,7 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   await page.evaluate(() => almPlanSetH(15));
   const todo15 = await leerVista();
   chk('15 días: el BI RELAX dice que sus entregas de PTF pueden salir de Banzer, y nadie dice «llevar de Banzer a PTF»',
-    todo15.filas.some(f=>/BI RELAX/.test(f) && /5 de las entregas de PTF pueden salir de Banzer/.test(f)) && !/de Banzer a PTF/i.test(todo15.texto), J(todo15.filas.filter(f=>/BI RELAX/.test(f))));
+    todo15.filas.some(f=>/BI RELAX/.test(f) && /Cargar en Banzer 5 de las entregas de la zona de PTF/.test(f)) && !/de Banzer a PTF/i.test(todo15.texto), J(todo15.filas.filter(f=>/BI RELAX/.test(f))));
   chk('⚠️ nunca «pedir», «producir», «fabricar» ni «no alcanza» en la lista: lo que falta se TRAE de Moreno',
     !/pedir|producir|fabricar|no alcanza|ningún almacén/i.test(todo15.filas.join(' ')) && /Traer 7 de Moreno a Banzer/.test(todo15.texto), J(todo15.filas));
   r = await page.evaluate(() => { almRefrescar(); return document.getElementById('alm-plan').open; });
@@ -565,6 +566,36 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
     STATE=JSON.parse(_st0); delete STOCK.c.u[K.G]; delete STOCK.g[BANZER].u[K.G]; delete STOCK.c.u[K.S]; delete STOCK.g[BANZER].u[K.S];
     delete STOCK.g[IM]; delete STOCK.al[IM]; delete K.G; delete K.S; stockOlvidarIndice(); ALM_PLAN_H=7; almRefrescar();
   });
+
+  // ══ La revisión de Codex del 07/10 (F1-F3) y la regla del dueño del 08/10: el plan trabaja con los Excel del día ══
+  r = await page.evaluate(() => {
+    var o={}, sacar=function(){ var f=ALM_DATA.filas.filter(function(x){ return x.k===K.F; })[0]; return f && f.plan[7]; };
+    var p0=JSON.stringify(STOCK.p||[]);
+    // F1: «pedí a fábrica» anotado y nunca cerrado NO cubre nada (el panel no sabe cuándo llega)
+    STOCK.p=[{ id:'fp1', k:K.F, u:10, fab:'Moreno', f:stockSumarDias(todayStr(),-30), esp:'', r:'' }];
+    stockOlvidarIndice(); almRefrescar(); var r1=sacar(); o.fab={ cam:r1.cam, deM:r1.deM.length, ant:r1.tP };
+    // …pero una RECOGIDA de Moreno ya programada sí (es el mismo «traer» en marcha)
+    STOCK.p=[{ id:'rc1', k:K.F, u:2, tipo:'recogida', de:'01-05-103 IM - PRODUCTOTERMINADO', fab:'', f:todayStr(), esp:stockSumarDias(todayStr(),1), r:'' }];
+    stockOlvidarIndice(); almRefrescar(); var r2=sacar(); o.rec={ cam:r2.cam };
+    STOCK.p=JSON.parse(p0); stockOlvidarIndice(); almRefrescar();
+    // F2: lo que sale de Banzer va en la copia para logística
+    ALM_PLAN_H=15; var t=''; var v=copyText; copyText=function(x){ t=x; }; try{ almCopiarPlan(); } finally { copyText=v; } o.copia=t; ALM_PLAN_H=7;
+    // F3: sin el Excel de PTF, nada de «cada depósito tiene lo suyo»
+    var c0=STOCK.c; STOCK.c={ f:'', u:{}, hora:'' }; stockOlvidarIndice(); almRefrescar(); ALM_PLAN_VER='hacer'; almPintarPlan();
+    var el=document.getElementById('alm-plan-in');
+    o.sin={ banner:((document.getElementById('alm-plan-sinexcel')||{}).textContent||'').replace(/\s+/g,' '), texto:el.textContent.replace(/\s+/g,' '),
+      filas:el.querySelectorAll('tbody tr').length, hayAlgunoSin:ALM_DATA.filas.some(function(f){ return f.plan[7].sinConteo; }) };
+    STOCK.c=c0; stockOlvidarIndice(); almRefrescar();
+    return o;
+  });
+  chk('⚠️ (F1, dueño 08/10) un «pedí a fábrica» anotado y nunca cerrado NO da por cubierto nada: el ORO ANATOMICO sigue sin movimiento propio y no se resta',
+    r.fab.cam===0, J(r.fab));
+  chk('…una recogida de Moreno ya programada SÍ se cuenta (es el mismo «traer» en marcha)', r.rec.cam===2, J(r.rec));
+  chk('⚠️ (F2) la copia para logística dice qué entregas de PTF se cargan en Banzer',
+    /↪️ CARGAR EN BANZER entregas de la zona de PTF \(a Banzer le sobran\)\n• ORO BI RELAX · 140x190: 5/.test(r.copia), r.copia.slice(0,600));
+  chk('⚠️ (F3) sin el Excel de PTF: cartel rojo «Falta el Excel de PTF», los productos en «Qué hacer», «hay ?» y nunca «cada depósito tiene lo suyo»',
+    r.sin.hayAlgunoSin && /Falta el Excel de PTF: \d+ productos? no se puede/.test(r.sin.banner) && r.sin.filas>0 &&
+    /PTF tener \d+ \(hay \?\)/.test(r.sin.texto) && !/cada depósito tiene lo suyo/i.test(r.sin.texto), J(r.sin).slice(0,500));
 
   // Celular
   await page.setViewportSize({ width:390, height:844 });

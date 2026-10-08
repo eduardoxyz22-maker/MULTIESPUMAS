@@ -2767,11 +2767,18 @@ existe. Batería entera: 137 suites, 5.175 bien · 0 mal.
 
 ### 5. Para revisar (Codex)
 - Que «Hoy en Banzer» (`almHoyBanzer`) y «Hoy en PTF» coincidan con lo que muestra la tabla de Stock para el mismo producto.
-- `stockNecesario` es la única fuente del «tener»: si algún día cambia la fórmula de «cuánto pedir», cambia también el reparto.
+- `stockNecesario` es la única fuente del «tener» **de la tabla** (el plan de 7/15/30 días suma lo vendido + lo para tener desde
+  §4hw, a propósito): si algún día cambia la fórmula de «cuánto pedir», cambia también el reparto de la tabla.
 - El reparto por proporción usa `Math.round`: con «tener» chico, una entrega de más o de menos mueve 1 unidad de lado. Es a
   propósito (no se puso umbral de movimiento mínimo); avisen si en los datos reales mete ruido.
-- Supuestos a validar con datos: la ventana de 60 días, el margen de 1 km «en el medio», y que la línea recta represente bien la
-  cercanía en la ciudad (no mira calles ni tráfico).
+- Supuestos a validar con datos: la ventana de 60 días y que la línea del dueño represente bien las zonas (no mira calles ni
+  tráfico). ~~El margen de 1 km «en el medio»~~: desde el 07/10 manda la línea del dueño, con 500 m de franja.
+
+**🚫 Tercera vuelta del plan (§4hx, 08/10, en la rama)**: la revisión de Codex del 07/10 encontró tres defectos y el dueño fijó la
+regla: el plan trabaja solo con los Excel del día (*«no anotan que está en camino; simplemente cargan los saldos de almacén cada
+día»*). F1: ya no resta lo anotado como «pedí a fábrica», solo las recogidas de Moreno programadas (`almPlanRecogidas`). F2: lo que
+Banzer puede cubrir de la zona de PTF va en «Qué hacer» y en la copia. F3: sin el Excel de PTF lo dice, en vez de «cada depósito
+tiene lo suyo». `test_banzer_ptf` → 105 (7 rojas contra `0d20d04`).
 
 ### 6. Esperan al dueño
 1. Confirmar el punto de Banzer en el mapa (si no cae bien, mandar las coordenadas → se cambian en `ALM_UBIC` y se saca `aprox`).
