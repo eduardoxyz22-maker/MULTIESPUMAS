@@ -7445,20 +7445,20 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ie. 08/10: 🚛 asignar el camión desde «Sin vehículo» (dueño: «sí, agregalo y publicá»)
+## 4ie. 08/10: 🚛 asignar el camión desde «Sin vehículo» (dueño: «sí, agregalo y publicá») — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 En el panel de «Sin vehículo», «🚚 ASIGNAR CAMIÓN»: cada pedido del día sin camión (cliente, OC, zona, turno, bultos) con un selector
 de los camiones de `VEHICULOS`. `cvAsignar(id, v)` hace lo mismo que la columna «Vehículo» de la tabla (`setVehiculo`: vehículo +
 el primer chofer de ese camión) sin reabrir fichas; `persistPedido` repinta tabla, Lista de carga y camiones. `test_camiones_admin`
 → 39.
 
-## 4id. 08/10: 🚛 un camión vacío dice POR QUÉ (en la rama, SIN publicar)
+## 4id. 08/10: 🚛 un camión vacío dice POR QUÉ — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 **El dueño** (captura de la página publicada): *«solo en "sin camión" aparece la lista lateral; en los demás camiones no sale»*.
 No era un error: ese día los 19 pedidos no tenían camión asignado (`vehiculoDe`: `p.vehiculo` o el camión del chofer), así que
 todo caía en «Sin vehículo». El panel decía solo «Este camión no tiene pedidos para hoy». Ahora dice «Ningún pedido de hoy tiene
 asignado el Carry. Hay N pedidos sin camión: se asigna en cada pedido…» con el botón «⚠️ Ver los N sin camión». `test_camiones_admin`
 → 37.
 
-## 4ic. 08/10: 🚛 Banzer y Moreno abren su panel al costado, como PTF (en la rama, SIN publicar)
+## 4ic. 08/10: 🚛 Banzer y Moreno abren su panel al costado, como PTF — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 **El dueño**: *«si le doy al camión de Banzer abre otra cosa, no el lateral, como el PTF»*. Los tres carteles abrían la Lista de
 carga (`cvIrALista`). Ahora cambian el panel de la derecha (`CV_VISTA`, `cvVer`): PTF = el camión elegido; Banzer = lo que se carga
 allá ese día, por camión, con los mismos tildes de la Lista (barra, «Faltan N», festejo al completar); Moreno = lo marcado «📥
@@ -7466,7 +7466,7 @@ recoger» por camión, sin tildes (eso se cambia en el pedido). Tocar el camión
 de §4ib, con `clip-path`, solo responden dentro de la silueta). Elegir un camión de las fichas o cambiar Hoy/Mañana vuelve a la
 vista del camión. `test_camiones_admin` §7b (5) → 36.
 
-## 4ib. 08/10: 🚛 los camiones de Administración: su propio botón para esconderlos y las líneas en el piso (en la rama, SIN publicar)
+## 4ib. 08/10: 🚛 los camiones de Administración: su propio botón para esconderlos y las líneas en el piso — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 **El dueño**, con capturas de Administración: *«separá las pestañas ocultar resumen y ocultar el nuevo 3D; que se vea siempre el
 resumen»* y *«esas líneas quedaron encima del camión, no abajo… se ve raro»*.
 - `#carga-viva` sale de `#adm-resumen` y queda justo arriba. Dos botones en la misma fila: «🙈 Ocultar camiones»
@@ -7479,7 +7479,7 @@ resumen»* y *«esas líneas quedaron encima del camión, no abajo… se ve raro
 - `test_camiones_admin` §1 y §8 cambiadas a conciencia (la tira ya no está dentro del resumen) + 5 comprobaciones nuevas → 31;
   contra `2a7c7bd` cae en la primera.
 
-## 4ia. 08/10: 🏷️ el SUEÑA LITE 105 partido en dos — un código que la lista aprendió después (en la rama, SIN publicar)
+## 4ia. 08/10: 🏷️ el SUEÑA LITE 105 partido en dos — un código que la lista aprendió después — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 **El aviso**: al subir el Excel de PTF el 08/10 el dueño vio en el control del corte «COLCHON SUENA LITE · 105X190: +20 sin
 explicar» y «…: −20 sin explicar» (los dos con el mismo nombre). Buscó «LITE» en Stock: dos filas. *«Si, salen dos, está
 partido. Arréglalo»*.

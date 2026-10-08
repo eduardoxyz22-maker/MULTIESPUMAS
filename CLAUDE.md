@@ -560,7 +560,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   van tildados A PROPÓSITO: dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*);
   `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`. Antes de tocar el cierre o el control del corte, leer §4hq.
 - **🏷️ Un código que la lista aprendió después ya no parte el producto** (§4ia, 08/10, dueño: *«Si, salen dos, está partido.
-  Arréglalo»*; en la rama, SIN publicar): pasó de verdad con el SUEÑA LITE 105 (CH2531, en `CODIGOS` desde el 05/10): 20 en
+  Arréglalo»*; PUBLICADA 08/10 15:54, `409a077`): pasó de verdad con el SUEÑA LITE 105 (CH2531, en `CODIGOS` desde el 05/10): 20 en
   una fila, los pedidos en otra con 0, y el control del Excel con «−20 / +20 sin explicar». `stockMigrar` ahora reescribe el
   mapa `cod` de cada foto: todo código de `CODIGOS` apunta a SU clave (`stockNorm(d)|stockNorm(m)` con las uniones 🔗) y lo
   guardado con la clave vieja la sigue (`renom`; dos códigos de la lista con productos distintos sobre la misma clave vieja:
@@ -616,7 +616,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
 - `#carga-viva` va JUSTO ARRIBA de `#adm-resumen` y FUERA de él (§4ib, 08/10, dueño: *«separá ocultar resumen y ocultar el nuevo
-  3D»*; en la rama, SIN publicar): **dos botones**, «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por compu; escondidos
+  3D»*; PUBLICADA 08/10 15:54, `409a077`): **dos botones**, «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por compu; escondidos
   no se dibujan) y «🙈 Ocultar resumen» (solo el resumen). Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
 - **Las líneas de color van en el PISO** (§4ib, dueño: *«esas líneas quedaron encima del camión, no abajo… se ve raro»*): `huella` es
   el rectángulo del piso y `cuerpo` la silueta de cada camión, que se vuelve a dibujar ENCIMA (`img.cv-cuerpo` con `clip-path`
