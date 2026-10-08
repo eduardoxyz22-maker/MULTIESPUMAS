@@ -830,6 +830,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
           <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
         </div>
       </div>
+      <div id="fx-dup" class="fx-dup no-print" hidden></div>
 
       <div class="field">
         <label class="lb">Productos <span class="req">*</span> <span class="hint" id="f-prods-hint">producto · medida · código · cantidad · precio</span></label>
@@ -879,6 +880,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
           <input type="text" id="f-maps" placeholder="Link, coordenadas (-17.749444, -63.104556) o código (5P2Q+PFX)" autocomplete="off">
         </div>
       </div>
+      <div id="fx-mapa" class="fx-mapa solo-entrega no-print" hidden></div>
 
       <div class="field solo-entrega">
         <label class="lb">Dirección</label>
@@ -989,6 +991,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
       </div>
     </div>
     <aside id="fx-der" class="fx-lado fx-der no-print" aria-label="Tu pedido"></aside>
+    <nav id="fx-pasos" class="no-print" hidden aria-label="Pasos del pedido"></nav>
   </div>
 
   <!-- ============ ADMIN VIEW ============ -->
@@ -1620,6 +1623,31 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .fx-der .fx-mes{ display:block !important; margin:0; }
 .fx-hoy{ display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#0b1730,#1e3a5f); color:#fff; border-radius:12px; padding:10px 12px; }
 .fx-hoy .g{ font-size:1.5rem; font-weight:900; line-height:1; } .fx-hoy .s{ font-size:.72rem; opacity:.85; }
+/* 🧰 (§4ih) Pedido repetido · buscador de productos · mapita · pasos en el celular */
+.fx-dup{ background:var(--amber-lt); border:1.5px solid var(--amber-border); color:#7c3d00; border-radius:12px; padding:10px 12px; margin:-6px 0 14px; font-size:.84rem; }
+.fx-dup-r{ display:flex; align-items:center; gap:8px; justify-content:space-between; background:#fff; border-radius:9px; padding:6px 8px; margin-top:6px; font-size:.8rem; }
+.fx-dup-r i{ color:var(--muted); } .fx-dup-r .btn{ width:auto; flex:none; }
+.fx-busca{ position:absolute; z-index:5000; background:#fff; border:1px solid var(--teal-border); border-radius:12px; box-shadow:0 14px 34px rgba(9,72,68,.22); padding:5px; max-height:360px; overflow:auto; }
+.fx-bo{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:9px; cursor:pointer; }
+.fx-bo:hover, .fx-bo.sel{ background:var(--teal-lt); }
+.fx-bo .t{ flex:1; min-width:0; font-size:.86rem; } .fx-bo .t b{ font-weight:800; } .fx-bo .c{ font-size:.7rem; color:var(--muted); }
+.fx-bc{ flex:none; font-size:.72rem; font-weight:800; border-radius:20px; padding:3px 9px; white-space:nowrap; }
+.fx-bc.ok{ background:var(--green-lt); color:var(--green); } .fx-bc.mo{ background:var(--amber-lt); color:var(--amber); } .fx-bc.pr{ background:#eaf1ff; color:#1d4ed8; } .fx-bc.no{ background:var(--red-lt); color:var(--red); }
+.fx-bmas{ font-size:.72rem; color:var(--muted); padding:6px 10px; }
+.fx-mapa{ margin:-6px 0 14px; border:1px solid var(--teal-border); border-radius:12px; overflow:hidden; background:#fff; }
+.fx-mapa.mal{ border-color:var(--red-border); background:var(--red-lt); color:var(--red); }
+.fx-mm{ height:170px; background:linear-gradient(135deg,#e6f7f6,#eef4ff); }
+.fx-mt{ font-size:.8rem; padding:8px 11px; } .fx-mt a{ color:var(--teal-dk); font-weight:800; }
+.fx-mtip{ font-size:.66rem; font-weight:800; padding:1px 5px; }
+#fx-pasos{ position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(255,255,255,.97); border-top:1px solid var(--gray-md); box-shadow:0 -6px 20px rgba(0,0,0,.08); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
+.fx-pbar{ height:4px; border-radius:4px; background:#eef0f3; overflow:hidden; margin:0 4px 6px; } .fx-pbar i{ display:block; height:100%; background:linear-gradient(90deg,#00B5AD,#22A06B); transition:width .4s var(--ease); }
+.fx-pbs{ display:flex; gap:6px; }
+.fx-pb{ flex:1; border:1.5px solid var(--gray-md); background:#fff; border-radius:11px; padding:5px 2px; display:flex; flex-direction:column; align-items:center; gap:1px; font:inherit; color:var(--muted); min-width:0; }
+.fx-pb .ic{ font-size:1rem; line-height:1.2; } .fx-pb .nm{ font-size:.66rem; font-weight:800; }
+.fx-pb.ok{ border-color:var(--green-border); color:var(--green); background:var(--green-lt); } .fx-pb.ok .ic{ font-weight:900; }
+.fx-pb.act{ border-color:var(--teal); box-shadow:0 0 0 2px rgba(0,181,173,.25); color:var(--teal-dk); }
+body.con-pasos{ padding-bottom:78px; }
+@media (max-width:480px){ .fx-saldo .fx-esc{ width:62px; height:34px; } .fx-saldo{ gap:7px; } }
 </style>
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -3624,7 +3652,7 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var card=document.createElement('div'); card.className='prod-card';
   // fila superior: producto + borrar
   var top=document.createElement('div'); top.className='prod-top';
-  var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; d.setAttribute('list','dl-productos'); if(desc)d.value=desc;
+  var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; if(desc)d.value=desc;   // (§4ih) sin `list`: el buscador propio muestra el saldo (fxBuscaAbrir)
   var del=document.createElement('button'); del.type='button'; del.className='prod-del'; del.textContent='×'; del.title='Quitar';
   del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); pintarTotalProds(); saldoAvisosProgramar(); });
   top.appendChild(d); top.appendChild(del);
@@ -9948,12 +9976,14 @@ function submitPedido(){
          (~1 segundo). Si la red no contesta en 4 segundos se guarda igual con el número
          provisorio: mejor una OC a corregir que una vendedora que no puede trabajar —
          y para eso está el aviso de repetidas en Administración. */
+      if(!fxDupConfirmar()) return;                                      // 🧰 (§4ih) ¿el mismo pedido dos veces?
       if(!saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;   // 🧾 con la planilla recién bajada (ver arriba)
       if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
       guardarYa();
     });
     return;
   }
+  if(!fxDupConfirmar()) return;                                          // 🧰 (§4ih) ¿el mismo pedido dos veces?
   if(!saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
   guardarYa();
 
@@ -11056,7 +11086,7 @@ function fxMesPintar(){
     '<div class="s">'+o.n+' venta'+(o.n===1?'':'s')+' este mes'+(o.antes>0?(' · '+o.pct+'% de lo de '+o.mesAnt+' ('+fmtBs0(o.antes)+')'):'')+'</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
-function fxFormPintar(){ try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); }catch(e){ /* las escenas nunca rompen el formulario */ } }
+function fxFormPintar(){ try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); fxDupPintar(); fxPasosPintar(); fxMapaProgramar(); }catch(e){ /* las escenas nunca rompen el formulario */ } }
 /* 🖥️ (§4ig) LOS COSTADOS: solo se arman con la pantalla ancha (en el celular no se ven y no se gasta nada). */
 function fxAncho(){ return !!(window.matchMedia && matchMedia('(min-width:1300px)').matches); }
 var FX_DIAS_NOM=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
@@ -11133,7 +11163,7 @@ function fxDerPintar(){
   if(el._h!==h){ var sc=el.scrollTop; el.innerHTML=h; el._h=h; el.scrollTop=sc; }
 }
 var FX_LADOS_T=null;
-function fxLadosProgramar(){ if(!fxAncho()) return; clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDerPintar(); }catch(e){} }, 150); }
+function fxLadosProgramar(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDupPintar(); fxPasosPintar(); if(fxAncho()) fxDerPintar(); }catch(e){} }, 150); }
 /* 3 · El dibujo del cuadrito del saldo. */
 function fxEscenaSaldo(tipo){
   if(tipo==='hay') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><rect x="6" y="56" width="106" height="5" rx="2" fill="#94a3b8"/>'+
@@ -11215,6 +11245,228 @@ function fxGuardado(rec){
     FX_ESCENA_T=setTimeout(fxCerrarEscena, tSale+7000);
   }catch(err){ fxCerrarEscena(); }
 }
+/* ============================================================================
+   🧰 MÁS AYUDAS DEL FORMULARIO (§4ih, 08/10/2026). El dueño eligió de una lista: *«4 me gusta, hazlo · 2, 5 y 6 dame ejemplo»*
+   (1 y 3 no: el precio queda a mano, «los combos tienen otros precios»). Ninguna cambia una regla del pedido.
+   ========================================================================== */
+/* ── 4 · ¿Ya tiene un pedido? ──
+   Mismo celular (los últimos 8 números) o el mismo nombre (6 letras o más), en un pedido que se entrega desde hace 7 días en
+   adelante o que se cargó en los últimos 7. Solo en un pedido NUEVO de tipo OC y no para Eduardo ni ROHO (Multicenter hace
+   varios pedidos el mismo día a propósito). Avisa mientras se escribe (`#fx-dup`) y pregunta al guardar (`fxDupConfirmar`). */
+function fxDupBuscar(){
+  if(EDIT_ID || VENTA_TIENDA || docTipoSel()!=='OC') return [];
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  if(esVendedorLite(val('f-vendedor'))) return [];
+  var cel=val('f-celular').replace(/\D/g,''), c8=cel.length>=7?cel.slice(-8):'', cli=normNombre(val('f-cliente'));
+  if(!c8 && cli.length<6) return [];
+  var desde=stockSumarDias(todayStr(),-7), out=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || esATC(p.oc) || esRPT(p.oc)) return;
+    if(!((p.fecha && p.fecha>=desde) || contaFecha(p)>=desde)) return;
+    var pc=String(p.celular||'').replace(/\D/g,''), porCel=!!c8 && pc.length>=7 && pc.slice(-8)===c8, porNom=cli.length>=6 && normNombre(p.cliente)===cli;
+    if(porCel || porNom) out.push({ p:p, porCel:porCel, porNom:porNom });
+  });
+  out.sort(function(a,b){ return String(b.p.fecha||'').localeCompare(String(a.p.fecha||'')); });
+  return out.slice(0,4);
+}
+function fxDupTxt(d){
+  var p=d.p, f=p.fecha?(['dom','lun','mar','mié','jue','vie','sáb'][dowDe(p.fecha)]+' '+p.fecha.slice(8,10)+'/'+p.fecha.slice(5,7)):'sin fecha';
+  return (ocEtiq(p.oc)||'pedido')+' · '+(p.cliente||'')+' · entrega '+f+(turnoDe(p)?(' '+turnoDe(p)):'')+' · '+(p.vendedor||'')+(p.entregado?' · ✅ entregado':'');
+}
+function fxDupPintar(){
+  var el=document.getElementById('fx-dup'); if(!el) return;
+  var L; try{ L=fxDupBuscar(); }catch(e){ L=[]; }
+  if(!L.length){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; el._h=''; } return; }
+  var por=L.some(function(d){ return d.porCel; }) ? 'este celular' : 'este cliente';
+  var h='<b>⚠️ Ojo: '+por+' ya tiene '+(L.length===1?'un pedido':(L.length+' pedidos'))+' de estos días.</b> ¿Es otra compra o es el mismo pedido?'+
+    L.map(function(d){ return '<div class="fx-dup-r"><span>'+esc(fxDupTxt(d))+(d.porCel?'':' <i>(mismo nombre)</i>')+'</span><button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(d.p.id))+'\')">👀 Ver</button></div>'; }).join('');
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  el.hidden=false;
+}
+var FX_DUP_OK='';
+function fxDupConfirmar(){
+  var L; try{ L=fxDupBuscar(); }catch(e){ return true; }
+  if(!L.length) return true;
+  var firma=L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'');
+  if(FX_DUP_OK===firma) return true;
+  var si=confirm('⚠️ ¿PEDIDO REPETIDO?\n\n'+(L.some(function(d){ return d.porCel; })?'Este celular':'Este cliente')+' ya tiene:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
+    '\n\nSi es OTRA compra, guardalo igual. Si es el mismo pedido, cancelá y corregí el que ya está (así no salen dos camiones).\n\n• Aceptar: guardar este pedido nuevo.\n• Cancelar: volver sin guardar.');
+  if(si){ FX_DUP_OK=firma; return true; }
+  fxDupPintar(); var el=document.getElementById('fx-dup'); if(el){ try{ el.scrollIntoView({block:'center'}); }catch(e){} }
+  return false;
+}
+/* ── 2 · Buscar el producto por nombre, con el saldo al lado ──
+   Reemplaza la lista del navegador (`dl-productos`, que no puede mostrar el saldo): las mismas opciones de `NOMBRES_LISTA`
+   («NOMBRE MEDIDA · CÓDIGO»), por palabras y sin acentos. Elegir una pone ese texto y dispara el `input` de siempre, que
+   completa medida y código como antes. El saldo sale de la MISMA cuenta del cuadrito (`saldoVeredicto`). */
+var FX_BUSCA={ el:null, inp:null, items:[], sel:-1 };
+var FX_NORM_LISTA=null;
+function fxBuscaNorm(){ if(!FX_NORM_LISTA) FX_NORM_LISTA=NOMBRES_LISTA.map(function(lb){ return { lb:lb, n:sinTildes(lb).toUpperCase() }; }); return FX_NORM_LISTA; }
+function fxBuscaChip(x){
+  try{
+    if(!STOCK_CARGADO) return '';
+    var k=stockInfo({ desc:x.d, medida:x.m, codigo:x.code }).k; if(!k || k==='|') return '';
+    var v=saldoVeredicto(k, 1, saldoSinId(), saldoFechaForm(), true), t=v.tipo;
+    if(t==='hay') return '<span class="fx-bc ok">✅ '+(v.libres!=null?(Math.max(0,v.libres)+' libre'+(v.libres===1?'':'s')):'hay')+'</span>';
+    if(t==='moreno') return '<span class="fx-bc mo">📥 en Moreno</span>';
+    if(t==='recogida') return '<span class="fx-bc mo">🚚 viene</span>';
+    if(t==='prod') return '<span class="fx-bc pr">⏳ en producción</span>';
+    if(t==='pedir') return '<span class="fx-bc no">🏭 no hay</span>';
+    if(t==='nofab') return '<span class="fx-bc no">🛑 ya no se fabrica</span>';
+  }catch(e){}
+  return '';
+}
+function fxBuscaCerrar(){ if(FX_BUSCA.el){ FX_BUSCA.el.hidden=true; } FX_BUSCA.items=[]; FX_BUSCA.sel=-1; }
+function fxBuscaAbrir(inp){
+  var q=sinTildes(inp.value).toUpperCase().trim();
+  if(q.length<2 || (NOMBRES[inp.value] && /·/.test(inp.value))){ fxBuscaCerrar(); return; }
+  var ws=q.split(/\s+/).filter(Boolean), L=fxBuscaNorm().filter(function(o){ return ws.every(function(w){ return o.n.indexOf(w)>=0; }); });
+  L.sort(function(a,b){ var A=a.n.indexOf(q)===0?0:1, B=b.n.indexOf(q)===0?0:1; return A-B || a.n.localeCompare(b.n); });
+  var tot=L.length; L=L.slice(0,8);
+  if(!L.length){ fxBuscaCerrar(); return; }
+  var el=FX_BUSCA.el; if(!el){ el=FX_BUSCA.el=document.createElement('div'); el.id='fx-busca'; el.className='fx-busca'; document.body.appendChild(el); }
+  FX_BUSCA.inp=inp; FX_BUSCA.items=L; FX_BUSCA.sel=-1;
+  el.innerHTML=L.map(function(o,i){ var x=NOMBRES[o.lb]||{};
+    return '<div class="fx-bo" data-i="'+i+'"><div class="t"><b>'+esc(x.d||o.lb)+'</b> '+esc(x.m||'')+'<div class="c">'+esc(x.code||'')+'</div></div>'+fxBuscaChip(x)+'</div>'; }).join('')+
+    (tot>L.length?('<div class="fx-bmas">… y '+(tot-L.length)+' más: escribí otra palabra para achicar</div>'):'');
+  var r=inp.getBoundingClientRect();
+  el.style.left=(r.left+window.scrollX)+'px'; el.style.top=(r.bottom+window.scrollY+4)+'px'; el.style.width=Math.max(r.width, 300)+'px';
+  el.hidden=false;
+}
+function fxBuscaElegir(i){
+  var o=FX_BUSCA.items[i], inp=FX_BUSCA.inp; if(!o || !inp) return;
+  fxBuscaCerrar();
+  inp.value=o.lb; inp.dispatchEvent(new Event('input',{bubbles:true})); inp.dispatchEvent(new Event('change',{bubbles:true}));
+  var q=inp.closest('.prod-card'); q=q&&q.querySelector('.prod-cant'); if(q){ try{ q.focus(); q.select(); }catch(e){} }
+}
+function fxBuscaMarcar(n){
+  var el=FX_BUSCA.el; if(!el || el.hidden || !FX_BUSCA.items.length) return false;
+  FX_BUSCA.sel=(FX_BUSCA.sel+n+FX_BUSCA.items.length)%FX_BUSCA.items.length;
+  [].forEach.call(el.querySelectorAll('.fx-bo'), function(d,i){ d.classList.toggle('sel', i===FX_BUSCA.sel); });
+  return true;
+}
+document.addEventListener('input', function(e){ var t=e.target; if(t && t.classList && t.classList.contains('prod-desc') && e.isTrusted!==false) fxBuscaAbrir(t); }, true);
+document.addEventListener('focusin', function(e){ var t=e.target; if(t && t.classList && t.classList.contains('prod-desc') && t.value.trim().length>=2 && !/·/.test(t.value)) fxBuscaAbrir(t); });
+document.addEventListener('keydown', function(e){
+  var t=e.target; if(!(t && t.classList && t.classList.contains('prod-desc')) || !FX_BUSCA.el || FX_BUSCA.el.hidden) return;
+  if(e.key==='ArrowDown'){ fxBuscaMarcar(1); e.preventDefault(); }
+  else if(e.key==='ArrowUp'){ fxBuscaMarcar(-1); e.preventDefault(); }
+  else if(e.key==='Enter' && FX_BUSCA.sel>=0){ fxBuscaElegir(FX_BUSCA.sel); e.preventDefault(); }
+  else if(e.key==='Escape') fxBuscaCerrar();
+});
+document.addEventListener('mousedown', function(e){
+  var o=e.target && e.target.closest ? e.target.closest('.fx-bo') : null;
+  if(o){ e.preventDefault(); fxBuscaElegir(+o.getAttribute('data-i')); return; }
+  if(FX_BUSCA.el && !FX_BUSCA.el.hidden && !(e.target.closest && (e.target.closest('#fx-busca') || e.target===FX_BUSCA.inp))) fxBuscaCerrar();
+});
+window.addEventListener('scroll', function(){ if(FX_BUSCA.el && !FX_BUSCA.el.hidden && FX_BUSCA.inp) fxBuscaAbrir(FX_BUSCA.inp); }, { passive:true });
+/* Al salir del campo se cierra (elegir una opción no saca el foco: el `mousedown` de la opción lo impide). */
+document.addEventListener('focusout', function(e){ var t=e.target; if(t && t===FX_BUSCA.inp) setTimeout(function(){ if(document.activeElement!==FX_BUSCA.inp) fxBuscaCerrar(); }, 120); });
+/* ── 5 · El mapita de la ubicación ──
+   Debajo de «Ubicación de Google Maps», con el pin, de qué lado de la línea de logística cae y a cuántos km de PTF. Lee lo que
+   lee el mapa de entregas (`coordsDeLink`); un enlace corto lo abre el servidor (`apiGeocode`, una vez por enlace). Si no se
+   entiende, lo dice en rojo ahí mismo (el guardado ya lo frena, §4ga). Solo mira: no escribe nada en el pedido. */
+var FX_MAPA={ t:null, mapa:null, pin:null, pedidos:{} };
+function fxMapaKm(a,b){ var R=6371, r=Math.PI/180, dla=(b.lat-a.lat)*r, dln=(b.lng-a.lng)*r, x=Math.sin(dla/2)*Math.sin(dla/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dln/2)*Math.sin(dln/2); return 2*R*Math.asin(Math.sqrt(x)); }
+function fxMapaProgramar(){ clearTimeout(FX_MAPA.t); FX_MAPA.t=setTimeout(fxMapaPintar, 450); }
+function fxMapaCoords(u){
+  var c=null; try{ c=coordsDeLink(u); }catch(e){}
+  if(!c && MAPA_COORDS[u] && MAPA_COORDS[u].lat!=null) c={ lat:MAPA_COORDS[u].lat, lng:MAPA_COORDS[u].lng, aprox:!!MAPA_COORDS[u].aprox };
+  return c;
+}
+function fxMapaPintar(){
+  var el=document.getElementById('fx-mapa'); if(!el) return;
+  var u=String((document.getElementById('f-maps')||{}).value||'').trim();
+  if(!u){ el.hidden=true; el._u=''; return; }
+  var c=fxMapaCoords(u);
+  if(!c){
+    var corto=/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(u);
+    if(corto && CONNECTED && !FX_MAPA.pedidos[u] && typeof apiGeocode==='function'){
+      FX_MAPA.pedidos[u]=1;
+      el.hidden=false; el.className='fx-mapa'; el.innerHTML='<div class="fx-mt">🔎 Abriendo el enlace…</div>';
+      conTopeDuro(apiGeocode([u]), 30000, 'tardó').then(function(res){
+        ((res&&res.geo)||[]).forEach(function(g){ if(g && g.link && g.lat!=null) MAPA_COORDS[g.link]={ link:g.link, lat:g.lat, lng:g.lng, aprox:!!g.aprox }; });
+        el._u=''; fxMapaPintar();
+      }, function(){ el._u=''; fxMapaPintar(); });
+      return;
+    }
+    el.hidden=false; el.className='fx-mapa mal'; el._u=u;
+    el.innerHTML=corto && FX_MAPA.pedidos[u] ? '<div class="fx-mt">⚠️ No pude abrir este enlace corto. Abrilo en el celular y copiá el link largo, o pegá las coordenadas.</div>'
+                                            : '<div class="fx-mt">⚠️ No reconozco esta ubicación: revisá el link (tiene que ser de Google Maps, coordenadas o un código como 5P2Q+PFX).</div>';
+    return;
+  }
+  if(el._u===u && el.querySelector('.fx-mm')) return;
+  el._u=u; el.hidden=false; el.className='fx-mapa';
+  var ptf=ALM_UBIC[0], km=fxMapaKm(ptf, c), lado=null; try{ lado=almLadoDeLinea(c); }catch(e){}
+  var ladoTxt=lado==null?'':(lado<0?'lado <b>Banzer</b>':'lado <b>PTF</b>')+' de la línea de logística';
+  el.innerHTML='<div class="fx-mm" id="fx-mm"></div><div class="fx-mt">📍 '+(c.aprox?'≈ aproximada · ':'')+'a <b>'+km.toFixed(1).replace('.',',')+' km</b> de PTF'+(ladoTxt?(' · '+ladoTxt):'')+
+    ' · <a href="https://www.google.com/maps?q='+c.lat+','+c.lng+'" target="_blank" rel="noopener">abrir en Maps ↗</a></div>';
+  if(navigator.webdriver && !window.FX_PRUEBA) return;          // en las pruebas no se baja el mapa (no hay red)
+  ensureLeafletCallado(function(){
+    var box=document.getElementById('fx-mm'); if(!box || !window.L) return;
+    try{
+      var m=L.map(box, { zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false }).fitBounds([[c.lat,c.lng]].concat(ALM_UBIC.map(function(a){ return [a.lat,a.lng]; })), { padding:[22,22], maxZoom:15 });   // el pin con PTF y Banzer a la vista
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(m);
+      try{ L.polyline(ALM_DIVISION, { color:'#0b1730', weight:2, opacity:.55, dashArray:'6 6' }).addTo(m); }catch(e){}   // la línea de logística (§4hy)
+      L.circleMarker([c.lat,c.lng], { radius:9, color:'#fff', weight:3, fillColor:'#00B5AD', fillOpacity:1 }).addTo(m);
+      ALM_UBIC.forEach(function(a){ L.circleMarker([a.lat,a.lng], { radius:6, color:'#fff', weight:2, fillColor:a.id==='ptf'?'#1e3a5f':'#D97706', fillOpacity:1 }).addTo(m).bindTooltip(a.nombre, { permanent:true, direction:'top', className:'fx-mtip' }); });
+    }catch(e){}
+  });
+}
+/* `ensureLeaflet` avisa con un cartel si no hay internet; acá el mapita no vale un cartel: sin mapa queda el texto. */
+function ensureLeafletCallado(cb){
+  if(window.L){ cb(); return; }
+  var js=document.getElementById('leaflet-js');
+  if(!js){
+    var css=document.createElement('link'); css.id='leaflet-css'; css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+    js=document.createElement('script'); js.id='leaflet-js'; js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; document.head.appendChild(js);
+  }
+  var t=setInterval(function(){ if(window.L){ clearInterval(t); cb(); } },150); setTimeout(function(){ clearInterval(t); },12000);
+}
+/* ── 6 · Los pasos en el celular ──
+   Una barra abajo de la pantalla (hasta 760 px) con Cliente · Productos · Entrega · Cobro: ✓ lo que ya está, el paso en el que
+   está la vendedora resaltado, y tocar uno lleva a esa parte del formulario. No esconde nada ni cambia el orden: el formulario
+   y sus controles al guardar son los de siempre. */
+var FX_PASOS=[
+  { n:'Cliente',   ico:'👤', ancla:function(){ return document.getElementById('wrap-cliente'); } },
+  { n:'Productos', ico:'🛏️', ancla:function(){ return document.getElementById('f-productos'); } },
+  { n:'Entrega',   ico:'🚚', ancla:function(){ return fxSec('Entrega'); } },
+  { n:'Cobro',     ico:'💰', ancla:function(){ return fxSec('Cobro'); } }
+];
+function fxSec(txt){ var s=[].slice.call(document.querySelectorAll('#view-form .sec')); for(var i=0;i<s.length;i++){ if(s[i].textContent.indexOf(txt)>=0 && s[i].offsetParent) return s[i]; } return null; }
+function fxPasosEstado(){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  var lite=esVendedorLite(val('f-vendedor')), tipo=docTipoSel(), tienda=VENTA_TIENDA;
+  var prods=[].some.call(document.querySelectorAll('#f-productos .prod-desc'), function(d){ return !!d.value.trim(); });
+  var pag=segVal('f-pagado');
+  return [
+    !!val('f-vendedor') && !!val('f-cliente') && (lite || tipo!=='OC' || !!val('f-celular')),
+    prods,
+    tienda || (!!val('f-fecha') && (tipo==='RPT' || !!val('f-zona'))),
+    tipo!=='OC' || lite || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && montoForm('f-saldo')>0))
+  ];
+}
+function fxPasosPintar(){
+  var el=document.getElementById('fx-pasos'); if(!el) return;
+  var enForm=document.getElementById('view-form').classList.contains('active');
+  if(!enForm || !(window.matchMedia && matchMedia('(max-width:760px)').matches)){ if(!el.hidden){ el.hidden=true; document.body.classList.remove('con-pasos'); } return; }
+  var ok=fxPasosEstado(), act=0, tope=110;
+  FX_PASOS.forEach(function(p,i){ var a=p.ancla(); if(a && a.offsetParent!==null && a.getBoundingClientRect().top<=window.innerHeight*0.45) act=i; });
+  var listos=ok.filter(Boolean).length;
+  var h='<div class="fx-pbar"><i style="width:'+Math.round(100*listos/4)+'%"></i></div><div class="fx-pbs">'+FX_PASOS.map(function(p,i){
+    var a=p.ancla(); if(!a || a.offsetParent===null) return '';
+    return '<button type="button" class="fx-pb'+(ok[i]?' ok':'')+(i===act?' act':'')+'" onclick="fxPasoIr('+i+')"><span class="ic">'+(ok[i]?'✓':p.ico)+'</span><span class="nm">'+p.n+'</span></button>';
+  }).join('')+'</div>';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  if(el.hidden){ el.hidden=false; document.body.classList.add('con-pasos'); }
+}
+function fxPasoIr(i){
+  var a=FX_PASOS[i] && FX_PASOS[i].ancla(); if(!a) return;
+  var hd=document.querySelector('.header'), off=(hd?hd.getBoundingClientRect().height:70)+12;
+  window.scrollTo({ top:a.getBoundingClientRect().top+window.scrollY-off, behavior:'smooth' });
+}
+var FX_PASOS_T=null;
+window.addEventListener('scroll', function(){ if(FX_PASOS_T) return; FX_PASOS_T=setTimeout(function(){ FX_PASOS_T=null; try{ fxPasosPintar(); }catch(e){} }, 120); }, { passive:true });
 /* ---- 👀 Quiénes ocupan el turno (§4fh) ----
    *«edité un pedido, le puse fecha 24 y NO LIBERÓ EL ESPACIO DEL 23»* (dueño, 22/09). El
    contador dice un número y nada más, así que cuando no cuadra no hay forma de saber POR QUÉ
@@ -26855,6 +27107,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
+  document.getElementById('f-maps').addEventListener('input',fxMapaProgramar);   // 🧰 (§4ih) el mapita
   (function(){ var fc=document.querySelector('#view-form .form-card'); if(fc){ ['input','change','click'].forEach(function(t){ fc.addEventListener(t, fxLadosProgramar); }); } })();   // 🖥️ (§4ig) el pedido en vivo
   window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
   document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)
