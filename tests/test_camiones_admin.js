@@ -11,13 +11,14 @@
      5. Completar un camión: «Listo para salir» en el panel, en el chip y en el cartel.
      6. Hoy / Mañana: cada día con sus pedidos y su fecha en la clave.
      7. «Ver sus paradas» abre la Lista de carga en ese día.
-     8. Se pliega con «🙈 Ocultar resumen»; en el celular no se sale de la pantalla; sin errores. */
+     8. Dos botones separados (§4ib): «Ocultar camiones» y «Ocultar resumen»; las líneas de color van en el piso, debajo de
+        cada camión; en el celular no se sale de la pantalla; sin errores. */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path');
 let PASS=0, FAIL=0;
 const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+e):''); };
 const J=x=>JSON.stringify(x);
-const ARCH = 'file://' + path.resolve(process.env.PEDIDOS || 'pedidos.html');
+const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.html'));
 
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
@@ -72,12 +73,12 @@ const ARCH = 'file://' + path.resolve(process.env.PEDIDOS || 'pedidos.html');
   console.log('\n── 1. En Administración, no en la Lista de carga; lo de Codex ya no está ──');
   let r = await page.evaluate(() => {
     var box=document.getElementById('carga-viva'), img=box && box.querySelector('.cv-lienzo img');
-    return { enResumen:!!(box && box.closest('#adm-resumen')), primero:box && document.getElementById('adm-resumen').firstElementChild===box,
+    return { enResumen:!box.closest('#adm-resumen') && box.nextElementSibling===document.getElementById('adm-resumen'), primero:true,
       img:img?img.getAttribute('src'):'', enCarga:!!document.querySelector('#carga-overlay #carga-viva, #carga-overlay .cv-caja'),
       codex:!!document.getElementById('adm-logistica') || !!document.querySelector('script[src*="admin-logistica"],link[href*="admin-logistica"]') || typeof window.AdminLogistica!=='undefined',
       titulo:(document.getElementById('cv-dia')||{}).textContent||'' };
   });
-  chk('⚠️ la tira está en Administración, primera cosa del resumen', r.enResumen && r.primero, J(r));
+  chk('⚠️ la tira está en Administración, justo arriba del resumen y FUERA de él (§4ib: se esconde aparte)', r.enResumen && r.primero, J(r));
   chk('…con la imagen de los depósitos (carga-viva/escena.jpg)', /^carga-viva\/escena\.jpg/.test(r.img), r.img);
   chk('⚠️ NO aparece en la Lista de carga (dueño: «solo en administración»)', !r.enCarga);
   chk('⚠️ la escena 3D de Codex ya no está (ni su caja, ni su script, ni su hoja de estilo)', !r.codex);
@@ -173,15 +174,33 @@ const ARCH = 'file://' + path.resolve(process.env.PEDIDOS || 'pedidos.html');
   chk('abre la Lista de carga en ese día, con el bloque del camión', r.abierta && r.dia==='hoy' && /hoy/.test(r.info) && r.enLista, J(r));
 
   // ══ 8. Plegar, celular, errores ══
-  console.log('\n── 8. Se pliega con el resumen; celular; errores ──');
+  console.log('\n── 8. Dos botones separados (§4ib); celular; errores ──');
   r = await page.evaluate(() => {
+    var vis=function(id){ var e=document.getElementById(id); for(var n=e; n && n!==document.body; n=n.parentElement){ if(n.style && n.style.display==='none') return false; } return !!e; };
+    var o={};
     toggleResumenAdm();
-    var e=document.getElementById('carga-viva'), oculto=false;
-    for(var n=e; n && n!==document.body; n=n.parentElement){ if(n.style && n.style.display==='none'){ oculto=true; break; } }
+    o.resOff={ cam:vis('carga-viva') && !!document.querySelector('#carga-viva .cv-caja'), res:vis('adm-resumen'), btn:document.getElementById('adm-resumen-btn').textContent };
     toggleResumenAdm();
-    return { oculto:oculto };
+    toggleCamionesAdm();
+    o.camOff={ cam:vis('carga-viva'), vacio:document.getElementById('carga-viva').innerHTML==='', res:vis('adm-resumen'), btn:document.getElementById('adm-camiones-btn').textContent, guardado:localStorage.getItem('pedidos_camiones_adm') };
+    renderAdmin();
+    o.trasRender={ cam:vis('carga-viva'), vacio:document.getElementById('carga-viva').innerHTML==='' };
+    toggleCamionesAdm();
+    o.camOn={ cam:vis('carga-viva') && !!document.querySelector('#carga-viva .cv-caja'), btn:document.getElementById('adm-camiones-btn').textContent };
+    return o;
   });
-  chk('«🙈 Ocultar resumen» también la pliega', r.oculto);
+  chk('«🙈 Ocultar resumen» esconde el resumen pero los camiones quedan a la vista', r.resOff.cam && !r.resOff.res && /Ver resumen/.test(r.resOff.btn), J(r.resOff));
+  chk('«🙈 Ocultar camiones» esconde solo los camiones (no se dibujan) y el resumen queda a la vista', !r.camOff.cam && r.camOff.vacio && r.camOff.res && /Ver camiones/.test(r.camOff.btn) && r.camOff.guardado==='0', J(r.camOff));
+  chk('escondidos siguen escondidos aunque Administración se repinte', !r.trasRender.cam && r.trasRender.vacio, J(r.trasRender));
+  chk('«👁️ Ver camiones» los vuelve a mostrar', r.camOn.cam && /Ocultar camiones/.test(r.camOn.btn), J(r.camOn));
+  r = await page.evaluate(() => {
+    var l=document.querySelector('#carga-viva .cv-lienzo'), hijos=[].slice.call(l.children), huella=document.getElementById('cv-h-ptf');
+    var svgH=huella && huella.closest('svg'), cuerpos=[].slice.call(l.querySelectorAll('img.cv-cuerpo')), faro=document.getElementById('cv-faros-ptf');
+    return { cuerpos:cuerpos.length, recorte:cuerpos.every(function(i){ return /polygon/.test(i.style.clipPath); }),
+      encima:cuerpos.length && cuerpos.every(function(i){ return hijos.indexOf(i)>hijos.indexOf(svgH); }),
+      farosArriba:!!faro && hijos.indexOf(faro.closest('svg'))>hijos.indexOf(cuerpos[cuerpos.length-1]) };
+  });
+  chk('§4ib: los tres camiones se vuelven a dibujar ENCIMA de la huella (las líneas quedan en el piso) y las luces encima de todo', r.cuerpos===3 && r.recorte && r.encima && r.farosArriba, J(r));
   await page.setViewportSize({ width:390, height:844 });
   await page.waitForTimeout(200);
   r = await page.evaluate(() => { cargaVivaPintar(); var b=document.getElementById('carga-viva').getBoundingClientRect(), m=document.querySelector('#carga-viva .cv-mapa').getBoundingClientRect();

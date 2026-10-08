@@ -615,7 +615,12 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
-- `#carga-viva`, primero dentro de `#adm-resumen`, se pliega con el resumen. Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- `#carga-viva` va JUSTO ARRIBA de `#adm-resumen` y FUERA de él (§4ib, 08/10, dueño: *«separá ocultar resumen y ocultar el nuevo
+  3D»*; en la rama, SIN publicar): **dos botones**, «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por compu; escondidos
+  no se dibujan) y «🙈 Ocultar resumen» (solo el resumen). Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- **Las líneas de color van en el PISO** (§4ib, dueño: *«esas líneas quedaron encima del camión, no abajo… se ve raro»*): `huella` es
+  el rectángulo del piso y `cuerpo` la silueta de cada camión, que se vuelve a dibujar ENCIMA (`img.cv-cuerpo` con `clip-path`
+  sobre la misma imagen); las luces (`cv-faros-*`) van en un segundo `svg` arriba de todo.
 - La imagen `carga-viva/escena.jpg` es FIJA y lo vivo va en coordenadas de la imagen (`CV_POS`, 1212×800). ⚠️ Los carteles tapan
   los textos que la imagen trae pintados: si se cambia la imagen, hay que volver a ubicarlos.
 - **Los tildes son LOS MISMOS de la Lista de carga** (`cargaChkKey`/`setCargaChk`), y la agrupación por camión es UNA:

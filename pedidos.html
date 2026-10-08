@@ -1054,13 +1054,15 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 
         <div id="adm-revisar"></div>
 
-        <!-- 👁️ Interruptor del resumen: ver §4bf en la bitácora. -->
-        <div style="display:flex;justify-content:flex-end;margin:0 0 10px">
+        <!-- 👁️ Dos interruptores SEPARADOS (§4ib, dueño 08/10: «separá ocultar resumen y ocultar el nuevo 3D»): los camiones y
+             el resumen se esconden cada uno con su botón, y cada compu recuerda lo suyo. Resumen: §4bf en la bitácora. -->
+        <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px">
+          <button class="btn btn-ghost btn-sm no-print" id="adm-camiones-btn" style="width:auto" onclick="toggleCamionesAdm()">🙈 Ocultar camiones</button>
           <button class="btn btn-ghost btn-sm" id="adm-resumen-btn" style="width:auto" onclick="toggleResumenAdm()">🙈 Ocultar resumen</button>
         </div>
 
-        <div id="adm-resumen">
         <div id="carga-viva" class="no-print"></div>
+        <div id="adm-resumen">
         <div class="metrics" id="adm-metrics"></div>
         <div class="metodos-line" id="adm-metodos"></div>
 
@@ -1443,6 +1445,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .cv-lienzo{ position:relative; width:100%; aspect-ratio:1212/800; transform-origin:55% 45%; animation:cvRespira 22s ease-in-out infinite alternate; }
 @keyframes cvRespira{ from{ transform:scale(1); } to{ transform:scale(1.045) translate(-1%,.6%); } }
 .cv-lienzo img{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.cv-lienzo img.cv-cuerpo{ pointer-events:none; }
 .cv-lienzo svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .cv-ruta{ fill:none; stroke:var(--cv-cian); stroke-width:3.5; stroke-linecap:round; stroke-dasharray:2 16; animation:cvCorre 1.2s linear infinite; opacity:.95; }
 @keyframes cvCorre{ to{ stroke-dashoffset:-18; } }
@@ -13141,14 +13144,19 @@ function printCarga(){ document.body.classList.add('printing-carga'); window.pri
      El elegido se dibuja en el andén de PTF; el cartel de Banzer suma lo que se carga allá ese día (todos los camiones) y el
      de Moreno, lo que hay que ir a buscar (`prodProd`, lo mismo que dice «📥 recoger» en la lista).
    · Vive en ADMINISTRACIÓN, arriba del resumen (dueño, 08/10: *«que solo se vea en administración, no en la lista de carga;
-     reemplazá lo de Codex»*): se pliega con «🙈 Ocultar resumen». Tiene su propio Hoy/Mañana (`CV_DIA`); los tildes van con la
+     reemplazá lo de Codex»*): se esconde con SU botón, «🙈 Ocultar camiones», aparte del resumen (§4ib). Tiene su propio Hoy/Mañana (`CV_DIA`); los tildes van con la
      fecha de ese día, igual que en la lista. «Ver sus paradas» abre la Lista de carga en ese día y baja al camión.
    ========================================================================== */
 var CV_SEL='', CV_ARMADA=false, CV_DIA='hoy';
 var CV_POS={
-  ptf:{ pin:[820,320], huella:'688,408 748,446 950,372 905,345', faros:[[728,418,22],[757,428,22]], de:[985,352], a:[870,335], fiesta:[822,362] },
-  bz: { pin:[468,133], huella:'340,180 455,236 505,214 395,160', faros:[[462,216,14],[484,222,14]], de:[290,205], a:[400,186], fiesta:[420,180] },
-  im: { pin:[338,440], huella:'225,500 365,590 430,560 290,470', faros:[[372,568,17],[404,576,17]] },
+  /* `huella` = el rectángulo en el PISO alrededor del camión; `cuerpo` = la silueta del camión, que se vuelve a dibujar ENCIMA
+     de la huella (§4ib, dueño 08/10: «esas líneas quedaron encima del camión, no abajo… se ve raro»). Coordenadas de la imagen. */
+  ptf:{ pin:[820,320], huella:'685,408 763,450 950,368 872,327',
+        cuerpo:[[722,375],[740,355],[755,347],[928,304],[931,360],[913,380],[880,392],[820,412],[780,437],[747,437],[720,420]], faros:[[728,418,22],[757,428,22]], de:[985,352], a:[870,335], fiesta:[822,362] },
+  bz: { pin:[468,133], huella:'330,198 462,250 515,224 385,165',
+        cuerpo:[[347,145],[353,135],[470,163],[472,170],[488,180],[494,187],[494,217],[477,231],[452,232],[420,218],[400,208],[360,195],[348,187]], faros:[[462,216,14],[484,222,14]], de:[290,205], a:[400,186], fiesta:[420,180] },
+  im: { pin:[338,440], huella:'220,505 368,600 435,568 285,468',
+        cuerpo:[[233,455],[245,449],[393,500],[400,510],[415,523],[418,533],[417,573],[400,587],[370,589],[357,577],[333,568],[310,555],[280,540],[250,520],[235,505],[233,493]], faros:[[372,568,17],[404,576,17]] },
   accion:[796,398]
 };
 function cvFecha(){ return CV_DIA==='manana' ? proximoDiaEntrega() : todayStr(); }
@@ -13200,6 +13208,8 @@ var CV_COL={ carga:'var(--cv-cian)', ok:'var(--cv-verde)', nada:'var(--cv-gris)'
 var CV_EST={ carga:'Cargando', ok:'✅ Listo para salir', nada:'Sin carga para este día', sin:'⚠️ Pedidos sin camión asignado' };
 function cargaVivaPintar(){
   var box=document.getElementById('carga-viva'); if(!box) return;
+  pintarCamionesAdm();
+  if(!camionesAdmVisible()){ box.innerHTML=''; CV_ARMADA=false; return; }   // 🙈 escondidos: no se dibujan (§4ib)
   var D=cargaVivaDatos();
   if(!D){ box.innerHTML=''; CV_ARMADA=false; return; }
   var dia=CV_DIA==='hoy'?'hoy':'mañana';
@@ -13214,9 +13224,12 @@ function cargaVivaPintar(){
         '<circle r="6" fill="#a5f3fc"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#cv-camino"/></animateMotion></circle>'+
         '<circle r="6" fill="#a5f3fc"><animateMotion dur="5s" begin="2.5s" repeatCount="indefinite"><mpath href="#cv-camino"/></animateMotion></circle>'+
         '<polygon id="cv-h-ptf" class="cv-huella" points="'+CV_POS.ptf.huella+'"/><polygon id="cv-h-bz" class="cv-huella" points="'+CV_POS.bz.huella+'"/><polygon id="cv-h-im" class="cv-huella" points="'+CV_POS.im.huella+'"/>'+
-        faros('ptf')+faros('bz')+faros('im')+
         '<circle class="cv-luzc" cx="800" cy="200" r="40"/><circle class="cv-luzc" cx="940" cy="258" r="40" style="animation-delay:-1.2s"/><circle class="cv-luzc" cx="1060" cy="305" r="40" style="animation-delay:-2.1s"/><circle class="cv-luzc" cx="232" cy="173" r="30"/><circle class="cv-luzc" cx="160" cy="455" r="30" style="animation-delay:-1.7s"/>'+
-      '</svg><div class="cv-capa" id="cv-capa"></div></div>'+
+      '</svg>'+
+      /* Los camiones otra vez, recortados de la misma imagen: tapan la parte de la huella que pasaba por encima (§4ib). */
+      ['ptf','bz','im'].map(function(id){ return '<img class="cv-cuerpo" src="carga-viva/escena.jpg?v=1" alt="" style="clip-path:polygon('+CV_POS[id].cuerpo.map(function(q){ return cvX(q[0])+' '+cvY(q[1]); }).join(',')+')">'; }).join('')+
+      '<svg viewBox="0 0 1212 800" preserveAspectRatio="none">'+faros('ptf')+faros('bz')+faros('im')+'</svg>'+
+      '<div class="cv-capa" id="cv-capa"></div></div>'+
       '<div class="cv-leyenda"><span><i style="background:var(--cv-cian)"></i>Cargando</span><span><i style="background:var(--cv-verde)"></i>Listo para salir</span><span><i style="background:var(--cv-ambar)"></i>Ir a buscar a Moreno</span><span><i style="background:var(--cv-gris)"></i>Sin carga</span></div></div>'+
       '<div class="cv-panel" id="cv-panel"></div></div></div>';
     CV_ARMADA=true;
@@ -24375,6 +24388,24 @@ function pintarResumenCua(){
 function toggleResumenCua(){
   try{ localStorage.setItem(LS_RESUMEN_CUA, resumenCuaVisible()?'0':'1'); }catch(e){}
   pintarResumenCua();
+}
+/* 🚛 (§4ib, 08/10) Los camiones de Administración (§4hz) se esconden con SU botón, aparte del resumen: el dueño quiere poder
+   tener el resumen a la vista sin la imagen, o al revés. Escondidos no se dibujan (la animación no corre de fondo). */
+var LS_CAMIONES='pedidos_camiones_adm';
+function camionesAdmVisible(){ try{ return localStorage.getItem(LS_CAMIONES)!=='0'; }catch(e){ return true; } }
+function pintarCamionesAdm(){
+  var box=document.getElementById('carga-viva'), b=document.getElementById('adm-camiones-btn');
+  var ver=camionesAdmVisible();
+  if(box) box.style.display = ver ? '' : 'none';
+  if(b){
+    b.innerHTML = ver ? '🙈 Ocultar camiones' : '👁️ Ver camiones';
+    b.title = ver ? 'Esconde la imagen de los camiones; el resumen queda como está' : 'Vuelve a mostrar la imagen de los camiones';
+  }
+}
+function toggleCamionesAdm(){
+  try{ localStorage.setItem(LS_CAMIONES, camionesAdmVisible()?'0':'1'); }catch(e){}
+  pintarCamionesAdm();
+  try{ cargaVivaPintar(); }catch(e){}
 }
 function toggleResumenAdm(){
   try{ localStorage.setItem(LS_RESUMEN, resumenAdmVisible()?'0':'1'); }catch(e){}

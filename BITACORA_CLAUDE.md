@@ -7445,6 +7445,19 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ib. 08/10: 🚛 los camiones de Administración: su propio botón para esconderlos y las líneas en el piso (en la rama, SIN publicar)
+**El dueño**, con capturas de Administración: *«separá las pestañas ocultar resumen y ocultar el nuevo 3D; que se vea siempre el
+resumen»* y *«esas líneas quedaron encima del camión, no abajo… se ve raro»*.
+- `#carga-viva` sale de `#adm-resumen` y queda justo arriba. Dos botones en la misma fila: «🙈 Ocultar camiones»
+  (`toggleCamionesAdm`/`pintarCamionesAdm`, `localStorage` `pedidos_camiones_adm`, cada compu lo suyo) y «🙈 Ocultar resumen» (solo
+  el resumen, como siempre). Escondidos, `cargaVivaPintar` vacía la caja y no dibuja nada (la animación no corre de fondo).
+- Las huellas de color (`CV_POS[..].huella`) pasaban por encima de los camiones. Ahora son el rectángulo del PISO alrededor de cada
+  camión (la de PTF calca el contorno que ya trae la imagen) y cada camión se vuelve a dibujar encima: tres `img.cv-cuerpo` de la
+  misma imagen recortadas con `clip-path` por su silueta (`CV_POS[..].cuerpo`, medida a mano sobre la imagen ampliada). Las luces
+  delanteras van en un segundo `svg`, encima de los recortes. ⚠️ Si se cambia la imagen, hay que volver a medir `cuerpo`.
+- `test_camiones_admin` §1 y §8 cambiadas a conciencia (la tira ya no está dentro del resumen) + 5 comprobaciones nuevas → 31;
+  contra `2a7c7bd` cae en la primera.
+
 ## 4ia. 08/10: 🏷️ el SUEÑA LITE 105 partido en dos — un código que la lista aprendió después (en la rama, SIN publicar)
 **El aviso**: al subir el Excel de PTF el 08/10 el dueño vio en el control del corte «COLCHON SUENA LITE · 105X190: +20 sin
 explicar» y «…: −20 sin explicar» (los dos con el mismo nombre). Buscó «LITE» en Stock: dos filas. *«Si, salen dos, está
