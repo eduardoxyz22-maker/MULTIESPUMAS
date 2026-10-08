@@ -10994,7 +10994,7 @@ function fxDiasPintar(){
 }
 function fxCamionPintar(){ fxCamionEn(document.getElementById('fx-camion')); fxCamionEn(document.getElementById('fx-izq-cam')); }
 function fxCamionEn(el){
-  if(!el) return;
+  if(!el) return;   // ⚠️ los degradados llevan el id de la caja: con dos camiones a la vista (§4ig) no se pueden repetir (test_auditoria)
   var f=(document.getElementById('f-fecha')||{}).value||'', t=normTurno(segVal('f-turno')||'AM');
   if(!f || !segVal('f-turno')){ el.hidden=true; return; }
   var lim=diaCerrado(f)?0:limTurno(f,t), usados=cuposUsadosTurno(f,t);
@@ -11018,12 +11018,12 @@ function fxCamionEn(el){
   var otroDia=!el._firma || el._firma.split('|').slice(0,2).join('|')!==(f+'|'+t);   // otro día o turno: el camión entra de nuevo
   el._firma=firma;
   el.innerHTML=cab+'<svg viewBox="0 0 520 190" aria-hidden="true"><defs>'+
-      '<linearGradient id="fx-caja" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e5ebf0"/></linearGradient>'+
-      '<linearGradient id="fx-cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20c9c0"/><stop offset="1" stop-color="#0b8f87"/></linearGradient>'+
-      '<linearGradient id="fx-vid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#5aa7d6"/></linearGradient></defs>'+
+      '<linearGradient id="fx-caja-'+el.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e5ebf0"/></linearGradient>'+
+      '<linearGradient id="fx-cab-'+el.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20c9c0"/><stop offset="1" stop-color="#0b8f87"/></linearGradient>'+
+      '<linearGradient id="fx-vid-'+el.id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#5aa7d6"/></linearGradient></defs>'+
     '<g class="fx-cam-g"'+(otroDia?' style="transform:translateX(-560px)"':'')+'><ellipse cx="260" cy="176" rx="235" ry="8" fill="rgba(0,0,0,.12)"/>'+
-      '<rect x="18" y="18" width="345" height="132" rx="8" fill="url(#fx-caja)" stroke="#cbd5df" stroke-width="2"/><rect x="18" y="128" width="345" height="10" fill="#00B5AD" opacity=".9"/>'+s+
-      '<path d="M366 58 h70 q22 0 34 22 l26 40 v28 q0 6 -6 6 h-124 z" fill="url(#fx-cab)"/><path d="M378 66 h52 q14 0 22 14 l16 28 h-90 z" fill="url(#fx-vid)"/>'+
+      '<rect x="18" y="18" width="345" height="132" rx="8" fill="url(#fx-caja-'+el.id+')" stroke="#cbd5df" stroke-width="2"/><rect x="18" y="128" width="345" height="10" fill="#00B5AD" opacity=".9"/>'+s+
+      '<path d="M366 58 h70 q22 0 34 22 l26 40 v28 q0 6 -6 6 h-124 z" fill="url(#fx-cab-'+el.id+')"/><path d="M378 66 h52 q14 0 22 14 l16 28 h-90 z" fill="url(#fx-vid-'+el.id+')"/>'+
       '<rect x="488" y="128" width="14" height="9" rx="3" fill="#fde68a"/><rect x="366" y="138" width="140" height="10" rx="3" fill="#0f5c58"/>'+
       [80,128,300,452].map(function(cx){ return '<circle cx="'+cx+'" cy="152" r="21" fill="#1f2937"/><circle cx="'+cx+'" cy="152" r="9" fill="#9ca3af"/>'; }).join('')+
     '</g></svg>';
