@@ -7466,9 +7466,11 @@ cada día. Y si en Moreno aumenta el saldo de almacén, quiere decir que ese pro
   fábrica» viejo o de hoy, antes «✓ Cada depósito tiene lo suyo», ahora «📥 Traer 8 de Moreno a PTF» + la alerta; con una recogida
   de 6 programada, «Traer 2» (bien antes y ahora).
 - `test_banzer_ptf` → 105 (7 rojas contra `0d20d04`).
-- **Pendiente con el dueño**: sacar el botón «🏭 Pedí a fábrica» (barra de Stock y el cartel «🚨 PEDIR YA», que abre ese mismo
-  formulario). El plan ya no lo usa; la pantalla de Stock («cuánto pedir», «Qué producir», tiempos de fábrica) todavía lee lo
-  anotado ahí.
+- **🚫 Sin el botón «🏭 Pedí a fábrica»** (dueño, 08/10: *«sí, porque ellos crean su Excel y correo, quítalos»*): se fue de la
+  barra de Stock, y «🚨 PEDIR YA» / «🏭 Pedir esta semana» son solo aviso (`<span>`, antes abrían ese formulario). La leyenda de
+  «🚚 Ya pedido» lo dice. `abrirStockPedido`/`guardarStockPedido` quedan en el código SIN botón (los pedidos ya anotados se siguen
+  leyendo; `test_rev3_stock` los llama directo). «🚚 Programar recogida» y «📥 Llegó de fábrica» siguen (no se pidió sacarlos).
+  `test_banzer_ptf` §1 lo verifica (→ 106).
 
 ## 4hw. 07/10 a la noche: 🗓️ el plan de 7/15/30 días, segunda vuelta — «tener» = lo ya vendido + lo para tener, «TRAER DE MORENO» y la alerta «Recordá revisar la producción» — PUBLICADA 07/10 18:46 (`0d20d04`, Pages OK 18:47, run 37698289301; el dueño: «publica»; batería 138 suites, 1 roja de carga en `test_borradores`, sola 95/95)
 El dueño, mirando la pantalla de §4hv publicada con su caso real (ESPECIAL SEMIORTOPEDICO: PTF tener 7, hay 0, 6 ya vendidos;

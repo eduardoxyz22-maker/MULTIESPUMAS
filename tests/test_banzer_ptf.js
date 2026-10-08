@@ -150,9 +150,12 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
     abrirStock();
     window._antes={ state:JSON.stringify(STATE), stock:JSON.stringify(STOCK) };
     var b=[].slice.call(document.querySelectorAll('#stock-overlay button')).filter(function(x){ return /Banzer o PTF/.test(x.textContent); })[0];
-    return { boton:!!b, enBarra:!!(b && !document.getElementById('stock-body').contains(b)) };
+    return { boton:!!b, enBarra:!!(b && !document.getElementById('stock-body').contains(b)),
+             pedi:[].slice.call(document.querySelectorAll('#stock-overlay button')).some(function(x){ return /Pedí a fábrica/.test(x.textContent); }),
+             abre:!!document.querySelector('#stock-overlay [onclick*="abrirStockPedido("]') };
   });
   chk('⚠️ la barra de Stock tiene el botón «📍 Banzer o PTF»', r.boton && r.enBarra, J(r));
+  chk('⚠️ (dueño 08/10: «ellos crean su Excel y correo, quítalos») no hay botón «🏭 Pedí a fábrica» ni nada que abra ese formulario', !r.pedi && !r.abre, J(r));
   // Lo que el panel lee sin internet ANTES de abrir (el servidor contesta al toque y se mide después, en §7).
   const sinServidor = await page.evaluate(() => { var T=almZonaData().T; return { n:T.n, mapa:T.mapa, zona:T.zona, sin:T.sin, pend:T.pend.map(function(x){ return x.u.replace(/^https:\/\/maps\.app\.goo\.gl\//,''); }) }; });
   await page.click('#stock-overlay button:has-text("Banzer o PTF")');

@@ -380,7 +380,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     cada día; si en Moreno aumenta el saldo, ese producto se fabricó»*)**: el plan resta SOLO las recogidas de Moreno ya
     programadas (`almPlanRecogidas`), nunca lo anotado como «pedí a fábrica» (Codex F1: daba por cubierta una entrega de mañana).
     `cubreB` es acción («↪️ Cargar en Banzer…», en «Qué hacer» y en la copia, F2); sin el Excel de PTF, «⚠️ Falta el Excel de PTF»
-    y nunca «cada depósito tiene lo suyo» (F3). ⚠️ No volver a restar `stockEnCaminoSeguro` en el plan. `test_banzer_ptf` → 105.
+    y nunca «cada depósito tiene lo suyo» (F3). ⚠️ No volver a restar `stockEnCaminoSeguro` en el plan. `test_banzer_ptf` → 106.
+    · **🚫 Sin «🏭 Pedí a fábrica»** (dueño, 08/10: *«ellos crean su Excel y correo, quítalos»*): fuera de la barra de Stock;
+    «🚨 PEDIR YA» y «🏭 Pedir esta semana» son solo aviso. `abrirStockPedido` queda sin botón. No volver a ponerlo sin que lo pida.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
