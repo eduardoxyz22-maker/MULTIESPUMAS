@@ -344,7 +344,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:
     Google no le da el pin de un LUGAR con nombre a un programa, ni al servidor). Si el dueño manda las coordenadas, se cambian ahí.
     · `almZonaData`: entregas de 60 días (`ALM_ZONA_DIAS`) con las reglas de la rotación de Stock (`stockCuenta`, sin venta de
-    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DE LOGÍSTICA cae** (08/10, §4hy; reemplaza la del dueño del 07/10: `ALM_DIVISION`, 41 puntos de norte a sur sacados de los píxeles negros
+    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DE LOGÍSTICA cae** (08/10, §4hy, PUBLICADA 08/10 12:36, `2a7c7bd`; reemplaza la del dueño del 07/10: `ALM_DIVISION`, 41 puntos de norte a sur sacados de los píxeles negros
     de su captura; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este → PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad).
     ⚠️ La línea tiene un tramo casi horizontal (El Trompillo): el lado sale del POLÍGONO del oeste (`almLineaGeo`) y la distancia
     del tramo más cercano; no volver a elegir el tramo «de la misma latitud» (daba el lado al revés en el quiebre); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
@@ -604,7 +604,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
-## 🚛 Los camiones en Administración (§4hz, 08/10): lo que hay que respetar
+## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
 - `#carga-viva`, primero dentro de `#adm-resumen`, se pliega con el resumen. Se pinta en `renderAdmin` y en `renderCargaSiActiva`.

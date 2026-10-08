@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hz. 08/10: 🚛 los camiones en Administración, sobre la imagen de ChatGPT, con los tildes ahí mismo — reemplaza la escena 3D de Codex
+## 4hz. 08/10: 🚛 los camiones en Administración, sobre la imagen de ChatGPT, con los tildes ahí mismo — reemplaza la escena 3D de Codex — PUBLICADA 08/10 12:36 (`2a7c7bd`, Pages OK, run 37810085454; el dueño: «reemplazá lo de Codex y publicá»; batería 139 suites, 5.284 bien · 0 mal)
 **Cómo se llegó** (todo el 08/10):
 - El dueño pidió «motion graphics» con camiones moviéndose en Stock, clicables («cargar este camión»), «algo más wow».
 - Primero salió una muestra en CSS/SVG. El dueño pidió «más realista, más 3D», y se hicieron dos escenas Three.js en el
@@ -7491,7 +7491,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   tildar (`reescritaAplicar` aplica solo lo cambiado acá sobre lo del servidor). Para probar los tildes, que el doble guarde y
   devuelva las filas del sistema.
 
-## 4hy. 08/10: 📍 la línea de «Banzer o PTF» pasa a ser la de LOGÍSTICA — EN LA RAMA, SIN PUBLICAR (el dueño: «no la publiques aún»)
+## 4hy. 08/10: 📍 la línea de «Banzer o PTF» pasa a ser la de LOGÍSTICA — PUBLICADA 08/10 12:36 junto con §4hz (`2a7c7bd`)
 El dueño mandó una captura del mapa publicado (el de §4ht/§4hw, con la línea punteada del 07/10) con una línea negra dibujada
 encima: *«logística quiere así la línea y división. trabajala no la publiques aún»*.
 - **Cómo se pasó a coordenadas**: los píxeles negros de la captura (máximo de R,G,B < 45), fila por fila, a 41 vértices de norte a
@@ -7513,7 +7513,7 @@ encima: *«logística quiere así la línea y división. trabajala no la publiqu
   su lado. El punto «en el medio» del armado (`MEDIO`) pasó a ser un punto de la línea nueva (era el punto medio entre los
   depósitos, que caía sobre la del dueño y con la de logística queda 1 km del lado de Banzer); las cuentas a mano de §3-§12 no
   cambiaron. Contra la publicada (`27c8d0d`): 89 bien · 20 mal.
-- Pendiente del dueño: «publica». Las zonas por depósito que defina logística siguen pudiendo reemplazar la línea.
+- Publicada con §4hz (el dueño: «publicá junto con las correcciones pendientes»). Las zonas por depósito que defina logística siguen pudiendo reemplazar la línea.
 
 ## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) y sin «🏭 Pedí a fábrica» — PUBLICADA 08/10 21:05 (`27c8d0d`, Pages OK 21:05, run 37711127971; el dueño: «sí… quítalos»; batería 138 suites, 5.254 bien · 0 mal)
 Codex revisó lo publicado el 07/10 (`0d20d04`) y reprodujo tres defectos; el dueño, al discutir el primero, fijó la regla: *«no usan
