@@ -650,7 +650,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
 - ⚠️ En Playwright (`navigator.webdriver`) la escena de guardar NO sale salvo `window.FX_PRUEBA`: si no, tapa la ventana de
   WhatsApp de todas las pruebas. ⚠️ Animaciones: un solo `requestAnimationFrame` para muchos elementos (con 90 se trababa la
   página) y nada de `blur` animado a pantalla completa. `carga-viva/camion-recorte.png` = `camion.png` sin fondo.
-- **🖥️ Pantalla ancha (§4ig, PUBLICADA 08/10 17:03, `cdc1fab`; desde 1120 px por §4ij, EN LA RAMA: el iPad acostado mide 1180 y con 1300 no los veía; entre 1120 y 1299 los costados van fijos, 236 y 262 px)**: `#fx-izq` (agenda de 7 días por turno + el camión) y
+- **🖥️ Pantalla ancha (§4ig, PUBLICADA 08/10 17:03, `cdc1fab`; desde 1120 px por §4ij, PUBLICADA 08/10 19:57, `63f9d68`: el iPad acostado mide 1180 y con 1300 no los veía; entre 1120 y 1299 los costados van fijos, 236 y 262 px)**: `#fx-izq` (agenda de 7 días por turno + el camión) y
   `#fx-der` (el pedido en vivo: productos con su estado, suma, «Para guardar», hoy y el mes) a los costados, `sticky`. «Para
   guardar» es solo una ayuda: las validaciones siguen en `submitPedido`. Más angosto no cambia nada.
 - `tests/test_escenas_form.js` (23).

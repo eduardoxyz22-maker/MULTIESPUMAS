@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ij. 08/10: 📱 en el iPad no se veía «nada de eso» — los costados desde 1120 px y la barra de pasos hasta 1119 — EN LA RAMA, sin publicar
+## 4ij. 08/10: 📱 en el iPad no se veía «nada de eso» — los costados desde 1120 px y la barra de pasos hasta 1119 — PUBLICADA 08/10 19:57 (`63f9d68`, Pages OK, run 37862228498; el dueño: «publica lo que falta publicar»; batería 143 suites, 5.365 bien, 1 roja de carga que pasa sola)
 El dueño: *«mandame capturas de cómo quedó, porque en el iPad no se ve nada de eso, solo en la PC parece»*. No era un error de
 Safari (revisado el código nuevo: nada que el iPad no entienda) sino los cortes de ancho: los costados (§4ig) salían desde 1300 px
 y la barra de pasos (§4ih) hasta 760 px, y el iPad Air mide 820 parado y 1180 acostado: caía en el medio y no veía ninguno de los
