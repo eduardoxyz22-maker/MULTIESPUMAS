@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ig. 08/10: 🖥️ los costados del formulario en pantalla ancha (en la rama, SIN publicar)
+## 4ig. 08/10: 🖥️ los costados del formulario en pantalla ancha — PUBLICADA 08/10 17:03 (`cdc1fab`, Pages OK, run 37844004385; el dueño: «me gusta, implementá»; batería 141 suites, 5.334 bien · 0 mal)
 **El dueño** (captura de la página publicada en su compu de 1920 px): *«publicar, y mientras hacé algo más pulido y
 desarrollado, porque además tenemos espacios vacíos a los laterales»*.
 - Desde **1300 px** (`fxAncho`), en la vista del formulario (`body:not(.ancha)` → `--wrap:1640px`) `#view-form` pasa a 3 columnas:
@@ -7461,6 +7461,8 @@ desarrollado, porque además tenemos espacios vacíos a los laterales»*.
   de `submitPedido`); «N pedidos cargados hoy» y lo vendido en el mes. Se repinta con cada `input`/`change`/`click` del formulario
   (150 ms, `fxLadosProgramar`), con los cuadritos del saldo y al cambiar el ancho de la ventana.
 - `test_escenas_form` §6 (4 más → 23).
+- ⚠️ Con dos camiones a la vista (el de adentro del formulario y el de la agenda) los degradados del SVG repetían ids y `test_auditoria`
+  lo atajó (162 rojas): `fxCamionEn` les pone el id de su caja.
 
 ## 4if. 08/10: ✨ las escenas del formulario de pedidos — PUBLICADA 08/10 16:35 (`19a2ec0`, Pages OK, run 37840479450; el dueño: «publicar»)
 **El dueño**, después de una muestra en video (scratchpad, no está en el repo): *«todas, pero ¿qué pasa con lo demás del
