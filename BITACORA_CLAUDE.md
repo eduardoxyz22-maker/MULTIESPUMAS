@@ -7445,6 +7445,18 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ij. 08/10: 📱 en el iPad no se veía «nada de eso» — los costados desde 1120 px y la barra de pasos hasta 1119 — EN LA RAMA, sin publicar
+El dueño: *«mandame capturas de cómo quedó, porque en el iPad no se ve nada de eso, solo en la PC parece»*. No era un error de
+Safari (revisado el código nuevo: nada que el iPad no entienda) sino los cortes de ancho: los costados (§4ig) salían desde 1300 px
+y la barra de pasos (§4ih) hasta 760 px, y el iPad Air mide 820 parado y 1180 acostado: caía en el medio y no veía ninguno de los
+dos. Las escenas, el buscador, el aviso de repetido y el mapita SÍ salían (capturas a 820 y 1180 con el escenario de prueba).
+- Costados desde **1120 px** (`fxAncho` y el `@media`): entre 1120 y 1299 van FIJOS (236 px y 262 px) y el formulario toma el resto
+  (~550 px en el iPad acostado); con `minmax` crecían los costados y el formulario quedaba en 340 (la vendedora salía «Maria Flc»).
+  Desde 1300, como antes.
+- Barra de pasos **hasta 1119 px** (`fxPasosPintar`): en el iPad parado aparece abajo; en el acostado, los costados.
+- Pruebas: `test_escenas_form` (24: el iPad acostado; «más angosto» ahora es < 1120) y `test_ayudas_form` (22: corre en 1180×820 y
+  mira el iPad parado). Las dos nuevas, rojas contra `e533511`.
+
 ## 4ii. 08/10: ➕ «Qué producir» pedía de menos: lo vendido sin entregar y el ritmo se tomaban «el mayor», no se SUMABAN — PUBLICADA 08/10 17:56 (`e533511`, Pages OK, run 37850277889; el dueño: «publica, y también 2 4 5 6»)
 El dueño, con la captura de «🏭 Qué producir»: *«especial semi ortopédico dice 9 sin entregar, hay 6 y solo pide 3 para los
 próximos 7 días… siendo que tiene 9 pendientes, a un ritmo de 1 por día… revisá la lógica para todos los productos, NO PUEDE
