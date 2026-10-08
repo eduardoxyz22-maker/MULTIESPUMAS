@@ -7468,7 +7468,7 @@ formulario?»* y *«por lo del celular no te preocupes… quiero escenas wow»*.
   (medido con la prueba: los temporizadores llegaban segundos tarde). Y el fondo borroso está quieto a propósito: animar un
   `blur` a pantalla completa es lo más caro de dibujar.
 - `renderCupoForm` = `renderCupoFormBase` + `fxFormPintar()`; también al escribir el vendedor y al final de `editPedido`.
-- `tests/test_escenas_form.js` (19; 17 rojas contra `409a077`). `VIDEO=<carpeta>` lo graba.
+- `tests/test_escenas_form.js` (19; 17 rojas contra `409a077`). `VIDEO=<carpeta>` lo graba. Batería entera: 141 suites, 5.330 bien · 0 mal.
 
 ## 4ie. 08/10: 🚛 asignar el camión desde «Sin vehículo» (dueño: «sí, agregalo y publicá») — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 En el panel de «Sin vehículo», «🚚 ASIGNAR CAMIÓN»: cada pedido del día sin camión (cliente, OC, zona, turno, bultos) con un selector
