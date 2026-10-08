@@ -17227,7 +17227,29 @@ function stockMigrar(d){
     var cod=(s&&s.cod)||{};
     Object.keys(cod).forEach(function(c){ if(cod[c] && !CODIGOS[String(c).toUpperCase()]) crudas[cod[c]]=1; });
   });
+  /* 🏷️ (08/10, §4ia — el SUEÑA LITE 105 partido en dos) UN CÓDIGO QUE LA LISTA APRENDIÓ DESPUÉS. El Excel de antes guardó
+     «CH2531 COLCHON SUEÑA LITE 105X190» con su nombre crudo (`SUENA LITE|105X190`) y el mapa de códigos de esa foto quedó
+     apuntando ahí. El 05/10 el CH2531 entró a `CODIGOS`: las unidades pasaban al nombre de la lista al leer, pero el MAPA
+     no, y como el código gana sobre cualquier nombre (`stockClaveInv`), el Excel nuevo y los pedidos seguían yendo a la
+     clave cruda — 20 en una fila, los pedidos en otra con 0 («NO HAY») y el control del corte con «−20 / +20 sin
+     explicar». Ahora todo código de la lista apunta a SU clave (la misma que da `stockInfo` por código, con las uniones
+     🔗), y lo que guardaba la clave vieja la sigue (`renom`). Dos códigos de la lista que dicen dos productos distintos
+     sobre la MISMA clave vieja: no se adivina, esa clave queda como está. */
+  var renom={}, dudosa={};
+  [d.c].concat(Object.keys(d.g||{}).map(function(nm){ return d.g[nm]; })).forEach(function(s){
+    var cod=(s&&s.cod)||{};
+    Object.keys(cod).forEach(function(c){
+      var C=CODIGOS[String(c).toUpperCase()], viejo=cod[c]; if(!C || !viejo) return;
+      var canon=stockAliasDe(stockNorm(C.d)+'|'+stockNorm(C.m||''), d.a);
+      if(viejo!==canon && !crudas[viejo]){
+        if(renom[viejo]!=null && renom[viejo]!==canon) dudosa[viejo]=1; else renom[viejo]=canon;
+      }
+      cod[c]=canon;
+    });
+  });
+  Object.keys(dudosa).forEach(function(k){ delete renom[k]; });
   var cl=function(k){
+    if(renom[k]!=null) return renom[k];
     if(crudas[k]) return stockAliasDe(k, d.a);
     var pa=String(k||'').split('|'); return stockAliasDe(stockClaveAuto({desc:pa[0]||'', medida:pa[1]||''}), d.a);
   };
@@ -17248,7 +17270,49 @@ function stockMigrar(d){
   (d.det||[]).forEach(function(x){ if(x && x.k) x.k=cl(x.k); });
   (d.sm||[]).forEach(function(x){ if(x && x.k) x.k=cl(x.k); });
   (d.h||[]).forEach(function(x){ ((x&&x.d)||[]).forEach(function(e){ if(e && e[0]!=null) e[0]=cl(e[0]); }); });
+  stockFundirDifs(d);
   return d;
+}
+/* 🧮 (08/10, §4ia) Cuando dos claves de un corte pasan a ser UNA (el código que la lista aprendió, una unión 🔗), sus
+   diferencias se suman: «−20 sin explicar» de la clave vieja y «+20 sin explicar» de la nueva eran los MISMOS 20 colchones
+   y dan 0 (se van). Lo que ese corte anotó por esa diferencia que ya no existe se anula con lápida (nunca se borra: la junta
+   por id lo reviviría): la detección de una entrada que en neto no hubo (o lo que sobra de ella) y la salida sin pedido de
+   una baja que en neto no hubo. Solo toca las claves que se fundieron: lo demás queda como lo dejó el control. */
+function stockFundirDifs(d){
+  var fundidas=[];
+  (d.h||[]).forEach(function(x){
+    if(!x || !Array.isArray(x.d) || x.d.length<2) return;
+    var por={}, out=[], net={}, hay=false;
+    x.d.forEach(function(e){
+      if(!Array.isArray(e) || e[0]==null){ out.push(e); return; }
+      var k=e[0], acc=Array.isArray(e[2]) ? e[2] : [];
+      if(por[k]){ por[k][1]=(Number(por[k][1])||0)+(Number(e[1])||0); if(acc.length) por[k][2]=(por[k][2]||[]).concat(acc); net[k]=1; hay=true; return; }
+      por[k]=e.length>2 ? [k, Number(e[1])||0, acc.slice()] : [k, Number(e[1])||0];
+      out.push(por[k]);
+    });
+    if(!hay) return;
+    x.d=out.filter(function(e){ return !(Array.isArray(e) && net[e[0]] && !(Number(e[1])||0) && !((e[2]||[]).length)); });
+    var n={}; Object.keys(net).forEach(function(k){ n[k]=Number(por[k][1])||0; });
+    fundidas.push({ f:String(x.f||''), hora:String(x.hora||''), hu:x.hu, n:n });
+  });
+  if(!fundidas.length) return;
+  var de=function(f, hora, hu, k){
+    for(var i=0;i<fundidas.length;i++){ var z=fundidas[i]; if(z.f===f && z.hora===hora && z.hu===hu && z.n[k]!=null) return z.n[k]; }
+    return null;
+  };
+  var ts=Date.now(), m='mismo producto con otro nombre';
+  (d.det||[]).forEach(function(x){
+    if(!x || x.an) return;
+    var n=de(String(x.f||''), String(x.hora||''), x.hu, x.k); if(n==null) return;
+    if(n<=0) x.an={ t:ts, m:m };
+    else if((Number(x.t)||0)>n){ x.t=n; x.u=Math.min(Number(x.u)||0, n); }
+  });
+  (d.sm||[]).forEach(function(x){
+    if(!x || x.an || !x.pre || !Array.isArray(x.c)) return;
+    var n=de(String(x.c[0]||''), String(x.c[1]||''), x.c[2], x.k); if(n==null) return;
+    if(n>=0) x.an={ t:ts, m:m };
+    else if((Number(x.u)||0)>-n) x.u=-n;
+  });
 }
 /* ¿Esta entrada suma encima del conteo de acá? Lo anterior al conteo ya está DENTRO de él: por
    fecha, como siempre (`stockDesdeSalidas`), y desde §4fz-b también por hora (`ts` ≤ `c.t`): una

@@ -558,8 +558,16 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).
   **Siguen SIN arreglar** (el dueño no pidió): un pedido confirmado en el cierre que después se reprograma queda ✅ en la fecha nueva (los 🌆 PM
   van tildados A PROPÓSITO: dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*);
-  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`; `stockMigrar` no migra `cod` (un código nuevo en `CODIGOS` parte el
-  producto: el SUEÑA LITE 105 si un Excel viejo lo traía). Antes de tocar el cierre o el control del corte, leer §4hq.
+  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`. Antes de tocar el cierre o el control del corte, leer §4hq.
+- **🏷️ Un código que la lista aprendió después ya no parte el producto** (§4ia, 08/10, dueño: *«Si, salen dos, está partido.
+  Arréglalo»*; en la rama, SIN publicar): pasó de verdad con el SUEÑA LITE 105 (CH2531, en `CODIGOS` desde el 05/10): 20 en
+  una fila, los pedidos en otra con 0, y el control del Excel con «−20 / +20 sin explicar». `stockMigrar` ahora reescribe el
+  mapa `cod` de cada foto: todo código de `CODIGOS` apunta a SU clave (`stockNorm(d)|stockNorm(m)` con las uniones 🔗) y lo
+  guardado con la clave vieja la sigue (`renom`; dos códigos de la lista con productos distintos sobre la misma clave vieja:
+  no se toca). **`stockFundirDifs`**: las diferencias de un corte que caen en la misma clave se suman (0 = se van), y lo que el
+  control anotó por una diferencia que en neto no hubo queda con lápida (`det`: entrada; `sm` con `pre`: salida) o se achica
+  a lo neto. Los códigos que la lista NO conoce siguen crudos (§4cy). `tests/test_codigo_nuevo.js` (15; 12 rojas contra `2a7c7bd`).
+  ⚠️ Va a pasar con cada código nuevo (el SMART 160x190 cuando llegue): ya no hace falta nada a mano.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
   · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). **Lo destildado en el cierre no lleva
     ninguna marca** (dueño, 05/10: *«un pedido que queda como pasado y no fue tildado, logística lo entregó; lo que no entregan
