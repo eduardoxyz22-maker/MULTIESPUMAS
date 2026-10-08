@@ -205,7 +205,8 @@ function INIT_DOS(vend){
     page.setDefaultTimeout(8000);
     page.__dialogos=[]; page.__respuestas=[];
     page.on('pageerror', e => errores.push(e.message));
-    page.on('dialog', d => { page.__dialogos.push(d.message()); const si = page.__respuestas.length ? page.__respuestas.shift() : true; if(si) d.accept(); else d.dismiss(); });
+    page.on('dialog', d => { if(/^⚠️ ¿PEDIDO REPETIDO\?/.test(d.message())){ d.accept(); return; }   // (§4ih) los pedidos de esta prueba repiten el celular a propósito: esa pregunta no es la del saldo
+      page.__dialogos.push(d.message()); const si = page.__respuestas.length ? page.__respuestas.shift() : true; if(si) d.accept(); else d.dismiss(); });
     await page.route(/^https?:/, r => r.abort());
     await page.clock.setFixedTime(new Date(RELOJ));
     await page.goto('file://' + PEDIDOS, { waitUntil:'load' });
@@ -626,7 +627,8 @@ function INIT_DOS(vend){
       p.setDefaultTimeout(8000);
       p.__dialogos=[]; p.__respuestas=[];
       p.on('pageerror', e => errores.push(e.message));
-      p.on('dialog', d => { p.__dialogos.push(d.message()); const si = p.__respuestas.length ? p.__respuestas.shift() : true; if(si) d.accept(); else d.dismiss(); });
+      p.on('dialog', d => { if(/^⚠️ ¿PEDIDO REPETIDO\?/.test(d.message())){ d.accept(); return; }   // (§4ih) ver arriba
+        p.__dialogos.push(d.message()); const si = p.__respuestas.length ? p.__respuestas.shift() : true; if(si) d.accept(); else d.dismiss(); });
       await p.clock.setFixedTime(new Date(RELOJ));
       await p.goto('file://' + PEDIDOS, { waitUntil:'load' });
       await p.waitForTimeout(400);

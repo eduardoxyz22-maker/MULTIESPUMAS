@@ -189,7 +189,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
      traer ya mismo» es el del rojo (PEDIR YA). Lo que importa en los dos casos: que no
      esconda que en la fábrica hay unidades. */
   chk('…pero avisa igual que hay 1 en la fábrica, y que no alcanza',
-      /hay 1 en Moreno/.test(r.texto) && /no alcanza/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);
+      /hay 1 en Moreno/.test(r.texto) && /no alcanza|para traer ya mismo/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);   // (§4ii) con lo vendido + el ritmo sumados se corta antes: «PEDIR YA» dice «para traer ya mismo»
 
   // ══ 4b. Lo que NO está en el reporte está en CERO, no «sin contar» ════════
   console.log('\n── 4b. Lo que no figura en el corte ──');

@@ -7445,6 +7445,44 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ii. 08/10: ➕ «Qué producir» pedía de menos: lo vendido sin entregar y el ritmo se tomaban «el mayor», no se SUMABAN — EN LA RAMA, sin publicar (espera «publica»)
+El dueño, con la captura de «🏭 Qué producir»: *«especial semi ortopédico dice 9 sin entregar, hay 6 y solo pide 3 para los
+próximos 7 días… siendo que tiene 9 pendientes, a un ritmo de 1 por día… revisá la lógica para todos los productos, NO PUEDE
+PASAR ESTO… por eso venimos sin stock: manda pedir 3 y 7 para 15 días y tenemos 9 pendientes de entrega por falta de stock»*.
+- **La causa, para todos los productos**: `stockNecesario(o)` era `max(comp, porDia × (fábrica + margen + reserva))`. Con más
+  vendido sin entregar que ritmo × días (9 contra 0,93 × 8 = 7,5) la reserva para lo que se va a vender desaparecía: necesidad 9
+  − 4 para cargar (Banzer) = pedir 5, de los que 2 se traen de Moreno → «7 días: 3». Lo mismo en la de 15 días (`nec15`) y en
+  «cubre hasta» (`stockProyectar`, `consumo=max(comp, porDia×(n+1))`).
+- **Ahora se SUMAN** (la misma regla que el dueño dio para Banzer o PTF en §4hw): `stockNecesario = comp + porDia × (…)`,
+  `nec15 = compHasta(hoy+15+fábrica) + porDia × (fábrica + margen + 15)`, `consumo = comp hasta ese día + porDia × (n+1)`. Con el
+  caso de la captura: 7 días = **producir 11 + traer 2** (antes 3), 15 días = **22** (antes 13), y se corta el 10/10 (antes 12/10).
+  Lo que no rota (`porDia`=0) sigue pidiendo solo lo vendido. El «Cómo se calcula» dice «Se suman» y «Banzer o PTF» lo explica igual.
+- **Lo que NO cambió**: el mes que viene (`mesNec`) sigue con el mayor entre lo vendido para ese mes y lo probable, porque lo
+  probable ya es el TOTAL de las entregas del mes (las vendidas son parte); los umbrales de rotación, el margen y la reserva, igual.
+- Es conservador a propósito: una venta nueva no sale el mismo día, así que la suma cuenta de más ~ritmo × (días entre la venta y
+  la entrega). El dueño prefiere eso a quedarse sin stock.
+- Pruebas: `tests/test_proyeccion_suma.js` (9; 5 rojas contra `cdc1fab`, que da exactamente lo de la captura: 3 y 13). Cambiadas a
+  conciencia: `test_banzer_ptf` (TITANIO ICE «tener» 8 → 10, pasar 6 → 8 a Banzer), `test_existencias` §4 (el NUEVO ECO FLEX pasa
+  de «pedir» a «PEDIR YA»: se corta antes), `test_stock` §3/§8/§9/§14 (ECO FLEX: corte en 2 días y no 4, pedir 30 y no 18; el
+  pedido a Moreno de §8 pasa de 20 a 30 para que siga siendo «ya pedido») y `test_stock_quince.cjs` de la otra herramienta, que
+  probaba justo la cuenta vieja («pendientes se comparan con previsión sin duplicar»).
+
+## 4ih. 08/10: 🧰 más ayudas del formulario: ¿pedido repetido?, buscar por nombre con saldo, el mapita y los pasos en el celular — EN LA RAMA, sin publicar
+El dueño eligió de una lista: *«4. me gusta, hazlo · 2, 5 y 6 dame ejemplo / muéstrame»* (la 1 no; la 3, combos, no: *«mejor nomás manual»*).
+- **¿Pedido repetido?** (`#fx-dup`, `fxDupBuscar/fxDupPintar/fxDupConfirmar`): mismo celular (últimos 8 dígitos) o mismo nombre
+  (≥6 letras, `normNombre`) en un pedido de estos días (fecha o carga desde hoy−7) → aviso mientras se escribe con «👀 Ver», y
+  pregunta al guardar (Cancelar = no guarda). No en Eduardo/ROHO, ATC, RPT, venta de tienda ni al corregir.
+- **Buscar por nombre con saldo** (`#fx-busca`, `fxBusca…`): la lista propia reemplaza al `datalist` de `.prod-desc`; cada opción
+  dice su saldo con la MISMA cuenta del cuadrito (`saldoVeredicto`). ↑/↓/Enter y tocar.
+- **El mapita** (`#fx-mapa`, `fxMapaPintar`): con el link o las coordenadas, km a PTF y de qué lado de la línea de logística
+  (`almLadoDeLinea`); un link que no se entiende, en rojo. Los enlaces cortos van por `apiGeocode`.
+- **Los pasos en el celular** (`#fx-pasos`, ≤760 px): Cliente · Productos · Entrega · Cobro con ✓; tocar lleva a esa parte.
+- ⚠️ La barra de pasos es fija abajo: `html.con-pasos{scroll-padding-bottom}` para que lo que se lleva a la vista (Guardar, un campo
+  con error) quede ARRIBA de ella (`test_rev7_celular` lo vio: tapaba Guardar). Las pruebas que guardan varios pedidos con el mismo
+  celular a propósito (`test_saldo_almacen`, `test_saldo_servidor`) aceptan la pregunta «¿PEDIDO REPETIDO?» sin contarla.
+- `tests/test_ayudas_form.js` (21).
+- Batería con §4ih + §4ii: 143 suites; las 18 rojas de la primera vuelta eran estas cuentas viejas y la pregunta nueva, corregidas.
+
 ## 4ig. 08/10: 🖥️ los costados del formulario en pantalla ancha — PUBLICADA 08/10 17:03 (`cdc1fab`, Pages OK, run 37844004385; el dueño: «me gusta, implementá»; batería 141 suites, 5.334 bien · 0 mal)
 **El dueño** (captura de la página publicada en su compu de 1920 px): *«publicar, y mientras hacé algo más pulido y
 desarrollado, porque además tenemos espacios vacíos a los laterales»*.
