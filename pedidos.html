@@ -1575,17 +1575,20 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .fx-chispa{ position:fixed; width:9px; height:9px; border-radius:2px; z-index:9001; pointer-events:none; }
 @media (prefers-reduced-motion:reduce){ #fx-escena *, .fx-camion *, .prod-saldo .fx-esc *, .fx-lado *{ animation:none !important; transition:none !important; } }
 /* 🖥️ LOS COSTADOS DEL FORMULARIO (§4ig, 08/10, dueño: «más pulido y desarrollado… tenemos espacios vacíos a los laterales»).
-   Desde 1300 px el formulario va al medio, la agenda de los camiones a la izquierda y el pedido en vivo a la derecha, los
-   dos fijos al bajar. Más angosto, todo como antes (y la tira de días, el camión y el mes siguen adentro del formulario). */
+   Desde 1120 px (§4ij: el iPad acostado es 1180, y con 1300 el dueño no los veía) el formulario va al medio, la agenda de los
+   camiones a la izquierda y el pedido en vivo a la derecha, los dos fijos al bajar. Más angosto, todo como antes (y la tira de
+   días, el camión y el mes siguen adentro del formulario); en el iPad parado, la barra de pasos (`fxPasosPintar`). */
 .fx-lado{ display:none; }
-@media (min-width:1300px){
+@media (min-width:1120px){
   body:not(.ancha){ --wrap:1640px; }
-  #view-form.active{ display:grid; grid-template-columns:minmax(270px,340px) minmax(0,720px) minmax(290px,370px); justify-content:center; gap:22px; align-items:start; }
+  #view-form.active{ display:grid; grid-template-columns:236px minmax(0,1fr) 262px; justify-content:center; gap:14px; align-items:start; }   /* (§4ij) costados fijos: con «minmax» crecían ellos y el formulario quedaba en 340 */
   #view-form .form-card{ max-width:none; margin:0; border-radius:var(--r-lg); }
   .fx-lado{ display:block; position:sticky; top:84px; max-height:calc(100vh - 98px); overflow:auto; background:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.7);
     border-radius:var(--r-lg); box-shadow:var(--sh-soft); padding:16px 16px 14px; scrollbar-width:thin; }
   #view-form #fx-dias, #view-form #fx-camion, #view-form #fx-mes{ display:none !important; }
 }
+@media (min-width:1120px) and (max-width:1299px){ .fx-lado{ padding:12px 11px 10px; } }
+@media (min-width:1300px){ #view-form.active{ grid-template-columns:minmax(270px,340px) minmax(0,720px) minmax(290px,370px); gap:22px; } }
 .fx-lt{ font-size:.66rem; font-weight:800; color:var(--teal); letter-spacing:.12em; text-transform:uppercase; display:flex; align-items:center; gap:8px; margin:0 0 4px; }
 .fx-lt::after{ content:''; flex:1; height:1px; background:var(--gray-md); }
 .fx-sub{ font-size:.74rem; color:var(--muted); margin:0 0 10px; }
@@ -11089,7 +11092,7 @@ function fxMesPintar(){
 }
 function fxFormPintar(){ try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); fxDupPintar(); fxPasosPintar(); fxMapaProgramar(); }catch(e){ /* las escenas nunca rompen el formulario */ } }
 /* 🖥️ (§4ig) LOS COSTADOS: solo se arman con la pantalla ancha (en el celular no se ven y no se gasta nada). */
-function fxAncho(){ return !!(window.matchMedia && matchMedia('(min-width:1300px)').matches); }
+function fxAncho(){ return !!(window.matchMedia && matchMedia('(min-width:1120px)').matches); }   // (§4ij) el iPad acostado (1180) entra
 var FX_DIAS_NOM=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
 function fxIzqPintar(){
   var el=document.getElementById('fx-izq'); if(!el || !fxAncho()) return;
@@ -11450,7 +11453,7 @@ function fxPasosEstado(){
 function fxPasosPintar(){
   var el=document.getElementById('fx-pasos'); if(!el) return;
   var enForm=document.getElementById('view-form').classList.contains('active');
-  if(!enForm || !(window.matchMedia && matchMedia('(max-width:760px)').matches)){ if(!el.hidden){ el.hidden=true; document.body.classList.remove('con-pasos'); document.documentElement.classList.remove('con-pasos'); } return; }
+  if(!enForm || !(window.matchMedia && matchMedia('(max-width:1119px)').matches)){ if(!el.hidden){ el.hidden=true; document.body.classList.remove('con-pasos'); document.documentElement.classList.remove('con-pasos'); } return; }
   var ok=fxPasosEstado(), act=0, tope=110;
   FX_PASOS.forEach(function(p,i){ var a=p.ancla(); if(a && a.offsetParent!==null && a.getBoundingClientRect().top<=window.innerHeight*0.45) act=i; });
   var listos=ok.filter(Boolean).length;

@@ -32,7 +32,7 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
     await page.evaluate(async()=>{ window._SRV.stock=window._stock(); STOCK_CARGADO=false; await refrescarEstado(); ULTIMO_ERROR=''; CARGA_ESTADO='ok'; showView('form'); resetForm(); });
     return { ctx, page, ev: async (fn,arg)=>{ try{ return await page.evaluate(fn,arg); }catch(e){ return { __error:String((e&&e.message)||e).slice(0,300) }; } } };
   };
-  let { ctx, page, ev } = await abrir(1100, 900);
+  let { ctx, page, ev } = await abrir(1180, 820);   // (§4ij) el iPad del dueño, acostado
   const set = (id,v) => ev(([id,v])=>{ var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); }, [id,v]);
 
   /* ── 4. ¿Pedido repetido? ── */
@@ -109,7 +109,11 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
   r = await ev(()=>document.getElementById('fx-mapa').hidden);
   chk('sin ubicación, no aparece nada', r===true, r);
   r = await ev(()=>!document.getElementById('fx-pasos') || document.getElementById('fx-pasos').hidden);
-  chk('6. en la compu la barra de pasos no aparece', r===true, r);
+  chk('6. en el iPad acostado (y en la compu) la barra de pasos no aparece: están los costados', r===true, r);
+  await ctx.close();
+  ({ ctx, page, ev } = await abrir(820, 1180));
+  r = await ev(()=>{ var e=document.getElementById('fx-pasos'); return { visible:!!e && !e.hidden, izq:getComputedStyle(document.getElementById('fx-izq')).display }; });
+  chk('6. en el iPad parado (820 px) sí aparece la barra de pasos, y los costados no (no entran)', r.visible && r.izq==='none', r);
   await ctx.close();
 
   /* ── 6. Los pasos en el celular ── */

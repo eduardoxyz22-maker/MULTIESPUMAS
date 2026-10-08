@@ -204,9 +204,15 @@ function PREPARAR(){
   r = await ev2(()=>document.getElementById('fx-der').innerText.replace(/\s+/g,' '));
   chk('el pedido en vivo: cliente, día y turno, el producto con su estado, la suma, lo que falta y lo vendido en el mes',
     /CLIENTE ROJAS/.test(r) && /Viernes 09\/10 · turno PM/.test(r) && /ORO BI RELAX/.test(r) && /Disponible/.test(r) && /Bs 3\.500,00/.test(r) && /✓ Productos/.test(r) && /VENDIDO EN OCTUBRE/.test(r), r);
+  /* (§4ij) El iPad Air acostado (1180): los costados entran, más angostos, y el formulario no queda apretado. */
+  await p2.setViewportSize({ width:1180, height:820 }); await p2.waitForTimeout(400);
+  r = await ev2(()=>{ var iz=document.getElementById('fx-izq').getBoundingClientRect(), de=document.getElementById('fx-der').getBoundingClientRect(), card=document.querySelector('#view-form .form-card').getBoundingClientRect();
+    return { izq:Math.round(iz.width), der:Math.round(de.width), form:Math.round(card.width), sobra:document.documentElement.scrollWidth>innerWidth }; });
+  chk('iPad acostado (1180 px): agenda y pedido en vivo a los costados, el formulario con más de 520 px y sin correrse de la pantalla',
+    r.izq>200 && r.der>200 && r.form>520 && !r.sobra, r);
   await p2.setViewportSize({ width:1100, height:900 }); await p2.waitForTimeout(400);
   r = await ev2(()=>({ izq:getComputedStyle(document.getElementById('fx-izq')).display, dias:getComputedStyle(document.getElementById('fx-dias')).display }));
-  chk('más angosto que 1300 px: sin costados, y la tira de días vuelve adentro del formulario', r.izq==='none' && r.dias!=='none', r);
+  chk('más angosto que 1120 px: sin costados, y la tira de días vuelve adentro del formulario', r.izq==='none' && r.dias!=='none', r);
   await ctx2.close();
 
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
