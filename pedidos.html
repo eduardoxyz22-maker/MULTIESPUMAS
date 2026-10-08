@@ -1445,7 +1445,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
@@ -19739,9 +19739,11 @@ function renderStock(){
      la revisión de pedidos, que es donde sale la lista de lo que hay que ir a buscar a IM.
      (Ninguno de los dos LLAMA a la fábrica: eso lo hace una persona por teléfono. El panel
      anota, avisa y deja de molestar — está escrito en el propio botón.) */
+  /* 🚫 (08/10, dueño: *«ellos crean su Excel y correo, quítalos»*) logística pide a fábrica con su propio Excel y correo, y lo que
+     llega se ve en el Excel del día: el botón «🏭 Pedí a fábrica» de la barra se fue y «🚨 PEDIR YA» / «🏭 Pedir esta semana» son solo
+     aviso (antes abrían ese formulario). `abrirStockPedido` queda en el código sin ningún botón, por los pedidos ya anotados. */
   var bpedir=function(o,txt,estilo,tit){
-    return '<button class="badge" style="'+estilo+';cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" '+
-      'data-k="'+esc(o.k)+'" onclick="abrirStockPedido(this.getAttribute(\'data-k\'))" title="'+esc(tit)+'">'+txt+'</button>';
+    return '<span class="badge" style="'+estilo+';font-size:.68rem;font-weight:700" title="'+esc(tit)+'">'+txt+'</span>';
   };
   /* (05/10) Con algo escrito en el buscador de la barra de arriba, los cuadros grandes (hoy, revisión, qué producir, tiendas)
      se esconden: lo buscado tiene que verse al instante, no tres pantallas más abajo. Se borra la búsqueda y vuelven. */
@@ -19757,9 +19759,9 @@ function renderStock(){
   var badge=function(o){
     if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
-      'Llamá a la fábrica y anotá acá lo que pediste: el producto deja de avisar y el panel aprende cuánto tarda.');
+      'Hay que pedirlo a la fábrica ya (con el Excel y el correo de siempre). Lo que llegue se ve en el Excel del día.');
     if(o.aviso==='pedir')   return bpedir(o,'🏭 Pedir esta semana','background:var(--amber-lt,#fff4d6);color:#7c4b00;border:1px solid #f0d264',
-      'Llamá a la fábrica y anotá acá lo que pediste.');
+      'Hay que pedirlo a la fábrica esta semana (con el Excel y el correo de siempre).');
     if(o.aviso==='traer')   return '<button class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd;cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" data-k="'+esc(o.k)+'" onclick="abrirStockRecogida(this.getAttribute(\'data-k\'))" title="Anotar que se va a buscar a Moreno: deja de avisar y queda pendiente hasta que llegue.">🚚 Programar recogida</button>';
     if(o.aviso==='pedido')  return '<span class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd">🚚 Ya pedido'+((o.reclamar||[]).length?' · ⚠️ reclamar':'')+'</span>';
     if(o.aviso==='agotado') return '<span class="badge" style="background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca" title="Discontinuado: la fábrica ya no lo hace. Se vende lo que queda y nada más.">🛑 Se acaba y no se fabrica más</span>';
@@ -19890,7 +19892,7 @@ function renderStock(){
   html+='<div style="margin-top:12px;font-size:.8rem;color:var(--muted);line-height:1.6">'+
     '🚨 <b>PEDIR YA</b> = se corta antes de que la fábrica pueda llegar. &nbsp; 🏭 <b>Pedir esta semana</b> = se corta dentro de lo que tarda la fábrica más el margen (2 días si la venta es pareja, hasta 5 si es a los saltos).<br>'+
     '🚚 <b>Traer de fábrica</b> = falta acá pero ya está fabricado en el otro almacén: mandá la camioneta en vez de pedir. &nbsp; '+
-    '🚚 <b>Ya pedido</b> = anotaste el pedido con «🏭 Pedí a fábrica» y con eso alcanza; cuando llegue, tocá «📥 Llegó de fábrica» — así el panel aprende cuánto tarda cada fábrica. &nbsp; 💤 <b>Sobra</b> = hay para más de '+STOCK_DIAS_SOBRA+' días.<br>'+
+    '🚚 <b>Ya pedido</b> = quedó anotado de antes un pedido a fábrica que alcanza (el botón para anotarlos se sacó el 08/10: lo que llega se ve en el Excel del día). &nbsp; 💤 <b>Sobra</b> = hay para más de '+STOCK_DIAS_SOBRA+' días.<br>'+
     '«Vende por día» = todo lo vendido en los últimos '+STOCK_VENTANA+' días (entregado o no) ÷ '+STOCK_VENTANA+'. «Se corta» mira día por día lo que hay, lo que llega y lo que se va.<br>'+
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
@@ -24685,7 +24687,7 @@ function almPlanDe(f, H, hoy, porId, Z, cache){
     xB=Math.round(esperado*s); xP=Math.round(esperado*(1-s));
   }
   var tB=fB+xB, tP=fP+xP;
-  var hB=f.hoyB||0, hP=f.hoyP, cam=stockEnCaminoSeguro(o);
+  var hB=f.hoyB||0, hP=f.hoyP, cam=almPlanRecogidas(o);
   var r={ H:H, hasta:hasta, tB:tB, tP:tP, firmeB:fB, firmeP:fP, xB:xB, xP:xP, hB:hB, hP:hP, cam:cam,
           pasar:0, deM:[], cubreB:0, excel:[], sinConteo:(hP==null) };
   if(hP==null) return r;                       // sin el Excel de PTF no se sabe qué le sobra ni qué le falta
@@ -24704,6 +24706,15 @@ function almPlanDe(f, H, hoy, porId, Z, cache){
     .map(function(nm){ return { nm:nm, u:Math.floor(o.otrosAlm[nm]+1e-9) }; }).sort(function(a,b){ return b.u-a.u; });
   r.alerta=almPlanAlertaDe(r, de, hoy);
   return r;
+}
+/* 🚚 Lo único que cuenta además del Excel del día: una RECOGIDA de Moreno ya programada (es el mismo «traer» en marcha, y ya
+   está descontada del Excel de Moreno). Lo anotado como «pedí a fábrica» NO cuenta (dueño, 08/10: *«no usan ese botón… simplemente
+   cargan los saldos de almacén cada día; si en Moreno aumenta el saldo, ese producto se fabricó»*): el panel no sabe cuándo llega
+   ni si llegó, y daba por cubierta una entrega de mañana (revisión de Codex del 07/10, F1). Lo que el Excel ya mostró como entrada
+   sin explicar (`o.detectado`) se descuenta para no contar dos veces una recogida que llegó y nadie cerró. */
+function almPlanRecogidas(o){
+  var n=0; (o.pedidos||[]).forEach(function(q){ if(q && q.tipo==='recogida') n+=Number(q.u)||0; });
+  return Math.max(0, n-(o.detectado||0));
 }
 /* De dónde se trae lo que falta: la fábrica del producto (la misma de «Qué producir»). Sueña, de Multiespumas; lo demás, de
    Moreno (Heaven, ROHO y lo que no dice su marca: el dueño, «TRAER DE MORENO»). */
@@ -24748,7 +24759,8 @@ function almPlanAlertaTxt(r, html){
 }
 function almPlanMovido(r){ return r.pasar+almPlanTraer(r); }
 function almPlanVendidoTraer(r){ var n=0; (r.deM||[]).forEach(function(m){ n+=m.uF||0; }); return n; }
-function almPlanHace(r){ return !r.sinConteo && (r.pasar>0 || (r.deM||[]).length>0); }
+/* «Qué hacer»: llevar, traer, que entregas de PTF salgan de Banzer (`cubreB`, F2) o subir el Excel de PTF que falta (F3). */
+function almPlanHace(r){ return r.sinConteo ? (r.tP+r.tB>0) : (r.pasar>0 || r.cubreB>0 || (r.deM||[]).length>0); }
 function almPlanSetH(H){ ALM_PLAN_H=H; almPintarPlan(); }
 function almPlanSetVer(v){ ALM_PLAN_VER=v; almPintarPlan(); }
 function almPlanFilas(A, H){
@@ -24771,7 +24783,7 @@ function almPlanParteTxt(u, uF, solo){
 function almPlanMovTxt(r, html){
   var b=function(t){ return html?('<b>'+t+'</b>'):t; }, L=[];
   if(r.pasar>0) L.push('🚚 Llevar '+b(stockUnid(r.pasar))+' de PTF a Banzer · PTF queda con '+b(stockUnid(r.hP-r.pasar)));
-  if(r.cubreB>0) L.push('↪️ '+stockUnid(r.cubreB)+' de las entregas de PTF pueden salir de Banzer (le sobran)');
+  if(r.cubreB>0) L.push('↪️ Cargar en Banzer '+b(stockUnid(r.cubreB))+' de las entregas de la zona de PTF (a Banzer le sobran)');
   (r.deM||[]).forEach(function(m){ L.push('📥 Traer '+b(stockUnid(m.u))+' de '+m.de+' a '+m.a+' ('+almPlanParteTxt(m.u, m.uF, true)+')'); });
   return L;
 }
@@ -24780,9 +24792,10 @@ function almPintarPlan(){
   var H=ALM_PLAN_H, todas=almPlanFilas(A, H), hacen=todas.filter(function(f){ return almPlanHace(f.plan[H]); });
   var alertan=todas.filter(function(f){ return !!f.plan[H].alerta; });
   var filas=(ALM_PLAN_VER==='hacer')?hacen:(ALM_PLAN_VER==='prod')?alertan:todas;
-  var t={ tB:0, hB:0, tP:0, hP:0, pasar:0, de:{}, deMF:0, faltan:0 };
+  var t={ tB:0, hB:0, tP:0, hP:0, pasar:0, cubreB:0, sin:0, de:{}, deMF:0, faltan:0 };
   todas.forEach(function(f){
-    var r=f.plan[H]; t.tB+=r.tB; t.hB+=r.hB; t.tP+=r.tP; t.hP+=(r.hP||0); t.pasar+=r.pasar; t.deMF+=almPlanVendidoTraer(r);
+    var r=f.plan[H]; t.tB+=r.tB; t.hB+=r.hB; t.tP+=r.tP; t.hP+=(r.hP||0); t.pasar+=r.pasar; t.cubreB+=r.cubreB; t.deMF+=almPlanVendidoTraer(r);
+    if(r.sinConteo) t.sin++;
     (r.deM||[]).forEach(function(m){ t.de[m.de]=(t.de[m.de]||0)+m.u; });
     if(r.alerta) t.faltan+=r.alerta.faltan;
   });
@@ -24808,12 +24821,15 @@ function almPintarPlan(){
       '<button type="button" class="btn btn-sm" style="width:auto;margin-left:auto;background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="almCopiarPlan()">📋 Copiar el plan de '+H+' días</button></div>'+
     '<div style="font-size:.85rem;color:#1e3a5f;line-height:1.55;margin-bottom:8px">Para las entregas de los próximos <b>'+H+' días</b>: '+
       '<b style="color:'+ALM_COLOR.B+'">🏪 Banzer tener '+stockUnid(t.tB)+'</b> (hay '+stockUnid(t.hB)+') · '+
-      '<b style="color:'+ALM_COLOR.P+'">🏭 PTF tener '+stockUnid(t.tP)+'</b> (hay '+stockUnid(t.hP)+')'+
+      '<b style="color:'+ALM_COLOR.P+'">🏭 PTF tener '+stockUnid(t.tP)+'</b> (hay '+(t.sin?'?':stockUnid(t.hP))+')'+
       (t.pasar?(' · 🚚 llevar <b>'+stockUnid(t.pasar)+'</b> de PTF a Banzer'):'')+
+      (t.cubreB?(' · ↪️ <b>'+stockUnid(t.cubreB)+'</b> '+(t.cubreB===1?'entrega de PTF sale':'entregas de PTF salen')+' de Banzer'):'')+
       (deTxt?(' · 📥 traer '+deTxt+(t.deMF?(' ('+stockUnid(t.deMF)+' ya vendido'+(t.deMF===1?'':'s')+')'):'')):'')+'</div>'+
     alerta+
+    (t.sin?('<div id="alm-plan-sinexcel" style="background:#fdecea;border:1px solid #f3b6b0;border-left:5px solid #b42318;border-radius:9px;padding:9px 12px;margin-bottom:8px;color:#8a1c24;font-size:.88rem;line-height:1.5">'+
+      '⚠️ <b>Falta el Excel de PTF</b>: '+t.sin+' producto'+(t.sin===1?'':'s')+' no se puede'+(t.sin===1?'':'n')+' calcular. Subí el Excel de hoy de PTF; hasta entonces el plan está incompleto.</div>'):'')+
     '<div style="font-size:.78rem;color:var(--muted);line-height:1.45;margin-bottom:8px">«Tener» = lo <b>ya vendido</b> para esos días en cada zona + lo <b>para tener</b>: lo que se vende en esos días al ritmo de los últimos 15 días. '+
-      'A Banzer va primero lo que a PTF le sobra de lo suyo (PTF nunca queda debajo); lo que todavía falta en cada uno se trae de Moreno (Sueña, de Multiespumas). Si el Excel de Moreno tiene menos de lo que hay que traer, sale ⚠️ «Recordá revisar la producción».</div>'+
+      'A Banzer va primero lo que a PTF le sobra de lo suyo (PTF nunca queda debajo); lo que todavía falta en cada uno se trae de Moreno (Sueña, de Multiespumas). Solo cuenta lo que dicen los Excel de hoy y las recogidas de Moreno ya programadas. Si el Excel de Moreno tiene menos de lo que hay que traer, sale ⚠️ «Recordá revisar la producción».</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+chipV+'</div>';
   if(!filas.length){
     el.innerHTML=h+'<div style="padding:10px;color:var(--muted);font-size:.86rem">'+(ALM_Q?'Ningún producto con esa búsqueda.'
@@ -24832,13 +24848,13 @@ function almPintarPlan(){
           '<br><span style="font-size:.86em;color:var(--muted)">hay '+(hay==null?'?':stockUnid(hay))+(extra||'')+'</span>';
       };
       var L=almPlanMovTxt(r, true), al=almPlanAlertaTxt(r, true);
-      var mov=r.sinConteo ? '<span style="color:var(--muted)">Sin el Excel de PTF: no se sabe qué sobra</span>'
+      var mov=r.sinConteo ? '<span style="color:#8a1c24;font-weight:700">⚠️ Falta el Excel de PTF: no se puede calcular</span>'
         : (L.length ? (L.join('<br>')+(al?('<div class="alm-plan-al" style="margin-top:6px;background:#fff4e5;border-left:4px solid #b45309;border-radius:6px;padding:5px 8px;font-size:.9em;line-height:1.45;color:#7c4b00">'+al+'</div>'):''))
                     : '<span style="color:#0a6b47">✓ Cada depósito tiene lo suyo</span>');
       return '<tr><td><b>'+esc(f.nombre)+'</b>'+(o.cod?('<br><span style="font-size:.86em;color:var(--muted)">'+esc(o.cod)+'</span>'):'')+
           (f.por==='poca'?'<br><span style="font-size:.84em;color:var(--muted)">se vende poco: todo en PTF</span>':f.por==='descont'?'<br><span style="font-size:.84em;color:#8a1c24">ya no se fabrica: todo en PTF</span>':f.por==='datos'?'<br><span style="font-size:.84em;color:var(--muted)">pocas entregas ubicadas: todo en PTF</span>':'')+'</td>'+
         '<td>'+lado(r.tB, r.firmeB, r.hB, ALM_COLOR.B)+'</td>'+
-        '<td>'+lado(r.tP, r.firmeP, r.hP, ALM_COLOR.P, r.cam>0?(' · +'+stockUnid(r.cam)+' en camino'):'')+'</td>'+
+        '<td>'+lado(r.tP, r.firmeP, r.hP, ALM_COLOR.P, r.cam>0?(' · +'+stockUnid(r.cam)+' en una recogida de Moreno'):'')+'</td>'+
         '<td>'+mov+'</td></tr>';
     }).join('')+'</tbody></table></div>';
   el.innerHTML=h;
@@ -24853,7 +24869,11 @@ function almCopiarPlan(){
   var tenerP=con(function(r){ return r.tP>0; }).sort(function(a,b){ return (b.plan[H].tP-a.plan[H].tP) || a.nombre.localeCompare(b.nombre); });
   var t='🗓️ PLAN DE STOCK · próximos '+H+' días (hasta el '+fmtFechaCorta(stockSumarDias(A.hoy, H))+') — '+fmtFecha(A.hoy)+'\n'+
     'Tener = lo ya vendido para esos días en cada zona + lo que se vende en esos días al ritmo de los últimos 15 días.\n';
+  var sinX=con(function(r){ return r.sinConteo; });
+  if(sinX.length) t+='\n⚠️ FALTA EL EXCEL DE PTF: estos no se pueden calcular\n'+sinX.map(function(f){ return '• '+f.nombre; }).join('\n')+'\n';
   if(pasar.length) t+='\n🚚 LLEVAR DE PTF A BANZER (PTF no baja de lo suyo)\n'+pasar.map(function(f){ var r=f.plan[H]; return '• '+f.nombre+': '+stockUnid(r.pasar)+' (PTF queda con '+stockUnid(r.hP-r.pasar)+')'; }).join('\n')+'\n';
+  var cubre=con(function(r){ return r.cubreB>0; });
+  if(cubre.length) t+='\n↪️ CARGAR EN BANZER entregas de la zona de PTF (a Banzer le sobran)\n'+cubre.map(function(f){ return '• '+f.nombre+': '+stockUnid(f.plan[H].cubreB); }).join('\n')+'\n';
   ['Moreno','Multiespumas'].forEach(function(de){
     var L=[];
     filas.forEach(function(f){ var r=f.plan[H], ms=(r.deM||[]).filter(function(m){ return m.de===de; }); if(!ms.length) return;

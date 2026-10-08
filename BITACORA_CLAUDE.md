@@ -7445,7 +7445,34 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hw. 07/10 a la noche: 🗓️ el plan de 7/15/30 días, segunda vuelta — «tener» = lo ya vendido + lo para tener, «TRAER DE MORENO» y la alerta «Recordá revisar la producción» — EN LA RAMA (espera el «publica» del dueño)
+## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) — EN LA RAMA (espera el «publica» del dueño)
+Codex revisó lo publicado el 07/10 (`0d20d04`) y reprodujo tres defectos; el dueño, al discutir el primero, fijó la regla: *«no usan
+ese botón [pedí a fábrica] y creo que lo vamos a quitar. Ellos no anotan que está en camino. Simplemente cargan los saldos de almacén
+cada día. Y si en Moreno aumenta el saldo de almacén, quiere decir que ese producto se fabricó y salió… hagamos las cosas bien»*.
+- **F1 (alta)**: `almPlanDe` restaba `stockEnCaminoSeguro(o)` entero: un «pedí a fábrica» anotado y nunca cerrado (o que llega en
+  semanas) daba por cubierta una entrega de mañana («✓ Cada depósito tiene lo suyo» con 0 en PTF y 6 vendidos). Ahora resta solo
+  **`almPlanRecogidas(o)`** = las recogidas de Moreno ya programadas (`q.tipo==='recogida'`: el mismo «traer» en marcha, ya
+  descontado del Excel de Moreno por `stockLibreOrigen`) menos `o.detectado`. Lo pedido a fábrica no cuenta: lo que llega se ve en
+  el Excel del día siguiente. La celda dice «+N en una recogida de Moreno». La tabla de abajo y la pantalla de Stock no cambiaron.
+- **F2 (media)**: `cubreB` («a Banzer le sobra, entregas de la zona de PTF salen de Banzer») ahora es acción: entra en `almPlanHace`
+  («Qué hacer»), en el total de arriba («↪️ N entregas de PTF salen de Banzer») y en la copia («↪️ CARGAR EN BANZER entregas de la
+  zona de PTF»). Texto: «↪️ Cargar en Banzer N de las entregas de la zona de PTF (a Banzer le sobran)». Nunca de Banzer a PTF.
+- **F3 (media)**: sin el Excel de PTF (`sinConteo`) el producto va a «Qué hacer» con «⚠️ Falta el Excel de PTF: no se puede
+  calcular», cartel rojo arriba (`#alm-plan-sinexcel`), el total dice «hay ?» y la copia lo lista. Ya no sale «cada depósito tiene
+  lo suyo» por falta de datos.
+- **D1**: §4hw ya figuraba publicado en la rama (`a6cdf47`, `0dcb2d2`); `main` lo recibe con esta publicación. **D2**:
+  `RESPUESTA_CLAUDE.md` §33 «Para revisar» marca lo que quedó viejo (el 1 km, `stockNecesario` como única fuente del plan).
+- Rueda de prueba para el dueño (scratchpad `rueda/`): 6 vendidos para mañana, 0 en PTF y Banzer, 2 en Moreno; con un «pedí a
+  fábrica» viejo o de hoy, antes «✓ Cada depósito tiene lo suyo», ahora «📥 Traer 8 de Moreno a PTF» + la alerta; con una recogida
+  de 6 programada, «Traer 2» (bien antes y ahora).
+- `test_banzer_ptf` → 105 (7 rojas contra `0d20d04`).
+- **🚫 Sin el botón «🏭 Pedí a fábrica»** (dueño, 08/10: *«sí, porque ellos crean su Excel y correo, quítalos»*): se fue de la
+  barra de Stock, y «🚨 PEDIR YA» / «🏭 Pedir esta semana» son solo aviso (`<span>`, antes abrían ese formulario). La leyenda de
+  «🚚 Ya pedido» lo dice. `abrirStockPedido`/`guardarStockPedido` quedan en el código SIN botón (los pedidos ya anotados se siguen
+  leyendo; `test_rev3_stock` los llama directo). «🚚 Programar recogida» y «📥 Llegó de fábrica» siguen (no se pidió sacarlos).
+  `test_banzer_ptf` §1 lo verifica (→ 106).
+
+## 4hw. 07/10 a la noche: 🗓️ el plan de 7/15/30 días, segunda vuelta — «tener» = lo ya vendido + lo para tener, «TRAER DE MORENO» y la alerta «Recordá revisar la producción» — PUBLICADA 07/10 18:46 (`0d20d04`, Pages OK 18:47, run 37698289301; el dueño: «publica»; batería 138 suites, 1 roja de carga en `test_borradores`, sola 95/95)
 El dueño, mirando la pantalla de §4hv publicada con su caso real (ESPECIAL SEMIORTOPEDICO: PTF tener 7, hay 0, 6 ya vendidos;
 «Traer 2 de Moreno a PTF»): *«no me cuadra eso de traer 2 de Moreno y hay 6 vendidos y tenemos 0. Debería aclarar traer (que ya
 está vendido y debería estar en cada almacén) más lo que debería tener para los próximos días. Si 6 ya están vendidos y deberían

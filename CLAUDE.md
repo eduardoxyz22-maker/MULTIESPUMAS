@@ -367,7 +367,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     descuidar las entregas de PTF»*): `<details id="alm-plan">` arriba del mapa; `almPlanDe` por producto y plazo, cada lado.
     Llevar: a Banzer solo lo que a PTF le SOBRA de lo suyo (PTF nunca baja de su «tener»). Nunca de Banzer a PTF (`cubreB`:
     «pueden salir de Banzer»). «📋 Copiar el plan de N días» (`almCopiarPlan`).
-    · **✏️ Segunda vuelta (§4hw, 07/10 noche, EN LA RAMA, espera «publica»)**, con el caso real del dueño (ESPECIAL SEMIORTOPEDICO, 6
+    · **✏️ Segunda vuelta (§4hw, 07/10 noche, PUBLICADA 07/10 18:46, `0d20d04`)**, con el caso real del dueño (ESPECIAL SEMIORTOPEDICO, 6
     vendidos y 0 en PTF, «Traer 2»): *«traer lo que ya está vendido… MÁS lo que debería tener para los próximos días, y lo mismo
     Banzer»*, *«¿qué pasa cuando el saldo es 0 en ambos?»*, *«no "pedir"… TRAER DE MORENO»* y *«si el Excel de Moreno muestra menos,
     una alerta de "recordá revisar la producción"»*. **Tener = ya vendido en su zona (`o.compIds`, `almLadoPedido`) + `porDia`×H
@@ -376,6 +376,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     hay que traer más de lo que dicen los Excel de donde se trae, y existe el Excel de ESA fábrica (`almPlanAlmsDe`), «⚠️ Recordá
     revisar la producción» en la fila, arriba (con «Ver cuáles»), en el filtro y en la copia. Nunca «pedir/producir/fabricar».
     `test_banzer_ptf` §12 (→ 101; 30 rojas contra `3f44b05`).
+    · **🚫 Solo los Excel del día (§4hx, 08/10, EN LA RAMA; dueño: *«no usan ese botón… simplemente cargan los saldos de almacén
+    cada día; si en Moreno aumenta el saldo, ese producto se fabricó»*)**: el plan resta SOLO las recogidas de Moreno ya
+    programadas (`almPlanRecogidas`), nunca lo anotado como «pedí a fábrica» (Codex F1: daba por cubierta una entrega de mañana).
+    `cubreB` es acción («↪️ Cargar en Banzer…», en «Qué hacer» y en la copia, F2); sin el Excel de PTF, «⚠️ Falta el Excel de PTF»
+    y nunca «cada depósito tiene lo suyo» (F3). ⚠️ No volver a restar `stockEnCaminoSeguro` en el plan. `test_banzer_ptf` → 106.
+    · **🚫 Sin «🏭 Pedí a fábrica»** (dueño, 08/10: *«ellos crean su Excel y correo, quítalos»*): fuera de la barra de Stock;
+    «🚨 PEDIR YA» y «🏭 Pedir esta semana» son solo aviso. `abrirStockPedido` queda sin botón. No volver a ponerlo sin que lo pida.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
