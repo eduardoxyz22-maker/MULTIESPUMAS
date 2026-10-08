@@ -383,6 +383,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     y nunca «cada depósito tiene lo suyo» (F3). ⚠️ No volver a restar `stockEnCaminoSeguro` en el plan. `test_banzer_ptf` → 106.
     · **🚫 Sin «🏭 Pedí a fábrica»** (dueño, 08/10: *«ellos crean su Excel y correo, quítalos»*): fuera de la barra de Stock;
     «🚨 PEDIR YA» y «🏭 Pedir esta semana» son solo aviso. `abrirStockPedido` queda sin botón. No volver a ponerlo sin que lo pida.
+    Qué se habló y por qué: `INFORME_08-10.md` (leerlo antes de proponer algo que dependa de lo que logística anota a mano).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
