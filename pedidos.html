@@ -1445,7 +1445,9 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .cv-lienzo{ position:relative; width:100%; aspect-ratio:1212/800; transform-origin:55% 45%; animation:cvRespira 22s ease-in-out infinite alternate; }
 @keyframes cvRespira{ from{ transform:scale(1); } to{ transform:scale(1.045) translate(-1%,.6%); } }
 .cv-lienzo img{ position:absolute; inset:0; width:100%; height:100%; display:block; }
-.cv-lienzo img.cv-cuerpo{ pointer-events:none; }
+.cv-lienzo img.cv-cuerpo{ cursor:pointer; }   /* el recorte del camión: se toca solo dentro de su silueta (clip-path) */
+.cv-pin.vista{ box-shadow:0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.45); }
+.cv-volver{ border:1px solid rgba(148,163,184,.35); background:rgba(255,255,255,.06); color:#e6edf7; border-radius:8px; padding:5px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; margin-bottom:8px; }
 .cv-lienzo svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .cv-ruta{ fill:none; stroke:var(--cv-cian); stroke-width:3.5; stroke-linecap:round; stroke-dasharray:2 16; animation:cvCorre 1.2s linear infinite; opacity:.95; }
 @keyframes cvCorre{ to{ stroke-dashoffset:-18; } }
@@ -13148,6 +13150,11 @@ function printCarga(){ document.body.classList.add('printing-carga'); window.pri
      fecha de ese día, igual que en la lista. «Ver sus paradas» abre la Lista de carga en ese día y baja al camión.
    ========================================================================== */
 var CV_SEL='', CV_ARMADA=false, CV_DIA='hoy';
+/* (§4ic, 08/10, dueño: «si le doy al camión de Banzer abre otra cosa, no el lateral, como el PTF») Qué muestra el panel de la
+   derecha: '' = el camión elegido; 'bz' = todo lo que se carga en Banzer ese día, por camión; 'im' = lo que hay que ir a buscar
+   a Moreno, por camión. Tocar un cartel o un camión de la imagen cambia el panel; nunca abre otra pantalla. */
+var CV_VISTA='';
+function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 var CV_POS={
   /* `huella` = el rectángulo en el PISO alrededor del camión; `cuerpo` = la silueta del camión, que se vuelve a dibujar ENCIMA
      de la huella (§4ib, dueño 08/10: «esas líneas quedaron encima del camión, no abajo… se ve raro»). Coordenadas de la imagen. */
@@ -13160,7 +13167,7 @@ var CV_POS={
   accion:[796,398]
 };
 function cvFecha(){ return CV_DIA==='manana' ? proximoDiaEntrega() : todayStr(); }
-function cvDia(d){ CV_DIA=d; CV_SEL=''; cargaVivaPintar(); }
+function cvDia(d){ CV_DIA=d; CV_SEL=''; CV_VISTA=''; cargaVivaPintar(); }
 function cvX(v){ return (v/1212*100)+'%'; }
 function cvY(v){ return (v/800*100)+'%'; }
 function cvU(n){ return n+' bulto'+(n===1?'':'s'); }
@@ -13227,7 +13234,7 @@ function cargaVivaPintar(){
         '<circle class="cv-luzc" cx="800" cy="200" r="40"/><circle class="cv-luzc" cx="940" cy="258" r="40" style="animation-delay:-1.2s"/><circle class="cv-luzc" cx="1060" cy="305" r="40" style="animation-delay:-2.1s"/><circle class="cv-luzc" cx="232" cy="173" r="30"/><circle class="cv-luzc" cx="160" cy="455" r="30" style="animation-delay:-1.7s"/>'+
       '</svg>'+
       /* Los camiones otra vez, recortados de la misma imagen: tapan la parte de la huella que pasaba por encima (§4ib). */
-      ['ptf','bz','im'].map(function(id){ return '<img class="cv-cuerpo" src="carga-viva/escena.jpg?v=1" alt="" style="clip-path:polygon('+CV_POS[id].cuerpo.map(function(q){ return cvX(q[0])+' '+cvY(q[1]); }).join(',')+')">'; }).join('')+
+      ['ptf','bz','im'].map(function(id){ return '<img class="cv-cuerpo" data-id="'+id+'" onclick="cvVer(\''+(id==='ptf'?'':id)+'\')" src="carga-viva/escena.jpg?v=1" alt="" style="clip-path:polygon('+CV_POS[id].cuerpo.map(function(q){ return cvX(q[0])+' '+cvY(q[1]); }).join(',')+')">'; }).join('')+
       '<svg viewBox="0 0 1212 800" preserveAspectRatio="none">'+faros('ptf')+faros('bz')+faros('im')+'</svg>'+
       '<div class="cv-capa" id="cv-capa"></div></div>'+
       '<div class="cv-leyenda"><span><i style="background:var(--cv-cian)"></i>Cargando</span><span><i style="background:var(--cv-verde)"></i>Listo para salir</span><span><i style="background:var(--cv-ambar)"></i>Ir a buscar a Moreno</span><span><i style="background:var(--cv-gris)"></i>Sin carga</span></div></div>'+
@@ -13245,25 +13252,64 @@ function cvPintarCapa(D){
   var c=D.sel, pin=function(id, cls, t, s, click){
     var p=CV_POS[id].pin, d=document.createElement('div'); d.className='cv-pin '+cls; d.id='cv-pin-'+id;
     d.style.left=cvX(p[0]); d.style.top=cvY(p[1]); d.innerHTML='<div class="t"><i></i>'+esc(t)+'</div><div class="s">'+esc(s)+'</div>';
-    d.onclick=click; capa.appendChild(d);
+    d.onclick=click; if((id==='ptf'?'':id)===CV_VISTA) d.className+=' vista'; capa.appendChild(d);
     document.getElementById('cv-h-'+id).setAttribute('class','cv-huella '+cls);
   };
   var est=c ? (c.fabTotal ? (c.fabDentro>=c.fabTotal?'ok':'carga') : (c.est==='ok'?'ok':'')) : '';
   pin('ptf', est, c ? (c.sin?'Sin vehículo':c.k) : 'PTF',
     c ? (c.fabTotal ? (c.fabDentro>=c.fabTotal ? '✅ todo cargado en PTF' : c.fabDentro+' de '+cvU(c.fabTotal)+' en PTF') : 'nada para cargar en PTF') : '',
-    function(){ cvIrALista(); });
+    function(){ cvVer(''); });
   pin('bz', D.bz.total ? (D.bz.dentro>=D.bz.total?'ok':'carga') : '', '🏪 Cargar en Banzer',
     D.bz.total ? (D.bz.dentro+' de '+cvU(D.bz.total)+(D.bz.cams>1?(' · '+D.bz.cams+' camiones'):'')) : 'nada para '+(CV_DIA==='hoy'?'hoy':'mañana'),
-    function(){ cvIrALista(); });
+    function(){ cvVer('bz'); });
   pin('im', D.im.u ? 'trae' : '', '📥 Ir a buscar a '+(Object.keys(D.im.alm).join(' + ')||'Moreno'),
-    D.im.u ? cvU(D.im.u)+' para traer' : 'nada que traer', function(){ cvIrALista(); });
+    D.im.u ? cvU(D.im.u)+' para traer' : 'nada que traer', function(){ cvVer('im'); });
   var a=document.createElement('div'); a.className='cv-accion'; a.id='cv-accion';
   a.style.left=cvX(CV_POS.accion[0]); a.style.top=cvY(CV_POS.accion[1]);
   a.textContent=c && c.est==='ok' ? '✅ Listo para salir' : '📦 Ver su carga';
   a.onclick=function(){ cvIrALista(); }; capa.appendChild(a);
 }
+function cvFilaHtml(l, extra){
+  var z=l.no?'<div class="z no">⛔ '+l.no+' sin stock</div>':(l.rec?'<div class="z re">📥 '+l.rec+' recoger de '+esc(l.alm)+'</div>':'');
+  return '<div class="cv-fila'+(l.on?' on':'')+'" data-k="'+esc(l.key)+'" data-l="'+esc(l.lugar)+'" data-u="'+l.u+'" onclick="cvTildar(this)"><div class="tk">'+(l.on?'✓':'')+'</div><div class="tx"><b>'+l.u+'× '+esc(l.kk)+'</b>'+(extra||'')+z+'</div></div>';
+}
+/* 🏪 / 📥 El panel de Banzer y el de Moreno (§4ic): lo de ese lugar para ese día, separado por camión. */
+function cvPanelLugar(D, el){
+  var dia=CV_DIA==='hoy'?'hoy':'mañana', bz=CV_VISTA==='bz', nom=bz?'Banzer':(Object.keys(D.im.alm).join(' + ')||'Moreno');
+  var h='<button type="button" class="cv-volver" onclick="cvVer(\'\')">← Volver al camión</button>'+
+    '<div class="cv-lbl">'+(bz?'🏪 CARGAR EN BANZER':'📥 IR A BUSCAR')+'</div><div class="cv-nom">'+esc(nom)+'</div>';
+  var grupos=D.cams.map(function(c){
+    var ls=bz ? c.lineas.filter(function(l){ return l.lugar!=='fabrica'; }) : c.fab.filter(function(l){ return l.rec>0; });
+    return { c:c, ls:ls };
+  }).filter(function(g){ return g.ls.length; });
+  if(bz){
+    var pct=D.bz.total?Math.round(100*D.bz.dentro/D.bz.total):0, listo=D.bz.total && D.bz.dentro>=D.bz.total;
+    h+=D.bz.total ? ('<div class="cv-est" style="color:'+(listo?CV_COL.ok:CV_COL.carga)+'"><i></i>'+(listo?'✅ Todo cargado en Banzer':'Cargando en Banzer')+'</div>'+
+        '<div class="cv-lbl" style="margin-top:8px">CARGA</div><div class="cv-num">'+D.bz.dentro+' <small>/ '+cvU(D.bz.total)+'</small></div>'+
+        '<div class="cv-bar'+(listo?' ok':'')+'"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="cv-falta">'+(listo?'Todo tildado en la Lista de carga':'Faltan '+cvU(D.bz.total-D.bz.dentro))+' · '+grupos.length+' camión'+(grupos.length===1?'':'es')+'</div>')
+      : '<div class="cv-vacio">No hay nada para cargar en Banzer '+dia+'.</div>';
+  } else {
+    h+=D.im.u ? ('<div class="cv-est" style="color:'+CV_COL.sin+'"><i></i>'+cvU(D.im.u)+' para traer</div>'+
+        '<div class="cv-falta" style="margin-top:4px">Lo que los pedidos de '+dia+' tienen marcado «📥 recoger». Logística lo trae a PTF y se carga ahí.</div>')
+      : '<div class="cv-vacio">No hay nada para ir a buscar '+dia+'.</div>';
+  }
+  if(grupos.length){
+    h+='<div class="cv-filas" id="cv-filas">'+grupos.map(function(g){
+      var t=esc(g.c.sin?'Sin vehículo':g.c.k)+(g.c.choferes.length?(' · '+esc(g.c.choferes.join(', '))):'');
+      return '<div class="cv-grupo">🚚 '+t+'</div>'+g.ls.map(function(l){
+        if(bz) return cvFilaHtml(l, '');
+        return '<div class="cv-fila"><div class="tk" style="border-color:var(--cv-ambar);color:var(--cv-ambar)">📥</div><div class="tx"><b>'+l.rec+'× '+esc(l.kk)+'</b><div class="z re">de '+esc(l.alm)+(l.u>l.rec?(' · el camión lleva '+l.u+' en total'):'')+'</div></div></div>';
+      }).join('');
+    }).join('')+'</div>';
+  }
+  h+='<button type="button" class="cv-ir" onclick="cvIrALista()">📋 Ver la Lista de carga de '+dia+'</button>'+
+     '<div class="cv-nota">'+(bz?'Los tildes son los de la Lista de carga: tildar acá es tildar allá, para todo el equipo.':'Para marcar o cambiar lo que se recoge, se hace en el pedido, como siempre.')+'</div>';
+  el.innerHTML=h;
+}
 function cvPintarPanel(D){
   var el=document.getElementById('cv-panel'); if(!el) return;
+  if(CV_VISTA==='bz' || CV_VISTA==='im'){ cvPanelLugar(D, el); return; }
   var c=D.sel;
   var h='<div class="cv-chips">'+D.cams.map(function(x){
     return '<button type="button" class="cv-chip'+(c&&x.k===c.k?' sel':'')+'" data-k="'+esc(x.k)+'" onclick="cvElegir(this.getAttribute(\'data-k\'))" title="'+esc(CV_EST[x.est])+'"><i style="background:'+CV_COL[x.est]+'"></i><span>'+esc(x.sin?'Sin vehículo':x.k)+'</span></button>';
@@ -13282,10 +13328,7 @@ function cvPintarPanel(D){
     c.lineas.forEach(function(l){ if(l.lugar!=='fabrica' && !grupos.some(function(g){ return g[0]===l.lugar; })) grupos.push([l.lugar,'🏪 EN '+String(l.lugar).toUpperCase()]); });
     h+='<div class="cv-filas" id="cv-filas">'+grupos.map(function(g){
       var ls=c.lineas.filter(function(l){ return l.lugar===g[0]; }); if(!ls.length) return '';
-      return '<div class="cv-grupo">'+esc(g[1])+'</div>'+ls.map(function(l){
-        var z=l.no?'<div class="z no">⛔ '+l.no+' sin stock</div>':(l.rec?'<div class="z re">📥 '+l.rec+' recoger de '+esc(l.alm)+'</div>':'');
-        return '<div class="cv-fila'+(l.on?' on':'')+'" data-k="'+esc(l.key)+'" data-l="'+esc(l.lugar)+'" data-u="'+l.u+'" onclick="cvTildar(this)"><div class="tk">'+(l.on?'✓':'')+'</div><div class="tx"><b>'+l.u+'× '+esc(l.kk)+'</b>'+z+'</div></div>';
-      }).join('');
+      return '<div class="cv-grupo">'+esc(g[1])+'</div>'+ls.map(function(l){ return cvFilaHtml(l, ''); }).join('');
     }).join('')+'</div>';
     if(c.est==='ok') h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
   } else if(c.est==='nada') h+='<div class="cv-vacio">Este camión no tiene pedidos para '+(CV_DIA==='hoy'?'hoy':'mañana')+'.</div>';
@@ -13295,7 +13338,7 @@ function cvPintarPanel(D){
   var f=document.getElementById('cv-filas');
   if(f){ if(top) f.scrollTop=top; else { var pr=f.querySelector('.cv-fila:not(.on)'); if(pr) f.scrollTop=Math.max(0, pr.offsetTop-f.offsetTop-30); } }
 }
-function cvElegir(k){ CV_SEL=k; cargaVivaPintar(); }
+function cvElegir(k){ CV_SEL=k; CV_VISTA=''; cargaVivaPintar(); }
 function cvIrALista(){
   CARGA_DIA=CV_DIA; abrirCarga(); setCargaDia(CV_DIA);
   var cams=document.querySelectorAll('#carga-body .carga-cam'), sc=document.getElementById('carga-body'), el=null;
@@ -13311,7 +13354,8 @@ function cvTildar(el){
   var D=cargaVivaDatos(), c=D&&D.sel;
   if(on && c){ var n0=c0?c0.dentro:0, nEl=document.getElementById('cv-n');
     if(nEl){ var t0=performance.now(); (function sube(t){ var p=Math.min(1,(t-t0)/800); nEl.textContent=Math.round(n0+(c.dentro-n0)*p); if(p<1) requestAnimationFrame(sube); })(t0); } }
-  if(c && c.est==='ok' && estAntes!=='ok') cvFiesta(lugar==='fabrica'?'ptf':'bz');
+  if(CV_VISTA==='bz'){ if(on && D && antes && D.bz.total && D.bz.dentro>=D.bz.total && antes.bz.dentro<antes.bz.total) cvFiesta('bz'); }   // (§4ic) Banzer completo
+  else if(c && c.est==='ok' && estAntes!=='ok') cvFiesta(lugar==='fabrica'?'ptf':'bz');
 }
 function cvVolar(id, n){
   var capa=document.getElementById('cv-capa'), P=CV_POS[id]; if(!capa || !P.de) return;

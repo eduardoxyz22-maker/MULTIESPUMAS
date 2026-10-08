@@ -626,6 +626,11 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
 - **Los tildes son LOS MISMOS de la Lista de carga** (`cargaChkKey`/`setCargaChk`), y la agrupación por camión es UNA:
   `cargaAgrupar`, que usan la lista y `cargaVivaDatos`. No duplicar la cuenta.
 - Tiene su propio Hoy/Mañana (`CV_DIA`). La Lista de carga NO lleva la tira, por pedido del dueño.
+- **Tocar un cartel o un camión de la imagen cambia el panel de la derecha, nunca abre otra pantalla** (§4ic, 08/10, dueño: *«si le
+  doy al camión de Banzer abre otra cosa, no el lateral, como el PTF»*): `CV_VISTA` = `''` (el camión elegido) / `'bz'` (lo que se
+  carga en Banzer ese día, por camión, con los MISMOS tildes) / `'im'` (lo marcado «📥 recoger», por camión; sin tildes: se cambia
+  en el pedido). `cvVer(v)`; «← Volver al camión»; los recortes `img.cv-cuerpo` se tocan dentro de su silueta. La Lista de carga
+  se abre solo con «📋 Ver…» y «📦 Ver su carga».
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)

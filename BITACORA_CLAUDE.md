@@ -7445,6 +7445,14 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ic. 08/10: 🚛 Banzer y Moreno abren su panel al costado, como PTF (en la rama, SIN publicar)
+**El dueño**: *«si le doy al camión de Banzer abre otra cosa, no el lateral, como el PTF»*. Los tres carteles abrían la Lista de
+carga (`cvIrALista`). Ahora cambian el panel de la derecha (`CV_VISTA`, `cvVer`): PTF = el camión elegido; Banzer = lo que se carga
+allá ese día, por camión, con los mismos tildes de la Lista (barra, «Faltan N», festejo al completar); Moreno = lo marcado «📥
+recoger» por camión, sin tildes (eso se cambia en el pedido). Tocar el camión de la imagen hace lo mismo que su cartel (los recortes
+de §4ib, con `clip-path`, solo responden dentro de la silueta). Elegir un camión de las fichas o cambiar Hoy/Mañana vuelve a la
+vista del camión. `test_camiones_admin` §7b (5) → 36.
+
 ## 4ib. 08/10: 🚛 los camiones de Administración: su propio botón para esconderlos y las líneas en el piso (en la rama, SIN publicar)
 **El dueño**, con capturas de Administración: *«separá las pestañas ocultar resumen y ocultar el nuevo 3D; que se vea siempre el
 resumen»* y *«esas líneas quedaron encima del camión, no abajo… se ve raro»*.

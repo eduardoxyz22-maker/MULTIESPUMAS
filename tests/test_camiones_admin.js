@@ -10,7 +10,7 @@
      4. Los tildes son LOS MISMOS de la Lista de carga, en los dos sentidos, con la misma clave.
      5. Completar un camión: «Listo para salir» en el panel, en el chip y en el cartel.
      6. Hoy / Mañana: cada día con sus pedidos y su fecha en la clave.
-     7. «Ver sus paradas» abre la Lista de carga en ese día.
+     7. «Ver sus paradas» abre la Lista de carga en ese día. 7b (§4ic): tocar Banzer o Moreno abre SU panel al costado.
      8. Dos botones separados (§4ib): «Ocultar camiones» y «Ocultar resumen»; las líneas de color van en el piso, debajo de
         cada camión; en el celular no se sale de la pantalla; sin errores. */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -172,6 +172,40 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
     closeCarga(); return out;
   });
   chk('abre la Lista de carga en ese día, con el bloque del camión', r.abierta && r.dia==='hoy' && /hoy/.test(r.info) && r.enLista, J(r));
+
+  // ══ 7b. Tocar Banzer o Moreno abre SU panel al costado, no otra pantalla (§4ic) ══
+  console.log('\n── 7b. Banzer y Moreno abren su panel al costado (§4ic) ──');
+  r = await page.evaluate(() => {
+    var ov=document.getElementById('carga-overlay'), abierta=function(){ return ov.style.display==='flex'; }, txt=function(){ return document.getElementById('cv-panel').innerText.replace(/\s+/g,' '); };
+    CV_DIA='hoy'; CV_SEL='Foton nuevo'; CV_VISTA=''; cargaVivaPintar();
+    var o={};
+    document.getElementById('cv-pin-bz').click();
+    o.bz={ lista:abierta(), txt:txt(), filas:document.querySelectorAll('#cv-panel .cv-fila').length, pinMarcado:/vista/.test(document.getElementById('cv-pin-bz').className) };
+    var k=document.querySelector('#cv-panel .cv-fila').getAttribute('data-k'); setCargaChk(k,false); cargaVivaPintar();   // las secciones de antes ya lo tildaron
+    document.querySelector('#cv-panel .cv-fila[data-k="'+k.replace(/"/g,'\\"')+'"]').click();
+    o.tilde={ k:k, on:isCargaChk(k), sigue:CV_VISTA, txt:txt() };
+    setCargaChk(k,false); cargaVivaPintar();
+    document.getElementById('cv-pin-im').click();
+    o.im={ lista:abierta(), txt:txt() };
+    document.querySelector('#carga-viva img.cv-cuerpo[data-id="bz"]').click();
+    o.cuerpoBz=CV_VISTA;
+    document.querySelector('#cv-panel .cv-volver').click();
+    o.volver={ vista:CV_VISTA, txt:txt() };
+    document.getElementById('cv-pin-im').click();
+    document.querySelector('#cv-panel .cv-chip[data-k="Carry"]') ? 0 : 0;
+    var chips=document.querySelectorAll('#cv-panel .cv-chip'); o.chipsEnLugar=chips.length;
+    document.getElementById('cv-pin-ptf').click();
+    o.ptf={ lista:abierta(), vista:CV_VISTA, txt:txt() };
+    if(abierta()) closeCarga();
+    return o;
+  });
+  chk('§4ic: tocar «Cargar en Banzer» abre el panel de Banzer al costado (no la Lista de carga), con el camión y lo que lleva',
+    !r.bz.lista && /CARGAR EN BANZER/.test(r.bz.txt) && /Foton encarpado/.test(r.bz.txt) && /2× ORO BI RELAX/.test(r.bz.txt) && r.bz.filas===1 && r.bz.pinMarcado, J(r.bz));
+  chk('§4ic: tildar en el panel de Banzer es el mismo tilde de la Lista de carga, y el panel sigue en Banzer', r.tilde.on && r.tilde.sigue==='bz' && /Todo cargado en Banzer/.test(r.tilde.txt), J(r.tilde));
+  chk('§4ic: tocar «Ir a buscar a Moreno» abre el panel de Moreno: qué traer y para qué camión', !r.im.lista && /IR A BUSCAR/.test(r.im.txt) && /3× ESPECIAL SEMIORTOPEDICO/.test(r.im.txt) && /Foton nuevo/.test(r.im.txt), J(r.im));
+  chk('§4ic: tocar el camión de Banzer en la imagen también abre su panel', r.cuerpoBz==='bz', J(r.cuerpoBz));
+  chk('§4ic: «← Volver al camión» y el cartel de PTF vuelven al camión elegido, sin abrir otra pantalla',
+    r.volver.vista==='' && /CAMIÓN ELEGIDO/.test(r.volver.txt) && !r.ptf.lista && r.ptf.vista==='' && /Foton nuevo/.test(r.ptf.txt), J({volver:r.volver.vista, ptf:r.ptf}));
 
   // ══ 8. Plegar, celular, errores ══
   console.log('\n── 8. Dos botones separados (§4ib); celular; errores ──');
