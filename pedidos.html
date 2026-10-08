@@ -676,6 +676,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
   EV.forEach(function(ev){ document.addEventListener(ev, tocar, true); });
 })();
 </script>
+<link rel="stylesheet" href="admin-logistica.css">
 </head>
 <body>
 <div class="header">
@@ -1060,6 +1061,21 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
         </div>
 
         <div id="adm-resumen">
+        <div class="adm-logistica" id="adm-logistica" aria-label="Resumen logístico">
+          <header class="adm-logistica-header"><div><h2>Stock y despacho</h2><p data-log-note>Asignaciones según los filtros de Administración</p></div><span class="adm-logistica-meta" data-log-count></span></header>
+          <div class="adm-logistica-main">
+            <div class="adm-logistica-stage">
+              <div class="adm-logistica-canvas"></div><div class="adm-logistica-labels" aria-hidden="true"></div>
+              <div class="adm-logistica-toolbar"><span>Vista conceptual · sin ubicación en vivo</span><button type="button" data-log-reset aria-label="Restablecer vista 3D">Restablecer vista</button></div>
+              <div class="adm-logistica-status" data-log-status role="status">Preparando la vista 3D…</div>
+            </div>
+            <aside class="adm-logistica-detail" data-log-detail aria-label="Detalle de la selección"></aside>
+          </div>
+          <nav class="adm-logistica-entities" data-log-entities aria-label="Seleccionar depósito o camión"></nav>
+          <p class="adm-logistica-empty" data-log-empty></p>
+        </div>
+        <details class="adm-logistica-consolidado"><summary>Ver cifras y consolidados del resumen</summary>
+
         <div class="metrics" id="adm-metrics"></div>
         <div class="metodos-line" id="adm-metodos"></div>
 
@@ -1094,6 +1110,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
             <div style="padding:10px 14px" id="adm-zonas"></div>
           </div>
         </div>
+        </details>
         </div><!-- /adm-resumen -->
 
         <div class="btn-row" style="margin-bottom:16px">
@@ -3083,6 +3100,7 @@ function showViewAhora(v){
   if(v==='atc') refreshAtc();
   if(v==='admin' && UNLOCKED) loadFromServer(false);
   if(v==='mis'){ misVendedorSel(); refreshMis(); }
+  if(window.AdminLogistica) window.AdminLogistica.refresh();
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
 }
 function initConnUI(){
@@ -24009,8 +24027,11 @@ function pintarResumenAdm(){
   box.style.display = ver ? '' : 'none';
   b.innerHTML = ver ? '🙈 Ocultar resumen'
     : ('👁️ Ver resumen'+(RESUMEN_MINI?(' <span style="opacity:.75;font-weight:600">· '+RESUMEN_MINI+'</span>'):''));
-  b.title = ver ? 'Esconde las fichas y los consolidados para dejar la tabla arriba de todo'
-                : 'Vuelve a mostrar las fichas y los consolidados';
+  b.title = ver ? 'Oculta la escena logística y sus consolidados'
+                : 'Vuelve a mostrar la escena logística';
+  b.setAttribute('aria-expanded', String(ver));
+  b.setAttribute('aria-controls', 'adm-resumen');
+  if(window.AdminLogistica) window.AdminLogistica.refresh();
 }
 /* ⚠️ Lo mismo para el CUADRE: contabilidad necesita trabajar con la planilla de pagos de
    abajo y arriba tiene los cierres, los retiros, el por cobrar y los avisos.
@@ -26016,5 +26037,6 @@ document.addEventListener('DOMContentLoaded',function(){
   autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
 });
 </script>
+<script src="admin-logistica.js" defer></script>
 </body>
 </html>
