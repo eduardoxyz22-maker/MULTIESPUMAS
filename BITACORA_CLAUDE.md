@@ -7475,7 +7475,7 @@ partido. Arréglalo»*.
 
 **Prueba**: `tests/test_codigo_nuevo.js` (15; 12 rojas contra `2a7c7bd`): una fila con PTF 20 + Moreno 3 y el pedido de 2;
 mapas de PTF y Moreno en la clave de la lista; un renglón del Excel nuevo cae ahí; sin «sin explicar»; detección y salida
-anuladas; con 22 contra 20 queda «+2» y la detección en 2; CH1297 sigue crudo; idempotente.
+anuladas; con 22 contra 20 queda «+2» y la detección en 2; CH1297 sigue crudo; idempotente. Batería entera: 140 suites, 5.299 bien · 0 mal.
 
 **Para el dueño**: al publicar y F5, la fila se junta sola y el aviso del control desaparece. Va a pasar con cada código nuevo
 (el SMART 160x190): ya no hace falta nada.
