@@ -7445,6 +7445,31 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4if. 08/10: ✨ las escenas del formulario de pedidos (en la rama, SIN publicar)
+**El dueño**, después de una muestra en video (scratchpad, no está en el repo): *«todas, pero ¿qué pasa con lo demás del
+formulario?»* y *«por lo del celular no te preocupes… quiero escenas wow»*. Lo demás del formulario queda IGUAL; esto solo mira.
+- **2 · `#fx-dias`** debajo de la fecha: los próximos 7 días (desde mañana; desde hoy para Eduardo/ROHO, `esVendedorLite`) con lo
+  libre AM + PM (`limTurno`, `cuposUsadosTurno`), «cerrado» en domingo/feriado/día cerrado (`diaCerrado`), «lleno». Tocar uno
+  llena `f-fecha` y dispara su `change` (corre lo de siempre).
+- **1 · `#fx-camion`** debajo del turno: el camión de ese día y turno, lugares ocupados, el «tuyo» y libres. Editando, el pedido
+  ya está adentro (`yaEsta`). Entra de costado al cambiar día o turno.
+- **3 ·** el dibujo del cuadrito del saldo (`fxEscenaSaldo` en `saldoCajaPintar`, envuelto en `.fx-saldo`): colchones apilados
+  (✅), camioncito a Moreno (📥/🚚), fábrica con humo (⏳/🏭/📐). Los SVG no llevan texto (no ensucian el `innerText` del cuadrito).
+- **5 · `#fx-mes`** arriba de «Guardar»: lo vendido este mes por la vendedora escrita (fecha de carga, `ventaTotal`, sin ATC ni
+  RPT ni borradores), contra el mes pasado entero. No sale al corregir.
+- **4 · `fxGuardado(rec)`** en `after()` de `submitPedido`, solo pedido NUEVO (o borrador de Kommo completado), no ATC ni venta de
+  tienda: pantalla oscura con la escena de §4hz borrosa de fondo, la foto del camión **recortada sin su fondo**
+  (`carga-viva/camion-recorte.png`, sacada de `camion.png` con un relleno desde los bordes), los productos que suben, faros,
+  sale con rayas de velocidad, «¡Pedido guardado!» con OC, cliente, día y turno, papelitos, y la barra del mes sumando el pedido.
+  Tocar cierra; sola a los ~7 s. La ventana de WhatsApp de siempre queda abajo.
+- ⚠️ **En las pruebas automáticas (`navigator.webdriver`) la escena 4 no sale** salvo `window.FX_PRUEBA` (si no, tapaba 7 s la
+  ventana de WhatsApp de todas las pruebas que guardan).
+- ⚠️ **Los papelitos van en UN solo cuadro a cuadro** (`fxChispas`): con uno por papelito (90) la página se trababa entera
+  (medido con la prueba: los temporizadores llegaban segundos tarde). Y el fondo borroso está quieto a propósito: animar un
+  `blur` a pantalla completa es lo más caro de dibujar.
+- `renderCupoForm` = `renderCupoFormBase` + `fxFormPintar()`; también al escribir el vendedor y al final de `editPedido`.
+- `tests/test_escenas_form.js` (19; 17 rojas contra `409a077`). `VIDEO=<carpeta>` lo graba.
+
 ## 4ie. 08/10: 🚛 asignar el camión desde «Sin vehículo» (dueño: «sí, agregalo y publicá») — PUBLICADA 08/10 15:54 (`409a077`, Pages OK, run 37835423020; batería 140 suites, 5.311 bien · 0 mal)
 En el panel de «Sin vehículo», «🚚 ASIGNAR CAMIÓN»: cada pedido del día sin camión (cliente, OC, zona, turno, bultos) con un selector
 de los camiones de `VEHICULOS`. `cvAsignar(id, v)` hace lo mismo que la columna «Vehículo» de la tabla (`setVehiculo`: vehículo +
