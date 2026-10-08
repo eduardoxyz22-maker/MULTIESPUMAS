@@ -24480,17 +24480,22 @@ function backupJson(){
    ========================================================================== */
 var ALM_ZONA_DIAS=60;     // las entregas que se miran para saber de qué lado sale cada producto
 var ALM_EMPATE_KM=1;      // (sin línea) con menos de 1 km de diferencia entre los dos depósitos, la entrega es «del medio»
-/* ✏️ LA LÍNEA DEL DUEÑO (07/10, la opción «A»). Con el mapa publicado: *«el corte de la línea y división no me convence, dame
-   opciones, la línea debería ser más hacia la izquierda»*, con una línea dibujada a mano sobre su captura; se le ofreció «A · tu
-   línea» o «B · por zonas de logística» y eligió *«probemos la A»*. Lo que queda a la IZQUIERDA (oeste) de la línea va a Banzer;
-   a la DERECHA (este), a PTF; a menos de `ALM_LINEA_BANDA_KM` de la línea, mitad y mitad. Puntos de norte a sur, pasados a
-   coordenadas tomando los dos depósitos de su captura como referencia (a menos de 70 m de su trazo). Fuera de las puntas sigue
-   derecha, con la dirección del último tramo. Vacía = la regla de antes (el depósito más cerca en línea recta). Cuando logística
-   defina qué zonas atiende cada depósito, esas zonas van a mandar sobre la línea (dueño, 07/10). */
-var ALM_DIVISION=[[-17.67063,-63.12355],[-17.68029,-63.12658],[-17.68949,-63.13042],[-17.69869,-63.13523],[-17.70789,-63.14004],
-  [-17.71709,-63.14484],[-17.72629,-63.15013],[-17.73549,-63.15518],[-17.74469,-63.16023],[-17.75389,-63.16552],[-17.76309,-63.17033],
-  [-17.77228,-63.17561],[-17.78148,-63.18138],[-17.79068,-63.18811],[-17.79988,-63.19484],[-17.80908,-63.19941],[-17.81828,-63.20422],
-  [-17.82748,-63.21047],[-17.83668,-63.21744],[-17.84588,-63.22682],[-17.85508,-63.23547],[-17.86428,-63.2398],[-17.87762,-63.24468]];
+/* ✏️ LA LÍNEA DE LOGÍSTICA (08/10). La del dueño (07/10, «probemos la A») quedó reemplazada: el dueño mandó la captura del
+   mapa publicado con la línea que quiere logística dibujada en negro encima (*«logística quiere así la línea y división»*). Lo
+   que queda a la IZQUIERDA (oeste) de la línea va a Banzer; a la DERECHA (este), a PTF; a menos de `ALM_LINEA_BANDA_KM` de la
+   línea, mitad y mitad. 41 puntos de norte a sur, sacados de los píxeles negros de la captura (mapa en zoom 11; PTF y Banzer de la
+   misma captura caen a menos de 1 px de sus coordenadas). La de logística baja por la avenida al este de Banzer, dobla al oeste a
+   la altura de El Trompillo (un tramo casi horizontal) y sigue al sudoeste: por ese quiebre el lado ya no se decide por el tramo
+   de la misma latitud sino por el polígono del oeste (`almLineaGeo`). Fuera de las puntas sigue derecha, con la dirección del
+   último tramo. Vacía = la regla de antes (el depósito más cerca en línea recta). Cuando logística defina qué zonas atiende cada
+   depósito, esas zonas van a mandar sobre la línea (dueño, 07/10). */
+var ALM_DIVISION=[[-17.65016,-63.06531],[-17.65932,-63.07080],[-17.66717,-63.07561],[-17.67502,-63.08042],[-17.68287,-63.08728],
+  [-17.69072,-63.09621],[-17.69857,-63.10651],[-17.70642,-63.11681],[-17.71427,-63.12711],[-17.72212,-63.13466],[-17.72997,-63.14015],
+  [-17.73781,-63.14359],[-17.74566,-63.14427],[-17.76136,-63.14496],[-17.77705,-63.14565],[-17.79013,-63.14599],[-17.79242,-63.15389],
+  [-17.79405,-63.16075],[-17.79797,-63.16350],[-17.80190,-63.16556],[-17.80516,-63.16831],[-17.80811,-63.17449],[-17.81072,-63.18273],
+  [-17.81170,-63.19509],[-17.81137,-63.21019],[-17.81366,-63.21431],[-17.81758,-63.21912],[-17.82412,-63.22530],[-17.83197,-63.23217],
+  [-17.83589,-63.23697],[-17.83981,-63.24246],[-17.84765,-63.25070],[-17.85550,-63.25757],[-17.85942,-63.26375],[-17.86334,-63.27130],
+  [-17.87118,-63.28298],[-17.87902,-63.29396],[-17.88686,-63.30358],[-17.89079,-63.30976],[-17.89471,-63.31731],[-17.89863,-63.32349]];
 var ALM_LINEA_BANDA_KM=0.5;   // a menos de 500 m de la línea, la entrega cuenta mitad para cada depósito
 var ALM_MIN_UNID=3;       // con menos unidades ubicadas en la ventana no se reparte: pocos datos
 var ALM_ZONA_MIN=3;       // una zona escrita ubica solo si tiene al menos 3 pedidos con pin
@@ -24532,16 +24537,34 @@ function almLado(pt){
   return dP<dB ? { P:1, B:0, dP:dP, dB:dB } : { P:0, B:1, dP:dP, dB:dB };
 }
 function almHayLinea(){ return !!(ALM_DIVISION && ALM_DIVISION.length>1); }
-/* Distancia con signo (km) de un punto a la línea del dueño: NEGATIVA = a la izquierda (oeste) → Banzer; POSITIVA = a la derecha
-   (este) → PTF. El tramo es el que abarca la latitud del punto (la línea va de norte a sur); más allá de las puntas, el de la
-   punta, estirado. Es la distancia perpendicular al tramo, en km (x al este, y al norte). */
+/* Distancia con signo (km) de un punto a la línea: NEGATIVA = a la izquierda (oeste) → Banzer; POSITIVA = a la derecha (este) →
+   PTF. El tamaño es la distancia a la línea (al tramo más cercano, con las puntas estiradas 80 km); el signo, si el punto cae
+   dentro del polígono del oeste (la línea estirada y cerrada lejos al oeste). Antes se usaba el tramo de la misma latitud: con
+   el tramo casi horizontal de la línea de logística (El Trompillo) eso daba el lado al revés justo ahí. */
+var ALM_LINEA_GEO=null;
+function almLineaGeo(){
+  var L=ALM_DIVISION;
+  if(ALM_LINEA_GEO && ALM_LINEA_GEO.L===L && ALM_LINEA_GEO.n===L.length) return ALM_LINEA_GEO;
+  var lat0=-17.78, lng0=-63.17, kx=111.32*Math.cos(lat0*Math.PI/180), ky=110.57;
+  var P=L.map(function(p){ return [(p[1]-lng0)*kx, (p[0]-lat0)*ky]; }), n=P.length;
+  var mas=function(a,b,km){ var dx=a[0]-b[0], dy=a[1]-b[1], l=Math.sqrt(dx*dx+dy*dy)||1; return [a[0]+dx/l*km, a[1]+dy/l*km]; };
+  var E=[mas(P[0],P[1],80)].concat(P,[mas(P[n-1],P[n-2],80)]);
+  var oeste=Math.min.apply(null, E.map(function(q){ return q[0]; }))-300;
+  ALM_LINEA_GEO={ L:L, n:n, lat0:lat0, lng0:lng0, kx:kx, ky:ky, E:E, poly:E.concat([[oeste,E[E.length-1][1]],[oeste,E[0][1]]]) };
+  return ALM_LINEA_GEO;
+}
 function almLadoDeLinea(pt){
-  var L=ALM_DIVISION, n=L.length, i=0;
-  for(i=0; i<n-2 && pt.lat<L[i+1][0]; i++);
-  var a=L[i], b=L[i+1], kx=111.32*Math.cos(pt.lat*Math.PI/180), ky=110.57;
-  var dx=(b[1]-a[1])*kx, dy=(b[0]-a[0])*ky, px=(pt.lng-a[1])*kx, py=(pt.lat-a[0])*ky;
-  var len=Math.sqrt(dx*dx+dy*dy)||1;
-  return (dx*py-dy*px)/len;      // tramo hacia el sur: un punto al oeste da negativo
+  var G=almLineaGeo(), x=(pt.lng-G.lng0)*G.kx, y=(pt.lat-G.lat0)*G.ky, E=G.E, d=Infinity, i, j, dentro=false;
+  for(i=0;i<E.length-1;i++){
+    var ax=E[i][0], ay=E[i][1], bx=E[i+1][0]-ax, by=E[i+1][1]-ay, l2=bx*bx+by*by||1;
+    var t=Math.max(0, Math.min(1, ((x-ax)*bx+(y-ay)*by)/l2)), ex=x-(ax+t*bx), ey=y-(ay+t*by);
+    d=Math.min(d, Math.sqrt(ex*ex+ey*ey));
+  }
+  var Q=G.poly;
+  for(i=0, j=Q.length-1; i<Q.length; j=i++){
+    if(((Q[i][1]>y)!==(Q[j][1]>y)) && (x < (Q[j][0]-Q[i][0])*(y-Q[i][1])/(Q[j][1]-Q[i][1])+Q[i][0])) dentro=!dentro;
+  }
+  return dentro ? -d : d;
 }
 function almZonaClave(z){ z=String(z||'').replace(/\s+/g,' ').trim(); return z ? normNombre(z) : ''; }
 /* La zona escrita → de qué lado cae, aprendido de los pedidos de esa zona que SÍ tienen pin (toda la planilla). Sin
@@ -25079,13 +25102,13 @@ function almZonasHtml(A){
 function almPieHtml(A){
   return '<div style="font-size:.78rem;color:var(--muted);line-height:1.55;padding:2px 4px 18px">'+
     '<b>Cómo se cuenta.</b> El lado sale de las entregas del '+fmtFecha(A.desde)+' al '+fmtFecha(A.hoy)+' por fecha de entrega. Para el lado no cuentan las ventas de tienda (no tienen dirección), las reposiciones (RPT), las ATC ni los pedidos puntuales (los de Eduardo, salvo Multicenter). «Conviene tener» sale de la pantalla de Stock, con sus reglas de siempre. '+
-    (almHayLinea() ? 'La línea es la que eligió el dueño el 07/10; cuando logística defina qué zonas atiende cada depósito, esas zonas van a mandar sobre la línea. ' : 'La distancia es en línea recta. ')+
+    (almHayLinea() ? 'La línea es la que dibujó logística el 08/10; cuando logística defina qué zonas atiende cada depósito, esas zonas van a mandar sobre la línea. ' : 'La distancia es en línea recta. ')+
     '«Hoy» es lo del último Excel de cada depósito menos lo que salió después. '+
     'Nunca se propone traer de Banzer a fábrica: si Banzer tiene de más, se deja de mandar y sale con las entregas. '+
     'La revisión automática sigue usando PTF primero y después Banzer, como hasta hoy. Esta pantalla no cambia nada: solo mira.</div>';
 }
 /* ---- El mapa ---- */
-/* La línea del dueño para dibujar, estirada 25 km en las dos puntas (en la dirección de cada punta). */
+/* La línea (de logística, 08/10) para dibujar, estirada 25 km en las dos puntas (en la dirección de cada punta). */
 function almLineaDivision(){
   if(!almHayLinea()) return null;
   var L=ALM_DIVISION, n=L.length;

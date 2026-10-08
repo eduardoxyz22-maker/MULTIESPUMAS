@@ -7445,6 +7445,30 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4hy. 08/10: 📍 la línea de «Banzer o PTF» pasa a ser la de LOGÍSTICA — EN LA RAMA, SIN PUBLICAR (el dueño: «no la publiques aún»)
+El dueño mandó una captura del mapa publicado (el de §4ht/§4hw, con la línea punteada del 07/10) con una línea negra dibujada
+encima: *«logística quiere así la línea y división. trabajala no la publiques aún»*.
+- **Cómo se pasó a coordenadas**: los píxeles negros de la captura (máximo de R,G,B < 45), fila por fila, a 41 vértices de norte a
+  sur. La captura es el mapa en zoom 11 (1.456 px por grado de longitud, Mercator): con PTF de ancla, Banzer cae a menos de 1 px de
+  su marca y la línea punteada vieja coincide con la de la captura. La comprobación (la línea nueva en rojo sobre la negra de la
+  captura) quedó en el scratchpad, `linea/comparar.png`; se superponen.
+- **La línea**: baja del norte (al este del aeropuerto Viru Viru) hacia el sudoeste, pasa ~140 m al OESTE de PTF, baja derecha por
+  la avenida hasta El Trompillo, ahí dobla al oeste en un tramo casi horizontal (~5 km) y sigue al sudoeste. Comparada con la del
+  dueño, en el norte y el centro va ~1 km más al este (más entregas para Banzer: la franja entre las dos líneas, del lado oeste de
+  PTF) y en el sur va más al oeste.
+- **`almLadoDeLinea` cambió de método** (la misma firma: distancia con signo en km, negativa = Banzer): antes tomaba el tramo que
+  abarcaba la LATITUD del punto y medía contra ese tramo; con el tramo horizontal de El Trompillo eso daba el lado según norte/sur
+  del tramo, no según oeste/este de la línea. Ahora `almLineaGeo` arma (y recuerda, por el arreglo) la línea en km con las puntas
+  estiradas 80 km en su dirección, cerrada lejos al oeste en un polígono: el SIGNO es «adentro del polígono = oeste = Banzer»; el
+  TAMAÑO, la distancia al tramo más cercano. El dibujo del mapa (`almLineaDivision`, 25 km por punta) no cambió.
+- Textos: «La línea es la que dibujó logística el 08/10…» en «Cómo se cuenta».
+- **`tests/test_banzer_ptf.js` → 109** (antes 106). §11 con la línea nueva (41 puntos, 43 dibujados), el punto 1,8 km al oeste de
+  PTF va a Banzer, el quiebre de El Trompillo (al sur del tramo horizontal PTF, al norte Banzer, más al sur PTF) y cada depósito de
+  su lado. El punto «en el medio» del armado (`MEDIO`) pasó a ser un punto de la línea nueva (era el punto medio entre los
+  depósitos, que caía sobre la del dueño y con la de logística queda 1 km del lado de Banzer); las cuentas a mano de §3-§12 no
+  cambiaron. Contra la publicada (`27c8d0d`): 89 bien · 20 mal.
+- Pendiente del dueño: «publica». Las zonas por depósito que defina logística siguen pudiendo reemplazar la línea.
+
 ## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) y sin «🏭 Pedí a fábrica» — PUBLICADA 08/10 21:05 (`27c8d0d`, Pages OK 21:05, run 37711127971; el dueño: «sí… quítalos»; batería 138 suites, 5.254 bien · 0 mal)
 Codex revisó lo publicado el 07/10 (`0d20d04`) y reprodujo tres defectos; el dueño, al discutir el primero, fijó la regla: *«no usan
 ese botón [pedí a fábrica] y creo que lo vamos a quitar. Ellos no anotan que está en camino. Simplemente cargan los saldos de almacén

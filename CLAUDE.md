@@ -344,9 +344,11 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:
     Google no le da el pin de un LUGAR con nombre a un programa, ni al servidor). Si el dueño manda las coordenadas, se cambian ahí.
     · `almZonaData`: entregas de 60 días (`ALM_ZONA_DIAS`) con las reglas de la rotación de Stock (`stockCuenta`, sin venta de
-    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DEL DUEÑO cae** (07/10, «probemos la
-    A»: `ALM_DIVISION`, 23 puntos de norte a sur pasados de su dibujo; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este →
-    PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
+    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DE LOGÍSTICA cae** (08/10, §4hy, EN
+    LA RAMA sin publicar; reemplaza la del dueño del 07/10: `ALM_DIVISION`, 41 puntos de norte a sur sacados de los píxeles negros
+    de su captura; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este → PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad).
+    ⚠️ La línea tiene un tramo casi horizontal (El Trompillo): el lado sale del POLÍGONO del oeste (`almLineaGeo`) y la distancia
+    del tramo más cercano; no volver a elegir el tramo «de la misma latitud» (daba el lado al revés en el quiebre); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
     aprendida de los pedidos CON pin (`almZonas`, ≥3). Por unidades. Las zonas que defina logística van a mandar sobre la línea.
     · **Tener = `stockNecesario(o)`**, la MISMA cuenta de `stockCuantoPedir` (sacada a función: no la dupliques). La venta de
     tienda cuenta para el tener (es rotación) pero no para el lado. Se reparte con la proporción; lo que rota poco y lo
