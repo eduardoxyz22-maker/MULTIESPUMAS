@@ -7445,7 +7445,77 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) — EN LA RAMA (espera el «publica» del dueño)
+## 4hz. 08/10: 🚛 los camiones en Administración, sobre la imagen de ChatGPT, con los tildes ahí mismo — reemplaza la escena 3D de Codex
+**Cómo se llegó** (todo el 08/10):
+- El dueño pidió «motion graphics» con camiones moviéndose en Stock, clicables («cargar este camión»), «algo más wow».
+- Primero salió una muestra en CSS/SVG. El dueño pidió «más realista, más 3D», y se hicieron dos escenas Three.js en el
+  scratchpad: una de Stock y otra de la Lista de carga, con galpón, andenes, autoelevador, lona abierta, bloom y papel picado.
+- El dueño mandó una imagen hecha por ChatGPT (render isométrico nocturno de PTF, Banzer y Moreno, con un panel a la derecha):
+  *«chat gpt lo hizo mejor y ni con la instrucción lo igualaste»*. Respuesta: usar SU imagen de fondo y poner lo vivo encima.
+  El dueño aprobó el video.
+- **Codex publicó en paralelo** (`7941fec`, 11:56) una escena 3D procedural en Administración («Stock y despacho», Three.js
+  0.186 local, ~3 MB). Las fichas del resumen quedaron plegadas en un desplegable. La batería entera sobre lo publicado dio 0 rojas.
+- El dueño comparó las dos: *«no se ve como tu diseño y tampoco tiene las opciones de carga lista ahí mismo»*. Después:
+  *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá lo de Codex y publicá junto con las
+  correcciones pendientes»*.
+
+**Hecho:**
+- **Lo de Codex se sacó entero**: `admin-logistica.{js,css}`, `admin-logistica-scene.mjs`, `vendor/logistica-three/`,
+  `ADMIN_LOGISTICA.md`, `tests/test_admin_logistica.cjs` y sus cambios en `pedidos.html` y `test_resumen.js` (con
+  `git apply -R` de su parche). Las fichas del resumen vuelven a verse como antes.
+- **`#carga-viva` es lo primero de `#adm-resumen`**: se pliega con «🙈 Ocultar resumen». Se pinta en `renderAdmin` (después
+  de `pintarResumenAdm`) y en `renderCargaSiActiva`, cuando ya está armada (`CV_ARMADA`): así llegan los tildes de otro equipo.
+- **La imagen** es `carga-viva/escena.jpg`, recortada de la de ChatGPT (1212×800, sin su panel, 330 KB), y `carga-viva/camion.png`
+  es el camión de su panel. Lo vivo va en coordenadas de la imagen (`CV_POS`): carteles de PTF (el camión elegido), Banzer (lo
+  que se carga allá ese día, todos los camiones) y Moreno (lo que hay que ir a buscar, `prodProd`), huellas, faros, ruta animada
+  (SMIL) y el botón «📦 Ver su carga».
+  - ⚠️ Los carteles TAPAN los textos que la imagen trae pintados («Camión 02 · En PTF» y «Cargar este camión» con el cursor).
+    Si se cambia la imagen, hay que volver a ubicarlos.
+- **Panel derecho**: los camiones de `VEHICULOS`, aunque no tengan pedidos ese día, + los asignados + «Sin vehículo».
+  - Del elegido: chofer y paradas, «X / Y bultos», barra, lo que falta y los renglones «🏭 EN FÁBRICA» / «🏪 EN BANZER», cada uno
+    con su tilde, con ⛔ sin stock y 📥 recoger de….
+  - Al tildar, los colchones vuelan desde el portón. Al completar el camión: luces, papel picado y «✅ ¡Listo para salir!».
+- **Una sola cuenta y los mismos tildes**: `cargaAgrupar(list)` sale de `cargaBloquesHtml` (la lista lo usa igual) y
+  `cargaVivaDatos` arma los renglones con `cargaChkKey(fecha, camión, producto[, Banzer])`. `cvTildar` usa `setCargaChk`.
+  Tildar arriba es tildar en la lista, para todo el equipo, y al revés.
+- **`CV_DIA`**: Hoy / Mañana propio (mañana = `proximoDiaEntrega()`); los pedidos son los de ese día sin ventas de tienda, como
+  `cargaLista`.
+- **«📋 Ver sus paradas en la Lista de carga»** abre la lista en ese día (`setCargaDia`) y baja al bloque del camión
+  (`data-veh` en `.carga-cam`).
+- **La Lista de carga quedó como siempre**: la tira estuvo arriba de la lista en la rama (`234bfde`) y se sacó antes de publicar.
+- `prefers-reduced-motion`: sin animaciones ni vuelos. En el celular, imagen arriba y panel abajo.
+- **`tests/test_camiones_admin.js` (27)**, con reloj clavado en el 08/10 10:00 y un servidor de mentira que guarda las filas del
+  sistema. Mira dónde vive, que no está en la carga, que lo de Codex no quedó, los camiones y las cuentas, los tildes en los dos
+  sentidos, completar, Hoy/Mañana, «ver sus paradas», plegar, 390 px y errores. Contra la publicada: no tiene la tira.
+- ⚠️ Un doble de `apiList` que NO devuelva la fila de los tildes (`__carga_chk__`) los borra en la relectura de después de
+  tildar (`reescritaAplicar` aplica solo lo cambiado acá sobre lo del servidor). Para probar los tildes, que el doble guarde y
+  devuelva las filas del sistema.
+
+## 4hy. 08/10: 📍 la línea de «Banzer o PTF» pasa a ser la de LOGÍSTICA — EN LA RAMA, SIN PUBLICAR (el dueño: «no la publiques aún»)
+El dueño mandó una captura del mapa publicado (el de §4ht/§4hw, con la línea punteada del 07/10) con una línea negra dibujada
+encima: *«logística quiere así la línea y división. trabajala no la publiques aún»*.
+- **Cómo se pasó a coordenadas**: los píxeles negros de la captura (máximo de R,G,B < 45), fila por fila, a 41 vértices de norte a
+  sur. La captura es el mapa en zoom 11 (1.456 px por grado de longitud, Mercator): con PTF de ancla, Banzer cae a menos de 1 px de
+  su marca y la línea punteada vieja coincide con la de la captura. La comprobación (la línea nueva en rojo sobre la negra de la
+  captura) quedó en el scratchpad, `linea/comparar.png`; se superponen.
+- **La línea**: baja del norte (al este del aeropuerto Viru Viru) hacia el sudoeste, pasa ~140 m al OESTE de PTF, baja derecha por
+  la avenida hasta El Trompillo, ahí dobla al oeste en un tramo casi horizontal (~5 km) y sigue al sudoeste. Comparada con la del
+  dueño, en el norte y el centro va ~1 km más al este (más entregas para Banzer: la franja entre las dos líneas, del lado oeste de
+  PTF) y en el sur va más al oeste.
+- **`almLadoDeLinea` cambió de método** (la misma firma: distancia con signo en km, negativa = Banzer): antes tomaba el tramo que
+  abarcaba la LATITUD del punto y medía contra ese tramo; con el tramo horizontal de El Trompillo eso daba el lado según norte/sur
+  del tramo, no según oeste/este de la línea. Ahora `almLineaGeo` arma (y recuerda, por el arreglo) la línea en km con las puntas
+  estiradas 80 km en su dirección, cerrada lejos al oeste en un polígono: el SIGNO es «adentro del polígono = oeste = Banzer»; el
+  TAMAÑO, la distancia al tramo más cercano. El dibujo del mapa (`almLineaDivision`, 25 km por punta) no cambió.
+- Textos: «La línea es la que dibujó logística el 08/10…» en «Cómo se cuenta».
+- **`tests/test_banzer_ptf.js` → 109** (antes 106). §11 con la línea nueva (41 puntos, 43 dibujados), el punto 1,8 km al oeste de
+  PTF va a Banzer, el quiebre de El Trompillo (al sur del tramo horizontal PTF, al norte Banzer, más al sur PTF) y cada depósito de
+  su lado. El punto «en el medio» del armado (`MEDIO`) pasó a ser un punto de la línea nueva (era el punto medio entre los
+  depósitos, que caía sobre la del dueño y con la de logística queda 1 km del lado de Banzer); las cuentas a mano de §3-§12 no
+  cambiaron. Contra la publicada (`27c8d0d`): 89 bien · 20 mal.
+- Pendiente del dueño: «publica». Las zonas por depósito que defina logística siguen pudiendo reemplazar la línea.
+
+## 4hx. 08/10: 🗓️ el plan de 7/15/30 días trabaja SOLO con los Excel del día + la revisión de Codex del 07/10 (F1-F3, D1-D2) y sin «🏭 Pedí a fábrica» — PUBLICADA 08/10 21:05 (`27c8d0d`, Pages OK 21:05, run 37711127971; el dueño: «sí… quítalos»; batería 138 suites, 5.254 bien · 0 mal)
 Codex revisó lo publicado el 07/10 (`0d20d04`) y reprodujo tres defectos; el dueño, al discutir el primero, fijó la regla: *«no usan
 ese botón [pedí a fábrica] y creo que lo vamos a quitar. Ellos no anotan que está en camino. Simplemente cargan los saldos de almacén
 cada día. Y si en Moreno aumenta el saldo de almacén, quiere decir que ese producto se fabricó y salió… hagamos las cosas bien»*.

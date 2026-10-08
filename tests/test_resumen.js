@@ -31,10 +31,6 @@ const ARCH = 'file://' + path.resolve('pedidos.html');
     document.getElementById('admin-lock').style.display='none';
     document.getElementById('admin-content').style.display='block';
     mostrarBotonesTodos();
-    // El resumen 3D conserva las cifras en un desplegable secundario. Esta suite
-    // comprueba que el interruptor exterior siga plegando TODO lo que esté abierto.
-    // El estado inicial cerrado y la escena se verifican en test_admin_logistica.cjs.
-    var cifras=document.querySelector('.adm-logistica-consolidado'); if(cifras) cifras.open=true;
     window._pl=[];
     apiSave=function(r){ var g=JSON.parse(JSON.stringify(r));
       window._pl=window._pl.filter(function(p){return p.id!==g.id;}).concat([g]); return Promise.resolve({ok:true}); };

@@ -80,11 +80,13 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
     };
     window._d=function(n){ return stockSumarDias(todayStr(), -n); };
     window._q=function(lat,lng){ return 'https://www.google.com/maps?q='+lat+','+lng; };
-    // Cerca de PTF (este), cerca de Banzer (norte) y justo en el medio entre los dos.
+    // Cerca de PTF (este), cerca de Banzer (norte) y sobre la línea.
     window.CERCA_P=[[-17.755,-63.135],[-17.760,-63.130],[-17.765,-63.140],[-17.752,-63.128],[-17.758,-63.137]];
     window.CERCA_B=[[-17.705,-63.175],[-17.710,-63.170],[-17.700,-63.165],[-17.712,-63.178],[-17.703,-63.172]];
     var P=ALM_UBIC[0], B=ALM_UBIC[1];
-    window.MEDIO=[(P.lat+B.lat)/2, (P.lng+B.lng)/2];
+    // «En el medio» = sobre la línea de logística (08/10): un punto de la línea entre los dos depósitos. Con la del dueño era
+    // el punto medio entre PTF y Banzer, que caía sobre su línea; la de logística pasa 1 km más al este.
+    window.MEDIO=[-17.72997,-63.14015];
     var n=0;
     window._P=function(o){ n++; return Object.assign({ id:'t'+n, fecha:_d(3), oc:'10-'+(100+n), vendedor:'Maria Flores', cliente:'CLIENTE '+n,
       celular:'70000000', turno:'AM', zona:'', direccion:'Calle '+n, maps:'', pagado:true, saldo:0, ts:Date.now(), metodoPago:'',
@@ -332,18 +334,22 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   chk('⚠️ en el celular (390 px) nada se sale de la pantalla: la tabla scrollea adentro de su caja', r.pagina<=390 && r.ov<=390 && r.cuerpo<=r.body+1 && r.wrap>0 && r.wrap<=390 && r.q<=390, J(r));
   chk('sin errores de JS en toda la prueba', errors.length===0, errors.join(' | '));
 
-  // ══ 11. La línea del dueño (07/10, «probemos la A») ═════════════════════════════════
-  console.log('\n── 11. La línea del dueño: izquierda Banzer, derecha PTF ──');
+  // ══ 11. La línea de logística (08/10; antes la del dueño, 07/10) ═══════════════════════
+  console.log('\n── 11. La línea de logística: izquierda Banzer, derecha PTF ──');
   r = await page.evaluate(() => {
     var lado=function(lat,lng){ var l=almLado({lat:lat,lng:lng}); return l.medio?'medio':(l.B>0.5?'B':'P'); };
     var km=function(lat,lng){ return Math.round(almKm({lat:lat,lng:lng},ALM_UBIC[0])*10)/10+'/'+Math.round(almKm({lat:lat,lng:lng},ALM_UBIC[1])*10)/10; };
     var out={ hay:almHayLinea(), puntos:ALM_DIVISION.length,
       so:lado(-17.82,-63.23), soKm:km(-17.82,-63.23),          // sudoeste: más cerca de PTF, pero a la izquierda de la línea
-      ne:lado(-17.69,-63.115), neKm:km(-17.69,-63.115),        // noreste: más cerca de Banzer, pero a la derecha
-      sobre:lado(-17.77228,-63.17561), a400:lado(-17.77228,-63.17561+0.4/106), a700:lado(-17.77228,-63.17561+0.7/106),
+      ne:lado(-17.70,-63.09), neKm:km(-17.70,-63.09),          // noreste: a la derecha de la línea
+      oe:lado(-17.75,-63.16), oeKm:km(-17.75,-63.16),          // 1,8 km al oeste de PTF: más cerca de PTF, pero a la izquierda
+      sobre:lado(-17.76136,-63.14496), a400:lado(-17.76136,-63.14496+0.4/106), a700:lado(-17.76136,-63.14496+0.7/106),
+      // el quiebre de El Trompillo: la línea dobla al oeste casi horizontal
+      bajoQuiebre:lado(-17.805,-63.150), sobreQuiebre:lado(-17.782,-63.162), quiebreLejos:lado(-17.84,-63.17),
+      ptfLado:almLadoDeLinea({lat:ALM_UBIC[0].lat,lng:ALM_UBIC[0].lng}), bzLado:almLadoDeLinea({lat:ALM_UBIC[1].lat,lng:ALM_UBIC[1].lng}),
       norte:lado(-17.60,-63.20), sur:lado(-18.00,-63.20) };
     var L0=ALM_DIVISION; ALM_DIVISION=[];
-    out.sinLinea={ so:lado(-17.82,-63.23), ne:lado(-17.69,-63.115) };
+    out.sinLinea={ so:lado(-17.82,-63.23), oe:lado(-17.75,-63.16) };
     ALM_DIVISION=L0;
     var lm=almLineaDivision(); out.dibujo={ n:lm.length, norte:lm[0][0]>ALM_DIVISION[0][0], sur:lm[lm.length-1][0]<ALM_DIVISION[ALM_DIVISION.length-1][0] };
     almRefrescar();
@@ -352,13 +358,16 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
     out.lineaMapa=(window._mapa.lineas[0]||{ll:[]}).ll.length;
     return out;
   });
-  chk('⚠️ hay línea del dueño (23 puntos, de norte a sur)', r.hay && r.puntos===23, J({hay:r.hay, puntos:r.puntos}));
+  chk('⚠️ hay línea de logística (41 puntos, de norte a sur)', r.hay && r.puntos===41, J({hay:r.hay, puntos:r.puntos}));
   chk('⚠️ una entrega al sudoeste, más cerca de PTF pero a la IZQUIERDA de la línea, va a Banzer', r.so==='B', J({so:r.so, km_ptf_banzer:r.soKm}));
-  chk('⚠️ una entrega al noreste, más cerca de Banzer pero a la DERECHA de la línea, va a PTF', r.ne==='P', J({ne:r.ne, km_ptf_banzer:r.neKm}));
+  chk('una entrega al noreste, a la DERECHA de la línea, va a PTF', r.ne==='P', J({ne:r.ne, km_ptf_banzer:r.neKm}));
+  chk('⚠️ una entrega 1,8 km al oeste de PTF (más cerca de PTF) cae a la IZQUIERDA de la línea de logística: va a Banzer', r.oe==='B', J({oe:r.oe, km_ptf_banzer:r.oeKm}));
   chk('sobre la línea y a 400 m: mitad y mitad; a 700 m ya es de su lado', r.sobre==='medio' && r.a400==='medio' && r.a700==='P', J({sobre:r.sobre, a400:r.a400, a700:r.a700}));
+  chk('⚠️ el quiebre de El Trompillo: al sur del tramo horizontal es PTF, al norte (y al oeste de la avenida) es Banzer, y más al sur sigue PTF', r.bajoQuiebre==='P' && r.sobreQuiebre==='B' && r.quiebreLejos==='P', J({bajo:r.bajoQuiebre, sobre:r.sobreQuiebre, lejos:r.quiebreLejos}));
+  chk('cada depósito queda de su lado (PTF a la derecha, Banzer a la izquierda)', r.ptfLado>0 && r.bzLado<0, J({ptf:r.ptfLado, banzer:r.bzLado}));
   chk('más allá de las puntas la línea sigue derecha (norte lejano a la izquierda: Banzer; sur lejano a la derecha: PTF)', r.norte==='B' && r.sur==='P', J({norte:r.norte, sur:r.sur}));
-  chk('sin línea vuelve la regla de antes (el más cerca): esas dos entregas cambian de lado', r.sinLinea.so==='P' && r.sinLinea.ne==='B', J(r.sinLinea));
-  chk('el mapa dibuja la línea del dueño estirada en las dos puntas', r.dibujo.n===25 && r.dibujo.norte && r.dibujo.sur && r.lineaMapa===25, J({dibujo:r.dibujo, lineaMapa:r.lineaMapa}));
+  chk('sin línea vuelve la regla de antes (el más cerca): esas dos entregas vuelven a PTF', r.sinLinea.so==='P' && r.sinLinea.oe==='P', J(r.sinLinea));
+  chk('el mapa dibuja la línea del dueño estirada en las dos puntas', r.dibujo.n===43 && r.dibujo.norte && r.dibujo.sur && r.lineaMapa===43, J({dibujo:r.dibujo, lineaMapa:r.lineaMapa}));
   chk('el resumen y el mapa lo dicen con palabras', /según de qué lado de la línea cae: a la izquierda \(oeste\), Banzer; a la derecha \(este\), PTF\. A menos de 500 m/.test(r.resumen) && /La línea punteada es la división: a la izquierda, Banzer; a la derecha, PTF/.test(r.tit), r.resumen.slice(0,400));
 
   // ══ 12. El plan de 7, 15 y 30 días (07/10 a la noche) ═══════════════════════════════

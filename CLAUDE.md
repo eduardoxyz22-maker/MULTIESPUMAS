@@ -344,9 +344,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     · Dónde quedan: `ALM_UBIC` (coordenadas escritas). PTF exacto (Plus Code 7V24+CRP); **Banzer `aprox`** (su dirección escrita:
     Google no le da el pin de un LUGAR con nombre a un programa, ni al servidor). Si el dueño manda las coordenadas, se cambian ahí.
     · `almZonaData`: entregas de 60 días (`ALM_ZONA_DIAS`) con las reglas de la rotación de Stock (`stockCuenta`, sin venta de
-    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DEL DUEÑO cae** (07/10, «probemos la
-    A»: `ALM_DIVISION`, 23 puntos de norte a sur pasados de su dibujo; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este →
-    PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
+    tienda, sin `stockPedidoUnico`, sin `esProdDeTienda`); **lado = de qué lado de la LÍNEA DE LOGÍSTICA cae** (08/10, §4hy; reemplaza la del dueño del 07/10: `ALM_DIVISION`, 41 puntos de norte a sur sacados de los píxeles negros
+    de su captura; `almLadoDeLinea`: izquierda/oeste → Banzer, derecha/este → PTF; a < `ALM_LINEA_BANDA_KM`=0,5 km, mitad y mitad).
+    ⚠️ La línea tiene un tramo casi horizontal (El Trompillo): el lado sale del POLÍGONO del oeste (`almLineaGeo`) y la distancia
+    del tramo más cercano; no volver a elegir el tramo «de la misma latitud» (daba el lado al revés en el quiebre); sin línea, el más cerca (`ALM_EMPATE_KM`); sin pin, la zona escrita
     aprendida de los pedidos CON pin (`almZonas`, ≥3). Por unidades. Las zonas que defina logística van a mandar sobre la línea.
     · **Tener = `stockNecesario(o)`**, la MISMA cuenta de `stockCuantoPedir` (sacada a función: no la dupliques). La venta de
     tienda cuenta para el tener (es rotación) pero no para el lado. Se reparte con la proporción; lo que rota poco y lo
@@ -376,13 +377,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     hay que traer más de lo que dicen los Excel de donde se trae, y existe el Excel de ESA fábrica (`almPlanAlmsDe`), «⚠️ Recordá
     revisar la producción» en la fila, arriba (con «Ver cuáles»), en el filtro y en la copia. Nunca «pedir/producir/fabricar».
     `test_banzer_ptf` §12 (→ 101; 30 rojas contra `3f44b05`).
-    · **🚫 Solo los Excel del día (§4hx, 08/10, EN LA RAMA; dueño: *«no usan ese botón… simplemente cargan los saldos de almacén
+    · **🚫 Solo los Excel del día (§4hx, 08/10, PUBLICADA 08/10 21:05, `27c8d0d`; dueño: *«no usan ese botón… simplemente cargan los saldos de almacén
     cada día; si en Moreno aumenta el saldo, ese producto se fabricó»*)**: el plan resta SOLO las recogidas de Moreno ya
     programadas (`almPlanRecogidas`), nunca lo anotado como «pedí a fábrica» (Codex F1: daba por cubierta una entrega de mañana).
     `cubreB` es acción («↪️ Cargar en Banzer…», en «Qué hacer» y en la copia, F2); sin el Excel de PTF, «⚠️ Falta el Excel de PTF»
     y nunca «cada depósito tiene lo suyo» (F3). ⚠️ No volver a restar `stockEnCaminoSeguro` en el plan. `test_banzer_ptf` → 106.
     · **🚫 Sin «🏭 Pedí a fábrica»** (dueño, 08/10: *«ellos crean su Excel y correo, quítalos»*): fuera de la barra de Stock;
     «🚨 PEDIR YA» y «🏭 Pedir esta semana» son solo aviso. `abrirStockPedido` queda sin botón. No volver a ponerlo sin que lo pida.
+    Qué se habló y por qué: `INFORME_08-10.md` (leerlo antes de proponer algo que dependa de lo que logística anota a mano).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
@@ -601,6 +603,17 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   («no suena nada»). Safari rechaza lo que Chromium perdona. Si hay que recortar, desde el cuadro 0 o codificando de nuevo, y
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
+
+## 🚛 Los camiones en Administración (§4hz, 08/10): lo que hay que respetar
+El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
+lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
+- `#carga-viva`, primero dentro de `#adm-resumen`, se pliega con el resumen. Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- La imagen `carga-viva/escena.jpg` es FIJA y lo vivo va en coordenadas de la imagen (`CV_POS`, 1212×800). ⚠️ Los carteles tapan
+  los textos que la imagen trae pintados: si se cambia la imagen, hay que volver a ubicarlos.
+- **Los tildes son LOS MISMOS de la Lista de carga** (`cargaChkKey`/`setCargaChk`), y la agrupación por camión es UNA:
+  `cargaAgrupar`, que usan la lista y `cargaVivaDatos`. No duplicar la cuenta.
+- Tiene su propio Hoy/Mañana (`CV_DIA`). La Lista de carga NO lleva la tira, por pedido del dueño.
+- `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
