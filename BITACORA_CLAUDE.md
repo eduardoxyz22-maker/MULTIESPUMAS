@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ii. 08/10: ➕ «Qué producir» pedía de menos: lo vendido sin entregar y el ritmo se tomaban «el mayor», no se SUMABAN — EN LA RAMA, sin publicar (espera «publica»)
+## 4ii. 08/10: ➕ «Qué producir» pedía de menos: lo vendido sin entregar y el ritmo se tomaban «el mayor», no se SUMABAN — PUBLICADA 08/10 17:56 (`e533511`, Pages OK, run 37850277889; el dueño: «publica, y también 2 4 5 6»)
 El dueño, con la captura de «🏭 Qué producir»: *«especial semi ortopédico dice 9 sin entregar, hay 6 y solo pide 3 para los
 próximos 7 días… siendo que tiene 9 pendientes, a un ritmo de 1 por día… revisá la lógica para todos los productos, NO PUEDE
 PASAR ESTO… por eso venimos sin stock: manda pedir 3 y 7 para 15 días y tenemos 9 pendientes de entrega por falta de stock»*.
@@ -7467,7 +7467,7 @@ PASAR ESTO… por eso venimos sin stock: manda pedir 3 y 7 para 15 días y tenem
   pedido a Moreno de §8 pasa de 20 a 30 para que siga siendo «ya pedido») y `test_stock_quince.cjs` de la otra herramienta, que
   probaba justo la cuenta vieja («pendientes se comparan con previsión sin duplicar»).
 
-## 4ih. 08/10: 🧰 más ayudas del formulario: ¿pedido repetido?, buscar por nombre con saldo, el mapita y los pasos en el celular — EN LA RAMA, sin publicar
+## 4ih. 08/10: 🧰 más ayudas del formulario: ¿pedido repetido?, buscar por nombre con saldo, el mapita y los pasos en el celular — PUBLICADA 08/10 17:56 (`e533511`, Pages OK, run 37850277889; el dueño: «publica, y también 2 4 5 6»)
 El dueño eligió de una lista: *«4. me gusta, hazlo · 2, 5 y 6 dame ejemplo / muéstrame»* (la 1 no; la 3, combos, no: *«mejor nomás manual»*).
 - **¿Pedido repetido?** (`#fx-dup`, `fxDupBuscar/fxDupPintar/fxDupConfirmar`): mismo celular (últimos 8 dígitos) o mismo nombre
   (≥6 letras, `normNombre`) en un pedido de estos días (fecha o carga desde hoy−7) → aviso mientras se escribe con «👀 Ver», y

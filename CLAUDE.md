@@ -253,7 +253,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     `tests/test_rotacion.js` (secciones 1-2 = pocas entregas, 6 = Eduardo), `test_circuito.cjs`,
     `test_stock_rotacion.cjs`.
   - **➕ Lo vendido sin entregar se SUMA al ritmo, no «el mayor»** (§4ii, 08/10, dueño: *«NO PUEDE PASAR ESTO… por eso venimos
-    sin stock»*; EN LA RAMA): `stockNecesario = comp + porDia × (fábrica + margen + reserva)`, `nec15` y el `consumo` de
+    sin stock»*; PUBLICADA 08/10 17:56, `e533511`): `stockNecesario = comp + porDia × (fábrica + margen + reserva)`, `nec15` y el `consumo` de
     `stockProyectar` igual. Con `max` el ESPECIAL SEMIORTOPEDICO (9 vendidos, 0,9/día, 4 en Banzer, 2 en Moreno) pedía producir 3;
     ahora 11 (+ 2 de Moreno). El mes que viene (`mesNec`) sigue con el mayor: lo probable ya incluye lo vendido. ⚠️ No volver al
     `max`. `tests/test_proyeccion_suma.js` (9).
@@ -654,7 +654,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   `#fx-der` (el pedido en vivo: productos con su estado, suma, «Para guardar», hoy y el mes) a los costados, `sticky`. «Para
   guardar» es solo una ayuda: las validaciones siguen en `submitPedido`. Más angosto no cambia nada.
 - `tests/test_escenas_form.js` (23).
-- **🧰 Más ayudas (§4ih, EN LA RAMA)**: ¿pedido repetido? (`#fx-dup`, pregunta al guardar), buscar el producto por nombre con el
+- **🧰 Más ayudas (§4ih, PUBLICADA 08/10 17:56, `e533511`)**: ¿pedido repetido? (`#fx-dup`, pregunta al guardar), buscar el producto por nombre con el
   saldo (`#fx-busca`, reemplaza el `datalist` de `.prod-desc`), el mapita de la ubicación (`#fx-mapa`) y los pasos en el celular
   (`#fx-pasos`). `tests/test_ayudas_form.js` (21).
 
