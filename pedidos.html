@@ -1647,6 +1647,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .fx-pb.ok{ border-color:var(--green-border); color:var(--green); background:var(--green-lt); } .fx-pb.ok .ic{ font-weight:900; }
 .fx-pb.act{ border-color:var(--teal); box-shadow:0 0 0 2px rgba(0,181,173,.25); color:var(--teal-dk); }
 body.con-pasos{ padding-bottom:78px; }
+html.con-pasos{ scroll-padding-bottom:84px; }
 @media (max-width:480px){ .fx-saldo .fx-esc{ width:62px; height:34px; } .fx-saldo{ gap:7px; } }
 </style>
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -11449,7 +11450,7 @@ function fxPasosEstado(){
 function fxPasosPintar(){
   var el=document.getElementById('fx-pasos'); if(!el) return;
   var enForm=document.getElementById('view-form').classList.contains('active');
-  if(!enForm || !(window.matchMedia && matchMedia('(max-width:760px)').matches)){ if(!el.hidden){ el.hidden=true; document.body.classList.remove('con-pasos'); } return; }
+  if(!enForm || !(window.matchMedia && matchMedia('(max-width:760px)').matches)){ if(!el.hidden){ el.hidden=true; document.body.classList.remove('con-pasos'); document.documentElement.classList.remove('con-pasos'); } return; }
   var ok=fxPasosEstado(), act=0, tope=110;
   FX_PASOS.forEach(function(p,i){ var a=p.ancla(); if(a && a.offsetParent!==null && a.getBoundingClientRect().top<=window.innerHeight*0.45) act=i; });
   var listos=ok.filter(Boolean).length;
@@ -11458,7 +11459,7 @@ function fxPasosPintar(){
     return '<button type="button" class="fx-pb'+(ok[i]?' ok':'')+(i===act?' act':'')+'" onclick="fxPasoIr('+i+')"><span class="ic">'+(ok[i]?'✓':p.ico)+'</span><span class="nm">'+p.n+'</span></button>';
   }).join('')+'</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
-  if(el.hidden){ el.hidden=false; document.body.classList.add('con-pasos'); }
+  if(el.hidden){ el.hidden=false; document.body.classList.add('con-pasos'); document.documentElement.classList.add('con-pasos'); }   // html: que lo que se lleva a la vista (Guardar, un campo con error) quede ARRIBA de la barra
 }
 function fxPasoIr(i){
   var a=FX_PASOS[i] && FX_PASOS[i].ancla(); if(!a) return;

@@ -247,22 +247,23 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var d=stockData();
     var eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0], pill=d.lista.filter(o=>/PILLOW/.test(o.desc))[0], mem=d.lista.filter(o=>/MEMORY/.test(o.desc))[0];
     renderAdmin();
-    return { eco:eco, pill:pill, mem:mem, corte4:window._adel(4), primero:d.lista[0].desc,
+    return { eco:eco, pill:pill, mem:mem, corte2:window._adel(2), primero:d.lista[0].desc,
              banner:(document.getElementById('adm-stock')||{}).textContent||'', fabrica:STOCK_DIAS_FABRICA, colchon:STOCK_COLCHON };
   });
   chk('la fábrica tarda 3 días mientras no se mida (lo dijo el dueño)', r.fabrica===3 && r.eco.lead===3 && r.eco.leadMedido===false, r.eco.lead+' · medido '+r.eco.leadMedido);
   chk('el depósito del ECO FLEX es 12', r.eco.deposito===12, r.eco.deposito);
-  chk('⚠️ se corta EN 4 DÍAS: ahí caen 20 vendidos que con 12 no se cubren (lo viejo miraba solo 3 días y decía «alcanza 12»)',
-      r.eco.dias===4 && r.eco.corte===r.corte4, r.eco.dias+' días · '+r.eco.corte);
-  chk('⚠️ …4 días es más que los 3 de fábrica pero menos que 3 + 2 de margen → PEDIR ESTA SEMANA',
-      r.eco.aviso==='pedir' && r.eco.margen===2, r.eco.aviso+' · margen '+r.eco.margen);
-  // 30 comprometidos desde 91ddcd8 (los 4 ✗ no hay de días pasados ya cuentan, ver §1): 30 − 12 = 18.
-  chk('…y dice cuánto pedir: los 30 comprometidos menos los 12 que hay = 18', r.eco.pedir===18, r.eco.pedir);
+  /* (§4ii, 08/10) Lo vendido para cada día MÁS 1 por día de lo que se va a vender: con 12 se corta en 2 días (antes, con el
+     mayor de los dos, la cuenta miraba solo lo vendido y decía 4). */
+  chk('⚠️ se corta EN 2 DÍAS: lo vendido para esos días + 1 por día que se va a vender ya no entra en 12',
+      r.eco.dias===2 && r.eco.corte===r.corte2, r.eco.dias+' días · '+r.eco.corte);
+  chk('⚠️ …2 días es menos que los 3 de fábrica → PEDIR YA', r.eco.aviso==='urgente' && r.eco.margen===2, r.eco.aviso+' · margen '+r.eco.margen);
+  // 30 comprometidos desde 91ddcd8 (los 4 ✗ no hay de días pasados ya cuentan, ver §1) + 1/día × (3 + 2 + 7) − 12 = 30 (§4ii: antes 30 − 12 = 18).
+  chk('…y dice cuánto pedir: 30 vendidos + 12 de venta (3 fábrica + 2 margen + 7 reserva) − 12 que hay = 30', r.eco.pedir===30, r.eco.pedir);
   chk('el ECO FLEX vende parejo (1 por tramo de 5 días) → margen de 2 días, «venta pareja»', r.eco.cv<0.01, 'cv '+r.eco.cv);
   chk('⚠️ el PILLOW con 30 en depósito y 2 vendidos en 4 semanas es PLATA PARADA', r.pill.aviso==='sobra' && r.pill.sobra===true, r.pill.aviso);
   chk('el MEMORY FLEX con 40 (para 40 días) ni sobra ni falta', r.mem.aviso==='', r.mem.aviso+' · corte en '+r.mem.dias+' días');
   chk('lo que hay que pedir va primero en la lista', /ECO FLEX/.test(r.primero), r.primero);
-  chk('⚠️ y avisa en Administración, diciendo cuál', /para pedir esta semana/.test(r.banner) && /ECO FLEX/.test(r.banner), r.banner.replace(/\s+/g,' ').slice(0,140));
+  chk('⚠️ y avisa en Administración, diciendo cuál', /se acaba/.test(r.banner) && /ECO FLEX/.test(r.banner), r.banner.replace(/\s+/g,' ').slice(0,140));
 
   r = await page.evaluate(() => {
     STOCK.c.u[K]=0;
@@ -382,17 +383,17 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   r = await page.evaluate(() => {
     var p=STATE.filter(function(x){ return x.id==='v1'; })[0]; p.entregado=false; p.fecha=window._adel(2);   // se deshace lo de §5
     STATE=STATE.filter(function(x){ return x.id!=='f2'; });
-    STOCK={ c:{f:todayStr(), u:{}}, e:[], p:[{id:'fp1', k:K, u:20, fab:'MORENO', f:todayStr(), esp:'', r:''}], a:{} };
+    STOCK={ c:{f:todayStr(), u:{}}, e:[], p:[{id:'fp1', k:K, u:30, fab:'MORENO', f:todayStr(), esp:'', r:''}], a:{} };   // (§4ii) 30: con 20 ya no alcanza para lo vendido + la venta
     STOCK.c.u[K]=12;
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     renderAdmin(); renderStock();
     return { eco:eco, llega:window._adel(3), banner:(document.getElementById('adm-stock')||{}).textContent||'',
              pantalla:((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' ') };
   });
-  chk('⚠️ con 20 pedidas a Moreno (llegan en ~3 días) el ECO FLEX pasa a «ya pedido» y NO molesta más',
-      r.eco.aviso==='pedido' && r.eco.enCamino===20, r.eco.aviso+' · '+r.eco.enCamino+' en camino');
+  chk('⚠️ con 30 pedidas a Moreno (llegan en ~3 días) el ECO FLEX pasa a «ya pedido» y NO molesta más',
+      r.eco.aviso==='pedido' && r.eco.enCamino===30, r.eco.aviso+' · '+r.eco.enCamino+' en camino');
   chk('…llegan el día que la fábrica suele tardar', r.eco.pedidos[0].llega===r.llega, r.eco.pedidos[0].llega);
-  chk('…y recuerda que sin ese pedido se cortaba en 4 días', r.eco.sinCamino===4, r.eco.sinCamino);
+  chk('…y recuerda que sin ese pedido se cortaba en 2 días', r.eco.sinCamino===2, r.eco.sinCamino);
   chk('el aviso de Administración se calla', r.banner.trim()==='', r.banner.slice(0,80));
   /* §4cr renombró la sección: «🚚 En camino — recogidas de Moreno y pedidos a fábrica»,
      porque ahora conviven las dos cosas. */
@@ -403,10 +404,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { aviso:eco.aviso, dias:eco.dias };
   });
   /* Desde 91ddcd8 (§4de) lo que YA está pedido no se vuelve a pedir aunque llegue tarde: el
-     corte sigue a la vista (4 días) pero el aviso queda en «🚚 Ya pedido» con «Confirmar la
+     corte sigue a la vista (2 días, §4ii) pero el aviso queda en «🚚 Ya pedido» con «Confirmar la
      llegada: hay un faltante antes de recibir. No duplicar la orden.» Antes decía «pedir», y
      eso podía terminar en DOS órdenes de fábrica por el mismo faltante. */
-  chk('⚠️ si lo pedido llega DESPUÉS del corte, el corte sigue a la vista pero NO se pide dos veces', r.aviso==='pedido' && r.dias===4, r.aviso+' · corte en '+r.dias);
+  chk('⚠️ si lo pedido llega DESPUÉS del corte, el corte sigue a la vista pero NO se pide dos veces', r.aviso==='pedido' && r.dias===2, r.aviso+' · corte en '+r.dias);
   r = await page.evaluate(() => {
     STOCK.p[0].esp='';
     abrirStockEntrada();
@@ -418,9 +419,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
              moreno:T.de('MORENO'), hoy:todayStr() };
   });
   chk('«📥 Llegó de fábrica» ofrece lo que estaba pedido', r.hayInput===true);
-  chk('⚠️ al marcar que llegó: se cierra el pedido, se suma al depósito (12+20) y ya no está en camino',
-      r.r===r.hoy && r.entrada && r.entrada.u===20 && r.entrada.de==='fp1' && r.deposito===32 && r.enCamino===0, r.deposito+' · '+r.enCamino+' · '+JSON.stringify(r.entrada));
-  chk('…y con 32 para 30 vendidos ya no hay nada que pedir', r.aviso==='', r.aviso);
+  chk('⚠️ al marcar que llegó: se cierra el pedido, se suma al depósito (12+30) y ya no está en camino',
+      r.r===r.hoy && r.entrada && r.entrada.u===30 && r.entrada.de==='fp1' && r.deposito===42 && r.enCamino===0, r.deposito+' · '+r.enCamino+' · '+JSON.stringify(r.entrada));
+  chk('…y con 42 para 30 vendidos + la venta de los próximos días ya no hay nada que pedir', r.aviso==='', r.aviso);
   chk('⚠️ …y quedó MEDIDO cuánto tardó Moreno esta vez', r.moreno.medido===true && r.moreno.n===1, JSON.stringify(r.moreno));
 
   // ══ 9. Cuánto tarda cada fábrica, medido ═══════════════════════════════════
@@ -454,7 +455,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { multi:T.de('MULTI'), aviso:eco.aviso, dias:eco.dias, lead:eco.lead };
   });
   chk('⚠️ una línea 🏭 Multiespumas sellada en la ficha mide 2 días para Multi', r.multi.dias===2 && r.multi.medido===true && r.multi.prestado===false, JSON.stringify(r.multi));
-  chk('⚠️ con Moreno en 4 días, cortarse en 3 es PEDIR YA (con 3 fijos era «esta semana»)', r.aviso==='urgente' && r.dias===3 && r.lead===4, r.aviso+' · '+r.dias+' · fábrica '+r.lead);
+  chk('⚠️ con Moreno en 4 días, cortarse en 2 es PEDIR YA (§4ii: con lo vendido + la venta se corta antes)', r.aviso==='urgente' && r.dias===2 && r.lead===4, r.aviso+' · '+r.dias+' · fábrica '+r.lead);
   r = await page.evaluate(() => {
     /* Los sellos los pone la ficha sola: al marcar 🏭 se anota el día, al pasar a ✔ el otro. */
     setProdProduccion('nh1', 0, 'Multiespumas');
@@ -594,11 +595,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     window.copyText=function(t){ copiado=t; };
     copiarStock();
     window.copyText=window._copyOrig;
+    var eco=stockData().lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
+    window._esp14=Math.ceil(eco.comp + eco.porDia*(eco.lead+eco.margen+eco.cubrir) - 0 - 6 - 1e-9);
+    window._comp14=eco.comp;
     return copiado;
   });
+  const esp14 = await page.evaluate(() => [window._esp14, window._comp14]);
   chk('arma el mensaje para la fábrica', /PEDIDO A F[ÁA]BRICA/.test(r), r.split('\n')[0]);
-  // 30 comprometidos desde 91ddcd8 (§1): 30 − 0 − 6 = 24.
-  chk('⚠️ dice cuántas unidades pedir: 30 comprometidos − 0 que hay − 6 en camino = 24', /pedir 24/.test(r), (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100));
+  // 30 comprometidos desde 91ddcd8 (§1) + la venta de fábrica + margen + reserva − 0 − 6 en camino (§4ii: antes 30 − 0 − 6 = 24).
+  chk('⚠️ dice cuántas unidades pedir: 30 vendidos + ritmo × (fábrica + margen + reserva) − 0 que hay − 6 en camino',
+      esp14[1]===30 && esp14[0]>24 && new RegExp('pedir '+esp14[0]+'\\b').test(r), [esp14, (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100)]);
   chk('…y por qué: lo que queda, lo que viene, lo que se vende por día y cuándo se corta',
       /quedan 0/.test(r) && /6 en camino/.test(r) && /por día/.test(r) && /se corta hoy/.test(r), (r.match(/quedan[^\n]*/)||[''])[0].slice(0,140));
 
