@@ -1447,6 +1447,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .cv-lienzo img{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .cv-lienzo img.cv-cuerpo{ cursor:pointer; }   /* el recorte del camión: se toca solo dentro de su silueta (clip-path) */
 .cv-pin.vista{ box-shadow:0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.45); }
+.cv-sel{ flex:none; max-width:46%; border:1px solid rgba(148,163,184,.4); background:#0f1f3d; color:#e6edf7; border-radius:7px; padding:5px 6px; font:inherit; font-size:.76rem; }
 .cv-volver{ border:1px solid rgba(148,163,184,.35); background:rgba(255,255,255,.06); color:#e6edf7; border-radius:8px; padding:5px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; margin-bottom:8px; }
 .cv-lienzo svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .cv-ruta{ fill:none; stroke:var(--cv-cian); stroke-width:3.5; stroke-linecap:round; stroke-dasharray:2 16; animation:cvCorre 1.2s linear infinite; opacity:.95; }
@@ -13180,9 +13181,9 @@ function cargaVivaDatos(){
   var sin=orden.indexOf('Sin vehículo'); if(sin>=0){ orden.splice(sin,1); if(G.byV['Sin vehículo']) orden.push('Sin vehículo'); }
   var bz={ total:0, dentro:0, cams:0 }, im={ u:0, alm:{} };
   orden.forEach(function(k){
-    var o=G.byV[k], c={ k:k, sin:(k==='Sin vehículo'), lineas:[], total:0, dentro:0, paradas:0, choferes:[] };
+    var o=G.byV[k], c={ k:k, sin:(k==='Sin vehículo'), lineas:[], total:0, dentro:0, paradas:0, choferes:[], stops:[] };
     if(o){
-      c.paradas=o.stops.length; c.choferes=Object.keys(o.choferes);
+      c.paradas=o.stops.length; c.stops=o.stops; c.choferes=Object.keys(o.choferes);
       Object.keys(o.prod).sort().forEach(function(kk){
         var u=o.prod[kk]; if(!(u>0)) return;
         var alm=Object.keys(o.prodAlm[kk]||{}).map(function(a){ return recogerCanon(a)==='' ? 'Moreno' : a; }).join(' + ');
@@ -13320,6 +13321,17 @@ function cvPintarPanel(D){
      '<div class="cv-est" style="color:'+CV_COL[c.est]+'"><i></i>'+CV_EST[c.est]+'</div>'+
      '<div class="cv-quien">'+esc((c.choferes.join(', ')||'sin chofer')+' · '+c.paradas+' parada'+(c.paradas===1?'':'s'))+'</div>'+
      '<img class="cv-foto" src="carga-viva/camion.png?v=1" alt="">';
+  /* 🚚 (§4ie, 08/10, dueño: «sí, agregalo») En «Sin vehículo», cada pedido trae su selector para elegirle el camión ahí mismo:
+     lo mismo que la columna «Vehículo» de la tabla (`cvAsignar` = `setVehiculo` sin reabrir ninguna ficha). */
+  if(c.sin && c.stops.length){
+    var opts=Object.keys(VEHICULOS).map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
+    h+='<div class="cv-lbl" style="margin-top:4px">🚚 ASIGNAR CAMIÓN</div><div class="cv-filas" id="cv-asignar" style="margin-bottom:12px">'+c.stops.map(function(p){
+      var n=(p.productos||[]).reduce(function(a,x){ return a+(Number(x.cant)||0); },0);
+      return '<div class="cv-fila cv-asig" style="cursor:default"><div class="tx" style="flex:1;min-width:0"><b>'+esc(p.cliente||'(sin cliente)')+'</b>'+
+        '<div class="z">'+esc([ocEtiq(p.oc), p.zona, turnoDe(p), cvU(n)].filter(Boolean).join(' · '))+'</div></div>'+
+        '<select class="cv-sel" data-id="'+esc(p.id)+'" onchange="cvAsignar(this.getAttribute(\'data-id\'), this.value)"><option value="">Camión…</option>'+opts+'</select></div>';
+    }).join('')+'</div>';
+  }
   if(c.total){
     h+='<div class="cv-lbl">CARGA</div><div class="cv-num"><span id="cv-n">'+c.dentro+'</span> <small>/ '+cvU(c.total)+'</small></div>'+
        '<div class="cv-bar'+(c.est==='ok'?' ok':'')+'"><i id="cv-barra" style="width:'+pct+'%"></i></div>'+
@@ -13346,6 +13358,12 @@ function cvPintarPanel(D){
   if(f){ if(top) f.scrollTop=top; else { var pr=f.querySelector('.cv-fila:not(.on)'); if(pr) f.scrollTop=Math.max(0, pr.offsetTop-f.offsetTop-30); } }
 }
 function cvElegir(k){ CV_SEL=k; CV_VISTA=''; cargaVivaPintar(); }
+function cvAsignar(id, v){
+  var p=findById(id); if(!p || !v || !VEHICULOS[v]) return;
+  p.vehiculo=v; p.chofer=VEHICULOS[v][0]||'';
+  persistPedido(p);                                   // repinta Administración, la Lista de carga y los camiones
+  try{ toast('🚚 '+(p.cliente||'Pedido')+' → '+v, 'ok'); }catch(e){}
+}
 function cvIrALista(){
   CARGA_DIA=CV_DIA; abrirCarga(); setCargaDia(CV_DIA);
   var cams=document.querySelectorAll('#carga-body .carga-cam'), sc=document.getElementById('carga-body'), el=null;

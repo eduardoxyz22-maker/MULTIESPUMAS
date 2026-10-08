@@ -631,6 +631,9 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   carga en Banzer ese día, por camión, con los MISMOS tildes) / `'im'` (lo marcado «📥 recoger», por camión; sin tildes: se cambia
   en el pedido). `cvVer(v)`; «← Volver al camión»; los recortes `img.cv-cuerpo` se tocan dentro de su silueta. La Lista de carga
   se abre solo con «📋 Ver…» y «📦 Ver su carga».
+- **Un camión sin pedidos dice por qué** (§4id: ningún pedido del día lo tiene asignado, cuántos esperan, botón a «Sin vehículo»),
+  y **en «Sin vehículo» se asigna el camión ahí mismo** (§4ie, `cvAsignar` = `setVehiculo` sin reabrir fichas: vehículo + primer
+  chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)

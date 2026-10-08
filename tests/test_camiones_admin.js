@@ -216,6 +216,23 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('§4id: un camión sin pedidos dice que ningún pedido lo tiene asignado, cuántos esperan camión, y lleva a «Sin vehículo»',
     /Ningún pedido de hoy tiene asignado el Carry/.test(r.txt) && /1 pedido sin camión/.test(r.txt) && r.boton && r.sel==='Sin vehículo', J(r));
 
+  r = await page.evaluate(async () => {
+    CV_DIA='hoy'; CV_VISTA=''; cvElegir('Sin vehículo');
+    var s=document.querySelector('#cv-panel select.cv-sel'), id=s && s.getAttribute('data-id'), txt=document.getElementById('cv-panel').innerText.replace(/\s+/g,' ');
+    var opciones=s ? [].slice.call(s.options).map(function(o){ return o.value||o.textContent; }) : [];
+    s.value='Carry'; s.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(function(r){ setTimeout(r,150); });
+    var p=findById(id), D=cargaVivaDatos();
+    var o={ id:id, txt:txt, opciones:opciones, veh:p.vehiculo, chofer:p.chofer, guardado:!!(_SRV[id] && _SRV[id].vehiculo==='Carry'),
+      sinQueda:!!D.porK['Sin vehículo'], carry:D.porK['Carry'] && D.porK['Carry'].paradas, enTabla:vehiculoDe(p) };
+    p.vehiculo=''; p.chofer=''; persistPedido(p);   // dejar el fixture como estaba
+    return o;
+  });
+  chk('§4ie: en «Sin vehículo» cada pedido trae su selector de camión (los cuatro de VEHICULOS)',
+    /ASIGNAR CAMIÓN/.test(r.txt) && /CLIENTE D/.test(r.txt) && ['Carry','Foton nuevo','Foton encarpado','Foton insumo'].every(function(v){ return r.opciones.indexOf(v)>=0; }), J({txt:r.txt.slice(0,200), op:r.opciones}));
+  chk('§4ie: elegir el camión lo guarda en el pedido (vehículo y chofer, como la columna de la tabla) y pasa a ese camión',
+    r.veh==='Carry' && r.chofer==='Luis Pierre' && r.guardado && !r.sinQueda && r.carry===1, J(r));
+
   // ══ 8. Plegar, celular, errores ══
   console.log('\n── 8. Dos botones separados (§4ib); celular; errores ──');
   r = await page.evaluate(() => {

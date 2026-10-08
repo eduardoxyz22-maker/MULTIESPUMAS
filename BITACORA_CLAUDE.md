@@ -7445,6 +7445,12 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ie. 08/10: 🚛 asignar el camión desde «Sin vehículo» (dueño: «sí, agregalo y publicá»)
+En el panel de «Sin vehículo», «🚚 ASIGNAR CAMIÓN»: cada pedido del día sin camión (cliente, OC, zona, turno, bultos) con un selector
+de los camiones de `VEHICULOS`. `cvAsignar(id, v)` hace lo mismo que la columna «Vehículo» de la tabla (`setVehiculo`: vehículo +
+el primer chofer de ese camión) sin reabrir fichas; `persistPedido` repinta tabla, Lista de carga y camiones. `test_camiones_admin`
+→ 39.
+
 ## 4id. 08/10: 🚛 un camión vacío dice POR QUÉ (en la rama, SIN publicar)
 **El dueño** (captura de la página publicada): *«solo en "sin camión" aparece la lista lateral; en los demás camiones no sale»*.
 No era un error: ese día los 19 pedidos no tenían camión asignado (`vehiculoDe`: `p.vehiculo` o el camión del chofer), así que
