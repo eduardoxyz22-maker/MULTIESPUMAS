@@ -7445,6 +7445,23 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ig. 08/10: 🖥️ los costados del formulario en pantalla ancha (en la rama, SIN publicar)
+**El dueño** (captura de la página publicada en su compu de 1920 px): *«publicar, y mientras hacé algo más pulido y
+desarrollado, porque además tenemos espacios vacíos a los laterales»*.
+- Desde **1300 px** (`fxAncho`), en la vista del formulario (`body:not(.ancha)` → `--wrap:1640px`) `#view-form` pasa a 3 columnas:
+  **`#fx-izq`** (agenda) · el formulario · **`#fx-der`** (tu pedido en vivo). Los dos costados son `sticky` debajo del encabezado.
+  Más angosto, nada cambia (celular, iPad parado). En la venta de tienda la agenda se esconde (`solo-entrega`).
+- **Agenda** (`fxIzqPintar`): los 7 días con una barra por turno (AM/PM, sábado solo AM) y «N libres»/«lleno», «cerrado» o
+  «feriado: nombre». Tocar el día elige la fecha; tocar el TURNO elige fecha y turno (`fxElegirDia(f, ev)`). Debajo, el camión del
+  turno (`fxCamionEn(#fx-izq-cam)`) y «👀 Ver los N pedidos del turno» (`verCuposTurno`). Con los costados, la tira y el camión de
+  adentro del formulario se esconden (no se repiten).
+- **Tu pedido** (`fxDerPintar`): cliente, tipo y vendedor, día y turno, zona, celular; cada producto con el ícono y el estado de su
+  cuadrito (`box._v.tipo` → `FX_SALDO_ICO`) y su subtotal; la suma, «A cuenta» y «Saldo por cobrar»; «Para guardar» (✓/○ de
+  vendedor, cliente, productos, fecha, zona, y celular y nota si no es Eduardo/ROHO — es una ayuda, NO reemplaza las validaciones
+  de `submitPedido`); «N pedidos cargados hoy» y lo vendido en el mes. Se repinta con cada `input`/`change`/`click` del formulario
+  (150 ms, `fxLadosProgramar`), con los cuadritos del saldo y al cambiar el ancho de la ventana.
+- `test_escenas_form` §6 (4 más → 23).
+
 ## 4if. 08/10: ✨ las escenas del formulario de pedidos — PUBLICADA 08/10 16:35 (`19a2ec0`, Pages OK, run 37840479450; el dueño: «publicar»)
 **El dueño**, después de una muestra en video (scratchpad, no está en el repo): *«todas, pero ¿qué pasa con lo demás del
 formulario?»* y *«por lo del celular no te preocupes… quiero escenas wow»*. Lo demás del formulario queda IGUAL; esto solo mira.
