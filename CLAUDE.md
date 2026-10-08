@@ -636,7 +636,7 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
-## ✨ Las escenas del formulario de pedidos (§4if, 08/10, dueño: *«todas… quiero escenas wow»*; en la rama, SIN publicar)
+## ✨ Las escenas del formulario de pedidos (§4if, 08/10, dueño: *«todas… quiero escenas wow»*; PUBLICADA 08/10 16:35, `19a2ec0`)
 Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, saldo ni el guardado).
 - `#fx-dias` (debajo de la fecha, 7 días con lo libre; tocar = `change` de `f-fecha`), `#fx-camion` (debajo del turno, lugares del
   turno con el «tuyo»), el dibujo del cuadrito (`fxEscenaSaldo` en `saldoCajaPintar`), `#fx-mes` (lo vendido en el mes por la

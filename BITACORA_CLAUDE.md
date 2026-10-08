@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4if. 08/10: ✨ las escenas del formulario de pedidos (en la rama, SIN publicar)
+## 4if. 08/10: ✨ las escenas del formulario de pedidos — PUBLICADA 08/10 16:35 (`19a2ec0`, Pages OK, run 37840479450; el dueño: «publicar»)
 **El dueño**, después de una muestra en video (scratchpad, no está en el repo): *«todas, pero ¿qué pasa con lo demás del
 formulario?»* y *«por lo del celular no te preocupes… quiero escenas wow»*. Lo demás del formulario queda IGUAL; esto solo mira.
 - **2 · `#fx-dias`** debajo de la fecha: los próximos 7 días (desde mañana; desde hoy para Eduardo/ROHO, `esVendedorLite`) con lo
