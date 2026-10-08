@@ -731,6 +731,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
           <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">
         </div>
       </div>
+      <div id="fx-dias" class="fx-dias solo-entrega no-print"></div>
 
       <div class="grid2">
         <div class="field">
@@ -744,7 +745,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
         </div>
         <div class="field">
           <label class="lb">Vendedor <span class="req">*</span></label>
-          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value);applyVendedorLite();sugerirTiendaSuc()">
+          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value);applyVendedorLite();sugerirTiendaSuc();fxFormPintar()">
           <datalist id="dl-vendedores"></datalist>
         </div>
       </div>
@@ -849,6 +850,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
           <input type="text" id="f-garantia" placeholder="Nombre a quien va la garantía" autocomplete="off">
         </div>
       </div>
+      <div id="fx-camion" class="fx-camion solo-entrega no-print" hidden></div>
 
 
       <div class="grid2" id="wrap-factura">
@@ -979,6 +981,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
         <textarea id="f-obs" placeholder="Notas del pedido: entregar después de las 15h, llamar antes, color específico, etc. (opcional)"></textarea>
       </div>
 
+      <div id="fx-mes" class="fx-mes no-print" hidden></div>
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
       </div>
@@ -1506,6 +1509,65 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .cv-vacio{ font-size:.82rem; color:var(--cv-sub); padding:6px 2px; }
 @media (max-width:900px){ .cv-marco{ flex-direction:column; } .cv-mapa{ width:100%; flex:none; } .cv-panel{ width:auto; align-self:stretch; } .cv-pin .s{ display:none; } .cv-pin{ padding:4px 8px 5px; } .cv-accion{ font-size:.66rem; } }
 @media (prefers-reduced-motion:reduce){ #carga-viva *{ animation:none !important; transition:none !important; } }
+/* ✨ ESCENAS DEL FORMULARIO (§4if, 08/10, dueño: «todas… quiero escenas wow»). Solo miran: no cambian ninguna regla del pedido. */
+.fx-dias{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; margin:-4px 0 14px; }
+.fx-dia{ border:1.5px solid var(--gray-md); border-radius:12px; padding:7px 2px 8px; text-align:center; background:#fff; cursor:pointer; transition:transform .25s var(--ease), box-shadow .25s, border-color .25s; font:inherit; color:inherit; min-width:0; }
+.fx-dia:hover{ transform:translateY(-2px); box-shadow:var(--sh-soft); }
+.fx-dia .d{ font-size:.64rem; color:var(--muted); font-weight:800; letter-spacing:.04em; } .fx-dia .n{ font-size:1.05rem; font-weight:800; line-height:1.2; }
+.fx-dia .b{ height:5px; border-radius:4px; background:#eef0f3; margin:5px 5px 0; overflow:hidden; } .fx-dia .b i{ display:block; height:100%; border-radius:4px; transition:width .6s var(--ease); }
+.fx-dia .q{ font-size:.6rem; margin-top:3px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fx-dia.off{ background:#f6f6f6; color:#b5b5b5; cursor:default; } .fx-dia.off:hover{ transform:none; box-shadow:none; }
+.fx-dia.sel{ border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,181,173,.2); transform:translateY(-2px); }
+.fx-camion{ margin:-2px 0 16px; background:linear-gradient(180deg,#f3fbfb,#eef4ff); border:1px solid var(--teal-border); border-radius:14px; padding:9px 12px 4px; position:relative; overflow:hidden; }
+.fx-camion .t{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:.86rem; flex-wrap:wrap; }
+.fx-camion .pill{ margin-left:auto; padding:3px 10px; border-radius:20px; font-size:.74rem; }
+.fx-camion svg{ width:100%; height:auto; display:block; max-height:190px; }
+.fx-slot{ transition:fill .35s, stroke .35s; } .fx-slot.tuyo{ animation:fxLate 1s ease-in-out infinite; }
+@keyframes fxLate{ 50%{ fill:#fde68a; } }
+.fx-cam-g{ transition:transform .7s cubic-bezier(.2,.8,.3,1); }
+.fx-saldo{ display:flex; gap:10px; align-items:flex-start; } .fx-saldo .fx-esc{ width:96px; height:52px; flex:none; } .fx-saldo-t{ flex:1; min-width:0; }
+.fx-colchon{ animation:fxApila .6s cubic-bezier(.2,1.6,.4,1) both; transform-box:fill-box; }
+@keyframes fxApila{ from{ transform:translateY(-26px); opacity:0; } }
+.fx-check{ transform-box:fill-box; transform-origin:center; animation:fxPop .5s .8s cubic-bezier(.2,1.8,.4,1) both; }
+@keyframes fxPop{ from{ transform:scale(0); } }
+.fx-va{ animation:fxIda 2.2s ease-in-out infinite alternate; } @keyframes fxIda{ to{ transform:translateX(24px); } }
+.fx-humo{ animation:fxHumo 2s ease-out infinite; transform-box:fill-box; transform-origin:center; }
+@keyframes fxHumo{ from{ transform:translateY(0) scale(.6); opacity:.8; } to{ transform:translateY(-20px) scale(1.5); opacity:0; } }
+.fx-gira{ transform-box:fill-box; transform-origin:center; animation:fxGira 3s linear infinite; } @keyframes fxGira{ to{ transform:rotate(360deg); } }
+.fx-mes{ background:#fff; border:1px solid var(--gray-md); border-radius:12px; padding:10px 14px; margin-top:18px; }
+.fx-mes .l{ font-size:.7rem; font-weight:800; letter-spacing:.06em; color:var(--muted); }
+.fx-mes .r{ display:flex; align-items:center; gap:12px; margin-top:6px; }
+.fx-mes .bar{ flex:1; height:12px; border-radius:10px; background:#eef0f3; overflow:hidden; } .fx-mes .bar i{ display:block; height:100%; border-radius:10px; background:linear-gradient(90deg,#00B5AD,#1d4ed8); transition:width 1.2s var(--ease); }
+.fx-mes .v{ font-weight:900; min-width:110px; text-align:right; } .fx-mes .s{ font-size:.74rem; color:var(--muted); margin-top:3px; }
+/* 🎬 La escena al guardar: el camión de verdad (la foto), los productos que suben y sale. */
+#fx-escena{ position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center; overflow:hidden; background:#060d1c; cursor:pointer; }
+#fx-escena.on{ display:flex; animation:fxEntra .35s ease-out; } @keyframes fxEntra{ from{ opacity:0; } }
+#fx-escena .fondo{ position:absolute; inset:-4%; background:url('carga-viva/escena.jpg?v=1') 50% 50%/cover no-repeat; filter:blur(7px) brightness(.4) saturate(1.25); transform:scale(1.08); }   /* quieto a propósito: un fondo borroso que se mueve es lo más caro de dibujar */
+#fx-escena .vineta{ position:absolute; inset:0; background:radial-gradient(ellipse at 50% 55%, transparent 30%, rgba(3,8,20,.85) 85%); }
+#fx-escena .piso{ position:absolute; left:50%; top:68%; width:min(900px,120vw); height:120px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(34,211,238,.35), transparent 65%); filter:blur(6px); }
+#fx-escena .cam{ position:absolute; left:50%; top:52%; width:min(620px,88vw); transform:translate(-50%,-50%); transition:transform 1.5s cubic-bezier(.55,0,.25,1), filter 1.5s; }
+/* `camion-recorte.png` = la foto del camión de §4hz sin su fondo azul (recortada una vez, con un relleno desde los bordes): con el
+   fondo se veía el rectángulo encima de la escena. */
+#fx-escena .cam img{ width:100%; display:block; filter:drop-shadow(0 18px 22px rgba(0,0,0,.55)); }
+#fx-escena .faro{ position:absolute; width:18%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle, rgba(255,248,214,.95), rgba(253,230,138,.35) 35%, transparent 70%); mix-blend-mode:screen; transform:translate(-50%,-50%); opacity:.55; }
+#fx-escena.listo .faro{ animation:fxFlash .35s ease-in-out 4; } @keyframes fxFlash{ 50%{ opacity:1; transform:translate(-50%,-50%) scale(1.5); } }
+#fx-escena .sale .cam, #fx-escena .cam.sale{ transform:translate(-185%,-28%) scale(1.55); filter:blur(2px); }
+#fx-escena .raya{ position:absolute; height:3px; border-radius:3px; background:linear-gradient(90deg,transparent,#a5f3fc,transparent); opacity:0; }
+#fx-escena.corre .raya{ animation:fxRaya .55s linear infinite; } @keyframes fxRaya{ from{ transform:translateX(60vw); opacity:0; } 30%{ opacity:.9; } to{ transform:translateX(-80vw); opacity:0; } }
+#fx-escena .bulto{ position:absolute; z-index:3; background:#fff; color:#0b1730; border-radius:10px; padding:7px 11px; font-weight:800; font-size:.86rem; white-space:nowrap; box-shadow:0 12px 26px rgba(0,0,0,.45); border:2px solid #22d3ee;
+  transition:transform .95s cubic-bezier(.5,-.25,.3,1), opacity .95s; }
+#fx-escena .cuenta{ position:absolute; left:50%; top:13%; transform:translateX(-50%); color:#a5f3fc; font-weight:900; font-size:1.05rem; letter-spacing:.04em; text-shadow:0 0 14px rgba(34,211,238,.7); text-align:center; }
+#fx-escena .sello{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.3); opacity:0; background:#fff; border-radius:20px; padding:20px 30px 18px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.55);
+  border:4px solid #22A06B; transition:all .55s cubic-bezier(.2,1.6,.4,1); width:min(440px,88vw); z-index:4; }
+#fx-escena .sello.on{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(-2deg); }
+#fx-escena .sello b{ display:block; color:#22A06B; font-size:1.55rem; font-weight:900; }
+#fx-escena .sello .oc{ font-size:1rem; font-weight:800; color:#0b1730; margin-top:4px; } #fx-escena .sello .cu{ font-size:.86rem; color:#6B6B6B; margin-top:2px; }
+#fx-escena .sello .mes{ margin-top:12px; text-align:left; } #fx-escena .sello .mes .l{ font-size:.68rem; font-weight:800; letter-spacing:.06em; color:#6B6B6B; }
+#fx-escena .sello .mes .bar{ height:12px; border-radius:10px; background:#eef0f3; overflow:hidden; margin-top:5px; } #fx-escena .sello .mes .bar i{ display:block; height:100%; border-radius:10px; background:linear-gradient(90deg,#00B5AD,#1d4ed8); transition:width 1.3s var(--ease); }
+#fx-escena .sello .mes .v{ display:flex; justify-content:space-between; margin-top:5px; font-size:.86rem; } #fx-escena .sello .mes .v b{ display:inline; font-size:.95rem; color:#0b1730; } #fx-escena .sello .mes .mas{ color:#22A06B; font-weight:800; }
+#fx-escena .chau{ position:absolute; bottom:18px; left:0; right:0; text-align:center; color:rgba(255,255,255,.55); font-size:.78rem; }
+.fx-chispa{ position:fixed; width:9px; height:9px; border-radius:2px; z-index:9001; pointer-events:none; }
+@media (prefers-reduced-motion:reduce){ #fx-escena *, .fx-camion *, .prod-saldo .fx-esc *{ animation:none !important; transition:none !important; } }
 </style>
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -10038,6 +10100,7 @@ function submitPedido(){
     if(wasEdit && !_deBorrador){ volverDeEdicion(_desde); confirmEdicionModal(rec, _cam); return; }
     if(wasEdit) volverDeEdicion(_desde);
     showWhatsappModal(rec);
+    if(!wasEdit || _deBorrador) fxGuardado(rec);   // ✨ (§4if) la escena va ENCIMA de la ventana de WhatsApp, que queda abajo
   }
 }
 
@@ -10571,6 +10634,7 @@ function editPedido(id){
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
   showView('form'); window.scrollTo(0,0);
+  fxFormPintar();   // ✨ (§4if) el camión con el pedido ya adentro, sin la barra del mes
 }
 function cancelEdit(){ resetForm(); }
 /* ✏️ (27/09, revisión en el celular) «＋ NUEVO PEDIDO» CON UNA EDICIÓN QUE QUEDÓ ABIERTA. La vendedora abre ✏️ Editar, se
@@ -10786,7 +10850,9 @@ function ajustarTurnoSeg(fecha){
   pm.title=sab?'Los sábados solo hay turno AM':'';
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
 }
-function renderCupoForm(){
+/* ✨ (§4if) Todo lo que repinta los cupos repinta también las escenas del formulario (días, camión y el mes). */
+function renderCupoForm(){ renderCupoFormBase(); fxFormPintar(); }
+function renderCupoFormBase(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   var fecha=document.getElementById('f-fecha').value||todayStr();
   ajustarTurnoSeg(fecha);
@@ -10837,6 +10903,191 @@ function renderCupoForm(){
     el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'')+
       cupoVerBtn(fecha, turno);
   }
+}
+/* ============================================================================
+   ✨ LAS ESCENAS DEL FORMULARIO DE PEDIDOS (§4if, 08/10/2026)
+   El dueño, con la muestra en video: *«todas… quiero escenas wow»*, y *«¿qué pasa con lo demás del formulario?»*: lo demás
+   queda IGUAL y en su lugar. Esto solo MIRA: no cambia cupos, fechas, saldo ni el guardado.
+     1 · `#fx-camion` (debajo del turno): el camión de ese día y turno con sus lugares — los que ya están, el «tuyo» y los
+         libres. La misma cuenta que el cartel de cupos (`limTurno`, `cuposUsadosTurno`); editando, el pedido ya está adentro.
+     2 · `#fx-dias` (debajo de la fecha): los próximos 7 días con lo que queda libre (AM + PM). Tocar uno llena la fecha
+         (dispara el mismo `change` del campo, así que corre todo lo de siempre). Domingo, feriado o día cerrado: «cerrado».
+     3 · El dibujo del cuadrito del saldo (`fxEscenaSaldo`, adentro de `saldoCajaHtml`): colchones en PTF, el camioncito que va
+         a Moreno, la fábrica trabajando.
+     4 · `fxGuardado(rec)` al guardar un pedido NUEVO (no al corregir, ni ATC ni venta de tienda): la foto del camión, los
+         productos que suben, sale, y «¡Pedido guardado!». Se toca y se cierra; sola a los 7 s. Queda ENCIMA de la ventana de
+         WhatsApp de siempre, que sigue abajo.
+     5 · `#fx-mes`: lo vendido este mes por la vendedora elegida (por la fecha de carga, sin ATC ni RPT, `ventaTotal`), contra
+         el mes pasado entero. También en la escena de guardar, con lo que suma este pedido.
+   ========================================================================== */
+var FX_DIAS_N=7;
+function fxDiaLibre(f){
+  if(diaCerrado(f)) return { cerrado:'cerrado', lim:0, usados:0 };
+  var lim=limTurno(f,'AM')+limTurno(f,'PM');
+  if(!lim) return { cerrado:(feriadoDe(f)?'feriado':'cerrado'), lim:0, usados:0 };
+  return { lim:lim, usados:cuposUsadosTurno(f,'AM')+(limTurno(f,'PM')?cuposUsadosTurno(f,'PM'):0) };
+}
+function fxDiasPintar(){
+  var el=document.getElementById('fx-dias'); if(!el) return;
+  var fsel=(document.getElementById('f-fecha')||{}).value||'', v=((document.getElementById('f-vendedor')||{}).value||'');
+  var desde=esVendedorLite(v)?todayStr():tomorrowStr(), N=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'], h='';
+  for(var i=0;i<FX_DIAS_N;i++){
+    var f=stockSumarDias(desde,i), L=fxDiaLibre(f), libre=Math.max(0,L.lim-L.usados), pct=L.lim?Math.min(100,Math.round(100*L.usados/L.lim)):0;
+    var col=L.cerrado?'#ccc':(libre<=0?'var(--red)':(libre<=4?'var(--amber)':'var(--green)'));
+    h+='<button type="button" class="fx-dia'+(L.cerrado?' off':'')+(f===fsel?' sel':'')+'" data-f="'+f+'"'+(L.cerrado?' disabled':' onclick="fxElegirDia(this.getAttribute(\'data-f\'))"')+
+      ' title="'+esc(fmtFecha(f)+(L.cerrado?(' · '+L.cerrado):(' · '+libre+' lugares libres (AM + PM)')))+'"><div class="d">'+N[dowDe(f)]+'</div><div class="n">'+f.slice(8,10)+'</div>'+
+      '<div class="b"><i style="width:'+pct+'%;background:'+col+'"></i></div><div class="q" style="color:'+col+'">'+(L.cerrado?L.cerrado:(libre<=0?'lleno':(libre+' libre'+(libre===1?'':'s'))))+'</div></button>';
+  }
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function fxElegirDia(f){
+  var i=document.getElementById('f-fecha'); if(!i || i.value===f) return;
+  i.value=f; i.dispatchEvent(new Event('input',{bubbles:true})); i.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function fxCamionPintar(){
+  var el=document.getElementById('fx-camion'); if(!el) return;
+  var f=(document.getElementById('f-fecha')||{}).value||'', t=normTurno(segVal('f-turno')||'AM');
+  if(!f || !segVal('f-turno')){ el.hidden=true; return; }
+  var lim=diaCerrado(f)?0:limTurno(f,t), usados=cuposUsadosTurno(f,t);
+  var prev=EDIT_ID?findById(EDIT_ID):null, yaEsta=!!(prev && prev.fecha===f && normTurno(prev.turno)===t);
+  if(!lim){ el.hidden=true; return; }
+  el.hidden=false;
+  var otros=yaEsta?usados-1:usados, tuyoEntra=otros<lim, libre=Math.max(0,lim-otros-1);
+  var n=Math.max(lim, otros+1), cols=Math.ceil(n/2), w=(345-24-(cols-1)*6)/cols, h=48, s='';
+  for(var i=0;i<n;i++){
+    var c=i%cols, r=Math.floor(i/cols), x=30+c*(w+6), y=28+r*(h+6), lleno=i<otros, es=(i===otros), sobra=i>=lim;
+    s+='<rect class="fx-slot'+(es?' tuyo':'')+'" x="'+x.toFixed(1)+'" y="'+y+'" width="'+w.toFixed(1)+'" height="'+h+'" rx="6" fill="'+(es?'#fef3c7':(lleno?(sobra?'#fde2e4':'#cfe9e7'):'#fff'))+
+      '" stroke="'+(es?(tuyoEntra?'#D97706':'#CE2939'):(lleno?(sobra?'#CE2939':'#00B5AD'):'#cbd5df'))+'" stroke-width="2"'+(lleno||es?'':' stroke-dasharray="5 4"')+'/>';
+    if(lleno) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+h/2+5)+'" text-anchor="middle" font-size="'+(w<34?11:15)+'">📦</text>';
+    if(es) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="'+(w<40?9:12)+'" font-weight="800" fill="'+(tuyoEntra?'#b45309':'#CE2939')+'">tuyo</text>';
+  }
+  var pill=tuyoEntra ? (libre+' lugar'+(libre===1?'':'es')+' libre'+(libre===1?'':'s')+' además del tuyo') : 'Lleno: el tuyo no entra';
+  var pc=!tuyoEntra?'var(--red)':(libre<=2?'var(--amber)':'var(--green)'), pb=!tuyoEntra?'var(--red-lt)':(libre<=2?'var(--amber-lt)':'var(--green-lt)');
+  var firma=f+'|'+t+'|'+otros+'|'+lim+'|'+(EDIT_ID||'');
+  var cab='<div class="t"><span>🚚 '+esc(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(f)]+' '+f.slice(8,10)+'/'+f.slice(5,7))+' · turno '+t+'</span><span class="pill" style="background:'+pb+';color:'+pc+'">'+esc(pill)+'</span></div>';
+  if(el._firma===firma) return;
+  var otroDia=!el._firma || el._firma.split('|').slice(0,2).join('|')!==(f+'|'+t);   // otro día o turno: el camión entra de nuevo
+  el._firma=firma;
+  el.innerHTML=cab+'<svg viewBox="0 0 520 190" aria-hidden="true"><defs>'+
+      '<linearGradient id="fx-caja" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e5ebf0"/></linearGradient>'+
+      '<linearGradient id="fx-cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20c9c0"/><stop offset="1" stop-color="#0b8f87"/></linearGradient>'+
+      '<linearGradient id="fx-vid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#5aa7d6"/></linearGradient></defs>'+
+    '<g class="fx-cam-g"'+(otroDia?' style="transform:translateX(-560px)"':'')+'><ellipse cx="260" cy="176" rx="235" ry="8" fill="rgba(0,0,0,.12)"/>'+
+      '<rect x="18" y="18" width="345" height="132" rx="8" fill="url(#fx-caja)" stroke="#cbd5df" stroke-width="2"/><rect x="18" y="128" width="345" height="10" fill="#00B5AD" opacity=".9"/>'+s+
+      '<path d="M366 58 h70 q22 0 34 22 l26 40 v28 q0 6 -6 6 h-124 z" fill="url(#fx-cab)"/><path d="M378 66 h52 q14 0 22 14 l16 28 h-90 z" fill="url(#fx-vid)"/>'+
+      '<rect x="488" y="128" width="14" height="9" rx="3" fill="#fde68a"/><rect x="366" y="138" width="140" height="10" rx="3" fill="#0f5c58"/>'+
+      [80,128,300,452].map(function(cx){ return '<circle cx="'+cx+'" cy="152" r="21" fill="#1f2937"/><circle cx="'+cx+'" cy="152" r="9" fill="#9ca3af"/>'; }).join('')+
+    '</g></svg>';
+  if(otroDia){ var g=el.querySelector('.fx-cam-g'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(g) g.style.transform='translateX(0)'; }); }); }
+}
+/* 5 · Lo vendido en el mes por una vendedora (fecha de carga, sin ATC ni RPT). */
+function fxMesDe(v, extra){
+  var hoy=todayStr(), ym=hoy.slice(0,7), d=new Date(+ym.slice(0,4), +ym.slice(5,7)-2, 1), ymA=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  var o={ v:v, ym:ym, este:0, n:0, antes:0 };
+  if(!v) return o;
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || esATC(p.oc) || esRPT(p.oc) || !mismoVendedor(p.vendedor, v)) return;
+    if(extra && p.id===extra.id) return;
+    var f=contaFecha(p).slice(0,7), m=ventaTotal(p);
+    if(f===ym){ o.este+=m; o.n++; } else if(f===ymA) o.antes+=m;
+  });
+  if(extra){ o.este+=ventaTotal(extra); o.n++; }
+  o.mesNom=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][+ym.slice(5,7)-1];
+  o.mesAnt=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][+ymA.slice(5,7)-1];
+  o.pct=o.antes>0 ? Math.min(100, Math.round(100*o.este/o.antes)) : (o.este>0?100:0);
+  return o;
+}
+function fxMesPintar(){
+  var el=document.getElementById('fx-mes'); if(!el) return;
+  var v=((document.getElementById('f-vendedor')||{}).value||'').trim();
+  if(!v || EDIT_ID){ el.hidden=true; return; }
+  var o=fxMesDe(nombreCanonico?nombreCanonico(v):v);
+  el.hidden=false;
+  var h='<div class="l">📈 VENDIDO EN '+esc(o.mesNom.toUpperCase())+' · '+esc(v.toUpperCase())+'</div><div class="r"><div class="bar"><i style="width:'+o.pct+'%"></i></div><div class="v">'+fmtBs0(o.este)+'</div></div>'+
+    '<div class="s">'+o.n+' venta'+(o.n===1?'':'s')+' este mes'+(o.antes>0?(' · '+o.pct+'% de lo de '+o.mesAnt+' ('+fmtBs0(o.antes)+')'):'')+'</div>';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function fxFormPintar(){ try{ fxDiasPintar(); fxCamionPintar(); fxMesPintar(); }catch(e){ /* las escenas nunca rompen el formulario */ } }
+/* 3 · El dibujo del cuadrito del saldo. */
+function fxEscenaSaldo(tipo){
+  if(tipo==='hay') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><rect x="6" y="56" width="106" height="5" rx="2" fill="#94a3b8"/>'+
+     [0,1,2].map(function(i){ return '<g class="fx-colchon" style="animation-delay:'+(i*.2)+'s"><rect x="18" y="'+(44-i*13)+'" width="70" height="11" rx="4" fill="#fff" stroke="#22A06B" stroke-width="1.5"/><rect x="18" y="'+(48-i*13)+'" width="70" height="2" fill="#bbf7d0"/></g>'; }).join('')+
+     '<g class="fx-check"><circle cx="100" cy="18" r="13" fill="#22A06B"/><path d="M93 18 l5 5 l9 -10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></g></svg>';
+  if(tipo==='moreno' || tipo==='recogida') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><rect x="0" y="50" width="118" height="3" fill="#cbd5e1"/><rect x="4" y="22" width="26" height="26" fill="#1e3a5f"/><rect x="10" y="30" width="14" height="4" fill="#fbbf24"/>'+
+     '<g class="fx-va"><rect x="38" y="30" width="30" height="16" rx="2" fill="#fff" stroke="#D97706" stroke-width="1.5"/><path d="M68 34 h8 l6 6 v6 h-14 z" fill="#D97706"/><circle cx="46" cy="48" r="4" fill="#1f2937"/><circle cx="74" cy="48" r="4" fill="#1f2937"/></g>'+
+     '<rect x="96" y="26" width="20" height="22" fill="#0f766e"/><rect x="100" y="33" width="12" height="4" fill="#22d3ee"/></svg>';
+  if(tipo==='prod' || tipo==='pedir' || tipo==='especial' || tipo==='fabcli') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><path d="M10 56 V30 l16 -9 v9 l16 -9 v9 l16 -9 V56 z" fill="#475569"/><rect x="62" y="12" width="10" height="44" fill="#334155"/>'+
+     '<circle class="fx-humo" cx="67" cy="8" r="5" fill="#cbd5e1"/><circle class="fx-humo" cx="67" cy="8" r="5" fill="#cbd5e1" style="animation-delay:.7s"/><circle class="fx-humo" cx="67" cy="8" r="5" fill="#cbd5e1" style="animation-delay:1.4s"/>'+
+     '<g class="fx-gira"><circle cx="96" cy="38" r="12" fill="none" stroke="'+(tipo==='pedir'?'#CE2939':'#1d4ed8')+'" stroke-width="5" stroke-dasharray="5 4"/><circle cx="96" cy="38" r="5" fill="'+(tipo==='pedir'?'#CE2939':'#1d4ed8')+'"/></g>'+
+     '<rect x="16" y="40" width="8" height="8" fill="#fde68a"/><rect x="32" y="40" width="8" height="8" fill="#fde68a"/><rect x="48" y="40" width="8" height="8" fill="#fde68a"/></svg>';
+  return '';
+}
+/* 4 · La escena al guardar. */
+var FX_ESCENA_T=null;
+function fxCerrarEscena(){
+  var e=document.getElementById('fx-escena'); if(!e) return;
+  clearTimeout(FX_ESCENA_T); e.className=''; e.innerHTML='';
+  [].slice.call(document.querySelectorAll('.fx-chispa')).forEach(function(s){ s.remove(); });
+}
+function fxChispas(x,y){
+  /* Un solo cuadro a cuadro para todos los papelitos (uno por papelito era 90 a la vez: en un celular modesto se trababa). */
+  var cols=['#22d3ee','#22A06B','#fbbf24','#f472b6','#1d4ed8','#fff'], ps=[], t0=performance.now();
+  for(var i=0;i<60;i++){ var s=document.createElement('div'); s.className='fx-chispa'; s.style.background=cols[i%6]; s.style.left=x+'px'; s.style.top=y+'px'; document.body.appendChild(s);
+    ps.push({ s:s, vx:(Math.random()-.5)*900, vy:-300-Math.random()*450, rot:Math.random()*720 }); }
+  (function mv(t){ var dt=(t-t0)/1000, vivo=dt<2.2;
+    ps.forEach(function(p){ if(!p.s.isConnected) return; p.s.style.transform='translate('+(p.vx*dt*.6)+'px,'+(p.vy*dt+600*dt*dt)+'px) rotate('+(p.rot*dt)+'deg)'; p.s.style.opacity=Math.max(0,1-dt/2.2); });
+    if(vivo && ps.some(function(p){ return p.s.isConnected; })) requestAnimationFrame(mv); else ps.forEach(function(p){ p.s.remove(); });
+  })(t0);
+}
+function fxGuardado(rec){
+  try{
+    if(!rec || esATC(rec.oc) || !rec.fecha) return;
+    /* ⚠️ En las pruebas automáticas (Playwright: `navigator.webdriver`) la escena tapaba la ventana de WhatsApp 7 s y las demás
+       pruebas no podían tocar nada: ahí no sale, salvo que la prueba la pida (`window.FX_PRUEBA`, test_escenas_form). */
+    if(navigator.webdriver && !window.FX_PRUEBA) return;
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var e=document.getElementById('fx-escena'); if(!e){ e=document.createElement('div'); e.id='fx-escena'; document.body.appendChild(e); }
+    fxCerrarEscena();
+    var prods=(rec.productos||[]).filter(function(x){ return x && (x.desc||x.codigo); }).slice(0,6);
+    var rpt=esRPT(rec.oc), dia=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dowDe(rec.fecha)]+' '+rec.fecha.slice(8,10)+'/'+rec.fecha.slice(5,7);
+    var mes=rpt?null:fxMesDe(rec.vendedor, rec), mesAntes=mes?mes.este-ventaTotal(rec):0, pctAntes=mes&&mes.antes>0?Math.min(100,Math.round(100*mesAntes/mes.antes)):0;
+    var rayas=''; for(var i=0;i<14;i++) rayas+='<div class="raya" style="top:'+(30+Math.round(i*37%55))+'%;width:'+(18+i*7%30)+'vw;left:'+(i*23%60)+'%;animation-delay:'+(i*.06)+'s"></div>';
+    e.innerHTML='<div class="fondo"></div><div class="vineta"></div><div class="piso"></div>'+rayas+
+      '<div class="cam" id="fx-cam"><img src="carga-viva/camion-recorte.png?v=1" alt=""><div class="faro" style="left:9%;top:83%"></div><div class="faro" style="left:21%;top:89%"></div></div>'+
+      '<div class="cuenta" id="fx-cuenta">Cargando el camión…</div>'+
+      '<div class="sello" id="fx-sello"><b>✅ ¡'+(rpt?'Reposición guardada':'Pedido guardado')+'!</b><div class="oc">'+esc(ocEtiq(rec.oc)||'')+(rec.cliente?(' · '+esc(rec.cliente)):'')+'</div>'+
+        '<div class="cu">Sale el '+esc(dia)+(turnoDe(rec)?(' · turno '+esc(turnoDe(rec))):'')+'</div>'+
+        (mes ? ('<div class="mes"><div class="l">📈 VENDIDO EN '+esc(mes.mesNom.toUpperCase())+' · '+esc(String(rec.vendedor||'').toUpperCase())+'</div><div class="bar"><i id="fx-mes-bar" style="width:'+pctAntes+'%"></i></div>'+
+          '<div class="v"><b id="fx-mes-n">'+fmtBs0(mesAntes)+'</b><span class="mas">+ '+fmtBs0(ventaTotal(rec))+' con este pedido</span></div></div>') : '')+
+      '</div><div class="chau">Tocá para seguir</div>';
+    e.onclick=fxCerrarEscena; e.className='on';
+    var cam=document.getElementById('fx-cam');
+    var paso=function(ms, f){ return setTimeout(function(){ if(e.className.indexOf('on')<0) return; f(); }, ms); };
+    prods.forEach(function(x, i){
+      paso(500+i*420, function(){
+        var b=document.createElement('div'); b.className='bulto'; b.textContent='🛏️ '+(Number(x.cant)>1?(x.cant+'× '):'')+String(x.desc||x.codigo).slice(0,28);
+        var W=window.innerWidth, H=window.innerHeight, sx=(i%2? W*0.78 : W*0.08), sy=H*(0.18+(i%3)*0.08);
+        b.style.left=sx+'px'; b.style.top=sy+'px'; e.appendChild(b);
+        var r=cam.getBoundingClientRect(), tx=r.left+r.width*0.62, ty=r.top+r.height*0.35;
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ var bb=b.getBoundingClientRect();
+          b.style.transform='translate('+(tx-bb.left-bb.width/2)+'px,'+(ty-bb.top-bb.height/2)+'px) scale(.25) rotate('+(i%2?-18:18)+'deg)'; b.style.opacity='0'; }); });
+        var c=document.getElementById('fx-cuenta'); if(c) c.textContent=(i+1)+' de '+prods.length+' cargado'+(prods.length===1?'':'s');
+      });
+    });
+    var tSale=700+prods.length*420+800;
+    paso(tSale-300, function(){ e.className='on listo'; var c=document.getElementById('fx-cuenta'); if(c) c.textContent='¡Listo para salir! 🚚'; });
+    paso(tSale+400, function(){ e.className='on listo corre'; cam.classList.add('sale'); });
+    paso(tSale+1300, function(){
+      var s=document.getElementById('fx-sello'); if(s) s.classList.add('on'); var c=document.getElementById('fx-cuenta'); if(c) c.textContent='';
+      fxChispas(window.innerWidth/2, window.innerHeight/2);
+    });
+    if(mes) paso(tSale+2000, function(){
+      var bar=document.getElementById('fx-mes-bar'), n=document.getElementById('fx-mes-n'); if(bar) bar.style.width=mes.pct+'%';
+      if(n){ var a=mesAntes, b2=mes.este, t0=performance.now(); (function f(t){ if(n._fin) return; var p=Math.min(1,(t-t0)/1300), q=1-Math.pow(1-p,3); n.textContent=fmtBs0(a+(b2-a)*q); if(p<1 && n.isConnected) requestAnimationFrame(f); })(t0); }
+    });
+    if(mes) paso(tSale+3500, function(){ var n=document.getElementById('fx-mes-n'); if(n){ n._fin=true; n.textContent=fmtBs0(mes.este); } });   // el número final, aunque el cuadro a cuadro no corra
+    FX_ESCENA_T=setTimeout(fxCerrarEscena, tSale+7000);
+  }catch(err){ fxCerrarEscena(); }
 }
 /* ---- 👀 Quiénes ocupan el turno (§4fh) ----
    *«edité un pedido, le puse fecha 24 y NO LIBERÓ EL ESPACIO DEL 23»* (dueño, 22/09). El
@@ -19721,7 +19972,8 @@ function saldoCajaHtml(v){
 }
 /* Solo se toca el cuadrito (nunca un campo ni el foco), y solo si cambió lo que dice. */
 function saldoCajaPintar(box, v){
-  var cls='prod-saldo ps-'+(v.color||'gris'), html=saldoCajaHtml(v);
+  var cls='prod-saldo ps-'+(v.color||'gris'), html=saldoCajaHtml(v), dib=fxEscenaSaldo(v.tipo);   // ✨ (§4if) el dibujo
+  if(dib) html='<div class="fx-saldo">'+dib+'<div class="fx-saldo-t">'+html+'</div></div>';
   if(box.hidden) box.hidden=false;
   if(box.className!==cls) box.className=cls;
   if(box._html!==html){ box.innerHTML=html; box._html=html; }

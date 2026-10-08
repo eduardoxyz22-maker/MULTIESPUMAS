@@ -636,6 +636,17 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
+## ✨ Las escenas del formulario de pedidos (§4if, 08/10, dueño: *«todas… quiero escenas wow»*; en la rama, SIN publicar)
+Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, saldo ni el guardado).
+- `#fx-dias` (debajo de la fecha, 7 días con lo libre; tocar = `change` de `f-fecha`), `#fx-camion` (debajo del turno, lugares del
+  turno con el «tuyo»), el dibujo del cuadrito (`fxEscenaSaldo` en `saldoCajaPintar`), `#fx-mes` (lo vendido en el mes por la
+  vendedora, contra el mes pasado) y `fxGuardado(rec)` (la escena al guardar un pedido NUEVO, encima de la ventana de WhatsApp).
+- Todo se repinta desde `renderCupoForm` (= `renderCupoFormBase` + `fxFormPintar`). Un cambio a los cupos se ve solo.
+- ⚠️ En Playwright (`navigator.webdriver`) la escena de guardar NO sale salvo `window.FX_PRUEBA`: si no, tapa la ventana de
+  WhatsApp de todas las pruebas. ⚠️ Animaciones: un solo `requestAnimationFrame` para muchos elementos (con 90 se trababa la
+  página) y nada de `blur` animado a pantalla completa. `carga-viva/camion-recorte.png` = `camion.png` sin fondo.
+- `tests/test_escenas_form.js` (19).
+
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
 o un **chofer** (`>Nombre` pegado a la nota en `metodoPago`: `Efectivo 500 @… #1004 >Luis
