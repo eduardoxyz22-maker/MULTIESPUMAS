@@ -7445,6 +7445,75 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ie. 08/10: 🚛 asignar el camión desde «Sin vehículo» (dueño: «sí, agregalo y publicá»)
+En el panel de «Sin vehículo», «🚚 ASIGNAR CAMIÓN»: cada pedido del día sin camión (cliente, OC, zona, turno, bultos) con un selector
+de los camiones de `VEHICULOS`. `cvAsignar(id, v)` hace lo mismo que la columna «Vehículo» de la tabla (`setVehiculo`: vehículo +
+el primer chofer de ese camión) sin reabrir fichas; `persistPedido` repinta tabla, Lista de carga y camiones. `test_camiones_admin`
+→ 39.
+
+## 4id. 08/10: 🚛 un camión vacío dice POR QUÉ (en la rama, SIN publicar)
+**El dueño** (captura de la página publicada): *«solo en "sin camión" aparece la lista lateral; en los demás camiones no sale»*.
+No era un error: ese día los 19 pedidos no tenían camión asignado (`vehiculoDe`: `p.vehiculo` o el camión del chofer), así que
+todo caía en «Sin vehículo». El panel decía solo «Este camión no tiene pedidos para hoy». Ahora dice «Ningún pedido de hoy tiene
+asignado el Carry. Hay N pedidos sin camión: se asigna en cada pedido…» con el botón «⚠️ Ver los N sin camión». `test_camiones_admin`
+→ 37.
+
+## 4ic. 08/10: 🚛 Banzer y Moreno abren su panel al costado, como PTF (en la rama, SIN publicar)
+**El dueño**: *«si le doy al camión de Banzer abre otra cosa, no el lateral, como el PTF»*. Los tres carteles abrían la Lista de
+carga (`cvIrALista`). Ahora cambian el panel de la derecha (`CV_VISTA`, `cvVer`): PTF = el camión elegido; Banzer = lo que se carga
+allá ese día, por camión, con los mismos tildes de la Lista (barra, «Faltan N», festejo al completar); Moreno = lo marcado «📥
+recoger» por camión, sin tildes (eso se cambia en el pedido). Tocar el camión de la imagen hace lo mismo que su cartel (los recortes
+de §4ib, con `clip-path`, solo responden dentro de la silueta). Elegir un camión de las fichas o cambiar Hoy/Mañana vuelve a la
+vista del camión. `test_camiones_admin` §7b (5) → 36.
+
+## 4ib. 08/10: 🚛 los camiones de Administración: su propio botón para esconderlos y las líneas en el piso (en la rama, SIN publicar)
+**El dueño**, con capturas de Administración: *«separá las pestañas ocultar resumen y ocultar el nuevo 3D; que se vea siempre el
+resumen»* y *«esas líneas quedaron encima del camión, no abajo… se ve raro»*.
+- `#carga-viva` sale de `#adm-resumen` y queda justo arriba. Dos botones en la misma fila: «🙈 Ocultar camiones»
+  (`toggleCamionesAdm`/`pintarCamionesAdm`, `localStorage` `pedidos_camiones_adm`, cada compu lo suyo) y «🙈 Ocultar resumen» (solo
+  el resumen, como siempre). Escondidos, `cargaVivaPintar` vacía la caja y no dibuja nada (la animación no corre de fondo).
+- Las huellas de color (`CV_POS[..].huella`) pasaban por encima de los camiones. Ahora son el rectángulo del PISO alrededor de cada
+  camión (la de PTF calca el contorno que ya trae la imagen) y cada camión se vuelve a dibujar encima: tres `img.cv-cuerpo` de la
+  misma imagen recortadas con `clip-path` por su silueta (`CV_POS[..].cuerpo`, medida a mano sobre la imagen ampliada). Las luces
+  delanteras van en un segundo `svg`, encima de los recortes. ⚠️ Si se cambia la imagen, hay que volver a medir `cuerpo`.
+- `test_camiones_admin` §1 y §8 cambiadas a conciencia (la tira ya no está dentro del resumen) + 5 comprobaciones nuevas → 31;
+  contra `2a7c7bd` cae en la primera.
+
+## 4ia. 08/10: 🏷️ el SUEÑA LITE 105 partido en dos — un código que la lista aprendió después (en la rama, SIN publicar)
+**El aviso**: al subir el Excel de PTF el 08/10 el dueño vio en el control del corte «COLCHON SUENA LITE · 105X190: +20 sin
+explicar» y «…: −20 sin explicar» (los dos con el mismo nombre). Buscó «LITE» en Stock: dos filas. *«Si, salen dos, está
+partido. Arréglalo»*.
+
+**La causa** (reproducida con datos sintéticos en `test_codigo_nuevo`, idéntica a la captura):
+- Los Excel de antes del 05/10 guardaron el «CH2531 COLCHON SUEÑA LITE 105X190» con su nombre crudo (`SUENA LITE|105X190`,
+  §4cy: código que la lista no conoce = otro producto) y el mapa de códigos de cada foto (`cod`) apuntando ahí.
+- El 05/10 (§4ho) el CH2531 entró a `CODIGOS`. Al leer, `stockMigrar` pasaba las UNIDADES a la clave de la lista (por nombre),
+  pero no tocaba el mapa `cod`. Y como el código gana sobre cualquier nombre (`stockClaveInv`, §4cv), el Excel nuevo
+  (`existLeer` → `stockClave` con el código) y los pedidos con CH2531 seguían cayendo en la clave cruda.
+- Resultado: la fila de la lista con los 20, la cruda con los pedidos y 0 («NO HAY», «🚨 PEDIR YA» posibles), y el control
+  comparando 20 contra 0 en cada clave: «+20» y «−20». Además dejó una detección de 20 sin asignar, que resta «en camino».
+- Estaba anotado como pendiente en §4hq.
+
+**El arreglo** (`pedidos.html`):
+- `stockMigrar`: antes de migrar, cada código de `CODIGOS` del mapa `cod` de cada foto pasa a apuntar a su clave
+  (`stockAliasDe(stockNorm(d)+'|'+stockNorm(m), d.a)`, lo mismo que da `stockInfo` por código). La clave vieja va a `renom`,
+  que `cl` mira primero: las unidades, recogidas, entradas, pedidos a fábrica, detecciones, salidas y el historial la siguen.
+  Si dos códigos de la lista dicen productos distintos sobre la misma clave vieja, no se adivina (`dudosa`). Las claves de
+  códigos que la lista no conoce (`crudas`) no se tocan.
+- `stockFundirDifs(d)` al final de `stockMigrar`: en cada corte del historial, las entradas de `h[].d` con la misma clave se
+  suman (con sus acciones); si dan 0 y no tienen acciones, se van. Para las claves fundidas: una detección (`det`) del mismo
+  corte (fecha, hora, huella) con neto ≤ 0 queda con lápida «mismo producto con otro nombre»; con neto > 0 se achica a lo
+  neto. Una salida sin pedido del control (`sm` con `pre` y `c`) con neto ≥ 0, lápida; con neto < 0, se achica.
+- Corre en cada lectura y en la junta (`stockFusionar` → `stockMigrar`): todos los equipos llegan a lo mismo y la lápida es
+  monótona (`fusLapidas`). Idempotente.
+
+**Prueba**: `tests/test_codigo_nuevo.js` (15; 12 rojas contra `2a7c7bd`): una fila con PTF 20 + Moreno 3 y el pedido de 2;
+mapas de PTF y Moreno en la clave de la lista; un renglón del Excel nuevo cae ahí; sin «sin explicar»; detección y salida
+anuladas; con 22 contra 20 queda «+2» y la detección en 2; CH1297 sigue crudo; idempotente. Batería entera: 140 suites, 5.299 bien · 0 mal.
+
+**Para el dueño**: al publicar y F5, la fila se junta sola y el aviso del control desaparece. Va a pasar con cada código nuevo
+(el SMART 160x190): ya no hace falta nada.
+
 ## 4hz. 08/10: 🚛 los camiones en Administración, sobre la imagen de ChatGPT, con los tildes ahí mismo — reemplaza la escena 3D de Codex — PUBLICADA 08/10 12:36 (`2a7c7bd`, Pages OK, run 37810085454; el dueño: «reemplazá lo de Codex y publicá»; batería 139 suites, 5.284 bien · 0 mal)
 **Cómo se llegó** (todo el 08/10):
 - El dueño pidió «motion graphics» con camiones moviéndose en Stock, clicables («cargar este camión»), «algo más wow».

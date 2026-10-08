@@ -558,8 +558,16 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).
   **Siguen SIN arreglar** (el dueño no pidió): un pedido confirmado en el cierre que después se reprograma queda ✅ en la fecha nueva (los 🌆 PM
   van tildados A PROPÓSITO: dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*);
-  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`; `stockMigrar` no migra `cod` (un código nuevo en `CODIGOS` parte el
-  producto: el SUEÑA LITE 105 si un Excel viejo lo traía). Antes de tocar el cierre o el control del corte, leer §4hq.
+  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`. Antes de tocar el cierre o el control del corte, leer §4hq.
+- **🏷️ Un código que la lista aprendió después ya no parte el producto** (§4ia, 08/10, dueño: *«Si, salen dos, está partido.
+  Arréglalo»*; en la rama, SIN publicar): pasó de verdad con el SUEÑA LITE 105 (CH2531, en `CODIGOS` desde el 05/10): 20 en
+  una fila, los pedidos en otra con 0, y el control del Excel con «−20 / +20 sin explicar». `stockMigrar` ahora reescribe el
+  mapa `cod` de cada foto: todo código de `CODIGOS` apunta a SU clave (`stockNorm(d)|stockNorm(m)` con las uniones 🔗) y lo
+  guardado con la clave vieja la sigue (`renom`; dos códigos de la lista con productos distintos sobre la misma clave vieja:
+  no se toca). **`stockFundirDifs`**: las diferencias de un corte que caen en la misma clave se suman (0 = se van), y lo que el
+  control anotó por una diferencia que en neto no hubo queda con lápida (`det`: entrada; `sm` con `pre`: salida) o se achica
+  a lo neto. Los códigos que la lista NO conoce siguen crudos (§4cy). `tests/test_codigo_nuevo.js` (15; 12 rojas contra `2a7c7bd`).
+  ⚠️ Va a pasar con cada código nuevo (el SMART 160x190 cuando llegue): ya no hace falta nada a mano.
 - **🔎 La revisión de Codex del 05/10 (7 hallazgos, R1–R10), corregida en la rama (segunda vuelta de §4hn; `RESPUESTA` §31)**:
   · **El día del corte lo decide la casilla, no la marca ✅** (`stockSalioVentana`). **Lo destildado en el cierre no lleva
     ninguna marca** (dueño, 05/10: *«un pedido que queda como pasado y no fue tildado, logística lo entregó; lo que no entregan
@@ -607,12 +615,25 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
-- `#carga-viva`, primero dentro de `#adm-resumen`, se pliega con el resumen. Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- `#carga-viva` va JUSTO ARRIBA de `#adm-resumen` y FUERA de él (§4ib, 08/10, dueño: *«separá ocultar resumen y ocultar el nuevo
+  3D»*; en la rama, SIN publicar): **dos botones**, «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por compu; escondidos
+  no se dibujan) y «🙈 Ocultar resumen» (solo el resumen). Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- **Las líneas de color van en el PISO** (§4ib, dueño: *«esas líneas quedaron encima del camión, no abajo… se ve raro»*): `huella` es
+  el rectángulo del piso y `cuerpo` la silueta de cada camión, que se vuelve a dibujar ENCIMA (`img.cv-cuerpo` con `clip-path`
+  sobre la misma imagen); las luces (`cv-faros-*`) van en un segundo `svg` arriba de todo.
 - La imagen `carga-viva/escena.jpg` es FIJA y lo vivo va en coordenadas de la imagen (`CV_POS`, 1212×800). ⚠️ Los carteles tapan
   los textos que la imagen trae pintados: si se cambia la imagen, hay que volver a ubicarlos.
 - **Los tildes son LOS MISMOS de la Lista de carga** (`cargaChkKey`/`setCargaChk`), y la agrupación por camión es UNA:
   `cargaAgrupar`, que usan la lista y `cargaVivaDatos`. No duplicar la cuenta.
 - Tiene su propio Hoy/Mañana (`CV_DIA`). La Lista de carga NO lleva la tira, por pedido del dueño.
+- **Tocar un cartel o un camión de la imagen cambia el panel de la derecha, nunca abre otra pantalla** (§4ic, 08/10, dueño: *«si le
+  doy al camión de Banzer abre otra cosa, no el lateral, como el PTF»*): `CV_VISTA` = `''` (el camión elegido) / `'bz'` (lo que se
+  carga en Banzer ese día, por camión, con los MISMOS tildes) / `'im'` (lo marcado «📥 recoger», por camión; sin tildes: se cambia
+  en el pedido). `cvVer(v)`; «← Volver al camión»; los recortes `img.cv-cuerpo` se tocan dentro de su silueta. La Lista de carga
+  se abre solo con «📋 Ver…» y «📦 Ver su carga».
+- **Un camión sin pedidos dice por qué** (§4id: ningún pedido del día lo tiene asignado, cuántos esperan, botón a «Sin vehículo»),
+  y **en «Sin vehículo» se asigna el camión ahí mismo** (§4ie, `cvAsignar` = `setVehiculo` sin reabrir fichas: vehículo + primer
+  chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
