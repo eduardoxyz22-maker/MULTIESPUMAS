@@ -599,6 +599,7 @@ details.pry-sem-det>summary{cursor:pointer;font-size:.78rem;font-weight:700;colo
   body.printing-carga #carga-overlay{ display:block !important; position:static !important; background:#fff !important; }
   body.printing-carga #carga-overlay .no-print{ display:none !important; }
   body.printing-carga #carga-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-carga #carga-scroll{ overflow:visible !important; }
   body.printing-carga .carga-cam{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
   body.printing-reporte > *{ display:none !important; }
   body.printing-reporte #reporte-overlay{ display:block !important; position:static !important; background:#fff !important; }
@@ -1441,7 +1442,80 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 <input type="file" id="roho-input" accept=".xlsx" style="display:none" onchange="onRohoArchivo(event)">
 <input type="file" id="exist-input" accept=".xlsx" style="display:none" onchange="onExistArchivo(event)">
 <input type="file" id="fcomp-input" accept="image/*" style="display:none" onchange="onCompFormElegido(event)">
-<div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<style>
+/* 🚛 CARGA VIVA (§4hz): los camiones arriba de la Lista de carga, sobre la imagen que hizo ChatGPT (dueño, 08/10). */
+#carga-viva{ --cv-navy:#0b1730; --cv-cian:#22d3ee; --cv-verde:#34d399; --cv-ambar:#fbbf24; --cv-gris:#94a3b8; --cv-sub:#93a4bd; }
+#carga-viva:empty{ display:none; }
+.cv-caja{ background:#0b1730; color:#e6edf7; padding:12px 12px 10px; }
+.cv-tit{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 2px 10px; }
+.cv-tit b{ font-size:1.02rem; }
+.cv-tit small{ color:var(--cv-sub); font-size:.78rem; }
+.cv-tit button, .cv-mini button{ margin-left:auto; border:1px solid rgba(148,163,184,.35); background:rgba(255,255,255,.06); color:#e6edf7; border-radius:8px; padding:5px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
+.cv-mini{ display:flex; align-items:center; gap:10px; background:#0b1730; color:#e6edf7; padding:8px 12px; font-size:.84rem; flex-wrap:wrap; }
+.cv-marco{ display:flex; gap:12px; align-items:flex-start; }
+.cv-mapa{ flex:1; min-width:0; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 10px 30px rgba(0,0,0,.45); border:1px solid rgba(148,163,184,.18); background:#10203f; }
+.cv-lienzo{ position:relative; width:100%; aspect-ratio:1212/800; transform-origin:55% 45%; animation:cvRespira 22s ease-in-out infinite alternate; }
+@keyframes cvRespira{ from{ transform:scale(1); } to{ transform:scale(1.045) translate(-1%,.6%); } }
+.cv-lienzo img{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.cv-lienzo svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.cv-ruta{ fill:none; stroke:var(--cv-cian); stroke-width:3.5; stroke-linecap:round; stroke-dasharray:2 16; animation:cvCorre 1.2s linear infinite; opacity:.95; }
+@keyframes cvCorre{ to{ stroke-dashoffset:-18; } }
+.cv-huella{ fill:rgba(148,163,184,.06); stroke:rgba(148,163,184,.45); stroke-width:2; transition:fill .4s, stroke .4s; }
+.cv-huella.carga{ fill:rgba(34,211,238,.12); stroke:var(--cv-cian); stroke-width:2.5; animation:cvLate 1.6s ease-in-out infinite; }
+.cv-huella.ok{ fill:rgba(52,211,153,.14); stroke:var(--cv-verde); stroke-width:2.5; }
+.cv-huella.trae{ fill:rgba(251,191,36,.12); stroke:var(--cv-ambar); stroke-width:2.5; }
+@keyframes cvLate{ 50%{ fill:rgba(34,211,238,.3); stroke-width:4; } }
+.cv-faro{ fill:url(#cv-luz); mix-blend-mode:screen; animation:cvTitila 2.8s ease-in-out infinite; }
+.cv-faro.fuerte{ animation:cvFlash .45s ease-in-out 6; }
+@keyframes cvTitila{ 50%{ opacity:.75; } }
+@keyframes cvFlash{ 50%{ opacity:0; } }
+.cv-luzc{ fill:url(#cv-luzc); mix-blend-mode:screen; animation:cvTitila 3.6s ease-in-out infinite; }
+.cv-capa{ position:absolute; inset:0; }
+.cv-pin{ position:absolute; transform:translate(-50%,-100%); background:rgba(11,23,48,.93); border:1.5px solid var(--cv-gris); border-radius:10px; padding:6px 11px 7px; white-space:nowrap; cursor:pointer; color:#e6edf7; box-shadow:0 8px 22px rgba(0,0,0,.45); }
+.cv-pin .t{ font-weight:800; font-size:.84rem; display:flex; align-items:center; gap:7px; }
+.cv-pin .t i{ width:10px; height:10px; border-radius:50%; background:var(--cv-gris); flex:none; }
+.cv-pin .s{ font-size:.72rem; color:var(--cv-sub); margin-left:17px; }
+.cv-pin.carga{ border-color:var(--cv-cian); } .cv-pin.carga .t i{ background:var(--cv-cian); box-shadow:0 0 8px var(--cv-cian); }
+.cv-pin.ok{ border-color:var(--cv-verde); } .cv-pin.ok .t i{ background:var(--cv-verde); box-shadow:0 0 8px var(--cv-verde); }
+.cv-pin.trae{ border-color:var(--cv-ambar); } .cv-pin.trae .t i{ background:var(--cv-ambar); box-shadow:0 0 8px var(--cv-ambar); }
+.cv-accion{ position:absolute; width:20.5%; height:7.2%; display:flex; align-items:center; justify-content:center; gap:6px; background:#fff; color:#0b1730; font-weight:800; font-size:.8rem; border-radius:9px; box-shadow:0 8px 20px rgba(0,0,0,.4); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 8px; }
+.cv-colchon{ position:absolute; width:3.2%; height:1.6%; background:linear-gradient(#fff,#e2e8f0); border-radius:4px; box-shadow:0 2px 4px rgba(0,0,0,.35); pointer-events:none; }
+.cv-chispa{ position:absolute; width:7px; height:7px; border-radius:2px; pointer-events:none; }
+.cv-leyenda{ display:flex; gap:14px; flex-wrap:wrap; padding:7px 12px; font-size:.74rem; color:var(--cv-sub); }
+.cv-leyenda span{ display:flex; align-items:center; gap:6px; } .cv-leyenda i{ width:9px; height:9px; border-radius:50%; }
+.cv-panel{ width:330px; flex:none; background:linear-gradient(180deg,#0f1f3d,#0b1730); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:12px 14px; }
+.cv-chips{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+.cv-chip{ border:1px solid rgba(148,163,184,.3); background:rgba(255,255,255,.04); color:#e6edf7; border-radius:9px; padding:7px 8px; font:inherit; font-size:.74rem; font-weight:700; text-align:left; cursor:pointer; display:flex; align-items:center; gap:6px; min-width:0; }
+.cv-chip span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cv-chip i{ width:8px; height:8px; border-radius:50%; flex:none; }
+.cv-chip.sel{ border-color:var(--cv-cian); background:rgba(34,211,238,.12); }
+.cv-lbl{ font-size:.7rem; letter-spacing:.08em; color:var(--cv-sub); font-weight:800; }
+.cv-nom{ font-size:1.45rem; font-weight:900; margin:3px 0 1px; }
+.cv-est{ display:flex; align-items:center; gap:8px; font-weight:700; }
+.cv-est i{ width:11px; height:11px; border-radius:50%; background:currentColor; box-shadow:0 0 10px currentColor; }
+.cv-quien{ font-size:.78rem; color:var(--cv-sub); margin-top:2px; }
+.cv-foto{ width:100%; max-height:110px; object-fit:contain; margin:6px 0 4px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5)); }
+.cv-num{ font-size:2.4rem; font-weight:900; line-height:1; } .cv-num small{ font-size:1.1rem; color:var(--cv-sub); font-weight:700; }
+.cv-bar{ height:11px; border-radius:9px; background:rgba(148,163,184,.2); margin:9px 0 5px; overflow:hidden; }
+.cv-bar i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg,#22d3ee,#06b6d4); box-shadow:0 0 12px #22d3ee; transition:width .8s cubic-bezier(.2,.8,.2,1); }
+.cv-bar.ok i{ background:linear-gradient(90deg,#34d399,#10b981); box-shadow:0 0 12px #34d399; }
+.cv-falta{ font-size:.82rem; color:var(--cv-sub); }
+.cv-filas{ margin-top:9px; display:flex; flex-direction:column; gap:6px; max-height:230px; overflow:auto; }
+.cv-grupo{ font-size:.7rem; font-weight:800; color:var(--cv-sub); margin:4px 2px 0; letter-spacing:.04em; }
+.cv-fila{ display:flex; align-items:center; gap:9px; background:rgba(255,255,255,.04); border:1px solid rgba(148,163,184,.15); border-radius:9px; padding:7px 9px; font-size:.8rem; cursor:pointer; }
+.cv-fila .tk{ width:22px; height:22px; border-radius:6px; border:2px solid #64748b; flex:none; display:flex; align-items:center; justify-content:center; font-weight:900; }
+.cv-fila.on .tk{ background:var(--cv-cian); border-color:var(--cv-cian); color:#0b1730; }
+.cv-fila.on .tx{ opacity:.5; text-decoration:line-through; }
+.cv-fila .z{ font-size:.7rem; color:var(--cv-sub); } .cv-fila .z.no{ color:#fca5a5; } .cv-fila .z.re{ color:#fcd34d; }
+.cv-listo{ margin-top:10px; padding:11px; border-radius:11px; background:rgba(52,211,153,.14); border:1px solid var(--cv-verde); color:#a7f3d0; font-weight:900; text-align:center; animation:cvAparece .5s cubic-bezier(.2,1.6,.4,1); }
+@keyframes cvAparece{ from{ transform:scale(.6); opacity:0; } }
+.cv-ir{ display:block; width:100%; margin-top:10px; border:0; border-radius:11px; padding:11px; font:inherit; font-weight:900; font-size:.92rem; background:var(--cv-cian); color:#0b1730; box-shadow:0 0 18px rgba(34,211,238,.45); cursor:pointer; }
+.cv-nota{ font-size:.7rem; color:var(--cv-sub); text-align:center; margin-top:6px; }
+.cv-vacio{ font-size:.82rem; color:var(--cv-sub); padding:6px 2px; }
+@media (max-width:900px){ .cv-marco{ flex-direction:column; } .cv-mapa{ width:100%; flex:none; } .cv-panel{ width:auto; align-self:stretch; } .cv-pin .s{ display:none; } .cv-pin{ padding:4px 8px 5px; } .cv-accion{ font-size:.66rem; } }
+@media (prefers-reduced-motion:reduce){ #carga-viva *{ animation:none !important; transition:none !important; } }
+</style>
+<div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-scroll" style="flex:1;overflow:auto"><div id="carga-viva" class="no-print"></div><div id="carga-body" style="padding:14px"></div></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="envio-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><div id="envio-partes" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-parte-todo" onclick="setEnvioParte('todo')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Todo</button><button id="envio-parte-AM" onclick="setEnvioParte('AM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌅 Solo AM</button><button id="envio-parte-PM" onclick="setEnvioParte('PM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌆 Solo PM</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div id="envio-body" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a copiar. Podés editarlo antes.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
@@ -12964,7 +13038,10 @@ function cargaAlmTxt(o){
 }
 /* Bloques por camión de un conjunto de pedidos. 'fecha' se usa para las tildes,
    así lo tildado en "Hoy" y en "Todos" es lo mismo. */
-function cargaBloquesHtml(list, fecha){
+/* Los pedidos agrupados por camión, con lo que se carga en fábrica (`prod`), en Banzer (`sale`), lo que no hay
+   (`prodNo`) y lo que se trae de Moreno (`prodProd`/`prodAlm`). Lo usan la lista (`cargaBloquesHtml`) y los camiones
+   de arriba (`cargaVivaDatos`, §4hz): una sola cuenta. */
+function cargaAgrupar(list){
   var byV={}, order=[];
   list.forEach(function(p){
     var k=vehiculoDe(p)||'Sin vehículo';
@@ -12991,6 +13068,10 @@ function cargaBloquesHtml(list, fecha){
     });
   });
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
+  return { byV:byV, order:order };
+}
+function cargaBloquesHtml(list, fecha){
+  var G=cargaAgrupar(list), byV=G.byV, order=G.order;
   var html='';
   order.forEach(function(k){
     var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
@@ -12998,7 +13079,7 @@ function cargaBloquesHtml(list, fecha){
     var nSinStock=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
     var nEnProd=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return esRecoger(x); }); }).length;
     var nSale=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return Object.keys(cargaSaleDe(x)).length>0; }); }).length;   // (26/09)
-    html+='<div class="carga-cam" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
+    html+='<div class="carga-cam" data-veh="'+esc(k)+'" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
         '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
         (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
@@ -13057,8 +13138,204 @@ function renderCarga(){
   }
   var sinCam=sinCamionHtml();   // (30/09, R1-2) arriba de la carga: los que quedaron en un feriado o domingo
   document.getElementById('carga-body').innerHTML=sinCam+(html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>');
+  try{ cargaVivaPintar(); }catch(e){ console.error(e); }
 }
 function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
+
+/* ============================================================================
+   🚛 CARGA VIVA (§4hz, 08/10) — los camiones arriba de la Lista de carga
+   El dueño, con la imagen que le hizo ChatGPT y la muestra en video: *«no se ve como tu diseño y tampoco tiene las
+   opciones de carga lista ahí mismo… ¿tú puedes hacerlo? y darme una muestra antes de publicar»*.
+   · La imagen (`carga-viva/escena.jpg`, recortada de la de ChatGPT: PTF, Banzer y Moreno) es FIJA: lo vivo va encima,
+     en coordenadas de la imagen (1212×800). Los carteles tapan los textos que la imagen traía pintados («Camión 02», «Cargar
+     este camión»): si se cambia la imagen, hay que volver a ubicarlos (`CV_POS`).
+   · Los datos son los de la lista de abajo y nada más: `cargaAgrupar` (la misma agrupación de `cargaBloquesHtml`) y los
+     MISMOS tildes (`cargaChkKey`/`isCargaChk`/`setCargaChk`). Tildar acá es tildar en la lista, para todo el equipo.
+   · Los camiones son los de `VEHICULOS` (aunque no tengan pedidos ese día) + los que aparezcan asignados + «Sin vehículo».
+     El elegido se dibuja en el andén de PTF; el cartel de Banzer suma lo que se carga allá ese día (todos los camiones) y el
+     de Moreno, lo que hay que ir a buscar (`prodProd`, lo mismo que dice «📥 recoger» en la lista).
+   · Solo con un día (Hoy o Mañana): en «Todos» no se dibuja. Se puede ocultar (`me_carga_viva_oculta`, por aparato).
+   ========================================================================== */
+var CV_SEL='', CV_ARMADA=false, CV_LISTO_YA={};
+var CV_LS='me_carga_viva_oculta';
+var CV_POS={
+  ptf:{ pin:[820,320], huella:'688,408 748,446 950,372 905,345', faros:[[728,418,22],[757,428,22]], de:[985,352], a:[870,335], fiesta:[822,362] },
+  bz: { pin:[468,133], huella:'340,180 455,236 505,214 395,160', faros:[[462,216,14],[484,222,14]], de:[290,205], a:[400,186], fiesta:[420,180] },
+  im: { pin:[338,440], huella:'225,500 365,590 430,560 290,470', faros:[[372,568,17],[404,576,17]] },
+  accion:[796,398]
+};
+function cvOculta(){ try{ return localStorage.getItem(CV_LS)==='1'; }catch(e){ return false; } }
+function cvOcultar(si){ try{ if(si) localStorage.setItem(CV_LS,'1'); else localStorage.removeItem(CV_LS); }catch(e){} CV_ARMADA=false; cargaVivaPintar(); }
+function cvX(v){ return (v/1212*100)+'%'; }
+function cvY(v){ return (v/800*100)+'%'; }
+function cvU(n){ return n+' bulto'+(n===1?'':'s'); }
+/* Lo que muestra la tira, sacado de la lista del día. */
+function cargaVivaDatos(){
+  if(CARGA_DIA==='todos') return null;
+  var list=cargaLista(), fecha=cargaDiaKey(), G=cargaAgrupar(list), cams=[], porK={};
+  var orden=Object.keys(VEHICULOS).slice();
+  G.order.forEach(function(k){ if(orden.indexOf(k)<0) orden.push(k); });
+  var sin=orden.indexOf('Sin vehículo'); if(sin>=0){ orden.splice(sin,1); if(G.byV['Sin vehículo']) orden.push('Sin vehículo'); }
+  var bz={ total:0, dentro:0, cams:0 }, im={ u:0, alm:{} };
+  orden.forEach(function(k){
+    var o=G.byV[k], c={ k:k, sin:(k==='Sin vehículo'), lineas:[], total:0, dentro:0, paradas:0, choferes:[] };
+    if(o){
+      c.paradas=o.stops.length; c.choferes=Object.keys(o.choferes);
+      Object.keys(o.prod).sort().forEach(function(kk){
+        var u=o.prod[kk]; if(!(u>0)) return;
+        var alm=Object.keys(o.prodAlm[kk]||{}).map(function(a){ return recogerCanon(a)==='' ? 'Moreno' : a; }).join(' + ');
+        c.lineas.push({ kk:kk, u:u, key:cargaChkKey(fecha,k,kk), lugar:'fabrica', no:o.prodNo[kk]||0, rec:o.prodProd[kk]||0, alm:alm||'Moreno' });
+        if(o.prodProd[kk]){ im.u+=o.prodProd[kk]; (alm||'Moreno').split(' + ').forEach(function(a){ im.alm[a]=1; }); }
+      });
+      o.saleOrden.forEach(function(n){
+        Object.keys(o.sale[n]).sort().forEach(function(kk){
+          var u=o.sale[n][kk]; if(!(u>0)) return;
+          c.lineas.push({ kk:kk, u:u, key:cargaChkKey(fecha,k,kk,n), lugar:n });
+        });
+      });
+    } else if(VEHICULOS[k]) c.choferes=VEHICULOS[k].slice();
+    var tieneBz=false;
+    c.lineas.forEach(function(l){ l.on=isCargaChk(l.key); c.total+=l.u; if(l.on) c.dentro+=l.u;
+      if(l.lugar!=='fabrica'){ bz.total+=l.u; if(l.on) bz.dentro+=l.u; tieneBz=true; } });
+    if(tieneBz) bz.cams++;
+    c.fab=c.lineas.filter(function(l){ return l.lugar==='fabrica'; });
+    c.fabTotal=c.fab.reduce(function(a,l){ return a+l.u; },0); c.fabDentro=c.fab.reduce(function(a,l){ return a+(l.on?l.u:0); },0);
+    c.est = c.sin ? 'sin' : (!c.total ? 'nada' : (c.dentro>=c.total ? 'ok' : 'carga'));
+    cams.push(c); porK[k]=c;
+  });
+  if(!porK[CV_SEL]){
+    var pend=cams.filter(function(c){ return c.est==='carga'; })[0] || cams.filter(function(c){ return c.total>0; })[0] || cams[0];
+    CV_SEL=pend?pend.k:'';
+  }
+  return { fecha:fecha, cams:cams, porK:porK, sel:porK[CV_SEL], bz:bz, im:im, pedidos:list.length };
+}
+var CV_COL={ carga:'var(--cv-cian)', ok:'var(--cv-verde)', nada:'var(--cv-gris)', sin:'var(--cv-ambar)' };
+var CV_EST={ carga:'Cargando', ok:'✅ Listo para salir', nada:'Sin carga para este día', sin:'⚠️ Pedidos sin camión asignado' };
+function cargaVivaPintar(){
+  var box=document.getElementById('carga-viva'); if(!box) return;
+  var D=cargaVivaDatos();
+  if(!D){ box.innerHTML=''; CV_ARMADA=false; return; }
+  var dia=CARGA_DIA==='hoy'?'hoy':'mañana';
+  if(cvOculta()){
+    var listos=D.cams.filter(function(c){ return c.est==='ok'; }).length, conCarga=D.cams.filter(function(c){ return c.total>0 && !c.sin; }).length;
+    box.innerHTML='<div class="cv-mini">🚛 <b>Camiones de '+dia+'</b> <span style="color:#93a4bd">'+listos+' de '+conCarga+' listos para salir</span><button type="button" onclick="cvOcultar(false)">👁️ Ver los camiones</button></div>';
+    CV_ARMADA=false; return;
+  }
+  if(!CV_ARMADA || !document.getElementById('cv-capa')){
+    var faros=function(id){ return '<g id="cv-faros-'+id+'">'+CV_POS[id].faros.map(function(f){ return '<circle class="cv-faro" cx="'+f[0]+'" cy="'+f[1]+'" r="'+f[2]+'"/>'; }).join('')+'</g>'; };
+    box.innerHTML='<div class="cv-caja"><div class="cv-tit"><b id="cv-dia"></b><small id="cv-cuenta"></small><button type="button" onclick="cvOcultar(true)">🙈 Ocultar</button></div>'+
+      '<div class="cv-marco"><div class="cv-mapa"><div class="cv-lienzo"><img src="carga-viva/escena.jpg?v=1" alt="">'+
+      '<svg viewBox="0 0 1212 800" preserveAspectRatio="none"><defs>'+
+        '<radialGradient id="cv-luz"><stop offset="0" stop-color="#fff8d6" stop-opacity=".95"/><stop offset=".35" stop-color="#fde68a" stop-opacity=".45"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></radialGradient>'+
+        '<radialGradient id="cv-luzc"><stop offset="0" stop-color="#ffe7b0" stop-opacity=".7"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient></defs>'+
+        '<path id="cv-camino" class="cv-ruta" d="M1005 668 L940 628 L860 580 L780 537 L700 494 L620 452 L540 413 L460 375 L395 343 Q360 322 372 300 L420 282 L480 262 L540 236 L590 212"/>'+
+        '<circle r="6" fill="#a5f3fc"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#cv-camino"/></animateMotion></circle>'+
+        '<circle r="6" fill="#a5f3fc"><animateMotion dur="5s" begin="2.5s" repeatCount="indefinite"><mpath href="#cv-camino"/></animateMotion></circle>'+
+        '<polygon id="cv-h-ptf" class="cv-huella" points="'+CV_POS.ptf.huella+'"/><polygon id="cv-h-bz" class="cv-huella" points="'+CV_POS.bz.huella+'"/><polygon id="cv-h-im" class="cv-huella" points="'+CV_POS.im.huella+'"/>'+
+        faros('ptf')+faros('bz')+faros('im')+
+        '<circle class="cv-luzc" cx="800" cy="200" r="40"/><circle class="cv-luzc" cx="940" cy="258" r="40" style="animation-delay:-1.2s"/><circle class="cv-luzc" cx="1060" cy="305" r="40" style="animation-delay:-2.1s"/><circle class="cv-luzc" cx="232" cy="173" r="30"/><circle class="cv-luzc" cx="160" cy="455" r="30" style="animation-delay:-1.7s"/>'+
+      '</svg><div class="cv-capa" id="cv-capa"></div></div>'+
+      '<div class="cv-leyenda"><span><i style="background:var(--cv-cian)"></i>Cargando</span><span><i style="background:var(--cv-verde)"></i>Listo para salir</span><span><i style="background:var(--cv-ambar)"></i>Ir a buscar a Moreno</span><span><i style="background:var(--cv-gris)"></i>Sin carga</span></div></div>'+
+      '<div class="cv-panel" id="cv-panel"></div></div></div>';
+    CV_ARMADA=true;
+  }
+  document.getElementById('cv-dia').textContent='🚛 Camiones de '+dia;
+  document.getElementById('cv-cuenta').textContent=D.pedidos+' pedido'+(D.pedidos===1?'':'s')+' · '+fmtFecha(D.fecha);
+  cvPintarCapa(D); cvPintarPanel(D);
+}
+function cvPintarCapa(D){
+  var capa=document.getElementById('cv-capa'); if(!capa) return;
+  [].slice.call(capa.querySelectorAll('.cv-pin,.cv-accion')).forEach(function(e){ e.remove(); });
+  var c=D.sel, pin=function(id, cls, t, s, click){
+    var p=CV_POS[id].pin, d=document.createElement('div'); d.className='cv-pin '+cls; d.id='cv-pin-'+id;
+    d.style.left=cvX(p[0]); d.style.top=cvY(p[1]); d.innerHTML='<div class="t"><i></i>'+esc(t)+'</div><div class="s">'+esc(s)+'</div>';
+    d.onclick=click; capa.appendChild(d);
+    document.getElementById('cv-h-'+id).setAttribute('class','cv-huella '+cls);
+  };
+  var est=c ? (c.fabTotal ? (c.fabDentro>=c.fabTotal?'ok':'carga') : (c.est==='ok'?'ok':'')) : '';
+  pin('ptf', est, c ? (c.sin?'Sin vehículo':c.k) : 'PTF',
+    c ? (c.fabTotal ? (c.fabDentro>=c.fabTotal ? '✅ todo cargado en PTF' : c.fabDentro+' de '+cvU(c.fabTotal)+' en PTF') : 'nada para cargar en PTF') : '',
+    function(){ cvIrALista(); });
+  pin('bz', D.bz.total ? (D.bz.dentro>=D.bz.total?'ok':'carga') : '', '🏪 Cargar en Banzer',
+    D.bz.total ? (D.bz.dentro+' de '+cvU(D.bz.total)+(D.bz.cams>1?(' · '+D.bz.cams+' camiones'):'')) : 'nada para '+(CARGA_DIA==='hoy'?'hoy':'mañana'),
+    function(){ cvIrALista(); });
+  pin('im', D.im.u ? 'trae' : '', '📥 Ir a buscar a '+(Object.keys(D.im.alm).join(' + ')||'Moreno'),
+    D.im.u ? cvU(D.im.u)+' para traer' : 'nada que traer', function(){ cvIrALista(); });
+  var a=document.createElement('div'); a.className='cv-accion'; a.id='cv-accion';
+  a.style.left=cvX(CV_POS.accion[0]); a.style.top=cvY(CV_POS.accion[1]);
+  a.textContent=c && c.est==='ok' ? '✅ Listo para salir' : '📦 Ver su carga';
+  a.onclick=function(){ cvIrALista(); }; capa.appendChild(a);
+}
+function cvPintarPanel(D){
+  var el=document.getElementById('cv-panel'); if(!el) return;
+  var c=D.sel;
+  var h='<div class="cv-chips">'+D.cams.map(function(x){
+    return '<button type="button" class="cv-chip'+(c&&x.k===c.k?' sel':'')+'" data-k="'+esc(x.k)+'" onclick="cvElegir(this.getAttribute(\'data-k\'))" title="'+esc(CV_EST[x.est])+'"><i style="background:'+CV_COL[x.est]+'"></i><span>'+esc(x.sin?'Sin vehículo':x.k)+'</span></button>';
+  }).join('')+'</div>';
+  if(!c){ el.innerHTML=h+'<div class="cv-vacio">No hay camiones.</div>'; return; }
+  var pct=c.total?Math.round(100*c.dentro/c.total):0, faltan=c.total-c.dentro;
+  h+='<div class="cv-lbl">CAMIÓN ELEGIDO</div><div class="cv-nom">'+esc(c.sin?'Sin vehículo':c.k)+'</div>'+
+     '<div class="cv-est" style="color:'+CV_COL[c.est]+'"><i></i>'+CV_EST[c.est]+'</div>'+
+     '<div class="cv-quien">'+esc((c.choferes.join(', ')||'sin chofer')+' · '+c.paradas+' parada'+(c.paradas===1?'':'s'))+'</div>'+
+     '<img class="cv-foto" src="carga-viva/camion.png?v=1" alt="">';
+  if(c.total){
+    h+='<div class="cv-lbl">CARGA</div><div class="cv-num"><span id="cv-n">'+c.dentro+'</span> <small>/ '+cvU(c.total)+'</small></div>'+
+       '<div class="cv-bar'+(c.est==='ok'?' ok':'')+'"><i id="cv-barra" style="width:'+pct+'%"></i></div>'+
+       '<div class="cv-falta">'+(c.est==='ok'?'Todo tildado en la Lista de carga':'Faltan '+cvU(faltan))+'</div>';
+    var grupos=[['fabrica','🏭 EN FÁBRICA (PTF)']];
+    c.lineas.forEach(function(l){ if(l.lugar!=='fabrica' && !grupos.some(function(g){ return g[0]===l.lugar; })) grupos.push([l.lugar,'🏪 EN '+String(l.lugar).toUpperCase()]); });
+    h+='<div class="cv-filas" id="cv-filas">'+grupos.map(function(g){
+      var ls=c.lineas.filter(function(l){ return l.lugar===g[0]; }); if(!ls.length) return '';
+      return '<div class="cv-grupo">'+esc(g[1])+'</div>'+ls.map(function(l){
+        var z=l.no?'<div class="z no">⛔ '+l.no+' sin stock</div>':(l.rec?'<div class="z re">📥 '+l.rec+' recoger de '+esc(l.alm)+'</div>':'');
+        return '<div class="cv-fila'+(l.on?' on':'')+'" data-k="'+esc(l.key)+'" data-l="'+esc(l.lugar)+'" data-u="'+l.u+'" onclick="cvTildar(this)"><div class="tk">'+(l.on?'✓':'')+'</div><div class="tx"><b>'+l.u+'× '+esc(l.kk)+'</b>'+z+'</div></div>';
+      }).join('');
+    }).join('')+'</div>';
+    if(c.est==='ok') h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
+  } else if(c.est==='nada') h+='<div class="cv-vacio">Este camión no tiene pedidos para '+(CARGA_DIA==='hoy'?'hoy':'mañana')+'.</div>';
+  h+='<button type="button" class="cv-ir" onclick="cvIrALista()">📋 Ver sus paradas en la lista</button><div class="cv-nota">Los tildes son los de la Lista de carga: tildar acá es tildar allá, para todo el equipo.</div>';
+  var sc=document.getElementById('cv-filas'), top=sc?sc.scrollTop:0;
+  el.innerHTML=h;
+  var f=document.getElementById('cv-filas');
+  if(f){ if(top) f.scrollTop=top; else { var pr=f.querySelector('.cv-fila:not(.on)'); if(pr) f.scrollTop=Math.max(0, pr.offsetTop-f.offsetTop-30); } }
+}
+function cvElegir(k){ CV_SEL=k; cargaVivaPintar(); }
+function cvIrALista(){
+  var cams=document.querySelectorAll('#carga-body .carga-cam'), sc=document.getElementById('carga-scroll'), el=null;
+  for(var i=0;i<cams.length;i++) if(cams[i].getAttribute('data-veh')===CV_SEL){ el=cams[i]; break; }
+  if(el && sc) sc.scrollTop+=el.getBoundingClientRect().top-sc.getBoundingClientRect().top-8;
+}
+function cvTildar(el){
+  var k=el.getAttribute('data-k'), on=!isCargaChk(k), lugar=el.getAttribute('data-l'), u=Number(el.getAttribute('data-u'))||1;
+  var antes=cargaVivaDatos(), c0=antes&&antes.sel, estAntes=c0?c0.est:'';
+  setCargaChk(k,on);
+  if(on) cvVolar(lugar==='fabrica'?'ptf':'bz', Math.min(u,6));
+  renderCarga();
+  var D=cargaVivaDatos(), c=D&&D.sel;
+  if(on && c){ var n0=c0?c0.dentro:0, nEl=document.getElementById('cv-n');
+    if(nEl){ var t0=performance.now(); (function sube(t){ var p=Math.min(1,(t-t0)/800); nEl.textContent=Math.round(n0+(c.dentro-n0)*p); if(p<1) requestAnimationFrame(sube); })(t0); } }
+  if(c && c.est==='ok' && estAntes!=='ok') cvFiesta(lugar==='fabrica'?'ptf':'bz');
+}
+function cvVolar(id, n){
+  var capa=document.getElementById('cv-capa'), P=CV_POS[id]; if(!capa || !P.de) return;
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for(var j=0;j<n;j++)(function(j){ setTimeout(function(){
+    var m=document.createElement('div'); m.className='cv-colchon'; capa.appendChild(m);
+    var a=P.de, b=P.a, t0=performance.now();
+    (function mv(t){ var p=Math.min(1,(t-t0)/850), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      m.style.left=cvX(a[0]+(b[0]-a[0])*e); m.style.top=cvY(a[1]+(b[1]-a[1])*e-Math.sin(e*Math.PI)*38); m.style.opacity=p>.85?(1-(p-.85)/.15):1;
+      if(p<1) requestAnimationFrame(mv); else m.remove(); })(t0);
+  }, j*260); })(j);
+}
+function cvFiesta(id){
+  var capa=document.getElementById('cv-capa'), P=CV_POS[id]; if(!capa) return;
+  var g=document.getElementById('cv-faros-'+id); if(g) [].forEach.call(g.children,function(c){ c.setAttribute('class','cv-faro fuerte'); setTimeout(function(){ c.setAttribute('class','cv-faro'); },3000); });
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var cols=['#34d399','#22d3ee','#fbbf24','#f472b6','#fff'], cx=P.fiesta[0], cy=P.fiesta[1];
+  for(var i=0;i<60;i++)(function(i){ var s=document.createElement('div'); s.className='cv-chispa'; s.style.background=cols[i%5]; capa.appendChild(s);
+    var vx=(Math.random()-.5)*360, vy=-120-Math.random()*260, t0=performance.now(), rot=Math.random()*720;
+    (function mv(t){ var dt=(t-t0)/1000; s.style.left=cvX(cx+vx*dt*.5); s.style.top=cvY(cy+vy*dt+300*dt*dt); s.style.transform='rotate('+(rot*dt)+'deg)'; s.style.opacity=Math.max(0,1-dt/1.8); if(dt<1.8) requestAnimationFrame(mv); else s.remove(); })(t0); })(i);
+}
 
 /* ============================================================================
    🎧 LA MATRIZ DE ATC (§4bq)
