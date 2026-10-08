@@ -701,6 +701,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
   <div id="carga-banner" style="display:none"></div>
   <!-- ============ FORM VIEW ============ -->
   <div id="view-form" class="view active">
+    <!-- 🖥️ (§4ig) En pantalla ancha: la agenda de los camiones a la izquierda y el pedido en vivo a la derecha. -->
+    <aside id="fx-izq" class="fx-lado fx-izq solo-entrega no-print" aria-label="Agenda de entregas"></aside>
     <div class="card form-card">
       <div id="conn-form" class="conn off"><span class="dot"></span><span id="conn-form-txt"></span></div>
       <div id="cupo-form" class="cupo ok"></div>
@@ -986,6 +988,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
       </div>
     </div>
+    <aside id="fx-der" class="fx-lado fx-der no-print" aria-label="Tu pedido"></aside>
   </div>
 
   <!-- ============ ADMIN VIEW ============ -->
@@ -1567,7 +1570,56 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 #fx-escena .sello .mes .v{ display:flex; justify-content:space-between; margin-top:5px; font-size:.86rem; } #fx-escena .sello .mes .v b{ display:inline; font-size:.95rem; color:#0b1730; } #fx-escena .sello .mes .mas{ color:#22A06B; font-weight:800; }
 #fx-escena .chau{ position:absolute; bottom:18px; left:0; right:0; text-align:center; color:rgba(255,255,255,.55); font-size:.78rem; }
 .fx-chispa{ position:fixed; width:9px; height:9px; border-radius:2px; z-index:9001; pointer-events:none; }
-@media (prefers-reduced-motion:reduce){ #fx-escena *, .fx-camion *, .prod-saldo .fx-esc *{ animation:none !important; transition:none !important; } }
+@media (prefers-reduced-motion:reduce){ #fx-escena *, .fx-camion *, .prod-saldo .fx-esc *, .fx-lado *{ animation:none !important; transition:none !important; } }
+/* 🖥️ LOS COSTADOS DEL FORMULARIO (§4ig, 08/10, dueño: «más pulido y desarrollado… tenemos espacios vacíos a los laterales»).
+   Desde 1300 px el formulario va al medio, la agenda de los camiones a la izquierda y el pedido en vivo a la derecha, los
+   dos fijos al bajar. Más angosto, todo como antes (y la tira de días, el camión y el mes siguen adentro del formulario). */
+.fx-lado{ display:none; }
+@media (min-width:1300px){
+  body:not(.ancha){ --wrap:1640px; }
+  #view-form.active{ display:grid; grid-template-columns:minmax(270px,340px) minmax(0,720px) minmax(290px,370px); justify-content:center; gap:22px; align-items:start; }
+  #view-form .form-card{ max-width:none; margin:0; border-radius:var(--r-lg); }
+  .fx-lado{ display:block; position:sticky; top:84px; max-height:calc(100vh - 98px); overflow:auto; background:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.7);
+    border-radius:var(--r-lg); box-shadow:var(--sh-soft); padding:16px 16px 14px; scrollbar-width:thin; }
+  #view-form #fx-dias, #view-form #fx-camion, #view-form #fx-mes{ display:none !important; }
+}
+.fx-lt{ font-size:.66rem; font-weight:800; color:var(--teal); letter-spacing:.12em; text-transform:uppercase; display:flex; align-items:center; gap:8px; margin:0 0 4px; }
+.fx-lt::after{ content:''; flex:1; height:1px; background:var(--gray-md); }
+.fx-sub{ font-size:.74rem; color:var(--muted); margin:0 0 10px; }
+.fx-ag{ display:flex; flex-direction:column; gap:6px; }
+.fx-agd{ display:grid; grid-template-columns:62px 1fr; gap:8px; align-items:center; border:1.5px solid var(--gray-md); border-radius:12px; padding:7px 9px; background:#fff; cursor:pointer; transition:border-color .2s, box-shadow .2s, transform .2s; text-align:left; font:inherit; color:inherit; width:100%; }
+.fx-agd:hover{ transform:translateX(2px); box-shadow:var(--sh-soft); }
+.fx-agd.sel{ border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,181,173,.18); }
+.fx-agd.off{ background:#f6f6f6; color:#b5b5b5; cursor:default; } .fx-agd.off:hover{ transform:none; box-shadow:none; }
+.fx-agd .d{ font-size:.66rem; font-weight:800; color:var(--muted); letter-spacing:.04em; } .fx-agd .n{ font-size:1.15rem; font-weight:900; line-height:1.1; }
+.fx-agd.off .d,.fx-agd.off .n{ color:#c2c2c2; }
+.fx-tur{ display:flex; flex-direction:column; gap:4px; }
+.fx-tr{ display:grid; grid-template-columns:24px 1fr 62px; gap:6px; align-items:center; font-size:.68rem; font-weight:800; border-radius:6px; padding:1px 3px; }
+.fx-tr.sel{ background:var(--teal-lt); }
+.fx-tr .b{ height:7px; border-radius:5px; background:#eef0f3; overflow:hidden; } .fx-tr .b i{ display:block; height:100%; border-radius:5px; transition:width .6s var(--ease); }
+.fx-tr .q{ text-align:right; white-space:nowrap; }
+.fx-agc{ font-size:.72rem; font-weight:800; color:#b5b5b5; }
+.fx-izq .fx-camion{ display:block !important; margin:12px 0 8px; padding:8px 10px 2px; }
+.fx-izq .fx-camion .t{ font-size:.78rem; } .fx-izq .fx-camion .pill{ font-size:.68rem; }
+.fx-ver{ width:100%; margin-top:2px; }
+.fx-dp{ display:flex; flex-direction:column; gap:10px; }
+.fx-cab{ display:flex; align-items:center; gap:10px; }
+.fx-cab .av{ width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#00B5AD,#1d4ed8); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; flex:none; }
+.fx-cab .nm{ font-weight:900; font-size:1rem; line-height:1.2; } .fx-cab .sb{ font-size:.74rem; color:var(--muted); }
+.fx-fila{ display:flex; gap:8px; align-items:flex-start; font-size:.82rem; }
+.fx-fila .i{ width:20px; text-align:center; flex:none; } .fx-fila .vacio{ color:#b5b5b5; font-style:italic; }
+.fx-prs{ display:flex; flex-direction:column; gap:5px; }
+.fx-pr{ display:grid; grid-template-columns:22px 1fr auto; gap:6px; align-items:start; background:var(--gray-lt); border-radius:9px; padding:7px 8px; font-size:.78rem; animation:fxPrEntra .35s var(--ease); }
+@keyframes fxPrEntra{ from{ opacity:0; transform:translateY(-4px); } }
+.fx-pr b{ font-weight:800; } .fx-pr .st{ font-size:.68rem; font-weight:800; margin-top:1px; } .fx-pr .m{ font-weight:800; white-space:nowrap; }
+.fx-tot{ border-top:1px dashed var(--gray-md); padding-top:8px; display:grid; grid-template-columns:1fr auto; gap:3px 10px; font-size:.82rem; }
+.fx-tot .gr{ font-size:1.05rem; font-weight:900; color:var(--teal-dk); }
+.fx-chk{ display:flex; flex-wrap:wrap; gap:5px; }
+.fx-chk span{ font-size:.7rem; font-weight:800; border-radius:20px; padding:3px 9px; background:var(--gray-lt); color:var(--muted); }
+.fx-chk span.ok{ background:var(--green-lt); color:var(--green); } .fx-chk span.no{ background:var(--amber-lt); color:var(--amber); }
+.fx-der .fx-mes{ display:block !important; margin:0; }
+.fx-hoy{ display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#0b1730,#1e3a5f); color:#fff; border-radius:12px; padding:10px 12px; }
+.fx-hoy .g{ font-size:1.5rem; font-weight:900; line-height:1; } .fx-hoy .s{ font-size:.72rem; opacity:.85; }
 </style>
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -10940,12 +10992,9 @@ function fxDiasPintar(){
   }
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
-function fxElegirDia(f){
-  var i=document.getElementById('f-fecha'); if(!i || i.value===f) return;
-  i.value=f; i.dispatchEvent(new Event('input',{bubbles:true})); i.dispatchEvent(new Event('change',{bubbles:true}));
-}
-function fxCamionPintar(){
-  var el=document.getElementById('fx-camion'); if(!el) return;
+function fxCamionPintar(){ fxCamionEn(document.getElementById('fx-camion')); fxCamionEn(document.getElementById('fx-izq-cam')); }
+function fxCamionEn(el){
+  if(!el) return;
   var f=(document.getElementById('f-fecha')||{}).value||'', t=normTurno(segVal('f-turno')||'AM');
   if(!f || !segVal('f-turno')){ el.hidden=true; return; }
   var lim=diaCerrado(f)?0:limTurno(f,t), usados=cuposUsadosTurno(f,t);
@@ -11007,7 +11056,84 @@ function fxMesPintar(){
     '<div class="s">'+o.n+' venta'+(o.n===1?'':'s')+' este mes'+(o.antes>0?(' · '+o.pct+'% de lo de '+o.mesAnt+' ('+fmtBs0(o.antes)+')'):'')+'</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
-function fxFormPintar(){ try{ fxDiasPintar(); fxCamionPintar(); fxMesPintar(); }catch(e){ /* las escenas nunca rompen el formulario */ } }
+function fxFormPintar(){ try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); }catch(e){ /* las escenas nunca rompen el formulario */ } }
+/* 🖥️ (§4ig) LOS COSTADOS: solo se arman con la pantalla ancha (en el celular no se ven y no se gasta nada). */
+function fxAncho(){ return !!(window.matchMedia && matchMedia('(min-width:1300px)').matches); }
+var FX_DIAS_NOM=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+function fxIzqPintar(){
+  var el=document.getElementById('fx-izq'); if(!el || !fxAncho()) return;
+  var fsel=(document.getElementById('f-fecha')||{}).value||'', tsel=normTurno(segVal('f-turno')||''), v=((document.getElementById('f-vendedor')||{}).value||'');
+  var desde=esVendedorLite(v)?todayStr():tomorrowStr(), filas='';
+  for(var i=0;i<FX_DIAS_N;i++){
+    var f=stockSumarDias(desde,i), L=fxDiaLibre(f), sel=(f===fsel);
+    var tur=['AM','PM'].filter(function(t){ return limTurno(f,t)>0 && !diaCerrado(f); }).map(function(t){
+      var lim=limTurno(f,t), u=cuposUsadosTurno(f,t), lib=Math.max(0,lim-u), pct=Math.min(100,Math.round(100*u/lim));
+      var col=lib<=0?'var(--red)':(lib<=3?'var(--amber)':'var(--green)');
+      return '<div class="fx-tr'+(sel&&tsel===t?' sel':'')+'" data-t="'+t+'"><span>'+(t==='AM'?'🌅':'🌆')+'</span><div class="b"><i style="width:'+pct+'%;background:'+col+'"></i></div><span class="q" style="color:'+col+'" title="'+u+' de '+lim+' ocupados">'+(lib<=0?'lleno':(lib+' libre'+(lib===1?'':'s')))+'</span></div>';
+    }).join('');
+    filas+='<button type="button" class="fx-agd'+(L.cerrado?' off':'')+(sel?' sel':'')+'" data-f="'+f+'"'+(L.cerrado?' disabled':' onclick="fxElegirDia(this.getAttribute(\'data-f\'), event)"')+'>'+
+      '<div><div class="d">'+FX_DIAS_NOM[dowDe(f)]+'</div><div class="n">'+f.slice(8,10)+'/'+f.slice(5,7)+'</div></div>'+
+      (L.cerrado ? '<div class="fx-agc">'+(L.cerrado==='feriado'?('🎉 feriado'+(feriadoDe(f)?(': '+esc(feriadoDe(f))):'')):'🚫 '+L.cerrado)+'</div>' : '<div class="fx-tur">'+tur+'</div>')+'</button>';
+  }
+  var nVer=(fsel && tsel) ? cuposUsadosTurno(fsel,tsel) : 0;
+  var h='<div class="fx-lt">📅 Agenda de entregas</div><div class="fx-sub">Tocá un día (o su turno) para elegirlo. Lo libre de cada camión.</div>'+
+    '<div class="fx-ag">'+filas+'</div><div id="fx-izq-cam" class="fx-camion" hidden></div>'+
+    (nVer ? '<button type="button" class="btn btn-ghost btn-sm fx-ver" onclick="verCuposTurno(\''+esc(fsel)+'\',\''+esc(tsel)+'\')">👀 Ver '+(nVer===1?'el pedido':('los '+nVer+' pedidos'))+' del turno '+esc(tsel)+'</button>' : '');
+  if(el._h!==h){ var cam=document.getElementById('fx-izq-cam'), firma=cam&&cam._firma, html=cam&&cam.innerHTML; el.innerHTML=h; el._h=h;
+    var nuevo=document.getElementById('fx-izq-cam'); if(nuevo && firma){ nuevo._firma=firma; nuevo.innerHTML=html; nuevo.hidden=false; } }
+}
+/* Tocar el turno de un día de la agenda elige el día Y el turno. */
+function fxElegirDia(f, ev){
+  var t=ev && ev.target && ev.target.closest ? ev.target.closest('.fx-tr') : null;
+  var i=document.getElementById('f-fecha');
+  if(i && i.value!==f){ i.value=f; i.dispatchEvent(new Event('input',{bubbles:true})); i.dispatchEvent(new Event('change',{bubbles:true})); }
+  if(t){ var b=document.querySelector('#f-turno button[data-val="'+t.getAttribute('data-t')+'"]'); if(b && !b.classList.contains('active')) b.click(); }
+}
+var FX_SALDO_ICO={ hay:['✅','var(--green)','Disponible'], moreno:['📥','var(--amber)','Hay en Moreno'], recogida:['🚚','var(--amber)','Viene de Moreno'],
+  prod:['⏳','var(--blue,#1d4ed8)','En producción'], pedir:['🏭','var(--red)','Hay que producir'], especial:['📐','#1d4ed8','Medida especial'],
+  fabcli:['🏭','#1d4ed8','Se fabrica para este pedido'], nofab:['🛑','var(--red)','Ya no se fabrica'], codigo:['🏷️','var(--amber)','Revisá el código'] };
+function fxDerPintar(){
+  var el=document.getElementById('fx-der'); if(!el || !fxAncho()) return;
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  var v=val('f-vendedor'), cli=val('f-cliente'), cel=val('f-celular'), zona=val('f-zona'), f=val('f-fecha'), t=normTurno(segVal('f-turno')||''), tipo=docTipoSel();
+  var lite=esVendedorLite(v), tienda=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA);
+  var prods=[], tot=0;
+  [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var d=String((c.querySelector('.prod-desc')||{}).value||'').trim(); if(!d) return;
+    var ms=c.querySelector('.prod-medida'), mo=c.querySelector('.prod-medida-otro'), med=ms?(ms.value==='Otros'?String((mo||{}).value||'').trim():String(ms.value||'')):'';
+    var q=parseInt((c.querySelector('.prod-cant')||{}).value,10)||0, pr=montoForm(c.querySelector('.prod-precio')), box=c.querySelector('.prod-saldo'), vv=box&&!box.hidden?box._v:null;
+    tot+=pr*q; prods.push({ d:d, m:med, q:q, sub:pr*q, ico:vv?FX_SALDO_ICO[vv.tipo]:null });
+  });
+  var acu=montoForm('f-acuenta'), sal=montoForm('f-saldo'), pagado=segVal('f-pagado')==='SI';
+  var ini=(v||'?').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase();
+  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':'🧾 Tu pedido')+'</div><div class="fx-dp">'+
+    '<div class="fx-cab"><div class="av">'+esc(ini)+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
+      '<div class="sb">'+esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':'🏪 Reposición'))+(v?(' · '+esc(v)):'')+'</div></div></div>';
+  if(!tienda) h+='<div class="fx-fila"><span class="i">🚚</span><span>'+(f?('<b>'+esc(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(f)]+' '+f.slice(8,10)+'/'+f.slice(5,7))+'</b>'+(t?(' · turno '+esc(t)):'')):'<span class="vacio">sin fecha</span>')+'</span></div>'+
+      '<div class="fx-fila"><span class="i">📍</span><span>'+(zona?esc(zona):'<span class="vacio">sin zona</span>')+'</span></div>';
+  if(cel) h+='<div class="fx-fila"><span class="i">📞</span><span>'+esc(cel)+'</span></div>';
+  h+='<div class="fx-prs">'+(prods.length ? prods.map(function(p){
+      return '<div class="fx-pr"><span>'+(p.ico?p.ico[0]:'🛏️')+'</span><div><b>'+(p.q>1?(p.q+'× '):'')+esc(p.d)+'</b>'+(p.m?(' · '+esc(p.m)):'')+
+        (p.ico?('<div class="st" style="color:'+p.ico[1]+'">'+esc(p.ico[2])+'</div>'):'')+'</div><span class="m">'+(p.sub>0?fmtBs0(p.sub):'')+'</span></div>';
+    }).join('') : '<div class="fx-fila"><span class="i">🛏️</span><span class="vacio">todavía sin productos</span></div>')+'</div>';
+  if(tipo==='OC' && (tot>0 || acu>0 || sal>0)) h+='<div class="fx-tot">'+(tot>0?('<span>Los ítems suman</span><b>'+fmtBs(r2(tot))+'</b>'):'')+
+      (pagado ? '<span>Pago</span><b style="color:var(--green)">✅ pagado</b>' : ('<span>A cuenta</span><b>'+fmtBs(acu)+'</b><span>Saldo por cobrar</span><span class="gr">'+fmtBs(sal)+'</span>'))+'</div>';
+  var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
+  if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); }
+  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){ return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div></div>';
+  if(v && !EDIT_ID){
+    var o=fxMesDe(nombreCanonico(v)), hoy=todayStr(), nH=0, bH=0;
+    (STATE||[]).forEach(function(p){ if(p && !esFilaSistema(p) && !borradorDe(p.id) && !esATC(p.oc) && !esRPT(p.oc) && mismoVendedor(p.vendedor,v) && contaFecha(p)===hoy){ nH++; bH+=ventaTotal(p); } });
+    h+='<div class="fx-hoy"><div class="g">'+nH+'</div><div><b>'+(nH===1?'pedido cargado hoy':'pedidos cargados hoy')+'</b><div class="s">'+fmtBs0(bH)+' vendidos hoy</div></div></div>'+
+      '<div class="fx-mes"><div class="l">📈 VENDIDO EN '+esc(o.mesNom.toUpperCase())+'</div><div class="r"><div class="bar"><i style="width:'+o.pct+'%"></i></div><div class="v">'+fmtBs0(o.este)+'</div></div>'+
+      '<div class="s">'+o.n+' venta'+(o.n===1?'':'s')+(o.antes>0?(' · '+o.pct+'% de lo de '+o.mesAnt):'')+'</div></div>';
+  }
+  h+='</div>';
+  if(el._h!==h){ var sc=el.scrollTop; el.innerHTML=h; el._h=h; el.scrollTop=sc; }
+}
+var FX_LADOS_T=null;
+function fxLadosProgramar(){ if(!fxAncho()) return; clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDerPintar(); }catch(e){} }, 150); }
 /* 3 · El dibujo del cuadrito del saldo. */
 function fxEscenaSaldo(tipo){
   if(tipo==='hay') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><rect x="6" y="56" width="106" height="5" rx="2" fill="#94a3b8"/>'+
@@ -20029,6 +20155,7 @@ function saldoAvisosPintarYa(filas){
       saldoCajaPintar(f.box, saldoVeredictoFila(f, sinId, fecha));
       f.box._firma=f.g+'|'+f.total;
     });
+    fxLadosProgramar();   // 🖥️ (§4ig) los íconos del pedido en vivo
   }catch(e){ /* el cuadrito nunca rompe el formulario */ }
 }
 /* 🔄 del cuadrito: lee la planilla ya (sin el tope de una por minuto) y repinta.
@@ -26723,6 +26850,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
+  (function(){ var fc=document.querySelector('#view-form .form-card'); if(fc){ ['input','change','click'].forEach(function(t){ fc.addEventListener(t, fxLadosProgramar); }); } })();   // 🖥️ (§4ig) el pedido en vivo
+  window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
   document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)
   document.getElementById('f-acuenta').addEventListener('input',updateMetodoVisibility);
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });

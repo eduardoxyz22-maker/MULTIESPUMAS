@@ -180,6 +180,35 @@ function PREPARAR(){
   chk('editando, el pedido ya está en el camión: 9 + el suyo = 10 de 12, sin contarlo dos veces; y sin la barra del mes', r.slots===12 && r.llenos===9 && r.tuyo===1 && r.mesOculto, r);
   chk('al corregir un pedido no sale la escena', r.alCorregir===false, r);
 
+  /* ── 6. Pantalla ancha (§4ig): la agenda a la izquierda y el pedido en vivo a la derecha ── */
+  console.log('\n── 6. Pantalla ancha: los costados ──');
+  const ctx2 = await browser.newContext({ viewport:{ width:1920, height:960 }, timezoneId:'America/La_Paz' });
+  const p2 = await ctx2.newPage(); p2.on('pageerror', e => errores.push(e.message)); p2.on('dialog', d => d.accept());
+  await p2.route(/^https?:/, r => r.abort()); await p2.clock.setFixedTime(new Date('2026-10-08T10:00:00-04:00'));
+  await p2.goto('file://' + PEDIDOS, { waitUntil:'load' }); await p2.waitForTimeout(300);
+  await p2.evaluate(PREPARAR);
+  const ev2 = async (fn, arg) => { try { return await p2.evaluate(fn, arg); } catch(e){ return { __error:String((e&&e.message)||e).slice(0,300) }; } };
+  await ev2(async()=>{ window._SRV.stock=window._stock(); STOCK_CARGADO=false; await refrescarEstado(); ULTIMO_ERROR=''; CARGA_ESTADO='ok'; showView('form'); resetForm(); _llenar(); });
+  await p2.waitForTimeout(400);
+  r = await ev2(()=>{ var iz=document.getElementById('fx-izq'), de=document.getElementById('fx-der'), card=document.querySelector('#view-form .form-card').getBoundingClientRect();
+    var a=iz.getBoundingClientRect(), b=de.getBoundingClientRect(), vis=function(id){ var e=document.getElementById(id); return !!e && getComputedStyle(e).display!=='none'; };
+    return { izq:a.width>200 && a.right<=card.left, der:b.width>200 && b.left>=card.right, filas:iz.querySelectorAll('.fx-agd').length, adentro:vis('fx-dias')||vis('fx-mes'), pagina:document.documentElement.scrollWidth };
+  });
+  chk('desde 1300 px: la agenda a la izquierda y el pedido a la derecha del formulario, sin la tira de adentro repetida', r.izq && r.der && r.filas===7 && !r.adentro && r.pagina<=1920, r);
+  try{ await p2.click('#fx-izq .fx-agd[data-f="2026-10-09"] .fx-tr[data-t="PM"]', {timeout:3000}); }catch(e){}
+  await p2.waitForTimeout(500);
+  r = await ev2(()=>({ fecha:document.getElementById('f-fecha').value, turno:segVal('f-turno'), cam:(document.getElementById('fx-izq-cam')||{}).innerText||'' }));
+  chk('tocar el turno PM del viernes en la agenda elige el día Y el turno; el camión de la agenda lo muestra', r.fecha==='2026-10-09' && r.turno==='PM' && /Viernes 09\/10 · turno PM/.test(r.cam), r);
+  await ev2(()=>{ _prod(0,'CH1761',1); var e=_cards()[0].querySelector('.prod-precio'); e.value='3500'; e.dispatchEvent(new Event('input',{bubbles:true})); });
+  await p2.waitForTimeout(900);
+  r = await ev2(()=>document.getElementById('fx-der').innerText.replace(/\s+/g,' '));
+  chk('el pedido en vivo: cliente, día y turno, el producto con su estado, la suma, lo que falta y lo vendido en el mes',
+    /CLIENTE ROJAS/.test(r) && /Viernes 09\/10 · turno PM/.test(r) && /ORO BI RELAX/.test(r) && /Disponible/.test(r) && /Bs 3\.500,00/.test(r) && /✓ Productos/.test(r) && /VENDIDO EN OCTUBRE/.test(r), r);
+  await p2.setViewportSize({ width:1100, height:900 }); await p2.waitForTimeout(400);
+  r = await ev2(()=>({ izq:getComputedStyle(document.getElementById('fx-izq')).display, dias:getComputedStyle(document.getElementById('fx-dias')).display }));
+  chk('más angosto que 1300 px: sin costados, y la tira de días vuelve adentro del formulario', r.izq==='none' && r.dias!=='none', r);
+  await ctx2.close();
+
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await ctx.close(); await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

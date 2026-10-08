@@ -645,7 +645,10 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
 - ⚠️ En Playwright (`navigator.webdriver`) la escena de guardar NO sale salvo `window.FX_PRUEBA`: si no, tapa la ventana de
   WhatsApp de todas las pruebas. ⚠️ Animaciones: un solo `requestAnimationFrame` para muchos elementos (con 90 se trababa la
   página) y nada de `blur` animado a pantalla completa. `carga-viva/camion-recorte.png` = `camion.png` sin fondo.
-- `tests/test_escenas_form.js` (19).
+- **🖥️ Pantalla ancha (§4ig, desde 1300 px; en la rama, SIN publicar)**: `#fx-izq` (agenda de 7 días por turno + el camión) y
+  `#fx-der` (el pedido en vivo: productos con su estado, suma, «Para guardar», hoy y el mes) a los costados, `sticky`. «Para
+  guardar» es solo una ayuda: las validaciones siguen en `submitPedido`. Más angosto no cambia nada.
+- `tests/test_escenas_form.js` (23).
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
