@@ -135,7 +135,17 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
   chk('(09/10) el cartel separa «🚨 se acaban antes de que llegue la fábrica» (Pedir ya) de «🏭 para pedir esta semana»',
     ()=>{ var a=r.al2; return (a.ya? a.t.indexOf('🚨 '+a.ya+' se acaba')>=0 : a.t.indexOf('🚨')<0) && (a.sem? a.t.indexOf('🏭 '+a.sem+' para pedir esta semana')>=0 : a.t.indexOf('esta semana')<0); }, r.al2);
   chk('el galpón más lleno (Moreno no: PTF con 34) llena más estantes', ()=>(r.llenos===40), r.llenos);
-  r = await ev(()=>{ stockGalponTocar('sale'); return { orden:STOCK_FILTRO.orden, dir:STOCK_FILTRO.dir, tabla:!!document.getElementById('stk-tabla-caja') }; });
+  r = await ev(()=>{
+    var d=stockData(), G=stockGalponesDatos(d); stockGalponVer('ptf');
+    var L=document.getElementById('galp-lista'), lis=L?[].map.call(L.querySelectorAll('li'), function(li){ return { k:li.getAttribute('data-k'), t:li.innerText.replace(/\s+/g,' ') }; }):[];
+    var ok=lis.every(function(x){ var o=d.lista.filter(function(y){ return y.k===x.k; })[0]; return o && x.t.indexOf(sfReloj(o).txt)>=0 && x.t.indexOf(sfAccion(o).replace(/<[^>]+>/g,''))>=0; });
+    var on=!!document.querySelector('#vis-galp .galp.on[data-galp="ptf"]'), expl=L?L.querySelector('.gl-expl').innerText:'';
+    stockGalponVer('ptf'); var cerrada=!document.getElementById('galp-lista');
+    return { n:lis.length, al:G[0].alerta.length, ok:ok, on:on, expl:expl, cerrada:cerrada, lis:lis };
+  });
+  chk('(09/10, dueño: «al dar click no dice…») tocar PTF abre abajo SUS productos, cada uno con cuándo se corta y qué hacer (lo mismo de las fichas)', ()=>(r.n===r.al && r.n>0 && r.ok && r.on), r);
+  chk('…y explica qué es «pedir ya» (se acaba antes de que llegue la fábrica) y «pedir esta semana»; tocar de nuevo la cierra', ()=>(/ANTES de que llegue la fábrica/.test(r.expl) && /esta semana/.test(r.expl) && r.cerrada), r.expl);
+  r = await ev(()=>{ stockGalponTocar('sale'); var det=document.getElementById('stk-tabla-det'); return { orden:STOCK_FILTRO.orden, dir:STOCK_FILTRO.dir, tabla:!!document.getElementById('stk-tabla-caja')&&!!det&&det.open }; });
   chk('tocar Banzer ordena la tabla por lo que hay en Banzer, de mayor a menor', ()=>(r.orden==='sale' && r.dir===-1 && r.tabla), r);
   await ev(()=>{ stockFiltroLimpiar(); });
 

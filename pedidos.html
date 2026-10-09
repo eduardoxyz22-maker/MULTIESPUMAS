@@ -1623,6 +1623,19 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .tm-ok{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:.72rem; font-weight:800; color:#fff; }
 .tm-pie{ display:block; color:var(--muted); font-size:.72rem; margin-top:3px; }
 @media (max-width:640px){ .tm-eje,.tm-fila{ grid-template-columns:1fr; gap:4px; } .tm-eje>div:first-child{ display:none; } .tm-dias span:nth-child(even),.tm-dias span.ult{ display:none; } }
+.galp.on{ outline:3px solid var(--galp); outline-offset:3px; border-radius:14px; }
+.galp-pista{ font-size:.78rem; color:var(--muted); text-align:center; margin-top:4px; }
+.galp-lista{ margin-top:10px; border:1px solid #e3e8ea; border-radius:12px; padding:10px 12px; background:#fbfdfd; }
+.gl-cab{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.gl-expl{ font-size:.78rem; color:#4b5563; margin:6px 0; }
+.galp-lista ul{ list-style:none; margin:0 0 8px; padding:0; }
+.galp-lista li{ display:grid; grid-template-columns:minmax(180px,1.3fr) 1.2fr 1fr; gap:8px; align-items:center; padding:7px 4px; border-top:1px solid #eef2f3; cursor:pointer; }
+.galp-lista li:hover{ background:#f3f8f7; }
+.gl-nom b{ display:block; font-size:.84rem; } .gl-nom small{ color:var(--muted); font-size:.74rem; }
+.gl-cuando{ font-size:.78rem; display:flex; flex-direction:column; gap:2px; }
+.gl-hacer{ font-size:.8rem; font-weight:800; border-radius:8px; padding:4px 8px; text-align:center; }
+.gl-hacer.sf-bad{ background:#fde2e4; color:#a3172a; } .gl-hacer.sf-warn{ background:#fef3c7; color:#92400e; } .gl-hacer.sf-ok,.gl-hacer.sf-gris{ background:#eef2f3; color:#374151; }
+@media (max-width:640px){ .galp-lista li{ grid-template-columns:1fr; gap:3px; } .gl-hacer{ text-align:left; justify-self:start; } }
 .lugd-cab{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-bottom:10px; }
 .lugd-cab .seg button{ font:inherit; font-weight:800; font-size:.82rem; padding:6px 12px; border:1px solid var(--gray-md); background:#fff; cursor:pointer; }
 .lugd-cab .seg button:first-child{ border-radius:8px 0 0 8px; } .lugd-cab .seg button:last-child{ border-radius:0 8px 8px 0; border-left:0; }
@@ -27345,7 +27358,7 @@ function stockGalponesHtml(d){
   var anima=visAnimar('galp', G.map(function(g){ return g.id+':'+g.u+':'+g.alerta.length; }).join('|'));
   var abierto=visPref('galp', true);
   var h='<details id="vis-galp" class="vis-caja"'+(abierto?' open':'')+' ontoggle="visPrefSet(\'galp\',this.open)">'+
-    '<summary><b>🏬 Los almacenes</b> <span class="vis-sub">cada galpón se llena con el saldo de su Excel · tocá uno y la tabla se ordena por lo que tiene</span></summary>'+
+    '<summary><b>🏬 Los almacenes</b> <span class="vis-sub">cada galpón se llena con el saldo de su Excel · tocá uno para ver cuáles avisan y cuándo se cortan</span></summary>'+
     '<div class="galp-fila">';
   G.forEach(function(g){
     var llenos=g.u>0 ? Math.max(1, Math.round(g.u/maxU*GALP_SLOTS)) : 0;
@@ -27367,7 +27380,7 @@ function stockGalponesHtml(d){
         : '<span class="galp-ok">✅ nada para pedir</span>';
     }
     var ej=g.alerta.slice(0,2).map(function(o){ return esc(stockNombre(o)); }).join(' · ');
-    h+='<button type="button" class="galp'+(anima?' anima':'')+'" data-galp="'+g.id+'" style="--galp:'+g.col+'" onclick="stockGalponTocar(\''+g.orden+'\')" title="Ordenar la tabla por lo que tiene '+esc(g.nombre)+'">'+
+    h+='<button type="button" class="galp'+(anima?' anima':'')+(GALP_VER===g.id?' on':'')+'" data-galp="'+g.id+'" style="--galp:'+g.col+'" onclick="stockGalponVer(\''+g.id+'\')" title="Ver cuáles son">'+
       '<div class="galp-caja"><div class="galp-techo"></div><div class="galp-cuerpo"><div class="galp-est">'+slots+'</div><div class="galp-puerta"></div></div></div>'+
       '<div class="galp-nom">'+g.ico+' '+esc(g.nombre)+'</div>'+
       '<div class="galp-u">'+(g.hay?stockUnid(g.u):'—')+'</div>'+
@@ -27375,11 +27388,40 @@ function stockGalponesHtml(d){
       '<div class="galp-al">'+alertaTxt+(ej?('<br><small>'+ej+(g.alerta.length>2?' …':'')+'</small>'):'')+'</div>'+
     '</button>';
   });
-  h+='</div></details>';   // 🌡️ el termómetro se sacó (§4iq, dueño: «esto no se entiende bien… quítalo»)
+  h+='</div>';
+  var gv=G.filter(function(g){ return g.id===GALP_VER; })[0];
+  if(gv) h+=stockGalponListaHtml(gv);
+  else h+='<div class="galp-pista">👆 Tocá un galpón para ver cuáles son, cuándo se cortan y cuándo llega lo nuevo.</div>';
+  h+='</details>';   // 🌡️ el termómetro de líneas se sacó (§4iq); el de barras está en §4it
   return h;
+}
+/* (09/10, dueño: *«al dar click no dice que se acaba antes de llegar a fábrica, o cómo sabe uno?»*) Tocar un galpón ordenaba la
+   tabla completa, que desde §4ip está plegada: no se veía nada. Ahora abre ABAJO la lista de lo que avisa ese galpón, con lo que
+   hay ahí, cuándo se corta (`sfReloj`, la MISMA cuenta de las fichas y el termómetro), cuándo llega (`stockTermoLlega`) y qué hacer
+   (`sfAccion`). Tocar de nuevo la cierra. La tabla ordenada sigue a un botón. */
+var GALP_VER='';
+function stockGalponVer(id){ GALP_VER=(GALP_VER===id?'':id); renderStock(); var e=document.getElementById('galp-lista'); if(e && e.scrollIntoView) e.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+function stockGalponListaHtml(g){
+  var trae=g.id==='trae', hayDe=function(o){ return g.id==='ptf' ? Math.max(0,o.deposito||0) : g.id==='sale' ? (o.enSale||0) : (o.enOtros||0); };
+  var expl = trae ? 'Ya están fabricados y esperan en Moreno: si se los trae, alcanza sin pedir a fábrica.'
+    : '🚨 <b>Pedir ya</b> = se acaba ANTES de que llegue la fábrica, aunque pidas hoy (va a haber días sin stock). '+
+      '🏭 <b>Pedir esta semana</b> = alcanza para lo que tarda la fábrica, pero no deja margen: pedilo estos días.';
+  var filas=g.alerta.map(function(o){
+    var r=sfReloj(o), L=stockTermoLlega(o);
+    return '<li data-k="'+esc(o.k)+'" onclick="sfElegir(this.dataset.k)" title="Ver su historia">'+
+      '<div class="gl-nom"><b>'+esc(o.desc)+' '+esc(o.medida||'')+'</b><small>hay '+stockUnid(hayDe(o))+' en '+esc(g.nombre)+(o.comp?(' · '+stockUnid(o.comp)+' vendido'+(o.comp===1?'':'s')+' sin entregar'):'')+(o.porDia>0?(' · '+stockNum(o.porDia)+' por día'):'')+'</small></div>'+
+      '<div class="gl-cuando">'+(trae?'':('<span>'+r.txt+'</span>'))+(L?('<span>🚚 '+esc(L.txt)+' el '+esc(sfDiaTxt(L.f))+'</span>'):'')+'</div>'+
+      '<div class="gl-hacer sf-'+sfEstado(o)+'">'+sfAccion(o)+'</div></li>';
+  }).join('');
+  return '<div class="galp-lista" id="galp-lista"><div class="gl-cab"><b>'+g.ico+' '+esc(g.nombre)+' · '+(trae?(g.alerta.length+' para traer'):(g.alerta.length+' para pedir'))+'</b>'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="stockGalponVer(\''+g.id+'\')">✕ Cerrar</button></div>'+
+    '<p class="gl-expl">'+expl+'</p>'+
+    (filas ? ('<ul>'+filas+'</ul>') : '<p class="gl-expl">✅ Nada que avisar en este galpón.</p>')+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="stockGalponTocar(\''+g.orden+'\')">📋 Ver todo lo de '+esc(g.nombre)+' en la tabla completa</button></div>';
 }
 function stockGalponTocar(orden){
   STOCK_FILTRO.orden=orden; STOCK_FILTRO.dir=-1;
+  try{ visPrefSet('stkTabla', true); }catch(e){}   // la tabla está plegada (§4ip): ordenarla sin abrirla no mostraba nada
   renderStock();
   var t=document.getElementById('stk-tabla-caja'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' });
 }

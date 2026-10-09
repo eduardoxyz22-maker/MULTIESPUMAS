@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — EN LA RAMA
+## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 (ver abajo)
 - El dueño, con la captura de la muestra 2: *«y el termómetro de cada producto cómo quedó o no se hizo?»*. El de §4ik eran líneas que
   bajaban bajo el cero y se sacó en §4iq; el de la muestra (barras) no se había hecho. **`stockTermoHtml`** (`<details id="stk-termo">`,
   entre las fichas y el catálogo, `visPref('termo')` abierta de entrada): una barra por producto sobre 17 días (`TERMO_DIAS`), verde
@@ -7455,13 +7455,20 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   en esos días o tienen aviso urgente/pedir/traer, el que se corta primero arriba, 8 y «Ver los que siguen». Solo mira.
 - `test_fichas_4ip` §8 (→ 47).
 
-## 4is. 09/10: 🏬 el cartel de los galpones separa «pedir ya» de «pedir esta semana» — EN LA RAMA
+## 4is. 09/10: 🏬 el cartel de los galpones separa «pedir ya» de «pedir esta semana» — PUBLICADA 09/10 (ver abajo)
 - El dueño, con la captura de los galpones (PTF «⚠️ 20 se acaban antes de que llegue la fábrica», Banzer «⚠️ 4…»): *«20 se acaban
   antes que llegue la fábrica?»*. Contaba juntos los avisos `urgente` («🚨 Pedir ya») y `pedir` («🏭 Pedir esta semana»), y solo los
   primeros se acaban antes de que llegue la fábrica. Ahora: «🚨 N se acaban antes de que llegue la fábrica» y «🏭 M para pedir esta
   semana», los urgentes primero en los ejemplos. Los números no cambiaron (salen de `stockData`, los mismos de fichas y tabla).
   El galpón de PTF cuenta TODOS los productos del catálogo con ese aviso; el de Banzer, solo los que tienen saldo en Banzer.
-- `test_visuales` §1 (→ 36).
+- **Tocar un galpón abre ABAJO su lista** (dueño, 09/10: *«al dar click no dice que se acaba antes de llegar a fábrica, o cómo sabe
+  uno?»*): antes ordenaba la tabla completa, que desde §4ip está plegada, y no se veía nada. `stockGalponVer(id)`/`GALP_VER` →
+  `stockGalponListaHtml`: cada producto con lo que hay en ese galpón, cuándo se corta (`sfReloj`), cuándo llega (`stockTermoLlega`) y
+  qué hacer (`sfAccion`), más una línea que explica «pedir ya» y «pedir esta semana». Tocar un renglón abre su historia (`sfElegir`);
+  «📋 Ver todo en la tabla completa» la ordena Y la abre (`stockGalponTocar` pone `visPref('stkTabla', true)`).
+  ⚠️ «⛔ Ya falta para lo vendido» con «🏭 Pedí esta semana» NO es contradicción: lo vendido se entrega en unos días y la fábrica
+  llega antes (`o.dias ≥ o.lead`); «Pedir ya» es solo cuando ni pidiendo hoy llega (`stockAvisoDe`).
+- `test_visuales` §1 (→ 38).
 
 ## 4ir. 09/10: 📍 «Sale de» en la tabla de Administración y «Lo del día, por lugar» — PUBLICADA 09/10 09:12 (`67b337b`), Pages OK 09:12
 - El dueño, con la captura de la tabla: *«Debería salir ahí, o no sé, dame ideas, muéstrame: debe verse rápido en la lista del día o esa
