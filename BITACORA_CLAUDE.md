@@ -7467,7 +7467,9 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **Respuestas del dueño (09/10 tarde)**: *«2. sí 3. sí 4 lo consulto 5. sí 6 consulto»*. Hecho: «SOMIER 3P 180X190CM HEAVEN» → SOMIER ORO (el alias
   del KING ahora acepta 3P/3 PLZ/3 PLAZAS con la medida en el medio); «COLCHON ANTIALERGICO 1.5PLZ … HEAVEN» → ESPECIAL ANTIALERGICO (solo la forma de
   ROHO que termina en HEAVEN; el JUNIOR sigue aparte, §4cz); `PROD_NO_ES_STOCK` en `esTextoDeTienda`: PROTETOR/PRROTETOR, ^PANEL, ^REPARACION, ^SERVICIO.
-  Esperan: S-1 (las NASA de PTF, sin respuesta), E2-4 y S-4 (los consulta). Quedan sin preguntar «SOMIER 3.5P 200X200 HEAVEN» y «SOMIER 2.5P HEAVEN».
+  Después: *«1 no»* (las NASA de PTF NO son la ALM/NASA 50x70: siguen aparte) y *«si tú ya sabes las medidas, roho somier Heaven es el oro»* →
+  UN alias para todo «SOMIER <plazas> … HEAVEN» (2P, 2 PLZ, 2.5P, 3P, 3 PLAZAS KING, 3.5P) → SOMIER ORO; sin medida la dan las plazas
+  (`medidaDeTexto`: 2.5P = 160x190). Real: ya no queda ninguna fila «SOMIER HEAVEN». Esperan: E2-4 y S-4 (los consulta).
 - **🚚 Camiones** (dueño: *«ese camión debería ser una animación… con el motor prendido… el de arriba quedó pequeño… dame más opciones»*; vista previa
   `camiones.html`, eligió *«B, C juntos y H1»*): arriba, un camión dibujado con «MULTIESPUMAS» (SVG en `.h-camion`, `h-viaje` 14 s hasta `calc(100% +
   130px)`, humo `.hc-humo`, ruedas `.hc-rayos`); en el formulario (`fxCamionEn`) la ciudad, los árboles y la calle pasan por detrás (`.fx-ciudad`,
