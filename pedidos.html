@@ -19164,6 +19164,8 @@ var PROD_ALIAS=[
      Heaven es el oro»*). TODO «SOMIER <plazas> … HEAVEN» de ROHO es el SOMIER ORO: 2P, 2 PLZ, 2.5P, 3P, 3 PLAZAS KING, 3.5P, con o sin la
      medida en el medio. La medida va en su campo (y si no viene, la sacan las plazas: `medidaDeTexto`). */
   { de:/\bSOMIER\s+\d(?:[.,]\d)?\s*(?:PLAZAS?|PLZ|P)\s+(?:\d{2,3}\s*X\s*\d{2,3}\s*(?:CM)?\s+)?(?:KING\s+)?HEAVEN\b/g, a:'SOMIER ORO' },
+  /* (§4iz, E1-4) «EURO PEDIC» con espacio (ROHO) es el EUROPEDIC del catálogo (CH1765-69): el mismo nombre, como FORTEFLEX. */
+  { de:/\bEURO\s+PEDIC\b/g,             a:'EUROPEDIC' },
   /* (§4iz, dueño 09/10: «sí», a «¿COLCHON ANTIALERGICO 1.5PLZ 105X190CM HEAVEN de ROHO es el ESPECIAL ANTIALERGICO (CH2391)?»). Solo la forma
      de ROHO (termina en HEAVEN): el ESPECIAL JUNIOR es OTRO colchón (§4cz) y no dice antialérgico. La medida va aparte. */
   { de:/\b(?:COLCHON\s+)?ANTIALERGICO\s+(?:\d(?:[.,]\d)?\s*(?:PLZ|PLAZAS?|P)\s+)?(?:\d{2,3}\s*X\s*\d{2,3}\s*(?:CM)?\s+)?HEAVEN\b/g, a:'ESPECIAL ANTIALERGICO' }
