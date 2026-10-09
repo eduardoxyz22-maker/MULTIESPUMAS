@@ -7457,6 +7457,9 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   entregados). Tocar un renglón abre el pedido. Plegable (`visPref('lugares')`, abierta de entrada).
 - Las dos salen de `prodPartes`, la MISMA marca de la Lista de carga y de `prodLugarTag` (§4iq). Solo miran: no guardan nada.
 - `test_fichas_4ip` §7 (→ 41).
+- Batería entera con §4ip + §4iq + §4ir: 147 suites, 5.469 comprobaciones. `test_ubic` dio 6 rojas con la máquina cargada y sola
+  28/28 (de las que fallan por carga). `test_stock_detalle.cjs` (de la otra herramienta) sí era real: tocaba una fila de la tabla
+  de stock, que desde §4ip arranca plegada. Ahora abre `#stk-tabla-det` antes de tocar, como lo haría la persona; 4/4 `.cjs` en verde.
 
 ## 4iq. 09/10: 🌡️ fuera el termómetro · 📍 de dónde se carga, a la vista de logística — EN LA RAMA
 - El dueño, con una captura de «🌡️ Los que se terminan» (las líneas rojas bajando bajo el cero): *«Esto no se entiende bien…
