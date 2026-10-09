@@ -156,8 +156,7 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
   /* «Cobrado» de la rendición suma `totalCobrado(p)` (§4ew): los 1.500 que cobró el chofer en
      «a» MÁS los 900 del QR de «c» que están en el historial (antes sumaba `p.cobradoBs`, que no
      viaja en la planilla: desde otra compu daba Bs 0). */
-  chk('  y entra en la rendición del chofer (1.500 + 900 del historial = 2.400)', /2\.400/.test(r.rendicion) && /Luis Pierre/.test(r.rendicion),
-      r.rendicion.replace(/\s+/g,' ').slice(0,80));
+  /* (§4io, 09/10: la rendición por chofer de Administración se sacó con el resumen; lo mismo lo dicen el parte del día y la vista del chofer) */
 
   // ---------- 8. los filtros de la pantalla ----------
   r = await page.evaluate(async ()=>{

@@ -1063,50 +1063,16 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 
         <div id="adm-revisar"></div>
 
-        <!-- 👁️ Dos interruptores SEPARADOS (§4ib, dueño 08/10: «separá ocultar resumen y ocultar el nuevo 3D»): los camiones y
-             el resumen se esconden cada uno con su botón, y cada compu recuerda lo suyo. Resumen: §4bf en la bitácora. -->
+        <!-- 🧹 (§4io, 09/10) El resumen de estadísticas (fichas, consolidados, rendición, cupos de 7 días y zonas) se SACÓ: el
+             dueño, *«al tenerlo ya en 3D y los focos de calor, eso ya no es útil para logística, quítalo»*. Lo reemplazan los
+             camiones, el 📅 calendario y los mapas. Los camiones siguen con su botón (§4ib). -->
         <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px">
+          <button class="btn btn-ghost btn-sm no-print" id="adm-salud-btn" style="width:auto" onclick="saludDelDia(true)">🌅 Salud del día</button>
           <button class="btn btn-ghost btn-sm no-print" id="adm-camiones-btn" style="width:auto" onclick="toggleCamionesAdm()">🙈 Ocultar camiones</button>
-          <button class="btn btn-ghost btn-sm" id="adm-resumen-btn" style="width:auto" onclick="toggleResumenAdm()">🙈 Ocultar resumen</button>
         </div>
 
         <div id="carga-viva" class="no-print"></div>
-        <div id="adm-resumen">
-        <div class="metrics" id="adm-metrics"></div>
-        <div class="metodos-line" id="adm-metodos"></div>
-
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-h">Consolidado por vendedor</div>
-            <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-vendedor"></table></div>
-          </div>
-          <div class="panel">
-            <div class="panel-h">Consolidado por día</div>
-            <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-dia"></table></div>
-          </div>
-        </div>
-
-        <div class="panel" style="margin-bottom:22px">
-          <div class="panel-h">🚛 Entregas asignadas por camión</div>
-          <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-camion"></table></div>
-        </div>
-
-        <div class="panel" style="margin-bottom:22px">
-          <div class="panel-h">💵 Rendición por chofer — salió a cobrar vs cobrado</div>
-          <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-rendicion"></table></div>
-        </div>
-
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-h">📅 Ocupación de cupos — próximos 7 días</div>
-            <div style="padding:10px 14px" id="adm-ocupacion"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-h">🔥 Concentración por zona</div>
-            <div style="padding:10px 14px" id="adm-zonas"></div>
-          </div>
-        </div>
-        </div><!-- /adm-resumen -->
+        <div id="adm-cal" class="no-print"></div>   <!-- 📅 debajo de los camiones (dueño, 09/10) -->
 
         <div class="btn-row" style="margin-bottom:16px">
           <span class="xls-group" title="Descargar Excel según el alcance elegido">
@@ -1524,6 +1490,63 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 @keyframes tendSube{ 50%{ transform:translate(-50%,-62%); } }
 @media (max-width:560px){ .alm-tend-fila{ grid-template-columns:1fr auto; } .alm-tend-sem{ grid-column:1/-1; order:3; } }
 @media (prefers-reduced-motion: reduce){ .alm-tend-fila.crece, .alm-tend-flecha.sube span{ animation:none !important; } }
+.hist-barras{ display:flex; gap:2px; align-items:flex-end; height:46px; margin-top:6px; }
+.hist-barras i{ flex:1; min-width:3px; background:#7c2d12; border-radius:2px 2px 0 0; opacity:.8; }
+/* §4im */
+.cc-lugar{ margin:-4px 0 8px; }
+.cc-wrap{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.cc-svg{ width:220px; max-width:100%; height:auto; }
+.cc-calle{ fill:#cbd5e1; } .cc-caja{ fill:#eef3f6; stroke:#94a3b8; stroke-width:1.5; } .cc-cabina{ fill:#0f766e; } .cc-vidrio{ fill:#e6f6f4; } .cc-rueda{ fill:#1e293b; }
+.cc-bulto{ fill:#fff; stroke:#cbd5e1; stroke-dasharray:3 2; } .cc-bulto.on{ fill:#0f766e; stroke:none; }
+.cc-bulto.entra{ animation:ccEntra .6s cubic-bezier(.3,1.4,.5,1); transform-box:fill-box; }
+@keyframes ccEntra{ from{ transform:translateX(160px); opacity:0; } }
+.cc-wrap.completo .cc-svg{ animation:ccSale 1.2s ease-in-out 1; }
+@keyframes ccSale{ 40%{ transform:translateX(10px); } }
+.cc-txt{ font-weight:800; color:#0f766e; font-size:.86rem; }
+.rk-cab{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+.rk-sem{ font-weight:900; }
+.rk{ position:relative; margin-bottom:12px; }
+.rk-fila{ position:absolute; left:0; right:0; height:32px; display:grid; grid-template-columns:24px minmax(110px,260px) minmax(0,1fr); gap:8px; align-items:center; transition:top .8s cubic-bezier(.4,1,.4,1); }
+.rk-pos{ font-weight:900; text-align:right; color:var(--muted); }
+.rk-nom{ font-size:.82rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rk-barra{ height:22px; border-radius:6px; display:flex; align-items:center; justify-content:flex-end; padding-right:7px; color:#fff; font-weight:800; font-size:.76rem; transition:width .8s cubic-bezier(.4,1,.4,1); min-width:30px; }
+.flecha{ font-size:.74rem; font-weight:900; margin-left:5px; }
+.cal-cab{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+.cal{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin-bottom:10px; }
+.cal-hd{ text-align:center; font-size:.68rem; font-weight:800; color:var(--muted); }
+.cal-dia{ border:0; border-radius:9px; min-height:52px; padding:5px 6px; text-align:left; font:inherit; cursor:pointer; background:#f1f5f9; color:var(--text,#1d2b36); min-width:0; }
+.cal-dia b{ display:block; font-size:.92rem; } .cal-dia span{ font-size:.68rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+.cal-dia.cerrado{ background:repeating-linear-gradient(45deg,#e2e8f0 0 4px,#f8fafc 4px 8px); color:var(--muted); }
+.cal-dia.hoy{ outline:3px solid #1e293b; outline-offset:-3px; } .cal-dia.sel{ box-shadow:0 0 0 3px var(--teal); }
+.cal-dia.lleno span::after{ content:" · lleno"; font-weight:800; }
+.cal-det{ font-size:.86rem; padding:8px 4px 12px; }
+.av-nuevo{ display:flex; gap:12px; align-items:center; background:#fef2f2; border:1px solid #fecaca; border-left:5px solid #dc2626; border-radius:11px; padding:10px 14px; margin-bottom:14px; font-size:.88rem; color:#7f1d1d; animation:avEntra .5s cubic-bezier(.3,1.4,.5,1); }
+.av-nuevo a{ color:#991b1b; font-weight:800; }
+@keyframes avEntra{ from{ transform:translateY(-10px); opacity:0; } }
+.campana{ display:inline-block; font-size:1.4rem; transform-origin:50% 0; animation:campana 1s ease-in-out 3; }
+@keyframes campana{ 20%{ transform:rotate(18deg); } 40%{ transform:rotate(-16deg); } 60%{ transform:rotate(10deg); } 80%{ transform:rotate(-6deg); } }
+tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
+@keyframes stkLate{ 50%{ background:#fee2e2; } }
+#salud-overlay{ display:none; position:fixed; inset:0; z-index:6000; background:rgba(4,30,30,.72); align-items:center; justify-content:center; padding:16px; }
+.salud-caja{ width:min(760px,100%); background:linear-gradient(160deg,#0a3b3a,#0d5a57); color:#eafffd; border-radius:18px; padding:20px; box-shadow:0 24px 60px rgba(0,0,0,.4); animation:avEntra .5s cubic-bezier(.3,1.3,.5,1); }
+.salud-tit{ display:flex; flex-direction:column; margin-bottom:14px; } .salud-tit b{ font-size:1.3rem; } .salud-tit span{ opacity:.8; font-size:.86rem; }
+.salud-med{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.salud-m{ background:rgba(255,255,255,.07); border-radius:12px; padding:10px; text-align:center; }
+.salud-m svg{ width:100%; max-width:150px; height:auto; } .salud-m b{ display:block; font-size:.9rem; } .salud-m small{ opacity:.8; font-size:.74rem; }
+.salud-arco{ transition:stroke-dashoffset 1.3s cubic-bezier(.3,1,.4,1); }
+.salud-pie{ display:flex; justify-content:flex-end; margin-top:14px; } .salud-pie .btn{ background:#fff; color:#0a3b3a; font-weight:800; width:auto; }
+.viaje{ display:flex; align-items:flex-start; margin:2px 0 12px; }
+.viaje-p{ flex:1; text-align:center; position:relative; font-size:.7rem; color:var(--muted); min-width:0; }
+.viaje-p::before{ content:""; position:absolute; top:14px; left:-50%; width:100%; height:4px; background:var(--gray-md,#e2e8f0); }
+.viaje-p:first-child::before{ display:none; }
+.viaje-p.hecho::before, .viaje-p.ahora::before{ background:var(--teal); }
+.viaje-p i{ position:relative; z-index:1; display:grid; place-items:center; width:30px; height:30px; margin:0 auto 3px; border-radius:50%; background:var(--gray-md,#e2e8f0); font-style:normal; font-size:.95rem; }
+.viaje-p.hecho i{ background:var(--teal); }
+.viaje-p.ahora i{ background:#f59e0b; transform:scale(1.15); animation:viajePulso 1.6s ease-in-out infinite; }
+.viaje-p.ahora{ color:var(--text,#1d2b36); font-weight:800; }
+@keyframes viajePulso{ 50%{ box-shadow:0 0 0 7px rgba(245,158,11,.25); } }
+.viaje.chico{ margin:6px 0 4px; } .viaje.chico .viaje-p i{ width:22px; height:22px; font-size:.72rem; } .viaje.chico .viaje-p::before{ top:10px; height:3px; }
+@media (prefers-reduced-motion: reduce){ .cc-bulto.entra, .cc-wrap.completo .cc-svg, .campana, tr.stk-late td, .viaje-p.ahora i, .av-nuevo{ animation:none !important; } }
 #mis-anillo:empty{ display:none; }
 .mis-anillo{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); padding:12px 16px; margin:-8px 0 18px; box-shadow:var(--sh-card); }
 .mis-ani{ width:150px; height:150px; display:block; }
@@ -2529,7 +2552,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-06-a';   // (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-09-a';   // (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -11736,6 +11759,7 @@ function refrescarEstadoYa(){
       cargaEstado('ok');
       saldoTrasLectura();                        // 🧾 (27/09) el saldo debajo de cada producto, con lo recién leído (§4gj)
       if(typeof cierreEntPendiente==='function' && cierreEntPendiente()) setTimeout(cierreEntSincronizar, 0);   // ⏳ (05/10) el cierre que esperaba señal
+      setTimeout(histStockAlDia, 0);             // 📚 (09/10, §4in) el Excel de hoy a la hoja «Historial stock», si falta
       return true;
     }
     ULTIMO_ERROR=(res&&res.error)?motivoDelServidor(res.error):'respuesta inesperada del servidor';
@@ -12059,6 +12083,7 @@ function tryUnlock(){
     document.getElementById('admin-pass').value='';
     document.getElementById('admin-err').style.display='none';
     loadFromServer(false);
+    setTimeout(function(){ try{ saludDelDia(); }catch(e){} }, 400);   // 🌅 (§4im) una vez por mañana, solo acá (con la clave)
   }else{ document.getElementById('admin-err').style.display='block'; }
 }
 function changePass(){
@@ -13116,45 +13141,10 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  admCalPintar();   // 📅 (§4im)
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
-  var total=list.length,pagados=0,saldoPend=0,unidades=0;
-  var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
-  list.forEach(function(p){ if(p.pagado){ pagados++; var _mb=metodoBase(p.metodoPago); if(mtd[_mb]!=null)mtd[_mb]++; else mtdSin++; } else saldoPend+=Number(p.saldo)||0; if(p.entregado)entregados++; if(p.verificado)verificados++; if(est[p.estado]!=null)est[p.estado]++; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
-  var pend=total-pagados-list.filter(function(p){ return !p.pagado && noSeCobra(p); }).length;   // (25/09) sin ATC/RPT, como el chip
-  document.getElementById('adm-metrics').innerHTML=
-    mc('var(--teal)','Pedidos',total,unidades+' unidades')+
-    mc('var(--green)','Pagados',pagados,total?Math.round(pagados/total*100)+'% del total':'—')+
-    mc('var(--red)','Por cobrar',pend,'pedidos pendientes')+
-    mc('var(--amber)','Saldo pendiente',fmtBs(saldoPend),'suma por cobrar');
-  /* Lo que muestra el botón cuando el resumen está plegado: el número grueso a la vista
-     sin tener que desplegar nada. */
-  RESUMEN_MINI = total+' pedido'+(total===1?'':'s')+(pend?(' · '+pend+' por cobrar · '+fmtBs(saldoPend)):'');
-  pintarResumenAdm(); acomodarFichas();
   try{ cargaVivaPintar(); }catch(e){ console.error(e); }
-  document.getElementById('adm-metodos').innerHTML=
-    'Cobros — 💵 Efectivo: <b>'+mtd.Efectivo+'</b> &nbsp;·&nbsp; 📱 QR: <b>'+mtd.QR+'</b> &nbsp;·&nbsp; 💳 Tarjeta: <b>'+mtd.Tarjeta+'</b>'+(mtdSin?(' &nbsp;·&nbsp; sin método: <b>'+mtdSin+'</b>'):'')+' &nbsp;&nbsp;|&nbsp;&nbsp; ⏳ Por cobrar: <b>'+pend+'</b>'+
-    '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; ✅ Verificados: <b>'+verificados+'</b> &nbsp;·&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
-
-  var byV={};
-  list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,saldo:0}; byV[k].n++; if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
-  var vRows=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){ return '<tr><td>'+esc(k)+'</td><td class="num">'+byV[k].n+'</td><td class="num">'+fmtBs(byV[k].saldo)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-vendedor').innerHTML='<thead><tr><th>Vendedor</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(vRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
-
-  var byD={};
-  list.forEach(function(p){ var k=esVentaTienda(p)?'TIENDA':(p.fecha||'—'); if(!byD[k])byD[k]={n:0,saldo:0}; byD[k].n++; if(!p.pagado)byD[k].saldo+=Number(p.saldo)||0; });
-  var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+(k==='TIENDA'?'🏪 Tienda':esc(fmtFecha(k)))+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Entrega</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
-
-  var byC={};
-  list.forEach(function(p){ var vh=vehiculoDe(p); if(vh){ if(!byC[vh])byC[vh]={n:0,ent:0,pend:0}; byC[vh].n++; if(p.entregado)byC[vh].ent++; else byC[vh].pend++; } });
-  var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
-  document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
-
-  var byCh={};
-  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=totalCobrado(p); if(!p.pagado) byCh[c].pend+=Number(p.saldo)||0; });   // §4fs: lo cobrado suma SIEMPRE
-  var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
 
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
   // allá a la derecha había que scrollear para verla.
@@ -13390,58 +13380,7 @@ function avisoOcRepetidasHtml(){
    cupos y de la Lista de carga sin que ningún test lo mirara. Lo destapó la auditoría de
    funciones repetidas. Ahora tiene nombre propio. */
 function diaSemanaCorto(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
-function occBar(icon,used,max){
-  if(max<=0){ return '<span style="flex:1;display:flex;align-items:center;gap:6px;opacity:.55">'+icon+'<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px"></span><span style="width:42px;flex:none;font-size:.66rem;font-weight:700;color:var(--muted)">cerrado</span></span>'; }
-  var pct=Math.min(100,Math.round(used/max*100)), full=used>=max;
-  var col=full?'var(--red)':(used>=max*0.8?'var(--amber)':'var(--teal)');
-  return '<span style="flex:1;display:flex;align-items:center;gap:6px">'+icon+
-    '<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
-    '<span style="width:42px;flex:none;font-size:.72rem;font-weight:700;color:'+(full?'var(--red)':'var(--muted)')+'">'+used+'/'+max+'</span></span>';
-}
-function renderOcupacion(){
-  var el=document.getElementById('adm-ocupacion'); if(!el) return;
-  var base=new Date(); base.setDate(base.getDate()+1); // desde mañana (no se agenda el mismo día)
-  var rows='';
-  for(var i=0;i<7;i++){
-    var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
-    var f=isoLocal(d), lAM=limTurno(f,'AM'), lPM=limTurno(f,'PM');
-    var uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM, totLim=lAM+lPM, dom=diaDomingo(f), fer=feriadoDe(f);
-    rows+='<div class="occ-row"'+((dom||fer)?' style="opacity:.6"':'')+'>'+
-      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemanaCorto(d)+'</span></span>'+
-      (dom ? '<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Domingo — cerrado</span>'
-           : fer ? ('<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Feriado — '+esc(fer)+'</span>') : (occBar('🌅',uAM,lAM)+occBar('🌆',uPM,lPM)))+
-      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+((totLim>0&&tot>=totLim)?'var(--red)':'var(--muted)')+'">'+((dom||(fer&&!tot))?'—':(tot+'/'+totLim))+'</span></div>';
-  }
-  el.innerHTML=rows;
-}
 
-/* ---- Concentración por zona (mapa de calor textual) ---- */
-function renderZonas(){
-  var el=document.getElementById('adm-zonas'); if(!el) return;
-  /* Agrupado sin mayúsculas ni acentos (§4dn): antes «Centro» y «centro» eran dos barras
-     con la mitad de los pedidos cada una, y la zona más cargada podía no salir ni en la
-     lista. El rótulo usa la escritura que más se repite en la planilla. */
-  var list=admFilter(), byZ={}, rot={};
-  list.forEach(function(p){
-    var z=String(p.zona||'').replace(/\s+/g,' ').trim();
-    var k=z?normNombre(z):'(sin zona)';
-    if(!byZ[k]){ byZ[k]={n:0,pend:0}; rot[k]={}; }
-    byZ[k].n++; if(!p.entregado)byZ[k].pend++;
-    var f=z||'(sin zona)'; rot[k][f]=(rot[k][f]||0)+1;
-  });
-  var etiq=function(k){ var f=rot[k]||{}; return Object.keys(f).sort(function(a,b){return f[b]-f[a];})[0]||k; };
-  var keys=Object.keys(byZ).sort(function(a,b){return byZ[b].n-byZ[a].n;});
-  if(!keys.length){ el.innerHTML='<div class="empty" style="padding:14px;color:var(--muted)">Sin datos</div>'; return; }
-  var maxN=byZ[keys[0]].n;
-  el.innerHTML=keys.slice(0,12).map(function(z){
-    var o=byZ[z], pct=Math.max(6,Math.round(o.n/maxN*100)), intens=o.n/maxN;
-    var col='hsl('+Math.round(28-intens*28)+','+Math.round(75+intens*15)+'%,'+Math.round(62-intens*17)+'%)';
-    var lbl=etiq(z);
-    return '<div class="occ-row"><span style="width:120px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(lbl)+'">'+esc(lbl)+'</span>'+
-      '<span style="flex:1;height:15px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
-      '<span style="width:104px;flex:none;text-align:right;font-size:.74rem;color:var(--muted)"><b style="color:var(--text)">'+o.n+'</b> pedidos'+(o.pend?(' · '+o.pend+' pend'):'')+'</span></div>';
-  }).join('');
-}
 
 /* ---- Reprogramar entrega ----
    Ventana con calendario de verdad (antes era un prompt donde había que TIPEAR
@@ -13811,6 +13750,7 @@ function cargaBloquesHtml(list, fecha){
         '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
         (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
         '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span>'+(nSinStock?(' · <span style="color:#c0392b">⛔ '+nSinStock+' con faltante</span>'):'')+(nEnProd?(' · <span style="color:#a67c00">📥 '+nEnProd+' por recoger de '+esc(cargaAlmTxt(o))+'</span>'):'')+(nSale?(' · <span style="color:#0369a1">🏪 '+nSale+' con carga en '+esc(o.saleOrden.join(' y '))+'</span>'):'')+'</span></div>';
+    html+='<div class="cc-lugar no-print"></div>';   // 🚛 el camión cargándose (§4im): se dibuja con los tildes, en cargaCamionesPintar
     var pk=Object.keys(o.prod).sort();   // (lo que va entero a Banzer no entra acá: ver arriba)
     /* 🚚 (26/09) Dos bloques, como pidió el dueño: «🏭 Cargar en fábrica» (lo de siempre, con la tilde de
        siempre) y «🏪 Cargar en Banzer» —a veces pasa el mismo camión, a veces sale otro—, cada uno con
@@ -13819,7 +13759,7 @@ function cargaBloquesHtml(list, fecha){
       (pk.length ? pk.map(function(kk){
         // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
         var ck=cargaChkKey(fecha,k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
-        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+'</label>'; }).join('')
+        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+'</label>'; }).join('')
         /* (26/09, noche) Solo si hay un depósito que nombrar: un camión con un pedido SIN productos decía
            «Nada: todo lo de este camión se carga en .» — como antes de Banzer, queda vacío. */
         : (o.saleOrden.length ? '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>' : ''))+'</div>';
@@ -13828,7 +13768,7 @@ function cargaBloquesHtml(list, fecha){
       html+='<div style="margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px" data-carga-lugar="'+esc(n)+'"><div class="lb" style="margin-bottom:6px;color:#0369a1">🏪 Cargar en '+esc(n)+' <span style="font-weight:600;text-transform:none">· '+tb+' bulto'+(tb===1?'':'s')+'</span></div>'+
         sk.map(function(kk){
           var ck=cargaChkKey(fecha,k,kk,n);
-          return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> <span>'+esc(kk)+'</span></label>';
+          return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> <span>'+esc(kk)+'</span></label>';
         }).join('')+'</div>';
     });
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
@@ -13865,6 +13805,7 @@ function renderCarga(){
   }
   var sinCam=sinCamionHtml();   // (30/09, R1-2) arriba de la carga: los que quedaron en un feriado o domingo
   document.getElementById('carga-body').innerHTML=sinCam+(html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>');
+  cargaCamionesPintar();   // 🚛 (§4im)
 }
 function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
 
@@ -16025,6 +15966,7 @@ function misCardHtml(p, n, todos, verNota){
       atrasoBadge(p)+
       avisoModifHtml(p, true)+
     '</div>'+
+    pedidoViajeHtml(p, true)+   // 🛤️ (§4im) dónde está, de un vistazo
     '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
     (p.estado?('<div class="cho-row"><span class="k">Stock</span> '+estadoBadge(p.estado)+'</div>'):'')+
     (p.direccion?('<div class="cho-row"><span class="k">Dirección</span><br>'+esc(p.direccion)+'</div>'):'')+
@@ -16164,7 +16106,7 @@ function showMisModal(id){
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
       ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
     '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+botonesRpt(p)+
+    '<div class="modal-b">'+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+botonesRpt(p)+   // 🛤️ (§4im)
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
@@ -20729,7 +20671,8 @@ function renderStockAviso(){
 }
 
 /* ---- La pantalla ---- */
-function abrirStock(){ document.getElementById('stock-overlay').style.display='flex'; var q=document.getElementById('stk-q'); if(q && q.value!==STOCK_FILTRO.q) q.value=STOCK_FILTRO.q; renderStock(); }
+function abrirStock(){ try{ STOCK_AVISOS_NUEVOS=stockAvisosNuevos(stockData().lista); }catch(e){ STOCK_AVISOS_NUEVOS=[]; }   // 🔔 (§4im) una vez por apertura
+  document.getElementById('stock-overlay').style.display='flex'; var q=document.getElementById('stk-q'); if(q && q.value!==STOCK_FILTRO.q) q.value=STOCK_FILTRO.q; renderStock(); }
 function closeStock(){ var ov=document.getElementById('stock-overlay'); if(ov) ov.style.display='none'; }
 function stockFabricasTxt(T){
   return PROD_LUGARES.map(function(L){
@@ -20922,7 +20865,9 @@ function renderStock(){
     html+='<div id="stk-buscando" style="background:#f6fbfa;border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:10px;font-size:.84rem">🔎 Buscando <b>«'+esc(STOCK_FILTRO.q)+'»</b>: se muestra solo lo que coincide. '+
       '<a style="cursor:pointer;color:#0f766e;font-weight:700" onclick="stockFiltroLimpiar()">Borrar la búsqueda</a> para volver a ver los cuadros de hoy, la revisión y qué producir.</div>';
   }else{
+    html+=stockAvisosHtml();      // 🔔 lo que pasó a pedir desde la última vez (§4im)
     html+=stockGalponesHtml(d);   // 🏬 los almacenes en 3D + 🌡️ los que se terminan (§4ik)
+    html+=stockRankingHtml();     // 🏆 los más vendidos, semana por semana (§4im)
     html+=renderStockHoy(d);
     html+=renderRevisionFija();
     html+=renderProducir(d);
@@ -21069,6 +21014,8 @@ function renderStock(){
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
   body.innerHTML=html;
+  if(document.getElementById('rk') && !RANK_TIMER) stockRankingSemana(RANK_SEM);   // 🏆 (§4im)
+  stockAvisosMarcar();                                                             // 🔔 (§4im)
   // (05/10) El buscador vive en la barra de arriba y NO se redibuja con la tabla: el cursor se queda donde está.
   // Solo si por algún motivo perdió el foco mientras se escribía, se lo devuelve (sin mover el cursor al final).
   if(STOCK_FILTRO.foco){ STOCK_FILTRO.foco=false; var q=document.getElementById('stk-q'); if(q && (!document.activeElement || document.activeElement===document.body)){ try{ q.focus({preventScroll:true}); }catch(e){ q.focus(); } } }
@@ -22504,8 +22451,10 @@ function abrirStockHistorial(){
           (dif!=null?('<br><span style="color:'+(dif<0?'var(--red)':'var(--green)')+';font-size:.9em">'+(dif>0?'+':'')+stockUnid(dif)+' contra el anterior</span>'):'')+'</td></tr>'+stockHistDifHtml(x);
       }).join('')+'</tbody></table>')
      :'<div style="color:var(--muted);padding:16px;text-align:center">Todavía no se subió ningún Excel de existencias.</div>')+
+    '<div id="hist-libro" style="margin-top:12px;font-size:.84rem;background:#fbf7f4;border:1px solid #eadfd6;border-radius:9px;padding:9px 12px"></div>'+   // 📚 (§4in)
     '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button></div></div>';
   openModal(html, true);
+  histStockPintar();
 }
 /* «IM», «Banzer» o «IM 2 + Banzer 1» — de dónde hay que traer las unidades de un producto. */
 function revStkAlmTxt(o){
@@ -25165,27 +25114,6 @@ function rowKind(p){
   return '';
 }
 function rowClass(p){ var k=rowKind(p); return k?('row-'+k):''; }
-/* ============================================================================
-   👁️ OCULTAR EL RESUMEN DE ADMINISTRACIÓN
-   Arriba de la tabla hay una pila de estadísticas (las fichas, la línea de cobros,
-   los consolidados por vendedor y por día, camión, rendición, cupos y zonas). Sirven,
-   pero empujan la tabla —que es lo que se usa todo el día— muy abajo. Con el botón se
-   guarda plegado o desplegado EN ESTA COMPUTADORA: cada uno lo deja como le sirve, sin
-   pisarle la pantalla al resto del equipo.
-   Plegado, el botón se lleva el número grueso, así no hay que desplegarlo para saber
-   cuántos pedidos hay y cuánto falta cobrar. */
-var LS_RESUMEN='pedidos_resumen_adm', RESUMEN_MINI='';
-function resumenAdmVisible(){ try{ return localStorage.getItem(LS_RESUMEN)!=='0'; }catch(e){ return true; } }
-function pintarResumenAdm(){
-  var box=document.getElementById('adm-resumen'), b=document.getElementById('adm-resumen-btn');
-  if(!box||!b) return;
-  var ver=resumenAdmVisible();
-  box.style.display = ver ? '' : 'none';
-  b.innerHTML = ver ? '🙈 Ocultar resumen'
-    : ('👁️ Ver resumen'+(RESUMEN_MINI?(' <span style="opacity:.75;font-weight:600">· '+RESUMEN_MINI+'</span>'):''));
-  b.title = ver ? 'Esconde las fichas y los consolidados para dejar la tabla arriba de todo'
-                : 'Vuelve a mostrar las fichas y los consolidados';
-}
 /* ⚠️ Lo mismo para el CUADRE: contabilidad necesita trabajar con la planilla de pagos de
    abajo y arriba tiene los cierres, los retiros, el por cobrar y los avisos.
    La diferencia con Administración: acá lo que se pliega incluye «Revisar antes de
@@ -25208,7 +25136,8 @@ function toggleResumenCua(){
   pintarResumenCua();
 }
 /* 🚛 (§4ib, 08/10) Los camiones de Administración (§4hz) se esconden con SU botón, aparte del resumen: el dueño quiere poder
-   tener el resumen a la vista sin la imagen, o al revés. Escondidos no se dibujan (la animación no corre de fondo). */
+   tener el resumen a la vista sin la imagen, o al revés. Escondidos no se dibujan (la animación no corre de fondo).
+   (§4io, 09/10) El resumen ya no existe: lo sacó el dueño. Este botón queda. */
 var LS_CAMIONES='pedidos_camiones_adm';
 function camionesAdmVisible(){ try{ return localStorage.getItem(LS_CAMIONES)!=='0'; }catch(e){ return true; } }
 function pintarCamionesAdm(){
@@ -25217,18 +25146,13 @@ function pintarCamionesAdm(){
   if(box) box.style.display = ver ? '' : 'none';
   if(b){
     b.innerHTML = ver ? '🙈 Ocultar camiones' : '👁️ Ver camiones';
-    b.title = ver ? 'Esconde la imagen de los camiones; el resumen queda como está' : 'Vuelve a mostrar la imagen de los camiones';
+    b.title = ver ? 'Esconde la imagen de los camiones' : 'Vuelve a mostrar la imagen de los camiones';
   }
 }
 function toggleCamionesAdm(){
   try{ localStorage.setItem(LS_CAMIONES, camionesAdmVisible()?'0':'1'); }catch(e){}
   pintarCamionesAdm();
   try{ cargaVivaPintar(); }catch(e){}
-}
-function toggleResumenAdm(){
-  try{ localStorage.setItem(LS_RESUMEN, resumenAdmVisible()?'0':'1'); }catch(e){}
-  pintarResumenAdm();
-  if(!resumenAdmVisible()){ var t=document.getElementById('adm-chips'); if(t){ try{ window.scrollTo(0,0); }catch(e){} } }
 }
 /* Lista de productos donde se marca ✔ hay / ✗ no hay / 📥 recoger de IM (se usa en las dos fichas) */
 function prodRevList(p){
@@ -27581,6 +27505,320 @@ function misAnilloHtml(mine, todos){
   svg+='</svg>';
   return '<div class="mis-anillo"><div style="flex:none">'+svg+'</div><div class="mis-ani-ley"><div class="vis-sub" style="margin-bottom:6px">'+(todos?'Todo el equipo':'Tu mes')+' · por fecha de entrega, sin ATC ni reposiciones</div>'+
     C.map(function(c){ return '<div class="mis-ani-it"><i style="background:'+c.col+'"></i><div><small>'+esc(c.lbl)+'</small><b>'+c.val+'</b><small>'+c.sub+'</small></div></div>'; }).join('')+'</div></div>';
+}
+
+
+/* ============================================================================
+   ✨ MÁS VISTAS QUE SOLO MIRAN (§4im, 09/10). El dueño, de la página de vistas previas: *«me gusta e implementa todo menos A, C,
+   D; me gusta la B, y la salud del día es solo para administración al poner la clave»*. Cada una sale de lo que ya hay:
+     · 🚛 El camión cargándose (Lista de carga): los MISMOS tildes (`isCargaChk`), en bultos.
+     · 🏆 El ranking de la semana (Stock): las entregas con las reglas de la rotación (`stockCuenta`, sin `stockPedidoUnico`).
+     · 📅 El calendario de calor (Administración): los pedidos de cada día y turno, como cuenta el cupo (`cuposUsadosTurno`).
+     · 🔔 Los avisos con movimiento (Stock): lo que pasó a pedir desde la última vez que ESTE equipo miró Stock.
+     · 🌅 La salud del día (solo al poner la clave de Administración, una vez por mañana y por equipo).
+     · 🛤️ El viaje del pedido (Mis pedidos): dónde está cada pedido, de un vistazo.
+   Ninguna guarda nada en la planilla.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- 🚛 EL CAMIÓN CARGÁNDOSE */
+function cargaCamionCuenta(cam){
+  var tot=0, ya=0;
+  [].forEach.call(cam.querySelectorAll('input[type=checkbox][data-k][data-u]'), function(el){ var u=Number(el.getAttribute('data-u'))||0; tot+=u; if(el.checked) ya+=u; });
+  return { tot:tot, ya:ya };
+}
+function cargaCamionSvg(ya, tot, nuevo){
+  var N=12, llenos=tot>0 ? Math.round(ya/tot*N) : 0, completo=(tot>0 && ya>=tot);
+  var s='<svg class="cc-svg" viewBox="0 0 220 74" role="img" aria-label="'+ya+' de '+tot+' bultos cargados">'+
+    '<rect x="4" y="66" width="212" height="4" rx="2" class="cc-calle"/>'+
+    '<rect x="6" y="8" width="150" height="52" rx="6" class="cc-caja"/>'+
+    '<path d="M160 26 h30 l20 18 v16 h-50z" class="cc-cabina"/><rect x="168" y="31" width="20" height="12" rx="2" class="cc-vidrio"/>';
+  for(var i=0;i<N;i++){
+    var c=i%6, f=Math.floor(i/6), x=12+c*24, y=36-f*24, on=i<llenos;
+    s+='<rect x="'+x+'" y="'+y+'" width="20" height="20" rx="4" class="cc-bulto'+(on?' on':'')+(on && nuevo && i===llenos-1?' entra':'')+'"/>';
+  }
+  [40,128,186].forEach(function(x){ s+='<circle cx="'+x+'" cy="62" r="9" class="cc-rueda"/>'; });
+  s+='</svg>';
+  return '<div class="cc-wrap'+(completo?' completo':'')+'">'+s+'<span class="cc-txt">'+(tot?(completo?'✅ Cargado entero':('🚛 '+ya+' de '+tot+' bultos')):'—')+'</span></div>';
+}
+function cargaCamionTildo(el){
+  var cam=el && el.closest && el.closest('.carga-cam'); if(!cam) return;
+  var box=cam.querySelector('.cc-lugar'); if(!box) return;
+  var c=cargaCamionCuenta(cam); box.innerHTML=cargaCamionSvg(c.ya, c.tot, !!el.checked && !visQuieto());
+}
+function cargaCamionesPintar(){
+  [].forEach.call(document.querySelectorAll('#carga-body .carga-cam'), function(cam){
+    var box=cam.querySelector('.cc-lugar'); if(!box) return;
+    var c=cargaCamionCuenta(cam); box.innerHTML=cargaCamionSvg(c.ya, c.tot, false);
+  });
+}
+
+/* ---------------------------------------------------------------- 🏆 EL RANKING DE LA SEMANA */
+var RANK_SEMANAS=6, RANK_TOPE=8, RANK_SEM=-1, RANK_TIMER=null;
+function stockRankingDatos(hoy){
+  hoy=hoy||todayStr();
+  var S=[], idx={};
+  for(var i=RANK_SEMANAS-1;i>=0;i--){ var hasta=stockSumarDias(hoy,-7*i), desde=stockSumarDias(hasta,-6); S.push({ desde:desde, hasta:hasta, u:{} }); }
+  STATE.forEach(function(p){
+    if(!stockCuenta(p) || stockPedidoUnico(p)) return;
+    var f=fechaSalida(p); if(!f || f>hoy || f<S[0].desde) return;
+    var w=null; for(var j=0;j<S.length;j++) if(f>=S[j].desde && f<=S[j].hasta){ w=S[j]; break; } if(!w) return;
+    (p.productos||[]).forEach(function(x){
+      if(esProdDeTienda(x)) return;
+      var c=Number(x.cant)||0, k=stockClave(x); if(!(c>0) || !k || k==='|') return;
+      w.u[k]=(w.u[k]||0)+c; idx[k]=1;
+    });
+  });
+  /* Los que entran: los RANK_TOPE más vendidos de las semanas juntas (así ninguno aparece y desaparece en el medio). */
+  var tot={}; Object.keys(idx).forEach(function(k){ tot[k]=S.reduce(function(a,w){ return a+(w.u[k]||0); },0); });
+  var ks=Object.keys(tot).sort(function(a,b){ return (tot[b]-tot[a]) || (a<b?-1:1); }).slice(0,RANK_TOPE);
+  return { S:S, ks:ks };
+}
+function stockRankingHtml(){
+  var R=stockRankingDatos(); if(!R.ks.length) return '';
+  var abierto=visPref('rank', true);
+  return '<details id="vis-rank" class="vis-caja"'+(abierto?' open':'')+' ontoggle="visPrefSet(\'rank\',this.open)">'+
+    '<summary><b>🏆 Los más vendidos</b> <span class="vis-sub">semana por semana, las últimas '+RANK_SEMANAS+' · ▶ pasa las semanas y la flecha dice quién sube</span></summary>'+
+    '<div class="rk-cab"><button type="button" class="btn btn-sm" style="background:#7c2d12;color:#fff;font-weight:700" onclick="stockRankingPlay()">'+(RANK_TIMER?'⏸':'▶')+' Pasar las semanas</button>'+
+    '<span class="rk-sem" id="rk-sem"></span></div><div class="rk" id="rk" style="height:'+(R.ks.length*35)+'px"></div></details>';
+}
+function stockRankingSemana(i){
+  var R=stockRankingDatos(), rk=document.getElementById('rk'); if(!rk || !R.ks.length) return;
+  if(i<0 || i>=R.S.length) i=R.S.length-1;
+  RANK_SEM=i;
+  var w=R.S[i], prev=i>0?R.S[i-1]:null, mx=1;
+  R.ks.forEach(function(k){ mx=Math.max(mx, w.u[k]||0); });
+  var orden=function(sem){ return R.ks.slice().sort(function(a,b){ return ((sem.u[b]||0)-(sem.u[a]||0)) || (R.ks.indexOf(a)-R.ks.indexOf(b)); }); };
+  var o=orden(w), oP=prev?orden(prev):null;
+  if(rk.children.length!==R.ks.length){
+    rk.innerHTML=R.ks.map(function(k,j){ return '<div class="rk-fila" data-k="'+esc(k)+'"><div class="rk-pos"></div><div class="rk-nom">'+esc(stockNombreClave(k))+'<span class="flecha"></span></div><div><div class="rk-barra" style="background:'+PRODUCIR_GRAF_COL.sem+';opacity:'+(1-j*0.07)+'"></div></div></div>'; }).join('');
+  }
+  [].forEach.call(rk.children, function(f){
+    var k=f.getAttribute('data-k'), pos=o.indexOf(k), u=w.u[k]||0;
+    f.style.top=(pos*35)+'px';
+    f.querySelector('.rk-pos').textContent=(pos+1);
+    var b=f.querySelector('.rk-barra'); b.style.width=Math.max(6, Math.round(u/mx*100))+'%'; b.textContent=u+' u.';
+    var fl=f.querySelector('.flecha'), antes=oP?oP.indexOf(k):pos;
+    fl.textContent=antes>pos?(' ▲'+(antes-pos)):(antes<pos?(' ▼'+(pos-antes)):'');
+    fl.style.color=antes>pos?'#15803d':'#b91c1c';
+  });
+  var sem=document.getElementById('rk-sem'); if(sem) sem.textContent='Semana del '+fmtFechaCorta(w.desde)+' al '+fmtFechaCorta(w.hasta);
+}
+function stockRankingPlay(){
+  if(RANK_TIMER){ clearInterval(RANK_TIMER); RANK_TIMER=null; renderStock(); return; }
+  var i=0; stockRankingSemana(0);
+  RANK_TIMER=setInterval(function(){
+    var ov=document.getElementById('stock-overlay');
+    i++; if(i>=RANK_SEMANAS || !ov || ov.style.display==='none'){ clearInterval(RANK_TIMER); RANK_TIMER=null; return; }
+    stockRankingSemana(i);
+  }, 1600);
+}
+
+/* ---------------------------------------------------------------- 📅 EL CALENDARIO DE CALOR (Administración) */
+var ADM_CAL_MES='', ADM_CAL_DIA='';
+function admCalDatos(ym){
+  var D={}, mx=1;
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p)) return;
+    var f=String(p.fecha||''); if(f.slice(0,7)!==ym) return;
+    var d=D[f]||(D[f]={ AM:0, PM:0, n:0, ent:0 }); d[normTurno(p.turno)]++; d.n++; if(p.entregado) d.ent++;
+    mx=Math.max(mx, d.n);
+  });
+  return { D:D, mx:mx };
+}
+function admCalFeriado(f){ try{ return (typeof feriadoDe==='function' && feriadoDe(f)) || ''; }catch(e){ return ''; } }
+function admCalHtml(){
+  var ym=ADM_CAL_MES||todayStr().slice(0,7), C=admCalDatos(ym), hoy=todayStr();
+  var y=+ym.slice(0,4), m=+ym.slice(5,7), dias=new Date(y,m,0).getDate(), pri=(new Date(y,m-1,1).getDay()+6)%7;   // lunes = 0
+  var h='<div class="cal-cab"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="admCalMes(-1)">◀</button><b>'+esc(mesNombre(ym))+'</b>'+
+    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="admCalMes(1)">▶</button><span class="vis-sub">cuanto más oscuro, más pedidos salen ese día · tocá un día</span></div>'+
+    '<div class="cal">'+['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(function(d){ return '<div class="cal-hd">'+d+'</div>'; }).join('');
+  for(var v=0;v<pri;v++) h+='<div></div>';
+  for(var d=1; d<=dias; d++){
+    var f=ym+'-'+(d<10?'0':'')+d, x=C.D[f], lim=limTurno(f,'AM')+limTurno(f,'PM'), n=x?x.n:0;
+    var cerrado=(lim===0), lleno=(lim>0 && n>=lim), fer=cerrado?admCalFeriado(f):'';   // (§4io) el feriado se nombra: lo decía «Ocupación de cupos»
+    var st='';
+    if(!cerrado && n>0){ var pc=Math.round(15+Math.min(1,n/Math.max(C.mx,1))*85); st=' style="background:color-mix(in srgb, #0f766e '+pc+'%, #e6f6f4)'+(pc>60?';color:#fff':'')+'"'; }
+    h+='<button type="button" class="cal-dia'+(cerrado?' cerrado':'')+(f===hoy?' hoy':'')+(f===ADM_CAL_DIA?' sel':'')+(lleno?' lleno':'')+'" data-f="'+f+'"'+(fer?(' title="Feriado — '+esc(fer)+'"'):'')+' onclick="admCalVer(this.dataset.f)"'+st+'>'+
+      '<b>'+d+'</b><span>'+(cerrado?(n?(n+' ⚠️'):(fer?'🚫 feriado':'sin camión')):(n?(n+' pedido'+(n===1?'':'s')):'—'))+'</span></button>';
+  }
+  h+='</div>';
+  if(ADM_CAL_DIA && ADM_CAL_DIA.slice(0,7)===ym){
+    var s=C.D[ADM_CAL_DIA]||{ AM:0, PM:0, n:0, ent:0 }, la=limTurno(ADM_CAL_DIA,'AM'), lp=limTurno(ADM_CAL_DIA,'PM');
+    h+='<div class="cal-det"><b>'+fmtFecha(ADM_CAL_DIA)+'</b>: '+s.n+' pedido'+(s.n===1?'':'s')+
+      (la||lp ? (' · 🌅 AM <b>'+s.AM+'</b>/'+la+(lp?(' · 🌆 PM <b>'+s.PM+'</b>/'+lp):'')) : (admCalFeriado(ADM_CAL_DIA) ? (' · 🚫 Feriado — '+esc(admCalFeriado(ADM_CAL_DIA))+': el camión no sale') : ' · día sin camión'))+
+      (s.ent?(' · ✅ '+s.ent+' entregado'+(s.ent===1?'':'s')):'')+
+      ' <button type="button" class="btn btn-sm" style="width:auto;background:var(--teal);color:#fff;font-weight:700;margin-left:6px" onclick="admCalAbrirDia()">Ver los pedidos de ese día</button></div>';
+  }
+  return h;
+}
+function admCalPintar(){
+  var el=document.getElementById('adm-cal'); if(!el) return;
+  var abierto=visPref('cal', false);
+  if(!el.firstChild){
+    el.innerHTML='<details id="adm-cal-det" class="vis-caja"'+(abierto?' open':'')+' ontoggle="visPrefSet(\'cal\',this.open);if(this.open)admCalPintar()"><summary><b>📅 Calendario de entregas</b> <span class="vis-sub">el mes de un vistazo</span></summary><div id="adm-cal-in"></div></details>';
+  }
+  var det=document.getElementById('adm-cal-det'), inn=document.getElementById('adm-cal-in');
+  if(det && det.open && inn) inn.innerHTML=admCalHtml();
+}
+function admCalMes(n){ var ym=ADM_CAL_MES||todayStr().slice(0,7), d=new Date(+ym.slice(0,4), +ym.slice(5,7)-1+n, 1); ADM_CAL_MES=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); admCalPintar(); }
+function admCalVer(f){ ADM_CAL_DIA=(ADM_CAL_DIA===f)?'':f; admCalPintar(); }
+function admCalAbrirDia(){
+  if(!ADM_CAL_DIA) return;
+  var b=document.querySelector('#adm-mode [data-val="dia"]'); if(b) b.click();
+  var i=document.getElementById('adm-dia'); if(i){ i.value=ADM_CAL_DIA; i.dispatchEvent(new Event('change',{bubbles:true})); }
+  renderAdmin();
+  var t=document.getElementById('adm-chips'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ---------------------------------------------------------------- 🔔 LOS AVISOS CON MOVIMIENTO (Stock) */
+var AVISOS_LS='me_vis_avisos', AVISOS_FUERTES={ urgente:1, pedir:1 };
+/* Compara con lo que vio ESTE equipo la última vez que abrió Stock: lo que pasó a «🚨 PEDIR YA» o «🏭 Pedir esta semana» desde entonces.
+   La primera vez solo anota (no hay contra qué comparar). */
+function stockAvisosNuevos(lista){
+  var viejo=null; try{ viejo=JSON.parse(localStorage.getItem(AVISOS_LS)||'null'); }catch(e){ viejo=null; }
+  var ahora={}, nuevos=[];
+  lista.forEach(function(o){ if(AVISOS_FUERTES[o.aviso]) ahora[o.k]=o.aviso; });
+  if(viejo && viejo.a){
+    lista.forEach(function(o){
+      if(!AVISOS_FUERTES[o.aviso]) return;
+      var antes=viejo.a[o.k]||'';
+      if(!antes || (antes==='pedir' && o.aviso==='urgente')) nuevos.push(o);
+    });
+  }
+  try{ localStorage.setItem(AVISOS_LS, JSON.stringify({ t:Date.now(), a:ahora })); }catch(e){}
+  return nuevos;
+}
+var STOCK_AVISOS_NUEVOS=[];
+function stockAvisosHtml(){
+  var L=STOCK_AVISOS_NUEVOS; if(!L.length) return '';
+  return '<div class="av-nuevo" id="stk-avisos-nuevos"><span class="campana">🔔</span><div><b>'+L.length+' producto'+(L.length===1?'':'s')+' '+(L.length===1?'pasó':'pasaron')+' a pedir</b> desde la última vez que miraste Stock en este equipo: '+
+    L.slice(0,4).map(function(o){ return '<a href="#" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k);return false">'+esc(stockNombre(o))+'</a>'+(o.aviso==='urgente'?' 🚨':''); }).join(' · ')+(L.length>4?(' y '+(L.length-4)+' más'):'')+'</div></div>';
+}
+function stockAvisosMarcar(){
+  STOCK_AVISOS_NUEVOS.forEach(function(o){
+    var tr=document.querySelector('#stock-body tr[data-stock-k="'+(window.CSS&&CSS.escape?CSS.escape(o.k):o.k)+'"]');
+    if(tr && !visQuieto()) tr.classList.add('stk-late');
+  });
+}
+
+/* ---------------------------------------------------------------- 🌅 LA SALUD DEL DÍA (solo Administración) */
+var SALUD_LS='me_salud_dia', SALUD_TIMER=null;
+function saludDatos(){
+  var hoy=todayStr(), man=proximoDiaEntrega(), M=[];
+  var hoyP=STATE.filter(function(p){ return p && p.fecha===hoy && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p); });
+  var ent=hoyP.filter(function(p){ return p.entregado; }).length;
+  M.push({ t:'Entregas de hoy', v:hoyP.length?ent/hoyP.length:0, txt:hoyP.length?(ent+' de '+hoyP.length+' marcadas'):'hoy no sale nada', c:'#5ff0c5' });
+  var d=stockData(), conRit=d.lista.filter(function(o){ return o.rota && stockHaySalir(o)!=null; }), mal=d.lista.filter(function(o){ return AVISOS_FUERTES[o.aviso]; });
+  M.push({ t:'Stock', v:conRit.length?Math.max(0,(conRit.length-mal.length)/conRit.length):(d.contado?1:0), txt:d.contado?(mal.length?(mal.length+' para pedir'):'nada para pedir'):'sin Excel de hoy', c:'#ffd166' });
+  var usados=cuposUsadosTurno(man,'AM')+cuposUsadosTurno(man,'PM'), lim=limTurno(man,'AM')+limTurno(man,'PM');
+  M.push({ t:'Cupos de '+fmtFechaCorta(man), v:lim?Math.min(1,usados/lim):0, txt:usados+' de '+lim+' lugares', c:'#7cc4ff' });
+  var ab=(d.abiertos||[]), llegan=ab.filter(function(q){ return q.llega===hoy; }).length;
+  M.push({ t:'Llega de fábrica', v:ab.length?llegan/ab.length:0, txt:llegan?(llegan+' llegan hoy de '+ab.length+' pedidos'):(ab.length?(ab.length+' pedidos en camino'):'nada pedido'), c:'#c9a7ff' });
+  return M;
+}
+function saludDelDia(forzar){
+  var hoy=todayStr(), ya=''; try{ ya=localStorage.getItem(SALUD_LS)||''; }catch(e){}
+  if(!forzar && ya===hoy) return false;
+  try{ localStorage.setItem(SALUD_LS, hoy); }catch(e){}
+  var M=saludDatos(), ov=document.getElementById('salud-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='salud-overlay'; document.body.appendChild(ov); }
+  var hora=new Date().getHours(), saludo=hora<12?'Buen día':(hora<19?'Buenas tardes':'Buenas noches');
+  ov.innerHTML='<div class="salud-caja"><div class="salud-tit"><b>'+saludo+'</b><span>'+esc(fmtFecha(hoy))+' · la salud del día</span></div><div class="salud-med">'+
+    M.map(function(m,i){ var L=Math.PI*56;
+      return '<div class="salud-m"><svg viewBox="0 0 140 84"><path d="M14 76 A56 56 0 0 1 126 76" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="12" stroke-linecap="round"/>'+
+        '<path class="salud-arco" d="M14 76 A56 56 0 0 1 126 76" fill="none" stroke="'+m.c+'" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+L.toFixed(1)+'" stroke-dashoffset="'+L.toFixed(1)+'" data-fin="'+(L*(1-Math.max(0,Math.min(1,m.v)))).toFixed(1)+'" style="transition-delay:'+(i*150)+'ms"/>'+
+        '<text x="70" y="70" text-anchor="middle" font-size="22" font-weight="900" fill="#fff">'+Math.round(m.v*100)+'%</text></svg><b>'+esc(m.t)+'</b><small>'+esc(m.txt)+'</small></div>'; }).join('')+
+    '</div><div class="salud-pie"><button type="button" class="btn" onclick="saludCerrar()">Entrar al panel →</button></div></div>';
+  ov.style.display='flex';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ [].forEach.call(ov.querySelectorAll('.salud-arco'), function(a){ a.setAttribute('stroke-dashoffset', a.getAttribute('data-fin')); }); }); });
+  clearTimeout(SALUD_TIMER); SALUD_TIMER=setTimeout(saludCerrar, 9000);
+  return true;
+}
+function saludCerrar(){ clearTimeout(SALUD_TIMER); var ov=document.getElementById('salud-overlay'); if(ov) ov.style.display='none'; }
+
+/* ---------------------------------------------------------------- 🛤️ EL VIAJE DEL PEDIDO (Mis pedidos) */
+/* Cinco pasos: cargado → mercadería → agendado → en camino → entregado. Lo que no es un paso de verdad para ese pedido
+   (una venta de tienda no viaja) no se dibuja. «Entregado» sigue la regla de siempre: ✅, o la fecha ya pasó (§4co). */
+function pedidoViajeDatos(p){
+  var hoy=todayStr(), lin=(p.productos||[]).filter(function(x){ return x && !esProdDeTienda(x) && Number(x.cant)>0; });
+  var merc;
+  if(!lin.length) merc={ hecho:true, lbl:'Mercadería' };
+  else if(lin.some(function(x){ return x.chk==='no'; })) merc={ hecho:false, lbl:'Sin stock', ico:'⛔' };
+  else if(lin.some(enProduccionPendiente)) merc={ hecho:false, lbl:'En producción', ico:'🏭' };
+  else if(lin.some(esRecoger)) merc={ hecho:false, lbl:'A recoger', ico:'📥' };
+  else if(lin.every(function(x){ return prodHay(x) || (enProduccion(x) && x.prodR); })) merc={ hecho:true, lbl:'Lista' };
+  else merc={ hecho:false, lbl:'Sin revisar', ico:'🔎' };
+  var f=String(p.fecha||''), entregado=!!p.entregado || (f && f<hoy);
+  var pasos=[
+    { ico:'📝', lbl:'Cargado', hecho:true },
+    { ico:merc.hecho?'📦':merc.ico, lbl:merc.lbl, hecho:merc.hecho||entregado },
+    { ico:'📅', lbl:f?fmtFechaCorta(f):'Sin fecha', hecho:!!f },
+    { ico:'🚚', lbl:'En camino', hecho:entregado },
+    { ico:'✅', lbl:'Entregado', hecho:entregado }
+  ];
+  var ahora=-1; for(var i=0;i<pasos.length;i++) if(!pasos[i].hecho){ ahora=i; break; }
+  if(ahora===3 && f>hoy) ahora=2;     // «en camino» solo el día de la entrega: antes, el pedido espera su fecha (agendado)
+  return { pasos:pasos, ahora:ahora };
+}
+function pedidoViajeHtml(p, chico){
+  if(!p || esVentaTienda(p) || esFilaSistema(p)) return '';
+  var V=pedidoViajeDatos(p);
+  return '<div class="viaje'+(chico?' chico':'')+'" aria-label="Dónde está el pedido">'+V.pasos.map(function(s,i){
+    var cls=(i===V.ahora)?'ahora':(s.hecho?'hecho':'');
+    return '<div class="viaje-p '+cls+'"><i>'+s.ico+'</i>'+((chico && i!==V.ahora)?'':('<span>'+esc(s.lbl)+'</span>'))+'</div>';
+  }).join('')+'</div>';
+}
+
+/* ============================================================================
+   📚 EL HISTORIAL DEL STOCK (§4in, 09/10; dueño: *«armá la hoja de historial»*).
+   La celda `__stock__` solo guarda 3 días de control; la historia va a la hoja «Historial stock» del servidor `2026-10-09-a`,
+   una fila por día con lo que dijo el Excel de cada almacén. La página la manda SOLA después de cada lectura buena
+   (`refrescarEstadoYa`) si hay un Excel de HOY que este equipo todavía no mandó (`HIST_LS` = día + huella). Varios equipos
+   mandan lo mismo: el servidor lo junta por almacén. Con un servidor anterior no se manda nada (contestaría «no id» y
+   ensuciaría «Rechazos»). No toca el stock ni la cola: si falla, se intenta con la próxima lectura.
+   ========================================================================== */
+var HIST_LS='me_hist_env', HIST_VERSION='2026-10-09-a', HIST_EN_VUELO=false;
+function histServidorListo(){ return String(SERVER_VER||'') >= HIST_VERSION; }
+function histHuella(t){ var h=5381; t=String(t); for(var i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36)+'.'+t.length; }
+/* Lo de HOY de cada almacén, como lo dijo su Excel (sin los ceros: `s0` = lo que no figura está en 0). */
+function histStockFoto(hoy){
+  hoy=hoy||todayStr(); var d={};
+  var meter=function(nombre, s){
+    if(!s || s.f!==hoy) return;
+    var u={}; Object.keys(s.u||{}).forEach(function(k){ var n=Number(s.u[k]); if(n) u[k]=n; });
+    d[nombre]={ f:s.f, h:String(s.hora||''), u:u, s0:!!s.solo0 };
+  };
+  if(typeof STOCK!=='undefined' && STOCK){ meter('PTF', STOCK.c); Object.keys(STOCK.g||{}).forEach(function(nm){ meter(nm, STOCK.g[nm]); }); }
+  return d;
+}
+function histStockAlDia(){
+  try{
+    if(HIST_EN_VUELO || !CONNECTED || !STOCK_CARGADO || !histServidorListo()) return false;
+    var hoy=todayStr(), d=histStockFoto(hoy); if(!Object.keys(d).length) return false;
+    var firma=hoy+'|'+histHuella(JSON.stringify(d)), ya='';
+    try{ ya=localStorage.getItem(HIST_LS)||''; }catch(e){}
+    if(ya===firma) return false;
+    HIST_EN_VUELO=true;
+    apiPost({ action:'histStock', fecha:hoy, datos:d }).then(function(res){
+      HIST_EN_VUELO=false;
+      if(res && res.ok){ try{ localStorage.setItem(HIST_LS, firma); }catch(e){} }
+    }, function(){ HIST_EN_VUELO=false; });
+    return true;
+  }catch(e){ HIST_EN_VUELO=false; return false; }
+}
+/* En «📜 Historial de cortes»: cuántos días tiene la hoja y una barrita por día con lo que había en PTF. */
+function histStockPintar(){
+  var el=document.getElementById('hist-libro'); if(!el) return;
+  if(!histServidorListo()){ el.innerHTML='<b>📚 Historial de muchos días:</b> se empieza a llenar solo apenas esté implementado el servidor <code>'+HIST_VERSION+'</code> (hoy: <code>'+esc(SERVER_VER||'?')+'</code>).'; return; }
+  el.innerHTML='📚 Leyendo la hoja del historial…';
+  conTope(apiPost({ action:'histStockLeer', desde:stockSumarDias(todayStr(), -59) }), 20000).then(function(res){
+    var dias=(res && res.ok && res.dias) || [];
+    if(!dias.length){ el.innerHTML='<b>📚 Historial de muchos días:</b> la hoja todavía está vacía. Se llena sola con el Excel de cada día.'; return; }
+    var tot=dias.map(function(x){ var p=(x.datos||{}).PTF; var n=0; if(p) Object.keys(p.u||{}).forEach(function(k){ n+=Number(p.u[k])||0; }); return { f:x.fecha, n:n, hay:!!p }; });
+    var mx=Math.max.apply(null, tot.map(function(t){ return t.n; }).concat([1]));
+    el.innerHTML='<b>📚 Historial de muchos días</b> <span style="color:var(--muted)">· '+dias.length+' día'+(dias.length===1?'':'s')+' guardado'+(dias.length===1?'':'s')+' en la hoja, del '+fmtFechaCorta(dias[0].fecha)+' al '+fmtFechaCorta(dias[dias.length-1].fecha)+' · unidades en PTF por día</span>'+
+      '<div class="hist-barras">'+tot.map(function(t){ return '<i title="'+fmtFechaCorta(t.f)+': '+(t.hay?(t.n+' en PTF'):'sin Excel de PTF')+'" style="height:'+(t.hay?Math.max(6,Math.round(t.n/mx*100)):3)+'%;'+(t.hay?'':'background:var(--gray-md)')+'"></i>'; }).join('')+'</div>';
+  }, function(){ el.innerHTML='<b>📚 Historial de muchos días:</b> no se pudo leer ahora (sin conexión). Probá de nuevo más tarde.'; });
 }
 
 /* ============================================================================

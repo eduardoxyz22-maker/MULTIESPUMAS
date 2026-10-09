@@ -321,13 +321,10 @@ const BASE = `
       saveMirror();
       showView('admin'); await new Promise(function(r){ setTimeout(r,150); });
       segSet('adm-mode','dia'); document.getElementById('adm-dia').value=hoy; QUICK_FILTER=''; renderAdmin();
-      return { mini:RESUMEN_MINI, chip:admBaseList().filter(quickTest('cobrar')).map(function(p){ return p.cliente; }),
-               fichas:(document.getElementById('adm-metrics')||{}).textContent.replace(/\s+/g,' '),
-               metodos:((document.getElementById('adm-metodos')||{}).textContent.match(/Por cobrar: ?\d+/)||[''])[0] };
+      return { chip:admBaseList().filter(quickTest('cobrar')).map(function(p){ return p.cliente; }) };
     }, BASE);
     chk('⚠️ el chip «💰 Por cobrar» trae solo la venta que debe (antes también la ATC y la RPT)', J(r.chip)===J(['DEBE']), J(r.chip));
-    chk('⚠️ la ficha «Por cobrar» y el resumen plegado cuentan 1, no 3', /Por cobrar ?1 ?pedidos pendientes/.test(r.fichas) && /1 por cobrar/.test(r.mini) && /Por cobrar: ?1$/.test(r.metodos), J([r.mini, r.metodos]));
-    chk('control: el total de pedidos y los pagados no cambian', /Pedidos4/.test(r.fichas) && /Pagados1/.test(r.fichas) && /^4 pedidos/.test(r.mini), r.fichas.slice(0,90));
+    /* (§4io, 09/10) Las fichas y el resumen plegado de Administración se sacaron: queda el chip, que es lo que se usa. */
     await page.close();
   }
 

@@ -78,7 +78,7 @@ const BASE = `
       return { metricas:metricas, rend:rend.replace(/\s+/g,' ') };
     }, BASE);
     chk('⚠️ «Cobrado» del chofer sale del historial (Bs 1.500), no de un campo que no viaja en la planilla', /Cobrado/.test(r.metricas) && /1\.500,00/.test(r.metricas), r.metricas.slice(0,160));
-    chk('…y la rendición por chofer de Administración también', /Luis Pierre/.test(r.rend) && /1\.500,00/.test(r.rend), r.rend.slice(0,120));
+    /* (§4io, 09/10: la rendición por chofer de Administración se sacó con el resumen; lo mismo lo dicen el parte del día y la vista del chofer) */
     await page.close();
   }
   {

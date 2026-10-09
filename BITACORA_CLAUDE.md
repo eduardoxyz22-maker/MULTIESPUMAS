@@ -7445,6 +7445,63 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4io. 09/10: 🧹 fuera el resumen de Administración — EN LA RAMA
+El dueño, con dos capturas del iPad (las fichas Pedidos/Pagados/Por cobrar/Saldo, la línea de cobros, los consolidados por
+vendedor y por día, la rendición por chofer, «Ocupación de cupos — próximos 7 días» y «Concentración por zona»): *«Al tenerlo
+ya en 3D y los focos de calor y etc, eso ya no es útil para logística, quítalo»*.
+- Se sacó ENTERO `#adm-resumen` (con «Entregas asignadas por camión», que estaba en el medio) y su botón «🙈 Ocultar resumen»
+  (`toggleResumenAdm`, `LS_RESUMEN`, `RESUMEN_MINI`, `pintarResumenAdm`), las cuentas de `renderAdmin` que lo llenaban,
+  `renderOcupacion`, `renderZonas` y `occBar`. Quedan: los avisos, los chips, la tabla, los botones, el 📅 calendario y los
+  camiones (con su «Ocultar camiones»). El Cuadre de Contabilidad sigue con SU «Ocultar resumen» (`LS_RESUMEN_CUA`).
+- **El feriado ahora lo dice el calendario** (`admCalFeriado`): la celda «🚫 feriado» con el nombre de título, y al tocarla
+  «🚫 Feriado — Navidad: el camión no sale». Lo decía la semana de ocupación (§4gy A1).
+- Lo cobrado por chofer lo siguen diciendo el parte del día, la vista del chofer y el Cuadre («Efectivo cobrado vs retirado»).
+- Pruebas cambiadas a conciencia: `test_resumen` (§1-8 = que ya no está), `test_camiones_admin` §1 y §8, `test_auditoria`,
+  `test_chofer` §7, `test_cuadre_alta`, `test_medias`, `test_finmes` §6, `test_rev29_dias` 4a (ahora el calendario),
+  `test_rev_entregas` §6 y `test_tabla` §7. También se arregló `test_servidor` §23: `HD` se llamaba a sí misma.
+
+## 4im. 09/10: 🚛🏆📅🔔🌅🛤️ seis vistas más (de la página de muestras) — EN LA RAMA
+El dueño, con la página de muestras abierta: *«implementa todo menos a,c,d, me gusta la B y la salud del día es solo para
+administración al poner la clave cierto?»* (A = tarjeta que se da vuelta, C = colchón 3D, D = semana en torres: NO).
+Todo SOLO MIRA: no cambia cupos, stock, tildes ni la planilla, salvo los tildes de la carga, que son los de siempre.
+- **🚛 Camión cargándose** (Lista de carga, arriba de cada camión, `.cc-lugar`): `cargaCamionCuenta(cam)` suma el `data-u` de
+  los tildes ya puestos (cada checkbox lleva sus unidades; 0 si el renglón no va); `cargaCamionSvg` dibuja 12 lugares y
+  «🚛 X de Y bultos» / «✅ Cargado entero»; `cargaCamionTildo(el)` lo repinta al tildar (después de `setCargaChk`).
+- **🏆 Ranking** (Stock, debajo de los galpones, `<details id="vis-rank">`): `stockRankingDatos()` = unidades entregadas por
+  producto en ventanas de 7 días, `RANK_SEMANAS`=6, los `RANK_TOPE`=8 que más salieron, con las reglas de la rotación
+  (`stockCuenta`, sin `stockPedidoUnico`, sin `esProdDeTienda`). ▶ recorre las semanas y las barras cambian de lugar con ▲/▼.
+- **📅 Calendario de entregas** (Administración, `#adm-cal` DEBAJO de los camiones, dueño 09/10: *«ese calendario debe ir debajo luego de la animación 3D»*, cerrado de entrada, pref `cal`):
+  `admCalDatos(ym)` cuenta AM/PM por día (sin sistema, borradores ni tienda); día cerrado rayado («sin camión», o «n ⚠️» si
+  igual tiene pedidos), lleno marcado; tocar un día dice AM n/lim y PM, y «Ver ese día» abre Administración en ese día.
+- **🔔 Avisos con movimiento** (Stock): `stockAvisosNuevos` compara con lo guardado en el aparato (`me_vis_avisos`; la primera
+  vez solo guarda) y dice qué productos pasaron a 🚨/🏭 desde la última vez; cartel con campana + la fila late (`stk-late`).
+- **🌅 Salud del día** (SOLO con la clave de Administración): `saludDatos()` = entregas de hoy, stock sin urgencias, cupos del
+  próximo día con camión, lo que llega de fábrica hoy. Sale una vez por mañana y por aparato al poner la clave
+  (`me_salud_dia`, se cierra sola a los 9 s) y con el botón «🌅 Salud del día».
+- **🛤️ El viaje del pedido** (B; Mis pedidos, en la tarjeta chica y en la ficha): Cargado → Mercadería (sin stock / en
+  producción / a recoger / lista / sin revisar) → fecha → En camino → Entregado (`pedidoViajeDatos`/`pedidoViajeHtml`). Una
+  fecha pasada cuenta como entregado (§4co, los choferes no marcan).
+- `tests/test_vistas_4im.js` (29; 26 rojas contra `bf34dab`); con `SHOTS=1` saca las capturas.
+
+## 4in. 09/10: 📚 la hoja «Historial stock» (servidor `2026-10-09-a`) — EN LA RAMA, el servidor lo implementa el dueño
+El dueño: *«publica y armá la hoja de historial»* (después de preguntar cuántos días se pueden guardar sin llenar la celda).
+- **Por qué aparte**: `__stock__` vive en UNA celda de «Pedidos» (50.000 letras, ~22.000 usadas): ahí entran 3 días de control.
+  Un día de saldos de los tres almacenes son 6.000-10.000 letras: en una hoja aparte, una fila por día, entran años.
+- **Servidor** (`histGuardar_`/`histLeer_`, acciones `histStock` adentro del candado y `histStockLeer` sin candado): hoja
+  `HIST_HOJA`='Historial stock' (columnas fecha · actualizado · almacenes · datos; la A con formato texto `@`, si no Google
+  convierte la fecha). Un día = `{<almacén>:{f,h,u,s0}}`; otro almacén el mismo día se JUNTA en la misma fila y un Excel más
+  viejo (por hora) no pisa al más nuevo. Lo de más de `HIST_DIAS`=730 días se borra al guardar. Más de `HIST_TOPE_LETRAS`
+  (48.000) en un día → `celda_llena`. `probarAntesDeImplementar` §10 dice cuántos días tiene. Ninguna escritura toca «Pedidos».
+- **Página** (`histStockAlDia`, después de cada lectura buena en `refrescarEstadoYa`): si `SERVER_VER` ≥ `HIST_VERSION`, con el
+  stock ya leído de la planilla (`STOCK_CARGADO`), manda los almacenes cuyo Excel es de HOY (sin los ceros) una vez por cambio
+  (`me_hist_env` = día + huella); si falla, la próxima lectura lo reintenta. ⚠️ Con un servidor anterior NO manda: la acción
+  desconocida caería en `doSave` → «no id» → hoja «Rechazos». «📜 Historial de cortes» muestra cuántos días hay y una barrita por
+  día con lo de PTF (`histStockPintar`, lee los últimos 60 días).
+- Todavía nada usa la historia para calcular: es la base de la «máquina del tiempo» y del «¿acertó el panel?».
+- `test_servidor` §23 (11 ⚠️ + la versión: 12 rojas contra el `.gs` 2026-10-06-a) y `tests/test_historial_stock.js` (11; 10 rojas
+  contra `bf34dab`). `SCRIPT_VERSION`/`ESTA_VERSION`/`SCRIPT_VERSION_ESPERADA` = `2026-10-09-a`. Volver atrás = ✏️ a la versión anotada
+  antes de implementar (la de la 10-06-a) Y pegar la 10-06-a (enlace fijo a `bf34dab`).
+
 ## 4il. 09/10: 📈 barrios que crecen (el 11 de la lista) — PUBLICADA 09/10 01:20 (`a9bc37a`, Pages OK, run 37888038312; el dueño: «publica»)
 El dueño: *«el 11 me gusta para implementar»* (de la lista de ideas: el mapa de calor con flechas de tendencia, qué zona vende
 cada vez más). En «📍 Banzer o PTF», debajo del mapa (`#alm-tend`, `almTendHtml`) y con flechas en el mapa (`almTendFlechas`).

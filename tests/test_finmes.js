@@ -153,21 +153,19 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('en «Día» tampoco: ahí el día lo eligió una persona a propósito', enDia==='', enDia.slice(0,60));
 
-  // ============ 6. ⚠️ plegar el resumen NO puede tapar el aviso ============
+  // ============ 6. ⚠️ el aviso está a la vista (el resumen se sacó en §4io; el aviso nunca vivió adentro) ============
   await aMes();
   const plegado = await page.evaluate(async () => {
-    if(resumenAdmVisible()) toggleResumenAdm();
     await new Promise(r=>setTimeout(r,150));
     var e=document.getElementById('adm-fuera');
-    if(!e){ if(!resumenAdmVisible()) toggleResumenAdm(); return { vis:false, txt:'NO EXISTE #adm-fuera' }; }
+    if(!e){ return { vis:false, txt:'NO EXISTE #adm-fuera' }; }
     var vis=true;
     for(var n=e; n && n!==document.body; n=n.parentElement){
       if(n.style && n.style.display==='none'){ vis=false; break; } }
     var txt=(e.textContent||'').replace(/\s+/g,' ').trim();
-    if(!resumenAdmVisible()) toggleResumenAdm();
     return { vis:vis, txt:txt };
   });
-  chk('⚠️ con el resumen plegado el aviso SIGUE a la vista (es alerta, no consolidado)',
+  chk('⚠️ el aviso está a la vista (es alerta, no consolidado: quedó al sacar el resumen)',
       plegado.vis===true && /entrega fuera de este mes/.test(plegado.txt),
       plegado.vis+' · '+plegado.txt.slice(0,60));
 

@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-06-a';   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-09-a';   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-06-a';
+  var ESTA_VERSION = '2026-10-09-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -244,6 +244,7 @@ function probarAntesDeImplementar() {
     huellaFila_: typeof huellaFila_, borradoAnotar_: typeof borradoAnotar_, feriadoGs_: typeof feriadoGs_,
     recientesAnotar_: typeof recientesAnotar_, onEdit: typeof onEdit,
     reservasLeer_: typeof reservasLeer_, reservaAnotar_: typeof reservaAnotar_, reservaProcesar_: typeof reservaProcesar_,   // (2026-10-02-a)
+    histGuardar_: typeof histGuardar_, histLeer_: typeof histLeer_,   // (2026-10-09-a)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -388,11 +389,95 @@ function probarAntesDeImplementar() {
     }
   } catch (e) { ojo('No pude leer las reservas de stock: ' + motivo(e)); }
 
+  /* 10. 📚 (2026-10-09-a) La hoja «Historial stock»: cuántos días tiene. Solo lee; si no está, se arma sola con el primer
+         Excel del día que suba alguien. Informa, no frena. */
+  try {
+    var shH = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HIST_HOJA);
+    if (!shH) bien('La hoja «' + HIST_HOJA + '» todavía no existe: se arma sola con el primer Excel del día que se suba con la página nueva.');
+    else {
+      var vH = shH.getDataRange().getValues(), fsH = [];
+      for (var ih = 1; ih < vH.length; ih++) { var fh = histFecha_(vH[ih][0]); if (fh) fsH.push(fh); }
+      fsH.sort();
+      bien('La hoja «' + HIST_HOJA + '» tiene ' + fsH.length + ' día(s) guardado(s)' + (fsH.length ? (', del ' + fsH[0] + ' al ' + fsH[fsH.length - 1]) : '') + '.');
+    }
+  } catch (e) { ojo('No pude mirar la hoja del historial: ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
   if (typeof Logger !== 'undefined') Logger.log(lineas.join('\n'));
   return { ok: !malas, malas: malas, avisos: avisos, lineas: lineas, veredicto: veredicto };
+}
+
+/* ============================================================================
+ * 📚 HISTORIAL DEL STOCK (2026-10-09-a, §4in). El dueño (09/10): *«armá la hoja de historial»*.
+ * El stock vive en UNA celda de «Pedidos» (`__stock__`) y Google corta cada celda en 50.000 letras: ahí solo entran 3 días
+ * de control. La historia va APARTE, en la hoja «Historial stock»: UNA FILA POR DÍA con los saldos de cada almacén que se
+ * subió ese día (lo que dijo el Excel). La página la manda sola después de leer la planilla, si hay un Excel de hoy que la
+ * hoja todavía no tiene; varios equipos mandan lo mismo y se JUNTA por almacén (el último de cada almacén gana).
+ * No toca «Pedidos» ni el stock: si algo falla acá, el panel sigue igual. Se lee solo cuando una pantalla lo pide
+ * (`histStockLeer`), nunca en la lectura de cada minuto.
+ * ========================================================================== */
+var HIST_HOJA = 'Historial stock';
+var HIST_DIAS = 730;                       // dos años; lo más viejo se borra solo al guardar
+var HIST_TOPE_LETRAS = 48000;              // una celda aguanta 50.000
+var HIST_ENC = ['fecha', 'actualizado', 'almacenes', 'datos'];
+function histFecha_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, 'America/La_Paz', 'yyyy-MM-dd');
+  return String(v || '').trim().slice(0, 10);
+}
+function histHoja_(crear) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(HIST_HOJA);
+  if (!sh && crear) {
+    sh = ss.insertSheet(HIST_HOJA);
+    sh.getRange(1, 1, 1, HIST_ENC.length).setValues([HIST_ENC]);
+    sh.getRange('A:A').setNumberFormat('@');   // la fecha como TEXTO: si no, Google la convierte en fecha y cambia el día
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+/* Guarda (o junta) el día. `datos` = { <almacén>: { f, h, u:{clave: unidades}, s0 } }. Va ADENTRO del candado de doPost. */
+function histGuardar_(body) {
+  var f = String(body.fecha || '').trim(), datos = body.datos;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(f) || !datos || typeof datos !== 'object' || !Object.keys(datos).length)
+    return jsonOut({ ok:false, error:'sin datos', version:SCRIPT_VERSION });
+  var sh = histHoja_(true), vals = sh.getDataRange().getValues(), fila = -1, viejo = {};
+  for (var i = 1; i < vals.length; i++) if (histFecha_(vals[i][0]) === f) {
+    fila = i + 1;
+    try { viejo = JSON.parse(String(vals[i][3] || '{}')) || {}; } catch (e) { viejo = {}; }
+    break;
+  }
+  Object.keys(datos).forEach(function (a) {
+    var n = datos[a]; if (!n || typeof n !== 'object') return;
+    var v = viejo[a];
+    /* Un Excel más viejo del mismo almacén y día no pisa al más nuevo (la hora manda). */
+    if (v && String(v.h || '') > String(n.h || '')) return;
+    viejo[a] = n;
+  });
+  var txt = JSON.stringify(viejo);
+  if (txt.length > HIST_TOPE_LETRAS) return jsonOut({ ok:false, error:'celda_llena', version:SCRIPT_VERSION, largo:txt.length });
+  var ahora = new Date().toISOString(), alms = Object.keys(viejo).sort().join(' · ');
+  var row = [f, ahora, alms, txt];
+  if (fila > 0) sh.getRange(fila, 1, 1, row.length).setValues([row]);
+  else sh.appendRow(row);
+  /* Lo más viejo de HIST_DIAS se va (de abajo para arriba, para no correr los números de fila). */
+  var corte = new Date(Date.now() - 4 * 3600000 - HIST_DIAS * 86400000).toISOString().slice(0, 10), borradas = 0;
+  vals = sh.getDataRange().getValues();
+  for (var j = vals.length - 1; j >= 1; j--) { var fj = histFecha_(vals[j][0]); if (fj && fj < corte) { sh.deleteRow(j + 1); borradas++; } }
+  return jsonOut({ ok:true, version:SCRIPT_VERSION, fecha:f, almacenes:Object.keys(viejo).length, largo:txt.length, borradas:borradas });
+}
+/* Lee los días entre `desde` y `hasta` (los dos opcionales). Sin candado: solo lee. */
+function histLeer_(body) {
+  var sh = histHoja_(false), desde = String(body.desde || ''), hasta = String(body.hasta || '9999');
+  if (!sh) return jsonOut({ ok:true, version:SCRIPT_VERSION, dias:[] });
+  var vals = sh.getDataRange().getValues(), dias = [];
+  for (var i = 1; i < vals.length; i++) {
+    var f = histFecha_(vals[i][0]); if (!f || f < desde || f > hasta) continue;
+    var d = {}; try { d = JSON.parse(String(vals[i][3] || '{}')) || {}; } catch (e) { d = {}; }
+    dias.push({ fecha:f, datos:d });
+  }
+  dias.sort(function (a, b) { return a.fecha < b.fecha ? -1 : (a.fecha > b.fecha ? 1 : 0); });
+  return jsonOut({ ok:true, version:SCRIPT_VERSION, dias:dias });
 }
 
 function jsonOut(obj) {
@@ -783,10 +868,13 @@ function doPostCuerpo_(e) {
   if (action === 'rechazos') return jsonOut({ ok:true, version:SCRIPT_VERSION, rechazos: rechazosInforme_() });
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
   if (action === 'getlog') return jsonOut({ ok:true, version:SCRIPT_VERSION, get: getLogInforme_() });
+  // 📚 (2026-10-09-a) El historial del stock: leer va sin candado; guardar, adentro (dos equipos pueden mandar el mismo día).
+  if (action === 'histStockLeer') return histLeer_(body);
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
     if (action === 'delete') return doDelete(body.id, body.rev, body);
+    if (action === 'histStock') return histGuardar_(body);   // 📚 (2026-10-09-a)
     return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf);   // (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
   } finally {
     lock.releaseLock();

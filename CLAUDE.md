@@ -620,9 +620,11 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
-- `#carga-viva` va JUSTO ARRIBA de `#adm-resumen` y FUERA de él (§4ib, 08/10, dueño: *«separá ocultar resumen y ocultar el nuevo
-  3D»*; PUBLICADA 08/10 15:54, `409a077`): **dos botones**, «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por compu; escondidos
-  no se dibujan) y «🙈 Ocultar resumen» (solo el resumen). Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- `#carga-viva` va arriba del 📅 calendario (`#adm-cal`, debajo de los camiones: dueño, 09/10) con su botón «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por
+  compu; escondidos no se dibujan). Se pinta en `renderAdmin` y en `renderCargaSiActiva`. **🧹 El resumen de Administración YA NO
+  EXISTE** (§4io, 09/10, dueño: *«al tenerlo ya en 3D y los focos de calor… eso ya no es útil para logística, quítalo»*): fichas,
+  línea de cobros, consolidados, camión, rendición, «Ocupación de cupos» y «Concentración por zona», con su «Ocultar resumen». No
+  volver a ponerlo. El feriado lo dice el calendario (`admCalFeriado`).
 - **Las líneas de color van en el PISO** (§4ib, dueño: *«esas líneas quedaron encima del camión, no abajo… se ve raro»*): `huella` es
   el rectángulo del piso y `cuerpo` la silueta de cada camión, que se vuelve a dibujar ENCIMA (`img.cv-cuerpo` con `clip-path`
   sobre la misma imagen); las luces (`cv-faros-*`) van en un segundo `svg` arriba de todo.
@@ -666,6 +668,18 @@ argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test
 **📈 Barrios que crecen** (§4il, 09/10, PUBLICADA 01:20, `a9bc37a`): en Banzer o PTF, por zona escrita, los últimos 30 días contra los 30 de antes
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.
+
+## 🚛 Seis vistas más (§4im, 09/10, EN LA RAMA, con §4io: fuera el resumen de Administración; dueño: *«todo menos a,c,d, me gusta la B»*)
+🚛 camión cargándose en la Lista de carga (`cargaCamionSvg`, cuenta los tildes de siempre con su `data-u`), 🏆 ranking por semana en
+Stock (`stockRankingDatos`, reglas de la rotación), 📅 calendario de entregas en Administración (`admCalHtml`), 🔔 avisos de lo que
+pasó a urgente desde la última vez (`stockAvisosNuevos`, `me_vis_avisos`), 🌅 salud del día SOLO con la clave (`saludDelDia`, una vez
+por mañana) y 🛤️ el viaje del pedido en Mis pedidos (`pedidoViajeHtml`). Solo miran. `tests/test_vistas_4im.js` (29). Bitácora §4im.
+
+## 📚 La hoja «Historial stock» (§4in, 09/10; servidor `2026-10-09-a`, EN LA RAMA)
+Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera
+de «Pedidos»: la celda `__stock__` sigue con sus 3 días. La página la manda sola después de leer (`histStockAlDia`) SOLO si el servidor
+es ≥ `2026-10-09-a` (con uno anterior caería en «Rechazos» como «no id»). 730 días, junta por almacén, el Excel más nuevo gana.
+`test_servidor` §23, `tests/test_historial_stock.js`.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
