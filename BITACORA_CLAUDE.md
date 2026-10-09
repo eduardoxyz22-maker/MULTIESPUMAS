@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4io. 09/10: 🧹 fuera el resumen de Administración — EN LA RAMA
+## 4io. 09/10: 🧹 fuera el resumen de Administración — PUBLICADA 09/10 02:04 (`d94ca49`, Pages OK, run 37891579091; el dueño: «publica»)
 El dueño, con dos capturas del iPad (las fichas Pedidos/Pagados/Por cobrar/Saldo, la línea de cobros, los consolidados por
 vendedor y por día, la rendición por chofer, «Ocupación de cupos — próximos 7 días» y «Concentración por zona»): *«Al tenerlo
 ya en 3D y los focos de calor y etc, eso ya no es útil para logística, quítalo»*.
@@ -7460,7 +7460,7 @@ ya en 3D y los focos de calor y etc, eso ya no es útil para logística, quítal
   `test_chofer` §7, `test_cuadre_alta`, `test_medias`, `test_finmes` §6, `test_rev29_dias` 4a (ahora el calendario),
   `test_rev_entregas` §6 y `test_tabla` §7. También se arregló `test_servidor` §23: `HD` se llamaba a sí misma.
 
-## 4im. 09/10: 🚛🏆📅🔔🌅🛤️ seis vistas más (de la página de muestras) — EN LA RAMA
+## 4im. 09/10: 🚛🏆📅🔔🌅🛤️ seis vistas más (de la página de muestras) — PUBLICADA 09/10 02:04 (`d94ca49`, Pages OK, run 37891579091; el dueño: «publica»)
 El dueño, con la página de muestras abierta: *«implementa todo menos a,c,d, me gusta la B y la salud del día es solo para
 administración al poner la clave cierto?»* (A = tarjeta que se da vuelta, C = colchón 3D, D = semana en torres: NO).
 Todo SOLO MIRA: no cambia cupos, stock, tildes ni la planilla, salvo los tildes de la carga, que son los de siempre.
@@ -7483,7 +7483,7 @@ Todo SOLO MIRA: no cambia cupos, stock, tildes ni la planilla, salvo los tildes 
   fecha pasada cuenta como entregado (§4co, los choferes no marcan).
 - `tests/test_vistas_4im.js` (29; 26 rojas contra `bf34dab`); con `SHOTS=1` saca las capturas.
 
-## 4in. 09/10: 📚 la hoja «Historial stock» (servidor `2026-10-09-a`) — EN LA RAMA, el servidor lo implementa el dueño
+## 4in. 09/10: 📚 la hoja «Historial stock» (servidor `2026-10-09-a`) — PÁGINA PUBLICADA 09/10 02:04 (`d94ca49`, Pages OK, run 37891579091; el dueño: «publica»); el servidor lo implementa el dueño
 El dueño: *«publica y armá la hoja de historial»* (después de preguntar cuántos días se pueden guardar sin llenar la celda).
 - **Por qué aparte**: `__stock__` vive en UNA celda de «Pedidos» (50.000 letras, ~22.000 usadas): ahí entran 3 días de control.
   Un día de saldos de los tres almacenes son 6.000-10.000 letras: en una hoja aparte, una fila por día, entran años.

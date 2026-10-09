@@ -669,13 +669,13 @@ argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.
 
-## 🚛 Seis vistas más (§4im, 09/10, EN LA RAMA, con §4io: fuera el resumen de Administración; dueño: *«todo menos a,c,d, me gusta la B»*)
+## 🚛 Seis vistas más (§4im, 09/10, PUBLICADA 02:04, `d94ca49`, con §4io: fuera el resumen de Administración; dueño: *«todo menos a,c,d, me gusta la B»*)
 🚛 camión cargándose en la Lista de carga (`cargaCamionSvg`, cuenta los tildes de siempre con su `data-u`), 🏆 ranking por semana en
 Stock (`stockRankingDatos`, reglas de la rotación), 📅 calendario de entregas en Administración (`admCalHtml`), 🔔 avisos de lo que
 pasó a urgente desde la última vez (`stockAvisosNuevos`, `me_vis_avisos`), 🌅 salud del día SOLO con la clave (`saludDelDia`, una vez
 por mañana) y 🛤️ el viaje del pedido en Mis pedidos (`pedidoViajeHtml`). Solo miran. `tests/test_vistas_4im.js` (29). Bitácora §4im.
 
-## 📚 La hoja «Historial stock» (§4in, 09/10; servidor `2026-10-09-a`, EN LA RAMA)
+## 📚 La hoja «Historial stock» (§4in, 09/10; página PUBLICADA 02:04, `d94ca49`; servidor `2026-10-09-a` lo implementa el dueño)
 Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera
 de «Pedidos»: la celda `__stock__` sigue con sus 3 días. La página la manda sola después de leer (`histStockAlDia`) SOLO si el servidor
 es ≥ `2026-10-09-a` (con uno anterior caería en «Rechazos» como «no id»). 730 días, junta por almacén, el Excel más nuevo gana.
