@@ -186,27 +186,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('con 40 ventas se ven las 40', f.filas===40, f.filas);
   chk('…y no aparece ningún aviso de «ver más»', f.aviso.trim()==='', f.aviso.trim().slice(0,60));
 
-  // ============ 7. los totales de arriba NO se topan: cuentan todo ============
+  // ============ 7. lo que cuenta NO se topa: cuenta todo ============
+  /* (§4io, 09/10) Las fichas «Pedidos/Pagados» y la línea de entregados se sacaron con el resumen de Administración: se
+     mira la lista filtrada (de donde salen los chips y el Excel), que tiene que traer las 400 aunque se dibujen 150. */
   await prep(400);
   await modo('todo');
-  const totales = await page.evaluate(() => {
-    /* Se lee la ficha «Pedidos» por su etiqueta, no buscando "400" en todo el texto:
-       los textos van pegados ("Pedidos400400 unidades") y un match suelto no prueba nada. */
-    var ficha=function(lbl){
-      var l=[].slice.call(document.querySelectorAll('#adm-metrics .mc-lbl'))
-              .filter(function(e){ return e.textContent.trim()===lbl; })[0];
-      return l ? l.parentElement.querySelector('.mc-val').textContent.trim() : 'NO ESTÁ';
-    };
-    return { pedidos:ficha('Pedidos'), pagados:ficha('Pagados'),
-             filas:document.querySelectorAll('#tbl-pedidos tbody tr').length };
-  });
-  chk('⚠️ la ficha «Pedidos» sigue diciendo 400, aunque se dibujen 150',
-      totales.pedidos==='400', totales.filas+' filas · la ficha dice '+totales.pedidos);
-  chk('…y la de «Pagados» también cuenta las 400', totales.pagados==='400', totales.pagados);
-  const linea = await page.evaluate(() =>
-    document.getElementById('adm-metodos').textContent.replace(/\s+/g,' '));
-  chk('…y la línea de entregados cuenta sobre el total, no sobre lo dibujado',
-      /\/ 400/.test(linea), linea.slice(-60));
+  const totales = await page.evaluate(() => ({ lista:admFilter().length, filas:document.querySelectorAll('#tbl-pedidos tbody tr').length }));
+  chk('⚠️ la lista filtrada sigue teniendo las 400, aunque se dibujen 150', totales.lista===400 && totales.filas<400, totales.filas+' filas · la lista tiene '+totales.lista);
 
   /* ⚠️ El tope es de la TABLA y de nadie más. Si alguna vez alguien "optimiza" metiéndolo
      dentro de admFilter(), el Excel saldría con 150 ventas de 400 y nadie se daría cuenta

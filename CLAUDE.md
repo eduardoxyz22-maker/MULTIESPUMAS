@@ -620,9 +620,11 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
-- `#carga-viva` va JUSTO ARRIBA de `#adm-resumen` y FUERA de él (§4ib, 08/10, dueño: *«separá ocultar resumen y ocultar el nuevo
-  3D»*; PUBLICADA 08/10 15:54, `409a077`): **dos botones**, «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por compu; escondidos
-  no se dibujan) y «🙈 Ocultar resumen» (solo el resumen). Se pinta en `renderAdmin` y en `renderCargaSiActiva`.
+- `#carga-viva` va debajo del 📅 calendario (`#adm-cal`) con su botón «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por
+  compu; escondidos no se dibujan). Se pinta en `renderAdmin` y en `renderCargaSiActiva`. **🧹 El resumen de Administración YA NO
+  EXISTE** (§4io, 09/10, dueño: *«al tenerlo ya en 3D y los focos de calor… eso ya no es útil para logística, quítalo»*): fichas,
+  línea de cobros, consolidados, camión, rendición, «Ocupación de cupos» y «Concentración por zona», con su «Ocultar resumen». No
+  volver a ponerlo. El feriado lo dice el calendario (`admCalFeriado`).
 - **Las líneas de color van en el PISO** (§4ib, dueño: *«esas líneas quedaron encima del camión, no abajo… se ve raro»*): `huella` es
   el rectángulo del piso y `cuerpo` la silueta de cada camión, que se vuelve a dibujar ENCIMA (`img.cv-cuerpo` con `clip-path`
   sobre la misma imagen); las luces (`cv-faros-*`) van en un segundo `svg` arriba de todo.
@@ -667,7 +669,7 @@ argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.
 
-## 🚛 Seis vistas más (§4im, 09/10, EN LA RAMA; dueño: *«todo menos a,c,d, me gusta la B»*)
+## 🚛 Seis vistas más (§4im, 09/10, EN LA RAMA, con §4io: fuera el resumen de Administración; dueño: *«todo menos a,c,d, me gusta la B»*)
 🚛 camión cargándose en la Lista de carga (`cargaCamionSvg`, cuenta los tildes de siempre con su `data-u`), 🏆 ranking por semana en
 Stock (`stockRankingDatos`, reglas de la rotación), 📅 calendario de entregas en Administración (`admCalHtml`), 🔔 avisos de lo que
 pasó a urgente desde la última vez (`stockAvisosNuevos`, `me_vis_avisos`), 🌅 salud del día SOLO con la clave (`saludDelDia`, una vez

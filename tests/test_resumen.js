@@ -1,4 +1,4 @@
-/* 👁️ EL BOTÓN PARA OCULTAR EL RESUMEN DE ADMINISTRACIÓN.
+/* 👁️ EL RESUMEN DE ADMINISTRACIÓN (se SACÓ en §4io, 09/10) Y EL BOTÓN DE OCULTAR EL RESUMEN DEL CUADRE.
    Pedido del dueño: arriba de la tabla hay una pila de estadísticas (las fichas, la línea
    de cobros, los consolidados por vendedor y por día, camión, rendición, cupos, zonas) que
    empuja la tabla —lo que se usa todo el día— muy abajo. Querían poder plegarla.
@@ -64,71 +64,26 @@ const ARCH = 'file://' + path.resolve('pedidos.html');
              boton:(document.getElementById('adm-resumen-btn')||{}).textContent||'' };
   });
 
-  // ============ 1. de fábrica viene desplegado ============
+  // ============ 1-8. (§4io, 09/10) El resumen de Administración SE SACÓ ============
+  /* El dueño: *«al tenerlo ya en 3D y los focos de calor y etc, eso ya no es útil para logística, quítalo»*. Ya no se
+     pliega: no está. Lo que sigue tiene que quedar igual (avisos, filtros, tabla, botones) y los camiones + el 📅 calendario. */
   await prep();
   let f = await foto();
-  chk('de entrada el resumen se ve, como siempre', f.fichas===true && f.porVendedor===true, JSON.stringify(f));
-  chk('y el botón ofrece ocultarlo', /Ocultar resumen/.test(f.boton), f.boton.trim());
-
-  // ============ 2. plegado: se va TODO el resumen ============
-  await page.evaluate(()=>toggleResumenAdm());
-  f = await foto();
-  chk('se van las fichas', f.fichas===false, f.fichas);
-  chk('se va la línea de cobros y stock', f.cobros===false, f.cobros);
-  chk('se va el consolidado por vendedor', f.porVendedor===false, f.porVendedor);
-  chk('se va el consolidado por día', f.porDia===false, f.porDia);
-  chk('se van camión y rendición', f.camion===false && f.rendicion===false, f.camion+'/'+f.rendicion);
-  chk('se van cupos y zonas', f.cupos===false && f.zonas===false, f.cupos+'/'+f.zonas);
-
-  // ============ 3. …y NO se lleva puesto nada de lo que sí se usa ============
+  chk('⚠️ se fueron las fichas, la línea de cobros y los consolidados por vendedor y por día',
+      f.fichas==='NO EXISTE' && f.cobros==='NO EXISTE' && f.porVendedor==='NO EXISTE' && f.porDia==='NO EXISTE', JSON.stringify(f));
+  chk('⚠️ se fueron camión, rendición, cupos de 7 días y zonas',
+      f.camion==='NO EXISTE' && f.rendicion==='NO EXISTE' && f.cupos==='NO EXISTE' && f.zonas==='NO EXISTE', JSON.stringify(f));
+  chk('⚠️ …y el botón «Ocultar resumen» con él', f.boton==='' && await page.evaluate(()=>typeof window.toggleResumenAdm==='undefined' && !document.getElementById('adm-resumen')), f.boton);
   chk('los avisos de arriba SIGUEN (entregas por revisar, OC repetidas)', f.avisos===true, f.avisos);
   chk('la tabla de pedidos SIGUE', f.tabla===true, f.tabla);
   chk('los filtros rápidos de la tabla SIGUEN', f.chips===true, f.chips);
   chk('los botones (Excel, Lista de carga, Cerrar día) SIGUEN',
       await page.evaluate(()=>{ var b=[].slice.call(document.querySelectorAll('#view-admin .btn-row button'));
         return b.some(x=>/Lista de carga/.test(x.textContent)) && b.some(x=>/Cerrar día/.test(x.textContent)); }));
-
-  // ============ 4. plegado, el botón se lleva el número grueso ============
-  chk('el botón ofrece volver a mostrarlo', /Ver resumen/.test(f.boton), f.boton.trim());
-  chk('…y sigue diciendo cuántos pedidos hay', /4 pedidos/.test(f.boton), f.boton.trim());
-  chk('…y cuánto falta cobrar', /3 por cobrar/.test(f.boton), f.boton.trim());
-
-  // ============ 5. la elección aguanta recargar la página ============
-  await page.reload({ waitUntil:'load' });
-  await page.waitForTimeout(300);
-  await prep();
-  f = await foto();
-  chk('tras recargar sigue plegado (no hay que ocultarlo cada vez)', f.fichas===false, f.fichas);
-  chk('…y el botón lo refleja', /Ver resumen/.test(f.boton), f.boton.trim());
-
-  // ============ 6. se vuelve a desplegar ============
-  await page.evaluate(()=>toggleResumenAdm());
-  f = await foto();
-  chk('volver a mostrarlo trae todo de vuelta',
-      f.fichas===true && f.porVendedor===true && f.porDia===true && f.camion===true && f.zonas===true,
-      JSON.stringify(f));
-
-  // ============ 7. es de ESTA computadora, no del equipo ============
-  const otra = await browser.newContext({ viewport:{width:1400,height:1000} });   // otro navegador
-  const p2 = await otra.newPage();
-  p2.on('dialog',d=>d.accept());
-  await p2.goto(ARCH, { waitUntil:'load' });
-  await p2.waitForTimeout(300);
-  const soloMio = await p2.evaluate(() => resumenAdmVisible());
-  chk('en otra computadora el resumen sigue como siempre (no se le pisa la pantalla a nadie)',
-      soloMio===true, soloMio);
-  await otra.close();
-
-  // ============ 8. sin nada que cobrar, el mini-resumen no inventa ============
-  const limpio = await page.evaluate(async () => {
-    STATE.forEach(function(p){ p.pagado=true; p.saldo=0; });
-    window._pl=JSON.parse(JSON.stringify(STATE)); saveMirror();
-    renderAdmin();
-    if(resumenAdmVisible()) toggleResumenAdm();
-    return (document.getElementById('adm-resumen-btn')||{}).textContent||'';
-  });
-  chk('con todo cobrado no dice "0 por cobrar" al pedo', !/por cobrar/.test(limpio), limpio.trim());
-  chk('…pero sí cuántos pedidos hay', /4 pedidos/.test(limpio), limpio.trim());
+  chk('los camiones y el 📅 calendario quedan en Administración',
+      await page.evaluate(()=>!!document.getElementById('carga-viva') && !!document.getElementById('adm-cal') && !!document.getElementById('adm-camiones-btn')));
+  chk('renderAdmin no revienta sin el resumen (la tabla trae los 4 pedidos)',
+      await page.evaluate(()=>{ renderAdmin(); return document.querySelectorAll('#tbl-pedidos tbody tr').length>=4; }));
 
   // ============ 9. el MISMO botón en el Cuadre de Contabilidad ============
   const cua = await page.evaluate(async () => {
@@ -172,8 +127,8 @@ const ARCH = 'file://' + path.resolve('pedidos.html');
       /por revisar/.test(cua.despues.boton), cua.despues.boton.trim());
   chk('…y cuánto falta cobrar', /por cobrar/.test(cua.despues.boton), cua.despues.boton.trim());
   chk('volver a mostrarlo trae todo de vuelta', cua.vuelta===true, cua.vuelta);
-  chk('el del Cuadre es independiente del de Administración (dos interruptores distintos)',
-      await page.evaluate(()=> LS_RESUMEN!==LS_RESUMEN_CUA));
+  chk('el del Cuadre sigue con su interruptor propio (el de Administración se fue con el resumen, §4io)',
+      await page.evaluate(()=> typeof LS_RESUMEN_CUA==='string' && typeof window.LS_RESUMEN==='undefined'));
 
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

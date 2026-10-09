@@ -221,10 +221,14 @@ function PREPARAR(){
   await reloj('2026-12-22T10:00:00-04:00');
   const occ = await ev(async () => {
     await _escenario(_stockTodo({}), []);
-    renderOcupacion();
-    var el=document.getElementById('adm-ocupacion'); return el ? el.innerText.replace(/\s+/g,' ') : '';
+    /* (§4io) «Ocupación de cupos — próximos 7 días» se sacó con el resumen: el 📅 calendario de Administración lo dice ahora. */
+    if(typeof admCalHtml!=='function') return '';
+    ADM_CAL_MES='2026-12'; ADM_CAL_DIA='2026-12-25';
+    var d=document.createElement('div'); d.innerHTML=admCalHtml();
+    var c=d.querySelector('[data-f="2026-12-25"]');
+    return ((c&&c.getAttribute('title'))||'')+' | '+((c&&c.textContent)||'')+' | '+((d.querySelector('.cal-det')||{}).textContent||'');
   });
-  chk('4a. la semana de ocupación marca el 25/12 como «Feriado — Navidad»', /Feriado — Navidad/.test(occ||''), (occ||'').slice(0,300));
+  chk('4a. el 📅 calendario marca el 25/12 como «Feriado — Navidad» (antes lo decía la semana de ocupación)', /Feriado — Navidad/.test(occ||'') && /feriado/.test(occ||''), (occ||'').slice(0,300));
   await reloj('2026-12-25T10:00:00-04:00');
   const adm = await ev(async () => {
     await refrescarEstado(); UNLOCKED=true;

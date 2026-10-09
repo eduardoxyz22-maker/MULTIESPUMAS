@@ -1748,7 +1748,7 @@ console.log('\n── 23. 📚 La hoja «Historial stock»: una fila por día, j
   const BZ  = { f:'2026-10-09', h:'08:10:00', u:{ 'TITANIO ICE|160X190':2 }, s0:true };
   let r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ PTF:PTF } });
   const hoja = () => a.otras['Historial stock'];
-  const HD = () => hoja() ? HD() : [[], [null, null, null, '{}']];   // contra un .gs viejo la hoja no existe: que falle, no que reviente
+  const HD = () => hoja() ? hoja()._datos : [[], [null, null, null, '{}']];   // contra un .gs viejo la hoja no existe: que falle, no que reviente
   chk('⚠️ a. guarda el día: arma la hoja con su encabezado y UNA fila', r.ok===true && r.fecha==='2026-10-09' && !!hoja() && HD().length===2 && HD()[0][0]==='fecha', JSON.stringify(r).slice(0,120));
   chk('⚠️ a. …y no toca «Pedidos»', a.sh._datos.length===1);
   r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ '01-05-025  Almacen Distribucion Banzer':BZ } });

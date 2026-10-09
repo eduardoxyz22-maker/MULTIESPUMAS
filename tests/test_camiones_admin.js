@@ -73,12 +73,12 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   console.log('\n── 1. En Administración, no en la Lista de carga; lo de Codex ya no está ──');
   let r = await page.evaluate(() => {
     var box=document.getElementById('carga-viva'), img=box && box.querySelector('.cv-lienzo img');
-    return { enResumen:!box.closest('#adm-resumen') && box.nextElementSibling===document.getElementById('adm-resumen'), primero:true,
+    return { enResumen:!document.getElementById('adm-resumen') && !!box.closest('#view-admin') && box.previousElementSibling===document.getElementById('adm-cal'), primero:true,
       img:img?img.getAttribute('src'):'', enCarga:!!document.querySelector('#carga-overlay #carga-viva, #carga-overlay .cv-caja'),
       codex:!!document.getElementById('adm-logistica') || !!document.querySelector('script[src*="admin-logistica"],link[href*="admin-logistica"]') || typeof window.AdminLogistica!=='undefined',
       titulo:(document.getElementById('cv-dia')||{}).textContent||'' };
   });
-  chk('⚠️ la tira está en Administración, justo arriba del resumen y FUERA de él (§4ib: se esconde aparte)', r.enResumen && r.primero, J(r));
+  chk('⚠️ la tira está en Administración, debajo del 📅 calendario; el resumen ya no existe (§4io: lo sacó el dueño)', r.enResumen && r.primero, J(r));
   chk('…con la imagen de los depósitos (carga-viva/escena.jpg)', /^carga-viva\/escena\.jpg/.test(r.img), r.img);
   chk('⚠️ NO aparece en la Lista de carga (dueño: «solo en administración»)', !r.enCarga);
   chk('⚠️ la escena 3D de Codex ya no está (ni su caja, ni su script, ni su hoja de estilo)', !r.codex);
@@ -238,19 +238,17 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   r = await page.evaluate(() => {
     var vis=function(id){ var e=document.getElementById(id); for(var n=e; n && n!==document.body; n=n.parentElement){ if(n.style && n.style.display==='none') return false; } return !!e; };
     var o={};
-    toggleResumenAdm();
-    o.resOff={ cam:vis('carga-viva') && !!document.querySelector('#carga-viva .cv-caja'), res:vis('adm-resumen'), btn:document.getElementById('adm-resumen-btn').textContent };
-    toggleResumenAdm();
+    o.resOff={ cam:vis('carga-viva') && !!document.querySelector('#carga-viva .cv-caja'), sinBoton:!document.getElementById('adm-resumen-btn'), sinFn:typeof window.toggleResumenAdm==='undefined' };
     toggleCamionesAdm();
-    o.camOff={ cam:vis('carga-viva'), vacio:document.getElementById('carga-viva').innerHTML==='', res:vis('adm-resumen'), btn:document.getElementById('adm-camiones-btn').textContent, guardado:localStorage.getItem('pedidos_camiones_adm') };
+    o.camOff={ cam:vis('carga-viva'), vacio:document.getElementById('carga-viva').innerHTML==='', tabla:vis('tbl-pedidos'), btn:document.getElementById('adm-camiones-btn').textContent, guardado:localStorage.getItem('pedidos_camiones_adm') };
     renderAdmin();
     o.trasRender={ cam:vis('carga-viva'), vacio:document.getElementById('carga-viva').innerHTML==='' };
     toggleCamionesAdm();
     o.camOn={ cam:vis('carga-viva') && !!document.querySelector('#carga-viva .cv-caja'), btn:document.getElementById('adm-camiones-btn').textContent };
     return o;
   });
-  chk('«🙈 Ocultar resumen» esconde el resumen pero los camiones quedan a la vista', r.resOff.cam && !r.resOff.res && /Ver resumen/.test(r.resOff.btn), J(r.resOff));
-  chk('«🙈 Ocultar camiones» esconde solo los camiones (no se dibujan) y el resumen queda a la vista', !r.camOff.cam && r.camOff.vacio && r.camOff.res && /Ver camiones/.test(r.camOff.btn) && r.camOff.guardado==='0', J(r.camOff));
+  chk('el botón «Ocultar resumen» ya no está (§4io, el resumen se sacó) y los camiones se ven', r.resOff.cam && r.resOff.sinBoton && r.resOff.sinFn, J(r.resOff));
+  chk('«🙈 Ocultar camiones» esconde solo los camiones (no se dibujan) y la tabla queda a la vista', !r.camOff.cam && r.camOff.vacio && r.camOff.tabla && /Ver camiones/.test(r.camOff.btn) && r.camOff.guardado==='0', J(r.camOff));
   chk('escondidos siguen escondidos aunque Administración se repinte', !r.trasRender.cam && r.trasRender.vacio, J(r.trasRender));
   chk('«👁️ Ver camiones» los vuelve a mostrar', r.camOn.cam && /Ocultar camiones/.test(r.camOn.btn), J(r.camOn));
   r = await page.evaluate(() => {

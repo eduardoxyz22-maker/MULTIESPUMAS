@@ -1063,52 +1063,16 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 
         <div id="adm-revisar"></div>
 
-        <!-- 👁️ Dos interruptores SEPARADOS (§4ib, dueño 08/10: «separá ocultar resumen y ocultar el nuevo 3D»): los camiones y
-             el resumen se esconden cada uno con su botón, y cada compu recuerda lo suyo. Resumen: §4bf en la bitácora. -->
+        <!-- 🧹 (§4io, 09/10) El resumen de estadísticas (fichas, consolidados, rendición, cupos de 7 días y zonas) se SACÓ: el
+             dueño, *«al tenerlo ya en 3D y los focos de calor, eso ya no es útil para logística, quítalo»*. Lo reemplazan los
+             camiones, el 📅 calendario y los mapas. Los camiones siguen con su botón (§4ib). -->
         <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px">
           <button class="btn btn-ghost btn-sm no-print" id="adm-salud-btn" style="width:auto" onclick="saludDelDia(true)">🌅 Salud del día</button>
           <button class="btn btn-ghost btn-sm no-print" id="adm-camiones-btn" style="width:auto" onclick="toggleCamionesAdm()">🙈 Ocultar camiones</button>
-          <button class="btn btn-ghost btn-sm" id="adm-resumen-btn" style="width:auto" onclick="toggleResumenAdm()">🙈 Ocultar resumen</button>
         </div>
 
         <div id="adm-cal" class="no-print"></div>
         <div id="carga-viva" class="no-print"></div>
-        <div id="adm-resumen">
-        <div class="metrics" id="adm-metrics"></div>
-        <div class="metodos-line" id="adm-metodos"></div>
-
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-h">Consolidado por vendedor</div>
-            <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-vendedor"></table></div>
-          </div>
-          <div class="panel">
-            <div class="panel-h">Consolidado por día</div>
-            <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-dia"></table></div>
-          </div>
-        </div>
-
-        <div class="panel" style="margin-bottom:22px">
-          <div class="panel-h">🚛 Entregas asignadas por camión</div>
-          <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-camion"></table></div>
-        </div>
-
-        <div class="panel" style="margin-bottom:22px">
-          <div class="panel-h">💵 Rendición por chofer — salió a cobrar vs cobrado</div>
-          <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-rendicion"></table></div>
-        </div>
-
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-h">📅 Ocupación de cupos — próximos 7 días</div>
-            <div style="padding:10px 14px" id="adm-ocupacion"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-h">🔥 Concentración por zona</div>
-            <div style="padding:10px 14px" id="adm-zonas"></div>
-          </div>
-        </div>
-        </div><!-- /adm-resumen -->
 
         <div class="btn-row" style="margin-bottom:16px">
           <span class="xls-group" title="Descargar Excel según el alcance elegido">
@@ -13178,45 +13142,9 @@ function admSort(list){
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
   admCalPintar();   // 📅 (§4im)
-  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
-  var total=list.length,pagados=0,saldoPend=0,unidades=0;
-  var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
-  list.forEach(function(p){ if(p.pagado){ pagados++; var _mb=metodoBase(p.metodoPago); if(mtd[_mb]!=null)mtd[_mb]++; else mtdSin++; } else saldoPend+=Number(p.saldo)||0; if(p.entregado)entregados++; if(p.verificado)verificados++; if(est[p.estado]!=null)est[p.estado]++; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
-  var pend=total-pagados-list.filter(function(p){ return !p.pagado && noSeCobra(p); }).length;   // (25/09) sin ATC/RPT, como el chip
-  document.getElementById('adm-metrics').innerHTML=
-    mc('var(--teal)','Pedidos',total,unidades+' unidades')+
-    mc('var(--green)','Pagados',pagados,total?Math.round(pagados/total*100)+'% del total':'—')+
-    mc('var(--red)','Por cobrar',pend,'pedidos pendientes')+
-    mc('var(--amber)','Saldo pendiente',fmtBs(saldoPend),'suma por cobrar');
-  /* Lo que muestra el botón cuando el resumen está plegado: el número grueso a la vista
-     sin tener que desplegar nada. */
-  RESUMEN_MINI = total+' pedido'+(total===1?'':'s')+(pend?(' · '+pend+' por cobrar · '+fmtBs(saldoPend)):'');
-  pintarResumenAdm(); acomodarFichas();
   try{ cargaVivaPintar(); }catch(e){ console.error(e); }
-  document.getElementById('adm-metodos').innerHTML=
-    'Cobros — 💵 Efectivo: <b>'+mtd.Efectivo+'</b> &nbsp;·&nbsp; 📱 QR: <b>'+mtd.QR+'</b> &nbsp;·&nbsp; 💳 Tarjeta: <b>'+mtd.Tarjeta+'</b>'+(mtdSin?(' &nbsp;·&nbsp; sin método: <b>'+mtdSin+'</b>'):'')+' &nbsp;&nbsp;|&nbsp;&nbsp; ⏳ Por cobrar: <b>'+pend+'</b>'+
-    '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; ✅ Verificados: <b>'+verificados+'</b> &nbsp;·&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
-
-  var byV={};
-  list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,saldo:0}; byV[k].n++; if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
-  var vRows=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){ return '<tr><td>'+esc(k)+'</td><td class="num">'+byV[k].n+'</td><td class="num">'+fmtBs(byV[k].saldo)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-vendedor').innerHTML='<thead><tr><th>Vendedor</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(vRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
-
-  var byD={};
-  list.forEach(function(p){ var k=esVentaTienda(p)?'TIENDA':(p.fecha||'—'); if(!byD[k])byD[k]={n:0,saldo:0}; byD[k].n++; if(!p.pagado)byD[k].saldo+=Number(p.saldo)||0; });
-  var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+(k==='TIENDA'?'🏪 Tienda':esc(fmtFecha(k)))+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Entrega</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
-
-  var byC={};
-  list.forEach(function(p){ var vh=vehiculoDe(p); if(vh){ if(!byC[vh])byC[vh]={n:0,ent:0,pend:0}; byC[vh].n++; if(p.entregado)byC[vh].ent++; else byC[vh].pend++; } });
-  var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
-  document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
-
-  var byCh={};
-  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=totalCobrado(p); if(!p.pagado) byCh[c].pend+=Number(p.saldo)||0; });   // §4fs: lo cobrado suma SIEMPRE
-  var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
 
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
   // allá a la derecha había que scrollear para verla.
@@ -13452,58 +13380,7 @@ function avisoOcRepetidasHtml(){
    cupos y de la Lista de carga sin que ningún test lo mirara. Lo destapó la auditoría de
    funciones repetidas. Ahora tiene nombre propio. */
 function diaSemanaCorto(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
-function occBar(icon,used,max){
-  if(max<=0){ return '<span style="flex:1;display:flex;align-items:center;gap:6px;opacity:.55">'+icon+'<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px"></span><span style="width:42px;flex:none;font-size:.66rem;font-weight:700;color:var(--muted)">cerrado</span></span>'; }
-  var pct=Math.min(100,Math.round(used/max*100)), full=used>=max;
-  var col=full?'var(--red)':(used>=max*0.8?'var(--amber)':'var(--teal)');
-  return '<span style="flex:1;display:flex;align-items:center;gap:6px">'+icon+
-    '<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
-    '<span style="width:42px;flex:none;font-size:.72rem;font-weight:700;color:'+(full?'var(--red)':'var(--muted)')+'">'+used+'/'+max+'</span></span>';
-}
-function renderOcupacion(){
-  var el=document.getElementById('adm-ocupacion'); if(!el) return;
-  var base=new Date(); base.setDate(base.getDate()+1); // desde mañana (no se agenda el mismo día)
-  var rows='';
-  for(var i=0;i<7;i++){
-    var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
-    var f=isoLocal(d), lAM=limTurno(f,'AM'), lPM=limTurno(f,'PM');
-    var uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM, totLim=lAM+lPM, dom=diaDomingo(f), fer=feriadoDe(f);
-    rows+='<div class="occ-row"'+((dom||fer)?' style="opacity:.6"':'')+'>'+
-      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemanaCorto(d)+'</span></span>'+
-      (dom ? '<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Domingo — cerrado</span>'
-           : fer ? ('<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Feriado — '+esc(fer)+'</span>') : (occBar('🌅',uAM,lAM)+occBar('🌆',uPM,lPM)))+
-      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+((totLim>0&&tot>=totLim)?'var(--red)':'var(--muted)')+'">'+((dom||(fer&&!tot))?'—':(tot+'/'+totLim))+'</span></div>';
-  }
-  el.innerHTML=rows;
-}
 
-/* ---- Concentración por zona (mapa de calor textual) ---- */
-function renderZonas(){
-  var el=document.getElementById('adm-zonas'); if(!el) return;
-  /* Agrupado sin mayúsculas ni acentos (§4dn): antes «Centro» y «centro» eran dos barras
-     con la mitad de los pedidos cada una, y la zona más cargada podía no salir ni en la
-     lista. El rótulo usa la escritura que más se repite en la planilla. */
-  var list=admFilter(), byZ={}, rot={};
-  list.forEach(function(p){
-    var z=String(p.zona||'').replace(/\s+/g,' ').trim();
-    var k=z?normNombre(z):'(sin zona)';
-    if(!byZ[k]){ byZ[k]={n:0,pend:0}; rot[k]={}; }
-    byZ[k].n++; if(!p.entregado)byZ[k].pend++;
-    var f=z||'(sin zona)'; rot[k][f]=(rot[k][f]||0)+1;
-  });
-  var etiq=function(k){ var f=rot[k]||{}; return Object.keys(f).sort(function(a,b){return f[b]-f[a];})[0]||k; };
-  var keys=Object.keys(byZ).sort(function(a,b){return byZ[b].n-byZ[a].n;});
-  if(!keys.length){ el.innerHTML='<div class="empty" style="padding:14px;color:var(--muted)">Sin datos</div>'; return; }
-  var maxN=byZ[keys[0]].n;
-  el.innerHTML=keys.slice(0,12).map(function(z){
-    var o=byZ[z], pct=Math.max(6,Math.round(o.n/maxN*100)), intens=o.n/maxN;
-    var col='hsl('+Math.round(28-intens*28)+','+Math.round(75+intens*15)+'%,'+Math.round(62-intens*17)+'%)';
-    var lbl=etiq(z);
-    return '<div class="occ-row"><span style="width:120px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(lbl)+'">'+esc(lbl)+'</span>'+
-      '<span style="flex:1;height:15px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
-      '<span style="width:104px;flex:none;text-align:right;font-size:.74rem;color:var(--muted)"><b style="color:var(--text)">'+o.n+'</b> pedidos'+(o.pend?(' · '+o.pend+' pend'):'')+'</span></div>';
-  }).join('');
-}
 
 /* ---- Reprogramar entrega ----
    Ventana con calendario de verdad (antes era un prompt donde había que TIPEAR
@@ -25237,27 +25114,6 @@ function rowKind(p){
   return '';
 }
 function rowClass(p){ var k=rowKind(p); return k?('row-'+k):''; }
-/* ============================================================================
-   👁️ OCULTAR EL RESUMEN DE ADMINISTRACIÓN
-   Arriba de la tabla hay una pila de estadísticas (las fichas, la línea de cobros,
-   los consolidados por vendedor y por día, camión, rendición, cupos y zonas). Sirven,
-   pero empujan la tabla —que es lo que se usa todo el día— muy abajo. Con el botón se
-   guarda plegado o desplegado EN ESTA COMPUTADORA: cada uno lo deja como le sirve, sin
-   pisarle la pantalla al resto del equipo.
-   Plegado, el botón se lleva el número grueso, así no hay que desplegarlo para saber
-   cuántos pedidos hay y cuánto falta cobrar. */
-var LS_RESUMEN='pedidos_resumen_adm', RESUMEN_MINI='';
-function resumenAdmVisible(){ try{ return localStorage.getItem(LS_RESUMEN)!=='0'; }catch(e){ return true; } }
-function pintarResumenAdm(){
-  var box=document.getElementById('adm-resumen'), b=document.getElementById('adm-resumen-btn');
-  if(!box||!b) return;
-  var ver=resumenAdmVisible();
-  box.style.display = ver ? '' : 'none';
-  b.innerHTML = ver ? '🙈 Ocultar resumen'
-    : ('👁️ Ver resumen'+(RESUMEN_MINI?(' <span style="opacity:.75;font-weight:600">· '+RESUMEN_MINI+'</span>'):''));
-  b.title = ver ? 'Esconde las fichas y los consolidados para dejar la tabla arriba de todo'
-                : 'Vuelve a mostrar las fichas y los consolidados';
-}
 /* ⚠️ Lo mismo para el CUADRE: contabilidad necesita trabajar con la planilla de pagos de
    abajo y arriba tiene los cierres, los retiros, el por cobrar y los avisos.
    La diferencia con Administración: acá lo que se pliega incluye «Revisar antes de
@@ -25280,7 +25136,8 @@ function toggleResumenCua(){
   pintarResumenCua();
 }
 /* 🚛 (§4ib, 08/10) Los camiones de Administración (§4hz) se esconden con SU botón, aparte del resumen: el dueño quiere poder
-   tener el resumen a la vista sin la imagen, o al revés. Escondidos no se dibujan (la animación no corre de fondo). */
+   tener el resumen a la vista sin la imagen, o al revés. Escondidos no se dibujan (la animación no corre de fondo).
+   (§4io, 09/10) El resumen ya no existe: lo sacó el dueño. Este botón queda. */
 var LS_CAMIONES='pedidos_camiones_adm';
 function camionesAdmVisible(){ try{ return localStorage.getItem(LS_CAMIONES)!=='0'; }catch(e){ return true; } }
 function pintarCamionesAdm(){
@@ -25289,18 +25146,13 @@ function pintarCamionesAdm(){
   if(box) box.style.display = ver ? '' : 'none';
   if(b){
     b.innerHTML = ver ? '🙈 Ocultar camiones' : '👁️ Ver camiones';
-    b.title = ver ? 'Esconde la imagen de los camiones; el resumen queda como está' : 'Vuelve a mostrar la imagen de los camiones';
+    b.title = ver ? 'Esconde la imagen de los camiones' : 'Vuelve a mostrar la imagen de los camiones';
   }
 }
 function toggleCamionesAdm(){
   try{ localStorage.setItem(LS_CAMIONES, camionesAdmVisible()?'0':'1'); }catch(e){}
   pintarCamionesAdm();
   try{ cargaVivaPintar(); }catch(e){}
-}
-function toggleResumenAdm(){
-  try{ localStorage.setItem(LS_RESUMEN, resumenAdmVisible()?'0':'1'); }catch(e){}
-  pintarResumenAdm();
-  if(!resumenAdmVisible()){ var t=document.getElementById('adm-chips'); if(t){ try{ window.scrollTo(0,0); }catch(e){} } }
 }
 /* Lista de productos donde se marca ✔ hay / ✗ no hay / 📥 recoger de IM (se usa en las dos fichas) */
 function prodRevList(p){
@@ -27773,6 +27625,7 @@ function admCalDatos(ym){
   });
   return { D:D, mx:mx };
 }
+function admCalFeriado(f){ try{ return (typeof feriadoDe==='function' && feriadoDe(f)) || ''; }catch(e){ return ''; } }
 function admCalHtml(){
   var ym=ADM_CAL_MES||todayStr().slice(0,7), C=admCalDatos(ym), hoy=todayStr();
   var y=+ym.slice(0,4), m=+ym.slice(5,7), dias=new Date(y,m,0).getDate(), pri=(new Date(y,m-1,1).getDay()+6)%7;   // lunes = 0
@@ -27782,17 +27635,17 @@ function admCalHtml(){
   for(var v=0;v<pri;v++) h+='<div></div>';
   for(var d=1; d<=dias; d++){
     var f=ym+'-'+(d<10?'0':'')+d, x=C.D[f], lim=limTurno(f,'AM')+limTurno(f,'PM'), n=x?x.n:0;
-    var cerrado=(lim===0), lleno=(lim>0 && n>=lim);
+    var cerrado=(lim===0), lleno=(lim>0 && n>=lim), fer=cerrado?admCalFeriado(f):'';   // (§4io) el feriado se nombra: lo decía «Ocupación de cupos»
     var st='';
     if(!cerrado && n>0){ var pc=Math.round(15+Math.min(1,n/Math.max(C.mx,1))*85); st=' style="background:color-mix(in srgb, #0f766e '+pc+'%, #e6f6f4)'+(pc>60?';color:#fff':'')+'"'; }
-    h+='<button type="button" class="cal-dia'+(cerrado?' cerrado':'')+(f===hoy?' hoy':'')+(f===ADM_CAL_DIA?' sel':'')+(lleno?' lleno':'')+'" data-f="'+f+'" onclick="admCalVer(this.dataset.f)"'+st+'>'+
-      '<b>'+d+'</b><span>'+(cerrado?(n?(n+' ⚠️'):'sin camión'):(n?(n+' pedido'+(n===1?'':'s')):'—'))+'</span></button>';
+    h+='<button type="button" class="cal-dia'+(cerrado?' cerrado':'')+(f===hoy?' hoy':'')+(f===ADM_CAL_DIA?' sel':'')+(lleno?' lleno':'')+'" data-f="'+f+'"'+(fer?(' title="Feriado — '+esc(fer)+'"'):'')+' onclick="admCalVer(this.dataset.f)"'+st+'>'+
+      '<b>'+d+'</b><span>'+(cerrado?(n?(n+' ⚠️'):(fer?'🚫 feriado':'sin camión')):(n?(n+' pedido'+(n===1?'':'s')):'—'))+'</span></button>';
   }
   h+='</div>';
   if(ADM_CAL_DIA && ADM_CAL_DIA.slice(0,7)===ym){
     var s=C.D[ADM_CAL_DIA]||{ AM:0, PM:0, n:0, ent:0 }, la=limTurno(ADM_CAL_DIA,'AM'), lp=limTurno(ADM_CAL_DIA,'PM');
     h+='<div class="cal-det"><b>'+fmtFecha(ADM_CAL_DIA)+'</b>: '+s.n+' pedido'+(s.n===1?'':'s')+
-      (la||lp ? (' · 🌅 AM <b>'+s.AM+'</b>/'+la+(lp?(' · 🌆 PM <b>'+s.PM+'</b>/'+lp):'')) : ' · día sin camión')+
+      (la||lp ? (' · 🌅 AM <b>'+s.AM+'</b>/'+la+(lp?(' · 🌆 PM <b>'+s.PM+'</b>/'+lp):'')) : (admCalFeriado(ADM_CAL_DIA) ? (' · 🚫 Feriado — '+esc(admCalFeriado(ADM_CAL_DIA))+': el camión no sale') : ' · día sin camión'))+
       (s.ent?(' · ✅ '+s.ent+' entregado'+(s.ent===1?'':'s')):'')+
       ' <button type="button" class="btn btn-sm" style="width:auto;background:var(--teal);color:#fff;font-weight:700;margin-left:6px" onclick="admCalAbrirDia()">Ver los pedidos de ese día</button></div>';
   }
@@ -27814,7 +27667,7 @@ function admCalAbrirDia(){
   var b=document.querySelector('#adm-mode [data-val="dia"]'); if(b) b.click();
   var i=document.getElementById('adm-dia'); if(i){ i.value=ADM_CAL_DIA; i.dispatchEvent(new Event('change',{bubbles:true})); }
   renderAdmin();
-  var t=document.getElementById('adm-resumen'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' });
+  var t=document.getElementById('adm-chips'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 /* ---------------------------------------------------------------- 🔔 LOS AVISOS CON MOVIMIENTO (Stock) */

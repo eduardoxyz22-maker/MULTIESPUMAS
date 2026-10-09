@@ -276,7 +276,7 @@ const r2=n=>Math.round((Number(n)||0)*100)/100;
   });
   chk('§4fs · el parte del día suma los 400 del cobro parcial en «Cobrado» (1.300, no 900)', r.parte.cob===1300 && r.parte.pend===600 && r.parte.pendN===1, J(r.parte));
   chk('  …y el «Cobrado» por chofer del parte también', r.parte.ch===1300, J(r.parte.ch));
-  chk('§4fs · la rendición por chofer: salió a cobrar 1.900, cobrado 1.300, falta 600', /1\.900,00/.test(r.rendicion) && /1\.300,00/.test(r.rendicion) && /600,00/.test(r.rendicion), r.rendicion);
+  /* (§4io, 09/10: la rendición por chofer de Administración se sacó con el resumen; lo mismo lo dicen el parte del día y la vista del chofer) */
   chk('§4fs · la tarjeta «Cobrado» de la vista del chofer incluye el parcial', /1\.300,00/.test(r.chofer), r.chofer.slice(0,200));
 
   // ══ §4ft · un «A cuenta» sin método NO va a «Bancos y tarjeta» ══

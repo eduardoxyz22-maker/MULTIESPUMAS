@@ -210,13 +210,14 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   await paso(ctx,'Administración · cada chip', ()=>ctx.page.evaluate(()=>{ QUICK_DEFS.forEach(function(d){ setQuick(d.k); }); QUICK_FILTER=''; renderAdmin(); }));
   await paso(ctx,'Administración · ordenar por cada columna (ida y vuelta)', ()=>ctx.page.evaluate(()=>{ ['num','fecha','vendedor','cliente','zona','saldo','estado'].forEach(function(k){ setSort(k); setSort(k); }); SORT_KEY=''; renderAdmin(); }));
   await paso(ctx,'Administración · buscador', ()=>ctx.page.evaluate(()=>{ var s=document.getElementById('adm-search'); s.value='DUPLICADA'; renderAdmin(); s.value=''; renderAdmin(); }));
-  await paso(ctx,'Administración · plegar resumen', ()=>ctx.page.evaluate(()=>{ toggleResumenAdm(); toggleResumenAdm(); }));
   await paso(ctx,'Administración · ver más / ver todos / ir al mes', ()=>ctx.page.evaluate(()=>{ admVerMas(); admVerTodos(); admTopeReset(); admIrAlMes(monthStr()); admVerTodoElHistorial(); }));
   await paso(ctx,'Administración · avisos plegables', ()=>ctx.page.evaluate(()=>{ toggleRevisar(); toggleRevisar(); toggleOcRep(); toggleOcRep(); }));
 
   /* ⚠️ Dientes para el bug de `diaSemana` (§4bx): el día de la semana TIENE que estar. */
-  const cupos = await ctx.page.evaluate(()=>{ renderOcupacion(); return (document.getElementById('adm-ocupacion')||{textContent:''}).textContent.replace(/\s+/g,' '); });
-  chk('🐛 el panel de cupos muestra el día de la semana (dom/lun/…/sáb)', /\b(dom|lun|mar|mié|jue|vie|sáb)\b/.test(cupos), cupos.slice(0,90));
+  /* (§4io, 09/10) El panel «Ocupación de cupos — próximos 7 días» se sacó con el resumen; el día de la semana lo sigue
+     escribiendo `diaSemanaCorto`, que usan los demás carteles. */
+  const cupos = await ctx.page.evaluate(()=>[0,1,2,3,4,5,6].map(function(i){ return diaSemanaCorto(new Date(2026,9,11+i)); }).join(' '));
+  chk('🐛 el día de la semana sale bien (dom/lun/…/sáb)', cupos==='dom lun mar mié jue vie sáb', cupos);
 
   // ---- todas las fichas, con cada pedido ----
   for (const id of ids){

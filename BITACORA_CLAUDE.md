@@ -7445,6 +7445,21 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4io. 09/10: 🧹 fuera el resumen de Administración — EN LA RAMA
+El dueño, con dos capturas del iPad (las fichas Pedidos/Pagados/Por cobrar/Saldo, la línea de cobros, los consolidados por
+vendedor y por día, la rendición por chofer, «Ocupación de cupos — próximos 7 días» y «Concentración por zona»): *«Al tenerlo
+ya en 3D y los focos de calor y etc, eso ya no es útil para logística, quítalo»*.
+- Se sacó ENTERO `#adm-resumen` (con «Entregas asignadas por camión», que estaba en el medio) y su botón «🙈 Ocultar resumen»
+  (`toggleResumenAdm`, `LS_RESUMEN`, `RESUMEN_MINI`, `pintarResumenAdm`), las cuentas de `renderAdmin` que lo llenaban,
+  `renderOcupacion`, `renderZonas` y `occBar`. Quedan: los avisos, los chips, la tabla, los botones, el 📅 calendario y los
+  camiones (con su «Ocultar camiones»). El Cuadre de Contabilidad sigue con SU «Ocultar resumen» (`LS_RESUMEN_CUA`).
+- **El feriado ahora lo dice el calendario** (`admCalFeriado`): la celda «🚫 feriado» con el nombre de título, y al tocarla
+  «🚫 Feriado — Navidad: el camión no sale». Lo decía la semana de ocupación (§4gy A1).
+- Lo cobrado por chofer lo siguen diciendo el parte del día, la vista del chofer y el Cuadre («Efectivo cobrado vs retirado»).
+- Pruebas cambiadas a conciencia: `test_resumen` (§1-8 = que ya no está), `test_camiones_admin` §1 y §8, `test_auditoria`,
+  `test_chofer` §7, `test_cuadre_alta`, `test_medias`, `test_finmes` §6, `test_rev29_dias` 4a (ahora el calendario),
+  `test_rev_entregas` §6 y `test_tabla` §7. También se arregló `test_servidor` §23: `HD` se llamaba a sí misma.
+
 ## 4im. 09/10: 🚛🏆📅🔔🌅🛤️ seis vistas más (de la página de muestras) — EN LA RAMA
 El dueño, con la página de muestras abierta: *«implementa todo menos a,c,d, me gusta la B y la salud del día es solo para
 administración al poner la clave cierto?»* (A = tarjeta que se da vuelta, C = colchón 3D, D = semana en torres: NO).
