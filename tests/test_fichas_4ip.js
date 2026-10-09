@@ -29,7 +29,7 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
     CONNECTED=true; CARGA_GEN++; CARGA_ESTADO='ok'; if(window.CARGA_TIMER) clearTimeout(CARGA_TIMER); if(window.CARGA_TIC) clearInterval(CARGA_TIC);
     apiList=function(){ return Promise.resolve({ ok:true, pedidos:JSON.parse(JSON.stringify(STATE)) }); };
     apiSave=function(rec){ return Promise.resolve({ ok:true, pedido:rec }); };
-    try{ ['me_vis_avisos','me_salud_dia','me_vis_4ik'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+    try{ ['me_vis_avisos','me_salud_dia','me_vis_4ik'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} visPrefSet('masVistas',true);   /* §4iv: estas vistas viven en «Más vistas», plegado */
     var hoy=todayStr(), dia=function(n){ return stockSumarDias(hoy, n); };
     var PR={ semi:{ desc:'ESPECIAL SEMIORTOPEDICO', medida:'140x190', codigo:'CH1107' }, tit:{ desc:'TITANIO ICE', medida:'160x190', codigo:'CH1201' },
              oro:{ desc:'ORO BI RELAX', medida:'140x190', codigo:'CH1761' }, eco:{ desc:'NUEVO ECO FLEX', medida:'105x190', codigo:'CH1331' } };
@@ -189,7 +189,7 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
       Object.assign({ cant:1, chk:'no' }, PR('ESPECIAL SEMIORTOPEDICO','140x190')), Object.assign({ cant:1 }, PR('SIN MARCA','140x190'))] }));
     STATE.push(Q({ id:'h4', fecha:hoy, cliente:'DORA SOSA', productos:[Object.assign({ cant:1 }, PR('SIN MARCA','140x190'))] }));
     STATE.push(Q({ id:'h5', fecha:man, cliente:'EVA LUNA', productos:[Object.assign({ cant:4, chk:'ok', chkDe:'Banzer' }, PR('TITANIO ICE','160x190'))] }));
-    try{ localStorage.removeItem('me_vis_4ik'); }catch(e){}
+    try{ localStorage.removeItem('me_vis_4ik'); }catch(e){} visPrefSet('masVistas',true);   /* §4iv: estas vistas viven en «Más vistas», plegado */
     ADM_LUG_DIA='hoy'; segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin();
     var o={};
     var ths=[].map.call(document.querySelectorAll('#tbl-pedidos thead th'), function(th){ return th.textContent.replace(/[▲▼↕]/g,'').trim(); });
@@ -250,10 +250,70 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
   chk('el 🚚 cae en hoy + lo que tarda la fábrica («si pedís hoy»), y entre los dos la franja «N días sin stock»', ()=>{ var n=Math.max(1,r.oro.lead); return Math.abs(r.oro.cami - n/17*100)<0.05 && (n>r.oro.dias ? r.oro.sin!==null && r.oro.pie.indexOf((n-r.oro.dias)+' día'+((n-r.oro.dias)===1?'':'s')+' sin stock')>=0 : true) && /si pedís hoy/.test(r.oro.pie); }, r.oro);
   chk('el que se corta primero va arriba (ordenados por el día del corte)', ()=>(r.orden.length>=2 && r.orden.every(function(x,i,A){ return i===0 || A[i-1]<=x; })), r.orden);
   chk('el TITANIO (sobra, no se corta en estos días) no ocupa lugar', ()=>(!r.titEsta), [r.titDias, r.titAviso]);
-  chk('abajo de cada nombre: hay · vendidos · por día; arriba, los días', ()=>(/hay \d+ · vendidos \d+ · [\d,]+ por día/.test(r.oro.nom) && r.eje===9), r.oro.nom);
+  chk('abajo de cada nombre: hay · vendidos · por día; arriba, los días', ()=>(/hay \d+ · \d+ vendidos? sin entregar · [\d,]+ por día/.test(r.oro.nom) && r.eje===9), r.oro.nom);
   if(SHOTS){ await ev(()=>{ var e=document.getElementById('stk-termo'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300); await page.screenshot({ path:path.join(SHOTS,'f8_termo.png') });
     await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ renderStock(); var e=document.getElementById('stk-termo'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300);
     await page.screenshot({ path:path.join(SHOTS,'f9_termo_cel.png') }); await page.setViewportSize({ width:1180, height:900 }); }
+
+  /* ══ 9. 🛍️ Las bolsas fuera del stock (dueño, 09/10: «las bolsas sacalas del stock») ══ */
+  console.log('\n── 9. 🛍️ Las bolsas no son stock ──');
+  r = await ev(async()=>{
+    var K1=stockClave({ desc:'BOLSA PARA ALMOHADAS', medida:'50x70' }), K2=stockClave({ desc:'BOLSA PARA COLCHON', medida:'140x190' });
+    STOCK.c.u[K1]=0; STOCK.c.u[K2]=1;
+    STATE.push(Object.assign({}, findById('m1'), { id:'b1', productos:[{ desc:'BOLSA PARA ALMOHADAS', medida:'50x70', cant:50 }, { desc:'BOLSA PARA COLCHON', medida:'140x190', cant:2 }] }));
+    stockOlvidarIndice(); var d=stockData();
+    var o={ k1:K1, enLista:d.lista.filter(function(x){ return /^BOLSA/.test(x.k); }).map(function(x){ return x.k; }),
+      t1:esProdDeTienda({ desc:'BOLSA PARA ALMOHADAS', medida:'50x70' }), t2:esTextoDeTienda(K2),
+      colchon:esProdDeTienda({ desc:'COLCHON RESORTES EN BOLSA', medida:'140x190' }), tit:esProdDeTienda({ desc:'TITANIO ICE', medida:'160x190' }) };
+    STATE=STATE.filter(function(p){ return p.id!=='b1'; }); delete STOCK.c.u[K1]; delete STOCK.c.u[K2]; stockOlvidarIndice();
+    return o;
+  });
+  chk('una bolsa (de pedido o del Excel) no entra al stock: ni ficha, ni «pedir», ni fábrica', ()=>(r.t1 && r.t2 && r.enLista.length===0), r);
+  chk('…solo si el nombre EMPIEZA con BOLSA: «COLCHON RESORTES EN BOLSA» y el TITANIO siguen siendo stock', ()=>(!r.colchon && !r.tit), r);
+
+  /* ══ 10. 📋 El plan de stock y la cinta (§4iv, dueño: «hazlo lo que acabas de mostrarme en el plan de stock») ══ */
+  console.log('\n── 10. 📋 Stock simplificado: la cinta, el plan y «Más vistas» plegado ──');
+  r = await ev(async()=>{
+    closeModal(); try{ var j=JSON.parse(localStorage.getItem('me_vis_4ik')||'{}'); delete j.masVistas; localStorage.setItem('me_vis_4ik', JSON.stringify(j)); }catch(e){}
+    PLAN_F='todos'; PLAN_ABIERTA=''; stockFiltroLimpiar(); abrirStock(); await new Promise(function(ok){ setTimeout(ok,120); });
+    var body=document.getElementById('stock-body'), cinta=document.getElementById('stk-cinta'), plan=document.getElementById('stk-plan'), mas=document.getElementById('stk-mas');
+    var orden=[].map.call(body.children, function(e){ return e.id; }).filter(Boolean);
+    var d=stockData(), P={}; stockProducir(d).bloques.forEach(function(B){ B.filas.forEach(function(f){ P[f.o.k]=f; }); });
+    var filas=[].map.call(plan.querySelectorAll('tr.pl-fila'), function(tr){ var k=tr.getAttribute('data-k'), o=d.lista.filter(function(x){ return x.k===k; })[0];
+      var n=function(c){ var t=(tr.querySelector('.'+c)||{}).textContent||''; return t==='—'?0:Number(t)||0; };
+      return { k:k, g:tr.getAttribute('data-g'), q:tr.querySelector('.pl-q').textContent, accion:sfAccion(o), p7:n('pl-p7'), fab:o.fabricar||0, p15:n('pl-p15'), pm:n('pl-pm'), f:P[k]?{quin:P[k].quin, mes:P[k].mes}:null, dias:o.dias==null?999:o.dias, aviso:o.aviso }; });
+    var cint=[].map.call(cinta.querySelectorAll('.ci-col:not([aria-hidden])'), function(b){ var k=b.getAttribute('data-k'), o=d.lista.filter(function(x){ return x.k===k; })[0];
+      return { k:k, carril:b.closest('.ci-est').getAttribute('data-c'), cant:b.querySelector('.ci-cant').textContent, fab:o.fabricar||0, aviso:o.aviso, somier:b.classList.contains('somier') }; });
+    var oro=cint.filter(function(x){ return x.k===_K.oro; })[0];
+    document.querySelector('#stk-cinta .ci-col[data-k="'+_K.oro.replace(/"/g,'\\"')+'"]').click(); await new Promise(function(ok){ setTimeout(ok,60); });
+    var det=document.querySelector('#stk-plan tr.pl-det'), detK=det && det.previousElementSibling.getAttribute('data-k');
+    var detTermo=!!(det && det.querySelector('.tm-barra .tm-punto')), detBot=det?[].map.call(det.querySelectorAll('button'), function(b){ return b.textContent; }):[];
+    planFiltro('ya'); var soloYa=[].map.call(document.querySelectorAll('#stk-plan tr.pl-fila'), function(tr){ return tr.getAttribute('data-g'); });
+    planFiltro('todos');
+    STOCK_FILTRO.q='ORO'; renderStock(); var buscando={ cinta:!!document.getElementById('stk-cinta'), filas:document.querySelectorAll('#stk-plan tr.pl-fila').length };
+    stockFiltroLimpiar(); renderStock();
+    return { orden:orden, masCerrado:mas && !mas.open, enMas:!!(mas && mas.querySelector('#producir') && mas.querySelector('#vis-galp') && mas.querySelector('#stk-fichas') && mas.querySelector('#stk-tabla-det')),
+      filas:filas, cint:cint, oro:oro, detK:detK, detTermo:detTermo, detBot:detBot, soloYa:soloYa, buscando:buscando, txt:plan.textContent.slice(0,120) };
+  });
+  chk('Stock arranca con la cinta y el plan a la vista, y todo lo demás plegado en «Más vistas» (cerrado de entrada)',
+    ()=>(r.orden.indexOf('stk-cinta')>=0 && r.orden.indexOf('stk-cinta')<r.orden.indexOf('stk-plan') && r.orden.indexOf('stk-plan')<r.orden.indexOf('stk-mas') && r.masCerrado && r.enMas), r.orden);
+  chk('UNA SOLA CUENTA: «Qué hacer hoy» del plan = la ficha (`sfAccion`) y «7 días» = lo que pide la ficha y «Qué producir»', ()=>(r.filas.length>0 && r.filas.every(function(x){ return x.q===x.accion.replace(/<[^>]+>/g,'') && x.p7===x.fab; })), r.filas.filter(function(x){ return x.q!==x.accion.replace(/<[^>]+>/g,'') || x.p7!==x.fab; }));
+  chk('«15 días» y el mes son los de «Qué producir» (la misma fila)', ()=>(r.filas.filter(function(x){ return x.f; }).every(function(x){ return x.p15===x.f.quin && x.pm===x.f.mes; })), r.filas.map(function(x){ return [x.k,x.p15,x.pm,x.f]; }));
+  chk('el plan va del más urgente al que alcanza (pedir ya primero)', ()=>(r.filas[0].aviso==='urgente' || r.filas[0].aviso==='traer'), r.filas.map(function(x){ return x.aviso; }));
+  chk('la cinta: cada colchón está en su carril y dice lo MISMO que su fila del plan (pedí N = 7 días)',
+    ()=>(r.cint.length>0 && r.cint.every(function(c){ var f=r.filas.filter(function(x){ return x.k===c.k; })[0]; return f && f.g===c.carril && (c.aviso==='traer' || c.cant==='pedí '+c.fab || (c.aviso==='revisar'&&c.fab===0)); })), r.cint);
+  chk('el ORO (pedir ya) va en el carril rojo diciendo cuánto', ()=>(r.oro && r.oro.carril==='ya' && /^pedí \d+$/.test(r.oro.cant)), r.oro);
+  chk('tocar un colchón abre su fila en el plan con el termómetro y los botones', ()=>(r.detK===r.oro.k && r.detTermo && r.detBot.some(function(t){ return /Ver pedidos/.test(t); })), { detK:r.detK, termo:r.detTermo, bot:r.detBot });
+  chk('los filtros del plan: «🚨 Pedir ya» deja solo esos', ()=>(r.soloYa.length>0 && r.soloYa.every(function(g){ return g==='ya'; })), r.soloYa);
+  chk('con algo en el buscador se va la cinta y el plan muestra solo lo buscado', ()=>(!r.buscando.cinta && r.buscando.filas>=1), r.buscando);
+  r = await ev(()=>{ var o={ desc:'X', aviso:'revisar', fabricar:7 }; var o0={ desc:'X', aviso:'revisar', fabricar:0 };
+    var cols=[].map.call(document.querySelectorAll('#stk-catalogo .sf-cat .hd'), function(e){ return e.textContent; });
+    return { con:sfAccion(o), sin:sfAccion(o0), cols:cols }; });
+  chk('«Revisá el saldo» ya no esconde el número: «· igual pedí 7» (sin nada que pedir, como antes)', ()=>(r.con==='⚠️ Revisá el saldo · igual pedí 7' && r.sin==='⚠️ Revisá el saldo antes de pedir'), r);
+  chk('el catálogo no repite medidas escritas distinto (140X190 = 140x190)', ()=>(r.cols.length===new Set(r.cols.map(function(c){ return c.toLowerCase(); })).size), r.cols);
+  if(SHOTS){ await ev(()=>{ closeModal(); PLAN_ABIERTA=''; renderStock(); var e=document.getElementById('stock-body'); if(e) e.scrollTop=0; }); await page.waitForTimeout(500); await page.screenshot({ path:path.join(SHOTS,'p1_plan.png') });
+    await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ renderStock(); var e=document.getElementById('stock-body'); if(e) e.scrollTop=0; }); await page.waitForTimeout(400);
+    await page.screenshot({ path:path.join(SHOTS,'p2_plan_cel.png') }); await page.setViewportSize({ width:1180, height:900 }); }
 
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

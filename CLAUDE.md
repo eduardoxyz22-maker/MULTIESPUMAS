@@ -206,6 +206,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     ⚠️ `PROD_TIENDA` es **lista negra a propósito**: los colchones del catálogo casi nunca
     dicen COLCHON (TITANIO LATEX, MEMORY FLEX), así que una lista blanca no sirve.
     ⚠️ MDF lleva guarda `PROD_MUEBLE`: una **cabecera/respaldar de MDF sí se fabrica**.
+    🛍️ **Las BOLSAS (empaque) tampoco** (§4iu, dueño 09/10: *«sacalas del stock»*): `PROD_EMPAQUE=/^BOLSAS?\b/`, solo al EMPEZAR el nombre.
   - **Dos códigos son dos productos** (§4cy): un renglón del Excel con un código que
     `CODIGOS` no conoce queda con su **nombre crudo** (`stockClaveCruda`: sin medida adentro,
     sin relleno, medida aparte) y nunca se suma «por parecerse». `stockEnCatalogo` exige
@@ -682,6 +683,14 @@ Mis pedidos (`misCardHtml`): borde por estado (`misEstadoCard`), íconos en vez 
 (`stockFichasHtml`, la MISMA fila de `stockData` y el mismo «Qué hacer»: `sfAccion`), catálogo en colores (`stockCatalogoHtml`), historia
 de 30 días al tocar (`sfElegir`) y el Excel del día animado (`STOCK_DELTA_ANTES` → `stockDeltaTomar`). ⚠️ La tabla de stock sigue
 ENTERA, plegada en `#stk-tabla-det`: no sacarla, las pruebas y logística la usan. `tests/test_fichas_4ip.js` (24). Bitácora §4ip.
+
+## 📋 Stock simple: cinta «Hoy» + Plan de stock + «👁️ Más vistas» (§4iv, 09/10, EN LA RAMA; dueño: *«quedó muy cargado… una dice una cosa, la otra otra»*)
+Arriba de Stock, sin buscar: la cinta `stockCintaHtml` (colchones por carril: pedir ya / esta semana / traer de Moreno / revisar) y
+siempre el **📋 Plan de stock** (`stockPlanHtml`): Hay · Vendido sin entregar · Se corta · Qué hacer hoy · Pedir 7 / 15 días / el mes.
+⚠️ **Una sola verdad**: «Qué hacer» = `sfAccion`, «Se corta» = `sfReloj`, 7 días = `o.fabricar`, 15 y el mes = `stockProducir`. No
+calcular nada aparte en el plan. Todo lo demás (Qué producir, galpones, ranking, fichas, termómetro, catálogo, tabla completa…) va
+plegado en `<details id="stk-mas">` (`visPref('masVistas')`, cerrado): una prueba que mire esas vistas hace `visPrefSet('masVistas',true)`
+(sin eso, `innerText` vacío). `test_fichas_4ip` §10.
 
 ## 📚 La hoja «Historial stock» (§4in, 09/10; página PUBLICADA 02:04, `d94ca49`; servidor `2026-10-09-a` lo implementa el dueño)
 Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera

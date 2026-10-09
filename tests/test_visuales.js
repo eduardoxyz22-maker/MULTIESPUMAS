@@ -112,7 +112,7 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
     L.push(C({ fecha:'2026-09-25', entregado:true, pagado:true, saldo:0, acuenta:9000, productos:[Object.assign({ cant:1 }, PR.tit)] }));
     STATE=L; STOCK=st; STOCK_CARGADO=true; if(typeof stockOlvidarIndice==='function') stockOlvidarIndice();
     window._K=K;
-    try{ localStorage.removeItem('me_vis_4ik'); }catch(e){}
+    try{ localStorage.removeItem('me_vis_4ik'); }catch(e){} visPrefSet('masVistas',true);   /* §4iv: estas vistas viven en «Más vistas», plegado */
   }, !!(SHOTS && LEAFLET_DIR));
 
   const abrirStock = async () => { await ev(()=>{ abrirStock(); }); await page.waitForTimeout(250); };

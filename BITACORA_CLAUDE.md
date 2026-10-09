@@ -7445,6 +7445,35 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iv. 09/10: 📋 Stock simple: la cinta «Hoy», el Plan de stock y lo demás plegado en «👁️ Más vistas» — EN LA RAMA
+- El dueño, con cinco capturas: *«stock y reposición quedó muy cargado… una dice pedir una cosa, la otra otra cosa… y logística en vez
+  de saber qué pedir ya, en 7 días y 15 y el mes… va a estar más perdido»*. Se le mostró la muestra `plan-stock.html` (cinta con
+  colchones + una tabla) y dijo: *«ok hazlo lo que acabas de mostrarme en el plan de stock»*.
+- **Arriba, sin buscar**: la cinta **🛤️ Hoy** (`stockCintaHtml`, `#stk-cinta`): cuatro carriles (🚨 pedir ya · 🏭 esta semana · 📥 traer
+  de Moreno · ⚠️ revisar), un colchón por producto con su cantidad (`cintaCant`, la misma de «Qué hacer»; el somier se dibuja como
+  somier). Corre sola con 4 o más; se para al pasar el dedo y con «reducir movimiento». Tocar un colchón abre su fila del plan (`planVer`).
+- **Después, siempre: 📋 Plan de stock** (`stockPlanHtml`, `#stk-plan`): una fila por producto con Producto · Hay (PTF·Banzer·Moreno) ·
+  Vendido sin entregar · Se corta · Qué hacer hoy · Pedir 7 días · 15 días · el mes. **Todo sale de lo que ya existía**: «Qué hacer» =
+  `sfAccion`, «Se corta» = `sfReloj`, 7 días = `o.fabricar`, 15 días y el mes = `stockProducir` (las mismas cifras de «Qué producir»).
+  Ordenada por urgencia (`SF_ORDEN`), chips por grupo (`PLAN_GRUPO`), 40 y «Ver todos». Tocar una fila abre el termómetro de ese
+  producto (`stockTermoFila`) y botones (pedidos, historia, recogida). «📋 Copiar el pedido para fábrica» = `copiarStock()` de siempre.
+  En el celular cada fila es una tarjeta.
+- **Lo demás, plegado en `<details id="stk-mas">` «👁️ Más vistas»** (`visPref('masVistas')`, cerrado de entrada): avisos, revisión fija,
+  Qué producir, galpones, ranking, tiendas, filtros, fichas, termómetro, catálogo, la tabla completa (sigue entera en `#stk-tabla-det`),
+  plata parada y los otros almacenes. Nada se borró. `renderStockHoy` quedó sin uso.
+- **Lo que se contradecía, arreglado**: «⚠️ Revisá el saldo» escondía la cantidad (ahora «· igual pedí N»); el termómetro no ponía 🚚 a un
+  `revisar` con algo para fabricar; «vendidos» decía dos cosas (ahora «vendidos sin entregar»); el catálogo repetía la misma medida
+  escrita de dos formas (`producirMedidaEtq`).
+- `test_fichas_4ip` §10 (→ 60). Las pruebas que miran vistas plegadas abren `stk-mas` (`visPrefSet('masVistas',true)`):
+  `test_visuales`, `test_vistas_4im`, `test_stock_detalle.cjs`.
+
+## 4iu. 09/10: 🛍️ las bolsas fuera del stock — EN LA RAMA
+- El dueño, al ver «BOLSA PARA ALMOHADAS × 50» y varias «BOLSA PARA COLCHON» en «Pedir a fábrica»: *«las bolsas sacalas del
+  stock»*. Son empaque. **`PROD_EMPAQUE=/^BOLSAS?\b/`** en `esTextoDeTienda` (la misma puerta que protectores y sábanas, §4cx: ni
+  ficha, ni rotación, ni comprometido, ni fábrica, ni unidades de la proyección), solo si el nombre EMPIEZA con BOLSA: un colchón
+  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: se le preguntó al dueño.
+- `test_fichas_4ip` §9 (→ 49).
+
 ## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 09:28 (`71111be`), Pages OK 09:29
 - El dueño, con la captura de la muestra 2: *«y el termómetro de cada producto cómo quedó o no se hizo?»*. El de §4ik eran líneas que
   bajaban bajo el cero y se sacó en §4iq; el de la muestra (barras) no se había hecho. **`stockTermoHtml`** (`<details id="stk-termo">`,
