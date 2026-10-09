@@ -705,8 +705,16 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - Con `fabricar>0` el aviso nunca es «✅ Alcanza» ni «📦 Pedido único». Lo vendido en «7 días» = `stockCompHorizonte` (15 días como mínimo; con
   menos se rompe el caso de §4ii). `consumoResto` suma (§4ii). «Traé N» = `o.recoger`, nunca `max(1,…)`.
 - `stockAsignar` devuelve `sinRespaldo` (lo marcado ✔ sin unidades) y la revisión lo lista; no toca marcas.
-- Esperan al dueño: tiempo de fábrica en Stock (48 h + recoger), Banzer fantasma, lo 🏭 en Moreno, venta de tienda, noviembre por el año pasado.
-  `tests/test_stock_4ix.js`.
+- `tests/test_stock_4ix.js`.
+
+## 📦 Stock con las respuestas del dueño (§4iy, 09/10, EN LA RAMA)
+- **Piso del tiempo de fábrica** (`stockLeadPiso`, la regla del cuadrito: 48 h + el día de recoger); muestras de menos de 2 días no cuentan.
+- **Lo dormido** (sin venta en 30 días, el mes pasado ni este) no se fabrica por «el año pasado» (`stockRangoMes`).
+- **La venta de tienda** cuenta para la rotación pero NO baja PTF/Banzer ni la espera el control del Excel (sale del stock de la tienda).
+- `PROD_ALIAS`: SOMIER 2P HEAVEN = SOMIER ORO. KING y FIBRA SILICONADA esperan al dueño.
+- **«✓ Ya pedí»** en el Plan de stock: `STOCK.p` con `ya:1` y `esp` fijo; vale hasta `esp`, se poda a los 15 días. No es el botón «Pedí a fábrica».
+- **💡 Para entregar antes** (`stockAsignar` → `soltar`, `revSoltarHtml`): sugiere soltar lo apartado para un pedido más lejano. No cambia marcas.
+- Banzer fantasma y lo 🏭 en Moreno: el dueño dijo que no. `tests/test_stock_4iy.js` (23).
 
 ## 📚 La hoja «Historial stock» (§4in, 09/10; página PUBLICADA 02:04, `d94ca49`; servidor `2026-10-09-a` lo implementa el dueño)
 Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera

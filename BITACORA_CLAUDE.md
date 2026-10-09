@@ -7445,6 +7445,32 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iy. 09/10: 📦 Stock con las respuestas del dueño a las 8 preguntas de §4ix — EN LA RAMA
+- El dueño: *«1. no 2. si 3. del stock de fabrica, cuando sale de la tienda ellos hacen la venta en "salio de tienda" 4. no 5. no 6. si
+  7. quizas podemos arreglar eso de marcar "ya pedi" con un check… 8. somier 2p heaven es el somier oro 9. king es el heaven de 3 plazas
+  creo o no se… almohadas de fibra siliconada son las de 50x70 o no se»*.
+- **6 (sí) · El tiempo de fábrica de Stock tiene piso**: `stockLeadPiso()` = días de hoy hasta el día siguiente a que sale de fábrica
+  (`diaArranque` → `saldoSaleDeFabrica` → `sigDiaHabil`), la MISMA regla del cuadrito (§4gs). Sin medición: max(`STOCK_DIAS_FABRICA`, piso);
+  medido: max(piso, medido). `stockMuestrasFabrica` tira las muestras de menos de `DIAS_PRODUCCION` días (el «1 día» medido era el día en que
+  logística anotaba la llegada, no la fábrica). Martes 10:00 = 3; viernes 18:00 = 5. Real (09/10): piso 4, MORENO 5 y MULTI 6 medidos, «7 días»
+  pasa de 182 a 206.
+- **4 (no) · Lo dormido no se fabrica por el año pasado**: `stockRangoMes` no suma «mismo mes del año pasado» ni «tendencia» si no hubo venta
+  en 30 días, ni el mes pasado, ni en lo que va de este. Real: MORFEO mes 0.
+- **3 · La venta de tienda no sale de PTF**: cuenta para la rotación (es venta) pero `stockData` no la descuenta del depósito ni de Banzer, ni
+  `stockSalidas`/`stockSalioVentana` la esperan en el control del Excel. Antes se descontaba dos veces (ya había salido con su RPT) y el control
+  la veía como «entrada sin explicar».
+- **8 · `PROD_ALIAS`**: «SOMIER 2P HEAVEN» → SOMIER ORO. KING y FIBRA SILICONADA: el dueño no está seguro, **no** se unieron (preguntado).
+- **7 · «✓ Ya pedí»** en «Qué hacer hoy» del Plan de stock (`planYaHtml`/`planYaPedi`): tildar anota en `STOCK.p` `{ya:1, u:o.fabricar, f:hoy,
+  esp}` con `esp` FIJO al tildar (si no, el día de llegada se recalculaba con el piso de cada día y no vencía). Cuenta como en camino hasta
+  `esp`; después deja de contar (`if(q.ya && stockEsperado(q,T)<hoy) return;`) y el panel vuelve a pedir si el Excel no lo muestra. Destildar el
+  mismo día lo saca; `stockPodar` lo tira a los 15 días si nunca se asignó a una llegada. No es el botón «Pedí a fábrica» (sacado el 08/10).
+- **2 (sí) · 💡 Para entregar antes**: `stockAsignar` anota lo que cada línea marcada se llevó (`apartadoPor`) y, cuando un pedido sin marcar no
+  se cubre, busca lo apartado para pedidos que se entregan DESPUÉS (el más lejano primero) → `soltar`; `revSoltarHtml` en la revisión automática.
+  Solo sugiere: no cambia marcas. ⚠️ El bloque va ANTES del `if(falta>0){ahora='no'…} else if…` (la primera versión lo metió en el medio y un
+  pedido sin fecha con faltante quedaba «ok»). Real: 10-106 podría tomar de 10-096 y de 09-381.
+- **1 y 5 (no)**: Banzer fantasma y lo 🏭 en Moreno siguen como estaban.
+- `tests/test_stock_4iy.js` (23; contra `3850365` no arranca: no existe `stockLeadPiso`).
+
 ## 4ix. 09/10: 🔎 Stock revisado por dos expertos y un super agente — lo que no dependía del dueño, arreglado — EN LA RAMA
 - El dueño: *«pon 2 agentes expertos en logística y almacén… revisar todo lo de stock y reposición, no pueden haber errores, y luego 1 super
   agente que revise lo de esos 2… para nunca tener faltantes»*. Experto 1 (cuánto tener y producir), experto 2 (almacén y flujo), los dos
