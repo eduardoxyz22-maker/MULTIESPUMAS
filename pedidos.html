@@ -20038,20 +20038,22 @@ function stockData(extra){
     o.paraSalir=(o.deposito==null && !(o.enSale>0) && !stockSaleContado(k)) ? null : Math.max(0, o.deposito||0)+(o.enSale||0);
     o.revisarSale=Object.keys(o.confSale).filter(function(nm){ return (o.confSale[nm]||0)>(o.salePor[nm]||0); });
     o.fab=o.fabUlt.fab||'';
-    var lt=T.de(o.fab); o.lead=lt.dias; o.leadMedido=lt.medido; o.leadN=lt.n; o.leadPrestado=!!lt.prestado;
+    /* (§4iz, E1-7) Sin fábrica anotada, la de su marca (Sueña → Multiespumas): con la general, Sueña avisaba un día tarde. */
+    o.fabLead=o.fab || MARCA_FABRICA[stockMarcaDe(o)] || '';
+    var lt=T.de(o.fabLead); o.lead=lt.dias; o.leadMedido=lt.medido; o.leadN=lt.n; o.leadPrestado=!!lt.prestado;
     o.margen=stockMargen(o);
     o.cubrir=o.rotacion==='alta'?STOCK_CUBRIR:(o.rotacion==='media'?3:0);
     // (26/09) …o más marcado «✔ hay en Banzer» que lo que dice el Excel de Banzer.
     o.revisarStock=(o.deposito!=null && (o.confirmadoAqui||0)>Math.max(0,o.deposito)) || o.revisarSale.length>0;
     o.compPronto=0; Object.keys(o.compPor).forEach(function(f){ if(stockDias(hoy,f)<=o.lead) o.compPronto+=o.compPor[f]; });
     o.pedidos.sort(function(a,b){ return a.llega<b.llega?-1:(a.llega>b.llega?1:0); });
+    o.detectado=stockDetectadoSinAsignar(k, T);   // 🧮 (§4hn) entradas vistas en el Excel sin pedido asignado. (§4iz, E1-2) ANTES de proyectar
     var pr=stockProyectar(o); o.corte=pr.corte; o.dias=pr.dias; o.saldoHoy=pr.saldoHoy; o.sinCamino=pr.sinCamino;
     o.alcanza=o.dias;
     o.contradice=stockContradice(o);
     o.sobra=stockSobra(o);
     o.descont=stockDescontinuadoK(o.k);
     o.aviso=stockAvisoDe(o);
-    o.detectado=stockDetectadoSinAsignar(k);   // 🧮 (§4hn) entradas vistas en el Excel sin pedido asignado: pueden ser lo «en camino»
     o.pedir=o.descont?Math.min(o.enOtros||0,Math.max(0,o.comp-(o.paraSalir||0)-stockEnCaminoSeguro(o))):stockCuantoPedir(o);
     o.recoger=Math.min(o.enOtros||0,o.pedir);
     o.fabricar=o.descont?0:Math.max(0,o.pedir-o.recoger);
@@ -20086,6 +20088,10 @@ function stockProyectar(o, serie){   // `serie` (§4ik): si viene un arreglo, se
   var dep=stockHaySalir(o);   // acá (negativo = conteo viejo, no un faltante, §4ds) + Banzer (26/09)
   if(dep==null) return { corte:null, dias:null, saldoHoy:null, sinCamino:null };
   var hoy=todayStr(), fechas=Object.keys(o.compPor).sort(), llegan=(o.pedidos||[]).filter(function(q){return q.llega>=hoy;});
+  /* (§4iz, E1-2) Lo que el Excel ya mostró y nadie asignó (`o.detectado`) ya está en el conteo: no se cuenta otra vez como llegada.
+     Se descuenta de las primeras llegadas. Si no, «Se corta» prometía semanas de más con la fábrica adelantada. */
+  var _det=o.detectado||0;
+  if(_det>0) llegan=llegan.map(function(q){ var t=Math.min(_det, Number(q.u)||0); _det-=t; return Object.assign({}, q, { u:(Number(q.u)||0)-t }); });
   var comp=0, iF=0, llega=0, iL=0, corte=null, dias=null, saldoHoy=null, sinCamino=null;
   var H=serie ? Math.min(STOCK_HORIZONTE, serie.H==null?STOCK_HORIZONTE:serie.H) : STOCK_HORIZONTE;
   for(var n=0;n<=H;n++){
@@ -21790,7 +21796,7 @@ function stockProducirDe(o, MS, PI){
      −5) y 5 en Moreno, «Hay» decía 0 y el negativo se comía lo de Moreno, mientras la tabla de
      abajo (`stockCuantoPedir`, con `max(0,deposito)` aparte) decía «recoger 5».
      (26/09) `stockHaySalir` = acá (con ese tope) + Banzer, que también es stock para cargar. */
-  var hay=stockHaySalir(o)+(o.enCamino||0)+(o.enOtros||0);
+  var hay=stockHaySalir(o)+stockEnCaminoSeguro(o)+(o.enOtros||0);   // (§4iz, E1-2) lo «en camino» que el Excel ya mostró no se cuenta dos veces
   r.hay=hay; r.ok=true;
   r.sem=Math.max(0, o.fabricar||0);
   var nec15=stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+o.lead)) + o.porDia*(o.lead+o.margen+PRODUCIR_QUINCENA);   // ➕ sumados, no el mayor (§4ii)
@@ -22249,7 +22255,7 @@ function guardarStockRecogida(){
     .sort(function(a,b){ return (recogerCanon(a)?0:1)-(recogerCanon(b)?0:1); })[0];
   if(!origen){toast('Ningún almacén tiene esa cantidad libre. Programá una recogida por almacén.','err');return;}
   var id='rc'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
-  STOCK.p=(STOCK.p||[]).concat([{ id:id, k:k, u:u, tipo:'recogida', de:origen, fab:'', f:todayStr(), esp:f, r:'' }]);
+  STOCK.p=(STOCK.p||[]).concat([{ id:id, k:k, u:u, tipo:'recogida', de:origen, fab:'', f:todayStr(), esp:f, r:'', t:Date.now() }]);
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Anotada la recogida: '+u+' unidades de '+stockAlmCorto(origen)+' para el '+fmtFechaCorta(f)+'. Cuando lleguen, tocá 📥 Llegó de fábrica.','ok',7000);
 }
@@ -22514,7 +22520,7 @@ function stockAsignar(){
     // (26/09) …y de qué almacén viene cada una: la usa la revisión de TODO (más abajo, `prog`).
     recogidasPor[o.k]=(o.pedidos||[]).filter(function(q){ return q.tipo==='recogida' && Number(q.u)>0; })
                                      .map(function(q){ return { alm:q.de||stockAlmPorDefecto()||'', u:Number(q.u)||0 }; });
-    encargados[o.k]=o.enCamino||0;
+    encargados[o.k]=stockEnCaminoSeguro(o);   // (§4iz, S-3) lo que el Excel ya mostró está en `dep`: no se descuenta otra vez
   });
   /* Toma `n` unidades de los otros almacenes y dice DE CUÁL salieron: primero el que ya
      estaba marcado a mano (`pref`), después el que más tenga, para que una línea se vaya a
@@ -23853,7 +23859,24 @@ function stockNormalizarDetecciones(S){
   S.det.forEach(function(x){ if(!x) return; var t=Math.round(Number(x.t)||0); x.u=x.an ? 0 : Math.max(0, t-(asig[x.id]||0)); });   // 🪦 anulada: nada por asignar
 }
 /* Lo detectado en los Excel y todavía sin asignar a ningún pedido, por producto. */
-function stockDetectadoSinAsignar(k){ var n=0; (STOCK.det||[]).forEach(function(x){ if(x && x.k===k && !x.alm) n+=Number(x.u)||0; }); return n; }
+/* ⚠️ (§4iz, E1-1, revisión del 09/10) Una entrada que el Excel mostró a las 10:34 no puede ser la llegada de algo pedido a las 16:05: cada
+   detección cuenta solo contra lo pedido ANTES de su corte (fecha y hora; un pedido sin hora es de las 00:00, como siempre), y nunca más
+   que lo en camino. Antes se restaba de todo: tildar «✓ Ya pedí 66» dejaba «Pedí 14 ya» al lado (las 14 de la mañana). */
+function stockDetectadoSinAsignar(k, T){
+  T=T||stockTiemposFabrica();
+  var hoy=todayStr();
+  var qs=(STOCK.p||[]).filter(function(q){ return q && q.k===k && !q.r && !(q.ya && stockEsperado(q,T)<hoy); })
+    .map(function(q){ var ts=q.t||q.ts; return { u:Number(q.u)||0, at:String(q.f||'')+'|'+(ts?horaDeTs(ts):'00:00:00') }; });
+  if(!qs.length) return 0;
+  var n=0, tot=0; qs.forEach(function(q){ tot+=q.u; });
+  (STOCK.det||[]).forEach(function(x){
+    if(!x || x.k!==k || x.alm || x.an) return;
+    var at=String(x.f||'')+'|'+(x.hora?String(x.hora).length===5?x.hora+':00':String(x.hora):'23:59:59'), antes=0;
+    qs.forEach(function(q){ if(q.at<at) antes+=q.u; });
+    n+=Math.min(Number(x.u)||0, antes);
+  });
+  return Math.min(n, tot);
+}
 /* «En camino» que se puede contar como seguro: lo pedido menos lo que una detección sin asignar ya podría ser (§30.8). */
 function stockEnCaminoSeguro(o){ return Math.max(0, (o.enCamino||0)-(o.detectado||0)); }
 /* ↩️ «No había llegado»: lápida sobre la recepción (nunca se borra: la junta por id la reviviría). */
@@ -28673,7 +28696,7 @@ function planYaPedi(k, on){
     var o=stockData().lista.find(function(x){ return x.k===k; }); if(!o || !(o.fabricar>0)) return;
     var id='fy'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
     /* `esp` fijo al tildar: si no, el día de llegada se recalculaba con el piso de CADA día (§4iy) y el tilde no vencía nunca. */
-    var nq={ id:id, k:k, u:o.fabricar, fab:o.fab||'', f:todayStr(), esp:'', r:'', ya:1 }; nq.esp=stockEsperado(nq);
+    var nq={ id:id, k:k, u:o.fabricar, fab:o.fabLead||o.fab||'', f:todayStr(), esp:'', r:'', ya:1, t:Date.now() }; nq.esp=stockEsperado(nq);   // (§4iz) con hora y la fábrica de su marca
     STOCK.p=(STOCK.p||[]).concat([nq]);
     toast('✓ Anotado: pediste '+stockUnid(o.fabricar)+'. No se vuelve a pedir hasta el día en que tendría que llegar.','ok',5000);
   } else {
