@@ -650,11 +650,23 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .h-an.cerr{opacity:.45}
 .h-an b{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.98rem;line-height:1}
 .h-an i{position:absolute;left:-6px;right:-6px;bottom:-12px;text-align:center;font-style:normal;font-size:.55rem;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.82)}
-.h-ruta{position:relative;height:14px;background:rgba(0,0,0,.22);overflow:hidden}
-.h-ruta::before{content:'';position:absolute;left:0;right:0;top:6px;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 16px,transparent 16px 32px)}
-.h-camion{position:absolute;bottom:0;right:-40px;font-size:15px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));animation:h-viaje 16s linear infinite,h-bache .4s ease-in-out infinite alternate}
-@keyframes h-viaje{to{right:calc(100% + 40px)}}
-@keyframes h-bache{to{transform:translateY(-1px)}}
+/* 🚚 (§4iz, dueño 09/10: «ese camioncito de arriba quedó pequeño» → eligió H1) Un camión dibujado con el nombre, que cruza de derecha a
+   izquierda con el motor prendido: tiembla, humo por el caño de atrás y ruedas que giran. Mira a la izquierda (si no, parece en reversa). */
+.h-ruta{position:relative;height:46px;background:rgba(0,0,0,.22);overflow:hidden}
+.h-ruta::before{content:'';position:absolute;left:0;right:0;top:37px;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 16px,transparent 16px 32px)}
+.h-camion{position:absolute;bottom:3px;right:-130px;line-height:0;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35));animation:h-viaje 14s linear infinite}
+.h-camion svg{width:108px;height:50px;display:block;overflow:visible}
+@keyframes h-viaje{to{right:calc(100% + 130px)}}
+.hc-cuerpo{animation:hc-tiembla .11s linear infinite;transform-box:fill-box}
+@keyframes hc-tiembla{25%{transform:translate(.25px,-.6px)}75%{transform:translate(-.25px,.45px)}}
+.hc-rayos{transform-box:fill-box;transform-origin:center;animation:hc-gira .5s linear infinite}
+@keyframes hc-gira{to{transform:rotate(-360deg)}}
+.hc-humo circle{transform-box:fill-box;transform-origin:center;opacity:0;animation:hc-humo 1.3s ease-out infinite}
+.hc-humo circle:nth-child(2){animation-delay:.43s}.hc-humo circle:nth-child(3){animation-delay:.86s}
+@keyframes hc-humo{0%{opacity:.75;transform:translate(0,0) scale(.4)}100%{opacity:0;transform:translate(26px,-18px) scale(2.2)}}
+.hc-faro{animation:hc-faro 1.6s ease-in-out infinite}
+@keyframes hc-faro{50%{opacity:.4}}
+@media(max-width:560px){ .h-ruta{height:38px} .h-ruta::before{top:30px} .h-camion svg{width:86px;height:40px} }
 @media(prefers-reduced-motion:reduce){ .h-camion{display:none} .h-an .v{transition:none} }
 .header-in{position:relative;z-index:1}
 @media(max-width:560px){ .header-in{flex-wrap:nowrap;padding:10px 14px;gap:10px} .htitle{display:none} .hstat{margin-left:auto} .h-anillos{gap:9px;padding-bottom:9px}
@@ -749,7 +761,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
     <div class="hstat"><div class="hstat-v" id="stat-hoy" hidden>0</div><div class="h-anillos" id="h-anillos" role="img" aria-label="Cupos libres del próximo camión"></div></div>
   </div>
   <!-- 🚚 (§4iw, 09/10, dueño: «A») La ruta del camión: el camión mira a la izquierda y va de derecha a izquierda (de frente). -->
-  <div class="h-ruta no-print" aria-hidden="true"><span class="h-camion">🚚</span></div>
+  <div class="h-ruta no-print" aria-hidden="true"><span class="h-camion"><svg viewBox="0 0 86 40"><g class="hc-humo"><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/></g><g class="hc-cuerpo"><rect x="26" y="4" width="56" height="24" rx="3" fill="#f8fafc" stroke="#cbd5df"/><rect x="26" y="22" width="56" height="4" fill="#00B5AD"/><text x="54" y="16.5" text-anchor="middle" font-size="6.1" font-weight="900" fill="#0b8f87" font-family="system-ui,sans-serif" textLength="50" lengthAdjust="spacingAndGlyphs">MULTIESPUMAS</text><path d="M25 10 h-11 q-6 0 -9 6 l-4 7 v6 q0 2 2 2 h22 z" fill="#14b8a6"/><path d="M22 12 h-8 q-4 0 -6 4 l-2.5 5 h16.5 z" fill="#bfe9ff"/><rect class="hc-faro" x="1" y="24" width="3.4" height="2.6" rx="1" fill="#fde68a"/><rect x="2" y="28" width="80" height="3" rx="1.2" fill="#0f5c58"/><rect x="82" y="26" width="4" height="1.6" fill="#6b7280"/></g><g><circle cx="14" cy="31" r="6" fill="#111827"/><g class="hc-rayos"><circle cx="14" cy="31" r="3.2" fill="#9ca3af"/><rect x="13.3" y="27.8" width="1.4" height="6.4" fill="#4b5563"/><rect x="10.8" y="30.3" width="6.4" height="1.4" fill="#4b5563"/></g></g><g><circle cx="60" cy="31" r="6" fill="#111827"/><g class="hc-rayos"><circle cx="60" cy="31" r="3.2" fill="#9ca3af"/><rect x="59.3" y="27.8" width="1.4" height="6.4" fill="#4b5563"/><rect x="56.8" y="30.3" width="6.4" height="1.4" fill="#4b5563"/></g></g><g><circle cx="72" cy="31" r="6" fill="#111827"/><g class="hc-rayos"><circle cx="72" cy="31" r="3.2" fill="#9ca3af"/><rect x="71.3" y="27.8" width="1.4" height="6.4" fill="#4b5563"/><rect x="68.8" y="30.3" width="6.4" height="1.4" fill="#4b5563"/></g></g></svg></span></div>
 </div>
 
 <div class="nav">
@@ -1891,10 +1903,28 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .fx-camion{ margin:-2px 0 16px; background:linear-gradient(180deg,#f3fbfb,#eef4ff); border:1px solid var(--teal-border); border-radius:14px; padding:9px 12px 4px; position:relative; overflow:hidden; }
 .fx-camion .t{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:.86rem; flex-wrap:wrap; }
 .fx-camion .pill{ margin-left:auto; padding:3px 10px; border-radius:20px; font-size:.74rem; }
-.fx-camion svg{ width:100%; height:auto; display:block; max-height:190px; }
+.fx-camion svg{ width:100%; height:auto; display:block; max-height:220px; }
 .fx-slot{ transition:fill .35s, stroke .35s; } .fx-slot.tuyo{ animation:fxLate 1s ease-in-out infinite; }
 @keyframes fxLate{ 50%{ fill:#fde68a; } }
 .fx-cam-g{ transition:transform .7s cubic-bezier(.2,.8,.3,1); }
+/* 🚚 (§4iz, dueño 09/10: «debería ser una animación, un camión con el motor prendido» → eligió «B y C juntos») El camión queda en su
+   lugar y pasan por detrás la ciudad, los árboles y la calle (va en viaje); tiembla, sale humo y las ruedas giran. Cuando cambia el día o
+   el turno, las cajas de los otros pedidos caen a su lugar una por una y la tuya late. Solo mira: los números son los de siempre. */
+.fx-cam-cuerpo{ animation:fxTiembla .11s linear infinite; transform-box:fill-box; }
+@keyframes fxTiembla{ 25%{ transform:translate(.3px,-.8px); } 75%{ transform:translate(-.3px,.6px); } }
+.fx-rayos{ transform-box:fill-box; transform-origin:center; animation:fxGira .45s linear infinite; }
+@keyframes fxGira{ to{ transform:rotate(360deg); } }
+.fx-humo circle{ transform-box:fill-box; transform-origin:center; opacity:0; animation:fxHumo 1.8s ease-out infinite; }
+.fx-humo circle:nth-child(2){ animation-delay:.6s; } .fx-humo circle:nth-child(3){ animation-delay:1.2s; }
+@keyframes fxHumo{ 0%{ opacity:.75; transform:translate(0,0) scale(.4); } 100%{ opacity:0; transform:translate(-34px,-30px) scale(2.2); } }
+.fx-calle{ stroke-dasharray:22 18; animation:fxCalle .55s linear infinite; }
+@keyframes fxCalle{ to{ stroke-dashoffset:40; } }
+.fx-ciudad{ animation:fxCiudad 9s linear infinite; } .fx-arboles{ animation:fxCiudad 3.2s linear infinite; }
+@keyframes fxCiudad{ to{ transform:translateX(-260px); } }
+.fx-faro{ animation:fxFaro 1.6s ease-in-out infinite; } .fx-haz{ opacity:.55; animation:fxHaz 1.6s ease-in-out infinite; }
+@keyframes fxFaro{ 50%{ opacity:.35; } } @keyframes fxHaz{ 50%{ opacity:.15; } }
+.fx-cae{ animation:fxCae .5s cubic-bezier(.3,1.5,.6,1) both; transform-box:fill-box; }
+@keyframes fxCae{ from{ transform:translateY(-70px); opacity:0; } to{ transform:none; opacity:1; } }
 .fx-saldo{ display:flex; gap:10px; align-items:flex-start; } .fx-saldo .fx-esc{ width:96px; height:52px; flex:none; } .fx-saldo-t{ flex:1; min-width:0; }
 .fx-colchon{ animation:fxApila .6s cubic-bezier(.2,1.6,.4,1) both; transform-box:fill-box; }
 @keyframes fxApila{ from{ transform:translateY(-26px); opacity:0; } }
@@ -11494,12 +11524,15 @@ function fxCamionEn(el){
   el.hidden=false;
   var otros=yaEsta?usados-1:usados, tuyoEntra=otros<lim, libre=Math.max(0,lim-otros-1);
   var n=Math.max(lim, otros+1), cols=Math.ceil(n/2), w=(345-24-(cols-1)*6)/cols, h=48, s='';
+  // (§4iz) las cajas caen solo cuando el camión entra (otro día o turno), una por una; la tuya al final
   for(var i=0;i<n;i++){
     var c=i%cols, r=Math.floor(i/cols), x=30+c*(w+6), y=28+r*(h+6), lleno=i<otros, es=(i===otros), sobra=i>=lim;
+    s+='<g'+((lleno||es)?' data-cae="'+(es?(Math.min(otros,14)*0.28+0.9):(0.7+Math.min(i,14)*0.28)).toFixed(2)+'"':'')+'>';
     s+='<rect class="fx-slot'+(es?' tuyo':'')+'" x="'+x.toFixed(1)+'" y="'+y+'" width="'+w.toFixed(1)+'" height="'+h+'" rx="6" fill="'+(es?'#fef3c7':(lleno?(sobra?'#fde2e4':'#cfe9e7'):'#fff'))+
       '" stroke="'+(es?(tuyoEntra?'#D97706':'#CE2939'):(lleno?(sobra?'#CE2939':'#00B5AD'):'#cbd5df'))+'" stroke-width="2"'+(lleno||es?'':' stroke-dasharray="5 4"')+'/>';
     if(lleno) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+h/2+5)+'" text-anchor="middle" font-size="'+(w<34?11:15)+'">📦</text>';
     if(es) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="'+(w<40?9:12)+'" font-weight="800" fill="'+(tuyoEntra?'#b45309':'#CE2939')+'">tuyo</text>';
+    s+='</g>';
   }
   var pill=tuyoEntra ? (libre+' lugar'+(libre===1?'':'es')+' libre'+(libre===1?'':'s')+' además del tuyo') : 'Lleno: el tuyo no entra';
   var pc=!tuyoEntra?'var(--red)':(libre<=2?'var(--amber)':'var(--green)'), pb=!tuyoEntra?'var(--red-lt)':(libre<=2?'var(--amber-lt)':'var(--green-lt)');
@@ -11508,16 +11541,31 @@ function fxCamionEn(el){
   if(el._firma===firma) return;
   var otroDia=!el._firma || el._firma.split('|').slice(0,2).join('|')!==(f+'|'+t);   // otro día o turno: el camión entra de nuevo
   el._firma=firma;
-  el.innerHTML=cab+'<svg viewBox="0 0 520 190" aria-hidden="true"><defs>'+
-      '<linearGradient id="fx-caja-'+el.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e5ebf0"/></linearGradient>'+
-      '<linearGradient id="fx-cab-'+el.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20c9c0"/><stop offset="1" stop-color="#0b8f87"/></linearGradient>'+
-      '<linearGradient id="fx-vid-'+el.id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#5aa7d6"/></linearGradient></defs>'+
+  var id=el.id, ciudad='', arboles='';
+  [0,38,70,118,150,196,228].forEach(function(bx,j){ for(var k=0;k<3;k++){ var hh=[46,74,34,60,82,40,56][j], ww=[34,28,44,28,46,26,30][j], X=bx+k*260;
+    ciudad+='<rect x="'+X+'" y="'+(20-hh)+'" width="'+ww+'" height="'+(hh+140)+'" fill="#d6e3ee"/>';
+    for(var v=0;v<Math.floor(hh/16);v++) ciudad+='<rect x="'+(X+6)+'" y="'+(26-hh+v*16)+'" width="'+(ww-12)+'" height="6" fill="#eef4f9"/>'; } });
+  for(var q=0;q<6;q++) arboles+='<g transform="translate('+(q*130+40)+',0)"><rect x="-2" y="150" width="4" height="22" fill="#8b6b4a"/><circle cx="0" cy="146" r="11" fill="#86c5a4"/></g>';
+  var rueda=function(cx){ return '<circle cx="'+cx+'" cy="152" r="21" fill="#1f2937"/><g class="fx-rayos"><circle cx="'+cx+'" cy="152" r="11" fill="#9ca3af"/>'+
+    [0,60,120].map(function(a){ return '<rect x="'+(cx-1.6)+'" y="141" width="3.2" height="22" fill="#4b5563" transform="rotate('+a+' '+cx+' 152)"/>'; }).join('')+
+    '<circle cx="'+cx+'" cy="152" r="3.5" fill="#e5e7eb"/></g>'; };
+  el.innerHTML=cab+'<svg viewBox="0 -60 520 250" aria-hidden="true"><defs>'+
+      '<linearGradient id="fx-caja-'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e5ebf0"/></linearGradient>'+
+      '<linearGradient id="fx-cab-'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20c9c0"/><stop offset="1" stop-color="#0b8f87"/></linearGradient>'+
+      '<linearGradient id="fx-vid-'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#5aa7d6"/></linearGradient>'+
+      '<radialGradient id="fx-haz-'+id+'" cx="0" cy=".5" r="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></radialGradient></defs>'+
+    '<g class="fx-ciudad">'+ciudad+'</g><g class="fx-arboles">'+arboles+'</g>'+
+    '<line class="fx-calle" x1="0" y1="183" x2="520" y2="183" stroke="#94a3b8" stroke-width="3"/>'+
     '<g class="fx-cam-g"'+(otroDia?' style="transform:translateX(-560px)"':'')+'><ellipse cx="260" cy="176" rx="235" ry="8" fill="rgba(0,0,0,.12)"/>'+
-      '<rect x="18" y="18" width="345" height="132" rx="8" fill="url(#fx-caja-'+el.id+')" stroke="#cbd5df" stroke-width="2"/><rect x="18" y="128" width="345" height="10" fill="#00B5AD" opacity=".9"/>'+s+
-      '<path d="M366 58 h70 q22 0 34 22 l26 40 v28 q0 6 -6 6 h-124 z" fill="url(#fx-cab-'+el.id+')"/><path d="M378 66 h52 q14 0 22 14 l16 28 h-90 z" fill="url(#fx-vid-'+el.id+')"/>'+
-      '<rect x="488" y="128" width="14" height="9" rx="3" fill="#fde68a"/><rect x="366" y="138" width="140" height="10" rx="3" fill="#0f5c58"/>'+
-      [80,128,300,452].map(function(cx){ return '<circle cx="'+cx+'" cy="152" r="21" fill="#1f2937"/><circle cx="'+cx+'" cy="152" r="9" fill="#9ca3af"/>'; }).join('')+
+      '<g class="fx-humo"><circle cx="20" cy="140" r="7" fill="#94a3b8"/><circle cx="20" cy="140" r="7" fill="#94a3b8"/><circle cx="20" cy="140" r="7" fill="#94a3b8"/></g>'+
+      '<g class="fx-cam-cuerpo"><rect x="18" y="18" width="345" height="132" rx="8" fill="url(#fx-caja-'+id+')" stroke="#cbd5df" stroke-width="2"/><rect x="18" y="128" width="345" height="10" fill="#00B5AD" opacity=".9"/>'+s+
+      '<rect x="10" y="136" width="14" height="5" rx="2" fill="#6b7280"/>'+
+      '<path d="M366 58 h70 q22 0 34 22 l26 40 v28 q0 6 -6 6 h-124 z" fill="url(#fx-cab-'+id+')"/><path d="M378 66 h52 q14 0 22 14 l16 28 h-90 z" fill="url(#fx-vid-'+id+')"/>'+
+      '<rect class="fx-faro" x="488" y="128" width="14" height="9" rx="3" fill="#fde68a"/><rect x="366" y="138" width="140" height="10" rx="3" fill="#0f5c58"/></g>'+
+      '<path class="fx-haz" d="M500 126 L520 112 L520 152 L500 138 z" fill="url(#fx-haz-'+id+')"/>'+
+      [80,128,300,452].map(rueda).join('')+
     '</g></svg>';
+  if(otroDia) el.querySelectorAll('[data-cae]').forEach(function(g){ g.setAttribute('class','fx-cae'); g.style.animationDelay=g.getAttribute('data-cae')+'s'; });
   if(otroDia){ var g=el.querySelector('.fx-cam-g'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(g) g.style.transform='translateX(0)'; }); }); }
 }
 /* 5 · Lo vendido en el mes por una vendedora (fecha de carga, sin ATC ni RPT). */

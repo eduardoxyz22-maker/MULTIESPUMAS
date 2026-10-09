@@ -57,7 +57,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     chk('1e. el camión anda (va de derecha a izquierda)', r.camVisible && /h-viaje/.test(r.anim), r.anim);
     chk('1f. ya no está «Cargá desde el celular · se comparte con el equipo»', !r.viejo);
     const css = await page.evaluate(()=>{ for (const s of document.styleSheets){ try{ for (const k of s.cssRules){ if(k.name==='h-viaje') return k.cssText; } }catch(e){} } return ''; });
-    chk('1g. el viaje termina a la IZQUIERDA (anima «right» hasta pasar el borde)', /right:\s*calc\(100% \+ 40px\)/.test(css), css);
+    chk('1g. el viaje termina a la IZQUIERDA (anima «right» hasta pasar el borde)', /right:\s*calc\(100% \+ 130px\)/.test(css), css);
     // lleno
     await cargar(page, Array(12).fill('AM'));
     await page.waitForTimeout(150);
