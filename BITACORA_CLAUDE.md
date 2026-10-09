@@ -7445,6 +7445,19 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ir. 09/10: 📍 «Sale de» en la tabla de Administración y «Lo del día, por lugar» — EN LA RAMA
+- El dueño, con la captura de la tabla: *«Debería salir ahí, o no sé, dame ideas, muéstrame: debe verse rápido en la lista del día o esa
+  tabla»*. Se le mostró una página con cinco formas (A–E) y eligió *«a,E»*.
+- **A · columna «Sale de»** pegada al N°: `pedidoLugaresHtml(p)` junta todo el pedido por lugar (`pedidoLugares`: 🏭 PTF, 🏪 Banzer,
+  📥 Moreno, ✗ Falta, 🏭 En producción), con unidades solo si sale de más de un lugar. Sin ninguna marca, «—». Venta de tienda y filas
+  del sistema, «—». ⚠️ Corre un lugar las columnas de la tabla: `test_adm_alta` pasó de `cells[5]` a `cells[6]` (cliente).
+- **E · «📍 Lo del día, por lugar»** (`#adm-lugares`, entre el calendario y la tabla): cuatro columnas (PTF cargar · Banzer cargar ·
+  Moreno ir a buscar · Falta avisar) con producto, cantidad, cliente y camión; Hoy / próximo día de camión (`proximoDiaEntrega`); cuenta
+  los productos sin revisar. Entran los mismos pedidos que el cierre de entregas (`cierreEntEntra`: sin tienda, borradores ni
+  entregados). Tocar un renglón abre el pedido. Plegable (`visPref('lugares')`, abierta de entrada).
+- Las dos salen de `prodPartes`, la MISMA marca de la Lista de carga y de `prodLugarTag` (§4iq). Solo miran: no guardan nada.
+- `test_fichas_4ip` §7 (→ 41).
+
 ## 4iq. 09/10: 🌡️ fuera el termómetro · 📍 de dónde se carga, a la vista de logística — EN LA RAMA
 - El dueño, con una captura de «🌡️ Los que se terminan» (las líneas rojas bajando bajo el cero): *«Esto no se entiende bien…
   Quítalo o mejorémoslo»*. **Se sacó** (`stockTermometrosHtml`, `stockTermoSvg`, `stockTermoTxt`, `stockTermoSerie`, `TERMO_*`, el

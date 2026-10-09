@@ -174,6 +174,62 @@ const SHOTS = process.env.SHOTS || '';
   chk('la tabla de Administración lo muestra al lado de cada producto', ()=>(r.tabla.indexOf('🏪 Banzer')>=0 && r.tabla.indexOf('✗ No hay')>=0), r.tabla);
   chk('y la ficha del pedido también (antes era un globito que en el iPad no se ve)', ()=>(r.ficha.indexOf('🏪 Banzer')>=0), r.ficha);
 
+  /* ══ 7. A: la columna «Sale de» · E: lo del día, por lugar (§4ir, dueño: «A, E») ══ */
+  console.log('\n── 7. 📍 A: columna «Sale de» · E: «Lo del día, por lugar» ──');
+  r = await ev(async()=>{
+    var hoy=todayStr(), man=proximoDiaEntrega(), PR=function(d,m){ return { desc:d, medida:m, codigo:'' }; };
+    var Q=function(o){ return Object.assign({ oc:'10-9'+o.id.slice(-1), vendedor:'Maria Flores', celular:'70001234', turno:'AM', zona:'Norte', direccion:'Calle', maps:'',
+      pagado:true, saldo:0, ts:Date.now(), metodoPago:'', observaciones:'', estado:'', entregado:false, vehiculo:'Carry', chofer:'Luis Pierre', garantia:'', nota:'1',
+      acuenta:0, facturarA:'', nit:'', nroDia:1, verificado:true, fotos:[] }, o); };
+    STATE.push(Q({ id:'h1', fecha:hoy, cliente:'ANA PEREZ', productos:[Object.assign({ cant:2, chk:'ok' }, PR('TITANIO ICE','160x190'))] }));
+    STATE.push(Q({ id:'h2', fecha:hoy, cliente:'BETO ROCA', vehiculo:'NPR', productos:[Object.assign({ cant:1, chk:'ok', chkDe:'Banzer' }, PR('ORO BI RELAX','140x190')),
+      Object.assign({ cant:1, chk:'im' }, PR('NUEVO ECO FLEX','105x190'))] }));
+    STATE.push(Q({ id:'h3', fecha:hoy, cliente:'CIRO DIAZ', productos:[Object.assign({ cant:3, chk:'ok', chkDes:[{ de:'', u:1 },{ de:'Banzer', u:2 }] }, PR('ORO BI RELAX','140x190')),
+      Object.assign({ cant:1, chk:'no' }, PR('ESPECIAL SEMIORTOPEDICO','140x190')), Object.assign({ cant:1 }, PR('SIN MARCA','140x190'))] }));
+    STATE.push(Q({ id:'h4', fecha:hoy, cliente:'DORA SOSA', productos:[Object.assign({ cant:1 }, PR('SIN MARCA','140x190'))] }));
+    STATE.push(Q({ id:'h5', fecha:man, cliente:'EVA LUNA', productos:[Object.assign({ cant:4, chk:'ok', chkDe:'Banzer' }, PR('TITANIO ICE','160x190'))] }));
+    try{ localStorage.removeItem('me_vis_4ik'); }catch(e){}
+    ADM_LUG_DIA='hoy'; segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin();
+    var o={};
+    var ths=[].map.call(document.querySelectorAll('#tbl-pedidos thead th'), function(th){ return th.textContent.replace(/[▲▼↕]/g,'').trim(); });
+    o.cab=ths.slice(0,4);
+    var celda=function(id){ var tr=document.querySelector('#tbl-pedidos tbody tr[data-id="'+id+'"]'); if(!tr) tr=[].filter.call(document.querySelectorAll('#tbl-pedidos tbody tr'), function(t){ return t.innerHTML.indexOf("'"+id+"'")>=0; })[0];
+      var td=tr && tr.querySelector('td.sale-de'); return td ? [].map.call(td.querySelectorAll('.lug'), function(x){ return x.textContent; }).join(' | ') || td.textContent.trim() : null; };
+    o.h1=celda('h1'); o.h2=celda('h2'); o.h3=celda('h3'); o.h4=celda('h4');
+    var det=document.getElementById('adm-lugares-det');
+    var col=function(c){ return [].map.call(document.querySelectorAll('#adm-lugares .lugd-'+c+' li'), function(li){ return li.textContent.replace(/\s+/g,' ').trim(); }); };
+    var tot=function(c){ var b=document.querySelector('#adm-lugares .lugd-'+c+' .lugd-h b'); return b ? b.textContent : null; };
+    o.det=!!det; o.abierto=det && det.open; o.arribaTabla=!!(det && (document.getElementById('adm-lugares').compareDocumentPosition(document.getElementById('tbl-pedidos')) & 4));
+    o.aca=col('aca'); o.sale=col('sale'); o.trae=col('trae'); o.no=col('no'); o.tAca=tot('aca'); o.tSale=tot('sale'); o.tTrae=tot('trae');
+    o.sub=(document.querySelector('#adm-lugares .lugd-cab .vis-sub')||{}).textContent||'';
+    var li=document.querySelector('#adm-lugares .lugd-trae li'); if(li) li.click();
+    o.abre=((document.getElementById('modal-box')||{}).textContent||'').indexOf('BETO ROCA')>=0; closeModal();
+    ADM_LUG_DIA='manana'; admLugaresPintar(); o.man=col('sale'); o.manAca=col('aca');
+    det=document.getElementById('adm-lugares-det'); det.open=false; det.dispatchEvent(new Event('toggle')); await new Promise(function(ok){ setTimeout(ok,30); });
+    admLugaresPintar(); o.cerradoQueda=document.getElementById('adm-lugares-det').open===false;
+    det=document.getElementById('adm-lugares-det'); det.open=true; det.dispatchEvent(new Event('toggle')); ADM_LUG_DIA='hoy'; admLugaresPintar();
+    return o;
+  });
+  chk('A: la columna «Sale de» va pegada al N° (Acciones · N° · Sale de · Entrega)', ()=>(r.cab[1].indexOf('N°')===0 && r.cab[2]==='Sale de' && r.cab[3].indexOf('Entrega')===0), r.cab);
+  chk('A: un lugar solo = su nombre sin números (h1: «🏭 PTF»)', ()=>(r.h1==='🏭 PTF'), r.h1);
+  chk('A: dos lugares = cada uno con sus unidades (h2: Banzer 1 y Moreno 1)', ()=>(r.h2==='🏪 Banzer 1 | 📥 Moreno 1'), r.h2);
+  chk('A: lo partido se suma por lugar y lo que falta se dice (h3: PTF 1, Banzer 2, Falta 1)', ()=>(r.h3==='🏭 PTF 1 | 🏪 Banzer 2 | ✗ Falta 1'), r.h3);
+  chk('A: sin ninguna marca, «—»', ()=>(r.h4==='—'), r.h4);
+  chk('E: la caja está arriba de la tabla, abierta de entrada', ()=>(r.det && r.abierto && r.arribaTabla), r);
+  chk('E: PTF = lo de acá (TITANIO ×2 de Ana y ORO ×1 de Ciro), 3 unidades', ()=>(r.aca.length===2 && r.tAca==='3' && r.aca.some(function(t){ return /TITANIO ICE 160x190 × 2.*ANA PEREZ · Carry/.test(t); })), [r.aca, r.tAca]);
+  chk('E: Banzer = 1 de Beto + 2 de Ciro (3 unidades), con el camión', ()=>(r.sale.length===2 && r.tSale==='3' && r.sale.some(function(t){ return /BETO ROCA · NPR/.test(t); })), [r.sale, r.tSale]);
+  chk('E: Moreno = ir a buscar el ECO FLEX de Beto', ()=>(r.trae.length===1 && /NUEVO ECO FLEX.*× 1.*de Moreno/.test(r.trae[0]) && r.tTrae==='1'), r.trae);
+  chk('E: lo que falta va aparte, para avisar', ()=>(r.no.length===1 && /SEMIORTOPEDICO/.test(r.no[0])), r.no);
+  chk('E: dice cuántos productos no se revisaron todavía (2 sin marca)', ()=>(/2 productos sin revisar/.test(r.sub)), r.sub);
+  chk('E: tocar un renglón abre el pedido', ()=>r.abre, r.abre);
+  chk('E: «Mañana» muestra lo del próximo día de camión (EVA LUNA ×4 en Banzer) y no lo de hoy', ()=>(r.man.length===1 && /EVA LUNA/.test(r.man[0]) && r.manAca.length===0), [r.man, r.manAca]);
+  chk('E: si la cerrás, queda cerrada al repintar', ()=>r.cerradoQueda, r.cerradoQueda);
+  if(SHOTS){ await ev(()=>{ closeStock(); closeModal(); var e=document.getElementById('adm-lugares'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300); await page.screenshot({ path:path.join(SHOTS,'f5_lugares.png') });
+    await ev(()=>{ QUICK_FILTER=''; var s=document.getElementById('adm-search'); if(s){ s.value=''; } segSet('adm-mode','hoy'); renderAdmin(); var t=document.getElementById('tbl-pedidos'); if(t) t.scrollIntoView(); }); await page.waitForTimeout(300);
+    await page.screenshot({ path:path.join(SHOTS,'f6_tabla.png') });
+    await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ var e=document.getElementById('adm-lugares'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300);
+    await page.screenshot({ path:path.join(SHOTS,'f7_lugares_cel.png') }); await page.setViewportSize({ width:1180, height:900 }); }
+
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close(); process.exit(FAIL?1:0);

@@ -665,7 +665,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
 recorrido en el Mapa de entregas (`mapaRutaPintar`, Hoy/Mañana), 🔥 semanas en Banzer o PTF (`almSemanas`) y ⭕ anillos en Mis
 pedidos (`misAnilloHtml`). Cada una sale de la cuenta que ya existe: ⚠️ el termómetro usa `stockProyectar(o, serie)` (segundo
 argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. **📍 §4iq**: la tabla de Administración y la ficha muestran de
-dónde se carga cada producto (`prodLugarTag`: 🏭 PTF · 🏪 Banzer · 📥 Moreno), con la misma marca de la Lista de carga. `tests/test_visuales.js` (34). Bitácora §4ik.
+dónde se carga cada producto (`prodLugarTag`: 🏭 PTF · 🏪 Banzer · 📥 Moreno), con la misma marca de la Lista de carga. **📍 §4ir** (dueño: *«a,E»*): columna «Sale de» pegada al N° (`pedidoLugaresHtml`; corre las columnas un lugar) y «📍 Lo del día, por lugar» arriba de la tabla (`admLugaresPintar`, Hoy/próximo día, los pedidos de `cierreEntEntra`); todo de `prodPartes`. `test_fichas_4ip` §7. `tests/test_visuales.js` (34). Bitácora §4ik.
 **📈 Barrios que crecen** (§4il, 09/10, PUBLICADA 01:20, `a9bc37a`): en Banzer o PTF, por zona escrita, los últimos 30 días contra los 30 de antes
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.
