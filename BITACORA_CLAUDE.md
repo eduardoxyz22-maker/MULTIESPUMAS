@@ -7445,6 +7445,19 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iq. 09/10: 🌡️ fuera el termómetro · 📍 de dónde se carga, a la vista de logística — EN LA RAMA
+- El dueño, con una captura de «🌡️ Los que se terminan» (las líneas rojas bajando bajo el cero): *«Esto no se entiende bien…
+  Quítalo o mejorémoslo»*. **Se sacó** (`stockTermometrosHtml`, `stockTermoSvg`, `stockTermoTxt`, `stockTermoSerie`, `TERMO_*`, el
+  gráfico del detalle de un producto y su CSS): lo mismo lo dicen ahora las fichas (§4ip) con palabras, «⏳ Se corta el jue 15/10 · 🚨
+  Pedí 12 ya», y la historia de 30 días al tocar. `stockProyectar(o, serie)` conserva su segundo argumento (no molesta; la cuenta no
+  cambió, `test_visuales` §2 lo sigue midiendo).
+- El dueño: *«¿dónde ve logística lo de "cargar en Banzer o PTF"? Veo que los vendedores en sus pedidos sí ven, pero logística?»*. Lo
+  veía en la Lista de carga (bloques Fábrica/Banzer), los camiones de Administración, el chofer, la ruta, el WhatsApp y el Excel, pero
+  **NO en la tabla de Administración** (los productos salían sin el lugar) ni en la ficha (un ✔ con un `title` que en el iPad no se ve).
+  **`prodLugarTag(x)`** pone la etiqueta a la vista en las dos: 🏭 PTF · 🏪 Banzer · 📥 Moreno (con cuántos si se parte), ✗ No hay,
+  🏭 En producción; sin marcar, nada. Sale de `prodPartes`, la misma marca de la Lista de carga.
+- `test_fichas_4ip` §6 (→ 27) y `test_visuales` §2 cambiado a conciencia.
+
 ## 4ip. 09/10: 🧾 Mis pedidos con menos letras y 🃏 Stock en fichas — EN LA RAMA
 El dueño, con la página de muestras (1, 13, 22, 28, 29, 30, 31, 33): *«la 13 no me gustó quítala, lo demás aplica»*. La 13 (el galpón
 PTF por dentro) NO se hizo. Todo solo mira: ningún número nuevo, nada se guarda en la planilla.

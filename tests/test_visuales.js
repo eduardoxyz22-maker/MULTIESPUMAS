@@ -135,26 +135,18 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
   chk('tocar Banzer ordena la tabla por lo que hay en Banzer, de mayor a menor', ()=>(r.orden==='sale' && r.dir===-1 && r.tabla), r);
   await ev(()=>{ stockFiltroLimpiar(); });
 
-  console.log('\n── 2. 🌡️ El termómetro ──');
+  console.log('\n── 2. 🌡️ El termómetro se sacó (§4iq, dueño: «esto no se entiende bien… quítalo»); la cuenta día por día queda ──');
   r = await ev(()=>{
-    var o=stockData().lista.filter(function(x){ return x.k===_K.semi; })[0], ot=stockData().lista.filter(function(x){ return x.k===_K.tit; })[0];
-    var S=stockTermoSerie(o, 14), St=stockTermoSerie(ot, 14);
-    var primero=S.filter(function(x){ return x.saldo< -1e-9; })[0];
-    var solo=stockProyectar(o);
-    var filas=[].map.call(document.querySelectorAll('#vis-galp .termo-fila'), function(f){ return f.dataset.k; });
-    var svgT=stockTermoSvg(ot);
-    return { n:S.length, corte:o.corte, dias:o.dias, primero:primero&&primero.d, soloCorte:solo.corte, soloDias:solo.dias, hoy0:S[0].saldo, saldoHoy:o.saldoHoy,
-      llegaT:St.filter(function(x){ return x.llega>0; }).map(function(x){ return x.d+':'+x.llega; }), camion:/🚚/.test(svgT), filas:filas, semiPrimero:filas[0]===_K.semi,
-      txt:(function(){ var t=document.createElement('div'); t.innerHTML=stockTermoTxt(o); return t.innerText; })() };
+    var o=stockData().lista.filter(function(x){ return x.k===_K.semi; })[0];
+    var S=[]; S.H=14; stockProyectar(o, S);
+    var primero=S.filter(function(x){ return x.saldo< -1e-9; })[0], solo=stockProyectar(o);
+    abrirStockPedidos(_K.semi); var det=!!document.querySelector('.termo-detalle'); closeModal();
+    return { n:S.length, corte:o.corte, primero:primero&&primero.d, soloCorte:solo.corte, soloDias:solo.dias, dias:o.dias, hoy0:S[0].saldo, saldoHoy:o.saldoHoy,
+      filas:document.querySelectorAll('#vis-galp .termo-fila, #vis-galp .termo-caja').length, det:det, fn:typeof window.stockTermometrosHtml };
   });
-  chk('15 días, uno por uno', ()=>(r.n===15), r.n);
-  chk('el primer día en rojo de la serie es el corte de la tabla («cubre hasta»): la misma cuenta', ()=>(r.primero===r.corte && r.corte==='2026-10-12'), r);
-  chk('sin serie, stockProyectar da lo mismo que antes (no cambió la cuenta)', ()=>(!r.__error && r.soloCorte===r.corte && r.soloDias===r.dias && r.hoy0===r.saldoHoy), r);
-  chk('lo pedido a fábrica aparece el día que llega (🚚 en el termómetro)', ()=>(r.llegaT.length===1 && /:10$/.test(r.llegaT[0]) && r.camion), r.llegaT);
-  chk('«Los que se terminan» arranca por el que se corta primero (el SEMIORTOPEDICO)', ()=>(r.semiPrimero && r.filas.length>=2), r.filas);
-  chk('el texto dice cuándo se corta y cuántos días sin stock', ()=>(/se corta el 12\/10/.test(r.txt) && /días sin stock/.test(r.txt)), r.txt);
-  r = await ev(()=>{ abrirStockPedidos(_K.semi); var m=document.querySelector('.termo-detalle'); var t=m?m.innerText:''; closeModal(); return { hay:!!m, svg:!!(m&&m.querySelector('svg')), t:t.slice(0,160) }; });
-  chk('el detalle de un producto («Cómo se calcula») trae su termómetro', ()=>(r.hay && r.svg), r);
+  chk('⚠️ ya no está «Los que se terminan» en los almacenes, ni el gráfico en el detalle de un producto', ()=>(r.filas===0 && !r.det && r.fn==='undefined'), r);
+  chk('la cuenta día por día (`stockProyectar` con su serie) sigue: 15 días y el primer día en rojo es el corte de la tabla', ()=>(r.n===15 && r.primero===r.corte && r.corte==='2026-10-12'), r);
+  chk('sin serie, stockProyectar da lo mismo (no cambió la cuenta)', ()=>(!r.__error && r.soloCorte===r.corte && r.soloDias===r.dias && r.hoy0===r.saldoHoy), r);
 
   console.log('\n── 3. 📊 «Qué producir» en gráfico ──');
   r = await ev(()=>{
@@ -176,8 +168,6 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
     await page.setViewportSize({ width:1180, height:820 });
     await ev(()=>{ var c=document.getElementById('vis-galp'); if(c) c.scrollIntoView(); }); await page.waitForTimeout(1600);
     await page.screenshot({ path:path.join(SHOTS,'v1_galpones.png') });
-    await ev(()=>{ var c=document.querySelector('#vis-galp .termo-caja'); if(c) c.scrollIntoView(); }); await page.waitForTimeout(1300);
-    await page.screenshot({ path:path.join(SHOTS,'v2_termometro.png') });
     await ev(()=>{ var c=document.querySelector('#producir .qp-graf'); if(c) c.scrollIntoView({block:'center'}); }); await page.waitForTimeout(1300);
     await page.screenshot({ path:path.join(SHOTS,'v3_producir.png') });
     await page.setViewportSize({ width:390, height:844 });

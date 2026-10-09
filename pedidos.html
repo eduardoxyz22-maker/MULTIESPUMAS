@@ -1432,14 +1432,6 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .galp-al small{ color:var(--muted); }
 .galp-mal{ color:#b91c1c; font-weight:800; }  .galp-ok{ color:#15803d; font-weight:700; }
 /* 🌡️ termómetro */
-.termo-caja{ border-top:1px dashed #e2e8f0; padding:10px 0 12px; }
-.termo-fila{ display:grid; grid-template-columns:minmax(200px,300px) 1fr; gap:4px 14px; align-items:center; padding:8px 4px; border-bottom:1px solid #f1f5f9; cursor:pointer; border-radius:8px; }
-.termo-fila:hover{ background:#f8fafc; }
-.termo-nom{ font-size:.86rem; line-height:1.35; } .termo-nom small{ color:var(--muted); font-size:.76rem; }
-.termo-svg{ width:100%; height:92px; display:block; overflow:visible; }
-.termo-linea{ stroke-dasharray:2000; animation:termoTraza 1.1s ease-out both; }
-@keyframes termoTraza{ from{ stroke-dashoffset:2000; } to{ stroke-dashoffset:0; } }
-@media (max-width:700px){ .termo-fila{ grid-template-columns:1fr; } }
 /* 📊 qué producir */
 .qp-graf{ margin:2px 0 10px; overflow-x:auto; }
 .qp-svg{ width:100%; height:auto; display:block; }
@@ -1609,6 +1601,9 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .sf-ley{ display:flex; flex-wrap:wrap; gap:12px; font-size:.78rem; color:var(--muted); margin:4px 0 8px; }
 .sf-ley i{ display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:-1px; margin-right:4px; }
 @media (prefers-reduced-motion: reduce){ .mis-sello.golpe, .viaje-cami.entra, .viaje-cami.anda svg, .sf-flota, .sf-brilla-mas, .sf-brilla-menos{ animation:none !important; } .viaje-cami{ transition:none; } }
+.lug{ display:inline-block; font-size:.72rem; font-weight:800; border-radius:6px; padding:0 6px; margin-left:2px; white-space:nowrap; line-height:1.55; }
+.lug-aca{ background:#e6f7f6; color:#00736d; } .lug-sale{ background:#e0f2fe; color:#075985; } .lug-trae{ background:#f3e8ff; color:#6b21a8; }
+.lug-no{ background:#fdeaec; color:#a3172a; } .lug-fab{ background:#fff4d6; color:#7c4b00; }
 #mis-anillo:empty{ display:none; }
 .mis-anillo{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); padding:12px 16px; margin:-8px 0 18px; box-shadow:var(--sh-card); }
 .mis-ani{ width:150px; height:150px; display:block; }
@@ -1620,7 +1615,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .mis-ani-it i{ width:12px; height:12px; border-radius:50%; flex:none; margin-top:4px; }
 .mis-ani-it b{ display:block; font-size:1.08rem; line-height:1.2; }
 .mis-ani-it small{ display:block; color:var(--muted); font-size:.74rem; }
-@media (prefers-reduced-motion: reduce){ .mapa-ruta-linea, .mapa-ruta-camion span, .termo-linea{ animation:none !important; } }
+@media (prefers-reduced-motion: reduce){ .mapa-ruta-linea, .mapa-ruta-camion span{ animation:none !important; } }
 </style>
 <style>
 /* 🚛 CARGA VIVA (§4hz): los camiones arriba de la Lista de carga, sobre la imagen que hizo ChatGPT (dueño, 08/10). */
@@ -13251,7 +13246,7 @@ function renderAdmin(){
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
       '</td>'+
       '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esRPT(p.oc)?('<span class="badge b-rpt" title="Reposición de tienda — va a una sucursal, no a un cliente">🏪 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
-      '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
+      '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+(p.productos||[]).map(function(x){ return esc(prodText([x]))+prodLugarTag(x); }).join('   |   ')+'</td>'+
       '<td style="white-space:nowrap">'+estadoCell+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
       '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td>'+
@@ -20845,7 +20840,6 @@ function stockSaldoDetalleHtml(o){
     else if(o.revisarStock||o.aviso==='urgente'||o.aviso==='pedir') html+='<p><b>El panel propone fabricar '+stockUnid(o.fabricar==null?o.pedir:o.fabricar)+'.</b>'+(o.enOtros?' Hay además '+stockUnid(o.enOtros)+' en Moreno / otros almacenes: revisar la recogida para cubrir parte del faltante.':'')+(o.pedir>bruto?' Hay un faltante antes de la llegada prevista; por eso se mantiene una reposición mínima.':'')+'</p>';
     else html+='<p><b>No hay una orden de reposición urgente.</b> '+(o.enCamino?'Ya hay unidades pendientes de llegada.':'Se mantiene vigilancia según la rotación y los pedidos.')+'</p>';
     if(o.corte) html+='<p>Primer faltante proyectado: <b>'+esc(fmtFecha(o.corte))+'</b>. Plazo de fábrica: '+o.lead+' días'+(o.leadMedido?' (medido).':' (estimado).')+'</p>';
-    html+='<div class="termo-detalle" style="margin-top:8px"><b>🌡️ Día por día, los próximos '+TERMO_DIAS+' días</b> <small style="color:var(--muted)">'+stockTermoTxt(o)+'</small>'+stockTermoSvg(o)+'</div>';   // §4ik
     html+='</div>';
   }
   return html+'</section>';
@@ -25249,10 +25243,26 @@ function toggleCamionesAdm(){
   try{ cargaVivaPintar(); }catch(e){}
 }
 /* Lista de productos donde se marca ✔ hay / ✗ no hay / 📥 recoger de IM (se usa en las dos fichas) */
+/* 📍 (§4iq, 09/10; dueño: *«¿dónde ve logística lo de cargar en Banzer o PTF?»*) De dónde sale cada producto, A LA VISTA:
+   la tabla de Administración y la ficha solo tenían el ✔ con un globito que en el iPad no se ve. Sale de `prodPartes`
+   (la misma marca que usan la Lista de carga, el chofer y la ruta): 🏭 PTF · 🏪 Banzer · 📥 Moreno, con cuántos si se parte;
+   ✗ No hay; 🏭 En producción. Sin marcar, nada (lo dice la columna Estado). */
+function prodLugarTag(x){
+  if(!x) return '';
+  var chip=function(c,t){ return ' <span class="lug lug-'+c+'">'+esc(t)+'</span>'; };
+  if(x.chk==='no') return chip('no','✗ No hay');
+  var pa=prodPartes(x);
+  if(!pa.length) return (enProduccion(x) && !x.prodR) ? chip('fab','🏭 En producción') : '';
+  var varias=pa.length>1;
+  return pa.map(function(e){
+    var n=e.tipo==='aca' ? 'PTF' : e.tipo==='sale' ? saleNombre(e.de) : (e.de ? recogerAlmCorto(e.de) : 'Moreno');
+    return chip(e.tipo, (e.tipo==='aca'?'🏭 ':e.tipo==='sale'?'🏪 ':'📥 ')+n+(varias?(' '+e.u):''));
+  }).join('');
+}
 function prodRevList(p){
   return (p.productos||[]).map(function(x,i){
     return '<div class="prod-rev">'+
-      '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'+
+      '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'+prodLugarTag(x)+
         (prodPrecio(x)>0?(' <span style="color:var(--teal-dk);font-weight:700">· '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))+'</span>'):'')+'</span>'+
       /* ⚠️ `flex:none` hacía que la tira de botones tomara SIEMPRE el ancho de todos juntos:
          con seis (dos almacenes y dos fábricas) se iba fuera de la pantalla del celular y
@@ -27248,7 +27258,7 @@ function stockGalponesHtml(d){
       '<div class="galp-al">'+alertaTxt+(ej?('<br><small>'+ej+(g.alerta.length>2?' …':'')+'</small>'):'')+'</div>'+
     '</button>';
   });
-  h+='</div>'+stockTermometrosHtml(d)+'</details>';
+  h+='</div></details>';   // 🌡️ el termómetro se sacó (§4iq, dueño: «esto no se entiende bien… quítalo»)
   return h;
 }
 function stockGalponTocar(orden){
@@ -27257,64 +27267,6 @@ function stockGalponTocar(orden){
   var t=document.getElementById('stk-tabla-caja'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-/* ---------------------------------------------------------------- 🌡️ EL TERMÓMETRO */
-var TERMO_DIAS=15, TERMO_TOPE=6, TERMO_VER_TODO=false, TERMO_N=0;
-/* La serie sale de `stockProyectar` con su segundo argumento: la MISMA cuenta del «cubre hasta», día por día. */
-function stockTermoSerie(o, H){ var s=[]; s.H=H||TERMO_DIAS-1; stockProyectar(o, s); return s; }
-function stockTermoSvg(o, H){
-  H=H||TERMO_DIAS-1;
-  var S=stockTermoSerie(o, H); if(!S.length) return '';
-  var W=600, A=56, top=10, n=S.length, dx=W/(n-1||1);
-  var vals=S.map(function(x){ return x.saldo; });
-  var mx=Math.max.apply(null, vals.concat([1])), mn=Math.min.apply(null, vals.concat([0]));
-  var Y=function(v){ return top+(mx-v)/((mx-mn)||1)*A; }, y0=Y(0);
-  var pts=S.map(function(x,i){ return [i*dx, Y(x.saldo)]; });
-  var linea=pts.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' ');
-  var area='0,'+y0.toFixed(1)+' '+linea+' '+W+','+y0.toFixed(1);
-  var id='tg'+(++TERMO_N);
-  var s='<svg class="termo-svg" viewBox="-6 0 '+(W+12)+' '+(top+A+26)+'" preserveAspectRatio="none" role="img" aria-label="Saldo día por día de '+esc(stockNombre(o))+'">'+
-    '<defs><clipPath id="'+id+'a"><rect x="-6" y="0" width="'+(W+12)+'" height="'+y0.toFixed(1)+'"/></clipPath>'+
-    '<clipPath id="'+id+'b"><rect x="-6" y="'+y0.toFixed(1)+'" width="'+(W+12)+'" height="'+(top+A+26)+'"/></clipPath></defs>'+
-    '<polygon points="'+area+'" fill="#bfe9d3" clip-path="url(#'+id+'a)"/>'+
-    '<polygon points="'+area+'" fill="#f7c5cb" clip-path="url(#'+id+'b)"/>'+
-    '<line x1="0" x2="'+W+'" y1="'+y0.toFixed(1)+'" y2="'+y0.toFixed(1)+'" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 4"/>'+
-    '<polyline class="termo-linea" points="'+linea+'" fill="none" stroke="'+(o.corte&&o.dias<=H?'#c2410c':'#15803d')+'" stroke-width="3" stroke-linejoin="round"/>';
-  S.forEach(function(x,i){
-    if(x.llega>0) s+='<text x="'+(i*dx).toFixed(1)+'" y="'+(Y(x.saldo)-7).toFixed(1)+'" text-anchor="middle" font-size="15">🚚</text>';
-    var lbl=(i===0)?'hoy':String(x.d).slice(8,10);
-    if(i===0 || i===n-1 || i%2===0) s+='<text x="'+(i*dx).toFixed(1)+'" y="'+(top+A+20)+'" text-anchor="middle" font-size="11" fill="#64748b">'+lbl+'</text>';
-  });
-  if(o.corte && o.dias!=null && o.dias<=H){
-    var cx=o.dias*dx;
-    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+y0.toFixed(1)+'" r="6" fill="#dc2626" stroke="#fff" stroke-width="2"/>';
-  }
-  return s+'</svg>';
-}
-function stockTermoTxt(o, H){
-  H=H||TERMO_DIAS-1;
-  var S=stockTermoSerie(o, H), sin=S.filter(function(x){ return x.saldo < -1e-9; }).length;
-  var lleg=S.filter(function(x){ return x.llega>0; })[0];
-  if(!o.corte || o.dias==null || o.dias>H) return '<span style="color:#15803d;font-weight:700">alcanza más de '+(H+1)+' días ✓</span>';
-  return '<span style="color:#b91c1c;font-weight:800">se corta '+(o.dias===0?'hoy':('el '+fmtFechaCorta(o.corte)))+'</span>'+
-    (lleg?(' · 🚚 llega el '+fmtFechaCorta(lleg.d)):' · sin nada pedido que llegue')+
-    (sin?(' · <b style="color:#b91c1c">'+sin+' día'+(sin===1?'':'s')+' sin stock</b> en '+(H+1)):'');
-}
-function stockTermometrosHtml(d){
-  if(!d.contado) return '';
-  var L=d.lista.filter(function(o){ return !o.descont && stockHaySalir(o)!=null && o.corte && o.dias!=null && o.dias<TERMO_DIAS && (o.comp>0||o.porDia>0); });
-  L.sort(function(a,b){ return (a.dias-b.dias) || (b.comp-a.comp); });
-  if(!L.length) return '<div class="termo-caja"><b>🌡️ Los que se terminan</b><div class="vis-sub" style="margin-top:4px">Ningún producto se queda sin stock en los próximos '+TERMO_DIAS+' días. ✅</div></div>';
-  var ver=TERMO_VER_TODO?L:L.slice(0,TERMO_TOPE);
-  return '<div class="termo-caja"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b>🌡️ Los que se terminan en los próximos '+TERMO_DIAS+' días</b>'+
-    '<span class="vis-sub">verde = hay · rojo = días sin stock · 🚚 = llega lo pedido · 🔴 = se corta. Lo vendido más lo que se va a vender, día por día.</span></div>'+
-    ver.map(function(o){
-      return '<div class="termo-fila" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">'+
-        '<div class="termo-nom"><b>'+esc(stockNombre(o))+'</b> <small>hay '+stockUnid(stockHaySalir(o))+' · vendidos sin entregar '+stockUnid(o.comp)+(o.porDia>0?(' · '+stockNum(o.porDia)+' por día'):'')+'</small><br><small>'+stockTermoTxt(o)+'</small></div>'+
-        stockTermoSvg(o)+'</div>';
-    }).join('')+
-    (L.length>TERMO_TOPE?('<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-top:4px" onclick="TERMO_VER_TODO=!TERMO_VER_TODO;renderStock()">'+(TERMO_VER_TODO?'Ver solo los '+TERMO_TOPE+' primeros':('Ver los '+L.length))+'</button>'):'')+
-  '</div>';
-}
 
 /* ---------------------------------------------------------------- 📊 «QUÉ PRODUCIR» EN GRÁFICO */
 var PRODUCIR_GRAF_COL={ sem:'#7c2d12', quin:'#ea8a5b', mes:'#e7c9b5' };

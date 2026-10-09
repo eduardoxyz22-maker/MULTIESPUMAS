@@ -661,10 +661,11 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   (`#fx-pasos`, hasta 1119 px desde §4ij: también el iPad parado). `tests/test_ayudas_form.js` (22).
 
 ## ✨ Seis vistas que solo miran (§4ik, 09/10; dueño: *«todo menos lo de Kommo y Contabilidad y cupos»*; PUBLICADA 09/10 00:57, `044f661`)
-🏬 galpones 3D + 🌡️ termómetro arriba de Stock (`stockGalponesHtml`), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
+🏬 galpones 3D arriba de Stock (`stockGalponesHtml`; 🌡️ el termómetro se SACÓ en §4iq: *«esto no se entiende»*), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
 recorrido en el Mapa de entregas (`mapaRutaPintar`, Hoy/Mañana), 🔥 semanas en Banzer o PTF (`almSemanas`) y ⭕ anillos en Mis
 pedidos (`misAnilloHtml`). Cada una sale de la cuenta que ya existe: ⚠️ el termómetro usa `stockProyectar(o, serie)` (segundo
-argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test_visuales.js` (34). Bitácora §4ik.
+argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. **📍 §4iq**: la tabla de Administración y la ficha muestran de
+dónde se carga cada producto (`prodLugarTag`: 🏭 PTF · 🏪 Banzer · 📥 Moreno), con la misma marca de la Lista de carga. `tests/test_visuales.js` (34). Bitácora §4ik.
 **📈 Barrios que crecen** (§4il, 09/10, PUBLICADA 01:20, `a9bc37a`): en Banzer o PTF, por zona escrita, los últimos 30 días contra los 30 de antes
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.

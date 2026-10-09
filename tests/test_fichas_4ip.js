@@ -154,6 +154,26 @@ const SHOTS = process.env.SHOTS || '';
   chk('la ficha que subió muestra «+5» y la que bajó «−3»; la que no cambió, nada', ()=>(r.oro==='+5' && r.tit==='−3' && r.eco===''), r);
   chk('al repintar no se repite (una sola vez)', ()=>(r.otra===''), r.otra);
 
+  /* ══ 6. 📍 De dónde sale cada producto, a la vista de logística (§4iq) ══ */
+  console.log('\n── 6. 📍 Logística ve de dónde se carga: PTF, Banzer, Moreno ──');
+  r = await ev(async()=>{
+    var t=function(x){ var d=document.createElement('div'); d.innerHTML=prodLugarTag(x); return d.textContent.replace(/\s+/g,' ').trim(); };
+    var o={ ptf:t({ desc:'A', cant:1, chk:'ok' }), bz:t({ desc:'A', cant:2, chk:'ok', chkDe:'Banzer' }),
+      mor:t({ desc:'A', cant:1, chk:'im' }), parte:t({ desc:'A', cant:2, chk:'ok', chkDes:[{ de:'', u:1 },{ de:'Banzer', u:1 }] }),
+      no:t({ desc:'A', cant:1, chk:'no' }), nada:t({ desc:'A', cant:1 }) };
+    var p=findById('m1'); p.productos[0].chkDe='Banzer';
+    UNLOCKED=true; document.getElementById('admin-lock').style.display='none'; document.getElementById('admin-content').style.display='block';
+    showView('admin'); await new Promise(function(ok){ setTimeout(ok,150); }); segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin();
+    var fila=[].filter.call(document.querySelectorAll('#tbl-pedidos tbody tr'), function(tr){ return /CLIENTE/.test(tr.textContent) && tr.querySelector('.lug'); });
+    o.tabla=[].map.call(document.querySelectorAll('#tbl-pedidos .prod-cell .lug'), function(x){ return x.textContent; });
+    showPedidoModal('m1'); o.ficha=[].map.call(document.querySelectorAll('#modal-box .prod-rev .lug'), function(x){ return x.textContent; }); closeModal();
+    return o;
+  });
+  chk('✔ de acá = «🏭 PTF», ✔ en Banzer = «🏪 Banzer», 📥 = «📥 Moreno», partido = «PTF 1 + Banzer 1», ✗ = «No hay», sin marcar = nada',
+    ()=>(r.ptf==='🏭 PTF' && r.bz==='🏪 Banzer' && r.mor==='📥 Moreno' && r.parte==='🏭 PTF 1 🏪 Banzer 1' && r.no==='✗ No hay' && r.nada===''), r);
+  chk('la tabla de Administración lo muestra al lado de cada producto', ()=>(r.tabla.indexOf('🏪 Banzer')>=0 && r.tabla.indexOf('✗ No hay')>=0), r.tabla);
+  chk('y la ficha del pedido también (antes era un globito que en el iPad no se ve)', ()=>(r.ficha.indexOf('🏪 Banzer')>=0), r.ficha);
+
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close(); process.exit(FAIL?1:0);
