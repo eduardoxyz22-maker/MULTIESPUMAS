@@ -7471,7 +7471,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - El dueño, al ver «BOLSA PARA ALMOHADAS × 50» y varias «BOLSA PARA COLCHON» en «Pedir a fábrica»: *«las bolsas sacalas del
   stock»*. Son empaque. **`PROD_EMPAQUE=/^BOLSAS?\b/`** en `esTextoDeTienda` (la misma puerta que protectores y sábanas, §4cx: ni
   ficha, ni rotación, ni comprometido, ni fábrica, ni unidades de la proyección), solo si el nombre EMPIEZA con BOLSA: un colchón
-  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: es un renglón a medio escribir de la OC 09-291 (Maria Flores, entrega 09/10 AM); se le dijo al dueño que lo corrija ella, no se tocó la planilla.
+  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: es un renglón a medio escribir de la OC 09-291 (Maria Flores, entrega 09/10 AM); el dueño: *«quítalo de todos lados»* → el 09/10 ~10:40 se releyó la fila y se guardó sin ese renglón (sin código ni precio), con su sello, desde esta sesión; releída: quedan COLCHON ORO BI RELAX, SOMIER BiRELAX y ALMOHADA. No queda ningún renglón de 1-2 letras en la planilla ni en el stock.
 - `test_fichas_4ip` §9 (→ 49).
 
 ## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 09:28 (`71111be`), Pages OK 09:29
