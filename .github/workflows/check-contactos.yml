@@ -1,0 +1,25 @@
+name: Check Contactos Kommo (solo lectura)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'scripts/check_contactos.py'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verificar contactos en Kommo
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+        run: python scripts/check_contactos.py
