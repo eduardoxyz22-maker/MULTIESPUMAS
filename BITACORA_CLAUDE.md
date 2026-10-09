@@ -7470,7 +7470,7 @@ Todo SOLO MIRA: no cambia cupos, stock, tildes ni la planilla, salvo los tildes 
 - **🏆 Ranking** (Stock, debajo de los galpones, `<details id="vis-rank">`): `stockRankingDatos()` = unidades entregadas por
   producto en ventanas de 7 días, `RANK_SEMANAS`=6, los `RANK_TOPE`=8 que más salieron, con las reglas de la rotación
   (`stockCuenta`, sin `stockPedidoUnico`, sin `esProdDeTienda`). ▶ recorre las semanas y las barras cambian de lugar con ▲/▼.
-- **📅 Calendario de entregas** (Administración, `#adm-cal` ARRIBA de los camiones: `#carga-viva` sigue pegado al resumen, §4ib, cerrado de entrada, pref `cal`):
+- **📅 Calendario de entregas** (Administración, `#adm-cal` DEBAJO de los camiones, dueño 09/10: *«ese calendario debe ir debajo luego de la animación 3D»*, cerrado de entrada, pref `cal`):
   `admCalDatos(ym)` cuenta AM/PM por día (sin sistema, borradores ni tienda); día cerrado rayado («sin camión», o «n ⚠️» si
   igual tiene pedidos), lleno marcado; tocar un día dice AM n/lim y PM, y «Ver ese día» abre Administración en ese día.
 - **🔔 Avisos con movimiento** (Stock): `stockAvisosNuevos` compara con lo guardado en el aparato (`me_vis_avisos`; la primera

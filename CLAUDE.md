@@ -620,7 +620,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
-- `#carga-viva` va debajo del 📅 calendario (`#adm-cal`) con su botón «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por
+- `#carga-viva` va arriba del 📅 calendario (`#adm-cal`, debajo de los camiones: dueño, 09/10) con su botón «🙈 Ocultar camiones» (`toggleCamionesAdm`, `LS_CAMIONES`, por
   compu; escondidos no se dibujan). Se pinta en `renderAdmin` y en `renderCargaSiActiva`. **🧹 El resumen de Administración YA NO
   EXISTE** (§4io, 09/10, dueño: *«al tenerlo ya en 3D y los focos de calor… eso ya no es útil para logística, quítalo»*): fichas,
   línea de cobros, consolidados, camión, rendición, «Ocupación de cupos» y «Concentración por zona», con su «Ocultar resumen». No

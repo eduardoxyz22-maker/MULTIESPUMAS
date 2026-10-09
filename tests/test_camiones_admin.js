@@ -73,12 +73,12 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   console.log('\n── 1. En Administración, no en la Lista de carga; lo de Codex ya no está ──');
   let r = await page.evaluate(() => {
     var box=document.getElementById('carga-viva'), img=box && box.querySelector('.cv-lienzo img');
-    return { enResumen:!document.getElementById('adm-resumen') && !!box.closest('#view-admin') && box.previousElementSibling===document.getElementById('adm-cal'), primero:true,
+    return { enResumen:!document.getElementById('adm-resumen') && !!box.closest('#view-admin') && box.nextElementSibling===document.getElementById('adm-cal'), primero:true,
       img:img?img.getAttribute('src'):'', enCarga:!!document.querySelector('#carga-overlay #carga-viva, #carga-overlay .cv-caja'),
       codex:!!document.getElementById('adm-logistica') || !!document.querySelector('script[src*="admin-logistica"],link[href*="admin-logistica"]') || typeof window.AdminLogistica!=='undefined',
       titulo:(document.getElementById('cv-dia')||{}).textContent||'' };
   });
-  chk('⚠️ la tira está en Administración, debajo del 📅 calendario; el resumen ya no existe (§4io: lo sacó el dueño)', r.enResumen && r.primero, J(r));
+  chk('⚠️ la tira está en Administración, arriba del 📅 calendario (dueño, 09/10); el resumen ya no existe (§4io: lo sacó el dueño)', r.enResumen && r.primero, J(r));
   chk('…con la imagen de los depósitos (carga-viva/escena.jpg)', /^carga-viva\/escena\.jpg/.test(r.img), r.img);
   chk('⚠️ NO aparece en la Lista de carga (dueño: «solo en administración»)', !r.enCarga);
   chk('⚠️ la escena 3D de Codex ya no está (ni su caja, ni su script, ni su hoja de estilo)', !r.codex);
