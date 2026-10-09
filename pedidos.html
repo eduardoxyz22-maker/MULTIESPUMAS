@@ -1524,6 +1524,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 @keyframes tendSube{ 50%{ transform:translate(-50%,-62%); } }
 @media (max-width:560px){ .alm-tend-fila{ grid-template-columns:1fr auto; } .alm-tend-sem{ grid-column:1/-1; order:3; } }
 @media (prefers-reduced-motion: reduce){ .alm-tend-fila.crece, .alm-tend-flecha.sube span{ animation:none !important; } }
+.hist-barras{ display:flex; gap:2px; align-items:flex-end; height:46px; margin-top:6px; }
+.hist-barras i{ flex:1; min-width:3px; background:#7c2d12; border-radius:2px 2px 0 0; opacity:.8; }
 #mis-anillo:empty{ display:none; }
 .mis-anillo{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); padding:12px 16px; margin:-8px 0 18px; box-shadow:var(--sh-card); }
 .mis-ani{ width:150px; height:150px; display:block; }
@@ -2529,7 +2531,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-06-a';   // (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-09-a';   // (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -11736,6 +11738,7 @@ function refrescarEstadoYa(){
       cargaEstado('ok');
       saldoTrasLectura();                        // 🧾 (27/09) el saldo debajo de cada producto, con lo recién leído (§4gj)
       if(typeof cierreEntPendiente==='function' && cierreEntPendiente()) setTimeout(cierreEntSincronizar, 0);   // ⏳ (05/10) el cierre que esperaba señal
+      setTimeout(histStockAlDia, 0);             // 📚 (09/10, §4in) el Excel de hoy a la hoja «Historial stock», si falta
       return true;
     }
     ULTIMO_ERROR=(res&&res.error)?motivoDelServidor(res.error):'respuesta inesperada del servidor';
@@ -22504,8 +22507,10 @@ function abrirStockHistorial(){
           (dif!=null?('<br><span style="color:'+(dif<0?'var(--red)':'var(--green)')+';font-size:.9em">'+(dif>0?'+':'')+stockUnid(dif)+' contra el anterior</span>'):'')+'</td></tr>'+stockHistDifHtml(x);
       }).join('')+'</tbody></table>')
      :'<div style="color:var(--muted);padding:16px;text-align:center">Todavía no se subió ningún Excel de existencias.</div>')+
+    '<div id="hist-libro" style="margin-top:12px;font-size:.84rem;background:#fbf7f4;border:1px solid #eadfd6;border-radius:9px;padding:9px 12px"></div>'+   // 📚 (§4in)
     '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button></div></div>';
   openModal(html, true);
+  histStockPintar();
 }
 /* «IM», «Banzer» o «IM 2 + Banzer 1» — de dónde hay que traer las unidades de un producto. */
 function revStkAlmTxt(o){
@@ -27581,6 +27586,59 @@ function misAnilloHtml(mine, todos){
   svg+='</svg>';
   return '<div class="mis-anillo"><div style="flex:none">'+svg+'</div><div class="mis-ani-ley"><div class="vis-sub" style="margin-bottom:6px">'+(todos?'Todo el equipo':'Tu mes')+' · por fecha de entrega, sin ATC ni reposiciones</div>'+
     C.map(function(c){ return '<div class="mis-ani-it"><i style="background:'+c.col+'"></i><div><small>'+esc(c.lbl)+'</small><b>'+c.val+'</b><small>'+c.sub+'</small></div></div>'; }).join('')+'</div></div>';
+}
+
+
+/* ============================================================================
+   📚 EL HISTORIAL DEL STOCK (§4in, 09/10; dueño: *«armá la hoja de historial»*).
+   La celda `__stock__` solo guarda 3 días de control; la historia va a la hoja «Historial stock» del servidor `2026-10-09-a`,
+   una fila por día con lo que dijo el Excel de cada almacén. La página la manda SOLA después de cada lectura buena
+   (`refrescarEstadoYa`) si hay un Excel de HOY que este equipo todavía no mandó (`HIST_LS` = día + huella). Varios equipos
+   mandan lo mismo: el servidor lo junta por almacén. Con un servidor anterior no se manda nada (contestaría «no id» y
+   ensuciaría «Rechazos»). No toca el stock ni la cola: si falla, se intenta con la próxima lectura.
+   ========================================================================== */
+var HIST_LS='me_hist_env', HIST_VERSION='2026-10-09-a', HIST_EN_VUELO=false;
+function histServidorListo(){ return String(SERVER_VER||'') >= HIST_VERSION; }
+function histHuella(t){ var h=5381; t=String(t); for(var i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36)+'.'+t.length; }
+/* Lo de HOY de cada almacén, como lo dijo su Excel (sin los ceros: `s0` = lo que no figura está en 0). */
+function histStockFoto(hoy){
+  hoy=hoy||todayStr(); var d={};
+  var meter=function(nombre, s){
+    if(!s || s.f!==hoy) return;
+    var u={}; Object.keys(s.u||{}).forEach(function(k){ var n=Number(s.u[k]); if(n) u[k]=n; });
+    d[nombre]={ f:s.f, h:String(s.hora||''), u:u, s0:!!s.solo0 };
+  };
+  if(typeof STOCK!=='undefined' && STOCK){ meter('PTF', STOCK.c); Object.keys(STOCK.g||{}).forEach(function(nm){ meter(nm, STOCK.g[nm]); }); }
+  return d;
+}
+function histStockAlDia(){
+  try{
+    if(HIST_EN_VUELO || !CONNECTED || !STOCK_CARGADO || !histServidorListo()) return false;
+    var hoy=todayStr(), d=histStockFoto(hoy); if(!Object.keys(d).length) return false;
+    var firma=hoy+'|'+histHuella(JSON.stringify(d)), ya='';
+    try{ ya=localStorage.getItem(HIST_LS)||''; }catch(e){}
+    if(ya===firma) return false;
+    HIST_EN_VUELO=true;
+    apiPost({ action:'histStock', fecha:hoy, datos:d }).then(function(res){
+      HIST_EN_VUELO=false;
+      if(res && res.ok){ try{ localStorage.setItem(HIST_LS, firma); }catch(e){} }
+    }, function(){ HIST_EN_VUELO=false; });
+    return true;
+  }catch(e){ HIST_EN_VUELO=false; return false; }
+}
+/* En «📜 Historial de cortes»: cuántos días tiene la hoja y una barrita por día con lo que había en PTF. */
+function histStockPintar(){
+  var el=document.getElementById('hist-libro'); if(!el) return;
+  if(!histServidorListo()){ el.innerHTML='<b>📚 Historial de muchos días:</b> se empieza a llenar solo apenas esté implementado el servidor <code>'+HIST_VERSION+'</code> (hoy: <code>'+esc(SERVER_VER||'?')+'</code>).'; return; }
+  el.innerHTML='📚 Leyendo la hoja del historial…';
+  conTope(apiPost({ action:'histStockLeer', desde:stockSumarDias(todayStr(), -59) }), 20000).then(function(res){
+    var dias=(res && res.ok && res.dias) || [];
+    if(!dias.length){ el.innerHTML='<b>📚 Historial de muchos días:</b> la hoja todavía está vacía. Se llena sola con el Excel de cada día.'; return; }
+    var tot=dias.map(function(x){ var p=(x.datos||{}).PTF; var n=0; if(p) Object.keys(p.u||{}).forEach(function(k){ n+=Number(p.u[k])||0; }); return { f:x.fecha, n:n, hay:!!p }; });
+    var mx=Math.max.apply(null, tot.map(function(t){ return t.n; }).concat([1]));
+    el.innerHTML='<b>📚 Historial de muchos días</b> <span style="color:var(--muted)">· '+dias.length+' día'+(dias.length===1?'':'s')+' guardado'+(dias.length===1?'':'s')+' en la hoja, del '+fmtFechaCorta(dias[0].fecha)+' al '+fmtFechaCorta(dias[dias.length-1].fecha)+' · unidades en PTF por día</span>'+
+      '<div class="hist-barras">'+tot.map(function(t){ return '<i title="'+fmtFechaCorta(t.f)+': '+(t.hay?(t.n+' en PTF'):'sin Excel de PTF')+'" style="height:'+(t.hay?Math.max(6,Math.round(t.n/mx*100)):3)+'%;'+(t.hay?'':'background:var(--gray-md)')+'"></i>'; }).join('')+'</div>';
+  }, function(){ el.innerHTML='<b>📚 Historial de muchos días:</b> no se pudo leer ahora (sin conexión). Probá de nuevo más tarde.'; });
 }
 
 /* ============================================================================

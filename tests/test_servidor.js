@@ -132,7 +132,7 @@ function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: 
   /* Hojas que crea un script aparte (25/09: «Respaldo entregados», de herramientas/): con el
      tope de filas de una hoja nueva bien bajo y convirtiendo fechas, que es el peor caso. */
   const otras = {};
-  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1 };   // (30/09, §4he) «Borrados»: la anota doDelete
+  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1, 'Historial stock':1 };   // (09/10, §4in) «Historial stock»: la columna A va como texto (`@`), sin convertir fechas   // (30/09, §4he) «Borrados»: la anota doDelete
   const cont = { flush: 0 };
   const cache = { _m: {},
     get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
@@ -143,7 +143,7 @@ function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: 
     console, Date,
     SpreadsheetApp: { getActiveSpreadsheet: () => ({
       getSheetByName: (n) => n==='Rechazos' ? shR : (OTRAS[n] ? (otras[n]||null) : sh),
-      insertSheet: (n) => n==='Rechazos' ? shR : (OTRAS[n] ? (otras[n]=hacerPlanilla([], { fechas:true, maxFilas:3 })) : sh) }),
+      insertSheet: (n) => n==='Rechazos' ? shR : (OTRAS[n] ? (otras[n]=hacerPlanilla([], n==='Historial stock' ? {} : { fechas:true, maxFilas:3 })) : sh) }),
       flush: () => { cont.flush++; } },
     PropertiesService: { getScriptProperties: () => ({
       getProperty: (k) => (props && props[k] != null) ? props[k] : null,
@@ -1696,8 +1696,8 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-06-a',
-      vG==='2026-10-06-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-09-a',
+      vG==='2026-10-09-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
@@ -1736,6 +1736,53 @@ console.log('\n── 22. 🧓 El stock solo lo guarda una página al día: sin 
     const v = cargar([HDR30], {}); v.post({ action:'save', juntar:1, pedido: stk('{"c":{"f":"2026-10-03","u":{}}}') });
     chk('⚠️ h. …y si lo guardó una página VIEJA (sin pv), avisa que con esta versión ya no va a poder y que todos hagan F5', /⚠️ El stock lo guardó por última vez una página VIEJA/.test(lin(v.ctx)) && /F5/.test(lin(v.ctx)), lin(v.ctx));
   } else chk('h. está probarAntesDeImplementar', false);
+}
+
+/* ── 📚 23. La hoja «Historial stock» (2026-10-09-a, §4in). El dueño: *«armá la hoja de historial»*. Una fila por día, aparte de
+      «Pedidos»: lo que dijo el Excel de cada almacén. Se junta por almacén y lo más viejo de 2 años se va. Todo lo marcado ⚠️ falla
+      contra el .gs 2026-10-06-a (no conoce `histStock`). ── */
+console.log('\n── 23. 📚 La hoja «Historial stock»: una fila por día, juntando almacenes (2026-10-09-a) ──');
+{
+  const a = cargar([HDR30], {});
+  const PTF = { f:'2026-10-09', h:'08:30:00', u:{ 'TITANIO ICE|160X190':6, 'ORO BI RELAX|140X190':20 }, s0:true };
+  const BZ  = { f:'2026-10-09', h:'08:10:00', u:{ 'TITANIO ICE|160X190':2 }, s0:true };
+  let r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ PTF:PTF } });
+  const hoja = () => a.otras['Historial stock'];
+  const HD = () => hoja() ? HD() : [[], [null, null, null, '{}']];   // contra un .gs viejo la hoja no existe: que falle, no que reviente
+  chk('⚠️ a. guarda el día: arma la hoja con su encabezado y UNA fila', r.ok===true && r.fecha==='2026-10-09' && !!hoja() && HD().length===2 && HD()[0][0]==='fecha', JSON.stringify(r).slice(0,120));
+  chk('⚠️ a. …y no toca «Pedidos»', a.sh._datos.length===1);
+  r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ '01-05-025  Almacen Distribucion Banzer':BZ } });
+  const d1 = JSON.parse(HD()[1][3]);
+  chk('⚠️ b. otro almacén el mismo día se JUNTA en la misma fila (PTF + Banzer)', r.ok===true && HD().length===2 && !!d1.PTF && !!d1['01-05-025  Almacen Distribucion Banzer'] && r.almacenes===2, JSON.stringify(Object.keys(d1)));
+  r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ PTF:Object.assign({}, PTF, { h:'07:00:00', u:{ 'TITANIO ICE|160X190':99 } }) } });
+  chk('⚠️ c. un Excel más VIEJO del mismo almacén no pisa al más nuevo', (JSON.parse(HD()[1][3]).PTF||{u:{}}).u['TITANIO ICE|160X190']===6);
+  r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ PTF:Object.assign({}, PTF, { h:'15:00:00', u:{ 'TITANIO ICE|160X190':4 } }) } });
+  chk('⚠️ c. …y uno más nuevo sí (el de la tarde)', (JSON.parse(HD()[1][3]).PTF||{u:{}}).u['TITANIO ICE|160X190']===4);
+  a.post({ action:'histStock', fecha:'2026-10-08', datos:{ PTF:Object.assign({}, PTF, { f:'2026-10-08' }) } });
+  r = a.post({ action:'histStockLeer' });
+  chk('⚠️ d. histStockLeer devuelve los días ordenados, con lo de cada almacén', r.ok===true && Array.isArray(r.dias) && r.dias.map(x=>x.fecha).join()==='2026-10-08,2026-10-09' && r.dias[1].datos.PTF && r.dias[1].datos.PTF.u['TITANIO ICE|160X190']===4 && !!r.dias[1].datos['01-05-025  Almacen Distribucion Banzer'], JSON.stringify(r).slice(0,160));
+  r = a.post({ action:'histStockLeer', desde:'2026-10-09' });
+  chk('⚠️ d. …y con «desde», solo de ese día en adelante', r.dias && r.dias.length===1 && r.dias[0].fecha==='2026-10-09');
+  const antes = HD().length;
+  r = a.post({ action:'histStock', fecha:'09/10/2026', datos:{ PTF:PTF } });
+  const r2 = a.post({ action:'histStock', fecha:'2026-10-09', datos:{} });
+  chk('⚠️ e. sin fecha bien escrita o sin datos: «sin datos» y no escribe nada', r.ok===false && r.error==='sin datos' && r2.ok===false && HD().length===antes);
+  HD().splice(1, 0, ['2023-01-02', '', 'PTF', '{"PTF":{"f":"2023-01-02","u":{}}}']);
+  r = a.post({ action:'histStock', fecha:'2026-10-09', datos:{ PTF:PTF } });
+  chk('⚠️ f. lo de más de 2 años se borra solo al guardar', r.ok===true && r.borradas===1 && !HD().some(f => f[0]==='2023-01-02'), JSON.stringify(r).slice(0,120));
+  const grande = {}; for (let i=0;i<3000;i++) grande['PRODUCTO DE PRUEBA NUMERO '+i+'|140X190'] = i;
+  r = a.post({ action:'histStock', fecha:'2026-10-10', datos:{ PTF:{ f:'2026-10-10', h:'09:00', u:grande } } });
+  chk('⚠️ g. un día que no entra en la celda: «celda_llena», sin escribir', r.ok===false && r.error==='celda_llena' && !HD().some(f => f[0]==='2026-10-10'), JSON.stringify(r).slice(0,100));
+  const k = cargar([HDR30], { PANEL_KEY:CLAVE });
+  r = k.post({ action:'histStock', fecha:'2026-10-09', datos:{ PTF:PTF } });
+  const rL = k.post({ action:'histStockLeer' });
+  chk('h. con la clave del equipo puesta, guardar y leer la piden', r.error==='clave' && rL.error==='clave');
+  if (typeof a.ctx.probarAntesDeImplementar === 'function') {
+    const lin = a.ctx.probarAntesDeImplementar().lineas.filter(l => /Historial stock/.test(l)).join(' | ');
+    chk('⚠️ i. probarAntesDeImplementar dice cuántos días tiene la hoja', /✅ La hoja «Historial stock» tiene 2 día\(s\) guardado\(s\), del 2026-10-08 al 2026-10-09/.test(lin), lin);
+    const v = cargar([HDR30], {});
+    chk('⚠️ i. …y sin la hoja, que se arma sola (no frena)', v.ctx.probarAntesDeImplementar().lineas.some(l => /✅ La hoja «Historial stock» todavía no existe/.test(l)));
+  } else chk('i. está probarAntesDeImplementar', false);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

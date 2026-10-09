@@ -7445,6 +7445,25 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4in. 09/10: 📚 la hoja «Historial stock» (servidor `2026-10-09-a`) — EN LA RAMA, el servidor lo implementa el dueño
+El dueño: *«publica y armá la hoja de historial»* (después de preguntar cuántos días se pueden guardar sin llenar la celda).
+- **Por qué aparte**: `__stock__` vive en UNA celda de «Pedidos» (50.000 letras, ~22.000 usadas): ahí entran 3 días de control.
+  Un día de saldos de los tres almacenes son 6.000-10.000 letras: en una hoja aparte, una fila por día, entran años.
+- **Servidor** (`histGuardar_`/`histLeer_`, acciones `histStock` adentro del candado y `histStockLeer` sin candado): hoja
+  `HIST_HOJA`='Historial stock' (columnas fecha · actualizado · almacenes · datos; la A con formato texto `@`, si no Google
+  convierte la fecha). Un día = `{<almacén>:{f,h,u,s0}}`; otro almacén el mismo día se JUNTA en la misma fila y un Excel más
+  viejo (por hora) no pisa al más nuevo. Lo de más de `HIST_DIAS`=730 días se borra al guardar. Más de `HIST_TOPE_LETRAS`
+  (48.000) en un día → `celda_llena`. `probarAntesDeImplementar` §10 dice cuántos días tiene. Ninguna escritura toca «Pedidos».
+- **Página** (`histStockAlDia`, después de cada lectura buena en `refrescarEstadoYa`): si `SERVER_VER` ≥ `HIST_VERSION`, con el
+  stock ya leído de la planilla (`STOCK_CARGADO`), manda los almacenes cuyo Excel es de HOY (sin los ceros) una vez por cambio
+  (`me_hist_env` = día + huella); si falla, la próxima lectura lo reintenta. ⚠️ Con un servidor anterior NO manda: la acción
+  desconocida caería en `doSave` → «no id» → hoja «Rechazos». «📜 Historial de cortes» muestra cuántos días hay y una barrita por
+  día con lo de PTF (`histStockPintar`, lee los últimos 60 días).
+- Todavía nada usa la historia para calcular: es la base de la «máquina del tiempo» y del «¿acertó el panel?».
+- `test_servidor` §23 (11 ⚠️ + la versión: 12 rojas contra el `.gs` 2026-10-06-a) y `tests/test_historial_stock.js` (11; 10 rojas
+  contra `bf34dab`). `SCRIPT_VERSION`/`ESTA_VERSION`/`SCRIPT_VERSION_ESPERADA` = `2026-10-09-a`. Volver atrás = ✏️ a la versión anotada
+  antes de implementar (la de la 10-06-a) Y pegar la 10-06-a (enlace fijo a `bf34dab`).
+
 ## 4il. 09/10: 📈 barrios que crecen (el 11 de la lista) — PUBLICADA 09/10 01:20 (`a9bc37a`, Pages OK, run 37888038312; el dueño: «publica»)
 El dueño: *«el 11 me gusta para implementar»* (de la lista de ideas: el mapa de calor con flechas de tendencia, qué zona vende
 cada vez más). En «📍 Banzer o PTF», debajo del mapa (`#alm-tend`, `almTendHtml`) y con flechas en el mapa (`almTendFlechas`).

@@ -667,6 +667,12 @@ argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.
 
+## 📚 La hoja «Historial stock» (§4in, 09/10; servidor `2026-10-09-a`, EN LA RAMA)
+Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera
+de «Pedidos»: la celda `__stock__` sigue con sus 3 días. La página la manda sola después de leer (`histStockAlDia`) SOLO si el servidor
+es ≥ `2026-10-09-a` (con uno anterior caería en «Rechazos» como «no id»). 730 días, junta por almacén, el Excel más nuevo gana.
+`test_servidor` §23, `tests/test_historial_stock.js`.
+
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
 o un **chofer** (`>Nombre` pegado a la nota en `metodoPago`: `Efectivo 500 @… #1004 >Luis
