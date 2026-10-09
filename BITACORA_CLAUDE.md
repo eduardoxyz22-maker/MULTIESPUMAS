@@ -7445,6 +7445,35 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ip. 09/10: 🧾 Mis pedidos con menos letras y 🃏 Stock en fichas — EN LA RAMA
+El dueño, con la página de muestras (1, 13, 22, 28, 29, 30, 31, 33): *«la 13 no me gustó quítala, lo demás aplica»*. La 13 (el galpón
+PTF por dentro) NO se hizo. Todo solo mira: ningún número nuevo, nada se guarda en la planilla.
+- **🧾 Mis pedidos (1 + 22)**, en `misCardHtml`:
+  - el borde (un anillo `box-shadow`, para no pisar el borde izquierdo de ATC/RPT) dice cómo está: `misEstadoCard` → `ok` (✅ marcado),
+    `mal` (una línea «✗ no hay»), `debe` (saldo y no es ATC/RPT), `va`;
+  - íconos (🛏️ 📍 💵 🚚, con `title`) en vez de «PRODUCTOS / DIRECCIÓN / COBRO / CHOFER»;
+  - el camioncito en el viaje chico (`pedidoViajeHtml(p, true)`): parado en el paso de ahora, rojo si falta stock (`.para`), entra
+    andando la primera vez que se ve en la apertura (`VIAJE_VISTO`);
+  - el sello «ENTREGADO» solo con `p.entregado` (no con la fecha pasada: la tarjeta dice «⏳ No entregado» y no se contradice), con
+    golpe una vez (`MIS_SELLO_VISTO`);
+  - botones de dos por fila y uno nuevo, **💬 WhatsApp** al cliente (`misWaCliente`: 8 dígitos con 6/7 → +591; si no, no hay botón).
+- **🃏 Stock en fichas (28 + 30)**: `stockFichasHtml(conMov)` debajo de los filtros, con la MISMA lista filtrada de la tabla (el buscador
+  también filtra las fichas). Cada ficha: torrecita (PTF/Banzer/Moreno + lo que falta para `stockNecesario`, `sfTorre`), tres números
+  (hay para cargar = `stockHaySalir`, vendido sin entregar = `o.comp`, y «a pedir»/«a traer»/«en camino»/«en Moreno»), cuándo se corta
+  (`sfReloj`, con el día de la semana) y UNA acción (`sfAccion`, el mismo «Qué hacer» de la tabla con `o.fabricar`/`o.pedir`). Orden:
+  `SF_ORDEN` (urgente, traer, pedir, revisar, pedido…), después los días. Se ven 12 (o todos los urgentes) y «Ver las N que siguen».
+  ⚠️ **La tabla sigue entera**, plegada abajo (`#stk-tabla-det`, «📋 La tabla completa», cerrada de entrada, `visPref('stkTabla')`):
+  las pruebas que leen `tr[data-stock-k]` siguen andando porque el contenido está en la página.
+- **🗂️ El catálogo (29)**: `stockCatalogoHtml`, modelos × las 8 medidas más usadas, el color de la ficha y lo que hay para cargar;
+  tocar una casilla abre su historia. `<details id="stk-catalogo">`, abierto de entrada (`visPref('stkCat')`).
+- **📈 La historia (33)**: `sfElegir(k)` abre una ventana con 30 días: las salidas de cada día salen de los pedidos (`sfSalidas`, siempre);
+  la línea de lo que había sale de la hoja «Historial stock» (`histStockLeer`, solo con el servidor `2026-10-09-a`, `SF_HIST_CACHE` 10 min)
+  y lo que entró = lo que subió el saldo más lo que salió ese día.
+- **📥 El Excel del día (31)**: `confirmarImportExist` deja la foto de antes (`STOCK_DELTA_ANTES = sfFotoDe(...)`, PTF+Banzer+Moreno por
+  producto) y `renderStock` la compara (`stockDeltaTomar`): cartel «subieron N · bajaron M» y «+5»/«−3» flotando en cada ficha que cambió,
+  UNA vez por producto (`STOCK_DELTA.visto`), durante 2 minutos (`SF_DELTA_MS`).
+- `tests/test_fichas_4ip.js` (24; 21 rojas contra `7642388`); con `SHOTS=` saca las capturas.
+
 ## 4io. 09/10: 🧹 fuera el resumen de Administración — PUBLICADA 09/10 02:04 (`d94ca49`, Pages OK, run 37891579091; el dueño: «publica»)
 El dueño, con dos capturas del iPad (las fichas Pedidos/Pagados/Por cobrar/Saldo, la línea de cobros, los consolidados por
 vendedor y por día, la rendición por chofer, «Ocupación de cupos — próximos 7 días» y «Concentración por zona»): *«Al tenerlo

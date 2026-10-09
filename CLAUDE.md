@@ -675,6 +675,13 @@ Stock (`stockRankingDatos`, reglas de la rotación), 📅 calendario de entregas
 pasó a urgente desde la última vez (`stockAvisosNuevos`, `me_vis_avisos`), 🌅 salud del día SOLO con la clave (`saludDelDia`, una vez
 por mañana) y 🛤️ el viaje del pedido en Mis pedidos (`pedidoViajeHtml`). Solo miran. `tests/test_vistas_4im.js` (29). Bitácora §4im.
 
+## 🃏 Mis pedidos con menos letras y Stock en fichas (§4ip, 09/10, EN LA RAMA; dueño: *«la 13 no me gustó quítala, lo demás aplica»*)
+Mis pedidos (`misCardHtml`): borde por estado (`misEstadoCard`), íconos en vez de títulos, camioncito en el viaje chico
+(`pedidoViajeHtml`), sello «ENTREGADO» solo con ✅ y 💬 WhatsApp al cliente (`misWaCliente`). Stock: fichas arriba de la tabla
+(`stockFichasHtml`, la MISMA fila de `stockData` y el mismo «Qué hacer»: `sfAccion`), catálogo en colores (`stockCatalogoHtml`), historia
+de 30 días al tocar (`sfElegir`) y el Excel del día animado (`STOCK_DELTA_ANTES` → `stockDeltaTomar`). ⚠️ La tabla de stock sigue
+ENTERA, plegada en `#stk-tabla-det`: no sacarla, las pruebas y logística la usan. `tests/test_fichas_4ip.js` (24). Bitácora §4ip.
+
 ## 📚 La hoja «Historial stock» (§4in, 09/10; página PUBLICADA 02:04, `d94ca49`; servidor `2026-10-09-a` lo implementa el dueño)
 Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera
 de «Pedidos»: la celda `__stock__` sigue con sus 3 días. La página la manda sola después de leer (`histStockAlDia`) SOLO si el servidor
