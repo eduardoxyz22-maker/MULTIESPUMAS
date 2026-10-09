@@ -692,14 +692,14 @@ calcular nada aparte en el plan. Todo lo demás (Qué producir, galpones, rankin
 plegado en `<details id="stk-mas">` (`visPref('masVistas')`, cerrado): una prueba que mire esas vistas hace `visPrefSet('masVistas',true)`
 (sin eso, `innerText` vacío). `test_fichas_4ip` §10.
 
-## 🚚 Arriba del panel (§4iw, 09/10, EN LA RAMA; dueño: *«A», «C, aprobado», «D2, D3, D5, D6»*)
+## 🚚 Arriba del panel (§4iw, 09/10, PUBLICADA 12:10, `960fdaa`; dueño: *«A», «C, aprobado», «D2, D3, D5, D6»*)
 Encabezado: el día (`hdrDiaTxt`) y dos anillos con los cupos libres del próximo camión (`hdrPintar`, desde `updateStats`); `#stat-hoy-l`
 sigue escrito (las pruebas lo leen). El camión 🚚 mira a la izquierda: va de DERECHA a IZQUIERDA (`h-viaje` anima `right`), si no parece en
 reversa. En el celular (≤700 px) las pestañas van fijas al pie (`.t-ic`/`.t-cr`), `#fx-pasos` encima y `scroll-padding-bottom` para no tapar
 nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello`), D6 `.late-dot`. ⚠️ D3/D5 apagados en Playwright salvo
 `window.FX_PRUEBA`. `tests/test_arriba_4iw.js` (24).
 
-## 🔎 Stock revisado el 09/10 (§4ix, EN LA RAMA; dueño: *«no pueden haber errores… para nunca tener faltantes»*)
+## 🔎 Stock revisado el 09/10 (§4ix, PUBLICADA 12:10, `960fdaa`; dueño: *«no pueden haber errores… para nunca tener faltantes»*)
 - `revisarStock` ya no esconde la urgencia: se corta antes de la fábrica → `urgente`, dentro del margen → `pedir`, y la acción dice «· ⚠️ revisá
   el saldo». ⚠️ No volver a `if(o.revisarStock) return 'revisar'` a secas.
 - Con `fabricar>0` el aviso nunca es «✅ Alcanza» ni «📦 Pedido único». Lo vendido en «7 días» = `stockCompHorizonte` (15 días como mínimo; con
@@ -707,7 +707,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - `stockAsignar` devuelve `sinRespaldo` (lo marcado ✔ sin unidades) y la revisión lo lista; no toca marcas.
 - `tests/test_stock_4ix.js`.
 
-## 📦 Stock con las respuestas del dueño (§4iy, 09/10, EN LA RAMA)
+## 📦 Stock con las respuestas del dueño (§4iy, 09/10, PUBLICADA 12:10, `960fdaa`)
 - **Piso del tiempo de fábrica** (`stockLeadPiso`, la regla del cuadrito: 48 h + el día de recoger); muestras de menos de 2 días no cuentan.
 - **Lo dormido** (sin venta en 30 días, el mes pasado ni este) no se fabrica por «el año pasado» (`stockRangoMes`).
 - **La venta de tienda** cuenta para la rotación pero NO baja PTF/Banzer ni la espera el control del Excel (sale del stock de la tienda).

@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4iy. 09/10: 📦 Stock con las respuestas del dueño a las 8 preguntas de §4ix — EN LA RAMA
+## 4iy. 09/10: 📦 Stock con las respuestas del dueño a las 8 preguntas de §4ix — PUBLICADA 09/10 12:10 (`960fdaa`), Pages OK 12:11
 - El dueño: *«1. no 2. si 3. del stock de fabrica, cuando sale de la tienda ellos hacen la venta en "salio de tienda" 4. no 5. no 6. si
   7. quizas podemos arreglar eso de marcar "ya pedi" con un check… 8. somier 2p heaven es el somier oro 9. king es el heaven de 3 plazas
   creo o no se… almohadas de fibra siliconada son las de 50x70 o no se»*.
@@ -7471,7 +7471,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **1 y 5 (no)**: Banzer fantasma y lo 🏭 en Moreno siguen como estaban.
 - `tests/test_stock_4iy.js` (23; contra `3850365` no arranca: no existe `stockLeadPiso`).
 
-## 4ix. 09/10: 🔎 Stock revisado por dos expertos y un super agente — lo que no dependía del dueño, arreglado — EN LA RAMA
+## 4ix. 09/10: 🔎 Stock revisado por dos expertos y un super agente — lo que no dependía del dueño, arreglado — PUBLICADA 09/10 12:10 (`960fdaa`)
 - El dueño: *«pon 2 agentes expertos en logística y almacén… revisar todo lo de stock y reposición, no pueden haber errores, y luego 1 super
   agente que revise lo de esos 2… para nunca tener faltantes»*. Experto 1 (cuánto tener y producir), experto 2 (almacén y flujo), los dos
   con la planilla real del 09/10 en el scratchpad (nunca en el repo); el super agente reprodujo, refutó o corrigió cada hallazgo y sumó 3.
@@ -7500,7 +7500,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - `tests/test_stock_4ix.js` (10; 9 rojas contra `b127868`). `test_stock_rotacion.cjs` (de la otra herramienta) cambió a conciencia: ahí el
   marcado de más que se corta antes de la fábrica ya no es solo «revisar».
 
-## 4iw. 09/10: 🚚 Arriba del panel: el día, los cupos en anillos y el camión; pestañas al pie en el celular; fichas 3D, números que cuentan, sellos y lo urgente que late — EN LA RAMA
+## 4iw. 09/10: 🚚 Arriba del panel: el día, los cupos en anillos y el camión; pestañas al pie en el celular; fichas 3D, números que cuentan, sellos y lo urgente que late — PUBLICADA 09/10 12:10 (`960fdaa`)
 - El dueño, con la captura del encabezado: *«más animaciones, diseños y mejoras para ir reduciendo texto… arriba y las pestañas»*. Muestra
   `encabezado.html` (artifact). Eligió: *«A»* (con el camión corregido: *«parece de ida en reversa»* → el emoji mira a la izquierda, así que
   va de derecha a izquierda), *«C, aprobado»*, *«D2, D3, D5, D6»*. La B (pestañas 3D con contadores), D1 y D4 no.
