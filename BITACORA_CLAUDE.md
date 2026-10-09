@@ -7445,6 +7445,64 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ir. 09/10: 📍 «Sale de» en la tabla de Administración y «Lo del día, por lugar» — EN LA RAMA
+- El dueño, con la captura de la tabla: *«Debería salir ahí, o no sé, dame ideas, muéstrame: debe verse rápido en la lista del día o esa
+  tabla»*. Se le mostró una página con cinco formas (A–E) y eligió *«a,E»*.
+- **A · columna «Sale de»** pegada al N°: `pedidoLugaresHtml(p)` junta todo el pedido por lugar (`pedidoLugares`: 🏭 PTF, 🏪 Banzer,
+  📥 Moreno, ✗ Falta, 🏭 En producción), con unidades solo si sale de más de un lugar. Sin ninguna marca, «—». Venta de tienda y filas
+  del sistema, «—». ⚠️ Corre un lugar las columnas de la tabla: `test_adm_alta` pasó de `cells[5]` a `cells[6]` (cliente).
+- **E · «📍 Lo del día, por lugar»** (`#adm-lugares`, entre el calendario y la tabla): cuatro columnas (PTF cargar · Banzer cargar ·
+  Moreno ir a buscar · Falta avisar) con producto, cantidad, cliente y camión; Hoy / próximo día de camión (`proximoDiaEntrega`); cuenta
+  los productos sin revisar. Entran los mismos pedidos que el cierre de entregas (`cierreEntEntra`: sin tienda, borradores ni
+  entregados). Tocar un renglón abre el pedido. Plegable (`visPref('lugares')`, abierta de entrada).
+- Las dos salen de `prodPartes`, la MISMA marca de la Lista de carga y de `prodLugarTag` (§4iq). Solo miran: no guardan nada.
+- `test_fichas_4ip` §7 (→ 41).
+- Batería entera con §4ip + §4iq + §4ir: 147 suites, 5.469 comprobaciones. `test_ubic` dio 6 rojas con la máquina cargada y sola
+  28/28 (de las que fallan por carga). `test_stock_detalle.cjs` (de la otra herramienta) sí era real: tocaba una fila de la tabla
+  de stock, que desde §4ip arranca plegada. Ahora abre `#stk-tabla-det` antes de tocar, como lo haría la persona; 4/4 `.cjs` en verde.
+
+## 4iq. 09/10: 🌡️ fuera el termómetro · 📍 de dónde se carga, a la vista de logística — EN LA RAMA
+- El dueño, con una captura de «🌡️ Los que se terminan» (las líneas rojas bajando bajo el cero): *«Esto no se entiende bien…
+  Quítalo o mejorémoslo»*. **Se sacó** (`stockTermometrosHtml`, `stockTermoSvg`, `stockTermoTxt`, `stockTermoSerie`, `TERMO_*`, el
+  gráfico del detalle de un producto y su CSS): lo mismo lo dicen ahora las fichas (§4ip) con palabras, «⏳ Se corta el jue 15/10 · 🚨
+  Pedí 12 ya», y la historia de 30 días al tocar. `stockProyectar(o, serie)` conserva su segundo argumento (no molesta; la cuenta no
+  cambió, `test_visuales` §2 lo sigue midiendo).
+- El dueño: *«¿dónde ve logística lo de "cargar en Banzer o PTF"? Veo que los vendedores en sus pedidos sí ven, pero logística?»*. Lo
+  veía en la Lista de carga (bloques Fábrica/Banzer), los camiones de Administración, el chofer, la ruta, el WhatsApp y el Excel, pero
+  **NO en la tabla de Administración** (los productos salían sin el lugar) ni en la ficha (un ✔ con un `title` que en el iPad no se ve).
+  **`prodLugarTag(x)`** pone la etiqueta a la vista en las dos: 🏭 PTF · 🏪 Banzer · 📥 Moreno (con cuántos si se parte), ✗ No hay,
+  🏭 En producción; sin marcar, nada. Sale de `prodPartes`, la misma marca de la Lista de carga.
+- `test_fichas_4ip` §6 (→ 27) y `test_visuales` §2 cambiado a conciencia.
+
+## 4ip. 09/10: 🧾 Mis pedidos con menos letras y 🃏 Stock en fichas — EN LA RAMA
+El dueño, con la página de muestras (1, 13, 22, 28, 29, 30, 31, 33): *«la 13 no me gustó quítala, lo demás aplica»*. La 13 (el galpón
+PTF por dentro) NO se hizo. Todo solo mira: ningún número nuevo, nada se guarda en la planilla.
+- **🧾 Mis pedidos (1 + 22)**, en `misCardHtml`:
+  - el borde (un anillo `box-shadow`, para no pisar el borde izquierdo de ATC/RPT) dice cómo está: `misEstadoCard` → `ok` (✅ marcado),
+    `mal` (una línea «✗ no hay»), `debe` (saldo y no es ATC/RPT), `va`;
+  - íconos (🛏️ 📍 💵 🚚, con `title`) en vez de «PRODUCTOS / DIRECCIÓN / COBRO / CHOFER»;
+  - el camioncito en el viaje chico (`pedidoViajeHtml(p, true)`): parado en el paso de ahora, rojo si falta stock (`.para`), entra
+    andando la primera vez que se ve en la apertura (`VIAJE_VISTO`);
+  - el sello «ENTREGADO» solo con `p.entregado` (no con la fecha pasada: la tarjeta dice «⏳ No entregado» y no se contradice), con
+    golpe una vez (`MIS_SELLO_VISTO`);
+  - botones de dos por fila y uno nuevo, **💬 WhatsApp** al cliente (`misWaCliente`: 8 dígitos con 6/7 → +591; si no, no hay botón).
+- **🃏 Stock en fichas (28 + 30)**: `stockFichasHtml(conMov)` debajo de los filtros, con la MISMA lista filtrada de la tabla (el buscador
+  también filtra las fichas). Cada ficha: torrecita (PTF/Banzer/Moreno + lo que falta para `stockNecesario`, `sfTorre`), tres números
+  (hay para cargar = `stockHaySalir`, vendido sin entregar = `o.comp`, y «a pedir»/«a traer»/«en camino»/«en Moreno»), cuándo se corta
+  (`sfReloj`, con el día de la semana) y UNA acción (`sfAccion`, el mismo «Qué hacer» de la tabla con `o.fabricar`/`o.pedir`). Orden:
+  `SF_ORDEN` (urgente, traer, pedir, revisar, pedido…), después los días. Se ven 12 (o todos los urgentes) y «Ver las N que siguen».
+  ⚠️ **La tabla sigue entera**, plegada abajo (`#stk-tabla-det`, «📋 La tabla completa», cerrada de entrada, `visPref('stkTabla')`):
+  las pruebas que leen `tr[data-stock-k]` siguen andando porque el contenido está en la página.
+- **🗂️ El catálogo (29)**: `stockCatalogoHtml`, modelos × las 8 medidas más usadas, el color de la ficha y lo que hay para cargar;
+  tocar una casilla abre su historia. `<details id="stk-catalogo">`, abierto de entrada (`visPref('stkCat')`).
+- **📈 La historia (33)**: `sfElegir(k)` abre una ventana con 30 días: las salidas de cada día salen de los pedidos (`sfSalidas`, siempre);
+  la línea de lo que había sale de la hoja «Historial stock» (`histStockLeer`, solo con el servidor `2026-10-09-a`, `SF_HIST_CACHE` 10 min)
+  y lo que entró = lo que subió el saldo más lo que salió ese día.
+- **📥 El Excel del día (31)**: `confirmarImportExist` deja la foto de antes (`STOCK_DELTA_ANTES = sfFotoDe(...)`, PTF+Banzer+Moreno por
+  producto) y `renderStock` la compara (`stockDeltaTomar`): cartel «subieron N · bajaron M» y «+5»/«−3» flotando en cada ficha que cambió,
+  UNA vez por producto (`STOCK_DELTA.visto`), durante 2 minutos (`SF_DELTA_MS`).
+- `tests/test_fichas_4ip.js` (24; 21 rojas contra `7642388`); con `SHOTS=` saca las capturas.
+
 ## 4io. 09/10: 🧹 fuera el resumen de Administración — PUBLICADA 09/10 02:04 (`d94ca49`, Pages OK, run 37891579091; el dueño: «publica»)
 El dueño, con dos capturas del iPad (las fichas Pedidos/Pagados/Por cobrar/Saldo, la línea de cobros, los consolidados por
 vendedor y por día, la rendición por chofer, «Ocupación de cupos — próximos 7 días» y «Concentración por zona»): *«Al tenerlo

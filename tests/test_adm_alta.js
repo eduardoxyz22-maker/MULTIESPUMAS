@@ -126,7 +126,7 @@ const BASE = `
       await refrescarEstado();
       var idsState=STATE.map(function(p){ return p.id; });
       segSet('adm-mode','todo'); QUICK_FILTER=''; admTopeReset(); renderAdmin();
-      var filas=Array.from(document.querySelectorAll('#tbl-pedidos tbody tr')).map(function(tr){ return tr.cells[5].textContent.trim(); });
+      var filas=Array.from(document.querySelectorAll('#tbl-pedidos tbody tr')).map(function(tr){ return tr.cells[6].textContent.trim(); });
       var conteoStock=STOCK.c.u[K];
       try{ localStorage.removeItem(LS_PEND); }catch(e){}
       return { enCola:enCola, idsState:idsState, filas:filas, conteoStock:conteoStock };
