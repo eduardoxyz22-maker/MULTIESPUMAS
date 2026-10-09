@@ -7445,6 +7445,20 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4il. 09/10: 📈 barrios que crecen (el 11 de la lista) — EN LA RAMA, SIN PUBLICAR (espera «publica»)
+El dueño: *«el 11 me gusta para implementar»* (de la lista de ideas: el mapa de calor con flechas de tendencia, qué zona vende
+cada vez más). En «📍 Banzer o PTF», debajo del mapa (`#alm-tend`, `almTendHtml`) y con flechas en el mapa (`almTendFlechas`).
+- **Por ZONA ESCRITA del pedido** (`almZonaClave`; se muestra la escritura que más se repite): entregas de los últimos 30 días
+  contra las 30 de antes (`ALM_ZONA_DIAS`/2), con las MISMAS entregas de la pantalla: `almZonaData` ahora devuelve `ents` (cada
+  entrega contada, con su zona, su lado y su pin). Cuenta entregas, no unidades: una compra grande no hace crecer un barrio.
+- `almTendencias`: `crece` = +2 o más y al menos +25 % (o zona nueva); `baja` = −2 o más y al menos −20 %; `igual`; con menos de
+  `ALM_TEND_MIN`=4 entregas en 60 días no se muestra. Orden: las que crecen, de la que más entregas sumó a la que menos.
+- Cada fila: las 9 semanas en barritas (la mitad reciente en verde/rojo), «n antes → n ahora», el % y la barra PTF/Banzer de esa
+  zona. Si crece y la mayoría cae del lado de Banzer: «conviene tener más ahí». Las que crecen laten dos veces al abrir.
+- Las flechas («▲ Urubó +500%», «▼ Pampa −83%») van en el centro de los pines de la zona, solo con «Todas» y sin producto elegido:
+  la tendencia es de los 60 días, no de una semana. Sin `L.marker`/`L.divIcon` (el Leaflet de mentira de `test_banzer_ptf`) no dibuja.
+- Solo mira. `tests/test_visuales.js` §5b (5; 4 rojas contra `044f661`). Batería: 144 suites, 5.404 bien; la única roja, `test_mispedidos` (la de carga de siempre), sola da 33/33.
+
 ## 4ik. 09/10: ✨ seis vistas nuevas con los datos de verdad — PUBLICADA 09/10 00:57 (`044f661`, Pages OK, run 37886269305; el dueño: «publica lo que hay pendiente»)
 El dueño, después de ver las previas con datos inventados: *«Todo menos lo de kommo y contabilidad y cupos, y que otros gráficos
 animaciones 3D Motion grafic o que mas podemos implementar.»* Hechas la 1, 2, 3, 4, 5 y 10 de la lista; quedaron afuera la 6
