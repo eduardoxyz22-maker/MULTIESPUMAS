@@ -28988,6 +28988,23 @@ document.addEventListener('DOMContentLoaded',function(){
   initSeg('f-metodo',updateBancoVisibility);
   initSeg('f-metodo2',pintarMixto);                 // 💳 pago mixto (§4ej)
   initSeg('f-envio-cob',pintarEnvioCobrado);
+  /* 🚫 (§4jb, dueño 09/10: *«¿por qué se pone recargo por entrega si no llené nada?»*) El panel nunca escribe la plata de un
+     pedido nuevo: lo que aparece solo es el AUTOCOMPLETAR del navegador (Chrome ignora autocomplete="off" cuando elegís una
+     dirección o un contacto guardado y llena todos los campos que cree que son de esa ficha). Si un campo de plata queda
+     marcado como autocompletado (`:autofill`), se borra y se dice. Lo tipeado o pegado a mano no tiene esa marca. */
+  (function(){
+    var PLATA=['f-envio','f-acuenta','f-saldo','f-cobrado','f-monto2','f-nota'];
+    function esAuto(el){ try{ return el.matches(':autofill'); }catch(e){} try{ return el.matches(':-webkit-autofill'); }catch(e){} return false; }
+    function revisar(el){
+      if(!el || PLATA.indexOf(el.id)<0 || !esAuto(el)) return;
+      var antes=el.value; el.value=(el.id==='f-acuenta'||el.id==='f-saldo')?'0':'';
+      try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+      if(antes) toast('🚫 El navegador escribió solo «'+antes+'» en '+(el.id==='f-envio'?'Recargo por entrega':el.id==='f-nota'?'Nota de venta':'un campo de plata')+': lo borré. Escribilo a mano si corresponde.', 'err');
+    }
+    var fc=document.getElementById('view-form');
+    if(fc){ ['input','change'].forEach(function(t){ fc.addEventListener(t, function(e){ var el=e.target; setTimeout(function(){ revisar(el); }, 0); }, true); }); }
+    window.formPlataAutollenada=revisar;
+  })();
   initSeg('f-doc-tipo',setDocTipo);
   initSeg('cta-mode',setContaModo);
   initSeg('cta-base',setContaBase);

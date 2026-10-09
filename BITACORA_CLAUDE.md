@@ -7445,6 +7445,16 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jb. 09/10 (tarde): 🚫 el navegador no escribe la plata solo — EN LA RAMA
+El dueño, con la captura del formulario de Eduardo: *«¿por qué se pone "recargo por entregas" como si tuviera recargo si no llené nada?»*
+(Bs 1023 en «Recargo por entrega» de un pedido NUEVO). El panel nunca escribe plata en un pedido nuevo (`resetForm` vacía `f-envio`;
+solo `editPedido` lo llena, y ningún pedido de la planilla tiene 1023): es el **autocompletar del navegador** (Chrome ignora
+`autocomplete="off"` cuando se elige una dirección/contacto guardado y llena todo lo que cree de esa ficha).
+- En el `init`: `formPlataAutollenada` mira `input`/`change` del formulario; si `f-envio`, `f-acuenta`, `f-saldo`, `f-cobrado`,
+  `f-monto2` o `f-nota` quedan con `:autofill` (`:-webkit-autofill`), los vacía (A cuenta/Saldo a 0) y avisa «🚫 El navegador escribió
+  solo «1023» en Recargo por entrega: lo borré». Lo tipeado o pegado no tiene esa marca; los demás campos (cliente, dirección) no se tocan.
+- `tests/test_autollenado.js` (6; simula `:autofill` con `el.matches`).
+
 ## 4ja. 09/10 (tarde): 🧾 Eduardo — que no se repita la NOTA DE VENTA — EN LA RAMA
 El dueño (con la captura del formulario, Eduardo cargando para «multicenter»): *«Eduardo repite clientes, así que a él revisá que no
 repita N° de nota. Eduardo únicamente»*.
