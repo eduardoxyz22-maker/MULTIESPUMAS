@@ -7459,7 +7459,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **3 · La venta de tienda no sale de PTF**: cuenta para la rotación (es venta) pero `stockData` no la descuenta del depósito ni de Banzer, ni
   `stockSalidas`/`stockSalioVentana` la esperan en el control del Excel. Antes se descontaba dos veces (ya había salido con su RPT) y el control
   la veía como «entrada sin explicar».
-- **8 · `PROD_ALIAS`**: «SOMIER 2P HEAVEN» → SOMIER ORO. KING y FIBRA SILICONADA: el dueño no está seguro, **no** se unieron (preguntado).
+- **8 · `PROD_ALIAS`**: «SOMIER 2P HEAVEN» → SOMIER ORO. Después (dueño, 09/10 tarde): **«SOMIER 3 PLAZAS KING HEAVEN» → SOMIER ORO** (*«1 si»*,
+  180x190), y la almohada: *«son distintos productos, por eso tienen distintas medidas y códigos»* → **`PROD_ALIAS_MEDIDA`** (alias por nombre Y
+  medida, solo sin código, en `stockInfo` vía `prodAliasMedida`): «ALMOHADA (DE) FIBRA SILICONADA» 50x70 = CD1403 (así la cargan con código);
+  la de 50x90 sigue siendo la CD1459. Real: la de Carola se suma a ALMOHADA|50X70. Sin publicar todavía.
 - **7 · «✓ Ya pedí»** en «Qué hacer hoy» del Plan de stock (`planYaHtml`/`planYaPedi`): tildar anota en `STOCK.p` `{ya:1, u:o.fabricar, f:hoy,
   esp}` con `esp` FIJO al tildar (si no, el día de llegada se recalculaba con el piso de cada día y no vencía). Cuenta como en camino hasta
   `esp`; después deja de contar (`if(q.ya && stockEsperado(q,T)<hoy) return;`) y el panel vuelve a pedir si el Excel no lo muestra. Destildar el

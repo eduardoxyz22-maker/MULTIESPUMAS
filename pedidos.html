@@ -19102,8 +19102,23 @@ var PROD_ALIAS=[
   { de:/\bFORTEFLEX\b/g,                a:'FORTE FLEX' },
   { de:/\bPILLOWFLEX\b/g,               a:'PILLOW FLEX' },
   /* (§4iy, dueño 09/10: «somier 2p heaven es el somier oro») Así lo escribe ROHO; la medida va aparte (140x190). */
-  { de:/\bSOMIER\s+2\s*P\s+HEAVEN\b/g,    a:'SOMIER ORO' }
+  { de:/\bSOMIER\s+2\s*P\s+HEAVEN\b/g,    a:'SOMIER ORO' },
+  /* (§4iy, dueño 09/10: «sí», a «¿el SOMIER 3 PLAZAS KING HEAVEN de ROHO, 180x190, es el SOMIER ORO 180x190?»). */
+  { de:/\bSOMIER\s+3\s*(?:PLAZAS|P)\s+KING\s+HEAVEN\b/g, a:'SOMIER ORO' }
 ];
+/* 📏 (§4iy, dueño 09/10: «son distintos productos, por eso tienen distintas medidas y códigos») Un nombre que es DOS productos según
+   la medida: la ALMOHADA DE FIBRA SILICONADA 50x70 es la CD1403 (así la cargan con código) y la de 50x90 es la CD1459. Escrita sin
+   código, la de 50x70 quedaba en una fila aparte. Solo sin código: un código escrito manda siempre (§4cy). */
+var PROD_ALIAS_MEDIDA=[
+  { de:/^ALMOHADAS?\s+(?:DE\s+)?FIBRA\s+SILICONADA\b/, med:'50X70', cod:'CD1403' }
+];
+function prodAliasMedida(x){
+  if(!x || String(x.codigo||'').trim()) return x;
+  var d=stockNorm(x.desc), m=stockNorm(producirMedidaEtq(x.medida||''));
+  for(var i=0;i<PROD_ALIAS_MEDIDA.length;i++){ var r=PROD_ALIAS_MEDIDA[i];
+    if(r.de.test(d) && m===r.med && CODIGOS[r.cod]) return Object.assign({}, x, { codigo:r.cod }); }
+  return x;
+}
 function prodAlias(t){
   var s=String(t==null?'':t);
   for(var i=0;i<PROD_ALIAS.length;i++) s=s.replace(PROD_ALIAS[i].de, PROD_ALIAS[i].a);
@@ -19447,6 +19462,7 @@ function stockHayEnInventario(k){
 }
 var STOCK_MEMO={};   // desc|medida|código → {auto, cat, cruda}. Se calcula una vez por nombre distinto.
 function stockInfo(x){
+  x=prodAliasMedida(x);
   var raw=stockNorm(x&&x.desc)+'|'+stockNorm(x&&x.medida)+'|'+stockNorm(x&&x.codigo);
   var m=STOCK_MEMO[raw];
   if(!m){

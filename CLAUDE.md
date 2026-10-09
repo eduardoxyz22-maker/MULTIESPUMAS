@@ -711,7 +711,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Piso del tiempo de fábrica** (`stockLeadPiso`, la regla del cuadrito: 48 h + el día de recoger); muestras de menos de 2 días no cuentan.
 - **Lo dormido** (sin venta en 30 días, el mes pasado ni este) no se fabrica por «el año pasado» (`stockRangoMes`).
 - **La venta de tienda** cuenta para la rotación pero NO baja PTF/Banzer ni la espera el control del Excel (sale del stock de la tienda).
-- `PROD_ALIAS`: SOMIER 2P HEAVEN = SOMIER ORO. KING y FIBRA SILICONADA esperan al dueño.
+- `PROD_ALIAS`: SOMIER 2P HEAVEN y SOMIER 3 PLAZAS KING HEAVEN = SOMIER ORO. `PROD_ALIAS_MEDIDA` (nombre + medida, solo sin código): ALMOHADA FIBRA SILICONADA 50x70 = CD1403; la 50x90 es otra (CD1459). Esto último EN LA RAMA.
 - **«✓ Ya pedí»** en el Plan de stock: `STOCK.p` con `ya:1` y `esp` fijo; vale hasta `esp`, se poda a los 15 días. No es el botón «Pedí a fábrica».
 - **💡 Para entregar antes** (`stockAsignar` → `soltar`, `revSoltarHtml`): sugiere soltar lo apartado para un pedido más lejano. No cambia marcas.
 - Banzer fantasma y lo 🏭 en Moreno: el dueño dijo que no. `tests/test_stock_4iy.js` (23).
