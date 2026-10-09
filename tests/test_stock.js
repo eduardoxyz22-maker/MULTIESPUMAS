@@ -25,7 +25,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
-  const page = await browser.newPage({ viewport:{width:1500,height:1000} });
+  const page = await browser.newPage({ viewport:{width:1500,height:1000}, timezoneId:'America/La_Paz' });
+  /* (§4iy) El tiempo de fábrica tiene piso (48 h + recoger) que depende del día: un martes a las 10 son 3 días. Sin reloj fijo
+     esta prueba cambiaba según el día en que se corriera (viernes = 4). */
+  await page.clock.setFixedTime(new Date('2026-10-06T10:00:00-04:00'));
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   page.on('dialog',d=>d.accept());
   await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });
@@ -410,6 +413,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ si lo pedido llega DESPUÉS del corte, el corte sigue a la vista pero NO se pide dos veces', r.aviso==='pedido' && r.dias===2, r.aviso+' · corte en '+r.dias);
   r = await page.evaluate(() => {
     STOCK.p[0].esp='';
+    STOCK.p[0].f=window._adel(-3);          // (§4iy) pedido hace 3 días: una llegada el mismo día (0 días) ya no se toma como medición
     abrirStockEntrada();
     var hayInput=!!document.getElementById('stk-rec-fp1');
     recibirStockPedido('fp1');
@@ -422,7 +426,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ al marcar que llegó: se cierra el pedido, se suma al depósito (12+30) y ya no está en camino',
       r.r===r.hoy && r.entrada && r.entrada.u===30 && r.entrada.de==='fp1' && r.deposito===42 && r.enCamino===0, r.deposito+' · '+r.enCamino+' · '+JSON.stringify(r.entrada));
   chk('…y con 42 para 30 vendidos + la venta de los próximos días ya no hay nada que pedir', r.aviso==='', r.aviso);
-  chk('⚠️ …y quedó MEDIDO cuánto tardó Moreno esta vez', r.moreno.medido===true && r.moreno.n===1, JSON.stringify(r.moreno));
+  chk('⚠️ …y quedó MEDIDO cuánto tardó Moreno esta vez (3 días)', r.moreno.medido===true && r.moreno.n===1 && r.moreno.dias===3, JSON.stringify(r.moreno));
 
   // ══ 9. Cuánto tarda cada fábrica, medido ═══════════════════════════════════
   console.log('\n── 9. La fábrica tarda lo que tardó las últimas veces, no 3 fijo ──');
@@ -437,7 +441,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     return { moreno:T.de('MORENO'), multi:T.de('MULTI'), lead:eco.lead, fab:eco.fab, txt:stockFabricasTxt(T) };
   });
-  chk('⚠️ Moreno: la mediana de [0,4,4,5] días = 4 (no los 3 fijos)', r.moreno.dias===4 && r.moreno.n===4, JSON.stringify(r.moreno));
+  /* (§4iy) la primera muestra ahora es de 3 días (pedido 3 días antes de llegar; una de 0 días ya no cuenta) */
+  chk('⚠️ Moreno: la mediana de [3,4,4,5] días = 4 (no los 3 fijos)', r.moreno.dias===4 && r.moreno.n===4, JSON.stringify(r.moreno));
   chk('Multi sin medidas usa lo de la otra fábrica y lo dice', r.multi.dias===4 && r.multi.prestado===true, JSON.stringify(r.multi)+' · '+r.txt);
   chk('el ECO FLEX se pide a Moreno → cuenta con 4 días', r.lead===4 && r.fab==='MORENO', r.lead+' · '+r.fab);
   r = await page.evaluate(() => {
@@ -454,7 +459,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     v2.fecha=window._adel(4);
     return { multi:T.de('MULTI'), aviso:eco.aviso, dias:eco.dias, lead:eco.lead };
   });
-  chk('⚠️ una línea 🏭 Multiespumas sellada en la ficha mide 2 días para Multi', r.multi.dias===2 && r.multi.medido===true && r.multi.prestado===false, JSON.stringify(r.multi));
+  /* (§4iy) la medición de 2 días se toma, pero nunca baja del piso (48 h + el día de recoger = 3 un martes) */
+  chk('⚠️ una línea 🏭 Multiespumas sellada en la ficha mide 2 días para Multi → 3 con el piso', r.multi.dias===3 && r.multi.n===1 && r.multi.medido===true && r.multi.prestado===false, JSON.stringify(r.multi));
   chk('⚠️ con Moreno en 4 días, cortarse en 2 es PEDIR YA (§4ii: con lo vendido + la venta se corta antes)', r.aviso==='urgente' && r.dias===2 && r.lead===4, r.aviso+' · '+r.dias+' · fábrica '+r.lead);
   r = await page.evaluate(() => {
     /* Los sellos los pone la ficha sola: al marcar 🏭 se anota el día, al pasar a ✔ el otro. */
