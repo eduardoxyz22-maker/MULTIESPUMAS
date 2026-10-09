@@ -7445,6 +7445,35 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iz. 09/10 (tarde): 🔎 Segunda revisión del stock (dos expertos + super agente, con Fable) y 🚚 camiones con el motor prendido — EN LA RAMA
+- El dueño: *«re pasás los agentes y el mega agente para arreglar todo»* y *«cambiás a Fable para revisar»*. E1 (cuánto tener y producir) y E2
+  (almacén y flujo) con la planilla del 09/10 16:05 (`exp4/h.js`, scratchpad); el super agente reprodujo cada hallazgo y sumó S-1…S-5. Informes:
+  `scratchpad/exp4/INFORME_E1.md`, `INFORME_E2.md` (fuera del repo).
+- **Bloque «en camino / detecciones»** (E1-1, E1-2, S-3, S-5): `stockDetectadoSinAsignar(k, T)` cuenta cada detección solo contra lo pedido ANTES de
+  su corte (fecha + hora; pedido sin hora = 00:00) y nunca más que lo en camino. Antes, tildar «✓ Ya pedí 66» de la ALMOHADA 50x70 dejaba «Pedí 14 ya»
+  al lado (las 14 detectadas a la mañana). `o.detectado` se calcula ANTES de `stockProyectar`, que descuenta lo detectado de las primeras llegadas;
+  `stockProducirDe` usa `stockEnCaminoSeguro`; la revisión (`encargados`) también. El tilde, las recogidas y los pedidos nuevos guardan `t` (hora).
+  Verificado: llegada sin asignar = llegada asignada (mismo «15 días», mismo «Se corta»).
+- **Revisión automática** (E2-1, E2-2, E2-3, E2-5, E2-6, E2-8): lo marcado que no está en SU lugar se busca en los otros en el orden del dueño (PTF →
+  Banzer → IM) y se reserva de ahí ANTES que lo sin marcar (lo marcado ya lo decidió logística); se lista en `revRealojaHtml` («marcado PTF, pero 4
+  están en Banzer») sin cambiar marcas. «Sin respaldo» queda solo para lo que no hay en ningún lado (real: 17 → 12; 8 a mover). Lo 🏭 llegado y contado
+  se reserva antes de repartir (bucle fuera del «solo vacíos»). Un ✗ entra en `A.faltan` y, con stock libre, en `revNoHayConStockHtml`.
+- **El mes** (E1-6 + E1-10): `mesQueda = floor(hay + quin − consumoResto)` SIN tope en 0: lo que «15 días» ya manda a producir no se pide dos veces y
+  lo que falta antes del 1° se suma (en «Qué producir» el «queda» negativo va en rojo).
+- **Chicos**: E1-7 sin fábrica anotada, la de su marca (`o.fabLead`: Sueña → MULTI, 6 días); E1-8 `stockEsperado` corre a día hábil (domingo, feriado);
+  E1-9 `planYaHtml` lista TODOS los «Ya pedí» vigentes con fecha y llegada, y `planYaPedi(k,false,id)` saca ese; E2-7 `x.eF` (el día real del cierre)
+  manda en `stockData`, `stockSalidas` y `stockSalioVentana`; E1-3 alias «SOMIER 2 PLZ 140X190CM HEAVEN» → SOMIER ORO; E1-4 «EURO PEDIC» → EUROPEDIC.
+- **No se tocó**: E1-11 (margen sin ventas, del lado seguro), E1-12 (cosmético), E2-9 (la clave de la carga es la de los tildes), E2-10, E2-11 (refutado).
+- **Esperan al dueño** (preguntas mandadas): S-1 (NASA ALTO FREEZE DUOFLEX CH2533 y TRAVESSEIRO GELFLEX CH1244 = ALM/NASA 50x70?), «SOMIER 3P 180X190CM
+  HEAVEN» = SOMIER ORO 180?, E1-5 (ANTIALERGICO 1.5PLZ de ROHO = ESPECIAL ANTIALERGICO CH2391?), E2-4 (¿el Excel de las 10:30 ya descontó el camión AM?),
+  S-2/E1-13 (sacar del stock PANEL POCKET, PROTETOR COLCHAO, REPARACION, SERVICIO), S-4 (08-230 ✅ con fecha de mañana).
+- **🚚 Camiones** (dueño: *«ese camión debería ser una animación… con el motor prendido… el de arriba quedó pequeño… dame más opciones»*; vista previa
+  `camiones.html`, eligió *«B, C juntos y H1»*): arriba, un camión dibujado con «MULTIESPUMAS» (SVG en `.h-camion`, `h-viaje` 14 s hasta `calc(100% +
+  130px)`, humo `.hc-humo`, ruedas `.hc-rayos`); en el formulario (`fxCamionEn`) la ciudad, los árboles y la calle pasan por detrás (`.fx-ciudad`,
+  `.fx-arboles`, `.fx-calle`), tiembla, humo y ruedas; con otro día o turno caen todas las cajas (`.fx-cae`, `data-cae`), y si entra un pedido de otro
+  en el mismo turno cae solo la nueva (`el._otros`). Solo mira: los lugares son los de siempre (`.fx-slot`).
+- `tests/test_stock_4iz.js` (17; 14 rojas contra `960fdaa`), `tests/test_camiones_4iz.js` (8). `test_arriba_4iw` 1g: 40px → 130px.
+
 ## 4iy. 09/10: 📦 Stock con las respuestas del dueño a las 8 preguntas de §4ix — PUBLICADA 09/10 12:10 (`960fdaa`), Pages OK 12:11
 - El dueño: *«1. no 2. si 3. del stock de fabrica, cuando sale de la tienda ellos hacen la venta en "salio de tienda" 4. no 5. no 6. si
   7. quizas podemos arreglar eso de marcar "ya pedi" con un check… 8. somier 2p heaven es el somier oro 9. king es el heaven de 3 plazas

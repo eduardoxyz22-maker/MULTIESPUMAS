@@ -707,6 +707,16 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - `stockAsignar` devuelve `sinRespaldo` (lo marcado ✔ sin unidades) y la revisión lo lista; no toca marcas.
 - `tests/test_stock_4ix.js`.
 
+## 🔎 Segunda revisión del stock + 🚚 camiones (§4iz, 09/10 tarde, EN LA RAMA)
+- **Detecciones del Excel**: `stockDetectadoSinAsignar(k,T)` cuenta cada detección solo contra lo pedido ANTES de su corte (hora en `q.t`). ⚠️ `o.detectado`
+  va ANTES de `stockProyectar` (que descuenta lo detectado de las primeras llegadas); `stockProducirDe` y `encargados` usan `stockEnCaminoSeguro`.
+- **Revisión automática**: lo marcado que no está en su lugar se busca en PTF → Banzer → IM y se reserva antes que lo sin marcar; `realoja` /
+  `revRealojaHtml` lo dicen sin cambiar marcas. 🏭 llegado se reserva primero. ✗ en `A.faltan`; ✗ con stock libre en `noHayConStock`.
+- **El mes**: `mesQueda = floor(hay + quin − consumoResto)` SIN tope (puede ser negativo). `stockEsperado` en día hábil. `o.fabLead` (fábrica de la marca).
+  Todos los «Ya pedí» vigentes en el plan (`planYaVigentes`). `x.eF` manda en las salidas. Alias SOMIER 2 PLZ … HEAVEN y EURO PEDIC.
+- **Camiones** (dueño: *«B, C juntos y H1»*): SVG en `.h-camion` (sigue `h-viaje`); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
+- `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
+
 ## 📦 Stock con las respuestas del dueño (§4iy, 09/10, PUBLICADA 12:10, `960fdaa`)
 - **Piso del tiempo de fábrica** (`stockLeadPiso`, la regla del cuadrito: 48 h + el día de recoger); muestras de menos de 2 días no cuentan.
 - **Lo dormido** (sin venta en 30 días, el mes pasado ni este) no se fabrica por «el año pasado» (`stockRangoMes`).
