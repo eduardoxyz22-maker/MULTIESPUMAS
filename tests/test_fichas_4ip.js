@@ -14,6 +14,7 @@ let PASS=0, FAIL=0;
 const chk=(l,c,e)=>{ if(typeof c==='function'){ try{ c=!!c(); }catch(err){ c=false; } } c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+(typeof e==='string'?e:JSON.stringify(e)).slice(0,400)):''); };
 const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 const SHOTS = process.env.SHOTS || '';
+const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'/'+m[2] : ''; };
 
 (async()=>{
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
@@ -229,6 +230,30 @@ const SHOTS = process.env.SHOTS || '';
     await page.screenshot({ path:path.join(SHOTS,'f6_tabla.png') });
     await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ var e=document.getElementById('adm-lugares'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300);
     await page.screenshot({ path:path.join(SHOTS,'f7_lugares_cel.png') }); await page.setViewportSize({ width:1180, height:900 }); }
+
+  /* ══ 8. 🌡️ El termómetro en barras (§4it, dueño con la muestra 2: «¿cómo quedó o no se hizo?») ══ */
+  console.log('\n── 8. 🌡️ El termómetro de cada producto, en barras ──');
+  r = await ev(async()=>{
+    closeModal(); try{ var j=JSON.parse(localStorage.getItem('me_vis_4ik')||'{}'); delete j.termo; localStorage.setItem('me_vis_4ik', JSON.stringify(j)); }catch(e){}
+    abrirStock(); await new Promise(function(ok){ setTimeout(ok,120); });
+    var d=stockData(), oro=d.lista.filter(function(o){ return o.k===_K.oro; })[0], tit=d.lista.filter(function(o){ return o.k===_K.tit; })[0];
+    var caja=document.getElementById('stk-termo'), fila=function(k){ return caja && caja.querySelector('.tm-fila[data-k="'+k.replace(/"/g,'\\"')+'"]'); };
+    var fo=fila(_K.oro), pos=function(el){ return el ? parseFloat(el.style.left) : null; };
+    var o={ hay:!!caja, abierto:caja&&caja.open, entreFichasYCatalogo:!!(caja && document.getElementById('stk-fichas').compareDocumentPosition(caja)&4 && caja.compareDocumentPosition(document.getElementById('stk-catalogo'))&4),
+      oro:{ dias:oro.dias, corte:oro.corte, lead:oro.lead, aviso:oro.aviso, punto:pos(fo&&fo.querySelector('.tm-punto')), cami:pos(fo&&fo.querySelector('.tm-cami')), sin:fo?((fo.querySelector('.tm-sin')||{}).textContent||''):null,
+        pie:fo?((fo.querySelector('.tm-pie')||{}).textContent||''):null, nom:fo?fo.querySelector('.tm-nom').textContent:'' },
+      titEsta:!!fila(_K.tit), titDias:tit.dias, titAviso:tit.aviso, orden:caja?[].map.call(caja.querySelectorAll('.tm-fila'), function(f){ var o=d.lista.filter(function(x){ return x.k===f.getAttribute('data-k'); })[0]; return o&&o.dias!=null?o.dias:999; }):[], eje:caja?caja.querySelectorAll('.tm-dias span').length:0 };
+    return o;
+  });
+  chk('la caja «🌡️ El termómetro de cada producto» está entre las fichas y el catálogo, abierta', ()=>(r.hay && r.abierto && r.entreFichasYCatalogo), r);
+  chk('el 🔴 del ORO cae en el día que se corta (la MISMA cuenta de «⏳ Se corta el…» de su ficha)', ()=>(r.oro.dias!=null && Math.abs(r.oro.punto - r.oro.dias/17*100)<0.05 && r.oro.pie.indexOf(sfDiaTxtNode(r.oro.corte))>=0), r.oro);
+  chk('el 🚚 cae en hoy + lo que tarda la fábrica («si pedís hoy»), y entre los dos la franja «N días sin stock»', ()=>{ var n=Math.max(1,r.oro.lead); return Math.abs(r.oro.cami - n/17*100)<0.05 && (n>r.oro.dias ? r.oro.sin!==null && r.oro.pie.indexOf((n-r.oro.dias)+' día'+((n-r.oro.dias)===1?'':'s')+' sin stock')>=0 : true) && /si pedís hoy/.test(r.oro.pie); }, r.oro);
+  chk('el que se corta primero va arriba (ordenados por el día del corte)', ()=>(r.orden.length>=2 && r.orden.every(function(x,i,A){ return i===0 || A[i-1]<=x; })), r.orden);
+  chk('el TITANIO (sobra, no se corta en estos días) no ocupa lugar', ()=>(!r.titEsta), [r.titDias, r.titAviso]);
+  chk('abajo de cada nombre: hay · vendidos · por día; arriba, los días', ()=>(/hay \d+ · vendidos \d+ · [\d,]+ por día/.test(r.oro.nom) && r.eje===9), r.oro.nom);
+  if(SHOTS){ await ev(()=>{ var e=document.getElementById('stk-termo'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300); await page.screenshot({ path:path.join(SHOTS,'f8_termo.png') });
+    await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ renderStock(); var e=document.getElementById('stk-termo'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300);
+    await page.screenshot({ path:path.join(SHOTS,'f9_termo_cel.png') }); await page.setViewportSize({ width:1180, height:900 }); }
 
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

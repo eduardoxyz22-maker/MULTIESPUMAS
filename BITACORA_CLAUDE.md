@@ -7445,6 +7445,16 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — EN LA RAMA
+- El dueño, con la captura de la muestra 2: *«y el termómetro de cada producto cómo quedó o no se hizo?»*. El de §4ik eran líneas que
+  bajaban bajo el cero y se sacó en §4iq; el de la muestra (barras) no se había hecho. **`stockTermoHtml`** (`<details id="stk-termo">`,
+  entre las fichas y el catálogo, `visPref('termo')` abierta de entrada): una barra por producto sobre 17 días (`TERMO_DIAS`), verde
+  mientras alcanza, 🔴 el día que se corta (`o.corte`/`o.dias` de `stockProyectar`, la MISMA cuenta de «⏳ Se corta el…» de las fichas),
+  🚚 el día que llega (`stockTermoLlega`: lo ya pedido; si no, «si pedís hoy» = hoy + `o.lead`; lo de Moreno, hoy +
+  `STOCK_DIAS_RECOGIDA`) y la franja roja = los días SIN stock entre los dos (también escrito abajo, en rojo). Entran los que se cortan
+  en esos días o tienen aviso urgente/pedir/traer, el que se corta primero arriba, 8 y «Ver los que siguen». Solo mira.
+- `test_fichas_4ip` §8 (→ 47).
+
 ## 4is. 09/10: 🏬 el cartel de los galpones separa «pedir ya» de «pedir esta semana» — EN LA RAMA
 - El dueño, con la captura de los galpones (PTF «⚠️ 20 se acaban antes de que llegue la fábrica», Banzer «⚠️ 4…»): *«20 se acaban
   antes que llegue la fábrica?»*. Contaba juntos los avisos `urgente` («🚨 Pedir ya») y `pedir` («🏭 Pedir esta semana»), y solo los

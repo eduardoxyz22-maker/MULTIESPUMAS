@@ -661,7 +661,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   (`#fx-pasos`, hasta 1119 px desde §4ij: también el iPad parado). `tests/test_ayudas_form.js` (22).
 
 ## ✨ Seis vistas que solo miran (§4ik, 09/10; dueño: *«todo menos lo de Kommo y Contabilidad y cupos»*; PUBLICADA 09/10 00:57, `044f661`)
-🏬 galpones 3D arriba de Stock (`stockGalponesHtml`; el cartel separa «🚨 pedir ya» de «🏭 esta semana», §4is; 🌡️ el termómetro se SACÓ en §4iq: *«esto no se entiende»*), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
+🏬 galpones 3D arriba de Stock (`stockGalponesHtml`; el cartel separa «🚨 pedir ya» de «🏭 esta semana», §4is; 🌡️ el termómetro de líneas se SACÓ en §4iq: *«esto no se entiende»*, y volvió en barras como la muestra 2 en §4it: `stockTermoHtml`, `o.corte` de `stockProyectar` + `stockTermoLlega`), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
 recorrido en el Mapa de entregas (`mapaRutaPintar`, Hoy/Mañana), 🔥 semanas en Banzer o PTF (`almSemanas`) y ⭕ anillos en Mis
 pedidos (`misAnilloHtml`). Cada una sale de la cuenta que ya existe: ⚠️ el termómetro usa `stockProyectar(o, serie)` (segundo
 argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. **📍 §4iq**: la tabla de Administración y la ficha muestran de
