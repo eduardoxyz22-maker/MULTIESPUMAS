@@ -206,6 +206,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     ⚠️ `PROD_TIENDA` es **lista negra a propósito**: los colchones del catálogo casi nunca
     dicen COLCHON (TITANIO LATEX, MEMORY FLEX), así que una lista blanca no sirve.
     ⚠️ MDF lleva guarda `PROD_MUEBLE`: una **cabecera/respaldar de MDF sí se fabrica**.
+    🛍️ **Las BOLSAS (empaque) tampoco** (§4iu, dueño 09/10: *«sacalas del stock»*): `PROD_EMPAQUE=/^BOLSAS?\b/`, solo al EMPEZAR el nombre.
   - **Dos códigos son dos productos** (§4cy): un renglón del Excel con un código que
     `CODIGOS` no conoce queda con su **nombre crudo** (`stockClaveCruda`: sin medida adentro,
     sin relleno, medida aparte) y nunca se suma «por parecerse». `stockEnCatalogo` exige

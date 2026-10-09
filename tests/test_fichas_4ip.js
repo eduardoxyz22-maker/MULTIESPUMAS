@@ -255,6 +255,22 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
     await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ renderStock(); var e=document.getElementById('stk-termo'); if(e) e.scrollIntoView(); }); await page.waitForTimeout(300);
     await page.screenshot({ path:path.join(SHOTS,'f9_termo_cel.png') }); await page.setViewportSize({ width:1180, height:900 }); }
 
+  /* ══ 9. 🛍️ Las bolsas fuera del stock (dueño, 09/10: «las bolsas sacalas del stock») ══ */
+  console.log('\n── 9. 🛍️ Las bolsas no son stock ──');
+  r = await ev(async()=>{
+    var K1=stockClave({ desc:'BOLSA PARA ALMOHADAS', medida:'50x70' }), K2=stockClave({ desc:'BOLSA PARA COLCHON', medida:'140x190' });
+    STOCK.c.u[K1]=0; STOCK.c.u[K2]=1;
+    STATE.push(Object.assign({}, findById('m1'), { id:'b1', productos:[{ desc:'BOLSA PARA ALMOHADAS', medida:'50x70', cant:50 }, { desc:'BOLSA PARA COLCHON', medida:'140x190', cant:2 }] }));
+    stockOlvidarIndice(); var d=stockData();
+    var o={ k1:K1, enLista:d.lista.filter(function(x){ return /^BOLSA/.test(x.k); }).map(function(x){ return x.k; }),
+      t1:esProdDeTienda({ desc:'BOLSA PARA ALMOHADAS', medida:'50x70' }), t2:esTextoDeTienda(K2),
+      colchon:esProdDeTienda({ desc:'COLCHON RESORTES EN BOLSA', medida:'140x190' }), tit:esProdDeTienda({ desc:'TITANIO ICE', medida:'160x190' }) };
+    STATE=STATE.filter(function(p){ return p.id!=='b1'; }); delete STOCK.c.u[K1]; delete STOCK.c.u[K2]; stockOlvidarIndice();
+    return o;
+  });
+  chk('una bolsa (de pedido o del Excel) no entra al stock: ni ficha, ni «pedir», ni fábrica', ()=>(r.t1 && r.t2 && r.enLista.length===0), r);
+  chk('…solo si el nombre EMPIEZA con BOLSA: «COLCHON RESORTES EN BOLSA» y el TITANIO siguen siendo stock', ()=>(!r.colchon && !r.tit), r);
+
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close(); process.exit(FAIL?1:0);

@@ -17937,9 +17937,13 @@ function stockCuenta(p){ return !!p && !esFilaSistema(p) && !esBorrador(p) && !e
    RESPALDAR de MDF sí se fabrica: si el renglón nombra el mueble, manda el mueble. */
 var PROD_TIENDA=/\b(PROTECTOR|PROTECTORES|SABANA|SABANAS|SABANILLA|SABANILLAS|MANTA|MANTAS|FRAZADA|FRAZADAS|CUBRECAMA|CUBRECAMAS|CUBRE|CUBRES|CUBRECOLCHON|CUBRECOLCHONES|EDREDON|EDREDONES)\b/;
 var PROD_MUEBLE=/\b(CABECERA|CABECERAS|RESPALDAR|RESPALDARES)\b/;
+/* 🛍️ Las bolsas (para almohadas, para colchón) son EMPAQUE, no un producto que se venda o se mande a fabricar (dueño, 09/10: *«las
+   bolsas sacalas del stock»*): salían en «🚨 Pedir ya · × 50». Solo cuando el nombre EMPIEZA con BOLSA: un colchón que diga «… EN
+   BOLSA» en el medio sigue siendo un colchón. */
+var PROD_EMPAQUE=/^BOLSAS?\b/;
 function esTextoDeTienda(t){
   var s=stockNorm(t);
-  if(PROD_TIENDA.test(s)) return true;
+  if(PROD_TIENDA.test(s) || PROD_EMPAQUE.test(s)) return true;
   return /\bMDF\b/.test(s) && !PROD_MUEBLE.test(s);
 }
 /* 🧹 LO QUE NO ES UN PRODUCTO (§4ds). En el panel se cargan también tareas de logística

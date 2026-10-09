@@ -7445,6 +7445,13 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iu. 09/10: 🛍️ las bolsas fuera del stock — EN LA RAMA
+- El dueño, al ver «BOLSA PARA ALMOHADAS × 50» y varias «BOLSA PARA COLCHON» en «Pedir a fábrica»: *«las bolsas sacalas del
+  stock»*. Son empaque. **`PROD_EMPAQUE=/^BOLSAS?\b/`** en `esTextoDeTienda` (la misma puerta que protectores y sábanas, §4cx: ni
+  ficha, ni rotación, ni comprometido, ni fábrica, ni unidades de la proyección), solo si el nombre EMPIEZA con BOLSA: un colchón
+  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: se le preguntó al dueño.
+- `test_fichas_4ip` §9 (→ 49).
+
 ## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 09:28 (`71111be`), Pages OK 09:29
 - El dueño, con la captura de la muestra 2: *«y el termómetro de cada producto cómo quedó o no se hizo?»*. El de §4ik eran líneas que
   bajaban bajo el cero y se sacó en §4iq; el de la muestra (barras) no se había hecho. **`stockTermoHtml`** (`<details id="stk-termo">`,
