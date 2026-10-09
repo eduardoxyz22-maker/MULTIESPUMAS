@@ -657,7 +657,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   `#fx-der` (el pedido en vivo: productos con su estado, suma, «Para guardar», hoy y el mes) a los costados, `sticky`. «Para
   guardar» es solo una ayuda: las validaciones siguen en `submitPedido`. Más angosto no cambia nada.
 - `tests/test_escenas_form.js` (23).
-- **🧰 Más ayudas (§4ih, PUBLICADA 08/10 17:56, `e533511`)**: ¿pedido repetido? (`#fx-dup`, pregunta al guardar), buscar el producto por nombre con el
+- **🧰 Más ayudas (§4ih, PUBLICADA 08/10 17:56, `e533511`)**: ¿pedido repetido? (`#fx-dup`, pregunta al guardar; **para Eduardo SOLO la nota de venta repetida**, en toda la planilla, `fxDupNotaBuscar`, §4ja, EN LA RAMA — dueño: *«Eduardo repite clientes… Eduardo únicamente»*), buscar el producto por nombre con el
   saldo (`#fx-busca`, reemplaza el `datalist` de `.prod-desc`), el mapita de la ubicación (`#fx-mapa`) y los pasos en el celular
   (`#fx-pasos`, hasta 1119 px desde §4ij: también el iPad parado). `tests/test_ayudas_form.js` (22).
 

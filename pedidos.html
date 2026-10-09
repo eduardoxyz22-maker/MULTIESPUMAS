@@ -11770,9 +11770,27 @@ function fxGuardado(rec){
    Mismo celular (los últimos 8 números) o el mismo nombre (6 letras o más), en un pedido que se entrega desde hace 7 días en
    adelante o que se cargó en los últimos 7. Solo en un pedido NUEVO de tipo OC y no para Eduardo ni ROHO (Multicenter hace
    varios pedidos el mismo día a propósito). Avisa mientras se escribe (`#fx-dup`) y pregunta al guardar (`fxDupConfirmar`). */
+/* 🧾 Eduardo (dueño, 09/10: *«Eduardo repite clientes, así que a él revisá que no repita el N° de nota. Eduardo únicamente»*):
+   Multicenter le compra varias veces, así que el cliente no dice nada; lo que no se puede repetir es la NOTA DE VENTA. Se busca
+   en toda la planilla (sin ventana de días), también al editar (sin contar el propio pedido) y en la venta de tienda. ROHO sigue
+   sin aviso. `fxNotaClave`: solo los números, sin ceros adelante («0032525» = «32525»). */
+function fxNotaClave(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
+function fxDupNotaBuscar(){
+  if(docTipoSel()!=='OC') return [];
+  var nk=fxNotaClave((document.getElementById('f-nota')||{}).value);
+  if(!nk) return [];
+  var out=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || (EDIT_ID && String(p.id)===String(EDIT_ID)) || esFilaSistema(p) || borradorDe(p.id) || esATC(p.oc) || esRPT(p.oc)) return;
+    if(fxNotaClave(p.nota)===nk) out.push({ p:p, porNota:true });
+  });
+  out.sort(function(a,b){ return String(b.p.fecha||'').localeCompare(String(a.p.fecha||'')); });
+  return out.slice(0,4);
+}
 function fxDupBuscar(){
-  if(EDIT_ID || VENTA_TIENDA || docTipoSel()!=='OC') return [];
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  if(mismoVendedor(val('f-vendedor'),'Eduardo Añez')) return fxDupNotaBuscar();
+  if(EDIT_ID || VENTA_TIENDA || docTipoSel()!=='OC') return [];
   if(esVendedorLite(val('f-vendedor'))) return [];
   var cel=val('f-celular').replace(/\D/g,''), c8=cel.length>=7?cel.slice(-8):'', cli=normNombre(val('f-cliente'));
   if(!c8 && cli.length<6) return [];
@@ -11788,15 +11806,17 @@ function fxDupBuscar(){
 }
 function fxDupTxt(d){
   var p=d.p, f=p.fecha?(['dom','lun','mar','mié','jue','vie','sáb'][dowDe(p.fecha)]+' '+p.fecha.slice(8,10)+'/'+p.fecha.slice(5,7)):'sin fecha';
-  return (ocEtiq(p.oc)||'pedido')+' · '+(p.cliente||'')+' · entrega '+f+(turnoDe(p)?(' '+turnoDe(p)):'')+' · '+(p.vendedor||'')+(p.entregado?' · ✅ entregado':'');
+  return (ocEtiq(p.oc)||'pedido')+(d.porNota?(' · Nota '+(p.nota||'')):'')+' · '+(p.cliente||'')+' · entrega '+f+(turnoDe(p)?(' '+turnoDe(p)):'')+' · '+(p.vendedor||'')+(p.entregado?' · ✅ entregado':'');
 }
 function fxDupPintar(){
   var el=document.getElementById('fx-dup'); if(!el) return;
   var L; try{ L=fxDupBuscar(); }catch(e){ L=[]; }
   if(!L.length){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; el._h=''; } return; }
+  var nota=L.some(function(d){ return d.porNota; });
   var por=L.some(function(d){ return d.porCel; }) ? 'este celular' : 'este cliente';
-  var h='<b>⚠️ Ojo: '+por+' ya tiene '+(L.length===1?'un pedido':(L.length+' pedidos'))+' de estos días.</b> ¿Es otra compra o es el mismo pedido?'+
-    L.map(function(d){ return '<div class="fx-dup-r"><span>'+esc(fxDupTxt(d))+(d.porCel?'':' <i>(mismo nombre)</i>')+'</span><button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(d.p.id))+'\')">👀 Ver</button></div>'; }).join('');
+  var h=(nota ? '<b>⚠️ Ojo: la nota de venta '+esc(String((document.getElementById('f-nota')||{}).value||'').trim())+' ya está cargada'+(L.length>1?(' en '+L.length+' pedidos'):'')+'.</b> Revisá el número: cada nota va en un solo pedido.'
+              : '<b>⚠️ Ojo: '+por+' ya tiene '+(L.length===1?'un pedido':(L.length+' pedidos'))+' de estos días.</b> ¿Es otra compra o es el mismo pedido?')+
+    L.map(function(d){ return '<div class="fx-dup-r"><span>'+esc(fxDupTxt(d))+(d.porCel||d.porNota?'':' <i>(mismo nombre)</i>')+'</span><button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(d.p.id))+'\')">👀 Ver</button></div>'; }).join('');
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
   el.hidden=false;
 }
@@ -11804,9 +11824,12 @@ var FX_DUP_OK='';
 function fxDupConfirmar(){
   var L; try{ L=fxDupBuscar(); }catch(e){ return true; }
   if(!L.length) return true;
-  var firma=L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'');
+  var firma=L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'')+'|'+String((document.getElementById('f-nota')||{}).value||'');
   if(FX_DUP_OK===firma) return true;
-  var si=confirm('⚠️ ¿PEDIDO REPETIDO?\n\n'+(L.some(function(d){ return d.porCel; })?'Este celular':'Este cliente')+' ya tiene:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
+  var si=L.some(function(d){ return d.porNota; }) ?
+    confirm('⚠️ ¿NOTA DE VENTA REPETIDA?\n\nLa nota '+String((document.getElementById('f-nota')||{}).value||'').trim()+' ya está en:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
+      '\n\nCada nota va en un solo pedido. Si te equivocaste de número, cancelá y corregilo.\n\n• Aceptar: guardar igual.\n• Cancelar: volver sin guardar.') :
+    confirm('⚠️ ¿PEDIDO REPETIDO?\n\n'+(L.some(function(d){ return d.porCel; })?'Este celular':'Este cliente')+' ya tiene:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
     '\n\nSi es OTRA compra, guardalo igual. Si es el mismo pedido, cancelá y corregí el que ya está (así no salen dos camiones).\n\n• Aceptar: guardar este pedido nuevo.\n• Cancelar: volver sin guardar.');
   if(si){ FX_DUP_OK=firma; return true; }
   fxDupPintar(); var el=document.getElementById('fx-dup'); if(el){ try{ el.scrollIntoView({block:'center'}); }catch(e){} }
