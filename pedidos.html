@@ -11565,7 +11565,14 @@ function fxCamionEn(el){
       '<path class="fx-haz" d="M500 126 L520 112 L520 152 L500 138 z" fill="url(#fx-haz-'+id+')"/>'+
       [80,128,300,452].map(rueda).join('')+
     '</g></svg>';
-  if(otroDia) el.querySelectorAll('[data-cae]').forEach(function(g){ g.setAttribute('class','fx-cae'); g.style.animationDelay=g.getAttribute('data-cae')+'s'; });
+  /* Otro día o turno: caen todas. Mismo día y turno con más pedidos de otros (lo cargó alguien recién): cae solo la caja nueva. */
+  var antes=el._otros, desde=otroDia ? 0 : (antes!=null && otros>antes ? antes : -1);
+  el._otros=otros;
+  if(desde>=0) el.querySelectorAll('[data-cae]').forEach(function(g, j){
+    var slot=g.querySelector('.fx-slot'), esTuyo=slot && /\btuyo\b/.test(slot.getAttribute('class')||'');
+    if(!otroDia && (esTuyo || j<desde)) return;
+    g.setAttribute('class','fx-cae'); g.style.animationDelay=(otroDia ? g.getAttribute('data-cae') : ((j-desde)*0.28+0.1).toFixed(2))+'s';
+  });
   if(otroDia){ var g=el.querySelector('.fx-cam-g'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(g) g.style.transform='translateX(0)'; }); }); }
 }
 /* 5 · Lo vendido en el mes por una vendedora (fecha de carga, sin ATC ni RPT). */
