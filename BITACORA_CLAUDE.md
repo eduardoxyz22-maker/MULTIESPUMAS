@@ -7445,6 +7445,29 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4im. 09/10: 🚛🏆📅🔔🌅🛤️ seis vistas más (de la página de muestras) — EN LA RAMA
+El dueño, con la página de muestras abierta: *«implementa todo menos a,c,d, me gusta la B y la salud del día es solo para
+administración al poner la clave cierto?»* (A = tarjeta que se da vuelta, C = colchón 3D, D = semana en torres: NO).
+Todo SOLO MIRA: no cambia cupos, stock, tildes ni la planilla, salvo los tildes de la carga, que son los de siempre.
+- **🚛 Camión cargándose** (Lista de carga, arriba de cada camión, `.cc-lugar`): `cargaCamionCuenta(cam)` suma el `data-u` de
+  los tildes ya puestos (cada checkbox lleva sus unidades; 0 si el renglón no va); `cargaCamionSvg` dibuja 12 lugares y
+  «🚛 X de Y bultos» / «✅ Cargado entero»; `cargaCamionTildo(el)` lo repinta al tildar (después de `setCargaChk`).
+- **🏆 Ranking** (Stock, debajo de los galpones, `<details id="vis-rank">`): `stockRankingDatos()` = unidades entregadas por
+  producto en ventanas de 7 días, `RANK_SEMANAS`=6, los `RANK_TOPE`=8 que más salieron, con las reglas de la rotación
+  (`stockCuenta`, sin `stockPedidoUnico`, sin `esProdDeTienda`). ▶ recorre las semanas y las barras cambian de lugar con ▲/▼.
+- **📅 Calendario de entregas** (Administración, `#adm-cal` ARRIBA de los camiones: `#carga-viva` sigue pegado al resumen, §4ib, cerrado de entrada, pref `cal`):
+  `admCalDatos(ym)` cuenta AM/PM por día (sin sistema, borradores ni tienda); día cerrado rayado («sin camión», o «n ⚠️» si
+  igual tiene pedidos), lleno marcado; tocar un día dice AM n/lim y PM, y «Ver ese día» abre Administración en ese día.
+- **🔔 Avisos con movimiento** (Stock): `stockAvisosNuevos` compara con lo guardado en el aparato (`me_vis_avisos`; la primera
+  vez solo guarda) y dice qué productos pasaron a 🚨/🏭 desde la última vez; cartel con campana + la fila late (`stk-late`).
+- **🌅 Salud del día** (SOLO con la clave de Administración): `saludDatos()` = entregas de hoy, stock sin urgencias, cupos del
+  próximo día con camión, lo que llega de fábrica hoy. Sale una vez por mañana y por aparato al poner la clave
+  (`me_salud_dia`, se cierra sola a los 9 s) y con el botón «🌅 Salud del día».
+- **🛤️ El viaje del pedido** (B; Mis pedidos, en la tarjeta chica y en la ficha): Cargado → Mercadería (sin stock / en
+  producción / a recoger / lista / sin revisar) → fecha → En camino → Entregado (`pedidoViajeDatos`/`pedidoViajeHtml`). Una
+  fecha pasada cuenta como entregado (§4co, los choferes no marcan).
+- `tests/test_vistas_4im.js` (29; 26 rojas contra `bf34dab`); con `SHOTS=1` saca las capturas.
+
 ## 4in. 09/10: 📚 la hoja «Historial stock» (servidor `2026-10-09-a`) — EN LA RAMA, el servidor lo implementa el dueño
 El dueño: *«publica y armá la hoja de historial»* (después de preguntar cuántos días se pueden guardar sin llenar la celda).
 - **Por qué aparte**: `__stock__` vive en UNA celda de «Pedidos» (50.000 letras, ~22.000 usadas): ahí entran 3 días de control.
