@@ -226,7 +226,8 @@ const BASE = `
       abrirStock(); var el=document.getElementById('producir'); var cabecera=el?el.textContent.replace(/\s+/g,' '):''; closeStock();
       return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,520) };
     }, BASE);
-    chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6 && r.sin.mes>0, J(r.sin));
+    /* (§4iz, E1-6) «mes>0» se fue: el 20/09 lo que «15 días» manda a producir ya llega en octubre y el mes no lo vuelve a pedir. */
+    chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6, J(r.sin));
     chk('⚠️ una venta única de 40 de EDUARDO a otro cliente en agosto no cambia «producir el mes que viene» (antes subía de 9 a 24)', r.conEdu.idx===6 && r.conEdu.mes===r.sin.mes && r.conEdu.mesNec===r.sin.mesNec && r.conEdu.v30===r.sin.v30, 'sin: '+J(r.sin)+' · con Eduardo: '+J(r.conEdu));
     /* Números exactos: una compra única de 40 en agosto lleva octubre de 9 a 24 (60 d 8,7 → 29,1 · 90 d 12,2 → 25,8, y la
        mediana salta a la tendencia). Por eso el dueño NO carga al panel las compras grandes y sueltas (§4gm).

@@ -74,6 +74,46 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
   });
   chk('no avisa para Eduardo/ROHO (Multicenter), ni en una ATC, ni al corregir el mismo pedido', r.edu && r.atc && r.edit, r);
 
+  /* ── 4b. Eduardo: la NOTA DE VENTA no se repite (dueño, 09/10: «Eduardo repite clientes… que no repita N° de nota. Eduardo únicamente») ── */
+  console.log('\n── 4b. Eduardo: nota de venta repetida ──');
+  r = await ev(async()=>{
+    var p=window._SRV.pedidos.filter(function(x){ return x.cliente==='CLIENTE MF2'; })[0]; p.nota='32525';
+    STATE.forEach(function(q){ if(q.id===p.id) q.nota='32525'; });
+    closeModal(); showView('form'); resetForm();
+    var s=function(id,v){ var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); };
+    var dup=function(){ var e=document.getElementById('fx-dup'); return e.hidden?'':e.innerText.replace(/\s+/g,' '); };
+    s('f-vendedor','Eduardo Añez'); s('f-cliente','multicenter'); s('f-nota','32524'); await _esperar(300);
+    var otra=dup();
+    s('f-nota','32525'); await _esperar(300);
+    var igual=dup();
+    s('f-nota','032525'); await _esperar(300);
+    var ceros=dup();
+    s('f-vendedor','ROHO'); s('f-nota','32525'); await _esperar(300);
+    var roho=dup();
+    s('f-vendedor','Maria Flores'); s('f-cliente','CLIENTE NUEVO'); s('f-nota','32525'); await _esperar(300);
+    var maria=dup();
+    editPedido(p.id); await _esperar(400); s('f-vendedor','Eduardo Añez'); await _esperar(300);
+    var propio=dup();
+    resetForm();
+    return { otra:otra, igual:igual, ceros:ceros, roho:roho, maria:maria, propio:propio };
+  });
+  chk('Eduardo con otra nota: nada (aunque Multicenter tenga pedidos)', r.otra==='', r);
+  chk('Eduardo con una nota ya cargada: aviso «la nota de venta 32525 ya está cargada» con el pedido y su nota', /nota de venta 32525 ya está cargada/.test(r.igual) && /CLIENTE MF2/.test(r.igual) && /Nota 32525/.test(r.igual), r);
+  chk('«032525» es la misma nota (sin ceros adelante)', /ya está cargada/.test(r.ceros), r);
+  chk('solo Eduardo: ROHO y las vendedoras no reciben el aviso de la nota', r.roho==='' && r.maria==='', r);
+  chk('al corregir el mismo pedido no se avisa contra sí mismo', r.propio==='', r);
+  await ev(()=>{ closeModal(); showView('form'); resetForm(); });
+  await set('f-vendedor','Eduardo Añez'); await set('f-cliente','multicenter'); await set('f-nota','32525');
+  await ev(()=>{ _prod(0,'CH1129',1); var f=document.getElementById('f-fecha'); f.value='2026-10-13'; f.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('f-zona').value='Norte'; });
+  await page.waitForTimeout(400);
+  page._resp=false; page._dialogos=[];
+  const n1 = await ev(()=>window._saves.length);
+  await page.click('#f-submit'); await page.waitForTimeout(1200);
+  r = await ev(()=>window._saves.length);
+  chk('al guardar pregunta «¿NOTA DE VENTA REPETIDA?»; Cancelar no guarda', page._dialogos.some(m=>/NOTA DE VENTA REPETIDA/.test(m) && /CLIENTE MF2/.test(m)) && r===n1, { d:page._dialogos, r, n1 });
+  page._resp=true; page._dialogos=[];
+  await ev(()=>{ closeModal(); showView('form'); resetForm(); });
+
   /* ── 2. Buscar el producto por nombre ── */
   console.log('\n── 2. Buscar el producto por nombre ──');
   await page.click('#f-productos .prod-desc'); await page.keyboard.type('semiort 140', {delay:20}); await page.waitForTimeout(500);

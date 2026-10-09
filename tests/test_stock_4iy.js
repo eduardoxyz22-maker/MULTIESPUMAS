@@ -5,7 +5,8 @@
    2. (4 «no») Para el mes que viene no se fabrica lo que no se vendió en 30 días, ni el mes pasado, ni en este, aunque el
       año pasado sí se vendió.
    3. (3) La venta de tienda («SALIÓ DE TIENDA») cuenta para la rotación pero NO baja PTF: sale del stock de la tienda.
-   4. (8) «SOMIER 2P HEAVEN» es el SOMIER ORO.
+   4. (8) «SOMIER 2P HEAVEN» y «SOMIER 3 PLAZAS KING HEAVEN» son el SOMIER ORO; la almohada de fibra siliconada 50x70 sin código es
+      la CD1403 (la de 50x90 es otra).
    5. (7) «✓ Ya pedí»: tildar anota lo pedido, deja de pedirse hasta el día en que tendría que llegar y vuelve después;
       destildar lo saca; la poda lo tira a los 15 días si nunca llegó.
    6. (2 «sí») Lo apartado para un pedido lejano se sugiere soltar para uno más cercano que quedó sin stock. Solo sugiere.
@@ -91,6 +92,15 @@ const PREP = `
     otro: stockClave({desc:'SOMIER 2P HEAVEN', medida:'140x190'})!==stockClave({desc:'SOMIER PLATA', medida:'140x190'})
   }));
   chk('4. «SOMIER 2P HEAVEN» = SOMIER ORO (y no otro somier)', r4.oro && r4.otro, r4);
+  const r4b = await page.evaluate(()=>({
+    king: stockClave({desc:'SOMIER 3 PLAZAS KING HEAVEN', medida:'180x190'})===stockClave({desc:'SOMIER ORO', medida:'180x190'}),
+    f70: stockClave({desc:'ALMOHADA FIBRA SILICONADA', medida:'50x70'})===stockClave({codigo:'CD1403', desc:'ALMOHADA', medida:'50x70'}),
+    f70b: stockClave({desc:'ALMOHADAS DE FIBRA SILICONADA', medida:'50X70'})===stockClave({codigo:'CD1403'}),
+    f90: stockClave({desc:'ALMOHADA FIBRA SILICONADA', medida:'50x90'})!==stockClave({codigo:'CD1403'}),
+    cod: stockClave({codigo:'CD1459', desc:'ALMOHADA FIBRA SILICONADA', medida:'50x90'})!==stockClave({codigo:'CD1403'})
+  }));
+  chk('4b. «SOMIER 3 PLAZAS KING HEAVEN» 180x190 = SOMIER ORO 180x190', r4b.king, r4b);
+  chk('4c. «ALMOHADA (DE) FIBRA SILICONADA» 50x70 sin código = CD1403; la de 50x90 sigue siendo otra', r4b.f70 && r4b.f70b && r4b.f90 && r4b.cod, r4b);
 
   // 5. ✓ Ya pedí
   const r5 = await page.evaluate(()=>{

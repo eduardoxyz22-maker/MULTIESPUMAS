@@ -7445,6 +7445,60 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jb. 09/10 (tarde): 🚫 el navegador no escribe la plata solo — EN LA RAMA
+El dueño, con la captura del formulario de Eduardo: *«¿por qué se pone "recargo por entregas" como si tuviera recargo si no llené nada?»*
+(Bs 1023 en «Recargo por entrega» de un pedido NUEVO). El panel nunca escribe plata en un pedido nuevo (`resetForm` vacía `f-envio`;
+solo `editPedido` lo llena, y ningún pedido de la planilla tiene 1023): es el **autocompletar del navegador** (Chrome ignora
+`autocomplete="off"` cuando se elige una dirección/contacto guardado y llena todo lo que cree de esa ficha).
+- En el `init`: `formPlataAutollenada` mira `input`/`change` del formulario; si `f-envio`, `f-acuenta`, `f-saldo`, `f-cobrado`,
+  `f-monto2` o `f-nota` quedan con `:autofill` (`:-webkit-autofill`), los vacía (A cuenta/Saldo a 0) y avisa «🚫 El navegador escribió
+  solo «1023» en Recargo por entrega: lo borré». Lo tipeado o pegado no tiene esa marca; los demás campos (cliente, dirección) no se tocan.
+- `tests/test_autollenado.js` (6; simula `:autofill` con `el.matches`).
+
+## 4ja. 09/10 (tarde): 🧾 Eduardo — que no se repita la NOTA DE VENTA — EN LA RAMA
+El dueño (con la captura del formulario, Eduardo cargando para «multicenter»): *«Eduardo repite clientes, así que a él revisá que no
+repita N° de nota. Eduardo únicamente»*.
+- `fxDupBuscar` (§4ih): si el vendedor es Eduardo (`mismoVendedor(…,'Eduardo Añez')`) va por **`fxDupNotaBuscar`**: la nota del
+  formulario contra TODA la planilla (sin ventana de días: una nota no se repite nunca), sin filas del sistema, borradores de Kommo,
+  ATC ni RPT; también al editar (sin contar el propio pedido) y en la venta de tienda. `fxNotaClave` = solo los números y sin ceros
+  adelante («032525» = «32525»). Aviso ámbar en `#fx-dup` («la nota de venta N ya está cargada… cada nota va en un solo pedido») y al
+  guardar `confirm` «¿NOTA DE VENTA REPETIDA?» (Aceptar guarda igual: nunca frena).
+- **Solo Eduardo**: ROHO sigue sin aviso, y las vendedoras siguen con el de siempre (mismo celular o nombre en estos días), sin la nota.
+- `test_ayudas_form` §4b (6 nuevas; 28/0).
+
+## 4iz. 09/10 (tarde): 🔎 Segunda revisión del stock (dos expertos + super agente, con Fable) y 🚚 camiones con el motor prendido — EN LA RAMA
+- El dueño: *«re pasás los agentes y el mega agente para arreglar todo»* y *«cambiás a Fable para revisar»*. E1 (cuánto tener y producir) y E2
+  (almacén y flujo) con la planilla del 09/10 16:05 (`exp4/h.js`, scratchpad); el super agente reprodujo cada hallazgo y sumó S-1…S-5. Informes:
+  `scratchpad/exp4/INFORME_E1.md`, `INFORME_E2.md` (fuera del repo).
+- **Bloque «en camino / detecciones»** (E1-1, E1-2, S-3, S-5): `stockDetectadoSinAsignar(k, T)` cuenta cada detección solo contra lo pedido ANTES de
+  su corte (fecha + hora; pedido sin hora = 00:00) y nunca más que lo en camino. Antes, tildar «✓ Ya pedí 66» de la ALMOHADA 50x70 dejaba «Pedí 14 ya»
+  al lado (las 14 detectadas a la mañana). `o.detectado` se calcula ANTES de `stockProyectar`, que descuenta lo detectado de las primeras llegadas;
+  `stockProducirDe` usa `stockEnCaminoSeguro`; la revisión (`encargados`) también. El tilde, las recogidas y los pedidos nuevos guardan `t` (hora).
+  Verificado: llegada sin asignar = llegada asignada (mismo «15 días», mismo «Se corta»).
+- **Revisión automática** (E2-1, E2-2, E2-3, E2-5, E2-6, E2-8): lo marcado que no está en SU lugar se busca en los otros en el orden del dueño (PTF →
+  Banzer → IM) y se reserva de ahí ANTES que lo sin marcar (lo marcado ya lo decidió logística); se lista en `revRealojaHtml` («marcado PTF, pero 4
+  están en Banzer») sin cambiar marcas. «Sin respaldo» queda solo para lo que no hay en ningún lado (real: 17 → 12; 8 a mover). Lo 🏭 llegado y contado
+  se reserva antes de repartir (bucle fuera del «solo vacíos»). Un ✗ entra en `A.faltan` y, con stock libre, en `revNoHayConStockHtml`.
+- **El mes** (E1-6 + E1-10): `mesQueda = floor(hay + quin − consumoResto)` SIN tope en 0: lo que «15 días» ya manda a producir no se pide dos veces y
+  lo que falta antes del 1° se suma (en «Qué producir» el «queda» negativo va en rojo).
+- **Chicos**: E1-7 sin fábrica anotada, la de su marca (`o.fabLead`: Sueña → MULTI, 6 días); E1-8 `stockEsperado` corre a día hábil (domingo, feriado);
+  E1-9 `planYaHtml` lista TODOS los «Ya pedí» vigentes con fecha y llegada, y `planYaPedi(k,false,id)` saca ese; E2-7 `x.eF` (el día real del cierre)
+  manda en `stockData`, `stockSalidas` y `stockSalioVentana`; E1-3 alias «SOMIER 2 PLZ 140X190CM HEAVEN» → SOMIER ORO; E1-4 «EURO PEDIC» → EUROPEDIC.
+- **No se tocó**: E1-11 (margen sin ventas, del lado seguro), E1-12 (cosmético), E2-9 (la clave de la carga es la de los tildes), E2-10, E2-11 (refutado).
+- **Respuestas del dueño (09/10 tarde)**: *«2. sí 3. sí 4 lo consulto 5. sí 6 consulto»*. Hecho: «SOMIER 3P 180X190CM HEAVEN» → SOMIER ORO (el alias
+  del KING ahora acepta 3P/3 PLZ/3 PLAZAS con la medida en el medio); «COLCHON ANTIALERGICO 1.5PLZ … HEAVEN» → ESPECIAL ANTIALERGICO (solo la forma de
+  ROHO que termina en HEAVEN; el JUNIOR sigue aparte, §4cz); `PROD_NO_ES_STOCK` en `esTextoDeTienda`: PROTETOR/PRROTETOR, ^PANEL, ^REPARACION, ^SERVICIO.
+  Después: *«1 no»* (las NASA de PTF NO son la ALM/NASA 50x70: siguen aparte) y *«si tú ya sabes las medidas, roho somier Heaven es el oro»* →
+  UN alias para todo «SOMIER <plazas> … HEAVEN» (2P, 2 PLZ, 2.5P, 3P, 3 PLAZAS KING, 3.5P) → SOMIER ORO; sin medida la dan las plazas
+  (`medidaDeTexto`: 2.5P = 160x190). Real: ya no queda ninguna fila «SOMIER HEAVEN». Esperan: E2-4 y S-4 (los consulta).
+- **🚚 Camiones** (dueño: *«ese camión debería ser una animación… con el motor prendido… el de arriba quedó pequeño… dame más opciones»*; vista previa
+  `camiones.html`, eligió *«B, C juntos y H1»* y después aclaró *«B y C / H3, creo que ya te había dicho»*): arriba (H3), un camión dibujado con «MULTIESPUMAS»,
+  más grande (140×65, 104×48 en el celular; `.h-ruta` 62 px), que entra, frena en el medio con el motor prendido (`h-viaje` 14 s, quieto entre el 30% y
+  el 62% en `calc(50% - 70px)`) y sigue a la izquierda hasta `calc(100% + 160px)` (SVG en `.h-camion`, humo `.hc-humo`, ruedas `.hc-rayos`); en el formulario (`fxCamionEn`) la ciudad, los árboles y la calle pasan por detrás (`.fx-ciudad`,
+  `.fx-arboles`, `.fx-calle`), tiembla, humo y ruedas; con otro día o turno caen todas las cajas (`.fx-cae`, `data-cae`), y si entra un pedido de otro
+  en el mismo turno cae solo la nueva (`el._otros`). Solo mira: los lugares son los de siempre (`.fx-slot`).
+- `tests/test_stock_4iz.js` (17; 14 rojas contra `960fdaa`), `tests/test_camiones_4iz.js` (8). `test_arriba_4iw` 1g: 40px → 130px.
+
 ## 4iy. 09/10: 📦 Stock con las respuestas del dueño a las 8 preguntas de §4ix — PUBLICADA 09/10 12:10 (`960fdaa`), Pages OK 12:11
 - El dueño: *«1. no 2. si 3. del stock de fabrica, cuando sale de la tienda ellos hacen la venta en "salio de tienda" 4. no 5. no 6. si
   7. quizas podemos arreglar eso de marcar "ya pedi" con un check… 8. somier 2p heaven es el somier oro 9. king es el heaven de 3 plazas
@@ -7459,7 +7513,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **3 · La venta de tienda no sale de PTF**: cuenta para la rotación (es venta) pero `stockData` no la descuenta del depósito ni de Banzer, ni
   `stockSalidas`/`stockSalioVentana` la esperan en el control del Excel. Antes se descontaba dos veces (ya había salido con su RPT) y el control
   la veía como «entrada sin explicar».
-- **8 · `PROD_ALIAS`**: «SOMIER 2P HEAVEN» → SOMIER ORO. KING y FIBRA SILICONADA: el dueño no está seguro, **no** se unieron (preguntado).
+- **8 · `PROD_ALIAS`**: «SOMIER 2P HEAVEN» → SOMIER ORO. Después (dueño, 09/10 tarde): **«SOMIER 3 PLAZAS KING HEAVEN» → SOMIER ORO** (*«1 si»*,
+  180x190), y la almohada: *«son distintos productos, por eso tienen distintas medidas y códigos»* → **`PROD_ALIAS_MEDIDA`** (alias por nombre Y
+  medida, solo sin código, en `stockInfo` vía `prodAliasMedida`): «ALMOHADA (DE) FIBRA SILICONADA» 50x70 = CD1403 (así la cargan con código);
+  la de 50x90 sigue siendo la CD1459. Real: la de Carola se suma a ALMOHADA|50X70. Sin publicar todavía.
 - **7 · «✓ Ya pedí»** en «Qué hacer hoy» del Plan de stock (`planYaHtml`/`planYaPedi`): tildar anota en `STOCK.p` `{ya:1, u:o.fabricar, f:hoy,
   esp}` con `esp` FIJO al tildar (si no, el día de llegada se recalculaba con el piso de cada día y no vencía). Cuenta como en camino hasta
   `esp`; después deja de contar (`if(q.ya && stockEsperado(q,T)<hoy) return;`) y el panel vuelve a pedir si el Excel no lo muestra. Destildar el

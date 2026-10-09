@@ -85,7 +85,8 @@ function PREPARAR(){
       codPTF:STOCK.c.cod.CH2531, codIM:STOCK.g[window._IM].cod.CH2531,
       dif:d, txt:div.innerText.replace(/\s+/g,' ').trim(),
       det:(STOCK.det||[]).map(function(x){ return { k:x.k, t:x.t, u:x.u, an:!!x.an }; }),
-      sinAsignar:stockDetectadoSinAsignar(window._CAT),
+      /* (§4iz) `stockDetectadoSinAsignar` ahora cuenta solo lo que puede ser un pedido pendiente (acá no hay): se mide la detección cruda. */
+      sinAsignar:(STOCK.det||[]).filter(function(x){ return x && x.k===window._CAT && !x.alm && !x.an; }).reduce(function(a,x){ return a+(Number(x.u)||0); },0),
       sm:(STOCK.sm||[]).map(function(x){ return { k:x.k, u:x.u, an:!!x.an }; }),
       parrilla:stockClave({ codigo:'CH1297', desc:'SOMIER PARRILLA NEGRO', medida:'140x190' }),
       negro:stockClave({ codigo:'SR2012', desc:'SOMIER NEGRO', medida:'140x190' })
