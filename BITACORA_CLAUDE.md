@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ik. 09/10: ✨ seis vistas nuevas con los datos de verdad — EN LA RAMA, SIN PUBLICAR (espera «publica»)
+## 4ik. 09/10: ✨ seis vistas nuevas con los datos de verdad — PUBLICADA 09/10 00:57 (`044f661`, Pages OK, run 37886269305; el dueño: «publica lo que hay pendiente»)
 El dueño, después de ver las previas con datos inventados: *«Todo menos lo de kommo y contabilidad y cupos, y que otros gráficos
 animaciones 3D Motion grafic o que mas podemos implementar.»* Hechas la 1, 2, 3, 4, 5 y 10 de la lista; quedaron afuera la 6
 (cupos), 7-9 (Contabilidad) y 11 (Kommo). **Solo miran**: ninguna guarda nada ni cambia una cuenta (`test_visuales` §7).
