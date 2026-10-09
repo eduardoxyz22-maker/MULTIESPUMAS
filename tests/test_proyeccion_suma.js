@@ -65,10 +65,11 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('el escenario es el de la captura: 9 sin entregar, 0,93 por día (rotación media), 4 en Banzer y 2 en Moreno',
     r && r.comp===9 && r.porDia===0.933 && r.rot==='media' && r.hay===4 && r.enOtros===2, r);
-  chk('7 días: 9 vendidas + 0,93 × 8 días (3 fábrica + 2 margen + 3 reserva) = 16,5 − 4 para cargar → pedir 13: traer 2 de Moreno y PRODUCIR 11 (antes 3)',
-    r && r.pedir===13 && r.recoger===2 && r.fabricar===11 && r.sem===11, r);
-  chk('15 días: 9 + 0,93 × 20 = 27,7 − 6 (Banzer + Moreno) → 22 (antes 13), nunca menos que la de 7 días',
-    r && r.quin===22 && r.quin>=r.sem, r);
+  /* (§4iy) El 08/10 es jueves: la fábrica tiene piso de 4 días (sale el sábado y el domingo no hay camión), no 3. Todo sube 0,93. */
+  chk('7 días: 9 vendidas + 0,93 × 9 días (4 fábrica + 2 margen + 3 reserva) = 17,4 − 4 para cargar → pedir 14: traer 2 de Moreno y PRODUCIR 12 (antes 3)',
+    r && r.lead===4 && r.pedir===14 && r.recoger===2 && r.fabricar===12 && r.sem===12, r);
+  chk('15 días: 9 + 0,93 × 21 = 28,6 − 6 (Banzer + Moreno) → 23 (antes 13), nunca menos que la de 7 días',
+    r && r.quin===23 && r.quin>=r.sem, r);
   chk('el aviso pide fabricar (no «alcanza»)', r && (r.aviso==='urgente'||r.aviso==='pedir'), r && r.aviso);
 
   console.log('\n── 2. Lo que rota poco sigue como antes ──');
@@ -97,7 +98,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
   console.log('\n── 5. El «Cómo se calcula» lo dice ──');
   r = await ev(()=>{ var o=stockData().lista.filter(function(x){ return x.k===_kS; })[0]; var t=document.createElement('div'); t.innerHTML=stockSaldoDetalleHtml(o); return t.innerText.replace(/\s+/g,' '); });
-  chk('dice «Se suman» y la necesidad 16,47', typeof r==='string' && /Se suman/.test(r) && !/Se toma el mayor/.test(r) && /16[.,]47/.test(r), typeof r==='string' ? (r.match(/Cómo se calcula.{0,400}/)||[r.slice(0,300)])[0] : r);
+  chk('dice «Se suman» y la necesidad 17,40', typeof r==='string' && /Se suman/.test(r) && !/Se toma el mayor/.test(r) && /17[.,]40/.test(r), typeof r==='string' ? (r.match(/Cómo se calcula.{0,400}/)||[r.slice(0,300)])[0] : r);
 
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

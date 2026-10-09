@@ -7445,6 +7445,77 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iy. 09/10: 📦 Stock con las respuestas del dueño a las 8 preguntas de §4ix — EN LA RAMA
+- El dueño: *«1. no 2. si 3. del stock de fabrica, cuando sale de la tienda ellos hacen la venta en "salio de tienda" 4. no 5. no 6. si
+  7. quizas podemos arreglar eso de marcar "ya pedi" con un check… 8. somier 2p heaven es el somier oro 9. king es el heaven de 3 plazas
+  creo o no se… almohadas de fibra siliconada son las de 50x70 o no se»*.
+- **6 (sí) · El tiempo de fábrica de Stock tiene piso**: `stockLeadPiso()` = días de hoy hasta el día siguiente a que sale de fábrica
+  (`diaArranque` → `saldoSaleDeFabrica` → `sigDiaHabil`), la MISMA regla del cuadrito (§4gs). Sin medición: max(`STOCK_DIAS_FABRICA`, piso);
+  medido: max(piso, medido). `stockMuestrasFabrica` tira las muestras de menos de `DIAS_PRODUCCION` días (el «1 día» medido era el día en que
+  logística anotaba la llegada, no la fábrica). Martes 10:00 = 3; viernes 18:00 = 5. Real (09/10): piso 4, MORENO 5 y MULTI 6 medidos, «7 días»
+  pasa de 182 a 206.
+- **4 (no) · Lo dormido no se fabrica por el año pasado**: `stockRangoMes` no suma «mismo mes del año pasado» ni «tendencia» si no hubo venta
+  en 30 días, ni el mes pasado, ni en lo que va de este. Real: MORFEO mes 0.
+- **3 · La venta de tienda no sale de PTF**: cuenta para la rotación (es venta) pero `stockData` no la descuenta del depósito ni de Banzer, ni
+  `stockSalidas`/`stockSalioVentana` la esperan en el control del Excel. Antes se descontaba dos veces (ya había salido con su RPT) y el control
+  la veía como «entrada sin explicar».
+- **8 · `PROD_ALIAS`**: «SOMIER 2P HEAVEN» → SOMIER ORO. KING y FIBRA SILICONADA: el dueño no está seguro, **no** se unieron (preguntado).
+- **7 · «✓ Ya pedí»** en «Qué hacer hoy» del Plan de stock (`planYaHtml`/`planYaPedi`): tildar anota en `STOCK.p` `{ya:1, u:o.fabricar, f:hoy,
+  esp}` con `esp` FIJO al tildar (si no, el día de llegada se recalculaba con el piso de cada día y no vencía). Cuenta como en camino hasta
+  `esp`; después deja de contar (`if(q.ya && stockEsperado(q,T)<hoy) return;`) y el panel vuelve a pedir si el Excel no lo muestra. Destildar el
+  mismo día lo saca; `stockPodar` lo tira a los 15 días si nunca se asignó a una llegada. No es el botón «Pedí a fábrica» (sacado el 08/10).
+- **2 (sí) · 💡 Para entregar antes**: `stockAsignar` anota lo que cada línea marcada se llevó (`apartadoPor`) y, cuando un pedido sin marcar no
+  se cubre, busca lo apartado para pedidos que se entregan DESPUÉS (el más lejano primero) → `soltar`; `revSoltarHtml` en la revisión automática.
+  Solo sugiere: no cambia marcas. ⚠️ El bloque va ANTES del `if(falta>0){ahora='no'…} else if…` (la primera versión lo metió en el medio y un
+  pedido sin fecha con faltante quedaba «ok»). Real: 10-106 podría tomar de 10-096 y de 09-381.
+- **1 y 5 (no)**: Banzer fantasma y lo 🏭 en Moreno siguen como estaban.
+- `tests/test_stock_4iy.js` (23; contra `3850365` no arranca: no existe `stockLeadPiso`).
+
+## 4ix. 09/10: 🔎 Stock revisado por dos expertos y un super agente — lo que no dependía del dueño, arreglado — EN LA RAMA
+- El dueño: *«pon 2 agentes expertos en logística y almacén… revisar todo lo de stock y reposición, no pueden haber errores, y luego 1 super
+  agente que revise lo de esos 2… para nunca tener faltantes»*. Experto 1 (cuánto tener y producir), experto 2 (almacén y flujo), los dos
+  con la planilla real del 09/10 en el scratchpad (nunca en el repo); el super agente reprodujo, refutó o corrigió cada hallazgo y sumó 3.
+- **Arreglado (no contradice ninguna regla del dueño)**:
+  · **N1** `stockAvisoDe`: con `revisarStock` (marcado de más), si se corta antes de que llegue la fábrica → `urgente`; dentro del margen →
+    `pedir`; si no, `revisar`. Lo marcado de más quiere decir que hay MENOS. `sfAccion` agrega «· ⚠️ revisá el saldo»; la copia dice
+    «PROVISIONAL» solo en `revisar`. Real: ALM/NASA, SEMIORTOPÉDICO 140 y 160, TITANIO LATEX 200 y su somier → «🚨 Pedí ya»; ALMOHADA 50x70 →
+    «Pedí 45 esta semana».
+  · **M1** con `fabricar>0` el aviso no queda en «✅ Alcanza» ni «📦 Pedido único» → `pedir` (5 productos reales: SOFT 140, ECO FLEX 140, …).
+  · **B1** `stockNecesario` usa `stockCompHorizonte(o)`: lo vendido que se entrega dentro de max(`STOCK_HORIZ_VENDIDO`=15, fábrica+margen+reserva)
+    días. Lo de fin de mes o diciembre pasa a «el mes». ⚠️ Con 7 días el caso del dueño de §4ii (9 vendidos, uno por día) bajaba a 15,47:
+    por eso 15. `test_proyeccion_suma` sigue 9/9.
+  · **M2** `stockProducirDe`: `consumoResto` SUMA lo vendido de este mes y el ritmo (regla de §4ii); `mesNec` sigue con el mayor.
+  · **M3** «traer» solo con algo para pedir (`_cp>0`); `sfAccion`/`cintaCant` usan `o.recoger` (antes `max(1,pedir)`: «Traé 1» inventado).
+    **B4** «· traé N de Moreno» también en `pedir` (y en `urgente` con `o.recoger`, no con todo `enOtros`). **B5** el pie de la copia dice
+    lo que cubre de verdad.
+  · Galpones: `revisar` con algo para fabricar también alerta.
+  · **M4** `PROD_ALIAS`: FORTEFLEX → FORTE FLEX, PILLOWFLEX → PILLOW FLEX.
+  · **ALTA2** `stockAsignar`: lo marcado «✔ hay»/«📥» que no encuentra unidades se anota por pedido (`sinResp`, `sinRespaldo` con OC, fecha y
+    cuántas faltan), no cuenta como «con stock para cargar» (`tot.sinResp`) y `renderRevisionFija` lo lista (`revSinRespaldoHtml`; la caja sale
+    aunque no haya nada sin marcar). No cambia marcas: quién se lleva el stock lo decide logística (§4gq). Real: 12 líneas, la 10-107 de hoy primera.
+- **Esperan al dueño** (8 preguntas, mandadas el 09/10): A1 (para Stock la fábrica tarda 1 día medido, ¿usar 48 h + recoger como el cuadrito?
+  sube 7 días de 182 a 203), ALTA1 (Banzer fantasma: ¿un pedido sin marcar con PTF en 0 salió de Banzer?), N2 (lo 🏭 de un cliente que aparece
+  en Moreno), venta de tienda (¿sale de PTF?), M5 (¿fabricar para noviembre por lo del año pasado?), N3 (aviso «probablemente ya pedido»),
+  soltar reservas lejanas, y tres productos sin identificar. Detalle: informes de los agentes (scratchpad, fuera del repo).
+- `tests/test_stock_4ix.js` (10; 9 rojas contra `b127868`). `test_stock_rotacion.cjs` (de la otra herramienta) cambió a conciencia: ahí el
+  marcado de más que se corta antes de la fábrica ya no es solo «revisar».
+
+## 4iw. 09/10: 🚚 Arriba del panel: el día, los cupos en anillos y el camión; pestañas al pie en el celular; fichas 3D, números que cuentan, sellos y lo urgente que late — EN LA RAMA
+- El dueño, con la captura del encabezado: *«más animaciones, diseños y mejoras para ir reduciendo texto… arriba y las pestañas»*. Muestra
+  `encabezado.html` (artifact). Eligió: *«A»* (con el camión corregido: *«parece de ida en reversa»* → el emoji mira a la izquierda, así que
+  va de derecha a izquierda), *«C, aprobado»*, *«D2, D3, D5, D6»*. La B (pestañas 3D con contadores), D1 y D4 no.
+- **A**: `#hdr-dia` = el día de hoy (`hdrDiaTxt`); `#h-anillos` = dos anillos AM/PM con los cupos LIBRES del próximo camión (`hdrPintar`,
+  desde `updateStats`, los mismos `limTurno`/`cuposUsadosTurno`); lleno = rojo, turno que no sale = «—». `#stat-hoy-l` sigue escrito abajo
+  del día (las pruebas lo leen); `#stat-hoy` queda escondido. `.h-ruta` + `.h-camion` (animación `h-viaje` sobre `right`). Se fue «Cargá
+  desde el celular · se comparte con el equipo». `.header-in` con z-index 1 para quedar sobre la telaraña de Halloween.
+- **C** (≤700 px): `.nav` fija al pie, ícono + palabra corta (`.t-ic`/`.t-cr`; `.t-lb` en pantalla ancha). `#fx-pasos` sube encima
+  (`html body #fx-pasos`), el `scroll-padding-bottom` crece para que «llevar a la vista» no quede tapado, y el toast sube.
+- **D2** fichas `.mc`/`.sf-ficha` se inclinan con el puntero. **D3** `.mc-val` cuenta hasta su valor (`fxCuentaUno`, solo si el número se
+  reescribe igual en es-BO; recuerda por ficha, no recuenta en cada refresco). **D5** `fxSello`: GUARDADO (corrección), COBRADO (pago o
+  recargo), ENTREGADO. **D6** `.late-dot` en «Pedir ya» de la cinta y del plan y en el aviso de reposiciones atrasadas.
+- ⚠️ D3 y D5 no corren en Playwright salvo `window.FX_PRUEBA` (como las escenas de §4if): las pruebas leen los números apenas se dibujan.
+- `tests/test_arriba_4iw.js` (24). `test_rev7_celular` pasó con el `scroll-padding-bottom`.
+
 ## 4iv. 09/10: 📋 Stock simple: la cinta «Hoy», el Plan de stock y lo demás plegado en «👁️ Más vistas» — PUBLICADA 09/10 10:27 (`68a5dc6`), Pages OK 10:28
 - El dueño, con cinco capturas: *«stock y reposición quedó muy cargado… una dice pedir una cosa, la otra otra cosa… y logística en vez
   de saber qué pedir ya, en 7 días y 15 y el mes… va a estar más perdido»*. Se le mostró la muestra `plan-stock.html` (cinta con
@@ -7471,7 +7542,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - El dueño, al ver «BOLSA PARA ALMOHADAS × 50» y varias «BOLSA PARA COLCHON» en «Pedir a fábrica»: *«las bolsas sacalas del
   stock»*. Son empaque. **`PROD_EMPAQUE=/^BOLSAS?\b/`** en `esTextoDeTienda` (la misma puerta que protectores y sábanas, §4cx: ni
   ficha, ni rotación, ni comprometido, ni fábrica, ni unidades de la proyección), solo si el nombre EMPIEZA con BOLSA: un colchón
-  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: es un renglón a medio escribir de la OC 09-291 (Maria Flores, entrega 09/10 AM); se le dijo al dueño que lo corrija ella, no se tocó la planilla.
+  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: es un renglón a medio escribir de la OC 09-291 (Maria Flores, entrega 09/10 AM); el dueño: *«quítalo de todos lados»* → el 09/10 ~10:40 se releyó la fila y se guardó sin ese renglón (sin código ni precio), con su sello, desde esta sesión; releída: quedan COLCHON ORO BI RELAX, SOMIER BiRELAX y ALMOHADA. No queda ningún renglón de 1-2 letras en la planilla ni en el stock.
 - `test_fichas_4ip` §9 (→ 49).
 
 ## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 09:28 (`71111be`), Pages OK 09:29
