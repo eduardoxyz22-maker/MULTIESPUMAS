@@ -658,6 +658,12 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   saldo (`#fx-busca`, reemplaza el `datalist` de `.prod-desc`), el mapita de la ubicación (`#fx-mapa`) y los pasos en el celular
   (`#fx-pasos`, hasta 1119 px desde §4ij: también el iPad parado). `tests/test_ayudas_form.js` (22).
 
+## ✨ Seis vistas que solo miran (§4ik, 09/10; dueño: *«todo menos lo de Kommo y Contabilidad y cupos»*; EN LA RAMA, SIN PUBLICAR)
+🏬 galpones 3D + 🌡️ termómetro arriba de Stock (`stockGalponesHtml`), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
+recorrido en el Mapa de entregas (`mapaRutaPintar`, Hoy/Mañana), 🔥 semanas en Banzer o PTF (`almSemanas`) y ⭕ anillos en Mis
+pedidos (`misAnilloHtml`). Cada una sale de la cuenta que ya existe: ⚠️ el termómetro usa `stockProyectar(o, serie)` (segundo
+argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test_visuales.js` (34). Bitácora §4ik.
+
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
 o un **chofer** (`>Nombre` pegado a la nota en `metodoPago`: `Efectivo 500 @… #1004 >Luis
