@@ -715,7 +715,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **El mes**: `mesQueda = floor(hay + quin − consumoResto)` SIN tope (puede ser negativo). `stockEsperado` en día hábil. `o.fabLead` (fábrica de la marca).
   Todos los «Ya pedí» vigentes en el plan (`planYaVigentes`). `x.eF` manda en las salidas. Alias: todo «SOMIER <plazas> … HEAVEN» de ROHO = SOMIER ORO (dueño), EURO PEDIC,
   ANTIALERGICO … HEAVEN (CH2391). `PROD_NO_ES_STOCK` (PROTETOR COLCHAO, PANEL, REPARACION, SERVICIO) fuera del stock (dueño, 09/10).
-- **Camiones** (dueño: *«B, C juntos y H1»*): SVG en `.h-camion` (sigue `h-viaje`); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
+- **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
 ## 📦 Stock con las respuestas del dueño (§4iy, 09/10, PUBLICADA 12:10, `960fdaa`)

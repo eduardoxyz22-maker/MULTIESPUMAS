@@ -1,5 +1,5 @@
-/* 🚚 CAMIONES CON EL MOTOR PRENDIDO (§4iz, 09/10; dueño: «B y C juntos, H1»). Solo miran: los lugares son los de siempre.
-   1. Arriba: un camión dibujado (no el emoji) con el nombre, humo y ruedas que giran, que cruza de derecha a izquierda.
+/* 🚚 CAMIONES CON EL MOTOR PRENDIDO (§4iz, 09/10; dueño: «B y C, H3»). Solo miran: los lugares son los de siempre.
+   1. Arriba (H3): un camión dibujado (no el emoji) con el nombre, humo y ruedas que giran: entra, frena en el medio y sigue a la izquierda.
    2. Formulario: el camión va por la ciudad (edificios, árboles y calle que se mueven) con humo y ruedas, y las cajas caen al entrar.
    3. Un pedido nuevo de otro en el mismo día y turno: cae solo esa caja (todas, solo con otro día o turno).
    4. Sin errores.
@@ -26,7 +26,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('1a. arriba es un camión dibujado con el nombre, no el emoji', r1.svg && /MULTIESPUMAS/.test(r1.txt) && !r1.emoji, r1);
   chk('1b. …con humo y tres ruedas que giran', r1.humo===3 && r1.ruedas===3 && /hc-gira/.test(r1.gira), r1);
-  chk('1c. …cruza la pantalla y es más grande que el emoji (≥ 35 px de alto en el celular)', /h-viaje/.test(r1.anim) && r1.alto>=35, r1);
+  chk('1c. …cruza la pantalla y es más grande que el emoji (≥ 45 px de alto en el celular)', /h-viaje/.test(r1.anim) && r1.alto>=45, r1);
+  const css = await page.evaluate(()=>{ for (const s of document.styleSheets){ try{ for (const k of s.cssRules){ if(k.name==='h-viaje') return k.cssText; } }catch(e){} } return ''; });
+  chk('1d. (H3) frena en el medio: el viaje se queda quieto entre el 30% y el 62%', /30%,\s*62%/.test(css) && /calc\(50% - 70px\)/.test(css), css);
 
   const r2 = await page.evaluate(()=>{
     try{ CARGA_GEN++; CARGA_ESTADO='ok'; clearTimeout(CARGA_TIMER); clearInterval(CARGA_TIC); }catch(e){}

@@ -7471,8 +7471,9 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   UN alias para todo «SOMIER <plazas> … HEAVEN» (2P, 2 PLZ, 2.5P, 3P, 3 PLAZAS KING, 3.5P) → SOMIER ORO; sin medida la dan las plazas
   (`medidaDeTexto`: 2.5P = 160x190). Real: ya no queda ninguna fila «SOMIER HEAVEN». Esperan: E2-4 y S-4 (los consulta).
 - **🚚 Camiones** (dueño: *«ese camión debería ser una animación… con el motor prendido… el de arriba quedó pequeño… dame más opciones»*; vista previa
-  `camiones.html`, eligió *«B, C juntos y H1»*): arriba, un camión dibujado con «MULTIESPUMAS» (SVG en `.h-camion`, `h-viaje` 14 s hasta `calc(100% +
-  130px)`, humo `.hc-humo`, ruedas `.hc-rayos`); en el formulario (`fxCamionEn`) la ciudad, los árboles y la calle pasan por detrás (`.fx-ciudad`,
+  `camiones.html`, eligió *«B, C juntos y H1»* y después aclaró *«B y C / H3, creo que ya te había dicho»*): arriba (H3), un camión dibujado con «MULTIESPUMAS»,
+  más grande (140×65, 104×48 en el celular; `.h-ruta` 62 px), que entra, frena en el medio con el motor prendido (`h-viaje` 14 s, quieto entre el 30% y
+  el 62% en `calc(50% - 70px)`) y sigue a la izquierda hasta `calc(100% + 160px)` (SVG en `.h-camion`, humo `.hc-humo`, ruedas `.hc-rayos`); en el formulario (`fxCamionEn`) la ciudad, los árboles y la calle pasan por detrás (`.fx-ciudad`,
   `.fx-arboles`, `.fx-calle`), tiembla, humo y ruedas; con otro día o turno caen todas las cajas (`.fx-cae`, `data-cae`), y si entra un pedido de otro
   en el mismo turno cae solo la nueva (`el._otros`). Solo mira: los lugares son los de siempre (`.fx-slot`).
 - `tests/test_stock_4iz.js` (17; 14 rojas contra `960fdaa`), `tests/test_camiones_4iz.js` (8). `test_arriba_4iw` 1g: 40px → 130px.

@@ -650,13 +650,14 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .h-an.cerr{opacity:.45}
 .h-an b{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.98rem;line-height:1}
 .h-an i{position:absolute;left:-6px;right:-6px;bottom:-12px;text-align:center;font-style:normal;font-size:.55rem;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.82)}
-/* 🚚 (§4iz, dueño 09/10: «ese camioncito de arriba quedó pequeño» → eligió H1) Un camión dibujado con el nombre, que cruza de derecha a
-   izquierda con el motor prendido: tiembla, humo por el caño de atrás y ruedas que giran. Mira a la izquierda (si no, parece en reversa). */
-.h-ruta{position:relative;height:46px;background:rgba(0,0,0,.22);overflow:hidden}
-.h-ruta::before{content:'';position:absolute;left:0;right:0;top:37px;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 16px,transparent 16px 32px)}
-.h-camion{position:absolute;bottom:3px;right:-130px;line-height:0;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35));animation:h-viaje 14s linear infinite}
-.h-camion svg{width:108px;height:50px;display:block;overflow:visible}
-@keyframes h-viaje{to{right:calc(100% + 130px)}}
+/* 🚚 (§4iz, dueño 09/10: «ese camioncito de arriba quedó pequeño» → eligió H3, «llega, frena y sigue») Un camión dibujado con el nombre,
+   más grande: entra por la derecha, frena en el medio con el motor prendido (tiembla, humo, faro) y sigue viaje hacia la izquierda. Mira
+   a la izquierda (si no, parece en reversa). */
+.h-ruta{position:relative;height:62px;background:rgba(0,0,0,.22);overflow:hidden}
+.h-ruta::before{content:'';position:absolute;left:0;right:0;top:50px;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 16px,transparent 16px 32px)}
+.h-camion{position:absolute;bottom:3px;right:-160px;line-height:0;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35));animation:h-viaje 14s ease-in-out infinite}
+.h-camion svg{width:140px;height:65px;display:block;overflow:visible}
+@keyframes h-viaje{0%{right:-160px}30%,62%{right:calc(50% - 70px)}100%{right:calc(100% + 160px)}}
 .hc-cuerpo{animation:hc-tiembla .11s linear infinite;transform-box:fill-box}
 @keyframes hc-tiembla{25%{transform:translate(.25px,-.6px)}75%{transform:translate(-.25px,.45px)}}
 .hc-rayos{transform-box:fill-box;transform-origin:center;animation:hc-gira .5s linear infinite}
@@ -666,7 +667,7 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 @keyframes hc-humo{0%{opacity:.75;transform:translate(0,0) scale(.4)}100%{opacity:0;transform:translate(26px,-18px) scale(2.2)}}
 .hc-faro{animation:hc-faro 1.6s ease-in-out infinite}
 @keyframes hc-faro{50%{opacity:.4}}
-@media(max-width:560px){ .h-ruta{height:38px} .h-ruta::before{top:30px} .h-camion svg{width:86px;height:40px} }
+@media(max-width:560px){ .h-ruta{height:46px} .h-ruta::before{top:37px} .h-camion svg{width:104px;height:48px} }
 @media(prefers-reduced-motion:reduce){ .h-camion{display:none} .h-an .v{transition:none} }
 .header-in{position:relative;z-index:1}
 @media(max-width:560px){ .header-in{flex-wrap:nowrap;padding:10px 14px;gap:10px} .htitle{display:none} .hstat{margin-left:auto} .h-anillos{gap:9px;padding-bottom:9px}
