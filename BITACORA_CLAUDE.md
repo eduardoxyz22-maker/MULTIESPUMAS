@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jb. 09/10 (tarde): 🚫 el navegador no escribe la plata solo — EN LA RAMA
+## 4jb. 09/10 (tarde): 🚫 el navegador no escribe la plata solo — PUBLICADA 09/10 18:33 (`097c56a`)
 El dueño, con la captura del formulario de Eduardo: *«¿por qué se pone "recargo por entregas" como si tuviera recargo si no llené nada?»*
 (Bs 1023 en «Recargo por entrega» de un pedido NUEVO). El panel nunca escribe plata en un pedido nuevo (`resetForm` vacía `f-envio`;
 solo `editPedido` lo llena, y ningún pedido de la planilla tiene 1023): es el **autocompletar del navegador** (Chrome ignora
@@ -7455,7 +7455,7 @@ solo `editPedido` lo llena, y ningún pedido de la planilla tiene 1023): es el *
   solo «1023» en Recargo por entrega: lo borré». Lo tipeado o pegado no tiene esa marca; los demás campos (cliente, dirección) no se tocan.
 - `tests/test_autollenado.js` (6; simula `:autofill` con `el.matches`).
 
-## 4ja. 09/10 (tarde): 🧾 Eduardo — que no se repita la NOTA DE VENTA — EN LA RAMA
+## 4ja. 09/10 (tarde): 🧾 Eduardo — que no se repita la NOTA DE VENTA — PUBLICADA 09/10 18:33 (`097c56a`)
 El dueño (con la captura del formulario, Eduardo cargando para «multicenter»): *«Eduardo repite clientes, así que a él revisá que no
 repita N° de nota. Eduardo únicamente»*.
 - `fxDupBuscar` (§4ih): si el vendedor es Eduardo (`mismoVendedor(…,'Eduardo Añez')`) va por **`fxDupNotaBuscar`**: la nota del
@@ -7466,7 +7466,7 @@ repita N° de nota. Eduardo únicamente»*.
 - **Solo Eduardo**: ROHO sigue sin aviso, y las vendedoras siguen con el de siempre (mismo celular o nombre en estos días), sin la nota.
 - `test_ayudas_form` §4b (6 nuevas; 28/0).
 
-## 4iz. 09/10 (tarde): 🔎 Segunda revisión del stock (dos expertos + super agente, con Fable) y 🚚 camiones con el motor prendido — EN LA RAMA
+## 4iz. 09/10 (tarde): 🔎 Segunda revisión del stock (dos expertos + super agente, con Fable) y 🚚 camiones con el motor prendido — PUBLICADA 09/10 18:33 (`097c56a`)
 - El dueño: *«re pasás los agentes y el mega agente para arreglar todo»* y *«cambiás a Fable para revisar»*. E1 (cuánto tener y producir) y E2
   (almacén y flujo) con la planilla del 09/10 16:05 (`exp4/h.js`, scratchpad); el super agente reprodujo cada hallazgo y sumó S-1…S-5. Informes:
   `scratchpad/exp4/INFORME_E1.md`, `INFORME_E2.md` (fuera del repo).

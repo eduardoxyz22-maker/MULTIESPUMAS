@@ -657,7 +657,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   `#fx-der` (el pedido en vivo: productos con su estado, suma, «Para guardar», hoy y el mes) a los costados, `sticky`. «Para
   guardar» es solo una ayuda: las validaciones siguen en `submitPedido`. Más angosto no cambia nada.
 - `tests/test_escenas_form.js` (23).
-- **🧰 Más ayudas (§4ih, PUBLICADA 08/10 17:56, `e533511`)**: ¿pedido repetido? (`#fx-dup`, pregunta al guardar; **para Eduardo SOLO la nota de venta repetida**, en toda la planilla, `fxDupNotaBuscar`, §4ja, EN LA RAMA — dueño: *«Eduardo repite clientes… Eduardo únicamente»*), 🚫 la plata que escribe sola el AUTOCOMPLETAR del navegador se borra con aviso (`formPlataAutollenada`, `:autofill`, §4jb: el «recargo 1023» que el dueño no puso), buscar el producto por nombre con el
+- **🧰 Más ayudas (§4ih, PUBLICADA 08/10 17:56, `e533511`)**: ¿pedido repetido? (`#fx-dup`, pregunta al guardar; **para Eduardo SOLO la nota de venta repetida**, en toda la planilla, `fxDupNotaBuscar`, §4ja, PUBLICADA 09/10 18:33 — dueño: *«Eduardo repite clientes… Eduardo únicamente»*), 🚫 la plata que escribe sola el AUTOCOMPLETAR del navegador se borra con aviso (`formPlataAutollenada`, `:autofill`, §4jb: el «recargo 1023» que el dueño no puso), buscar el producto por nombre con el
   saldo (`#fx-busca`, reemplaza el `datalist` de `.prod-desc`), el mapita de la ubicación (`#fx-mapa`) y los pasos en el celular
   (`#fx-pasos`, hasta 1119 px desde §4ij: también el iPad parado). `tests/test_ayudas_form.js` (22).
 
@@ -707,7 +707,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - `stockAsignar` devuelve `sinRespaldo` (lo marcado ✔ sin unidades) y la revisión lo lista; no toca marcas.
 - `tests/test_stock_4ix.js`.
 
-## 🔎 Segunda revisión del stock + 🚚 camiones (§4iz, 09/10 tarde, EN LA RAMA)
+## 🔎 Segunda revisión del stock + 🚚 camiones (§4iz, 09/10 tarde, PUBLICADA 18:33, `097c56a`)
 - **Detecciones del Excel**: `stockDetectadoSinAsignar(k,T)` cuenta cada detección solo contra lo pedido ANTES de su corte (hora en `q.t`). ⚠️ `o.detectado`
   va ANTES de `stockProyectar` (que descuenta lo detectado de las primeras llegadas); `stockProducirDe` y `encargados` usan `stockEnCaminoSeguro`.
 - **Revisión automática**: lo marcado que no está en su lugar se busca en PTF → Banzer → IM y se reserva antes que lo sin marcar; `realoja` /
@@ -722,7 +722,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Piso del tiempo de fábrica** (`stockLeadPiso`, la regla del cuadrito: 48 h + el día de recoger); muestras de menos de 2 días no cuentan.
 - **Lo dormido** (sin venta en 30 días, el mes pasado ni este) no se fabrica por «el año pasado» (`stockRangoMes`).
 - **La venta de tienda** cuenta para la rotación pero NO baja PTF/Banzer ni la espera el control del Excel (sale del stock de la tienda).
-- `PROD_ALIAS`: SOMIER 2P HEAVEN y SOMIER 3 PLAZAS KING HEAVEN = SOMIER ORO. `PROD_ALIAS_MEDIDA` (nombre + medida, solo sin código): ALMOHADA FIBRA SILICONADA 50x70 = CD1403; la 50x90 es otra (CD1459). Esto último EN LA RAMA.
+- `PROD_ALIAS`: SOMIER 2P HEAVEN y SOMIER 3 PLAZAS KING HEAVEN = SOMIER ORO. `PROD_ALIAS_MEDIDA` (nombre + medida, solo sin código): ALMOHADA FIBRA SILICONADA 50x70 = CD1403; la 50x90 es otra (CD1459). Publicado 09/10 18:33 (`097c56a`).
 - **«✓ Ya pedí»** en el Plan de stock: `STOCK.p` con `ya:1` y `esp` fijo; vale hasta `esp`, se poda a los 15 días. No es el botón «Pedí a fábrica».
 - **💡 Para entregar antes** (`stockAsignar` → `soltar`, `revSoltarHtml`): sugiere soltar lo apartado para un pedido más lejano. No cambia marcas.
 - Banzer fantasma y lo 🏭 en Moreno: el dueño dijo que no. `tests/test_stock_4iy.js` (23).
