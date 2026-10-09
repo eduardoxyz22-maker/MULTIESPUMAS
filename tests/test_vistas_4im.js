@@ -30,7 +30,7 @@ const SHOTS = process.env.SHOTS || '';
     apiList=function(){ return Promise.resolve({ ok:true, pedidos:JSON.parse(JSON.stringify(STATE)) }); };
     apiSave=function(rec){ window._guardados++; return Promise.resolve({ ok:true, pedido:rec }); };
     guardarCargaChk=function(){};   // los tildes de la carga: en la prueba no viajan
-    try{ ['me_vis_avisos','me_salud_dia','me_vis_4ik'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+    try{ ['me_vis_avisos','me_salud_dia','me_vis_4ik'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} visPrefSet('masVistas',true);   /* §4iv: estas vistas viven en «Más vistas», plegado */
     var hoy=todayStr(), dia=function(n){ return stockSumarDias(hoy, n); };
     var PR={ semi:{ desc:'ESPECIAL SEMIORTOPEDICO', medida:'140x190', codigo:'CH1107' }, tit:{ desc:'TITANIO ICE', medida:'160x190', codigo:'CH1201' },
              oro:{ desc:'ORO BI RELAX', medida:'140x190', codigo:'CH1761' }, eco:{ desc:'NUEVO ECO FLEX', medida:'105x190', codigo:'CH1331' } };
