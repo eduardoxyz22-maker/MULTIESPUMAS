@@ -7445,7 +7445,32 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ir. 09/10: 📍 «Sale de» en la tabla de Administración y «Lo del día, por lugar» — EN LA RAMA
+## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 (ver abajo)
+- El dueño, con la captura de la muestra 2: *«y el termómetro de cada producto cómo quedó o no se hizo?»*. El de §4ik eran líneas que
+  bajaban bajo el cero y se sacó en §4iq; el de la muestra (barras) no se había hecho. **`stockTermoHtml`** (`<details id="stk-termo">`,
+  entre las fichas y el catálogo, `visPref('termo')` abierta de entrada): una barra por producto sobre 17 días (`TERMO_DIAS`), verde
+  mientras alcanza, 🔴 el día que se corta (`o.corte`/`o.dias` de `stockProyectar`, la MISMA cuenta de «⏳ Se corta el…» de las fichas),
+  🚚 el día que llega (`stockTermoLlega`: lo ya pedido; si no, «si pedís hoy» = hoy + `o.lead`; lo de Moreno, hoy +
+  `STOCK_DIAS_RECOGIDA`) y la franja roja = los días SIN stock entre los dos (también escrito abajo, en rojo). Entran los que se cortan
+  en esos días o tienen aviso urgente/pedir/traer, el que se corta primero arriba, 8 y «Ver los que siguen». Solo mira.
+- `test_fichas_4ip` §8 (→ 47).
+
+## 4is. 09/10: 🏬 el cartel de los galpones separa «pedir ya» de «pedir esta semana» — PUBLICADA 09/10 (ver abajo)
+- El dueño, con la captura de los galpones (PTF «⚠️ 20 se acaban antes de que llegue la fábrica», Banzer «⚠️ 4…»): *«20 se acaban
+  antes que llegue la fábrica?»*. Contaba juntos los avisos `urgente` («🚨 Pedir ya») y `pedir` («🏭 Pedir esta semana»), y solo los
+  primeros se acaban antes de que llegue la fábrica. Ahora: «🚨 N se acaban antes de que llegue la fábrica» y «🏭 M para pedir esta
+  semana», los urgentes primero en los ejemplos. Los números no cambiaron (salen de `stockData`, los mismos de fichas y tabla).
+  El galpón de PTF cuenta TODOS los productos del catálogo con ese aviso; el de Banzer, solo los que tienen saldo en Banzer.
+- **Tocar un galpón abre ABAJO su lista** (dueño, 09/10: *«al dar click no dice que se acaba antes de llegar a fábrica, o cómo sabe
+  uno?»*): antes ordenaba la tabla completa, que desde §4ip está plegada, y no se veía nada. `stockGalponVer(id)`/`GALP_VER` →
+  `stockGalponListaHtml`: cada producto con lo que hay en ese galpón, cuándo se corta (`sfReloj`), cuándo llega (`stockTermoLlega`) y
+  qué hacer (`sfAccion`), más una línea que explica «pedir ya» y «pedir esta semana». Tocar un renglón abre su historia (`sfElegir`);
+  «📋 Ver todo en la tabla completa» la ordena Y la abre (`stockGalponTocar` pone `visPref('stkTabla', true)`).
+  ⚠️ «⛔ Ya falta para lo vendido» con «🏭 Pedí esta semana» NO es contradicción: lo vendido se entrega en unos días y la fábrica
+  llega antes (`o.dias ≥ o.lead`); «Pedir ya» es solo cuando ni pidiendo hoy llega (`stockAvisoDe`).
+- `test_visuales` §1 (→ 38).
+
+## 4ir. 09/10: 📍 «Sale de» en la tabla de Administración y «Lo del día, por lugar» — PUBLICADA 09/10 09:12 (`67b337b`), Pages OK 09:12
 - El dueño, con la captura de la tabla: *«Debería salir ahí, o no sé, dame ideas, muéstrame: debe verse rápido en la lista del día o esa
   tabla»*. Se le mostró una página con cinco formas (A–E) y eligió *«a,E»*.
 - **A · columna «Sale de»** pegada al N°: `pedidoLugaresHtml(p)` junta todo el pedido por lugar (`pedidoLugares`: 🏭 PTF, 🏪 Banzer,
@@ -7461,7 +7486,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   28/28 (de las que fallan por carga). `test_stock_detalle.cjs` (de la otra herramienta) sí era real: tocaba una fila de la tabla
   de stock, que desde §4ip arranca plegada. Ahora abre `#stk-tabla-det` antes de tocar, como lo haría la persona; 4/4 `.cjs` en verde.
 
-## 4iq. 09/10: 🌡️ fuera el termómetro · 📍 de dónde se carga, a la vista de logística — EN LA RAMA
+## 4iq. 09/10: 🌡️ fuera el termómetro · 📍 de dónde se carga, a la vista de logística — PUBLICADA 09/10 09:12 (`67b337b`), Pages OK 09:12
 - El dueño, con una captura de «🌡️ Los que se terminan» (las líneas rojas bajando bajo el cero): *«Esto no se entiende bien…
   Quítalo o mejorémoslo»*. **Se sacó** (`stockTermometrosHtml`, `stockTermoSvg`, `stockTermoTxt`, `stockTermoSerie`, `TERMO_*`, el
   gráfico del detalle de un producto y su CSS): lo mismo lo dicen ahora las fichas (§4ip) con palabras, «⏳ Se corta el jue 15/10 · 🚨
@@ -7474,7 +7499,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   🏭 En producción; sin marcar, nada. Sale de `prodPartes`, la misma marca de la Lista de carga.
 - `test_fichas_4ip` §6 (→ 27) y `test_visuales` §2 cambiado a conciencia.
 
-## 4ip. 09/10: 🧾 Mis pedidos con menos letras y 🃏 Stock en fichas — EN LA RAMA
+## 4ip. 09/10: 🧾 Mis pedidos con menos letras y 🃏 Stock en fichas — PUBLICADA 09/10 09:12 (`67b337b`), Pages OK 09:12
 El dueño, con la página de muestras (1, 13, 22, 28, 29, 30, 31, 33): *«la 13 no me gustó quítala, lo demás aplica»*. La 13 (el galpón
 PTF por dentro) NO se hizo. Todo solo mira: ningún número nuevo, nada se guarda en la planilla.
 - **🧾 Mis pedidos (1 + 22)**, en `misCardHtml`:

@@ -1606,6 +1606,36 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .lug-aca{ background:#e6f7f6; color:#00736d; } .lug-sale{ background:#e0f2fe; color:#075985; } .lug-trae{ background:#f3e8ff; color:#6b21a8; }
 .lug-no{ background:#fdeaec; color:#a3172a; } .lug-fab{ background:#fff4d6; color:#7c4b00; }
 .sale-de .lug{ margin:1px 0; }
+.tm-eje,.tm-fila{ display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:10px; align-items:center; }
+.tm-dias{ position:relative; height:16px; font-size:.68rem; color:var(--muted); }
+.tm-dias span{ position:absolute; transform:translateX(-50%); white-space:nowrap; }
+.tm-fila{ padding:7px 0; border-top:1px solid #eef2f3; }
+.tm-nom b{ display:block; font-size:.86rem; line-height:1.2; } .tm-nom small{ color:var(--muted); font-size:.74rem; }
+.tm-barra{ position:relative; height:22px; border-radius:11px; background:#eef6f3; }
+.tm-verde{ position:absolute; top:0; bottom:0; border-radius:11px; background:linear-gradient(90deg,#1a9c63,#5fc994); }
+.tm-verde.tm-baja{ background:linear-gradient(90deg,#1a9c63,#7ab03c 70%,#d9a10b); border-radius:11px 0 0 11px; }
+.tm-repone{ position:absolute; top:0; bottom:0; border-radius:0 11px 11px 0; background:#b9e6cf; }
+.tm-sin{ position:absolute; top:0; bottom:0; background:repeating-linear-gradient(135deg,#fde2e4 0 6px,#f8b9c0 6px 12px); display:flex; align-items:center; overflow:hidden; }
+.tm-sin span{ font-size:.7rem; font-weight:800; color:#a3172a; padding-left:14px; white-space:nowrap; }
+.tm-dias span.pri{ transform:translateX(-30%); } .tm-dias span.ult{ transform:translateX(-80%); }
+.tm-punto{ position:absolute; top:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#e11d2e; box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.3); }
+.tm-cami{ position:absolute; top:-9px; transform:translateX(-50%); font-style:normal; font-size:1.05rem; }
+.tm-ok{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:.72rem; font-weight:800; color:#fff; }
+.tm-pie{ display:block; color:var(--muted); font-size:.72rem; margin-top:3px; }
+@media (max-width:640px){ .tm-eje,.tm-fila{ grid-template-columns:1fr; gap:4px; } .tm-eje>div:first-child{ display:none; } .tm-dias span:nth-child(even),.tm-dias span.ult{ display:none; } }
+.galp.on{ outline:3px solid var(--galp); outline-offset:3px; border-radius:14px; }
+.galp-pista{ font-size:.78rem; color:var(--muted); text-align:center; margin-top:4px; }
+.galp-lista{ margin-top:10px; border:1px solid #e3e8ea; border-radius:12px; padding:10px 12px; background:#fbfdfd; }
+.gl-cab{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.gl-expl{ font-size:.78rem; color:#4b5563; margin:6px 0; }
+.galp-lista ul{ list-style:none; margin:0 0 8px; padding:0; }
+.galp-lista li{ display:grid; grid-template-columns:minmax(180px,1.3fr) 1.2fr 1fr; gap:8px; align-items:center; padding:7px 4px; border-top:1px solid #eef2f3; cursor:pointer; }
+.galp-lista li:hover{ background:#f3f8f7; }
+.gl-nom b{ display:block; font-size:.84rem; } .gl-nom small{ color:var(--muted); font-size:.74rem; }
+.gl-cuando{ font-size:.78rem; display:flex; flex-direction:column; gap:2px; }
+.gl-hacer{ font-size:.8rem; font-weight:800; border-radius:8px; padding:4px 8px; text-align:center; }
+.gl-hacer.sf-bad{ background:#fde2e4; color:#a3172a; } .gl-hacer.sf-warn{ background:#fef3c7; color:#92400e; } .gl-hacer.sf-ok,.gl-hacer.sf-gris{ background:#eef2f3; color:#374151; }
+@media (max-width:640px){ .galp-lista li{ grid-template-columns:1fr; gap:3px; } .gl-hacer{ text-align:left; justify-self:start; } }
 .lugd-cab{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-bottom:10px; }
 .lugd-cab .seg button{ font:inherit; font-weight:800; font-size:.82rem; padding:6px 12px; border:1px solid var(--gray-md); background:#fff; cursor:pointer; }
 .lugd-cab .seg button:first-child{ border-radius:8px 0 0 8px; } .lugd-cab .seg button:last-child{ border-radius:0 8px 8px 0; border-left:0; }
@@ -21012,6 +21042,7 @@ function renderStock(){
   html+=renderStockFiltros(d, visiblesAntes, conMov.length);
   /* 🃏 (§4ip) Las fichas y el catálogo en colores van primero; la tabla de siempre, entera, queda plegada abajo. */
   html+=stockFichasHtml(conMov);
+  html+=stockTermoHtml(conMov);   // 🌡️ (§4it) el termómetro de la muestra, en barras
   html+=stockCatalogoHtml(conMov);
   html+='<details id="stk-tabla-det" class="vis-caja"'+(visPref('stkTabla', false)?' open':'')+' ontoggle="visPrefSet(\'stkTabla\',this.open)">'+
     '<summary><b>📋 La tabla completa</b> <span class="vis-sub">'+conMov.length+' producto'+(conMov.length===1?'':'s')+' con todos los números y el porqué</span></summary>';
@@ -27327,7 +27358,7 @@ function stockGalponesHtml(d){
   var anima=visAnimar('galp', G.map(function(g){ return g.id+':'+g.u+':'+g.alerta.length; }).join('|'));
   var abierto=visPref('galp', true);
   var h='<details id="vis-galp" class="vis-caja"'+(abierto?' open':'')+' ontoggle="visPrefSet(\'galp\',this.open)">'+
-    '<summary><b>🏬 Los almacenes</b> <span class="vis-sub">cada galpón se llena con el saldo de su Excel · tocá uno y la tabla se ordena por lo que tiene</span></summary>'+
+    '<summary><b>🏬 Los almacenes</b> <span class="vis-sub">cada galpón se llena con el saldo de su Excel · tocá uno para ver cuáles avisan y cuándo se cortan</span></summary>'+
     '<div class="galp-fila">';
   G.forEach(function(g){
     var llenos=g.u>0 ? Math.max(1, Math.round(g.u/maxU*GALP_SLOTS)) : 0;
@@ -27339,9 +27370,17 @@ function stockGalponesHtml(d){
     }
     var alertaTxt;
     if(g.id==='trae') alertaTxt=g.alerta.length ? ('<span class="galp-mal" style="color:#5b21b6">🚚 '+g.alerta.length+' para traer</span>') : '<span class="galp-ok">✅ nada que traer ahora</span>';
-    else alertaTxt=g.alerta.length ? ('<span class="galp-mal">⚠️ '+g.alerta.length+' se acaba'+(g.alerta.length===1?'':'n')+' antes de que llegue la fábrica</span>') : '<span class="galp-ok">✅ ninguno se acaba antes de fábrica</span>';
+    else {
+      /* (09/10, dueño: *«20 se acaban antes que llegue la fábrica?»*) Eran «🚨 Pedir ya» y «🏭 Pedir esta semana» juntos, y solo
+         los primeros se acaban antes de que llegue la fábrica. Ahora cada uno con su nombre, los mismos de las fichas y la tabla. */
+      var nYa=g.alerta.filter(function(o){ return o.aviso==='urgente'; }).length, nSem=g.alerta.length-nYa;
+      g.alerta.sort(function(a,b){ return (a.aviso==='urgente'?0:1)-(b.aviso==='urgente'?0:1); });
+      alertaTxt=g.alerta.length ? ((nYa?('<span class="galp-mal">🚨 '+nYa+' se acaba'+(nYa===1?'':'n')+' antes de que llegue la fábrica</span>'):'')+
+          (nSem?((nYa?'<br>':'')+'<span class="galp-mal" style="color:#92400e">🏭 '+nSem+' para pedir esta semana</span>'):''))
+        : '<span class="galp-ok">✅ nada para pedir</span>';
+    }
     var ej=g.alerta.slice(0,2).map(function(o){ return esc(stockNombre(o)); }).join(' · ');
-    h+='<button type="button" class="galp'+(anima?' anima':'')+'" data-galp="'+g.id+'" style="--galp:'+g.col+'" onclick="stockGalponTocar(\''+g.orden+'\')" title="Ordenar la tabla por lo que tiene '+esc(g.nombre)+'">'+
+    h+='<button type="button" class="galp'+(anima?' anima':'')+(GALP_VER===g.id?' on':'')+'" data-galp="'+g.id+'" style="--galp:'+g.col+'" onclick="stockGalponVer(\''+g.id+'\')" title="Ver cuáles son">'+
       '<div class="galp-caja"><div class="galp-techo"></div><div class="galp-cuerpo"><div class="galp-est">'+slots+'</div><div class="galp-puerta"></div></div></div>'+
       '<div class="galp-nom">'+g.ico+' '+esc(g.nombre)+'</div>'+
       '<div class="galp-u">'+(g.hay?stockUnid(g.u):'—')+'</div>'+
@@ -27349,11 +27388,40 @@ function stockGalponesHtml(d){
       '<div class="galp-al">'+alertaTxt+(ej?('<br><small>'+ej+(g.alerta.length>2?' …':'')+'</small>'):'')+'</div>'+
     '</button>';
   });
-  h+='</div></details>';   // 🌡️ el termómetro se sacó (§4iq, dueño: «esto no se entiende bien… quítalo»)
+  h+='</div>';
+  var gv=G.filter(function(g){ return g.id===GALP_VER; })[0];
+  if(gv) h+=stockGalponListaHtml(gv);
+  else h+='<div class="galp-pista">👆 Tocá un galpón para ver cuáles son, cuándo se cortan y cuándo llega lo nuevo.</div>';
+  h+='</details>';   // 🌡️ el termómetro de líneas se sacó (§4iq); el de barras está en §4it
   return h;
+}
+/* (09/10, dueño: *«al dar click no dice que se acaba antes de llegar a fábrica, o cómo sabe uno?»*) Tocar un galpón ordenaba la
+   tabla completa, que desde §4ip está plegada: no se veía nada. Ahora abre ABAJO la lista de lo que avisa ese galpón, con lo que
+   hay ahí, cuándo se corta (`sfReloj`, la MISMA cuenta de las fichas y el termómetro), cuándo llega (`stockTermoLlega`) y qué hacer
+   (`sfAccion`). Tocar de nuevo la cierra. La tabla ordenada sigue a un botón. */
+var GALP_VER='';
+function stockGalponVer(id){ GALP_VER=(GALP_VER===id?'':id); renderStock(); var e=document.getElementById('galp-lista'); if(e && e.scrollIntoView) e.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+function stockGalponListaHtml(g){
+  var trae=g.id==='trae', hayDe=function(o){ return g.id==='ptf' ? Math.max(0,o.deposito||0) : g.id==='sale' ? (o.enSale||0) : (o.enOtros||0); };
+  var expl = trae ? 'Ya están fabricados y esperan en Moreno: si se los trae, alcanza sin pedir a fábrica.'
+    : '🚨 <b>Pedir ya</b> = se acaba ANTES de que llegue la fábrica, aunque pidas hoy (va a haber días sin stock). '+
+      '🏭 <b>Pedir esta semana</b> = alcanza para lo que tarda la fábrica, pero no deja margen: pedilo estos días.';
+  var filas=g.alerta.map(function(o){
+    var r=sfReloj(o), L=stockTermoLlega(o);
+    return '<li data-k="'+esc(o.k)+'" onclick="sfElegir(this.dataset.k)" title="Ver su historia">'+
+      '<div class="gl-nom"><b>'+esc(o.desc)+' '+esc(o.medida||'')+'</b><small>hay '+stockUnid(hayDe(o))+' en '+esc(g.nombre)+(o.comp?(' · '+stockUnid(o.comp)+' vendido'+(o.comp===1?'':'s')+' sin entregar'):'')+(o.porDia>0?(' · '+stockNum(o.porDia)+' por día'):'')+'</small></div>'+
+      '<div class="gl-cuando">'+(trae?'':('<span>'+r.txt+'</span>'))+(L?('<span>🚚 '+esc(L.txt)+' el '+esc(sfDiaTxt(L.f))+'</span>'):'')+'</div>'+
+      '<div class="gl-hacer sf-'+sfEstado(o)+'">'+sfAccion(o)+'</div></li>';
+  }).join('');
+  return '<div class="galp-lista" id="galp-lista"><div class="gl-cab"><b>'+g.ico+' '+esc(g.nombre)+' · '+(trae?(g.alerta.length+' para traer'):(g.alerta.length+' para pedir'))+'</b>'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="stockGalponVer(\''+g.id+'\')">✕ Cerrar</button></div>'+
+    '<p class="gl-expl">'+expl+'</p>'+
+    (filas ? ('<ul>'+filas+'</ul>') : '<p class="gl-expl">✅ Nada que avisar en este galpón.</p>')+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="stockGalponTocar(\''+g.orden+'\')">📋 Ver todo lo de '+esc(g.nombre)+' en la tabla completa</button></div>';
 }
 function stockGalponTocar(orden){
   STOCK_FILTRO.orden=orden; STOCK_FILTRO.dir=-1;
+  try{ visPrefSet('stkTabla', true); }catch(e){}   // la tabla está plegada (§4ip): ordenarla sin abrirla no mostraba nada
   renderStock();
   var t=document.getElementById('stk-tabla-caja'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' });
 }
@@ -28029,6 +28097,64 @@ function stockFichasHtml(lista){
     ((L.length>tope || SF_TODAS) ? ('<div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="SF_TODAS=!SF_TODAS;renderStock()">'+
       (SF_TODAS?'🙈 Ver solo lo primero':('👁️ Ver las '+(L.length-tope)+' fichas que siguen'))+'</button></div>') : '')+
   '</div>';
+}
+/* 🌡️ (§4it, 09/10; dueño, con la captura de la muestra 2: *«y el termómetro de cada producto cómo quedó o no se hizo?»*). El de §4ik
+   eran líneas que bajaban bajo el cero y se sacó en §4iq (*«no se entiende»*). Este es el de la muestra: una barra por producto sobre
+   los próximos días, verde mientras alcanza, 🔴 el día que se corta (`o.corte`/`o.dias` de `stockProyectar`, la MISMA cuenta de
+   «⏳ Se corta el…» de las fichas), 🚚 el día que llega lo de fábrica y la franja roja = los días SIN stock entre las dos.
+   Solo mira. Llega: lo ya pedido (`o.pedidos`, el más próximo); si no, «si pedís hoy» = hoy + lo que tarda la fábrica (`o.lead`);
+   para lo que está en Moreno, hoy + `STOCK_DIAS_RECOGIDA`. */
+var TERMO_DIAS=17, TERMO_TOPE=8, TERMO_TODOS=false;
+function stockTermoLlega(o){
+  var hoy=todayStr(), q=(o.pedidos||[]).filter(function(x){ return x && x.llega && x.llega>=hoy; })
+    .sort(function(a,b){ return a.llega<b.llega?-1:1; })[0];
+  if(q) return { f:q.llega, txt:'llegan '+stockUnid(Number(q.u)||0)+' de fábrica' };
+  if(o.aviso==='traer') return { f:stockSumarDias(hoy, STOCK_DIAS_RECOGIDA), txt:'si lo traés hoy de Moreno' };
+  if(o.aviso==='urgente'||o.aviso==='pedir') return { f:stockSumarDias(hoy, Math.max(1, o.lead||STOCK_DIAS_FABRICA)), txt:'si pedís hoy a fábrica' };
+  return null;
+}
+function stockTermoFilas(lista){
+  return lista.filter(function(o){
+    if(stockHaySalir(o)==null) return false;
+    return (o.dias!=null && o.dias<TERMO_DIAS) || o.aviso==='urgente' || o.aviso==='pedir' || o.aviso==='traer';
+  }).sort(function(a,b){ var da=a.dias==null?999:a.dias, db=b.dias==null?999:b.dias; return da!==db ? da-db : (b.vendidos||0)-(a.vendidos||0); });
+}
+function stockTermoFila(o, hoy){
+  var N=TERMO_DIAS, pc=function(n){ return (Math.max(0,Math.min(N,n))/N*100).toFixed(2)+'%'; };
+  var corte=(o.dias!=null && o.dias<N) ? o.dias : null, L=stockTermoLlega(o), nL=null;
+  if(L){ nL=Math.round((new Date(L.f+'T12:00:00')-new Date(hoy+'T12:00:00'))/864e5); if(nL<0||nL>=N) nL=(nL<0?0:null); }
+  var hay=Math.max(0, stockHaySalir(o)||0), h='';
+  if(corte==null){
+    h+='<div class="tm-verde" style="left:0;width:100%"></div><span class="tm-ok">alcanza más de '+(N-1)+' días ✓</span>';
+  } else {
+    h+='<div class="tm-verde tm-baja" style="left:0;width:'+pc(corte)+'"></div>';
+    var fin=(nL!=null && nL>corte) ? nL : (nL==null ? N : corte);
+    if(fin>corte){
+      var sin=fin-corte;
+      var sinTxt=(nL==null?('sin stock desde el '+sfDiaTxt(o.corte)):(sin+' día'+(sin===1?'':'s')+' sin stock'));
+      h+='<div class="tm-sin" style="left:'+pc(corte)+';width:'+pc(sin)+'">'+(sin>=4?('<span>'+sinTxt+'</span>'):'')+'</div>';
+    }
+    if(nL!=null && nL<N) h+='<div class="tm-repone" style="left:'+pc(Math.max(nL,corte))+';width:'+pc(N-Math.max(nL,corte))+'"></div>';
+    h+='<i class="tm-punto" style="left:'+pc(corte)+'" title="Se corta '+(corte<=0?'hoy':('el '+esc(sfDiaTxt(o.corte))))+'"></i>';
+  }
+  if(nL!=null && nL<N) h+='<i class="tm-cami" style="left:'+pc(nL)+'" title="'+esc(L.txt)+': '+esc(sfDiaTxt(L.f))+'">🚚</i>';
+  var sinN=(corte!=null && nL!=null && nL>corte) ? (nL-corte) : 0;
+  var pie=(corte==null?'':((corte<=0?'🔴 se corta hoy':('🔴 se corta el '+sfDiaTxt(o.corte)))+(sinN?(' · <b style="color:#a3172a">'+sinN+' día'+(sinN===1?'':'s')+' sin stock</b>'):'')+(L?(' · 🚚 '+L.txt+' '+(nL===0?'hoy':(nL==null?('el '+sfDiaTxt(L.f)+', fuera de estos días'):('el '+sfDiaTxt(L.f))))):' · sin nada que llegue')));
+  return '<div class="tm-fila" data-k="'+esc(o.k)+'">'+
+    '<div class="tm-nom"><b>'+esc(o.desc)+' '+esc(o.medida||'')+'</b><small>hay '+stockUnid(hay)+' · vendidos '+stockUnid(o.vendidos||0)+' · '+stockNum(o.porDia||0)+' por día</small></div>'+
+    '<div class="tm-der"><div class="tm-barra">'+h+'</div>'+(pie?('<small class="tm-pie">'+pie+'</small>'):'')+'</div></div>';
+}
+function stockTermoHtml(lista){
+  var F=stockTermoFilas(lista); if(!F.length) return '';
+  var hoy=todayStr(), N=TERMO_DIAS, eje='';
+  for(var n=0;n<N;n+=2) eje+='<span style="left:'+((n+0.5)/N*100).toFixed(2)+'%"'+(n===0?' class="pri"':(n+2>=N?' class="ult"':''))+'>'+esc(sfDiaTxt(stockSumarDias(hoy,n)))+'</span>';
+  var tope=TERMO_TODOS ? F.length : TERMO_TOPE;
+  return '<details id="stk-termo" class="vis-caja"'+(visPref('termo', true)?' open':'')+' ontoggle="visPrefSet(\'termo\',this.open)">'+
+    '<summary><b>🌡️ El termómetro de cada producto</b> <span class="vis-sub">la barra baja día a día con lo vendido más lo que se va a vender · 🔴 donde se termina · 🚚 donde llega · la franja roja son los días SIN stock</span></summary>'+
+    '<div class="tm-eje"><div></div><div class="tm-dias">'+eje+'</div></div>'+
+    F.slice(0,tope).map(function(o){ return stockTermoFila(o, hoy); }).join('')+
+    ((F.length>TERMO_TOPE)?('<div style="margin-top:6px"><button class="btn btn-ghost btn-sm" onclick="TERMO_TODOS=!TERMO_TODOS;renderStock()">'+(TERMO_TODOS?'🙈 Ver solo los primeros':('👁️ Ver los '+(F.length-TERMO_TOPE)+' que siguen'))+'</button></div>'):'')+
+  '</details>';
 }
 /* 🗂️ (muestra 29) Todo el catálogo: modelos en filas, medidas en columnas, cada casilla con lo que hay y el color de la ficha. */
 function sfMedidaNum(m){ var x=String(m||'').match(/(\d+)\s*[xX×*]\s*(\d+)/); return x ? (+x[1])*1000+(+x[2]) : 9e9; }
