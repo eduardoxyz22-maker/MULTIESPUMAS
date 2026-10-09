@@ -661,7 +661,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
   (`#fx-pasos`, hasta 1119 px desde §4ij: también el iPad parado). `tests/test_ayudas_form.js` (22).
 
 ## ✨ Seis vistas que solo miran (§4ik, 09/10; dueño: *«todo menos lo de Kommo y Contabilidad y cupos»*; PUBLICADA 09/10 00:57, `044f661`)
-🏬 galpones 3D arriba de Stock (`stockGalponesHtml`; 🌡️ el termómetro se SACÓ en §4iq: *«esto no se entiende»*), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
+🏬 galpones 3D arriba de Stock (`stockGalponesHtml`; el cartel separa «🚨 pedir ya» de «🏭 esta semana», §4is; 🌡️ el termómetro se SACÓ en §4iq: *«esto no se entiende»*), 📊 gráfico en «Qué producir» (`producirGraficoSvg`), 🛣️
 recorrido en el Mapa de entregas (`mapaRutaPintar`, Hoy/Mañana), 🔥 semanas en Banzer o PTF (`almSemanas`) y ⭕ anillos en Mis
 pedidos (`misAnilloHtml`). Cada una sale de la cuenta que ya existe: ⚠️ el termómetro usa `stockProyectar(o, serie)` (segundo
 argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. **📍 §4iq**: la tabla de Administración y la ficha muestran de
@@ -676,7 +676,7 @@ Stock (`stockRankingDatos`, reglas de la rotación), 📅 calendario de entregas
 pasó a urgente desde la última vez (`stockAvisosNuevos`, `me_vis_avisos`), 🌅 salud del día SOLO con la clave (`saludDelDia`, una vez
 por mañana) y 🛤️ el viaje del pedido en Mis pedidos (`pedidoViajeHtml`). Solo miran. `tests/test_vistas_4im.js` (29). Bitácora §4im.
 
-## 🃏 Mis pedidos con menos letras y Stock en fichas (§4ip, 09/10, EN LA RAMA; dueño: *«la 13 no me gustó quítala, lo demás aplica»*)
+## 🃏 Mis pedidos con menos letras y Stock en fichas (§4ip, 09/10, PUBLICADA 09:12, `67b337b`, con §4iq y §4ir; dueño: *«la 13 no me gustó quítala, lo demás aplica»*)
 Mis pedidos (`misCardHtml`): borde por estado (`misEstadoCard`), íconos en vez de títulos, camioncito en el viaje chico
 (`pedidoViajeHtml`), sello «ENTREGADO» solo con ✅ y 💬 WhatsApp al cliente (`misWaCliente`). Stock: fichas arriba de la tabla
 (`stockFichasHtml`, la MISMA fila de `stockData` y el mismo «Qué hacer»: `sfAccion`), catálogo en colores (`stockCatalogoHtml`), historia

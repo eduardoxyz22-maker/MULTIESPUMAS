@@ -27339,7 +27339,15 @@ function stockGalponesHtml(d){
     }
     var alertaTxt;
     if(g.id==='trae') alertaTxt=g.alerta.length ? ('<span class="galp-mal" style="color:#5b21b6">🚚 '+g.alerta.length+' para traer</span>') : '<span class="galp-ok">✅ nada que traer ahora</span>';
-    else alertaTxt=g.alerta.length ? ('<span class="galp-mal">⚠️ '+g.alerta.length+' se acaba'+(g.alerta.length===1?'':'n')+' antes de que llegue la fábrica</span>') : '<span class="galp-ok">✅ ninguno se acaba antes de fábrica</span>';
+    else {
+      /* (09/10, dueño: *«20 se acaban antes que llegue la fábrica?»*) Eran «🚨 Pedir ya» y «🏭 Pedir esta semana» juntos, y solo
+         los primeros se acaban antes de que llegue la fábrica. Ahora cada uno con su nombre, los mismos de las fichas y la tabla. */
+      var nYa=g.alerta.filter(function(o){ return o.aviso==='urgente'; }).length, nSem=g.alerta.length-nYa;
+      g.alerta.sort(function(a,b){ return (a.aviso==='urgente'?0:1)-(b.aviso==='urgente'?0:1); });
+      alertaTxt=g.alerta.length ? ((nYa?('<span class="galp-mal">🚨 '+nYa+' se acaba'+(nYa===1?'':'n')+' antes de que llegue la fábrica</span>'):'')+
+          (nSem?((nYa?'<br>':'')+'<span class="galp-mal" style="color:#92400e">🏭 '+nSem+' para pedir esta semana</span>'):''))
+        : '<span class="galp-ok">✅ nada para pedir</span>';
+    }
     var ej=g.alerta.slice(0,2).map(function(o){ return esc(stockNombre(o)); }).join(' · ');
     h+='<button type="button" class="galp'+(anima?' anima':'')+'" data-galp="'+g.id+'" style="--galp:'+g.col+'" onclick="stockGalponTocar(\''+g.orden+'\')" title="Ordenar la tabla por lo que tiene '+esc(g.nombre)+'">'+
       '<div class="galp-caja"><div class="galp-techo"></div><div class="galp-cuerpo"><div class="galp-est">'+slots+'</div><div class="galp-puerta"></div></div></div>'+
