@@ -1511,6 +1511,19 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .alm-sem-barras button.todas{ flex:none; padding:0 8px; font-size:.72rem; font-weight:800; color:#0f766e; justify-content:center; border:1px solid #99d6cf; }
 .alm-sem-txt{ flex:1 1 100%; font-size:.82rem; }
 /* ⭕ anillos de Mis pedidos */
+.alm-tend-fila{ display:grid; grid-template-columns:minmax(120px,1.4fr) minmax(90px,1fr) auto auto; gap:6px 12px; align-items:center; padding:7px 4px; border-bottom:1px solid #f1f5f9; font-size:.86rem; }
+.alm-tend-fila.crece{ animation:tendLate 2.4s ease-in-out 2; }
+@keyframes tendLate{ 50%{ background:#ecfdf5; } }
+.alm-tend-nom small{ color:#1d4ed8; font-size:.74rem; }
+.alm-tend-sem{ display:flex; gap:2px; align-items:flex-end; height:26px; }
+.alm-tend-sem i{ flex:1; border-radius:2px 2px 0 0; }
+.alm-tend-num{ display:flex; flex-direction:column; align-items:flex-end; line-height:1.2; font-size:.82rem; white-space:nowrap; }
+.alm-tend-flecha span{ display:inline-block; white-space:nowrap; transform:translate(-50%,-50%); font:800 12px/1 system-ui,sans-serif; padding:5px 8px; border-radius:999px; color:#fff; border:2px solid #fff; box-shadow:0 3px 10px rgba(0,0,0,.3); }
+.alm-tend-flecha.sube span{ background:#16a34a; animation:tendSube 1.8s ease-in-out infinite; }
+.alm-tend-flecha.baja span{ background:#dc2626; }
+@keyframes tendSube{ 50%{ transform:translate(-50%,-62%); } }
+@media (max-width:560px){ .alm-tend-fila{ grid-template-columns:1fr auto; } .alm-tend-sem{ grid-column:1/-1; order:3; } }
+@media (prefers-reduced-motion: reduce){ .alm-tend-fila.crece, .alm-tend-flecha.sube span{ animation:none !important; } }
 #mis-anillo:empty{ display:none; }
 .mis-anillo{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); padding:12px 16px; margin:-8px 0 18px; box-shadow:var(--sh-card); }
 .mis-ani{ width:150px; height:150px; display:block; }
@@ -25771,7 +25784,7 @@ function almNivel(o){
 }
 function almZonaData(){
   var D=stockData(), hoy=D.hoy, desde=diasAtras(ALM_ZONA_DIAS-1), Z=almZonas();
-  var porK={}, puntos=[], vistos={};
+  var porK={}, puntos=[], vistos={}, ents=[];
   var T={ n:0, mapa:0, zona:0, sin:0, aprox:0, P:0, B:0, medio:0, pend:[], fallo:0 };
   STATE.forEach(function(p){
     if(!stockCuenta(p) || esVentaTienda(p) || stockPedidoUnico(p)) return;
@@ -25788,6 +25801,7 @@ function almZonaData(){
     }
     T.n++; T[como]++;
     if(lado){ T.P+=lado.P; T.B+=lado.B; if(lado.medio) T.medio++; }
+    ents.push({ f:fs, zk:almZonaClave(p.zona), zona:String(p.zona||'').replace(/\s+/g,' ').trim(), lado:lado, pt:pt });   // 📈 (§4il) cada entrega, para la tendencia por zona
     var ks=[], uTot=0;
     lin.forEach(function(x){
       var k=stockClave(x), c=Number(x.cant)||0;
@@ -25828,7 +25842,7 @@ function almZonaData(){
   var porId={}, ladoDe={};
   STATE.forEach(function(p){ if(p && p.id!=null) porId[p.id]=p; });
   filas.forEach(function(f){ f.plan={}; ALM_PLAN_DIAS.forEach(function(H){ f.plan[H]=almPlanDe(f, H, hoy, porId, Z, ladoDe); }); });
-  return { D:D, T:T, Z:Z, filas:filas, puntos:puntos, hoy:hoy, desde:desde, hayB:hayB, hayP:!!(STOCK.c && STOCK.c.f),
+  return { D:D, T:T, Z:Z, filas:filas, puntos:puntos, ents:ents, hoy:hoy, desde:desde, hayB:hayB, hayP:!!(STOCK.c && STOCK.c.f),
            km:almKm(almUbic('ptf'), almUbic('banzer')) };
 }
 /* ============================================================================
@@ -26136,10 +26150,12 @@ function almPintar(){
         '<div id="alm-mapa-tit" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin-bottom:8px"></div>'+
         '<div id="alm-sem"></div>'+   // 🔥 semana por semana (§4ik)
         '<div id="alm-mapa" style="height:46vh;min-height:260px;border-radius:8px;background:#e5e7eb"></div></div>'+
+      '<div id="alm-tend"></div>'+   // 📈 barrios que crecen (§4il)
       '<div id="alm-tabla"></div><div id="alm-zonas"></div><div id="alm-pie"></div>';
   }
   document.getElementById('alm-resumen').innerHTML=almResumenHtml(A);
   document.getElementById('alm-zonas').innerHTML=almZonasHtml(A);
+  almPintarTend();
   document.getElementById('alm-pie').innerHTML=almPieHtml(A);
   almPintarTabla();
   almPintarPlan();
@@ -26352,6 +26368,7 @@ function almPintarMapa(encuadrar){
       .addTo(ALM_CAPA);
     pts.push([w.lat,w.lng]);
   });
+  almTendFlechas(A);   // 📈 (§4il)
   setTimeout(function(){
     if(!ALM_MAPA) return;
     ALM_MAPA.invalidateSize();
@@ -27450,6 +27467,80 @@ function almSemPlay(){
     else ALM_SEM++;
     almSemPintar(); almPintarMapa(false);
   }, 1300);
+}
+
+/* ---------------------------------------------------------------- 📈 BARRIOS QUE CRECEN (§4il, 09/10)
+   El dueño, de la lista de ideas: *«el 11 me gusta para implementar»* (el mapa de calor con flechas de tendencia: qué zona vende
+   cada vez más y conviene tener más cerca). Por ZONA ESCRITA del pedido: las entregas de los últimos 30 días contra las 30 de
+   antes, con las MISMAS entregas de esta pantalla (`almZonaData().ents`: la ventana de 60 días, las reglas de rotación de Stock).
+   Cuenta entregas, no unidades (una compra grande no hace crecer un barrio). Solo mira. */
+var ALM_TEND_MIN=4, ALM_TEND_TOPE=8, ALM_TEND_TODO=false;
+function almTendencias(A){
+  var mitad=Math.floor(ALM_ZONA_DIAS/2), nSem=Math.ceil(ALM_ZONA_DIAS/7), Z={};
+  (A.ents||[]).forEach(function(e){
+    if(!e.zk) return;
+    var z=Z[e.zk]||(Z[e.zk]={ k:e.zk, nombres:{}, n0:0, n1:0, P:0, B:0, la:0, lo:0, np:0, sem:[] });
+    if(!z.sem.length) for(var i=0;i<nSem;i++) z.sem.push(0);
+    z.nombres[e.zona]=(z.nombres[e.zona]||0)+1;
+    var d=stockDias(e.f, A.hoy);
+    if(d<mitad) z.n1++; else z.n0++;
+    var w=nSem-1-Math.min(nSem-1, Math.floor(d/7)); z.sem[w]++;
+    if(e.lado){ z.P+=e.lado.P||0; z.B+=e.lado.B||0; }
+    if(e.pt){ z.la+=e.pt.lat; z.lo+=e.pt.lng; z.np++; }
+  });
+  return Object.keys(Z).map(function(k){
+    var z=Z[k], ns=z.nombres;
+    z.nombre=Object.keys(ns).sort(function(a,b){ return (ns[b]-ns[a]) || (a<b?-1:1); })[0]||k;
+    z.n=z.n0+z.n1; z.dif=z.n1-z.n0;
+    z.pct=z.n0>0 ? Math.round(z.dif/z.n0*100) : null;
+    z.tipo=(z.n<ALM_TEND_MIN) ? 'pocos' : (z.dif>=2 && (z.n0===0 || z.n1>=z.n0*1.25)) ? 'crece' : (z.dif<=-2 && z.n1<=z.n0*0.8) ? 'baja' : 'igual';
+    z.lat=z.np?z.la/z.np:null; z.lng=z.np?z.lo/z.np:null;
+    z.sB=(z.P+z.B)>0 ? z.B/(z.P+z.B) : null;
+    return z;
+  }).sort(function(a,b){
+    var r={ crece:3, igual:2, baja:1, pocos:0 };
+    return (r[b.tipo]-r[a.tipo]) || (a.tipo==='baja' ? a.dif-b.dif : b.dif-a.dif) || (b.n-a.n) || (a.nombre<b.nombre?-1:1);
+  });
+}
+function almTendTxt(z){ return z.pct==null ? 'nueva' : ((z.pct>0?'+':'')+z.pct+'%'); }
+function almTendHtml(A){
+  var L=almTendencias(A).filter(function(z){ return z.tipo!=='pocos'; });
+  var mitad=Math.floor(ALM_ZONA_DIAS/2);
+  var h='<div id="alm-tend-caja" style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:10px 12px;margin-bottom:14px">'+
+    '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px"><b style="color:#1e3a5f">📈 Barrios que crecen</b>'+
+    '<span class="vis-sub">entregas de los últimos '+mitad+' días contra los '+mitad+' de antes, por la zona escrita del pedido · las flechas también van en el mapa («Todas»)</span></div>';
+  if(!L.length) return h+'<div class="vis-sub">Todavía no hay zonas con al menos '+ALM_TEND_MIN+' entregas en los '+ALM_ZONA_DIAS+' días.</div></div>';
+  var nC=L.filter(function(z){ return z.tipo==='crece'; }).length, nB=L.filter(function(z){ return z.tipo==='baja'; }).length;
+  h+='<div class="vis-sub" style="margin-bottom:6px">'+(nC?('<b style="color:#15803d">▲ '+nC+' crece'+(nC===1?'':'n')+'</b>'):'ninguna crece')+' · '+(nB?('<b style="color:#b91c1c">▼ '+nB+' baja'+(nB===1?'':'n')+'</b>'):'ninguna baja')+' · '+(L.length-nC-nB)+' igual</div>';
+  var ver=ALM_TEND_TODO?L:L.slice(0,ALM_TEND_TOPE);
+  h+=ver.map(function(z){
+    var mx=Math.max.apply(null, z.sem.concat([1]));
+    var barras=z.sem.map(function(v,i){ var rec=i>=z.sem.length-Math.ceil(mitad/7); return '<i style="height:'+Math.max(8,Math.round(v/mx*100))+'%;background:'+(rec?(z.tipo==='baja'?'#f87171':(z.tipo==='crece'?'#34d399':'#94a3b8')):'#cbd5e1')+'"></i>'; }).join('');
+    var col=z.tipo==='crece'?'#15803d':(z.tipo==='baja'?'#b91c1c':'#64748b'), fl=z.tipo==='crece'?'▲':(z.tipo==='baja'?'▼':'＝');
+    var cons='';
+    if(z.tipo==='crece' && z.sB!=null) cons=z.sB>0.5 ? 'del lado de Banzer: conviene tener más ahí' : 'del lado de PTF';
+    return '<div class="alm-tend-fila'+(z.tipo==='crece'?' crece':'')+'" data-zona="'+esc(z.k)+'">'+
+      '<div class="alm-tend-nom"><b>'+esc(z.nombre)+'</b>'+(cons?('<br><small>'+cons+'</small>'):'')+'</div>'+
+      '<div class="alm-tend-sem" title="entregas por semana, de la más vieja a la de hoy">'+barras+'</div>'+
+      '<div class="alm-tend-num"><span>'+z.n0+' → <b>'+z.n1+'</b></span><b style="color:'+col+'">'+fl+' '+almTendTxt(z)+'</b></div>'+
+      '<div>'+(z.sB!=null?almBarra(z.P,z.B,64):'<span class="vis-sub">sin pin</span>')+'</div></div>';
+  }).join('');
+  if(L.length>ALM_TEND_TOPE) h+='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-top:6px" onclick="ALM_TEND_TODO=!ALM_TEND_TODO;almPintarTend()">'+(ALM_TEND_TODO?'Ver menos':('Ver las '+L.length+' zonas'))+'</button>';
+  return h+'</div>';
+}
+function almPintarTend(){ var el=document.getElementById('alm-tend'); if(el && ALM_DATA) el.innerHTML=almTendHtml(ALM_DATA); }
+/* Las flechas en el mapa: en el centro de los pines de cada zona que crece o baja. Solo con «Todas» y sin un producto elegido. */
+function almTendFlechas(A){
+  if(!ALM_CAPA || !window.L || !L.marker || !L.divIcon || ALM_SEM>=0 || ALM_K) return 0;
+  var n=0;
+  almTendencias(A).forEach(function(z){
+    if((z.tipo!=='crece' && z.tipo!=='baja') || z.lat==null) return;
+    var up=(z.tipo==='crece');
+    L.marker([z.lat,z.lng], { interactive:false, zIndexOffset:800, icon:L.divIcon({ className:'alm-tend-flecha '+(up?'sube':'baja'),
+      html:'<span>'+(up?'▲':'▼')+' '+esc(z.nombre)+' '+almTendTxt(z)+'</span>', iconSize:null, iconAnchor:[0,0] }) }).addTo(ALM_CAPA);
+    n++;
+  });
+  return n;
 }
 
 /* ---------------------------------------------------------------- ⭕ LOS ANILLOS DE MIS PEDIDOS */

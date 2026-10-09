@@ -6,6 +6,7 @@
      4. 🛣️ El recorrido en el mapa: un camino por chofer, AM antes que PM, ✓ en lo entregado, 🚚 en la última entrega.
      5. 🔥 El mapa de calor semana por semana: las semanas suman las entregas de los 60 días; elegir una dibuja solo esas.
      6. ⭕ Los anillos de Mis pedidos: lo vendido contra el mes pasado, lo entregado y lo cobrado, como las fichas.
+     5b. 📈 Barrios que crecen (§4il): por zona, los últimos 30 días contra los 30 de antes, en lista y con flechas en el mapa.
    Reloj clavado en el viernes 09/10/2026 a las 10:00 de Bolivia. Leaflet de mentira que anota lo que se dibuja.
    Se corre:  node tests/test_visuales.js        Dientes:  PEDIDOS=/ruta/a/pedidos_42665bc.html node tests/test_visuales.js
    Capturas:  SHOTS=/carpeta LEAFLET_DIR=/carpeta/con/leaflet.js node tests/test_visuales.js   (Leaflet de verdad, sin mapa de fondo)
@@ -88,6 +89,10 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
       var d=-(1+Math.floor(i*55/70)), lat=-17.78+(azar()-0.5)*0.14, lng=-63.18+(azar()-0.5)*0.14;
       L.push(P({ fecha:dia(d), entregado:true, zona:zonas[i%zonas.length], maps:q(lat,lng), productos:[Object.assign({ cant:1 }, PR[rot[i%rot.length]])] }));
     }
+    /* 📈 (§4il) Una zona que crece (Urubó: 1 entrega hace 40 días, 6 en los últimos 30) y una que baja (Pampa: 6 antes, 1 ahora).
+       Fuera de los 15 días de la rotación, para no mover el ritmo de ningún producto. */
+    [-40,-16,-18,-20,-22,-24,-26].forEach(function(d,j){ L.push(P({ fecha:dia(d), entregado:true, zona:'Urubó', maps:q(-17.765+j*0.002,-63.245), productos:[Object.assign({ cant:1 }, PR.oro)] })); });
+    [-31,-35,-39,-43,-47,-51,-20].forEach(function(d,j){ L.push(P({ fecha:dia(d), entregado:true, zona:'Pampa de la Isla', maps:q(-17.765+j*0.002,-63.105), productos:[Object.assign({ cant:1 }, PR.oro)] })); });
     /* Lo vendido y sin entregar: 9 SEMI de mañana a la semana que viene, y otros. */
     [1,2,3,4,5,6,7,8,9].forEach(function(dd){ L.push(P({ fecha:dia(dd), productos:[Object.assign({ cant:1 }, PR.semi)] })); });
     [2,3,5].forEach(function(dd){ L.push(P({ fecha:dia(dd), productos:[Object.assign({ cant:2 }, PR.eco)] })); });
@@ -240,6 +245,24 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
   chk('▶ arranca por la primera semana, y cerrar la pantalla lo para', ()=>(r.a===0 && r.t && !r.t2), r);
   if(SHOTS){ await ev(()=>{ abrirAlm(); almSemVer(6); var c=document.getElementById('alm-mapa-caja'); if(c) c.scrollIntoView(); }); await page.waitForTimeout(1500); await page.screenshot({ path:path.join(SHOTS,'v5_calor.png') }); await ev(()=>{ cerrarAlm(); }); }
   await ev(()=>{ ALM_SEM=-1; });
+
+  console.log('\n── 5b. 📈 Barrios que crecen ──');
+  await ev(()=>{ abrirAlm(); }); await page.waitForTimeout(SHOTS?1500:300);
+  r = await ev(()=>{
+    var T=almTendencias(ALM_DATA), u=T.filter(function(z){ return z.nombre==='Urubó'; })[0], pa=T.filter(function(z){ return z.nombre==='Pampa de la Isla'; })[0];
+    var caja=document.getElementById('alm-tend-caja'), filas=caja?[].map.call(caja.querySelectorAll('.alm-tend-fila'), function(f){ return f.innerText.replace(/\s+/g,' '); }):[];
+    var fl=window._mapa ? window._mapa.marcas.filter(function(m){ return m.o.icon && /alm-tend-flecha/.test(m.o.icon.className||''); }).map(function(m){ return m.o.icon.html; }) : null;
+    return { u:u&&{ n0:u.n0, n1:u.n1, tipo:u.tipo, pct:u.pct }, pa:pa&&{ n0:pa.n0, n1:pa.n1, tipo:pa.tipo }, primero:T[0].nombre, filas:filas, fl:fl };
+  });
+  chk('Urubó crece: 1 entrega en los 30 días de antes y 6 en los últimos 30 (+500 %)', ()=>(r.u.n0===1 && r.u.n1===6 && r.u.tipo==='crece' && r.u.pct===500), r.u);
+  chk('Pampa de la Isla baja: 6 → 1', ()=>(r.pa.n0===6 && r.pa.n1===1 && r.pa.tipo==='baja'), r.pa);
+  chk('las que crecen van primero (de la que más entregas sumó a la que menos) y Urubó dice «1 → 6 ▲ +500%»', ()=>{ var iU=r.filas.findIndex(function(f){ return /Urubó/.test(f); }), iP=r.filas.findIndex(function(f){ return /Pampa/.test(f); });
+    return iU>=0 && iP>iU && /1 → 6/.test(r.filas[iU]) && /▲ \+500%/.test(r.filas[iU]) && /▼/.test(r.filas[iP]) && r.filas.slice(0,iU).every(function(f){ return /▲/.test(f); }); }, r.filas);
+  if(!SHOTS) chk('en el mapa («Todas») van las flechas: ▲ Urubó y ▼ Pampa entre ellas', ()=>(r.fl.length>=2 && r.fl.some(function(h){ return /▲ Urubó/.test(h); }) && r.fl.some(function(h){ return /▼ Pampa/.test(h); })), r.fl);
+  if(SHOTS){ await ev(()=>{ var c=document.getElementById('alm-mapa-caja'); if(c) c.scrollIntoView(); }); await page.waitForTimeout(1200); await page.screenshot({ path:path.join(SHOTS,'v7_barrios_mapa.png') });
+    await ev(()=>{ var c=document.getElementById('alm-tend-caja'); if(c) c.scrollIntoView(); }); await page.waitForTimeout(600); await page.screenshot({ path:path.join(SHOTS,'v7_barrios_lista.png') }); }
+  r = await ev(()=>{ almSemVer(3); var n=window._mapa ? window._mapa.marcas.filter(function(m){ return m.o.icon && /alm-tend-flecha/.test(m.o.icon.className||''); }).length : -1; almSemVer(-1); cerrarAlm(); return n; });
+  if(!SHOTS) chk('mirando una sola semana no hay flechas (la tendencia es de los 60 días)', r===0, r);
 
   console.log('\n── 6. ⭕ Los anillos de Mis pedidos ──');
   r = await ev(()=>{
