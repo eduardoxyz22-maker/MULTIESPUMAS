@@ -7445,6 +7445,38 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ik. 09/10: ✨ seis vistas nuevas con los datos de verdad — EN LA RAMA, SIN PUBLICAR (espera «publica»)
+El dueño, después de ver las previas con datos inventados: *«Todo menos lo de kommo y contabilidad y cupos, y que otros gráficos
+animaciones 3D Motion grafic o que mas podemos implementar.»* Hechas la 1, 2, 3, 4, 5 y 10 de la lista; quedaron afuera la 6
+(cupos), 7-9 (Contabilidad) y 11 (Kommo). **Solo miran**: ninguna guarda nada ni cambia una cuenta (`test_visuales` §7).
+- **🏬 Los almacenes en 3D** (arriba de Stock, `<details id="vis-galp">`, abierto por defecto y recordado por compu en
+  `me_vis_4ik`): PTF (`deposito`), Banzer (`enSale`) y Moreno (`enOtros`) de `stockData`, cada uno un galpón de 40 lugares que se
+  llena en proporción al más lleno; los cuadritos rojos punteados son los productos que se acaban antes de que llegue la
+  fábrica (aviso `urgente`/`pedir`; en Moreno, «para traer»). Tocar un galpón ordena la tabla por lo que tiene
+  (`stockGalponTocar` → `STOCK_FILTRO.orden`, de mayor a menor). Con la búsqueda escrita no se ve (como los otros cuadros).
+- **🌡️ El termómetro**: `stockProyectar(o, serie)` ganó un segundo argumento opcional: con un arreglo anota cada día
+  `{d, saldo, llega}` y no corta antes. **La cuenta es la misma** (el primer día en rojo = el «cubre hasta» de la tabla; sin serie da
+  lo mismo que antes). «Los que se terminan en los próximos 15 días» va dentro de la caja de los galpones (hasta 6, «Ver los N»), y
+  cada producto lo trae también en su detalle («Cómo se calcula»). Verde = hay, rojo = días sin stock, 🚚 = llega lo pedido.
+- **📊 «Qué producir» en gráfico**: un SVG por bloque con el pie «por medida» (`B.medidas`: 7 días, 15 días, el mes que viene),
+  ordenado de la medida que más hay que producir a la que menos. «📊 Ocultar gráfico» por compu.
+- **🛣️ El recorrido del día** (Mapa de entregas, botón «🛣️ Recorrido», prendido por defecto): solo Hoy/Mañana; un camino por
+  chofer que sale de PTF, **AM antes que PM y siempre la parada más cerca** (`mapaRutaOrden`: es una SUGERENCIA, lo dice el
+  panel), paradas numeradas, ✓ las entregadas, 🚚 en la última entregada (o en PTF), y un punto que recorre la ruta en loop (un
+  solo `requestAnimationFrame`, se para al cerrar el mapa: `mapaRutaParar`). Panel abajo a la izquierda: «2 de 5 entregados ·
+  próxima: …» y km en línea recta. ⚠️ Los choferes todavía no marcan ✅: los ✓ salen hoy del cierre de entregas.
+- **🔥 El mapa de calor semana por semana** (Banzer o PTF, arriba del mapa): 9 barras = las 9 semanas de los 60 días
+  (`almSemanas`, cada barra partida PTF/Banzer), «Todas», y ▶ que las pasa de a una cada 1,3 s (se para al cerrar). Elegir una
+  dibuja solo sus entregas con manchas más grandes y dice fechas, cuántas, % PTF/Banzer y la zona con más. Los puntos de
+  `almZonaData` ahora llevan `z` (la zona escrita).
+- **⭕ Los anillos de Mis pedidos** (debajo de las fichas): por fecha de ENTREGA y sin ATC/RPT, como las fichas: lo vendido para
+  este mes contra el mes pasado ENTERO (no hay meta), los entregados (fecha pasada o ✅) y lo cobrado (la ficha «Por cobrar» es lo
+  que falta). Sin ventas en los dos meses, no se dibuja.
+- Las animaciones corren **una vez cuando cambian los números** (`visAnimar`: el panel se repinta cada minuto) y se apagan con
+  «reducir movimiento» del sistema.
+- `tests/test_visuales.js` (34; 32 rojas contra `42665bc`). Capturas: `SHOTS=… LEAFLET_DIR=… node tests/test_visuales.js`.
+- Batería: 144 suites, 5.398 bien; las 2 rojas eran de `test_banzer_ptf` (la tira de semanas se salía en 390 px: las barras ahora se achican y en el celular va una fecha sí y una no) y quedaron 109/109.
+
 ## 4ij. 08/10: 📱 en el iPad no se veía «nada de eso» — los costados desde 1120 px y la barra de pasos hasta 1119 — PUBLICADA 08/10 19:57 (`63f9d68`, Pages OK, run 37862228498; el dueño: «publica lo que falta publicar»; batería 143 suites, 5.365 bien, 1 roja de carga que pasa sola)
 El dueño: *«mandame capturas de cómo quedó, porque en el iPad no se ve nada de eso, solo en la PC parece»*. No era un error de
 Safari (revisado el código nuevo: nada que el iPad no entienda) sino los cortes de ancho: los costados (§4ig) salían desde 1300 px
