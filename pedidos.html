@@ -1721,6 +1721,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .pl-cero{ color:var(--muted); }
 .pl-hoy{ color:#b4182b; font-weight:700; }
 .pl-que{ display:inline-block; border-radius:8px; padding:3px 8px; font-weight:800; font-size:.78rem; }
+.pl-ya-chk{ display:inline-flex; align-items:center; gap:5px; margin-left:8px; font-size:.74rem; font-weight:700; color:#0f766e; cursor:pointer; white-space:nowrap; } .pl-ya-chk input{ width:16px; height:16px; }
 .pl-ya{ background:#fde4e7; color:#a3172a; } .pl-sem{ background:#fdf1d8; color:#92400e; } .pl-tr{ background:#efe7fc; color:#6b21a8; }
 .pl-rev{ background:#e2ecfb; color:#1d4ed8; } .pl-ok{ background:#e1f4ea; color:#14724a; } .pl-gris{ background:#eef2f3; color:var(--muted); }
 .pl-det td{ background:#f6f9f9; padding:8px 12px; }
@@ -18491,7 +18492,8 @@ function stockPodar(S, hoy){
   if(!S) return S;
   hoy=hoy||todayStr();
   var tope=stockSumarDias(hoy, -STOCK_RECIBIDOS_TOPE), corte=stockSumarDias(hoy, -STOCK_RECIBIDOS_DIAS);
-  var P=(S.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=tope); });
+  var yaTope=stockSumarDias(hoy, -15);   // (§4iy) un «✓ Ya pedí» que nunca se asignó a una llegada se va a los 15 días
+  var P=(S.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=tope) && !(q.ya && !q.r && String(q.f||'')<yaTope); });
   var viejo=function(q){ return !!q.r && String(q.r)<corte; };
   var fabDe=function(q){ return q.tipo==='recogida' ? '' : stockFabNorm(q.fab); };
   // (b) por producto: la fecha del pedido más nuevo, y la del pedido a fábrica más nuevo CON fábrica (como `ultFab`)
@@ -19098,7 +19100,9 @@ var PROD_ALIAS=[
   { de:/\bALM\/HEAVEN\b/g,               a:'ALMOHADA HEAVEN' },
   /* (§4ix, M4) Escritos pegados en los pedidos: no reservaban del FORTE FLEX / PILLOW FLEX real y salían como «pedí 1» aparte. */
   { de:/\bFORTEFLEX\b/g,                a:'FORTE FLEX' },
-  { de:/\bPILLOWFLEX\b/g,               a:'PILLOW FLEX' }
+  { de:/\bPILLOWFLEX\b/g,               a:'PILLOW FLEX' },
+  /* (§4iy, dueño 09/10: «somier 2p heaven es el somier oro») Así lo escribe ROHO; la medida va aparte (140x190). */
+  { de:/\bSOMIER\s+2\s*P\s+HEAVEN\b/g,    a:'SOMIER ORO' }
 ];
 function prodAlias(t){
   var s=String(t==null?'':t);
@@ -19561,7 +19565,7 @@ function stockHaySalir(o){
 function stockSalidas(k, desde, hasta){
   var n=0;
   STATE.forEach(function(p){
-    if(!stockCuenta(p) || !stockSalio(p)) return;
+    if(!stockCuenta(p) || !stockSalio(p) || esVentaTienda(p)) return;   // (§4iy) la venta de tienda no sale de PTF
     var f=fechaSalida(p);
     if(desde && f<desde) return;
     if(hasta && f>hasta) return;
@@ -19645,7 +19649,7 @@ function stockFabNorm(f){
 }
 function stockMuestrasFabrica(){
   var m={};
-  var add=function(fab,f,r){ if(!f||!r) return; var d=stockDias(f,r); if(!(d>=0)||d>STOCK_MUESTRA_DIAS) return; fab=stockFabNorm(fab); (m[fab]=m[fab]||[]).push({f:f,r:r,d:d}); };
+  var add=function(fab,f,r){ if(!f||!r) return; var d=stockDias(f,r); if(!(d>=DIAS_PRODUCCION)||d>STOCK_MUESTRA_DIAS) return; fab=stockFabNorm(fab); (m[fab]=m[fab]||[]).push({f:f,r:r,d:d}); };   // (§4iy) menos de 48 h es imposible: la línea se marcó 🏭 tarde
   /* `enConteo` = se dio por llegado al subir un Excel de existencias: se sabe que ya estaba,
      NO cuándo llegó. Medir con eso inventaría un tiempo de fábrica que nadie observó. */
   (STOCK.p||[]).forEach(function(q){ if(q&&q.r&&!q.enConteo&&q.tipo!=='recogida') add(q.fab,q.f,q.r); });
@@ -19662,15 +19666,20 @@ function stockMuestrasFabrica(){
 }
 /* La mediana de las últimas llegadas, fábrica por fábrica. Sin medidas de una fábrica se
    usan las de las otras («prestado»); sin ninguna, los 3 días del dueño. */
+/* 🏭 (§4iy, dueño 09/10: «sí», a «¿en Stock la fábrica tarda lo mismo que en el formulario, 48 h + 1 día para recoger?»). Lo
+   medido salía de pedidos marcados 🏭 tarde (de `prodF` a la fecha de ENTREGA, muestras de 0 y 1 día): Moreno daba 1 día y el panel
+   avisaba tarde. El piso es la MISMA cuenta del cuadrito del formulario: desde el día en que se manda a producir (`diaArranque`, con la
+   hora de corte), 48 h hábiles (`saldoSaleDeFabrica`) y el día siguiente hábil para recoger y entregar. Lo medido solo puede SUBIRLO. */
+function stockLeadPiso(){ var hoy=todayStr(); return Math.max(1, stockDias(hoy, sigDiaHabil(saldoSaleDeFabrica(diaArranque())))||0); }
 function stockTiemposFabrica(){
-  var m=stockMuestrasFabrica(), todas=[], por={};
+  var m=stockMuestrasFabrica(), todas=[], por={}, piso=stockLeadPiso();
   Object.keys(m).forEach(function(f){ todas=todas.concat(m[f]); });
   var medir=function(lista){
-    if(!lista.length) return { dias:STOCK_DIAS_FABRICA, n:0, medido:false, prestado:false };
+    if(!lista.length) return { dias:Math.max(STOCK_DIAS_FABRICA, piso), n:0, medido:false, prestado:false };
     var ult=lista.slice().sort(function(a,b){ return a.r<b.r?1:(a.r>b.r?-1:0); }).slice(0,STOCK_MUESTRAS)
                  .map(function(s){ return s.d; }).sort(function(a,b){ return a-b; });
     var med=ult.length%2 ? ult[(ult.length-1)/2] : (ult[ult.length/2-1]+ult[ult.length/2])/2;
-    return { dias:Math.max(1, Math.round(med)), n:ult.length, medido:true, prestado:false };
+    return { dias:Math.max(piso, Math.round(med)), n:ult.length, medido:true, prestado:false };
   };
   var gen=medir(todas);
   PROD_LUGARES.forEach(function(L){ por[L.corto]=medir(m[L.corto]||[]); });
@@ -19839,6 +19848,10 @@ function stockData(extra){
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
       // haya pasado — es la contradicción con el conteo, y sin reprogramar se avisa aparte.
       if(!p.entregado && !hecho && x.chk==='no'){ o.noHay+=c; if(fs>o.noHayF) o.noHayF=fs; if(salio) o.noHayViejo+=c; }
+      /* 🏪 (§4iy, dueño 09/10: lo que sale de la tienda se carga como «salió de tienda»; lo de fábrica sale de PTF). La venta de tienda
+         ya contó para la rotación (arriba) pero NO baja PTF ni Banzer: el colchón llegó a la tienda antes, con su RPT. Antes se descontaba
+         dos veces y el control del Excel lo marcaba como «entrada sin explicar». */
+      if(esVentaTienda(p)) return;
       if(salio){
         // Ya salió del depósito (entregado, o de un día que pasó). Lo hecho a pedido y lo
         // tildado ✗ no hay no salieron de acá.
@@ -19883,6 +19896,7 @@ function stockData(extra){
     if(!q||!q.k) return;
     var o=grupo(q.k); if(q.tipo!=='recogida')ultFab(o, q.f, q.fab);
     if(q.r) return;
+    if(q.ya && stockEsperado(q,T)<todayStr()) return;   // (§4iy) el «✓ Ya pedí» vale hasta el día en que tendría que llegar; si el Excel no lo muestra, se vuelve a pedir
     o.enCamino+=Number(q.u)||0;
     o.pedidos.push({ id:q.id, u:Number(q.u)||0, fab:stockFabNorm(q.fab), f:q.f, llega:stockEsperado(q,T), tipo:q.tipo||'fabrica', de:q.de||'' });
   });
@@ -21428,7 +21442,7 @@ function renderRevisionFija(){
   var A;
   try{ A=stockAsignar(); }catch(e){ return ''; }
   var nPed=A.pedidos.length;
-  if(!nPed && !(A.sinRespaldo||[]).length) return '';   // (§4ix) los «✔ hay» sin respaldo se dicen aunque no haya nada sin marcar
+  if(!nPed && !(A.sinRespaldo||[]).length && !(A.soltar||[]).length) return '';   // (§4ix) los «✔ hay» sin respaldo se dicen aunque no haya nada sin marcar
   var listos=A.pedidos.filter(function(g){
     return g.lineas.length && g.lineas.every(function(l){ return l.ahora==='ok'; });
   }).length;
@@ -21449,7 +21463,7 @@ function renderRevisionFija(){
       ficha('#7f1d1d',A.tot.descont,'🛑 sin stock y ya no se fabrica')+
       ficha('#b45309',A.tot.codOtro,'🏷️ con el código de otra medida u otro producto — corregilos en el pedido')+
     '</div>'+
-    revSinRespaldoHtml(A.sinRespaldo)+
+    revSinRespaldoHtml(A.sinRespaldo)+revSoltarHtml(A.soltar)+
     '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">'+
       (cambian?('<button class="btn btn-primary btn-sm" style="background:#0f766e" onclick="abrirStockRevisar()">🤖 Ver y aplicar '+cambian+' cambio'+(cambian===1?'':'s')+'</button>')
               :'<span style="font-size:.84rem;color:#0a6b47;font-weight:700">✅ Los pedidos ya están tildados según el stock.</span>')+
@@ -21468,6 +21482,18 @@ function revSinRespaldoHtml(L){
     '<b style="color:#8a1c24">⚠️ '+L.length+' línea'+(L.length===1?'':'s')+' marcada'+(L.length===1?'':'s')+' «✔ hay» sin stock que la'+(L.length===1?'':'s')+' respalde</b> — '+
     'no hay esas unidades en PTF, Banzer ni Moreno. Reprogramar, mandar a fabricar o revisar el Excel.'+
     '<ul style="margin:5px 0 0 16px;padding:0">'+L.slice(0,8).map(fila).join('')+'</ul>'+(L.length>8?('<div style="color:var(--muted)">y '+(L.length-8)+' más</div>'):'')+'</div>';
+}
+/* (§4iy) 💡 Para entregar antes: lo apartado para un pedido más lejano alcanza para uno que se quedó sin stock. Solo sugiere. */
+function revSoltarHtml(L){
+  L=(L||[]); if(!L.length) return '';
+  var ver=function(id, oc){ return '<a href="#" data-id="'+esc(id)+'" onclick="var _i=this.dataset.id;var _p=STATE.find(function(q){return q.id===_i;});if(_p)showPedidoModal(_p);return false"><b>'+esc(oc||'—')+'</b></a>'; };
+  return '<div style="margin:6px 0 2px;padding:8px 11px;border:1px solid #bae6fd;background:#eff8ff;border-radius:9px;font-size:.8rem">'+
+    '<b style="color:#075985">💡 Para entregar antes</b> — estos pedidos se quedaron sin stock, pero hay unidades apartadas para pedidos que se entregan después. '+
+    'Si soltás la marca del pedido lejano, alcanza (y para ese se pide a fábrica con tiempo).'+
+    '<ul style="margin:5px 0 0 16px;padding:0">'+L.slice(0,8).map(function(s){
+      return '<li>'+ver(s.para.id, s.para.oc)+' ('+fmtFechaCorta(s.para.fecha)+') · '+esc(s.nom)+' — faltan '+s.falta+': '+
+        s.de.map(function(d){ return 'soltar '+d.u+' de '+ver(d.id, d.oc)+' ('+fmtFechaCorta(d.fecha)+')'; }).join(' y ')+(s.cubre<s.falta?(' · igual faltan '+(s.falta-s.cubre)):'')+'</li>';
+    }).join('')+'</ul></div>';
 }
 /* El mensaje para mandarle a la fábrica, con lo que hay que pedir y por qué. */
 function copiarStock(){
@@ -21670,7 +21696,10 @@ function stockRangoMes(o, MS, PI){
   if(hay1 && hay2) est.push({n:'60 d', v:(de(m1)+de(m2))/2*f, t:mesNombreCorto(m1)+' '+de(m1)+' · '+mesNombreCorto(m2)+' '+de(m2)});
   if(hay1 && hay2 && hay3) est.push({n:'90 d', v:(de(m1)+de(m2)+de(m3))/3*f, t:mesNombreCorto(m1)+' '+de(m1)+' · '+mesNombreCorto(m2)+' '+de(m2)+' · '+mesNombreCorto(m3)+' '+de(m3)});
   var ap=mesRestar(obj,12), apAct=mesRestar(actual,12);
-  if(H[ap]!=null){
+  /* 💤 (§4iy, dueño 09/10: «no», a «¿se fabrica para noviembre un producto que no se vendió en septiembre ni octubre porque se vendió
+     el año pasado?»). Sin ventas en los últimos 30 días, ni el mes pasado, ni en lo que va de este: el año pasado no cuenta. */
+  var dormido=!(o.porDiaMes>0) && !(de(m1)>0) && !((P[actual]||0)>0);
+  if(H[ap]!=null && !dormido){
     est.push({n:mesNombreCorto(ap), v:H[ap], t:'mismo mes del año pasado'});
     // tendencia: cómo viene este mes (prorrateado a mes entero) contra el mismo mes del año pasado
     var diasHoy=+hoy.slice(8,10), diasMes=new Date(+hoy.slice(0,4),+hoy.slice(5,7),0).getDate();
@@ -22475,7 +22504,7 @@ function stockAsignar(){
      el titular decía «65 con stock para cargar» con 16 líneas sin una unidad detrás (la 10-107 de hoy, TITANIO LATEX 200x200, sin stock en
      ningún almacén). Ahora se anota por pedido y fecha (`sinResp`), no cuenta como «con stock» y la revisión lo lista. No cambia ninguna
      marca: quién se lleva el stock lo decide logística (dueño, 28/09). Se recorre por fecha de entrega (`revStkPedidos` ya viene así). */
-  var sinResp={}, sinRespaldo=[];
+  var sinResp={}, sinRespaldo=[], apartadoPor={}, soltar=[];
   if(REVSTK_SOLO_VACIOS) revStkPedidos(true).forEach(function(p){
     (p.productos||[]).forEach(function(x, xi){
       var _falta=0;
@@ -22509,6 +22538,8 @@ function stockAsignar(){
         if(u>tomado.u && dep[k]!=null){ _falta+=Math.max(0,(u-tomado.u)-dep[k]); dep[k]=Math.max(0,dep[k]-(u-tomado.u)); }
         else if(u>tomado.u && dep[k]==null && im[k]!=null && info[k] && info[k].paraSalir!=null) _falta+=(u-tomado.u);
       });
+      /* (§4iy) Lo que esta línea marcada se llevó de verdad: si después un pedido de ANTES se queda sin stock, se sugiere soltarlo. */
+      if(c>_falta && x.chk!=='no') (apartadoPor[k]=apartadoPor[k]||[]).push({ id:p.id, oc:p.oc||'', fecha:p.fecha||'', u:c-_falta, usado:0 });
       if(_falta>0){
         sinResp[p.id+'|'+xi]=_falta;
         sinRespaldo.push({ id:p.id, oc:p.oc||'', cliente:p.cliente||'', fecha:p.fecha||'', k:k, nom:(info[k]&&info[k].desc?stockNombre(info[k]):(x.desc||'')), u:c, faltan:_falta });
@@ -22591,6 +22622,14 @@ function stockAsignar(){
          («de 4: 1 acá, 2 en Moreno, 1 hay que fabricar»). La idea es de la versión de
          ChatGPT, que lo desglosaba y la mía decía solo «no hay» (§4cr). */
       var hayDep=deDep, hayIM=deIM, haySale=deSale, hayProg=prog, aFabricar=falta>0?falta:0;
+      /* 💡 (§4iy, dueño 09/10: «sí», a «¿puede sugerir soltar un colchón apartado para diciembre para un pedido de la semana que viene?»).
+         Solo sugiere: las marcas las cambia logística. Busca lo apartado para un pedido que se entrega DESPUÉS (el más lejano primero). */
+      if(falta>0 && p.fecha){
+        var _sueltos=(apartadoPor[k]||[]).filter(function(a){ return a.fecha && a.fecha>p.fecha && a.u>a.usado; }).sort(function(a,b){ return a.fecha<b.fecha?1:-1; });
+        var _cubre=0, _de=[];
+        _sueltos.forEach(function(a){ if(_cubre>=falta) return; var t=Math.min(a.u-a.usado, falta-_cubre); a.usado+=t; _cubre+=t; _de.push({ oc:a.oc, fecha:a.fecha, id:a.id, u:t }); });
+        if(_de.length) soltar.push({ para:{ id:p.id, oc:p.oc||'', fecha:p.fecha }, nom:(o.desc?stockNombre(o):(x.desc||'')), falta:falta, cubre:_cubre, de:_de });
+      }
       if(falta>0){ ahora='no'; deDep=0; deIM=0; deSale=0; almIM=''; porIM=[]; prog=0; }  // no alcanza: no se reserva nada (tampoco la recogida)
       else if(deIM>0 || prog>0) ahora='im';
       else ahora='ok';                                   // acá y/o Banzer: se carga, no se va a buscar
@@ -22686,7 +22725,7 @@ function stockAsignar(){
     tot.atc++;
   });
   var ord=function(m){ return Object.keys(m).map(function(k){ return m[k]; }).filter(function(o){ return o.u>0; }).sort(function(a,b){ return b.u-a.u; }); };
-  return { revisadas:revisadas, almMal:almMal, sinRespaldo:sinRespaldo, firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
+  return { revisadas:revisadas, almMal:almMal, sinRespaldo:sinRespaldo, soltar:soltar, firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
            sinContar:ord(sinPorProd), descont:ord(descPorProd), sobraDep:dep, sobraIM:im };
 }
 /* 🚚 (26/09) El porqué de un «✔ hay»: acá, en Banzer o repartido. La marca de antes «📥 Banzer» lo dice. */
@@ -23405,7 +23444,7 @@ function stockSalioVentana(p, x, v){
   if(!p || !x || !v || !stockCuenta(p)) return false;
   var f=fechaSalida(p); if(!f || f<v.desde || f>v.hasta) return false;
   if(!enProduccionPendiente(x) && (esRecoger(x) || x.chk==='no')) return false;   // una línea 🏭 vive con «✗ no hay» hasta que llega: su salida cuenta igual
-  if(esVentaTienda(p)) return true;                       // la venta de tienda sale el día que se cargó
+  if(esVentaTienda(p)) return false;                      // (§4iy) la venta de tienda sale del stock de la tienda, no de PTF
   /* ⚠️ (05/10, Codex H1) El DÍA DEL CORTE lo decide la casilla «ya incluye las entregas», no la marca ✅: una entrega
      confirmada a las 15:00 no estaba en el Excel de las 09:00 aunque figure entregada. Lo destildado en el cierre no lleva
      ninguna marca (dueño, 05/10: fecha pasada sin ✅ = salió; lo que no sale se reprograma). */
@@ -28526,7 +28565,7 @@ function stockPlanHtml(d, lista){
       '<td data-l="Hay" class="pl-hay">'+hay+'</td>'+
       '<td data-l="Vendido sin entregar" class="pl-comp">'+num(o.comp||0)+'</td>'+
       '<td data-l="Se corta" class="pl-corta"><span class="'+((h!=null&&((o.dias!=null&&o.dias<=0)||/falta/.test(r.txt)))?'pl-hoy':'')+'">'+esc(corta)+'</span></td>'+
-      '<td data-l="Qué hacer hoy" class="pl-q"><span class="pl-que pl-'+(x.g||'gris')+'">'+(x.g==='ya'?'<i class="late-dot"></i>':'')+sfAccion(o)+'</span></td>'+
+      '<td data-l="Qué hacer hoy" class="pl-q"><span class="pl-que pl-'+(x.g||'gris')+'">'+(x.g==='ya'?'<i class="late-dot"></i>':'')+sfAccion(o)+'</span>'+planYaHtml(o)+'</td>'+
       '<td data-l="Pedir · 7 días" class="pl-p7">'+num(x.p7)+'</td>'+
       '<td data-l="Pedir · 15 días" class="pl-p15">'+num(x.p15)+'</td>'+
       '<td data-l="Pedir · '+esc(MS.nombre)+'" class="pl-pm">'+num(x.pm)+'</td></tr>';
@@ -28546,6 +28585,31 @@ function stockPlanHtml(d, lista){
       (filas || '<tr><td colspan="8" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;renderStock()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
+}
+/* ✓ (§4iy, dueño 09/10: «quizás podemos arreglar eso de marcar "ya pedí" con un check»). Sin esto, mientras la fábrica produce, el
+   panel volvía a pedir lo mismo 2-3 días. Tildar anota un pedido a fábrica (`STOCK.p`, `ya:1`) por lo que dice «Pedir 7 días»: cuenta
+   como «en camino» hasta el día en que tendría que llegar (`stockEsperado`, con el tiempo de fábrica) y después deja de contar solo, así
+   que si el Excel no lo muestra el panel vuelve a avisar. Destildar el mismo día lo saca. No hay botón «Pedí a fábrica» (dueño, 08/10). */
+function planYaDe(o){ var hoy=todayStr(); return (STOCK.p||[]).filter(function(q){ return q && q.ya && !q.r && q.k===o.k && q.f===hoy; })[0]||null; }
+function planYaHtml(o){
+  var q=planYaDe(o);
+  if(q) return '<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" checked data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> ✓ Ya pedí '+stockUnid(q.u)+' hoy</label>';
+  if(!(o.fabricar>0) || o.descont || !(o.aviso==='urgente'||o.aviso==='pedir'||o.aviso==='revisar')) return '';
+  return '<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> Ya pedí '+stockUnid(o.fabricar)+'</label>';
+}
+function planYaPedi(k, on){
+  if(on){
+    var o=stockData().lista.find(function(x){ return x.k===k; }); if(!o || !(o.fabricar>0)) return;
+    var id='fy'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
+    /* `esp` fijo al tildar: si no, el día de llegada se recalculaba con el piso de CADA día (§4iy) y el tilde no vencía nunca. */
+    var nq={ id:id, k:k, u:o.fabricar, fab:o.fab||'', f:todayStr(), esp:'', r:'', ya:1 }; nq.esp=stockEsperado(nq);
+    STOCK.p=(STOCK.p||[]).concat([nq]);
+    toast('✓ Anotado: pediste '+stockUnid(o.fabricar)+'. No se vuelve a pedir hasta el día en que tendría que llegar.','ok',5000);
+  } else {
+    var hoy=todayStr();
+    STOCK.p=(STOCK.p||[]).filter(function(q){ return !(q && q.ya && !q.r && q.k===k && q.f===hoy); });
+  }
+  stockOlvidarIndice(); guardarStock(); renderStock();
 }
 /* 🗂️ (muestra 29) Todo el catálogo: modelos en filas, medidas en columnas, cada casilla con lo que hay y el color de la ficha. */
 function sfMedidaNum(m){ var x=String(m||'').match(/(\d+)\s*[xX×*]\s*(\d+)/); return x ? (+x[1])*1000+(+x[2]) : 9e9; }
