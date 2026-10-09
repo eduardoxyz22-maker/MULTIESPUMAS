@@ -163,13 +163,14 @@ function NUMEROS(k){
       { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem] });
   /* (30/09, §4hd) Sin la medida especial CH1389 en el histórico: oct-25 = 6 y tendencia 18 (antes 8 y 24), así que el rango
      arranca en 6, el máximo sin Multicenter es el ritmo de 30 d (18,6 → 19) y con Multicenter la mediana es el 90 d (20,4 → 21). */
-  chk('15 días 9 → 23 y octubre 15 → 21 (rango 6–19 → 6–34)',
-      nBase.T.quin===9 && nMc.T.quin===23 && nBase.T.mesNec===15 && nMc.T.mesNec===21 && nBase.T.mesMin===6 && nBase.T.mesMax===19 && nMc.T.mesMin===6 && nMc.T.mesMax===34,
+  chk('15 días 9 → 23 y octubre 15 → 21 (rango 5–18 → 1–29)',
+      /* (§4iz, E1-6) el rango de «producir» descuenta lo que el 15 días ya manda: 6–19 → 5–18 y 6–34 → 1–29 (lo que se NECESITA no cambia) */
+      nBase.T.quin===9 && nMc.T.quin===23 && nBase.T.mesNec===15 && nMc.T.mesNec===21 && nBase.T.mesMin===5 && nBase.T.mesMax===18 && nMc.T.mesMin===1 && nMc.T.mesMax===29,
       { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.mesMin, nBase.T.mesMax], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.mesMin, nMc.T.mesMax] });
   // En la publicada esas ventas SÍ se veían, pero solo en los carteles de «no cuentan» (únicos de Eduardo y puntuales):
   // ningún número de la proyección se movía. Se comparan solo los de la proyección.
   const PROY = ['vendidosRotacion','nVentasRotacion','rotacion','porDia','v30','n30','porDiaMes','comp','pedir','recoger','fabricar','margen','cubrir',
-                'sem','quin','mesNec','mes','mesQueda','mesMin','mesMax','est','ago','sep'];
+                'sem','quin','mesNec','est','ago','sep'];   // (§4iz, E1-6/10) mes, mesQueda, mesMin, mesMax cambiaron a propósito: «queda» suma lo de 15 días y no tiene tope en 0
   const proy = (o) => PROY.map(k => k+'='+o[k]).join(' ');
   chk('(antes) en la página publicada, Eduardo → Multicenter no movía ningún número de la proyección', proy(vMc.T)===proy(vBase.T), { antesBase:proy(vBase.T), antesConMc:proy(vMc.T) });
   chk('(antes) …solo aparecía en los carteles de «no cuentan»: +8 en únicos de Eduardo y +8 en puntuales (la de hace 4 días)',
