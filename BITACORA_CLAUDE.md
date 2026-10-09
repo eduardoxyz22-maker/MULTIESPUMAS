@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4il. 09/10: 📈 barrios que crecen (el 11 de la lista) — EN LA RAMA, SIN PUBLICAR (espera «publica»)
+## 4il. 09/10: 📈 barrios que crecen (el 11 de la lista) — PUBLICADA 09/10 01:20 (`a9bc37a`, Pages OK, run 37888038312; el dueño: «publica»)
 El dueño: *«el 11 me gusta para implementar»* (de la lista de ideas: el mapa de calor con flechas de tendencia, qué zona vende
 cada vez más). En «📍 Banzer o PTF», debajo del mapa (`#alm-tend`, `almTendHtml`) y con flechas en el mapa (`almTendFlechas`).
 - **Por ZONA ESCRITA del pedido** (`almZonaClave`; se muestra la escritura que más se repite): entregas de los últimos 30 días

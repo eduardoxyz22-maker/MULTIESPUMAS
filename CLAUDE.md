@@ -663,7 +663,7 @@ Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, s
 recorrido en el Mapa de entregas (`mapaRutaPintar`, Hoy/Mañana), 🔥 semanas en Banzer o PTF (`almSemanas`) y ⭕ anillos en Mis
 pedidos (`misAnilloHtml`). Cada una sale de la cuenta que ya existe: ⚠️ el termómetro usa `stockProyectar(o, serie)` (segundo
 argumento opcional), NO una copia de la cuenta. Ninguna guarda nada. `tests/test_visuales.js` (34). Bitácora §4ik.
-**📈 Barrios que crecen** (§4il, 09/10, EN LA RAMA): en Banzer o PTF, por zona escrita, los últimos 30 días contra los 30 de antes
+**📈 Barrios que crecen** (§4il, 09/10, PUBLICADA 01:20, `a9bc37a`): en Banzer o PTF, por zona escrita, los últimos 30 días contra los 30 de antes
 (`almTendencias` sobre `almZonaData().ents`, la MISMA ventana de la pantalla) + flechas en el mapa con «Todas». Cuenta entregas,
 no unidades. `test_visuales` §5b.
 
