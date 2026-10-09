@@ -699,6 +699,15 @@ reversa. En el celular (≤700 px) las pestañas van fijas al pie (`.t-ic`/`.t-c
 nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello`), D6 `.late-dot`. ⚠️ D3/D5 apagados en Playwright salvo
 `window.FX_PRUEBA`. `tests/test_arriba_4iw.js` (24).
 
+## 🔎 Stock revisado el 09/10 (§4ix, EN LA RAMA; dueño: *«no pueden haber errores… para nunca tener faltantes»*)
+- `revisarStock` ya no esconde la urgencia: se corta antes de la fábrica → `urgente`, dentro del margen → `pedir`, y la acción dice «· ⚠️ revisá
+  el saldo». ⚠️ No volver a `if(o.revisarStock) return 'revisar'` a secas.
+- Con `fabricar>0` el aviso nunca es «✅ Alcanza» ni «📦 Pedido único». Lo vendido en «7 días» = `stockCompHorizonte` (15 días como mínimo; con
+  menos se rompe el caso de §4ii). `consumoResto` suma (§4ii). «Traé N» = `o.recoger`, nunca `max(1,…)`.
+- `stockAsignar` devuelve `sinRespaldo` (lo marcado ✔ sin unidades) y la revisión lo lista; no toca marcas.
+- Esperan al dueño: tiempo de fábrica en Stock (48 h + recoger), Banzer fantasma, lo 🏭 en Moreno, venta de tienda, noviembre por el año pasado.
+  `tests/test_stock_4ix.js`.
+
 ## 📚 La hoja «Historial stock» (§4in, 09/10; página PUBLICADA 02:04, `d94ca49`; servidor `2026-10-09-a` lo implementa el dueño)
 Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera
 de «Pedidos»: la celda `__stock__` sigue con sus 3 días. La página la manda sola después de leer (`histStockAlDia`) SOLO si el servidor

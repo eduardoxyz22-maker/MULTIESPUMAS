@@ -7445,6 +7445,35 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ix. 09/10: 🔎 Stock revisado por dos expertos y un super agente — lo que no dependía del dueño, arreglado — EN LA RAMA
+- El dueño: *«pon 2 agentes expertos en logística y almacén… revisar todo lo de stock y reposición, no pueden haber errores, y luego 1 super
+  agente que revise lo de esos 2… para nunca tener faltantes»*. Experto 1 (cuánto tener y producir), experto 2 (almacén y flujo), los dos
+  con la planilla real del 09/10 en el scratchpad (nunca en el repo); el super agente reprodujo, refutó o corrigió cada hallazgo y sumó 3.
+- **Arreglado (no contradice ninguna regla del dueño)**:
+  · **N1** `stockAvisoDe`: con `revisarStock` (marcado de más), si se corta antes de que llegue la fábrica → `urgente`; dentro del margen →
+    `pedir`; si no, `revisar`. Lo marcado de más quiere decir que hay MENOS. `sfAccion` agrega «· ⚠️ revisá el saldo»; la copia dice
+    «PROVISIONAL» solo en `revisar`. Real: ALM/NASA, SEMIORTOPÉDICO 140 y 160, TITANIO LATEX 200 y su somier → «🚨 Pedí ya»; ALMOHADA 50x70 →
+    «Pedí 45 esta semana».
+  · **M1** con `fabricar>0` el aviso no queda en «✅ Alcanza» ni «📦 Pedido único» → `pedir` (5 productos reales: SOFT 140, ECO FLEX 140, …).
+  · **B1** `stockNecesario` usa `stockCompHorizonte(o)`: lo vendido que se entrega dentro de max(`STOCK_HORIZ_VENDIDO`=15, fábrica+margen+reserva)
+    días. Lo de fin de mes o diciembre pasa a «el mes». ⚠️ Con 7 días el caso del dueño de §4ii (9 vendidos, uno por día) bajaba a 15,47:
+    por eso 15. `test_proyeccion_suma` sigue 9/9.
+  · **M2** `stockProducirDe`: `consumoResto` SUMA lo vendido de este mes y el ritmo (regla de §4ii); `mesNec` sigue con el mayor.
+  · **M3** «traer» solo con algo para pedir (`_cp>0`); `sfAccion`/`cintaCant` usan `o.recoger` (antes `max(1,pedir)`: «Traé 1» inventado).
+    **B4** «· traé N de Moreno» también en `pedir` (y en `urgente` con `o.recoger`, no con todo `enOtros`). **B5** el pie de la copia dice
+    lo que cubre de verdad.
+  · Galpones: `revisar` con algo para fabricar también alerta.
+  · **M4** `PROD_ALIAS`: FORTEFLEX → FORTE FLEX, PILLOWFLEX → PILLOW FLEX.
+  · **ALTA2** `stockAsignar`: lo marcado «✔ hay»/«📥» que no encuentra unidades se anota por pedido (`sinResp`, `sinRespaldo` con OC, fecha y
+    cuántas faltan), no cuenta como «con stock para cargar» (`tot.sinResp`) y `renderRevisionFija` lo lista (`revSinRespaldoHtml`; la caja sale
+    aunque no haya nada sin marcar). No cambia marcas: quién se lleva el stock lo decide logística (§4gq). Real: 12 líneas, la 10-107 de hoy primera.
+- **Esperan al dueño** (8 preguntas, mandadas el 09/10): A1 (para Stock la fábrica tarda 1 día medido, ¿usar 48 h + recoger como el cuadrito?
+  sube 7 días de 182 a 203), ALTA1 (Banzer fantasma: ¿un pedido sin marcar con PTF en 0 salió de Banzer?), N2 (lo 🏭 de un cliente que aparece
+  en Moreno), venta de tienda (¿sale de PTF?), M5 (¿fabricar para noviembre por lo del año pasado?), N3 (aviso «probablemente ya pedido»),
+  soltar reservas lejanas, y tres productos sin identificar. Detalle: informes de los agentes (scratchpad, fuera del repo).
+- `tests/test_stock_4ix.js` (10; 9 rojas contra `b127868`). `test_stock_rotacion.cjs` (de la otra herramienta) cambió a conciencia: ahí el
+  marcado de más que se corta antes de la fábrica ya no es solo «revisar».
+
 ## 4iw. 09/10: 🚚 Arriba del panel: el día, los cupos en anillos y el camión; pestañas al pie en el celular; fichas 3D, números que cuentan, sellos y lo urgente que late — EN LA RAMA
 - El dueño, con la captura del encabezado: *«más animaciones, diseños y mejoras para ir reduciendo texto… arriba y las pestañas»*. Muestra
   `encabezado.html` (artifact). Eligió: *«A»* (con el camión corregido: *«parece de ida en reversa»* → el emoji mira a la izquierda, así que
