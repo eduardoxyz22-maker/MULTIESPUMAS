@@ -185,7 +185,8 @@ function NUMEROS(k){
 
   // ═══ 7. Las demás ventas no cambian ═══════════════════════════════════════════════════════════════════════
   console.log('\n── 7. Sin Eduardo → Multicenter, todo da IGUAL que en la página publicada ──');
-  const comunes = (a, b) => { const out={}; Object.keys(b).forEach(k => { if(k!=='vendidosEduMc' && k!=='v30EduMc') out[k]=a[k]; }); return out; };
+  const MES_NUEVO = ['mes','mesQueda','mesMin','mesMax'];   // (§4iz, E1-6/10) cambiaron a propósito contra la página publicada
+  const comunes = (a, b) => { const out={}; Object.keys(b).forEach(k => { if(k!=='vendidosEduMc' && k!=='v30EduMc' && MES_NUEVO.indexOf(k)<0) out[k]=a[k]; }); return out; };
   chk('TITANIO ICE sin ventas de Eduardo a Multicenter: cada número igual que antes (15 d, 30 d, 7 d, 15 d, el mes, el rango y el índice)',
       JSON.stringify(comunes(nBase.T, vBase.T))===JSON.stringify(comunes(vBase.T, vBase.T)), { nueva:comunes(nBase.T, vBase.T), antes:vBase.T });
   chk('COLCHON SOFT (el equipo solo) da igual que antes, con y sin las ventas de Eduardo a Multicenter del TITANIO',
