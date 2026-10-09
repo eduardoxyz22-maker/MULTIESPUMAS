@@ -7445,6 +7445,22 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4iw. 09/10: 🚚 Arriba del panel: el día, los cupos en anillos y el camión; pestañas al pie en el celular; fichas 3D, números que cuentan, sellos y lo urgente que late — EN LA RAMA
+- El dueño, con la captura del encabezado: *«más animaciones, diseños y mejoras para ir reduciendo texto… arriba y las pestañas»*. Muestra
+  `encabezado.html` (artifact). Eligió: *«A»* (con el camión corregido: *«parece de ida en reversa»* → el emoji mira a la izquierda, así que
+  va de derecha a izquierda), *«C, aprobado»*, *«D2, D3, D5, D6»*. La B (pestañas 3D con contadores), D1 y D4 no.
+- **A**: `#hdr-dia` = el día de hoy (`hdrDiaTxt`); `#h-anillos` = dos anillos AM/PM con los cupos LIBRES del próximo camión (`hdrPintar`,
+  desde `updateStats`, los mismos `limTurno`/`cuposUsadosTurno`); lleno = rojo, turno que no sale = «—». `#stat-hoy-l` sigue escrito abajo
+  del día (las pruebas lo leen); `#stat-hoy` queda escondido. `.h-ruta` + `.h-camion` (animación `h-viaje` sobre `right`). Se fue «Cargá
+  desde el celular · se comparte con el equipo». `.header-in` con z-index 1 para quedar sobre la telaraña de Halloween.
+- **C** (≤700 px): `.nav` fija al pie, ícono + palabra corta (`.t-ic`/`.t-cr`; `.t-lb` en pantalla ancha). `#fx-pasos` sube encima
+  (`html body #fx-pasos`), el `scroll-padding-bottom` crece para que «llevar a la vista» no quede tapado, y el toast sube.
+- **D2** fichas `.mc`/`.sf-ficha` se inclinan con el puntero. **D3** `.mc-val` cuenta hasta su valor (`fxCuentaUno`, solo si el número se
+  reescribe igual en es-BO; recuerda por ficha, no recuenta en cada refresco). **D5** `fxSello`: GUARDADO (corrección), COBRADO (pago o
+  recargo), ENTREGADO. **D6** `.late-dot` en «Pedir ya» de la cinta y del plan y en el aviso de reposiciones atrasadas.
+- ⚠️ D3 y D5 no corren en Playwright salvo `window.FX_PRUEBA` (como las escenas de §4if): las pruebas leen los números apenas se dibujan.
+- `tests/test_arriba_4iw.js` (24). `test_rev7_celular` pasó con el `scroll-padding-bottom`.
+
 ## 4iv. 09/10: 📋 Stock simple: la cinta «Hoy», el Plan de stock y lo demás plegado en «👁️ Más vistas» — PUBLICADA 09/10 10:27 (`68a5dc6`), Pages OK 10:28
 - El dueño, con cinco capturas: *«stock y reposición quedó muy cargado… una dice pedir una cosa, la otra otra cosa… y logística en vez
   de saber qué pedir ya, en 7 días y 15 y el mes… va a estar más perdido»*. Se le mostró la muestra `plan-stock.html` (cinta con

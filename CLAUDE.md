@@ -692,6 +692,13 @@ calcular nada aparte en el plan. Todo lo demás (Qué producir, galpones, rankin
 plegado en `<details id="stk-mas">` (`visPref('masVistas')`, cerrado): una prueba que mire esas vistas hace `visPrefSet('masVistas',true)`
 (sin eso, `innerText` vacío). `test_fichas_4ip` §10.
 
+## 🚚 Arriba del panel (§4iw, 09/10, EN LA RAMA; dueño: *«A», «C, aprobado», «D2, D3, D5, D6»*)
+Encabezado: el día (`hdrDiaTxt`) y dos anillos con los cupos libres del próximo camión (`hdrPintar`, desde `updateStats`); `#stat-hoy-l`
+sigue escrito (las pruebas lo leen). El camión 🚚 mira a la izquierda: va de DERECHA a IZQUIERDA (`h-viaje` anima `right`), si no parece en
+reversa. En el celular (≤700 px) las pestañas van fijas al pie (`.t-ic`/`.t-cr`), `#fx-pasos` encima y `scroll-padding-bottom` para no tapar
+nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello`), D6 `.late-dot`. ⚠️ D3/D5 apagados en Playwright salvo
+`window.FX_PRUEBA`. `tests/test_arriba_4iw.js` (24).
+
 ## 📚 La hoja «Historial stock» (§4in, 09/10; página PUBLICADA 02:04, `d94ca49`; servidor `2026-10-09-a` lo implementa el dueño)
 Una fila por día con lo que dijo el Excel de cada almacén (`histGuardar_`/`histLeer_`; acciones `histStock`, `histStockLeer`), fuera
 de «Pedidos»: la celda `__stock__` sigue con sus 3 días. La página la manda sola después de leer (`histStockAlDia`) SOLO si el servidor
