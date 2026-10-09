@@ -684,7 +684,7 @@ Mis pedidos (`misCardHtml`): borde por estado (`misEstadoCard`), íconos en vez 
 de 30 días al tocar (`sfElegir`) y el Excel del día animado (`STOCK_DELTA_ANTES` → `stockDeltaTomar`). ⚠️ La tabla de stock sigue
 ENTERA, plegada en `#stk-tabla-det`: no sacarla, las pruebas y logística la usan. `tests/test_fichas_4ip.js` (24). Bitácora §4ip.
 
-## 📋 Stock simple: cinta «Hoy» + Plan de stock + «👁️ Más vistas» (§4iv, 09/10, EN LA RAMA; dueño: *«quedó muy cargado… una dice una cosa, la otra otra»*)
+## 📋 Stock simple: cinta «Hoy» + Plan de stock + «👁️ Más vistas» (§4iv, 09/10, PUBLICADA 10:27, `68a5dc6`, con §4iu; dueño: *«quedó muy cargado… una dice una cosa, la otra otra»*)
 Arriba de Stock, sin buscar: la cinta `stockCintaHtml` (colchones por carril: pedir ya / esta semana / traer de Moreno / revisar) y
 siempre el **📋 Plan de stock** (`stockPlanHtml`): Hay · Vendido sin entregar · Se corta · Qué hacer hoy · Pedir 7 / 15 días / el mes.
 ⚠️ **Una sola verdad**: «Qué hacer» = `sfAccion`, «Se corta» = `sfReloj`, 7 días = `o.fabricar`, 15 y el mes = `stockProducir`. No

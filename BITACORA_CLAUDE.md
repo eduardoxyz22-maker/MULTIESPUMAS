@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4iv. 09/10: 📋 Stock simple: la cinta «Hoy», el Plan de stock y lo demás plegado en «👁️ Más vistas» — EN LA RAMA
+## 4iv. 09/10: 📋 Stock simple: la cinta «Hoy», el Plan de stock y lo demás plegado en «👁️ Más vistas» — PUBLICADA 09/10 10:27 (`68a5dc6`), Pages OK 10:28
 - El dueño, con cinco capturas: *«stock y reposición quedó muy cargado… una dice pedir una cosa, la otra otra cosa… y logística en vez
   de saber qué pedir ya, en 7 días y 15 y el mes… va a estar más perdido»*. Se le mostró la muestra `plan-stock.html` (cinta con
   colchones + una tabla) y dijo: *«ok hazlo lo que acabas de mostrarme en el plan de stock»*.
@@ -7467,11 +7467,11 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - `test_fichas_4ip` §10 (→ 60). Las pruebas que miran vistas plegadas abren `stk-mas` (`visPrefSet('masVistas',true)`):
   `test_visuales`, `test_vistas_4im`, `test_stock_detalle.cjs`.
 
-## 4iu. 09/10: 🛍️ las bolsas fuera del stock — EN LA RAMA
+## 4iu. 09/10: 🛍️ las bolsas fuera del stock — PUBLICADA 09/10 10:27 (`68a5dc6`), Pages OK 10:28
 - El dueño, al ver «BOLSA PARA ALMOHADAS × 50» y varias «BOLSA PARA COLCHON» en «Pedir a fábrica»: *«las bolsas sacalas del
   stock»*. Son empaque. **`PROD_EMPAQUE=/^BOLSAS?\b/`** en `esTextoDeTienda` (la misma puerta que protectores y sábanas, §4cx: ni
   ficha, ni rotación, ni comprometido, ni fábrica, ni unidades de la proyección), solo si el nombre EMPIEZA con BOLSA: un colchón
-  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: se le preguntó al dueño.
+  «… EN BOLSA» sigue siendo colchón. Un producto que se llama solo «A» (× 1 en «Pedir ya») sigue: es un renglón a medio escribir de la OC 09-291 (Maria Flores, entrega 09/10 AM); se le dijo al dueño que lo corrija ella, no se tocó la planilla.
 - `test_fichas_4ip` §9 (→ 49).
 
 ## 4it. 09/10: 🌡️ el termómetro en barras, como la muestra 2 — PUBLICADA 09/10 09:28 (`71111be`), Pages OK 09:29
