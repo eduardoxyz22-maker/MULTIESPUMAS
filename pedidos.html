@@ -18225,9 +18225,12 @@ var PROD_MUEBLE=/\b(CABECERA|CABECERAS|RESPALDAR|RESPALDARES)\b/;
    bolsas sacalas del stock»*): salían en «🚨 Pedir ya · × 50». Solo cuando el nombre EMPIEZA con BOLSA: un colchón que diga «… EN
    BOLSA» en el medio sigue siendo un colchón. */
 var PROD_EMPAQUE=/^BOLSAS?\b/;
+/* 🧹 (§4iz, dueño 09/10: «sí», a sacarlos del stock) Los protectores que entran en portugués («PROTETOR COLCHAO», también «PRROTETOR»),
+   el PANEL POCKET (un componente, no un colchón) y los servicios («REPARACION…», «SERVICIO…»): ni se venden de stock ni se fabrican. */
+var PROD_NO_ES_STOCK=/\bPR{1,2}OTETOR\b|^PANEL\b|^REPARACION\b|^SERVICIO\b/;
 function esTextoDeTienda(t){
   var s=stockNorm(t);
-  if(PROD_TIENDA.test(s) || PROD_EMPAQUE.test(s)) return true;
+  if(PROD_TIENDA.test(s) || PROD_EMPAQUE.test(s) || PROD_NO_ES_STOCK.test(s)) return true;
   return /\bMDF\b/.test(s) && !PROD_MUEBLE.test(s);
 }
 /* 🧹 LO QUE NO ES UN PRODUCTO (§4ds). En el panel se cargan también tareas de logística
@@ -19163,7 +19166,10 @@ var PROD_ALIAS=[
   /* (§4iz, E1-4) «EURO PEDIC» con espacio (ROHO) es el EUROPEDIC del catálogo (CH1765-69): el mismo nombre, como FORTEFLEX. */
   { de:/\bEURO\s+PEDIC\b/g,             a:'EUROPEDIC' },
   /* (§4iy, dueño 09/10: «sí», a «¿el SOMIER 3 PLAZAS KING HEAVEN de ROHO, 180x190, es el SOMIER ORO 180x190?»). */
-  { de:/\bSOMIER\s+3\s*(?:PLAZAS|P)\s+KING\s+HEAVEN\b/g, a:'SOMIER ORO' }
+  { de:/\bSOMIER\s+3\s*(?:PLAZAS?|PLZ|P)\s+(?:\d{2,3}\s*X\s*\d{2,3}\s*(?:CM)?\s+)?(?:KING\s+)?HEAVEN\b/g, a:'SOMIER ORO' },   // (§4iz, dueño: «sí») también «SOMIER 3P 180X190CM HEAVEN»
+  /* (§4iz, dueño 09/10: «sí», a «¿COLCHON ANTIALERGICO 1.5PLZ 105X190CM HEAVEN de ROHO es el ESPECIAL ANTIALERGICO (CH2391)?»). Solo la forma
+     de ROHO (termina en HEAVEN): el ESPECIAL JUNIOR es OTRO colchón (§4cz) y no dice antialérgico. La medida va aparte. */
+  { de:/\b(?:COLCHON\s+)?ANTIALERGICO\s+(?:\d(?:[.,]\d)?\s*(?:PLZ|PLAZAS?|P)\s+)?(?:\d{2,3}\s*X\s*\d{2,3}\s*(?:CM)?\s+)?HEAVEN\b/g, a:'ESPECIAL ANTIALERGICO' }
 ];
 /* 📏 (§4iy, dueño 09/10: «son distintos productos, por eso tienen distintas medidas y códigos») Un nombre que es DOS productos según
    la medida: la ALMOHADA DE FIBRA SILICONADA 50x70 es la CD1403 (así la cargan con código) y la de 50x90 es la CD1459. Escrita sin

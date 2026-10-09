@@ -7464,9 +7464,10 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   E1-9 `planYaHtml` lista TODOS los «Ya pedí» vigentes con fecha y llegada, y `planYaPedi(k,false,id)` saca ese; E2-7 `x.eF` (el día real del cierre)
   manda en `stockData`, `stockSalidas` y `stockSalioVentana`; E1-3 alias «SOMIER 2 PLZ 140X190CM HEAVEN» → SOMIER ORO; E1-4 «EURO PEDIC» → EUROPEDIC.
 - **No se tocó**: E1-11 (margen sin ventas, del lado seguro), E1-12 (cosmético), E2-9 (la clave de la carga es la de los tildes), E2-10, E2-11 (refutado).
-- **Esperan al dueño** (preguntas mandadas): S-1 (NASA ALTO FREEZE DUOFLEX CH2533 y TRAVESSEIRO GELFLEX CH1244 = ALM/NASA 50x70?), «SOMIER 3P 180X190CM
-  HEAVEN» = SOMIER ORO 180?, E1-5 (ANTIALERGICO 1.5PLZ de ROHO = ESPECIAL ANTIALERGICO CH2391?), E2-4 (¿el Excel de las 10:30 ya descontó el camión AM?),
-  S-2/E1-13 (sacar del stock PANEL POCKET, PROTETOR COLCHAO, REPARACION, SERVICIO), S-4 (08-230 ✅ con fecha de mañana).
+- **Respuestas del dueño (09/10 tarde)**: *«2. sí 3. sí 4 lo consulto 5. sí 6 consulto»*. Hecho: «SOMIER 3P 180X190CM HEAVEN» → SOMIER ORO (el alias
+  del KING ahora acepta 3P/3 PLZ/3 PLAZAS con la medida en el medio); «COLCHON ANTIALERGICO 1.5PLZ … HEAVEN» → ESPECIAL ANTIALERGICO (solo la forma de
+  ROHO que termina en HEAVEN; el JUNIOR sigue aparte, §4cz); `PROD_NO_ES_STOCK` en `esTextoDeTienda`: PROTETOR/PRROTETOR, ^PANEL, ^REPARACION, ^SERVICIO.
+  Esperan: S-1 (las NASA de PTF, sin respuesta), E2-4 y S-4 (los consulta). Quedan sin preguntar «SOMIER 3.5P 200X200 HEAVEN» y «SOMIER 2.5P HEAVEN».
 - **🚚 Camiones** (dueño: *«ese camión debería ser una animación… con el motor prendido… el de arriba quedó pequeño… dame más opciones»*; vista previa
   `camiones.html`, eligió *«B, C juntos y H1»*): arriba, un camión dibujado con «MULTIESPUMAS» (SVG en `.h-camion`, `h-viaje` 14 s hasta `calc(100% +
   130px)`, humo `.hc-humo`, ruedas `.hc-rayos`); en el formulario (`fxCamionEn`) la ciudad, los árboles y la calle pasan por detrás (`.fx-ciudad`,

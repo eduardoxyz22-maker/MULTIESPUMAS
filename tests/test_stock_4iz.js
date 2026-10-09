@@ -111,6 +111,11 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
     // 10. alias
     out.alias={ somier: stockClave({desc:'SOMIER 2 PLZ 140X190CM HEAVEN', medida:'140x190'})===stockClave({desc:'SOMIER ORO', medida:'140x190'}),
+      somier3: stockClave({desc:'SOMIER 3P 180X190CM HEAVEN', medida:'180x190'})===stockClave({desc:'SOMIER ORO', medida:'180x190'}),
+      anti: stockClave({desc:'COLCHON ANTIALERGICO 1.5PLZ 105X190CM HEAVEN', medida:'105x190'})===stockClave({codigo:'CH2391'}),
+      junior: stockClave({desc:'ESPECIAL JUNIOR', medida:'105x190'})!==stockClave({codigo:'CH2391'}),
+      fuera: ['PROTETOR COLCHAO IMPERMEAVEL KING','PRROTETOR COLCHAO 140','PANEL POCKET','REPARACION HEAVEN','SERVICIO MANTENIMIENTO'].every(function(t){ return esTextoDeTienda(t) && esProdDeTienda({desc:t}); }),
+      queda: !esTextoDeTienda('TITANIO LATEX') && !esTextoDeTienda('COLCHON PANELADO X'),
       euro: stockClave({desc:'COLCHON EURO PEDIC 3 PLAZAS 180X190CM HEAVEN', medida:'180x190'})===stockClave({desc:'EUROPEDIC', medida:'180x190'}) };
     return out;
   });
@@ -130,6 +135,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('8. el mes: «queda» = hay + lo de 15 días − lo que se gasta hasta el 31, puede ser negativo', r.mes.queda===r.mes.esperado && r.mes.mes===Math.max(0, r.mes.nec-r.mes.queda), r.mes);
   chk('9. un atrasado entregado HOY (día del cierre) baja del Excel de hoy; sin ese día, no', r.ef.con===8 && r.ef.sin===10, r.ef);
   chk('10. «SOMIER 2 PLZ 140X190CM HEAVEN» = SOMIER ORO y «EURO PEDIC» = EUROPEDIC', r.alias.somier && r.alias.euro, r.alias);
+  chk('10b. (dueño) «SOMIER 3P 180X190CM HEAVEN» = SOMIER ORO y el ANTIALERGICO 1.5PLZ de ROHO = CH2391 (el JUNIOR sigue aparte)', r.alias.somier3 && r.alias.anti && r.alias.junior, r.alias);
+  chk('10c. (dueño) PROTETOR COLCHAO, PANEL POCKET, REPARACION y SERVICIO salen del stock; un colchón no', r.alias.fuera && r.alias.queda, r.alias);
   chk('11. ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

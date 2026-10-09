@@ -713,7 +713,8 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Revisión automática**: lo marcado que no está en su lugar se busca en PTF → Banzer → IM y se reserva antes que lo sin marcar; `realoja` /
   `revRealojaHtml` lo dicen sin cambiar marcas. 🏭 llegado se reserva primero. ✗ en `A.faltan`; ✗ con stock libre en `noHayConStock`.
 - **El mes**: `mesQueda = floor(hay + quin − consumoResto)` SIN tope (puede ser negativo). `stockEsperado` en día hábil. `o.fabLead` (fábrica de la marca).
-  Todos los «Ya pedí» vigentes en el plan (`planYaVigentes`). `x.eF` manda en las salidas. Alias SOMIER 2 PLZ … HEAVEN y EURO PEDIC.
+  Todos los «Ya pedí» vigentes en el plan (`planYaVigentes`). `x.eF` manda en las salidas. Alias SOMIER 2 PLZ/3P … HEAVEN (ORO), EURO PEDIC,
+  ANTIALERGICO … HEAVEN (CH2391). `PROD_NO_ES_STOCK` (PROTETOR COLCHAO, PANEL, REPARACION, SERVICIO) fuera del stock (dueño, 09/10).
 - **Camiones** (dueño: *«B, C juntos y H1»*): SVG en `.h-camion` (sigue `h-viaje`); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
