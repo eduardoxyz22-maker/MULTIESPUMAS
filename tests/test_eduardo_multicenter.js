@@ -157,13 +157,14 @@ function NUMEROS(k){
   chk('rotación media → ALTA (18 unidades en 2 tramos): margen 2 → 4 días, reserva 3 → 7',
       nBase.T.rotacion==='media' && nBase.T.margen===2 && nBase.T.cubrir===3 && nMc.T.rotacion==='alta' && nMc.T.margen===4 && nMc.T.cubrir===7,
       { base:[nBase.T.rotacion, nBase.T.margen, nBase.T.cubrir], con:[nMc.T.rotacion, nMc.T.margen, nMc.T.cubrir] });
-  chk('7 días de «Qué producir» 1 → 12 = fabricar de la tabla; pedir 3 → 14 (recoger 2 de Moreno + fabricar 12)',
-      nBase.T.sem===1 && nBase.T.pedir===3 && nBase.T.recoger===2 && nMc.T.sem===12 && nMc.T.pedir===14 && nMc.T.recoger===2 && nMc.T.fabricar===12,
+  /* (§4iy) El 10/09 (jueves) la fábrica tiene piso de 4 días (sale el sábado, el domingo no hay camión): 12 → 13, 14 → 15, 22 → 23. */
+  chk('7 días de «Qué producir» 1 → 13 = fabricar de la tabla; pedir 3 → 15 (recoger 2 de Moreno + fabricar 13)',
+      nBase.T.sem===1 && nBase.T.pedir===3 && nBase.T.recoger===2 && nMc.T.sem===13 && nMc.T.pedir===15 && nMc.T.recoger===2 && nMc.T.fabricar===13,
       { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem] });
   /* (30/09, §4hd) Sin la medida especial CH1389 en el histórico: oct-25 = 6 y tendencia 18 (antes 8 y 24), así que el rango
      arranca en 6, el máximo sin Multicenter es el ritmo de 30 d (18,6 → 19) y con Multicenter la mediana es el 90 d (20,4 → 21). */
-  chk('15 días 9 → 22 y octubre 15 → 21 (rango 6–19 → 6–34)',
-      nBase.T.quin===9 && nMc.T.quin===22 && nBase.T.mesNec===15 && nMc.T.mesNec===21 && nBase.T.mesMin===6 && nBase.T.mesMax===19 && nMc.T.mesMin===6 && nMc.T.mesMax===34,
+  chk('15 días 9 → 23 y octubre 15 → 21 (rango 6–19 → 6–34)',
+      nBase.T.quin===9 && nMc.T.quin===23 && nBase.T.mesNec===15 && nMc.T.mesNec===21 && nBase.T.mesMin===6 && nBase.T.mesMax===19 && nMc.T.mesMin===6 && nMc.T.mesMax===34,
       { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.mesMin, nBase.T.mesMax], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.mesMin, nMc.T.mesMax] });
   // En la publicada esas ventas SÍ se veían, pero solo en los carteles de «no cuentan» (únicos de Eduardo y puntuales):
   // ningún número de la proyección se movía. Se comparan solo los de la proyección.

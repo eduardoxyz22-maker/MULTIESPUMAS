@@ -281,7 +281,7 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
     var d=stockData(), P={}; stockProducir(d).bloques.forEach(function(B){ B.filas.forEach(function(f){ P[f.o.k]=f; }); });
     var filas=[].map.call(plan.querySelectorAll('tr.pl-fila'), function(tr){ var k=tr.getAttribute('data-k'), o=d.lista.filter(function(x){ return x.k===k; })[0];
       var n=function(c){ var t=(tr.querySelector('.'+c)||{}).textContent||''; return t==='—'?0:Number(t)||0; };
-      return { k:k, g:tr.getAttribute('data-g'), q:tr.querySelector('.pl-q').textContent, accion:sfAccion(o), p7:n('pl-p7'), fab:o.fabricar||0, p15:n('pl-p15'), pm:n('pl-pm'), f:P[k]?{quin:P[k].quin, mes:P[k].mes}:null, dias:o.dias==null?999:o.dias, aviso:o.aviso }; });
+      return { k:k, g:tr.getAttribute('data-g'), q:(function(){ var c=tr.querySelector('.pl-q').cloneNode(true); c.querySelectorAll('.pl-ya-chk').forEach(function(e){ e.remove(); }); return c.textContent; })(),   /* (§4iy) sin el tilde «Ya pedí» */ accion:sfAccion(o), p7:n('pl-p7'), fab:o.fabricar||0, p15:n('pl-p15'), pm:n('pl-pm'), f:P[k]?{quin:P[k].quin, mes:P[k].mes}:null, dias:o.dias==null?999:o.dias, aviso:o.aviso }; });
     var cint=[].map.call(cinta.querySelectorAll('.ci-col:not([aria-hidden])'), function(b){ var k=b.getAttribute('data-k'), o=d.lista.filter(function(x){ return x.k===k; })[0];
       return { k:k, carril:b.closest('.ci-est').getAttribute('data-c'), cant:b.querySelector('.ci-cant').textContent, fab:o.fabricar||0, aviso:o.aviso, somier:b.classList.contains('somier') }; });
     var oro=cint.filter(function(x){ return x.k===_K.oro; })[0];
