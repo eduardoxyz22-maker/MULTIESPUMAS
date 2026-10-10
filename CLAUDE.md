@@ -1125,6 +1125,9 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   fábrica 3D (montacargas adelante con lo que falta cargar, camiones al fondo con lo ya cargado según los tildes de la Lista de carga,
   `depCargado`); abajo `#mis-dep-cols`, una columna por cliente. Pendiente = sin ✅ (acá NO vale «fecha pasada = salió»).
   three.js r128 lazy (`depLibs`); sin 3D, las columnas. `tests/test_mis_deposito.js` (19).
+- **🎨 La dona de todas las vendedoras (§4jj, EN LA RAMA; dueño: *«opción A pero con las animaciones del C»*)**: `#mis-metrics` vive
+  en `#mis-izq` para todas; cada dato de la dona con su barra; las 4 fichas con su color y un dibujito animado (`misFichasVivas`,
+  `MIS_ESC`, clases `mi-f1…4`, `mi-debe`, `mi-entra`). ⚠️ Sin letras dentro de los SVG (las pruebas leen el texto de las fichas).
 - **🚛 Camiones (§4jh, EN LA RAMA)**: la fiesta espera a `cargaSyncSet('ok')`; `#cv-sync` dice Guardando/Guardado/Sin enviar; con los
   camiones escondidos queda `#carga-viva-linea`. `tests/test_carga_sync.js` (9).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.

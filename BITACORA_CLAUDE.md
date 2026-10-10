@@ -7445,6 +7445,23 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jj. 10/10: 🎨 La dona de todas las vendedoras: barras y 4 fichas con color y dibujito — EN LA RAMA
+El dueño: *«que a los demás vendedores también les aparezca su dona así… ellos a lo horizontal… esas fichas se ven cutres»* →
+*«opción 3 pero con cosas de la opción 2»* (dona + barras, los 4 números como píldoras) → *«les falta más personalidad, colores y
+animaciones… no va con la nueva UIX»*. Se le mostraron tres estilos (A de color con ícono, B llenas de color, C con dibujito animado)
+y eligió **«opción A pero con las animaciones del C»**.
+- `#mis-metrics` se muda a `#mis-izq` para TODAS las vendedoras (antes solo Eduardo). En pantalla ancha: dona · datos con barra ·
+  fichas 2×2 en una fila; en el celular y en la columna de Eduardo, apilado y el dibujito arriba a la derecha de cada ficha.
+- Las barras de la dona (`.mis-ani-bar`) llevan rayitas que caminan.
+- **`misFichasVivas(box, debe)`** (en `renderMis`, después de armar las fichas): a cada `.mc` le pone `mi-f1…mi-f4` (verde agua, azul,
+  rojo, verde) y un `<span class="mi-esc" aria-hidden>` con el SVG de `MIS_ESC` (camioncito que pasa, almanaque que cambia de hoja,
+  monedas que caen, cajas que se apilan). ⚠️ **Sin `<text>` adentro de los dibujos**: las pruebas leen el texto de cada ficha.
+  «Por cobrar» lleva `mi-debe` (anillo que late) solo con saldo. La entrada con destello va con `mi-entra`, que se pone SOLO si
+  cambió el texto (`visAnimar('misFichas', …)`): el panel se repinta cada minuto. `prefers-reduced-motion` apaga todo.
+- El color del número lo pone la ficha (`--c`), no el `mc()` de siempre (se pisa con `!important` solo adentro de `#mis-izq`).
+- `test_mis_deposito` §1 y §7 cambiaron a conciencia (las fichas ya no vuelven a su lugar) y §8 nuevo (dibujito sin letras,
+  colores, «Por cobrar» late solo con saldo): 21. Mis pedidos, celular, vistas, camiones: todas en verde.
+
 ## 4ji. 10/10: 🏭 La fábrica de Eduardo (montacargas + camiones) y la dona con los 4 números — EN LA RAMA
 El dueño, mirando §4jg publicado: *«se ve pobre, queda todo alrededor vacío y solo unos 3 pallets»* → *«diseña pequeños montacargas
 con los colchones encima»* → *«me gusta la A pero pondría camiones y más cosas ambientales de fábrica»*, *«quita las 4 fichas y ponlo

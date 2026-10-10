@@ -92,6 +92,14 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   r=await page.evaluate(()=>__ver('Maria Flores'));
   r.met=await page.evaluate(()=>document.getElementById('mis-metrics').parentNode.id);
   chk('…al cambiar a una vendedora se va, y las 4 fichas siguen en la ficha de la dona (§4jj)', r.visible===false && r.met==='mis-izq', r);
+  // 8. (§4jj) las 4 fichas con su color y su dibujito, sin texto adentro del dibujo; «Por cobrar» late solo con saldo
+  r=await page.evaluate(()=>{ var cs=[].slice.call(document.querySelectorAll('#mis-izq #mis-metrics .mc'));
+    return { n:cs.length, esc:cs.filter(c=>c.querySelector('.mi-esc svg')).length, clases:cs.map(c=>c.className),
+      txtEsc:cs.map(c=>c.querySelector('.mi-esc')?c.querySelector('.mi-esc').textContent.trim():'x').join(''),
+      lbl:cs.map(c=>c.querySelector('.mc-lbl').textContent).join('|'), val:cs[2]?cs[2].querySelector('.mc-val').textContent:'' }; });
+  chk('8. las 4 fichas llevan su dibujito y su color (mi-f1…mi-f4), sin letras en el dibujo', r.n===4 && r.esc===4 && r.txtEsc==='' &&
+    r.clases.every((c,i)=>c.indexOf('mi-f'+(i+1))>=0) && r.lbl==='Hoy|Este mes|Por cobrar|Total cargados', r);
+  chk('…«Por cobrar» late solo si hay saldo', (/[1-9]/.test(r.val)) === (r.clases[2].indexOf('mi-debe')>=0), r);
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
