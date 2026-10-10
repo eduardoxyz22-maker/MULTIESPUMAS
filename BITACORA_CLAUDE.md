@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jp. 10/10: ⏳ La fila de espera, que se distinga — EN LA RAMA
+## 4jp. 10/10: ⏳ La fila de espera, que se distinga — PUBLICADA 10/10 15:03 (`a93c0e6`), Pages OK
 El dueño, con las capturas de §4jm: *«no se distingue lo de espera…»*. La fila ya no va detrás de la zona (se perdía entre los demás
 montacargas): es un **corral al costado derecho de la zona** (`gr.wl`, que se suma al ancho y a `anchoT`), piso naranja con borde
 rayado amarillo y negro y «ESPERA» pintado (`depTexEspera`, canvas 256×768), barandas con postes a los dos lados, y el cartel
