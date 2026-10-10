@@ -648,6 +648,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 .h-an.pm .v{stroke:#7ae0ff}
 .h-an.lleno .v{stroke:#ff6b6b}
 .h-an.cerr{opacity:.45}
+.h-anillos.viejo .h-an{opacity:.55}
+.h-anillos.viejo::after{content:'⚠️ copia';align-self:center;font-size:.7rem;font-weight:800;color:#ffd166;white-space:nowrap}
 .h-an b{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.98rem;line-height:1}
 .h-an i{position:absolute;left:-6px;right:-6px;bottom:-12px;text-align:center;font-style:normal;font-size:.55rem;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.82)}
 /* 🚚 (§4iz, dueño 09/10: «ese camioncito de arriba quedó pequeño» → eligió H3, «llega, frena y sigue») Un camión dibujado con el nombre,
@@ -4407,6 +4409,7 @@ var EDIT_REV=null;
    pago de una venta que ya tiene sus pagos registrados (ver `submitPedido`): sin esto, cambiar el monto
    o el método de una venta cobrada decía «Cambios guardados ✓» y la planilla seguía con lo de antes. */
 var EDIT_PLATA0=null;
+var EDIT_TIENDA_SUC0=null;   // (§4jd) la tienda que mostraba el selector al abrir la edición
 /* 💵 (27/09) «A cuenta» y «Saldo» como estaban antes de tocar «SÍ, pagado» (que los pone en 0). Volver a «NO» los repone:
    antes quedaban en 0 (§4gg, «Quedan (BAJA)») y, desde que corregir el precio conserva los pagos, guardar así dejaba PAGADA
    una venta que debía —el saldo desaparecía sin preguntar—. */
@@ -5504,7 +5507,7 @@ function pryTipoProd(x){
   /* (30/09, A3-1) «P/ SOMIER», «P/COLCHON» es «PARA»: lo que sigue es el USO, no el producto («PATAS P/SOMIER» por 4 contaba
      4 somieres). */
   var s=prodAlias(stockNorm(x.desc)).replace(PRY_SIN, ' ').replace(/\bP\/\s*/g, ' PARA ');
-  if(!s || PROD_NO_STOCK.test(s)) return '';                           // «VARIOS», «RECOGER…», tapizado: no son ventas de un producto
+  if(!s || PROD_NO_STOCK.test(s) || PROD_NO_ES_STOCK.test(s)) return '';   // «VARIOS», «RECOGER…», tapizado; (§4jd, A3-4) PANEL POCKET, servicio, devolución
   var c=false, so=false, acc=false;
   s.split(PRY_PEDAZOS).filter(function(p){ return /[A-Z]/.test(p); }).forEach(function(p, i){
     /* (30/09) Después de un accesorio «DE / PARA COLCHON» («FORRO DE COLCHON Y SOMIER», «PROTECTOR PARA COLCHON Y SOMIER»), la
@@ -9964,6 +9967,16 @@ function submitPedido(){
     if(_cobOtros.length) _avisoPlata='los otros pagos registrados quedan como estaban';
   }else{
     _metodoPago = _metForm;
+    /* (§4jd, A2-3) Una venta VIEJA con un método que el formulario no sabe volver a escribir («QR 0 %<imagen>», «QR» sin monto) y que
+       se guarda SIN tocar la plata conserva su método tal cual: antes salía vacío y la imagen del comprobante quedaba huérfana (6 ventas
+       de julio). Solo cuando todo lo de plata a la vista es lo mismo que al abrir (`EDIT_PLATA0`) y el método de antes se perdería. */
+    var _pmPrev=String((prev&&prev.metodoPago)||'').replace(/\s*·\s*REGISTRADO\s*$/,'').trim();
+    if(isEdit && prev && _p0 && _pmPrev && String(_metForm||'').trim()!==_pmPrev &&
+       segVal('f-pagado')===_p0.pagado && r2(montoForm('f-cobrado'))===_p0.cobrado && segVal('f-metodo')===_p0.metodo && segVal('f-banco')===_p0.banco &&
+       r2(_acuVal)===r2(Number(prev.acuenta)||0) && r2(_salVal)===r2(Number(prev.saldo)||0) &&
+       ((_pmPrev.match(/%[^\s%+]+/g)||[]).some(function(id){ return String(_metForm||'').indexOf(id)<0; }) || !String(_metForm||'').trim())){
+      _metodoPago = _pmPrev;
+    }
   }
   /* ⚠️ LA MARCA «REGISTRADO» NO SE PIERDE AL GUARDAR DESDE EL FORMULARIO (§4fy). `_metForm` se
      arma sin ella, y solo el bloque del flete (más abajo) la reponía — que sale antes si el
@@ -10225,7 +10238,11 @@ function submitPedido(){
     celular: document.getElementById('f-celular').value.trim(),
     turno: _tienda ? '' : segVal('f-turno'),
     zona: _tienda ? ZONA_TIENDA : document.getElementById('f-zona').value.trim(),
-    direccion: _tienda ? dirTiendaConSucursal() : document.getElementById('f-direccion').value.trim(),
+    /* (§4jd, A2-4) una venta de tienda vieja («SALIÓ DE TIENDA» a secas) que se guarda sin tocar la tienda conserva su dirección: antes
+       se le escribía la sucursal deducida por la vendedora y cada producto quedaba «✏️ cambió la dirección» sin que nadie lo cambiara. */
+    direccion: _tienda ? ((isEdit && prev && String(prev.direccion||'').indexOf(DIR_TIENDA)===0 && EDIT_TIENDA_SUC0!=null &&
+                           String((document.getElementById('f-tienda-suc')||{}).value||'')===EDIT_TIENDA_SUC0) ? prev.direccion : dirTiendaConSucursal())
+                       : document.getElementById('f-direccion').value.trim(),
     maps: _tienda ? '' : (_maps||''),
     // (27/09) Con los pagos registrados conservados, «pagado», «A cuenta» y el saldo salen de la cuenta de arriba (como `aplicarCobros`).
     pagado: (_pagadoFin!=null) ? _pagadoFin : (segVal('f-pagado')==='SI'),
@@ -10963,7 +10980,7 @@ function confirmarReemplazoForm(){
   return true;
 }
 function resetForm(){
-  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; PAGO_NO_VISTO=null;
+  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
@@ -11023,6 +11040,7 @@ function editPedido(id){
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
+  EDIT_TIENDA_SUC0=VENTA_TIENDA ? String((document.getElementById('f-tienda-suc')||{}).value||'') : null;   // (§4jd, A2-4)
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
@@ -11270,13 +11288,17 @@ function zonaCanonica(z, lista){
   for(var i=0;i<hay.length;i++) if(normNombre(hay[i])===k) return hay[i];
   return String(z).replace(/\s+/g,' ').trim();
 }
+/* 🔒 (§4jd, revisión del 10/10: A2-2/A3-1) El próximo camión que de verdad sale: un día que Administración CERRÓ no tiene cupos para
+   ofrecer (el formulario ya lo frena y el cuadrito promete desde el siguiente). Antes los anillos decían «AM 7 libres» del sábado cerrado. */
+function hdrProximoAbierto(){ var d=proximoDiaEntrega(), cerr=[]; for(var n=0; n<14 && diaCerrado(d); n++){ cerr.push(d); d=sigDiaHabil(d); } return { d:d, cerrados:cerr }; }
 function updateStats(){
   // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
-  var man=proximoDiaEntrega();   // un sábado es el LUNES (§4ex): los cupos que importan son los del próximo camión
+  var PA=hdrProximoAbierto(), man=PA.d;   // un sábado es el LUNES (§4ex): los cupos que importan son los del próximo camión; un día cerrado se saltea (§4jd)
   var rAM=Math.max(0,limTurno(man,'AM')-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,limTurno(man,'PM')-cuposUsadosTurno(man,'PM'));
   document.getElementById('stat-hoy').textContent=(diaDomingo(man)?'0':(rAM+rPM));
   var _cuando = (man===tomorrowStr()) ? 'mañana' : ('el '+['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dowDe(man)]+' '+fmtFecha(man));
-  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos '+_cuando+' · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM));
+  var _cerr = PA.cerrados.length ? (' <small>('+PA.cerrados.map(function(f){ return fmtFechaCorta(f); }).join(', ')+' cerrado por administración)</small>') : '';
+  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos '+_cuando+' · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM)+_cerr);
   hdrPintar(man, rAM, rPM);
   updateFooter();
 }
@@ -11297,6 +11319,9 @@ function hdrPintar(man, rAM, rPM){
   var h1=document.getElementById('hdr-dia'); if(h1) h1.textContent=hdrDiaTxt();
   var el=document.getElementById('h-anillos'); if(!el) return;
   var lA=limTurno(man,'AM'), lP=limTurno(man,'PM');
+  /* (§4jd, A3-7) sin la planilla leída, los anillos son de la COPIA del dispositivo: se ven apagados con «⚠️ copia» */
+  var viejo=(typeof CARGA_ESTADO!=='undefined' && CARGA_ESTADO!=='ok');
+  el.classList.toggle('viejo', viejo); el.title=viejo ? ('Copia guardada en este equipo'+(typeof desdeCuandoLaCopia==='function'?(' '+desdeCuandoLaCopia()):'')+': todavía no se pudo leer la planilla') : '';
   var firma=[man,rAM,rPM,lA,lP].join('|'); if(el.dataset.f===firma) return; el.dataset.f=firma;
   var antes={}; [].forEach.call(el.querySelectorAll('.v'), function(c,i){ antes[i]=c.style.strokeDashoffset; });
   el.innerHTML=hdrAnilloHtml('AM', rAM, lA)+hdrAnilloHtml('PM', rPM, lP);
@@ -11647,6 +11672,7 @@ function fxDerPintar(){
   var el=document.getElementById('fx-der'); if(!el || !fxAncho()) return;
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
   var v=val('f-vendedor'), cli=val('f-cliente'), cel=val('f-celular'), zona=val('f-zona'), f=val('f-fecha'), t=normTurno(segVal('f-turno')||''), tipo=docTipoSel();
+  if(tipo==='RPT') cli=val('f-rpt-suc') ? ('🏪 '+val('f-rpt-suc')) : '';   // (§4jd, A2-5) en una RPT el destino es la sucursal
   var lite=esVendedorLite(v), tienda=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA);
   var prods=[], tot=0;
   [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
@@ -12223,7 +12249,7 @@ function cargaTic(){ cargaBanner(); renderConnEstado(); }
    al nuevo. (Sin esto, un intento arrancado con la red cortada podía volver tarde y tapar
    con «Sin respuesta» a una carga que ya había andado.) */
 var CARGA_GEN=0;
-function cargaEstado(k){ CARGA_ESTADO=k; cargaBanner(); renderConnEstado(); }
+function cargaEstado(k){ CARGA_ESTADO=k; cargaBanner(); renderConnEstado(); try{ var _a=document.getElementById('h-anillos'); if(_a) _a.classList.toggle('viejo', k!=='ok'); }catch(e){} }   // (§4jd) los anillos dicen si son copia
 function cargaBanner(){
   var b=document.getElementById('carga-banner'); if(!b) return;
   var visible = CONNECTED && (CARGA_ESTADO==='reintento' || CARGA_ESTADO==='error' || (CARGA_ESTADO==='cargando' && !STATE.length));
@@ -14296,11 +14322,13 @@ function cargaVivaDatos(){
       });
     } else if(VEHICULOS[k]) c.choferes=VEHICULOS[k].slice();
     var tieneBz=false;
-    c.lineas.forEach(function(l){ l.on=isCargaChk(l.key); c.total+=l.u; if(l.on) c.dentro+=l.u;
-      if(l.lugar!=='fabrica'){ bz.total+=l.u; if(l.on) bz.dentro+=l.u; tieneBz=true; } });
+    /* (§4jd, A2-1) una línea toda ✗ (sin stock) no se carga: no cuenta, como el `data-u=0` de la Lista de carga. Antes la Lista
+       decía «85/85 cargado entero» y los camiones «85 de 144», nunca «Listo». */
+    c.lineas.forEach(function(l){ l.on=isCargaChk(l.key); l.cu=(l.lugar==='fabrica' && l.no>=l.u) ? 0 : l.u; c.total+=l.cu; if(l.on) c.dentro+=l.cu;
+      if(l.lugar!=='fabrica'){ bz.total+=l.cu; if(l.on) bz.dentro+=l.cu; tieneBz=true; } });
     if(tieneBz) bz.cams++;
     c.fab=c.lineas.filter(function(l){ return l.lugar==='fabrica'; });
-    c.fabTotal=c.fab.reduce(function(a,l){ return a+l.u; },0); c.fabDentro=c.fab.reduce(function(a,l){ return a+(l.on?l.u:0); },0);
+    c.fabTotal=c.fab.reduce(function(a,l){ return a+l.cu; },0); c.fabDentro=c.fab.reduce(function(a,l){ return a+(l.on?l.cu:0); },0);
     c.est = c.sin ? 'sin' : (!c.total ? 'nada' : (c.dentro>=c.total ? 'ok' : 'carga'));
     cams.push(c); porK[k]=c;
   });
@@ -16295,7 +16323,7 @@ function renderMis(){
   mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
   box.innerHTML=
     mc('var(--teal)','Hoy',nHoy, todos?'se entregan hoy (todo el equipo)':'pedidos que se entregan hoy')+
-    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades · se entregan este mes')+
+    mc('var(--teal-dk)','Este mes',nMes,uMes+' artículos · se entregan este mes')+   // (§4jd, A3-8) «artículos»: cuenta todo (almohadas incluidas); «unidades» en Contabilidad son solo colchones y somieres
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
@@ -16422,7 +16450,12 @@ function misEstadoCard(p, falta){
 function misWaCliente(cel){
   var d=String(cel||'').replace(/[^0-9]/g,'');
   if(/^[67]\d{7}$/.test(d)) d='591'+d;
-  else if(!/^591[67]\d{7}$/.test(d)) return '';
+  else if(!/^591[67]\d{7}$/.test(d)){
+    /* (§4jd, A2-6) dos celulares en el campo («70012345 / 76543210»): el primero que sea un celular */
+    var m=String(cel||'').replace(/[\s.\-]/g,'').match(/(?:\+?591)?([67]\d{7})(?!\d)/);
+    if(!m) return '';
+    d='591'+m[1];
+  }
   return 'https://wa.me/'+d;
 }
 /* El sello «ENTREGADO» cae con un golpe la PRIMERA vez que se ve en esta apertura de la página, no en cada repintado. */
@@ -18261,7 +18294,7 @@ var PROD_MUEBLE=/\b(CABECERA|CABECERAS|RESPALDAR|RESPALDARES)\b/;
 var PROD_EMPAQUE=/^BOLSAS?\b/;
 /* 🧹 (§4iz, dueño 09/10: «sí», a sacarlos del stock) Los protectores que entran en portugués («PROTETOR COLCHAO», también «PRROTETOR»),
    el PANEL POCKET (un componente, no un colchón) y los servicios («REPARACION…», «SERVICIO…»): ni se venden de stock ni se fabrican. */
-var PROD_NO_ES_STOCK=/\bPR{1,2}OTETOR\b|^PANEL\b|^REPARACION\b|^SERVICIO\b/;
+var PROD_NO_ES_STOCK=/\bPR{1,2}OTETOR\b|^PANEL\b|^REPARACION\b|^SERVICIO\b|^DEVOLVER\b|^DEVOLUCION\b/;   // (§4jd, A1-8) «DEVOLVER TITANIO LATEX…» no es una venta ni una salida
 function esTextoDeTienda(t){
   var s=stockNorm(t);
   if(PROD_TIENDA.test(s) || PROD_EMPAQUE.test(s) || PROD_NO_ES_STOCK.test(s)) return true;
@@ -20103,7 +20136,7 @@ function stockData(extra){
     o.pedir=o.descont?Math.min(o.enOtros||0,Math.max(0,o.comp-(o.paraSalir||0)-stockEnCaminoSeguro(o))):stockCuantoPedir(o);
     o.recoger=Math.min(o.enOtros||0,o.pedir);
     o.fabricar=o.descont?0:Math.max(0,o.pedir-o.recoger);
-    if(o.recoger>0&&!o.fabricar&&!o.revisarStock) o.aviso='traer';
+    if(o.recoger>0&&!o.fabricar&&(!o.revisarStock||o.aviso==='urgente'||o.aviso==='pedir')) o.aviso='traer';   // (§4jd, A1-5) nunca «🚨 Pedí 0 ya · traé 1»
     if(!o.pedir && o.enCamino>0 && (o.aviso==='urgente'||o.aviso==='pedir')) o.aviso='pedido';
     /* (§4ix, M1) El aviso y la cantidad miran plazos distintos: con algo para fabricar, «✅ Alcanza» o «📦 Pedido único» contradecían
        a «Pedir 7 días», a «Qué producir» y a la copia para fábrica (5 productos, 17 unidades el 09/10). Una sola verdad: pedir. */
@@ -20165,6 +20198,7 @@ function stockProyectar(o, serie){   // `serie` (§4ik): si viene un arreglo, se
    nadie tiene que configurar nada. */
 function stockMargen(o){
   var m=(o.vendidosRotacion==null?o.vendidos:o.vendidosRotacion)/3; o.cv=0;
+  if(o.rotacion==='baja') return 0;   // (§4jd, A1-9) antes de «sin ventas → STOCK_COLCHON»: sin rotación no hay margen (como dice §4dj)
   if(!(m>0)) return STOCK_COLCHON;
   var v=0; for(var i=0;i<3;i++) v+=(o.sem[i]-m)*(o.sem[i]-m);
   o.cv=Math.sqrt(v/3)/m;
@@ -20214,7 +20248,7 @@ function stockAvisoDe(o){
      `o.revisarStock` sigue en true para que la acción lo diga («· revisá el saldo»). */
   if(o.revisarStock){
     if(stockDescontinuadoK(o.k) || o.dias==null) return 'revisar';
-    return o.dias<o.lead ? 'urgente' : (o.dias<o.lead+o.margen ? 'pedir' : 'revisar');   // el carril «Revisar» queda para lo que no urge
+    return o.dias<=o.lead ? 'urgente' : (o.dias<o.lead+o.margen ? 'pedir' : 'revisar');   // el carril «Revisar» queda para lo que no urge (≤: §4jd)
   }
   if(stockHaySalir(o)==null) return o.vendidos>0 ? 'sincontar' : '';
   var falta = (o.dias!=null && o.dias<o.lead+o.margen);
@@ -20225,7 +20259,9 @@ function stockAvisoDe(o){
   if(!o.descont && falta && _cp>0 && o.enOtros>=_cp) return 'traer';   // (§4ix, M3) con 0 para pedir (ya programado) no se inventa «traé 1»
   /* 🛑 Discontinuado (§4cz): se corta y la fábrica ya no lo hace. No es «pedir», es avisar. */
   if(o.descont) return falta ? 'agotado' : (o.sobra ? 'sobra' : '');
-  if(o.dias!=null && o.dias<o.lead) return 'urgente';           // ni pidiendo hoy llega a tiempo
+  /* (§4jd, A1-3) con `dias === lead` HOY es el último día para pedir: pedido hoy llega justo, mañana llega tarde (DREAM REFORZADO 180:
+     vendido para el 14/10, 5 días de fábrica, el viernes decía «esta semana» y el sábado ya no llegaba). «Esta semana» = queda holgura. */
+  if(o.dias!=null && o.dias<=o.lead) return 'urgente';          // ni pidiendo mañana llega a tiempo
   if(falta) return 'pedir';                                     // se corta dentro de fábrica + margen
   if(o.enCamino>0) return 'pedido';                             // ya está pedido y con eso alcanza
   if(o.sobra) return 'sobra';
@@ -21914,6 +21950,7 @@ function stockProducir(d){
     if(o.deposito==null){ sinContar++; return; }
     var r=stockProducirDe(o, MS, PI), b=stockBloqueDe(o), B=bloques[b.k];
     var f={ o:o, bloque:b, algo:(r.sem>0||r.quin>0||r.mes>0), md:producirMedidaEtq(o.medida) };
+    o._pQuin=r.quin; o._pMes=r.mes;   // (§4jd, A1-7) para que «📦 Pedido único» no contradiga a las columnas de 15 días / el mes
     PRODUCIR_COLS.forEach(function(c){ f[c]=r[c]; }); f.mesNec=r.mesNec; f.mesQueda=r.mesQueda; f.hay=r.hay; f.rango=r.rango; f.mesMin=r.mesMin; f.mesMax=r.mesMax;
     if(!f.algo) cubiertos++;
     B.filas.push(f);
@@ -22731,6 +22768,13 @@ function stockAsignar(){
       if(_falta>0){
         sinResp[p.id+'|'+xi]=_falta;
         sinRespaldo.push({ id:p.id, oc:p.oc||'', cliente:p.cliente||'', fecha:p.fecha||'', k:k, nom:(info[k]&&info[k].desc?stockNombre(info[k]):(x.desc||'')), u:c, faltan:_falta });
+        /* (§4jd, A1-2) lo marcado ✔ que no tiene unidades en ningún lado TAMBIÉN falta: entra en «✗ No alcanza» y en «📋 Copiar pedido a
+           fábrica» (antes copiaba 21 donde faltaban 37 vendidos, y el TITANIO LATEX 200x200 no aparecía). Las ✗ ya entraron arriba. */
+        if(x.chk!=='no'){
+          var _reg=stockDescontinuadoK(k) ? descPorProd : faltaPorProd, _o2=info[k]||{};
+          if(!_reg[k]) _reg[k]={k:k, nom:(_o2.desc?stockNombre(_o2):(x.desc||'')), cod:_o2.cod||x.codigo||'', u:0, ped:[], alm:{}};
+          _reg[k].u+=_falta; if(_reg[k].ped.length<12) _reg[k].ped.push(p);
+        }
       }
     });
   });
@@ -22919,7 +22963,11 @@ function stockAsignar(){
     if(_libre[l.k]==null){ var t=Math.max(0, dep[l.k]||0), por=[]; if(t>0) por.push({ alm:'PTF', u:t, aca:true });
       (imAlm[l.k]||[]).forEach(function(e){ if(e.u>0) por.push({ alm:e.alm, u:e.u, sale:e.sale }); }); _libre[l.k]=por; }
     var hay=0; _libre[l.k].forEach(function(e){ hay+=e.u; });
-    if(hay>=l.u) noHayConStock.push(Object.assign({}, l, { en:_libre[l.k] }));
+    if(hay>=l.u){
+      noHayConStock.push(Object.assign({}, l, { en:_libre[l.k].filter(function(e){ return e.u>0; }).map(function(e){ return Object.assign({}, e); }) }));
+      /* (§4jd, A1-6) lo ofrecido a una línea ya no está para la siguiente: antes varias ✗ se listaban contra las MISMAS unidades */
+      var r=l.u; _libre[l.k].forEach(function(e){ var t=Math.min(e.u, r); e.u-=t; r-=t; });
+    }
   });
   return { noHayConStock:noHayConStock, revisadas:revisadas, almMal:almMal, sinRespaldo:sinRespaldo, soltar:soltar, realoja:realoja, firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
            sinContar:ord(sinPorProd), descont:ord(descPorProd), sobraDep:dep, sobraIM:im };
@@ -22945,7 +22993,7 @@ function revStkDesglose(l){
 }
 function copiarRevStkFabricar(){
   var r=stockAsignar();
-  copyText('PEDIDO A FÁBRICA — faltantes de esta revisión\n'+r.faltan.map(function(o){return '• '+o.nom+' × '+o.u;}).join('\n'));
+  copyText('PEDIDO A FÁBRICA — faltantes de esta revisión (solo lo ya vendido; lo de reponer stock está en el Plan de stock)\n'+r.faltan.map(function(o){return '• '+o.nom+' × '+o.u;}).join('\n'));
 }
 /* `alm` puede ser el nombre de un almacén o el desglose entero (`[{alm|de,u}]`).
    🚚 (26/09) Cada parte puede traer su tipo (`sale`, o `tipo` de `prodPartes`): lo de Banzer se dice
@@ -28451,14 +28499,14 @@ function stockAvisosMarcar(){
 /* ---------------------------------------------------------------- 🌅 LA SALUD DEL DÍA (solo Administración) */
 var SALUD_LS='me_salud_dia', SALUD_TIMER=null;
 function saludDatos(){
-  var hoy=todayStr(), man=proximoDiaEntrega(), M=[];
+  var hoy=todayStr(), man=hdrProximoAbierto().d, M=[];   // (§4jd) el próximo camión que sale, como los anillos
   var hoyP=STATE.filter(function(p){ return p && p.fecha===hoy && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p); });
   var ent=hoyP.filter(function(p){ return p.entregado; }).length;
   M.push({ t:'Entregas de hoy', v:hoyP.length?ent/hoyP.length:0, txt:hoyP.length?(ent+' de '+hoyP.length+' marcadas'):'hoy no sale nada', c:'#5ff0c5' });
   var d=stockData(), conRit=d.lista.filter(function(o){ return o.rota && stockHaySalir(o)!=null; }), mal=d.lista.filter(function(o){ return AVISOS_FUERTES[o.aviso]; });
   M.push({ t:'Stock', v:conRit.length?Math.max(0,(conRit.length-mal.length)/conRit.length):(d.contado?1:0), txt:d.contado?(mal.length?(mal.length+' para pedir'):'nada para pedir'):'sin Excel de hoy', c:'#ffd166' });
   var usados=cuposUsadosTurno(man,'AM')+cuposUsadosTurno(man,'PM'), lim=limTurno(man,'AM')+limTurno(man,'PM');
-  M.push({ t:'Cupos de '+fmtFechaCorta(man), v:lim?Math.min(1,usados/lim):0, txt:usados+' de '+lim+' lugares', c:'#7cc4ff' });
+  M.push({ t:'Cupos de '+fmtFechaCorta(man), v:lim?Math.min(1,usados/lim):0, txt:usados+' ocupados de '+lim+' · '+Math.max(0,lim-usados)+' libres', c:'#7cc4ff' });   // (§4jd) antes «8 de 15 lugares» al lado de anillos con LIBRES
   var ab=(d.abiertos||[]), llegan=ab.filter(function(q){ return q.llega===hoy; }).length;
   M.push({ t:'Llega de fábrica', v:ab.length?llegan/ab.length:0, txt:llegan?(llegan+' llegan hoy de '+ab.length+' pedidos'):(ab.length?(ab.length+' pedidos en camino'):'nada pedido'), c:'#c9a7ff' });
   return M;
@@ -28549,11 +28597,11 @@ function sfAccion(o){
   switch(o.aviso){
     case 'urgente': return '🚨 Pedí '+stockUnid(o.fabricar)+' ya'+(o.recoger>0?(' · traé '+stockUnid(o.recoger)+' de Moreno'):'')+(o.revisarStock?' · ⚠️ revisá el saldo':'');
     case 'pedir':   return '🏭 Pedí '+stockUnid(o.fabricar)+' esta semana'+(o.recoger>0?(' · traé '+stockUnid(o.recoger)+' de Moreno'):'')+(o.revisarStock?' · ⚠️ revisá el saldo':'');
-    case 'traer':   return '🚚 Traé '+stockUnid(o.recoger||o.pedir)+' de Moreno';
+    case 'traer':   return '🚚 Traé '+stockUnid(o.recoger||o.pedir)+' de Moreno'+(o.revisarStock?' · ⚠️ revisá el saldo':'');
     case 'revisar': return '⚠️ Revisá el saldo'+(o.fabricar>0?(' · igual pedí '+stockUnid(o.fabricar)):' antes de pedir');   // (§4iv) el número no se esconde
     case 'pedido':  return '🚚 Ya pedido'+((o.reclamar||[]).length?' · ⚠️ reclamar':'');
     case 'agotado': return '🛑 Se acaba: no se fabrica más';
-    case 'unico':   return '📦 Pedido único: no se repone';
+    case 'unico':   return (o._pQuin>0||o._pMes>0) ? ('📦 Sin rotación en 15 días · el plan pide '+stockUnid(o._pQuin>0?o._pQuin:o._pMes)+(o._pQuin>0?' en 15 días':' el mes que viene')) : '📦 Pedido único: no se repone';   // (§4jd, A1-7)
     case 'sobra':   return '💤 Sobra: no pedir más';
     case 'sincontar': return 'Sin contar: subí el Excel';
   }
@@ -28819,7 +28867,12 @@ function planYaHtml(o){
 function planYaPedi(k, on, id){
   if(on){
     var o=stockData().lista.find(function(x){ return x.k===k; }); if(!o || !(o.fabricar>0)) return;
-    var id='fy'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
+    /* (§4jd, A3-2) id DERIVADO del producto y el día: dos equipos que tildan «Ya pedí» a la vez antes de leerse anotan el MISMO pedido
+       y la junta por id los une (antes eran dos pedidos de 66 → 132 en camino y el panel dejaba de pedir). «Ya pedí N más» lleva el
+       número de tildes de hoy que ya había (los dos equipos que lo tocan a la vez también coinciden). */
+    var hoyY=todayStr(), nHoy=(STOCK.p||[]).filter(function(q){ return q && q.ya && !q.r && q.k===k && q.f===hoyY; }).length;
+    var id='fy:'+huellaId(k+'|'+hoyY+(nHoy?('|'+nHoy):''));
+    if((STOCK.p||[]).some(function(q){ return q && q.id===id; })) return;
     /* `esp` fijo al tildar: si no, el día de llegada se recalculaba con el piso de CADA día (§4iy) y el tilde no vencía nunca. */
     /* 🏭 (§4jd, dueño 10/10: «48 horas hábiles producir, 24 para entregar, o sea 3 días; si entra luego de las 4:30 las 48 empiezan
        a correr al siguiente día») La fecha es la MISMA regla del cuadrito del vendedor: arranca `diaArranque()` (corte 16:30), sale

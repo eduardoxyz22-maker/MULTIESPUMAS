@@ -27,7 +27,8 @@ const dd  = (n) => { const d=new Date(HOY); d.setDate(d.getDate()+n); return d.t
 /* Un día hábil (lunes a viernes) desde hoy + n: el sábado no tiene PM y el domingo está cerrado.
    Con dd(2) a secas, la sección 7 (turno PM) daba 8 rojos los jueves y los viernes en hora UTC:
    eran «los 8 del 18/09», que fue viernes (bitácora). */
-const ddHabil = (n) => { for (let k=n; k<n+7; k++){ const s=dd(k), w=new Date(s+'T12:00:00Z').getUTCDay(); if (w>=1 && w<=5) return s; } return dd(n); };
+const FERIADOS_T=['2026-11-02','2026-12-25','2027-01-01','2027-01-22','2027-02-08','2027-02-09','2027-03-26','2027-05-01','2027-05-27','2027-06-21','2027-08-06','2027-09-24','2027-11-02','2027-12-25'];   // (§4jd, A3-5) los de `FERIADOS` del panel: el formulario no deja agendar un feriado
+const ddHabil = (n) => { for (let k=n; k<n+9; k++){ const s=dd(k), w=new Date(s+'T12:00:00Z').getUTCDay(); if (w>=1 && w<=5 && FERIADOS_T.indexOf(s)<0) return s; } return dd(n); };
 const DIA = 86400000;
 
 (async () => {

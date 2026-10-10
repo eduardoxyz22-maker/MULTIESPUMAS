@@ -27,7 +27,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 const D=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
 /* Un día hábil (lunes a viernes) a n días o después: el portero rechaza el domingo y el sábado no
    tiene PM. Con D(3) a secas la prueba se pudría los jueves (hoy + 3 = domingo; bitácora). */
-const DH=(n)=>{ for(let k=n;k<n+7;k++){ const s=D(k), w=new Date(s+'T12:00:00Z').getUTCDay(); if(w>=1&&w<=5) return s; } return D(n); };
+const FERIADOS_T=['2026-11-02','2026-12-25','2027-01-01','2027-01-22','2027-02-08','2027-02-09','2027-03-26','2027-05-01','2027-05-27','2027-06-21','2027-08-06','2027-09-24','2027-11-02','2027-12-25'];   // (§4jd, A3-5) los de `FERIADOS` del panel: el formulario no deja agendar un feriado
+const DH=(n)=>{ for(let k=n;k<n+9;k++){ const s=D(k), w=new Date(s+'T12:00:00Z').getUTCDay(); if(w>=1&&w<=5&&FERIADOS_T.indexOf(s)<0) return s; } return D(n); };
 
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
