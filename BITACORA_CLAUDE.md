@@ -7445,6 +7445,15 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jo. 10/10: ✕ La ventana de los pedidos de Eduardo no cerraba — EN LA RAMA
+El dueño, en su iPad: *«abro esto y no cierra, no funciona la X»*. `.dep-modal{display:grid}` le ganaba al atributo `hidden` (el
+`[hidden]{display:none}` del navegador pierde contra cualquier `display` del autor): `depPanel(null)` ponía `hidden` pero la ventana
+seguía a la vista. Arreglo: `.dep-modal[hidden]{display:none!important}`. La prueba de §4jm miraba la propiedad `hidden`, no lo que se
+ve: ahora `test_mis_deposito` §10 mide `getComputedStyle(...).display` después de la ✕ y de tocar afuera (27).
+⚠️ Toda ventana nueva con `display` propio que se esconda con `hidden` necesita su regla `[hidden]`.
+Batería completa de esta tarde (antes del arreglo): 158 suites, 5.675 comprobaciones; las 2 rojas (`test_escenas_form`,
+`test_mispedidos`, 1 cada una) dan todo bien solas: son las de siempre con la máquina cargada.
+
 ## 4jn. 10/10: 🚚 El camión de arriba con el logo de Multiespumas — PUBLICADA 10/10 14:24 (`078c46b`), Pages OK
 El dueño: *«me gusta el fondo todo pero el camión no tiene estilo Multiespumas, ese es el logo (MultiESPUMAS Viscarra S.R.L., tres
 hojas amarilla, naranja y rosa)»*. Se le mostraron tres (artifact «Camión Multiespumas») y eligió **la opción 1**: caja blanca con las
