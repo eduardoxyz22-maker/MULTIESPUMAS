@@ -54,7 +54,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   let r=await page.evaluate(()=>__ver('Maria Flores'));
   chk('1. con una vendedora elegida no aparece', r.visible===false, r);
   r=await page.evaluate(()=>({ cols:document.getElementById('mis-dep-cols').hidden, met:document.getElementById('mis-metrics').parentNode.id }));
-  chk('…ni las columnas, y sus 4 fichas siguen en su lugar de siempre', r.cols===true && r.met!=='mis-izq', r);
+  chk('…ni las columnas, y sus 4 fichas van en la ficha de la dona (§4jj, todas las vendedoras)', r.cols===true && r.met==='mis-izq', r);
   r=await page.evaluate(()=>__ver('Eduardo Añez', true));
   chk('…tampoco en «👑 Ver todos»', r.visible===false, r);
   r=await page.evaluate(()=>__ver('Eduardo Añez'));
@@ -91,7 +91,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
   r=await page.evaluate(()=>__ver('Maria Flores'));
   r.met=await page.evaluate(()=>document.getElementById('mis-metrics').parentNode.id);
-  chk('…al cambiar a una vendedora se va, y las 4 fichas vuelven a su lugar', r.visible===false && r.met!=='mis-izq', r);
+  chk('…al cambiar a una vendedora se va, y las 4 fichas siguen en la ficha de la dona (§4jj)', r.visible===false && r.met==='mis-izq', r);
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
