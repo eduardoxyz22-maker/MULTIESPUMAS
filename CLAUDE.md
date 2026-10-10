@@ -1120,6 +1120,10 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   cliente o producto»*): `#mis-q` fuera de la lista (no pierde el foco), `misBuscaTest` (nota, cliente, Facturar a, OC, celular, zona,
   productos; sin acentos; todas las palabras; número sin guiones), `misBuscar` pasa a «📋 Todos». Los chips cuentan lo encontrado; los
   números de arriba no. Para todos. `tests/test_mis_buscar.js` (16).
+- **📦 El depósito de Eduardo en 3D** (§4jg, 10/10, EN LA RAMA; dueño: *«pendiente es todo lo que no está marcado como entregado…
+  qué tienen por entregar y cuánto en la semana»*): `#mis-dep` al lado de la dona, SOLO con Eduardo (`MIS_VE_DEP`). Pendiente = sin ✅
+  (acá NO vale «fecha pasada = salió»). Semana/próxima/atrasados/todo; por cliente y producto con el estado de logística; tocar un
+  pedido = `showMisModal`. three.js r128 lazy (`depLibs`), sin 3D queda la lista. `tests/test_mis_deposito.js` (16).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
 - **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de

@@ -1239,7 +1239,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
       <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
       <div class="metrics" id="mis-metrics"></div>
-      <div id="mis-anillo"></div>
+      <!-- 📦 (10/10, §4jg) Arriba, al lado de la dona: el depósito 3D de lo que falta entregar, SOLO con Eduardo elegido. -->
+      <div id="mis-arriba"><div id="mis-anillo"></div><div id="mis-dep" hidden></div></div>
       <!-- 📱 (26/09, dueño) Los botones de filtro van JUSTO ARRIBA de la lista: en el celular, con los cuatro números en
            el medio, tocar «📅 Hoy» cambiaba una lista que quedaba mucho más abajo, fuera de la pantalla. -->
       <!-- 🔎 (10/10, §4jf, dueño: «eduardo necesita un buscador, para buscar por nro de nota, nombre cliente o producto»).
@@ -1815,6 +1816,42 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .lugd-vacio{ color:var(--muted); font-size:.82rem; }
 .lug-sin{ background:var(--gray-lt,#eef2f4); color:var(--muted); }
 #mis-anillo:empty{ display:none; }
+#mis-arriba{ display:grid; gap:14px; align-items:start; margin:-8px 0 18px; }
+#mis-arriba .mis-anillo{ margin:0; }
+@media (min-width:1100px){ #mis-arriba.con-dep{ grid-template-columns:minmax(300px,400px) minmax(0,1fr); } }
+/* 📦 el depósito de Eduardo (§4jg) */
+.dep{ background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); box-shadow:var(--sh-card); padding:12px; min-width:0; }
+.dep-cab{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.dep-cab h3{ margin:0; font-size:1.02rem; font-weight:900; } .dep-cab small{ display:block; color:var(--muted); font-weight:600; font-size:.78rem; }
+.dep-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.dep-chip{ font:inherit; font-size:.8rem; font-weight:800; border:1.5px solid var(--gray-md); background:#fff; color:var(--text); border-radius:999px; padding:6px 11px; cursor:pointer; }
+.dep-chip.on{ background:#14232a; border-color:#14232a; color:#fff; }
+.dep-chip .n{ opacity:.7; margin-left:3px; }
+.dep-cuerpo{ display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:12px; align-items:start; }
+@media (max-width:900px){ .dep-cuerpo{ grid-template-columns:minmax(0,1fr); } }
+.dep-esc{ position:relative; height:clamp(340px,52vh,520px); border-radius:14px; overflow:hidden; background:#eef3f4; border:1px solid var(--gray-md); touch-action:none; }
+.dep-esc canvas{ display:block; width:100%; height:100%; }
+.dep-etq{ position:absolute; left:0; top:0; pointer-events:none; white-space:nowrap; will-change:transform; }
+.dep-etq-cli{ font-weight:900; font-size:.86rem; background:#fff; color:#14232a; border-radius:10px; padding:5px 10px 6px; box-shadow:0 6px 18px rgba(12,36,40,.18); border-left:5px solid var(--c); }
+.dep-etq-cli small{ display:block; font-weight:700; font-size:.7rem; color:var(--muted); }
+.dep-etq-pila{ font-weight:800; font-size:.74rem; color:#fff; background:var(--c); border-radius:999px; padding:3px 8px; box-shadow:0 3px 10px rgba(0,0,0,.25); }
+.dep-ayuda{ position:absolute; left:10px; bottom:10px; right:104px; font-size:.74rem; color:var(--muted); background:rgba(255,255,255,.85); border-radius:9px; padding:5px 9px; }
+.dep-todo{ position:absolute; right:10px; bottom:10px; font:inherit; font-size:.78rem; font-weight:800; background:#fff; border:1px solid var(--gray-md); border-radius:9px; padding:6px 10px; cursor:pointer; }
+.dep-sin3d{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:18px; color:var(--muted); font-size:.86rem; }
+.dep-panel{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+.dep-tot{ display:flex; gap:12px; align-items:center; } .dep-tot b{ font-size:2.3rem; line-height:1; font-weight:900; font-variant-numeric:tabular-nums; } .dep-tot span{ font-size:.82rem; color:var(--muted); }
+.dep-cli{ display:grid; grid-template-columns:42px minmax(0,1fr); gap:9px; align-items:center; text-align:left; font:inherit; background:#fff; border:1.5px solid var(--gray-md); border-radius:12px; padding:8px 10px; cursor:pointer; }
+.dep-cli.on{ border-color:var(--c); background:color-mix(in srgb,var(--c) 9%,#fff); }
+.dep-cli b{ display:block; font-weight:900; font-size:.92rem; } .dep-cli span{ font-size:.76rem; color:var(--muted); }
+.dep-det{ border-top:1px solid var(--gray-md); padding-top:8px; display:flex; flex-direction:column; gap:4px; }
+.dep-det h4{ margin:0 0 2px; font-weight:900; font-size:.98rem; }
+.dep-lin{ display:grid; grid-template-columns:2.1em minmax(0,1fr); gap:2px 6px; font-size:.84rem; padding:4px 0; border-bottom:1px dashed var(--gray-md); }
+.dep-lin>b{ text-align:right; color:#00807a; }
+.dep-ests{ grid-column:2/-1; display:flex; flex-wrap:wrap; gap:2px 10px; font-size:.72rem; font-weight:800; }
+.dep-e-ok{ color:#15803d; } .dep-e-im{ color:#b45309; } .dep-e-no{ color:#c0392b; } .dep-e-fab{ color:#7c3aed; } .dep-e-sin{ color:#71858a; }
+.dep-ped{ text-align:left; font:inherit; font-size:.8rem; background:#f3f8f8; border:0; border-radius:9px; padding:6px 9px; cursor:pointer; }
+.dep-ped:hover{ background:#e6f3f2; } .dep-ped b{ font-weight:900; }
+.dep-vacio{ color:var(--muted); font-size:.86rem; padding:8px 0; }
 .mis-anillo{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); padding:12px 16px; margin:-8px 0 18px; box-shadow:var(--sh-card); }
 .mis-ani{ width:150px; height:150px; display:block; }
 @media (max-width:560px){ .mis-anillo>div:first-child{ margin:0 auto; } }
@@ -16427,7 +16464,7 @@ function renderMis(){
   if(bw) bw.style.display=(v||todos)?'flex':'none';
   if(bx) bx.style.display=MIS_Q.trim()?'':'none';
   if(bi && !MIS_Q.trim()){ bi.style.display='none'; bi.textContent=''; }
-  if(!v && !todos){ box.innerHTML=''; var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
+  if(!v && !todos){ box.innerHTML=''; var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; misDepPintar([], '', false); tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
      iba al FONDO de la lista (debajo del pedido más viejo), así que pasados los MIS_TOPE no se veía
@@ -16447,6 +16484,7 @@ function renderMis(){
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
+  misDepPintar(mine, v, todos);                     // 📦 el depósito 3D, solo con Eduardo (§4jg)
   // 🔎 (§4jf) la búsqueda achica la lista y lo que cuentan los chips; los números de arriba quedan enteros
   var hayQ=!!MIS_Q.trim(), hall=hayQ ? mine.filter(misBuscaTest(MIS_Q)) : mine;
   if(bi && hayQ){ bi.style.display='block'; bi.textContent=hall.length ? ('🔎 '+hall.length+' pedido'+(hall.length===1?'':'s')+' con «'+MIS_Q.trim()+'»') : ''; }
@@ -28431,6 +28469,255 @@ function misAnilloHtml(mine, todos){
     C.map(function(c){ return '<div class="mis-ani-it"><i style="background:'+c.col+'"></i><div><small>'+esc(c.lbl)+'</small><b>'+c.val+'</b><small>'+c.sub+'</small></div></div>'; }).join('')+'</div></div>';
 }
 
+
+/* ============================================================================
+   📦 EL DEPÓSITO DE EDUARDO EN 3D (§4jg, 10/10). El dueño, con la dona de Mis pedidos: *«como Eduardo maneja solo proveedores,
+   quiero algo arriba al lado de la dona que muestre, ej. MULTICENTER 15 semi de 2 plazas… y así de los pendientes, y al darle
+   clic muestre los pedidos, para saber qué mandar a pedir o controlar a logística más rápido»*; eligió la escena en 3D de
+   verdad («me gusta») y: *«pendiente es todo lo que no está marcado como entregado… para saber qué tienen por entregar y
+   cuánto en la semana»*.
+     · SOLO con Eduardo elegido en Mis pedidos (`MIS_VE_DEP`, como la nota de §4hu). Las vendedoras no lo ven.
+     · Pendiente = sin ✅ (`!p.entregado`), aunque la fecha haya pasado: acá NO vale la regla de §4co («fecha pasada = salió»).
+       Afuera: filas del sistema, borradores de Kommo y ventas de tienda (salen de la tienda, no del camión).
+     · Períodos por la fecha de entrega: Esta semana (lunes a domingo), Próxima semana, ⏰ Atrasados (fecha pasada) y Todo.
+     · El estado de cada producto es el que marcó logística (✔ hay / 📥 recoger / ✗ no hay / 🏭 en fábrica / sin revisar).
+     · La escena usa three.js (r128) y se baja recién cuando hace falta (`depLibs`); sin internet o sin 3D queda el panel de
+       la derecha, que dice lo mismo. Solo mira: no guarda nada. Tocar un pedido abre su ficha de Mis pedidos (`showMisModal`).
+   ========================================================================== */
+var MIS_VE_DEP=['Eduardo Añez'];
+function misVeDep(v){ return MIS_VE_DEP.some(function(n){ return mismoVendedor(v, n); }); }
+var DEP={ per:'sem', sel:null, firma:'', C:[], w3:null, tw:[], libsMal:false, cargando:false };
+var DEP_COL=['#14a6a0','#2f6fd6','#c9951a','#7c5ce6','#e0528a','#5b6b7d','#0e8f5a','#d4612a','#9fb2c4','#a98bf0','#ef8fb6','#3f8fb0'];
+var DEP_CLI=['#14a6a0','#7c5ce6','#e0528a','#d4612a','#2f6fd6','#0e8f5a','#c9951a','#5b6b7d'];
+var DEP_EST={ ok:'✔ hay', im:'📥 recoger', no:'✗ no hay', fab:'🏭 en fábrica', '':'sin revisar' };
+function depSumar(iso, n){ var d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return isoLocal(d); }
+function depPeriodos(){ var hoy=todayStr(), d=new Date(hoy+'T12:00:00'), lun=depSumar(hoy, -((d.getDay()+6)%7));
+  return { hoy:hoy, sem:[lun, depSumar(lun,6)], prox:[depSumar(lun,7), depSumar(lun,13)] }; }
+function depEnPer(p, per, R){
+  var f=String(p.fecha||'').slice(0,10);
+  if(per==='todo') return true;
+  if(per==='atras') return !!f && f<R.hoy;
+  var r=R[per]; return !!f && f>=r[0] && f<=r[1];
+}
+function depEstado(x){ if(enProduccion(x)) return 'fab'; if(x.chk==='no') return 'no';   // 🏭 primero: un «no hay» ya mandado a fabricar dice en qué está
+  if(esRecoger(x)) return 'im'; if(prodHay(x)) return 'ok'; return ''; }
+function depPendientes(mine){
+  return (mine||[]).filter(function(p){ return p && !p.entregado && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && (p.productos||[]).length; });
+}
+/* Agrupa por cliente y, dentro, por producto + medida. `u` = unidades; `listo` = lo marcado ✔ o 📥 (se puede cargar). */
+function depAgrupar(L){
+  var o={};
+  L.forEach(function(p){
+    var nom=String(p.cliente||'').trim()||'(sin cliente)', key=normNombre(nom);
+    var c=o[key]=o[key]||{ c:nom, peds:[], prod:{}, u:0, listo:0 };
+    c.peds.push(p);
+    (p.productos||[]).forEach(function(x){
+      var u=Number(x.cant)||0; if(u<=0) return;
+      var d=String(x.desc||'').trim().toUpperCase()||'(sin nombre)', m=String(x.medida||'').trim().toLowerCase().replace(/\s+/g,''), k=d+'|'+m, st=depEstado(x);
+      var q=c.prod[k]=c.prod[k]||{ k:k, d:d, m:m, u:0, st:{} };
+      q.u+=u; q.st[st]=(q.st[st]||0)+u; c.u+=u; if(st==='ok'||st==='im') c.listo+=u;
+    });
+  });
+  return Object.keys(o).map(function(k){ return o[k]; }).filter(function(c){ return c.u>0; }).sort(function(a,b){ return b.u-a.u || (a.c<b.c?-1:1); });
+}
+function depDatos(mine, per){
+  var R=depPeriodos(), P=depPendientes(mine), cuenta={};
+  ['sem','prox','atras','todo'].forEach(function(k){ cuenta[k]=0; P.forEach(function(p){ if(depEnPer(p,k,R)) (p.productos||[]).forEach(function(x){ cuenta[k]+=Math.max(0,Number(x.cant)||0); }); }); });
+  return { R:R, cuenta:cuenta, C:depAgrupar(P.filter(function(p){ return depEnPer(p, per, R); })) };
+}
+function depEstHtml(st){ return Object.keys(st).map(function(s){ return '<span class="dep-e-'+(s||'sin')+'">'+(Object.keys(st).length>1?st[s]+' ':'')+DEP_EST[s]+'</span>'; }).join(''); }
+function depCorto(q){ return q.d.split(' ')[0].toLowerCase().replace('semiortopedico','semi')+(q.m?(' '+q.m.replace(/x(190|200)$/,'')):''); }
+function depAnillo(pct, col){ var R=16, L=2*Math.PI*R;
+  return '<svg viewBox="0 0 42 42" width="42" height="42" aria-hidden="true"><circle cx="21" cy="21" r="'+R+'" fill="none" stroke="#e3eaec" stroke-width="5"/><circle cx="21" cy="21" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(L*pct/100).toFixed(1)+' '+L.toFixed(1)+'" transform="rotate(-90 21 21)"/><text x="21" y="25" text-anchor="middle" font-size="10.5" font-weight="900" fill="#14232a">'+pct+'%</text></svg>'; }
+
+function misDepPintar(mine, v, todos){
+  var box=document.getElementById('mis-dep'), arriba=document.getElementById('mis-arriba');
+  if(!box) return;
+  var ver=!todos && !!v && misVeDep(v);
+  box.hidden=!ver; if(arriba) arriba.classList.toggle('con-dep', ver);
+  if(!ver){ DEP.firma=''; return; }
+  if(!box.firstChild){
+    box.innerHTML='<div class="dep"><div class="dep-cab"><div><h3>📦 Lo que falta entregar, por cliente</h3><small>Todo lo que no tiene ✅. Tocá un cliente para ver sus pedidos.</small></div><div class="dep-chips" id="dep-chips"></div></div>'+
+      '<div class="dep-cuerpo"><div class="dep-esc" id="dep-esc"><div class="dep-ayuda">Arrastrá para girar · tocá un cliente</div><button class="dep-todo" type="button" onclick="depVerTodo(true)">↺ Ver todo</button></div><div class="dep-panel" id="dep-panel"></div></div></div>';
+  }
+  var D=depDatos(mine, DEP.per);
+  if(DEP.per==='sem' && !D.cuenta.sem && D.cuenta.todo && !DEP.perTocado){ DEP.per='todo'; D=depDatos(mine, 'todo'); }
+  DEP.C=D.C;
+  if(DEP.sel && !D.C.some(function(c){ return c.c===DEP.sel; })) DEP.sel=null;
+  var defs=[['sem','📅 Esta semana'],['prox','➡️ Próxima'],['atras','⏰ Atrasados'],['todo','📋 Todo']];
+  document.getElementById('dep-chips').innerHTML=defs.map(function(d){ return '<button type="button" class="dep-chip'+(DEP.per===d[0]?' on':'')+'" onclick="depPer(\''+d[0]+'\')">'+d[1]+'<span class="n">'+D.cuenta[d[0]]+'</span></button>'; }).join('');
+  var firma=DEP.per+'§'+todayStr()+'§'+D.C.map(function(c){ return c.c+':'+c.peds.map(function(p){ return p.id; }).join(',')+':'+Object.keys(c.prod).map(function(k){ var q=c.prod[k]; return k+'='+q.u+JSON.stringify(q.st); }).join(';'); }).join('#');
+  if(firma===DEP.firma) return;
+  DEP.firma=firma;
+  depPanelPintar();
+  depLibs(function(ok){ if(!ok){ depSin3D(); return; } if(depIniciar3D()) depConstruir(DEP.C); });
+}
+function depPer(k){ DEP.per=k; DEP.perTocado=true; DEP.sel=null; DEP.firma=''; renderMis(); }
+function depPanelPintar(){
+  var el=document.getElementById('dep-panel'); if(!el) return;
+  var C=DEP.C, tot=C.reduce(function(s,c){ return s+c.u; },0), np=C.reduce(function(s,c){ return s+c.peds.length; },0);
+  if(!C.length){ el.innerHTML='<div class="dep-vacio">✅ Nada pendiente en este período.</div>'; return; }
+  var h='<div class="dep-tot"><b>'+tot+'</b><span>productos por entregar<br>'+C.length+' cliente'+(C.length===1?'':'s')+' · '+np+' pedido'+(np===1?'':'s')+'</span></div>';
+  h+=C.map(function(c,i){ var col=DEP_CLI[i%DEP_CLI.length], pct=Math.round(100*c.listo/c.u);
+    return '<button type="button" class="dep-cli'+(DEP.sel===c.c?' on':'')+'" style="--c:'+col+'" onclick="depElegir('+i+')">'+depAnillo(pct,col)+'<span><b>'+esc(c.c)+'</b><span>'+c.u+' productos · '+pct+'% listo para cargar</span></span></button>'; }).join('');
+  var c=C.filter(function(x){ return x.c===DEP.sel; })[0];
+  if(c){
+    h+='<div class="dep-det"><h4>'+esc(c.c)+'</h4>'+Object.keys(c.prod).map(function(k){ var q=c.prod[k];
+      return '<div class="dep-lin"><b>'+q.u+'</b><span>'+esc(q.d)+(q.m?(' '+esc(q.m)):'')+'</span><span class="dep-ests">'+depEstHtml(q.st)+'</span></div>'; }).join('')+
+      c.peds.slice().sort(function(a,b){ return String(a.fecha||'9')<String(b.fecha||'9')?-1:1; }).map(function(p){
+        var u=(p.productos||[]).reduce(function(s,x){ return s+(Number(x.cant)||0); },0);
+        return '<button type="button" class="dep-ped" data-id="'+esc(p.id)+'" onclick="showMisModal(this.dataset.id)"><b>'+(p.nota?('Nota '+esc(p.nota)):esc(p.oc||''))+'</b> · '+(p.fecha?('entrega '+fmtFecha(p.fecha)):'sin fecha')+(p.fecha && p.fecha<todayStr()?' <span class="dep-e-no">⏰ atrasado</span>':'')+' · '+u+' producto'+(u===1?'':'s')+'</button>'; }).join('')+'</div>';
+  }
+  el.innerHTML=h;
+}
+function depElegir(i){ var c=DEP.C[i]; if(!c) return; DEP.sel=c.c; depPanelPintar(); if(c._x!=null) depAcercar(c._x, c._z||0); }
+function depSin3D(){ var b=document.getElementById('dep-esc'); if(!b || b.querySelector('.dep-sin3d')) return;
+  b.insertAdjacentHTML('beforeend','<div class="dep-sin3d">La vista 3D no se pudo cargar en este equipo (sin internet o sin 3D).<br>La lista de la derecha tiene todo.</div>'); }
+
+/* ---- three.js, que se baja recién cuando hace falta ---- */
+function depLibs(cb){
+  if(window.THREE && THREE.OrbitControls){ cb(true); return; }
+  if(DEP.libsMal){ cb(false); return; }
+  if(!DEP.cargando){
+    DEP.cargando=true;
+    var js=document.createElement('script'); js.id='three-js'; js.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    js.onerror=function(){ DEP.libsMal=true; };
+    js.onload=function(){ var oc=document.createElement('script'); oc.id='three-orbit'; oc.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'; oc.onerror=function(){ DEP.libsMal=true; }; document.head.appendChild(oc); };
+    document.head.appendChild(js);
+  }
+  var t0=Date.now(), t=setInterval(function(){
+    if(window.THREE && THREE.OrbitControls){ clearInterval(t); cb(true); }
+    else if(DEP.libsMal || Date.now()-t0>20000){ clearInterval(t); DEP.libsMal=true; cb(false); }
+  },150);
+}
+/* Movimientos propios (sin otra librería): cada uno lleva un objeto de su valor de arranque al final. */
+function depBote(x){ var n=7.5625, d=2.75; if(x<1/d) return n*x*x; if(x<2/d) return n*(x-=1.5/d)*x+.75; if(x<2.5/d) return n*(x-=2.25/d)*x+.9375; return n*(x-=2.625/d)*x+.984375; }
+function depSuave(x){ return x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2; }
+function depTween(o, to, dur, delay, ease){
+  if(visQuieto() || !DEP.w3){ Object.keys(to).forEach(function(k){ o[k]=to[k]; }); return; }
+  DEP.tw=DEP.tw.filter(function(t){ return t.o!==o; });
+  DEP.tw.push({ o:o, to:to, de:null, t0:performance.now()+(delay||0)*1000, d:dur*1000, e:ease||depSuave });
+}
+function depTweens(now){
+  DEP.tw=DEP.tw.filter(function(t){
+    if(now<t.t0) return true;
+    if(!t.de){ t.de={}; Object.keys(t.to).forEach(function(k){ t.de[k]=t.o[k]; }); }
+    var f=Math.min(1,(now-t.t0)/t.d), e=t.e(f);
+    Object.keys(t.to).forEach(function(k){ t.o[k]=t.de[k]+(t.to[k]-t.de[k])*e; });
+    return f<1;
+  });
+}
+function depIniciar3D(){
+  if(DEP.w3) return true;
+  var box=document.getElementById('dep-esc'); if(!box || !window.THREE) return false;
+  var r; try{ r=new THREE.WebGLRenderer({ antialias:true }); }catch(e){ depSin3D(); return false; }
+  r.setPixelRatio(Math.min(2, window.devicePixelRatio||1)); r.outputEncoding=THREE.sRGBEncoding; r.toneMapping=THREE.ACESFilmicToneMapping; r.toneMappingExposure=1.05;
+  r.shadowMap.enabled=true; r.shadowMap.type=THREE.PCFSoftShadowMap; box.insertBefore(r.domElement, box.firstChild);
+  var esc3=new THREE.Scene(), cam=new THREE.PerspectiveCamera(38,1,.1,200), cielo=new THREE.Color('#eef3f4').convertSRGBToLinear();
+  esc3.background=cielo; esc3.fog=new THREE.Fog(cielo, 26, 60); cam.position.set(9,9.5,13);
+  esc3.add(new THREE.HemisphereLight(0xffffff, 0x667788, .55));
+  var sol=new THREE.DirectionalLight(0xffffff, 1.05); sol.position.set(8,16,9); sol.castShadow=true; sol.shadow.mapSize.set(2048,2048);
+  var sc=sol.shadow.camera; sc.left=-22; sc.right=22; sc.top=18; sc.bottom=-18; sc.near=1; sc.far=60; sol.shadow.bias=-.0006; esc3.add(sol);
+  var piso=new THREE.Mesh(new THREE.PlaneGeometry(160,160), new THREE.MeshStandardMaterial({ color:new THREE.Color('#e1e9eb').convertSRGBToLinear(), roughness:.95 }));
+  piso.rotation.x=-Math.PI/2; piso.receiveShadow=true; esc3.add(piso);
+  var grilla=new THREE.GridHelper(160,80,0x000000,0x000000); grilla.material.opacity=.05; grilla.material.transparent=true; grilla.position.y=.002; esc3.add(grilla);
+  var ctl=new THREE.OrbitControls(cam, r.domElement); ctl.enableDamping=true; ctl.dampingFactor=.08; ctl.maxPolarAngle=Math.PI*.46; ctl.minDistance=4; ctl.maxDistance=60;
+  ctl.autoRotate=!visQuieto(); ctl.autoRotateSpeed=.4; ctl.target.set(0,.6,0); ctl.addEventListener('start', function(){ ctl.autoRotate=false; });
+  DEP.w3={ r:r, esc:esc3, cam:cam, ctl:ctl, box:box, grupo:null, etqs:[], zonas:[], geo:{}, mat:{} };
+  function tam(){ var w=box.clientWidth, h=box.clientHeight; if(!w||!h) return; var antes=cam.aspect>=1; r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); if(DEP.w3.grupo && antes!==(cam.aspect>=1)) depConstruir(DEP.C); }
+  tam(); if(window.ResizeObserver) new ResizeObserver(tam).observe(box); else window.addEventListener('resize', tam);
+  var ray=new THREE.Raycaster(), pt=new THREE.Vector2(), p0=null;
+  r.domElement.addEventListener('pointerdown', function(e){ p0=[e.clientX,e.clientY]; });
+  r.domElement.addEventListener('pointerup', function(e){
+    if(!p0 || Math.hypot(e.clientX-p0[0], e.clientY-p0[1])>6) return;
+    var b=r.domElement.getBoundingClientRect(); pt.set((e.clientX-b.left)/b.width*2-1, -(e.clientY-b.top)/b.height*2+1); ray.setFromCamera(pt, cam);
+    var hit=ray.intersectObjects(DEP.w3.zonas, true)[0]; if(!hit) return;
+    var o=hit.object; while(o && o.userData.i==null) o=o.parent; if(o) depElegir(o.userData.i);
+  });
+  var v=new THREE.Vector3();
+  (function loop(now){
+    requestAnimationFrame(loop);
+    if(!box.offsetParent) return;                   // escondido (otra pestaña u otro vendedor): no dibuja
+    depTweens(now||performance.now()); ctl.update(); r.render(esc3, cam);
+    var w=box.clientWidth, h=box.clientHeight;
+    DEP.w3.etqs.forEach(function(t){ v.copy(t.pos).project(cam); var vis=v.z<1 && v.x>-1.1 && v.x<1.1 && v.y>-1.1 && v.y<1.1;
+      t.el.style.opacity=vis?1:0; t.el.style.transform='translate('+((v.x*.5+.5)*w).toFixed(1)+'px,'+((-v.y*.5+.5)*h).toFixed(1)+'px) translate(-50%,'+(t.abajo?'0':'-100%')+')'; });
+  })();
+  return true;
+}
+function depPaquete(w, h, d, rad){
+  var k=[w,h,d,rad].map(function(n){ return n.toFixed(3); }).join('|'), G=DEP.w3.geo; if(G[k]) return G[k];
+  var s=new THREE.Shape(), x=-w/2+rad, y=-d/2+rad, ww=w-2*rad, dd=d-2*rad, rr=rad*.9;
+  s.moveTo(x,y+rr); s.lineTo(x,y+dd-rr); s.quadraticCurveTo(x,y+dd,x+rr,y+dd); s.lineTo(x+ww-rr,y+dd); s.quadraticCurveTo(x+ww,y+dd,x+ww,y+dd-rr);
+  s.lineTo(x+ww,y+rr); s.quadraticCurveTo(x+ww,y,x+ww-rr,y); s.lineTo(x+rr,y); s.quadraticCurveTo(x,y,x,y+rr);
+  var g=new THREE.ExtrudeGeometry(s, { depth:Math.max(.01,h-2*rad), bevelEnabled:true, bevelThickness:rad, bevelSize:rad, bevelSegments:4, curveSegments:6 });
+  g.rotateX(-Math.PI/2); g.computeBoundingBox(); g.translate(0,-g.boundingBox.min.y,0); return G[k]=g;
+}
+function depMat(col, op){ var k=col+(op||''), M=DEP.w3.mat; if(M[k]) return M[k];
+  return M[k]=new THREE.MeshStandardMaterial({ color:new THREE.Color(col).convertSRGBToLinear(), roughness:.5, metalness:.02, transparent:!!op, opacity:op||1 }); }
+function depTexZona(nom, col){
+  var c=document.createElement('canvas'); c.width=1024; c.height=1024; var x=c.getContext('2d'), rr=function(){ x.beginPath(); if(x.roundRect) x.roundRect(30,30,964,964,90); else x.rect(30,30,964,964); };
+  x.globalAlpha=.1; x.fillStyle=col; rr(); x.fill(); x.globalAlpha=1; x.lineWidth=16; x.strokeStyle=col; x.setLineDash([60,34]); rr(); x.stroke(); x.setLineDash([]);
+  x.fillStyle=col; x.font='900 '+(nom.length>14?64:92)+'px system-ui, sans-serif'; x.textAlign='center'; x.fillText(nom.slice(0,24), 512, 930);
+  var t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=8; return t;
+}
+function depMedida(m){ var a=String(m||'').match(/(\d{2,3})\s*[x*]\s*(\d{2,3})/i); var w=a?Number(a[1])/100:1.4, d=a?Number(a[2])/100:1.9; return [Math.max(.4,Math.min(2,w)), Math.max(.4,Math.min(2.1,d))]; }
+function depTipo(d){ return /SOMIER|BOX/.test(d)?'somier':/ALMOHADA/.test(d)?'almohada':/PROTECTOR|SABANA|SÁBANA|MANTA|CUBRECAMA|FORRO|EDREDON/.test(d)?'otro':'colchon'; }
+function depConstruir(C){
+  var W=DEP.w3; if(!W) return;
+  if(W.grupo) W.esc.remove(W.grupo);
+  W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.zonas=[];
+  var g=new THREE.Group(); W.grupo=g; W.esc.add(g);
+  var ZW=5.4, gap=1.6, n=C.length, x0=-(n-1)*(ZW+gap)/2, delay=0, ancho=W.cam.aspect>=1, colores={};
+  C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ if(!colores[k]) colores[k]=DEP_COL[Object.keys(colores).length%DEP_COL.length]; }); });
+  C.forEach(function(c, ci){
+    var off=x0+ci*(ZW+gap), zx=ancho?off:0, zz=ancho?0:off, col=DEP_CLI[ci%DEP_CLI.length], zona=new THREE.Group();
+    zona.position.set(zx,0,zz); zona.userData.i=ci; g.add(zona); W.zonas.push(zona); c._x=zx; c._z=zz;
+    var deco=new THREE.Mesh(new THREE.PlaneGeometry(ZW,ZW), new THREE.MeshBasicMaterial({ map:depTexZona(c.c,col), transparent:true, depthWrite:false }));
+    deco.rotation.x=-Math.PI/2; deco.position.y=.005; zona.add(deco);
+    var hit=new THREE.Mesh(new THREE.BoxGeometry(ZW,3,ZW), new THREE.MeshBasicMaterial({ visible:false })); hit.position.y=1.5; zona.add(hit);
+    var ks=Object.keys(c.prod).slice(0,4), filas=Math.ceil(ks.length/2), celda=2.3;
+    ks.forEach(function(k, i){
+      var q=c.prod[k], t=depTipo(q.d), md=depMedida(q.m), px=ks.length===1?0:((i%2)-.5)*celda, pz=(Math.floor(i/2)-(filas-1)/2)*celda-.2;
+      var pal=new THREE.Group(); pal.position.set(px,0,pz); zona.add(pal);
+      var pw=Math.min(2.1,Math.max(1.1,md[0]+.2)), pd=Math.min(2.2,Math.max(1.1,md[1]+.15));
+      [-1,0,1].forEach(function(s){ var b=new THREE.Mesh(new THREE.BoxGeometry(pw,.09,.16), depMat('#9c744a')); b.position.set(0,.045,s*(pd/2-.1)); b.castShadow=b.receiveShadow=true; pal.add(b); });
+      var tab=new THREE.Mesh(new THREE.BoxGeometry(pw,.05,pd), depMat('#b48a55')); tab.position.y=.115; tab.castShadow=tab.receiveShadow=true; pal.add(tab);
+      var w,h,d; if(t==='almohada'){ w=.5; h=.16; d=.7; } else if(t==='otro'){ w=.6; h=.18; d=.45; } else { w=md[0]*.92; d=md[1]*.92; h=t==='somier'?.34:.26; }
+      var chico=(t==='almohada'||t==='otro'), geo=depPaquete(w,h,d,chico?.06:.05), mx=Math.min(q.u, chico?16:12), base=.14, alto=0;
+      for(var u=0;u<mx;u++){
+        var m=new THREE.Mesh(geo, depMat(colores[k])); m.castShadow=m.receiveShadow=true;
+        var faja=new THREE.Mesh(new THREE.BoxGeometry(w+.012,h*.98,.07), depMat('#f4f7f8',.92)); faja.position.y=h/2; m.add(faja);
+        var yy=chico ? base+Math.floor(u/2)*h : base+u*h; m.position.set(chico?((u%2)-.5)*(w+.05):0, 0, 0); m.rotation.y=(u%2?1:-1)*.015;
+        pal.add(m); alto=Math.max(alto, yy+h);
+        m.position.y=yy+7+u*.25; depTween(m.position, { y:yy }, .95, delay, depBote); delay+=.04;
+      }
+      var e=document.createElement('div'); e.className='dep-etq dep-etq-pila';
+      var st=q.st.no?'no':(q.st['']||q.st.fab)?'':q.st.im?'im':'ok';
+      e.style.setProperty('--c', { ok:'#15803d', im:'#b45309', no:'#c0392b', '':'#71858a' }[st]);
+      e.textContent=q.u+' '+depCorto(q)+(q.u>mx?(' (se ven '+mx+')'):'');
+      W.box.appendChild(e); W.etqs.push({ el:e, pos:new THREE.Vector3(zx+px, alto+.35, zz+pz) });
+    });
+    var e=document.createElement('div'); e.className='dep-etq dep-etq-cli'; e.style.setProperty('--c', col);
+    e.innerHTML=esc(c.c)+'<small>'+c.u+' productos · '+c.peds.length+' pedido'+(c.peds.length>1?'s':'')+(Object.keys(c.prod).length>4?' · se ven 4 productos':'')+'</small>';
+    W.box.appendChild(e); W.etqs.push({ el:e, pos:new THREE.Vector3(zx,0,zz+ZW/2+.15), abajo:true });
+  });
+  W.span=Math.max(10, n*(ZW+gap));
+  var sel=DEP.sel && C.filter(function(c){ return c.c===DEP.sel; })[0];
+  if(sel) depAcercar(sel._x, sel._z);
+  else if(!ancho && C.length){ DEP.sel=C[0].c; depPanelPintar(); W.ctl.autoRotate=false; depAcercar(C[0]._x, C[0]._z); }   // celular: arranca cerca del primero
+  else depVerTodo(false);
+}
+function depVerTodo(tocado){
+  var W=DEP.w3; if(tocado){ DEP.sel=null; depPanelPintar(); } if(!W) return;
+  var d=Math.max(11, (W.span||14)*.95)*Math.max(1, 1.2/(W.cam.aspect||1));
+  depTween(W.cam.position, { x:d*.55, y:d*.62, z:d*.85 }, 1.4, 0); depTween(W.ctl.target, { x:0, y:.6, z:0 }, 1.4, 0);
+}
+function depAcercar(x, z){
+  var W=DEP.w3; if(!W) return; W.ctl.autoRotate=false;
+  var k=Math.max(1, .85/(W.cam.aspect||1));
+  depTween(W.cam.position, { x:x+5*k, y:6.4*k, z:z+9.2*k }, 1.2, 0); depTween(W.ctl.target, { x:x, y:1.3, z:z }, 1.2, 0);
+}
 
 /* ============================================================================
    ✨ MÁS VISTAS QUE SOLO MIRAN (§4im, 09/10). El dueño, de la página de vistas previas: *«me gusta e implementa todo menos A, C,
