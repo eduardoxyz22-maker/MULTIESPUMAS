@@ -565,6 +565,9 @@ details.pry-sem-det{margin-top:8px}
 details.pry-sem-det>summary{cursor:pointer;font-size:.78rem;font-weight:700;color:var(--teal-dk);padding:4px 0}
 .pry-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .pry-tabla{width:100%;border-collapse:collapse;font-size:.78rem}
+#pry-plata .pry-tabla td:not(:first-child),#pry-plata .pry-tabla th:not(:first-child){text-align:right;white-space:nowrap}
+#pry-plata .pry-tabla td:first-child{min-width:190px}
+#pry-plata tr.pry-pl-tot td{font-weight:800;border-top:2px solid var(--border,#e5e7eb)}
 .pry-tabla th,.pry-tabla td{padding:6px 10px;border-top:1px solid var(--gray-md);text-align:right;white-space:nowrap;vertical-align:top}
 .pry-tabla th:first-child,.pry-tabla td:first-child{text-align:left}
 .pry-tabla th{font-size:.62rem;position:static}   /* el encabezado negro de todas las tablas del panel, sin quedar pegado arriba */
@@ -1239,6 +1242,13 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
       <div id="mis-anillo"></div>
       <!-- 📱 (26/09, dueño) Los botones de filtro van JUSTO ARRIBA de la lista: en el celular, con los cuatro números en
            el medio, tocar «📅 Hoy» cambiaba una lista que quedaba mucho más abajo, fuera de la pantalla. -->
+      <!-- 🔎 (10/10, §4jf, dueño: «eduardo necesita un buscador, para buscar por nro de nota, nombre cliente o producto»).
+           Va FUERA de la lista que se redibuja: escribir no le saca el foco al campo. -->
+      <div id="mis-busca" style="display:none;gap:6px;align-items:center;margin:0 0 8px">
+        <input type="search" id="mis-q" placeholder="🔎 Buscar N° de nota, cliente, producto u OC" autocomplete="off" oninput="misBuscar(this.value)" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:16px">
+        <button class="btn btn-ghost btn-sm" id="mis-q-x" style="width:auto;display:none" onclick="misBuscar('');document.getElementById('mis-q').value=''">✕</button>
+      </div>
+      <div id="mis-q-info" style="display:none;font-size:.82rem;color:var(--muted);margin:-2px 0 8px"></div>
       <div class="qchips" id="mis-chips"></div>
       <div id="mis-lista"></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
@@ -1329,6 +1339,8 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
         <div class="metrics" id="pry-metrics" data-min="300"></div>
         <!-- 📊 (29/09, §4gv) A esta altura: el mes contra otro mes al mismo día, en plata y en unidades. -->
         <div id="pry-altura"></div>
+        <!-- 💵 (10/10, §4je) De dónde sale lo vendido: cobrado en el mes, adelantos de antes y lo que falta, y cómo se llega al Cuadre. -->
+        <div id="pry-plata"></div>
         <div id="pry-vendedores"></div>
         <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
         <div id="pry-prueba"></div>
@@ -5591,6 +5603,75 @@ function pryMezcla(K, f, prom){
   var p1 = f>0 ? K/f : 0, p2 = K+(1-f)*prom, w = f*f;
   return { p1:p1, p2:p2, w:w, proy:(w*p1+(1-w)*p2) };
 }
+/* 💵 DE DÓNDE SALE LO VENDIDO (§4je, 10/10; dueño: *«en Heaven vendido + falta por cobrar no me coincide con lo "vendido en"
+   proyección»* → *«hazlo»*). La Proyección cuenta lo VENDIDO para el mes (entrega agendada); el Cuadre, la plata que ENTRÓ en el mes
+   (fecha del pago) y su «Por cobrar», las ventas CARGADAS en el mes. Las tres cortan por fechas distintas: este cuadro lo pone en una
+   cuenta que cierra, por marca, con las MISMAS ventas que la ficha (las de `pryVentas`: equipo de tiendas, `fechaSalida` en el mes,
+   `ventaTotal`) y los MISMOS pagos que el Cuadre (`contaPagos`, monto > 0; el flete aparte, no es de la venta).
+   vendido = cobrado en el mes + cobrado antes + cobrado después + sin fecha + falta cobrar + pagadas sin monto − cobrado de más.
+   Y la ficha de la marca en el Cuadre = cobrado en el mes de estas ventas + cobros del mes de ventas de OTROS meses + fletes del mes. */
+function pryPlata(ym){
+  var ini=ym+'-01', fin=pryFinDeMes(ym), G={};
+  var g0=function(k){ return G[k]||(G[k]={ vendido:0, n:0, mes:0, antes:0, despues:0, sinF:0, faltaMes:0, nFaltaMes:0, faltaAntes:0, nFaltaAntes:0, sinMonto:0, deMas:0, otrasMes:0, fleteMes:0, caja:0 }); };
+  var sumar=function(k, campo, v){ g0(k)[campo]=r2(g0(k)[campo]+v); g0('equipo')[campo]=r2(g0('equipo')[campo]+v); };
+  g0('equipo');
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || fueraDeConta(p,'tienda')) return;
+    var g=marcaDe(nombreCanonico(p.vendedor)||p.vendedor)||'sin', f=fechaSalida(p), delMes=!!(f && f>=ini && f<=fin);
+    var pagos=(contaPagos(p)||[]).filter(function(c){ return (Number(c.monto)||0)>0; }), cob=0;
+    pagos.forEach(function(c){
+      var m=Number(c.monto)||0, fc=c.fecha||'', enMes=!!(fc && fc>=ini && fc<=fin);
+      if(enMes) sumar(g,'caja',m);
+      if(esEnvio(c)){ if(enMes) sumar(g,'fleteMes',m); return; }
+      if(!delMes){ if(enMes) sumar(g,'otrasMes',m); return; }
+      cob=r2(cob+m);
+      sumar(g, enMes ? 'mes' : (!fc ? 'sinF' : (fc<ini ? 'antes' : 'despues')), m);
+    });
+    if(!delMes) return;
+    var tot=ventaTotal(p), resto=r2(tot-cob);
+    sumar(g,'vendido',tot); sumar(g,'n',1);
+    if(resto>0.009){
+      if(p.pagado) sumar(g,'sinMonto',resto);                          // «SÍ, pagado» sin el monto anotado (§4fg)
+      else if((contaFecha(p)||f)>=ini){ sumar(g,'faltaMes',resto); sumar(g,'nFaltaMes',1); }
+      else { sumar(g,'faltaAntes',resto); sumar(g,'nFaltaAntes',1); }
+    } else if(resto<-0.009) sumar(g,'deMas',-resto);
+  });
+  return G;
+}
+function pryPlataHtml(ym){
+  var G=pryPlata(ym), mes=mesNombre(ym), cols=[];
+  MARCAS.forEach(function(m){ if(G[m.k] && (G[m.k].vendido>0.009 || G[m.k].caja>0.009)) cols.push({ k:m.k, t:m.ico+' '+m.lbl }); });
+  if(G.sin && (G.sin.vendido>0.009 || G.sin.caja>0.009)) cols.push({ k:'sin', t:'⚠️ Sin marca' });
+  cols.push({ k:'equipo', t:'Equipo' });
+  if(!(G.equipo.vendido>0.009) && !(G.equipo.caja>0.009)) return '';
+  var hay=function(campo){ return cols.some(function(c){ return Math.abs((G[c.k]||{})[campo]||0)>0.009; }); };
+  var fila=function(lbl, campo, cls, signo, nCampo){
+    return '<tr'+(cls?(' class="'+cls+'"'):'')+'><td>'+lbl+'</td>'+cols.map(function(c){ var g=G[c.k]||{}, v=g[campo]||0;
+      return '<td>'+(v>0.009 ? ((signo||'')+fmtBs0(v)+(nCampo && g[nCampo] ? (' <small>('+g[nCampo]+')</small>') : '')) : '—')+'</td>'; }).join('')+'</tr>';
+  };
+  var h='<div class="cua-box" id="pry-plata-box"><div class="cua-t">💵 De dónde sale lo vendido — '+esc(mes)+'</div>'+
+    '<div class="pry-intro" style="margin:-4px 0 10px">Lo vendido para '+esc(mes)+' (entrega agendada, lo de las fichas de arriba) partido en lo que ya se cobró, '+
+    'cuándo, y lo que falta. El Cuadre mira otra cosa: la plata que ENTRÓ en el mes, sea de la venta que sea.</div>'+
+    '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th></th>'+cols.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    fila('<b>Vendido para '+esc(mes)+'</b>','vendido','pry-pl-tot','','n')+
+    fila('✓ Cobrado en '+esc(mes),'mes')+
+    fila('✓ Cobrado ANTES (adelantos de meses anteriores)','antes')+
+    (hay('despues') ? fila('✓ Cobrado DESPUÉS de '+esc(mes),'despues') : '')+
+    (hay('sinF') ? fila('✓ Cobrado sin fecha anotada','sinF') : '')+
+    fila('⏳ Falta cobrar · ventas cargadas en '+esc(mes)+' <small>(el «Por cobrar» del Cuadre)</small>','faltaMes','','','nFaltaMes')+
+    fila('⏳ Falta cobrar · ventas cargadas ANTES <small>(no están en el «Por cobrar» del Cuadre de '+esc(mes)+')</small>','faltaAntes','','','nFaltaAntes')+
+    (hay('sinMonto') ? fila('✅ Marcadas pagadas sin el monto anotado','sinMonto') : '')+
+    (hay('deMas') ? fila('➖ Cobrado de más','deMas','','−') : '')+
+    '</tbody></table></div>'+
+    '<div class="cua-t" style="margin-top:14px;font-size:.86rem">🧮 Y el Cuadre de '+esc(mes)+' (por fecha del pago)</div>'+
+    '<div class="pry-scroll"><table class="pry-tabla"><tbody>'+
+    fila('✓ Cobrado en '+esc(mes)+' de estas ventas','mes')+
+    fila('＋ Cobrado en '+esc(mes)+' de ventas de OTROS meses <small>(saldos de entregas anteriores, adelantos de las que vienen)</small>','otrasMes','','+')+
+    (hay('fleteMes') ? fila('＋ Recargo por entrega cobrado en '+esc(mes),'fleteMes','','+') : '')+
+    fila('<b>= Lo que entró en '+esc(mes)+'</b> <small>(la ficha de cada marca en el Cuadre)</small>','caja','pry-pl-tot')+
+    '</tbody></table></div></div>';
+  return h;
+}
 function proyeccionMes(ym){
   var hoy=todayStr(), ini=ym+'-01', fin=pryFinDeMes(ym);
   var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
@@ -5941,6 +6022,7 @@ function renderProyeccion(){
       : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>')+'</div>';
 
   document.getElementById('pry-altura').innerHTML=pryAlturaHtml(R);
+  var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
   document.getElementById('pry-patron').innerHTML=pryPatronHtml(R);
 
@@ -15090,6 +15172,40 @@ var MIS_DEFS=[
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
+/* 🔎 BUSCAR EN MIS PEDIDOS (10/10, §4jf; dueño: «en mis pedidos eduardo necesita un buscador, para buscar por nro de nota,
+   nombre cliente o producto»). Busca en el N° de nota, el cliente, «Facturar a», la OC, el celular y los productos (nombre,
+   código y medida), sin acentos ni mayúsculas. Varias palabras = tienen que estar TODAS («titanio 160»). Un número también
+   se encuentra sin los guiones o puntos de la nota («08230» = «08-230»). Para todos (no molesta), pensado para Eduardo.
+   Los números de arriba (Hoy, Este mes, Por cobrar) NO cambian con la búsqueda: son del vendedor entero. Los chips sí
+   cuentan dentro de lo encontrado. */
+var MIS_Q='';
+function misBuscaTexto(p){
+  var t=[p.nota, p.cliente, p.facturarA, p.oc, p.celular, p.zona];
+  (p.productos||[]).forEach(function(x){ t.push(x.desc, x.codigo, x.medida); });
+  return sinTildes(t.filter(Boolean).join(' | '));
+}
+function misBuscaTest(q){
+  var pal=sinTildes(q).split(/\s+/).filter(Boolean);
+  if(!pal.length) return function(){ return true; };
+  return function(p){
+    var h=misBuscaTexto(p), num=null;
+    return pal.every(function(w){
+      if(h.indexOf(w)>=0) return true;
+      var d=w.replace(/\D/g,'');
+      if(d.length>=3 && d.length===w.replace(/[.\-\/\s]/g,'').length){   // solo un número (con o sin guiones)
+        if(num===null) num=[p.nota, p.oc, p.celular].map(function(s){ return String(s||'').replace(/\D/g,''); }).join(' ');
+        return num.indexOf(d)>=0;
+      }
+      return false;
+    });
+  };
+}
+function misBuscar(q){
+  var antes=MIS_Q; MIS_Q=String(q||'');
+  // Al empezar a buscar se mira en TODOS: una nota vieja no está en «📅 Hoy» y la búsqueda diría «nada».
+  if(!antes.trim() && MIS_Q.trim()) MIS_FILTER='todos';
+  MIS_TOPE=120; renderMis();
+}
 function setMisFiltro(k){ MIS_FILTER=k; MIS_TOPE=120; renderMis(); }
 function renderMisChips(mine){
   var el=document.getElementById('mis-chips'); if(!el) return;
@@ -16307,6 +16423,10 @@ function renderMis(){
   var chips=document.getElementById('mis-chips');
   renderColaAviso();                                // ⏳ lo que este dispositivo no mandó (§4el)
   renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)
+  var bw=document.getElementById('mis-busca'), bi=document.getElementById('mis-q-info'), bx=document.getElementById('mis-q-x');
+  if(bw) bw.style.display=(v||todos)?'flex':'none';
+  if(bx) bx.style.display=MIS_Q.trim()?'':'none';
+  if(bi && !MIS_Q.trim()){ bi.style.display='none'; bi.textContent=''; }
   if(!v && !todos){ box.innerHTML=''; var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
@@ -16327,9 +16447,18 @@ function renderMis(){
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
-  renderMisChips(mine); acomodarFichas();
+  // 🔎 (§4jf) la búsqueda achica la lista y lo que cuentan los chips; los números de arriba quedan enteros
+  var hayQ=!!MIS_Q.trim(), hall=hayQ ? mine.filter(misBuscaTest(MIS_Q)) : mine;
+  if(bi && hayQ){ bi.style.display='block'; bi.textContent=hall.length ? ('🔎 '+hall.length+' pedido'+(hall.length===1?'':'s')+' con «'+MIS_Q.trim()+'»') : ''; }
+  renderMisChips(hall); acomodarFichas();
   if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
-  var lista=mine.filter(misTest(MIS_FILTER));
+  var lista=hall.filter(misTest(MIS_FILTER));
+  if(hayQ && !lista.length){
+    tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
+    empty.textContent = hall.length ? ('Con «'+MIS_Q.trim()+'» hay '+hall.length+' en otro filtro: tocá «📋 Todos».')
+      : ('🔎 Ningún pedido'+(todos?'':' tuyo')+' tiene «'+MIS_Q.trim()+'» (se busca en la nota, el cliente, la OC, el celular y los productos).');
+    return;
+  }
   // En "Atrasados" lo urgente va primero: el que lleva más tiempo esperando, arriba.
   if(MIS_FILTER==='atras') lista.sort(function(a,b){ return minutosAtraso(b)-minutosAtraso(a); });
   if(!lista.length){

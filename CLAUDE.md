@@ -1116,6 +1116,10 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   nota»*; PUBLICADA 07/10 17:50, `07c4db3`): `MIS_VE_NOTA`/`misVeNota(v)` deciden por el nombre ELEGIDO en Mis pedidos (no por el
   vendedor del pedido); `misNotaTxt` pone «· Nota N» al lado de la OC (o «· sin nota»; nada en ATC/RPT) y la ficha
   (`showMisModal`) lo dice arriba. Las vendedoras no lo ven. `tests/test_mis_nota.js` (19; 8 rojas contra `faff9a0`).
+- **🔎 Buscador en Mis pedidos** (§4jf, 10/10, EN LA RAMA; dueño: *«eduardo necesita un buscador, para buscar por nro de nota, nombre
+  cliente o producto»*): `#mis-q` fuera de la lista (no pierde el foco), `misBuscaTest` (nota, cliente, Facturar a, OC, celular, zona,
+  productos; sin acentos; todas las palabras; número sin guiones), `misBuscar` pasa a «📋 Todos». Los chips cuentan lo encontrado; los
+  números de arriba no. Para todos. `tests/test_mis_buscar.js` (16).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
 - **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
@@ -1268,6 +1272,10 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - La meta por marca NO está hecha: el dueño eligió esto antes (la meta es por marca y cambia cada mes).
   - La tabla de cada marca tiene siete columnas y tiene que entrar en el iPad parado (820 px): relleno de 7 px en
     `#pry-altura` (`test_proyeccion` §17 lo mide).
+- **💵 De dónde sale lo vendido** (§4je, 10/10, EN LA RAMA; dueño: *«vendido + falta por cobrar no me coincide»*): `pryPlata`/`pryPlataHtml`
+  (`#pry-plata`) parte lo vendido del mes por marca en cobrado en el mes / antes / falta (cargadas en el mes o antes) y muestra cómo se
+  llega a la ficha del Cuadre (+ cobros del mes de OTRAS ventas + fletes). Mismas ventas que la ficha y mismos pagos que el Cuadre
+  (`contaPagos`): si se toca una de las dos, revisar esta. `tests/test_pry_plata.js`.
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
