@@ -71,7 +71,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     seed(rot(), 4);
     STOCK.p=[{ id:'fyAyer', k:k, u:7, fab:'', f:diasAtras(1), esp:diasAdelante(2), r:'', ya:1, t:Date.now()-86400000 }];
     o=fila(); var h=planYaHtml(o);
-    out.ayer={ ve:/Ya pedí 7 el /.test(h) && /llega ~/.test(h) && /checked/.test(h) };
+    out.ayer={ ve:/Ya pedí 7 el /.test(h) && /se entrega desde ~/.test(h) && /checked/.test(h) };
     planYaPedi(k, false, 'fyAyer'); out.ayer.quitado=(STOCK.p||[]).length===0;
 
     // 5. ✔ acá ×3 para hoy con 1 en PTF y 4 en Banzer; sin marcar ×2 para dentro de 5 días con 1 en Moreno

@@ -4528,7 +4528,11 @@ function contaFecha(p){ var t=Number(p&&p.ts)||0; return t?isoDeTsBolivia(t):(p&
    "facturar a" (por eso tienen el formulario simplificado), así que en esta vista
    aparecerían casi vacíos y ensuciarían los totales. Se los saca de la tabla, del
    desplegable, del resumen y del Excel. Sacar un nombre de acá lo devuelve a la vista. */
-var CONTA_EXCLUIR=['ROHO','Eduardo Añez'];
+/* 🏭 (§4jd, dueño 10/10: «así es, fuera de contabilidad; sí en el stock») Los PEDIDOS INTERNOS tampoco son ventas: los cargan
+   ALBA, FABRICA, MULTIESPUMA, MORENO, ALZER y «REPOSICION DE ALMACEN» (salen del depósito, pero no entra plata). Quedan fuera de
+   Ventas, el Cuadre, la Proyección y el desplegable; el stock los sigue contando (`stockCuenta` no mira esta lista). */
+var CONTA_INTERNOS=['ALBA','FABRICA','MULTIESPUMA','MULTIESPUMAS','MORENO','ALZER','REPOSICION DE ALMACEN'];
+var CONTA_EXCLUIR=['ROHO','Eduardo Añez'].concat(CONTA_INTERNOS);
 /* ============================================================================
    🛏️ LAS DOS MARCAS — SUEÑA y HEAVEN (§4bl)
    El equipo vende dos marcas y cada una tiene su propia caja: no es lo mismo cuánto entró
@@ -11774,15 +11778,21 @@ function fxGuardado(rec){
    Multicenter le compra varias veces, así que el cliente no dice nada; lo que no se puede repetir es la NOTA DE VENTA. Se busca
    en toda la planilla (sin ventana de días), también al editar (sin contar el propio pedido) y en la venta de tienda. ROHO sigue
    sin aviso. `fxNotaClave`: solo los números, sin ceros adelante («0032525» = «32525»). */
+/* (§4jd, dueño 10/10: *«cada vendedor [tiene su numeración]; Eduardo no usa número de nota, ahí anota el nro de pedido de sus
+   proveedores»*) Se compara SOLO contra los pedidos de Eduardo (la 1024 de Jonathan no es la misma), y cada número del campo por
+   separado («32525 / 32526» son dos números, no «3252532526»): avisa si alguno ya está en otro pedido suyo. */
 function fxNotaClave(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
+function fxNotaNumeros(n){ return (String(n||'').match(/\d+/g)||[]).map(function(x){ return x.replace(/^0+/,''); }).filter(Boolean); }
 function fxDupNotaBuscar(){
   if(docTipoSel()!=='OC') return [];
-  var nk=fxNotaClave((document.getElementById('f-nota')||{}).value);
-  if(!nk) return [];
+  var nums=fxNotaNumeros((document.getElementById('f-nota')||{}).value);
+  if(!nums.length) return [];
   var out=[];
   (STATE||[]).forEach(function(p){
     if(!p || (EDIT_ID && String(p.id)===String(EDIT_ID)) || esFilaSistema(p) || borradorDe(p.id) || esATC(p.oc) || esRPT(p.oc)) return;
-    if(fxNotaClave(p.nota)===nk) out.push({ p:p, porNota:true });
+    if(!mismoVendedor(p.vendedor,'Eduardo Añez')) return;
+    var suyos=fxNotaNumeros(p.nota);
+    if(nums.some(function(x){ return suyos.indexOf(x)>=0; })) out.push({ p:p, porNota:true });
   });
   out.sort(function(a,b){ return String(b.p.fecha||'').localeCompare(String(a.p.fecha||'')); });
   return out.slice(0,4);
@@ -11814,7 +11824,7 @@ function fxDupPintar(){
   if(!L.length){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; el._h=''; } return; }
   var nota=L.some(function(d){ return d.porNota; });
   var por=L.some(function(d){ return d.porCel; }) ? 'este celular' : 'este cliente';
-  var h=(nota ? '<b>⚠️ Ojo: la nota de venta '+esc(String((document.getElementById('f-nota')||{}).value||'').trim())+' ya está cargada'+(L.length>1?(' en '+L.length+' pedidos'):'')+'.</b> Revisá el número: cada nota va en un solo pedido.'
+  var h=(nota ? '<b>⚠️ Ojo: el número '+esc(String((document.getElementById('f-nota')||{}).value||'').trim())+' ya está en '+(L.length>1?(L.length+' pedidos tuyos'):'otro pedido tuyo')+'.</b> Revisá el número de pedido del proveedor.'
               : '<b>⚠️ Ojo: '+por+' ya tiene '+(L.length===1?'un pedido':(L.length+' pedidos'))+' de estos días.</b> ¿Es otra compra o es el mismo pedido?')+
     L.map(function(d){ return '<div class="fx-dup-r"><span>'+esc(fxDupTxt(d))+(d.porCel||d.porNota?'':' <i>(mismo nombre)</i>')+'</span><button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(d.p.id))+'\')">👀 Ver</button></div>'; }).join('');
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
@@ -11827,8 +11837,8 @@ function fxDupConfirmar(){
   var firma=L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'')+'|'+String((document.getElementById('f-nota')||{}).value||'');
   if(FX_DUP_OK===firma) return true;
   var si=L.some(function(d){ return d.porNota; }) ?
-    confirm('⚠️ ¿NOTA DE VENTA REPETIDA?\n\nLa nota '+String((document.getElementById('f-nota')||{}).value||'').trim()+' ya está en:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
-      '\n\nCada nota va en un solo pedido. Si te equivocaste de número, cancelá y corregilo.\n\n• Aceptar: guardar igual.\n• Cancelar: volver sin guardar.') :
+    confirm('⚠️ ¿NÚMERO REPETIDO?\n\nEl número '+String((document.getElementById('f-nota')||{}).value||'').trim()+' ya está en otro pedido tuyo:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
+      '\n\nSi te equivocaste de número, cancelá y corregilo. Si es el mismo pedido del proveedor en dos entregas, guardalo igual.\n\n• Aceptar: guardar igual.\n• Cancelar: volver sin guardar.') :
     confirm('⚠️ ¿PEDIDO REPETIDO?\n\n'+(L.some(function(d){ return d.porCel; })?'Este celular':'Este cliente')+' ya tiene:\n'+L.map(function(d){ return '• '+fxDupTxt(d); }).join('\n')+
     '\n\nSi es OTRA compra, guardalo igual. Si es el mismo pedido, cancelá y corregí el que ya está (así no salen dos camiones).\n\n• Aceptar: guardar este pedido nuevo.\n• Cancelar: volver sin guardar.');
   if(si){ FX_DUP_OK=firma; return true; }
@@ -20397,7 +20407,7 @@ var SALDO_DIA_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','s
    ⚠️ Ya no usa lo que tarda la fábrica «medido» ni los 3 días de `STOCK_DIAS_FABRICA`: esos siguen en la pantalla de stock
    para avisar cuándo pedir, y ahí 3 días = las 48 h + el día en que se recoge (hasta que se puede entregar). */
 var DIAS_PRODUCCION=2;           // «debería salir en 48 horas» (dueño, 28/09): días hábiles desde que arranca la fábrica
-var HORA_CORTE=17;               // lunes a viernes: lo que entra desde las 17:00 empieza el siguiente día hábil
+var HORA_CORTE=16.5;             // lunes a viernes: lo que entra desde las 16:30 empieza el siguiente día hábil (dueño, 10/10: «si entra luego de las 4:30 las 48 empiezan a correr al siguiente día»; antes 17:00)
 var HORA_CORTE_SABADO=12;        // el sábado se trabaja hasta el mediodía
 /* Feriados: no trabajan ni logística ni producción. Los nacionales y el 24 de septiembre (Santa Cruz).
    ⚠️ Revisar cada año (Carnaval, Viernes Santo y Corpus Christi cambian de fecha; un feriado en domingo pasa al lunes). */
@@ -20420,8 +20430,10 @@ function saldoDiaRecoge(){ return diaHabilMas(todayStr(), STOCK_DIAS_RECOGIDA); 
 /* 🏭 El día en que sale de la fábrica (y se recoge) lo que arrancó `desde`. */
 function saldoSaleDeFabrica(desde){ return diaHabilMas(desde, DIAS_PRODUCCION); }
 /* El día en que logística y producción EMPIEZAN con lo que se pide ahora. */
-function diaArranque(){
-  var ahora=new Date(), hoy=isoLocal(ahora), h=ahora.getHours()+ahora.getMinutes()/60;
+function horaCorteTxt(h){ var m=Math.round((h%1)*60); return Math.floor(h)+':'+('0'+m).slice(-2); }
+/* (§4jd) `cuando` (ms) opcional: el día en que arrancaba lo pedido a esa hora (el «✓ Ya pedí» guarda la suya). */
+function diaArranque(cuando){
+  var ahora=cuando ? new Date(cuando) : new Date(), hoy=isoLocal(ahora), h=ahora.getHours()+ahora.getMinutes()/60;
   var corte=diaSabado(hoy) ? HORA_CORTE_SABADO : HORA_CORTE;
   return (diaHabil(hoy) && h<corte) ? hoy : sigDiaHabil(hoy);
 }
@@ -20433,8 +20445,8 @@ function saldoArrancaTxt(v){
   if(v.arranca===hoy) return fab ? ('🏭 Se manda a producir hoy'+fab+'.') : '';
   var por = FERIADOS[hoy] ? ('Hoy es feriado ('+FERIADOS[hoy]+')')
           : diaDomingo(hoy) ? 'Hoy es domingo'
-          : diaSabado(hoy) ? ('El sábado se trabaja hasta las '+HORA_CORTE_SABADO+':00')
-          : ('Ya pasaron las '+HORA_CORTE+':00');
+          : diaSabado(hoy) ? ('El sábado se trabaja hasta las '+horaCorteTxt(HORA_CORTE_SABADO))
+          : ('Ya pasaron las '+horaCorteTxt(HORA_CORTE));
   return '🕔 '+por+': se manda a producir el '+saldoDiaTxt(v.arranca)+fab+'.';
 }
 
@@ -20669,7 +20681,7 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
        🏭 (28/09) Cada pedido a fábrica sale `DIAS_PRODUCCION` días hábiles después del día en que se pidió (la regla del
        dueño, la misma de «hay que mandar a producir»): si no, el día que logística lo pide la promesa se corría un día. */
     var falta=cant-v.libres, cum=0;
-    var fabS=fab.map(function(q){ return { u:Number(q.u)||0, llega:q.f ? saldoSaleDeFabrica(q.f) : q.llega }; })
+    var fabS=fab.map(function(q){ return { u:Number(q.u)||0, llega:(q.arr||q.f) ? saldoSaleDeFabrica(q.arr||q.f) : q.llega }; })   // (§4jd) desde el día en que arrancó
                 .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); });
     for(var i=0;i<fabS.length;i++){ cum+=fabS[i].u; if(cum>=falta-1e-9){ v.llega=fabS[i].llega||saldoSaleDeFabrica(diaArranque()); break; } }
     if(v.llega){ v.tipo='prod'; v.color='ambar'; v.atrasada=(v.llega<hoy); disp=saldoMax(v.llega, hoy); }
@@ -28799,7 +28811,7 @@ function planYaHtml(o){
   var hoy=todayStr(), T=stockTiemposFabrica(), h='';
   planYaVigentes(o).forEach(function(q){
     h+='<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" checked data-k="'+esc(o.k)+'" data-id="'+esc(q.id)+'" onchange="planYaPedi(this.dataset.k,this.checked,this.dataset.id)"> ✓ Ya pedí '+stockUnid(q.u)+
-      (q.f===hoy?' hoy':(' el '+fmtFechaCorta(q.f)))+' · llega ~'+fmtFechaCorta(stockEsperado(q,T))+'</label>';
+      (q.f===hoy?' hoy':(' el '+fmtFechaCorta(q.f)))+' · se entrega desde ~'+fmtFechaCorta(stockEsperado(q,T))+'</label>';
   });
   if(!(o.fabricar>0) || o.descont || !(o.aviso==='urgente'||o.aviso==='pedir'||o.aviso==='revisar')) return h;
   return h+'<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> Ya pedí '+stockUnid(o.fabricar)+(h?' más':'')+'</label>';
@@ -28809,7 +28821,12 @@ function planYaPedi(k, on, id){
     var o=stockData().lista.find(function(x){ return x.k===k; }); if(!o || !(o.fabricar>0)) return;
     var id='fy'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
     /* `esp` fijo al tildar: si no, el día de llegada se recalculaba con el piso de CADA día (§4iy) y el tilde no vencía nunca. */
-    var nq={ id:id, k:k, u:o.fabricar, fab:o.fabLead||o.fab||'', f:todayStr(), esp:'', r:'', ya:1, t:Date.now() }; nq.esp=stockEsperado(nq);   // (§4iz) con hora y la fábrica de su marca
+    /* 🏭 (§4jd, dueño 10/10: «48 horas hábiles producir, 24 para entregar, o sea 3 días; si entra luego de las 4:30 las 48 empiezan
+       a correr al siguiente día») La fecha es la MISMA regla del cuadrito del vendedor: arranca `diaArranque()` (corte 16:30), sale
+       de fábrica `DIAS_PRODUCCION` días hábiles después y se entrega desde el día hábil siguiente. `arr` queda guardado para que el
+       cuadrito cuente desde el mismo día (antes el Plan decía «llega ~14/10» con lo medido y el cuadrito «programá desde el 13/10»). */
+    var arr=diaArranque();
+    var nq={ id:id, k:k, u:o.fabricar, fab:o.fabLead||o.fab||'', f:todayStr(), arr:arr, esp:sigDiaHabil(saldoSaleDeFabrica(arr)), r:'', ya:1, t:Date.now() };
     STOCK.p=(STOCK.p||[]).concat([nq]);
     toast('✓ Anotado: pediste '+stockUnid(o.fabricar)+'. No se vuelve a pedir hasta el día en que tendría que llegar.','ok',5000);
   } else {
