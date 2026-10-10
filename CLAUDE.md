@@ -832,7 +832,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
     SOLO con `admEfectivoConDuda(p)` = hay chofer y el camión ya salió (`entregado`, o `fechaSalida(p) <= hoy`); «🚚 El chofer» /
     «🧑‍💼 la vendedora» / otro chofer (`choferesParaSelect`) → `admCobrarEfectivo` → **`applyPaid(p, metodo, banco, recibio)`** (4°
     argumento nuevo, `>Nombre` §4eq). Sin chofer o con la entrega por delante, directo como siempre (los fixtures viejos no cambian).
-- **🔁 El mismo pago dos veces pregunta** (§4jr, 10/10, auditoría de Antigravity y Codex): `ctaRegistrarPago` llama a
+- **🔁 El mismo pago dos veces pregunta** (§4jr, 10/10, PUBLICADA 19:05, `82e869d`; auditoría de Antigravity y Codex): `ctaRegistrarPago` llama a
   `pagoRepetido(p, linea)` (mismo monto, día, método, banco y recibo contra `contaPagos`) y hace `confirm` antes de anotarlo;
   nunca frena. `tests/test_pago_repetido.js`. Y `tests/correr.sh` ahora sale 1 si alguna prueba falla («== HAY PRUEBAS EN ROJO ==»).
 - **🧾 El pago de MENTIRA de una venta «PAGADA sin monto»** (§4fg): esas ventas no tienen

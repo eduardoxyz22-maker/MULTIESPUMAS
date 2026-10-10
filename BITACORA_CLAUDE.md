@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jr. 10/10: 🔎 La auditoría de Antigravity y Codex (informe del 10/10), analizada con Fable y arreglada
+## 4jr. 10/10: 🔎 La auditoría de Antigravity y Codex (informe del 10/10), analizada con Fable y arreglada — PUBLICADA 10/10 19:05 (`82e869d`)
 El dueño subió `INFORME_AUDITORIA_MULTIESPUMAS.md` (Antigravity + Codex, sobre `958b0b9` y `3310172`). Un agente con Fable lo
 verificó contra HEAD (`9d222ff`): los tres hallazgos son reales; lo demás (pedir = lo vendido + el ritmo, reservas que no frenan,
 sin parciales por línea, crédito de ROHO/Multicenter, `r2(1.005)`, el 350/1 de `test_servidor` sin `.git`) es decisión del dueño o
@@ -7461,6 +7461,7 @@ el entorno del auditor. Nada de plata o stock mal calculado. El dueño: *«ok»*
 - **H3 — `Panel.html` y `panel.html`** (baja): `Panel.html` (1.952 bytes, del primer commit del bot, cargador de un panel React
   viejo) se borró; nada lo nombraba. `Panel.jsx`/`Views.jsx`/`Icons.jsx`/`data.js`/`panel.css` siguen: se le preguntó al dueño.
 - El comentario de `test_proyeccion_suma` y la línea de §4ii en `CLAUDE.md` decían 11; desde §4iy son 12 (+2 de Moreno).
+- Batería antes de publicar: 160 suites, «== TODO EN VERDE ==», exit 0 (la primera con el código de salida de verdad).
 
 ## 4jq. 10/10: 🚛 Los camiones de Administración en 3D, por camión, con una ficha por camión abajo — PUBLICADA 10/10 16:21 (`e497b11`)
 El dueño, mirando la fábrica de Eduardo: *«¿cómo lo aplicamos en Administración, en vez de eso que hay? Allá hay muchos nombres de
