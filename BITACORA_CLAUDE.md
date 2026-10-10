@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jj. 10/10: 🎨 La dona de todas las vendedoras: barras y 4 fichas con color y dibujito — EN LA RAMA
+## 4jj. 10/10: 🎨 La dona de todas las vendedoras: barras y 4 fichas con color y dibujito — PUBLICADA 10/10 13:37 (`244b5f1`), Pages OK
 El dueño: *«que a los demás vendedores también les aparezca su dona así… ellos a lo horizontal… esas fichas se ven cutres»* →
 *«opción 3 pero con cosas de la opción 2»* (dona + barras, los 4 números como píldoras) → *«les falta más personalidad, colores y
 animaciones… no va con la nueva UIX»*. Se le mostraron tres estilos (A de color con ícono, B llenas de color, C con dibujito animado)
@@ -7462,7 +7462,7 @@ y eligió **«opción A pero con las animaciones del C»**.
 - `test_mis_deposito` §1 y §7 cambiaron a conciencia (las fichas ya no vuelven a su lugar) y §8 nuevo (dibujito sin letras,
   colores, «Por cobrar» late solo con saldo): 21. Mis pedidos, celular, vistas, camiones: todas en verde.
 
-## 4ji. 10/10: 🏭 La fábrica de Eduardo (montacargas + camiones) y la dona con los 4 números — EN LA RAMA
+## 4ji. 10/10: 🏭 La fábrica de Eduardo (montacargas + camiones) y la dona con los 4 números — PUBLICADA 10/10 13:37 (`244b5f1`), Pages OK
 El dueño, mirando §4jg publicado: *«se ve pobre, queda todo alrededor vacío y solo unos 3 pallets»* → *«diseña pequeños montacargas
 con los colchones encima»* → *«me gusta la A pero pondría camiones y más cosas ambientales de fábrica»*, *«quita las 4 fichas y ponlo
 en la ficha de la dona»*, *«la dona y al lado la imagen 3D»*, *«esto [la lista por cliente] lo movería debajo, en verticales»*. Con el
@@ -7477,7 +7477,7 @@ ejemplo «Mis pedidos de Eduardo» (artifact): *«sí, ponlo así y publica, ME 
   «🚚 N en <camión>», los pedidos (→ `showMisModal`).
 - `tests/test_mis_deposito.js` → 19 (las fichas que se mudan, lo cargado por los tildes, las columnas).
 
-## 4jh. 10/10: 🚛 Los camiones celebran con el guardado confirmado, y una línea al esconderlos — EN LA RAMA
+## 4jh. 10/10: 🚛 Los camiones celebran con el guardado confirmado, y una línea al esconderlos — PUBLICADA 10/10 13:37 (`244b5f1`), Pages OK
 De la revisión de Astra (dueño: «1 ok», «5 ok»): `cvTildar` deja la fiesta en `CV_FIESTA_PEND` y `cargaSyncSet('ok')` (respuesta buena
 de `guardarCargaChk`) la dispara si sigue completo; `cola`/rechazo no festeja. `#cv-sync` en el panel: «⏳ Guardando…» / «✓ Guardado en la
 planilla» / «📴 Sin enviar». `#carga-viva-linea` con los camiones escondidos (`cvLineaHtml`: sin camión, por recoger, camiones completos;

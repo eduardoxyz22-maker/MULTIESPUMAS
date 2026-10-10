@@ -1120,15 +1120,15 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   cliente o producto»*): `#mis-q` fuera de la lista (no pierde el foco), `misBuscaTest` (nota, cliente, Facturar a, OC, celular, zona,
   productos; sin acentos; todas las palabras; número sin guiones), `misBuscar` pasa a «📋 Todos». Los chips cuentan lo encontrado; los
   números de arriba no. Para todos. `tests/test_mis_buscar.js` (16).
-- **🏭 La fábrica de Eduardo** (§4jg → §4ji, 10/10, EN LA RAMA; dueño: *«ME ENCANTA»*): SOLO con Eduardo elegido (`MIS_VE_DEP`), nunca en
+- **🏭 La fábrica de Eduardo** (§4jg → §4ji, 10/10, PUBLICADA 13:37, `244b5f1`; dueño: *«ME ENCANTA»*): SOLO con Eduardo elegido (`MIS_VE_DEP`), nunca en
   «👑 Ver todos». `#mis-izq` = la dona + las 4 fichas (`#mis-metrics` se MUDA ahí y vuelve con otro vendedor); al lado `#mis-dep`, la
   fábrica 3D (montacargas adelante con lo que falta cargar, camiones al fondo con lo ya cargado según los tildes de la Lista de carga,
   `depCargado`); abajo `#mis-dep-cols`, una columna por cliente. Pendiente = sin ✅ (acá NO vale «fecha pasada = salió»).
   three.js r128 lazy (`depLibs`); sin 3D, las columnas. `tests/test_mis_deposito.js` (19).
-- **🎨 La dona de todas las vendedoras (§4jj, EN LA RAMA; dueño: *«opción A pero con las animaciones del C»*)**: `#mis-metrics` vive
+- **🎨 La dona de todas las vendedoras (§4jj, PUBLICADA 10/10 13:37, `244b5f1`; dueño: *«opción A pero con las animaciones del C»*)**: `#mis-metrics` vive
   en `#mis-izq` para todas; cada dato de la dona con su barra; las 4 fichas con su color y un dibujito animado (`misFichasVivas`,
   `MIS_ESC`, clases `mi-f1…4`, `mi-debe`, `mi-entra`). ⚠️ Sin letras dentro de los SVG (las pruebas leen el texto de las fichas).
-- **🚛 Camiones (§4jh, EN LA RAMA)**: la fiesta espera a `cargaSyncSet('ok')`; `#cv-sync` dice Guardando/Guardado/Sin enviar; con los
+- **🚛 Camiones (§4jh, PUBLICADA 10/10 13:37, `244b5f1`)**: la fiesta espera a `cargaSyncSet('ok')`; `#cv-sync` dice Guardando/Guardado/Sin enviar; con los
   camiones escondidos queda `#carga-viva-linea`. `tests/test_carga_sync.js` (9).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
 - **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
