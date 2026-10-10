@@ -29201,9 +29201,11 @@ function depAcercar(x, z, ancho){
    · Tocar: un camión o su andén → lo elige en el panel; un montacargas → la ventana con los pedidos de ese producto en ese camión;
      Banzer / Moreno → su panel (`cvVer`). Solo mira: tildar sigue siendo en el panel o en la Lista de carga.
    · Todo sale de `cargaVivaDatos()`: los MISMOS números del panel de la derecha.
-   · Va detrás de `CV_3D` (`#cv3d` en la dirección o `me_cv3d`=1 en el aparato) hasta que el dueño lo apruebe.
+   · Aprobado por el dueño el 10/10 («publica y veamos»). `CV_3D` lo apaga: `me_cv3d`=0 en el aparato vuelve a la imagen y al panel
+     de antes. ⚠️ En Playwright (`navigator.webdriver`) arranca apagado, para que las pruebas de la imagen y del panel sigan midiendo
+     lo de siempre; `tests/test_camiones_3d.js` lo prende (`CV_3D=true`) y mide las fichas.
    ========================================================================== */
-var CV_3D=(function(){ try{ return /cv3d/.test(location.hash) || localStorage.getItem('me_cv3d')==='1'; }catch(e){ return false; } })();
+var CV_3D=(function(){ try{ if(/cv3d/.test(location.hash)) return true; if(localStorage.getItem('me_cv3d')==='0') return false; return !navigator.webdriver; }catch(e){ return !navigator.webdriver; } })();
 var CV3D={ firma:'', D:null, en:{}, zonas:{} };
 var CV_ESTCOL={ ok:'#15803d', im:'#b45309', no:'#c0392b' };
 function cv3dCorto(kk){

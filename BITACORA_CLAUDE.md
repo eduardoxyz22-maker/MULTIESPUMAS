@@ -7445,6 +7445,26 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jq. 10/10: 🚛 Los camiones de Administración en 3D, por camión, con una ficha por camión abajo — PUBLICADA (ver abajo)
+El dueño, mirando la fábrica de Eduardo: *«¿cómo lo aplicamos en Administración, en vez de eso que hay? Allá hay muchos nombres de
+clientes… hacé el ejemplo por camión, ¿y los montacargas tendrán productos no más?»*. Con las capturas: *«los montacargas, camiones,
+todo bello, pero el panel lateral y el diseño no»* → fichas → *«publica y veamos»*.
+- **Un solo dibujante** para las dos escenas: `depIniciar3D(box)` muda el lienzo a la caja que lo pide (`depMudar`: saca carteles,
+  cambia el `ResizeObserver`, borra `DEP.firma`/`CV3D.firma`), `W.modo` = `'mis'`/`'adm'`, `depRehacer()` al girar el aparato,
+  `userData.dep.fn` = acción propia de lo tocado, niebla según el modo. `cv3dPintar` no hace nada con la caja escondida (si no, le
+  sacaba el lienzo a Mis pedidos). `DEP.quieto`: rearmar sin animar (`suave`, al tildar): solo cae al camión lo recién cargado.
+- **La escena** (`cv3dConstruir`, todo de `cargaVivaDatos()`): cada camión en su andén con lo YA cargado arriba (tildes); adelante,
+  un montacargas por producto que FALTA cargar en PTF, verde hay / ámbar traer de Moreno / rojo sin stock (vacío); más de 4 al
+  corral de espera (§4jp). «Sin vehículo» = corral sin camión. Banzer a la izquierda (andén azul con techo), Moreno a la derecha (la
+  camioneta). Tocar: camión/andén → `cvElegir`; montacargas → `cv3dPedidos` (ventana de §4jm con `q.peds`, abre `showPedidoModal`);
+  Banzer/Moreno → `cvVer`. La cámara va sola al camión elegido (`cv3dIr`/`cv3dEncuadrar`); «↺ Ver todo» encuadra todo a lo ancho.
+- **Sin panel lateral**: `#cv-panel` queda vacío y abajo va `#cv-cols` (`cv3dColsPintar`): botones Banzer / Moreno / Lista de carga y
+  una ficha por camión (estilo de las de Eduardo, `.dep-col`): chofer, paradas, barra (azul en el camión, verde listo para cargar),
+  cada producto con SU tilde (`cv3dTildar` → `setCargaChk`, la clave de siempre) y su estado; el nombre abre la ventana; las paradas
+  plegadas. Orden: «Sin vehículo» (con el selector `cvAsignar` por pedido), los con carga, los vacíos. Diseño claro (`.cv3d-caja`).
+- `CV_3D`: prendido para todos; `me_cv3d`=0 vuelve a lo de antes; **en Playwright arranca apagado** (las pruebas de la imagen y del panel
+  siguen igual). Sin three.js queda la imagen de siempre con las fichas. `tests/test_camiones_3d.js` (15).
+
 ## 4jp. 10/10: ⏳ La fila de espera, que se distinga — PUBLICADA 10/10 15:03 (`a93c0e6`), Pages OK
 El dueño, con las capturas de §4jm: *«no se distingue lo de espera…»*. La fila ya no va detrás de la zona (se perdía entre los demás
 montacargas): es un **corral al costado derecho de la zona** (`gr.wl`, que se suma al ancho y a `anchoT`), piso naranja con borde
