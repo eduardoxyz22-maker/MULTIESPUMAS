@@ -718,10 +718,10 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
-## 🔎 Revisión del 10/10 con 3 agentes + super + mega (§4jd, EN LA RAMA)
+## 🔎 Revisión del 10/10 con 3 agentes + super + mega (§4jd, PUBLICADA 10/10 09:45, `135ff1e`)
 - **Corte 16:30** (`HORA_CORTE`=16.5, dueño: *«48 h hábiles producir, 24 para entregar; si entra luego de las 4:30 las 48 empiezan al
   siguiente día»*). El «✓ Ya pedí» guarda `arr` y `esp` con esa regla (la MISMA del cuadrito: `q.arr||q.f`); id derivado `fy:`+huella
-  (producto|día|n) para que dos equipos no lo dupliquen. Las cantidades de Stock siguen con el tiempo medido.
+  (producto|día|n) para que dos equipos no lo dupliquen. Las cantidades de Stock siguen con el tiempo medido (dueño, 10/10: *«no, dejá los 5 días»*).
 - **Pedidos internos fuera de Contabilidad** (`CONTA_INTERNOS`: ALBA, FABRICA, MULTIESPUMA, MORENO, ALZER, REPOSICION DE ALMACEN);
   en el stock siguen.
 - **Número de Eduardo**: solo contra SUS pedidos y número por número (es el N° de pedido del proveedor; cada vendedor tiene su

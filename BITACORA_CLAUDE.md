@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jd. 10/10: 🔎 Revisión con 3 agentes → super (Fable) → mega (Fable), respuestas del dueño y arreglos — EN LA RAMA
+## 4jd. 10/10: 🔎 Revisión con 3 agentes → super (Fable) → mega (Fable), respuestas del dueño y arreglos — PUBLICADA 10/10 09:45 (`135ff1e`), Pages OK
 El dueño: *«agente que revise stock y saldo, agente que revise errores de todo el panel, agente que revise lo general, 1 super agente
 usando Fable que audite a cada agente y 1 mega agente que audite lo que audita»*. Informe: scratchpad `rev6/INFORME_FINAL.md`
 (+ `rev6/resultado.json`). Resultado del mega: con la planilla real del 09/10 rehízo a mano los 12 productos que más rotan (viernes y
@@ -7455,7 +7455,7 @@ sin errores de JavaScript. Descartó A1-1 (Banzer fantasma: decisión del dueño
 - **A. Fecha de un «Ya pedí»**: *«48 horas hábiles producir, 24 para entregar, o sea 3 días. Si entra luego de las 4:30 las 48
   empiezan a correr al siguiente día»*. → `HORA_CORTE`=16.5 (antes 17; `horaCorteTxt`), `planYaPedi` guarda `arr=diaArranque()` y
   `esp=sigDiaHabil(saldoSaleDeFabrica(arr))`; el cuadrito cuenta desde `q.arr||q.f`; el Plan dice «se entrega desde ~dd/mm». Las
-  CANTIDADES de Stock siguen con el tiempo medido (Moreno 5 días): no se cambió sin preguntar.
+  CANTIDADES de Stock siguen con el tiempo medido (Moreno 5 días): el dueño, 10/10: *«no, dejá los 5 días»*.
 - **B.** ALBA, FABRICA, MULTIESPUMA(S), MORENO, ALZER y «REPOSICION DE ALMACEN» = pedidos internos: `CONTA_INTERNOS` dentro de
   `CONTA_EXCLUIR` (fuera de Ventas, Cuadre, Proyección y del desplegable); el stock los sigue contando.
 - **C.** *«Cada vendedor [su numeración]; Eduardo no usa número de nota, ahí anota el nro de pedido de sus proveedores»* →
