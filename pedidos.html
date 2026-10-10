@@ -29001,9 +29001,10 @@ function depTexEspera(){
    «Abrir el pedido». Solo mira. */
 function depPanel(q){
   var fondo=document.getElementById('dep-modal');
-  if(!q){ if(fondo) fondo.hidden=true; return; }
+  if(!q){ if(fondo){ fondo.hidden=true; fondo.style.display='none'; } return; }   // (§4jo) las dos: el estilo manda aunque el navegador tenga el CSS viejo
   if(!fondo){ fondo=document.createElement('div'); fondo.id='dep-modal'; fondo.className='dep-modal'; fondo.hidden=true;
-    fondo.addEventListener('click', function(e){ if(e.target===fondo) depPanel(null); }); document.body.appendChild(fondo); }
+    fondo.addEventListener('click', function(e){ if(e.target===fondo || (e.target.closest && e.target.closest('.dep-md-x'))) depPanel(null); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') depPanel(null); }); document.body.appendChild(fondo); }
   var peds=[], tit='', sub='', marca=null;
   if(q.v){ DEP.C.forEach(function(c){ c.peds.forEach(function(p){ if(vehiculoDe(p)===q.v) peds.push(p); }); });
     var cho=(VEHICULOS[q.v]||[])[0]||'', car=0; DEP.C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ car+=c.prod[k].cam[q.v]||0; }); });
@@ -29027,7 +29028,7 @@ function depPanel(q){
           return '<span class="dep-md-l'+(es?' es':'')+'">'+(Number(x.cant)||0)+' × '+esc(String(x.desc||'').toUpperCase())+(x.medida?(' '+esc(x.medida)):'')+' <span class="dep-e-'+(est||'sin')+'">'+DEP_EST[est]+'</span>'+(cg.u>0?' <span class="dep-e-cam">🚚 '+cg.u+' en '+esc(cg.v)+'</span>':'')+'</span>'; }).join('')+'</button>'; }).join('')
       :'<div class="dep-md-vacio">'+(q.v?'Este camión no tiene pedidos de este período asignados.':'Sin pedidos.')+'</div>')+
     '<div class="dep-md-pie">Tocá un pedido para abrir su ficha.</div></div>';
-  fondo.hidden=false;
+  fondo.hidden=false; fondo.style.display='';
 }
 function depClaveX(x){ return (String(x.desc||'').trim().toUpperCase()||'(sin nombre)')+'|'+String(x.medida||'').trim().toLowerCase().replace(/\s+/g,''); }
 function depConstruir(C){
