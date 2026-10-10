@@ -73,7 +73,7 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   console.log('\n── 1. En Administración, no en la Lista de carga; lo de Codex ya no está ──');
   let r = await page.evaluate(() => {
     var box=document.getElementById('carga-viva'), img=box && box.querySelector('.cv-lienzo img');
-    return { enResumen:!document.getElementById('adm-resumen') && !!box.closest('#view-admin') && box.nextElementSibling===document.getElementById('adm-cal'), primero:true,
+    return { enResumen:!document.getElementById('adm-resumen') && !!box.closest('#view-admin') && (box.nextElementSibling===document.getElementById('adm-cal') || (box.nextElementSibling && box.nextElementSibling.id==='carga-viva-linea' && box.nextElementSibling.nextElementSibling===document.getElementById('adm-cal'))), primero:true,
       img:img?img.getAttribute('src'):'', enCarga:!!document.querySelector('#carga-overlay #carga-viva, #carga-overlay .cv-caja'),
       codex:!!document.getElementById('adm-logistica') || !!document.querySelector('script[src*="admin-logistica"],link[href*="admin-logistica"]') || typeof window.AdminLogistica!=='undefined',
       titulo:(document.getElementById('cv-dia')||{}).textContent||'' };
@@ -142,10 +142,14 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
     var filas=[].slice.call(document.querySelectorAll('#cv-panel .cv-fila:not(.on)'));
     filas.forEach(function(f){ cvTildar(document.querySelector('#cv-panel .cv-fila[data-k="'+CSS.escape(f.getAttribute('data-k'))+'"]')); });
     await new Promise(r=>setTimeout(r,120));
+    /* (§4jh) la fiesta sale recién con el guardado confirmado: a los 120 ms todavía no, y el panel dice «Guardando…» */
+    var antes=document.querySelectorAll('#cv-capa .cv-chispa').length, sync=(document.getElementById('cv-sync')||{}).textContent||'';
+    await new Promise(r=>setTimeout(r,1800));
     var conf=document.querySelectorAll('#cv-capa .cv-chispa').length, faros=document.querySelectorAll('#cv-faros-bz .cv-faro.fuerte').length + document.querySelectorAll('#cv-faros-ptf .cv-faro.fuerte').length;
-    return { est:cargaVivaDatos().porK['Foton encarpado'].est, bz:cargaVivaDatos().bz, conf:conf, faros:faros, listo:!!document.querySelector('#cv-panel .cv-listo') };
+    return { est:cargaVivaDatos().porK['Foton encarpado'].est, bz:cargaVivaDatos().bz, conf:conf, faros:faros, listo:!!document.querySelector('#cv-panel .cv-listo'), antes:antes, sync:sync, sync2:(document.getElementById('cv-sync')||{}).textContent||'' };
   });
   chk('⚠️ tildar los dos renglones del encarpado (fábrica y Banzer) lo completa, con papel picado y luces', r.est==='ok' && r.listo && r.conf>0 && r.faros>0, J(r));
+  chk('(§4jh) …pero el papel picado espera al guardado confirmado: antes dice «Guardando…», después «✓ Guardado»', r.antes===0 && /Guardando/.test(r.sync) && /Guardado en la planilla/.test(r.sync2), J({antes:r.antes, sync:r.sync, sync2:r.sync2}));
   chk('…y el cartel de Banzer queda 2 de 2', r.bz.total===2 && r.bz.dentro===2, J(r.bz));
 
   // ══ 6. Hoy / Mañana ══
