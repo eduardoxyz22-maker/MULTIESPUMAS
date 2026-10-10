@@ -7445,6 +7445,17 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jf. 10/10: 🔎 Buscador en Mis pedidos (nota, cliente, producto, OC) — EN LA RAMA
+El dueño, con la captura de Mis pedidos de Eduardo: *«en mis pedidos eduardo necesita un buscador, para buscar por nro de nota, nombre
+cliente o producto»*.
+- `#mis-busca` (campo `#mis-q` + ✕) arriba de los chips, FUERA de `#mis-lista` (escribir no pierde el foco); aparece con un nombre
+  elegido o con «👑 Ver todos». Para todos los vendedores (no molesta); pensado para Eduardo.
+- `misBuscaTest(q)`: busca en nota, cliente, «Facturar a», OC, celular, zona y productos (nombre, código, medida), sin acentos ni
+  mayúsculas (`sinTildes`); varias palabras = todas; un número también sin guiones ni puntos («08230» = «08-230»).
+- `misBuscar(q)`: al empezar a buscar pasa a «📋 Todos» (una nota vieja no está en «📅 Hoy»). Los chips cuentan dentro de lo
+  encontrado; los números de arriba (Hoy, Este mes, Por cobrar, Total) no cambian. Sin resultados lo dice.
+- `tests/test_mis_buscar.js` (16; contra `main` no arranca: no hay campo).
+
 ## 4je. 10/10: 💵 «De dónde sale lo vendido» en la Proyección — EN LA RAMA
 El dueño: *«¿por qué en Proyección Heaven dice 405k vendido y en el Cuadre Heaven tiene 228.654?»* y *«Heaven vendido + falta por
 cobrar no me coincide con lo "vendido en" Proyección»* → *«hazlo»*. Las tres pantallas cortan por fechas distintas: la Proyección por

@@ -1242,6 +1242,13 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
       <div id="mis-anillo"></div>
       <!-- 📱 (26/09, dueño) Los botones de filtro van JUSTO ARRIBA de la lista: en el celular, con los cuatro números en
            el medio, tocar «📅 Hoy» cambiaba una lista que quedaba mucho más abajo, fuera de la pantalla. -->
+      <!-- 🔎 (10/10, §4jf, dueño: «eduardo necesita un buscador, para buscar por nro de nota, nombre cliente o producto»).
+           Va FUERA de la lista que se redibuja: escribir no le saca el foco al campo. -->
+      <div id="mis-busca" style="display:none;gap:6px;align-items:center;margin:0 0 8px">
+        <input type="search" id="mis-q" placeholder="🔎 Buscar N° de nota, cliente, producto u OC" autocomplete="off" oninput="misBuscar(this.value)" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:16px">
+        <button class="btn btn-ghost btn-sm" id="mis-q-x" style="width:auto;display:none" onclick="misBuscar('');document.getElementById('mis-q').value=''">✕</button>
+      </div>
+      <div id="mis-q-info" style="display:none;font-size:.82rem;color:var(--muted);margin:-2px 0 8px"></div>
       <div class="qchips" id="mis-chips"></div>
       <div id="mis-lista"></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
@@ -15165,6 +15172,40 @@ var MIS_DEFS=[
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
+/* 🔎 BUSCAR EN MIS PEDIDOS (10/10, §4jf; dueño: «en mis pedidos eduardo necesita un buscador, para buscar por nro de nota,
+   nombre cliente o producto»). Busca en el N° de nota, el cliente, «Facturar a», la OC, el celular y los productos (nombre,
+   código y medida), sin acentos ni mayúsculas. Varias palabras = tienen que estar TODAS («titanio 160»). Un número también
+   se encuentra sin los guiones o puntos de la nota («08230» = «08-230»). Para todos (no molesta), pensado para Eduardo.
+   Los números de arriba (Hoy, Este mes, Por cobrar) NO cambian con la búsqueda: son del vendedor entero. Los chips sí
+   cuentan dentro de lo encontrado. */
+var MIS_Q='';
+function misBuscaTexto(p){
+  var t=[p.nota, p.cliente, p.facturarA, p.oc, p.celular, p.zona];
+  (p.productos||[]).forEach(function(x){ t.push(x.desc, x.codigo, x.medida); });
+  return sinTildes(t.filter(Boolean).join(' | '));
+}
+function misBuscaTest(q){
+  var pal=sinTildes(q).split(/\s+/).filter(Boolean);
+  if(!pal.length) return function(){ return true; };
+  return function(p){
+    var h=misBuscaTexto(p), num=null;
+    return pal.every(function(w){
+      if(h.indexOf(w)>=0) return true;
+      var d=w.replace(/\D/g,'');
+      if(d.length>=3 && d.length===w.replace(/[.\-\/\s]/g,'').length){   // solo un número (con o sin guiones)
+        if(num===null) num=[p.nota, p.oc, p.celular].map(function(s){ return String(s||'').replace(/\D/g,''); }).join(' ');
+        return num.indexOf(d)>=0;
+      }
+      return false;
+    });
+  };
+}
+function misBuscar(q){
+  var antes=MIS_Q; MIS_Q=String(q||'');
+  // Al empezar a buscar se mira en TODOS: una nota vieja no está en «📅 Hoy» y la búsqueda diría «nada».
+  if(!antes.trim() && MIS_Q.trim()) MIS_FILTER='todos';
+  MIS_TOPE=120; renderMis();
+}
 function setMisFiltro(k){ MIS_FILTER=k; MIS_TOPE=120; renderMis(); }
 function renderMisChips(mine){
   var el=document.getElementById('mis-chips'); if(!el) return;
@@ -16382,6 +16423,10 @@ function renderMis(){
   var chips=document.getElementById('mis-chips');
   renderColaAviso();                                // ⏳ lo que este dispositivo no mandó (§4el)
   renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)
+  var bw=document.getElementById('mis-busca'), bi=document.getElementById('mis-q-info'), bx=document.getElementById('mis-q-x');
+  if(bw) bw.style.display=(v||todos)?'flex':'none';
+  if(bx) bx.style.display=MIS_Q.trim()?'':'none';
+  if(bi && !MIS_Q.trim()){ bi.style.display='none'; bi.textContent=''; }
   if(!v && !todos){ box.innerHTML=''; var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
@@ -16402,9 +16447,18 @@ function renderMis(){
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
-  renderMisChips(mine); acomodarFichas();
+  // 🔎 (§4jf) la búsqueda achica la lista y lo que cuentan los chips; los números de arriba quedan enteros
+  var hayQ=!!MIS_Q.trim(), hall=hayQ ? mine.filter(misBuscaTest(MIS_Q)) : mine;
+  if(bi && hayQ){ bi.style.display='block'; bi.textContent=hall.length ? ('🔎 '+hall.length+' pedido'+(hall.length===1?'':'s')+' con «'+MIS_Q.trim()+'»') : ''; }
+  renderMisChips(hall); acomodarFichas();
   if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
-  var lista=mine.filter(misTest(MIS_FILTER));
+  var lista=hall.filter(misTest(MIS_FILTER));
+  if(hayQ && !lista.length){
+    tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
+    empty.textContent = hall.length ? ('Con «'+MIS_Q.trim()+'» hay '+hall.length+' en otro filtro: tocá «📋 Todos».')
+      : ('🔎 Ningún pedido'+(todos?'':' tuyo')+' tiene «'+MIS_Q.trim()+'» (se busca en la nota, el cliente, la OC, el celular y los productos).');
+    return;
+  }
   // En "Atrasados" lo urgente va primero: el que lleva más tiempo esperando, arriba.
   if(MIS_FILTER==='atras') lista.sort(function(a,b){ return minutosAtraso(b)-minutosAtraso(a); });
   if(!lista.length){
