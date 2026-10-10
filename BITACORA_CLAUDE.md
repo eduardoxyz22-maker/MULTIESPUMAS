@@ -7445,6 +7445,19 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jk. 10/10: 🏙️ Arriba, una calle de verdad y la ciudad en ruinas; 🚚 los camiones de Eduardo siempre al fondo — EN LA RAMA
+El dueño, con la captura del encabezado: *«esas líneas están muy seguidas, no parece una carretera… y no hay de fondo edificios,
+árboles o algo que simule una ciudad (en este caso tema Halloween) … ciudad en ruinas, cosas de miedo»*. Y mirando la fábrica de
+Eduardo en «Próxima» sin nada cargado: *«¿y mis camiones?»*.
+- `.h-ruta` (68 px; 52 en el celular): `.h-lejos` y `.h-cerca` = la ciudad en dos capas (SVG en `background`, repetido a lo ancho),
+  `.h-calle` = asfalto + cordón + líneas de 28 px cada 64. En octubre (`tema-halloween`): ruinas con techos rotos, casa embrujada con
+  ventanas naranjas, árboles secos, tumbas, reja, calabazas, `.h-luna`, `.h-murc` (3 murciélagos) y niebla (`.h-ruta::after`). Los
+  dibujos salen de `herramientas/ruta_ciudad_gen.py` (azar con semilla: siempre el mismo). Sin movimiento con `prefers-reduced-motion`.
+- `depConstruir`: al fondo van SIEMPRE camiones — los que ya tienen algo cargado + los que tienen pedidos del período asignados
+  (`vehiculoDe`), aunque estén vacíos («0 ya cargados · N pedidos»); si ninguno, la flota entera (`VEHICULOS`) «esperando carga».
+  La firma de la escena incluye el vehículo de cada pedido. Carteles de camiones vecinos alternan altura.
+- `test_mis_deposito` §9 (la ciudad y la calle): 22.
+
 ## 4jj. 10/10: 🎨 La dona de todas las vendedoras: barras y 4 fichas con color y dibujito — PUBLICADA 10/10 13:37 (`244b5f1`), Pages OK
 El dueño: *«que a los demás vendedores también les aparezca su dona así… ellos a lo horizontal… esas fichas se ven cutres»* →
 *«opción 3 pero con cosas de la opción 2»* (dona + barras, los 4 números como píldoras) → *«les falta más personalidad, colores y

@@ -100,6 +100,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('8. las 4 fichas llevan su dibujito y su color (mi-f1…mi-f4), sin letras en el dibujo', r.n===4 && r.esc===4 && r.txtEsc==='' &&
     r.clases.every((c,i)=>c.indexOf('mi-f'+(i+1))>=0) && r.lbl==='Hoy|Este mes|Por cobrar|Total cargados', r);
   chk('…«Por cobrar» late solo si hay saldo', (/[1-9]/.test(r.val)) === (r.clases[2].indexOf('mi-debe')>=0), r);
+  // 9. (§4jk) el encabezado tiene la ciudad y una calle de verdad
+  r=await page.evaluate(()=>['h-lejos','h-cerca','h-calle'].map(c=>{ var e=document.querySelector('.h-ruta .'+c); return e?getComputedStyle(e).backgroundImage.length:0; }));
+  chk('9. arriba: la ciudad (lejos y cerca) y la calle con sus líneas', r.every(n=>n>50), r);
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
