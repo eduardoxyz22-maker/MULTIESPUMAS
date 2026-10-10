@@ -1936,6 +1936,19 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .dep-etq-cam{ font-weight:900; font-size:.8rem; background:#14232a; color:#fff; border-radius:10px; padding:4px 10px 5px; box-shadow:0 6px 18px rgba(0,0,0,.3); }
 .dep-etq-cam small{ display:block; font-weight:700; font-size:.68rem; color:#9fe3dc; }
 .dep-ayuda{ position:absolute; left:10px; bottom:10px; right:104px; font-size:.74rem; color:var(--muted); background:rgba(255,255,255,.85); border-radius:9px; padding:5px 9px; z-index:1; }
+.dep-modal{ position:fixed; inset:0; z-index:3900; background:rgba(15,25,30,.45); display:grid; place-items:center; padding:16px; }
+.dep-md{ background:#fff; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.3); width:min(520px,100%); max-height:min(80vh,720px); overflow:auto; padding:18px 18px 12px; animation:dep-md .22s ease-out; }
+@keyframes dep-md{ from{ opacity:0; transform:translateY(12px) scale(.98); } to{ opacity:1; transform:none; } }
+.dep-md-cab{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:12px; } .dep-md-cab b{ display:block; font-size:1.15rem; font-weight:900; } .dep-md-cab small{ display:block; color:var(--muted); font-size:.85rem; }
+.dep-md-x{ border:0; background:none; font-size:1.3rem; color:#5b6b75; cursor:pointer; padding:2px 6px; }
+.dep-md-p{ display:block; width:100%; text-align:left; font:inherit; color:inherit; background:#fff; border:1px solid var(--gray-md); border-radius:12px; padding:10px 14px; margin:0 0 10px; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.dep-md-p:hover{ border-color:#00B5AD; box-shadow:0 6px 16px -8px rgba(0,120,110,.4); }
+.dep-md-t{ display:block; font-size:.92rem; margin-bottom:3px; } .dep-md-t b{ font-weight:900; }
+.dep-md-l{ display:block; font-size:.86rem; line-height:1.5; } .dep-md-l.es{ background:#fff7e6; border-radius:6px; margin:0 -6px; padding:0 6px; } .dep-md-l .dep-e-sin{ font-weight:800; color:#1f2937; }
+.dep-md-vacio{ color:var(--muted); padding:8px 2px; } .dep-md-pie{ color:var(--muted); font-size:.82rem; margin-top:2px; }
+.dep-lin{ cursor:pointer; } .dep-lin:hover{ background:#f3f8f8; }
+.dep-etq-cola{ font-weight:900; font-size:.72rem; background:#b45309; color:#fff; border-radius:8px; padding:3px 8px; }
+.dep-etq-mini{ font-size:.62rem!important; padding:2px 6px!important; }
 .dep-todo{ position:absolute; right:10px; bottom:10px; z-index:1; font:inherit; font-size:.78rem; font-weight:800; background:#fff; border:1px solid var(--gray-md); border-radius:9px; padding:6px 10px; cursor:pointer; }
 .dep-sin3d{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:18px; color:var(--muted); font-size:.86rem; }
 .dep-ley{ display:flex; gap:4px 12px; flex-wrap:wrap; padding-top:8px; font-size:.72rem; color:var(--muted); }
@@ -28747,12 +28760,12 @@ function depColsPintar(){
   if(!C.length){ el.innerHTML='<div class="dep-vacio">✅ Nada pendiente en este período.</div>'; return; }
   el.innerHTML=C.map(function(c,i){
     var col=DEP_CLI[i%DEP_CLI.length], pc=c.u?Math.round(100*c.car/c.u):0, pl=c.u?Math.round(100*c.listo/c.u):0, resto=Math.max(0,c.u-c.car-c.listo);
-    return '<article class="dep-col'+(DEP.sel===c.c?' on':'')+'" style="--c:'+col+'" data-i="'+i+'" onclick="depElegir('+i+')">'+
+    return '<article class="dep-col'+(DEP.sel===c.c?' on':'')+'" style="--c:'+col+'" data-i="'+i+'" onclick="depElegir('+i+');depPanel({i:'+i+'})">'+
       '<h4>'+esc(c.c)+'<span>'+c.u+' producto'+(c.u===1?'':'s')+' · '+c.peds.length+' pedido'+(c.peds.length===1?'':'s')+'</span></h4>'+
       '<div class="dep-barra" aria-hidden="true"><i style="width:'+pc+'%;background:#2d6fd6"></i><i style="width:'+pl+'%;background:#15803d"></i></div>'+
       '<div class="dep-leyc"><b class="dep-e-cam">🚚 '+c.car+' ya en el camión</b> · <b class="dep-e-ok">'+c.listo+' listo'+(c.listo===1?'':'s')+' para cargar</b>'+(resto?(' · '+resto+' sin stock o sin revisar'):'')+'</div>'+
       Object.keys(c.prod).map(function(k){ var q=c.prod[k];
-        return '<div class="dep-lin"><b>'+q.u+'</b><span>'+esc(q.d)+(q.m?(' '+esc(q.m)):'')+'</span><span class="dep-ests">'+depEstHtml(q.st)+
+        return '<div class="dep-lin" data-k="'+esc(k)+'" onclick="event.stopPropagation();depElegir('+i+');depPanel({i:'+i+',k:this.dataset.k})"><b>'+q.u+'</b><span>'+esc(q.d)+(q.m?(' '+esc(q.m)):'')+'</span><span class="dep-ests">'+depEstHtml(q.st)+
           Object.keys(q.cam).map(function(v){ return '<span class="dep-e-cam">🚚 '+q.cam[v]+' en '+esc(v)+'</span>'; }).join('')+'</span></div>'; }).join('')+
       c.peds.slice().sort(function(a,b){ return String(a.fecha||'9')<String(b.fecha||'9')?-1:1; }).map(function(p){
         var u=(p.productos||[]).reduce(function(s,x){ return s+(Number(x.cant)||0); },0), vh=vehiculoDe(p);
@@ -28829,7 +28842,8 @@ function depIniciar3D(){
     var b=r.domElement.getBoundingClientRect(); pt.set((e.clientX-b.left)/b.width*2-1, -(e.clientY-b.top)/b.height*2+1); ray.setFromCamera(pt, cam);
     var hit=ray.intersectObjects(DEP.w3.toca, true)[0]; if(!hit) return;
     var o=hit.object; while(o && !o.userData.dep) o=o.parent; if(!o) return;
-    if(o.userData.dep.i!=null) depElegir(o.userData.dep.i); else depAcercar(o.userData.dep.x, o.userData.dep.z);
+    var u=o.userData.dep;
+    if(u.i!=null){ depElegir(u.i); depPanel(u.k?{ i:u.i, k:u.k }:{ i:u.i }); } else { depAcercar(u.x, u.z); if(u.v) depPanel({ v:u.v }); }
   });
   var v=new THREE.Vector3(), t0=performance.now();
   (function loop(now){
@@ -28837,8 +28851,27 @@ function depIniciar3D(){
     if(!box.offsetParent) return;                   // escondido (otra pestaña u otro vendedor): no dibuja
     now=now||performance.now(); depTweens(now); if(DEP.w3.cada) DEP.w3.cada((now-t0)/1000); ctl.update(); r.render(esc3, cam);
     var w=box.clientWidth, h=box.clientHeight;
+    /* (§4jm, dueño: «los montacargas se paran muy juntos, se solapan los nombres… por más que alejo o doy zoom») los carteles son de
+       tamaño fijo en pantalla: después de ubicarlos, el que pisa a otro se corre hacia arriba (o hacia abajo el del cliente) hasta
+       quedar libre. Mismo orden siempre (de cerca a lejos), así no bailan. */
+    var L=[];
     DEP.w3.etqs.forEach(function(t){ t.obj.getWorldPosition(v); v.y+=t.dy; v.project(cam); var vis=v.z<1 && v.x>-1.15 && v.x<1.15 && v.y>-1.15 && v.y<1.15;
-      t.el.style.opacity=vis?1:0; t.el.style.transform='translate('+((v.x*.5+.5)*w).toFixed(1)+'px,'+((-v.y*.5+.5)*h).toFixed(1)+'px) translate(-50%,'+(t.abajo?'0':'-100%')+')'; });
+      if(!t.w){ t.w=t.el.offsetWidth; t.h=t.el.offsetHeight; }
+      var px=(v.x*.5+.5)*w, py=(-v.y*.5+.5)*h; L.push({ t:t, vis:vis, x:px-t.w/2, y:t.abajo?py:py-t.h, z:v.z }); });
+    var prio=function(o){ return o.t.abajo?0:/dep-etq-(cam|cola)/.test(o.t.el.className)?1:2; };
+    L.sort(function(a,b){ return prio(a)-prio(b) || a.z-b.z; });
+    var puestos=[];
+    /* (dueño: «aparecen letras flotando por todos lados, no en cada montacargas») el cartel de un montacargas se corre como mucho UN
+       renglón; si igual pisa a otro, se esconde hasta que acerques la cámara o toques el cliente (la ventana dice todo). */
+    if(L.some(function(o){ return o.t.pila==null; })) L.forEach(function(o){ if(o.t.pila==null) o.t.pila=/dep-etq-pila/.test(o.t.el.className); });
+    L.forEach(function(o){
+      if(o.vis && o.t.w){ var tope=o.t.pila?2:14, y0=o.y, libre=false;
+        for(var n=0;n<tope;n++){ var choca=null;
+          for(var j=0;j<puestos.length;j++){ var p=puestos[j]; if(o.x<p.x+p.w-2 && o.x+o.t.w>p.x+2 && o.y<p.y+p.h-1 && o.y+o.t.h>p.y+1){ choca=p; break; } }
+          if(!choca){ libre=true; break; } o.y=o.t.abajo?(choca.y+choca.h+2):(choca.y-o.t.h-2); }
+        if(!libre && o.t.pila){ o.vis=false; o.y=y0; }
+        else puestos.push({ x:o.x, y:o.y, w:o.t.w, h:o.t.h }); }
+      o.t.el.style.opacity=o.vis?1:0; o.t.el.style.transform='translate('+o.x.toFixed(1)+'px,'+o.y.toFixed(1)+'px)'; });
   })();
   return true;
 }
@@ -28856,8 +28889,10 @@ function depPaquete(w, h, d, rad){
 function depMesh(geo, mt, x, y, z, sombra){ var o=new THREE.Mesh(geo, mt); o.position.set(x||0, y||0, z||0); if(sombra!==false){ o.castShadow=true; o.receiveShadow=true; } return o; }
 function depCaja(w, h, d, col, x, y, z, o){ return depMesh(new THREE.BoxGeometry(w,h,d), depMat(col,o), x, y, z); }
 function depCil(r, h, col, x, y, z, seg){ return depMesh(new THREE.CylinderGeometry(r,r,h,seg||16), depMat(col), x, y, z); }
-function depRueda(r, w, x, y, z){ var g=new THREE.Group(), c=depMesh(new THREE.CylinderGeometry(r,r,w,20), depMat('#1f2326',{ roughness:.9 })); c.rotation.z=Math.PI/2; g.add(c);
-  var hb=depMesh(new THREE.CylinderGeometry(r*.5,r*.5,w+.02,12), depMat('#b9c2c7',{ metalness:.4 })); hb.rotation.z=Math.PI/2; g.add(hb); g.position.set(x,y,z); return g; }
+/* (§4jm) `ejeZ`: rueda de un vehículo que mira a los costados (el camión va a lo largo de x: su eje va a lo ancho, en z). Antes el camión
+   llevaba las ruedas del montacargas, giradas 90°: el dueño, *«¿y qué onda con las llantas? están hacia el frente»*. */
+function depRueda(r, w, x, y, z, ejeZ){ var g=new THREE.Group(), c=depMesh(new THREE.CylinderGeometry(r,r,w,20), depMat('#1f2326',{ roughness:.9 })); if(ejeZ) c.rotation.x=Math.PI/2; else c.rotation.z=Math.PI/2; g.add(c);
+  var hb=depMesh(new THREE.CylinderGeometry(r*.5,r*.5,w+.02,12), depMat('#b9c2c7',{ metalness:.4 })); if(ejeZ) hb.rotation.x=Math.PI/2; else hb.rotation.z=Math.PI/2; g.add(hb); g.position.set(x,y,z); return g; }
 function depMedida(m){ var a=String(m||'').match(/(\d{2,3})\s*[x*]\s*(\d{2,3})/i); var w=a?Number(a[1])/100:1.4, d=a?Number(a[2])/100:1.9; return [Math.max(.4,Math.min(1.6,w)), Math.max(.4,Math.min(2,d))]; }
 function depTipo(d){ return /SOMIER|BOX/.test(d)?'somier':/ALMOHADA/.test(d)?'almohada':/PROTECTOR|SABANA|SÁBANA|MANTA|CUBRECAMA|FORRO|EDREDON/.test(d)?'otro':'colchon'; }
 /* pila de colchones (o almohadas) sobre un pallet; devuelve la altura de arriba */
@@ -28896,7 +28931,7 @@ function depCamion(){
   cab.add(depCaja(1.2,.06,2.06,'#0b6f69',-.1,2.32,0)); cab.position.x=L/2-.75; g.add(cab);
   g.add(depCaja(4.5,2.2,.08,'#e9eef0',-.95,1.85,-1.0)); g.add(depCaja(4.5,.08,2.08,'#dfe5e8',-.95,2.95,0)); g.add(depCaja(.08,2.2,2.08,'#dfe5e8',-3.2,1.85,0)); g.add(depCaja(.08,2.2,2.08,'#dfe5e8',1.3,1.85,0));
   g.add(depCaja(4.5,.12,2.08,'#7d878d',-.95,.8,0));
-  [[-2.3,1],[-2.3,-1],[-1.2,1],[-1.2,-1],[2.1,1],[2.1,-1]].forEach(function(p){ g.add(depRueda(.42,.32,p[0],.42,p[1])); });
+  [[-2.3,1],[-2.3,-1],[-1.2,1],[-1.2,-1],[2.1,1],[2.1,-1]].forEach(function(p){ g.add(depRueda(.42,.32,p[0],.42,p[1],true)); });
   var carga=new THREE.Group(); carga.position.set(-.95,.86,0); g.add(carga); return { g:g, carga:carga };
 }
 /* el ambiente de fábrica (piso con juntas, pared con portones, estanterías, columnas, conos, pallets, oficina); sin azar: igual cada vez */
@@ -28951,14 +28986,57 @@ function depEtq(obj, html, cls, col, dy, abajo){
   var e=document.createElement('div'); e.className='dep-etq '+cls; e.style.setProperty('--c', col); e.innerHTML=html; DEP.w3.box.appendChild(e);
   DEP.w3.etqs.push({ el:e, obj:obj, dy:dy, abajo:abajo });
 }
+var DEP_COLA=6, DEP_COLA_PASO=1.75;   // (§4jm) cuántos esperan en la fila y cada cuánto
+function depTexEspera(){
+  if(DEP.texEsp) return DEP.texEsp;
+  var c=document.createElement('canvas'); c.width=512; c.height=96; var x=c.getContext('2d');
+  x.fillStyle='rgba(245,176,20,.22)'; x.fillRect(0,0,512,96);
+  for(var i=-96;i<512;i+=32){ x.fillStyle=(i/32)%2?'#1f2326':'#f5b014'; x.beginPath(); x.moveTo(i,0); x.lineTo(i+16,0); x.lineTo(i+16+12,12); x.lineTo(i+12,12); x.fill(); x.beginPath(); x.moveTo(i,84); x.lineTo(i+16,84); x.lineTo(i+16+12,96); x.lineTo(i+12,96); x.fill(); }
+  var t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; DEP.texEsp=t; return t;
+}
+/* 📋 (§4jm, dueño: «si doy clic a un montacargas no muestra los pedidos, ¿qué pasó con mis fichas desplegables?») Tocar un montacargas,
+   la zona de un cliente o un camión abre, adentro de la escena, la ficha con SUS pedidos: cada uno se despliega con lo que lleva y
+   «Abrir el pedido». Solo mira. */
+function depPanel(q){
+  var fondo=document.getElementById('dep-modal');
+  if(!q){ if(fondo) fondo.hidden=true; return; }
+  if(!fondo){ fondo=document.createElement('div'); fondo.id='dep-modal'; fondo.className='dep-modal'; fondo.hidden=true;
+    fondo.addEventListener('click', function(e){ if(e.target===fondo) depPanel(null); }); document.body.appendChild(fondo); }
+  var peds=[], tit='', sub='', marca=null;
+  if(q.v){ DEP.C.forEach(function(c){ c.peds.forEach(function(p){ if(vehiculoDe(p)===q.v) peds.push(p); }); });
+    var cho=(VEHICULOS[q.v]||[])[0]||'', car=0; DEP.C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ car+=c.prod[k].cam[q.v]||0; }); });
+    tit='🚚 '+esc(q.v); sub=(cho?esc(cho)+' · ':'')+car+' ya cargado'+(car===1?'':'s')+' · ';
+  } else {
+    var c=DEP.C[q.i]; if(!c) return;
+    if(q.k){ var pr=c.prod[q.k]; marca=q.k; peds=c.peds.filter(function(p){ return (p.productos||[]).some(function(x){ return depClaveX(x)===q.k; }); });
+      tit=esc(c.c); sub=esc(pr?(pr.d+(pr.m?' '+pr.m:'')):q.k)+(pr?(' · '+pr.falta+' por cargar · '+pr.car+' en camión'):'')+' · ';
+    } else { peds=c.peds.slice(); tit=esc(c.c); sub=''; }
+  }
+  sub+=peds.length+' pedido'+(peds.length===1?'':'s');
+  peds.sort(function(a,b){ return String(a.fecha||'9')<String(b.fecha||'9')?-1:1; });
+  var hoy=todayStr(), DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
+  var fdia=function(f){ if(!f) return 'sin fecha'; var d=new Date(f+'T12:00:00'); return DIAS[d.getDay()]+' '+f.slice(8,10)+'/'+f.slice(5,7); };
+  fondo.innerHTML='<div class="dep-md" role="dialog" aria-modal="true"><div class="dep-md-cab"><div><b>'+tit+'</b><small>'+sub+'</small></div><button type="button" class="dep-md-x" aria-label="Cerrar" onclick="depPanel(null)">✕</button></div>'+
+    (peds.length?peds.map(function(p){
+      var vh=vehiculoDe(p);
+      return '<button type="button" class="dep-md-p" data-id="'+esc(p.id)+'" onclick="depPanel(null);showMisModal(this.dataset.id)"><span class="dep-md-t"><b>'+(p.nota?('Nota '+esc(p.nota)):esc(p.oc||''))+'</b> · '+esc(p.cliente||'')+' · entrega '+fdia(p.fecha)+
+        (p.fecha&&p.fecha<hoy?' <span class="dep-e-no">⏰ atrasado</span>':'')+(vh?' · 🚚 '+esc(vh):'')+'</span>'+
+        (p.productos||[]).map(function(x){ var cg=depCargado(p,x), est=depEstado(x), es=(marca && depClaveX(x)===marca);
+          return '<span class="dep-md-l'+(es?' es':'')+'">'+(Number(x.cant)||0)+' × '+esc(String(x.desc||'').toUpperCase())+(x.medida?(' '+esc(x.medida)):'')+' <span class="dep-e-'+(est||'sin')+'">'+DEP_EST[est]+'</span>'+(cg.u>0?' <span class="dep-e-cam">🚚 '+cg.u+' en '+esc(cg.v)+'</span>':'')+'</span>'; }).join('')+'</button>'; }).join('')
+      :'<div class="dep-md-vacio">'+(q.v?'Este camión no tiene pedidos de este período asignados.':'Sin pedidos.')+'</div>')+
+    '<div class="dep-md-pie">Tocá un pedido para abrir su ficha.</div></div>';
+  fondo.hidden=false;
+}
+function depClaveX(x){ return (String(x.desc||'').trim().toUpperCase()||'(sin nombre)')+'|'+String(x.medida||'').trim().toLowerCase().replace(/\s+/g,''); }
 function depConstruir(C){
   var W=DEP.w3; if(!W) return;
   if(W.grupo) W.esc.remove(W.grupo);
-  W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[];
+  W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[]; depPanel(null);
   var g=new THREE.Group(); W.grupo=g; W.esc.add(g);
   /* adelante: un montacargas por producto con lo que FALTA cargar (hasta 5 por cliente; el cartel dice si hay más) */
-  var esp=2.3, gap=1.6, grupos=C.map(function(c, i){ var ps=Object.keys(c.prod).map(function(k){ return c.prod[k]; }).filter(function(q){ return q.falta>0; });
-    return { c:c, i:i, ps:ps.slice(0,5), mas:Math.max(0,ps.length-5), w:Math.max(3.4, Math.min(5,ps.length)*esp+.6) }; });
+  var esp=2.9, gap=2.2, grupos=C.map(function(c, i){ var ps=Object.keys(c.prod).map(function(k){ return c.prod[k]; }).filter(function(q){ return q.falta>0; });
+    var cola=ps.slice(5, 5+DEP_COLA);
+    return { c:c, i:i, ps:ps.slice(0,5), cola:cola, mas:Math.max(0,ps.length-5-cola.length), w:Math.max(3.4, Math.min(5,ps.length)*esp+.6, cola.length*DEP_COLA_PASO+1.4) }; });
   var anchoT=grupos.reduce(function(s,gr){ return s+gr.w; },0)+Math.max(0,grupos.length-1)*gap, x=-anchoT/2;
   /* al fondo: los camiones con lo YA cargado */
   var cams={}; C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ var q=c.prod[k]; Object.keys(q.cam).forEach(function(v){ if(v==='Sin vehículo') return; (cams[v]=cams[v]||[]).push({ k:k, q:q, u:q.cam[v] }); }); }); });
@@ -28971,7 +29049,7 @@ function depConstruir(C){
   depAmbiente(g, ancho, fz);
   lista.forEach(function(v, i){
     var t=depCamion(), cx=-((lista.length-1)*8)/2+i*8, cv=cams[v]||[], tot=cv.reduce(function(s,d){ return s+d.u; },0), np=asg[v]||0;
-    t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ x:cx, z:fz }; g.add(t.g); W.toca.push(t.g);
+    t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ x:cx, z:fz, v:v }; g.add(t.g); W.toca.push(t.g);
     cv.slice(0,3).forEach(function(d, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg); depPila(pg, d.k, d.q.d, d.q.m, d.u, 6, 1.3, 1.6);
       pg.position.y=3; depTween(pg.position, { y:0 }, .9, 1.2+i*.3+j*.25, depSale); });
     var cho=(VEHICULOS[v]||[])[0]||'';
@@ -28985,18 +29063,35 @@ function depConstruir(C){
     var hit=new THREE.Mesh(new THREE.BoxGeometry(gr.w,3,3.6), new THREE.MeshBasicMaterial({ visible:false })); hit.position.set(cx,1.5,1.3); hit.userData.dep={ i:gr.i }; g.add(hit); W.toca.push(hit);
     depLinea(cx-gr.w/2,-.6,cx+gr.w/2,-.6,g);
     gr.ps.forEach(function(q, i){
-      var mc=depMontacargas(), px=cx+(i-(gr.ps.length-1)/2)*esp; mc.g.position.set(px,0,-5.5); mc.g.userData.dep={ i:gr.i }; g.add(mc.g); W.toca.push(mc.g);
+      var mc=depMontacargas(), px=cx+(i-(gr.ps.length-1)/2)*esp; mc.g.position.set(px,0,-5.5); mc.g.userData.dep={ i:gr.i, k:q.k }; g.add(mc.g); W.toca.push(mc.g);
       var st=q.st.no?'no':(q.st['']||q.st.fab)?'':q.st.im?'im':'ok', alto=depPila(mc.carga, q.k, q.d, q.m, q.falta, 8);
       depEtq(mc.carga, q.falta+' '+esc(depCorto(q))+(q.falta>8?(' (se ven 8)'):''), 'dep-etq-pila', DEP_ESTCOL[st], alto+.3);
       var d=.3+gi*.35+i*.2; mc.carro.position.y=.12; mov.push({ mc:mc, d:d });
       depTween(mc.g.position, { z:.4 }, 2.4, d, depSale, function(){ depTween(mc.carro.position, { y:.7 }, .8, 0); });
     });
+    /* ⏳ (§4jm, dueño: «¿habrá al costado una fila de espera?») lo que no entra adelante espera en hilera detrás de su zona, de
+       costado, con la baliza naranja prendida; entran desde la derecha y frenan uno detrás del otro. */
+    if(gr.cola.length){
+      var zc=-2.9, x0=cx-gr.w/2+.9, carril=new THREE.Mesh(new THREE.PlaneGeometry(gr.w-.4, 1.9), new THREE.MeshBasicMaterial({ map:depTexEspera(), transparent:true, depthWrite:false }));
+      carril.rotation.x=-Math.PI/2; carril.position.set(cx,.014,zc); g.add(carril);
+      var letrero=new THREE.Object3D(); letrero.position.set(cx-gr.w/2+.6,0,zc-1.1); g.add(letrero);
+      depEtq(letrero, '⏳ '+(gr.cola.length+gr.mas)+' en espera', 'dep-etq-cola', '#b45309', 0, true);
+      gr.cola.forEach(function(q, j){
+        var mc=depMontacargas(), px=x0+j*DEP_COLA_PASO; mc.g.scale.setScalar(.82); mc.g.rotation.y=-Math.PI/2; mc.g.position.set(cx+gr.w/2+6+j*1.2,0,zc);
+        mc.g.userData.dep={ i:gr.i, k:q.k }; g.add(mc.g); W.toca.push(mc.g);
+        var st=q.st.no?'no':(q.st['']||q.st.fab)?'':q.st.im?'im':'ok', alto=depPila(mc.carga, q.k, q.d, q.m, q.falta, 3);
+        var bal=depMesh(new THREE.SphereGeometry(.1,10,8), new THREE.MeshBasicMaterial({ color:0xff8a00 }), 0, 2.16, -.05); mc.g.add(bal);
+        var d=1.2+gi*.35+j*.45; mov.push({ mc:mc, d:d, ax:'x', bal:bal });
+        depTween(mc.g.position, { x:px }, 2.2, d, depSale);
+      });
+    }
     var cartel=new THREE.Object3D(); cartel.position.set(cx,0,3.2); g.add(cartel);
-    var falta=gr.ps.reduce(function(s,q){ return s+q.falta; },0);
+    var falta=gr.ps.concat(gr.cola).reduce(function(s,q){ return s+q.falta; },0);
     depEtq(cartel, esc(c.c)+'<small>'+(falta?(falta+' por cargar'):'✅ todo cargado')+' · '+c.car+' en camión'+(gr.mas?(' · +'+gr.mas+' productos más'):'')+'</small>', 'dep-etq-cli', col, 0, true);
     x+=gr.w+gap;
   });
-  W.cada=function(t){ mov.forEach(function(o){ var z=o.mc.g.position.z; if(o.u!=null) o.mc.ruedas.forEach(function(r){ r.rotation.x+=(z-o.u)*2; }); o.u=z; if(!visQuieto()) o.mc.chofer.rotation.y=Math.sin(t*1.2+o.d*5)*.3; }); };
+  W.cada=function(t){ mov.forEach(function(o){ var z=o.ax==='x'?-o.mc.g.position.x:o.mc.g.position.z; if(o.u!=null) o.mc.ruedas.forEach(function(r){ r.rotation.x+=(z-o.u)*2; }); o.u=z;
+    if(!visQuieto()){ o.mc.chofer.rotation.y=Math.sin(t*1.2+o.d*5)*.3; if(o.bal) o.bal.visible=(Math.floor(t*2.2+o.d*3)%2)===0; } }); };
   W.ancho=ancho;
   var sel=DEP.sel && C.filter(function(c){ return c.c===DEP.sel; })[0];
   if(sel) depAcercar(sel._x, 1);

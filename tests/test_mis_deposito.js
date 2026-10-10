@@ -103,6 +103,17 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   // 9. (§4jk) el encabezado tiene la ciudad y una calle de verdad
   r=await page.evaluate(()=>['h-lejos','h-cerca','h-calle'].map(c=>{ var e=document.querySelector('.h-ruta .'+c); return e?getComputedStyle(e).backgroundImage.length:0; }));
   chk('9. arriba: la ciudad (lejos y cerca) y la calle con sus líneas', r.every(n=>n>50), r);
+  // 10. (§4jm) tocar la ficha de un cliente o uno de sus productos abre la ventana con SUS pedidos; tocar un pedido abre su ficha
+  r=await page.evaluate(()=>__ver('Eduardo Añez'));
+  r=await page.evaluate(()=>{ var col=document.querySelector('#mis-dep-cols .dep-col'); col.click(); var m=document.getElementById('dep-modal');
+    return { vis:!!m && !m.hidden, n:m?m.querySelectorAll('.dep-md-p').length:0, txt:m?m.innerText.replace(/\n/g,' | ').slice(0,220):'' }; });
+  chk('10. tocar la ficha del cliente abre la ventana con todos sus pedidos (nota, entrega y lo que lleva)', r.vis && r.n>=2 && /Nota \d+/.test(r.txt) && /×/.test(r.txt), r);
+  r=await page.evaluate(()=>{ depPanel(null); var l=document.querySelector('#mis-dep-cols .dep-col .dep-lin:last-of-type'); l.click(); var m=document.getElementById('dep-modal');
+    return { vis:!m.hidden, n:m.querySelectorAll('.dep-md-p').length, es:m.querySelectorAll('.dep-md-l.es').length, txt:m.innerText.slice(0,160) }; });
+  chk('…tocar un producto abre solo los pedidos que lo llevan, con ese producto resaltado', r.vis && r.n>=1 && r.es>=1, r);
+  r=await page.evaluate(()=>{ var k=null; var o=window.showMisModal; window.showMisModal=function(id){ k=id; }; document.querySelector('#dep-modal .dep-md-p').click(); window.showMisModal=o;
+    return { abre:k, cerrada:document.getElementById('dep-modal').hidden }; });
+  chk('…y tocar un pedido abre su ficha de Mis pedidos (la ventana se cierra)', !!r.abre && r.cerrada, r);
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

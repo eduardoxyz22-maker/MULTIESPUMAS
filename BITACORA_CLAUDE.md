@@ -7445,6 +7445,24 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jm. 10/10: 🏭 La fábrica de Eduardo: la ventana con los pedidos, la fila de espera, las ruedas y los carteles — EN LA RAMA
+El dueño: *«si doy clic a la ficha de abajo o al montacargas no me abre la lista de a qué OCs son esos productos… habíamos diseñado una
+ficha desplegable, a este estilo (imagen 4)»*, *«armame el ejemplo de la fila de espera»*, *«¿y qué onda con las llantas? están hacia
+el frente»* y *«los montacargas se paran muy juntos, se solapan los nombres… por más que alejo o doy zoom»*.
+- **`depPanel(q)`** = ventana `#dep-modal` (fija, z 3900, como su imagen 4): título del cliente (o 🚚 camión), «N pedidos» y una tarjeta
+  por pedido («Nota N · cliente · entrega mar 13/10 · 🚚 camión», y abajo «6 × PRODUCTO medida ✔ hay / 📥 recoger / ✗ no hay / sin revisar
+  / 🚚 N en camión»). Tocar la tarjeta cierra la ventana y abre `showMisModal`. Se abre al tocar: la ficha de un cliente abajo (todos sus
+  pedidos), un producto de esa ficha o un montacargas (`{i,k}`: solo los pedidos que lo llevan, con el renglón resaltado), la zona de un
+  cliente, o un camión (`{v}`: los pedidos asignados). `depClaveX(x)` = la misma clave producto|medida de `depAgrupar`.
+- **⏳ Fila de espera**: lo que pasa de 5 productos por cliente (hasta `DEP_COLA`=6) espera detrás de su zona, de costado, más chico, con
+  baliza naranja que titila, sobre un carril pintado (`depTexEspera`), entrando desde la derecha; cartel «⏳ N en espera». Sin cartel
+  por montacargas en la fila (se tocan y abren la ventana). La zona se ensancha para que entre la fila.
+- **Ruedas del camión**: `depRueda(…, ejeZ)` — el camión va a lo largo de x, su eje va en z (antes llevaba la rueda del montacargas).
+- **Carteles**: montacargas más separados (`esp` 2,9, `gap` 2,2) y, en cada cuadro, los carteles se acomodan en pantalla: primero los
+  de cliente, después camiones y la fila, después los de montacargas (de cerca a lejos). El de un montacargas se corre como mucho un
+  renglón; si igual pisa, se esconde hasta acercar la cámara.
+- `test_mis_deposito` §10 (la ventana: cliente, producto resaltado, abrir el pedido): 25.
+
 ## 4jl. 10/10: 🏭 Las columnas por cliente de Eduardo, fijas — PUBLICADA 10/10 13:52 (`17e28d0`), Pages OK
 El dueño, con la captura de MULTICENTER ocupando todo el ancho y cuatro columnas dibujadas a mano: *«¿y qué pasa cuando hay más
 proveedores? ¿ocupa cada uno el ancho de la página? habíamos quedado que era 1 por proveedor y luego múltiples fichas ocupando ese
