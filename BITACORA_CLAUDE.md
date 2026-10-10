@@ -7445,6 +7445,24 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jg. 10/10: 📦 El depósito de Eduardo en 3D, en Mis pedidos — EN LA RAMA
+El dueño: *«como Eduardo maneja solo proveedores, quiero una animación 3D arriba al lado de la dona… ej. MULTICENTER 15 semi de 2
+plazas… y al dar clic muestre los pedidos, para saber qué mandar a pedir o controlar a logística más rápido»*. Se le mostraron
+ejemplos (A-F en imágenes, G-L en CSS: *«se ve cutre»*) y una escena con three.js (artifact «Depósito de Eduardo»): *«me gusta,
+pendiente es todo lo que no está marcado como entregado… para saber qué tienen por entregar y cuánto en la semana»*.
+- `#mis-arriba` = `#mis-anillo` + `#mis-dep`; desde 1100 px van lado a lado (`.con-dep`). `misDepPintar(mine, v, todos)` desde
+  `renderMis`, SOLO con Eduardo elegido (`MIS_VE_DEP`) y nunca en «👑 Ver todos».
+- **Pendiente = sin ✅** (`depPendientes`): acá NO vale «fecha pasada = salió» (§4co). Afuera: sistema, borradores, venta de tienda.
+- Períodos por la fecha de entrega (`depPeriodos`/`depEnPer`): esta semana (lunes a domingo), próxima, ⏰ atrasados, todo; los
+  botones dicen cuántos productos. Arranca en «esta semana» (o «todo» si la semana está vacía).
+- Por cliente (`normNombre`: «MULTICENTER» = «Multicenter») y producto+medida; estado (`depEstado`): 🏭 primero, ✗, 📥, ✔, sin
+  revisar. «% listo» = ✔ + 📥. Tocar un pedido → `showMisModal`.
+- 3D: three.js r128 + OrbitControls bajados recién al necesitarlos (`depLibs`, cdnjs/jsdelivr); un solo renderer; se dibuja solo
+  si se ve (`offsetParent`); movimientos propios (`depTween`, sin GSAP); rehace la escena solo si cambió la firma de los datos.
+  Sin 3D o sin internet: aviso y la lista de la derecha. En el celular las zonas van en fila hacia el fondo y arranca cerca del
+  primer cliente.
+- `tests/test_mis_deposito.js` (16, sin 3D: la red cortada).
+
 ## 4jf. 10/10: 🔎 Buscador en Mis pedidos (nota, cliente, producto, OC) — PUBLICADA 10/10 11:42 (`341a290`), Pages OK
 El dueño, con la captura de Mis pedidos de Eduardo: *«en mis pedidos eduardo necesita un buscador, para buscar por nro de nota, nombre
 cliente o producto»*.
