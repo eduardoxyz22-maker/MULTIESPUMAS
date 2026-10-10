@@ -1123,7 +1123,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **🏭 La fábrica de Eduardo** (§4jg → §4ji, 10/10, PUBLICADA 13:37, `244b5f1`; dueño: *«ME ENCANTA»*): SOLO con Eduardo elegido (`MIS_VE_DEP`), nunca en
   «👑 Ver todos». `#mis-izq` = la dona + las 4 fichas (`#mis-metrics` se MUDA ahí y vuelve con otro vendedor); al lado `#mis-dep`, la
   fábrica 3D (montacargas adelante con lo que falta cargar, camiones al fondo con lo ya cargado según los tildes de la Lista de carga,
-  `depCargado`); abajo `#mis-dep-cols`, una columna por cliente. Pendiente = sin ✅ (acá NO vale «fecha pasada = salió»).
+  `depCargado`); abajo `#mis-dep-cols`, una columna por cliente (§4jl: columnas FIJAS, 4/3/2/1 según el ancho; nunca `auto-fit`, estiraba un cliente solo al ancho entero). Pendiente = sin ✅ (acá NO vale «fecha pasada = salió»).
   three.js r128 lazy (`depLibs`); sin 3D, las columnas. `tests/test_mis_deposito.js` (19).
 - **🎨 La dona de todas las vendedoras (§4jj, PUBLICADA 10/10 13:37, `244b5f1`; dueño: *«opción A pero con las animaciones del C»*)**: `#mis-metrics` vive
   en `#mis-izq` para todas; cada dato de la dona con su barra; las 4 fichas con su color y un dibujito animado (`misFichasVivas`,

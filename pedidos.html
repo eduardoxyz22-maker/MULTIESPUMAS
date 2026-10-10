@@ -1940,7 +1940,12 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .dep-sin3d{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:18px; color:var(--muted); font-size:.86rem; }
 .dep-ley{ display:flex; gap:4px 12px; flex-wrap:wrap; padding-top:8px; font-size:.72rem; color:var(--muted); }
 .dep-ley span::before{ content:""; display:inline-block; width:9px; height:9px; border-radius:3px; background:var(--c); margin-right:4px; vertical-align:-1px; }
-#mis-dep-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:12px; margin:0 0 16px; }
+/* (§4jl, dueño: «habíamos quedado que era 1 por proveedor y luego múltiples fichas ocupando ese ancho») columnas FIJAS: un cliente
+   ocupa una columna (4 en la compu, 3 en el iPad, 2 en el celular acostado, 1 en el parado), nunca el ancho entero. */
+#mis-dep-cols{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:0 0 16px; align-items:start; }
+@media (max-width:1300px){ #mis-dep-cols{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:900px){ #mis-dep-cols{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px){ #mis-dep-cols{ grid-template-columns:minmax(0,1fr); } }
 .dep-col{ background:#fff; border:1px solid var(--gray-md); border-top:5px solid var(--c); border-radius:var(--r-lg,14px); box-shadow:var(--sh-card); padding:12px; display:flex; flex-direction:column; gap:5px; cursor:pointer; min-width:0; transition:box-shadow .2s,transform .2s; }
 .dep-col.on{ box-shadow:0 0 0 2px var(--c),0 10px 24px rgba(12,36,40,.12); transform:translateY(-2px); }
 .dep-col h4{ margin:0; font-weight:900; font-size:1rem; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
