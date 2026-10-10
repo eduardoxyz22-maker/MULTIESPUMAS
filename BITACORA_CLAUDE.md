@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jn. 10/10: 🚚 El camión de arriba con el logo de Multiespumas — EN LA RAMA
+## 4jn. 10/10: 🚚 El camión de arriba con el logo de Multiespumas — PUBLICADA 10/10 14:24 (`078c46b`), Pages OK
 El dueño: *«me gusta el fondo todo pero el camión no tiene estilo Multiespumas, ese es el logo (MultiESPUMAS Viscarra S.R.L., tres
 hojas amarilla, naranja y rosa)»*. Se le mostraron tres (artifact «Camión Multiespumas») y eligió **la opción 1**: caja blanca con las
 tres hojas del logo y «MultiESPUMAS · Viscarra S.R.L.» en azul marino (`#1f3b73`), cabina azul marino y abajo tres franjas rosa,

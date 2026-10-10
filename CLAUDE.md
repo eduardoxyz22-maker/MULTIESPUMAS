@@ -1133,7 +1133,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **🏙️ Arriba y 🚚 los camiones de Eduardo (§4jk, PUBLICADA 10/10 13:48, `788fb9a`)**: `.h-ruta` con ciudad (`.h-lejos`/`.h-cerca`, en octubre en ruinas con luna,
   murciélagos y niebla) y calle de verdad (`.h-calle`), dibujos de `herramientas/ruta_ciudad_gen.py`. En la fábrica de Eduardo los camiones
   van SIEMPRE al fondo: con carga, con pedidos asignados aunque vacíos, o la flota «esperando carga».
-- **🚚 El camión de arriba (§4jn, EN LA RAMA; dueño eligió la opción 1)**: caja blanca con el logo (tres hojas + «MultiESPUMAS · Viscarra
+- **🚚 El camión de arriba (§4jn, PUBLICADA 10/10, `078c46b`; dueño eligió la opción 1)**: caja blanca con el logo (tres hojas + «MultiESPUMAS · Viscarra
   S.R.L.»), cabina azul marino y las tres franjas de colores abajo; mismas clases `hc-*` y `viewBox` 86×40.
 - **🚛 Camiones (§4jh, PUBLICADA 10/10 13:37, `244b5f1`)**: la fiesta espera a `cargaSyncSet('ok')`; `#cv-sync` dice Guardando/Guardado/Sin enviar; con los
   camiones escondidos queda `#carga-viva-linea`. `tests/test_carga_sync.js` (9).
