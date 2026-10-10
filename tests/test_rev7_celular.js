@@ -292,7 +292,7 @@ function INIT(vend){
     chk('«Hoy» cuenta lo que se ENTREGA hoy (1), y el cartel lo dice', hoy.v==='1' && /se entregan hoy/.test(hoy.sub||''), hoy);
     chk('⚠️ …el cartel ya no dice «pedidos cargados» (contaba entregas)', !/cargados/.test(hoy.sub||''), hoy.sub);
     chk('«Este mes» cuenta lo que se entrega en septiembre (3: sin la venta de tienda ni el de octubre), y lo dice', mes.v==='3' && /se entregan este mes/.test(mes.sub||''), mes);
-    chk('…y sus unidades (1 + 2 + 1)', /^4 unidades/.test(mes.sub||''), mes.sub);
+    chk('…y sus artículos (1 + 2 + 1; §4jd: «artículos», no «unidades»)', /^4 artículos/.test(mes.sub||''), mes.sub);
     chk('«Por cobrar» es el saldo de lo que se entrega este mes (1.000 + 2.000 + 500) y lo dice', /3\.500,00/.test(pc.v||'') && /se entrega este mes/.test(pc.sub||''), pc);
     chk('(control) «Total cargados» sigue siendo todo lo suyo, sin lo de otra vendedora', (r.m['Total cargados']||{}).v==='5', r.m['Total cargados']);
     chk('(control) los chips siguen filtrando por la ENTREGA: 📅 Hoy 1 · 🌅 Mañana 1', r.chips['📅 Hoy']===1 && r.chips['🌅 Mañana']===1, r.chips);

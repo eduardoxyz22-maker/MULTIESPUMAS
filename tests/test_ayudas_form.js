@@ -77,8 +77,10 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
   /* ── 4b. Eduardo: la NOTA DE VENTA no se repite (dueño, 09/10: «Eduardo repite clientes… que no repita N° de nota. Eduardo únicamente») ── */
   console.log('\n── 4b. Eduardo: nota de venta repetida ──');
   r = await ev(async()=>{
-    var p=window._SRV.pedidos.filter(function(x){ return x.cliente==='CLIENTE MF2'; })[0]; p.nota='32525';
-    STATE.forEach(function(q){ if(q.id===p.id) q.nota='32525'; });
+    // (§4jd) cada vendedor tiene su numeración: el 32525 es de un pedido de EDUARDO; el 1024 de otra vendedora no choca
+    var p=window._SRV.pedidos.filter(function(x){ return x.cliente==='CLIENTE MF2'; })[0]; p.nota='32525'; p.vendedor='Eduardo Añez';
+    STATE.forEach(function(q){ if(q.id===p.id){ q.nota='32525'; q.vendedor='Eduardo Añez'; } });
+    var q2=STATE.filter(function(x){ return x.cliente==='CLIENTE MF1'; })[0]; if(q2) q2.nota='1024';
     closeModal(); showView('form'); resetForm();
     var s=function(id,v){ var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); };
     var dup=function(){ var e=document.getElementById('fx-dup'); return e.hidden?'':e.innerText.replace(/\s+/g,' '); };
@@ -88,6 +90,10 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
     var igual=dup();
     s('f-nota','032525'); await _esperar(300);
     var ceros=dup();
+    s('f-nota','32526 / 32525'); await _esperar(300);
+    var dos=dup();
+    s('f-nota','1024'); await _esperar(300);
+    var deOtra=dup();
     s('f-vendedor','ROHO'); s('f-nota','32525'); await _esperar(300);
     var roho=dup();
     s('f-vendedor','Maria Flores'); s('f-cliente','CLIENTE NUEVO'); s('f-nota','32525'); await _esperar(300);
@@ -95,11 +101,13 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
     editPedido(p.id); await _esperar(400); s('f-vendedor','Eduardo Añez'); await _esperar(300);
     var propio=dup();
     resetForm();
-    return { otra:otra, igual:igual, ceros:ceros, roho:roho, maria:maria, propio:propio };
+    return { otra:otra, igual:igual, ceros:ceros, dos:dos, deOtra:deOtra, roho:roho, maria:maria, propio:propio };
   });
   chk('Eduardo con otra nota: nada (aunque Multicenter tenga pedidos)', r.otra==='', r);
-  chk('Eduardo con una nota ya cargada: aviso «la nota de venta 32525 ya está cargada» con el pedido y su nota', /nota de venta 32525 ya está cargada/.test(r.igual) && /CLIENTE MF2/.test(r.igual) && /Nota 32525/.test(r.igual), r);
-  chk('«032525» es la misma nota (sin ceros adelante)', /ya está cargada/.test(r.ceros), r);
+  chk('Eduardo con un número que ya está en otro pedido SUYO: «el número 32525 ya está en otro pedido tuyo» con el pedido y su número', /el número 32525 ya está en otro pedido tuyo/.test(r.igual) && /CLIENTE MF2/.test(r.igual) && /Nota 32525/.test(r.igual), r);
+  chk('«032525» es el mismo número (sin ceros adelante)', /ya está en otro pedido tuyo/.test(r.ceros), r);
+  chk('(§4jd) «32526 / 32525» son dos números: avisa por el 32525 (antes se pegaban en «3252532526»)', /ya está en otro pedido tuyo/.test(r.dos), r);
+  chk('(§4jd) cada vendedor tiene su numeración: el 1024 de otra vendedora no es repetido para Eduardo', r.deOtra==='', r);
   chk('solo Eduardo: ROHO y las vendedoras no reciben el aviso de la nota', r.roho==='' && r.maria==='', r);
   chk('al corregir el mismo pedido no se avisa contra sí mismo', r.propio==='', r);
   await ev(()=>{ closeModal(); showView('form'); resetForm(); });
@@ -110,7 +118,7 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
   const n1 = await ev(()=>window._saves.length);
   await page.click('#f-submit'); await page.waitForTimeout(1200);
   r = await ev(()=>window._saves.length);
-  chk('al guardar pregunta «¿NOTA DE VENTA REPETIDA?»; Cancelar no guarda', page._dialogos.some(m=>/NOTA DE VENTA REPETIDA/.test(m) && /CLIENTE MF2/.test(m)) && r===n1, { d:page._dialogos, r, n1 });
+  chk('al guardar pregunta «¿NÚMERO REPETIDO?»; Cancelar no guarda', page._dialogos.some(m=>/NÚMERO REPETIDO/.test(m) && /CLIENTE MF2/.test(m)) && r===n1, { d:page._dialogos, r, n1 });
   page._resp=true; page._dialogos=[];
   await ev(()=>{ closeModal(); showView('form'); resetForm(); });
 

@@ -718,6 +718,17 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
+## 🔎 Revisión del 10/10 con 3 agentes + super + mega (§4jd, EN LA RAMA)
+- **Corte 16:30** (`HORA_CORTE`=16.5, dueño: *«48 h hábiles producir, 24 para entregar; si entra luego de las 4:30 las 48 empiezan al
+  siguiente día»*). El «✓ Ya pedí» guarda `arr` y `esp` con esa regla (la MISMA del cuadrito: `q.arr||q.f`); id derivado `fy:`+huella
+  (producto|día|n) para que dos equipos no lo dupliquen. Las cantidades de Stock siguen con el tiempo medido.
+- **Pedidos internos fuera de Contabilidad** (`CONTA_INTERNOS`: ALBA, FABRICA, MULTIESPUMA, MORENO, ALZER, REPOSICION DE ALMACEN);
+  en el stock siguen.
+- **Número de Eduardo**: solo contra SUS pedidos y número por número (es el N° de pedido del proveedor; cada vendedor tiene su
+  numeración).
+- Arriba saltea días cerrados (`hdrProximoAbierto`); `dias<=lead` = urgente; camiones sin líneas ✗; la copia a fábrica suma lo marcado
+  sin respaldo. Detalle y lo que quedó sin hacer: bitácora §4jd. `tests/test_rev_4jd.js`.
+
 ## 📦 Stock con las respuestas del dueño (§4iy, 09/10, PUBLICADA 12:10, `960fdaa`)
 - **Piso del tiempo de fábrica** (`stockLeadPiso`, la regla del cuadrito: 48 h + el día de recoger); muestras de menos de 2 días no cuentan.
 - **Lo dormido** (sin venta en 30 días, el mes pasado ni este) no se fabrica por «el año pasado» (`stockRangoMes`).

@@ -11,7 +11,7 @@
      desde el siguiente. Lunes 18:00 → arranca el martes → sale el jueves → se entrega el viernes.
 
    ⚠️ LO QUE ESTA PRUEBA CUIDA:
-   1. `diaArranque`: hoy si es día hábil y antes del corte (17:00; sábado 12:00); si no, el siguiente día hábil (sin domingos
+   1. `diaArranque`: hoy si es día hábil y antes del corte (16:30 desde el 10/10, §4jd; sábado 12:00); si no, el siguiente día hábil (sin domingos
       ni feriados).
    2. El cuadrito del formulario, lunes 28/09 a las 16:25 y a las 18:15:
       · 📥 HAY EN MORENO: a las dos horas «programá desde el miércoles 30/09», sin aviso de la hora;
@@ -133,8 +133,9 @@ function PREPARAR(){
   console.log('\n── 1. diaArranque: hoy antes del corte; si no, el siguiente día hábil ──');
   const casos = [
     ['2026-09-28T16:25:00-04:00', '2026-09-28', 'lunes 16:25 → hoy (lunes 28)'],
-    ['2026-09-28T16:59:00-04:00', '2026-09-28', 'lunes 16:59 → hoy'],
-    ['2026-09-28T17:00:00-04:00', '2026-09-29', 'lunes 17:00 en punto → martes 29 (ya cerró)'],
+    ['2026-09-28T16:29:00-04:00', '2026-09-28', 'lunes 16:29 → hoy'],
+    ['2026-09-28T16:30:00-04:00', '2026-09-29', '(§4jd) lunes 16:30 en punto → martes 29 (corte del dueño, 10/10)'],
+    ['2026-09-28T17:00:00-04:00', '2026-09-29', 'lunes 17:00 → martes 29 (ya cerró)'],
     ['2026-09-28T18:15:00-04:00', '2026-09-29', 'lunes 18:15 → martes 29'],
     ['2026-10-02T17:30:00-04:00', '2026-10-03', 'viernes 17:30 → sábado 03 (el sábado se trabaja)'],
     ['2026-10-03T11:30:00-04:00', '2026-10-03', 'sábado 11:30 → hoy (corte del sábado: 12:00)'],
@@ -165,8 +166,8 @@ function PREPARAR(){
       /🏭 Se manda a producir hoy, sale de fábrica el miércoles 30\/09 \(48 h\) y ese día se recoge\./.test(a.txt), a.txt);
   chk('🏭 hay que fabricar, lunes 18:15: «espere ~4 días» — el viernes del dueño, no el sábado de antes',
       /🏭 NO HAY · decile al cliente que espere ~4 días/.test(b.txt), [b.txt, b.__error]);
-  chk('…y dice por qué y la cuenta: «🕔 Ya pasaron las 17:00: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10 (48 h) y ese día se recoge.»',
-      /🕔 Ya pasaron las 17:00: se manda a producir el martes 29\/09, sale de fábrica el jueves 01\/10 \(48 h\) y ese día se recoge\./.test(b.txt), b.txt);
+  chk('…y dice por qué y la cuenta: «🕔 Ya pasaron las 16:30: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10 (48 h) y ese día se recoge.»',
+      /🕔 Ya pasaron las 16:30: se manda a producir el martes 29\/09, sale de fábrica el jueves 01\/10 \(48 h\) y ese día se recoge\./.test(b.txt), b.txt);
 
   a = await ver(LUN_16, { aca:0 }, null, '2026-09-29'); b = await ver(LUN_18, { aca:0 }, null, '2026-09-29');
   chk('…con la entrega para mañana, la línea roja: 16:25 «programá desde el jueves 01/10»',
@@ -178,7 +179,7 @@ function PREPARAR(){
   b = await ver(LUN_18, { aca:2 }, { desc:'TITANIO ICE', otra:'150x200', cant:1 });
   chk('📐 medida especial, lunes 16:25: «espere ~3 días»', /📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~3 días/.test(a.txt), [a.txt, a.__error]);
   chk('📐 medida especial, lunes 18:15: «espere ~4 días» y el porqué',
-      /📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~4 días/.test(b.txt) && /🕔 Ya pasaron las 17:00: se manda a producir el martes 29\/09/.test(b.txt), b.txt);
+      /📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~4 días/.test(b.txt) && /🕔 Ya pasaron las 16:30: se manda a producir el martes 29\/09/.test(b.txt), b.txt);
 
   a = await ver(LUN_18, { aca:2 });
   chk('(control) ✅ lo que está a mano NO cambia a las 18:15: «podés programar desde mañana, martes 29/09», sin el aviso de la hora',
@@ -202,8 +203,8 @@ function PREPARAR(){
   });
   const preg = page.__dialogos.find(t => /ANTES DE GUARDAR, MIRÁ EL SALDO/.test(t)) || '';
   chk('al guardar a las 18:15 algo que hay que fabricar, la pregunta de siempre sale…', !!preg, [preg.slice(0,200), g && g.__error]);
-  chk('…con «~4 días» y «🕔 Ya pasaron las 17:00: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10»',
-      /espera ~4 días/.test(preg) && /🕔 Ya pasaron las 17:00: se manda a producir el martes 29\/09, sale de fábrica el jueves 01\/10 \(48 h\) y ese día se recoge\./.test(preg), preg.slice(0,500));
+  chk('…con «~4 días» y «🕔 Ya pasaron las 16:30: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10»',
+      /espera ~4 días/.test(preg) && /🕔 Ya pasaron las 16:30: se manda a producir el martes 29\/09, sale de fábrica el jueves 01\/10 \(48 h\) y ese día se recoge\./.test(preg), preg.slice(0,500));
   chk('…y guarda igual (nunca frena la venta)', g && g.guardo, g);
 
   // ═══ 5. Sábado, domingo, viernes a la noche y feriado ═══════════════════════════════════════════════
