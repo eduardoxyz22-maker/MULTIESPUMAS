@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jg. 10/10: 📦 El depósito de Eduardo en 3D, en Mis pedidos — EN LA RAMA
+## 4jg. 10/10: 📦 El depósito de Eduardo en 3D, en Mis pedidos — PUBLICADA 10/10 12:36 (`a7643ab`), Pages OK
 El dueño: *«como Eduardo maneja solo proveedores, quiero una animación 3D arriba al lado de la dona… ej. MULTICENTER 15 semi de 2
 plazas… y al dar clic muestre los pedidos, para saber qué mandar a pedir o controlar a logística más rápido»*. Se le mostraron
 ejemplos (A-F en imágenes, G-L en CSS: *«se ve cutre»*) y una escena con three.js (artifact «Depósito de Eduardo»): *«me gusta,
