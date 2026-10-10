@@ -1120,10 +1120,13 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   cliente o producto»*): `#mis-q` fuera de la lista (no pierde el foco), `misBuscaTest` (nota, cliente, Facturar a, OC, celular, zona,
   productos; sin acentos; todas las palabras; número sin guiones), `misBuscar` pasa a «📋 Todos». Los chips cuentan lo encontrado; los
   números de arriba no. Para todos. `tests/test_mis_buscar.js` (16).
-- **📦 El depósito de Eduardo en 3D** (§4jg, 10/10, PUBLICADA 12:36, `a7643ab`; dueño: *«pendiente es todo lo que no está marcado como entregado…
-  qué tienen por entregar y cuánto en la semana»*): `#mis-dep` al lado de la dona, SOLO con Eduardo (`MIS_VE_DEP`). Pendiente = sin ✅
-  (acá NO vale «fecha pasada = salió»). Semana/próxima/atrasados/todo; por cliente y producto con el estado de logística; tocar un
-  pedido = `showMisModal`. three.js r128 lazy (`depLibs`), sin 3D queda la lista. `tests/test_mis_deposito.js` (16).
+- **🏭 La fábrica de Eduardo** (§4jg → §4ji, 10/10, EN LA RAMA; dueño: *«ME ENCANTA»*): SOLO con Eduardo elegido (`MIS_VE_DEP`), nunca en
+  «👑 Ver todos». `#mis-izq` = la dona + las 4 fichas (`#mis-metrics` se MUDA ahí y vuelve con otro vendedor); al lado `#mis-dep`, la
+  fábrica 3D (montacargas adelante con lo que falta cargar, camiones al fondo con lo ya cargado según los tildes de la Lista de carga,
+  `depCargado`); abajo `#mis-dep-cols`, una columna por cliente. Pendiente = sin ✅ (acá NO vale «fecha pasada = salió»).
+  three.js r128 lazy (`depLibs`); sin 3D, las columnas. `tests/test_mis_deposito.js` (19).
+- **🚛 Camiones (§4jh, EN LA RAMA)**: la fiesta espera a `cargaSyncSet('ok')`; `#cv-sync` dice Guardando/Guardado/Sin enviar; con los
+  camiones escondidos queda `#carga-viva-linea`. `tests/test_carga_sync.js` (9).
 - `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
 - **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de

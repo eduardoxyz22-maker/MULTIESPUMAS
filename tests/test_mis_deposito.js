@@ -53,37 +53,45 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
   let r=await page.evaluate(()=>__ver('Maria Flores'));
   chk('1. con una vendedora elegida no aparece', r.visible===false, r);
+  r=await page.evaluate(()=>({ cols:document.getElementById('mis-dep-cols').hidden, met:document.getElementById('mis-metrics').parentNode.id }));
+  chk('…ni las columnas, y sus 4 fichas siguen en su lugar de siempre', r.cols===true && r.met!=='mis-izq', r);
   r=await page.evaluate(()=>__ver('Eduardo Añez', true));
   chk('…tampoco en «👑 Ver todos»', r.visible===false, r);
   r=await page.evaluate(()=>__ver('Eduardo Añez'));
-  chk('…con Eduardo, sí (arriba, al lado de la dona)', r.visible===true, r);
+  chk('…con Eduardo, sí: al lado de la dona', r.visible===true, r);
+  r=await page.evaluate(()=>({ met:document.getElementById('mis-metrics').parentNode.id, cols:document.getElementById('mis-dep-cols').hidden, txt:document.getElementById('mis-izq').innerText.replace(/\s+/g,' ') }));
+  chk('(§4ji) las 4 fichas (Hoy, Este mes, Por cobrar, Total) se mudan a la ficha de la dona, y las columnas aparecen abajo', r.met==='mis-izq' && r.cols===false && /Total cargados/i.test(r.txt) && /Por cobrar/i.test(r.txt), r);
 
   const per=await page.evaluate(()=>{ var out={}; ['sem','prox','atras','todo'].forEach(function(k){ var D=depDatos(STATE.filter(function(p){ return mismoVendedor(p.vendedor,'Eduardo Añez'); }), k); out[k]={ n:D.cuenta[k], C:D.C.map(function(c){ return c.c+':'+c.u; }) }; }); return out; });
-  chk('2. pendiente = sin ✅ (lo atrasado sigue), sin lo entregado ni la venta de tienda: todo = 16', per.todo.n===16 && JSON.stringify(per.todo.C)==='["Multicenter:13","TIENDA AMIGA:2","FULANITO:1"]' || (per.todo.n===16 && per.todo.C.join()==='MULTICENTER:13,TIENDA AMIGA:2,FULANITO:1'), per.todo);
+  chk('2. pendiente = sin ✅ (lo atrasado sigue), sin lo entregado ni la venta de tienda: todo = 16', per.todo.n===16 && per.todo.C.length===3 && /:13$/.test(per.todo.C[0]) && per.todo.C[1]==='TIENDA AMIGA:2' && per.todo.C[2]==='FULANITO:1', per.todo);
   chk('3. esta semana (lun 05 a dom 11/10) = 13 (el 08/10 sin ✅ incluido), próxima = 2, atrasados = 5', per.sem.n===13 && per.prox.n===2 && per.atras.n===5, per);
-  chk('…los botones lo dicen', /Esta semana\s*13/.test(r.chips) && /Próxima\s*2/.test(r.chips) && /Atrasados\s*5/.test(r.chips) && /Todo\s*16/.test(r.chips), r.chips);
+  r=await page.evaluate(()=>document.getElementById('dep-chips').innerText);
+  chk('…los botones lo dicen (13 · 2 · 5 · 16)', /Esta semana\s*13/.test(r) && /Próxima\s*2/.test(r) && /Atrasados\s*5/.test(r) && /Todo\s*16/.test(r), r);
   chk('…el mismo cliente escrito distinto («MULTICENTER» / «Multicenter») es uno solo', per.sem.C.length===1 && /:13$/.test(per.sem.C[0]), per.sem);
 
-  r=await page.evaluate(()=>{ DEP.perTocado=true; depPer('todo'); return document.getElementById('dep-panel').innerText; });
-  chk('4. el total y los clientes con su % listo (MULTICENTER 6 de 13 = 46 %)', /16\s*productos por entregar/.test(r) && /3 clientes · 4 pedidos/.test(r) && /13 productos · 46% listo para cargar/i.test(r), r.slice(0,300));
-  r=await page.evaluate(()=>{ var b=[].slice.call(document.querySelectorAll('.dep-cli')).filter(function(x){ return /MULTICENTER|Multicenter/.test(x.innerText); })[0]; b.click(); return document.getElementById('dep-panel').innerText; });
-  chk('…por producto y medida, con lo que marcó logística', /10\s*ESPECIAL SEMIORTOPEDICO 140x190/.test(r) && /6 ✔ hay/.test(r) && /4 ✗ no hay/.test(r) && /3\s*SOMIER ORO 140x190/.test(r) && /sin revisar/.test(r), r);
-  chk('5. tocar un cliente muestra sus pedidos (con nota, día y ⏰ si está atrasado)', /Nota 32601 · entrega 08\/10\/2026 ⏰ atrasado/.test(r) && /Nota 32610 · entrega 10\/10\/2026/.test(r), r);
-  r=await page.evaluate(()=>{ document.querySelector('.dep-ped[data-id="a"]').click(); var m=document.getElementById('modal')||document.querySelector('.modal-bg'); return { kind:window.MODAL_KIND, txt:document.body.innerText.indexOf('32601')>=0 }; });
-  chk('…y tocar un pedido abre su ficha de Mis pedidos', r.kind==='mis', r);
-  await page.evaluate(()=>{ try{ closeModal(); }catch(e){} });
+  r=await page.evaluate(()=>{ DEP.perTocado=true; depPer('todo'); return [].slice.call(document.querySelectorAll('#mis-dep-cols .dep-col')).map(function(a){ return a.innerText.replace(/\s+/g,' '); }); });
+  chk('4. una columna por cliente (3), con sus productos y pedidos', r.length===3 && /13 productos · 2 pedidos/.test(r[0]), r[0]);
+  chk('…por producto y medida, con lo que marcó logística', /10 ESPECIAL SEMIORTOPEDICO 140x190/.test(r[0]) && /6 ✔ hay/.test(r[0]) && /4 ✗ no hay/.test(r[0]) && /3 SOMIER ORO 140x190/.test(r[0]) && /sin revisar/.test(r[0]), r[0]);
+  chk('…lo listo para cargar (los 6 con ✔) y nada todavía en el camión', /🚚 0 ya en el camión/.test(r[0]) && /6 listos para cargar/.test(r[0]), r[0]);
+  chk('5. sus pedidos con nota, día y ⏰ si está atrasado', /Nota 32601 · entrega 08\/10\/2026 ⏰ atrasado/.test(r[0]) && /Nota 32610 · entrega 10\/10\/2026/.test(r[0]), r[0]);
+  chk('…lo que ya está en fábrica dice 🏭, y lo que hay que ir a buscar, 📥 recoger', /🏭 en fábrica/.test(r[2]) && /📥 recoger/.test(r[1]) && /2 listos para cargar/.test(r[1]), { t:r[1], f:r[2] });
 
-  r=await page.evaluate(()=>{ var b=[].slice.call(document.querySelectorAll('.dep-cli')).filter(function(x){ return /FULANITO/.test(x.innerText); })[0]; b.click(); return document.getElementById('dep-panel').innerText; });
-  chk('…lo que ya está en fábrica dice 🏭', /🏭 en fábrica/.test(r), r);
-  r=await page.evaluate(()=>{ var b=[].slice.call(document.querySelectorAll('.dep-cli')).filter(function(x){ return /TIENDA AMIGA/.test(x.innerText); })[0]; b.click(); return document.getElementById('dep-panel').innerText; });
-  chk('…y lo que hay que ir a buscar, 📥 recoger', /📥 recoger/.test(r) && /2 productos · 100% listo/.test(r), r);
+  r=await page.evaluate(()=>{ var b=STATE.filter(function(p){ return p.id==='b'; })[0]; b.vehiculo='Foton nuevo';
+    CARGA_CHK={}; CARGA_CHK[cargaChkKey(b.fecha,'Foton nuevo',cargaProdKey(b.productos[0]))]=1; DEP.firma=''; renderMis();
+    return document.querySelector('#mis-dep-cols .dep-col').innerText.replace(/\s+/g,' '); });
+  chk('6. lo tildado en la Lista de carga cuenta como «ya en el camión», y dice en cuál', /🚚 6 ya en el camión/.test(r) && /🚚 6 en Foton nuevo/.test(r) && /0 listos para cargar/.test(r), r);
+
+  r=await page.evaluate(()=>{ document.querySelector('.dep-ped[data-id="a"]').click(); return { kind:window.MODAL_KIND }; });
+  chk('…tocar un pedido abre su ficha de Mis pedidos', r.kind==='mis', r);
+  await page.evaluate(()=>{ try{ closeModal(); }catch(e){} });
 
   await page.waitForTimeout(1500);
   r=await page.evaluate(()=>{ var s=document.querySelector('#dep-esc .dep-sin3d'); return s?s.innerText:''; });
-  chk('6. sin internet ni 3D lo dice, y la lista sigue', /no se pudo cargar/.test(r), r);
+  chk('7. sin internet ni 3D lo dice, y las columnas siguen', /no se pudo cargar/.test(r) && /columnas de abajo/.test(r), r);
 
   r=await page.evaluate(()=>__ver('Maria Flores'));
-  chk('…al cambiar a una vendedora se va', r.visible===false, r);
+  r.met=await page.evaluate(()=>document.getElementById('mis-metrics').parentNode.id);
+  chk('…al cambiar a una vendedora se va, y las 4 fichas vuelven a su lugar', r.visible===false && r.met!=='mis-izq', r);
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

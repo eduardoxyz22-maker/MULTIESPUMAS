@@ -7445,6 +7445,27 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ji. 10/10: 🏭 La fábrica de Eduardo (montacargas + camiones) y la dona con los 4 números — EN LA RAMA
+El dueño, mirando §4jg publicado: *«se ve pobre, queda todo alrededor vacío y solo unos 3 pallets»* → *«diseña pequeños montacargas
+con los colchones encima»* → *«me gusta la A pero pondría camiones y más cosas ambientales de fábrica»*, *«quita las 4 fichas y ponlo
+en la ficha de la dona»*, *«la dona y al lado la imagen 3D»*, *«esto [la lista por cliente] lo movería debajo, en verticales»*. Con el
+ejemplo «Mis pedidos de Eduardo» (artifact): *«sí, ponlo así y publica, ME ENCANTA»*.
+- Con Eduardo: `#mis-izq` = dona + `#mis-metrics` (MUDADO ahí, 2×2; vuelve a su lugar con otro vendedor); al lado `#mis-dep` (la
+  fábrica); abajo `#mis-dep-cols` (una columna por cliente). Desde 1000 px van lado a lado (340 px | resto).
+- La fábrica: adelante un montacargas por producto con lo que FALTA cargar (`q.falta`, hasta 5 por cliente); al fondo un camión por
+  vehículo con lo YA cargado (`depCargado`: los MISMOS tildes de la Lista de carga, `cargaChkKey` por día, camión, producto y lugar);
+  estanterías, columnas, portones, conos, pallets y oficina (`depAmbiente`, sin azar: `depAzar`). Tocar un montacargas, un camión o una
+  columna acerca la cámara. Celular: arranca cerca del primer cliente.
+- Columnas: barra «🚚 ya en el camión» (azul) + «listos para cargar» (verde: ✔/📥 menos lo cargado), cada producto con su estado y
+  «🚚 N en <camión>», los pedidos (→ `showMisModal`).
+- `tests/test_mis_deposito.js` → 19 (las fichas que se mudan, lo cargado por los tildes, las columnas).
+
+## 4jh. 10/10: 🚛 Los camiones celebran con el guardado confirmado, y una línea al esconderlos — EN LA RAMA
+De la revisión de Astra (dueño: «1 ok», «5 ok»): `cvTildar` deja la fiesta en `CV_FIESTA_PEND` y `cargaSyncSet('ok')` (respuesta buena
+de `guardarCargaChk`) la dispara si sigue completo; `cola`/rechazo no festeja. `#cv-sync` en el panel: «⏳ Guardando…» / «✓ Guardado en la
+planilla» / «📴 Sin enviar». `#carga-viva-linea` con los camiones escondidos (`cvLineaHtml`: sin camión, por recoger, camiones completos;
+tocarla los muestra). `tests/test_carga_sync.js` (9), `test_camiones_admin` §1 y §5 a conciencia.
+
 ## 4jg. 10/10: 📦 El depósito de Eduardo en 3D, en Mis pedidos — PUBLICADA 10/10 12:36 (`a7643ab`), Pages OK
 El dueño: *«como Eduardo maneja solo proveedores, quiero una animación 3D arriba al lado de la dona… ej. MULTICENTER 15 semi de 2
 plazas… y al dar clic muestre los pedidos, para saber qué mandar a pedir o controlar a logística más rápido»*. Se le mostraron
