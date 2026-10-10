@@ -7445,6 +7445,14 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jc. 09/10 (noche): 📲 Aviso por WhatsApp a los clientes de mañana — EN DISEÑO, sin código
+El dueño: *«cada final del día, con 1 botón, que se envíe mensaje de WhatsApp a los clientes para informarles que mañana estarán
+pasando a entregarles sus pedidos, por favor estén atentos»*. Se le explicaron dos caminos: (1) lista «📲 Avisar a los de mañana»
+con un toque por cliente (wa.me con el texto armado, ✓ de avisado, sin costo, se puede hacer ya); (2) un solo botón de verdad solo
+con la API oficial de WhatsApp (número registrado, plantilla aprobada por Meta, costo por mensaje), quizás por Kommo si su WhatsApp
+es el oficial. Respondió: **sale desde el WhatsApp de LOGÍSTICA** y *«veremos cómo lo hacemos, seguiré pensando»*. Falta: con o sin
+turno, y la firma (Heaven / Multiespumas / Sueña). No hacer nada hasta que lo pida.
+
 ## 4jb. 09/10 (tarde): 🚫 el navegador no escribe la plata solo — PUBLICADA 09/10 18:33 (`097c56a`)
 El dueño, con la captura del formulario de Eduardo: *«¿por qué se pone "recargo por entregas" como si tuviera recargo si no llené nada?»*
 (Bs 1023 en «Recargo por entrega» de un pedido NUEVO). El panel nunca escribe plata en un pedido nuevo (`resetForm` vacía `f-envio`;
