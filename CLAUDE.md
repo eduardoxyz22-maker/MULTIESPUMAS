@@ -1268,6 +1268,10 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - La meta por marca NO está hecha: el dueño eligió esto antes (la meta es por marca y cambia cada mes).
   - La tabla de cada marca tiene siete columnas y tiene que entrar en el iPad parado (820 px): relleno de 7 px en
     `#pry-altura` (`test_proyeccion` §17 lo mide).
+- **💵 De dónde sale lo vendido** (§4je, 10/10, EN LA RAMA; dueño: *«vendido + falta por cobrar no me coincide»*): `pryPlata`/`pryPlataHtml`
+  (`#pry-plata`) parte lo vendido del mes por marca en cobrado en el mes / antes / falta (cargadas en el mes o antes) y muestra cómo se
+  llega a la ficha del Cuadre (+ cobros del mes de OTRAS ventas + fletes). Mismas ventas que la ficha y mismos pagos que el Cuadre
+  (`contaPagos`): si se toca una de las dos, revisar esta. `tests/test_pry_plata.js`.
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de

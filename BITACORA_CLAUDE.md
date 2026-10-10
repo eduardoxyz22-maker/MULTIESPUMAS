@@ -7445,6 +7445,19 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4je. 10/10: 💵 «De dónde sale lo vendido» en la Proyección — EN LA RAMA
+El dueño: *«¿por qué en Proyección Heaven dice 405k vendido y en el Cuadre Heaven tiene 228.654?»* y *«Heaven vendido + falta por
+cobrar no me coincide con lo "vendido en" Proyección»* → *«hazlo»*. Las tres pantallas cortan por fechas distintas: la Proyección por
+la ENTREGA agendada (lo vendido), el Cuadre por la fecha del PAGO (lo que entró) y su «Por cobrar» por la fecha de CARGA.
+- `pryPlata(ym)` / `pryPlataHtml(ym)` (caja `#pry-plata`, debajo de «A esta altura»): por marca y equipo, con las MISMAS ventas que la
+  ficha (equipo de tiendas, `fechaSalida` en el mes, `ventaTotal`) y los MISMOS pagos del Cuadre (`contaPagos`, monto > 0; el flete
+  aparte): vendido = cobrado en el mes + cobrado antes + después + sin fecha + falta (cargadas en el mes / antes) + pagadas sin monto
+  − de más; y «lo que entró en el mes» = cobrado en el mes de estas ventas + cobros del mes de OTRAS ventas + fletes = la ficha de
+  la marca en el Cuadre. Solo mira.
+- Con la planilla real del 09/10: Heaven 409.515 = 216.115 + 137.971 + 26.063 + 29.366; entró 216.115 + 6.429 = 222.544 = la ficha
+  del Cuadre. Sueña 75.200 y 63.260. Todo cierra al centavo.
+- `tests/test_pry_plata.js` (7).
+
 ## 4jd. 10/10: 🔎 Revisión con 3 agentes → super (Fable) → mega (Fable), respuestas del dueño y arreglos — PUBLICADA 10/10 09:45 (`135ff1e`), Pages OK
 El dueño: *«agente que revise stock y saldo, agente que revise errores de todo el panel, agente que revise lo general, 1 super agente
 usando Fable que audite a cada agente y 1 mega agente que audite lo que audita»*. Informe: scratchpad `rev6/INFORME_FINAL.md`
