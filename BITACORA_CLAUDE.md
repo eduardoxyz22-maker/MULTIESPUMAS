@@ -7445,6 +7445,38 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jd. 10/10: 🔎 Revisión con 3 agentes → super (Fable) → mega (Fable), respuestas del dueño y arreglos — EN LA RAMA
+El dueño: *«agente que revise stock y saldo, agente que revise errores de todo el panel, agente que revise lo general, 1 super agente
+usando Fable que audite a cada agente y 1 mega agente que audite lo que audita»*. Informe: scratchpad `rev6/INFORME_FINAL.md`
+(+ `rev6/resultado.json`). Resultado del mega: con la planilla real del 09/10 rehízo a mano los 12 productos que más rotan (viernes y
+sábado) y coinciden Plan, revisión automática y cuadrito; ninguna plata ni pedido se pierde (1.016 filas guardadas sin cambios);
+sin errores de JavaScript. Descartó A1-1 (Banzer fantasma: decisión del dueño, §4iy) y corrigió al super en A3-6 (sí existe, BAJA).
+**Respuestas del dueño (10/10):**
+- **A. Fecha de un «Ya pedí»**: *«48 horas hábiles producir, 24 para entregar, o sea 3 días. Si entra luego de las 4:30 las 48
+  empiezan a correr al siguiente día»*. → `HORA_CORTE`=16.5 (antes 17; `horaCorteTxt`), `planYaPedi` guarda `arr=diaArranque()` y
+  `esp=sigDiaHabil(saldoSaleDeFabrica(arr))`; el cuadrito cuenta desde `q.arr||q.f`; el Plan dice «se entrega desde ~dd/mm». Las
+  CANTIDADES de Stock siguen con el tiempo medido (Moreno 5 días): no se cambió sin preguntar.
+- **B.** ALBA, FABRICA, MULTIESPUMA(S), MORENO, ALZER y «REPOSICION DE ALMACEN» = pedidos internos: `CONTA_INTERNOS` dentro de
+  `CONTA_EXCLUIR` (fuera de Ventas, Cuadre, Proyección y del desplegable); el stock los sigue contando.
+- **C.** *«Cada vendedor [su numeración]; Eduardo no usa número de nota, ahí anota el nro de pedido de sus proveedores»* →
+  `fxDupNotaBuscar` compara solo contra pedidos de Eduardo y número por número (`fxNotaNumeros`: «32526 / 32525»); textos «¿NÚMERO
+  REPETIDO?» / «ya está en otro pedido tuyo».
+**Arreglos (MEDIA):** (1) `hdrProximoAbierto`: arriba, un día cerrado por administración se saltea y lo dice («10/10 cerrado por
+administración»); la salud del día dice «N ocupados de M · L libres». (2) «Ya pedí» con id `fy:`+`huellaId(k|día|n)`: dos equipos a la
+vez = el mismo pedido. (3) `stockAvisoDe`: `dias<=lead` → urgente (DREAM REFORZADO 180). (4) `cargaVivaDatos`: una línea toda ✗ no
+cuenta (`l.cu`), como el `data-u=0` de la Lista. (5) `stockAsignar`: lo marcado ✔ sin respaldo entra en `faltaPorProd` (la copia a
+fábrica pasó de 21 a 37 con la planilla real; el texto dice «solo lo ya vendido»).
+**BAJA hechos:** «Pedí 0 ya» → «🚚 Traé N · ⚠️ revisá el saldo»; `noHayConStock` descuenta lo ofrecido; `stockMargen` baja → 0 antes de
+«sin ventas»; `^DEVOLVER|^DEVOLUCION` en `PROD_NO_ES_STOCK`; `pryTipoProd` mira `PROD_NO_ES_STOCK` (PANEL POCKET); `misWaCliente` toma el
+primer celular; RPT en «Tu pedido» con la sucursal; editar sin tocar la plata conserva un método viejo que el formulario no sabe
+reescribir («QR 0 %img», A2-3) y una venta de tienda vieja conserva su dirección (`EDIT_TIENDA_SUC0`, A2-4); «📦 Pedido único» dice «Sin
+rotación en 15 días · el plan pide N» cuando las columnas piden (`o._pQuin/_pMes`); anillos «⚠️ copia» sin lectura (`cargaEstado`); Mis
+pedidos «artículos»; `test_borradores`/`test_noborra` saltean feriados.
+**Quedan (no hechos, a propósito):** A2-7 (tildes al asignar camión desde «Sin vehículo»: los tildes son por producto y camión, mover
+uno puede marcar como cargado lo de otro pedido; mejor que lo decida el dueño), A2-8 (barra de Stock en el celular, diseño), A2-9 (filas
+viejas que no se pueden reguardar sin inventar un dato: es política), A3-6 (animaciones con «reducir movimiento»).
+Pruebas: `tests/test_rev_4jd.js` (20), `test_ayudas_form` §4b (30), `test_corte_horario` (16:30), `test_stock_4iz` (texto).
+
 ## 4jc. 09/10 (noche): 📲 Aviso por WhatsApp a los clientes de mañana — EN DISEÑO, sin código
 El dueño: *«cada final del día, con 1 botón, que se envíe mensaje de WhatsApp a los clientes para informarles que mañana estarán
 pasando a entregarles sus pedidos, por favor estén atentos»*. Se le explicaron dos caminos: (1) lista «📲 Avisar a los de mañana»
