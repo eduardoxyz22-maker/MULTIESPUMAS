@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jo. 10/10: ✕ La ventana de los pedidos de Eduardo no cerraba — EN LA RAMA
+## 4jo. 10/10: ✕ La ventana de los pedidos de Eduardo no cerraba — PUBLICADA 10/10 14:40 (`90684b0`), Pages OK
 El dueño, en su iPad: *«abro esto y no cierra, no funciona la X»*. `.dep-modal{display:grid}` le ganaba al atributo `hidden` (el
 `[hidden]{display:none}` del navegador pierde contra cualquier `display` del autor): `depPanel(null)` ponía `hidden` pero la ventana
 seguía a la vista. Arreglo: `.dep-modal[hidden]{display:none!important}`. La prueba de §4jm miraba la propiedad `hidden`, no lo que se
