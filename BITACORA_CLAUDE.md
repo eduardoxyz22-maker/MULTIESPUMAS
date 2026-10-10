@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jq. 10/10: 🚛 Los camiones de Administración en 3D, por camión, con una ficha por camión abajo — PUBLICADA (ver abajo)
+## 4jq. 10/10: 🚛 Los camiones de Administración en 3D, por camión, con una ficha por camión abajo — PUBLICADA 10/10 16:21 (`e497b11`)
 El dueño, mirando la fábrica de Eduardo: *«¿cómo lo aplicamos en Administración, en vez de eso que hay? Allá hay muchos nombres de
 clientes… hacé el ejemplo por camión, ¿y los montacargas tendrán productos no más?»*. Con las capturas: *«los montacargas, camiones,
 todo bello, pero el panel lateral y el diseño no»* → fichas → *«publica y veamos»*.
@@ -7464,6 +7464,7 @@ todo bello, pero el panel lateral y el diseño no»* → fichas → *«publica y
   plegadas. Orden: «Sin vehículo» (con el selector `cvAsignar` por pedido), los con carga, los vacíos. Diseño claro (`.cv3d-caja`).
 - `CV_3D`: prendido para todos; `me_cv3d`=0 vuelve a lo de antes; **en Playwright arranca apagado** (las pruebas de la imagen y del panel
   siguen igual). Sin three.js queda la imagen de siempre con las fichas. `tests/test_camiones_3d.js` (15).
+- Batería completa antes de publicar: 159 suites, 0 rojas.
 
 ## 4jp. 10/10: ⏳ La fila de espera, que se distinga — PUBLICADA 10/10 15:03 (`a93c0e6`), Pages OK
 El dueño, con las capturas de §4jm: *«no se distingue lo de espera…»*. La fila ya no va detrás de la zona (se perdía entre los demás

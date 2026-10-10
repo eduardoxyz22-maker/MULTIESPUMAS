@@ -643,7 +643,7 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   y **en «Sin vehículo» se asigna el camión ahí mismo** (§4ie, `cvAsignar` = `setVehiculo` sin reabrir fichas: vehículo + primer
   chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
-- **🚛 En 3D, por camión (§4jq, 10/10, dueño: *«publica y veamos»*)**: con `CV_3D` (prendido salvo `me_cv3d`=0; APAGADO en Playwright)
+- **🚛 En 3D, por camión (§4jq, 10/10, PUBLICADA 16:21, `e497b11`; dueño: *«publica y veamos»*)**: con `CV_3D` (prendido salvo `me_cv3d`=0; APAGADO en Playwright)
   la imagen se reemplaza por la escena 3D (`cv3dConstruir`: camión en su andén con lo cargado, un montacargas por producto que falta,
   Sin vehículo, Banzer, Moreno) y el panel oscuro por **una ficha clara por camión** abajo (`cv3dColsPintar`, `#cv-cols`) con los
   MISMOS tildes. El dueño NO quiere el panel lateral ni el diseño oscuro con el 3D. ⚠️ Un solo dibujante three.js para esta escena y
