@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jk. 10/10: 🏙️ Arriba, una calle de verdad y la ciudad en ruinas; 🚚 los camiones de Eduardo siempre al fondo — EN LA RAMA
+## 4jk. 10/10: 🏙️ Arriba, una calle de verdad y la ciudad en ruinas; 🚚 los camiones de Eduardo siempre al fondo — PUBLICADA 10/10 13:48 (`788fb9a`), Pages OK
 El dueño, con la captura del encabezado: *«esas líneas están muy seguidas, no parece una carretera… y no hay de fondo edificios,
 árboles o algo que simule una ciudad (en este caso tema Halloween) … ciudad en ruinas, cosas de miedo»*. Y mirando la fábrica de
 Eduardo en «Próxima» sin nada cargado: *«¿y mis camiones?»*.

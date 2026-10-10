@@ -1128,7 +1128,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **🎨 La dona de todas las vendedoras (§4jj, PUBLICADA 10/10 13:37, `244b5f1`; dueño: *«opción A pero con las animaciones del C»*)**: `#mis-metrics` vive
   en `#mis-izq` para todas; cada dato de la dona con su barra; las 4 fichas con su color y un dibujito animado (`misFichasVivas`,
   `MIS_ESC`, clases `mi-f1…4`, `mi-debe`, `mi-entra`). ⚠️ Sin letras dentro de los SVG (las pruebas leen el texto de las fichas).
-- **🏙️ Arriba y 🚚 los camiones de Eduardo (§4jk, EN LA RAMA)**: `.h-ruta` con ciudad (`.h-lejos`/`.h-cerca`, en octubre en ruinas con luna,
+- **🏙️ Arriba y 🚚 los camiones de Eduardo (§4jk, PUBLICADA 10/10 13:48, `788fb9a`)**: `.h-ruta` con ciudad (`.h-lejos`/`.h-cerca`, en octubre en ruinas con luna,
   murciélagos y niebla) y calle de verdad (`.h-calle`), dibujos de `herramientas/ruta_ciudad_gen.py`. En la fábrica de Eduardo los camiones
   van SIEMPRE al fondo: con carga, con pedidos asignados aunque vacíos, o la flota «esperando carga».
 - **🚛 Camiones (§4jh, PUBLICADA 10/10 13:37, `244b5f1`)**: la fiesta espera a `cargaSyncSet('ok')`; `#cv-sync` dice Guardando/Guardado/Sin enviar; con los
