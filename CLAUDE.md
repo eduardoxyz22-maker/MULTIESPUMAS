@@ -1124,7 +1124,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   «👑 Ver todos». `#mis-izq` = la dona + las 4 fichas (`#mis-metrics` se MUDA ahí y vuelve con otro vendedor); al lado `#mis-dep`, la
   fábrica 3D (montacargas adelante con lo que falta cargar, camiones al fondo con lo ya cargado según los tildes de la Lista de carga,
   `depCargado`); abajo `#mis-dep-cols`, una columna por cliente (§4jl: columnas FIJAS, 4/3/2/1 según el ancho; nunca `auto-fit`, estiraba un cliente solo al ancho entero). Pendiente = sin ✅ (acá NO vale «fecha pasada = salió»).
-  three.js r128 lazy (`depLibs`); sin 3D, las columnas. **§4jm**: tocar una ficha, un producto, un montacargas o un camión abre
+  three.js r128 lazy (`depLibs`); sin 3D, las columnas. **§4jm (PUBLICADA 10/10 14:11, `0f95518`)**: tocar una ficha, un producto, un montacargas o un camión abre
   `depPanel` (ventana con los pedidos, el estilo de la imagen del dueño); fila de espera para lo que pasa de 5 (`DEP_COLA`); ruedas del
   camión con `ejeZ`; los carteles se acomodan en pantalla (el de un montacargas se esconde si igual pisa). `tests/test_mis_deposito.js` (25).
 - **🎨 La dona de todas las vendedoras (§4jj, PUBLICADA 10/10 13:37, `244b5f1`; dueño: *«opción A pero con las animaciones del C»*)**: `#mis-metrics` vive

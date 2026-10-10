@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jm. 10/10: 🏭 La fábrica de Eduardo: la ventana con los pedidos, la fila de espera, las ruedas y los carteles — EN LA RAMA
+## 4jm. 10/10: 🏭 La fábrica de Eduardo: la ventana con los pedidos, la fila de espera, las ruedas y los carteles — PUBLICADA 10/10 14:11 (`0f95518`), Pages OK
 El dueño: *«si doy clic a la ficha de abajo o al montacargas no me abre la lista de a qué OCs son esos productos… habíamos diseñado una
 ficha desplegable, a este estilo (imagen 4)»*, *«armame el ejemplo de la fila de espera»*, *«¿y qué onda con las llantas? están hacia
 el frente»* y *«los montacargas se paran muy juntos, se solapan los nombres… por más que alejo o doy zoom»*.
