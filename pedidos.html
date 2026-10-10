@@ -28783,7 +28783,7 @@ function depLeyPintar(){
 function depElegir(i){
   var c=DEP.C[i]; if(!c) return; DEP.sel=c.c;
   [].forEach.call(document.querySelectorAll('#mis-dep-cols .dep-col'), function(a){ a.classList.toggle('on', a.getAttribute('data-i')===String(i)); });
-  if(c._x!=null) depAcercar(c._x, 1);
+  if(c._x!=null) depAcercar(c._x, 1, c._w);
 }
 function depSin3D(){ var b=document.getElementById('dep-esc'); if(!b || b.querySelector('.dep-sin3d')) return;
   b.insertAdjacentHTML('beforeend','<div class="dep-sin3d">La vista 3D no se pudo cargar en este equipo (sin internet o sin 3D).<br>Las columnas de abajo tienen todo.</div>'); }
@@ -28988,12 +28988,18 @@ function depEtq(obj, html, cls, col, dy, abajo){
   var e=document.createElement('div'); e.className='dep-etq '+cls; e.style.setProperty('--c', col); e.innerHTML=html; DEP.w3.box.appendChild(e);
   DEP.w3.etqs.push({ el:e, obj:obj, dy:dy, abajo:abajo });
 }
-var DEP_COLA=6, DEP_COLA_PASO=1.75;   // (§4jm) cuántos esperan en la fila y cada cuánto
+var DEP_COLA=6, DEP_COLA_PASO=1.8;   // (§4jm) cuántos esperan en la fila y cada cuánto
 function depTexEspera(){
   if(DEP.texEsp) return DEP.texEsp;
-  var c=document.createElement('canvas'); c.width=512; c.height=96; var x=c.getContext('2d');
-  x.fillStyle='rgba(245,176,20,.22)'; x.fillRect(0,0,512,96);
-  for(var i=-96;i<512;i+=32){ x.fillStyle=(i/32)%2?'#1f2326':'#f5b014'; x.beginPath(); x.moveTo(i,0); x.lineTo(i+16,0); x.lineTo(i+16+12,12); x.lineTo(i+12,12); x.fill(); x.beginPath(); x.moveTo(i,84); x.lineTo(i+16,84); x.lineTo(i+16+12,96); x.lineTo(i+12,96); x.fill(); }
+  var c=document.createElement('canvas'); c.width=256; c.height=768; var x=c.getContext('2d'), b=18;
+  x.fillStyle='rgba(240,138,36,.55)'; x.fillRect(0,0,256,768);
+  x.save(); x.beginPath(); x.rect(0,0,256,768); x.rect(b,b,256-2*b,768-2*b); x.clip('evenodd');
+  for(var i=-768;i<1024;i+=28){ x.fillStyle='#f5b014'; x.beginPath(); x.moveTo(i,0); x.lineTo(i+14,0); x.lineTo(i+14+768,768); x.lineTo(i+768,768); x.fill(); }
+  x.restore();
+  x.save(); x.beginPath(); x.rect(0,0,256,768); x.rect(b,b,256-2*b,768-2*b); x.clip('evenodd');
+  for(var i2=-754;i2<1024;i2+=28){ x.fillStyle='#1f2326'; x.beginPath(); x.moveTo(i2,0); x.lineTo(i2+14,0); x.lineTo(i2+14+768,768); x.lineTo(i2+768,768); x.fill(); }
+  x.restore();
+  x.fillStyle='rgba(180,83,9,.85)'; x.font='900 54px system-ui,Arial,sans-serif'; x.textAlign='center'; x.fillText('ESPERA',128,700);
   var t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; DEP.texEsp=t; return t;
 }
 /* 📋 (§4jm, dueño: «si doy clic a un montacargas no muestra los pedidos, ¿qué pasó con mis fichas desplegables?») Tocar un montacargas,
@@ -29039,8 +29045,9 @@ function depConstruir(C){
   /* adelante: un montacargas por producto con lo que FALTA cargar (hasta 5 por cliente; el cartel dice si hay más) */
   var esp=2.9, gap=2.2, grupos=C.map(function(c, i){ var ps=Object.keys(c.prod).map(function(k){ return c.prod[k]; }).filter(function(q){ return q.falta>0; });
     var cola=ps.slice(5, 5+DEP_COLA);
-    return { c:c, i:i, ps:ps.slice(0,5), cola:cola, mas:Math.max(0,ps.length-5-cola.length), w:Math.max(3.4, Math.min(5,ps.length)*esp+.6, cola.length*DEP_COLA_PASO+1.4) }; });
-  var anchoT=grupos.reduce(function(s,gr){ return s+gr.w; },0)+Math.max(0,grupos.length-1)*gap, x=-anchoT/2;
+    var cc=Math.ceil(cola.length/3);   // (§4jp) la fila va al COSTADO de la zona, en columnas de a 3
+    return { c:c, i:i, ps:ps.slice(0,5), cola:cola, mas:Math.max(0,ps.length-5-cola.length), w:Math.max(3.4, Math.min(5,ps.length)*esp+.6), wl:cc?(cc*DEP_COLA_PASO+.9):0 }; });
+  var anchoT=grupos.reduce(function(s,gr){ return s+gr.w+gr.wl; },0)+Math.max(0,grupos.length-1)*gap, x=-anchoT/2;
   /* al fondo: los camiones con lo YA cargado */
   var cams={}; C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ var q=c.prod[k]; Object.keys(q.cam).forEach(function(v){ if(v==='Sin vehículo') return; (cams[v]=cams[v]||[]).push({ k:k, q:q, u:q.cam[v] }); }); }); });
   /* (§4jk, dueño: «¿y mis camiones?») al fondo van SIEMPRE los camiones: los que ya tienen algo cargado, los que tienen pedidos de
@@ -29060,7 +29067,7 @@ function depConstruir(C){
   });
   var mov=[];
   grupos.forEach(function(gr, gi){
-    var c=gr.c, cx=x+gr.w/2, col=DEP_CLI[gr.i%DEP_CLI.length]; c._x=cx;
+    var c=gr.c, cx=x+gr.w/2, col=DEP_CLI[gr.i%DEP_CLI.length]; c._x=x+(gr.w+gr.wl)/2; c._w=gr.w+gr.wl;   // la cámara encuadra la zona Y su fila
     var deco=new THREE.Mesh(new THREE.PlaneGeometry(gr.w,3.6), new THREE.MeshBasicMaterial({ color:new THREE.Color(col).convertSRGBToLinear(), transparent:true, opacity:.16, depthWrite:false }));
     deco.rotation.x=-Math.PI/2; deco.position.set(cx,.012,1.3); g.add(deco);
     var hit=new THREE.Mesh(new THREE.BoxGeometry(gr.w,3,3.6), new THREE.MeshBasicMaterial({ visible:false })); hit.position.set(cx,1.5,1.3); hit.userData.dep={ i:gr.i }; g.add(hit); W.toca.push(hit);
@@ -29074,30 +29081,40 @@ function depConstruir(C){
     });
     /* ⏳ (§4jm, dueño: «¿habrá al costado una fila de espera?») lo que no entra adelante espera en hilera detrás de su zona, de
        costado, con la baliza naranja prendida; entran desde la derecha y frenan uno detrás del otro. */
+    /* ⏳ (§4jp, dueño: «no se distingue lo de espera») la fila es un CORRAL al costado de la zona: piso naranja con borde rayado y
+       «ESPERA» pintado, postes con cadena del lado de la zona y el cartel «⏳ FILA DE ESPERA · N» adelante. Los que esperan van en
+       columnas de a 3, más chicos, mirando adelante, con baliza que titila y su número (1º, 2º…); entran desde el fondo. */
     if(gr.cola.length){
-      var zc=-2.9, x0=cx-gr.w/2+.9, carril=new THREE.Mesh(new THREE.PlaneGeometry(gr.w-.4, 1.9), new THREE.MeshBasicMaterial({ map:depTexEspera(), transparent:true, depthWrite:false }));
-      carril.rotation.x=-Math.PI/2; carril.position.set(cx,.014,zc); g.add(carril);
-      var letrero=new THREE.Object3D(); letrero.position.set(cx-gr.w/2+.6,0,zc-1.1); g.add(letrero);
-      depEtq(letrero, '⏳ '+(gr.cola.length+gr.mas)+' en espera', 'dep-etq-cola', '#b45309', 0, true);
+      var xl=x+gr.w+.25, lw=gr.wl-.3, lx=xl+lw/2, z0=1.1, z1=-6.4, lz=(z0+z1)/2;
+      var piso=new THREE.Mesh(new THREE.PlaneGeometry(lw, z0-z1), new THREE.MeshBasicMaterial({ map:depTexEspera(), transparent:true, depthWrite:false }));
+      piso.rotation.x=-Math.PI/2; piso.position.set(lx,.016,lz); g.add(piso);
+      [z0,(z0*2+z1)/3,(z0+z1*2)/3,z1].forEach(function(zp, n, A){
+        [xl, xl+lw].forEach(function(xp){ g.add(depCil(.07,1.3,'#1f2326',xp,.65,zp,10)); g.add(depCil(.09,.2,'#f5b014',xp,1.1,zp,10)); g.add(depCil(.09,.16,'#f5b014',xp,.5,zp,10));
+          if(n<A.length-1){ var largo=zp-A[n+1]; g.add(depCaja(.05,.05,largo,'#f08a24',xp,1.18,zp-largo/2)); g.add(depCaja(.05,.05,largo,'#f08a24',xp,.7,zp-largo/2)); } });
+      });
+      var letrero=new THREE.Object3D(); letrero.position.set(lx,1.7,z1+.2); g.add(letrero);
+      depEtq(letrero, '⏳ FILA DE ESPERA · '+(gr.cola.length+gr.mas), 'dep-etq-cola', '#b45309', 0);
       gr.cola.forEach(function(q, j){
-        var mc=depMontacargas(), px=x0+j*DEP_COLA_PASO; mc.g.scale.setScalar(.82); mc.g.rotation.y=-Math.PI/2; mc.g.position.set(cx+gr.w/2+6+j*1.2,0,zc);
+        var col3=Math.floor(j/3), fila=j%3, px=xl+.45+DEP_COLA_PASO/2+col3*DEP_COLA_PASO, pz=-.6-fila*2.25;
+        var mc=depMontacargas(); mc.g.scale.setScalar(.92); mc.g.position.set(px,0,-13-fila*2);
         mc.g.userData.dep={ i:gr.i, k:q.k }; g.add(mc.g); W.toca.push(mc.g);
         var st=q.st.no?'no':(q.st['']||q.st.fab)?'':q.st.im?'im':'ok', alto=depPila(mc.carga, q.k, q.d, q.m, q.falta, 3);
-        var bal=depMesh(new THREE.SphereGeometry(.1,10,8), new THREE.MeshBasicMaterial({ color:0xff8a00 }), 0, 2.16, -.05); mc.g.add(bal);
-        var d=1.2+gi*.35+j*.45; mov.push({ mc:mc, d:d, ax:'x', bal:bal });
-        depTween(mc.g.position, { x:px }, 2.2, d, depSale);
+        var bal=depMesh(new THREE.SphereGeometry(.12,10,8), new THREE.MeshBasicMaterial({ color:0xff8a00 }), 0, 2.18, -.05); mc.g.add(bal);
+        depEtq(mc.carga, (j+1)+'º · '+q.falta+' '+esc(depCorto(q)), 'dep-etq-pila dep-etq-mini', DEP_ESTCOL[st], alto*.8+.25);
+        var d=1.2+gi*.35+j*.35; mov.push({ mc:mc, d:d, bal:bal });
+        depTween(mc.g.position, { z:pz }, 2.4, d, depSale);
       });
     }
     var cartel=new THREE.Object3D(); cartel.position.set(cx,0,3.2); g.add(cartel);
     var falta=gr.ps.concat(gr.cola).reduce(function(s,q){ return s+q.falta; },0);
     depEtq(cartel, esc(c.c)+'<small>'+(falta?(falta+' por cargar'):'✅ todo cargado')+' · '+c.car+' en camión'+(gr.mas?(' · +'+gr.mas+' productos más'):'')+'</small>', 'dep-etq-cli', col, 0, true);
-    x+=gr.w+gap;
+    x+=gr.w+gr.wl+gap;
   });
   W.cada=function(t){ mov.forEach(function(o){ var z=o.ax==='x'?-o.mc.g.position.x:o.mc.g.position.z; if(o.u!=null) o.mc.ruedas.forEach(function(r){ r.rotation.x+=(z-o.u)*2; }); o.u=z;
     if(!visQuieto()){ o.mc.chofer.rotation.y=Math.sin(t*1.2+o.d*5)*.3; if(o.bal) o.bal.visible=(Math.floor(t*2.2+o.d*3)%2)===0; } }); };
   W.ancho=ancho;
   var sel=DEP.sel && C.filter(function(c){ return c.c===DEP.sel; })[0];
-  if(sel) depAcercar(sel._x, 1);
+  if(sel) depAcercar(sel._x, 1, sel._w);
   else if(W.cam.aspect<1 && C.length) depAcercar(C[0]._x, 1);    // celular: la fábrica entera queda chica; arranca cerca del primero
   else depVerTodo(false);
 }
@@ -29106,9 +29123,9 @@ function depVerTodo(tocado){
   var k=Math.max(1, 1.25/(W.cam.aspect||1)), d=((W.ancho||14)*.66+9)*k;
   depTween(W.cam.position, { x:d*.18, y:d*.62, z:d*.95 }, 1.4, 0); depTween(W.ctl.target, { x:0, y:.6, z:-3.5 }, 1.4, 0);
 }
-function depAcercar(x, z){
+function depAcercar(x, z, ancho){
   var W=DEP.w3; if(!W) return;
-  var k=Math.max(1, .9/(W.cam.aspect||1));
+  var k=Math.max(1, .9/(W.cam.aspect||1))*Math.max(1, (ancho||0)/11);   // (§4jp) una zona ancha (con su fila) entra entera
   depTween(W.cam.position, { x:x+3*k, y:4.8*k, z:z+8.5*k }, 1.3, 0); depTween(W.ctl.target, { x:x, y:1.2, z:z-.6 }, 1.3, 0);
 }
 

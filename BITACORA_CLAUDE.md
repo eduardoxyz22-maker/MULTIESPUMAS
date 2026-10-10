@@ -7445,6 +7445,14 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jp. 10/10: ⏳ La fila de espera, que se distinga — EN LA RAMA
+El dueño, con las capturas de §4jm: *«no se distingue lo de espera…»*. La fila ya no va detrás de la zona (se perdía entre los demás
+montacargas): es un **corral al costado derecho de la zona** (`gr.wl`, que se suma al ancho y a `anchoT`), piso naranja con borde
+rayado amarillo y negro y «ESPERA» pintado (`depTexEspera`, canvas 256×768), barandas con postes a los dos lados, y el cartel
+«⏳ FILA DE ESPERA · N» atrás. Los que esperan van en columnas de a 3, mirando adelante, un poco más chicos (0,92), con baliza que titila
+y su número («1º · 2 titanio 140»); entran desde el fondo. **La cámara encuadra la zona con su fila**: `c._x` = centro de zona + corral,
+`c._w` = ancho, y `depAcercar(x, z, ancho)` se aleja para que entre entera.
+
 ## 4jo. 10/10: ✕ La ventana de los pedidos de Eduardo no cerraba — PUBLICADA 10/10 14:40 (`90684b0`) y la segunda vuelta 14:46 (`d4592de`), Pages OK
 El dueño, en su iPad: *«abro esto y no cierra, no funciona la X»*. `.dep-modal{display:grid}` le ganaba al atributo `hidden` (el
 `[hidden]{display:none}` del navegador pierde contra cualquier `display` del autor): `depPanel(null)` ponía `hidden` pero la ventana
