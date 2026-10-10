@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jl. 10/10: 🏭 Las columnas por cliente de Eduardo, fijas — PUBLICADA 10/10 13:58 (`17e28d0`), Pages OK
+## 4jl. 10/10: 🏭 Las columnas por cliente de Eduardo, fijas — PUBLICADA 10/10 13:52 (`17e28d0`), Pages OK
 El dueño, con la captura de MULTICENTER ocupando todo el ancho y cuatro columnas dibujadas a mano: *«¿y qué pasa cuando hay más
 proveedores? ¿ocupa cada uno el ancho de la página? habíamos quedado que era 1 por proveedor y luego múltiples fichas ocupando ese
 ancho»*. `#mis-dep-cols`: `repeat(4,…)` en la compu, 3 hasta 1300 px, 2 hasta 900, 1 hasta 560 (antes `auto-fit`, que estiraba un solo
