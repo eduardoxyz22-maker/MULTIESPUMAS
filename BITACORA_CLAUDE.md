@@ -7445,6 +7445,13 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jn. 10/10: 🚚 El camión de arriba con el logo de Multiespumas — EN LA RAMA
+El dueño: *«me gusta el fondo todo pero el camión no tiene estilo Multiespumas, ese es el logo (MultiESPUMAS Viscarra S.R.L., tres
+hojas amarilla, naranja y rosa)»*. Se le mostraron tres (artifact «Camión Multiespumas») y eligió **la opción 1**: caja blanca con las
+tres hojas del logo y «MultiESPUMAS · Viscarra S.R.L.» en azul marino (`#1f3b73`), cabina azul marino y abajo tres franjas rosa,
+naranja y amarilla. Mismas clases de animación (`hc-humo`, `hc-cuerpo`, `hc-faro`, `hc-rayos`), mismo `viewBox` 86×40 y ruedas en el
+mismo lugar. El texto va con `textLength` para no salirse de la caja. `test_camiones_4iz` 1a mira «MULTIESPUMAS» sin mayúsculas (`/i`).
+
 ## 4jm. 10/10: 🏭 La fábrica de Eduardo: la ventana con los pedidos, la fila de espera, las ruedas y los carteles — PUBLICADA 10/10 14:11 (`0f95518`), Pages OK
 El dueño: *«si doy clic a la ficha de abajo o al montacargas no me abre la lista de a qué OCs son esos productos… habíamos diseñado una
 ficha desplegable, a este estilo (imagen 4)»*, *«armame el ejemplo de la fila de espera»*, *«¿y qué onda con las llantas? están hacia

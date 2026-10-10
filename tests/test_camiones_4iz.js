@@ -24,7 +24,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       humo:cam.querySelectorAll('.hc-humo circle').length, ruedas:cam.querySelectorAll('.hc-rayos').length,
       gira:cam.querySelector('.hc-rayos') && getComputedStyle(cam.querySelector('.hc-rayos')).animationName, alto:cam.getBoundingClientRect().height };
   });
-  chk('1a. arriba es un camión dibujado con el nombre, no el emoji', r1.svg && /MULTIESPUMAS/.test(r1.txt) && !r1.emoji, r1);
+  chk('1a. arriba es un camión dibujado con el nombre, no el emoji', r1.svg && /MULTIESPUMAS/i.test(r1.txt) && !r1.emoji, r1);
   chk('1b. …con humo y tres ruedas que giran', r1.humo===3 && r1.ruedas===3 && /hc-gira/.test(r1.gira), r1);
   chk('1c. …cruza la pantalla y es más grande que el emoji (≥ 45 px de alto en el celular)', /h-viaje/.test(r1.anim) && r1.alto>=45, r1);
   const css = await page.evaluate(()=>{ for (const s of document.styleSheets){ try{ for (const k of s.cssRules){ if(k.name==='h-viaje') return k.cssText; } }catch(e){} } return ''; });
