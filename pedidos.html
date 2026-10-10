@@ -9250,6 +9250,13 @@ function ctaRegistrarPago(id){
      lo volvía a cobrar. La pregunta queda para cuando se vio «💵 Pago» y la venta se saldó en
      otro lado antes de tocar el botón. */
   var _env = CTA_TIPO==='envio' || CTA_FORM_ENV;
+  /* 🔁 (10/10, auditoría de Antigravity y Codex, hallazgo 2) EL MISMO PAGO DOS VECES: si ya hay uno registrado con el mismo monto,
+     día, método, banco y N° de recibo, se pregunta antes de anotarlo otra vez (el saldo bajaría dos veces). Solo pregunta: puede
+     haber dos pagos iguales de verdad. Si se anotó por error, «🗑 Borrar este pago» (§4hk). */
+  var _rep=pagoRepetido(p, linea);
+  if(_rep && !confirm('⚠️ Ya hay un pago IGUAL registrado en esta venta:\n\n'+
+      contaMetodoTxt(_rep)+' · '+fmtBs(Number(_rep.monto)||0)+' · '+(_rep.fecha?fmtFecha(_rep.fecha):'sin fecha')+' · recibo '+limpiaNota(_rep.nota)+'\n\n'+
+      '¿Anotarlo IGUAL otra vez? (si es el mismo pago, tocá Cancelar: si no, el saldo baja dos veces)')) return;
   if(!_env && falta<=0.01){
     if(!confirm('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
                 '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
@@ -9295,6 +9302,15 @@ function ctaRegistrarPago(id){
      el flete (Bs 50) en vez del pago (Bs 700) — e invitaban a registrarlo dos veces (§4ew). */
   showPagoWhatsapp(id, (anticipoDe(p)?1:0)+cobrosDe(p).length-1);
   pagoWaEstado(_prP);                      // §4fp: si el guardado no entra, la ventana lo dice
+}
+/* 🔁 ¿Ya está este pago? Mismo monto, día, método, banco (QR) y N° de recibo, contra TODO lo cobrado de la venta (adelanto,
+   cobros y fletes cobrados: `contaPagos`). Devuelve el que coincide, o null. */
+function pagoRepetido(p, linea){
+  var nn=function(t){ return limpiaNota(t).toUpperCase(); }, m=r2(Number(linea.monto)||0);
+  return contaPagos(p).filter(function(c){
+    return r2(Number(c.monto)||0)===m && String(c.fecha||'')===String(linea.fecha||'') && String(c.metodo||'')===String(linea.metodo||'') &&
+      String(c.banco||'')===String(linea.banco||'') && nn(c.nota)===nn(linea.nota) && nn(linea.nota)!=='';
+  })[0]||null;
 }
 /* ---- El pago, listo para pegar en el grupo de WhatsApp ----
    Se manda el mensaje Y el link de la imagen: WhatsApp no puede adjuntar el archivo desde

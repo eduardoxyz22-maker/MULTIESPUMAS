@@ -256,7 +256,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - **➕ Lo vendido sin entregar se SUMA al ritmo, no «el mayor»** (§4ii, 08/10, dueño: *«NO PUEDE PASAR ESTO… por eso venimos
     sin stock»*; PUBLICADA 08/10 17:56, `e533511`): `stockNecesario = comp + porDia × (fábrica + margen + reserva)`, `nec15` y el `consumo` de
     `stockProyectar` igual. Con `max` el ESPECIAL SEMIORTOPEDICO (9 vendidos, 0,9/día, 4 en Banzer, 2 en Moreno) pedía producir 3;
-    ahora 11 (+ 2 de Moreno). El mes que viene (`mesNec`) sigue con el mayor: lo probable ya incluye lo vendido. ⚠️ No volver al
+    ahora 11 (+ 2 de Moreno); desde §4iy (piso de 4 días de fábrica) 12 (+ 2). El mes que viene (`mesNec`) sigue con el mayor: lo probable ya incluye lo vendido. ⚠️ No volver al
     `max`. `tests/test_proyeccion_suma.js` (9).
   - **⚠️ Si volvés a tocar `STOCK_VENTANA` o los umbrales de rotación**: revisá que ningún
     texto quede con un número hardcodeado (pasó dos veces, §4dc — «4 semanas» sobrevivió un
@@ -832,6 +832,9 @@ Eduardo. `tests/test_chofer_efectivo.js`.
     SOLO con `admEfectivoConDuda(p)` = hay chofer y el camión ya salió (`entregado`, o `fechaSalida(p) <= hoy`); «🚚 El chofer» /
     «🧑‍💼 la vendedora» / otro chofer (`choferesParaSelect`) → `admCobrarEfectivo` → **`applyPaid(p, metodo, banco, recibio)`** (4°
     argumento nuevo, `>Nombre` §4eq). Sin chofer o con la entrega por delante, directo como siempre (los fixtures viejos no cambian).
+- **🔁 El mismo pago dos veces pregunta** (§4jr, 10/10, auditoría de Antigravity y Codex): `ctaRegistrarPago` llama a
+  `pagoRepetido(p, linea)` (mismo monto, día, método, banco y recibo contra `contaPagos`) y hace `confirm` antes de anotarlo;
+  nunca frena. `tests/test_pago_repetido.js`. Y `tests/correr.sh` ahora sale 1 si alguna prueba falla («== HAY PRUEBAS EN ROJO ==»).
 - **🧾 El pago de MENTIRA de una venta «PAGADA sin monto»** (§4fg): esas ventas no tienen
   renglón —el campo guarda el método suelto, `Efectivo %IMG`— y `cobrosDe` fabrica uno con el
   monto de **`p.cobradoBs`**, que NO viaja en la planilla (vale 0 apenas se relee la lista).

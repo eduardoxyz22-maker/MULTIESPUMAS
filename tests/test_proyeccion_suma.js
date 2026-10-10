@@ -5,7 +5,8 @@
    la venta de la semana desaparecía y se pedía solo 9 − 4 (Banzer) = 5, de los que 2 se traen de Moreno → «7 días: 3».
    Ahora se SUMAN (la misma regla que el dueño dio para Banzer o PTF, §4hw).
    Se prueba con el caso de su captura armado con datos inventados (reloj clavado en el jueves 08/10/2026 a las 10:00 de Bolivia):
-     · 7 días = 11 (antes 3), 15 días = 22 (antes 13), y «cubre hasta» se corre por la venta que viene;
+     · 7 días = 11 (antes 3), 15 días = 22 (antes 13), y «cubre hasta» se corre por la venta que viene; desde §4iy (piso de 4 días
+       de fábrica un jueves) son 14 (12 a fabricar + 2 de Moreno) y 23: lo que miden las comprobaciones de abajo;
      · lo que rota poco (sin ritmo) sigue pidiendo solo lo vendido, como antes;
      · para TODOS los productos de la tabla: lo que se pide alcanza para lo vendido MÁS el ritmo;
      · el «Cómo se calcula» dice «Se suman».

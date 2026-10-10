@@ -27,6 +27,9 @@ uno(){
   elif [ -z "$out" ]; then echo "$n :: VACIO"
   elif [ "$rc" -ne 0 ]; then echo "$n :: SIN RESUMEN (exit $rc) · $(echo "$out" | tail -1)"
   else echo "$n :: ok (sin resumen)"; fi
+  # (10/10, auditoría de Antigravity y Codex, hallazgo 1) el código de salida dice la verdad: antes la batería salía 0 aunque
+  # una prueba fallara. Falla = exit≠0 (también el corte por tiempo), algún ✗, «N mal» con N>0, o nada de salida.
+  [ "$rc" -eq 0 ] && [ "$bad" -eq 0 ] && [ -n "$out" ] && ! echo "$line" | grep -qE '[1-9][0-9]* mal'
 }
 export -f uno
 # ⚠️ Los .cjs (otra mano tocando el mismo panel, §4db2) hablan otro idioma: "OK "/"FALLO "
@@ -40,7 +43,7 @@ unoCjs(){
   f="$1"; n=$(basename "$f" .cjs)
   out=$(NODE_PATH="${NODE_PATH:-/opt/node22/lib/node_modules}" CHROME_PATH="${CHROME_PATH:-/opt/pw-browsers/chromium-1194/chrome-linux/chrome}" timeout 400 node "$f" 2>&1)
   rc=$?
-  if [ "$rc" -eq 124 ]; then echo "$n :: CORTADO POR TIEMPO (400 s)"; return; fi
+  if [ "$rc" -eq 124 ]; then echo "$n :: CORTADO POR TIEMPO (400 s)"; return 1; fi
   ok=$(echo "$out" | grep -c '^OK ')
   fallo=$(echo "$out" | grep -c '^FALLO ')
   # ⚠️ No todos los .cjs hablan "OK "/"FALLO ": algunos usan ✓/✗ y cierran con la misma
@@ -59,6 +62,7 @@ unoCjs(){
   else
     echo "$n :: ok (sin resumen)"
   fi
+  [ "$rc" -eq 0 ] && [ "$fallo" -eq 0 ] && ! echo "$line" | grep -qE '[1-9][0-9]* mal'
 }
 export -f unoCjs
 # ⚠️ Y los .py (§4fx): `test_traer.py`, `test_kommo.py` y `test_duplicados.py` cuidan lo que
@@ -72,8 +76,13 @@ unoPy(){
   elif [ -n "$line" ]; then echo "$n :: $line"
   elif [ "$rc" -ne 0 ]; then echo "$n :: SIN RESUMEN (exit $rc) · $(echo "$out" | tail -1)"
   else echo "$n :: ok (sin resumen)"; fi
+  [ "$rc" -eq 0 ] && ! echo "$line" | grep -qE '[1-9][0-9]* mal'
 }
 export -f unoPy
-ls tests/test_*"$1"*.js 2>/dev/null | xargs -r -P 4 -I{} bash -c 'uno "$@"' _ {}
-ls tests/test_*"$1"*.cjs 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoCjs "$@"' _ {}
-ls tests/test_*"$1"*.py 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoPy "$@"' _ {}
+# xargs sale ≠0 (123) si alguna prueba falló: la batería entera sale 1 y lo dice al final.
+falla=0
+ls tests/test_*"$1"*.js 2>/dev/null | xargs -r -P 4 -I{} bash -c 'uno "$@"' _ {} || falla=1
+ls tests/test_*"$1"*.cjs 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoCjs "$@"' _ {} || falla=1
+ls tests/test_*"$1"*.py 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoPy "$@"' _ {} || falla=1
+[ "$falla" -eq 0 ] && echo "== TODO EN VERDE ==" || echo "== HAY PRUEBAS EN ROJO =="
+exit $falla
