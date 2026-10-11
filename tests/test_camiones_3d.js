@@ -103,6 +103,25 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('el producto abre la ventana con su pedido', r.vis && /CLIENTE A/.test(r.txt) && /Foton nuevo/.test(r.txt), r.txt.slice(0,200));
   chk('el título elige el camión', r.sel==='Foton encarpado' && r.on==='Foton encarpado', J(r));
 
+  console.log('\n── 5b. Tocar en la escena 3D (11/10, dueño: «no funcionan los montacargas y camiones del 3D») ──');
+  r = await page.evaluate(() => {
+    /* el piso del andén (caja invisible) queda ADELANTE del montacargas: tiene que ganar el montacargas */
+    var zona={ userData:{ dep:{ fn:function(){}, zona:true, n:'zona' } } }, mc={ userData:{ dep:{ fn:function(){}, n:'mc' } } }, pieza={ userData:{}, parent:mc };
+    var a=depHitDe([{ object:zona }, { object:pieza }]), b=depHitDe([{ object:zona }]), c=depHitDe([]);
+    var D=cargaVivaDatos(), cam=D.porK['Foton nuevo'], sin=D.cams.filter(function(x){ return x.sin; })[0];
+    var leer=function(){ var m=document.getElementById('dep-modal'); return { vis:!!m && getComputedStyle(m).display!=='none', tit:(m.querySelector('.dep-md-cab b')||{}).textContent||'', txt:m.innerText.replace(/\s+/g,' '), n:m.querySelectorAll('.dep-md-p').length }; };
+    cv3dCamPanel(cam); var r1=leer(); depPanel(null);
+    cv3dCamPanel(sin); var r2=leer(); depPanel(null);
+    cv3dLugarPanel('bz'); var r3=leer(); depPanel(null);
+    cv3dLugarPanel('im'); var r4=leer(); depPanel(null);
+    return { a:a&&a.n, b:b&&b.n, c:c, cam:r1, sin:r2, bz:r3, im:r4 };
+  });
+  chk('gana lo tocado (el montacargas), no el piso del andén que está adelante', r.a==='mc' && r.b==='zona' && r.c==null, J([r.a,r.b,r.c]));
+  chk('tocar un camión abre su ficha con sus pedidos y lo cargado', r.cam.vis && /Foton nuevo/.test(r.cam.tit) && r.cam.n===1 && /CLIENTE A/.test(r.cam.txt) && /de 5 bultos cargados/.test(r.cam.txt), r.cam);
+  chk('«Sin camión» abre los pedidos que esperan camión', r.sin.vis && /Sin camión/.test(r.sin.tit) && /CLIENTE C/.test(r.sin.txt), r.sin);
+  chk('Banzer abre los pedidos que se cargan allá', r.bz.vis && /Banzer/.test(r.bz.tit) && r.bz.n===1 && /CLIENTE B/.test(r.bz.txt), r.bz);
+  chk('Moreno abre los pedidos que hay que ir a buscar', r.im.vis && /Ir a buscar/.test(r.im.tit) && r.im.n===1 && /CLIENTE A/.test(r.im.txt), r.im);
+
   console.log('\n── 6. Sin 3D y sin errores ──');
   await page.waitForTimeout(500);
   r = await page.evaluate(() => ({ img:!!document.querySelector('#carga-viva .cv-lienzo img'), con3d:!!document.querySelector('.cv-mapa.con3d') }));
