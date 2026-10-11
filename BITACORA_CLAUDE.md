@@ -7465,8 +7465,9 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   el propio P1 no dispara otra búsqueda (`NX_CLI_LLENANDO`).
 - **P3 · el mensaje para el cliente** (`nxMsgCliente`, `nxClienteBloque`): en «✅ Pedido guardado», debajo del mensaje del grupo,
   un cuadro verde con el texto para el CLIENTE (se puede corregir) y «💬 Abrir el WhatsApp de <nombre>» (`misWaCliente` + `?text=`).
-  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 11/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, de 14:30 a 18:30» (`NX_HORARIO`); sin turno, sin hora. Y con fecha, la línea del dueño: «📞 Estar atento: nuestro
-  personal de logística se contactará una hora antes de la entrega, según el turno y en la fecha designada.»
+  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 11/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, entre las 14:30 y las 18:30» (`NX_RANGO`); sin turno, sin hora. Y con fecha, la línea de logística CONCRETA (dueño, 11/10: *«ese mensaje no dice nada concreto… decir según el turno que elige
+  el vendedor»*, `nxLlamadaTxt`): «📞 Estar atento el martes 13/10 por la tarde: llegamos entre las 14:30 y las 18:30, y nuestro
+  personal de logística se contactará una hora antes de la entrega.» (AM: por la mañana, entre las 9:00 y las 12:00). El día y el horario van solo ahí (se sacó el «📅 Entrega:» que los repetía).
   Saldo con el recargo por entrega si queda. No en ATC, RPT, venta de tienda ni al reenviar. Al corregir, si cambió el día o el turno
   (`difPedido`), «💬 Avisarle al cliente del día nuevo» (`nxAvisarCambio`).
 - **M1 · recordatorio de entrega** (dueño: *«¿dónde iría?»* → en Mis pedidos): la 5ª ficha naranja `mi-f5` a lo ancho, debajo de las

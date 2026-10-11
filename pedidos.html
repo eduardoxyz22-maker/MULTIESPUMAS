@@ -30548,9 +30548,16 @@ function nxCliLimpiar(){ clearTimeout(NX_CLI_T); NX_CLI={ vista:{}, lleno:{}, p:
    Sale en la ventana de «✅ Pedido guardado», debajo del mensaje del grupo: se puede corregir antes de mandarlo y el botón abre
    el WhatsApp DEL CLIENTE con el texto puesto. También al corregir un pedido si cambió el día o el turno («avisale del cambio»).
    El turno va con su horario (dueño, 11/10: *«si está en PM, que entre las 14:30 a 18:30 llegará, o si es AM desde las 9 a 12»*):
-   `NX_HORARIO`. Sin turno no se promete hora. */
-var NX_HORARIO={ AM:'por la mañana, de 9:00 a 12:00', PM:'por la tarde, de 14:30 a 18:30' };
-function nxTurnoTxt(t){ return NX_HORARIO[t] ? (', '+NX_HORARIO[t]) : ''; }
+   `NX_RANGO`, en UNA línea (`nxLlamadaTxt`). Sin turno no se promete hora. */
+/* (dueño, 11/10) La línea de logística, CONCRETA según el día y el turno que eligió el vendedor:
+   AM → «📞 Estar atento el martes 13/10 por la mañana: llegamos entre las 9:00 y las 12:00, y nuestro personal de logística se
+   contactará una hora antes de la entrega.» · PM → lo mismo «por la tarde», entre las 14:30 y las 18:30. */
+var NX_RANGO={ AM:['por la mañana','9:00','12:00'], PM:['por la tarde','14:30','18:30'] };
+function nxLlamadaTxt(p){
+  var t=turnoDe(p), r=NX_RANGO[t], d=nxDiaTxt(p.fecha);
+  return r ? ('📞 Estar atento el '+d+' '+r[0]+': llegamos entre las '+r[1]+' y las '+r[2]+', y nuestro personal de logística se contactará una hora antes de la entrega.')
+           : ('📞 Estar atento el '+d+': nuestro personal de logística se contactará una hora antes de la entrega.');
+}
 function nxSaldoCliente(p){
   if(noSeCobra(p)) return '';
   var falta=Number(p.saldo)||0, flete=envioPorCobrar(p);
@@ -30566,16 +30573,16 @@ function nxMsgCliente(p, tipo){
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+'. Cambió el día de entrega de tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+':');
   }else if(tipo==='manana'){
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+' por tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+'.');
-    L.push('🚚 '+(p.fecha===tomorrowStr()?'Mañana ':'El ')+cuando+' te lo llevamos'+nxTurnoTxt(t)+'.');
+    L.push('🚚 '+(p.fecha===tomorrowStr()?'Mañana ':'El ')+cuando+' te lo llevamos.');
   }else{
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te confirmamos tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+' de '+nxMarcaTxt(p)+':');
   }
   (p.productos||[]).filter(Boolean).forEach(function(x){ L.push('🛏️ '+(Number(x.cant)||1)+' × '+String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')); });
-  if(tipo!=='manana' && p.fecha) L.push('📅 Entrega: '+cuando+nxTurnoTxt(t));
+  /* el día y el horario van UNA vez, en la línea de logística (`nxLlamadaTxt`) */
   var dir=String(p.direccion||'').trim(); if(dir) L.push('📍 '+dir);
   var sl=nxSaldoCliente(p); if(sl) L.push(sl);
   /* (dueño, 11/10) logística llama una hora antes, según el turno y en la fecha de entrega */
-  if(p.fecha) L.push('📞 Estar atento: nuestro personal de logística se contactará una hora antes de la entrega, según el turno y en la fecha designada.');
+  if(p.fecha) L.push(nxLlamadaTxt(p));
   L.push(tipo==='manana' ? 'Si no vas a estar, avisanos por acá así lo reprogramamos. ¡Gracias!' : 'Cualquier cambio, escribinos a este número. ¡Gracias por tu compra!');
   if(p.vendedor) L.push(String(p.vendedor).trim());
   return L.join('\n');
