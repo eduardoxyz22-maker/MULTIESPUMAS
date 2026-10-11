@@ -7445,6 +7445,58 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4js. 11/10: ✨ Las nueve mejoras (P1, P3, M1, M3, C1, C2, A1, A2, A3) en el panel — en la rama, SIN publicar
+El dueño pidió mejoras para Pedidos, Mis pedidos, Contabilidad y Administración; de la lista eligió *«P1, P3, M1, M3, C1, C2, A1,
+A2, A3. Ármame muestras»*. Vio la página de muestras, preguntó dónde iba el recordatorio y pidió *«más animaciones y más colores
+según el nuevo estilo»*; con la segunda versión: *«en todo, la idea está buena, todo está bueno, solo falta pulir el diseño, los
+colores, animaciones»*. Se hicieron las nueve en el panel, con el estilo de las fichas de Mis pedidos (§4jj). Ninguna cambia una
+regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un bloque (`nx*`, CSS `.nx`), arriba del arranque.
+- **Estilo común (`.nx`)**: cada caja con su color (`nx-teal/verde/nar/oro/azul/rojo/lila/rosa`, variables `--c/--cd/--tl/--bd` como
+  `mi-f1…4`), la franja de la marca arriba (rosa · naranja · amarillo del logo), un dibujito que se mueve (`NX_ICO`, los de la
+  muestra, sin letras adentro), destello al aparecer (`nx-entra`), botones redondos (`nx-btn`), barra con rayitas que caminan.
+  El papel picado (`nxConfeti`) no sale en Playwright salvo `window.FX_PRUEBA`, ni con «reducir movimiento».
+- **P1 · el cliente que ya compró** (`nxCliBuscar`, `#nx-cli` debajo del celular): al escribir el celular (los 8 números; un celular
+  a medio escribir no busca, un fijo de 7 sí) en un pedido NUEVO busca en toda la planilla y completa SOLO los campos vacíos (nombre,
+  zona, dirección, ubicación, facturar a, NIT) con el pedido más nuevo. «No es él · vaciar» saca solo lo completado que nadie cambió.
+  Ni al corregir ni en una reposición; en venta de tienda, sin la dirección.
+- **P3 · el mensaje para el cliente** (`nxMsgCliente`, `nxClienteBloque`): en «✅ Pedido guardado», debajo del mensaje del grupo,
+  un cuadro verde con el texto para el CLIENTE (se puede corregir) y «💬 Abrir el WhatsApp de <nombre>» (`misWaCliente` + `?text=`).
+  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno = «por la mañana / por la tarde», sin horarios.
+  Saldo con el recargo por entrega si queda. No en ATC, RPT, venta de tienda ni al reenviar. Al corregir, si cambió el día o el turno
+  (`difPedido`), «💬 Avisarle al cliente del día nuevo» (`nxAvisarCambio`).
+- **M1 · recordatorio de entrega** (dueño: *«¿dónde iría?»* → en Mis pedidos): la 5ª ficha naranja `mi-f5` a lo ancho, debajo de las
+  cuatro: «🔔 Mañana · N de M avisados» (o el día, si el próximo camión no es mañana). Solo pedidos de ella para `proximoDiaEntrega()`,
+  sin ATC/RPT/tienda. Tocarla despliega `#nx-m1` (lista con turno, zona, productos, saldo y «💬 Avisar», que abre su WhatsApp y marca
+  «✓ Avisado»; «Avisar al siguiente»; la burbuja con lo mandado). Desde las 17:00 (`NX_M1_HORA`) late y la pestaña «Mis pedidos»
+  muestra en naranja los que faltan (de la vendedora recordada en el aparato). **«✓ Avisado» es de ESTE dispositivo**
+  (`me_m1_avisos`: id → fecha; si se reprograma vuelve a «avisar»; se borra a los 10 días): no va a la planilla.
+- **M3 · el festejo** (`nxM3`): lo vendido para el mes (la misma cuenta de la dona, `misAnilloDatos`) pasa todo el mes anterior →
+  dona dorada, medalla «🏅 ¡Pasaste lo de septiembre! +N%» y, la primera vez del mes en ese aparato (`me_m3_fiesta`), papel picado.
+  No en «👑 Ver todos».
+- **C1 · cierre del mes** (`nxCierreAbrir`/`nxCierreBajar`, botón «🗂️ Cierre del mes» en Ventas): un Excel con «Ventas», «Cuadre»,
+  «Productos» y «Productos (detalle)». Reusa `exportConta`, `exportCuadre` y `pmCalcular`/`pmHojas` SIN tocarlos: `nxCierreHojas` pone
+  sus controles en el mes, cambia por un momento `buildXlsx`/`downloadBlob`/`toast` para juntar las hojas y deja todo como estaba
+  (`finally`). ⚠️ Si uno de esos Excel cambia de controles, el cierre los tiene que seguir. Corte y vendedor de Ventas; la búsqueda no.
+  Lee la planilla antes (`apiList`, tope 30 s); sin conexión, con lo del aparato y lo dice.
+- **C2 · pagos sin terminar** (`nxPstLista`, botón «🧾 Pagos sin terminar · N» y número ámbar en la pestaña Contabilidad): pagos de los
+  últimos 45 días (`NX_PST_DIAS`) sin N° de recibo, sin foto del comprobante (QR/tarjeta; el efectivo no la pide), QR sin banco, sin
+  método, y la PAGADA sin monto (el pago `sinMonto`, el mismo del aviso 💸 del Cuadre). «Completar» abre la ficha. Con un vendedor
+  elegido en Ventas, solo los suyos.
+- **A1 · camión sugerido** (`nxSugDatos`/`#nx-sug`, arriba de los camiones): para los del próximo día (o de hoy) sin camión:
+  (1) el camión que ya va a esa zona (`normNombre`), (2) el que tiene una parada a ≤4 km (`almPunto`, `mapaKmAprox`), (3) el que lleva
+  menos paradas entre los que salen (si ninguno sale, cualquiera menos el de insumos). Se va sumando lo sugerido. «✓ Aceptar»,
+  «Aceptar todas» y el desplegable para elegir otro; aceptar = `vehiculo` + primer chofer (como `cvAsignar`). Nunca asigna solo.
+- **A2 · hoja de ruta por cercanía** (`nxRutaOrdenar` en `renderRuta`): saliendo de PTF, la mañana primero y siempre la parada más
+  cerca (`mapaRutaOrden`, la del recorrido del mapa); sin ubicación, al final y dicho; km por parada y total, en línea recta. El
+  WhatsApp de la ruta sale en el mismo orden. «↺ Como estaba» vuelve a turno y zona (`me_ruta_cerca`, por aparato). Los km no se
+  guardan en el pedido (`kmDe` aparte).
+- **A3 · aviso de las 15:00** (`nxA3Pintar`, `#nx-a3`): desde `NX_A3_HORA`=15, si quedan pedidos del próximo día sin camión, cartel
+  arriba de Administración («🚚 Asignar ahora» baja a A1; «⏰ Recordar en 30 min») y número rojo en la pestaña, solo en un aparato
+  donde ya se entró a Administración (`me_adm_dev`).
+- Los números de las pestañas (`nxBadges`) se repintan con `updateStats` y cada minuto (`nxRelojArrancar`).
+- `tests/test_nueve_4js.js` (48; contra `97e9093` no existen las funciones). Capturas en iPad (1180) y celular (390) revisadas.
+- **A confirmar con el dueño**: las 15:00 y las 17:00; «✓ Avisado» por aparato (no en la planilla); los 45 días de C2.
+
 ## 4jr. 10/10: 🔎 La auditoría de Antigravity y Codex (informe del 10/10), analizada con Fable y arreglada — PUBLICADA 10/10 19:05 (`82e869d`)
 El dueño subió `INFORME_AUDITORIA_MULTIESPUMAS.md` (Antigravity + Codex, sobre `958b0b9` y `3310172`). Un agente con Fable lo
 verificó contra HEAD (`9d222ff`): los tres hallazgos son reales; lo demás (pedir = lo vendido + el ritmo, reservas que no frenan,

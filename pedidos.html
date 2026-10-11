@@ -744,6 +744,178 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .late-dot::after{animation-delay:.9s}
 @keyframes late-onda{to{transform:scale(3);opacity:0}}
 @media(prefers-reduced-motion:reduce){ .late-dot::before,.late-dot::after{animation:none;opacity:0} }
+/* ✨ (§4js, 11/10) Las nueve mejoras, con el estilo de las fichas de Mis pedidos (§4jj): cada caja con SU color, la franja de la
+   marca arriba (rosa · naranja · amarillo del logo), un dibujito que se mueve, un destello al aparecer y botones redondos. */
+.nx{ --c:#00B5AD; --cd:#008F88; --tl:#E6F7F6; --bd:#99DDD9; position:relative; border:1px solid var(--bd); border-radius:16px;
+  background:linear-gradient(140deg,var(--tl) 0%,#fff 72%); box-shadow:0 8px 22px -14px var(--c); padding:14px 14px 12px; overflow:hidden; min-width:0; }
+.nx::before{ content:""; position:absolute; left:0; right:0; top:0; height:4px; background:linear-gradient(90deg,#e9609a 0 33.3%,#f08a24 33.3% 66.6%,#f6c437 66.6%); }
+.nx::after{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.85) 50%,transparent 65%); background-size:250% 100%; background-position:120% 0; }
+.nx-entra{ animation:nx-entra .55s cubic-bezier(.2,1.3,.4,1) both; }
+.nx-entra::after{ opacity:1; animation:mi-brillo 1.4s .5s ease-out forwards; }
+@keyframes nx-entra{ from{ opacity:0; transform:translateY(10px) scale(.97); } to{ opacity:1; transform:none; } }
+.nx-teal{ --c:#00B5AD; --cd:#008F88; --tl:#E6F7F6; --bd:#99DDD9; }
+.nx-verde{ --c:#1fa855; --cd:#15803d; --tl:#E7F8EE; --bd:#b5e6c8; }
+.nx-nar{ --c:#f08a24; --cd:#b45309; --tl:#FFF3E6; --bd:#f9cf9f; }
+.nx-oro{ --c:#e8a317; --cd:#a8730a; --tl:#FFF8E1; --bd:#f3dc95; }
+.nx-azul{ --c:#2d6fd6; --cd:#1d4ed8; --tl:#e8f0fd; --bd:#b9cff5; }
+.nx-rojo{ --c:#CE2939; --cd:#a51d2b; --tl:#FDEAEC; --bd:#F5C0C5; }
+.nx-lila{ --c:#7c5ce6; --cd:#5b3fc4; --tl:#F1EDFD; --bd:#cfc3f6; }
+.nx-rosa{ --c:#e9609a; --cd:#b8306c; --tl:#FDEDF4; --bd:#f5bdd5; }
+.nx-cab{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-width:0; }
+.nx-fila{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.nx-cuerpo{ flex:1 1 220px; min-width:0; }
+.nx-ico{ flex:none; width:52px; height:44px; border-radius:13px; background:#fff; display:grid; place-items:center; box-shadow:0 5px 12px -6px var(--c), inset 0 0 0 1px var(--bd); }
+.nx-ico svg{ width:44px; height:34px; overflow:visible; display:block; }
+.nx-tit{ font-weight:900; color:var(--cd); font-size:.98rem; line-height:1.25; text-wrap:balance; }
+.nx-sub{ font-size:.78rem; color:var(--muted); line-height:1.4; }
+.nx-sub b{ color:var(--text); }
+.nx-acc{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+.nx-btn{ appearance:none; border:0; border-radius:999px; padding:8px 14px; font:inherit; font-size:.82rem; font-weight:800; cursor:pointer; white-space:nowrap;
+  background:var(--c); color:#fff; box-shadow:0 6px 14px -8px var(--c); transition:transform .15s, box-shadow .15s, filter .15s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+.nx-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px -10px var(--c); filter:brightness(1.05); }
+.nx-btn:active{ transform:scale(.97); }
+.nx-btn:disabled{ opacity:.6; cursor:wait; }
+.nx-btn-suave{ background:#fff; color:var(--cd); box-shadow:inset 0 0 0 1.5px var(--bd); }
+.nx-btn-wa{ background:#1fa855; box-shadow:0 6px 14px -8px #1fa855; }
+.nx-btn-hecho{ background:#fff; color:#15803d; box-shadow:inset 0 0 0 1.5px #b5e6c8; }
+.nx-btn-grande{ width:100%; justify-content:center; padding:12px 16px; font-size:.95rem; margin-top:12px; }
+.nx-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+.nx-chip{ font-size:.72rem; font-weight:800; color:var(--cd); background:#fff; border:1px solid var(--bd); border-radius:999px; padding:3px 9px; animation:nx-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+.nx-chip-rojo{ color:#a51d2b; border-color:#F5C0C5; background:#fff7f8; }
+@keyframes nx-pop{ from{ transform:scale(.6); opacity:0; } to{ transform:none; opacity:1; } }
+.nx-num{ display:inline-grid; place-items:center; min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:#fff; color:var(--cd,#a8730a); font-size:.72rem; font-weight:900; }
+.nx-barra{ height:9px; border-radius:6px; background:#eef1f3; overflow:hidden; margin:10px 0 4px; }
+.nx-barra i{ display:block; height:100%; border-radius:6px; background:var(--c); position:relative; overflow:hidden; transition:width .6s cubic-bezier(.2,1,.3,1); }
+.nx-barra i::after{ content:""; position:absolute; inset:0; background:repeating-linear-gradient(-45deg,rgba(255,255,255,.35) 0 6px,transparent 6px 12px); background-size:17px 100%; animation:mi-rayas 1s linear infinite; }
+.nx-turno{ flex:none; font-size:.7rem; font-weight:900; border-radius:999px; padding:3px 8px; }
+.nx-turno.am{ background:#FFF3E6; color:#b45309; } .nx-turno.pm{ background:#EEF0FF; color:#4338ca; }
+.nx-pie{ font-size:.72rem; color:var(--muted); margin-top:8px; }
+.nx-vacio{ text-align:center; padding:18px 8px; font-weight:800; color:var(--cd); }
+.nx-modal-h{ background:linear-gradient(90deg,var(--hc,#00B5AD),var(--hc2,#008F88)); }
+.nx-azul-h{ --hc:#2d6fd6; --hc2:#1d4ed8; } .nx-rojo-h{ --hc:#CE2939; --hc2:#a51d2b; }
+/* dibujitos (los mismos movimientos de la muestra) */
+.nx-a-pop{ transform-box:fill-box; transform-origin:center; animation:nx-a-pop 2.4s ease-in-out infinite; }
+@keyframes nx-a-pop{ 0%,15%{ transform:scale(0); } 30%,85%{ transform:scale(1); } 100%{ transform:scale(0); } }
+.nx-a-linea{ animation:nx-a-linea 2.4s ease-in-out infinite; }
+@keyframes nx-a-linea{ 0%{ stroke-dashoffset:30; } 40%,100%{ stroke-dashoffset:0; } }
+.nx-a-campana{ transform-box:fill-box; transform-origin:50% 0; animation:nx-a-campana 1.6s ease-in-out infinite; }
+@keyframes nx-a-campana{ 0%,50%,100%{ transform:rotate(0); } 10%{ transform:rotate(16deg); } 20%{ transform:rotate(-14deg); } 30%{ transform:rotate(10deg); } 40%{ transform:rotate(-6deg); } }
+.nx-a-onda{ transform-box:fill-box; transform-origin:center; animation:nx-a-onda 1.6s ease-out infinite; }
+@keyframes nx-a-onda{ from{ transform:scale(.6); opacity:.9; } to{ transform:scale(1.5); opacity:0; } }
+.nx-a-flota{ animation:nx-a-flota 2.2s ease-in-out infinite; }
+@keyframes nx-a-flota{ 50%{ transform:translateY(-3px); } }
+.nx-a-chispa{ transform-box:fill-box; transform-origin:center; animation:nx-a-chispa 1.4s ease-in-out infinite; }
+@keyframes nx-a-chispa{ 0%,100%{ transform:scale(.2); opacity:0; } 50%{ transform:scale(1); opacity:1; } }
+.nx-a-apila{ animation:nx-a-apila 3s ease-out infinite; }
+@keyframes nx-a-apila{ 0%{ transform:translateY(-22px); opacity:0; } 20%,85%{ transform:none; opacity:1; } 100%{ opacity:0; } }
+.nx-a-lupa{ animation:nx-a-lupa 2.6s ease-in-out infinite; }
+@keyframes nx-a-lupa{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(14px,8px); } }
+.nx-a-cam{ animation:nx-a-cam 3s linear infinite; }
+@keyframes nx-a-cam{ from{ transform:translateX(-26px); } to{ transform:translateX(58px); } }
+.nx-a-rueda{ transform-box:fill-box; transform-origin:center; animation:mi-gira .5s linear infinite; }
+.nx-a-ruta{ stroke-dasharray:4 4; animation:nx-a-ruta 1s linear infinite; }
+@keyframes nx-a-ruta{ to{ stroke-dashoffset:-8; } }
+.nx-a-pin{ transform-box:fill-box; transform-origin:50% 100%; animation:nx-a-pin 1.4s ease-in-out infinite; }
+@keyframes nx-a-pin{ 0%,100%{ transform:translateY(0); } 40%{ transform:translateY(-5px); } 60%{ transform:translateY(0) scaleY(.9); } }
+.nx-a-aguja{ transform-box:view-box; transform-origin:26px 22px; animation:mi-gira 3s linear infinite; }
+.nx-a-tiembla{ transform-box:fill-box; transform-origin:center; animation:nx-a-tiembla 2s ease-in-out infinite; }
+@keyframes nx-a-tiembla{ 0%,70%,100%{ transform:rotate(0); } 75%{ transform:rotate(-8deg); } 80%{ transform:rotate(8deg); } 85%{ transform:rotate(-6deg); } 90%{ transform:rotate(5deg); } }
+
+/* P1 · el cliente que ya compró */
+#nx-cli{ margin:-4px 0 14px; }
+/* P3 · el mensaje para el cliente */
+.nx-cli-msg{ margin-top:14px; }
+.nx-wa-text{ width:100%; margin:10px 0 8px; background:#fff; border:1.5px solid var(--bd); border-radius:12px; font-size:.85rem; resize:vertical; }
+.nx-cli-msg .nx-acc{ justify-content:flex-start; }
+/* M1 · la 5ª ficha de Mis pedidos, a lo ancho debajo de las cuatro */
+#mis-izq .mc.mi-f5{ --c:#f08a24; --cd:#b45309; --tl:#FFF3E6; --bd:#f9cf9f; grid-column:1/-1; cursor:pointer; }
+#mis-izq .mc.mi-f5.mi-listo{ --c:#1fa855; --cd:#15803d; --tl:#E7F8EE; --bd:#b5e6c8; }
+#mis-izq .mc.mi-f5.mi-abierta{ box-shadow:0 0 0 2px var(--c), 0 10px 22px -12px var(--c); }
+#mis-izq .mc.mi-f5.mi-late{ animation:nx-latido 1.8s ease-in-out infinite; }
+#mis-izq .mc.mi-f5.mi-late .mi-esc::after{ content:""; position:absolute; inset:-4px; border-radius:15px; border:2px solid var(--c); animation:mi-late 1.6s ease-out infinite; }
+#mis-izq .mc.mi-f5 .mi-esc{ overflow:visible; }
+@keyframes nx-latido{ 0%,100%{ transform:none; } 50%{ transform:scale(1.015); } }
+.mi-nuevo{ position:absolute; top:7px; right:8px; font-size:.62rem; font-weight:900; color:#fff; background:#e9609a; border-radius:999px; padding:2px 8px; box-shadow:0 4px 10px -4px #e9609a; }
+#mis-metrics.mi-entra .mc:nth-child(5){ animation-delay:.44s; }
+.nx-m1{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .45s cubic-bezier(.2,1,.3,1); margin:-6px 0 0; }
+.nx-m1>*{ overflow:hidden; min-height:0; }
+.nx-m1.abierta{ grid-template-rows:1fr; margin:-6px 0 14px; }
+.nx-m1 .nx{ padding-bottom:12px; }
+.nx-m1-lista{ display:grid; gap:6px; margin-top:6px; }
+.nx-m1-r, .nx-sug-r, .nx-pst-r{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #eef1f3; border-radius:12px; padding:8px 10px; animation:nx-entra .45s cubic-bezier(.2,1.3,.4,1) both; }
+.nx-m1-r.ok{ background:#f3fbf6; border-color:#cdeedd; }
+.nx-m1-q, .nx-sug-q, .nx-pst-q{ flex:1; min-width:0; }
+.nx-m1-q b, .nx-sug-q b, .nx-pst-q b{ display:block; font-size:.88rem; }
+.nx-m1-q small, .nx-sug-q small, .nx-pst-q small{ display:block; font-size:.74rem; color:var(--muted); line-height:1.35; }
+.nx-m1-msg{ margin-top:10px; }
+.nx-m1-msg small{ font-size:.72rem; font-weight:800; color:var(--cd); text-transform:uppercase; letter-spacing:.05em; }
+.nx-burbuja{ margin-top:5px; max-width:460px; background:#E7F8EE; border:1px solid #b5e6c8; border-radius:4px 14px 14px 14px; padding:9px 12px; font-size:.82rem; line-height:1.45; animation:nx-pop .4s ease-out both; }
+/* M3 · el festejo */
+.mis-anillo.mis-gana .mis-ani{ filter:drop-shadow(0 0 10px rgba(232,163,23,.55)); }
+.mis-anillo.mis-gana .mis-ani .mis-ani-arco:nth-of-type(2){ stroke:#e8a317; }
+.nx-medalla{ display:inline-flex; align-items:center; gap:6px; font-size:.8rem; font-weight:900; color:#a8730a; background:linear-gradient(90deg,#FFF8E1,#fff); border:1px solid #f3dc95; border-radius:999px; padding:4px 11px; margin-bottom:4px; animation:nx-pop .6s cubic-bezier(.2,1.6,.4,1) both; }
+.nx-medalla b{ color:#15803d; }
+.mis-anillo.mis-fiesta .mis-ani{ animation:nx-gira-una 1.1s cubic-bezier(.2,1.3,.4,1) both; }
+@keyframes nx-gira-una{ from{ transform:rotate(-120deg) scale(.85); } to{ transform:none; } }
+.nx-confeti{ position:fixed; inset:0; pointer-events:none; z-index:6000; overflow:hidden; }
+.nx-confeti i{ position:absolute; width:9px; height:13px; border-radius:2px; animation:nx-confeti 2.2s cubic-bezier(.15,.7,.4,1) forwards; }
+@keyframes nx-confeti{ 0%{ transform:translate(0,0) rotate(0); opacity:1; } 70%{ opacity:1; } 100%{ transform:translate(var(--dx),calc(var(--dy) + 260px)) rotate(var(--rot)); opacity:0; } }
+/* C1 · el cierre del mes */
+.nx-hojas{ display:grid; gap:8px; margin-top:12px; }
+.nx-hoja{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #e6ebf0; border-left:5px solid var(--c); border-radius:12px; padding:9px 12px; animation:nx-entra .5s cubic-bezier(.2,1.3,.4,1) both; }
+.nx-hoja-n{ flex:none; width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:color-mix(in srgb, var(--c) 14%, #fff); font-size:1.05rem; }
+.nx-hoja b{ display:block; font-size:.88rem; } .nx-hoja small{ display:block; font-size:.74rem; color:var(--muted); }
+.nx-archivo{ display:flex; align-items:center; gap:10px; margin-top:12px; background:#f1fbf5; border:1px solid #bfe8cf; border-radius:12px; padding:10px 12px; }
+.nx-archivo b{ display:block; font-size:.85rem; word-break:break-all; } .nx-archivo small{ display:block; font-size:.74rem; color:var(--muted); }
+.nx-xls{ flex:none; width:36px; height:40px; border-radius:6px; background:#107c41; color:#fff; font-weight:900; display:grid; place-items:center; animation:nx-pop .6s cubic-bezier(.2,1.6,.4,1) both; }
+/* C2 · pagos sin terminar */
+#nx-pst-btn{ background:#a8730a!important; }
+#nx-pst-btn.nx-hay{ background:#CE2939!important; }
+#nx-pst-btn .nx-num{ color:#a51d2b; margin-left:2px; }
+.nx-pst-lista{ display:grid; gap:6px; max-height:56vh; overflow:auto; padding:2px; }
+.nx-pst-r .nx-chips{ margin-top:4px; }
+/* A1 · camión sugerido */
+#nx-sug{ margin:0 0 14px; } #nx-sug:empty, #nx-a3:empty{ display:none; }
+.nx-tabs{ display:flex; gap:6px; flex-wrap:wrap; }
+.nx-tab{ appearance:none; border:1.5px solid var(--bd); background:#fff; color:var(--cd); border-radius:999px; padding:5px 10px; font:inherit; font-size:.78rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+.nx-tab.on{ background:var(--c); border-color:var(--c); color:#fff; }
+.nx-tab .nx-num{ background:var(--tl); }
+.nx-sug-lista{ display:grid; gap:6px; margin-top:6px; }
+.nx-flecha{ flex:none; color:var(--c); font-weight:900; animation:nx-flecha 1.2s ease-in-out infinite; }
+@keyframes nx-flecha{ 50%{ transform:translateX(4px); } }
+.nx-sug-v{ flex:0 1 190px; min-width:120px; } .nx-sug-v select{ width:100%; } .nx-sug-v small{ display:block; font-size:.7rem; color:var(--cd); font-weight:700; margin-top:2px; }
+.nx-sug-r.nx-va{ animation:nx-va .4s ease-in forwards; }
+@keyframes nx-va{ to{ transform:translateX(60px) scale(.9); opacity:0; } }
+.nx-cams{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+.nx-cam{ position:relative; background:#fff; border:1px solid var(--bd); border-radius:12px; padding:8px 10px; display:grid; grid-template-columns:1fr auto; gap:2px 8px; align-items:center; }
+.nx-cam b{ font-size:.82rem; } .nx-cam small{ grid-column:1/-1; font-size:.7rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nx-cam-n{ font-weight:900; color:var(--cd); font-size:1.05rem; font-variant-numeric:tabular-nums; }
+.nx-cam-n i{ font-style:normal; font-size:.72rem; color:#fff; background:var(--c); border-radius:999px; padding:1px 6px; vertical-align:2px; }
+.nx-cam-nuevo{ box-shadow:0 0 0 2px var(--tl), 0 6px 14px -10px var(--c); }
+.nx-destello{ animation:nx-destello 1.4s ease-out; }
+@keyframes nx-destello{ 0%{ box-shadow:0 0 0 0 rgba(0,181,173,.7); } 100%{ box-shadow:0 0 0 18px rgba(0,181,173,0); } }
+/* A3 · aviso de las 15:00 */
+#nx-a3{ margin:0 0 12px; }
+.nx-a3{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.nx-a3 .nx-tit{ color:#b8306c; }
+/* los números de las pestañas */
+.nav button{ position:relative; }
+.nx-tb{ position:absolute; top:2px; right:4px; min-width:18px; height:18px; padding:0 5px; border-radius:999px; color:#fff; font-size:.66rem; font-weight:900; display:grid; place-items:center; line-height:1; box-shadow:0 3px 8px -3px rgba(0,0,0,.4); pointer-events:none; }
+.nx-tb-nar{ background:#f08a24; } .nx-tb-oro{ background:#e8a317; } .nx-tb-rojo{ background:#CE2939; animation:nx-tb-late 1.8s ease-in-out infinite; }
+.nx-tb-pop{ animation:nx-pop .45s cubic-bezier(.2,1.6,.4,1); }
+@keyframes nx-tb-late{ 50%{ transform:scale(1.15); } }
+/* A2 · la hoja de ruta */
+.nx-ruta-bar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
+.nx-km{ display:inline-block; font-size:.7rem; font-weight:800; color:#5b3fc4; background:#F1EDFD; border-radius:999px; padding:1px 7px; margin-left:4px; }
+@media (max-width:560px){
+  .nx-m1-r, .nx-sug-r, .nx-pst-r{ flex-wrap:wrap; }
+  .nx-sug-v{ flex:1 1 100%; } .nx-flecha{ display:none; }
+  .nx-acc{ justify-content:flex-start; }
+  .nx-tb{ top:0; right:2px; }
+}
+@media (prefers-reduced-motion:reduce){ .nx *, .nx, .nx::after, .nx-tb, #mis-izq .mc.mi-f5{ animation:none!important; } }
+@media print{ #nx-sug, #nx-a3, .nx-tb, #nx-m1, #nx-cli{ display:none!important; } }
 </style>
 <script>
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
@@ -940,6 +1112,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
         </div>
       </div>
+      <div id="nx-cli" class="no-print" hidden></div>   <!-- 👋 (§4js, P1) el cliente que ya compró -->
       <div id="fx-dup" class="fx-dup no-print" hidden></div>
 
       <div class="field">
@@ -1171,6 +1344,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           </div>
         </div>
 
+        <div id="nx-a3" class="no-print"></div>   <!-- 🔔 (§4js, A3) a las 15:00, los de mañana sin camión -->
         <div id="adm-revisar"></div>
 
         <!-- 🧹 (§4io, 09/10) El resumen de estadísticas (fichas, consolidados, rendición, cupos de 7 días y zonas) se SACÓ: el
@@ -1181,6 +1355,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <button class="btn btn-ghost btn-sm no-print" id="adm-camiones-btn" style="width:auto" onclick="toggleCamionesAdm()">🙈 Ocultar camiones</button>
         </div>
 
+        <div id="nx-sug" class="no-print"></div>   <!-- 🚚 (§4js, A1) el camión sugerido para los que no tienen -->
         <div id="carga-viva" class="no-print"></div>
         <div id="carga-viva-linea" class="no-print" onclick="toggleCamionesAdm()" title="Volver a mostrar los camiones"></div>
         <div id="adm-cal" class="no-print"></div>   <!-- 📅 debajo de los camiones (dueño, 09/10) -->
@@ -1471,6 +1646,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div class="field">
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
           <button id="cta-productos-mes" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirProductosMes()">📦 Productos del mes</button>
+          <button id="nx-cierre-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#1d4ed8" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>
+          <button id="nx-pst-btn" class="btn btn-primary btn-sm" style="width:auto" onclick="nxPstAbrir()">🧾 Pagos sin terminar</button>
         </div>
         <div class="field">
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
@@ -5383,6 +5560,7 @@ function renderContaMarcas(list, vSel, vendido){
 }
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
+  try{ nxPstBoton(); }catch(e){}   // 🧾 (§4js, C2) cuántos pagos sin terminar
   var list=contaLista();
   var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0;
   list.forEach(function(p){
@@ -11307,6 +11485,7 @@ function resetForm(){
   document.getElementById('f-productos').innerHTML='';
   addProdRow();
   document.getElementById('f-celular').value='';
+  nxCliLimpiar();                              // 👋 (§4js, P1)
   segSet('f-turno','AM');
   var _tHint0=document.getElementById('f-turno-hint'); if(_tHint0) _tHint0.textContent='';
   document.getElementById('f-zona').value='';
@@ -11498,6 +11677,9 @@ function confirmEdicionModal(rec, cambios){
               '📦 <b>Al almacén le llegó el aviso</b> de que este pedido se modificó, para que revisen el stock de nuevo.</div>') : '')+
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-sm wa-btn" style="width:100%" onclick="'+esc("waDesdeEdicion('"+String(rec.id)+"')")+'">📲 Pasar la venta actualizada</button>'+
+        /* 💬 (§4js, P3) cambió el día o el turno: el mensaje para avisarle al cliente */
+        ((nxClienteVale(rec) && cambios.some(function(t){ return /cambió la fecha|cambió de turno/.test(t); }))
+          ? ('<button class="btn btn-sm" style="width:100%;background:#1fa855;color:#fff;font-weight:800" onclick="'+esc("nxAvisarCambio('"+String(rec.id)+"')")+'">💬 Avisarle al cliente del día nuevo</button>') : '')+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="closeModal()">✓ Listo</button>'+
     '</div>');
@@ -11606,6 +11788,7 @@ function updateStats(){
   var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos '+_cuando+' · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM)+_cerr);
   hdrPintar(man, rAM, rPM);
   updateFooter();
+  if(typeof nxBadges==='function') nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
 }
 
 /* 🚚 (§4iw, 09/10, dueño: «A») Arriba: el día de hoy y dos anillos con los cupos LIBRES del próximo camión (AM y PM).
@@ -12836,6 +13019,7 @@ function tryUnlock(){
     document.getElementById('admin-pass').value='';
     document.getElementById('admin-err').style.display='none';
     loadFromServer(false);
+    nxLS(LS_ADM_DEV, 1); nxBadges();   // 🔔 (§4js, A3) este dispositivo es de administración: la pestaña muestra los sin camión
     setTimeout(function(){ try{ saludDelDia(); }catch(e){} }, 400);   // 🌅 (§4im) una vez por mañana, solo acá (con la clave)
   }else{ document.getElementById('admin-err').style.display='block'; }
 }
@@ -13898,6 +14082,7 @@ function renderAdmin(){
   admLugaresPintar();   // 📍 (§4ir)
   renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
+  try{ nxA3Pintar(); nxSugPintar(); }catch(e){ console.error(e); }   // 🔔🚚 (§4js, A3 y A1)
   try{ cargaVivaPintar(); }catch(e){ console.error(e); }
 
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
@@ -16685,7 +16870,7 @@ function renderMis(){
   if(bw) bw.style.display=(v||todos)?'flex':'none';
   if(bx) bx.style.display=MIS_Q.trim()?'':'none';
   if(bi && !MIS_Q.trim()){ bi.style.display='none'; bi.textContent=''; }
-  if(!v && !todos){ box.innerHTML=''; var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; misDepPintar([], '', false); tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
+  if(!v && !todos){ box.innerHTML=''; nxM1Desp('', false); var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; misDepPintar([], '', false); tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
      iba al FONDO de la lista (debajo del pedido más viejo), así que pasados los MIS_TOPE no se veía
@@ -16705,7 +16890,10 @@ function renderMis(){
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   misFichasVivas(box, pend>0);                      // 🎨 (§4jj) color + dibujito en cada ficha
+  nxM1Ficha(box, v, todos);                         // 🔔 (§4js, M1) la 5ª ficha: avisar a los clientes de mañana
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
+  nxM3(mine, v, todos);                             // 🏅 (§4js, M3) pasó lo del mes anterior
+  nxBadges();
   misDepPintar(mine, v, todos);                     // 📦 el depósito 3D, solo con Eduardo (§4jg)
   // 🔎 (§4jf) la búsqueda achica la lista y lo que cuentan los chips; los números de arriba quedan enteros
   var hayQ=!!MIS_Q.trim(), hall=hayQ ? mine.filter(misBuscaTest(MIS_Q)) : mine;
@@ -25296,6 +25484,7 @@ function showWhatsappModal(rec, volverA, reenvio){
         '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="'+salir+'">'+(reenvio?'Volver a la venta':'Cerrar')+'</button>'+
       '</div>'+
+      (reenvio ? '' : nxClienteBloque(rec, 'nuevo'))+   // 💬 (§4js, P3) y el mensaje para el CLIENTE, listo para su WhatsApp
     '</div>';
   openModal(html);
 }
@@ -26718,9 +26907,14 @@ function renderRuta(){
   list.forEach(function(p){ var k=String(p.chofer||'Sin chofer').trim()||'Sin chofer'; if(!RUTA_BYC[k]){ RUTA_BYC[k]=[]; RUTA_ORDER.push(k); } RUTA_BYC[k].push(p); });
   RUTA_ORDER.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
   RUTA_ORDER.forEach(function(k){ RUTA_BYC[k].sort(function(a,b){ var ta=(a.turno||'ZZ'),tb=(b.turno||'ZZ'); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }); });
+  /* 🧭 (§4js, A2) Por cercanía, saliendo de PTF (la mañana primero). El WhatsApp de la ruta sale en el MISMO orden. */
+  var _cerca=nxRutaCerca() && RUTA_DIA!=='todos', _rk={};
+  if(_cerca) RUTA_ORDER.forEach(function(k){ if(k==='Sin chofer') return; var o=nxRutaOrdenar(RUTA_BYC[k]); RUTA_BYC[k]=o.stops; _rk[k]=o; });
   var diaLbl=RUTA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):RUTA_DIA==='manana'?('mañana '+fmtFecha(proximoDiaEntrega())):'todos';
   document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
-  var html='';
+  var html=(RUTA_DIA!=='todos') ? ('<div class="nx-ruta-bar no-print"><button type="button" class="nx-btn" style="--c:#7c5ce6;background:'+(_cerca?'#7c5ce6':'#fff')+';color:'+(_cerca?'#fff':'#5b3fc4')+';box-shadow:inset 0 0 0 1.5px #cfc3f6" onclick="nxRutaSetCerca(true)">🧭 Por cercanía</button>'+
+    '<button type="button" class="nx-btn" style="background:'+(_cerca?'#fff':'#7c5ce6')+';color:'+(_cerca?'#5b3fc4':'#fff')+';box-shadow:inset 0 0 0 1.5px #cfc3f6" onclick="nxRutaSetCerca(false)">↺ Como estaba (turno y zona)</button>'+
+    '<span style="font-size:.78rem;color:#666">'+(_cerca?'Saliendo de PTF, la mañana primero y siempre la parada más cerca. Los km son en línea recta.':'Por turno y zona, como siempre.')+'</span></div>') : '';
   RUTA_ORDER.forEach(function(k, idx){
     var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
     var aCobrar=(cobrar>0 || fleteC>0.01);
@@ -26728,7 +26922,7 @@ function renderRuta(){
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
       '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
-      '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+'</span>'+
+      '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+(_rk[k]?(' · ~'+Math.round(_rk[k].km)+' km'+(_rk[k].sin?(' · '+_rk[k].sin+' sin ubicación, al final'):'')):'')+'</span>'+
       (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
       (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(aCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
@@ -26737,7 +26931,7 @@ function renderRuta(){
         (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'')+
         (cr.f?('<br><b style="color:#c0392b">'+esc(cr.f)+'</b>'):'');   // (26/09) el flete pactado (§4ai)
       html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
-        '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
+        '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(_rk[k]?(_rk[k].kmDe[String(p.id)]!=null?('<span class="nx-km">'+(_rk[k].kmDe[String(p.id)]<1?'&lt;1':Math.round(_rk[k].kmDe[String(p.id)]))+' km</span>'):'<span class="nx-km" style="background:#FFF3E6;color:#b45309">sin ubicación</span>'):'')+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
         '<span style="color:#444">🛏️ '+esc(prodTextRuta(p.productos))+'</span><br>'+   // (26/09) «(cargar en Banzer)»
         (atcComodinAviso(p)?('<b class="b-comodin" style="color:#1d4ed8">'+esc(atcComodinAviso(p))+'</b><br>'):'')+cobro+   // (26/09)
@@ -30164,6 +30358,619 @@ window.addEventListener('beforeunload', function(e){
     if(n){ e.preventDefault(); e.returnValue=''; }
   }catch(err){}
 });
+/* ============================================================================
+   ✨ LAS NUEVE MEJORAS (§4js, 11/10/2026). El dueño eligió de una lista «P1, P3, M1, M3, C1, C2, A1, A2, A3», vio las muestras
+   y dijo *«en todo, la idea está buena, todo está bueno, solo falta pulir el diseño, los colores, animaciones»*.
+   Ninguna cambia una regla del pedido ni guarda nada sola: completan, avisan o proponen, y la persona confirma.
+     P1 · el cliente que ya compró: con el celular se completan sus datos (`nxCliBuscar`).
+     P3 · el mensaje para el CLIENTE al guardar, listo para su WhatsApp (`nxMsgCliente`, en `showWhatsappModal`).
+     M1 · Mis pedidos: la 5ª ficha «🔔 Mañana» con la lista para avisar a cada cliente (`nxM1*`).
+     M3 · Mis pedidos: el festejo al pasar lo vendido el mes anterior (`nxM3`).
+     C1 · Contabilidad: el cierre del mes en un Excel con Ventas, Cuadre y Productos (`nxCierre*`).
+     C2 · Contabilidad: los pagos a los que les falta algo (`nxPst*`).
+     A1 · Administración: el camión que le toca a cada pedido sin camión (`nxSug*`).
+     A2 · Hoja de ruta: las paradas por cercanía, saliendo de PTF (`nxRutaOrdenar`, en `renderRuta`).
+     A3 · Administración: a las 15:00 avisa los pedidos de mañana que siguen sin camión (`nxA3*`).
+   El estilo es el de las fichas de Mis pedidos (§4jj): cada una con su color, un dibujito que se mueve, la franja de la marca
+   arriba y un destello al aparecer (`.nx`). En las pruebas automáticas no hay papel picado (salvo `window.FX_PRUEBA`).
+   ========================================================================== */
+var NX_ICO={
+  cli:'<svg viewBox="0 0 52 40"><rect x="4" y="4" width="38" height="30" rx="5" fill="#E6F7F6" stroke="#00B5AD" stroke-width="2"/><circle cx="15" cy="16" r="5" fill="#00B5AD"/><path d="M8 28c1.5-5 12.5-5 14 0" fill="#00B5AD"/><line class="nx-a-linea" x1="26" y1="14" x2="37" y2="14" stroke="#008F88" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="30"/><line class="nx-a-linea" x1="26" y1="21" x2="35" y2="21" stroke="#99DDD9" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="30" style="animation-delay:.2s"/><g class="nx-a-pop"><circle cx="42" cy="32" r="8" fill="#15803d"/><path d="M38.5 32l2.5 2.5 4.5-5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></g></svg>',
+  wa:'<svg viewBox="0 0 52 40"><g class="nx-a-pop"><path d="M4 6h26a4 4 0 014 4v10a4 4 0 01-4 4H14l-6 5v-5H4a4 4 0 01-4-4V10a4 4 0 014-4z" fill="#1fa855"/><circle cx="10" cy="15" r="2" fill="#fff"/><circle cx="17" cy="15" r="2" fill="#fff"/><circle cx="24" cy="15" r="2" fill="#fff"/></g><g class="nx-a-pop" style="animation-delay:.6s"><path d="M24 18h22a4 4 0 014 4v8a4 4 0 01-4 4h-2v5l-6-5H24a4 4 0 01-4-4v-8a4 4 0 014-4z" fill="#E7F8EE" stroke="#1fa855" stroke-width="1.6"/><path d="M29 27l3 3 6-6" stroke="#1fa855" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></svg>',
+  camp:'<svg viewBox="0 0 52 40"><circle class="nx-a-onda" cx="24" cy="18" r="14" fill="none" stroke="#f08a24" stroke-width="2"/><g class="nx-a-campana"><path d="M24 5c-6 0-9 5-9 10v7l-3 4h24l-3-4v-7c0-5-3-10-9-10z" fill="#f08a24"/><rect x="22" y="2" width="4" height="4" rx="2" fill="#b45309"/><circle cx="24" cy="30" r="3" fill="#b45309"/></g><rect x="34" y="24" width="16" height="14" rx="3" fill="#fff" stroke="#e9609a" stroke-width="1.8"/><rect x="34" y="24" width="16" height="4" rx="2" fill="#e9609a"/><circle cx="39" cy="33" r="1.6" fill="#b8306c"/><circle cx="45" cy="33" r="1.6" fill="#f6c437"/></svg>',
+  copa:'<svg viewBox="0 0 52 40"><g class="nx-a-flota"><path d="M16 4h20v8a10 10 0 01-20 0z" fill="#e8a317"/><path d="M16 7h-6a6 6 0 006 7M36 7h6a6 6 0 01-6 7" fill="none" stroke="#e8a317" stroke-width="2.4"/><rect x="23" y="21" width="6" height="7" fill="#a8730a"/><rect x="17" y="28" width="18" height="5" rx="2" fill="#a8730a"/><path d="M23 9l2 3 4-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></g><path class="nx-a-chispa" d="M6 8l1.5 3 3 1.5-3 1.5L6 17l-1.5-3L1.5 12.5l3-1.5z" fill="#f6c437"/><path class="nx-a-chispa" style="animation-delay:.5s" d="M46 20l1.2 2.4 2.4 1.2-2.4 1.2L46 27l-1.2-2.2-2.4-1.2 2.4-1.2z" fill="#e9609a"/><path class="nx-a-chispa" style="animation-delay:.9s" d="M44 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#f08a24"/></svg>',
+  hojas:'<svg viewBox="0 0 52 40"><rect x="6" y="36" width="40" height="2" rx="1" fill="#b9cff5"/><g class="nx-a-apila"><rect x="10" y="26" width="32" height="9" rx="2" fill="#21a366"/><rect x="10" y="26" width="9" height="9" rx="2" fill="#107c41"/></g><g class="nx-a-apila" style="animation-delay:.35s"><rect x="10" y="16" width="32" height="9" rx="2" fill="#2d6fd6"/><rect x="10" y="16" width="9" height="9" rx="2" fill="#1d4ed8"/></g><g class="nx-a-apila" style="animation-delay:.7s"><rect x="10" y="6" width="32" height="9" rx="2" fill="#e9609a"/><rect x="10" y="6" width="9" height="9" rx="2" fill="#b8306c"/></g></svg>',
+  recibo:'<svg viewBox="0 0 52 40"><path d="M8 3h24v34l-4-3-4 3-4-3-4 3-4-3-4 3z" fill="#fff" stroke="#CE2939" stroke-width="1.8"/><line x1="12" y1="10" x2="28" y2="10" stroke="#F5C0C5" stroke-width="2.4"/><line x1="12" y1="16" x2="24" y2="16" stroke="#F5C0C5" stroke-width="2.4"/><line x1="12" y1="22" x2="27" y2="22" stroke="#F5C0C5" stroke-width="2.4"/><g class="nx-a-lupa"><circle cx="30" cy="14" r="7" fill="rgba(255,255,255,.7)" stroke="#a51d2b" stroke-width="2.6"/><line x1="35" y1="19" x2="41" y2="25" stroke="#a51d2b" stroke-width="3.2" stroke-linecap="round"/></g><g class="nx-a-tiembla"><circle cx="44" cy="8" r="6" fill="#CE2939"/><rect x="43" y="4" width="2" height="5" fill="#fff"/><rect x="43" y="10" width="2" height="2" fill="#fff"/></g></svg>',
+  cam:'<svg viewBox="0 0 52 40"><line x1="0" y1="35" x2="52" y2="35" stroke="#cfe9e7" stroke-width="2" stroke-dasharray="5 4"/><g class="nx-a-cam"><rect x="0" y="12" width="20" height="15" rx="2" fill="#E6F7F6" stroke="#00B5AD"/><rect x="0" y="23" width="20" height="2.5" fill="#e9609a"/><path d="M20 16h6l5 6v5H20z" fill="#1f3b73"/><path d="M22 18h3l3 4h-6z" fill="#bfe9ff"/><circle class="nx-a-rueda" cx="6" cy="29" r="3.4" fill="#1f2326"/><circle class="nx-a-rueda" cx="25" cy="29" r="3.4" fill="#1f2326"/></g><g class="nx-a-pop"><circle cx="44" cy="10" r="7" fill="#00B5AD"/><path d="M41 10h6M44 7l3 3-3 3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg>',
+  ruta:'<svg viewBox="0 0 52 40"><path class="nx-a-ruta" d="M6 34C14 30 10 20 20 20s12-12 24-14" fill="none" stroke="#7c5ce6" stroke-width="2.6" stroke-linecap="round"/><circle cx="6" cy="34" r="4" fill="#1f3b73"/><circle cx="20" cy="20" r="3.4" fill="#7c5ce6"/><g class="nx-a-pin"><path d="M44 2c-4 0-7 3-7 7 0 5 7 12 7 12s7-7 7-12c0-4-3-7-7-7z" fill="#e9609a"/><circle cx="44" cy="9" r="2.6" fill="#fff"/></g></svg>',
+  reloj:'<svg viewBox="0 0 52 44"><g class="nx-a-tiembla"><circle cx="26" cy="22" r="16" fill="#fff" stroke="#e9609a" stroke-width="3"/><circle cx="14" cy="6" r="4" fill="#e9609a"/><circle cx="38" cy="6" r="4" fill="#e9609a"/></g><line x1="26" y1="22" x2="26" y2="12" stroke="#1f3b73" stroke-width="2.6" stroke-linecap="round"/><g class="nx-a-aguja"><line x1="26" y1="22" x2="34" y2="22" stroke="#b8306c" stroke-width="2" stroke-linecap="round"/></g><circle cx="26" cy="22" r="2" fill="#1f3b73"/></svg>'
+};
+function nxIco(k){ return '<span class="nx-ico" aria-hidden="true">'+(NX_ICO[k]||'')+'</span>'; }
+function nxLS(k, v){
+  try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)||'null'); localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+  return null;
+}
+function nxMudo(){ return (navigator.webdriver && !window.FX_PRUEBA) || visQuieto(); }
+function nxHoraAhora(){ var d=new Date(); return d.getHours()+d.getMinutes()/60; }
+function nxDiaTxt(iso){
+  var d=dowDe(iso), dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  return (d>=0?dias[d]+' ':'')+fmtFechaCorta(iso);
+}
+/* «mañana» si es mañana de verdad; si no (sábado → lunes, víspera de feriado), el nombre del día. */
+function nxCuandoTxt(iso){ return iso===tomorrowStr() ? ('mañana '+nxDiaTxt(iso)) : ('el '+nxDiaTxt(iso)); }
+function nxNombreCorto(c){
+  var w=String(c||'').trim().split(/\s+/)[0]||'';
+  return w ? (w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()) : '';
+}
+function nxMarcaTxt(p){ var m=marcaDe(p&&p.vendedor); return m==='heaven' ? 'Heaven Colchones' : m==='suena' ? 'Sueña' : 'Multiespumas'; }
+function nxProdsTxt(p, sep){
+  return (p.productos||[]).filter(Boolean).map(function(x){
+    return (Number(x.cant)||1)+' × '+String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'');
+  }).join(sep||', ');
+}
+/* El papel picado de los festejos: unos pocos papelitos con los colores de la marca, sin sonido. */
+function nxConfeti(desde){
+  if(nxMudo()) return;
+  var r=desde && desde.getBoundingClientRect ? desde.getBoundingClientRect() : { left:innerWidth/2, top:innerHeight/3, width:0, height:0 };
+  var cx=r.left+r.width/2, cy=r.top+r.height/2, col=['#e9609a','#f08a24','#f6c437','#00B5AD','#7c5ce6','#2d6fd6'];
+  var caja=document.createElement('div'); caja.className='nx-confeti'; caja.setAttribute('aria-hidden','true');
+  for(var i=0;i<46;i++){
+    var s=document.createElement('i'), ang=Math.random()*Math.PI*2, dist=90+Math.random()*190;
+    s.style.left=cx+'px'; s.style.top=cy+'px'; s.style.background=col[i%col.length];
+    s.style.setProperty('--dx', Math.round(Math.cos(ang)*dist)+'px'); s.style.setProperty('--dy', Math.round(Math.sin(ang)*dist-60)+'px');
+    s.style.setProperty('--rot', Math.round(Math.random()*720-360)+'deg'); s.style.animationDelay=(Math.random()*.18).toFixed(2)+'s';
+    if(i%3===0) s.style.borderRadius='50%';
+    caja.appendChild(s);
+  }
+  document.body.appendChild(caja);
+  setTimeout(function(){ caja.remove(); }, 2600);
+}
+
+/* ---------------------------------------------------------------- P1 · EL CLIENTE QUE YA COMPRÓ
+   Al escribir el celular en un pedido NUEVO se busca en toda la planilla (por los 8 números del celular, como el aviso de
+   pedido repetido). Si ya compró, se completan los campos VACÍOS con los datos de su pedido más nuevo (lo escrito no se toca).
+   «No es él» vacía solo lo que se completó y que nadie cambió después. Ni al corregir, ni en una reposición (va a una sucursal). */
+var NX_CLI={ vista:'', lleno:{}, p:null, n:0 };
+var NX_CLI_T=0;
+var NX_CLI_CAMPOS={ 'f-cliente':'nombre', 'f-zona':'zona', 'f-direccion':'dirección', 'f-maps':'ubicación', 'f-facturar':'facturar a', 'f-nit':'NIT' };
+function nxCel8(t){
+  var s=String(t||'').replace(/[\s.\-()]/g,''), m=s.match(/[67]\d{7}/g);
+  if(m) return m;
+  var d=s.replace(/\D/g,'').replace(/^591/,'');
+  if(/^[67]/.test(d)) return [];            // un celular a medio escribir: todavía no busca
+  return d.length>=7 ? [d.slice(-8)] : [];  // un fijo
+}
+function nxCliProgramar(){ clearTimeout(NX_CLI_T); NX_CLI_T=setTimeout(nxCliBuscar, 350); }
+function nxCliBuscar(){
+  var el=document.getElementById('nx-cli'), fc=document.getElementById('f-celular'); if(!el || !fc) return;
+  if(EDIT_ID || docTipoSel()==='RPT'){ nxCliPintar(null); return; }
+  var cs=nxCel8(fc.value);
+  if(!cs.length){ NX_CLI.vista=''; nxCliPintar(null); return; }
+  var clave=cs.join(',');
+  if(clave===NX_CLI.vista) return;          // ya se miró este número (y si dijo «no es él», no se vuelve a completar)
+  var L=(STATE||[]).filter(function(p){
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || esRPT(p.oc)) return false;
+    return nxCel8(p.celular).some(function(x){ return cs.indexOf(x)>=0; });
+  });
+  NX_CLI.vista=clave; NX_CLI.lleno={};
+  if(!L.length){ NX_CLI.p=null; nxCliPintar(null); return; }
+  L.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
+  var u=L[0], lleno={};
+  var poner=function(id, v){
+    var e=document.getElementById(id); v=String(v||'').trim();
+    if(!e || !v || String(e.value||'').trim()) return;
+    e.value=v; lleno[id]=v;
+    try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){}
+  };
+  poner('f-cliente', u.cliente);
+  if(!esVentaTienda(u) && !VENTA_TIENDA){ poner('f-zona', u.zona); poner('f-direccion', u.direccion); poner('f-maps', u.maps); }
+  poner('f-facturar', u.facturarA); poner('f-nit', u.nit);
+  NX_CLI.lleno=lleno; NX_CLI.p=u; NX_CLI.n=L.length;
+  nxCliPintar(u, true);
+}
+function nxCliPintar(u, nuevo){
+  var el=document.getElementById('nx-cli'); if(!el) return;
+  if(!u){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; } return; }
+  var ks=Object.keys(NX_CLI.lleno), f=fechaSalida(u)||contaFecha(u), id=String(u.id).replace(/'/g,'');
+  el.innerHTML='<div class="nx nx-teal nx-fila'+(nuevo?' nx-entra':'')+'">'+nxIco('cli')+
+    '<div class="nx-cuerpo"><div class="nx-tit">👋 Ya compró'+(NX_CLI.n>1?(' · '+NX_CLI.n+' pedidos'):'')+'</div>'+
+      '<div class="nx-sub">El último: <b>'+esc(ocEtiq(u.oc)||'pedido')+'</b> del '+esc(fmtFecha(f))+(u.vendedor?(' · '+esc(u.vendedor)):'')+
+        ((u.productos||[]).length?(' · '+esc(nxProdsTxt(u))):'')+'</div>'+
+      (ks.length ? ('<div class="nx-chips">'+ks.map(function(k,i){ return '<span class="nx-chip" style="animation-delay:'+(i*90)+'ms">✓ '+esc(NX_CLI_CAMPOS[k])+'</span>'; }).join('')+'</div>')
+                 : '<div class="nx-sub">Sus datos ya estaban escritos: no se cambió nada.</div>')+
+    '</div>'+
+    '<div class="nx-acc">'+
+      (ks.length?'<button type="button" class="nx-btn nx-btn-suave" onclick="nxCliNoEs()">No es él · vaciar</button>':'')+
+      '<button type="button" class="nx-btn nx-btn-suave" onclick="showPedidoModal(\''+id+'\')">👀 Ver el último</button>'+
+    '</div></div>';
+  el.hidden=false;
+}
+function nxCliNoEs(){
+  Object.keys(NX_CLI.lleno).forEach(function(id){
+    var e=document.getElementById(id);
+    if(e && String(e.value||'').trim()===NX_CLI.lleno[id]){ e.value=''; try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} }
+  });
+  NX_CLI.lleno={}; NX_CLI.p=null;
+  nxCliPintar(null);
+  toast('Listo: se vaciaron los datos que se habían completado','ok');
+}
+function nxCliLimpiar(){ clearTimeout(NX_CLI_T); NX_CLI={ vista:'', lleno:{}, p:null, n:0 }; nxCliPintar(null); }
+
+/* ---------------------------------------------------------------- P3 · EL MENSAJE PARA EL CLIENTE
+   Sale en la ventana de «✅ Pedido guardado», debajo del mensaje del grupo: se puede corregir antes de mandarlo y el botón abre
+   el WhatsApp DEL CLIENTE con el texto puesto. También al corregir un pedido si cambió el día o el turno («avisale del cambio»).
+   Nada de horarios: el turno dice «por la mañana / por la tarde», que es lo que el panel sabe. */
+function nxSaldoCliente(p){
+  if(noSeCobra(p)) return '';
+  var falta=Number(p.saldo)||0, flete=envioPorCobrar(p);
+  if((p.pagado || falta<=0.01) && flete<=0.01) return '✅ Tu compra ya está pagada.';
+  var t='💵 Saldo a pagar al recibir: '+fmtBs(p.pagado?0:falta);
+  if(flete>0.01) t+=(p.pagado||falta<=0.01) ? (' · recargo por entrega '+fmtBs(flete)) : (' + '+fmtBs(flete)+' del recargo por entrega');
+  return t;
+}
+function nxMsgCliente(p, tipo){
+  var nom=nxNombreCorto(p.cliente), t=turnoDe(p), cuando=p.fecha?nxDiaTxt(p.fecha):'';
+  var L=[];
+  if(tipo==='cambio'){
+    L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+'. Cambió el día de entrega de tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+':');
+  }else if(tipo==='manana'){
+    L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+' por tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+'.');
+    L.push('🚚 '+(p.fecha===tomorrowStr()?'Mañana ':'El ')+cuando+' te lo llevamos'+(t?(t==='PM'?', por la tarde':', por la mañana'):'')+'.');
+  }else{
+    L.push('Hola'+(nom?(' '+nom):'')+' 👋, te confirmamos tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+' de '+nxMarcaTxt(p)+':');
+  }
+  (p.productos||[]).filter(Boolean).forEach(function(x){ L.push('🛏️ '+(Number(x.cant)||1)+' × '+String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')); });
+  if(tipo!=='manana' && p.fecha) L.push('📅 Entrega: '+cuando+(t?(t==='PM'?', por la tarde':', por la mañana'):''));
+  var dir=String(p.direccion||'').trim(); if(dir) L.push('📍 '+dir);
+  var sl=nxSaldoCliente(p); if(sl) L.push(sl);
+  L.push(tipo==='manana' ? 'Si no vas a estar, avisanos por acá así lo reprogramamos. ¡Gracias!' : 'Cualquier cambio, escribinos a este número. ¡Gracias por tu compra!');
+  if(p.vendedor) L.push(String(p.vendedor).trim());
+  return L.join('\n');
+}
+function nxWaClienteUrl(cel, txt){ var u=misWaCliente(cel); return u ? (u+'?text='+encodeURIComponent(txt||'')) : ''; }
+/* ¿A este pedido le corresponde el mensaje al cliente? Una entrega con fecha, que no sea ATC, reposición ni venta de tienda. */
+function nxClienteVale(p){ return !!p && !!p.fecha && !esATC(p.oc) && !esRPT(p.oc) && !esVentaTienda(p) && !esFilaSistema(p); }
+function nxClienteBloque(p, tipo){
+  if(!nxClienteVale(p)) return '';
+  var cel=misWaCliente(p.celular), nom=nxNombreCorto(p.cliente)||'el cliente';
+  return '<div class="nx nx-verde nx-cli-msg nx-entra">'+
+    '<div class="nx-cab">'+nxIco('wa')+'<div><div class="nx-tit">💬 Mensaje para '+esc(nom)+'</div>'+
+      '<div class="nx-sub">'+(tipo==='cambio'?'Avisale del día nuevo. ':'')+'Se puede corregir antes de mandarlo.</div></div></div>'+
+    '<textarea class="wa-text nx-wa-text" id="nx-wa-cli" rows="7">'+esc(nxMsgCliente(p, tipo))+'</textarea>'+
+    '<div class="nx-acc">'+
+      '<button type="button" class="nx-btn nx-btn-suave" onclick="copyText(document.getElementById(\'nx-wa-cli\').value)">📋 Copiar</button>'+
+      (cel ? ('<button type="button" class="nx-btn nx-btn-wa" onclick="nxAbrirWaCliente(\''+esc(String(p.celular||'').replace(/'/g,''))+'\')">💬 Abrir el WhatsApp de '+esc(nom)+'</button>')
+           : '<span class="nx-sub">⚠️ No tiene un celular de WhatsApp anotado: copiá el mensaje y mandalo a mano.</span>')+
+    '</div></div>';
+}
+function nxAbrirWaCliente(cel){
+  var t=(document.getElementById('nx-wa-cli')||{}).value||'', u=nxWaClienteUrl(cel, t);
+  if(u) window.open(u, '_blank');
+}
+function nxAvisarCambio(id){
+  var p=findById(id); if(!p) return;
+  openModal('<div class="modal-h"><h3>💬 Avisar al cliente</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+nxClienteBloque(p, 'cambio')+'<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button></div>');
+}
+
+/* ---------------------------------------------------------------- M1 · RECORDATORIO DE ENTREGA (Mis pedidos)
+   La 5ª ficha, naranja, al lado de las otras cuatro: cuántas entregas tiene la vendedora el próximo día con camión y a cuántos
+   clientes ya les avisó. Tocándola se despliega la lista con el WhatsApp de cada uno. Desde las 17:00 (`NX_M1_HORA`) late y la
+   pestaña «Mis pedidos» muestra en naranja cuántos faltan avisar.
+   «✓ Avisado» se recuerda en ESTE dispositivo (por pedido y día: si se reprograma, vuelve a «avisar»). No va a la planilla. */
+var NX_M1_HORA=17, NX_M1_ABIERTA=false, NX_M1_ULT='';
+var LS_M1='me_m1_avisos';
+function nxM1Avisos(){ var a=nxLS(LS_M1); return (a && typeof a==='object') ? a : {}; }
+function nxM1Avisado(p){ return nxM1Avisos()[String(p.id)]===String(p.fecha||''); }
+function nxM1Marcar(id, on){
+  var a=nxM1Avisos(), p=findById(id), hoy=todayStr();
+  Object.keys(a).forEach(function(k){ if(String(a[k]||'')<stockSumarDias(hoy,-10)) delete a[k]; });   // lo viejo se va solo
+  if(on && p) a[String(id)]=String(p.fecha||''); else delete a[String(id)];
+  nxLS(LS_M1, a);
+}
+function nxM1Lista(v, todos){
+  if(!v || todos) return [];
+  var dia=proximoDiaEntrega();
+  return (STATE||[]).filter(function(p){
+    return p && p.fecha===dia && !p.entregado && mismoVendedor(p.vendedor, v) && !esFilaSistema(p) && !borradorDe(p.id) &&
+      !esATC(p.oc) && !esRPT(p.oc) && !esVentaTienda(p);
+  }).sort(function(a,b){ var ta=turnoDe(a)||'Z', tb=turnoDe(b)||'Z'; if(ta!==tb) return ta<tb?-1:1; return String(a.cliente||'').localeCompare(String(b.cliente||''),'es'); });
+}
+function nxM1Datos(v, todos){
+  var L=nxM1Lista(v, todos), av=L.filter(nxM1Avisado).length;
+  return { dia:proximoDiaEntrega(), L:L, n:L.length, av:av, faltan:L.length-av, tarde:nxHoraAhora()>=NX_M1_HORA };
+}
+/* La ficha (la agrega `renderMis` después de las cuatro). */
+function nxM1Ficha(box, v, todos){
+  if(!box) return;
+  var D=nxM1Datos(v, todos);
+  var ya=box.querySelector('.mi-f5'); if(ya) ya.remove();
+  if(!D.n){ nxM1Desp(v, todos); return; }
+  var listo=D.faltan===0, cuando=(D.dia===tomorrowStr()?'Mañana':('El '+nxDiaTxt(D.dia).split(' ')[0]));
+  var h='<div class="mc mi-f5'+(listo?' mi-listo':(D.tarde?' mi-late':''))+(NX_M1_ABIERTA?' mi-abierta':'')+'" role="button" tabindex="0" onclick="nxM1Toggle()" onkeydown="if(event.key===\'Enter\')nxM1Toggle()" title="Avisar a los clientes de '+esc(cuando.toLowerCase())+'">'+
+    '<span class="mi-esc" aria-hidden="true">'+NX_ICO.camp+'</span>'+
+    '<div class="mc-lbl">🔔 '+esc(cuando)+'</div>'+
+    '<div class="mc-val">'+D.av+' de '+D.n+'</div>'+
+    '<div class="mc-sub">'+(listo?'✓ todos avisados':('avisados · tocá para avisar'+(D.tarde?'':(' · desde las '+NX_M1_HORA+':00 te lo recuerdo'))))+'</div>'+
+    (D.tarde && !listo ? '<span class="mi-nuevo">'+D.faltan+' sin avisar</span>' : '')+
+  '</div>';
+  box.insertAdjacentHTML('beforeend', h);
+  nxM1Desp(v, todos);
+}
+function nxM1Toggle(){ NX_M1_ABIERTA=!NX_M1_ABIERTA; renderMis(); if(NX_M1_ABIERTA){ var d=document.getElementById('nx-m1'); if(d) try{ d.scrollIntoView({ block:'nearest', behavior:'smooth' }); }catch(e){} } }
+function nxM1Desp(v, todos){
+  var arr=document.getElementById('mis-arriba'); if(!arr) return;
+  var el=document.getElementById('nx-m1');
+  if(!el){ el=document.createElement('div'); el.id='nx-m1'; el.className='nx-m1 no-print'; arr.parentNode.insertBefore(el, arr.nextSibling); }
+  var D=nxM1Datos(v, todos);
+  if(!D.n || !NX_M1_ABIERTA){ el.classList.remove('abierta'); el.innerHTML=''; return; }
+  var pct=D.n?Math.round(D.av/D.n*100):0, ult=NX_M1_ULT && findById(NX_M1_ULT);
+  var filas=D.L.map(function(p, i){
+    var av=nxM1Avisado(p), t=turnoDe(p), wa=nxWaClienteUrl(p.celular, nxMsgCliente(p, 'manana')), id=String(p.id).replace(/'/g,'');
+    var sl=noSeCobra(p) ? '' : ((p.pagado||(Number(p.saldo)||0)<=0.01) ? 'pagado' : ('saldo '+fmtBs(p.saldo)));
+    return '<div class="nx-m1-r'+(av?' ok':'')+'" style="animation-delay:'+(i*60)+'ms">'+
+      '<span class="nx-turno '+(t==='PM'?'pm':'am')+'">'+(t==='PM'?'🌆 PM':(t?'🌅 AM':'—'))+'</span>'+
+      '<div class="nx-m1-q"><b>'+esc(p.cliente||'—')+'</b><small>'+esc([p.zona, nxProdsTxt(p), sl].filter(Boolean).join(' · '))+'</small></div>'+
+      (av ? '<button type="button" class="nx-btn nx-btn-hecho" onclick="nxM1Marcar(\''+id+'\', false);renderMis()" title="Tocá para desmarcar">✓ Avisado</button>'
+          : wa ? ('<a class="nx-btn nx-btn-wa" href="'+esc(wa)+'" target="_blank" rel="noopener" onclick="nxM1Avisar(\''+id+'\')">💬 Avisar</a>')
+               : '<span class="nx-sub" title="No tiene celular de WhatsApp anotado">sin celular</span>')+
+    '</div>';
+  }).join('');
+  el.innerHTML='<div class="nx nx-nar">'+
+    '<div class="nx-cab">'+nxIco('camp')+'<div class="nx-cuerpo"><div class="nx-tit">📅 '+esc(nxCuandoTxt(D.dia).replace(/^./,function(c){ return c.toUpperCase(); }))+' · tus '+D.n+' entrega'+(D.n===1?'':'s')+'</div>'+
+      '<div class="nx-sub">'+(D.faltan?('Faltan '+D.faltan+' por avisar. El mensaje sale armado con el día, el turno, lo que lleva y el saldo.'):'✅ Les avisaste a todos.')+'</div></div>'+
+      (D.faltan?'<button type="button" class="nx-btn nx-btn-wa" onclick="nxM1Siguiente()">💬 Avisar al siguiente</button>':'')+'</div>'+
+    '<div class="nx-barra" aria-label="'+D.av+' de '+D.n+' avisados"><i style="width:'+pct+'%"></i></div>'+
+    '<div class="nx-m1-lista">'+filas+'</div>'+
+    (ult ? ('<div class="nx-m1-msg"><small>Lo que le mandaste a '+esc(nxNombreCorto(ult.cliente)||'—')+'</small><div class="nx-burbuja">'+esc(nxMsgCliente(ult, 'manana')).replace(/\n/g,'<br>')+'</div></div>') : '')+
+    '<div class="nx-pie">«✓ Avisado» queda anotado en este dispositivo. Si el pedido cambia de día, vuelve a «Avisar».</div>'+
+  '</div>';
+  requestAnimationFrame(function(){ el.classList.add('abierta'); });
+}
+function nxM1Avisar(id){
+  NX_M1_ULT=id; nxM1Marcar(id, true);
+  setTimeout(function(){ renderMis(); nxBadges(); var D=nxM1Datos(misVendedorSel(), MIS_TODOS && UNLOCKED); if(D.n && !D.faltan){ nxConfeti(document.querySelector('#mis-metrics .mi-f5')); toast('✅ Les avisaste a todos los de '+nxCuandoTxt(D.dia),'ok'); } }, 120);
+}
+function nxM1Siguiente(){
+  var D=nxM1Datos(misVendedorSel(), MIS_TODOS && UNLOCKED);
+  var p=D.L.filter(function(q){ return !nxM1Avisado(q) && misWaCliente(q.celular); })[0];
+  if(!p){ toast('A los que quedan les falta el celular de WhatsApp','err'); return; }
+  window.open(nxWaClienteUrl(p.celular, nxMsgCliente(p, 'manana')), '_blank');
+  nxM1Avisar(p.id);
+}
+
+/* ---------------------------------------------------------------- M3 · EL FESTEJO AL PASAR EL MES ANTERIOR
+   Lo vendido para este mes (por fecha de entrega, como la dona) pasa lo de todo el mes anterior: la dona se pone dorada, sale la
+   medalla y, la PRIMERA vez que la vendedora lo ve en ese mes (en este dispositivo), papel picado. Sin sonido. */
+var LS_M3='me_m3_fiesta';
+function nxM3(mine, v, todos){
+  var box=document.getElementById('mis-anillo'); if(!box) return;
+  var an=box.querySelector('.mis-anillo'); if(!an) return;
+  var R; try{ R=misAnilloDatos(mine); }catch(e){ return; }
+  if(todos || !v || !(R.bsAnt>0) || !(R.bs>R.bsAnt)) return;
+  var mesN=function(ym){ return window.mesNombre(ym).replace(/ de \d{4}$/,''); };
+  an.classList.add('mis-gana');
+  var ley=an.querySelector('.mis-ani-ley');
+  if(ley) ley.insertAdjacentHTML('afterbegin','<div class="nx-medalla">🏅 ¡Pasaste lo de '+esc(mesN(R.ant))+'! <b>+'+Math.round((R.bs/R.bsAnt-1)*100)+'%</b></div>');
+  var vistos=nxLS(LS_M3)||{}, k=normNombre(v)+'|'+R.mes;
+  if(vistos[k]) return;
+  vistos[k]=Date.now(); nxLS(LS_M3, vistos);
+  if(document.getElementById('view-mis') && document.getElementById('view-mis').classList.contains('active')){
+    an.classList.add('mis-fiesta');
+    setTimeout(function(){ nxConfeti(an.querySelector('svg')||an); }, 350);
+  }else{ delete vistos[k]; nxLS(LS_M3, vistos); }   // se festeja cuando lo vea
+}
+
+/* ---------------------------------------------------------------- C1 · EL CIERRE DEL MES EN UN SOLO EXCEL
+   Tres partes en un archivo: Ventas (el Excel de Ventas), Cuadre (el del Cuadre, con el arqueo y los retiros) y Productos del
+   mes (consolidado y detalle). Las MISMAS funciones que los botones de siempre (`exportConta`, `exportCuadre`, `pmHojas`): no
+   cambia ningún número. Respeta el corte (Ingreso / Entrega agendada) y el vendedor elegidos en Ventas; la búsqueda no.
+   ⚠️ Para reusar los dos Excel sin tocarlos, se ponen sus controles en el mes elegido, se juntan las hojas que arman y se vuelven
+   los controles como estaban (`nxCierreHojas`). Si un Excel cambia de controles, este cierre los tiene que seguir. */
+function nxMesesCierre(){
+  var out=[], d=new Date(todayStr()+'T12:00:00'); d.setDate(1);
+  for(var i=0;i<6;i++){ out.push(isoLocal(d).slice(0,7)); d.setMonth(d.getMonth()-1); }
+  return out;
+}
+function nxCierreHojas(mes){
+  var g=function(id){ var e=document.getElementById(id); return e?e.value:''; }, s=function(id,v){ var e=document.getElementById(id); if(e) e.value=v; };
+  var antes={ ctaMode:segVal('cta-mode'), ctaMes:g('cta-mes'), ctaQ:g('cta-search'), ctaTab:segVal('cta-tab'), cuaMode:segVal('cua-mode'), cuaMes:g('cua-mes'), cuaVend:g('cua-vendedor') };
+  var hojas={ ventas:[], cuadre:[] }, cuenta={ ventas:0, pagos:0, retiros:0 }, dest='ventas';
+  var bx=window.buildXlsx, dl=window.downloadBlob, ts=window.toast;
+  try{
+    segSet('cta-mode','mes'); s('cta-mes', mes); s('cta-search','');
+    if(antes.ctaTab==='mayor') segSet('cta-tab','ventas');
+    segSet('cua-mode','mes'); s('cua-mes', mes);
+    var vend=g('cta-vendedor'); s('cua-vendedor', vend); if(g('cua-vendedor')!==vend) s('cua-vendedor','');
+    cuenta.ventas=contaLista().length; cuenta.pagos=cuadrePagos().length;
+    try{ cuenta.retiros=retirosDe(cuadrePeriodo(), cuadreVendedor()).length; }catch(e){}
+    window.buildXlsx=function(sh){ hojas[dest]=hojas[dest].concat(sh||[]); return null; };
+    window.downloadBlob=function(){}; window.toast=function(){};
+    dest='ventas'; exportConta();
+    dest='cuadre'; exportCuadre();
+  }finally{
+    window.buildXlsx=bx; window.downloadBlob=dl; window.toast=ts;
+    segSet('cta-mode', antes.ctaMode||'mes'); s('cta-mes', antes.ctaMes); s('cta-search', antes.ctaQ);
+    if(antes.ctaTab) segSet('cta-tab', antes.ctaTab);
+    segSet('cua-mode', antes.cuaMode||'mes'); s('cua-mes', antes.cuaMes); s('cua-vendedor', antes.cuaVend);
+  }
+  return { hojas:hojas, cuenta:cuenta };
+}
+function nxCierreProductos(mes, lista){
+  var cfg={ mes:mes, base:contaBase(), vendedor:((document.getElementById('cta-vendedor')||{}).value||'').trim() };
+  var pend=getPending(), L=(lista||STATE).slice();
+  pend.forEach(function(p){ L=L.filter(function(q){ return q.id!==p.id; }); L.push(p); });
+  var r=pmCalcular(L, cfg, pend);
+  return { r:r, hojas:pmHojas(r) };
+}
+function nxCierreAbrir(){
+  if(typeof contaTab==='function' && contaTab()==='mayor'){ toast('El cierre del mes es de Ventas: pasá a la pestaña Ventas','err'); return; }
+  var ms=nxMesesCierre(), sel=(segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
+  if(ms.indexOf(sel)<0) ms.unshift(sel);
+  openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>🗂️ Cierre del mes</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><div class="nx nx-azul">'+
+      '<div class="nx-cab">'+nxIco('hojas')+'<div class="nx-cuerpo"><div class="nx-tit">Un solo Excel con Ventas, Cuadre y Productos</div>'+
+        '<div class="nx-sub">Las mismas cuentas que los Excel de siempre. Corte: <b>'+(contaBase()==='entrega'?'Entrega agendada':'Ingreso')+'</b>'+
+        (((document.getElementById('cta-vendedor')||{}).value||'')?(' · Vendedor: <b>'+esc(document.getElementById('cta-vendedor').value)+'</b>'):' · Todos los vendedores')+'</div></div></div>'+
+      '<label class="nx-sub" style="display:block;margin:10px 0 4px">Mes</label>'+
+      '<select id="nx-cierre-mes" class="msel" onchange="nxCierreResumen()">'+ms.map(function(m){ return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(mesNombre(m).replace(/^./,function(c){ return c.toUpperCase(); }))+'</option>'; }).join('')+'</select>'+
+      '<div id="nx-cierre-res" class="nx-hojas"></div>'+
+      '<button type="button" class="nx-btn nx-btn-grande" id="nx-cierre-btn" onclick="nxCierreBajar()">⬇️ Bajar el cierre</button>'+
+      '<div id="nx-cierre-fin"></div>'+
+    '</div></div>');
+  nxCierreResumen();
+}
+function nxCierreResumen(){
+  var box=document.getElementById('nx-cierre-res'); if(!box) return;
+  var mes=(document.getElementById('nx-cierre-mes')||{}).value; if(!mes) return;
+  var H=nxCierreHojas(mes), P; try{ P=nxCierreProductos(mes).r; }catch(e){ P=null; }
+  var c=H.cuenta;
+  var hoja=function(n, ico, tit, sub, col){ return '<div class="nx-hoja" style="--c:'+col+';animation-delay:'+(n*110)+'ms"><span class="nx-hoja-n">'+ico+'</span><div><b>'+tit+'</b><small>'+sub+'</small></div></div>'; };
+  box.innerHTML=hoja(0,'🧾','Ventas', c.ventas+' venta'+(c.ventas===1?'':'s')+' · una fila por producto','#21a366')+
+    hoja(1,'🧮','Cuadre', c.pagos+' pago'+(c.pagos===1?'':'s')+(c.retiros?(' · '+c.retiros+' retiro'+(c.retiros===1?'':'s')):'')+' · cierre por forma de pago','#2d6fd6')+
+    hoja(2,'📦','Productos del mes', P?(P.consolidado.length+' producto'+(P.consolidado.length===1?'':'s')+' · '+P.detalle.length+' renglones'):'—','#e9609a');
+  var fin=document.getElementById('nx-cierre-fin'); if(fin) fin.innerHTML='';
+}
+function nxCierreBajar(){
+  var mes=(document.getElementById('nx-cierre-mes')||{}).value; if(!mes) return;
+  var btn=document.getElementById('nx-cierre-btn'); if(btn){ btn.disabled=true; btn.textContent='⏳ Juntando las ventas del mes…'; }
+  var consulta=CONNECTED ? conTopeDuro(apiList(), 30000, 'tardo_datos').then(function(res){ return (res && res.ok && Array.isArray(res.pedidos)) ? res.pedidos : null; }).catch(function(){ return null; }) : Promise.resolve(null);
+  return consulta.then(function(lista){
+    var H=nxCierreHojas(mes), PR=nxCierreProductos(mes, lista);
+    var ven=H.hojas.ventas.length ? H.hojas.ventas : [{ name:'Ventas', cols:[{w:40}], matrix:[[{v:'Sin ventas en '+mesNombre(mes),s:1}]] }];
+    var cua=H.hojas.cuadre.length ? H.hojas.cuadre : [{ name:'Cuadre', cols:[{w:40}], matrix:[[{v:'Sin pagos ni retiros en '+mesNombre(mes),s:1}]] }];
+    ven.forEach(function(h,i){ h.name=i?('Ventas '+(i+1)):'Ventas'; });
+    cua.forEach(function(h,i){ h.name=i?('Cuadre '+(i+1)):'Cuadre'; });
+    PR.hojas.forEach(function(h){ h.name=(h.name==='Detalle')?'Productos (detalle)':'Productos'; h.cols=(h.cols||[]).map(function(w){ return typeof w==='number'?{w:w}:w; }); });
+    var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+    var tag=mes+(vSel?('-'+vSel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'-'+contaBase();
+    var nombre='cierre-'+tag+'.xlsx';
+    downloadBlob(buildXlsx(ven.concat(cua, PR.hojas)), nombre, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    if(btn){ btn.disabled=false; btn.textContent='⬇️ Bajar el cierre'; }
+    var fin=document.getElementById('nx-cierre-fin');
+    if(fin) fin.innerHTML='<div class="nx-archivo nx-entra"><span class="nx-xls">X</span><div><b>'+esc(nombre)+'</b><small>Listo. '+(lista?'Con la planilla recién leída.':'⚠️ Sin conexión: con lo que tiene este dispositivo.')+'</small></div></div>';
+    toast('🗂️ Cierre de '+mesNombre(mes)+' descargado ✓','ok');
+  });
+}
+
+/* ---------------------------------------------------------------- C2 · PAGOS SIN TERMINAR
+   Los pagos de los últimos `NX_PST_DIAS` días a los que les falta algo: el N° de recibo, la foto del comprobante (QR o tarjeta),
+   el banco (QR) o el método; y las ventas marcadas PAGADA sin monto. «Completar» abre la ficha de la venta. El número sale en el
+   botón y en la pestaña de Contabilidad. Con un vendedor elegido en Ventas, solo los suyos. Solo mira. */
+var NX_PST_DIAS=45;
+function nxPstLista(){
+  var desde=stockSumarDias(todayStr(), -NX_PST_DIAS), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
+    if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    contaPagos(p).forEach(function(c){
+      var f=c.fecha||contaFecha(p); if(f<desde) return;
+      /* La «PAGADA sin monto» (§4fg): su pago no dice cuánto. Es el mismo aviso «💸» de Revisar antes de cerrar. */
+      if(!((Number(c.monto)||0)>0)){ if(c.sinMonto) out.push({ p:p, c:null, f:f, falta:['el monto (está PAGADA sin monto)'] }); return; }
+      var falta=[], met=String(c.metodo||'');
+      if(!met) falta.push('el método');
+      if(!limpiaNota(c.nota)) falta.push('el N° de recibo');
+      if(met && met!=='Efectivo' && !compsArr(c.comps!=null?c.comps:c.comp).length) falta.push('la foto del comprobante');
+      if(/^QR/i.test(met) && !c.banco) falta.push('el banco');
+      if(falta.length) out.push({ p:p, c:c, f:f, falta:falta });
+    });
+  });
+  return out.sort(function(a,b){ return a.f<b.f?-1:a.f>b.f?1:0; });
+}
+function nxPstBoton(){
+  var b=document.getElementById('nx-pst-btn'); if(!b) return;
+  var n=0; try{ n=nxPstLista().length; }catch(e){}
+  b.innerHTML='🧾 Pagos sin terminar'+(n?(' <span class="nx-num">'+n+'</span>'):' ✓');
+  b.classList.toggle('nx-hay', n>0);
+}
+function nxPstAbrir(){
+  var L=nxPstLista(), n=L.length;
+  var porQue={}; L.forEach(function(x){ x.falta.forEach(function(f){ porQue[f]=(porQue[f]||0)+1; }); });
+  var filas=L.map(function(x,i){
+    var c=x.c, id=String(x.p.id).replace(/'/g,'');
+    return '<div class="nx-pst-r" style="animation-delay:'+Math.min(i,12)*50+'ms">'+
+      '<div class="nx-pst-q"><b>'+esc(x.p.cliente||'—')+'</b><small>'+esc(fmtFechaCorta(x.f))+' · '+esc(x.p.vendedor||'')+(c?(' · '+esc(cobroMetodoTxt(c)||'sin método')+' · <b>'+fmtBs(c.monto)+'</b>'):'')+(x.p.nota?(' · nota '+esc(x.p.nota)):'')+'</small>'+
+        '<div class="nx-chips">'+x.falta.map(function(f){ return '<span class="nx-chip nx-chip-rojo">falta '+esc(f)+'</span>'; }).join('')+'</div></div>'+
+      '<button type="button" class="nx-btn" onclick="closeModal();showContaModal(\''+id+'\')">Completar</button></div>';
+  }).join('');
+  openModal('<div class="modal-h nx-modal-h nx-rojo-h"><h3>🧾 Pagos sin terminar · '+n+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><div class="nx nx-rojo">'+
+      '<div class="nx-cab">'+nxIco('recibo')+'<div class="nx-cuerpo"><div class="nx-tit">'+(n?('A '+n+' pago'+(n===1?'':'s')+' le'+(n===1?'':'s')+' falta algo'):'✅ Todo al día')+'</div>'+
+        '<div class="nx-sub">De los últimos '+NX_PST_DIAS+' días'+(((document.getElementById('cta-vendedor')||{}).value||'')?(' · solo '+esc(document.getElementById('cta-vendedor').value)):'')+'. «Completar» abre la ficha de esa venta.</div></div></div>'+
+      (n?('<div class="nx-chips" style="margin:8px 0 4px">'+Object.keys(porQue).map(function(k){ return '<span class="nx-chip">'+porQue[k]+' sin '+esc(k.replace(/^(el|la) /,''))+'</span>'; }).join('')+'</div>'+
+          '<div class="nx-pst-lista">'+filas+'</div>')
+        :'<div class="nx-vacio">No queda ningún pago sin terminar. 🎉</div>')+
+    '</div></div>');
+}
+
+/* ---------------------------------------------------------------- A1 · EL CAMIÓN SUGERIDO
+   Para cada pedido del próximo día de entrega (o de hoy) que no tiene camión, el panel propone uno:
+     1) el camión que YA va a esa zona ese día (el que más paradas tiene ahí);
+     2) si no, el que tiene una parada a menos de `NX_SUG_KM` km (con la ubicación del pedido);
+     3) si no, el que lleva menos paradas ese día (entre los que salen; si ninguno sale todavía, cualquiera menos el de insumos).
+   Nunca asigna solo: «Aceptar» pone el camión y su primer chofer, como la columna «Vehículo» y «Sin vehículo» de los camiones. */
+var NX_SUG_KM=4, NX_SUG_DIA='manana', NX_SUG_CAMBIO={};
+function nxSugDia(){ return NX_SUG_DIA==='hoy' ? todayStr() : proximoDiaEntrega(); }
+function nxSugPeds(dia){
+  return (STATE||[]).filter(function(p){ return p && p.fecha===dia && !p.entregado && !esVentaTienda(p) && !esFilaSistema(p) && !borradorDe(p.id); });
+}
+function nxSugSin(dia){ return nxSugPeds(dia).filter(function(p){ return !vehiculoDe(p); }); }
+function nxSugDatos(dia){
+  var cams={}, orden=Object.keys(VEHICULOS);
+  orden.forEach(function(v){ cams[v]={ v:v, n:0, zonas:{}, pts:[], nuevos:0 }; });
+  var meter=function(c, p, virtual){
+    c.n++; if(virtual) c.nuevos++;
+    var z=normNombre(p.zona); if(z) c.zonas[z]=(c.zonas[z]||0)+1;
+    var g=almPunto(p); if(g) c.pts.push(g);
+  };
+  var sin=[];
+  nxSugPeds(dia).forEach(function(p){ var v=vehiculoDe(p); if(v && cams[v]) meter(cams[v], p); else if(!v) sin.push(p); });
+  sin.sort(function(a,b){ var za=normNombre(a.zona), zb=normNombre(b.zona); if(za!==zb) return za<zb?-1:1; return (turnoDe(a)||'Z')<(turnoDe(b)||'Z')?-1:1; });
+  var lista=sin.map(function(p){
+    var z=normNombre(p.zona), g=almPunto(p), best=null, por='';
+    if(z){ orden.forEach(function(v){ var c=cams[v], k=c.zonas[z]||0; if(k>0 && (!best || k>(best.zonas[z]||0) || (k===(best.zonas[z]||0) && c.n<best.n))) best=c; });
+      if(best) por='ya va a '+String(p.zona||'').trim(); }
+    if(!best && g){
+      var md=1e9; orden.forEach(function(v){ cams[v].pts.forEach(function(q){ var d=mapaKmAprox(g, q); if(d<md){ md=d; best=cams[v]; } }); });
+      if(best && md<=NX_SUG_KM) por='pasa a ~'+(md<1?'menos de 1':Math.round(md))+' km'; else best=null;
+    }
+    if(!best){
+      var salen=orden.filter(function(v){ return cams[v].n>0; }), cand=salen.length?salen:orden.filter(function(v){ return !/insumo/i.test(v); });
+      cand.forEach(function(v){ if(!best || cams[v].n<best.n) best=cams[v]; });
+      por=salen.length?'el que lleva menos paradas':'ninguno sale todavía ese día';
+    }
+    var elegido=NX_SUG_CAMBIO[p.id] && cams[NX_SUG_CAMBIO[p.id]] ? cams[NX_SUG_CAMBIO[p.id]] : best;
+    if(elegido!==best) por='elegido a mano';
+    if(elegido) meter(elegido, p, true);
+    return { p:p, v:elegido?elegido.v:'', por:por };
+  });
+  return { dia:dia, lista:lista, cams:orden.map(function(v){ return cams[v]; }) };
+}
+function nxSugPintar(){
+  var el=document.getElementById('nx-sug'); if(!el) return;
+  if(!UNLOCKED){ el.innerHTML=''; el._h=''; return; }
+  var nH=nxSugSin(todayStr()).length, nM=nxSugSin(proximoDiaEntrega()).length;
+  if(NX_SUG_DIA==='hoy' && !nH) NX_SUG_DIA='manana';
+  var D=nxSugDatos(nxSugDia());
+  if(!D.lista.length && !nH){ el.innerHTML=''; el._h=''; return; }
+  var chip=function(k, lbl, n){ return '<button type="button" class="nx-tab'+(NX_SUG_DIA===k?' on':'')+'" onclick="NX_SUG_DIA=\''+k+'\';nxSugPintar()">'+lbl+' <span class="nx-num">'+n+'</span></button>'; };
+  var opts=function(sel){ return Object.keys(VEHICULOS).map(function(v){ return '<option'+(v===sel?' selected':'')+'>'+esc(v)+'</option>'; }).join(''); };
+  var filas=D.lista.map(function(s,i){
+    var p=s.p, id=String(p.id).replace(/'/g,''), t=turnoDe(p);
+    return '<div class="nx-sug-r" id="nx-sug-'+esc(id)+'" style="animation-delay:'+Math.min(i,10)*55+'ms">'+
+      '<span class="nx-turno '+(t==='PM'?'pm':'am')+'">'+(t==='PM'?'🌆 PM':(t?'🌅 AM':'—'))+'</span>'+
+      '<div class="nx-sug-q"><b>'+esc(p.cliente||'—')+'</b><small>'+esc([p.zona||'sin zona', ocEtiq(p.oc), (p.productos||[]).length+' producto'+((p.productos||[]).length===1?'':'s')].filter(Boolean).join(' · '))+'</small></div>'+
+      '<span class="nx-flecha" aria-hidden="true">➜</span>'+
+      '<div class="nx-sug-v"><select class="msel" onchange="NX_SUG_CAMBIO[\''+id+'\']=this.value;nxSugPintar()">'+opts(s.v)+'</select><small>'+esc(s.por)+'</small></div>'+
+      '<button type="button" class="nx-btn" onclick="nxSugAceptar(\''+id+'\')">✓ Aceptar</button></div>';
+  }).join('');
+  var cams=D.cams.map(function(c){
+    var zs=Object.keys(c.zonas).slice(0,4);
+    return '<div class="nx-cam'+(c.nuevos?' nx-cam-nuevo':'')+'"><b>🚚 '+esc(c.v)+'</b><span class="nx-cam-n">'+c.n+(c.nuevos?(' <i>+'+c.nuevos+'</i>'):'')+'</span>'+
+      '<small>'+(zs.length?esc(zs.map(function(z){ return z.replace(/^./,function(x){ return x.toUpperCase(); }); }).join(' · ')):'sin paradas')+'</small></div>';
+  }).join('');
+  var h='<div class="nx nx-teal nx-sug" id="nx-sug-caja">'+
+    '<div class="nx-cab">'+nxIco('cam')+'<div class="nx-cuerpo"><div class="nx-tit">'+(D.lista.length?('⚠️ Sin camión para '+esc(NX_SUG_DIA==='hoy'?('hoy '+nxDiaTxt(D.dia)):nxCuandoTxt(D.dia))+' · '+D.lista.length+' pedido'+(D.lista.length===1?'':'s')):('✅ '+(NX_SUG_DIA==='hoy'?'Hoy':'Mañana')+' todos tienen camión'))+'</div>'+
+      '<div class="nx-sub">El panel propone el camión que ya va a esa zona; si ninguno va, el más cerca o el que lleva menos paradas. Vos decidís.</div></div>'+
+      '<div class="nx-tabs">'+chip('manana', nxDiaTxt(proximoDiaEntrega()).split(' ')[0].replace(/^./,function(c){ return c.toUpperCase(); }), nM)+(nH?chip('hoy','Hoy',nH):'')+'</div></div>'+
+    (D.lista.length?('<div class="nx-acc" style="justify-content:flex-start;margin:8px 0 2px"><button type="button" class="nx-btn" onclick="nxSugAceptarTodas()">✓ Aceptar todas ('+D.lista.length+')</button>'+
+      (Object.keys(NX_SUG_CAMBIO).length?'<button type="button" class="nx-btn nx-btn-suave" onclick="NX_SUG_CAMBIO={};nxSugPintar()">↺ Volver a lo sugerido</button>':'')+'</div>'+
+      '<div class="nx-sug-lista">'+filas+'</div>'):'')+
+    '<div class="nx-sub" style="margin:10px 0 6px;font-weight:800">🚚 Camiones de '+esc(NX_SUG_DIA==='hoy'?'hoy':nxDiaTxt(D.dia))+(D.lista.length?' (con lo sugerido)':'')+'</div>'+
+    '<div class="nx-cams">'+cams+'</div>'+
+  '</div>';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }   // repintar igual reiniciaría las animaciones de entrada cada 2 minutos
+}
+function nxSugAplicar(id, v){
+  var p=findById(id); if(!p || !v || !VEHICULOS[v] || vehiculoDe(p)) return false;
+  p.vehiculo=v; p.chofer=VEHICULOS[v][0]||'';
+  delete NX_SUG_CAMBIO[id];
+  persistPedido(p);
+  return true;
+}
+function nxSugElegido(id){ var D=nxSugDatos(nxSugDia()); for(var i=0;i<D.lista.length;i++) if(String(D.lista[i].p.id)===String(id)) return D.lista[i].v; return ''; }
+function nxSugAceptar(id){
+  var v=nxSugElegido(id), r=document.getElementById('nx-sug-'+id), p=findById(id);
+  if(!v) return;
+  var hacer=function(){ if(nxSugAplicar(id, v)){ toast('🚚 '+((p&&p.cliente)||'Pedido')+' → '+v,'ok'); nxBadges(); } };
+  if(r && !nxMudo()){ r.classList.add('nx-va'); setTimeout(hacer, 380); } else hacer();
+}
+function nxSugAceptarTodas(){
+  var D=nxSugDatos(nxSugDia()), n=0;
+  D.lista.forEach(function(s){ if(s.v && nxSugAplicar(s.p.id, s.v)) n++; });
+  if(n){ toast('🚚 '+n+' pedido'+(n===1?'':'s')+' con camión ✓','ok'); nxConfeti(document.getElementById('nx-sug-caja')); }
+  nxBadges();
+}
+
+/* ---------------------------------------------------------------- A2 · LAS PARADAS POR CERCANÍA (hoja de ruta)
+   La hoja de ruta (y su WhatsApp) ordena las paradas de cada chofer saliendo de PTF: primero la mañana, después la tarde, y en
+   cada turno siempre la más cerca de donde quedó (la MISMA cuenta del recorrido del mapa, `mapaRutaOrden`). Las que no tienen
+   ubicación van al final y se dice. Los km son en línea recta. «Como estaba» vuelve al orden de siempre (turno y zona). */
+var LS_RUTA_CERCA='me_ruta_cerca';
+function nxRutaCerca(){ var v=nxLS(LS_RUTA_CERCA); return v!==false; }
+function nxRutaSetCerca(on){ nxLS(LS_RUTA_CERCA, !!on); renderRuta(); }
+function nxRutaOrdenar(stops){
+  var P=almUbic('ptf'), con=[], sin=[];
+  stops.forEach(function(p){ var g=almPunto(p); if(g) con.push({ p:p, g:g }); else sin.push(p); });
+  var ord=mapaRutaOrden(con, P), prev=P, km=0, kmDe={};   // los km van aparte: el pedido no se toca (se guarda tal cual)
+  ord.forEach(function(it){ var d=mapaKmAprox(prev, it.g); km+=d; prev=it.g; kmDe[String(it.p.id)]=d; });
+  return { stops:ord.map(function(it){ return it.p; }).concat(sin), km:km, sin:sin.length, kmDe:kmDe };
+}
+
+/* ---------------------------------------------------------------- A3 · AVISO DE PEDIDOS SIN CAMIÓN
+   Desde las 15:00 (`NX_A3_HORA`), si quedan pedidos del próximo día de entrega sin camión: un cartel arriba de Administración
+   (con «🚚 Asignar ahora», que baja a las sugerencias, y «⏰ Recordar en 30 min») y el número rojo en la pestaña. El número queda
+   hasta que no falte ninguno; el cartel se puede posponer. La pestaña muestra el número solo en un dispositivo donde ya se
+   entró a Administración (las vendedoras no lo necesitan). */
+var NX_A3_HORA=15, LS_A3='me_a3_pos', LS_ADM_DEV='me_adm_dev';
+function nxA3Datos(){
+  var dia=proximoDiaEntrega(), n=nxSugSin(dia).length;
+  return { dia:dia, n:n, activo:n>0 && nxHoraAhora()>=NX_A3_HORA };
+}
+function nxA3Pintar(){
+  var el=document.getElementById('nx-a3'); if(!el) return;
+  var D=nxA3Datos(), pos=nxLS(LS_A3)||{};
+  if(!UNLOCKED || !D.activo || (pos.dia===todayStr() && Date.now()<(pos.hasta||0))){ el.innerHTML=''; el._h=''; return; }
+  var h='<div class="nx nx-rosa nx-a3 nx-entra" role="alert">'+nxIco('reloj')+
+    '<div class="nx-cuerpo"><div class="nx-tit">🔔 Ya son más de las '+NX_A3_HORA+':00 y quedan '+D.n+' pedido'+(D.n===1?'':'s')+' de '+esc(nxCuandoTxt(D.dia))+' sin camión</div>'+
+      '<div class="nx-sub">Asignalos ahora así la carga se arma a tiempo.</div></div>'+
+    '<div class="nx-acc"><button type="button" class="nx-btn" onclick="nxA3Ir()">🚚 Asignar ahora</button>'+
+      '<button type="button" class="nx-btn nx-btn-suave" onclick="nxA3Posponer()">⏰ Recordar en 30 min</button></div></div>';
+  if(el._h!==h || !el.innerHTML){ el.innerHTML=h; el._h=h; }
+}
+function nxA3Ir(){
+  NX_SUG_DIA='manana'; nxSugPintar();
+  var c=document.getElementById('nx-sug-caja');
+  if(c){ try{ c.scrollIntoView({ block:'start', behavior:'smooth' }); }catch(e){} c.classList.remove('nx-destello'); void c.offsetWidth; c.classList.add('nx-destello'); }
+}
+function nxA3Posponer(){ nxLS(LS_A3, { dia:todayStr(), hasta:Date.now()+30*60000 }); nxA3Pintar(); toast('⏰ Te lo recuerdo en 30 minutos','ok'); }
+
+/* ---------------------------------------------------------------- LOS NÚMEROS DE LAS PESTAÑAS
+   Mis pedidos (naranja, desde las 17:00): clientes de mañana sin avisar, de la vendedora recordada en este dispositivo.
+   Contabilidad (ámbar): pagos sin terminar. Administración (rojo, desde las 15:00): pedidos de mañana sin camión. */
+function nxBadge(idTab, n, cls, tit){
+  var t=document.getElementById(idTab); if(!t) return;
+  var b=t.querySelector('.nx-tb');
+  if(!n){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('span'); b.className='nx-tb'; t.appendChild(b); }
+  b.className='nx-tb '+cls; if(b.textContent!==String(n)){ b.textContent=String(n); b.classList.remove('nx-tb-pop'); void b.offsetWidth; b.classList.add('nx-tb-pop'); }
+  b.title=tit||'';
+}
+function nxBadges(){
+  try{
+    var v=getVendedorMem(), D=v?nxM1Datos(v, false):null;
+    nxBadge('tab-mis', (D && D.tarde) ? D.faltan : 0, 'nx-tb-nar', 'Clientes de mañana sin avisar');
+  }catch(e){}
+  try{ var np=nxPstLista().length; nxBadge('tab-conta', np, 'nx-tb-oro', 'Pagos sin terminar'); nxPstBoton(); }catch(e){}
+  try{
+    var A=nxA3Datos(), dev=UNLOCKED || nxLS(LS_ADM_DEV);
+    nxBadge('tab-admin', (dev && A.activo) ? A.n : 0, 'nx-tb-rojo', 'Pedidos de mañana sin camión');
+    nxA3Pintar();
+  }catch(e){}
+}
+var NX_RELOJ=0;
+function nxRelojArrancar(){ if(NX_RELOJ) return; NX_RELOJ=setInterval(function(){ nxBadges(); }, 60000); }
+
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   geoCacheLoad();
@@ -30238,6 +31045,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
   document.getElementById('f-maps').addEventListener('input',fxMapaProgramar);   // 🧰 (§4ih) el mapita
+  document.getElementById('f-celular').addEventListener('input',nxCliProgramar);   // 👋 (§4js, P1) ¿ya compró?
   (function(){ var fc=document.querySelector('#view-form .form-card'); if(fc){ ['input','change','click'].forEach(function(t){ fc.addEventListener(t, fxLadosProgramar); }); } })();   // 🖥️ (§4ig) el pedido en vivo
   window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
   document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)
@@ -30249,6 +31057,7 @@ document.addEventListener('DOMContentLoaded',function(){
   cargaInicial();      // la planilla, con reintentos y cartel de qué pasa (§4di)
   if(CONNECTED) flushPending();
   autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
+  nxBadges(); nxRelojArrancar();   // ✨ (§4js) los números de las pestañas, y cada minuto (las 15:00 y las 17:00)
 });
 </script>
 </body>
