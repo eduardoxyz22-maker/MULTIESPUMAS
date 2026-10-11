@@ -30567,13 +30567,13 @@ function nxSaldoCliente(p){
   return t;
 }
 function nxMsgCliente(p, tipo){
-  var nom=nxNombreCorto(p.cliente), t=turnoDe(p), cuando=p.fecha?nxDiaTxt(p.fecha):'';
+  var nom=nxNombreCorto(p.cliente);
   var L=[];
   if(tipo==='cambio'){
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+'. Cambió el día de entrega de tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+':');
   }else if(tipo==='manana'){
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+' por tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+'.');
-    L.push('🚚 '+(p.fecha===tomorrowStr()?'Mañana ':'El ')+cuando+' te lo llevamos.');
+    L.push('🚚 '+(p.fecha===tomorrowStr()?'¡Mañana':('¡El '+nxDiaTxt(p.fecha).split(' ')[0]))+' te llevamos tu pedido!');   // el día con fecha y la hora van en la línea de logística
   }else{
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te confirmamos tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+' de '+nxMarcaTxt(p)+':');
   }

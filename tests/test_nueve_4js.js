@@ -195,7 +195,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('tocarla despliega las 2 entregas', r.filas===2, r.filas);
   chk('en el recordatorio, la línea de la mañana: de 9:00 a 12:00', /Estar atento el sábado 10\/10 por la mañana: llegamos entre las 9:00 y las 12:00/.test(r.wa), r.wa.slice(0,400));
-  chk('el «Avisar» abre su WhatsApp con el mensaje de mañana', /wa\.me\/59176543210\?text=Hola Ana/.test(r.wa) && /Mañana sábado 10\/10 te lo llevamos\./.test(r.wa), r.wa.slice(0,140));
+  chk('el «Avisar» abre su WhatsApp con el mensaje de mañana', /wa\.me\/59176543210\?text=Hola Ana/.test(r.wa) && /¡Mañana te llevamos tu pedido!/.test(r.wa), r.wa.slice(0,140));
   chk('avisado: 1 de 2, la fila en verde y el número baja a 1', /1 de 2/.test(r.txt) && r.hecho===1 && r.badge==='1', r);
   chk('se ve el mensaje que se le mandó', /Hola Ana/.test(r.msg), r.msg.slice(0,60));
   chk('con todos avisados la ficha se pone en verde', /2 de 2/.test(r.todos) && /todos avisados/.test(r.todos) && r.listo, r.todos);
