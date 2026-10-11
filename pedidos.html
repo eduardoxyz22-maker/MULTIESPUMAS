@@ -30499,7 +30499,10 @@ function nxCliLimpiar(){ clearTimeout(NX_CLI_T); NX_CLI={ vista:'', lleno:{}, p:
 /* ---------------------------------------------------------------- P3 · EL MENSAJE PARA EL CLIENTE
    Sale en la ventana de «✅ Pedido guardado», debajo del mensaje del grupo: se puede corregir antes de mandarlo y el botón abre
    el WhatsApp DEL CLIENTE con el texto puesto. También al corregir un pedido si cambió el día o el turno («avisale del cambio»).
-   Nada de horarios: el turno dice «por la mañana / por la tarde», que es lo que el panel sabe. */
+   El turno va con su horario (dueño, 11/10: *«si está en PM, que entre las 14:30 a 18:30 llegará, o si es AM desde las 9 a 12»*):
+   `NX_HORARIO`. Sin turno no se promete hora. */
+var NX_HORARIO={ AM:'por la mañana, de 9:00 a 12:00', PM:'por la tarde, de 14:30 a 18:30' };
+function nxTurnoTxt(t){ return NX_HORARIO[t] ? (', '+NX_HORARIO[t]) : ''; }
 function nxSaldoCliente(p){
   if(noSeCobra(p)) return '';
   var falta=Number(p.saldo)||0, flete=envioPorCobrar(p);
@@ -30515,12 +30518,12 @@ function nxMsgCliente(p, tipo){
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+'. Cambió el día de entrega de tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+':');
   }else if(tipo==='manana'){
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te escribimos de '+nxMarcaTxt(p)+' por tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+'.');
-    L.push('🚚 '+(p.fecha===tomorrowStr()?'Mañana ':'El ')+cuando+' te lo llevamos'+(t?(t==='PM'?', por la tarde':', por la mañana'):'')+'.');
+    L.push('🚚 '+(p.fecha===tomorrowStr()?'Mañana ':'El ')+cuando+' te lo llevamos'+nxTurnoTxt(t)+'.');
   }else{
     L.push('Hola'+(nom?(' '+nom):'')+' 👋, te confirmamos tu pedido'+(p.oc?(' '+ocEtiq(p.oc)):'')+' de '+nxMarcaTxt(p)+':');
   }
   (p.productos||[]).filter(Boolean).forEach(function(x){ L.push('🛏️ '+(Number(x.cant)||1)+' × '+String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')); });
-  if(tipo!=='manana' && p.fecha) L.push('📅 Entrega: '+cuando+(t?(t==='PM'?', por la tarde':', por la mañana'):''));
+  if(tipo!=='manana' && p.fecha) L.push('📅 Entrega: '+cuando+nxTurnoTxt(t));
   var dir=String(p.direccion||'').trim(); if(dir) L.push('📍 '+dir);
   var sl=nxSaldoCliente(p); if(sl) L.push(sl);
   L.push(tipo==='manana' ? 'Si no vas a estar, avisanos por acá así lo reprogramamos. ¡Gracias!' : 'Cualquier cambio, escribinos a este número. ¡Gracias por tu compra!');

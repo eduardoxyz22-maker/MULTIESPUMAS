@@ -7461,7 +7461,7 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   Ni al corregir ni en una reposición; en venta de tienda, sin la dirección.
 - **P3 · el mensaje para el cliente** (`nxMsgCliente`, `nxClienteBloque`): en «✅ Pedido guardado», debajo del mensaje del grupo,
   un cuadro verde con el texto para el CLIENTE (se puede corregir) y «💬 Abrir el WhatsApp de <nombre>» (`misWaCliente` + `?text=`).
-  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno = «por la mañana / por la tarde», sin horarios.
+  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 11/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, de 14:30 a 18:30» (`NX_HORARIO`); sin turno, sin hora.
   Saldo con el recargo por entrega si queda. No en ATC, RPT, venta de tienda ni al reenviar. Al corregir, si cambió el día o el turno
   (`difPedido`), «💬 Avisarle al cliente del día nuevo» (`nxAvisarCambio`).
 - **M1 · recordatorio de entrega** (dueño: *«¿dónde iría?»* → en Mis pedidos): la 5ª ficha naranja `mi-f5` a lo ancho, debajo de las

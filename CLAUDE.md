@@ -726,7 +726,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 ## ✨ Las nueve mejoras (§4js, 11/10, en la rama SIN publicar; dueño: *«todo está bueno, solo falta pulir el diseño, los colores, animaciones»*)
 Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja de la marca y dibujito). Solo completan, avisan o proponen:
 - **P1** `nxCliBuscar` (`#nx-cli`): el celular de un pedido NUEVO completa SOLO lo vacío con el pedido más nuevo de ese cliente; «No es él» lo vacía.
-- **P3** `nxMsgCliente`/`nxClienteBloque`: en «✅ Pedido guardado», el mensaje para el CLIENTE y su WhatsApp; al corregir con día/turno nuevo, `nxAvisarCambio`. Sin horarios.
+- **P3** `nxMsgCliente`/`nxClienteBloque`: en «✅ Pedido guardado», el mensaje para el CLIENTE y su WhatsApp; al corregir con día/turno nuevo, `nxAvisarCambio`. Con el horario del turno (`NX_HORARIO`: AM 9:00 a 12:00, PM 14:30 a 18:30, dueño 11/10).
 - **M1** la 5ª ficha `mi-f5` «🔔 Mañana» en Mis pedidos + `#nx-m1`; late desde las 17:00 (`NX_M1_HORA`). ⚠️ «✓ Avisado» es por aparato (`me_m1_avisos`), no va a la planilla.
 - **M3** `nxM3`: pasó lo vendido el mes anterior → dona dorada, medalla y papel picado una vez por mes (`me_m3_fiesta`).
 - **C1** `nxCierreBajar`: un Excel con Ventas, Cuadre y Productos. ⚠️ Reusa `exportConta`/`exportCuadre`/`pmHojas` cambiando sus controles y
