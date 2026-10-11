@@ -30449,7 +30449,34 @@ function nxCel8(t){
   return d.length>=7 ? [d.slice(-8)] : [];  // un fijo
 }
 function nxNit(t){ var d=String(t||'').replace(/\D/g,'').replace(/^0+/,''); return d.length>=5 ? d : ''; }
-function nxNomClave(t){ var n=normNombre(t); return (n.length>=6 && /\s/.test(n)) ? n : ''; }
+/* (dueño, 11/10: *«puse multicenter y no me llenó nada»*) El nombre busca también con UNA palabra (5 letras o más: «MULTICENTER») y
+   perdona un error de tipeo («Muticenter»): `nxNomParecido`. Sigue sin completar solo: propone y se elige. */
+function nxNomClave(t){ var n=normNombre(t).replace(/[^a-z0-9ñ ]+/g,' ').replace(/\s+/g,' ').trim(); return n.length>=5 ? n : ''; }
+/* Distancia de edición (letras cambiadas, de más o de menos), cortando apenas pasa `max`. */
+function nxDist(a, b, max){
+  if(Math.abs(a.length-b.length)>max) return max+1;
+  var prev=[], i, j; for(j=0;j<=b.length;j++) prev[j]=j;
+  for(i=1;i<=a.length;i++){
+    var cur=[i], min=i;
+    for(j=1;j<=b.length;j++){ cur[j]=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+(a.charAt(i-1)===b.charAt(j-1)?0:1)); if(cur[j]<min) min=cur[j]; }
+    if(min>max) return max+1;
+    prev=cur;
+  }
+  return prev[b.length];
+}
+/* ¿El cliente `nombre` es el que se escribió (`nm`, ya normalizado)? 0 = igual · 1 = empieza igual · 2 = con un error de tipeo ·
+   -1 = no. «Empieza igual» (las primeras palabras: «MULTICENTER» → «MULTICENTER BODEGA») solo con 2 palabras o 8 letras o más: una
+   palabra corta como «MARIA» traería a todas las Marías. El error: 1 letra hasta 7, 2 desde 8. */
+function nxNomParecido(nombre, nm){
+  var c=nxNomClave(nombre); if(!c) return -1;
+  if(c===nm) return 0;
+  var w=nm.split(' ').length, largo=(w>=2 || nm.length>=8), tope=nm.length>=8 ? 2 : 1;
+  var pre=c.split(' ').slice(0,w).join(' ');
+  if(largo && pre===nm) return 1;
+  if(nxDist(c, nm, tope)<=tope) return 2;
+  if(largo && pre!==c && nxDist(pre, nm, tope)<=tope) return 2;
+  return -1;
+}
 function nxCliProgramar(e){
   if(NX_CLI_LLENANDO) return;               // lo que completa el propio P1 no vuelve a buscar
   var id=(e && e.target && e.target.id)||'f-celular';
@@ -30464,7 +30491,7 @@ function nxCliBuscar(por){
   var clave='', test=null;
   if(por==='cel'){ var cs=nxCel8(val('f-celular')); if(cs.length){ clave=cs.join(','); test=function(p){ return nxCel8(p.celular).some(function(x){ return cs.indexOf(x)>=0; }); }; } }
   else if(por==='nit'){ var ni=nxNit(val('f-nit')); if(ni){ clave=ni; test=function(p){ return nxNit(p.nit)===ni; }; } }
-  else { var nm=nxNomClave(val('f-cliente')); if(nm){ clave=nm; test=function(p){ return normNombre(p.cliente)===nm; }; } }
+  else { var nm=nxNomClave(val('f-cliente')); if(nm){ clave=nm; test=function(p){ return nxNomParecido(p.cliente, nm)>=0; }; } }
   if(!clave){ NX_CLI.vista[por]=''; if(NX_CLI.por===por && !Object.keys(NX_CLI.lleno).length) nxCliPintar(null); return; }
   if(NX_CLI.vista[por]===clave) return;     // ya se miró (y si dijo «no es él», no se vuelve a completar)
   NX_CLI.vista[por]=clave;
@@ -30473,10 +30500,13 @@ function nxCliBuscar(por){
   if(!L.length){ if(NX_CLI.por===por && !Object.keys(NX_CLI.lleno).length) nxCliPintar(null); return; }
   L.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
   if(por==='nom'){
+    /* Primero el nombre igual, después el que empieza igual, después el que tiene un error; dentro, el más nuevo. */
+    var pes={}; L.forEach(function(p){ pes[p.id]=nxNomParecido(p.cliente, clave); });
+    L.sort(function(a,b){ return (pes[a.id]-pes[b.id]) || ((Number(b.ts)||0)-(Number(a.ts)||0)); });
     /* El mismo nombre puede ser otra persona: uno por celular distinto (o por zona, si no tiene celular). */
     var vistos={}, cands=[];
-    L.forEach(function(p){ var k=(nxCel8(p.celular)[0]||'')||('z:'+normNombre(p.zona)); if(vistos[k]) { vistos[k].n++; return; } vistos[k]={ p:p, n:1 }; cands.push(vistos[k]); });
-    NX_CLI.cands=cands.slice(0,3); NX_CLI.por='nom';
+    L.forEach(function(p){ var k=nxNomClave(p.cliente)+'|'+((nxCel8(p.celular)[0]||'')||('z:'+normNombre(p.zona))); if(vistos[k]) { vistos[k].n++; return; } vistos[k]={ p:p, n:1, igual:pes[p.id]===0 }; cands.push(vistos[k]); });
+    NX_CLI.cands=cands.slice(0,3); NX_CLI.por='nom'; NX_CLI.escrito=val('f-cliente');
     nxCliPintar(null, false, NX_CLI.cands);
     return;
   }
@@ -30500,14 +30530,21 @@ function nxCliLlenar(u, n, por){
 function nxCliElegir(i){
   var c=NX_CLI.cands && NX_CLI.cands[i]; if(!c) return;
   var n=nxCliPedidos().filter(function(p){ return normNombre(p.cliente)===normNombre(c.p.cliente) && nxCel8(p.celular)[0]===nxCel8(c.p.celular)[0]; }).length||c.n;
+  /* Si se escribió distinto («Muticenter»), el nombre queda como en sus pedidos («MULTICENTER»): así lo encuentran las cuentas que
+     miran el cliente (Eduardo → Multicenter en el stock, §4gm). «No es él» vuelve a lo escrito. */
+  var fc=document.getElementById('f-cliente'), antes=fc ? String(fc.value||'') : '';
+  if(fc && normNombre(antes)!==normNombre(c.p.cliente)){
+    NX_CLI_LLENANDO=true; fc.value=String(c.p.cliente||'').trim(); try{ fc.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} NX_CLI_LLENANDO=false;
+  } else antes='';
   nxCliLlenar(c.p, n, 'nom');
+  if(antes){ NX_CLI.nomAntes=antes; NX_CLI.nomPuesto=String(c.p.cliente||'').trim(); NX_CLI.vista.nom=nxNomClave(NX_CLI.nomPuesto); }
 }
 function nxCliPintar(u, nuevo, cands){
   var el=document.getElementById('nx-cli'); if(!el) return;
   if(cands && cands.length){
     el.innerHTML='<div class="nx nx-teal nx-entra">'+
       '<div class="nx-cab">'+nxIco('cli')+'<div class="nx-cuerpo"><div class="nx-tit">👋 ¿Es un cliente que ya compró?</div>'+
-        '<div class="nx-sub">Hay '+(cands.length===1?'un cliente':cands.length+' clientes')+' con ese nombre. Si es '+(cands.length===1?'él':'uno de ellos')+', tocá «Sí, es este» y se completan sus datos.</div></div></div>'+
+        '<div class="nx-sub">Hay '+(cands.length===1?'un cliente':cands.length+' clientes')+(cands.every(function(c){ return c.igual; })?' con ese nombre':' con un nombre parecido')+'. Si es '+(cands.length===1?'él':'uno de ellos')+', tocá «Sí, es este» y se completan sus datos'+(cands.every(function(c){ return c.igual; })?'':' (y el nombre queda como en sus pedidos)')+'.</div></div></div>'+
       '<div class="nx-cli-cands">'+cands.map(function(c,i){
         var p=c.p, f=fechaSalida(p)||contaFecha(p);
         return '<div class="nx-cli-cand" style="animation-delay:'+(i*80)+'ms"><div class="nx-sug-q"><b>'+esc(p.cliente||'—')+'</b>'+
@@ -30539,8 +30576,10 @@ function nxCliNoEs(){
     var e=document.getElementById(id);
     if(e && String(e.value||'').trim()===NX_CLI.lleno[id]){ e.value=''; try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} }
   });
+  var fc=document.getElementById('f-cliente');
+  if(NX_CLI.nomAntes && fc && String(fc.value||'').trim()===NX_CLI.nomPuesto){ fc.value=NX_CLI.nomAntes; try{ fc.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} }
   NX_CLI_LLENANDO=false;
-  NX_CLI.lleno={}; NX_CLI.p=null; NX_CLI.cands=null;
+  NX_CLI.lleno={}; NX_CLI.p=null; NX_CLI.cands=null; NX_CLI.nomAntes=''; NX_CLI.nomPuesto='';
   nxCliPintar(null);
   toast('Listo: se vaciaron los datos que se habían completado','ok');
 }
