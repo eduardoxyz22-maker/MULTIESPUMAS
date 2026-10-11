@@ -137,7 +137,33 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('por el NIT también completa (y pone el celular)', r.porNit.cli==='JUAN CARLOS ROCA' && r.porNit.cel==='71234567' && r.porNit.zona==='Equipetrol' && /por el NIT/.test(r.porNit.txt), r.porNit);
   chk('por el nombre NO completa solo: propone, sin acentos ni mayúsculas', r.antes.zona==='' && r.antes.n===1 && /Sí, es este/.test(r.antes.txt), r.antes);
   chk('«Sí, es este» completa celular y zona', r.despues.cel==='71234567' && r.despues.zona==='Equipetrol' && /elegido por el nombre/.test(r.despues.txt), r.despues);
-  chk('con una sola palabra no busca por nombre', r.corto);
+  chk('con una palabra corta («juan») no busca por nombre', r.corto);
+  /* (dueño, 11/10: «puse multicenter y no me llenó nada») una palabra sola y con un error de tipeo. */
+  r = await page.evaluate(async () => {
+    await cargar([ P({ id:'MC1', oc:'09-200', cliente:'MULTICENTER', celular:'', zona:'Parque Industrial', direccion:'Bodega Multicenter', vendedor:'Eduardo', fecha:window.dia(-10), ts:window.tsDe(window.dia(-11)) }),
+                   P({ id:'MC2', oc:'09-150', cliente:'MULTICENTER BODEGA', celular:'', zona:'Norte', vendedor:'Eduardo', fecha:window.dia(-30), ts:window.tsDe(window.dia(-31)) }),
+                   P({ id:'MA1', oc:'09-100', cliente:'MARIA LOPEZ', celular:'70000001', zona:'Sur', fecha:window.dia(-5) }),
+                   P({ id:'MA2', oc:'09-101', cliente:'MARIA', celular:'70000002', zona:'Oeste', fecha:window.dia(-5) }) ]);
+    showView('form'); resetForm();
+    var c=document.getElementById('f-cliente'), g=function(id){ return document.getElementById(id).value; };
+    var cands=function(){ return [].map.call(document.querySelectorAll('#nx-cli .nx-cli-cand b'), function(b){ return b.textContent; }); };
+    var escribir=async function(t){ resetForm(); c.value=t; c.dispatchEvent(new Event('input',{bubbles:true})); await esperar(450); return { c:cands(), txt:document.getElementById('nx-cli').innerText }; };
+    var tipeo=await escribir('Muticenter');
+    nxCliElegir(0); await esperar(50);
+    var elegido={ cli:g('f-cliente'), zona:g('f-zona'), dir:g('f-direccion') };
+    nxCliNoEs(); await esperar(50);
+    var noEs={ cli:g('f-cliente'), zona:g('f-zona') };
+    var bien=await escribir('multicenter'), maria=await escribir('Maria'), mariaL=await escribir('maria lopes'), otro=await escribir('Pedro Vaca');
+    resetForm();
+    return { tipeo:tipeo, elegido:elegido, noEs:noEs, bien:bien.c, maria:maria.c, mariaL:mariaL.c, otro:otro.c };
+  });
+  chk('«Muticenter» (sin la L, una palabra) propone MULTICENTER y MULTICENTER BODEGA, el igual primero', JSON.stringify(r.tipeo.c)==='["MULTICENTER","MULTICENTER BODEGA"]' && /nombre parecido/.test(r.tipeo.txt), r.tipeo);
+  chk('«Sí, es este» completa zona y dirección y deja el nombre como en sus pedidos', r.elegido.cli==='MULTICENTER' && r.elegido.zona==='Parque Industrial' && r.elegido.dir==='Bodega Multicenter', r.elegido);
+  chk('«No es él» vacía lo completado y vuelve a lo escrito', r.noEs.cli==='Muticenter' && r.noEs.zona==='', r.noEs);
+  chk('«multicenter» bien escrito: el mismo resultado', JSON.stringify(r.bien)==='["MULTICENTER","MULTICENTER BODEGA"]', r.bien);
+  chk('«Maria» sola (palabra corta): solo la que se llama MARIA, no todas las Marías', JSON.stringify(r.maria)==='["MARIA"]', r.maria);
+  chk('«maria lopes» (dos palabras, una letra mal): MARIA LOPEZ', JSON.stringify(r.mariaL)==='["MARIA LOPEZ"]', r.mariaL);
+  chk('un nombre que no compró nunca: no propone nada', r.otro.length===0, r.otro);
 
   console.log('\n── P3 · el mensaje para el cliente ──');
   r = await page.evaluate(async () => {
