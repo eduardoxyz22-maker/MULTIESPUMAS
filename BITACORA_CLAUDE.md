@@ -7501,7 +7501,9 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   donde ya se entró a Administración (`me_adm_dev`).
 - Los números de las pestañas (`nxBadges`) se repintan con `updateStats` y cada minuto (`nxRelojArrancar`).
 - `tests/test_nueve_4js.js` (53; contra `97e9093` no existen las funciones). Capturas en iPad (1180) y celular (390) revisadas.
-- El dueño confirmó «✓ Avisado» por aparato (*«1 sí»*). Quedan sin confirmar las 15:00, las 17:00 y los 45 días de C2.
+- El dueño confirmó «✓ Avisado» por aparato (*«1 sí»*) y después eligió de opciones: A3 a las **16:00** (`NX_A3_HORA`), M1 desde las
+  **17:00** (como estaba) y C2 **solo el mes en curso** (`NX_PST_DIAS`=0 → desde el día 1; la lista dice «De octubre de 2026»).
+  `test_nueve_4js` → 55.
 - Antes de publicar: batería 160 suites, 5.755 comprobaciones, «== TODO EN VERDE ==». `test_ubic` salía rojo con la máquina cargada
   (1 de cada 4 corridas en paralelo; la versión de antes, 0 de 8): su servidor de mentira tardaba 3 s y el contador se leía a
   ~2,7 s; con Administración algo más pesada (las cajas animadas) se pasaba. Se le dio 5 s (8 de 8 en paralelo).

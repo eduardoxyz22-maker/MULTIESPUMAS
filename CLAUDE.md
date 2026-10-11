@@ -731,11 +731,11 @@ Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja d
 - **M3** `nxM3`: pasó lo vendido el mes anterior → dona dorada, medalla y papel picado una vez por mes (`me_m3_fiesta`).
 - **C1** `nxCierreBajar`: un Excel con Ventas, Cuadre y Productos. ⚠️ Reusa `exportConta`/`exportCuadre`/`pmHojas` cambiando sus controles y
   `buildXlsx`/`downloadBlob`/`toast` por un momento (`nxCierreHojas`, con `finally`): si esos Excel cambian de controles, seguirlos.
-- **C2** `nxPstLista`: pagos de 45 días sin recibo, sin foto (no efectivo), QR sin banco, sin método o PAGADA sin monto (`c.sinMonto`).
+- **C2** `nxPstLista`: pagos de ESTE mes (`NX_PST_DIAS`=0, dueño 10/10) sin recibo, sin foto (no efectivo), QR sin banco, sin método o PAGADA sin monto (`c.sinMonto`).
 - **A1** `nxSugDatos`: camión que ya va a la zona → parada a ≤4 km → menos paradas. Aceptar = vehículo + primer chofer.
 - **A2** `nxRutaOrdenar` en `renderRuta`: por cercanía desde PTF (`mapaRutaOrden`), AM primero; «Como estaba» (`me_ruta_cerca`). Los km NO van al pedido.
-- **A3** `nxA3Pintar`: desde las 15:00, cartel en Administración y número rojo en la pestaña (solo aparatos de administración, `me_adm_dev`).
-- Números de pestañas: `nxBadges` (desde `updateStats` y cada minuto). `tests/test_nueve_4js.js` (53). Papel picado apagado en Playwright salvo `FX_PRUEBA`.
+- **A3** `nxA3Pintar`: desde las 16:00 (`NX_A3_HORA`, dueño 10/10), cartel en Administración y número rojo en la pestaña (solo aparatos de administración, `me_adm_dev`).
+- Números de pestañas: `nxBadges` (desde `updateStats` y cada minuto). `tests/test_nueve_4js.js` (55). Papel picado apagado en Playwright salvo `FX_PRUEBA`.
 
 ## 🔎 Revisión del 10/10 con 3 agentes + super + mega (§4jd, PUBLICADA 10/10 09:45, `135ff1e`)
 - **Corte 16:30** (`HORA_CORTE`=16.5, dueño: *«48 h hábiles producir, 24 para entregar; si entra luego de las 4:30 las 48 empiezan al

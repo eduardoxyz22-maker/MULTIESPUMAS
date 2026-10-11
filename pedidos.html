@@ -30817,9 +30817,9 @@ function nxCierreBajar(){
    Los pagos de los últimos `NX_PST_DIAS` días a los que les falta algo: el N° de recibo, la foto del comprobante (QR o tarjeta),
    el banco (QR) o el método; y las ventas marcadas PAGADA sin monto. «Completar» abre la ficha de la venta. El número sale en el
    botón y en la pestaña de Contabilidad. Con un vendedor elegido en Ventas, solo los suyos. Solo mira. */
-var NX_PST_DIAS=45;
+var NX_PST_DIAS=0;   /* (dueño, 10/10: «solo este mes») 0 = desde el día 1 del mes en curso */
 function nxPstLista(){
-  var desde=stockSumarDias(todayStr(), -NX_PST_DIAS), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
+  var desde=NX_PST_DIAS ? stockSumarDias(todayStr(), -NX_PST_DIAS) : (todayStr().slice(0,7)+'-01'), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
   (STATE||[]).forEach(function(p){
     if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
@@ -30856,7 +30856,7 @@ function nxPstAbrir(){
   openModal('<div class="modal-h nx-modal-h nx-rojo-h"><h3>🧾 Pagos sin terminar · '+n+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b"><div class="nx nx-rojo">'+
       '<div class="nx-cab">'+nxIco('recibo')+'<div class="nx-cuerpo"><div class="nx-tit">'+(n?('A '+n+' pago'+(n===1?'':'s')+' le'+(n===1?'':'s')+' falta algo'):'✅ Todo al día')+'</div>'+
-        '<div class="nx-sub">De los últimos '+NX_PST_DIAS+' días'+(((document.getElementById('cta-vendedor')||{}).value||'')?(' · solo '+esc(document.getElementById('cta-vendedor').value)):'')+'. «Completar» abre la ficha de esa venta.</div></div></div>'+
+        '<div class="nx-sub">'+(NX_PST_DIAS?('De los últimos '+NX_PST_DIAS+' días'):('De '+mesNombre(todayStr().slice(0,7))))+(((document.getElementById('cta-vendedor')||{}).value||'')?(' · solo '+esc(document.getElementById('cta-vendedor').value)):'')+'. «Completar» abre la ficha de esa venta.</div></div></div>'+
       (n?('<div class="nx-chips" style="margin:8px 0 4px">'+Object.keys(porQue).map(function(k){ return '<span class="nx-chip">'+porQue[k]+' sin '+esc(k.replace(/^(el|la) /,''))+'</span>'; }).join('')+'</div>'+
           '<div class="nx-pst-lista">'+filas+'</div>')
         :'<div class="nx-vacio">No queda ningún pago sin terminar. 🎉</div>')+
@@ -30982,7 +30982,7 @@ function nxRutaOrdenar(stops){
    (con «🚚 Asignar ahora», que baja a las sugerencias, y «⏰ Recordar en 30 min») y el número rojo en la pestaña. El número queda
    hasta que no falte ninguno; el cartel se puede posponer. La pestaña muestra el número solo en un dispositivo donde ya se
    entró a Administración (las vendedoras no lo necesitan). */
-var NX_A3_HORA=15, LS_A3='me_a3_pos', LS_ADM_DEV='me_adm_dev';
+var NX_A3_HORA=16,   /* (dueño, 10/10: «16:00») */ LS_A3='me_a3_pos', LS_ADM_DEV='me_adm_dev';
 function nxA3Datos(){
   var dia=proximoDiaEntrega(), n=nxSugSin(dia).length;
   return { dia:dia, n:n, activo:n>0 && nxHoraAhora()>=NX_A3_HORA };

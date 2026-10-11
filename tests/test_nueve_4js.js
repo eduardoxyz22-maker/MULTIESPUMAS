@@ -246,6 +246,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     await cargar([ P({ id:'Q1', cliente:'SIN FOTO', ts:window.tsDe(window.dia(-3)), pagado:false, saldo:500, productos:[{desc:'X',cant:1,precio:1500}], metodoPago:'QR 1000 @'+window.dia(-3) }),
                    P({ id:'Q2', cliente:'COMPLETO', ts:window.tsDe(window.dia(-3)), metodoPago:'Efectivo 900 @'+window.dia(-3)+' #555' }),
                    P({ id:'Q3', cliente:'VIEJO', ts:window.tsDe(window.dia(-90)), metodoPago:'QR 900 @'+window.dia(-90) }),
+                   P({ id:'Q6', cliente:'MES PASADO', ts:window.tsDe('2026-09-28'), metodoPago:'QR 700 @2026-09-28' }),
                    P({ id:'Q4', cliente:'PAGADA SIN MONTO', ts:window.tsDe(window.dia(-2)), pagado:true, metodoPago:'Efectivo' }),
                    P({ id:'Q5', cliente:'SIN NADA', ts:window.tsDe(window.dia(-2)), pagado:true, metodoPago:'' }) ]);
     showView('conta'); await esperar(150); renderConta();
@@ -254,7 +255,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     nxPstAbrir(); var m=document.getElementById('modal-box').innerText; closeModal();
     return { n:L.length, falta:q1?q1.falta:[], q4:q4?q4.falta:[], btn:b.innerText, tab:t?t.textContent:'', m:m };
   });
-  chk('cuenta los pagos a los que les falta algo (no el completo ni el de hace 90 días)', r.n===2, r.n);
+  chk('cuenta los pagos de ESTE mes a los que les falta algo (no el completo, ni el del 28/09, ni el de hace 90 días)', r.n===2, r.n);
+  chk('la lista dice que es de este mes', /De octubre de 2026/.test(r.m), r.m.slice(0,120));
   chk('la PAGADA sin monto entra (como el aviso 💸 del Cuadre)', /PAGADA sin monto/.test(String(r.q4)), r.q4);
   chk('le falta recibo, comprobante y banco', JSON.stringify(r.falta)===JSON.stringify(['el N° de recibo','la foto del comprobante','el banco']), r.falta);
   chk('el número en el botón y en la pestaña', /Pagos sin terminar\s*2/.test(r.btn) && r.tab==='2', r);
@@ -299,10 +301,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       return { a3:document.getElementById('nx-a3').innerText, badge:b?b.textContent:'' };
     });
   };
-  r = await a3('2026-10-08T18:00:00Z');   // 14:00
-  chk('a las 14:00 todavía no avisa', r.a3==='' && r.badge==='', r);
   r = await a3('2026-10-08T19:30:00Z');   // 15:30
-  chk('a las 15:30 sale el cartel y el número rojo en la pestaña', /quedan 1 pedido de mañana/.test(r.a3) && r.badge==='1', r);
+  chk('a las 15:30 todavía no avisa (el aviso es a las 16:00)', r.a3==='' && r.badge==='', r);
+  r = await a3('2026-10-08T20:30:00Z');   // 16:30
+  chk('a las 16:30 sale el cartel y el número rojo en la pestaña', /más de las 16:00 y quedan 1 pedido de mañana/.test(r.a3) && r.badge==='1', r);
   r = await page.evaluate(async () => {
     nxA3Posponer(); var pos=document.getElementById('nx-a3').innerText;
     var b=document.querySelector('#tab-admin .nx-tb');
