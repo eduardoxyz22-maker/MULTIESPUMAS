@@ -725,8 +725,8 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 
 ## ✨ Las nueve mejoras (§4js, 11/10, en la rama SIN publicar; dueño: *«todo está bueno, solo falta pulir el diseño, los colores, animaciones»*)
 Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja de la marca y dibujito). Solo completan, avisan o proponen:
-- **P1** `nxCliBuscar` (`#nx-cli`): el celular de un pedido NUEVO completa SOLO lo vacío con el pedido más nuevo de ese cliente; «No es él» lo vacía.
-- **P3** `nxMsgCliente`/`nxClienteBloque`: en «✅ Pedido guardado», el mensaje para el CLIENTE y su WhatsApp; al corregir con día/turno nuevo, `nxAvisarCambio`. Con el horario del turno (`NX_HORARIO`: AM 9:00 a 12:00, PM 14:30 a 18:30, dueño 11/10).
+- **P1** `nxCliBuscar` (`#nx-cli`): en un pedido NUEVO, el celular o el NIT (≥5 números) completan SOLO lo vacío con el pedido más nuevo de ese cliente; el NOMBRE completo (dos palabras, sin acentos) NO completa solo: propone hasta 3 y se elige «Sí, es este» (dueño, 11/10). «No es él» lo vacía. `NX_CLI_LLENANDO` evita que lo completado vuelva a buscar.
+- **P3** `nxMsgCliente`/`nxClienteBloque`: en «✅ Pedido guardado», el mensaje para el CLIENTE y su WhatsApp; al corregir con día/turno nuevo, `nxAvisarCambio`. Dice que logística llama una hora antes (dueño, 11/10). Con el horario del turno (`NX_HORARIO`: AM 9:00 a 12:00, PM 14:30 a 18:30, dueño 11/10).
 - **M1** la 5ª ficha `mi-f5` «🔔 Mañana» en Mis pedidos + `#nx-m1`; late desde las 17:00 (`NX_M1_HORA`). ⚠️ «✓ Avisado» es por aparato (`me_m1_avisos`), no va a la planilla.
 - **M3** `nxM3`: pasó lo vendido el mes anterior → dona dorada, medalla y papel picado una vez por mes (`me_m3_fiesta`).
 - **C1** `nxCierreBajar`: un Excel con Ventas, Cuadre y Productos. ⚠️ Reusa `exportConta`/`exportCuadre`/`pmHojas` cambiando sus controles y
@@ -735,7 +735,7 @@ Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja d
 - **A1** `nxSugDatos`: camión que ya va a la zona → parada a ≤4 km → menos paradas. Aceptar = vehículo + primer chofer.
 - **A2** `nxRutaOrdenar` en `renderRuta`: por cercanía desde PTF (`mapaRutaOrden`), AM primero; «Como estaba» (`me_ruta_cerca`). Los km NO van al pedido.
 - **A3** `nxA3Pintar`: desde las 15:00, cartel en Administración y número rojo en la pestaña (solo aparatos de administración, `me_adm_dev`).
-- Números de pestañas: `nxBadges` (desde `updateStats` y cada minuto). `tests/test_nueve_4js.js` (48). Papel picado apagado en Playwright salvo `FX_PRUEBA`.
+- Números de pestañas: `nxBadges` (desde `updateStats` y cada minuto). `tests/test_nueve_4js.js` (53). Papel picado apagado en Playwright salvo `FX_PRUEBA`.
 
 ## 🔎 Revisión del 10/10 con 3 agentes + super + mega (§4jd, PUBLICADA 10/10 09:45, `135ff1e`)
 - **Corte 16:30** (`HORA_CORTE`=16.5, dueño: *«48 h hábiles producir, 24 para entregar; si entra luego de las 4:30 las 48 empiezan al

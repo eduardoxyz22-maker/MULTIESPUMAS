@@ -78,7 +78,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
   console.log('\n── P1 · el cliente que ya compró ──');
   let r = await page.evaluate(async () => {
-    await cargar([ P({ id:'A1', oc:'09-112', cliente:'JUAN CARLOS ROCA', celular:'71234567', zona:'Equipetrol', direccion:'Av. Banzer 123', maps:'https://www.google.com/maps?q=-17.76,-63.19', facturarA:'ROCA SRL', nit:'4455', fecha:window.dia(-20), ts:window.tsDe(window.dia(-25)) }),
+    await cargar([ P({ id:'A1', oc:'09-112', cliente:'JUAN CARLOS ROCA', celular:'71234567', zona:'Equipetrol', direccion:'Av. Banzer 123', maps:'https://www.google.com/maps?q=-17.76,-63.19', facturarA:'ROCA SRL', nit:'4455667', fecha:window.dia(-20), ts:window.tsDe(window.dia(-25)) }),
                    P({ id:'A0', oc:'08-050', cliente:'JUAN ROCA', celular:'591 712 34567', zona:'Viejo', fecha:window.dia(-60), ts:window.tsDe(window.dia(-61)) }) ]);
     showView('form'); resetForm();
     var c=document.getElementById('f-celular'); c.value='712 3456'; c.dispatchEvent(new Event('input',{bubbles:true}));
@@ -92,7 +92,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('con 7 números de un celular todavía no busca', r.antes==='', r.antes);
   chk('completa el nombre del pedido más nuevo', r.cli==='JUAN CARLOS ROCA', r.cli);
-  chk('y zona, dirección, ubicación, facturar a y NIT', r.zona==='Equipetrol' && r.dir==='Av. Banzer 123' && /q=-17.76/.test(r.maps) && r.fac==='ROCA SRL' && r.nit==='4455', r);
+  chk('y zona, dirección, ubicación, facturar a y NIT', r.zona==='Equipetrol' && r.dir==='Av. Banzer 123' && /q=-17.76/.test(r.maps) && r.fac==='ROCA SRL' && r.nit==='4455667', r);
   chk('el cartel dice que ya compró, cuántos pedidos y el último', r.visible && /Ya compró · 2 pedidos/.test(r.txt) && /09-112/.test(r.txt), r.txt.slice(0,120));
   r = await page.evaluate(async () => {
     document.getElementById('f-zona').value='Norte (lo cambié)';
@@ -116,6 +116,28 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('lo ya escrito no se pisa (completa solo lo vacío)', r.cli==='OTRO NOMBRE' && r.zona==='Equipetrol', r);
   chk('al corregir un pedido no completa nada', r.editZona==='' && r.oculto, r);
+  r = await page.evaluate(async () => {
+    resetForm();
+    var n=document.getElementById('f-nit'); n.value='4455667'; n.dispatchEvent(new Event('input',{bubbles:true}));
+    await esperar(450);
+    var g=function(id){ return document.getElementById(id).value; };
+    var porNit={ cli:g('f-cliente'), cel:g('f-celular'), zona:g('f-zona'), txt:document.getElementById('nx-cli').innerText };
+    resetForm();
+    var c=document.getElementById('f-cliente'); c.value='juan carlos roca'; c.dispatchEvent(new Event('input',{bubbles:true}));
+    await esperar(450);
+    var antes={ zona:g('f-zona'), txt:document.getElementById('nx-cli').innerText, n:document.querySelectorAll('#nx-cli .nx-cli-cand').length };
+    nxCliElegir(0); await esperar(50);
+    var despues={ cel:g('f-celular'), zona:g('f-zona'), cli:g('f-cliente'), txt:document.getElementById('nx-cli').innerText };
+    resetForm();
+    c.value='juan'; c.dispatchEvent(new Event('input',{bubbles:true})); await esperar(450);
+    var corto=document.getElementById('nx-cli').hidden;
+    resetForm();
+    return { porNit:porNit, antes:antes, despues:despues, corto:corto };
+  });
+  chk('por el NIT también completa (y pone el celular)', r.porNit.cli==='JUAN CARLOS ROCA' && r.porNit.cel==='71234567' && r.porNit.zona==='Equipetrol' && /por el NIT/.test(r.porNit.txt), r.porNit);
+  chk('por el nombre NO completa solo: propone, sin acentos ni mayúsculas', r.antes.zona==='' && r.antes.n===1 && /Sí, es este/.test(r.antes.txt), r.antes);
+  chk('«Sí, es este» completa celular y zona', r.despues.cel==='71234567' && r.despues.zona==='Equipetrol' && /elegido por el nombre/.test(r.despues.txt), r.despues);
+  chk('con una sola palabra no busca por nombre', r.corto);
 
   console.log('\n── P3 · el mensaje para el cliente ──');
   r = await page.evaluate(async () => {
@@ -135,6 +157,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('al guardar sale el mensaje para el cliente', /Hola Juan 👋, te confirmamos tu pedido OC 10-045/.test(r.t), r.t.split('\n')[0]);
   chk('con los productos, el día, la tarde, la dirección y el saldo', /TITANIO LATEX 140x190/.test(r.t) && /SOMIER ORO/.test(r.t) && /por la tarde, de 14:30 a 18:30/.test(r.t) && /Los Pinos 123/.test(r.t) && /Saldo a pagar al recibir: Bs 1\.200/.test(r.t), r.t);
+  chk('dice que logística llama una hora antes', /logística se contactará una hora antes de la entrega, según el turno y en la fecha designada/.test(r.t), r.t);
   chk('el botón abre el WhatsApp DEL CLIENTE', r.btn && r.url==='https://wa.me/59171234567?text=hola', r.url);
   chk('ni en una ATC ni al reenviar la venta', !r.enAtc && !r.enReenvio, r);
   chk('al corregir: «avisarle al cliente» solo si cambió el día o el turno', r.conCambio && !r.sinCambio, r);

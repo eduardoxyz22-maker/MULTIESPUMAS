@@ -826,6 +826,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 #nx-cli{ margin:-4px 0 14px; }
 /* P3 · el mensaje para el cliente */
 .nx-cli-msg{ margin-top:14px; }
+.nx-cli-cands{ display:grid; gap:6px; margin-top:8px; }
+.nx-cli-cand{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border:1px solid var(--bd); border-radius:12px; padding:8px 10px; animation:nx-entra .45s cubic-bezier(.2,1.3,.4,1) both; }
+.nx-por{ font-size:.7rem; font-weight:800; color:var(--cd); background:#fff; border:1px solid var(--bd); border-radius:999px; padding:1px 8px; vertical-align:2px; }
 .nx-wa-text{ width:100%; margin:10px 0 8px; background:#fff; border:1.5px solid var(--bd); border-radius:12px; font-size:.85rem; resize:vertical; }
 .nx-cli-msg .nx-acc{ justify-content:flex-start; }
 /* M1 · la 5ª ficha de Mis pedidos, a lo ancho debajo de las cuatro */
@@ -30427,12 +30430,15 @@ function nxConfeti(desde){
 }
 
 /* ---------------------------------------------------------------- P1 · EL CLIENTE QUE YA COMPRÓ
-   Al escribir el celular en un pedido NUEVO se busca en toda la planilla (por los 8 números del celular, como el aviso de
-   pedido repetido). Si ya compró, se completan los campos VACÍOS con los datos de su pedido más nuevo (lo escrito no se toca).
+   En un pedido NUEVO se busca en toda la planilla por tres caminos (dueño, 11/10: *«¿P1 solo funciona con el nro de celular?»*):
+     · el CELULAR (los 8 números, como el aviso de pedido repetido) y el NIT (5 números o más): son de UNA persona, así que se
+       completan solos los campos VACÍOS con su pedido más nuevo (lo escrito no se toca);
+     · el NOMBRE completo (nombre y apellido, 6 letras o más, sin acentos ni mayúsculas): dos clientes pueden llamarse igual, así
+       que NO completa solo: propone hasta 3 (con su celular y zona) y se elige con «Sí, es este».
    «No es él» vacía solo lo que se completó y que nadie cambió después. Ni al corregir, ni en una reposición (va a una sucursal). */
-var NX_CLI={ vista:'', lleno:{}, p:null, n:0 };
-var NX_CLI_T=0;
-var NX_CLI_CAMPOS={ 'f-cliente':'nombre', 'f-zona':'zona', 'f-direccion':'dirección', 'f-maps':'ubicación', 'f-facturar':'facturar a', 'f-nit':'NIT' };
+var NX_CLI={ vista:{}, lleno:{}, p:null, n:0, por:'', cands:null };
+var NX_CLI_T=0, NX_CLI_LLENANDO=false;
+var NX_CLI_CAMPOS={ 'f-cliente':'nombre', 'f-celular':'celular', 'f-zona':'zona', 'f-direccion':'dirección', 'f-maps':'ubicación', 'f-facturar':'facturar a', 'f-nit':'NIT' };
 function nxCel8(t){
   var s=String(t||'').replace(/[\s.\-()]/g,''), m=s.match(/[67]\d{7}/g);
   if(m) return m;
@@ -30440,40 +30446,80 @@ function nxCel8(t){
   if(/^[67]/.test(d)) return [];            // un celular a medio escribir: todavía no busca
   return d.length>=7 ? [d.slice(-8)] : [];  // un fijo
 }
-function nxCliProgramar(){ clearTimeout(NX_CLI_T); NX_CLI_T=setTimeout(nxCliBuscar, 350); }
-function nxCliBuscar(){
-  var el=document.getElementById('nx-cli'), fc=document.getElementById('f-celular'); if(!el || !fc) return;
+function nxNit(t){ var d=String(t||'').replace(/\D/g,'').replace(/^0+/,''); return d.length>=5 ? d : ''; }
+function nxNomClave(t){ var n=normNombre(t); return (n.length>=6 && /\s/.test(n)) ? n : ''; }
+function nxCliProgramar(e){
+  if(NX_CLI_LLENANDO) return;               // lo que completa el propio P1 no vuelve a buscar
+  var id=(e && e.target && e.target.id)||'f-celular';
+  clearTimeout(NX_CLI_T); NX_CLI_T=setTimeout(function(){ nxCliBuscar(id==='f-cliente'?'nom':id==='f-nit'?'nit':'cel'); }, 350);
+}
+function nxCliPedidos(){ return (STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !borradorDe(p.id) && !esRPT(p.oc); }); }
+function nxCliBuscar(por){
+  por=por||'cel';
+  var el=document.getElementById('nx-cli'); if(!el) return;
   if(EDIT_ID || docTipoSel()==='RPT'){ nxCliPintar(null); return; }
-  var cs=nxCel8(fc.value);
-  if(!cs.length){ NX_CLI.vista=''; nxCliPintar(null); return; }
-  var clave=cs.join(',');
-  if(clave===NX_CLI.vista) return;          // ya se miró este número (y si dijo «no es él», no se vuelve a completar)
-  var L=(STATE||[]).filter(function(p){
-    if(!p || esFilaSistema(p) || borradorDe(p.id) || esRPT(p.oc)) return false;
-    return nxCel8(p.celular).some(function(x){ return cs.indexOf(x)>=0; });
-  });
-  NX_CLI.vista=clave; NX_CLI.lleno={};
-  if(!L.length){ NX_CLI.p=null; nxCliPintar(null); return; }
+  var val=function(id){ return String((document.getElementById(id)||{}).value||''); };
+  var clave='', test=null;
+  if(por==='cel'){ var cs=nxCel8(val('f-celular')); if(cs.length){ clave=cs.join(','); test=function(p){ return nxCel8(p.celular).some(function(x){ return cs.indexOf(x)>=0; }); }; } }
+  else if(por==='nit'){ var ni=nxNit(val('f-nit')); if(ni){ clave=ni; test=function(p){ return nxNit(p.nit)===ni; }; } }
+  else { var nm=nxNomClave(val('f-cliente')); if(nm){ clave=nm; test=function(p){ return normNombre(p.cliente)===nm; }; } }
+  if(!clave){ NX_CLI.vista[por]=''; if(NX_CLI.por===por && !Object.keys(NX_CLI.lleno).length) nxCliPintar(null); return; }
+  if(NX_CLI.vista[por]===clave) return;     // ya se miró (y si dijo «no es él», no se vuelve a completar)
+  NX_CLI.vista[por]=clave;
+  if(NX_CLI.p && test(NX_CLI.p)) return;    // es el mismo cliente que ya se completó por otro camino
+  var L=nxCliPedidos().filter(test);
+  if(!L.length){ if(NX_CLI.por===por && !Object.keys(NX_CLI.lleno).length) nxCliPintar(null); return; }
   L.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
-  var u=L[0], lleno={};
+  if(por==='nom'){
+    /* El mismo nombre puede ser otra persona: uno por celular distinto (o por zona, si no tiene celular). */
+    var vistos={}, cands=[];
+    L.forEach(function(p){ var k=(nxCel8(p.celular)[0]||'')||('z:'+normNombre(p.zona)); if(vistos[k]) { vistos[k].n++; return; } vistos[k]={ p:p, n:1 }; cands.push(vistos[k]); });
+    NX_CLI.cands=cands.slice(0,3); NX_CLI.por='nom';
+    nxCliPintar(null, false, NX_CLI.cands);
+    return;
+  }
+  nxCliLlenar(L[0], L.length, por);
+}
+function nxCliLlenar(u, n, por){
+  var lleno={};
   var poner=function(id, v){
     var e=document.getElementById(id); v=String(v||'').trim();
     if(!e || !v || String(e.value||'').trim()) return;
     e.value=v; lleno[id]=v;
-    try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){}
+    NX_CLI_LLENANDO=true; try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} NX_CLI_LLENANDO=false;
   };
-  poner('f-cliente', u.cliente);
+  poner('f-cliente', u.cliente); poner('f-celular', u.celular);
   if(!esVentaTienda(u) && !VENTA_TIENDA){ poner('f-zona', u.zona); poner('f-direccion', u.direccion); poner('f-maps', u.maps); }
   poner('f-facturar', u.facturarA); poner('f-nit', u.nit);
-  NX_CLI.lleno=lleno; NX_CLI.p=u; NX_CLI.n=L.length;
+  NX_CLI.lleno=lleno; NX_CLI.p=u; NX_CLI.n=n; NX_CLI.por=por; NX_CLI.cands=null;
   nxCliPintar(u, true);
 }
-function nxCliPintar(u, nuevo){
+/* «Sí, es este» de la búsqueda por nombre. */
+function nxCliElegir(i){
+  var c=NX_CLI.cands && NX_CLI.cands[i]; if(!c) return;
+  var n=nxCliPedidos().filter(function(p){ return normNombre(p.cliente)===normNombre(c.p.cliente) && nxCel8(p.celular)[0]===nxCel8(c.p.celular)[0]; }).length||c.n;
+  nxCliLlenar(c.p, n, 'nom');
+}
+function nxCliPintar(u, nuevo, cands){
   var el=document.getElementById('nx-cli'); if(!el) return;
+  if(cands && cands.length){
+    el.innerHTML='<div class="nx nx-teal nx-entra">'+
+      '<div class="nx-cab">'+nxIco('cli')+'<div class="nx-cuerpo"><div class="nx-tit">👋 ¿Es un cliente que ya compró?</div>'+
+        '<div class="nx-sub">Hay '+(cands.length===1?'un cliente':cands.length+' clientes')+' con ese nombre. Si es '+(cands.length===1?'él':'uno de ellos')+', tocá «Sí, es este» y se completan sus datos.</div></div></div>'+
+      '<div class="nx-cli-cands">'+cands.map(function(c,i){
+        var p=c.p, f=fechaSalida(p)||contaFecha(p);
+        return '<div class="nx-cli-cand" style="animation-delay:'+(i*80)+'ms"><div class="nx-sug-q"><b>'+esc(p.cliente||'—')+'</b>'+
+          '<small>'+esc([p.celular?('📞 '+p.celular):'sin celular', p.zona, (ocEtiq(p.oc)||'pedido')+' del '+fmtFecha(f), c.n>1?(c.n+' pedidos'):''].filter(Boolean).join(' · '))+'</small></div>'+
+          '<button type="button" class="nx-btn" onclick="nxCliElegir('+i+')">✓ Sí, es este</button></div>';
+      }).join('')+'</div>'+
+      '<div class="nx-acc" style="justify-content:flex-start;margin-top:6px"><button type="button" class="nx-btn nx-btn-suave" onclick="NX_CLI.cands=null;nxCliPintar(null)">No, es otro cliente</button></div></div>';
+    el.hidden=false; return;
+  }
   if(!u){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; } return; }
   var ks=Object.keys(NX_CLI.lleno), f=fechaSalida(u)||contaFecha(u), id=String(u.id).replace(/'/g,'');
+  var porTxt={ cel:'por el celular', nit:'por el NIT', nom:'elegido por el nombre' }[NX_CLI.por]||'';
   el.innerHTML='<div class="nx nx-teal nx-fila'+(nuevo?' nx-entra':'')+'">'+nxIco('cli')+
-    '<div class="nx-cuerpo"><div class="nx-tit">👋 Ya compró'+(NX_CLI.n>1?(' · '+NX_CLI.n+' pedidos'):'')+'</div>'+
+    '<div class="nx-cuerpo"><div class="nx-tit">👋 Ya compró'+(NX_CLI.n>1?(' · '+NX_CLI.n+' pedidos'):'')+(porTxt?(' <small class="nx-por">'+porTxt+'</small>'):'')+'</div>'+
       '<div class="nx-sub">El último: <b>'+esc(ocEtiq(u.oc)||'pedido')+'</b> del '+esc(fmtFecha(f))+(u.vendedor?(' · '+esc(u.vendedor)):'')+
         ((u.productos||[]).length?(' · '+esc(nxProdsTxt(u))):'')+'</div>'+
       (ks.length ? ('<div class="nx-chips">'+ks.map(function(k,i){ return '<span class="nx-chip" style="animation-delay:'+(i*90)+'ms">✓ '+esc(NX_CLI_CAMPOS[k])+'</span>'; }).join('')+'</div>')
@@ -30486,15 +30532,17 @@ function nxCliPintar(u, nuevo){
   el.hidden=false;
 }
 function nxCliNoEs(){
+  NX_CLI_LLENANDO=true;
   Object.keys(NX_CLI.lleno).forEach(function(id){
     var e=document.getElementById(id);
     if(e && String(e.value||'').trim()===NX_CLI.lleno[id]){ e.value=''; try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} }
   });
-  NX_CLI.lleno={}; NX_CLI.p=null;
+  NX_CLI_LLENANDO=false;
+  NX_CLI.lleno={}; NX_CLI.p=null; NX_CLI.cands=null;
   nxCliPintar(null);
   toast('Listo: se vaciaron los datos que se habían completado','ok');
 }
-function nxCliLimpiar(){ clearTimeout(NX_CLI_T); NX_CLI={ vista:'', lleno:{}, p:null, n:0 }; nxCliPintar(null); }
+function nxCliLimpiar(){ clearTimeout(NX_CLI_T); NX_CLI={ vista:{}, lleno:{}, p:null, n:0, por:'', cands:null }; nxCliPintar(null); }
 
 /* ---------------------------------------------------------------- P3 · EL MENSAJE PARA EL CLIENTE
    Sale en la ventana de «✅ Pedido guardado», debajo del mensaje del grupo: se puede corregir antes de mandarlo y el botón abre
@@ -30526,6 +30574,8 @@ function nxMsgCliente(p, tipo){
   if(tipo!=='manana' && p.fecha) L.push('📅 Entrega: '+cuando+nxTurnoTxt(t));
   var dir=String(p.direccion||'').trim(); if(dir) L.push('📍 '+dir);
   var sl=nxSaldoCliente(p); if(sl) L.push(sl);
+  /* (dueño, 11/10) logística llama una hora antes, según el turno y en la fecha de entrega */
+  if(p.fecha) L.push('📞 Estar atento: nuestro personal de logística se contactará una hora antes de la entrega, según el turno y en la fecha designada.');
   L.push(tipo==='manana' ? 'Si no vas a estar, avisanos por acá así lo reprogramamos. ¡Gracias!' : 'Cualquier cambio, escribinos a este número. ¡Gracias por tu compra!');
   if(p.vendedor) L.push(String(p.vendedor).trim());
   return L.join('\n');
@@ -31048,7 +31098,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
   document.getElementById('f-maps').addEventListener('input',fxMapaProgramar);   // 🧰 (§4ih) el mapita
-  document.getElementById('f-celular').addEventListener('input',nxCliProgramar);   // 👋 (§4js, P1) ¿ya compró?
+  ['f-celular','f-nit','f-cliente'].forEach(function(id){ document.getElementById(id).addEventListener('input',nxCliProgramar); });   // 👋 (§4js, P1) ¿ya compró? por celular, NIT o nombre
   (function(){ var fc=document.querySelector('#view-form .form-card'); if(fc){ ['input','change','click'].forEach(function(t){ fc.addEventListener(t, fxLadosProgramar); }); } })();   // 🖥️ (§4ig) el pedido en vivo
   window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
   document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)

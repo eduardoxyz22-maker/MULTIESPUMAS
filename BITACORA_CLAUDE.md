@@ -7459,9 +7459,14 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   a medio escribir no busca, un fijo de 7 sí) en un pedido NUEVO busca en toda la planilla y completa SOLO los campos vacíos (nombre,
   zona, dirección, ubicación, facturar a, NIT) con el pedido más nuevo. «No es él · vaciar» saca solo lo completado que nadie cambió.
   Ni al corregir ni en una reposición; en venta de tienda, sin la dirección.
+  Segunda vuelta (dueño, 11/10: *«¿P1 solo funciona con el nro de celular?»*): también por **NIT** (≥5 números, completa igual, celular
+  incluido) y por **nombre completo** (dos palabras o más, `normNombre`): ese NO completa solo, porque dos clientes se llaman igual;
+  propone hasta 3 (uno por celular distinto, con zona y último pedido) y se elige «✓ Sí, es este» (`nxCliElegir`). Lo que completa
+  el propio P1 no dispara otra búsqueda (`NX_CLI_LLENANDO`).
 - **P3 · el mensaje para el cliente** (`nxMsgCliente`, `nxClienteBloque`): en «✅ Pedido guardado», debajo del mensaje del grupo,
   un cuadro verde con el texto para el CLIENTE (se puede corregir) y «💬 Abrir el WhatsApp de <nombre>» (`misWaCliente` + `?text=`).
-  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 11/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, de 14:30 a 18:30» (`NX_HORARIO`); sin turno, sin hora.
+  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 11/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, de 14:30 a 18:30» (`NX_HORARIO`); sin turno, sin hora. Y con fecha, la línea del dueño: «📞 Estar atento: nuestro
+  personal de logística se contactará una hora antes de la entrega, según el turno y en la fecha designada.»
   Saldo con el recargo por entrega si queda. No en ATC, RPT, venta de tienda ni al reenviar. Al corregir, si cambió el día o el turno
   (`difPedido`), «💬 Avisarle al cliente del día nuevo» (`nxAvisarCambio`).
 - **M1 · recordatorio de entrega** (dueño: *«¿dónde iría?»* → en Mis pedidos): la 5ª ficha naranja `mi-f5` a lo ancho, debajo de las
@@ -7494,7 +7499,7 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   arriba de Administración («🚚 Asignar ahora» baja a A1; «⏰ Recordar en 30 min») y número rojo en la pestaña, solo en un aparato
   donde ya se entró a Administración (`me_adm_dev`).
 - Los números de las pestañas (`nxBadges`) se repintan con `updateStats` y cada minuto (`nxRelojArrancar`).
-- `tests/test_nueve_4js.js` (48; contra `97e9093` no existen las funciones). Capturas en iPad (1180) y celular (390) revisadas.
+- `tests/test_nueve_4js.js` (53; contra `97e9093` no existen las funciones). Capturas en iPad (1180) y celular (390) revisadas.
 - **A confirmar con el dueño**: las 15:00 y las 17:00; «✓ Avisado» por aparato (no en la planilla); los 45 días de C2.
 
 ## 4jr. 10/10: 🔎 La auditoría de Antigravity y Codex (informe del 10/10), analizada con Fable y arreglada — PUBLICADA 10/10 19:05 (`82e869d`)
