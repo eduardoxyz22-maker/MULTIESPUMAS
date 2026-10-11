@@ -723,6 +723,19 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
+## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` EN LA RAMA, sin publicar: espera que el dueño arme Meta)
+Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
+confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
+- `doSave` → `waAlGuardar_` solo anota en `WA_COLA` (sin red, adentro del candado); `waRepaso` (cada 5 min + `waDespierta` de una vez)
+  manda AFUERA del candado, armando cada mensaje con la planilla de ese momento, tras 2 min de espera (`WA_ESPERA_MS`). Reintentos en
+  `WA_SALIDA` (solo qué y a quién). Todo queda en la hoja «Bot WhatsApp». `estadoBotWhatsApp()`; `probarAntesDeImplementar` §11.
+- 🚫 Al cliente no: Eduardo (dueño), ROHO, ATC, RPT, tienda, entregados, `__`, `kommo-`, sin celular, fecha pasada (`waNoCliente_` =
+  `nxBotManda` de la página). `WA_MARCAS` = `MARCAS` de la página (`test_wa_bot` §1 las compara): un vendedor nuevo va en los dos.
+- Propiedades del script (NUNCA en el código): `WA_TOKEN`, `WA_PHONE_ID`, `WA_LOGISTICA`, `WA_ACTIVO`=1, opcionales `WA_PRUEBA`,
+  `WA_IDIOMA`, `WA_API`. Cada respuesta trae `wa:1|0` y la página dice «🤖 lo manda el bot» (el botón a mano queda).
+- ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
+- `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
+
 ## ✨ Las nueve mejoras (§4js, 10/10, PUBLICADA 10/10 21:51 de Bolivia, `98771b8`; dueño: *«todo está bueno, solo falta pulir el diseño, los colores, animaciones»*)
 Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja de la marca y dibujito). Solo completan, avisan o proponen:
 - **P1** `nxCliBuscar` (`#nx-cli`): en un pedido NUEVO, el celular o el NIT (≥5 números) completan SOLO lo vacío con el pedido más nuevo de ese cliente; el NOMBRE completo (dos palabras, sin acentos) NO completa solo: propone hasta 3 y se elige «Sí, es este» (dueño, 10/10). «No es él» lo vacía. `NX_CLI_LLENANDO` evita que lo completado vuelva a buscar.

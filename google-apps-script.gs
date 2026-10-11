@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-09-a';   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-11-a';   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-09-a';
+  var ESTA_VERSION = '2026-10-11-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -245,6 +245,7 @@ function probarAntesDeImplementar() {
     recientesAnotar_: typeof recientesAnotar_, onEdit: typeof onEdit,
     reservasLeer_: typeof reservasLeer_, reservaAnotar_: typeof reservaAnotar_, reservaProcesar_: typeof reservaProcesar_,   // (2026-10-02-a)
     histGuardar_: typeof histGuardar_, histLeer_: typeof histLeer_,   // (2026-10-09-a)
+    waAlGuardar_: typeof waAlGuardar_, waRepaso: typeof waRepaso, waDespierta: typeof waDespierta,   // (2026-10-11-a)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -402,6 +403,23 @@ function probarAntesDeImplementar() {
     }
   } catch (e) { ojo('No pude mirar la hoja del historial: ' + motivo(e)); }
 
+  /* 11. 🤖 (2026-10-11-a) El bot de WhatsApp: si está prendido, que tenga lo que necesita. Solo lee; informa, no frena (el panel
+         no depende del bot). */
+  try {
+    if (typeof waConfig_ !== 'function') ojo('Este código no tiene el bot de WhatsApp (waConfig_): ¿es un pegado viejo?');
+    else if (!waActivo_()) bien('El bot de WhatsApp está apagado (WA_ACTIVO no es 1): guardar sigue igual y no se manda nada.');
+    else {
+      var cW = waConfig_();
+      if (!cW.ok) ojo('El bot de WhatsApp está prendido pero faltan WA_TOKEN o WA_PHONE_ID en las Propiedades del script: no va a mandar nada.');
+      else bien('El bot de WhatsApp está prendido' + (cW.prueba ? ' EN PRUEBA (todo va al número de WA_PRUEBA)' : '') + ', con ' + cW.logistica.length +
+                ' persona(s) de logística: ' + (cW.logistica.map(function (L) { return L.nombre; }).join(', ') || 'ninguna') + '.');
+      if (cW.mal.length) ojo('En WA_LOGISTICA hay número(s) que no entiendo: ' + cW.mal.join(', ') + '. Va así: Ernesto:59170000000, David:59171111111');
+      if (!kTriggersDe_('waRepaso').length) ojo('No está el disparador del bot (waRepaso cada 5 minutos): ejecutá «instalarDisparadores» una vez.');
+      var uW = waJsonProp_('WA_ULTIMO', null);
+      if (uW && uW.error) ojo('La última vuelta del bot avisó: «' + String(uW.error).slice(0, 160) + '».');
+    }
+  } catch (e) { ojo('No pude mirar el bot de WhatsApp: ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
@@ -484,6 +502,7 @@ function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
   if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
   if (obj && obj.adminAuth == null) obj.adminAuth = adminKey_() ? 'clave' : 'abierto';
+  if (obj && obj.wa == null && typeof waActivo_ === 'function') obj.wa = waActivo_() ? 1 : 0;   // 🤖 (2026-10-11-a) la página dice «lo manda el bot»
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -660,6 +679,7 @@ function getLogInforme_() {
 function jsonTexto_(obj) {
   if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
   if (obj && obj.adminAuth == null) obj.adminAuth = adminKey_() ? 'clave' : 'abierto';
+  if (obj && obj.wa == null && typeof waActivo_ === 'function') obj.wa = waActivo_() ? 1 : 0;   // 🤖 (2026-10-11-a) la página dice «lo manda el bot»
   return JSON.stringify(obj);
 }
 function getCache_() {
@@ -1722,6 +1742,8 @@ function doSave(p, forzar, juntar, reserva, formato) {
      nunca para una fila del sistema; si algo falla acá, el guardado vale igual y la respuesta sale sin `saldo`. */
   var saldoR = null;
   if (reserva && String(p.id).indexOf('__') !== 0) { try { saldoR = reservaProcesar_(String(p.id), reserva, Date.now()); } catch (eR) { saldoR = null; } }
+  /* 🤖 (2026-10-11-a) El bot de WhatsApp: anota si el pedido es nuevo o cambió de día (sin red; lo manda `waRepaso` afuera). */
+  if (String(p.id).indexOf('__') !== 0) { try { waAlGuardar_(viejo, eco); } catch (eW) {} }
   /* (2026-09-30-a) `ahora` = cuándo quedó escrito, con el reloj de Google, DESPUÉS de releer la fila. Una lectura con un
      `ahora` posterior lo tiene adentro: si no lo trae, lo borraron (el panel ya no lo adivina, §4he). */
   var outS = { ok:true, version:SCRIPT_VERSION, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add'), ahora: Date.now() };
@@ -1989,6 +2011,418 @@ function purgeBackups_(folder, keep) {
 }
 
 /* ============================================================================
+ * 🤖 EL BOT DE WHATSAPP (2026-10-11-a, §4jt). El dueño (11/10): *«un bot que envíe automático esos mensajes al crear el
+ * pedido y otro para logística»*. Manda por la API de WhatsApp de Meta (un número propio, nombre visible «Multiespumas»),
+ * con las 6 plantillas de «Utilidad» que el dueño cargó en Meta:
+ *   · al CLIENTE: `confirmacion_pedido` (pedido nuevo), `cambio_entrega` (cambió el día o el turno) y, desde las 17:00,
+ *     `recordatorio_entrega` (los del próximo día con camión);
+ *   · a LOGÍSTICA, a cada uno por separado: `logistica_pedido_nuevo`, `logistica_cambio` y, desde las 16:00,
+ *     `logistica_sin_camion` (los del próximo día que siguen sin camión).
+ * La marca va DENTRO del mensaje, por el vendedor (Heaven Colchones, Sueña o Multiespumas, como `MARCAS` de la página).
+ *
+ * ⚠️ GUARDAR NO ESPERA A META. `doSave` solo anota «este pedido es nuevo / cambió de día» en la propiedad WA_COLA (adentro
+ * del candado, sin red, §4dt) y deja un disparador de una vez. El envío lo hace `waRepaso` (cada 5 minutos, y ese disparador)
+ * FUERA del candado, leyendo la planilla EN ESE MOMENTO: el mensaje sale con lo último. Un pedido espera `WA_ESPERA_MS`
+ * (2 minutos) antes de salir: si la vendedora lo corrige enseguida, sale UN mensaje con lo corregido.
+ * Lo que no salió por un problema pasajero de Meta (5xx, 429, límite) queda en WA_SALIDA y se reintenta (`WA_REINT_MAX`).
+ * Todo lo que se manda, falla o se saltea queda en la hoja «Bot WhatsApp».
+ *
+ * 🚫 AL CLIENTE NO: los de Eduardo (dueño, 11/10) ni los de ROHO, ATC, RPT, ventas de tienda, entregados, filas del sistema,
+ * borradores de Kommo, ni sin un celular de WhatsApp (591 + 6/7 + 7 números; eso queda anotado en la hoja).
+ *
+ * ── CÓMO SE PRENDE (lo hace el dueño, una vez) ─────────────────────────────
+ * ⚙️ Configuración del proyecto → Propiedades del script → Agregar (NUNCA en el código: el repositorio es público):
+ *      WA_TOKEN     = el token permanente del usuario del sistema de Meta
+ *      WA_PHONE_ID  = el «Identificador del número de teléfono» (WhatsApp → Configuración de la API)
+ *      WA_LOGISTICA = Ernesto:591XXXXXXXX, David:591XXXXXXXX
+ *      WA_PRUEBA    = (opcional) un número: TODO lo manda ahí en vez de al cliente o a logística. Para probar.
+ *      WA_ACTIVO    = 1   (0 o vacío = apagado: no anota ni manda nada)
+ *      WA_IDIOMA    = (opcional) el idioma de las plantillas en Meta; por defecto «es»
+ * y después ▶ Ejecutar «instalarDisparadores» una vez (deja `waRepaso` cada 5 minutos). `estadoBotWhatsApp` dice cómo anda.
+ * ========================================================================== */
+var WA_ESPERA_MS = 2 * 60000;           // cuánto espera un pedido recién guardado antes de salir
+var WA_COLA_TOPE = 150;                 // pedidos esperando como mucho (una propiedad aguanta 9 KB)
+var WA_SALIDA_TOPE_LETRAS = 8000;       // los reintentos pendientes, como mucho
+var WA_REINT_MAX = 3;                   // intentos por mensaje ante un problema pasajero de Meta
+var WA_REINT_MS = 5 * 60000;            // cada cuánto se reintenta
+var WA_HORA_LOGISTICA = 16;             // (dueño, 10/10: «16:00») pedidos sin camión
+var WA_HORA_RECORDATORIO = 17;          // (dueño, 10/10: «17:00») recordatorio al cliente
+var WA_VENTANA_H = 2;                   // si el bot estuvo parado, después de 2 horas ya no se manda el de ese día (dice «Son las 16:00»)
+var WA_CORRIDA_MS = 4 * 60000;          // Apps Script corta a los 6 minutos: lo que no salió queda para la próxima
+var WA_HOJA = 'Bot WhatsApp';
+var WA_HOJA_ENC = ['Fecha', 'Pedido', 'N° OC', 'Mensaje', 'Para', 'Número', 'Plantilla', 'Estado', 'Detalle'];
+var WA_HOJA_MAX = 3000;                 // filas como mucho; después se borran las más viejas
+/* ⚠️ La MISMA lista que `MARCAS` de pedidos.html (test_wa_bot.js §1 las compara). */
+var WA_MARCAS = [
+  { lbl:'Sueña', vendedores:['Mauricio Merida', 'Juan Pablo Paredes', 'Fernando Peinado'] },
+  { lbl:'Heaven Colchones', vendedores:['Jonathan Monje', 'Maria Flores', 'Isabel Robledo', 'Carola Chavez', 'Mirian Salazar'] }
+];
+/* (dueño, 11/10) El horario según el turno que eligió el vendedor: AM de 9 a 12, PM de 14:30 a 18:30 (`NX_RANGO` de la página). */
+var WA_RANGO = { AM:['por la mañana', '9:00 y las 12:00'], PM:['por la tarde', '14:30 y las 18:30'] };
+var WA_TIPOS = {
+  conf:{ plantilla:'confirmacion_pedido', txt:'Confirmación', cli:true },
+  camb:{ plantilla:'cambio_entrega', txt:'Cambio de día', cli:true },
+  rec: { plantilla:'recordatorio_entrega', txt:'Recordatorio', cli:true },
+  ln:  { plantilla:'logistica_pedido_nuevo', txt:'Logística: nuevo' },
+  lc:  { plantilla:'logistica_cambio', txt:'Logística: cambio' },
+  sc:  { plantilla:'logistica_sin_camion', txt:'Logística: sin camión' }
+};
+
+function waActivo_() { var v = prop_('WA_ACTIVO').toLowerCase(); return v === '1' || v === 'si' || v === 'sí' || v === 'true'; }
+function waNorm_(t) {
+  /* Sin `normalize` (no está en el motor viejo de Apps Script): las vocales con acento, a mano. */
+  return String(t || '').toLowerCase().replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e').replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
+    .replace(/[úùüû]/g, 'u').replace(/\s+/g, ' ').trim();
+}
+/** El celular de WhatsApp de Bolivia (591 + 6/7 + 7 números), como `misWaCliente` de la página; '' si no hay uno. */
+function waCel_(cel) {
+  var d = String(cel || '').replace(/[^0-9]/g, '');
+  if (/^[67]\d{7}$/.test(d)) return '591' + d;
+  if (/^591[67]\d{7}$/.test(d)) return d;
+  var m = String(cel || '').replace(/[\s.\-]/g, '').match(/(?:\+?591)?([67]\d{7})(?!\d)/);   // dos celulares en el campo: el primero
+  return m ? '591' + m[1] : '';
+}
+function waMarca_(vend) {
+  var v = waNorm_(vend);
+  for (var i = 0; i < WA_MARCAS.length; i++)
+    for (var j = 0; j < WA_MARCAS[i].vendedores.length; j++) if (waNorm_(WA_MARCAS[i].vendedores[j]) === v) return WA_MARCAS[i].lbl;
+  return 'Multiespumas';
+}
+/* La hora de Bolivia (UTC−4 fijo, sin horario de verano, §4fu). */
+function waBo_(ms) {
+  var s = new Date(ms - 4 * 3600000).toISOString();
+  return { hoy:s.slice(0, 10), hora:Number(s.slice(11, 13)) + Number(s.slice(14, 16)) / 60, txt:s.slice(8, 10) + '/' + s.slice(5, 7) + ' ' + s.slice(11, 16) };
+}
+function waDow_(f) { return new Date(String(f) + 'T12:00:00Z').getUTCDay(); }
+function waMasDias_(f, n) { return new Date(Date.parse(String(f) + 'T12:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+/** El próximo día con camión: mañana, salteando domingos y feriados (`proximoDiaEntrega` de la página). */
+function waProximoDia_(hoy) {
+  var d = waMasDias_(hoy, 1);
+  for (var i = 0; i < 10 && (waDow_(d) === 0 || feriadoGs_(d)); i++) d = waMasDias_(d, 1);
+  return d;
+}
+function waDiaTxt_(f) {
+  var dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  return dias[waDow_(f)] + ' ' + String(f).slice(8, 10) + '/' + String(f).slice(5, 7);
+}
+function waTurno_(p) { var t = String((p && p.turno) || '').trim(); return t ? turnoNorm_(t) : ''; }
+function waCuandoTxt_(p) { var r = WA_RANGO[waTurno_(p)]; return waDiaTxt_(p.fecha) + (r ? ' ' + r[0] : ''); }
+function waHorasTxt_(p) { var r = WA_RANGO[waTurno_(p)]; return r ? r[1] : '9:00 y las 18:30'; }
+function waOc_(oc) { oc = String(oc || '').trim(); return oc ? (/^(ATC|RPT)\b/i.test(oc) ? oc : 'OC ' + oc) : '(sin número)'; }
+function waNombre_(c) {
+  var w = String(c || '').trim().split(/\s+/)[0] || '';
+  return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : 'estimado cliente';
+}
+function waProds_(p) {
+  var t = (p.productos || []).filter(function (x) { return x && x.desc; }).map(function (x) {
+    return (Number(x.cant) || 1) + ' × ' + String(x.desc).trim() + (x.medida ? ' ' + String(x.medida).trim() : '');
+  }).join(', ');
+  return t || 'tu compra';
+}
+function waBs_(n) {
+  n = Math.round((Number(n) || 0) * 100) / 100;
+  var ent = Math.floor(n), cen = Math.round((n - ent) * 100);
+  return 'Bs ' + String(ent).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (cen ? ',' + (cen < 10 ? '0' : '') + cen : '');
+}
+/* El recargo por entrega PACTADO y sin cobrar (un «^» sin método en «Método pago», como `envioPorCobrar` de la página). */
+function waFletePendiente_(mp) {
+  var t = 0;
+  String(mp || '').split('+').forEach(function (s) {
+    s = s.trim(); if (s.charAt(0) !== '^') return;
+    var m = s.slice(1).trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*[A-Za-zÁÉÍÓÚáéíóúÑñ]+)?\s*([\d.]+)/);
+    if (m && !m[1]) t += Number(m[2]) || 0;
+  });
+  return Math.round(t * 100) / 100;
+}
+/* Sin el 💵: la plantilla ya lo trae. Lo mismo que `nxSaldoCliente` de la página. */
+function waSaldo_(p) {
+  var falta = p.pagado ? 0 : (Number(p.saldo) || 0), flete = waFletePendiente_(p.metodoPago);
+  if (falta <= 0.01 && flete <= 0.01) return 'Tu compra ya está pagada';
+  if (falta <= 0.01) return 'Recargo por entrega a pagar al recibir: ' + waBs_(flete);
+  return 'Saldo a pagar al recibir: ' + waBs_(falta) + (flete > 0.01 ? ' + ' + waBs_(flete) + ' del recargo por entrega' : '');
+}
+/* Meta no acepta un dato vacío, con saltos de línea o con más de 4 espacios seguidos. */
+function waParam_(t) {
+  t = String(t == null ? '' : t).replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  if (t.length > 250) t = t.slice(0, 247) + '…';
+  return t || '—';
+}
+/** ¿Es una ENTREGA? (para logística): con fecha, sin entregar, no del sistema, ni borrador de Kommo, ni venta de tienda. */
+function waEsEntrega_(p) {
+  var id = String((p && p.id) || '');
+  if (!p || !id || id.indexOf('__') === 0 || id.indexOf(BORRADOR_PREF) === 0 || !p.fecha || p.entregado) return false;
+  if (String(p.estado || '') === BORRADOR_EST) return false;
+  return waNorm_(p.direccion).indexOf('salio de tienda') !== 0 && waNorm_(p.zona) !== 'tienda';
+}
+/** Por qué NO se le manda al cliente: {m:'motivo', anotar:bool}, o null si se le manda. */
+function waNoCliente_(p, hoy) {
+  if (!waEsEntrega_(p)) return { m:'no es una entrega pendiente', anotar:false };
+  if (/^(ATC|RPT)\b/i.test(String(p.oc || '').trim())) return { m:'ATC o RPT', anotar:false };
+  var v = waNorm_(p.vendedor);
+  if (v.indexOf('eduardo') >= 0) return { m:'cliente de Eduardo', anotar:false };   // (dueño, 11/10)
+  if (v.indexOf('roho') >= 0) return { m:'pedido de ROHO', anotar:false };
+  if (String(p.fecha) < hoy) return { m:'la fecha de entrega ya pasó', anotar:true };
+  if (!waCel_(p.celular)) return { m:'no tiene un celular de WhatsApp anotado («' + String(p.celular || '').slice(0, 30) + '»)', anotar:true };
+  return null;
+}
+function waConfig_() {
+  var c = { token:prop_('WA_TOKEN'), phone:prop_('WA_PHONE_ID'), idioma:prop_('WA_IDIOMA') || 'es', api:prop_('WA_API') || 'v21.0',
+            prueba:waCel_(prop_('WA_PRUEBA')), logistica:[], mal:[] };
+  prop_('WA_LOGISTICA').split(/[,;\n]+/).forEach(function (s) {
+    s = s.trim(); if (!s) return;
+    var i = s.indexOf(':'), nom = i >= 0 ? s.slice(0, i).trim() : '', cel = waCel_(i >= 0 ? s.slice(i + 1) : s);
+    if (cel) c.logistica.push({ nombre:nom || cel, cel:cel }); else c.mal.push(nom || s);
+  });
+  c.ok = !!(c.token && c.phone);
+  return c;
+}
+
+/* ── La cola (WA_COLA): qué pedido es nuevo o cambió de día. Se escribe ADENTRO del candado de doPost. ── */
+function waJsonProp_(k, def) { try { var v = JSON.parse(prop_(k) || 'null'); return v == null ? def : v; } catch (e) { return def; } }
+function waColaLeer_() { var c = waJsonProp_('WA_COLA', []); return Array.isArray(c) ? c : []; }
+function waColaGuardar_(c) {
+  if (c.length > WA_COLA_TOPE) c = c.slice(c.length - WA_COLA_TOPE);
+  try { PropertiesService.getScriptProperties().setProperty('WA_COLA', JSON.stringify(c)); } catch (e) {}
+}
+/** Lo llama doSave con la fila YA escrita (`viejo` = la fila de antes, o null si es nueva). Nunca frena un guardado. */
+function waAlGuardar_(viejo, rec) {
+  if (!waActivo_() || !rec) return;
+  var id = String(rec.id || '');
+  if (!id || id.indexOf('__') === 0 || id.indexOf(BORRADOR_PREF) === 0 || !rec.fecha) return;
+  var ev = null, fV = viejo ? fmtDate(viejo[1]) : '';
+  if (!viejo || !fV) ev = { id:id, t:'n' };                       // nuevo, o recién le pusieron fecha (venta de tienda → entrega)
+  else if (fV !== String(rec.fecha) || turnoNorm_(viejo[7]) !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + turnoNorm_(viejo[7]) };
+  if (!ev) return;
+  var cola = waColaLeer_(), ya = null, ms = Date.now();
+  for (var i = 0; i < cola.length; i++) if (cola[i].id === id) { ya = cola[i]; break; }
+  if (ya) {
+    /* Nuevo + cambio = UN mensaje de nuevo con el día último; dos cambios = uno, desde el día de ANTES del primero. */
+    if (ev.t === 'n') { ya.t = 'n'; delete ya.de; }
+    ya.ms = ms;
+  } else { ev.ms = ms; cola.push(ev); }
+  waColaGuardar_(cola);
+  waDespertar_();
+}
+/* Un disparador de una vez para que el mensaje salga a los ~2 minutos y no a los 5 del repaso. Uno solo a la vez. */
+function waDespertar_() {
+  if (typeof ScriptApp === 'undefined') return false;
+  if (Number(prop_('WA_DESP_HASTA')) > Date.now()) return true;
+  try {
+    ScriptApp.newTrigger('waDespierta').timeBased().after(WA_ESPERA_MS + 15000).create();
+    PropertiesService.getScriptProperties().setProperty('WA_DESP_HASTA', String(Date.now() + WA_ESPERA_MS + 90000));
+    return true;
+  } catch (e) { return false; }
+}
+function waDespierta() {
+  kTriggersDe_('waDespierta').forEach(function (t) { try { ScriptApp.deleteTrigger(t); } catch (e) {} });
+  try { PropertiesService.getScriptProperties().deleteProperty('WA_DESP_HASTA'); } catch (e) {}
+  return waRepaso();
+}
+
+/* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
+function waSalidaLeer_() { var s = waJsonProp_('WA_SALIDA', []); return Array.isArray(s) ? s : []; }
+function waSalidaGuardar_(s) {
+  var txt = JSON.stringify(s);
+  while (s.length && txt.length > WA_SALIDA_TOPE_LETRAS) { s.shift(); txt = JSON.stringify(s); }
+  try { PropertiesService.getScriptProperties().setProperty('WA_SALIDA', txt); } catch (e) {}
+}
+
+/** Arma un mensaje: {to, para, numero, plantilla, params, p} o {saltar:'motivo', anotar}. `recs` = la planilla de ahora. */
+function waArmar_(m, recs, cfg, B) {
+  var T = WA_TIPOS[m.k], p = null;
+  if (!T) return { saltar:'tipo desconocido', anotar:true };
+  if (m.id) { p = recs[m.id] || null; if (!p) return { saltar:'el pedido ya no está (lo borraron)', anotar:true }; }
+  var out = { plantilla:T.plantilla, p:p };
+  if (T.cli) {
+    var no = waNoCliente_(p, B.hoy); if (no) return { saltar:no.m, anotar:no.anotar, p:p };
+    out.para = String(p.cliente || 'cliente'); out.numero = waCel_(p.celular);
+  } else {
+    var L = null; for (var i = 0; i < cfg.logistica.length; i++) if (cfg.logistica[i].nombre === m.a) L = cfg.logistica[i];
+    if (!L) return { saltar:'«' + m.a + '» ya no está en WA_LOGISTICA', anotar:true };
+    out.para = L.nombre; out.numero = L.cel;
+    if (p && !waEsEntrega_(p)) return { saltar:'ya no es una entrega pendiente', anotar:false, p:p };
+    if (p && String(p.fecha) < B.hoy) return { saltar:'la fecha de entrega ya pasó', anotar:false, p:p };   // una venta cargada de atrás
+    /* ROHO entra de a muchos desde su Excel: logística no recibe uno por uno (sí aparece a las 16:00 si no tiene camión). */
+    if (p && waNorm_(p.vendedor).indexOf('roho') >= 0) return { saltar:'pedido de ROHO', anotar:false, p:p };
+  }
+  if ((m.k === 'camb' || m.k === 'lc') && (String(p.fecha) + '|' + turnoNorm_(p.turno)) === m.de) return { saltar:'volvió al día de antes', anotar:false, p:p };
+  if (m.k === 'rec' && String(p.fecha) !== m.dia) return { saltar:'cambió de día', anotar:false, p:p };
+  var N = waParam_, marca = p ? waMarca_(p.vendedor) : '';
+  if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p)];
+  else if (m.k === 'camb') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p)];
+  else if (m.k === 'rec') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), p.fecha === waMasDias_(B.hoy, 1) ? 'Mañana' : 'El ' + waDiaTxt_(p.fecha).split(' ')[0],
+                                        waProds_(p), waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p)];
+  else if (m.k === 'ln') out.params = [waDiaTxt_(p.fecha), waTurno_(p) || 'sin turno', String(p.cliente || '').trim(), String(p.zona || '').trim() || 'sin zona', waProds_(p), String(p.vendedor || '').trim() || 'sin vendedor'];
+  else if (m.k === 'lc') {
+    var de = String(m.de || '').split('|'), antes = { fecha:de[0], turno:de[1] || '' };
+    out.params = [waOc_(p.oc), String(p.cliente || '').trim(), 'pasó del ' + waCuandoTxt_(antes) + ' al ' + waCuandoTxt_(p)];
+  } else if (m.k === 'sc') {
+    var sin = [];
+    for (var id in recs) { var q = recs[id]; if (q.fecha === m.dia && waEsEntrega_(q) && !String(q.vehiculo || '').trim() && !String(q.chofer || '').trim()) sin.push(q); }
+    if (!sin.length) return { saltar:'ya no queda ninguno sin camión', anotar:false };
+    sin.sort(function (a, b) { return (Number(a.nroDia) || 0) - (Number(b.nroDia) || 0); });
+    var noms = sin.slice(0, 12).map(function (q) { return String(q.cliente || '').trim() + (q.zona ? ' (' + String(q.zona).trim() + ')' : ''); });
+    out.params = [String(sin.length), waDiaTxt_(m.dia), noms.join(', ') + (sin.length > 12 ? ' y ' + (sin.length - 12) + ' más' : '')];
+  }
+  out.params = out.params.map(N);
+  if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
+  return out;
+}
+/** Manda UNA plantilla. {ok, id} · {reintentar, detalle} · {fatal, detalle} · {detalle} (no se reintenta). */
+function waEnviar_(cfg, numero, plantilla, params) {
+  var body = { messaging_product:'whatsapp', to:numero, type:'template',
+               template:{ name:plantilla, language:{ code:cfg.idioma },
+                          components:[{ type:'body', parameters:params.map(function (t) { return { type:'text', text:t }; }) }] } };
+  var r, code, txt;
+  try {
+    r = UrlFetchApp.fetch('https://graph.facebook.com/' + cfg.api + '/' + encodeURIComponent(cfg.phone) + '/messages',
+                          { method:'post', contentType:'application/json', headers:{ Authorization:'Bearer ' + cfg.token },
+                            payload:JSON.stringify(body), muteHttpExceptions:true });
+    code = r.getResponseCode(); txt = String(r.getContentText() || '');
+  } catch (e) { return { reintentar:true, detalle:'sin conexión con Meta: ' + String((e && e.message) || e).slice(0, 150) }; }
+  var o = {}; try { o = JSON.parse(txt); } catch (e2) {}
+  if (code >= 200 && code < 300) return { ok:true, id:String(((o.messages || [])[0] || {}).id || '') };
+  var er = o.error || {}, ec = Number(er.code) || 0;
+  var det = 'HTTP ' + code + (ec ? ' · #' + ec : '') + ' · ' + String(er.message || txt).slice(0, 180) +
+            (er.error_data && er.error_data.details ? ' · ' + String(er.error_data.details).slice(0, 150) : '');
+  if (code === 401 || ec === 190) return { fatal:true, detalle:'El token de Meta no sirve (venció o está mal copiado): ' + det };
+  if (code >= 500 || code === 429 || [1, 2, 4, 80007, 130429, 131016, 131056].indexOf(ec) >= 0) return { reintentar:true, detalle:det };
+  return { detalle:det };
+}
+function waHoja_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(WA_HOJA);
+  if (!sh) {
+    sh = ss.insertSheet(WA_HOJA);
+    sh.appendRow(WA_HOJA_ENC);
+    try { sh.getRange(1, 1, 1, WA_HOJA_ENC.length).setFontWeight('bold'); sh.setFrozenRows(1); } catch (e) {}
+  }
+  return sh;
+}
+function waAnotar_(filas) {
+  if (!filas.length) return;
+  try {
+    var sh = waHoja_(), last = sh.getLastRow();
+    sh.getRange(last + 1, 1, filas.length, WA_HOJA_ENC.length).setValues(filas);
+    if (last + filas.length > WA_HOJA_MAX + 500) sh.deleteRows(2, last + filas.length - WA_HOJA_MAX);
+  } catch (e) {}
+}
+
+/** ⏱ Cada 5 minutos (y a los ~2 minutos de guardar un pedido): manda lo de la cola, los reintentos y, una vez por día, el
+    aviso de las 16:00 a logística y el recordatorio de las 17:00. Deja un resumen en WA_ULTIMO (sin nombres ni números). */
+function waRepaso() {
+  var t0 = Date.now(), B = waBo_(t0);
+  var res = { ts:new Date(t0).toISOString(), enviados:0, errores:0, saltados:0, reintentos:0, quedan:0, error:'' };
+  var guardarRes = function () { try { PropertiesService.getScriptProperties().setProperty('WA_ULTIMO', JSON.stringify(res)); } catch (e) {} };
+  if (!waActivo_()) { res.error = 'apagado (WA_ACTIVO)'; guardarRes(); return res; }
+  var cfg = waConfig_();
+  if (!cfg.ok) { res.error = 'faltan WA_TOKEN o WA_PHONE_ID en las Propiedades del script'; guardarRes(); return res; }
+  /* 1. Adentro del candado (es el de doPost): tomar lo que está listo y marcar lo de cada día, así dos corridas a la vez no
+        mandan lo mismo. Sin red adentro. */
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { res.error = 'busy (la próxima corrida lo manda)'; guardarRes(); return res; }
+  var msgs = [], recDia = '', recYa = {}, confHoy;
+  try {
+    var cola = waColaLeer_(), quedan = [];
+    cola.forEach(function (ev) {
+      if (t0 - (Number(ev.ms) || 0) < WA_ESPERA_MS) { quedan.push(ev); return; }
+      if (ev.t === 'n') {
+        msgs.push({ id:ev.id, k:'conf', a:'cliente', n:0 });
+        cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'ln', a:L.nombre, n:0 }); });
+      } else if (ev.t === 'c') {
+        msgs.push({ id:ev.id, k:'camb', a:'cliente', de:ev.de, n:0 });
+        cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'lc', a:L.nombre, de:ev.de, n:0 }); });
+      }
+    });
+    waColaGuardar_(quedan);
+    var sal = waSalidaLeer_(), salQueda = [];
+    sal.forEach(function (m) { if (t0 >= (Number(m.prox) || 0)) msgs.push(m); else salQueda.push(m); });
+    waSalidaGuardar_(salQueda);
+    var hecho = waJsonProp_('WA_HECHO', {}), cambio = false, prox = waProximoDia_(B.hoy);
+    /* 16:00 a logística: los días que se trabaja (no el domingo ni un feriado). */
+    if (B.hora >= WA_HORA_LOGISTICA && B.hora < WA_HORA_LOGISTICA + WA_VENTANA_H && hecho.log !== B.hoy && waDow_(B.hoy) !== 0 && !feriadoGs_(B.hoy)) {
+      cfg.logistica.forEach(function (L) { msgs.push({ k:'sc', a:L.nombre, dia:prox, n:0 }); });
+      hecho.log = B.hoy; cambio = true;
+    }
+    /* 17:00 al cliente: los del próximo día con camión. El sábado ya son los del lunes, y el domingo no se repiten. */
+    if (B.hora >= WA_HORA_RECORDATORIO && B.hora < WA_HORA_RECORDATORIO + WA_VENTANA_H && hecho.rec !== B.hoy) { recDia = prox; hecho.rec = B.hoy; cambio = true; }
+    if (cambio) PropertiesService.getScriptProperties().setProperty('WA_HECHO', JSON.stringify(hecho));
+  } finally { lock.releaseLock(); }
+  var recs = null;
+  var planilla = function () {
+    if (recs) return recs;
+    recs = {}; readAll().forEach(function (p) { recs[p.id] = p; }); return recs;
+  };
+  confHoy = waJsonProp_('WA_CONF_HOY', {}); if (confHoy.d !== B.hoy) confHoy = { d:B.hoy, ids:[] };
+  if (recDia) {
+    var ya = waJsonProp_('WA_REC', {}); if (ya.f === recDia) (ya.ids || []).forEach(function (id) { recYa[id] = 1; });
+    var R = planilla();
+    for (var id in R) {
+      var p = R[id];
+      if (p.fecha !== recDia || recYa[id] || confHoy.ids.indexOf(id) >= 0) continue;   // confirmado hoy: no se repite
+      var no = waNoCliente_(p, B.hoy); if (no && !no.anotar) continue;                    // los que no van, ni se anotan
+      msgs.push({ id:id, k:'rec', a:'cliente', dia:recDia, n:0 });
+    }
+  }
+  if (!msgs.length) { guardarRes(); return res; }
+  var R2 = planilla(), filas = [], reint = [], recHechos = [], parar = '';
+  for (var i = 0; i < msgs.length; i++) {
+    var m = msgs[i], T = WA_TIPOS[m.k] || { txt:m.k, plantilla:'' };
+    if (parar || Date.now() - t0 > WA_CORRIDA_MS) { reint.push(m); continue; }   // lo que no llegó a salir, a la próxima
+    var a = waArmar_(m, R2, cfg, B), p = a.p || (m.id ? R2[m.id] : null);
+    var base = [B.txt, m.id || '', p ? String(p.oc || '') : '', T.txt];
+    if (a.saltar) {
+      res.saltados++;
+      if (m.k === 'rec') recHechos.push(m.id);
+      if (a.anotar) filas.push(base.concat([p ? String(p.cliente || '') : (m.a || ''), '', T.plantilla, '⏭️ no se manda', a.saltar]));
+      continue;
+    }
+    var r = waEnviar_(cfg, a.numero, a.plantilla, a.params);
+    if (r.ok) {
+      res.enviados++;
+      if (m.k === 'rec') recHechos.push(m.id);
+      if (m.k === 'conf') confHoy.ids.push(m.id);
+      filas.push(base.concat([a.para, a.numero, a.plantilla, '✅ enviado', r.id || '']));
+    } else if (r.fatal) {
+      parar = r.detalle; res.errores++; reint.push(m);
+      filas.push(base.concat([a.para, a.numero, a.plantilla, '❌ error', r.detalle]));
+    } else if (r.reintentar && (Number(m.n) || 0) + 1 < WA_REINT_MAX) {
+      m.n = (Number(m.n) || 0) + 1; m.prox = Date.now() + WA_REINT_MS; reint.push(m); res.reintentos++;
+      filas.push(base.concat([a.para, a.numero, a.plantilla, '🔁 se reintenta (' + m.n + ')', r.detalle]));
+    } else {
+      res.errores++;
+      if (m.k === 'rec') recHechos.push(m.id);
+      filas.push(base.concat([a.para, a.numero, a.plantilla, '❌ error', r.detalle]));
+    }
+  }
+  if (recDia || recHechos.length) {
+    var y = waJsonProp_('WA_REC', {}), f = recDia || (y.f || '');
+    if (y.f !== f) y = { f:f, ids:[] };
+    recHechos.forEach(function (id) { if (y.ids.indexOf(id) < 0) y.ids.push(id); });
+    try { PropertiesService.getScriptProperties().setProperty('WA_REC', JSON.stringify(y)); } catch (e) {}
+  }
+  if (confHoy.ids.length > 300) confHoy.ids = confHoy.ids.slice(-300);
+  try { PropertiesService.getScriptProperties().setProperty('WA_CONF_HOY', JSON.stringify(confHoy)); } catch (e) {}
+  if (reint.length) {
+    var l2 = LockService.getScriptLock();
+    try { l2.waitLock(20000); var s2 = waSalidaLeer_().concat(reint); waSalidaGuardar_(s2); } catch (e) {} finally { try { l2.releaseLock(); } catch (e3) {} }
+  }
+  res.quedan = reint.length;
+  if (parar) res.error = parar;
+  waAnotar_(filas);
+  guardarRes();
+  return res;
+}
+/** ▶️ Para mirar desde el editor cómo anda el bot (no manda nada). */
+function estadoBotWhatsApp() {
+  var c = waConfig_();
+  var s = { activo:waActivo_(), token:!!c.token, telefono:!!c.phone, idioma:c.idioma, logistica:c.logistica.map(function (L) { return L.nombre; }),
+            logisticaMal:c.mal, prueba:!!c.prueba, enCola:waColaLeer_().length, reintentos:waSalidaLeer_().length,
+            ultimo:waJsonProp_('WA_ULTIMO', null), hecho:waJsonProp_('WA_HECHO', {}), repasoInstalado:kTriggersDe_('waRepaso').length > 0 };
+  if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
+  return s;
+}
+
+/* ============================================================================
  * 📥 BORRADORES DE KOMMO (§4cc)
  *
  * Cuando una venta pasa a «Compradores» en Kommo, Kommo avisa acá y esta parte deja
@@ -2248,10 +2682,11 @@ function kommoRepaso() {
 /** ▶️ CORRER UNA VEZ desde el editor (Ejecutar ▸ instalarDisparadores): deja el repaso
     cada 5 minutos. Pide autorización la primera vez; es normal. */
 function instalarDisparadores() {
-  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
+  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas', 'waRepaso'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
   ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('barrerFotosHuerfanas').timeBased().everyDays(1).atHour(3).create();   // 🖼️ §4ep, de madrugada
-  var msg = '✅ Listo: kommoRepaso corre cada 5 minutos y barrerFotosHuerfanas una vez por día (3 am). Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
+  ScriptApp.newTrigger('waRepaso').timeBased().everyMinutes(5).create();                    // 🤖 (2026-10-11-a) el bot de WhatsApp; apagado mientras WA_ACTIVO no sea 1
+  var msg = '✅ Listo: kommoRepaso y waRepaso (el bot de WhatsApp) corren cada 5 minutos y barrerFotosHuerfanas una vez por día (3 am). Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
   if (typeof Logger !== 'undefined') Logger.log(msg);
   return msg;
 }

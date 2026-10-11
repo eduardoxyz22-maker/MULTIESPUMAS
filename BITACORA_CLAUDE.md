@@ -7445,6 +7445,51 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jt. 11/10: 🤖 El bot de WhatsApp — servidor `2026-10-11-a` + aviso en el panel (EN LA RAMA, sin publicar; espera que el dueño arme Meta)
+El dueño: *«Como armamos un bot 🤖 que envíe automático esos mensajes al crear el pedido y otro para logística»*. Eligió: un número
+NUEVO de la API de WhatsApp de Meta (no el de Kommo, que es de las vendedoras), con nombre visible **«Multiespumas»** y la marca
+DENTRO del mensaje (*«pero es de heaven y sueña»*); las respuestas del cliente van a su vendedora (*«escribile a tu vendedora por el
+WhatsApp de siempre»*, ya en las plantillas); **los clientes de Eduardo no reciben nada**; logística = **Ernesto y David**, cada uno
+por separado. Las 6 plantillas de «Utilidad» (texto exacto, ejemplos y orden de los {{n}}) se le pasaron el 11/10; el nombre de cada
+una es el que busca el servidor (`WA_TIPOS`).
+- **Qué hace el servidor** (bloque `wa*` antes de los borradores de Kommo, para que `borradorDeLead_` siga siendo la última función):
+  · `doSave` → **`waAlGuardar_(viejo, eco)`** con la fila YA escrita: solo anota en la propiedad `WA_COLA` «nuevo» (`t:'n'`) o
+    «cambió de día/turno» (`t:'c'`, `de:'fecha|turno'` de antes). Sin red, adentro del candado (§4dt). Nuevo + cambio = un nuevo; dos
+    cambios = uno desde el día de ANTES. Deja UN disparador de una vez (`waDespierta`, guardado por `WA_DESP_HASTA`).
+  · **`waRepaso`** (cada 5 min, `instalarDisparadores`) toma adentro del candado lo que ya esperó `WA_ESPERA_MS` (2 min: una
+    corrección enseguida sale como UN mensaje), los reintentos vencidos (`WA_SALIDA`) y marca lo de cada día (`WA_HECHO`); después,
+    afuera, lee la planilla y ARMA cada mensaje con lo de ese momento (`waArmar_`): un pedido borrado, que volvió al día de antes o
+    que ya se entregó, no sale.
+  · Cliente: `confirmacion_pedido` / `cambio_entrega` / `recordatorio_entrega` (17:00, el próximo día con camión —`waProximoDia_`:
+    saltea domingo y `FERIADOS_GS`—, «Mañana» o «El martes»; sin repetir: `WA_REC` por fecha destino, y no al que se confirmó HOY:
+    `WA_CONF_HOY`). Logística: `logistica_pedido_nuevo` / `logistica_cambio` («pasó del … al …») / `logistica_sin_camion` (16:00, ni
+    domingo ni feriado; sin vehículo NI chofer; hasta 12 nombres + «y N más»). Las dos horas valen 2 h (`WA_VENTANA_H`): si el bot
+    estuvo parado no manda a las 20:00 un «Son las 16:00».
+  · **A quién no** (`waNoCliente_`, la página usa la misma regla en `nxBotManda`): Eduardo, ROHO, ATC, RPT, venta de tienda,
+    entregado, filas `__`, borradores `kommo-`, sin celular de WhatsApp (`waCel_` = `misWaCliente`) y fecha pasada. Lo de «sin
+    celular», «borrado» y «fecha pasada» queda anotado en la hoja; lo demás no (es a propósito). A logística no van ROHO (entra de a
+    muchos desde su Excel; sí aparece a las 16:00) ni lo de fecha pasada.
+  · Meta: `UrlFetchApp` a `graph.facebook.com/<WA_API>/<WA_PHONE_ID>/messages`, plantilla con `language.code`=`WA_IDIOMA` (es).
+    5xx/429/límites → se reintenta (`WA_REINT_MAX`=3, cada 5 min; en `WA_SALIDA` va solo QUÉ y A QUIÉN, se rearma); 401/#190 (token)
+    → para la vuelta y guarda lo pendiente; otro 4xx (plantilla mal, #132001) → error sin reintento. `waParam_`: sin saltos de línea,
+    sin vacíos («—»), 250 letras.
+  · Hoja **«Bot WhatsApp»** (Fecha, Pedido, N° OC, Mensaje, Para, Número, Plantilla, Estado, Detalle), tope 3.000 filas. `WA_ULTIMO`
+    sin nombres ni números. `estadoBotWhatsApp()` desde el editor. `probarAntesDeImplementar` §11 lo informa (nunca frena).
+  · Propiedades (las pega el dueño, NUNCA en el código): `WA_TOKEN`, `WA_PHONE_ID`, `WA_LOGISTICA` («Ernesto:591…, David:591…»),
+    `WA_ACTIVO`=1 (sin eso no anota ni manda nada), opcionales `WA_PRUEBA` (todo a ese número, la hoja dice «(prueba)»), `WA_IDIOMA`,
+    `WA_API`. `jsonOut`/`jsonTexto_` agregan `wa:1|0`.
+  · Sin `String.prototype.normalize` (`waNorm_` saca los acentos a mano): el .gs es ES5 y no sé con qué motor corre.
+- **La página** (`WA_BOT`, de `j.wa` en `apiPost`; la lectura comprimida lo copia): con el bot prendido, «✅ Pedido guardado» y
+  «Avisar al cliente del día nuevo» dicen «🤖 El bot de WhatsApp se lo manda solo, en unos 2 minutos: no hace falta mandarlo a mano»
+  (el botón a mano queda), y en Mis pedidos → 🔔 Mañana el que el bot avisa cuenta como avisado con «🤖 Lo avisa el bot». Con un
+  servidor viejo (sin `wa`) nada cambia. `SCRIPT_VERSION_ESPERADA`=`2026-10-11-a`: **publicar la página DESPUÉS de que el dueño
+  implemente el .gs** (si no, «Cerrar día» muestra la línea gris de servidor viejo).
+- Pruebas: `tests/test_wa_bot.js` (63, el .gs real con Google y Meta de mentira y reloj propio; contra el .gs de `be6214f` revienta:
+  no existe el bot) y `tests/test_wa_pagina.js` (12). `test_servidor` §11 con la versión nueva.
+- **Falta** (del dueño): chip, app de Meta con WhatsApp, pago, verificación del negocio, las 6 plantillas aprobadas y el token del
+  usuario del sistema. Después: pegar el `.gs` (enlace raw fijo), probar, implementar, las propiedades con `WA_PRUEBA` primero,
+  `instalarDisparadores`, mirar la hoja, sacar `WA_PRUEBA`.
+
 ## 4js. 10/10 (noche): ✨ Las nueve mejoras (P1, P3, M1, M3, C1, C2, A1, A2, A3) en el panel — PUBLICADA 10/10 21:51 (`98771b8`), Pages OK
 El dueño pidió mejoras para Pedidos, Mis pedidos, Contabilidad y Administración; de la lista eligió *«P1, P3, M1, M3, C1, C2, A1,
 A2, A3. Ármame muestras»*. Vio la página de muestras, preguntó dónde iba el recordatorio y pidió *«más animaciones y más colores
