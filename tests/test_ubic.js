@@ -86,7 +86,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
 
   // ============ 1. antes de tocar nada ============
-  await prep(3000,'no');
+  /* (§4js, 11/10) 5 s y no 3: el contador se lee a los ~2,7 s y, con la batería cargando la máquina, la consulta de 3 s a veces ya
+     había terminado (la ventana se redibujaba y el contador «desaparecía»). El margen era la prueba, no el panel. */
+  await prep(5000,'no');
   let f = await foto();
   chk('el botón está listo para tocar', f.hayBoton===true && f.apagado===false, f.texto);
   chk('…y todavía no dice que esté consultando', f.hayBloque===false, f.bloque.slice(0,60));
@@ -131,7 +133,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /Ya está consultando/.test(insistir.aviso) && /\d+ s/.test(insistir.aviso), insistir.aviso);
 
   // ============ 5. al terminar vuelve a la normalidad ============
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(4500);
   f = await foto();
   chk('al terminar el botón se vuelve a encender', f.apagado===false, f.texto);
   chk('…y ofrece «Probar de nuevo»', /Probar de nuevo/.test(f.texto), f.texto);
