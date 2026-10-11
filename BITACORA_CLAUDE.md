@@ -7445,6 +7445,16 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ju. 11/10 (mañana): 👋 P1 por el nombre con UNA palabra y con un error de tipeo — PUBLICADA 11/10 09:00 de Bolivia (`6e67b9d`), Pages OK
+El dueño, con captura del formulario (había escrito «Muticenter»): *«El auto completar no veo que funcione, puse multicenter y no me llenó
+nada»*. Dos causas: el nombre pedía nombre y apellido (`/\s/`) y la comparación era exacta. Ahora `nxNomClave` acepta una palabra de 5
+letras o más y `nxNomParecido` acepta: igual (0); que empiece igual por palabras («MULTICENTER» → «MULTICENTER BODEGA») solo con 2
+palabras u 8 letras o más (si no, «MARIA» traía a todas); o un error de tipeo (`nxDist`: 1 letra hasta 7, 2 desde 8). Se proponen
+hasta 3, el igual primero; el cartel dice «con un nombre parecido». **Sigue sin completar solo** (regla del dueño). «Sí, es este» deja
+el nombre COMO EN SUS PEDIDOS (así «Muticenter» vuelve a ser MULTICENTER y entra en la regla de Eduardo → Multicenter del stock, §4gm);
+«No es él» vuelve a lo escrito. `test_nueve_4js` → 62 (+7). Publicado SOLO esto (cherry-pick sobre `main`): el bot (§4jt) sigue en la
+rama esperando el servidor.
+
 ## 4jt. 11/10: 🤖 El bot de WhatsApp — servidor `2026-10-11-a` + aviso en el panel (EN LA RAMA, sin publicar; espera que el dueño arme Meta)
 El dueño: *«Como armamos un bot 🤖 que envíe automático esos mensajes al crear el pedido y otro para logística»*. Eligió: un número
 NUEVO de la API de WhatsApp de Meta (no el de Kommo, que es de las vendedoras), con nombre visible **«Multiespumas»** y la marca
