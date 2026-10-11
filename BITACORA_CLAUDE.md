@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4js. 11/10: ✨ Las nueve mejoras (P1, P3, M1, M3, C1, C2, A1, A2, A3) en el panel — en la rama, SIN publicar
+## 4js. 10/10 (noche): ✨ Las nueve mejoras (P1, P3, M1, M3, C1, C2, A1, A2, A3) en el panel — PUBLICADA 10/10 21:51 (`98771b8`), Pages OK
 El dueño pidió mejoras para Pedidos, Mis pedidos, Contabilidad y Administración; de la lista eligió *«P1, P3, M1, M3, C1, C2, A1,
 A2, A3. Ármame muestras»*. Vio la página de muestras, preguntó dónde iba el recordatorio y pidió *«más animaciones y más colores
 según el nuevo estilo»*; con la segunda versión: *«en todo, la idea está buena, todo está bueno, solo falta pulir el diseño, los
@@ -7459,13 +7459,13 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   a medio escribir no busca, un fijo de 7 sí) en un pedido NUEVO busca en toda la planilla y completa SOLO los campos vacíos (nombre,
   zona, dirección, ubicación, facturar a, NIT) con el pedido más nuevo. «No es él · vaciar» saca solo lo completado que nadie cambió.
   Ni al corregir ni en una reposición; en venta de tienda, sin la dirección.
-  Segunda vuelta (dueño, 11/10: *«¿P1 solo funciona con el nro de celular?»*): también por **NIT** (≥5 números, completa igual, celular
+  Segunda vuelta (dueño, 10/10: *«¿P1 solo funciona con el nro de celular?»*): también por **NIT** (≥5 números, completa igual, celular
   incluido) y por **nombre completo** (dos palabras o más, `normNombre`): ese NO completa solo, porque dos clientes se llaman igual;
   propone hasta 3 (uno por celular distinto, con zona y último pedido) y se elige «✓ Sí, es este» (`nxCliElegir`). Lo que completa
   el propio P1 no dispara otra búsqueda (`NX_CLI_LLENANDO`).
 - **P3 · el mensaje para el cliente** (`nxMsgCliente`, `nxClienteBloque`): en «✅ Pedido guardado», debajo del mensaje del grupo,
   un cuadro verde con el texto para el CLIENTE (se puede corregir) y «💬 Abrir el WhatsApp de <nombre>» (`misWaCliente` + `?text=`).
-  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 11/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, entre las 14:30 y las 18:30» (`NX_RANGO`); sin turno, sin hora. Y con fecha, la línea de logística CONCRETA (dueño, 11/10: *«ese mensaje no dice nada concreto… decir según el turno que elige
+  Marca por vendedor (`marcaDe`: Heaven Colchones / Sueña / Multiespumas). Turno con su horario (dueño, 10/10): AM «por la mañana, de 9:00 a 12:00», PM «por la tarde, entre las 14:30 y las 18:30» (`NX_RANGO`); sin turno, sin hora. Y con fecha, la línea de logística CONCRETA (dueño, 10/10: *«ese mensaje no dice nada concreto… decir según el turno que elige
   el vendedor»*, `nxLlamadaTxt`): «📞 Estar atento el martes 13/10 por la tarde: llegamos entre las 14:30 y las 18:30, y nuestro
   personal de logística se contactará una hora antes de la entrega.» (AM: por la mañana, entre las 9:00 y las 12:00). El día y el horario van solo ahí (se sacó el «📅 Entrega:» que los repetía).
   Saldo con el recargo por entrega si queda. No en ATC, RPT, venta de tienda ni al reenviar. Al corregir, si cambió el día o el turno
@@ -7501,7 +7501,11 @@ regla del pedido ni guarda nada sola: completan, avisan o proponen. Todo en un b
   donde ya se entró a Administración (`me_adm_dev`).
 - Los números de las pestañas (`nxBadges`) se repintan con `updateStats` y cada minuto (`nxRelojArrancar`).
 - `tests/test_nueve_4js.js` (53; contra `97e9093` no existen las funciones). Capturas en iPad (1180) y celular (390) revisadas.
-- **A confirmar con el dueño**: las 15:00 y las 17:00; «✓ Avisado» por aparato (no en la planilla); los 45 días de C2.
+- El dueño confirmó «✓ Avisado» por aparato (*«1 sí»*). Quedan sin confirmar las 15:00, las 17:00 y los 45 días de C2.
+- Antes de publicar: batería 160 suites, 5.755 comprobaciones, «== TODO EN VERDE ==». `test_ubic` salía rojo con la máquina cargada
+  (1 de cada 4 corridas en paralelo; la versión de antes, 0 de 8): su servidor de mentira tardaba 3 s y el contador se leía a
+  ~2,7 s; con Administración algo más pesada (las cajas animadas) se pasaba. Se le dio 5 s (8 de 8 en paralelo).
+- (Las fechas «11/10» de los comentarios de `pedidos.html` son el día en UTC; en Bolivia fue el 10/10 a la noche.)
 
 ## 4jr. 10/10: 🔎 La auditoría de Antigravity y Codex (informe del 10/10), analizada con Fable y arreglada — PUBLICADA 10/10 19:05 (`82e869d`)
 El dueño subió `INFORME_AUDITORIA_MULTIESPUMAS.md` (Antigravity + Codex, sobre `958b0b9` y `3310172`). Un agente con Fable lo
