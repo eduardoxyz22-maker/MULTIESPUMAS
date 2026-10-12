@@ -13748,3 +13748,10 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   ⚠️ Una página VIEJA (sin F5) la ve como un pedido sin fecha hasta recargar.
 - `tests/test_asistente_ak.js` (38; 32 rojas contra `8485847`).
 - **PUBLICADA 12/10 (`c13dc1c`)**, batería 172 suites en verde. Opciones de la «ciudad» de los camiones dibujadas para el dueño: https://claude.ai/artifact/KK1hkAVK2yRfnx3UqvLvwr (1 cada camión en su almacén · 2 sobre el mapa real con los anillos · 3 una escena por almacén); espera su elección.
+- **12/10 tarde**: el dueño mandó un video («WareTrack», patio isométrico) y dijo que la escena 3D actual «no tiene nada de 3D… algo así
+  imaginaba». Muestra hecha con datos de ejemplo, SIN tocar el panel: https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL (galpones PTF/Banzer/
+  Moreno con andenes, camiones de culata, montacargas que llevan colchones, avenida, fichas arriba, ficha del camión con «Ya salió», recorrido
+  del pedido y andenes abajo; cámara ortográfica, colores con `convertSRGBToLinear`, sin tone mapping). Espera su OK para pasarla al panel.
+- **Bot de WhatsApp**: el dueño ya tiene el número de PRUEBA de Meta (Phone Number ID 1416620634858875). Pasos y las 6 plantillas para
+  copiar: https://claude.ai/artifact/11nH5NMMSXtrqQP5fQpPZ2 (`logistica_cambio` lleva «del pedido {{1}} ({{2}}): {{3}}» para que no queden
+  dos variables pegadas). `.gs` 2026-10-11-a por el enlace fijo a `e3739914…` (2.977 líneas). La página se publica DESPUÉS de que implemente.
