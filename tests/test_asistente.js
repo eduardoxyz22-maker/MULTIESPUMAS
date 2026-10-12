@@ -1,0 +1,131 @@
+/* 🧑‍💼 EDUARDO, EL ASISTENTE DEL PANEL (§4jx, 11/10). El dueño eligió la burbuja en la esquina, su imagen con lentes, con sonido y
+   que ayude a cada vendedor con lo suyo.
+
+   ⚠️ LO QUE ESTA PRUEBA CUIDA (falla contra lo publicado, `1f881f5`, que no tiene asistente):
+   1. En las pruebas automáticas no aparece (taparía botones) salvo `window.ASIS_PRUEBA`.
+   2. La burbuja lleva la cara del dueño y el número de avisos.
+   3. Mis pedidos: avisa los clientes de mañana sin avisar (desde las 17:00), los saldos de hace más de una semana y los pedidos sin
+      ubicación, solo del vendedor elegido. «Entendido» lo guarda en este aparato y deja de avisar.
+   4. Administración (con la clave): los pedidos de mañana sin camión.
+   5. Al guardar con el cliente y sin celular ni ubicación, avisa (no frena nada).
+   6. La ayuda busca sin acentos y «Mostrame dónde» cambia de pestaña e ilumina el lugar.
+   7. 🔇 se recuerda en el aparato.
+   Datos SINTÉTICOS. Reloj clavado en el viernes 18/09/2026 a las 18:00 de Bolivia.
+   Se corre:  node tests/test_asistente.js   (desde la raíz del repo) */
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const path = require('path');
+let PASS=0, FAIL=0;
+const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+(typeof e==='string'?e:JSON.stringify(e)).slice(0,500)):''); };
+const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
+
+function PREPARAR(){
+  var c=document.getElementById('conn-form'); if(c) c.style.display='none';
+  CONNECTED=false; CARGA_GEN++; CARGA_ESTADO='ok'; ULTIMO_ERROR='';
+  try{ clearTimeout(CARGA_TIMER); clearInterval(CARGA_TIC); }catch(e){}
+  if(typeof AUTO_TIMER!=='undefined' && AUTO_TIMER) clearInterval(AUTO_TIMER);
+  if(typeof MIS_TIMER!=='undefined' && MIS_TIMER) clearInterval(MIS_TIMER);
+  loadFromServer=function(){};
+  apiList=function(){ return Promise.resolve({ ok:true, pedidos:JSON.parse(JSON.stringify(STATE)) }); };
+  try{ localStorage.removeItem('me_asis_vistos'); localStorage.removeItem('me_asis_mudo'); }catch(e){}
+  var n=0, man=proximoDiaEntrega();
+  var V=function(o){ n++; return Object.assign({ id:'a'+n, oc:'09-'+(400+n), nota:String(900+n), vendedor:'Mirian Salazar', cliente:'CLIENTE A'+n, fecha:man, turno:'AM',
+    productos:[{desc:'COLCHON TITANIO',medida:'140x190',cant:1,precio:3000}], saldo:0, acuenta:0, pagado:true, metodoPago:'', entregado:false,
+    ts:new Date('2026-09-10T10:00:00-04:00').getTime(), fotos:[], chofer:'', vehiculo:'', maps:'https://maps.app.goo.gl/x', celular:'7000000' }, o); };
+  window.FIX=function(){ n=0; return [
+    V({}),                                                                                           // mañana, sin avisar y sin camión
+    V({ cliente:'DEBE MUCHO', fecha:'2026-09-05', entregado:true, pagado:false, saldo:1500 }),       // saldo hace 13 días
+    V({ cliente:'SIN PIN', fecha:'2026-09-25', maps:'' }),                                           // sin ubicación
+    V({ vendedor:'Maria Flores', cliente:'DE OTRA', fecha:'2026-09-01', entregado:true, pagado:false, saldo:900, maps:'' })   // de otra vendedora: no
+  ]; };
+}
+
+(async () => {
+  const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
+  const errores=[];
+  const abrir = async (conAsis) => {
+    const page = await browser.newPage({ viewport:{ width:1180, height:900 }, timezoneId:'America/La_Paz' });
+    page.on('pageerror', e => errores.push(e.message));
+    page.on('dialog', d => d.accept());
+    await page.route(/^https?:/, r => r.abort());
+    if (conAsis) await page.addInitScript(() => { window.ASIS_PRUEBA=1; });
+    await page.clock.setFixedTime(new Date('2026-09-18T18:00:00-04:00'));
+    await page.goto('file://' + PEDIDOS, { waitUntil:'load' });
+    await page.waitForTimeout(1600);
+    return page;
+  };
+
+  console.log('\n── 1. En las pruebas automáticas no aparece ──');
+  let p0 = await abrir(false);
+  chk('sin ASIS_PRUEBA no hay burbuja (no tapa botones de las otras pruebas)', await p0.evaluate(() => !document.getElementById('asis')));
+  await p0.close();
+
+  const page = await abrir(true);
+  const ev = async (fn, arg) => { try { return await page.evaluate(fn, arg); } catch(e){ return { __error:String((e&&e.message)||e).slice(0,300) }; } };
+  await ev(PREPARAR);
+  await ev(() => { showView('mis'); });
+  await page.waitForTimeout(150);
+
+  console.log('\n── 2-3. Mis pedidos ──');
+  let r = await ev(async () => {
+    STATE=FIX(); var mv=document.getElementById('mis-vendedor'); mv.value='Mirian Salazar'; renderMis();
+    asisRefrescar();
+    var yo=document.getElementById('asis-yo'), img=yo && yo.querySelector('img');
+    return { img:img && img.getAttribute('src'), n:(document.getElementById('asis-n')||{}).textContent, nOculto:(document.getElementById('asis-n')||{}).hidden,
+             ks:asisAvisos().map(function(a){ return a.k.split('|')[0]+':'+a.t; }), globo:!document.getElementById('asis-globo').hidden };
+  });
+  chk('el asistente es el 3D del dueño de cuerpo entero', /asistente\/eduardo-3d\.webp/.test(r.img||''), r);
+  chk('avisa: clientes de mañana sin avisar, el saldo de hace 13 días y el pedido sin ubicación (3), solo de Mirian',
+      r.n==='3' && !r.nOculto && r.ks.some(function(k){ return /^m1:.*Mañana se entrega 1 pedido tuyo/.test(k); }) &&
+      r.ks.some(function(k){ return /^deben:1 cliente tuyo/.test(k); }) && r.ks.some(function(k){ return /^sinub:1 pedido sin ubicación/.test(k); }) &&
+      !r.ks.some(function(k){ return /DE OTRA/.test(k); }), r);
+  chk('y lo dice en el globito', r.globo, r);
+
+  r = await ev(() => {
+    asisAbrir('avisos');
+    var avs=[].map.call(document.querySelectorAll('#asis-panel .asis-av'), function(a){ return a.innerText.replace(/\s+/g,' '); });
+    var b=[].filter.call(document.querySelectorAll('#asis-panel .asis-b'), function(x){ return x.textContent==='Entendido'; })[0];
+    b.click();
+    return { avs:avs, despues:document.querySelectorAll('#asis-panel .asis-av').length, n:document.getElementById('asis-n').textContent,
+             ls:localStorage.getItem('me_asis_vistos')||'', saludo:(document.querySelector('#asis-panel .asis-h b')||{}).textContent };
+  });
+  chk('la ventana muestra los 3 avisos y saluda a la vendedora', r.avs.length===3 && /Mirian/.test(r.saludo||''), r);
+  chk('«Entendido» lo saca, baja el número y queda guardado en este aparato', r.despues===2 && r.n==='2' && /m1\|/.test(r.ls), r);
+
+  console.log('\n── 4. Administración ──');
+  r = await ev(async () => {
+    asisCerrar(); UNLOCKED=true; showView('admin'); await new Promise(function(res){ setTimeout(res, 600); });
+    return asisAvisos().map(function(a){ return a.k.split('|')[0]+':'+a.t; });
+  });
+  chk('con la clave: «1 pedido de mañana sin camión»', r.some(function(k){ return /^a3:1 pedido de mañana sin camión/.test(k); }), r);
+
+  console.log('\n── 5. Al guardar ──');
+  r = await ev(async () => {
+    tabNuevoPedido(); await new Promise(function(res){ setTimeout(res, 500); });
+    document.getElementById('f-cliente').value='JUAN PEREZ'; document.getElementById('f-celular').value=''; document.getElementById('f-maps').value='';
+    asisAlGuardar();
+    return { ks:asisAvisos().map(function(a){ return a.t; }), globo:document.getElementById('asis-globo').innerText };
+  });
+  chk('sin celular ni ubicación: avisa las dos cosas (y no frena el guardado)',
+      r.ks.some(function(t){ return /Te faltó el celular de JUAN PEREZ/.test(t); }) && r.ks.some(function(t){ return /Sin ubicación de Google Maps/.test(t); }) && /celular/.test(r.globo), r);
+
+  console.log('\n── 6. La ayuda ──');
+  r = await ev(async () => {
+    asisAbrir('ayuda'); ASIS.q='cómo anoto el PAGO'; asisAyudaLista();
+    var qs=[].map.call(document.querySelectorAll('#asis-lista .asis-pq'), function(b){ return b.textContent; });
+    var sin=asisBuscar('xyzw').length;
+    showView('mis'); await new Promise(function(res){ setTimeout(res, 300); });
+    asisMostrar(asisBuscar('pago')[0]); await new Promise(function(res){ setTimeout(res, 700); });
+    return { qs:qs, sin:sin, vista:asisVista(), foco:document.getElementById('f-metodo').classList.contains('asis-foco'), cerrado:document.getElementById('asis-panel').hidden };
+  });
+  chk('«cómo anoto el PAGO» encuentra primero «¿Cómo anoto el pago o un adelanto?»; una palabra rara no encuentra nada', /pago o un adelanto/.test(r.qs[0]||'') && r.sin===0, r);
+  chk('«Mostrame dónde» lleva a Nuevo pedido e ilumina el método de pago', r.vista==='form' && r.foco && r.cerrado, r);
+
+  console.log('\n── 7. El sonido ──');
+  r = await ev(() => { asisAbrir('avisos'); asisMudoCambiar(); return { ls:localStorage.getItem('me_asis_mudo'), btn:[].map.call(document.querySelectorAll('#asis-panel .asis-x'), function(b){ return b.textContent; }).join('') }; });
+  chk('🔇 silencia y se recuerda en el aparato', r.ls==='1' && /🔇/.test(r.btn), r);
+
+  chk('sin errores de la página', errores.length===0, errores.slice(0,3));
+  await browser.close();
+  console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
+  process.exit(FAIL ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });
