@@ -7455,6 +7455,12 @@ El dueño: *«falta que al entrar al panel cada vendedor se identifique»*.
   asistente se repinta. Logística/Administración = `setVendedorMem('')`. Se cambia desde la ventana de Eduardo («¿No sos …?», con ✕).
 - No es un control de acceso (no hay contraseñas): es para que cada uno vea lo suyo. No guarda nada en la planilla.
 - En Playwright no sale salvo `window.QUIEN_PRUEBA`. `tests/test_quien.js` (10; 6 rojas contra lo publicado antes). Batería en verde.
+- **Segunda vuelta** (dueño, 12/10 00:05: *«elegí vendedor pero en contabilidad seguía saliendo todos… y no era Eduardo el que decía
+  bienvenido sino una alerta del panel»*; PUBLICADA 12/10 00:09, `2bf2b6f`): `quienContaPoner` deja `#cta-vendedor` y `#cua-vendedor`
+  en quien entró (desde `llenarUnSelectVendedor` cuando están en «Todos», UNA vez por elección: `QUIEN_CONTA_PUESTO`; si después elige
+  «Todos» a mano, queda); logística/administración → «Todos». El saludo es `quienSaludo` → `asisGlobo` (globito de Eduardo con salto y
+  sonido, dice cuántos avisos tiene), ya no `toast`. `test_quien` → 13. `test_codex26_cierres` §3 pasó a la fecha de hoy (las tildes
+  de carga de más de `CARGA_DIAS_GUARDA` se podan: el 01/10 fijo se pudrió el 12/10).
 
 ## 4jz. 11/10 (noche): 🎧 ATC con el estilo nuevo y 🙈 la pestaña Chofer escondida — PUBLICADA 11/10 23:21 de Bolivia (`7a6085f`), Pages OK
 El dueño: *«falta modernizar la pestaña de atc al nuevo estilo, elimina la pestaña choferes nadie la usa, o escóndela»*.
