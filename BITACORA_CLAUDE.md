@@ -13693,3 +13693,13 @@ imprimir `versión 2026-09-20-a`.
 - **Varias imágenes a la vez** (dueño, con captura del comprobante: *«no deja subir más de 1 foto a la vez»*): los tres selectores de
   comprobantes con `multiple` + `compVarias` (de a una, mismo manejador, tope `COMP_MAX`). `test_comp_varias` 5 (rojo contra `e2f1021`).
   Batería entera en verde.
+
+## 4kg. 12/10: GPS de los camiones (Monnet, i-monnet 5.0) — EN ESTUDIO
+- El dueño: *«¿cómo sabe el sistema que se despachó un camión? si te paso el GPS…»*. Hoy el panel sabe «cargado» (tildes) y
+  «entregado» (cierre), nunca «salió». Plataforma: i-monnet 5.0 de Monnet (sistema propio, sin API pública a la vista; desde la sesión
+  no se pudo abrir: el proxy bloquea el dominio). Caminos: A) API/token de Monnet (el dueño pregunta); B) geocercas PTF/Banzer con
+  alerta por correo que el `.gs` lee con GmailApp (pide permiso nuevo); C) entrar con usuario y contraseña (último recurso, frágil).
+- Placas (dueño): Foton nuevo 6663-CCP · Carry 6409-TIG · Foton insumo 6021-URL · Foton encarpado 5655-KSC (el dueño escribió
+  «KSK»; i-monnet dice KSC). En `VEHICULO_PLACA`, sin usar todavía. PTF = «Calle Transversal 10A, Dr. Melchor Pinto Parada», junto a
+  MULTIESPUMAS VISCARRA SRL (donde paran KSC y CCP), coincide con `ALM_UBIC.ptf`. Credenciales: NUNCA por el chat; si hacen falta, a
+  las Propiedades del script.
