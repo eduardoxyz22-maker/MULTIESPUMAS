@@ -13809,7 +13809,7 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - Pendiente para la próxima versión del `.gs`: el aviso «sin camión» corta el último nombre a la mitad («ROXANA CONTRERA L….»)
   por el tope de 250 letras de `waParam_`: cortar entre nombres y decir «y N más».
 
-### §4kj — 📅 Hoy / Mañana en la tabla de Administración (12/10, dueño: *«ahí falta el hoy / mañana para filtrar la tabla»*)
+### §4kj — 📅 Hoy / Mañana en la tabla de Administración (12/10, PUBLICADA `a65cf17`; dueño: *«ahí falta el hoy / mañana para filtrar la tabla»*)
 - Dos chips en `QUICK_DEFS` después de «Todos»: `hoy` (`p.fecha===todayStr()`) y `manana` (`p.fecha===proximoDiaEntrega()`; si el
   próximo día con camión no es mañana, el chip dice su nombre: «➡️ Martes 03/11», `lblF`). Los dos llevan `todo:true`: cuentan y
   filtran sobre `admBaseList(true)` (sin el corte por día/mes; la búsqueda sí), porque el 31 «Mañana» es del mes siguiente.
