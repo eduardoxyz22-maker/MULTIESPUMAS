@@ -90,7 +90,7 @@ function servidor(props) {
   const guardar = (rec) => { const r = post({ action: 'save', pedido: rec }); if (r.ok) rec.rev = r.pedido.rev; return r; };
   const leer = (id) => ctx.rowToRec_(sh._datos.find(f => f[0] === id));
   const hoja = () => (hojas['Bot WhatsApp'] ? hojas['Bot WhatsApp']._datos.slice(1) : []);
-  const salen = () => meta.llamadas.map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text) }));
+  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text) }));
   const limpiar = () => { meta.llamadas.length = 0; };
   return { ctx, sh, P, meta, triggers, post, guardar, leer, hoja, salen, limpiar, repaso: () => ctx.waRepaso() };
 }
@@ -443,8 +443,8 @@ console.log('\n── 10. El webhook de Meta: verificar, estados en la hoja, res
   const nAntes = S.hoja().length;
   aviso('clave-hook', { contacts: [{ wa_id: '59170111222', profile: { name: 'Juan' } }], messages: [{ id: 'wamid.resp1', from: '59170111222', timestamp: ts, type: 'text', text: { body: 'Gracias, ahí estaré' } }] });
   aviso('clave-hook', { contacts: [{ wa_id: '59170111222', profile: { name: 'Juan' } }], messages: [{ id: 'wamid.resp1', from: '59170111222', timestamp: ts, type: 'text', text: { body: 'Gracias, ahí estaré' } }] });
-  const ult = S.hoja()[S.hoja().length - 1];
-  chk('lo que contesta el cliente: UNA fila «💬 Respondió» con su nombre, número y texto (repetido por Meta, no se duplica)', S.hoja().length === nAntes + 1 && ult[3] === '💬 Respondió' && ult[4] === 'Juan' && ult[5] === '59170111222' && ult[9] === 'Gracias, ahí estaré', ult);
+  const rs = S.hoja().filter(f => f[3] === '💬 Respondió'), ult = rs[rs.length - 1];
+  chk('lo que contesta el cliente: UNA fila «💬 Respondió» con su nombre, número y texto (repetido por Meta, no se duplica; + la respuesta automática, desde 12-c)', S.hoja().length === nAntes + 2 && rs.length === 1 && ult[4] === 'Juan' && ult[5] === '59170111222' && ult[9] === 'Gracias, ahí estaré', ult);
   const n2 = S.hoja().length, m2 = JSON.stringify(meta());
   aviso('mala', { statuses: [{ id: w[0], status: 'failed', timestamp: ts, errors: [{ code: 1 }] }] });
   aviso('clave-hook', Object.assign({ statuses: [{ id: w[0], status: 'failed', timestamp: ts, errors: [{ code: 1 }] }] }, { metadata: { phone_number_id: '999-kommo' } }));
@@ -479,6 +479,36 @@ console.log('\n── 11. «Sin camión» no parte un nombre; un aviso con otra 
   const pr = S2.ctx.probarAntesDeImplementar().lineas.join('\n');
   chk('probar lo dice: «con OTRA clave en la dirección… igual a WA_HOOK_KEY»', /2 aviso\(s\) de Meta con OTRA clave/.test(pr), pr.split('\n').filter(l => /Meta/.test(l)));
   chk('estadoBotWhatsApp también', S2.ctx.estadoBotWhatsApp().metaRechazados.n === 2);
+}
+
+// ══ 12. (2026-10-12-c) Lo que contesta un cliente: con su pedido, respuesta automática una vez, y para el panel ══════
+console.log('\n── 12. El cliente contesta: de qué pedido es, respuesta automática y lo que lee el panel ──');
+{
+  poner('2026-10-14 10:00');
+  const S = servidor(Object.assign({ WA_HOOK_KEY: 'k' }, ON));
+  const p = ped({ id: 'rc1', cliente: 'JUAN CARLOS ROCA', vendedor: 'Carola Chavez', celular: '70111222' }); S.guardar(p);
+  pasar(3); S.repaso();
+  const wConf = S.hoja().find(f => f[3] === 'Confirmación')[8];
+  S.limpiar();
+  const ts = () => String(Math.floor(RELOJ.ms / 1000));
+  const aviso = (msgs) => S.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ field: 'messages', value: { metadata: { phone_number_id: '1234567890' }, contacts: [{ wa_id: '59170111222', profile: { name: 'Juan Roca' } }], messages: msgs } }] }] }) } });
+  aviso([{ id: 'wamid.r1', from: '59170111222', timestamp: ts(), type: 'text', text: { body: 'Quiero modificar mi horario' }, context: { id: wConf } }]);
+  const fila = S.hoja().find(f => f[8] === 'wamid.r1');
+  chk('la respuesta queda con SU pedido y OC (por el «Responder» sobre la confirmación)', fila && fila[1] === 'rc1' && fila[2] === p.oc && fila[11] > 0, fila);
+  const tx = S.meta.llamadas.filter(c => c.body && c.body.type === 'text');
+  chk('respuesta automática: un texto al cliente que nombra a su vendedora y la OC', tx.length === 1 && tx[0].body.to === '59170111222' && /vendedora Carola/.test(tx[0].body.text.body) && /OC 10-/.test(tx[0].body.text.body) && /Juan/.test(tx[0].body.text.body), tx.map(c => c.body.text.body));
+  chk('…y queda anotada en la hoja como «Respuesta automática» ✅', S.hoja().some(f => f[3] === 'Respuesta automática' && /enviado/.test(f[7])));
+  pasar(10);
+  aviso([{ id: 'wamid.r2', from: '59170111222', timestamp: ts(), type: 'text', text: { body: '¿Me escuchan?' } }]);
+  chk('un segundo mensaje: se anota (por el último mensaje que le mandó el bot) pero NO se responde de nuevo', S.hoja().find(f => f[8] === 'wamid.r2')[1] === 'rc1' && S.meta.llamadas.filter(c => c.body && c.body.type === 'text').length === 1);
+  const r = JSON.parse(S.ctx.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'waRespuestas' }) } })._t);
+  chk('waRespuestas: las dos, la más nueva primero, con pedido, nombre, número y texto', r.ok && r.resp.length === 2 && r.resp[0].w === 'wamid.r2' && r.resp[1].txt === 'Quiero modificar mi horario' && r.resp[1].id === 'rc1' && r.resp[1].nom === 'Juan Roca', r.resp);
+  const a = JSON.parse(S.ctx.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'waRespAtendida', w: 'wamid.r1', quien: 'Carola Chavez' }) } })._t);
+  const r2 = JSON.parse(S.ctx.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'waRespuestas' }) } })._t);
+  chk('waRespAtendida: «Carola Chavez · 14/10 10:13» en la columna K y el panel lo lee', a.ok && /^Carola Chavez · 14\/10/.test(r2.resp[1].at) && r2.resp[0].at === '', r2.resp.map(x => x.at));
+  const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'k', WA_AUTORESP: '0' }, ON));
+  S2.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: '1234567890' }, messages: [{ id: 'wamid.z', from: '59170000000', timestamp: ts(), type: 'text', text: { body: 'hola' } }] } }] }] }) } });
+  chk('con WA_AUTORESP=0 no se responde (pero se anota)', S2.meta.llamadas.length === 0 && S2.hoja().some(f => f[8] === 'wamid.z'));
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

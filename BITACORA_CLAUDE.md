@@ -13829,3 +13829,14 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - **🚀 `.gs` 2026-10-12-b IMPLEMENTADO como VERSIÓN 43 (12/10 16:59, el dueño; en la «Descripción» escribió «2026-10-12-e» por error de tipeo: el código es la b)**. Volver atrás = ✏️ a la **versión 42** («12 oct 2026, 3:57 p.m.», la
   12-a) Y pegar `e7d32f303d7743a0388080293c5f310c903c241f` (3.156 líneas). Página con ESPERADA 12-b publicada a continuación.
   David todavía NO va en `WA_LOGISTICA` (dueño: «por el momento no»).
+
+### §4kk — 💬 Lo que contesta el cliente al bot, en el panel (12/10, dueño: *«haz que las respuestas de los clientes aparezcan en el panel… ¿qué pasa si el cliente responde?»*)
+- **`.gs` 2026-10-12-c**: la fila «💬 Respondió» lleva pedido y OC (`waHookPedidoDe_`: el `context.id` del «Responder» → la fila de ese
+  wamid; si no, el último mensaje ✅ que el bot le mandó a ese número), K «Atendida», L «ms». **Respuesta automática** (texto libre
+  dentro de la ventana de 24 h, `waPost_`), una vez cada `WA_AUTO_HORAS`=12 por número (`WA_AUTO`): «este número solo manda avisos…
+  escribile a tu vendedora X… ya le avisamos»; `WA_AUTORESP`=0 la apaga; queda en la hoja como «Respuesta automática».
+  Acciones `waRespuestas` (7 días, 150, lo más nuevo primero; sin candado) y `waRespAtendida` {w, quien, deshacer}. `test_wa_bot` §12 (→ 101).
+- **Página** (ESPERADA 12-c; se publica DESPUÉS de implementar): `waRespTraer` (desde `nxBadges`, 1 por minuto, solo con `WA_BOT` y
+  servidor ≥ 12-c) → `#wa-resp-mis` (las de los pedidos de la vendedora elegida; «👑 Ver todos» = todas) y `#wa-resp-adm` (todas, con
+  clave/aparato de administración/logística), aviso 💬 de Eduardo, botones «📋 Abrir el pedido», «💬 Escribirle» (wa.me) y «✓ Ya lo
+  atendí» (para todos). `tests/test_wa_resp.js` (7).

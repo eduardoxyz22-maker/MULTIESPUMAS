@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-12-b';   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-12-c';   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-12-b';
+  var ESTA_VERSION = '2026-10-12-c';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -901,6 +901,9 @@ function doPostCuerpo_(e) {
   if (action === 'rechazos') return jsonOut({ ok:true, version:SCRIPT_VERSION, rechazos: rechazosInforme_() });
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
   if (action === 'getlog') return jsonOut({ ok:true, version:SCRIPT_VERSION, get: getLogInforme_() });
+  // 💬 (2026-10-12-c) Lo que contestaron los clientes al bot (hoja «Bot WhatsApp»). Sin candado: no toca «Pedidos».
+  if (action === 'waRespuestas') return jsonOut({ ok:true, version:SCRIPT_VERSION, resp: waRespuestasLeer_() });
+  if (action === 'waRespAtendida') return waRespAtendida_(body);
   // 📚 (2026-10-09-a) El historial del stock: leer va sin candado; guardar, adentro (dos equipos pueden mandar el mismo día).
   if (action === 'histStockLeer') return histLeer_(body);
   var lock = LockService.getScriptLock();
@@ -2298,9 +2301,12 @@ function waArmar_(m, recs, cfg, B) {
 }
 /** Manda UNA plantilla. {ok, id} · {reintentar, detalle} · {fatal, detalle} · {detalle} (no se reintenta). */
 function waEnviar_(cfg, numero, plantilla, params) {
-  var body = { messaging_product:'whatsapp', to:numero, type:'template',
-               template:{ name:plantilla, language:{ code:cfg.idioma },
-                          components:[{ type:'body', parameters:params.map(function (t) { return { type:'text', text:t }; }) }] } };
+  return waPost_(cfg, { messaging_product:'whatsapp', to:numero, type:'template',
+                        template:{ name:plantilla, language:{ code:cfg.idioma },
+                                   components:[{ type:'body', parameters:params.map(function (t) { return { type:'text', text:t }; }) }] } });
+}
+/* (2026-10-12-c) El envío a Meta, para una plantilla o para un texto libre (la respuesta automática). */
+function waPost_(cfg, body) {
   var r, code, txt;
   try {
     r = UrlFetchApp.fetch('https://graph.facebook.com/' + cfg.api + '/' + encodeURIComponent(cfg.phone) + '/messages',
@@ -2519,8 +2525,8 @@ function waHookTxtMsg_(m) {
 function waHookAnotar_(est, resp) {
   var sh = waHoja_(), last = sh.getLastRow();
   try { if (String(sh.getRange(1, WA_META_COL).getValue() || '') === '') sh.getRange(1, WA_META_COL).setValue('Meta dice').setFontWeight('bold'); } catch (er) {}
-  var ids = last > 1 ? sh.getRange(2, 9, last - 1, 1).getValues() : [], fila = {};
-  for (var i = 0; i < ids.length; i++) { var w = String(ids[i][0] || ''); if (w.indexOf('wamid.') === 0) fila[w] = i + 2; }
+  var datos = last > 1 ? sh.getRange(2, 1, last - 1, 9).getValues() : [], fila = {};
+  for (var i = 0; i < datos.length; i++) { var w = String(datos[i][8] || ''); if (w.indexOf('wamid.') === 0) fila[w] = i + 2; }
   var meta = waJsonProp_('WA_META', {}) || {};
   meta.n = (Number(meta.n) || 0) + est.length + resp.length; meta.ts = new Date().toISOString(); meta.fallos = meta.fallos || [];
   est.forEach(function (s) {
@@ -2540,13 +2546,85 @@ function waHookAnotar_(est, resp) {
     for (var k in WA_META_TXT) if (ya.indexOf(WA_META_TXT[k]) === 0) rYa = WA_META_RANGO[k];
     if (r > rYa) c.setValue(txt);   // nunca para atrás (Meta puede mandar «entregado» después de «leído»)
   });
+  if (resp.length) waHookEncabezados_(sh);
   resp.forEach(function (m) {
     var w = String(m.id || ''); if (!w || fila[w]) return;   // Meta lo mandó dos veces
-    sh.appendRow([waHookHora_(m.timestamp), '', '', '💬 Respondió', String(m._nom || ''), String(m.from || ''), '', '💬 mensaje', w, waHookTxtMsg_(m).slice(0, 500)]);
+    var de = String(m.from || ''), ped = waHookPedidoDe_(datos, fila, m, de), ms = (Number(m.timestamp) * 1000) || Date.now();
+    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, waHookTxtMsg_(m).slice(0, 500), '', ms]);
     fila[w] = sh.getLastRow();
+    try { waAutoResponder_(sh, de, ped, m._nom); } catch (er) {}
   });
   meta.resp = (Number(meta.resp) || 0) + resp.length;
   try { PropertiesService.getScriptProperties().setProperty('WA_META', JSON.stringify(meta)); } catch (er) {}
+}
+
+/* 💬 (2026-10-12-c) LO QUE CONTESTA UN CLIENTE, EN EL PANEL. El dueño: «haz que las respuestas de los clientes aparezcan en el
+   panel… ¿qué pasa si el cliente responde?». Antes quedaba en la hoja y nadie lo veía.
+   · De qué pedido es: si el cliente usó «Responder» sobre un mensaje del bot, Meta manda su `context.id` (el wamid de ESE
+     mensaje, que está en «Detalle»); si no, el último mensaje que el bot le mandó a ese número. La fila guarda pedido y OC.
+   · Columnas K «Atendida» (quién y cuándo, desde el panel) y L «ms» (para ordenar: «Fecha» no tiene año).
+   · Respuesta automática (texto libre: Meta lo deja sin plantilla dentro de las 24 h en que el cliente escribió), UNA vez cada
+     `WA_AUTO_HORAS` por número: «este número solo manda avisos… escribile a tu vendedora». `WA_AUTORESP`=0 la apaga.
+   · El panel las pide con `waRespuestas` (sin candado: es otra hoja) y marca «✓ Ya lo atendí» con `waRespAtendida`. */
+var WA_RESP_COLS = 12, WA_AUTO_HORAS = 12, WA_RESP_DIAS = 7, WA_RESP_MAX = 150;
+function waHookEncabezados_(sh) {
+  try {
+    var enc = sh.getRange(1, 11, 1, 2).getValues()[0];
+    if (String(enc[0] || '') === '') sh.getRange(1, 11).setValue('Atendida').setFontWeight('bold');
+    if (String(enc[1] || '') === '') sh.getRange(1, 12).setValue('ms').setFontWeight('bold');
+  } catch (er) {}
+}
+function waHookPedidoDe_(datos, fila, m, de) {
+  var ctx = String((m.context || {}).id || ''), f = ctx ? fila[ctx] : 0;
+  if (f && datos[f - 2] && datos[f - 2][1]) return { id:String(datos[f - 2][1]), oc:String(datos[f - 2][2] || '') };
+  for (var i = datos.length - 1; i >= 0; i--) {
+    var r = datos[i];
+    if (String(r[5] || '') === de && r[1] && String(r[3] || '').indexOf('💬') < 0 && String(r[7] || '').indexOf('enviado') >= 0) return { id:String(r[1]), oc:String(r[2] || '') };
+  }
+  return { id:'', oc:'' };
+}
+function waAutoResponder_(sh, de, ped, nom) {
+  var v = prop_('WA_AUTORESP').toLowerCase(); if (v === '0' || v === 'no') return;
+  if (!waActivo_() || !de) return;
+  var cfg = waConfig_(); if (!cfg.ok) return;
+  var ahora = Date.now(), ya = waJsonProp_('WA_AUTO', {}) || {}, lim = ahora - WA_AUTO_HORAS * 3600000;
+  for (var k in ya) if (!(Number(ya[k]) > lim)) delete ya[k];
+  if (ya[de]) return;
+  var p = null;
+  if (ped.id) { try { readAll().some(function (q) { if (String(q.id) === ped.id) { p = q; return true; } return false; }); } catch (er) {} }
+  var vend = p ? waNombre_(p.vendedor) : '', oc = p ? waOc_(p.oc) : (ped.oc ? 'OC ' + ped.oc : '');
+  var txt = '¡Gracias por escribirnos' + (nom ? ', ' + waNombre_(nom) : '') + '! Este número solo manda los avisos de entrega y nadie lee los mensajes acá. ' +
+            'Para cambiar el día, el horario o cualquier dato de tu pedido' + (oc ? ' ' + oc : '') + ', escribile a tu vendedora' + (vend ? ' ' + vend : '') +
+            ' por el WhatsApp de siempre. Ya le avisamos que nos escribiste.';
+  var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:txt, preview_url:false } });
+  ya[de] = ahora;
+  var claves = Object.keys(ya); if (claves.length > 300) claves.slice(0, claves.length - 300).forEach(function (c) { delete ya[c]; });
+  try { PropertiesService.getScriptProperties().setProperty('WA_AUTO', JSON.stringify(ya)); } catch (er) {}
+  sh.appendRow([waBo_(ahora).txt, ped.id, ped.oc, 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', ahora]);
+}
+/** Para el panel: lo que contestaron los clientes en los últimos WA_RESP_DIAS días, lo más nuevo primero. */
+function waRespuestasLeer_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WA_HOJA); if (!sh) return [];
+  var last = sh.getLastRow(); if (last < 2) return [];
+  var desde = Math.max(2, last - 1500), filas = sh.getRange(desde, 1, last - desde + 1, WA_RESP_COLS).getValues(), lim = Date.now() - WA_RESP_DIAS * 86400000, out = [];
+  for (var i = filas.length - 1; i >= 0 && out.length < WA_RESP_MAX; i--) {
+    var r = filas[i]; if (String(r[3] || '') !== '💬 Respondió') continue;
+    var ms = Number(r[11]) || 0; if (ms && ms < lim) continue;
+    out.push({ w:String(r[8] || ''), ms:ms, t:String(r[0] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || ''), num:String(r[5] || ''),
+               txt:String(r[9] || ''), at:String(r[10] || '') });
+  }
+  return out;
+}
+function waRespAtendida_(body) {
+  var w = String(body.w || ''); if (w.indexOf('wamid.') !== 0) return jsonOut({ ok:false, error:'no id', version:SCRIPT_VERSION });
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WA_HOJA); if (!sh) return jsonOut({ ok:false, error:'no hay hoja', version:SCRIPT_VERSION });
+  var last = sh.getLastRow(), ids = last > 1 ? sh.getRange(2, 9, last - 1, 1).getValues() : [];
+  for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i][0]) === w) {
+    var val = body.deshacer ? '' : (String(body.quien || 'alguien').slice(0, 40) + ' · ' + waBo_(Date.now()).txt);
+    sh.getRange(i + 2, 11).setValue(val);
+    return jsonOut({ ok:true, at:val, version:SCRIPT_VERSION });
+  }
+  return jsonOut({ ok:false, error:'no está', version:SCRIPT_VERSION });
 }
 
 /* ============================================================================

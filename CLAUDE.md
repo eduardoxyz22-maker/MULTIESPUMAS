@@ -740,7 +740,10 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - **📬 Escucha a Meta (§4ki, `.gs` 2026-10-12-a)**: webhook `?wa=<WA_HOOK_KEY>` (`waHook_`, antes de todo en doPost; la verificación
   `hub.challenge` en doGet antes de la clave). Estados en la columna «Meta dice» de «Bot WhatsApp» por `wamid` (nunca para atrás) y lo que
   contesta el cliente como «💬 Respondió». Solo el `WA_PHONE_ID`; el número de Kommo NO se suscribe.
-- `tests/test_wa_bot.js` (89), `tests/test_wa_pagina.js` (12). Bitácora §4jt, §4ki.
+- **💬 Lo que contesta el cliente (§4kk, `.gs` 2026-10-12-c)**: la fila «💬 Respondió» con su pedido, respuesta automática una vez
+  cada 12 h por número (`WA_AUTORESP`=0 la apaga) y al panel por `waRespuestas` (`#wa-resp-mis` de su vendedora, `#wa-resp-adm` todas,
+  aviso de Eduardo); «✓ Ya lo atendí» = `waRespAtendida` (columna K, para todos).
+- `tests/test_wa_bot.js` (101), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)
