@@ -738,6 +738,11 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
+## 🎧 ATC con el estilo nuevo y 🙈 Chofer escondida (§4jz, 11/10; PUBLICADA 23:21, `7a6085f`)
+`#tab-chofer` va `hidden` (la vista sigue). ATC: fichas vivas (`cxFichasVivas(…, atvIcoDe)`), «🛤️ El viaje» (`atcLista(true)` = sin el
+filtro de estado; tocar un paso filtra), motivos en barras que filtran y tarjetas bajo 900 px (`me_atc_tabla`). Solo presentación: la tabla
+`#tbl-atc` se sigue armando. `tests/test_atc_4jz.js`. Bitácora §4jz.
+
 ## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*)
 Su imagen 3D de cuerpo entero en la esquina (`asistente/eduardo-3d.webp`, cabecera `eduardo-busto.webp`; `?v=` en `ASIS_IMG`/`ASIS_BUSTO`).
 Avisa según la pestaña (`asisAvisos`: Mis pedidos del vendedor elegido, al guardar, Administración, Contabilidad) leyendo las cuentas de

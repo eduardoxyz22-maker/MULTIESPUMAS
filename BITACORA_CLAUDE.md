@@ -7445,6 +7445,21 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jz. 11/10 (noche): 🎧 ATC con el estilo nuevo y 🙈 la pestaña Chofer escondida — PUBLICADA 11/10 23:21 de Bolivia (`7a6085f`), Pages OK
+El dueño: *«falta modernizar la pestaña de atc al nuevo estilo, elimina la pestaña choferes nadie la usa, o escóndela»*.
+- **Chofer escondida, no borrada**: `#tab-chofer` lleva `hidden` (+ `.nav button[hidden]{display:none!important}`); la vista y
+  `showView('chofer')` siguen (las pruebas del chofer la usan). Volver = sacar `hidden`. En el celular quedan 5 botones abajo.
+- **ATC, solo presentación** (bloque `atv*`, después de `renderAtc`; CSS `.atv-*` al final del segundo `<style>`):
+  · Fichas con color y dibujito: `cxFichasVivas(box, clave, icoDe)` ganó un 3° argumento; ATC pasa `atvIcoDe`. Laten Por recoger,
+    Listas, Recoger de fábrica y Sin motivo cuando hay.
+  · 🛤️ «El viaje de las ATC» (`#atv-viaje`, `ATV_PASOS`): cuántas en cada estado con `atcLista(true)` (el argumento nuevo saltea
+    el filtro de estado); tocar un paso pone ese estado en `#atc-estado` (otra vez, lo saca).
+  · 💬 Motivos en barras (en `renderAtc`, `.atv-mb`): largo = cuántas, verde = cerradas; tocar filtra por motivo, «sin motivo» va al
+    estado `sinmotivo`.
+  · < 900 px: tarjetas (`#atv-cards`, `.atv-c`) con estado, cliente, motivo, las 4 fechas (Entró, Recojo, De fábrica, Al cliente) y los
+    días en semáforo (abierta > 7 ámbar, > 15 rojo); «📋 Ver como tabla» por aparato (`me_atc_tabla`). La tabla se sigue armando.
+- `tests/test_atc_4jz.js` (15; 13 rojas contra lo publicado antes). `test_arriba_4iw` 3b cambió a conciencia (5 pestañas). Batería en verde.
+
 ## 4jy. 11/10 (noche): 🚛 Los montacargas = «Lo del día, por lugar», y «⏳ ESPERAN» se toca — PUBLICADA 11/10 23:06 de Bolivia (`91fa2fe`), Pages OK
 El dueño, con dos capturas del iPad (16 pedidos de mañana sin camión): *«en los montacargas no veo los productos de mañana todos y cuando
 doy clic en espera no muestra qué hay en espera… no veo que los montacargas coincidan con lo que hay que cargar mañana»*.
