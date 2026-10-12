@@ -7495,6 +7495,14 @@ cuando podemos usar un avatar 3D»*. Va **su imagen 3D de cuerpo entero** (chaqu
 - **Cabecera en blanco** (dueño, 11/10 con captura del iPad: *«no uses fondo negro, sí blanco en la imagen del chat de Eduardo»*;
   `396081c`) → corregido enseguida (dueño: *«eso sí me gusta negro, pero la foto del avatar de Eduardo fondo blanco»*; PUBLICADA
   `512af29`): la cabecera `.asis-h` SIGUE OSCURA y lo blanco es solo el fondo de la foto (`.asis-h img`).
+- **🕺 Pose nueva con movimiento** (dueño, 11/10: *«acá tienes otra imagen para crearle movimiento»*; PUBLICADA 23:38, `84790b6`):
+  `asistente/eduardo-3d.webp` y `eduardo-busto.webp` salen ahora de esa imagen (Cloudinary `multiespumas/eduardo_pose2` +
+  `e_background_removal`, traída por `traer-imagenes.yml`; original y recorte PNG solo en la rama), `?v=2`. Las dos poses que mandó
+  son casi iguales (la mano en los lentes): alternarlas parecía dos personas, así que el movimiento es de CSS sobre una sola:
+  `.asis-fig` se mece desde los pies y respira (`asis-mece`, 6,5 s), `.asis-brillo` (un destello que cruza el lente, coordenadas de la
+  imagen: 40%/7,8%) y `.asis-chispa` (✦) cada 5,5 s. Un movimiento de verdad (cuerpo, mano) pide un video generado por IA: Freepik
+  sin créditos. ⚠️ Si se cambia la imagen, volver a ubicar `.asis-brillo`/`.asis-chispa`.
+- **3D sin borradores de Kommo** (mismo publicado): `cargaVivaDatos` filtra `esBorrador` y `esFilaSistema`. `test_camiones_3d` §5c.
 
 ## 4jw. 11/10 (noche): ✨ Contabilidad con el estilo nuevo (A–K) — PUBLICADA 11/10 21:09 de Bolivia (`407f4a9`), Pages OK
 El dueño, con las muestras (artifact «Contabilidad: once mejoras», A a K): *«A, B, C, D, E, F, G y H, I, J, K armame las muestras»* y
