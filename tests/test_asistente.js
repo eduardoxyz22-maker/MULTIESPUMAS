@@ -103,8 +103,9 @@ function PREPARAR(){
   console.log('\n── 5. Al guardar ──');
   r = await ev(async () => {
     tabNuevoPedido(); await new Promise(function(res){ setTimeout(res, 500); });
-    document.getElementById('f-cliente').value='JUAN PEREZ'; document.getElementById('f-celular').value=''; document.getElementById('f-maps').value='';
-    asisAlGuardar();
+    /* (12/10) lo llama submitPedido con el pedido YA guardado */
+    asisAlGuardar({ id:'g1', oc:'09-499', vendedor:'Mirian Salazar', cliente:'JUAN PEREZ', celular:'', maps:'' }, false);
+    await new Promise(function(res){ setTimeout(res, 900); });
     return { ks:asisAvisos().map(function(a){ return a.t; }), globo:document.getElementById('asis-globo').innerText };
   });
   chk('sin celular ni ubicación: avisa las dos cosas (y no frena el guardado)',

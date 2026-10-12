@@ -256,6 +256,34 @@ console.log('\n── 6. Cuando Meta falla ──');
   chk('plantilla mal cargada en Meta: error con el motivo, sin reintento', r.errores === 1 && !JSON.parse(S.P.WA_SALIDA || '[]').length && /132001/.test(S.hoja()[0][8]), S.hoja()[0]);
 }
 
+// ══ 5b. Revisión del 12/10 ═══════════════════════════════════════════════════
+console.log('\n── 5b. Revisión del 12/10: Kommo completado, celular mal escrito, recordatorio antes que la confirmación ──');
+{
+  poner('2026-10-14 10:00');
+  const S = servidor(ON);
+  S.guardar(ped({ id: 'kommo-123', cliente: 'DE KOMMO' }));                                   // borrador completado: estado vacío
+  S.guardar(ped({ id: 'kommo-777', cliente: 'SIGUE BORRADOR', estado: 'Borrador Kommo' }));  // todavía en la bandeja
+  pasar(3); S.repaso();
+  const s = S.salen(), conf = s.filter(x => x.pl === 'confirmacion_pedido'), ln = s.filter(x => x.pl === 'logistica_pedido_nuevo').map(x => x.p[2]);
+  chk('una venta de Kommo ya completada recibe la confirmación y logística el «pedido nuevo» (antes se salteaba por el id kommo-)',
+      conf.length === 1 && ln.filter(n => n === 'DE KOMMO').length === 2, s.map(x => x.pl + ':' + x.p[2]));
+  chk('lo que sigue como borrador de Kommo no manda nada', !s.some(x => x.p.indexOf('SIGUE BORRADOR') >= 0), s);
+  chk('el celular: un dígito de más o un número de otro país NO arman un celular de otra persona',
+      S.ctx.waCel_('775123456') === '' && S.ctx.waCel_('12367123456') === '' && S.ctx.waCel_('+54 9 11 6712 3456') === '' &&
+      S.ctx.waCel_('Cel: 70111222') === '59170111222' && S.ctx.waCel_('(591) 70111222') === '59170111222' && S.ctx.waCel_('70111222/76543210') === '59170111222',
+      ['775123456', '12367123456', '+54 9 11 6712 3456', 'Cel: 70111222', '(591) 70111222'].map(x => x + '→' + S.ctx.waCel_(x)));
+}
+{
+  poner('2026-10-14 16:59');
+  const S = servidor(Object.assign({}, ON, { WA_LOGISTICA: '' }));
+  S.guardar(ped({ id: 'q1', cliente: 'A LAS 16:59' }));
+  pasar(1); S.repaso();   // 17:00: la confirmación todavía espera sus 2 minutos
+  chk('a las 17:00 el pedido de las 16:59 no recibe el recordatorio antes que la confirmación', !S.salen().some(x => x.pl === 'recordatorio_entrega'), S.salen().map(x => x.pl));
+  S.limpiar(); pasar(3); S.repaso();
+  const s = S.salen().map(x => x.pl);
+  chk('a los minutos sale la confirmación (que ya dice el día), y no un recordatorio repetido', s.indexOf('confirmacion_pedido') >= 0 && s.indexOf('recordatorio_entrega') < 0, s);
+}
+
 // ══ 7. 16:00 y 17:00 ═════════════════════════════════════════════════════════
 console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 ──');
 {

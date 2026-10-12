@@ -2079,7 +2079,9 @@ function waCel_(cel) {
   var d = String(cel || '').replace(/[^0-9]/g, '');
   if (/^[67]\d{7}$/.test(d)) return '591' + d;
   if (/^591[67]\d{7}$/.test(d)) return d;
-  var m = String(cel || '').replace(/[\s.\-]/g, '').match(/(?:\+?591)?([67]\d{7})(?!\d)/);   // dos celulares en el campo: el primero
+  /* Dos celulares en el campo («70012345 / 76543210»): el primero. (12/10, revisión) Con borde a la IZQUIERDA también: si no,
+     de «775123456» o de un número de otro país salía un celular de Bolivia de OTRA persona. */
+  var m = String(cel || '').replace(/[\s.\-()]/g, '').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
   return m ? '591' + m[1] : '';
 }
 function waMarca_(vend) {
@@ -2150,7 +2152,9 @@ function waParam_(t) {
 /** ¿Es una ENTREGA? (para logística): con fecha, sin entregar, no del sistema, ni borrador de Kommo, ni venta de tienda. */
 function waEsEntrega_(p) {
   var id = String((p && p.id) || '');
-  if (!p || !id || id.indexOf('__') === 0 || id.indexOf(BORRADOR_PREF) === 0 || !p.fecha || p.entregado) return false;
+  /* (12/10, revisión) El borrador se reconoce por su ESTADO, no por el id: una venta de Kommo ya completada conserva el id
+     `kommo-<lead>` y es una entrega como cualquier otra. */
+  if (!p || !id || id.indexOf('__') === 0 || !p.fecha || p.entregado) return false;
   if (String(p.estado || '') === BORRADOR_EST) return false;
   return waNorm_(p.direccion).indexOf('salio de tienda') !== 0 && waNorm_(p.zona) !== 'tienda';
 }
@@ -2188,7 +2192,7 @@ function waColaGuardar_(c) {
 function waAlGuardar_(viejo, rec) {
   if (!waActivo_() || !rec) return;
   var id = String(rec.id || '');
-  if (!id || id.indexOf('__') === 0 || id.indexOf(BORRADOR_PREF) === 0 || !rec.fecha) return;
+  if (!id || id.indexOf('__') === 0 || String(rec.estado || '') === BORRADOR_EST || !rec.fecha) return;   // (12/10) por el estado, no por `kommo-`
   var ev = null, fV = viejo ? fmtDate(viejo[1]) : '';
   if (!viejo || !fV) ev = { id:id, t:'n' };                       // nuevo, o recién le pusieron fecha (venta de tienda → entrega)
   else if (fV !== String(rec.fecha) || turnoNorm_(viejo[7]) !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + turnoNorm_(viejo[7]) };
@@ -2320,11 +2324,11 @@ function waRepaso() {
         mandan lo mismo. Sin red adentro. */
   var lock = LockService.getScriptLock();
   try { lock.waitLock(20000); } catch (e) { res.error = 'busy (la próxima corrida lo manda)'; guardarRes(); return res; }
-  var msgs = [], recDia = '', recYa = {}, confHoy;
+  var msgs = [], recDia = '', recYa = {}, confHoy, colaN = {};
   try {
     var cola = waColaLeer_(), quedan = [];
     cola.forEach(function (ev) {
-      if (t0 - (Number(ev.ms) || 0) < WA_ESPERA_MS) { quedan.push(ev); return; }
+      if (t0 - (Number(ev.ms) || 0) < WA_ESPERA_MS) { quedan.push(ev); if (ev.t === 'n') colaN[ev.id] = 1; return; }
       if (ev.t === 'n') {
         msgs.push({ id:ev.id, k:'conf', a:'cliente', n:0 });
         cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'ln', a:L.nombre, n:0 }); });
@@ -2359,6 +2363,7 @@ function waRepaso() {
     for (var id in R) {
       var p = R[id];
       if (p.fecha !== recDia || recYa[id] || confHoy.ids.indexOf(id) >= 0) continue;   // confirmado hoy: no se repite
+      if (colaN[id]) continue;   // (12/10) su confirmación todavía espera en la cola: sale en unos minutos y ya dice el día
       var no = waNoCliente_(p, B.hoy); if (no && !no.anotar) continue;                    // los que no van, ni se anotan
       msgs.push({ id:id, k:'rec', a:'cliente', dia:recDia, n:0 });
     }
