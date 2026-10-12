@@ -726,7 +726,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
-## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` EN LA RAMA, sin publicar: espera que el dueño arme Meta)
+## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` IMPLEMENTADO 12/10 ~15:15 por el dueño, EN PRUEBA con `WA_PRUEBA`; la página del bot sigue en la rama)
 Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
 confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
 - `doSave` → `waAlGuardar_` solo anota en `WA_COLA` (sin red, adentro del candado); `waRepaso` (cada 5 min + `waDespierta` de una vez)

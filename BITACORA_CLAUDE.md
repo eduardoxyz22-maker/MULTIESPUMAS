@@ -13773,3 +13773,12 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - **📱 Número propio del bot (12/10)**: **+591 69398727**, en una cuenta de WhatsApp NUEVA «MultiEspumas Viscarra SRL» (WABA
   **1129883766133666**, aparte de la de Kommo 971970071780541), identificador **1331069306760069**. El número de prueba ya no hace falta.
   Propiedades: `WA_WABA_ID`=1129883766133666, `WA_PHONE_ID`=1331069306760069, `WA_PRUEBA`=59162505280 mientras se prueba.
+- **🚀 `.gs` 2026-10-11-a IMPLEMENTADO (12/10 ~15:15, el dueño)**: pegó el código del enlace fijo a `f7587fb…` (3.054 líneas), cargó
+  `WA_TOKEN` (usuario del sistema «bot-panel», sin vencimiento, solo `whatsapp_business_messaging` + `whatsapp_business_management`) y
+  las propiedades (`WA_WABA_ID`, `WA_PHONE_ID`, `WA_PRUEBA`=59162505280, `WA_LOGISTICA`=Ernesto:59162505280, `WA_ACTIVO`=1).
+  `crearPlantillasWhatsApp` 15:01: las 6 creadas (PENDING). probar 15:05: ✅ (1.311 filas, stock 51 %, comprimida 3 veces menos, 9
+  reservas; ⚠️ solo el disparador del bot). Implementó; `instalarDisparadores` 15:16 ✅ (kommoRepaso + waRepaso cada 5 min). 15:13:
+  aprobadas `recordatorio_entrega` y `logistica_sin_camion`, las otras 4 en revisión. Tarjeta cargada en la WABA 1129883766133666
+  (la verde del asistente de Meta era de la de Kommo). La app LOGISTICA-2 sigue en «Desarrollo»: pasarla a «Activo» (pide URL de
+  política de privacidad) antes de sacar `WA_PRUEBA`. Negocio sin verificar (250 clientes por día). Falta: el número de la versión
+  anterior para volver atrás (se le pidió), las 6 aprobadas, pedido de prueba y publicar la página del bot (espera `2026-10-11-a`).
