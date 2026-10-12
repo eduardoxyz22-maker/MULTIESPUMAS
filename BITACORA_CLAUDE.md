@@ -13755,3 +13755,7 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - **Bot de WhatsApp**: el dueño ya tiene el número de PRUEBA de Meta (Phone Number ID 1416620634858875). Pasos y las 6 plantillas para
   copiar: https://claude.ai/artifact/11nH5NMMSXtrqQP5fQpPZ2 (`logistica_cambio` lleva «del pedido {{1}} ({{2}}): {{3}}» para que no queden
   dos variables pegadas). `.gs` 2026-10-11-a por el enlace fijo a `e3739914…` (2.977 líneas). La página se publica DESPUÉS de que implemente.
+- **Bot, 12/10 tarde**: el dueño registró el número propio **+591 69636218** («MultiEspumas Viscarra SRL», cuenta 971970071780541,
+  número 633697466495954) y agregó el pago. Quiso ponerlo también como destinatario de prueba y Meta no lo deja (es el que MANDA).
+  `WA_PHONE_ID` = 633697466495954 (no el de prueba); `WA_PRUEBA` = su celular personal. Página de pasos actualizada (versión 2).
+  Pregunta abierta: si 69636218 era un WhatsApp en uso, ese teléfono ya no puede usar la app de WhatsApp.
