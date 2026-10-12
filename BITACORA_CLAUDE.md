@@ -13761,3 +13761,7 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   Pregunta abierta: si 69636218 era un WhatsApp en uso, ese teléfono ya no puede usar la app de WhatsApp.
 - El dueño aclaró: **62505280 es SU celular** (lo puso como destinatario en la prueba) y lo quiso agregar con «Agregar número nuevo»;
   Meta no deja porque tiene WhatsApp en uso. No va en Meta: va SOLO en `WA_PRUEBA` = 59162505280. El que manda es el 69636218.
+- ⚠️ **Corrección**: el **69636218 es el WhatsApp de KOMMO** (ya registrado en la misma cuenta del negocio, por eso aparece «Registrado»).
+  NO usarlo para el bot: ni su identificador 633697466495954 en `WA_PHONE_ID`, ni re-registrar, ni cambiarle el PIN. El bot necesita un
+  número NUEVO sin WhatsApp (chip o fijo) agregado a «MultiEspumas Viscarra SRL» (cabe: 2 sin verificar el negocio). Mientras tanto, se
+  puede probar con el número de prueba (`WA_PHONE_ID`=1416620634858875, el 62505280 ya está en su lista). Página de pasos versión 3.
