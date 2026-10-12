@@ -8,7 +8,9 @@
       ubicación, solo del vendedor elegido. «Entendido» lo guarda en este aparato y deja de avisar.
    4. Administración (con la clave): los pedidos de mañana sin camión.
    5. Al guardar con el cliente y sin celular ni ubicación, avisa (no frena nada).
-   6. La ayuda busca sin acentos y «Mostrame dónde» cambia de pestaña e ilumina el lugar.
+   6. La ayuda busca sin acentos y «Mostrame dónde» cambia de pestaña e ilumina el lugar. (12/10) SIEMPRE algo que se ve: sin la
+      clave, la tarjeta de la contraseña; sin nombre, «elegí tu nombre»; el pago, la parte del cobro que está a la vista.
+   6c. (12/10) Los avisos de saldo y sin ubicación tienen «Ver cuáles»: la lista entera, y cada cliente abre su pedido.
    7. 🔇 se recuerda en el aparato.
    Datos SINTÉTICOS. Reloj clavado en el viernes 18/09/2026 a las 18:00 de Bolivia.
    Se corre:  node tests/test_asistente.js   (desde la raíz del repo) */
@@ -115,10 +117,64 @@ function PREPARAR(){
     var sin=asisBuscar('xyzw').length;
     showView('mis'); await new Promise(function(res){ setTimeout(res, 300); });
     asisMostrar(asisBuscar('pago')[0]); await new Promise(function(res){ setTimeout(res, 700); });
-    return { qs:qs, sin:sin, vista:asisVista(), foco:document.getElementById('f-metodo').classList.contains('asis-foco'), cerrado:document.getElementById('asis-panel').hidden };
+    var el=ASIS_FOCO;
+    return { qs:qs, sin:sin, vista:asisVista(), foco:!!el && /^(wrap-metodo|wrap-cobro-todo)$/.test(el.id) && asisSeVe(el) && el.classList.contains('asis-foco'), id:el&&el.id, cerrado:document.getElementById('asis-panel').hidden };
   });
   chk('«cómo anoto el PAGO» encuentra primero «¿Cómo anoto el pago o un adelanto?»; una palabra rara no encuentra nada', /pago o un adelanto/.test(r.qs[0]||'') && r.sin===0, r);
-  chk('«Mostrame dónde» lleva a Nuevo pedido e ilumina el método de pago', r.vista==='form' && r.foco && r.cerrado, r);
+  chk('«Mostrame dónde» lleva a Nuevo pedido e ilumina la parte del pago que SE VE (el método está escondido hasta elegir)', r.vista==='form' && r.foco && r.cerrado, r);
+
+  console.log('\n── 6b. (12/10, dueño: «algunos no lleva y muestra») cada «Mostrame dónde» ilumina algo que se ve ──');
+  const recorrer = async (un, nombre) => ev(async (o) => {
+    UNLOCKED=o.un; var lk=document.getElementById('admin-lock'), ac=document.getElementById('admin-content');
+    if(lk) lk.style.display=o.un?'none':''; if(ac) ac.style.display=o.un?'block':'none';
+    var mv=document.getElementById('mis-vendedor'); mv.value=''; try{ localStorage.removeItem('me_mis_vendedor'); }catch(e){} ASIS.alGuardar=[];
+    if(o.nombre){ setVendedorMem(o.nombre); }
+    var out=[];
+    for(var i=0;i<ASIS_AYUDA.length;i++){
+      showView('mis'); mv.value=''; renderMis(); await new Promise(function(res){ setTimeout(res, 150); });
+      asisMostrar(i); await new Promise(function(res){ setTimeout(res, 1300); });
+      var el=ASIS_FOCO, rc=el && el.getBoundingClientRect(), gl=document.getElementById('asis-globo');
+      out.push({ i:i+1, v:ASIS_AYUDA[i].v, id:el?(el.id||el.textContent.slice(0,20)):'', ve:asisSeVe(el) && rc.height>0 && rc.top<innerHeight && rc.bottom>0, glo:gl.hidden?'':gl.innerText.replace(/\s+/g,' ') });
+      gl.hidden=true;
+    }
+    return out;
+  }, { un:un, nombre:nombre });
+  const R13 = (x) => Array.isArray(x) ? x : Array.from({length:13}, () => ({}));
+  r = R13(await recorrer(false, ''));
+  chk('sin clave y sin nombre: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
+  chk('Administración sin la clave → la tarjeta de la contraseña, y Eduardo lo dice',
+      r.filter(function(x){ return x.v==='admin'; }).every(function(x){ return x.id==='admin-lock' && /contraseña de Administración/.test(x.glo); }), r);
+  chk('buscar/corregir sin nombre elegido → «Primero elegí tu nombre»',
+      r[7].id==='mis-vendedor' && /elegí tu nombre/.test(r[7].glo) && r[8].id==='mis-vendedor', [r[7], r[8]]);
+  r = R13(await recorrer(true, 'Mirian Salazar'));
+  chk('con la clave y el nombre recordado: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
+  chk('buscar un pedido: pone el nombre de este aparato y lleva al buscador', r[7].id==='mis-q' && !r[7].glo, r[7]);
+  chk('cierre de entregas → el botón «✅ Cierre de entregas»; asignar camión → los camiones', /Cierre de entregas/.test(r[10].id) && /^carga-viva|Lista de carga/.test(r[9].id), [r[9], r[10]]);
+
+  console.log('\n── 6c. (12/10, dueño: «5 clientes tuyos tienen saldo, das clic y no hace nada») «Ver cuáles» los muestra y abre cada uno ──');
+  r = await ev(async () => {
+    asisCerrar(); try{ localStorage.removeItem('me_asis_vistos'); }catch(e){}
+    showView('mis'); STATE=FIX(); var mv=document.getElementById('mis-vendedor'); mv.value='Mirian Salazar'; renderMis(); await new Promise(function(res){ setTimeout(res, 150); });
+    asisAbrir('avisos');
+    var avs=[].slice.call(document.querySelectorAll('#asis-panel .asis-av'));
+    var deb=avs.filter(function(a){ return /con saldo/.test(a.innerText); })[0];
+    var btn=deb && [].filter.call(deb.querySelectorAll('.asis-b'), function(b){ return /Ver cuáles/.test(b.textContent); })[0];
+    if(btn) btn.click();
+    deb=[].filter.call(document.querySelectorAll('#asis-panel .asis-av'), function(a){ return /con saldo/.test(a.innerText); })[0];
+    var filas=deb ? [].map.call(deb.querySelectorAll('.asis-li button'), function(b){ return b.innerText.replace(/\s+/g,' '); }) : [];
+    var ub=[].filter.call(document.querySelectorAll('#asis-panel .asis-av'), function(a){ return /sin ubicación/.test(a.innerText); })[0];
+    var tieneUb=!!(ub && [].some.call(ub.querySelectorAll('.asis-b'), function(b){ return /Ver cuáles/.test(b.textContent); }));
+    var f=deb && deb.querySelector('.asis-li button'); if(f) f.click();
+    await new Promise(function(res){ setTimeout(res, 300); });
+    var m=document.getElementById('modal');
+    return { btn:!!btn, filas:filas, tieneUb:tieneUb, cerrado:document.getElementById('asis-panel').hidden,
+             modal:!!m && getComputedStyle(m).display!=='none' && /DEBE MUCHO/.test((document.getElementById('modal-box')||{}).innerText||'') };
+  });
+  chk('el aviso del saldo tiene «Ver cuáles» y muestra al cliente con lo que debe y desde cuándo',
+      r.btn && r.filas.length===1 && /DEBE MUCHO/.test(r.filas[0]) && /1\.500/.test(r.filas[0]) && /hace 13 días/.test(r.filas[0]) && !r.filas.some(function(t){ return /DE OTRA/.test(t); }), r);
+  chk('el de «sin ubicación» también tiene «Ver cuáles»', r.tieneUb, r);
+  chk('tocar un cliente cierra a Eduardo y abre la ficha de ese pedido', r.cerrado && r.modal, r);
+  await ev(() => { try{ closeModal(); }catch(e){} });
 
   console.log('\n── 7. El sonido ──');
   r = await ev(() => { asisAbrir('avisos'); asisMudoCambiar(); return { ls:localStorage.getItem('me_asis_mudo'), btn:[].map.call(document.querySelectorAll('#asis-panel .asis-x'), function(b){ return b.textContent; }).join('') }; });

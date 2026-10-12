@@ -7445,6 +7445,23 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4kd. 12/10: 🧑‍💼 Eduardo lleva SIEMPRE a un lugar que se ve y «Ver cuáles» en los avisos — EN LA RAMA, sin publicar
+El dueño, con capturas: *«el muéstrame donde de Eduardo algunos no lleva y muestra, y 5 clientes tuyos tienen saldo das clic y no hace
+nada, se supone que ayuda mostrar cuáles… Eduardo debe ayudar»*.
+- Medido con Playwright los 13 «Mostrame dónde»: 5 iluminaban algo escondido. El pago (`#f-metodo` vive en `#wrap-metodo`, que se ve recién
+  al elegir SÍ/A cuenta), buscar y corregir (`#mis-q` se esconde sin vendedor elegido) y los dos de Administración (sin la clave no se ve
+  nada de `#admin-content`).
+- **`asisDestino(a)`**: `f` puede ser una LISTA y vale el primero que se ve (`asisSeVe` = caja con ancho y alto; un `div` vacío no cuenta).
+  Administración sin la clave → `#admin-lock` y el globito dice «🔒 Primero poné la contraseña». Mis pedidos sin nombre → si el aparato lo
+  sabe (`asisVendedor`), lo pone y sigue; si no, `#mis-vendedor` con «👤 Primero elegí tu nombre». `alt` = otros lugares con su mensaje (el
+  pago en una ATC/RPT). El globito de estos mensajes se cierra al tocarlo (`asisGlobo(a, calladito, solo)`), no abre los avisos.
+  Destinos: pago `#wrap-metodo` → `#wrap-cobro-todo`; camión `#carga-viva` → la línea → «📦 Lista de carga»; cierre de entregas → el botón
+  «✅ Cierre de entregas» (antes iluminaba los camiones).
+- **Avisos con `lista`** (saldo de hace +7 días y sin ubicación): «Ver cuáles (N)» los despliega dentro del aviso (`ASIS.lista`,
+  `asisVerLista`), cada uno con OC, día y lo que debe; tocar uno cierra a Eduardo y abre su ficha (`asisAbrirPedido` → `showMisModal`). El que
+  debe hace más tiempo, primero. Tocar el globito de un aviso con lista abre la ventana con la lista ya desplegada.
+- `tests/test_asistente.js` (21; 9 rojas contra lo de antes): §6b recorre los 13 sin clave/sin nombre y con clave/con nombre; §6c la lista.
+
 ## 4kb. 12/10 (madrugada): ✨ Administración: las herramientas en grupos y las ventanas con cabecera nueva — PUBLICADA 12/10 00:21 de Bolivia (`55eaf9c`), Pages OK
 El dueño, con captura de la barra de botones: *«nos falta actualizar y modernizar esa parte del panel y lo que lleva dentro, solo tocamos
 y modernizamos stock y producción»*.
