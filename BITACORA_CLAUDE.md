@@ -13712,3 +13712,9 @@ imprimir `versión 2026-09-20-a`.
   `cv3dCamPanel` → `depPanel` con `q.pie` (el botón de `cvSalioHtml`); al marcar se cierra y, con la escena a la vista (`CV3D.anden`), el
   camión gira y sale hacia adelante. **`depTweens` corre los `fin` DESPUÉS de reemplazar la lista**: antes la animación encadenada se perdía
   (el camión giraba y quedaba; los montacargas nunca levantaban). PUBLICADA 12/10 (`6682b30`). Probado con three.js r128 de verdad.
+- **Lo de «Sin camión» espera en SU lugar** (dueño, 12/10, con la captura de «⏳ Esperan · Sin camión» que listaba «Banzer · cargar 17»:
+  *«¿no deberían estar en la fila de espera de Banzer?… si no tienen camión asignado pero sí almacén»*). `cv3dSinParte(c)` reparte lo
+  pendiente de «Sin vehículo»: `sale` → una fila delante de Banzer, `trae` → delante de Moreno (de a dos, hasta 6, cartel «⏳ ESPERAN CAMIÓN»
+  que lista todo con «🚚 Asignarles camión»), y en el andén de «Sin camión» quedan PTF y lo que falta. `cv3dEsperan(k, desde, lugar)`.
+  Un camión ASIGNADO sigue con todo delante de él (ese camión pasa por Banzer): no se cambió. `test_camiones_3d` §5c (28; §5c cambió a
+  conciencia: la fila de «Sin camión» ya no trae Banzer ni Moreno).
