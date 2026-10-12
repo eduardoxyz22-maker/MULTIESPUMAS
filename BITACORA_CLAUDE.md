@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ke. 12/10: 🛣️ El recorrido sale de PTF o de Banzer según dónde se carga, y sin camiones lo dice — EN LA RAMA, sin publicar
+## 4ke. 12/10: 🛣️ El recorrido sale de PTF o de Banzer según dónde se carga, y sin camiones lo dice — PUBLICADA 12/10 02:09 de Bolivia (`e2f1021`), Pages OK
 El dueño, con captura del mapa a las 01:48: *«cuando marco recorrido no me sale nada, ¿qué debería salir? Muéstrame»* y después
 *«¿toma en cuenta si sale de PTF o Banzer? Según como dividimos y pusimos en PTF o Banzer»*.
 - **No salía nada** porque el recorrido es POR CAMIÓN (`mapaRutaDatos` deja afuera «Sin chofer») y a esa hora ningún pedido de hoy tenía

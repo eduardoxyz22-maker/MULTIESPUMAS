@@ -746,6 +746,11 @@ Eduardo: `asisDestino` (si el lugar no se ve: la contraseña, «elegí tu nombre
 asignar camión y cierre de entregas con `solo:'adm'` → solo `asisVeAdm()` (logística, Administración, clave o `me_adm_dev`; dueño: *«no es
 para los vendedores»*). `tests/test_asistente.js`. Bitácora §4kc, §4kd.
 
+## 🛣️ El recorrido sale de donde se carga (§4ke, 12/10; PUBLICADA 02:09, `e2f1021`; dueño: *«¿toma en cuenta si sale de PTF o Banzer?»*)
+`rutaSalida(pedidos)` = depósitos en orden con la marca de cada producto (`prodPartesCarga`): acá/sin marcar/Moreno → PTF, «✔ Banzer» → Banzer,
+las dos → PTF y después Banzer. La usan el recorrido del mapa (`mapaRutaDatos`/`mapaRutaPintar`, ordena desde el último depósito) y la Hoja de
+ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vacio`) en vez de esconderse. `tests/test_ruta_salida.js`. Bitácora §4ke.
+
 ## ✨ Administración: herramientas en grupos (§4kb, 12/10; PUBLICADA 00:21, `55eaf9c`)
 Los mismos botones en `.btn-row.adm-tools` (cuatro `.at-g`); el color va en `--c` y la explicación en `data-d` (con `::after`: no cambia el
 `textContent`). Un botón nuevo de Administración entra en su grupo con esa forma. Las ventanas llevan `class="adm-ov"` (cabecera nueva, solo
