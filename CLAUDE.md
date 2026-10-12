@@ -738,6 +738,14 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
+## ✨ Adentro de las ventanas de Administración + Eduardo que lleva a algo visible (§4kc + §4kd, 12/10; PUBLICADA 01:41, `f233130`)
+Solo presentación: fichas `mc` vivas (`admVestir`/`cxFichasVivas` + `admIcoDe`/`ADM_ESC`), barras de columna (`admBarras`), barra «N de M»
+(`admAvanceHtml`; en el cierre `#cie-av` se repinta en `cierreEntToggle`), Lista de carga con `cargaResumenPintar`, el mapa dentro de
+`.mapa-cv` con `#mapa-flota`. ⚠️ Lo que leen las pruebas (textos, recuadro verde de ROHO, tablas) quedó igual: no sacarlo al «limpiar».
+Eduardo: `asisDestino` (si el lugar no se ve: la contraseña, «elegí tu nombre» o `alt`), avisos con `lista` y «Ver cuáles» → `showMisModal`;
+asignar camión y cierre de entregas con `solo:'adm'` → solo `asisVeAdm()` (logística, Administración, clave o `me_adm_dev`; dueño: *«no es
+para los vendedores»*). `tests/test_asistente.js`. Bitácora §4kc, §4kd.
+
 ## ✨ Administración: herramientas en grupos (§4kb, 12/10; PUBLICADA 00:21, `55eaf9c`)
 Los mismos botones en `.btn-row.adm-tools` (cuatro `.at-g`); el color va en `--c` y la explicación en `data-d` (con `::after`: no cambia el
 `textContent`). Un botón nuevo de Administración entra en su grupo con esa forma. Las ventanas llevan `class="adm-ov"` (cabecera nueva, solo

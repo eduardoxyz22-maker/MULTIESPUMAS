@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4kc. 12/10: ✨ Lo de ADENTRO de las ventanas de Administración con el estilo nuevo — EN LA RAMA, sin publicar
+## 4kc. 12/10: ✨ Lo de ADENTRO de las ventanas de Administración con el estilo nuevo — PUBLICADA 12/10 01:41 de Bolivia (`f233130`), Pages OK
 El dueño, después de §4kb: *«muéstrame antes de publicar»* → *«me gusta, pero aún no publiques, sigamos con los demás»* → *«si sigue,
 cuando esté todo reviso y veo si publicamos o no»*. Solo presentación: ninguna cuenta, texto que leen las pruebas, tilde ni guardado cambia.
 - **Lista de carga** (`bc57164`): tira `#carga-res.lcr` con una tarjeta por camión (`cargaResumenPintar`, armada del DOM con
@@ -7471,7 +7471,7 @@ cuando esté todo reviso y veo si publicamos o no»*. Solo presentación: ningun
 - Pruebas de esas ventanas en verde sin tocarlas (test_rev4_atc_flete, test_cierre_entregas, test_buscar, test_rpt, test_ubicar,
   test_rev_entregas, test_roho, test_adm_tools, test_visuales, test_auditoria, test_rev_corte_codex, test_vistas_4im).
 
-## 4kd. 12/10: 🧑‍💼 Eduardo lleva SIEMPRE a un lugar que se ve y «Ver cuáles» en los avisos — EN LA RAMA, sin publicar
+## 4kd. 12/10: 🧑‍💼 Eduardo lleva SIEMPRE a un lugar que se ve y «Ver cuáles» en los avisos — PUBLICADA 12/10 01:41 de Bolivia (`f233130`, con §4kc), Pages OK
 El dueño, con capturas: *«el muéstrame donde de Eduardo algunos no lleva y muestra, y 5 clientes tuyos tienen saldo das clic y no hace
 nada, se supone que ayuda mostrar cuáles… Eduardo debe ayudar»*.
 - Medido con Playwright los 13 «Mostrame dónde»: 5 iluminaban algo escondido. El pago (`#f-metodo` vive en `#wrap-metodo`, que se ve recién
@@ -7486,7 +7486,14 @@ nada, se supone que ayuda mostrar cuáles… Eduardo debe ayudar»*.
 - **Avisos con `lista`** (saldo de hace +7 días y sin ubicación): «Ver cuáles (N)» los despliega dentro del aviso (`ASIS.lista`,
   `asisVerLista`), cada uno con OC, día y lo que debe; tocar uno cierra a Eduardo y abre su ficha (`asisAbrirPedido` → `showMisModal`). El que
   debe hace más tiempo, primero. Tocar el globito de un aviso con lista abre la ventana con la lista ya desplegada.
-- `tests/test_asistente.js` (21; 9 rojas contra lo de antes): §6b recorre los 13 sin clave/sin nombre y con clave/con nombre; §6c la lista.
+- **Asignar camión y cierre de entregas, solo para logística y Administración** (dueño, al verlo: *«eso no es para los vendedores, solo
+  para logística y administración, corrige eso y publica»*): esas dos entradas de `ASIS_AYUDA` llevan `solo:'adm'` y las ve solo quien
+  `asisVeAdm()` = entró como logística o Administración (`quienRol`, §4ka), tiene la clave puesta (`UNLOCKED`) o el aparato marcado de
+  administración (`me_adm_dev`). Un vendedor no las ve en la lista ni buscando, y «Mostrame dónde» de una de ellas no hace nada.
+- `tests/test_asistente.js` (24; 9 rojas contra lo de antes): §6b recorre los 13 como logística sin clave y con clave; §6b2 el vendedor
+  sin esas dos; §6c la lista.
+- Publicado con §4kc (cherry-pick de `bc57164`, `ec438ae`, `ef5a3bb`, `37ad27b`, `125a53d` sobre `main`, SIN el bot de WhatsApp §4jt que
+  sigue esperando el `.gs`). Batería sobre lo publicado: 165 suites, una roja de carga (`test_mispedidos`, sola 33/33).
 
 ## 4kb. 12/10 (madrugada): ✨ Administración: las herramientas en grupos y las ventanas con cabecera nueva — PUBLICADA 12/10 00:21 de Bolivia (`55eaf9c`), Pages OK
 El dueño, con captura de la barra de botones: *«nos falta actualizar y modernizar esa parte del panel y lo que lleva dentro, solo tocamos
