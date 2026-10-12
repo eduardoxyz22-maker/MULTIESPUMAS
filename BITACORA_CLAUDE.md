@@ -7445,6 +7445,32 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4kc. 12/10: ✨ Lo de ADENTRO de las ventanas de Administración con el estilo nuevo — EN LA RAMA, sin publicar
+El dueño, después de §4kb: *«muéstrame antes de publicar»* → *«me gusta, pero aún no publiques, sigamos con los demás»* → *«si sigue,
+cuando esté todo reviso y veo si publicamos o no»*. Solo presentación: ninguna cuenta, texto que leen las pruebas, tilde ni guardado cambia.
+- **Lista de carga** (`bc57164`): tira `#carga-res.lcr` con una tarjeta por camión (`cargaResumenPintar`, armada del DOM con
+  `cargaCamionCuenta`, se repinta al tildar), renglones tildados en verde (`:has(input:checked)`), cada parada en tarjeta.
+- **Parte del día, Reporte, Productos más entregados, Faltantes** (`ec438ae`): fichas `mc` con color y dibujito (`admVestir` →
+  `cxFichasVivas` + `admIcoDe`) y una barrita de fondo en la columna que importa (`admBarras`, `td.adm-barra`). **Hoja de ruta** como
+  recorrido (`.rt-stop`, línea punteada y punto). **Cierre del día** como mensaje de WhatsApp (fondo y globo verde, el `textarea` sigue).
+- **Las seis que faltaban** (este commit):
+  · **Entregado**: `.ent-res` es `.metrics.adm-fm` con fichas vivas, la barra «🚚 Salieron N de M del día» (`admAvanceHtml`), camiones y
+    entregas en tarjeta con franja (verde entregado, ámbar falta).
+  · **Cierre de entregas**: fichas Para hoy / Tildados / Atrasados, barra «Tildados N de M» que se repinta en `cierreEntToggle` (`#cie-av`),
+    cada pedido en tarjeta (`.cie-row`, verde si está tildado, franja ámbar el atrasado). En el celular las tres fichas en una fila, sin el texto chico.
+  · **Quién vendió qué**: fichas Unidades / Total vendido / Pedidos / Vendedores dentro de la carátula (se imprimen), 🥇🥈🥉 por CSS en el
+    cuadro (`.bus-v::before`: no cambia el `innerText`, no se imprime) y la barrita de unidades (`admBarras`, sin la fila TOTAL).
+  · **Importar ROHO**: fichas Se crean / Ya estaban / Para días pasados / No se pueden ARRIBA del recuadro verde (que se queda: las pruebas lo leen),
+    turnos en píldora (`.roho-seg`), tabla con cabecera violeta.
+  · **Revisar ubicaciones**: las cuatro cajitas pasan a fichas `mc` (Se ubican / No se ubican / Link corto / Sin enlace) + barra «Se ubican N de
+    M con enlace»; cada pedido en tarjeta con franja del color de su sección (`.ru-fila`).
+  · **Mapa de entregas**: `#mapa-canvas` va dentro de `.mapa-cv` (posición absoluta, Leaflet igual) con `#mapa-flota`, la tarjeta arriba a la
+    derecha (lo que dice `#mapa-info`, en grande, y el chofer/zona con más entregas; la arma `renderMapaLegend`). La leyenda en píldoras. En el
+    celular la barra es más chica y `#mapa-info` se esconde (sigue en el DOM). El recorrido (`#mapa-ruta-panel`) queda abajo a la izquierda.
+  · Todas las barras de botones de ventana (Hoy · Mañana · Todos) en píldora. `ADM_ESC` = dibujitos nuevos (pin, enlace, tilde, Excel, gente).
+- Pruebas de esas ventanas en verde sin tocarlas (test_rev4_atc_flete, test_cierre_entregas, test_buscar, test_rpt, test_ubicar,
+  test_rev_entregas, test_roho, test_adm_tools, test_visuales, test_auditoria, test_rev_corte_codex, test_vistas_4im).
+
 ## 4kd. 12/10: 🧑‍💼 Eduardo lleva SIEMPRE a un lugar que se ve y «Ver cuáles» en los avisos — EN LA RAMA, sin publicar
 El dueño, con capturas: *«el muéstrame donde de Eduardo algunos no lleva y muestra, y 5 clientes tuyos tienen saldo das clic y no hace
 nada, se supone que ayuda mostrar cuáles… Eduardo debe ayudar»*.

@@ -1725,7 +1725,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
-<div id="mapa-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-ruta-btn" class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="toggleMapaRuta()">☑ 🛣️ Recorrido</button><button id="mapa-solosin" class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button id="mapa-ubicar" class="btn btn-sm" style="display:none;background:#fff;color:#7c3aed;font-weight:700" onclick="ubicarSinLinkMapa()" title="Busca en el servidor la dirección escrita de los pedidos que no tienen link de Maps y los pone en el mapa, marcados como aproximados (la cuadra, no la puerta).">📍 Ubicar por dirección</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div><div id="mapa-ruta-panel"></div></div>
+<div id="mapa-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-ruta-btn" class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="toggleMapaRuta()">☑ 🛣️ Recorrido</button><button id="mapa-solosin" class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button id="mapa-ubicar" class="btn btn-sm" style="display:none;background:#fff;color:#7c3aed;font-weight:700" onclick="ubicarSinLinkMapa()" title="Busca en el servidor la dirección escrita de los pedidos que no tienen link de Maps y los pone en el mapa, marcados como aproximados (la cuadra, no la puerta).">📍 Ubicar por dirección</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div class="mapa-cv" style="flex:1;min-height:0;position:relative"><div id="mapa-canvas" style="position:absolute;inset:0"></div><div id="mapa-flota" aria-live="polite"></div></div><div id="mapa-ruta-panel"></div></div>
 <div id="ruta-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="visor" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.92);flex-direction:column" onclick="if(event.target===this)cerrarVisor()"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap"><b id="visor-tit" style="font-size:.92rem"></b><span id="visor-n" style="font-size:.8rem;opacity:.75"></span><a id="visor-drive" href="#" target="_blank" rel="noopener" style="margin-left:auto;color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:20px">⬇ Original</a><button onclick="cerrarVisor()" style="border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer">✕ Cerrar</button></div><div style="flex:1;min-height:0;display:flex;align-items:center;gap:6px;padding:0 8px 14px"><button id="visor-ant" onclick="visorMover(-1)" class="visor-nav">‹</button><img id="visor-img" alt="Foto de la entrega" style="flex:1;min-width:0;max-height:100%;object-fit:contain;border-radius:10px"><button id="visor-sig" onclick="visorMover(1)" class="visor-nav">›</button></div></div>
 <div id="entregas-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -2386,6 +2386,69 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 /* Faltantes: el resumen y cada producto como tarjeta */
 #faltantes-body > div{ border-radius:16px!important; box-shadow:0 8px 20px -16px rgba(180,83,9,.55)!important; }
 @media print{ td.adm-barra{ background-image:none!important; } .ruta-chofer .rt-stop::before, .ruta-chofer .rt-stop::after{ display:none; } .ruta-chofer .rt-stop{ padding-left:0!important; border:0!important; } }
+
+/* ✨ (§4kc) Mapa de entregas: la tarjeta flotante y la leyenda en píldoras */
+#mapa-flota{ position:absolute; right:12px; top:12px; z-index:500; display:flex; gap:8px; align-items:stretch; flex-wrap:wrap; justify-content:flex-end; max-width:calc(100% - 70px); pointer-events:none; }
+#mapa-flota:empty{ display:none; }
+#mapa-flota > div{ background:rgba(255,255,255,.92); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:14px; padding:7px 12px; box-shadow:0 10px 24px -14px rgba(15,60,70,.7); border:1px solid rgba(15,118,110,.15); }
+#mapa-flota .mf-n{ display:flex; flex-direction:column; align-items:center; min-width:64px; } #mapa-flota .mf-n b{ font-size:1.25rem; line-height:1.1; font-variant-numeric:tabular-nums; }
+#mapa-flota .mf-n span{ font-size:.68rem; color:#5b6b7d; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+#mapa-flota .mf-n.ok b{ color:#0f766e; } #mapa-flota .mf-n.am b{ color:#b45309; } #mapa-flota .mf-n.gr b{ color:#64748b; }
+#mapa-flota .mf-top{ display:flex; align-items:center; gap:6px; font-size:.8rem; font-weight:700; color:#1f2b2d; flex-wrap:wrap; }
+#mapa-flota .mf-top i{ width:12px; height:12px; border-radius:50%; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.12); }
+#mapa-flota .mf-top small{ flex-basis:100%; font-weight:600; color:#5b6b7d; font-size:.68rem; }
+#mapa-legend > span{ background:rgba(255,255,255,.18); border-radius:999px; padding:2px 9px 2px 4px; }
+@media(max-width:640px){ #mapa-overlay > .no-print:first-child{ gap:6px!important; padding:8px 10px!important; }
+  #mapa-overlay > .no-print:first-child .btn{ padding:5px 10px!important; font-size:.72rem!important; }
+  #mapa-info{ display:none; }   /* en el celular lo dice la tarjeta de arriba del mapa (el texto sigue ahí) */
+  #mapa-flota{ right:8px; top:8px; gap:6px; } #mapa-flota .mf-n{ min-width:54px; } #mapa-flota .mf-top{ display:none; } }
+/* Los grupos de botones de la barra (Hoy · Mañana · Todos) como píldoras */
+.adm-ov > .no-print:first-child > div[style*="rgba(255,255,255,.18)"]{ border-radius:999px!important; padding:2px; }
+.adm-ov > .no-print:first-child > div[style*="rgba(255,255,255,.18)"] > button{ border-radius:999px!important; }
+
+/* ✨ (§4kc) La barra de avance «N de M» (Entregado, Cierre de entregas, Revisar ubicaciones) */
+.adm-av{ margin:0 0 12px; padding:9px 12px 10px; border-radius:14px; background:#fff; border:1px solid color-mix(in srgb, var(--c) 30%, #fff); box-shadow:0 8px 20px -18px var(--c); }
+.adm-av-t{ font-size:.82rem; color:#334; display:flex; gap:4px; align-items:baseline; flex-wrap:wrap; } .adm-av-t > b:last-child{ margin-left:auto; color:var(--c); font-size:.95rem; }
+.adm-av-b{ height:9px; border-radius:99px; background:color-mix(in srgb, var(--c) 14%, #eef2f3); overflow:hidden; margin-top:6px; }
+.adm-av-b i{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c)); transition:width .5s cubic-bezier(.2,1,.3,1); }
+.metrics.adm-fm{ grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
+@media(max-width:640px){ .metrics.adm-fm, .metrics.roho-met, .metrics.ru-met, .metrics.bus-met{ grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px; }
+  .metrics.cie-met{ grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:6px; }
+  .metrics.adm-fm .mc, .metrics.cie-met .mc, .metrics.roho-met .mc, .metrics.ru-met .mc, .metrics.bus-met .mc{ padding:10px 10px 9px 14px; }
+  .metrics.cie-met .mc .mc-sub, .metrics.cie-met .mc .cx-esc{ display:none; } .metrics.cie-met .mc.cx-v .mc-lbl{ padding-right:0; } }
+/* Entregado: cada camión como tarjeta, cada entrega con su franja */
+#entregas-body .ent-cam, #entregas-body .ent-falta{ border-radius:18px; border-color:#dbe8e9; box-shadow:0 12px 26px -22px rgba(15,60,70,.6); }
+#entregas-body .ent-cam-h{ background:linear-gradient(120deg,#0f766e,#15a99f); padding:11px 15px; letter-spacing:.01em; }
+#entregas-body .ent-falta .ent-cam-h{ background:linear-gradient(120deg,#b45309,#f59e0b)!important; }
+#entregas-body .ent-card{ background:#fff; border-color:#e6eef0; border-left:5px solid #22A06B; border-radius:14px; box-shadow:0 4px 12px -10px rgba(15,60,70,.5); transition:transform .15s, box-shadow .15s; }
+#entregas-body .ent-falta .ent-card{ border-left-color:#f59e0b; }
+#entregas-body .ent-card:hover{ transform:translateY(-1px); box-shadow:0 10px 20px -14px rgba(15,60,70,.55); }
+#entregas-body .ent-card.atc{ border-left-color:var(--atc); } #entregas-body .ent-card.rpt{ border-left-color:var(--rpt); }
+#entregas-body .ent-sub{ border-radius:14px; } #entregas-body .ent-sub-h{ border-radius:0; }
+#entregas-body .callout-rojo, #entregas-body .callout-warn, #entregas-body .callout-ok{ border-radius:14px; }
+/* Cierre de entregas: cada pedido en tarjeta; tildado = verde */
+.cie-ent .cie-row{ border:1px solid #e3ecee!important; border-radius:13px; padding:9px 11px!important; margin:6px 0; background:#fff; transition:background .15s, border-color .15s; }
+.cie-ent .cie-row:has(input:checked){ background:#ecfaf2; border-color:#9ad9b6!important; box-shadow:inset 4px 0 0 #22A06B; }
+.cie-ent .cie-row.atr{ box-shadow:inset 4px 0 0 #f59e0b; } .cie-ent .cie-row.atr:has(input:checked){ box-shadow:inset 4px 0 0 #22A06B; }
+.cie-ent .cie-row input[type=checkbox]{ accent-color:#22A06B; }
+.cie-ent .cie-sec{ display:flex; align-items:center; gap:8px; color:#0a6b47; } .cie-ent .cie-sec::after{ content:""; flex:1; height:1px; background:#d6ece0; }
+.cie-ent .cie-sec.atr{ color:#b45309; } .cie-ent .cie-sec.atr::after{ background:#f6deb8; }
+/* Quién vendió qué: el cuadro con medallas y barra, la tabla con cabecera violeta */
+#busca-overlay .roho-tabla thead th{ background:#f3efff; color:#4c1d95; }
+#busca-body .bus-cuadro tbody tr[data-v]:hover td{ background-color:#faf8ff; }
+#busca-body .bus-cuadro tbody tr[data-v]:nth-child(1) .bus-v::before{ content:"🥇 "; } #busca-body .bus-cuadro tbody tr[data-v]:nth-child(2) .bus-v::before{ content:"🥈 "; }
+#busca-body .bus-cuadro tbody tr[data-v]:nth-child(3) .bus-v::before{ content:"🥉 "; }
+#busca-body > div{ border-radius:16px!important; box-shadow:0 10px 24px -20px rgba(76,29,149,.55)!important; }
+#busca-overlay > .no-print:nth-child(2){ background:linear-gradient(180deg,#fff,#faf8ff)!important; }
+#busca-overlay > .no-print:nth-child(2) input, #busca-overlay > .no-print:nth-child(2) select{ border-radius:11px; }
+/* Importar ROHO: los turnos como píldoras y la tabla más clara */
+.roho-md .roho-seg .btn{ border-radius:999px!important; } .roho-md .roho-tabla thead th{ background:#f3efff; color:#4c1d95; }
+.roho-md .roho-tabla tbody tr:nth-child(even) td{ background:#fbfaff; }
+/* Revisar ubicaciones: cada pedido con su franja según la sección */
+.ru-md .ru-fila{ border:1px solid #e6eef0; border-left:4px solid #94a3b8; border-radius:12px!important; box-shadow:0 4px 10px -9px rgba(15,60,70,.5); }
+.ru-md > div[style*="--amber-lt"] .ru-fila{ border-left-color:#f59e0b; } .ru-md > div[style*="--red-lt"] .ru-fila{ border-left-color:#c0392b; }
+.ru-md > div[style*="border-radius:10px"]{ border-radius:16px!important; }
+@media print{ .adm-av{ display:none; } #busca-body .bus-v::before{ content:none!important; } }
 
 /* ✨ Lista de carga con el estilo nuevo (§4kc) — solo presentación: los tildes, sus claves y el texto siguen iguales */
 .lcr{ margin:0 0 14px; padding:12px; border-radius:16px; background:linear-gradient(160deg,#e9f7f5,#fff 70%); border:1px solid #cdeceb; box-shadow:0 10px 24px -20px #0f766e; }
@@ -17483,7 +17546,7 @@ function renderEntregas(){
   var d=entregasDatos(f), dn=dayNumMap(), t=d.tot;
   document.getElementById('entregas-info').textContent=
     fmtFecha(f)+' · '+t.n+' de '+t.total+' entregados'+(t.cobrado?(' · cobrado '+fmtBs(t.cobrado)):'');
-  var h='<div class="ent-res">'+
+  var h='<div class="ent-res metrics adm-fm">'+
     mc('var(--green)','Entregados',t.n, t.total?('de '+t.total+' del día'):'no hay pedidos ese día')+
     mc('var(--teal-dk)','Unidades',t.unid,'productos entregados')+
     mc('var(--teal)','Cobrado',fmtBs(t.cobrado), metodosHtml(t.porMetodo)?'':'sin cobros anotados')+
@@ -17495,6 +17558,7 @@ function renderEntregas(){
          : (t.flete>0.01?'nada de la venta':'no queda nada por cobrar'))+
        (t.flete>0.01?(' · + '+fmtBs(t.flete)+' de flete'):''))+   // (26/09) el flete, aparte (como la hoja de ruta)
   '</div>'+
+  (t.total?admAvanceHtml(t.n, t.total, '🚚 Salieron <b>'+t.n+'</b> de <b>'+t.total+'</b> del día · ', '#22A06B'):'')+   // ✨ (§4kc)
   (metodosHtml(t.porMetodo)?('<div style="margin:0 0 12px">'+metodosHtml(t.porMetodo)+'</div>'):'')+
   (t.porCobrarSalio?('<div class="callout-rojo">💸 <b>'+t.nSinCobrar+'</b> '+(t.nSinCobrar===1?'entrega salió y volvió SIN COBRAR':'entregas salieron y volvieron SIN COBRAR')+': <b>'+fmtBs(t.porCobrarSalio)+'</b>. Es lo primero que hay que reclamar.</div>'):'')+
   (t.n&&t.sinFoto?('<div class="callout-warn">📷 <b>'+t.sinFoto+'</b> '+(t.sinFoto===1?'entrega no tiene foto':'entregas no tienen foto')+'.</div>'):'')+
@@ -17534,6 +17598,7 @@ function renderEntregas(){
       '</div></div>';
   }
   document.getElementById('entregas-body').innerHTML=h;
+  try{ cxFichasVivas(document.querySelector('#entregas-body .ent-res'), 'entRes', admIcoDe); }catch(e){}   // ✨ (§4kc)
 }
 function printEntregas(){ document.body.classList.add('printing-entregas'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-entregas'); },600); }
 function entregasTexto(){
@@ -18777,8 +18842,26 @@ function renderReporte(){
 /* ✨ (§4kc, 12/10) Las ventanas de Administración con el estilo nuevo, SOLO presentación: las fichas `.mc` de Parte del día, Reporte y
    Productos más entregados toman su color y un dibujito (`cxFichasVivas` + `admIcoDe`), y en sus tablas la columna que importa lleva una
    barra de fondo proporcional al mayor (no cambia el texto: las pruebas lo leen). `tablas` = [{ t: texto del título del panel, col, c }]. */
+/* Dibujitos de las ventanas de Administración que no tenían uno parecido en Contabilidad o Mis pedidos. */
+var ADM_ESC={
+  pin:'<svg viewBox="0 0 48 36"><ellipse cx="24" cy="32" rx="9" ry="2.4" fill="#cdeedd"/><g class="cx-late"><path d="M24 31s-9-9-9-16a9 9 0 0 1 18 0c0 7-9 16-9 16z" fill="#22A06B"/><circle cx="24" cy="15" r="3.6" fill="#fff"/></g></svg>',
+  link:'<svg viewBox="0 0 48 36"><g class="cx-sacude" fill="none" stroke="#D97706" stroke-width="3" stroke-linecap="round"><path d="M20 21l8-8"/><path d="M17 16l-3 3a5 5 0 0 0 7 7l3-3"/><path d="M31 20l3-3a5 5 0 0 0-7-7l-3 3"/></g></svg>',
+  tilde:'<svg viewBox="0 0 48 36"><rect x="9" y="5" width="30" height="26" rx="6" fill="#e8f7ef" stroke="#22A06B" stroke-width="2"/><path class="cx-late" d="M16 18l6 6 11-12" fill="none" stroke="#22A06B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  excel:'<svg viewBox="0 0 48 36"><rect x="10" y="4" width="28" height="28" rx="3" fill="#fff" stroke="#6d28d9" stroke-width="2"/><g class="cx-renglon" fill="#c4b5fd"><rect x="14" y="10" width="20" height="3" rx="1"/><rect x="14" y="16" width="20" height="3" rx="1"/><rect x="14" y="22" width="13" height="3" rx="1"/></g><circle class="cx-chispa" cx="38" cy="6" r="3" fill="#F5C518"/></svg>',
+  gente:'<svg viewBox="0 0 48 36"><g class="cx-late"><circle cx="17" cy="12" r="5" fill="#f59e0b"/><path d="M8 30a9 9 0 0 1 18 0z" fill="#f59e0b"/></g><circle cx="32" cy="13" r="4.4" fill="#fcd34d"/><path d="M24 30a8 8 0 0 1 16 0z" fill="#fcd34d"/></svg>'
+};
 function admIcoDe(lbl){
   var t=String(lbl||'').toUpperCase();
+  if(/^SE UBICAN/.test(t)) return ADM_ESC.pin;
+  if(/LINK CORTO/.test(t)) return ADM_ESC.link;
+  if(/SIN ENLACE|NO SE UBICAN|NO SE PUEDEN/.test(t)) return CX_ESC_X.duda;
+  if(/TILDADO/.test(t)) return ADM_ESC.tilde;
+  if(/ATRASADO|DÍAS PASADOS|DIAS PASADOS/.test(t)) return CX_ESC[2];
+  if(/PARA HOY/.test(t)) return MIS_ESC[0];
+  if(/SE CREAN|YA ESTABAN/.test(t)) return ADM_ESC.excel;
+  if(/VENDEDORES/.test(t)) return ADM_ESC.gente;
+  if(/TOTAL VENDIDO/.test(t)) return CX_ESC[1];
+  if(/^UNIDADES/.test(t)) return CX_ESC_X.suena;
   if(/ENTREGAD|PEDIDOS$|^PEDIDOS/.test(t) && /ENTREG/.test(t)) return MIS_ESC[0];
   if(/COBRADO/.test(t)) return CX_ESC[1];
   if(/POR COBRAR/.test(t)) return CX_ESC[2];
@@ -18795,12 +18878,23 @@ function admVestir(id, tablas){
   (tablas||[]).forEach(function(tb){
     [].forEach.call(box.querySelectorAll('.panel'), function(pn){
       var h=pn.querySelector('.panel-h'); if(!h || h.textContent.indexOf(tb.t)<0) return;
-      var filas=[].slice.call(pn.querySelectorAll('tbody tr')), vals=filas.map(function(tr){ var td=tr.children[tb.col]; return td ? (parseFloat(String(td.textContent).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0) : 0; });
-      var max=Math.max.apply(null, vals.concat([0])); if(!(max>0)) return;
-      filas.forEach(function(tr, k){ var td=tr.children[tb.col]; if(!td) return; var pc=Math.round(vals[k]/max*100);
-        td.classList.add('adm-barra'); td.style.backgroundImage='linear-gradient(90deg,'+(tb.c||'#00B5AD')+' '+pc+'%,transparent '+pc+'%)'; });
+      admBarras(pn.querySelectorAll('tbody tr'), tb.col, tb.c);
     });
   });
+}
+/* La barrita de fondo en una columna de números: proporcional al mayor de esas filas (`filas` = los `tr`). No toca el texto. */
+function admBarras(filas, col, color){
+  filas=[].slice.call(filas||[]);
+  var vals=filas.map(function(tr){ var td=tr.children[col]; return td ? (parseFloat(String(td.textContent).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0) : 0; });
+  var max=Math.max.apply(null, vals.concat([0])); if(!(max>0)) return;
+  filas.forEach(function(tr, k){ var td=tr.children[col]; if(!td) return; var pc=Math.round(vals[k]/max*100);
+    td.classList.add('adm-barra'); td.style.backgroundImage='linear-gradient(90deg,'+(color||'#00B5AD')+' '+pc+'%,transparent '+pc+'%)'; });
+}
+/* Una barra de avance «N de M» con su texto (Entregado, Cierre de entregas). */
+function admAvanceHtml(n, tot, txt, col, id){
+  var pc=tot>0 ? Math.round(n/tot*100) : 0;
+  return '<div class="adm-av"'+(id?(' id="'+id+'"'):'')+' style="--c:'+(col||'#22A06B')+'"><div class="adm-av-t">'+txt+'<b>'+pc+'%</b></div>'+
+    '<div class="adm-av-b"><i style="width:'+pc+'%"></i></div></div>';
 }
 function printReporte(){ document.body.classList.add('printing-reporte'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-reporte'); },600); }
 
@@ -19158,15 +19252,18 @@ function renderBuscar(){
       (d.sinPrecio?('<br><span style="color:var(--amber);font-size:.85rem">⚠️ '+d.sinPrecio+' unidad'+(d.sinPrecio===1?'':'es')+' sin precio cargado: no suman al total.</span>'):'')+
       (busFueraTxt(d)?('<br><span style="color:var(--muted);font-size:.85rem">'+busFueraTxt(d)+'.</span>'):'')+
     '</div>'+
+    '<div class="metrics bus-met" style="margin-top:10px">'+   // ✨ (§4kc) los números grandes, con su dibujito
+      mc('#5b21b6','Unidades',d.uni,'vendidas en el período')+mc('#22A06B','Total vendido',fmtBs(d.plata),'con los precios cargados')+
+      mc('#0f766e','Pedidos',d.nPed,'con alguno de esos productos')+mc('#b45309','Vendedores',nv,(d.porVend[0]?('el primero: '+esc(d.porVend[0].vend)):''))+'</div>'+
     '<div style="font-size:.75rem;color:var(--muted);margin-top:6px">Emitido el '+fmtFecha(todayStr())+'</div></div>';
   /* ⚠️ LA RESPUESTA ES ESTE CUADRO: quién vendió cuánto, el que más vendió primero. El detalle
      de abajo es el respaldo, pedido por pedido. */
   html+='<div style="overflow:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px">'+
-    '<table class="roho-tabla" style="min-width:640px"><thead><tr>'+
+    '<table class="roho-tabla bus-cuadro" style="min-width:640px"><thead><tr>'+
     '<th style="width:170px">Vendedor</th><th>Qué vendió</th><th style="width:80px;white-space:nowrap">Pedidos</th>'+
     '<th style="width:86px;white-space:nowrap">Unidades</th><th style="width:124px;white-space:nowrap">Total</th></tr></thead><tbody>'+
     d.porVend.map(function(g){
-      return '<tr data-v="'+esc(g.vend)+'" onclick="busElegirVendedor(this.dataset.v)" style="cursor:pointer" title="Ver solo lo de este vendedor"><td><b style="text-decoration:underline dotted">'+esc(g.vend)+'</b></td>'+
+      return '<tr data-v="'+esc(g.vend)+'" onclick="busElegirVendedor(this.dataset.v)" style="cursor:pointer" title="Ver solo lo de este vendedor"><td><b class="bus-v" style="text-decoration:underline dotted">'+esc(g.vend)+'</b></td>'+
         '<td style="font-size:.85em;color:var(--muted)">'+g.lista.map(function(q){ return esc(q.nom)+' <b style="color:#111">× '+q.uni+'</b>'; }).join('<br>')+'</td>'+
         '<td style="text-align:right">'+g.nPed+'</td>'+
         '<td style="text-align:right"><b>'+g.uni+'</b></td>'+
@@ -19206,6 +19303,10 @@ function renderBuscar(){
       '<td style="text-align:right;white-space:nowrap">'+d.uni+'</td><td></td><td style="text-align:right;white-space:nowrap;color:#5b21b6">'+esc(fmtBs(d.plata))+'</td><td></td></tr>'+
     '</tbody></table></div>';
   body.innerHTML=html;
+  try{   // ✨ (§4kc) fichas vivas y la barrita de unidades por vendedor (sin la fila del TOTAL)
+    cxFichasVivas(body.querySelector('.bus-met'), 'busMet', admIcoDe);
+    admBarras(body.querySelectorAll('.bus-cuadro tbody tr[data-v]'), 3, '#a78bfa');
+  }catch(e){}
 }
 function copiarBusca(){
   var d=BUSCA;
@@ -26454,8 +26555,11 @@ function renderImportRoho(){
     }).join('')+'</tbody></table></div>') : '';
 
   var html='<div class="modal-h" style="background:#6d28d9"><h3>📥 Importar pedidos de ROHO</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+
+    '<div class="modal-b roho-md">'+
       '<p style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Leí <b>'+R.filas+'</b> líneas del Excel. Esto es lo que va a pasar — <b>todavía no se guardó nada</b>.</p>'+
+      '<div class="metrics roho-met">'+mc('#6d28d9','Se crean',elegidos.length,'pedidos nuevos')+mc('#0f766e','Ya estaban',R.yaEstan.length,'misma nota: se saltean')+   // ✨ (§4kc)
+        mc(R.viejos.length?'#b45309':'#94a3b8','Para días pasados',R.viejos.length,ROHO_VIEJOS?'se traen también':'no se traen')+
+        mc((R.sinFecha.length||(R.malos&&R.malos.length))?'#c0392b':'#94a3b8','No se pueden',R.sinFecha.length+((R.malos&&R.malos.length)||0),'sin fecha o con un dato ilegible')+'</div>'+
       '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:10px 13px">'+
         lin('✅ <b>'+R.nuevos.length+'</b> pedido'+(R.nuevos.length===1?'':'s')+' nuevo'+(R.nuevos.length===1?'':'s')+' para entregar del <b>'+esc(fmtFecha(tomorrowStr()))+'</b> en adelante')+
         (R.yaEstan.length?lin('↩️ <b>'+R.yaEstan.length+'</b> ya estaban cargados — se saltean (misma nota)'):'')+
@@ -26475,7 +26579,7 @@ function renderImportRoho(){
         '<span>Traer también las <b>'+R.viejos.length+'</b> de hoy o de antes (la más vieja: '+esc(fmtFecha(R.viejos.map(function(p){return p.fecha;}).sort()[0]))+'). '+
         '<span style="color:var(--muted)">El camión de esos días ya salió, así que no van a entrar en ninguna ruta: solo sirve si querés tenerlas registradas.</span></span></label>'):'')+
       '<div style="margin-top:12px"><label class="lb">Turno de entrega</label>'+
-        '<div style="display:flex;gap:6px;flex-wrap:wrap">'+tb('AM','🌅 Todos AM')+tb('PM','🌆 Todos PM')+tb('repartir','⚖️ Repartir AM/PM')+'</div>'+
+        '<div class="roho-seg" style="display:flex;gap:6px;flex-wrap:wrap">'+tb('AM','🌅 Todos AM')+tb('PM','🌆 Todos PM')+tb('repartir','⚖️ Repartir AM/PM')+'</div>'+
         '<div style="font-size:.76rem;color:var(--muted);margin-top:5px">El Excel de ROHO no dice el turno. Se puede cambiar después, pedido por pedido.</div></div>'+
       ((sinZona||sinCel||sinDir||combos||avisosDia.length)?('<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:10px 13px;margin-top:11px;font-size:.82rem;color:#7a5b00">'+
         (combos?lin('🛏️ <b>'+combos+'</b> combo'+(combos===1?'':'s')+' partido'+(combos===1?'':'s')+' en colchón + somier — el panel no acepta un combo en una sola línea'):'')+
@@ -26492,6 +26596,7 @@ function renderImportRoho(){
       '<div id="roho-progreso" style="margin-top:10px;font-size:.82rem"></div>'+
     '</div>';
   openModal(html, true);          // ancha: la tabla tiene 8 columnas
+  try{ cxFichasVivas(document.querySelector('#modal-box .roho-met'), 'rohoMet', admIcoDe); }catch(e){}   // ✨ (§4kc)
 }
 function confirmarImportRoho(){
   var lista=rohoElegidos();
@@ -27036,7 +27141,7 @@ function abrirCierreEntregas(){
 }
 function cierreEntFila(p, atrasado){
   var on=!!CIERRE_ENT_SEL[p.id], hoy=todayStr();
-  return '<label style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
+  return '<label class="cie-row'+(atrasado?' atr':'')+'" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
     '<input type="checkbox" class="cie-ent-chk" data-id="'+esc(String(p.id))+'"'+(on?' checked':'')+' onchange="cierreEntToggle(this.getAttribute(\'data-id\'), this.checked)" style="width:18px;height:18px">'+
     '<b>'+esc(ocEtiq(p.oc)||'—')+'</b>'+
     '<span>'+esc(p.cliente||'(sin cliente)')+'</span>'+
@@ -27051,15 +27156,18 @@ function cierreEntFila(p, atrasado){
 function renderCierreEntregas(){
   var hoy=todayStr(), H=cierreEntHoy(hoy), A=cierreEntAtrasados(hoy);
   var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Cierre de entregas · '+esc(fmtFecha(hoy))+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+
+    '<div class="modal-b cie-ent">'+
+    '<div class="metrics cie-met">'+mc('#0a6b47','Para hoy',H.length,'programados sin confirmar')+mc('#22A06B','Tildados',cierreEntTildados().length,'se confirman al tocar el botón')+
+      mc(A.length?'#b45309':'#94a3b8','Atrasados',A.length,A.length?'fecha pasada, sin confirmar':'ninguno')+'</div>'+   // ✨ (§4kc)
+    cierreEntAvanceHtml()+
     '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px">Los de hoy vienen <b>tildados como propuesta</b>: destildá los que no salieron o el cliente no estaba, y tocá Confirmar. '+
       'Abrir esta lista no cambia nada. Antes de confirmar el panel <b>relee la planilla</b>: lo que otro equipo reprogramó, borró o ya marcó se saltea y se avisa. '+
       'Los destildados siguen pendientes: si no salieron, reprogramalos (un pedido con la fecha pasada y sin tildar se da por entregado).</p>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><label class="lb" for="cie-ent-quien" style="margin:0">¿Quién cierra?</label>'+
       '<input id="cie-ent-quien" type="text" value="'+esc(cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
-    '<div style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
+    '<div class="cie-sec" style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
     (H.length ? H.map(function(p){ return cierreEntFila(p,false); }).join('') : '<div style="font-size:.86rem;color:var(--muted);padding:6px 0">No queda ninguno sin confirmar.</div>')+
-    (A.length ? ('<div style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
+    (A.length ? ('<div class="cie-sec atr" style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
       '<div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">Vienen destildados a propósito: nunca se confirman por omisión. Si uno sí se entregó, tildalo y decí qué día.</div>'+
       A.map(function(p){ return cierreEntFila(p,true); }).join('')) : '')+
     '<div class="modal-actions" style="margin-top:14px">'+
@@ -27067,10 +27175,18 @@ function renderCierreEntregas(){
       '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
     '</div></div>';
   openModal(html, true);
+  try{ cxFichasVivas(document.querySelector('#modal-box .cie-met'), 'cieMet', admIcoDe); }catch(e){}
+}
+/* ✨ (§4kc) La barra «N de M tildados»: se repinta al tildar (`cierreEntToggle`). */
+function cierreEntAvanceHtml(){
+  var tot=cierreEntHoy().length+cierreEntAtrasados().length, n=cierreEntTildados().length;
+  return admAvanceHtml(n, tot, '✅ Tildados <b>'+n+'</b> de <b>'+tot+'</b> · ', '#22A06B').replace('<div class="adm-av"', '<div class="adm-av" id="cie-av"');
 }
 function cierreEntTildados(){ return Object.keys(CIERRE_ENT_SEL).filter(function(id){ return CIERRE_ENT_SEL[id]; }); }
 function cierreEntBotonTxt(){ var n=cierreEntTildados().length; return n ? ('✅ Confirmar '+n+' entrega'+(n===1?'':'s')) : 'Nada tildado'; }
-function cierreEntToggle(id, on){ CIERRE_ENT_SEL[String(id)]=!!on; var b=document.getElementById('cie-ent-confirmar'); if(b) b.textContent=cierreEntBotonTxt(); }
+function cierreEntToggle(id, on){ CIERRE_ENT_SEL[String(id)]=!!on; var b=document.getElementById('cie-ent-confirmar'); if(b) b.textContent=cierreEntBotonTxt();
+  var av=document.getElementById('cie-av'); if(av) av.outerHTML=cierreEntAvanceHtml();
+  var fs=document.querySelectorAll('#modal-box .cie-met .mc-val'); if(fs[1]) fs[1].textContent=String(cierreEntTildados().length); }
 function cierreEntDia(id, v){ if(/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))) CIERRE_ENT_DIA[String(id)]=v; }
 /* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
 /* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
@@ -29319,7 +29435,7 @@ function renderRevUbic(yaResolvio){
   var d=revUbicDatos();
   function fila(p, nota){
     var esLink=/^https?:/i.test(p.maps||'');
-    return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem">'+
+    return '<div class="ru-fila" style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem">'+
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
         '<b style="cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
         '<span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
@@ -29331,12 +29447,13 @@ function renderRevUbic(yaResolvio){
       '</div>'+
       (p.maps?('<div style="color:var(--muted);font-size:.76rem;word-break:break-all;margin-top:3px">'+esc(p.maps)+'</div>'):'')+'</div>';
   }
-  var h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:14px">'+
-    '<div style="background:var(--green-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--green)">'+d.ok.length+'</div><div style="font-size:.72rem;color:#0a6b47;font-weight:700">SE UBICAN</div></div>'+
-    '<div style="background:'+(d.nores.length?'var(--red-lt)':'var(--gray-lt)')+';border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:'+(d.nores.length?'var(--red)':'var(--gray)')+'">'+d.nores.length+'</div><div style="font-size:.72rem;font-weight:700;color:'+(d.nores.length?'#8a1c24':'var(--muted)')+'">NO SE UBICAN</div></div>'+
-    '<div style="background:'+(d.cortos.length?'var(--amber-lt)':'var(--gray-lt)')+';border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:'+(d.cortos.length?'var(--amber)':'var(--gray)')+'">'+d.cortos.length+'</div><div style="font-size:.72rem;font-weight:700;color:'+(d.cortos.length?'#7c4b00':'var(--muted)')+'">LINK CORTO</div></div>'+
-    '<div style="background:var(--gray-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--muted)">'+d.sinLink.length+'</div><div style="font-size:.72rem;color:var(--muted);font-weight:700">SIN ENLACE</div></div>'+
-  '</div>';
+  /* ✨ (§4kc) Las cuatro cuentas como fichas, con su dibujito y una barra de cuántos se ubican de los que tienen enlace. */
+  var h='<div class="metrics ru-met" style="margin-bottom:12px">'+
+    mc('#22A06B','Se ubican',d.ok.length,'aparecen en el mapa')+
+    mc(d.nores.length?'#c0392b':'#94a3b8','No se ubican',d.nores.length,d.nores.length?'hay que corregirlos':'ninguno')+
+    mc(d.cortos.length?'#b45309':'#94a3b8','Link corto',d.cortos.length,d.cortos.length?'los abre el servidor':'ninguno')+
+    mc('#64748b','Sin enlace',d.sinLink.length,'sin entregar y sin Maps')+
+  '</div>'+(d.conLink.length?admAvanceHtml(d.ok.length, d.conLink.length, '📍 Se ubican <b>'+d.ok.length+'</b> de <b>'+d.conLink.length+'</b> con enlace · ', '#22A06B'):'');
   /* Mientras el servidor trabaja, el resultado ANTERIOR ("no pudo con ninguno") se retira:
      mostrarlo durante el reintento hacía creer que ya había fallado de nuevo. */
   if(REV_EN_CURSO) h+=revEnCursoHtml();
@@ -29384,7 +29501,8 @@ function renderRevUbic(yaResolvio){
   if(d.conLink.length && !d.nores.length && !d.cortos.length && !d.lejos.length)
     h+='<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:14px;text-align:center;color:#0a6b47;font-weight:700">✅ Todos los enlaces cargados se ubican en el mapa.</div>';
   openModal('<div class="modal-h"><h3>📍 Revisar ubicaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b" id="rev-ubic-panel">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
+    '<div class="modal-b ru-md" id="rev-ubic-panel">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
+  try{ cxFichasVivas(document.querySelector('#rev-ubic-panel .ru-met'), 'ruMet', admIcoDe); }catch(e){}
 }
 /* El bloque que se ve mientras el servidor abre los enlaces. Dice qué está pasando, cuánto
    suele tardar, cuánto va, y que se puede cerrar la ventana sin cortar nada. */
@@ -29591,6 +29709,12 @@ function renderMapaLegend(){
   /* ⚠️ Ordenada por CANTIDAD, de mayor a menor. Alfabético no servía para lo que se pidió:
      así la primera de la lista ES la zona de mayor entrega. */
   var claves=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a] || (a<b?-1:1); });
+  /* ✨ (§4kc) La tarjeta flotante sobre el mapa: lo mismo que dice la barra de arriba, en grande y con el que más entregas tiene. */
+  var fl=document.getElementById('mapa-flota');
+  if(fl) fl.innerHTML='<div class="mf-n ok"><b>'+ok+'</b><span>'+(MAPA_SOLO_SIN?'sin chofer':'en el mapa')+'</span></div>'+
+    (sin?('<div class="mf-n am"><b>'+sin+'</b><span>sin ubicar</span></div>'):'')+
+    (sinLink.length?('<div class="mf-n gr"><b>'+sinLink.length+'</b><span>sin ubicación</span></div>'):'')+
+    (claves.length?('<div class="mf-top"><i style="background:'+mapaColorFor(claves[0])+'"></i>'+esc(claves[0])+' <b>'+cnt[claves[0]]+'</b>'+(claves.length>1?'<small>el que más tiene</small>':'')+'</div>'):'');
   document.getElementById('mapa-legend').innerHTML=claves.map(function(k,i){ return '<span style="display:inline-flex;align-items:center;gap:4px"'+(i===0&&claves.length>1?' title="la de más entregas"':'')+'><span style="width:11px;height:11px;border-radius:50%;background:'+mapaColorFor(k)+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' <b>('+cnt[k]+')</b></span>'; }).join('');
 }
 function mapaPopup(p){
