@@ -145,6 +145,13 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('van en el orden de las columnas: PTF, Banzer, Moreno, Falta', r.ordenOk, J(r));
   chk('«⏳ ESPERAN» abre la lista de TODO lo que espera (también lo que no entra en la fila), agrupado por lugar', r.vis && r.nl===r.n-4 && r.gr.length>=3 && /Esperan/.test(r.txt), J(r));
   chk('tocar un producto de la lista abre sus pedidos', r.abre, J(r));
+  r = await page.evaluate(() => {
+    var hoy=todayStr(), antes=STATE.slice();
+    STATE.push({ id:'kommo-999', fecha:hoy, oc:'', vendedor:'Maria Flores', cliente:'BORRADOR KOMMO', estado:BORRADOR_EST, turno:'AM', vehiculo:'', productos:[{codigo:'',desc:'KOMMO PRODUCTO',medida:'140x190',cant:5}], fotos:[], ts:Date.now() });
+    var D=cargaVivaDatos(), c=D.porK['Sin vehículo'], hay=!!c && c.lineas.some(function(l){ return /KOMMO PRODUCTO/.test(l.kk); });
+    STATE=antes; return { hay:hay, esB:esBorrador({estado:BORRADOR_EST}) };
+  });
+  chk('un borrador de Kommo con fecha NO entra al 3D (solo lo cargado de verdad, dueño 12/10)', r.esB && !r.hay, J(r));
 
   console.log('\n── 6. Sin 3D y sin errores ──');
   await page.waitForTimeout(500);
