@@ -7472,6 +7472,15 @@ después *«Ok pásalas y publica»*. **Solo presentación**: ninguna cuenta cam
 - **K** `#cx-pry`: ficha por marca con la curva (lo vendido del mes según el día en que se CARGÓ, `pryVentas`), punteada hasta la
   proyección de `proyeccionMes`. Meta: «todavía no hay dónde cargarla» (las metas son por marca y por mes, §4gu: falta decidir dónde).
 - `tests/test_conta_4jw.js` (38). Publicado solo esto (cherry-pick sobre `main`); el bot (§4jt) sigue en la rama.
+- **Segunda vuelta (dueño, 11/10 con capturas: «le falta estilo, animaciones a esas fichas… Sueña y Heaven… y la foto 1 [Cuadre]»;
+  PUBLICADA 11/10 22:19, `1f881f5`)**: `cxFichasVivas(box, clave)` en `#cta-marcas`, `#cua-metrics` y `#pry-metrics`: color de la
+  franja de cada ficha (`.mc-bar` → `--c`), dibujito según el título (`cxIcoDe`, `CX_ESC_X`: billete, banco, duda, balanza, Sueña,
+  Heaven, fábrica + los de A y el camión de `MIS_ESC`), barrita cuando el texto dice «N% de lo…» y entrada escalonada. El texto de
+  cada ficha no cambia. `test_conta_4jw` §A+ (→ 40).
+- **🧑‍💼 Asistente Eduardo (§4jx, en curso)**: el dueño eligió la forma A (burbuja). El dibujo SVG a mano no le gustó («que feo»):
+  tres avatares 3D con gafas generados en SU Cloudinary con texto (sin su foto; quedan 30 de 50 del mes) y traídos al repo por
+  `.github/workflows/traer-imagenes.yml` (desde la sesión no hay salida a Cloudinary): `asistente/muestra1-3.png` (solo en la rama).
+  Muestras: https://claude.ai/artifact/1712oAH4ewGcrMskadZwJ9. Falta que elija el avatar, sonido sí/no y si le avisa lo de cada vendedor.
 
 ## 4jv. 11/10 (noche): 🚛 El 3D de Administración se toca como el de Mis pedidos — PUBLICADA 11/10 20:06 de Bolivia (`258e672`), Pages OK
 El dueño, con captura de «Camiones de mañana» en 3D: *«No funcionan los montacargas y camiones del 3D como el 3D en mis pedidos, que al
