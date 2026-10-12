@@ -13818,3 +13818,11 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   mira `hub.verify_token`, no `wa`): los POST se descartaban en silencio. Corregida, llegó la primera fila «💬 Respondió»
   («Ernesto Coordinador logis…», «OK») y apareció el título «Meta dice». ⚠️ Lección: un `wa` que no coincide no deja rastro.
   Próxima versión del `.gs`: anotar los avisos rechazados por clave (cuántos y cuándo, sin el valor) y mostrarlo en probar.
+- **🚀 12/10 ~16:55: el dueño sacó `WA_PRUEBA`** («si quiero que les llegue… pongamos a funcionar de una vez el bot»): desde los
+  recordatorios de las 17:00 el bot les escribe a los clientes de verdad. Logística: solo Ernesto (59162505280). **Página del bot
+  PUBLICADA** (`530b9e3`: «🤖 lo manda el bot» al guardar y en «🔔 Mañana»; `SCRIPT_VERSION_ESPERADA` 2026-10-12-a).
+- **`.gs` 2026-10-12-b** (en la rama): «sin camión» con nombres ENTEROS hasta `WA_LISTA_MAX`=240 y «y N más» (sin el tope de 12);
+  `WA_HOOK_MAL` cuenta los avisos de Meta con otra clave en `?wa=` (cuántos y cuándo, nunca el valor) → probar §11 y
+  `estadoBotWhatsApp().metaRechazados`. `test_wa_bot` §11 (→ 94). La página con ESPERADA 12-b se publica DESPUÉS de que lo implemente.
+  ⚠️ Raro sin explicar: a las 16:54 `estadoBotWhatsApp().meta` era `null` aunque la fila «💬 Respondió» de las 16:31 estaba en la
+  hoja (`waHookAnotar_` guarda WA_META al final). Mirarlo con los avisos de los recordatorios.

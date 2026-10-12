@@ -457,5 +457,29 @@ console.log('\n── 10. El webhook de Meta: verificar, estados en la hoja, res
   chk('probarAntesDeImplementar dice cuántos avisos y el último fallo', /Meta avisa lo que pasó con cada mensaje/.test(pr) && /NO entregó 1 mensaje/.test(pr), pr.split('\n').filter(l => /Meta/.test(l)));
 }
 
+// ══ 11. (2026-10-12-b) «sin camión» con nombres enteros + avisos de Meta con otra clave ══════════════
+console.log('\n── 11. «Sin camión» no parte un nombre; un aviso con otra clave queda contado ──');
+{
+  poner('2026-10-14 09:00');
+  const S = servidor(ON);
+  const noms = ['NOELIA ESCALANTE ZAMORA','DAVID MIRANDA','ERIKA MENACHO','SAMUEL LIMA','ABIGAIL CASTRO LOPEZ','ORDOÑEZ BALDERAS ALBERTO','NAOMI CUELLAR','JUAN PEREZ','MIA PLAZA','ROXANA CONTRERAS LOPEZ','MARIA LUISA GUTIERREZ','PEDRO PABLO VACA DIEZ','CARLOS ANDRES ROJAS'];
+  noms.forEach((n, i) => S.guardar(ped({ id: 'sc' + i, cliente: n, zona: 'Norte', fecha: '2026-10-15' })));
+  pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 16:05'); S.repaso();
+  const s = S.salen().find(x => x.pl === 'logistica_sin_camion');
+  const lista = s ? s.p[2] : '';
+  const m = lista.match(/ y (\d+) más$/), dentro = lista.replace(/ y \d+ más$/, '').split(', ');
+  chk('13 sin camión: la lista entra en 250 letras, termina en «y N más» y no parte ningún nombre', s && lista.length <= 250 && !!m && dentro.every(x => noms.some(n => x === n + ' (Norte)')) && dentro.length + Number(m[1]) === 13, lista);
+  chk('…y el total sigue diciendo 13', s && s.p[0] === '13');
+  const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'buena' }, ON));
+  S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
+  S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
+  const mal = JSON.parse(S2.P.WA_HOOK_MAL || '{}');
+  chk('dos avisos con otra clave en la dirección quedan contados, sin guardar el valor que vino', mal.n === 2 && !/TUCLAVE/.test(S2.P.WA_HOOK_MAL), S2.P.WA_HOOK_MAL);
+  const pr = S2.ctx.probarAntesDeImplementar().lineas.join('\n');
+  chk('probar lo dice: «con OTRA clave en la dirección… igual a WA_HOOK_KEY»', /2 aviso\(s\) de Meta con OTRA clave/.test(pr), pr.split('\n').filter(l => /Meta/.test(l)));
+  chk('estadoBotWhatsApp también', S2.ctx.estadoBotWhatsApp().metaRechazados.n === 2);
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;
