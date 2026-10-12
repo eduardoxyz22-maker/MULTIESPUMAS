@@ -319,8 +319,8 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   poner('2026-10-14 17:02'); S.repaso();
   const s = S.salen().filter(x => x.pl === 'recordatorio_entrega');
   chk('17:02 del miércoles: recordatorio_entrega solo a ANA (PEDRO sin celular, EDU de Eduardo)', s.length === 1 && s[0].to === '59170111222', S.salen());
-  chk('…con «Mañana», la marca Sueña y «Tu compra ya está pagada»', s[0] && JSON.stringify(s[0].p) === JSON.stringify(['Ana', 'Sueña', 'OC ' + a.oc, 'Mañana', '1 × SMART 140x190',
-      'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'tu vendedora por el WhatsApp de siempre']), s[0] && s[0].p);
+  chk('…con «Mañana», la marca Sueña y «Tu compra ya está pagada» (Sueña: «tu vendedor»)', s[0] && JSON.stringify(s[0].p) === JSON.stringify(['Ana', 'Sueña', 'OC ' + a.oc, 'Mañana', '1 × SMART 140x190',
+      'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'tu vendedor por el WhatsApp de siempre']), s[0] && s[0].p);
   chk('la hoja anota que PEDRO no tiene celular', S.hoja().some(f => f[1] === 'r2' && f[3] === 'Recordatorio' && /celular/.test(f[8])));
   chk('el saldo con el recargo pactado: «Saldo a pagar al recibir: Bs 1.200 + Bs 150 del recargo por entrega»', S.ctx.waSaldo_(S.leer('r2')) === 'Saldo a pagar al recibir: Bs 1.200 + Bs 150 del recargo por entrega', S.ctx.waSaldo_(S.leer('r2')));
   S.limpiar(); poner('2026-10-14 17:30'); S.repaso();
@@ -531,6 +531,9 @@ console.log('\n── 13. v2 con respaldo y contacto de la vendedora (WA_VENDEDO
   S.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: '1234567890' }, contacts: [{ wa_id: '59170111222', profile: { name: 'Juan' } }], messages: [{ id: 'wamid.q', from: '59170111222', timestamp: String(Math.floor(RELOJ.ms / 1000)), type: 'text', text: { body: 'hola' } }] } }] }] }) } });
   const tx = S.meta.llamadas.filter(c => c.body.type === 'text').map(c => c.body.text.body)[0] || '';
   chk('la respuesta automática trae el enlace directo a la vendedora', /escribile a tu vendedora \*Carola\*:\n👉 https:\/\/wa\.me\/59170000001/.test(tx) && /👋/.test(tx), tx);
+  chk('«tu vendedor» para Jonathan, Mauricio, Juan Pablo y Fernando; «tu vendedora» para ellas', S.ctx.waContactoVend_('Jonathan Monje') === 'tu vendedor por el WhatsApp de siempre' &&
+      S.ctx.waTuVend_('Juan Pablo Paredes') === 'tu vendedor' && S.ctx.waTuVend_('Fernando Peinado') === 'tu vendedor' && S.ctx.waTuVend_('Mauricio Merida') === 'tu vendedor' &&
+      S.ctx.waTuVend_('Isabel Robledo') === 'tu vendedora' && S.ctx.waTuVend_('Mirian Salazar') === 'tu vendedora', S.ctx.waContactoVend_('Jonathan Monje'));
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

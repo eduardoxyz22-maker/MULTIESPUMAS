@@ -2270,9 +2270,16 @@ function waVendCel_(vend) {
   for (var j = 0; j < L.length; j++) if ((' ' + v + ' ').indexOf(' ' + L[j].nom + ' ') >= 0) return L[j].cel;
   return '';
 }
+/* (12/10) «tu vendedor» o «tu vendedora» según el primer nombre: Jonathan, Mauricio, Juan Pablo y Fernando son hombres.
+   Un vendedor nuevo va acá (y en WA_MARCAS). */
+var WA_VENDEDOR_HOMBRE = ['jonathan', 'mauricio', 'juan', 'fernando', 'eduardo'];
+function waTuVend_(vend) {
+  var w = waNorm_(vend).trim().split(/\s+/)[0] || '';
+  return WA_VENDEDOR_HOMBRE.indexOf(w) >= 0 ? 'tu vendedor' : 'tu vendedora';
+}
 function waContactoVend_(vend) {
   var cel = waVendCel_(vend), nom = waNombre_(vend);
-  return (cel && nom) ? (nom + ' 👉 https://wa.me/' + cel) : 'tu vendedora por el WhatsApp de siempre';
+  return (cel && nom) ? (nom + ' 👉 https://wa.me/' + cel) : waTuVend_(vend) + ' por el WhatsApp de siempre';
 }
 function waArmar_(m, recs, cfg, B) {
   var T = WA_TIPOS[m.k], p = null;
@@ -2623,7 +2630,7 @@ function waAutoResponder_(sh, de, ped, nom) {
   /* (2026-10-12-d) Con emojis y espacios (el dueño: «muy seco… más estético») y, si está su número en WA_VENDEDORAS, el enlace directo. */
   var txt = '🤖 _Mensaje automático_\n\n¡Hola' + (nom ? ' ' + waNombre_(nom) : '') + '! 👋 Gracias por escribirnos.\n\n' +
             'Este número solo envía los avisos de entrega y no lee los mensajes.\n\n' +
-            '✏️ Para cambiar el día, el horario o cualquier dato de tu pedido' + (oc ? ' *' + oc + '*' : '') + ', escribile a tu vendedora' + (vend ? ' *' + vend + '*' : '') +
+            '✏️ Para cambiar el día, el horario o cualquier dato de tu pedido' + (oc ? ' *' + oc + '*' : '') + ', escribile a ' + (p ? waTuVend_(p.vendedor) : 'tu vendedora') + (vend ? ' *' + vend + '*' : '') +
             (cel ? ':\n👉 https://wa.me/' + cel : ' por el WhatsApp de siempre.') + '\n\n' +
             'Ya le avisamos que nos escribiste 😊';
   var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:txt, preview_url:false } });
