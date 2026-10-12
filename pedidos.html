@@ -32554,15 +32554,23 @@ var ASIS_AYUDA=[
   { q:'¿Cómo aviso a mis clientes de mañana?', k:'avisar cliente whatsapp manana entrega', v:'mis', f:'#mis-vendedor', p:['Entrá a 📋 Mis pedidos y elegí tu nombre.','Desde las 17:00 aparece «🔔 Mañana» con tus clientes.','Tocá 💬 WhatsApp en cada uno: el mensaje sale armado.'] },
   { q:'¿Cómo busco un pedido?', k:'buscar encontrar pedido nota cliente producto', v:'mis', f:['#mis-q','#mis-vendedor'], p:['En 📋 Mis pedidos, escribí en el buscador el N° de nota, el cliente, el producto o la OC.','Busca en todos tus pedidos, no solo en los de este mes.'] },
   { q:'¿Cómo corrijo un pedido que ya guardé?', k:'editar corregir cambiar pedido modificar', v:'mis', f:['#mis-q','#mis-lista','#mis-vendedor'], p:['En 📋 Mis pedidos tocá el pedido y después ✏️ Editar.','Cambiá lo que haga falta y guardá.','Si ya tiene pagos registrados, la plata se corrige en Contabilidad.'] },
-  { q:'¿Cómo asigno un camión?', k:'camion vehiculo chofer asignar logistica carga', v:'admin', f:['#carga-viva','#carga-viva-linea','#view-admin [onclick="abrirCarga()"]'], p:['En 🔒 Administración, mirá «Sin vehículo» en los camiones.','Tocá el pedido y elegí el vehículo: el chofer se pone solo.','Los tildes de la lista de carga dicen qué ya se cargó.'] },
-  { q:'¿Cómo hago el cierre de entregas?', k:'cierre entregas entregado tildar 16:30', v:'admin', f:['#view-admin [onclick="abrirCierreEntregas()"]'], p:['Desde las 16:30 tocá «✅ Cierre de entregas».','Vienen tildados los de hoy: destildá lo que no salió.','Confirmá: quedan marcados como entregados.'] },
+  { q:'¿Cómo asigno un camión?', k:'camion vehiculo chofer asignar logistica carga', solo:'adm', v:'admin', f:['#carga-viva','#carga-viva-linea','#view-admin [onclick="abrirCarga()"]'], p:['En 🔒 Administración, mirá «Sin vehículo» en los camiones.','Tocá el pedido y elegí el vehículo: el chofer se pone solo.','Los tildes de la lista de carga dicen qué ya se cargó.'] },
+  { q:'¿Cómo hago el cierre de entregas?', k:'cierre entregas entregado tildar 16:30', solo:'adm', v:'admin', f:['#view-admin [onclick="abrirCierreEntregas()"]'], p:['Desde las 16:30 tocá «✅ Cierre de entregas».','Vienen tildados los de hoy: destildá lo que no salió.','Confirmá: quedan marcados como entregados.'] },
   { q:'¿Cómo registro un pago en Contabilidad?', k:'contabilidad registrar pago cobro ficha venta', v:'conta', f:'#cta-metrics', p:['En 🧾 Contabilidad tocá la venta.','En la ficha, «💵 Pago»: el monto, el método y la foto del comprobante.','Al terminar, marcala «📥 cargada al sistema».'] },
   { q:'¿Cómo anoto un retiro de efectivo?', k:'retiro efectivo plata caja rendir', v:'conta', f:'#cx-grupos', p:['En 🧾 Contabilidad tocá «💵 Retiro de efectivo».','Elegí quién entrega y quién retira, el monto y las notas.','En el Cuadre, «👛 Quién tiene el efectivo» te lo arma solo con «Retiro».'] }
 ];
 var ASIS_COMUNES=['como','hago','que','el','la','los','las','un','una','de','del','mi','mis','por','para','en','se','me','lo','al','yo','con'];
+/* (12/10, dueño: «eso no es para los vendedores, solo para logística y administración») Las preguntas con `solo:'adm'` (asignar camión,
+   cierre de entregas) las ve solo quien entró como logística o Administración (§4ka), o tiene la clave puesta o el aparato marcado de
+   administración (`me_adm_dev`). Un vendedor no las ve ni en la lista ni con «Mostrame dónde». */
+function asisVeAdm(){
+  try{ var r=quienRol(); if(r==='admin' || r==='logistica') return true; }catch(e){}
+  return !!(UNLOCKED || nxLS(LS_ADM_DEV));
+}
 function asisBuscar(q){
   var t=sinTildes(String(q||'').toLowerCase()).replace(/[¿?¡!.,]/g,' ').split(/\s+/).filter(function(w){ return w.length>1 && ASIS_COMUNES.indexOf(w)<0; });
-  return ASIS_AYUDA.map(function(a, i){ var h=sinTildes((a.q+' '+a.k).toLowerCase()); return { i:i, s:t.length ? t.filter(function(w){ return h.indexOf(w)>=0; }).length : 1 }; })
+  var veAdm=asisVeAdm();
+  return ASIS_AYUDA.map(function(a, i){ if(a.solo==='adm' && !veAdm) return { i:i, s:0 }; var h=sinTildes((a.q+' '+a.k).toLowerCase()); return { i:i, s:t.length ? t.filter(function(w){ return h.indexOf(w)>=0; }).length : 1 }; })
     .filter(function(x){ return x.s>0; }).sort(function(a, b){ return b.s-a.s || a.i-b.i; }).map(function(x){ return x.i; });
 }
 /* ---------- señalar algo en la pantalla ---------- */
@@ -32596,7 +32604,7 @@ function asisDestino(a){
   return { el:document.querySelector('#view-'+a.v) };
 }
 function asisMostrar(i){
-  var a=ASIS_AYUDA[i]; if(!a) return;
+  var a=ASIS_AYUDA[i]; if(!a || (a.solo==='adm' && !asisVeAdm())) return;
   asisCerrar();
   if(asisVista()!==a.v){ if(a.v==='form') tabNuevoPedido(); else showView(a.v); }
   setTimeout(function(){

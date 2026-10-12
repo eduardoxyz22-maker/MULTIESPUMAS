@@ -124,29 +124,48 @@ function PREPARAR(){
   chk('«Mostrame dónde» lleva a Nuevo pedido e ilumina la parte del pago que SE VE (el método está escondido hasta elegir)', r.vista==='form' && r.foco && r.cerrado, r);
 
   console.log('\n── 6b. (12/10, dueño: «algunos no lleva y muestra») cada «Mostrame dónde» ilumina algo que se ve ──');
-  const recorrer = async (un, nombre) => ev(async (o) => {
-    UNLOCKED=o.un; var lk=document.getElementById('admin-lock'), ac=document.getElementById('admin-content');
+  const recorrer = async (un, nombre, rol) => ev(async (o) => {
+    UNLOCKED=o.un; quienRol(o.rol||''); var lk=document.getElementById('admin-lock'), ac=document.getElementById('admin-content');
     if(lk) lk.style.display=o.un?'none':''; if(ac) ac.style.display=o.un?'block':'none';
     var mv=document.getElementById('mis-vendedor'); mv.value=''; try{ localStorage.removeItem('me_mis_vendedor'); }catch(e){} ASIS.alGuardar=[];
     if(o.nombre){ setVendedorMem(o.nombre); }
     var out=[];
     for(var i=0;i<ASIS_AYUDA.length;i++){
       showView('mis'); mv.value=''; renderMis(); await new Promise(function(res){ setTimeout(res, 150); });
+      if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
       asisMostrar(i); await new Promise(function(res){ setTimeout(res, 1300); });
       var el=ASIS_FOCO, rc=el && el.getBoundingClientRect(), gl=document.getElementById('asis-globo');
-      out.push({ i:i+1, v:ASIS_AYUDA[i].v, id:el?(el.id||el.textContent.slice(0,20)):'', ve:asisSeVe(el) && rc.height>0 && rc.top<innerHeight && rc.bottom>0, glo:gl.hidden?'':gl.innerText.replace(/\s+/g,' ') });
+      out.push({ i:i+1, v:ASIS_AYUDA[i].v, solo:ASIS_AYUDA[i].solo||'', vista:asisVista(), id:el?(el.id||el.textContent.slice(0,20)):'', ve:asisSeVe(el) && rc.height>0 && rc.top<innerHeight && rc.bottom>0, glo:gl.hidden?'':gl.innerText.replace(/\s+/g,' ') });
       gl.hidden=true;
     }
     return out;
-  }, { un:un, nombre:nombre });
+  }, { un:un, nombre:nombre, rol:rol });
   const R13 = (x) => Array.isArray(x) ? x : Array.from({length:13}, () => ({}));
-  r = R13(await recorrer(false, ''));
-  chk('sin clave y sin nombre: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
+  r = R13(await recorrer(false, '', 'logistica'));
+  chk('logística sin clave y sin nombre: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
   chk('Administración sin la clave → la tarjeta de la contraseña, y Eduardo lo dice',
       r.filter(function(x){ return x.v==='admin'; }).every(function(x){ return x.id==='admin-lock' && /contraseña de Administración/.test(x.glo); }), r);
   chk('buscar/corregir sin nombre elegido → «Primero elegí tu nombre»',
       r[7].id==='mis-vendedor' && /elegí tu nombre/.test(r[7].glo) && r[8].id==='mis-vendedor', [r[7], r[8]]);
-  r = R13(await recorrer(true, 'Mirian Salazar'));
+  console.log('\n── 6b2. (12/10, dueño: «eso no es para los vendedores, solo para logística y administración») ──');
+  let rv = await ev(async () => {
+    UNLOCKED=false; quienRol(''); setVendedorMem('Mirian Salazar');
+    var busca=asisBuscar('cómo asigno un camión').concat(asisBuscar('cierre de entregas')).map(function(i){ return ASIS_AYUDA[i].solo||''; });
+    var todas=asisBuscar('').map(function(i){ return ASIS_AYUDA[i].q; });
+    if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
+    showView('mis'); await new Promise(function(res){ setTimeout(res, 150); });
+    var iAdm=ASIS_AYUDA.map(function(a,i){ return a.solo==='adm'?i:-1; }).filter(function(i){ return i>=0; });
+    asisMostrar(iAdm[0]); await new Promise(function(res){ setTimeout(res, 700); });
+    var r1={ busca:busca, n:todas.length, hayAdm:todas.some(function(q){ return /camión|cierre de entregas/i.test(q); }), vista:asisVista(), foco:!!ASIS_FOCO };
+    quienRol('logistica'); r1.logVe=asisBuscar('').length; r1.logCamion=asisBuscar('cómo asigno un camión').some(function(i){ return ASIS_AYUDA[i].solo==='adm'; });
+    quienRol(''); UNLOCKED=true; r1.claveVe=asisBuscar('').length; UNLOCKED=false;
+    return r1;
+  });
+  chk('un vendedor NO ve «¿Cómo asigno un camión?» ni «¿Cómo hago el cierre de entregas?», ni buscándolas',
+      rv.busca && rv.busca.indexOf('adm')<0 && rv.n===11 && !rv.hayAdm, rv);
+  chk('…y «Mostrame dónde» de una de esas no lo lleva a Administración', rv.vista==='mis' && !rv.foco, rv);
+  chk('logística y quien tiene la clave las ven (13)', rv.logVe===13 && rv.logCamion && rv.claveVe===13, rv);
+  r = R13(await recorrer(true, 'Mirian Salazar', ''));
   chk('con la clave y el nombre recordado: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
   chk('buscar un pedido: pone el nombre de este aparato y lleva al buscador', r[7].id==='mis-q' && !r[7].glo, r[7]);
   chk('cierre de entregas → el botón «✅ Cierre de entregas»; asignar camión → los camiones', /Cierre de entregas/.test(r[10].id) && /^carga-viva|Lista de carga/.test(r[9].id), [r[9], r[10]]);
