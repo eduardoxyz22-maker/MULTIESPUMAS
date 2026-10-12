@@ -1731,11 +1731,11 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 <div id="entregas-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoElegida(event)">
 <!-- Comprobante del pago: SIN capture, para poder elegir una captura de pantalla ya guardada -->
-<input type="file" id="comp-input" accept="image/*" style="display:none" onchange="onCompElegido(event)">
+<input type="file" id="comp-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onCompElegido)">
 <!-- 📥 El Excel de ROHO (§4ci) -->
 <input type="file" id="roho-input" accept=".xlsx" style="display:none" onchange="onRohoArchivo(event)">
 <input type="file" id="exist-input" accept=".xlsx" style="display:none" onchange="onExistArchivo(event)">
-<input type="file" id="fcomp-input" accept="image/*" style="display:none" onchange="onCompFormElegido(event)">
+<input type="file" id="fcomp-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onCompFormElegido)">
 <style>
 /* ✨ §4ik (09/10): las seis vistas nuevas. Solo miran. */
 .vis-caja{ background:#fff; border:1px solid var(--gray-md); border-radius:12px; padding:0 14px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
@@ -2978,7 +2978,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="faltantes-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="envio-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><div id="envio-partes" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-parte-todo" onclick="setEnvioParte('todo')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Todo</button><button id="envio-parte-AM" onclick="setEnvioParte('AM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌅 Solo AM</button><button id="envio-parte-PM" onclick="setEnvioParte('PM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌆 Solo PM</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div id="envio-body" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a copiar. Podés editarlo antes.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
-<input type="file" id="ret-foto-input" accept="image/*" style="display:none" onchange="onRetFotoElegida(event)">
+<input type="file" id="ret-foto-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onRetFotoElegida)">
 <div id="retiros-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c3aed;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">💵 Retiros de efectivo</b><input type="month" id="ret-mes" onchange="renderRetiros()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"><select id="ret-filtro-vend" onchange="renderRetiros()" style="flex:0 0 auto;max-width:200px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"></select><span id="ret-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c3aed;font-weight:700" onclick="copiarRetiros()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printRetiros()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRetiros()">✕ Cerrar</button></div><div id="retiros-body" style="flex:1;overflow:auto;padding:14px"><div id="ret-form"></div><div id="ret-lista"></div></div></div>
 <!-- 🔎 BUSCAR PEDIDOS (§4db): por cliente, por producto y entre dos fechas. Nació de un
      pedido concreto del dueño —«todos los pedidos de Juan Pablo Paredes que digan carioca
@@ -8861,7 +8861,7 @@ function onRetFotoElegida(ev){
   retLeerForm();
   if(compsArr(RET_FORM.fotos).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo la foto del recibo…','ok');
-  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return subirFoto('retiro_'+(RET_FORM.entrega||''), 'recibo_retiro', dataUrl);
   }).then(function(res){
     if(!res || !res.ok || !res.fotoId){
@@ -9390,7 +9390,7 @@ function onCompElegido(ev){
   if(yaTiene>=COMP_MAX){ toast('Ese pago ya tiene las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; showContaModal(p.id);          // que se vea "⏳ Subiendo…" desde ya
-  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return subirFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl);
   }).then(function(res){
     COMP_SUBIENDO--;
@@ -11012,6 +11012,24 @@ function adjuntarCompForm(destino){
   var el=document.getElementById('fcomp-input'); if(!el) return;
   el.value=''; el.click();
 }
+/* 🖼️ (12/10, dueño: «no deja subir más de 1 foto a la vez») Los selectores de comprobantes aceptan VARIAS imágenes de una vez
+   (`multiple`). Se suben DE A UNA con el manejador de siempre (el tope de COMP_MAX, el destino y el guardado no cambian): cada vuelta
+   repone `COMP_DESTINO` (el manejador lo consume) y espera a que la anterior termine. Las que pasan el tope no se suben y se dice. */
+function compVarias(ev, fn){
+  var inp=ev && ev.target; if(!inp) return;
+  var fs=Array.prototype.slice.call(inp.files||[]), ds={}, dest=COMP_DESTINO;
+  for(var k in (inp.dataset||{})) ds[k]=inp.dataset[k];
+  try{ inp.value=''; }catch(e){}                   // así se puede volver a elegir la misma imagen
+  if(fs.length>COMP_MAX){ toast('Elegiste '+fs.length+' imágenes: se suben las primeras '+COMP_MAX+' (es el tope por pago).','err',6000); fs=fs.slice(0, COMP_MAX); }
+  var i=0;
+  var sig=function(){
+    if(i>=fs.length) return;
+    var f=fs[i++]; COMP_DESTINO=dest;
+    var r; try{ r=fn({ target:{ files:[f], dataset:ds, value:'' } }); }catch(e){ r=null; }
+    return Promise.resolve(r).then(sig, sig);
+  };
+  return sig();
+}
 function onCompFormElegido(ev){
   var f=(ev.target.files||[])[0]; if(!f) return;
   // El tope va acá y no solo en el botón: así no se sube nada a Drive de más.
@@ -11019,7 +11037,7 @@ function onCompFormElegido(ev){
   var _dest=COMP_DESTINO;                          // por si cambian de bloque mientras sube
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; compRepintar();                 // que se vea "⏳ Subiendo…" desde ya
-  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return subirFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl);
   }).then(function(res){
     COMP_SUBIENDO--;

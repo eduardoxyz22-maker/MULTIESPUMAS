@@ -762,6 +762,9 @@ ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vac
   en el celular la ventana entra en la pantalla y la figura se corre con «Guardar» a la vista (`body.asis-guardar`).
 - `misWaCliente` y `waCel_` con borde a la izquierda (un dígito de más armaba el celular de OTRA persona). «👛 Quién tiene el efectivo»
   nombra al chofer (`E.fuera`). El recorrido del mapa calcula el depósito con TODOS los pedidos del chofer.
+- **🖼️ Varias imágenes a la vez** (dueño: *«no deja subir más de 1 foto a la vez»*): `comp-input`, `fcomp-input` y `ret-foto-input` llevan
+  `multiple` y pasan por `compVarias(ev, fn)`: de a una con el manejador de siempre (que ahora devuelve su promesa), reponiendo
+  `COMP_DESTINO` en cada vuelta; más de `COMP_MAX`, se cortan y se dice. `tests/test_comp_varias.js` (5).
 - **Bot (`.gs` 2026-10-11-a, sin implementar)**: el borrador se reconoce por `estado`, no por `kommo-` (una venta de Kommo completada no
   recibía nada); el recordatorio de las 17:00 no sale antes de una confirmación que espera en la cola. `test_wa_bot` §5b,
   `tests/test_asistente_rev.js` (17; 16 rojas contra `e2f1021`), `test_ruta_salida` §5b.

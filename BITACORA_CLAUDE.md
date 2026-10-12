@@ -13690,3 +13690,6 @@ imprimir `versión 2026-09-20-a`.
   ocupado o sin respuesta con muchos borrados juntos desde el teléfono, y `borrEsLaMisma` lo callaba. Ahora de a uno, con aviso y
   devolviendo la tarjeta. No se pudo ver la hoja «Borrados» ni Ejecuciones desde acá para confirmarlo.
 - Pruebas: `test_borr_misma` (7; 3 rojas contra `e2f1021`), `test_asistente_rev` (17; 16 rojas), `test_ruta_salida` 12, `test_wa_bot` 73.
+- **Varias imágenes a la vez** (dueño, con captura del comprobante: *«no deja subir más de 1 foto a la vez»*): los tres selectores de
+  comprobantes con `multiple` + `compVarias` (de a una, mismo manejador, tope `COMP_MAX`). `test_comp_varias` 5 (rojo contra `e2f1021`).
+  Batería entera en verde.
