@@ -751,7 +751,7 @@ para los vendedores»*). `tests/test_asistente.js`. Bitácora §4kc, §4kd.
 las dos → PTF y después Banzer. La usan el recorrido del mapa (`mapaRutaDatos`/`mapaRutaPintar`, ordena desde el último depósito) y la Hoja de
 ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vacio`) en vez de esconderse. `tests/test_ruta_salida.js`. Bitácora §4ke.
 
-## 🔎 Revisión del 11-12/10 con 6 agentes y 📥 «Sí, es la misma» (§4kf, 12/10; en la rama, SIN publicar)
+## 🔎 Revisión del 11-12/10 con 6 agentes y 📥 «Sí, es la misma» (§4kf, 12/10; PUBLICADA 10:48, `3ad6cc1`; los arreglos del bot siguen en la rama)
 - **«Sí, es la misma» / «Descartar»** van de a uno (`borrEnSerie`) y un borrado que Google no hizo (ocupado, sin respuesta) DEVUELVE la
   tarjeta y lo dice; el ✓ sale con el sí del servidor. Antes lo callaba: el dueño veía la bandeja vacía en el teléfono y al otro día
   volvían todas (las filas nunca se borraron: «esperando hace 6 días»). `tests/test_borr_misma.js` (panel + `.gs` reales).

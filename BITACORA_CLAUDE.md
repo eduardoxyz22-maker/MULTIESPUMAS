@@ -13679,7 +13679,7 @@ dirección). Después, Actions → «Traer ventas de Kommo (respaldo)» → Run 
 imprimir `versión 2026-09-20-a`.
 
 
-## 4kf. 12/10: revisión con 6 agentes (2 Haiku, 2 Sonnet, Opus, Fable) y «Sí, es la misma» que no borraba — EN LA RAMA, sin publicar
+## 4kf. 12/10: revisión con 6 agentes (2 Haiku, 2 Sonnet, Opus, Fable) y «Sí, es la misma» que no borraba — PUBLICADA 12/10 10:48 (`3ad6cc1`, Pages OK), con varias imágenes, 🚚 Ya salió y SIN CAMIÓN que se toca; el bot de WhatsApp sigue en la rama
 - El dueño implementó el servidor **2026-10-09-a** (Historial stock) el 12/10 (enlace fijo a `c3c6585`, 2.537 líneas). Volver atrás: la
   versión anotada + pegar la 10-06-a (`84c2b74…`, 2.449 líneas).
 - Revisión: 18 hallazgos confirmados por Opus y Fable (informe en el resultado del workflow `wf_a482cc5d-e7b`). Arreglados todos los de
