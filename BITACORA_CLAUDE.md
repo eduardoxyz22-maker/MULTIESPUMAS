@@ -13865,7 +13865,7 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - 12/10 a la noche, el dueño: *«ya cargué los celulares, ya salieron aprobadas las plantillas»*: `WA_VENDEDORAS` cargada y las 6 `_v2`
   aprobadas. Desde ahí salen las v2 con el enlace al WhatsApp del vendedor.
 
-### §4km — 🤖 Recordatorio en dos tandas: 17:00 los de la mañana, 19:00 los de la tarde (12/10, `.gs` 2026-10-12-f)
+### §4km — 🤖 Recordatorio en dos tandas: 17:00 los de la mañana, 19:00 los de la tarde (12/10, `.gs` 2026-10-12-f; IMPLEMENTADO por el dueño ~18:30 y PÁGINA PUBLICADA 18:33, `c4cff91`)
 - Dueño (12/10, ~19:40): *«a las 17 recordatorio a los que son en la mañana del día siguiente y a las 19:00 los que son para el turno
   PM de mañana. La idea es avisarles un día antes, no 5 horas antes»*. Antes salían todos a las 17:00 (hoy salieron 2: el resto se
   había confirmado en el día, y esos no se repiten).
@@ -13875,3 +13875,4 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - ⚠️ Versión **12-f**, no 12-e: el dueño escribió «2026-10-12-e» como descripción de la implementación de la 12-b (§4kj); para no
   confundir, la «e» se saltea. Página: `SCRIPT_VERSION_ESPERADA` 12-f, textos del «🔔 Mañana» (17:00 AM / 19:00 PM).
 - `test_wa_bot` §5c (→ 113), `test_wa_pagina` (el pie), `test_servidor` §11.
+- Volver atrás: ✏️ a la versión de la 12-d que anotó el dueño Y pegar la 12-d de `f24447c533106ba70859f83a8c0de5b41ecea473` (3.294 líneas).

@@ -726,9 +726,9 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
-## 🤖 El bot de WhatsApp (§4jt, 11/10; EN MARCHA con clientes reales desde el 12/10; servidor `2026-10-12-d` IMPLEMENTADO 12/10 ~17:40, página PUBLICADA 17:46, `a0bec42`)
+## 🤖 El bot de WhatsApp (§4jt, 11/10; EN MARCHA con clientes reales desde el 12/10; servidor `2026-10-12-f` IMPLEMENTADO 12/10 ~18:30, página PUBLICADA 18:33, `c4cff91`)
 Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
-confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
+confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turno, 19:00 los de la tarde y lo que faltó: §4km, 12/10); a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
 - `doSave` → `waAlGuardar_` solo anota en `WA_COLA` (sin red, adentro del candado); `waRepaso` (cada 5 min + `waDespierta` de una vez)
   manda AFUERA del candado, armando cada mensaje con la planilla de ese momento, tras 2 min de espera (`WA_ESPERA_MS`). Reintentos en
   `WA_SALIDA` (solo qué y a quién). Todo queda en la hoja «Bot WhatsApp». `estadoBotWhatsApp()`; `probarAntesDeImplementar` §11.
