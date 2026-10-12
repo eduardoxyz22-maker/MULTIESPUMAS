@@ -738,6 +738,11 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
+## ✨ Administración: herramientas en grupos (§4kb, 12/10; PUBLICADA 00:21, `55eaf9c`)
+Los mismos botones en `.btn-row.adm-tools` (cuatro `.at-g`); el color va en `--c` y la explicación en `data-d` (con `::after`: no cambia el
+`textContent`). Un botón nuevo de Administración entra en su grupo con esa forma. Las ventanas llevan `class="adm-ov"` (cabecera nueva, solo
+CSS). `tests/test_adm_tools.js`. Bitácora §4kb.
+
 ## 👋 Quién usa el panel (§4ka, 11/10; PUBLICADA 23:53, `4ab5c90`; dueño: *«que al entrar al panel cada vendedor se identifique»*)
 Una vez por pestaña (`sessionStorage` `me_quien_ok`) sale «¿Quién está usando el panel?»: vendedores, logística, administración. Elegir
 usa `setVendedorMem` (el mismo «Tu nombre») y llena el formulario y Mis pedidos; se cambia con «¿No sos …?» en la ventana de Eduardo.

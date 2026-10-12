@@ -7445,6 +7445,20 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4kb. 12/10 (madrugada): ✨ Administración: las herramientas en grupos y las ventanas con cabecera nueva — PUBLICADA 12/10 00:21 de Bolivia (`55eaf9c`), Pages OK
+El dueño, con captura de la barra de botones: *«nos falta actualizar y modernizar esa parte del panel y lo que lleva dentro, solo tocamos
+y modernizamos stock y producción»*.
+- **La barra** (`.btn-row.adm-tools`, se queda la clase `btn-row`: `test_resumen` la busca): los MISMOS botones (texto, `onclick`, ids
+  `btn-mapa`/`btn-cerrar-dia`) en cuatro `.at-g`: 🚚 Entregas del día · 📤 Mensajes y partes (con el Excel) · 🏭 Stock y ventas · ⚙️ Ajustes
+  y claves (fila de píldoras). Cada herramienta `.at-t` lleva su color en `--c` (ya no `background` en línea) y una línea de para qué sirve
+  en `data-d`, que se dibuja con `::after` para no cambiar el `textContent`.
+- Los avisos de arriba de la tabla (`#adm-fuera`, `#adm-stock`, `#adm-borradores`, `#adm-rpt`, `#adm-cierre-ent`) como tarjetas, y los
+  filtros `#adm-chips` como los chips nuevos. Solo CSS.
+- **Las ventanas** (11 overlays con `class="adm-ov"`: mapa, ruta, entregas, carga, faltantes, parte, envio, retiros, busca, prods, reporte):
+  cabecera con brillo y sombra, botones en píldora, fondo suave. Solo CSS sobre su estilo en línea. Lo de ADENTRO de cada ventana todavía
+  no se rediseñó (como sí se hizo con Stock y Qué producir): se propone ir una por una.
+- `tests/test_adm_tools.js` (6). Batería en verde.
+
 ## 4ka. 11/10 (noche): 👋 Al entrar al panel, cada uno dice quién es — PUBLICADA 11/10 23:53 de Bolivia (`4ab5c90`), Pages OK
 El dueño: *«falta que al entrar al panel cada vendedor se identifique»*.
 - Bloque `quien*` (antes de `pintarPiezasAtc`), CSS `.quien*`. Al abrir el panel, UNA vez por pestaña (`sessionStorage` `me_quien_ok`:
