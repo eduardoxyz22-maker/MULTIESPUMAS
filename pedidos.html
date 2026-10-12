@@ -29309,7 +29309,7 @@ function depPanel(q){
   fondo.innerHTML='<div class="dep-md" role="dialog" aria-modal="true"><div class="dep-md-cab"><div><b>'+tit+'</b><small>'+sub+'</small></div><button type="button" class="dep-md-x" aria-label="Cerrar" onclick="depPanel(null)">✕</button></div>'+
     (peds.length?peds.map(function(p){
       var vh=vehiculoDe(p);
-      return '<button type="button" class="dep-md-p" data-id="'+esc(p.id)+'" onclick="depPanel(null);'+abrir+'(this.dataset.id)"><span class="dep-md-t"><b>'+(p.nota?('Nota '+esc(p.nota)):esc(p.oc||''))+'</b> · '+esc(p.cliente||'')+' · entrega '+fdia(p.fecha)+
+      return '<button type="button" class="dep-md-p" data-id="'+esc(p.id)+'" onclick="depPanel(null);'+abrir+'(this.dataset.id)"><span class="dep-md-t"><b>'+(abrir==='showPedidoModal' ? esc([ocEtiq(p.oc), p.nota?('Nota '+p.nota):''].filter(Boolean).join(' · ')||'(sin número)') : (p.nota?('Nota '+esc(p.nota)):esc(p.oc||'')))+'</b> · '+esc(p.cliente||'')+' · entrega '+fdia(p.fecha)+
         (p.fecha&&p.fecha<hoy?' <span class="dep-e-no">⏰ atrasado</span>':'')+(vh?' · 🚚 '+esc(vh):'')+'</span>'+
         (p.productos||[]).map(function(x){ var cg=depCargado(p,x), est=depEstado(x), es=(marca && depClaveX(x)===marca) || (esFn && esFn(x));
           return '<span class="dep-md-l'+(es?' es':'')+'">'+(Number(x.cant)||0)+' × '+esc(String(x.desc||'').toUpperCase())+(x.medida?(' '+esc(x.medida)):'')+' <span class="dep-e-'+(est||'sin')+'">'+DEP_EST[est]+'</span>'+(cg.u>0?' <span class="dep-e-cam">🚚 '+cg.u+' en '+esc(cg.v)+'</span>':'')+'</span>'; }).join('')+'</button>'; }).join('')
