@@ -7445,6 +7445,26 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jx. 11/10 (noche): 🧑‍💼 Eduardo, el asistente del panel, en 3D de cuerpo entero — PUBLICADO 11/10 22:45 de Bolivia (`7f54c33`), Pages OK
+El dueño: un asistente virtual con SU imagen que ayude a los vendedores, avise y recuerde, y sirva de centro de ayuda. Eligió la forma
+A (en la esquina), **con sonido**, que **ayude a cada vendedor con lo suyo** (*«pronto haremos que me avise»*: avisarle a él lo de cada
+vendedor queda para después). Del dibujo SVG dijo «que feo»; de la cara en un círculo, *«no me gusta que se vea una cara en un círculo
+cuando podemos usar un avatar 3D»*. Va **su imagen 3D de cuerpo entero** (chaqueta, lentes de sol), sin fondo.
+- **Imágenes**: `asistente/eduardo-3d.webp` (figura, 25 KB) y `asistente/eduardo-busto.webp` (cabecera de la ventana, 12 KB), recortadas
+  por el canal alfa del recorte que hizo Cloudinary (`e_background_removal`) sobre su imagen. Desde la sesión no hay salida a Cloudinary:
+  entran por `.github/workflows/traer-imagenes.yml` (push de `herramientas/traer_imagenes.txt`, reintenta el 423). El original y el
+  recorte PNG y ese flujo quedan SOLO en la rama; a `main` fueron las dos webp. Cambiar la imagen = subir el `?v=` de `ASIS_IMG`/`ASIS_BUSTO`.
+- **Solo mira y avisa**: no guarda nada en la planilla. `asisAvisos()` según la pestaña: Mis pedidos (los de mañana sin avisar desde las
+  17:00 con `nxM1Datos`, saldos de 7+ días con `contaFaltaCobrar`, pedidos sin ubicación; solo del vendedor elegido), Nuevo pedido (al
+  guardar con cliente y sin celular o sin ubicación, `asisAlGuardar`, no frena), Administración con clave o aparato de administración
+  (`nxA3Datos`, cierre de entregas, RPT atrasadas) y Contabilidad (`nxPstLista`). Ninguna cuenta nueva: todo lee lo que ya existía.
+- «Entendido» por aparato (`me_asis_vistos`), 🔇 por aparato (`me_asis_mudo`). Sonido = WebAudio (sin archivo), se habilita con el
+  primer toque. Ayuda «¿Cómo hago…?»: `ASIS_AYUDA` (13), búsqueda sin acentos y sin palabras comunes (`ASIS_COMUNES`: «cómo» estaba en
+  todas), «👉 Mostrame dónde» cambia de pestaña e ilumina el lugar (`asisFoco`).
+- ⚠️ En Playwright NO aparece salvo `window.ASIS_PRUEBA` (taparía botones de todas las pruebas). ⚠️ `.asis [hidden]{display:none!important}`:
+  `.asis-panel{display:flex}` le ganaba al `hidden` y dejaba una raya encima del globito.
+- `tests/test_asistente.js` (12). Batería: 165 suites, 5.896, en verde. Publicado solo esto (cherry-pick); el bot de WhatsApp sigue en la rama.
+
 ## 4jw. 11/10 (noche): ✨ Contabilidad con el estilo nuevo (A–K) — PUBLICADA 11/10 21:09 de Bolivia (`407f4a9`), Pages OK
 El dueño, con las muestras (artifact «Contabilidad: once mejoras», A a K): *«A, B, C, D, E, F, G y H, I, J, K armame las muestras»* y
 después *«Ok pásalas y publica»*. **Solo presentación**: ninguna cuenta cambia; todo lee `renderContaMetrics`, `renderConta`,
@@ -7477,10 +7497,7 @@ después *«Ok pásalas y publica»*. **Solo presentación**: ninguna cuenta cam
   franja de cada ficha (`.mc-bar` → `--c`), dibujito según el título (`cxIcoDe`, `CX_ESC_X`: billete, banco, duda, balanza, Sueña,
   Heaven, fábrica + los de A y el camión de `MIS_ESC`), barrita cuando el texto dice «N% de lo…» y entrada escalonada. El texto de
   cada ficha no cambia. `test_conta_4jw` §A+ (→ 40).
-- **🧑‍💼 Asistente Eduardo (§4jx, en curso)**: el dueño eligió la forma A (burbuja). El dibujo SVG a mano no le gustó («que feo»):
-  tres avatares 3D con gafas generados en SU Cloudinary con texto (sin su foto; quedan 30 de 50 del mes) y traídos al repo por
-  `.github/workflows/traer-imagenes.yml` (desde la sesión no hay salida a Cloudinary): `asistente/muestra1-3.png` (solo en la rama).
-  Muestras: https://claude.ai/artifact/1712oAH4ewGcrMskadZwJ9. Falta que elija el avatar, sonido sí/no y si le avisa lo de cada vendedor.
+- **🧑‍💼 Asistente Eduardo**: ver §4jx (arriba).
 
 ## 4jv. 11/10 (noche): 🚛 El 3D de Administración se toca como el de Mis pedidos — PUBLICADA 11/10 20:06 de Bolivia (`258e672`), Pages OK
 El dueño, con captura de «Camiones de mañana» en 3D: *«No funcionan los montacargas y camiones del 3D como el 3D en mis pedidos, que al

@@ -737,6 +737,12 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
+## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*)
+Su imagen 3D de cuerpo entero en la esquina (`asistente/eduardo-3d.webp`, cabecera `eduardo-busto.webp`; `?v=` en `ASIS_IMG`/`ASIS_BUSTO`).
+Avisa según la pestaña (`asisAvisos`: Mis pedidos del vendedor elegido, al guardar, Administración, Contabilidad) leyendo las cuentas de
+siempre, ayuda «¿Cómo hago…?» (`ASIS_AYUDA`) y sonido WebAudio. Solo mira: nada va a la planilla; «Entendido» y 🔇 por aparato. En Playwright
+no aparece salvo `ASIS_PRUEBA`. Avisarle al dueño lo de cada vendedor: lo pide después. `tests/test_asistente.js`. Bitácora §4jx.
+
 ## ✨ Contabilidad con el estilo nuevo (§4jw, 11/10; dueño: *«Ok pásalas y publica»*; PUBLICADA 11/10 21:09, `407f4a9`)
 Solo presentación, bloque `cx*`: A fichas vivas + barra cobrado/falta (`#cx-vivo`, DEBAJO de `#cta-marcas`), B dona de marcas, C botones en
 tres grupos (`#cx-grupos`), D chips que filtran SOLO la tabla (`CX_FILTRO`), E tarjetas bajo 900 px (`me_cx_tabla` vuelve a la tabla),
