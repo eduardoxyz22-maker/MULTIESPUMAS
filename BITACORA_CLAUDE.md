@@ -7492,6 +7492,8 @@ cuando podemos usar un avatar 3D»*. Va **su imagen 3D de cuerpo entero** (chaqu
 - ⚠️ En Playwright NO aparece salvo `window.ASIS_PRUEBA` (taparía botones de todas las pruebas). ⚠️ `.asis [hidden]{display:none!important}`:
   `.asis-panel{display:flex}` le ganaba al `hidden` y dejaba una raya encima del globito.
 - `tests/test_asistente.js` (12). Batería: 165 suites, 5.896, en verde. Publicado solo esto (cherry-pick); el bot de WhatsApp sigue en la rama.
+- **Cabecera en blanco** (dueño, 11/10 con captura del iPad: *«no uses fondo negro, sí blanco en la imagen del chat de Eduardo»*;
+  PUBLICADA 23:4x, `396081c`): `.asis-h` blanco con un toque turquesa, saludo en `--teal-dk`, botones claros. No volver al oscuro.
 
 ## 4jw. 11/10 (noche): ✨ Contabilidad con el estilo nuevo (A–K) — PUBLICADA 11/10 21:09 de Bolivia (`407f4a9`), Pages OK
 El dueño, con las muestras (artifact «Contabilidad: once mejoras», A a K): *«A, B, C, D, E, F, G y H, I, J, K armame las muestras»* y
