@@ -30902,9 +30902,9 @@ function cv3dLug(l){ return (l.no||0)>=l.u ? 'no' : (l.lugar!=='fabrica' ? 'sale
 function cv3dLugEtq(l){ var t=cv3dLug(l);
   return (t==='no'?'⛔ ':t==='trae'?'📥 ':t==='sale'?'🏪 ':'🏭 ')+l.u+' '+esc(cv3dCorto(l.kk))+(t==='no'?' · falta':t==='trae'?' · Moreno':t==='sale'?' · Banzer':(l.no?(' · ⛔ '+l.no):'')); }
 /* la ventana de lo que espera: cada producto con su lugar, agrupado como las columnas; tocar uno = sus pedidos */
-function cv3dEsperan(k, desde){
+function cv3dEsperan(k, desde, lugar){
   var D=cargaVivaDatos(), c=D.porK[k]; if(!c) return;   // lo de ahora: si alguien tildó mientras tanto, no lo lista
-  var pend=cv3dPendientes(c), cola=pend.slice(desde||0), grupos={};
+  var sp=c.sin ? cv3dSinParte(c) : null, pend=sp ? (lugar ? sp[lugar] : sp.aca) : cv3dPendientes(c), cola=pend.slice(desde||0), grupos={};
   cola.forEach(function(l){ var t=cv3dLug(l); (grupos[t]=grupos[t]||[]).push(l); });
   var html=['aca','sale','trae','no'].filter(function(t){ return grupos[t]; }).map(function(t){
     var u=grupos[t].reduce(function(a,l){ return a+l.u; },0);
@@ -30912,13 +30912,23 @@ function cv3dEsperan(k, desde){
       return '<button type="button" class="dep-md-p cv3d-gr-l" data-k="'+esc(c.k)+'" data-kk="'+esc(l.kk)+'" onclick="cv3dPedidosDe(this)"><span class="dep-md-t"><b>'+l.u+' × '+esc(l.kk)+'</b>'+
         (t==='trae'?(' · de '+esc(l.alm)):'')+(t==='sale'?(' · en '+esc(l.lugar)):'')+(l.no && t!=='no'?(' · <span class="dep-e-no">⛔ '+l.no+' sin stock</span>'):'')+'</span></button>'; }).join('')+'</div>'; }).join('');
   var n=cola.length;
-  depPanel({ html:html||'<div class="dep-md-vacio">No espera nada.</div>', tit:'⏳ Esperan · '+(c.sin?'⚠️ Sin camión':('🚚 '+esc(c.k))),
-    sub:n+' producto'+(n===1?'':'s')+(desde?(' en la fila (los '+desde+' de adelante ya están frente al camión)'):' por cargar')+' · '+cvU(cola.reduce(function(a,l){ return a+l.u; },0)) });
+  var donde=lugar==='sale' ? ' en Banzer' : lugar==='trae' ? (' en '+(Object.keys(D.im.alm).join(' + ')||'Moreno')) : '';
+  depPanel({ html:html||'<div class="dep-md-vacio">No espera nada.</div>', tit:'⏳ Esperan'+donde+' · '+(c.sin?'⚠️ Sin camión':('🚚 '+esc(c.k))),
+    sub:n+' producto'+(n===1?'':'s')+(desde?(' en la fila (los '+desde+' de adelante ya están frente al camión)'):' por cargar')+' · '+cvU(cola.reduce(function(a,l){ return a+l.u; },0)),
+    pie:c.sin ? '<button type="button" class="cvc-salio-btn" onclick="cv3dSinCamion()">🚚 Asignarles camión</button> Tocá un producto para ver sus pedidos.' : '' });
 }
 /* lo que falta cargar en ese camión, en el orden de las columnas (PTF, Banzer, Moreno, Falta) */
 function cv3dPendientes(c){
   return c.lineas.filter(function(l){ return !l.on && l.u>0; }).map(function(l, i){ return { l:l, i:i }; })
     .sort(function(a,b){ return CV_LUGORD[cv3dLug(a.l)]-CV_LUGORD[cv3dLug(b.l)] || a.i-b.i; }).map(function(o){ return o.l; });
+}
+/* 🏪📥 (12/10, dueño: «lo de Banzer cargar ¿no debería estar en la fila de espera de Banzer?… si no tienen camión asignado pero sí
+   almacén») Lo de «Sin camión» que se carga en Banzer espera EN Banzer, y lo que se trae de Moreno, en Moreno; en el andén de «Sin
+   camión» queda lo de PTF y lo que falta. Un camión asignado sigue con todo delante de él (ese camión pasa por Banzer). */
+function cv3dSinParte(c){
+  var r={ aca:[], sale:[], trae:[] }; if(!c) return r;
+  cv3dPendientes(c).forEach(function(l){ var t=cv3dLug(l); (t==='sale'||t==='trae' ? r[t] : r.aca).push(l); });
+  return r;
 }
 function cv3dCorto(kk){
   var m=String(kk||'').match(/(\d{2,3})\s*[x*]\s*(\d{2,3})\s*(cm)?\s*$/i), d=m?kk.slice(0,m.index):String(kk||'');
@@ -30955,14 +30965,38 @@ function cv3dConstruir(D, suave){
   var g=new THREE.Group(); W.grupo=g; W.esc.add(g);
   var antes=CV3D.en, ahora={}, andenAhora={}; DEP.quieto=!!suave;
   DEP.colP={}; D.cams.forEach(function(c){ c.lineas.forEach(function(l){ if(!DEP.colP[l.kk]) DEP.colP[l.kk]=DEP_COL[Object.keys(DEP.colP).length%DEP_COL.length]; }); });
-  var esp=2.9, gap=1.8;
+  var esp=2.9, gap=1.8, espBz=[], espIm=[], espK='';
   var zonas=D.cams.map(function(c, i){
-    var pend=cv3dPendientes(c), carg=c.lineas.filter(function(l){ return l.on && l.cu>0; });
+    var sp=c.sin ? cv3dSinParte(c) : null, pend=sp ? sp.aca : cv3dPendientes(c), carg=c.lineas.filter(function(l){ return l.on && l.cu>0; });
+    if(sp){ espBz=sp.sale; espIm=sp.trae; espK=c.k; }
     var bzL=c.lineas.filter(function(l){ return l.lugar!=='fabrica'; }), bzU=bzL.reduce(function(s,l){ return s+l.cu; },0), bzD=bzL.reduce(function(s,l){ return s+(l.on?l.cu:0); },0);
     var cola=pend.slice(4, 4+CV_COLA_MAX), cc=Math.ceil(cola.length/3);
     return { c:c, i:i, pend:pend.slice(0,4), cola:cola, mas:Math.max(0,pend.length-4-cola.length), carg:carg, bzU:bzU, bzD:bzD,
       w:c.sin ? Math.max(5, Math.min(4,pend.length)*esp+.6) : Math.max(7.4, Math.min(4,pend.length)*esp+.6), wl:cc?(cc*DEP_COLA_PASO+.9):0 };
   });
+  /* 🏪📥 lo de «Sin camión» que espera en Banzer o en Moreno: una fila delante de ese lugar, de a dos; el cartel lista todos */
+  var mov=[], marca=[], CV_ESP_MAX=6;
+  var esperaEn=function(lista, cx, lugar, col){
+    if(!lista.length) return;
+    var ver=lista.slice(0, CV_ESP_MAX), filas=Math.ceil(ver.length/2), z0=-.2, z1=.9+filas*2.4;
+    var pc=new THREE.Mesh(new THREE.PlaneGeometry(lado-.4, z1-z0), new THREE.MeshBasicMaterial({ map:depTexEspera(), transparent:true, depthWrite:false }));
+    pc.rotation.x=-Math.PI/2; pc.position.set(cx,.017,(z0+z1)/2); g.add(pc);
+    var c=D.porK[espK], tot=lista.reduce(function(a,l){ return a+l.u; },0), verLos=function(){ cv3dEsperan(espK, 0, lugar); };
+    var hitE=new THREE.Mesh(new THREE.BoxGeometry(lado-.4,1.2,z1-z0), new THREE.MeshBasicMaterial({ visible:false })); hitE.position.set(cx,.6,(z0+z1)/2); hitE.userData.dep={ fn:verLos, zona:true }; g.add(hitE); W.toca.push(hitE);
+    var letrero=new THREE.Object3D(); letrero.position.set(cx,.2,z1+.3); g.add(letrero);
+    depEtq(letrero, '⏳ ESPERAN CAMIÓN · '+cvU(tot)+'<small style="display:block;font-weight:700;opacity:.9">'+lista.length+' producto'+(lista.length===1?'':'s')+' sin camión · tocá para ver'+(lista.length>ver.length?(' (+'+(lista.length-ver.length)+')'):'')+'</small>', 'dep-etq-cola', col, 0, false, verLos);
+    ver.forEach(function(l, j){
+      var px=cx+((j%2)?1.4:-1.4)*(ver.length===1?0:1), pz=.9+Math.floor(j/2)*2.4, st=cv3dEst(l);
+      var mc=depMontacargas(); mc.g.scale.setScalar(.92); mc.g.position.set(px,0,suave?pz:pz+9);
+      var abre=function(){ cvElegir(espK); cv3dPedidos(c, l); };
+      mc.g.userData.dep={ fn:abre }; g.add(mc.g); W.toca.push(mc.g);
+      var alto=st==='no' ? .4 : depPila(mc.carga, l.kk, l.kk.toUpperCase(), l.kk, l.cu, 3);
+      var bal=depMesh(new THREE.SphereGeometry(.12,10,8), new THREE.MeshBasicMaterial({ color:0xff8a00 }), 0, 2.18, -.05); mc.g.add(bal);
+      depEtq(mc.carga, cv3dLugEtq(l), 'dep-etq-pila dep-etq-mini', CV_LUGCOL[cv3dLug(l)], alto*.8+.25, false, abre);
+      var d=.6+j*.22; mov.push({ mc:mc, d:d, bal:bal });
+      if(!suave) depTween(mc.g.position, { z:pz }, 2.2, d, depSale);
+    });
+  };
   var lado=5.6, anchoZ=zonas.reduce(function(s,z){ return s+z.w+z.wl; },0)+Math.max(0,zonas.length-1)*gap, anchoT=anchoZ+2*(lado+gap), x=-anchoT/2;
   var fz=-9, ancho=Math.max(12, anchoT);
   depAmbiente(g, ancho, fz);
@@ -30979,9 +31013,9 @@ function cv3dConstruir(D, suave){
     var cartel=new THREE.Object3D(); cartel.position.set(cx,4.4,-4.6); g.add(cartel);
     depEtq(cartel, '🏪 Banzer<small>'+(D.bz.total ? (D.bz.dentro>=D.bz.total ? '✅ todo cargado' : (D.bz.dentro+' de '+cvU(D.bz.total)+' cargados')) : 'nada para cargar')+'</small>', 'dep-etq-cli', col, .2);
     CV3D.zonas.bz={ x:cx, w:lado+2 };
+    esperaEn(espBz, cx, 'sale', CV_LUGCOL.sale);
     x+=lado+gap;
   })();
-  var mov=[], marca=[];
   zonas.forEach(function(z, zi){
     var c=z.c, cx=x+z.w/2, col=c.sin?'#d97706':DEP_CLI[z.i%DEP_CLI.length], listo=!c.sin && c.total>0 && c.dentro>=c.total;
     CV3D.zonas[c.k]={ x:x+(z.w+z.wl)/2, w:z.w+z.wl };
@@ -31067,6 +31101,7 @@ function cv3dConstruir(D, suave){
     var hit=new THREE.Mesh(new THREE.BoxGeometry(lado,3,8.4), new THREE.MeshBasicMaterial({ visible:false })); hit.position.set(cx,1.5,-2.4); hit.userData.dep={ fn:abre, zona:true }; g.add(hit); W.toca.push(hit);
     depEtq(t.g, '📥 Ir a buscar a '+esc(almN)+'<small>'+(D.im.u ? (cvU(D.im.u)+' para traer a PTF') : 'nada que traer')+'</small>', 'dep-etq-cli', col, 3.4);
     CV3D.zonas.im={ x:cx, w:lado+2 };
+    esperaEn(espIm, cx, 'trae', CV_LUGCOL.trae);
   })();
   DEP.quieto=false; CV3D.en=ahora; CV3D.anden=andenAhora; CV3D.marca=marca;
   W.cada=function(t){ mov.forEach(function(o){ var z=o.mc.g.position.z; if(o.u!=null) o.mc.ruedas.forEach(function(r){ r.rotation.x+=(z-o.u)*2; }); o.u=z;

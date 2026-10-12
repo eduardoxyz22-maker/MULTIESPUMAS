@@ -648,6 +648,9 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   Sin vehículo, Banzer, Moreno) y el panel oscuro por **una ficha clara por camión** abajo (`cv3dColsPintar`, `#cv-cols`) con los
   MISMOS tildes. El dueño NO quiere el panel lateral ni el diseño oscuro con el 3D. ⚠️ Un solo dibujante three.js para esta escena y
   la fábrica de Eduardo: `depIniciar3D(box)` muda el lienzo (`depMudar`); no crear otro `WebGLRenderer`. `tests/test_camiones_3d.js`.
+  **Montacargas = «Lo del día, por lugar» (§4jy, PUBLICADA 11/10 23:06, `91fa2fe`)**: un montacargas por producto por cargar (Banzer incluido), color de su columna (`cv3dLug`/`CV_LUGCOL`), fila hasta 24 y «⏳ ESPERAN» se toca (`cv3dEsperan`). `test_camiones_3d` §5c.
+  **Sin camión espera en su lugar (12/10)**: lo de Banzer de los pedidos sin camión espera delante de Banzer y lo de Moreno delante de Moreno (`cv3dSinParte`, `cv3dEsperan(k, desde, lugar)`); en el andén «Sin camión» quedan PTF y lo que falta. Un camión asignado no cambia.
+  **Tocar (§4jv, PUBLICADA 11/10 20:06, `258e672`)**: `depHitDe` hace ganar lo tocado sobre la caja invisible del andén (`dep.zona`); camión → `cv3dCamPanel`, Banzer/Moreno → `cv3dLugarPanel`, montacargas → `cv3dPedidos`: la ventana de Mis pedidos (`depPanel`).
 
 ## ✨ Las escenas del formulario de pedidos (§4if, 08/10, dueño: *«todas… quiero escenas wow»*; PUBLICADA 08/10 16:35, `19a2ec0`)
 Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, saldo ni el guardado).
@@ -723,8 +726,6 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
-<<<<<<< HEAD
-=======
 ## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` EN LA RAMA, sin publicar: espera que el dueño arme Meta)
 Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
 confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
@@ -751,7 +752,7 @@ para los vendedores»*). `tests/test_asistente.js`. Bitácora §4kc, §4kd.
 las dos → PTF y después Banzer. La usan el recorrido del mapa (`mapaRutaDatos`/`mapaRutaPintar`, ordena desde el último depósito) y la Hoja de
 ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vacio`) en vez de esconderse. `tests/test_ruta_salida.js`. Bitácora §4ke.
 
-## 🔎 Revisión del 11-12/10 con 6 agentes y 📥 «Sí, es la misma» (§4kf, 12/10; en la rama, SIN publicar)
+## 🔎 Revisión del 11-12/10 con 6 agentes y 📥 «Sí, es la misma» (§4kf, 12/10; PUBLICADA 10:48, `3ad6cc1`; los arreglos del bot siguen en la rama)
 - **«Sí, es la misma» / «Descartar»** van de a uno (`borrEnSerie`) y un borrado que Google no hizo (ocupado, sin respuesta) DEVUELVE la
   tarjeta y lo dice; el ✓ sale con el sí del servidor. Antes lo callaba: el dueño veía la bandeja vacía en el teléfono y al otro día
   volvían todas (las filas nunca se borraron: «esperando hace 6 días»). `tests/test_borr_misma.js` (panel + `.gs` reales).
@@ -805,10 +806,9 @@ cierre), H quién tiene el efectivo (`cxRetiro`), I botón en cada aviso (`cxAvi
 hora), K curva por marca en Proyección (meta: falta dónde cargarla). ⚠️ No calcular nada aparte: todo lee las funciones de siempre.
 `tests/test_conta_4jw.js` (38). Bitácora §4jw.
 
->>>>>>> d394ec0 («Sí, es la misma» y «Descartar» de a uno y sin fallar callados (la fila de Kommo no se borraba y volvía); bitácora §4kf)
 ## ✨ Las nueve mejoras (§4js, 10/10, PUBLICADA 10/10 21:51 de Bolivia, `98771b8`; dueño: *«todo está bueno, solo falta pulir el diseño, los colores, animaciones»*)
 Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja de la marca y dibujito). Solo completan, avisan o proponen:
-- **P1** `nxCliBuscar` (`#nx-cli`): en un pedido NUEVO, el celular o el NIT (≥5 números) completan SOLO lo vacío con el pedido más nuevo de ese cliente; el NOMBRE completo (dos palabras, sin acentos) NO completa solo: propone hasta 3 y se elige «Sí, es este» (dueño, 10/10). «No es él» lo vacía. `NX_CLI_LLENANDO` evita que lo completado vuelva a buscar.
+- **P1** `nxCliBuscar` (`#nx-cli`): en un pedido NUEVO, el celular o el NIT (≥5 números) completan SOLO lo vacío con el pedido más nuevo de ese cliente; el NOMBRE NO completa solo: propone hasta 3 y se elige «Sí, es este» (dueño, 10/10). Desde §4ju (11/10, PUBLICADA `6e67b9d`) busca con UNA palabra de 5+ letras («MULTICENTER») y perdona un error de tipeo (`nxNomParecido`/`nxDist`); al elegir, el nombre queda como en sus pedidos. «No es él» lo vacía. `NX_CLI_LLENANDO` evita que lo completado vuelva a buscar.
 - **P3** `nxMsgCliente`/`nxClienteBloque`: en «✅ Pedido guardado», el mensaje para el CLIENTE y su WhatsApp; al corregir con día/turno nuevo, `nxAvisarCambio`. Línea de logística concreta según día y turno (`nxLlamadaTxt`, dueño 10/10: AM «entre las 9:00 y las 12:00», PM «entre las 14:30 y las 18:30», y que llaman una hora antes).
 - **M1** la 5ª ficha `mi-f5` «🔔 Mañana» en Mis pedidos + `#nx-m1`; late desde las 17:00 (`NX_M1_HORA`). ⚠️ «✓ Avisado» es por aparato (`me_m1_avisos`), no va a la planilla.
 - **M3** `nxM3`: pasó lo vendido el mes anterior → dona dorada, medalla y papel picado una vez por mes (`me_m3_fiesta`).

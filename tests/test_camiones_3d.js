@@ -134,16 +134,24 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
     var mc={aca:0,sale:0,trae:0,no:0}; pend.forEach(function(l){ mc[cv3dLug(l)]+=l.u; });
     var A=admLugaresDatos(hoy).C, col={}; Object.keys(A).forEach(function(k){ col[k]=A[k].filter(function(q){ return q.veh==='sin camión'; }).reduce(function(s2,q){ return s2+q.u; },0); });
     var orden=pend.map(function(l){ return cv3dLug(l); }), ordenOk=orden.every(function(t,j){ return !j || CV_LUGORD[orden[j-1]]<=CV_LUGORD[t]; });
+    var sp=cv3dSinParte(c), suma=sp.aca.length+sp.sale.length+sp.trae.length;
+    var soloLug=sp.sale.every(function(l){ return cv3dLug(l)==='sale'; }) && sp.trae.every(function(l){ return cv3dLug(l)==='trae'; }) && sp.aca.every(function(l){ return /^(aca|no)$/.test(cv3dLug(l)); });
     cv3dEsperan('Sin vehículo', 4);
     var m=document.getElementById('dep-modal'), vis=!!m && getComputedStyle(m).display!=='none', txt=m.innerText.replace(/\s+/g,' '), nl=m.querySelectorAll('.cv3d-gr-l').length;
     var gr=[].map.call(m.querySelectorAll('.cv3d-gr-h span'), function(e){ return e.textContent; });
     m.querySelector('.cv3d-gr-l').click(); var m2=document.getElementById('dep-modal'), txt2=m2.innerText.replace(/\s+/g,' ');
+    cv3dEsperan('Sin vehículo', 0, 'sale');
+    var m3=document.getElementById('dep-modal'), txt3=m3.innerText.replace(/\s+/g,' '), nl3=m3.querySelectorAll('.cv3d-gr-l').length, gr3=[].map.call(m3.querySelectorAll('.cv3d-gr-h span'), function(e){ return e.textContent; });
+    var asig=!!m3.querySelector('button[onclick*="cv3dSinCamion"]');
     depPanel(null); STATE=antes;
-    return { mc:mc, col:col, n:pend.length, ordenOk:ordenOk, vis:vis, nl:nl, gr:gr, txt:txt.slice(0,200), abre:/pedido/.test(txt2) && /ESPERA/.test(txt2) };
+    return { mc:mc, col:col, n:pend.length, ordenOk:ordenOk, vis:vis, nl:nl, gr:gr, txt:txt.slice(0,200), abre:/pedido/.test(txt2) && /ESPERA/.test(txt2),
+      suma:suma, soloLug:soloLug, nAca:sp.aca.length, nSale:sp.sale.length, nTrae:sp.trae.length, nl3:nl3, gr3:gr3, txt3:txt3.slice(0,160), asig:asig };
   });
   chk('los montacargas de «Sin camión» suman lo mismo que las columnas PTF / Banzer / Moreno / Falta (Banzer incluido)', J(r.mc)===J(r.col) && r.mc.sale>0 && r.mc.trae>0 && r.mc.no>0, J([r.mc, r.col]));
   chk('van en el orden de las columnas: PTF, Banzer, Moreno, Falta', r.ordenOk, J(r));
-  chk('«⏳ ESPERAN» abre la lista de TODO lo que espera (también lo que no entra en la fila), agrupado por lugar', r.vis && r.nl===r.n-4 && r.gr.length>=3 && /Esperan/.test(r.txt), J(r));
+  chk('lo de «Sin camión» se reparte: Banzer espera en Banzer, Moreno en Moreno, el resto (PTF y lo que falta) en su andén — sin perder ninguno (12/10, dueño: «¿no debería estar en la fila de espera de Banzer?»)', r.suma===r.n && r.soloLug && r.nSale>0 && r.nTrae>0, J(r));
+  chk('«⏳ ESPERAN» del andén «Sin camión» lista lo que no entra adelante, ya SIN lo de Banzer ni Moreno', r.vis && r.nl===r.nAca-4 && r.gr.length===2 && !r.gr.some(function(t){ return /Banzer|Moreno/.test(t); }) && /Esperan/.test(r.txt), J(r));
+  chk('«⏳ ESPERAN CAMIÓN» de Banzer lista TODO lo de Banzer sin camión, y trae «Asignarles camión»', r.nl3===r.nSale && r.gr3.length===1 && /Banzer/.test(r.gr3[0]) && /Esperan en Banzer/.test(r.txt3) && r.asig, J(r));
   chk('tocar un producto de la lista abre sus pedidos', r.abre, J(r));
   r = await page.evaluate(() => {
     var hoy=todayStr(), antes=STATE.slice();
