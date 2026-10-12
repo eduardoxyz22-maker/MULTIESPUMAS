@@ -123,6 +123,29 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('en Administración la ficha dice la OC y la nota («OC 10-31 · Nota 501»), logística busca por OC', /OC 10-31 · Nota 501/.test(r.cam.txt), r.cam.txt.slice(0,160));
   chk('Moreno abre los pedidos que hay que ir a buscar', r.im.vis && /Ir a buscar/.test(r.im.tit) && r.im.n===1 && /CLIENTE A/.test(r.im.txt), r.im);
 
+  console.log('\n── 5c. Los montacargas = «Lo del día, por lugar» y «⏳ ESPERAN» se toca (12/10, dueño: «no veo que los montacargas coincidan con lo que hay que cargar mañana… cuando doy clic en espera no muestra qué hay en espera») ──');
+  r = await page.evaluate(() => {
+    var hoy=todayStr(), n=0, x=function(d,m,c,e){ return Object.assign({codigo:'',desc:d,medida:m,cant:c},e||{}); };
+    var P=function(cli,prods){ n++; return { id:'s5c'+n, fecha:hoy, oc:'10-'+(80+n), vendedor:'Maria Flores', cliente:cli, celular:'7', turno:'AM', zona:'Norte', direccion:'x', maps:'', pagado:true, saldo:0, ts:Date.now(), metodoPago:'', entregado:false, vehiculo:'', chofer:'', nota:String(n), acuenta:0, fotos:[], productos:prods }; };
+    var antes=STATE.slice();
+    var tipos=[{chk:'ok'},{chk:'ok',chkDe:'Banzer'},{chk:'im'},{chk:'no'}];
+    for(var i=0;i<14;i++) STATE.push(P('ESPERA '+i,[x('PRODUCTO '+i,'140x190',1+(i%2),tipos[i%4])]));
+    var D=cargaVivaDatos(), c=D.porK['Sin vehículo'], pend=cv3dPendientes(c);
+    var mc={aca:0,sale:0,trae:0,no:0}; pend.forEach(function(l){ mc[cv3dLug(l)]+=l.u; });
+    var A=admLugaresDatos(hoy).C, col={}; Object.keys(A).forEach(function(k){ col[k]=A[k].filter(function(q){ return q.veh==='sin camión'; }).reduce(function(s2,q){ return s2+q.u; },0); });
+    var orden=pend.map(function(l){ return cv3dLug(l); }), ordenOk=orden.every(function(t,j){ return !j || CV_LUGORD[orden[j-1]]<=CV_LUGORD[t]; });
+    cv3dEsperan('Sin vehículo', 4);
+    var m=document.getElementById('dep-modal'), vis=!!m && getComputedStyle(m).display!=='none', txt=m.innerText.replace(/\s+/g,' '), nl=m.querySelectorAll('.cv3d-gr-l').length;
+    var gr=[].map.call(m.querySelectorAll('.cv3d-gr-h span'), function(e){ return e.textContent; });
+    m.querySelector('.cv3d-gr-l').click(); var m2=document.getElementById('dep-modal'), txt2=m2.innerText.replace(/\s+/g,' ');
+    depPanel(null); STATE=antes;
+    return { mc:mc, col:col, n:pend.length, ordenOk:ordenOk, vis:vis, nl:nl, gr:gr, txt:txt.slice(0,200), abre:/pedido/.test(txt2) && /ESPERA/.test(txt2) };
+  });
+  chk('los montacargas de «Sin camión» suman lo mismo que las columnas PTF / Banzer / Moreno / Falta (Banzer incluido)', J(r.mc)===J(r.col) && r.mc.sale>0 && r.mc.trae>0 && r.mc.no>0, J([r.mc, r.col]));
+  chk('van en el orden de las columnas: PTF, Banzer, Moreno, Falta', r.ordenOk, J(r));
+  chk('«⏳ ESPERAN» abre la lista de TODO lo que espera (también lo que no entra en la fila), agrupado por lugar', r.vis && r.nl===r.n-4 && r.gr.length>=3 && /Esperan/.test(r.txt), J(r));
+  chk('tocar un producto de la lista abre sus pedidos', r.abre, J(r));
+
   console.log('\n── 6. Sin 3D y sin errores ──');
   await page.waitForTimeout(500);
   r = await page.evaluate(() => ({ img:!!document.querySelector('#carga-viva .cv-lienzo img'), con3d:!!document.querySelector('.cv-mapa.con3d') }));
