@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-11-a';   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-12-a';   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-11-a';
+  var ESTA_VERSION = '2026-10-12-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -417,6 +417,13 @@ function probarAntesDeImplementar() {
       if (!kTriggersDe_('waRepaso').length) ojo('No está el disparador del bot (waRepaso cada 5 minutos): ejecutá «instalarDisparadores» una vez.');
       var uW = waJsonProp_('WA_ULTIMO', null);
       if (uW && uW.error) ojo('La última vuelta del bot avisó: «' + String(uW.error).slice(0, 160) + '».');
+      /* 📬 (2026-10-12-a) Los avisos de Meta (entregado / leído / falló). */
+      var mW = waJsonProp_('WA_META', null), vW = waJsonProp_('WA_HOOK_VERIF', null);
+      if (!prop_('WA_HOOK_KEY')) bien('Meta todavía no avisa si cada mensaje se entregó (falta la propiedad WA_HOOK_KEY y el webhook en Meta).');
+      else if (mW && mW.ts) bien('Meta avisa lo que pasó con cada mensaje: ' + mW.n + ' aviso(s), el último el ' + horaBolivia(Date.parse(mW.ts)) + '.');
+      else if (vW && vW.ok === false) ojo('Meta intentó verificar el webhook con un token que no es el de WA_HOOK_KEY: copialo igual en los dos lados.');
+      else bien('WA_HOOK_KEY está puesta; Meta todavía no mandó ningún aviso' + (vW && vW.ok ? ' (la dirección ya se verificó)' : '') + '.');
+      if (mW && mW.fallos && mW.fallos.length) ojo('Meta avisó que NO entregó ' + mW.fallos.length + ' mensaje(s); el último: ' + mW.fallos[mW.fallos.length - 1].t + ' · ' + mW.fallos[mW.fallos.length - 1].e);
     }
   } catch (e) { ojo('No pude mirar el bot de WhatsApp: ' + motivo(e)); }
 
@@ -571,6 +578,8 @@ var GET_LOG_FIRMAS_MAX = 15;         // firmas distintas como mucho; el resto ca
 var GET_LOG_SEG = 6 * 3600;          // vida del registro en la caché (tope de CacheService); cada GET la renueva
 var GET_LOG_PROP_SEG = 60;           // cada cuánto, como mucho, se copia el resumen a las Propiedades del script
 function doGet(e) {
+  /* 📬 (2026-10-12-a) Meta verifica la dirección del webhook del bot con un GET: va ANTES de la clave y del GET_CERRADO. */
+  var vMeta = waHookVerificar_(e); if (vMeta) return vMeta;
   if (!claveOk_(e && e.parameter && e.parameter.k)) { getRegistrar_(e, 'clave'); return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION }); }
   if (getCerrado_()) { getRegistrar_(e, 'cerrado'); return jsonOut({ ok:false, error:'get_cerrado', version:SCRIPT_VERSION }); }
   var txt = getCacheLeer_();
@@ -817,6 +826,8 @@ function rechazosInforme_() {
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano.
     Envuelve al cuerpo real para anotar cada «no» (§4el). */
 function doPost(e) {
+  /* 📬 (2026-10-12-a) Los avisos de Meta del bot (`?wa=`): ni JSON del panel ni «Rechazos». */
+  if (e && e.parameter && e.parameter[WA_HOOK_PARAM]) return waHook_(e);
   /* 📥 El aviso de Kommo NO se anota en «Rechazos» (§4et): un `busy` del webhook quedaba
      como un guardado «save» sin id ni cliente, y Administración lo leía como una venta
      perdida de alguien. El hook tiene su propio rastro (KOMMO_ULTIMO_HOOK) y su cola. */
@@ -2422,9 +2433,100 @@ function estadoBotWhatsApp() {
   var c = waConfig_();
   var s = { activo:waActivo_(), token:!!c.token, telefono:!!c.phone, idioma:c.idioma, logistica:c.logistica.map(function (L) { return L.nombre; }),
             logisticaMal:c.mal, prueba:!!c.prueba, enCola:waColaLeer_().length, reintentos:waSalidaLeer_().length,
-            ultimo:waJsonProp_('WA_ULTIMO', null), hecho:waJsonProp_('WA_HECHO', {}), repasoInstalado:kTriggersDe_('waRepaso').length > 0 };
+            ultimo:waJsonProp_('WA_ULTIMO', null), hecho:waJsonProp_('WA_HECHO', {}), repasoInstalado:kTriggersDe_('waRepaso').length > 0,
+            metaAvisa:!!prop_('WA_HOOK_KEY'), metaVerifico:waJsonProp_('WA_HOOK_VERIF', null), meta:waJsonProp_('WA_META', null) };   // (2026-10-12-a)
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
   return s;
+}
+
+/* 📬 (2026-10-12-a) LO QUE META AVISA DE CADA MENSAJE. «enviado» en la hoja solo dice que Meta lo ACEPTÓ: si después no lo
+   entrega (el 12/10 los 4 primeros del número nuevo no llegaron), Meta lo avisa por un webhook. Este pedazo lo escucha.
+   · Dirección en Meta (app → WhatsApp → Configuración → Webhook): la /exec de siempre + `?wa=<WA_HOOK_KEY>`, y el mismo valor
+     como «Token de verificación». Sin la propiedad WA_HOOK_KEY no acepta nada (la dirección está en la página pública).
+   · Meta verifica con un GET (`hub.challenge`): doGet lo contesta ANTES de la clave del panel y del GET_CERRADO.
+   · Cada aviso va a la hoja «Bot WhatsApp»: el estado (enviado → entregado → leído; «falló» con el código y el motivo) en la
+     columna «Meta dice» de la fila de ese mensaje (se busca por su `wamid`, que ya está en «Detalle»), y lo que CONTESTA un
+     cliente en una fila nueva «💬 Respondió». Un aviso repetido (Meta reintenta) no duplica nada ni vuelve atrás un estado.
+   · Solo los avisos del número del bot (WA_PHONE_ID): el de Kommo no se suscribe, pero si llegara, se ignora.
+   · No toma el candado del panel (no toca «Pedidos»): Meta manda 3 avisos por mensaje y no puede esperar a un guardado. */
+var WA_HOOK_PARAM = 'wa';
+var WA_META_COL = 10;                   // columna «Meta dice» de la hoja (después de las 9 de WA_HOJA_ENC)
+var WA_META_RANGO = { sent:1, delivered:2, read:3, failed:4 };
+var WA_META_TXT = { sent:'📤 enviado', delivered:'✓✓ entregado', read:'👁️ leído', failed:'❌ falló' };
+function waHookClaveOk_(v) { var k = prop_('WA_HOOK_KEY'); return !!k && String(v || '') === k; }
+/** GET de Meta para verificar la dirección: contesta `hub.challenge` solo con el token correcto. null = no es de Meta. */
+function waHookVerificar_(e) {
+  var p = (e && e.parameter) || {};
+  if (p['hub.mode'] !== 'subscribe' && !p['hub.challenge']) return null;
+  var ok = waHookClaveOk_(p['hub.verify_token']);
+  try { PropertiesService.getScriptProperties().setProperty('WA_HOOK_VERIF', JSON.stringify({ ts:new Date().toISOString(), ok:ok })); } catch (er) {}
+  return ContentService.createTextOutput(ok ? String(p['hub.challenge'] || '') : 'token incorrecto');
+}
+function waHookHora_(ts) { var ms = Number(ts) * 1000; return ms ? waBo_(ms).txt : waBo_(Date.now()).txt; }
+/** POST de Meta con avisos. Siempre contesta «ok» (un «no» haría que Meta reintente durante días). */
+function waHook_(e) {
+  var out = ContentService.createTextOutput('ok');
+  if (!waHookClaveOk_(e && e.parameter && e.parameter[WA_HOOK_PARAM])) return out;
+  var b = {}; try { b = JSON.parse(e.postData.contents); } catch (er) { return out; }
+  var miTel = String(prop_('WA_PHONE_ID') || ''), est = [], resp = [];
+  (b.entry || []).forEach(function (en) {
+    (en.changes || []).forEach(function (ch) {
+      var v = (ch && ch.value) || {}, tel = String((v.metadata || {}).phone_number_id || '');
+      if (miTel && tel && tel !== miTel) return;
+      var noms = {}; (v.contacts || []).forEach(function (c) { noms[String(c.wa_id || '')] = String((c.profile || {}).name || ''); });
+      (v.statuses || []).forEach(function (s) { est.push(s); });
+      (v.messages || []).forEach(function (m) { m._nom = noms[String(m.from || '')] || ''; resp.push(m); });
+    });
+  });
+  if (!est.length && !resp.length) return out;
+  try { waHookAnotar_(est, resp); } catch (er) {}
+  return out;
+}
+function waHookTxtError_(s) {
+  var e = (s.errors || [])[0] || {};
+  var t = (e.code ? '#' + e.code + ' ' : '') + String(e.title || e.message || '');
+  var d = e.error_data && e.error_data.details ? String(e.error_data.details) : '';
+  return (t + (d && t.indexOf(d) < 0 ? ' · ' + d : '')).trim().slice(0, 300);
+}
+function waHookTxtMsg_(m) {
+  var t = m.type || '';
+  if (t === 'text') return String((m.text || {}).body || '');
+  if (t === 'button') return '[botón] ' + String((m.button || {}).text || '');
+  if (t === 'interactive') { var i = m.interactive || {}; return '[respuesta] ' + String(((i.button_reply || i.list_reply) || {}).title || ''); }
+  if (t === 'reaction') return '[reacción] ' + String((m.reaction || {}).emoji || '');
+  return '[' + (t || 'mensaje') + ']';
+}
+function waHookAnotar_(est, resp) {
+  var sh = waHoja_(), last = sh.getLastRow();
+  try { if (String(sh.getRange(1, WA_META_COL).getValue() || '') === '') sh.getRange(1, WA_META_COL).setValue('Meta dice').setFontWeight('bold'); } catch (er) {}
+  var ids = last > 1 ? sh.getRange(2, 9, last - 1, 1).getValues() : [], fila = {};
+  for (var i = 0; i < ids.length; i++) { var w = String(ids[i][0] || ''); if (w.indexOf('wamid.') === 0) fila[w] = i + 2; }
+  var meta = waJsonProp_('WA_META', {}) || {};
+  meta.n = (Number(meta.n) || 0) + est.length + resp.length; meta.ts = new Date().toISOString(); meta.fallos = meta.fallos || [];
+  est.forEach(function (s) {
+    var st = String(s.status || ''), r = WA_META_RANGO[st]; if (!r) return;
+    var txt = (WA_META_TXT[st] || st) + ' ' + waHookHora_(s.timestamp).slice(6) + (st === 'failed' ? ' · ' + waHookTxtError_(s) : '');
+    if (st === 'failed') {
+      meta.fallos.push({ t:waHookHora_(s.timestamp), e:waHookTxtError_(s).slice(0, 160) });
+      if (meta.fallos.length > 10) meta.fallos = meta.fallos.slice(-10);
+    }
+    var f = fila[String(s.id || '')];
+    if (!f) {
+      if (st !== 'failed') return;   // de un mensaje que la hoja ya no tiene: solo importa si falló
+      sh.appendRow([waHookHora_(s.timestamp), '', '', 'Aviso de Meta', '', String(s.recipient_id || ''), '', '❌ falló', String(s.id || ''), txt]);
+      fila[String(s.id || '')] = sh.getLastRow(); return;
+    }
+    var c = sh.getRange(f, WA_META_COL), ya = String(c.getValue() || ''), rYa = 0;
+    for (var k in WA_META_TXT) if (ya.indexOf(WA_META_TXT[k]) === 0) rYa = WA_META_RANGO[k];
+    if (r > rYa) c.setValue(txt);   // nunca para atrás (Meta puede mandar «entregado» después de «leído»)
+  });
+  resp.forEach(function (m) {
+    var w = String(m.id || ''); if (!w || fila[w]) return;   // Meta lo mandó dos veces
+    sh.appendRow([waHookHora_(m.timestamp), '', '', '💬 Respondió', String(m._nom || ''), String(m.from || ''), '', '💬 mensaje', w, waHookTxtMsg_(m).slice(0, 500)]);
+    fila[w] = sh.getLastRow();
+  });
+  meta.resp = (Number(meta.resp) || 0) + resp.length;
+  try { PropertiesService.getScriptProperties().setProperty('WA_META', JSON.stringify(meta)); } catch (er) {}
 }
 
 /* ============================================================================

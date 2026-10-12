@@ -417,5 +417,45 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   chk('sin WA_WABA_ID dice qué falta y no llama a Meta', /WA_WABA_ID/.test(S2.ctx.crearPlantillasWhatsApp().error || '') && S2.meta.llamadas.length === 0);
 }
 
+// ══ 10. Lo que Meta avisa (2026-10-12-a): entregado / leído / falló, y lo que contesta el cliente ══════════════
+console.log('\n── 10. El webhook de Meta: verificar, estados en la hoja, respuestas, sin clave nada ──');
+{
+  const S = servidor(Object.assign({ WA_HOOK_KEY: 'clave-hook' }, ON));
+  poner('2026-10-14 10:00');
+  const p = ped(); S.guardar(p); pasar(3); S.repaso();
+  const w = S.hoja().map(f => f[8]).filter(x => /^wamid\./.test(x));
+  chk('antes: el bot anotó los mensajes con su wamid', w.length === 3, S.hoja());
+  const get = (q) => S.ctx.doGet({ parameter: q })._t;
+  chk('verificar: con el token correcto contesta el challenge; con otro, no', get({ wa: 'clave-hook', 'hub.mode': 'subscribe', 'hub.verify_token': 'clave-hook', 'hub.challenge': '987' }) === '987'
+      && get({ 'hub.mode': 'subscribe', 'hub.verify_token': 'otra', 'hub.challenge': '987' }) !== '987', get({ 'hub.mode': 'subscribe', 'hub.verify_token': 'otra', 'hub.challenge': '987' }));
+  const aviso = (wa, value) => S.ctx.doPost({ parameter: { wa }, postData: { contents: JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'X', changes: [{ field: 'messages', value: Object.assign({ messaging_product: 'whatsapp', metadata: { phone_number_id: '1234567890' } }, value) }] }] }) } })._t;
+  const ts = String(Math.floor(RELOJ.ms / 1000));
+  const meta = () => S.hoja().map(f => f[9] || '');
+  chk('el aviso contesta «ok» (nunca un «no»: Meta reintentaría días)', aviso('clave-hook', { statuses: [{ id: w[0], status: 'sent', timestamp: ts }] }) === 'ok');
+  aviso('clave-hook', { statuses: [{ id: w[0], status: 'delivered', timestamp: ts }, { id: w[1], status: 'read', timestamp: ts }] });
+  aviso('clave-hook', { statuses: [{ id: w[0], status: 'sent', timestamp: ts }, { id: w[1], status: 'delivered', timestamp: ts }] });   // llegan desordenados
+  const H = S.hoja();
+  chk('la columna «Meta dice»: entregado / leído, y un aviso viejo no lo vuelve atrás', /^✓✓ entregado/.test(H[0][9]) && /^👁️ leído/.test(H[1][9]) && S.ctx.SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bot WhatsApp')._datos[0][9] === 'Meta dice', meta());
+  aviso('clave-hook', { statuses: [{ id: w[2], status: 'failed', timestamp: ts, errors: [{ code: 131042, title: 'Business eligibility payment issue', error_data: { details: 'Message failed to send because there were one or more errors related to your payment method.' } }] }] });
+  chk('falló: lo dice con el código y el motivo, en la fila del mensaje', /^❌ falló .*#131042 Business eligibility payment issue · Message failed/.test(S.hoja()[2][9]), S.hoja()[2][9]);
+  const est = S.ctx.estadoBotWhatsApp();
+  chk('estadoBotWhatsApp lo cuenta y guarda el último fallo', est.metaAvisa && est.meta && est.meta.n >= 6 && est.meta.fallos.length === 1 && /131042/.test(est.meta.fallos[0].e), est.meta);
+  const nAntes = S.hoja().length;
+  aviso('clave-hook', { contacts: [{ wa_id: '59170111222', profile: { name: 'Juan' } }], messages: [{ id: 'wamid.resp1', from: '59170111222', timestamp: ts, type: 'text', text: { body: 'Gracias, ahí estaré' } }] });
+  aviso('clave-hook', { contacts: [{ wa_id: '59170111222', profile: { name: 'Juan' } }], messages: [{ id: 'wamid.resp1', from: '59170111222', timestamp: ts, type: 'text', text: { body: 'Gracias, ahí estaré' } }] });
+  const ult = S.hoja()[S.hoja().length - 1];
+  chk('lo que contesta el cliente: UNA fila «💬 Respondió» con su nombre, número y texto (repetido por Meta, no se duplica)', S.hoja().length === nAntes + 1 && ult[3] === '💬 Respondió' && ult[4] === 'Juan' && ult[5] === '59170111222' && ult[9] === 'Gracias, ahí estaré', ult);
+  const n2 = S.hoja().length, m2 = JSON.stringify(meta());
+  aviso('mala', { statuses: [{ id: w[0], status: 'failed', timestamp: ts, errors: [{ code: 1 }] }] });
+  aviso('clave-hook', Object.assign({ statuses: [{ id: w[0], status: 'failed', timestamp: ts, errors: [{ code: 1 }] }] }, { metadata: { phone_number_id: '999-kommo' } }));
+  chk('con otra clave, o de OTRO número (el de Kommo), no se anota nada', S.hoja().length === n2 && JSON.stringify(meta()) === m2);
+  chk('el aviso de Meta no pasa por «Rechazos» ni por el panel', !S.ctx.SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Rechazos'));
+  const S2 = servidor(ON);
+  chk('sin WA_HOOK_KEY: ni verifica ni anota', S2.ctx.doGet({ parameter: { 'hub.mode': 'subscribe', 'hub.verify_token': '', 'hub.challenge': '5' } })._t !== '5'
+      && S2.ctx.doPost({ parameter: { wa: '' }, postData: { contents: '{}' } }) !== undefined && !S2.P.WA_META);
+  const pr = S.ctx.probarAntesDeImplementar().lineas.join('\n');
+  chk('probarAntesDeImplementar dice cuántos avisos y el último fallo', /Meta avisa lo que pasó con cada mensaje/.test(pr) && /NO entregó 1 mensaje/.test(pr), pr.split('\n').filter(l => /Meta/.test(l)));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

@@ -13785,3 +13785,17 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   · **Volver atrás de la 11-a** = ✏️ a la **versión 40** («12 oct 2026, 12:54», la anotada por el dueño antes de implementar) **Y**
   pegar la 2026-10-09-a del enlace fijo a `c3c6585b060f143464cb9d865f3a1761a4926b78` (2.537 líneas, termina en `}` con
   `return borrador;` antes). Después, borrar el disparador `waRepaso` (o `WA_ACTIVO`=0): corre el código GUARDADO en el editor.
+- **✅ El bot ENTREGA (12/10 15:51)**: el 2° pedido de prueba (OC 10-145, Sueña) llegó al 62505280: confirmación al cliente y
+  «pedido nuevo» a logística, bien armados. Los 4 de las 15:26 (los primeros del número) Meta los aceptó (wamid) y no los entregó:
+  seguramente el pago o las plantillas recién aprobadas todavía no estaban activos. Sin webhook no se puede saber.
+
+### §4ki — 📬 El bot escucha a Meta (12/10, `.gs` 2026-10-12-a, dueño: *«si, prepara lo de escuchar las respuestas de Meta»*)
+- `waHookVerificar_` (doGet, ANTES de la clave y de GET_CERRADO: `hub.challenge` solo si `hub.verify_token` = `WA_HOOK_KEY`) y
+  `waHook_` (doPost con `?wa=<WA_HOOK_KEY>`, antes de todo: ni Kommo, ni JSON del panel, ni «Rechazos»; siempre contesta «ok»).
+- `waHookAnotar_`: estados en la columna 10 «Meta dice» de «Bot WhatsApp», buscando la fila por el `wamid` de «Detalle»; nunca
+  para atrás (`WA_META_RANGO`); «falló» con código, título y detalle (y si la hoja ya no tiene la fila, una fila «Aviso de Meta»).
+  Lo que contesta un cliente → fila «💬 Respondió» (nombre del perfil, número, texto); repetido por Meta no duplica. Solo avisos
+  del `WA_PHONE_ID` (el número de Kommo no se suscribe; si llegara, se ignora). Sin candado: no toca «Pedidos».
+- `WA_META` (conteo, último, 10 últimos fallos) en `estadoBotWhatsApp` y en probar §11. `test_wa_bot` §10 (→ 89).
+- ⚠️ Meta puede reintentar si Apps Script contesta con su redirección 302: por eso todo es idempotente (por wamid).
+- Si con la app en «Desarrollo» Meta no manda avisos de producción, hay que pasarla a «Activo» (pide URL de política de privacidad).
