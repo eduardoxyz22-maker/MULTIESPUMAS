@@ -648,6 +648,7 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   Sin vehículo, Banzer, Moreno) y el panel oscuro por **una ficha clara por camión** abajo (`cv3dColsPintar`, `#cv-cols`) con los
   MISMOS tildes. El dueño NO quiere el panel lateral ni el diseño oscuro con el 3D. ⚠️ Un solo dibujante three.js para esta escena y
   la fábrica de Eduardo: `depIniciar3D(box)` muda el lienzo (`depMudar`); no crear otro `WebGLRenderer`. `tests/test_camiones_3d.js`.
+  **Tocar (§4jv, PUBLICADA 11/10 20:06, `258e672`)**: `depHitDe` hace ganar lo tocado sobre la caja invisible del andén (`dep.zona`); camión → `cv3dCamPanel`, Banzer/Moreno → `cv3dLugarPanel`, montacargas → `cv3dPedidos`: la ventana de Mis pedidos (`depPanel`).
 
 ## ✨ Las escenas del formulario de pedidos (§4if, 08/10, dueño: *«todas… quiero escenas wow»*; PUBLICADA 08/10 16:35, `19a2ec0`)
 Lo demás del formulario queda igual: esto SOLO MIRA (no cambia cupos, fechas, saldo ni el guardado).

@@ -7445,6 +7445,18 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jv. 11/10 (noche): 🚛 El 3D de Administración se toca como el de Mis pedidos — PUBLICADA 11/10 20:06 de Bolivia (`258e672`), Pages OK
+El dueño, con captura de «Camiones de mañana» en 3D: *«No funcionan los montacargas y camiones del 3D como el 3D en mis pedidos, que al
+dar clic a un producto o camiones muestra la ficha»*. Causa: cada andén tiene una caja INVISIBLE (para elegir el camión tocando el piso)
+que envuelve a los montacargas y queda delante del camión; el rayo la tocaba primero y solo elegía el camión, sin abrir nada. Ahora:
+- `depHitDe(hits)`: gana lo tocado (montacargas, camión); la caja del andén (`userData.dep.zona`) solo si no hay otra cosa. La usa el
+  mismo `pointerup` de los dos 3D (Mis pedidos no tiene cajas de andén: sin cambio).
+- Camión o su andén → `cv3dCamPanel(c)` (todos sus pedidos, chofer y «N de M bultos cargados»); «Sin camión» → los que esperan;
+  Banzer → `cv3dLugarPanel('bz')` (los que se cargan allá); Moreno → `cv3dLugarPanel('im')` (los que hay que ir a buscar). Es la
+  ventana de Mis pedidos (`depPanel`, `abrir:'showPedidoModal'`). Las fichas de abajo siguen igual.
+- Probado con el 3D de verdad (three r128 local + SwiftShader, en el scratchpad: el repo no trae la librería) y en la batería sin 3D:
+  `test_camiones_3d` §5b (→ 20). Publicado SOLO esto (cherry-pick sobre `main`); el bot (§4jt) sigue en la rama.
+
 ## 4ju. 11/10 (mañana): 👋 P1 por el nombre con UNA palabra y con un error de tipeo — PUBLICADA 11/10 09:00 de Bolivia (`6e67b9d`), Pages OK
 El dueño, con captura del formulario (había escrito «Muticenter»): *«El auto completar no veo que funcione, puse multicenter y no me llenó
 nada»*. Dos causas: el nombre pedía nombre y apellido (`/\s/`) y la comparación era exacta. Ahora `nxNomClave` acepta una palabra de 5
