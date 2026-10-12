@@ -7445,6 +7445,19 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jy. 11/10 (noche): 🚛 Los montacargas = «Lo del día, por lugar», y «⏳ ESPERAN» se toca — PUBLICADA 11/10 23:06 de Bolivia (`91fa2fe`), Pages OK
+El dueño, con dos capturas del iPad (16 pedidos de mañana sin camión): *«en los montacargas no veo los productos de mañana todos y cuando
+doy clic en espera no muestra qué hay en espera… no veo que los montacargas coincidan con lo que hay que cargar mañana»*.
+- **Por qué no coincidían**: la escena 3D ponía montacargas solo para `c.fab` (lo de PTF y lo de Moreno); lo de Banzer no tenía
+  montacargas (21 de los 47 bultos de la prueba). Y pasados 4 adelante + 6 en la fila (`DEP_COLA`), el resto no se dibujaba.
+- **Ahora** (`cv3dPendientes`, `cv3dLug`, `CV_LUGCOL`): cada producto por cargar del camión es un montacargas, en el orden y con el
+  color de las columnas de `admLugaresDatos` (🏭 PTF · 🏪 Banzer · 📥 Moreno · ⛔ Falta). La fila muestra hasta `CV_COLA_MAX`=24 (llegan más
+  rápido) y el cartel «⏳ ESPERAN» (y el piso de la fila) abre `cv3dEsperan`: TODO lo que espera, agrupado por lugar, cada producto abre
+  sus pedidos. `depEtq` tiene un 7° argumento (`fn`) para carteles que se tocan; también el «⏳ FILA DE ESPERA» de la fábrica de Eduardo.
+  `depPanel({html})` arma una ventana con una lista propia. `cv3dEsperan`/`cv3dPedidosDe` leen `cargaVivaDatos()` de ahora.
+- ⚠️ Lo que todavía puede diferir: la escena incluye pedidos ya ✅ y borradores de Kommo con fecha; las columnas no (`cierreEntEntra`).
+- `test_camiones_3d` §5c (→ 25; contra lo publicado antes, `cv3dPendientes is not defined`). Batería entera en verde.
+
 ## 4jx. 11/10 (noche): 🧑‍💼 Eduardo, el asistente del panel, en 3D de cuerpo entero — PUBLICADO 11/10 22:45 de Bolivia (`7f54c33`), Pages OK
 El dueño: un asistente virtual con SU imagen que ayude a los vendedores, avise y recuerde, y sirva de centro de ayuda. Eligió la forma
 A (en la esquina), **con sonido**, que **ayude a cada vendedor con lo suyo** (*«pronto haremos que me avise»*: avisarle a él lo de cada
