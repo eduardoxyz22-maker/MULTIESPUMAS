@@ -739,7 +739,7 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
-## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»)
+## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)
 · C logística sin clave en cualquier pestaña (`asisLogistica`) · D mensaje al cliente según el cuadrito al guardar (`asisMsgEspera`, la MISMA
 cuenta `saldoVeredictoFila`) · E resumen del día 5–14 h (`asisResumenDia`, `a.res`) · F sinónimos + errores de tipeo + la pestaña primero

@@ -13747,3 +13747,4 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   el mismo segundo pueden perder una pregunta (es diagnóstico). La ve solo Administración (clave o rol admin) en «¿Cómo hago…?».
   ⚠️ Una página VIEJA (sin F5) la ve como un pedido sin fecha hasta recargar.
 - `tests/test_asistente_ak.js` (38; 32 rojas contra `8485847`).
+- **PUBLICADA 12/10 (`c13dc1c`)**, batería 172 suites en verde. Opciones de la «ciudad» de los camiones dibujadas para el dueño: https://claude.ai/artifact/KK1hkAVK2yRfnx3UqvLvwr (1 cada camión en su almacén · 2 sobre el mapa real con los anillos · 3 una escena por almacén); espera su elección.
