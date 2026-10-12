@@ -7445,6 +7445,17 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ka. 11/10 (noche): 👋 Al entrar al panel, cada uno dice quién es — PUBLICADA 11/10 23:53 de Bolivia (`4ab5c90`), Pages OK
+El dueño: *«falta que al entrar al panel cada vendedor se identifique»*.
+- Bloque `quien*` (antes de `pintarPiezasAtc`), CSS `.quien*`. Al abrir el panel, UNA vez por pestaña (`sessionStorage` `me_quien_ok`:
+  recargar la misma pestaña no pregunta; una pestaña o una apertura nueva sí), la ventana «👋 ¡Hola! ¿Quién está usando el panel?» con
+  la foto de Eduardo, los `VENDEDORES`, «🚚 Soy de logística» y «🔒 Administración». Si ya había alguien en el aparato, arriba
+  «Sigo siendo …» (o «Sigo en Logística/Administración», `me_quien_rol`). No tiene ✕ al entrar: hay que elegir.
+- Elegir = `setVendedorMem` (el mismo `me_mis_vendedor` de siempre) + `#f-vendedor` (si no hay `EDIT_ID`) + `#mis-vendedor` + el
+  asistente se repinta. Logística/Administración = `setVendedorMem('')`. Se cambia desde la ventana de Eduardo («¿No sos …?», con ✕).
+- No es un control de acceso (no hay contraseñas): es para que cada uno vea lo suyo. No guarda nada en la planilla.
+- En Playwright no sale salvo `window.QUIEN_PRUEBA`. `tests/test_quien.js` (10; 6 rojas contra lo publicado antes). Batería en verde.
+
 ## 4jz. 11/10 (noche): 🎧 ATC con el estilo nuevo y 🙈 la pestaña Chofer escondida — PUBLICADA 11/10 23:21 de Bolivia (`7a6085f`), Pages OK
 El dueño: *«falta modernizar la pestaña de atc al nuevo estilo, elimina la pestaña choferes nadie la usa, o escóndela»*.
 - **Chofer escondida, no borrada**: `#tab-chofer` lleva `hidden` (+ `.nav button[hidden]{display:none!important}`); la vista y
