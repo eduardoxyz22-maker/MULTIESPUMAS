@@ -168,13 +168,15 @@ function INIT(){
   await esc('3. Dos cargadores tildan productos distintos a la vez', async () => {
     const S = servidor(); sembrar(S);
     const A = await abrir(S,'A'), B = await abrir(S,'B');
-    await A.evaluate(() => { __regla({ act:'save', id:'__carga_chk__', mode:'hold', name:'a1' }); setCargaChk('2026-10-01|COLCHON TITANIO', true); });
+    /* (12/10) la fecha de HOY: `textoCargaChk` poda las tildes de más de 10 días, y con el 01/10 fijo la prueba se pudrió el 12/10 */
+    const D = await A.evaluate(() => todayStr());
+    await A.evaluate((D) => { __regla({ act:'save', id:'__carga_chk__', mode:'hold', name:'a1' }); setCargaChk(D+'|COLCHON TITANIO', true); }, D);
     await hasta(() => A.evaluate(() => !!window.__ctl.holds.a1));
-    await B.evaluate(() => { setCargaChk('2026-10-01|SOMIER NEGRO', true); });
+    await B.evaluate((D) => { setCargaChk(D+'|SOMIER NEGRO', true); }, D);
     await hasta(() => tildesEn(S).length>=1);
     await A.evaluate(() => { __soltar('a1'); });
     await hasta(() => tildesEn(S).length>=2, 8000);
-    chk('⚠️ las DOS tildes quedan en la planilla (antes: una)', tildesEn(S).join(' ; ')==='2026-10-01|COLCHON TITANIO ; 2026-10-01|SOMIER NEGRO', tildesEn(S));
+    chk('⚠️ las DOS tildes quedan en la planilla (antes: una)', tildesEn(S).join(' ; ')===D+'|COLCHON TITANIO ; '+D+'|SOMIER NEGRO', tildesEn(S));
   });
 
   // ══ 4. Sin carrera, todo como siempre ══════════════════════════════════════════════════

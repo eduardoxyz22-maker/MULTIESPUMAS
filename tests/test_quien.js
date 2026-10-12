@@ -44,6 +44,17 @@ const FOTOS=process.env.FOTOS||'';
     await new Promise(function(res){ setTimeout(res, 100); });
     return { cerrada:document.getElementById('quien').hidden, mem:localStorage.getItem('me_mis_vendedor'), form:document.getElementById('f-vendedor').value, mis:document.getElementById('mis-vendedor').value }; });
   chk('tocar «Mirian Salazar» lo recuerda, lo pone en el formulario y en Mis pedidos, y cierra', r.cerrada && r.mem==='Mirian Salazar' && r.form==='Mirian Salazar' && r.mis==='Mirian Salazar', r);
+  r=await ev(p, async () => { await new Promise(function(res){ setTimeout(res, 300); });
+    var g=document.getElementById('asis-globo'), t=document.getElementById('toast');
+    return { globo:g && !g.hidden ? g.textContent : '', toast:t ? t.textContent : '' }; });
+  chk('el saludo lo dice Eduardo en su globito («¡Hola, Mirian!»), no un aviso del panel', /Hola, Mirian/.test(r.globo) && !/Hola/.test(r.toast||''), r);
+  r=await ev(p, async () => { showView('conta'); await new Promise(function(res){ setTimeout(res, 250); });
+    var a=document.getElementById('cta-vendedor').value;
+    var cu=document.getElementById('cua-vendedor'); llenarSelectContaVendedor();
+    document.getElementById('cta-vendedor').value=''; renderConta(); llenarSelectContaVendedor();
+    return { cta:a, cua:cu.value, despuesTodos:document.getElementById('cta-vendedor').value }; });
+  chk('Contabilidad (Ventas y Cuadre) arranca filtrada en Mirian Salazar', r.cta==='Mirian Salazar' && r.cua==='Mirian Salazar', r);
+  chk('si después elige «Todos» a mano, no se lo vuelve a poner', r.despuesTodos==='', r);
 
   console.log('\n── 4. Recargar y pestaña nueva ──');
   await p.reload({ waitUntil:'load' }); await p.waitForTimeout(1700);
@@ -60,8 +71,8 @@ const FOTOS=process.env.FOTOS||'';
     await new Promise(function(res){ setTimeout(res, 80); });
     var mem=localStorage.getItem('me_mis_vendedor'), rol=localStorage.getItem('me_quien_rol');
     quienAbrir(false); var s=document.querySelector('#quien .quien-sigo'); var t=s?s.textContent:''; quienCerrar();
-    return { mem:mem, rol:rol, sigo:t, form:document.getElementById('f-vendedor').value }; });
-  chk('«Soy de logística» olvida el nombre de vendedor y después ofrece «Sigo en Logística»', r.mem==='' && r.rol==='logistica' && /Sigo en Logística/.test(r.sigo) && r.form==='', r);
+    return { mem:mem, rol:rol, sigo:t, form:document.getElementById('f-vendedor').value, cta:(document.getElementById('cta-vendedor')||{}).value }; });
+  chk('«Soy de logística» olvida el nombre de vendedor y después ofrece «Sigo en Logística»', r.mem==='' && r.rol==='logistica' && /Sigo en Logística/.test(r.sigo) && r.form==='' && !r.cta, r);
 
   console.log('\n── 6. Cambiar desde la ventana de Eduardo ──');
   r=await ev(p, async () => { setVendedorMem('Mirian Salazar'); document.getElementById('mis-vendedor').value='Mirian Salazar';

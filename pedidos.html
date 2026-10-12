@@ -5397,6 +5397,7 @@ function llenarUnSelectVendedor(id){
   sel.innerHTML='<option value="">Todos</option>'+list.map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
   // Al refrescar no se pierde lo elegido, aunque estuviera escrito distinto.
   if(actual){ for(var i=0;i<list.length;i++) if(mismoVendedor(list[i],actual)){ sel.value=list[i]; break; } }
+  else if(typeof quienContaPoner==='function') quienContaPoner(sel, list);   // 👋 (12/10) arranca en el vendedor que entró al panel
 }
 /* El vendedor elegido en el cuadre ('' = todos). */
 function cuadreVendedor(){ return ((document.getElementById('cua-vendedor')||{}).value||'').trim(); }
@@ -16207,16 +16208,38 @@ function quienAbrir(cambiar){
   box.hidden=false;
 }
 function quienCerrar(){ var b=document.getElementById('quien'); if(b) b.hidden=true; }
+/* (12/10, dueño: «elegí vendedor pero en contabilidad seguía saliendo todos») Los filtros de vendedor de Contabilidad (Ventas y Cuadre)
+   arrancan en quien entró, UNA vez por elección: si después elige «Todos» a mano, no se lo vuelve a poner. */
+var QUIEN_CONTA_PUESTO={};
+function quienContaPoner(sel, list){
+  if(!sel || !quienActivo() || !quienSesion() || QUIEN_CONTA_PUESTO[sel.id]) return;
+  var v=getVendedorMem(); if(!v) return;
+  for(var i=0;i<list.length;i++) if(mismoVendedor(list[i], v)){ sel.value=list[i]; QUIEN_CONTA_PUESTO[sel.id]=1; return; }
+}
+/* 👋 el saludo lo dice Eduardo, en su globito (no un aviso del panel) */
+function quienSaludo(v, rol){
+  var n=0; try{ n=(typeof asisAvisos==='function' && ASIS.montado) ? asisAvisos().length : 0; }catch(e){}
+  var a=v ? { ico:'👋', t:'¡Hola, '+v.split(' ')[0]+'!', x: n ? ('Tenés '+n+' aviso'+(n===1?'':'s')+'. Tocame y te los muestro.') : 'Ya te muestro tus pedidos. Si necesitás ayuda, tocame.' }
+          : { ico:'👋', t:'¡Hola!', x:(rol==='admin' ? 'Te muestro todo, como Administración.' : 'Te muestro lo de logística.')+' Si necesitás ayuda, tocame.' };
+  if(typeof ASIS!=='undefined' && ASIS.montado) asisGlobo(a);
+  else setTimeout(function(){ try{ if(ASIS.montado) asisGlobo(a); }catch(e){} }, 1500);
+}
 function quienElegir(v, rol){
   v=String(v||'').trim();
   setVendedorMem(v); quienRol(v ? '' : (rol||'')); quienSesion(v || rol || 'ok');
   var f=document.getElementById('f-vendedor');
   if(f && !EDIT_ID){ f.value=v; try{ applyVendedorLite(); }catch(e){} try{ fxFormPintar(); }catch(e){} }
   var m=document.getElementById('mis-vendedor'); if(m) m.value=v;
+  /* Contabilidad: el vendedor elegido (o «Todos» para logística y administración) */
+  QUIEN_CONTA_PUESTO={};
+  ['cta-vendedor','cua-vendedor'].forEach(function(id){ var s=document.getElementById(id); if(!s) return;
+    if(!v){ s.value=''; return; }
+    var L=[].map.call(s.options, function(o){ return o.value; }).filter(Boolean); s.value=''; quienContaPoner(s, L); });
   quienCerrar();
   try{ if(document.getElementById('view-mis').classList.contains('active')) renderMis(); }catch(e){}
-  try{ if(typeof ASIS!=='undefined' && ASIS.montado){ ASIS.firma=''; asisRefrescar(true); } }catch(e){}
-  if(v) toast('👋 ¡Hola, '+v.split(' ')[0]+'! Ya veo tus pedidos.','ok');
+  try{ if(document.getElementById('view-conta').classList.contains('active')) renderConta(); }catch(e){}
+  try{ if(typeof ASIS!=='undefined' && ASIS.montado){ asisRefrescar(); } }catch(e){}
+  quienSaludo(v, rol);
 }
 function quienAlEntrar(){ if(!quienActivo() || quienSesion()) return; quienAbrir(false); }
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(quienAlEntrar, 900); });
