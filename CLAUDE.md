@@ -737,6 +737,14 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
+## ✨ Contabilidad con el estilo nuevo (§4jw, 12/10; dueño: *«Ok pásalas y publica»*)
+Solo presentación, bloque `cx*`: A fichas vivas + barra cobrado/falta (`#cx-vivo`, DEBAJO de `#cta-marcas`), B dona de marcas, C botones en
+tres grupos (`#cx-grupos`), D chips que filtran SOLO la tabla (`CX_FILTRO`), E tarjetas bajo 900 px (`me_cx_tabla` vuelve a la tabla),
+F «dos veces» con «Son distintas» por aparato (`me_cx_dup_ok` saca el par de `DUP_IDX`), G semáforo (tocar → la casilla de la tabla del
+cierre), H quién tiene el efectivo (`cxRetiro`), I botón en cada aviso (`cxAvisoBtn`), J lo que entró día por día (⚠️ los cobros no tienen
+hora), K curva por marca en Proyección (meta: falta dónde cargarla). ⚠️ No calcular nada aparte: todo lee las funciones de siempre.
+`tests/test_conta_4jw.js` (38). Bitácora §4jw.
+
 ## ✨ Las nueve mejoras (§4js, 10/10, PUBLICADA 10/10 21:51 de Bolivia, `98771b8`; dueño: *«todo está bueno, solo falta pulir el diseño, los colores, animaciones»*)
 Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja de la marca y dibujito). Solo completan, avisan o proponen:
 - **P1** `nxCliBuscar` (`#nx-cli`): en un pedido NUEVO, el celular o el NIT (≥5 números) completan SOLO lo vacío con el pedido más nuevo de ese cliente; el NOMBRE NO completa solo: propone hasta 3 y se elige «Sí, es este» (dueño, 10/10). Desde §4ju (11/10, PUBLICADA `6e67b9d`) busca con UNA palabra de 5+ letras («MULTICENTER») y perdona un error de tipeo (`nxNomParecido`/`nxDist`); al elegir, el nombre queda como en sus pedidos. «No es él» lo vacía. `NX_CLI_LLENANDO` evita que lo completado vuelva a buscar.

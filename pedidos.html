@@ -1544,6 +1544,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
+        <!-- ✨ (§4jw, K) Una ficha por marca con la curva del mes: lo vendido día a día, hasta dónde llegaría y la meta. -->
+        <div id="cx-pry"></div>
         <!-- 📊 (29/09, §4gv) A esta altura: el mes contra otro mes al mismo día, en plata y en unidades. -->
         <div id="pry-altura"></div>
         <!-- 💵 (10/10, §4je) De dónde sale lo vendido: cobrado en el mes, adelantos de antes y lo que falta, y cómo se llega al Cuadre. -->
@@ -1598,7 +1600,11 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         </div>
         <div id="cua-resumen">
         <div class="metrics" id="cua-metrics"></div>
+        <!-- ✨ (§4jw) G: el semáforo por forma de pago · J: la plata que entró, día por día · H: quién tiene el efectivo -->
+        <div id="cx-semaforo"></div>
         <div id="cua-cierre"></div>
+        <div id="cx-tiempo"></div>
+        <div id="cx-mano"></div>
         <div id="cua-retiros"></div>
         <div class="two-col cua-2col">
           <div id="cua-alertas"></div>
@@ -1646,24 +1652,35 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="refreshConta()">🔄 Actualizar</button>
         </div>
-        <div class="field">
+      </div>
+      <!-- 🧭 (§4jw, C) Los botones de siempre, en tres grupos: bajar, revisar y cargar. Lo que necesita atención trae su número. -->
+      <div class="cx-grupos" id="cx-grupos">
+        <div class="cx-gr cx-gr-bajar"><span class="cx-gr-t">⬇️ Bajar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
           <button id="cta-productos-mes" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirProductosMes()">📦 Productos del mes</button>
           <button id="nx-cierre-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#1d4ed8" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>
+        </div>
+        <div class="cx-gr cx-gr-revisar"><span class="cx-gr-t">🔎 Revisar</span>
           <button id="nx-pst-btn" class="btn btn-primary btn-sm" style="width:auto" onclick="nxPstAbrir()">🧾 Pagos sin terminar</button>
+          <button id="cx-dup-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cxDupAbrir()">👯 Dos veces</button>
+          <button id="cx-deben-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="abrirPorCobrar('ventas')">⏳ Deben</button>
         </div>
-        <div class="field">
+        <div class="cx-gr cx-gr-cargar"><span class="cx-gr-t">➕ Cargar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
-        </div>
-        <div class="field">
           <button class="btn btn-primary btn-sm" style="width:auto;background:#7c3aed" onclick="abrirRetiros()">💵 Retiro de efectivo</button>
         </div>
       </div>
       <div id="cta-banner" style="display:none"></div>
       <div class="metrics" id="cta-metrics"></div>
       <div class="metrics cta-marcas" id="cta-marcas" data-como="cta-metrics"></div>
+      <!-- ✨ (§4jw) A: la barra de cobrado/falta · B: la dona de las marcas · F: cargadas dos veces · D: chips que filtran la tabla -->
+      <div id="cx-vivo"></div>
+      <div id="cx-dup"></div>
+      <div id="cx-chips"></div>
       <div class="metodos-line" id="cta-resumen"></div>
-      <div class="tw tw-tall"><table id="tbl-conta"></table></div>
+      <div class="tw tw-tall" id="cx-tw"><table id="tbl-conta"></table></div>
+      <!-- 🃏 (§4jw, E) Las mismas ventas en tarjetas, solo en pantalla angosta (iPad parado y celular). -->
+      <div id="cx-cards" class="cx-cards"></div>
       <div id="cta-empty" class="empty">No hay pedidos en este período.</div>
       </div>
     </div>
@@ -2208,6 +2225,179 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .mis-ani-it b{ display:block; font-size:1.08rem; line-height:1.2; }
 .mis-ani-it small{ display:block; color:var(--muted); font-size:.74rem; }
 @media (prefers-reduced-motion: reduce){ .mapa-ruta-linea, .mapa-ruta-camion span{ animation:none !important; } }
+/* ✨ (§4jw) CONTABILIDAD CON EL ESTILO NUEVO — solo presentación (ver el bloque `cx*` del script). */
+.cx-t{ font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.09em; color:var(--teal-dk); margin-bottom:8px; }
+.cx-nota{ font-size:.72rem; color:var(--muted); margin-top:8px; }
+.cx-ley{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.76rem; color:var(--muted); margin-top:8px; }
+.cx-ley span{ display:inline-flex; align-items:center; gap:5px; } .cx-ley i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+.cx-ley b{ color:var(--text); }
+/* C · los grupos de botones */
+.cx-grupos{ display:flex; flex-wrap:wrap; gap:10px; margin:-6px 0 16px; }
+.cx-gr{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:7px 9px; border-radius:12px; background:var(--gray-lt); border:1px solid var(--gray-md); min-width:0; }
+.cx-gr-t{ font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-right:2px; white-space:nowrap; }
+.cx-gr-bajar{ background:#eefaf9; border-color:#c9ece9; } .cx-gr-revisar{ background:#fff8ec; border-color:#fde3b3; } .cx-gr-cargar{ background:#f4f0fe; border-color:#e0d6fb; }
+.cx-gr .btn{ margin:0; }
+.btn.cx-rev{ background:#fff; border:1px solid var(--gray-md); color:var(--text); font-weight:700; }
+.btn.cx-rev.cx-hay{ background:#CE2939; border-color:#CE2939; color:#fff; } .btn.cx-rev.cx-hay .nx-num{ color:#a51d2b; }
+.btn.cx-rev.cx-hay-amb{ background:#D97706; border-color:#D97706; color:#fff; } .btn.cx-rev.cx-hay-amb .nx-num{ color:#9a5203; }
+@media (max-width:640px){ .cx-gr{ flex:1 1 100%; } }
+/* A · las fichas vivas */
+#cta-metrics .mc.cx-f{ --c:#00B5AD; --tl:#E6F7F6; --bd:#99DDD9; background:linear-gradient(140deg,var(--tl) 0%,#fff 75%); border-color:var(--bd); box-shadow:0 6px 18px -12px var(--c); }
+#cta-metrics .mc.cx-f2{ --c:#22A06B; --tl:#E6F9F0; --bd:#b8e6d0; } #cta-metrics .mc.cx-f3{ --c:#D97706; --tl:#FEF3E2; --bd:#FCD34D; } #cta-metrics .mc.cx-f4{ --c:#7c3aed; --tl:#f3effe; --bd:#ddd6fe; }
+#cta-metrics .mc.cx-f .mc-lbl{ padding-right:40px; color:var(--c); filter:saturate(.9) brightness(.8); }
+#cta-metrics .cx-esc{ position:absolute; right:8px; top:7px; width:34px; height:27px; border-radius:9px; background:#fff; display:grid; place-items:center; box-shadow:0 4px 10px -6px var(--c), inset 0 0 0 1px var(--bd); }
+#cta-metrics .cx-esc svg{ width:30px; height:22px; overflow:visible; }
+#cta-metrics .mc.cx-debe .cx-esc::after{ content:""; position:absolute; inset:-4px; border-radius:14px; border:2px solid var(--c); animation:mi-late 1.6s ease-out infinite; }
+#cta-metrics.cx-entra .mc{ animation:mi-entra .55s cubic-bezier(.2,1.3,.4,1) both; }
+#cta-metrics.cx-entra .mc:nth-child(2){ animation-delay:.1s; } #cta-metrics.cx-entra .mc:nth-child(3){ animation-delay:.2s; } #cta-metrics.cx-entra .mc:nth-child(4){ animation-delay:.3s; }
+.cx-renglon{ animation:cx-renglon 2.6s ease-in-out infinite; transform-box:fill-box; transform-origin:left; }
+@keyframes cx-renglon{ 0%{ transform:scaleX(0); } 40%,85%{ transform:scaleX(1); } 100%{ transform:scaleX(1); opacity:0; } }
+.cx-chispa{ animation:cx-chispa 1.8s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+@keyframes cx-chispa{ 0%,100%{ transform:scale(.6); opacity:.5; } 50%{ transform:scale(1.15); opacity:1; } }
+.cx-reloj{ animation:cx-reloj 3s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+@keyframes cx-reloj{ 0%,70%{ transform:none; } 85%,100%{ transform:rotate(180deg); } }
+.cx-arena{ animation:cx-arena 3s linear infinite; transform-box:fill-box; transform-origin:bottom; }
+@keyframes cx-arena{ 0%{ transform:scaleY(1); } 70%,100%{ transform:scaleY(.15); } }
+.cx-hoja{ animation:cx-hoja 2.6s ease-in-out infinite; }
+@keyframes cx-hoja{ 0%,15%{ transform:translateY(-6px); opacity:0; } 35%,75%{ transform:translateY(3px); opacity:1; } 100%{ transform:translateY(8px); opacity:0; } }
+/* A · la barra y B · la dona */
+.cx-vivo{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:12px; margin:0 0 16px; align-items:start; }
+.cx-vivo.cx-solo{ grid-template-columns:minmax(0,1fr); }
+@media (max-width:899px){ .cx-vivo{ grid-template-columns:minmax(0,1fr); } }
+.cx-barra-box, .cx-dona-box{ background:#fff; border:1px solid var(--gray-md); border-radius:var(--r-lg,14px); padding:13px 15px; box-shadow:var(--sh-card); min-width:0; }
+.cx-barra{ display:flex; height:16px; border-radius:9px; overflow:hidden; background:#eef2f3; }
+.cx-barra i{ display:block; height:100%; position:relative; transition:width .8s cubic-bezier(.3,1,.4,1); }
+.cx-barra i::after{ content:""; position:absolute; inset:0; background:repeating-linear-gradient(-45deg,rgba(255,255,255,.28) 0 6px,transparent 6px 12px); background-size:17px 100%; animation:mi-rayas 1s linear infinite; }
+.cx-b-cob{ background:#22A06B; } .cx-b-fal{ background:#F59E0B; } .cx-b-otro{ background:#cbd5e1; }
+.cx-dona-in{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+.cx-dona{ position:relative; width:120px; height:120px; flex:none; }
+.cx-dona svg{ width:120px; height:120px; display:block; }
+.cx-arco{ cursor:pointer; transition:stroke-width .2s; }
+.cx-dona svg.anima .cx-arco{ animation:cx-arco 1s cubic-bezier(.3,1,.4,1) both; }
+@keyframes cx-arco{ from{ stroke-dasharray:0 var(--L); } }
+.cx-dona-c{ position:absolute; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; }
+.cx-dona-c small{ display:block; font-size:.62rem; color:var(--muted); font-weight:700; max-width:76px; line-height:1.2; }
+.cx-dona-c b{ font-size:.9rem; font-variant-numeric:tabular-nums; }
+.cx-mks{ flex:1 1 170px; min-width:0; display:grid; gap:5px; }
+.cx-mk{ display:grid; grid-template-columns:12px minmax(0,1fr) auto auto; gap:7px; align-items:center; text-align:left; background:#fff; border:1px solid var(--gray-md); border-radius:9px; padding:6px 9px; font:inherit; font-size:.8rem; cursor:pointer; }
+.cx-mk i{ width:12px; height:12px; border-radius:50%; background:var(--c); }
+.cx-mk span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .cx-mk b{ font-variant-numeric:tabular-nums; } .cx-mk small{ color:var(--muted); }
+.cx-mk.on{ border-color:var(--c); box-shadow:0 0 0 2px color-mix(in srgb, var(--c) 25%, transparent); }
+.cx-mk-det{ margin-top:10px; padding:9px 11px; border-radius:10px; background:color-mix(in srgb, var(--c,#00B5AD) 9%, #fff); border-left:4px solid var(--c,#00B5AD); font-size:.8rem; }
+.cx-mk-det div{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:4px; } .cx-mk-ayuda{ color:var(--muted); border-left-color:var(--gray-md); background:var(--gray-lt); }
+/* F · cargadas dos veces */
+.cx-dup{ background:#fff8ec; border:1px solid #fcd34d; border-left:5px solid #D97706; border-radius:12px; padding:10px 13px; margin:0 0 12px; }
+.cx-dup-h{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.cx-dup-h > div{ flex:1 1 220px; min-width:0; } .cx-dup-h b{ color:#9a5203; } .cx-dup-h small{ display:block; color:#7c4b00; font-size:.74rem; }
+.cx-dup-ico{ font-size:1.5rem; animation:cx-dup 2.4s ease-in-out infinite; display:inline-block; }
+@keyframes cx-dup{ 0%,80%,100%{ transform:none; } 88%{ transform:rotate(-12deg); } 94%{ transform:rotate(10deg); } }
+.btn.cx-dup-ver{ width:auto; background:#D97706; color:#fff; font-weight:800; }
+.cx-pares{ display:grid; gap:9px; margin-top:10px; }
+.cx-par{ background:#fff; border:1px solid #fde3b3; border-radius:10px; padding:9px 11px; }
+.cx-par-t{ font-size:.8rem; margin-bottom:6px; }
+.cx-par-ps{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:7px; }
+.cx-par-p{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 8px; align-items:center; background:var(--gray-lt); border-radius:8px; padding:6px 9px; font-size:.8rem; }
+.cx-par-p small{ grid-column:1; color:var(--muted); } .cx-par-p .btn{ grid-row:1/span 2; grid-column:2; width:auto; }
+.btn.cx-par-ok{ width:auto; margin-top:8px; background:#fff; border:1px solid var(--gray-md); color:var(--text); font-weight:700; }
+.cx-dup-pie, .cx-dup-min{ font-size:.72rem; color:var(--muted); margin-top:8px; } .cx-dup-min{ margin:0 0 10px; }
+.cx-dup-fuera a, .cx-chips-pie a{ cursor:pointer; color:var(--teal-dk); font-weight:700; }
+/* D · los chips */
+.cx-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 8px; }
+.cx-chip{ --c:#64748b; --tl:#f1f5f9; display:inline-flex; align-items:center; gap:5px; border:1px solid color-mix(in srgb, var(--c) 30%, #fff); background:var(--tl); color:var(--c); border-radius:999px; padding:5px 11px; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; transition:transform .12s; }
+.cx-chip b{ background:#fff; color:var(--c); border-radius:999px; padding:0 7px; font-size:.72rem; }
+.cx-chip:hover{ transform:translateY(-1px); }
+.cx-chip.k-todas{ --c:#0f766e; --tl:#E6F7F6; } .cx-chip.k-ok{ --c:#15803d; --tl:#E6F9F0; } .cx-chip.k-sal{ --c:#b45309; --tl:#FEF3E2; }
+.cx-chip.k-car{ --c:#6d28d9; --tl:#f3effe; } .cx-chip.k-env{ --c:#0e7490; --tl:#e6f6fa; } .cx-chip.k-met{ --c:#1d4ed8; --tl:#e8f0fd; } .cx-chip.k-gris{ --c:#475569; --tl:#f1f5f9; }
+.cx-chip.on{ background:var(--c); color:#fff; border-color:var(--c); box-shadow:0 4px 12px -6px var(--c); }
+.cx-chip.on b{ color:var(--c); }
+.cx-chips-pie{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; font-size:.78rem; color:var(--muted); margin:0 0 8px; }
+.btn.cx-vista-btn{ width:auto; margin-left:auto; }
+#cta-resumen{ font-size:.76rem; color:var(--muted); }
+/* E · las ventas en tarjetas (angosto) */
+.cx-cards{ display:none; }
+#cta-pane-ventas.cx-tarjetas #cx-tw{ display:none; }
+#cta-pane-ventas.cx-tarjetas .cx-cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; }
+.cx-vc{ --c:#94a3b8; position:relative; background:#fff; border:1px solid var(--gray-md); border-left:5px solid var(--c); border-radius:12px; padding:10px 12px; cursor:pointer; overflow:hidden; min-width:0;
+  animation:mi-entra .4s ease-out both; box-shadow:0 4px 14px -12px #0f172a; }
+.cx-vc.st-ok{ --c:#22A06B; } .cx-vc.st-sal{ --c:#D97706; } .cx-vc.st-gris{ --c:#94a3b8; }
+.cx-vc.cx-reg{ background:linear-gradient(160deg,#f2fbf7 0%,#fff 60%); }
+.cx-vc-h{ display:flex; gap:8px; align-items:baseline; justify-content:space-between; }
+.cx-vc-h b{ min-width:0; overflow-wrap:anywhere; } .cx-vc-h span{ font-weight:900; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.cx-vc-s{ font-size:.74rem; color:var(--muted); margin-top:2px; }
+.cx-vc-p{ font-size:.76rem; margin-top:6px; padding-top:6px; border-top:1px dashed var(--gray-md); } .cx-vc-p span{ color:var(--muted); }
+.cx-vc-pie{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+.cx-st{ font-size:.72rem; font-weight:800; color:var(--c); background:color-mix(in srgb, var(--c) 12%, #fff); border-radius:999px; padding:2px 9px; }
+.cx-pg{ font-size:.7rem; background:var(--gray-lt); border-radius:999px; padding:2px 8px; color:var(--text); }
+.cx-pg-env{ background:#FEF3E2; color:#9a5203; font-weight:700; }
+.cx-sello{ position:absolute; right:8px; bottom:22px; transform:rotate(-12deg); border:2px solid #15803d; color:#15803d; border-radius:6px; padding:1px 7px; font-size:.62rem; font-weight:900; letter-spacing:.12em; opacity:.55; pointer-events:none; }
+/* G · el semáforo */
+.cx-fps{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; }
+.cx-fp{ --c:#64748b; --tl:#f8fafc; --bd:#e2e8f0; background:linear-gradient(150deg,var(--tl) 0%,#fff 70%); border:1px solid var(--bd); border-radius:12px; padding:10px 12px; cursor:pointer; transition:transform .15s; }
+.cx-fp:hover{ transform:translateY(-2px); }
+.cx-fp.cx-ok{ --c:#15803d; --tl:#E6F9F0; --bd:#b8e6d0; } .cx-fp.cx-mal{ --c:#b45309; --tl:#FEF3E2; --bd:#FCD34D; } .cx-fp.cx-pend{ --c:#b45309; --tl:#fffbeb; --bd:#fde68a; }
+.cx-fp-h{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:5px; font-size:.86rem; }
+.cx-luz{ width:13px; height:13px; border-radius:50%; background:#cbd5e1; flex:none; box-shadow:0 0 0 3px #fff, 0 0 8px #cbd5e1; }
+.cx-ok .cx-luz{ background:#22c55e; box-shadow:0 0 0 3px #fff, 0 0 10px #22c55e; }
+.cx-mal .cx-luz, .cx-pend .cx-luz{ background:#f59e0b; box-shadow:0 0 0 3px #fff, 0 0 10px #f59e0b; animation:cx-luz 1.4s ease-in-out infinite; }
+@keyframes cx-luz{ 50%{ opacity:.45; } }
+.cx-fp-r{ display:flex; justify-content:space-between; gap:8px; font-size:.78rem; color:var(--muted); padding:2px 0; } .cx-fp-r b{ color:var(--text); font-variant-numeric:tabular-nums; }
+.cx-fp-bar{ height:7px; border-radius:5px; background:#e8edef; overflow:hidden; margin:6px 0 5px; } .cx-fp-bar i{ display:block; height:100%; background:var(--c); border-radius:5px; transition:width .8s; }
+.cx-fp-m{ font-size:.74rem; font-weight:800; color:var(--c); }
+.cx-sem-pie{ margin-top:10px; padding:9px 12px; border-radius:10px; font-size:.84rem; font-weight:700; text-align:center; }
+.cx-sem-pie.pend, .cx-sem-pie.mal{ background:#fff8ec; color:#9a5203; }
+.cx-fiesta{ position:relative; overflow:hidden; margin-top:10px; padding:12px; border-radius:10px; background:linear-gradient(90deg,#dcfce7,#ecfeff); color:#15803d; font-weight:900; text-align:center; }
+.cx-conf{ position:absolute; inset:0; pointer-events:none; }
+.cx-conf i{ position:absolute; top:-10px; width:7px; height:11px; border-radius:2px; opacity:0; }
+.cx-fiesta.anima .cx-conf i{ animation:cx-conf 1.8s ease-in forwards; }
+.cx-conf i:nth-child(3n){ background:#22c55e; } .cx-conf i:nth-child(3n+1){ background:#f59e0b; } .cx-conf i:nth-child(3n+2){ background:#7c5ce6; }
+.cx-conf i:nth-child(1){ left:6%; } .cx-conf i:nth-child(2){ left:14%; animation-delay:.15s!important; } .cx-conf i:nth-child(3){ left:23%; animation-delay:.3s!important; }
+.cx-conf i:nth-child(4){ left:31%; animation-delay:.05s!important; } .cx-conf i:nth-child(5){ left:40%; animation-delay:.4s!important; } .cx-conf i:nth-child(6){ left:48%; animation-delay:.2s!important; }
+.cx-conf i:nth-child(7){ left:57%; animation-delay:.1s!important; } .cx-conf i:nth-child(8){ left:65%; animation-delay:.35s!important; } .cx-conf i:nth-child(9){ left:73%; animation-delay:.25s!important; }
+.cx-conf i:nth-child(10){ left:81%; animation-delay:.45s!important; } .cx-conf i:nth-child(11){ left:89%; animation-delay:.12s!important; } .cx-conf i:nth-child(12){ left:95%; animation-delay:.32s!important; }
+@keyframes cx-conf{ 0%{ opacity:1; transform:translateY(0) rotate(0); } 100%{ opacity:0; transform:translateY(70px) rotate(300deg); } }
+/* H · quién tiene el efectivo */
+.cx-manos-in{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+.cx-mano{ position:relative; background:linear-gradient(150deg,#E6F9F0 0%,#fff 70%); border:1px solid #b8e6d0; border-radius:12px; padding:10px 12px; overflow:hidden; animation:mi-entra .45s ease-out both; }
+.cx-mano.cx-chofer{ background:linear-gradient(150deg,#FEF3E2 0%,#fff 70%); border-color:#FCD34D; }
+.cx-mano.cx-demas{ background:linear-gradient(150deg,#FDEAEC 0%,#fff 70%); border-color:#F5C0C5; }
+.cx-mano-q{ font-size:.84rem; padding-right:34px; } .cx-mano-n{ font-size:1.25rem; font-weight:900; color:#15803d; font-variant-numeric:tabular-nums; margin-top:2px; }
+.cx-chofer .cx-mano-n{ color:#b45309; } .cx-demas .cx-mano-n{ color:#CE2939; font-size:1rem; }
+.cx-mano-s{ font-size:.72rem; color:var(--muted); }
+.btn.cx-mano-btn{ width:auto; margin-top:7px; background:#155e75; color:#fff; font-weight:800; }
+.cx-billete{ position:absolute; right:10px; top:10px; width:26px; height:15px; border-radius:3px; background:#4ade80; border:2px solid #15803d; animation:cx-billete 2.6s ease-in-out infinite; }
+.cx-billete::after{ content:""; position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px; border-radius:50%; background:#15803d; }
+@keyframes cx-billete{ 0%,100%{ transform:translateY(0) rotate(-8deg); } 50%{ transform:translateY(-5px) rotate(8deg); } }
+/* I · los avisos como tarjetas con su botón */
+#cua-alertas .cua-av{ align-items:center; padding:9px 11px; border:1px solid var(--gray-md); border-left-width:4px; border-radius:11px; margin-bottom:6px; box-shadow:0 3px 10px -9px #0f172a; }
+#cua-alertas .cua-av.sev-plata{ background:#fff7f8; border-color:#f5c0c5; border-left-color:var(--red); }
+#cua-alertas .cua-av.sev-datos{ background:#fffbf2; border-color:#fde3b3; border-left-color:var(--amber); }
+.cx-av-btn{ flex:none; align-self:center; border:0; border-radius:999px; padding:5px 11px; font:inherit; font-size:.74rem; font-weight:800; cursor:pointer; background:var(--teal); color:#fff; white-space:nowrap; }
+.sev-plata .cx-av-btn{ background:var(--red); } .sev-datos .cx-av-btn{ background:#D97706; }
+@media (max-width:560px){ #cua-alertas .cua-av{ flex-wrap:wrap; } #cua-alertas .cua-av .av-txt{ flex:1 1 calc(100% - 34px); } .cx-av-btn{ order:3; margin-left:27px; } #cua-alertas .cua-av .av-n{ order:4; } }
+/* J · la plata que entró, día por día */
+.cx-t-wrap{ overflow-x:auto; }
+.cx-t-svg{ width:100%; height:auto; display:block; }
+.cx-t-ax{ font-size:9px; fill:#7a8a90; font-weight:700; font-family:inherit; }
+.cx-t-col{ cursor:pointer; animation:cx-sube .6s cubic-bezier(.3,1,.4,1) both; transform-box:fill-box; transform-origin:bottom; }
+.cx-t-col:hover rect, .cx-t-col.on rect{ filter:brightness(1.08); } .cx-t-col.on > rect:first-child{ fill:#eef6f6; }
+@keyframes cx-sube{ from{ transform:scaleY(0); } }
+.cx-t-det{ margin-top:8px; background:var(--gray-lt); border-radius:9px; padding:8px 11px; font-size:.8rem; }
+/* K · la curva de cada marca */
+.cx-kfs{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin:0 0 18px; }
+.cx-kf{ background:linear-gradient(150deg,color-mix(in srgb, var(--c) 10%, #fff) 0%,#fff 65%); border:1px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius:14px; padding:12px 14px; min-width:0; }
+.cx-kf-h{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; } .cx-kf-h b{ color:var(--t,var(--c)); } .cx-kf-h span{ font-size:.72rem; color:var(--muted); }
+.cx-kf-n{ display:flex; gap:18px; margin:5px 0 4px; } .cx-kf-n small{ display:block; font-size:.66rem; color:var(--muted); font-weight:700; } .cx-kf-n b{ font-size:1.12rem; font-variant-numeric:tabular-nums; }
+.cx-kf-p{ color:#7c3aed; }
+.cx-k-svg{ width:100%; height:auto; display:block; }
+.cx-k-svg.anima .cx-k-l{ stroke-dasharray:900; animation:cx-dibuja 1.4s ease-out both; }
+.cx-k-svg.anima .cx-k-p{ animation:cx-aparece 1s 1.1s both; }
+.cx-k-hoy{ animation:cx-late 1.6s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+@keyframes cx-dibuja{ from{ stroke-dashoffset:900; } to{ stroke-dashoffset:0; } }
+@keyframes cx-aparece{ from{ opacity:0; } }
+@keyframes cx-late{ 50%{ transform:scale(1.35); } }
+.cx-kf-x{ display:flex; justify-content:space-between; font-size:.64rem; color:var(--muted); margin-top:-2px; }
+.cx-kf-pie{ font-size:.7rem; color:var(--muted); margin-top:5px; }
+@media (prefers-reduced-motion:reduce){ #view-conta *, #view-conta *::after{ animation:none!important; } }
 </style>
 <style>
 /* 🚛 CARGA VIVA (§4hz): los camiones arriba de la Lista de carga, sobre la imagen que hizo ChatGPT (dueño, 08/10). */
@@ -5454,6 +5644,7 @@ function renderContaMetrics(list, vSel){
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
                    : ('las '+n+' están registradas'));
   renderContaMarcas(list, vSel, vendido);
+  try{ cxVivoPintar(list, vSel, { vendido:vendido, cobrado:cobrado, falta:falta, nDeben:nDeben, n:n, nReg:nReg }); }catch(e){}   // ✨ §4jw A y B
   acomodarFichas();
 }
 /* ⏳ QUIÉN DEBE (06/10, §4hr). El dueño: *«los vendedores sale que tienen por cobrar pero contabilidad no sabe qué clientes
@@ -5592,6 +5783,7 @@ function renderConta(){
   // Sobre la MISMA lista que se muestra: así las dos ventas del par están a la vista y
   // se pueden comparar. Marcar una sin poder ver la otra confundiría más de lo que ayuda.
   DUP_IDX=indiceDuplicados(list);
+  try{ cxDupMarcarDescartados(); }catch(e){}   // 👯 (§4jw, F) los pares que en esta compu dijeron «son distintas»
   renderContaMetrics(list, vSel);
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
@@ -5612,6 +5804,11 @@ function renderConta(){
     (DUP_IDX.n?('<br><span style="color:var(--amber);font-weight:700">⚠️ '+DUP_IDX.n+' venta'+(DUP_IDX.n===1?'':'s')+
       ' que puede'+(DUP_IDX.n===1?'':'n')+' estar <b>cargada'+(DUP_IDX.n===1?'':'s')+' dos veces</b> — '+
       'están marcadas en la tabla. Revisalas antes de facturar.</span>'):'');
+  /* ✨ (§4jw) Los botones con su número (C), el cartel de las cargadas dos veces (F) y los chips que filtran (D). Solo miran: la
+     tabla muestra lo que el chip elegido deja pasar (`cxFiltrar`); las fichas, el resumen y el Excel siguen siendo de todo. */
+  try{ cxBotonesPintar(list, nDebe, saldo); }catch(e){}
+  try{ cxDupPintar(); }catch(e){}
+  try{ cxChipsPintar(list, porMet); }catch(e){}
   var vac=document.getElementById('cta-empty');
   vac.style.display=list.length?'none':'block';
   // Que el cartel diga POR QUÉ está vacío: si no, uno cree que no hay pedidos
@@ -5624,7 +5821,9 @@ function renderConta(){
       : 'No hay pedidos en este período.';
   }
   tbl.style.display=list.length?'table':'none';
-  if(!list.length){ tbl.innerHTML=''; return; }
+  if(!list.length){ tbl.innerHTML=''; try{ cxCardsPintar([], list); }catch(e){} return; }
+  var _todas=list; list=cxFiltrar(list);
+  try{ cxCardsPintar(list, _todas); }catch(e){}
   var head='<thead><tr><th>Ingresado</th><th>Entrega agendada</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Entrega</th><th>Celular</th>'+
            '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Pagos recibidos</th><th>Recargo entrega</th><th>Observaciones</th></tr></thead>';
   tbl.innerHTML=head+'<tbody>'+list.map(function(p){
@@ -5773,6 +5972,439 @@ function renderContaSiActiva(){
 function contaRepintar(){
   var t=contaTab();
   if(t==='cuadre') renderCuadre(); else if(t==='proy') renderProyeccion(); else renderConta();
+}
+
+/* ============================================================================
+   ✨ CONTABILIDAD CON EL ESTILO NUEVO (§4jw, 12/10). El dueño, con las muestras A–K: *«Ok pásalas y publica»*.
+   SOLO PRESENTACIÓN: todas las cuentas son las de siempre (`renderContaMetrics`, `renderConta`, `cuadreCierre`, `cuadreEfectivo`,
+   `cuadreAlertas`, `proyeccionMes`). Nada de esto escribe en la planilla. «Son distintas» y la vista tabla/tarjetas son de cada aparato.
+     A · las 4 fichas de Ventas con su color y su dibujito + la barra de cobrado contra lo que falta (`cxVivoPintar`)
+     B · la dona de las marcas: tocar una dice lo vendido, lo cobrado y lo que falta de esa marca
+     C · los botones en tres grupos (bajar, revisar, cargar), con su número (`cxBotonesPintar`)
+     D · chips que filtran la TABLA (`CX_FILTRO`, `cxFiltrar`): las fichas, el resumen y el Excel siguen siendo de todo
+     E · en pantalla angosta, las ventas en tarjetas (`cxCardsPintar`); se puede volver a la tabla (`me_cx_tabla`)
+     F · cargadas dos veces en un cartel con «Ver cuáles» y «Son distintas» (`me_cx_dup_ok`, por aparato)
+     G · el semáforo del cierre por forma de pago (lee `cuadreCierre`; lo contado se sigue escribiendo en la tabla)
+     H · quién tiene el efectivo en la mano (lee `cuadreEfectivo`), con «Retiro» que abre el retiro ya llenado
+     I · cada aviso de «Revisar antes de cerrar» con el botón que lo resuelve (`cxAvisoBtn`)
+     J · la plata que entró, día por día y por forma de pago (cada cobro se anota con su DÍA, no con la hora)
+     K · en 📈 Proyección, una ficha por marca con la curva del mes (lee `pryVentas` y `proyeccionMes`)
+   ========================================================================== */
+var CX_ESC=[
+  '<svg viewBox="0 0 48 36"><rect x="6" y="5" width="36" height="26" rx="4" fill="#fff" stroke="#00B5AD" stroke-width="2"/><rect x="11" y="11" width="16" height="4" rx="1.5" fill="#00B5AD"/><g class="cx-renglon"><rect x="11" y="19" width="26" height="2.6" rx="1.3" fill="#99DDD9"/><rect x="11" y="24" width="18" height="2.6" rx="1.3" fill="#99DDD9"/></g><circle class="cx-chispa" cx="40" cy="6" r="3" fill="#F5C518"/></svg>',
+  '<svg viewBox="0 0 48 36"><ellipse cx="24" cy="32" rx="16" ry="2.5" fill="#cdeedd"/><g class="mi-mon"><ellipse cx="24" cy="27" rx="11" ry="4" fill="#15803d"/><rect x="13" y="23" width="22" height="4" fill="#22A06B"/><ellipse cx="24" cy="23" rx="11" ry="4" fill="#4ade80"/></g><g class="mi-mon" style="animation-delay:.4s"><ellipse cx="24" cy="19" rx="11" ry="4" fill="#15803d"/><rect x="13" y="15" width="22" height="4" fill="#22A06B"/><ellipse cx="24" cy="15" rx="11" ry="4" fill="#4ade80"/></g></svg>',
+  '<svg viewBox="0 0 48 36"><g class="cx-reloj"><path d="M15 4h18M15 32h18" stroke="#D97706" stroke-width="2.6" stroke-linecap="round"/><path d="M17 5c0 9 14 9 14 13S17 23 17 31M31 5c0 9-14 9-14 13s14 5 14 13" fill="none" stroke="#D97706" stroke-width="2"/><path class="cx-arena" d="M19 9h10l-5 7z" fill="#F59E0B"/><path d="M20 30h8l-4-5z" fill="#F59E0B"/></g></svg>',
+  '<svg viewBox="0 0 48 36"><path d="M6 10h13l3 4h20v17H6z" fill="#efeafd" stroke="#7c3aed" stroke-width="2" stroke-linejoin="round"/><g class="cx-hoja"><rect x="14" y="5" width="20" height="14" rx="2" fill="#fff" stroke="#a78bfa"/><rect x="17" y="9" width="12" height="2" rx="1" fill="#c4b5fd"/><rect x="17" y="13" width="9" height="2" rx="1" fill="#c4b5fd"/></g><path d="M6 16h36v15H6z" fill="#ddd6fe" opacity=".75"/><circle cx="38" cy="26" r="2.4" fill="#7c3aed"/></svg>'
+];
+function cxPct(a, b){ return b>0.009 ? Math.round(a/b*100) : 0; }
+function cxLS(k, v){ try{ if(arguments.length>1){ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k, v); return v; } return localStorage.getItem(k); }catch(e){ return null; } }
+var CX_MARCA='';   // la marca elegida en la dona ('' = todas)
+function cxVivoPintar(list, vSel, d){
+  var box=document.getElementById('cta-metrics');
+  if(box){
+    var cs=box.querySelectorAll('.mc');
+    for(var i=0;i<cs.length && i<CX_ESC.length;i++){
+      cs[i].classList.add('cx-f', 'cx-f'+(i+1));
+      if(i===2 && d.falta>0.01) cs[i].classList.add('cx-debe');
+      if(i===3 && d.n-d.nReg>0) cs[i].classList.add('cx-ojo');
+      cs[i].insertAdjacentHTML('afterbegin','<span class="cx-esc" aria-hidden="true">'+CX_ESC[i]+'</span>');
+    }
+    box.classList.toggle('cx-entra', visAnimar('cxFichas', box.textContent));
+  }
+  var vivo=document.getElementById('cx-vivo'); if(!vivo) return;
+  if(!d.n){ vivo.innerHTML=''; return; }
+  var cob=Math.min(d.cobrado, d.vendido), fal=Math.min(d.falta, Math.max(0, d.vendido-cob));
+  var pc=cxPct(cob, d.vendido), pf=cxPct(fal, d.vendido), pr=Math.max(0, 100-pc-pf);
+  var porCargar=d.n-d.nReg;
+  var barra='<div class="cx-barra-box"><div class="cx-t">💰 De lo vendido, cuánto entró</div>'+
+    '<div class="cx-barra" title="Cobrado '+pc+'% · falta '+pf+'%">'+
+      '<i class="cx-b-cob" style="width:'+pc+'%"></i><i class="cx-b-fal" style="width:'+pf+'%"></i>'+(pr?'<i class="cx-b-otro" style="width:'+pr+'%"></i>':'')+'</div>'+
+    '<div class="cx-ley"><span><i style="background:#22A06B"></i>Cobrado <b>'+pc+'%</b></span>'+
+      '<span><i style="background:#F59E0B"></i>Falta <b>'+pf+'%</b></span>'+
+      (pr?'<span><i style="background:#cbd5e1"></i>Sin monto o sin marcar <b>'+pr+'%</b></span>':'')+
+      '<span>📥 Por cargar al sistema: <b>'+porCargar+' de '+d.n+'</b> ('+cxPct(porCargar, d.n)+'%)</span></div></div>';
+  vivo.innerHTML='<div class="cx-vivo'+(contaAmbito()==='mayor'?' cx-solo':'')+'">'+barra+(contaAmbito()==='mayor' ? '' : cxDonaHtml(list, vSel, d.vendido))+'</div>';
+}
+/* B · la dona. La misma división que las fichas de marca (`renderContaMarcas`) y, para cada marca, lo cobrado (`contaCobrado`) y lo
+   que falta (`contaFaltaCobrar`) con las mismas reglas que las fichas de arriba. */
+function cxMarcasDatos(list){
+  var M={}, orden=[];
+  MARCAS.forEach(function(g){ M[g.k]={ k:g.k, lbl:g.ico+' '+g.lbl, col:g.col, bs:0, cob:0, falta:0, n:0 }; orden.push(g.k); });
+  M.sin={ k:'sin', lbl:'⚠️ Sin marca', col:'#94a3b8', bs:0, cob:0, falta:0, n:0 }; orden.push('sin');
+  (list||[]).forEach(function(p){
+    var x=M[marcaDe(p.vendedor)]||M.sin, f=contaFaltaCobrar(p);
+    x.bs=r2(x.bs+ventaTotal(p)); x.cob=r2(x.cob+contaCobrado(p)); if(f>0.01) x.falta=r2(x.falta+f); x.n++;
+  });
+  return orden.map(function(k){ return M[k]; }).filter(function(x){ return x.n; });
+}
+function cxDonaHtml(list, vSel, vendido){
+  var D=cxMarcasDatos(list); if(!D.length) return '';
+  if(CX_MARCA && !D.some(function(x){ return x.k===CX_MARCA; })) CX_MARCA='';
+  var tot=0; D.forEach(function(x){ tot+=Math.max(0,x.bs); });
+  var R=40, C=2*Math.PI*R, acc=0, arcos='';
+  D.forEach(function(x){
+    var f=tot>0.009 ? Math.max(0,x.bs)/tot : 0, L=f*C;
+    arcos+='<circle class="cx-arco'+(CX_MARCA===x.k?' on':'')+'" cx="50" cy="50" r="'+R+'" fill="none" stroke="'+x.col+'" stroke-width="'+(CX_MARCA===x.k?17:13)+'"'+
+      ' stroke-dasharray="'+L.toFixed(2)+' '+(C-L).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'" transform="rotate(-90 50 50)" style="--L:'+C.toFixed(1)+'"'+
+      ' onclick="cxMarcaElegir(\''+x.k+'\')"><title>'+esc(x.lbl)+'</title></circle>';
+    acc+=L;
+  });
+  var sel=D.filter(function(x){ return x.k===CX_MARCA; })[0];
+  var cen=sel ? ('<small>'+esc(sel.lbl)+'</small><b>'+cxPct(sel.bs, tot)+'%</b>') : ('<small>'+D.length+' marca'+(D.length===1?'':'s')+'</small><b>'+fmtBs0(tot)+'</b>');
+  var anima=visAnimar('cxDona', D.map(function(x){ return x.k+x.bs; }).join('|'));
+  var ley=D.map(function(x){
+    return '<button type="button" class="cx-mk'+(CX_MARCA===x.k?' on':'')+'" style="--c:'+x.col+'" onclick="cxMarcaElegir(\''+x.k+'\')">'+
+      '<i></i><span>'+esc(x.lbl)+'</span><b>'+fmtBs0(x.bs)+'</b><small>'+cxPct(x.bs, tot)+'%</small></button>';
+  }).join('');
+  var det=sel
+    ? ('<div class="cx-mk-det" style="--c:'+sel.col+'"><b>'+esc(sel.lbl)+'</b> · '+sel.n+' venta'+(sel.n===1?'':'s')+
+       '<div><span>Vendido <b>'+fmtBs(sel.bs)+'</b></span><span>Cobrado <b style="color:#15803d">'+fmtBs(sel.cob)+'</b></span>'+
+       '<span>Falta <b style="color:#b45309">'+fmtBs(sel.falta)+'</b></span></div></div>')
+    : '<div class="cx-mk-det cx-mk-ayuda">👆 Tocá una marca para ver lo vendido, lo cobrado y lo que falta.</div>';
+  return '<div class="cx-dona-box"><div class="cx-t">🛏️ Las marcas</div><div class="cx-dona-in">'+
+    '<div class="cx-dona"><svg viewBox="0 0 100 100" class="'+(anima?'anima':'')+'"><circle cx="50" cy="50" r="'+R+'" fill="none" stroke="#eef2f3" stroke-width="13"/>'+arcos+'</svg>'+
+      '<div class="cx-dona-c">'+cen+'</div></div>'+
+    '<div class="cx-mks">'+ley+'</div></div>'+det+'</div>';
+}
+function cxMarcaElegir(k){ CX_MARCA=(CX_MARCA===k)?'':k; renderConta(); }
+/* C · los botones con su número. */
+function cxBotonesPintar(list, nDebe, saldo){
+  var b=document.getElementById('cx-dup-btn');
+  if(b){ var nd=DUP_IDX.n||0; b.innerHTML='👯 Dos veces'+(nd?(' <span class="nx-num">'+nd+'</span>'):' ✓'); b.classList.toggle('cx-hay', nd>0); }
+  var d=document.getElementById('cx-deben-btn');
+  if(d){ d.innerHTML='⏳ Deben'+(nDebe?(' <span class="nx-num">'+nDebe+'</span>'):' ✓'); d.classList.toggle('cx-hay-amb', nDebe>0);
+    d.title=nDebe?(nDebe+' venta'+(nDebe===1?'':'s')+' con saldo · '+fmtBs(saldo)):'No queda saldo pendiente'; }
+}
+/* D · los chips. Cada uno cuenta con la MISMA regla del resumen de abajo (`renderConta`). */
+var CX_FILTRO=null;   // { k, v } — solo la tabla
+var CX_CHIPS=[
+  { k:'pag',  ico:'✅', lbl:'Pagadas',             cls:'k-ok',  f:function(p){ return !!p.pagado; } },
+  { k:'debe', ico:'⏳', lbl:'Con saldo',           cls:'k-sal', f:function(p){ return !p.pagado && contaFaltaCobrar(p)>0.01; } },
+  { k:'smon', ico:'❓', lbl:'Sin monto anotado',   cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.01) && sinMontoAnotado(p); } },
+  { k:'smar', ico:'⚪', lbl:'Cobradas sin marcar', cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.01) && !sinMontoAnotado(p); } },
+  { k:'carg', ico:'📥', lbl:'Por cargar al sistema', cls:'k-car', f:function(p){ return !regEnSistema(p); } },
+  { k:'reg',  ico:'🧾', lbl:'Ya en el sistema',    cls:'k-ok',  f:function(p){ return regEnSistema(p); } },
+  { k:'env',  ico:'🚚', lbl:'Con recargo',         cls:'k-env', f:function(p){ return envioTotal(p)>0; } },
+  { k:'dup',  ico:'👯', lbl:'Dos veces',           cls:'k-sal', f:function(p){ return !!DUP_IDX.marca[p.id]; } }
+];
+function cxChipDef(F){
+  if(!F) return null;
+  if(F.k==='met') return { k:'met', v:F.v, f:function(p){ return contaPagos(p).some(function(c){ return cobroMetodoTxt(c)===F.v; }); } };
+  return CX_CHIPS.filter(function(c){ return c.k===F.k; })[0]||null;
+}
+function cxFiltrar(list){ var d=cxChipDef(CX_FILTRO); return d ? (list||[]).filter(d.f) : (list||[]); }
+function cxChipsPintar(list, porMet){
+  var box=document.getElementById('cx-chips'); if(!box) return;
+  if(!list.length){ box.innerHTML=''; return; }
+  var act=cxChipDef(CX_FILTRO);
+  if(act && !list.some(act.f)){ CX_FILTRO=null; act=null; }
+  var on=function(k, v){ return CX_FILTRO && CX_FILTRO.k===k && (k!=='met' || CX_FILTRO.v===v); };
+  var h='<button type="button" class="cx-chip k-todas'+(CX_FILTRO?'':' on')+'" onclick="cxFiltro(null)">📋 Todas <b>'+list.length+'</b></button>';
+  CX_CHIPS.forEach(function(c){
+    var n=list.filter(c.f).length; if(!n) return;
+    h+='<button type="button" class="cx-chip '+c.cls+(on(c.k)?' on':'')+'" onclick="cxFiltro(\''+c.k+'\')">'+c.ico+' '+esc(c.lbl)+' <b>'+n+'</b></button>';
+  });
+  Object.keys(porMet||{}).sort().forEach(function(m){
+    h+='<button type="button" class="cx-chip k-met'+(on('met', m)?' on':'')+'" data-v="'+esc(m)+'" onclick="cxFiltro(\'met\', this.getAttribute(\'data-v\'))">'+
+       (/^Efectivo/.test(m)?'💵':/^QR/.test(m)?'📱':/^Tarjeta/.test(m)?'💳':'🏦')+' '+esc(m)+' <b>'+porMet[m]+'</b></button>';
+  });
+  var vis=act ? list.filter(act.f).length : list.length;
+  var ang=cxAngosto();
+  box.innerHTML='<div class="cx-chips">'+h+'</div>'+
+    ((act || ang) ? ('<div class="cx-chips-pie">'+
+      (act ? ('Mostrando <b>'+vis+'</b> de '+list.length+' en la '+(cxModoTarjetas()?'lista':'tabla')+' · <a onclick="cxFiltro(null)">✕ ver todas</a>') : '')+
+      (ang ? ('<button type="button" class="btn btn-ghost btn-sm cx-vista-btn" onclick="cxVistaCambiar()">'+(cxModoTarjetas()?'📋 Ver como tabla':'🃏 Ver en tarjetas')+'</button>') : '')+
+     '</div>') : '');
+}
+function cxFiltro(k, v){
+  if(!k || (CX_FILTRO && CX_FILTRO.k===k && (k!=='met' || CX_FILTRO.v===v))) CX_FILTRO=null;
+  else CX_FILTRO={ k:k, v:v };
+  renderConta();
+}
+/* E · tarjetas en pantalla angosta (iPad parado y celular). En la ancha sigue la tabla. */
+var CX_ANGOSTO=900;
+function cxAngosto(){ try{ return window.matchMedia ? matchMedia('(max-width:'+(CX_ANGOSTO-1)+'px)').matches : (window.innerWidth<CX_ANGOSTO); }catch(e){ return false; } }
+function cxModoTarjetas(){ return cxAngosto() && cxLS('me_cx_tabla')!=='1'; }
+function cxVistaCambiar(){ cxLS('me_cx_tabla', cxModoTarjetas() ? '1' : null); renderConta(); }
+(function(){
+  try{
+    var mq=window.matchMedia && matchMedia('(max-width:'+(CX_ANGOSTO-1)+'px)');
+    if(mq){ var f=function(){ try{ renderContaSiActiva(); }catch(e){} };
+      if(mq.addEventListener) mq.addEventListener('change', f); else if(mq.addListener) mq.addListener(f); }
+  }catch(e){}
+})();
+function cxEstadoVenta(p){
+  if(p.pagado) return { cls:'st-ok', txt:'✅ Pagada' };
+  var f=contaFaltaCobrar(p);
+  if(f>0.01) return { cls:'st-sal', txt:'⏳ Debe '+fmtBs(f) };
+  if(sinMontoAnotado(p)) return { cls:'st-gris', txt:'❓ Sin monto anotado' };
+  return { cls:'st-gris', txt:'⚪ Cobrada, sin marcar pagada' };
+}
+function cxCardsPintar(list, todas){
+  var box=document.getElementById('cx-cards'), pane=document.getElementById('cta-pane-ventas');
+  var tarj=cxModoTarjetas();
+  if(pane) pane.classList.toggle('cx-tarjetas', tarj && !!(todas||[]).length);
+  if(!box) return;
+  if(!tarj || !(todas||[]).length){ box.innerHTML=''; return; }
+  if(!list.length){ box.innerHTML='<div class="empty" style="padding:18px 0">Ninguna venta con ese filtro. <a style="cursor:pointer;color:var(--teal-dk);font-weight:700" onclick="cxFiltro(null)">Ver todas</a></div>'; return; }
+  box.innerHTML=list.map(function(p, i){
+    var st=cxEstadoVenta(p), reg=regEnSistema(p), prods=contaProdTxt(p.productos), env=envioTotal(p);
+    var pagos=contaPagos(p).filter(function(c){ return (Number(c.monto)||0)>0; });
+    var ing=contaFecha(p);
+    return '<div class="cx-vc '+st.cls+(reg?' cx-reg':'')+'" data-id="'+esc(String(p.id))+'" role="button" tabindex="0" style="animation-delay:'+Math.min(i,10)*35+'ms"'+
+        ' onclick="showContaModal(this.getAttribute(\'data-id\'))" onkeydown="if(event.key===\'Enter\'){this.click();}">'+
+      (reg?'<span class="cx-sello" aria-hidden="true">REGISTRADO</span>':'')+
+      '<div class="cx-vc-h"><b>'+esc(p.cliente||'—')+'</b><span>'+fmtBs(ventaTotal(p))+'</span></div>'+
+      '<div class="cx-vc-s">'+[p.nota?('🧾 nota '+esc(p.nota)):'sin nota', p.oc?esc(ocEtiq(p.oc)):'', esc(p.vendedor||'—')].filter(Boolean).join(' · ')+'</div>'+
+      '<div class="cx-vc-s">📝 '+esc(ing?fmtFechaCorta(ing):'—')+(esVentaTienda(p)?' · 🏪 en tienda':(p.fecha?(' · 🚚 '+esc(fmtFechaCorta(p.fecha))+(p.entregado?' ✅':'')):''))+'</div>'+
+      (prods.length?('<div class="cx-vc-p">'+prods.slice(0,2).map(esc).join('<br>')+(prods.length>2?('<br><span>y '+(prods.length-2)+' más</span>'):'')+'</div>'):'')+
+      '<div class="cx-vc-pie"><span class="cx-st">'+st.txt+'</span>'+
+        pagos.slice(0,3).map(function(c){ return '<span class="cx-pg">'+esc(cobroMetodoTxt(c)||'sin método')+' '+fmtBs0(c.monto)+(esEnvio(c)?' 🚚':'')+'</span>'; }).join('')+
+        (pagos.length>3?('<span class="cx-pg">+'+(pagos.length-3)+'</span>'):'')+
+        (env>0 && envioPorCobrar(p)>0.01?('<span class="cx-pg cx-pg-env">🚚 flete por cobrar '+fmtBs0(envioPorCobrar(p))+'</span>'):'')+
+      '</div>'+dupChip(p)+
+    '</div>';
+  }).join('');
+}
+/* F · cargadas dos veces. «Son distintas» se recuerda en ESTE aparato: el par deja de marcarse acá (en la tabla, el resumen y los
+   chips), no en la planilla ni en otras computadoras. */
+var CX_DUP_ABIERTO=false;
+function cxDupClave(g){ return g.motivo+'|'+g.ps.map(function(p){ return String(p.id); }).sort().join(','); }
+function cxDupOk(){ try{ var a=JSON.parse(cxLS('me_cx_dup_ok')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function cxDupMarcarDescartados(){
+  var ok=cxDupOk(); if(!ok.length){ DUP_IDX.fuera=0; return; }
+  var vivos=[], fuera=0, marca={};
+  DUP_IDX.grupos.forEach(function(g){ if(ok.indexOf(cxDupClave(g))>=0) fuera++; else vivos.push(g); });
+  if(!fuera){ DUP_IDX.fuera=0; return; }
+  vivos.forEach(function(g){ g.ps.forEach(function(p){ if(!marca[p.id]) marca[p.id]={ motivo:g.motivo, clave:g.clave, otros:g.ps.filter(function(q){ return q.id!==p.id; }) }; }); });
+  DUP_IDX={ grupos:vivos, marca:marca, n:Object.keys(marca).length, fuera:fuera };
+}
+function cxDupDistintas(k){
+  var ok=cxDupOk(); if(ok.indexOf(k)<0) ok.push(k); if(ok.length>300) ok=ok.slice(ok.length-300);
+  cxLS('me_cx_dup_ok', JSON.stringify(ok)); toast('✋ Anotado en esta compu: esas ventas son distintas','ok'); renderConta();
+}
+function cxDupVolver(){ cxLS('me_cx_dup_ok', null); renderConta(); }
+function cxDupAbrir(){
+  if(!(DUP_IDX.grupos||[]).length){ toast('✅ No hay ventas cargadas dos veces en este período','ok'); return; }
+  CX_DUP_ABIERTO=true; renderConta();
+  var b=document.getElementById('cx-dup'); if(b && b.scrollIntoView) try{ b.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){}
+}
+function cxDupToggle(){ CX_DUP_ABIERTO=!CX_DUP_ABIERTO; renderConta(); }
+function cxDupMotivo(g){
+  var q=g.ps[0];
+  if(g.motivo==='nota') return 'Misma nota <b>'+esc(g.clave)+'</b> en el talonario de '+esc(q.vendedor||'—');
+  if(g.motivo==='notaCliente') return 'Misma nota <b>'+esc(g.clave)+'</b> y el mismo cliente, cargada por vendedores distintos';
+  return 'Mismo cliente y el mismo monto (<b>'+fmtBs(ventaTotal(q))+'</b>)';
+}
+function cxDupPintar(){
+  var box=document.getElementById('cx-dup'); if(!box) return;
+  var G=DUP_IDX.grupos||[], n=DUP_IDX.n||0, fuera=DUP_IDX.fuera||0;
+  var volver=fuera ? ('<span class="cx-dup-fuera">'+fuera+' par'+(fuera===1?'':'es')+' marcado'+(fuera===1?'':'s')+' «son distintas» en esta compu · <a onclick="cxDupVolver()">↺ volver a mostrar'+(fuera===1?'lo':'los')+'</a></span>') : '';
+  if(!G.length){ box.innerHTML=volver?('<div class="cx-dup-min">'+volver+'</div>'):''; return; }
+  var pares=G.map(function(g){
+    var k=cxDupClave(g);
+    return '<div class="cx-par"><div class="cx-par-t">'+cxDupMotivo(g)+'</div><div class="cx-par-ps">'+
+      g.ps.map(function(p){
+        return '<div class="cx-par-p"><b>'+esc(p.cliente||'—')+'</b><small>'+[p.nota?('nota '+esc(p.nota)):'sin nota', esc(p.vendedor||'—'),
+          esc(fmtFechaCorta(contaFecha(p))||'—'), fmtBs(ventaTotal(p))].join(' · ')+'</small>'+
+          '<button type="button" class="btn btn-ghost btn-sm" data-id="'+esc(String(p.id))+'" onclick="showContaModal(this.getAttribute(\'data-id\'))">Abrir</button></div>';
+      }).join('')+'</div>'+
+      '<button type="button" class="btn btn-sm cx-par-ok" data-k="'+esc(k)+'" onclick="cxDupDistintas(this.getAttribute(\'data-k\'))">✋ Son distintas</button></div>';
+  }).join('');
+  box.innerHTML='<div class="cx-dup'+(CX_DUP_ABIERTO?' on':'')+'"><div class="cx-dup-h"><span class="cx-dup-ico" aria-hidden="true">👯</span><div><b>'+n+' venta'+(n===1?'':'s')+
+    ' que puede'+(n===1?'':'n')+' estar cargada'+(n===1?'':'s')+' dos veces</b><small>Revisalas antes de facturar. Si son ventas distintas, marcalas y dejan de avisar en esta compu.</small></div>'+
+    '<button type="button" class="btn btn-sm cx-dup-ver" onclick="cxDupToggle()">'+(CX_DUP_ABIERTO?'Ocultar ▴':'Ver cuáles ▾')+'</button></div>'+
+    (CX_DUP_ABIERTO?('<div class="cx-pares">'+pares+'</div>'):'')+(volver?('<div class="cx-dup-pie">'+volver+'</div>'):'')+'</div>';
+}
+/* G · el semáforo. Lo contado se escribe en la tabla «Cierre por forma de pago» (tocar una tarjeta lleva a su casilla). */
+function cxFormaIco(f){ return f.efectivo?'💵':(f.forma.indexOf('QR')===0?'📱':(f.forma.indexOf('Tarjeta')===0?'💳':'❔')); }
+function cxSemaforoPintar(CIE){
+  var box=document.getElementById('cx-semaforo'); if(!box) return;
+  if(!CIE || !CIE.filas.length){ box.innerHTML=''; return; }
+  var todas=CIE.arqueoOn && CIE.anotadas===CIE.filas.length && CIE.filas.every(function(f){ return f.dif===0; });
+  var cards=CIE.filas.map(function(f){
+    var luz, msg;
+    if(!CIE.arqueoOn){ luz='gris'; msg='👤 el arqueo se hace con Todos'; }
+    else if(f.arqueo==null){ luz='pend'; msg='✍️ Falta contar'; }
+    else if(f.dif===0){ luz='ok'; msg='✅ Cierra'; }
+    else { luz='mal'; msg='⚠️ '+(f.dif<0?'Faltan ':'Sobran ')+fmtBs(Math.abs(f.dif)); }
+    var w=(f.arqueo==null) ? 0 : (f.monto>0.009 ? Math.max(0, Math.min(100, Math.round(f.arqueo/f.monto*100))) : 100);
+    return '<div class="cx-fp cx-'+luz+'" role="button" tabindex="0" data-forma="'+esc(f.forma)+'" onclick="cxIrArqueo(this.getAttribute(\'data-forma\'))" title="Anotar lo contado de '+esc(f.forma)+'">'+
+      '<div class="cx-fp-h"><b>'+cxFormaIco(f)+' '+esc(f.forma)+'</b><span class="cx-luz" aria-hidden="true"></span></div>'+
+      '<div class="cx-fp-r"><span>Cobrado</span><b>'+fmtBs(f.monto)+'</b></div>'+
+      '<div class="cx-fp-r"><span>Contado</span><b>'+(f.arqueo==null?'—':fmtBs(f.arqueo))+'</b></div>'+
+      '<div class="cx-fp-bar"><i style="width:'+w+'%"></i></div><div class="cx-fp-m">'+msg+'</div></div>';
+  }).join('');
+  var faltan=CIE.filas.length-CIE.anotadas, pie='';
+  if(!CIE.arqueoOn) pie='';
+  else if(todas) pie='<div class="cx-fiesta'+(visAnimar('cxCierra', JSON.stringify(cuadrePeriodo())+CIE.total)?' anima':'')+'"><span class="cx-conf" aria-hidden="true">'+
+    '<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>🎉 El cuadre cierra: todo lo cobrado coincide con lo contado</div>';
+  else if(faltan) pie='<div class="cx-sem-pie pend">✍️ Falta'+(faltan===1?'':'n')+' contar '+faltan+' forma'+(faltan===1?'':'s')+' de pago: tocá la tarjeta y escribí lo contado.</div>';
+  else pie='<div class="cx-sem-pie mal">⚠️ Todavía no cierra: revisá las tarjetas en ámbar ('+(CIE.difTotal<0?'faltan ':'sobran ')+fmtBs(Math.abs(CIE.difTotal))+').</div>';
+  box.innerHTML='<div class="cua-box cx-sem"><div class="cua-t">🚦 Semáforo del cierre — '+esc(cuadrePeriodoTxt())+'</div><div class="cx-fps">'+cards+'</div>'+pie+'</div>';
+}
+function cxIrArqueo(forma){
+  var i=[].filter.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'), function(x){ return x.getAttribute('data-forma')===forma; })[0];
+  if(!i){ toast('El arqueo se anota con «Todos» los vendedores','warn'); return; }
+  try{ i.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
+  try{ i.focus({ preventScroll:true }); i.select(); }catch(e){ try{ i.focus(); }catch(e2){} }
+}
+/* H · quién tiene el efectivo en la mano (`cuadreEfectivo`: cobrado en efectivo − retirado, por quien recibió la plata). */
+function cxManoPintar(){
+  var box=document.getElementById('cx-mano'); if(!box) return;
+  var E=cuadreEfectivo(), filas=E.filas;
+  if(!filas.length){ box.innerHTML=''; return; }
+  var con=filas.filter(function(o){ return Math.abs(o.falta)>0.01; });
+  var cards=con.map(function(o, i){
+    var debe=o.falta>0.01;
+    return '<div class="cx-mano'+(debe?'':' cx-demas')+(o.chofer?' cx-chofer':'')+'" style="animation-delay:'+Math.min(i,8)*60+'ms">'+
+      (debe?'<span class="cx-billete" aria-hidden="true"></span>':'')+
+      '<div class="cx-mano-q"><b>'+esc(o.nombre)+'</b>'+(o.chofer?' <span class="badge b-amber" style="font-size:.6rem">🚚 chofer</span>':'')+'</div>'+
+      '<div class="cx-mano-n">'+(debe?fmtBs(o.falta):('⚠️ '+fmtBs(Math.abs(o.falta))+' de más'))+'</div>'+
+      '<div class="cx-mano-s">'+(debe?'tiene en la mano':'se retiró más de lo cobrado')+' · cobró '+fmtBs0(o.cobrado)+' · retirado '+fmtBs0(o.ret)+'</div>'+
+      (debe?('<button type="button" class="btn btn-sm cx-mano-btn" data-n="'+esc(o.nombre)+'" data-m="'+r2(o.falta)+'" onclick="cxRetiro(this.getAttribute(\'data-n\'), this.getAttribute(\'data-m\'))">💵 Retiro</button>'):'')+
+    '</div>';
+  }).join('');
+  box.innerHTML='<div class="cua-box cx-manos"><div class="cua-t">👛 Quién tiene el efectivo — '+esc(cuadrePeriodoTxt())+'</div>'+
+    (con.length ? ('<div class="cx-manos-in">'+cards+'</div><div class="cx-nota">«Retiro» abre el retiro de efectivo ya llenado con la persona y el monto: revisalo y agregá las notas antes de guardar. Los choferes rinden a Contabilidad.</div>')
+                : '<div class="empty" style="padding:12px 0">✅ Todo el efectivo cobrado ya se recogió.</div>')+'</div>';
+}
+function cxRetiro(nombre, monto){
+  abrirRetiros();
+  var sel=document.getElementById('ret-entrega'), val=nombre;
+  if(sel) for(var i=0;i<sel.options.length;i++) if(sel.options[i].value && mismoVendedor(sel.options[i].value, nombre)){ val=sel.options[i].value; break; }
+  RET_FORM.entrega=val; RET_FORM.monto=String(monto||'');
+  if(esChoferNombre(val)) RET_FORM.retira=RETIRA_CHOFER;
+  renderRetiros();
+  toast('Revisá el monto y agregá las notas antes de guardar','ok');
+}
+/* I · el botón de cada aviso. Abre la venta que hay que corregir (la primera de la lista) o la lista entera. */
+var CX_AV_BTN={ sinnotapago:'🧾 Anotar la nota', sinfecha:'📅 Poner la fecha', sinmonto:'💸 Anotar el monto', sinnada:'❓ Completarla',
+  flete:'🚚 Ver el flete', sistema:'📥 Abrir', entregado:'💰 Cobrar', dup:'👯 Comparar', compdup:'🖼️ Revisar', fecharara:'📆 Corregir la fecha',
+  descuadre:'🧮 Corregir', sinresp:'📎 Adjuntar', varias:'👥 Ver el cliente', exceso:'⚠️ Revisar' };
+function cxAvisoBtn(a){
+  if(!a) return '';
+  if(a.k==='cobrar') return '<button type="button" class="cx-av-btn" onclick="event.stopPropagation();abrirPorCobrar(\'cuadre\')">💰 Ver quiénes deben</button>';
+  var d=(a.det||[]).filter(function(x){ return x && x.id; })[0], lbl=CX_AV_BTN[a.k];
+  if(!d || !lbl) return '';
+  var n=(a.det||[]).length;
+  return '<button type="button" class="cx-av-btn" data-id="'+esc(String(d.id))+'" onclick="event.stopPropagation();showContaModal(this.getAttribute(\'data-id\'))"'+
+    ' title="Abrir '+(n>1?'la primera de la lista':'esa venta')+'">'+lbl+(n>1?' ›':'')+'</button>';
+}
+/* J · la plata que entró, día por día y por forma de pago. En «Mes», los días del mes; en «Día», ese día y los 6 de antes; en
+   «Todo», mes por mes. Los mismos pagos que el cuadre (`cuadrePagos`; para «Día», los mismos filtros con 7 días). */
+var CX_TIEMPO={ datos:null, sel:-1 };
+var CX_GRUPOS_PAGO=[{ k:'ef', lbl:'Efectivo', col:'#22A06B' }, { k:'qr', lbl:'QR', col:'#2d6fd6' }, { k:'tj', lbl:'Tarjeta', col:'#7c5ce6' }, { k:'ot', lbl:'Otro', col:'#94a3b8' }];
+function cxGrupoPago(c){ var m=String(c.metodo||''); return m==='Efectivo'?'ef':(m.indexOf('QR')===0?'qr':(m.indexOf('Tarjeta')===0?'tj':'ot')); }
+function cxPagosRango(desde, hasta){
+  var vend=cuadreVendedor(), out=[];
+  STATE.forEach(function(p){
+    if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
+    contaPagos(p).forEach(function(c){
+      if(!((Number(c.monto)||0)>0) || !c.fecha || c.fecha<desde || c.fecha>hasta) return;
+      out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', monto:Number(c.monto)||0 });
+    });
+  });
+  return out;
+}
+function cxTiempoPintar(pagos){
+  var box=document.getElementById('cx-tiempo'); if(!box) return;
+  var pe=cuadrePeriodo(), B=[], idx={};
+  var nuevo=function(k, lbl, sub){ idx[k]=B.length; B.push({ k:k, lbl:lbl, sub:sub, tot:0, n:0, g:{ ef:0, qr:0, tj:0, ot:0 } }); };
+  var lista=pagos;
+  if(pe.modo==='mes'){
+    var y=+pe.val.slice(0,4), m=+pe.val.slice(5,7), nd=new Date(y, m, 0).getDate();
+    for(var d=1; d<=nd; d++){ var f=pe.val+'-'+(d<10?'0':'')+d; nuevo(f, String(d), f); }
+  }else if(pe.modo==='dia'){
+    for(var j=6; j>=0; j--){ var f2=stockSumarDias(pe.val, -j); nuevo(f2, fmtFechaCorta(f2), f2); }
+    lista=cxPagosRango(B[0].k, pe.val);
+  }else{
+    var ms={}; (pagos||[]).forEach(function(c){ if(c.fecha) ms[c.fecha.slice(0,7)]=1; });
+    Object.keys(ms).sort().slice(-14).forEach(function(ym){ nuevo(ym, mesNombreCorto(ym), ym); });
+  }
+  (lista||[]).forEach(function(c){
+    if(!c.fecha) return;
+    var k=(pe.modo==='todo') ? c.fecha.slice(0,7) : c.fecha, i=idx[k]; if(i==null) return;
+    var b=B[i], g=cxGrupoPago(c); b.g[g]=r2(b.g[g]+c.monto); b.tot=r2(b.tot+c.monto); b.n++;
+  });
+  var tot=0, n=0; B.forEach(function(b){ tot=r2(tot+b.tot); n+=b.n; });
+  if(!B.length || !n){ box.innerHTML=''; CX_TIEMPO.datos=null; return; }
+  CX_TIEMPO.datos=B;
+  var mx=0; B.forEach(function(b){ if(b.tot>mx) mx=b.tot; });
+  /* El ancho de la caja, para que la letra no se achique ni se salga de costado en el celular. */
+  var ancho=Math.max(280, Math.min(900, (box.clientWidth||720)-36));
+  var paso=Math.max(6, Math.min(46, (ancho-46)/B.length)), bw=Math.round(Math.max(4, paso*0.72)*10)/10, H=150, top=10, base=top+H, W=Math.round(40+B.length*paso+6);
+  var cadaN=Math.max(1, Math.ceil(22/paso));
+  var esc1=function(v){ return mx>0 ? v/mx*H : 0; };
+  var kfmt=function(v){ return v>=1000 ? ((Math.round(v/100)/10).toLocaleString('es-BO')+'k') : String(Math.round(v)); };
+  var svg='<svg class="cx-t-svg" viewBox="0 0 '+W+' '+(base+22)+'" style="max-width:'+W+'px" role="img" aria-label="Lo que entró en '+esc(cuadrePeriodoTxt())+'">';
+  [0, .5, 1].forEach(function(t){ var yy=(base-t*H).toFixed(1); svg+='<line x1="38" x2="'+W+'" y1="'+yy+'" y2="'+yy+'" stroke="#e5e9eb"/><text x="34" y="'+(+yy+3)+'" text-anchor="end" class="cx-t-ax">'+kfmt(mx*t)+'</text>'; });
+  var sel=(CX_TIEMPO.sel>=0 && CX_TIEMPO.sel<B.length && B[CX_TIEMPO.sel].n) ? CX_TIEMPO.sel : -1;
+  if(sel<0) for(var q=B.length-1; q>=0; q--) if(B[q].n){ sel=q; break; }
+  CX_TIEMPO.sel=sel;
+  var etqs='';   // los días van aparte: si no, suben con la animación de la barra
+  B.forEach(function(b, i){
+    var x=Math.round((40+i*paso+(paso-bw)/2)*10)/10, yy=base;
+    svg+='<g class="cx-t-col'+(i===sel?' on':'')+'" onclick="cxTiempoVer('+i+')" style="animation-delay:'+Math.min(i,30)*18+'ms"><rect x="'+(x-2)+'" y="'+top+'" width="'+(bw+4)+'" height="'+H+'" fill="transparent"/>';
+    CX_GRUPOS_PAGO.forEach(function(g){ var h=esc1(b.g[g.k]); if(h<0.5) return; yy-=h;
+      svg+='<rect x="'+x+'" y="'+yy.toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" rx="2" fill="'+g.col+'"/>'; });
+    svg+='</g>';
+    if(i%cadaN===0) etqs+='<text x="'+(x+bw/2)+'" y="'+(base+15)+'" text-anchor="middle" class="cx-t-ax">'+esc(b.lbl)+'</text>';
+  });
+  svg+=etqs;
+  svg+='</svg>';
+  var por=(pe.modo==='todo')?'mes por mes':(pe.modo==='dia'?'ese día y los 6 de antes':'día por día');
+  box.innerHTML='<div class="cua-box cx-tiempo"><div class="cua-t">📊 La plata que entró, '+por+' — '+fmtBs(tot)+' en '+n+' cobro'+(n===1?'':'s')+'</div>'+
+    '<div class="cx-t-wrap">'+svg+'</div>'+
+    '<div class="cx-ley">'+CX_GRUPOS_PAGO.map(function(g){ return '<span><i style="background:'+g.col+'"></i>'+g.lbl+'</span>'; }).join('')+'</div>'+
+    '<div class="cx-t-det" id="cx-t-det">'+cxTiempoDet(sel)+'</div>'+
+    '<div class="cx-nota">👆 Tocá una barra para ver qué entró. Cada cobro se anota con su día, no con la hora: por eso va día por día.</div></div>';
+}
+function cxTiempoDet(i){
+  var B=CX_TIEMPO.datos, b=B && B[i]; if(!b) return '';
+  var cuando=(/^\d{4}-\d{2}$/.test(b.sub)) ? mesNombre(b.sub) : (diaSemana(b.sub)+' '+fmtFechaCorta(b.sub));
+  if(!b.n) return '<b>'+esc(cuando)+'</b> · no entró nada';
+  return '<b>'+esc(cuando)+'</b> · '+fmtBs(b.tot)+' en '+b.n+' cobro'+(b.n===1?'':'s')+' — '+
+    CX_GRUPOS_PAGO.filter(function(g){ return b.g[g.k]>0.009; }).map(function(g){ return g.lbl+' '+fmtBs(b.g[g.k]); }).join(' · ');
+}
+function cxTiempoVer(i){
+  CX_TIEMPO.sel=i;
+  var d=document.getElementById('cx-t-det'); if(d) d.innerHTML=cxTiempoDet(i);
+  var cs=document.querySelectorAll('#cx-tiempo .cx-t-col'); for(var k=0;k<cs.length;k++) cs[k].classList.toggle('on', k===i);
+}
+/* K · la curva de cada marca en 📈 Proyección: lo vendido para el mes según el día en que se cargó (línea llena), hasta dónde
+   llegaría (punteada, la proyección de siempre) y la meta, cuando haya dónde cargarla. */
+function cxPryPintar(R){
+  var box=document.getElementById('cx-pry'); if(!box) return;
+  var ms=(R.marcas||[]).filter(function(m){ return m.tot.n; });
+  if(!ms.length){ box.innerHTML=''; return; }
+  var V=pryVentas(), y=+R.ym.slice(0,4), mo=+R.ym.slice(5,7), N=new Date(y, mo, 0).getDate(), ini=R.ym+'-01';
+  var conProy=(R.estado!=='cerrado'), hoyD=(R.estado==='cerrado') ? N : (R.estado==='curso' ? Math.min(N, +String(todayStr()).slice(8,10)) : 0);
+  var anima=visAnimar('cxPry', R.ym+'|'+ms.map(function(m){ return m.g.k+m.tot.vendido; }).join('|'));
+  var cards=ms.map(function(m){
+    var c=[]; for(var i=0;i<=N;i++) c.push(0);
+    V.forEach(function(x){
+      if(x.amb!=='tienda' || x.g!==m.g.k || x.ym!==R.ym) return;
+      var d = x.reg<ini ? 0 : (x.reg.slice(0,7)>R.ym ? N : +x.reg.slice(8,10));
+      c[Math.max(0, Math.min(N, d))]+=x.bs;
+    });
+    for(var k=1;k<=N;k++) c[k]+=c[k-1];
+    var vend=m.tot.vendido, proy=conProy ? m.tot.proy : vend, top=Math.max(proy, vend, c[N], 1)*1.12;
+    var W=300, H=110, X=function(d){ return 4+d/N*(W-8); }, Y=function(v){ return H-4-v/top*(H-12); };
+    var pts=[]; for(var d=0; d<=hoyD; d++) pts.push(X(d).toFixed(1)+','+Y(c[d]).toFixed(1));
+    var linea=pts.length>1 ? ('<polyline class="cx-k-l" points="'+pts.join(' ')+'" fill="none" stroke="'+m.g.col+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<polygon points="'+X(0).toFixed(1)+','+(H-4)+' '+pts.join(' ')+' '+X(hoyD).toFixed(1)+','+(H-4)+'" fill="'+m.g.col+'" opacity=".12"/>') : '';
+    var punt=(conProy && hoyD<N) ? ('<line class="cx-k-p" x1="'+X(hoyD).toFixed(1)+'" y1="'+Y(c[hoyD]).toFixed(1)+'" x2="'+X(N).toFixed(1)+'" y2="'+Y(proy).toFixed(1)+'" stroke="'+m.g.col+'" stroke-width="2" stroke-dasharray="5 4"/>'+
+      '<circle cx="'+X(N).toFixed(1)+'" cy="'+Y(proy).toFixed(1)+'" r="4" fill="#fff" stroke="'+m.g.col+'" stroke-width="2"/>') : '';
+    var hoy=(hoyD>0) ? ('<circle class="cx-k-hoy" cx="'+X(hoyD).toFixed(1)+'" cy="'+Y(c[hoyD]).toFixed(1)+'" r="4.5" fill="'+m.g.col+'"/>') : '';
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" class="cx-k-svg'+(anima?' anima':'')+'" aria-hidden="true">'+
+      '<line x1="4" x2="'+(W-4)+'" y1="'+(H-4)+'" y2="'+(H-4)+'" stroke="#e5e9eb"/>'+linea+punt+hoy+'</svg>';
+    return '<div class="cx-kf" style="--c:'+m.g.col+';--t:'+(m.g.txt||m.g.col)+'"><div class="cx-kf-h"><b>'+m.g.ico+' '+esc(m.g.lbl)+'</b><span>'+m.tot.n+' venta'+(m.tot.n===1?'':'s')+' · '+m.tot.u+' u.</span></div>'+
+      '<div class="cx-kf-n"><div><small>Vendido</small><b>'+fmtBs0(vend)+'</b></div>'+(conProy?('<div><small>📈 Llegaría a</small><b class="cx-kf-p">'+fmtBs0(proy)+'</b></div>'):'')+'</div>'+
+      svg+'<div class="cx-kf-x"><span>1</span><span>'+N+'</span></div>'+
+      '<div class="cx-kf-pie">🎯 Meta: todavía no hay dónde cargarla'+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
+  }).join('');
+  box.innerHTML='<div class="cx-kfs">'+cards+'</div>';
 }
 
 /* ============================================================================
@@ -6345,7 +6977,9 @@ function renderProyeccion(){
   if(R.sinMarca.filas.length) h+=mc('var(--amber)','⚠️ Sin marca', fmtBs(R.sinMarca.tot.vendido), nV(R.sinMarca.tot.n)+' · '+nU(R.sinMarca.tot.u)+' de vendedores que no están en ninguna marca');
   if(R.mayor.filas.length) h+=mc('#1d6fb8','🏭 Mayoristas', fmtBs(R.mayor.tot.vendido),
           nV(R.mayor.tot.n)+' · '+nU(R.mayor.tot.u)+' de '+esc(mayoristasTxt())+' · aparte del equipo'+(conProy ? (' · 📈 proyección '+fmtBs0(R.mayor.tot.proy)) : ''));
-  box.innerHTML=h; acomodarFichas();
+  box.innerHTML=h;
+  try{ cxPryPintar(R); }catch(e){}   // ✨ (§4jw, K) la curva de cada marca
+  acomodarFichas();
 
   var avisos=[];
   if(R.estado==='curso' && R.dt<5) avisos.push('⏳ '+(R.dt===1 ? 'Va ' : 'Van ')+pryDiasHabTxt(R.dt)+' del mes: la proyección todavía se mueve mucho.');
@@ -7112,6 +7746,7 @@ function avisosHtml(al){
       out+='<div class="cua-av sev-'+esc(a.sev||'datos')+(abierto?' on':'')+'" onclick="'+esc("cuaToggleAviso('"+a.k+"')")+'">'+
         '<span style="font-size:1.05rem;flex:none">'+a.ico+'</span>'+
         '<div class="av-txt">'+a.txt+'</div>'+
+        cxAvisoBtn(a)+   // ✨ (§4jw, I) el botón que lo resuelve
         (n?('<span class="av-n">'+(abierto?'▾':'▸')+' '+n+'</span>'):'')+
       '</div>';
       if(abierto && n) out+='<div class="cua-det">'+alertaDetHtml(a.det, a.k)+'</div>';
@@ -7314,6 +7949,10 @@ function renderCuadre(){
 
   // ---- efectivo cobrado vs. retirado, vendedor por vendedor
   renderCuadreRetiros();
+  /* ✨ (§4jw) G semáforo, J día por día y H quién tiene el efectivo: leen lo mismo que la tabla del cierre y la de retiros. */
+  try{ cxSemaforoPintar(CIE); }catch(e){}
+  try{ cxTiempoPintar(pagos); }catch(e){}
+  try{ cxManoPintar(); }catch(e){}
 
   // ---- por cobrar, de lo más viejo a lo más nuevo
   var pe=document.getElementById('cua-pendientes');

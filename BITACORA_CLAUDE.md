@@ -7445,6 +7445,34 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4jw. 12/10: ✨ Contabilidad con el estilo nuevo (A–K) — PUBLICADA (ver abajo)
+El dueño, con las muestras (artifact «Contabilidad: once mejoras», A a K): *«A, B, C, D, E, F, G y H, I, J, K armame las muestras»* y
+después *«Ok pásalas y publica»*. **Solo presentación**: ninguna cuenta cambia; todo lee `renderContaMetrics`, `renderConta`,
+`cuadreCierre`, `cuadreEfectivo`, `cuadreAlertas`, `proyeccionMes`/`pryVentas`. Bloque `cx*` (script, después de `contaRepintar`) y CSS
+`cx-*` (al final del segundo `<style>`).
+- **A** fichas de Ventas con color y dibujito (`CX_ESC`, sin letras en el SVG) + barra cobrado/falta en `#cx-vivo` (va DEBAJO de
+  `#cta-marcas`: `test_ventas_marcas` §7 mide que las fichas de marca queden pegadas a las de arriba). El número que cuenta ya lo hacía §4iw.
+- **B** dona de marcas (`cxDonaHtml`, `CX_MARCA`): tocar = vendido, cobrado (`contaCobrado`) y falta (`contaFaltaCobrar`) de esa marca.
+  Las fichas de marca de §4gw QUEDAN (la dona va al lado de la barra).
+- **C** botones en tres grupos (`#cx-grupos`: Bajar / Revisar / Cargar), con «👯 Dos veces» y «⏳ Deben» con su número. Los ids de siempre.
+- **D** chips (`CX_CHIPS`, `CX_FILTRO`, `cxFiltrar`) con la MISMA regla del resumen; filtran SOLO la tabla (y las tarjetas). El resumen
+  `#cta-resumen` sigue (más chico): las pruebas lo leen.
+- **E** en angosto (< 900 px: iPad parado y celular) las ventas en tarjetas (`cxCardsPintar`, `#cta-pane-ventas.cx-tarjetas` esconde
+  `#cx-tw`); borde por estado y sello REGISTRADO; «📋 Ver como tabla» por aparato (`me_cx_tabla`). La tabla sigue armándose siempre.
+- **F** cartel ámbar `#cx-dup` con «Ver cuáles» (pares con «Abrir») y «✋ Son distintas» POR APARATO (`me_cx_dup_ok`):
+  `cxDupMarcarDescartados` saca esos pares de `DUP_IDX` (tabla, resumen, chip y botón). En el Cuadre el aviso 👯 sigue igual (no lo filtra).
+- **G** semáforo `#cx-semaforo` (sobre `cuadreCierre`): sin casillas propias, tocar una tarjeta lleva a SU casilla de la tabla
+  (`cxIrArqueo`); todo contado y sin diferencia → «🎉 El cuadre cierra» con papelitos una vez por cambio (`visAnimar`).
+- **H** `#cx-mano`: quién tiene el efectivo (`cuadreEfectivo().filas`, falta ≠ 0); «💵 Retiro» = `abrirRetiros` con entrega y monto puestos
+  (`cxRetiro`; chofer → retira Contabilidad).
+- **I** cada `.cua-av` con su botón (`cxAvisoBtn`, `CX_AV_BTN`): abre la primera venta de la lista; «cobrar» abre `abrirPorCobrar('cuadre')`.
+  `stopPropagation`: no pliega el aviso.
+- **J** `#cx-tiempo`: barras apiladas por forma de pago. ⚠️ Los cobros NO tienen hora (solo día): va día por día (Mes), los 7 días hasta
+  ese (Día, `cxPagosRango` con los filtros de `cuadrePagos`) o mes por mes (Todo, 14 últimos). La muestra decía «por hora»: se le avisa.
+- **K** `#cx-pry`: ficha por marca con la curva (lo vendido del mes según el día en que se CARGÓ, `pryVentas`), punteada hasta la
+  proyección de `proyeccionMes`. Meta: «todavía no hay dónde cargarla» (las metas son por marca y por mes, §4gu: falta decidir dónde).
+- `tests/test_conta_4jw.js` (38). Publicado solo esto (cherry-pick sobre `main`); el bot (§4jt) sigue en la rama.
+
 ## 4jv. 11/10 (noche): 🚛 El 3D de Administración se toca como el de Mis pedidos — PUBLICADA 11/10 20:06 de Bolivia (`258e672`), Pages OK
 El dueño, con captura de «Camiones de mañana» en 3D: *«No funcionan los montacargas y camiones del 3D como el 3D en mis pedidos, que al
 dar clic a un producto o camiones muestra la ficha»*. Causa: cada andén tiene una caja INVISIBLE (para elegir el camión tocando el piso)
