@@ -2198,6 +2198,11 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cvc-l.cero{ opacity:.6; cursor:default; }
 .cvc-bz{ color:#1d4ed8; }
 .cvc-asig{ display:flex; flex-direction:column; gap:4px; padding:5px 0; border-bottom:1px dashed var(--gray-md); }
+.cvc-salio{ margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:#dbeafe; color:#1e3a8a; font-size:.84rem; }
+.cvc-salio button{ margin-left:auto; border:1px solid #93c5fd; background:#fff; color:#1e3a8a; border-radius:999px; padding:6px 12px; min-height:36px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
+.cvc-salio-btn{ margin-top:8px; width:100%; min-height:44px; border:1.5px dashed #2563eb; background:#fff; color:#1d4ed8; border-radius:10px; font:inherit; font-weight:800; cursor:pointer; }
+.cvc-salio-btn.listo{ border-style:solid; background:#2563eb; color:#fff; }
+.dep-etq-cam.cv3d-ruta{ background:#1d4ed8; } .dep-etq-cam.cv3d-ruta small{ color:#dbeafe; }
 .cvc-sel{ font:inherit; font-size:.8rem; font-weight:700; border:1.5px solid #fcd34d; border-radius:8px; padding:5px 8px; background:#fffbeb; }
 .cvc-paradas summary{ cursor:pointer; font-size:.78rem; font-weight:800; color:var(--muted); padding:4px 0; }
 .cvc-paradas .dep-ped{ display:block; width:100%; margin-top:4px; }
@@ -15685,6 +15690,35 @@ function guardarCargaChk(){
   }, 700);
 }
 function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
+/* 🛣️ «YA SALIÓ EL CAMIÓN» (12/10, dueño: *«falta cómo hacemos que "ya salió el camión" mientras»* — hasta tener el GPS de Monnet).
+   Logística lo toca en la ficha del camión. Viaja en la MISMA fila de los tildes de la carga (`__carga_chk__`, con su sello y su
+   junta), como una tilde más: `fecha|camión|🚚 SALIÓ|HH:MM` (la hora de Bolivia). Se poda sola con las demás a los 10 días, y una
+   página vieja la ignora (no es la clave de ningún producto). Deshacer = sacar esa tilde. */
+var CARGA_SALIO='🚚 SALIÓ';
+function salioClave(fecha, veh){
+  var pre=cargaChkKey(fecha, veh, CARGA_SALIO)+'|';
+  var ks=Object.keys(CARGA_CHK).filter(function(k){ return k.indexOf(pre)===0; }).sort();
+  return ks.length ? ks[0] : '';
+}
+/* '' si no salió; si salió, la hora («10:42») */
+function camionSalio(fecha, veh){ if(!fecha || !veh) return ''; var k=salioClave(fecha, veh); return k ? (k.slice(k.lastIndexOf('|')+1)||'—') : ''; }
+function camionSalioMarcar(veh, on){
+  var f=todayStr(), k=salioClave(f, veh);
+  if(on){
+    if(k) return;
+    var D=null; try{ D=cargaVivaDatos(); }catch(e){}
+    var c=D && D.porK && D.porK[veh], falta=c ? Math.max(0, (c.total||0)-(c.dentro||0)) : 0;
+    if(falta && !confirm('Al '+veh+' le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga.\n\n¿Salió igual?')) return;
+    var h=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+    setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
+    toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
+  }else{
+    if(!k) return;
+    if(!confirm('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.')) return;
+    Object.keys(CARGA_CHK).forEach(function(x){ if(x.indexOf(cargaChkKey(f, veh, CARGA_SALIO)+'|')===0) setCargaChk(x, false); });
+  }
+  try{ renderCargaSiActiva(); }catch(e){} try{ cargaVivaPintar(); }catch(e){}
+}
 function limpiarCargaChk(){
   if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;
   var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
@@ -16071,7 +16105,8 @@ function cvPintarPanel(D){
       var ls=c.lineas.filter(function(l){ return l.lugar===g[0]; }); if(!ls.length) return '';
       return '<div class="cv-grupo">'+esc(g[1])+'</div>'+ls.map(function(l){ return cvFilaHtml(l, ''); }).join('');
     }).join('')+'</div>';
-    if(c.est==='ok') h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
+    if(c.est==='ok' && !camionSalio(D.fecha, c.k)) h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
+    h+=cvSalioHtml(D, c);
   } else if(c.est==='nada'){
     /* (§4id, 08/10) El dueño vio los camiones vacíos y la lista solo en «Sin vehículo»: es que ningún pedido del día tenía el
        camión asignado. Se dice eso, con cuántos esperan camión y un botón para verlos. */
@@ -16092,6 +16127,18 @@ function cvAsignar(id, v){
   p.vehiculo=v; p.chofer=VEHICULOS[v][0]||'';
   persistPedido(p);                                   // repinta Administración, la Lista de carga y los camiones
   try{ toast('🚚 '+(p.cliente||'Pedido')+' → '+v, 'ok'); }catch(e){}
+}
+/* 👆 (12/10, dueño: «sí») El cartel «⚠️ SIN CAMIÓN» de la escena 3D se toca: la lista de esos pedidos con su «🚚 Asignar camión…»
+   (el MISMO `cvAsignar` de la ficha «Sin vehículo»). Al asignar uno, la lista se rearma con los que quedan. */
+function cv3dSinCamion(){
+  var D=cargaVivaDatos(), c=(D.cams||[]).filter(function(x){ return x.sin; })[0], ps=c ? c.stops : [];
+  if(!ps.length){ closeModal(); toast('✅ Todos los pedidos de '+(CV_DIA==='hoy'?'hoy':'mañana')+' ya tienen camión.','ok'); return; }
+  var opts=Object.keys(VEHICULOS).map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
+  openModal('<div class="modal-h"><h3>⚠️ '+ps.length+' pedido'+(ps.length===1?'':'s')+' sin camión · '+(CV_DIA==='hoy'?'hoy':'mañana')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="cv-sinc" style="padding:12px 16px">'+ps.map(function(p){ var n=(p.productos||[]).reduce(function(a,x){ return a+(Number(x.cant)||0); },0);
+      return '<div class="cvc-asig"><button type="button" class="dep-ped" data-id="'+esc(p.id)+'" onclick="showPedidoModal(this.dataset.id)"><b>'+esc(p.cliente||'(sin cliente)')+'</b> · '+esc([ocEtiq(p.oc), turnoDe(p), p.zona, cvU(n)].filter(Boolean).join(' · '))+'</button>'+
+        '<select class="cvc-sel" data-id="'+esc(p.id)+'" onchange="cvAsignar(this.getAttribute(\'data-id\'), this.value);setTimeout(cv3dSinCamion, 250)"><option value="">🚚 Asignar camión…</option>'+opts+'</select></div>'; }).join('')+
+    '<p style="font-size:.8rem;color:var(--muted);margin:10px 0 0">Al asignarlo, sus montacargas se ponen delante de ese camión.</p></div>');
 }
 function cvIrALista(){
   CARGA_DIA=CV_DIA; abrirCarga(); setCargaDia(CV_DIA);
@@ -30885,7 +30932,7 @@ function cv3dPintar(D){
     box.innerHTML='<div class="dep-ayuda">Arrastrá para girar · tocá un camión, un montacargas, Banzer o Moreno</div><button class="dep-todo" type="button" onclick="cv3dVerTodo()">↺ Ver todo</button>';
     mapa.insertBefore(box, mapa.firstChild); }
   CV3D.D=D;
-  var firma=D.fecha+'§'+D.cams.map(function(c){ return c.k+':'+c.paradas+':'+c.lineas.map(function(l){ return l.key+'='+l.u+'/'+l.cu+(l.on?'✓':'')+l.no+'/'+l.rec; }).join(',')+':'+c.choferes.join('/'); }).join('#')+'§'+D.bz.total+'/'+D.bz.dentro+'§'+D.im.u;
+  var firma=D.fecha+'§'+D.cams.map(function(c){ return c.k+':'+c.paradas+':'+c.lineas.map(function(l){ return l.key+'='+l.u+'/'+l.cu+(l.on?'✓':'')+l.no+'/'+l.rec; }).join(',')+':'+c.choferes.join('/')+':'+camionSalio(D.fecha, c.k); }).join('#')+'§'+D.bz.total+'/'+D.bz.dentro+'§'+D.im.u;
   depLibs(function(ok){
     if(!ok){ mapa.classList.remove('con3d'); return; }
     if(!depIniciar3D(box)) return;
@@ -30942,16 +30989,23 @@ function cv3dConstruir(D, suave){
       var piso=new THREE.Mesh(new THREE.PlaneGeometry(z.w-.4, 7.2), new THREE.MeshBasicMaterial({ map:depTexEspera(), transparent:true, depthWrite:false }));
       piso.rotation.x=-Math.PI/2; piso.position.set(cx,.016,-3.6); g.add(piso);
       var cs=new THREE.Object3D(); cs.position.set(cx,1.9,-7.4); g.add(cs);
-      depEtq(cs, '⚠️ SIN CAMIÓN · '+c.paradas+' pedido'+(c.paradas===1?'':'s')+'<small style="display:block;font-weight:700;opacity:.9">asigná el camión en el panel →</small>', 'dep-etq-cola', '#b45309', 0);
+      depEtq(cs, '⚠️ SIN CAMIÓN · '+c.paradas+' pedido'+(c.paradas===1?'':'s')+'<small style="display:block;font-weight:700;opacity:.9">👆 tocá para asignarles camión</small>', 'dep-etq-cola', '#b45309', 0, false, function(){ cv3dSinCamion(); });
     } else {
       depLinea(cx-z.w/2,1.8,cx+z.w/2,1.8,g); depLinea(cx-z.w/2,-6.6,cx-z.w/2,1.8,g); depLinea(cx+z.w/2,-6.6,cx+z.w/2,1.8,g);
       /* el camión en su andén, con lo ya cargado arriba */
+      var salio=camionSalio(D.fecha, c.k);
+      if(salio){   // 🛣️ (12/10) ya salió: el andén queda vacío y su cartel lo dice
+        var ts=new THREE.Object3D(); ts.position.set(cx,0,fz+.6); g.add(ts);
+        depEtq(ts, '🛣️ '+esc(c.k)+'<small>salió a las '+esc(salio)+' · en camino</small>', 'dep-etq-cam cv3d-ruta', '#1d4ed8', 1.6+(zi%2)*.9, false, elegir);
+        z.carg.forEach(function(l){ ahora[l.key]=1; });
+      } else {
       var t=depCamion(); t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ fn:elegir }; g.add(t.g); W.toca.push(t.g);
       z.carg.slice(0,3).forEach(function(l, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg);
         depPila(pg, l.kk, l.kk.toUpperCase(), l.kk, l.cu, 6, 1.3, 1.6); ahora[l.key]=1;
         if(!suave || !antes[l.key]){ var q=DEP.quieto; DEP.quieto=false; pg.position.y=3; depTween(pg.position, { y:0 }, .9, suave?.1:(1.2+zi*.3+j*.25), depSale); DEP.quieto=q; } });
       z.carg.slice(3).forEach(function(l){ ahora[l.key]=1; });
       depEtq(t.g, '🚚 '+esc(c.k)+'<small>'+esc(c.choferes[0]||'sin chofer')+' · '+(listo ? '✅ listo para salir' : (c.total ? (c.dentro+' de '+cvU(c.total)+' cargados') : 'sin pedidos'))+(z.bzU?(' · 🏪 '+z.bzD+'/'+z.bzU+' en Banzer'):'')+'</small>', 'dep-etq-cam'+(listo?' cv3d-ok':''), '#14232a', 3.6+(zi%2)*.9);
+      }
     }
     /* adelante, un montacargas por producto que falta cargar, delante de su camión */
     z.pend.forEach(function(l, i){
@@ -31054,6 +31108,7 @@ function cv3dColsPintar(D){
         '<b>'+l.u+'</b><span class="cvc-p" data-k="'+esc(c.k)+'" data-kk="'+esc(l.kk)+'" onclick="event.preventDefault();cv3dPedidosDe(this)">'+esc(l.kk)+'</span><span class="dep-ests">'+est(l)+'</span></label>';
     }).join('');
     if(!c.sin && !c.total) h+='<div class="dep-leyc">Ningún pedido de '+dia+' tiene este camión.</div>';
+    h+=cvSalioHtml(D, c);
     if(!c.sin && c.stops.length) h+='<details class="cvc-paradas"><summary>📍 '+c.paradas+' parada'+(c.paradas===1?'':'s')+'</summary>'+c.stops.map(function(p){
       return '<button type="button" class="dep-ped" data-id="'+esc(p.id)+'" onclick="showPedidoModal(this.dataset.id)"><b>'+esc(p.cliente||'(sin cliente)')+'</b> · '+esc([ocEtiq(p.oc), turnoDe(p), p.zona].filter(Boolean).join(' · '))+'</button>'; }).join('')+'</details>';
     return h+'</article>';
@@ -31061,6 +31116,13 @@ function cv3dColsPintar(D){
   var abiertos=[].map.call(el.querySelectorAll('.cvc-paradas[open]'), function(d){ return d.parentNode.getAttribute('data-k'); });
   el.innerHTML=arriba+'<div class="cvc-grid">'+cols+'</div>';
   abiertos.forEach(function(k){ var a=el.querySelector('.cvc[data-k="'+CSS.escape(k)+'"] .cvc-paradas'); if(a) a.open=true; });
+}
+/* 🛣️ «Ya salió» en la ficha del camión: solo hoy y con pedidos (§ salió, 12/10) */
+function cvSalioHtml(D, c){
+  if(!c || c.sin || !c.stops || !c.stops.length || !D || D.fecha!==todayStr()) return '';
+  var hs=camionSalio(D.fecha, c.k), kq=esc(JSON.stringify(c.k));
+  return hs ? ('<div class="cvc-salio si">🛣️ <b>Salió a las '+esc(hs)+'</b> · en camino<button type="button" onclick="camionSalioMarcar('+kq+',false)">deshacer</button></div>')
+            : ('<button type="button" class="cvc-salio-btn'+((c.total && c.dentro>=c.total)?' listo':'')+'" onclick="camionSalioMarcar('+kq+',true)">🚚 Ya salió</button>');
 }
 function cv3dTildar(inp){
   setCargaChk(inp.getAttribute('data-k'), inp.checked);
@@ -31349,6 +31411,9 @@ function pedidoViajeDatos(p){
     { ico:'🚚', lbl:'En camino', hecho:entregado },
     { ico:'✅', lbl:'Entregado', hecho:entregado }
   ];
+  /* 🛣️ (12/10) el camión de este pedido ya salió hoy (lo marcó logística): «en camino» con la hora */
+  var _sal=(!entregado && f===hoy) ? camionSalio(f, vehiculoDe(p)) : '';
+  if(_sal){ pasos[3].hecho=true; pasos[3].lbl='Salió '+_sal; }
   var ahora=-1; for(var i=0;i<pasos.length;i++) if(!pasos[i].hecho){ ahora=i; break; }
   if(ahora===3 && f>hoy) ahora=2;     // «en camino» solo el día de la entrega: antes, el pedido espera su fecha (agendado)
   return { pasos:pasos, ahora:ahora };

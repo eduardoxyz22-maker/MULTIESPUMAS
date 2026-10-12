@@ -13703,3 +13703,8 @@ imprimir `versión 2026-09-20-a`.
   «KSK»; i-monnet dice KSC). En `VEHICULO_PLACA`, sin usar todavía. PTF = «Calle Transversal 10A, Dr. Melchor Pinto Parada», junto a
   MULTIESPUMAS VISCARRA SRL (donde paran KSC y CCP), coincide con `ALM_UBIC.ptf`. Credenciales: NUNCA por el chat; si hacen falta, a
   las Propiedades del script.
+- **«🚚 Ya salió» a mano mientras tanto** (dueño: *«falta cómo hacemos que ya salió mientras»*) y el cartel «SIN CAMIÓN» que se toca (dueño:
+  *«sí»*). Probado con three.js de verdad (r128 bajado de npm, en el scratchpad): andén vacío con «🛣️ salió a las 10:42». `test_camion_salio` 10
+  (8 rojas contra `e2f1021`). Las alertas de geocerca de i-monnet ya existen (captura del dueño, 10/10): FUERA 07:59 de PTF, DENTRO de BANZER
+  08:46, y un ida-vuelta FUERA/DENTRO de PTF a las 13:12 (rebote): cuando lleguen por correo, «salió» = FUERA sostenido (p. ej. sin un DENTRO
+  en los 5 minutos siguientes). Falta saber si i-monnet las manda por correo.

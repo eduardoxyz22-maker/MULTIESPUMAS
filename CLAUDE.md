@@ -765,6 +765,13 @@ ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vac
 - **🖼️ Varias imágenes a la vez** (dueño: *«no deja subir más de 1 foto a la vez»*): `comp-input`, `fcomp-input` y `ret-foto-input` llevan
   `multiple` y pasan por `compVarias(ev, fn)`: de a una con el manejador de siempre (que ahora devuelve su promesa), reponiendo
   `COMP_DESTINO` en cada vuelta; más de `COMP_MAX`, se cortan y se dice. `tests/test_comp_varias.js` (5).
+- **🛣️ «Ya salió el camión»** (dueño: *«falta cómo hacemos que "ya salió el camión" mientras»*, hasta el GPS): botón «🚚 Ya salió» en la ficha
+  del camión (`cvSalioHtml`, 3D y 2D, solo hoy y con pedidos) → `camionSalioMarcar`: una tilde más en `__carga_chk__`,
+  `fecha|camión|🚚 SALIÓ|HH:MM` (hora de Bolivia; `salioClave`/`camionSalio`), con sello y junta como las demás; pregunta si falta carga;
+  «deshacer». En 3D el andén queda vacío con «🛣️ salió a las…» (la firma de la escena incluye `camionSalio`); en Mis pedidos el viaje dice
+  «Salió HH:MM» (`pedidoViajeDatos`). El cartel «⚠️ SIN CAMIÓN» se toca → `cv3dSinCamion` (lista con `cvAsignar`). `tests/test_camion_salio.js` (10).
+  🛰️ GPS: Monnet i-monnet 5.0, `VEHICULO_PLACA`; ya tiene las geocercas «Centro de Dist. MULTIESPUMAS» y «Centro de dist. BANZER» con alertas
+  «Unidad <placa> Generó ALERTA FUERA/DENTRO DE GEOCERCA <nombre> el AAAA/MM/DD HH:MM:SS» (rebotan en segundos: hace falta filtrar). Bitácora §4kg.
 - **Bot (`.gs` 2026-10-11-a, sin implementar)**: el borrador se reconoce por `estado`, no por `kommo-` (una venta de Kommo completada no
   recibía nada); el recordatorio de las 17:00 no sale antes de una confirmación que espera en la cola. `test_wa_bot` §5b,
   `tests/test_asistente_rev.js` (17; 16 rojas contra `e2f1021`), `test_ruta_salida` §5b.
