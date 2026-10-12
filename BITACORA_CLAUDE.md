@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4jw. 12/10: ✨ Contabilidad con el estilo nuevo (A–K) — PUBLICADA (ver abajo)
+## 4jw. 11/10 (noche): ✨ Contabilidad con el estilo nuevo (A–K) — PUBLICADA 11/10 21:09 de Bolivia (`407f4a9`), Pages OK
 El dueño, con las muestras (artifact «Contabilidad: once mejoras», A a K): *«A, B, C, D, E, F, G y H, I, J, K armame las muestras»* y
 después *«Ok pásalas y publica»*. **Solo presentación**: ninguna cuenta cambia; todo lee `renderContaMetrics`, `renderConta`,
 `cuadreCierre`, `cuadreEfectivo`, `cuadreAlertas`, `proyeccionMes`/`pryVentas`. Bloque `cx*` (script, después de `contaRepintar`) y CSS

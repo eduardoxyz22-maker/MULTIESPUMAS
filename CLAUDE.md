@@ -737,7 +737,7 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
-## ✨ Contabilidad con el estilo nuevo (§4jw, 12/10; dueño: *«Ok pásalas y publica»*)
+## ✨ Contabilidad con el estilo nuevo (§4jw, 11/10; dueño: *«Ok pásalas y publica»*; PUBLICADA 11/10 21:09, `407f4a9`)
 Solo presentación, bloque `cx*`: A fichas vivas + barra cobrado/falta (`#cx-vivo`, DEBAJO de `#cta-marcas`), B dona de marcas, C botones en
 tres grupos (`#cx-grupos`), D chips que filtran SOLO la tabla (`CX_FILTRO`), E tarjetas bajo 900 px (`me_cx_tabla` vuelve a la tabla),
 F «dos veces» con «Son distintas» por aparato (`me_cx_dup_ok` saca el par de `DUP_IDX`), G semáforo (tocar → la casilla de la tabla del
