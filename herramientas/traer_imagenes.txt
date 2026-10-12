@@ -1,3 +1,1 @@
-https://res.cloudinary.com/d15mkrjj/image/upload/f_png,w_640/multiespumas/asistente_eduardo_v1.png muestra1.png
-https://res.cloudinary.com/d15mkrjj/image/upload/f_png,w_640/multiespumas/asistente_eduardo_v2.png muestra2.png
-https://res.cloudinary.com/d15mkrjj/image/upload/f_png,w_640/multiespumas/asistente_eduardo_v3.png muestra3.png
+https://res.cloudinary.com/d15mkrjj/image/upload/f_png,w_640/multiespumas/asistente_eduardo_v4.png muestra3.png
