@@ -90,7 +90,7 @@ function servidor(props) {
   const guardar = (rec) => { const r = post({ action: 'save', pedido: rec }); if (r.ok) rec.rev = r.pedido.rev; return r; };
   const leer = (id) => ctx.rowToRec_(sh._datos.find(f => f[0] === id));
   const hoja = () => (hojas['Bot WhatsApp'] ? hojas['Bot WhatsApp']._datos.slice(1) : []);
-  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text) }));
+  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name.replace(/_v2$/, ''), v2: /_v2$/.test(c.body.template.name), p: c.body.template.components[0].parameters.map(x => x.text) }));
   const limpiar = () => { meta.llamadas.length = 0; };
   return { ctx, sh, P, meta, triggers, post, guardar, leer, hoja, salen, limpiar, repaso: () => ctx.waRepaso() };
 }
@@ -149,8 +149,8 @@ console.log('\n── 3. Pedido nuevo: confirmación al cliente y aviso a cada u
   const s = S.salen();
   chk('a los 3 minutos salen 6 mensajes (2 pedidos × cliente + Ernesto + David)', r.enviados === 6 && s.length === 6, r);
   const c = s.find(x => x.pl === 'confirmacion_pedido' && x.to === '59170111222');
-  chk('al cliente: confirmacion_pedido con los 8 datos en orden', !!c && JSON.stringify(c.p) === JSON.stringify(['Juan', 'OC 10-045', 'Heaven Colchones',
-      '1 × TITANIO LATEX 140x190', 'Av. Banzer 4to anillo', 'Saldo a pagar al recibir: Bs 1.200', 'jueves 15/10 por la tarde', '14:30 y las 18:30']), c);
+  chk('al cliente: confirmacion_pedido_v2 con los 9 datos en orden (el último, el contacto de la vendedora)', !!c && c.v2 && JSON.stringify(c.p) === JSON.stringify(['Juan', 'OC 10-045', 'Heaven Colchones',
+      '1 × TITANIO LATEX 140x190', 'Av. Banzer 4to anillo', 'Saldo a pagar al recibir: Bs 1.200', 'jueves 15/10 por la tarde', '14:30 y las 18:30', 'tu vendedora por el WhatsApp de siempre']), c);
   const lg = s.filter(x => x.pl === 'logistica_pedido_nuevo' && x.p[2] === 'juan carlos roca');
   chk('a Ernesto y a David, por separado: logistica_pedido_nuevo', lg.length === 2 && lg.map(x => x.to).sort().join() === '59171000001,59172000002', lg);
   chk('…con día, turno, cliente, zona, productos y vendedor', JSON.stringify(lg[0].p) === JSON.stringify(['jueves 15/10', 'PM', 'juan carlos roca', 'Equipetrol', '1 × TITANIO LATEX 140x190', 'Carola Chavez']), lg[0] && lg[0].p);
@@ -184,7 +184,7 @@ console.log('\n── 4. Corregido enseguida = un mensaje; cambio de día; ida y
   S.limpiar();
   p.fecha = '2026-10-19'; p.turno = 'PM'; S.guardar(p); pasar(3); S.repaso(); s = S.salen();
   const cc = s.find(x => x.pl === 'cambio_entrega');
-  chk('cambio de día: cambio_entrega al cliente con el día y horario nuevos', !!cc && JSON.stringify(cc.p) === JSON.stringify(['Juan', 'Heaven Colchones', 'OC ' + p.oc, 'lunes 19/10 por la tarde', '14:30 y las 18:30']), cc);
+  chk('cambio de día: cambio_entrega al cliente con el día y horario nuevos', !!cc && JSON.stringify(cc.p) === JSON.stringify(['Juan', 'Heaven Colchones', 'OC ' + p.oc, 'lunes 19/10 por la tarde', '14:30 y las 18:30', 'tu vendedora por el WhatsApp de siempre']), cc);
   const lc = s.filter(x => x.pl === 'logistica_cambio');
   chk('…y logistica_cambio a los dos: «pasó del viernes 16/10 por la mañana al lunes 19/10 por la tarde»', lc.length === 2 &&
       lc[0].p[2] === 'pasó del viernes 16/10 por la mañana al lunes 19/10 por la tarde' && lc[0].p[0] === 'OC ' + p.oc, lc[0] && lc[0].p);
@@ -320,7 +320,7 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   const s = S.salen().filter(x => x.pl === 'recordatorio_entrega');
   chk('17:02 del miércoles: recordatorio_entrega solo a ANA (PEDRO sin celular, EDU de Eduardo)', s.length === 1 && s[0].to === '59170111222', S.salen());
   chk('…con «Mañana», la marca Sueña y «Tu compra ya está pagada»', s[0] && JSON.stringify(s[0].p) === JSON.stringify(['Ana', 'Sueña', 'OC ' + a.oc, 'Mañana', '1 × SMART 140x190',
-      'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00']), s[0] && s[0].p);
+      'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'tu vendedora por el WhatsApp de siempre']), s[0] && s[0].p);
   chk('la hoja anota que PEDRO no tiene celular', S.hoja().some(f => f[1] === 'r2' && f[3] === 'Recordatorio' && /celular/.test(f[8])));
   chk('el saldo con el recargo pactado: «Saldo a pagar al recibir: Bs 1.200 + Bs 150 del recargo por entrega»', S.ctx.waSaldo_(S.leer('r2')) === 'Saldo a pagar al recibir: Bs 1.200 + Bs 150 del recargo por entrega', S.ctx.waSaldo_(S.leer('r2')));
   S.limpiar(); poner('2026-10-14 17:30'); S.repaso();
@@ -392,7 +392,7 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
   chk('son las 6 de WA_TIPOS, con el mismo nombre', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombres), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
-  const esperado = { confirmacion_pedido: 8, cambio_entrega: 5, recordatorio_entrega: 8, logistica_pedido_nuevo: 6, logistica_cambio: 3, logistica_sin_camion: 3 };
+  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_sin_camion_v2: 3 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
@@ -405,13 +405,13 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const r2 = S.ctx.crearPlantillasWhatsApp();
   chk('con el token vencido lo dice («generá otro»)', !r2.ok && r2.plantillas.every(x => /token no sirve/.test(x.txt)), r2.plantillas[0]);
   S.limpiar(); S.meta.responder = () => ({ code: 200, body: { data: [
-    { name: 'confirmacion_pedido', language: 'es', status: 'APPROVED', category: 'UTILITY' },
-    { name: 'cambio_entrega', language: 'es', status: 'REJECTED', rejected_reason: 'INVALID_FORMAT' },
-    { name: 'recordatorio_entrega', language: 'es', status: 'PENDING' },
-    { name: 'logistica_pedido_nuevo', language: 'en_US', status: 'APPROVED' } ] } });
+    { name: 'confirmacion_pedido_v2', language: 'es', status: 'APPROVED', category: 'UTILITY' },
+    { name: 'cambio_entrega_v2', language: 'es', status: 'REJECTED', rejected_reason: 'INVALID_FORMAT' },
+    { name: 'recordatorio_entrega_v2', language: 'es', status: 'PENDING' },
+    { name: 'logistica_pedido_nuevo_v2', language: 'en_US', status: 'APPROVED' } ] } });
   const v = S.ctx.verPlantillasWhatsApp();
   const tx = v.plantillas.map(x => x.txt).join(' | ');
-  chk('ver: aprobada / rechazada con el motivo / en revisión / no creada (la de otro idioma no cuenta)', /confirmacion_pedido: ✅ aprobada/.test(tx) && /cambio_entrega: ❌ rechazada · motivo: INVALID_FORMAT/.test(tx) && /recordatorio_entrega: ⏳ en revisión/.test(tx) && /logistica_pedido_nuevo: — no está creada/.test(tx) && v.listas === false, tx);
+  chk('ver: aprobada / rechazada con el motivo / en revisión / no creada (la de otro idioma no cuenta)', /confirmacion_pedido_v2: ✅ aprobada/.test(tx) && /cambio_entrega_v2: ❌ rechazada · motivo: INVALID_FORMAT/.test(tx) && /recordatorio_entrega_v2: ⏳ en revisión/.test(tx) && /logistica_pedido_nuevo_v2: — no está creada/.test(tx) && v.listas === false, tx);
   chk('ver es un GET, sin cuerpo', S.meta.llamadas.length === 1 && S.meta.llamadas[0].o.method === 'get' && /fields=name,status/.test(S.meta.llamadas[0].url));
   const S2 = servidor(ON);
   chk('sin WA_WABA_ID dice qué falta y no llama a Meta', /WA_WABA_ID/.test(S2.ctx.crearPlantillasWhatsApp().error || '') && S2.meta.llamadas.length === 0);
@@ -496,7 +496,7 @@ console.log('\n── 12. El cliente contesta: de qué pedido es, respuesta auto
   const fila = S.hoja().find(f => f[8] === 'wamid.r1');
   chk('la respuesta queda con SU pedido y OC (por el «Responder» sobre la confirmación)', fila && fila[1] === 'rc1' && fila[2] === p.oc && fila[11] > 0, fila);
   const tx = S.meta.llamadas.filter(c => c.body && c.body.type === 'text');
-  chk('respuesta automática: un texto al cliente que nombra a su vendedora y la OC', tx.length === 1 && tx[0].body.to === '59170111222' && /vendedora Carola/.test(tx[0].body.text.body) && /OC 10-/.test(tx[0].body.text.body) && /Juan/.test(tx[0].body.text.body), tx.map(c => c.body.text.body));
+  chk('respuesta automática: un texto al cliente que nombra a su vendedora y la OC', tx.length === 1 && tx[0].body.to === '59170111222' && /vendedora \*Carola\*/.test(tx[0].body.text.body) && /OC 10-/.test(tx[0].body.text.body) && /Juan/.test(tx[0].body.text.body), tx.map(c => c.body.text.body));
   chk('…y queda anotada en la hoja como «Respuesta automática» ✅', S.hoja().some(f => f[3] === 'Respuesta automática' && /enviado/.test(f[7])));
   pasar(10);
   aviso([{ id: 'wamid.r2', from: '59170111222', timestamp: ts(), type: 'text', text: { body: '¿Me escuchan?' } }]);
@@ -509,6 +509,28 @@ console.log('\n── 12. El cliente contesta: de qué pedido es, respuesta auto
   const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'k', WA_AUTORESP: '0' }, ON));
   S2.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: '1234567890' }, messages: [{ id: 'wamid.z', from: '59170000000', timestamp: ts(), type: 'text', text: { body: 'hola' } }] } }] }] }) } });
   chk('con WA_AUTORESP=0 no se responde (pero se anota)', S2.meta.llamadas.length === 0 && S2.hoja().some(f => f[8] === 'wamid.z'));
+}
+
+// ══ 13. (2026-10-12-d) Plantillas v2 con la vieja de respaldo + el WhatsApp de la vendedora ══════════════
+console.log('\n── 13. v2 con respaldo y contacto de la vendedora (WA_VENDEDORAS) ──');
+{
+  poner('2026-10-14 10:00');
+  const S = servidor(Object.assign({ WA_VENDEDORAS: 'Carola Chavez:70000001, Maria:+591 7000 0002', WA_HOOK_KEY: 'k' }, ON));
+  chk('WA_VENDEDORAS: por nombre entero o por el primero; «Carola Chávez» con acento también', S.ctx.waVendCel_('Carola Chávez') === '59170000001' && S.ctx.waVendCel_('Maria Flores') === '59170000002' && S.ctx.waVendCel_('Isabel Robledo') === '');
+  const p = ped({ id: 'v1', vendedor: 'Carola Chavez' }); S.guardar(p);
+  S.meta.responder = (b) => (b.template && /_v2$/.test(b.template.name)) ? { code: 404, body: { error: { code: 132001, message: 'Template name does not exist in the translation' } } } : null;
+  pasar(3); S.repaso();
+  const ll = S.meta.llamadas.map(c => c.body.template.name + ':' + c.body.template.components[0].parameters.length);
+  chk('la v2 todavía no aprobada: sale la VIEJA con sus 8 datos (no se pierde el mensaje)', ll.indexOf('confirmacion_pedido_v2:9') >= 0 && ll.indexOf('confirmacion_pedido:8') >= 0, ll);
+  chk('…y la hoja anota la plantilla que salió de verdad', S.hoja().some(f => f[3] === 'Confirmación' && f[6] === 'confirmacion_pedido' && /enviado/.test(f[7])), S.hoja().map(f => f[6] + ' ' + f[7]));
+  S.limpiar(); S.meta.responder = null;
+  const q = ped({ id: 'v2', vendedor: 'Carola Chavez', fecha: '2026-10-16' }); S.guardar(q); pasar(3); S.repaso();
+  const c = S.salen().find(x => x.pl === 'confirmacion_pedido' && x.v2);
+  chk('con la v2 aprobada: el último dato es «Carola 👉 https://wa.me/59170000001»', c && c.p[8] === 'Carola 👉 https://wa.me/59170000001', c && c.p);
+  S.limpiar();
+  S.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: '1234567890' }, contacts: [{ wa_id: '59170111222', profile: { name: 'Juan' } }], messages: [{ id: 'wamid.q', from: '59170111222', timestamp: String(Math.floor(RELOJ.ms / 1000)), type: 'text', text: { body: 'hola' } }] } }] }] }) } });
+  const tx = S.meta.llamadas.filter(c => c.body.type === 'text').map(c => c.body.text.body)[0] || '';
+  chk('la respuesta automática trae el enlace directo a la vendedora', /escribile a tu vendedora \*Carola\*:\n👉 https:\/\/wa\.me\/59170000001/.test(tx) && /👋/.test(tx), tx);
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

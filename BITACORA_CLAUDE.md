@@ -13842,3 +13842,17 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   atendí» (para todos). `tests/test_wa_resp.js` (7).
 - **🚀 12/10: `.gs` 2026-10-12-c IMPLEMENTADO (el dueño; volver atrás = ✏️ a la versión 43 Y pegar `b833b91…`, 3.176 líneas) y
   página PUBLICADA (`02a7a09`).**
+
+### §4kl — 🤖 Mensajes «_v2» con emojis + WhatsApp de la vendedora · ✅ sin entregado automático (12/10, SIN publicar: el dueño pidió ver los ejemplos antes)
+- Dueño: *«¿no sería ideal que redirija al nro de la vendedora…? mi jefe dice que el mensaje está muy seco, faltan emojis… más
+  estético»* y *«incluí un saludo de que sos un sistema automatizado o el emoticón de bot»*. `.gs` **2026-10-12-d**: plantillas
+  `*_v2` (🤖 _Mensaje automático_, negritas, emojis, espacios; las 3 del cliente con el contacto al final: `waContactoVend_` →
+  «Carola 👉 https://wa.me/591…» desde la propiedad **`WA_VENDEDORAS`** = `Nombre:celular, …`, o «tu vendedora por el WhatsApp de
+  siempre»). `WA_TIPOS[k].vieja/nv`: si Meta contesta 132001/132015/132016 (no existe/pausada/desactivada) sale la vieja con sus
+  `nv` datos y la hoja anota cuál salió. Respuesta automática con 🤖 y el enlace a la vendedora. `test_wa_bot` §13 (→ 106).
+- Dueño: *«quitá el entregado "automático"… pedidos que se marcan entregado y no se entregan. Mejor solo la alerta de Eduardo a
+  logística a X hora y el log manual»*. Página: `abrirCierreEntregas` ya NO tilda los de hoy (reemplaza la decisión del 06/10 de los
+  🌆 PM tildados); `pedidoViajeDatos`: «Entregado» SOLO con ✅ (fecha pasada sin ✅ = «❓ Sin confirmar»); `misAnilloDatos` cuenta
+  entregados solo con ✅. El aviso de Eduardo a las 16:30 (`CIERRE_ENT_HORA`) sigue. ⚠️ La regla del STOCK «fecha pasada sin ✅ =
+  salió» (§4co, dueño 05/10) NO se tocó: es una cuenta, no marca nada. Pruebas cambiadas a conciencia: `test_cierre_entregas`,
+  `test_rev_corte_codex` (tildan a mano), `test_visuales` §6, `test_vistas_4im` §5.

@@ -277,7 +277,7 @@ const SHOTS = process.env.SHOTS || '', LEAFLET_DIR = process.env.LEAFLET_DIR || 
   });
   chk('lo vendido para octubre = sus 4 ventas del mes (sin la ATC): 3000 + 4000 + 3000 + 4000', ()=>(r.R.bs===14000 && r.R.n===4), r.R);
   chk('septiembre entero: 15000 → 93 %', ()=>(r.R.bsAnt===15000 && /93% de septiembre/.test(r.t)), String(r.t||r.__error||'').slice(0,200));
-  chk('entregados: los 2 de fecha pasada', ()=>(r.R.ent===2 && /2 de 4/.test(r.t)), r.R);
+  chk('(12/10, dueño) entregados: solo el que tiene ✅ (la fecha pasada ya no cuenta)', ()=>(r.R.ent===1 && /1 de 4/.test(r.t)), r.R);
   chk('falta cobrar = la suma de los saldos (1500 + 2000 + 4000), como la ficha «Por cobrar»', ()=>(r.R.cobrar===7500 && r.arcos===3), r.R);
   if(SHOTS){
     await page.setViewportSize({ width:390, height:844 }); await ev(()=>{ VIS_FIRMAS={}; renderMis(); var a=document.getElementById('mis-metrics'); if(a) a.scrollIntoView(); }); await page.waitForTimeout(1400);

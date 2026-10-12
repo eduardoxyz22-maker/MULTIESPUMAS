@@ -154,7 +154,7 @@ const SHOTS = process.env.SHOTS || '';
   chk('listo y para el martes: espera su fecha (paso «agendado»)', ()=>(r.m1.ahora===2 && /\d\d\/10/.test(r.m1.lbl)), r.m1);
   chk('con un producto sin stock: está en «Sin stock»', ()=>(r.m2.ahora===1 && r.m2.lbl==='Sin stock'), r.m2);
   chk('listo y es hoy: «En camino»', ()=>(r.m3.ahora===3 && r.m3.lbl==='En camino'), r.m3);
-  chk('de ayer: entregado (la regla de siempre: fecha pasada)', ()=>r.m4.ahora===-1, r.m4);
+  chk('(12/10, dueño) de ayer sin ✅: «Sin confirmar» (ya no se da por entregado)', ()=>(r.m4.lbl==='Sin confirmar'), r.m4);
   chk('sin revisar: «Sin revisar»', ()=>(r.m5.ahora===1 && r.m5.lbl==='Sin revisar'), r.m5);
   r = await ev(async()=>{
     showView('mis'); await new Promise(function(ok){ setTimeout(ok,150); });
