@@ -13708,3 +13708,7 @@ imprimir `versión 2026-09-20-a`.
   (8 rojas contra `e2f1021`). Las alertas de geocerca de i-monnet ya existen (captura del dueño, 10/10): FUERA 07:59 de PTF, DENTRO de BANZER
   08:46, y un ida-vuelta FUERA/DENTRO de PTF a las 13:12 (rebote): cuando lleguen por correo, «salió» = FUERA sostenido (p. ej. sin un DENTRO
   en los 5 minutos siguientes). Falta saber si i-monnet las manda por correo.
+- **«Ya salió» en la ventana del camión 3D** (dueño: *«la idea es dar clic al camión, revisar y marcar ya salió, y el camión se vaya del 3D»*):
+  `cv3dCamPanel` → `depPanel` con `q.pie` (el botón de `cvSalioHtml`); al marcar se cierra y, con la escena a la vista (`CV3D.anden`), el
+  camión gira y sale hacia adelante. **`depTweens` corre los `fin` DESPUÉS de reemplazar la lista**: antes la animación encadenada se perdía
+  (el camión giraba y quedaba; los montacargas nunca levantaban). PUBLICADA 12/10 (`6682b30`). Probado con three.js r128 de verdad.
