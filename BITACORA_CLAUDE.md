@@ -13718,3 +13718,32 @@ imprimir `versión 2026-09-20-a`.
   que lista todo con «🚚 Asignarles camión»), y en el andén de «Sin camión» quedan PTF y lo que falta. `cv3dEsperan(k, desde, lugar)`.
   Un camión ASIGNADO sigue con todo delante de él (ese camión pasa por Banzer): no se cambió. `test_camiones_3d` §5c (28; §5c cambió a
   conciencia: la fila de «Sin camión» ya no trae Banzer ni Moreno).
+
+## §4kh — Eduardo: las ideas A–K (12/10; el dueño eligió «A,B,C,D,E,F,G,H,I,K», la J no)
+Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe una fila del sistema.
+- **A** `asisDatos()`/`asisDatosHtml()`: «🕒 Datos de las HH:MM» (hora de Bolivia, `ULTIMO_REFRESCO`) o, sin lectura buena,
+  «📵 Sin conexión: te muestro lo de hace N h» (`LS_LECTURA_T`), arriba de la ventana.
+- **B** `me_asis_vistos` guarda HASTA CUÁNDO (ms): «Entendido» 24 h (`asisEntendido`), «⏰ En 1 hora» (`asisEnUnaHora`), «🌙 Mañana»
+  a las 8 de Bolivia (`asisManana`), todo por `asisPosponer`. Lo viejo (el DÍA como texto) vale hasta el final del día siguiente
+  (`asisOcultoHasta`). Los avisos «al guardar» (`a.tm`) solo llevan «Entendido» (se van solos a los 10 min).
+- **C** `asisLogistica()`: con `quienRol()==='logistica'` en CUALQUIER pestaña (y en Administración con la clave): «✗ no hay» de hoy,
+  lo que hay que traer de Moreno (hoy y el próximo camión, `esRecoger`) y los camiones de hoy sin terminar de cargar (`cargaVivaDatos` con
+  `CV_DIA='hoy'` por un momento; sin los que ya salieron). Las listas abren la ficha del pedido (`asisAbrirPedido(id, 1)`).
+- **D** `asisMsgEspera(rec)` desde `asisAlGuardar`: si algo se trae de Moreno o se fabrica, el mensaje al cliente con el día de cada uno y
+  el de entrega (la cuenta del cuadrito: `saldoClasificar` + `saldoVeredictoFila` con el propio pedido sin contarse), con «💬 Mandar por
+  WhatsApp» (`asisMandarMsg`) o «📋 Copiar». Todo a mano → nada. Ni Eduardo ni ROHO, ni ATC/RPT/tienda.
+- **E** `asisResumenDia()`: de 5 a 14 h (`ASIS_RES_DESDE/HASTA`), primer aviso «☀️ Tu día, …» con tres líneas (`a.res`), cada una con su
+  «Ver cuáles» (clave `k#i`). Vendedora: hoy / próximo camión / clientes con saldo. Logística: salen hoy / próximo (sin camión) / Moreno.
+  Administración: hoy / próximo / pagos sin terminar. Clave `dia|fecha|rol o nombre`.
+- **F** `asisBuscar`: `ASIS_SINONIMOS` («plata», «cobrar», «depósito» → pago…), errores de tipeo con `nxDist` (1 letra; 2 desde 7 letras;
+  palabras de 4+), y con el mismo puntaje gana la pestaña donde se está. «xyzw» sigue sin encontrar nada.
+- **G** Seis respuestas más AL FINAL de `ASIS_AYUDA` (reprogramar, flete, seguir una ATC, cerrar un día [adm], el recorrido [adm], el
+  recorrido guiado [`tour:1`]): 19 en total, 15 para un vendedor. `test_asistente` cambió a conciencia (11/13 → 15/19).
+- **H** `body.asis-escribe` (focusin/focusout) achica y corre a Eduardo en el celular (≤700 px) y esconde el globito.
+- **I** `asisTourOfrecer()` desde `quienElegir` (una vez por aparato, `me_asis_tour`), `asisTourEmpezar/Paso/Fin`, 7 pasos
+  (`ASIS_TOUR_PASOS`), tarjeta `#asis-tour`; `asisFoco(sel, true)` deja el campo iluminado mientras dure el paso.
+- **K** Búsqueda sin respuesta quieta 3 s → `me_asis_preg` → con la próxima lectura buena (`nxBadges` cada minuto) a la fila del
+  sistema **`__asis_preguntas__`** (`ASIS_PREG_ID`, en `esFilaSistema`; JSON `{v:1,q:[{t,d,v,p}]}`, últimas 80). Sin sello: dos aparatos en
+  el mismo segundo pueden perder una pregunta (es diagnóstico). La ve solo Administración (clave o rol admin) en «¿Cómo hago…?».
+  ⚠️ Una página VIEJA (sin F5) la ve como un pedido sin fecha hasta recargar.
+- `tests/test_asistente_ak.js` (38; 32 rojas contra `8485847`).
