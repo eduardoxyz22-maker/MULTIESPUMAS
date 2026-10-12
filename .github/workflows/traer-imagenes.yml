@@ -19,7 +19,13 @@ jobs:
           while read -r url archivo; do
             [ -z "$url" ] && continue
             case "$archivo" in */*|..*|'') echo "nombre raro: $archivo"; exit 1;; esac
-            curl -fsSL "$url" -o "asistente/$archivo"
+            # Cloudinary contesta 423 mientras procesa un recorte de fondo: se reintenta hasta ~2 minutos.
+            for i in $(seq 1 20); do
+              code=$(curl -sSL -o "asistente/$archivo" -w '%{http_code}' "$url" || echo 000)
+              [ "$code" = "200" ] && break
+              echo "intento $i: $code"; sleep 6
+            done
+            [ "$code" = "200" ] || { echo "no se pudo bajar $url"; exit 1; }
             ls -la "asistente/$archivo"
           done < herramientas/traer_imagenes.txt
       - name: Subir
