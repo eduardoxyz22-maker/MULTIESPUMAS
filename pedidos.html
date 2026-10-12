@@ -2363,6 +2363,37 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @media(max-width:700px){ .asis{ right:2px; bottom:calc(72px + env(safe-area-inset-bottom)); } body.con-pasos .asis{ bottom:calc(138px + env(safe-area-inset-bottom)); }
   .asis-yo{ width:66px; height:118px; } .asis-fig{ height:112px; } .asis-piso{ width:54px; } .asis-globo{ margin:0 66px -90px 0; } }
 @media print{ .asis{ display:none!important; } }
+/* ✨ Lista de carga con el estilo nuevo (§4kc) — solo presentación: los tildes, sus claves y el texto siguen iguales */
+.lcr{ margin:0 0 14px; padding:12px; border-radius:16px; background:linear-gradient(160deg,#e9f7f5,#fff 70%); border:1px solid #cdeceb; box-shadow:0 10px 24px -20px #0f766e; }
+.lcr-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; } .lcr-top b{ font-size:.95rem; color:#0f4f4a; }
+.lcr-bar{ display:block; height:8px; border-radius:999px; background:#e2ecee; overflow:hidden; } .lcr-bar.big{ flex:1 1 160px; height:10px; }
+.lcr-bar i{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#00B5AD,#22A06B); transition:width .5s ease; }
+.lcr-pc{ font-weight:900; color:#0f766e; font-variant-numeric:tabular-nums; }
+.lcr-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
+.lcr-c{ display:grid; gap:5px; text-align:left; font:inherit; cursor:pointer; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid #d6e6e8; border-left:5px solid #0f766e;
+  box-shadow:0 6px 14px -12px rgba(15,118,110,.6); transition:transform .15s, box-shadow .15s; animation:mi-entra .4s ease-out both; min-width:0; }
+.lcr-c:hover{ transform:translateY(-2px); box-shadow:0 12px 20px -14px rgba(15,118,110,.7); }
+.lcr-c.sin{ border-left-color:#d97706; background:#fffaf0; } .lcr-c.listo{ border-left-color:#16a34a; background:#f2fbf6; }
+.lcr-h{ display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; } .lcr-h b{ font-size:.92rem; } .lcr-h small{ color:var(--muted); font-size:.74rem; }
+.lcr-n{ font-size:.78rem; color:var(--muted); } .lcr-n b{ color:#0f766e; font-size:.9rem; }
+.lcr-al{ display:flex; flex-wrap:wrap; gap:4px; } .lcr-a{ font-size:.7rem; font-weight:800; padding:2px 7px; border-radius:999px; }
+.lcr-a.no{ background:#fde8ea; color:#b91c1c; } .lcr-a.im{ background:#fff4e0; color:#a16207; } .lcr-a.bz{ background:#e0f2fe; color:#0369a1; } .lcr-a.ve{ background:#f1f5f9; color:#64748b; }
+#carga-body .carga-cam{ border-radius:18px!important; border:1px solid #dbe7e9; border-left:6px solid #0f766e; box-shadow:0 10px 26px -20px rgba(15,60,70,.55)!important; scroll-margin-top:12px; }
+#carga-body .carga-cam.lc-foco{ animation:lc-foco 1.4s ease-out 1; }
+@keyframes lc-foco{ 0%{ box-shadow:0 0 0 4px rgba(0,181,173,.55); } 100%{ box-shadow:0 0 0 0 rgba(0,181,173,0); } }
+#carga-body [data-carga-lugar] > label{ flex-wrap:wrap; padding:8px 10px!important; margin:4px 0; border-radius:12px; background:#f6f9fa; border:1px solid #e6eef0; cursor:pointer; transition:background .15s, border-color .15s; }
+#carga-body [data-carga-lugar] > label:hover{ background:#eef8f7; border-color:#bfe5e2; }
+#carga-body [data-carga-lugar] > label input[type=checkbox]{ width:22px!important; height:22px!important; accent-color:#16a34a; }
+#carga-body [data-carga-lugar] > label:has(input:checked){ background:#e8f7ee; border-color:#a7dcbc; }
+#carga-body [data-carga-lugar] > label:has(input:checked) span{ color:#166534; }
+#carga-body [data-carga-lugar]:not([data-carga-lugar="fabrica"]){ border-radius:14px!important; }
+#carga-body [data-carga-lugar="fabrica"] > .lb, #carga-body [data-carga-lugar] > .lb{ font-weight:800; }
+#carga-body .carga-stop{ padding:8px 10px; margin:4px 0; border:1px solid #edf1f2; border-bottom:1px solid #edf1f2; border-radius:12px; background:#fff; }
+#carga-body .carga-stop:hover{ background:#f0fbfa; }
+@media (max-width:560px){ .lcr-g{ grid-template-columns:1fr 1fr; } .lcr-c{ padding:8px; } .lcr-h b{ font-size:.82rem; } }
+@media print{ .lcr{ display:none!important; } }
+@media (prefers-reduced-motion:reduce){ .lcr-c, #carga-body .carga-cam.lc-foco{ animation:none!important; } }
+
 /* ✨ Administración: herramientas en grupos (12/10). Dueño, con captura: «muy grande, se supone que eran píldoras y ocupaban poco
    espacio… así solo alarga la hoja del panel». Cada grupo es UNA fila de píldoras chicas; la explicación queda en el `title`. */
 .btn-row.adm-tools{ display:flex; flex-direction:column; gap:6px; }
@@ -15645,6 +15676,45 @@ function renderCarga(){
   var sinCam=sinCamionHtml();   // (30/09, R1-2) arriba de la carga: los que quedaron en un feriado o domingo
   document.getElementById('carga-body').innerHTML=sinCam+(html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>');
   cargaCamionesPintar();   // 🚛 (§4im)
+  cargaResumenPintar();    // ✨ (§4kc) la tira de camiones de arriba
+}
+/* ✨ (§4kc, 12/10, dueño: «modernizar… lo que lleva dentro», empezando por la Lista de carga; «muéstrame antes de publicar»)
+   Arriba de la lista, UNA tarjeta por camión con la barra de lo cargado (los MISMOS tildes: `cargaCamionCuenta`), las paradas y las
+   alertas que ya dice su encabezado (faltante, recoger, Banzer, sin verificar). Tocar una baja a ese camión. Solo mira: se arma desde lo
+   que la lista ya dibujó, no hace cuentas aparte. En «Todos» (varias fechas) no sale. */
+function cargaResumenPintar(){
+  var body=document.getElementById('carga-body'); if(!body) return;
+  var viejo=document.getElementById('carga-res'); if(viejo) viejo.remove();
+  if(CARGA_DIA==='todos') return;
+  var cams=[].slice.call(body.querySelectorAll('.carga-cam')); if(!cams.length) return;
+  var totY=0, totT=0;
+  var tarjetas=cams.map(function(cam, i){
+    var c=cargaCamionCuenta(cam), veh=cam.getAttribute('data-veh')||'Sin vehículo', sin=/^Sin veh/i.test(veh);
+    var cab=(cam.firstElementChild && cam.firstElementChild.textContent)||'';
+    var cho=(cam.firstElementChild && cam.firstElementChild.children[1] && cam.firstElementChild.children[1].tagName==='SPAN' && !/bultos/.test(cam.firstElementChild.children[1].textContent)) ? cam.firstElementChild.children[1].textContent : '';
+    var par=cam.querySelectorAll('.carga-stop').length, pc=c.tot?Math.round(c.ya/c.tot*100):0, listo=c.tot>0 && c.ya>=c.tot;
+    totY+=c.ya; totT+=c.tot;
+    var al=[];
+    var mf=cab.match(/(\d+) con faltante/); if(mf) al.push('<span class="lcr-a no">⛔ '+mf[1]+'</span>');
+    var mr=cab.match(/(\d+) por recoger/); if(mr) al.push('<span class="lcr-a im">📥 '+mr[1]+'</span>');
+    var mb=cab.match(/(\d+) con carga en/); if(mb) al.push('<span class="lcr-a bz">🏪 '+mb[1]+'</span>');
+    var mv=cab.match(/✅ (\d+)\/(\d+) verif/); if(mv && mv[1]!==mv[2]) al.push('<span class="lcr-a ve">⚠️ '+(mv[2]-mv[1])+' sin verificar</span>');
+    return '<button type="button" class="lcr-c'+(sin?' sin':'')+(listo?' listo':'')+'" style="animation-delay:'+Math.min(i,8)*50+'ms" data-i="'+i+'" onclick="cargaResumenIr(this)">'+
+      '<span class="lcr-h"><b>'+(sin?'⚠️ Sin vehículo':('🚛 '+esc(veh)))+'</b>'+(cho?('<small>'+esc(cho)+'</small>'):'')+'</span>'+
+      '<span class="lcr-bar"><i style="width:'+pc+'%"></i></span>'+
+      '<span class="lcr-n">'+(c.tot ? (listo ? '✅ cargado entero' : ('<b>'+c.ya+'</b> de '+c.tot+' bultos')) : 'sin bultos')+' · '+par+' parada'+(par===1?'':'s')+'</span>'+
+      (al.length ? ('<span class="lcr-al">'+al.join('')+'</span>') : '')+'</button>';
+  }).join('');
+  var pcT=totT?Math.round(totY/totT*100):0;
+  var d=document.createElement('div'); d.id='carga-res'; d.className='lcr no-print';
+  d.innerHTML='<div class="lcr-top"><b>🚚 '+(CARGA_DIA==='hoy'?'Hoy':'Mañana')+': '+totY+' de '+totT+' bultos cargados</b><span class="lcr-bar big"><i style="width:'+pcT+'%"></i></span><span class="lcr-pc">'+pcT+'%</span></div>'+
+    '<div class="lcr-g">'+tarjetas+'</div>';
+  body.insertBefore(d, body.firstChild);
+}
+function cargaResumenIr(b){
+  var cams=document.querySelectorAll('#carga-body .carga-cam'), cam=cams[Number(b.getAttribute('data-i'))||0]; if(!cam) return;
+  try{ cam.scrollIntoView({ behavior:visQuieto()?'auto':'smooth', block:'start' }); }catch(e){ cam.scrollIntoView(); }
+  cam.classList.remove('lc-foco'); void cam.offsetWidth; cam.classList.add('lc-foco');
 }
 function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
 
@@ -30797,6 +30867,7 @@ function cargaCamionTildo(el){
   var cam=el && el.closest && el.closest('.carga-cam'); if(!cam) return;
   var box=cam.querySelector('.cc-lugar'); if(!box) return;
   var c=cargaCamionCuenta(cam); box.innerHTML=cargaCamionSvg(c.ya, c.tot, !!el.checked && !visQuieto());
+  cargaResumenPintar();
 }
 function cargaCamionesPintar(){
   [].forEach.call(document.querySelectorAll('#carga-body .carga-cam'), function(cam){
