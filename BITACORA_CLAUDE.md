@@ -13864,3 +13864,14 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   (`3e6bdd661a2f50bc8a4b7aedc03b51c1faa90ff3`, 3.254 líneas); la página publicada anda igual con la 12-c (solo mostraría la línea gris).
 - 12/10 a la noche, el dueño: *«ya cargué los celulares, ya salieron aprobadas las plantillas»*: `WA_VENDEDORAS` cargada y las 6 `_v2`
   aprobadas. Desde ahí salen las v2 con el enlace al WhatsApp del vendedor.
+
+### §4km — 🤖 Recordatorio en dos tandas: 17:00 los de la mañana, 19:00 los de la tarde (12/10, `.gs` 2026-10-12-f)
+- Dueño (12/10, ~19:40): *«a las 17 recordatorio a los que son en la mañana del día siguiente y a las 19:00 los que son para el turno
+  PM de mañana. La idea es avisarles un día antes, no 5 horas antes»*. Antes salían todos a las 17:00 (hoy salieron 2: el resto se
+  había confirmado en el día, y esos no se repiten).
+- `WA_HORA_REC_PM`=19 + `hecho.recPm`. A las 17:00 (`recSoloAM`) los AM y los sin turno; a las 19:00 los PM y CUALQUIERA del día
+  siguiente que todavía no lo recibió (el bot parado a las 17, un PM que pasó a AM entre las 17 y las 19). Cada pedido una vez (`WA_REC`).
+  Ventana de 2 h cada tanda (`WA_VENTANA_H`). Lo demás igual (confirmado hoy no se repite; Eduardo/ROHO/ATC/RPT/sin celular).
+- ⚠️ Versión **12-f**, no 12-e: el dueño escribió «2026-10-12-e» como descripción de la implementación de la 12-b (§4kj); para no
+  confundir, la «e» se saltea. Página: `SCRIPT_VERSION_ESPERADA` 12-f, textos del «🔔 Mañana» (17:00 AM / 19:00 PM).
+- `test_wa_bot` §5c (→ 113), `test_wa_pagina` (el pie), `test_servidor` §11.

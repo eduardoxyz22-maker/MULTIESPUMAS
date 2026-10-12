@@ -3785,7 +3785,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-12-d';   // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-12-f';   // (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -32263,7 +32263,7 @@ function nxWaClienteUrl(cel, txt){ var u=misWaCliente(cel); return u ? (u+'?text
 /* ¿A este pedido le corresponde el mensaje al cliente? Una entrega con fecha, que no sea ATC, reposición ni venta de tienda. */
 function nxClienteVale(p){ return !!p && !!p.fecha && !esATC(p.oc) && !esRPT(p.oc) && !esVentaTienda(p) && !esFilaSistema(p); }
 /* 🤖 (11/10, §4jt) EL BOT DE WHATSAPP. Con el servidor 2026-10-11-a prendido (`WA_ACTIVO`=1 → cada respuesta trae `wa:1`), el
-   servidor le manda SOLO al cliente la confirmación, el cambio de día y el recordatorio de las 17:00. Acá solo se dice, para que
+   servidor le manda SOLO al cliente la confirmación, el cambio de día y el recordatorio (17:00 los de la mañana, 19:00 los de la tarde, dueño 12/10). Acá solo se dice, para que
    nadie lo mande dos veces: el botón de WhatsApp a mano queda igual. La regla es la del servidor (`waNoCliente_`): ni Eduardo
    (dueño, 11/10), ni ROHO, ni sin celular de WhatsApp, ni con la fecha pasada. */
 var WA_BOT=false;
@@ -32410,7 +32410,7 @@ function nxM1Desp(v, todos){
     return '<div class="nx-m1-r'+(av?' ok':'')+'" style="animation-delay:'+(i*60)+'ms">'+
       '<span class="nx-turno '+(t==='PM'?'pm':'am')+'">'+(t==='PM'?'🌆 PM':(t?'🌅 AM':'—'))+'</span>'+
       '<div class="nx-m1-q"><b>'+esc(p.cliente||'—')+'</b><small>'+esc([p.zona, nxProdsTxt(p), sl].filter(Boolean).join(' · '))+'</small></div>'+
-      (nxBotManda(p) ? '<span class="nx-btn nx-btn-hecho" title="El bot de WhatsApp le manda el recordatorio a las '+NX_M1_HORA+':00">🤖 Lo avisa el bot</span>'
+      (nxBotManda(p) ? '<span class="nx-btn nx-btn-hecho" title="El bot de WhatsApp le manda el recordatorio a las '+(t==='PM'?'19':'17')+':00">🤖 Lo avisa el bot</span>'
           : av ? '<button type="button" class="nx-btn nx-btn-hecho" onclick="nxM1Marcar(\''+id+'\', false);renderMis()" title="Tocá para desmarcar">✓ Avisado</button>'
           : wa ? ('<a class="nx-btn nx-btn-wa" href="'+esc(wa)+'" target="_blank" rel="noopener" onclick="nxM1Avisar(\''+id+'\')">💬 Avisar</a>')
                : '<span class="nx-sub" title="No tiene celular de WhatsApp anotado">sin celular</span>')+
@@ -32423,7 +32423,7 @@ function nxM1Desp(v, todos){
     '<div class="nx-barra" aria-label="'+D.av+' de '+D.n+' avisados"><i style="width:'+pct+'%"></i></div>'+
     '<div class="nx-m1-lista">'+filas+'</div>'+
     (ult ? ('<div class="nx-m1-msg"><small>Lo que le mandaste a '+esc(nxNombreCorto(ult.cliente)||'—')+'</small><div class="nx-burbuja">'+esc(nxMsgCliente(ult, 'manana')).replace(/\n/g,'<br>')+'</div></div>') : '')+
-    '<div class="nx-pie">'+(WA_BOT?'🤖 El bot de WhatsApp les manda el recordatorio a las '+NX_M1_HORA+':00 a los que tienen celular. ':'')+'«✓ Avisado» queda anotado en este dispositivo. Si el pedido cambia de día, vuelve a «Avisar».</div>'+
+    '<div class="nx-pie">'+(WA_BOT?'🤖 El bot de WhatsApp les manda el recordatorio a los que tienen celular: a las 17:00 los de la mañana y a las 19:00 los de la tarde. ':'')+'«✓ Avisado» queda anotado en este dispositivo. Si el pedido cambia de día, vuelve a «Avisar».</div>'+
   '</div>';
   requestAnimationFrame(function(){ el.classList.add('abierta'); });
 }

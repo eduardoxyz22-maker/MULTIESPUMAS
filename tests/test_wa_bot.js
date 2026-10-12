@@ -321,10 +321,35 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   chk('17:02 del miércoles: recordatorio_entrega solo a ANA (PEDRO sin celular, EDU de Eduardo)', s.length === 1 && s[0].to === '59170111222', S.salen());
   chk('…con «Mañana», la marca Sueña y «Tu compra ya está pagada» (Sueña: «tu vendedor»)', s[0] && JSON.stringify(s[0].p) === JSON.stringify(['Ana', 'Sueña', 'OC ' + a.oc, 'Mañana', '1 × SMART 140x190',
       'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'tu vendedor por el WhatsApp de siempre']), s[0] && s[0].p);
-  chk('la hoja anota que PEDRO no tiene celular', S.hoja().some(f => f[1] === 'r2' && f[3] === 'Recordatorio' && /celular/.test(f[8])));
+  chk('17:02: PEDRO (turno PM) todavía no: lo suyo es a las 19:00', !S.hoja().some(f => f[1] === 'r2' && f[3] === 'Recordatorio'));
+  S.limpiar(); poner('2026-10-14 19:02'); S.repaso();
+  chk('19:02: la hoja anota que PEDRO (PM) no tiene celular, y a ANA no se le repite', S.hoja().some(f => f[1] === 'r2' && f[3] === 'Recordatorio' && /celular/.test(f[8])) &&
+      !S.salen().some(x => x.pl === 'recordatorio_entrega'), S.salen());
   chk('el saldo con el recargo pactado: «Saldo a pagar al recibir: Bs 1.200 + Bs 150 del recargo por entrega»', S.ctx.waSaldo_(S.leer('r2')) === 'Saldo a pagar al recibir: Bs 1.200 + Bs 150 del recargo por entrega', S.ctx.waSaldo_(S.leer('r2')));
   S.limpiar(); poner('2026-10-14 17:30'); S.repaso();
   chk('a las 17:30 no se repite', S.meta.llamadas.length === 0);
+}
+{
+  /* (dueño, 12/10) «a las 17 recordatorio a los que son en la mañana del día siguiente y a las 19:00 los que son para el turno PM». */
+  poner('2026-10-13 11:00');
+  const S = servidor(ON);
+  const am = ped({ id: 't1', cliente: 'ALBA MAÑANA', fecha: '2026-10-15', turno: 'AM', celular: '70000011' });
+  const pm = ped({ id: 't2', cliente: 'PABLO TARDE', fecha: '2026-10-15', turno: 'PM', celular: '70000012' });
+  const st = ped({ id: 't3', cliente: 'SOFIA SINTURNO', fecha: '2026-10-15', turno: '', celular: '70000013' });
+  const mv = ped({ id: 't4', cliente: 'MARIO CAMBIA', fecha: '2026-10-15', turno: 'PM', celular: '70000014' });
+  [am, pm, st, mv].forEach(x => S.guardar(x)); pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 17:03'); S.repaso();
+  let a = S.salen().filter(x => x.pl === 'recordatorio_entrega').map(x => x.to).sort();
+  chk('17:03: recordatorio a los de la MAÑANA y a los sin turno, no a los de la tarde', a.join() === '59170000011,59170000013', a);
+  S.limpiar();
+  poner('2026-10-14 18:10'); S.guardar(Object.assign(S.leer('t4'), { turno: 'AM' })); pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 19:04'); S.repaso();
+  a = S.salen().filter(x => x.pl === 'recordatorio_entrega').map(x => x.to).sort();
+  chk('19:04: los de la TARDE, y el que pasó de PM a AM después de las 17 (no se queda sin aviso); a los de las 17 no se les repite', a.join() === '59170000012,59170000014', a);
+  const p2 = S.salen().find(x => x.to === '59170000012');
+  chk('…el de la tarde dice «Mañana» y «por la tarde»', p2 && p2.p[3] === 'Mañana' && /por la tarde/.test(p2.p[6]), p2 && p2.p);
+  S.limpiar(); poner('2026-10-14 20:30'); S.repaso();
+  chk('20:30: no se repite nada', !S.salen().some(x => x.pl === 'recordatorio_entrega'), S.salen());
 }
 {
   /* Sábado 31/10: el domingo no hay camión y el lunes 02/11 es feriado (Todos Santos) → el próximo es el martes 03/11. */
@@ -333,8 +358,10 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   const a = ped({ id: 'q1', cliente: 'MARTA', fecha: '2026-11-03', turno: 'PM' });
   S.guardar(a); pasar(5); S.repaso(); S.limpiar();
   poner('2026-10-31 17:05'); S.repaso();
+  chk('sábado 17:05: MARTA es PM, todavía no', !S.salen().some(x => x.pl === 'recordatorio_entrega'), S.salen());
+  poner('2026-10-31 19:05'); S.repaso();
   let s = S.salen().filter(x => x.pl === 'recordatorio_entrega');
-  chk('sábado 17:05: «El martes» (saltea domingo y el feriado del lunes)', s.length === 1 && s[0].pl === 'recordatorio_entrega' && s[0].p[3] === 'El martes' && s[0].p[6] === 'martes 03/11 por la tarde', s);
+  chk('sábado 19:05: «El martes» (saltea domingo y el feriado del lunes)', s.length === 1 && s[0].pl === 'recordatorio_entrega' && s[0].p[3] === 'El martes' && s[0].p[6] === 'martes 03/11 por la tarde', s);
   S.limpiar();
   S.guardar(ped({ id: 'q2', cliente: 'NUEVO DOMINGO', fecha: '2026-11-03' }));
   poner('2026-11-01 16:05'); S.repaso();

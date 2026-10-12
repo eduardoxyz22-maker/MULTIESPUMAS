@@ -126,7 +126,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   r = await m1(true);
   chk('prendido: Ana cuenta como avisada (1 de 2) con «🤖 Lo avisa el bot»', /1 de 2/.test(r.ficha) && r.filas.some(t => /ANA/.test(t) && /Lo avisa el bot/.test(t)), r);
   chk('…Pedro (sin celular) sigue «sin celular»', r.filas.some(t => /PEDRO/.test(t) && /sin celular/.test(t)), r.filas);
-  chk('…y el pie lo explica', /El bot de WhatsApp les manda el recordatorio a las 17:00/.test(r.pie), r.pie);
+  chk('…y el pie lo explica', /El bot de WhatsApp les manda el recordatorio.*17:00 los de la mañana y a las 19:00 los de la tarde/.test(r.pie), r.pie);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log(`\n${PASS} bien · ${FAIL} mal`);
