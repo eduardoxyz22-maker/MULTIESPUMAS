@@ -13840,3 +13840,5 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   servidor ≥ 12-c) → `#wa-resp-mis` (las de los pedidos de la vendedora elegida; «👑 Ver todos» = todas) y `#wa-resp-adm` (todas, con
   clave/aparato de administración/logística), aviso 💬 de Eduardo, botones «📋 Abrir el pedido», «💬 Escribirle» (wa.me) y «✓ Ya lo
   atendí» (para todos). `tests/test_wa_resp.js` (7).
+- **🚀 12/10: `.gs` 2026-10-12-c IMPLEMENTADO (el dueño; volver atrás = ✏️ a la versión 43 Y pegar `b833b91…`, 3.176 líneas) y
+  página PUBLICADA (`02a7a09`).**
