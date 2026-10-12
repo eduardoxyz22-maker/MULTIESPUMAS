@@ -13843,7 +13843,7 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - **🚀 12/10: `.gs` 2026-10-12-c IMPLEMENTADO (el dueño; volver atrás = ✏️ a la versión 43 Y pegar `b833b91…`, 3.176 líneas) y
   página PUBLICADA (`02a7a09`).**
 
-### §4kl — 🤖 Mensajes «_v2» con emojis + WhatsApp de la vendedora · ✅ sin entregado automático (12/10, SIN publicar: el dueño pidió ver los ejemplos antes)
+### §4kl — 🤖 Mensajes «_v2» con emojis + WhatsApp de la vendedora · ✅ sin entregado automático (12/10; `.gs` 12-d IMPLEMENTADO ~17:40 por el dueño, PÁGINA PUBLICADA 17:46, `a0bec42`, Pages OK 17:47)
 - Dueño: *«¿no sería ideal que redirija al nro de la vendedora…? mi jefe dice que el mensaje está muy seco, faltan emojis… más
   estético»* y *«incluí un saludo de que sos un sistema automatizado o el emoticón de bot»*. `.gs` **2026-10-12-d**: plantillas
   `*_v2` (🤖 _Mensaje automático_, negritas, emojis, espacios; las 3 del cliente con el contacto al final: `waContactoVend_` →
@@ -13856,3 +13856,9 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   entregados solo con ✅. El aviso de Eduardo a las 16:30 (`CIERRE_ENT_HORA`) sigue. ⚠️ La regla del STOCK «fecha pasada sin ✅ =
   salió» (§4co, dueño 05/10) NO se tocó: es una cuenta, no marca nada. Pruebas cambiadas a conciencia: `test_cierre_entregas`,
   `test_rev_corte_codex` (tildan a mano), `test_visuales` §6, `test_vistas_4im` §5.
+- Antes de publicar: «tu vendedor» o «tu vendedora» según el primer nombre (`waTuVend_`, `WA_VENDEDOR_HOMBRE`: Jonathan, Mauricio,
+  Juan Pablo, Fernando, Eduardo) en el contacto sin número y en la respuesta automática. `test_wa_bot` → 107. Commit de la rama
+  `f24447c` (3.294 líneas). El dueño corrió `crearPlantillasWhatsApp` (17:45: 5 `_v2` en revisión, `logistica_cambio_v2` aprobada;
+  mientras tanto salen las viejas solas). Publicado en `main` también el `.gs` y `test_wa_bot.js`. Falta: que cargue
+  `WA_VENDEDORAS` y que Meta apruebe las 5. **Volver atrás**: ✏️ a la versión de la 12-c que anotó el dueño Y pegar la 12-c
+  (`3e6bdd661a2f50bc8a4b7aedc03b51c1faa90ff3`, 3.254 líneas); la página publicada anda igual con la 12-c (solo mostraría la línea gris).

@@ -726,7 +726,7 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
-## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` IMPLEMENTADO 12/10 ~15:15 por el dueño, EN PRUEBA con `WA_PRUEBA`; la página del bot sigue en la rama)
+## 🤖 El bot de WhatsApp (§4jt, 11/10; EN MARCHA con clientes reales desde el 12/10; servidor `2026-10-12-d` IMPLEMENTADO 12/10 ~17:40, página PUBLICADA 17:46, `a0bec42`)
 Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
 confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
 - `doSave` → `waAlGuardar_` solo anota en `WA_COLA` (sin red, adentro del candado); `waRepaso` (cada 5 min + `waDespierta` de una vez)
@@ -743,7 +743,11 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - **💬 Lo que contesta el cliente (§4kk, `.gs` 2026-10-12-c)**: la fila «💬 Respondió» con su pedido, respuesta automática una vez
   cada 12 h por número (`WA_AUTORESP`=0 la apaga) y al panel por `waRespuestas` (`#wa-resp-mis` de su vendedora, `#wa-resp-adm` todas,
   aviso de Eduardo); «✓ Ya lo atendí» = `waRespAtendida` (columna K, para todos).
-- `tests/test_wa_bot.js` (101), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk.
+- **🤖 v2 (§4kl, `.gs` 2026-10-12-d)**: plantillas `*_v2` con 🤖 _Mensaje automático_ y emojis; si Meta no la tiene aprobada sale la vieja
+  (`WA_TIPOS[k].vieja/nv`, errores 132001/132015/132016). Al cliente, el WhatsApp de su vendedor desde **`WA_VENDEDORAS`** (`Nombre:celular, …`,
+  en Propiedades, nunca en el código); «tu vendedor/a» por `waTuVend_` (`WA_VENDEDOR_HOMBRE`). **Sin entregado automático** (dueño, 12/10):
+  el cierre de entregas no tilda nada solo y fecha pasada sin ✅ = «❓ Sin confirmar»; la regla del stock (§4co) no cambió.
+- `tests/test_wa_bot.js` (107), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)
