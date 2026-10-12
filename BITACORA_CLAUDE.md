@@ -7458,6 +7458,9 @@ y modernizamos stock y producción»*.
   cabecera con brillo y sombra, botones en píldora, fondo suave. Solo CSS sobre su estilo en línea. Lo de ADENTRO de cada ventana todavía
   no se rediseñó (como sí se hizo con Stock y Qué producir): se propone ir una por una.
 - `tests/test_adm_tools.js` (6). Batería en verde.
+- **Corregido a píldoras chicas** (dueño, con captura: *«muy grande, se supone que eran píldoras y ocupaban poco espacio… así solo alarga la
+  hoja del panel»*; PUBLICADA 12/10 00:3x, `86d4755`): cada `.at-g` es UNA fila (etiqueta + píldoras), la explicación pasó al `title`
+  (`data-d` queda, ya sin `::after`). En el celular, píldoras de .68rem. ⚠️ No volver a las tarjetas con descripción: alargaban la página.
 
 ## 4ka. 11/10 (noche): 👋 Al entrar al panel, cada uno dice quién es — PUBLICADA 11/10 23:53 de Bolivia (`4ab5c90`), Pages OK
 El dueño: *«falta que al entrar al panel cada vendedor se identifique»*.
