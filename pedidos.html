@@ -51,6 +51,7 @@ body{font-family:var(--font-sans);color:var(--text);-webkit-font-smoothing:antia
   .nav button{flex:1 1 auto;padding:9px 8px;font-size:.74rem;text-align:center}
 }
 .nav button.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.nav button[hidden]{display:none!important}
 .nav button:hover:not(.active){background:var(--teal-lt);color:var(--teal-dk)}
 
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 22px}
@@ -974,7 +975,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 <div class="nav">
   <button id="tab-form" class="active" onclick="tabNuevoPedido()"><span class="t-ic">＋</span><span class="t-lb">Nuevo pedido</span><span class="t-cr">Nuevo</span></button>
   <button id="tab-mis" onclick="showView('mis')"><span class="t-ic">📋</span><span class="t-lb">Mis pedidos</span><span class="t-cr">Míos</span></button>
-  <button id="tab-chofer" onclick="showView('chofer')"><span class="t-ic">🚚</span><span class="t-lb">Chofer</span><span class="t-cr">Chofer</span></button>
+  <!-- 🙈 (12/10, dueño: «elimina la pestaña choferes, nadie la usa, o escóndela») Escondida, no borrada: la vista sigue (showView('chofer'))
+       y el botón vuelve sacando `hidden`. -->
+  <button id="tab-chofer" hidden onclick="showView('chofer')"><span class="t-ic">🚚</span><span class="t-lb">Chofer</span><span class="t-cr">Chofer</span></button>
   <button id="tab-conta" onclick="showView('conta')"><span class="t-ic">🧾</span><span class="t-lb">Contabilidad</span><span class="t-cr">Conta</span></button>
   <button id="tab-atc" onclick="showView('atc')"><span class="t-ic">🎧</span><span class="t-lb">ATC</span><span class="t-cr">ATC</span></button>
   <button id="tab-admin" onclick="showView('admin')"><span class="t-ic">🔒</span><span class="t-lb">Administración</span><span class="t-cr">Admin</span></button>
@@ -1514,8 +1517,10 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
       </div>
 
       <div class="metrics" id="atc-metrics"></div>
+      <div id="atv-viaje"></div>
       <div id="atc-por-motivo"></div>
-      <div class="tw tw-tall"><table id="tbl-atc"></table></div>
+      <div id="atv-cards" class="atv-cards"></div>
+      <div class="tw tw-tall" id="atv-tw"><table id="tbl-atc"></table></div>
       <div id="atc-empty" class="empty" style="display:none">No hay ATC para este filtro.</div>
     </div>
   </div>
@@ -2338,6 +2343,54 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @media(max-width:700px){ .asis{ right:2px; bottom:calc(72px + env(safe-area-inset-bottom)); } body.con-pasos .asis{ bottom:calc(138px + env(safe-area-inset-bottom)); }
   .asis-yo{ width:66px; height:118px; } .asis-yo img{ height:112px; } .asis-piso{ width:54px; } .asis-globo{ margin:0 66px -90px 0; } }
 @media print{ .asis{ display:none!important; } }
+/* 🎧 ATC con el estilo nuevo (12/10) */
+.atv-t{ font-weight:800; font-size:.86rem; color:var(--text); display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 10px; margin-bottom:8px; }
+.atv-t small{ font-weight:600; color:var(--muted); font-size:.74rem; }
+.atv-limpia{ margin-left:auto; border:1px solid var(--gray-md); background:#fff; border-radius:999px; padding:3px 10px; font:inherit; font-size:.74rem; font-weight:700; cursor:pointer; }
+.atv-viaje{ margin:4px 0 16px; padding:12px; border:1px solid var(--gray-lt); border-radius:14px; background:linear-gradient(180deg,#f7fbfb,#fff); }
+.atv-pasos{ display:flex; align-items:stretch; gap:4px; overflow-x:auto; padding:2px 2px 6px; }
+.atv-paso{ --c:#94a3b8; flex:1 1 0; min-width:92px; display:grid; justify-items:center; gap:2px; padding:9px 6px 8px; border-radius:12px; border:1px solid color-mix(in srgb, var(--c) 35%, #fff);
+  background:linear-gradient(160deg,color-mix(in srgb, var(--c) 12%, #fff),#fff 75%); font:inherit; cursor:pointer; position:relative; transition:transform .2s, box-shadow .2s; }
+.atv-paso:hover{ transform:translateY(-2px); box-shadow:0 10px 20px -14px var(--c); }
+.atv-paso b{ font-size:1.35rem; line-height:1; color:var(--c); font-variant-numeric:tabular-nums; }
+.atv-p-ico{ font-size:1.15rem; } .atv-p-t{ font-size:.68rem; font-weight:700; color:var(--muted); text-align:center; line-height:1.2; }
+.atv-paso.cero{ opacity:.55; } .atv-paso.cero b{ color:var(--muted); }
+.atv-paso.on{ box-shadow:0 0 0 3px var(--c); }
+.atv-paso.late::after{ content:""; position:absolute; inset:-3px; border-radius:14px; border:2px solid var(--c); animation:mi-late 1.8s ease-out infinite; pointer-events:none; }
+.atv-flecha{ flex:0 0 12px; align-self:center; height:2px; background:repeating-linear-gradient(90deg,#94a3b8 0 4px,transparent 4px 7px); position:relative; }
+.atv-flecha::after{ content:""; position:absolute; right:-2px; top:-3px; border:4px solid transparent; border-left-color:#94a3b8; }
+.atv-viaje.atv-entra .atv-paso{ animation:mi-entra .5s cubic-bezier(.2,1.3,.4,1) both; }
+.atv-mot{ margin:0 0 16px; display:grid; gap:6px; }
+.atv-mb{ display:grid; grid-template-columns:minmax(110px,190px) 1fr auto; align-items:center; gap:10px; width:100%; text-align:left; font:inherit; background:#fff; border:1px solid var(--gray-lt);
+  border-radius:10px; padding:6px 10px; cursor:pointer; animation:mi-entra .45s ease-out both; }
+.atv-mb.on{ border-color:var(--teal); box-shadow:0 0 0 2px var(--teal-lt); }
+.atv-mb-n{ font-size:.76rem; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--text); min-width:0; overflow-wrap:anywhere; }
+.atv-mb-b{ height:12px; border-radius:999px; background:#eef2f4; overflow:hidden; }
+.atv-mb-b i{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#00B5AD,#4fd1c5); position:relative; animation:atv-crece .9s ease-out both; transform-origin:left; }
+.atv-mb.sin .atv-mb-b i{ background:linear-gradient(90deg,#dc2626,#f87171); }
+.atv-mb-b em{ position:absolute; left:0; top:0; bottom:0; background:rgba(21,128,61,.55); border-radius:999px; }
+.atv-mb-v{ font-size:.74rem; color:var(--muted); white-space:nowrap; } .atv-mb-v b{ color:var(--text); font-size:.9rem; }
+@keyframes atv-crece{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+.atv-onda{ animation:atv-onda 1.6s ease-in-out infinite; transform-origin:24px 16px; } @keyframes atv-onda{ 50%{ opacity:.25; transform:scale(1.12); } }
+.atv-modo{ display:flex; justify-content:flex-end; margin:0 0 8px; }
+#view-atc.atv-tarjetas #atv-tw{ display:none; }
+.atv-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
+.atv-c{ --c:#94a3b8; background:#fff; border:1px solid var(--gray-md); border-left:5px solid var(--c); border-radius:12px; padding:10px 12px; cursor:pointer; min-width:0;
+  box-shadow:0 6px 16px -14px var(--c); animation:mi-entra .45s ease-out both; }
+.atv-c-h{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.atv-dias{ margin-left:auto; font-weight:900; font-size:.78rem; border-radius:999px; padding:2px 8px; background:#e8f7ee; color:#15803d; font-variant-numeric:tabular-nums; }
+.atv-dias.ojo{ background:#fff4e0; color:#b45309; } .atv-dias.mal{ background:#fde8ea; color:#b91c1c; }
+.atv-c-cli{ margin-top:6px; overflow-wrap:anywhere; } .atv-c-cli span{ font-size:.74rem; color:var(--muted); }
+.atv-c-p{ font-size:.78rem; color:var(--text); margin-top:3px; overflow-wrap:anywhere; }
+.atv-c-m{ margin-top:6px; display:flex; flex-wrap:wrap; gap:4px; }
+.atv-hitos{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--gray-md); position:relative; }
+.atv-h{ display:grid; justify-items:center; gap:1px; text-align:center; opacity:.5; }
+.atv-h.si{ opacity:1; } .atv-h i{ font-style:normal; font-size:.95rem; } .atv-h small{ font-size:.62rem; color:var(--muted); } .atv-h b{ font-size:.72rem; }
+.atv-c-pie{ display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:8px; font-size:.72rem; color:var(--muted); }
+@media (max-width:560px){ .atv-mb{ grid-template-columns:1fr auto; } .atv-mb-b{ grid-column:1 / -1; grid-row:2; }
+  .atv-pasos{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; overflow:visible; } .atv-paso{ min-width:0; } .atv-flecha{ display:none; } }
+@media (prefers-reduced-motion:reduce){ .atv-paso, .atv-mb, .atv-mb-b i, .atv-c, .atv-onda, .atv-paso.late::after{ animation:none!important; } }
+
 @media (prefers-reduced-motion:reduce){ .asis *, .asis-foco{ animation:none!important; } }
 /* A · la barra y B · la dona */
 .cx-vivo{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:12px; margin:0 0 16px; align-items:start; }
@@ -6135,7 +6188,7 @@ function cxIcoDe(lbl){
   if(/PROYECCI|CERRÓ|CERRO/.test(t)) return MIS_ESC[1];
   return CX_ESC[0];   // entró / vendido
 }
-function cxFichasVivas(box, clave){
+function cxFichasVivas(box, clave, icoDe){   // icoDe: el dibujito según el título (ATC trae el suyo)
   if(!box) return;
   var cs=box.querySelectorAll('.mc');
   for(var i=0;i<cs.length;i++){
@@ -6144,7 +6197,7 @@ function cxFichasVivas(box, clave){
     c.classList.add('cx-v');
     var col=bar ? (bar.style.background||bar.style.backgroundColor||'') : '';
     if(col) c.style.setProperty('--c', col);
-    c.insertAdjacentHTML('afterbegin','<span class="cx-esc" aria-hidden="true">'+cxIcoDe(lbl && lbl.textContent)+'</span>');
+    c.insertAdjacentHTML('afterbegin','<span class="cx-esc" aria-hidden="true">'+(icoDe||cxIcoDe)(lbl && lbl.textContent)+'</span>');
     var m=sub && String(sub.textContent).match(/(\d{1,3})% de lo/);
     if(m) c.insertAdjacentHTML('beforeend','<span class="cx-pct" aria-hidden="true"><i style="width:'+Math.min(100, +m[1])+'%"></i></span>');
     if(/FALTA|POR COBRAR|POR RETIRAR|SIN MÉTODO/i.test(lbl && lbl.textContent || '') && !/✅/.test((c.querySelector('.mc-val')||{}).textContent||'')) c.classList.add('cx-debe');
@@ -15843,11 +15896,11 @@ function refreshAtc(){
     if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); ULTIMO_REFRESCO=Date.now(); saveMirror(); renderAtc(); }
   }).catch(function(){});
 }
-function atcLista(){
+function atcLista(sinEstado){
   var mode=segVal('atc-mode')||'todo';
   var mes=(document.getElementById('atc-mes')||{}).value||'';
   var mot=(document.getElementById('atc-motivo')||{}).value||'';
-  var est=(document.getElementById('atc-estado')||{}).value||'';
+  var est=sinEstado ? '' : ((document.getElementById('atc-estado')||{}).value||'');   // sinEstado: el «viaje» cuenta todos los estados
   var q=sinTildes((document.getElementById('atc-search')||{}).value||'');   // sin tildes, como Administración (25/09)
   var list=STATE.filter(function(p){ return esATC(p.oc); });
   /* ⚠️ Corta por cuándo ENTRÓ la ATC, no por la fecha de recojo: la pregunta es
@@ -15907,18 +15960,19 @@ function renderAtc(){
   var byM={};
   list.forEach(function(p){ var k=atcMotivo(p)||'(sin motivo anotado)'; if(!byM[k])byM[k]={n:0,dev:0}; byM[k].n++; if(atcEntregada(p)) byM[k].dev++; });
   var claves=Object.keys(byM).sort(function(a,b){ return byM[b].n-byM[a].n; });
+  /* ✨ (12/10, dueño: «falta modernizar la pestaña de ATC al nuevo estilo») Cada motivo es una barra: el largo es cuántas, lo
+     verde lo cerrado. Tocar uno filtra por ese motivo (y otra vez, lo saca). */
+  var motSel=(document.getElementById('atc-motivo')||{}).value||'', maxM=claves.length?byM[claves[0]].n:0;
   document.getElementById('atc-por-motivo').innerHTML = claves.length
-    ? ('<div style="margin:2px 0 16px"><div class="lb" style="margin-bottom:7px">Por qué se generaron</div>'+
-       '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
-       claves.map(function(k){
-         var o=byM[k], pc=list.length?Math.round(o.n/list.length*100):0;
-         var sinM=(k==='(sin motivo anotado)');
-         return '<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--gray-lt);'+
-           'border-left:3px solid '+(sinM?'var(--red)':'var(--teal)')+';border-radius:8px;padding:7px 11px">'+
-           '<div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em">'+esc(k)+'</div>'+
-           '<div style="font-weight:800;color:'+(sinM?'var(--red)':'var(--teal-dk)')+'">'+o.n+' <span style="font-size:.72rem;font-weight:600;color:var(--muted)">('+pc+'%)</span></div>'+
-           '<div style="font-size:.7rem;color:var(--muted)">'+o.dev+' cerrada'+(o.dev===1?'':'s')+'</div></div>';
-       }).join('')+'</div></div>')
+    ? ('<div class="atv-mot"><div class="atv-t">💬 Por qué se generaron <small>tocá uno para ver solo esas</small></div>'+
+       claves.map(function(k, i){
+         var o=byM[k], pc=list.length?Math.round(o.n/list.length*100):0, sinM=(k==='(sin motivo anotado)');
+         var w=maxM?Math.max(4, Math.round(o.n/maxM*100)):0, wc=o.n?Math.round(o.dev/o.n*100):0;
+         return '<button type="button" class="atv-mb'+(sinM?' sin':'')+(motSel===k?' on':'')+'" style="animation-delay:'+Math.min(i,8)*45+'ms" data-m="'+esc(sinM?'':k)+'" data-sin="'+(sinM?1:0)+'" onclick="atvMotivo(this)">'+
+           '<span class="atv-mb-n">'+esc(k)+'</span>'+
+           '<span class="atv-mb-b"><i style="width:'+w+'%"><em style="width:'+wc+'%"></em></i></span>'+
+           '<span class="atv-mb-v"><b>'+o.n+'</b> ('+pc+'%) · '+o.dev+' cerrada'+(o.dev===1?'':'s')+'</span></button>';
+       }).join('')+'</div>')
     : '';
 
   /* ---- La matriz ---- */
@@ -15979,6 +16033,100 @@ function renderAtc(){
   document.getElementById('tbl-atc').innerHTML=head+'<tbody>'+body+'</tbody>';
   document.getElementById('tbl-atc').style.display=list.length?'table':'none';
   document.getElementById('atc-empty').style.display=list.length?'none':'block';
+  try{ atvPintar(list, mesSel); }catch(e){ console.error(e); }
+}
+/* ==========================================================================
+   🎧 ATC CON EL ESTILO NUEVO (12/10, dueño: «falta modernizar la pestaña de ATC al nuevo estilo»). Solo presentación: las cuentas
+   son las de siempre (`atcLista`, `atcEstado`, `atcDias`, `atcMotivo`) y la tabla se sigue armando entera (las pruebas la leen).
+   · Fichas con su color y un dibujito (`cxFichasVivas` con `atvIcoDe`); late la que pide trabajo.
+   · 🛤️ El viaje: Por recoger → En fábrica → Lista → Recoger de fábrica → Programada → Entregada, con cuántas hay en cada paso
+     (sin el filtro de estado); tocar un paso filtra por ese estado.
+   · 💬 Motivos en barras (en `renderAtc`), que se tocan para filtrar.
+   · En angosto (< 900 px: iPad parado y celular) tarjetas en vez de tabla, con las cuatro fechas del circuito y los días en
+     semáforo; «📋 Ver como tabla» por aparato (`me_atc_tabla`).
+   ========================================================================== */
+var ATV_ESC={
+  atc:'<svg viewBox="0 0 48 36"><path d="M12 20v-3a12 12 0 0 1 24 0v3" fill="none" stroke="#00B5AD" stroke-width="3" stroke-linecap="round"/><rect x="8" y="18" width="7" height="11" rx="3" fill="#00B5AD"/><rect x="33" y="18" width="7" height="11" rx="3" fill="#00B5AD"/><path d="M36 29q0 4-6 4h-4" fill="none" stroke="#0d8f88" stroke-width="2" stroke-linecap="round"/><g class="atv-onda"><path d="M42 12q3 4 0 8" fill="none" stroke="#7dd3cf" stroke-width="2" stroke-linecap="round"/><path d="M6 12q-3 4 0 8" fill="none" stroke="#7dd3cf" stroke-width="2" stroke-linecap="round"/></g></svg>'
+};
+function atvIcoDe(lbl){
+  var t=String(lbl||'').toUpperCase();
+  if(/POR RECOGER|RECOGER DE F/.test(t)) return MIS_ESC[0];
+  if(/LISTAS/.test(t)) return MIS_ESC[3];
+  if(/EN FÁBRICA|EN FABRICA/.test(t)) return CX_ESC_X.fabrica;
+  if(/PROGRAMADA/.test(t)) return MIS_ESC[1];
+  if(/ENTREGADA/.test(t)) return CX_ESC_X.suena;
+  if(/SIN MOTIVO/.test(t)) return CX_ESC_X.duda;
+  return ATV_ESC.atc;
+}
+var ATV_PASOS=[
+  { k:'sinrecoger', ico:'🚚', t:'Por recoger',   c:'#dc2626' },
+  { k:'fabrica',    ico:'🏭', t:'En fábrica',    c:'#d97706' },
+  { k:'lista',      ico:'📦', t:'Lista en fábrica', c:'#1d4ed8' },
+  { k:'recogerfab', ico:'🏭', t:'Recoger de fábrica', c:'#dc2626' },
+  { k:'programada', ico:'🔁', t:'Programada',    c:'#0369a1' },
+  { k:'cerrada',    ico:'✅', t:'Entregada',     c:'#16a34a' }
+];
+function atvColor(k){ for(var i=0;i<ATV_PASOS.length;i++) if(ATV_PASOS[i].k===k) return ATV_PASOS[i].c; return '#94a3b8'; }
+function atvModoTarjetas(){ var v=cxLS('me_atc_tabla'); return window.innerWidth<900 && v!=='1'; }
+function atvTabla(si){ cxLS('me_atc_tabla', si?'1':null); renderAtc(); }
+function atvEstado(k){ var s=document.getElementById('atc-estado'); if(!s) return; s.value=(s.value===k?'':k); renderAtc(); }
+function atvMotivo(b){
+  if(b.getAttribute('data-sin')==='1'){ atvEstado('sinmotivo'); return; }
+  var s=document.getElementById('atc-motivo'), m=b.getAttribute('data-m'); if(!s) return;
+  s.value=(s.value===m?'':m); renderAtc();
+}
+function atvPintar(list, mesSel){
+  /* las fichas */
+  var box=document.getElementById('atc-metrics');
+  if(box){
+    cxFichasVivas(box, 'atcFichas', atvIcoDe);
+    [].forEach.call(box.querySelectorAll('.mc'), function(c){
+      var l=(c.querySelector('.mc-lbl')||{}).textContent||'', v=Number(((c.querySelector('.mc-val')||{}).textContent||'').replace(/\D/g,''))||0;
+      c.classList.toggle('cx-debe', v>0 && /Por recoger|Listas|Recoger de f|Sin motivo/i.test(l));
+    });
+  }
+  /* 🛤️ el viaje */
+  var vj=document.getElementById('atv-viaje');
+  if(vj){
+    var todas=atcLista(true), cuenta={}, est=(document.getElementById('atc-estado')||{}).value||'';
+    todas.forEach(function(p){ var e=atcEstado(p); cuenta[e]=(cuenta[e]||0)+1; });
+    var abiertas=todas.length-(cuenta.cerrada||0);
+    vj.innerHTML=todas.length ? ('<div class="atv-viaje'+(visAnimar('atvViaje', JSON.stringify(cuenta))?' atv-entra':'')+'">'+
+      '<div class="atv-t">🛤️ El viaje de las ATC <small>'+abiertas+' sin cerrar · tocá un paso para ver solo esas</small>'+
+        (est?('<button type="button" class="atv-limpia" onclick="atvEstado(\''+esc(est)+'\')">✕ ver todas</button>'):'')+'</div>'+
+      '<div class="atv-pasos">'+ATV_PASOS.map(function(o, i){
+        var n=cuenta[o.k]||0;
+        return '<button type="button" class="atv-paso'+(n?'':' cero')+(est===o.k?' on':'')+((n && /sinrecoger|lista|recogerfab/.test(o.k))?' late':'')+'" style="--c:'+o.c+';animation-delay:'+i*70+'ms" onclick="atvEstado(\''+o.k+'\')">'+
+          '<span class="atv-p-ico">'+o.ico+'</span><b>'+n+'</b><span class="atv-p-t">'+esc(o.t)+'</span></button>';
+      }).join('<span class="atv-flecha" aria-hidden="true"></span>')+'</div></div>') : '';
+  }
+  /* las tarjetas */
+  var cards=document.getElementById('atv-cards'), vista=document.getElementById('view-atc'), tarj=atvModoTarjetas();
+  if(vista) vista.classList.toggle('atv-tarjetas', tarj && !!list.length);
+  if(!cards) return;
+  if(!list.length){ cards.innerHTML=''; return; }
+  var cambiar='<div class="atv-modo">'+(tarj ? '<button type="button" class="btn btn-ghost btn-sm" onclick="atvTabla(true)">📋 Ver como tabla</button>'
+    : (window.innerWidth<900 ? '<button type="button" class="btn btn-ghost btn-sm" onclick="atvTabla(false)">🃏 Ver en tarjetas</button>' : ''))+'</div>';
+  if(!tarj){ cards.innerHTML=cambiar; return; }
+  var hoy=todayStr();
+  cards.innerHTML=cambiar+'<div class="atv-grid">'+list.map(function(p, i){
+    var e=atcEstado(p), lb=atcEstadoLbl(e), m=atcMotivo(p), d=atcDias(p), cerr=(e==='cerrada');
+    var sem=d==null ? '' : (cerr ? 'ok' : (d>15 ? 'mal' : (d>7 ? 'ojo' : 'ok')));
+    var prod=(p.productos||[]).map(function(x){ return String((x&&x.desc)||'')+((x&&x.medida)?(' '+x.medida):''); }).filter(Boolean).join(' · ')||'—';
+    var hito=function(ico, t, f){ return '<span class="atv-h'+(f?' si':'')+'"><i>'+ico+'</i><small>'+t+'</small><b>'+(f?esc(fmtFechaCorta(f)):'—')+'</b></span>'; };
+    var vieja=(mesSel && atcEntro(p).slice(0,7)<mesSel);
+    return '<div class="atv-c" style="--c:'+atvColor(e)+';animation-delay:'+Math.min(i,10)*35+'ms" role="button" tabindex="0" data-id="'+esc(String(p.id))+'" onclick="verAtc(this.getAttribute(\'data-id\'))" onkeydown="if(event.key===\'Enter\'){this.click();}">'+
+      '<div class="atv-c-h"><span class="badge b-atc">🎧 '+esc(p.oc||'—')+'</span><span class="badge '+lb.cls+'">'+esc(lb.lbl)+'</span>'+
+        (d!=null?('<span class="atv-dias '+sem+'" title="Días del circuito">'+d+' d</span>'):'')+'</div>'+
+      '<div class="atv-c-cli"><b>'+esc(p.cliente||'—')+'</b>'+(p.celular?(' <span>📞 '+esc(p.celular)+'</span>'):'')+'</div>'+
+      '<div class="atv-c-p">'+esc(prod)+'</div>'+
+      '<div class="atv-c-m">'+(m?('<span class="badge b-gray">'+esc(m)+'</span>'):'<span class="badge b-red">⚠️ sin motivo</span>')+
+        (atcComodin(p)?' <span class="badge b-blue">🛏️ comodín</span>':'')+(vieja?(' <span class="badge b-amber">⏳ de '+esc(mesNombreCorto(atcEntro(p).slice(0,7)))+'</span>'):'')+'</div>'+
+      '<div class="atv-hitos">'+hito('📝','Entró',atcEntro(p))+hito('🚚','Recojo',atcRecogida(p))+hito('🏭','De fábrica',atcRecogidoFab(p))+hito('✅','Al cliente',atcEntregada(p))+'</div>'+
+      '<div class="atv-c-pie"><span>'+esc(p.vendedor||'')+'</span>'+
+        (UNLOCKED?('<button type="button" class="rowbtn" onclick="event.stopPropagation();abrirDevolucionAtc(\''+esc(p.id)+'\')" title="Anotar recojo, devolución de fábrica o entrega al cliente">📦 Anotar avance</button>'):'')+'</div>'+
+    '</div>';
+  }).join('')+'</div>';
 }
 /* Las casillas de «qué se le recoge», dibujadas desde ATC_PIEZAS para no repetir la lista. */
 function pintarPiezasAtc(){

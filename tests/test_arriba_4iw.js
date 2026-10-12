@@ -78,7 +78,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     const page = await abrir('2026-10-06T10:00:00-04:00', { viewport:{ width:390, height:844 }, hasTouch:true, isMobile:true });
     const r = await page.evaluate(async ()=>{
       var nav=document.querySelector('.nav'), rn=nav.getBoundingClientRect(), cs=getComputedStyle(nav);
-      var bs=[].map.call(nav.querySelectorAll('button'), function(b){ var rb=b.getBoundingClientRect(); return { id:b.id, w:Math.round(rb.width), cr:getComputedStyle(b.querySelector('.t-cr')).display, lb:getComputedStyle(b.querySelector('.t-lb')).display, txt:b.innerText.trim() }; });
+      var bs=[].filter.call(nav.querySelectorAll('button'), function(b){ return !b.hidden; }).map(function(b){ /* (12/10, §4jz) «Chofer» va escondida */ var rb=b.getBoundingClientRect(); return { id:b.id, w:Math.round(rb.width), cr:getComputedStyle(b.querySelector('.t-cr')).display, lb:getComputedStyle(b.querySelector('.t-lb')).display, txt:b.innerText.trim() }; });
       window.scrollTo(0,600); fxPasosPintar(); await new Promise(r=>setTimeout(r,250));
       var ps=document.getElementById('fx-pasos'), rp=ps.getBoundingClientRect();
       var b=document.getElementById('f-submit'); b.scrollIntoView({block:'end'}); await new Promise(r=>setTimeout(r,120));
@@ -89,7 +89,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
         unaLinea: an.top < hd.top + 20 };
     });
     chk('3a. en el celular las pestañas van fijas al pie', r.pos==='fixed' && r.abajo===0 && r.alto<70, r);
-    chk('3b. seis botones con ícono y palabra corta, todos del mismo ancho', r.bs.length===6 && r.bs.every(b=>b.cr==='block' && b.lb==='none') && Math.max(...r.bs.map(b=>b.w))-Math.min(...r.bs.map(b=>b.w))<=2,
+    chk('3b. cinco botones (Chofer escondida, §4jz) con ícono y palabra corta, todos del mismo ancho', r.bs.length===5 && r.bs.every(b=>b.cr==='block' && b.lb==='none') && Math.max(...r.bs.map(b=>b.w))-Math.min(...r.bs.map(b=>b.w))<=2,
         r.bs.map(b=>b.txt.replace(/\s+/g,' ')+'·'+b.w));
     chk('3c. la página no se va de costado', r.ancho<=r.vw, r.ancho);
     chk('3d. la barra de pasos queda ENCIMA de la barra del pie', !r.pasosOculto && r.pasosAbajo<=r.navArriba+2, r);
