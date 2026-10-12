@@ -120,6 +120,7 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('tocar un camión abre su ficha con sus pedidos y lo cargado', r.cam.vis && /Foton nuevo/.test(r.cam.tit) && r.cam.n===1 && /CLIENTE A/.test(r.cam.txt) && /de 5 bultos cargados/.test(r.cam.txt), r.cam);
   chk('«Sin camión» abre los pedidos que esperan camión', r.sin.vis && /Sin camión/.test(r.sin.tit) && /CLIENTE C/.test(r.sin.txt), r.sin);
   chk('Banzer abre los pedidos que se cargan allá', r.bz.vis && /Banzer/.test(r.bz.tit) && r.bz.n===1 && /CLIENTE B/.test(r.bz.txt), r.bz);
+  chk('en Administración la ficha dice la OC y la nota («OC 10-31 · Nota 501»), logística busca por OC', /OC 10-31 · Nota 501/.test(r.cam.txt), r.cam.txt.slice(0,160));
   chk('Moreno abre los pedidos que hay que ir a buscar', r.im.vis && /Ir a buscar/.test(r.im.tit) && r.im.n===1 && /CLIENTE A/.test(r.im.txt), r.im);
 
   console.log('\n── 6. Sin 3D y sin errores ──');
