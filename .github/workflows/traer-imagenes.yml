@@ -1,0 +1,31 @@
+# Baja a la carpeta asistente/ las imágenes de herramientas/traer_imagenes.txt («url archivo» por renglón) y las sube a la
+# misma rama. Lo usa el asistente del panel (§4jx): desde la sesión de Claude no hay salida a Cloudinary.
+name: Traer imágenes del asistente
+on:
+  push:
+    paths: ['herramientas/traer_imagenes.txt']
+permissions:
+  contents: write
+jobs:
+  traer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: '${{ github.ref_name }}' }
+      - name: Bajar
+        run: |
+          set -e
+          mkdir -p asistente
+          while read -r url archivo; do
+            [ -z "$url" ] && continue
+            case "$archivo" in */*|..*|'') echo "nombre raro: $archivo"; exit 1;; esac
+            curl -fsSL "$url" -o "asistente/$archivo"
+            ls -la "asistente/$archivo"
+          done < herramientas/traer_imagenes.txt
+      - name: Subir
+        run: |
+          git config user.name heaven-bot
+          git config user.email heaven-bot@users.noreply.github.com
+          git add asistente
+          git diff --cached --quiet || git commit -m "Imágenes del asistente (traídas de Cloudinary)"
+          git push origin HEAD:${{ github.ref_name }}
