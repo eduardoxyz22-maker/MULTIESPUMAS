@@ -7456,6 +7456,8 @@ que envuelve a los montacargas y queda delante del camión; el rayo la tocaba pr
   ventana de Mis pedidos (`depPanel`, `abrir:'showPedidoModal'`). Las fichas de abajo siguen igual.
 - Probado con el 3D de verdad (three r128 local + SwiftShader, en el scratchpad: el repo no trae la librería) y en la batería sin 3D:
   `test_camiones_3d` §5b (→ 20). Publicado SOLO esto (cherry-pick sobre `main`); el bot (§4jt) sigue en la rama.
+- **La OC adelante** (dueño: *«qué pedidos u OC eran»*; PUBLICADA 11/10 20:18, `446e1c9`): en Administración (`abrir:'showPedidoModal'`)
+  la ventana dice «OC 10-31 · Nota 501»; en Mis pedidos sigue la nota sola (es la de Eduardo). `test_camiones_3d` → 21.
 
 ## 4ju. 11/10 (mañana): 👋 P1 por el nombre con UNA palabra y con un error de tipeo — PUBLICADA 11/10 09:00 de Bolivia (`6e67b9d`), Pages OK
 El dueño, con captura del formulario (había escrito «Muticenter»): *«El auto completar no veo que funcione, puse multicenter y no me llenó
