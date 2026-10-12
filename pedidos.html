@@ -2355,6 +2355,30 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @media(max-width:700px){ .asis{ right:2px; bottom:calc(72px + env(safe-area-inset-bottom)); } body.con-pasos .asis{ bottom:calc(138px + env(safe-area-inset-bottom)); }
   .asis-yo{ width:66px; height:118px; } .asis-fig{ height:112px; } .asis-piso{ width:54px; } .asis-globo{ margin:0 66px -90px 0; } }
 @media print{ .asis{ display:none!important; } }
+/* 👋 ¿Quién está usando el panel? (12/10) */
+.quien{ position:fixed; inset:0; z-index:4800; background:rgba(15,23,28,.55); backdrop-filter:blur(3px); display:grid; place-items:center; padding:16px; }
+.quien[hidden]{ display:none!important; }
+.quien-c{ width:min(560px,100%); max-height:calc(100vh - 32px); overflow:auto; background:#fff; border-radius:20px; box-shadow:0 30px 70px -20px rgba(0,0,0,.55); animation:mi-entra .4s cubic-bezier(.2,1.3,.4,1) both; }
+.quien-h{ display:flex; align-items:center; gap:12px; padding:14px 16px; background:linear-gradient(120deg,#1f2a30,#2c3e45); color:#fff; border-radius:20px 20px 0 0; }
+.quien-h img{ width:60px; height:60px; border-radius:16px; object-fit:cover; object-position:50% 10%; background:#fff; flex:none; }
+.quien-h > div{ flex:1; min-width:0; } .quien-h b{ display:block; font-size:1.02rem; } .quien-h small{ display:block; opacity:.8; font-size:.8rem; margin-top:2px; }
+.quien-x{ border:0; background:rgba(255,255,255,.12); color:#fff; border-radius:9px; width:34px; height:34px; cursor:pointer; flex:none; }
+.quien-sigo{ display:flex; align-items:center; gap:12px; width:calc(100% - 32px); margin:14px 16px 0; padding:12px 14px; border:2px solid var(--teal); border-radius:14px; background:var(--teal-lt); font:inherit; font-size:.95rem; cursor:pointer; text-align:left; }
+.quien-sigo span{ flex:1; } .quien-sigo em{ font-style:normal; font-weight:900; color:var(--teal-dk); font-size:1.2rem; }
+.quien-sep{ text-align:center; color:var(--muted); font-size:.78rem; margin:12px 0 0; }
+.quien-g{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; padding:12px 16px 4px; }
+.quien-b{ --c:#00B5AD; display:flex; align-items:center; gap:9px; padding:10px; border:1px solid var(--gray-md); border-radius:12px; background:#fff; font:inherit; font-size:.86rem; font-weight:700; cursor:pointer; text-align:left;
+  animation:mi-entra .4s ease-out both; transition:transform .15s, box-shadow .15s, border-color .15s; min-width:0; }
+.quien-b span{ min-width:0; overflow-wrap:anywhere; }
+.quien-b:hover{ transform:translateY(-2px); border-color:var(--c); box-shadow:0 10px 18px -12px var(--c); }
+.quien-b.on{ border-color:var(--c); box-shadow:0 0 0 2px var(--c); }
+.quien-b i, .quien-sigo i{ flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-weight:900; font-size:.82rem; color:#fff; background:var(--c,#00B5AD); }
+.quien-otros{ display:flex; flex-wrap:wrap; gap:8px; padding:10px 16px 16px; border-top:1px dashed var(--gray-md); margin-top:10px; }
+.quien-otros button{ flex:1; min-width:140px; padding:9px 10px; border:1px solid var(--gray-md); border-radius:12px; background:#f7f9fa; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
+.asis-quien{ color:#7dd3cf; text-decoration:underline; cursor:pointer; white-space:nowrap; }
+@media print{ .quien{ display:none!important; } }
+@media (prefers-reduced-motion:reduce){ .quien-c, .quien-b{ animation:none!important; } }
+
 /* 🎧 ATC con el estilo nuevo (12/10) */
 .atv-t{ font-weight:800; font-size:.86rem; color:var(--text); display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 10px; margin-bottom:8px; }
 .atv-t small{ font-weight:600; color:var(--muted); font-size:.74rem; }
@@ -16140,6 +16164,60 @@ function atvPintar(list, mesSel){
     '</div>';
   }).join('')+'</div>';
 }
+/* ==========================================================================
+   👋 ¿QUIÉN ESTÁ USANDO EL PANEL? (12/10, dueño: «falta que al entrar al panel cada vendedor se identifique»)
+   Al abrir el panel (una vez por pestaña: `sessionStorage` `me_quien_ok`; recargar la misma pestaña no vuelve a preguntar) Eduardo
+   pregunta quién es. Tocar un nombre lo recuerda en el aparato (`setVendedorMem`, el mismo «Tu nombre» de siempre), lo pone en el
+   formulario (si no hay una edición abierta) y en Mis pedidos, y el asistente ya avisa lo de esa persona. «Logística» y
+   «Administración» no son vendedores: olvidan el nombre (`setVendedorMem('')`). Se cambia desde la ventana de Eduardo («¿No sos…?»).
+   No guarda nada en la planilla. En Playwright no sale salvo `window.QUIEN_PRUEBA` (taparía todas las pruebas).
+   ========================================================================== */
+var QUIEN_LS_OK='me_quien_ok', QUIEN_LS_ROL='me_quien_rol';
+function quienActivo(){ return !(navigator.webdriver && !window.QUIEN_PRUEBA); }
+function quienSesion(v){ try{ if(arguments.length){ if(v) sessionStorage.setItem(QUIEN_LS_OK, v); else sessionStorage.removeItem(QUIEN_LS_OK); } return sessionStorage.getItem(QUIEN_LS_OK)||''; }catch(e){ return ''; } }
+function quienRol(v){ try{ if(arguments.length){ if(v) localStorage.setItem(QUIEN_LS_ROL, v); else localStorage.removeItem(QUIEN_LS_ROL); } return localStorage.getItem(QUIEN_LS_ROL)||''; }catch(e){ return ''; } }
+function quienLista(){
+  var vistos={}, L=[];
+  (typeof VENDEDORES!=='undefined'?VENDEDORES:[]).forEach(function(v){ var k=normNombre(v); if(k && !vistos[k]){ vistos[k]=1; L.push(v); } });
+  return L;
+}
+function quienIni(v){ return String(v||'').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join(''); }
+var QUIEN_COL=['#00B5AD','#2d6fd6','#7c3aed','#e9609a','#f08a24','#16a34a','#0369a1','#b45309','#1f3b73','#c0392b'];
+function quienAbrir(cambiar){
+  if(!quienActivo()) return;
+  try{ if(typeof asisCerrar==='function') asisCerrar(); }catch(e){}
+  var box=document.getElementById('quien');
+  if(!box){ box=document.createElement('div'); box.id='quien'; box.className='quien no-print'; document.body.appendChild(box); }
+  var ult=getVendedorMem(), rol=quienRol(), L=quienLista();
+  var yo=(typeof ASIS_BUSTO!=='undefined') ? '<img src="'+ASIS_BUSTO+'" alt="" width="72" height="72">' : '';
+  var antes=(ult && !cambiar) ? ('<button type="button" class="quien-sigo" data-v="'+esc(ult)+'" onclick="quienElegir(this.getAttribute(\'data-v\'))"><i style="--c:'+QUIEN_COL[Math.max(0,L.indexOf(ult))%QUIEN_COL.length]+'">'+esc(quienIni(ult))+'</i><span>Sigo siendo <b>'+esc(ult)+'</b></span><em>✓</em></button>')
+    : ((rol && !cambiar) ? ('<button type="button" class="quien-sigo" onclick="quienElegir(\'\', \''+rol+'\')"><i style="--c:#5b6b7d">'+(rol==='admin'?'🔒':'🚚')+'</i><span>Sigo en <b>'+(rol==='admin'?'Administración':'Logística')+'</b></span><em>✓</em></button>') : '');
+  box.innerHTML='<div class="quien-c" role="dialog" aria-modal="true" aria-labelledby="quien-t">'+
+    '<div class="quien-h">'+yo+'<div><b id="quien-t">👋 ¡Hola! ¿Quién está usando el panel?</b><small>Así te muestro tus pedidos y te aviso lo tuyo.</small></div>'+
+      (cambiar ? '<button type="button" class="quien-x" aria-label="Cerrar" onclick="quienCerrar()">✕</button>' : '')+'</div>'+
+    antes+
+    (antes ? '<div class="quien-sep">o elegí otro nombre</div>' : '')+
+    '<div class="quien-g">'+L.map(function(v, i){
+      return '<button type="button" class="quien-b'+(v===ult?' on':'')+'" style="--c:'+QUIEN_COL[i%QUIEN_COL.length]+';animation-delay:'+Math.min(i,10)*40+'ms" data-v="'+esc(v)+'" onclick="quienElegir(this.getAttribute(\'data-v\'))"><i>'+esc(quienIni(v))+'</i><span>'+esc(v)+'</span></button>';
+    }).join('')+'</div>'+
+    '<div class="quien-otros"><button type="button" onclick="quienElegir(\'\', \'logistica\')">🚚 Soy de logística</button><button type="button" onclick="quienElegir(\'\', \'admin\')">🔒 Administración</button></div>'+
+  '</div>';
+  box.hidden=false;
+}
+function quienCerrar(){ var b=document.getElementById('quien'); if(b) b.hidden=true; }
+function quienElegir(v, rol){
+  v=String(v||'').trim();
+  setVendedorMem(v); quienRol(v ? '' : (rol||'')); quienSesion(v || rol || 'ok');
+  var f=document.getElementById('f-vendedor');
+  if(f && !EDIT_ID){ f.value=v; try{ applyVendedorLite(); }catch(e){} try{ fxFormPintar(); }catch(e){} }
+  var m=document.getElementById('mis-vendedor'); if(m) m.value=v;
+  quienCerrar();
+  try{ if(document.getElementById('view-mis').classList.contains('active')) renderMis(); }catch(e){}
+  try{ if(typeof ASIS!=='undefined' && ASIS.montado){ ASIS.firma=''; asisRefrescar(true); } }catch(e){}
+  if(v) toast('👋 ¡Hola, '+v.split(' ')[0]+'! Ya veo tus pedidos.','ok');
+}
+function quienAlEntrar(){ if(!quienActivo() || quienSesion()) return; quienAbrir(false); }
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(quienAlEntrar, 900); });
 /* Las casillas de «qué se le recoge», dibujadas desde ATC_PIEZAS para no repetir la lista. */
 function pintarPiezasAtc(){
   var box=document.getElementById('f-atc-piezas'); if(!box) return;
@@ -32251,7 +32329,7 @@ function asisPanelPintar(){
     cuerpo='<input type="search" id="asis-q" class="asis-q" placeholder="Ej.: pago, feriado, ATC, camión…" autocomplete="off" value="'+esc(qv)+'" oninput="ASIS.q=this.value;asisAyudaLista()">'+
       '<div id="asis-lista" class="asis-lista">'+asisAyudaHtml(idx)+'</div>';
   }
-  p.innerHTML='<div class="asis-h"><img src="'+ASIS_BUSTO+'" alt="" width="64" height="64"><div><b>'+saludo+' 👋</b><small>Soy Eduardo, tu asistente del panel</small></div>'+
+  p.innerHTML='<div class="asis-h"><img src="'+ASIS_BUSTO+'" alt="" width="64" height="64"><div><b>'+saludo+' 👋</b><small>Soy Eduardo, tu asistente del panel · <a class="asis-quien" onclick="quienAbrir(true)">'+(v?('¿No sos '+esc(v.split(' ')[0])+'?'):'¿Quién sos?')+'</a></small></div>'+
       '<button type="button" class="asis-x" title="'+(asisMudo()?'Activar el sonido':'Silenciar')+'" onclick="asisMudoCambiar()">'+(asisMudo()?'🔇':'🔊')+'</button>'+
       '<button type="button" class="asis-x" aria-label="Cerrar" onclick="asisCerrar()">✕</button></div>'+
     '<div class="asis-tabs"><button type="button" class="'+(ASIS.tab==='avisos'?'on':'')+'" onclick="asisTab(\'avisos\')">🔔 Avisos'+(A.length?(' <span>'+A.length+'</span>'):'')+'</button>'+
