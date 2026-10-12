@@ -147,14 +147,14 @@ const BASE = `
       var out={};
       out.antes={ salio:stockSalioVentana(findById('a1'), findById('a1').productos[0], v), salidas:stockSalidasVentana(K, v, ''), comp:_fila(K).comp, dep:_fila(K).deposito };
       /* El cierre: h1 tildado (propuesta), el atrasado a1 viene destildado y queda así. */
-      abrirCierreEntregas(); document.getElementById('cie-ent-quien').value='Marisol';
+      abrirCierreEntregas(); cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */ document.getElementById('cie-ent-quien').value='Marisol';
       var res=await confirmarCierreEntregas();
       out.res={ hechos:res.hechos, ok:res.ok, cola:res.cola };
       out.a1=_ver('a1'); out.a1Saves=_n('a1');
       out.despues={ salio:stockSalioVentana(findById('a1'), findById('a1').productos[0], v), salidas:stockSalidasVentana(K, v, ''), comp:_fila(K).comp, dep:_fila(K).deposito, stockSalio:stockSalio(findById('a1'), findById('a1').productos[0]) };
       var C=stockConciliar(R, 'log', false); var fk=C.filas.filter(function(z){ return z.k===K; })[0]||null; out.c={ fila:!!fk, cuadran:C.resumen.cuadran };
       /* Sigue en la lista de atrasados, destildado. Reprogramado para mañana deja de ser salida y vuelve a comprometido. */
-      closeModal(); abrirCierreEntregas();
+      closeModal(); abrirCierreEntregas(); cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       var sel=document.querySelector('.cie-ent-chk[data-id="a1"]'); out.sigueEnLista=!!sel && sel.checked===false; closeModal();
       findById('a1').fecha=_adel(1); out.reprog={ salio:stockSalio(findById('a1'), findById('a1').productos[0]), comp:_fila(K).comp, dep:_fila(K).deposito };
       return out;
@@ -368,7 +368,7 @@ const BASE = `
       ['h1','h2','h3','h4'].forEach(function(id,i){ STATE.push(_P({id:id, oc:'10-03'+i, fecha:todayStr(), nroDia:i+1, productos:H(1)})); });
       saveMirror(); renderAdmin();
       window._sinRed=true; window._fallan={ h1:1, h2:1, h3:1, h4:1 };
-      abrirCierreEntregas(); document.getElementById('cie-ent-quien').value='Marisol';
+      abrirCierreEntregas(); cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */ document.getElementById('cie-ent-quien').value='Marisol';
       var res=await confirmarCierreEntregas(); await _wait(100);
       var out={ res:{ pendiente:res.pendiente, hechos:res.hechos, leyo:res.leyo }, pend:cierreEntPendiente(), marcados:STATE.filter(function(p){ return p.entregado; }).length, cola:getPending().length, txt:_modalTxt() };
       closeModal(); renderAdmin(); out.cartel=(document.getElementById('adm-cierre-ent')||{}).innerText||'';
@@ -454,6 +454,7 @@ const BASE = `
       out.hoy=cierreEntHoy().map(function(p){ return p.id; });
       var antes=JSON.stringify(STATE);
       abrirCierreEntregas(); out.abrirNoEscribe = JSON.stringify(STATE)===antes && window._guardadas.length===0;
+      cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       var c=document.querySelector('.cie-ent-chk[data-id="h2"]'); c.checked=false; c.dispatchEvent(new Event('change'));
       document.getElementById('cie-ent-quien').value='Marisol';
       var res=await confirmarCierreEntregas();

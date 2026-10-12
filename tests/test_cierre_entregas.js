@@ -115,6 +115,7 @@ const BASE = `
       abrirCierreEntregas();
       out.abierto=_modalTxt();
       out.tildados=_tildados();
+      cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       out.sinEscribir = window._saves.length===0 && JSON.stringify(STATE)===antes;
       // sin nombre no confirma
       document.getElementById('cie-ent-quien').value='';
@@ -135,8 +136,8 @@ const BASE = `
       out.quedan=cierreEntHoy().map(function(p){ return p.id; });
       return out;
     }, BASE);
-    chk('abrir la lista muestra los 3 de hoy tildados y el atrasado destildado, y NO escribe nada',
-        J(r.tildados)===J([['h1',true],['h3',true],['h2',true],['a1',false]]) && r.sinEscribir, J([r.tildados, r.sinEscribir]));
+    chk('(12/10, dueño: «quita el entregado automático») abrir la lista NO tilda nada y NO escribe nada',
+        J(r.tildados)===J([['h1',false],['h3',false],['h2',false],['a1',false]]) && r.sinEscribir, J([r.tildados, r.sinEscribir]));
     chk('sin «quién cierra» no confirma y lo dice', r.sinQuien.saves===0 && /quién/i.test(r.sinQuien.toast), J(r.sinQuien));
     chk('destildar uno actualiza el botón: «Confirmar 2 entregas»', /Confirmar 2 entregas/.test(r.botonTxt), r.botonTxt);
     chk('los dos tildados quedan entregados con el registro en cada producto (día de hoy, quién, cuándo)',
@@ -160,6 +161,7 @@ const BASE = `
     const r = await page.evaluate(async (base) => {
       eval(base); _armar(); renderAdmin();
       abrirCierreEntregas();
+      cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       /* Mientras la lista está abierta, otro equipo: reprograma h1 al jueves, borra h3 y marca h2 entregado. */
       var pl=JSON.parse(JSON.stringify(STATE));
       pl.forEach(function(p){ if(p.id==='h1'){ p.fecha='2026-10-08'; p.rev=9; } if(p.id==='h2'){ p.entregado=true; p.rev=9; } });
@@ -186,6 +188,7 @@ const BASE = `
       STATE.push(_P({id:'atc1', oc:'ATC 10-001', cliente:'DEVOLUCION', fecha:'2026-10-07', productos:[{desc:'SOFT',medida:'140x190',cant:1,atc:{mot:'Hundimiento', pdev:'2026-10-07', pturno:'AM', rf:'2026-10-06'}}]}));
       saveMirror(); renderAdmin();
       abrirCierreEntregas();
+      cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       var out={};
       out.enLista = _tildados().map(function(t){ return t[0]; });
       // tildo el atrasado y digo que se entregó el martes 06
@@ -213,6 +216,7 @@ const BASE = `
       apiList=function(){ return Promise.reject(new TypeError('Failed to fetch')); };
       apiSave=function(){ return Promise.reject(new TypeError('Failed to fetch')); };
       abrirCierreEntregas();
+      cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       document.getElementById('cie-ent-quien').value='Marisol';
       var res=await confirmarCierreEntregas();
       await new Promise(function(r){ setTimeout(r,200); });
@@ -245,6 +249,7 @@ const BASE = `
     const r = await page.evaluate(async (base) => {
       eval(base); _armar(); renderAdmin();
       abrirCierreEntregas();
+      cierreEntHoy().forEach(function(p){ var c=document.querySelector('.cie-ent-chk[data-id="'+p.id+'"]'); if(c){ c.checked=true; c.dispatchEvent(new Event('change')); } });   /* (12/10) nada viene tildado: logística tilda a mano */
       document.getElementById('cie-ent-quien').value='Marisol';
       await confirmarCierreEntregas();
       closeModal(); showPedidoModal('h1');
