@@ -13759,3 +13759,5 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   número 633697466495954) y agregó el pago. Quiso ponerlo también como destinatario de prueba y Meta no lo deja (es el que MANDA).
   `WA_PHONE_ID` = 633697466495954 (no el de prueba); `WA_PRUEBA` = su celular personal. Página de pasos actualizada (versión 2).
   Pregunta abierta: si 69636218 era un WhatsApp en uso, ese teléfono ya no puede usar la app de WhatsApp.
+- El dueño aclaró: **62505280 es SU celular** (lo puso como destinatario en la prueba) y lo quiso agregar con «Agregar número nuevo»;
+  Meta no deja porque tiene WhatsApp en uso. No va en Meta: va SOLO en `WA_PRUEBA` = 59162505280. El que manda es el 69636218.
