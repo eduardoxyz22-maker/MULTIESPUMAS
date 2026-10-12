@@ -2201,6 +2201,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cvc-salio{ margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:#dbeafe; color:#1e3a8a; font-size:.84rem; }
 .cvc-salio button{ margin-left:auto; border:1px solid #93c5fd; background:#fff; color:#1e3a8a; border-radius:999px; padding:6px 12px; min-height:36px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
 .cvc-salio-btn{ margin-top:8px; width:100%; min-height:44px; border:1.5px dashed #2563eb; background:#fff; color:#1d4ed8; border-radius:10px; font:inherit; font-weight:800; cursor:pointer; }
+.dep-md-salio{ margin-bottom:8px; } .dep-md-salio .cvc-salio-btn, .dep-md-salio .cvc-salio{ margin-top:0; }
 .cvc-salio-btn.listo{ border-style:solid; background:#2563eb; color:#fff; }
 .dep-etq-cam.cv3d-ruta{ background:#1d4ed8; } .dep-etq-cam.cv3d-ruta small{ color:#dbeafe; }
 .cvc-sel{ font:inherit; font-size:.8rem; font-weight:700; border:1.5px solid #fcd34d; border-radius:8px; padding:5px 8px; background:#fffbeb; }
@@ -15711,6 +15712,7 @@ function camionSalioMarcar(veh, on){
     if(falta && !confirm('Al '+veh+' le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga.\n\n¿Salió igual?')) return;
     var h=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
     setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
+    try{ depPanel(null); }catch(e){}
     toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
   }else{
     if(!k) return;
@@ -30526,14 +30528,18 @@ function depTween(o, to, dur, delay, ease, fin){
   DEP.tw.push({ o:o, to:to, de:null, t0:performance.now()+(delay||0)*1000, d:dur*1000, e:ease||depSuave, fin:fin });
 }
 function depTweens(now){
+  /* (12/10) el «fin» de una animación corre DESPUÉS de reemplazar la lista: si no, la animación que encadena (el camión que gira
+     y después se va, el montacargas que llega y después levanta) se agregaba a la lista vieja y se perdía. */
+  var fins=[];
   DEP.tw=DEP.tw.filter(function(t){
     if(now<t.t0) return true;
     if(!t.de){ t.de={}; Object.keys(t.to).forEach(function(k){ t.de[k]=t.o[k]; }); }
     var f=Math.min(1,(now-t.t0)/t.d), e=t.e(f);
     Object.keys(t.to).forEach(function(k){ t.o[k]=t.de[k]+(t.to[k]-t.de[k])*e; });
-    if(f>=1 && t.fin) t.fin();
+    if(f>=1 && t.fin) fins.push(t.fin);
     return f<1;
   });
+  fins.forEach(function(fn){ try{ fn(); }catch(e){} });
 }
 /* (§4jq) UN solo dibujante para las dos escenas (la fábrica de Eduardo en Mis pedidos y los camiones de Administración): nunca se
    ven a la vez, así que el lienzo se MUDA a la caja que lo pide (`box`) y quien lo pidió rearma su escena. */
@@ -30773,7 +30779,7 @@ function depPanel(q){
         (p.productos||[]).map(function(x){ var cg=depCargado(p,x), est=depEstado(x), es=(marca && depClaveX(x)===marca) || (esFn && esFn(x));
           return '<span class="dep-md-l'+(es?' es':'')+'">'+(Number(x.cant)||0)+' × '+esc(String(x.desc||'').toUpperCase())+(x.medida?(' '+esc(x.medida)):'')+' <span class="dep-e-'+(est||'sin')+'">'+DEP_EST[est]+'</span>'+(cg.u>0?' <span class="dep-e-cam">🚚 '+cg.u+' en '+esc(cg.v)+'</span>':'')+'</span>'; }).join('')+'</button>'; }).join('')
       :'<div class="dep-md-vacio">'+(q.peds?'Sin pedidos.':q.v?'Este camión no tiene pedidos de este período asignados.':'Sin pedidos.')+'</div>')+
-    '<div class="dep-md-pie">Tocá un pedido para abrir su ficha.</div></div>';
+    '<div class="dep-md-pie">'+(q.pie||'Tocá un pedido para abrir su ficha.')+'</div></div>';
   fondo.hidden=false; fondo.style.display='';
 }
 function depClaveX(x){ return (String(x.desc||'').trim().toUpperCase()||'(sin nombre)')+'|'+String(x.medida||'').trim().toLowerCase().replace(/\s+/g,''); }
@@ -30949,7 +30955,7 @@ function cv3dConstruir(D, suave){
   if(W.grupo) W.esc.remove(W.grupo);
   W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[]; depPanel(null);
   var g=new THREE.Group(); W.grupo=g; W.esc.add(g);
-  var antes=CV3D.en, ahora={}; DEP.quieto=!!suave;
+  var antes=CV3D.en, ahora={}, andenAhora={}; DEP.quieto=!!suave;
   DEP.colP={}; D.cams.forEach(function(c){ c.lineas.forEach(function(l){ if(!DEP.colP[l.kk]) DEP.colP[l.kk]=DEP_COL[Object.keys(DEP.colP).length%DEP_COL.length]; }); });
   var esp=2.9, gap=1.8;
   var zonas=D.cams.map(function(c, i){
@@ -30995,11 +31001,21 @@ function cv3dConstruir(D, suave){
       /* el camión en su andén, con lo ya cargado arriba */
       var salio=camionSalio(D.fecha, c.k);
       if(salio){   // 🛣️ (12/10) ya salió: el andén queda vacío y su cartel lo dice
+        if(suave && CV3D.anden && CV3D.anden[c.k]){   // recién marcado con la escena a la vista: gira hacia afuera y se va
+          var tv=depCamion(); tv.g.position.set(cx,0,fz+.6); g.add(tv.g);
+          var qv=DEP.quieto; DEP.quieto=false;
+          depTween(tv.g.position, { x:cx+1.2, z:fz+2.2 }, .9, .15, depSuave);
+          depTween(tv.g.rotation, { y:-Math.PI/2 }, .9, .15, depSuave, function(){
+            var q2=DEP.quieto; DEP.quieto=false;
+            depTween(tv.g.position, { z:fz+40 }, 2.6, 0, depSuave, function(){ tv.g.visible=false; });
+            DEP.quieto=q2; });
+          DEP.quieto=qv;
+        }
         var ts=new THREE.Object3D(); ts.position.set(cx,0,fz+.6); g.add(ts);
         depEtq(ts, '🛣️ '+esc(c.k)+'<small>salió a las '+esc(salio)+' · en camino</small>', 'dep-etq-cam cv3d-ruta', '#1d4ed8', 1.6+(zi%2)*.9, false, elegir);
         z.carg.forEach(function(l){ ahora[l.key]=1; });
       } else {
-      var t=depCamion(); t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ fn:elegir }; g.add(t.g); W.toca.push(t.g);
+      var t=depCamion(); t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ fn:elegir }; g.add(t.g); W.toca.push(t.g); andenAhora[c.k]=1;
       z.carg.slice(0,3).forEach(function(l, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg);
         depPila(pg, l.kk, l.kk.toUpperCase(), l.kk, l.cu, 6, 1.3, 1.6); ahora[l.key]=1;
         if(!suave || !antes[l.key]){ var q=DEP.quieto; DEP.quieto=false; pg.position.y=3; depTween(pg.position, { y:0 }, .9, suave?.1:(1.2+zi*.3+j*.25), depSale); DEP.quieto=q; } });
@@ -31054,7 +31070,7 @@ function cv3dConstruir(D, suave){
     depEtq(t.g, '📥 Ir a buscar a '+esc(almN)+'<small>'+(D.im.u ? (cvU(D.im.u)+' para traer a PTF') : 'nada que traer')+'</small>', 'dep-etq-cli', col, 3.4);
     CV3D.zonas.im={ x:cx, w:lado+2 };
   })();
-  DEP.quieto=false; CV3D.en=ahora; CV3D.marca=marca;
+  DEP.quieto=false; CV3D.en=ahora; CV3D.anden=andenAhora; CV3D.marca=marca;
   W.cada=function(t){ mov.forEach(function(o){ var z=o.mc.g.position.z; if(o.u!=null) o.mc.ruedas.forEach(function(r){ r.rotation.x+=(z-o.u)*2; }); o.u=z;
     if(!visQuieto()){ o.mc.chofer.rotation.y=Math.sin(t*1.2+o.d*5)*.3; if(o.bal) o.bal.visible=(Math.floor(t*2.2+o.d*3)%2)===0; } }); };
   W.ancho=ancho; cv3dMarcar();
@@ -31141,7 +31157,10 @@ function cv3dVerTodo(){ var W=DEP.w3; if(!W) return;
 function cv3dAbrir(q){ depPanel(q); }
 function cv3dCamPanel(c){
   var lis=c.sin ? '' : ((c.choferes[0]||'sin chofer')+' · '+(c.total ? (c.dentro+' de '+cvU(c.total)+' cargados') : 'sin carga')+' · ');
-  cv3dAbrir({ peds:c.stops.slice(), tit:c.sin?'⚠️ Sin camión':('🚚 '+esc(c.k)), sub:esc(lis), abrir:'showPedidoModal' });
+  /* 🛣️ (12/10, dueño: «la idea es dar clic al camión, revisar y marcar ya salió, y el camión se vaya del 3D») */
+  var sal=c.sin ? '' : cvSalioHtml(CV3D.D||cargaVivaDatos(), c);
+  cv3dAbrir({ peds:c.stops.slice(), tit:c.sin?'⚠️ Sin camión':('🚚 '+esc(c.k)), sub:esc(lis), abrir:'showPedidoModal',
+    pie:sal ? ('<div class="dep-md-salio">'+sal+'</div>Revisá los pedidos y tocá «Ya salió» cuando el camión se vaya.') : '' });
 }
 function cv3dLugarPanel(v){
   var D=CV3D.D||cargaVivaDatos(), peds=[], vistos={}, kks={};
