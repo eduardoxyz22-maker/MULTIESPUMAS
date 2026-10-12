@@ -751,6 +751,21 @@ para los vendedores»*). `tests/test_asistente.js`. Bitácora §4kc, §4kd.
 las dos → PTF y después Banzer. La usan el recorrido del mapa (`mapaRutaDatos`/`mapaRutaPintar`, ordena desde el último depósito) y la Hoja de
 ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vacio`) en vez de esconderse. `tests/test_ruta_salida.js`. Bitácora §4ke.
 
+## 🔎 Revisión del 11-12/10 con 6 agentes y 📥 «Sí, es la misma» (§4kf, 12/10; en la rama, SIN publicar)
+- **«Sí, es la misma» / «Descartar»** van de a uno (`borrEnSerie`) y un borrado que Google no hizo (ocupado, sin respuesta) DEVUELVE la
+  tarjeta y lo dice; el ✓ sale con el sí del servidor. Antes lo callaba: el dueño veía la bandeja vacía en el teléfono y al otro día
+  volvían todas (las filas nunca se borraron: «esperando hace 6 días»). `tests/test_borr_misma.js` (panel + `.gs` reales).
+- **Eduardo**: el aviso al guardar lo llama `submitPedido` → `after` con el pedido YA guardado (`asisAlGuardar(rec, tienda)`; clave
+  `g-map|<id>`; «Abrir el pedido» = `asisEditarEn`), sin tienda/ATC/RPT ni celular para Eduardo/ROHO; «Mañana» solo si es mañana
+  (`asisCuando`); globo y pop una vez por aviso (`ASIS.anunciados`); la ventana se repinta solo si cambió algo y conserva foco y scroll;
+  sin lectura buena no dice «Todo en orden» (`asisSinDatos`); «sin ubicación» sin RPT/ATC; cierre esperando señal; botones de 44 px;
+  en el celular la ventana entra en la pantalla y la figura se corre con «Guardar» a la vista (`body.asis-guardar`).
+- `misWaCliente` y `waCel_` con borde a la izquierda (un dígito de más armaba el celular de OTRA persona). «👛 Quién tiene el efectivo»
+  nombra al chofer (`E.fuera`). El recorrido del mapa calcula el depósito con TODOS los pedidos del chofer.
+- **Bot (`.gs` 2026-10-11-a, sin implementar)**: el borrador se reconoce por `estado`, no por `kommo-` (una venta de Kommo completada no
+  recibía nada); el recordatorio de las 17:00 no sale antes de una confirmación que espera en la cola. `test_wa_bot` §5b,
+  `tests/test_asistente_rev.js` (17; 16 rojas contra `e2f1021`), `test_ruta_salida` §5b.
+
 ## ✨ Administración: herramientas en grupos (§4kb, 12/10; PUBLICADA 00:21, `55eaf9c`)
 Los mismos botones en `.btn-row.adm-tools` (cuatro `.at-g`); el color va en `--c` y la explicación en `data-d` (con `::after`: no cambia el
 `textContent`). Un botón nuevo de Administración entra en su grupo con esa forma. Las ventanas llevan `class="adm-ov"` (cabecera nueva, solo

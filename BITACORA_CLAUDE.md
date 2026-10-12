@@ -13677,3 +13677,16 @@ Implementar → Administrar implementaciones → ✏️ en la implementación de
 «Nueva versión» → Implementar. **No** crear una implementación nueva (§4dm: estrena otra
 dirección). Después, Actions → «Traer ventas de Kommo (respaldo)» → Run workflow tiene que
 imprimir `versión 2026-09-20-a`.
+
+
+## 4kf. 12/10: revisión con 6 agentes (2 Haiku, 2 Sonnet, Opus, Fable) y «Sí, es la misma» que no borraba — EN LA RAMA, sin publicar
+- El dueño implementó el servidor **2026-10-09-a** (Historial stock) el 12/10 (enlace fijo a `c3c6585`, 2.537 líneas). Volver atrás: la
+  versión anotada + pegar la 10-06-a (`84c2b74…`, 2.449 líneas).
+- Revisión: 18 hallazgos confirmados por Opus y Fable (informe en el resultado del workflow `wf_a482cc5d-e7b`). Arreglados todos los de
+  la página y los dos del bot; quedan como opciones para el dueño (A–K): «Más tarde/Mañana», avisos de logística sin clave, resumen del
+  día por rol, ayuda con sinónimos, recorrido guiado, «💬 Recordar el pago», lo que preguntan y Eduardo no sabe, leer en voz alta.
+- **«Sí, es la misma»** (dueño, con captura: *«por más que doy… hoy al ingresar salieron todos de nuevo»*): las tarjetas decían
+  «esperando hace 6 días» → la fila nunca se borró. En el laboratorio, con el `.gs` real, sí borra: la causa más probable es Google
+  ocupado o sin respuesta con muchos borrados juntos desde el teléfono, y `borrEsLaMisma` lo callaba. Ahora de a uno, con aviso y
+  devolviendo la tarjeta. No se pudo ver la hoja «Borrados» ni Ejecuciones desde acá para confirmarlo.
+- Pruebas: `test_borr_misma` (7; 3 rojas contra `e2f1021`), `test_asistente_rev` (17; 16 rojas), `test_ruta_salida` 12, `test_wa_bot` 73.

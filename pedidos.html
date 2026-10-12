@@ -14596,15 +14596,29 @@ function borrEsLaMisma(idBorr, idPed){
   var _copiaB=JSON.parse(JSON.stringify(b));
   BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
   saveBorrMirror(); renderBorrSiActivo();
-  // §4fz: el borrador se borra solo si sigue siendo el que se vio (otra lo pudo haber completado).
-  if(CONNECTED){ BORRADO_AQUI[String(idBorr)]=Date.now(); }   // (26/09) ver `borradoAqui`
-  if(CONNECTED) borrarEnServidor(_copiaB).then(function(r){
-    if(!(r && r.ok)) delete BORRADO_AQUI[String(idBorr)];
+  if(!CONNECTED){ toast('Quitado de esta pantalla, pero este aparato no está conectado a la planilla: en los otros sigue apareciendo.','err', 8000); return; }
+  /* (12/10, dueño: «por más que doy "sí, es la misma"… hoy al ingresar salieron todos de nuevo») Antes un borrado que Google no
+     hacía (ocupado, sin respuesta, la lectura en vez del borrado) quedaba CALLADO: la tarjeta se iba de la pantalla y la fila
+     seguía en la planilla, y volvía en la próxima lectura. Ahora: uno por vez (`borrEnSerie`, tocar muchas seguidas mandaba
+     todo junto y trababa a Google), un «no» claro la devuelve a la bandeja diciéndolo, y el ✓ sale recién con el sí del servidor. */
+  BORRADO_AQUI[String(idBorr)]=Date.now();   // (26/09) ver `borradoAqui`
+  var volver=function(){ delete BORRADO_AQUI[String(idBorr)];
+    BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); }).concat([_copiaB]); saveBorrMirror(); renderBorrSiActivo(); };
+  borrEnSerie(function(){ return borrarEnServidor(_copiaB); }).then(function(r){
+    if(r && r.ok){ toast('✓ Listo: quedó una sola venta, la que ya tenías cargada ('+(b.cliente||'')+').','ok', 4500); return; }
+    delete BORRADO_AQUI[String(idBorr)];
     if(r && r.conflicto){ toast('⚠️ El borrador de Kommo no se borró: '+queCambioTxt(_copiaB, r.actual)+'. Revisá que no quede la venta dos veces.','err',10000);
-      try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} }
-  }, function(){ delete BORRADO_AQUI[String(idBorr)]; });
-  toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
+      try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} return; }
+    if(r && r.incierto){ toast('⚠️ Google no confirmó si quitó '+(b.cliente||'ese borrador')+' ('+r.error+'). Si vuelve a aparecer, tocá otra vez «Sí, es la misma».','err',9000); return; }
+    volver();
+    toast('❌ No se pudo quitar '+(b.cliente||'ese borrador')+' de la planilla ('+motivoBorrar(r)+'): sigue en la bandeja. Tocá de nuevo «Sí, es la misma» en un momento.','err',9000);
+  }, function(){ volver(); toast('❌ No se pudo quitar '+(b.cliente||'ese borrador')+': sigue en la bandeja. Probá de nuevo con señal.','err',9000); });
+  toast('Quitando de la bandeja… ('+(b.cliente||'')+')','ok', 2500);
 }
+/* Los borrados de la bandeja de Kommo, de a uno: cada uno relee la planilla antes de borrar (`borrarEnServidor`), y diez juntos
+   hacían diez lecturas enteras y diez borrados en el mismo segundo — Google contestaba «ocupado» o nada. */
+var BORR_SERIE=Promise.resolve();
+function borrEnSerie(fn){ var p=BORR_SERIE.then(fn, fn); BORR_SERIE=p.then(function(){}, function(){}); return p; }
 
 /* 📦 UNA FILA DEL SISTEMA EN VUELO NO LA PISA EL `list` (§4ev). Igual que los pedidos (§4eo):
    si la fila del stock (o la del arqueo) tiene un guardado en vuelo, en espera, de hace menos
@@ -17168,7 +17182,7 @@ function descartarBorrador(id){
        descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
        descartada en Kommo. Se mira antes, y el borrado va con el sello. */
     var volverBorr=function(){ delete BORRADO_AQUI[String(id)]; BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
-    borrarEnServidor(copia).then(function(r){
+    borrEnSerie(function(){ return borrarEnServidor(copia); }).then(function(r){   // (12/10) de a uno, como «Sí, es la misma»
       if(r.ok) return;
       delete BORRADO_AQUI[String(id)];      // no se borró (o no se sabe): lo que diga la planilla manda
       if(r.conflicto){
