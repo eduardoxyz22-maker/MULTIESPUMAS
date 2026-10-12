@@ -13826,6 +13826,6 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   `estadoBotWhatsApp().metaRechazados`. `test_wa_bot` §11 (→ 94). La página con ESPERADA 12-b se publica DESPUÉS de que lo implemente.
   ⚠️ Raro sin explicar: a las 16:54 `estadoBotWhatsApp().meta` era `null` aunque la fila «💬 Respondió» de las 16:31 estaba en la
   hoja (`waHookAnotar_` guarda WA_META al final). Mirarlo con los avisos de los recordatorios.
-- **🚀 `.gs` 2026-10-12-b IMPLEMENTADO (12/10 ~17:10, el dueño)**. Volver atrás = ✏️ a la **versión 42** («12 oct 2026, 3:57 p.m.», la
+- **🚀 `.gs` 2026-10-12-b IMPLEMENTADO como VERSIÓN 43 (12/10 16:59, el dueño; en la «Descripción» escribió «2026-10-12-e» por error de tipeo: el código es la b)**. Volver atrás = ✏️ a la **versión 42** («12 oct 2026, 3:57 p.m.», la
   12-a) Y pegar `e7d32f303d7743a0388080293c5f310c903c241f` (3.156 líneas). Página con ESPERADA 12-b publicada a continuación.
   David todavía NO va en `WA_LOGISTICA` (dueño: «por el momento no»).
