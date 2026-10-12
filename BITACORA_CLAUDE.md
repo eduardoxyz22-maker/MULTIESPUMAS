@@ -13802,3 +13802,9 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - **🚀 `.gs` 2026-10-12-a IMPLEMENTADO (12/10 ~16:00, el dueño)** con el webhook verificado en Meta («Configurar webhooks» ✅; Meta
   suscribió solo `account_alerts` y `account_review_update`: falta confirmar `messages` y el «Suscribir webhooks» del 69398727).
   **Volver atrás** = ✏️ a la **versión 41** (la 2026-10-11-a) Y pegar `f7587fbf9c3eae8fb26ba593e352194aaabc64ca` (3.054 líneas).
+- **12/10 ~16:20**: los 6 tipos de mensaje LLEGAN (15:51–16:09, hoja «Bot WhatsApp» con wamid). La columna J quedó vacía con la app
+  en «Desarrollo» (Meta no mandó ningún aviso, ni los «ok» del dueño). Se publicó `privacidad.html` en `main` (`baef9c1`, Pages OK
+  20:08 UTC; `#borrar` = instrucciones para borrar datos), el dueño la cargó en LOGISTICA-2 → Información básica (categoría
+  «Negocios y páginas») y pasó la app a **Activo**. Falta ver si llegan los avisos.
+- Pendiente para la próxima versión del `.gs`: el aviso «sin camión» corta el último nombre a la mitad («ROXANA CONTRERA L….»)
+  por el tope de 250 letras de `waParam_`: cortar entre nombres y decir «y N más».
