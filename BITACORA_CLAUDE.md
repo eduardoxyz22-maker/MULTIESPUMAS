@@ -13782,3 +13782,6 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   (la verde del asistente de Meta era de la de Kommo). La app LOGISTICA-2 sigue en «Desarrollo»: pasarla a «Activo» (pide URL de
   política de privacidad) antes de sacar `WA_PRUEBA`. Negocio sin verificar (250 clientes por día). Falta: el número de la versión
   anterior para volver atrás (se le pidió), las 6 aprobadas, pedido de prueba y publicar la página del bot (espera `2026-10-11-a`).
+  · **Volver atrás de la 11-a** = ✏️ a la **versión 40** («12 oct 2026, 12:54», la anotada por el dueño antes de implementar) **Y**
+  pegar la 2026-10-09-a del enlace fijo a `c3c6585b060f143464cb9d865f3a1761a4926b78` (2.537 líneas, termina en `}` con
+  `return borrador;` antes). Después, borrar el disparador `waRepaso` (o `WA_ACTIVO`=0): corre el código GUARDADO en el editor.
