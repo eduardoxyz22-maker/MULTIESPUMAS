@@ -2387,6 +2387,9 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 #faltantes-body > div{ border-radius:16px!important; box-shadow:0 8px 20px -16px rgba(180,83,9,.55)!important; }
 @media print{ td.adm-barra{ background-image:none!important; } .ruta-chofer .rt-stop::before, .ruta-chofer .rt-stop::after{ display:none; } .ruta-chofer .rt-stop{ padding-left:0!important; border:0!important; } }
 
+/* 🛣️ (12/10) De dónde sale cada camión, y Banzer marcado en el mapa */
+#mapa-ruta-panel .mrp-sale{ font-size:.74rem; font-weight:700; color:#0f4f4a; margin:2px 0 1px; }
+.mapa-ruta-dep.bz span{ background:#0b5fa5!important; }
 /* 🛣️ (12/10) El recorrido sin camiones asignados: lo dice en vez de esconderse */
 #mapa-ruta-panel .mrp-vacio{ font-size:.82rem; color:#334; line-height:1.4; margin:6px 0 8px; }
 #mapa-ruta-panel .mrp-ir{ border:0; border-radius:999px; background:#00877f; color:#fff; font:inherit; font-size:.78rem; font-weight:700; padding:6px 12px; cursor:pointer; }
@@ -28240,7 +28243,7 @@ function renderRuta(){
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
       '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
-      '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+(_rk[k]?(' · ~'+Math.round(_rk[k].km)+' km'+(_rk[k].sin?(' · '+_rk[k].sin+' sin ubicación, al final'):'')):'')+'</span>'+
+      '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+(_rk[k]?(' · '+rutaSalidaTxt(_rk[k].deps||[])+' · ~'+Math.round(_rk[k].km)+' km'+(_rk[k].sin?(' · '+_rk[k].sin+' sin ubicación, al final'):'')):'')+'</span>'+
       (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
       (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(aCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
@@ -29972,6 +29975,22 @@ function mapaRutaOrden(items, desde){
   });
   return orden;
 }
+/* 🏭🏪 (12/10, dueño: «¿toma en cuenta si sale de PTF o Banzer, según como dividimos?») De dónde sale el camión, con la MISMA marca
+   de cada producto que usan la Lista de carga y «Lo del día, por lugar» (`prodPartesCarga`): lo de acá (y lo sin marcar, y lo que se
+   trae de Moreno, que logística deja en PTF antes) carga en PTF; lo «✔ hay en Banzer», en Banzer. Con las dos: PTF primero y después
+   Banzer (de PTF salen los camiones). Devuelve los depósitos en orden. */
+function rutaSalida(pedidos){
+  var aca=false, bz=false;
+  (pedidos||[]).forEach(function(p){ (p.productos||[]).forEach(function(x){
+    if(typeof esProdDeTienda==='function' && esProdDeTienda(x)) return;
+    prodPartesCarga(x).forEach(function(e){ if(e.u>0){ if(e.tipo==='sale') bz=true; else aca=true; } });
+  }); });
+  var P=almUbic('ptf'), B=almUbic('banzer'), deps=[];
+  if(aca || !bz) deps.push({ id:'ptf', nombre:'PTF', lat:P.lat, lng:P.lng });
+  if(bz && B) deps.push({ id:'banzer', nombre:'Banzer', lat:B.lat, lng:B.lng });
+  return deps;
+}
+function rutaSalidaTxt(deps){ return deps.length>1 ? 'carga en PTF y en Banzer' : ('sale de '+(deps[0]?deps[0].nombre:'PTF')); }
 function mapaRutaDatos(){
   var P=almUbic('ptf'), R={}, orden=[];
   MAPA_LIST.forEach(function(p){
@@ -29981,10 +30000,12 @@ function mapaRutaDatos(){
   });
   orden.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
   return orden.map(function(k,i){
-    var stops=mapaRutaOrden(R[k], P), hechos=stops.filter(function(it){ return !!it.p.entregado; }).length;
-    var km=0, prev=P; stops.forEach(function(it){ km+=mapaKmAprox(prev, it.g); prev=it.g; });
+    var deps=rutaSalida(R[k].map(function(it){ return it.p; })), ult=deps[deps.length-1]||P;
+    var stops=mapaRutaOrden(R[k], ult), hechos=stops.filter(function(it){ return !!it.p.entregado; }).length;
+    var km=0, prev=deps[0]||P; deps.slice(1).forEach(function(d){ km+=mapaKmAprox(prev, d); prev=d; });
+    stops.forEach(function(it){ km+=mapaKmAprox(prev, it.g); prev=it.g; });
     var col=(MAPA_COLOR_POR==='chofer') ? mapaColorFor(k) : CHOFER_COLORS[i % CHOFER_COLORS.length];
-    return { k:k, stops:stops, hechos:hechos, km:km, col:col, sin:(k==='Sin chofer') };
+    return { k:k, stops:stops, hechos:hechos, km:km, col:col, sin:(k==='Sin chofer'), deps:deps };
   });
 }
 function mapaRutaPintar(){
@@ -30010,7 +30031,7 @@ function mapaRutaPintar(){
   }
   var capa=L.layerGroup().addTo(MAPA); MAPA_RUTA_ANIM=[]; MAPA_RUTA_ANIM.capa=capa;
   D.forEach(function(r){
-    var lat=[[P.lat,P.lng]].concat(r.stops.map(function(it){ return [it.g.lat,it.g.lng]; }));
+    var lat=r.deps.map(function(d){ return [d.lat,d.lng]; }).concat(r.stops.map(function(it){ return [it.g.lat,it.g.lng]; }));
     L.polyline(lat, { color:'#fff', weight:8, opacity:.85, interactive:false }).addTo(capa);
     L.polyline(lat, { color:r.col, weight:4, opacity:.95, dashArray:'10 8', className:'mapa-ruta-linea', interactive:false }).addTo(capa);
     r.stops.forEach(function(it,i){
@@ -30018,9 +30039,9 @@ function mapaRutaPintar(){
       L.marker([it.g.lat,it.g.lng], { icon:L.divIcon({ className:'mapa-ruta-num', html:'<span style="background:'+(ok?r.col:'#fff')+';color:'+(ok?'#fff':r.col)+';border-color:'+r.col+'">'+(ok?'✓':(i+1))+'</span>', iconSize:[24,24], iconAnchor:[12,12] }),
         zIndexOffset:500 }).bindPopup(mapaPopup(it.p)).addTo(capa);
     });
-    /* 🚚 Dónde está el camión: en la última parada marcada entregada, o todavía en PTF. */
+    /* 🚚 Dónde está el camión: en la última parada marcada entregada, o todavía en el depósito de donde sale. */
     var ult=-1; r.stops.forEach(function(it,i){ if(it.p.entregado) ult=i; });
-    var en=ult>=0 ? r.stops[ult].g : P;
+    var en=ult>=0 ? r.stops[ult].g : (r.deps[0]||P);
     L.marker([en.lat,en.lng], { icon:L.divIcon({ className:'mapa-ruta-camion', html:'<span>🚚</span>', iconSize:[30,30], iconAnchor:[15,40] }), zIndexOffset:900, interactive:false }).addTo(capa);
     /* El punto que recorre la ruta en orden, para ver de un vistazo por dónde va el día. */
     if(!visQuieto() && lat.length>1){
@@ -30028,17 +30049,20 @@ function mapaRutaPintar(){
       MAPA_RUTA_ANIM.push({ dot:dot, lat:lat, t0:0, dur:Math.max(6000, lat.length*1100) });
     }
   });
-  L.marker([P.lat,P.lng], { icon:L.divIcon({ className:'mapa-ruta-dep', html:'<span>🏭 PTF</span>', iconSize:[64,24], iconAnchor:[32,-8] }), zIndexOffset:950, interactive:false }).addTo(capa);
+  var _usa={}; D.forEach(function(r){ r.deps.forEach(function(d){ _usa[d.id]=d; }); });
+  Object.keys(_usa).forEach(function(id){ var d=_usa[id];
+    L.marker([d.lat,d.lng], { icon:L.divIcon({ className:'mapa-ruta-dep'+(id==='banzer'?' bz':''), html:'<span>'+(id==='banzer'?'🏪 Banzer':'🏭 PTF')+'</span>', iconSize:[74,24], iconAnchor:[37,-8] }), zIndexOffset:950, interactive:false }).addTo(capa); });
   if(panel){
     panel.innerHTML='<div class="mrp-tit"><b>🛣️ Recorrido · '+(MAPA_DIA==='hoy'?'hoy':'mañana')+'</b><button type="button" onclick="this.parentNode.parentNode.classList.toggle(\'chico\')">▾</button></div>'+
       D.map(function(r){
         var prox=r.stops.filter(function(it){ return !it.p.entregado; })[0];
         var pct=r.stops.length?Math.round(r.hechos/r.stops.length*100):0;
         return '<div class="mrp-camion" style="border-left-color:'+r.col+'"><b>🚚 '+esc(r.k)+'</b> <small>'+r.stops.length+' parada'+(r.stops.length===1?'':'s')+' · ~'+Math.round(r.km)+' km en línea recta</small>'+
+          '<div class="mrp-sale">'+(r.deps.length>1?'🏭 → 🏪 ':(r.deps[0]&&r.deps[0].id==='banzer'?'🏪 ':'🏭 '))+esc(rutaSalidaTxt(r.deps))+'</div>'+
           '<div class="mrp-barra"><i style="width:'+pct+'%;background:'+r.col+'"></i></div>'+
           '<small>'+r.hechos+' de '+r.stops.length+' entregado'+(r.stops.length===1?'':'s')+(prox?(' · próxima: '+esc(prox.p.cliente||'—')):' · ✅ terminó')+'</small></div>';
       }).join('')+
-      '<div class="mrp-pie">El orden es una sugerencia: AM primero y siempre la parada más cerca. Los ✓ salen del cierre de entregas o de lo que marque el chofer.</div>';
+      '<div class="mrp-pie">El orden es una sugerencia: sale de donde se carga (PTF o Banzer, según la marca de cada producto), AM primero y siempre la parada más cerca. Los ✓ salen del cierre de entregas o de lo que marque el chofer.</div>';
     panel.style.display='block';
   }
   if(MAPA_RUTA_ANIM.length){
@@ -32422,11 +32446,12 @@ var LS_RUTA_CERCA='me_ruta_cerca';
 function nxRutaCerca(){ var v=nxLS(LS_RUTA_CERCA); return v!==false; }
 function nxRutaSetCerca(on){ nxLS(LS_RUTA_CERCA, !!on); renderRuta(); }
 function nxRutaOrdenar(stops){
-  var P=almUbic('ptf'), con=[], sin=[];
+  var con=[], sin=[], deps=rutaSalida(stops), P=deps[0]||almUbic('ptf'), ultD=deps[deps.length-1]||P;
   stops.forEach(function(p){ var g=almPunto(p); if(g) con.push({ p:p, g:g }); else sin.push(p); });
-  var ord=mapaRutaOrden(con, P), prev=P, km=0, kmDe={};   // los km van aparte: el pedido no se toca (se guarda tal cual)
+  var ord=mapaRutaOrden(con, ultD), prev=ultD, km=0, kmDe={};   // (12/10) sale de PTF, de Banzer, o de PTF pasando por Banzer
+  if(deps.length>1) km+=mapaKmAprox(P, ultD);   // los km van aparte: el pedido no se toca (se guarda tal cual)
   ord.forEach(function(it){ var d=mapaKmAprox(prev, it.g); km+=d; prev=it.g; kmDe[String(it.p.id)]=d; });
-  return { stops:ord.map(function(it){ return it.p; }).concat(sin), km:km, sin:sin.length, kmDe:kmDe };
+  return { stops:ord.map(function(it){ return it.p; }).concat(sin), km:km, sin:sin.length, kmDe:kmDe, deps:deps };
 }
 
 /* ---------------------------------------------------------------- A3 · AVISO DE PEDIDOS SIN CAMIÓN

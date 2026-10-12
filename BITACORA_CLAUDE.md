@@ -7445,6 +7445,22 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ke. 12/10: 🛣️ El recorrido sale de PTF o de Banzer según dónde se carga, y sin camiones lo dice — EN LA RAMA, sin publicar
+El dueño, con captura del mapa a las 01:48: *«cuando marco recorrido no me sale nada, ¿qué debería salir? Muéstrame»* y después
+*«¿toma en cuenta si sale de PTF o Banzer? Según como dividimos y pusimos en PTF o Banzer»*.
+- **No salía nada** porque el recorrido es POR CAMIÓN (`mapaRutaDatos` deja afuera «Sin chofer») y a esa hora ningún pedido de hoy tenía
+  camión. El panel se escondía callado; ahora dice «Todavía ningún pedido de hoy tiene camión asignado (N sin chofer)…» y trae
+  «🚚 Asignar camiones en Administración» (`.mrp-vacio`, `.mrp-ir`).
+- **De dónde sale** (`rutaSalida(pedidos)` → depósitos en orden): con la MISMA marca de la Lista de carga y «Lo del día, por lugar»
+  (`prodPartesCarga`): lo de acá, lo sin marcar y lo que se trae de Moreno (logística lo deja en PTF antes) → PTF; lo «✔ hay en
+  Banzer» (`tipo:'sale'`) → Banzer; con las dos, PTF y después Banzer. Productos de tienda no cuentan. La línea arranca en el primer
+  depósito, pasa por el segundo y las paradas se ordenan desde el ÚLTIMO (`mapaRutaOrden(…, ult)`); los km los suman; el 🚚 sin
+  entregas espera en el primero; el mapa marca 🏭 PTF y/o 🏪 Banzer (`.mapa-ruta-dep.bz`); el panel dice «sale de PTF / sale de Banzer
+  / carga en PTF y en Banzer» (`rutaSalidaTxt`). La **Hoja de ruta** (`nxRutaOrdenar`) usa lo mismo y lo dice al lado del chofer.
+- ⚠️ Si algún día un camión sale de Banzer ANTES que de PTF, o hay que ir a Moreno el mismo día, es acá (`rutaSalida`). Hoy sigue lo
+  decidido el 26/09: el bloque de Banzer va bajo el camión de cada pedido.
+- `tests/test_ruta_salida.js` (10; 9 rojas contra `f233130`).
+
 ## 4kc. 12/10: ✨ Lo de ADENTRO de las ventanas de Administración con el estilo nuevo — PUBLICADA 12/10 01:41 de Bolivia (`f233130`), Pages OK
 El dueño, después de §4kb: *«muéstrame antes de publicar»* → *«me gusta, pero aún no publiques, sigamos con los demás»* → *«si sigue,
 cuando esté todo reviso y veo si publicamos o no»*. Solo presentación: ninguna cuenta, texto que leen las pruebas, tilde ni guardado cambia.
