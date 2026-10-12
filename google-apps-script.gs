@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-12-d';   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-12-f';   // ⬅️ recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-12-d';
+  var ESTA_VERSION = '2026-10-12-f';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -2063,7 +2063,8 @@ var WA_LISTA_MAX = 240;                // (2026-10-12-b) «sin camión»: hasta 
 var WA_REINT_MAX = 3;                   // intentos por mensaje ante un problema pasajero de Meta
 var WA_REINT_MS = 5 * 60000;            // cada cuánto se reintenta
 var WA_HORA_LOGISTICA = 16;             // (dueño, 10/10: «16:00») pedidos sin camión
-var WA_HORA_RECORDATORIO = 17;          // (dueño, 10/10: «17:00») recordatorio al cliente
+var WA_HORA_RECORDATORIO = 17;          // (dueño, 10/10: «17:00») recordatorio al cliente: desde el 12/10, los de la MAÑANA (y sin turno)
+var WA_HORA_REC_PM = 19;                // (dueño, 12/10: «a las 17 los de la mañana y a las 19 los del turno PM de mañana»)
 var WA_VENTANA_H = 2;                   // si el bot estuvo parado, después de 2 horas ya no se manda el de ese día (dice «Son las 16:00»)
 var WA_CORRIDA_MS = 4 * 60000;          // Apps Script corta a los 6 minutos: lo que no salió queda para la próxima
 var WA_HOJA = 'Bot WhatsApp';
@@ -2386,7 +2387,7 @@ function waRepaso() {
         mandan lo mismo. Sin red adentro. */
   var lock = LockService.getScriptLock();
   try { lock.waitLock(20000); } catch (e) { res.error = 'busy (la próxima corrida lo manda)'; guardarRes(); return res; }
-  var msgs = [], recDia = '', recYa = {}, confHoy, colaN = {};
+  var msgs = [], recDia = '', recSoloAM = false, recYa = {}, confHoy, colaN = {};
   try {
     var cola = waColaLeer_(), quedan = [];
     cola.forEach(function (ev) {
@@ -2409,8 +2410,11 @@ function waRepaso() {
       cfg.logistica.forEach(function (L) { msgs.push({ k:'sc', a:L.nombre, dia:prox, n:0 }); });
       hecho.log = B.hoy; cambio = true;
     }
-    /* 17:00 al cliente: los del próximo día con camión. El sábado ya son los del lunes, y el domingo no se repiten. */
-    if (B.hora >= WA_HORA_RECORDATORIO && B.hora < WA_HORA_RECORDATORIO + WA_VENTANA_H && hecho.rec !== B.hoy) { recDia = prox; hecho.rec = B.hoy; cambio = true; }
+    /* Al cliente, los del próximo día con camión (el sábado ya son los del lunes; el domingo no se repiten): a las 17:00 los de la
+       MAÑANA y los sin turno; a las 19:00 los del turno PM y cualquiera que todavía no lo recibió (si a las 17 el bot estuvo parado,
+       o pasó de PM a AM entre las 17 y las 19). Cada pedido lo recibe UNA vez (WA_REC). */
+    if (B.hora >= WA_HORA_RECORDATORIO && B.hora < WA_HORA_RECORDATORIO + WA_VENTANA_H && hecho.rec !== B.hoy) { recDia = prox; recSoloAM = true; hecho.rec = B.hoy; cambio = true; }
+    if (B.hora >= WA_HORA_REC_PM && B.hora < WA_HORA_REC_PM + WA_VENTANA_H && hecho.recPm !== B.hoy) { recDia = prox; recSoloAM = false; hecho.recPm = B.hoy; cambio = true; }
     if (cambio) PropertiesService.getScriptProperties().setProperty('WA_HECHO', JSON.stringify(hecho));
   } finally { lock.releaseLock(); }
   var recs = null;
@@ -2426,6 +2430,7 @@ function waRepaso() {
       var p = R[id];
       if (p.fecha !== recDia || recYa[id] || confHoy.ids.indexOf(id) >= 0) continue;   // confirmado hoy: no se repite
       if (colaN[id]) continue;   // (12/10) su confirmación todavía espera en la cola: sale en unos minutos y ya dice el día
+      if (recSoloAM && waTurno_(p) === 'PM') continue;   // (12/10) el de la tarde sale a las 19:00
       var no = waNoCliente_(p, B.hoy); if (no && !no.anotar) continue;                    // los que no van, ni se anotan
       msgs.push({ id:id, k:'rec', a:'cliente', dia:recDia, n:0 });
     }
