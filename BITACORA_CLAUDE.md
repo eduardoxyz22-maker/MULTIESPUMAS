@@ -13799,3 +13799,6 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - `WA_META` (conteo, último, 10 últimos fallos) en `estadoBotWhatsApp` y en probar §11. `test_wa_bot` §10 (→ 89).
 - ⚠️ Meta puede reintentar si Apps Script contesta con su redirección 302: por eso todo es idempotente (por wamid).
 - Si con la app en «Desarrollo» Meta no manda avisos de producción, hay que pasarla a «Activo» (pide URL de política de privacidad).
+- **🚀 `.gs` 2026-10-12-a IMPLEMENTADO (12/10 ~16:00, el dueño)** con el webhook verificado en Meta («Configurar webhooks» ✅; Meta
+  suscribió solo `account_alerts` y `account_review_update`: falta confirmar `messages` y el «Suscribir webhooks» del 69398727).
+  **Volver atrás** = ✏️ a la **versión 41** (la 2026-10-11-a) Y pegar `f7587fbf9c3eae8fb26ba593e352194aaabc64ca` (3.054 líneas).
