@@ -13765,3 +13765,8 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   NO usarlo para el bot: ni su identificador 633697466495954 en `WA_PHONE_ID`, ni re-registrar, ni cambiarle el PIN. El bot necesita un
   número NUEVO sin WhatsApp (chip o fijo) agregado a «MultiEspumas Viscarra SRL» (cabe: 2 sin verificar el negocio). Mientras tanto, se
   puede probar con el número de prueba (`WA_PHONE_ID`=1416620634858875, el 62505280 ya está en su lista). Página de pasos versión 3.
+- **🧩 Las plantillas se crean desde el editor** (12/10): la cuenta de PRUEBA de Meta (WABA 2901139558521747) es de Meta y WhatsApp
+  Manager le dice al dueño «No tienes acceso». `.gs` (misma versión 2026-10-11-a, sin implementar todavía): `WA_PLANTILLAS` (los 6 textos
+  con sus ejemplos, en el orden de `waArmar_`) + **`crearPlantillasWhatsApp()`** (POST `/<WA_WABA_ID>/message_templates`, Utilidad, `es`;
+  la que ya existe queda) + **`verPlantillasWhatsApp()`** (en revisión / aprobada / rechazada con motivo). Propiedad nueva **`WA_WABA_ID`**.
+  `confirmacion_pedido` lleva «{{5}}.\n{{6}}» (sin el punto quedaban dos datos pegados: Meta las rechaza). `test_wa_bot` → 78.

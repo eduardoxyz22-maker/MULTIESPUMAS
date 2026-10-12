@@ -2428,6 +2428,83 @@ function estadoBotWhatsApp() {
 }
 
 /* ============================================================================
+ * 🧩 LAS 6 PLANTILLAS, CREADAS DESDE ACÁ (12/10). El dueño no pudo crearlas a mano en la cuenta de PRUEBA de Meta
+ * («No tienes acceso a la cuenta de WhatsApp Business…»: esa cuenta es de Meta). `crearPlantillasWhatsApp` las crea con la
+ * API, con el MISMO texto y los ejemplos que pide Meta, en la cuenta de la propiedad WA_WABA_ID (la de prueba hoy; la de
+ * verdad cuando esté el número propio). Se corre UNA vez desde el editor (▶). Una que ya existe queda como está.
+ * `verPlantillasWhatsApp` dice cómo va cada una (en revisión / aprobada / rechazada y por qué). Ninguna toca pedidos.
+ * ⚠️ Los nombres son los de WA_TIPOS y los {{n}} van en el orden en que `waArmar_` arma los datos: si cambia uno, cambian los dos.
+ * ========================================================================== */
+var WA_PLANTILLAS = [
+  { n:'confirmacion_pedido',
+    t:'Hola {{1}}, te confirmamos tu pedido {{2}} de {{3}}.\nProductos: {{4}}\nDirección de entrega: {{5}}.\n{{6}}.\nTe lo entregamos el {{7}}. El camión pasa entre las {{8}} y logística te llama una hora antes.\nSi tenés una consulta, escribile a tu vendedora por el WhatsApp de siempre. ¡Gracias por tu compra!',
+    e:['Juan', 'OC 10-412', 'Heaven Colchones', '1 × TITANIO ICE 160x190', 'Calle 1 #23, Barrio Norte', 'Saldo a pagar al recibir: Bs 1.500', 'jueves 15/10 por la mañana', '9:00 y las 12:00'] },
+  { n:'cambio_entrega',
+    t:'Hola {{1}}, te escribimos de {{2}}. Cambió el día de entrega de tu pedido {{3}}: ahora te lo llevamos el {{4}}, entre las {{5}}. Logística te llama una hora antes.\nSi no te queda bien, escribile a tu vendedora por el WhatsApp de siempre.',
+    e:['Juan', 'Heaven Colchones', 'OC 10-412', 'viernes 16/10 por la tarde', '14:30 y las 18:30'] },
+  { n:'recordatorio_entrega',
+    t:'Hola {{1}}, te escribimos de {{2}} por tu pedido {{3}}.\n{{4}} te llevamos: {{5}}.\n{{6}}.\nEntrega: {{7}}, entre las {{8}}. Logística te llama una hora antes.\nSi no vas a estar, escribile a tu vendedora por el WhatsApp de siempre para cambiar el día.',
+    e:['Juan', 'Heaven Colchones', 'OC 10-412', 'Mañana', '1 × TITANIO ICE 160x190', 'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00'] },
+  { n:'logistica_pedido_nuevo',
+    t:'Pedido nuevo para el {{1}}, turno {{2}}.\nCliente: {{3}}, zona {{4}}.\nProductos: {{5}}\nVendedor: {{6}}\nAsignale camión en el panel.',
+    e:['jueves 15/10', 'AM', 'JUAN PEREZ', 'Norte', '1 × TITANIO ICE 160x190', 'Maria Flores'] },
+  { n:'logistica_cambio',
+    t:'Cambio de entrega del pedido {{1}} ({{2}}): {{3}}.\nRevisá el camión asignado en el panel.',
+    e:['OC 10-412', 'JUAN PEREZ', 'pasó del jueves 15/10 por la mañana al viernes 16/10 por la tarde'] },
+  { n:'logistica_sin_camion',
+    t:'Son las 16:00 y quedan {{1}} pedidos del {{2}} sin camión: {{3}}.\nAsignalos en el panel así la carga se arma a tiempo.',
+    e:['3', 'jueves 15/10', 'JUAN PEREZ (Norte), ANA ROJAS (Centro), MULTICENTER (Equipetrol)'] }
+];
+function waPlantillasCfg_() {
+  var c = waConfig_(), waba = prop_('WA_WABA_ID');
+  if (!c.token) return { error:'Falta la propiedad WA_TOKEN (el token de Meta).' };
+  if (!waba) return { error:'Falta la propiedad WA_WABA_ID: el «Identificador de la cuenta de WhatsApp Business» (en la cuenta de prueba, el número largo que aparece al lado del número +1 555…).' };
+  return { c:c, waba:waba, base:'https://graph.facebook.com/' + c.api + '/' + encodeURIComponent(waba) + '/message_templates' };
+}
+/** ▶ Correr UNA vez desde el editor: crea las 6 plantillas en la cuenta WA_WABA_ID. */
+function crearPlantillasWhatsApp() {
+  var K = waPlantillasCfg_(), out = [];
+  if (K.error) { if (typeof Logger !== 'undefined') Logger.log('❌ ' + K.error); return { error:K.error }; }
+  WA_PLANTILLAS.forEach(function (pl) {
+    var body = { name:pl.n, language:K.c.idioma, category:'UTILITY',
+                 components:[{ type:'BODY', text:pl.t, example:{ body_text:[pl.e] } }] };
+    var code = 0, o = {};
+    try {
+      var r = UrlFetchApp.fetch(K.base, { method:'post', contentType:'application/json', headers:{ Authorization:'Bearer ' + K.c.token },
+                                          payload:JSON.stringify(body), muteHttpExceptions:true });
+      code = r.getResponseCode(); try { o = JSON.parse(String(r.getContentText() || '{}')); } catch (e1) {}
+    } catch (e) { out.push({ n:pl.n, ok:false, txt:'❌ ' + pl.n + ': sin conexión con Meta (' + String((e && e.message) || e).slice(0, 120) + ')' }); return; }
+    var er = o.error || {}, msg = String(er.error_user_msg || er.message || '');
+    if (code >= 200 && code < 300) out.push({ n:pl.n, ok:true, estado:String(o.status || ''), txt:'✅ ' + pl.n + ': creada (' + String(o.status || 'en revisión') + (o.category && o.category !== 'UTILITY' ? ', Meta la puso como ' + o.category : '') + ')' });
+    else if (/exist/i.test(msg) || Number(er.error_subcode) === 2388023 || Number(er.error_subcode) === 2388024) out.push({ n:pl.n, ok:true, ya:true, txt:'↪️ ' + pl.n + ': ya existía, quedó como estaba' });
+    else if (code === 401 || Number(er.code) === 190) out.push({ n:pl.n, ok:false, txt:'❌ ' + pl.n + ': el token no sirve (venció o está mal copiado). Generá otro y cambiá WA_TOKEN.' });
+    else out.push({ n:pl.n, ok:false, txt:'❌ ' + pl.n + ': Meta dijo «' + msg.slice(0, 200) + '» (HTTP ' + code + ')' });
+  });
+  if (typeof Logger !== 'undefined') out.forEach(function (x) { Logger.log(x.txt); });
+  return { plantillas:out, ok:out.every(function (x) { return x.ok; }) };
+}
+/** ▶ Cómo van: en revisión (PENDING), aprobada (APPROVED) o rechazada (REJECTED, con el motivo). */
+function verPlantillasWhatsApp() {
+  var K = waPlantillasCfg_();
+  if (K.error) { if (typeof Logger !== 'undefined') Logger.log('❌ ' + K.error); return { error:K.error }; }
+  var lista = [], o = {};
+  try {
+    var r = UrlFetchApp.fetch(K.base + '?fields=name,status,language,category,rejected_reason&limit=200',
+                              { method:'get', headers:{ Authorization:'Bearer ' + K.c.token }, muteHttpExceptions:true });
+    try { o = JSON.parse(String(r.getContentText() || '{}')); } catch (e1) {}
+  } catch (e) { return { error:'sin conexión con Meta' }; }
+  if (o.error) { if (typeof Logger !== 'undefined') Logger.log('❌ ' + (o.error.message || '')); return { error:String(o.error.message || '') }; }
+  var hay = {}; (o.data || []).forEach(function (t) { if (t && t.language === K.c.idioma) hay[t.name] = t; });
+  var nombre = { APPROVED:'✅ aprobada', PENDING:'⏳ en revisión', REJECTED:'❌ rechazada', PAUSED:'⏸️ pausada', DISABLED:'🚫 desactivada' };
+  WA_PLANTILLAS.forEach(function (pl) {
+    var t = hay[pl.n];
+    lista.push({ n:pl.n, estado:t ? String(t.status) : '', txt:pl.n + ': ' + (t ? ((nombre[t.status] || t.status) + (t.rejected_reason && t.rejected_reason !== 'NONE' ? ' · motivo: ' + t.rejected_reason : '') + (t.category && t.category !== 'UTILITY' ? ' · categoría ' + t.category : '')) : '— no está creada (corré crearPlantillasWhatsApp)') });
+  });
+  if (typeof Logger !== 'undefined') lista.forEach(function (x) { Logger.log(x.txt); });
+  return { plantillas:lista, listas:lista.every(function (x) { return x.estado === 'APPROVED'; }) };
+}
+
+/* ============================================================================
  * 📥 BORRADORES DE KOMMO (§4cc)
  *
  * Cuando una venta pasa a «Compradores» en Kommo, Kommo avisa acá y esta parte deja

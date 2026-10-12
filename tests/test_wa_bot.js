@@ -65,7 +65,7 @@ function servidor(props) {
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => P[k] != null ? P[k] : null, setProperty: (k, v) => { P[k] = String(v); },
       deleteProperty: (k) => { delete P[k]; }, setProperties: (o) => Object.assign(P, o) }) },
     UrlFetchApp: { fetch: (url, o) => {
-      const body = JSON.parse(o.payload); meta.llamadas.push({ url, o, body });
+      const body = o.payload ? JSON.parse(o.payload) : null; meta.llamadas.push({ url, o, body });
       const r = meta.responder ? meta.responder(body, meta.llamadas.length) : null;
       const code = r ? r.code : 200, txt = r ? JSON.stringify(r.body || {}) : JSON.stringify({ messages: [{ id: 'wamid.' + (++meta.n) }] });
       return { getResponseCode: () => code, getContentText: () => txt };
@@ -382,6 +382,39 @@ console.log('\n── 8. WA_PRUEBA, instalarDisparadores y probarAntesDeImplemen
   S.guardar({ id: '__stock__', fecha: '', observaciones: '{}' });
   S.guardar({ id: '__ret_1__', fecha: '2026-10-15', cliente: 'retiro' });
   chk('las filas del sistema no entran a la cola', !JSON.parse(S.P.WA_COLA || '[]').length, S.P.WA_COLA);
+}
+
+// ══ Las 6 plantillas, creadas desde el editor (12/10: la cuenta de prueba de Meta no deja crearlas a mano) ══
+console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWhatsApp ──');
+{
+  const S = servidor(Object.assign({}, ON, { WA_WABA_ID: '2901139558521747' }));
+  const T = S.ctx.WA_PLANTILLAS, tipos = S.ctx.WA_TIPOS;
+  const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
+  chk('son las 6 de WA_TIPOS, con el mismo nombre', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombres), T.map(x => x.n));
+  const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
+  const esperado = { confirmacion_pedido: 8, cambio_entrega: 5, recordatorio_entrega: 8, logistica_pedido_nuevo: 6, logistica_cambio: 3, logistica_sin_camion: 3 };
+  chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
+  chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
+  S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
+  const r = S.ctx.crearPlantillasWhatsApp();
+  const ll = S.meta.llamadas;
+  chk('crear: 6 llamadas a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === 6 && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
+  chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === 5, r);
+  chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
+  S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
+  const r2 = S.ctx.crearPlantillasWhatsApp();
+  chk('con el token vencido lo dice («generá otro»)', !r2.ok && r2.plantillas.every(x => /token no sirve/.test(x.txt)), r2.plantillas[0]);
+  S.limpiar(); S.meta.responder = () => ({ code: 200, body: { data: [
+    { name: 'confirmacion_pedido', language: 'es', status: 'APPROVED', category: 'UTILITY' },
+    { name: 'cambio_entrega', language: 'es', status: 'REJECTED', rejected_reason: 'INVALID_FORMAT' },
+    { name: 'recordatorio_entrega', language: 'es', status: 'PENDING' },
+    { name: 'logistica_pedido_nuevo', language: 'en_US', status: 'APPROVED' } ] } });
+  const v = S.ctx.verPlantillasWhatsApp();
+  const tx = v.plantillas.map(x => x.txt).join(' | ');
+  chk('ver: aprobada / rechazada con el motivo / en revisión / no creada (la de otro idioma no cuenta)', /confirmacion_pedido: ✅ aprobada/.test(tx) && /cambio_entrega: ❌ rechazada · motivo: INVALID_FORMAT/.test(tx) && /recordatorio_entrega: ⏳ en revisión/.test(tx) && /logistica_pedido_nuevo: — no está creada/.test(tx) && v.listas === false, tx);
+  chk('ver es un GET, sin cuerpo', S.meta.llamadas.length === 1 && S.meta.llamadas[0].o.method === 'get' && /fields=name,status/.test(S.meta.llamadas[0].url));
+  const S2 = servidor(ON);
+  chk('sin WA_WABA_ID dice qué falta y no llama a Meta', /WA_WABA_ID/.test(S2.ctx.crearPlantillasWhatsApp().error || '') && S2.meta.llamadas.length === 0);
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
