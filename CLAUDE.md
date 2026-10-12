@@ -739,6 +739,14 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
 - `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
 
+## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»)
+A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)
+· C logística sin clave en cualquier pestaña (`asisLogistica`) · D mensaje al cliente según el cuadrito al guardar (`asisMsgEspera`, la MISMA
+cuenta `saldoVeredictoFila`) · E resumen del día 5–14 h (`asisResumenDia`, `a.res`) · F sinónimos + errores de tipeo + la pestaña primero
+(`ASIS_SINONIMOS`, `nxDist`) · G seis respuestas más AL FINAL de `ASIS_AYUDA` (19; un vendedor 15) · H `body.asis-escribe` · I recorrido guiado
+(`asisTour*`, `me_asis_tour`) · K lo que no supo → fila del sistema **`__asis_preguntas__`** (en `esFilaSistema`), la ve solo Administración.
+⚠️ Una respuesta nueva va AL FINAL y su `f` tiene que existir en la página (`test_asistente_ak` §G). `tests/test_asistente_ak.js` (38).
+
 ## ✨ Adentro de las ventanas de Administración + Eduardo que lleva a algo visible (§4kc + §4kd, 12/10; PUBLICADA 01:41, `f233130`)
 Solo presentación: fichas `mc` vivas (`admVestir`/`cxFichasVivas` + `admIcoDe`/`ADM_ESC`), barras de columna (`admBarras`), barra «N de M»
 (`admAvanceHtml`; en el cierre `#cie-av` se repinta en `cierreEntToggle`), Lista de carga con `cargaResumenPintar`, el mapa dentro de

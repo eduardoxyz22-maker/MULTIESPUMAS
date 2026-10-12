@@ -139,11 +139,13 @@ function PREPARAR(){
       out.push({ i:i+1, v:ASIS_AYUDA[i].v, solo:ASIS_AYUDA[i].solo||'', vista:asisVista(), id:el?(el.id||el.textContent.slice(0,20)):'', ve:asisSeVe(el) && rc.height>0 && rc.top<innerHeight && rc.bottom>0, glo:gl.hidden?'':gl.innerText.replace(/\s+/g,' ') });
       gl.hidden=true;
     }
+    if(typeof asisTourFin==='function') asisTourFin();   // (12/10, I) la última es el recorrido guiado
     return out;
   }, { un:un, nombre:nombre, rol:rol });
-  const R13 = (x) => Array.isArray(x) ? x : Array.from({length:13}, () => ({}));
+  const NT=19, NV=15;   // (12/10, G) 6 respuestas más: 19 en total, 15 para un vendedor
+  const R13 = (x) => Array.isArray(x) ? x : Array.from({length:NT}, () => ({}));
   r = R13(await recorrer(false, '', 'logistica'));
-  chk('logística sin clave y sin nombre: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
+  chk('logística sin clave y sin nombre: las '+NT+' iluminan algo que se ve', Array.isArray(r) && r.length===NT && r.every(function(x){ return x.ve; }), r.filter(function(x){ return !x.ve; }));
   chk('Administración sin la clave → la tarjeta de la contraseña, y Eduardo lo dice',
       r.filter(function(x){ return x.v==='admin'; }).every(function(x){ return x.id==='admin-lock' && /contraseña de Administración/.test(x.glo); }), r);
   chk('buscar/corregir sin nombre elegido → «Primero elegí tu nombre»',
@@ -163,11 +165,11 @@ function PREPARAR(){
     return r1;
   });
   chk('un vendedor NO ve «¿Cómo asigno un camión?» ni «¿Cómo hago el cierre de entregas?», ni buscándolas',
-      rv.busca && rv.busca.indexOf('adm')<0 && rv.n===11 && !rv.hayAdm, rv);
+      rv.busca && rv.busca.indexOf('adm')<0 && rv.n===NV && !rv.hayAdm, rv);
   chk('…y «Mostrame dónde» de una de esas no lo lleva a Administración', rv.vista==='mis' && !rv.foco, rv);
-  chk('logística y quien tiene la clave las ven (13)', rv.logVe===13 && rv.logCamion && rv.claveVe===13, rv);
+  chk('logística y quien tiene la clave las ven ('+NT+')', rv.logVe===NT && rv.logCamion && rv.claveVe===NT, rv);
   r = R13(await recorrer(true, 'Mirian Salazar', ''));
-  chk('con la clave y el nombre recordado: las 13 iluminan algo que se ve', Array.isArray(r) && r.length===13 && r.every(function(x){ return x.ve; }), r);
+  chk('con la clave y el nombre recordado: las '+NT+' iluminan algo que se ve', Array.isArray(r) && r.length===NT && r.every(function(x){ return x.ve; }), r.filter(function(x){ return !x.ve; }));
   chk('buscar un pedido: pone el nombre de este aparato y lleva al buscador', r[7].id==='mis-q' && !r[7].glo, r[7]);
   chk('cierre de entregas → el botón «✅ Cierre de entregas»; asignar camión → los camiones', /Cierre de entregas/.test(r[10].id) && /^carga-viva|Lista de carga/.test(r[9].id), [r[9], r[10]]);
 
