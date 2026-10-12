@@ -13862,3 +13862,5 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   mientras tanto salen las viejas solas). Publicado en `main` también el `.gs` y `test_wa_bot.js`. Falta: que cargue
   `WA_VENDEDORAS` y que Meta apruebe las 5. **Volver atrás**: ✏️ a la versión de la 12-c que anotó el dueño Y pegar la 12-c
   (`3e6bdd661a2f50bc8a4b7aedc03b51c1faa90ff3`, 3.254 líneas); la página publicada anda igual con la 12-c (solo mostraría la línea gris).
+- 12/10 a la noche, el dueño: *«ya cargué los celulares, ya salieron aprobadas las plantillas»*: `WA_VENDEDORAS` cargada y las 6 `_v2`
+  aprobadas. Desde ahí salen las v2 con el enlace al WhatsApp del vendedor.
