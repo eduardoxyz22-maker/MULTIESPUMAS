@@ -221,7 +221,7 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
       closeEntregas();
       // El Parte del día (pantalla y el WhatsApp de las 18:00)
       var d=parteData(); abrirParte();
-      out.parte={ pend:d.pend, pendN:d.pendN, card:txt([].filter.call(document.querySelectorAll('#parte-body div'), function(x){ return /^Por cobrar/i.test(x.textContent.trim()) && x.children.length===3; })[0]),
+      out.parte={ pend:d.pend, pendN:d.pendN, card:txt([].filter.call(document.querySelectorAll('#parte-body .mc'), function(x){ return /^Por cobrar/i.test((x.querySelector('.mc-lbl')||{}).textContent||''); })[0]),   // (§4kc) la ficha ahora es `.mc`
                   linea:(parteText().split('\n').filter(function(l){ return /Por cobrar/.test(l); })[0]||'') };
       closeParte();
       // Parte de un día con solo la venta pagada y su flete
