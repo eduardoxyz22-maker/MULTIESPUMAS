@@ -13814,3 +13814,7 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   próximo día con camión no es mañana, el chip dice su nombre: «➡️ Martes 03/11», `lblF`). Los dos llevan `todo:true`: cuentan y
   filtran sobre `admBaseList(true)` (sin el corte por día/mes; la búsqueda sí), porque el 31 «Mañana» es del mes siguiente.
   `quickDef(k)`. `tests/test_adm_hoy.js` (6).
+- **✅ 12/10 16:31: Meta ya avisa.** La URL del webhook había quedado con `?wa=TUCLAVE` literal (verificaba igual porque el GET
+  mira `hub.verify_token`, no `wa`): los POST se descartaban en silencio. Corregida, llegó la primera fila «💬 Respondió»
+  («Ernesto Coordinador logis…», «OK») y apareció el título «Meta dice». ⚠️ Lección: un `wa` que no coincide no deja rastro.
+  Próxima versión del `.gs`: anotar los avisos rechazados por clave (cuántos y cuándo, sin el valor) y mostrarlo en probar.
