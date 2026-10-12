@@ -57,6 +57,19 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   console.log('\n── 5. La Hoja de ruta con la misma regla ──');
   chk('la hoja de ruta ordena desde el mismo depósito', r.H && r.H['Banzer'].deps==='banzer' && r.H['Banzer'].primero==='C5' && r.H['Los dos'].deps==='ptf>banzer' && r.H['Los dos'].primero==='C7' && r.H['Acá'].deps==='ptf', r.H);
 
+  console.log('\n── 5b. (12/10, revisión) Un pedido «✔ Banzer» SIN ubicación también dice de dónde sale ──');
+  const r5 = await ev(() => {
+    var P=almUbic('ptf'), hoy=todayStr();
+    var A={ id:'m1', oc:'10-901', cliente:'CON PIN', fecha:hoy, turno:'AM', vendedor:'Mirian Salazar', chofer:'Mixto', vehiculo:'', productos:[{ desc:'TITANIO LATEX', medida:'140x190', cant:1, precio:3000 }], saldo:0, pagado:true, entregado:false, maps:'https://www.google.com/maps?q='+(P.lat+0.01)+','+P.lng, ts:1, fotos:[] };
+    var B=Object.assign({}, A, { id:'m2', oc:'10-902', cliente:'SIN PIN', maps:'', productos:[{ desc:'TITANIO LATEX', medida:'140x190', cant:1, precio:3000, chk:'ok', chkDe:'Banzer' }] });
+    var st=STATE, ml=MAPA_LIST, mc=MAPA_COORDS;
+    STATE=[A, B]; MAPA_LIST=STATE.slice(); MAPA_COORDS={}; var g=coordsDeLink(A.maps); MAPA_COORDS[A.maps]={ link:A.maps, lat:g.lat, lng:g.lng };
+    var m=mapaRutaDatos().filter(function(x){ return x.k==='Mixto'; })[0], h=nxRutaOrdenar(STATE);
+    var out={ mapa:m && rutaSalidaTxt(m.deps), hoja:rutaSalidaTxt(h.deps) };
+    STATE=st; MAPA_LIST=ml; MAPA_COORDS=mc; return out;
+  });
+  chk('el mapa y la Hoja de ruta dicen lo mismo: «carga en PTF y en Banzer»', r5.mapa==='carga en PTF y en Banzer' && r5.hoja===r5.mapa, r5);
+
   console.log('\n── 4, 6. El panel del recorrido ──');
   const p4 = await ev(() => {
     var panel=document.getElementById('mapa-ruta-panel'); document.getElementById('mapa-overlay').style.display='flex';
@@ -75,6 +88,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('el panel dice de dónde sale cada camión', /sale de Banzer/.test(p4.con.txt) && /carga en PTF y en Banzer/.test(p4.con.txt) && /sale de PTF/.test(p4.con.txt), p4.con && p4.con.txt);
   chk('el mapa marca 🏭 PTF y 🏪 Banzer', /PTF/.test(p4.con.dep) && /Banzer/.test(p4.con.dep), p4.con && p4.con.dep);
   chk('sin ningún camión asignado: lo dice y ofrece asignarlos (antes no salía nada)', p4.visible && /ningún pedido de hoy tiene camión asignado/.test(p4.sin) && p4.btn, p4);
+  chk('(12/10) y no promete «desde PTF»: cada camión sale de su depósito', !/desde PTF/.test(p4.sin) && /su depósito/.test(p4.sin), p4.sin);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

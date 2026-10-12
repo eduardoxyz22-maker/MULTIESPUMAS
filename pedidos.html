@@ -1731,11 +1731,11 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 <div id="entregas-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoElegida(event)">
 <!-- Comprobante del pago: SIN capture, para poder elegir una captura de pantalla ya guardada -->
-<input type="file" id="comp-input" accept="image/*" style="display:none" onchange="onCompElegido(event)">
+<input type="file" id="comp-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onCompElegido)">
 <!-- 📥 El Excel de ROHO (§4ci) -->
 <input type="file" id="roho-input" accept=".xlsx" style="display:none" onchange="onRohoArchivo(event)">
 <input type="file" id="exist-input" accept=".xlsx" style="display:none" onchange="onExistArchivo(event)">
-<input type="file" id="fcomp-input" accept="image/*" style="display:none" onchange="onCompFormElegido(event)">
+<input type="file" id="fcomp-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onCompFormElegido)">
 <style>
 /* ✨ §4ik (09/10): las seis vistas nuevas. Solo miran. */
 .vis-caja{ background:#fff; border:1px solid var(--gray-md); border-radius:12px; padding:0 14px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
@@ -2198,6 +2198,11 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cvc-l.cero{ opacity:.6; cursor:default; }
 .cvc-bz{ color:#1d4ed8; }
 .cvc-asig{ display:flex; flex-direction:column; gap:4px; padding:5px 0; border-bottom:1px dashed var(--gray-md); }
+.cvc-salio{ margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:#dbeafe; color:#1e3a8a; font-size:.84rem; }
+.cvc-salio button{ margin-left:auto; border:1px solid #93c5fd; background:#fff; color:#1e3a8a; border-radius:999px; padding:6px 12px; min-height:36px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
+.cvc-salio-btn{ margin-top:8px; width:100%; min-height:44px; border:1.5px dashed #2563eb; background:#fff; color:#1d4ed8; border-radius:10px; font:inherit; font-weight:800; cursor:pointer; }
+.cvc-salio-btn.listo{ border-style:solid; background:#2563eb; color:#fff; }
+.dep-etq-cam.cv3d-ruta{ background:#1d4ed8; } .dep-etq-cam.cv3d-ruta small{ color:#dbeafe; }
 .cvc-sel{ font:inherit; font-size:.8rem; font-weight:700; border:1.5px solid #fcd34d; border-radius:8px; padding:5px 8px; background:#fffbeb; }
 .cvc-paradas summary{ cursor:pointer; font-size:.78rem; font-weight:800; color:var(--muted); padding:4px 0; }
 .cvc-paradas .dep-ped{ display:block; width:100%; margin-top:4px; }
@@ -2338,7 +2343,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .asis-h{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:linear-gradient(120deg,#1f2a30,#2c3e45); color:#fff; }   /* (12/10, dueño: «eso sí me gusta negro, pero la foto de Eduardo con fondo blanco») */
 .asis-h img{ width:52px; height:52px; border-radius:14px; object-fit:cover; object-position:50% 10%; background:#fff; flex:none; box-shadow:0 0 0 2px rgba(255,255,255,.35); }
 .asis-h > div{ flex:1; min-width:0; } .asis-h b{ display:block; } .asis-h small{ display:block; opacity:.8; font-size:.74rem; }
-.asis-x{ border:0; background:rgba(255,255,255,.12); color:#fff; border-radius:9px; width:32px; height:32px; cursor:pointer; font-size:.9rem; }
+.asis-x{ border:0; background:rgba(255,255,255,.12); color:#fff; border-radius:9px; width:44px; height:44px; flex:none; cursor:pointer; font-size:1rem; }
 .asis-tabs{ display:flex; gap:4px; padding:8px 10px 0; border-bottom:1px solid var(--gray-md); }
 .asis-tabs button{ flex:1; border:0; background:none; padding:8px 6px; font:inherit; font-weight:700; font-size:.82rem; color:var(--muted); border-bottom:3px solid transparent; cursor:pointer; }
 .asis-tabs button.on{ color:var(--teal-dk); border-bottom-color:var(--teal); }
@@ -2348,7 +2353,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .asis-av.am{ border-left-color:var(--amber); background:#fffaf0; } .asis-av.ro{ border-left-color:var(--red); background:#fff6f7; }
 .asis-av b{ display:block; } .asis-av span{ display:block; color:var(--muted); font-size:.78rem; margin-top:2px; }
 .asis-acc{ display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
-.asis-b{ border:1px solid var(--gray-md); background:#fff; color:var(--text); border-radius:999px; padding:5px 12px; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
+.asis-b{ border:1px solid var(--gray-md); background:#fff; color:var(--text); border-radius:999px; padding:8px 14px; min-height:44px; font:inherit; font-size:.8rem; font-weight:700; cursor:pointer; }
+.asis-sindatos{ text-align:left; line-height:1.45; } .asis-sindatos .asis-b{ margin-top:8px; }
 .asis-b.si{ background:var(--teal); border-color:var(--teal); color:#fff; }
 .asis-vacio{ color:var(--muted); font-size:.85rem; padding:10px 4px; }
 /* (12/10) «Ver cuáles» despliega los clientes dentro del aviso; cada uno abre su pedido */
@@ -2368,7 +2374,12 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .asis-foco{ position:relative; z-index:5; box-shadow:0 0 0 4px #f59e0b, 0 0 22px 6px rgba(245,158,11,.55)!important; border-radius:10px; animation:asis-foco 1s ease-in-out infinite alternate; }
 @keyframes asis-foco{ to{ box-shadow:0 0 0 7px #f59e0b, 0 0 30px 10px rgba(245,158,11,.35); } }
 @media(max-width:700px){ .asis{ right:2px; bottom:calc(72px + env(safe-area-inset-bottom)); } body.con-pasos .asis{ bottom:calc(138px + env(safe-area-inset-bottom)); }
-  .asis-yo{ width:66px; height:118px; } .asis-fig{ height:112px; } .asis-piso{ width:54px; } .asis-globo{ margin:0 66px -90px 0; } }
+  .asis-yo{ width:66px; height:118px; } .asis-fig{ height:112px; } .asis-piso{ width:54px; } .asis-globo{ margin:0 66px -90px 0; }
+  /* (12/10, revisión) en un celular bajo (360×640) la ventana se salía por arriba: alto = la pantalla menos la burbuja y su altura */
+  .asis-panel{ max-height:calc(100vh - 214px); max-height:calc(100dvh - 214px - env(safe-area-inset-bottom)); }
+  body.con-pasos .asis-panel{ max-height:calc(100vh - 280px); max-height:calc(100dvh - 280px - env(safe-area-inset-bottom)); }
+  /* y con «Guardar pedido» a la vista Eduardo se corre: tapaba su esquina derecha */
+  body.asis-guardar .asis-yo{ opacity:0; pointer-events:none; transform:translateX(60px); transition:opacity .2s, transform .2s; } }
 @media print{ .asis{ display:none!important; } }
 /* ✨ Ventanas de Administración (§4kc) */
 .pt-met .mc{ min-width:0; }
@@ -2972,7 +2983,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="faltantes-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="envio-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><div id="envio-partes" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-parte-todo" onclick="setEnvioParte('todo')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Todo</button><button id="envio-parte-AM" onclick="setEnvioParte('AM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌅 Solo AM</button><button id="envio-parte-PM" onclick="setEnvioParte('PM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌆 Solo PM</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div id="envio-body" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a copiar. Podés editarlo antes.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
-<input type="file" id="ret-foto-input" accept="image/*" style="display:none" onchange="onRetFotoElegida(event)">
+<input type="file" id="ret-foto-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onRetFotoElegida)">
 <div id="retiros-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c3aed;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">💵 Retiros de efectivo</b><input type="month" id="ret-mes" onchange="renderRetiros()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"><select id="ret-filtro-vend" onchange="renderRetiros()" style="flex:0 0 auto;max-width:200px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"></select><span id="ret-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c3aed;font-weight:700" onclick="copiarRetiros()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printRetiros()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRetiros()">✕ Cerrar</button></div><div id="retiros-body" style="flex:1;overflow:auto;padding:14px"><div id="ret-form"></div><div id="ret-lista"></div></div></div>
 <!-- 🔎 BUSCAR PEDIDOS (§4db): por cliente, por producto y entre dos fechas. Nació de un
      pedido concreto del dueño —«todos los pedidos de Juan Pablo Paredes que digan carioca
@@ -6627,8 +6638,11 @@ function cxIrArqueo(forma){
 /* H · quién tiene el efectivo en la mano (`cuadreEfectivo`: cobrado en efectivo − retirado, por quien recibió la plata). */
 function cxManoPintar(){
   var box=document.getElementById('cx-mano'); if(!box) return;
-  var E=cuadreEfectivo(), filas=E.filas;
-  if(!filas.length){ box.innerHTML=''; return; }
+  var E=cuadreEfectivo(), filas=E.filas, fuera=(E.fuera||[]).filter(function(o){ return o.monto>0.01; });
+  if(!filas.length && !fuera.length){ box.innerHTML=''; return; }
+  /* (12/10, revisión) con una vendedora elegida, lo que cobró un CHOFER de sus ventas va a `fuera`: antes decía «todo recogido» */
+  var fueraHtml=fuera.length ? ('<div class="cx-nota" style="color:#7c4b00">🚚 De estas ventas, '+fuera.map(function(o){ return '<b>'+esc(o.nombre)+'</b> cobró '+fmtBs(o.monto); }).join(' · ')+
+    ' en efectivo: lo que tiene en la mano se ve eligiendo «Todos».</div>') : '';
   var con=filas.filter(function(o){ return Math.abs(o.falta)>0.01; });
   var cards=con.map(function(o, i){
     var debe=o.falta>0.01;
@@ -6642,7 +6656,7 @@ function cxManoPintar(){
   }).join('');
   box.innerHTML='<div class="cua-box cx-manos"><div class="cua-t">👛 Quién tiene el efectivo — '+esc(cuadrePeriodoTxt())+'</div>'+
     (con.length ? ('<div class="cx-manos-in">'+cards+'</div><div class="cx-nota">«Retiro» abre el retiro de efectivo ya llenado con la persona y el monto: revisalo y agregá las notas antes de guardar. Los choferes rinden a Contabilidad.</div>')
-                : '<div class="empty" style="padding:12px 0">✅ Todo el efectivo cobrado ya se recogió.</div>')+'</div>';
+                : (fuera.length ? '' : '<div class="empty" style="padding:12px 0">✅ Todo el efectivo cobrado ya se recogió.</div>'))+fueraHtml+'</div>';
 }
 function cxRetiro(nombre, monto){
   abrirRetiros();
@@ -8850,7 +8864,7 @@ function onRetFotoElegida(ev){
   retLeerForm();
   if(compsArr(RET_FORM.fotos).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo la foto del recibo…','ok');
-  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return subirFoto('retiro_'+(RET_FORM.entrega||''), 'recibo_retiro', dataUrl);
   }).then(function(res){
     if(!res || !res.ok || !res.fotoId){
@@ -9379,7 +9393,7 @@ function onCompElegido(ev){
   if(yaTiene>=COMP_MAX){ toast('Ese pago ya tiene las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; showContaModal(p.id);          // que se vea "⏳ Subiendo…" desde ya
-  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return subirFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl);
   }).then(function(res){
     COMP_SUBIENDO--;
@@ -11001,6 +11015,24 @@ function adjuntarCompForm(destino){
   var el=document.getElementById('fcomp-input'); if(!el) return;
   el.value=''; el.click();
 }
+/* 🖼️ (12/10, dueño: «no deja subir más de 1 foto a la vez») Los selectores de comprobantes aceptan VARIAS imágenes de una vez
+   (`multiple`). Se suben DE A UNA con el manejador de siempre (el tope de COMP_MAX, el destino y el guardado no cambian): cada vuelta
+   repone `COMP_DESTINO` (el manejador lo consume) y espera a que la anterior termine. Las que pasan el tope no se suben y se dice. */
+function compVarias(ev, fn){
+  var inp=ev && ev.target; if(!inp) return;
+  var fs=Array.prototype.slice.call(inp.files||[]), ds={}, dest=COMP_DESTINO;
+  for(var k in (inp.dataset||{})) ds[k]=inp.dataset[k];
+  try{ inp.value=''; }catch(e){}                   // así se puede volver a elegir la misma imagen
+  if(fs.length>COMP_MAX){ toast('Elegiste '+fs.length+' imágenes: se suben las primeras '+COMP_MAX+' (es el tope por pago).','err',6000); fs=fs.slice(0, COMP_MAX); }
+  var i=0;
+  var sig=function(){
+    if(i>=fs.length) return;
+    var f=fs[i++]; COMP_DESTINO=dest;
+    var r; try{ r=fn({ target:{ files:[f], dataset:ds, value:'' } }); }catch(e){ r=null; }
+    return Promise.resolve(r).then(sig, sig);
+  };
+  return sig();
+}
 function onCompFormElegido(ev){
   var f=(ev.target.files||[])[0]; if(!f) return;
   // El tope va acá y no solo en el botón: así no se sube nada a Drive de más.
@@ -11008,7 +11040,7 @@ function onCompFormElegido(ev){
   var _dest=COMP_DESTINO;                          // por si cambian de bloque mientras sube
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; compRepintar();                 // que se vea "⏳ Subiendo…" desde ya
-  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return subirFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl);
   }).then(function(res){
     COMP_SUBIENDO--;
@@ -12081,6 +12113,7 @@ function submitPedido(){
   }
   function after(wasEdit){
     var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
+    try{ asisAlGuardar(rec, _tienda); }catch(eA){}   // (12/10) Eduardo: lo que faltó, recién con el pedido YA guardado
     /* 📥 Si era un borrador de Kommo, ya es un pedido: sale de la bandeja (§4ca).
        Sin esto quedaba en las dos listas y parecía que no se había guardado. */
     if(borradorDe(rec.id)){
@@ -14584,15 +14617,29 @@ function borrEsLaMisma(idBorr, idPed){
   var _copiaB=JSON.parse(JSON.stringify(b));
   BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
   saveBorrMirror(); renderBorrSiActivo();
-  // §4fz: el borrador se borra solo si sigue siendo el que se vio (otra lo pudo haber completado).
-  if(CONNECTED){ BORRADO_AQUI[String(idBorr)]=Date.now(); }   // (26/09) ver `borradoAqui`
-  if(CONNECTED) borrarEnServidor(_copiaB).then(function(r){
-    if(!(r && r.ok)) delete BORRADO_AQUI[String(idBorr)];
+  if(!CONNECTED){ toast('Quitado de esta pantalla, pero este aparato no está conectado a la planilla: en los otros sigue apareciendo.','err', 8000); return; }
+  /* (12/10, dueño: «por más que doy "sí, es la misma"… hoy al ingresar salieron todos de nuevo») Antes un borrado que Google no
+     hacía (ocupado, sin respuesta, la lectura en vez del borrado) quedaba CALLADO: la tarjeta se iba de la pantalla y la fila
+     seguía en la planilla, y volvía en la próxima lectura. Ahora: uno por vez (`borrEnSerie`, tocar muchas seguidas mandaba
+     todo junto y trababa a Google), un «no» claro la devuelve a la bandeja diciéndolo, y el ✓ sale recién con el sí del servidor. */
+  BORRADO_AQUI[String(idBorr)]=Date.now();   // (26/09) ver `borradoAqui`
+  var volver=function(){ delete BORRADO_AQUI[String(idBorr)];
+    BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); }).concat([_copiaB]); saveBorrMirror(); renderBorrSiActivo(); };
+  borrEnSerie(function(){ return borrarEnServidor(_copiaB); }).then(function(r){
+    if(r && r.ok){ toast('✓ Listo: quedó una sola venta, la que ya tenías cargada ('+(b.cliente||'')+').','ok', 4500); return; }
+    delete BORRADO_AQUI[String(idBorr)];
     if(r && r.conflicto){ toast('⚠️ El borrador de Kommo no se borró: '+queCambioTxt(_copiaB, r.actual)+'. Revisá que no quede la venta dos veces.','err',10000);
-      try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} }
-  }, function(){ delete BORRADO_AQUI[String(idBorr)]; });
-  toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
+      try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} return; }
+    if(r && r.incierto){ toast('⚠️ Google no confirmó si quitó '+(b.cliente||'ese borrador')+' ('+r.error+'). Si vuelve a aparecer, tocá otra vez «Sí, es la misma».','err',9000); return; }
+    volver();
+    toast('❌ No se pudo quitar '+(b.cliente||'ese borrador')+' de la planilla ('+motivoBorrar(r)+'): sigue en la bandeja. Tocá de nuevo «Sí, es la misma» en un momento.','err',9000);
+  }, function(){ volver(); toast('❌ No se pudo quitar '+(b.cliente||'ese borrador')+': sigue en la bandeja. Probá de nuevo con señal.','err',9000); });
+  toast('Quitando de la bandeja… ('+(b.cliente||'')+')','ok', 2500);
 }
+/* Los borrados de la bandeja de Kommo, de a uno: cada uno relee la planilla antes de borrar (`borrarEnServidor`), y diez juntos
+   hacían diez lecturas enteras y diez borrados en el mismo segundo — Google contestaba «ocupado» o nada. */
+var BORR_SERIE=Promise.resolve();
+function borrEnSerie(fn){ var p=BORR_SERIE.then(fn, fn); BORR_SERIE=p.then(function(){}, function(){}); return p; }
 
 /* 📦 UNA FILA DEL SISTEMA EN VUELO NO LA PISA EL `list` (§4ev). Igual que los pedidos (§4eo):
    si la fila del stock (o la del arqueo) tiene un guardado en vuelo, en espera, de hace menos
@@ -15641,6 +15688,35 @@ function guardarCargaChk(){
   }, 700);
 }
 function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
+/* 🛣️ «YA SALIÓ EL CAMIÓN» (12/10, dueño: *«falta cómo hacemos que "ya salió el camión" mientras»* — hasta tener el GPS de Monnet).
+   Logística lo toca en la ficha del camión. Viaja en la MISMA fila de los tildes de la carga (`__carga_chk__`, con su sello y su
+   junta), como una tilde más: `fecha|camión|🚚 SALIÓ|HH:MM` (la hora de Bolivia). Se poda sola con las demás a los 10 días, y una
+   página vieja la ignora (no es la clave de ningún producto). Deshacer = sacar esa tilde. */
+var CARGA_SALIO='🚚 SALIÓ';
+function salioClave(fecha, veh){
+  var pre=cargaChkKey(fecha, veh, CARGA_SALIO)+'|';
+  var ks=Object.keys(CARGA_CHK).filter(function(k){ return k.indexOf(pre)===0; }).sort();
+  return ks.length ? ks[0] : '';
+}
+/* '' si no salió; si salió, la hora («10:42») */
+function camionSalio(fecha, veh){ if(!fecha || !veh) return ''; var k=salioClave(fecha, veh); return k ? (k.slice(k.lastIndexOf('|')+1)||'—') : ''; }
+function camionSalioMarcar(veh, on){
+  var f=todayStr(), k=salioClave(f, veh);
+  if(on){
+    if(k) return;
+    var D=null; try{ D=cargaVivaDatos(); }catch(e){}
+    var c=D && D.porK && D.porK[veh], falta=c ? Math.max(0, (c.total||0)-(c.dentro||0)) : 0;
+    if(falta && !confirm('Al '+veh+' le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga.\n\n¿Salió igual?')) return;
+    var h=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+    setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
+    toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
+  }else{
+    if(!k) return;
+    if(!confirm('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.')) return;
+    Object.keys(CARGA_CHK).forEach(function(x){ if(x.indexOf(cargaChkKey(f, veh, CARGA_SALIO)+'|')===0) setCargaChk(x, false); });
+  }
+  try{ renderCargaSiActiva(); }catch(e){} try{ cargaVivaPintar(); }catch(e){}
+}
 function limpiarCargaChk(){
   if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;
   var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
@@ -16027,7 +16103,8 @@ function cvPintarPanel(D){
       var ls=c.lineas.filter(function(l){ return l.lugar===g[0]; }); if(!ls.length) return '';
       return '<div class="cv-grupo">'+esc(g[1])+'</div>'+ls.map(function(l){ return cvFilaHtml(l, ''); }).join('');
     }).join('')+'</div>';
-    if(c.est==='ok') h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
+    if(c.est==='ok' && !camionSalio(D.fecha, c.k)) h+='<div class="cv-listo">✅ ¡Listo para salir!</div>';
+    h+=cvSalioHtml(D, c);
   } else if(c.est==='nada'){
     /* (§4id, 08/10) El dueño vio los camiones vacíos y la lista solo en «Sin vehículo»: es que ningún pedido del día tenía el
        camión asignado. Se dice eso, con cuántos esperan camión y un botón para verlos. */
@@ -16048,6 +16125,18 @@ function cvAsignar(id, v){
   p.vehiculo=v; p.chofer=VEHICULOS[v][0]||'';
   persistPedido(p);                                   // repinta Administración, la Lista de carga y los camiones
   try{ toast('🚚 '+(p.cliente||'Pedido')+' → '+v, 'ok'); }catch(e){}
+}
+/* 👆 (12/10, dueño: «sí») El cartel «⚠️ SIN CAMIÓN» de la escena 3D se toca: la lista de esos pedidos con su «🚚 Asignar camión…»
+   (el MISMO `cvAsignar` de la ficha «Sin vehículo»). Al asignar uno, la lista se rearma con los que quedan. */
+function cv3dSinCamion(){
+  var D=cargaVivaDatos(), c=(D.cams||[]).filter(function(x){ return x.sin; })[0], ps=c ? c.stops : [];
+  if(!ps.length){ closeModal(); toast('✅ Todos los pedidos de '+(CV_DIA==='hoy'?'hoy':'mañana')+' ya tienen camión.','ok'); return; }
+  var opts=Object.keys(VEHICULOS).map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
+  openModal('<div class="modal-h"><h3>⚠️ '+ps.length+' pedido'+(ps.length===1?'':'s')+' sin camión · '+(CV_DIA==='hoy'?'hoy':'mañana')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="cv-sinc" style="padding:12px 16px">'+ps.map(function(p){ var n=(p.productos||[]).reduce(function(a,x){ return a+(Number(x.cant)||0); },0);
+      return '<div class="cvc-asig"><button type="button" class="dep-ped" data-id="'+esc(p.id)+'" onclick="showPedidoModal(this.dataset.id)"><b>'+esc(p.cliente||'(sin cliente)')+'</b> · '+esc([ocEtiq(p.oc), turnoDe(p), p.zona, cvU(n)].filter(Boolean).join(' · '))+'</button>'+
+        '<select class="cvc-sel" data-id="'+esc(p.id)+'" onchange="cvAsignar(this.getAttribute(\'data-id\'), this.value);setTimeout(cv3dSinCamion, 250)"><option value="">🚚 Asignar camión…</option>'+opts+'</select></div>'; }).join('')+
+    '<p style="font-size:.8rem;color:var(--muted);margin:10px 0 0">Al asignarlo, sus montacargas se ponen delante de ese camión.</p></div>');
 }
 function cvIrALista(){
   CARGA_DIA=CV_DIA; abrirCarga(); setCargaDia(CV_DIA);
@@ -17156,7 +17245,7 @@ function descartarBorrador(id){
        descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
        descartada en Kommo. Se mira antes, y el borrado va con el sello. */
     var volverBorr=function(){ delete BORRADO_AQUI[String(id)]; BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
-    borrarEnServidor(copia).then(function(r){
+    borrEnSerie(function(){ return borrarEnServidor(copia); }).then(function(r){   // (12/10) de a uno, como «Sí, es la misma»
       if(r.ok) return;
       delete BORRADO_AQUI[String(id)];      // no se borró (o no se sabe): lo que diga la planilla manda
       if(r.conflicto){
@@ -18264,7 +18353,8 @@ function misWaCliente(cel){
   if(/^[67]\d{7}$/.test(d)) d='591'+d;
   else if(!/^591[67]\d{7}$/.test(d)){
     /* (§4jd, A2-6) dos celulares en el campo («70012345 / 76543210»): el primero que sea un celular */
-    var m=String(cel||'').replace(/[\s.\-]/g,'').match(/(?:\+?591)?([67]\d{7})(?!\d)/);
+    /* (12/10, revisión) con borde a la izquierda: de «775123456» o de un número de otro país salía el celular de OTRA persona */
+    var m=String(cel||'').replace(/[\s.\-()]/g,'').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
     if(!m) return '';
     d='591'+m[1];
   }
@@ -27968,6 +28058,9 @@ var VEHICULOS = {
   'Foton encarpado': ['Cristhian','Miguel'],
   'Foton insumo':    ['Fernando']
 };
+/* 🛰️ (12/10, dueño) La placa de cada camión en el GPS de Monnet (i-monnet 5.0). Todavía no se usa: es para cuando el panel sepa
+   solo cuándo sale y vuelve cada camión (API de Monnet o alertas de geocerca por correo). PTF = donde paran KSC y CCP. */
+var VEHICULO_PLACA = { 'Foton nuevo':'6663-CCP', 'Carry':'6409-TIG', 'Foton insumo':'6021-URL', 'Foton encarpado':'5655-KSC' };
 /* Los choferes para un desplegable de UN pedido: los de los camiones más el que ese pedido
    ya tenga guardado, aunque no esté más en la lista — si no, un pedido viejo mostraba
    «Chofer…» como si no tuviera ninguno. */
@@ -28233,7 +28326,7 @@ function renderRuta(){
   document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
   var html=(RUTA_DIA!=='todos') ? ('<div class="nx-ruta-bar no-print"><button type="button" class="nx-btn" style="--c:#7c5ce6;background:'+(_cerca?'#7c5ce6':'#fff')+';color:'+(_cerca?'#fff':'#5b3fc4')+';box-shadow:inset 0 0 0 1.5px #cfc3f6" onclick="nxRutaSetCerca(true)">🧭 Por cercanía</button>'+
     '<button type="button" class="nx-btn" style="background:'+(_cerca?'#fff':'#7c5ce6')+';color:'+(_cerca?'#5b3fc4':'#fff')+';box-shadow:inset 0 0 0 1.5px #cfc3f6" onclick="nxRutaSetCerca(false)">↺ Como estaba (turno y zona)</button>'+
-    '<span style="font-size:.78rem;color:#666">'+(_cerca?'Saliendo de PTF, la mañana primero y siempre la parada más cerca. Los km son en línea recta.':'Por turno y zona, como siempre.')+'</span></div>') : '';
+    '<span style="font-size:.78rem;color:#666">'+(_cerca?'Cada camión sale de su depósito (PTF, Banzer o los dos: se dice al lado del chofer), la mañana primero y siempre la parada más cerca. Los km son en línea recta.':'Por turno y zona, como siempre.')+'</span></div>') : '';
   RUTA_ORDER.forEach(function(k, idx){
     var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
     var aCobrar=(cobrar>0 || fleteC>0.01);
@@ -29990,15 +30083,16 @@ function rutaSalida(pedidos){
 }
 function rutaSalidaTxt(deps){ return deps.length>1 ? 'carga en PTF y en Banzer' : ('sale de '+(deps[0]?deps[0].nombre:'PTF')); }
 function mapaRutaDatos(){
-  var P=almUbic('ptf'), R={}, orden=[];
+  var P=almUbic('ptf'), R={}, orden=[], TODOS={};
   MAPA_LIST.forEach(function(p){
     if(!mapaVisible(p) || esFilaSistema(p) || esBorrador(p)) return;
+    var kt=mapaRutaClave(p); (TODOS[kt]=TODOS[kt]||[]).push(p);   // (12/10) de dónde sale: con TODOS sus pedidos, como la Hoja de ruta
     var g=MAPA_COORDS[String(p.maps).trim()]; if(!g || g.lat==null) return;
     var k=mapaRutaClave(p); if(!R[k]){ R[k]=[]; orden.push(k); } R[k].push({ p:p, g:g });
   });
   orden.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
   return orden.map(function(k,i){
-    var deps=rutaSalida(R[k].map(function(it){ return it.p; })), ult=deps[deps.length-1]||P;
+    var deps=rutaSalida(TODOS[k]||R[k].map(function(it){ return it.p; })), ult=deps[deps.length-1]||P;
     var stops=mapaRutaOrden(R[k], ult), hechos=stops.filter(function(it){ return !!it.p.entregado; }).length;
     var km=0, prev=deps[0]||P; deps.slice(1).forEach(function(d){ km+=mapaKmAprox(prev, d); prev=d; });
     stops.forEach(function(it){ km+=mapaKmAprox(prev, it.g); prev=it.g; });
@@ -30020,7 +30114,7 @@ function mapaRutaPintar(){
       panel.innerHTML='<div class="mrp-tit"><b>🛣️ Recorrido · '+(MAPA_DIA==='hoy'?'hoy':'mañana')+'</b><button type="button" onclick="this.parentNode.parentNode.classList.toggle(\'chico\')">▾</button></div>'+
         '<div class="mrp-vacio">'+(nSin
           ? ('Todavía <b>ningún pedido de '+(MAPA_DIA==='hoy'?'hoy':'mañana')+' tiene camión asignado</b> ('+nSin+' sin chofer). El recorrido se dibuja por camión: '+
-             'apenas logística les ponga camión, sale la línea de cada uno desde PTF, con las paradas numeradas en orden y el 🚚 donde va.')
+             'apenas logística les ponga camión, sale la línea de cada uno desde su depósito (PTF o Banzer), con las paradas numeradas en orden y el 🚚 donde va.')
           : ('No hay pedidos de '+(MAPA_DIA==='hoy'?'hoy':'mañana')+' con ubicación para dibujar un recorrido.'))+'</div>'+
         (nSin?'<button type="button" class="mrp-ir" onclick="closeMapa();showView(\'admin\')">🚚 Asignar camiones en Administración</button>':'');
       panel.style.display='block';
@@ -30836,7 +30930,7 @@ function cv3dPintar(D){
     box.innerHTML='<div class="dep-ayuda">Arrastrá para girar · tocá un camión, un montacargas, Banzer o Moreno</div><button class="dep-todo" type="button" onclick="cv3dVerTodo()">↺ Ver todo</button>';
     mapa.insertBefore(box, mapa.firstChild); }
   CV3D.D=D;
-  var firma=D.fecha+'§'+D.cams.map(function(c){ return c.k+':'+c.paradas+':'+c.lineas.map(function(l){ return l.key+'='+l.u+'/'+l.cu+(l.on?'✓':'')+l.no+'/'+l.rec; }).join(',')+':'+c.choferes.join('/'); }).join('#')+'§'+D.bz.total+'/'+D.bz.dentro+'§'+D.im.u;
+  var firma=D.fecha+'§'+D.cams.map(function(c){ return c.k+':'+c.paradas+':'+c.lineas.map(function(l){ return l.key+'='+l.u+'/'+l.cu+(l.on?'✓':'')+l.no+'/'+l.rec; }).join(',')+':'+c.choferes.join('/')+':'+camionSalio(D.fecha, c.k); }).join('#')+'§'+D.bz.total+'/'+D.bz.dentro+'§'+D.im.u;
   depLibs(function(ok){
     if(!ok){ mapa.classList.remove('con3d'); return; }
     if(!depIniciar3D(box)) return;
@@ -30893,16 +30987,23 @@ function cv3dConstruir(D, suave){
       var piso=new THREE.Mesh(new THREE.PlaneGeometry(z.w-.4, 7.2), new THREE.MeshBasicMaterial({ map:depTexEspera(), transparent:true, depthWrite:false }));
       piso.rotation.x=-Math.PI/2; piso.position.set(cx,.016,-3.6); g.add(piso);
       var cs=new THREE.Object3D(); cs.position.set(cx,1.9,-7.4); g.add(cs);
-      depEtq(cs, '⚠️ SIN CAMIÓN · '+c.paradas+' pedido'+(c.paradas===1?'':'s')+'<small style="display:block;font-weight:700;opacity:.9">asigná el camión en el panel →</small>', 'dep-etq-cola', '#b45309', 0);
+      depEtq(cs, '⚠️ SIN CAMIÓN · '+c.paradas+' pedido'+(c.paradas===1?'':'s')+'<small style="display:block;font-weight:700;opacity:.9">👆 tocá para asignarles camión</small>', 'dep-etq-cola', '#b45309', 0, false, function(){ cv3dSinCamion(); });
     } else {
       depLinea(cx-z.w/2,1.8,cx+z.w/2,1.8,g); depLinea(cx-z.w/2,-6.6,cx-z.w/2,1.8,g); depLinea(cx+z.w/2,-6.6,cx+z.w/2,1.8,g);
       /* el camión en su andén, con lo ya cargado arriba */
+      var salio=camionSalio(D.fecha, c.k);
+      if(salio){   // 🛣️ (12/10) ya salió: el andén queda vacío y su cartel lo dice
+        var ts=new THREE.Object3D(); ts.position.set(cx,0,fz+.6); g.add(ts);
+        depEtq(ts, '🛣️ '+esc(c.k)+'<small>salió a las '+esc(salio)+' · en camino</small>', 'dep-etq-cam cv3d-ruta', '#1d4ed8', 1.6+(zi%2)*.9, false, elegir);
+        z.carg.forEach(function(l){ ahora[l.key]=1; });
+      } else {
       var t=depCamion(); t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ fn:elegir }; g.add(t.g); W.toca.push(t.g);
       z.carg.slice(0,3).forEach(function(l, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg);
         depPila(pg, l.kk, l.kk.toUpperCase(), l.kk, l.cu, 6, 1.3, 1.6); ahora[l.key]=1;
         if(!suave || !antes[l.key]){ var q=DEP.quieto; DEP.quieto=false; pg.position.y=3; depTween(pg.position, { y:0 }, .9, suave?.1:(1.2+zi*.3+j*.25), depSale); DEP.quieto=q; } });
       z.carg.slice(3).forEach(function(l){ ahora[l.key]=1; });
       depEtq(t.g, '🚚 '+esc(c.k)+'<small>'+esc(c.choferes[0]||'sin chofer')+' · '+(listo ? '✅ listo para salir' : (c.total ? (c.dentro+' de '+cvU(c.total)+' cargados') : 'sin pedidos'))+(z.bzU?(' · 🏪 '+z.bzD+'/'+z.bzU+' en Banzer'):'')+'</small>', 'dep-etq-cam'+(listo?' cv3d-ok':''), '#14232a', 3.6+(zi%2)*.9);
+      }
     }
     /* adelante, un montacargas por producto que falta cargar, delante de su camión */
     z.pend.forEach(function(l, i){
@@ -31005,6 +31106,7 @@ function cv3dColsPintar(D){
         '<b>'+l.u+'</b><span class="cvc-p" data-k="'+esc(c.k)+'" data-kk="'+esc(l.kk)+'" onclick="event.preventDefault();cv3dPedidosDe(this)">'+esc(l.kk)+'</span><span class="dep-ests">'+est(l)+'</span></label>';
     }).join('');
     if(!c.sin && !c.total) h+='<div class="dep-leyc">Ningún pedido de '+dia+' tiene este camión.</div>';
+    h+=cvSalioHtml(D, c);
     if(!c.sin && c.stops.length) h+='<details class="cvc-paradas"><summary>📍 '+c.paradas+' parada'+(c.paradas===1?'':'s')+'</summary>'+c.stops.map(function(p){
       return '<button type="button" class="dep-ped" data-id="'+esc(p.id)+'" onclick="showPedidoModal(this.dataset.id)"><b>'+esc(p.cliente||'(sin cliente)')+'</b> · '+esc([ocEtiq(p.oc), turnoDe(p), p.zona].filter(Boolean).join(' · '))+'</button>'; }).join('')+'</details>';
     return h+'</article>';
@@ -31012,6 +31114,13 @@ function cv3dColsPintar(D){
   var abiertos=[].map.call(el.querySelectorAll('.cvc-paradas[open]'), function(d){ return d.parentNode.getAttribute('data-k'); });
   el.innerHTML=arriba+'<div class="cvc-grid">'+cols+'</div>';
   abiertos.forEach(function(k){ var a=el.querySelector('.cvc[data-k="'+CSS.escape(k)+'"] .cvc-paradas'); if(a) a.open=true; });
+}
+/* 🛣️ «Ya salió» en la ficha del camión: solo hoy y con pedidos (§ salió, 12/10) */
+function cvSalioHtml(D, c){
+  if(!c || c.sin || !c.stops || !c.stops.length || !D || D.fecha!==todayStr()) return '';
+  var hs=camionSalio(D.fecha, c.k), kq=esc(JSON.stringify(c.k));
+  return hs ? ('<div class="cvc-salio si">🛣️ <b>Salió a las '+esc(hs)+'</b> · en camino<button type="button" onclick="camionSalioMarcar('+kq+',false)">deshacer</button></div>')
+            : ('<button type="button" class="cvc-salio-btn'+((c.total && c.dentro>=c.total)?' listo':'')+'" onclick="camionSalioMarcar('+kq+',true)">🚚 Ya salió</button>');
 }
 function cv3dTildar(inp){
   setCargaChk(inp.getAttribute('data-k'), inp.checked);
@@ -31300,6 +31409,9 @@ function pedidoViajeDatos(p){
     { ico:'🚚', lbl:'En camino', hecho:entregado },
     { ico:'✅', lbl:'Entregado', hecho:entregado }
   ];
+  /* 🛣️ (12/10) el camión de este pedido ya salió hoy (lo marcó logística): «en camino» con la hora */
+  var _sal=(!entregado && f===hoy) ? camionSalio(f, vehiculoDe(p)) : '';
+  if(_sal){ pasos[3].hecho=true; pasos[3].lbl='Salió '+_sal; }
   var ahora=-1; for(var i=0;i<pasos.length;i++) if(!pasos[i].hecho){ ahora=i; break; }
   if(ahora===3 && f>hoy) ahora=2;     // «en camino» solo el día de la entrega: antes, el pedido espera su fecha (agendado)
   return { pasos:pasos, ahora:ahora };
@@ -32501,7 +32613,7 @@ function nxBadges(){
    en este aparato (`me_asis_vistos`) hasta que cambie. Con «🔇» se calla (`me_asis_mudo`). En las pruebas automáticas no aparece salvo
    `window.ASIS_PRUEBA` (si no, tapa botones de todas las pruebas).
    ========================================================================== */
-var ASIS={ montado:false, abierto:false, tab:'avisos', alGuardar:[], firma:'', primera:true, audio:null };
+var ASIS={ montado:false, abierto:false, tab:'avisos', alGuardar:[], firma:'', primera:true, audio:null, anunciados:{}, vistaPint:'' };
 var ASIS_LS_VISTOS='me_asis_vistos', ASIS_LS_MUDO='me_asis_mudo';
 var ASIS_IMG='asistente/eduardo-3d.webp?v=2', ASIS_BUSTO='asistente/eduardo-busto.webp?v=2';   // v=2: la pose que mandó el 12/10   // el 3D del dueño, sin fondo (§4jx)
 function asisActivo(){ return !(navigator.webdriver && !window.ASIS_PRUEBA); }
@@ -32514,16 +32626,18 @@ function asisVista(){
 }
 /* El vendedor de este aparato: el elegido en Mis pedidos o el recordado del formulario. */
 function asisVendedor(){ var m=document.getElementById('mis-vendedor'); return ((m && m.value) || getVendedorMem() || '').trim(); }
+/* (12/10, revisión) «Mañana» solo si es mañana de verdad: un sábado el próximo camión es el lunes (la misma regla de nxCuandoTxt). */
+function asisCuando(iso){ return iso===tomorrowStr() ? 'Mañana' : ('El '+nxDiaTxt(iso)); }
 /* ---------- los avisos de cada pestaña ---------- */
 function asisAvisos(){
   var A=[], hoy=todayStr(), vis=asisVista(), v=asisVendedor();
   ASIS.alGuardar=ASIS.alGuardar.filter(function(a){ return Date.now()-a.tm < 10*60000; });
-  if(vis==='form') ASIS.alGuardar.forEach(function(a){ A.push(a); });
+  ASIS.alGuardar.forEach(function(a){ A.push(a); });   // (12/10) tras guardar la pantalla pasa a Mis pedidos: se ven en todas
   if(vis==='mis' && v){
     try{
       var D=nxM1Datos(v, false);
       if(D.n && D.faltan && D.tarde) A.push({ k:'m1|'+D.dia+'|'+D.faltan, sev:'am', ico:'🔔',
-        t:'Mañana se entrega'+(D.n===1?'':'n')+' '+D.n+' pedido'+(D.n===1?'':'s')+' tuyo'+(D.n===1?'':'s'),
+        t:asisCuando(D.dia)+' se entrega'+(D.n===1?'':'n')+' '+D.n+' pedido'+(D.n===1?'':'s')+' tuyo'+(D.n===1?'':'s'),
         x:'Te falta avisar a '+D.faltan+' cliente'+(D.faltan===1?'':'s')+' a qué hora pasa el camión.', b:['Ver cuáles', "asisIr('#nx-m1', nxM1Toggle)"] });
     }catch(e){}
     var deben=(STATE||[]).filter(function(p){
@@ -32533,12 +32647,12 @@ function asisAvisos(){
     if(deben.length){ var bs=0; deben.forEach(function(p){ bs=r2(bs+contaFaltaCobrar(p)); });
       /* (12/10, dueño: «das clic y no hace nada… Eduardo debe ayudar») la lista entera: el que debe hace más tiempo, primero */
       deben.sort(function(a, b){ return String(fechaSalida(a)).localeCompare(String(fechaSalida(b))) || contaFaltaCobrar(b)-contaFaltaCobrar(a); });
-      A.push({ k:'deben|'+deben.length+'|'+Math.round(bs), sev:'ro', ico:'⏳', t:deben.length+' cliente'+(deben.length===1?'':'s')+' tuyo'+(deben.length===1?'':'s')+' con saldo hace más de una semana',
+      A.push({ k:'deben|'+deben.length+'|'+Math.round(bs), sev:'ro', ico:'⏳', t:deben.length+' cliente'+(deben.length===1?'':'s')+' tuyo'+(deben.length===1?'':'s')+' con saldo hace una semana o más',
         x:'Suman '+fmtBs(bs)+'. Tocá «Ver cuáles» y abrí cada uno. Si ya pagaron, pasale el comprobante a Contabilidad.',
         lista:deben.map(function(p){ var d=diasEntre(fechaSalida(p), hoy);
           return { id:p.id, t:p.cliente||'—', s:(p.oc||'')+' · se entregó el '+fmtFechaCorta(fechaSalida(p))+' (hace '+d+' día'+(d===1?'':'s')+')', m:fmtBs(contaFaltaCobrar(p)) }; }) }); }
     var sinUb=(STATE||[]).filter(function(p){
-      return p && !esFilaSistema(p) && !esBorrador(p) && mismoVendedor(p.vendedor, v) && !p.entregado && !esVentaTienda(p) && p.fecha && p.fecha>=hoy && !String(p.maps||'').trim();
+      return p && !esFilaSistema(p) && !esBorrador(p) && mismoVendedor(p.vendedor, v) && !p.entregado && !esVentaTienda(p) && !esRPT(p.oc) && !esATC(p.oc) && p.fecha && p.fecha>=hoy && !String(p.maps||'').trim();   // (12/10) la RPT va sin pin a propósito
     });
     sinUb.sort(function(a, b){ return String(a.fecha).localeCompare(String(b.fecha)); });
     if(sinUb.length) A.push({ k:'sinub|'+sinUb.map(function(p){ return p.id; }).join(','), sev:'', ico:'📍', t:sinUb.length+' pedido'+(sinUb.length===1?'':'s')+' sin ubicación de Google Maps',
@@ -32546,36 +32660,48 @@ function asisAvisos(){
       lista:sinUb.map(function(p){ return { id:p.id, t:p.cliente||'—', s:(p.oc||'')+' · se entrega el '+fmtFechaCorta(p.fecha)+(p.zona?(' · '+p.zona):''), m:'' }; }) });
   }
   if(vis==='admin' && (UNLOCKED || nxLS(LS_ADM_DEV))){
-    try{ var S=nxA3Datos(); if(S.activo) A.push({ k:'a3|'+S.dia+'|'+S.n, sev:'ro', ico:'🚚', t:S.n+' pedido'+(S.n===1?'':'s')+' de mañana sin camión', x:'Sin camión no salen en la lista de carga.', b:['Asignar', 'nxA3Ir()'] }); }catch(e){}
-    try{ if(cierreEntEsHora()){ var ch=cierreEntHoy(); if(ch.length) A.push({ k:'cierre|'+hoy+'|'+ch.length, sev:'am', ico:'✅', t:'Ya son las '+CIERRE_ENT_HORA+': hacé el cierre de entregas', x:'Hoy hay '+ch.length+' entrega'+(ch.length===1?'':'s')+' sin marcar. Tildá lo que salió y confirmá.', b:['Hacer el cierre', 'abrirCierreEntregas()'] }); } }catch(e){}
-    try{ var ra=rptAtrasadas(); if(ra.length) A.push({ k:'rpt|'+ra.length, sev:'am', ico:'🏪', t:ra.length+' reposici'+(ra.length===1?'ón':'ones')+' de tienda atrasada'+(ra.length===1?'':'s'), x:'Pasaron '+RPT_DIAS_AVISO+' días o más de la fecha y no figuran entregadas.', b:['Ver', 'admVerRptAtrasadas()'] }); }catch(e){}
+    try{ var S=nxA3Datos(); if(S.activo) A.push({ k:'a3|'+S.dia+'|'+S.n, sev:'ro', ico:'🚚', t:S.n+' pedido'+(S.n===1?'':'s')+' '+(S.dia===tomorrowStr()?'de mañana':('del '+nxDiaTxt(S.dia)))+' sin camión', x:'Sin camión no salen en la lista de carga.', b:['Asignar', 'nxA3Ir()'] }); }catch(e){}
+    try{ if(cierreEntEsHora() && cierreEntPendiente()) A.push({ k:'cierre-pend|'+hoy, sev:'am', ico:'📶', t:'Tu cierre de entregas está esperando señal', x:'Quedó guardado en este aparato y se manda solo con la próxima lectura de la planilla. No hace falta repetirlo.', b:['Intentar ahora', 'refrescarEstadoYa()'] });
+      else if(cierreEntEsHora()){ var ch=cierreEntHoy(); if(ch.length) A.push({ k:'cierre|'+hoy+'|'+ch.length, sev:'am', ico:'✅', t:'Ya son las '+CIERRE_ENT_HORA+': hacé el cierre de entregas', x:'Hoy hay '+ch.length+' entrega'+(ch.length===1?'':'s')+' sin marcar. Tildá lo que salió y confirmá.', b:['Hacer el cierre', 'abrirCierreEntregas()'] }); } }catch(e){}
+    try{ var ra=rptAtrasadas(); if(ra.length) A.push({ k:'rpt|'+ra.map(function(p){ return p.id; }).join(','), sev:'am', ico:'🏪', t:ra.length+' reposici'+(ra.length===1?'ón':'ones')+' de tienda atrasada'+(ra.length===1?'':'s'), x:'Pasaron '+RPT_DIAS_AVISO+' días o más de la fecha y no figuran entregadas.', b:['Ver', 'admVerRptAtrasadas()'] }); }catch(e){}
   }
   if(vis==='conta'){
-    try{ var np=nxPstLista().length; if(np) A.push({ k:'pst|'+np, sev:'am', ico:'🧾', t:np+' pago'+(np===1?'':'s')+' sin terminar este mes', x:'Sin recibo, sin foto, QR sin banco o sin monto.', b:['Ver cuáles', 'nxPstAbrir()'] }); }catch(e){}
+    try{ var _pl=nxPstLista(), np=_pl.length; if(np) A.push({ k:'pst|'+todayStr().slice(0,7)+'|'+_pl.map(function(o){ return o.p.id+'.'+(o.f||''); }).join(','), sev:'am', ico:'🧾', t:np+' pago'+(np===1?'':'s')+' sin terminar este mes', x:'Sin recibo, sin foto, QR sin banco o sin monto.', b:['Ver cuáles', 'nxPstAbrir()'] }); }catch(e){}
   }
   var vistos=asisVistos();
   return A.filter(function(a){ return !vistos[a.k]; });
 }
-/* ---------- al guardar un pedido: lo que conviene completar (no frena: el guardado sigue igual) ---------- */
-function asisAlGuardar(){
-  if(!asisActivo()) return;
-  var cel=((document.getElementById('f-celular')||{}).value||'').trim();
-  var maps=((document.getElementById('f-maps')||{}).value||'').trim();
-  var cli=((document.getElementById('f-cliente')||{}).value||'').trim();
-  var tienda=(typeof esVentaTiendaForm==='function') ? esVentaTiendaForm() : false;
-  var L=[], t=Date.now();
-  if(cli && !cel) L.push({ k:'g-cel|'+t, sev:'ro', ico:'📱', t:'Te faltó el celular de '+cli, x:'Sin celular, logística no puede avisarle cuándo llega el camión.', b:['Llevarme', "asisFoco('#f-celular')"], tm:t });
-  if(cli && !maps && !tienda) L.push({ k:'g-map|'+t, sev:'', ico:'📍', t:'Sin ubicación de Google Maps', x:'Pedile al cliente que te mande su ubicación por WhatsApp y pegala en el pedido.', b:['Llevarme', "asisFoco('#f-maps')"], tm:t });
+/* ---------- al guardar un pedido: lo que conviene completar (no frena: el guardado sigue igual) ----------
+   (12/10, revisión) Lo llama `submitPedido` cuando el pedido YA se guardó (`after`), con el pedido guardado: antes corría en el
+   click, aunque la validación frenara, repetía el aviso con cada click y su «Llevarme» llevaba al formulario NUEVO vacío.
+   Ni en una venta de tienda, ni en una ATC o RPT (la sucursal va sin pin a propósito), ni el celular para Eduardo o ROHO. */
+function asisAlGuardar(rec, tienda){
+  if(!asisActivo() || !rec) return;
+  var id=String(rec.id||''), cli=String(rec.cliente||'').trim();
+  if(!id || !cli || tienda || rec.entregado || esATC(rec.oc) || esRPT(rec.oc)) return;
+  var L=[], t=Date.now(), ir=function(sel){ return 'asisEditarEn('+JSON.stringify(id)+','+JSON.stringify(sel)+')'; };
+  if(!String(rec.celular||'').trim() && !esVendedorLite(rec.vendedor))
+    L.push({ k:'g-cel|'+id, sev:'ro', ico:'📱', t:'Te faltó el celular de '+cli, x:'Sin celular, logística no puede avisarle cuándo llega el camión. El pedido ya está guardado: abrilo y agregalo.', b:['Abrir el pedido', ir('#f-celular')], tm:t });
+  if(!String(rec.maps||'').trim())
+    L.push({ k:'g-map|'+id, sev:'', ico:'📍', t:'Sin ubicación de Google Maps ('+cli+')', x:'Pedile al cliente que te mande su ubicación por WhatsApp. El pedido ya está guardado: abrilo y pegala.', b:['Abrir el pedido', ir('#f-maps')], tm:t });
   if(!L.length) return;
-  ASIS.alGuardar=L.concat(ASIS.alGuardar).slice(0,4);
-  asisRefrescar(true);
+  var ks=L.map(function(a){ return a.k; });
+  ASIS.alGuardar=L.concat(ASIS.alGuardar.filter(function(a){ return ks.indexOf(a.k)<0; })).slice(0,4);
+  setTimeout(function(){ asisRefrescar(true); }, 700);   // después de que la pantalla vuelva a donde va
+}
+/* «Abrir el pedido» de un aviso al guardar: ESE pedido en el formulario y el campo que falta. `editPedido` termina de llenar el
+   formulario un tic después (§4fj): se ilumina recién entonces. */
+function asisEditarEn(id, sel){
+  asisCerrar(); ASIS.alGuardar=ASIS.alGuardar.filter(function(a){ return a.k.split('|')[1]!==String(id); });
+  try{ editPedido(id); }catch(e){ return; }
+  setTimeout(function(){ asisFoco(sel); }, 450);
 }
 /* ---------- la ayuda: preguntas escritas para este panel ---------- */
 var ASIS_AYUDA=[
   { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar', v:'form', f:'#f-cliente', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago y tocá «Guardar pedido».'] },
   { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Si es QR o tarjeta, adjuntá la foto del comprobante.','Lo que paga después lo registra Contabilidad desde la ficha de la venta.'] },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
-  { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','Siempre podés guardar igual: es un aviso.'] },
+  { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','Siempre podés guardar igual: es un aviso.'] },
   { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Cargá el cliente y qué hay que reparar.','No se cobra: la parte del pago se esconde sola.'] },
   { q:'¿Cómo pido reposición para mi tienda (RPT)?', k:'rpt reposicion tienda sucursal', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido elegí 🏪 RPT.','Elegí la sucursal: la dirección y la zona se completan solas.','Cargá los productos y marcá si es Reposición o Adicional.','Al guardar, bajá el Excel y mandalo por correo.'] },
   { q:'¿Cómo aviso a mis clientes de mañana?', k:'avisar cliente whatsapp manana entrega', v:'mis', f:'#mis-vendedor', p:['Entrá a 📋 Mis pedidos y elegí tu nombre.','Desde las 17:00 aparece «🔔 Mañana» con tus clientes.','Tocá 💬 WhatsApp en cada uno: el mensaje sale armado.'] },
@@ -32583,7 +32709,7 @@ var ASIS_AYUDA=[
   { q:'¿Cómo corrijo un pedido que ya guardé?', k:'editar corregir cambiar pedido modificar', v:'mis', f:['#mis-q','#mis-lista','#mis-vendedor'], p:['En 📋 Mis pedidos tocá el pedido y después ✏️ Editar.','Cambiá lo que haga falta y guardá.','Si ya tiene pagos registrados, la plata se corrige en Contabilidad.'] },
   { q:'¿Cómo asigno un camión?', k:'camion vehiculo chofer asignar logistica carga', solo:'adm', v:'admin', f:['#carga-viva','#carga-viva-linea','#view-admin [onclick="abrirCarga()"]'], p:['En 🔒 Administración, mirá «Sin vehículo» en los camiones.','Tocá el pedido y elegí el vehículo: el chofer se pone solo.','Los tildes de la lista de carga dicen qué ya se cargó.'] },
   { q:'¿Cómo hago el cierre de entregas?', k:'cierre entregas entregado tildar 16:30', solo:'adm', v:'admin', f:['#view-admin [onclick="abrirCierreEntregas()"]'], p:['Desde las 16:30 tocá «✅ Cierre de entregas».','Vienen tildados los de hoy: destildá lo que no salió.','Confirmá: quedan marcados como entregados.'] },
-  { q:'¿Cómo registro un pago en Contabilidad?', k:'contabilidad registrar pago cobro ficha venta', v:'conta', f:'#cta-metrics', p:['En 🧾 Contabilidad tocá la venta.','En la ficha, «💵 Pago»: el monto, el método y la foto del comprobante.','Al terminar, marcala «📥 cargada al sistema».'] },
+  { q:'¿Cómo registro un pago en Contabilidad?', k:'contabilidad registrar pago cobro ficha venta', v:'conta', f:'#cta-metrics', p:['En 🧾 Contabilidad tocá la venta.','En la ficha, «💵 Registrar un pago»: el monto, el método y la foto del comprobante.','Cuando ya lo cargaste en el sistema, tocá «✅ Pago registrado en sistema».'] },
   { q:'¿Cómo anoto un retiro de efectivo?', k:'retiro efectivo plata caja rendir', v:'conta', f:'#cx-grupos', p:['En 🧾 Contabilidad tocá «💵 Retiro de efectivo».','Elegí quién entrega y quién retira, el monto y las notas.','En el Cuadre, «👛 Quién tiene el efectivo» te lo arma solo con «Retiro».'] }
 ];
 var ASIS_COMUNES=['como','hago','que','el','la','los','las','un','una','de','del','mi','mis','por','para','en','se','me','lo','al','yo','con'];
@@ -32653,7 +32779,7 @@ function asisAudio(){
   return ASIS.audio;
 }
 function asisPop(){
-  if(asisMudo() || !asisActivo() || visQuieto()) return;
+  if(asisMudo() || !asisActivo()) return;   // (12/10) «reducir movimiento» no es silencio: el sonido lo apaga solo 🔇
   var C=asisAudio(); if(!C) return;
   try{
     if(C.state==='suspended') C.resume();
@@ -32676,7 +32802,9 @@ function asisMontar(){
   /* el navegador deja sonar recién después de un toque: el primero «desbloquea» el audio */
   var desbloquear=function(){ var C=asisAudio(); try{ if(C && C.state==='suspended') C.resume(); }catch(e){} document.removeEventListener('pointerdown', desbloquear, true); };
   document.addEventListener('pointerdown', desbloquear, true);
-  var g=document.getElementById('f-submit'); if(g) g.addEventListener('click', asisAlGuardar, true);
+  /* (12/10) con «Guardar pedido» en pantalla, la figura se corre (solo cambia algo en el celular: ver el CSS) */
+  var gs=document.getElementById('f-submit');
+  if(gs && window.IntersectionObserver) try{ new IntersectionObserver(function(es){ document.body.classList.toggle('asis-guardar', !!(es[0] && es[0].isIntersecting)); }).observe(gs); }catch(e){}
   asisRefrescar();
 }
 function asisRefrescar(nuevoYa){
@@ -32684,11 +32812,15 @@ function asisRefrescar(nuevoYa){
   var A=asisAvisos(), n=A.length, firma=A.map(function(a){ return a.k; }).join('#');
   var nb=document.getElementById('asis-n'); if(nb){ nb.hidden=!n; nb.textContent=String(n); }
   var yo=document.getElementById('asis-yo'); if(yo) yo.classList.toggle('asis-hay', n>0);
-  var nuevos=A.filter(function(a){ return ('#'+ASIS.firma+'#').indexOf('#'+a.k+'#')<0; });
+  /* (12/10, revisión) Globo y «pop» solo la PRIMERA vez que aparece cada aviso en esta apertura de la página (`ASIS.anunciados`):
+     antes la firma era de la pestaña que se miraba y, al ir y volver, el mismo aviso sonaba otra vez. */
+  var nuevos=A.filter(function(a){ return !ASIS.anunciados[a.k]; });
+  A.forEach(function(a){ ASIS.anunciados[a.k]=1; });
+  var cambio=(firma!==ASIS.firma || ASIS.vistaPint!==asisVista());
   ASIS.firma=firma;
-  if(ASIS.abierto) asisPanelPintar();
-  else if(nuevos.length && (!ASIS.primera || nuevoYa)) asisGlobo(nuevos[0]);
-  else if(nuevos.length && ASIS.primera) asisGlobo(nuevos[0], true);
+  /* abierta: se repinta solo si cambió algo (el reloj de cada minuto ya no le saca el foco al buscador ni sube la lista) */
+  if(ASIS.abierto){ if(cambio) asisPanelPintar(); }
+  else if(nuevos.length) asisGlobo(nuevos[0], ASIS.primera && !nuevoYa);
   ASIS.primera=false;
 }
 var ASIS_GLOBO_T=0;
@@ -32709,9 +32841,15 @@ function asisEntendido(k){ var v=asisVistos(), hoy=todayStr(); v[k]=hoy;
   nxLS(ASIS_LS_VISTOS, v); ASIS.alGuardar=ASIS.alGuardar.filter(function(a){ return a.k!==k; }); asisRefrescar(); }
 function asisMudoCambiar(){ try{ localStorage.setItem(ASIS_LS_MUDO, asisMudo() ? '0' : '1'); }catch(e){} if(!asisMudo()) asisPop(); asisPanelPintar(); }
 function asisAccion(i){ var A=asisAvisos(), a=A[i]; if(!a || !a.b) return; asisCerrar(); try{ (new Function(a.b[1]))(); }catch(e){} }
+/* (12/10, revisión) Sin una lectura buena de la planilla, «Todo en orden» mentía: los avisos salen de lo que se pudo leer. */
+function asisSinDatos(){ return !!CARGA_ESTADO && CARGA_ESTADO!=='ok'; }
 function asisPanelPintar(){
   var p=document.getElementById('asis-panel'); if(!p) return;
   if(!ASIS.abierto){ p.hidden=true; return; }
+  ASIS.vistaPint=asisVista();
+  /* lo que tenía la persona: el foco y el cursor del buscador, y dónde estaba la lista (se repone al final) */
+  var _q=document.getElementById('asis-q'), _foco=!!_q && document.activeElement===_q, _sel=_foco ? [_q.selectionStart, _q.selectionEnd] : null;
+  var _cu=p.querySelector('.asis-cuerpo'), _scroll=_cu ? _cu.scrollTop : 0;
   var A=asisAvisos(), v=asisVendedor();
   var saludo=(function(){ var h=horaBolivia().getHours(); return h<12 ? 'Buen día' : (h<19 ? 'Buenas tardes' : 'Buenas noches'); })()+(v ? (', '+esc(v.split(' ')[0])) : '');
   var cuerpo;
@@ -32726,19 +32864,25 @@ function asisPanelPintar(){
         (a.b ? ('<button type="button" class="asis-b si" onclick="asisAccion('+i+')">'+esc(a.b[0])+'</button>') : '')+
         (a.lista ? ('<button type="button" class="asis-b si" data-k="'+esc(a.k)+'" onclick="asisVerLista(this.getAttribute(\'data-k\'))">'+(abierta?'Ocultar':'Ver cuáles ('+a.lista.length+')')+'</button>') : '')+
         '<button type="button" class="asis-b" data-k="'+esc(a.k)+'" onclick="asisEntendido(this.getAttribute(\'data-k\'))">Entendido</button></div></div>';
-    }).join('') : '<div class="asis-vacio">✅ Todo en orden por acá. Si necesitás algo, preguntame en «¿Cómo hago…?».</div>';
+    }).join('') : (asisSinDatos()
+      ? ('<div class="asis-vacio asis-sindatos">⚠️ <b>No pude leer la planilla.</b> Lo que ves es la copia de este aparato:'+desdeCuandoLaCopia()+
+         ' No te fíes de que no haya avisos hasta que vuelva la conexión.<br><button type="button" class="asis-b si" onclick="cargaInicial(0)">🔄 Volver a intentar</button></div>')
+      : '<div class="asis-vacio">✅ Todo en orden por acá. Si necesitás algo, preguntame en «¿Cómo hago…?».</div>');
   }else{
     var qv=ASIS.q||'', idx=asisBuscar(qv);
     cuerpo='<input type="search" id="asis-q" class="asis-q" placeholder="Ej.: pago, feriado, ATC, camión…" autocomplete="off" value="'+esc(qv)+'" oninput="ASIS.q=this.value;asisAyudaLista()">'+
       '<div id="asis-lista" class="asis-lista">'+asisAyudaHtml(idx)+'</div>';
   }
   p.innerHTML='<div class="asis-h"><img src="'+ASIS_BUSTO+'" alt="" width="64" height="64"><div><b>'+saludo+' 👋</b><small>Soy Eduardo, tu asistente del panel · <a class="asis-quien" onclick="quienAbrir(true)">'+(v?('¿No sos '+esc(v.split(' ')[0])+'?'):'¿Quién sos?')+'</a></small></div>'+
-      '<button type="button" class="asis-x" title="'+(asisMudo()?'Activar el sonido':'Silenciar')+'" onclick="asisMudoCambiar()">'+(asisMudo()?'🔇':'🔊')+'</button>'+
+      '<button type="button" class="asis-x" title="'+(asisMudo()?'Activar el sonido':'Silenciar')+'" aria-label="'+(asisMudo()?'Activar el sonido':'Silenciar')+'" onclick="asisMudoCambiar()">'+(asisMudo()?'🔇':'🔊')+'</button>'+
       '<button type="button" class="asis-x" aria-label="Cerrar" onclick="asisCerrar()">✕</button></div>'+
     '<div class="asis-tabs"><button type="button" class="'+(ASIS.tab==='avisos'?'on':'')+'" onclick="asisTab(\'avisos\')">🔔 Avisos'+(A.length?(' <span>'+A.length+'</span>'):'')+'</button>'+
       '<button type="button" class="'+(ASIS.tab==='ayuda'?'on':'')+'" onclick="asisTab(\'ayuda\')">❓ ¿Cómo hago…?</button></div>'+
     '<div class="asis-cuerpo">'+cuerpo+'</div>';
   p.hidden=false;
+  var cu=p.querySelector('.asis-cuerpo'); if(cu && _scroll) cu.scrollTop=_scroll;
+  var q=document.getElementById('asis-q');
+  if(q && _foco){ try{ q.focus({ preventScroll:true }); if(_sel) q.setSelectionRange(_sel[0], _sel[1]); }catch(e){} }
 }
 var ASIS_ABIERTA=-1;
 function asisAyudaHtml(idx){

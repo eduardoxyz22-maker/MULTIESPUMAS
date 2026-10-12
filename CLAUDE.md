@@ -723,6 +723,89 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
+<<<<<<< HEAD
+=======
+## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` EN LA RAMA, sin publicar: espera que el dueño arme Meta)
+Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
+confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
+- `doSave` → `waAlGuardar_` solo anota en `WA_COLA` (sin red, adentro del candado); `waRepaso` (cada 5 min + `waDespierta` de una vez)
+  manda AFUERA del candado, armando cada mensaje con la planilla de ese momento, tras 2 min de espera (`WA_ESPERA_MS`). Reintentos en
+  `WA_SALIDA` (solo qué y a quién). Todo queda en la hoja «Bot WhatsApp». `estadoBotWhatsApp()`; `probarAntesDeImplementar` §11.
+- 🚫 Al cliente no: Eduardo (dueño), ROHO, ATC, RPT, tienda, entregados, `__`, `kommo-`, sin celular, fecha pasada (`waNoCliente_` =
+  `nxBotManda` de la página). `WA_MARCAS` = `MARCAS` de la página (`test_wa_bot` §1 las compara): un vendedor nuevo va en los dos.
+- Propiedades del script (NUNCA en el código): `WA_TOKEN`, `WA_PHONE_ID`, `WA_LOGISTICA`, `WA_ACTIVO`=1, opcionales `WA_PRUEBA`,
+  `WA_IDIOMA`, `WA_API`. Cada respuesta trae `wa:1|0` y la página dice «🤖 lo manda el bot» (el botón a mano queda).
+- ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
+- `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
+
+## ✨ Adentro de las ventanas de Administración + Eduardo que lleva a algo visible (§4kc + §4kd, 12/10; PUBLICADA 01:41, `f233130`)
+Solo presentación: fichas `mc` vivas (`admVestir`/`cxFichasVivas` + `admIcoDe`/`ADM_ESC`), barras de columna (`admBarras`), barra «N de M»
+(`admAvanceHtml`; en el cierre `#cie-av` se repinta en `cierreEntToggle`), Lista de carga con `cargaResumenPintar`, el mapa dentro de
+`.mapa-cv` con `#mapa-flota`. ⚠️ Lo que leen las pruebas (textos, recuadro verde de ROHO, tablas) quedó igual: no sacarlo al «limpiar».
+Eduardo: `asisDestino` (si el lugar no se ve: la contraseña, «elegí tu nombre» o `alt`), avisos con `lista` y «Ver cuáles» → `showMisModal`;
+asignar camión y cierre de entregas con `solo:'adm'` → solo `asisVeAdm()` (logística, Administración, clave o `me_adm_dev`; dueño: *«no es
+para los vendedores»*). `tests/test_asistente.js`. Bitácora §4kc, §4kd.
+
+## 🛣️ El recorrido sale de donde se carga (§4ke, 12/10; PUBLICADA 02:09, `e2f1021`; dueño: *«¿toma en cuenta si sale de PTF o Banzer?»*)
+`rutaSalida(pedidos)` = depósitos en orden con la marca de cada producto (`prodPartesCarga`): acá/sin marcar/Moreno → PTF, «✔ Banzer» → Banzer,
+las dos → PTF y después Banzer. La usan el recorrido del mapa (`mapaRutaDatos`/`mapaRutaPintar`, ordena desde el último depósito) y la Hoja de
+ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vacio`) en vez de esconderse. `tests/test_ruta_salida.js`. Bitácora §4ke.
+
+## 🔎 Revisión del 11-12/10 con 6 agentes y 📥 «Sí, es la misma» (§4kf, 12/10; en la rama, SIN publicar)
+- **«Sí, es la misma» / «Descartar»** van de a uno (`borrEnSerie`) y un borrado que Google no hizo (ocupado, sin respuesta) DEVUELVE la
+  tarjeta y lo dice; el ✓ sale con el sí del servidor. Antes lo callaba: el dueño veía la bandeja vacía en el teléfono y al otro día
+  volvían todas (las filas nunca se borraron: «esperando hace 6 días»). `tests/test_borr_misma.js` (panel + `.gs` reales).
+- **Eduardo**: el aviso al guardar lo llama `submitPedido` → `after` con el pedido YA guardado (`asisAlGuardar(rec, tienda)`; clave
+  `g-map|<id>`; «Abrir el pedido» = `asisEditarEn`), sin tienda/ATC/RPT ni celular para Eduardo/ROHO; «Mañana» solo si es mañana
+  (`asisCuando`); globo y pop una vez por aviso (`ASIS.anunciados`); la ventana se repinta solo si cambió algo y conserva foco y scroll;
+  sin lectura buena no dice «Todo en orden» (`asisSinDatos`); «sin ubicación» sin RPT/ATC; cierre esperando señal; botones de 44 px;
+  en el celular la ventana entra en la pantalla y la figura se corre con «Guardar» a la vista (`body.asis-guardar`).
+- `misWaCliente` y `waCel_` con borde a la izquierda (un dígito de más armaba el celular de OTRA persona). «👛 Quién tiene el efectivo»
+  nombra al chofer (`E.fuera`). El recorrido del mapa calcula el depósito con TODOS los pedidos del chofer.
+- **🖼️ Varias imágenes a la vez** (dueño: *«no deja subir más de 1 foto a la vez»*): `comp-input`, `fcomp-input` y `ret-foto-input` llevan
+  `multiple` y pasan por `compVarias(ev, fn)`: de a una con el manejador de siempre (que ahora devuelve su promesa), reponiendo
+  `COMP_DESTINO` en cada vuelta; más de `COMP_MAX`, se cortan y se dice. `tests/test_comp_varias.js` (5).
+- **🛣️ «Ya salió el camión»** (dueño: *«falta cómo hacemos que "ya salió el camión" mientras»*, hasta el GPS): botón «🚚 Ya salió» en la ficha
+  del camión (`cvSalioHtml`, 3D y 2D, solo hoy y con pedidos) → `camionSalioMarcar`: una tilde más en `__carga_chk__`,
+  `fecha|camión|🚚 SALIÓ|HH:MM` (hora de Bolivia; `salioClave`/`camionSalio`), con sello y junta como las demás; pregunta si falta carga;
+  «deshacer». En 3D el andén queda vacío con «🛣️ salió a las…» (la firma de la escena incluye `camionSalio`); en Mis pedidos el viaje dice
+  «Salió HH:MM» (`pedidoViajeDatos`). El cartel «⚠️ SIN CAMIÓN» se toca → `cv3dSinCamion` (lista con `cvAsignar`). `tests/test_camion_salio.js` (10).
+  🛰️ GPS: Monnet i-monnet 5.0, `VEHICULO_PLACA`; ya tiene las geocercas «Centro de Dist. MULTIESPUMAS» y «Centro de dist. BANZER» con alertas
+  «Unidad <placa> Generó ALERTA FUERA/DENTRO DE GEOCERCA <nombre> el AAAA/MM/DD HH:MM:SS» (rebotan en segundos: hace falta filtrar). Bitácora §4kg.
+- **Bot (`.gs` 2026-10-11-a, sin implementar)**: el borrador se reconoce por `estado`, no por `kommo-` (una venta de Kommo completada no
+  recibía nada); el recordatorio de las 17:00 no sale antes de una confirmación que espera en la cola. `test_wa_bot` §5b,
+  `tests/test_asistente_rev.js` (17; 16 rojas contra `e2f1021`), `test_ruta_salida` §5b.
+
+## ✨ Administración: herramientas en grupos (§4kb, 12/10; PUBLICADA 00:21, `55eaf9c`)
+Los mismos botones en `.btn-row.adm-tools` (cuatro `.at-g`); el color va en `--c` y la explicación en `data-d` (con `::after`: no cambia el
+`textContent`). Un botón nuevo de Administración entra en su grupo con esa forma. Las ventanas llevan `class="adm-ov"` (cabecera nueva, solo
+CSS). `tests/test_adm_tools.js`. Bitácora §4kb.
+
+## 👋 Quién usa el panel (§4ka, 11/10; PUBLICADA 23:53, `4ab5c90`; dueño: *«que al entrar al panel cada vendedor se identifique»*)
+Una vez por pestaña (`sessionStorage` `me_quien_ok`) sale «¿Quién está usando el panel?»: vendedores, logística, administración. Elegir
+usa `setVendedorMem` (el mismo «Tu nombre») y llena el formulario y Mis pedidos; se cambia con «¿No sos …?» en la ventana de Eduardo.
+No es control de acceso. En Playwright no sale salvo `QUIEN_PRUEBA`. `tests/test_quien.js`.
+
+## 🎧 ATC con el estilo nuevo y 🙈 Chofer escondida (§4jz, 11/10; PUBLICADA 23:21, `7a6085f`)
+`#tab-chofer` va `hidden` (la vista sigue). ATC: fichas vivas (`cxFichasVivas(…, atvIcoDe)`), «🛤️ El viaje» (`atcLista(true)` = sin el
+filtro de estado; tocar un paso filtra), motivos en barras que filtran y tarjetas bajo 900 px (`me_atc_tabla`). Solo presentación: la tabla
+`#tbl-atc` se sigue armando. `tests/test_atc_4jz.js`. Bitácora §4jz.
+
+## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*)
+Su imagen 3D de cuerpo entero en la esquina (`asistente/eduardo-3d.webp`, cabecera `eduardo-busto.webp`; `?v=` en `ASIS_IMG`/`ASIS_BUSTO`).
+Avisa según la pestaña (`asisAvisos`: Mis pedidos del vendedor elegido, al guardar, Administración, Contabilidad) leyendo las cuentas de
+siempre, ayuda «¿Cómo hago…?» (`ASIS_AYUDA`) y sonido WebAudio. Solo mira: nada va a la planilla; «Entendido» y 🔇 por aparato. En Playwright
+no aparece salvo `ASIS_PRUEBA`. Avisarle al dueño lo de cada vendedor: lo pide después. `tests/test_asistente.js`. Bitácora §4jx.
+
+## ✨ Contabilidad con el estilo nuevo (§4jw, 11/10; dueño: *«Ok pásalas y publica»*; PUBLICADA 11/10 21:09, `407f4a9`)
+Solo presentación, bloque `cx*`: A fichas vivas + barra cobrado/falta (`#cx-vivo`, DEBAJO de `#cta-marcas`), B dona de marcas, C botones en
+tres grupos (`#cx-grupos`), D chips que filtran SOLO la tabla (`CX_FILTRO`), E tarjetas bajo 900 px (`me_cx_tabla` vuelve a la tabla),
+F «dos veces» con «Son distintas» por aparato (`me_cx_dup_ok` saca el par de `DUP_IDX`), G semáforo (tocar → la casilla de la tabla del
+cierre), H quién tiene el efectivo (`cxRetiro`), I botón en cada aviso (`cxAvisoBtn`), J lo que entró día por día (⚠️ los cobros no tienen
+hora), K curva por marca en Proyección (meta: falta dónde cargarla). ⚠️ No calcular nada aparte: todo lee las funciones de siempre.
+`tests/test_conta_4jw.js` (38). Bitácora §4jw.
+
+>>>>>>> d394ec0 («Sí, es la misma» y «Descartar» de a uno y sin fallar callados (la fila de Kommo no se borraba y volvía); bitácora §4kf)
 ## ✨ Las nueve mejoras (§4js, 10/10, PUBLICADA 10/10 21:51 de Bolivia, `98771b8`; dueño: *«todo está bueno, solo falta pulir el diseño, los colores, animaciones»*)
 Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja de la marca y dibujito). Solo completan, avisan o proponen:
 - **P1** `nxCliBuscar` (`#nx-cli`): en un pedido NUEVO, el celular o el NIT (≥5 números) completan SOLO lo vacío con el pedido más nuevo de ese cliente; el NOMBRE completo (dos palabras, sin acentos) NO completa solo: propone hasta 3 y se elige «Sí, es este» (dueño, 10/10). «No es él» lo vacía. `NX_CLI_LLENANDO` evita que lo completado vuelva a buscar.
