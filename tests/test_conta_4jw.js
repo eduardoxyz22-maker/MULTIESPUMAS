@@ -311,6 +311,22 @@ function PREPARAR(){
   chk('la meta dice que todavía no hay dónde cargarla', r.cs.every(function(t){ return /Meta: todavía no hay dónde cargarla/.test(t); }), r.cs);
   await foto('K_proy');
 
+  // ═══ A+. Las fichas de marca y las del Cuadre, con el mismo estilo (dueño, 11/10) ═══════════════════
+  console.log('\n── A+. Fichas de marca, del Cuadre y de Proyección con color y dibujito ──');
+  r = await ev(async () => {
+    var pry=[].map.call(document.querySelectorAll('#pry-metrics .mc'), function(c){ return c.classList.contains('cx-v'); });
+    VER(); await new Promise(function(res){ setTimeout(res, 60); });
+    var mk=[].map.call(document.querySelectorAll('#cta-marcas .mc'), function(c){ return { v:c.classList.contains('cx-v'), ico:!!c.querySelector('.cx-esc svg'), pct:!!c.querySelector('.cx-pct i'), txt:c.innerText.replace(/\s+/g,' ') }; });
+    CUADRE(); await new Promise(function(res){ setTimeout(res, 60); });
+    var cu=[].map.call(document.querySelectorAll('#cua-metrics .mc'), function(c){ return c.classList.contains('cx-v') && !!c.querySelector('.cx-esc svg'); });
+    var letras=[].map.call(document.querySelectorAll('#cua-metrics .cx-esc, #cta-marcas .cx-esc'), function(e){ return e.textContent.trim(); }).join('');
+    return { pry:pry, mk:mk, cu:cu, letras:letras };
+  });
+  chk('Sueña y Heaven en Ventas: con su color, dibujito y la barrita del % (el texto sigue igual)',
+      r.mk.length>=2 && r.mk.every(function(m){ return m.v && m.ico && m.pct; }) && /% de lo vendido/.test(r.mk[0].txt), r.mk);
+  chk('todas las fichas del Cuadre y de Proyección con el estilo nuevo, sin letras dentro del dibujo',
+      r.cu.length>=8 && r.cu.every(Boolean) && r.pry.length>=2 && r.pry.every(Boolean) && r.letras==='', r);
+
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
