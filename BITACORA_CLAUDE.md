@@ -13770,3 +13770,6 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   con sus ejemplos, en el orden de `waArmar_`) + **`crearPlantillasWhatsApp()`** (POST `/<WA_WABA_ID>/message_templates`, Utilidad, `es`;
   la que ya existe queda) + **`verPlantillasWhatsApp()`** (en revisión / aprobada / rechazada con motivo). Propiedad nueva **`WA_WABA_ID`**.
   `confirmacion_pedido` lleva «{{5}}.\n{{6}}» (sin el punto quedaban dos datos pegados: Meta las rechaza). `test_wa_bot` → 78.
+- **📱 Número propio del bot (12/10)**: **+591 69398727**, en una cuenta de WhatsApp NUEVA «MultiEspumas Viscarra SRL» (WABA
+  **1129883766133666**, aparte de la de Kommo 971970071780541), identificador **1331069306760069**. El número de prueba ya no hace falta.
+  Propiedades: `WA_WABA_ID`=1129883766133666, `WA_PHONE_ID`=1331069306760069, `WA_PRUEBA`=59162505280 mientras se prueba.
