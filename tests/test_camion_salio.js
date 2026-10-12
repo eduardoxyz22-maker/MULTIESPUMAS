@@ -51,6 +51,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('al tocarlo queda la hora de Bolivia y va en la fila de los tildes de la carga', r.hora==='10:42' && /\|Carry\|🚚 SALIÓ\|10:42/.test(r.celda||''), r);
   chk('la ficha dice «Salió a las 10:42» con «deshacer»', /Salió a las 10:42/.test(r.despues||'') && /deshacer/.test(r.despues||''), r.despues);
 
+  console.log('\n── 1b. La ventana que se abre al tocar el camión en 3D trae «Ya salió» ──');
+  r = await ev(() => { var D=cargaVivaDatos(); cv3dCamPanel(D.porK['Foton nuevo']);
+    var m=document.getElementById('dep-modal'), b=m && m.querySelector('.cvc-salio-btn');
+    var out={ btn:!!b, txt:m ? m.innerText.replace(/\s+/g,' ') : '' }; depPanel(null); return out; });
+  chk('tocar el camión abre sus pedidos con «🚚 Ya salió» abajo', r.btn && /Ya salió/.test(r.txt) && /Revisá los pedidos/.test(r.txt), r.txt.slice(0,200));
+
   console.log('\n── 2. Mis pedidos: el viaje del pedido ──');
   r = await ev(() => ({ carry:pedidoViajeDatos(findById('v1')), foton:pedidoViajeDatos(findById('v2')) }));
   chk('el pedido del Carry dice «Salió 10:42» y espera «Entregado»', r.carry.pasos[3].lbl==='Salió 10:42' && r.carry.pasos[3].hecho && r.carry.ahora===4, r.carry);
