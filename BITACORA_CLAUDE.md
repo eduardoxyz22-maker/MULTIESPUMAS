@@ -13882,3 +13882,8 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
 - Verificar la empresa en Meta: no por ahora (*«apenas tenemos 10-20 por día»*; el límite sin verificar es ~250 clientes por día).
 - David en `WA_LOGISTICA`: *«aún no»*.
 - GPS: *«ya tengo el api del GPS»* → se le pidió la documentación (sin el token, que va a Propiedades del script) y qué quiere que haga.
+- 13/10, el dueño: *«¿cómo vamos con la construcción de mi ciudad según el video demo…?»* → *«dame la muestra a ver de todo»*. La muestra del
+  patio (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, versión 2) suma, con datos de ejemplo y botones para prender/apagar cada una:
+  B GPS (afuera 5 min seguidos → «Ya salió» solo, y la vuelta al andén), C en la calle (camiones por la avenida + tarjetas con su recorrido
+  y «📍 pasó por acá», sin marcar entregado), D noche (faroles, ventanas, bocas de los andenes y calabazas en octubre) y E alertas
+  (sin chofer, pedidos sin camión, Moreno sin nadie que vaya). Reloj acelerado: 1 min cada 2 s. NADA de esto está en el panel: espera su elección.
