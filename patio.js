@@ -6,8 +6,9 @@
      · las paradas = los pedidos de cada camión, con el pin de almPunto(); una RPT va a SU tienda;
      · lo que Ernesto revisa y lo que David le reta = los pedidos del día (Eduardo, ROHO, Multicenter, sin camión, ✗ sin stock,
        días pasados sin ✅).
-   Lo único que escribe es lo que el panel ya escribía: una tilde de carga y «Ya salió». Sin GPS todavía: el camión que salió hace
-   su recorrido ESTIMADO (en orden, sin marcar nada); el ✅ entregado lo sigue marcando logística.
+   Lo único que escribe es lo que el panel ya escribía: una tilde de carga y «Ya salió». Con el GPS (servidor 2026-10-13-a, §4ko) el
+   camión que salió va por las calles hasta donde dice el GPS (`cams[].gps`); sin GPS hace su recorrido ESTIMADO (en orden, sin
+   marcar nada). El ✅ entregado lo sigue marcando logística.
    Se baja recién al tocar «🏙️ Ver la ciudad» (pedidos.html → patioAbrirCiudad) y dibuja con el MISMO lienzo de three.js que la
    fábrica de Eduardo y los camiones de Administración (`depIniciar3D` + `DEP.w3.alt`): nunca un segundo WebGLRenderer. */
 (function(){
@@ -618,7 +619,7 @@ var DAV=persona({ camisa:0x15803d, pant:0x5d4a3a, gorra:0xffffff, tabla:true });
 var OFI={ x:ALM.ptf.x-ALM.ptf.w/2-4.8, z:ALM.ptf.z+ALM.ptf.d/2-5+6.2 };
 ERN.g.position.set(OFI.x+1.5,0,OFI.z); ERN.g.rotation.y=.3;
 DAV.g.position.set(ALM.ptf.x-4,0,ALM.ptf.dock+13);
-var NPCS={ gar:{ P:GAR, n:'GARNÍCULA', cls:'npc' }, ern:{ P:ERN, n:'ERNESTO', cls:'npc ern' }, dav:{ P:DAV, n:'DAVID', cls:'npc dav' } };
+var NPCS={ gar:{ P:GAR, n:'EDUARDO', cls:'npc' }, ern:{ P:ERN, n:'ERNESTO', cls:'npc ern' }, dav:{ P:DAV, n:'DAVID', cls:'npc dav' } };
 Object.keys(NPCS).forEach(function(k){ var N=NPCS[k]; N.etq={ el:etiqueta(N.cls,N.n), obj:N.P.g, dy:3.9 }; ETQ.push(N.etq); N.modo='quieto'; });
 function decir(k, txt, seg, ic){ var N=NPCS[k]; callar(k); N.habla={ el:etiqueta('habla'+(k==='gar'?'':(k==='dav'&&ic)?' jefe':' calma'),(ic||(k==='gar'?'🗯️ ':'💬 '))+txt), obj:N.P.g, dy:5.6 }; ETQ.push(N.habla); N.hablaT=seg||3.8; }
 function callar(k){ var N=NPCS[k]; if(N.habla){ ETQ.splice(ETQ.indexOf(N.habla),1); N.habla.el.remove(); N.habla=null; } }
@@ -634,12 +635,12 @@ var FRASES={
   ernesto:['¡ERNESTO, dejá el celular y asigná choferes, carajo!','¡ERNESTO, tu planilla es un desastre, me cago en diez!','¡ERNESTO! ¿Y la Lista de carga? ¡La puta madre!'],
   david:['¡DAVID, ese montacargas no se maneja solo, carajo!','¡DAVID! ¿Quién contó el stock, un ciego? ¡La puta madre!','¡DAVID, la zona de espera parece feria, ordená eso!']
 };
-var RESP={ ern:['¡Calmate, Garnícula, ya lo asigno!','¡No me grites, que está en la Lista de carga!','¡Ya va, ya va, estoy en eso!','¡Andá a putear a David, que es su turno!'],
-           dav:['¡Tranquilo, viejo, que ya sale!','¡Garnícula, el jefe acá soy yo, andá a trabajar!','¡Ya le digo a Ernesto, no te sulfures!','¡Garnícula, tomate un mate y relajate!'] };
+var RESP={ ern:['¡Calmate, Eduardo, ya lo asigno!','¡No me grites, que está en la Lista de carga!','¡Ya va, ya va, estoy en eso!','¡Andá a putear a David, que es su turno!'],
+           dav:['¡Tranquilo, viejo, que ya sale!','¡Eduardo, el jefe acá soy yo, andá a trabajar!','¡Ya le digo a Ernesto, no te sulfures!','¡Eduardo, tomate un mate y relajate!'] };
 var ULT={};
 function frase(L, tipo, c){ var f=L[Math.floor(Math.random()*L.length)]; if(f===ULT[tipo] && L.length>1) f=L[(L.indexOf(f)+1)%L.length]; ULT[tipo]=f;
   return f.replace('{p}', c?c.p:'').replace('{n}', c?(tipo==='espera'?c.nEspera:(c.total-c.dentro)):''); }
-/* lo de Garnícula a Ernesto y a David sale del día: pedidos sin camión, Moreno, camiones sin chofer */
+/* lo de Eduardo a Ernesto y a David sale del día: pedidos sin camión, Moreno, camiones sin chofer */
 function garExtra(tipo){ var d=D0?D0.dia:{}, L=[];
   if(tipo==='ernesto'){ if(d.sinCamion) L.push('¡ERNESTO! ¿Y el camión para los '+d.sinCamion+' pedidos sin camión? ¡La puta madre!');
     if(D0 && D0.im && D0.im.u) L.push('¡ERNESTO! ¡Moreno tiene '+D0.im.u+' para traer y nadie va!'); }
@@ -693,7 +694,7 @@ function ernLlega(){ var E=ERNN;
   var c=E.c; E.st='revisa'; E.vueltas++; E.t=4.6; mirar(ERN, anden(c)); decir('ern', ernRevisa(c), 4.2, '🔎 '); }
 function ernPaso(dt, t){ var E=ERNN, N=NPCS.ern, p=ERN.g.position;
   if(E.st==='escucha'){ animar(ERN, N.modo==='contesta'?'contesta':'quieto', t); return; }
-  /* si Garnícula viene a putearlo, lo espera */
+  /* si Eduardo viene a putearlo, lo espera */
   var gp=GAR.g.position, acosado=GARN.a==='ern' && GARN.path && Math.hypot(gp.x-p.x,gp.z-p.z)<7;
   if(E.path && !acosado && N.modo!=='contesta'){ if(caminar(ERN, E.path[0], 3.2, dt)){ E.path.shift(); if(!E.path.length){ E.path=null; ernLlega(); } } animar(ERN,'anda',t,9); return; }
   if(N.modo==='contesta'){ animar(ERN,'contesta',t); return; }
@@ -1176,7 +1177,7 @@ ren.domElement.addEventListener('pointerup', function(e){ if(!PT.abierto || !baj
   var hit=ray.intersectObjects(TOCA.filter(function(o){ return o.visible && o.parent; }), true)[0]; if(!hit) return; var o=hit.object; while(o && !o.userData.tipo) o=o.parent; if(!o) return;
   var u=o.userData;
   if(u.tipo==='espera'){ var c=u.c; elegir(c); toast((u.it.st==='moreno'?'📥 ':'🅿️ ')+'<b>'+escH(u.it.prod)+' ×'+u.it.u+'</b> para el '+escH(c.p)+' · '+ITEM_TX[u.it.pend?'pend':u.it.st](u.it)+'. Se tilda en la ficha (es la tilde de la Lista de carga).'); return; }
-  if(u.tipo==='npc'){ if(u.quien==='gar'){ var cerca=garParados(GARN.sitio)[0]; decir('gar', cerca?garFrase(garTipo(cerca),cerca):garFrase('suelto')); toast('🧔 Es GARNÍCULA. No le hagas caso, putea a todos.'); }
+  if(u.tipo==='npc'){ if(u.quien==='gar'){ var cerca=garParados(GARN.sitio)[0]; decir('gar', cerca?garFrase(garTipo(cerca),cerca):garFrase('suelto')); toast('🧔 Es EDUARDO. No le hagas caso, putea a todos.'); }
     else if(u.quien==='ern'){ var cc=ERNN.c||ernCamiones()[0]; if(ERNN.st!=='escucha') decir('ern', cc?ernRevisa(cc):RESP.ern[0], 3.6, '🔎 '); toast('📋 ERNESTO, de logística: recorre los andenes y revisa la carga de cada camión.'); }
     else { if(DAVN.st!=='reta') decir('dav', jefeTema().d, 3.8, '📢 '); toast('🧑‍💼 DAVID, jefe de logística: le recuerda a Ernesto lo pendiente del día.'); } return; }
   if(u.c) elegir(u.c, false); });

@@ -14131,4 +14131,8 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
 - Cuota de Apps Script (gmail, 90 min/día de disparadores): ~900 vueltas × 1-2 s ≈ 15-30 min. Con Kommo y el bot debería entrar; si
   Ejecuciones muestra «Servicio usado demasiadas veces», se puede pasar el repaso a cada 5 minutos.
 - `PATIO_V='20261013d'`. Pruebas: `test_gps.js` (46), `test_gps_pagina.js` (20), `test_servidor` §11 (versión).
+- El dueño, mientras tanto: *«cambia el nombre de garnicula a "EDUARDO"»*. Hecho en la ciudad: el cartel, las respuestas de Ernesto y
+  David y el aviso al tocarlo dicen EDUARDO; las variables siguen `gar`/`GARN`.
+- Batería entera (179 archivos) con todo esto: dos en rojo con la máquina cargada (`test_getlog` 20/1 y `test_patio` 32/1, el
+  montacargas no llegó a tiempo); corridas solas, 21/21 y 33/33. El resto, en verde.
 

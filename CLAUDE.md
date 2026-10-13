@@ -639,7 +639,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `tests/test_gps.js` (46, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (20). Bitácora §4ko.
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
-La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad.
+La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).
 - Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`, y desde 13/10 también `#adm-ciudad-btn` arriba de Administración, al lado de «Ocultar camiones»: con la vista 3D `.cv-tit button` lo pintaba blanco sobre blanco y el dueño no lo encontraba) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
   aparte: cambiarlo = subir `PATIO_V` y `node --check patio.js`). Pantalla completa `#pt-ov` (CSS con `#pt-ov` adelante, ids `pt-`).
 - ⚠️ **Un solo lienzo**: dibuja con `DEP.w3` vía **`DEP.w3.alt={cuadro,tam}`** (el bucle de `depIniciar3D` le cede el cuadro); mientras
