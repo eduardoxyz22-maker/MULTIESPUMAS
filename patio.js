@@ -231,17 +231,17 @@ function edificio(x,z,w,d,h){ h=altoFrente(x,z,h);
   if(h<16 && rnd()<.7) caja(w*.86,.25,1.6,TOLDOM[Math.floor(rnd()*TOLDOM.length)],x,3.4,z+d/2+.8);
 }
 function cuadraEdif(x,z,w,d,h){ if(enTienda(x,z,w,d)) return; edificio(x,z,w,d,h); }
-function cuadra(cx,cz){
-  var x0=cx-G/2+RW/2+1, x1=cx+G/2-RW/2-1, z0=cz-G/2+RW/2+1, z1=cz+G/2-RW/2-1, lejos=Math.max(0,(-cz-35)/140);
-  plano(x1-x0+2,z1-z0+2,cx,cz,.04,VER);
+function cuadra(cx,cz){   // (13/10, dueño: «Santa Cruz no tiene tantos edificios, es un mix… casas de 1 y 2 pisos») casi todo casas; edificios altos solo al fondo (centro / Equipetrol)
+  var x0=cx-G/2+RW/2+1, x1=cx+G/2-RW/2-1, z0=cz-G/2+RW/2+1, z1=cz+G/2-RW/2-1, tipo=(cz<=-105 && cx>=-105 && cx<=245) ? 'alto' : (rnd()<.2 ? 'mixto' : 'casas'), TT=[0xc0563a,0x9a4a3a,0x6b7d8f,0xb5651d]; plano(x1-x0+2,z1-z0+2,cx,cz,.04,VER);
+  if(tipo==='casas'){ for(var i=0;i<4;i++) for(var j=0;j<3;j++){ var hx=x0+7+i*14.5, hz=z0+8+j*18; if(enTienda(hx,hz,9,8)) continue; if(rnd()<.55) casa(hx,hz,COLS[Math.floor(rnd()*COLS.length)],TT[Math.floor(rnd()*TT.length)],j%2?Math.PI:0); else edificio(hx,hz,9,8,rnd()<.5?3.6:7); if(rnd()<.45) arbol(hx+5.5,hz+6,.7); } return; }
   for(var z=z0+1; z<z1-6; ){ var dd=11+Math.floor(rnd()*7); if(z+dd>z1) break;
     for(var x=x0+1; x<x1-6; ){ var ww=10+Math.floor(rnd()*8); if(x+ww>x1) break;
-      cuadraEdif(x+ww/2, z+dd/2, ww, dd, 7+Math.floor(rnd()*14*(1+lejos*1.6))); x+=ww+2.5; }
+      cuadraEdif(x+ww/2, z+dd/2, ww, dd, tipo==='alto' ? 10+Math.floor(rnd()*22) : 4+Math.floor(rnd()*9)); x+=ww+2.5; }
     z+=dd+2.5; }
 }
 function casa(x,z,col,techo,rot){ var g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g);
   bloqueFach(0,0,7,6,4,col,g); var t=M(techo);
-  var a=caja(7.4,.35,3.9,t,0,4.75,-1.45,g); a.rotation.x=.55; var b=caja(7.4,.35,3.9,t,0,4.75,1.45,g); b.rotation.x=-.55; }
+  var a=caja(7.4,.35,3.9,t,0,4.75,-1.45,g); a.rotation.x=-.55; var b=caja(7.4,.35,3.9,t,0,4.75,1.45,g); b.rotation.x=.55; }   // (13/10, dueño) a dos aguas hacia afuera: antes quedaban en V
 function parque(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,PASTO); plano(G-RW,3,cx,cz,.05,M(0xe8dcc0)); plano(3,G-RW,cx,cz,.05,M(0xe8dcc0));
   cil(4,.6,M(0xcfd8e3),cx,.3,cz,null,32); cil(3.3,.2,Mbrilla(0x7fc4ec,0x7fc4ec),cx,.65,cz,null,32); cil(.4,2.6,M(0xcfd8e3),cx,1.3,cz,null,12);
   for(var t=0;t<26;t++){ var ax=cx-28+rnd()*56, az=cz-28+rnd()*56; if(Math.abs(ax-cx)<3||Math.abs(az-cz)<3) continue; arbol(ax,az,1.1+rnd()*.7); }

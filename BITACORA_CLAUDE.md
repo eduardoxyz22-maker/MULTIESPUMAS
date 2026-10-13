@@ -14010,3 +14010,7 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   suites, una sola roja con la máquina cargada (`test_mispedidos` 32/1) que sola da 33/33, igual que contra main. El dueño, el mismo día:
   *«aumentá unas cuantas casas, cosas delante de Charcas, Bs As y Carmelo para que no parezcan al borde de la ciudad y la nada»* → una fila
   más de cuadras abajo (Z1=5·G): casas, parque y `barrio` (casas + edificios bajos + kiosco) en esa fila. Muestra v14 y patio.js iguales.
+- Después (13/10): *«Santa Cruz no tiene tantos edificios, es un mix… casas de 1 y 2 pisos»* → `cuadra` decide el tipo: las filas del
+  fondo (norte) siguen con edificios altos; el resto, 80 % cuadras de casas (grilla 4×3 de `casa()` o edificios bajos de 3,6/7) y 20 %
+  mixtas (4–12). Y *«los techos están al revés»*: en `casa()` las dos aguas tenían los signos de `rotation.x` cambiados (quedaban en V);
+  ahora -0,55 / +0,55. Muestra v15. Rendimiento: la ciudad va juntada por material (`juntar`), así que la cantidad de casas casi no pesa.
