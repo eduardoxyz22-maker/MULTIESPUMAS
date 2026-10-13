@@ -14203,3 +14203,13 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
 - Batería entera (180 archivos) con la 13-b: cuatro en rojo con la máquina cargada (`test_auditoria`: el doble de Leaflet sin
   `layerGroup` —arreglado: el mapa no arma la capa si no hay nada que dibujar—; `test_control_corte`, `test_concurrencia` y
   `test_mispedidos`: corridos solos, 32/32, 50/50 y 33/33). El resto, en verde (6.242 comprobaciones).
+- **13/10 11:06, el dueño con la ciudad abierta en el iPad**: *«¿por qué está parado ese camión? Está atrás de la fábrica en plena
+  calle»* (5655-KSC, Foton encarpado, «Salió · 0 de 0 entregados», en la calle del lado de atrás de Industrias Moreno). **Causa**: el GPS lo
+  ve EN Moreno (ya a las 10:01 `probarGps` lo daba a 8,1 km de PTF = Moreno), pero la 13-a solo conoce PTF y Banzer como lugares donde
+  se «está»: Moreno contaba como «en la calle», y la ciudad pone a todo camión en la calle sobre la calle más cercana a su punto
+  (`gpsEscenaDe` redondea `z` a la grilla) — la de atrás de la fábrica. Y la ficha decía «Salió» sin hora (no había salida).
+  **Arreglo (página, anda con el servidor de hoy)**: `gpsEnMoreno(x)` (= `mor` de la 13-b, o ≤ `GPS_MORENO_M` 400 m del pin
+  `GPS_MORENO`, el mismo del `.gs`: `test_gps` §1); `gpsDondeTxt` → «en Moreno»; en la ciudad `gpsLugar(g)` (UNA cuenta para
+  `sincronizar` y `gpsAlDia`) lo estaciona en el andén de Moreno (`c.alm='im'`, los andenes de Moreno entran al reparto) con
+  «📥 En Moreno · lo dice el GPS»; un camión en la calle sin salida dice «En la calle · lo dice el GPS», no «Salió ·».
+  `PATIO_V='20261013g'`. Pruebas: `test_gps` (93), `test_gps_pagina` §8 (→ 54), `test_patio` 3D (→ 35).

@@ -649,6 +649,10 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   la 13-b). Página: `gpsDiaTomar`, `gpsParadas` (servidor o aparato, misma regla `gpsPedidosCerca`), `gpsLlegadaDe(p)`; «📍 Llegó HH:MM» en
   Mis pedidos; en el **cierre de entregas** cada pedido dice qué vio el GPS y **«📍 Tildar los N que vio el GPS»** solo tilda (confirma
   logística). 🚫 **Nada se marca ✅ solo** (dueño, 12/10). ⚠️ GPS_DIA y GPS_PAR son propiedades: aguantan 9 KB (`GPS_PROP_TOPE`).
+- **📥 En Moreno, no en la calle de atrás** (13/10, dueño: *«¿por qué está parado ese camión? Está atrás de la fábrica en plena calle»*):
+  `gpsEnMoreno(x)` (`mor` de la 13-b o ≤400 m de `GPS_MORENO`, = el del `.gs`) → «en Moreno»; la ciudad lo estaciona en el andén de Moreno
+  (`gpsLugar(g)`, UNA cuenta para `sincronizar` y `gpsAlDia`: si difieren, la escena se rearma cada 1,5 s). ⚠️ Un camión «en la calle» se
+  dibuja en la calle MÁS CERCANA a su punto (`z` redondeado a la grilla): un lugar nuevo donde los camiones «están» va como depósito, no como calle.
 - `tests/test_gps.js` (92, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (52). Bitácora §4ko, §4kp.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
 

@@ -104,6 +104,8 @@ console.log('\n── 1. Los depósitos y las placas: los de pedidos.html ──
   chk('PTF y Banzer tienen las mismas coordenadas en el .gs y en la página', dep === pag, { dep, pag });
   const pl = {}; Object.keys(VP).forEach(k => { pl[VP[k].toUpperCase().replace(/[^A-Z0-9]/g, '')] = k; });
   chk('las placas del .gs son las de VEHICULO_PLACA (sin guiones)', JSON.stringify(pl) === JSON.stringify(S.ctx.GPS_PLACAS), { pl, gs: S.ctx.GPS_PLACAS });
+  const MP = vm.runInNewContext('(' + tomar('var GPS_MORENO={', '}') + ')');
+  chk('(13-b) el pin de Moreno es el mismo en el .gs y en la página (GPS_MORENO)', MP.lat === S.ctx.GPS_MORENO.lat && MP.lng === S.ctx.GPS_MORENO.lng, { pag: MP, gs: S.ctx.GPS_MORENO });
   chk('la placa se compara sin guiones ni espacios: «6663-CCP», «6663 ccp» y «6663CCP» son la misma',
       S.ctx.gpsPlaca_('6663-CCP') === '6663CCP' && S.ctx.gpsPlaca_('6663 ccp') === '6663CCP');
 }

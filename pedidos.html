@@ -15783,7 +15783,13 @@ function camionSalioGps(fecha, veh){
   return GPS_SALIO[fecha+'|'+veh]||'';
 }
 function gpsHace(x){ if(!x || !x.r) return ''; var m=Math.round((Date.now()-Number(x.r))/60000); return m<=0?'recién':m<60?('hace '+m+' min'):('hace '+Math.floor(m/60)+' h '+(m%60)+' min'); }
-function gpsDondeTxt(x){ if(!x) return ''; var d=x.dep; if(!x.f && d) return 'en '+d.n; if(x.mor) return 'en Moreno'; return 'en la calle'+(d?(' · a '+(d.m<1000?(d.m+' m'):((d.m/1000).toFixed(1).replace('.',',')+' km'))+' de '+d.n):''); }
+/* 📥 (13/10, dueño con la ciudad abierta: «¿por qué está parado ese camión? Está atrás de la fábrica en plena calle») Moreno es un lugar
+   donde el camión ESTÁ (va a recoger), no la calle: a ≤ GPS_MORENO_M del pin del dueño (= GPS_MORENO del .gs, test_gps §1). Con el
+   servidor 13-b viene marcado (`mor`); con el de antes, la página lo mide sola. */
+var GPS_MORENO={ lat:-17.7623355, lng:-63.0675466 }, GPS_MORENO_M=400;
+function gpsEnMoreno(x){ if(!x) return false; if(x.mor) return true;
+  var la=Number(x.la), lo=Number(x.lo); return isFinite(la) && isFinite(lo) && gpsMetros({ lat:la, lng:lo }, GPS_MORENO)<=GPS_MORENO_M; }
+function gpsDondeTxt(x){ if(!x) return ''; var d=x.dep; if(!x.f && d) return 'en '+d.n; if(gpsEnMoreno(x)) return 'en Moreno'; return 'en la calle'+(d?(' · a '+(d.m<1000?(d.m+' m'):((d.m/1000).toFixed(1).replace('.',',')+' km'))+' de '+d.n):''); }
 /* 🛰️ (13/10, dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») LO QUE EL GPS FUE DICIENDO HOY. El servidor solo da la
    ÚLTIMA posición de cada camión: el recorrido del día se arma en este aparato, un punto por cada reporte nuevo que trae la lectura
    (una por minuto mientras el panel está abierto), y sobrevive al F5 (localStorage, solo el día de hoy). Solo mira: nada va a la
@@ -16183,7 +16189,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013f';
+var PATIO_V='20261013g';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
@@ -30465,7 +30471,7 @@ function mapaGpsPintar(){
   Object.keys(VEHICULO_PLACA).forEach(function(veh){
     var x=camionGps(veh); if(!x) return; n++;
     var sal=camionSalio(todayStr(), veh);
-    L.marker([x.la,x.lo], { zIndexOffset:1000, icon:L.divIcon({ className:'mapa-gps'+(x.v>3?' anda':'')+(x.f?'':' dep'), html:'<span>🚚 <b>'+esc(VEHICULO_PLACA[veh])+'</b>'+(x.v>3?(' '+x.v+' km/h'):'')+'</span>', iconSize:[130,26], iconAnchor:[65,34] }) })
+    L.marker([x.la,x.lo], { zIndexOffset:1000, icon:L.divIcon({ className:'mapa-gps'+(x.v>3?' anda':'')+(x.f && !gpsEnMoreno(x)?'':' dep'), html:'<span>🚚 <b>'+esc(VEHICULO_PLACA[veh])+'</b>'+(x.v>3?(' '+x.v+' km/h'):'')+'</span>', iconSize:[130,26], iconAnchor:[65,34] }) })
       .bindPopup('<b>🚚 '+esc(veh)+' · '+esc(VEHICULO_PLACA[veh])+'</b><br>'+(x.c?('🧑‍✈️ '+esc(x.c)+'<br>'):'')+'🛰️ '+esc(gpsDondeTxt(x))+' · '+x.v+' km/h · motor '+(x.m?'encendido':'apagado')+
         (x.r?('<br>⏱️ reporte '+esc(gpsHace(x))):'')+(sal?('<br>🛣️ salió '+esc(sal)):'')+(x.vu?(' · volvió '+esc(x.vu)):''))
       .addTo(capa);

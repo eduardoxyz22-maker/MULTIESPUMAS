@@ -135,12 +135,14 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       { p:'6663CCP', pl:'6663-CCP', la:-17.7489, lo:-63.1540, v:12, m:1, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:1180 }, f:1, s:'', vu:'' },
       { p:'5655KSC', pl:'5655-KSC', la:-17.7623, lo:-63.0680, v:0, m:0, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:8100 }, f:1, s:'', vu:'' } ] }, Date.now());
     var D=patioDatos(), C={}; D.cams.forEach(function(c){ C[c.k]=c; });
-    return { tig:C['Carry'].gps, url:C['Foton insumo'].gps, ccp:C['Foton nuevo'].gps, ksc:C['Foton encarpado'].gps };
+    return { tig:C['Carry'].gps, url:C['Foton insumo'].gps, ccp:C['Foton nuevo'].gps, ksc:C['Foton encarpado'].gps, donde:gpsDondeTxt(camionGps('Foton encarpado')), dondeCcp:gpsDondeTxt(camionGps('Foton nuevo')) };
   });
   chk('el Carry, en Banzer: «adentro» y en Banzer (la ciudad lo estaciona allá)', r.tig && r.tig.f===0 && r.tig.depId==='banzer', r.tig);
   chk('el Foton insumo, adentro de PTF', r.url && r.url.f===0 && r.url.depId==='ptf', r.url);
   chk('el Foton nuevo, en la calle a ~1 km al oeste de PTF (en la ciudad, a la izquierda de PTF, x<35)', r.ccp && r.ccp.f===1 && r.ccp.x<35 && r.ccp.x>-140, r.ccp);
   chk('el Foton encarpado, en la calle junto a Moreno (Moreno está en x 315, z −105 de la ciudad)', r.ksc && r.ksc.f===1 && Math.abs(r.ksc.x-315)<40 && Math.abs(r.ksc.z+105)<=70, r.ksc);
+  chk('(13/10, dueño: «está atrás de la fábrica en plena calle») a 60 m del pin de Moreno: «en Moreno», aunque el servidor (13-a) no lo diga', r.ksc && r.ksc.enMor===true && r.donde==='en Moreno', [r.ksc && r.ksc.enMor, r.donde]);
+  chk('…y uno en la calle a 1 km de PTF sigue «en la calle»', r.ccp && r.ccp.enMor===false && /^en la calle/.test(r.dondeCcp), [r.ccp && r.ccp.enMor, r.dondeCcp]);
 
   console.log('\n── 9. (dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») el recorrido del día y sus paradas ──');
   r = await ev(() => {
