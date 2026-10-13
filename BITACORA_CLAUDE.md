@@ -14025,3 +14025,6 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   faroles de esquina, autos estacionados) y `cuadraCruza` cambia por una cuadra común la cuadra especial que un anillo cruza. La ciudad
   creció dos filas abajo (`Z1=7*G`, también en `s1_mapa.js`) y «Ver todo» mira al centro nuevo (`[70,140, Z/360]`). Muestra v17.
   ⚠️ El bloque de los anillos agregó 44 líneas a `cuerpo.js`: los rangos de `armar.py` se corrieron (todo lo de después de la 194).
+- Después (13/10): *«los techos de las fábricas están al revés igual»* → el techo de los galpones (`r.rotation.x=s*.3`) y el de la iglesia
+  tenían el mismo error que las casas (en V). Y *«te pasé fotos de Santa Cruz»* → más teja (sin techos grises en las casas), menos losas
+  grises y el doble de árboles en los patios. Los carteles de los anillos se ponen lejos de galpones y tiendas (el del 4to tapaba PTF). Muestra v18.

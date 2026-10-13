@@ -183,7 +183,7 @@ function galpon(k){
   caja(A.w+.4,.5,A.d+.4,M(new THREE.Color(A.col).multiplyScalar(.7).getHex()),0,.25,0,g);
   var techo=M(A.marca?0x2e2f6e:new THREE.Color(A.col).multiplyScalar(.78).getHex(),{ roughness:.45 }); techo.map=CHAPA;
   var tra=Mbrilla(0xd9ecff,0xfff3c4);
-  [-1,1].forEach(function(s){ var r=caja(A.w+.8,.4,A.d/2+1.2,techo,0,A.h+1.3,s*A.d/4,g); r.rotation.x=-s*.3;
+  [-1,1].forEach(function(s){ var r=caja(A.w+.8,.4,A.d/2+1.2,techo,0,A.h+1.3,s*A.d/4,g); r.rotation.x=s*.3;   /* (13/10, dueño) a dos aguas: antes quedaba en V */
     for(var t=0;t<Math.floor(A.w/6);t++){ var xt=-A.w/2+3+t*6; caja(2.2,.12,A.d/2-2,tra,xt,.26,0,r,false); } });
   caja(A.w+.9,.5,.9,techo,0,A.h+2.5,0,g);
   for(var u=0;u<3;u++) caja(2,1.1,1.6,M(0xc5ced8),-A.w/2+5+u*5,A.h+2.6,-A.d/4-1,g);
@@ -259,7 +259,7 @@ ANILLOS.forEach(function(A, ai){ var n=Math.max(96, Math.round(Math.PI*2*A.r/2.5
     var g2=new THREE.RingGeometry(A.r-1.5, A.r+1.5, sg, 1, t0, tl); g2.rotateX(-Math.PI/2); var m2=new THREE.Mesh(g2, PASTO); m2.position.set(PLAZA.x,.07,PLAZA.z); EST.add(m2);   // el camellón
     [-1,1].forEach(function(sd){ var g3=new THREE.RingGeometry(A.r+sd*(AN_HW-.9)-.25, A.r+sd*(AN_HW-.9)+.25, sg, 1, t0, tl); g3.rotateX(-Math.PI/2); var m3=new THREE.Mesh(g3, VIA_RAYA); m3.position.set(PLAZA.x,.068,PLAZA.z); EST.add(m3); });   // las rayas blancas del borde
     var cada=Math.max(1, Math.round(9/(A.r*paso))); for(var j=T[0]+2, k=0; j<=T[1]-2; j+=cada, k++){ var jj=(j+n)%n; viaAdorno(px(jj), pz(jj), k, ai>0); } });
-  var best=null, dir=Math.atan2(-(RADIALES[1].dz), RADIALES[1].dx)+.28-ai*.09; tramos.forEach(function(T){ for(var j=T[0]+6;j<=T[1]-6;j++){ var dd=Math.abs(Math.atan2(Math.sin(j*paso-dir),Math.cos(j*paso-dir))); if(!best||dd<best.d) best={ d:dd, j:(j+n)%n }; } });
+  var best=null, dir=Math.atan2(-(RADIALES[1].dz), RADIALES[1].dx)+.28-ai*.09; tramos.forEach(function(T){ for(var j=T[0]+6;j<=T[1]-6;j++){ var dd=Math.abs(Math.atan2(Math.sin(j*paso-dir),Math.cos(j*paso-dir))); var qx=PLAZA.x+A.r*Math.cos(j*paso), qz=PLAZA.z-A.r*Math.sin(j*paso), tapa=Object.keys(ALM).some(function(k){ return Math.abs(qx-ALM[k].bx)<G && Math.abs(qz-ALM[k].bz)<G; })||TIENDAS.some(function(t){ return Math.hypot(qx-t.x,qz-t.z)<45; }); if(!tapa && (!best||dd<best.d)) best={ d:dd, j:(j+n)%n };   /* el cartel lejos de los galpones y las tiendas: no tapa */ } });
   if(best) viaCartel(A.n, PLAZA.x+(A.r+AN_HW+3)*Math.cos(best.j*paso), PLAZA.z-(A.r+AN_HW+3)*Math.sin(best.j*paso)); });
 RADIALES.forEach(function(R){ var paso=2.5, n=Math.ceil(900/paso), ptx=function(i){ return PLAZA.x+(R.t0+i*paso)*R.dx; }, ptz=function(i){ return PLAZA.z+(R.t0+i*paso)*R.dz; }, rot=Math.atan2(-R.dz,R.dx);
   viaTramos(n, function(i){ return viaLibre(ptx(i),ptz(i)); }).forEach(function(T){ var L=(T[1]-T[0]+1)*paso, mx=(ptx(T[0])+ptx(T[1]))/2, mz=(ptz(T[0])+ptz(T[1]))/2;
@@ -275,16 +275,16 @@ function plazaPrincipal(cx,cz){ var a=G-RW, pie=M(0xe8dcc0); plano(a,a,cx,cz,.04
   var lad=0xb5603f, z0=cz-a/2+6; bloqueFach(cx,z0,28,10,13,lad); caja(28.4,.6,10.4,M(0xf4ede0),cx,13.3,z0);
   [-11,11].forEach(function(dx){ bloqueFach(cx+dx,z0+1.5,6.5,6.5,24,lad); caja(7,.6,7,M(0xf4ede0),cx+dx,24.3,z0+1.5); var c=new THREE.Mesh(new THREE.ConeGeometry(4.4,6,4), M(0x9aa6b3)); c.position.set(cx+dx,27.6,z0+1.5); c.rotation.y=Math.PI/4; c.castShadow=true; EST.add(c); caja(.25,2.4,.25,M(0xf2b705),cx+dx,31.6,z0+1.5); }); }
 VIA_ON=true;
-var PATIO=M(0xcfe3bf), LOTE=M(0xe8e3d3), TT=[0xc0563a,0x9a4a3a,0x6b7d8f,0xb5651d,0xa9442e]; function zonaAlta(cx,cz){ var dx=(cx-70)/230, dz=(cz+140)/150; return Math.max(0,1-Math.sqrt(dx*dx+dz*dz)); }   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
+var PATIO=M(0xcfe3bf), LOTE=M(0xe8e3d3), TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var dx=(cx-70)/230, dz=(cz+140)/150; return Math.max(0,1-Math.sqrt(dx*dx+dz*dz)); }   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
 function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)||enVia(x,z,Math.max(ww,dd)*.5)) return; var r=rnd(), de=Math.abs(Math.sin(rot))>.5;
   if(r<.04+.26*za){ edificio(x,z,ww,dd,12+Math.floor(rnd()*(8+22*za))); return; }   // un edificio suelto entre las casas
-  if(r<.17+.26*za){ edificio(x,z,ww,dd,rnd()<.55?3.8:7); return; }   // comercio de 1 o 2 pisos con su toldo, o casa de losa con tanque
+  if(r<.11+.22*za){ edificio(x,z,ww,dd,rnd()<.55?3.8:7); return; }   // comercio de 1 o 2 pisos con su toldo, o casa de losa con tanque
   casa(x,z,COLS[Math.floor(rnd()*COLS.length)],TT[Math.floor(rnd()*TT.length)],rot,rnd()<.38?2:1,(de?dd:ww)-.6,(de?ww:dd)-.6); }   // casa de 1 o 2 pisos con techo de teja
 function cuadra(cx,cz){ var a=G-RW-2, x0=cx-a/2, z0=cz-a/2, za=zonaAlta(cx,cz), n=5, lw=a/n, fd=13, ad=a-2*fd, m=Math.max(1,Math.floor(ad/11)), lz2=ad/m;
   plano(a+2,a+2,cx,cz,.04,VER); plano(a-1,a-1,cx,cz,.045,LOTE); plano(ad-1,ad-1,cx,cz,.05,PATIO);
   for(var i=0;i<n;i++){ var lx=x0+lw*(i+.5); lote(lx,z0+fd/2,lw-1.2,fd-2,Math.PI,za); lote(lx,z0+a-fd/2,lw-1.2,fd-2,0,za); }
   for(var k=0;k<m;k++){ var lz=z0+fd+lz2*(k+.5); lote(x0+fd/2,lz,fd-2,lz2-1.2,Math.PI/2,za); lote(x0+a-fd/2,lz,fd-2,lz2-1.2,-Math.PI/2,za); }
-  for(var t=0,nt=3+Math.floor(rnd()*4);t<nt;t++) arbol(cx-ad/2+3+rnd()*(ad-6), cz-ad/2+3+rnd()*(ad-6), .8+rnd()*.5); }   // los patios del fondo con árboles
+  for(var t=0,nt=7+Math.floor(rnd()*5);t<nt;t++) arbol(cx-ad/2+3+rnd()*(ad-6), cz-ad/2+3+rnd()*(ad-6), 1+rnd()*.7); }   // los patios del fondo con árboles
 function casa(x,z,col,techo,rot,pisos,w,d){ w=w||7; d=d||6; var h=pisos===2?7:4, g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); bloqueFach(0,0,w,d,h,col,g); var t=M(techo), s=d/2+.9, ta=caja(w+.4,.35,s,t,0,h+.75,-d/4,g); ta.rotation.x=-.55; var tb=caja(w+.4,.35,s,t,0,h+.75,d/4,g); tb.rotation.x=.55; }   // (13/10, dueño) a dos aguas hacia afuera: antes quedaban en V
 function parque(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,PASTO); plano(G-RW,3,cx,cz,.05,M(0xe8dcc0)); plano(3,G-RW,cx,cz,.05,M(0xe8dcc0));
   cil(4,.6,M(0xcfd8e3),cx,.3,cz,null,32); cil(3.3,.2,Mbrilla(0x7fc4ec,0x7fc4ec),cx,.65,cz,null,32); cil(.4,2.6,M(0xcfd8e3),cx,1.3,cz,null,12);
@@ -301,7 +301,7 @@ function escuela(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,VER); bloqueFach(cx-10,cz-14,
   [cx-6.5,cx+18.5].forEach(function(x){ caja(.2,3.2,.2,BLANCO,x,1.6,cz+12); caja(.1,1,1.4,BLANCO,x,3.4,cz+12); });
   for(var t=0;t<6;t++) arbol(cx-26+t*3.5,cz+26,.9); }
 function iglesia(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xe8dcc0)); var bl=0xf4ede0;
-  bloqueFach(cx,cz-8,14,22,10,bl); var t=M(0xb24a3a); var a=caja(15,.4,8.2,t,cx,11.6,cz-11.5); a.rotation.x=.6; var b=caja(15,.4,8.2,t,cx,11.6,cz-4.5); b.rotation.x=-.6;
+  bloqueFach(cx,cz-8,14,22,10,bl); var t=M(0xb24a3a); var a=caja(15,.4,8.2,t,cx,11.6,cz-11.5); a.rotation.x=-.6; var b=caja(15,.4,8.2,t,cx,11.6,cz-4.5); b.rotation.x=.6;
   bloqueFach(cx,cz+5,6,6,20,bl); var cono=new THREE.Mesh(new THREE.ConeGeometry(4.3,7,4), t); cono.position.set(cx,23.5,cz+5); cono.rotation.y=Math.PI/4; cono.castShadow=true; EST.add(cono);
   caja(.25,2.4,.25,M(0xf2b705),cx,28,cz+5); caja(1.4,.25,.25,M(0xf2b705),cx,28.4,cz+5);
   for(var t2=0;t2<14;t2++) arbol(cx-24+rnd()*48, cz+12+rnd()*14, 1); }
