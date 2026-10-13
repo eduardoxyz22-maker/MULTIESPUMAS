@@ -126,6 +126,10 @@ async function preparar(page){
     r = await page.evaluate(() => ({ cerrado:document.getElementById('pt-ov').hidden, abierto:!!window.PATIO_ABIERTO }));
     chk('«✕ Cerrar» vuelve al panel', r.cerrado && !r.abierto, r);
   } else { await page.evaluate(() => patioCerrar()); console.log('\n── 5. Con three.js: la ciudad con el mismo lienzo ──'); }
+  // 🔥 (13/10, dueño: «que Eduardo también tenga en sus diálogos: carajo, otra vez se está quemando un Fidalga»)
+  { const src=fs.readFileSync(path.resolve('patio.js'),'utf8'), m=src.match(/var FRASES=\{[\s\S]*?\n\};/), F=m?m[0]:'';
+    chk('EDUARDO dice «¡Carajo, otra vez se está quemando un Fidalga!» (paseando y en la calle) y se lo grita a Ernesto y a David',
+      (F.match(/¡Carajo, otra vez se está quemando un Fidalga!/g)||[]).length===2 && /¡ERNESTO! ¡Carajo, otra vez se está quemando un Fidalga/.test(F) && /¡DAVID, carajo, otra vez se está quemando un Fidalga!/.test(F), F.length); }
   chk('sin errores en la página', errors.length===0, errors.slice(0,3));
   await browser.close();
   if(TH){ await con3D(); }

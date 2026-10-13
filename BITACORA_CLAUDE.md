@@ -14269,3 +14269,7 @@ El dueño mandó una captura de la ciudad, sin texto. Se vieron tres cosas:
   `2026-10-13-c`, `PATIO_V='20261013i'`), patio.js (aviso en un renglón, paradas con su distancia, el Fidalga), el `.gs` 13-c,
   CLAUDE.md y las pruebas del GPS y de la ciudad. Volver atrás de la página: `528d2a0`; del servidor: ✏️ a la versión anotada Y pegar
   la 13-b (`16ac162…`, 3.721 líneas).
+- **13/10, el dueño: *«que Eduardo también tenga en sus diálogos "carajo, otra vez se está quemando un Fidalga"»***: EDUARDO (el de la
+  ciudad) lo dice paseando (`suelto`) y en la calle (`calle`), y se lo grita a Ernesto (*«¡ERNESTO! ¡Carajo, otra vez se está quemando
+  un Fidalga y vos con el celular!»*) y a David. `PATIO_V='20261013j'`; `test_patio` → 38 (lee las frases de `patio.js`). El Eduardo
+  asistente del panel (el que ven los vendedores) no cambió.
