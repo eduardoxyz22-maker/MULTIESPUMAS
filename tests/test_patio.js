@@ -153,6 +153,13 @@ async function con3D(){
   chk('Foton nuevo en un andén de PTF, Carry en Banzer', C['Foton nuevo'] && C['Foton nuevo'].alm==='ptf' && !C['Foton nuevo'].enCalle && C['Carry'] && C['Carry'].alm==='bz', [C['Foton nuevo'], C['Carry']&&C['Carry'].alm]);
   chk('cada línea por cargar tiene su pallet; lo sin stock no', C['Foton encarpado'] && C['Foton encarpado'].items.every(it=>it.st==='falta'?!it.pallet:it.pallet), C['Foton encarpado']&&C['Foton encarpado'].items);
   chk('alertas: sin camión, Moreno y sin stock', r.E && ['sin camión','Moreno','sin stock'].every(t=>r.E.alertas.some(a=>a.indexOf(t)>=0)), r.E&&r.E.alertas);
+  // (13/10, captura del dueño de las 12:36) tocar «sin camión» avisaba con un recuadro oscuro de arriba hasta abajo: la `.toast` de la página
+  // (fija, `bottom:24px`) se sumaba a la del patio (`top`). Ahora es `pt-toast`, un renglón
+  r = await page.evaluate(async () => { var b=[].filter.call(document.querySelectorAll('#pt-ov .al'), function(x){ return /sin camión/i.test(x.textContent); })[0];
+    if(!b) return { hay:false }; b.click(); await new Promise(function(res){ setTimeout(res, 300); });
+    var t=document.querySelector('#pt-ov .pt-toast'), q=t && t.getBoundingClientRect();
+    return { hay:true, t:!!t, viejo:!!document.querySelector('#pt-ov .toast'), alto:q ? Math.round(q.height) : 0, ancho:q ? Math.round(q.width) : 0, txt:t ? t.textContent : '' }; });
+  chk('el aviso de «sin camión» es un renglón arriba (no un recuadro de arriba hasta abajo)', r.hay && r.t && !r.viejo && r.alto>0 && r.alto<90 && /Sin vehículo/.test(r.txt), r);
   await page.screenshot({ path:path.join(process.env.PATIO_FOTOS||'/tmp','patio_1.png'), timeout:120000 }).catch(e=>console.log('(sin foto: '+e.message.split('\n')[0]+')'));
   // tildar desde la ficha
   await page.evaluate(() => document.querySelector('#pt-ir-cam button[data-cam="Foton nuevo"]').click()); await page.waitForTimeout(800);

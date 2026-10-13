@@ -15902,9 +15902,25 @@ function gpsParadas(veh){
       return { t0:aMs(q[0]), t1:aMs(q[1]), lat:Number(q[2]), lng:Number(q[3]), ids:ids, peds:peds, ped:peds[0]||null, pm:pm, abierta:!!q[5], srv:true };
     });
   } else out=gpsParadasAparato(veh);
+  /* 🚪 (13/10, captura del dueño de las 12:36: el 5655-KSC «se paró 6 min» y «17 min» sin pedido cerca y a las 12:33 «llegó a PTF»)
+     quieto a menos de GPS_PUERTA_M de PTF, Banzer o Moreno y sin pedido de hoy cerca = esperando en la puerta del depósito (o en la
+     calle de atrás), no una parada de reparto. No se muestra ni cuenta. Con pedido cerca, sí: puede ser un cliente vecino. */
+  out=out.filter(function(s){ s.base=gpsBaseCerca(s.lat, s.lng); return (s.peds && s.peds.length) || !s.base || s.base.m>=GPS_PUERTA_M; });
   GPS_PAR_MEMO.v[veh]=out;
   return out;
 }
+/* La base más cerca de un punto: PTF y Banzer (ALM_UBIC) o Moreno (GPS_MORENO), con sus metros. GPS_PUERTA_M = GPS_SALIDA_M del .gs:
+   hasta ahí el camión «todavía no salió» o «ya está llegando». */
+var GPS_PUERTA_M=700;
+function gpsBaseCerca(lat, lng){
+  var best=null, pt={ lat:Number(lat), lng:Number(lng) };
+  if(!isFinite(pt.lat) || !isFinite(pt.lng)) return null;
+  (typeof ALM_UBIC!=='undefined' ? ALM_UBIC : []).concat([{ id:'moreno', nombre:'Moreno', lat:GPS_MORENO.lat, lng:GPS_MORENO.lng }]).forEach(function(d){
+    var m=gpsMetros(pt, { lat:Number(d.lat), lng:Number(d.lng) });
+    if(!best || m<best.m) best={ id:d.id, n:d.nombre, m:Math.round(m) }; });
+  return best;
+}
+function gpsKmTxt(m){ return m<1000 ? (m+' m') : ((m/1000).toFixed(1).replace('.',',')+' km'); }
 function gpsParadasAparato(veh){
   var L=gpsHistDe(veh), out=[], cur=null;
   var cerrar=function(c, fin){ if(fin) c.t1=fin; if(c.t1-c.t0<GPS_PARADA_MIN*60000) return;
@@ -15923,7 +15939,7 @@ function gpsParadasAparato(veh){
 }
 function gpsDurTxt(ms){ var m=Math.max(1, Math.round(ms/60000)); return m<60 ? (m+' min') : (Math.floor(m/60)+' h '+(m%60)+' min'); }
 function gpsQuienTxt(s){
-  if(!s.peds || !s.peds.length) return ' (sin pedido de hoy cerca)';
+  if(!s.peds || !s.peds.length) return ' (sin pedido de hoy cerca'+(s.base && s.base.m<2000 ? ' · a '+gpsKmTxt(s.base.m)+' de '+s.base.n : '')+')';
   return ' cerca de '+s.peds.map(function(p){ return '<b>'+esc(p.cliente||'—')+'</b>'+(p.oc?' · '+esc(ocEtiq(p.oc)||p.oc):''); }).join(' y ')+(s.pm!=null?' ('+s.pm+' m)':'');
 }
 /* «📡 Lo que dijo el GPS» de hoy, lo más nuevo primero: salidas, llegadas y paradas. */
@@ -15940,7 +15956,9 @@ function gpsEventosHoy(){
           if(!e[3]) primera=false;
           ev.push({ h:e[0], k:veh, ic:e[3]?'↩️':'🛣️', x:'<b>'+esc(pl)+'</b> salió de '+gpsLugarTxt(e[2])+por });
         } else if(e[1]==='lle'){
-          ev.push({ h:e[0], k:veh, ic:e[2]==='moreno'?'📥':'🏁', x:'<b>'+esc(pl)+'</b> llegó a '+gpsLugarTxt(e[2])+(e[2]==='moreno'?' (a recoger)':'')+(e[3]?(' · venía de '+gpsLugarTxt(e[3])):'') });
+          /* (13/10) «llegó a Banzer · venía de Banzer» sonaba raro (captura del dueño): salió y volvió al mismo lugar = «volvió a» */
+          var mismo=!!e[3] && e[3]===e[2];
+          ev.push({ h:e[0], k:veh, ic:e[2]==='moreno'?'📥':'🏁', x:'<b>'+esc(pl)+'</b> '+(mismo?'volvió a ':'llegó a ')+gpsLugarTxt(e[2])+(e[2]==='moreno' && !mismo?' (a recoger)':'')+(e[3] && !mismo?(' · venía de '+gpsLugarTxt(e[3])):'') });
         }
       });
     } else {
@@ -16189,7 +16207,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013g';
+var PATIO_V='20261013h';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
