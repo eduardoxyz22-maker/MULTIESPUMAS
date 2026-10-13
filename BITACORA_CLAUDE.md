@@ -14348,3 +14348,6 @@ reprogramar lo que no se entregó»*.
 - El bot de WhatsApp le avisa el día nuevo al cliente, como en cualquier cambio de día (no se tocó nada del bot).
 - `tests/test_cierre_reprogramar.js` (17; contra `27cce45` no existe el botón). Siguen verdes test_cierre_entregas (26), test_gps_pagina
   (58), test_rev_corte_codex (45), test_rev_entregas (40), test_conflicto (45), test_rev30_dias, test_rev3_atc_mis, test_rev4_atc_flete.
+- **PUBLICADO 13/10 17:41 de Bolivia, `60a98e8`** (dueño: «SI PUBLICA»), Pages OK: pedidos.html (cierre con «📅 No salió · reprogramar»),
+  CLAUDE.md, `tests/test_cierre_reprogramar.js` y el diagnóstico con el GPS del día (§4ku). Se publicó con la batería a medias (34 de ~183
+  en verde) porque logística cierra a esa hora; las suites del cierre y del reprogramar ya estaban verdes. Volver atrás de la página: `27cce45`.
