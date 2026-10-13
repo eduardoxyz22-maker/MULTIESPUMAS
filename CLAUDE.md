@@ -636,7 +636,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   mapa de entregas (Hoy) dibuja `mapaGpsPintar` y el recorrido no pone su 🚚 estimado si hay GPS; la ciudad (`cams[].gps`,
   `manejar` va por las calles hasta el punto del GPS; «volvió» → al andén; `api.gps` lo actualiza SIN rearmar la escena).
 - Cuota: la cuenta es gmail (90 min/día de disparadores): gpsRepaso ≈ 1-2 s × ~900 vueltas. Si se pasa, mirar Ejecuciones.
-- `tests/test_gps.js` (46, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (20). Bitácora §4ko.
+- **La ciudad sigue al GPS** (13/10, dueño: *«los 4 camiones salen en el mismo lugar»*): lejos → en la calle en su punto; en PTF o Banzer →
+  en ese depósito (`c.gpsCalle`/`c.gpsDep`). ⚠️ `geoAEscena` está ANCLADO (afín por cuadrados mínimos sobre PTF, Banzer, Moreno, la plaza y
+  las tiendas + ajuste local): un ancla nueva va en `geoArmar`. Recorrido del día y paradas: en el aparato (`gpsHistAnotar`, `me_gps_hist`,
+  `gpsParadas`, `gpsEventosHoy`); pestañas «🛰️ Recorrido GPS» y «📡 Lo que dijo el GPS»; «Por cargar» incluye lo sin camión.
+- `tests/test_gps.js` (46, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (30). Bitácora §4ko.
+- **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
 La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).

@@ -31,7 +31,33 @@ Object.keys(ALM).forEach(function(k){ var A=ALM[k]; A.x=A.bx; A.fz=A.bz+10; A.z=
    (a 300-800 m una de otra) se separan a mano como pidió el dueño: Central a una cuadra de Mia Plaza, Buenos Aires dos cuadras a la izquierda
    de Charcas, Carmelo abajo a la derecha. Todas con el frente hacia abajo (hacia la cámara) menos Central. */
 var PTF_GEO={ lat:-17.7489091, lng:-63.1429133 }, KM=36;
-function geoAEscena(lat,lng){ var e=(lng-PTF_GEO.lng)*106.0*KM, n=(lat-PTF_GEO.lat)*110.6*KM; return { x:35+e*.755-n*.656, z:35-e*.656-n*.755 }; }
+/* (13/10, dueño, con el GPS de verdad al lado: «los 4 camiones… no coinciden al menos un poco») la ciudad está armada A MANO: PTF, Banzer,
+   Moreno, la plaza 24 de Septiembre y las tiendas están donde los ubicó el dueño, no a escala. Un punto real (un pin, el GPS) se ubica
+   ANCLADO en esos lugares: la cuenta derecha (afín, por cuadrados mínimos, los depósitos y la plaza pesan más) que mejor los acierta, más un
+   ajuste local que lleva lo que cae a pocas cuadras de un ancla a donde está esa ancla en la ciudad. Lejos de todo, la cuenta derecha sola. */
+var GEO_AF=null, GEO_ANCLAS=null, GEO_RADIO_KM=.45;
+function geoKm(lat,lng){ return [(lng-PTF_GEO.lng)*106.0, (lat-PTF_GEO.lat)*110.6]; }
+function geoArmar(){
+  var A=[[-17.7489091,-63.1429133,35,35,6], [-17.7202386,-63.1631265,-105,-35,6], [-17.7623355,-63.0675466,315,-105,6], [-17.78368,-63.18215,-35,315,5]];   // PTF, Banzer, Moreno, la plaza
+  var T=(typeof TIENDAS!=='undefined' && TIENDAS) || null;
+  if(T) T.forEach(function(t){ if(t.fijo && isFinite(t.lat)) A.push([t.lat, t.lng, t.fijo.x, t.fijo.fila, 1]); });
+  var M=[[0,0,0],[0,0,0],[0,0,0]], bx=[0,0,0], bz=[0,0,0];
+  A.forEach(function(a){ var k=geoKm(a[0],a[1]), v=[k[0],k[1],1], w=a[4]; for(var i=0;i<3;i++){ for(var j=0;j<3;j++) M[i][j]+=w*v[i]*v[j]; bx[i]+=w*v[i]*a[2]; bz[i]+=w*v[i]*a[3]; } });
+  var resolver=function(b){ var m=M.map(function(r,i){ return r.concat([b[i]]); });
+    for(var i=0;i<3;i++){ var p=i; for(var k=i+1;k<3;k++) if(Math.abs(m[k][i])>Math.abs(m[p][i])) p=k; var t=m[i]; m[i]=m[p]; m[p]=t;
+      for(var k2=i+1;k2<3;k2++){ var f=m[k2][i]/m[i][i]; for(var j=i;j<4;j++) m[k2][j]-=f*m[i][j]; } }
+    var x=[0,0,0]; for(var i2=2;i2>=0;i2--){ var s=m[i2][3]; for(var j2=i2+1;j2<3;j2++) s-=m[i2][j2]*x[j2]; x[i2]=s/m[i2][i2]; } return x; };
+  var af={ cx:resolver(bx), cz:resolver(bz) };
+  var anc=A.map(function(a){ var k=geoKm(a[0],a[1]); return { k:k, rx:a[2]-(af.cx[0]*k[0]+af.cx[1]*k[1]+af.cx[2]), rz:a[3]-(af.cz[0]*k[0]+af.cz[1]*k[1]+af.cz[2]) }; });
+  if(T){ GEO_AF=af; GEO_ANCLAS=anc; }   // sin las tiendas todavía (no pasa: están todas fijas) no se guarda
+  return { af:af, anc:anc };
+}
+function geoAEscena(lat,lng){
+  var G0=GEO_AF ? { af:GEO_AF, anc:GEO_ANCLAS } : geoArmar(), k=geoKm(lat,lng), af=G0.af;
+  var x=af.cx[0]*k[0]+af.cx[1]*k[1]+af.cx[2], z=af.cz[0]*k[0]+af.cz[1]*k[1]+af.cz[2], sw=0, cx=0, cz=0;
+  G0.anc.forEach(function(a){ var dx=k[0]-a.k[0], dy=k[1]-a.k[1], w=Math.exp(-(dx*dx+dy*dy)/(GEO_RADIO_KM*GEO_RADIO_KM)); sw+=w; cx+=w*a.rx; cz+=w*a.rz; });
+  return { x:x+cx/(sw+.05), z:z+cz/(sw+.05) };
+}
 var TIENDAS=[ { n:'Mia Plaza', marca:'heaven', fijo:{ x:-24, fila:210, lado:-1 }, lat:-17.7702734, lng:-63.1697256 }, { n:'Buenos Aires', marca:'heaven', fijo:{ x:-119, fila:280, lado:-1 }, lat:-17.7807965, lng:-63.1836189 },
   { n:'Central', marca:'heaven', fijo:{ x:116, fila:210, lado:1 }, lat:-17.7727299, lng:-63.1672416 }, { n:'Mutualista', marca:'suena', fijo:{ x:-24, fila:140, lado:-1 }, lat:-17.765811, lng:-63.162066 },
   { n:'Charcas', marca:'suena', fijo:{ x:21, fila:280, lado:-1 }, lat:-17.7801473, lng:-63.1762546 }, { n:'Carmelo', marca:'suena', fijo:{ x:186, fila:280, lado:-1 }, lat:-17.7919108, lng:-63.1538966 } ];
@@ -62,16 +88,32 @@ function ptDePedido(p){
 /* 🛰️ (§4ko) dónde dice el GPS que está el camión, en la escena (la misma cuenta que el pin de un pedido): solo hoy */
 function gpsEscenaDe(veh){ var x=(typeof camionGps==='function') ? camionGps(veh) : null; if(!x) return null;
   var q=geoAEscena(Number(x.la), Number(x.lo));
-  return { x:Math.max(X0+8, Math.min(X1-8, q.x)), z:Math.round(Math.max(Z0, Math.min(Z1, q.z))/G)*G, v:x.v, m:x.m, f:x.f, vu:x.vu||'',
+  return { x:Math.max(X0+8, Math.min(X1-8, q.x)), z:Math.round(Math.max(Z0, Math.min(Z1, q.z))/G)*G, v:x.v, m:x.m, f:x.f, vu:x.vu||'', depId:(x.dep && x.dep.id) || '',
            hace:(typeof gpsHace==='function' ? gpsHace(x) : ''), donde:(typeof gpsDondeTxt==='function' ? gpsDondeTxt(x) : '') }; }
+/* 🛰️ (13/10, dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») el recorrido del día de este aparato (gpsHistDe,
+   pedidos.html) y sus paradas, en la escena. Sin pegar a las calles: es el rastro de verdad. Hasta 400 puntos. */
+function gpsAEscena(la, lo){ var q=geoAEscena(Number(la), Number(lo)); return { x:Math.max(X0, Math.min(X1, q.x)), z:Math.max(Z0, Math.min(Z1, q.z)) }; }
+function gpsRutaDe(veh){ if(typeof gpsHistDe!=='function') return [];
+  var L=gpsHistDe(veh), paso=Math.max(1, Math.ceil(L.length/400)), out=[];
+  for(var i=0;i<L.length;i+=paso){ var q=gpsAEscena(L[i][1], L[i][2]); out.push({ x:q.x, z:q.z, t:L[i][0], v:L[i][3] }); }
+  if(L.length && (L.length-1)%paso){ var u=L[L.length-1], q2=gpsAEscena(u[1], u[2]); out.push({ x:q2.x, z:q2.z, t:u[0], v:u[3] }); }
+  return out; }
+function gpsParadasDe(veh){ if(typeof gpsParadas!=='function') return [];
+  return gpsParadas(veh).map(function(s){ var q=gpsAEscena(s.lat, s.lng);
+    return { x:q.x, z:q.z, h0:gpsHoraTxt(s.t0), dur:gpsDurTxt(s.t1-s.t0), abierta:!!s.abierta, cli:s.ped?(s.ped.cliente||'—'):'', oc:s.ped?(s.ped.oc||''):'', m:s.pm }; }); }
 function diaDe(f, n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return (typeof isoLocal==='function') ? isoLocal(d) : d.toISOString().slice(0,10); }
 function delDia(p){ return !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p); }
 function patioDatos(){
   var D=null; try{ D=cargaVivaDatos(); }catch(e){ console.error(e); }
   if(!D) return null;
-  var fecha=D.fecha, hoy=todayStr(), cams=[], sin={ stops:[] }, i=0;
+  var fecha=D.fecha, hoy=todayStr(), cams=[], sin={ stops:[], lineas:[] }, i=0;
+  var linea=function(l){
+      var fab=l.lugar==='fabrica';
+      var st=l.on ? 'camion' : (fab && l.no>=l.u) ? 'falta' : (fab && l.rec>0) ? 'moreno' : 'espera';
+      return { key:l.key, prod:l.kk, u:l.u, lugar:l.lugar, st:st, alm:l.alm||'', no:l.no||0, rec:l.rec||0 }; };
   D.cams.forEach(function(c){
-    if(c.sin){ sin.stops=(c.stops||[]).slice(); return; }
+    /* (13/10, dueño: «por cargar sale vacío») lo de los pedidos sin camión también se carga: va con sus líneas */
+    if(c.sin){ sin.stops=(c.stops||[]).slice(); sin.lineas=(c.lineas||[]).map(linea); return; }
     var lin=c.lineas.map(function(l){
       var fab=l.lugar==='fabrica';
       var st=l.on ? 'camion' : (fab && l.no>=l.u) ? 'falta' : (fab && l.rec>0) ? 'moreno' : 'espera';
@@ -87,7 +129,7 @@ function patioDatos(){
     cams.push({ k:c.k, p:(typeof VEHICULO_PLACA!=='undefined' && VEHICULO_PLACA[c.k]) || c.k, col:COL_CAM[i++%COL_CAM.length],
       alm:soloBz?'bz':'ptf', lineas:lin, chofer:(c.choferes||[]).join(' / '), conPedidos:(c.stops||[]).length>0,
       stops:stops, salio:camionSalio(fecha, c.k), salioMano:!!(typeof salioClave==='function' && salioClave(fecha, c.k)),
-      gps:(fecha===hoy ? gpsEscenaDe(c.k) : null) });
+      gps:(fecha===hoy ? gpsEscenaDe(c.k) : null), gpsRuta:(fecha===hoy ? gpsRutaDe(c.k) : []), gpsParadas:(fecha===hoy ? gpsParadasDe(c.k) : []) });
   });
   var list=STATE.filter(function(p){ return delDia(p) && p.fecha===fecha; });
   var camDe=function(L){ var v=L.map(function(p){ return vehiculoDe(p)||''; }).filter(Boolean); return v.length ? ((typeof VEHICULO_PLACA!=='undefined' && VEHICULO_PLACA[v[0]])||v[0]) : ''; };
@@ -110,14 +152,21 @@ function patioDatos(){
   return { fecha:fecha, hoy:fecha===hoy, cams:cams, sin:sin, im:D.im||{ u:0, alm:{} }, pedidos:D.pedidos,
     dia:{ eduardo:edu.length, eduardoCam:camDe(edu), roho:roho.length, rohoCam:camDe(roho), multi:multi.length, multiCam:camDe(multi),
           sinCamion:sin.stops.length, sinMarcar:sinMarcar, faltan:faltan.length, faltanOc:faltan.slice(0,3).map(function(p){ return p.oc||p.cliente; }),
-          tarde:tarde, tardeSin:tardeSin } };
+          tarde:tarde, tardeSin:tardeSin,
+          gpsLog:(fecha===hoy && typeof gpsEventosHoy==='function') ? gpsEventosHoy() : [],
+          gpsVivo:(typeof gpsVigente==='function' && gpsVigente()), gpsDesde:gpsDesdeTxt() } };
 }
 window.patioDatos=patioDatos;
 window.patioTiendas=function(){ return TIENDAS.map(function(t){ return { n:t.n, marca:t.marca, pt:{ x:t.pt.x, z:t.pt.z } }; }); };
 function firmaDe(D){ return D ? JSON.stringify([D.fecha, D.cams.map(function(c){ return [c.k, c.alm, c.chofer, c.salio, c.lineas.map(function(l){ return l.key+'='+l.u+l.st; }),
   c.stops.map(function(s){ return s.id+(s.ok?'✓':'')+(s.pt?s.pt.x+','+s.pt.z:''); })]; }), D.sin.stops.length, D.im.u, diaFirma(D.dia)]) : ''; }
 /* la hora de «va tarde» cambia cada minuto: no cuenta como cambio de la escena (la dice David en el momento, `horaYa`) */
-function diaFirma(d){ var t=d && d.tarde; return t ? Object.assign({}, d, { tarde:{ k:t.k, n:t.n, turno:t.turno, cams:t.cams } }) : d; }
+function diaFirma(d){ if(!d) return d; var t=d.tarde, o=Object.assign({}, d, { gpsLog:0, gpsVivo:0, gpsDesde:0 });   // lo del GPS cambia cada minuto: va por api.gps
+  if(t) o.tarde={ k:t.k, n:t.n, turno:t.turno, cams:t.cams }; return o; }
+/* desde qué hora tiene recorrido este aparato (el primer punto de hoy de cualquier camión) */
+function gpsDesdeTxt(){ if(typeof gpsHistCargar!=='function') return ''; var H=gpsHistCargar(), m=0;
+  Object.keys(H.u||{}).forEach(function(p){ var L=H.u[p]; if(L && L.length && (!m || L[0][0]<m)) m=L[0][0]; });
+  return m ? gpsHoraTxt(m) : ''; }
 var CSS="#pt-ov{\n  --fondo:#e9f0f7; --papel:#ffffff; --tinta:#14243a; --suave:#5d7086; --linea:#dbe4ee;\n  --azul:#2f6fd6; --teal:#00a59e; --morado:#7b3fb0; --ambar:#c26a00; --verde:#15803d; --rojo:#c0392b; --calabaza:#e8731a;\n  --sombra:0 8px 28px rgba(20,36,58,.13);\n  --f-tit:'Archivo','Arial Narrow',system-ui,sans-serif; --f-txt:'Nunito Sans',system-ui,-apple-system,sans-serif;\n  color-scheme:light;\n}\n#pt-ov{ background:var(--fondo); color:var(--tinta); font-family:var(--f-txt); transition:background .6s; }\n#pt-ov.noche{ --fondo:#0f1a2c; }\n#pt-ov .pt-app{ position:relative; height:100%; min-height:640px; overflow:hidden; }\n#pt-ov #pt-esc{ position:absolute; inset:0; overflow:hidden; }\n#pt-ov #pt-esc canvas{ display:block; width:100%; height:100%; touch-action:none; }\n#pt-ov .capa{ position:absolute; pointer-events:none; }\n#pt-ov .capa > *{ pointer-events:auto; }\n#pt-ov button{ font:inherit; }\n#pt-ov button:focus-visible{ outline:3px solid var(--azul); outline-offset:2px; }\n#pt-ov .barra{ top:12px; left:16px; right:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }\n#pt-ov .marca{ display:flex; align-items:center; gap:10px; background:var(--papel); border-radius:12px; padding:8px 14px; box-shadow:var(--sombra); }\n#pt-ov .marca b{ font-family:var(--f-tit); font-size:1.05rem; letter-spacing:.02em; }\n#pt-ov .marca small{ color:var(--suave); display:block; font-size:.74rem; }\n#pt-ov .logo{ width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--teal),var(--azul)); display:grid; place-items:center; color:#fff; font-weight:800; font-family:var(--f-tit); }\n#pt-ov .vistas{ display:flex; gap:6px; flex-wrap:wrap; background:var(--papel); border-radius:14px; padding:5px; box-shadow:var(--sombra); }\n#pt-ov .vistas button{ border:0; background:#eef3f8; color:var(--suave); font-weight:700; font-size:.8rem; padding:6px 11px; border-radius:10px; cursor:pointer; display:flex; gap:6px; align-items:center; min-height:34px; }\n#pt-ov .vistas button b{ font-family:var(--f-tit); width:18px; height:18px; border-radius:6px; display:grid; place-items:center; background:#d7e1ec; color:var(--tinta); font-size:.7rem; }\n#pt-ov .vistas button.on{ background:var(--tinta); color:#fff; }\n#pt-ov .vistas button.on b{ background:var(--teal); color:#fff; }\n#pt-ov .vivo{ margin-left:auto; background:var(--papel); border-radius:999px; padding:7px 14px; box-shadow:var(--sombra); font-weight:700; font-size:.85rem; color:var(--verde); display:flex; align-items:center; gap:8px; font-variant-numeric:tabular-nums; }\n#pt-ov .vivo i{ width:8px; height:8px; border-radius:50%; background:var(--verde); box-shadow:0 0 0 4px rgba(21,128,61,.18); }\n#pt-ov .vivo small{ color:var(--suave); font-weight:600; font-size:.72rem; }\n#pt-ov .kpis{ top:70px; left:16px; display:flex; gap:10px; flex-wrap:wrap; max-width:calc(100% - 360px); }\n#pt-ov .kpi{ background:var(--papel); border-radius:12px; padding:9px 13px; box-shadow:var(--sombra); display:flex; gap:10px; align-items:center; min-width:138px; }\n#pt-ov .kpi .ic{ width:32px; height:32px; border-radius:10px; display:grid; place-items:center; font-size:1rem; background:#eaf1fc; }\n#pt-ov .kpi small{ color:var(--suave); font-size:.72rem; display:block; }\n#pt-ov .kpi b{ font-family:var(--f-tit); font-size:1.3rem; font-variant-numeric:tabular-nums; }\n#pt-ov .kpi.rojo .ic{ background:#fdecea; }\n#pt-ov .kpi.rojo b{ color:var(--rojo); }\n#pt-ov .lado{ top:70px; right:16px; width:min(320px, calc(100% - 32px)); max-height:calc(100% - 300px); overflow:auto; display:flex; flex-direction:column; gap:10px; }\n#pt-ov .ficha{ background:var(--papel); border-radius:14px; box-shadow:var(--sombra); padding:14px; display:flex; flex-direction:column; gap:10px; }\n#pt-ov .ficha .cab{ display:flex; gap:10px; align-items:center; }\n#pt-ov .ficha .cab .ic{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-size:1.3rem; background:#eaf1fc; flex:none; }\n#pt-ov .ficha .cab small{ color:var(--suave); font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; display:block; }\n#pt-ov .ficha .cab b{ font-family:var(--f-tit); font-size:1.08rem; }\n#pt-ov .placa{ font-family:var(--f-tit); font-size:.72rem; background:#fff7d6; border:1.5px solid #1d2b3a; border-radius:5px; padding:1px 6px; letter-spacing:.05em; margin-left:6px; vertical-align:2px; }\n#pt-ov .chip{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:3px 10px; font-size:.76rem; font-weight:700; background:#e7f6ee; color:var(--verde); width:fit-content; }\n#pt-ov .chip.am{ background:#fff4e2; color:var(--ambar); }\n#pt-ov .chip.az{ background:#e9f0fd; color:var(--azul); }\n#pt-ov .chip.mo{ background:#f2eafa; color:var(--morado); }\n#pt-ov .chip.ro{ background:#fdecea; color:var(--rojo); }\n#pt-ov .barrita{ height:8px; border-radius:999px; background:#edf2f7; overflow:hidden; }\n#pt-ov .barrita i{ display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--azul)); border-radius:999px; transition:width .6s; }\n#pt-ov .filas{ display:flex; flex-direction:column; gap:6px; font-size:.84rem; }\n#pt-ov .filas div{ display:flex; justify-content:space-between; gap:10px; }\n#pt-ov .filas span{ color:var(--suave); }\n#pt-ov .filas b{ text-align:right; }\n#pt-ov .prods{ display:flex; flex-direction:column; gap:5px; font-size:.82rem; border-top:1px dashed var(--linea); padding-top:8px; }\n#pt-ov .prods label{ display:flex; gap:8px; align-items:center; }\n#pt-ov .prods input{ width:18px; height:18px; accent-color:var(--azul); }\n#pt-ov .paradas{ display:flex; flex-direction:column; gap:6px; font-size:.82rem; border-top:1px dashed var(--linea); padding-top:8px; }\n#pt-ov .paradas div{ display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:6px; align-items:start; }\n#pt-ov .paradas small{ color:var(--suave); display:block; }\n#pt-ov .boton{ border:0; border-radius:10px; padding:10px 12px; font-weight:800; background:var(--azul); color:#fff; cursor:pointer; min-height:44px; }\n#pt-ov .boton:disabled{ background:#c7d3e2; cursor:default; }\n#pt-ov .nota-gps{ font-size:.76rem; color:var(--suave); background:#f3f7fb; border-radius:8px; padding:7px 9px; }\n#pt-ov .alertas h4{ margin:0; font-family:var(--f-tit); font-size:.92rem; color:var(--rojo); display:flex; gap:6px; align-items:center; }\n#pt-ov .al{ display:grid; grid-template-columns:28px minmax(0,1fr); gap:8px; align-items:start; text-align:left; border:0; background:#fff6f5; border-radius:10px; padding:8px 10px; cursor:pointer; color:var(--tinta); }\n#pt-ov .al:hover{ background:#fdecea; }\n#pt-ov .al .ic{ font-size:1.1rem; }\n#pt-ov .al b{ font-size:.84rem; display:block; }\n#pt-ov .al small{ color:var(--suave); font-size:.76rem; }\n#pt-ov .abajo{ left:16px; right:16px; bottom:14px; }\n#pt-ov .pie{ background:var(--papel); border-radius:14px; box-shadow:var(--sombra); padding:10px 14px 14px; max-width:980px; }\n#pt-ov .tabs{ display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--linea); margin-bottom:10px; }\n#pt-ov .tabs button{ border:0; background:none; font-weight:700; font-size:.84rem; color:var(--suave); padding:8px 10px; border-bottom:3px solid transparent; cursor:pointer; }\n#pt-ov .tabs button.on{ color:var(--tinta); border-bottom-color:var(--azul); }\n#pt-ov .tabs button[hidden]{ display:none; }\n#pt-ov .tabs button em{ font-style:normal; background:#e9f0fd; color:var(--azul); border-radius:999px; padding:0 7px; font-size:.72rem; margin-left:4px; }\n#pt-ov .pasos{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:relative; }\n#pt-ov .pasos::before{ content:\"\"; position:absolute; left:10%; right:10%; top:13px; height:3px; background:#e3eaf3; }\n#pt-ov .pasos .lleno{ position:absolute; left:10%; top:13px; height:3px; background:var(--azul); transition:width .6s; }\n#pt-ov .paso{ text-align:center; position:relative; font-size:.74rem; color:var(--suave); }\n#pt-ov .paso i{ width:28px; height:28px; border-radius:50%; margin:0 auto 4px; display:grid; place-items:center; background:#e3eaf3; color:#fff; font-style:normal; font-size:.8rem; position:relative; z-index:1; }\n#pt-ov .paso.ok i{ background:var(--azul); }\n#pt-ov .paso.ya i{ background:var(--papel); border:3px solid var(--azul); color:var(--azul); }\n#pt-ov .paso b{ display:block; color:var(--tinta); font-size:.76rem; }\n#pt-ov .rutas{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }\n#pt-ov .ruta{ border:1px solid var(--linea); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; cursor:pointer; }\n#pt-ov .ruta:hover{ border-color:var(--azul); }\n#pt-ov .ruta .t{ display:flex; justify-content:space-between; gap:8px; align-items:center; font-size:.84rem; }\n#pt-ov .ruta .t b{ font-family:var(--f-tit); }\n#pt-ov .linea{ position:relative; height:26px; }\n#pt-ov .linea::before{ content:\"\"; position:absolute; left:6px; right:6px; top:12px; height:3px; background:#e3eaf3; border-radius:3px; }\n#pt-ov .linea .hecho{ position:absolute; left:6px; top:12px; height:3px; background:var(--teal); border-radius:3px; transition:width 1s; }\n#pt-ov .linea .pt{ position:absolute; top:7px; width:13px; height:13px; border-radius:50%; background:var(--papel); border:3px solid #c7d3e2; transform:translateX(-50%); }\n#pt-ov .linea .pt.ok{ border-color:var(--teal); background:var(--teal); }\n#pt-ov .linea .pt.base{ border-color:var(--tinta); border-radius:3px; }\n#pt-ov .linea .cam{ position:absolute; top:-2px; font-size:1.05rem; transform:translateX(-50%) scaleX(-1); transition:left 1s; }\n#pt-ov .ruta .p{ font-size:.78rem; color:var(--suave); }\n#pt-ov .ruta .p b{ color:var(--tinta); }\n#pt-ov .vacio{ color:var(--suave); font-size:.84rem; padding:6px 0; }\n#pt-ov .log{ display:flex; flex-direction:column; gap:4px; max-height:150px; overflow:auto; font-size:.8rem; }\n#pt-ov .log div{ display:grid; grid-template-columns:48px minmax(0,1fr); gap:8px; padding:4px 0; border-top:1px solid var(--linea); }\n#pt-ov .log div:first-child{ border-top:0; }\n#pt-ov .log time{ font-variant-numeric:tabular-nums; color:var(--suave); font-weight:700; }\n#pt-ov .log .nuevo{ animation:pt-brilla 1.6s; }\n@keyframes pt-brilla{ from{ background:#fff4c2; } to{ background:transparent; } }\n#pt-ov .and{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:6px 14px; }\n#pt-ov .and .a{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:4px 10px; align-items:center; font-size:.8rem; padding:6px 0; border-top:1px solid var(--linea); cursor:pointer; }\n#pt-ov .and .a small{ color:var(--suave); display:block; }\n#pt-ov .and .a .dot{ width:10px; height:10px; border-radius:3px; }\n#pt-ov .etq{ position:absolute; transform:translate(-50%,-100%); pointer-events:none; font-family:var(--f-tit); font-weight:700; white-space:nowrap; }\n#pt-ov .etq.galpon{ background:var(--papel); border-radius:10px; padding:5px 10px; box-shadow:var(--sombra); font-size:.82rem; display:flex; gap:6px; align-items:center; }\n#pt-ov .etq.galpon small{ font-family:var(--f-txt); color:var(--suave); font-weight:600; }\n#pt-ov .etq.mini{ background:var(--azul); color:#fff; border-radius:8px; padding:2px 7px; font-size:.7rem; }\n#pt-ov .etq.mini.mo{ background:var(--morado); }\n#pt-ov .etq.mini.calle{ background:var(--teal); }\n#pt-ov .etq.alerta{ background:var(--rojo); color:#fff; border-radius:9px; padding:4px 9px; font-size:.74rem; box-shadow:0 6px 16px rgba(192,57,43,.35); animation:pt-late 1.6s ease-in-out infinite; }\n#pt-ov .etq.gps{ background:var(--tinta); color:#fff; border-radius:8px; padding:3px 8px; font-size:.7rem; }\n@keyframes pt-late{ 50%{ transform:translate(-50%,-112%); } }\n#pt-ov .toast{ position:absolute; left:50%; top:118px; transform:translateX(-50%); background:var(--tinta); color:#fff; border-radius:12px; padding:9px 14px; font-weight:700; font-size:.84rem; box-shadow:var(--sombra); max-width:min(90%,520px); text-align:center; z-index:5; transition:opacity .4s; }\n#pt-ov .ir{ top:140px; left:16px; display:flex; flex-direction:column; gap:6px; }\n#pt-ov .ir button{ border:0; background:var(--papel); box-shadow:var(--sombra); border-radius:10px; padding:7px 11px; font-weight:700; font-size:.8rem; color:var(--tinta); cursor:pointer; text-align:left; min-height:36px; }\n#pt-ov .ir button.on{ background:var(--azul); color:#fff; }\n#pt-ov .etq.tag{ background:#fff; color:var(--tinta); border:1.5px solid var(--teal); border-radius:7px; padding:1px 6px; font-size:.64rem; font-family:var(--f-txt); }\n#pt-ov .etq.tag.sig{ background:var(--teal); color:#fff; }\n#pt-ov .etq.pin{ background:var(--papel); color:var(--tinta); border-radius:8px; padding:2px 8px; font-size:.7rem; box-shadow:var(--sombra); }\n#pt-ov .etq.pin.ok{ color:var(--verde); }\n#pt-ov .etq.flota{ color:var(--verde); font-size:1rem; text-shadow:0 1px 0 #fff, 0 0 8px #fff; transition:transform 1.4s ease-out, opacity 1.4s; }\n#pt-ov .etq.npc{ background:#ff7a00; color:#fff; border-radius:7px; padding:1px 7px; font-size:.66rem; letter-spacing:.06em; }\n#pt-ov .etq.habla{ background:#fff; color:#14243a; border:2px solid #c0392b; border-radius:12px; padding:5px 10px; font-size:.78rem; font-family:var(--f-txt); font-weight:800; max-width:260px; white-space:normal; text-align:center; box-shadow:var(--sombra); }\n#pt-ov .etq.npc.ern{ background:#2f6fd6; }\n#pt-ov .etq.npc.dav{ background:#15803d; }\n#pt-ov .etq.habla.calma{ border-color:#2f6fd6; }\n#pt-ov .etq.habla.calma::after{ border-top-color:#2f6fd6; }\n#pt-ov .etq.habla.jefe{ border-color:#15803d; background:#f0fbf3; }\n#pt-ov .etq.habla.jefe::after{ border-top-color:#15803d; }\n#pt-ov .etq.tienda{ color:#fff; border-radius:6px; padding:2px 8px; font-size:.68rem; font-weight:800; letter-spacing:.04em; box-shadow:var(--sombra); }\n#pt-ov .etq.tienda.hv{ background:#1f2f6b; }\n#pt-ov .etq.tienda.su{ background:#f5c400; color:#14243a; }\n#pt-ov .ir hr{ border:0; border-top:1px solid rgba(20,36,58,.15); margin:4px 0; width:100%; }\n#pt-ov .ir .cams{ display:flex; flex-direction:column; gap:6px; }\n#pt-ov .ir .cams button small{ font-weight:600; }\n#pt-ov .etq.habla::after{ content:\"\"; position:absolute; left:50%; bottom:-9px; margin-left:-7px; border:7px solid transparent; border-top-color:#c0392b; border-bottom:0; }\n#pt-ov .aviso{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:var(--papel); padding:16px 20px; border-radius:12px; box-shadow:var(--sombra); }\n@media (min-width:981px){#pt-ov .barra{ top:10px; left:12px; right:12px; gap:8px; }\n#pt-ov .marca{ padding:5px 10px; gap:8px; border-radius:10px; }\n#pt-ov .marca b{ font-size:.92rem; }\n#pt-ov .marca small{ font-size:.64rem; }\n#pt-ov .logo{ width:24px; height:24px; font-size:.8rem; border-radius:7px; }\n#pt-ov .vistas{ padding:3px; gap:3px; border-radius:11px; }\n#pt-ov .vistas button{ font-size:.72rem; padding:4px 8px; min-height:30px; border-radius:8px; }\n#pt-ov .vistas button b{ display:none; }\n#pt-ov .vivo{ padding:5px 11px; font-size:.76rem; }\n#pt-ov .vivo small{ display:none; }\n#pt-ov .kpis{ top:54px; left:12px; gap:5px; max-width:calc(100% - 310px); }\n#pt-ov .kpi{ min-width:0; padding:3px 10px 3px 6px; gap:5px; border-radius:999px; }\n#pt-ov .kpi .ic{ width:auto; height:auto; background:none; font-size:.82rem; }\n#pt-ov .kpi > div:last-child{ display:flex; gap:5px; align-items:baseline; }\n#pt-ov .kpi small{ font-size:.66rem; }\n#pt-ov .kpi b{ font-size:.9rem; }\n#pt-ov .ir{ top:90px; left:12px; gap:4px; }\n#pt-ov .ir button{ font-size:.72rem; padding:4px 9px; min-height:30px; border-radius:8px; }\n#pt-ov .ir .cams{ gap:4px; }\n#pt-ov .ir hr{ margin:2px 0; }\n#pt-ov .lado{ top:54px; right:12px; width:min(270px, calc(100% - 24px)); max-height:calc(100% - 120px); gap:7px; }\n#pt-ov .ficha{ padding:10px 11px; gap:7px; border-radius:12px; }\n#pt-ov .ficha .cab .ic{ width:30px; height:30px; font-size:1rem; border-radius:9px; }\n#pt-ov .ficha .cab small{ font-size:.62rem; }\n#pt-ov .ficha .cab b{ font-size:.92rem; }\n#pt-ov .placa{ font-size:.64rem; }\n#pt-ov .chip{ font-size:.7rem; padding:2px 8px; }\n#pt-ov .barrita{ height:6px; }\n#pt-ov .filas{ font-size:.76rem; gap:4px; }\n#pt-ov .prods, #pt-ov .paradas{ font-size:.73rem; gap:4px; }\n#pt-ov .prods input{ width:15px; height:15px; }\n#pt-ov .boton{ min-height:34px; padding:6px 10px; font-size:.78rem; }\n#pt-ov .nota-gps{ font-size:.68rem; padding:5px 8px; }\n#pt-ov .alertas h4{ font-size:.82rem; }\n#pt-ov .al{ padding:6px 8px; }\n#pt-ov .al b{ font-size:.76rem; }\n#pt-ov .al small{ font-size:.68rem; }\n#pt-ov .abajo{ left:12px; right:auto; bottom:10px; width:min(760px, calc(100% - 300px)); }\n#pt-ov .pie{ padding:4px 10px 10px; border-radius:12px; }\n#pt-ov .tabs{ margin-bottom:8px; flex-wrap:nowrap; overflow-x:auto; gap:2px; }\n#pt-ov .tabs button{ font-size:.72rem; padding:6px 6px; white-space:nowrap; flex:none; }\n#pt-ov .paso{ font-size:.66rem; }\n#pt-ov .paso b{ font-size:.68rem; }\n#pt-ov .paso i{ width:22px; height:22px; font-size:.68rem; }\n#pt-ov .pasos::before, #pt-ov .pasos .lleno{ top:10px; }\n#pt-ov .rutas{ grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:7px; }\n#pt-ov .ruta{ padding:7px 9px; gap:5px; }\n#pt-ov .ruta .t{ font-size:.76rem; }\n#pt-ov .ruta .p{ font-size:.7rem; }\n#pt-ov .log{ max-height:110px; font-size:.72rem; }\n#pt-ov .and .a{ font-size:.72rem; padding:4px 0; }\n#pt-ov .toast{ top:92px; font-size:.78rem; }\n#pt-ov .etq.habla{ font-size:.72rem; padding:4px 9px; max-width:230px; }\n\n}\n#pt-ov .ruta{ min-width:0; overflow-wrap:anywhere; }\n#pt-ov .plegar{ border:0; background:#eef3f8; border-radius:8px; font-weight:800; font-size:.72rem; color:var(--suave); padding:4px 9px; cursor:pointer; min-height:28px; }\n#pt-ov .plegar:hover{ background:#e2eaf3; color:var(--tinta); }\n#pt-ov .lado .plegar{ align-self:flex-end; box-shadow:var(--sombra); background:var(--papel); }\n#pt-ov .tabs .plegar{ margin-left:auto; border-bottom:0; }\n#pt-ov .lado.plegado .ficha:not(.alertas) > :not(.cab):not(.chip){ display:none; }\n#pt-ov .lado.plegado .alertas{ display:none; }\n#pt-ov .abajo.plegado #tab-cuerpo{ display:none; }\n#pt-ov .abajo.plegado .tabs{ margin-bottom:0; border-bottom:0; }\n#pt-ov .abajo.plegado .pie{ padding-bottom:4px; }\n#pt-ov .solo-btn{ border:0; background:var(--tinta); color:#fff; border-radius:10px; padding:5px 11px; font-weight:800; font-size:.74rem; cursor:pointer; min-height:30px; box-shadow:var(--sombra); }\n#pt-ov.solo .kpis, #pt-ov.solo .lado, #pt-ov.solo .abajo, #pt-ov.solo .vistas, #pt-ov.solo .marca small, #pt-ov.solo .ir .cams, #pt-ov.solo .ir hr{ display:none; }\n@media (max-width:980px){#pt-ov .solo-btn{ display:none; }\n }\n@media (max-width:980px){#pt-ov .ir .cams{ flex-direction:row; flex-wrap:wrap; }\n#pt-ov .ir hr{ display:none; }\n#pt-ov .pt-app{ height:auto; min-height:0; overflow:visible; display:flex; flex-direction:column; gap:12px; padding-inline:16px; padding-block:12px 20px; }\n#pt-ov #pt-esc{ position:relative; inset:auto; height:58vh; min-height:340px; margin-inline:-16px; order:2; }\n#pt-ov .capa{ position:static; }\n#pt-ov .barra{ order:0; }\n#pt-ov .ir{ order:1; flex-direction:row; flex-wrap:wrap; }\n#pt-ov .kpis{ order:1; max-width:none; }\n#pt-ov .lado{ order:3; width:auto; max-height:none; }\n#pt-ov .abajo{ order:4; }\n#pt-ov .vivo{ margin-left:0; }\n#pt-ov .kpi{ min-width:0; flex:1 1 140px; }\n#pt-ov .toast{ position:fixed; top:12px; }\n#pt-ov .paso{ font-size:.66rem; }\n#pt-ov .paso b{ font-size:.68rem; }\n\n}\n@media (prefers-reduced-motion: reduce){#pt-ov .barrita i, #pt-ov .pasos .lleno, #pt-ov .linea .hecho, #pt-ov .linea .cam{ transition:none; }\n#pt-ov .etq.alerta, #pt-ov .log .nuevo{ animation:none; }\n }\n\n";
 
 /* ═════════ la escena: se arma UNA vez (la primera vez que se abre) y después solo se acomoda con cada lectura ═════════ */
@@ -913,7 +962,9 @@ function llenar(c, pop){ var cg=CAMG[c.k].userData.carga; while(cg.children.leng
   c.mini.innerHTML=escH(c.p)+(c.enCalle?' · '+hechas(c)+'/'+c.paradas.length:' · '+c.dentro+'/'+c.total); }
 function aparcar(c){ var t=CAMG[c.k], a=anden(c); c.enCalle=false; c.anim=null; c.path=null; t.position.set(a.x,0,a.z); t.rotation.y=-Math.PI/2; t.visible=true;
   c.mini.classList.remove('calle'); var m=montaDe(c); m.casa=montaCasa(c); m.g.visible=true; if(m.st==='quieto'){ m.g.position.set(m.casa.x,0,m.casa.z); m.g.rotation.y=0; } }
-function arrancar(c){ var a=anden(c), A=ALM[c.alm]; c.enCalle=true; c.anim=null; c.pos={ x:a.x, z:A.fila }; c.dir={ x:0, z:1 }; armarRuta(c, c.pos);
+function arrancar(c, alGps){ var a=anden(c), A=ALM[c.alm]; c.enCalle=true; c.anim=null; c.pos={ x:a.x, z:A.fila }; c.dir={ x:0, z:1 }; armarRuta(c, c.pos);
+  /* al abrir (o al cambiar de día): directo a donde dice el GPS; si sale mientras se mira, maneja hasta ahí (manejar) */
+  if(alGps && c.gps){ c.pos={ x:c.gps.x, z:c.gps.z }; c.gpsF=c.gps.x+','+c.gps.z; c.path=[{ x:c.gps.x, z:c.gps.z, gpsFin:true }]; c.pi=0; c.pausa=0; }
   c.mini.classList.add('calle'); if(c.monta){ terminarCarga(c.monta); c.monta.st='quieto'; c.monta.g.visible=false; } CAMG[c.k].visible=V.calle; llenar(c); }
 function salir(c){ var t=CAMG[c.k], a=anden(c), A=ALM[c.alm]; if(c.monta){ terminarCarga(c.monta); c.monta.st='quieto'; c.monta.g.visible=false; }
   c.anim={ t:0, dur:1.6, f:function(k){ t.position.z=a.z+k*(A.fila-2.4-a.z); }, fin:function(){ arrancar(c); pintarTodo(); } }; }
@@ -995,15 +1046,20 @@ function sincronizar(D, animar){
     if(!c){ c={ k:d.k, p:d.p, col:d.col, items:[], byKey:{}, paradas:[], anden:0, slot:CAMS.length }; CAMS.push(c);
       var t=camion(c); CAMG[c.k]=t; c.mini=etiqueta('mini', escH(c.p)); ETQ.push({ el:c.mini, obj:t, dy:5.2 }); }
     c.alm=d.alm; c.chofer=d.chofer; c.paradas=d.stops; c.salio=d.salio; c.salioMano=d.salioMano; c.conPedidos=d.conPedidos;
-    c.gps=d.gps; c.volvio=!!(d.gps && !d.gps.f && d.gps.vu);   // 🛰️ (§4ko) el GPS dice que volvió a PTF o Banzer: vuelve a su andén
+    c.gps=d.gps; c.volvio=!!(d.gps && !d.gps.f && d.gps.vu); c.gpsRuta=d.gpsRuta||[]; c.gpsParadas=d.gpsParadas||[];
+    /* (13/10, dueño: «los 4 camiones salen en el mismo lugar, no en vivo») con GPS, el camión está DONDE DICE EL GPS: lejos de PTF y de
+       Banzer → en la calle, en su punto; en PTF o en Banzer → en ese depósito. Sin GPS, como antes («Ya salió» y el recorrido estimado). */
+    c.gpsCalle=!!(d.gps && d.gps.f); c.gpsDep=(d.gps && !d.gps.f) ? (d.gps.depId||'') : '';
+    if(c.gpsDep) c.alm=(c.gpsDep==='banzer') ? 'bz' : 'ptf';   // 🛰️ (§4ko) el GPS dice que volvió a PTF o Banzer: vuelve a su andén
   });
   /* los andenes: salteados (0, 2, 4…) mientras alcancen, así cada camión tiene su carril de espera al costado sin pisar al vecino */
   ['ptf','bz'].forEach(function(k){ var L=CAMS.filter(function(c){ return c.alm===k; }), np=ALM[k].puertas, salto=L.length<=Math.ceil(np/2);
     L.forEach(function(c,i){ var pu=salto ? i*2 : i%np; if(c.anden!==pu && !c.enCalle){ c.anden=pu; c.movido=true; } else c.anden=pu; }); });
   D.cams.forEach(function(d){ itemsSync(camPorK(d.k), d, animar); });
   CAMS.forEach(function(c){
-    if(c.salio && !c.volvio){
-      if(!c.enCalle && !c.anim){ if(animar && CAMG[c.k].visible) salir(c); else arrancar(c); }
+    var calle=c.gps ? c.gpsCalle : (c.salio && !c.volvio);
+    if(calle){
+      if(!c.enCalle && !c.anim){ if(animar && CAMG[c.k].visible) salir(c); else arrancar(c, !!c.gpsCalle); }
       else if(c.enCalle){ var fr=c.paradas.map(function(s){ return s.id+(s.ok?'✓':'')+(s.pt?s.pt.x+','+s.pt.z:''); }).join('|'); if(fr!==c.firmaRuta) armarRuta(c, c.pos); }
     } else if(c.enCalle || c.anim || c.movido || !c.monta){ aparcar(c); c.movido=false; }
     if(c.enCalle) CAMG[c.k].visible=V.calle;
@@ -1083,6 +1139,7 @@ function pintarAlertas(){ var el=document.getElementById('pt-alertas'); if(!el) 
   [].forEach.call(el.querySelectorAll('.al'), function(b){ b.onclick=function(){ var a=ALERTAS[+b.dataset.i], p=a.pos(); SEGUIR=false; volar(p.x,p.z,1.2); marcarIr(a.ir); if(a.k) elegir(a.k); if(a.sinCam) toast('📦 Asignales camión en Administración → camiones, ficha «Sin vehículo».'); }; }); }
 function pintarKpis(){
   var tot=0, den=0, calle=0, por=0, fal=0; CAMS.forEach(function(c){ if(c.enCalle){ calle++; return; } tot+=c.total; den+=c.dentro; c.items.forEach(function(it){ if(it.st==='espera'||it.st==='moreno') por+=it.u; if(it.st==='falta') fal+=it.u; }); });
+  ((D0 && D0.sin && D0.sin.lineas) || []).forEach(function(l){ if(l.st==='espera'||l.st==='moreno') por+=l.u; if(l.st==='falta') fal+=l.u; });   // (13/10) lo de los pedidos sin camión también
   var k=[['🅿️','Por cargar',por],['⛔','Sin stock',fal],['🛣️','En la calle',calle],['✅','Cargado',(tot?Math.round(100*den/tot):100)+'%']];
   if(!V.calle) k.splice(2,1);
   var h=k.map(function(x){ return '<div class="kpi"><div class="ic">'+x[0]+'</div><div><small>'+x[1]+'</small><b>'+x[2]+'</b></div></div>'; }).join('');
@@ -1108,20 +1165,57 @@ function tabCalle(){ var L=CAMS.filter(function(c){ return c.enCalle; });
 function tabAnd(){ if(!CAMS.length) return '<div class="vacio">—</div>';
   return '<div class="and">'+CAMS.map(function(c){ var A=ALM[c.alm], est=c.enCalle?'🛣️ '+hechas(c)+'/'+c.paradas.length:!c.total&&!c.items.length?'— vacío':(c.total&&!c.chofer?'⚠️ sin chofer':c.total&&c.dentro>=c.total?'✅ listo':(c.dentro+'/'+c.total));
   return '<div class="a" data-k="'+escH(c.k)+'"><i class="dot" style="background:#'+new THREE.Color(c.col).getHexString()+'"></i><div><b>'+A.n+' · andén '+(c.anden+1)+'</b><small>'+escH(c.p)+' · '+escH(c.chofer||'sin chofer')+'</small></div><b>'+est+'</b></div>'; }).join('')+'</div>'; }
-function tabEsp(){ var L=CAMS.filter(function(c){ return !c.enCalle && c.items.length; });
-  if(!L.length) return '<div class="vacio">Nada para cargar '+(D0&&D0.hoy?'hoy':'ese día')+'.</div>';
-  return '<div class="rutas">'+L.map(function(c){ function lista(f){ var x=c.items.filter(f); return x.length?x.map(function(it){ return '<div>· '+escH(it.prod)+' ×'+it.u+(it.st==='moreno'?' 📥':it.dep==='bz'&&c.alm!=='bz'?' 🏪':'')+'</div>'; }).join(''):'<div style="color:var(--suave)">—</div>'; }
+function tabEsp(){ var L=CAMS.filter(function(c){ return !c.enCalle && c.items.length; }), S=(D0 && D0.sin) || { stops:[], lineas:[] };
+  if(!L.length && !S.lineas.length) return '<div class="vacio">Nada para cargar '+(D0&&D0.hoy?'hoy':'ese día')+'.</div>';
+  /* (13/10, dueño: «por cargar sale vacío») lo de los pedidos sin camión, primero: está por cargar y le falta el camión */
+  var sinH=S.lineas.length ? ('<div class="ruta sin"><div class="t"><b>⚠️ Sin camión · '+S.stops.length+' pedido'+(S.stops.length===1?'':'s')+'</b><span class="chip am">asignales camión en Administración</span></div>'+
+    '<div class="p" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+
+    [['🏭 PTF / 🏪 Banzer', function(l){ return l.st==='espera'; }], ['📥 Traer de Moreno', function(l){ return l.st==='moreno'; }], ['⛔ Sin stock', function(l){ return l.st==='falta'; }]].map(function(g){
+      var x=S.lineas.filter(g[1]); return '<div><b>'+g[0]+'</b>'+(x.length?x.map(function(l){ return '<div>· '+escH(l.prod)+' ×'+l.u+(l.lugar!=='fabrica'&&l.st==='espera'?' 🏪':'')+'</div>'; }).join(''):'<div style="color:var(--suave)">—</div>')+'</div>'; }).join('')+
+    '</div></div>') : '';
+  return '<div class="rutas">'+sinH+L.map(function(c){ function lista(f){ var x=c.items.filter(f); return x.length?x.map(function(it){ return '<div>· '+escH(it.prod)+' ×'+it.u+(it.st==='moreno'?' 📥':it.dep==='bz'&&c.alm!=='bz'?' 🏪':'')+'</div>'; }).join(''):'<div style="color:var(--suave)">—</div>'; }
     return '<div class="ruta" data-k="'+escH(c.k)+'"><div class="t"><b>'+escH(c.p)+' · '+ALM[c.alm].n+'</b><span class="chip'+(c.total&&c.dentro>=c.total?'':' am')+'">'+c.dentro+'/'+c.total+' cargado</span></div>'+
       '<div class="p" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><div><b>🅿️ Por cargar</b>'+lista(function(it){ return it.st==='espera'||it.st==='moreno'||it.pend; })+'</div><div><b>⛔ Sin stock</b>'+lista(function(it){ return it.st==='falta'; })+'</div><div><b>🚚 En el camión</b>'+lista(function(it){ return it.st==='camion'&&!it.pend; })+'</div></div></div>'; }).join('')+'</div>'; }
+/* 🛰️ (13/10, dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») */
+function gpsQuieto(){ return D0 && D0.hoy ? '' : '<div class="vacio">El GPS dice lo de HOY: tocá «Hoy» arriba.</div>'; }
+function tabGpsRec(){ var q=gpsQuieto(); if(q) return q;
+  var conG=CAMS.filter(function(c){ return c.gps || (c.gpsRuta && c.gpsRuta.length); });
+  if(!conG.length) return '<div class="vacio">'+(D0.dia.gpsVivo?'El GPS todavía no mandó recorridos hoy.':'Sin noticias del GPS: el panel lo lee cada minuto (de 6:00 a 21:00, lunes a sábado).')+'</div>';
+  var c=(SEL && conG.indexOf(SEL)>=0) ? SEL : conG[0];
+  var chips='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+conG.map(function(x){ return '<button type="button" class="chip'+(x===c?' az':'')+'" data-k="'+escH(x.k)+'" style="cursor:pointer;border:0">🚚 '+escH(x.p)+'</button>'; }).join('')+'</div>';
+  var R=c.gpsRuta||[], km=0; for(var i=1;i<R.length;i++){ var dx=R[i].x-R[i-1].x, dz=R[i].z-R[i-1].z; km+=Math.sqrt(dx*dx+dz*dz); }
+  var pasos=[];
+  if(c.salio) pasos.push({ ic:c.salioMano?'🛣️':'🛰️', h:c.salio, t:'Salió'+(c.salioMano?' (marcado en el panel)':' (lo dice el GPS)') });
+  (c.gpsParadas||[]).forEach(function(s){ pasos.push({ ic:'🛑', h:s.h0, t:(s.abierta?'Parado hace ':'Se paró ')+s.dur+(s.cli?' · cerca de <b>'+escH(s.cli)+'</b>'+(s.oc?' · '+escH(s.oc):'')+' ('+s.m+' m)':' · sin pedido de hoy cerca') }); });
+  if(c.gps && c.gps.vu) pasos.push({ ic:'🏁', h:c.gps.vu, t:'Volvió' });
+  pasos.sort(function(a,b){ return a.h<b.h?-1:a.h>b.h?1:0; });
+  var ahora=c.gps ? ('<b>Ahora:</b> '+escH(c.gps.donde)+' · '+c.gps.v+' km/h'+(c.gps.m?'':' · motor apagado')+(c.gps.hace?' · reporte '+escH(c.gps.hace):'')) : 'Sin posición del GPS en los últimos 10 minutos.';
+  return chips+'<div class="log">'+(pasos.length?pasos.map(function(p){ return '<div><time>'+escH(p.h)+'</time><span>'+p.ic+' '+p.t+'</span></div>'; }).join(''):'<div><time>—</time><span>Hoy todavía no salió ni se paró en la calle.</span></div>')+'</div>'+
+    '<div class="nota-gps" style="margin-top:8px">'+ahora+(R.length>1?' · rastro de '+R.length+' reportes (la línea de su color en la ciudad)':'')+'. Una parada es '+4+' min o más quieto fuera de PTF y Banzer; «cerca» = a menos de 300 m de un pedido suyo de hoy. El ✅ entregado lo sigue marcando logística.</div>'; }
+function tabGps(){ var q=gpsQuieto(); if(q) return q;
+  var L=D0.dia.gpsLog||[];
+  return '<div class="log">'+(L.length?L.map(function(e){ return '<div data-k="'+escH(e.k)+'" style="cursor:pointer"><time>'+escH(e.h)+'</time><span>'+e.ic+' '+e.x+'</span></div>'; }).join(''):'<div><time>—</time><span>'+(D0.dia.gpsVivo?'El GPS todavía no dijo nada de hoy: ni salidas, ni vueltas, ni paradas.':'Sin noticias del GPS en los últimos 10 minutos.')+'</span></div>')+'</div>'+
+    '<div class="nota-gps" style="margin-top:8px">📡 '+(D0.dia.gpsVivo?'El GPS se lee cada minuto':'⚠️ Sin noticias del GPS')+'. «Salió» = 15 min seguidos lejos de PTF y de Banzer. Las paradas salen del recorrido que este aparato fue leyendo'+(D0.dia.gpsDesde?' (desde las '+escH(D0.dia.gpsDesde)+')':'')+'.</div>'; }
 function pintarTab(){
   [].forEach.call(document.querySelectorAll('#pt-tabs button[data-t]'), function(b){ var t=b.dataset.t; b.hidden=(t==='calle'&&!V.calle); b.classList.toggle('on', t===TAB); });
   if(TAB==='calle'&&!V.calle) TAB='rec';
-  document.getElementById('pt-tab-cuerpo').innerHTML=TAB==='rec'?tabRec():TAB==='esp'?tabEsp():TAB==='calle'?tabCalle():tabAnd();
+  document.getElementById('pt-tab-cuerpo').innerHTML=TAB==='rec'?tabRec():TAB==='esp'?tabEsp():TAB==='calle'?tabCalle():TAB==='gpsr'?tabGpsRec():TAB==='gps'?tabGps():tabAnd();
   [].forEach.call(document.querySelectorAll('#pt-tab-cuerpo [data-k]'), function(d){ d.onclick=function(){ var c=camPorK(d.dataset.k); if(c) elegir(c, true); }; });
 }
-function pintarTodo(){ pintarCamiones(); pintarFicha(); pintarAlertas(); pintarKpis(); pintarTab(); pintarTags(); pintarPines(); pintarLinea(); }
+/* 🛰️ (13/10) el rastro del GPS del camión elegido: una línea de su color por donde pasó hoy y un 🛑 en cada parada */
+var RASTRO=null;
+function pintarRastro(){
+  if(RASTRO){ esc.remove(RASTRO); RASTRO.traverse(function(o){ if(o.geometry) o.geometry.dispose(); }); RASTRO=null; }
+  var c=SEL; if(!c || !c.gpsRuta || c.gpsRuta.length<2 || !(D0 && D0.hoy)) return;
+  RASTRO=new THREE.Group(); RASTRO.name='rastro-gps';
+  var pts=c.gpsRuta.map(function(p){ return new THREE.Vector3(p.x, .55, p.z); });
+  RASTRO.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color:c.col, transparent:true, opacity:.9 })));
+  (c.gpsParadas||[]).forEach(function(s){ var m=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.5,14), new THREE.MeshBasicMaterial({ color:s.cli?0x16a34a:0xdc2626 })); m.position.set(s.x,.6,s.z); RASTRO.add(m); });
+  esc.add(RASTRO); c.rastroN=c.gpsRuta.length;
+}
+function pintarTodo(){ pintarCamiones(); pintarFicha(); pintarAlertas(); pintarKpis(); pintarTab(); pintarTags(); pintarPines(); pintarLinea(); pintarRastro(); }
 document.getElementById('pt-tabs').onclick=function(e){ var b=e.target.closest('button'); if(!b || !b.dataset.t) return; PT.plegar('pt-abajo', false); TAB=b.dataset.t; pintarTab(); };
-function elegir(c, mover){ if(!c) return; var antes=SEL; SEL=c; if(antes!==c) SEGUIR=false; pintarCamiones(); pintarFicha(); if(TAB==='rec') pintarTab(); pintarTags(); pintarPines(); pintarLinea();
+function elegir(c, mover){ if(!c) return; var antes=SEL; SEL=c; if(antes!==c) SEGUIR=false; pintarCamiones(); pintarFicha(); if(TAB==='rec'||TAB==='gpsr') pintarTab(); pintarTags(); pintarPines(); pintarLinea(); pintarRastro();
   var t=CAMG[c.k]; t.userData.salto=0;
   if(mover){ volar(t.position.x, t.position.z, 1.1); marcarIr(c.enCalle?null:c.alm); if(c.enCalle){ SEGUIR=true; pintarFicha(); } } }
 
@@ -1213,11 +1307,15 @@ ponerNoche(false);
 /* 🛰️ (§4ko) el GPS cambia cada minuto: se pasa sin rearmar la escena (no entra en la firma) */
 function gpsAlDia(D){ var cambio=false, otro=false; (D && D.cams || []).forEach(function(d){ var c=camPorK(d.k); if(!c) return;
   var vo=!!(d.gps && !d.gps.f && d.gps.vu), fk=d.gps ? [d.gps.x, d.gps.z, d.gps.v, d.gps.f, d.gps.hace].join('|') : '';
-  if(vo!==!!c.volvio) cambio=true;
+  var gc=!!(d.gps && d.gps.f), gd=(d.gps && !d.gps.f) ? (d.gps.depId||'') : '';
+  if(vo!==!!c.volvio || gc!==!!c.gpsCalle || gd!==(c.gpsDep||'') || !!d.gps!==!!c.gps) cambio=true;   // salió a la calle, llegó a un depósito, o apareció/se fue el GPS: la escena se acomoda
   if(fk!==(c.gpsK||'')){ otro=true; if(c===SEL) c.gpsRepinta=true; }
-  c.gps=d.gps; c.volvio=vo; c.gpsK=fk; });
-  /* solo si cambió algo del GPS (corre cada 1,5 s): la ficha y la pestaña de la calle dicen dónde está */
-  if(otro){ if(SEL && SEL.gpsRepinta){ SEL.gpsRepinta=false; pintarFicha(); } if(TAB==='calle') pintarTab(); }
+  c.gps=d.gps; c.volvio=vo; c.gpsK=fk;
+  var rk=(d.gpsRuta||[]).length+'|'+(d.gpsParadas||[]).map(function(s){ return s.h0+s.dur; }).join(',');
+  if(rk!==(c.rastroK||'')){ otro=true; c.rastroK=rk; c.gpsRuta=d.gpsRuta||[]; c.gpsParadas=d.gpsParadas||[]; if(c===SEL) c.rastroOtro=true; } });
+  if(D && D0 && D.dia && JSON.stringify(D.dia.gpsLog)!==JSON.stringify(D0.dia.gpsLog)){ D0.dia.gpsLog=D.dia.gpsLog; D0.dia.gpsVivo=D.dia.gpsVivo; D0.dia.gpsDesde=D.dia.gpsDesde; otro=true; }
+  /* solo si cambió algo del GPS (corre cada 1,5 s): la ficha, las pestañas y el rastro */
+  if(otro){ if(SEL && SEL.gpsRepinta){ SEL.gpsRepinta=false; pintarFicha(); } if(SEL && SEL.rastroOtro){ SEL.rastroOtro=false; pintarRastro(); } if(TAB==='calle'||TAB==='gps'||TAB==='gpsr') pintarTab(); }
   return cambio; }
 return { sincronizar:sincronizar, cuadro:cuadro, medir:medir, ctl:ctl, aplicarVistas:aplicarVistas, toast:toast, gps:gpsAlDia,
   estado:function(){ return { camiones:CAMS.map(function(c){ return { k:c.k, p:c.p, alm:c.alm, anden:c.anden, enCalle:!!c.enCalle, saliendo:!!c.anim, monta:c.monta?(c.monta.st+(c.monta.g.visible?'':'/oculto')+(c.monta.obj?'/'+c.monta.obj.prod:'')):'', total:c.total, dentro:c.dentro,
@@ -1250,7 +1348,8 @@ var HTML=
   '<div class="capa abajo" id="pt-abajo"><section class="pie">'+
     '<div class="tabs" id="pt-tabs">'+
       '<button type="button" class="on" data-t="rec">🛤️ Recorrido del camión</button><button type="button" data-t="esp">📦 Por cargar</button>'+
-      '<button type="button" data-t="calle">🛣️ En la calle <em id="pt-n-calle">0</em></button><button type="button" data-t="and">🅿️ Andenes</button>'+
+      '<button type="button" data-t="calle">🛣️ En la calle <em id="pt-n-calle">0</em></button><button type="button" data-t="gpsr">🛰️ Recorrido GPS</button>'+
+      '<button type="button" data-t="gps">📡 Lo que dijo el GPS</button><button type="button" data-t="and">🅿️ Andenes</button>'+
       '<button type="button" class="plegar" id="pt-pl-pie">▾ Achicar</button>'+
     '</div><div id="pt-tab-cuerpo"></div></section></div>'+
   '<div class="armando" id="pt-armando" hidden>🏗️ Armando la ciudad…</div>'+

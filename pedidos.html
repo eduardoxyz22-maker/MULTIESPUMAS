@@ -15765,6 +15765,7 @@ function gpsTomar(g, ahoraSrv){
   if(ahoraSrv && Number(g.t) && Number(ahoraSrv)-Number(g.t)>GPS_VIGENCIA_MS) return;   // la caché del servidor es vieja: el repaso se paró
   var u={}; g.u.forEach(function(x){ if(x && x.p) u[x.p]=x; });
   GPS={ t:Number(g.t)||0, u:u, rec:relojMs() };
+  try{ gpsHistAnotar(u); }catch(e){}   // el recorrido del día, en este aparato
   /* «salió» se recuerda en esta pestaña todo el día: si después el GPS se calla, el camión no vuelve solo al andén */
   var hoy=todayStr();
   Object.keys(VEHICULO_PLACA).forEach(function(veh){ var x=u[gpsPlaca(VEHICULO_PLACA[veh])]; if(x && x.s) GPS_SALIO[hoy+'|'+veh]=String(x.s); });
@@ -15775,6 +15776,76 @@ function camionGps(veh){ if(!veh || !gpsVigente()) return null; var pl=VEHICULO_
 function camionSalioGps(fecha, veh){ return (fecha && veh && fecha===todayStr()) ? (GPS_SALIO[fecha+'|'+veh]||'') : ''; }
 function gpsHace(x){ if(!x || !x.r) return ''; var m=Math.round((Date.now()-Number(x.r))/60000); return m<=0?'recién':m<60?('hace '+m+' min'):('hace '+Math.floor(m/60)+' h '+(m%60)+' min'); }
 function gpsDondeTxt(x){ if(!x) return ''; var d=x.dep; if(!x.f && d) return 'en '+d.n; return 'en la calle'+(d?(' · a '+(d.m<1000?(d.m+' m'):((d.m/1000).toFixed(1).replace('.',',')+' km'))+' de '+d.n):''); }
+/* 🛰️ (13/10, dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») LO QUE EL GPS FUE DICIENDO HOY. El servidor solo da la
+   ÚLTIMA posición de cada camión: el recorrido del día se arma en este aparato, un punto por cada reporte nuevo que trae la lectura
+   (una por minuto mientras el panel está abierto), y sobrevive al F5 (localStorage, solo el día de hoy). Solo mira: nada va a la
+   planilla y nada se marca ✅ (dueño, 12/10: sin entregado automático). Punto = [hora del reporte, lat, lng, km/h, motor, afuera]. */
+var GPS_HIST_LS='me_gps_hist', GPS_HIST={ f:'', u:{} }, GPS_HIST_MAX=900, GPS_PARADA_MIN=4, GPS_PARADA_M=150, GPS_CLIENTE_M=300;
+function gpsHistCargar(){
+  var hoy=todayStr(); if(GPS_HIST.f===hoy) return GPS_HIST;
+  var h=null; try{ h=JSON.parse(localStorage.getItem(GPS_HIST_LS)||'null'); }catch(e){}
+  GPS_HIST=(h && h.f===hoy && h.u && typeof h.u==='object') ? h : { f:hoy, u:{} };
+  return GPS_HIST;
+}
+function gpsHistAnotar(u){
+  var H=gpsHistCargar(), cambio=false;
+  Object.keys(u||{}).forEach(function(p){
+    var x=u[p]; if(!x || !isFinite(Number(x.la)) || !isFinite(Number(x.lo))) return;
+    var t=Number(x.r)||0; if(!t || isoDeTsBolivia(t)!==H.f) return;      // solo los reportes de hoy
+    var L=H.u[p]||(H.u[p]=[]), ult=L[L.length-1];
+    if(ult && ult[0]>=t) return;                                            // el mismo reporte de la lectura anterior
+    L.push([t, Number(x.la), Number(x.lo), Math.round(Number(x.v)||0), x.m?1:0, x.f?1:0]);
+    if(L.length>GPS_HIST_MAX) L.splice(0, L.length-GPS_HIST_MAX);
+    cambio=true;
+  });
+  if(cambio) try{ localStorage.setItem(GPS_HIST_LS, JSON.stringify(H)); }catch(e){}
+}
+function gpsHistDe(veh){ var H=gpsHistCargar(); return H.u[gpsPlaca(VEHICULO_PLACA[veh]||veh)]||[]; }
+function gpsMetros(a, b){ var r=Math.PI/180, dLa=(b.lat-a.lat)*r, dLo=(b.lng-a.lng)*r, q=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*6371000*Math.asin(Math.min(1, Math.sqrt(q))); }
+function gpsHoraTxt(t){ var d=new Date(Number(t)-4*3600000).toISOString(); return d.slice(11,16); }
+/* Los pedidos de hoy de ese camión, con su punto (el mismo pin del mapa). */
+function gpsPedidosDe(veh){
+  var hoy=todayStr(), out=[];
+  STATE.forEach(function(p){ if(!p || p.fecha!==hoy || esFilaSistema(p) || esBorrador(p) || vehiculoDe(p)!==veh) return;
+    var g=null; try{ g=typeof almPunto==='function' ? almPunto(p) : null; }catch(e){}
+    if(g && isFinite(Number(g.lat))) out.push({ p:p, lat:Number(g.lat), lng:Number(g.lng) }); });
+  return out;
+}
+/* Las paradas: GPS_PARADA_MIN minutos o más quieto (≤3 km/h) en el mismo lugar, lejos de PTF y de Banzer. Si se paró cerca de un
+   pedido suyo de hoy (GPS_CLIENTE_M), lo nombra. `abierta` = sigue parado ahí. */
+function gpsParadas(veh){
+  var L=gpsHistDe(veh), peds=gpsPedidosDe(veh), out=[], cur=null;
+  var cerrar=function(c, fin){ if(fin) c.t1=fin; if(c.t1-c.t0<GPS_PARADA_MIN*60000) return;
+    var mejor=null; peds.forEach(function(o){ var m=gpsMetros(c, o); if(m<=GPS_CLIENTE_M && (!mejor || m<mejor.m)) mejor={ o:o, m:Math.round(m) }; });
+    c.ped=mejor ? mejor.o.p : null; c.pm=mejor ? mejor.m : null; out.push(c); };
+  L.forEach(function(q){
+    var pt={ lat:q[1], lng:q[2] }, quieto=q[3]<=3 && q[5]===1;
+    if(quieto){
+      if(cur && gpsMetros(cur, pt)<=GPS_PARADA_M){ cur.t1=q[0]; return; }
+      if(cur) cerrar(cur, q[0]);
+      cur={ t0:q[0], t1:q[0], lat:q[1], lng:q[2] };
+    } else if(cur){ cerrar(cur, q[0]); cur=null; }
+  });
+  if(cur){ var ab=cur; ab.abierta=true; ab.t1=Math.max(ab.t1, Date.now()); cerrar(ab); }
+  return out;
+}
+function gpsDurTxt(ms){ var m=Math.max(1, Math.round(ms/60000)); return m<60 ? (m+' min') : (Math.floor(m/60)+' h '+(m%60)+' min'); }
+/* «📡 Lo que dijo el GPS» de hoy, lo más nuevo primero: salidas y vueltas (del servidor), paradas (del recorrido de este aparato). */
+function gpsEventosHoy(){
+  var ev=[];
+  Object.keys(VEHICULO_PLACA).forEach(function(veh){
+    var pl=VEHICULO_PLACA[veh], x=camionGps(veh), dep=function(id){ return id==='banzer'?'Banzer':'PTF'; };
+    if(x && x.s) ev.push({ h:x.s, k:veh, ic:'🛣️', x:'<b>'+esc(pl)+'</b> salió de '+dep(x.sd)+' (15 min afuera → «Ya salió» solo)' });
+    if(x && x.ul && x.ul!==x.s) ev.push({ h:x.ul, k:veh, ic:'🛣️', x:'<b>'+esc(pl)+'</b> volvió a salir' });
+    if(x && x.vu) ev.push({ h:x.vu, k:veh, ic:'🏁', x:'<b>'+esc(pl)+'</b> volvió a '+esc((x.dep && x.dep.n) || 'PTF') });
+    gpsParadas(veh).forEach(function(s){
+      var quien=s.ped ? (' cerca de <b>'+esc(s.ped.cliente||'—')+'</b>'+(s.ped.oc?' · '+esc(s.ped.oc):'')+' ('+s.pm+' m)') : ' (sin pedido de hoy cerca)';
+      ev.push({ h:gpsHoraTxt(s.t0), k:veh, ic:'🛑', x:'<b>'+esc(pl)+'</b> '+(s.abierta?'está parado hace ':'se paró ')+gpsDurTxt(s.t1-s.t0)+quien }); });
+  });
+  ev.sort(function(a,b){ return a.h<b.h ? 1 : a.h>b.h ? -1 : 0; });
+  return ev;
+}
 function cvGpsLinea(x){
   if(!x) return '';
   return '<div class="cvc-gps">🛰️ <b>'+esc(gpsDondeTxt(x))+'</b> · '+x.v+' km/h'+(x.m?'':' · motor apagado')+(x.r?(' · '+gpsHace(x)):'')+(x.vu?(' · volvió '+esc(x.vu)):'')+
@@ -15991,7 +16062,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013d';
+var PATIO_V='20261013e';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
@@ -17220,6 +17291,19 @@ function misVendedorSel(mv){
   if(!v && document.activeElement!==mv){ v=getVendedorMem(); if(v) mv.value=v; }
   return v;
 }
+/* 🙈 (13/10, dueño: «falta botón ocultar para que no se les haga larguísima la página en Mis pedidos a las vendedoras, ahora que también
+   salen sus mensajes») las ventas de Kommo y lo que contestaron los clientes se pliegan: queda la línea de arriba con cuántas son.
+   Por aparato (localStorage; si no deja guardar, por esta pestaña). Nada va a la planilla. */
+var LS_MIS_PLEGADO='me_mis_plegado', MIS_PLEGADO_MEM={};
+function misPlegadoLeer(){ try{ var o=JSON.parse(localStorage.getItem(LS_MIS_PLEGADO)||'{}'); if(o && typeof o==='object') return o; }catch(e){} return MIS_PLEGADO_MEM; }
+function misPlegado(k){ return !!misPlegadoLeer()[k]; }
+function misPlegar(k){
+  var o=Object.assign({}, misPlegadoLeer()); if(o[k]) delete o[k]; else o[k]=1;
+  MIS_PLEGADO_MEM=o; try{ localStorage.setItem(LS_MIS_PLEGADO, JSON.stringify(o)); }catch(e){}
+  try{ renderBorradoresMis(); }catch(e){} try{ renderBorradoresHuerfanos(); }catch(e){} try{ waRespPintar(); }catch(e){}
+}
+function misPlegarBtn(k){ var p=misPlegado(k);
+  return '<button type="button" class="btn btn-ghost btn-sm mis-plegar" data-plegar="'+k+'" style="width:auto;float:right;margin:-3px 0 4px 8px" onclick="misPlegar(\''+k+'\')">'+(p?'👁️ Mostrar':'🙈 Ocultar')+'</button>'; }
 function renderBorradoresMis(){
   var box=document.getElementById('mis-borradores'); if(!box) return;
   var v=misVendedorSel();
@@ -17232,14 +17316,14 @@ function renderBorradoresMis(){
   box.innerHTML=
     '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
       'border-radius:10px;padding:12px 15px;margin-bottom:12px">'+
-      '<div style="font-size:.95rem;color:#7a5b00;margin-bottom:9px">'+
+      '<div style="font-size:.95rem;color:#7a5b00;margin-bottom:'+(misPlegado('kommo')?'0':'9px')+'">'+misPlegarBtn('kommo')+
         '📥 <b>'+n+(n===1?' venta vino':' ventas vinieron')+' de Kommo'+(todos?'':' a tu nombre')+
         '</b> y '+(n===1?'le falta':'les falta')+' la entrega.'+
-        '<div style="font-size:.82rem;opacity:.9;margin-top:2px">'+
-          'Todavía no ocupan lugar en ningún camión: eso pasa cuando les pongas la fecha y guardes.</div>'+
+        (misPlegado('kommo') ? '' : ('<div style="font-size:.82rem;opacity:.9;margin-top:2px">'+
+          'Todavía no ocupan lugar en ningún camión: eso pasa cuando les pongas la fecha y guardes.</div>'))+
       '</div>'+
-      lista.slice(0,12).map(function(p){ return borrCardHtml(p, todos); }).join('')+
-      (n>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(n-12)+' más</div>') : '')+
+      (misPlegado('kommo') ? '' : (lista.slice(0,12).map(function(p){ return borrCardHtml(p, todos); }).join('')+
+      (n>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(n-12)+' más</div>') : '')))+
     '</div>';
 }
 /* Los sin dueña van a Administración: si no, nadie los vería nunca. */
@@ -17253,13 +17337,13 @@ function renderBorradoresHuerfanos(){
     '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
       'border-radius:10px;padding:12px 15px;margin-bottom:12px">'+
       '<div style="font-size:.95rem;color:#7a5b00;margin-bottom:9px">'+
-        '📥 <b>'+n+(n===1?' venta de Kommo quedó':' ventas de Kommo quedaron')+' sin vendedora.</b>'+
+        misPlegarBtn('kommo-adm')+'📥 <b>'+n+(n===1?' venta de Kommo quedó':' ventas de Kommo quedaron')+' sin vendedora.</b>'+
         '<div style="font-size:.82rem;opacity:.9;margin-top:2px">'+
           'En Kommo el responsable no es ninguna de las vendedoras del panel, así que no le aparece a nadie. '+
           'Completala vos o corregí el responsable en Kommo.</div>'+
       '</div>'+
-      lista.slice(0,12).map(function(p){ return borrCardHtml(p, true); }).join('')+
-      (n>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(n-12)+' más</div>') : '')+
+      (misPlegado('kommo-adm') ? '' : (lista.slice(0,12).map(function(p){ return borrCardHtml(p, true); }).join('')+
+      (n>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(n-12)+' más</div>') : '')))+
     '</div>';
 }
 /* Abre el formulario con lo que Kommo trajo ya puesto. Conserva el id `kommo-…`:
@@ -32370,12 +32454,17 @@ function waRespTraer(forzar){
 function waRespPed(r){ return (r && r.id) ? findById(r.id) : null; }
 function waRespPend(){ return WA_RESP.filter(function(r){ return !r.at; }); }
 function waRespDeVend(v){ return waRespPend().filter(function(r){ var p=waRespPed(r); return !!p && mismoVendedor(p.vendedor, v); }); }
+/* (13/10, captura del dueño: «Tue Oct 13 2026 09:41:00 GMT-0400 (hora de Bolivia)») la hora de la hoja viene como fecha larga en
+   inglés: se muestra «13/10 09:41» (hora de Bolivia). Si no se entiende, tal cual. */
+function waRespHora(t){ t=String(t||''); if(!/GMT|^\d{4}-\d{2}-\d{2}T/.test(t)) return t;   // «12/10 17:09» ya viene bien: no tocar
+  var ms=Date.parse(t); if(!isFinite(ms)) return t;
+  var d=new Date(ms-4*3600000).toISOString(); return d.slice(8,10)+'/'+d.slice(5,7)+' '+d.slice(11,16); }
 function waRespCard(r){
   var p=waRespPed(r), quien=r.nom || (p && p.cliente) || r.num, wa=r.num ? ('https://wa.me/'+String(r.num).replace(/[^0-9]/g,'')) : '';
   var ped=p ? [p.oc ? ('OC '+p.oc) : '', p.cliente||'', p.vendedor||'', p.fecha ? ('entrega '+fmtFechaCorta(p.fecha)+(p.turno?(' '+normTurno(p.turno)):'')) : ''].filter(Boolean).join(' · ')
             : (r.oc ? ('OC '+r.oc) : 'No sé de qué pedido es');
   return '<div class="wa-resp-c'+(r.at?' hecha':'')+'">'+
-    '<div class="wa-resp-q"><b>'+esc(quien)+'</b> <small>'+esc(r.t||'')+(r.num?(' · +'+esc(r.num)):'')+'</small></div>'+
+    '<div class="wa-resp-q"><b>'+esc(quien)+'</b> <small>'+esc(waRespHora(r.t))+(r.num?(' · +'+esc(r.num)):'')+'</small></div>'+
     '<div class="wa-resp-txt">«'+esc(r.txt||'')+'»</div>'+
     '<div class="wa-resp-p">'+esc(ped)+'</div>'+
     '<div class="wa-resp-b">'+
@@ -32385,18 +32474,19 @@ function waRespCard(r){
             : '<button type="button" class="btn btn-sm wa-resp-ok" onclick="waRespAtender(\''+esc(r.w)+'\')">✓ Ya lo atendí</button>')+
     '</div></div>';
 }
-function waRespHtml(lista, quien){
+function waRespHtml(lista, quien, kPleg){
   if(!lista.length) return '';
+  var pl=!!kPleg && misPlegado(kPleg);   // 🙈 (13/10) se pliega: en Mis pedidos (dueño) y en Administración (dueño: «lo mismo en administración»)
   return '<div class="wa-resp">'+
-    '<div class="wa-resp-tit">💬 '+lista.length+' cliente'+(lista.length===1?'':'s')+' le respondi'+(lista.length===1?'ó':'eron')+' al bot de WhatsApp'+(quien?(' · '+esc(quien)):'')+'</div>'+
-    '<div class="wa-resp-sub">El bot solo manda avisos y no lee: ya le contestó al cliente que te escriba por el WhatsApp de siempre. Escribile vos y después tocá «✓ Ya lo atendí».</div>'+
-    lista.map(waRespCard).join('')+'</div>';
+    '<div class="wa-resp-tit">'+(kPleg?misPlegarBtn(kPleg):'')+'💬 '+lista.length+' cliente'+(lista.length===1?'':'s')+' le respondi'+(lista.length===1?'ó':'eron')+' al bot de WhatsApp'+(quien?(' · '+esc(quien)):'')+'</div>'+
+    (pl ? '' : ('<div class="wa-resp-sub">El bot solo manda avisos y no lee: ya le contestó al cliente que te escriba por el WhatsApp de siempre. Escribile vos y después tocá «✓ Ya lo atendí».</div>'+
+    lista.map(waRespCard).join('')))+'</div>';
 }
 function waRespPintar(){
   var m=document.getElementById('wa-resp-mis'), a=document.getElementById('wa-resp-adm');
   if(m){ var v=(document.getElementById('mis-vendedor')||{}).value||''; var todos=MIS_TODOS && UNLOCKED;
-    m.innerHTML = todos ? waRespHtml(waRespPend(), 'todos') : (v ? waRespHtml(waRespDeVend(v.trim()), '') : ''); }
-  if(a) a.innerHTML = (UNLOCKED || nxLS(LS_ADM_DEV) || quienRol()==='logistica') ? waRespHtml(waRespPend(), '') : '';
+    m.innerHTML = todos ? waRespHtml(waRespPend(), 'todos', 'wa-mis') : (v ? waRespHtml(waRespDeVend(v.trim()), '', 'wa-mis') : ''); }
+  if(a) a.innerHTML = (UNLOCKED || nxLS(LS_ADM_DEV) || quienRol()==='logistica') ? waRespHtml(waRespPend(), '', 'wa-adm') : '';
 }
 function waRespAtender(w){
   var r=null; WA_RESP.forEach(function(x){ if(x.w===w) r=x; }); if(!r) return;

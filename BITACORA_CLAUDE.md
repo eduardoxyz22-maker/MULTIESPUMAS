@@ -14141,4 +14141,21 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   6663-CCP = Foton nuevo, a 44 m de Banzer). **La hora del reporte en UTC da bien** («13:49:10» = 09:49 de Bolivia, hace 13 min).
   **El pin de Banzer sirve** (35 y 44 m, adentro de los 300 m): no hace falta GPS_DEPOSITOS.
 - **Página PUBLICADA 13/10 (`2e2eb42`)** con pedidos.html, patio.js (`PATIO_V='20261013d'`), CLAUDE.md, el `.gs` y las pruebas.
+- **13/10 ~10:10, el dueño con la ciudad abierta**: *«por cargar abajo a la izquierda sale vacío»* (los 17 pedidos de hoy sin camión: la
+  pestaña solo miraba camiones) · *«falta la pestaña recorrido gps y "lo que dijo el gps"»* · *«los 4 camiones salen en el mismo lugar,
+  no en vivo… el gps real, no coinciden al menos un poco»* (captura de la plataforma: TIG en Banzer, URL en PTF, CCP en la calle, KSC en el
+  Jardín Botánico, junto a Moreno). Hecho (PATIO_V='20261013e'):
+  · **Cada camión DONDE DICE EL GPS** (`c.gpsCalle`/`c.gpsDep`): lejos de PTF y de Banzer → en la calle, en su punto (al abrir, directo;
+    si sale mientras se mira, maneja hasta ahí); en PTF o Banzer → estacionado en ese depósito. Sin GPS, como antes. «Salió» (David, Mis
+    pedidos) sigue siendo el de las 15 min.
+  · **`geoAEscena` anclado** (s1_mapa): la ciudad está armada a mano, así que un punto real se ubica con una cuenta afín por cuadrados
+    mínimos sobre PTF, Banzer, Moreno, la plaza y las tiendas (los depósitos y la plaza pesan más; error ≤ 18 unidades) + un ajuste local
+    (gaussiano, 0,45 km) hacia cada ancla. Antes era una escala fija desde PTF que no coincidía con lo armado.
+  · **«Por cargar»** con el bloque «⚠️ Sin camión» (`D0.sin.lineas`) y los números de arriba lo cuentan.
+  · **«🛰️ Recorrido GPS»** (por camión: salió, paradas, volvió, ahora) y **«📡 Lo que dijo el GPS»** (registro del día). El recorrido se arma
+    en el APARATO (`gpsHistAnotar`, `me_gps_hist`, un punto por reporte nuevo) y las paradas (`gpsParadas`: ≥4 min quieto fuera de los
+    depósitos, el pedido de hoy a ≤300 m) salen de ahí; rastro de su color en la ciudad (`pintarRastro`).
+- *«falta botón ocultar… Mis pedidos… ahora que también salen sus mensajes»* y *«lo mismo en Administración»*: `misPlegar(k)`
+  (`me_mis_plegado`): ventas de Kommo (`kommo`, `kommo-adm`) y respuestas al bot (`wa-mis`, `wa-adm`). La hora de la respuesta se leía
+  «Tue Oct 13 2026 09:41:00 GMT-0400…»: `waRespHora` → «13/10 09:41». `tests/test_ocultar.js` (8), `test_gps_pagina` §8-9 (→ 30).
 
