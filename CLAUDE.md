@@ -618,8 +618,28 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
+## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` EN LA RAMA, lo implementa el dueño; la página espera su «publica»)
+La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettoken` (apikey + usuario + contraseña → token de 6 h) y
+`getdata` (apikey + token → cada unidad: placa, posición, km/h, motor, conductor, hora del reporte). **30 s entre pedidos.**
+- 🔐 **Propiedades del script**: `GPS_APIKEY`, `GPS_USUARIO`, `GPS_CLAVE` (nunca en el código ni en el chat); `GPS_TOKEN_AUTO` lo
+  maneja el script; opcional `GPS_DEPOSITOS` (JSON) corrige el pin de Banzer sin reimplementar. Sin las tres, nada corre ni se escribe.
+- **`gpsRepaso`** (disparador cada minuto, `instalarDisparadores`; 6 a 21 h de Bolivia, ni domingo ni feriado): UN pedido por vuelta
+  (el token o las posiciones). Posiciones a la caché `gps_pos` (10 min), resumen en `GPS_ULTIMO`, salidas del día en `GPS_DIA`.
+  La lectura `list` las lleva en `gps` (de la caché, sin red). Desde el editor: `probarGps` (dice qué camión es cada placa y la hora
+  del reporte: con `UseUTCDate=1` se lee en UTC, **verificarlo la primera vez**) y `estadoGps`. `probarAntesDeImplementar` §12.
+- **«Salió»** = estuvo a ≤ `GPS_DENTRO_M` (300 m) de PTF o Banzer y pasa `GPS_FUERA_MIN` (15) minutos a ≥ `GPS_SALIDA_M` (700 m) de
+  los dos; la hora es cuando se alejó. Ir de PTF a Banzer a cargar no cuenta; visto primero en la calle, no se adivina. «Volvió» al entrar.
+- ⚠️ `GPS_DEPOSITOS` = `ALM_UBIC` y `GPS_PLACAS` = `VEHICULO_PLACA` de la página (`test_gps` §1): un camión nuevo va en los dos.
+- **Página (solo mira, no escribe)**: `apiList` → `gpsTomar(j.gps, j.ahora)` (una caché de más de `GPS_VIGENCIA_MS` = 10 min no se
+  toma); `camionGps(veh)`; **`camionSalio` = la marca a mano o, si no, la del GPS de hoy** (`GPS_SALIO`, se recuerda en la pestaña);
+  la ficha del camión dice «🛰️ Salió … · lo dice el GPS» (sin «deshacer»: solo se deshace lo marcado a mano) + `cvGpsLinea`; el
+  mapa de entregas (Hoy) dibuja `mapaGpsPintar` y el recorrido no pone su 🚚 estimado si hay GPS; la ciudad (`cams[].gps`,
+  `manejar` va por las calles hasta el punto del GPS; «volvió» → al andén; `api.gps` lo actualiza SIN rearmar la escena).
+- Cuota: la cuenta es gmail (90 min/día de disparadores): gpsRepaso ≈ 1-2 s × ~900 vueltas. Si se pasa, mirar Ejecuciones.
+- `tests/test_gps.js` (46, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (20). Bitácora §4ko.
+
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
-La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad.
+La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).
 - Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`, y desde 13/10 también `#adm-ciudad-btn` arriba de Administración, al lado de «Ocultar camiones»: con la vista 3D `.cv-tit button` lo pintaba blanco sobre blanco y el dueño no lo encontraba) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
   aparte: cambiarlo = subir `PATIO_V` y `node --check patio.js`). Pantalla completa `#pt-ov` (CSS con `#pt-ov` adelante, ids `pt-`).
 - ⚠️ **Un solo lienzo**: dibuja con `DEP.w3` vía **`DEP.w3.alt={cuadro,tam}`** (el bucle de `depIniciar3D` le cede el cuadro); mientras
