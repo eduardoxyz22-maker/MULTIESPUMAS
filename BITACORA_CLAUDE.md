@@ -13906,3 +13906,10 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   ciudad por las calles («¡qué tráfico de mierda!»). Tocarlo lo hace hablar. Vista inicial más cerca (zoom 1,9) para que se vea la carga.
   También dijo: *«en tus fotos se ve una cosa, en el artefacto otra»* → se le pidió una captura de lo que ve (sospecha: su pantalla usa el
   diseño angosto, o la versión vieja en caché).
+- 13/10, el dueño: *«¿cómo cambian camión? ¿dónde se ven los productos en espera? que saquen de la fábrica y pongan en un andén de espera
+  por cargar… faltan más detalles a la ciudad, y Garnícula debe putear más a Ernesto y a David»* → versión 6: cada producto pasa por 🏭 galpón →
+  🅿️ carril de espera (amarillo, con la placa del camión; cartel «ZONA DE ESPERA · POR CARGAR») → 🚚 camión, con dos montacargas por camión
+  (naranja saca del galpón, amarillo carga). Botones de cada camión a la izquierda, pestaña «📦 Por cargar», fichas «En el galpón / En espera».
+  ERNESTO (planilla, en la puerta de la oficina) y DAVID (recorre la zona de espera) en PTF: Garnícula los va a buscar y les putea; ellos le
+  contestan. Más ciudad: gente por las veredas, mototaxis, pájaros, autos estacionados, paradas de micro, kioscos, banderas de Bolivia.
+  Pregunta abierta: «cómo cambian camión» ¿era elegir otro camión (hecho) o pasar un producto a otro camión?
