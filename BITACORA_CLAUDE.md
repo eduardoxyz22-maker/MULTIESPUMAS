@@ -14072,3 +14072,14 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   · *«sí, agrandalo, quiero los 4 anillos; con eso me basta»* → la ciudad crece dos columnas al oeste y una fila al sur (`X0=-6*G`, `Z1=10*G`,
     también en `s1_mapa.js`), el bosque y el río se corren con `BORDE_X`, y el 4to anillo (s=315) entra entero (solo faroles, como el 3ro).
     Equipetrol (`zonaAlta`) sigue pegado al bosque; «Ver todo» = [0,245, Z/480]; gente, motos y autos usan el tamaño nuevo. Muestra v28. 29/29.
+  · *«en algunos lugares poné un Burger King y restaurantes repartidos: Hot Burger, KFC, Pollos Luisín, etc.»* → `restaurante` (local de un
+    piso con franja de color, toldo, nombre al frente, mesas con sombrilla y cartel alto en poste mirando a la cámara) en 8 lotes (`RESTO_EN`:
+    manzana → [casa, fila, marca, giro]): 2 Burger King (uno en la esquina que marcó, mirando a la calle de al lado), 2 KFC, 2 Hot Burger,
+    Pollos Luisín y Pollos Kiky. Solo el nombre escrito, sin logos.
+  · Con dos capturas marcadas: *«eliminá esa fila»* (la columna al oeste del 4to anillo) → `X0=-5*G` (también `s1_mapa.js`): el 4to anillo es
+    el borde de la ciudad y ahí empieza el bosque. *«Hacia la San Martín, donde pasa el 4to anillo, conecta el puente del Urubó; ahí pusiste
+    una avenida de más»* → fuera la avenida z=210 dentro de la ciudad: se cruza el 4to anillo y se entra al puente. *«Ahí colocá un Hipermaxi,
+    un supermercado con su parqueo»* → `hipermaxi` en la manzana (-315,175) (`ESPECIAL`): edificio blanco con franja roja y amarilla, entrada
+    vidriada, cartel, parqueo con cajones y autos, carritos y cartel alto. «Ver todo» = [35,245, Z/470]. Muestra v29. 29/29.
+  · ⚠️ `armar.py` quedó con rangos corridos dos veces (un remap a medias de una corrida que el dueño interrumpió): se corrigió a mano
+    (−17 desde la línea 400). Antes de cada `remap.py`, verificar que `s13` apunte a `function ponerNoche` en cuerpo.js.

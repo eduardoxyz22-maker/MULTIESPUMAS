@@ -21,7 +21,7 @@ function escH(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ r
    Con el NORTE ARRIBA de la pantalla (dueño, 13/10: «nuestra vista va de abajo hacia arriba»): la cámara mira en diagonal, así que el norte
    de la escena es (-x,-z). Pines del dueño (13/10): PTF -17.7489091,-63.1429133 · Banzer -17.7202386,-63.1631265 (~3,2 km al norte, ~2,1 al
    oeste: arriba a la izquierda) · Moreno -17.7623355,-63.0675466 (~8 km al este: a la derecha). */
-var G=70, RW=10, X0=-6*G, X1=6*G, Z0=-3*G, Z1=10*G;   // (13/10, dueño) más ciudad abajo: así se ven los anillos alrededor de la plaza 24 de Septiembre
+var G=70, RW=10, X0=-5*G, X1=6*G, Z0=-3*G, Z1=10*G;   // (13/10, dueño) más ciudad abajo: así se ven los anillos alrededor de la plaza 24 de Septiembre
 var ALM={ ptf:{ n:'PTF', bx:35, bz:35, w:40, d:22, h:9, puertas:5, col:0x1e5fd0, marca:true, sub:'Productos terminados', cartel:'MULTIESPUMAS · PTF' },
           bz:{ n:'Banzer', bx:-105, bz:-35, w:30, d:18, h:8, puertas:4, col:0x2b7be4, marca:true, sub:'Almacén de salida', cartel:'ALMACÉN BANZER' },
           im:{ n:'Moreno', bx:315, bz:-105, w:26, d:22, h:9, puertas:3, col:0x7b3fb0, sub:'Fábrica', cartel:'INDUSTRIAS MORENO' } };
@@ -245,7 +245,7 @@ var ANILLOS=[ { s:105, rc:35, n:'1er ANILLO' }, { s:175, rc:35, n:'2do ANILLO' }
 ANILLOS.forEach(function(A, an){ var s=A.s, rc=A.rc, xa=PLAZA.x-s, xb=PLAZA.x+s, za=PLAZA.z-s, zb=PLAZA.z+s;
   AV_RECTAS.push({ eje:'x', c:za, a:xa+rc, b:xb-rc, an:an }, { eje:'x', c:zb, a:xa+rc, b:xb-rc, an:an }, { eje:'z', c:xa, a:za+rc, b:zb-rc, an:an }, { eje:'z', c:xb, a:za+rc, b:zb-rc, an:an });
   [[1,-1,0],[-1,-1,Math.PI/2],[-1,1,Math.PI],[1,1,Math.PI*1.5]].forEach(function(q){ AV_ARCOS.push({ x:PLAZA.x+q[0]*(s-rc), z:PLAZA.z+q[1]*(s-rc), r:rc, t0:q[2], an:an }); }); });
-AV_RECTAS.push({ eje:'z', c:-70, a:Z0, b:PLAZA.z-105 }, { eje:'x', c:280, a:PLAZA.x+105, b:X1 }, { eje:'x', c:210, a:X0, b:PLAZA.x-55 }, { eje:'z', c:0, a:PLAZA.z+105, b:Z1 });   // hacia Banzer, hacia Moreno, hacia el Urubó y al sur
+AV_RECTAS.push({ eje:'z', c:-70, a:Z0, b:PLAZA.z-105 }, { eje:'x', c:280, a:PLAZA.x+105, b:X1 }, { eje:'z', c:0, a:PLAZA.z+105, b:Z1 });   // hacia Banzer, hacia Moreno, hacia el Urubó y al sur
 function viaLibre(x,z){ if(x<X0-RW/2||x>X1+RW/2||z<Z0-RW/2||z>Z1+RW/2) return false;
   for(var k in ALM){ var A=ALM[k]; if(Math.abs(x-A.bx)<G/2-2 && Math.abs(z-A.bz)<G/2-2) return false; }
   return !TIENDAS.some(function(t){ var dx=x-t.x, dz=z-t.z; return dx*dx+dz*dz<18*18; }); }
@@ -321,7 +321,7 @@ function rioX(z){ return BORDE_X-150+16*Math.sin(z/95)+7*Math.sin(z/41); }
   plano(urX0-urX1-10,120,(urX0+urX1)/2,ZU,.035,Mc(0xa9cf8f));   // el pasto del Urubó
   viaCartel('CINTURÓN ECOLÓGICO', BORDE_X-16, ZU-13); viaCartel('PUENTE URUBÓ · RÍO PIRAÍ', xb0+10, ZU-13); viaCartel('URUBÓ', urX0-4, ZU+13); })();
 VIA_ON=true;
-var PATIO=M(0xcfe3bf), LOTE=M(0xf1ede3), CASACOL=[0xf7f3ea,0xf1e3cf,0xf6efd9,0xfaf7f0,0xf4d7c9,0xdfe8f2,0xf0d9c4], TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+370)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
+var PATIO=M(0xcfe3bf), LOTE=M(0xf1ede3), CASACOL=[0xf7f3ea,0xf1e3cf,0xf6efd9,0xfaf7f0,0xf4d7c9,0xdfe8f2,0xf0d9c4], TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+330)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
 function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)) return; if(enVia(x,z,Math.max(ww,dd)*.5)){ if(!enVia(x,z,2)) arbol(x,z,1+rnd()*.4); return; }   // donde pasa la curva del anillo: un árbol, no un hueco
   var r=rnd(), de=Math.abs(Math.sin(rot))>.5; EDIF_FRENTE=Math.cos(rot)<-.5?-1:1; if(LOTE_COL && LOTE_FRENTE && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
   if(r<.04+.26*za){ edificio(x,z,ww,dd,12+Math.floor(rnd()*(8+22*za))); return; }   // un edificio suelto entre las casas
@@ -333,10 +333,42 @@ var LOTE_COL=false, LOTE_FRENTE=false, EDIF_FRENTE=1, PASAJE=Mc(0x8f9db0); funct
   Object.keys(pas).forEach(function(k){ plano(4.8,a+2,x0+lw*k,cz,.05,PASAJE); plano(.25,a+2,x0+lw*k,cz,.052,VIA_RAYA); });
   var hor=!LOTE_COL && rnd()<.35; if(hor){ plano(a+2,4.8,cx,cz,.0505,PASAJE); plano(a+2,.25,cx,cz,.0525,VIA_RAYA); }   // (13/10, dueño: «todos son rectos hacia el norte, uno que otro horizontal») a veces también uno a lo largo, por el medio
   for(var j=0;j<2;j++) for(var i=0;i<n;i++){ var iz=pas[i]?2.6:1.1, de=pas[i+1]?2.6:1.1, ww=lw-iz-de, lx=x0+lw*i+iz+ww/2, sg=j===0?-1:1, fz=cz+sg*(a/2-1-fd/2), bz=cz+sg*(ad/2+.5+(hor?1.6:0)), adb=ad-(hor?3.2:0);   // dos filas, cada casa mirando a SU calle
-    LOTE_FRENTE=true; lote(lx, fz, ww, fd, j===0?Math.PI:0, za);
+    LOTE_FRENTE=true; var rk=RESTO_EN[cx+','+cz]; if(rk && rk[0]===i && rk[1]===j && !enTienda(lx,fz,ww,fd) && !enVia(lx,fz,Math.max(ww,fd)*.5)) restaurante(lx, fz, rk[3]!=null?fd:ww, rk[3]!=null?ww:fd, rk[3]!=null?rk[3]:(j===0?Math.PI:0), rk[2]); else lote(lx, fz, ww, fd, j===0?Math.PI:0, za);
     if(!enTienda(lx,bz,ww,adb) && !enVia(lx,bz,Math.max(lw,adb)*.5)) fondo(lx,bz,ww-1.2,adb);   // y su construcción del fondo hasta el medio: no queda vacío
     if(i<n-1 && !pas[i+1] && rnd()<.35) arbol(x0+lw*(i+1), fz+sg*(fd/2-1.5), .8+rnd()*.35); }   // algún árbol en la vereda, entre casa y casa (no en un pasaje)
   LOTE_COL=LOTE_FRENTE=false; EDIF_FRENTE=1; }
+/* 🍔 (13/10, dueño: «en algunos lugares poné un Burger King, y algunos restaurantes repartidos: Hot Burger, KFC, Pollos Luisín, etc.») */
+var RESTOS={ bk:{ n:'BURGER KING', f:'#f5ebdc', l:'#d62300', pared:0xf5ebdc, borde:0xd62300, toldo:0x502314 },
+  kfc:{ n:'KFC', f:'#e4002b', l:'#ffffff', pared:0xffffff, borde:0xe4002b, toldo:0xe4002b, rayas:1 },
+  hot:{ n:'HOT BURGER', f:'#e23d3d', l:'#ffd400', pared:0xfff3d6, borde:0xe23d3d, toldo:0xffd400 },
+  luisin:{ n:'POLLOS LUISÍN', f:'#f28c00', l:'#ffffff', pared:0xfff1d6, borde:0xf28c00, toldo:0xc0563a },
+  kiky:{ n:'POLLOS KIKY', f:'#ffd400', l:'#c8102e', pared:0xfffbe6, borde:0xc8102e, toldo:0xc8102e } };
+var RESTO_EN={ '-105,105':[3,0,'bk',Math.PI/2], '175,385':[2,1,'bk'], '35,175':[1,1,'kfc'], '-315,385':[2,1,'kfc'], '-245,245':[3,1,'hot'], '245,455':[1,1,'luisin'], '-175,525':[2,1,'kiky'], '105,595':[1,1,'hot'] };   // manzana: [casa, fila, marca, giro]; el BK en la esquina que marcó el dueño, mirando a la calle de al lado
+function restaurante(x,z,w,d,rot,k){ var R=RESTOS[k], g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; EST.add(g); var bd=d-5, bz=-2.5;
+  bloqueFach(0,bz,w,bd,4.4,R.pared,g); caja(w+.5,.9,bd+.5,Mc(R.borde),0,4.75,bz,g); caja(w-.5,.1,bd-.5,TECHO2,0,5.22,bz,g,false); caja(2.2,1,1.6,Mc(0xc5ced8),-w/4,5.7,bz-bd/5,g);   // el local con su franja de color
+  if(R.rayas) for(var r=-w/2+.6;r<w/2;r+=1.6) caja(.8,.92,.1,Mc(0xffffff),r,4.75,bz+bd/2+.3,g,false);   // las rayas rojas y blancas
+  caja(w*.86,.25,2.2,Mc(R.toldo),0,3.3,bz+bd/2+1.1,g);
+  var fr=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w*.9,R.n.length*1.05+2.5),1.3), new THREE.MeshBasicMaterial({ map:cartelTex(R.n,R.f,R.l,1024,150) })); fr.position.set(0,4.75,bz+bd/2+.32); g.add(fr);   // el nombre en el frente
+  [[-w/4,d/2-1.5],[w/4,d/2-1.5]].forEach(function(m){ cil(.7,.12,Mc(0xffffff),m[0],1,m[1],g,10); cil(.08,1,Mc(0x5d6b7c),m[0],.5,m[1],g,6); var u=new THREE.Mesh(new THREE.ConeGeometry(1.6,.7,8), Mc(R.borde)); u.position.set(m[0],2.6,m[1]); g.add(u); cil(.05,2.3,Mc(0x5d6b7c),m[0],1.4,m[1],g,6); });   // mesas con sombrilla afuera
+  var lx=w/2-1, lz=d/2-.5, c=Math.cos(rot), s2=Math.sin(rot), px=x+lx*c+lz*s2, pz=z-lx*s2+lz*c, sw=Math.max(5.5,R.n.length*.6);   // el cartel alto en el poste, mirando a la cámara
+  cil(.18,10,Mc(0x5d6b7c),px,5,pz,null,8);
+  var cart=new THREE.Mesh(new THREE.PlaneGeometry(sw,2.4), new THREE.MeshBasicMaterial({ map:cartelTex(R.n,R.f,R.l,Math.round(256*sw/2.4),256), side:THREE.DoubleSide })); cart.position.set(px,10.6,pz); cart.rotation.y=Math.atan2(80,92); EST.add(cart);
+  caja(sw+.3,2.7,.25,Mc(0x3d4752),px-.14*Math.sin(Math.atan2(80,92)),10.6,pz-.14*Math.cos(Math.atan2(80,92))).rotation.y=Math.atan2(80,92); }
+/* 🛒 (13/10, dueño, marcado en su captura: «ahí colocá un Hipermaxi, un supermercado con su parqueo; como referencia, cruzás el 4to anillo y
+   entrás al puente del Urubó») en la manzana pegada al 4to anillo y a la calle que va al puente. */
+function hipermaxi(cx,cz){ var a=G-RW, ROJO=Mc(0xd7261e), AM=Mc(0xffc20e), bw=a-6, bd=22, bz=cz-a/2+3+bd/2, ra=VIA_RAYA;
+  plano(a,a,cx,cz,.04,LOTE); plano(a-3,a-3,cx,cz,.045,Mc(0x8f9bab));   // el parqueo
+  bloqueFach(cx,bz,bw,bd,8,0xf4f6f9); caja(bw+.6,1.5,bd+.6,ROJO,cx,8.6,bz); caja(bw+.62,.45,bd+.62,AM,cx,7.65,bz); caja(bw-.6,.1,bd-.6,TECHO2,cx,9.4,bz,null,false);
+  [-bw/4,bw/4].forEach(function(dx){ caja(3,1.4,2.2,Mc(0xc5ced8),cx+dx,10.1,bz-3); });
+  caja(12,4.2,.3,Mc(0x8fb8d8,{ roughness:.15, metalness:.2 }),cx,2.1,bz+bd/2+.12,null,false); caja(16,.4,3.2,ROJO,cx,4.5,bz+bd/2+1.6);   // la entrada vidriada con su alero
+  var fr=new THREE.Mesh(new THREE.PlaneGeometry(22,3.2), new THREE.MeshBasicMaterial({ map:cartelTex('HIPERMAXI','#d7261e','#ffffff',1024,150) })); fr.position.set(cx,6.3,bz+bd/2+.35); EST.add(fr);
+  var p0=bz+bd/2+5, cols=[0xe23d3d,0xffffff,0x2f6fd6,0x1f2937,0xc0c7d1,0x15803d,0xf2b705];
+  [p0+5, p0+16].forEach(function(zr, r){ for(var k=-a/2+4; k<a/2-3; k+=3.4){ plano(.25,5.2,cx+k,zr,.05,ra); var kk=k+1.7; if(kk<a/2-3 && rnd()<.55) autoQuieto(cx+kk, zr+(r?.4:-.4), Math.PI/2, cols[Math.floor(rnd()*cols.length)]); } });   // cajones y autos estacionados
+  plano(a-6,.3,cx,p0+10.5,.05,ra);
+  for(var c=0;c<4;c++){ caja(1.1,.9,.8,Mc(0xd7261e),cx-a/2+3+c*1.25,.55,p0+.8); }   // carritos
+  var px=cx+a/2-4, pz=cz+a/2-3, sw=7; cil(.22,12,Mc(0x5d6b7c),px,6,pz,null,8);   // el cartel alto, mirando a la cámara
+  var cart=new THREE.Mesh(new THREE.PlaneGeometry(sw,2.6), new THREE.MeshBasicMaterial({ map:cartelTex('HIPERMAXI','#d7261e','#ffffff',700,260), side:THREE.DoubleSide })); cart.position.set(px,12.6,pz); cart.rotation.y=Math.atan2(80,92); EST.add(cart);
+  for(var t=-a/2+3; t<a/2; t+=9){ arbol(cx+t, cz+a/2-1.2, .9); } }
 function fondo(x,z,w,d){ var r=rnd();
   if(r<.55){ bloqueFach(x,z,w,d,3.4,CASACOL[Math.floor(rnd()*CASACOL.length)]); caja(w+.3,.4,d+.3,TECHO2,x,3.6,z); if(rnd()<.4) cil(.8,1.4,TANQUE,x,4.5,z,null,10); }
   else if(r<.85){ bloqueFach(x,z,w,d,3.2,0xf1e3cf); caja(w+.4,.3,d+.4,Mc(TT[Math.floor(rnd()*TT.length)]),x,3.45,z); }
@@ -373,9 +405,9 @@ function obra(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xd9c7a3)); var gris=M(0xb7c2c
   for(var i=0;i<4;i++) pallet(null,3,cx+18+i*2,0,cz+16); }
 function barrio(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,VER); for(var i=0;i<3;i++){ casa(cx-20+i*14, cz-16, COLS[(i+2)%COLS.length], [0xc0563a,0x9a4a3a,0x6b7d8f][i%3], 0); edificio(cx-20+i*14, cz+12, 10, 9, 5+Math.floor(rnd()*5)); arbol(cx-13+i*14, cz-4, .8); } kiosco(cx+22, cz-2, 0xf2b705); } function casas(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xc7deb8)); var tt=[0xc0563a,0x9a4a3a,0x6b7d8f];
   for(var i=0;i<4;i++) for(var j=0;j<3;j++){ casa(cx-21+i*14, cz-18+j*17, COLS[(i+j)%COLS.length], tt[(i+j)%3], j%2?Math.PI:0); arbol(cx-16+i*14, cz-14+j*17, .8); } }
-var ESPECIAL={ '35,105':parque, '105,35':surtidor, '-35,35':escuela, '105,-35':iglesia, '-105,35':obra, '-175,35':cuadra, '-175,-35':cuadra, '245,35':cuadra };
+var ESPECIAL={ '-315,175':hipermaxi, '35,105':parque, '105,35':surtidor, '-35,35':escuela, '105,-35':iglesia, '-105,35':obra, '-175,35':cuadra, '-175,-35':cuadra, '245,35':cuadra };
 TIENDAS.forEach(function(t){ MIRAR.push({ x:t.x, z:t.z, r:15 }); }); Object.keys(ALM).forEach(function(k){ var A=ALM[k]; MIRAR.push({ x:A.x, z:A.fz+6, r:Math.max(A.w,A.d)*.75+6 }); });
-for(var bi=-6; bi<=5; bi++) for(var bj=-3; bj<=9; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz, fe=ESPECIAL[key]||(bj>=4&&((bi*3+bj+40)%7===0)?parque:null);
+for(var bi=-5; bi<=5; bi++) for(var bj=-3; bj<=9; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz, fe=ESPECIAL[key]||(bj>=4&&((bi*3+bj+40)%7===0)?parque:null);
   if((cx===ALM.ptf.bx&&cz===ALM.ptf.bz)||(cx===ALM.bz.bx&&cz===ALM.bz.bz)||(cx===ALM.im.bx&&cz===ALM.im.bz)) continue;
   if(cx===PLAZA.x&&cz===PLAZA.z) plazaPrincipal(cx,cz); else if(fe && !cuadraCruza(cx,cz)) fe(cx,cz); else cuadra(cx,cz); }
 /* 🏪 las tiendas Heaven y Sueña, con su vidriera, su toldo y su cartel; ahí llegan las reposiciones (RPT) */
@@ -1032,7 +1064,7 @@ function elegir(c, mover){ if(!c) return; var antes=SEL; SEL=c; if(antes!==c) SE
 /* ── la cámara ── */
 var DEST=null;
 function volar(x,z,zoom){ DEST={ x0:ctl.target.x, z0:ctl.target.z, x:x, z:z, zm0:cam.zoom, zm:zoom||cam.zoom, t:0 }; }
-var IR={ ptf:function(){ return [ALM.ptf.x-8, ALM.ptf.fz+9, 1.9]; }, bz:function(){ return [ALM.bz.x-4, ALM.bz.fz+9, 1.9]; }, im:function(){ return [ALM.im.x, ALM.im.fz+8, 1.7]; }, todo:function(){ return [0,245, Z/480]; }, centro:function(){ return [PLAZA.x+2, PLAZA.z-6, 1.25]; } };
+var IR={ ptf:function(){ return [ALM.ptf.x-8, ALM.ptf.fz+9, 1.9]; }, bz:function(){ return [ALM.bz.x-4, ALM.bz.fz+9, 1.9]; }, im:function(){ return [ALM.im.x, ALM.im.fz+8, 1.7]; }, todo:function(){ return [35,245, Z/470]; }, centro:function(){ return [PLAZA.x+2, PLAZA.z-6, 1.25]; } };
 function pintarCamiones(){ var el=document.getElementById('pt-ir-cam'); if(!el) return;
   el.innerHTML=CAMS.map(function(c){ var e=c.enCalle?'🛣️':(!c.total&&!c.items.length)?'⚪':(c.total&&!c.chofer)?'⚠️':(c.total&&c.dentro>=c.total)?'✅':'⏳';
     return '<button type="button" data-cam="'+escH(c.k)+'" class="'+(SEL===c?'on':'')+'">'+e+' '+escH(c.p)+' <small style="opacity:.75">'+(c.enCalle?hechas(c)+'/'+c.paradas.length:c.dentro+'/'+c.total)+'</small></button>'; }).join(''); }
