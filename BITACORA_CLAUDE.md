@@ -14039,3 +14039,7 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   suroeste al noreste como el real) con su arenal y el agua, y la avenida del oeste (`RADIALES[3]`, Roca y Coronado) que sigue por el bosque y
   cruza el río por un puente, con carteles «RÍO PIRAÍ» y «CINTURÓN ECOLÓGICO» (`viaCartel` ahora estira el cartel al largo del texto).
   `zonaAlta` pone las torres de Equipetrol al oeste, pegadas al bosque (y algo menos al norte). Muestra v20.
+- Después (13/10): *«dame bola a todo lo que dije y las fotos… ¿por qué pusiste patio y árboles detrás de las casas? se ve feo»* → `cuadra`
+  ya NO deja el patio verde al medio: la manzana entera son lotes (5 × 4) pegados, con algún árbol asomando entre los techos (en las
+  esquinas de los lotes, 20 %), como en las fotos aéreas. Las casonas con galería van solo en las filas que dan a la calle (`LOTE_FRENTE`).
+  ⚠️ No volver a poner patios ni bosquecitos adentro de las manzanas. Muestra v21.

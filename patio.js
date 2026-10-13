@@ -312,15 +312,15 @@ function rioX(z){ return BORDE_X-150+16*Math.sin(z/95)+7*Math.sin(z/41); }
   var cr=P(tR-8); viaCartel('RÍO PIRAÍ', cr.x+9*W.dz, cr.z-9*W.dx); var cb=P(tC-14); viaCartel('CINTURÓN ECOLÓGICO', cb.x+11*W.dz, cb.z-11*W.dx); })();
 VIA_ON=true;
 var PATIO=M(0xcfe3bf), LOTE=M(0xe8e3d3), TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+235)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
-function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)||enVia(x,z,Math.max(ww,dd)*.5)) return; var r=rnd(), de=Math.abs(Math.sin(rot))>.5; if(LOTE_COL && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
+function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)||enVia(x,z,Math.max(ww,dd)*.5)) return; var r=rnd(), de=Math.abs(Math.sin(rot))>.5; if(LOTE_COL && LOTE_FRENTE && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
   if(r<.04+.26*za){ edificio(x,z,ww,dd,12+Math.floor(rnd()*(8+22*za))); return; }   // un edificio suelto entre las casas
   if(r<.11+.22*za){ edificio(x,z,ww,dd,rnd()<.55?3.8:7); return; }   // comercio de 1 o 2 pisos con su toldo, o casa de losa con tanque
   casa(x,z,COLS[Math.floor(rnd()*COLS.length)],TT[Math.floor(rnd()*TT.length)],rot,rnd()<.38?2:1,(de?dd:ww)-.6,(de?ww:dd)-.6); }   // casa de 1 o 2 pisos con techo de teja
-var LOTE_COL=false; function cuadra(cx,cz){ LOTE_COL=Math.abs(cx-PLAZA.x)<=G && Math.abs(cz-PLAZA.z)<=G; var a=G-RW-2, x0=cx-a/2, z0=cz-a/2, za=zonaAlta(cx,cz), n=5, lw=a/n, fd=13, ad=a-2*fd, m=Math.max(1,Math.floor(ad/11)), lz2=ad/m;
-  plano(a+2,a+2,cx,cz,.04,VER); plano(a-1,a-1,cx,cz,.045,LOTE); plano(ad-1,ad-1,cx,cz,.05,PATIO);
-  for(var i=0;i<n;i++){ var lx=x0+lw*(i+.5); lote(lx,z0+fd/2,lw-1.2,fd-2,Math.PI,za); lote(lx,z0+a-fd/2,lw-1.2,fd-2,0,za); }
-  for(var k=0;k<m;k++){ var lz=z0+fd+lz2*(k+.5); lote(x0+fd/2,lz,fd-2,lz2-1.2,-Math.PI/2,za); lote(x0+a-fd/2,lz,fd-2,lz2-1.2,Math.PI/2,za); }
-  for(var t=0,nt=7+Math.floor(rnd()*5);t<nt;t++) arbol(cx-ad/2+3+rnd()*(ad-6), cz-ad/2+3+rnd()*(ad-6), 1+rnd()*.7); LOTE_COL=false; }   // los patios del fondo con árboles
+var LOTE_COL=false, LOTE_FRENTE=false; function cuadra(cx,cz){ LOTE_COL=Math.abs(cx-PLAZA.x)<=G && Math.abs(cz-PLAZA.z)<=G; var a=G-RW-2, x0=cx-a/2, z0=cz-a/2, za=zonaAlta(cx,cz), n=5, lw=a/n, filas=4, fd=a/filas;   // (13/10, dueño: «¿por qué pusiste patio y árboles detrás de las casas? se ve feo») la manzana llena de casas, como en las fotos
+  plano(a+2,a+2,cx,cz,.04,VER); plano(a-1,a-1,cx,cz,.045,LOTE);
+  for(var j=0;j<filas;j++) for(var i=0;i<n;i++){ LOTE_FRENTE=(j===0||j===filas-1); lote(x0+lw*(i+.5), z0+fd*(j+.5), lw-.9, fd-.9, j<filas/2?Math.PI:0, za); }
+  for(var t=0;t<n*filas;t++) if(rnd()<.2) arbol(x0+lw*(1+Math.floor(rnd()*(n-1))), z0+fd*(1+Math.floor(rnd()*(filas-1))), .9+rnd()*.5);   // algún árbol asomando entre los techos
+  LOTE_COL=LOTE_FRENTE=false; }
 function casa(x,z,col,techo,rot,pisos,w,d){ w=w||7; d=d||6; var h=pisos===2?7:4, g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); bloqueFach(0,0,w,d,h,col,g); var t=M(techo), s=d/2+.9, ta=caja(w+.4,.35,s,t,0,h+.75,-d/4,g); ta.rotation.x=-.55; var tb=caja(w+.4,.35,s,t,0,h+.75,d/4,g); tb.rotation.x=.55; }   // (13/10, dueño) a dos aguas hacia afuera: antes quedaban en V
 function parque(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,PASTO); plano(G-RW,3,cx,cz,.05,M(0xe8dcc0)); plano(3,G-RW,cx,cz,.05,M(0xe8dcc0));
   cil(4,.6,M(0xcfd8e3),cx,.3,cz,null,32); cil(3.3,.2,Mbrilla(0x7fc4ec,0x7fc4ec),cx,.65,cz,null,32); cil(.4,2.6,M(0xcfd8e3),cx,1.3,cz,null,12);
