@@ -13876,3 +13876,9 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   confundir, la «e» se saltea. Página: `SCRIPT_VERSION_ESPERADA` 12-f, textos del «🔔 Mañana» (17:00 AM / 19:00 PM).
 - `test_wa_bot` §5c (→ 113), `test_wa_pagina` (el pie), `test_servidor` §11.
 - Volver atrás: ✏️ a la versión de la 12-d que anotó el dueño Y pegar la 12-d de `f24447c533106ba70859f83a8c0de5b41ecea473` (3.294 líneas).
+
+### 13/10 — respuestas del dueño a los pendientes
+- Token de Kommo (vence ~28/10): *«lo veo el 27»*. Recordárselo ese día.
+- Verificar la empresa en Meta: no por ahora (*«apenas tenemos 10-20 por día»*; el límite sin verificar es ~250 clientes por día).
+- David en `WA_LOGISTICA`: *«aún no»*.
+- GPS: *«ya tengo el api del GPS»* → se le pidió la documentación (sin el token, que va a Propiedades del script) y qué quiere que haga.
