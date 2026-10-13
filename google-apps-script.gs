@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-12-f';   // ⬅️ recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-13-a';   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-12-f';
+  var ESTA_VERSION = '2026-10-13-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -246,6 +246,7 @@ function probarAntesDeImplementar() {
     reservasLeer_: typeof reservasLeer_, reservaAnotar_: typeof reservaAnotar_, reservaProcesar_: typeof reservaProcesar_,   // (2026-10-02-a)
     histGuardar_: typeof histGuardar_, histLeer_: typeof histLeer_,   // (2026-10-09-a)
     waAlGuardar_: typeof waAlGuardar_, waRepaso: typeof waRepaso, waDespierta: typeof waDespierta,   // (2026-10-11-a)
+    gpsRepaso: typeof gpsRepaso, gpsParaLista_: typeof gpsParaLista_, probarGps: typeof probarGps,   // (2026-10-13-a)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -429,11 +430,229 @@ function probarAntesDeImplementar() {
     }
   } catch (e) { ojo('No pude mirar el bot de WhatsApp: ' + motivo(e)); }
 
+  /* 12. 🛰️ (2026-10-13-a) El GPS de los camiones. Solo lee; informa, no frena (el panel no depende del GPS). */
+  try {
+    var cG = gpsConfig_();
+    if (!cG.ok) bien('El GPS todavía no está configurado (faltan ' + cG.faltan.join(', ') + ' en las Propiedades del script): el panel sigue igual, sin posiciones.');
+    else {
+      if (!kTriggersDe_('gpsRepaso').length) ojo('El GPS está configurado pero falta su repaso de cada minuto: ejecutá «instalarDisparadores» una vez.');
+      var uG = waJsonProp_('GPS_ULTIMO', null), tG = uG && Date.parse(uG.ts);
+      if (!tG) bien('El GPS está configurado; todavía no corrió ningún repaso (ejecutá «probarGps» para verlo andar).');
+      else if (uG.error) ojo('El último repaso del GPS (el ' + horaBolivia(tG) + ') avisó: «' + String(uG.error).slice(0, 160) + '». Ejecutá «probarGps» para ver qué pasa.');
+      else bien('El GPS anda: el último repaso (el ' + horaBolivia(tG) + ') vio ' + uG.n + ' unidad(es)' + (uG.placas ? ': ' + uG.placas : '') + '.');
+    }
+  } catch (e) { ojo('No pude mirar el GPS: ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
   if (typeof Logger !== 'undefined') Logger.log(lineas.join('\n'));
   return { ok: !malas, malas: malas, avisos: avisos, lineas: lineas, veredicto: veredicto };
+}
+
+/* ============================================================================
+ * 🛰️ EL GPS DE LOS CAMIONES (2026-10-13-a, §4ko). El dueño (13/10): *«Sí, armá lo del GPS»*.
+ * La plataforma del GPS (service24gps; su documentación está en docs.redgps.com) se usa con dos pedidos:
+ *   · gettoken: apikey + usuario + contraseña → un token que vale 6 horas;
+ *   · getdata:  apikey + token → cada unidad con su placa, posición, velocidad, motor, conductor y hora del reporte.
+ *   Pide al menos 30 segundos entre un pedido y otro: `gpsRepaso` hace UNO por vuelta (el token o las posiciones, nunca los dos).
+ * 🔐 Lo que da la empresa del GPS va SOLO en las Propiedades del script (⚙️ Configuración del proyecto): GPS_APIKEY, GPS_USUARIO y
+ *   GPS_CLAVE. Nunca en el código (el repo es público) ni en el chat. El token lo pide y lo guarda el script (GPS_TOKEN_AUTO: no tocar).
+ *   Sin las tres, todo esto no hace nada (ni un pedido, ni una propiedad escrita) y el panel sigue igual que antes.
+ * · `gpsRepaso` (disparador cada minuto; de GPS_HORA_DESDE a GPS_HORA_HASTA de Bolivia, ni domingo ni feriado) deja las posiciones
+ *   en la caché (GPS_CACHE_SEG) y un resumen en la propiedad GPS_ULTIMO. La lectura del panel (`list`) las lleva en `gps`: ningún
+ *   pedido más a la plataforma por cada panel abierto. Si el repaso se para, a los 10 minutos el panel deja de mostrarlas.
+ * · «Salió» (propiedad GPS_DIA, se reinicia cada día): un camión que estuvo a menos de GPS_DENTRO_M de PTF o de Banzer y después pasa
+ *   GPS_FUERA_MIN minutos seguidos a más de GPS_SALIDA_M de los dos. La hora es la de cuando se alejó. Un ir y venir corto (de PTF
+ *   a Banzer a cargar) no cuenta. Si ese día no estuvo adentro (durmió afuera, o el GPS empezó a reportar con el camión en la calle),
+ *   no se adivina: queda el botón «🚚 Ya salió» del panel, que sigue mandando.
+ * · ▶️ Desde el editor: `probarGps` (pide y muestra lo que devuelve la plataforma, sin guardar posiciones) y `estadoGps`.
+ * ========================================================================== */
+var GPS_API = 'https://api.service24gps.com/api/v1/';
+var GPS_MIN_MS = 30000;                       // la plataforma: 30 s entre pedidos
+var GPS_TOKEN_MS = (5 * 60 + 30) * 60000;     // el token vale 6 h: se renueva a las 5 h 30
+var GPS_CACHE_SEG = 600;                      // las posiciones, 10 minutos en la caché
+var GPS_HORA_DESDE = 6, GPS_HORA_HASTA = 21;  // hora de Bolivia
+var GPS_DENTRO_M = 300, GPS_SALIDA_M = 700, GPS_FUERA_MIN = 15;
+/* = ALM_UBIC de pedidos.html (test_gps §1 los compara). Banzer está ubicado por su dirección escrita: si el dueño manda el pin,
+   la propiedad GPS_DEPOSITOS ([{"id":"banzer","n":"Banzer","lat":…,"lng":…}, …]) lo corrige sin volver a implementar. */
+var GPS_DEPOSITOS = [ { id:'ptf', n:'PTF', lat:-17.7489125, lng:-63.1429219 }, { id:'banzer', n:'Banzer', lat:-17.7197548, lng:-63.1631138 } ];
+/* = VEHICULO_PLACA de pedidos.html (test_gps §1): solo para que `probarGps` diga qué camión es cada placa. */
+var GPS_PLACAS = { '6663CCP':'Foton nuevo', '6409TIG':'Carry', '6021URL':'Foton insumo', '5655KSC':'Foton encarpado' };
+
+function gpsPlaca_(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function gpsConfig_() {
+  var k = prop_('GPS_APIKEY'), u = prop_('GPS_USUARIO'), c = prop_('GPS_CLAVE');
+  return { ok: !!(k && u && c), apikey: k, usuario: u, clave: c,
+           faltan: [['GPS_APIKEY', k], ['GPS_USUARIO', u], ['GPS_CLAVE', c]].filter(function (x) { return !x[1]; }).map(function (x) { return x[0]; }) };
+}
+function gpsDepositos_() {
+  try {
+    var d = JSON.parse(prop_('GPS_DEPOSITOS') || 'null');
+    if (Array.isArray(d) && d.length && d.every(function (x) { return x && isFinite(Number(x.lat)) && isFinite(Number(x.lng)) && x.lat !== '' && x.lng !== ''; })) return d;
+  } catch (e) {}
+  return GPS_DEPOSITOS;
+}
+function gpsDistM_(la1, lo1, la2, lo2) {
+  var r = Math.PI / 180, dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r;
+  var a = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) * Math.sin(dLo / 2);
+  return 2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+/** El depósito más cerca de un punto: { id, n, m (metros) }. */
+function gpsCerca_(la, lo) {
+  var best = null;
+  gpsDepositos_().forEach(function (d) { var m = gpsDistM_(la, lo, Number(d.lat), Number(d.lng)); if (!best || m < best.m) best = { id: String(d.id || ''), n: String(d.n || d.id || ''), m: m }; });
+  return best;
+}
+function gpsHora_(ms) { return new Date(ms - 4 * 3600000).toISOString().slice(11, 16); }   // HH:MM de Bolivia (UTC−4 fijo)
+/** UN pedido a la plataforma. { ok, status, data } o { ok:false, status, error }. Nunca tira, nunca dice la apikey ni el token. */
+function gpsPedir_(accion, campos) {
+  try { PropertiesService.getScriptProperties().setProperty('GPS_ULT_MS', String(Date.now())); } catch (e) {}
+  var r;
+  try { r = UrlFetchApp.fetch(GPS_API + accion, { method: 'post', payload: campos, muteHttpExceptions: true }); }
+  catch (e) { return { ok: false, status: 0, error: 'no hubo conexión con el GPS (' + String((e && e.message) || e).slice(0, 120) + ')' }; }
+  var code = Number(r.getResponseCode()) || 0, txt = String(r.getContentText() || ''), j = null;
+  try { j = JSON.parse(txt); } catch (e) { j = null; }
+  var st = (j && j.status != null && isFinite(Number(j.status))) ? Number(j.status) : code;
+  if (code >= 200 && code < 300 && j && st === 200) return { ok: true, status: st, data: j.data };
+  var msg = j ? (j.message || j.error || j.mensaje || (typeof j.data === 'string' ? j.data : '')) : txt.replace(/<[^>]*>/g, ' ').slice(0, 120);
+  return { ok: false, status: st || code, error: 'el GPS contestó ' + (st || code) + (msg ? ': ' + String(msg).replace(/\s+/g, ' ').trim().slice(0, 160) : '') };
+}
+function gpsTokenLeer_() {
+  try { var o = JSON.parse(prop_('GPS_TOKEN_AUTO') || 'null'); if (o && o.k && Number(o.hasta) > Date.now()) return String(o.k); } catch (e) {}
+  return '';
+}
+function gpsTokenPedir_(cfg) {
+  var r = gpsPedir_('gettoken', { apikey: cfg.apikey, token: '', username: cfg.usuario, password: cfg.clave });
+  if (!r.ok) return r;
+  var k = typeof r.data === 'string' ? r.data : (r.data && (r.data.token || r.data.Token)) || '';
+  if (!k) return { ok: false, error: 'el GPS contestó sin token' };
+  PropertiesService.getScriptProperties().setProperty('GPS_TOKEN_AUTO', JSON.stringify({ k: String(k), hasta: Date.now() + GPS_TOKEN_MS }));
+  return { ok: true, token: String(k) };
+}
+function gpsNum_(v) { var t = String(v == null ? '' : v).trim().replace(',', '.').replace(/^\+/, ''); if (t === '') return null; var n = Number(t); return isFinite(n) ? n : null; }
+/** Lo que devuelve getdata, en corto. Sin coordenadas (o en 0,0) no entra. `r` = hora del reporte (pedida en UTC). */
+function gpsUnidades_(data, crudo) {
+  if (!Array.isArray(data)) return [];
+  return data.map(function (u) {
+    if (!u) return null;
+    var la = gpsNum_(u.Latitude), lo = gpsNum_(u.Longitude);
+    if (la == null || lo == null || (la === 0 && lo === 0) || Math.abs(la) > 90 || Math.abs(lo) > 180) return null;
+    var rep = String(u.ReportDate || ''), rms = Date.parse(rep.replace(' ', 'T') + 'Z');
+    var x = { p: gpsPlaca_(u.UnitPlate || u.UnitId), pl: String(u.UnitPlate || '').slice(0, 20), id: String(u.UnitId || '').slice(0, 40),
+              la: Math.round(la * 1e6) / 1e6, lo: Math.round(lo * 1e6) / 1e6, v: Math.max(0, Math.round(gpsNum_(u.GpsSpeed) || 0)),
+              m: String(u.Ignition) === '1' ? 1 : 0, r: isFinite(rms) ? rms : 0, c: String(u.Conductor || '').slice(0, 40) };
+    if (crudo) x.rd = rep.slice(0, 25);
+    return x;
+  }).filter(function (x) { return x && x.p; });
+}
+/** «Salió» y «volvió» de cada camión, con lo de hoy guardado en GPS_DIA. Agrega a cada unidad: dep (el depósito más cerca),
+    f (1 = afuera), s (la primera salida del día, HH:MM), sd (de qué depósito), ul (la última salida), vu (volvió, HH:MM). */
+function gpsSalidas_(U, ahora) {
+  var hoy = waBo_(ahora).hoy, st = null;
+  try { st = JSON.parse(prop_('GPS_DIA') || 'null'); } catch (e) { st = null; }
+  if (!st || st.f !== hoy || !st.u) st = { f: hoy, u: {} };
+  U.forEach(function (x) {
+    var s = st.u[x.p] || (st.u[x.p] = {}), c = gpsCerca_(x.la, x.lo);
+    var dentro = !!c && c.m <= GPS_DENTRO_M, lejos = !c || c.m >= GPS_SALIDA_M;
+    if (dentro) {
+      if (s.a === 0 && s.x && s.cu) s.v = gpsHora_(ahora);      // volvió de un viaje que contó
+      s.a = 1; s.de = c.id; s.x = 0; s.cu = 0;
+    } else if (lejos) {
+      if (s.a === 1) { s.a = 0; s.x = ahora; s.xd = s.de || ''; s.cu = 0; }
+      else if (s.a == null) s.a = 0;                             // primero visto afuera: no se sabe cuándo salió
+      else if (s.x && !s.cu && ahora - s.x >= GPS_FUERA_MIN * 60000) {
+        s.cu = 1; s.n = (Number(s.n) || 0) + 1; s.ul = gpsHora_(s.x); s.v = '';
+        if (!s.s) { s.s = s.ul; s.sd = s.xd || ''; }
+      }
+    }                                                            // entre medio: queda como estaba
+    x.dep = c ? { id: c.id, n: c.n, m: Math.round(c.m) } : null;
+    x.f = dentro ? 0 : (lejos ? 1 : (s.a === 0 ? 1 : 0));
+    x.s = s.s || ''; x.sd = s.sd || ''; x.ul = s.ul || ''; x.vu = s.v || '';
+  });
+  try { PropertiesService.getScriptProperties().setProperty('GPS_DIA', JSON.stringify(st)); } catch (e) {}
+  return st;
+}
+function gpsGuardarRes_(res) { try { PropertiesService.getScriptProperties().setProperty('GPS_ULTIMO', JSON.stringify(res)); } catch (e) {} }
+/** ⏱️ El disparador de cada minuto. Un pedido por vuelta, en horario de reparto. */
+function gpsRepaso() {
+  var t0 = Date.now(), B = waBo_(t0), cfg = gpsConfig_();
+  if (!cfg.ok) return { ok: false, error: 'sin configurar' };            // sin las tres propiedades no escribe nada
+  if (B.hora < GPS_HORA_DESDE || B.hora >= GPS_HORA_HASTA || waDow_(B.hoy) === 0 || feriadoGs_(B.hoy)) return { ok: false, error: 'fuera de horario' };
+  if (t0 - (Number(prop_('GPS_ULT_MS')) || 0) < GPS_MIN_MS) return { ok: false, error: 'muy seguido' };
+  var res = { ts: new Date(t0).toISOString(), n: 0, error: '' };
+  var tok = gpsTokenLeer_();
+  if (!tok) {
+    var rt = gpsTokenPedir_(cfg);
+    res.token = rt.ok ? 'nuevo' : ''; if (!rt.ok) res.error = 'token: ' + rt.error;
+    gpsGuardarRes_(res); return res;                                     // las posiciones, en la próxima vuelta (30 s)
+  }
+  var r = gpsPedir_('getdata', { apikey: cfg.apikey, token: tok, UseUTCDate: '1', sensores: '0' });
+  if (r.ok && !Array.isArray(r.data)) r = { ok: false, status: 200, error: 'el GPS contestó sin la lista de unidades' + (typeof r.data === 'string' ? ': ' + r.data.slice(0, 120) : '') };
+  if (!r.ok) {
+    /* Un token vencido o rechazado: se olvida y la próxima vuelta pide otro. */
+    if (r.status === 401 || r.status === 403 || /token/i.test(r.error)) { try { PropertiesService.getScriptProperties().deleteProperty('GPS_TOKEN_AUTO'); } catch (e) {} r.error += ' (pido otro token en la próxima vuelta)'; }
+    res.error = r.error; gpsGuardarRes_(res); return res;
+  }
+  var U = gpsUnidades_(r.data);
+  gpsSalidas_(U, t0);
+  var c = getCache_();
+  if (c) { try { c.put('gps_pos', JSON.stringify({ t: t0, u: U }), GPS_CACHE_SEG); } catch (e) { res.error = 'caché: ' + String((e && e.message) || e).slice(0, 80); } }
+  res.ok = true; res.n = U.length; res.placas = U.map(function (x) { return x.pl || x.id; }).slice(0, 20).join(', ');
+  gpsGuardarRes_(res); return res;
+}
+/** Lo que va en la lectura del panel: las posiciones de la caché, o nada. Sin red. */
+function gpsParaLista_() {
+  var c = getCache_(); if (!c) return null;
+  try { var t = c.get('gps_pos'); return t ? JSON.parse(t) : null; } catch (e) { return null; }
+}
+/** ▶️ DESDE EL EDITOR (Ejecutar ▸ probarGps): pide a la plataforma y muestra qué camiones ve, con la placa, a qué camión del panel
+    corresponde, la velocidad, el motor, a cuánto está de PTF o de Banzer y la hora del reporte. No guarda posiciones. Si tiene que
+    pedir el token, espera los 30 segundos que pide la plataforma antes de pedir las posiciones (tarda ~1 minuto). */
+function probarGps() {
+  var L = [], cfg = gpsConfig_();
+  if (!cfg.ok) L.push('❌ Faltan en las Propiedades del script: ' + cfg.faltan.join(', ') + '. Van en ⚙️ Configuración del proyecto → Propiedades del script (nunca en el código ni por el chat).');
+  else {
+    var esperar = function () { var w = GPS_MIN_MS - (Date.now() - (Number(prop_('GPS_ULT_MS')) || 0)); if (w > 0) { L.push('⏳ Espero ' + Math.ceil(w / 1000) + ' s (la plataforma pide 30 s entre pedidos)…'); Utilities.sleep(w + 500); } };
+    var tok = gpsTokenLeer_();
+    if (tok) L.push('✅ Hay un token vigente (lo renueva solo cada 5 h 30).');
+    else {
+      esperar();
+      var rt = gpsTokenPedir_(cfg);
+      if (rt.ok) { tok = rt.token; L.push('✅ La plataforma dio el token: la apikey, el usuario y la clave andan.'); }
+      else L.push('❌ La plataforma no dio el token: ' + rt.error + '. Revisá GPS_APIKEY, GPS_USUARIO y GPS_CLAVE (el usuario tiene que estar habilitado para el servicio web).');
+    }
+    if (tok) {
+      esperar();
+      var r = gpsPedir_('getdata', { apikey: cfg.apikey, token: tok, UseUTCDate: '1', sensores: '0' });
+      if (r.ok && !Array.isArray(r.data)) r = { ok: false, error: 'contestó sin la lista de unidades' };
+      if (!r.ok) L.push('❌ Las posiciones: ' + r.error);
+      else {
+        var U = gpsUnidades_(r.data, true), ahora = Date.now();
+        L.push('✅ La plataforma ve ' + U.length + ' unidad(es) (hora de Bolivia: ' + gpsHora_(ahora) + '):');
+        U.forEach(function (x) {
+          var c = gpsCerca_(x.la, x.lo), cam = GPS_PLACAS[x.p];
+          var hace = x.r ? Math.round((ahora - x.r) / 60000) : null;
+          L.push('  · ' + (x.pl || x.id) + (cam ? ' = ' + cam : ' (no es ningún camión del panel)') + ' · ' + x.v + ' km/h · motor ' + (x.m ? 'encendido' : 'apagado') +
+                 ' · a ' + (c.m < 1000 ? Math.round(c.m) + ' m' : (c.m / 1000).toFixed(1) + ' km') + ' de ' + c.n +
+                 ' · reporte «' + x.rd + '»' + (hace != null ? ' (= ' + gpsHora_(x.r) + ' de Bolivia, hace ' + hace + ' min)' : '') + (x.c ? ' · ' + x.c : ''));
+        });
+        Object.keys(GPS_PLACAS).forEach(function (p) { if (!U.some(function (x) { return x.p === p; })) L.push('  ⚠️ El ' + GPS_PLACAS[p] + ' (' + p + ') no aparece en el GPS.'); });
+        L.push('Si la hora del reporte no coincide con la de Bolivia, mandame una captura de este registro.');
+      }
+    }
+    if (!kTriggersDe_('gpsRepaso').length) L.push('⚠️ Falta el repaso de cada minuto: ejecutá «instalarDisparadores» una vez.');
+  }
+  if (typeof Logger !== 'undefined') Logger.log(L.join('\n'));
+  return { lineas: L };
+}
+/** ▶️ Cómo anda el GPS, sin pedir nada a la plataforma: configuración (sin valores), último repaso, salidas de hoy. */
+function estadoGps() {
+  var cfg = gpsConfig_(), tk = null; try { tk = JSON.parse(prop_('GPS_TOKEN_AUTO') || 'null'); } catch (e) {}
+  var s = { configurado: cfg.ok, faltan: cfg.faltan, token: !!(tk && Number(tk.hasta) > Date.now()), repasoInstalado: kTriggersDe_('gpsRepaso').length > 0,
+            ultimo: waJsonProp_('GPS_ULTIMO', null), hoy: waJsonProp_('GPS_DIA', null), depositos: gpsDepositos_() };
+  if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
+  return s;
 }
 
 /* ============================================================================
@@ -896,7 +1115,12 @@ function doPostCuerpo_(e) {
      fotos, al entrar, al cambiar algo tarda minutos"*. */
   /* 📦 (2026-09-30-a) Con `ahora`, y a pedido del panel comprimida (`z`) o solo lo cambiado (`desde`): ver leerLista_. Un
      panel que no manda nada de eso recibe lo de siempre (la planilla entera), con tres datos de más que no usa. */
-  if (action === 'list') { latidoAnotar_(body); return listaResponder_(leerLista_(body), body); }
+  if (action === 'list') {
+    latidoAnotar_(body);
+    var lst = leerLista_(body), gps = gpsParaLista_();   // 🛰️ (2026-10-13-a) las posiciones de los camiones, de la caché: sin red
+    if (gps) lst.gps = gps;
+    return listaResponder_(lst, body);
+  }
   // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
   if (action === 'rechazos') return jsonOut({ ok:true, version:SCRIPT_VERSION, rechazos: rechazosInforme_() });
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
@@ -3009,11 +3233,12 @@ function kommoRepaso() {
 /** ▶️ CORRER UNA VEZ desde el editor (Ejecutar ▸ instalarDisparadores): deja el repaso
     cada 5 minutos. Pide autorización la primera vez; es normal. */
 function instalarDisparadores() {
-  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas', 'waRepaso'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
+  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas', 'waRepaso', 'gpsRepaso'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
   ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('barrerFotosHuerfanas').timeBased().everyDays(1).atHour(3).create();   // 🖼️ §4ep, de madrugada
   ScriptApp.newTrigger('waRepaso').timeBased().everyMinutes(5).create();                    // 🤖 (2026-10-11-a) el bot de WhatsApp; apagado mientras WA_ACTIVO no sea 1
-  var msg = '✅ Listo: kommoRepaso y waRepaso (el bot de WhatsApp) corren cada 5 minutos y barrerFotosHuerfanas una vez por día (3 am). Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
+  ScriptApp.newTrigger('gpsRepaso').timeBased().everyMinutes(1).create();                   // 🛰️ (2026-10-13-a) el GPS; no hace nada sin GPS_APIKEY/GPS_USUARIO/GPS_CLAVE
+  var msg = '✅ Listo: kommoRepaso y waRepaso (el bot de WhatsApp) corren cada 5 minutos, gpsRepaso (el GPS de los camiones) cada minuto y barrerFotosHuerfanas una vez por día (3 am). Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
   if (typeof Logger !== 'undefined') Logger.log(msg);
   return msg;
 }

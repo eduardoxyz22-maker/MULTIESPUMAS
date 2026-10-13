@@ -14107,3 +14107,28 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   por unidad `UnitPlate`, `Latitude`, `Longitude`, `GpsSpeed`, `Ignition`, `ReportDate`, `Conductor`). Mínimo 30 s entre consultas.
   Plan: el `.gs` consulta (disparador ≥1 min), guarda el token 6 h en caché y las posiciones por placa; el panel las lee. Las llaves van en
   Propiedades del script (`GPS_APIKEY`, `GPS_USUARIO`, `GPS_CLAVE`), nunca en el chat ni en el código.
+
+## §4ko — 🛰️ El GPS de los camiones (13/10)
+- El dueño: *«Sí, armá lo del GPS y cómo obtengo la api key y token?»*, con la documentación de la plataforma (service24gps, la de
+  docs.redgps.com): `gettoken` (apikey + `username` + `password` + `token` vacío → `data` = token de 6 h) y `getdata` (apikey + token →
+  `data` = lista de unidades con `UnitPlate`, `Latitude`/`Longitude` con signo, `GpsSpeed`, `Ignition`, `ReportDate`, `Conductor`).
+  Al menos 30 s entre pedidos. No encontré documentación pública: todo sale de las dos páginas que pegó.
+- **La apikey la da la empresa del GPS** (la doc dice «APIKEY entregada»), con un usuario habilitado para el servicio web. **El token
+  NO lo saca el dueño**: lo pide el script con apikey + usuario + clave y lo renueva solo a las 5 h 30.
+- **Servidor `2026-10-13-a`** (bloque «🛰️ EL GPS DE LOS CAMIONES», antes del historial del stock): `gpsRepaso` (cada minuto, 6-21 h de
+  Bolivia, ni domingo ni feriado, un pedido por vuelta: el token o las posiciones), `gpsSalidas_` (GPS_DIA), `gpsParaLista_` (la
+  lectura `list` lleva `gps`, de la caché), `probarGps` y `estadoGps` desde el editor, `probarAntesDeImplementar` §12, el disparador en
+  `instalarDisparadores`. Pide `UseUTCDate=1` y lee `ReportDate` en UTC: **la primera vez, `probarGps` muestra la hora cruda y la
+  traducida** para confirmarlo. Payload como formulario (`payload` objeto = urlencoded; la doc usa `--form`): si la plataforma no lo
+  acepta, `probarGps` lo va a decir y se cambia a multipart.
+- **«Salió»**: dentro (≤300 m) → lejos (≥700 m) 15 minutos seguidos. La hora es cuando se alejó. Elegido así para que ir de PTF a Banzer
+  a cargar (≈10-15 min) no sea «salió». Banzer está por su dirección escrita (`aprox`): si el pin real queda a más de 300 m, ningún
+  camión «entra» a Banzer — se corrige con la propiedad `GPS_DEPOSITOS` (o mandando el pin). `probarGps` dice a cuántos metros está
+  cada camión del depósito más cerca: sirve para calibrar.
+- **Página**: «salió» del GPS solo si nadie tocó «🚚 Ya salió» (el botón manda y solo eso se deshace). Mis pedidos, la ficha del camión,
+  el reclamo de David y la ciudad usan `camionSalio`: todos lo ven solos. Mapa de entregas: 🚚 por placa (Hoy). Ciudad: el camión va
+  al punto del GPS por las calles y se queda; si el GPS dice que volvió a un depósito, vuelve al andén.
+- Cuota de Apps Script (gmail, 90 min/día de disparadores): ~900 vueltas × 1-2 s ≈ 15-30 min. Con Kommo y el bot debería entrar; si
+  Ejecuciones muestra «Servicio usado demasiadas veces», se puede pasar el repaso a cada 5 minutos.
+- `PATIO_V='20261013d'`. Pruebas: `test_gps.js` (46), `test_gps_pagina.js` (20), `test_servidor` §11 (versión).
+

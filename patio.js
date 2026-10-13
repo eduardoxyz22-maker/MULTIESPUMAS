@@ -58,6 +58,11 @@ function ptDePedido(p){
   var q=geoAEscena(Number(g.lat), Number(g.lng));
   return { x:Math.max(X0+8, Math.min(X1-8, q.x)), z:Math.round(Math.max(Z0, Math.min(Z1, q.z))/G)*G };
 }
+/* 🛰️ (§4ko) dónde dice el GPS que está el camión, en la escena (la misma cuenta que el pin de un pedido): solo hoy */
+function gpsEscenaDe(veh){ var x=(typeof camionGps==='function') ? camionGps(veh) : null; if(!x) return null;
+  var q=geoAEscena(Number(x.la), Number(x.lo));
+  return { x:Math.max(X0+8, Math.min(X1-8, q.x)), z:Math.round(Math.max(Z0, Math.min(Z1, q.z))/G)*G, v:x.v, m:x.m, f:x.f, vu:x.vu||'',
+           hace:(typeof gpsHace==='function' ? gpsHace(x) : ''), donde:(typeof gpsDondeTxt==='function' ? gpsDondeTxt(x) : '') }; }
 function diaDe(f, n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return (typeof isoLocal==='function') ? isoLocal(d) : d.toISOString().slice(0,10); }
 function delDia(p){ return !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p); }
 function patioDatos(){
@@ -80,7 +85,8 @@ function patioDatos(){
     });
     cams.push({ k:c.k, p:(typeof VEHICULO_PLACA!=='undefined' && VEHICULO_PLACA[c.k]) || c.k, col:COL_CAM[i++%COL_CAM.length],
       alm:soloBz?'bz':'ptf', lineas:lin, chofer:(c.choferes||[]).join(' / '), conPedidos:(c.stops||[]).length>0,
-      stops:stops, salio:camionSalio(fecha, c.k) });
+      stops:stops, salio:camionSalio(fecha, c.k), salioMano:!!(typeof salioClave==='function' && salioClave(fecha, c.k)),
+      gps:(fecha===hoy ? gpsEscenaDe(c.k) : null) });
   });
   var list=STATE.filter(function(p){ return delDia(p) && p.fecha===fecha; });
   var camDe=function(L){ var v=L.map(function(p){ return vehiculoDe(p)||''; }).filter(Boolean); return v.length ? ((typeof VEHICULO_PLACA!=='undefined' && VEHICULO_PLACA[v[0]])||v[0]) : ''; };
@@ -987,14 +993,15 @@ function sincronizar(D, animar){
     var c=camPorK(d.k);
     if(!c){ c={ k:d.k, p:d.p, col:d.col, items:[], byKey:{}, paradas:[], anden:0, slot:CAMS.length }; CAMS.push(c);
       var t=camion(c); CAMG[c.k]=t; c.mini=etiqueta('mini', escH(c.p)); ETQ.push({ el:c.mini, obj:t, dy:5.2 }); }
-    c.alm=d.alm; c.chofer=d.chofer; c.paradas=d.stops; c.salio=d.salio; c.conPedidos=d.conPedidos;
+    c.alm=d.alm; c.chofer=d.chofer; c.paradas=d.stops; c.salio=d.salio; c.salioMano=d.salioMano; c.conPedidos=d.conPedidos;
+    c.gps=d.gps; c.volvio=!!(d.gps && !d.gps.f && d.gps.vu);   // 🛰️ (§4ko) el GPS dice que volvió a PTF o Banzer: vuelve a su andén
   });
   /* los andenes: salteados (0, 2, 4…) mientras alcancen, así cada camión tiene su carril de espera al costado sin pisar al vecino */
   ['ptf','bz'].forEach(function(k){ var L=CAMS.filter(function(c){ return c.alm===k; }), np=ALM[k].puertas, salto=L.length<=Math.ceil(np/2);
     L.forEach(function(c,i){ var pu=salto ? i*2 : i%np; if(c.anden!==pu && !c.enCalle){ c.anden=pu; c.movido=true; } else c.anden=pu; }); });
   D.cams.forEach(function(d){ itemsSync(camPorK(d.k), d, animar); });
   CAMS.forEach(function(c){
-    if(c.salio){
+    if(c.salio && !c.volvio){
       if(!c.enCalle && !c.anim){ if(animar && CAMG[c.k].visible) salir(c); else arrancar(c); }
       else if(c.enCalle){ var fr=c.paradas.map(function(s){ return s.id+(s.ok?'✓':'')+(s.pt?s.pt.x+','+s.pt.z:''); }).join('|'); if(fr!==c.firmaRuta) armarRuta(c, c.pos); }
     } else if(c.enCalle || c.anim || c.movido || !c.monta){ aparcar(c); c.movido=false; }
@@ -1027,7 +1034,7 @@ function pintarPines(){ PINES.forEach(function(p){ esc.remove(p.g); if(p.e){ var
 
 /* ═════════ la ficha del camión elegido, las alertas, los números y las pestañas ═════════ */
 function estadoChip(c){
-  if(c.enCalle) return '<span class="chip az">🛣️ Salió '+escH(c.salio)+' · '+hechas(c)+' de '+c.paradas.length+' entregados</span>';
+  if(c.enCalle) return '<span class="chip az">'+(c.salioMano?'🛣️':'🛰️')+' Salió '+escH(c.salio)+' · '+hechas(c)+' de '+c.paradas.length+' entregados</span>';
   if(!c.total && !c.items.length) return '<span class="chip">Sin carga '+(D0&&D0.hoy?'hoy':'para ese día')+'</span>';
   if(!c.total) return '<span class="chip ro">⛔ Todo sin stock</span>';
   if(c.dentro>=c.total && !c.chofer) return '<span class="chip ro">🧑‍✈️ Cargado, sin chofer</span>';
@@ -1043,12 +1050,14 @@ function pintarFicha(){
   var A=ALM[c.alm], hoy=!!(D0 && D0.hoy);
   var h='<div class="cab"><div class="ic">🚚</div><div><small>Camión · '+A.n+' andén '+(c.anden+1)+'</small><b>'+escH(c.k)+'<span class="placa">'+escH(c.p)+'</span></b></div></div>'+estadoChip(c);
   if(c.enCalle){
-    h+='<div class="filas"><div><span>Chofer</span><b>'+escH(c.chofer||'—')+'</b></div><div><span>Salió</span><b>'+escH(c.salio)+' (marcado en el panel)</b></div></div>'+
+    h+='<div class="filas"><div><span>Chofer</span><b>'+escH(c.chofer||'—')+'</b></div><div><span>Salió</span><b>'+escH(c.salio)+(c.salioMano?' (marcado en el panel)':' (lo dice el GPS)')+'</b></div>'+
+      (c.gps?'<div><span>🛰️ GPS</span><b>'+escH(c.gps.donde)+' · '+c.gps.v+' km/h'+(c.gps.hace?' · '+escH(c.gps.hace):'')+'</b></div>':'')+'</div>'+
       '<div class="paradas">'+c.paradas.map(function(p){ var aca=c.enParada===p, prox=proximaParada(c)===p;
         return '<div data-id="'+escH(p.id)+'" title="Tocá para ver el pedido"><span>'+(p.ok?'✅':(aca?'🚚':'○'))+'</span><span><b>'+escH(p.n)+'</b><small>'+escH(p.z)+(p.pt?'':' · sin ubicación')+'</small></span><small>'+(p.ok?'entregado':(prox?'próxima':''))+'</small></div>'; }).join('')+'</div>'+
       '<button class="boton" type="button" id="pt-b-seguir">'+(SEGUIR?'📷 Dejar de seguirlo':'📷 Seguirlo con la cámara')+'</button>'+
-      (hoy?'<button class="boton gris" type="button" id="pt-b-volvio">↩️ Deshacer «salió»</button>':'')+
-      '<div class="nota-gps">🛣️ Recorrido <b>estimado</b>: sin GPS todavía, el camión pasa por sus paradas en orden. El <b>✅ entregado</b> lo marca logística en el cierre de entregas.</div>';
+      (hoy && c.salioMano?'<button class="boton gris" type="button" id="pt-b-volvio">↩️ Deshacer «salió»</button>':'')+
+      (c.gps ? '<div class="nota-gps">🛰️ El camión está <b>donde dice el GPS</b> (se actualiza cada minuto). Las paradas no se marcan solas: el <b>✅ entregado</b> lo marca logística en el cierre de entregas.</div>'
+             : '<div class="nota-gps">🛣️ Recorrido <b>estimado</b>: sin GPS, el camión pasa por sus paradas en orden. El <b>✅ entregado</b> lo marca logística en el cierre de entregas.</div>');
   } else {
     var pct=c.total?Math.round(100*c.dentro/c.total):0;
     h+='<div class="barrita"><i style="width:'+pct+'%"></i></div>'+
@@ -1094,7 +1103,7 @@ function tabCalle(){ var L=CAMS.filter(function(c){ return c.enCalle; });
       c.paradas.map(function(p,i){ return '<i class="pt'+(p.ok?' ok':'')+'" style="left:'+pos(i)+'%" title="'+escH(p.n)+'"></i>'; }).join('')+
       '<span class="cam" style="left:'+(hc>=n?pos(n-1):(pos(hc-1)+pos(hc))/2)+'%">🚚</span></div>'+
       '<div class="p">'+(prox?'Próxima: <b>'+escH(prox.n)+'</b> · '+escH(prox.z):'<b>Vuelve a '+ALM[c.alm].n+'</b>')+'</div>'+
-      '<div class="p">Salió '+escH(c.salio)+' · ≈ recorrido estimado (sin GPS) · tocá para verlo</div></div>'; }).join('')+'</div>'; }
+      '<div class="p">Salió '+escH(c.salio)+' · '+(c.gps?('🛰️ '+escH(c.gps.donde)+' · '+c.gps.v+' km/h'):'≈ recorrido estimado (sin GPS)')+' · tocá para verlo</div></div>'; }).join('')+'</div>'; }
 function tabAnd(){ if(!CAMS.length) return '<div class="vacio">—</div>';
   return '<div class="and">'+CAMS.map(function(c){ var A=ALM[c.alm], est=c.enCalle?'🛣️ '+hechas(c)+'/'+c.paradas.length:!c.total&&!c.items.length?'— vacío':(c.total&&!c.chofer?'⚠️ sin chofer':c.total&&c.dentro>=c.total?'✅ listo':(c.dentro+'/'+c.total));
   return '<div class="a" data-k="'+escH(c.k)+'"><i class="dot" style="background:#'+new THREE.Color(c.col).getHexString()+'"></i><div><b>'+A.n+' · andén '+(c.anden+1)+'</b><small>'+escH(c.p)+' · '+escH(c.chofer||'sin chofer')+'</small></div><b>'+est+'</b></div>'; }).join('')+'</div>'; }
@@ -1129,15 +1138,23 @@ var tt=null; function toast(txt){ var d=OV.querySelector('.toast'); if(!d){ d=do
   d.innerHTML=txt; d.style.opacity=1; clearTimeout(tt); tt=setTimeout(function(){ d.style.opacity=0; }, 3800); }
 
 /* manejar por la calle: por la derecha, frena en cada cliente (sin marcar nada: el ✅ es de logística) y da la vuelta */
-function manejar(c, dt){ var t=CAMG[c.k]; if(!c.path) return;
+function manejar(c, dt){ var t=CAMG[c.k];
+  /* 🛰️ (§4ko) con GPS y en la calle: va por las calles hasta donde dice el GPS y se queda ahí hasta el próximo reporte */
+  if(c.gps && c.gps.f){ var fk=c.gps.x+','+c.gps.z;
+    if(c.gpsF!==fk && c.pos){ c.gpsF=fk; var rg=ruta({ x:c.pos.x, z:c.pos.z }, { x:c.gps.x, z:c.gps.z }); if(rg.length) rg[rg.length-1].gpsFin=true; c.path=rg; c.pi=0; c.pausa=0; c.enParada=null; } }
+  else if(c.gpsF){ c.gpsF=null; if(c.pos) armarRuta(c, c.pos); }
+  if(!c.path) return;
   if(c.pausa>0){ c.pausa-=dt; } else if(!quieto){
-    var obj=c.path[c.pi]; if(!obj){ armarRuta(c, c.pos); return; }
+    var obj=c.path[c.pi]; if(!obj){ if(!c.gpsF) armarRuta(c, c.pos); return; }
     var dx=obj.x-c.pos.x, dz=obj.z-c.pos.z, d=Math.hypot(dx,dz), paso=11*dt;
     if(d>.01){ c.dir={ x:dx/d, z:dz/d }; }
     if(d<=paso){ c.pos.x=obj.x; c.pos.z=obj.z;
-      if(obj.stop){ c.pausa=2.4; c.enParada=obj.stop; if(SEL===c) pintarFicha(); } else c.enParada=null;
-      if(obj.fin){ c.pausa=3; armarRuta(c, { x:c.pos.x, z:c.pos.z }); if(SEL===c){ pintarLinea(); if(TAB==='rec') pintarTab(); } return; }
-      c.pi++; if(SEL===c) pintarLinea();
+      if(obj.gpsFin){ c.enParada=null; }
+      else {
+        if(obj.stop){ c.pausa=2.4; c.enParada=obj.stop; if(SEL===c) pintarFicha(); } else c.enParada=null;
+        if(obj.fin){ c.pausa=3; armarRuta(c, { x:c.pos.x, z:c.pos.z }); if(SEL===c){ pintarLinea(); if(TAB==='rec') pintarTab(); } return; }
+        c.pi++; if(SEL===c) pintarLinea();
+      }
     } else { c.pos.x+=dx/d*paso; c.pos.z+=dz/d*paso; } }
   var ox=-c.dir.z*2.6, oz=c.dir.x*2.6; t.position.set(c.pos.x+ox, 0, c.pos.z+oz);
   var meta=Math.atan2(-c.dir.z, c.dir.x), dif=meta-t.rotation.y; dif=((dif+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI; t.rotation.y+=dif*Math.min(1,dt*8); t.rotation.y=((t.rotation.y+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
@@ -1192,7 +1209,16 @@ function cuadro(){
 function medir(w,h){ W=w||box.clientWidth; H=h||box.clientHeight; if(!W||!H) return; ren.setSize(W,H,false); var a=W/H; Z=zDe(a); cam.left=-Z*a; cam.right=Z*a; cam.top=Z; cam.bottom=-Z; cam.updateProjectionMatrix(); }
 var v0=IR.ptf(); ctl.target.set(v0[0],0,v0[1]); cam.position.set(v0[0],0,v0[1]).add(OJO); cam.zoom=v0[2]; cam.updateProjectionMatrix(); ctl.update();
 ponerNoche(false);
-return { sincronizar:sincronizar, cuadro:cuadro, medir:medir, ctl:ctl, aplicarVistas:aplicarVistas, toast:toast,
+/* 🛰️ (§4ko) el GPS cambia cada minuto: se pasa sin rearmar la escena (no entra en la firma) */
+function gpsAlDia(D){ var cambio=false, otro=false; (D && D.cams || []).forEach(function(d){ var c=camPorK(d.k); if(!c) return;
+  var vo=!!(d.gps && !d.gps.f && d.gps.vu), fk=d.gps ? [d.gps.x, d.gps.z, d.gps.v, d.gps.f, d.gps.hace].join('|') : '';
+  if(vo!==!!c.volvio) cambio=true;
+  if(fk!==(c.gpsK||'')){ otro=true; if(c===SEL) c.gpsRepinta=true; }
+  c.gps=d.gps; c.volvio=vo; c.gpsK=fk; });
+  /* solo si cambió algo del GPS (corre cada 1,5 s): la ficha y la pestaña de la calle dicen dónde está */
+  if(otro){ if(SEL && SEL.gpsRepinta){ SEL.gpsRepinta=false; pintarFicha(); } if(TAB==='calle') pintarTab(); }
+  return cambio; }
+return { sincronizar:sincronizar, cuadro:cuadro, medir:medir, ctl:ctl, aplicarVistas:aplicarVistas, toast:toast, gps:gpsAlDia,
   estado:function(){ return { camiones:CAMS.map(function(c){ return { k:c.k, p:c.p, alm:c.alm, anden:c.anden, enCalle:!!c.enCalle, saliendo:!!c.anim, monta:c.monta?(c.monta.st+(c.monta.g.visible?'':'/oculto')+(c.monta.obj?'/'+c.monta.obj.prod:'')):'', total:c.total, dentro:c.dentro,
     items:c.items.map(function(it){ return { prod:it.prod, u:it.u, st:it.st, dep:it.dep, pend:!!it.pend, carry:!!it.carry, pallet:!!it.g }; }), paradas:c.paradas.length }; }),
     alertas:ALERTAS.map(function(a){ return a.t; }), sel:SEL?SEL.k:'' }; } };
@@ -1274,7 +1300,8 @@ function pintarHora(){ var el=document.getElementById('pt-hora'); if(!el) return
 function refrescar(forzar){
   if(!PT.abierto) return;
   var D=patioDatos(); pintarSub(D); pintarHora(); if(!D || !PT.api) return;
-  var f=firmaDe(D); if(!forzar && f===PT.firma) return;
+  var vuelta=false; try{ if(PT.api.gps) vuelta=PT.api.gps(D); }catch(e){ console.error(e); }   // 🛰️ (§4ko) el GPS, sin rearmar la escena
+  var f=firmaDe(D); if(!forzar && !vuelta && f===PT.firma) return;
   var animar=!!PT.firma && PT.firma.indexOf(JSON.stringify(D.fecha))===1;   // el mismo día: lo que cambió se anima; otro día: se acomoda de una
   PT.firma=f; try{ PT.api.sincronizar(D, animar); }catch(e){ console.error(e); }
 }
