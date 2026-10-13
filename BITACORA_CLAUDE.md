@@ -13934,3 +13934,11 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   ⚠️ En Playwright con swiftshader la escena va a ~3 cuadros por segundo y el `dt` tope (0,05) hace que la gente se mueva 6 veces más lento: para
   ver los diálogos en una prueba, una copia con `Math.min(.3, crudo)` (`patio_rapido.html` en el scratchpad). Publicada como versión 7 del mismo
   enlace.
+- 13/10, el dueño (captura del iPad, de la versión vieja): *«al menos en el iPad los controles deberían ser más chicos así deja espacio para
+  ver y maniobrar en la ciudad; en la compu no sé si será igual de invasivo»* → versión 8 (desde 981 px de ancho: iPad acostado y compu):
+  encabezado de una línea, las fichas de números como pastillas chicas, botones de lugar y de camión más chicos, ficha del camión de 270 px,
+  pestañas de abajo en una sola línea. «▴ Achicar» en la ficha (queda la placa y el estado) y «▾ Achicar» en el panel de abajo (quedan las
+  pestañas; tocar una lo abre). «⛶ Solo la ciudad» esconde todo menos los botones de lugar y la hora («☰ Mostrar paneles» lo vuelve).
+  Cada aparato recuerda cómo lo dejó (localStorage `patio_*`). Sin nada guardado, con menos de 1250 px la ficha arranca achicada y con
+  menos de 1400 px el panel de abajo también. En el celular y el iPad parado (≤980 px) sigue como antes: la ciudad arriba y los paneles
+  debajo, sin tapar.
