@@ -14014,3 +14014,14 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   fondo (norte) siguen con edificios altos; el resto, 80 % cuadras de casas (grilla 4×3 de `casa()` o edificios bajos de 3,6/7) y 20 %
   mixtas (4–12). Y *«los techos están al revés»*: en `casa()` las dos aguas tenían los signos de `rotation.x` cambiados (quedaban en V);
   ahora -0,55 / +0,55. Muestra v15. Rendimiento: la ciudad va juntada por material (`juntar`), así que la cantidad de casas casi no pesa.
+- Después (13/10), con una captura de «Ver todo»: *«no me gusta, se ve bruto y vacío, no como una ciudad mixta»* → `cuadra` arma lotes
+  pegados al borde de la manzana (5 por lado largo, 2 por costado) con el patio verde y árboles al fondo; cada lote es casa de 1 o 2
+  pisos (teja), comercio de 1-2 pisos con toldo / casa de losa, o un edificio SUELTO (`zonaAlta`: más hacia el centro/Equipetrol,
+  nunca una pared). La fila de abajo y las cuadras especiales viejas, igual. Muestra v16.
+- Y con tres fotos: *«Santa Cruz es la ciudad de los anillos, se ve así desde arriba»* → `PLAZA` (-35,315) = la plaza 24 de Septiembre
+  con la catedral (`plazaPrincipal`), cinco `ANILLOS` (48/147/203/243/410: radios elegidos para no pisar ninguna tienda ni galpón;
+  donde igual pasaría, `viaLibre` lo corta) y cuatro `RADIALES` (hacia Banzer, PTF, Moreno y el oeste), con camellón, rayas, faroles y
+  árboles; de noche el asfalto brilla naranja (`VIA_ASF` es `Mbrilla`). `enVia` saca lo que caería encima (lotes, árboles sueltos,
+  faroles de esquina, autos estacionados) y `cuadraCruza` cambia por una cuadra común la cuadra especial que un anillo cruza. La ciudad
+  creció dos filas abajo (`Z1=7*G`, también en `s1_mapa.js`) y «Ver todo» mira al centro nuevo (`[70,140, Z/360]`). Muestra v17.
+  ⚠️ El bloque de los anillos agregó 44 líneas a `cuerpo.js`: los rangos de `armar.py` se corrieron (todo lo de después de la 194).
