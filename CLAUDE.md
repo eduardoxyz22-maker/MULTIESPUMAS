@@ -627,6 +627,14 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
 - **Datos = `cargaVivaDatos()`** (`patioDatos()` sin three.js): una línea = un pallet (🚚 tildada / 🅿️ PTF o Banzer / 📥 Moreno / ⛔ ✗).
   Escribe SOLO la tilde (`setCargaChk`, la de la Lista de carga) y «Ya salió» (`camionSalioMarcar`). Sin GPS: el recorrido en la calle es
   ESTIMADO y no marca ✅. La RPT va a su tienda (`TIENDAS` en patio.js, con los pines del dueño, norte arriba).
+- **La ciudad** (13/10, decidida por el dueño con fotos, versión 31 de la muestra; PUBLICADA con `PATIO_V='20261013b'`): manzanas de dos filas de
+  casas mirando a SU calle (techo a dos aguas con `PRISMA`, puerta, alero) + construcción del fondo; pasajes de calle a calle (`PASAJE`) y a veces
+  uno a lo largo; 4 anillos INTEGRADOS a la cuadrícula alrededor de la plaza 24 de Septiembre (`ANILLOS` = calles hechas avenida, curvas solo en
+  las esquinas: `AV_ARCOS`; el camellón se corta antes de la cebra; 1ro y 2do con árboles, 3ro y 4to solo faroles); catedral (`plazaPrincipal`);
+  Equipetrol al oeste (`zonaAlta`) pegado al cinturón ecológico y el río Piraí con el PUENTE URUBÓ (sale del 4to anillo, `ZU`); Hipermaxi en la
+  esquina del 4to anillo y el puente; restaurantes (`RESTO_EN`); cebras con gente cruzando (`CEBRAS`/`CRUZAN`); micros en el semáforo con los
+  autos puteando (`COLAS`, `colasPaso`, con la hora del semáforo). ⚠️ `patio.js` se arma con `armar.py` (scratchpad) por rangos de líneas de
+  `cuerpo.js`: si se agrega una línea, los rangos se corren (bitácora §4kn).
 - `tests/test_patio.js` (21 sin 3D; +8 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
