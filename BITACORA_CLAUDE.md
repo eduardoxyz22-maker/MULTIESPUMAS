@@ -13913,3 +13913,24 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   ERNESTO (planilla, en la puerta de la oficina) y DAVID (recorre la zona de espera) en PTF: Garnícula los va a buscar y les putea; ellos le
   contestan. Más ciudad: gente por las veredas, mototaxis, pájaros, autos estacionados, paradas de micro, kioscos, banderas de Bolivia.
   «Cómo cambian camión» = elegir otro camión (dueño, 13/10): ya está con los botones de la izquierda.
+- 13/10, el dueño (con la imagen del logo «MultiESPUMAS Viscarra S.R.L.»): *«a Ernesto le falta moverse, monitorear, revisar cargas, algunos
+  diálogos; a David le falta putear a Ernesto: no te olvides las entregas de Eduardo, de ROHO, Multicenter cuando hay, de marcar y revisar lo
+  entregado, las reprogramaciones, por qué no están asignados los choferes, o productos a cada camión… David es el jefe de Ernesto. A las
+  fábricas les falta identidad de MultiEspumas; faltan las tiendas Heaven y Sueña para mostrar los camiones en las RPT»* → versión 7:
+  · ERNESTO sale de la oficina, camina a cada camión parado de PTF (prefiere los que tienen algo mal), se para al costado del carril de espera y
+    dice lo que ve con los datos del camión («6663-CCP: 2 de 6. Falta sacar del galpón el SOMIER ORO…», «sin chofer, ¿a quién llamo?», «lleva
+    la RPT 10-006 a Heaven Mia Plaza», «completo ✔, firmo la salida»); a las 3 revisiones vuelve a la oficina («marco lo entregado de ayer…»).
+  · DAVID, jefe de logística: da vueltas por la zona de espera y cada 15-22 s alcanza a Ernesto (aunque camine) y le reta con un tema por vez,
+    en orden: entregas de Eduardo, camión sin chofer, ROHO, marcar lo entregado, productos sin sacar de un camión, Multicenter (solo si hay),
+    reprogramados, pedidos sin camión, la RPT de la tienda, el camión que volvió. Ernesto contesta («Sí, jefe, ya van en el Foton nuevo» o
+    «Sí, jefe… (otra vez lo mismo)»). Globo verde 📢 para David, azul 🔎/💬 para Ernesto, rojo 🗯️ para Garnícula, que ya no va a putear al que
+    está con el jefe y persigue al que se movió. Los números del día (3 de Eduardo, 2 de ROHO, 4 de Multicenter…) son DE EJEMPLO (`DIA`).
+  · Fábricas con el logo que mandó (fondo gris sacado, recortado): paredes blancas, techo azul marino con el logo encima (sin claraboyas
+    tapándolo), cartel del frente con logo + «PTF · Productos terminados», franjas amarilla/naranja/coral/lila en los costados; el camión con
+    una banda blanca y el logo a los dos lados.
+  · Tiendas en su lugar real (los pines de `SUCURSALES`, misma escala de ~36 por km): SE SUPUSO Heaven = Mia Plaza, Buenos Aires y Central;
+    Sueña = Mutualista, Charcas y Carmelo (falta que el dueño lo confirme). Tiendas Roho no tiene pin: no está. Los camiones llevan su RPT como
+    una parada más (CCP → Heaven Mia Plaza, TIG → Heaven Central, URL → Sueña Mutualista, KSC → Sueña Carmelo).
+  ⚠️ En Playwright con swiftshader la escena va a ~3 cuadros por segundo y el `dt` tope (0,05) hace que la gente se mueva 6 veces más lento: para
+  ver los diálogos en una prueba, una copia con `Math.min(.3, crudo)` (`patio_rapido.html` en el scratchpad). Publicada como versión 7 del mismo
+  enlace.
