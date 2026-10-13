@@ -653,7 +653,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   `gpsEnMoreno(x)` (`mor` de la 13-b o ≤400 m de `GPS_MORENO`, = el del `.gs`) → «en Moreno»; la ciudad lo estaciona en el andén de Moreno
   (`gpsLugar(g)`, UNA cuenta para `sincronizar` y `gpsAlDia`: si difieren, la escena se rearma cada 1,5 s). ⚠️ Un camión «en la calle» se
   dibuja en la calle MÁS CERCANA a su punto (`z` redondeado a la grilla): un lugar nuevo donde los camiones «están» va como depósito, no como calle.
-- `tests/test_gps.js` (92, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (52). Bitácora §4ko, §4kp.
+- **🚪 La puerta de los depósitos no es una parada** (§4kq, 13/10, captura del dueño: el KSC «se paró 17 min» y «llegó a PTF»): quieto a
+  < 700 m de PTF, Banzer o Moreno SIN pedido cerca no se muestra (página: `gpsBaseCerca`, `GPS_PUERTA_M`) ni se anota ni suma `tp`
+  (servidor **`2026-10-13-c`**, `s.qb`); de Moreno, los 45 min corren solo lejos de las bases. Sin eso, Moreno → PTF con espera en la
+  puerta era «salió de Moreno». «volvió a Banzer» cuando sale y vuelve al mismo lugar. ⚠️ El aviso de la ciudad es `.pt-toast`: una
+  clase dentro de `#pt-ov` que se llame como una de la página hereda sus reglas (`.toast` lo estiraba de arriba hasta abajo).
+- `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)

@@ -14221,3 +14221,33 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   panel es a las 45.000); lectura comprimida 1.127.025 → 322.508 letras; el bot prendido con 1 de logística (Ernesto); Meta 107 avisos;
   «El GPS anda: el último repaso (12:10) vio 4 unidades» y **«Hoy el GPS anotó 2 parada(s) de los camiones; 1 cerca de un pedido del
   día»**: las paradas del servidor ya andan con datos de verdad.
+
+## §4kq — 🚪 La captura de las 12:36: el aviso gigante, «volvió a Banzer» y la puerta de los depósitos (servidor `2026-10-13-c`, 13/10)
+El dueño mandó una captura de la ciudad, sin texto. Se vieron tres cosas:
+- **Un recuadro oscuro enorme en medio de la ciudad** con «📦 Asignales camión en Administración…». **Causa**: el aviso de la ciudad
+  se llamaba `.toast`, igual que el de la página, cuya regla (fija, `bottom:24px`, `width:max-content`, `display:flex`) se sumaba a la
+  de la ciudad (`top:118px`): con `top` y `bottom` a la vez, el aviso se estiraba de arriba hasta abajo. **Arreglo**: `pt-toast`
+  (css.txt + p4_ui.js), con `bottom:auto`, `height:auto` y `pointer-events:none`. ⚠️ Una clase nueva dentro de `#pt-ov` no puede
+  llamarse como una de la página: las reglas de la página también le aplican.
+- **«6409-TIG llegó a Banzer · venía de Banzer»**: salió de Banzer y volvió. Ahora dice **«volvió a Banzer»** (`gpsEventosHoy`: si
+  `e[3]===e[2]`); «llegó a X · venía de Y» solo cuando son lugares distintos.
+- **«5655-KSC se paró 6 min» (12:09) y «se paró 17 min (sin pedido de hoy cerca)» (12:15), y a las 12:33 «llegó a PTF»**: el KSC
+  venía de Moreno (la captura de las 11:06) y esperaba afuera de PTF. La 13-b anota una parada en cualquier lugar fuera de los 300 m
+  de un depósito, también en la franja de 300-700 m (donde todavía no «llegó» pero ya no está «en la calle»). Y peor: esa espera
+  sumaba `s.tp`, así que **convertía un viaje de Moreno a PTF en «salió de Moreno»** (el «Ya salió» prendido para los vendedores) y
+  un traslado PTF → Banzer en una salida. No se pudo mirar dónde fue de verdad (desde acá no hay salida a Google), pero la prueba con
+  la 13-b reproduce justo eso: «salió de Moreno 11:02».
+  · **Página** (`gpsParadas`, anda con la 13-b): una parada SIN pedido a menos de `GPS_PUERTA_M`=700 m (= `GPS_SALIDA_M` del `.gs`)
+    de PTF, Banzer o Moreno (`gpsBaseCerca`: `ALM_UBIC` + `GPS_MORENO`) no se muestra ni cuenta; con pedido cerca, sí (un cliente
+    vecino). Las que quedan sin pedido dicen a cuánto del depósito fueron si es menos de 2 km («sin pedido de hoy cerca · a 1,2 km de
+    PTF»), también en la ciudad (`base` en `gpsParadasDe`). `PATIO_V='20261013h'`.
+  · **Servidor `2026-10-13-c`** (`gpsSalidas_`): esa espera no se anota ni suma `tp` (`s.qb` = ya se miró: la planilla se lee UNA vez
+    por espera, no cada minuto). Y de Moreno los 45 min corren solo LEJOS de las bases (`lejos`); una parada en un pedido (`tm`) cuenta
+    siempre. Nada más cambió.
+- Pruebas: `test_gps.js` §14 (→ 99; contra la 13-b se caen 4: la parada en la puerta, «salió de Moreno», el traslado y la versión),
+  `test_gps_pagina.js` §15 (→ 58; contra `528d2a0` se caen las 4 de §15), `test_patio` 3D (→ 36: el aviso mide 55 px de alto, antes
+  la pantalla entera), `test_servidor` §11 (versión 13-c).
+- Commits: `258095f` (página + ciudad, la página todavía espera la 13-b: se puede publicar sola) y el siguiente (servidor 13-c + la
+  página que lo espera). **Publicar**: la página de `258095f` cuando el dueño diga; el `.gs` 13-c lo implementa él y recién después la
+  página que espera la 13-c (con la 13-b ya implementada, una página que espere la 13-c pondría el cartel de «versión vieja»).
+  Volver atrás del servidor = ✏️ a la versión anotada Y pegar la 13-b (`16ac162…`, 3.721 líneas).
