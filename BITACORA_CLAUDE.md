@@ -13956,3 +13956,8 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   etiqueta (💛) y la valla de la ruta. `altoFrente(x,z,h)` dentro de `edificio`: si el edificio queda entre la cámara (dirección
   (0,656 ; 0,755) en el piso) y una tienda o una fábrica (`MIRAR`), baja a 1 piso y va subiendo de a poco con la distancia; los de los
   costados, un poco menos. La cámara sigue siendo la misma, solo cambian las alturas.
+- 13/10, el dueño mandó el pin de Moreno: **-17.7623355, -63.0675466** (Industrias Moreno; ~8 km al este y ~1,5 km al sur de PTF) →
+  versión 11: Moreno en la cuadra (315, 105) de la escena, con la misma escala de ~36 por km que las tiendas (`geoAEscena` da 323, 88).
+  La ciudad crece otra fila de cuadras a la derecha (X1=6·G) y Sueña Carmelo pasa a (385, fila 210), otra vez casi en el rincón de abajo a
+  la derecha. Sin «ubicación aproximada» en ningún texto. La parada «Moreno · recoger 2» del camión KSC va a la puerta nueva. Para el
+  panel de verdad, este es el pin de Moreno que falta en `ALM_UBIC` si algún día se lo quiere agregar.
