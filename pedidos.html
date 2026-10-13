@@ -28455,12 +28455,13 @@ function tiendaElegirHtml(p, x, i){
   if(TDA_ELIGE!==p.id+'|'+i) return '';
   var t=esRecoger(x) ? recogeDeTienda(x) : '', suya=sucursalDeVendedor(p.vendedor), L=recogerTiendas();
   if(suya && L.indexOf(suya)>0){ L.splice(L.indexOf(suya),1); L.unshift(suya); }
-  var arg=function(n){ return JSON.stringify(String(n)).replace(/"/g,'&quot;'); };
+  var comillas=function(n){ return JSON.stringify(String(n)).replace(/"/g,'&quot;'); }, qt=comillas(t);   // el nombre, listo para ir dentro del onclick
   return '<div class="tda-elige"><span>🏬 ¿De qué tienda se recoge?</span>'+L.map(function(n){
-      return '<button type="button" class="chkbtn wide'+(t===n?' tda':'')+'" onclick="tiendaElegir(\''+p.id+'\','+i+','+arg(n)+')"'+(t===n?' title="Tocala de nuevo para sacar la marca"':'')+'>'+
+      var qn=comillas(n);
+      return '<button type="button" class="chkbtn wide'+(t===n?' tda':'')+'" onclick="tiendaElegir(\''+p.id+'\','+i+','+qn+')"'+(t===n?' title="Tocala de nuevo para sacar la marca"':'')+'>'+
         esc(n)+(n===suya ? ' <small>· de '+esc(String(p.vendedor||'').split(' ')[0])+'</small>' : '')+'</button>';
     }).join('')+
-    (t ? '<button type="button" class="chkbtn wide" onclick="tiendaElegir(\''+p.id+'\','+i+','+arg(t)+')">✕ Quitar</button>' : '')+'</div>';
+    (t ? '<button type="button" class="chkbtn wide" onclick="tiendaElegir(\''+p.id+'\','+i+','+qt+')">✕ Quitar</button>' : '')+'</div>';
 }
 /* El renglón de ayuda debajo de «Productos». Es una FUNCIÓN y no una constante porque los
    almacenes de donde se recoge cambian: aparece uno nuevo apenas se sube su Excel (§4ey). */
