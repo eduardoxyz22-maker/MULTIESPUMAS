@@ -133,6 +133,7 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
     var D=cargaVivaDatos(), c=D.porK['Sin vehículo'], pend=cv3dPendientes(c);
     var mc={aca:0,sale:0,trae:0,no:0}; pend.forEach(function(l){ mc[cv3dLug(l)]+=l.u; });
     var A=admLugaresDatos(hoy).C, col={}; Object.keys(A).forEach(function(k){ col[k]=A[k].filter(function(q){ return q.veh==='sin camión'; }).reduce(function(s2,q){ return s2+q.u; },0); });
+    if('tda' in col){ col.trae+=col.tda; delete col.tda; }   // (13/10) 🏬 lo de una tienda tiene su columna en «Lo del día»; en el 3D va con lo de ir a buscar
     var orden=pend.map(function(l){ return cv3dLug(l); }), ordenOk=orden.every(function(t,j){ return !j || CV_LUGORD[orden[j-1]]<=CV_LUGORD[t]; });
     var sp=cv3dSinParte(c), suma=sp.aca.length+sp.sale.length+sp.trae.length;
     var soloLug=sp.sale.every(function(l){ return cv3dLug(l)==='sale'; }) && sp.trae.every(function(l){ return cv3dLug(l)==='trae'; }) && sp.aca.every(function(l){ return /^(aca|no)$/.test(cv3dLug(l)); });

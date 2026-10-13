@@ -286,6 +286,10 @@ tbody tr:hover{background:var(--teal-lt)}
 .chkbtn.ok{background:var(--green);color:#fff;border-color:var(--green)}
 .chkbtn.no{background:var(--red);color:#fff;border-color:var(--red)}
 .chkbtn.im{background:#f5c400;color:#5a4500;border-color:#f5c400}
+.chkbtn.tda{background:#be185d;color:#fff;border-color:#be185d}
+.tda-elige{flex-basis:100%;display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:flex-end;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:8px;padding:6px 8px}
+.tda-elige>span{font-size:.76rem;font-weight:800;color:#9d174d;margin-right:auto}
+.tda-elige small{font-weight:600;opacity:.8}
 .chkbtn.prodon{background:#fff176;color:#5a4500;border-color:#f5c400;box-shadow:inset 0 0 0 1px #f5c400}
 .chk-sep{width:1px;align-self:stretch;background:var(--gray-md);margin:0 2px}
 .chkbtn.wide{width:auto;padding:0 10px;font-size:.74rem;white-space:nowrap}
@@ -1320,48 +1324,6 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div id="rechazos-box" style="display:none"></div>
         <div id="cupo-admin" class="cupo ok"></div>
 
-        <div class="filters">
-          <div class="field">
-            <label class="lb">Ver por</label>
-            <!-- ⚠️ VUELVE A ARRANCAR EN «TODO» (§4bo revierte a §4bn).
-                 §4bn lo había puesto en «Mes» por velocidad, pero medido DESPUÉS del tope de
-                 filas la diferencia es de 14 ms (84 vs 98 con 3.000 ventas): el tope fue lo
-                 que arregló la lentitud, no el filtro. Y «Mes» corta por fecha de ENTREGA,
-                 así que el 31 de agosto escondía las entregas de septiembre —justo las que se
-                 están preparando—. No vale 14 ms.
-                 El orden de fábrica es por fecha DESCENDENTE, así que las 150 filas que se
-                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba.
-
-                 ⚠️ 05/09: VUELVE A ARRANCAR EN «MES», pedido por el dueño (§4cj). Lo que
-                 hacía peligroso el de §4bn ya no existe: `renderFueraDelMes()` avisa en
-                 ámbar cuáles entregas quedan afuera del mes filtrado y lleva a ellas de un
-                 toque, así que a fin de mes ya no desaparecen en silencio. La lentitud que
-                 el dueño sentía NO era el filtro (Todo 42 ms vs Mes 21 ms con 3.000 ventas)
-                 sino la pantalla en blanco mientras bajaba la planilla — eso se arregló en
-                 `loadFromServer`. -->
-            <div class="seg" id="adm-mode">
-              <button type="button" data-val="dia">Día</button>
-              <button type="button" data-val="mes" class="active">Mes</button>
-              <button type="button" data-val="todo">Todo</button>
-            </div>
-          </div>
-          <div class="field" id="wrap-dia" style="display:none">
-            <label class="lb">Fecha de entrega</label>
-            <input type="date" id="adm-dia">
-          </div>
-          <div class="field" id="wrap-mes">
-            <label class="lb">Mes</label>
-            <input type="month" id="adm-mes">
-          </div>
-          <div class="field" style="flex:1;min-width:150px">
-            <label class="lb">Buscar</label>
-            <input type="text" id="adm-search" placeholder="Cliente, OC, vendedor, zona…">
-          </div>
-          <div class="field">
-            <button class="btn btn-ghost btn-sm" id="adm-refresh" onclick="loadFromServer(true)">🔄 Actualizar</button>
-          </div>
-        </div>
-
         <div id="nx-a3" class="no-print"></div>   <!-- 🔔 (§4js, A3) a las 15:00, los de mañana sin camión -->
         <div id="adm-revisar"></div>
 
@@ -1395,6 +1357,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
             <button class="btn btn-sm at-t" style="--c:#8a1c24" title="No se agenda más ese día" data-d="no se agenda más ese día" onclick="abrirCierreDias()" id="btn-cerrar-dia">🔒 Cerrar día</button>
           </div></section>
           <section class="at-g" style="--g:#128C7E"><h5><span>📤</span> Mensajes y partes</h5><div class="at-b">
+            <button class="btn btn-sm at-t" id="anu-btn" style="--c:#c2410c" title="Escribí un aviso y Eduardo se lo dice a los vendedores cada 3 minutos, hasta que lo quites" data-d="Eduardo lo repite cada 3 min" onclick="anuncioAbrir()">📢 Decir anuncio</button>
             <button class="btn btn-sm at-t" style="--c:#0f766e" title="El resumen de hoy para el grupo" data-d="el resumen de hoy para el grupo" onclick="abrirParte()">📋 Parte del día</button>
             <button class="btn btn-sm at-t" style="--c:#128C7E" title="Lo que salió hoy, para WhatsApp" data-d="lo que salió hoy, para WhatsApp" onclick="abrirEnvio('hoy')">📤 Cierre del día</button>
             <button class="btn btn-sm at-t" style="--c:#25D366" title="Lo de mañana, para WhatsApp" data-d="lo de mañana, para WhatsApp" onclick="abrirEnvio('manana')">📤 Mañana</button>
@@ -1440,6 +1403,49 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div id="adm-rpt"></div>
         <!-- ✅ Cierre de entregas (§4hn): desde las 16:30 de Bolivia, cuántos de hoy siguen sin confirmar. -->
         <div id="adm-cierre-ent"></div>
+        <!-- 🔎 (13/10, dueño: «la barra de la derecha ponla encima de la izquierda») «Ver por / Mes / Buscar» va pegada a la tabla,
+             justo encima de los filtros rápidos (Todos, Hoy, Mañana…): antes estaba arriba de todo, lejos de lo que filtra. Mismos ids. -->
+        <div class="filters adm-filtros">
+          <div class="field">
+            <label class="lb">Ver por</label>
+            <!-- ⚠️ VUELVE A ARRANCAR EN «TODO» (§4bo revierte a §4bn).
+                 §4bn lo había puesto en «Mes» por velocidad, pero medido DESPUÉS del tope de
+                 filas la diferencia es de 14 ms (84 vs 98 con 3.000 ventas): el tope fue lo
+                 que arregló la lentitud, no el filtro. Y «Mes» corta por fecha de ENTREGA,
+                 así que el 31 de agosto escondía las entregas de septiembre —justo las que se
+                 están preparando—. No vale 14 ms.
+                 El orden de fábrica es por fecha DESCENDENTE, así que las 150 filas que se
+                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba.
+
+                 ⚠️ 05/09: VUELVE A ARRANCAR EN «MES», pedido por el dueño (§4cj). Lo que
+                 hacía peligroso el de §4bn ya no existe: `renderFueraDelMes()` avisa en
+                 ámbar cuáles entregas quedan afuera del mes filtrado y lleva a ellas de un
+                 toque, así que a fin de mes ya no desaparecen en silencio. La lentitud que
+                 el dueño sentía NO era el filtro (Todo 42 ms vs Mes 21 ms con 3.000 ventas)
+                 sino la pantalla en blanco mientras bajaba la planilla — eso se arregló en
+                 `loadFromServer`. -->
+            <div class="seg" id="adm-mode">
+              <button type="button" data-val="dia">Día</button>
+              <button type="button" data-val="mes" class="active">Mes</button>
+              <button type="button" data-val="todo">Todo</button>
+            </div>
+          </div>
+          <div class="field" id="wrap-dia" style="display:none">
+            <label class="lb">Fecha de entrega</label>
+            <input type="date" id="adm-dia">
+          </div>
+          <div class="field" id="wrap-mes">
+            <label class="lb">Mes</label>
+            <input type="month" id="adm-mes">
+          </div>
+          <div class="field" style="flex:1;min-width:150px">
+            <label class="lb">Buscar</label>
+            <input type="text" id="adm-search" placeholder="Cliente, OC, vendedor, zona…">
+          </div>
+          <div class="field">
+            <button class="btn btn-ghost btn-sm" id="adm-refresh" onclick="loadFromServer(true)">🔄 Actualizar</button>
+          </div>
+        </div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
@@ -1957,7 +1963,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @media (prefers-reduced-motion: reduce){ .mis-sello.golpe, .viaje-cami.entra, .viaje-cami.anda svg, .sf-flota, .sf-brilla-mas, .sf-brilla-menos{ animation:none !important; } .viaje-cami{ transition:none; } }
 .lug{ display:inline-block; font-size:.72rem; font-weight:800; border-radius:6px; padding:0 6px; margin-left:2px; white-space:nowrap; line-height:1.55; }
 .lug-aca{ background:#e6f7f6; color:#00736d; } .lug-sale{ background:#e0f2fe; color:#075985; } .lug-trae{ background:#f3e8ff; color:#6b21a8; }
-.lug-no{ background:#fdeaec; color:#a3172a; } .lug-fab{ background:#fff4d6; color:#7c4b00; }
+.lug-no{ background:#fdeaec; color:#a3172a; } .lug-fab{ background:#fff4d6; color:#7c4b00; } .lug-tda{ background:#fce7f3; color:#9d174d; }
 .sale-de .lug{ margin:1px 0; }
 .ci-caja{ background:#fff; border:1px solid #dfe8e8; border-radius:14px; padding:10px 12px; margin-bottom:12px; display:grid; gap:8px; }
 .ci-cab,.pl-cab{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; }
@@ -2065,9 +2071,9 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .lugd-cab .seg button.on{ background:var(--teal); color:#fff; border-color:var(--teal); }
 .lugd-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; padding-bottom:12px; }
 .lugd{ border:2px solid; border-radius:12px; padding:9px 11px; min-width:0; }
-.lugd-aca{ border-color:#00807a; } .lugd-sale{ border-color:#0b5fa5; } .lugd-trae{ border-color:#6b2fa8; } .lugd-no{ border-color:#b4182b; }
+.lugd-aca{ border-color:#00807a; } .lugd-sale{ border-color:#0b5fa5; } .lugd-trae{ border-color:#6b2fa8; } .lugd-no{ border-color:#b4182b; } .lugd-tda{ border-color:#be185d; }
 .lugd-h{ display:flex; justify-content:space-between; gap:8px; font-weight:800; margin-bottom:6px; }
-.lugd-aca .lugd-h{ color:#00736d; } .lugd-sale .lugd-h{ color:#075985; } .lugd-trae .lugd-h{ color:#6b21a8; } .lugd-no .lugd-h{ color:#a3172a; }
+.lugd-aca .lugd-h{ color:#00736d; } .lugd-sale .lugd-h{ color:#075985; } .lugd-trae .lugd-h{ color:#6b21a8; } .lugd-no .lugd-h{ color:#a3172a; } .lugd-tda .lugd-h{ color:#9d174d; }
 .lugd ul{ list-style:none; margin:0; padding:0; display:grid; gap:4px; }
 .lugd li{ display:flex; flex-direction:column; gap:1px; font-size:.82rem; cursor:pointer; border-radius:6px; padding:3px 4px; border-bottom:1px dashed #e3e8ea; }
 .lugd li:hover{ background:#f6f9f9; } .lugd li:last-child{ border-bottom:0; } .lugd li span:first-child{ min-width:0; } .lugd li span:last-child{ color:var(--muted); font-size:.76rem; }
@@ -2388,6 +2394,39 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .asis-preg{ margin:10px 11px 4px; border:1px solid var(--gray-md); border-radius:12px; padding:8px 10px; font-size:.8rem; }
 .asis-preg summary{ cursor:pointer; font-weight:700; } .asis-preg ul{ margin:6px 0 0; padding-left:16px; } .asis-preg li{ margin:4px 0; }
 .asis-preg li small{ display:block; color:var(--muted); } .asis-preg-n{ display:block; color:var(--muted); margin-top:6px; }
+/* 📢 (13/10) el anuncio de Administración: en el globo, en la lista de Eduardo, el botón y su ventana */
+.anu-tag{ display:inline-block; font-style:normal; font-size:.66rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:#fff; background:#c2410c; border-radius:999px; padding:2px 8px; margin-bottom:4px; }
+.asis-globo.asis-anuncio{ border-left-color:#c2410c; background:linear-gradient(135deg,#fff7ed,#fff); max-width:min(340px, calc(100vw - 110px)); font-size:.9rem; animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both, anu-late 1.2s ease-in-out .4s 3; }
+.asis-globo.asis-anuncio b{ color:#7c2d12; }
+@keyframes anu-late{ 0%,100%{ box-shadow:0 12px 30px -14px rgba(0,0,0,.45); } 50%{ box-shadow:0 0 0 6px rgba(194,65,12,.22), 0 12px 30px -14px rgba(0,0,0,.45); } }
+.asis-av.anu-av{ border-left-color:#c2410c; background:linear-gradient(135deg,#fff7ed,#fffdfb); }
+.asis-av.anu-av b{ color:#7c2d12; font-size:.92rem; }
+.asis-av.anu-av .asis-acc:empty{ display:none; }
+.adm-tools .at-t.anu-on{ background:#c2410c; color:#fff; box-shadow:0 0 0 3px rgba(194,65,12,.2); }
+.adm-tools .at-t.anu-on::before{ content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:#fff; margin-right:6px; vertical-align:middle; animation:anu-punto 1.4s ease-in-out infinite; }
+@keyframes anu-punto{ 50%{ opacity:.25; } }
+.anu{ position:fixed; inset:0; z-index:4700; background:rgba(15,23,28,.55); backdrop-filter:blur(3px); display:grid; place-items:center; padding:16px; }
+.anu[hidden]{ display:none!important; }
+.anu-c{ width:min(500px,100%); max-height:calc(100vh - 32px); overflow:auto; background:#fff; border-radius:20px; box-shadow:0 30px 70px -20px rgba(0,0,0,.55); animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both; }
+.anu-h{ display:flex; align-items:center; gap:12px; padding:14px 16px; background:linear-gradient(120deg,#7c2d12,#c2410c); color:#fff; border-radius:20px 20px 0 0; }
+.anu-h img{ width:56px; height:56px; border-radius:15px; object-fit:cover; object-position:50% 10%; background:#fff; flex:none; }
+.anu-h > div{ flex:1; min-width:0; } .anu-h b{ display:block; font-size:1.02rem; } .anu-h small{ display:block; opacity:.88; font-size:.8rem; margin-top:2px; line-height:1.35; }
+.anu-x{ border:0; background:rgba(255,255,255,.16); color:#fff; border-radius:10px; width:40px; height:40px; cursor:pointer; flex:none; font-size:1rem; }
+.anu-b{ padding:14px 16px 16px; display:grid; gap:8px; }
+.anu-hoy{ border:1px solid #fed7aa; border-left:4px solid #c2410c; background:#fff7ed; border-radius:12px; padding:9px 12px; font-size:.86rem; }
+.anu-hoy q{ display:block; font-weight:800; color:#7c2d12; font-size:.95rem; margin:3px 0; quotes:'«' '»'; }
+.anu-hoy small{ display:block; color:var(--muted); font-size:.76rem; }
+.anu-hoy.anu-no{ border-color:var(--gray-md); border-left-color:var(--gray-md); background:#f7f9fa; color:var(--muted); }
+.anu-b label{ font-weight:800; font-size:.84rem; margin-top:4px; }
+.anu-b textarea{ width:100%; box-sizing:border-box; border:1px solid var(--gray-md); border-radius:12px; padding:10px 12px; font:inherit; font-size:.95rem; line-height:1.4; resize:vertical; min-height:84px; }
+.anu-b textarea:focus{ outline:none; border-color:#c2410c; box-shadow:0 0 0 3px rgba(194,65,12,.15); }
+.anu-n{ text-align:right; color:var(--muted); font-size:.72rem; font-variant-numeric:tabular-nums; }
+.anu-est{ font-size:.82rem; color:#0f766e; min-height:1.2em; } .anu-est.mal{ color:#b91c1c; font-weight:700; }
+.anu-acc{ display:flex; flex-wrap:wrap; gap:8px; }
+.anu-acc button{ flex:1 1 140px; min-height:44px; border-radius:12px; font:inherit; font-size:.88rem; font-weight:800; cursor:pointer; border:1px solid var(--gray-md); background:#fff; }
+.anu-acc .anu-si{ background:#c2410c; border-color:#c2410c; color:#fff; }
+.anu-acc .anu-quitar{ color:#b91c1c; border-color:#fecaca; background:#fff5f5; }
+.anu-acc button:disabled{ opacity:.55; cursor:wait; }
 .asis-tour{ position:fixed; z-index:10002; right:16px; bottom:190px; width:min(340px, calc(100vw - 32px)); background:#fff; border:2px solid var(--teal);
   border-radius:16px; box-shadow:0 14px 40px rgba(0,0,0,.22); padding:12px 14px; display:flex; flex-direction:column; gap:4px; animation:mi-entra .3s ease-out both; }
 .asis-tour small{ color:var(--muted); font-weight:700; } .asis-tour b{ font-size:1rem; } .asis-tour span{ font-size:.86rem; line-height:1.4; }
@@ -14289,8 +14328,9 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
+var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
 function filaSistema(id, titulo, texto){
   return { id:id, fecha:'', turno:'', vendedor:'', productos:[], cliente:titulo,
@@ -16207,7 +16247,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013j';
+var PATIO_V='20261013k';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
@@ -22013,7 +22053,7 @@ function stockSalidas(k, desde, hasta){
     var f0=fechaSalida(p);
     // (26/09) Solo lo que salió de ACÁ: lo cargado en Banzer baja el conteo de Banzer (`stockData`).
     (p.productos||[]).forEach(function(x){ var f=(x&&x.eF)||f0; if(desde && f<desde) return; if(hasta && f>hasta) return;   // (§4iz, E2-7) el día real del cierre
-      if(!x || !stockSalio(p,x) || esProdDeTienda(x) || x.chk==='no' || stockClave(x)!==k) return; n+= enProduccion(x) ? prodUnidEnConteo(x) : stockUnidAca(x); });   // (05/10, Codex R5) lo 🏭 llegado y contado sale como cualquier colchón
+      if(!x || !stockSalio(p,x) || esProdDeTienda(x) || x.chk==='no' || recogeDeTienda(x) || stockClave(x)!==k) return; n+= enProduccion(x) ? prodUnidEnConteo(x) : stockUnidAca(x); });   // 🏬 (13/10) lo de una tienda no salió de acá   // (05/10, Codex R5) lo 🏭 llegado y contado sale como cualquier colchón
   });
   return n;
 }
@@ -22024,7 +22064,7 @@ function stockComprometido(k, hasta){
     if(!stockCuenta(p) || p.entregado || esVentaTienda(p)) return;
     var f=p.fecha||''; if(!f || (hasta && f>hasta)) return;
     (p.productos||[]).forEach(function(x){
-      if(stockSalio(p,x) || esProdDeTienda(x) || stockClave(x)!==k) return;
+      if(stockSalio(p,x) || esProdDeTienda(x) || recogeDeTienda(x) || stockClave(x)!==k) return;   // 🏬 (13/10) lo de una tienda no espera stock de acá
       if(enProduccion(x)) n+=prodUnidEnConteo(x);             // (05/10, Codex H2/R5) lo que YA llegó y está contado es de ese pedido
       else n+=Number(x.cant)||0;
     });
@@ -22296,6 +22336,9 @@ function stockData(extra){
          ya contó para la rotación (arriba) pero NO baja PTF ni Banzer: el colchón llegó a la tienda antes, con su RPT. Antes se descontaba
          dos veces y el control del Excel lo marcaba como «entrada sin explicar». */
       if(esVentaTienda(p)) return;
+      /* 🏬 (13/10) Lo que se va a buscar a una TIENDA tampoco: la venta ya contó para la rotación (arriba), pero esas unidades no están
+         en ningún Excel —ni PTF, ni Banzer, ni Moreno—, así que no se reservan (`comp`) ni bajan ningún conteo al salir. */
+      if(recogeDeTienda(x)) return;
       if(salio){
         // Ya salió del depósito (entregado, o de un día que pasó). Lo hecho a pedido y lo
         // tildado ✗ no hay no salieron de acá.
@@ -23918,6 +23961,7 @@ function renderRevisionFija(){
       ficha('#075985',A.tot.aFab,'ya pedidos a fábrica')+
       ficha('#7c3aed',A.tot.atc,'🎧 ATC — reclamos, no entran')+
       ficha('#92400e',A.tot.tienda,'🏪 se entregan en tienda')+
+      ficha('#be185d',A.tot.deTienda||0,'🏬 se recogen de una tienda (no se tocan)')+
       ficha('#7f1d1d',A.tot.descont,'🛑 sin stock y ya no se fabrica')+
       ficha('#b45309',A.tot.codOtro,'🏷️ con el código de otra medida u otro producto — corregilos en el pedido')+
     '</div>'+
@@ -24982,7 +25026,7 @@ function stockAsignar(){
                   .sort(function(a,b){ return b.u-a.u; });
     return { u:sacado, alm:(por.length?por[0].alm:''), por:por };
   };
-  var pedidos=[], almMal=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0, atc:0, tienda:0, descont:0};
+  var pedidos=[], almMal=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0, atc:0, tienda:0, deTienda:0, descont:0};
   var faltaPorProd={}, imPorProd={}, sinPorProd={}, descPorProd={}, revisadas=[];
   // Lo revisado conserva su reserva incluso fuera del filtro de fechas actual.
   // No se vuelve a repartir ese stock a una línea nueva ni se cambia su marca.
@@ -25004,7 +25048,7 @@ function stockAsignar(){
   if(REVSTK_SOLO_VACIOS) revStkPedidos(true).forEach(function(p){
     (p.productos||[]).forEach(function(x, xi){
       var _falta=0;
-      if(enProduccion(x)||esProdDeTienda(x)) return;
+      if(enProduccion(x)||esProdDeTienda(x)||recogeDeTienda(x)) return;   // 🏬 (13/10) lo de una tienda no reserva nada
       var c=Number(x.cant)||0, k=stockClave(x);
       if(!(c>0)) return;
       var rec=esRecoger(x);
@@ -25083,6 +25127,8 @@ function stockAsignar(){
          Va ANTES que el 🏭 a propósito — un protector marcado «en producción» sigue siendo
          un protector, y contarlo como pedido a fábrica es el error que se está sacando. */
       if(esProdDeTienda(x)){ tot.tienda++; return; }
+      /* 🏬 (13/10) Lo que logística mandó a buscar a una tienda: lo decidió una persona y no es stock del panel. No se toca ni se propone otra cosa. */
+      if(recogeDeTienda(x)){ tot.deTienda++; return; }
       var antes=(x.chk==='ok'||x.chk==='no'||x.chk==='im') ? x.chk : '';
       var rec=esRecoger(x), hay=prodHay(x);
       /* 🚚 (26/09) La marca de ANTES «📥 Banzer»: ya se lee como «✔ hay en Banzer» (`prodHay`) y se
@@ -25341,6 +25387,7 @@ function renderStockRevisar(){
       (R.tot.sinContar?mc2('var(--gray)','Sin contar',R.tot.sinContar,'no se tocan'):'')+
       (R.tot.atc?mc2('#7c3aed','🎧 ATC',R.tot.atc,'reclamos: no se fabrican'):'')+
       (R.tot.tienda?mc2('#92400e','🏪 De tienda',R.tot.tienda,'protectores, sábanas, mantas'):'')+
+      (R.tot.deTienda?mc2('#be185d','🏬 Se recogen de una tienda',R.tot.deTienda,'marcadas a mano: no se tocan'):'')+
       (R.tot.descont?mc2('#7f1d1d','🛑 No se fabrica más',R.tot.descont,'sin stock, y la fábrica ya no lo hace'):'')+
       (R.tot.codOtro?mc2('#b45309','🏷️ Código de otro',R.tot.codOtro,'otra medida u otro producto: no se revisan, corregilos en el pedido'):'')+
     '</div>'+
@@ -25999,7 +26046,7 @@ function stockSalidasVentana(k, v, alm){
   var n=0;
   STATE.forEach(function(p){
     ((p&&p.productos)||[]).forEach(function(x){
-      if(!x || enProduccionPendiente(x) || esProdDeTienda(x) || stockClave(x)!==k || !stockSalioVentana(p, x, v)) return;
+      if(!x || enProduccionPendiente(x) || esProdDeTienda(x) || recogeDeTienda(x) || stockClave(x)!==k || !stockSalioVentana(p, x, v)) return;   // 🏬 (13/10) no bajó ningún Excel
       if(enProduccion(x)){ if(!alm) n+=prodUnidEnConteo(x); return; }    // (05/10, Codex R5) lo 🏭 llegado y contado, del depósito de acá
       if(alm) prodPartesCarga(x).forEach(function(e){ if(e.tipo==='sale' && recogerMismo(e.de, alm)) n+=e.u; });
       else n+=stockUnidAca(x);
@@ -27939,14 +27986,32 @@ function recogerCanon(nm){
   nm=String(nm||'').trim();
   return (!nm || stockAlmNombre(nm)==='Industrias Moreno') ? '' : nm;
 }
-function recogerAlmCorto(nm){ return recogerCanon(nm) ? stockAlmCorto(nm) : 'IM'; }
+/* 🏬 RECOGER DE UNA TIENDA (13/10, dueño, con la ficha de un pedido: *«a veces no hay stock en fábrica y los vendedores piden que recojan
+   de sus tiendas; falta el botón "tienda" y elegir la sucursal»*). Es un «📥 recoger» como el de Moreno (`chk='im'`) con el lugar en
+   `chkDe` = «Tienda <sucursal>»: no viaja nada nuevo a la planilla, y una página sin F5 ya lo lee «📥 Recoger de Tienda Mia Plaza».
+   ⚠️ Pero lo de la tienda NO está en ningún Excel: no se reserva ni se descuenta de PTF, Banzer ni Moreno (`stockData`, `stockSalidas`,
+   `stockComprometido`, `stockSalidasVentana`), la revisión automática no la toca (`stockAsignar`) y la venta SÍ cuenta para la rotación
+   (como la venta de tienda, §4iy: el colchón se repone a la tienda con su RPT). Las tiendas son las propias (`SUCURSALES` sin Tiendas Roho,
+   que es de ROHO) y la del vendedor del pedido va primero (`sucursalDeVendedor`). */
+var TIENDA_PREF='Tienda ';
+function recogerTiendas(){ return SUCURSALES.filter(function(s){ return !/ROHO/i.test(s.n); }).map(function(s){ return s.n; }); }
+/* «Tienda Mia Plaza» → «Mia Plaza» (como está en SUCURSALES); cualquier otro lugar → ''. */
+function recogeTiendaDe(nm){
+  var m=/^\s*tienda\s+(.+?)\s*$/i.exec(String(nm==null?'':nm)); if(!m) return '';
+  var su=sucursalDe(m[1]); return su ? su.n : m[1];
+}
+/* ¿Esta línea se va a buscar a una tienda? La marca a mano deja UN lugar (sin desglose): devuelve la sucursal o ''. */
+function recogeDeTienda(x){ return (x && x.chk==='im' && !(x.chkDes && x.chkDes.length)) ? recogeTiendaDe(x.chkDe) : ''; }
+function recogerIco(nm){ return recogeTiendaDe(nm) ? '🏬' : '📥'; }
+function recogerAlmCorto(nm){ var t=recogeTiendaDe(nm); if(t) return TIENDA_PREF+t; return recogerCanon(nm) ? stockAlmCorto(nm) : 'IM'; }
 /* ⚠️ La identidad va por el nombre ENTERO, no por el corto: el corto puede venir recortado
    («Almacen Distribucion …») y dos almacenes distintos con nombre largo parecido quedarían
    con la misma clave — o, peor, el mismo almacén escrito de dos maneras con claves
    distintas, que es lo que dejaba huérfana una marca puesta a mano. */
-function recogerClave(nm){ return recogerCanon(nm) ? normNombre(stockAlmLimpio(nm)) : 'im'; }
+function recogerClave(nm){ var t=recogeTiendaDe(nm); if(t) return 'tienda:'+normNombre(t); return recogerCanon(nm) ? normNombre(stockAlmLimpio(nm)) : 'im'; }
 function recogerMismo(a,b){
   var ka=recogerClave(a), kb=recogerClave(b);
+  if(ka.indexOf('tienda:')===0 || kb.indexOf('tienda:')===0) return ka===kb;   // 🏬 una tienda es esa tienda: nunca «se parece» a un almacén
   if(ka===kb) return true;
   /* El Excel puede traer el almacén con más palabras que el botón: hoy el botón guarda
      «Banzer» y el reporte puede llamarlo «01-05-004 ALMACEN BANZER». Sin esta regla, el día
@@ -28247,6 +28312,7 @@ function prodLugarTag(x){
   var varias=pa.length>1;
   return pa.map(function(e){
     var n=e.tipo==='aca' ? 'PTF' : e.tipo==='sale' ? saleNombre(e.de) : (e.de ? recogerAlmCorto(e.de) : 'Moreno');
+    if(e.tipo==='trae' && recogeTiendaDe(e.de)) return chip('tda', '🏬 '+n+(varias?(' '+e.u):''));   // 🏬 (13/10) de una tienda
     return chip(e.tipo, (e.tipo==='aca'?'🏭 ':e.tipo==='sale'?'🏪 ':'📥 ')+n+(varias?(' '+e.u):''));
   }).join('');
 }
@@ -28264,6 +28330,7 @@ function pedidoLugares(p){
     pa.forEach(function(e){
       if(e.tipo==='aca') sumar('aca','🏭 PTF','aca',e.u);
       else if(e.tipo==='sale') sumar('s:'+normNombre(saleNombre(e.de)),'🏪 '+saleNombre(e.de),'sale',e.u);
+      else if(recogeTiendaDe(e.de)){ var nt=recogerAlmCorto(e.de); sumar('d:'+normNombre(nt),'🏬 '+nt,'tda',e.u); }   // 🏬 (13/10)
       else { var n=(e.de && recogerCanon(e.de)) ? stockAlmCorto(e.de) : 'Moreno'; sumar('t:'+normNombre(n),'📥 '+n,'trae',e.u); }
     });
   });
@@ -28277,7 +28344,7 @@ function pedidoLugaresHtml(p){
 }
 var ADM_LUG_DIA='hoy';
 function admLugaresDatos(f){
-  var C={ aca:[], sale:[], trae:[], no:[] }, sin=0;
+  var C={ aca:[], sale:[], trae:[], tda:[], no:[] }, sin=0;
   STATE.forEach(function(p){
     if(!cierreEntEntra(p) || p.fecha!==f) return;
     var veh=vehiculoDe(p)||'sin camión';
@@ -28291,6 +28358,7 @@ function admLugaresDatos(f){
         var r={ t:nom, u:e.u, cli:p.cliente||'', veh:veh, id:p.id };
         if(e.tipo==='aca') C.aca.push(r);
         else if(e.tipo==='sale'){ r.de=saleNombre(e.de); C.sale.push(r); }
+        else if(recogeTiendaDe(e.de)){ r.de=recogeTiendaDe(e.de); C.tda.push(r); }   // 🏬 (13/10) de una tienda
         else { r.de=(e.de && recogerCanon(e.de)) ? stockAlmCorto(e.de) : 'Moreno'; C.trae.push(r); }
       });
     });
@@ -28307,12 +28375,13 @@ function admLugaresHtml(){
         return '<li onclick="showPedidoModal(\''+esc(r.id)+'\')" title="Abrir el pedido"><span>'+esc(r.t)+' <b>× '+stockUnid(r.u)+'</b>'+(r.de&&cls!=='aca'&&cls!=='sale'?(' <small>de '+esc(r.de)+'</small>'):'')+'</span><span>'+esc(String(r.cli).split(' ').slice(0,2).join(' '))+' · '+esc(r.veh)+'</span></li>';
       }).join('')+'</ul>') : '<div class="lugd-vacio">nada</div>')+'</div>';
   };
-  var hay=C.aca.length+C.sale.length+C.trae.length+C.no.length;
+  var hay=C.aca.length+C.sale.length+C.trae.length+C.tda.length+C.no.length;
   return '<div class="lugd-cab"><span class="seg" style="display:inline-flex">'+
       '<button type="button" class="'+(ADM_LUG_DIA!=='manana'?'on':'')+'" onclick="ADM_LUG_DIA=\'hoy\';admLugaresPintar()">Hoy</button>'+
       '<button type="button" class="'+(ADM_LUG_DIA==='manana'?'on':'')+'" onclick="ADM_LUG_DIA=\'manana\';admLugaresPintar()">'+(proximoDiaEntrega()===stockSumarDias(todayStr(),1)?'Mañana':('El '+fmtFechaCorta(proximoDiaEntrega())))+'</button></span>'+
       '<span class="vis-sub">'+esc(fmtFecha(f))+(D.sin?(' · 🔎 '+D.sin+' producto'+(D.sin===1?'':'s')+' sin revisar todavía (no se sabe de dónde salen)'):'')+'</span></div>'+
     (hay ? ('<div class="lugd-grid">'+col('aca','🏭 PTF · cargar',C.aca)+col('sale','🏪 Banzer · cargar',C.sale)+col('trae','📥 Moreno · ir a buscar',C.trae)+
+      (C.tda.length?col('tda','🏬 Tienda · ir a buscar',C.tda):'')+
       (C.no.length?col('no','✗ Falta · avisar',C.no):'')+'</div>')
          : '<div class="lugd-vacio" style="padding:8px 0">Ese día no hay productos marcados todavía.</div>');
 }
@@ -28357,6 +28426,7 @@ function prodRevList(p){
           var etq=A.corto.length>12 ? (A.corto.slice(0,11)+'…') : A.corto;
           return '<button class="chkbtn wide'+(on?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\','+arg+')" title="Sí hay, pero hay que recogerlo del almacén '+esc(A.corto)+'">📥 '+esc(etq)+'</button>';
         }).join('')+
+        tiendaBtnHtml(p, x, i)+                                   // 🏬 (13/10) recoger de una tienda
         '<span class="chk-sep"></span>'+
         PROD_LUGARES.map(function(L){
           var on=(prodDondeSePide(x)===L.v);
@@ -28368,15 +28438,37 @@ function prodRevList(p){
         (enProduccion(x) && !prodDondeSePide(x)
           ? '<button class="chkbtn wide prodon" style="border-style:dashed" onclick="setProdProduccion(\''+p.id+'\','+i+',\'\')" title="Está marcado como pedido a fábrica pero no se dijo a cuál. Elegí MORENO o MULTI, o tocá acá para desmarcarlo.">🏭 ¿?</button>'
           : '')+
-      '</span></div>';
+      '</span>'+tiendaElegirHtml(p, x, i)+'</div>';
   }).join('');
+}
+/* 🏬 (13/10) El botón «Tienda» abre, debajo del producto, las sucursales para elegir de cuál se recoge (la del vendedor primero). Tocar
+   la elegida otra vez —o «Quitar»— saca la marca. Guarda con `setProdChk(…, 'im', 'Tienda <sucursal>')`, como cualquier 📥. */
+var TDA_ELIGE='';   // 'id|renglón' con la lista de tiendas abierta
+function tiendaElegirAbrir(id, i){ var k=id+'|'+i; TDA_ELIGE=(TDA_ELIGE===k) ? '' : k; reabrirFicha(id); }
+function tiendaElegir(id, i, n){ TDA_ELIGE=''; setProdChk(id, i, 'im', TIENDA_PREF+n); }
+function tiendaBtnHtml(p, x, i){
+  var t=esRecoger(x) ? recogeDeTienda(x) : '';
+  var etq=t ? ('🏬 '+(t.length>12 ? (t.slice(0,11)+'…') : t)) : '🏬 Tienda';
+  return '<button class="chkbtn wide'+(t?' tda':'')+'" onclick="tiendaElegirAbrir(\''+p.id+'\','+i+')" title="No hay en fábrica y se va a buscar a una tienda: elegí la sucursal">'+esc(etq)+'</button>';
+}
+function tiendaElegirHtml(p, x, i){
+  if(TDA_ELIGE!==p.id+'|'+i) return '';
+  var t=esRecoger(x) ? recogeDeTienda(x) : '', suya=sucursalDeVendedor(p.vendedor), L=recogerTiendas();
+  if(suya && L.indexOf(suya)>0){ L.splice(L.indexOf(suya),1); L.unshift(suya); }
+  var comillas=function(n){ return JSON.stringify(String(n)).replace(/"/g,'&quot;'); }, qt=comillas(t);   // el nombre, listo para ir dentro del onclick
+  return '<div class="tda-elige"><span>🏬 ¿De qué tienda se recoge?</span>'+L.map(function(n){
+      var qn=comillas(n);
+      return '<button type="button" class="chkbtn wide'+(t===n?' tda':'')+'" onclick="tiendaElegir(\''+p.id+'\','+i+','+qn+')"'+(t===n?' title="Tocala de nuevo para sacar la marca"':'')+'>'+
+        esc(n)+(n===suya ? ' <small>· de '+esc(String(p.vendedor||'').split(' ')[0])+'</small>' : '')+'</button>';
+    }).join('')+
+    (t ? '<button type="button" class="chkbtn wide" onclick="tiendaElegir(\''+p.id+'\','+i+','+qt+')">✕ Quitar</button>' : '')+'</div>';
 }
 /* El renglón de ayuda debajo de «Productos». Es una FUNCIÓN y no una constante porque los
    almacenes de donde se recoge cambian: aparece uno nuevo apenas se sube su Excel (§4ey). */
 function prodAyuda(){
   var almacenes=recogerLista().map(function(A){ return A.corto; }).join(' o ');
   var salen=salidaLista().map(function(A){ return A.corto; }).join(' o ');
-  return '<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay'+(salen?(' acá · ✔ '+esc(salen)+' (se carga allá)'):'')+' · ✗ no hay · 📥 recoger de '+esc(almacenes)+' &nbsp;|&nbsp; 🏭 ya se pidió a fábrica: MORENO o MULTI (se combina)</div>';
+  return '<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay'+(salen?(' acá · ✔ '+esc(salen)+' (se carga allá)'):'')+' · ✗ no hay · 📥 recoger de '+esc(almacenes)+' · 🏬 recoger de una tienda &nbsp;|&nbsp; 🏭 ya se pidió a fábrica: MORENO o MULTI (se combina)</div>';
 }
 /* Resumen de la revisión: cuántos hay / faltan / hay que recoger */
 function prodResumen(p){
@@ -31298,11 +31390,11 @@ var CV_ESTCOL={ ok:'#15803d', im:'#b45309', no:'#c0392b' };
    cargar, con el LUGAR de «📍 Lo del día, por lugar» (`admLugaresDatos`) y sus mismos colores: 🏭 PTF · 🏪 Banzer · 📥 Moreno · ⛔ Falta.
    Antes solo salía lo de PTF (lo de Banzer no tenía montacargas) y pasados 10 por camión no se veía el resto. */
 var CV_LUGCOL={ aca:'#00807a', sale:'#0b5fa5', trae:'#6b2fa8', no:'#b4182b' }, CV_LUGORD={ aca:0, sale:1, trae:2, no:3 };
-var CV_LUGTXT={ aca:'🏭 PTF · cargar', sale:'🏪 Banzer · cargar', trae:'📥 Moreno · ir a buscar', no:'⛔ Falta · avisar' };
+var CV_LUGTXT={ aca:'🏭 PTF · cargar', sale:'🏪 Banzer · cargar', trae:'📥 Ir a buscar', no:'⛔ Falta · avisar' };   // (13/10) a Moreno o a una tienda: lo dice cada renglón
 var CV_COLA_MAX=24;   // los que se ven en la fila; el cartel «⏳ ESPERAN» se toca y lista TODOS
 function cv3dLug(l){ return (l.no||0)>=l.u ? 'no' : (l.lugar!=='fabrica' ? 'sale' : (l.rec>0 ? 'trae' : 'aca')); }
 function cv3dLugEtq(l){ var t=cv3dLug(l);
-  return (t==='no'?'⛔ ':t==='trae'?'📥 ':t==='sale'?'🏪 ':'🏭 ')+l.u+' '+esc(cv3dCorto(l.kk))+(t==='no'?' · falta':t==='trae'?' · Moreno':t==='sale'?' · Banzer':(l.no?(' · ⛔ '+l.no):'')); }
+  return (t==='no'?'⛔ ':t==='trae'?'📥 ':t==='sale'?'🏪 ':'🏭 ')+l.u+' '+esc(cv3dCorto(l.kk))+(t==='no'?' · falta':t==='trae'?(' · '+esc(l.alm||'Moreno')):t==='sale'?' · Banzer':(l.no?(' · ⛔ '+l.no):'')); }
 /* la ventana de lo que espera: cada producto con su lugar, agrupado como las columnas; tocar uno = sus pedidos */
 function cv3dEsperan(k, desde, lugar){
   var D=cargaVivaDatos(), c=D.porK[k]; if(!c) return;   // lo de ahora: si alguien tildó mientras tanto, no lo lista
@@ -33139,6 +33231,7 @@ function nxBadges(){
   try{ waRespTraer(); }catch(e){}   // 💬 (12/10, §4kk) lo que contestaron los clientes, una vez por minuto
   try{ asisRefrescar(); }catch(e){}   // 🧑‍💼 §4jx
   try{ asisPreguntasMandar(); }catch(e){}   // ❓ (K) lo que quedó esperando señal
+  try{ anuncioBtnPintar(); }catch(e){}   // 📢 (13/10)
 }
 /* ============================================================================
    🧑‍💼 EDUARDO, EL ASISTENTE DEL PANEL (§4jx, 11/10). El dueño: *«quiero que crees un avatar de mí… como un asistente virtual que
@@ -33225,8 +33318,9 @@ function asisAvisos(){
       b:['Ver', "asisIr('"+(vis==='mis'?'#wa-resp-mis':'#wa-resp-adm')+"')"] });
   }catch(e){}
   try{ var R=asisResumenDia(); if(R) A.unshift(R); }catch(e){}   // ☀️ (E) el resumen del día va primero
+  try{ var AN=anuncioAviso(); if(AN) A.unshift(AN); }catch(e){}   // 📢 (13/10) y el anuncio de Administración, antes que todo
   var vistos=asisVistos();
-  return A.filter(function(a){ return !asisOculto(vistos, a.k); });
+  return A.filter(function(a){ return a.fijo || !asisOculto(vistos, a.k); });
 }
 /* 🚚 (12/10, C) Lo de logística: hoy con «✗ no hay», lo que hay que ir a buscar a Moreno (hoy y el próximo camión) y los camiones
    de hoy que todavía no terminaron de cargar. Todo sale de las cuentas de siempre (`cierreEntEntra`, `esRecoger`, `cargaVivaDatos`). */
@@ -33493,6 +33587,7 @@ function asisMontar(){
   var gs=document.getElementById('f-submit');
   if(gs && window.IntersectionObserver) try{ new IntersectionObserver(function(es){ document.body.classList.toggle('asis-guardar', !!(es[0] && es[0].isIntersecting)); }).observe(gs); }catch(e){}
   asisRefrescar();
+  clearInterval(ANUNCIO.tic); ANUNCIO.tic=setInterval(anuncioTic, ANUNCIO_TIC_MS);   // 📢 (13/10) el reloj del anuncio
 }
 function asisRefrescar(nuevoYa){
   if(!ASIS.montado) return;
@@ -33501,7 +33596,7 @@ function asisRefrescar(nuevoYa){
   var yo=document.getElementById('asis-yo'); if(yo) yo.classList.toggle('asis-hay', n>0);
   /* (12/10, revisión) Globo y «pop» solo la PRIMERA vez que aparece cada aviso en esta apertura de la página (`ASIS.anunciados`):
      antes la firma era de la pestaña que se miraba y, al ir y volver, el mismo aviso sonaba otra vez. */
-  var nuevos=A.filter(function(a){ return !ASIS.anunciados[a.k]; });
+  var nuevos=A.filter(function(a){ return !ASIS.anunciados[a.k] && !a.anuncio; });   // 📢 el anuncio lo dice `anuncioTic`, con su ritmo
   A.forEach(function(a){ ASIS.anunciados[a.k]=1; });
   var cambio=(firma!==ASIS.firma || ASIS.vistaPint!==asisVista());
   ASIS.firma=firma;
@@ -33509,15 +33604,17 @@ function asisRefrescar(nuevoYa){
   if(ASIS.abierto){ if(cambio) asisPanelPintar(); }
   else if(nuevos.length) asisGlobo(nuevos[0], ASIS.primera && !nuevoYa);
   ASIS.primera=false;
+  anuncioTic();
 }
 var ASIS_GLOBO_T=0;
 function asisGlobo(a, calladito, solo){
   var gl=document.getElementById('asis-globo'), yo=document.getElementById('asis-yo'); if(!gl) return;
-  gl.innerHTML='<b>'+(a.ico?(a.ico+' '):'')+esc(a.t)+'</b><span>'+esc(a.x)+'</span>';
+  gl.innerHTML=(a.anuncio ? '<em class="anu-tag">Anuncio de Administración</em>' : '')+'<b>'+(a.ico?(a.ico+' '):'')+esc(a.t)+'</b><span>'+esc(a.x)+'</span>';
+  gl.classList.toggle('asis-anuncio', !!a.anuncio);   // 📢 (13/10) el anuncio se ve distinto y dura más (`a.ms`)
   gl.hidden=false; gl.onclick=solo ? function(){ gl.hidden=true; } : function(){ if(a.lista) ASIS.lista=a.k; asisAbrir('avisos'); };
   if(yo){ yo.classList.remove('asis-salta'); void yo.offsetWidth; yo.classList.add('asis-salta'); }
   if(!calladito) asisPop();
-  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(function(){ gl.hidden=true; }, 7000);
+  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(function(){ gl.hidden=true; }, a.ms||7000);
 }
 function asisToggle(){ if(ASIS.abierto) asisCerrar(); else asisAbrir(ASIS.firma ? 'avisos' : 'ayuda'); }
 function asisAbrir(tab){ ASIS.abierto=true; ASIS.tab=tab||ASIS.tab; var gl=document.getElementById('asis-globo'); if(gl) gl.hidden=true; asisPanelPintar(); }
@@ -33566,14 +33663,15 @@ function asisPanelPintar(){
       var res=(a.res||[]).map(function(r, j){ var kj=a.k+'#'+j, ab=ASIS.lista===kj;
         return '<div class="asis-res"><span>'+esc(r.t)+'</span>'+(r.lista && r.lista.length ? ('<button type="button" class="asis-b asis-mini" data-k="'+esc(kj)+'" onclick="asisVerLista(this.getAttribute(\'data-k\'))">'+(ab?'Ocultar':'Ver cuáles ('+r.lista.length+')')+'</button>') : '')+
           (ab ? lis(r.lista, a.ped) : '')+'</div>'; }).join('');
-      return '<div class="asis-av '+(a.sev||'')+'"><b>'+a.ico+' '+esc(a.t)+'</b>'+(a.x ? ('<span>'+esc(a.x)+'</span>') : '')+res+
+      /* 📢 (13/10) el anuncio es «hasta nuevo aviso» (`fijo`): sin «Entendido» ni «En 1 hora»; lo quita Administración */
+      return '<div class="asis-av '+(a.sev||'')+(a.anuncio?' anu-av':'')+'">'+(a.anuncio ? '<em class="anu-tag">Anuncio de Administración</em>' : '')+'<b>'+a.ico+' '+esc(a.t)+'</b>'+(a.x ? ('<span>'+esc(a.x)+'</span>') : '')+res+
         (abierta ? lis(a.lista, a.ped) : '')+
         '<div class="asis-acc">'+
         (a.b ? ('<button type="button" class="asis-b si" onclick="asisAccion('+i+')">'+esc(a.b[0])+'</button>') : '')+
         (a.lista ? ('<button type="button" class="asis-b si" data-k="'+esc(a.k)+'" onclick="asisVerLista(this.getAttribute(\'data-k\'))">'+(abierta?'Ocultar':'Ver cuáles ('+a.lista.length+')')+'</button>') : '')+
-        (a.tm ? '' : ('<button type="button" class="asis-b asis-luego" data-k="'+esc(a.k)+'" onclick="asisEnUnaHora(this.getAttribute(\'data-k\'))">⏰ En 1 hora</button>'+
+        ((a.tm || a.fijo) ? '' : ('<button type="button" class="asis-b asis-luego" data-k="'+esc(a.k)+'" onclick="asisEnUnaHora(this.getAttribute(\'data-k\'))">⏰ En 1 hora</button>'+
                       '<button type="button" class="asis-b asis-luego" data-k="'+esc(a.k)+'" onclick="asisManana(this.getAttribute(\'data-k\'))">🌙 Mañana</button>'))+
-        '<button type="button" class="asis-b" data-k="'+esc(a.k)+'" onclick="asisEntendido(this.getAttribute(\'data-k\'))">Entendido</button></div></div>';
+        (a.fijo ? '' : '<button type="button" class="asis-b" data-k="'+esc(a.k)+'" onclick="asisEntendido(this.getAttribute(\'data-k\'))">Entendido</button>')+'</div></div>';
     }).join('') : (asisSinDatos()
       ? ('<div class="asis-vacio asis-sindatos">⚠️ <b>No pude leer la planilla.</b> Lo que ves es la copia de este aparato:'+desdeCuandoLaCopia()+
          ' No te fíes de que no haya avisos hasta que vuelva la conexión.<br><button type="button" class="asis-b si" onclick="cargaInicial(0)">🔄 Volver a intentar</button></div>')
@@ -33656,6 +33754,129 @@ function asisPreguntasHtml(){
     (L.length ? ('<ul>'+L.slice(0,40).map(function(x){ return '<li><b>«'+esc(x.t)+'»</b><small>'+esc([x.d, x.v].filter(Boolean).join(' · '))+'</small></li>'; }).join('')+'</ul>')
               : '<div class="asis-vacio">Todavía nadie preguntó algo que no sepa.</div>')+
     '<small class="asis-preg-n">Sirve para saber qué explicar. Pedime que agregue la respuesta.</small></details>';
+}
+/* ============================================================================
+   📢 (13/10) EL ANUNCIO DE ADMINISTRACIÓN. El dueño: *«crea un botón en administración "decir anuncio" para que Eduardo lo repita
+   cada 3 min a los vendedores, por ejemplo a veces quiero avisar "no hay insumos para el ICE" hasta nuevo aviso»*.
+   · Vive en la fila del sistema `__anuncio__` (`ANUNCIO_ID`, la misma para todos los aparatos; sin sello en el servidor: gana el
+     último que la guarda). JSON `{v, t, d, ts, por}`; quitarlo = guardarla con `t` vacío (la fila queda).
+   · Administración lo escribe y lo quita desde «📢 Decir anuncio» (`anuncioAbrir`, solo con la contraseña puesta).
+   · En los aparatos de los VENDEDORES (`anuncioRepite`: ni la clave puesta, ni «Administración»/«Logística» en «¿Quién está usando
+     el panel?») Eduardo lo dice con su globo y sonido apenas llega, y después cada `ANUNCIO_CADA_MS` (3 min), hasta que lo quiten.
+     No tiene «Entendido» ni «En 1 hora» (`fijo`): es «hasta nuevo aviso». 🔇 le saca el sonido; el globo sale igual.
+   · En Administración y logística queda primero en los avisos de Eduardo, sin repetirse (una vez al llegar).
+   · Solo avisa: no cambia pedidos ni frena nada. Sin conexión se ve la última copia del aparato.
+   ========================================================================== */
+var ANUNCIO_CADA_MS=3*60000, ANUNCIO_TIC_MS=15000, ANUNCIO_GLOBO_MS=20000, ANUNCIO_MAX=240;
+var ANUNCIO={ ts:0, ult:0, tic:0, env:0 };
+function anuncioLeer(){
+  var r=(STATE||[]).filter(function(p){ return p && String(p.id)===ANUNCIO_ID; })[0], o=null;
+  try{ o=JSON.parse((r && r.observaciones)||'null'); }catch(e){}
+  if(!o || !String(o.t||'').trim()) return null;
+  return { t:String(o.t).trim().slice(0, ANUNCIO_MAX), d:String(o.d||''), ts:Number(o.ts)||0, por:String(o.por||'') };
+}
+function anuncioRepite(){
+  if(UNLOCKED) return false;
+  var r=''; try{ r=quienRol(); }catch(e){}
+  return r!=='admin' && r!=='logistica';
+}
+/* «hoy a las 14:20» / «el 12/10 a las 14:20» */
+function anuncioDesde(a){
+  var m=/^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})/.exec(String(a && a.d || '')); if(!m) return '';
+  return (m[1]===todayStr() ? 'hoy' : ('el '+fmtFechaCorta(m[1])))+' a las '+m[2];
+}
+function anuncioAviso(){
+  var a=anuncioLeer(); if(!a) return null;
+  var rep=anuncioRepite(), des=anuncioDesde(a);
+  return { k:'anuncio|'+a.ts, sev:'ro', ico:'📢', fijo:1, anuncio:1, t:a.t,
+    x: rep ? ('Desde '+(des||'hace un rato')+'. Te lo repito cada 3 minutos hasta que Administración lo quite.')
+           : ('Eduardo se lo dice a los vendedores cada 3 minutos'+(des?(' desde '+des):'')+', hasta que lo quites.'),
+    b: UNLOCKED ? ['✏️ Cambiar o quitar', 'anuncioAbrir()'] : null };
+}
+/* el reloj (cada `ANUNCIO_TIC_MS` y en cada `asisRefrescar`): uno nuevo se dice en el acto; el mismo, cada 3 min y solo a los vendedores */
+function anuncioTic(){
+  if(!ASIS.montado) return;
+  var a=anuncioLeer();
+  if(!a){ ANUNCIO.ts=0; return; }
+  var nuevo=(a.ts!==ANUNCIO.ts), ahora=Date.now();
+  if(!nuevo && (!anuncioRepite() || ahora-ANUNCIO.ult < ANUNCIO_CADA_MS)) return;
+  ANUNCIO.ts=a.ts; ANUNCIO.ult=ahora;
+  anuncioDecir(a);
+}
+function anuncioDecir(a){
+  var av=anuncioAviso() || {};
+  if(ASIS.abierto){   // con la ventana abierta ya está arriba de todo: que salte y suene
+    var yo=document.getElementById('asis-yo'); if(yo){ yo.classList.remove('asis-salta'); void yo.offsetWidth; yo.classList.add('asis-salta'); }
+    asisPop();
+  } else asisGlobo({ ico:'📢', t:a.t, x:av.x||'', anuncio:1, ms:ANUNCIO_GLOBO_MS });
+  if(!asisMudo()) setTimeout(asisPop, 240);   // dos «pop»: suena distinto a un aviso de siempre
+}
+/* ---------- la ventana para escribirlo (Administración) ---------- */
+function anuncioAbrir(){
+  if(!UNLOCKED){ toast('🔒 Primero poné la contraseña de Administración.', 'err'); return; }
+  try{ asisCerrar(); }catch(e){}
+  var box=document.getElementById('anu');
+  if(!box){ box=document.createElement('div'); box.id='anu'; box.className='anu no-print'; document.body.appendChild(box); }
+  var a=anuncioLeer(), des=a ? anuncioDesde(a) : '';
+  box.innerHTML='<div class="anu-c" role="dialog" aria-modal="true" aria-labelledby="anu-t">'+
+    '<div class="anu-h"><img src="'+ASIS_BUSTO+'" alt="" width="56" height="56"><div><b id="anu-t">📢 Decir anuncio</b>'+
+      '<small>Eduardo se lo dice a los vendedores apenas lo publiques y después cada 3 minutos, con sonido, hasta que lo quites.</small></div>'+
+      '<button type="button" class="anu-x" aria-label="Cerrar" onclick="anuncioCerrar()">✕</button></div>'+
+    '<div class="anu-b">'+
+      (a ? ('<div class="anu-hoy"><b>🔴 Ahora están escuchando:</b><q>'+esc(a.t)+'</q><small>'+esc([des ? ('desde '+des) : '', a.por].filter(Boolean).join(' · '))+'</small></div>')
+         : '<div class="anu-hoy anu-no">No hay ningún anuncio. Escribilo abajo.</div>')+
+      '<label for="anu-txt">'+(a ? 'Cambiarlo por' : 'Qué querés que diga')+'</label>'+
+      '<textarea id="anu-txt" maxlength="'+ANUNCIO_MAX+'" rows="3" placeholder="Ej.: No hay insumos para el ICE hasta nuevo aviso." oninput="anuncioContar()">'+esc(a ? a.t : '')+'</textarea>'+
+      '<div class="anu-n"><span id="anu-n">'+(a ? a.t.length : 0)+'</span> de '+ANUNCIO_MAX+' letras</div>'+
+      '<div id="anu-est" class="anu-est" aria-live="polite"></div>'+
+      '<div class="anu-acc">'+
+        '<button type="button" id="anu-pub" class="anu-si" onclick="anuncioGuardar(false)">📢 '+(a ? 'Cambiar el anuncio' : 'Publicar anuncio')+'</button>'+
+        (a ? '<button type="button" id="anu-quitar" class="anu-quitar" onclick="anuncioGuardar(true)">🗑 Quitar anuncio</button>' : '')+
+        '<button type="button" class="anu-no-b" onclick="anuncioCerrar()">Cancelar</button>'+
+      '</div></div></div>';
+  box.hidden=false;
+  setTimeout(function(){ var t=document.getElementById('anu-txt'); if(t) try{ t.focus(); t.setSelectionRange(t.value.length, t.value.length); }catch(e){} }, 60);
+}
+function anuncioCerrar(){ var b=document.getElementById('anu'); if(b) b.hidden=true; }
+function anuncioContar(){ var t=document.getElementById('anu-txt'), n=document.getElementById('anu-n'); if(t && n) n.textContent=String(t.value.length); }
+function anuncioEstado(txt, mal){ var e=document.getElementById('anu-est'); if(e){ e.textContent=txt||''; e.classList.toggle('mal', !!mal); } }
+function anuncioGuardar(quitar){
+  if(ANUNCIO.env) return;
+  if(!UNLOCKED){ anuncioEstado('🔒 Primero poné la contraseña de Administración.', true); return; }
+  var ta=document.getElementById('anu-txt');
+  var t=quitar ? '' : String((ta && ta.value) || '').replace(/\s+/g, ' ').trim().slice(0, ANUNCIO_MAX);
+  if(!quitar && !t){ anuncioEstado('Escribí qué querés que diga Eduardo.', true); return; }
+  var a=anuncioLeer();
+  if(!quitar && a && a.t===t){ anuncioEstado('Es el mismo anuncio que ya está puesto.', true); return; }
+  var d=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+  var o={ v:1, t:t, d:todayStr()+' '+z(d.getHours())+':'+z(d.getMinutes()), ts:Date.now(), por:(getVendedorMem()||'Administración') };
+  var fila=filaSistema(ANUNCIO_ID, '📢 ANUNCIO DE ADMINISTRACIÓN (no tocar: lo lee el panel)', JSON.stringify(o));
+  var vieja=(STATE||[]).filter(function(p){ return p && String(p.id)===ANUNCIO_ID; })[0];
+  var rv=Math.max(Number(vieja && vieja.rev)||0, Number(SAVE_REV[ANUNCIO_ID])||0); if(rv) fila.rev=rv;
+  ANUNCIO.env=1; anuncioEstado('Guardando en la planilla…');
+  ['anu-pub','anu-quitar'].forEach(function(id){ var b=document.getElementById(id); if(b) b.disabled=true; });
+  var fin=function(ok, txt){
+    ANUNCIO.env=0;
+    ['anu-pub','anu-quitar'].forEach(function(id){ var b=document.getElementById(id); if(b) b.disabled=false; });
+    if(!ok){ anuncioEstado(txt, true); return; }
+    anuncioCerrar();
+    toast(quitar ? '🗑 Anuncio quitado: Eduardo deja de decirlo.' : '📢 Listo: Eduardo se lo dice a los vendedores cada 3 minutos.', 'ok');
+    try{ asisRefrescar(); }catch(e){}
+    try{ anuncioBtnPintar(); }catch(e){}
+  };
+  Promise.resolve().then(function(){ return apiSave(fila); }).then(function(res){
+    if(res && res.ok){
+      STATE=(STATE||[]).filter(function(p){ return String(p.id)!==ANUNCIO_ID; }); STATE.push(res.pedido || fila);
+      fin(true);
+    } else fin(false, '⚠️ No se guardó'+(res && res.error ? (' ('+res.error+')') : '')+'. Probá de nuevo en un rato.');
+  }, function(e){ fin(false, '⚠️ No se guardó: '+(function(){ try{ return motivoDeError(e); }catch(x){ return 'sin conexión con la planilla'; } })()+'. Probá de nuevo.'); });
+}
+/* el botón de Administración dice si hay un anuncio puesto */
+function anuncioBtnPintar(){
+  var b=document.getElementById('anu-btn'); if(!b) return;
+  var a=anuncioLeer(), on=!!a;
+  b.classList.toggle('anu-on', on);
+  b.setAttribute('data-d', on ? 'ahora: «'+a.t.slice(0, 40)+(a.t.length>40?'…':'')+'»' : 'Eduardo lo repite cada 3 min');
 }
 /* ============================================================================
    🧭 (12/10, I) EL RECORRIDO GUIADO: la primera vez que una vendedora elige su nombre en este aparato, Eduardo le ofrece mostrarle

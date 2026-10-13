@@ -1089,7 +1089,9 @@ function armarAlertas(D){
   if(ns) ALERTAS.push({ ic:'📦', t:ns+' pedido'+(ns===1?'':'s')+(D.hoy?' de hoy':'')+' sin camión', d:D.sin.stops.slice(0,4).map(function(p){ return 'OC '+(p.oc||'—'); }).join(' · ')+(ns>4?' · …':'')+' · asignalos en Administración',
     pos:function(){ return new THREE.Vector3(PTF.x+25,0,PTF.fz+16); }, dy:5.2, obj:cartel(PTF.x+28,PTF.fz+17,2.8), ir:'ptf', sinCam:true });
   if(D.im && D.im.u>0){ var q=[]; CAMS.forEach(function(c){ c.items.forEach(function(it){ if(it.st==='moreno') q.push(it.prod+' ×'+it.u+' ('+c.p+')'); }); });
-    ALERTAS.push({ ic:'📥', t:'Moreno: '+D.im.u+' por traer', d:q.slice(0,3).join(' · ')+(q.length>3?' · …':''),
+    /* (13/10) también se va a buscar a las tiendas (🏬): el cartel nombra los lugares; solo Moreno, como siempre */
+    var lugs=Object.keys(D.im.alm||{}), otros=lugs.some(function(a){ return a!=='Moreno'; });
+    ALERTAS.push({ ic:'📥', t:(otros ? ('Por traer: '+D.im.u+' de '+lugs.join(' + ')) : ('Moreno: '+D.im.u+' por traer')), d:q.slice(0,3).join(' · ')+(q.length>3?' · …':''),
       pos:function(){ return new THREE.Vector3(ALM.im.x,0,ALM.im.fz+8); }, dy:5.4, obj:cartel(ALM.im.x+9,ALM.im.fz+9,3.2), ir:'im' }); }
   var nf=0; CAMS.forEach(function(c){ nf+=c.nFalta||0; });
   if(nf) ALERTAS.push({ ic:'⛔', t:nf+' línea'+(nf===1?'':'s')+' sin stock', d:'✗ no hay: avisá al cliente y reprogramá la entrega', pos:function(){ return new THREE.Vector3(PTF.x+6,0,PTF.fz+3); }, dy:7.5, ir:'ptf' });

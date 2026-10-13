@@ -661,6 +661,23 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
 
+## 🏬 Recoger de una tienda (§4kr, 13/10; dueño: *«a veces no hay stock en fábrica y los vendedores piden que recojan de sus tiendas»*; en la rama, `f4e796b`)
+- En las marcas de cada producto, **«🏬 Tienda»** → elegir la sucursal (`SUCURSALES` sin Tiendas Roho, la del vendedor primero). Guarda la
+  MISMA marca de «📥 recoger» con `chkDe='Tienda X'` (`TIENDA_PREF`): una página vieja la lee como «📥 Recoger de Tienda X».
+- `recogeTiendaDe(nm)`/`recogeDeTienda(x)`; `recogerClave` = `tienda:<sucursal>` y `recogerMismo` no la junta con ningún almacén.
+- ⚠️ **No es stock del panel**: `stockData`, `stockComprometido`, `stockSalidas`, `stockSalidasVentana` y `stockAsignar` (`tot.deTienda`) la
+  saltean; no reserva ni descuenta PTF/Banzer/Moreno y el control del corte no la espera. **Sí cuenta para la rotación.** Un camino nuevo
+  que reserve o descuente stock tiene que saltearla igual. Se ve con 🏬 en Administración, «Lo del día, por lugar», los camiones 3D y la
+  ciudad. `tests/test_recoger_tienda.js` (20). Bitácora §4kr.
+
+## 📢 «Decir anuncio» (§4ks, 13/10; dueño: *«que Eduardo lo repita cada 3 min a los vendedores… "no hay insumos para el ICE" hasta nuevo aviso»*; en la rama)
+- Fila del sistema **`__anuncio__`** (`ANUNCIO_ID`, en `esFilaSistema`; JSON `{v,t,d,ts,por}`; quitar = `t` vacío; sin sello: gana el último).
+  El servidor no cambió.
+- Administración → «📤 Mensajes y partes» → **«📢 Decir anuncio»** (`#anu-btn`, `anuncioAbrir`, solo con la contraseña).
+- **Vendedores** (`anuncioRepite`: sin clave y sin rol admin/logística): globo naranja con sonido apenas llega y cada `ANUNCIO_CADA_MS` (3 min;
+  reloj de 15 s en `asisMontar`); primero en los avisos y **sin «Entendido»** (`fijo`). Administración y logística: una vez, sin repetir.
+- `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (27). Bitácora §4ks.
+
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
 La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).
 - Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`, y desde 13/10 también `#adm-ciudad-btn` arriba de Administración, al lado de «Ocultar camiones»: con la vista 3D `.cv-tit button` lo pintaba blanco sobre blanco y el dueño no lo encontraba) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
