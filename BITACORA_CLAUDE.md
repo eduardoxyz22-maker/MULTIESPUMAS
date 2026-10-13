@@ -14060,3 +14060,5 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   · Carteles: `cartelTex` y el del galpón achican la letra hasta entrar (*«los nombres no se leen»*).
   · `Mc` = material compartido para lo que no se mueve (casas, árboles…): antes cada uno estrenaba el suyo.
   · `armar.py` rearmado con `remap.py` (scratchpad: mapea los rangos por diff entre versiones de cuerpo.js). test_patio 29/29. Muestra v23.
+  · *«siguen habiendo líneas verdes entre los cruces»* → en cada calle que cruza un anillo (o una avenida de salida) el camellón y las rayas
+    blancas se cortan (`cortes` en `AV_RECTAS`): el cruce queda de asfalto, como cualquier esquina. Muestra v24.

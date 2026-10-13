@@ -256,8 +256,11 @@ function viaAdorno(x,z,i,conArbol){ if(i%2===0){ cil(.12,6.5,VIA_POSTE,x,3.25,z,
 function viaTramos(n, libre){ var out=[], ini=-1; for(var i=0;i<=n;i++){ var ok=i<n && libre(i); if(ok && ini<0) ini=i; if(!ok && ini>=0){ out.push([ini,i-1]); ini=-1; } } return out; }
 AV_RECTAS.forEach(function(R){ var a=Math.max(R.a, R.eje==='x'?X0-RW/2:Z0-RW/2), b=Math.min(R.b, R.eje==='x'?X1+RW/2:Z1+RW/2); if(b-a<2) return;
   var L=b-a, m=(a+b)/2, X=function(p){ return R.eje==='x'?p:R.c; }, Z=function(p){ return R.eje==='x'?R.c:p; };
-  plano(R.eje==='x'?L:RW, R.eje==='x'?RW:L, X(m), Z(m), .06, VIA_ASF); plano(R.eje==='x'?L:1.4, R.eje==='x'?1.4:L, X(m), Z(m), .07, PASTO);
-  [-1,1].forEach(function(sd){ plano(R.eje==='x'?L:.3, R.eje==='x'?.3:L, X(m)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(m)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); });
+  plano(R.eje==='x'?L:RW, R.eje==='x'?RW:L, X(m), Z(m), .06, VIA_ASF);
+  var o0=R.eje==='x'?X0:Z0, cortes=[], p0=a;   // (13/10, dueño: «siguen habiendo líneas verdes entre los cruces») el camellón y las rayas se cortan en cada calle que cruza
+  for(var gx=o0; gx<=b+G; gx+=G){ if(gx+RW/2+.5<=a || gx-RW/2-.5>=b) continue; if(gx-RW/2-.5>p0) cortes.push([p0, gx-RW/2-.5]); p0=gx+RW/2+.5; } if(b>p0) cortes.push([p0,b]);
+  cortes.forEach(function(c){ var l=c[1]-c[0], mm=(c[0]+c[1])/2; if(l<1) return; plano(R.eje==='x'?l:1.4, R.eje==='x'?1.4:l, X(mm), Z(mm), .07, PASTO);
+    [-1,1].forEach(function(sd){ plano(R.eje==='x'?l:.3, R.eje==='x'?.3:l, X(mm)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(mm)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); }); });
   for(var p=a+7, k=0; p<b-4; p+=14, k++){ var md=((p%G)+G)%G; if(md<8||md>G-8) continue; viaAdorno(X(p), Z(p), 0, false); } });   // faroles en el camellón, no en los cruces
 AV_ARCOS.forEach(function(C, ci){ var n=Math.max(12, Math.round(C.r*Math.PI/2/2.5)), paso=Math.PI/2/n, px=function(i){ return C.x+C.r*Math.cos(C.t0+i*paso); }, pz=function(i){ return C.z-C.r*Math.sin(C.t0+i*paso); };
   viaTramos(n+1, function(i){ return viaLibre(px(i),pz(i)); }).forEach(function(T){ var t0=C.t0+T[0]*paso, tl=(T[1]-T[0])*paso; if(tl<=0) return;
