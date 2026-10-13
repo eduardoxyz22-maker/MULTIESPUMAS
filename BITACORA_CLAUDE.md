@@ -14213,3 +14213,7 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   `sincronizar` y `gpsAlDia`) lo estaciona en el andén de Moreno (`c.alm='im'`, los andenes de Moreno entran al reparto) con
   «📥 En Moreno · lo dice el GPS»; un camión en la calle sin salida dice «En la calle · lo dice el GPS», no «Salió ·».
   `PATIO_V='20261013g'`. Pruebas: `test_gps` (93), `test_gps_pagina` §8 (→ 54), `test_patio` 3D (→ 35).
+- **13/10 tarde: el dueño implementó el servidor `2026-10-13-b`** («ya está publicado el gs») y la página salió en seguida:
+  **PUBLICADA `528d2a0`** (pedidos.html, patio.js con `PATIO_V='20261013g'`, el `.gs`, CLAUDE.md y las pruebas del GPS). Desde ahora
+  las paradas, el registro y el recorrido los anota el servidor; la página los toma de `gpsDia` y pide `gpsRuta`. Volver atrás del
+  servidor = ✏️ a la versión anotada Y pegar la 13-a (`d2963b1…`, 3.524 líneas); la página de antes es `7f53be3`.
