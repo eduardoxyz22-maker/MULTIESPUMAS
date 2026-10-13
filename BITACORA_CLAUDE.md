@@ -14028,3 +14028,9 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
 - Después (13/10): *«los techos de las fábricas están al revés igual»* → el techo de los galpones (`r.rotation.x=s*.3`) y el de la iglesia
   tenían el mismo error que las casas (en V). Y *«te pasé fotos de Santa Cruz»* → más teja (sin techos grises en las casas), menos losas
   grises y el doble de árboles en los patios. Los carteles de los anillos se ponen lejos de galpones y tiendas (el del 4to tapaba PTF). Muestra v18.
+- Y con fotos de la catedral: *«la catedral y la plaza 24 de Septiembre es el centro de la ciudad»* → `plazaPrincipal`: catedral de
+  ladrillo liso (no la fachada con ventanas de los edificios) con la nave y su techo de teja, el frontón, tres puertas y dos torres con
+  ventanas de arco, cornisas blancas y cúpula; la plaza con cuatro jardines, palmeras (`palmera`), árboles y el monumento al centro. Las
+  ocho cuadras que la rodean son casonas blancas con teja y galería (`colonial`, `LOTE_COL`); los lotes de los costados ahora miran a la
+  calle. Sin el anillo pegado a la plaza: adentro del 1er anillo queda el casco viejo en cuadrícula, como en el mapa (quedan 4 anillos:
+  147/203/243/410). Botón «⛪ Centro» (`IR.centro`, también en `p4_ui.js` y `p5_tail.js`). Muestra v19.
