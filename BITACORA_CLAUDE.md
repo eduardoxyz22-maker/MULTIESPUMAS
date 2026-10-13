@@ -14006,3 +14006,7 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   scratchpad: `libs/t/package`). ⚠️ Con el reloj de Playwright fijo, `THREE.Clock` no avanza y nada se mueve: la parte 3D va sin
   `setFixedTime`. ⚠️ En swiftshader va a ~2 cuadros por segundo: el montacargas tarda ~45 s en subir un pallet; esperar con
   `waitForFunction` y tocar con `el.click()` (el `page.click` espera «estable» y se cansa).
+- **Publicado 13/10** en `main` (`d5bbfe0`): pedidos.html + patio.js + tests/test_patio.js + CLAUDE.md. Antes, la batería entera: 176
+  suites, una sola roja con la máquina cargada (`test_mispedidos` 32/1) que sola da 33/33, igual que contra main. El dueño, el mismo día:
+  *«aumentá unas cuantas casas, cosas delante de Charcas, Bs As y Carmelo para que no parezcan al borde de la ciudad y la nada»* → una fila
+  más de cuadras abajo (Z1=5·G): casas, parque y `barrio` (casas + edificios bajos + kiosco) en esa fila. Muestra v14 y patio.js iguales.
