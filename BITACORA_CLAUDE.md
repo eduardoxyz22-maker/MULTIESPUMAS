@@ -13969,3 +13969,13 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   (105, fila 210), Carmelo (385, fila 210). La ciudad crece una columna a la izquierda (X0=-4·G). Ofreció mandar las coordenadas de cada
   tienda: con las ubicaciones a mano no hacen falta para la muestra (el pin real, en la vista girada 45°, no coincidía con cómo él ve la
   ciudad).
+- 13/10, el dueño mandó los pines de todo: Mutualista -17.765811,-63.162066 · Charcas -17.7801473,-63.1762546 · Carmelo -17.7919108,-63.1538966
+  · Buenos Aires -17.7807965,-63.1836189 · Central -17.7727299,-63.1672416 · Mia Plaza -17.7702734,-63.1697256 · Banzer -17.7202386,-63.1631265
+  · PTF -17.7489091,-63.1429133 (Moreno ya estaba: -17.7623355,-63.0675466) → versión 13. **El enredo de antes era el giro**: la cámara
+  isométrica mira en diagonal y el norte de la escena (-z) quedaba arriba a la DERECHA; el dueño lee la pantalla con el norte ARRIBA. Con
+  `geoAEscena` girado 45° (norte = (-x,-z), este = (+x,-z)) sus pedidos de antes coinciden con los pines: Banzer arriba a la izquierda de
+  PTF (bloque -105,-35), Moreno a la derecha (315,-105), las tiendas abajo a la izquierda y Carmelo la más de abajo a la derecha. Como en la
+  escena una cuadra son ~2 km y las tiendas están a 300-800 m, se separan a mano respetando ese orden y lo que pidió (Central a una cuadra de
+  Mia Plaza, Buenos Aires dos cuadras a la izquierda de Charcas). Frentes hacia abajo menos Central. La parada de Moreno sale de `ALM.im`.
+  Estos pines (y el de Moreno) sirven para el panel de verdad: `SUCURSALES` tiene otros números para algunas tiendas; antes de copiarlos
+  allá, preguntarle cuáles valen.
