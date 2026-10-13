@@ -14217,3 +14217,7 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   **PUBLICADA `528d2a0`** (pedidos.html, patio.js con `PATIO_V='20261013g'`, el `.gs`, CLAUDE.md y las pruebas del GPS). Desde ahora
   las paradas, el registro y el recorrido los anota el servidor; la página los toma de `gpsDia` y pide `gpsRuta`. Volver atrás del
   servidor = ✏️ a la versión anotada Y pegar la 13-a (`d2963b1…`, 3.524 líneas); la página de antes es `7f53be3`.
+- **Su `probarAntesDeImplementar` con la 13-b (captura del dueño)**: todo ✅ — 1.330 filas; stock 25.007/50.000 (50 %, el aviso del
+  panel es a las 45.000); lectura comprimida 1.127.025 → 322.508 letras; el bot prendido con 1 de logística (Ernesto); Meta 107 avisos;
+  «El GPS anda: el último repaso (12:10) vio 4 unidades» y **«Hoy el GPS anotó 2 parada(s) de los camiones; 1 cerca de un pedido del
+  día»**: las paradas del servidor ya andan con datos de verdad.
