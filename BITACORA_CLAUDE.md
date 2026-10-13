@@ -14069,3 +14069,6 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
     `an` (índice del anillo): 1ro y 2do, farol y árbol alternados en el camellón; 3ro y avenidas de salida, solo faroles. Hoy hay 3 anillos
     (el 4to no entra en el mapa sin agrandarlo hacia el bosque). Muestra v26.
   · *«los camellones no deben estar sobre el paso de cebra, sino terminar antes»* → el camellón se corta 3 más antes de cada cruce. Muestra v27.
+  · *«sí, agrandalo, quiero los 4 anillos; con eso me basta»* → la ciudad crece dos columnas al oeste y una fila al sur (`X0=-6*G`, `Z1=10*G`,
+    también en `s1_mapa.js`), el bosque y el río se corren con `BORDE_X`, y el 4to anillo (s=315) entra entero (solo faroles, como el 3ro).
+    Equipetrol (`zonaAlta`) sigue pegado al bosque; «Ver todo» = [0,245, Z/480]; gente, motos y autos usan el tamaño nuevo. Muestra v28. 29/29.
