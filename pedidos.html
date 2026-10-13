@@ -2394,6 +2394,20 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .asis-preg{ margin:10px 11px 4px; border:1px solid var(--gray-md); border-radius:12px; padding:8px 10px; font-size:.8rem; }
 .asis-preg summary{ cursor:pointer; font-weight:700; } .asis-preg ul{ margin:6px 0 0; padding-left:16px; } .asis-preg li{ margin:4px 0; }
 .asis-preg li small{ display:block; color:var(--muted); } .asis-preg-n{ display:block; color:var(--muted); margin-top:6px; }
+/* 📅 (13/10) reprogramar desde el cierre de entregas */
+.cie-rp-btn{ color:#b45309!important; border-color:#fed7aa!important; }
+.cie-rp-btn.on{ background:#fff7ed!important; }
+.cie-rp{ margin:0 0 8px 26px; padding:10px 12px; border:1px solid #fed7aa; border-left:4px solid #f59e0b; border-radius:12px; background:#fffbf5; display:grid; gap:8px; font-size:.84rem; animation:mi-entra .3s ease-out both; }
+.cie-rp-t{ font-weight:800; color:#7c4b00; } .cie-rp-t span{ font-weight:600; color:var(--muted); margin-left:6px; font-size:.78rem; }
+.cie-rp-fila{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.cie-rp-dia, .cie-rp-tur{ background:#fff!important; border:1px solid var(--gray-md)!important; color:var(--text)!important; border-radius:999px!important; }
+.cie-rp-dia.on, .cie-rp-tur.on{ background:#0a6b47!important; border-color:#0a6b47!important; color:#fff!important; }
+.cie-rp-f{ width:160px!important; flex:none; padding:4px 8px; }
+.cie-rp-cupo{ color:#0a6b47; font-size:.8rem; }
+.cie-rp-av{ background:var(--amber-lt); border:1px solid var(--amber-border); border-radius:10px; padding:8px 11px; color:#8a5a00; font-size:.8rem; }
+.cie-rp-ok{ background:#b45309!important; color:#fff!important; border-color:#b45309!important; }
+.cie-rp-hechos{ margin:0 0 10px; padding:8px 11px; border-radius:10px; background:#fff7ed; border:1px solid #fed7aa; font-size:.82rem; display:grid; gap:2px; }
+@media (max-width:560px){ .cie-rp{ margin-left:0; } }
 /* 📢 (13/10) el anuncio de Administración: en el globo, en la lista de Eduardo, el botón y su ventana */
 .anu-tag{ display:inline-block; font-style:normal; font-size:.66rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:#fff; background:#c2410c; border-radius:999px; padding:2px 8px; margin-bottom:4px; }
 .asis-globo.asis-anuncio{ border-left-color:#c2410c; background:linear-gradient(135deg,#fff7ed,#fff); max-width:min(340px, calc(100vw - 110px)); font-size:.9rem; animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both, anu-late 1.2s ease-in-out .4s 3; }
@@ -15559,14 +15573,19 @@ function reproConfirmar(){
   if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
   if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
+  // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
+  reproAplicar(p, f, t, avisos.length>0);
+  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
+  reproVolver();                          // vuelve a la ficha desde la que se abrió
+}
+/* Mover un pedido a otro día/turno, lo mismo desde 📅 Reprogramar y desde el cierre de entregas (13/10): número del día nuevo, la ATC
+   que vive en su devolución la sigue, y con avisos confirmados va con `forzar`. Devuelve la promesa del guardado. */
+function reproAplicar(p, f, t, forzar){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
   atcSeguirViaje(p, _enDev);
-  // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
-  persistPedido(p, {forzar: avisos.length>0});
-  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
-  reproVolver();                          // vuelve a la ficha desde la que se abrió
+  return persistPedido(p, {forzar: !!forzar});
 }
 
 /* ============================================================================
@@ -27601,7 +27620,7 @@ function renderCierreEntAviso(){
     ' <button class="rv-toggle" style="margin-left:8px" onclick="abrirCierreEntregas()">hacer el cierre</button>';
 }
 function abrirCierreEntregas(){
-  CIERRE_ENT_SEL={}; CIERRE_ENT_DIA={};
+  CIERRE_ENT_SEL={}; CIERRE_ENT_DIA={}; CIERRE_ENT_RP={ id:'', f:'', t:'' }; CIERRE_ENT_RP_HECHOS=[];
   /* (12/10, dueño: «quita el entregado automático… pedidos que se marcan entregado y no se entregan… mejor solo la alerta de Eduardo a
      logística y el LOG manual») NADA viene tildado: logística tilda uno por uno lo que de verdad salió. Antes los de hoy venían tildados. */
   MODAL_KIND='admin';
@@ -27619,11 +27638,88 @@ function cierreEntFila(p, atrasado){
     (atrasado ? '' : cierreEntGpsHtml(p))+
     (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>'+
       '<span style="font-size:.8rem;color:var(--muted)">¿qué día se entregó? <input type="date" class="cie-ent-dia" data-id="'+esc(String(p.id))+'" value="'+esc(CIERRE_ENT_DIA[p.id]||hoy)+'" max="'+esc(hoy)+'" min="'+esc(p.fecha)+'" onchange="cierreEntDia(this.getAttribute(\'data-id\'), this.value)" style="width:140px;padding:3px 6px"></span>') : '')+
-    '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
-  '</label>';
+    '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" style="margin-left:auto" data-id="'+esc(String(p.id))+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: pasalo a otro día sin salir del cierre">📅 No salió · reprogramar</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
+  '</label>'+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
+}
+/* 📅 (13/10, dueño, con la captura del cierre: «al tildar lo entregado debería permitir ahí mismo reprogramar lo que no se entregó»)
+   Cada renglón sin tildar tiene «📅 No salió · reprogramar»: abre debajo el día (Hoy PM si era de la mañana · el próximo camión · el
+   siguiente · cualquier fecha) y el turno, con los cupos y los avisos de siempre (`reproAvisos`: día cerrado, domingo, feriado, sábado
+   PM, turno lleno), y lo mueve con `reproAplicar` —lo mismo que 📅 Reprogramar de la ficha— SIN cerrar la ventana. El pedido sale de
+   la lista (ya no es de hoy) y queda en «📅 Reprogramados en este cierre». Con avisos pregunta y pide la clave de administración del
+   servidor como la ficha. Lo reprogramado nunca queda tildado. Como cualquier cambio de día, el bot le avisa al cliente el día nuevo. */
+var CIERRE_ENT_RP={ id:'', f:'', t:'' }, CIERRE_ENT_RP_HECHOS=[];
+function cierreEntRpDias(p){
+  var hoy=todayStr(), L=[], d1=proximoDiaEntrega(), d2=d1;
+  if(p.fecha===hoy && normTurno(p.turno)!=='PM' && !diaSabado(hoy) && limTurno(hoy,'PM')>0) L.push({ f:hoy, t:'PM', x:'Hoy PM' });
+  L.push({ f:d1, x:(d1===tomorrowStr()?'Mañana':diaSemana(d1))+' '+fmtFechaCorta(d1) });
+  for(var i=0;i<14;i++){ d2=stockSumarDias(d2,1); if(!diaDomingo(d2) && !(typeof feriadoDe==='function' && feriadoDe(d2)) && !diaCerrado(d2)) break; }
+  L.push({ f:d2, x:diaSemana(d2)+' '+fmtFechaCorta(d2) });
+  return L;
+}
+function cierreEntRpTurno(f, t){ return (diaSabado(f) && t==='PM') ? 'AM' : (t||'AM'); }
+function cierreEntRpAbrir(id){
+  id=String(id);
+  if(CIERRE_ENT_RP.id===id){ CIERRE_ENT_RP={ id:'', f:'', t:'' }; renderCierreEntregas(); return; }
+  var p=findById(id); if(!p) return;
+  var f=proximoDiaEntrega();
+  CIERRE_ENT_RP={ id:id, f:f, t:cierreEntRpTurno(f, normTurno(p.turno)||'AM') };
+  if(CIERRE_ENT_SEL[id]) delete CIERRE_ENT_SEL[id];   // si no salió, no puede quedar tildado
+  renderCierreEntregas();
+}
+function cierreEntRpFecha(f, t){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(f||''))) return;
+  CIERRE_ENT_RP.f=f; CIERRE_ENT_RP.t=cierreEntRpTurno(f, t||CIERRE_ENT_RP.t); renderCierreEntregas();
+}
+function cierreEntRpSetTurno(t){ CIERRE_ENT_RP.t=cierreEntRpTurno(CIERRE_ENT_RP.f, t); renderCierreEntregas(); }
+function cierreEntRpHtml(p){
+  if(CIERRE_ENT_RP.id!==String(p.id)) return '';
+  var f=CIERRE_ENT_RP.f, t=CIERRE_ENT_RP.t, hoy=todayStr(), av=reproAvisos(p, f, t);
+  var lim=limTurno(f,t), usados=cuposUsadosTurno(f,t); if(p.fecha===f && normTurno(p.turno)===t) usados--;
+  var chip=function(o){ var tt=o.t||cierreEntRpTurno(o.f, t), on=(o.f===f && tt===t);
+    return '<button type="button" class="btn btn-sm cie-rp-dia'+(on?' on':'')+'" onclick="cierreEntRpFecha(\''+o.f+'\''+(o.t?(',\''+o.t+'\''):'')+')">'+esc(o.x)+'</button>'; };
+  var tb=function(x){ var no=(x==='PM' && diaSabado(f)); return '<button type="button" class="btn btn-sm cie-rp-tur'+(t===x?' on':'')+'"'+(no?' disabled title="Los sábados solo hay turno AM"':'')+' onclick="cierreEntRpSetTurno(\''+x+'\')">'+(x==='AM'?'🌅 AM':'🌆 PM')+'</button>'; };
+  return '<div class="cie-rp" data-id="'+esc(String(p.id))+'">'+
+    '<div class="cie-rp-t">📅 ¿Para cuándo lo pasás? <span>Ahora: '+esc(fmtFechaCorta(p.fecha))+' · '+esc(normTurno(p.turno)||'—')+'</span></div>'+
+    '<div class="cie-rp-fila">'+cierreEntRpDias(p).map(chip).join('')+
+      '<input type="date" class="cie-rp-f" value="'+esc(f)+'" min="'+esc(hoy)+'" onchange="cierreEntRpFecha(this.value)">'+'</div>'+
+    '<div class="cie-rp-fila">'+tb('AM')+tb('PM')+
+      (av.length ? '' : ('<span class="cie-rp-cupo">quedan <b>'+Math.max(0, lim-usados)+'</b> de '+lim+' en el turno '+esc(t)+' del '+esc(fmtFechaCorta(f))+'</span>'))+'</div>'+
+    (av.length ? ('<div class="cie-rp-av">'+av.map(function(a){ return '⚠️ '+esc(a); }).join('<br>')+'<br><b>Se puede igual: te lo pregunto antes.</b></div>') : '')+
+    '<div class="cie-rp-fila"><button type="button" class="btn btn-sm cie-rp-ok" onclick="cierreEntRpConfirmar()">✓ Pasar al '+esc(diaSemana(f)+' '+fmtFechaCorta(f))+' · '+esc(t)+'</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="cierreEntRpAbrir(\''+esc(String(p.id))+'\')">Cancelar</button></div>'+
+  '</div>';
+}
+function cierreEntRpConfirmar(){
+  var p=findById(CIERRE_ENT_RP.id); if(!p) return Promise.resolve(null);
+  var f=CIERRE_ENT_RP.f, t=CIERRE_ENT_RP.t;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí el día nuevo','err'); return Promise.resolve(null); }
+  if(f===p.fecha && t===normTurno(p.turno)){ toast('Es el mismo día y el mismo turno','err'); return Promise.resolve(null); }
+  var av=reproAvisos(p, f, t);
+  if(av.length && !confirm('⚠️ Ojo:\n\n   • '+av.join('\n   • ')+'\n\n¿Reprogramar igual?')) return Promise.resolve(null);
+  if(av.length && !asegurarClaveAdmin()) return Promise.resolve(null);
+  var antes={ f:p.fecha, t:normTurno(p.turno)||'' };
+  delete CIERRE_ENT_SEL[String(p.id)]; delete CIERRE_ENT_DIA[String(p.id)];
+  var pr=reproAplicar(p, f, t, av.length>0);
+  CIERRE_ENT_RP_HECHOS.push({ id:String(p.id), oc:ocEtiq(p.oc)||'—', cli:p.cliente||'', de:antes, a:{ f:f, t:t } });
+  CIERRE_ENT_RP={ id:'', f:'', t:'' };
+  renderCierreEntregas();
+  toast('📅 '+(ocEtiq(p.oc)||p.cliente||'Pedido')+' pasó al '+fmtFecha(f)+' · '+t+'.', 'ok', 4000);
+  return Promise.resolve(pr).then(function(r){
+    if(r && r.ok===false && RECHAZOS_FIRMES[r.error]) toast('⚠️ El servidor no aceptó el cambio de día de '+(ocEtiq(p.oc)||p.cliente||'ese pedido')+': abrilo y revisalo.', 'err', 9000);
+    return r;
+  });
+}
+function cierreEntRpHechosHtml(){
+  if(!CIERRE_ENT_RP_HECHOS.length) return '';
+  return '<div class="cie-rp-hechos"><b>📅 Reprogramados en este cierre · '+CIERRE_ENT_RP_HECHOS.length+'</b>'+
+    CIERRE_ENT_RP_HECHOS.map(function(h){ return '<div>'+esc(h.oc)+' · '+esc(h.cli)+': '+esc(fmtFechaCorta(h.de.f))+' '+esc(h.de.t)+' → <b>'+esc(fmtFechaCorta(h.a.f))+' '+esc(h.a.t)+'</b></div>'; }).join('')+'</div>';
 }
 function renderCierreEntregas(){
   var hoy=todayStr(), H=cierreEntHoy(hoy), A=cierreEntAtrasados(hoy);
+  /* 📅 (13/10) se repinta al abrir/usar «reprogramar»: que la lista no salte arriba */
+  var _mb=document.getElementById('modal-box'), _ab=document.getElementById('modal')&&document.getElementById('modal').classList.contains('on') && _mb && _mb.querySelector('.cie-ent');
+  var _sc=_ab ? [_mb.scrollTop, _ab.scrollTop] : null;
   var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Cierre de entregas · '+esc(fmtFecha(hoy))+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b cie-ent">'+
     '<div class="metrics cie-met">'+mc('#0a6b47','Para hoy',H.length,'programados sin confirmar')+mc('#22A06B','Tildados',cierreEntTildados().length,'se confirman al tocar el botón')+
@@ -27631,10 +27727,11 @@ function renderCierreEntregas(){
     cierreEntAvanceHtml()+
     '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px"><b>Nada viene tildado</b>: tildá uno por uno lo que de verdad se entregó y tocá Confirmar. '+
       'Abrir esta lista no cambia nada. Antes de confirmar el panel <b>relee la planilla</b>: lo que otro equipo reprogramó, borró o ya marcó se saltea y se avisa. '+
-      'Los destildados siguen pendientes: si no salieron, reprogramalos (un pedido con la fecha pasada y sin tildar se da por entregado).</p>'+
+      'Los destildados siguen pendientes: <b>si no salieron, tocá «📅 No salió · reprogramar»</b> en su renglón (un pedido con la fecha pasada y sin tildar se da por entregado).</p>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><label class="lb" for="cie-ent-quien" style="margin:0">¿Quién cierra?</label>'+
       '<input id="cie-ent-quien" type="text" value="'+esc(cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
     cierreEntGpsResumenHtml(H)+
+    cierreEntRpHechosHtml()+
     '<div class="cie-sec" style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
     (H.length ? H.map(function(p){ return cierreEntFila(p,false); }).join('') : '<div style="font-size:.86rem;color:var(--muted);padding:6px 0">No queda ninguno sin confirmar.</div>')+
     (A.length ? ('<div class="cie-sec atr" style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
@@ -27646,6 +27743,7 @@ function renderCierreEntregas(){
     '</div></div>';
   openModal(html, true);
   try{ cxFichasVivas(document.querySelector('#modal-box .cie-met'), 'cieMet', admIcoDe); }catch(e){}
+  if(_sc){ try{ var _b2=document.querySelector('#modal-box .cie-ent'); _mb.scrollTop=_sc[0]; if(_b2) _b2.scrollTop=_sc[1]; }catch(e){} }
 }
 /* 📍 (§4kp, dueño 13/10: «¿y qué pasa con las entregas automatizadas… camión se detuvo en una ubicación marcada para entrega?») LO QUE
    VIO EL GPS, en cada pedido de HOY: 'vio' (el camión se paró a ≤ 300 m de su pin), 'novio' (el camión ya volvió a PTF/Banzer y no se

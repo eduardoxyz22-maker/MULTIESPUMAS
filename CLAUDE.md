@@ -559,6 +559,12 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   2 min). Un «Conté a mano» más nuevo frena el Excel con su propio texto (`previoAMano`).
   ⚠️ El 06/10 a la mañana ya se subieron Excel con la página de antes: hay detecciones con el nombre largo. La página nueva
   las lee y las ofrece por su nombre (§16). `tests/test_corte_del_dia.js` (56, con .xlsx armados en la prueba), `test_servidor` §22.
+- **📅 Reprogramar ahí mismo** (§4kv, 13/10, dueño: *«al tildar lo entregado debería permitir ahí mismo reprogramar lo que no se entregó»*;
+  en la rama): cada renglón (hoy y atrasados) tiene «📅 No salió · reprogramar» → recuadro AFUERA del `<label>` (`cierreEntRpHtml`: Hoy PM ·
+  el próximo camión · el siguiente · fecha · turno, con cupos y `reproAvisos`) → `cierreEntRpConfirmar` mueve con **`reproAplicar`** (la
+  MISMA de 📅 Reprogramar de la ficha: `nroDia` nuevo, `atcSeguirViaje`, `forzar` con avisos + `asegurarClaveAdmin`) SIN cerrar el cierre.
+  Abrirlo destilda; queda en «📅 Reprogramados en este cierre» (`CIERRE_ENT_RP_HECHOS`). El bot avisa el día nuevo como cualquier cambio.
+  `tests/test_cierre_reprogramar.js` (17).
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).

@@ -21,6 +21,7 @@ import sys
 import time
 import urllib.error as _er
 import urllib.request as _rq
+from datetime import datetime, timedelta, timezone
 
 PANEL_URL = os.environ.get("PANEL_URL", "").strip()
 ORIGEN = "https://eduardoxyz22-maker.github.io"
@@ -115,6 +116,9 @@ def contar(crudo):
         print(f"   ⚠️ JSON raro: {type(j).__name__}")
         return
     print(f"   ok={j.get('ok')!r} · error={j.get('error')!r} · versión={j.get('version')!r}")
+    global _LISTA
+    if _LISTA is None and isinstance(j.get("pedidos"), list):
+        _LISTA = j                                          # 🛰️ (13/10) la primera lectura buena: de acá sale el resumen del GPS
     ped = j.get("pedidos")
     if isinstance(ped, list):
         global _PEDIDOS
@@ -129,6 +133,124 @@ def contar(crudo):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
         celda_stock(ped, j.get('version'))
         pedidos_en_feriados(ped)
+
+
+_LISTA = None
+
+# 🛰️ (13/10) EL GPS DE HOY Y LAS ENTREGAS MARCADAS. El dueño: «¿cómo vamos con el GPS? ¿cómo está todo? las entregas
+#    "marcadas"». Lo que la lectura trae del servidor (`gps` = la última posición de cada camión, `gpsDia` = salidas, registro y
+#    paradas de hoy, desde el .gs 2026-10-13-b) contra los pedidos de hoy: cuántos tiene cada camión, en cuántos se paró el GPS y
+#    cuántos tienen el ✅. ⚠️ Registro PÚBLICO: solo placas (ya están en el código), horas y CUENTAS; nunca clientes, direcciones,
+#    coordenadas ni el nombre del conductor.
+GPS_PLACAS = {"6663CCP": "Foton nuevo", "6409TIG": "Carry", "6021URL": "Foton insumo", "5655KSC": "Foton encarpado"}
+GPS_LUGARES = [("PTF", -17.7489125, -63.1429219, 300), ("Banzer", -17.7197548, -63.1631138, 300), ("Moreno", -17.7623355, -63.0675466, 400)]
+BO = timezone(timedelta(hours=-4))
+
+
+def _dist_m(la1, lo1, la2, lo2):
+    import math
+    r = math.pi / 180
+    a = math.sin((la2 - la1) * r / 2) ** 2 + math.cos(la1 * r) * math.cos(la2 * r) * math.sin((lo2 - lo1) * r / 2) ** 2
+    return 6371000 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _hora_bo(ms):
+    try:
+        return datetime.fromtimestamp(ms / 1000, BO).strftime("%H:%M") if ms else "?"
+    except Exception:
+        return "?"
+
+
+def _sale_en_camion(p):
+    """Un pedido que sale en un camión: ni filas del sistema, ni borradores de Kommo, ni ventas de tienda."""
+    if not isinstance(p, dict):
+        return False
+    i = str(p.get("id") or "")
+    if i.startswith("__") or i.startswith("kommo-") or str(p.get("estado") or "").lower().startswith("borrador"):
+        return False
+    d = str(p.get("direccion") or "").upper().replace("Ó", "O")
+    return not (d.startswith("SALIO DE TIENDA") or str(p.get("zona") or "").strip().lower() == "tienda")
+
+
+def gps_del_dia():
+    print("\n── 🛰️ el GPS de hoy y las entregas marcadas (solo horas y cuentas: este registro es público) ──")
+    j = _LISTA
+    if not j:
+        print("   (no hubo una lectura buena de la planilla)")
+        return
+    ahora = datetime.now(BO)
+    hoy = ahora.date().isoformat()
+    print(f"   servidor {j.get('version')!r} · ahora en Bolivia: {ahora.strftime('%d/%m %H:%M')}")
+    g = j.get("gps") if isinstance(j.get("gps"), dict) else None
+    if not g or not g.get("u"):
+        print("   ❌ la lectura NO trae posiciones del GPS (`gps`): el repaso no corre, faltan las claves en Propiedades, o pasaron más de "
+              "10 min sin un pedido bueno a la plataforma (fuera de 6 a 21 h, domingo o feriado no corre)")
+    else:
+        t = g.get("t") or 0
+        print(f"   posiciones: pedidas a la plataforma a las {_hora_bo(t)} (hace {max(0, round((ahora.timestamp() * 1000 - t) / 60000))} min) · "
+              f"{len(g['u'])} camión(es)")
+        for x in g["u"]:
+            if not isinstance(x, dict):
+                continue
+            nom = GPS_PLACAS.get(str(x.get("p") or ""), "¿placa sin camión en el panel?")
+            donde = "en la calle"
+            try:
+                cer = min(((_dist_m(x["la"], x["lo"], la, lo), n, rad) for n, la, lo, rad in GPS_LUGARES))
+                donde = (f"en {cer[1]}" if cer[0] <= cer[2] else f"en la calle, a {cer[0] / 1000:.1f} km de {cer[1]}").replace(".", ",")
+            except Exception:
+                pass
+            viejo = round((t - (x.get("r") or 0)) / 60000) if x.get("r") else None
+            print(f"   · {nom} ({x.get('p')}): {donde} · {x.get('v', 0)} km/h · motor {'prendido' if x.get('m') else 'apagado'} · "
+                  f"último reporte {_hora_bo(x.get('r'))}" + (f" (⚠️ {viejo} min antes de la consulta)" if viejo and viejo > 15 else ""))
+    d = j.get("gpsDia") if isinstance(j.get("gpsDia"), dict) else None
+    vistos = {}
+    if not d:
+        print("   ❌ la lectura NO trae el día del GPS (`gpsDia`): llega con el .gs 2026-10-13-b, y solo si hoy ya corrió el repaso")
+    else:
+        print(f"   el día del GPS: {d.get('f')} · actualizado a las {_hora_bo(d.get('t'))}")
+        for pl, u in sorted((d.get("u") or {}).items()):
+            nom = GPS_PLACAS.get(pl, pl)
+            ev = u.get("ev") or []
+            par = u.get("par") or []
+            con = [q for q in par if isinstance(q, list) and len(q) > 4 and q[4]]
+            for q in con:
+                for i in q[4]:
+                    vistos[str(i)] = nom
+            tipos = {}
+            for e in ev:
+                if isinstance(e, list) and len(e) > 1:
+                    k = e[1] + ("·" + e[3] if e[1] == "sal" and len(e) > 3 and e[3] else "")
+                    tipos[k] = tipos.get(k, 0) + 1
+            print(f"   · {nom}: salió {u.get('s') or '—'}" + (f" (de {u.get('sd')})" if u.get('sd') else "") +
+                  (f" · última salida {u.get('ul')}" if u.get('ul') and u.get('ul') != u.get('s') else "") +
+                  (f" · volvió {u.get('vu')}" if u.get('vu') else "") +
+                  f" · paradas {len(par)} ({len(con)} en un pedido, {sum(len(q[4]) for q in con)} pedido(s) nombrados) · registro: " +
+                  (", ".join(f"{k} {n}" for k, n in sorted(tipos.items())) or "vacío"))
+    ped = [p for p in (j.get("pedidos") or []) if _sale_en_camion(p)]
+    de_hoy = [p for p in ped if str(p.get("fecha") or "")[:10] == hoy]
+    print(f"   ── pedidos de HOY que salen en camión: {len(de_hoy)} ──")
+    por = {}
+    for p in de_hoy:
+        v = str(p.get("vehiculo") or "").strip() or "(sin camión)"
+        c = por.setdefault(v, {"n": 0, "ok": 0, "gps": 0, "ambos": 0})
+        c["n"] += 1
+        ok = bool(p.get("entregado"))
+        vio = str(p.get("id")) in vistos
+        c["ok"] += ok
+        c["gps"] += vio
+        c["ambos"] += ok and vio
+    for v, c in sorted(por.items()):
+        print(f"   · {v}: {c['n']} pedido(s) · ✅ marcados {c['ok']} · el GPS se paró en {c['gps']} · las dos cosas {c['ambos']}")
+    tot = {k: sum(c[k] for c in por.values()) for k in ("n", "ok", "gps", "ambos")}
+    if de_hoy:
+        print(f"   TOTAL hoy: {tot['n']} · ✅ {tot['ok']} · GPS {tot['gps']} · los dos {tot['ambos']}")
+    print("   ── los últimos 7 días: ¿se marca el ✅? (el cierre de entregas) ──")
+    for k in range(7, 0, -1):
+        f = (ahora.date() - timedelta(days=k)).isoformat()
+        L = [p for p in ped if str(p.get("fecha") or "")[:10] == f]
+        if L:
+            n_ok = sum(1 for p in L if p.get("entregado"))
+            print(f"   {f}: {len(L)} pedido(s) · ✅ {n_ok} ({round(100 * n_ok / len(L))} %)")
 
 
 # 📏 (06/10, auditoría) Todo el stock vive en UNA celda y Google la corta en 50.000 letras: el .gs contesta `celda_llena`
@@ -550,6 +672,8 @@ def main():
     contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
     # 4) Dónde se va el tiempo: correr el script o entregar los datos.
     en_dos_tramos(pagina or PANEL_URL)
+    # 4b) 🛰️ (13/10) El GPS de hoy y las entregas marcadas, con la primera lectura buena.
+    gps_del_dia()
     # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
     ubicacion_almacenes(pagina or PANEL_URL)
     ubicacion_pedidos(pagina or PANEL_URL)
