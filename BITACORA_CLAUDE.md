@@ -14043,3 +14043,7 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   ya NO deja el patio verde al medio: la manzana entera son lotes (5 × 4) pegados, con algún árbol asomando entre los techos (en las
   esquinas de los lotes, 20 %), como en las fotos aéreas. Las casonas con galería van solo en las filas que dan a la calle (`LOTE_FRENTE`).
   ⚠️ No volver a poner patios ni bosquecitos adentro de las manzanas. Muestra v21.
+- Y enseguida, con la captura de la v15: *«sin patios y así repartido se veía mejor, tratá de asemejar a las fotos»* → `cuadra` vuelve al
+  reparto de la v15 (4 × 3 casas sueltas con su espacio alrededor, árbol entre casa y casa al 40 %), sin patio verde, y con lo de las fotos:
+  teja (`TT`), frentes blancos/crema (`CASACOL`), edificios sueltos (`zonaAlta`: Equipetrol al oeste), casonas con galería alrededor de la
+  plaza. ⚠️ La forma que le gusta: casas SUELTAS y repartidas, sin patios. Muestra v22.

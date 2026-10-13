@@ -311,15 +311,15 @@ function rioX(z){ return BORDE_X-150+16*Math.sin(z/95)+7*Math.sin(z/41); }
   for(var k=1;k<6;k++){ var q=P(tR-4+k*Lp/6); caja(2,2.4,AN_HW*2,gp,q.x,1.2,q.z).rotation.y=rot; }
   var cr=P(tR-8); viaCartel('RÍO PIRAÍ', cr.x+9*W.dz, cr.z-9*W.dx); var cb=P(tC-14); viaCartel('CINTURÓN ECOLÓGICO', cb.x+11*W.dz, cb.z-11*W.dx); })();
 VIA_ON=true;
-var PATIO=M(0xcfe3bf), LOTE=M(0xe8e3d3), TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+235)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
+var PATIO=M(0xcfe3bf), LOTE=M(0xf1ede3), CASACOL=[0xf7f3ea,0xf1e3cf,0xf6efd9,0xfaf7f0,0xf4d7c9,0xdfe8f2,0xf0d9c4], TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+235)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
 function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)||enVia(x,z,Math.max(ww,dd)*.5)) return; var r=rnd(), de=Math.abs(Math.sin(rot))>.5; if(LOTE_COL && LOTE_FRENTE && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
   if(r<.04+.26*za){ edificio(x,z,ww,dd,12+Math.floor(rnd()*(8+22*za))); return; }   // un edificio suelto entre las casas
   if(r<.11+.22*za){ edificio(x,z,ww,dd,rnd()<.55?3.8:7); return; }   // comercio de 1 o 2 pisos con su toldo, o casa de losa con tanque
-  casa(x,z,COLS[Math.floor(rnd()*COLS.length)],TT[Math.floor(rnd()*TT.length)],rot,rnd()<.38?2:1,(de?dd:ww)-.6,(de?ww:dd)-.6); }   // casa de 1 o 2 pisos con techo de teja
-var LOTE_COL=false, LOTE_FRENTE=false; function cuadra(cx,cz){ LOTE_COL=Math.abs(cx-PLAZA.x)<=G && Math.abs(cz-PLAZA.z)<=G; var a=G-RW-2, x0=cx-a/2, z0=cz-a/2, za=zonaAlta(cx,cz), n=5, lw=a/n, filas=4, fd=a/filas;   // (13/10, dueño: «¿por qué pusiste patio y árboles detrás de las casas? se ve feo») la manzana llena de casas, como en las fotos
-  plano(a+2,a+2,cx,cz,.04,VER); plano(a-1,a-1,cx,cz,.045,LOTE);
-  for(var j=0;j<filas;j++) for(var i=0;i<n;i++){ LOTE_FRENTE=(j===0||j===filas-1); lote(x0+lw*(i+.5), z0+fd*(j+.5), lw-.9, fd-.9, j<filas/2?Math.PI:0, za); }
-  for(var t=0;t<n*filas;t++) if(rnd()<.2) arbol(x0+lw*(1+Math.floor(rnd()*(n-1))), z0+fd*(1+Math.floor(rnd()*(filas-1))), .9+rnd()*.5);   // algún árbol asomando entre los techos
+  casa(x,z,CASACOL[Math.floor(rnd()*CASACOL.length)],TT[Math.floor(rnd()*TT.length)],rot,rnd()<.38?2:1,(de?dd:ww)-.6,(de?ww:dd)-.6); }   // casa de 1 o 2 pisos con techo de teja
+var LOTE_COL=false, LOTE_FRENTE=false; function cuadra(cx,cz){ LOTE_COL=Math.abs(cx-PLAZA.x)<=G && Math.abs(cz-PLAZA.z)<=G; var x0=cx-G/2+RW/2+1, z0=cz-G/2+RW/2+1, za=zonaAlta(cx,cz), a=G-RW-2;   // (13/10, dueño, con la captura de la v15: «sin patios y así repartido se veía mejor, tratá de asemejar a las fotos»)
+  plano(a+2,a+2,cx,cz,.04,VER); plano(a-1,a-1,cx,cz,.045,LOTE);   // casas sueltas en 4 × 3, con su espacio alrededor, sin patio verde
+  for(var j=0;j<3;j++) for(var i=0;i<4;i++){ var hx=x0+7+i*14.5, hz=z0+8+j*18; LOTE_FRENTE=(j!==1); lote(hx,hz,10,9.5,j===0?Math.PI:0,za);
+    if(rnd()<.4) arbol(hx+6.4+(rnd()-.5)*1.5, hz+(j===0?6.6:-6.6), .8+rnd()*.35); }   // algún árbol entre casa y casa, como en las fotos
   LOTE_COL=LOTE_FRENTE=false; }
 function casa(x,z,col,techo,rot,pisos,w,d){ w=w||7; d=d||6; var h=pisos===2?7:4, g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); bloqueFach(0,0,w,d,h,col,g); var t=M(techo), s=d/2+.9, ta=caja(w+.4,.35,s,t,0,h+.75,-d/4,g); ta.rotation.x=-.55; var tb=caja(w+.4,.35,s,t,0,h+.75,d/4,g); tb.rotation.x=.55; }   // (13/10, dueño) a dos aguas hacia afuera: antes quedaban en V
 function parque(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,PASTO); plano(G-RW,3,cx,cz,.05,M(0xe8dcc0)); plano(3,G-RW,cx,cz,.05,M(0xe8dcc0));
