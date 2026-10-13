@@ -33,7 +33,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var V=function(veh, o){ n++; return Object.assign({ id:'g'+n, oc:'10-'+(800+n), cliente:'CLIENTE '+n, fecha:hoy, turno:'AM', vendedor:'Mirian Salazar', vehiculo:veh,
       chofer:veh?(VEHICULOS[veh]||[])[0]:'', zona:'Norte', productos:[{ desc:'TITANIO LATEX', medida:'140x190', cant:1, precio:3000, chk:'ok' }], saldo:0, pagado:true,
       entregado:false, maps:'https://www.google.com/maps?q='+(P.lat+0.01*n)+','+P.lng, ts:1, fotos:[] }, o||{}); };
-    STATE=[ V('Foton nuevo'), V('Foton nuevo', { turno:'PM' }), V('Carry'), V('Foton encarpado') ];
+    STATE=[ V('Foton nuevo'), V('Foton nuevo', { turno:'PM' }), V('Carry'), V('Foton encarpado'), V('', { productos:[{ desc:'MEMORY FLEX', medida:'160x200', cant:2, precio:5000, chk:'ok' }] }) ];
     CARGA_CHK={};
     window.__G={ t:Date.now()-60000, u:[
       { p:'6663CCP', pl:'6663-CCP', la:-17.762, lo:-63.1429, v:32, m:1, r:Date.now()-120000, c:'LUIS', dep:{ id:'ptf', n:'PTF', m:1455 }, f:1, s:'09:42', sd:'ptf', ul:'09:42', vu:'' },
@@ -118,6 +118,43 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('…y el punto del que anda en la calle no es el de PTF (el Carry, adentro)', r.ca.gps && (r.ca.gps.x!==r.fn.gps.x || r.ca.gps.z!==r.fn.gps.z), [r.fn.gps, r.ca.gps]);
   chk('el Carry, adentro de PTF; el Foton encarpado sin GPS', r.ca.salio==='' && r.ca.gps && r.ca.gps.f===0 && r.fe.gps===null, r);
   chk('a las 12:30 David reclama el que no salió (Foton encarpado o Carry), nunca el que el GPS ya vio salir', r.tarde && r.tarde.k!=='Foton nuevo', r.tarde);
+
+  console.log('\n── 8. (13/10, dueño: «los 4 camiones salen en el mismo lugar… no coinciden») cada camión donde dice el GPS ──');
+  r = await ev(() => {
+    var t=Date.now()-60000;
+    gpsTomar({ t:t, u:[
+      { p:'6409TIG', pl:'6409-TIG', la:-17.7201, lo:-63.1630, v:0, m:0, r:t, c:'', dep:{ id:'banzer', n:'Banzer', m:35 }, f:0, s:'', vu:'' },
+      { p:'6021URL', pl:'6021-URL', la:-17.7490, lo:-63.1430, v:0, m:0, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:20 }, f:0, s:'', vu:'' },
+      { p:'6663CCP', pl:'6663-CCP', la:-17.7489, lo:-63.1540, v:12, m:1, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:1180 }, f:1, s:'', vu:'' },
+      { p:'5655KSC', pl:'5655-KSC', la:-17.7623, lo:-63.0680, v:0, m:0, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:8100 }, f:1, s:'', vu:'' } ] }, Date.now());
+    var D=patioDatos(), C={}; D.cams.forEach(function(c){ C[c.k]=c; });
+    return { tig:C['Carry'].gps, url:C['Foton insumo'].gps, ccp:C['Foton nuevo'].gps, ksc:C['Foton encarpado'].gps };
+  });
+  chk('el Carry, en Banzer: «adentro» y en Banzer (la ciudad lo estaciona allá)', r.tig && r.tig.f===0 && r.tig.depId==='banzer', r.tig);
+  chk('el Foton insumo, adentro de PTF', r.url && r.url.f===0 && r.url.depId==='ptf', r.url);
+  chk('el Foton nuevo, en la calle a ~1 km al oeste de PTF (en la ciudad, a la izquierda de PTF, x<35)', r.ccp && r.ccp.f===1 && r.ccp.x<35 && r.ccp.x>-140, r.ccp);
+  chk('el Foton encarpado, en la calle junto a Moreno (Moreno está en x 315, z −105 de la ciudad)', r.ksc && r.ksc.f===1 && Math.abs(r.ksc.x-315)<40 && Math.abs(r.ksc.z+105)<=70, r.ksc);
+
+  console.log('\n── 9. (dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») el recorrido del día y sus paradas ──');
+  r = await ev(() => {
+    try{ localStorage.removeItem('me_gps_hist'); }catch(e){} GPS_HIST={ f:'', u:{} };
+    var P=almUbic('ptf'), b=Date.parse('2026-10-14T10:00:00-04:00'), m=60000;
+    var pto=function(min, la, lo, v){ var x={ p:'6663CCP', la:la, lo:lo, v:v, m:1, f:1, r:b+min*m }; var u={}; u['6663CCP']=x; gpsHistAnotar(u); };
+    pto(0, P.lat+0.03, P.lng, 35); pto(5, P.lat+0.0101, P.lng, 0); pto(5, P.lat+0.0101, P.lng, 0);   // el mismo reporte dos veces: uno solo
+    pto(8, P.lat+0.0102, P.lng+0.0001, 1); pto(12, P.lat+0.0101, P.lng, 0); pto(14, P.lat+0.002, P.lng+0.01, 28);
+    var h=gpsHistDe('Foton nuevo'), par=gpsParadas('Foton nuevo'), ev2=gpsEventosHoy(), guardado=null;
+    try{ guardado=JSON.parse(localStorage.getItem('me_gps_hist')); }catch(e){}
+    var D=patioDatos(), fn=D.cams.filter(function(c){ return c.k==='Foton nuevo'; })[0];
+    return { n:h.length, par:par.map(function(s){ return { h:gpsHoraTxt(s.t0), dur:gpsDurTxt(s.t1-s.t0), cli:s.ped && s.ped.cliente, m:s.pm }; }), ev:ev2.map(function(e){ return e.h+' '+e.x.replace(/<[^>]+>/g,''); }),
+      guardado:!!(guardado && guardado.u && guardado.u['6663CCP'] && guardado.u['6663CCP'].length===5), ruta:fn.gpsRuta.length, paradas:fn.gpsParadas, log:D.dia.gpsLog.length, desde:D.dia.gpsDesde,
+      sin:D.sin.lineas.map(function(l){ return l.prod+'×'+l.u+':'+l.st; }) };
+  });
+  chk('cada reporte nuevo es un punto (el repetido no): 5', r.n===5, r.n);
+  chk('queda guardado en el aparato (sobrevive al F5)', r.guardado, r.guardado);
+  chk('una parada de 9 min a las 10:05, cerca de CLIENTE 1 (su pedido de hoy)', r.par.length===1 && r.par[0].h==='10:05' && r.par[0].dur==='9 min' && r.par[0].cli==='CLIENTE 1' && r.par[0].m<50, r.par);
+  chk('«📡 Lo que dijo el GPS»: la parada, lo más nuevo primero', r.ev.length>=1 && /^10:05 6663-CCP se paró 9 min cerca de CLIENTE 1/.test(r.ev[0]), r.ev);
+  chk('la ciudad recibe el rastro (5 puntos), la parada y el registro', r.ruta===5 && r.paradas.length===1 && r.paradas[0].cli==='CLIENTE 1' && r.log>=1 && r.desde==='10:00', r);
+  chk('«Por cargar»: lo del pedido sin camión también (MEMORY FLEX ×2)', r.sin.some(function(x){ return /MEMORY FLEX/.test(x) && /×2/.test(x); }), r.sin);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
