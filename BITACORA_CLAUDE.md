@@ -14062,3 +14062,6 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   · `armar.py` rearmado con `remap.py` (scratchpad: mapea los rangos por diff entre versiones de cuerpo.js). test_patio 29/29. Muestra v23.
   · *«siguen habiendo líneas verdes entre los cruces»* → en cada calle que cruza un anillo (o una avenida de salida) el camellón y las rayas
     blancas se cortan (`cortes` en `AV_RECTAS`): el cruce queda de asfalto, como cualquier esquina. Muestra v24.
+  · *«faltan las líneas que siguen; pasos de cebra donde pusiste semáforos, gente cruzando ahí»* → en cada cruce las rayas del anillo siguen
+    punteadas; `CEBRAS` (los 7 cruces con semáforo) llevan un paso de cebra en cada brazo y `CRUZAN` = 2 personas por cruce que esperan y
+    cruzan ida y vuelta (`cruzarPaso`, desde `vidaPaso`). Muestra v25. test_patio 29/29.

@@ -259,6 +259,7 @@ AV_RECTAS.forEach(function(R){ var a=Math.max(R.a, R.eje==='x'?X0-RW/2:Z0-RW/2),
   plano(R.eje==='x'?L:RW, R.eje==='x'?RW:L, X(m), Z(m), .06, VIA_ASF);
   var o0=R.eje==='x'?X0:Z0, cortes=[], p0=a;   // (13/10, dueño: «siguen habiendo líneas verdes entre los cruces») el camellón y las rayas se cortan en cada calle que cruza
   for(var gx=o0; gx<=b+G; gx+=G){ if(gx+RW/2+.5<=a || gx-RW/2-.5>=b) continue; if(gx-RW/2-.5>p0) cortes.push([p0, gx-RW/2-.5]); p0=gx+RW/2+.5; } if(b>p0) cortes.push([p0,b]);
+  for(var gx2=o0; gx2<=b+G; gx2+=G){ if(gx2-RW/2<a || gx2+RW/2>b) continue; for(var pp=gx2-RW/2+.6; pp<gx2+RW/2-.4; pp+=2.2) [-1,1].forEach(function(sd){ var mm=pp+.6; plano(R.eje==='x'?1.2:.3, R.eje==='x'?.3:1.2, X(mm)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(mm)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); }); }   // (13/10, dueño: «faltan las líneas que siguen») en el cruce las rayas siguen punteadas
   cortes.forEach(function(c){ var l=c[1]-c[0], mm=(c[0]+c[1])/2; if(l<1) return; plano(R.eje==='x'?l:1.4, R.eje==='x'?1.4:l, X(mm), Z(mm), .07, PASTO);
     [-1,1].forEach(function(sd){ plano(R.eje==='x'?l:.3, R.eje==='x'?.3:l, X(mm)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(mm)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); }); });
   for(var p=a+7, k=0; p<b-4; p+=14, k++){ var md=((p%G)+G)%G; if(md<8||md>G-8) continue; viaAdorno(X(p), Z(p), 0, false); } });   // faroles en el camellón, no en los cruces
@@ -392,7 +393,9 @@ function cartelRuta(x,z,txt,fondo,letra){ var g=new THREE.Group(); g.position.se
   var p=new THREE.Mesh(new THREE.BoxGeometry(10,3.6,.3),[M(0xdfe6ee),M(0xdfe6ee),M(0xdfe6ee),M(0xdfe6ee),new THREE.MeshBasicMaterial({ map:cartelTex(txt,fondo,letra,1024,370) }),M(0xdfe6ee)]);
   p.position.y=8.2; p.castShadow=true; g.add(p); }
 cartelRuta(60,77,'HEAVEN COLCHONES','#14243a','#ffffff'); cartelRuta(-60,-63,'SUEÑA COLCHONES','#f5c400','#14243a'); cartelRuta(150,7,'HEAVEN COLCHONES','#14243a','#ffffff');
-var SEMAFOROS=[];
+var SEMAFOROS=[], CEBRAS=[[70,70],[0,70],[0,-70],[-70,-70],[140,0],[210,0],[70,0]];
+CEBRAS.forEach(function(q){ var d=RW/2+1.8, CB=Mc(0xf7f9fc);   // (13/10, dueño: «pasos de cebra donde pusiste semáforos, gente cruzando ahí») uno en cada brazo del cruce
+  for(var k=-3.6;k<=3.61;k+=1.2){ plano(2.6,.6,q[0]+d,q[1]+k,.08,CB); plano(2.6,.6,q[0]-d,q[1]+k,.08,CB); plano(.6,2.6,q[0]+k,q[1]+d,.08,CB); plano(.6,2.6,q[0]+k,q[1]-d,.08,CB); } });
 [[70,70],[0,70],[0,-70],[-70,-70],[140,0],[210,0],[70,0]].forEach(function(q,i){ var g=new THREE.Group(); g.position.set(q[0]+6,0,q[1]+6); EST.add(g); cil(.15,5,M(0x3d4752),0,2.5,0,g,8);
   caja(.6,1.6,.5,M(0x1c242c),0,5.3,0,g); var ro=M(0x3a1515), ve=M(0x153a20); ro.emissive=lin(0xff2a2a); ve.emissive=lin(0x22e06a);
   caja(.3,.3,.1,ro,0,5.75,.27,g,false); caja(.3,.3,.1,ve,0,4.85,.27,g,false); SEMAFOROS.push({ ro:ro, ve:ve, f:i%2 }); });
@@ -695,7 +698,14 @@ for(var nm=0; nm<34; nm++){ var yg=nm>=16, g2=new THREE.Group(), col=M(yg?0xff2d
 for(var nb=0; nb<3; nb++) for(var na=0; na<5; na++){ var g3=new THREE.Group(), pm=M(0x1f2937);
   var a1=cajaV(.9,.06,.25,pm,-.42,0,0,g3,false), a2=cajaV(.9,.06,.25,pm,.42,0,0,g3,false); esc.add(g3);
   AVES.push({ g:g3, a1:a1, a2:a2, b:nb, i:na, r:50+nb*25, cx:35+nb*20, cz:-40+nb*15, v:.12+nb*.03 }); }
-function vidaPaso(dt, t){
+var CRUZAN=[]; CEBRAS.forEach(function(q,qi){ for(var n=0;n<2;n++){ var g=new THREE.Group(), ropa=M(ROPA[(qi*2+n)%ROPA.length]), piel=M(PIEL[(qi+n)%PIEL.length]);
+  cilV(.3,1.05,ropa,0,1.35,0,g,8); cilV(.22,.9,M(0x2f4f7f),0,.45,0,g,8); var h=new THREE.Mesh(new THREE.SphereGeometry(.26,10,8), piel); h.position.y=2.1; g.add(h); g.scale.setScalar(1.25); esc.add(g);
+  var brazo=(qi+n*2)%4; CRUZAN.push({ g:g, x:q[0], z:q[1], b:brazo, t:n*4.5+qi*1.3, f:qi+n }); } });   // en cada cruce con semáforo, dos personas que cruzan por la cebra
+function cruzarPaso(dt, t){ CRUZAN.forEach(function(c){ c.t+=dt; var ciclo=c.t%14, d=RW/2+1.8, L=RW+3, u=0, ida=true;
+  if(ciclo<3) u=0; else if(ciclo<7){ u=(ciclo-3)/4; } else if(ciclo<10){ u=1; } else { u=1-(ciclo-10)/4; ida=false; }
+  var anda=(ciclo>=3&&ciclo<7)||ciclo>=10, y=anda?Math.abs(Math.sin((t+c.f)*7))*.09:0, p=-L/2+u*L, sx=c.b<2?1:-1;
+  if(c.b%2===0){ c.g.position.set(c.x+sx*d, y, c.z+p); c.g.rotation.y=ida?0:Math.PI; } else { c.g.position.set(c.x+p, y, c.z+sx*d); c.g.rotation.y=ida?Math.PI/2:-Math.PI/2; } }); }
+function vidaPaso(dt, t){ cruzarPaso(dt, t);
   PEATONES.forEach(function(q){ q.p+=q.s*q.v*dt; var lim0=q.eje==='x'?X0:Z0, lim1=q.eje==='x'?X1:Z1; if(q.p>lim1) q.p=lim0; if(q.p<lim0) q.p=lim1;
     var off=q.lado*6.6, y=Math.abs(Math.sin((t+q.f)*7))*.09;
     if(q.eje==='x'){ q.g.position.set(q.p,y,q.c+off); q.g.rotation.y=q.s>0?Math.PI/2:-Math.PI/2; } else { q.g.position.set(q.c+off,y,q.p); q.g.rotation.y=q.s>0?0:Math.PI; } });
