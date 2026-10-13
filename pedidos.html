@@ -1371,6 +1371,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px">
           <button class="btn btn-ghost btn-sm no-print" id="adm-salud-btn" style="width:auto" onclick="saludDelDia(true)">🌅 Salud del día</button>
           <button class="btn btn-ghost btn-sm no-print" id="adm-camiones-btn" style="width:auto" onclick="toggleCamionesAdm()">🙈 Ocultar camiones</button>
+          <!-- 🏙️ (13/10, dueño: «aún no veo la ciudad») siempre a la vista: el de los camiones no está si se esconden -->
+          <button class="btn btn-sm no-print cv-ciudad" id="adm-ciudad-btn" style="width:auto" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones, la carga y las paradas del día">🏙️ Ver la ciudad</button>
         </div>
 
         <div id="nx-sug" class="no-print"></div>   <!-- 🚚 (§4js, A1) el camión sugerido para los que no tienen -->
@@ -2783,6 +2785,8 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .cv-dias button.on{ background:#22d3ee; color:#0b1730; }
 .cv-ciudad{ border:0; border-radius:9px; background:linear-gradient(135deg,#00a59e,#2f6fd6); color:#fff; font:inherit; font-size:.8rem; font-weight:900; padding:6px 13px; cursor:pointer; min-height:34px; box-shadow:0 4px 12px rgba(47,111,214,.3); }
 .cv-ciudad:hover{ filter:brightness(1.08); } .cv-ciudad:disabled{ opacity:.7; cursor:wait; }
+/* (13/10, dueño: «no sale») `.cv-tit button` lo pintaba blanco sobre blanco en la vista 3D: el botón de la ciudad manda */
+.cv-tit button.cv-ciudad{ border:0; background:linear-gradient(135deg,#00a59e,#2f6fd6); color:#fff; font-size:.82rem; font-weight:900; padding:7px 14px; }
 .cv-tit button, .cv-mini button{ border:1px solid rgba(148,163,184,.35); background:rgba(255,255,255,.06); color:#e6edf7; border-radius:8px; padding:5px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
 .cv-mini{ display:flex; align-items:center; gap:10px; background:#0b1730; color:#e6edf7; padding:8px 12px; font-size:.84rem; flex-wrap:wrap; }
 .cv-marco{ display:flex; gap:12px; align-items:flex-start; }
@@ -15955,13 +15959,15 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013b';
+var PATIO_V='20261013c';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
-  var b=document.getElementById('cv-ciudad'); if(b){ b.disabled=true; b.textContent='⏳ Cargando la ciudad…'; }
+  var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  var poner=function(cargando){ B.forEach(function(b){ b.disabled=cargando; b.textContent=cargando?'⏳ Cargando la ciudad…':'🏙️ Ver la ciudad'; }); };
+  poner(true);
   var s=document.createElement('script'); s.src='patio.js?v='+PATIO_V;
-  s.onload=function(){ if(b){ b.disabled=false; b.textContent='🏙️ Ver la ciudad'; } if(window.patioAbrir) window.patioAbrir(); };
-  s.onerror=function(){ if(b){ b.disabled=false; b.textContent='🏙️ Ver la ciudad'; } s.remove(); toast('No se pudo cargar la ciudad: revisá la conexión y probá de nuevo.','err',5000); };
+  s.onload=function(){ poner(false); if(window.patioAbrir) window.patioAbrir(); };
+  s.onerror=function(){ poner(false); s.remove(); toast('No se pudo cargar la ciudad: revisá la conexión y probá de nuevo.','err',5000); };
   document.head.appendChild(s);
 }
 var CV_POS={

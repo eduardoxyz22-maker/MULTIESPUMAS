@@ -105,6 +105,18 @@ async function preparar(page){
   chk('tildarla la pone «en el camión»', r.tras==='camion', r.tras);
   chk('«Ya salió» marca la hora y deshacerlo la saca', /^\d\d:\d\d$/.test(r.sal) && r.vuelta==='', [r.sal, r.vuelta]);
 
+  console.log('\n── 3b. Lo que va tarde: a las 12:30 un camión con entregas de la mañana que no salió (el reclamo de David) ──');
+  r = await page.evaluate(() => ({ diez:patioDatos().dia.tarde }));
+  chk('a las 10:00 todavía no va tarde nada', r.diez===null, r.diez);
+  await page.clock.setFixedTime(new Date('2026-10-13T12:30:00-04:00'));
+  r = await page.evaluate(() => { var d=patioDatos().dia, T=d.tarde, otro=null;
+    if(T){ camionSalioMarcar(T.k, true); otro=patioDatos().dia.tarde; camionSalioMarcar(T.k, false); }
+    return { T:T, sin:d.tardeSin, otro:otro }; });
+  chk('a las 12:30 avisa el camión con más entregas de la mañana sin salir, con la hora', !!r.T && r.T.turno==='AM' && r.T.hora==='12:30' && r.T.n>=1, r.T);
+  chk('…y la entrega de la mañana que sigue sin camión', r.sin===1, r.sin);
+  chk('un camión que ya salió no se reclama', !r.otro || r.otro.k!==(r.T||{}).k, r.otro);
+  await page.clock.setFixedTime(new Date('2026-10-13T10:00:00-04:00'));
+
   if(!TH){
     console.log('\n── 4. Sin three.js: abre igual y avisa ──');
     await page.waitForTimeout(1500);   // sin internet el <script> de three.js falla y depLibs se rinde

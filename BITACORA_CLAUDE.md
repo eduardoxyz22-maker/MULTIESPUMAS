@@ -14091,3 +14091,19 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
     queda ~4,5 s (`Q.flojo`, contado con la hora del semáforo, no con los cuadros: en el iPad lento pasa igual), los de atrás lo putean
     (`COLA_PUTEA`, globos a dos alturas) y él contesta (`COLA_MICRO`); arrancan, se pierden a media cuadra y vuelven en el próximo rojo.
     Muestra v31. Y *«listo, a publicar»* → `PATIO_V='20261013b'`, pedidos.html + patio.js + CLAUDE.md a main.
+
+
+### §4kn — 13/10 a la mañana: «aún no veo la ciudad» y el reclamo de David por lo que va tarde
+- El dueño: *«ojo aún no veo la ciudad»* / *«no no sale»* (captura de los camiones en 3D). La ciudad SÍ estaba publicada (89fe4d8) y abría
+  bien: el botón «🏙️ Ver la ciudad» de la barra de los camiones salía **blanco sobre blanco** en la vista 3D (`.cv-tit button` con fondo
+  translúcido y letra clara le ganaba a `.cv-ciudad`). Arreglo: `.cv-tit button.cv-ciudad` con su degradé, y un segundo botón fijo
+  `#adm-ciudad-btn` arriba de Administración (se ve aunque los camiones estén escondidos). `patioAbrirCiudad` pone «⏳ Cargando…» en los dos.
+- «Sí agrégalo y publica»: `patioDatos().dia.tarde` (hoy, a las 12:00 un camión con entregas de la mañana o sin turno que no tiene
+  «🚚 Ya salió»; a las 16:00 las de la tarde; el camión con más entregas, cuántos camiones van tarde) y `tardeSin` (las de hoy sin camión).
+  David lo reclama primero (`jefeTarde`: Ernesto contesta según falte chofer o bultos) y Garnícula también. La hora se dice en el momento
+  (`horaYa`) y NO entra en la firma (`diaFirma`): si no, la escena se resincronizaba cada minuto. Sin GPS, «salió» = el botón.
+- `test_patio` §3b (4). PATIO_V='20261013c'.
+- GPS (service24gps / RedGPS): el dueño pasó la doc de `gettoken` (apikey + usuario + clave → token de 6 h) y `getdata` (apikey + token →
+  por unidad `UnitPlate`, `Latitude`, `Longitude`, `GpsSpeed`, `Ignition`, `ReportDate`, `Conductor`). Mínimo 30 s entre consultas.
+  Plan: el `.gs` consulta (disparador ≥1 min), guarda el token 6 h en caché y las posiciones por placa; el panel las lee. Las llaves van en
+  Propiedades del script (`GPS_APIKEY`, `GPS_USUARIO`, `GPS_CLAVE`), nunca en el chat ni en el código.
