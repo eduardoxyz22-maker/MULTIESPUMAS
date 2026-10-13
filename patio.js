@@ -21,7 +21,7 @@ function escH(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ r
    Con el NORTE ARRIBA de la pantalla (dueño, 13/10: «nuestra vista va de abajo hacia arriba»): la cámara mira en diagonal, así que el norte
    de la escena es (-x,-z). Pines del dueño (13/10): PTF -17.7489091,-63.1429133 · Banzer -17.7202386,-63.1631265 (~3,2 km al norte, ~2,1 al
    oeste: arriba a la izquierda) · Moreno -17.7623355,-63.0675466 (~8 km al este: a la derecha). */
-var G=70, RW=10, X0=-4*G, X1=6*G, Z0=-3*G, Z1=4*G;
+var G=70, RW=10, X0=-4*G, X1=6*G, Z0=-3*G, Z1=5*G;   // (13/10, dueño) una fila más abajo: casas y vida delante de Charcas, Buenos Aires y Carmelo
 var ALM={ ptf:{ n:'PTF', bx:35, bz:35, w:40, d:22, h:9, puertas:5, col:0x1e5fd0, marca:true, sub:'Productos terminados', cartel:'MULTIESPUMAS · PTF' },
           bz:{ n:'Banzer', bx:-105, bz:-35, w:30, d:18, h:8, puertas:4, col:0x2b7be4, marca:true, sub:'Almacén de salida', cartel:'ALMACÉN BANZER' },
           im:{ n:'Moreno', bx:315, bz:-105, w:26, d:22, h:9, puertas:3, col:0x7b3fb0, sub:'Fábrica', cartel:'INDUSTRIAS MORENO' } };
@@ -267,11 +267,11 @@ function obra(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xd9c7a3)); var gris=M(0xb7c2c
   caja(1.2,34,1.2,am,cx+14,17,cz-8); GRUA=new THREE.Group(); GRUA.position.set(cx+14,34,cz-8); esc.add(GRUA);
   caja(34,1,1,am,8,0,0,GRUA,true); caja(4,2,2,M(0x5d6b7c),-8,-.2,0,GRUA,true); var cable=caja(.08,12,.08,M(0x1c242c),20,-6,0,GRUA,false); caja(1.7,.8,1.2,matCol[0],20,-12.4,0,GRUA,true);
   for(var i=0;i<4;i++) pallet(null,3,cx+18+i*2,0,cz+16); }
-function casas(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xc7deb8)); var tt=[0xc0563a,0x9a4a3a,0x6b7d8f];
+function barrio(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,VER); for(var i=0;i<3;i++){ casa(cx-20+i*14, cz-16, COLS[(i+2)%COLS.length], [0xc0563a,0x9a4a3a,0x6b7d8f][i%3], 0); edificio(cx-20+i*14, cz+12, 10, 9, 5+Math.floor(rnd()*5)); arbol(cx-13+i*14, cz-4, .8); } kiosco(cx+22, cz-2, 0xf2b705); } function casas(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xc7deb8)); var tt=[0xc0563a,0x9a4a3a,0x6b7d8f];
   for(var i=0;i<4;i++) for(var j=0;j<3;j++){ casa(cx-21+i*14, cz-18+j*17, COLS[(i+j)%COLS.length], tt[(i+j)%3], j%2?Math.PI:0); arbol(cx-16+i*14, cz-14+j*17, .8); } }
 var ESPECIAL={ '35,105':parque, '105,35':surtidor, '-35,35':escuela, '105,-35':iglesia, '-105,35':obra, '-175,35':casas, '-175,-35':casas, '245,35':casas };
 TIENDAS.forEach(function(t){ MIRAR.push({ x:t.x, z:t.z, r:15 }); }); Object.keys(ALM).forEach(function(k){ var A=ALM[k]; MIRAR.push({ x:A.x, z:A.fz+6, r:Math.max(A.w,A.d)*.75+6 }); });
-for(var bi=-4; bi<=5; bi++) for(var bj=-3; bj<=3; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz;
+for(var bi=-4; bi<=5; bi++) for(var bj=-3; bj<=4; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz; if(bj===4){ [casas,parque,casas,barrio][((bi%4)+4)%4](cx,cz); continue; }
   if((cx===ALM.ptf.bx&&cz===ALM.ptf.bz)||(cx===ALM.bz.bx&&cz===ALM.bz.bz)||(cx===ALM.im.bx&&cz===ALM.im.bz)) continue;
   if(ESPECIAL[key]) ESPECIAL[key](cx,cz); else cuadra(cx,cz); }
 /* 🏪 las tiendas Heaven y Sueña, con su vidriera, su toldo y su cartel; ahí llegan las reposiciones (RPT) */
@@ -362,7 +362,7 @@ function auto(col, micro, yango){ var g=new THREE.Group(), L=micro?9:4, A2=micro
 var YANGO_TEX=cartelTex('YANGO','#ff2d2d','#ffffff',256,72);
 var nA=0;
 for(var r=Z0; r<=Z1; r+=G) [1,-1].forEach(function(s,i){ AUTOS.push({ g:auto(AC[(nA++)%AC.length], nA%7===0), eje:'x', c:r, s:s, v:7+rnd()*5, p:X0+rnd()*(X1-X0) }); });
-for(var ny=0; ny<16; ny++){ var ex=ny%2===0, cy2=ex?Z0+G*Math.floor(rnd()*8):X0+G*Math.floor(rnd()*12), sy=rnd()<.5?1:-1;
+for(var ny=0; ny<16; ny++){ var ex=ny%2===0, cy2=ex?Z0+G*Math.floor(rnd()*9):X0+G*Math.floor(rnd()*12), sy=rnd()<.5?1:-1;
   AUTOS.push({ g:auto([0xf7f9fc,0xc9d1db,0x1f2937,0xb8c4d0][ny%4], false, true), eje:ex?'x':'z', c:cy2, s:sy, v:8+rnd()*5, p:(ex?X0:Z0)+rnd()*(ex?X1-X0:Z1-Z0) }); }
 for(var q=X0; q<=X1; q+=G) [1,-1].forEach(function(s){ if(rnd()<.35) return; AUTOS.push({ g:auto(AC[(nA++)%AC.length], nA%9===0), eje:'z', c:q, s:s, v:7+rnd()*5, p:Z0+rnd()*(Z1-Z0) }); });
 /* camiones: la caja es de lona transparente, para ver lo que lleva */
@@ -583,13 +583,13 @@ for(var np=0; np<48; np++){ var g=new THREE.Group(), ropa=M(ROPA[np%ROPA.length]
   cilV(.3,1.05,ropa,0,1.35,0,g,8); cilV(.22,.9,M(np%3?0x2f4f7f:0x3d4752),0,.45,0,g,8); var h=new THREE.Mesh(new THREE.SphereGeometry(.26,10,8), piel); h.position.y=2.1; g.add(h);
   if(np%4===0){ var som=new THREE.Mesh(new THREE.ConeGeometry(.5,.25,10), M(0xf4ede0)); som.position.y=2.4; g.add(som); }
   g.scale.setScalar(1.25); esc.add(g); var fila=np%2===0;
-  PEATONES.push({ g:g, eje:fila?'x':'z', c:(fila?Z0+G*Math.floor(rnd()*8):X0+G*Math.floor(rnd()*12)), lado:rnd()<.5?1:-1, s:rnd()<.5?1:-1, v:1.2+rnd()*1.1, p:(fila?X0:Z0)+rnd()*(fila?X1-X0:Z1-Z0), f:rnd()*6 }); }
+  PEATONES.push({ g:g, eje:fila?'x':'z', c:(fila?Z0+G*Math.floor(rnd()*9):X0+G*Math.floor(rnd()*12)), lado:rnd()<.5?1:-1, s:rnd()<.5?1:-1, v:1.2+rnd()*1.1, p:(fila?X0:Z0)+rnd()*(fila?X1-X0:Z1-Z0), f:rnd()*6 }); }
 for(var nm=0; nm<34; nm++){ var yg=nm>=16, g2=new THREE.Group(), col=M(yg?0xff2d2d:[0xe23d3d,0x1f2937,0x2f6fd6,0xf2b705][nm%4],{ roughness:.4 }), ne=M(0x1c242c);
   cajaV(1.7,.5,.45,col,0,.75,0,g2); [[.7],[-.7]].forEach(function(r){ var w=cilV(.32,.18,ne,r[0],.35,0,g2,12); w.rotation.x=Math.PI/2; });
   cilV(.24,.8,M(ROPA[nm%ROPA.length]),-.15,1.4,0,g2,8); var hh2=new THREE.Mesh(new THREE.SphereGeometry(.26,10,8), M(yg?0xff2d2d:0x1f2937)); hh2.position.set(-.15,2,0); g2.add(hh2);
   if(yg){ cajaV(.7,.62,.7,M(0xff2d2d),-.75,1.35,0,g2,false); [1,-1].forEach(function(sd){ var pl=new THREE.Mesh(new THREE.PlaneGeometry(.66,.2), new THREE.MeshBasicMaterial({ map:YANGO_TEX })); pl.position.set(-.75,1.4,sd*.36); if(sd<0) pl.rotation.y=Math.PI; g2.add(pl); }); }
   g2.scale.setScalar(1.3); esc.add(g2); var f2=nm%2===0;
-  MOTOS.push({ g:g2, eje:f2?'x':'z', c:(f2?Z0+G*Math.floor(rnd()*8):X0+G*Math.floor(rnd()*12)), s:rnd()<.5?1:-1, v:12+rnd()*6, p:(f2?X0:Z0)+rnd()*(f2?X1-X0:Z1-Z0) }); }
+  MOTOS.push({ g:g2, eje:f2?'x':'z', c:(f2?Z0+G*Math.floor(rnd()*9):X0+G*Math.floor(rnd()*12)), s:rnd()<.5?1:-1, v:12+rnd()*6, p:(f2?X0:Z0)+rnd()*(f2?X1-X0:Z1-Z0) }); }
 for(var nb=0; nb<3; nb++) for(var na=0; na<5; na++){ var g3=new THREE.Group(), pm=M(0x1f2937);
   var a1=cajaV(.9,.06,.25,pm,-.42,0,0,g3,false), a2=cajaV(.9,.06,.25,pm,.42,0,0,g3,false); esc.add(g3);
   AVES.push({ g:g3, a1:a1, a2:a2, b:nb, i:na, r:50+nb*25, cx:35+nb*20, cz:-40+nb*15, v:.12+nb*.03 }); }
@@ -919,7 +919,7 @@ function elegir(c, mover){ if(!c) return; var antes=SEL; SEL=c; if(antes!==c) SE
 /* ── la cámara ── */
 var DEST=null;
 function volar(x,z,zoom){ DEST={ x0:ctl.target.x, z0:ctl.target.z, x:x, z:z, zm0:cam.zoom, zm:zoom||cam.zoom, t:0 }; }
-var IR={ ptf:function(){ return [ALM.ptf.x-8, ALM.ptf.fz+9, 1.9]; }, bz:function(){ return [ALM.bz.x-4, ALM.bz.fz+9, 1.9]; }, im:function(){ return [ALM.im.x, ALM.im.fz+8, 1.7]; }, todo:function(){ return [70,35, Z/290]; } };
+var IR={ ptf:function(){ return [ALM.ptf.x-8, ALM.ptf.fz+9, 1.9]; }, bz:function(){ return [ALM.bz.x-4, ALM.bz.fz+9, 1.9]; }, im:function(){ return [ALM.im.x, ALM.im.fz+8, 1.7]; }, todo:function(){ return [70,70, Z/310]; } };
 function pintarCamiones(){ var el=document.getElementById('pt-ir-cam'); if(!el) return;
   el.innerHTML=CAMS.map(function(c){ var e=c.enCalle?'🛣️':(!c.total&&!c.items.length)?'⚪':(c.total&&!c.chofer)?'⚠️':(c.total&&c.dentro>=c.total)?'✅':'⏳';
     return '<button type="button" data-cam="'+escH(c.k)+'" class="'+(SEL===c?'on':'')+'">'+e+' '+escH(c.p)+' <small style="opacity:.75">'+(c.enCalle?hechas(c)+'/'+c.paradas.length:c.dentro+'/'+c.total)+'</small></button>'; }).join(''); }
