@@ -343,7 +343,7 @@ var RESTOS={ bk:{ n:'BURGER KING', f:'#f5ebdc', l:'#d62300', pared:0xf5ebdc, bor
   hot:{ n:'HOT BURGER', f:'#e23d3d', l:'#ffd400', pared:0xfff3d6, borde:0xe23d3d, toldo:0xffd400 },
   luisin:{ n:'POLLOS LUISÍN', f:'#f28c00', l:'#ffffff', pared:0xfff1d6, borde:0xf28c00, toldo:0xc0563a },
   kiky:{ n:'POLLOS KIKY', f:'#ffd400', l:'#c8102e', pared:0xfffbe6, borde:0xc8102e, toldo:0xc8102e } };
-var RESTO_EN={ '-105,105':[3,0,'bk',Math.PI/2], '175,385':[2,1,'bk'], '35,175':[1,1,'kfc'], '-315,385':[2,1,'kfc'], '-245,245':[3,1,'hot'], '245,455':[1,1,'luisin'], '-175,525':[2,1,'kiky'], '105,595':[1,1,'hot'] };   // manzana: [casa, fila, marca, giro]; el BK en la esquina que marcó el dueño, mirando a la calle de al lado
+var RESTO_EN={ '-105,35':[0,0,'bk'], '175,385':[2,1,'bk'], '35,175':[1,1,'kfc'], '-315,385':[2,1,'kfc'], '-245,245':[3,1,'hot'], '245,455':[1,1,'luisin'], '-175,525':[2,1,'kiky'], '105,595':[1,1,'hot'] };   // manzana: [casa, fila, marca, giro]; (13/10, dueño) el BK en la esquina de arriba a la izquierda de la manzana donde estaba la obra, frente a Banzer; la obra se fue al este, fuera del 4to anillo
 function restaurante(x,z,w,d,rot,k){ var R=RESTOS[k], g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; EST.add(g); var bd=d-5, bz=-2.5;
   bloqueFach(0,bz,w,bd,4.4,R.pared,g); caja(w+.5,.9,bd+.5,Mc(R.borde),0,4.75,bz,g); caja(w-.5,.1,bd-.5,TECHO2,0,5.22,bz,g,false); caja(2.2,1,1.6,Mc(0xc5ced8),-w/4,5.7,bz-bd/5,g);   // el local con su franja de color
   if(R.rayas) for(var r=-w/2+.6;r<w/2;r+=1.6) caja(.8,.92,.1,Mc(0xffffff),r,4.75,bz+bd/2+.3,g,false);   // las rayas rojas y blancas
@@ -405,7 +405,7 @@ function obra(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xd9c7a3)); var gris=M(0xb7c2c
   for(var i=0;i<4;i++) pallet(null,3,cx+18+i*2,0,cz+16); }
 function barrio(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,VER); for(var i=0;i<3;i++){ casa(cx-20+i*14, cz-16, COLS[(i+2)%COLS.length], [0xc0563a,0x9a4a3a,0x6b7d8f][i%3], 0); edificio(cx-20+i*14, cz+12, 10, 9, 5+Math.floor(rnd()*5)); arbol(cx-13+i*14, cz-4, .8); } kiosco(cx+22, cz-2, 0xf2b705); } function casas(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,M(0xc7deb8)); var tt=[0xc0563a,0x9a4a3a,0x6b7d8f];
   for(var i=0;i<4;i++) for(var j=0;j<3;j++){ casa(cx-21+i*14, cz-18+j*17, COLS[(i+j)%COLS.length], tt[(i+j)%3], j%2?Math.PI:0); arbol(cx-16+i*14, cz-14+j*17, .8); } }
-var ESPECIAL={ '-315,175':hipermaxi, '35,105':parque, '105,35':surtidor, '-35,35':escuela, '105,-35':iglesia, '-105,35':obra, '-175,35':cuadra, '-175,-35':cuadra, '245,35':cuadra };
+var ESPECIAL={ '-315,175':hipermaxi, '35,105':parque, '105,35':surtidor, '-35,35':escuela, '105,-35':iglesia, '-105,35':cuadra, '315,385':obra, '-175,35':cuadra, '-175,-35':cuadra, '245,35':cuadra };
 TIENDAS.forEach(function(t){ MIRAR.push({ x:t.x, z:t.z, r:15 }); }); Object.keys(ALM).forEach(function(k){ var A=ALM[k]; MIRAR.push({ x:A.x, z:A.fz+6, r:Math.max(A.w,A.d)*.75+6 }); });
 for(var bi=-5; bi<=5; bi++) for(var bj=-3; bj<=9; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz, fe=ESPECIAL[key]||(bj>=4&&((bi*3+bj+40)%7===0)?parque:null);
   if((cx===ALM.ptf.bx&&cz===ALM.ptf.bz)||(cx===ALM.bz.bx&&cz===ALM.bz.bz)||(cx===ALM.im.bx&&cz===ALM.im.bz)) continue;

@@ -14083,3 +14083,6 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
     vidriada, cartel, parqueo con cajones y autos, carritos y cartel alto. «Ver todo» = [35,245, Z/470]. Muestra v29. 29/29.
   · ⚠️ `armar.py` quedó con rangos corridos dos veces (un remap a medias de una corrida que el dueño interrumpió): se corrigió a mano
     (−17 desde la línea 400). Antes de cada `remap.py`, verificar que `s13` apunte a `function ponerNoche` en cuerpo.js.
+  · *«esa construcción antes de Banzer estorba, movela a otra manzana y poné casas, y el BK en la esquina de arriba a la izquierda de la manzana
+    donde está la construcción»* → `obra` pasa a la manzana (315,385) (al este, fuera del 4to anillo); (-105,35) es una manzana común con el
+    Burger King en su esquina (-x,-z), mirando a la calle de Banzer (`RESTO_EN['-105,35']=[0,0,'bk']`). Muestra v30.
