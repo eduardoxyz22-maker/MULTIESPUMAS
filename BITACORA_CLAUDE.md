@@ -13912,4 +13912,4 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   (naranja saca del galpón, amarillo carga). Botones de cada camión a la izquierda, pestaña «📦 Por cargar», fichas «En el galpón / En espera».
   ERNESTO (planilla, en la puerta de la oficina) y DAVID (recorre la zona de espera) en PTF: Garnícula los va a buscar y les putea; ellos le
   contestan. Más ciudad: gente por las veredas, mototaxis, pájaros, autos estacionados, paradas de micro, kioscos, banderas de Bolivia.
-  Pregunta abierta: «cómo cambian camión» ¿era elegir otro camión (hecho) o pasar un producto a otro camión?
+  «Cómo cambian camión» = elegir otro camión (dueño, 13/10): ya está con los botones de la izquierda.
