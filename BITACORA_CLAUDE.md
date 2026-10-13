@@ -14333,3 +14333,18 @@ nunca clientes, direcciones, coordenadas ni el conductor. `14dd531` (en la rama:
   recoger). Pedidos de hoy: 19, **12 sin camión asignado**; ✅ 5; el GPS se paró en 6; los dos, 0. Foton encarpado: 10 paradas y ninguna
   en un pedido (no tiene pedidos asignados hoy). Últimos 7 días: ✅ entre 91 y 100 % (el cierre de entregas se usa). 60 días: 260 de 711
   entregas sin enlace de Maps → el GPS no puede nombrarlas.
+
+## §4kv — 📅 Reprogramar desde el cierre de entregas (13/10)
+El dueño, con la captura del cierre (14 para hoy, 0 tildados, 3 atrasados): *«al tildar lo entregado debería permitir ahí mismo
+reprogramar lo que no se entregó»*.
+- Cada renglón (de hoy y atrasado) tiene **«📅 No salió · reprogramar»**. Abre debajo un recuadro (afuera del `<label>` del renglón:
+  tocarlo no tilda) con: «Hoy PM» (solo si era de la mañana, no es sábado y hay turno PM), el próximo camión (`proximoDiaEntrega`), el
+  siguiente día hábil y una fecha cualquiera (desde hoy); el turno (sábado sin PM); los cupos libres del turno o los avisos de siempre
+  (`reproAvisos`: cerrado, domingo, feriado, sábado PM, lleno).
+- «✓ Pasar al…» usa **`reproAplicar`** (sacada de `reproConfirmar`: la misma cuenta que 📅 Reprogramar de la ficha) y NO cierra la ventana:
+  el pedido sale de la lista y queda en «📅 Reprogramados en este cierre». Con avisos pregunta y pide la clave de administración del
+  servidor (`asegurarClaveAdmin`) y guarda con `forzar`. Abrirlo destilda el pedido; lo reprogramado nunca se confirma.
+- La lista no salta arriba al repintar (se guarda el scroll en `renderCierreEntregas`).
+- El bot de WhatsApp le avisa el día nuevo al cliente, como en cualquier cambio de día (no se tocó nada del bot).
+- `tests/test_cierre_reprogramar.js` (17; contra `27cce45` no existe el botón). Siguen verdes test_cierre_entregas (26), test_gps_pagina
+  (58), test_rev_corte_codex (45), test_rev_entregas (40), test_conflicto (45), test_rev30_dias, test_rev3_atc_mis, test_rev4_atc_flete.
