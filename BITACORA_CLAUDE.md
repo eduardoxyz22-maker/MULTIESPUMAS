@@ -13961,3 +13961,11 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   La ciudad crece otra fila de cuadras a la derecha (X1=6·G) y Sueña Carmelo pasa a (385, fila 210), otra vez casi en el rincón de abajo a
   la derecha. Sin «ubicación aproximada» en ningún texto. La parada «Moreno · recoger 2» del camión KSC va a la puerta nueva. Para el
   panel de verdad, este es el pin de Moreno que falta en `ALM_UBIC` si algún día se lo quiere agregar.
+- 13/10, el dueño: *«nuestra vista va de abajo hacia arriba, así que poné las tiendas mirando hacia abajo para distinguirlas; separá dos
+  cuadras más a la izquierda la Buenos Aires de la Charcas; separá una cuadra la Central de la Mia Plaza; Central es la única que mira
+  hacia arriba»* → versión 12: todas las tiendas con `fijo` (ninguna sale ya del pin) y el frente hacia la cámara (`lado:-1`, la tienda
+  arriba de la calle) menos Central (`lado:1`). Charcas (-105, fila 140), Buenos Aires dos cuadras más a la izquierda (-245, fila 140),
+  Mutualista (-35, fila 140; en la fila 70 caía encima de la escuela), Mia Plaza (-35, fila 210), Central una cuadra libre en el medio
+  (105, fila 210), Carmelo (385, fila 210). La ciudad crece una columna a la izquierda (X0=-4·G). Ofreció mandar las coordenadas de cada
+  tienda: con las ubicaciones a mano no hacen falta para la muestra (el pin real, en la vista girada 45°, no coincidía con cómo él ve la
+  ciudad).
