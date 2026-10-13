@@ -14316,3 +14316,8 @@ El dueño, con dos capturas (los chips «Todos 221 · Hoy · Mañana…» y la b
 derecha ponla encima de la izquierda»*. El bloque `.filters` (ahora `.filters.adm-filtros`) se mudó de arriba de todo (debajo de
 `#cupo-admin`) a justo encima de `#adm-chips`, pegado a la tabla que filtra. Mismos ids (`adm-mode`, `adm-dia`, `adm-mes`,
 `adm-search`, `adm-refresh`): nada de la cuenta cambió. Los chips siguen `sticky` arriba al bajar la tabla; la barra no.
+- **PUBLICADO 13/10 15:40 de Bolivia, `27cce45`** (dueño: «seee»), junto con §4kr (🏬 Tienda) y §4ks (📢 Decir anuncio): pedidos.html,
+  patio.js (`PATIO_V='20261013k'`), CLAUDE.md y las pruebas `test_anuncio`, `test_recoger_tienda`, `test_camiones_3d`. Batería: 182
+  suites; en rojo solo `test_patio` (37/1 con la máquina cargada, sola 38/38) y `test_onclicks` (leía `arg(` —una función local de la
+  lista de tiendas— como si no existiera; se rearmó con el nombre ya armado antes del onclick, 5/5). Servidor sin cambios (13-c).
+  Volver atrás de la página: `4bcc296`. Todos F5.
