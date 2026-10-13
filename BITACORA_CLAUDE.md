@@ -14159,3 +14159,47 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   (`me_mis_plegado`): ventas de Kommo (`kommo`, `kommo-adm`) y respuestas al bot (`wa-mis`, `wa-adm`). La hora de la respuesta se leía
   «Tue Oct 13 2026 09:41:00 GMT-0400…»: `waRespHora` → «13/10 09:41». `tests/test_ocultar.js` (8), `test_gps_pagina` §8-9 (→ 30).
 
+- **Publicado 13/10 tarde (`7f53be3`, Pages OK)**: la ciudad que sigue al GPS, «Por cargar» con lo sin camión, las dos pestañas y los
+  botones «Ocultar».
+
+## §4kp — 🛰️ Servidor `2026-10-13-b`: paradas cerca de los pedidos, Moreno = recoger, el registro y el recorrido del día (13/10)
+- El dueño: *«¿y funcionará el "salió de fábrica" automático? ¿el volvió a fábrica o almacén según el GPS? ¿y qué pasa con las
+  entregas "automatizadas" que dijimos de "camión se detuvo en una ubicación marcada para entrega"?… ponte serio»*.
+- **Lo que ya andaba con la 13-a**: «salió» solo (15 min lejos de PTF/Banzer) y «volvió» (la ciudad lo estaciona en ese depósito).
+  **Lo que faltaba**: (1) las paradas las armaba CADA APARATO con lo que iba leyendo — si nadie tenía el panel abierto no quedaba nada,
+  y cada uno veía otra cosa; (2) un viaje a **Moreno a recoger** prendía «Ya salió» para los vendedores; (3) nada le decía a logística
+  qué pedidos vio el GPS en la puerta.
+- **Servidor 13-b** (bloque «LO QUE PASÓ EN EL DÍA», dentro del GPS):
+  · **Paradas** (`GPS_PAR`, una propiedad por día): ≥4 min a ≤3 km/h en ≤150 m, fuera de PTF, Banzer y Moreno. Al registrarse se lee la
+    planilla UNA vez (`gpsPedidosHoy_`, `memo` por vuelta) y se nombran los pedidos de HOY a ≤300 m: los de ESE camión; si no hay, los
+    sin camión; nunca los de otro. Pin = «Link Maps» (`extractCoords`) o la hoja «Geo» (enlaces cortos ya resueltos). Sin tienda ni
+    borradores (por `estado`). Con el reporte dormido (motor apagado), la parada cuenta hasta 20 min después del último reporte y no
+    vuelve atrás. Tope 24 por camión: se van primero las viejas SIN pedido; la propiedad < 8.500 letras.
+  · **Moreno** (pin del dueño, 400 m): llegar a Moreno sin haberse parado en ningún pedido = ese viaje fue a recoger → el «salió» se
+    deshace (`'rec'`). Salir de Moreno cuenta recién con la primera parada o a los 45 min (Moreno → PTF son ~25 min). PTF → Banzer (o al
+    revés) sin parar = traslado (`'tra'`), tampoco cuenta. Un viaje que entregó y después fue a Moreno queda como salida.
+  · **Registro** `ev` por camión (GPS_DIA): `[hora,'sal',lugar,marca]` y `[hora,'lle',lugar,de dónde venía]`, tope 24 (la primera salida
+    de verdad nunca se va: es la hora de «Ya salió»).
+  · **La lectura lleva `gpsDia`** (caché `gps_dia`, 6 h): sigue llegando después de las 21 h, cuando las posiciones vencieron. Las
+    posiciones (`gps`) siguen livianas.
+  · **Recorrido** (caché `gps_ruta`): un punto cada 40 m o 5 min, tope 300 por camión (se ralea la mitad vieja: queda el día entero).
+    Acción **`gpsRuta`** sin candado ni planilla; la página la pide solo con la 13-b (con la 13-a caería en el guardado y en «Rechazos»).
+  · `probarAntesDeImplementar` §12 dice cuántas paradas hubo hoy y cuántas cerca de un pedido. `estadoGps` muestra GPS_PAR.
+- **Página** (`SCRIPT_VERSION_ESPERADA='2026-10-13-b'`): `gpsDiaTomar` (localStorage `me_gps_dia`, solo hoy; una lectura atrasada no
+  pisa); `camionSalioGps` = el `s` del día del servidor (un viaje a recoger se deshace también en la memoria `GPS_SALIO`);
+  `gpsParadas` = las del servidor (si el servidor no nombró pedido, la página busca con la MISMA regla, `gpsPedidosCerca`) o, sin la
+  13-b, las del aparato; `gpsEventosHoy` con palabras («fue a recoger a Moreno: no cuenta como "salió"», «llegó a PTF · venía de Moreno»);
+  `gpsLlegadaDe(p)`; `gpsHistDe` junta el recorrido del servidor con el del aparato. **🚫 Nada se marca ✅** (12/10).
+  · **Mis pedidos**: «📍 Llegó HH:MM» como paso actual del viaje (no es «Entregado»).
+  · **Cierre de entregas**: cada pedido de hoy dice «📍 el camión estuvo ahí de … a …», «🛰️ el camión volvió sin pararse ahí» (solo
+    cuando ya volvió) o «sin ubicación · el GPS no puede decir»; arriba, el resumen y **«📍 Tildar los N que vio el GPS»** (tilda, no
+    guarda: logística confirma con el botón de siempre). El texto viejo «vienen tildados como propuesta» (de antes del 12/10) se corrigió.
+  · **Mapa de entregas (Hoy)**: las paradas (verde = cerca de un pedido), aunque las posiciones hayan vencido.
+  · **Ciudad** (`PATIO_V='20261013f'`): las paradas nombran todos los clientes del lugar; la nota dice que lo anota el servidor.
+- Pruebas: `test_gps.js` §9-13 (→ 92; contra el `.gs` 13-a se cae en §9), `test_gps_pagina.js` §10-14 (→ 52; contra la página
+  publicada se cae en §10), `test_servidor` §11 (versión).
+- ⚠️ **Publicar = primero el servidor (el dueño), después la página**: la página 13-b con el servidor 13-a anda igual que hoy (sin
+  `gpsDia`, sin pedir `gpsRuta`), pero el cartel de versión pediría implementar.
+- Batería entera (180 archivos) con la 13-b: cuatro en rojo con la máquina cargada (`test_auditoria`: el doble de Leaflet sin
+  `layerGroup` —arreglado: el mapa no arma la capa si no hay nada que dibujar—; `test_control_corte`, `test_concurrencia` y
+  `test_mispedidos`: corridos solos, 32/32, 50/50 y 33/33). El resto, en verde (6.242 comprobaciones).

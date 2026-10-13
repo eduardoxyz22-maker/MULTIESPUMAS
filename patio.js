@@ -100,7 +100,9 @@ function gpsRutaDe(veh){ if(typeof gpsHistDe!=='function') return [];
   return out; }
 function gpsParadasDe(veh){ if(typeof gpsParadas!=='function') return [];
   return gpsParadas(veh).map(function(s){ var q=gpsAEscena(s.lat, s.lng);
-    return { x:q.x, z:q.z, h0:gpsHoraTxt(s.t0), dur:gpsDurTxt(s.t1-s.t0), abierta:!!s.abierta, cli:s.ped?(s.ped.cliente||'—'):'', oc:s.ped?(s.ped.oc||''):'', m:s.pm }; }); }
+    var ps=(s.peds && s.peds.length) ? s.peds : (s.ped ? [s.ped] : []);   // (§4kp) el servidor puede nombrar varios en el mismo lugar
+    return { x:q.x, z:q.z, h0:gpsHoraTxt(s.t0), dur:gpsDurTxt(s.t1-s.t0), abierta:!!s.abierta, cli:ps.map(function(p){ return p.cliente||'—'; }).join(' y '),
+             oc:ps.map(function(p){ return p.oc||''; }).filter(Boolean).join(' y '), m:s.pm }; }); }
 function diaDe(f, n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return (typeof isoLocal==='function') ? isoLocal(d) : d.toISOString().slice(0,10); }
 function delDia(p){ return !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p); }
 function patioDatos(){
@@ -154,14 +156,14 @@ function patioDatos(){
           sinCamion:sin.stops.length, sinMarcar:sinMarcar, faltan:faltan.length, faltanOc:faltan.slice(0,3).map(function(p){ return p.oc||p.cliente; }),
           tarde:tarde, tardeSin:tardeSin,
           gpsLog:(fecha===hoy && typeof gpsEventosHoy==='function') ? gpsEventosHoy() : [],
-          gpsVivo:(typeof gpsVigente==='function' && gpsVigente()), gpsDesde:gpsDesdeTxt() } };
+          gpsVivo:(typeof gpsVigente==='function' && gpsVigente()), gpsDesde:gpsDesdeTxt(), gpsSrv:(typeof gpsDiaHay==='function' && gpsDiaHay()) } };
 }
 window.patioDatos=patioDatos;
 window.patioTiendas=function(){ return TIENDAS.map(function(t){ return { n:t.n, marca:t.marca, pt:{ x:t.pt.x, z:t.pt.z } }; }); };
 function firmaDe(D){ return D ? JSON.stringify([D.fecha, D.cams.map(function(c){ return [c.k, c.alm, c.chofer, c.salio, c.lineas.map(function(l){ return l.key+'='+l.u+l.st; }),
   c.stops.map(function(s){ return s.id+(s.ok?'✓':'')+(s.pt?s.pt.x+','+s.pt.z:''); })]; }), D.sin.stops.length, D.im.u, diaFirma(D.dia)]) : ''; }
 /* la hora de «va tarde» cambia cada minuto: no cuenta como cambio de la escena (la dice David en el momento, `horaYa`) */
-function diaFirma(d){ if(!d) return d; var t=d.tarde, o=Object.assign({}, d, { gpsLog:0, gpsVivo:0, gpsDesde:0 });   // lo del GPS cambia cada minuto: va por api.gps
+function diaFirma(d){ if(!d) return d; var t=d.tarde, o=Object.assign({}, d, { gpsLog:0, gpsVivo:0, gpsDesde:0, gpsSrv:0 });   // lo del GPS cambia cada minuto: va por api.gps
   if(t) o.tarde={ k:t.k, n:t.n, turno:t.turno, cams:t.cams }; return o; }
 /* desde qué hora tiene recorrido este aparato (el primer punto de hoy de cualquier camión) */
 function gpsDesdeTxt(){ if(typeof gpsHistCargar!=='function') return ''; var H=gpsHistCargar(), m=0;
@@ -1186,16 +1188,18 @@ function tabGpsRec(){ var q=gpsQuieto(); if(q) return q;
   var R=c.gpsRuta||[], km=0; for(var i=1;i<R.length;i++){ var dx=R[i].x-R[i-1].x, dz=R[i].z-R[i-1].z; km+=Math.sqrt(dx*dx+dz*dz); }
   var pasos=[];
   if(c.salio) pasos.push({ ic:c.salioMano?'🛣️':'🛰️', h:c.salio, t:'Salió'+(c.salioMano?' (marcado en el panel)':' (lo dice el GPS)') });
-  (c.gpsParadas||[]).forEach(function(s){ pasos.push({ ic:'🛑', h:s.h0, t:(s.abierta?'Parado hace ':'Se paró ')+s.dur+(s.cli?' · cerca de <b>'+escH(s.cli)+'</b>'+(s.oc?' · '+escH(s.oc):'')+' ('+s.m+' m)':' · sin pedido de hoy cerca') }); });
+  (c.gpsParadas||[]).forEach(function(s){ pasos.push({ ic:s.cli?'📍':'🛑', h:s.h0, t:(s.abierta?'Parado hace ':'Se paró ')+s.dur+(s.cli?' · cerca de <b>'+escH(s.cli)+'</b>'+(s.oc?' · '+escH(s.oc):'')+' ('+s.m+' m)':' · sin pedido de hoy cerca') }); });
   if(c.gps && c.gps.vu) pasos.push({ ic:'🏁', h:c.gps.vu, t:'Volvió' });
   pasos.sort(function(a,b){ return a.h<b.h?-1:a.h>b.h?1:0; });
   var ahora=c.gps ? ('<b>Ahora:</b> '+escH(c.gps.donde)+' · '+c.gps.v+' km/h'+(c.gps.m?'':' · motor apagado')+(c.gps.hace?' · reporte '+escH(c.gps.hace):'')) : 'Sin posición del GPS en los últimos 10 minutos.';
   return chips+'<div class="log">'+(pasos.length?pasos.map(function(p){ return '<div><time>'+escH(p.h)+'</time><span>'+p.ic+' '+p.t+'</span></div>'; }).join(''):'<div><time>—</time><span>Hoy todavía no salió ni se paró en la calle.</span></div>')+'</div>'+
-    '<div class="nota-gps" style="margin-top:8px">'+ahora+(R.length>1?' · rastro de '+R.length+' reportes (la línea de su color en la ciudad)':'')+'. Una parada es '+4+' min o más quieto fuera de PTF y Banzer; «cerca» = a menos de 300 m de un pedido suyo de hoy. El ✅ entregado lo sigue marcando logística.</div>'; }
+    '<div class="nota-gps" style="margin-top:8px">'+ahora+(R.length>1?' · rastro de '+R.length+' reportes (la línea de su color en la ciudad)':'')+'. Una parada es '+4+' min o más quieto fuera de PTF'+(D0.dia.gpsSrv?', Banzer y Moreno':' y Banzer')+'; «cerca» = a menos de 300 m de un pedido suyo de hoy (📍). El ✅ entregado lo sigue marcando logística.</div>'; }
 function tabGps(){ var q=gpsQuieto(); if(q) return q;
   var L=D0.dia.gpsLog||[];
   return '<div class="log">'+(L.length?L.map(function(e){ return '<div data-k="'+escH(e.k)+'" style="cursor:pointer"><time>'+escH(e.h)+'</time><span>'+e.ic+' '+e.x+'</span></div>'; }).join(''):'<div><time>—</time><span>'+(D0.dia.gpsVivo?'El GPS todavía no dijo nada de hoy: ni salidas, ni vueltas, ni paradas.':'Sin noticias del GPS en los últimos 10 minutos.')+'</span></div>')+'</div>'+
-    '<div class="nota-gps" style="margin-top:8px">📡 '+(D0.dia.gpsVivo?'El GPS se lee cada minuto':'⚠️ Sin noticias del GPS')+'. «Salió» = 15 min seguidos lejos de PTF y de Banzer. Las paradas salen del recorrido que este aparato fue leyendo'+(D0.dia.gpsDesde?' (desde las '+escH(D0.dia.gpsDesde)+')':'')+'.</div>'; }
+    '<div class="nota-gps" style="margin-top:8px">📡 '+(D0.dia.gpsVivo?'El GPS se lee cada minuto':'⚠️ Sin noticias del GPS')+'. «Salió» = 15 min seguidos lejos de PTF y de Banzer'+(D0.dia.gpsSrv?
+      '; ir a recoger a Moreno o pasar de un depósito al otro no cuenta. Las paradas y este registro los anota el servidor cada minuto, para todos (aunque nadie tenga el panel abierto).':
+      '. Las paradas salen del recorrido que este aparato fue leyendo'+(D0.dia.gpsDesde?' (desde las '+escH(D0.dia.gpsDesde)+')':'')+'.')+'</div>'; }
 function pintarTab(){
   [].forEach.call(document.querySelectorAll('#pt-tabs button[data-t]'), function(b){ var t=b.dataset.t; b.hidden=(t==='calle'&&!V.calle); b.classList.toggle('on', t===TAB); });
   if(TAB==='calle'&&!V.calle) TAB='rec';
@@ -1313,7 +1317,7 @@ function gpsAlDia(D){ var cambio=false, otro=false; (D && D.cams || []).forEach(
   c.gps=d.gps; c.volvio=vo; c.gpsK=fk;
   var rk=(d.gpsRuta||[]).length+'|'+(d.gpsParadas||[]).map(function(s){ return s.h0+s.dur; }).join(',');
   if(rk!==(c.rastroK||'')){ otro=true; c.rastroK=rk; c.gpsRuta=d.gpsRuta||[]; c.gpsParadas=d.gpsParadas||[]; if(c===SEL) c.rastroOtro=true; } });
-  if(D && D0 && D.dia && JSON.stringify(D.dia.gpsLog)!==JSON.stringify(D0.dia.gpsLog)){ D0.dia.gpsLog=D.dia.gpsLog; D0.dia.gpsVivo=D.dia.gpsVivo; D0.dia.gpsDesde=D.dia.gpsDesde; otro=true; }
+  if(D && D0 && D.dia && JSON.stringify(D.dia.gpsLog)!==JSON.stringify(D0.dia.gpsLog)){ D0.dia.gpsLog=D.dia.gpsLog; D0.dia.gpsVivo=D.dia.gpsVivo; D0.dia.gpsDesde=D.dia.gpsDesde; D0.dia.gpsSrv=D.dia.gpsSrv; otro=true; }
   /* solo si cambió algo del GPS (corre cada 1,5 s): la ficha, las pestañas y el rastro */
   if(otro){ if(SEL && SEL.gpsRepinta){ SEL.gpsRepinta=false; pintarFicha(); } if(SEL && SEL.rastroOtro){ SEL.rastroOtro=false; pintarRastro(); } if(TAB==='calle'||TAB==='gps'||TAB==='gpsr') pintarTab(); }
   return cambio; }

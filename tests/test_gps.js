@@ -47,12 +47,17 @@ const unidad = (placa, pt, o) => Object.assign({ UnitId: 'U-' + placa, UnitPlate
   Latitude: (pt.la >= 0 ? '+' : '') + pt.la.toFixed(6), Longitude: pt.lo.toFixed(6), GpsSpeed: '32', Ignition: '1', Conductor: 'CHOFER UNO', Direction: 'N' }, o || {});
 
 const SECRETO = { GPS_APIKEY: 'apikey-de-mentira-123', GPS_USUARIO: 'usuario-mentira', GPS_CLAVE: 'clave-mentira-456' };
-function servidor(props) {
-  const sh = hacerPlanilla([HDR]), P = Object.assign({}, props || {}), triggers = [], cache = new Map();
+function servidor(props, opt) {
+  opt = opt || {};
+  const sh = hacerPlanilla([HDR].concat(opt.filas || [])), P = Object.assign({}, props || {}), triggers = [], cache = new Map();
+  const geo = opt.geo ? hacerPlanilla([['link', 'lat', 'lng', 'aprox']].concat(opt.geo)) : null;
+  const lecturas = { pedidos: 0, geo: 0, enRepaso: 0 };   // cuántas veces se leyó la planilla entera (y la hoja Geo); enRepaso = las del GPS
+  const gdr = sh.getDataRange; sh.getDataRange = () => { lecturas.pedidos++; return gdr(); };
+  if (geo) { const g2 = geo.getDataRange; geo.getDataRange = () => { lecturas.geo++; return g2(); }; }
   const gps = { llamadas: [], unidades: [], tokenN: 0, responder: null };
   const ctx = {
     console, Date: FakeDate, JSON, Math, Number, String, Array, Object, RegExp, encodeURIComponent, isFinite,
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: (n) => n === 'Pedidos' ? sh : null, insertSheet: () => hacerPlanilla([]) }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: (n) => n === 'Pedidos' ? sh : (n === 'Geo' ? geo : null), insertSheet: () => hacerPlanilla([]) }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => P[k] != null ? P[k] : null, setProperty: (k, v) => { P[k] = String(v); },
       deleteProperty: (k) => { delete P[k]; }, setProperties: (o) => Object.assign(P, o) }) },
     UrlFetchApp: { fetch: (url, o) => {
@@ -80,11 +85,12 @@ function servidor(props) {
   ctx.globalThis = ctx; vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(GS, 'utf8'), ctx);
   const post = (b) => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(b) }, parameter: {} })._t);
-  return { ctx, P, gps, cache, triggers, post, repaso: () => ctx.gpsRepaso(), lista: () => post({ action: 'list' }) };
+  return { ctx, P, gps, cache, triggers, post, sh, lecturas, repaso: () => { const n = lecturas.pedidos, r = ctx.gpsRepaso(); lecturas.enRepaso += lecturas.pedidos - n; return r; }, lista: () => post({ action: 'list' }) };
 }
 /* Dos vueltas seguidas (token + posiciones), un minuto entre cada una. */
 const arrancar = (S) => { S.repaso(); pasar(1); return S.repaso(); };
-const unid = (S, placa) => { const g = S.lista().gps; return g && g.u.filter(x => x.p === placa)[0]; };
+const unid = (S, placa) => { const L = S.lista(), g = L.gps, x = g && g.u.filter(x => x.p === placa)[0];
+  return x && Object.assign({}, x, L.gpsDia && L.gpsDia.u[placa] ? { ev: L.gpsDia.u[placa].ev, par: L.gpsDia.u[placa].par } : {}); };   // (13-b) el día viene aparte
 
 // ══ 1. Lo mismo que la página ══════════════════════════════════════════════
 console.log('\n── 1. Los depósitos y las placas: los de pedidos.html ──');
@@ -244,6 +250,201 @@ console.log('\n── 8. instalarDisparadores, probarAntesDeImplementar y probar
   chk('…y dice qué camión es cada placa, a cuánto está de PTF o Banzer y la hora del reporte', /6663-CCP = Foton nuevo · 32 km\/h · motor encendido · a \d+ m de PTF · reporte «2026-10-14 \d\d:\d\d:\d\d» \(= \d\d:\d\d de Bolivia/.test(g) && /ABC123 \(no es ningún camión del panel\)/.test(g), g);
   chk('…y avisa los camiones del panel que el GPS no ve', /⚠️ El Carry \(6409TIG\) no aparece en el GPS/.test(g) && /Foton insumo/.test(g), g);
   chk('probarGps no guarda posiciones ni toca las salidas', S.cache.get('gps_pos') && JSON.parse(S.cache.get('gps_pos')).u.length === 2 && !/rd/.test(S.cache.get('gps_pos')));
+}
+
+// ══ 9. Las paradas, cerca de los pedidos del día (2026-10-13-b) ══════════════
+console.log('\n── 9. 🛑 Paradas: 4 min quieto fuera de las bases; el pedido de HOY de ese camión a ≤ 300 m ──');
+const MOR = { la: -17.7623355, lo: -63.0675466 };
+const CLI_A = { la: -17.7700, lo: -63.1600 }, CLI_A2 = { la: -17.7707, lo: -63.1600 }, CLI_B = { la: -17.7800, lo: -63.1300 };
+const CLI_C = { la: -17.7900, lo: -63.1500 }, CLI_D = { la: -17.7600, lo: -63.1800 }, CLI_X = { la: -17.7950, lo: -63.1700 }, ROJO = { la: -17.7750, lo: -63.1450 };
+const fila = (id, fecha, cli, pt, veh, o) => { o = o || {}; const r = new Array(30).fill(''); r[0] = id; r[1] = fecha; r[2] = o.oc || ('10-' + id); r[3] = 'Vendedora Uno'; r[4] = cli;
+  r[8] = o.zona || 'Norte'; r[9] = o.dir || 'Calle 1'; r[10] = pt ? ('https://www.google.com/maps?q=' + pt.la + ',' + pt.lo) : (o.maps || ''); r[17] = o.estado || ''; r[19] = veh || ''; r[29] = 1; return r; };
+const QUIETO = { GpsSpeed: '0', Ignition: '0' }, ANDA = { GpsSpeed: '35' };
+const min1 = (S, U) => { pasar(1); S.gps.unidades = U(); return S.repaso(); };
+const hh = (ms) => new Date(ms - 4 * 3600000).toISOString().slice(11, 16);
+{
+  const HOY = '2026-10-14', AYER = '2026-10-13';
+  const S = servidor(SECRETO, { filas: [
+    fila('pA', HOY, 'Cliente A', CLI_A, 'Foton nuevo'), fila('pA2', HOY, 'Cliente A bis', CLI_A2, 'Foton nuevo'),
+    fila('pC', HOY, 'Cliente del Carry', CLI_C, 'Carry'), fila('pL', HOY, 'Cliente sin camión', CLI_B, ''),
+    fila('pY', AYER, 'Cliente de ayer', CLI_B, 'Foton nuevo'), fila('kommo-9', HOY, 'Borrador', CLI_B, '', { estado: 'Borrador Kommo' }),
+    fila('pG', HOY, 'Cliente link corto', null, 'Foton nuevo', { maps: 'https://maps.app.goo.gl/abc123' }),
+    fila('pT', HOY, 'Venta de tienda', CLI_D, 'Foton nuevo', { zona: 'Tienda' }) ],
+    geo: [['https://maps.app.goo.gl/abc123', CLI_D.la, CLI_D.lo, '']] });
+  poner('2026-10-14 08:00'); S.gps.unidades = [unidad('6663-CCP', PTF, QUIETO)]; arrancar(S);         // 08:01 en PTF, quieto
+  for (let i = 0; i < 5; i++) min1(S, () => [unidad('6663-CCP', PTF, QUIETO)]);                     // 08:06 cargando en PTF
+  chk('quieto ADENTRO de PTF no es una parada (y no lee la planilla)', !(unid(S, '6663CCP').par || []).length && S.lecturas.enRepaso === 0, unid(S, '6663CCP').par);
+  for (let i = 0; i < 4; i++) min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);                     // 08:07-08:10 en la calle
+  min1(S, () => [unidad('6663-CCP', CLI_A, QUIETO)]);                                               // 08:11 llega a lo de A
+  const t0 = RELOJ.ms;
+  for (let i = 0; i < 3; i++) min1(S, () => [unidad('6663-CCP', CLI_A, QUIETO)]);                   // 08:14 (3 min)
+  chk('3 minutos quieto en lo de A: todavía no es parada, y la planilla no se leyó', !(unid(S, '6663CCP').par || []).length && S.lecturas.enRepaso === 0, S.lecturas);
+  min1(S, () => [unidad('6663-CCP', CLI_A, QUIETO)]);                                               // 08:15 (4 min)
+  let a = unid(S, '6663CCP'), p0 = (a.par || [])[0] || [];
+  chk('a los 4 minutos: parada desde las 08:11, abierta, con los dos pedidos SUYOS de hoy a ≤ 300 m (el más cerca primero)',
+      p0[0] === hh(t0) && p0[1] === '08:15' && p0[5] === 1 && JSON.stringify(p0[4]) === '["pA","pA2"]' && p0[6] === 0, p0);
+  chk('…la planilla se leyó UNA vez, recién al registrar la parada', S.lecturas.enRepaso === 1, S.lecturas);
+  for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_A, QUIETO)]);                   // 08:21
+  a = unid(S, '6663CCP');
+  chk('sigue ahí: «hasta» avanza (08:21) y no vuelve a leer la planilla', a.par[0][1] === '08:21' && a.par[0][5] === 1 && S.lecturas.enRepaso === 1, a.par[0]);
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);                                                 // 08:22 se va
+  a = unid(S, '6663CCP');
+  chk('…y a los 15 minutos de dejar PTF «salió 08:07» (con la parada adentro, igual que antes)', a.s === '08:07' && a.sd === 'ptf', a);
+  chk('se va: la parada queda cerrada (08:11 a 08:21)', a.par[0][5] === 0 && a.par[0][1] === '08:21' && a.par.length === 1, a.par);
+  for (let i = 0; i < 2; i++) min1(S, () => [unidad('6663-CCP', ROJO, QUIETO)]);                    // semáforo largo: 2 min
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);
+  chk('2 minutos en un semáforo: no es parada', unid(S, '6663CCP').par.length === 1, unid(S, '6663CCP').par.length);
+  for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_C, QUIETO)]);
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);
+  a = unid(S, '6663CCP');
+  chk('parado al lado del pedido de OTRO camión (el Carry): parada SIN pedido — nunca se le adjudica', a.par.length === 2 && a.par[1][4].length === 0 && a.par[1][6] == null, a.par[1]);
+  for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_B, QUIETO)]);
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);
+  a = unid(S, '6663CCP');
+  chk('al lado de un pedido de hoy SIN camión: ese sí (ni el de ayer ni el borrador de Kommo)', JSON.stringify(a.par[2][4]) === '["pL"]', a.par[2]);
+  for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_D, QUIETO)]);
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);
+  a = unid(S, '6663CCP');
+  chk('un pedido con enlace corto: el pin sale de la hoja «Geo» (la venta de tienda del mismo lugar no cuenta)', JSON.stringify(a.par[3][4]) === '["pG"]' && S.lecturas.geo >= 1, [a.par[3], S.lecturas]);
+  chk('cuatro paradas registradas = cuatro lecturas de la planilla (una por parada, nunca por minuto)', S.lecturas.enRepaso === 4, S.lecturas);
+  /* El GPS se duerme con el motor apagado: el último reporte queda quieto y viejo. */
+  pasar(1); const dormido = unidad('6663-CCP', CLI_X, QUIETO), tD = RELOJ.ms; S.gps.unidades = [dormido]; S.repaso();
+  for (let i = 0; i < 30; i++) { pasar(1); S.repaso(); }
+  a = unid(S, '6663CCP'); const pd = a.par[4] || [];
+  chk('con el reporte dormido: la parada cuenta hasta 20 min después del último reporte y ahí se queda (no vuelve atrás)', pd[0] === hh(tD) && pd[1] === hh(tD + 20 * 60000) && pd[5] === 1, pd);
+  poner('2026-10-14 12:30'); S.gps.unidades = [unidad('6663-CCP', CERCA_PTF, QUIETO)]; S.repaso();
+  a = unid(S, '6663CCP');
+  chk('vuelve a PTF: «volvió 12:30», la parada abierta se cierra y el registro dice salió y llegó', a.vu === '12:30' && a.par[4][5] === 0 &&
+      JSON.stringify(a.ev) === JSON.stringify([['08:07', 'sal', 'ptf', ''], ['12:30', 'lle', 'ptf', 'ptf']]), a.ev);
+  const PA = JSON.parse(S.P.GPS_PAR);
+  chk('las paradas quedan en la propiedad GPS_PAR de hoy (no en la caché: no se pierden)', PA.f === HOY && PA.u['6663CCP'].length === 5, PA.f);
+  chk('…y nada de eso marca ✅ ni toca la planilla', S.sh._datos.slice(1).every(r => r[18] === ''), S.sh._datos.map(r => r[18]));
+}
+
+// ══ 10. Moreno = recoger; traslados ════════════════════════════════════════
+console.log('\n── 10. 📥 Moreno es para RECOGER: ese viaje no es «salió»; de PTF a Banzer sin pararse, tampoco ──');
+{
+  const HOY = '2026-10-14';
+  const S = servidor(SECRETO, { filas: [fila('pU', HOY, 'Cliente del insumo', CLI_A, 'Foton insumo'), fila('pU2', HOY, 'Otro del insumo', CLI_B, 'Foton insumo')] });
+  poner('2026-10-14 08:00');
+  const todos = (t, u, k) => [unidad('6409-TIG', t[0], t[1]), unidad('6021-URL', u[0], u[1]), unidad('5655-KSC', k[0], k[1])];
+  S.gps.unidades = todos([PTF, QUIETO], [PTF, QUIETO], [PTF, QUIETO]); arrancar(S);                                 // 08:01 los tres en PTF
+  min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                                                // 08:02 salen
+  for (let i = 0; i < 15; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                  // 08:17
+  let t = unid(S, '6409TIG');
+  chk('15 min afuera: «salió 08:02» (todavía no se sabe adónde va)', t.s === '08:02' && t.sd === 'ptf', t);
+  for (let i = 0; i < 3; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                   // 08:20
+  min1(S, () => todos([MOR, QUIETO], [LEJOS, ANDA], [BZ, QUIETO]));                                                 // 08:21: el Carry a Moreno, el KSC a Banzer
+  t = unid(S, '6409TIG'); let k = unid(S, '5655KSC');
+  chk('el Carry llega a Moreno sin haberse parado en ningún pedido: fue a recoger → el «salió» se DESHACE', t.s === '' && t.ul === '' && t.mor === 1 && t.f === 1, t);
+  chk('…el registro lo dice: salió de PTF (a recoger) y llegó a Moreno', JSON.stringify(t.ev) === JSON.stringify([['08:02', 'sal', 'ptf', 'rec'], ['08:21', 'lle', 'moreno', 'ptf']]), t.ev);
+  chk('…y en Moreno no se registran paradas (está en una base)', !t.par.length, t.par);
+  chk('el KSC fue de PTF a Banzer en 19 min sin pararse: traslado, el «salió» también se deshace', k.s === '' && k.f === 0 && k.dep.id === 'banzer' && k.ev[0][3] === 'tra', k.ev);
+  for (let i = 0; i < 20; i++) min1(S, () => todos([MOR, QUIETO], [LEJOS, ANDA], [BZ, QUIETO]));                   // 08:41 cargando
+  min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                                                // 08:42 el Carry sale de Moreno, el KSC de Banzer
+  for (let i = 0; i < 20; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                  // 09:02
+  t = unid(S, '6409TIG'); k = unid(S, '5655KSC');
+  chk('el Carry sale de Moreno y anda 20 min: NO «salió» (de Moreno a PTF son ~25 min)', t.s === '', t);
+  chk('el KSC sale de Banzer: a los 15 min «salió 08:42 de Banzer»', k.s === '08:42' && k.sd === 'banzer', k);
+  for (let i = 0; i < 5; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));
+  min1(S, () => todos([CERCA_PTF, QUIETO], [LEJOS, ANDA], [LEJOS, ANDA]));                                          // 09:08 el Carry llega a PTF
+  t = unid(S, '6409TIG');
+  chk('…llega a PTF: un traslado de Moreno a PTF, sin «salió» ni «volvió»; el registro dice de dónde venía',
+      t.s === '' && t.vu === '' && JSON.stringify(t.ev.slice(-1)) === JSON.stringify([['09:08', 'lle', 'ptf', 'moreno']]) && !t.ev.some(e => e[1] === 'sal' && e[2] === 'moreno'), t.ev);
+  min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                                                // 09:09 ahora sí sale a repartir
+  for (let i = 0; i < 15; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));
+  t = unid(S, '6409TIG');
+  chk('…y cuando sale de PTF a repartir: «salió 09:09»', t.s === '09:09' && t.sd === 'ptf', t);
+  /* El insumo (URL): reparte y DESPUÉS va a Moreno; después sale de Moreno directo a un cliente. */
+  for (let i = 0; i < 6; i++) min1(S, () => todos([LEJOS, ANDA], [CLI_A, QUIETO], [LEJOS, ANDA]));
+  min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));
+  for (let i = 0; i < 3; i++) min1(S, () => todos([LEJOS, ANDA], [MOR, QUIETO], [LEJOS, ANDA]));
+  let u = unid(S, '6021URL');
+  chk('el insumo entregó en lo de su cliente y después fue a Moreno: su «salió 08:02» QUEDA (no fue solo a recoger)', u.s === '08:02' && u.mor === 1 && u.ev[0][3] === '' && u.vu === '', u.ev);
+  min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));
+  const tSal = RELOJ.ms;
+  for (let i = 0; i < 4; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));
+  for (let i = 0; i < 5; i++) min1(S, () => todos([LEJOS, ANDA], [CLI_B, QUIETO], [LEJOS, ANDA]));   // 4 min quieto = 5 lecturas
+  u = unid(S, '6021URL');
+  chk('sale de Moreno directo a otro cliente: con la primera parada cuenta «salió» a la hora en que dejó Moreno', u.ul === hh(tSal) && u.s === '08:02' &&
+      u.ev.some(e => e[1] === 'sal' && e[2] === 'moreno' && e[0] === hh(tSal) && e[3] === ''), u.ev);
+  /* Moreno → 45 minutos dando vueltas sin pararse en ninguna base: sí salió */
+  const S2 = servidor(SECRETO); poner('2026-10-14 08:00');
+  S2.gps.unidades = [unidad('6409-TIG', MOR, QUIETO)]; arrancar(S2);
+  min1(S2, () => [unidad('6409-TIG', LEJOS, ANDA)]); const t2 = RELOJ.ms;
+  for (let i = 0; i < 44; i++) min1(S2, () => [unidad('6409-TIG', LEJOS, ANDA)]);
+  chk('de Moreno, 44 min afuera sin parar: todavía no', unid(S2, '6409TIG').s === '', unid(S2, '6409TIG'));
+  min1(S2, () => [unidad('6409-TIG', LEJOS, ANDA)]);
+  chk('…a los 45 min: «salió» a la hora en que dejó Moreno', unid(S2, '6409TIG').s === hh(t2) && unid(S2, '6409TIG').sd === 'moreno', unid(S2, '6409TIG'));
+}
+
+// ══ 11. Topes: una propiedad aguanta 9 KB ══════════════════════════════════
+console.log('\n── 11. Topes: 24 paradas por camión (las con pedido se quedan), 24 anotaciones, < 8.500 letras ──');
+{
+  const HOY = '2026-10-14', filas = [], pts = [];
+  for (let i = 0; i < 30; i++) { const p = { la: -17.80 - i * 0.01, lo: -63.20 }; pts.push(p); if (i % 3 === 0) filas.push(fila('pp' + i, HOY, 'Cliente ' + i, p, 'Foton nuevo')); }
+  const S = servidor(SECRETO, { filas }); poner('2026-10-14 06:30');
+  S.gps.unidades = [unidad('6663-CCP', PTF, QUIETO), unidad('6409-TIG', PTF, QUIETO), unidad('6021-URL', PTF, QUIETO), unidad('5655-KSC', PTF, QUIETO)]; arrancar(S);
+  for (let i = 0; i < 30; i++) {
+    for (let j = 0; j < 5; j++) min1(S, () => ['6663-CCP', '6409-TIG', '6021-URL', '5655-KSC'].map(pl => unidad(pl, pts[i], QUIETO)));
+    min1(S, () => ['6663-CCP', '6409-TIG', '6021-URL', '5655-KSC'].map(pl => unidad(pl, LEJOS, ANDA)));
+  }
+  const a = unid(S, '6663CCP'), con = a.par.filter(q => q[4].length);
+  chk('30 paradas: quedan 24 por camión', a.par.length === 24 && unid(S, '6409TIG').par.length === 24, a.par.length);
+  chk('…las 10 con pedido están todas (se van primero las viejas SIN pedido)', con.length === 10, con.map(q => q[4][0]));
+  chk('GPS_PAR (4 camiones × 24 paradas) no pasa las 8.500 letras', S.P.GPS_PAR.length <= 8500, S.P.GPS_PAR.length);
+  for (let v = 0; v < 14; v++) {
+    min1(S, () => ['6663-CCP', '6409-TIG', '6021-URL', '5655-KSC'].map(pl => unidad(pl, CERCA_PTF, QUIETO)));
+    for (let j = 0; j < 17; j++) min1(S, () => ['6663-CCP', '6409-TIG', '6021-URL', '5655-KSC'].map(pl => unidad(pl, LEJOS, ANDA)));
+  }
+  const b = unid(S, '6663CCP');
+  chk('14 viajes = 28 anotaciones: quedan 24, y la PRIMERA salida del día sigue siendo la hora de «Ya salió»', b.ev.length === 24 && b.s === '06:32' && b.ev.some(e => e[0] === '06:32' && e[1] === 'sal'), [b.s, b.ev.length, b.ev[0]]);
+  chk('GPS_DIA no pasa las 8.500 letras', S.P.GPS_DIA.length <= 8500, S.P.GPS_DIA.length);
+  const Lb = S.lista();
+  chk('la lectura del panel lleva el día aparte (`gpsDia`: salidas, registro y paradas) y las posiciones siguen livianas', Lb.gpsDia && Lb.gpsDia.f === HOY && Array.isArray(Lb.gpsDia.u['6663CCP'].par) &&
+      Lb.gpsDia.u['6663CCP'].s === b.s && !('par' in Lb.gps.u[0]) && JSON.stringify(Lb.gps).length < 3000 && JSON.stringify(Lb.gpsDia).length < 30000, [JSON.stringify(Lb.gps).length, JSON.stringify(Lb.gpsDia).length]);
+  S.cache.delete('gps_pos');
+  const Lc = S.lista();
+  chk('después de las 21 h (las posiciones vencieron): el día SIGUE llegando, para el cierre de entregas', !('gps' in Lc) && Lc.gpsDia && Lc.gpsDia.u['6663CCP'].par.length === 24, Object.keys(Lc));
+  poner('2026-10-15 06:10');
+  chk('…pero el de ayer no', !('gpsDia' in S.lista()));
+}
+
+// ══ 12. El recorrido del día ═══════════════════════════════════════════════
+console.log('\n── 12. 🗺️ El recorrido: aparte (`gpsRuta`), sin candado y sin leer la planilla ──');
+{
+  const S = servidor(SECRETO); poner('2026-10-14 08:00');
+  S.gps.unidades = [unidad('6663-CCP', PTF, QUIETO)]; arrancar(S);
+  for (let i = 0; i < 10; i++) min1(S, () => [unidad('6663-CCP', PTF, QUIETO)]);                    // 10 min quieto en PTF
+  for (let i = 0; i < 10; i++) min1(S, () => [unidad('6663-CCP', { la: PTF.la - (i + 1) * 0.002, lo: PTF.lo }, ANDA)]);   // 10 min andando, ~220 m por minuto
+  let locks = 0; const lk = S.ctx.LockService; S.ctx.LockService = { getScriptLock: () => ({ waitLock() { locks++; }, releaseLock() {}, tryLock() { locks++; return true; } }) };
+  const n0 = S.lecturas.pedidos, R = S.post({ action: 'gpsRuta' });   // (la lectura de la planilla la haría `list`, no esto)
+  S.ctx.LockService = lk;
+  const L = R.ruta && R.ruta.u['6663CCP'];
+  chk('`gpsRuta` contesta sin candado y sin leer la planilla', R.ok && locks === 0 && S.lecturas.pedidos === n0, { locks, n0, ahora: S.lecturas.pedidos });
+  chk('quieto en PTF: un punto cada 5 min (3), no uno por minuto; andando: uno por minuto (10)', L && L.length === 13, L && L.map(q => q[0]));
+  chk('cada punto: [minuto del día en Bolivia (el del REPORTE: 08:00), lat, lng, km/h]', L && L[0][0] === 8 * 60 && Math.abs(L[0][1] - PTF.la) < 1e-5 && L[12][3] === 35, L && L[0]);
+  chk('la lectura de cada minuto NO lleva el recorrido (pesa): solo las posiciones', !('ruta' in S.lista().gps) && !JSON.stringify(S.lista().gps).includes('gps_ruta'));
+  for (let i = 0; i < 400; i++) min1(S, () => [unidad('6663-CCP', { la: -17.70 - i * 0.001, lo: -63.10 }, ANDA)]);
+  const L2 = S.post({ action: 'gpsRuta' }).ruta.u['6663CCP'];
+  chk('un día largo: no pasa de 300 puntos y queda el día entero (el primero y el último)', L2.length <= 300 && L2[0][0] === 8 * 60 && L2[L2.length - 1][0] === Math.floor((RELOJ.ms - 4 * 3600000) % 86400000 / 60000), [L2.length, L2[0][0], L2[L2.length - 1][0]]);
+  chk('…y entra en la caché (< 100 KB)', S.cache.get('gps_ruta').length < 100000, S.cache.get('gps_ruta').length);
+  poner('2026-10-15 07:00');
+  chk('otro día: el recorrido de ayer no se muestra', S.post({ action: 'gpsRuta' }).ruta === null);
+}
+
+// ══ 13. probarAntesDeImplementar cuenta las paradas ════════════════════════
+console.log('\n── 13. probarAntesDeImplementar: cuántas paradas de hoy, cuántas cerca de un pedido ──');
+{
+  const S = servidor(SECRETO, { filas: [fila('pA', '2026-10-14', 'Cliente A', CLI_A, 'Foton nuevo')] }); poner('2026-10-14 08:00');
+  S.gps.unidades = [unidad('6663-CCP', PTF, QUIETO)]; arrancar(S);
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);
+  for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_A, QUIETO)]);
+  min1(S, () => [unidad('6663-CCP', LEJOS, ANDA)]);
+  for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_X, QUIETO)]);
+  const p = S.ctx.probarAntesDeImplementar().lineas.join('\n');
+  chk('«Hoy el GPS anotó 2 parada(s)…; 1 cerca de un pedido del día (… nada se marca ✅)»', /Hoy el GPS anotó 2 parada\(s\) de los camiones; 1 cerca de un pedido del día \(solo se muestran: nada se marca ✅\)/.test(p), p.split('\n').filter(l => /GPS/.test(l)));
+  chk('la versión es la 2026-10-13-b', S.ctx.SCRIPT_VERSION === '2026-10-13-b');
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

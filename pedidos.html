@@ -1794,6 +1794,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .mapa-ruta-num span{ display:grid; place-items:center; width:24px; height:24px; border-radius:50%; border:3px solid; font:900 11px/1 system-ui,sans-serif; box-sizing:border-box; box-shadow:0 2px 6px rgba(0,0,0,.25); }
 .mapa-gps span{ display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:#14232a; color:#fff; font:700 11px/1 system-ui,sans-serif; padding:5px 8px; border-radius:999px; box-shadow:0 4px 12px rgba(0,0,0,.35); border:2px solid #fff; }
 .mapa-gps.anda span{ background:#0f766e; } .mapa-gps.dep span{ background:#475569; }
+.cie-gps.vio{ background:#dcfce7; color:#14532d; border:1px solid #86efac }
 .mrp-gps{ font-size:.72rem; color:#0f766e; font-weight:700; margin:2px 0; }
 .cvc-gps{ font-size:.74rem; color:#0f766e; margin:6px 0 0; line-height:1.35; } .cvc-gps a{ color:inherit; font-weight:700; }
 .mapa-ruta-camion span{ font-size:24px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); display:block; animation:rutaSalta 1.6s ease-in-out infinite; }
@@ -3795,7 +3796,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-13-a';   // (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-13-b';   // (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -4072,6 +4073,7 @@ function apiList(opts){
     }catch(e){}
     try{ localStorage.setItem(LS_LECTURA_T, String(Date.now())); }catch(e){}
     try{ if(j.gps) gpsTomar(j.gps, j.ahora); }catch(e){}   // 🛰️ (§4ko) las posiciones de los camiones vienen con la lectura
+    try{ if(j.gpsDia) gpsDiaTomar(j.gpsDia); }catch(e){}   // 🛰️ (§4kp) y lo que pasó en el día: salidas, registro y paradas
     return j;
   });
 }
@@ -15758,7 +15760,7 @@ function camionSalio(fecha, veh){ if(!fecha || !veh) return ''; var k=salioClave
    m (motor), r (hora del reporte), c (conductor), dep:{id,n,m} (el depósito más cerca), f (1 = lejos de PTF y de Banzer), s (salió,
    HH:MM), sd (de dónde), ul (la última salida), vu (volvió) }] }. SOLO MIRA: no escribe nada en la planilla. El «🚚 Ya salió» a mano
    sigue mandando; sin GPS (servidor viejo, sin configurar, o más de GPS_VIGENCIA_MS sin noticias) todo queda como antes. */
-var GPS={ t:0, u:{}, rec:0 }, GPS_SALIO={}, GPS_VIGENCIA_MS=10*60000;
+var GPS={ t:0, u:{}, rec:0 }, GPS_SALIO={}, GPS_VIGENCIA_MS=10*60000, GPS_VER=0;   // GPS_VER sube con cada novedad (memo de las paradas)
 function gpsPlaca(s){ return String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,''); }
 function gpsTomar(g, ahoraSrv){
   if(!g || !Array.isArray(g.u)) return;
@@ -15768,14 +15770,20 @@ function gpsTomar(g, ahoraSrv){
   try{ gpsHistAnotar(u); }catch(e){}   // el recorrido del día, en este aparato
   /* «salió» se recuerda en esta pestaña todo el día: si después el GPS se calla, el camión no vuelve solo al andén */
   var hoy=todayStr();
-  Object.keys(VEHICULO_PLACA).forEach(function(veh){ var x=u[gpsPlaca(VEHICULO_PLACA[veh])]; if(x && x.s) GPS_SALIO[hoy+'|'+veh]=String(x.s); });
+  /* (§4kp) si el servidor dice que NO salió (un viaje a Moreno a recoger se deshace), se olvida: no queda prendido de antes */
+  Object.keys(VEHICULO_PLACA).forEach(function(veh){ var x=u[gpsPlaca(VEHICULO_PLACA[veh])]; if(!x) return; if(x.s) GPS_SALIO[hoy+'|'+veh]=String(x.s); else delete GPS_SALIO[hoy+'|'+veh]; });
+  GPS_VER++;
   try{ var ov=document.getElementById('mapa-overlay'); if(ov && ov.style.display==='flex') mapaGpsPintar(); }catch(e){}
 }
 function gpsVigente(){ return !!GPS.rec && relojMs()-GPS.rec<GPS_VIGENCIA_MS; }
 function camionGps(veh){ if(!veh || !gpsVigente()) return null; var pl=VEHICULO_PLACA[veh]||veh; return GPS.u[gpsPlaca(pl)]||null; }
-function camionSalioGps(fecha, veh){ return (fecha && veh && fecha===todayStr()) ? (GPS_SALIO[fecha+'|'+veh]||'') : ''; }
+function camionSalioGps(fecha, veh){
+  if(!(fecha && veh && fecha===todayStr())) return '';
+  var d=gpsDiaDe(veh); if(d) return String(d.s||'');      // (§4kp) el día del servidor manda: también cuando deshizo un viaje a recoger a Moreno
+  return GPS_SALIO[fecha+'|'+veh]||'';
+}
 function gpsHace(x){ if(!x || !x.r) return ''; var m=Math.round((Date.now()-Number(x.r))/60000); return m<=0?'recién':m<60?('hace '+m+' min'):('hace '+Math.floor(m/60)+' h '+(m%60)+' min'); }
-function gpsDondeTxt(x){ if(!x) return ''; var d=x.dep; if(!x.f && d) return 'en '+d.n; return 'en la calle'+(d?(' · a '+(d.m<1000?(d.m+' m'):((d.m/1000).toFixed(1).replace('.',',')+' km'))+' de '+d.n):''); }
+function gpsDondeTxt(x){ if(!x) return ''; var d=x.dep; if(!x.f && d) return 'en '+d.n; if(x.mor) return 'en Moreno'; return 'en la calle'+(d?(' · a '+(d.m<1000?(d.m+' m'):((d.m/1000).toFixed(1).replace('.',',')+' km'))+' de '+d.n):''); }
 /* 🛰️ (13/10, dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») LO QUE EL GPS FUE DICIENDO HOY. El servidor solo da la
    ÚLTIMA posición de cada camión: el recorrido del día se arma en este aparato, un punto por cada reporte nuevo que trae la lectura
    (una por minuto mientras el panel está abierto), y sobrevive al F5 (localStorage, solo el día de hoy). Solo mira: nada va a la
@@ -15798,12 +15806,46 @@ function gpsHistAnotar(u){
     if(L.length>GPS_HIST_MAX) L.splice(0, L.length-GPS_HIST_MAX);
     cambio=true;
   });
-  if(cambio) try{ localStorage.setItem(GPS_HIST_LS, JSON.stringify(H)); }catch(e){}
+  if(cambio){ GPS_VER++; try{ localStorage.setItem(GPS_HIST_LS, JSON.stringify(H)); }catch(e){} }
 }
-function gpsHistDe(veh){ var H=gpsHistCargar(); return H.u[gpsPlaca(VEHICULO_PLACA[veh]||veh)]||[]; }
+/* (§4kp) Con el servidor 2026-10-13-b el recorrido del día lo anota el SERVIDOR (para todos, aunque nadie tenga el panel abierto) y se
+   pide aparte (`gpsRuta`, como mucho cada 2 minutos, solo cuando alguien lo mira: la ciudad o el mapa). Se juntan los dos: lo del
+   servidor y, después de su último punto, lo que este aparato fue leyendo. */
+var GPS_RUTA_SRV=null, GPS_RUTA_PED=0, GPS_RUTA_CADA=120000;
+function gpsRutaPedir(forzar){
+  if(!servidorTiene('2026-10-13-b')) return Promise.resolve(null);   // con la 13-a «gpsRuta» caería en el guardado: no se pide
+  if(!forzar && GPS_RUTA_PED && relojMs()-GPS_RUTA_PED<GPS_RUTA_CADA) return Promise.resolve(GPS_RUTA_SRV);
+  GPS_RUTA_PED=relojMs();
+  return apiPost({action:'gpsRuta'}).then(function(j){
+    if(j && j.ok && j.ruta && j.ruta.f===todayStr() && j.ruta.u){ GPS_RUTA_SRV=j.ruta; GPS_VER++; }
+    return GPS_RUTA_SRV;
+  }, function(){ return GPS_RUTA_SRV; });
+}
+function gpsHistDe(veh){
+  var pl=gpsPlaca(VEHICULO_PLACA[veh]||veh), H=gpsHistCargar(), loc=H.u[pl]||[];
+  try{ gpsRutaPedir(); }catch(e){}
+  var R=GPS_RUTA_SRV; if(!R || R.f!==todayStr() || !R.u || !Array.isArray(R.u[pl]) || !R.u[pl].length) return loc;
+  var base=Date.parse(R.f+'T00:00:00-04:00'), srv=R.u[pl].map(function(q){ return [base+Number(q[0])*60000, Number(q[1]), Number(q[2]), Number(q[3])||0, 1, 1]; });
+  var ult=srv[srv.length-1][0];
+  return srv.concat(loc.filter(function(q){ return q[0]>ult+59999; }));
+}
 function gpsMetros(a, b){ var r=Math.PI/180, dLa=(b.lat-a.lat)*r, dLo=(b.lng-a.lng)*r, q=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)*Math.sin(dLo/2);
   return 2*6371000*Math.asin(Math.min(1, Math.sqrt(q))); }
 function gpsHoraTxt(t){ var d=new Date(Number(t)-4*3600000).toISOString(); return d.slice(11,16); }
+/* (§4kp) Los pedidos de HOY cerca de un punto, con la MISMA regla del servidor: primero los de ESE camión; si no hay, los que no
+   tienen camión; nunca los de otro camión. [{ p, m }] del más cerca al más lejos (hasta 3), a ≤ GPS_CLIENTE_M. */
+function gpsPedidosCerca(veh, lat, lng){
+  var hoy=todayStr(), suyos=[], libres=[];
+  STATE.forEach(function(p){
+    if(!p || p.fecha!==hoy || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p)) return;
+    var v=vehiculoDe(p); if(v && v!==veh) return;
+    var g=null; try{ g=typeof almPunto==='function' ? almPunto(p) : null; }catch(e){}
+    if(!g || !isFinite(Number(g.lat))) return;
+    var m=gpsMetros({ lat:lat, lng:lng }, { lat:Number(g.lat), lng:Number(g.lng) });
+    if(m<=GPS_CLIENTE_M) (v ? suyos : libres).push({ p:p, m:Math.round(m) });
+  });
+  return (suyos.length ? suyos : libres).sort(function(a,b){ return a.m-b.m; }).slice(0,3);
+}
 /* Los pedidos de hoy de ese camión, con su punto (el mismo pin del mapa). */
 function gpsPedidosDe(veh){
   var hoy=todayStr(), out=[];
@@ -15812,13 +15854,56 @@ function gpsPedidosDe(veh){
     if(g && isFinite(Number(g.lat))) out.push({ p:p, lat:Number(g.lat), lng:Number(g.lng) }); });
   return out;
 }
-/* Las paradas: GPS_PARADA_MIN minutos o más quieto (≤3 km/h) en el mismo lugar, lejos de PTF y de Banzer. Si se paró cerca de un
-   pedido suyo de hoy (GPS_CLIENTE_M), lo nombra. `abierta` = sigue parado ahí. */
+/* 🛰️ (13/10, §4kp, servidor 2026-10-13-b) EL DÍA DE LOS CAMIONES, DEL SERVIDOR (`gpsDia` de la lectura): por placa, s/sd/ul/vu (las
+   salidas a repartir, sin los viajes a recoger a Moreno ni los traslados), ev (el registro: [hora, 'sal'|'lle', lugar, marca o de
+   dónde venía]) y par (las paradas: [desde, hasta, lat, lng, [ids de pedidos de hoy a ≤ 300 m], 1 = sigue ahí, metros]). Llega
+   también después de las 21 h (caché de 6 h) y se guarda en este aparato (solo hoy): el cierre de entregas lo tiene aunque el GPS
+   ya no reporte. SOLO MIRA: nada se marca ✅ (dueño, 12/10). Con un servidor anterior no llega y todo sigue como antes. */
+var GPS_DIA_LS='me_gps_dia', GPS_DIA={ f:'', t:0, u:{} };
+function gpsDiaTomar(d){
+  if(!d || !d.u || typeof d.u!=='object' || d.f!==todayStr()) return;
+  var A=gpsDiaCargar(); if(A.f===d.f && Number(A.t)>Number(d.t||0)) return;   // una lectura atrasada no vuelve atrás
+  GPS_DIA={ f:d.f, t:Number(d.t)||0, u:d.u }; GPS_VER++;
+  try{ localStorage.setItem(GPS_DIA_LS, JSON.stringify(GPS_DIA)); }catch(e){}
+}
+function gpsDiaCargar(){
+  var hoy=todayStr(); if(GPS_DIA.f===hoy) return GPS_DIA;
+  var d=null; try{ d=JSON.parse(localStorage.getItem(GPS_DIA_LS)||'null'); }catch(e){}
+  GPS_DIA=(d && d.f===hoy && d.u && typeof d.u==='object') ? d : { f:hoy, t:0, u:{} };
+  return GPS_DIA;
+}
+function gpsDiaDe(veh){ if(!veh) return null; var D=gpsDiaCargar(); return D.u[gpsPlaca(VEHICULO_PLACA[veh]||veh)]||null; }
+function gpsDiaHay(){ return Object.keys(gpsDiaCargar().u).length>0; }
+function gpsLugarTxt(id){ return id==='banzer'?'Banzer':id==='moreno'?'Moreno':id==='ptf'?'PTF':'—'; }
+/* ¿El camión ya volvió de repartir? La última anotación es una llegada a PTF o Banzer, después de alguna salida a repartir. */
+function gpsVolvioDelTodo(d){ var L=(d&&d.ev)||[], u=L[L.length-1]; return !!u && u[1]==='lle' && u[2]!=='moreno' && L.some(function(e){ return e[1]==='sal' && !e[3]; }); }
+/* Las paradas: con el día del servidor, las suyas (con los pedidos que él ya nombró); sin él, las de este aparato: GPS_PARADA_MIN
+   minutos o más quieto (≤3 km/h) en el mismo lugar, lejos de PTF y de Banzer, con el pedido suyo de hoy más cerca (GPS_CLIENTE_M).
+   Cada parada: { t0, t1, lat, lng, ped (el pedido más cerca), peds, ids, pm (metros), abierta (sigue ahí), srv }. */
+var GPS_PAR_MEMO={ k:'', t:0, v:{} };
 function gpsParadas(veh){
-  var L=gpsHistDe(veh), peds=gpsPedidosDe(veh), out=[], cur=null;
+  var k=GPS_VER+'|'+STATE.length+'|'+gpsDiaCargar().t;
+  if(GPS_PAR_MEMO.k!==k || relojMs()-GPS_PAR_MEMO.t>3000) GPS_PAR_MEMO={ k:k, t:relojMs(), v:{} };
+  if(GPS_PAR_MEMO.v[veh]) return GPS_PAR_MEMO.v[veh];
+  var d=gpsDiaDe(veh), out;
+  if(d && Array.isArray(d.par)){
+    var hoy=todayStr(), aMs=function(h){ return Date.parse(hoy+'T'+String(h||'00:00')+':00-04:00'); };
+    out=d.par.map(function(q){
+      var ids=Array.isArray(q[4]) ? q[4].map(String) : [], peds=ids.map(findById).filter(Boolean), pm=(q[6]==null?null:Number(q[6]));
+      /* el servidor nombra el pedido al registrar la parada; si en ese momento el pedido no tenía pin o camión, se busca acá con la
+         misma regla (lo de ahora de la planilla) */
+      if(!peds.length){ var c=gpsPedidosCerca(veh, Number(q[2]), Number(q[3])); peds=c.map(function(o){ return o.p; }); ids=peds.map(function(p){ return String(p.id); }); pm=c.length ? c[0].m : null; }
+      return { t0:aMs(q[0]), t1:aMs(q[1]), lat:Number(q[2]), lng:Number(q[3]), ids:ids, peds:peds, ped:peds[0]||null, pm:pm, abierta:!!q[5], srv:true };
+    });
+  } else out=gpsParadasAparato(veh);
+  GPS_PAR_MEMO.v[veh]=out;
+  return out;
+}
+function gpsParadasAparato(veh){
+  var L=gpsHistDe(veh), out=[], cur=null;
   var cerrar=function(c, fin){ if(fin) c.t1=fin; if(c.t1-c.t0<GPS_PARADA_MIN*60000) return;
-    var mejor=null; peds.forEach(function(o){ var m=gpsMetros(c, o); if(m<=GPS_CLIENTE_M && (!mejor || m<mejor.m)) mejor={ o:o, m:Math.round(m) }; });
-    c.ped=mejor ? mejor.o.p : null; c.pm=mejor ? mejor.m : null; out.push(c); };
+    var cc=gpsPedidosCerca(veh, c.lat, c.lng);
+    c.peds=cc.map(function(o){ return o.p; }); c.ped=c.peds[0]||null; c.ids=c.peds.map(function(p){ return String(p.id); }); c.pm=cc.length ? cc[0].m : null; out.push(c); };
   L.forEach(function(q){
     var pt={ lat:q[1], lng:q[2] }, quieto=q[3]<=3 && q[5]===1;
     if(quieto){
@@ -15831,21 +15916,57 @@ function gpsParadas(veh){
   return out;
 }
 function gpsDurTxt(ms){ var m=Math.max(1, Math.round(ms/60000)); return m<60 ? (m+' min') : (Math.floor(m/60)+' h '+(m%60)+' min'); }
-/* «📡 Lo que dijo el GPS» de hoy, lo más nuevo primero: salidas y vueltas (del servidor), paradas (del recorrido de este aparato). */
+function gpsQuienTxt(s){
+  if(!s.peds || !s.peds.length) return ' (sin pedido de hoy cerca)';
+  return ' cerca de '+s.peds.map(function(p){ return '<b>'+esc(p.cliente||'—')+'</b>'+(p.oc?' · '+esc(ocEtiq(p.oc)||p.oc):''); }).join(' y ')+(s.pm!=null?' ('+s.pm+' m)':'');
+}
+/* «📡 Lo que dijo el GPS» de hoy, lo más nuevo primero: salidas, llegadas y paradas. */
 function gpsEventosHoy(){
   var ev=[];
   Object.keys(VEHICULO_PLACA).forEach(function(veh){
-    var pl=VEHICULO_PLACA[veh], x=camionGps(veh), dep=function(id){ return id==='banzer'?'Banzer':'PTF'; };
-    if(x && x.s) ev.push({ h:x.s, k:veh, ic:'🛣️', x:'<b>'+esc(pl)+'</b> salió de '+dep(x.sd)+' (15 min afuera → «Ya salió» solo)' });
-    if(x && x.ul && x.ul!==x.s) ev.push({ h:x.ul, k:veh, ic:'🛣️', x:'<b>'+esc(pl)+'</b> volvió a salir' });
-    if(x && x.vu) ev.push({ h:x.vu, k:veh, ic:'🏁', x:'<b>'+esc(pl)+'</b> volvió a '+esc((x.dep && x.dep.n) || 'PTF') });
+    var pl=VEHICULO_PLACA[veh], x=camionGps(veh), d=gpsDiaDe(veh), dep=function(id){ return id==='banzer'?'Banzer':'PTF'; };
+    if(d){
+      var primera=true;
+      (d.ev||[]).forEach(function(e){
+        if(e[1]==='sal'){
+          var por=e[3]==='rec' ? ' — fue a recoger a Moreno: no cuenta como «salió»' : e[3]==='tra' ? ' — traslado entre depósitos: no cuenta como «salió»' :
+            (primera ? (e[2]==='moreno' ? ' con mercadería (→ «Ya salió» solo)' : ' (15 min afuera → «Ya salió» solo)') : ' otra vez');
+          if(!e[3]) primera=false;
+          ev.push({ h:e[0], k:veh, ic:e[3]?'↩️':'🛣️', x:'<b>'+esc(pl)+'</b> salió de '+gpsLugarTxt(e[2])+por });
+        } else if(e[1]==='lle'){
+          ev.push({ h:e[0], k:veh, ic:e[2]==='moreno'?'📥':'🏁', x:'<b>'+esc(pl)+'</b> llegó a '+gpsLugarTxt(e[2])+(e[2]==='moreno'?' (a recoger)':'')+(e[3]?(' · venía de '+gpsLugarTxt(e[3])):'') });
+        }
+      });
+    } else {
+      if(x && x.s) ev.push({ h:x.s, k:veh, ic:'🛣️', x:'<b>'+esc(pl)+'</b> salió de '+dep(x.sd)+' (15 min afuera → «Ya salió» solo)' });
+      if(x && x.ul && x.ul!==x.s) ev.push({ h:x.ul, k:veh, ic:'🛣️', x:'<b>'+esc(pl)+'</b> volvió a salir' });
+      if(x && x.vu) ev.push({ h:x.vu, k:veh, ic:'🏁', x:'<b>'+esc(pl)+'</b> volvió a '+esc((x.dep && x.dep.n) || 'PTF') });
+    }
     gpsParadas(veh).forEach(function(s){
-      var quien=s.ped ? (' cerca de <b>'+esc(s.ped.cliente||'—')+'</b>'+(s.ped.oc?' · '+esc(s.ped.oc):'')+' ('+s.pm+' m)') : ' (sin pedido de hoy cerca)';
-      ev.push({ h:gpsHoraTxt(s.t0), k:veh, ic:'🛑', x:'<b>'+esc(pl)+'</b> '+(s.abierta?'está parado hace ':'se paró ')+gpsDurTxt(s.t1-s.t0)+quien }); });
+      ev.push({ h:gpsHoraTxt(s.t0), k:veh, ic:s.peds&&s.peds.length?'📍':'🛑', x:'<b>'+esc(pl)+'</b> '+(s.abierta?'está parado hace ':'se paró ')+gpsDurTxt(s.t1-s.t0)+gpsQuienTxt(s) }); });
   });
   ev.sort(function(a,b){ return a.h<b.h ? 1 : a.h>b.h ? -1 : 0; });
   return ev;
 }
+/* 📍 (§4kp) ¿El GPS vio el camión en la puerta de este pedido HOY? Una parada que lo nombra (el servidor al registrarla, o la página
+   con la misma regla: a ≤ GPS_CLIENTE_M de su pin, del camión que lo lleva; sin camión, de cualquiera). La más cerca, prefiriendo
+   su camión: { veh, t0, t1, abierta, m }, o null. Es una PRUEBA para mostrar: no marca ✅ (dueño, 12/10: «el log manual»). */
+function gpsLlegadaDe(p){
+  if(!p || p.fecha!==todayStr() || esFilaSistema(p) || esBorrador(p)) return null;
+  var id=String(p.id), mio=vehiculoDe(p), pin=null, mejor=null;
+  try{ pin=typeof almPunto==='function' ? almPunto(p) : null; }catch(e){}
+  if(pin && !isFinite(Number(pin.lat))) pin=null;
+  Object.keys(VEHICULO_PLACA).forEach(function(veh){
+    gpsParadas(veh).forEach(function(s){
+      if((s.ids||[]).indexOf(id)<0) return;   // la parada ya nombra sus pedidos (servidor o acá, con la misma regla)
+      var m=pin ? Math.round(gpsMetros(s, { lat:Number(pin.lat), lng:Number(pin.lng) })) : (s.pm!=null ? s.pm : 0);
+      var c={ veh:veh, t0:s.t0, t1:s.t1, abierta:!!s.abierta, m:m };
+      if(!mejor || (veh===mio && mejor.veh!==mio) || ((veh===mio)===(mejor.veh===mio) && m<mejor.m)) mejor=c;
+    });
+  });
+  return mejor;
+}
+function gpsLlegadaTxt(ll){ if(!ll) return ''; return ll.abierta ? ('el camión está ahí desde las '+gpsHoraTxt(ll.t0)) : ('el camión estuvo ahí de '+gpsHoraTxt(ll.t0)+' a '+gpsHoraTxt(ll.t1)+' ('+gpsDurTxt(ll.t1-ll.t0)+')'); }
 function cvGpsLinea(x){
   if(!x) return '';
   return '<div class="cvc-gps">🛰️ <b>'+esc(gpsDondeTxt(x))+'</b> · '+x.v+' km/h'+(x.m?'':' · motor apagado')+(x.r?(' · '+gpsHace(x)):'')+(x.vu?(' · volvió '+esc(x.vu)):'')+
@@ -16062,7 +16183,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013e';
+var PATIO_V='20261013f';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
@@ -27424,6 +27545,7 @@ function cierreEntFila(p, atrasado){
     '<span style="color:var(--muted)">'+esc(p.zona||'')+'</span>'+
     '<span class="badge b-gray">'+(normTurno(p.turno)==='PM'?'🌆 PM':'🌅 AM')+'</span>'+
     '<span style="color:var(--muted)">'+esc(vehiculoDe(p)||'sin camión')+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>'+
+    (atrasado ? '' : cierreEntGpsHtml(p))+
     (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>'+
       '<span style="font-size:.8rem;color:var(--muted)">¿qué día se entregó? <input type="date" class="cie-ent-dia" data-id="'+esc(String(p.id))+'" value="'+esc(CIERRE_ENT_DIA[p.id]||hoy)+'" max="'+esc(hoy)+'" min="'+esc(p.fecha)+'" onchange="cierreEntDia(this.getAttribute(\'data-id\'), this.value)" style="width:140px;padding:3px 6px"></span>') : '')+
     '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
@@ -27436,11 +27558,12 @@ function renderCierreEntregas(){
     '<div class="metrics cie-met">'+mc('#0a6b47','Para hoy',H.length,'programados sin confirmar')+mc('#22A06B','Tildados',cierreEntTildados().length,'se confirman al tocar el botón')+
       mc(A.length?'#b45309':'#94a3b8','Atrasados',A.length,A.length?'fecha pasada, sin confirmar':'ninguno')+'</div>'+   // ✨ (§4kc)
     cierreEntAvanceHtml()+
-    '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px">Los de hoy vienen <b>tildados como propuesta</b>: destildá los que no salieron o el cliente no estaba, y tocá Confirmar. '+
+    '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px"><b>Nada viene tildado</b>: tildá uno por uno lo que de verdad se entregó y tocá Confirmar. '+
       'Abrir esta lista no cambia nada. Antes de confirmar el panel <b>relee la planilla</b>: lo que otro equipo reprogramó, borró o ya marcó se saltea y se avisa. '+
       'Los destildados siguen pendientes: si no salieron, reprogramalos (un pedido con la fecha pasada y sin tildar se da por entregado).</p>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><label class="lb" for="cie-ent-quien" style="margin:0">¿Quién cierra?</label>'+
       '<input id="cie-ent-quien" type="text" value="'+esc(cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
+    cierreEntGpsResumenHtml(H)+
     '<div class="cie-sec" style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
     (H.length ? H.map(function(p){ return cierreEntFila(p,false); }).join('') : '<div style="font-size:.86rem;color:var(--muted);padding:6px 0">No queda ninguno sin confirmar.</div>')+
     (A.length ? ('<div class="cie-sec atr" style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
@@ -27452,6 +27575,42 @@ function renderCierreEntregas(){
     '</div></div>';
   openModal(html, true);
   try{ cxFichasVivas(document.querySelector('#modal-box .cie-met'), 'cieMet', admIcoDe); }catch(e){}
+}
+/* 📍 (§4kp, dueño 13/10: «¿y qué pasa con las entregas automatizadas… camión se detuvo en una ubicación marcada para entrega?») LO QUE
+   VIO EL GPS, en cada pedido de HOY: 'vio' (el camión se paró a ≤ 300 m de su pin), 'novio' (el camión ya volvió a PTF/Banzer y no se
+   paró ahí), 'sinpin' (sin ubicación: el GPS no puede decir) o null (su camión no tiene GPS de hoy, o sigue en la calle). Es una AYUDA:
+   NO tilda nada solo (dueño, 12/10: «quitá el entregado automático… el log manual»). «📍 Tildar los que vio el GPS» tilda, y logística
+   confirma con el botón de siempre. */
+function cierreEntGps(p){
+  if(!p || p.fecha!==todayStr()) return null;
+  var ll=gpsLlegadaDe(p); if(ll) return { k:'vio', ll:ll };
+  var veh=vehiculoDe(p), d=veh ? gpsDiaDe(veh) : null; if(!d) return null;
+  var pin=null; try{ pin=almPunto(p); }catch(e){}
+  if(!pin || !isFinite(Number(pin.lat))) return { k:'sinpin' };
+  return gpsVolvioDelTodo(d) ? { k:'novio' } : null;
+}
+function cierreEntGpsHtml(p){
+  var g=cierreEntGps(p); if(!g) return '';
+  if(g.k==='vio') return '<span class="badge cie-gps vio" title="Lo dice el GPS: no es un ✅, tildalo si se entregó">📍 '+esc(gpsLlegadaTxt(g.ll))+'</span>';
+  if(g.k==='novio') return '<span class="badge b-amber cie-gps novio" title="El camión ya volvió y el GPS no lo vio parado cerca de este pedido">🛰️ el camión volvió sin pararse ahí</span>';
+  return '<span class="badge b-gray cie-gps sinpin" title="El pedido no tiene ubicación: el GPS no puede decir si pasó">sin ubicación · el GPS no puede decir</span>';
+}
+function cierreEntGpsResumenHtml(H){
+  if(!gpsDiaHay() || !H.length) return '';
+  var vio=[], novio=0, sinpin=0;
+  H.forEach(function(p){ var g=cierreEntGps(p); if(!g) return; if(g.k==='vio') vio.push(p); else if(g.k==='novio') novio++; else sinpin++; });
+  var falta=vio.filter(function(p){ return !CIERRE_ENT_SEL[p.id]; }).length;
+  return '<div class="cie-gps-res" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;border-radius:10px;background:var(--soft,#f1f5f9);font-size:.84rem">'+
+    '<span>🛰️ El GPS vio el camión en la puerta de <b>'+vio.length+'</b> de '+H.length+' pedido'+(H.length===1?'':'s')+' de hoy'+
+      (novio?(' · <b style="color:#b45309">'+novio+'</b> con el camión de vuelta sin haberse parado ahí'):'')+(sinpin?(' · '+sinpin+' sin ubicación'):'')+'.</span>'+
+    (falta ? '<button type="button" class="btn btn-sm" id="cie-gps-tildar" style="background:#0a6b47;color:#fff" onclick="cierreEntTildarGps()">📍 Tildar los '+falta+' que vio el GPS</button>' : '')+
+    '<span style="flex-basis:100%;font-size:.78rem;color:var(--muted)">Es una ayuda, no un ✅: el GPS ve dónde se paró el camión, no si el cliente recibió. Lo que se entregó y el GPS no vio (sin ubicación, o estacionó lejos), tildalo igual.</span>'+
+  '</div>';
+}
+function cierreEntTildarGps(){
+  var n=0; cierreEntHoy(todayStr()).forEach(function(p){ var g=cierreEntGps(p); if(g && g.k==='vio' && !CIERRE_ENT_SEL[p.id]){ CIERRE_ENT_SEL[String(p.id)]=true; n++; } });
+  renderCierreEntregas();
+  if(n) toast('📍 Tildados '+n+' que vio el GPS. Revisalos y tocá Confirmar.', 'ok', 4000);
 }
 /* ✨ (§4kc) La barra «N de M tildados»: se repinta al tildar (`cierreEntToggle`). */
 function cierreEntAvanceHtml(){
@@ -30288,8 +30447,21 @@ function mapaRutaDatos(){
 var MAPA_GPS_CAPA=null;
 function mapaGpsPintar(){
   if(MAPA_GPS_CAPA){ try{ MAPA_GPS_CAPA.remove(); }catch(e){} MAPA_GPS_CAPA=null; }
-  if(!MAPA || !window.L || MAPA_DIA!=='hoy' || !gpsVigente()) return 0;
+  if(!MAPA || !window.L || MAPA_DIA!=='hoy') return 0;
+  /* 📍 (§4kp) dónde se paró cada camión hoy: verde = cerca de un pedido suyo; gris = en otro lado. Sin nada que dibujar, ni la capa. */
+  var hayPar=Object.keys(VEHICULO_PLACA).some(function(veh){ return gpsParadas(veh).length>0; });
+  if(!hayPar && !gpsVigente()) return 0;
   var capa=L.layerGroup().addTo(MAPA), n=0; MAPA_GPS_CAPA=capa;
+  Object.keys(VEHICULO_PLACA).forEach(function(veh){
+    gpsParadas(veh).forEach(function(q){
+      if(!isFinite(q.lat) || !isFinite(q.lng)) return;
+      var con=!!(q.peds && q.peds.length);
+      L.circleMarker([q.lat,q.lng], { radius:con?8:6, color:con?'#0a6b47':'#64748b', weight:2, fillColor:con?'#22c55e':'#cbd5e1', fillOpacity:.85 })
+        .bindPopup('<b>'+(con?'📍':'🛑')+' '+esc(veh)+'</b> · '+(q.abierta?'parado desde las ':'se paró a las ')+gpsHoraTxt(q.t0)+(q.abierta?'':(' ('+gpsDurTxt(q.t1-q.t0)+')'))+'<br>'+gpsQuienTxt(q).replace(/^ /,'')+'<br><span style="color:#64748b">Lo dice el GPS: no es un ✅.</span>')
+        .addTo(capa);
+    });
+  });
+  if(!gpsVigente()) return 0;
   Object.keys(VEHICULO_PLACA).forEach(function(veh){
     var x=camionGps(veh); if(!x) return; n++;
     var sal=camionSalio(todayStr(), veh);
@@ -31674,6 +31846,9 @@ function pedidoViajeDatos(p){
   /* 🛣️ (12/10) el camión de este pedido ya salió hoy (lo marcó logística): «en camino» con la hora */
   var _sal=(!entregado && f===hoy) ? camionSalio(f, vehiculoDe(p)) : '';
   if(_sal){ pasos[3].hecho=true; pasos[3].lbl='Salió '+_sal; }
+  /* 📍 (§4kp) el GPS vio el camión en la puerta: «Llegó HH:MM». NO es «Entregado»: eso sigue siendo el ✅ de logística (dueño, 12/10). */
+  var _lle=(!entregado && f===hoy) ? gpsLlegadaDe(p) : null;
+  if(_lle){ pasos[3].hecho=true; pasos[4].ico='📍'; pasos[4].lbl='Llegó '+gpsHoraTxt(_lle.t0); }
   var ahora=-1; for(var i=0;i<pasos.length;i++) if(!pasos[i].hecho){ ahora=i; break; }
   if(ahora===3 && f>hoy) ahora=2;     // «en camino» solo el día de la entrega: antes, el pedido espera su fecha (agendado)
   return { pasos:pasos, ahora:ahora };

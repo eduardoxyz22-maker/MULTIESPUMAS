@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-13-a';   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-13-b';   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-13-a';
+  var ESTA_VERSION = '2026-10-13-b';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -247,6 +247,7 @@ function probarAntesDeImplementar() {
     histGuardar_: typeof histGuardar_, histLeer_: typeof histLeer_,   // (2026-10-09-a)
     waAlGuardar_: typeof waAlGuardar_, waRepaso: typeof waRepaso, waDespierta: typeof waDespierta,   // (2026-10-11-a)
     gpsRepaso: typeof gpsRepaso, gpsParaLista_: typeof gpsParaLista_, probarGps: typeof probarGps,   // (2026-10-13-a)
+    gpsSalidas_: typeof gpsSalidas_, gpsPedidosHoy_: typeof gpsPedidosHoy_, gpsRutaAnotar_: typeof gpsRutaAnotar_, gpsRutaLeer_: typeof gpsRutaLeer_, gpsDiaParaLista_: typeof gpsDiaParaLista_,   // (2026-10-13-b)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -440,6 +441,9 @@ function probarAntesDeImplementar() {
       if (!tG) bien('El GPS está configurado; todavía no corrió ningún repaso (ejecutá «probarGps» para verlo andar).');
       else if (uG.error) ojo('El último repaso del GPS (el ' + horaBolivia(tG) + ') avisó: «' + String(uG.error).slice(0, 160) + '». Ejecutá «probarGps» para ver qué pasa.');
       else bien('El GPS anda: el último repaso (el ' + horaBolivia(tG) + ') vio ' + uG.n + ' unidad(es)' + (uG.placas ? ': ' + uG.placas : '') + '.');
+      var pG = waJsonProp_('GPS_PAR', null), nP = 0, nC = 0;   // (2026-10-13-b) las paradas de hoy
+      if (pG && pG.u) Object.keys(pG.u).forEach(function (p) { (pG.u[p] || []).forEach(function (q) { nP++; if (q[4] && q[4].length) nC++; }); });
+      if (pG && pG.f === waBo_(Date.now()).hoy) bien('Hoy el GPS anotó ' + nP + ' parada(s) de los camiones; ' + nC + ' cerca de un pedido del día (solo se muestran: nada se marca ✅).');
     }
   } catch (e) { ojo('No pude mirar el GPS: ' + motivo(e)); }
 
@@ -466,6 +470,8 @@ function probarAntesDeImplementar() {
  *   GPS_FUERA_MIN minutos seguidos a más de GPS_SALIDA_M de los dos. La hora es la de cuando se alejó. Un ir y venir corto (de PTF
  *   a Banzer a cargar) no cuenta. Si ese día no estuvo adentro (durmió afuera, o el GPS empezó a reportar con el camión en la calle),
  *   no se adivina: queda el botón «🚚 Ya salió» del panel, que sigue mandando.
+ * · (2026-10-13-b) Las PARADAS cerca de los pedidos del día, Moreno como lugar de recoger, el registro y el recorrido del día:
+ *   ver «LO QUE PASÓ EN EL DÍA» más abajo. Nada se marca ✅: el panel lo muestra y logística tilda.
  * · ▶️ Desde el editor: `probarGps` (pide y muestra lo que devuelve la plataforma, sin guardar posiciones) y `estadoGps`.
  * ========================================================================== */
 var GPS_API = 'https://api.service24gps.com/api/v1/';
@@ -499,9 +505,9 @@ function gpsDistM_(la1, lo1, la2, lo2) {
   return 2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 /** El depósito más cerca de un punto: { id, n, m (metros) }. */
-function gpsCerca_(la, lo) {
+function gpsCerca_(la, lo, deps) {
   var best = null;
-  gpsDepositos_().forEach(function (d) { var m = gpsDistM_(la, lo, Number(d.lat), Number(d.lng)); if (!best || m < best.m) best = { id: String(d.id || ''), n: String(d.n || d.id || ''), m: m }; });
+  (deps || gpsDepositos_()).forEach(function (d) { var m = gpsDistM_(la, lo, Number(d.lat), Number(d.lng)); if (!best || m < best.m) best = { id: String(d.id || ''), n: String(d.n || d.id || ''), m: m }; });
   return best;
 }
 function gpsHora_(ms) { return new Date(ms - 4 * 3600000).toISOString().slice(11, 16); }   // HH:MM de Bolivia (UTC−4 fijo)
@@ -546,32 +552,217 @@ function gpsUnidades_(data, crudo) {
     return x;
   }).filter(function (x) { return x && x.p; });
 }
-/** «Salió» y «volvió» de cada camión, con lo de hoy guardado en GPS_DIA. Agrega a cada unidad: dep (el depósito más cerca),
-    f (1 = afuera), s (la primera salida del día, HH:MM), sd (de qué depósito), ul (la última salida), vu (volvió, HH:MM). */
-function gpsSalidas_(U, ahora) {
-  var hoy = waBo_(ahora).hoy, st = null;
+/* 🛰️ (2026-10-13-b) LO QUE PASÓ EN EL DÍA, EN EL SERVIDOR. El dueño (13/10): *«¿funcionará el "salió de fábrica" automático? ¿el
+   volvió a fábrica o almacén según el GPS? ¿y qué pasa con las entregas automatizadas que dijimos de "camión se detuvo en una
+   ubicación marcada para entrega"?»*. Antes el recorrido y las paradas los armaba cada aparato con lo que iba leyendo (si nadie
+   tenía el panel abierto, no quedaba nada). Ahora los arma `gpsRepaso`, cada minuto, para todos:
+   · PARADAS (propiedad GPS_PAR, se reinicia cada día): GPS_PARADA_MIN minutos o más a ≤ GPS_QUIETO_KMH km/h en el mismo lugar
+     (GPS_PARADA_M), fuera de PTF, Banzer y Moreno. Al registrarse, se busca el pedido de HOY más cerca (≤ GPS_CLIENTE_M): primero
+     los de ESE camión, si no los que no tienen camión; nunca los de otro camión. El pin es el del pedido («Link Maps», o el que
+     el servidor ya resolvió en la hoja «Geo»). La planilla se lee SOLO cuando se registra una parada (unas decenas por día).
+     🚫 NADA se marca ✅ (dueño, 12/10: *«quitá el entregado automático… el log manual»*): es una PRUEBA que el panel muestra
+     («📍 el camión estuvo ahí de 10:05 a 10:20»), y logística tilda.
+   · MORENO es un lugar de RECOGER, no de entregar (dueño: *«solo de Moreno hay que ir a traer»*): llegar a Moreno sin haberse
+     detenido en ningún pedido = ese viaje fue a recoger, y su «salió» se DESHACE (el «Ya salió» de los vendedores no se prende por
+     ir a buscar mercadería). Salir de Moreno cuenta como «salió» recién con la primera parada o a los GPS_FUERA_MORENO_MIN: de
+     Moreno a PTF no es salir a repartir. Y PTF → Banzer (o al revés) sin pararse en ningún lado = traslado, tampoco cuenta.
+   · REGISTRO (`ev` de cada camión en GPS_DIA): [hora, 'sal', de dónde, marca] y [hora, 'lle', a dónde, de dónde venía]; marca =
+     '' (salió a repartir), 'rec' (fue a recoger a Moreno) o 'tra' (traslado entre depósitos).
+   · RECORRIDO (caché `gps_ruta`, GPS_RUTA_SEG): un punto cada GPS_RUTA_M metros o GPS_RUTA_MIN minutos, hasta GPS_RUTA_TOPE por
+     camión (los más viejos se ralean). El panel lo pide aparte (`gpsRuta`), solo al abrir la ciudad o el mapa: no viaja en cada lectura.
+   Todo con tope (GPS_PROP_TOPE): una propiedad aguanta 9 KB. */
+var GPS_MORENO = { id:'moreno', n:'Moreno', lat:-17.7623355, lng:-63.0675466 };   // el pin que mandó el dueño (13/10, = patio.js)
+var GPS_MORENO_M = 400;                       // Industrias Moreno es un predio grande: 400 m alrededor del pin
+var GPS_FUERA_MORENO_MIN = 45;                // de Moreno a PTF son ~25 min: recién a los 45 min afuera (o con una parada) «salió»
+var GPS_QUIETO_KMH = 3, GPS_PARADA_MIN = 4, GPS_PARADA_M = 150, GPS_CLIENTE_M = 300, GPS_REPORTE_VIEJO_MIN = 20;
+var GPS_PAR_TOPE = 24, GPS_EV_TOPE = 24, GPS_PROP_TOPE = 8500;
+var GPS_RUTA_SEG = 21600, GPS_RUTA_TOPE = 300, GPS_RUTA_M = 40, GPS_RUTA_MIN = 5;
+/** Las bases (donde «se está», no «se para»): PTF y Banzer con GPS_DENTRO_M, Moreno con GPS_MORENO_M. La más cerca. */
+function gpsBase_(la, lo, deps) {
+  var best = null;
+  (deps || gpsDepositos_()).concat([GPS_MORENO]).forEach(function (d) {
+    var m = gpsDistM_(la, lo, Number(d.lat), Number(d.lng)), id = String(d.id || '');
+    if (!best || m < best.m) best = { id: id, n: String(d.n || id), m: m, radio: id === 'moreno' ? GPS_MORENO_M : GPS_DENTRO_M };
+  });
+  return best;
+}
+/** Los pedidos de HOY con su pin. Una sola lectura de la planilla por vuelta (`memo`), y solo si hace falta. */
+function gpsPedidosHoy_(hoy, memo) {
+  if (memo.peds) return memo.peds;
+  var out = [], geo = null;
+  try {
+    readAll().forEach(function (p) {
+      var id = String((p && p.id) || '');
+      if (!id || id.indexOf('__') === 0 || p.fecha !== hoy || String(p.estado || '') === BORRADOR_EST) return;
+      if (waNorm_(p.direccion).indexOf('salio de tienda') === 0 || waNorm_(p.zona) === 'tienda') return;
+      var c = extractCoords(p.maps);
+      if (!c && p.maps) {
+        if (!geo) { try { geo = getGeoCache(); } catch (e) { geo = {}; } }
+        var g = geo[String(p.maps).trim()];
+        if (g && isFinite(g.lat) && isFinite(g.lng) && (g.lat || g.lng)) c = { lat: Number(g.lat), lng: Number(g.lng) };
+      }
+      if (c) out.push({ id: id, veh: String(p.vehiculo || '').trim(), la: Number(c.lat), lo: Number(c.lng) });
+    });
+  } catch (e) {}
+  memo.peds = out;
+  return out;
+}
+/** El pedido (o los, si hay varios en el mismo lugar) de esa parada: [ids, metros al más cerca]. */
+function gpsParadaPedidos_(placa, la, lo, hoy, memo) {
+  var veh = String(GPS_PLACAS[placa] || '').toLowerCase(), suyos = [], libres = [];
+  gpsPedidosHoy_(hoy, memo).forEach(function (o) {
+    var m = gpsDistM_(la, lo, o.la, o.lo);
+    if (m > GPS_CLIENTE_M) return;
+    if (veh && o.veh.toLowerCase() === veh) suyos.push({ id: o.id, m: m });
+    else if (!o.veh) libres.push({ id: o.id, m: m });
+  });
+  var L = (suyos.length ? suyos : libres).sort(function (a, b) { return a.m - b.m; }).slice(0, 3);
+  return L.length ? [L.map(function (o) { return o.id; }), Math.round(L[0].m)] : [[], null];
+}
+/** Recalcula la primera y la última salida «de verdad» (sin las de recoger ni los traslados). */
+function gpsSalidasDeEv_(s) {
+  var sal = (s.ev || []).filter(function (e) { return e[1] === 'sal' && !e[3]; });
+  s.s = sal.length ? sal[0][0] : ''; s.sd = sal.length ? sal[0][2] : ''; s.ul = sal.length ? sal[sal.length - 1][0] : '';
+}
+function gpsEvAnotar_(s, e) {
+  var L = s.ev || (s.ev = []); L.push(e);
+  while (L.length > GPS_EV_TOPE) {
+    /* lo más viejo se va, salvo la primera salida de verdad (es la hora de «Ya salió») */
+    var pri = -1; for (var i = 0; i < L.length; i++) if (L[i][1] === 'sal' && !L[i][3]) { pri = i; break; }
+    L.splice(pri === 0 ? 1 : 0, 1);
+    if (s.ts != null && s.ts >= 0) s.ts--;
+  }
+  return L.length - 1;
+}
+/** «Salió», «volvió», las paradas y el registro de cada camión. Agrega a cada unidad: dep (el depósito más cerca: PTF o Banzer),
+    f (1 = afuera de PTF y de Banzer), mor (1 = en Moreno), s (la primera salida a repartir, HH:MM), sd (de dónde), ul (la última),
+    vu (volvió, HH:MM). Devuelve el DÍA para el panel: { f, t, u:{ <placa>: { s, sd, ul, vu, ev (el registro), par (las paradas:
+    [desde, hasta, lat, lng, [ids de pedidos], 1 = sigue ahí, metros al pedido]) } } }. */
+function gpsSalidas_(U, ahora, memo) {
+  var hoy = waBo_(ahora).hoy, st = null, PA = null;
+  memo = memo || {};
+  var deps = gpsDepositos_();   // una sola lectura de la propiedad por vuelta (cuenta para la cuota diaria de Propiedades)
   try { st = JSON.parse(prop_('GPS_DIA') || 'null'); } catch (e) { st = null; }
   if (!st || st.f !== hoy || !st.u) st = { f: hoy, u: {} };
+  try { PA = JSON.parse(prop_('GPS_PAR') || 'null'); } catch (e) { PA = null; }
+  if (!PA || PA.f !== hoy || !PA.u) PA = { f: hoy, u: {} };
   U.forEach(function (x) {
-    var s = st.u[x.p] || (st.u[x.p] = {}), c = gpsCerca_(x.la, x.lo);
-    var dentro = !!c && c.m <= GPS_DENTRO_M, lejos = !c || c.m >= GPS_SALIDA_M;
+    var s = st.u[x.p] || (st.u[x.p] = {}), par = PA.u[x.p] || (PA.u[x.p] = []);
+    var cd = gpsCerca_(x.la, x.lo, deps), cb = gpsBase_(x.la, x.lo, deps);
+    var dentro = !!cb && cb.m <= cb.radio, lejos = !cb || cb.m >= Math.max(GPS_SALIDA_M, cb.radio + 300);
+    var t = (x.r && x.r <= ahora) ? x.r : ahora;
+    var cerrarParada = function () { if (s.qi != null && s.qi >= 0 && par[s.qi]) par[s.qi][5] = 0; s.qi = -1; };
     if (dentro) {
-      if (s.a === 0 && s.x && s.cu) s.v = gpsHora_(ahora);      // volvió de un viaje que contó
-      s.a = 1; s.de = c.id; s.x = 0; s.cu = 0;
-    } else if (lejos) {
-      if (s.a === 1) { s.a = 0; s.x = ahora; s.xd = s.de || ''; s.cu = 0; }
-      else if (s.a == null) s.a = 0;                             // primero visto afuera: no se sabe cuándo salió
-      else if (s.x && !s.cu && ahora - s.x >= GPS_FUERA_MIN * 60000) {
-        s.cu = 1; s.n = (Number(s.n) || 0) + 1; s.ul = gpsHora_(s.x); s.v = '';
-        if (!s.s) { s.s = s.ul; s.sd = s.xd || ''; }
+      cerrarParada(); s.q = null;
+      if (s.a === 0 && (!s.x || ahora - s.x >= GPS_FUERA_MIN * 60000)) {
+        /* llegó, después de un viaje: ¿qué fue ese viaje? */
+        var marca = '';
+        if (s.cu && s.ts != null && s.ts >= 0 && s.ev && s.ev[s.ts]) {
+          if (cb.id === 'moreno' && !s.tm) marca = 'rec';                           // fue a buscar a Moreno
+          else if (cb.id !== 'moreno' && s.xd && s.xd !== cb.id && !s.tp) marca = 'tra';   // de un depósito al otro, sin pararse
+          if (marca) { s.ev[s.ts][3] = marca; s.v = s.vp || ''; gpsSalidasDeEv_(s); }
+        }
+        gpsEvAnotar_(s, [gpsHora_(ahora), 'lle', cb.id, s.x ? (s.xd || '') : '']);
+        if (s.cu && !marca && cb.id !== 'moreno') s.v = gpsHora_(ahora);           // volvió de un viaje que contó
       }
-    }                                                            // entre medio: queda como estaba
-    x.dep = c ? { id: c.id, n: c.n, m: Math.round(c.m) } : null;
-    x.f = dentro ? 0 : (lejos ? 1 : (s.a === 0 ? 1 : 0));
+      s.a = 1; s.de = cb.id; s.x = 0; s.cu = 0; s.ts = -1;
+    } else {
+      if (lejos && s.a === 1) { s.a = 0; s.x = ahora; s.xd = s.de || ''; s.cu = 0; s.tp = 0; s.tm = 0; s.ts = -1; }
+      else if (lejos && s.a == null) { s.a = 0; s.x = 0; s.tp = 0; s.tm = 0; s.ts = -1; }   // primero visto afuera: no se sabe cuándo salió
+      /* 🛑 la parada (solo afuera de las bases) */
+      if (s.a === 0 && x.v <= GPS_QUIETO_KMH) {
+        if (!(s.q && gpsDistM_(s.q[1], s.q[2], x.la, x.lo) <= GPS_PARADA_M)) { cerrarParada(); s.q = [t, x.la, x.lo]; }
+        var fin = (ahora - t <= GPS_REPORTE_VIEJO_MIN * 60000) ? ahora : t;
+        if (fin - s.q[0] >= GPS_PARADA_MIN * 60000) {
+          if (s.qi == null || s.qi < 0 || !par[s.qi]) {
+            var pp = gpsParadaPedidos_(x.p, s.q[1], s.q[2], hoy, memo);
+            par.push([gpsHora_(s.q[0]), gpsHora_(fin), s.q[1], s.q[2], pp[0], 1, pp[1]]);
+            s.qi = par.length - 1; s.tp = (Number(s.tp) || 0) + 1; if (pp[0].length) s.tm = (Number(s.tm) || 0) + 1;
+          } else if (gpsHora_(fin) > par[s.qi][1]) par[s.qi][1] = gpsHora_(fin);   // el reporte se durmió: no vuelve atrás
+        }
+      } else if (s.q) { cerrarParada(); s.q = null; }
+      /* 🛣️ «salió»: 15 min lejos de PTF/Banzer; de Moreno, con la primera parada o a los 45 min */
+      if (s.a === 0 && s.x && !s.cu) {
+        var fuera = ahora - s.x, deMor = s.xd === 'moreno';
+        if (deMor ? ((Number(s.tp) || 0) > 0 || fuera >= GPS_FUERA_MORENO_MIN * 60000) : (lejos && fuera >= GPS_FUERA_MIN * 60000)) {
+          s.cu = 1; s.n = (Number(s.n) || 0) + 1; s.vp = s.v || ''; s.v = '';
+          s.ts = gpsEvAnotar_(s, [gpsHora_(s.x), 'sal', s.xd || '', '']);
+          gpsSalidasDeEv_(s);
+        }
+      }
+    }
+    var dentroD = !!cd && cd.m <= GPS_DENTRO_M, lejosD = !cd || cd.m >= GPS_SALIDA_M;
+    x.dep = cd ? { id: cd.id, n: cd.n, m: Math.round(cd.m) } : null;
+    x.f = dentroD ? 0 : (lejosD ? 1 : (s.a === 0 || s.de === 'moreno' ? 1 : 0));
+    x.mor = (dentro && cb.id === 'moreno') ? 1 : 0;
     x.s = s.s || ''; x.sd = s.sd || ''; x.ul = s.ul || ''; x.vu = s.v || '';
   });
+  Object.keys(PA.u).forEach(function (p) { while (PA.u[p].length > GPS_PAR_TOPE && gpsParQuitar_(PA.u[p], st.u[p])); });
+  gpsTopeProp_(PA, function (o) {
+    /* sobra: se va UNA parada del camión que más tiene (la más vieja ya cerrada sin pedido; si no hay, la más vieja cerrada) */
+    var mas = null; Object.keys(o.u).forEach(function (p) { if (o.u[p].length && (!mas || o.u[p].length > o.u[mas].length)) mas = p; });
+    return !!mas && gpsParQuitar_(o.u[mas], st.u[mas]);
+  });
+  gpsTopeProp_(st, function (o) {
+    var mas = null; Object.keys(o.u).forEach(function (p) { var L = o.u[p].ev || []; if (L.length > 4 && (!mas || L.length > o.u[mas].ev.length)) mas = p; });
+    if (!mas) return false;
+    var L = o.u[mas].ev, pri = -1; for (var i = 0; i < L.length; i++) if (L[i][1] === 'sal' && !L[i][3]) { pri = i; break; }
+    L.splice(pri === 0 ? 1 : 0, 1); if (o.u[mas].ts != null && o.u[mas].ts >= 0) o.u[mas].ts--;
+    return true;
+  });
   try { PropertiesService.getScriptProperties().setProperty('GPS_DIA', JSON.stringify(st)); } catch (e) {}
-  return st;
+  try { PropertiesService.getScriptProperties().setProperty('GPS_PAR', JSON.stringify(PA)); } catch (e) {}
+  /* Lo que va al panel (`gpsDia` de la lectura): por camión, las salidas, el registro y las paradas de hoy. */
+  var dia = { f: hoy, t: ahora, u: {} };
+  Object.keys(st.u).forEach(function (p) { var s = st.u[p];
+    dia.u[p] = { s: s.s || '', sd: s.sd || '', ul: s.ul || '', vu: s.v || '', ev: s.ev || [], par: PA.u[p] || [] }; });
+  return dia;
+}
+/** El día de los camiones para la lectura del panel (caché `gps_dia`, 6 h): sigue llegando después de las 21 h, cuando el
+    repaso ya no corre y las posiciones vencieron, para que el cierre de entregas tenga lo que vio el GPS. Solo el de HOY. */
+function gpsDiaParaLista_() {
+  var c = getCache_(); if (!c) return null;
+  try { var d = JSON.parse(c.get('gps_dia') || 'null'); return (d && d.f === waBo_(Date.now()).hoy) ? d : null; } catch (e) { return null; }
+}
+/** Saca UNA parada de la lista de un camión: la más vieja cerrada SIN pedido; si no hay, la más vieja cerrada. La abierta
+    (sigue parado ahí) no se toca. Corrige el índice de la abierta. false = no hay qué sacar. */
+function gpsParQuitar_(L, s) {
+  var i = -1, k;
+  for (k = 0; k < L.length; k++) if (!L[k][5] && !(L[k][4] && L[k][4].length)) { i = k; break; }
+  if (i < 0) for (k = 0; k < L.length; k++) if (!L[k][5]) { i = k; break; }
+  if (i < 0) return false;
+  L.splice(i, 1);
+  if (s && s.qi != null && s.qi > i) s.qi--;
+  return true;
+}
+/** Una propiedad aguanta 9 KB: mientras el JSON pase GPS_PROP_TOPE, `sacar(o)` saca algo (false = ya no hay qué sacar). */
+function gpsTopeProp_(o, sacar) {
+  for (var i = 0; i < 500 && JSON.stringify(o).length > GPS_PROP_TOPE; i++) if (!sacar(o)) break;
+}
+/** 🗺️ El recorrido del día (caché `gps_ruta`): [minuto del día en Bolivia, lat, lng, km/h] por camión. */
+function gpsRutaAnotar_(U, ahora) {
+  var c = getCache_(); if (!c) return;
+  var hoy = waBo_(ahora).hoy, R = null;
+  try { R = JSON.parse(c.get('gps_ruta') || 'null'); } catch (e) { R = null; }
+  if (!R || R.f !== hoy || !R.u) R = { f: hoy, u: {} };
+  U.forEach(function (x) {
+    var t = (x.r && x.r <= ahora) ? x.r : ahora;
+    if (waBo_(t).hoy !== hoy) return;                                       // un reporte de ayer no entra
+    var mi = Math.floor(((t - 4 * 3600000) % 86400000 + 86400000) % 86400000 / 60000);
+    var L = R.u[x.p] || (R.u[x.p] = []), ult = L[L.length - 1];
+    var la = Math.round(x.la * 1e5) / 1e5, lo = Math.round(x.lo * 1e5) / 1e5;
+    if (ult && (mi < ult[0] || (gpsDistM_(ult[1], ult[2], la, lo) < GPS_RUTA_M && mi - ult[0] < GPS_RUTA_MIN))) return;
+    L.push([mi, la, lo, x.v]);
+    if (L.length > GPS_RUTA_TOPE) {                                         // se ralea la mitad más vieja: queda el día entero
+      var mitad = Math.floor(L.length / 2), viejo = L.slice(0, mitad).filter(function (q, i) { return i % 2 === 0; });
+      R.u[x.p] = viejo.concat(L.slice(mitad));
+    }
+  });
+  try { c.put('gps_ruta', JSON.stringify(R), GPS_RUTA_SEG); } catch (e) {}
+}
+function gpsRutaLeer_() {
+  var c = getCache_(); if (!c) return null;
+  try { var R = JSON.parse(c.get('gps_ruta') || 'null'); return (R && R.f === waBo_(Date.now()).hoy) ? R : null; } catch (e) { return null; }
 }
 function gpsGuardarRes_(res) { try { PropertiesService.getScriptProperties().setProperty('GPS_ULTIMO', JSON.stringify(res)); } catch (e) {} }
 /** ⏱️ El disparador de cada minuto. Un pedido por vuelta, en horario de reparto. */
@@ -594,10 +785,12 @@ function gpsRepaso() {
     if (r.status === 401 || r.status === 403 || /token/i.test(r.error)) { try { PropertiesService.getScriptProperties().deleteProperty('GPS_TOKEN_AUTO'); } catch (e) {} r.error += ' (pido otro token en la próxima vuelta)'; }
     res.error = r.error; gpsGuardarRes_(res); return res;
   }
-  var U = gpsUnidades_(r.data);
-  gpsSalidas_(U, t0);
+  var U = gpsUnidades_(r.data), memo = {};
+  var dia = gpsSalidas_(U, t0, memo);
+  try { gpsRutaAnotar_(U, t0); } catch (e) {}                          // (2026-10-13-b) el recorrido del día, para todos
+  if (memo.peds) res.leyo = memo.peds.length;                           // se leyó la planilla para nombrar una parada
   var c = getCache_();
-  if (c) { try { c.put('gps_pos', JSON.stringify({ t: t0, u: U }), GPS_CACHE_SEG); } catch (e) { res.error = 'caché: ' + String((e && e.message) || e).slice(0, 80); } }
+  if (c) { try { c.put('gps_pos', JSON.stringify({ t: t0, u: U }), GPS_CACHE_SEG); c.put('gps_dia', JSON.stringify(dia), GPS_RUTA_SEG); } catch (e) { res.error = 'caché: ' + String((e && e.message) || e).slice(0, 80); } }
   res.ok = true; res.n = U.length; res.placas = U.map(function (x) { return x.pl || x.id; }).slice(0, 20).join(', ');
   gpsGuardarRes_(res); return res;
 }
@@ -650,7 +843,8 @@ function probarGps() {
 function estadoGps() {
   var cfg = gpsConfig_(), tk = null; try { tk = JSON.parse(prop_('GPS_TOKEN_AUTO') || 'null'); } catch (e) {}
   var s = { configurado: cfg.ok, faltan: cfg.faltan, token: !!(tk && Number(tk.hasta) > Date.now()), repasoInstalado: kTriggersDe_('gpsRepaso').length > 0,
-            ultimo: waJsonProp_('GPS_ULTIMO', null), hoy: waJsonProp_('GPS_DIA', null), depositos: gpsDepositos_() };
+            ultimo: waJsonProp_('GPS_ULTIMO', null), hoy: waJsonProp_('GPS_DIA', null), paradas: waJsonProp_('GPS_PAR', null),   // (2026-10-13-b)
+            depositos: gpsDepositos_(), moreno: GPS_MORENO };
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
   return s;
 }
@@ -1117,8 +1311,9 @@ function doPostCuerpo_(e) {
      panel que no manda nada de eso recibe lo de siempre (la planilla entera), con tres datos de más que no usa. */
   if (action === 'list') {
     latidoAnotar_(body);
-    var lst = leerLista_(body), gps = gpsParaLista_();   // 🛰️ (2026-10-13-a) las posiciones de los camiones, de la caché: sin red
+    var lst = leerLista_(body), gps = gpsParaLista_(), gd = gpsDiaParaLista_();   // 🛰️ (2026-10-13-a) las posiciones de los camiones, de la caché: sin red
     if (gps) lst.gps = gps;
+    if (gd) lst.gpsDia = gd;                            // (2026-10-13-b) salidas, registro y paradas de hoy, también de la caché
     return listaResponder_(lst, body);
   }
   // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
@@ -1130,6 +1325,8 @@ function doPostCuerpo_(e) {
   if (action === 'waRespAtendida') return waRespAtendida_(body);
   // 📚 (2026-10-09-a) El historial del stock: leer va sin candado; guardar, adentro (dos equipos pueden mandar el mismo día).
   if (action === 'histStockLeer') return histLeer_(body);
+  // 🛰️ (2026-10-13-b) El recorrido de los camiones de hoy (caché `gps_ruta`). Sin candado y sin la planilla: solo la caché.
+  if (action === 'gpsRuta') return jsonOut({ ok:true, version:SCRIPT_VERSION, ahora:Date.now(), ruta: gpsRutaLeer_() });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {

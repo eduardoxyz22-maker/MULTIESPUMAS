@@ -618,7 +618,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
-## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` IMPLEMENTADO 13/10 ~10:00 por el dueño, `probarGps` ✅ 4 de 4 placas, hora en UTC verificada, Banzer a 35-44 m: el pin sirve; página PUBLICADA 13/10, `2e2eb42`; volver atrás: ✏️ a la versión anotada Y pegar la 12-f de `2232b59…`, 3.299 líneas)
+## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` IMPLEMENTADO 13/10 ~10:00 por el dueño, `probarGps` ✅ 4 de 4 placas, hora en UTC verificada, Banzer a 35-44 m: el pin sirve; página PUBLICADA 13/10, `2e2eb42` y `7f53be3`; volver atrás: ✏️ a la versión anotada Y pegar la 12-f de `2232b59…`, 3.299 líneas. **`2026-10-13-b` EN LA RAMA (§4kp)**: lo implementa el dueño y DESPUÉS se publica la página; volver atrás de la 13-b = ✏️ a la versión anotada Y pegar la 13-a de `d2963b1…`, 3.524 líneas)
 La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettoken` (apikey + usuario + contraseña → token de 6 h) y
 `getdata` (apikey + token → cada unidad: placa, posición, km/h, motor, conductor, hora del reporte). **30 s entre pedidos.**
 - 🔐 **Propiedades del script**: `GPS_APIKEY`, `GPS_USUARIO`, `GPS_CLAVE` (nunca en el código ni en el chat); `GPS_TOKEN_AUTO` lo
@@ -640,7 +640,16 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   en ese depósito (`c.gpsCalle`/`c.gpsDep`). ⚠️ `geoAEscena` está ANCLADO (afín por cuadrados mínimos sobre PTF, Banzer, Moreno, la plaza y
   las tiendas + ajuste local): un ancla nueva va en `geoArmar`. Recorrido del día y paradas: en el aparato (`gpsHistAnotar`, `me_gps_hist`,
   `gpsParadas`, `gpsEventosHoy`); pestañas «🛰️ Recorrido GPS» y «📡 Lo que dijo el GPS»; «Por cargar» incluye lo sin camión.
-- `tests/test_gps.js` (46, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (30). Bitácora §4ko.
+- **📍 13-b (§4kp; dueño: *«¿y las entregas automatizadas… camión se detuvo en una ubicación marcada para entrega? ponte serio»*)**:
+  el SERVIDOR anota el día para todos (aunque nadie tenga el panel abierto). **Paradas** (`GPS_PAR`): ≥4 min quieto fuera de PTF,
+  Banzer y Moreno; nombra los pedidos de HOY a ≤300 m (de ese camión; si no, sin camión; nunca de otro), leyendo la planilla UNA vez
+  por parada. **Moreno = recoger** (`GPS_MORENO`, 400 m): un viaje que llega a Moreno sin pararse en ningún pedido deshace su «salió»;
+  salir de Moreno cuenta con la primera parada o a los 45 min; PTF ↔ Banzer sin parar = traslado. **Registro** `ev` en GPS_DIA. La lectura
+  lleva **`gpsDia`** (caché 6 h: sigue después de las 21 h) y el recorrido va aparte (**`gpsRuta`**, sin candado; la página lo pide solo con
+  la 13-b). Página: `gpsDiaTomar`, `gpsParadas` (servidor o aparato, misma regla `gpsPedidosCerca`), `gpsLlegadaDe(p)`; «📍 Llegó HH:MM» en
+  Mis pedidos; en el **cierre de entregas** cada pedido dice qué vio el GPS y **«📍 Tildar los N que vio el GPS»** solo tilda (confirma
+  logística). 🚫 **Nada se marca ✅ solo** (dueño, 12/10). ⚠️ GPS_DIA y GPS_PAR son propiedades: aguantan 9 KB (`GPS_PROP_TOPE`).
+- `tests/test_gps.js` (92, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (52). Bitácora §4ko, §4kp.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
