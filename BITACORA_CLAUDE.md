@@ -14086,3 +14086,8 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   · *«esa construcción antes de Banzer estorba, movela a otra manzana y poné casas, y el BK en la esquina de arriba a la izquierda de la manzana
     donde está la construcción»* → `obra` pasa a la manzana (315,385) (al este, fuera del 4to anillo); (-105,35) es una manzana común con el
     Burger King en su esquina (-x,-z), mirando a la calle de Banzer (`RESTO_EN['-105,35']=[0,0,'bk']`). Muestra v30.
+  · *«autos detenidos en los semáforos, adelante un micro, los autos puteando a los micreros, y luego se mueven y siguen»* → `COLAS` en 3 cruces
+    con semáforo (micro + 3 autos; esos carriles no llevan autos sueltos: `colaUsa`): en rojo esperan antes de la cebra; en verde el micrero se
+    queda ~4,5 s (`Q.flojo`, contado con la hora del semáforo, no con los cuadros: en el iPad lento pasa igual), los de atrás lo putean
+    (`COLA_PUTEA`, globos a dos alturas) y él contesta (`COLA_MICRO`); arrancan, se pierden a media cuadra y vuelven en el próximo rojo.
+    Muestra v31. Y *«listo, a publicar»* → `PATIO_V='20261013b'`, pedidos.html + patio.js + CLAUDE.md a main.

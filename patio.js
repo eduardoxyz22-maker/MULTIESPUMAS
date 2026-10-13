@@ -488,6 +488,31 @@ function palletV(g,n,x,y,z){ return pallet(g||VIVO,n,x,y,z); }
 
 /* autos y micros por todas las calles */
 var AUTOS=[], AC=[0xe23d3d,0xffffff,0x2f6fd6,0x1f2937,0xf2b705,0x9aa8b8,0x15803d,0xc0c7d1,0x7b3fb0];
+/* 🚦 (13/10, dueño: «autos detenidos en los semáforos, adelante un micro, los autos puteando al micrero, y luego se mueven y siguen su curso»)
+   tres colas en cruces con semáforo: el micro adelante, tres autos atrás. En rojo esperan antes del paso de cebra; en verde el micrero se queda
+   pensando, le tocan bocina y lo putean, y recién arranca; pasan y se pierden a media cuadra, y vuelven a llegar al semáforo en el próximo rojo. */
+var COLAS=[ { si:0, x:70, z:70, eje:'x', s:1, mc:0xf2b705 }, { si:2, x:0, z:-70, eje:'z', s:1, mc:0x15803d }, { si:4, x:140, z:0, eje:'x', s:-1, mc:0x2f6fd6 } ];
+function colaUsa(eje, c, s){ return COLAS.some(function(Q){ return Q.eje===eje && (eje==='x'?Q.z:Q.x)===c && Q.s===s; }); }
+var COLA_PUTEA=['¡Avanzá, micrero!','¡Está en verde, carajo!','¡Pííí! ¡Movete, pues!','¡Micrero de mierda, dale!','¡¿Qué esperás, que se ponga rojo?!','¡Chuta, este micrero!','¡Arrancá esa carcacha, carajo!'],
+    COLA_MICRO=['¡Ya voy, ya voy, carajo!','¡Estoy cargando pasajeros, pues!','¡Calmate, che, que no es tu casa!','¡Pará, que sube una doña!'];
+COLAS.forEach(function(Q, qi){ Q.v=[]; [[Q.mc,1],[AC[(qi*3+1)%AC.length]],[AC[(qi*3+4)%AC.length]],[AC[(qi*3+7)%AC.length]]].forEach(function(o){ var mi=!!o[1], L=mi?9:4; Q.v.push({ g:auto(o[0], mi), L:L, h:L/2, d:0, oc:false, e:1 }); });
+  var d=-8.3; Q.v.forEach(function(v){ v.d=d-v.h; d=v.d-v.h-1.4; }); Q.rojoAnt=null; Q.verdeT=99; Q.flojo=false; });
+function colaPoner(Q, v){ var p=Q.s*v.d, g=v.g; if(Q.eje==='x'){ g.position.set(Q.x+p,0,Q.z+Q.s*2.6); g.rotation.y=Q.s>0?0:Math.PI; } else { g.position.set(Q.x-Q.s*2.6,0,Q.z+p); g.rotation.y=Q.s>0?-Math.PI/2:Math.PI/2; } g.scale.setScalar(Math.max(.01,v.e)); g.visible=v.e>.02; }
+function colaHabla(v, txt, micro, i){ if(!v.etq){ v.etq={ el:etiqueta('habla'+(micro?' calma':''),''), obj:v.g, dy:micro?5.4:(i%2?6.4:3.8), oculta:true }; ETQ.push(v.etq); }
+  if(txt){ if(v.etq.oculta || v.etq.txt!==txt){ v.etq.el.textContent=(micro?'💬 ':'🗯️ ')+txt; v.etq.txt=txt; } v.etq.oculta=false; } else v.etq.oculta=true; }
+function colasPaso(dt, t){ var fase=Math.floor(t/8)%2, tf=t%8;
+  COLAS.forEach(function(Q, qi){ var rojo=(fase+(Q.si%2))%2===0, lim=Infinity, mic=Q.v[0], parado=!mic.oc && mic.d+mic.h>=-8.3-1.2 && mic.d+mic.h<=-8.2;
+    if(rojo!==Q.rojoAnt){ Q.flojo=!rojo && parado; Q.rojoAnt=rojo; }   // el micrero se queda pensando solo si estaba esperando la luz
+    Q.verdeT=(!rojo && Q.flojo)?tf:99;   // con la hora del semáforo, no con los cuadros: en un aparato lento pasa igual
+    if(rojo && tf<2.5 && Q.v.every(function(v){ return v.oc; })){ var d=-40; Q.v.forEach(function(v){ v.d=d-v.h; d=v.d-v.h-1.6; v.oc=false; v.e=.05; }); }   // vuelven a llegar al semáforo
+    var demora=4.5, espera=!rojo && Q.verdeT<demora;
+    Q.v.forEach(function(v, i){ if(v.oc){ colaHabla(v,''); return; }
+      var meta=Infinity; if(v.d+v.h<=-8.3+.05){ if(rojo) meta=-8.3-v.h; if(i===0 && espera) meta=Math.min(meta, v.d); }
+      meta=Math.min(meta, lim-v.h); v.d=Math.min(v.d+9*dt, Math.max(v.d, meta)); lim=v.d-v.h-1.4;
+      if(v.d>58){ v.e-=dt*3; if(v.e<=0){ v.e=0; v.oc=true; } } else if(v.e<1) v.e=Math.min(1,v.e+dt*3);
+      colaPoner(Q, v);
+      var txt=''; if(espera && Q.verdeT>.4){ if(i===0){ if(Q.verdeT>2.2) txt=COLA_MICRO[(qi+Math.floor(t/16))%COLA_MICRO.length]; } else if(Q.verdeT>.4+i*.35) txt=COLA_PUTEA[(qi*3+i+Math.floor(t/16))%COLA_PUTEA.length]; }
+      colaHabla(v, txt, i===0, i); }); }); }
 function auto(col, micro, yango){ var g=new THREE.Group(), L=micro?9:4, A2=micro?2.4:1.9, c=M(col,{ roughness:.35 });
   cajaV(L,micro?2.2:1,A2,c,0,micro?1.6:.85,0,g); if(!micro) cajaV(L*.5,.75,A2*.9,M(0x9ec5ff,{ roughness:.1, metalness:.3 }),-.2,1.7,0,g);
   else { cajaV(L-.6,.8,A2+.02,M(0x9ec5ff,{ roughness:.1, metalness:.3 }),0,2.1,0,g); cajaV(L+.02,.3,A2+.02,M(0xffffff),0,1.15,0,g); }
@@ -499,10 +524,10 @@ function auto(col, micro, yango){ var g=new THREE.Group(), L=micro?9:4, A2=micro
 /* 🚕 Yango: autos con su cartelito rojo en el techo y motos de entrega con su caja (Santa Cruz los tiene por todos lados) */
 var YANGO_TEX=cartelTex('YANGO','#ff2d2d','#ffffff',256,72);
 var nA=0;
-for(var r=Z0; r<=Z1; r+=G) [1,-1].forEach(function(s,i){ AUTOS.push({ g:auto(AC[(nA++)%AC.length], nA%7===0), eje:'x', c:r, s:s, v:7+rnd()*5, p:X0+rnd()*(X1-X0) }); });
+for(var r=Z0; r<=Z1; r+=G) [1,-1].forEach(function(s,i){ if(colaUsa('x',r,s)) return; AUTOS.push({ g:auto(AC[(nA++)%AC.length], nA%7===0), eje:'x', c:r, s:s, v:7+rnd()*5, p:X0+rnd()*(X1-X0) }); });
 for(var ny=0; ny<16; ny++){ var ex=ny%2===0, cy2=ex?Z0+G*Math.floor(rnd()*((Z1-Z0)/G+1)):X0+G*Math.floor(rnd()*((X1-X0)/G+1)), sy=rnd()<.5?1:-1;
-  AUTOS.push({ g:auto([0xf7f9fc,0xc9d1db,0x1f2937,0xb8c4d0][ny%4], false, true), eje:ex?'x':'z', c:cy2, s:sy, v:8+rnd()*5, p:(ex?X0:Z0)+rnd()*(ex?X1-X0:Z1-Z0) }); }
-for(var q=X0; q<=X1; q+=G) [1,-1].forEach(function(s){ if(rnd()<.35) return; AUTOS.push({ g:auto(AC[(nA++)%AC.length], nA%9===0), eje:'z', c:q, s:s, v:7+rnd()*5, p:Z0+rnd()*(Z1-Z0) }); });
+  if(!colaUsa(ex?'x':'z',cy2,sy)) AUTOS.push({ g:auto([0xf7f9fc,0xc9d1db,0x1f2937,0xb8c4d0][ny%4], false, true), eje:ex?'x':'z', c:cy2, s:sy, v:8+rnd()*5, p:(ex?X0:Z0)+rnd()*(ex?X1-X0:Z1-Z0) }); }
+for(var q=X0; q<=X1; q+=G) [1,-1].forEach(function(s){ if(rnd()<.35||colaUsa('z',q,s)) return; AUTOS.push({ g:auto(AC[(nA++)%AC.length], nA%9===0), eje:'z', c:q, s:s, v:7+rnd()*5, p:Z0+rnd()*(Z1-Z0) }); });
 /* camiones: la caja es de lona transparente, para ver lo que lleva */
 var LONA=M(0xf1f4f8,{ roughness:.5, transparent:true, opacity:.32 }); LONA.depthWrite=false;
 var LOGO_CAMION=texLogo(720,160,function(g2,w2,h2){ var an=LOGO?LOGO.w*(h2-10)/LOGO.h:0; dibLogo(g2,(w2-an)/2,5,h2-10); });
@@ -1125,7 +1150,7 @@ function cuadro(){
   if(!quieto){ AUTOS.forEach(function(a){ a.p+=a.s*a.v*dt;
       if(a.eje==='x'){ if(a.p>X1+15) a.p=X0-15; if(a.p<X0-15) a.p=X1+15; a.g.position.set(a.p,0,a.c+a.s*2.6); a.g.rotation.y=a.s>0?0:Math.PI; }
       else { if(a.p>Z1+15) a.p=Z0-15; if(a.p<Z0-15) a.p=Z1+15; a.g.position.set(a.c-a.s*2.6,0,a.p); a.g.rotation.y=a.s>0?-Math.PI/2:Math.PI/2; } });
-    if(GRUA) GRUA.rotation.y=Math.sin(t*.15)*1.2; }
+    if(GRUA) GRUA.rotation.y=Math.sin(t*.15)*1.2; colasPaso(dt, t); }
   var fase=Math.floor(t/8)%2; SEMAFOROS.forEach(function(s2){ var rojo=(fase+s2.f)%2===0; s2.ro.emissiveIntensity=rojo?1:0; s2.ve.emissiveIntensity=rojo?0:1; });
   var st=SEL?CAMG[SEL.k]:null; ANILLO.visible=!!(st && st.visible); if(st){ ANILLO.position.x=st.position.x; ANILLO.position.z=st.position.z; var pul=1+Math.sin(t*4)*.08; ANILLO.scale.set(pul,pul,pul); }
   var nx=ctl.target.x, nz=ctl.target.z;
