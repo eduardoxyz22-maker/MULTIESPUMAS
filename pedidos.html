@@ -2781,6 +2781,8 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .cv-dias{ margin-left:auto; display:flex; background:rgba(255,255,255,.08); border-radius:8px; overflow:hidden; }
 .cv-dias button{ border:0; background:transparent; color:#e6edf7; padding:5px 12px; font:inherit; font-size:.78rem; font-weight:800; cursor:pointer; }
 .cv-dias button.on{ background:#22d3ee; color:#0b1730; }
+.cv-ciudad{ border:0; border-radius:9px; background:linear-gradient(135deg,#00a59e,#2f6fd6); color:#fff; font:inherit; font-size:.8rem; font-weight:900; padding:6px 13px; cursor:pointer; min-height:34px; box-shadow:0 4px 12px rgba(47,111,214,.3); }
+.cv-ciudad:hover{ filter:brightness(1.08); } .cv-ciudad:disabled{ opacity:.7; cursor:wait; }
 .cv-tit button, .cv-mini button{ border:1px solid rgba(148,163,184,.35); background:rgba(255,255,255,.06); color:#e6edf7; border-radius:8px; padding:5px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
 .cv-mini{ display:flex; align-items:center; gap:10px; background:#0b1730; color:#e6edf7; padding:8px 12px; font-size:.84rem; flex-wrap:wrap; }
 .cv-marco{ display:flex; gap:12px; align-items:flex-start; }
@@ -15950,6 +15952,18 @@ var CV_SEL='', CV_ARMADA=false, CV_DIA='hoy';
    a Moreno, por camión. Tocar un cartel o un camión de la imagen cambia el panel; nunca abre otra pantalla. */
 var CV_VISTA='';
 function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
+/* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
+   la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
+   de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
+var PATIO_V='20261013a';
+function patioAbrirCiudad(){
+  if(window.patioAbrir){ window.patioAbrir(); return; }
+  var b=document.getElementById('cv-ciudad'); if(b){ b.disabled=true; b.textContent='⏳ Cargando la ciudad…'; }
+  var s=document.createElement('script'); s.src='patio.js?v='+PATIO_V;
+  s.onload=function(){ if(b){ b.disabled=false; b.textContent='🏙️ Ver la ciudad'; } if(window.patioAbrir) window.patioAbrir(); };
+  s.onerror=function(){ if(b){ b.disabled=false; b.textContent='🏙️ Ver la ciudad'; } s.remove(); toast('No se pudo cargar la ciudad: revisá la conexión y probá de nuevo.','err',5000); };
+  document.head.appendChild(s);
+}
 var CV_POS={
   /* `huella` = el rectángulo en el PISO alrededor del camión; `cuerpo` = la silueta del camión, que se vuelve a dibujar ENCIMA
      de la huella (§4ib, dueño 08/10: «esas líneas quedaron encima del camión, no abajo… se ve raro»). Coordenadas de la imagen. */
@@ -16023,7 +16037,7 @@ function cargaVivaPintar(){
   var dia=CV_DIA==='hoy'?'hoy':'mañana';
   if(!CV_ARMADA || !document.getElementById('cv-capa')){
     var faros=function(id){ return '<g id="cv-faros-'+id+'">'+CV_POS[id].faros.map(function(f){ return '<circle class="cv-faro" cx="'+f[0]+'" cy="'+f[1]+'" r="'+f[2]+'"/>'; }).join('')+'</g>'; };
-    box.innerHTML='<div class="cv-caja"><div class="cv-tit"><b id="cv-dia"></b><small id="cv-cuenta"></small><div class="cv-dias"><button type="button" id="cv-hoy" onclick="cvDia(\'hoy\')">Hoy</button><button type="button" id="cv-manana" onclick="cvDia(\'manana\')">Mañana</button></div></div>'+
+    box.innerHTML='<div class="cv-caja"><div class="cv-tit"><b id="cv-dia"></b><small id="cv-cuenta"></small><div class="cv-dias"><button type="button" id="cv-hoy" onclick="cvDia(\'hoy\')">Hoy</button><button type="button" id="cv-manana" onclick="cvDia(\'manana\')">Mañana</button></div><button type="button" class="cv-ciudad" id="cv-ciudad" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones, la carga y las paradas de este día">🏙️ Ver la ciudad</button></div>'+
       '<div class="cv-marco"><div class="cv-mapa"><div class="cv-lienzo"><img src="carga-viva/escena.jpg?v=1" alt="">'+
       '<svg viewBox="0 0 1212 800" preserveAspectRatio="none"><defs>'+
         '<radialGradient id="cv-luz"><stop offset="0" stop-color="#fff8d6" stop-opacity=".95"/><stop offset=".35" stop-color="#fde68a" stop-opacity=".45"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></radialGradient>'+
@@ -30587,6 +30601,8 @@ function depTweens(now){
    ven a la vez, así que el lienzo se MUDA a la caja que lo pide (`box`) y quien lo pidió rearma su escena. */
 function depIniciar3D(box){
   box=box||document.getElementById('dep-esc');
+  /* 🏙️ (§4kn) mientras el Patio de carga está abierto el lienzo es suyo: nadie se lo saca (una lectura que repinta Administración detrás) */
+  if(DEP.w3 && DEP.w3.alt && box!==DEP.w3.box) return false;
   if(DEP.w3){ if(box && DEP.w3.box!==box) depMudar(box); return true; }
   if(!box || !window.THREE) return false;
   var r; try{ r=new THREE.WebGLRenderer({ antialias:true }); }catch(e){ depSin3D(); return false; }
@@ -30599,11 +30615,12 @@ function depIniciar3D(box){
   var sc=sol.shadow.camera; sc.left=-30; sc.right=30; sc.top=22; sc.bottom=-22; sc.near=1; sc.far=80; sol.shadow.bias=-.0006; esc3.add(sol);
   var ctl=new THREE.OrbitControls(cam, r.domElement); ctl.enableDamping=true; ctl.dampingFactor=.08; ctl.maxPolarAngle=Math.PI*.45; ctl.minDistance=5; ctl.maxDistance=120;
   DEP.w3={ r:r, esc:esc3, cam:cam, ctl:ctl, box:box, grupo:null, etqs:[], toca:[], geo:{}, mat:{}, cada:null, modo:'mis' };
-  function tam(){ var bx=DEP.w3.box, w=bx.clientWidth, h=bx.clientHeight; if(!w||!h) return; var antes=cam.aspect>=1; r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); if(DEP.w3.grupo && antes!==(cam.aspect>=1)) depRehacer(); }
+  function tam(){ var bx=DEP.w3.box, w=bx.clientWidth, h=bx.clientHeight; if(!w||!h) return; if(DEP.w3.alt){ r.setSize(w,h,false); DEP.w3.alt.tam(w,h); return; } var antes=cam.aspect>=1; r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); if(DEP.w3.grupo && antes!==(cam.aspect>=1)) depRehacer(); }
   DEP.w3.tam=tam; tam(); if(window.ResizeObserver){ DEP.w3.ro=new ResizeObserver(tam); DEP.w3.ro.observe(box); } else window.addEventListener('resize', tam);
   var ray=new THREE.Raycaster(), pt=new THREE.Vector2(), p0=null;
   r.domElement.addEventListener('pointerdown', function(e){ p0=[e.clientX,e.clientY]; });
   r.domElement.addEventListener('pointerup', function(e){
+    if(DEP.w3.alt) return;                          // 🏙️ el Patio de carga toca lo suyo (patio.js)
     if(!p0 || Math.hypot(e.clientX-p0[0], e.clientY-p0[1])>6) return;
     var b=r.domElement.getBoundingClientRect(); pt.set((e.clientX-b.left)/b.width*2-1, -(e.clientY-b.top)/b.height*2+1); ray.setFromCamera(pt, cam);
     /* (11/10, dueño: «no funcionan los montacargas y camiones del 3D») el piso de cada andén es una caja invisible que TAPA a lo
@@ -30617,6 +30634,7 @@ function depIniciar3D(box){
     requestAnimationFrame(loop);
     var box=DEP.w3.box;
     if(!box.offsetParent) return;                   // escondido (otra pestaña u otro vendedor): no dibuja
+    if(DEP.w3.alt){ try{ DEP.w3.alt.cuadro(now); }catch(e){ console.error(e); } return; }   // 🏙️ el Patio de carga (patio.js) dibuja su ciudad
     now=now||performance.now(); depTweens(now); if(DEP.w3.cada) DEP.w3.cada((now-t0)/1000); ctl.update(); r.render(esc3, cam);
     var w=box.clientWidth, h=box.clientHeight;
     /* (§4jm, dueño: «los montacargas se paran muy juntos, se solapan los nombres… por más que alejo o doy zoom») los carteles son de

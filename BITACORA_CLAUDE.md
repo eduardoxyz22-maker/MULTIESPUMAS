@@ -13979,3 +13979,30 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   Mia Plaza, Buenos Aires dos cuadras a la izquierda de Charcas). Frentes hacia abajo menos Central. La parada de Moreno sale de `ALM.im`.
   Estos pines (y el de Moreno) sirven para el panel de verdad: `SUCURSALES` tiene otros números para algunas tiendas; antes de copiarlos
   allá, preguntarle cuáles valen.
+
+## §4kn — 🏙️ El Patio de carga 3D al panel, con los datos de verdad (13/10)
+El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avisás cuando esté»*.
+- **Dónde**: Administración → camiones → botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`, al lado de Hoy/Mañana) → `patioAbrirCiudad()`
+  baja **`patio.js?v=PATIO_V`** recién ahí (archivo aparte, 142 KB, como `productos-mes.js`: cambiarlo = subir `PATIO_V`). Abre una
+  pantalla completa (`#pt-ov`, z 3200; todo su CSS va con `#pt-ov` adelante y sus ids con `pt-`). «✕ Cerrar» o Escape vuelven.
+- **Un solo lienzo** (regla de §4jq): usa `depIniciar3D(#pt-esc)` y se cuelga de **`DEP.w3.alt = { cuadro, tam }`**: mientras está, el
+  bucle de `depIniciar3D` llama a `alt.cuadro()` (escena y cámara ortográfica del patio) en vez de dibujar la suya, `tam` le pasa el
+  tamaño, el toque del dibujante se calla, su OrbitControls queda apagado y **nadie más puede llevarse el lienzo** (`depIniciar3D` de
+  otra caja devuelve false: si no, una lectura que repinta Administración detrás se lo sacaba). Al cerrar: `alt=null`, tono ACES 1.08
+  de vuelta y `cargaVivaPintar()` (los camiones de Administración rearman su 3D). La ciudad se arma UNA vez; reabrir es al toque.
+- **Datos (`patioDatos()`, sin three.js)** = `cargaVivaDatos()` (respeta Hoy/Mañana `CV_DIA`): cada línea de la Lista de carga es un
+  pallet: 🚚 tildada · 🅿️ por cargar en el carril del camión (PTF, o Banzer si la marca dice ✔ Banzer) · 📥 en Moreno (traer) ·
+  ⛔ sin stock (✗, sin pallet). Un camión con todo en Banzer espera en un andén de Banzer. Andenes salteados (0, 2, 4) mientras
+  alcancen. Las paradas = sus pedidos con `almPunto` (girado con el norte arriba, `geoAEscena`, y llevado a la calle); **una RPT va a
+  SU tienda** (la sucursal en `cliente`). «Sin camión», Moreno, sin chofer y ✗ sin stock son las alertas.
+- **Lo único que escribe** es lo de siempre: la tilde (`setCargaChk`, la MISMA de la Lista de carga — el montacargas sube lo tildado,
+  venga de acá o de otro equipo) y «🚚 Ya salió» / «↩️ Deshacer» (`camionSalioMarcar`). Se relee cada 1,5 s (firma de lo que muestra).
+- **Sin GPS todavía**: el camión que salió hace un recorrido **estimado** (AM primero, el más cerca cada vez) y da la vuelta; no marca
+  nada (el ✅ lo marca logística). La ficha y «En la calle» lo dicen.
+- **La gente con el día real**: Ernesto revisa las líneas de cada camión; David le reta con Eduardo (y en qué camión va), ROHO,
+  Multicenter, días pasados sin ✅ (3 días), ✗ sin stock para reprogramar, sin camión, sin chofer, la RPT y Moreno; Garnícula usa lo
+  mismo. Las tiendas, Moreno y Banzer en los pines del dueño (§ demo v13).
+- `tests/test_patio.js`: 21 sin 3D (botón, datos, tilde y salió, sin internet) + 8 con 3D si `PATIO_THREE=<paquete three 0.128>` (en el
+  scratchpad: `libs/t/package`). ⚠️ Con el reloj de Playwright fijo, `THREE.Clock` no avanza y nada se mueve: la parte 3D va sin
+  `setFixedTime`. ⚠️ En swiftshader va a ~2 cuadros por segundo: el montacargas tarda ~45 s en subir un pallet; esperar con
+  `waitForFunction` y tocar con `el.click()` (el `page.click` espera «estable» y se cansa).

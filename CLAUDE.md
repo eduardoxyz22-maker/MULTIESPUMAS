@@ -618,6 +618,17 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
+## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
+La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad.
+- Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
+  aparte: cambiarlo = subir `PATIO_V` y `node --check patio.js`). Pantalla completa `#pt-ov` (CSS con `#pt-ov` adelante, ids `pt-`).
+- ⚠️ **Un solo lienzo**: dibuja con `DEP.w3` vía **`DEP.w3.alt={cuadro,tam}`** (el bucle de `depIniciar3D` le cede el cuadro); mientras
+  está abierto `depIniciar3D(otra caja)` devuelve false. Al cerrar, `alt=null`, tono ACES 1.08 y `cargaVivaPintar()`. No crear otro renderer.
+- **Datos = `cargaVivaDatos()`** (`patioDatos()` sin three.js): una línea = un pallet (🚚 tildada / 🅿️ PTF o Banzer / 📥 Moreno / ⛔ ✗).
+  Escribe SOLO la tilde (`setCargaChk`, la de la Lista de carga) y «Ya salió» (`camionSalioMarcar`). Sin GPS: el recorrido en la calle es
+  ESTIMADO y no marca ✅. La RPT va a su tienda (`TIENDAS` en patio.js, con los pines del dueño, norte arriba).
+- `tests/test_patio.js` (21 sin 3D; +8 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn.
+
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
