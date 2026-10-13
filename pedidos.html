@@ -1399,6 +1399,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
             <button class="btn btn-sm at-t" style="--c:#8a1c24" title="No se agenda más ese día" data-d="no se agenda más ese día" onclick="abrirCierreDias()" id="btn-cerrar-dia">🔒 Cerrar día</button>
           </div></section>
           <section class="at-g" style="--g:#128C7E"><h5><span>📤</span> Mensajes y partes</h5><div class="at-b">
+            <button class="btn btn-sm at-t" id="anu-btn" style="--c:#c2410c" title="Escribí un aviso y Eduardo se lo dice a los vendedores cada 3 minutos, hasta que lo quites" data-d="Eduardo lo repite cada 3 min" onclick="anuncioAbrir()">📢 Decir anuncio</button>
             <button class="btn btn-sm at-t" style="--c:#0f766e" title="El resumen de hoy para el grupo" data-d="el resumen de hoy para el grupo" onclick="abrirParte()">📋 Parte del día</button>
             <button class="btn btn-sm at-t" style="--c:#128C7E" title="Lo que salió hoy, para WhatsApp" data-d="lo que salió hoy, para WhatsApp" onclick="abrirEnvio('hoy')">📤 Cierre del día</button>
             <button class="btn btn-sm at-t" style="--c:#25D366" title="Lo de mañana, para WhatsApp" data-d="lo de mañana, para WhatsApp" onclick="abrirEnvio('manana')">📤 Mañana</button>
@@ -2392,6 +2393,39 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .asis-preg{ margin:10px 11px 4px; border:1px solid var(--gray-md); border-radius:12px; padding:8px 10px; font-size:.8rem; }
 .asis-preg summary{ cursor:pointer; font-weight:700; } .asis-preg ul{ margin:6px 0 0; padding-left:16px; } .asis-preg li{ margin:4px 0; }
 .asis-preg li small{ display:block; color:var(--muted); } .asis-preg-n{ display:block; color:var(--muted); margin-top:6px; }
+/* 📢 (13/10) el anuncio de Administración: en el globo, en la lista de Eduardo, el botón y su ventana */
+.anu-tag{ display:inline-block; font-style:normal; font-size:.66rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:#fff; background:#c2410c; border-radius:999px; padding:2px 8px; margin-bottom:4px; }
+.asis-globo.asis-anuncio{ border-left-color:#c2410c; background:linear-gradient(135deg,#fff7ed,#fff); max-width:min(340px, calc(100vw - 110px)); font-size:.9rem; animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both, anu-late 1.2s ease-in-out .4s 3; }
+.asis-globo.asis-anuncio b{ color:#7c2d12; }
+@keyframes anu-late{ 0%,100%{ box-shadow:0 12px 30px -14px rgba(0,0,0,.45); } 50%{ box-shadow:0 0 0 6px rgba(194,65,12,.22), 0 12px 30px -14px rgba(0,0,0,.45); } }
+.asis-av.anu-av{ border-left-color:#c2410c; background:linear-gradient(135deg,#fff7ed,#fffdfb); }
+.asis-av.anu-av b{ color:#7c2d12; font-size:.92rem; }
+.asis-av.anu-av .asis-acc:empty{ display:none; }
+.adm-tools .at-t.anu-on{ background:#c2410c; color:#fff; box-shadow:0 0 0 3px rgba(194,65,12,.2); }
+.adm-tools .at-t.anu-on::before{ content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:#fff; margin-right:6px; vertical-align:middle; animation:anu-punto 1.4s ease-in-out infinite; }
+@keyframes anu-punto{ 50%{ opacity:.25; } }
+.anu{ position:fixed; inset:0; z-index:4700; background:rgba(15,23,28,.55); backdrop-filter:blur(3px); display:grid; place-items:center; padding:16px; }
+.anu[hidden]{ display:none!important; }
+.anu-c{ width:min(500px,100%); max-height:calc(100vh - 32px); overflow:auto; background:#fff; border-radius:20px; box-shadow:0 30px 70px -20px rgba(0,0,0,.55); animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both; }
+.anu-h{ display:flex; align-items:center; gap:12px; padding:14px 16px; background:linear-gradient(120deg,#7c2d12,#c2410c); color:#fff; border-radius:20px 20px 0 0; }
+.anu-h img{ width:56px; height:56px; border-radius:15px; object-fit:cover; object-position:50% 10%; background:#fff; flex:none; }
+.anu-h > div{ flex:1; min-width:0; } .anu-h b{ display:block; font-size:1.02rem; } .anu-h small{ display:block; opacity:.88; font-size:.8rem; margin-top:2px; line-height:1.35; }
+.anu-x{ border:0; background:rgba(255,255,255,.16); color:#fff; border-radius:10px; width:40px; height:40px; cursor:pointer; flex:none; font-size:1rem; }
+.anu-b{ padding:14px 16px 16px; display:grid; gap:8px; }
+.anu-hoy{ border:1px solid #fed7aa; border-left:4px solid #c2410c; background:#fff7ed; border-radius:12px; padding:9px 12px; font-size:.86rem; }
+.anu-hoy q{ display:block; font-weight:800; color:#7c2d12; font-size:.95rem; margin:3px 0; quotes:'«' '»'; }
+.anu-hoy small{ display:block; color:var(--muted); font-size:.76rem; }
+.anu-hoy.anu-no{ border-color:var(--gray-md); border-left-color:var(--gray-md); background:#f7f9fa; color:var(--muted); }
+.anu-b label{ font-weight:800; font-size:.84rem; margin-top:4px; }
+.anu-b textarea{ width:100%; box-sizing:border-box; border:1px solid var(--gray-md); border-radius:12px; padding:10px 12px; font:inherit; font-size:.95rem; line-height:1.4; resize:vertical; min-height:84px; }
+.anu-b textarea:focus{ outline:none; border-color:#c2410c; box-shadow:0 0 0 3px rgba(194,65,12,.15); }
+.anu-n{ text-align:right; color:var(--muted); font-size:.72rem; font-variant-numeric:tabular-nums; }
+.anu-est{ font-size:.82rem; color:#0f766e; min-height:1.2em; } .anu-est.mal{ color:#b91c1c; font-weight:700; }
+.anu-acc{ display:flex; flex-wrap:wrap; gap:8px; }
+.anu-acc button{ flex:1 1 140px; min-height:44px; border-radius:12px; font:inherit; font-size:.88rem; font-weight:800; cursor:pointer; border:1px solid var(--gray-md); background:#fff; }
+.anu-acc .anu-si{ background:#c2410c; border-color:#c2410c; color:#fff; }
+.anu-acc .anu-quitar{ color:#b91c1c; border-color:#fecaca; background:#fff5f5; }
+.anu-acc button:disabled{ opacity:.55; cursor:wait; }
 .asis-tour{ position:fixed; z-index:10002; right:16px; bottom:190px; width:min(340px, calc(100vw - 32px)); background:#fff; border:2px solid var(--teal);
   border-radius:16px; box-shadow:0 14px 40px rgba(0,0,0,.22); padding:12px 14px; display:flex; flex-direction:column; gap:4px; animation:mi-entra .3s ease-out both; }
 .asis-tour small{ color:var(--muted); font-weight:700; } .asis-tour b{ font-size:1rem; } .asis-tour span{ font-size:.86rem; line-height:1.4; }
@@ -14293,8 +14327,9 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
+var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
 function filaSistema(id, titulo, texto){
   return { id:id, fecha:'', turno:'', vendedor:'', productos:[], cliente:titulo,
@@ -33194,6 +33229,7 @@ function nxBadges(){
   try{ waRespTraer(); }catch(e){}   // 💬 (12/10, §4kk) lo que contestaron los clientes, una vez por minuto
   try{ asisRefrescar(); }catch(e){}   // 🧑‍💼 §4jx
   try{ asisPreguntasMandar(); }catch(e){}   // ❓ (K) lo que quedó esperando señal
+  try{ anuncioBtnPintar(); }catch(e){}   // 📢 (13/10)
 }
 /* ============================================================================
    🧑‍💼 EDUARDO, EL ASISTENTE DEL PANEL (§4jx, 11/10). El dueño: *«quiero que crees un avatar de mí… como un asistente virtual que
@@ -33280,8 +33316,9 @@ function asisAvisos(){
       b:['Ver', "asisIr('"+(vis==='mis'?'#wa-resp-mis':'#wa-resp-adm')+"')"] });
   }catch(e){}
   try{ var R=asisResumenDia(); if(R) A.unshift(R); }catch(e){}   // ☀️ (E) el resumen del día va primero
+  try{ var AN=anuncioAviso(); if(AN) A.unshift(AN); }catch(e){}   // 📢 (13/10) y el anuncio de Administración, antes que todo
   var vistos=asisVistos();
-  return A.filter(function(a){ return !asisOculto(vistos, a.k); });
+  return A.filter(function(a){ return a.fijo || !asisOculto(vistos, a.k); });
 }
 /* 🚚 (12/10, C) Lo de logística: hoy con «✗ no hay», lo que hay que ir a buscar a Moreno (hoy y el próximo camión) y los camiones
    de hoy que todavía no terminaron de cargar. Todo sale de las cuentas de siempre (`cierreEntEntra`, `esRecoger`, `cargaVivaDatos`). */
@@ -33548,6 +33585,7 @@ function asisMontar(){
   var gs=document.getElementById('f-submit');
   if(gs && window.IntersectionObserver) try{ new IntersectionObserver(function(es){ document.body.classList.toggle('asis-guardar', !!(es[0] && es[0].isIntersecting)); }).observe(gs); }catch(e){}
   asisRefrescar();
+  clearInterval(ANUNCIO.tic); ANUNCIO.tic=setInterval(anuncioTic, ANUNCIO_TIC_MS);   // 📢 (13/10) el reloj del anuncio
 }
 function asisRefrescar(nuevoYa){
   if(!ASIS.montado) return;
@@ -33556,7 +33594,7 @@ function asisRefrescar(nuevoYa){
   var yo=document.getElementById('asis-yo'); if(yo) yo.classList.toggle('asis-hay', n>0);
   /* (12/10, revisión) Globo y «pop» solo la PRIMERA vez que aparece cada aviso en esta apertura de la página (`ASIS.anunciados`):
      antes la firma era de la pestaña que se miraba y, al ir y volver, el mismo aviso sonaba otra vez. */
-  var nuevos=A.filter(function(a){ return !ASIS.anunciados[a.k]; });
+  var nuevos=A.filter(function(a){ return !ASIS.anunciados[a.k] && !a.anuncio; });   // 📢 el anuncio lo dice `anuncioTic`, con su ritmo
   A.forEach(function(a){ ASIS.anunciados[a.k]=1; });
   var cambio=(firma!==ASIS.firma || ASIS.vistaPint!==asisVista());
   ASIS.firma=firma;
@@ -33564,15 +33602,17 @@ function asisRefrescar(nuevoYa){
   if(ASIS.abierto){ if(cambio) asisPanelPintar(); }
   else if(nuevos.length) asisGlobo(nuevos[0], ASIS.primera && !nuevoYa);
   ASIS.primera=false;
+  anuncioTic();
 }
 var ASIS_GLOBO_T=0;
 function asisGlobo(a, calladito, solo){
   var gl=document.getElementById('asis-globo'), yo=document.getElementById('asis-yo'); if(!gl) return;
-  gl.innerHTML='<b>'+(a.ico?(a.ico+' '):'')+esc(a.t)+'</b><span>'+esc(a.x)+'</span>';
+  gl.innerHTML=(a.anuncio ? '<em class="anu-tag">Anuncio de Administración</em>' : '')+'<b>'+(a.ico?(a.ico+' '):'')+esc(a.t)+'</b><span>'+esc(a.x)+'</span>';
+  gl.classList.toggle('asis-anuncio', !!a.anuncio);   // 📢 (13/10) el anuncio se ve distinto y dura más (`a.ms`)
   gl.hidden=false; gl.onclick=solo ? function(){ gl.hidden=true; } : function(){ if(a.lista) ASIS.lista=a.k; asisAbrir('avisos'); };
   if(yo){ yo.classList.remove('asis-salta'); void yo.offsetWidth; yo.classList.add('asis-salta'); }
   if(!calladito) asisPop();
-  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(function(){ gl.hidden=true; }, 7000);
+  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(function(){ gl.hidden=true; }, a.ms||7000);
 }
 function asisToggle(){ if(ASIS.abierto) asisCerrar(); else asisAbrir(ASIS.firma ? 'avisos' : 'ayuda'); }
 function asisAbrir(tab){ ASIS.abierto=true; ASIS.tab=tab||ASIS.tab; var gl=document.getElementById('asis-globo'); if(gl) gl.hidden=true; asisPanelPintar(); }
@@ -33621,14 +33661,15 @@ function asisPanelPintar(){
       var res=(a.res||[]).map(function(r, j){ var kj=a.k+'#'+j, ab=ASIS.lista===kj;
         return '<div class="asis-res"><span>'+esc(r.t)+'</span>'+(r.lista && r.lista.length ? ('<button type="button" class="asis-b asis-mini" data-k="'+esc(kj)+'" onclick="asisVerLista(this.getAttribute(\'data-k\'))">'+(ab?'Ocultar':'Ver cuáles ('+r.lista.length+')')+'</button>') : '')+
           (ab ? lis(r.lista, a.ped) : '')+'</div>'; }).join('');
-      return '<div class="asis-av '+(a.sev||'')+'"><b>'+a.ico+' '+esc(a.t)+'</b>'+(a.x ? ('<span>'+esc(a.x)+'</span>') : '')+res+
+      /* 📢 (13/10) el anuncio es «hasta nuevo aviso» (`fijo`): sin «Entendido» ni «En 1 hora»; lo quita Administración */
+      return '<div class="asis-av '+(a.sev||'')+(a.anuncio?' anu-av':'')+'">'+(a.anuncio ? '<em class="anu-tag">Anuncio de Administración</em>' : '')+'<b>'+a.ico+' '+esc(a.t)+'</b>'+(a.x ? ('<span>'+esc(a.x)+'</span>') : '')+res+
         (abierta ? lis(a.lista, a.ped) : '')+
         '<div class="asis-acc">'+
         (a.b ? ('<button type="button" class="asis-b si" onclick="asisAccion('+i+')">'+esc(a.b[0])+'</button>') : '')+
         (a.lista ? ('<button type="button" class="asis-b si" data-k="'+esc(a.k)+'" onclick="asisVerLista(this.getAttribute(\'data-k\'))">'+(abierta?'Ocultar':'Ver cuáles ('+a.lista.length+')')+'</button>') : '')+
-        (a.tm ? '' : ('<button type="button" class="asis-b asis-luego" data-k="'+esc(a.k)+'" onclick="asisEnUnaHora(this.getAttribute(\'data-k\'))">⏰ En 1 hora</button>'+
+        ((a.tm || a.fijo) ? '' : ('<button type="button" class="asis-b asis-luego" data-k="'+esc(a.k)+'" onclick="asisEnUnaHora(this.getAttribute(\'data-k\'))">⏰ En 1 hora</button>'+
                       '<button type="button" class="asis-b asis-luego" data-k="'+esc(a.k)+'" onclick="asisManana(this.getAttribute(\'data-k\'))">🌙 Mañana</button>'))+
-        '<button type="button" class="asis-b" data-k="'+esc(a.k)+'" onclick="asisEntendido(this.getAttribute(\'data-k\'))">Entendido</button></div></div>';
+        (a.fijo ? '' : '<button type="button" class="asis-b" data-k="'+esc(a.k)+'" onclick="asisEntendido(this.getAttribute(\'data-k\'))">Entendido</button>')+'</div></div>';
     }).join('') : (asisSinDatos()
       ? ('<div class="asis-vacio asis-sindatos">⚠️ <b>No pude leer la planilla.</b> Lo que ves es la copia de este aparato:'+desdeCuandoLaCopia()+
          ' No te fíes de que no haya avisos hasta que vuelva la conexión.<br><button type="button" class="asis-b si" onclick="cargaInicial(0)">🔄 Volver a intentar</button></div>')
@@ -33711,6 +33752,129 @@ function asisPreguntasHtml(){
     (L.length ? ('<ul>'+L.slice(0,40).map(function(x){ return '<li><b>«'+esc(x.t)+'»</b><small>'+esc([x.d, x.v].filter(Boolean).join(' · '))+'</small></li>'; }).join('')+'</ul>')
               : '<div class="asis-vacio">Todavía nadie preguntó algo que no sepa.</div>')+
     '<small class="asis-preg-n">Sirve para saber qué explicar. Pedime que agregue la respuesta.</small></details>';
+}
+/* ============================================================================
+   📢 (13/10) EL ANUNCIO DE ADMINISTRACIÓN. El dueño: *«crea un botón en administración "decir anuncio" para que Eduardo lo repita
+   cada 3 min a los vendedores, por ejemplo a veces quiero avisar "no hay insumos para el ICE" hasta nuevo aviso»*.
+   · Vive en la fila del sistema `__anuncio__` (`ANUNCIO_ID`, la misma para todos los aparatos; sin sello en el servidor: gana el
+     último que la guarda). JSON `{v, t, d, ts, por}`; quitarlo = guardarla con `t` vacío (la fila queda).
+   · Administración lo escribe y lo quita desde «📢 Decir anuncio» (`anuncioAbrir`, solo con la contraseña puesta).
+   · En los aparatos de los VENDEDORES (`anuncioRepite`: ni la clave puesta, ni «Administración»/«Logística» en «¿Quién está usando
+     el panel?») Eduardo lo dice con su globo y sonido apenas llega, y después cada `ANUNCIO_CADA_MS` (3 min), hasta que lo quiten.
+     No tiene «Entendido» ni «En 1 hora» (`fijo`): es «hasta nuevo aviso». 🔇 le saca el sonido; el globo sale igual.
+   · En Administración y logística queda primero en los avisos de Eduardo, sin repetirse (una vez al llegar).
+   · Solo avisa: no cambia pedidos ni frena nada. Sin conexión se ve la última copia del aparato.
+   ========================================================================== */
+var ANUNCIO_CADA_MS=3*60000, ANUNCIO_TIC_MS=15000, ANUNCIO_GLOBO_MS=20000, ANUNCIO_MAX=240;
+var ANUNCIO={ ts:0, ult:0, tic:0, env:0 };
+function anuncioLeer(){
+  var r=(STATE||[]).filter(function(p){ return p && String(p.id)===ANUNCIO_ID; })[0], o=null;
+  try{ o=JSON.parse((r && r.observaciones)||'null'); }catch(e){}
+  if(!o || !String(o.t||'').trim()) return null;
+  return { t:String(o.t).trim().slice(0, ANUNCIO_MAX), d:String(o.d||''), ts:Number(o.ts)||0, por:String(o.por||'') };
+}
+function anuncioRepite(){
+  if(UNLOCKED) return false;
+  var r=''; try{ r=quienRol(); }catch(e){}
+  return r!=='admin' && r!=='logistica';
+}
+/* «hoy a las 14:20» / «el 12/10 a las 14:20» */
+function anuncioDesde(a){
+  var m=/^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})/.exec(String(a && a.d || '')); if(!m) return '';
+  return (m[1]===todayStr() ? 'hoy' : ('el '+fmtFechaCorta(m[1])))+' a las '+m[2];
+}
+function anuncioAviso(){
+  var a=anuncioLeer(); if(!a) return null;
+  var rep=anuncioRepite(), des=anuncioDesde(a);
+  return { k:'anuncio|'+a.ts, sev:'ro', ico:'📢', fijo:1, anuncio:1, t:a.t,
+    x: rep ? ('Desde '+(des||'hace un rato')+'. Te lo repito cada 3 minutos hasta que Administración lo quite.')
+           : ('Eduardo se lo dice a los vendedores cada 3 minutos'+(des?(' desde '+des):'')+', hasta que lo quites.'),
+    b: UNLOCKED ? ['✏️ Cambiar o quitar', 'anuncioAbrir()'] : null };
+}
+/* el reloj (cada `ANUNCIO_TIC_MS` y en cada `asisRefrescar`): uno nuevo se dice en el acto; el mismo, cada 3 min y solo a los vendedores */
+function anuncioTic(){
+  if(!ASIS.montado) return;
+  var a=anuncioLeer();
+  if(!a){ ANUNCIO.ts=0; return; }
+  var nuevo=(a.ts!==ANUNCIO.ts), ahora=Date.now();
+  if(!nuevo && (!anuncioRepite() || ahora-ANUNCIO.ult < ANUNCIO_CADA_MS)) return;
+  ANUNCIO.ts=a.ts; ANUNCIO.ult=ahora;
+  anuncioDecir(a);
+}
+function anuncioDecir(a){
+  var av=anuncioAviso() || {};
+  if(ASIS.abierto){   // con la ventana abierta ya está arriba de todo: que salte y suene
+    var yo=document.getElementById('asis-yo'); if(yo){ yo.classList.remove('asis-salta'); void yo.offsetWidth; yo.classList.add('asis-salta'); }
+    asisPop();
+  } else asisGlobo({ ico:'📢', t:a.t, x:av.x||'', anuncio:1, ms:ANUNCIO_GLOBO_MS });
+  if(!asisMudo()) setTimeout(asisPop, 240);   // dos «pop»: suena distinto a un aviso de siempre
+}
+/* ---------- la ventana para escribirlo (Administración) ---------- */
+function anuncioAbrir(){
+  if(!UNLOCKED){ toast('🔒 Primero poné la contraseña de Administración.', 'err'); return; }
+  try{ asisCerrar(); }catch(e){}
+  var box=document.getElementById('anu');
+  if(!box){ box=document.createElement('div'); box.id='anu'; box.className='anu no-print'; document.body.appendChild(box); }
+  var a=anuncioLeer(), des=a ? anuncioDesde(a) : '';
+  box.innerHTML='<div class="anu-c" role="dialog" aria-modal="true" aria-labelledby="anu-t">'+
+    '<div class="anu-h"><img src="'+ASIS_BUSTO+'" alt="" width="56" height="56"><div><b id="anu-t">📢 Decir anuncio</b>'+
+      '<small>Eduardo se lo dice a los vendedores apenas lo publiques y después cada 3 minutos, con sonido, hasta que lo quites.</small></div>'+
+      '<button type="button" class="anu-x" aria-label="Cerrar" onclick="anuncioCerrar()">✕</button></div>'+
+    '<div class="anu-b">'+
+      (a ? ('<div class="anu-hoy"><b>🔴 Ahora están escuchando:</b><q>'+esc(a.t)+'</q><small>'+esc([des ? ('desde '+des) : '', a.por].filter(Boolean).join(' · '))+'</small></div>')
+         : '<div class="anu-hoy anu-no">No hay ningún anuncio. Escribilo abajo.</div>')+
+      '<label for="anu-txt">'+(a ? 'Cambiarlo por' : 'Qué querés que diga')+'</label>'+
+      '<textarea id="anu-txt" maxlength="'+ANUNCIO_MAX+'" rows="3" placeholder="Ej.: No hay insumos para el ICE hasta nuevo aviso." oninput="anuncioContar()">'+esc(a ? a.t : '')+'</textarea>'+
+      '<div class="anu-n"><span id="anu-n">'+(a ? a.t.length : 0)+'</span> de '+ANUNCIO_MAX+' letras</div>'+
+      '<div id="anu-est" class="anu-est" aria-live="polite"></div>'+
+      '<div class="anu-acc">'+
+        '<button type="button" id="anu-pub" class="anu-si" onclick="anuncioGuardar(false)">📢 '+(a ? 'Cambiar el anuncio' : 'Publicar anuncio')+'</button>'+
+        (a ? '<button type="button" id="anu-quitar" class="anu-quitar" onclick="anuncioGuardar(true)">🗑 Quitar anuncio</button>' : '')+
+        '<button type="button" class="anu-no-b" onclick="anuncioCerrar()">Cancelar</button>'+
+      '</div></div></div>';
+  box.hidden=false;
+  setTimeout(function(){ var t=document.getElementById('anu-txt'); if(t) try{ t.focus(); t.setSelectionRange(t.value.length, t.value.length); }catch(e){} }, 60);
+}
+function anuncioCerrar(){ var b=document.getElementById('anu'); if(b) b.hidden=true; }
+function anuncioContar(){ var t=document.getElementById('anu-txt'), n=document.getElementById('anu-n'); if(t && n) n.textContent=String(t.value.length); }
+function anuncioEstado(txt, mal){ var e=document.getElementById('anu-est'); if(e){ e.textContent=txt||''; e.classList.toggle('mal', !!mal); } }
+function anuncioGuardar(quitar){
+  if(ANUNCIO.env) return;
+  if(!UNLOCKED){ anuncioEstado('🔒 Primero poné la contraseña de Administración.', true); return; }
+  var ta=document.getElementById('anu-txt');
+  var t=quitar ? '' : String((ta && ta.value) || '').replace(/\s+/g, ' ').trim().slice(0, ANUNCIO_MAX);
+  if(!quitar && !t){ anuncioEstado('Escribí qué querés que diga Eduardo.', true); return; }
+  var a=anuncioLeer();
+  if(!quitar && a && a.t===t){ anuncioEstado('Es el mismo anuncio que ya está puesto.', true); return; }
+  var d=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+  var o={ v:1, t:t, d:todayStr()+' '+z(d.getHours())+':'+z(d.getMinutes()), ts:Date.now(), por:(getVendedorMem()||'Administración') };
+  var fila=filaSistema(ANUNCIO_ID, '📢 ANUNCIO DE ADMINISTRACIÓN (no tocar: lo lee el panel)', JSON.stringify(o));
+  var vieja=(STATE||[]).filter(function(p){ return p && String(p.id)===ANUNCIO_ID; })[0];
+  var rv=Math.max(Number(vieja && vieja.rev)||0, Number(SAVE_REV[ANUNCIO_ID])||0); if(rv) fila.rev=rv;
+  ANUNCIO.env=1; anuncioEstado('Guardando en la planilla…');
+  ['anu-pub','anu-quitar'].forEach(function(id){ var b=document.getElementById(id); if(b) b.disabled=true; });
+  var fin=function(ok, txt){
+    ANUNCIO.env=0;
+    ['anu-pub','anu-quitar'].forEach(function(id){ var b=document.getElementById(id); if(b) b.disabled=false; });
+    if(!ok){ anuncioEstado(txt, true); return; }
+    anuncioCerrar();
+    toast(quitar ? '🗑 Anuncio quitado: Eduardo deja de decirlo.' : '📢 Listo: Eduardo se lo dice a los vendedores cada 3 minutos.', 'ok');
+    try{ asisRefrescar(); }catch(e){}
+    try{ anuncioBtnPintar(); }catch(e){}
+  };
+  Promise.resolve().then(function(){ return apiSave(fila); }).then(function(res){
+    if(res && res.ok){
+      STATE=(STATE||[]).filter(function(p){ return String(p.id)!==ANUNCIO_ID; }); STATE.push(res.pedido || fila);
+      fin(true);
+    } else fin(false, '⚠️ No se guardó'+(res && res.error ? (' ('+res.error+')') : '')+'. Probá de nuevo en un rato.');
+  }, function(e){ fin(false, '⚠️ No se guardó: '+(function(){ try{ return motivoDeError(e); }catch(x){ return 'sin conexión con la planilla'; } })()+'. Probá de nuevo.'); });
+}
+/* el botón de Administración dice si hay un anuncio puesto */
+function anuncioBtnPintar(){
+  var b=document.getElementById('anu-btn'); if(!b) return;
+  var a=anuncioLeer(), on=!!a;
+  b.classList.toggle('anu-on', on);
+  b.setAttribute('data-d', on ? 'ahora: «'+a.t.slice(0, 40)+(a.t.length>40?'…':'')+'»' : 'Eduardo lo repite cada 3 min');
 }
 /* ============================================================================
    🧭 (12/10, I) EL RECORRIDO GUIADO: la primera vez que una vendedora elige su nombre en este aparato, Eduardo le ofrece mostrarle

@@ -14273,3 +14273,40 @@ El dueño mandó una captura de la ciudad, sin texto. Se vieron tres cosas:
   ciudad) lo dice paseando (`suelto`) y en la calle (`calle`), y se lo grita a Ernesto (*«¡ERNESTO! ¡Carajo, otra vez se está quemando
   un Fidalga y vos con el celular!»*) y a David. `PATIO_V='20261013j'`; `test_patio` → 38 (lee las frases de `patio.js`). El Eduardo
   asistente del panel (el que ven los vendedores) no cambió.
+
+## §4kr — 🏬 Recoger de una tienda (13/10, dueño, con la captura de la ficha de un pedido)
+*«A veces no hay stock en fábrica y los vendedores piden que recojan de sus tiendas: falta el botón "tienda" y elegir la sucursal.»*
+- En las marcas de cada producto (ficha del pedido, `prodRevList`), después de los botones de almacén: **«🏬 Tienda»** abre la lista de
+  sucursales (`tiendaElegirHtml`; `SUCURSALES` sin Tiendas Roho, la del vendedor primero con `sucursalDeVendedor`). Elegir una =
+  `setProdChk(id, i, 'im', 'Tienda <sucursal>')`: **la misma marca de «📥 recoger»** con `chkDe='Tienda X'`, así una página vieja la
+  lee como «📥 Recoger de Tienda X» y no se pierde nada (sin migrar, sin columna nueva).
+- `recogeTiendaDe(nm)`/`recogeDeTienda(x)` la reconocen; `recogerClave` usa `tienda:<sucursal>` y `recogerMismo` no la confunde con
+  ningún almacén (ni con Moreno). Ícono 🏬 (`recogerIco`), nombre corto «Tienda X» (`recogerAlmCorto`).
+- **NO es stock que el panel lleve** (el stock de las tiendas no se carga): no reserva ni descuenta PTF/Banzer/Moreno (`stockData`,
+  `stockComprometido`, `stockSalidas`, `stockSalidasVentana` la saltean), el control del corte no la espera, y la revisión automática
+  (`stockAsignar`) no la toca (la cuenta en `tot.deTienda` y lo dice). **Sí cuenta para la rotación** (es una venta) cuando sale.
+- Se ve en: la tabla de Administración (`prodLugarTag`, chip 🏬), «Sale de» (`pedidoLugares`), «📍 Lo del día, por lugar» (columna
+  «🏬 Tienda · ir a buscar»), los camiones 3D («📥 Ir a buscar», `cv3dLugEtq` con el lugar) y el aviso de la ciudad («Por traer: N de
+  Moreno + Tienda X»; `PATIO_V='20261013k'`).
+- Pruebas: `tests/test_recoger_tienda.js` (20; contra `b2c831d` la tienda le quitaba la unidad de PTF a otra línea y el comprometido
+  daba 4 en vez de 1), `test_camiones_3d` (28: la columna `tda` se cuenta con «traer»). Commit `f4e796b`.
+
+## §4ks — 📢 «Decir anuncio»: Eduardo les repite un aviso a los vendedores cada 3 minutos (13/10)
+El dueño: *«queremos que Eduardo dé anuncios: creá un botón en Administración "decir anuncio" para que Eduardo lo repita cada 3 min a
+los vendedores; por ejemplo, a veces quiero avisar "no hay insumos para el ICE" hasta nuevo aviso.»*
+- **Fila del sistema `__anuncio__`** (`ANUNCIO_ID`, en `esFilaSistema`), la misma para todos los aparatos: JSON `{v, t, d, ts, por}`.
+  Sin sello en el servidor (no está en `SISTEMA_CON_SELLO`): gana el último que la guarda. Es fila fija del sistema (`filaFijaSistema_`):
+  puede volver a nacer. **Quitar = guardarla con `t` vacío.** El servidor no cambió (anda con la 13-c).
+- **Administración** → «📤 Mensajes y partes» → **«📢 Decir anuncio»** (`#anu-btn`, `anuncioAbrir`, solo con la contraseña puesta):
+  ventana con lo que dice ahora, el texto (240 letras), «📢 Publicar / Cambiar», «🗑 Quitar». Vacío o el mismo texto no guarda; si el
+  servidor no contesta `ok`, la ventana queda abierta y lo dice. Con un anuncio puesto el botón queda naranja con un punto que late y
+  su `data-d` dice el texto (`anuncioBtnPintar`, desde `nxBadges`).
+- **Vendedores** (`anuncioRepite`: sin la clave puesta y sin «Administración»/«Logística» en «¿Quién está usando el panel?»): Eduardo
+  lo dice apenas llega (globo naranja `asis-anuncio`, 20 s, dos «pop») y otra vez cada `ANUNCIO_CADA_MS` = 3 min (el reloj mira cada
+  15 s: sale entre los 3:00 y los 3:15). En sus avisos va PRIMERO y **sin «Entendido» ni «En 1 hora»** (`fijo`): es hasta nuevo
+  aviso; lo escondido a mano no lo esconde. 🔇 le saca el sonido, el globo sale igual.
+- **Administración y logística**: una vez al llegar y primero en los avisos («✏️ Cambiar o quitar» con la clave), sin repetirse.
+- `asisRefrescar` no lo cuenta entre los avisos nuevos (lo dice `anuncioTic`, con su ritmo) y llama a `anuncioTic` al final; el reloj
+  arranca en `asisMontar`. En Playwright, como todo Eduardo, solo con `ASIS_PRUEBA`.
+- ⚠️ Una página vieja (sin F5) no conoce `__anuncio__` como fila del sistema (lo mismo que pasó con `__asis_preguntas__`): con F5 se va.
+- `tests/test_anuncio.js` (27; contra `b2c831d` se cae entero: no existe).
