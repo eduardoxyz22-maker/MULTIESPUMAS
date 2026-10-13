@@ -242,9 +242,9 @@ var PLAZA={ x:-35, z:315 }, AN_HW=7, VIA_ON=false, VIA_ASF=Mbrilla(0x6c7a8e,0xb8
    CALLES de la cuadrícula hechas avenida (camellón, faroles, rayas) alrededor de la plaza, con las esquinas redondeadas como en el mapa; las
    calles que llegan los cruzan como en cualquier esquina. Las avenidas que salen del centro también van por calles. */
 var ANILLOS=[ { s:105, rc:35, n:'1er ANILLO' }, { s:175, rc:35, n:'2do ANILLO' }, { s:245, rc:35, n:'3er ANILLO' } ], AV_RECTAS=[], AV_ARCOS=[];
-ANILLOS.forEach(function(A){ var s=A.s, rc=A.rc, xa=PLAZA.x-s, xb=PLAZA.x+s, za=PLAZA.z-s, zb=PLAZA.z+s;
-  AV_RECTAS.push({ eje:'x', c:za, a:xa+rc, b:xb-rc }, { eje:'x', c:zb, a:xa+rc, b:xb-rc }, { eje:'z', c:xa, a:za+rc, b:zb-rc }, { eje:'z', c:xb, a:za+rc, b:zb-rc });
-  [[1,-1,0],[-1,-1,Math.PI/2],[-1,1,Math.PI],[1,1,Math.PI*1.5]].forEach(function(q){ AV_ARCOS.push({ x:PLAZA.x+q[0]*(s-rc), z:PLAZA.z+q[1]*(s-rc), r:rc, t0:q[2] }); }); });
+ANILLOS.forEach(function(A, an){ var s=A.s, rc=A.rc, xa=PLAZA.x-s, xb=PLAZA.x+s, za=PLAZA.z-s, zb=PLAZA.z+s;
+  AV_RECTAS.push({ eje:'x', c:za, a:xa+rc, b:xb-rc, an:an }, { eje:'x', c:zb, a:xa+rc, b:xb-rc, an:an }, { eje:'z', c:xa, a:za+rc, b:zb-rc, an:an }, { eje:'z', c:xb, a:za+rc, b:zb-rc, an:an });
+  [[1,-1,0],[-1,-1,Math.PI/2],[-1,1,Math.PI],[1,1,Math.PI*1.5]].forEach(function(q){ AV_ARCOS.push({ x:PLAZA.x+q[0]*(s-rc), z:PLAZA.z+q[1]*(s-rc), r:rc, t0:q[2], an:an }); }); });
 AV_RECTAS.push({ eje:'z', c:-70, a:Z0, b:PLAZA.z-105 }, { eje:'x', c:280, a:PLAZA.x+105, b:X1 }, { eje:'x', c:210, a:X0, b:PLAZA.x-55 }, { eje:'z', c:0, a:PLAZA.z+105, b:Z1 });   // hacia Banzer, hacia Moreno, hacia el Urubó y al sur
 function viaLibre(x,z){ if(x<X0-RW/2||x>X1+RW/2||z<Z0-RW/2||z>Z1+RW/2) return false;
   for(var k in ALM){ var A=ALM[k]; if(Math.abs(x-A.bx)<G/2-2 && Math.abs(z-A.bz)<G/2-2) return false; }
@@ -252,7 +252,7 @@ function viaLibre(x,z){ if(x<X0-RW/2||x>X1+RW/2||z<Z0-RW/2||z>Z1+RW/2) return fa
 function enVia(x,z,rad){ for(var i=0;i<AV_ARCOS.length;i++){ var C=AV_ARCOS[i], dx=x-C.x, dz=z-C.z, d=Math.sqrt(dx*dx+dz*dz), t=Math.atan2(-dz,dx); if(t<0) t+=Math.PI*2;   // solo las curvas pisan manzanas: lo recto va por la calle
     var dt=t-C.t0; if(dt<-.1) dt+=Math.PI*2; if(dt<=Math.PI/2+.1 && Math.abs(d-C.r)<RW/2+rad) return true; } return false; }
 function cuadraCruza(cx,cz){ var h=(G-RW)/2; for(var i=-2;i<=2;i++) for(var j=-2;j<=2;j++) if(enVia(cx+i*h/2, cz+j*h/2, 2)) return true; return false; }
-function viaAdorno(x,z,i,conArbol){ if(i%2===0){ cil(.12,6.5,VIA_POSTE,x,3.25,z,EST,6); caja(.8,.3,.8,VIA_FOCO,x,6.6,z,EST,false); } else if(conArbol) arbol(x,z,.95,EST); }
+function viaAdorno(x,z,i,conArbol){ if(i%2===0){ cil(.12,6.5,VIA_POSTE,x,3.25,z,EST,6); caja(.8,.3,.8,VIA_FOCO,x,6.6,z,EST,false); } else if(conArbol) arbol(x,z,1.2,EST); }
 function viaTramos(n, libre){ var out=[], ini=-1; for(var i=0;i<=n;i++){ var ok=i<n && libre(i); if(ok && ini<0) ini=i; if(!ok && ini>=0){ out.push([ini,i-1]); ini=-1; } } return out; }
 AV_RECTAS.forEach(function(R){ var a=Math.max(R.a, R.eje==='x'?X0-RW/2:Z0-RW/2), b=Math.min(R.b, R.eje==='x'?X1+RW/2:Z1+RW/2); if(b-a<2) return;
   var L=b-a, m=(a+b)/2, X=function(p){ return R.eje==='x'?p:R.c; }, Z=function(p){ return R.eje==='x'?R.c:p; };
@@ -262,12 +262,12 @@ AV_RECTAS.forEach(function(R){ var a=Math.max(R.a, R.eje==='x'?X0-RW/2:Z0-RW/2),
   for(var gx2=o0; gx2<=b+G; gx2+=G){ if(gx2-RW/2<a || gx2+RW/2>b) continue; for(var pp=gx2-RW/2+.6; pp<gx2+RW/2-.4; pp+=2.2) [-1,1].forEach(function(sd){ var mm=pp+.6; plano(R.eje==='x'?1.2:.3, R.eje==='x'?.3:1.2, X(mm)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(mm)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); }); }   // (13/10, dueño: «faltan las líneas que siguen») en el cruce las rayas siguen punteadas
   cortes.forEach(function(c){ var l=c[1]-c[0], mm=(c[0]+c[1])/2; if(l<1) return; plano(R.eje==='x'?l:1.4, R.eje==='x'?1.4:l, X(mm), Z(mm), .07, PASTO);
     [-1,1].forEach(function(sd){ plano(R.eje==='x'?l:.3, R.eje==='x'?.3:l, X(mm)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(mm)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); }); });
-  for(var p=a+7, k=0; p<b-4; p+=14, k++){ var md=((p%G)+G)%G; if(md<8||md>G-8) continue; viaAdorno(X(p), Z(p), 0, false); } });   // faroles en el camellón, no en los cruces
+  var arb=R.an!=null && R.an<2; for(var p=a+7, k=0; p<b-4; p+=7, k++){ var md=((p%G)+G)%G; if(md<8||md>G-8) continue; if(arb) viaAdorno(X(p), Z(p), k, true); else if(k%2===0) viaAdorno(X(p), Z(p), 0, false); } });   // (13/10, dueño) 1er y 2do anillo: árboles y luces en el camellón; 3ro y avenidas: solo luces   // faroles en el camellón, no en los cruces
 AV_ARCOS.forEach(function(C, ci){ var n=Math.max(12, Math.round(C.r*Math.PI/2/2.5)), paso=Math.PI/2/n, px=function(i){ return C.x+C.r*Math.cos(C.t0+i*paso); }, pz=function(i){ return C.z-C.r*Math.sin(C.t0+i*paso); };
   viaTramos(n+1, function(i){ return viaLibre(px(i),pz(i)); }).forEach(function(T){ var t0=C.t0+T[0]*paso, tl=(T[1]-T[0])*paso; if(tl<=0) return;
     [[C.r-RW/2,C.r+RW/2,VIA_ASF,.06],[C.r-.7,C.r+.7,PASTO,.07],[C.r+RW/2-.75,C.r+RW/2-.45,VIA_RAYA,.068],[C.r-RW/2+.45,C.r-RW/2+.75,VIA_RAYA,.068]].forEach(function(q){
       var g=new THREE.RingGeometry(q[0], q[1], Math.max(4,T[1]-T[0]), 1, t0, tl); g.rotateX(-Math.PI/2); var m=new THREE.Mesh(g, q[2]); m.position.set(C.x,q[3],C.z); m.receiveShadow=true; EST.add(m); });
-    for(var j=T[0]+2, k=0; j<=T[1]-2; j+=Math.max(2,Math.round(7/(C.r*paso))), k++) viaAdorno(px(j), pz(j), k, true); }); });
+    for(var j=T[0]+2, k=0; j<=T[1]-2; j+=Math.max(2,Math.round(7/(C.r*paso))), k++) viaAdorno(px(j), pz(j), k, C.an<2); }); });
 ANILLOS.forEach(function(A){ viaCartel(A.n, PLAZA.x-A.s-9, PLAZA.z+26); });
 function viaCartel(txt, x, z){ var p=M(0x5d6b7c), sw=Math.max(9, txt.length*.62), hp=sw/2-1.1; caja(.25,5.4,.25,p,x-hp*.755,2.7,z+hp*.656); caja(.25,5.4,.25,p,x+hp*.755,2.7,z-hp*.656);
   var s=new THREE.Mesh(new THREE.PlaneGeometry(sw,2.2), new THREE.MeshBasicMaterial({ map:cartelTex(txt,'#0f6b3a','#ffffff',Math.round(512*sw/9),124), side:THREE.DoubleSide })); s.position.set(x,6.3,z); s.rotation.y=Math.atan2(80,92); EST.add(s); }

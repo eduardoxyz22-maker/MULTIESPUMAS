@@ -14065,3 +14065,6 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   · *«faltan las líneas que siguen; pasos de cebra donde pusiste semáforos, gente cruzando ahí»* → en cada cruce las rayas del anillo siguen
     punteadas; `CEBRAS` (los 7 cruces con semáforo) llevan un paso de cebra en cada brazo y `CRUZAN` = 2 personas por cruce que esperan y
     cruzan ida y vuelta (`cruzarPaso`, desde `vidaPaso`). Muestra v25. test_patio 29/29.
+  · *«solo en el 1er y 2do anillo hay árboles en el medio y luces; en el 3ro y 4to solo luces y camellón»* → `AV_RECTAS`/`AV_ARCOS` llevan
+    `an` (índice del anillo): 1ro y 2do, farol y árbol alternados en el camellón; 3ro y avenidas de salida, solo faroles. Hoy hay 3 anillos
+    (el 4to no entra en el mapa sin agrandarlo hacia el bosque). Muestra v26.
