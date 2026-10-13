@@ -14310,3 +14310,9 @@ los vendedores; por ejemplo, a veces quiero avisar "no hay insumos para el ICE" 
   arranca en `asisMontar`. En Playwright, como todo Eduardo, solo con `ASIS_PRUEBA`.
 - ⚠️ Una página vieja (sin F5) no conoce `__anuncio__` como fila del sistema (lo mismo que pasó con `__asis_preguntas__`): con F5 se va.
 - `tests/test_anuncio.js` (27; contra `b2c831d` se cae entero: no existe).
+
+## §4kt — 🔎 Administración: «Ver por / Mes / Buscar» encima de los filtros rápidos (13/10)
+El dueño, con dos capturas (los chips «Todos 221 · Hoy · Mañana…» y la barra «Ver por / Mes / Buscar / Actualizar»): *«la barra de la
+derecha ponla encima de la izquierda»*. El bloque `.filters` (ahora `.filters.adm-filtros`) se mudó de arriba de todo (debajo de
+`#cupo-admin`) a justo encima de `#adm-chips`, pegado a la tabla que filtra. Mismos ids (`adm-mode`, `adm-dia`, `adm-mes`,
+`adm-search`, `adm-refresh`): nada de la cuenta cambió. Los chips siguen `sticky` arriba al bajar la tabla; la barra no.

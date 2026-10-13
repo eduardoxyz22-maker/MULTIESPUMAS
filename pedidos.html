@@ -1324,48 +1324,6 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div id="rechazos-box" style="display:none"></div>
         <div id="cupo-admin" class="cupo ok"></div>
 
-        <div class="filters">
-          <div class="field">
-            <label class="lb">Ver por</label>
-            <!-- ⚠️ VUELVE A ARRANCAR EN «TODO» (§4bo revierte a §4bn).
-                 §4bn lo había puesto en «Mes» por velocidad, pero medido DESPUÉS del tope de
-                 filas la diferencia es de 14 ms (84 vs 98 con 3.000 ventas): el tope fue lo
-                 que arregló la lentitud, no el filtro. Y «Mes» corta por fecha de ENTREGA,
-                 así que el 31 de agosto escondía las entregas de septiembre —justo las que se
-                 están preparando—. No vale 14 ms.
-                 El orden de fábrica es por fecha DESCENDENTE, así que las 150 filas que se
-                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba.
-
-                 ⚠️ 05/09: VUELVE A ARRANCAR EN «MES», pedido por el dueño (§4cj). Lo que
-                 hacía peligroso el de §4bn ya no existe: `renderFueraDelMes()` avisa en
-                 ámbar cuáles entregas quedan afuera del mes filtrado y lleva a ellas de un
-                 toque, así que a fin de mes ya no desaparecen en silencio. La lentitud que
-                 el dueño sentía NO era el filtro (Todo 42 ms vs Mes 21 ms con 3.000 ventas)
-                 sino la pantalla en blanco mientras bajaba la planilla — eso se arregló en
-                 `loadFromServer`. -->
-            <div class="seg" id="adm-mode">
-              <button type="button" data-val="dia">Día</button>
-              <button type="button" data-val="mes" class="active">Mes</button>
-              <button type="button" data-val="todo">Todo</button>
-            </div>
-          </div>
-          <div class="field" id="wrap-dia" style="display:none">
-            <label class="lb">Fecha de entrega</label>
-            <input type="date" id="adm-dia">
-          </div>
-          <div class="field" id="wrap-mes">
-            <label class="lb">Mes</label>
-            <input type="month" id="adm-mes">
-          </div>
-          <div class="field" style="flex:1;min-width:150px">
-            <label class="lb">Buscar</label>
-            <input type="text" id="adm-search" placeholder="Cliente, OC, vendedor, zona…">
-          </div>
-          <div class="field">
-            <button class="btn btn-ghost btn-sm" id="adm-refresh" onclick="loadFromServer(true)">🔄 Actualizar</button>
-          </div>
-        </div>
-
         <div id="nx-a3" class="no-print"></div>   <!-- 🔔 (§4js, A3) a las 15:00, los de mañana sin camión -->
         <div id="adm-revisar"></div>
 
@@ -1445,6 +1403,49 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div id="adm-rpt"></div>
         <!-- ✅ Cierre de entregas (§4hn): desde las 16:30 de Bolivia, cuántos de hoy siguen sin confirmar. -->
         <div id="adm-cierre-ent"></div>
+        <!-- 🔎 (13/10, dueño: «la barra de la derecha ponla encima de la izquierda») «Ver por / Mes / Buscar» va pegada a la tabla,
+             justo encima de los filtros rápidos (Todos, Hoy, Mañana…): antes estaba arriba de todo, lejos de lo que filtra. Mismos ids. -->
+        <div class="filters adm-filtros">
+          <div class="field">
+            <label class="lb">Ver por</label>
+            <!-- ⚠️ VUELVE A ARRANCAR EN «TODO» (§4bo revierte a §4bn).
+                 §4bn lo había puesto en «Mes» por velocidad, pero medido DESPUÉS del tope de
+                 filas la diferencia es de 14 ms (84 vs 98 con 3.000 ventas): el tope fue lo
+                 que arregló la lentitud, no el filtro. Y «Mes» corta por fecha de ENTREGA,
+                 así que el 31 de agosto escondía las entregas de septiembre —justo las que se
+                 están preparando—. No vale 14 ms.
+                 El orden de fábrica es por fecha DESCENDENTE, así que las 150 filas que se
+                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba.
+
+                 ⚠️ 05/09: VUELVE A ARRANCAR EN «MES», pedido por el dueño (§4cj). Lo que
+                 hacía peligroso el de §4bn ya no existe: `renderFueraDelMes()` avisa en
+                 ámbar cuáles entregas quedan afuera del mes filtrado y lleva a ellas de un
+                 toque, así que a fin de mes ya no desaparecen en silencio. La lentitud que
+                 el dueño sentía NO era el filtro (Todo 42 ms vs Mes 21 ms con 3.000 ventas)
+                 sino la pantalla en blanco mientras bajaba la planilla — eso se arregló en
+                 `loadFromServer`. -->
+            <div class="seg" id="adm-mode">
+              <button type="button" data-val="dia">Día</button>
+              <button type="button" data-val="mes" class="active">Mes</button>
+              <button type="button" data-val="todo">Todo</button>
+            </div>
+          </div>
+          <div class="field" id="wrap-dia" style="display:none">
+            <label class="lb">Fecha de entrega</label>
+            <input type="date" id="adm-dia">
+          </div>
+          <div class="field" id="wrap-mes">
+            <label class="lb">Mes</label>
+            <input type="month" id="adm-mes">
+          </div>
+          <div class="field" style="flex:1;min-width:150px">
+            <label class="lb">Buscar</label>
+            <input type="text" id="adm-search" placeholder="Cliente, OC, vendedor, zona…">
+          </div>
+          <div class="field">
+            <button class="btn btn-ghost btn-sm" id="adm-refresh" onclick="loadFromServer(true)">🔄 Actualizar</button>
+          </div>
+        </div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
