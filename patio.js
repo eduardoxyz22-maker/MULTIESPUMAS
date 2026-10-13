@@ -21,7 +21,7 @@ function escH(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ r
    Con el NORTE ARRIBA de la pantalla (dueño, 13/10: «nuestra vista va de abajo hacia arriba»): la cámara mira en diagonal, así que el norte
    de la escena es (-x,-z). Pines del dueño (13/10): PTF -17.7489091,-63.1429133 · Banzer -17.7202386,-63.1631265 (~3,2 km al norte, ~2,1 al
    oeste: arriba a la izquierda) · Moreno -17.7623355,-63.0675466 (~8 km al este: a la derecha). */
-var G=70, RW=10, X0=-4*G, X1=6*G, Z0=-3*G, Z1=7*G;   // (13/10, dueño) más ciudad abajo: así se ven los anillos alrededor de la plaza 24 de Septiembre
+var G=70, RW=10, X0=-4*G, X1=6*G, Z0=-3*G, Z1=9*G;   // (13/10, dueño) más ciudad abajo: así se ven los anillos alrededor de la plaza 24 de Septiembre
 var ALM={ ptf:{ n:'PTF', bx:35, bz:35, w:40, d:22, h:9, puertas:5, col:0x1e5fd0, marca:true, sub:'Productos terminados', cartel:'MULTIESPUMAS · PTF' },
           bz:{ n:'Banzer', bx:-105, bz:-35, w:30, d:18, h:8, puertas:4, col:0x2b7be4, marca:true, sub:'Almacén de salida', cartel:'ALMACÉN BANZER' },
           im:{ n:'Moreno', bx:315, bz:-105, w:26, d:22, h:9, puertas:3, col:0x7b3fb0, sub:'Fábrica', cartel:'INDUSTRIAS MORENO' } };
@@ -113,6 +113,8 @@ var sol=new THREE.DirectionalLight(0xffffff, .8); sol.castShadow=true; sol.shado
 var sc=sol.shadow.camera; sc.left=-120; sc.right=120; sc.top=110; sc.bottom=-110; sc.near=1; sc.far=420; sol.shadow.bias=-.0008; esc.add(sol); esc.add(sol.target);
 var BRILLA=[], LUCES=[], EST=new THREE.Group();   // EST = lo que no se mueve: al final se junta por material (pocas llamadas de dibujo)
 var M=function(c,o){ var m=new THREE.MeshStandardMaterial(Object.assign({ roughness:.75, metalness:.05 }, o||{})); m.color=lin(c); return m; };
+var PRISMA=null, PUERTA=null, VIDRIO_B=null;   // los de la casa: se arman al primer uso
+var MCACHE={}, Mc=function(c,o){ var k=c+'|'+(o?JSON.stringify(o):''); return MCACHE[k]||(MCACHE[k]=M(c,o)); };   // (13/10) el mismo material para lo que no se mueve: menos llamadas de dibujo
 var Mbrilla=function(c,e){ var m=M(c,{ roughness:.4 }); m.emissive=lin(e); m.emissiveIntensity=0; BRILLA.push(m); return m; };
 var caja=function(w,h,d,mat,x,y,z,g,sombra){ var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); m.position.set(x||0,y||0,z||0); m.castShadow=sombra!==false; m.receiveShadow=true; (g||EST).add(m); return m; };
 var cil=function(r,h,mat,x,y,z,g,seg){ var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg||16), mat); m.position.set(x,y,z); m.castShadow=true; (g||EST).add(m); return m; };
@@ -140,7 +142,8 @@ var FACH_E=lienzo(512,512,function(g){ g.fillStyle='#000'; g.fillRect(0,0,512,51
 var CHAPA=lienzo(128,128,function(g){ g.fillStyle='#ffffff'; g.fillRect(0,0,128,128); for(var x=0;x<128;x+=16){ g.fillStyle='#dfe6ee'; g.fillRect(x,0,6,128); g.fillStyle='#f6f9fc'; g.fillRect(x+6,0,3,128); } });
 CHAPA.wrapS=CHAPA.wrapT=THREE.RepeatWrapping;
 function cartelTex(txt, fondo, letra, w, h){ return lienzo(w||1024,h||160,function(g,W2,H2){ g.fillStyle=fondo; g.fillRect(0,0,W2,H2);
-  g.fillStyle=letra; g.font='800 '+Math.round(H2*.5)+'px Archivo, Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(txt, W2/2, H2/2+4); }); }
+  g.fillStyle=letra; var fs=Math.round(H2*.5); g.font='800 '+fs+'px Archivo, Arial Narrow, sans-serif'; var mw=g.measureText(txt).width; if(mw>W2*.9){ fs=Math.floor(fs*W2*.9/mw); g.font='800 '+fs+'px Archivo, Arial Narrow, sans-serif'; }   // (13/10, dueño: «los nombres no se leen») la letra se achica hasta entrar
+  g.textAlign='center'; g.textBaseline='middle'; g.fillText(txt, W2/2, H2/2+4); }); }
 function uvEscala(geo, uw, ud, vh){ var uv=geo.attributes.uv; for(var f=0;f<6;f++){ var a=f<2?ud:(f<4?0:uw), b=(f===2||f===3)?0:vh;
   for(var v=0;v<4;v++){ var i=f*4+v; uv.setXY(i, uv.getX(i)*a, uv.getY(i)*b); } } uv.needsUpdate=true; }
 var FMAT={}, TECHO2=M(0x9aa8b8);
@@ -150,7 +153,7 @@ function bloqueFach(x,z,w,d,h,col,g){ var geo=new THREE.BoxGeometry(w,h,d); uvEs
 /* ── suelo, calles, veredas ── */
 var ASF=M(0x8f9db0), VER=M(0xf1f4f8), BLANCO=M(0xffffff), AMARILLO=M(0xf2b705), PASTO=M(0x9fd3a0), HORM=M(0xe9eef3);
 var plano=function(w,d,x,z,y,mat,g){ var m=new THREE.Mesh(new THREE.PlaneGeometry(w,d), mat); m.rotation.x=-Math.PI/2; m.position.set(x,y||.02,z); m.receiveShadow=true; (g||EST).add(m); return m; };
-var piso=new THREE.Mesh(new THREE.PlaneGeometry(1400,1200), M(0xcfdac6)); piso.rotation.x=-Math.PI/2; piso.receiveShadow=true; esc.add(piso);
+var piso=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800), M(0xcfdac6)); piso.position.z=150; piso.rotation.x=-Math.PI/2; piso.receiveShadow=true; esc.add(piso);
 for(var zi=Z0; zi<=Z1; zi+=G){ plano(X1-X0+RW,RW,(X0+X1)/2,zi,.03,ASF); for(var xd=X0; xd<X1; xd+=7) plano(3,.3,xd+3.5,zi,.05,BLANCO); }
 for(var xi=X0; xi<=X1; xi+=G){ plano(RW,Z1-Z0+RW,xi,(Z0+Z1)/2,.031,ASF); for(var zd=Z0; zd<Z1; zd+=7) plano(.3,3,xi,zd+3.5,.051,BLANCO); }
 for(var a1=X0; a1<=X1; a1+=G) for(var b1=Z0; b1<=Z1; b1+=G) plano(RW,RW,a1,b1,.052,ASF);   // los cruces sin rayas
@@ -162,7 +165,7 @@ function pallet(g, n, x, y, z){ var p=new THREE.Group(); p.position.set(x||0,y||
 
 /* ── cada almacén en su predio: piso de hormigón, cerco, portón con caseta ── */
 var TOCA=[], ETQ=[], LUZ_ANDEN={};
-function arbol(x,z,s,g){ if(!g && VIA_ON && enVia(x,z,1.4)) return; s=s||1; cil(.2*s,1.6*s,M(0x8a6a4b),x,.8*s,z,g); var c=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3*s,0), [M(0x58b368,{ flatShading:true }),M(0x4ea35c,{ flatShading:true }),M(0x6cc077,{ flatShading:true })][Math.floor(rnd()*3)]);
+function arbol(x,z,s,g){ if(!g && VIA_ON && enVia(x,z,1.4)) return; s=s||1; cil(.2*s,1.6*s,Mc(0x8a6a4b),x,.8*s,z,g); var c=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3*s,0), [Mc(0x58b368,{ flatShading:true }),Mc(0x4ea35c,{ flatShading:true }),Mc(0x6cc077,{ flatShading:true })][Math.floor(rnd()*3)]);
   c.position.set(x,2.4*s,z); c.castShadow=true; (g||EST).add(c); }
 var POSTE=M(0x8c99a8);
 function predio(A){
@@ -188,7 +191,7 @@ function galpon(k){
   caja(A.w+.9,.5,.9,techo,0,A.h+2.5,0,g);
   for(var u=0;u<3;u++) caja(2,1.1,1.6,M(0xc5ced8),-A.w/2+5+u*5,A.h+2.6,-A.d/4-1,g);
   var cartTex=A.marca ? texLogo(1024,160,function(g2,w2,h2){ g2.fillStyle='#ffffff'; g2.fillRect(0,0,w2,h2); var an=dibLogo(g2,14,6,h2-12);
-      g2.fillStyle='#2e2f6e'; g2.font='800 '+Math.round(h2*.42)+'px Archivo, Arial Narrow, sans-serif'; g2.textBaseline='middle'; g2.fillText(A.n+' · '+A.sub, 30+an, h2/2+4); }) : cartelTex(A.cartel,'#ffffff','#14243a');
+      g2.fillStyle='#2e2f6e'; var fs2=Math.round(h2*.42), tx2=A.n+' · '+A.sub, lib=w2-(30+an)-24; g2.font='800 '+fs2+'px Archivo, Arial Narrow, sans-serif'; var mw2=g2.measureText(tx2).width; if(mw2>lib){ fs2=Math.floor(fs2*lib/mw2); g2.font='800 '+fs2+'px Archivo, Arial Narrow, sans-serif'; } g2.textBaseline='middle'; g2.fillText(tx2, 30+an, h2/2+4); }) : cartelTex(A.cartel,'#ffffff','#14243a');
   var cart=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(A.w*.62,22),2.2), new THREE.MeshBasicMaterial({ map:cartTex }));
   cart.position.set(0,A.h-1.3,A.d/2+.06); g.add(cart);
   caja(A.w+.4,1.2,2,M(0xcfd8e3),0,.6,A.d/2+1,g);
@@ -228,104 +231,120 @@ function edificio(x,z,w,d,h){ h=altoFrente(x,z,h);
   if(rnd()<.55) cil(.9,1.6,TANQUE,x+w/4,h+1.3,z-d/4,null,12);
   if(rnd()<.5) caja(2.2,1.2,1.6,AIRE,x-w/4,h+1.1,z+d/5);
   if(h>22 && rnd()<.6) caja(.15,6,.15,TANQUE,x,h+3.5,z);
-  if(h<16 && rnd()<.7) caja(w*.86,.25,1.6,TOLDOM[Math.floor(rnd()*TOLDOM.length)],x,3.4,z+d/2+.8);
+  if(h<16 && rnd()<.7) caja(w*.86,.25,1.6,TOLDOM[Math.floor(rnd()*TOLDOM.length)],x,3.4,z+(EDIF_FRENTE||1)*(d/2+.8));
 }
 function cuadraEdif(x,z,w,d,h){ if(enTienda(x,z,w,d)) return; edificio(x,z,w,d,h); }
 /* 🛣️ (13/10, dueño: «Santa Cruz es la ciudad de los anillos, se ve así desde arriba») los anillos alrededor de la plaza 24 de Septiembre y las
    avenidas que salen del centro hacia Banzer, PTF (Mutualista), Moreno (Virgen de Cotoca) y al oeste (Roca y Coronado). Escala de juguete: los
    radios esquivan las tiendas y los galpones (por donde pasaría, el anillo se corta). De noche brillan naranja, como en la foto desde el avión. */
 var PLAZA={ x:-35, z:315 }, AN_HW=7, VIA_ON=false, VIA_ASF=Mbrilla(0x6c7a8e,0xb8701e), VIA_RAYA=M(0xf4f6f9), VIA_FOCO=Mbrilla(0xffe0b0,0xffa640), VIA_POSTE=M(0x5d6b7c);
-var ANILLOS=[ { r:147, n:'1er ANILLO' }, { r:203, n:'2do ANILLO' }, { r:243, n:'3er ANILLO' }, { r:410, n:'4to ANILLO' } ];   // adentro del 1ro, el casco viejo en cuadrícula (como en el mapa)
-var RADIALES=[ [ALM.bz.x,ALM.bz.z], [ALM.ptf.x,ALM.ptf.z], [ALM.im.x,ALM.im.z], [PLAZA.x-100,PLAZA.z-12] ].map(function(p){ var dx=p[0]-PLAZA.x, dz=p[1]-PLAZA.z, l=Math.sqrt(dx*dx+dz*dz); return { dx:dx/l, dz:dz/l, t0:ANILLOS[0].r }; });
+/* (13/10, dueño: «las avenidas de los anillos se ven raro, no se integran con las calles; siguen su forma, como una ruta») los anillos son
+   CALLES de la cuadrícula hechas avenida (camellón, faroles, rayas) alrededor de la plaza, con las esquinas redondeadas como en el mapa; las
+   calles que llegan los cruzan como en cualquier esquina. Las avenidas que salen del centro también van por calles. */
+var ANILLOS=[ { s:105, rc:35, n:'1er ANILLO' }, { s:175, rc:35, n:'2do ANILLO' }, { s:245, rc:35, n:'3er ANILLO' } ], AV_RECTAS=[], AV_ARCOS=[];
+ANILLOS.forEach(function(A){ var s=A.s, rc=A.rc, xa=PLAZA.x-s, xb=PLAZA.x+s, za=PLAZA.z-s, zb=PLAZA.z+s;
+  AV_RECTAS.push({ eje:'x', c:za, a:xa+rc, b:xb-rc }, { eje:'x', c:zb, a:xa+rc, b:xb-rc }, { eje:'z', c:xa, a:za+rc, b:zb-rc }, { eje:'z', c:xb, a:za+rc, b:zb-rc });
+  [[1,-1,0],[-1,-1,Math.PI/2],[-1,1,Math.PI],[1,1,Math.PI*1.5]].forEach(function(q){ AV_ARCOS.push({ x:PLAZA.x+q[0]*(s-rc), z:PLAZA.z+q[1]*(s-rc), r:rc, t0:q[2] }); }); });
+AV_RECTAS.push({ eje:'z', c:-70, a:Z0, b:PLAZA.z-105 }, { eje:'x', c:280, a:PLAZA.x+105, b:X1 }, { eje:'x', c:210, a:X0, b:PLAZA.x-55 }, { eje:'z', c:0, a:PLAZA.z+105, b:Z1 });   // hacia Banzer, hacia Moreno, hacia el Urubó y al sur
 function viaLibre(x,z){ if(x<X0-RW/2||x>X1+RW/2||z<Z0-RW/2||z>Z1+RW/2) return false;
-  for(var k in ALM){ var A=ALM[k]; if(Math.abs(x-A.bx)<G/2+AN_HW+2 && Math.abs(z-A.bz)<G/2+AN_HW+2) return false; }
-  return !TIENDAS.some(function(t){ var dx=x-t.x, dz=z-t.z; return dx*dx+dz*dz<22*22; }); }
-function enVia(x,z,rad){ var dx=x-PLAZA.x, dz=z-PLAZA.z, d=Math.sqrt(dx*dx+dz*dz), i;
-  for(i=0;i<ANILLOS.length;i++) if(Math.abs(d-ANILLOS[i].r)<AN_HW+rad) return true;
-  for(i=0;i<RADIALES.length;i++){ var R=RADIALES[i], t=dx*R.dx+dz*R.dz; if(t>R.t0-rad && Math.abs(dx*R.dz-dz*R.dx)<AN_HW+rad) return true; }
-  return false; }
-function cuadraCruza(cx,cz){ var h=(G-RW)/2, nx=Math.max(cx-h,Math.min(cx+h,PLAZA.x)), nz=Math.max(cz-h,Math.min(cz+h,PLAZA.z)), dmin=Math.hypot(nx-PLAZA.x,nz-PLAZA.z), dmax=0;
-  [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(function(s){ dmax=Math.max(dmax, Math.hypot(cx+s[0]*h-PLAZA.x, cz+s[1]*h-PLAZA.z)); });
-  return ANILLOS.some(function(A){ return dmin<A.r+AN_HW && dmax>A.r-AN_HW; }) || enVia(cx,cz,h*1.42); }
+  for(var k in ALM){ var A=ALM[k]; if(Math.abs(x-A.bx)<G/2-2 && Math.abs(z-A.bz)<G/2-2) return false; }
+  return !TIENDAS.some(function(t){ var dx=x-t.x, dz=z-t.z; return dx*dx+dz*dz<18*18; }); }
+function enVia(x,z,rad){ for(var i=0;i<AV_ARCOS.length;i++){ var C=AV_ARCOS[i], dx=x-C.x, dz=z-C.z, d=Math.sqrt(dx*dx+dz*dz), t=Math.atan2(-dz,dx); if(t<0) t+=Math.PI*2;   // solo las curvas pisan manzanas: lo recto va por la calle
+    var dt=t-C.t0; if(dt<-.1) dt+=Math.PI*2; if(dt<=Math.PI/2+.1 && Math.abs(d-C.r)<RW/2+rad) return true; } return false; }
+function cuadraCruza(cx,cz){ var h=(G-RW)/2; for(var i=-2;i<=2;i++) for(var j=-2;j<=2;j++) if(enVia(cx+i*h/2, cz+j*h/2, 2)) return true; return false; }
 function viaAdorno(x,z,i,conArbol){ if(i%2===0){ cil(.12,6.5,VIA_POSTE,x,3.25,z,EST,6); caja(.8,.3,.8,VIA_FOCO,x,6.6,z,EST,false); } else if(conArbol) arbol(x,z,.95,EST); }
 function viaTramos(n, libre){ var out=[], ini=-1; for(var i=0;i<=n;i++){ var ok=i<n && libre(i); if(ok && ini<0) ini=i; if(!ok && ini>=0){ out.push([ini,i-1]); ini=-1; } } return out; }
-ANILLOS.forEach(function(A, ai){ var n=Math.max(96, Math.round(Math.PI*2*A.r/2.5)), paso=Math.PI*2/n, ang=function(i){ return i*paso; }, px=function(i){ return PLAZA.x+A.r*Math.cos(ang(i)); }, pz=function(i){ return PLAZA.z-A.r*Math.sin(ang(i)); };
-  var libres=[]; for(var i=0;i<n;i++) libres.push(viaLibre(px(i),pz(i)));
-  var tramos=viaTramos(n, function(i){ return libres[i]; });
-  if(tramos.length>1 && tramos[0][0]===0 && tramos[tramos.length-1][1]===n-1){ var u=tramos.pop(); tramos[0]=[u[0]-n, tramos[0][1]]; }   // el tramo que cruza el ángulo 0 va entero
-  A.tramos=tramos;
-  tramos.forEach(function(T){ var t0=T[0]*paso, tl=(T[1]-T[0]+1)*paso, sg=Math.max(4,T[1]-T[0]+1);
-    var g1=new THREE.RingGeometry(A.r-AN_HW, A.r+AN_HW, sg, 1, t0, tl); g1.rotateX(-Math.PI/2); var m1=new THREE.Mesh(g1, VIA_ASF); m1.position.set(PLAZA.x,.06,PLAZA.z); m1.receiveShadow=true; EST.add(m1);
-    var g2=new THREE.RingGeometry(A.r-1.5, A.r+1.5, sg, 1, t0, tl); g2.rotateX(-Math.PI/2); var m2=new THREE.Mesh(g2, PASTO); m2.position.set(PLAZA.x,.07,PLAZA.z); EST.add(m2);   // el camellón
-    [-1,1].forEach(function(sd){ var g3=new THREE.RingGeometry(A.r+sd*(AN_HW-.9)-.25, A.r+sd*(AN_HW-.9)+.25, sg, 1, t0, tl); g3.rotateX(-Math.PI/2); var m3=new THREE.Mesh(g3, VIA_RAYA); m3.position.set(PLAZA.x,.068,PLAZA.z); EST.add(m3); });   // las rayas blancas del borde
-    var cada=Math.max(1, Math.round(9/(A.r*paso))); for(var j=T[0]+2, k=0; j<=T[1]-2; j+=cada, k++){ var jj=(j+n)%n; viaAdorno(px(jj), pz(jj), k, ai>0); } });
-  var best=null, dir=Math.atan2(-(RADIALES[1].dz), RADIALES[1].dx)+.28-ai*.09; tramos.forEach(function(T){ for(var j=T[0]+6;j<=T[1]-6;j++){ var dd=Math.abs(Math.atan2(Math.sin(j*paso-dir),Math.cos(j*paso-dir))); var qx=PLAZA.x+A.r*Math.cos(j*paso), qz=PLAZA.z-A.r*Math.sin(j*paso), tapa=Object.keys(ALM).some(function(k){ return Math.abs(qx-ALM[k].bx)<G && Math.abs(qz-ALM[k].bz)<G; })||TIENDAS.some(function(t){ return Math.hypot(qx-t.x,qz-t.z)<45; }); if(!tapa && (!best||dd<best.d)) best={ d:dd, j:(j+n)%n };   /* el cartel lejos de los galpones y las tiendas: no tapa */ } });
-  if(best) viaCartel(A.n, PLAZA.x+(A.r+AN_HW+3)*Math.cos(best.j*paso), PLAZA.z-(A.r+AN_HW+3)*Math.sin(best.j*paso)); });
-RADIALES.forEach(function(R){ var paso=2.5, n=Math.ceil(900/paso), ptx=function(i){ return PLAZA.x+(R.t0+i*paso)*R.dx; }, ptz=function(i){ return PLAZA.z+(R.t0+i*paso)*R.dz; }, rot=Math.atan2(-R.dz,R.dx);
-  viaTramos(n, function(i){ return viaLibre(ptx(i),ptz(i)); }).forEach(function(T){ var L=(T[1]-T[0]+1)*paso, mx=(ptx(T[0])+ptx(T[1]))/2, mz=(ptz(T[0])+ptz(T[1]))/2;
-    var m1=plano(L, AN_HW*2, mx, mz, .061, VIA_ASF); m1.rotation.z=rot; var m2=plano(L, 3, mx, mz, .071, PASTO); m2.rotation.z=rot;
-    for(var j=T[0]+2, k=0; j<=T[1]-2; j+=4, k++) viaAdorno(ptx(j), ptz(j), k, true); }); });
+AV_RECTAS.forEach(function(R){ var a=Math.max(R.a, R.eje==='x'?X0-RW/2:Z0-RW/2), b=Math.min(R.b, R.eje==='x'?X1+RW/2:Z1+RW/2); if(b-a<2) return;
+  var L=b-a, m=(a+b)/2, X=function(p){ return R.eje==='x'?p:R.c; }, Z=function(p){ return R.eje==='x'?R.c:p; };
+  plano(R.eje==='x'?L:RW, R.eje==='x'?RW:L, X(m), Z(m), .06, VIA_ASF); plano(R.eje==='x'?L:1.4, R.eje==='x'?1.4:L, X(m), Z(m), .07, PASTO);
+  [-1,1].forEach(function(sd){ plano(R.eje==='x'?L:.3, R.eje==='x'?.3:L, X(m)+(R.eje==='x'?0:sd*(RW/2-.6)), Z(m)+(R.eje==='x'?sd*(RW/2-.6):0), .068, VIA_RAYA); });
+  for(var p=a+7, k=0; p<b-4; p+=14, k++){ var md=((p%G)+G)%G; if(md<8||md>G-8) continue; viaAdorno(X(p), Z(p), 0, false); } });   // faroles en el camellón, no en los cruces
+AV_ARCOS.forEach(function(C, ci){ var n=Math.max(12, Math.round(C.r*Math.PI/2/2.5)), paso=Math.PI/2/n, px=function(i){ return C.x+C.r*Math.cos(C.t0+i*paso); }, pz=function(i){ return C.z-C.r*Math.sin(C.t0+i*paso); };
+  viaTramos(n+1, function(i){ return viaLibre(px(i),pz(i)); }).forEach(function(T){ var t0=C.t0+T[0]*paso, tl=(T[1]-T[0])*paso; if(tl<=0) return;
+    [[C.r-RW/2,C.r+RW/2,VIA_ASF,.06],[C.r-.7,C.r+.7,PASTO,.07],[C.r+RW/2-.75,C.r+RW/2-.45,VIA_RAYA,.068],[C.r-RW/2+.45,C.r-RW/2+.75,VIA_RAYA,.068]].forEach(function(q){
+      var g=new THREE.RingGeometry(q[0], q[1], Math.max(4,T[1]-T[0]), 1, t0, tl); g.rotateX(-Math.PI/2); var m=new THREE.Mesh(g, q[2]); m.position.set(C.x,q[3],C.z); m.receiveShadow=true; EST.add(m); });
+    for(var j=T[0]+2, k=0; j<=T[1]-2; j+=Math.max(2,Math.round(7/(C.r*paso))), k++) viaAdorno(px(j), pz(j), k, true); }); });
+ANILLOS.forEach(function(A){ viaCartel(A.n, PLAZA.x-A.s-9, PLAZA.z+26); });
 function viaCartel(txt, x, z){ var p=M(0x5d6b7c), sw=Math.max(9, txt.length*.62), hp=sw/2-1.1; caja(.25,5.4,.25,p,x-hp*.755,2.7,z+hp*.656); caja(.25,5.4,.25,p,x+hp*.755,2.7,z-hp*.656);
   var s=new THREE.Mesh(new THREE.PlaneGeometry(sw,2.2), new THREE.MeshBasicMaterial({ map:cartelTex(txt,'#0f6b3a','#ffffff',Math.round(512*sw/9),124), side:THREE.DoubleSide })); s.position.set(x,6.3,z); s.rotation.y=Math.atan2(80,92); EST.add(s); }
-function palmera(x,z,h){ if(VIA_ON && enVia(x,z,1.5)) return; h=h||7+rnd()*3; cil(.22,h,M(0x9c8a6a),x,h/2,z,EST,6); var hoja=M(0x4e9a4f,{ flatShading:true });
+function palmera(x,z,h){ if(VIA_ON && enVia(x,z,1.5)) return; h=h||7+rnd()*3; cil(.22,h,Mc(0x9c8a6a),x,h/2,z,EST,6); var hoja=Mc(0x4e9a4f,{ flatShading:true });
   for(var i=0;i<7;i++){ var an=i/7*Math.PI*2+rnd()*.4, f=caja(.55,.12,3.4,hoja,x+Math.cos(an)*1.5,h-.1,z+Math.sin(an)*1.5); f.rotation.order='YXZ'; f.rotation.y=Math.PI/2-an; f.rotation.x=.42; } }
-function colonial(x,z,w,d,rot){ var g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); var bl=M(0xf7f2e8), t=M([0xc0563a,0xb5502f,0xcc6a3c][Math.floor(rnd()*3)]), h=7.5, s=d/2+.9;   // casona blanca con teja y galería, como alrededor de la plaza
+function colonial(x,z,w,d,rot){ var g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); var bl=Mc(0xf7f2e8), t=Mc([0xc0563a,0xb5502f,0xcc6a3c][Math.floor(rnd()*3)]), h=7.5, s=d/2+.9;   // casona blanca con teja y galería, como alrededor de la plaza
   bloqueFach(0,0,w,d,h,0xf7f2e8,g); var ta=caja(w+.4,.35,s,t,0,h+.75,-d/4,g); ta.rotation.x=-.5; var tb=caja(w+.4,.35,s,t,0,h+.75,d/4,g); tb.rotation.x=.5;
-  caja(w-.6,3.4,.15,M(0x6b5d50),0,1.7,d/2+.08,g,false); caja(w+.2,.5,2.8,bl,0,3.85,d/2+1.3,g); for(var c=-w/2+.6; c<=w/2-.5; c+=2.3) caja(.45,3.6,.45,bl,c,1.8,d/2+2.4,g); }
-function plazaPrincipal(cx,cz){ var a=G-RW, pie=M(0xe9dcc4), BR=M(0xc0683f), BRF=0xc0683f, BL=M(0xf3e6d4), OSC=M(0x3a2a22);   // (13/10, dueño, con fotos) la catedral de ladrillo con sus dos torres y la plaza 24 de Septiembre con palmeras
+  caja(w-.6,3.4,.15,Mc(0x6b5d50),0,1.7,d/2+.08,g,false); caja(w+.2,.5,2.8,bl,0,3.85,d/2+1.3,g); for(var c=-w/2+.6; c<=w/2-.5; c+=2.3) caja(.45,3.6,.45,bl,c,1.8,d/2+2.4,g); }
+function plazaPrincipal(cx,cz){ var a=G-RW, pie=Mc(0xe9dcc4), BR=Mc(0xc0683f), BRF=0xc0683f, BL=Mc(0xf3e6d4), OSC=Mc(0x3a2a22);   // (13/10, dueño, con fotos) la catedral de ladrillo con sus dos torres y la plaza 24 de Septiembre con palmeras
   plano(a,a,cx,cz,.04,pie);
   [[-1,1],[1,1],[-1,-1],[1,-1]].forEach(function(q){ plano(a/2-6,16,cx+q[0]*(a/4+1.5),cz+12+q[1]*10,.045,PASTO); });   // los cuatro jardines
   var cz0=cz-19;   // la catedral al fondo, mirando a la plaza (y a la cámara)
   caja(18,13,18,BR,cx,6.5,cz0-6); [-5,0,5].forEach(function(k){ [-1,1].forEach(function(sd){ caja(.25,3.4,1.6,OSC,cx+sd*9.05,7.5,cz0-6+k); }); });   // la nave, ladrillo liso con ventanas de arco
-  var r1=caja(10.4,.4,19,M(0xb5502f),cx-4.6,15.1,cz0-6); r1.rotation.z=.46; var r2=caja(10.4,.4,19,M(0xb5502f),cx+4.6,15.1,cz0-6); r2.rotation.z=-.46;
+  var r1=caja(10.4,.4,19,Mc(0xb5502f),cx-4.6,15.1,cz0-6); r1.rotation.z=.46; var r2=caja(10.4,.4,19,Mc(0xb5502f),cx+4.6,15.1,cz0-6); r2.rotation.z=-.46;
   caja(24,16,4,BR,cx,8,cz0+5); [-6.5,6.5].forEach(function(dx){ caja(1.6,3,.25,OSC,cx+dx,10.5,cz0+7.1); }); caja(2.4,2.4,.25,OSC,cx,12.5,cz0+7.1); caja(10,5,3.8,BR,cx,18.5,cz0+5); caja(4.5,3,3.6,BR,cx,22.4,cz0+5); caja(24.6,.6,4.6,BL,cx,16.2,cz0+5);   // la fachada con su frontón
   caja(3.2,6.5,.3,OSC,cx,3.25,cz0+7.1); [-6.5,6.5].forEach(function(dx){ caja(2,4.6,.3,OSC,cx+dx,2.3,cz0+7.1); });   // las puertas
   [-12.5,12.5].forEach(function(dx){ var x=cx+dx, z=cz0+5;   // las dos torres con cúpula
     caja(7,22,7,BR,x,11,z); [[0,3.55,0],[3.55,0,Math.PI/2]].forEach(function(o){ [6.5,16.5].forEach(function(y){ caja(1.3,2.8,.25,OSC,x+o[0],y,z+o[1]).rotation.y=o[2]; }); }); caja(7.6,.6,7.6,BL,x,22.3,z); caja(7.4,.4,7.4,BL,x,11,z); caja(5.4,5.6,5.4,BR,x,25.4,z); caja(5.8,.5,5.8,BL,x,28.4,z);
     [[0,2.75,0],[2.75,0,Math.PI/2]].forEach(function(o){ caja(1.5,2.6,.25,OSC,x+o[0],25.6,z+o[1]).rotation.y=o[2]; });
-    cil(2.3,1.6,BR,x,29.4,z,null,12); var cu=new THREE.Mesh(new THREE.SphereGeometry(2.5,14,8,0,Math.PI*2,0,Math.PI/2), M(0xb85a35)); cu.position.set(x,30.2,z); cu.castShadow=true; EST.add(cu);
-    cil(.55,1.6,BL,x,33.4,z,null,8); caja(.18,1.6,.18,M(0xf2b705),x,35,z); caja(.9,.18,.18,M(0xf2b705),x,35.3,z); });
-  cil(2.2,1.4,M(0xd9d2c4),cx,.7,cz+12,null,8); cil(.55,7,M(0xf3ede2),cx,4.8,cz+12,null,10); caja(1,1.8,.8,M(0x8a7a5a),cx,9.2,cz+12);   // el monumento del centro
+    cil(2.3,1.6,BR,x,29.4,z,null,12); var cu=new THREE.Mesh(new THREE.SphereGeometry(2.5,14,8,0,Math.PI*2,0,Math.PI/2), Mc(0xb85a35)); cu.position.set(x,30.2,z); cu.castShadow=true; EST.add(cu);
+    cil(.55,1.6,BL,x,33.4,z,null,8); caja(.18,1.6,.18,Mc(0xf2b705),x,35,z); caja(.9,.18,.18,Mc(0xf2b705),x,35.3,z); });
+  cil(2.2,1.4,Mc(0xd9d2c4),cx,.7,cz+12,null,8); cil(.55,7,Mc(0xf3ede2),cx,4.8,cz+12,null,10); caja(1,1.8,.8,Mc(0x8a7a5a),cx,9.2,cz+12);   // el monumento del centro
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(q){ for(var i=0;i<2;i++) palmera(cx+q[0]*(6+i*8), cz+12+q[1]*(4+i*2.5)); arbol(cx+q[0]*22, cz+12+q[1]*12, 1.5, EST); });
   for(var p=-24;p<=24;p+=12){ palmera(cx+p, cz+28); palmera(cx-28, cz+p*.55+12); palmera(cx+28, cz+p*.55+12); }
-  [[-9,4],[9,4],[-9,20],[9,20]].forEach(function(b){ caja(2.4,.5,.7,M(0x8a6a4b),cx+b[0],.5,cz+b[1]); }); }
-/* 🌳 (13/10, dueño, con foto: «Equipetrol termina y empieza el borde ecológico y el río Piraí») al oeste de la ciudad: el cinturón ecológico
-   (bosque tupido), el río Piraí con su arenal y la avenida del oeste (Roca y Coronado) que lo cruza por un puente. El río corre en z, como el
-   real (del suroeste al noreste). Equipetrol, con sus torres, queda pegado al bosque (`zonaAlta`). */
-var BORDE_X=X0-RW/2-2;
+  [[-9,4],[9,4],[-9,20],[9,20]].forEach(function(b){ caja(2.4,.5,.7,Mc(0x8a6a4b),cx+b[0],.5,cz+b[1]); }); }
+/* 🌳 (13/10, dueño, con foto: «Equipetrol termina y empieza el borde ecológico y el río Piraí… y un puente que atraviesa el río simulando la
+   entrada al Urubó»; «el puente que cruza al final de Equipetrol es el del Urubó, no el de la Roca y Coronado») al oeste: el cinturón
+   ecológico, el río Piraí con su arenal, y la calle de Equipetrol (z = ZU) que sigue derecho, cruza el río por el PUENTE URUBÓ y llega al
+   Urubó (condominios y torres del otro lado). El río corre en z, como el real (del suroeste al noreste). */
+var BORDE_X=X0-RW/2-2, ZU=210;
 function rioX(z){ return BORDE_X-150+16*Math.sin(z/95)+7*Math.sin(z/41); }
-(function borde(){ var W=RADIALES[3], z0=Z0-60, z1=Z1+60, BOSQ=[M(0x3f7a3c,{ flatShading:true }),M(0x4c8a42,{ flatShading:true }),M(0x356b34,{ flatShading:true }),M(0x5a9a4a,{ flatShading:true })], ICO=new THREE.IcosahedronGeometry(1,0);
-  var enCamino=function(x,z){ var dx=x-PLAZA.x, dz=z-PLAZA.z, t=dx*W.dx+dz*W.dz; return t>0 && Math.abs(dx*W.dz-dz*W.dx)<11; };
-  var copa=function(x,z,r){ if(enCamino(x,z)) return; var m=new THREE.Mesh(ICO, BOSQ[Math.floor(rnd()*BOSQ.length)]); m.scale.set(r,r*(.75+rnd()*.35),r); m.position.set(x,r*.75,z); m.rotation.y=rnd()*3; m.receiveShadow=true; EST.add(m); };
-  plano(BORDE_X-(BORDE_X-420),z1-z0,(BORDE_X+BORDE_X-420)/2,(z0+z1)/2,.03,M(0x5f8f4e));   // el piso del bosque
-  for(var z=z0; z<z1; z+=8.5) for(var x=BORDE_X-3; x>BORDE_X-420; x-=8.5){ var rx=rioX(z), jx=x+(rnd()-.5)*5, jz=z+(rnd()-.5)*5; if(Math.abs(jx-rx)<36) continue; copa(jx,jz,3.4+rnd()*2.4); }
+(function borde(){ var z0=Z0-60, z1=Z1+60, BOSQ=[Mc(0x3f7a3c,{ flatShading:true }),Mc(0x4c8a42,{ flatShading:true }),Mc(0x356b34,{ flatShading:true }),Mc(0x5a9a4a,{ flatShading:true })], ICO=new THREE.IcosahedronGeometry(1,0);
+  var xr=rioX(ZU), urX0=xr-46, urX1=BORDE_X-420, claro=function(x,z){ return x<urX0 && x>urX1 && Math.abs(z-ZU)<62; };   // el Urubó: el claro del otro lado del río
+  var copa=function(x,z,r){ if(Math.abs(z-ZU)<11 || claro(x,z)) return; var m=new THREE.Mesh(ICO, BOSQ[Math.floor(rnd()*BOSQ.length)]); m.scale.set(r,r*(.75+rnd()*.35),r); m.position.set(x,r*.75,z); m.rotation.y=rnd()*3; m.receiveShadow=true; EST.add(m); };
+  plano(420,z1-z0,BORDE_X-210,(z0+z1)/2,.03,Mc(0x5f8f4e));   // el piso del bosque
+  for(var z=z0; z<z1; z+=8.5) for(var x=BORDE_X-3; x>BORDE_X-420; x-=8.5){ var jx=x+(rnd()-.5)*5, jz=z+(rnd()-.5)*5; if(Math.abs(jx-rioX(jz))<40) continue; copa(jx,jz,3.4+rnd()*2.4); }
+  var AR=Mc(0xdccaa0), AG=Mc(0x5d9bd0,{ roughness:.3 });
   for(var zr=z0; zr<z1; zr+=12){ var a=rioX(zr), b=rioX(zr+12), fi=Math.atan((b-a)/12);
-    var s=plano(66,13,(a+b)/2,zr+6,.05,M(0xdccaa0)); s.rotation.z=fi;   // el arenal
-    var w=plano(20+6*Math.sin(zr/53),13,(a+b)/2+6*Math.sin(zr/29),zr+6,.06,M(0x7fa6bf,{ roughness:.35 })); w.rotation.z=fi; }   // el agua
-  var tC=(BORDE_X-PLAZA.x)/W.dx, tF=(BORDE_X-470-PLAZA.x)/W.dx, rot=Math.atan2(-W.dz,W.dx), P=function(t){ return { x:PLAZA.x+t*W.dx, z:PLAZA.z+t*W.dz }; };
-  var tR=tC; while(Math.abs(P(tR).x-rioX(P(tR).z))>36) tR+=1; var tR2=tR; while(Math.abs(P(tR2).x-rioX(P(tR2).z))<=36) tR2+=1;
-  [[tC,tR],[tR2,tF]].forEach(function(s){ var a=P(s[0]), b=P(s[1]), L=s[1]-s[0], m1=plano(L,AN_HW*2,(a.x+b.x)/2,(a.z+b.z)/2,.061,VIA_ASF); m1.rotation.z=rot; var m2=plano(L,3,(a.x+b.x)/2,(a.z+b.z)/2,.071,PASTO); m2.rotation.z=rot; });
-  var a2=P(tR-4), b2=P(tR2+4), Lp=tR2-tR+8, cx=(a2.x+b2.x)/2, cz=(a2.z+b2.z)/2, gp=M(0xd5dbe2);   // el puente
-  var d=caja(Lp,1,AN_HW*2+1,gp,cx,2.4,cz); d.rotation.y=rot; var d2=caja(Lp,.1,AN_HW*2-.4,VIA_ASF,cx,2.95,cz); d2.rotation.y=rot;
-  [-1,1].forEach(function(sd){ var bx=cx+sd*(AN_HW+.3)*-W.dz, bz=cz+sd*(AN_HW+.3)*W.dx, r=caja(Lp,1,.35,M(0xf4f6f9),bx,3.4,bz); r.rotation.y=rot; });
-  for(var k=1;k<6;k++){ var q=P(tR-4+k*Lp/6); caja(2,2.4,AN_HW*2,gp,q.x,1.2,q.z).rotation.y=rot; }
-  var cr=P(tR-8); viaCartel('RÍO PIRAÍ', cr.x+9*W.dz, cr.z-9*W.dx); var cb=P(tC-14); viaCartel('CINTURÓN ECOLÓGICO', cb.x+11*W.dz, cb.z-11*W.dx); })();
+    var s=plano(74,13,(a+b)/2,zr+6,.05,AR); s.rotation.z=fi;   // el arenal
+    var w=plano(34+8*Math.sin(zr/53),13,(a+b)/2+5*Math.sin(zr/29),zr+6,.06,AG); w.rotation.z=fi; }   // el agua: es un río
+  var xb0=xr+42, xb1=xr-42, gp=Mc(0xe3e8ee), bl=Mc(0xf7f9fc);
+  [[BORDE_X,xb0],[xb1,urX1+10]].forEach(function(s){ var L=s[0]-s[1], m1=plano(L,AN_HW*2,(s[0]+s[1])/2,ZU,.061,VIA_ASF); var m2=plano(L,3,(s[0]+s[1])/2,ZU,.071,PASTO);
+    for(var xx=s[0]-4; xx>s[1]+2; xx-=10) viaAdorno(xx, ZU, Math.round(xx/10), true); });
+  var Lp=xb0-xb1+8, cx=(xb0+xb1)/2;   // el puente Urubó
+  caja(Lp,1.2,AN_HW*2+1.6,gp,cx,2.6,ZU); caja(Lp,.1,AN_HW*2-.4,VIA_ASF,cx,3.25,ZU); caja(Lp,1.6,.3,PASTO,cx,3.3,ZU);
+  [-1,1].forEach(function(sd){ caja(Lp,1,.35,bl,cx,3.8,ZU+sd*(AN_HW+.5)); });
+  for(var k=0;k<=6;k++){ var px=xb0+4-k*Lp/6; caja(2.2,2.6,AN_HW*2,gp,px,1.3,ZU); if(k>0&&k<6){ caja(.3,7,.3,bl,px,7,ZU-AN_HW-.5); caja(.3,7,.3,bl,px,7,ZU+AN_HW+.5); caja(.9,.3,.9,VIA_FOCO,px,10.4,ZU-AN_HW-.5,EST,false); caja(.9,.3,.9,VIA_FOCO,px,10.4,ZU+AN_HW+.5,EST,false); } }
+  [[urX0-14,ZU-30,14,13,4],[urX0-34,ZU-30,14,13,7],[urX0-54,ZU-32,14,13,4],[urX0-14,ZU+30,14,13,7],[urX0-34,ZU+30,14,13,4],[urX0-58,ZU+34,16,16,30],[urX0-80,ZU-36,16,16,24]].forEach(function(c,i){   // el Urubó: casas de condominio y torres
+    if(c[4]>10) edificio(c[0],c[1],c[2],c[3],c[4]); else casa(c[0],c[1],[0xf7f3ea,0xf1e3cf,0xfaf7f0,0xf6efd9][i%4],[0xc0563a,0xb5502f,0xcc6a3c][i%3],c[1]<ZU?Math.PI:0,c[4]>5?2:1,c[2]-1,c[3]-1); });
+  plano(urX0-urX1-10,120,(urX0+urX1)/2,ZU,.035,Mc(0xa9cf8f));   // el pasto del Urubó
+  viaCartel('CINTURÓN ECOLÓGICO', BORDE_X-16, ZU-13); viaCartel('PUENTE URUBÓ · RÍO PIRAÍ', xb0+10, ZU-13); viaCartel('URUBÓ', urX0-4, ZU+13); })();
 VIA_ON=true;
 var PATIO=M(0xcfe3bf), LOTE=M(0xf1ede3), CASACOL=[0xf7f3ea,0xf1e3cf,0xf6efd9,0xfaf7f0,0xf4d7c9,0xdfe8f2,0xf0d9c4], TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+235)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
-function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)||enVia(x,z,Math.max(ww,dd)*.5)) return; var r=rnd(), de=Math.abs(Math.sin(rot))>.5; if(LOTE_COL && LOTE_FRENTE && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
+function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)) return; if(enVia(x,z,Math.max(ww,dd)*.5)){ if(!enVia(x,z,2)) arbol(x,z,1+rnd()*.4); return; }   // donde pasa la curva del anillo: un árbol, no un hueco
+  var r=rnd(), de=Math.abs(Math.sin(rot))>.5; EDIF_FRENTE=Math.cos(rot)<-.5?-1:1; if(LOTE_COL && LOTE_FRENTE && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
   if(r<.04+.26*za){ edificio(x,z,ww,dd,12+Math.floor(rnd()*(8+22*za))); return; }   // un edificio suelto entre las casas
   if(r<.11+.22*za){ edificio(x,z,ww,dd,rnd()<.55?3.8:7); return; }   // comercio de 1 o 2 pisos con su toldo, o casa de losa con tanque
   casa(x,z,CASACOL[Math.floor(rnd()*CASACOL.length)],TT[Math.floor(rnd()*TT.length)],rot,rnd()<.38?2:1,(de?dd:ww)-.6,(de?ww:dd)-.6); }   // casa de 1 o 2 pisos con techo de teja
-var LOTE_COL=false, LOTE_FRENTE=false; function cuadra(cx,cz){ LOTE_COL=Math.abs(cx-PLAZA.x)<=G && Math.abs(cz-PLAZA.z)<=G; var x0=cx-G/2+RW/2+1, z0=cz-G/2+RW/2+1, za=zonaAlta(cx,cz), a=G-RW-2;   // (13/10, dueño, con la captura de la v15: «sin patios y así repartido se veía mejor, tratá de asemejar a las fotos»)
-  plano(a+2,a+2,cx,cz,.04,VER); plano(a-1,a-1,cx,cz,.045,LOTE);   // casas sueltas en 4 × 3, con su espacio alrededor, sin patio verde
-  for(var j=0;j<3;j++) for(var i=0;i<4;i++){ var hx=x0+7+i*14.5, hz=z0+8+j*18; LOTE_FRENTE=(j!==1); lote(hx,hz,10,9.5,j===0?Math.PI:0,za);
-    if(rnd()<.4) arbol(hx+6.4+(rnd()-.5)*1.5, hz+(j===0?6.6:-6.6), .8+rnd()*.35); }   // algún árbol entre casa y casa, como en las fotos
-  LOTE_COL=LOTE_FRENTE=false; }
-function casa(x,z,col,techo,rot,pisos,w,d){ w=w||7; d=d||6; var h=pisos===2?7:4, g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); bloqueFach(0,0,w,d,h,col,g); var t=M(techo), s=d/2+.9, ta=caja(w+.4,.35,s,t,0,h+.75,-d/4,g); ta.rotation.x=-.55; var tb=caja(w+.4,.35,s,t,0,h+.75,d/4,g); tb.rotation.x=.55; }   // (13/10, dueño) a dos aguas hacia afuera: antes quedaban en V
-function parque(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,PASTO); plano(G-RW,3,cx,cz,.05,M(0xe8dcc0)); plano(3,G-RW,cx,cz,.05,M(0xe8dcc0));
-  cil(4,.6,M(0xcfd8e3),cx,.3,cz,null,32); cil(3.3,.2,Mbrilla(0x7fc4ec,0x7fc4ec),cx,.65,cz,null,32); cil(.4,2.6,M(0xcfd8e3),cx,1.3,cz,null,12);
+var LOTE_COL=false, LOTE_FRENTE=false, EDIF_FRENTE=1, PASAJE=Mc(0x8f9db0); function cuadra(cx,cz){ LOTE_COL=Math.abs(cx-PLAZA.x)<=G && Math.abs(cz-PLAZA.z)<=G; var a=G-RW-2, x0=cx-a/2, za=zonaAlta(cx,cz), n=4, lw=a/n, fd=16, ad=a/2-fd-1;
+  plano(a+2,a+2,cx,cz,.04,LOTE);   // (13/10, dueño: «detrás de las casas se ve vacío, parece un cuadrado dentro de otro cuadrado») un solo piso, sin el cuadrado de adentro
+  var pas={}, r0=LOTE_COL?0:rnd(); if(r0>.25){ if(r0<.6) pas[2]=1; else if(r0<.85){ pas[1]=pas[3]=1; } else pas[1]=pas[2]=pas[3]=1; }   // (13/10, dueño: «me gusta la A, pero donde se pueda poné los pasajes para verlos desde arriba») de calle a calle, entre las casas; no en todas
+  Object.keys(pas).forEach(function(k){ plano(4.8,a+2,x0+lw*k,cz,.05,PASAJE); plano(.25,a+2,x0+lw*k,cz,.052,VIA_RAYA); });
+  var hor=!LOTE_COL && rnd()<.35; if(hor){ plano(a+2,4.8,cx,cz,.0505,PASAJE); plano(a+2,.25,cx,cz,.0525,VIA_RAYA); }   // (13/10, dueño: «todos son rectos hacia el norte, uno que otro horizontal») a veces también uno a lo largo, por el medio
+  for(var j=0;j<2;j++) for(var i=0;i<n;i++){ var iz=pas[i]?2.6:1.1, de=pas[i+1]?2.6:1.1, ww=lw-iz-de, lx=x0+lw*i+iz+ww/2, sg=j===0?-1:1, fz=cz+sg*(a/2-1-fd/2), bz=cz+sg*(ad/2+.5+(hor?1.6:0)), adb=ad-(hor?3.2:0);   // dos filas, cada casa mirando a SU calle
+    LOTE_FRENTE=true; lote(lx, fz, ww, fd, j===0?Math.PI:0, za);
+    if(!enTienda(lx,bz,ww,adb) && !enVia(lx,bz,Math.max(lw,adb)*.5)) fondo(lx,bz,ww-1.2,adb);   // y su construcción del fondo hasta el medio: no queda vacío
+    if(i<n-1 && !pas[i+1] && rnd()<.35) arbol(x0+lw*(i+1), fz+sg*(fd/2-1.5), .8+rnd()*.35); }   // algún árbol en la vereda, entre casa y casa (no en un pasaje)
+  LOTE_COL=LOTE_FRENTE=false; EDIF_FRENTE=1; }
+function fondo(x,z,w,d){ var r=rnd();
+  if(r<.55){ bloqueFach(x,z,w,d,3.4,CASACOL[Math.floor(rnd()*CASACOL.length)]); caja(w+.3,.4,d+.3,TECHO2,x,3.6,z); if(rnd()<.4) cil(.8,1.4,TANQUE,x,4.5,z,null,10); }
+  else if(r<.85){ bloqueFach(x,z,w,d,3.2,0xf1e3cf); caja(w+.4,.3,d+.4,Mc(TT[Math.floor(rnd()*TT.length)]),x,3.45,z); }
+  else { bloqueFach(x,z,w,d,6.2,CASACOL[Math.floor(rnd()*CASACOL.length)]); caja(w+.3,.4,d+.3,TECHO2,x,6.4,z); cil(.9,1.6,TANQUE,x,7.4,z,null,12); } }
+function casa(x,z,col,techo,rot,pisos,w,d){ w=w||7; d=d||6; if(!PRISMA){ PRISMA=new THREE.CylinderGeometry(1,1,1,3); PRISMA.rotateX(-Math.PI/2); PUERTA=Mc(0x5b4636); VIDRIO_B=Mc(0xf4f6f9); } var h=pisos===2?7:4, g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); bloqueFach(0,0,w,d,h,col,g);   // (13/10, dueño: «las casas están de costado, su frente está de costado») el triángulo del techo, la puerta y el alero miran a la calle
+  var t=Mc(techo), s=w/2+.9, ta=caja(s,.35,d+.7,t,-w/4,h+.75,0,g); ta.rotation.z=.55; var tb=caja(s,.35,d+.7,t,w/4,h+.75,0,g); tb.rotation.z=-.55;
+  var hg=.45+.26*s, pr=new THREE.Mesh(PRISMA, Mc(col)); pr.scale.set(w/1.732, hg/1.5, d); pr.position.set(0,h+hg/3,0); pr.castShadow=true; g.add(pr);
+  caja(1.7,2.9,.15,PUERTA,0,1.45,d/2+.08,g,false); caja(3.6,.18,1.4,t,0,3.25,d/2+.7,g);
+  if(pisos===2){ caja(w*.6,.22,1.3,VIDRIO_B,0,4.35,d/2+.65,g); caja(w*.6,.8,.12,VIDRIO_B,0,4.85,d/2+1.25,g,false); } }
+function parque(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,PASTO); plano(G-RW,3,cx,cz,.05,Mc(0xe8dcc0)); plano(3,G-RW,cx,cz,.05,Mc(0xe8dcc0));
+  cil(4,.6,Mc(0xcfd8e3),cx,.3,cz,null,32); cil(3.3,.2,Mbrilla(0x7fc4ec,0x7fc4ec),cx,.65,cz,null,32); cil(.4,2.6,Mc(0xcfd8e3),cx,1.3,cz,null,12);
   for(var t=0;t<26;t++){ var ax=cx-28+rnd()*56, az=cz-28+rnd()*56; if(Math.abs(ax-cx)<3||Math.abs(az-cz)<3) continue; arbol(ax,az,1.1+rnd()*.7); }
-  [[-6,-3],[6,-3],[-6,3],[6,3]].forEach(function(b){ caja(2.4,.5,.7,M(0x8a6a4b),cx+b[0],.5,cz+b[1]); }); }
+  [[-6,-3],[6,-3],[-6,3],[6,3]].forEach(function(b){ caja(2.4,.5,.7,Mc(0x8a6a4b),cx+b[0],.5,cz+b[1]); }); }
 function surtidor(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,HORM); var col=M(0xe23d3d);
   [-8,8].forEach(function(dx){ [-6,6].forEach(function(dz){ caja(.5,5,.5,M(0xdfe6ee),cx+dx,2.5,cz+dz); }); });
   caja(22,1,16,M(0xffffff),cx,5.5,cz); caja(22.2,.4,16.2,col,cx,5,cz);
@@ -351,7 +370,7 @@ function barrio(cx,cz){ plano(G-RW,G-RW,cx,cz,.04,VER); for(var i=0;i<3;i++){ ca
   for(var i=0;i<4;i++) for(var j=0;j<3;j++){ casa(cx-21+i*14, cz-18+j*17, COLS[(i+j)%COLS.length], tt[(i+j)%3], j%2?Math.PI:0); arbol(cx-16+i*14, cz-14+j*17, .8); } }
 var ESPECIAL={ '35,105':parque, '105,35':surtidor, '-35,35':escuela, '105,-35':iglesia, '-105,35':obra, '-175,35':cuadra, '-175,-35':cuadra, '245,35':cuadra };
 TIENDAS.forEach(function(t){ MIRAR.push({ x:t.x, z:t.z, r:15 }); }); Object.keys(ALM).forEach(function(k){ var A=ALM[k]; MIRAR.push({ x:A.x, z:A.fz+6, r:Math.max(A.w,A.d)*.75+6 }); });
-for(var bi=-4; bi<=5; bi++) for(var bj=-3; bj<=6; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz, fe=ESPECIAL[key]||(bj>=4&&((bi*3+bj+40)%7===0)?parque:null);
+for(var bi=-4; bi<=5; bi++) for(var bj=-3; bj<=8; bj++){ var cx=35+bi*G, cz=35+bj*G, key=cx+','+cz, fe=ESPECIAL[key]||(bj>=4&&((bi*3+bj+40)%7===0)?parque:null);
   if((cx===ALM.ptf.bx&&cz===ALM.ptf.bz)||(cx===ALM.bz.bx&&cz===ALM.bz.bz)||(cx===ALM.im.bx&&cz===ALM.im.bz)) continue;
   if(cx===PLAZA.x&&cz===PLAZA.z) plazaPrincipal(cx,cz); else if(fe && !cuadraCruza(cx,cz)) fe(cx,cz); else cuadra(cx,cz); }
 /* 🏪 las tiendas Heaven y Sueña, con su vidriera, su toldo y su cartel; ahí llegan las reposiciones (RPT) */
@@ -391,7 +410,7 @@ function parada(x,z,rot){ var g=new THREE.Group(); g.position.set(x,0,z); g.rota
   caja(4.4,.18,1.8,M(0x00a59e),0,2.8,0,g); caja(4.2,2.2,.1,M(0xbfe3ff,{ roughness:.1, metalness:.2 }),0,1.6,-.8,g); [-2,2].forEach(function(dx){ caja(.12,2.8,.12,gris,dx,1.4,-.8,g); });
   caja(3.4,.15,.6,M(0x8a6a4b),0,.7,-.4,g); caja(.5,.5,.12,M(0xf2b705),2.4,2.4,0,g); }
 [[60,63.2],[-20,63.2],[130,-6.8],[-90,-76.8],[200,-76.8],[20,-136.8]].forEach(function(q){ parada(q[0],q[1],0); });
-function kiosco(x,z,col){ caja(2.2,1.6,1.6,M(0xf4f7fb),x,.8,z); caja(2.4,.12,1.8,M(0x8a6a4b),x,1.62,z); var u=new THREE.Mesh(new THREE.ConeGeometry(2.2,1,10), M(col)); u.position.set(x,3.2,z); u.castShadow=true; EST.add(u); cil(.06,2.2,M(0x5d6b7c),x,2,z,null,6); }
+function kiosco(x,z,col){ caja(2.2,1.6,1.6,Mc(0xf4f7fb),x,.8,z); caja(2.4,.12,1.8,Mc(0x8a6a4b),x,1.62,z); var u=new THREE.Mesh(new THREE.ConeGeometry(2.2,1,10), Mc(col)); u.position.set(x,3.2,z); u.castShadow=true; EST.add(u); cil(.06,2.2,Mc(0x5d6b7c),x,2,z,null,6); }
 kiosco(8,78,0xe23d3d); kiosco(-30,78,0xf2b705); kiosco(-62,64,0x2f6fd6); kiosco(132,64,0x15803d); kiosco(-12,-6,0xe23d3d);
 var BANDERA=lienzo(192,128,function(g){ g.fillStyle='#d52b1e'; g.fillRect(0,0,192,43); g.fillStyle='#f9e300'; g.fillRect(0,43,192,42); g.fillStyle='#007934'; g.fillRect(0,85,192,43); });
 function bandera(x,z){ cil(.12,9,M(0xdfe6ee),x,4.5,z,null,8); var b=new THREE.Mesh(new THREE.PlaneGeometry(3,2), new THREE.MeshBasicMaterial({ map:BANDERA, side:THREE.DoubleSide })); b.position.set(x+1.5,8,z); EST.add(b); }
@@ -999,7 +1018,7 @@ function elegir(c, mover){ if(!c) return; var antes=SEL; SEL=c; if(antes!==c) SE
 /* ── la cámara ── */
 var DEST=null;
 function volar(x,z,zoom){ DEST={ x0:ctl.target.x, z0:ctl.target.z, x:x, z:z, zm0:cam.zoom, zm:zoom||cam.zoom, t:0 }; }
-var IR={ ptf:function(){ return [ALM.ptf.x-8, ALM.ptf.fz+9, 1.9]; }, bz:function(){ return [ALM.bz.x-4, ALM.bz.fz+9, 1.9]; }, im:function(){ return [ALM.im.x, ALM.im.fz+8, 1.7]; }, todo:function(){ return [70,140, Z/360]; }, centro:function(){ return [PLAZA.x+2, PLAZA.z-6, 1.25]; } };
+var IR={ ptf:function(){ return [ALM.ptf.x-8, ALM.ptf.fz+9, 1.9]; }, bz:function(){ return [ALM.bz.x-4, ALM.bz.fz+9, 1.9]; }, im:function(){ return [ALM.im.x, ALM.im.fz+8, 1.7]; }, todo:function(){ return [70,210, Z/420]; }, centro:function(){ return [PLAZA.x+2, PLAZA.z-6, 1.25]; } };
 function pintarCamiones(){ var el=document.getElementById('pt-ir-cam'); if(!el) return;
   el.innerHTML=CAMS.map(function(c){ var e=c.enCalle?'🛣️':(!c.total&&!c.items.length)?'⚪':(c.total&&!c.chofer)?'⚠️':(c.total&&c.dentro>=c.total)?'✅':'⏳';
     return '<button type="button" data-cam="'+escH(c.k)+'" class="'+(SEL===c?'on':'')+'">'+e+' '+escH(c.p)+' <small style="opacity:.75">'+(c.enCalle?hechas(c)+'/'+c.paradas.length:c.dentro+'/'+c.total)+'</small></button>'; }).join(''); }

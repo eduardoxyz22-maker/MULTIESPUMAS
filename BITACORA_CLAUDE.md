@@ -14047,3 +14047,16 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   reparto de la v15 (4 × 3 casas sueltas con su espacio alrededor, árbol entre casa y casa al 40 %), sin patio verde, y con lo de las fotos:
   teja (`TT`), frentes blancos/crema (`CASACOL`), edificios sueltos (`zonaAlta`: Equipetrol al oeste), casonas con galería alrededor de la
   plaza. ⚠️ La forma que le gusta: casas SUELTAS y repartidas, sin patios. Muestra v22.
+- Después (13/10, con capturas y dibujos del dueño; eligió mirando FOTOS antes de publicar, como pidió): *«casas, pasajes y demás, 10/10»*.
+  · Casas «A»: dos filas por manzana, cada casa mirando a SU calle (cumbrera hacia la calle con `PRISMA`, puerta y alero), y su
+    construcción del fondo hasta el medio (`fondo`): ya no queda vacío atrás. Un solo piso por manzana (sin el cuadrado de adentro).
+  · Pasajes (`PASAJE`, con raya blanca para verse desde arriba): de calle a calle entre casa y casa (0-3 por manzana, al azar) y, en
+    ~1 de cada 3, uno a lo largo por el medio. Las manzanas de la plaza, enteras.
+  · Anillos INTEGRADOS a la cuadrícula (*«no se integran con las calles, siguen su forma como una ruta»*): `ANILLOS` = {s, rc}: calles de la
+    cuadrícula a ±s de la plaza hechas avenida (camellón, rayas, faroles) y solo las esquinas curvas (`AV_ARCOS`, radio 35). `enVia` solo
+    mira las curvas (lo recto va por la calle); donde la curva pisa un lote, un árbol en vez de un hueco. Avenidas de salida por calles
+    (`AV_RECTAS`). Tres anillos completos (la ciudad bajó a `Z1=9*G`, piso 1800×1800).
+  · Puente URUBÓ (no Roca y Coronado) al final de Equipetrol (calle z=`ZU`=210): río más ancho, Urubó del otro lado con condominio y torres.
+  · Carteles: `cartelTex` y el del galpón achican la letra hasta entrar (*«los nombres no se leen»*).
+  · `Mc` = material compartido para lo que no se mueve (casas, árboles…): antes cada uno estrenaba el suyo.
+  · `armar.py` rearmado con `remap.py` (scratchpad: mapea los rangos por diff entre versiones de cuerpo.js). test_patio 29/29. Muestra v23.
