@@ -168,6 +168,13 @@ async function con3D(){
   await page.waitForFunction(() => { var c=patioEstado().camiones.filter(function(c){ return c.k==='Foton nuevo'; })[0]; return c && (c.enCalle || c.saliendo); }, null, { timeout:30000, polling:500 }).catch(()=>{});
   r = await page.evaluate(() => patioEstado().camiones.filter(function(c){ return c.k==='Foton nuevo'; })[0]);
   chk('«Ya salió» lo manda a la calle', r && (r.enCalle || r.saliendo), r && [r.enCalle, r.saliendo]);
+  // (13/10, dueño: «¿por qué está parado ese camión? Está atrás de la fábrica en plena calle») el GPS lo ve en Moreno → en el andén de Moreno
+  await page.evaluate(() => { var t=Date.now(); gpsTomar({ t:t, u:[{ p:'5655KSC', pl:'5655-KSC', la:-17.7627, lo:-63.0671, v:0, m:0, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:8100 }, f:1, s:'', vu:'' }] }, t); });
+  await page.waitForFunction(() => { var c=patioEstado().camiones.filter(function(c){ return c.k==='Foton encarpado'; })[0]; return c && c.alm==='im' && !c.enCalle && !c.saliendo; }, null, { timeout:30000, polling:500 }).catch(()=>{});
+  await page.evaluate(() => { var b=document.querySelector('#pt-ir-cam button[data-cam="Foton encarpado"]'); if(b) b.click(); }); await page.waitForTimeout(600);
+  r = await page.evaluate(() => ({ c:patioEstado().camiones.filter(function(c){ return c.k==='Foton encarpado'; })[0], ficha:(document.getElementById('pt-ficha')||{}).textContent||'' }));
+  chk('el GPS en Moreno: el camión queda en el andén de Moreno, no en la calle de atrás', r.c && r.c.alm==='im' && !r.c.enCalle, r.c && [r.c.alm, r.c.enCalle]);
+  chk('…y la ficha dice «📥 En Moreno · lo dice el GPS» (no «Salió» sin hora)', /📥 En Moreno · lo dice el GPS/.test(r.ficha) && !/Salió ·/.test(r.ficha), r.ficha.slice(0,200));
   await page.screenshot({ path:path.join(process.env.PATIO_FOTOS||'/tmp','patio_2.png'), timeout:120000 }).catch(e=>console.log('(sin foto: '+e.message.split('\n')[0]+')'));
   await page.evaluate(() => document.getElementById('pt-cerrar').click());
   await page.waitForTimeout(300);

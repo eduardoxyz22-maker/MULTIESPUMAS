@@ -6,6 +6,9 @@
    5. Mis pedidos: el viaje dice «Salió HH:MM» con el GPS.
    6. El mapa de entregas (Hoy): un 🚚 por camión con su placa; el 🚚 estimado del recorrido no se dibuja si hay GPS.
    7. La ciudad (patio.js): cada camión con su punto del GPS en la escena, «salió» del GPS y David no reclama un camión que salió.
+   10-14. (§4kp, servidor 2026-10-13-b) el DÍA del servidor (`gpsDia`): un «salió» que fue a recoger a Moreno se deshace; el registro
+      con palabras; «📍 Llegó» en Mis pedidos (no ✅); el cierre de entregas dice qué vio el GPS y tilda SOLO al tocar el botón; las
+      paradas en el mapa; el recorrido del servidor (`gpsRuta`, solo con la 13-b); una lectura atrasada o de ayer no pisa.
    Datos SINTÉTICOS. Reloj clavado el miércoles 14/10/2026 a las 12:30 de Bolivia.
    Se corre:  node tests/test_gps_pagina.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -39,7 +42,11 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       { p:'6663CCP', pl:'6663-CCP', la:-17.762, lo:-63.1429, v:32, m:1, r:Date.now()-120000, c:'LUIS', dep:{ id:'ptf', n:'PTF', m:1455 }, f:1, s:'09:42', sd:'ptf', ul:'09:42', vu:'' },
       { p:'6409TIG', pl:'6409-TIG', la:P.lat, lo:P.lng, v:0, m:0, r:Date.now()-60000, c:'', dep:{ id:'ptf', n:'PTF', m:12 }, f:0, s:'', sd:'', ul:'', vu:'' } ] };
     window.__conGps=true;
-    apiPost=function(pl){ var j={ ok:true, version:'2026-10-13-a', ahora:Date.now(), pedidos:JSON.parse(JSON.stringify(STATE)) }; if(window.__conGps) j.gps=JSON.parse(JSON.stringify(window.__G)); return Promise.resolve(j); };
+    apiPost=function(pl){
+      if(pl && pl.action==='gpsRuta'){ window.__rutaPedidos++; return Promise.resolve({ ok:true, version:window.__ver, ruta:JSON.parse(JSON.stringify(window.__RUTA||null)) }); }
+      var j={ ok:true, version:window.__ver||'2026-10-13-a', ahora:Date.now(), pedidos:JSON.parse(JSON.stringify(STATE)) }; if(window.__conGps) j.gps=JSON.parse(JSON.stringify(window.__G));
+      if(window.__DIA) j.gpsDia=JSON.parse(JSON.stringify(window.__DIA)); return Promise.resolve(j); };
+    window.__rutaPedidos=0;
   });
 
   console.log('\n── 1. La lectura trae el GPS ──');
@@ -128,12 +135,14 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       { p:'6663CCP', pl:'6663-CCP', la:-17.7489, lo:-63.1540, v:12, m:1, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:1180 }, f:1, s:'', vu:'' },
       { p:'5655KSC', pl:'5655-KSC', la:-17.7623, lo:-63.0680, v:0, m:0, r:t, c:'', dep:{ id:'ptf', n:'PTF', m:8100 }, f:1, s:'', vu:'' } ] }, Date.now());
     var D=patioDatos(), C={}; D.cams.forEach(function(c){ C[c.k]=c; });
-    return { tig:C['Carry'].gps, url:C['Foton insumo'].gps, ccp:C['Foton nuevo'].gps, ksc:C['Foton encarpado'].gps };
+    return { tig:C['Carry'].gps, url:C['Foton insumo'].gps, ccp:C['Foton nuevo'].gps, ksc:C['Foton encarpado'].gps, donde:gpsDondeTxt(camionGps('Foton encarpado')), dondeCcp:gpsDondeTxt(camionGps('Foton nuevo')) };
   });
   chk('el Carry, en Banzer: «adentro» y en Banzer (la ciudad lo estaciona allá)', r.tig && r.tig.f===0 && r.tig.depId==='banzer', r.tig);
   chk('el Foton insumo, adentro de PTF', r.url && r.url.f===0 && r.url.depId==='ptf', r.url);
   chk('el Foton nuevo, en la calle a ~1 km al oeste de PTF (en la ciudad, a la izquierda de PTF, x<35)', r.ccp && r.ccp.f===1 && r.ccp.x<35 && r.ccp.x>-140, r.ccp);
   chk('el Foton encarpado, en la calle junto a Moreno (Moreno está en x 315, z −105 de la ciudad)', r.ksc && r.ksc.f===1 && Math.abs(r.ksc.x-315)<40 && Math.abs(r.ksc.z+105)<=70, r.ksc);
+  chk('(13/10, dueño: «está atrás de la fábrica en plena calle») a 60 m del pin de Moreno: «en Moreno», aunque el servidor (13-a) no lo diga', r.ksc && r.ksc.enMor===true && r.donde==='en Moreno', [r.ksc && r.ksc.enMor, r.donde]);
+  chk('…y uno en la calle a 1 km de PTF sigue «en la calle»', r.ccp && r.ccp.enMor===false && /^en la calle/.test(r.dondeCcp), [r.ccp && r.ccp.enMor, r.dondeCcp]);
 
   console.log('\n── 9. (dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») el recorrido del día y sus paradas ──');
   r = await ev(() => {
@@ -155,6 +164,114 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('«📡 Lo que dijo el GPS»: la parada, lo más nuevo primero', r.ev.length>=1 && /^10:05 6663-CCP se paró 9 min cerca de CLIENTE 1/.test(r.ev[0]), r.ev);
   chk('la ciudad recibe el rastro (5 puntos), la parada y el registro', r.ruta===5 && r.paradas.length===1 && r.paradas[0].cli==='CLIENTE 1' && r.log>=1 && r.desde==='10:00', r);
   chk('«Por cargar»: lo del pedido sin camión también (MEMORY FLEX ×2)', r.sin.some(function(x){ return /MEMORY FLEX/.test(x) && /×2/.test(x); }), r.sin);
+
+  console.log('\n── 10. (§4kp, servidor 13-b) el día del servidor: «salió» que se deshace (Moreno), registro y paradas ──');
+  r = await ev(async () => {
+    var hoy=todayStr(), P=almUbic('ptf'), now=Date.now();
+    STATE.push(Object.assign({}, STATE[3], { id:'g6', oc:'10-806', cliente:'CLIENTE SIN PIN', maps:'' }));
+    /* 1) un servidor 13-a dijo que el Carry salió 08:02 (iba a Moreno) */
+    window.__G.u[1]=Object.assign({}, window.__G.u[1], { la:-17.75, lo:-63.10, f:1, s:'08:02', sd:'ptf', ul:'08:02' });
+    window.__G.t=now-60000; await apiList({ entera:true });
+    var antes=camionSalio(hoy, 'Carry');
+    /* 2) el 13-b: llegó a Moreno sin pararse en ningún pedido → no salió a repartir */
+    window.__G.u[1]=Object.assign({}, window.__G.u[1], { la:-17.7623, lo:-63.0676, s:'', sd:'', ul:'', mor:1 });
+    window.__DIA={ f:hoy, t:now, u:{
+      '6663CCP':{ s:'09:42', sd:'ptf', ul:'09:42', vu:'', ev:[['09:42','sal','ptf','']],
+        par:[['10:05','10:15',P.lat+0.0101,P.lng,['g1'],0,11], ['10:40','10:50',P.lat+0.0201,P.lng+0.0001,[],0,null], ['11:20','11:31',P.lat+0.0500,P.lng+0.0002,[],1,null]] },
+      '6409TIG':{ s:'', sd:'', ul:'', vu:'', ev:[['08:02','sal','ptf','rec'],['08:21','lle','moreno','ptf'],['09:08','lle','ptf','moreno']], par:[] },
+      '5655KSC':{ s:'08:40', sd:'banzer', ul:'08:40', vu:'12:10', ev:[['08:40','sal','banzer',''],['12:10','lle','ptf','banzer']], par:[['09:30','09:45',-17.80,-63.20,[],0,null]] } } };
+    window.__ver='2026-10-13-b'; SERVER_VER='2026-10-13-b'; window.__rutaPedidos=0;   // (el apiPost de verdad anota SERVER_VER con cada respuesta)
+    window.__RUTA={ f:hoy, u:{ '6663CCP':[[9*60+40, P.lat, P.lng, 0], [9*60+50, P.lat+0.005, P.lng, 30], [10*60+5, P.lat+0.0101, P.lng, 0]] } };
+    await apiList({ entera:true });
+    var D=gpsDiaCargar(), guardado=null; try{ guardado=JSON.parse(localStorage.getItem('me_gps_dia')); }catch(e){}
+    return { antes:antes, despues:camionSalio(hoy, 'Carry'), fn:camionSalio(hoy, 'Foton nuevo'), hay:gpsDiaHay(), guardado:!!(guardado && guardado.f===hoy && guardado.u['6409TIG']),
+      donde:gpsDondeTxt(camionGps('Carry')), ev:gpsEventosHoy().map(function(e){ return e.h+' '+e.ic+' '+e.x.replace(/<[^>]+>/g,''); }) };
+  });
+  if(r.__error) console.log('ERROR', r.__error);
+  chk('el 13-a dijo «salió 08:02»; el 13-b dice que fue a recoger a Moreno: el «salió» se DESHACE (no queda recordado)', r.antes==='08:02' && r.despues==='', r);
+  chk('el Foton nuevo sigue con su salida de verdad (09:42); el día queda guardado en el aparato', r.fn==='09:42' && r.hay && r.guardado, r);
+  chk('la ficha del camión dice «en Moreno»', r.donde==='en Moreno', r.donde);
+  chk('«📡 Lo que dijo el GPS»: el viaje a recoger, la llegada a Moreno y la vuelta, con palabras', r.ev.some(function(e){ return /^08:02 ↩️ 6409-TIG salió de PTF — fue a recoger a Moreno: no cuenta como «salió»/.test(e); }) &&
+      r.ev.some(function(e){ return /^08:21 📥 6409-TIG llegó a Moreno \(a recoger\) · venía de PTF/.test(e); }) && r.ev.some(function(e){ return /^09:08 🏁 6409-TIG llegó a PTF · venía de Moreno/.test(e); }), r.ev);
+  chk('…y las paradas: 📍 la que el servidor nombró, 📍 la que la página reconoce (10:40, el pin de g2) y 🛑 la que no tiene pedido', r.ev.some(function(e){ return /^10:05 📍 6663-CCP se paró 10 min cerca de CLIENTE 1 · OC 10-801 \(11 m\)/.test(e); }) &&
+      r.ev.some(function(e){ return /^10:40 📍 6663-CCP se paró 10 min cerca de CLIENTE 2/.test(e); }) && r.ev.some(function(e){ return /^09:30 🛑 5655-KSC se paró 15 min \(sin pedido de hoy cerca\)/.test(e); }), r.ev);
+
+  console.log('\n── 11. 📍 «Llegó» en Mis pedidos: es una prueba, NO un ✅ ──');
+  r = await ev(() => {
+    var ids=['g1','g2','g3','g4','g5','g6'], out={};
+    ids.forEach(function(id){ var p=findById(id), ll=gpsLlegadaDe(p); out[id]=ll ? (ll.veh+' '+gpsHoraTxt(ll.t0)+(ll.abierta?' abierta':'')+' '+ll.m+'m') : null; });
+    var v=pedidoViajeDatos(findById('g1')).pasos.map(function(s){ return (s.hecho?'✓':'·')+s.ico+s.lbl; });
+    var v4=pedidoViajeDatos(findById('g4')).pasos.map(function(s){ return (s.hecho?'✓':'·')+s.ico+s.lbl; });
+    return { ll:out, v:v, v4:v4, ent:findById('g1').entregado };
+  });
+  chk('g1: la parada que el servidor le asignó (10:05, a 11 m)', r.ll.g1==='Foton nuevo 10:05 11m', r.ll);
+  chk('g2: el servidor no la nombró, pero el camión SUYO se paró a 15 m de su pin → 10:40', r.ll.g2==='Foton nuevo 10:40 15m', r.ll);
+  chk('g5 (sin camión): cualquier camión que se paró en su puerta → el Foton nuevo, 11:20, sigue ahí', /^Foton nuevo 11:20 abierta/.test(r.ll.g5||''), r.ll);
+  chk('g3 (Carry), g4 (encarpado, el camión se paró lejos) y g6 (sin pin): nada', r.ll.g3===null && r.ll.g4===null && r.ll.g6===null, r.ll);
+  chk('el viaje de g1: «Salió 09:42» hecho y «📍 Llegó 10:05» como paso actual, sin ✅', r.v[3]==='✓🚚Salió 09:42' && r.v[4]==='·📍Llegó 10:05' && r.ent===false, r.v);
+  chk('el de g4 (sin parada en su puerta) sigue esperando el ✅ de siempre', r.v4[4]==='·✅Entregado', r.v4);
+
+  console.log('\n── 12. ✅ Cierre de entregas: lo que vio el GPS, y tildar SOLO a pedido ──');
+  r = await ev(() => {
+    var guardados=0, ap=apiSave; apiSave=function(){ guardados++; return Promise.resolve({ ok:true }); };
+    abrirCierreEntregas();
+    var box=document.getElementById('modal-box'), t=box.innerText.replace(/\s+/g,' '), tild0=cierreEntTildados().length;
+    var badge=function(id){ var i=box.querySelector('.cie-ent-chk[data-id="'+id+'"]'); var row=i && i.closest('.cie-row'); var b=row && row.querySelector('.cie-gps'); return b ? b.textContent : ''; };
+    var b={ g1:badge('g1'), g2:badge('g2'), g3:badge('g3'), g4:badge('g4'), g5:badge('g5'), g6:badge('g6') };
+    var btn=document.getElementById('cie-gps-tildar'), btnTxt=btn && btn.textContent;
+    if(btn) btn.click();
+    var sel=cierreEntTildados().slice().sort(), btn2=document.getElementById('cie-gps-tildar');
+    closeModal(); apiSave=ap;
+    return { t:t, tild0:tild0, b:b, btnTxt:btnTxt, sel:sel, btn2:!!btn2, guardados:guardados, ent:STATE.filter(function(p){ return p.entregado; }).length };
+  });
+  if(r.__error) console.log('ERROR', r.__error);
+  chk('al abrir, NADA viene tildado (dueño, 12/10) y el texto ya no dice «vienen tildados»', r.tild0===0 && /Nada viene tildado/.test(r.t) && !/vienen tildados como propuesta/.test(r.t), r.t.slice(0,300));
+  chk('el resumen: el GPS vio la puerta de 3 de 6, 1 con el camión de vuelta sin pararse, 1 sin ubicación', /El GPS vio el camión en la puerta de 3 de 6 pedidos de hoy · 1 con el camión de vuelta sin haberse parado ahí · 1 sin ubicación/.test(r.t), r.t);
+  chk('cada fila dice lo suyo: 📍 estuvo ahí (g1, g2), está ahí (g5), volvió sin pararse (g4), sin ubicación (g6), nada (g3)',
+      /📍 el camión estuvo ahí de 10:05 a 10:15 \(10 min\)/.test(r.b.g1) && /de 10:40 a 10:50/.test(r.b.g2) && /está ahí desde las 11:20/.test(r.b.g5) &&
+      /volvió sin pararse ahí/.test(r.b.g4) && /sin ubicación/.test(r.b.g6) && r.b.g3==='', r.b);
+  chk('«📍 Tildar los 3 que vio el GPS» tilda g1, g2 y g5 — y nada más', /Tildar los 3 que vio el GPS/.test(r.btnTxt||'') && JSON.stringify(r.sel)==='["g1","g2","g5"]' && !r.btn2, [r.btnTxt, r.sel]);
+  chk('…sin guardar nada ni marcar ✅: logística confirma con el botón de siempre', r.guardados===0 && r.ent===0, r);
+
+  console.log('\n── 13. El mapa (paradas) y el recorrido del servidor ──');
+  r = await ev(async () => {
+    document.getElementById('mapa-overlay').style.display='flex';
+    var circ=[]; var capa={ addTo:function(){ return capa; }, remove:function(){} };
+    var obj=function(o){ var x={ o:o, addTo:function(){ return x; }, bindPopup:function(t){ x.pop=t; return x; }, setLatLng:function(){ return x; } }; return x; };
+    window.L={ layerGroup:function(){ return capa; }, polyline:obj, circleMarker:function(ll, o){ var x=obj(o); circ.push(x); return x; }, divIcon:function(o){ return o; }, marker:function(){ return obj(); } };
+    MAPA={ removeLayer:function(){} }; MAPA_DIA='hoy';
+    GPS.rec=relojMs()-11*60000;   // las posiciones vencieron: las paradas se dibujan igual
+    mapaGpsPintar();
+    var pops=circ.map(function(c){ return (c.o.fillColor==='#22c55e'?'V ':'G ')+String(c.pop||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' '); });
+    document.getElementById('mapa-overlay').style.display='none';
+    window.__conGps=true; window.__G.t=Date.now()-60000; await apiList({ entera:true });
+    GPS_RUTA_PED=0; GPS_RUTA_SRV=null; var n0=window.__rutaPedidos, h=gpsHistDe('Foton nuevo'); await new Promise(function(res){ setTimeout(res, 50); });
+    var h2=gpsHistDe('Foton nuevo'), n1=window.__rutaPedidos; gpsHistDe('Foton nuevo'); var n2=window.__rutaPedidos;
+    return { pops:pops, n0:n1-n0, n1:n2-n0, n2:n2-n0, h2:h2.length, h2a:h2[0] && gpsHoraTxt(h2[0][0]), ult:h2.length && gpsHoraTxt(h2[h2.length-1][0]), hs:h2.map(function(q){ return gpsHoraTxt(q[0]); }).join(',') };
+  });
+  if(r.__error) console.log('ERROR', r.__error);
+  chk('el mapa de Hoy dibuja las 4 paradas (verde = cerca de un pedido: 3), aunque las posiciones hayan vencido', r.pops.length===4 && r.pops.filter(function(x){ return x[0]==='V'; }).length===3 &&
+      r.pops.some(function(x){ return /Foton nuevo · se paró a las 10:05 \(10 min\) cerca de CLIENTE 1/.test(x); }) && r.pops.every(function(x){ return /no es un ✅/.test(x); }), r.pops);
+  chk('el recorrido se pide al servidor (gpsRuta) una vez, y no otra vez antes de 2 minutos', r.n0===1 && r.n1===1, [r.n0, r.n1]);
+  chk('…y se junta: los puntos del servidor (09:40 a 10:05) y después los de este aparato (10:08 a 10:14)', r.hs==='09:40,09:50,10:05,10:08,10:12,10:14,12:28', r.hs);
+
+  console.log('\n── 14. Un servidor 13-a no recibe «gpsRuta»; un día viejo o atrasado no pisa ──');
+  r = await ev(async () => {
+    var hoy=todayStr();
+    SERVER_VER='2026-10-13-a'; GPS_RUTA_PED=0; var n=window.__rutaPedidos; await gpsRutaPedir(true); var conA=window.__rutaPedidos-n;
+    SERVER_VER='2026-10-13-b';
+    var t=gpsDiaCargar().t;
+    gpsDiaTomar({ f:hoy, t:t-60000, u:{ '6409TIG':{ s:'07:00', ev:[], par:[] } } });
+    var atrasado=camionSalio(hoy, 'Carry');
+    gpsDiaTomar({ f:'2026-10-13', t:t+60000, u:{ '6409TIG':{ s:'07:00', ev:[], par:[] } } });
+    var ayer=camionSalio(hoy, 'Carry');
+    var D=patioDatos(), fn=D.cams.filter(function(c){ return c.k==='Foton nuevo'; })[0];
+    return { conA:conA, atrasado:atrasado, ayer:ayer, srv:D.dia.gpsSrv, par:fn.gpsParadas.map(function(s){ return s.h0+' '+s.cli; }) };
+  });
+  if(r.__error) console.log('ERROR', r.__error);
+  chk('con el servidor 13-a no se pide «gpsRuta» (caería en el guardado)', r.conA===0, r);
+  chk('una lectura atrasada (t más viejo) y el día de ayer no cambian nada', r.atrasado==='' && r.ayer==='', r);
+  chk('la ciudad: sabe que el registro es del servidor y nombra el cliente de cada parada', r.srv===true && r.par[0]==='10:05 CLIENTE 1' && r.par[1]==='10:40 CLIENTE 2' && r.par[2]==='11:20 CLIENTE 5', r.par);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

@@ -89,6 +89,7 @@ function ptDePedido(p){
 function gpsEscenaDe(veh){ var x=(typeof camionGps==='function') ? camionGps(veh) : null; if(!x) return null;
   var q=geoAEscena(Number(x.la), Number(x.lo));
   return { x:Math.max(X0+8, Math.min(X1-8, q.x)), z:Math.round(Math.max(Z0, Math.min(Z1, q.z))/G)*G, v:x.v, m:x.m, f:x.f, vu:x.vu||'', depId:(x.dep && x.dep.id) || '',
+           enMor:(typeof gpsEnMoreno==='function' && gpsEnMoreno(x)),   // (13/10) en Moreno: se estaciona ahí, no en la calle de atrás
            hace:(typeof gpsHace==='function' ? gpsHace(x) : ''), donde:(typeof gpsDondeTxt==='function' ? gpsDondeTxt(x) : '') }; }
 /* 🛰️ (13/10, dueño: «falta la pestaña recorrido gps y "lo que dijo el gps"») el recorrido del día de este aparato (gpsHistDe,
    pedidos.html) y sus paradas, en la escena. Sin pegar a las calles: es el rastro de verdad. Hasta 400 puntos. */
@@ -100,7 +101,9 @@ function gpsRutaDe(veh){ if(typeof gpsHistDe!=='function') return [];
   return out; }
 function gpsParadasDe(veh){ if(typeof gpsParadas!=='function') return [];
   return gpsParadas(veh).map(function(s){ var q=gpsAEscena(s.lat, s.lng);
-    return { x:q.x, z:q.z, h0:gpsHoraTxt(s.t0), dur:gpsDurTxt(s.t1-s.t0), abierta:!!s.abierta, cli:s.ped?(s.ped.cliente||'—'):'', oc:s.ped?(s.ped.oc||''):'', m:s.pm }; }); }
+    var ps=(s.peds && s.peds.length) ? s.peds : (s.ped ? [s.ped] : []);   // (§4kp) el servidor puede nombrar varios en el mismo lugar
+    return { x:q.x, z:q.z, h0:gpsHoraTxt(s.t0), dur:gpsDurTxt(s.t1-s.t0), abierta:!!s.abierta, cli:ps.map(function(p){ return p.cliente||'—'; }).join(' y '),
+             oc:ps.map(function(p){ return p.oc||''; }).filter(Boolean).join(' y '), m:s.pm }; }); }
 function diaDe(f, n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return (typeof isoLocal==='function') ? isoLocal(d) : d.toISOString().slice(0,10); }
 function delDia(p){ return !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p); }
 function patioDatos(){
@@ -154,14 +157,14 @@ function patioDatos(){
           sinCamion:sin.stops.length, sinMarcar:sinMarcar, faltan:faltan.length, faltanOc:faltan.slice(0,3).map(function(p){ return p.oc||p.cliente; }),
           tarde:tarde, tardeSin:tardeSin,
           gpsLog:(fecha===hoy && typeof gpsEventosHoy==='function') ? gpsEventosHoy() : [],
-          gpsVivo:(typeof gpsVigente==='function' && gpsVigente()), gpsDesde:gpsDesdeTxt() } };
+          gpsVivo:(typeof gpsVigente==='function' && gpsVigente()), gpsDesde:gpsDesdeTxt(), gpsSrv:(typeof gpsDiaHay==='function' && gpsDiaHay()) } };
 }
 window.patioDatos=patioDatos;
 window.patioTiendas=function(){ return TIENDAS.map(function(t){ return { n:t.n, marca:t.marca, pt:{ x:t.pt.x, z:t.pt.z } }; }); };
 function firmaDe(D){ return D ? JSON.stringify([D.fecha, D.cams.map(function(c){ return [c.k, c.alm, c.chofer, c.salio, c.lineas.map(function(l){ return l.key+'='+l.u+l.st; }),
   c.stops.map(function(s){ return s.id+(s.ok?'✓':'')+(s.pt?s.pt.x+','+s.pt.z:''); })]; }), D.sin.stops.length, D.im.u, diaFirma(D.dia)]) : ''; }
 /* la hora de «va tarde» cambia cada minuto: no cuenta como cambio de la escena (la dice David en el momento, `horaYa`) */
-function diaFirma(d){ if(!d) return d; var t=d.tarde, o=Object.assign({}, d, { gpsLog:0, gpsVivo:0, gpsDesde:0 });   // lo del GPS cambia cada minuto: va por api.gps
+function diaFirma(d){ if(!d) return d; var t=d.tarde, o=Object.assign({}, d, { gpsLog:0, gpsVivo:0, gpsDesde:0, gpsSrv:0 });   // lo del GPS cambia cada minuto: va por api.gps
   if(t) o.tarde={ k:t.k, n:t.n, turno:t.turno, cams:t.cams }; return o; }
 /* desde qué hora tiene recorrido este aparato (el primer punto de hoy de cualquier camión) */
 function gpsDesdeTxt(){ if(typeof gpsHistCargar!=='function') return ''; var H=gpsHistCargar(), m=0;
@@ -1038,6 +1041,9 @@ function armarAlertas(D){
     if(a.obj){ a.obj.visible=V.alertas; a.obj.children[1].material.emissiveIntensity=V.noche?1:.35; } });
 }
 
+/* 🛰️ dónde lo pone el GPS: en la calle, o en un depósito ('ptf', 'banzer', 'moreno'). UNA cuenta para sincronizar y gpsAlDia (si no,
+   la escena se rearmaba cada 1,5 s creyendo que algo cambió). */
+function gpsLugar(g){ var enMor=!!(g && g.enMor); return { calle:!!(g && g.f && !enMor), dep:g ? (enMor ? 'moreno' : (!g.f ? (g.depId||'') : '')) : '' }; }
 /* ═════════ sincronizar: la escena se pone igual a lo que dice el panel ═════════ */
 function sincronizar(D, animar){
   D0=D;
@@ -1049,11 +1055,13 @@ function sincronizar(D, animar){
     c.gps=d.gps; c.volvio=!!(d.gps && !d.gps.f && d.gps.vu); c.gpsRuta=d.gpsRuta||[]; c.gpsParadas=d.gpsParadas||[];
     /* (13/10, dueño: «los 4 camiones salen en el mismo lugar, no en vivo») con GPS, el camión está DONDE DICE EL GPS: lejos de PTF y de
        Banzer → en la calle, en su punto; en PTF o en Banzer → en ese depósito. Sin GPS, como antes («Ya salió» y el recorrido estimado). */
-    c.gpsCalle=!!(d.gps && d.gps.f); c.gpsDep=(d.gps && !d.gps.f) ? (d.gps.depId||'') : '';
-    if(c.gpsDep) c.alm=(c.gpsDep==='banzer') ? 'bz' : 'ptf';   // 🛰️ (§4ko) el GPS dice que volvió a PTF o Banzer: vuelve a su andén
+    /* (13/10, dueño: «¿por qué está parado ese camión? Está atrás de la fábrica en plena calle») a ≤ 400 m de Moreno el camión ESTÁ en
+       Moreno (fue a recoger): se estaciona en su andén. Antes contaba como «en la calle» y quedaba en la calle más cercana a su punto. */
+    var GL=gpsLugar(d.gps); c.gpsCalle=GL.calle; c.gpsDep=GL.dep;
+    if(c.gpsDep) c.alm=(c.gpsDep==='banzer') ? 'bz' : (c.gpsDep==='moreno') ? 'im' : 'ptf';   // 🛰️ (§4ko) el GPS dice dónde está: a su andén
   });
   /* los andenes: salteados (0, 2, 4…) mientras alcancen, así cada camión tiene su carril de espera al costado sin pisar al vecino */
-  ['ptf','bz'].forEach(function(k){ var L=CAMS.filter(function(c){ return c.alm===k; }), np=ALM[k].puertas, salto=L.length<=Math.ceil(np/2);
+  ['ptf','bz','im'].forEach(function(k){ var L=CAMS.filter(function(c){ return c.alm===k; }), np=ALM[k].puertas, salto=L.length<=Math.ceil(np/2);
     L.forEach(function(c,i){ var pu=salto ? i*2 : i%np; if(c.anden!==pu && !c.enCalle){ c.anden=pu; c.movido=true; } else c.anden=pu; }); });
   D.cams.forEach(function(d){ itemsSync(camPorK(d.k), d, animar); });
   CAMS.forEach(function(c){
@@ -1091,7 +1099,8 @@ function pintarPines(){ PINES.forEach(function(p){ esc.remove(p.g); if(p.e){ var
 
 /* ═════════ la ficha del camión elegido, las alertas, los números y las pestañas ═════════ */
 function estadoChip(c){
-  if(c.enCalle) return '<span class="chip az">'+(c.salioMano?'🛣️':'🛰️')+' Salió '+escH(c.salio)+' · '+hechas(c)+' de '+c.paradas.length+' entregados</span>';
+  if(c.enCalle) return '<span class="chip az">'+(c.salioMano?'🛣️':'🛰️')+(c.salio?' Salió '+escH(c.salio):' En la calle · lo dice el GPS')+' · '+hechas(c)+' de '+c.paradas.length+' entregados</span>';
+  if(c.gpsDep==='moreno') return '<span class="chip">📥 En Moreno · lo dice el GPS'+(c.total?' · '+c.dentro+'/'+c.total+' cargado':'')+'</span>';
   if(!c.total && !c.items.length) return '<span class="chip">Sin carga '+(D0&&D0.hoy?'hoy':'para ese día')+'</span>';
   if(!c.total) return '<span class="chip ro">⛔ Todo sin stock</span>';
   if(c.dentro>=c.total && !c.chofer) return '<span class="chip ro">🧑‍✈️ Cargado, sin chofer</span>';
@@ -1186,16 +1195,18 @@ function tabGpsRec(){ var q=gpsQuieto(); if(q) return q;
   var R=c.gpsRuta||[], km=0; for(var i=1;i<R.length;i++){ var dx=R[i].x-R[i-1].x, dz=R[i].z-R[i-1].z; km+=Math.sqrt(dx*dx+dz*dz); }
   var pasos=[];
   if(c.salio) pasos.push({ ic:c.salioMano?'🛣️':'🛰️', h:c.salio, t:'Salió'+(c.salioMano?' (marcado en el panel)':' (lo dice el GPS)') });
-  (c.gpsParadas||[]).forEach(function(s){ pasos.push({ ic:'🛑', h:s.h0, t:(s.abierta?'Parado hace ':'Se paró ')+s.dur+(s.cli?' · cerca de <b>'+escH(s.cli)+'</b>'+(s.oc?' · '+escH(s.oc):'')+' ('+s.m+' m)':' · sin pedido de hoy cerca') }); });
+  (c.gpsParadas||[]).forEach(function(s){ pasos.push({ ic:s.cli?'📍':'🛑', h:s.h0, t:(s.abierta?'Parado hace ':'Se paró ')+s.dur+(s.cli?' · cerca de <b>'+escH(s.cli)+'</b>'+(s.oc?' · '+escH(s.oc):'')+' ('+s.m+' m)':' · sin pedido de hoy cerca') }); });
   if(c.gps && c.gps.vu) pasos.push({ ic:'🏁', h:c.gps.vu, t:'Volvió' });
   pasos.sort(function(a,b){ return a.h<b.h?-1:a.h>b.h?1:0; });
   var ahora=c.gps ? ('<b>Ahora:</b> '+escH(c.gps.donde)+' · '+c.gps.v+' km/h'+(c.gps.m?'':' · motor apagado')+(c.gps.hace?' · reporte '+escH(c.gps.hace):'')) : 'Sin posición del GPS en los últimos 10 minutos.';
   return chips+'<div class="log">'+(pasos.length?pasos.map(function(p){ return '<div><time>'+escH(p.h)+'</time><span>'+p.ic+' '+p.t+'</span></div>'; }).join(''):'<div><time>—</time><span>Hoy todavía no salió ni se paró en la calle.</span></div>')+'</div>'+
-    '<div class="nota-gps" style="margin-top:8px">'+ahora+(R.length>1?' · rastro de '+R.length+' reportes (la línea de su color en la ciudad)':'')+'. Una parada es '+4+' min o más quieto fuera de PTF y Banzer; «cerca» = a menos de 300 m de un pedido suyo de hoy. El ✅ entregado lo sigue marcando logística.</div>'; }
+    '<div class="nota-gps" style="margin-top:8px">'+ahora+(R.length>1?' · rastro de '+R.length+' reportes (la línea de su color en la ciudad)':'')+'. Una parada es '+4+' min o más quieto fuera de PTF'+(D0.dia.gpsSrv?', Banzer y Moreno':' y Banzer')+'; «cerca» = a menos de 300 m de un pedido suyo de hoy (📍). El ✅ entregado lo sigue marcando logística.</div>'; }
 function tabGps(){ var q=gpsQuieto(); if(q) return q;
   var L=D0.dia.gpsLog||[];
   return '<div class="log">'+(L.length?L.map(function(e){ return '<div data-k="'+escH(e.k)+'" style="cursor:pointer"><time>'+escH(e.h)+'</time><span>'+e.ic+' '+e.x+'</span></div>'; }).join(''):'<div><time>—</time><span>'+(D0.dia.gpsVivo?'El GPS todavía no dijo nada de hoy: ni salidas, ni vueltas, ni paradas.':'Sin noticias del GPS en los últimos 10 minutos.')+'</span></div>')+'</div>'+
-    '<div class="nota-gps" style="margin-top:8px">📡 '+(D0.dia.gpsVivo?'El GPS se lee cada minuto':'⚠️ Sin noticias del GPS')+'. «Salió» = 15 min seguidos lejos de PTF y de Banzer. Las paradas salen del recorrido que este aparato fue leyendo'+(D0.dia.gpsDesde?' (desde las '+escH(D0.dia.gpsDesde)+')':'')+'.</div>'; }
+    '<div class="nota-gps" style="margin-top:8px">📡 '+(D0.dia.gpsVivo?'El GPS se lee cada minuto':'⚠️ Sin noticias del GPS')+'. «Salió» = 15 min seguidos lejos de PTF y de Banzer'+(D0.dia.gpsSrv?
+      '; ir a recoger a Moreno o pasar de un depósito al otro no cuenta. Las paradas y este registro los anota el servidor cada minuto, para todos (aunque nadie tenga el panel abierto).':
+      '. Las paradas salen del recorrido que este aparato fue leyendo'+(D0.dia.gpsDesde?' (desde las '+escH(D0.dia.gpsDesde)+')':'')+'.')+'</div>'; }
 function pintarTab(){
   [].forEach.call(document.querySelectorAll('#pt-tabs button[data-t]'), function(b){ var t=b.dataset.t; b.hidden=(t==='calle'&&!V.calle); b.classList.toggle('on', t===TAB); });
   if(TAB==='calle'&&!V.calle) TAB='rec';
@@ -1307,13 +1318,13 @@ ponerNoche(false);
 /* 🛰️ (§4ko) el GPS cambia cada minuto: se pasa sin rearmar la escena (no entra en la firma) */
 function gpsAlDia(D){ var cambio=false, otro=false; (D && D.cams || []).forEach(function(d){ var c=camPorK(d.k); if(!c) return;
   var vo=!!(d.gps && !d.gps.f && d.gps.vu), fk=d.gps ? [d.gps.x, d.gps.z, d.gps.v, d.gps.f, d.gps.hace].join('|') : '';
-  var gc=!!(d.gps && d.gps.f), gd=(d.gps && !d.gps.f) ? (d.gps.depId||'') : '';
+  var GL=gpsLugar(d.gps), gc=GL.calle, gd=GL.dep;
   if(vo!==!!c.volvio || gc!==!!c.gpsCalle || gd!==(c.gpsDep||'') || !!d.gps!==!!c.gps) cambio=true;   // salió a la calle, llegó a un depósito, o apareció/se fue el GPS: la escena se acomoda
   if(fk!==(c.gpsK||'')){ otro=true; if(c===SEL) c.gpsRepinta=true; }
   c.gps=d.gps; c.volvio=vo; c.gpsK=fk;
   var rk=(d.gpsRuta||[]).length+'|'+(d.gpsParadas||[]).map(function(s){ return s.h0+s.dur; }).join(',');
   if(rk!==(c.rastroK||'')){ otro=true; c.rastroK=rk; c.gpsRuta=d.gpsRuta||[]; c.gpsParadas=d.gpsParadas||[]; if(c===SEL) c.rastroOtro=true; } });
-  if(D && D0 && D.dia && JSON.stringify(D.dia.gpsLog)!==JSON.stringify(D0.dia.gpsLog)){ D0.dia.gpsLog=D.dia.gpsLog; D0.dia.gpsVivo=D.dia.gpsVivo; D0.dia.gpsDesde=D.dia.gpsDesde; otro=true; }
+  if(D && D0 && D.dia && JSON.stringify(D.dia.gpsLog)!==JSON.stringify(D0.dia.gpsLog)){ D0.dia.gpsLog=D.dia.gpsLog; D0.dia.gpsVivo=D.dia.gpsVivo; D0.dia.gpsDesde=D.dia.gpsDesde; D0.dia.gpsSrv=D.dia.gpsSrv; otro=true; }
   /* solo si cambió algo del GPS (corre cada 1,5 s): la ficha, las pestañas y el rastro */
   if(otro){ if(SEL && SEL.gpsRepinta){ SEL.gpsRepinta=false; pintarFicha(); } if(SEL && SEL.rastroOtro){ SEL.rastroOtro=false; pintarRastro(); } if(TAB==='calle'||TAB==='gps'||TAB==='gpsr') pintarTab(); }
   return cambio; }
