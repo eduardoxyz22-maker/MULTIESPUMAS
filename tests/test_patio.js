@@ -160,6 +160,11 @@ async function con3D(){
     var t=document.querySelector('#pt-ov .pt-toast'), q=t && t.getBoundingClientRect();
     return { hay:true, t:!!t, viejo:!!document.querySelector('#pt-ov .toast'), alto:q ? Math.round(q.height) : 0, ancho:q ? Math.round(q.width) : 0, txt:t ? t.textContent : '' }; });
   chk('el aviso de «sin camión» es un renglón arriba (no un recuadro de arriba hasta abajo)', r.hay && r.t && !r.viejo && r.alto>0 && r.alto<90 && /Sin vehículo/.test(r.txt), r);
+  // 🔥 (13/10, dueño: «poné un supermercado Fidalga en llamas, nomás por diversión») solo adorno: llamas que se mueven y su cartel
+  const f1 = await page.evaluate(() => patioEstado());
+  await page.waitForTimeout(700);
+  const f2 = await page.evaluate(() => ({ E:patioEstado(), etq:[].map.call(document.querySelectorAll('#pt-ov .etq.fuego'), function(e){ return e.textContent; }) }));
+  chk('el Fidalga en llamas: 27 llamas que se mueven y su cartel «🔥 FIDALGA»', f1.fuego===27 && f2.E.fuegoAlto!==f1.fuegoAlto && f2.etq.join()==='🔥 FIDALGA', [f1.fuego, f1.fuegoAlto, f2.E.fuegoAlto, f2.etq]);
   await page.screenshot({ path:path.join(process.env.PATIO_FOTOS||'/tmp','patio_1.png'), timeout:120000 }).catch(e=>console.log('(sin foto: '+e.message.split('\n')[0]+')'));
   // tildar desde la ficha
   await page.evaluate(() => document.querySelector('#pt-ir-cam button[data-cam="Foton nuevo"]').click()); await page.waitForTimeout(800);

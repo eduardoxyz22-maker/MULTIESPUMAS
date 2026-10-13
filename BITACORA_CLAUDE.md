@@ -14251,3 +14251,17 @@ El dueño mandó una captura de la ciudad, sin texto. Se vieron tres cosas:
   página que lo espera). **Publicar**: la página de `258095f` cuando el dueño diga; el `.gs` 13-c lo implementa él y recién después la
   página que espera la 13-c (con la 13-b ya implementada, una página que espere la 13-c pondría el cartel de «versión vieja»).
   Volver atrás del servidor = ✏️ a la versión anotada Y pegar la 13-b (`16ac162…`, 3.721 líneas).
+- **13/10 tarde, el dueño implementó la `2026-10-13-c`** («implementado»). Batería entera: 181 suites, 6.301 comprobaciones; en rojo
+  solo `test_mispedidos` (32/1 con la máquina cargada, sola 33/33) y `test_patio` (corrió a mitad del armado del Fidalga; sola 37/37).
+
+### §4kq-b — 🔥 El Fidalga en llamas (13/10, dueño, con una captura de la zona de la obra y el parque)
+*«De paso poné un supermercado Fidalga en llamas, nomás por diversión, en ese sector, por ahí.»* SOLO ADORNO: no sale de ningún dato.
+- Manzana `'385,385'` (al este de la obra, al lado del parque), en `ESPECIAL` (misma línea de `cuerpo.js`: los rangos de `armar.py`
+  no se corren). `fidalga()` y `fuegoPaso()` viven en `patio_real/fuego.js`, pegado ADELANTE de `p3_vivo.js` (dentro de `armar`):
+  las funciones se elevan, y `var FUEGO;` va SIN valor porque ese archivo corre DESPUÉS del armado de la ciudad (un `=null` borraba lo
+  armado). Sin `rnd()`: no corre la suerte de las casas que siguen.
+- Galpón blanco con la franja y el cartel «FIDALGA» rojos (medio caído), techo hundido, hollín, la entrada rota; 9 focos × 3 conos
+  (rojo, naranja, amarillo, mezcla aditiva) que laten; 28 bolas de humo que suben y se van con el viento (arranca con la columna
+  armada); luz naranja que titila; camión de bomberos con la escalera al techo, balizas roja/azul, el chorro y dos bomberos; carritos
+  tirados; cartel «🔥 FIDALGA» (`.etq.fuego`). EDUARDO tiene dos frases más (`suelto`, `calle`).
+- `patioEstado()` dice `fuego` (llamas) y `fuegoAlto` (para ver que se mueven). `test_patio` 3D → 37. `PATIO_V='20261013i'`.
