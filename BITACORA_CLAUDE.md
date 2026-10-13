@@ -14034,3 +14034,8 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   ocho cuadras que la rodean son casonas blancas con teja y galería (`colonial`, `LOTE_COL`); los lotes de los costados ahora miran a la
   calle. Sin el anillo pegado a la plaza: adentro del 1er anillo queda el casco viejo en cuadrícula, como en el mapa (quedan 4 anillos:
   147/203/243/410). Botón «⛪ Centro» (`IR.centro`, también en `p4_ui.js` y `p5_tail.js`). Muestra v19.
+- Y con una foto aérea: *«Equipetrol termina y empieza el borde ecológico y el río Piraí»* → al oeste de la ciudad (el lado x=X0, arriba a la
+  izquierda en «Ver todo») el cinturón ecológico (copas de bosque, `copa`, sin sombra para no pesar), el río Piraí (`rioX(z)`: corre en z, del
+  suroeste al noreste como el real) con su arenal y el agua, y la avenida del oeste (`RADIALES[3]`, Roca y Coronado) que sigue por el bosque y
+  cruza el río por un puente, con carteles «RÍO PIRAÍ» y «CINTURÓN ECOLÓGICO» (`viaCartel` ahora estira el cartel al largo del texto).
+  `zonaAlta` pone las torres de Equipetrol al oeste, pegadas al bosque (y algo menos al norte). Muestra v20.

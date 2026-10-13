@@ -265,8 +265,8 @@ RADIALES.forEach(function(R){ var paso=2.5, n=Math.ceil(900/paso), ptx=function(
   viaTramos(n, function(i){ return viaLibre(ptx(i),ptz(i)); }).forEach(function(T){ var L=(T[1]-T[0]+1)*paso, mx=(ptx(T[0])+ptx(T[1]))/2, mz=(ptz(T[0])+ptz(T[1]))/2;
     var m1=plano(L, AN_HW*2, mx, mz, .061, VIA_ASF); m1.rotation.z=rot; var m2=plano(L, 3, mx, mz, .071, PASTO); m2.rotation.z=rot;
     for(var j=T[0]+2, k=0; j<=T[1]-2; j+=4, k++) viaAdorno(ptx(j), ptz(j), k, true); }); });
-function viaCartel(txt, x, z){ var p=M(0x5d6b7c); caja(.25,5.4,.25,p,x-3.4*.755,2.7,z+3.4*.656); caja(.25,5.4,.25,p,x+3.4*.755,2.7,z-3.4*.656);
-  var s=new THREE.Mesh(new THREE.PlaneGeometry(9,2.2), new THREE.MeshBasicMaterial({ map:cartelTex(txt,'#0f6b3a','#ffffff',512,124), side:THREE.DoubleSide })); s.position.set(x,6.3,z); s.rotation.y=Math.atan2(80,92); EST.add(s); }
+function viaCartel(txt, x, z){ var p=M(0x5d6b7c), sw=Math.max(9, txt.length*.62), hp=sw/2-1.1; caja(.25,5.4,.25,p,x-hp*.755,2.7,z+hp*.656); caja(.25,5.4,.25,p,x+hp*.755,2.7,z-hp*.656);
+  var s=new THREE.Mesh(new THREE.PlaneGeometry(sw,2.2), new THREE.MeshBasicMaterial({ map:cartelTex(txt,'#0f6b3a','#ffffff',Math.round(512*sw/9),124), side:THREE.DoubleSide })); s.position.set(x,6.3,z); s.rotation.y=Math.atan2(80,92); EST.add(s); }
 function palmera(x,z,h){ if(VIA_ON && enVia(x,z,1.5)) return; h=h||7+rnd()*3; cil(.22,h,M(0x9c8a6a),x,h/2,z,EST,6); var hoja=M(0x4e9a4f,{ flatShading:true });
   for(var i=0;i<7;i++){ var an=i/7*Math.PI*2+rnd()*.4, f=caja(.55,.12,3.4,hoja,x+Math.cos(an)*1.5,h-.1,z+Math.sin(an)*1.5); f.rotation.order='YXZ'; f.rotation.y=Math.PI/2-an; f.rotation.x=.42; } }
 function colonial(x,z,w,d,rot){ var g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; EST.add(g); var bl=M(0xf7f2e8), t=M([0xc0563a,0xb5502f,0xcc6a3c][Math.floor(rnd()*3)]), h=7.5, s=d/2+.9;   // casona blanca con teja y galería, como alrededor de la plaza
@@ -289,8 +289,29 @@ function plazaPrincipal(cx,cz){ var a=G-RW, pie=M(0xe9dcc4), BR=M(0xc0683f), BRF
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(q){ for(var i=0;i<2;i++) palmera(cx+q[0]*(6+i*8), cz+12+q[1]*(4+i*2.5)); arbol(cx+q[0]*22, cz+12+q[1]*12, 1.5, EST); });
   for(var p=-24;p<=24;p+=12){ palmera(cx+p, cz+28); palmera(cx-28, cz+p*.55+12); palmera(cx+28, cz+p*.55+12); }
   [[-9,4],[9,4],[-9,20],[9,20]].forEach(function(b){ caja(2.4,.5,.7,M(0x8a6a4b),cx+b[0],.5,cz+b[1]); }); }
+/* 🌳 (13/10, dueño, con foto: «Equipetrol termina y empieza el borde ecológico y el río Piraí») al oeste de la ciudad: el cinturón ecológico
+   (bosque tupido), el río Piraí con su arenal y la avenida del oeste (Roca y Coronado) que lo cruza por un puente. El río corre en z, como el
+   real (del suroeste al noreste). Equipetrol, con sus torres, queda pegado al bosque (`zonaAlta`). */
+var BORDE_X=X0-RW/2-2;
+function rioX(z){ return BORDE_X-150+16*Math.sin(z/95)+7*Math.sin(z/41); }
+(function borde(){ var W=RADIALES[3], z0=Z0-60, z1=Z1+60, BOSQ=[M(0x3f7a3c,{ flatShading:true }),M(0x4c8a42,{ flatShading:true }),M(0x356b34,{ flatShading:true }),M(0x5a9a4a,{ flatShading:true })], ICO=new THREE.IcosahedronGeometry(1,0);
+  var enCamino=function(x,z){ var dx=x-PLAZA.x, dz=z-PLAZA.z, t=dx*W.dx+dz*W.dz; return t>0 && Math.abs(dx*W.dz-dz*W.dx)<11; };
+  var copa=function(x,z,r){ if(enCamino(x,z)) return; var m=new THREE.Mesh(ICO, BOSQ[Math.floor(rnd()*BOSQ.length)]); m.scale.set(r,r*(.75+rnd()*.35),r); m.position.set(x,r*.75,z); m.rotation.y=rnd()*3; m.receiveShadow=true; EST.add(m); };
+  plano(BORDE_X-(BORDE_X-420),z1-z0,(BORDE_X+BORDE_X-420)/2,(z0+z1)/2,.03,M(0x5f8f4e));   // el piso del bosque
+  for(var z=z0; z<z1; z+=8.5) for(var x=BORDE_X-3; x>BORDE_X-420; x-=8.5){ var rx=rioX(z), jx=x+(rnd()-.5)*5, jz=z+(rnd()-.5)*5; if(Math.abs(jx-rx)<36) continue; copa(jx,jz,3.4+rnd()*2.4); }
+  for(var zr=z0; zr<z1; zr+=12){ var a=rioX(zr), b=rioX(zr+12), fi=Math.atan((b-a)/12);
+    var s=plano(66,13,(a+b)/2,zr+6,.05,M(0xdccaa0)); s.rotation.z=fi;   // el arenal
+    var w=plano(20+6*Math.sin(zr/53),13,(a+b)/2+6*Math.sin(zr/29),zr+6,.06,M(0x7fa6bf,{ roughness:.35 })); w.rotation.z=fi; }   // el agua
+  var tC=(BORDE_X-PLAZA.x)/W.dx, tF=(BORDE_X-470-PLAZA.x)/W.dx, rot=Math.atan2(-W.dz,W.dx), P=function(t){ return { x:PLAZA.x+t*W.dx, z:PLAZA.z+t*W.dz }; };
+  var tR=tC; while(Math.abs(P(tR).x-rioX(P(tR).z))>36) tR+=1; var tR2=tR; while(Math.abs(P(tR2).x-rioX(P(tR2).z))<=36) tR2+=1;
+  [[tC,tR],[tR2,tF]].forEach(function(s){ var a=P(s[0]), b=P(s[1]), L=s[1]-s[0], m1=plano(L,AN_HW*2,(a.x+b.x)/2,(a.z+b.z)/2,.061,VIA_ASF); m1.rotation.z=rot; var m2=plano(L,3,(a.x+b.x)/2,(a.z+b.z)/2,.071,PASTO); m2.rotation.z=rot; });
+  var a2=P(tR-4), b2=P(tR2+4), Lp=tR2-tR+8, cx=(a2.x+b2.x)/2, cz=(a2.z+b2.z)/2, gp=M(0xd5dbe2);   // el puente
+  var d=caja(Lp,1,AN_HW*2+1,gp,cx,2.4,cz); d.rotation.y=rot; var d2=caja(Lp,.1,AN_HW*2-.4,VIA_ASF,cx,2.95,cz); d2.rotation.y=rot;
+  [-1,1].forEach(function(sd){ var bx=cx+sd*(AN_HW+.3)*-W.dz, bz=cz+sd*(AN_HW+.3)*W.dx, r=caja(Lp,1,.35,M(0xf4f6f9),bx,3.4,bz); r.rotation.y=rot; });
+  for(var k=1;k<6;k++){ var q=P(tR-4+k*Lp/6); caja(2,2.4,AN_HW*2,gp,q.x,1.2,q.z).rotation.y=rot; }
+  var cr=P(tR-8); viaCartel('RÍO PIRAÍ', cr.x+9*W.dz, cr.z-9*W.dx); var cb=P(tC-14); viaCartel('CINTURÓN ECOLÓGICO', cb.x+11*W.dz, cb.z-11*W.dx); })();
 VIA_ON=true;
-var PATIO=M(0xcfe3bf), LOTE=M(0xe8e3d3), TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var dx=(cx-70)/230, dz=(cz+140)/150; return Math.max(0,1-Math.sqrt(dx*dx+dz*dz)); }   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
+var PATIO=M(0xcfe3bf), LOTE=M(0xe8e3d3), TT=[0xc0563a,0xb5502f,0xcc6a3c,0xa9442e,0xd2734a,0x9a4a3a]; function zonaAlta(cx,cz){ var ex=(cx+235)/150, ez=(cz-200)/230, nx=(cx-70)/230, nz=(cz+140)/150; return Math.max(0,1-Math.sqrt(ex*ex+ez*ez), .5*(1-Math.sqrt(nx*nx+nz*nz))); }   /* Equipetrol: torres al oeste, pegadas al bosque (13/10, dueño) */   // (13/10, dueño: «se ve bruto y vacío, no como una ciudad mixta») cuadras llenas con patio al fondo; hacia el centro/Equipetrol más edificios, sueltos, nunca una pared
 function lote(x,z,ww,dd,rot,za){ if(enTienda(x,z,ww,dd)||enVia(x,z,Math.max(ww,dd)*.5)) return; var r=rnd(), de=Math.abs(Math.sin(rot))>.5; if(LOTE_COL && r<.85){ colonial(x,z,(de?dd:ww)-.6,(de?ww:dd)-.6,rot); return; }
   if(r<.04+.26*za){ edificio(x,z,ww,dd,12+Math.floor(rnd()*(8+22*za))); return; }   // un edificio suelto entre las casas
   if(r<.11+.22*za){ edificio(x,z,ww,dd,rnd()<.55?3.8:7); return; }   // comercio de 1 o 2 pisos con su toldo, o casa de losa con tanque
