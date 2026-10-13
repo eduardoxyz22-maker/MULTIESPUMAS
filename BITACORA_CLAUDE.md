@@ -14351,3 +14351,4 @@ reprogramar lo que no se entregó»*.
 - **PUBLICADO 13/10 17:41 de Bolivia, `60a98e8`** (dueño: «SI PUBLICA»), Pages OK: pedidos.html (cierre con «📅 No salió · reprogramar»),
   CLAUDE.md, `tests/test_cierre_reprogramar.js` y el diagnóstico con el GPS del día (§4ku). Se publicó con la batería a medias (34 de ~183
   en verde) porque logística cierra a esa hora; las suites del cierre y del reprogramar ya estaban verdes. Volver atrás de la página: `27cce45`.
+  La batería terminó después: 183 suites, 6.368 comprobaciones; en rojo solo `test_patio` (37/1 con la máquina cargada, sola 38/38).
