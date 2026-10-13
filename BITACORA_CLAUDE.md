@@ -13892,3 +13892,11 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   de vidrio en PTF; montacargas ×1,6, dos por camión que se carga y uno por galpón; la ciudad alrededor (cuadras de edificios con ventanas
   que se prenden de noche, casas, parque con fuente, autos y micros, semáforos, faroles, carteles HEAVEN COLCHONES y SUEÑA). Sigue siendo
   solo la muestra: el panel no cambió.
+- 13/10, el dueño: *«me gusta, pero podemos añadir más cosas… separar más las fábricas como están en el GPS… y no olvides ver las cargas de
+  los camiones, montacargas, colchones en los pallets esperando ser cargados, la animación cuando los cargan o eligen»* → versión 4: mapa en
+  cuadrícula (cuadras de 70 con calles de 10), PTF y Banzer en la posición relativa de `ALM_UBIC` (achicada; Banzer ~3,2 km al norte y ~2,1 km
+  al oeste), Moreno en ubicación APROXIMADA (falta su pin). Cada almacén en su predio. Botones 🏭 PTF / 🏪 Banzer / 📥 Moreno / 🗺️ Ver todo.
+  Carga visible: caja de lona transparente, un pallet por producto que espera al costado del camión, el montacargas va, lo levanta, lo sube
+  (+1 y salto), tocar un pallet lo carga primero. Los camiones en la calle siguen la cuadrícula hasta cada cliente (pin), frenan y vuelven
+  marcha atrás al andén; línea punteada de lo que le falta y «Seguirlo con la cámara». Más ciudad: surtidor, escuela con cancha, iglesia,
+  obra con grúa que gira, casas, parque. Lo quieto se junta por material (pocas llamadas de dibujo).
