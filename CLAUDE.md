@@ -618,6 +618,17 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
+## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
+La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad.
+- Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
+  aparte: cambiarlo = subir `PATIO_V` y `node --check patio.js`). Pantalla completa `#pt-ov` (CSS con `#pt-ov` adelante, ids `pt-`).
+- ⚠️ **Un solo lienzo**: dibuja con `DEP.w3` vía **`DEP.w3.alt={cuadro,tam}`** (el bucle de `depIniciar3D` le cede el cuadro); mientras
+  está abierto `depIniciar3D(otra caja)` devuelve false. Al cerrar, `alt=null`, tono ACES 1.08 y `cargaVivaPintar()`. No crear otro renderer.
+- **Datos = `cargaVivaDatos()`** (`patioDatos()` sin three.js): una línea = un pallet (🚚 tildada / 🅿️ PTF o Banzer / 📥 Moreno / ⛔ ✗).
+  Escribe SOLO la tilde (`setCargaChk`, la de la Lista de carga) y «Ya salió» (`camionSalioMarcar`). Sin GPS: el recorrido en la calle es
+  ESTIMADO y no marca ✅. La RPT va a su tienda (`TIENDAS` en patio.js, con los pines del dueño, norte arriba).
+- `tests/test_patio.js` (21 sin 3D; +8 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn.
+
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
@@ -726,9 +737,9 @@ nada. D2 fichas 3D, D3 números que cuentan (`fxCuentaUno`), D5 sellos (`fxSello
 - **Camiones** (dueño: *«B y C / H3»*): arriba (H3) un camión SVG grande en `.h-camion` que entra, frena en el medio y sigue (`h-viaje`: quieto entre el 30% y el 62%); `fxCamionEn` con ciudad/árboles/calle, humo, ruedas y cajas que caen.
 - `tests/test_stock_4iz.js` (17), `tests/test_camiones_4iz.js` (8). Detalle y preguntas pendientes: bitácora §4iz.
 
-## 🤖 El bot de WhatsApp (§4jt, 11/10; servidor `2026-10-11-a` EN LA RAMA, sin publicar: espera que el dueño arme Meta)
+## 🤖 El bot de WhatsApp (§4jt, 11/10; EN MARCHA con clientes reales desde el 12/10; servidor `2026-10-12-f` IMPLEMENTADO 12/10 ~18:30, página PUBLICADA 18:33, `c4cff91`)
 Número propio de la API de WhatsApp de Meta («Multiespumas»), 6 plantillas de «Utilidad» (`WA_TIPOS`, nombres EXACTOS). Al cliente:
-confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
+confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turno, 19:00 los de la tarde y lo que faltó: §4km, 12/10); a Ernesto y David, por separado: pedido nuevo, cambio y «sin camión» a las 16:00.
 - `doSave` → `waAlGuardar_` solo anota en `WA_COLA` (sin red, adentro del candado); `waRepaso` (cada 5 min + `waDespierta` de una vez)
   manda AFUERA del candado, armando cada mensaje con la planilla de ese momento, tras 2 min de espera (`WA_ESPERA_MS`). Reintentos en
   `WA_SALIDA` (solo qué y a quién). Todo queda en la hoja «Bot WhatsApp». `estadoBotWhatsApp()`; `probarAntesDeImplementar` §11.
@@ -737,9 +748,19 @@ confirmación, cambio de día y recordatorio de las 17:00; a Ernesto y David, po
 - Propiedades del script (NUNCA en el código): `WA_TOKEN`, `WA_PHONE_ID`, `WA_LOGISTICA`, `WA_ACTIVO`=1, opcionales `WA_PRUEBA`,
   `WA_IDIOMA`, `WA_API`. Cada respuesta trae `wa:1|0` y la página dice «🤖 lo manda el bot» (el botón a mano queda).
 - ⚠️ La página nueva espera `2026-10-11-a`: publicarla DESPUÉS de que el dueño implemente el `.gs`. `.gs` sin `normalize` (ES5).
-- `tests/test_wa_bot.js` (63), `tests/test_wa_pagina.js` (12). Bitácora §4jt.
+- **📬 Escucha a Meta (§4ki, `.gs` 2026-10-12-a)**: webhook `?wa=<WA_HOOK_KEY>` (`waHook_`, antes de todo en doPost; la verificación
+  `hub.challenge` en doGet antes de la clave). Estados en la columna «Meta dice» de «Bot WhatsApp» por `wamid` (nunca para atrás) y lo que
+  contesta el cliente como «💬 Respondió». Solo el `WA_PHONE_ID`; el número de Kommo NO se suscribe.
+- **💬 Lo que contesta el cliente (§4kk, `.gs` 2026-10-12-c)**: la fila «💬 Respondió» con su pedido, respuesta automática una vez
+  cada 12 h por número (`WA_AUTORESP`=0 la apaga) y al panel por `waRespuestas` (`#wa-resp-mis` de su vendedora, `#wa-resp-adm` todas,
+  aviso de Eduardo); «✓ Ya lo atendí» = `waRespAtendida` (columna K, para todos).
+- **🤖 v2 (§4kl, `.gs` 2026-10-12-d)**: plantillas `*_v2` con 🤖 _Mensaje automático_ y emojis; si Meta no la tiene aprobada sale la vieja
+  (`WA_TIPOS[k].vieja/nv`, errores 132001/132015/132016). Al cliente, el WhatsApp de su vendedor desde **`WA_VENDEDORAS`** (`Nombre:celular, …`,
+  en Propiedades, nunca en el código); «tu vendedor/a» por `waTuVend_` (`WA_VENDEDOR_HOMBRE`). **Sin entregado automático** (dueño, 12/10):
+  el cierre de entregas no tilda nada solo y fecha pasada sin ✅ = «❓ Sin confirmar»; la regla del stock (§4co) no cambió.
+- `tests/test_wa_bot.js` (107), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk.
 
-## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»)
+## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)
 · C logística sin clave en cualquier pestaña (`asisLogistica`) · D mensaje al cliente según el cuadrito al guardar (`asisMsgEspera`, la MISMA
 cuenta `saldoVeredictoFila`) · E resumen del día 5–14 h (`asisResumenDia`, `a.res`) · F sinónimos + errores de tipeo + la pestaña primero
