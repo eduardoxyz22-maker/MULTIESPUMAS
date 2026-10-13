@@ -13951,3 +13951,8 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   rojo YANGO en el techo y franja roja) y 18 motos Yango (casco y caja roja con YANGO) entre el tránsito. El cartel de una parada RPT dice solo
   «🏪 RPT 10-006» (tapaba el nombre de la tienda). ⚠️ Desde esta sesión no se puede abrir el enlace corto de Moreno (el proxy rechaza
   google/goo.gl): se le pidieron las coordenadas; Moreno sigue aproximado.
+- 13/10, el dueño (capturas del iPad): *«las tiendas Sueña son amarillas; achicá los edificios al frente de las tiendas y las fábricas
+  para poder ver y maniobrar bien»* → versión 10: Sueña en amarillo (#f5c400, letras azul marino) en el local, el toldo, el cartel, la
+  etiqueta (💛) y la valla de la ruta. `altoFrente(x,z,h)` dentro de `edificio`: si el edificio queda entre la cámara (dirección
+  (0,656 ; 0,755) en el piso) y una tienda o una fábrica (`MIRAR`), baja a 1 piso y va subiendo de a poco con la distancia; los de los
+  costados, un poco menos. La cámara sigue siendo la misma, solo cambian las alturas.
