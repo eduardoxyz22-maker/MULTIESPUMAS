@@ -14321,3 +14321,15 @@ derecha ponla encima de la izquierda»*. El bloque `.filters` (ahora `.filters.a
   suites; en rojo solo `test_patio` (37/1 con la máquina cargada, sola 38/38) y `test_onclicks` (leía `arg(` —una función local de la
   lista de tiendas— como si no existiera; se rearmó con el nombre ya armado antes del onclick, 5/5). Servidor sin cambios (13-c).
   Volver atrás de la página: `4bcc296`. Todos F5.
+
+## §4ku — 🛰️ El diagnóstico de la lectura dice el GPS del día y las entregas marcadas (13/10)
+El dueño: *«¿cómo vamos con el GPS? ¿cómo está todo? las entregas "marcadas"»*. Desde acá no hay salida a Google, así que
+`herramientas/diagnostico_lectura.py` ganó `gps_del_dia()` (con la primera lectura buena, `_LISTA`): posición y último reporte de cada
+camión (`gps`), salidas/vueltas/paradas del día (`gpsDia`) y, de los pedidos de HOY que salen en camión, cuántos tienen ✅, en cuántos
+se paró el GPS y los dos, por camión; más el ✅ de los últimos 7 días. Registro PÚBLICO: solo placas (ya en el código), horas y cuentas;
+nunca clientes, direcciones, coordenadas ni el conductor. `14dd531` (en la rama: corre al pushear el archivo).
+- **Corrida del 13/10 17:06 de Bolivia** (run 38467932383): servidor 13-c; los 4 camiones reportando (el más viejo, 9 min); salidas de hoy
+  Carry 14:09 (Banzer), Foton insumo 14:14 (Banzer), Foton encarpado 15:53 (PTF, volvió 16:58), Foton nuevo 16:38 (de Moreno, después de
+  recoger). Pedidos de hoy: 19, **12 sin camión asignado**; ✅ 5; el GPS se paró en 6; los dos, 0. Foton encarpado: 10 paradas y ninguna
+  en un pedido (no tiene pedidos asignados hoy). Últimos 7 días: ✅ entre 91 y 100 % (el cierre de entregas se usa). 60 días: 260 de 711
+  entregas sin enlace de Maps → el GPS no puede nombrarlas.
