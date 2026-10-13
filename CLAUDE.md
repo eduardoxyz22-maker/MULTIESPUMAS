@@ -620,14 +620,14 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
 La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad.
-- Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
+- Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`, y desde 13/10 también `#adm-ciudad-btn` arriba de Administración, al lado de «Ocultar camiones»: con la vista 3D `.cv-tit button` lo pintaba blanco sobre blanco y el dueño no lo encontraba) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
   aparte: cambiarlo = subir `PATIO_V` y `node --check patio.js`). Pantalla completa `#pt-ov` (CSS con `#pt-ov` adelante, ids `pt-`).
 - ⚠️ **Un solo lienzo**: dibuja con `DEP.w3` vía **`DEP.w3.alt={cuadro,tam}`** (el bucle de `depIniciar3D` le cede el cuadro); mientras
   está abierto `depIniciar3D(otra caja)` devuelve false. Al cerrar, `alt=null`, tono ACES 1.08 y `cargaVivaPintar()`. No crear otro renderer.
 - **Datos = `cargaVivaDatos()`** (`patioDatos()` sin three.js): una línea = un pallet (🚚 tildada / 🅿️ PTF o Banzer / 📥 Moreno / ⛔ ✗).
   Escribe SOLO la tilde (`setCargaChk`, la de la Lista de carga) y «Ya salió» (`camionSalioMarcar`). Sin GPS: el recorrido en la calle es
   ESTIMADO y no marca ✅. La RPT va a su tienda (`TIENDAS` en patio.js, con los pines del dueño, norte arriba).
-- **La ciudad** (13/10, decidida por el dueño con fotos, versión 31 de la muestra; PUBLICADA con `PATIO_V='20261013b'`): manzanas de dos filas de
+- **La ciudad** (13/10, decidida por el dueño con fotos, versión 31 de la muestra; PUBLICADA con `PATIO_V='20261013b'`; `20261013c` = el reclamo de David por lo que va tarde: `dia.tarde` a las 12:00 con entregas AM sin «Ya salió», a las 16:00 las PM, `jefeTarde`, la hora fuera de la firma con `diaFirma`): manzanas de dos filas de
   casas mirando a SU calle (techo a dos aguas con `PRISMA`, puerta, alero) + construcción del fondo; pasajes de calle a calle (`PASAJE`) y a veces
   uno a lo largo; 4 anillos INTEGRADOS a la cuadrícula alrededor de la plaza 24 de Septiembre (`ANILLOS` = calles hechas avenida, curvas solo en
   las esquinas: `AV_ARCOS`; el camellón se corta antes de la cebra; 1ro y 2do con árboles, 3ro y 4to solo faroles); catedral (`plazaPrincipal`);
