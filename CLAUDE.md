@@ -618,7 +618,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
-## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` EN LA RAMA, lo implementa el dueño; la página espera su «publica»)
+## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` IMPLEMENTADO 13/10 ~10:00 por el dueño, `probarGps` ✅ 4 de 4 placas, hora en UTC verificada, Banzer a 35-44 m: el pin sirve; página PUBLICADA 13/10, `2e2eb42`; volver atrás: ✏️ a la versión anotada Y pegar la 12-f de `2232b59…`, 3.299 líneas)
 La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettoken` (apikey + usuario + contraseña → token de 6 h) y
 `getdata` (apikey + token → cada unidad: placa, posición, km/h, motor, conductor, hora del reporte). **30 s entre pedidos.**
 - 🔐 **Propiedades del script**: `GPS_APIKEY`, `GPS_USUARIO`, `GPS_CLAVE` (nunca en el código ni en el chat); `GPS_TOKEN_AUTO` lo

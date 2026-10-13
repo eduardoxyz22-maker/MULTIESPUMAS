@@ -14135,4 +14135,10 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   David y el aviso al tocarlo dicen EDUARDO; las variables siguen `gar`/`GARN`.
 - Batería entera (179 archivos) con todo esto: dos en rojo con la máquina cargada (`test_getlog` 20/1 y `test_patio` 32/1, el
   montacargas no llegó a tiempo); corridas solas, 21/21 y 33/33. El resto, en verde.
+- **13/10 ~10:00: el dueño implementó el servidor `2026-10-13-a`** («listo, ya implementé, publica la página»), con GPS_APIKEY,
+  GPS_USUARIO y GPS_CLAVE en Propiedades. Su `probarGps` de las 10:01: token vigente; 4 unidades, las 4 placas reconocidas
+  (5655-KSC = Foton encarpado, a 8,1 km de PTF; 6021-URL = Foton insumo, a 20 m de PTF; 6409-TIG = Carry, a 35 m de Banzer;
+  6663-CCP = Foton nuevo, a 44 m de Banzer). **La hora del reporte en UTC da bien** («13:49:10» = 09:49 de Bolivia, hace 13 min).
+  **El pin de Banzer sirve** (35 y 44 m, adentro de los 300 m): no hace falta GPS_DEPOSITOS.
+- **Página PUBLICADA 13/10 (`2e2eb42`)** con pedidos.html, patio.js (`PATIO_V='20261013d'`), CLAUDE.md, el `.gs` y las pruebas.
 
