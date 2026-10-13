@@ -680,7 +680,8 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
   `cuerpo.js`: si se agrega una línea, los rangos se corren (bitácora §4kn).
 - **🔥 El Fidalga en llamas** (§4kq-b, 13/10, dueño: *«nomás por diversión»*): manzana `'385,385'`, al lado de la obra. Solo adorno.
   `fidalga()`/`fuegoPaso()` en `patio_real/fuego.js` (adelante de `p3_vivo.js`); ⚠️ `var FUEGO;` sin valor (corre después del armado).
-- `tests/test_patio.js` (21 sin 3D; +16 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn, §4kq.
+  EDUARDO (el de la ciudad) dice *«¡Carajo, otra vez se está quemando un Fidalga!»* (dueño) en `s_npc.js`; el asistente del panel, no.
+- `tests/test_patio.js` (22 sin 3D; +16 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn, §4kq.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá

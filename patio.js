@@ -682,11 +682,11 @@ var FRASES={
   sinchofer:['¡¿Y el chofer?! ¡La reputa madre!','¡ERNESTO! ¿Quién maneja el {p}? ¡Me cago en todo!','¡Camión sin chofer otra vez, qué cagada, DAVID!','¡Alguien que maneje esta porquería, carajo!'],
   volvio:['¡Volvió el {p}! ¿Y la plata del cobro, carajo?','¡Lavá ese camión que está hecho mierda!','¡¿Recién volvés?! ¡Ni que fueras a Cochabamba!'],
   espera:['¡DAVID, ¿quién dejó {n} pallets en espera desde hace una hora?!','¡La zona de espera es un quilombo, la puta madre!','¡Sacá eso de ahí y cargalo, carajo!'],
-  suelto:['¡Quién dejó este pallet acá, la puta madre!','¡Hace un calor de mierda!','¡Carajo, otra vez sin señal!','¡Esto es un quilombo, chuta!','¡Se quema el Fidalga y ustedes rascándose, carajo!'],
+  suelto:['¡Quién dejó este pallet acá, la puta madre!','¡Hace un calor de mierda!','¡Carajo, otra vez sin señal!','¡Esto es un quilombo, chuta!','¡Se quema el Fidalga y ustedes rascándose, carajo!','¡Carajo, otra vez se está quemando un Fidalga!'],
   vacio:['¡{p} vacío y ocupando andén, carajo!','¡Este {p} no lleva nada, la puta madre!','¡¿Y el {p}? ¡Sin carga y tomando sol!'],
-  calle:['¡Qué tráfico de mierda, carajo!','¡Los micros manejan como el orto!','¡Chuta, me cansé de caminar!','¡Esos mototaxis me van a matar, carajo!','¡Chuta, con el humo del Fidalga no se ve nada!'],
-  ernesto:['¡ERNESTO, dejá el celular y asigná choferes, carajo!','¡ERNESTO, tu planilla es un desastre, me cago en diez!','¡ERNESTO! ¿Y la Lista de carga? ¡La puta madre!'],
-  david:['¡DAVID, ese montacargas no se maneja solo, carajo!','¡DAVID! ¿Quién contó el stock, un ciego? ¡La puta madre!','¡DAVID, la zona de espera parece feria, ordená eso!']
+  calle:['¡Qué tráfico de mierda, carajo!','¡Los micros manejan como el orto!','¡Chuta, me cansé de caminar!','¡Esos mototaxis me van a matar, carajo!','¡Chuta, con el humo del Fidalga no se ve nada!','¡Carajo, otra vez se está quemando un Fidalga!'],
+  ernesto:['¡ERNESTO, dejá el celular y asigná choferes, carajo!','¡ERNESTO, tu planilla es un desastre, me cago en diez!','¡ERNESTO! ¿Y la Lista de carga? ¡La puta madre!','¡ERNESTO! ¡Carajo, otra vez se está quemando un Fidalga y vos con el celular!'],
+  david:['¡DAVID, ese montacargas no se maneja solo, carajo!','¡DAVID! ¿Quién contó el stock, un ciego? ¡La puta madre!','¡DAVID, la zona de espera parece feria, ordená eso!','¡DAVID, carajo, otra vez se está quemando un Fidalga!']
 };
 var RESP={ ern:['¡Calmate, Eduardo, ya lo asigno!','¡No me grites, que está en la Lista de carga!','¡Ya va, ya va, estoy en eso!','¡Andá a putear a David, que es su turno!'],
            dav:['¡Tranquilo, viejo, que ya sale!','¡Eduardo, el jefe acá soy yo, andá a trabajar!','¡Ya le digo a Ernesto, no te sulfures!','¡Eduardo, tomate un mate y relajate!'] };
