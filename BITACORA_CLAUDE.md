@@ -14068,3 +14068,4 @@ El dueño, con la muestra v13: *«Me gusta, publica y vemos cómo queda, me avis
   · *«solo en el 1er y 2do anillo hay árboles en el medio y luces; en el 3ro y 4to solo luces y camellón»* → `AV_RECTAS`/`AV_ARCOS` llevan
     `an` (índice del anillo): 1ro y 2do, farol y árbol alternados en el camellón; 3ro y avenidas de salida, solo faroles. Hoy hay 3 anillos
     (el 4to no entra en el mapa sin agrandarlo hacia el bosque). Muestra v26.
+  · *«los camellones no deben estar sobre el paso de cebra, sino terminar antes»* → el camellón se corta 3 más antes de cada cruce. Muestra v27.
