@@ -13942,3 +13942,12 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   Cada aparato recuerda cómo lo dejó (localStorage `patio_*`). Sin nada guardado, con menos de 1250 px la ficha arranca achicada y con
   menos de 1400 px el panel de abajo también. En el celular y el iPad parado (≤980 px) sigue como antes: la ciudad arriba y los paneles
   debajo, sin tapar.
+- 13/10, el dueño: *«Sueña Carmelo debería estar casi al rincón de abajo derecho, Mia Plaza y Central por donde está la Carmelo en tu foto,
+  y crece más la ciudad si hace falta; coloca motos Yango etc. No coloques logo en el techo»*; confirmó Heaven = Mia Plaza, Buenos Aires,
+  Central y Sueña = Mutualista, Charcas, Carmelo; mandó el enlace corto de Moreno (`maps.app.goo.gl/D8qJVwGDvsS4mqUS9`) → versión 9:
+  Mia Plaza y Central en la fila z=210 a los lados de la calle x=0, Carmelo en x=315 / fila 140 (`TIENDAS[].fijo`: la ubicación que dice el
+  dueño manda sobre el pin, que en la vista isométrica queda girado 45°: el norte apunta arriba a la derecha). La ciudad crece una columna a
+  la derecha (X1=5·G). Sin logo en el techo (queda en el cartel del frente, en las franjas y en los camiones). 16 autos Yango (cartelito
+  rojo YANGO en el techo y franja roja) y 18 motos Yango (casco y caja roja con YANGO) entre el tránsito. El cartel de una parada RPT dice solo
+  «🏪 RPT 10-006» (tapaba el nombre de la tienda). ⚠️ Desde esta sesión no se puede abrir el enlace corto de Moreno (el proxy rechaza
+  google/goo.gl): se le pidieron las coordenadas; Moreno sigue aproximado.
