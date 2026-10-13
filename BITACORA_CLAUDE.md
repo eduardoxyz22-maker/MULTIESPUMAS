@@ -13900,3 +13900,9 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   (+1 y salto), tocar un pallet lo carga primero. Los camiones en la calle siguen la cuadrícula hasta cada cliente (pin), frenan y vuelven
   marcha atrás al andén; línea punteada de lo que le falta y «Seguirlo con la cámara». Más ciudad: surtidor, escuela con cancha, iglesia,
   obra con grúa que gira, casas, parque. Lo quieto se junta por material (pocas llamadas de dibujo).
+- 13/10, el dueño: *«quiero un NPC que se llame GARNICULA y pase puteando cada rato cerca de los camiones cuando estén parados»* → versión 5:
+  GARNÍCULA (chaleco naranja con reflectivos, gorra, panza) camina entre los camiones parados de su almacén y putea según el estado de cada uno
+  (cargando / listo y quieto / sin chofer / volvió), con globo de diálogo; cada 4 puteadas, si hay camiones parados en otro almacén, cruza la
+  ciudad por las calles («¡qué tráfico de mierda!»). Tocarlo lo hace hablar. Vista inicial más cerca (zoom 1,9) para que se vea la carga.
+  También dijo: *«en tus fotos se ve una cosa, en el artefacto otra»* → se le pidió una captura de lo que ve (sospecha: su pantalla usa el
+  diseño angosto, o la versión vieja en caché).
