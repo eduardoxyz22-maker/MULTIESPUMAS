@@ -14265,3 +14265,7 @@ El dueño mandó una captura de la ciudad, sin texto. Se vieron tres cosas:
   armada); luz naranja que titila; camión de bomberos con la escalera al techo, balizas roja/azul, el chorro y dos bomberos; carritos
   tirados; cartel «🔥 FIDALGA» (`.etq.fuego`). EDUARDO tiene dos frases más (`suelto`, `calle`).
 - `patioEstado()` dice `fuego` (llamas) y `fuegoAlto` (para ver que se mueven). `test_patio` 3D → 37. `PATIO_V='20261013i'`.
+- **PUBLICADO 13/10 13:01 de Bolivia, `b2c831d`** (el dueño: «implementado» = servidor 13-c puesto): pedidos.html (espera la
+  `2026-10-13-c`, `PATIO_V='20261013i'`), patio.js (aviso en un renglón, paradas con su distancia, el Fidalga), el `.gs` 13-c,
+  CLAUDE.md y las pruebas del GPS y de la ciudad. Volver atrás de la página: `528d2a0`; del servidor: ✏️ a la versión anotada Y pegar
+  la 13-b (`16ac162…`, 3.721 líneas).
