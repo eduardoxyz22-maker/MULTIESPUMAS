@@ -9,6 +9,7 @@
    10-14. (§4kp, servidor 2026-10-13-b) el DÍA del servidor (`gpsDia`): un «salió» que fue a recoger a Moreno se deshace; el registro
       con palabras; «📍 Llegó» en Mis pedidos (no ✅); el cierre de entregas dice qué vio el GPS y tilda SOLO al tocar el botón; las
       paradas en el mapa; el recorrido del servidor (`gpsRuta`, solo con la 13-b); una lectura atrasada o de ayer no pisa.
+   15. «volvió a Banzer» (no «llegó a Banzer · venía de Banzer») y las paradas sin pedido a menos de 700 m de un depósito no cuentan.
    Datos SINTÉTICOS. Reloj clavado el miércoles 14/10/2026 a las 12:30 de Bolivia.
    Se corre:  node tests/test_gps_pagina.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -272,6 +273,26 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('con el servidor 13-a no se pide «gpsRuta» (caería en el guardado)', r.conA===0, r);
   chk('una lectura atrasada (t más viejo) y el día de ayer no cambian nada', r.atrasado==='' && r.ayer==='', r);
   chk('la ciudad: sabe que el registro es del servidor y nombra el cliente de cada parada', r.srv===true && r.par[0]==='10:05 CLIENTE 1' && r.par[1]==='10:40 CLIENTE 2' && r.par[2]==='11:20 CLIENTE 5', r.par);
+
+  console.log('\n── 15. (13/10, captura del dueño de las 12:36) «volvió a Banzer» y las paradas en la puerta de los depósitos ──');
+  r = await ev(async () => {
+    var hoy=todayStr(), P=almUbic('ptf'), D0=gpsDiaCargar(), d=JSON.parse(JSON.stringify(window.__DIA));
+    d.t=D0.t+1000;
+    d.u['6409TIG']={ s:'10:20', sd:'banzer', ul:'10:20', vu:'12:33', ev:[['10:20','sal','banzer',''],['12:33','lle','banzer','banzer']],
+      par:[['12:09','12:15',P.lat-0.004,P.lng,[],0,null], ['12:15','12:32',P.lat-0.0042,P.lng+0.0005,[],0,null],      // a ~450 m de PTF, sin pedido: esperando en la puerta
+           ['11:00','11:10',P.lat+0.004,P.lng,['g1'],0,20],                                                        // a ~450 m de PTF, CON pedido: es una entrega
+           ['11:30','11:40',P.lat-0.011,P.lng,[],0,null]] };                                                       // a 1,2 km de PTF, sin pedido: se muestra
+    window.__DIA=d; await apiList({ entera:true });
+    var evs=gpsEventosHoy().filter(function(e){ return e.k==='Carry'; }).map(function(e){ return e.h+' '+e.ic+' '+e.x.replace(/<[^>]+>/g,''); });
+    var cam=patioDatos().cams.filter(function(c){ return c.k==='Carry'; })[0];
+    return { evs:evs, par:gpsParadas('Carry').map(function(s){ return gpsHoraTxt(s.t0); }), ciudad:cam.gpsParadas.map(function(s){ return s.h0+'|'+s.cli+'|'+s.base; }) };
+  });
+  if(r.__error) console.log('ERROR', r.__error);
+  chk('«llegó a Banzer · venía de Banzer» → «volvió a Banzer»', r.evs.some(function(e){ return /^12:33 🏁 6409-TIG volvió a Banzer$/.test(e); }) && !r.evs.some(function(e){ return /venía de Banzer/.test(e); }), r.evs);
+  chk('las dos paradas a ~450 m de PTF sin pedido NO cuentan (esperaba en la puerta); la de 450 m CON pedido sí', r.par.join(',')==='11:00,11:30' &&
+      !r.evs.some(function(e){ return /^12:(09|15) /.test(e); }) && r.evs.some(function(e){ return /^11:00 📍 6409-TIG se paró 10 min cerca de CLIENTE 1/.test(e); }), [r.par, r.evs]);
+  chk('una parada sin pedido a 1,2 km dice dónde fue: «a 1,2 km de PTF»', r.evs.some(function(e){ return /^11:30 🛑 6409-TIG se paró 10 min \(sin pedido de hoy cerca · a 1,2 km de PTF\)/.test(e); }), r.evs);
+  chk('la ciudad igual: dos paradas, y la de 1,2 km con su lugar', r.ciudad.length===2 && r.ciudad[1]==='11:30||a 1,2 km de PTF', r.ciudad);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

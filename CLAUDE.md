@@ -618,7 +618,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   probarlo en el iPad del dueño antes de dar por bueno. La de «una vez por día» (`hw_risa_dia`) se sacó: le impedía probarla.
   ⚠️ En una prueba, esperar a que `play()` conteste antes de contar (`__pend`): con la batería cargando la máquina tarda.
 
-## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` IMPLEMENTADO 13/10 ~10:00 por el dueño, `probarGps` ✅ 4 de 4 placas, hora en UTC verificada, Banzer a 35-44 m: el pin sirve; página PUBLICADA 13/10, `2e2eb42` y `7f53be3`; volver atrás: ✏️ a la versión anotada Y pegar la 12-f de `2232b59…`, 3.299 líneas. **`2026-10-13-b` EN LA RAMA (§4kp)**: lo implementa el dueño y DESPUÉS se publica la página; volver atrás de la 13-b = ✏️ a la versión anotada Y pegar la 13-a de `d2963b1…`, 3.524 líneas)
+## 🛰️ El GPS de los camiones (§4ko, 13/10; dueño: *«Sí, armá lo del GPS»*; servidor `2026-10-13-a` IMPLEMENTADO 13/10 ~10:00 por el dueño, `probarGps` ✅ 4 de 4 placas, hora en UTC verificada, Banzer a 35-44 m: el pin sirve; página PUBLICADA 13/10, `2e2eb42` y `7f53be3`; volver atrás: ✏️ a la versión anotada Y pegar la 12-f de `2232b59…`, 3.299 líneas. **`2026-10-13-b` IMPLEMENTADO 13/10 tarde por el dueño (§4kp) y página PUBLICADA `528d2a0`**; volver atrás de la 13-b = ✏️ a la versión anotada Y pegar la 13-a de `d2963b1…`, 3.524 líneas)
 La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettoken` (apikey + usuario + contraseña → token de 6 h) y
 `getdata` (apikey + token → cada unidad: placa, posición, km/h, motor, conductor, hora del reporte). **30 s entre pedidos.**
 - 🔐 **Propiedades del script**: `GPS_APIKEY`, `GPS_USUARIO`, `GPS_CLAVE` (nunca en el código ni en el chat); `GPS_TOKEN_AUTO` lo
@@ -653,7 +653,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   `gpsEnMoreno(x)` (`mor` de la 13-b o ≤400 m de `GPS_MORENO`, = el del `.gs`) → «en Moreno»; la ciudad lo estaciona en el andén de Moreno
   (`gpsLugar(g)`, UNA cuenta para `sincronizar` y `gpsAlDia`: si difieren, la escena se rearma cada 1,5 s). ⚠️ Un camión «en la calle» se
   dibuja en la calle MÁS CERCANA a su punto (`z` redondeado a la grilla): un lugar nuevo donde los camiones «están» va como depósito, no como calle.
-- `tests/test_gps.js` (92, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (52). Bitácora §4ko, §4kp.
+- **🚪 La puerta de los depósitos no es una parada** (§4kq, 13/10, captura del dueño: el KSC «se paró 17 min» y «llegó a PTF»): quieto a
+  < 700 m de PTF, Banzer o Moreno SIN pedido cerca no se muestra (página: `gpsBaseCerca`, `GPS_PUERTA_M`) ni se anota ni suma `tp`
+  (servidor **`2026-10-13-c`**, `s.qb`); de Moreno, los 45 min corren solo lejos de las bases. Sin eso, Moreno → PTF con espera en la
+  puerta era «salió de Moreno». «volvió a Banzer» cuando sale y vuelve al mismo lugar. ⚠️ El aviso de la ciudad es `.pt-toast`: una
+  clase dentro de `#pt-ov` que se llame como una de la página hereda sus reglas (`.toast` lo estiraba de arriba hasta abajo).
+- `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
@@ -673,7 +678,9 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
   esquina del 4to anillo y el puente; restaurantes (`RESTO_EN`); cebras con gente cruzando (`CEBRAS`/`CRUZAN`); micros en el semáforo con los
   autos puteando (`COLAS`, `colasPaso`, con la hora del semáforo). ⚠️ `patio.js` se arma con `armar.py` (scratchpad) por rangos de líneas de
   `cuerpo.js`: si se agrega una línea, los rangos se corren (bitácora §4kn).
-- `tests/test_patio.js` (21 sin 3D; +8 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn.
+- **🔥 El Fidalga en llamas** (§4kq-b, 13/10, dueño: *«nomás por diversión»*): manzana `'385,385'`, al lado de la obra. Solo adorno.
+  `fidalga()`/`fuegoPaso()` en `patio_real/fuego.js` (adelante de `p3_vivo.js`); ⚠️ `var FUEGO;` sin valor (corre después del armado).
+- `tests/test_patio.js` (21 sin 3D; +16 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn, §4kq.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá

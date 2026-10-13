@@ -446,7 +446,31 @@ console.log('\n── 13. probarAntesDeImplementar: cuántas paradas de hoy, cu�
   for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_X, QUIETO)]);
   const p = S.ctx.probarAntesDeImplementar().lineas.join('\n');
   chk('«Hoy el GPS anotó 2 parada(s)…; 1 cerca de un pedido del día (… nada se marca ✅)»', /Hoy el GPS anotó 2 parada\(s\) de los camiones; 1 cerca de un pedido del día \(solo se muestran: nada se marca ✅\)/.test(p), p.split('\n').filter(l => /GPS/.test(l)));
-  chk('la versión es la 2026-10-13-b', S.ctx.SCRIPT_VERSION === '2026-10-13-b');
+  chk('la versión es la 2026-10-13-c', S.ctx.SCRIPT_VERSION === '2026-10-13-c');
+}
+
+// ══ 14. (2026-10-13-c) La puerta de los depósitos no es una parada ═════════
+console.log('\n── 14. 🚪 Quieto a < 700 m de PTF, Banzer o Moreno y sin pedido cerca: no es parada ni vuelve «salió» un traslado ──');
+{
+  /* La captura del dueño (13/10 12:36): el 5655-KSC «se paró 6 min», «se paró 17 min (sin pedido de hoy cerca)» y a las 12:33 «llegó a PTF»:
+     venía de Moreno y esperaba afuera de PTF. */
+  const HOY = '2026-10-14';
+  const PUERTA_PTF = { la: PTF.la - 0.004, lo: PTF.lo }, PUERTA_BZ = { la: BZ.la + 0.004, lo: BZ.lo }, VECINO = { la: PTF.la + 0.004, lo: PTF.lo };
+  const S = servidor(SECRETO, { filas: [fila('pV', HOY, 'Vecino de PTF', VECINO, 'Foton nuevo')] });
+  poner('2026-10-14 11:00');
+  const todos = (k, z, c) => [unidad('5655-KSC', k[0], k[1]), unidad('6409-TIG', z[0], z[1]), unidad('6663-CCP', c[0], c[1])];
+  S.gps.unidades = todos([MOR, QUIETO], [PTF, QUIETO], [PTF, QUIETO]); arrancar(S);                                // 11:01: KSC en Moreno, TIG y CCP en PTF
+  for (let i = 0; i < 25; i++) min1(S, () => todos([LEJOS, ANDA], [LEJOS, ANDA], [LEJOS, ANDA]));                   // 11:26: KSC de Moreno a PTF; TIG a Banzer; CCP al vecino
+  for (let i = 0; i < 6; i++) min1(S, () => todos([PUERTA_PTF, QUIETO], [PUERTA_BZ, QUIETO], [VECINO, QUIETO]));      // 11:32: esperan en la puerta / CCP entrega
+  for (let i = 0; i < 17; i++) min1(S, () => todos([PUERTA_PTF, QUIETO], [BZ, QUIETO], [LEJOS, ANDA]));              // 11:49: KSC sigue en la puerta (17 min), TIG entra a Banzer
+  min1(S, () => todos([CERCA_PTF, QUIETO], [BZ, QUIETO], [LEJOS, ANDA]));                                             // 11:50: KSC entra a PTF
+  const k = unid(S, '5655KSC'), t = unid(S, '6409TIG'), c = unid(S, '6663CCP');
+  chk('el KSC esperó 23 min en la puerta de PTF sin pedido cerca: NO es parada', !(k.par || []).length, k.par);
+  chk('…y de Moreno a PTF en 49 min, esperando en la puerta: NO «salió» (los 45 min cuentan lejos de las bases)', k.s === '' && !k.ev.some(e => e[1] === 'sal'), k.ev);
+  chk('…el registro: llegó a PTF desde Moreno', JSON.stringify(k.ev.slice(-1)) === JSON.stringify([['11:50', 'lle', 'ptf', 'moreno']]), k.ev);
+  chk('…la planilla se leyó UNA vez por esa espera (no una por minuto)', S.lecturas.enRepaso <= 3, S.lecturas);
+  chk('el TIG esperó en la puerta de Banzer y entró: sigue siendo un traslado (no «salió»)', t.s === '' && !(t.par || []).length && t.ev[0][3] === 'tra', t.ev);
+  chk('el CCP se paró a 450 m de PTF, al lado de SU pedido: esa sí es parada (un cliente vecino)', (c.par || []).length === 1 && JSON.stringify(c.par[0][4]) === '["pV"]', c.par);
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

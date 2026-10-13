@@ -3796,7 +3796,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-13-b';   // (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-13-c';   // (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -15902,9 +15902,25 @@ function gpsParadas(veh){
       return { t0:aMs(q[0]), t1:aMs(q[1]), lat:Number(q[2]), lng:Number(q[3]), ids:ids, peds:peds, ped:peds[0]||null, pm:pm, abierta:!!q[5], srv:true };
     });
   } else out=gpsParadasAparato(veh);
+  /* 🚪 (13/10, captura del dueño de las 12:36: el 5655-KSC «se paró 6 min» y «17 min» sin pedido cerca y a las 12:33 «llegó a PTF»)
+     quieto a menos de GPS_PUERTA_M de PTF, Banzer o Moreno y sin pedido de hoy cerca = esperando en la puerta del depósito (o en la
+     calle de atrás), no una parada de reparto. No se muestra ni cuenta. Con pedido cerca, sí: puede ser un cliente vecino. */
+  out=out.filter(function(s){ s.base=gpsBaseCerca(s.lat, s.lng); return (s.peds && s.peds.length) || !s.base || s.base.m>=GPS_PUERTA_M; });
   GPS_PAR_MEMO.v[veh]=out;
   return out;
 }
+/* La base más cerca de un punto: PTF y Banzer (ALM_UBIC) o Moreno (GPS_MORENO), con sus metros. GPS_PUERTA_M = GPS_SALIDA_M del .gs:
+   hasta ahí el camión «todavía no salió» o «ya está llegando». */
+var GPS_PUERTA_M=700;
+function gpsBaseCerca(lat, lng){
+  var best=null, pt={ lat:Number(lat), lng:Number(lng) };
+  if(!isFinite(pt.lat) || !isFinite(pt.lng)) return null;
+  (typeof ALM_UBIC!=='undefined' ? ALM_UBIC : []).concat([{ id:'moreno', nombre:'Moreno', lat:GPS_MORENO.lat, lng:GPS_MORENO.lng }]).forEach(function(d){
+    var m=gpsMetros(pt, { lat:Number(d.lat), lng:Number(d.lng) });
+    if(!best || m<best.m) best={ id:d.id, n:d.nombre, m:Math.round(m) }; });
+  return best;
+}
+function gpsKmTxt(m){ return m<1000 ? (m+' m') : ((m/1000).toFixed(1).replace('.',',')+' km'); }
 function gpsParadasAparato(veh){
   var L=gpsHistDe(veh), out=[], cur=null;
   var cerrar=function(c, fin){ if(fin) c.t1=fin; if(c.t1-c.t0<GPS_PARADA_MIN*60000) return;
@@ -15923,7 +15939,7 @@ function gpsParadasAparato(veh){
 }
 function gpsDurTxt(ms){ var m=Math.max(1, Math.round(ms/60000)); return m<60 ? (m+' min') : (Math.floor(m/60)+' h '+(m%60)+' min'); }
 function gpsQuienTxt(s){
-  if(!s.peds || !s.peds.length) return ' (sin pedido de hoy cerca)';
+  if(!s.peds || !s.peds.length) return ' (sin pedido de hoy cerca'+(s.base && s.base.m<2000 ? ' · a '+gpsKmTxt(s.base.m)+' de '+s.base.n : '')+')';
   return ' cerca de '+s.peds.map(function(p){ return '<b>'+esc(p.cliente||'—')+'</b>'+(p.oc?' · '+esc(ocEtiq(p.oc)||p.oc):''); }).join(' y ')+(s.pm!=null?' ('+s.pm+' m)':'');
 }
 /* «📡 Lo que dijo el GPS» de hoy, lo más nuevo primero: salidas, llegadas y paradas. */
@@ -15940,7 +15956,9 @@ function gpsEventosHoy(){
           if(!e[3]) primera=false;
           ev.push({ h:e[0], k:veh, ic:e[3]?'↩️':'🛣️', x:'<b>'+esc(pl)+'</b> salió de '+gpsLugarTxt(e[2])+por });
         } else if(e[1]==='lle'){
-          ev.push({ h:e[0], k:veh, ic:e[2]==='moreno'?'📥':'🏁', x:'<b>'+esc(pl)+'</b> llegó a '+gpsLugarTxt(e[2])+(e[2]==='moreno'?' (a recoger)':'')+(e[3]?(' · venía de '+gpsLugarTxt(e[3])):'') });
+          /* (13/10) «llegó a Banzer · venía de Banzer» sonaba raro (captura del dueño): salió y volvió al mismo lugar = «volvió a» */
+          var mismo=!!e[3] && e[3]===e[2];
+          ev.push({ h:e[0], k:veh, ic:e[2]==='moreno'?'📥':'🏁', x:'<b>'+esc(pl)+'</b> '+(mismo?'volvió a ':'llegó a ')+gpsLugarTxt(e[2])+(e[2]==='moreno' && !mismo?' (a recoger)':'')+(e[3] && !mismo?(' · venía de '+gpsLugarTxt(e[3])):'') });
         }
       });
     } else {
@@ -16189,7 +16207,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261013g';
+var PATIO_V='20261013i';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);

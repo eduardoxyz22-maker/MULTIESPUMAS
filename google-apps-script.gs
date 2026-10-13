@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-13-b';   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-13-c';   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-13-b';
+  var ESTA_VERSION = '2026-10-13-c';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -472,6 +472,9 @@ function probarAntesDeImplementar() {
  *   no se adivina: queda el botón «🚚 Ya salió» del panel, que sigue mandando.
  * · (2026-10-13-b) Las PARADAS cerca de los pedidos del día, Moreno como lugar de recoger, el registro y el recorrido del día:
  *   ver «LO QUE PASÓ EN EL DÍA» más abajo. Nada se marca ✅: el panel lo muestra y logística tilda.
+ * · (2026-10-13-c) LA PUERTA DE LOS DEPÓSITOS: quieto a menos de GPS_SALIDA_M de PTF, Banzer o Moreno y sin pedido de hoy cerca =
+ *   esperando para entrar (o en la calle de atrás), no una parada: no se anota ni cuenta. Y de Moreno, los 45 min corren solo LEJOS
+ *   de las bases (una parada EN UN PEDIDO cuenta siempre): de Moreno a PTF con espera en la puerta no es «salió».
  * · ▶️ Desde el editor: `probarGps` (pide y muestra lo que devuelve la plataforma, sin guardar posiciones) y `estadoGps`.
  * ========================================================================== */
 var GPS_API = 'https://api.service24gps.com/api/v1/';
@@ -653,7 +656,7 @@ function gpsSalidas_(U, ahora, memo) {
     var t = (x.r && x.r <= ahora) ? x.r : ahora;
     var cerrarParada = function () { if (s.qi != null && s.qi >= 0 && par[s.qi]) par[s.qi][5] = 0; s.qi = -1; };
     if (dentro) {
-      cerrarParada(); s.q = null;
+      cerrarParada(); s.q = null; s.qb = 0;
       if (s.a === 0 && (!s.x || ahora - s.x >= GPS_FUERA_MIN * 60000)) {
         /* llegó, después de un viaje: ¿qué fue ese viaje? */
         var marca = '';
@@ -671,20 +674,31 @@ function gpsSalidas_(U, ahora, memo) {
       else if (lejos && s.a == null) { s.a = 0; s.x = 0; s.tp = 0; s.tm = 0; s.ts = -1; }   // primero visto afuera: no se sabe cuándo salió
       /* 🛑 la parada (solo afuera de las bases) */
       if (s.a === 0 && x.v <= GPS_QUIETO_KMH) {
-        if (!(s.q && gpsDistM_(s.q[1], s.q[2], x.la, x.lo) <= GPS_PARADA_M)) { cerrarParada(); s.q = [t, x.la, x.lo]; }
+        if (!(s.q && gpsDistM_(s.q[1], s.q[2], x.la, x.lo) <= GPS_PARADA_M)) { cerrarParada(); s.q = [t, x.la, x.lo]; s.qb = 0; }
         var fin = (ahora - t <= GPS_REPORTE_VIEJO_MIN * 60000) ? ahora : t;
         if (fin - s.q[0] >= GPS_PARADA_MIN * 60000) {
           if (s.qi == null || s.qi < 0 || !par[s.qi]) {
-            var pp = gpsParadaPedidos_(x.p, s.q[1], s.q[2], hoy, memo);
-            par.push([gpsHora_(s.q[0]), gpsHora_(fin), s.q[1], s.q[2], pp[0], 1, pp[1]]);
-            s.qi = par.length - 1; s.tp = (Number(s.tp) || 0) + 1; if (pp[0].length) s.tm = (Number(s.tm) || 0) + 1;
+            if (!s.qb) {
+              var pp = gpsParadaPedidos_(x.p, s.q[1], s.q[2], hoy, memo), bq = gpsBase_(s.q[1], s.q[2], deps);
+              /* 🚪 (2026-10-13-c) quieto a menos de GPS_SALIDA_M de PTF, Banzer o Moreno y sin pedido de hoy cerca = esperando en la
+                 puerta del depósito (captura del dueño, 13/10 12:36: «se paró 6 min», «se paró 17 min» y «llegó a PTF»). No es una
+                 parada: no se anota ni cuenta (s.tp), así que tampoco convierte un traslado o una vuelta de Moreno en «salió».
+                 `qb` = ya se miró: la planilla no se vuelve a leer cada minuto mientras sigue ahí. */
+              if (!pp[0].length && bq && bq.m < GPS_SALIDA_M) s.qb = 1;
+              else {
+                par.push([gpsHora_(s.q[0]), gpsHora_(fin), s.q[1], s.q[2], pp[0], 1, pp[1]]);
+                s.qi = par.length - 1; s.tp = (Number(s.tp) || 0) + 1; if (pp[0].length) s.tm = (Number(s.tm) || 0) + 1;
+              }
+            }
           } else if (gpsHora_(fin) > par[s.qi][1]) par[s.qi][1] = gpsHora_(fin);   // el reporte se durmió: no vuelve atrás
         }
-      } else if (s.q) { cerrarParada(); s.q = null; }
+      } else if (s.q) { cerrarParada(); s.q = null; s.qb = 0; }
       /* 🛣️ «salió»: 15 min lejos de PTF/Banzer; de Moreno, con la primera parada o a los 45 min */
       if (s.a === 0 && s.x && !s.cu) {
         var fuera = ahora - s.x, deMor = s.xd === 'moreno';
-        if (deMor ? ((Number(s.tp) || 0) > 0 || fuera >= GPS_FUERA_MORENO_MIN * 60000) : (lejos && fuera >= GPS_FUERA_MIN * 60000)) {
+        /* (2026-10-13-c) de Moreno: una parada en un pedido cuenta siempre; si no, recién LEJOS de las bases (de Moreno a PTF, la
+           espera en la puerta de PTF no lo vuelve «salió» por los 45 min) */
+        if (deMor ? ((Number(s.tm) || 0) > 0 || (lejos && ((Number(s.tp) || 0) > 0 || fuera >= GPS_FUERA_MORENO_MIN * 60000))) : (lejos && fuera >= GPS_FUERA_MIN * 60000)) {
           s.cu = 1; s.n = (Number(s.n) || 0) + 1; s.vp = s.v || ''; s.v = '';
           s.ts = gpsEvAnotar_(s, [gpsHora_(s.x), 'sal', s.xd || '', '']);
           gpsSalidasDeEv_(s);
