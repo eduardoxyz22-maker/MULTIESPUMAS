@@ -13887,3 +13887,8 @@ Ninguna necesita servidor nuevo. Todo SOLO avisa o señala, salvo K que escribe 
   B GPS (afuera 5 min seguidos → «Ya salió» solo, y la vuelta al andén), C en la calle (camiones por la avenida + tarjetas con su recorrido
   y «📍 pasó por acá», sin marcar entregado), D noche (faroles, ventanas, bocas de los andenes y calabazas en octubre) y E alertas
   (sin chofer, pedidos sin camión, Moreno sin nadie que vaya). Reloj acelerado: 1 min cada 2 s. NADA de esto está en el panel: espera su elección.
+- 13/10, el dueño: *«más grande las fábricas, montacargas, más "ciudad", se ve pobre»* → versión 3 de la muestra: galpones de chapa más
+  grandes (PTF 40×22, Banzer 28×18, Moreno 24×22) con tragaluces, toldo, topes, luz roja/verde por andén y el cartel con el nombre; oficina
+  de vidrio en PTF; montacargas ×1,6, dos por camión que se carga y uno por galpón; la ciudad alrededor (cuadras de edificios con ventanas
+  que se prenden de noche, casas, parque con fuente, autos y micros, semáforos, faroles, carteles HEAVEN COLCHONES y SUEÑA). Sigue siendo
+  solo la muestra: el panel no cambió.
