@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heaven Meta Ads 2026</title>
+<meta name="description" content="Análisis de la publicidad de Heaven en Meta Ads, enero a octubre de 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{
+  --font-anthropic-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-anthropic-serif:'Source Serif 4',Georgia,serif;
+  --color-fg:#1f1e1d; --color-fg-muted:#6b6a66; --color-bg:#faf9f5; --color-panel:#ffffff;
+  --color-border-line:#e6e3da; --color-ok:#2f7d4f; --color-warn:#a8650c; --color-bad:#c0392b;
+  --cds-gap-xs:4px; --cds-gap-sm:8px; --cds-gap-md:16px; --cds-gap-xl:40px;
+  --cds-pad-xs:6px; --cds-pad-sm:10px; --cds-pad-lg:20px; --cds-radius:10px;
+  --cds-font-size-title:2rem; --cds-font-size-heading:1.35rem; --cds-font-size-body:1rem; --cds-font-size-caption:.8125rem;
+  --cds-font-weight-medium:600;
+  --cds-surface-popover:#ffffff; --cds-border:#e6e3da; --cds-shadow-popover:0 6px 20px rgba(0,0,0,.12);
+  --cds-text-secondary:#6b6a66; --cds-chart-grid:#ece9e1; --cds-chart-reference:#8f8d86;
+  --cds-chart-muted:#c9c6bd; --cds-chart-status-critical:#c0392b; --cds-dur-slow:.3s;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --color-fg:#ecebe6; --color-fg-muted:#a3a19a; --color-bg:#1c1b19; --color-panel:#262522;
+    --color-border-line:#3a3935; --color-ok:#5cbf85; --color-warn:#e0a24a; --color-bad:#ec7063;
+    --cds-surface-popover:#2e2d2a; --cds-border:#3a3935; --cds-shadow-popover:0 6px 20px rgba(0,0,0,.5);
+    --cds-text-secondary:#a3a19a; --cds-chart-grid:#33322e; --cds-chart-reference:#8f8d86;
+    --cds-chart-muted:#5a5852; --cds-chart-status-critical:#ec7063;
+  }
+}
+:root[data-theme="dark"]{
+  --color-fg:#ecebe6; --color-fg-muted:#a3a19a; --color-bg:#1c1b19; --color-panel:#262522;
+  --color-border-line:#3a3935; --color-ok:#5cbf85; --color-warn:#e0a24a; --color-bad:#ec7063;
+  --cds-surface-popover:#2e2d2a; --cds-border:#3a3935; --cds-shadow-popover:0 6px 20px rgba(0,0,0,.5);
+  --cds-text-secondary:#a3a19a; --cds-chart-grid:#33322e; --cds-chart-muted:#5a5852; --cds-chart-status-critical:#ec7063;
+}
+html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
+#dash-root{padding:32px 16px 64px;box-sizing:border-box}
+@media (max-width:600px){ :root{--cds-font-size-title:1.6rem;--cds-gap-xl:28px} }
+</style>
+</head>
+<body>
+<div id="dash-root">
+<style>
+#dash-root .hv{max-width:1120px;margin-inline:auto;display:flex;flex-direction:column;gap:var(--cds-gap-xl);font-family:var(--font-anthropic-sans);font-variant-numeric:tabular-nums}
+#dash-root .hv h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+#dash-root .hv h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0;text-wrap:balance}
+#dash-root .hv h3{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);margin:0}
+#dash-root .hv p{margin:0;max-width:72ch;line-height:1.5}
+#dash-root .hv-sub{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+#dash-root .hv-lead{font-size:var(--cds-font-size-body);line-height:1.55}
+#dash-root .hv-lead b, #dash-root .hv-card b{font-weight:600}
+#dash-root .hv-sec{display:flex;flex-direction:column;gap:var(--cds-gap-md)}
+#dash-root .hv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:var(--cds-gap-md)}
+#dash-root .hv-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:var(--cds-gap-md)}
+#dash-root .hv-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-sm);min-width:0;position:relative}
+#dash-root .hv-tile .hv-big{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);line-height:1.1}
+#dash-root .hv-tile .hv-unit{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+#dash-root .hv-kv{display:grid;grid-template-columns:1fr auto;gap:2px var(--cds-gap-sm);font-size:var(--cds-font-size-caption)}
+#dash-root .hv-kv span:nth-child(odd){color:var(--color-fg-muted)}
+#dash-root .hv-chip{align-self:flex-start;font-size:var(--cds-font-size-caption);padding:1px 8px;border-radius:999px;border:1px solid var(--color-border-line)}
+#dash-root .hv-good{color:var(--color-ok)}
+#dash-root .hv-bad{color:var(--color-bad)}
+#dash-root .hv-warn{color:var(--color-warn)}
+#dash-root .hv-muted{color:var(--color-fg-muted)}
+#dash-root .hv-chart{min-height:220px;width:100%}
+#dash-root .hv-chart svg{display:block}
+#dash-root .hv-tablewrap{overflow-x:auto}
+#dash-root .hv table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption)}
+#dash-root .hv th{text-align:right;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);padding:6px 8px;border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+#dash-root .hv td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+#dash-root .hv th:first-child, #dash-root .hv td:first-child{text-align:left;white-space:normal}
+#dash-root .hv td.hv-wrap{white-space:normal;text-align:left;color:var(--color-fg-muted);min-width:14rem}
+#dash-root .hv-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;z-index:5}
+#dash-root .hv-tip .t{color:var(--cds-text-secondary)}
+#dash-root .hv-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+#dash-root .hv-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+#dash-root .hv ol, #dash-root .hv ul{margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:var(--cds-gap-xs);line-height:1.5;max-width:80ch}
+#dash-root [data-dash-source-state=empty]{color:transparent}
+#dash-root [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+#dash-root .hv-fail{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);min-height:inherit}
+#dash-root .hv-fail::before{content:"";width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+</style>
+
+<div class="hv">
+  <header class="hv-sec" id="inicio">
+    <h1>Heaven en Meta Ads, enero a octubre de 2026</h1>
+    <p class="hv-lead dash-skeleton" id="hv-takeaway">
+      Desde mayo cada conversación de WhatsApp costó <b data-source="periodos" data-field="costo_conv" data-where="etapa=Más presupuesto">—</b> BOB, contra <b data-source="periodos" data-field="costo_conv" data-where="etapa=Mejor etapa">—</b> BOB en marzo y abril. Se gastó <b data-source="vs_mejor" data-field="var_gasto_dia" data-where="etapa=Más presupuesto">—</b> más por día y llegaron <b data-source="vs_mejor" data-field="var_conv_dia" data-where="etapa=Más presupuesto">—</b> conversaciones por día. Octubre, con 14 días y promo de aniversario, bajó a <b data-source="periodos" data-field="costo_conv" data-where="etapa=Octubre parcial">—</b> BOB.
+    </p>
+    <p class="hv-sub">Cuenta Colchones Heaven BO. Datos de Meta Ads consultados el 14/10/2026. Noviembre y diciembre de 2025 no tuvieron gasto. Una conversación es una persona que escribió por WhatsApp desde un anuncio; no es una venta.</p>
+  </header>
+
+  <section class="hv-sec" id="veredicto">
+    <h2>¿Fue mejor o peor?</h2>
+    <p class="hv-sub">Costo por conversación de la campaña de mensajes en cada etapa, comparado con la mejor etapa (marzo y abril).</p>
+    <div class="hv-tiles" id="hv-tiles"></div>
+  </section>
+
+  <section class="hv-sec" id="mes-a-mes">
+    <h2>Mes a mes</h2>
+    <div class="hv-grid">
+      <div class="hv-card">
+        <h3>Gasto por mes (BOB)</h3>
+        <p class="hv-sub">Campaña de mensajes y otras campañas (video y alcance). Octubre llega al 14.</p>
+        <div class="hv-legend" id="hv-leg-gasto"></div>
+        <div class="hv-chart" id="ch-gasto" data-source="mensual"></div>
+      </div>
+      <div class="hv-card">
+        <h3>Conversaciones por mes</h3>
+        <p class="hv-sub">Conversaciones de WhatsApp iniciadas desde anuncios.</p>
+        <div class="hv-chart" id="ch-conv" data-source="mensual"></div>
+      </div>
+      <div class="hv-card">
+        <h3>Costo por conversación (BOB)</h3>
+        <p class="hv-sub">Más bajo es mejor. La línea punteada es el promedio de marzo y abril.</p>
+        <div class="hv-chart" id="ch-costo" data-source="mensual periodos"></div>
+      </div>
+    </div>
+    <div class="hv-card">
+      <h3>Tabla mensual de la campaña de mensajes</h3>
+      <p class="hv-sub">CPM es lo que cuesta mostrar mil veces un anuncio. CTR es el porcentaje de quienes vieron el anuncio y tocaron el enlace.</p>
+      <div class="hv-tablewrap">
+        <table id="tb-mensual" data-source="mensual" data-row-key="mes_nombre">
+          <thead><tr>
+            <th data-field="mes_nombre">Mes</th>
+            <th data-field="gasto_total">Gasto total</th>
+            <th data-field="gasto_mensajes">Gasto mensajes</th>
+            <th data-field="conversaciones">Conversaciones</th>
+            <th data-field="costo_conv">Costo por conversación</th>
+            <th data-field="cpm">CPM</th>
+            <th data-field="ctr">CTR</th>
+            <th data-field="conv_por_clic">Conversaciones por clic</th>
+            <th data-field="dias_activos">Días activos</th>
+            <th data-field="gasto_dia">Gasto por día</th>
+            <th data-field="conv_dia">Conversaciones por día</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="hv-sec" id="presupuesto">
+    <h2>¿Subir el presupuesto trae más resultados?</h2>
+    <p>Sí, pero cada conversación extra sale más cara. Lo que pasó en la cuenta cuando subió el presupuesto:</p>
+    <div class="hv-card">
+      <h3>Casos reales de subida de presupuesto</h3>
+      <p class="hv-sub">Cambio en gasto, conversaciones y costo entre dos períodos.</p>
+      <div class="hv-tablewrap">
+        <table id="tb-casos" data-source="casos_presupuesto" data-row-key="caso">
+          <thead><tr>
+            <th data-field="caso">Comparación</th>
+            <th data-field="unidad">Medido</th>
+            <th data-field="var_gasto">Cambio en gasto</th>
+            <th data-field="var_conv">Cambio en conversaciones</th>
+            <th data-field="costo_antes">Costo antes</th>
+            <th data-field="costo_despues">Costo después</th>
+            <th data-field="var_costo">Cambio en costo</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hv-sub">Febrero a marzo salió muy bien porque coincidió con creativos nuevos y la segmentación que mejor funcionó. De junio a julio la subida ya rindió menos que proporcional. De marzo y abril a julio–septiembre se gastó más por día y llegaron menos conversaciones.</p>
+    </div>
+    <div class="hv-grid">
+      <div class="hv-card">
+        <h3>Si subimos el presupuesto, ¿cuánto crecen las conversaciones?</h3>
+        <p class="hv-sub">Estimación con los <span data-source="elasticidad" data-field="dias" data-row="0">—</span> días con gasto. La raya muestra el rango probable.</p>
+        <div class="hv-legend" id="hv-leg-esc"></div>
+        <div class="hv-chart" id="ch-esc" data-source="escenarios"></div>
+      </div>
+      <div class="hv-card">
+        <h3>Costo por conversación según el gasto del día</h3>
+        <p class="hv-sub">Días agrupados por cuánto se gastó ese día (BOB). Los días de más gasto fueron los más caros.</p>
+        <div class="hv-chart" id="ch-tramos" data-source="tramos_diarios"></div>
+      </div>
+    </div>
+    <div class="hv-card">
+      <h3>Proyección al ritmo de octubre</h3>
+      <p class="hv-sub">Mes de 30 días con el gasto y el rendimiento diario de octubre. Es una estimación: octubre tiene pocos días y promo de aniversario.</p>
+      <div class="hv-tablewrap">
+        <table id="tb-esc" data-source="escenarios" data-row-key="escenario">
+          <thead><tr>
+            <th data-field="escenario">Escenario</th>
+            <th data-field="gasto_mes">Presupuesto al mes (BOB)</th>
+            <th data-field="conv_mes">Conversaciones al mes</th>
+            <th data-field="costo_conv">Costo por conversación</th>
+            <th data-field="var_conv">Más conversaciones</th>
+            <th data-field="var_costo">Costo más alto</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="hv-sec" id="por-que">
+    <h2>¿Por qué subió el costo?</h2>
+    <p>Lo que más subió fue el precio de mostrar los anuncios (CPM). La gente que toca el anuncio escribe más que antes, así que el problema no es el mensaje sino a quién y cómo se le muestra. Parte de la suba puede ser del mercado; para separarlo hay que pedirle a la agencia el historial de cambios.</p>
+    <div class="hv-grid">
+      <div class="hv-card">
+        <h3>CPM por mes (BOB)</h3>
+        <p class="hv-sub">Costo de mil impresiones. Más bajo es mejor.</p>
+        <div class="hv-chart" id="ch-cpm" data-source="mensual"></div>
+      </div>
+      <div class="hv-card">
+        <h3>Conversaciones por cada clic</h3>
+        <p class="hv-sub">De cada clic en el anuncio, cuántos inician conversación. Más alto es mejor.</p>
+        <div class="hv-chart" id="ch-cr" data-source="mensual"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hv-sec" id="octubre">
+    <h2>Octubre contra septiembre, mismos días</h2>
+    <div class="hv-card">
+      <h3>Del 1 al 13 de cada mes, campaña de mensajes</h3>
+      <p class="hv-sub">Octubre mejoró frente a septiembre, pero septiembre fue de los meses más caros del año.</p>
+      <div class="hv-tablewrap">
+        <table id="tb-sepoct" data-source="sep_oct" data-row-key="metrica">
+          <thead><tr>
+            <th data-field="metrica">Métrica</th>
+            <th data-field="sep_1_13">Septiembre</th>
+            <th data-field="oct_1_13">Octubre</th>
+            <th data-field="variacion">Cambio</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="hv-sec" id="plata">
+    <h2>Dónde se fue la plata</h2>
+    <div class="hv-card">
+      <h3>Hallazgos para revisar con la agencia</h3>
+      <p class="hv-sub">Gasto extra: lo que se pagó de más comparado con la referencia. Los hallazgos se cruzan entre sí, así que no se suman.</p>
+      <div class="hv-tablewrap">
+        <table id="tb-hall" data-source="hallazgos" data-row-key="hallazgo">
+          <thead><tr>
+            <th data-field="hallazgo">Hallazgo</th>
+            <th data-field="detalle">Detalle</th>
+            <th data-field="gasto">Gasto (BOB)</th>
+            <th data-field="conversaciones">Conversaciones</th>
+            <th data-field="costo_conv">Costo por conversación</th>
+            <th data-field="referencia">Referencia</th>
+            <th data-field="sobrecosto">Gasto extra (BOB)</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="hv-grid">
+      <div class="hv-card">
+        <h3>Por formato del anuncio</h3>
+        <p class="hv-sub">Campaña de mensajes, todo el período.</p>
+        <div class="hv-tablewrap">
+          <table id="tb-form" data-source="formatos" data-row-key="formato">
+            <thead><tr>
+              <th data-field="formato">Formato</th>
+              <th data-field="anuncios">Anuncios</th>
+              <th data-field="gasto">Gasto (BOB)</th>
+              <th data-field="conversaciones">Conversaciones</th>
+              <th data-field="costo_conv">Costo por conversación</th>
+              <th data-field="cpm">CPM</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="hv-card">
+        <h3>Por ubicación</h3>
+        <p class="hv-sub">Campaña de mensajes, todo el período.</p>
+        <div class="hv-tablewrap">
+          <table id="tb-ubi" data-source="ubicaciones" data-row-key="ubicacion">
+            <thead><tr>
+              <th data-field="ubicacion">Ubicación</th>
+              <th data-field="gasto">Gasto (BOB)</th>
+              <th data-field="pct_gasto">Parte del gasto</th>
+              <th data-field="conversaciones">Conversaciones</th>
+              <th data-field="costo_conv">Costo por conversación</th>
+              <th data-field="cpm">CPM</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hv-sec" id="preguntas">
+    <h2>Preguntas para la agencia</h2>
+    <div class="hv-card">
+      <ol>
+        <li>En mayo los conjuntos pasaron de intereses y radio en Santa Cruz a públicos amplios (Advantage+). En ese mismo mes los conjuntos de abril seguían saliendo más baratos. ¿Por qué se cambió y qué prueba lo respaldó?</li>
+        <li>Anuncios que rendían muy bien, como Día del Padre Tropical o Especial Antialérgico, se apagaron sin señales de cansancio del público. ¿Por qué?</li>
+        <li>¿Qué regla usan para pausar anuncios y conjuntos caros, y en cuántos días la aplican?</li>
+        <li>¿Por qué hubo días con gasto muy por encima de lo normal, si esos días fueron los más caros?</li>
+        <li>¿Qué buscan las campañas de video (ThruPlay) y alcance (Awareness)? ¿Cómo se mide si ayudan a vender? Hoy no se usan para volver a impactar a quien vio los videos.</li>
+        <li>¿Qué plan tienen para bajar el CPM, que se duplicó desde marzo?</li>
+        <li>Pedir el historial de cambios de la cuenta de mayo a septiembre.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="hv-sec" id="limites">
+    <h2>Qué no dicen estos datos</h2>
+    <div class="hv-card">
+      <ul>
+        <li>No hay ventas. Una conversación barata no garantiza una venta; para saber el costo por venta hay que cruzar las conversaciones con el CRM (Kommo).</li>
+        <li>Octubre tiene solo 14 días y la promo de aniversario. Todavía no es una recuperación confirmada.</li>
+        <li>La proyección de presupuesto es una estimación con los datos diarios del año. Subir mucho más de lo que ya se probó tiene más incertidumbre.</li>
+        <li>La configuración de los conjuntos es la que tienen hoy; no muestra cada cambio que se hizo durante el año.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>window.HV_DATA={"casos_presupuesto": {"columns": ["caso", "unidad", "gasto_antes", "gasto_despues", "var_gasto", "conv_antes", "conv_despues", "var_conv", "costo_antes", "costo_despues", "var_costo"], "rows": [{"caso": "Feb → Mar", "unidad": "por mes", "gasto_antes": "4249.99", "gasto_despues": "6449.4", "var_gasto": "0.5175", "conv_antes": "1143.0", "conv_despues": "3571.0", "var_conv": "2.1242", "costo_antes": "3.72", "costo_despues": "1.81", "var_costo": "-0.5143"}, {"caso": "Jun → Jul", "unidad": "por mes", "gasto_antes": "5493.62", "gasto_despues": "8065.92", "var_gasto": "0.4682", "conv_antes": "2086.0", "conv_despues": "2654.0", "var_conv": "0.2723", "costo_antes": "2.63", "costo_despues": "3.04", "var_costo": "0.154"}, {"caso": "Mar–Abr → Jul–Sep", "unidad": "por día", "gasto_antes": "214.98", "gasto_despues": "250.83", "var_gasto": "0.1668", "conv_antes": "110.6", "conv_despues": "84.1", "var_conv": "-0.2397", "costo_antes": "1.94", "costo_despues": "2.98", "var_costo": "0.5345"}]}, "elasticidad": {"columns": ["elasticidad", "bajo", "alto", "dias"], "rows": [{"elasticidad": "0.755", "bajo": "0.639", "alto": "0.958", "dias": "255"}]}, "escenarios": {"columns": ["aumento", "escenario", "var_conv", "var_conv_bajo", "var_conv_alto", "var_costo", "gasto_mes", "conv_mes", "costo_conv"], "rows": [{"aumento": "0.0", "escenario": "Igual que hoy", "var_conv": "0.0", "var_conv_bajo": "0.0", "var_conv_alto": "0.0", "var_costo": "0.0", "gasto_mes": "7340.0", "conv_mes": "3456.0", "costo_conv": "2.12"}, {"aumento": "0.25", "escenario": "+25% presupuesto", "var_conv": "0.1835", "var_conv_bajo": "0.1532", "var_conv_alto": "0.2383", "var_costo": "0.0562", "gasto_mes": "9176.0", "conv_mes": "4091.0", "costo_conv": "2.24"}, {"aumento": "0.5", "escenario": "+50% presupuesto", "var_conv": "0.3581", "var_conv_bajo": "0.2956", "var_conv_alto": "0.4746", "var_costo": "0.1045", "gasto_mes": "11011.0", "conv_mes": "4694.0", "costo_conv": "2.35"}, {"aumento": "1.0", "escenario": "+100% presupuesto", "var_conv": "0.6876", "var_conv_bajo": "0.557", "var_conv_alto": "0.9426", "var_costo": "0.1851", "gasto_mes": "14681.0", "conv_mes": "5833.0", "costo_conv": "2.52"}]}, "formatos": {"columns": ["formato", "anuncios", "gasto", "conversaciones", "costo_conv", "cpm"], "rows": [{"formato": "Arte (imagen)", "anuncios": "92", "gasto": "37213.43", "conversaciones": "15390", "costo_conv": "2.42", "cpm": "8.13"}, {"formato": "Video", "anuncios": "50", "gasto": "15341.43", "conversaciones": "5330", "costo_conv": "2.88", "cpm": "13.85"}, {"formato": "Carrusel", "anuncios": "11", "gasto": "1568.29", "conversaciones": "555", "costo_conv": "2.83", "cpm": "8.03"}, {"formato": "Sin verificar", "anuncios": "17", "gasto": "2711.31", "conversaciones": "678", "costo_conv": "4.0", "cpm": "15.64"}]}, "hallazgos": {"columns": ["orden", "hallazgo", "detalle", "gasto", "conversaciones", "costo_conv", "referencia", "sobrecosto"], "rows": [{"orden": "1", "hallazgo": "Eficiencia perdida de mayo a septiembre", "detalle": "Gasto de may–sep comparado con el costo por conversación de mar–abr", "gasto": "34531.58", "conversaciones": "12116", "costo_conv": "2.85", "referencia": "1.94", "sobrecosto": "10974.0"}, {"orden": "2", "hallazgo": "Conjuntos con costo alto", "detalle": "11 conjuntos con costo 30% sobre el promedio", "gasto": "12472.72", "conversaciones": "2832", "costo_conv": "4.4", "referencia": "2.59", "sobrecosto": "5141.0"}, {"orden": "3", "hallazgo": "Anuncios con costo alto", "detalle": "27 anuncios con más de 150 BOB a más de 4 BOB/conv", "gasto": "9645.93", "conversaciones": "1844", "costo_conv": "5.23", "referencia": "2.59", "sobrecosto": "4872.0"}, {"orden": "4", "hallazgo": "Picos de gasto en pocos días", "detalle": "23 días con 1,5 veces o más el gasto normal del mes", "gasto": "11558.59", "conversaciones": "3275", "costo_conv": "3.53", "referencia": "2.43", "sobrecosto": "3614.0"}, {"orden": "5", "hallazgo": "ThruPlay y Awareness sin resultado medible", "detalle": "Campañas de video y alcance: no buscan conversaciones y no hay medición de su efecto", "gasto": "3714.5", "conversaciones": "0", "costo_conv": "", "referencia": "", "sobrecosto": ""}]}, "mensual": {"columns": ["mes", "mes_nombre", "gasto_total", "gasto_mensajes", "gasto_otras", "conversaciones", "costo_conv", "cpm", "ctr", "conv_por_clic", "dias_activos", "gasto_dia", "conv_dia", "parcial"], "rows": [{"mes": "2026-01", "mes_nombre": "Ene", "gasto_total": "2365.54", "gasto_mensajes": "1728.56", "gasto_otras": "636.98", "conversaciones": "448", "costo_conv": "3.86", "cpm": "16.21", "ctr": "0.01091", "conv_por_clic": "0.3852", "dias_activos": "12", "gasto_dia": "144.0", "conv_dia": "37.3", "parcial": "no"}, {"mes": "2026-02", "mes_nombre": "Feb", "gasto_total": "4999.87", "gasto_mensajes": "4249.99", "gasto_otras": "749.88", "conversaciones": "1143", "costo_conv": "3.72", "cpm": "10.43", "ctr": "0.0101", "conv_por_clic": "0.2778", "dias_activos": "25", "gasto_dia": "170.0", "conv_dia": "45.7", "parcial": "no"}, {"mes": "2026-03", "mes_nombre": "Mar", "gasto_total": "6803.4", "gasto_mensajes": "6449.4", "gasto_otras": "354.0", "conversaciones": "3571", "costo_conv": "1.81", "cpm": "5.99", "ctr": "0.01131", "conv_por_clic": "0.2933", "dias_activos": "31", "gasto_dia": "208.0", "conv_dia": "115.2", "parcial": "no"}, {"mes": "2026-04", "mes_nombre": "Abr", "gasto_total": "6803.36", "gasto_mensajes": "6449.43", "gasto_otras": "353.93", "conversaciones": "3063", "costo_conv": "2.11", "cpm": "6.92", "ctr": "0.00884", "conv_por_clic": "0.3719", "dias_activos": "29", "gasto_dia": "222.4", "conv_dia": "105.6", "parcial": "no"}, {"mes": "2026-05", "mes_nombre": "May", "gasto_total": "6964.86", "gasto_mensajes": "6964.86", "gasto_otras": "0.0", "conversaciones": "2632", "costo_conv": "2.65", "cpm": "9.01", "ctr": "0.00856", "conv_por_clic": "0.3976", "dias_activos": "27", "gasto_dia": "258.0", "conv_dia": "97.5", "parcial": "no"}, {"mes": "2026-06", "mes_nombre": "Jun", "gasto_total": "5743.62", "gasto_mensajes": "5493.62", "gasto_otras": "250.0", "conversaciones": "2086", "costo_conv": "2.63", "cpm": "7.97", "ctr": "0.00821", "conv_por_clic": "0.3685", "dias_activos": "29", "gasto_dia": "189.4", "conv_dia": "71.9", "parcial": "no"}, {"mes": "2026-07", "mes_nombre": "Jul", "gasto_total": "8065.92", "gasto_mensajes": "8065.92", "gasto_otras": "0.0", "conversaciones": "2654", "costo_conv": "3.04", "cpm": "10.98", "ctr": "0.00945", "conv_por_clic": "0.3824", "dias_activos": "29", "gasto_dia": "278.1", "conv_dia": "91.5", "parcial": "no"}, {"mes": "2026-08", "mes_nombre": "Ago", "gasto_total": "7373.43", "gasto_mensajes": "6503.56", "gasto_otras": "869.87", "conversaciones": "2222", "costo_conv": "2.93", "cpm": "13.92", "ctr": "0.0099", "conv_por_clic": "0.4801", "dias_activos": "29", "gasto_dia": "224.3", "conv_dia": "76.6", "parcial": "no"}, {"mes": "2026-09", "mes_nombre": "Sep", "gasto_total": "8003.46", "gasto_mensajes": "7503.62", "gasto_otras": "499.84", "conversaciones": "2522", "costo_conv": "2.98", "cpm": "13.25", "ctr": "0.00975", "conv_por_clic": "0.4569", "dias_activos": "30", "gasto_dia": "250.1", "conv_dia": "84.1", "parcial": "no"}, {"mes": "2026-10", "mes_nombre": "Oct", "gasto_total": "3425.52", "gasto_mensajes": "3425.52", "gasto_otras": "0.0", "conversaciones": "1613", "costo_conv": "2.12", "cpm": "11.33", "ctr": "0.01162", "conv_por_clic": "0.4592", "dias_activos": "14", "gasto_dia": "244.7", "conv_dia": "115.2", "parcial": "si"}]}, "periodos": {"columns": ["orden", "etapa", "meses", "gasto", "conversaciones", "costo_conv", "gasto_dia", "conv_dia"], "rows": [{"orden": "1", "etapa": "Arranque", "meses": "Ene–Feb", "gasto": "5978.55", "conversaciones": "1591", "costo_conv": "3.76", "gasto_dia": "161.6", "conv_dia": "43.0"}, {"orden": "2", "etapa": "Mejor etapa", "meses": "Mar–Abr", "gasto": "12898.83", "conversaciones": "6634", "costo_conv": "1.94", "gasto_dia": "215.0", "conv_dia": "110.6"}, {"orden": "3", "etapa": "Más presupuesto", "meses": "May–Sep", "gasto": "34531.58", "conversaciones": "12116", "costo_conv": "2.85", "gasto_dia": "239.8", "conv_dia": "84.1"}, {"orden": "4", "etapa": "Octubre parcial", "meses": "Oct", "gasto": "3425.52", "conversaciones": "1613", "costo_conv": "2.12", "gasto_dia": "244.7", "conv_dia": "115.2"}]}, "sep_oct": {"columns": ["metrica", "clave", "sep_1_13", "oct_1_13", "variacion", "mejor_si"], "rows": [{"metrica": "Gasto campaña mensajes (BOB)", "clave": "gasto", "sep_1_13": "4193.93", "oct_1_13": "3268.34", "variacion": "-0.2207", "mejor_si": "menos"}, {"metrica": "Conversaciones", "clave": "conv", "sep_1_13": "1254.0", "oct_1_13": "1543.0", "variacion": "0.2305", "mejor_si": "mas"}, {"metrica": "Costo por conversación (BOB)", "clave": "costo", "sep_1_13": "3.3444", "oct_1_13": "2.1182", "variacion": "-0.3667", "mejor_si": "menos"}, {"metrica": "CPM (BOB)", "clave": "cpm", "sep_1_13": "13.4047", "oct_1_13": "11.2247", "variacion": "-0.1626", "mejor_si": "menos"}, {"metrica": "CTR de enlace", "clave": "ctr", "sep_1_13": "0.0088", "oct_1_13": "0.0116", "variacion": "0.3143", "mejor_si": "mas"}]}, "tramos_diarios": {"columns": ["tramo", "dias", "gasto", "conversaciones", "costo_conv", "orden"], "rows": [{"tramo": "Hasta 150", "dias": "53", "gasto": "4718.66", "conversaciones": "2105", "costo_conv": "2.24", "orden": "1"}, {"tramo": "150–250", "dias": "127", "gasto": "25580.88", "conversaciones": "10671", "costo_conv": "2.4", "orden": "2"}, {"tramo": "250–400", "dias": "58", "gasto": "17030.62", "conversaciones": "6653", "costo_conv": "2.56", "orden": "3"}, {"tramo": "Más de 400", "dias": "17", "gasto": "9504.88", "conversaciones": "2510", "costo_conv": "3.79", "orden": "4"}]}, "ubicaciones": {"columns": ["ubicacion", "gasto", "conversaciones", "pct_gasto", "costo_conv", "cpm"], "rows": [{"ubicacion": "Facebook feed", "gasto": "33740.92", "conversaciones": "12320", "pct_gasto": "0.5937", "costo_conv": "2.74", "cpm": "10.62"}, {"ubicacion": "Facebook reels", "gasto": "13096.02", "conversaciones": "5577", "pct_gasto": "0.2304", "costo_conv": "2.35", "cpm": "10.57"}, {"ubicacion": "Instagram", "gasto": "4593.62", "conversaciones": "1509", "pct_gasto": "0.0808", "costo_conv": "3.04", "cpm": "10.4"}, {"ubicacion": "Facebook Marketplace y búsqueda", "gasto": "2835.73", "conversaciones": "1510", "pct_gasto": "0.0499", "costo_conv": "1.88", "cpm": "4.31"}, {"ubicacion": "WhatsApp estados", "gasto": "2114.02", "conversaciones": "866", "pct_gasto": "0.0372", "costo_conv": "2.44", "cpm": "4.88"}, {"ubicacion": "Otras", "gasto": "454.72", "conversaciones": "172", "pct_gasto": "0.008", "costo_conv": "2.64", "cpm": "4.25"}]}};</script>
+<script>
+// Reemplazo mínimo del «dash» de los tableros de Claude: los datos van adentro de la página.
+(function(){
+  var DATA=window.HV_DATA, calcs={}, fns=[];
+  function rowsDe(id){ if(DATA[id]) return DATA[id].rows; var c=calcs[id]; if(!c) return null;
+    if(!('v' in c)) c.v=c.fn.apply(null,c.inputs.map(rowsDe)); return c.v; }
+  window.dash={
+    data:function(id){ var r=rowsDe(id); return r?{status:'ok',data:r,rows:r,columns:DATA[id]?DATA[id].columns:Object.keys(r[0]||{}),refreshing:false,meta:[]}:{status:'missing',data:[],rows:[],columns:[],meta:[]}; },
+    calc:function(id,o){ calcs[id]={inputs:o.inputs,fn:o.fn}; },
+    loader:function(){}, onData:function(fn){ fns.push(fn); fn(); },
+    colors:['#2a78d6','#d97a2b','#7c6bd1','#2f9e7a','#c94f7c','#8a8f2e','#3aa0b8','#b5654a'],
+    refresh:function(){}, params:function(){return {};}, setParams:function(){}, resetParams:function(){}, setLink:function(){}
+  };
+  var t=0, w=window.innerWidth;
+  window.addEventListener('resize',function(){ if(window.innerWidth===w) return; w=window.innerWidth;
+    clearTimeout(t); t=setTimeout(function(){ fns.forEach(function(f){f();}); },150); });
+})();
+</script>
+<script>
+(function(){
+  const NUM=(v)=>v===''||v==null?null:Number(v);
+  const f0=new Intl.NumberFormat('es-BO',{maximumFractionDigits:0});
+  const f1=new Intl.NumberFormat('es-BO',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const f2=new Intl.NumberFormat('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const pc0=new Intl.NumberFormat('es-BO',{style:'percent',maximumFractionDigits:0});
+  const pc1=new Intl.NumberFormat('es-BO',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1});
+  const pc2=new Intl.NumberFormat('es-BO',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:2});
+  const sp=(v,f)=>(v>0?'+':v<0?'−':'')+f.format(Math.abs(v));
+  window.hvFmt={NUM,f0,f1,f2,pc0,pc1,pc2,sp};
+
+  dash.calc('vs_mejor',{
+    inputs:['periodos'],
+    title:'Cambio frente a marzo–abril',
+    description:'Cambio de costo por conversación, gasto por día y conversaciones por día de cada etapa frente a la mejor etapa (marzo y abril).',
+    fn:(periodos)=>{
+      const ref=periodos.find(r=>r.etapa==='Mejor etapa');
+      return periodos.map(r=>({etapa:r.etapa,
+        var_costo:Number(r.costo_conv)/Number(ref.costo_conv)-1,
+        var_gasto_dia:Number(r.gasto_dia)/Number(ref.gasto_dia)-1,
+        var_conv_dia:Number(r.conv_dia)/Number(ref.conv_dia)-1}));
+    }
+  });
+
+  function fail(el,st){ if(!el) return; el.innerHTML=''; if(st==='error'||st==='connect'){const d=document.createElement('div');d.className='hv-fail';d.textContent='Failed to load';el.appendChild(d);} }
+  function tip(card){ let t=card.querySelector(':scope > .hv-tip'); if(!t){t=document.createElement('div');t.className='hv-tip';t.hidden=true;card.appendChild(t);} return t; }
+  function showTip(card,ev,head,lines){
+    const t=tip(card); t.innerHTML='';
+    const h=document.createElement('div'); h.className='t'; h.textContent=head; t.appendChild(h);
+    lines.forEach(([c,name,val])=>{const r=document.createElement('div'); if(c){const i=document.createElement('i');i.style.cssText=`display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:${c}`;r.appendChild(i);} r.appendChild(document.createTextNode(name+': '+val)); t.appendChild(r);});
+    t.hidden=false;
+    const cr=card.getBoundingClientRect(); let x=ev.clientX-cr.left+12, y=ev.clientY-cr.top+12;
+    const w=t.offsetWidth; if(x+w>cr.width-8) x=ev.clientX-cr.left-w-12; if(x<4)x=4;
+    t.style.left=x+'px'; t.style.top=y+'px';
+  }
+  function hideTip(card){ const t=card.querySelector(':scope > .hv-tip'); if(t) t.hidden=true; }
+  window.hvTip={showTip,hideTip,fail};
+
+  function axisClean(g){ g.attr('font-size',null).attr('font-family',null); g.selectAll('text').attr('fill','var(--color-fg-muted)').style('font-size','var(--cds-font-size-caption)'); g.select('.domain').remove(); g.selectAll('line').attr('stroke','var(--cds-chart-grid)'); }
+  function measure(svg,texts){ const tmp=svg.append('g'); let m=0; texts.forEach(s=>{const t=tmp.append('text').style('font-size','var(--cds-font-size-caption)').text(s); m=Math.max(m,t.node().getComputedTextLength());}); tmp.remove(); return m; }
+
+  // Bars by month (stacked optional)
+  function barChart(id,rows,series,fmtAxis,fmtVal){
+    const el=document.getElementById(id); const card=el.closest('.hv-card'); el.innerHTML='';
+    const W=Math.max(260,el.clientWidth), H=220;
+    const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+    const tot=rows.map(r=>series.reduce((s,k)=>s+NUM(r[k.key]),0));
+    const y=d3.scaleLinear([0,d3.max(tot)*1.08],[H-24,8]).nice();
+    const ml=measure(svg,y.ticks(4).map(fmtAxis))+10;
+    const x=d3.scaleBand(rows.map(r=>r.mes_nombre),[ml,W-4]).padding(0.28);
+    const gy=svg.append('g').attr('transform',`translate(${ml},0)`).call(d3.axisLeft(y).ticks(4).tickFormat(fmtAxis).tickSize(-(W-ml-4))); axisClean(gy); gy.selectAll('text').attr('x',-6);
+    const gx=svg.append('g').attr('transform',`translate(0,${H-24})`).call(d3.axisBottom(x).tickSize(0)); axisClean(gx); gx.selectAll('text').attr('dy','1.1em');
+    rows.forEach((r,i)=>{
+      let base=0; const partial=r.parcial==='si';
+      series.forEach(s=>{
+        const v=NUM(r[s.key]); const y0=y(base), y1=y(base+v);
+        svg.append('rect').attr('x',x(r.mes_nombre)).attr('width',x.bandwidth()).attr('y',y1).attr('height',Math.max(0,y0-y1)).attr('rx',3)
+          .attr('fill',s.color).attr('fill-opacity',partial?0.45:1);
+        base+=v;
+      });
+      svg.append('rect').attr('x',x(r.mes_nombre)-x.step()*x.paddingInner()/2).attr('width',x.step()).attr('y',0).attr('height',H-24).attr('fill','transparent')
+        .on('mousemove',ev=>showTip(card,ev,r.mes_nombre+(partial?' (al 14)':''),series.map(s=>[series.length>1?s.color:null,s.label,fmtVal(NUM(r[s.key]))])))
+        .on('mouseleave',()=>hideTip(card));
+    });
+  }
+
+  function lineChart(id,rows,key,color,fmtAxis,fmtVal,label,refVal,refLabel){
+    const el=document.getElementById(id); const card=el.closest('.hv-card'); el.innerHTML='';
+    const W=Math.max(260,el.clientWidth), H=220;
+    const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+    const vals=rows.map(r=>NUM(r[key])); const all=refVal!=null?vals.concat([refVal]):vals;
+    const y=d3.scaleLinear([0,d3.max(all)*1.15],[H-24,10]).nice();
+    const ml=measure(svg,y.ticks(4).map(fmtAxis))+10;
+    const x=d3.scalePoint(rows.map(r=>r.mes_nombre),[ml+10,W-30]);
+    const gy=svg.append('g').attr('transform',`translate(${ml},0)`).call(d3.axisLeft(y).ticks(4).tickFormat(fmtAxis).tickSize(-(W-ml-4))); axisClean(gy); gy.selectAll('text').attr('x',-6);
+    const gx=svg.append('g').attr('transform',`translate(0,${H-24})`).call(d3.axisBottom(x).tickSize(0)); axisClean(gx); gx.selectAll('text').attr('dy','1.1em');
+    if(refVal!=null){ svg.append('line').attr('x1',ml).attr('x2',W-4).attr('y1',y(refVal)).attr('y2',y(refVal)).attr('stroke','var(--cds-chart-reference)').attr('stroke-dasharray','4 4');
+      svg.append('text').attr('x',W-4).attr('y',y(refVal)-5).attr('text-anchor','end').attr('fill','var(--color-fg-muted)').style('font-size','var(--cds-font-size-caption)').text(refLabel); }
+    const line=d3.line().x(r=>x(r.mes_nombre)).y(r=>y(NUM(r[key])));
+    svg.append('path').datum(rows).attr('d',line).attr('fill','none').attr('stroke',color).attr('stroke-width',2).attr('stroke-linecap','round').attr('stroke-linejoin','round');
+    rows.forEach(r=>{ svg.append('circle').attr('cx',x(r.mes_nombre)).attr('cy',y(NUM(r[key]))).attr('r',r.parcial==='si'?4:3).attr('fill',r.parcial==='si'?'var(--color-bg)':color).attr('stroke',color).attr('stroke-width',1.5); });
+    const last=rows[rows.length-1];
+    svg.append('text').attr('x',x(last.mes_nombre)+7).attr('y',y(NUM(last[key]))+4).attr('fill',color).style('font-size','var(--cds-font-size-caption)').text(fmtVal(NUM(last[key])));
+    const step=x.step();
+    rows.forEach(r=>{ svg.append('rect').attr('x',x(r.mes_nombre)-step/2).attr('width',step).attr('y',0).attr('height',H-24).attr('fill','transparent')
+      .on('mousemove',ev=>showTip(card,ev,r.mes_nombre+(r.parcial==='si'?' (al 14)':''),[[null,label,fmtVal(NUM(r[key]))]])).on('mouseleave',()=>hideTip(card)); });
+  }
+  window.hvCharts={barChart,lineChart};
+
+  function fillTable(id,rows,cols){
+    const tb=document.querySelector('#'+id+' tbody'); tb.innerHTML='';
+    rows.forEach(r=>{ const tr=document.createElement('tr');
+      cols.forEach(c=>{ const td=document.createElement('td'); const out=c(r); td.textContent=out.t; if(out.c) td.className=out.c; tr.appendChild(td); });
+      tb.appendChild(tr); });
+  }
+  window.hvTable=fillTable;
+})();
+</script>
+
+<script>
+(function(){
+  const {NUM,f0,f1,f2,pc0,pc1,pc2,sp}=window.hvFmt;
+  const {barChart,lineChart}=window.hvCharts; const fillTable=window.hvTable; const fail=window.hvTip.fail;
+  const C=dash.colors;
+  const raw=(k)=>r=>({t:r[k]});
+  const bs=(k)=>r=>({t:r[k]===''?'No aplica':f2.format(NUM(r[k]))});
+  const int=(k)=>r=>({t:f0.format(NUM(r[k]))});
+
+  dash.onData(()=>{
+    // header + tiles
+    const P=dash.data('periodos'), V=dash.data('vs_mejor');
+    const tk=document.getElementById('hv-takeaway');
+    if(P.status==='ok'&&V.status==='ok'){
+      tk.classList.remove('dash-skeleton');
+      const p=Object.fromEntries(P.data.map(r=>[r.etapa,r])); const v=Object.fromEntries(V.data.map(r=>[r.etapa,r]));
+      tk.querySelector('[data-where="etapa=Más presupuesto"][data-source="periodos"]').textContent=f2.format(NUM(p['Más presupuesto'].costo_conv));
+      tk.querySelector('[data-where="etapa=Mejor etapa"]').textContent=f2.format(NUM(p['Mejor etapa'].costo_conv));
+      tk.querySelector('[data-field="var_gasto_dia"]').textContent=pc0.format(Math.abs(v['Más presupuesto'].var_gasto_dia));
+      tk.querySelector('[data-field="var_conv_dia"]').textContent=pc0.format(Math.abs(v['Más presupuesto'].var_conv_dia))+' menos';
+      tk.querySelector('[data-where="etapa=Octubre parcial"]').textContent=f2.format(NUM(p['Octubre parcial'].costo_conv));
+
+      const box=document.getElementById('hv-tiles'); box.innerHTML='';
+      P.data.slice().sort((a,b)=>NUM(a.orden)-NUM(b.orden)).forEach(r=>{
+        const vv=v[r.etapa]; const card=document.createElement('div'); card.className='hv-card hv-tile';
+        const h=document.createElement('h3'); h.textContent=r.etapa+' · '+r.meses; card.appendChild(h);
+        const big=document.createElement('div'); big.className='hv-big';
+        big.setAttribute('data-source','periodos'); big.setAttribute('data-field','costo_conv'); big.setAttribute('data-where','etapa='+r.etapa);
+        big.textContent=f2.format(NUM(r.costo_conv)); card.appendChild(big);
+        const u=document.createElement('div'); u.className='hv-unit'; u.textContent='BOB por conversación'; card.appendChild(u);
+        const chip=document.createElement('span'); chip.className='hv-chip';
+        if(r.etapa==='Mejor etapa'){ chip.textContent='Referencia'; chip.classList.add('hv-good'); }
+        else { chip.setAttribute('data-source','vs_mejor'); chip.setAttribute('data-field','var_costo'); chip.setAttribute('data-where','etapa='+r.etapa);
+          chip.textContent=sp(vv.var_costo,pc0)+' vs mar–abr'; chip.classList.add(vv.var_costo>0.25?'hv-bad':vv.var_costo>0.05?'hv-warn':'hv-good'); }
+        card.appendChild(chip);
+        const kv=document.createElement('div'); kv.className='hv-kv';
+        [['Gasto mensajes','gasto',x=>f0.format(x)+' BOB'],['Conversaciones','conversaciones',x=>f0.format(x)],['Gasto por día','gasto_dia',x=>f0.format(x)+' BOB'],['Conversaciones por día','conv_dia',x=>f0.format(x)]].forEach(([lab,k,fm])=>{
+          const a=document.createElement('span'); a.textContent=lab; const b=document.createElement('span');
+          b.setAttribute('data-source','periodos'); b.setAttribute('data-field',k); b.setAttribute('data-where','etapa='+r.etapa); b.textContent=fm(NUM(r[k])); kv.appendChild(a); kv.appendChild(b); });
+        card.appendChild(kv); box.appendChild(card);
+      });
+    } else { fail(document.getElementById('hv-tiles'),P.status); }
+
+    // monthly
+    const M=dash.data('mensual');
+    if(M.status==='ok'){
+      const rows=M.data;
+      const lg=document.getElementById('hv-leg-gasto'); lg.innerHTML='';
+      [['Campaña de mensajes',C[0]],['Video y alcance',C[2]]].forEach(([n,c])=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=c;s.appendChild(i);s.appendChild(document.createTextNode(n));lg.appendChild(s);});
+      barChart('ch-gasto',rows,[{key:'gasto_mensajes',label:'Mensajes',color:C[0]},{key:'gasto_otras',label:'Video y alcance',color:C[2]}],v=>f0.format(v),v=>f0.format(v)+' BOB');
+      barChart('ch-conv',rows,[{key:'conversaciones',label:'Conversaciones',color:C[0]}],v=>f0.format(v),v=>f0.format(v));
+      const ref=P.status==='ok'?NUM(P.data.find(r=>r.etapa==='Mejor etapa').costo_conv):null;
+      lineChart('ch-costo',rows,'costo_conv',C[0],v=>f1.format(v),v=>f2.format(v),'Costo por conversación',ref,'Mar–abr');
+      lineChart('ch-cpm',rows,'cpm',C[0],v=>f0.format(v),v=>f2.format(v),'CPM');
+      lineChart('ch-cr',rows,'conv_por_clic',C[0],v=>pc0.format(v),v=>pc0.format(v),'Conversaciones por clic');
+      fillTable('tb-mensual',rows,[raw('mes_nombre'),int('gasto_total'),int('gasto_mensajes'),int('conversaciones'),
+        r=>({t:f2.format(NUM(r.costo_conv)),c:NUM(r.costo_conv)>2.6?'hv-bad':NUM(r.costo_conv)<2.2?'hv-good':''}),
+        bs('cpm'),r=>({t:pc2.format(NUM(r.ctr))}),r=>({t:pc0.format(NUM(r.conv_por_clic))}),int('dias_activos'),int('gasto_dia'),int('conv_dia')]);
+    } else { ['ch-gasto','ch-conv','ch-costo','ch-cpm','ch-cr'].forEach(i=>fail(document.getElementById(i),M.status)); document.querySelector('#tb-mensual tbody').innerHTML=''; }
+
+    // budget cases
+    const K=dash.data('casos_presupuesto');
+    if(K.status==='ok') fillTable('tb-casos',K.data,[raw('caso'),raw('unidad'),
+      r=>({t:sp(NUM(r.var_gasto),pc0)}),
+      r=>({t:sp(NUM(r.var_conv),pc0),c:NUM(r.var_conv)>=NUM(r.var_gasto)?'hv-good':NUM(r.var_conv)<0?'hv-bad':'hv-warn'}),
+      bs('costo_antes'),bs('costo_despues'),
+      r=>({t:sp(NUM(r.var_costo),pc0),c:NUM(r.var_costo)<0?'hv-good':'hv-bad'})]);
+    else document.querySelector('#tb-casos tbody').innerHTML='';
+
+    // scenarios
+    const E=dash.data('escenarios');
+    const el=document.getElementById('ch-esc'); const card=el.closest('.hv-card');
+    if(E.status==='ok'){
+      const rows=E.data.filter(r=>NUM(r.aumento)>0);
+      const lg=document.getElementById('hv-leg-esc'); lg.innerHTML='';
+      [['Aumento de presupuesto','var(--cds-chart-muted)'],['Aumento de conversaciones',C[0]]].forEach(([n,c])=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=c;s.appendChild(i);s.appendChild(document.createTextNode(n));lg.appendChild(s);});
+      el.innerHTML=''; const W=Math.max(260,el.clientWidth),H=220;
+      const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+      const mx=d3.max(rows,r=>Math.max(NUM(r.aumento),NUM(r.var_conv_alto)));
+      const y=d3.scaleLinear([0,mx*1.12],[H-24,10]).nice();
+      const ml=(function(){const t=svg.append('text').style('font-size','var(--cds-font-size-caption)').text(pc0.format(y.domain()[1]));const w=t.node().getComputedTextLength();t.remove();return w+10;})();
+      const x0=d3.scaleBand(rows.map(r=>r.escenario),[ml,W-4]).padding(0.25);
+      const x1=d3.scaleBand(['p','c'],[0,x0.bandwidth()]).padding(0.12);
+      const gy=svg.append('g').attr('transform',`translate(${ml},0)`).call(d3.axisLeft(y).ticks(4).tickFormat(v=>pc0.format(v)).tickSize(-(W-ml-4)));
+      gy.attr('font-size',null).attr('font-family',null); gy.selectAll('text').attr('fill','var(--color-fg-muted)').attr('x',-6).style('font-size','var(--cds-font-size-caption)'); gy.select('.domain').remove(); gy.selectAll('line').attr('stroke','var(--cds-chart-grid)');
+      const gx=svg.append('g').attr('transform',`translate(0,${H-24})`).call(d3.axisBottom(x0).tickSize(0).tickFormat(s=>s.replace(' presupuesto','')));
+      gx.attr('font-size',null).attr('font-family',null); gx.select('.domain').remove(); gx.selectAll('text').attr('fill','var(--color-fg-muted)').attr('dy','1.1em').style('font-size','var(--cds-font-size-caption)');
+      rows.forEach(r=>{
+        const bx=x0(r.escenario);
+        svg.append('rect').attr('x',bx+x1('p')).attr('width',x1.bandwidth()).attr('y',y(NUM(r.aumento))).attr('height',y(0)-y(NUM(r.aumento))).attr('rx',3).attr('fill','var(--cds-chart-muted)');
+        svg.append('rect').attr('x',bx+x1('c')).attr('width',x1.bandwidth()).attr('y',y(NUM(r.var_conv))).attr('height',y(0)-y(NUM(r.var_conv))).attr('rx',3).attr('fill',C[0]);
+        const cx=bx+x1('c')+x1.bandwidth()/2;
+        svg.append('line').attr('x1',cx).attr('x2',cx).attr('y1',y(NUM(r.var_conv_bajo))).attr('y2',y(NUM(r.var_conv_alto))).attr('stroke','var(--color-fg)').attr('stroke-width',1.5);
+        [NUM(r.var_conv_bajo),NUM(r.var_conv_alto)].forEach(v=>svg.append('line').attr('x1',cx-5).attr('x2',cx+5).attr('y1',y(v)).attr('y2',y(v)).attr('stroke','var(--color-fg)').attr('stroke-width',1.5));
+        svg.append('rect').attr('x',bx).attr('width',x0.bandwidth()).attr('y',0).attr('height',H-24).attr('fill','transparent')
+          .on('mousemove',ev=>window.hvTip.showTip(card,ev,r.escenario,[['var(--cds-chart-muted)','Presupuesto',sp(NUM(r.aumento),pc0)],[C[0],'Conversaciones',sp(NUM(r.var_conv),pc0)+' ('+pc0.format(NUM(r.var_conv_bajo))+' a '+pc0.format(NUM(r.var_conv_alto))+')'],[null,'Costo por conversación',sp(NUM(r.var_costo),pc0)]]))
+          .on('mouseleave',()=>window.hvTip.hideTip(card));
+      });
+      fillTable('tb-esc',E.data,[raw('escenario'),int('gasto_mes'),int('conv_mes'),bs('costo_conv'),
+        r=>({t:NUM(r.aumento)===0?'—':sp(NUM(r.var_conv),pc0)}),r=>({t:NUM(r.aumento)===0?'—':sp(NUM(r.var_costo),pc0),c:NUM(r.var_costo)>0?'hv-warn':''})]);
+    } else { fail(el,E.status); document.querySelector('#tb-esc tbody').innerHTML=''; }
+
+    // tramos
+    const T=dash.data('tramos_diarios'); const te=document.getElementById('ch-tramos'); const tcard=te.closest('.hv-card');
+    if(T.status==='ok'){
+      te.innerHTML=''; const rows=T.data.slice().sort((a,b)=>NUM(a.orden)-NUM(b.orden));
+      const W=Math.max(260,te.clientWidth),H=220;
+      const svg=d3.select(te).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+      const y=d3.scaleLinear([0,d3.max(rows,r=>NUM(r.costo_conv))*1.2],[H-40,10]).nice();
+      const ml=(function(){const t=svg.append('text').style('font-size','var(--cds-font-size-caption)').text(f1.format(y.domain()[1]));const w=t.node().getComputedTextLength();t.remove();return w+10;})();
+      const x=d3.scaleBand(rows.map(r=>r.tramo),[ml,W-4]).padding(0.3);
+      const gy=svg.append('g').attr('transform',`translate(${ml},0)`).call(d3.axisLeft(y).ticks(4).tickFormat(v=>f1.format(v)).tickSize(-(W-ml-4)));
+      gy.attr('font-size',null).attr('font-family',null); gy.selectAll('text').attr('fill','var(--color-fg-muted)').attr('x',-6).style('font-size','var(--cds-font-size-caption)'); gy.select('.domain').remove(); gy.selectAll('line').attr('stroke','var(--cds-chart-grid)');
+      const gx=svg.append('g').attr('transform',`translate(0,${H-40})`).call(d3.axisBottom(x).tickSize(0));
+      gx.attr('font-size',null).attr('font-family',null); gx.select('.domain').remove(); gx.selectAll('text').attr('fill','var(--color-fg-muted)').attr('dy','1.1em').style('font-size','var(--cds-font-size-caption)');
+      const mx=d3.max(rows,r=>NUM(r.costo_conv));
+      rows.forEach(r=>{
+        const v=NUM(r.costo_conv);
+        svg.append('rect').attr('x',x(r.tramo)).attr('width',x.bandwidth()).attr('y',y(v)).attr('height',y(0)-y(v)).attr('rx',4).attr('fill',v===mx?'var(--cds-chart-status-critical)':C[0]);
+        svg.append('text').attr('x',x(r.tramo)+x.bandwidth()/2).attr('y',y(v)-6).attr('text-anchor','middle').attr('fill','var(--color-fg)').style('font-size','var(--cds-font-size-caption)').text(f2.format(v));
+        svg.append('text').attr('x',x(r.tramo)+x.bandwidth()/2).attr('y',H-8).attr('text-anchor','middle').attr('fill','var(--color-fg-muted)').style('font-size','var(--cds-font-size-caption)').text(f0.format(NUM(r.dias))+' días');
+        svg.append('rect').attr('x',x(r.tramo)).attr('width',x.bandwidth()).attr('y',0).attr('height',H-40).attr('fill','transparent')
+          .on('mousemove',ev=>window.hvTip.showTip(tcard,ev,r.tramo+' BOB por día',[[null,'Días',f0.format(NUM(r.dias))],[null,'Gasto',f0.format(NUM(r.gasto))+' BOB'],[null,'Conversaciones',f0.format(NUM(r.conversaciones))],[null,'Costo por conversación',f2.format(v)+' BOB']]))
+          .on('mouseleave',()=>window.hvTip.hideTip(tcard));
+      });
+    } else fail(te,T.status);
+
+    // sep vs oct
+    const S=dash.data('sep_oct');
+    if(S.status==='ok'){
+      const fm=(r,v)=>r.clave==='ctr'?pc2.format(v):r.clave==='conv'?f0.format(v):f2.format(v);
+      fillTable('tb-sepoct',S.data,[raw('metrica'),r=>({t:fm(r,NUM(r.sep_1_13))}),r=>({t:fm(r,NUM(r.oct_1_13))}),
+        r=>{const v=NUM(r.variacion); const good=r.mejor_si==='mas'?v>0:v<0; return {t:sp(v,pc0),c:r.clave==='gasto'?'':good?'hv-good':'hv-bad'};}]);
+    } else document.querySelector('#tb-sepoct tbody').innerHTML='';
+
+    // findings
+    const Hh=dash.data('hallazgos');
+    if(Hh.status==='ok') fillTable('tb-hall',Hh.data.slice().sort((a,b)=>NUM(a.orden)-NUM(b.orden)),[raw('hallazgo'),r=>({t:r.detalle,c:'hv-wrap'}),int('gasto'),int('conversaciones'),bs('costo_conv'),bs('referencia'),
+      r=>({t:r.sobrecosto===''?'No aplica':f0.format(NUM(r.sobrecosto)),c:r.sobrecosto===''?'hv-muted':'hv-bad'})]);
+    else document.querySelector('#tb-hall tbody').innerHTML='';
+
+    const F=dash.data('formatos');
+    if(F.status==='ok'){ const mn=d3.min(F.data,r=>NUM(r.costo_conv)); fillTable('tb-form',F.data,[raw('formato'),int('anuncios'),int('gasto'),int('conversaciones'),r=>({t:f2.format(NUM(r.costo_conv)),c:NUM(r.costo_conv)===mn?'hv-good':NUM(r.costo_conv)>3?'hv-bad':''}),bs('cpm')]); }
+    else document.querySelector('#tb-form tbody').innerHTML='';
+
+    const U=dash.data('ubicaciones');
+    if(U.status==='ok'){ const mn=d3.min(U.data,r=>NUM(r.costo_conv)); fillTable('tb-ubi',U.data,[raw('ubicacion'),int('gasto'),r=>({t:pc0.format(NUM(r.pct_gasto))}),int('conversaciones'),r=>({t:f2.format(NUM(r.costo_conv)),c:NUM(r.costo_conv)===mn?'hv-good':NUM(r.costo_conv)>3?'hv-bad':''}),bs('cpm')]); }
+    else document.querySelector('#tb-ubi tbody').innerHTML='';
+
+    const EL=dash.data('elasticidad'); const ed=document.querySelector('[data-source="elasticidad"][data-field="dias"]');
+    if(EL.status==='ok'&&EL.data.length) ed.textContent=f0.format(NUM(EL.data[0].dias)); else ed.textContent='—';
+  });
+})();
+</script>
+
+</div>
+</body>
+</html>
