@@ -76,7 +76,7 @@ function BASE(){
     return { hay:!!b, txt:b ? b.innerText : '', sel:_sel('h2'), f:CIERRE_ENT_RP.f, t:CIERRE_ENT_RP.t,
       dias:b ? Array.from(b.querySelectorAll('.cie-rp-dia')).map(function(x){ return x.textContent; }) : [] }; });
   chk('abre el recuadro debajo del renglón, con el próximo camión elegido y el mismo turno', r.hay && r.f==='2026-10-15' && r.t==='AM', r);
-  chk('ofrece Hoy PM, el jueves 15/10 y el viernes 16/10, y dice los cupos', r.dias.length===3 && /Hoy PM/.test(r.dias[0]) && /15\/10/.test(r.dias[1]) && /16\/10/.test(r.dias[2]) && /quedan \d+ de 12/.test(r.txt), r);
+  chk('ofrece Hoy PM, el jueves 15/10 y el viernes 16/10, y dice los cupos', r.dias.length===3 && /Hoy PM/.test(r.dias[0]) && /15\/10/.test(r.dias[1]) && /16\/10/.test(r.dias[2]) && /quedan \d+ de (12|8) /.test(r.txt), r);   // (14/10) el jueves 15/10 tiene 8 en la mañana: un camión en mantenimiento (CUPOS_FECHA)
   chk('abrirlo destilda el pedido (si no salió, no puede quedar tildado)', !r.sel, r);
   await page.click('.cie-rp[data-id="h2"] .cie-rp-t');
   r = await ev(() => ({ sel:_sel('h2'), abierto:!!document.querySelector('.cie-rp[data-id="h2"]') }));
