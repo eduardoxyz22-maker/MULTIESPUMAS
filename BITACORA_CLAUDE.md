@@ -14383,3 +14383,14 @@ que entré recién al panel. haz que grite, tiemble la pantalla, que Eduardo apa
   `tests/test_anuncio.js` y el diagnóstico con la línea del anuncio (`2ffcb74`). Se publicó con la batería corriendo; antes, en verde:
   test_anuncio 44, test_asistente 24, test_asistente_ak 38, test_asistente_rev 17, test_halloween 22, test_onclicks 5, test_adm_tools 6,
   test_quien 13. Volver atrás de la página: `60a98e8`.
+
+## §4kx — 🏬 Stock de cada tienda: lo que dijo el dueño (14/10, pendiente, sin código)
+- Logística NO repone lo que se recoge de una tienda: el vendedor marca y la tienda queda con uno menos. Hace falta llevar el saldo de
+  cada tienda.
+- Las tiendas NO están en el reporte de Moreno (cada una tiene su almacén) y subir un Excel por día «es una paja».
+- Todas las ventas de tienda se cargan en el panel («SALIÓ DE TIENDA», con la sucursal: `sucursalDeVenta`).
+- Las tiendas a veces se pasan mercadería entre ellas (sin RPT): hace falta un «pasé a otra tienda».
+- Puede subir los saldos de cada tienda **cada 1° de mes** («y a partir de ahí vemos»).
+- Propuesta que quedó: saldo = el del 1° + RPT entregadas (`sucursalDeRpt`) − ventas de tienda − marcas «🏬 Tienda» (`recogeDeTienda`)
+  ± pases entre tiendas; se ve en Stock, en el cuadrito del formulario y en el botón «🏬 Tienda». Ya existe `stockTiendas`/`renderTiendas`
+  (vendió/recibió 30 días). Falta: formato del archivo del 1° (preguntarle), el pase entre tiendas y que diga «armalo».
