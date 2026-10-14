@@ -14596,3 +14596,7 @@ mantenimiento, así que solo por mañana»*.
   entrada y 170 de salida ≈ USD 0.0122)», categoría hora, la respuesta con el día, el horario y el saldo del pedido de prueba. La clave
   anda y el `.gs` 14-b está pegado. Todavía APAGADO: había puesto `IA_ACTIVA` = «=1» (tiene que ser `1` a secas). Siguiente:
   `IA_SOLO` = su número, `IA_ACTIVA` = 1 y escribirle al bot. ~USD 0,012 por respuesta → USD 100 ≈ 8.000.
+- **14/10 19:11: primera respuesta de Claude a un cliente real (el dueño, con `IA_SOLO`)**: escribió «A qué hora llega mi pedido ?» (su
+  pedido de prueba estaba borrado) y no salió la automática al instante (señal de que el webhook 14-b lo dejó «⏳»); Claude contestó a
+  los pocos minutos (el disparador de una vez tarda 1-2 min, a lo sumo el repaso de 5). Falta: probar «no voy a estar» y una
+  inyección, sacar `IA_SOLO` y «publica» para las tarjetas del panel.
