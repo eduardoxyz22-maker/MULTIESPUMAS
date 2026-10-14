@@ -858,7 +858,13 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   (`WA_TIPOS[k].vieja/nv`, errores 132001/132015/132016). Al cliente, el WhatsApp de su vendedor desde **`WA_VENDEDORAS`** (`Nombre:celular, …`,
   en Propiedades, nunca en el código); «tu vendedor/a» por `waTuVend_` (`WA_VENDEDOR_HOMBRE`). **Sin entregado automático** (dueño, 12/10):
   el cierre de entregas no tilda nada solo y fecha pasada sin ✅ = «❓ Sin confirmar»; la regla del stock (§4co) no cambió.
-- `tests/test_wa_bot.js` (107), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk.
+- **🚀 Lo de la tarde que sale cargado a la mañana** (§4lb, 14/10, dueño: *«Ernesto no va a "reprogramar"… debería ser automático, al
+  marcar cargado y saliendo»*; en la rama, servidor `2026-10-14-a` SIN implementar): al salir un camión antes de las 12:00 («🚚 Ya salió» o
+  el GPS de hace ≤ 60 min, en un aparato de logística/Administración), `adelantoAlSalir` pasa a AM los pedidos de HOY de ese camión que
+  están en la TARDE y van ENTEROS en la carga (tildes de «🌆 Tarde»; copia los tildes a «🌅 Mañana»), con `reproAplicar(…, forzar,
+  {adelanto:1})`. El servidor: evento `e` → plantilla **`pedido_en_camino`** solo al cliente (respaldo `cambio_entrega_v2` → `cambio_entrega`);
+  sin `adelanto` o de otro día, el cambio de siempre. Nada se marca ✅. `tests/test_adelanto.js` (14), `test_wa_bot` §14.
+- `tests/test_wa_bot.js` (126), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)

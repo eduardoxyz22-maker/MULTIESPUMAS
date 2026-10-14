@@ -14444,3 +14444,36 @@ decían el turno; los 3 de la tarde que veía estaban en «Sin vehículo» porqu
   test_carga_turnos 16, test_asistente_ak 38, test_banzer_salida 77, test_camion_salio 11, test_camiones_3d 28, test_camiones_admin 40,
   test_carga_sync 9, test_gps_pagina 58, test_mis_deposito 27, test_recoger_tienda 20, test_rev3_admin 48, test_rev4_atc_flete 57,
   test_vistas_4im 29, test_patio 38. Volver atrás: `61dbaf8`.
+
+## §4lb — 🚀 Lo de la tarde que sale cargado a la mañana: pasa solo a AM y el bot le avisa al cliente (14/10)
+El dueño: *«si un pedido está agendado para la tarde y Ernesto lo carga en la mañana y despacha, que avise al cliente que está cargado y
+en camino para entregarse en la mañana, ¿cómo podríamos hacer para el bot?»*. Le propuse que Ernesto lo reprogramara y contestó: *«Ernesto
+no va a "reprogramar": al marcar entrega en la mañana eso ya es reprogramar»* · *«1. solo los pedidos de la tarde que se adelantan a la
+mañana»* · *«2. no, no lo pasa: debería ser automático, al marcar cargado y saliendo»*.
+- **Página** (`adelantoAlSalir(veh, h)`): cuando un camión SALE antes de las **12:00** (`ADELANTO_HORA_MAX`), los pedidos de HOY de ESE
+  camión que están en la TARDE y van **enteros** en la carga (`adelantoCargadoEntero`: cada renglón con unidades tildado con el tilde de SU
+  turno, `depCargado`; ninguno ✗) pasan a la MAÑANA con `reproAplicar(q, hoy, 'AM', forzar, {adelanto:1})` (el día ya está cerrado y es un
+  hecho). Sus tildes de «🌆 Tarde» se copian a «🌅 Mañana» (`adelantoTildesAM` + un `guardarCargaChk`): si no, el camión que ya salió
+  figuraba con carga pendiente. Aviso: «🚀 El Carry salió a las 10:42 con 2 pedidos de la TARDE ya cargados: pasan a la MAÑANA (…). El bot
+  les avisa que van en camino.». Se queda como está: a medio cargar, ✗, mañana, sin turno, otro camión, entregado, otro día.
+  · **Dos disparadores**: «🚚 Ya salió» a mano (`camionSalioMarcar`, con la hora del toque) y el **GPS** (`adelantoRevisarGps`, después de
+    cada lectura en `refrescarEstadoYa`): solo en aparatos de logística/Administración (`asisVeAdm`), una salida de esta mañana de hace ≤ 60
+    min (`ADELANTO_GPS_MIN`: lo tildado mucho después no es lo que se llevó), una vez por salida y aparato (`me_adelanto_hecho`), relee la
+    planilla antes de mover (otro aparato pudo hacerlo recién); si ya se marcó «Ya salió» a mano para ese viaje (GPS ≤ 30 min después), no.
+    En Playwright el del GPS solo corre con `window.ADELANTO_PRUEBA`.
+  · `apiSaveAhora` manda `adelanto:1` SOLO en ese envío (como `reserva`): si cae a la cola, sale el cambio de día de siempre.
+- **Servidor `2026-10-14-a`**: `doPost` → `doSave(…, adelanto)` → `waAlGuardar_(viejo, rec, adelanto)`: mismo día = **hoy**, PM → AM y con
+  `adelanto` = evento **`e`** (si no, `c` como siempre; un `adelanto` de otro día es un cambio común — la prueba lo atrapó: sin el «hoy» se
+  tragaba el mensaje). En la cola: `c`+`e` = `e`; `e`+`c` = `c` (desde el día de antes del primero). `waRepaso`: `e` → `enc` SOLO al cliente
+  (a logística nada: lo cargaron ellos). `waArmar_`: si ya no es hoy por la mañana, no sale. Datos = los de `camb`.
+  · Plantilla nueva **`pedido_en_camino`** (Utilidad, 6 datos, en `WA_PLANTILLAS`): «🚚 ¡Tu pedido *OC …* ya está cargado y en camino! Lo
+    adelantamos: te lo entregamos *hoy, miércoles 14/10 por la mañana*, antes de lo agendado. ⏰ Entre las 9:00 y las 12:00…». Respaldo
+    en cadena (`vieja`/`vieja2`): mientras Meta no la apruebe sale `cambio_entrega_v2` («Ahora te lo llevamos el miércoles 14/10 por la
+    mañana»), y si tampoco, `cambio_entrega`. Los demás tipos no cambian. Se crea corriendo otra vez `crearPlantillasWhatsApp` (las que
+    ya existen quedan como están).
+  · Con el servidor 13-c la página publicada igual funciona: el `adelanto` se ignora y sale el cambio de día + aviso a logística.
+- Pruebas: `tests/test_adelanto.js` (14; 11 rojas contra `2bd1bf3`), `test_wa_bot` §14 (+7, y las plantillas pasan a 7), `test_servidor`
+  §11 con la versión nueva, `test_gps` acepta «13-c o posterior».
+- ⚠️ Lo que NO hace: no marca ✅ nada (dueño, 12/10); no mueve pedidos sin camión; después de las 12:00 no adelanta (sería el viaje de la
+  tarde). Un pedido de la tarde que Ernesto tilda pero NO va en ese viaje (lo preparó de antemano) se adelantaría igual si el camión sale
+  a la mañana: el tilde quiere decir «va en el camión».
