@@ -14592,3 +14592,7 @@ mantenimiento, así que solo por mañana»*.
 - `tests/test_cupos_fecha.js` (7); `test_cierre_reprogramar` acepta «de 8» (reloj clavado el 14/10).
 - **PUBLICADA 14/10 18:24 de Bolivia, `d14db54`** (solo `pedidos.html` + las dos pruebas, encima de `c68a00c`; sin lo de Claude,
   que sigue en la rama). En la rama: `aa4c0df`.
+- **14/10 19:07 de Bolivia: el dueño corrió `probarAsistente`** (captura): «✅ Claude contestó en 4 s (modelo claude-opus-5-5; 2212 tokens de
+  entrada y 170 de salida ≈ USD 0.0122)», categoría hora, la respuesta con el día, el horario y el saldo del pedido de prueba. La clave
+  anda y el `.gs` 14-b está pegado. Todavía APAGADO: había puesto `IA_ACTIVA` = «=1» (tiene que ser `1` a secas). Siguiente:
+  `IA_SOLO` = su número, `IA_ACTIVA` = 1 y escribirle al bot. ~USD 0,012 por respuesta → USD 100 ≈ 8.000.
