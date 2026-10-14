@@ -14477,3 +14477,6 @@ mañana»* · *«2. no, no lo pasa: debería ser automático, al marcar cargado 
 - ⚠️ Lo que NO hace: no marca ✅ nada (dueño, 12/10); no mueve pedidos sin camión; después de las 12:00 no adelanta (sería el viaje de la
   tarde). Un pedido de la tarde que Ernesto tilda pero NO va en ese viaje (lo preparó de antemano) se adelantaría igual si el camión sale
   a la mañana: el tilde quiere decir «va en el camión».
+- **Batería entera (14/10)**: 185 suites, 6.454 comprobaciones; la única roja fue `test_patio` (37/1, la que tropieza con la máquina
+  cargada) y sola da 38/0. En la rama `3096750` (+ esta nota). Enlace del `.gs` 2026-10-14-a fijo a `3096750…` (3.755 líneas, termina en
+  `}` con `return borrador;` antes). Volver atrás: ✏️ a la versión anotada Y pegar la 13-c de `b2c831d…` (3.735 líneas).
