@@ -680,7 +680,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - Fila del sistema **`__anuncio__`** (`ANUNCIO_ID`, en `esFilaSistema`; JSON `{v,t,d,ts,por}`; quitar = `t` vacío; sin sello: gana el último).
   El servidor no cambió.
 - Administración → «📤 Mensajes y partes» → **«📢 Decir anuncio»** (`#anu-btn`, `anuncioAbrir`, solo con la contraseña).
-- **📣 Eduardo lo GRITA en TODOS los aparatos UNA VEZ al entrar al panel** (§4kw, 14/10; dueño: *«haz que grite, tiemble la pantalla, que
+- **📣 Eduardo lo GRITA en TODOS los aparatos UNA VEZ al entrar al panel** (§4kw + §4ky, 14/10, PUBLICADO `3e2dd38`; dueño: *«haz que grite, tiemble la pantalla, que
   Eduardo aparezca con su megáfono gritando!»*) **y después, cada `ANUNCIO_CADA_MS` (3 min), solo el globo de Eduardo, callado**
   (`anuncioRecordar`; dueño, mismo día: *«si sale en pantalla completa cada 3 min sería molesto… solo la primera vez… y luego el
   pequeño saca el anuncio cada 3 min sin molestar»*). ⚠️ No volver a gritar en grande cada 3 min. Un anuncio NUEVO se grita otra vez.
@@ -692,6 +692,14 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   de Halloween (`window.hwRisaAudio`). En los avisos de Eduardo sigue primero y **sin «Entendido»** (`fijo`).
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
+
+## 📇 Clientes para Excel (§4kz, 14/10; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*; en la rama)
+- Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
+  con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por
+  cliente, junta por los últimos 8 números del celular o, sin celular, por nombre) o «Repetir el contacto» (una fila por venta).
+- Entran las VENTAS (`cliEntra`: sin filas del sistema, borradores, ATC, RPT ni internos; ventas de tienda sí). El mes = el de la venta
+  (`contaFecha`). Valor = `ventaTotal(p)` (TOTAL VENTA de Contabilidad); sin montos, `prodTotal`. Columnas: CLIENTE, CELULAR (texto), VALOR
+  (número, formato Bs) y después compras/fecha, vendedor y última compra/nota. Solo arma el archivo. `tests/test_clientes_excel.js` (23).
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
 La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).

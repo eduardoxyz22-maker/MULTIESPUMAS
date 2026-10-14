@@ -1376,6 +1376,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
             <button class="btn btn-sm at-t" style="--c:#b45309" title="Lo que falta para entregar" data-d="lo que falta para entregar" onclick="abrirFaltantes()">🏭 Faltantes / producción</button>
             <button class="btn btn-sm at-t" style="--c:#155e75" title="Lo que más sale" data-d="lo que más sale" onclick="abrirProds()">🛏️ Productos más entregados</button>
             <button class="btn btn-sm at-t" style="--c:#5b21b6" data-d="por producto o por vendedor" onclick="abrirBuscar()" title="Escribí un producto (o varios, separados por coma) y un período: te dice qué vendedor vendió cuánto, con el detalle de cada pedido. También podés elegir un vendedor y ver todo lo que vendió.">🔎 Quién vendió qué</button>
+            <button class="btn btn-sm at-t" id="cli-btn" style="--c:#0e7490" data-d="nombre, celular y compra" onclick="abrirClientes()" title="Un Excel con el nombre, el celular y el valor de la compra de cada cliente, de un mes o de todo, de los vendedores que elijas.">📇 Clientes (Excel)</button>
             <button class="btn btn-sm at-t" style="--c:#CE2939" data-d="el Excel de ROHO → pedidos" onclick="abrirImportRoho()" title="Subí el Excel «DETALLE NOTA DE VENTA PARA PROVEEDOR» que bajás del sistema de ROHO y se crean los pedidos.">📥 Importar ROHO</button>
           </div></section>
           <section class="at-g at-aj" style="--g:#5b6b7d"><h5><span>⚙️</span> Ajustes y claves</h5><div class="at-b">
@@ -2409,6 +2410,30 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cie-rp-ok{ background:#b45309!important; color:#fff!important; border-color:#b45309!important; }
 .cie-rp-hechos{ margin:0 0 10px; padding:8px 11px; border-radius:10px; background:#fff7ed; border:1px solid #fed7aa; font-size:.82rem; display:grid; gap:2px; }
 @media (max-width:560px){ .cie-rp{ margin-left:0; } }
+/* 📇 (14/10) Clientes para Excel */
+.cli-ctl{ padding:11px 14px; background:#fff; border-bottom:1px solid var(--gray-md); display:flex; gap:12px 22px; flex-wrap:wrap; align-items:flex-start; }
+.cli-g{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+.cli-g .lb{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0; }
+.cli-g-v{ flex:1 1 320px; }
+.cli-seg{ display:flex; flex-wrap:wrap; gap:4px; }
+.cli-seg button, .cli-mini{ border:1px solid var(--gray-md); background:#fff; color:#0e7490; border-radius:999px; padding:6px 12px; font:inherit; font-size:.82rem; font-weight:700; cursor:pointer; min-height:34px; }
+.cli-mini{ padding:2px 9px; min-height:26px; font-size:.74rem; }
+.cli-seg button.on{ background:#0e7490; border-color:#0e7490; color:#fff; }
+#cli-mes{ max-width:180px; } #cli-mes:disabled{ opacity:.45; }
+.cli-vends{ display:flex; flex-wrap:wrap; gap:6px; }
+.cli-v{ display:inline-flex; align-items:center; gap:5px; border:1px solid var(--gray-md); border-radius:999px; padding:5px 11px; font-size:.82rem; cursor:pointer; background:#fff; }
+.cli-v.on{ border-color:#0e7490; background:#ecfeff; color:#0e7490; font-weight:700; }
+.cli-v input{ margin:0; accent-color:#0e7490; }
+.cli-res{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+.cli-res span{ background:#fff; border:1px solid var(--gray-md); border-left:4px solid #0e7490; border-radius:10px; padding:7px 12px; font-size:.86rem; }
+.cli-res .cli-ojo{ border-left-color:#d97706; color:#92400e; }
+.cli-nota{ color:var(--muted); font-size:.8rem; margin:4px 0 10px; }
+.cli-tabla{ overflow-x:auto; background:#fff; border:1px solid var(--gray-md); border-radius:10px; }
+.cli-tabla table{ width:100%; min-width:640px; border-collapse:collapse; font-size:.84rem; }
+.cli-tabla th{ background:#0e7490; color:#fff; text-align:left; padding:8px 10px; font-size:.74rem; letter-spacing:.03em; }
+.cli-tabla td{ padding:7px 10px; border-top:1px solid #eef2f4; }
+.cli-tabla td.num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cli-vacio{ background:#fff; border:1px dashed var(--gray-md); border-radius:12px; padding:22px; text-align:center; color:var(--muted); }
 /* 📢 (13/10) el anuncio de Administración: el globo de cada 3 min, la lista de Eduardo, el botón y su ventana */
 .anu-tag{ display:inline-block; font-style:normal; font-size:.66rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:#fff; background:#c2410c; border-radius:999px; padding:2px 8px; margin-bottom:4px; }
 .asis-globo.asis-anuncio{ border-left-color:#c2410c; background:linear-gradient(135deg,#fff7ed,#fff); max-width:min(340px, calc(100vw - 110px)); font-size:.9rem; animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both, anu-late 1.2s ease-in-out .4s 3; }
@@ -3146,6 +3171,14 @@ html.con-pasos{ scroll-padding-bottom:84px; }
   <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="renderBuscar()">🔎 Buscar</button>
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<!-- 📇 (14/10) Clientes para Excel: nombre, celular y valor de la compra, por mes o todo, de los vendedores que se elijan (`abrirClientes`). -->
+<div id="cli-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0e7490;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📇 Clientes para Excel</b><span id="cli-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="cli-bajar" style="margin-left:auto;background:#fff;color:#0e7490;font-weight:700" onclick="cliBajar()">⬇ Bajar Excel</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cliCerrar()">✕ Cerrar</button></div>
+<div class="no-print cli-ctl">
+  <div class="cli-g"><span class="lb">Período</span><div class="cli-seg" id="cli-alc"><button type="button" data-v="mes" onclick="cliElegir('alc','mes')">Un mes</button><button type="button" data-v="todo" onclick="cliElegir('alc','todo')">Todo</button></div><input type="month" id="cli-mes" onchange="renderClientes()" aria-label="Mes"></div>
+  <div class="cli-g"><span class="lb">Si compró más de una vez</span><div class="cli-seg" id="cli-modo"><button type="button" data-v="cliente" onclick="cliElegir('modo','cliente')">Sumar sus compras (un renglón por cliente)</button><button type="button" data-v="compra" onclick="cliElegir('modo','compra')">Repetir el contacto (una fila por compra)</button></div></div>
+  <div class="cli-g cli-g-v"><span class="lb">Vendedores <button type="button" class="cli-mini" onclick="cliTodos(true)">Todos</button><button type="button" class="cli-mini" onclick="cliTodos(false)">Ninguno</button></span><div id="cli-vends" class="cli-vends"></div></div>
+</div>
+<div id="cli-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -19647,6 +19680,119 @@ function busLlenarVendedores(){
   if(actual){ for(var i=0;i<list.length;i++) if(mismoVendedor(list[i],actual)){ sel.value=list[i]; break; } }
 }
 function closeBusca(){ var ov=document.getElementById('busca-overlay'); if(ov) ov.style.display='none'; }
+/* ============================================================================
+   📇 (14/10) CLIENTES PARA EXCEL. El dueño: *«necesito un botón para exportar Excel en administración que saque estos datos por mes,
+   o todo, y elegir de qué vendedores (sí, en plural): nombre del cliente, número de celular, valor de la compra (en caso que comprara
+   más de un producto podemos repetir el contacto o sumar el valor de las compras que hizo)»*.
+   · Qué entra: las VENTAS. Afuera: filas del sistema, borradores de Kommo, ATC y RPT (no son ventas) y los pedidos internos
+     (`CONTA_INTERNOS`: ALBA, FABRICA…). Las ventas de tienda sí. Eduardo y ROHO se pueden elegir (como en «Quién vendió qué»).
+   · El mes es el de la VENTA (`contaFecha`: el día que se cargó), como «Ingreso» en Contabilidad.
+   · Valor = `ventaTotal(p)`: el TOTAL VENTA de Contabilidad, con todos sus productos. Sin montos anotados, la suma de los precios.
+   · «Sumar sus compras» junta por celular (los últimos 8 números) o, sin celular, por el nombre; «Repetir el contacto» = una fila por venta.
+   · Solo arma el archivo: no escribe nada en la planilla.
+   ========================================================================== */
+var CLIX={ alc:'mes', modo:'cliente', vend:null, vista:200 };
+function cliEsInterno(v){ for(var i=0;i<CONTA_INTERNOS.length;i++) if(mismoVendedor(CONTA_INTERNOS[i], v)) return true; return false; }
+function cliEntra(p){
+  return !!p && !esFilaSistema(p) && !esBorrador(p) && String(p.id||'').indexOf('__')!==0 && !esATC(p.oc) && !esRPT(p.oc) && !cliEsInterno(p.vendedor);
+}
+function cliValor(p){ var v=Number(ventaTotal(p))||0; if(!(v>0) && tienePrecios(p)) v=prodTotal(p); return r2(v); }
+function cliCelClave(c){ var d=String(c||'').replace(/\D/g, ''); return d.length>=7 ? d.slice(-8) : ''; }
+/* los vendedores para elegir: la lista fija + los que aparezcan en las ventas, sin repetir por acentos */
+function cliVendedores(){
+  var seen={}, list=[];
+  var meter=function(v){ var k=normNombre(v); if(!k || seen[k] || cliEsInterno(v)) return; seen[k]=1; list.push(nombreCanonico(v)); };
+  VENDEDORES.forEach(meter);
+  (STATE||[]).forEach(function(p){ if(cliEntra(p)) meter(p.vendedor); });
+  return list.sort(function(a,b){ return a.localeCompare(b, 'es'); });
+}
+function abrirClientes(){
+  var m=document.getElementById('cli-mes'); if(m && !m.value) m.value=todayStr().slice(0,7);
+  var L=cliVendedores();
+  /* lo elegido antes se respeta; uno nuevo arranca tildado */
+  if(!CLIX.vend) CLIX.vend={};
+  L.forEach(function(v){ if(!(v in CLIX.vend)) CLIX.vend[v]=true; });
+  CLIX.lista=L;
+  document.getElementById('cli-overlay').style.display='flex';
+  renderClientes();
+}
+function cliCerrar(){ var ov=document.getElementById('cli-overlay'); if(ov) ov.style.display='none'; }
+function cliElegir(k, v){ CLIX[k]=v; renderClientes(); }
+function cliTodos(si){ (CLIX.lista||[]).forEach(function(v){ CLIX.vend[v]=!!si; }); renderClientes(); }
+function cliVend(i, si){ var v=(CLIX.lista||[])[i]; if(v!=null){ CLIX.vend[v]=!!si; renderClientes(); } }
+function cliElegidos(){ return (CLIX.lista||[]).filter(function(v){ return CLIX.vend && CLIX.vend[v]; }); }
+function cliDatos(){
+  var mes=((document.getElementById('cli-mes')||{}).value)||todayStr().slice(0,7), sel=cliElegidos();
+  var ventas=(STATE||[]).filter(function(p){
+    if(!cliEntra(p)) return false;
+    if(!sel.some(function(v){ return mismoVendedor(v, p.vendedor); })) return false;
+    return CLIX.alc!=='mes' || contaFecha(p).slice(0,7)===mes;
+  }).sort(function(a,b){ return (contaFecha(a)).localeCompare(contaFecha(b)) || ((Number(a.ts)||0)-(Number(b.ts)||0)); });
+  var compras=ventas.map(function(p){
+    return { id:p.id, cliente:String(p.cliente||'').trim(), cel:String(p.celular||'').trim(), valor:cliValor(p), fecha:contaFecha(p),
+      vendedor:nombreCanonico(p.vendedor||''), nota:String(p.nota||p.oc||'').trim() };
+  });
+  var G={}, orden=[];
+  compras.forEach(function(c){
+    var k=cliCelClave(c.cel); k=k ? ('c'+k) : ('n'+normNombre(c.cliente||'(sin nombre)'));
+    var g=G[k]; if(!g){ g=G[k]={ cliente:'', cel:'', valor:0, n:0, vend:[], ult:'' }; orden.push(k); }
+    g.valor=r2(g.valor+c.valor); g.n++;
+    if(c.cliente) g.cliente=c.cliente;          // el nombre y el celular de la compra más nueva
+    if(c.cel) g.cel=c.cel;
+    if(c.vendedor && g.vend.indexOf(c.vendedor)<0) g.vend.push(c.vendedor);
+    if(c.fecha>g.ult) g.ult=c.fecha;
+  });
+  var clientes=orden.map(function(k){ return G[k]; }).sort(function(a,b){ return (b.valor-a.valor) || a.cliente.localeCompare(b.cliente, 'es'); });
+  var total=r2(compras.reduce(function(a,c){ return a+c.valor; }, 0));
+  return { mes:mes, vendedores:sel, compras:compras, clientes:clientes, total:total,
+    sinCel:(CLIX.modo==='compra' ? compras : clientes).filter(function(c){ return !cliCelClave(c.cel); }).length };
+}
+/* las filas del Excel (y de la vista previa): las tres columnas que pidió el dueño primero */
+function cliFilas(D){
+  if(CLIX.modo==='compra') return {
+    cab:['CLIENTE','CELULAR','VALOR DE LA COMPRA (Bs)','FECHA DE VENTA','VENDEDOR','N° NOTA / OC'],
+    filas:D.compras.map(function(c){ return [c.cliente, c.cel, c.valor, c.fecha ? fmtFecha(c.fecha) : '', c.vendedor, c.nota]; }) };
+  return {
+    cab:['CLIENTE','CELULAR','VALOR DE SUS COMPRAS (Bs)','COMPRAS','VENDEDOR','ÚLTIMA COMPRA'],
+    filas:D.clientes.map(function(c){ return [c.cliente, c.cel, c.valor, c.n, c.vend.join(', '), c.ult ? fmtFecha(c.ult) : '']; }) };
+}
+function cliPeriodoTxt(D){ return CLIX.alc==='mes' ? mesNombre(D.mes) : 'todo'; }
+function renderClientes(){
+  var seg=function(id, v){ [].forEach.call(document.querySelectorAll('#'+id+' button'), function(b){ var on=b.getAttribute('data-v')===v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on?'true':'false'); }); };
+  seg('cli-alc', CLIX.alc); seg('cli-modo', CLIX.modo);
+  var m=document.getElementById('cli-mes'); if(m) m.disabled=(CLIX.alc!=='mes');
+  var V=document.getElementById('cli-vends');
+  if(V) V.innerHTML=(CLIX.lista||[]).map(function(v, i){
+    return '<label class="cli-v'+(CLIX.vend[v]?' on':'')+'"><input type="checkbox"'+(CLIX.vend[v]?' checked':'')+' onchange="cliVend('+i+', this.checked)"> '+esc(v)+'</label>';
+  }).join('');
+  var D=cliDatos(), F=cliFilas(D), body=document.getElementById('cli-body'), info=document.getElementById('cli-info');
+  var bajar=document.getElementById('cli-bajar'); if(bajar) bajar.disabled=!F.filas.length;
+  if(info) info.textContent=cliPeriodoTxt(D)+' · '+(D.vendedores.length===(CLIX.lista||[]).length ? 'todos los vendedores' : (D.vendedores.length+' vendedor'+(D.vendedores.length===1?'':'es')));
+  if(!body) return;
+  if(!D.vendedores.length){ body.innerHTML='<div class="cli-vacio">Elegí al menos un vendedor.</div>'; return; }
+  if(!F.filas.length){ body.innerHTML='<div class="cli-vacio">No hay ventas de esos vendedores en '+esc(cliPeriodoTxt(D))+'.</div>'; return; }
+  var ver=F.filas.slice(0, CLIX.vista);
+  body.innerHTML='<div class="cli-res"><span><b>'+D.clientes.length+'</b> cliente'+(D.clientes.length===1?'':'s')+'</span><span><b>'+D.compras.length+'</b> compra'+(D.compras.length===1?'':'s')+'</span><span><b>'+esc(fmtBs(D.total))+'</b> en total</span>'+
+      (D.sinCel ? ('<span class="cli-ojo">'+D.sinCel+(CLIX.modo==='compra' ? ' fila' : ' cliente')+(D.sinCel===1?'':'s')+' sin celular</span>') : '')+'</div>'+
+    '<p class="cli-nota">Las tres primeras columnas son las que pediste; después van '+(CLIX.modo==='compra' ? 'la fecha, el vendedor y la nota' : 'cuántas veces compró, quién le vendió y su última compra')+'. '+
+      'El mes es el de la venta (el día que se cargó). Sin ATC, reposiciones ni pedidos internos.</p>'+
+    '<div class="cli-tabla"><table><thead><tr>'+F.cab.map(function(h){ return '<th>'+esc(h)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+      ver.map(function(r){ return '<tr>'+r.map(function(x, j){ return '<td'+(j===2?' class="num"':'')+'>'+esc(j===2 ? fmtBs(x) : String(x==null?'':x))+'</td>'; }).join('')+'</tr>'; }).join('')+
+    '</tbody></table></div>'+
+    (F.filas.length>ver.length ? ('<p class="cli-nota">Se ven las primeras '+ver.length+' de '+F.filas.length+': el Excel lleva todas.</p>') : '');
+}
+function cliBajar(){
+  var D=cliDatos(), F=cliFilas(D);
+  if(!F.filas.length){ toast('No hay ventas para bajar con lo elegido.', 'err'); return; }
+  var rows=[F.cab.map(function(h){ return { v:h, s:1 }; })];
+  F.filas.forEach(function(r){ rows.push([r[0], r[1], { v:r[2], t:'n', s:2 }, (typeof r[3]==='number' ? { v:r[3], t:'n' } : r[3]), r[4], r[5]]); });
+  var bytes=buildXlsx([{ name:CLIX.modo==='compra' ? 'Compras' : 'Clientes', cols:[{w:34},{w:16},{w:22},{w:14},{w:26},{w:16}], matrix:rows }]);
+  var slug=function(s){ return sinTildes(String(s||'').toLowerCase()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  var quien=D.vendedores.length===(CLIX.lista||[]).length ? 'todos' : (D.vendedores.length===1 ? slug(D.vendedores[0]) : (D.vendedores.length+'-vendedores'));
+  downloadBlob(bytes, 'clientes-'+(CLIX.alc==='mes' ? D.mes : 'todo')+'-'+quien+(CLIX.modo==='compra' ? '-por-compra' : '')+'.xlsx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('📇 Excel descargado — '+F.filas.length+(CLIX.modo==='compra' ? ' compra' : ' cliente')+(F.filas.length===1?'':'s')+' · '+fmtBs(D.total), 'ok');
+}
 /* Cada renglón del detalle abre el pedido (la misma ficha que Administración) POR ENCIMA de
    esta pantalla: el modal está en z-index 4000 y el overlay en 3000, así que al cerrar la
    ficha se vuelve acá con la búsqueda intacta. Pedido del dueño (09/09), con la pantalla
