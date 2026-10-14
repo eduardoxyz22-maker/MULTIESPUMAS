@@ -14379,3 +14379,7 @@ que entré recién al panel. haz que grite, tiemble la pantalla, que Eduardo apa
 - **El GPS a las 09:24** (mismo diagnóstico, `2ffcb74`): los 4 camiones reportando (09:11–09:22), quietos con el motor apagado: 3 en
   Banzer y 1 en PTF. No habían salido. De los 20 pedidos de hoy, **19 sin camión asignado** (el GPS no puede nombrar paradas de pedidos
   sin camión salvo por cercanía, y la carga 3D los muestra en «Sin camión»).
+- **PUBLICADO 14/10 ~10:05 de Bolivia, `c8322dd`** (dueño: «si publica»), Pages OK: pedidos.html (el grito), CLAUDE.md,
+  `tests/test_anuncio.js` y el diagnóstico con la línea del anuncio (`2ffcb74`). Se publicó con la batería corriendo; antes, en verde:
+  test_anuncio 44, test_asistente 24, test_asistente_ak 38, test_asistente_rev 17, test_halloween 22, test_onclicks 5, test_adm_tools 6,
+  test_quien 13. Volver atrás de la página: `60a98e8`.
