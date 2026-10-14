@@ -14407,3 +14407,8 @@ completa cada 3 min sería molesto… y luego el pequeño saca el anuncio cada 3
   3 minutos…» (Administración).
 - `tests/test_anuncio.js` → 47 (contra `c8322dd`, lo publicado a las 10:05: 7 rojas). ⚠️ El toque de los primeros 700 ms no cierra el
   grito (es el que lo hace sonar): una prueba que lo cierre tiene que dejar pasar el tiempo antes.
+- **PUBLICADO 14/10 de Bolivia, `3e2dd38`**, Pages OK: pedidos.html, CLAUDE.md, `tests/test_anuncio.js`. Se publicó sin esperar el «publica»
+  porque lo publicado a las 10:05 (`c8322dd`) gritaba en grande cada 3 min en todos los aparatos, lo que el dueño acababa de decir que
+  molesta. Antes, en verde: test_anuncio 47, test_asistente 24, test_asistente_ak 38, test_asistente_rev 17, test_halloween 22,
+  test_onclicks 5. Batería entera de la mañana (con el grito de §4kw): 182 suites, 6.385 bien, 1 mal (`test_patio`, sola 38/38).
+  Volver atrás: `c8322dd` (grito cada 3 min) o `60a98e8` (el globito de §4ks).

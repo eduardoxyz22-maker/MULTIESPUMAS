@@ -680,7 +680,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - Fila del sistema **`__anuncio__`** (`ANUNCIO_ID`, en `esFilaSistema`; JSON `{v,t,d,ts,por}`; quitar = `t` vacío; sin sello: gana el último).
   El servidor no cambió.
 - Administración → «📤 Mensajes y partes» → **«📢 Decir anuncio»** (`#anu-btn`, `anuncioAbrir`, solo con la contraseña).
-- **📣 Eduardo lo GRITA en TODOS los aparatos UNA VEZ al entrar al panel** (§4kw, 14/10; dueño: *«haz que grite, tiemble la pantalla, que
+- **📣 Eduardo lo GRITA en TODOS los aparatos UNA VEZ al entrar al panel** (§4kw + §4ky, 14/10, PUBLICADO `3e2dd38`; dueño: *«haz que grite, tiemble la pantalla, que
   Eduardo aparezca con su megáfono gritando!»*) **y después, cada `ANUNCIO_CADA_MS` (3 min), solo el globo de Eduardo, callado**
   (`anuncioRecordar`; dueño, mismo día: *«si sale en pantalla completa cada 3 min sería molesto… solo la primera vez… y luego el
   pequeño saca el anuncio cada 3 min sin molestar»*). ⚠️ No volver a gritar en grande cada 3 min. Un anuncio NUEVO se grita otra vez.
