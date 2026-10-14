@@ -3941,7 +3941,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-13-c';   // (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-14-a';   // (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -4305,6 +4305,9 @@ function apiSaveAhora(rec, opts){
   /* 📦 (02/10, §4hj) Lo que este pedido saca del saldo del almacén, para el libro de reservas del servidor 2026-10-02-a
      (`saldoReservaArmar`). Viaja SOLO desde el formulario: la cola, el chofer y Contabilidad no lo mandan. */
   if(opts && opts.reserva) payload.reserva=opts.reserva;
+  /* 🚀 (14/10) Un pedido de la tarde que salió cargado a la mañana (`adelantoAlSalir`): el servidor 2026-10-14-a le manda al cliente
+     «cargado y en camino» en vez del cambio de día. Como `reserva`, viaja solo en este envío: si cae a la cola, sale el cambio de día. */
+  if(opts && opts.adelanto) payload.adelanto=1;
   /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
      redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
      petición. Si el guardado tarda —el servidor puede esperar hasta 30 s el candado cuando
@@ -13941,6 +13944,7 @@ function refrescarEstadoYa(){
       saldoTrasLectura();                        // 🧾 (27/09) el saldo debajo de cada producto, con lo recién leído (§4gj)
       if(typeof cierreEntPendiente==='function' && cierreEntPendiente()) setTimeout(cierreEntSincronizar, 0);   // ⏳ (05/10) el cierre que esperaba señal
       setTimeout(histStockAlDia, 0);             // 📚 (09/10, §4in) el Excel de hoy a la hoja «Historial stock», si falta
+      setTimeout(function(){ try{ adelantoRevisarGps(); }catch(e){} }, 0);   // 🚀 (14/10) el GPS vio salir un camión con lo de la tarde cargado
       return true;
     }
     ULTIMO_ERROR=(res&&res.error)?motivoDelServidor(res.error):'respuesta inesperada del servidor';
@@ -15672,12 +15676,12 @@ function reproConfirmar(){
 }
 /* Mover un pedido a otro día/turno, lo mismo desde 📅 Reprogramar y desde el cierre de entregas (13/10): número del día nuevo, la ATC
    que vive en su devolución la sigue, y con avisos confirmados va con `forzar`. Devuelve la promesa del guardado. */
-function reproAplicar(p, f, t, forzar){
+function reproAplicar(p, f, t, forzar, extra){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
   atcSeguirViaje(p, _enDev);
-  return persistPedido(p, {forzar: !!forzar});
+  return persistPedido(p, Object.assign({forzar: !!forzar}, extra||{}));   // (14/10) `extra.adelanto`: ver adelantoAlSalir
 }
 
 /* ============================================================================
@@ -16161,12 +16165,126 @@ function camionSalioMarcar(veh, on){
     setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
     try{ depPanel(null); }catch(e){}
     toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
+    try{ adelantoAlSalir(veh, z(h.getHours())+':'+z(h.getMinutes())); }catch(e){}   // 🚀 (14/10) lo de la tarde que salió cargado, a la mañana
   }else{
     if(!k) return;
     if(!confirm('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.')) return;
     Object.keys(CARGA_CHK).forEach(function(x){ if(x.indexOf(cargaChkKey(f, veh, CARGA_SALIO)+'|')===0) setCargaChk(x, false); });
   }
   try{ renderCargaSiActiva(); }catch(e){} try{ cargaVivaPintar(); }catch(e){}
+}
+/* 🚀 LO DE LA TARDE QUE SALE CARGADO A LA MAÑANA (14/10, dueño: «si un pedido está agendado para la tarde y Ernesto lo carga en la
+   mañana y despacha, que avise al cliente que está cargado y en camino para entregarse en la mañana» · «Ernesto no va a "reprogramar":
+   marcar la entrega en la mañana eso ya es reprogramar» · «solo los pedidos de la tarde que se adelantan a la mañana» · «debería ser
+   automático, al marcar cargado y saliendo»).
+   Cuando un camión SALE antes de las ADELANTO_HORA_MAX (a mano con «🚚 Ya salió», o el GPS lo vio salir hace menos de ADELANTO_GPS_MIN
+   minutos), los pedidos de HOY de ESE camión que están en la TARDE y van ENTEROS en la carga (cada renglón tildado en «🌆 Tarde» de la
+   Lista de carga, ninguno ✗ no hay) pasan a la MAÑANA, igual que con 📅 Reprogramar (`reproAplicar`, con `forzar`: el día ya está
+   cerrado y es un hecho, ya van en el camión), y con `adelanto`: el servidor 2026-10-14-a le manda al cliente «cargado y en camino»
+   (con uno anterior, el cambio de día de siempre). Sus tildes pasan a «🌅 Mañana» (si no, el camión que ya salió figuraría con carga
+   pendiente). Un pedido a medio cargar se queda en la tarde. Sin turno o de la mañana, nada. Nada se marca ✅ (dueño, 12/10). */
+var ADELANTO_HORA_MAX=12, ADELANTO_GPS_MIN=60, ADELANTO_LS='me_adelanto_hecho', ADELANTO_MEM={}, ADELANTO_EN_CURSO=false;
+function adelantoMinutos(h){ var m=String(h||'').match(/^(\d{1,2}):(\d{2})/); return m ? Number(m[1])*60+Number(m[2]) : -1; }
+/* ¿Va entero en el camión? Todos sus renglones con unidades, tildados en la Lista de carga con el tilde de SU turno (`depCargado`). */
+function adelantoCargadoEntero(p){
+  var hay=false, L=(p&&p.productos)||[];
+  for(var i=0;i<L.length;i++){
+    var x=L[i], c=Number(x.cant)||0; if(c<=0) continue;
+    if(x.chk==='no' || depCargado(p, x).u<c) return false;
+    hay=true;
+  }
+  return hay;
+}
+function adelantoCandidatos(fecha, veh){
+  return STATE.filter(function(p){
+    return !!p && p.fecha===fecha && !p.entregado && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) &&
+      vehiculoDe(p)===veh && turnoDe(p)==='PM' && adelantoCargadoEntero(p);
+  });
+}
+/* Lo tildado en «🌆 Tarde» de un pedido que pasó a la mañana, también en «🌅 Mañana» (la misma cuenta que `depCargado`). */
+function adelantoTildesAM(p){
+  var v=vehiculoDe(p)||'Sin vehículo', f=String(p.fecha||''), n=0;
+  (p.productos||[]).forEach(function(x){
+    var kk=cargaProdKey(x)||'(sin detalle)', c=Number(x.cant)||0, sm={}, en=0; if(c<=0) return;
+    try{ sm=cargaSaleDe(x)||{}; }catch(e){ sm={}; }
+    var lugares=Object.keys(sm).map(function(l){ en+=sm[l]; return l; });
+    if(c-en>0) lugares.push('');
+    lugares.forEach(function(l){
+      if(!isCargaChk(cargaChkKey(f,v,kk,l,'PM'))) return;
+      var k=cargaChkKey(f,v,kk,l,'AM'); if(isCargaChk(k)) return;
+      CARGA_CHK[k]=1; CARGA_CAMBIOS[k]=true; n++;
+    });
+  });
+  return n;
+}
+function adelantoHecho(fecha, veh, h, marcar){
+  var o=null; try{ o=JSON.parse(localStorage.getItem(ADELANTO_LS)||'null'); }catch(e){}
+  if(!o || o.f!==fecha || !o.k) o={ f:fecha, k:{} };
+  var k=fecha+'|'+veh+'|'+h;
+  if(!marcar) return !!(o.k[k] || ADELANTO_MEM[k]);
+  o.k[k]=1; ADELANTO_MEM[k]=1;
+  try{ localStorage.setItem(ADELANTO_LS, JSON.stringify(o)); }catch(e){}
+  return true;
+}
+/* `h` = la hora de la salida («10:42», de Bolivia). Devuelve la promesa con los pedidos que pasaron a la mañana. */
+function adelantoAlSalir(veh, h){
+  var f=todayStr(), min=adelantoMinutos(h);
+  if(!veh || veh==='Sin vehículo' || min<0 || min>=ADELANTO_HORA_MAX*60) return Promise.resolve([]);
+  if(!adelantoCandidatos(f, veh).length) return Promise.resolve([]);
+  adelantoHecho(f, veh, h, true);
+  var hechos=[], tildes=0;
+  ADELANTO_EN_CURSO=true;
+  return adelantoCandidatos(f, veh).reduce(function(pr, p){
+    return pr.then(function(){
+      var q=findById(p.id);
+      if(!q || q.fecha!==f || turnoDe(q)!=='PM' || vehiculoDe(q)!==veh || !adelantoCargadoEntero(q)) return;
+      return reproAplicar(q, f, 'AM', true, { adelanto:1 }).then(function(r){
+        if(r && (r.ok || r.local)){ hechos.push(q); tildes+=adelantoTildesAM(q); }
+      }, function(){});
+    });
+  }, Promise.resolve()).then(function(){
+    ADELANTO_EN_CURSO=false;
+    if(tildes){ try{ guardarCargaChk(); }catch(e){} }
+    if(hechos.length){
+      var noms=hechos.map(function(q){ return String(q.cliente||'').trim()||'(sin cliente)'; });
+      toast('🚀 El '+veh+' salió a las '+h+' con '+(hechos.length===1?'un pedido':hechos.length+' pedidos')+' de la TARDE ya cargado'+(hechos.length===1?'':'s')+
+            ': pasa'+(hechos.length===1?'':'n')+' a la MAÑANA ('+noms.join(', ')+'). El bot le'+(hechos.length===1?'':'s')+' avisa que va'+(hechos.length===1?'':'n')+' en camino.','ok',9000);
+      try{ renderCargaSiActiva(); }catch(e){} try{ autoRepintar(); }catch(e){}
+    }
+    return hechos;
+  }, function(){ ADELANTO_EN_CURSO=false; return hechos; });
+}
+/* La hora de la última salida que vio el GPS hoy (el día del servidor, o la última posición), '' si no salió. */
+function adelantoSalidaGps(veh){
+  var d=gpsDiaDe(veh); if(d) return String(d.ul||d.s||'');
+  var x=camionGps(veh); return x ? String(x.ul||x.s||'') : '';
+}
+/* Después de cada lectura, en los aparatos de logística y Administración: una salida del GPS de esta mañana que este aparato todavía no
+   revisó y que pasó hace menos de ADELANTO_GPS_MIN minutos (lo tildado mucho después de la salida no es lo que se llevó). Si alguien
+   marcó «Ya salió» a mano, eso ya se revisó en el momento: el GPS cuenta solo para un viaje después (más de 30 minutos). */
+function adelantoRevisarGps(){
+  if(ADELANTO_EN_CURSO) return;
+  if(typeof navigator!=='undefined' && navigator.webdriver && !window.ADELANTO_PRUEBA) return;   // en las pruebas, solo la que lo pide
+  var adm=false; try{ adm=asisVeAdm(); }catch(e){} if(!adm) return;
+  var hoy=todayStr(), b=horaBolivia(), ahora=b.getHours()*60+b.getMinutes();
+  if(ahora>=ADELANTO_HORA_MAX*60+ADELANTO_GPS_MIN) return;
+  var pend=[];
+  Object.keys(VEHICULO_PLACA).forEach(function(veh){
+    var h=adelantoSalidaGps(veh), m=adelantoMinutos(h);
+    if(m<0 || m>=ADELANTO_HORA_MAX*60 || ahora<m || ahora-m>ADELANTO_GPS_MIN || adelantoHecho(hoy, veh, h)) return;
+    var mk=salioClave(hoy, veh), mm=mk ? adelantoMinutos(mk.slice(mk.lastIndexOf('|')+1)) : -1;
+    if(mm>=0 && m<=mm+30){ adelantoHecho(hoy, veh, h, true); return; }
+    if(!adelantoCandidatos(hoy, veh).length) return;   // nada de la tarde cargado: se vuelve a mirar en la próxima lectura
+    pend.push({ veh:veh, h:h });
+  });
+  if(!pend.length) return;
+  /* Otra vez la planilla antes de mover (otro aparato de logística pudo haberlo hecho recién), y de a un camión. */
+  ADELANTO_EN_CURSO=true;
+  refrescarEstadoYa().then(function(ok){
+    ADELANTO_EN_CURSO=false;
+    if(!ok) return;                                    // sin una lectura buena no se mueve nada: se vuelve a mirar en la próxima
+    return pend.reduce(function(pr, o){ return pr.then(function(){ return adelantoAlSalir(o.veh, o.h); }); }, Promise.resolve());
+  }, function(){ ADELANTO_EN_CURSO=false; });
 }
 function limpiarCargaChk(){
   if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;

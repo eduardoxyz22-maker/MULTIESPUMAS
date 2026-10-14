@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-13-c';   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-14-a';   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-13-c';
+  var ESTA_VERSION = '2026-10-14-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -1346,7 +1346,7 @@ function doPostCuerpo_(e) {
   try {
     if (action === 'delete') return doDelete(body.id, body.rev, body);
     if (action === 'histStock') return histGuardar_(body);   // 📚 (2026-10-09-a)
-    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf);   // (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
+    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto);   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
   } finally {
     lock.releaseLock();
   }
@@ -2062,7 +2062,7 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
    más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
 /* (2026-10-02-a) `reserva`: lo que este pedido saca del saldo del almacén, según el panel (ver RESERVAS). Se mira al FINAL,
    con la fila ya escrita: nunca frena ni cambia nada de lo de arriba. */
-function doSave(p, forzar, juntar, reserva, formato) {
+function doSave(p, forzar, juntar, reserva, formato, adelanto) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -2194,7 +2194,7 @@ function doSave(p, forzar, juntar, reserva, formato) {
   var saldoR = null;
   if (reserva && String(p.id).indexOf('__') !== 0) { try { saldoR = reservaProcesar_(String(p.id), reserva, Date.now()); } catch (eR) { saldoR = null; } }
   /* 🤖 (2026-10-11-a) El bot de WhatsApp: anota si el pedido es nuevo o cambió de día (sin red; lo manda `waRepaso` afuera). */
-  if (String(p.id).indexOf('__') !== 0) { try { waAlGuardar_(viejo, eco); } catch (eW) {} }
+  if (String(p.id).indexOf('__') !== 0) { try { waAlGuardar_(viejo, eco, adelanto); } catch (eW) {} }
   /* (2026-09-30-a) `ahora` = cuándo quedó escrito, con el reloj de Google, DESPUÉS de releer la fila. Una lectura con un
      `ahora` posterior lo tiene adentro: si no lo trae, lo borraron (el panel ya no lo adivina, §4he). */
   var outS = { ok:true, version:SCRIPT_VERSION, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add'), ahora: Date.now() };
@@ -2520,7 +2520,11 @@ var WA_TIPOS = {
   rec: { plantilla:'recordatorio_entrega_v2', vieja:'recordatorio_entrega', nv:8, txt:'Recordatorio', cli:true },
   ln:  { plantilla:'logistica_pedido_nuevo_v2', vieja:'logistica_pedido_nuevo', nv:6, txt:'Logística: nuevo' },
   lc:  { plantilla:'logistica_cambio_v2', vieja:'logistica_cambio', nv:3, txt:'Logística: cambio' },
-  sc:  { plantilla:'logistica_sin_camion_v2', vieja:'logistica_sin_camion', nv:3, txt:'Logística: sin camión' }
+  sc:  { plantilla:'logistica_sin_camion_v2', vieja:'logistica_sin_camion', nv:3, txt:'Logística: sin camión' },
+  /* 🚀 (2026-10-14-a, dueño: «un pedido agendado para la tarde que Ernesto carga en la mañana y despacha: que avise al cliente que está
+     cargado y en camino»). Mismos datos que `camb`. Mientras Meta no apruebe la nueva, sale el cambio de día de siempre (v2 y después la
+     primera): «Ahora te lo llevamos el martes 14/10 por la mañana». */
+  enc: { plantilla:'pedido_en_camino', vieja:'cambio_entrega_v2', nv:6, vieja2:'cambio_entrega', nv2:5, txt:'En camino (adelantado a la mañana)', cli:true }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -2645,20 +2649,25 @@ function waColaGuardar_(c) {
   if (c.length > WA_COLA_TOPE) c = c.slice(c.length - WA_COLA_TOPE);
   try { PropertiesService.getScriptProperties().setProperty('WA_COLA', JSON.stringify(c)); } catch (e) {}
 }
-/** Lo llama doSave con la fila YA escrita (`viejo` = la fila de antes, o null si es nueva). Nunca frena un guardado. */
-function waAlGuardar_(viejo, rec) {
+/** Lo llama doSave con la fila YA escrita (`viejo` = la fila de antes, o null si es nueva). Nunca frena un guardado.
+    🚀 (2026-10-14-a) `adelanto` = el panel lo pasó de la TARDE a la MAÑANA del mismo día porque el camión salió con él cargado: al
+    cliente le sale «cargado y en camino» (`e`) en vez del cambio de día, y a logística nada (ellos lo cargaron). */
+function waAlGuardar_(viejo, rec, adelanto) {
   if (!waActivo_() || !rec) return;
   var id = String(rec.id || '');
   if (!id || id.indexOf('__') === 0 || String(rec.estado || '') === BORRADOR_EST || !rec.fecha) return;   // (12/10) por el estado, no por `kommo-`
-  var ev = null, fV = viejo ? fmtDate(viejo[1]) : '';
+  var ev = null, fV = viejo ? fmtDate(viejo[1]) : '', tV = viejo ? turnoNorm_(viejo[7]) : '';
   if (!viejo || !fV) ev = { id:id, t:'n' };                       // nuevo, o recién le pusieron fecha (venta de tienda → entrega)
-  else if (fV !== String(rec.fecha) || turnoNorm_(viejo[7]) !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + turnoNorm_(viejo[7]) };
+  else if (adelanto && fV === String(rec.fecha) && fV === waBo_(Date.now()).hoy && tV === 'PM' && turnoNorm_(rec.turno) === 'AM') ev = { id:id, t:'e', de:fV + '|PM' };   // solo HOY: otro día es un cambio común
+  else if (fV !== String(rec.fecha) || tV !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + tV };
   if (!ev) return;
   var cola = waColaLeer_(), ya = null, ms = Date.now();
   for (var i = 0; i < cola.length; i++) if (cola[i].id === id) { ya = cola[i]; break; }
   if (ya) {
-    /* Nuevo + cambio = UN mensaje de nuevo con el día último; dos cambios = uno, desde el día de ANTES del primero. */
+    /* Nuevo + cambio = UN mensaje de nuevo con el día último; dos cambios = uno, desde el día de ANTES del primero.
+       (2026-10-14-a) Un cambio que termina adelantado sale «en camino»; uno adelantado que después se mueve, como cambio de día. */
     if (ev.t === 'n') { ya.t = 'n'; delete ya.de; }
+    else if (ya.t !== 'n') { if (ev.t === 'e') ya.t = 'e'; else if (ya.t === 'e') ya.t = 'c'; }
     ya.ms = ms;
   } else { ev.ms = ms; cola.push(ev); }
   waColaGuardar_(cola);
@@ -2736,9 +2745,10 @@ function waArmar_(m, recs, cfg, B) {
   }
   if ((m.k === 'camb' || m.k === 'lc') && (String(p.fecha) + '|' + turnoNorm_(p.turno)) === m.de) return { saltar:'volvió al día de antes', anotar:false, p:p };
   if (m.k === 'rec' && String(p.fecha) !== m.dia) return { saltar:'cambió de día', anotar:false, p:p };
+  if (m.k === 'enc' && (String(p.fecha) !== B.hoy || waTurno_(p) !== 'AM')) return { saltar:'ya no va hoy por la mañana', anotar:false, p:p };   // (2026-10-14-a)
   var N = waParam_, marca = p ? waMarca_(p.vendedor) : '';
   if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
-  else if (m.k === 'camb') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
+  else if (m.k === 'camb' || m.k === 'enc') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'rec') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), p.fecha === waMasDias_(B.hoy, 1) ? 'Mañana' : 'El ' + waDiaTxt_(p.fecha).split(' ')[0],
                                         waProds_(p), waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'ln') out.params = [waDiaTxt_(p.fecha), waTurno_(p) || 'sin turno', String(p.cliente || '').trim(), String(p.zona || '').trim() || 'sin zona', waProds_(p), String(p.vendedor || '').trim() || 'sin vendedor'];
@@ -2833,6 +2843,8 @@ function waRepaso() {
       } else if (ev.t === 'c') {
         msgs.push({ id:ev.id, k:'camb', a:'cliente', de:ev.de, n:0 });
         cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'lc', a:L.nombre, de:ev.de, n:0 }); });
+      } else if (ev.t === 'e') {
+        msgs.push({ id:ev.id, k:'enc', a:'cliente', de:ev.de, n:0 });   // 🚀 (2026-10-14-a) solo al cliente: logística fue la que lo cargó
       }
     });
     waColaGuardar_(quedan);
@@ -2885,7 +2897,11 @@ function waRepaso() {
     }
     var r = waEnviar_(cfg, a.numero, a.plantilla, a.params);
     /* (2026-10-12-d) La v2 todavía no está aprobada (o la pausaron): sale la de antes, con sus datos. */
-    if (!r.ok && T.vieja && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0) { r = waEnviar_(cfg, a.numero, T.vieja, a.params.slice(0, T.nv)); a.plantilla = T.vieja; }
+    /* (2026-10-14-a) Y si la de antes tampoco está, la siguiente (`vieja2`): «en camino» → cambio de día v2 → cambio de día. */
+    var alts = [[T.vieja, T.nv], [T.vieja2, T.nv2]];
+    for (var ai = 0; ai < alts.length && !r.ok && alts[ai][0] && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0; ai++) {
+      r = waEnviar_(cfg, a.numero, alts[ai][0], a.params.slice(0, alts[ai][1])); a.plantilla = alts[ai][0];
+    }
     if (r.ok) {
       res.enviados++;
       if (m.k === 'rec') recHechos.push(m.id);
@@ -3105,7 +3121,7 @@ function waRespAtendida_(body) {
 }
 
 /* ============================================================================
- * 🧩 LAS 6 PLANTILLAS, CREADAS DESDE ACÁ (12/10). El dueño no pudo crearlas a mano en la cuenta de PRUEBA de Meta
+ * 🧩 LAS PLANTILLAS, CREADAS DESDE ACÁ (12/10; 2026-10-14-a: + `pedido_en_camino`, se crea corriendo otra vez crearPlantillasWhatsApp). El dueño no pudo crearlas a mano en la cuenta de PRUEBA de Meta
  * («No tienes acceso a la cuenta de WhatsApp Business…»: esa cuenta es de Meta). `crearPlantillasWhatsApp` las crea con la
  * API, con el MISMO texto y los ejemplos que pide Meta, en la cuenta de la propiedad WA_WABA_ID (la de prueba hoy; la de
  * verdad cuando esté el número propio). Se corre UNA vez desde el editor (▶). Una que ya existe queda como está.
@@ -3133,7 +3149,11 @@ var WA_PLANTILLAS = [
     e:['OC 10-412', 'JUAN PEREZ', 'pasó del jueves 15/10 por la mañana al viernes 16/10 por la tarde'] },
   { n:'logistica_sin_camion_v2',
     t:'🤖 ⏰ Son las 16:00 y quedan *{{1}} pedidos* del {{2}} sin camión 🚚\n\n📋 {{3}}\n\n👉 Asignalos en el panel así la carga se arma a tiempo.',
-    e:['3', 'jueves 15/10', 'JUAN PEREZ (Norte), ANA ROJAS (Centro), MULTICENTER (Equipetrol)'] }
+    e:['3', 'jueves 15/10', 'JUAN PEREZ (Norte), ANA ROJAS (Centro), MULTICENTER (Equipetrol)'] },
+  /* 🚀 (2026-10-14-a) Un pedido de la tarde que salió cargado a la mañana. Mismos datos y orden que `cambio_entrega_v2` (es su respaldo). */
+  { n:'pedido_en_camino',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
+    e:['Juan', 'Heaven Colchones', 'OC 10-412', 'martes 14/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] }
 ];
 function waPlantillasCfg_() {
   var c = waConfig_(), waba = prop_('WA_WABA_ID');
@@ -3141,7 +3161,7 @@ function waPlantillasCfg_() {
   if (!waba) return { error:'Falta la propiedad WA_WABA_ID: el «Identificador de la cuenta de WhatsApp Business» (en la cuenta de prueba, el número largo que aparece al lado del número +1 555…).' };
   return { c:c, waba:waba, base:'https://graph.facebook.com/' + c.api + '/' + encodeURIComponent(waba) + '/message_templates' };
 }
-/** ▶ Correr UNA vez desde el editor: crea las 6 plantillas en la cuenta WA_WABA_ID. */
+/** ▶ Correr desde el editor: crea las plantillas que falten en la cuenta WA_WABA_ID (las que ya existen quedan como están). */
 function crearPlantillasWhatsApp() {
   var K = waPlantillasCfg_(), out = [];
   if (K.error) { if (typeof Logger !== 'undefined') Logger.log('❌ ' + K.error); return { error:K.error }; }

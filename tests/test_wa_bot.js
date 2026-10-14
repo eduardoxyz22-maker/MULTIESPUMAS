@@ -411,22 +411,22 @@ console.log('\n── 8. WA_PRUEBA, instalarDisparadores y probarAntesDeImplemen
   chk('las filas del sistema no entran a la cola', !JSON.parse(S.P.WA_COLA || '[]').length, S.P.WA_COLA);
 }
 
-// ══ Las 6 plantillas, creadas desde el editor (12/10: la cuenta de prueba de Meta no deja crearlas a mano) ══
+// ══ Las plantillas (6 + «en camino» desde 2026-10-14-a), creadas desde el editor (12/10: la cuenta de prueba de Meta no deja crearlas a mano) ══
 console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWhatsApp ──');
 {
   const S = servidor(Object.assign({}, ON, { WA_WABA_ID: '2901139558521747' }));
   const T = S.ctx.WA_PLANTILLAS, tipos = S.ctx.WA_TIPOS;
   const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
-  chk('son las 6 de WA_TIPOS, con el mismo nombre', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombres), T.map(x => x.n));
+  chk('son las 7 de WA_TIPOS, con el mismo nombre', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombres), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
-  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_sin_camion_v2: 3 };
+  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_sin_camion_v2: 3, pedido_en_camino: 6 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
   const r = S.ctx.crearPlantillasWhatsApp();
   const ll = S.meta.llamadas;
-  chk('crear: 6 llamadas a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === 6 && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
-  chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === 5, r);
+  chk('crear: 7 llamadas a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === 7 && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
+  chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === 6, r);
   chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
   const r2 = S.ctx.crearPlantillasWhatsApp();
@@ -561,6 +561,67 @@ console.log('\n── 13. v2 con respaldo y contacto de la vendedora (WA_VENDEDO
   chk('«tu vendedor» para Jonathan, Mauricio, Juan Pablo y Fernando; «tu vendedora» para ellas', S.ctx.waContactoVend_('Jonathan Monje') === 'tu vendedor por el WhatsApp de siempre' &&
       S.ctx.waTuVend_('Juan Pablo Paredes') === 'tu vendedor' && S.ctx.waTuVend_('Fernando Peinado') === 'tu vendedor' && S.ctx.waTuVend_('Mauricio Merida') === 'tu vendedor' &&
       S.ctx.waTuVend_('Isabel Robledo') === 'tu vendedora' && S.ctx.waTuVend_('Mirian Salazar') === 'tu vendedora', S.ctx.waContactoVend_('Jonathan Monje'));
+}
+
+// ══ 14. (2026-10-14-a) Lo de la tarde que salió cargado a la mañana: «cargado y en camino», solo al cliente ══════════════
+console.log('\n── 14. Adelantado a la mañana (`adelanto`): pedido_en_camino al cliente, nada a logística ──');
+{
+  poner('2026-10-14 08:00');
+  const S = servidor(ON);
+  const p = ped({ id: 'ad1', fecha: '2026-10-14', turno: 'PM', cliente: 'JUAN CARLOS ROCA' });
+  const q = ped({ id: 'ad2', fecha: '2026-10-14', turno: 'PM', cliente: 'ANA SIN ADELANTO', celular: '70222333' });
+  S.guardar(p); S.guardar(q); pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 10:30');
+  const mover = (rec, extra) => { const r = S.post(Object.assign({ action: 'save', pedido: rec, forzar: true }, extra || {})); if (r.ok) rec.rev = r.pedido.rev; return r; };
+  p.turno = 'AM'; const r1 = mover(p, { adelanto: 1 });
+  chk('el panel lo pasa a la mañana con `adelanto` (y `forzar`: el día está cerrado)', r1.ok === true && S.leer('ad1').turno === 'AM', r1);
+  const cola = JSON.parse(S.P.WA_COLA || '[]');
+  chk('en la cola queda como «e» (adelantado), desde la tarde de hoy', cola.length === 1 && cola[0].t === 'e' && cola[0].de === '2026-10-14|PM', cola);
+  q.turno = 'AM'; mover(q);
+  pasar(3); S.repaso();
+  const s = S.salen(), enc = s.filter(x => x.pl === 'pedido_en_camino');
+  chk('al cliente: pedido_en_camino con nombre, marca, OC, «miércoles 14/10 por la mañana», el horario y el contacto (los datos de cambio_entrega_v2)', enc.length === 1 && enc[0].to === '59170111222' &&
+      JSON.stringify(enc[0].p) === JSON.stringify(['Juan', 'Heaven Colchones', 'OC ' + p.oc, 'miércoles 14/10 por la mañana', '9:00 y las 12:00', 'tu vendedora por el WhatsApp de siempre']), s.map(x => x.pl + ':' + x.to));
+  chk('…a logística no le llega «cambio» del adelantado (ellos lo cargaron)', !s.some(x => x.pl === 'logistica_cambio' && x.p[1] === 'JUAN CARLOS ROCA'), s.map(x => x.pl + ':' + x.p[1]));
+  chk('sin `adelanto` (lo movió otra persona a mano): el cambio de día de siempre, al cliente y a logística', s.some(x => x.pl === 'cambio_entrega' && x.to === '59170222333') && s.filter(x => x.pl === 'logistica_cambio' && x.p[1] === 'ANA SIN ADELANTO').length === 2, s.map(x => x.pl + ':' + x.to));
+  chk('la hoja lo anota como «En camino (adelantado a la mañana)»', S.hoja().some(f => f[1] === 'ad1' && /En camino/.test(f[3]) && f[6] === 'pedido_en_camino' && /enviado/.test(f[7])), S.hoja().map(f => f[3] + ' ' + f[6]));
+}
+{
+  poner('2026-10-14 08:00');
+  const S = servidor(Object.assign({}, ON, { WA_LOGISTICA: '' }));
+  const p = ped({ id: 'ad3', fecha: '2026-10-14', turno: 'PM' }); S.guardar(p); pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 10:00');
+  S.meta.responder = (b) => (b.template && b.template.name === 'pedido_en_camino') ? { code: 404, body: { error: { code: 132001, message: 'Template name does not exist in the translation' } } } : null;
+  p.turno = 'AM'; let r = S.post({ action: 'save', pedido: p, forzar: true, adelanto: 1 }); p.rev = r.pedido.rev;
+  pasar(3); S.repaso();
+  let ll = S.meta.llamadas.map(c => c.body.template.name + ':' + c.body.template.components[0].parameters.length);
+  chk('«en camino» todavía sin aprobar en Meta: sale el cambio de día v2 con sus 6 datos («ahora te lo llevamos el miércoles 14/10 por la mañana»)', JSON.stringify(ll) === JSON.stringify(['pedido_en_camino:6', 'cambio_entrega_v2:6']), ll);
+  chk('…y la hoja anota la que salió de verdad', S.hoja().some(f => f[1] === 'ad3' && f[6] === 'cambio_entrega_v2' && /enviado/.test(f[7])), S.hoja().map(f => f[6] + ' ' + f[7]));
+  /* Las dos nuevas sin aprobar: la primera del cambio de día (5 datos). */
+  const q = ped({ id: 'ad4', fecha: '2026-10-14', turno: 'PM' }); poner('2026-10-14 08:00'); S.guardar(q); pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 10:10');
+  S.meta.responder = (b) => (b.template && b.template.name !== 'cambio_entrega') ? { code: 404, body: { error: { code: 132001, message: 'no existe' } } } : null;
+  q.turno = 'AM'; r = S.post({ action: 'save', pedido: q, forzar: true, adelanto: 1 }); q.rev = r.pedido.rev;
+  pasar(3); S.repaso();
+  ll = S.meta.llamadas.map(c => c.body.template.name + ':' + c.body.template.components[0].parameters.length);
+  chk('…y si tampoco está la v2: cambio_entrega con 5 (no se pierde el aviso)', JSON.stringify(ll) === JSON.stringify(['pedido_en_camino:6', 'cambio_entrega_v2:6', 'cambio_entrega:5']), ll);
+  chk('la confirmación con la v2 sin aprobar sigue cayendo en la vieja (nada cambió para los demás tipos)', S.ctx.WA_TIPOS.conf.vieja === 'confirmacion_pedido' && !S.ctx.WA_TIPOS.conf.vieja2);
+}
+{
+  poner('2026-10-14 08:00');
+  const S = servidor(Object.assign({}, ON, { WA_LOGISTICA: '' }));
+  const p = ped({ id: 'ad5', fecha: '2026-10-14', turno: 'PM' }), q = ped({ id: 'ad6', fecha: '2026-10-14', turno: 'PM', celular: '70333444' }), u = ped({ id: 'ad7', fecha: '2026-10-15', turno: 'PM', celular: '70444555' });
+  [p, q, u].forEach(x => S.guardar(x)); pasar(5); S.repaso(); S.limpiar();
+  poner('2026-10-14 10:00');
+  const mover = (rec, extra) => { const r = S.post(Object.assign({ action: 'save', pedido: rec, forzar: true }, extra || {})); if (r.ok) rec.rev = r.pedido.rev; return r; };
+  p.turno = 'AM'; mover(p, { adelanto: 1 }); pasar(1); p.turno = 'PM'; mover(p);
+  q.turno = 'AM'; mover(q, { adelanto: 1 }); pasar(0.5); q.fecha = '2026-10-16'; mover(q);
+  u.turno = 'AM'; mover(u, { adelanto: 1 });                    // `adelanto` con OTRO día (no hoy): un cambio común
+  pasar(3); S.repaso();
+  const s = S.salen();
+  chk('adelantado y vuelto a la tarde antes de salir el mensaje: nada', !s.some(x => x.to === '59170111222'), s.map(x => x.pl + ':' + x.to));
+  chk('adelantado y después movido a otro día: el cambio de día de siempre («viernes 16/10 por la mañana»)', s.some(x => x.pl === 'cambio_entrega' && x.to === '59170333444' && x.p[3] === 'viernes 16/10 por la mañana') && !s.some(x => x.pl === 'pedido_en_camino'), s.map(x => x.pl + ':' + x.to + ':' + x.p[3]));
+  chk('`adelanto` en un pedido de otro día no es «en camino» (solo el mismo día, de la tarde a la mañana)', s.some(x => x.pl === 'cambio_entrega' && x.to === '59170444555'), s.map(x => x.pl + ':' + x.to));
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

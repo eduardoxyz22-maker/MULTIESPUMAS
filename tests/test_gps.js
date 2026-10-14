@@ -446,7 +446,7 @@ console.log('\n── 13. probarAntesDeImplementar: cuántas paradas de hoy, cu�
   for (let i = 0; i < 6; i++) min1(S, () => [unidad('6663-CCP', CLI_X, QUIETO)]);
   const p = S.ctx.probarAntesDeImplementar().lineas.join('\n');
   chk('«Hoy el GPS anotó 2 parada(s)…; 1 cerca de un pedido del día (… nada se marca ✅)»', /Hoy el GPS anotó 2 parada\(s\) de los camiones; 1 cerca de un pedido del día \(solo se muestran: nada se marca ✅\)/.test(p), p.split('\n').filter(l => /GPS/.test(l)));
-  chk('la versión es la 2026-10-13-c', S.ctx.SCRIPT_VERSION === '2026-10-13-c');
+  chk('la versión es la 2026-10-13-c o posterior', S.ctx.SCRIPT_VERSION >= '2026-10-13-c');
 }
 
 // ══ 14. (2026-10-13-c) La puerta de los depósitos no es una parada ═════════
