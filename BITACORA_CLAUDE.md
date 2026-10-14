@@ -14412,3 +14412,17 @@ completa cada 3 min sería molesto… y luego el pequeño saca el anuncio cada 3
   molesta. Antes, en verde: test_anuncio 47, test_asistente 24, test_asistente_ak 38, test_asistente_rev 17, test_halloween 22,
   test_onclicks 5. Batería entera de la mañana (con el grito de §4kw): 182 suites, 6.385 bien, 1 mal (`test_patio`, sola 38/38).
   Volver atrás: `c8322dd` (grito cada 3 min) o `60a98e8` (el globito de §4ks).
+
+## §4kz — 📇 Clientes para Excel (14/10)
+El dueño: *«necesito un botón para exportar Excel en administración que saque estos datos por mes, o todo, y elegir de qué vendedores
+(si en plural): nombre del cliente, número de celular, valor de la compra (en caso que comprara más de un producto podemos repetir el
+contacto o sumar el valor de las compras que hizo)»*.
+- Botón «📇 Clientes (Excel)» en «Stock y ventas» (al lado de «Quién vendió qué») → ventana `#cli-overlay`: Un mes / Todo, «Sumar sus
+  compras» (por defecto) / «Repetir el contacto», y los vendedores con tildes (Todos / Ninguno). Vista previa con cuántos clientes,
+  compras, el total y cuántos sin celular; «⬇ Bajar Excel».
+- Decisiones mías (decírselas): el mes es el de la VENTA (el día que se cargó, como «Ingreso»); el valor es el TOTAL VENTA de
+  Contabilidad (con el flete si lo tiene; una «pagada sin monto», la suma de los precios); se junta por celular (últimos 8 números: «+591
+  700-11111» = «70011111») y si no hay celular, por nombre; el nombre y el celular son los de la compra más nueva; ordenado del que más
+  compró. Afuera: ATC, RPT, pedidos internos, borradores de Kommo. Eduardo y ROHO se pueden elegir. Después de las 3 columnas pedidas van
+  compras/fecha, vendedor y última compra/nota (se pueden borrar en el Excel).
+- `tests/test_clientes_excel.js` (23; contra `3e2dd38` no existe el botón). Verdes: test_adm_tools, test_onclicks, test_buscar.

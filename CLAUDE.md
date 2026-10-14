@@ -693,6 +693,14 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
+## 📇 Clientes para Excel (§4kz, 14/10; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*; en la rama)
+- Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
+  con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por
+  cliente, junta por los últimos 8 números del celular o, sin celular, por nombre) o «Repetir el contacto» (una fila por venta).
+- Entran las VENTAS (`cliEntra`: sin filas del sistema, borradores, ATC, RPT ni internos; ventas de tienda sí). El mes = el de la venta
+  (`contaFecha`). Valor = `ventaTotal(p)` (TOTAL VENTA de Contabilidad); sin montos, `prodTotal`. Columnas: CLIENTE, CELULAR (texto), VALOR
+  (número, formato Bs) y después compras/fecha, vendedor y última compra/nota. Solo arma el archivo. `tests/test_clientes_excel.js` (23).
+
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
 La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).
 - Botón **«🏙️ Ver la ciudad»** (`#cv-ciudad`, y desde 13/10 también `#adm-ciudad-btn` arriba de Administración, al lado de «Ocultar camiones»: con la vista 3D `.cv-tit button` lo pintaba blanco sobre blanco y el dueño no lo encontraba) en los camiones de Administración → `patioAbrirCiudad()` baja **`patio.js?v=PATIO_V`** (archivo
