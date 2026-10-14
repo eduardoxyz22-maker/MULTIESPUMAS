@@ -14352,3 +14352,30 @@ reprogramar lo que no se entregó»*.
   CLAUDE.md, `tests/test_cierre_reprogramar.js` y el diagnóstico con el GPS del día (§4ku). Se publicó con la batería a medias (34 de ~183
   en verde) porque logística cierra a esa hora; las suites del cierre y del reprogramar ya estaban verdes. Volver atrás de la página: `27cce45`.
   La batería terminó después: 183 suites, 6.368 comprobaciones; en rojo solo `test_patio` (37/1 con la máquina cargada, sola 38/38).
+
+## §4kw — 📣 Eduardo GRITA el anuncio: pantalla entera, temblor, sirena y voz (14/10)
+El dueño, 09:24: *«el gps como está? hoy no veo que se mueva… a Eduardo no lo veo gritando el anuncio cada 3 min como acordamos. y eso
+que entré recién al panel. haz que grite, tiemble la pantalla, que Eduardo aparezca con su megáfono gritando!»*.
+- **Por qué no lo veía**: §4ks lo repetía SOLO a los vendedores (`anuncioRepite`: sin clave y sin rol admin/logística). El dueño entra con
+  la clave, así que lo vio una vez, como un globito que se iba a los 20 s. El anuncio SÍ estaba puesto (diagnóstico de las 09:25: «PUESTO,
+  65 letras, desde el 13/10 15:53»).
+- **Ahora** (`anuncioRepite` ya no existe): en TODOS los aparatos, apenas llega y cada 3 min. `anuncioGrito` arma `#anu-grito`
+  (pantalla entera, z 10050, `role=alertdialog`): Eduardo grande (`ASIS_IMG`) saltando, un megáfono SVG en la boca que vibra
+  (`anuncioMegafonoSvg`, ubicado sobre la imagen 246×560: boca al 52 %/13,6 %), ondas amarillas y la burbuja con «📢 Anuncio de
+  Administración» y el texto en mayúsculas. La pantalla de atrás tiembla ~1 s (`body.anu-tiembla` → `.header`, `.nav`, `.wrap`; al
+  encabezado se le deja su `grad-move`; ⚠️ no se transforma `body`: los `fixed` saltarían). Con «reducir movimiento», sin temblor.
+- **Sonido**: sirena de dos tonos WebAudio (~1,3 s, `anuncioSirena`) y después la voz del navegador (`speechSynthesis`, `anuncioHablar`):
+  «¡Atención, atención! …», en castellano (de Latinoamérica y de hombre si el aparato tiene: `anuncioVoz`), sin emojis
+  (`anuncioTextoVoz`). Mientras habla no se cierra sola; al terminar, 2,5 s más (si no habla, 12 s). Tocar en cualquier lado, «👍
+  Entendido» o Esc lo cierran y lo callan. Con la clave, «✏️ Cambiar o quitar». 🔇 de Eduardo = sin sirena ni voz (la pantalla sale).
+- **Lo que el navegador no deja**: sonar sin un toque desde que se abrió la página. Al abrir sale callado (`ANUNCIO.sinVoz`); si sigue en
+  pantalla, el PRIMER toque lo hace gritar y ese toque no lo cierra (`anuncioEscuchar`, en `touchend`/`click`/`keydown`; en el iPhone la
+  voz se «estrena» dentro de ese toque con una frase muda, `vozLista`). La risa de Halloween suena con el mismo toque: Eduardo espera a
+  que termine (`window.hwRisaAudio`, `ended`, tope 12 s).
+- **No tapa a quien escribe**: con el cursor en un campo y una tecla hace menos de 8 s (`anuncioEscribiendo`), espera al próximo tic.
+- Sin cambios en el servidor ni en la fila `__anuncio__`. `tests/test_anuncio.js` reescrita: 44 (contra `a8fd477`, lo publicado: las del
+  grito en rojo). ⚠️ En Playwright `navigator.userActivation.hasBeenActive` es SIEMPRE true (evalúa con gesto): la prueba del primer
+  toque reemplaza `anuncioPuedeSonar` por una bandera que pone un `pointerdown` de verdad.
+- **El GPS a las 09:24** (mismo diagnóstico, `2ffcb74`): los 4 camiones reportando (09:11–09:22), quietos con el motor apagado: 3 en
+  Banzer y 1 en PTF. No habían salido. De los 20 pedidos de hoy, **19 sin camión asignado** (el GPS no puede nombrar paradas de pedidos
+  sin camión salvo por cercanía, y la carga 3D los muestra en «Sin camión»).
