@@ -693,7 +693,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
-## 📇 Clientes para Excel (§4kz, 14/10; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*; en la rama)
+## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
   con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por
   cliente, junta por los últimos 8 números del celular o, sin celular, por nombre) o «Repetir el contacto» (una fila por venta).
@@ -748,6 +748,12 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   y **en «Sin vehículo» se asigna el camión ahí mismo** (§4ie, `cvAsignar` = `setVehiculo` sin reabrir fichas: vehículo + primer
   chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
+- **🌅🌆 Mañana y tarde por separado** (§4la, 14/10; dueño: *«¿solo muestra los AM?… sí, hazlo, separa mañana y tarde»*): `cargaChkKey(fecha,
+  veh, prod, lugar, turno)` — lo de la TARDE lleva `|~PM` al final; la mañana y lo sin turno siguen con la clave de SIEMPRE (lo ya tildado
+  no se pierde). `cargaVivaDatos` arma las líneas por turno (`l.t`), las fichas (`cv3dColsPintar`) ponen «🌅 Mañana»/«🌆 Tarde» con lo
+  cargado de cada uno, y la Lista de carga separa con `cargaSeccionesHtml(o, fecha, k, t)` (cartel `.carga-turno` solo si hay tarde: un
+  camión solo de la mañana se ve como siempre). `depCargado`, `cv3dPedidos` y `textoCargaChk` usan el turno del pedido (`normTurno`).
+  ⚠️ Todo lo que lea un tilde de carga de un producto tiene que pasar el turno. `tests/test_carga_turnos.js` (16).
 - **🚛 En 3D, por camión (§4jq, 10/10, PUBLICADA 16:21, `e497b11`; dueño: *«publica y veamos»*)**: con `CV_3D` (prendido salvo `me_cv3d`=0; APAGADO en Playwright)
   la imagen se reemplaza por la escena 3D (`cv3dConstruir`: camión en su andén con lo cargado, un montacargas por producto que falta,
   Sin vehículo, Banzer, Moreno) y el panel oscuro por **una ficha clara por camión** abajo (`cv3dColsPintar`, `#cv-cols`) con los
