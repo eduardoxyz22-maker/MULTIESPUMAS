@@ -14572,3 +14572,8 @@ para después).
   · Riesgo anotado, no bug: con la cuenta gmail los disparadores tienen 90 min/día; lo que se espera a Claude se suma en `IA_USO.seg` y
     probar lo dice («N s esperando a Claude»).
   · `test_wa_bot` §15b (+22 → 200; contra `fb45399` caen 11 antes de que la prueba se corte por la función que no existía).
+- **Listo para el dueño (14/10)**: todas las pruebas que cargan el `.gs` en verde (`test_wa_bot` 200, `test_servidor` 367, `test_gps` 99,
+  `test_concurrencia` 50, `test_saldo_servidor` 24, `test_hook` 78…), `test_wa_claude` 11, `test_codex28` 8; la batería entera de antes de
+  los arreglos, 187 suites / 6.506 en verde. Enlace del `.gs` 2026-10-14-b fijo a `e39b2615f150697c1f2f958f1acaf160b9ca2d39` (4.325
+  líneas, termina en `}` con `return borrador;` antes). Volver atrás: ✏️ a la versión anotada Y pegar la 14-a de `c68a00c` (3.755 líneas).
+  La página espera la 14-b: se publica DESPUÉS de implementar.
