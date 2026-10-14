@@ -14550,3 +14550,25 @@ para después).
   ni a las vendedoras; no avisa por WhatsApp a la vendedora (lo ve en el panel). Orden para prender: el dueño implementa el `.gs` 14-b →
   pone `ANTHROPIC_API_KEY` → corre `probarAsistente` → `IA_ACTIVA`=1 con `IA_SOLO`=su número → prueba escribiéndole al bot → saca
   `IA_SOLO`. La página se publica después de implementar el `.gs`.
+- **Revisión independiente de `fb45399`, antes de darle el `.gs` al dueño** (un agente con el arnés de `test_wa_bot`, 11 hallazgos). Arreglados:
+  1. **La J la pisaba Meta**: lo que contestó Claude iba en la J y el «👁️ leído» la reemplazaba, así que Claude nunca veía sus
+     respuestas anteriores. Ahora va en la **P** de la fila «🤖 Respuesta IA» (J queda para Meta) e `iaContexto_` lee `r[15] || r[9]`.
+  2. **Dos respuestas si la hoja fallaba después de mandar** (y 3. **filas repetidas con el mismo wamid** → hasta 8 respuestas en 2 h,
+     verificado): **`IA_HECHO`** en Propiedades (huella corta por wamid, 48 h, tope 250) se anota ANTES de mandar (y en la automática);
+     la toma de mensajes saltea y corrige («🤖 ya contestado») lo que ya está ahí; el `catch` de `iaRepaso` no devuelve a «⏳» un grupo
+     `hecho`. Lo repetido se toma una vez y se escribe en TODAS sus filas (`iaFilas_`, reemplaza a `iaFila_`).
+  4. **Dos respuestas cruzadas**: un número con un mensaje tomado por otra vuelta espera entero (`ocupado`), y cada vuelta toma como
+     mucho `IA_GRUPOS_MAX` = 6 números (los demás no quedan tomados esperando).
+  5. **Datos de otro cliente**: `iaPedidoDe_` solo mira pedidos cuyo celular es el que escribe (el de la fila incluido) y nunca los de
+     Eduardo, ROHO, ATC ni RPT.
+  6. **El filtro de enlaces** rompía el de la vendedora con `*…*`/emoji y dejaba pasar `wa.me/…`, `www.…`, «algo.com/…»: ahora guarda los
+     buenos aparte (con o sin `https://`), saca todo lo demás conservando la puntuación, y si no queda nada → la automática (no «atendido»).
+  7. **Medio emoji** en un corte → 400 de la API: `iaCorte_` no parte pares y `iaUnicode_` saca mitades sueltas (el webhook corta igual).
+  8. **Meta falla al mandar**: un reintento enseguida (sin volver a preguntarle a Claude); si igual falla, «❌ no se pudo mandar», P vacía,
+     pendiente para la vendedora (el panel ya no dice «le contestó»).
+  9. **Sin planilla** (`readAll` falló): no se le pregunta a Claude (diría «no encontramos tu pedido»); vuelve a «⏳n+1».
+  10. Panel: una reacción en el medio ya no se queda con el mensaje de antes (`junta` solo para los principales).
+  11. **`waAnotar_` con `appendRow`** de a una (antes `getLastRow` + `setValues` podía pisar lo que el webhook anotaba en el medio).
+  · Riesgo anotado, no bug: con la cuenta gmail los disparadores tienen 90 min/día; lo que se espera a Claude se suma en `IA_USO.seg` y
+    probar lo dice («N s esperando a Claude»).
+  · `test_wa_bot` §15b (+22 → 200; contra `fb45399` caen 11 antes de que la prueba se corte por la función que no existía).

@@ -874,8 +874,10 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   Llamada cruda (`iaLlamar_`): `x-api-key`, `anthropic-version: 2023-06-01`, beta `server-side-fallback-2026-07-01` + `fallbacks:'default'`,
   `output_config` con `effort:'low'` y `json_schema`, SIN `thinking`; un 400 que no es crédito → una vez la consulta simple.
   Propiedades: `ANTHROPIC_API_KEY` (NUNCA en el código ni en el chat), `IA_ACTIVA`=1, `IA_SOLO` (probar con un número). `probarAsistente` desde
-  el editor (una consulta, sin WhatsApp). Página: `waRespIaHtml`/`waRespIaHechas`. `test_wa_bot` §15, `tests/test_wa_claude.js` (11).
-- `tests/test_wa_bot.js` (178), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
+  el editor (una consulta, sin WhatsApp). Página: `waRespIaHtml`/`waRespIaHechas`. `test_wa_bot` §15 y §15b, `tests/test_wa_claude.js` (11).
+  ⚠️ **Nunca dos respuestas**: `IA_HECHO` (Propiedades) se anota ANTES de mandar y la toma de mensajes lo respeta; un número con un mensaje
+  tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
+- `tests/test_wa_bot.js` (200), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)

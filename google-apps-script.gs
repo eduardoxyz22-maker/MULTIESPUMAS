@@ -459,7 +459,7 @@ function probarAntesDeImplementar() {
       else if (!waActivo_()) ojo('IA_ACTIVA está puesta pero el bot de WhatsApp está apagado (WA_ACTIVO): Claude tampoco contesta.');
       else {
         bien('Claude le contesta a los clientes' + (eI.solo ? ' — SOLO a ' + eI.solo + ' número(s) de prueba (IA_SOLO)' : ', a todos') + '. Hoy: ' + eI.hoy.consultas +
-             ' consulta(s). Desde el ' + eI.total.desde + ': ' + eI.total.consultas + ' consulta(s), unos USD ' + eI.total.usd.toFixed(2) + '.');
+             ' consulta(s) (' + Math.round(eI.hoy.segundos) + ' s esperando a Claude, de los 90 min por día de disparadores). Desde el ' + eI.total.desde + ': ' + eI.total.consultas + ' consulta(s), unos USD ' + eI.total.usd.toFixed(2) + '.');
         if (eI.pausa) ojo('Claude está en pausa hasta el ' + eI.pausa.hasta + ': «' + String(eI.pausa.motivo || '').slice(0, 160) + '». Mientras tanto sale la respuesta automática de siempre.');
         if (eI.ultimo && eI.ultimo.error) ojo('La última vuelta de Claude avisó: «' + String(eI.ultimo.error).slice(0, 160) + '».');
         if (eI.ultimo && eI.ultimo.aviso) ojo('Claude: ' + String(eI.ultimo.aviso).slice(0, 200));
@@ -2833,9 +2833,12 @@ function waHoja_() {
 function waAnotar_(filas) {
   if (!filas.length) return;
   try {
-    var sh = waHoja_(), last = sh.getLastRow();
-    sh.getRange(last + 1, 1, filas.length, WA_HOJA_ENC.length).setValues(filas);
-    if (last + filas.length > WA_HOJA_MAX + 500) sh.deleteRows(2, last + filas.length - WA_HOJA_MAX);
+    var sh = waHoja_();
+    /* (2026-10-14-b) De a una con appendRow: con «getLastRow + setValues», lo que el webhook anotaba en el medio (lo que escribió un
+       cliente) quedaba pisado y nadie lo veía. */
+    filas.forEach(function (f) { sh.appendRow(f); });
+    var last = sh.getLastRow();
+    if (last > WA_HOJA_MAX + 500) sh.deleteRows(2, last - WA_HOJA_MAX);
   } catch (e) {}
 }
 
@@ -3078,7 +3081,7 @@ function waHookAnotar_(est, resp) {
     var conIa = false;
     try { cfgIa = cfgIa || waConfig_(); conIa = iaParaNumero_(de, cfgIa); } catch (er) {}
     var reac = String(m.type || '') === 'reaction';
-    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, waHookTxtMsg_(m).slice(0, 500),
+    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, iaCorte_(waHookTxtMsg_(m), 500),
                   conIa && reac ? '🤖 reacción · ' + waBo_(Date.now()).txt : '', ms,
                   conIa ? (reac ? '— reacción: no se contesta' : '⏳') : '']);
     fila[w] = sh.getLastRow();
@@ -3153,8 +3156,10 @@ function waRespuestasLeer_() {
     if (ia.indexOf('🤖 ↓') === 0) { if (junta[num]) junta[num].antes.unshift(String(r[9] || '')); continue; }
     var x = { w:String(r[8] || ''), ms:ms, t:String(r[0] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || ''), num:num,
               txt:String(r[9] || ''), at:String(r[10] || '') };
-    if (ia) { x.ia = ia; x.cat = String(r[13] || ''); x.res = String(r[14] || ''); x.resp = String(r[15] || ''); x.urg = ia.indexOf('urgente') >= 0; x.antes = []; junta[num] = x; }
-    else delete junta[num];
+    if (ia) {
+      x.ia = ia; x.cat = String(r[13] || ''); x.res = String(r[14] || ''); x.resp = String(r[15] || ''); x.urg = ia.indexOf('urgente') >= 0; x.antes = [];
+      if (ia.charAt(0) !== '—') junta[num] = x;   // una reacción no es el mensaje principal de nadie
+    }
     out.push(x);
   }
   return out;
@@ -3217,6 +3222,8 @@ var IA_PAUSA_MS = 30 * 60000;        // la clave no sirve o se acabó el crédit
 var IA_FILAS = 400;                  // las filas del final de la hoja que se miran
 var IA_HIST_MS = 24 * 3600000;       // lo hablado que Claude ve
 var IA_CORRIDA_MS = 4 * 60000;
+var IA_GRUPOS_MAX = 6;               // números por vuelta (los demás, a la vuelta siguiente: así no esperan tomados)
+var IA_HECHO_TOPE = 250;             // mensajes ya contestados que se recuerdan (IA_HECHO, 48 h): una propiedad aguanta 9 KB
 var IA_PRECIO_IN = 4, IA_PRECIO_OUT = 20;   // USD por millón de tokens (Claude Opus 5.5): solo para estimar el gasto
 var IA_COL = 13;                     // M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
 var IA_CATS = ['hora', 'saldo', 'cambio', 'no_esta', 'direccion', 'confirma', 'reclamo', 'otro'];
@@ -3271,12 +3278,14 @@ function iaDespierta() {
    pisarse una anotación. */
 function iaUsoHoy_() {
   var u = waJsonProp_('IA_USO', {}) || {}, hoy = waBo_(Date.now()).hoy;
-  if (u.d !== hoy) { u.d = hoy; u.n = 0; u.r = 0; u.por = {}; }
+  if (u.d !== hoy) { u.d = hoy; u.n = 0; u.r = 0; u.seg = 0; u.por = {}; }
   u.por = u.por || {}; u.tot = u.tot || { n:0, tin:0, tout:0, desde:hoy };
   return u;
 }
-function iaUsoAnotar_(de, r, contesto) {
+function iaUsoAnotar_(de, r, contesto, seg) {
   var u = iaUsoHoy_();
+  u.seg = Math.round(((Number(u.seg) || 0) + (Number(seg) || 0)) * 10) / 10;   // lo que se esperó a Claude: cuenta para los 90 min/día de disparadores
+  if (!(r && (r.uso || r.ok))) { try { PropertiesService.getScriptProperties().setProperty('IA_USO', JSON.stringify(u)); } catch (e) {} return u; }
   u.n++; if (de) u.por[de] = (u.por[de] || 0) + 1; if (contesto) u.r++;
   var tin = (r && r.uso && r.uso.tin) || 0, tout = (r && r.uso && r.uso.tout) || 0;
   u.tot.n++; u.tot.tin += tin; u.tot.tout += tout;
@@ -3288,17 +3297,36 @@ function iaGuardarRes_(res) {
   try { PropertiesService.getScriptProperties().setProperty('IA_ULTIMO', JSON.stringify(res)); } catch (e) {}
   return res;
 }
-/** La fila de un mensaje por su wamid (columna I), buscando desde abajo: se busca de nuevo antes de escribir porque `waAnotar_`
-    puede haber borrado filas viejas mientras tanto. */
-function iaFila_(sh, w) {
-  if (!w) return 0;
-  var last = sh.getLastRow(), desde = Math.max(2, last - IA_FILAS - 100), ids = last >= desde ? sh.getRange(desde, 9, last - desde + 1, 1).getValues() : [];
-  for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i][0]) === w) return desde + i;
-  return 0;
+/** TODAS las filas de un mensaje por su wamid (columna I), buscadas de nuevo antes de escribir (`waAnotar_` puede haber borrado filas
+    viejas mientras tanto). Todas: Meta puede entregar el mismo mensaje dos veces a la vez y el control de repetidos del webhook no
+    alcanza (lee antes de agregar). Lo que se escribe va a todas. */
+function iaFilas_(sh, w) {
+  if (!w) return [];
+  var last = sh.getLastRow(), desde = Math.max(2, last - IA_FILAS - 100), ids = last >= desde ? sh.getRange(desde, 9, last - desde + 1, 1).getValues() : [], out = [];
+  for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === w) out.push(desde + i);
+  return out;
 }
 function iaMarcar_(sh, g, valor) {
-  g.filas.forEach(function (f) { var row = iaFila_(sh, f.w); if (row) sh.getRange(row, IA_COL).setValue(valor); });
+  g.filas.forEach(function (f) { iaFilas_(sh, f.w).forEach(function (row) { sh.getRange(row, IA_COL).setValue(valor); }); });
 }
+/* 🔒 Los mensajes ya contestados (por Claude o con la automática), en las Propiedades: si después falla la hoja (Google a veces tarda o
+   corta) o una vuelta vieja los vuelve a tomar, NO se contestan dos veces. Una huella corta por wamid, 48 h, tope IA_HECHO_TOPE. */
+function iaHuella_(w) { var h = 5381; w = String(w || ''); for (var i = 0; i < w.length; i++) h = ((h * 33) ^ w.charCodeAt(i)) >>> 0; return h.toString(36) + w.length.toString(36); }
+function iaHechoLeer_() { var o = waJsonProp_('IA_HECHO', {}); return (o && typeof o === 'object') ? o : {}; }
+function iaHechoAnotar_(g) {
+  var o = iaHechoLeer_(), ahora = Math.floor(Date.now() / 1000), lim = ahora - 48 * 3600;
+  for (var k in o) if (!(Number(o[k]) > lim)) delete o[k];
+  g.filas.forEach(function (f) { if (f.w) o[iaHuella_(f.w)] = ahora; });
+  var ks = Object.keys(o); if (ks.length > IA_HECHO_TOPE) { ks.sort(function (a, b) { return o[a] - o[b]; }); ks.slice(0, ks.length - IA_HECHO_TOPE).forEach(function (k) { delete o[k]; }); }
+  try { PropertiesService.getScriptProperties().setProperty('IA_HECHO', JSON.stringify(o)); } catch (e) {}
+  g.hecho = true;
+}
+/* Sin partir un emoji al cortar (medio emoji en el JSON y la API contesta 400), y sin mitades sueltas que hayan quedado. */
+function iaCorte_(t, n) {
+  t = String(t == null ? '' : t); if (t.length <= n) return t;
+  var c = t.charCodeAt(n - 1); return t.slice(0, (c >= 0xD800 && c <= 0xDBFF) ? n - 1 : n);
+}
+function iaUnicode_(t) { return String(t || '').replace(/[\ud800-\udbff](?![\udc00-\udfff])/g, '').replace(/(^|[^\ud800-\udbff])[\udc00-\udfff]/g, '$1'); }
 
 /** ⏱ Contesta lo que espera a Claude. `limite` = hasta cuándo puede arrancar una consulta (ms); `mirar` = leer la hoja aunque
     no esté la marca IA_PEND (el disparador de una vez: el mensaje que lo creó ya está en la hoja). */
@@ -3312,25 +3340,32 @@ function iaRepaso(limite, mirar) {
   /* 1. Adentro del candado (el de doPost: corto, sin red): tomar los mensajes listos, así dos vueltas a la vez no contestan dos veces. */
   var lock = LockService.getScriptLock();
   try { lock.waitLock(15000); } catch (e) { res.error = 'busy (la próxima vuelta lo contesta)'; iaDespertar_(); return iaGuardarRes_(res); }
-  var grupos = [], quedan = 0, viva = iaActiva_() && !iaEnPausa_();
+  var grupos = [], quedan = 0, viva = iaActiva_() && !iaEnPausa_(), hecho = iaHechoLeer_();
   try {
     var last = sh.getLastRow(), desde = Math.max(2, last - IA_FILAS + 1);
     var filas = last >= desde ? sh.getRange(desde, 1, last - desde + 1, IA_COL).getValues() : [];
-    var por = {}, orden = [];
+    var por = {}, orden = [], ocupado = {};
     for (var i = 0; i < filas.length; i++) {
       var r = filas[i], est = String(r[12] || '');
       if (String(r[3] || '') !== '💬 Respondió' || est.charAt(0) !== '⏳') continue;
+      var de = String(r[5] || ''), ms = Number(r[11]) || 0, w = String(r[8] || '');
+      if (w && hecho[iaHuella_(w)]) { sh.getRange(desde + i, IA_COL).setValue('🤖 ya contestado'); continue; }   // contestado, y la hoja no llegó a decirlo
       var mm = est.match(/^⏳(\d*)(?:@(\d+))?/), n = Number(mm && mm[1]) || 0, tom = Number(mm && mm[2]) || 0;
-      if (tom && t0 - tom < IA_RECLAMO_MS) { quedan++; continue; }   // otra vuelta lo está contestando
-      var de = String(r[5] || ''), ms = Number(r[11]) || 0;
-      if (!por[de]) { por[de] = { de:de, filas:[], n:0, ultMs:0 }; orden.push(de); }
-      por[de].filas.push({ fila:desde + i, w:String(r[8] || ''), ms:ms, txt:String(r[9] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || '') });
+      /* Otra vuelta lo está contestando: ese NÚMERO entero espera (si no, un mensaje nuevo suyo se contestaba acá y la otra vuelta
+         contestaba el de antes sin saberlo: dos respuestas). */
+      if (tom && t0 - tom < IA_RECLAMO_MS) { ocupado[de] = 1; quedan++; continue; }
+      if (!por[de]) { por[de] = { de:de, filas:[], extra:[], vistos:{}, n:0, ultMs:0 }; orden.push(de); }
+      if (w && por[de].vistos[w]) { por[de].extra.push(desde + i); continue; }   // el mismo mensaje dos veces: se toma, se contesta una
+      por[de].vistos[w] = 1;
+      por[de].filas.push({ fila:desde + i, w:w, ms:ms, txt:String(r[9] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || '') });
       por[de].n = Math.max(por[de].n, n); por[de].ultMs = Math.max(por[de].ultMs, ms);
     }
     orden.forEach(function (d) {
       var g = por[d];
+      if (ocupado[d] || grupos.length >= IA_GRUPOS_MAX) { quedan++; return; }
       if (viva && t0 - g.ultMs < IA_ESPERA_MS) { quedan++; return; }   // el cliente todavía está escribiendo
       g.filas.forEach(function (f) { sh.getRange(f.fila, IA_COL).setValue('⏳' + g.n + '@' + t0); });
+      g.extra.forEach(function (x) { sh.getRange(x, IA_COL).setValue('⏳' + g.n + '@' + t0); });
       grupos.push(g);
     });
     if (!grupos.length && !quedan && prop_('IA_PEND') === pend0) { try { props.deleteProperty('IA_PEND'); } catch (e) {} }
@@ -3339,22 +3374,31 @@ function iaRepaso(limite, mirar) {
   if (!grupos.length) return iaGuardarRes_(res);
   /* 2. Afuera del candado: Claude y WhatsApp, con la planilla de ahora. */
   var cfg = waConfig_(), B = waBo_(t0), recs = null, hoja = null;
+  /* Sin la planilla, Claude diría «no encontramos tu pedido» a todos: se espera a la vuelta siguiente. */
+  try { recs = readAll(); } catch (e1) { res.error = 'no se pudo leer la planilla: ' + String((e1 && e1.message) || e1).slice(0, 150); }
   for (var gi = 0; gi < grupos.length; gi++) {
     var g = grupos[gi];
-    if (Date.now() > fin - 70000) { iaMarcar_(sh, g, '⏳' + g.n); res.esperan++; continue; }   // no llega a terminar: a la próxima vuelta
-    res.grupos++;
     try {
-      if (!recs) { recs = []; try { recs = readAll(); } catch (e1) {} }
+      if (!recs) { iaSoltar_(sh, g, recs, res); continue; }
+      if (Date.now() > fin - 70000) { iaMarcar_(sh, g, '⏳' + g.n); res.esperan++; continue; }   // no llega a terminar: a la próxima vuelta
+      res.grupos++;
       if (!hoja) hoja = iaHojaLeer_(sh);
       iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res);
     } catch (e) {
       res.error = String((e && e.message) || e).slice(0, 200);
-      if (g.n + 1 >= IA_INTENTOS) iaRespaldo_(sh, g, iaPedidoDe_(g, recs || []), 'falló: ' + res.error, res);
-      else iaMarcar_(sh, g, '⏳' + (g.n + 1));
+      /* Ya contestado (o con la automática): NUNCA vuelve a la fila de espera, aunque la hoja haya fallado después. */
+      if (g.hecho) { try { iaMarcar_(sh, g, '🤖 contestó (la hoja no llegó a anotar todo: ' + res.error.slice(0, 80) + ')'); } catch (e2) {} }
+      else { try { iaSoltar_(sh, g, recs, res); } catch (e3) {} }
     }
   }
+  if (!recs) iaDespertar_();
   try { props.setProperty('IA_PEND', String(Date.now())); } catch (e) {}   // la próxima vuelta confirma que no quedó nada
   return iaGuardarRes_(res);
+}
+/* Otra vez a la fila de espera con un intento más; al último, la automática. */
+function iaSoltar_(sh, g, recs, res) {
+  if (g.n + 1 >= IA_INTENTOS) return iaRespaldo_(sh, g, iaPedidoDe_(g, recs || []), 'falló: ' + (res.error || 'error'), res);
+  iaMarcar_(sh, g, '⏳' + (g.n + 1));
 }
 /* Las filas del final de la hoja, para lo hablado y los avisos que ya se mandaron. */
 function iaHojaLeer_(sh) {
@@ -3371,11 +3415,16 @@ function iaPedidoDe_(g, recs) {
   (recs || []).forEach(function (q) {
     var qid = String((q && q.id) || '');
     if (!qid || qid.indexOf('__') === 0 || String(q.estado || '') === BORRADOR_EST) return;
-    if (id && qid === id) { p = q; return; }
+    /* Solo pedidos de ESTE número (si el celular del pedido se corrigió, el que escribe ya no es ese cliente) y de los que el bot le
+       habla al cliente: ni los de Eduardo, ni ROHO, ni ATC/RPT (waNoCliente_). */
     if (waCel_(q.celular) !== g.de) return;
+    var v = waNorm_(q.vendedor);
+    if (v.indexOf('eduardo') >= 0 || v.indexOf('roho') >= 0 || /^(ATC|RPT)\b/i.test(String(q.oc || '').trim())) return;
+    if (id && qid === id) { p = q; return; }
     if (q.fecha && String(q.fecha) < lim) return;
     otros.push(q);
   });
+  if (!p) oc = '';
   var clave = function (q) { var f = String(q.fecha || '9999'); return (q.entregado || f < hoy ? '1' : '0') + f; };
   otros.sort(function (a, b) { return clave(a) < clave(b) ? -1 : clave(a) > clave(b) ? 1 : 0; });
   if (!p && otros.length) p = otros.shift();
@@ -3401,7 +3450,7 @@ function iaPedidoTxt_(p, B) {
   return L.join('\n');
 }
 /* El texto del cliente es DATO: sin «<» ni «>» no puede cerrar la etiqueta y hacerse pasar por instrucciones. */
-function iaSinEtiquetas_(t) { return String(t || '').replace(/</g, '‹').replace(/>/g, '›').slice(0, 1200); }
+function iaSinEtiquetas_(t) { return iaCorte_(String(t || '').replace(/</g, '‹').replace(/>/g, '›'), 1200); }
 function iaSistema_(marca) {
   return [
     'Sos el asistente automático de WhatsApp de ' + marca + ' (colchones, Santa Cruz de la Sierra, Bolivia). Este número le manda a cada cliente los avisos de su entrega (confirmación del pedido, cambio de día, recordatorio del día anterior) y ahora también contesta lo que el cliente escribe.',
@@ -3446,17 +3495,18 @@ function iaContexto_(g, ped, hoja, B) {
   (hoja || []).forEach(function (r) {
     if (String(r[5] || '') !== g.de || propias[String(r[8] || '')]) return;
     var tipo = String(r[3] || ''), ms = Number(r[11]) || 0, hora = ms ? waBo_(ms).txt : '';
-    if (tipo === '💬 Respondió') { if (ms >= lim) conv.push(hora + ' · cliente: ' + iaSinEtiquetas_(r[9]).slice(0, 400)); }
-    else if (tipo === '🤖 Respuesta IA') { if (ms >= lim) conv.push(hora + ' · asistente: ' + iaSinEtiquetas_(String(r[9] || '').replace(/^🤖 _[^_]*_\s*/, '')).slice(0, 400)); }
+    if (tipo === '💬 Respondió') { if (ms >= lim) conv.push(hora + ' · cliente: ' + iaCorte_(iaSinEtiquetas_(r[9]), 400)); }
+    /* Lo que contestó Claude va en la P: la J («Meta dice») la pisa el «entregado / leído» de Meta. */
+    else if (tipo === '🤖 Respuesta IA') { if (ms >= lim) conv.push(hora + ' · asistente: ' + iaCorte_(iaSinEtiquetas_(String(r[15] || r[9] || '').replace(/^🤖 _[^_]*_\s*/, '')), 400)); }
     else if (tipo === 'Respuesta automática') { if (ms >= lim) conv.push(hora + ' · respuesta automática fija: «este número no lee, escribile a tu vendedor/a»'); }
     else if (String(r[7] || '').indexOf('enviado') >= 0 && tipo.indexOf('Logística') < 0 && tipo.indexOf('IA →') < 0) avisos.push(tipo);
   });
   if (avisos.length) { u.push(''); u.push('Avisos que el bot ya le mandó (del más viejo al más nuevo): ' + avisos.slice(-5).join(', ') + '.'); }
   if (conv.length) { u.push(''); u.push('<conversacion>'); conv.slice(-12).forEach(function (x) { u.push(x); }); u.push('</conversacion>'); }
   u.push(''); u.push('<mensaje_cliente>');
-  g.filas.forEach(function (f) { u.push((f.ms ? waBo_(f.ms).txt + ' · ' : '') + (f.nom ? iaSinEtiquetas_(f.nom).slice(0, 40) : 'cliente') + ': ' + iaSinEtiquetas_(f.txt)); });
+  g.filas.forEach(function (f) { u.push((f.ms ? waBo_(f.ms).txt + ' · ' : '') + (f.nom ? iaCorte_(iaSinEtiquetas_(f.nom), 40) : 'cliente') + ': ' + iaSinEtiquetas_(f.txt)); });
   u.push('</mensaje_cliente>');
-  return { system:iaSistema_(marca), user:u.join('\n'), enlaces:enlaces, marca:marca };
+  return { system:iaSistema_(marca), user:iaUnicode_(u.join('\n')), enlaces:enlaces, marca:marca };
 }
 /* Por si esta cuenta no acepta algo de la consulta completa (400): la misma pregunta, lo más simple posible, pidiendo el JSON. */
 var IA_PIDE_JSON = '\n\nContestá SOLO con un objeto JSON, sin nada antes ni después, con estas claves: categoria (una de: ' + IA_CATS.join(', ') +
@@ -3511,14 +3561,26 @@ function iaInterpretar_(r) {
 }
 /* Lo que sale al cliente: sin enlaces que no sean los de su vendedor/a, sin la firma (se agrega acá) y sin pasarse de largo. */
 function iaLimpiarRespuesta_(t, enlaces) {
-  t = String(t || '').replace(/\r/g, '').replace(/^🤖[^\n]*\n+/, '');
-  t = t.replace(/https?:\/\/[^\s)>\]]+/g, function (u) { var l = u.replace(/[.,;:!?»"']+$/, ''); return ((enlaces || []).indexOf(l) >= 0 ? l : '') + u.slice(l.length); });
+  t = iaUnicode_(String(t || '').replace(/\r/g, '').replace(/^🤖[^\n]*\n+/, ''));
+  /* Los enlaces buenos (el WhatsApp de su vendedor/a, con o sin «https://») se guardan aparte; todo lo demás que WhatsApp mostraría
+     como enlace (http…, www…, wa.me/…, «algo.com/…») se va; los buenos vuelven enteros. Así un «*…*», un «_…_» o un emoji pegado
+     no rompen el bueno. */
+  var guarda = [];
+  (enlaces || []).forEach(function (L) {
+    [L, L.replace(/^https:\/\//, '')].forEach(function (v) { if (t.indexOf(v) >= 0) { t = t.split(v).join('\u0001' + guarda.length + '\u0001'); guarda.push(L); } });
+  });
+  var fuera = function (u) { var m = u.match(/[.,;:!?)»"'*_~]+$/); return m ? m[0] : ''; };   // el enlace se va; el punto de después, no
+  t = t.replace(/(?:https?:\/\/|www\.)[^\s\u0001]+/gi, fuera).replace(/\bwa\.me\/[^\s\u0001]*/gi, fuera)
+       .replace(/\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|bo|me|ly|io|co|info|xyz|app|link|site|online|store|shop)\b(?:\/[^\s\u0001]*)?/gi, fuera)
+       .replace(/[ \t]{2,}/g, ' ');
+  t = t.replace(/\u0001(\d+)\u0001/g, function (x, i) { return guarda[Number(i)] || ''; });
   t = t.replace(/[ \t]+([.,;:!?])/g, '$1').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();   // «Mirá también .» → «Mirá también.»
   return t.length > 1000 ? t.slice(0, 997).replace(/\s+\S*$/, '') + '…' : t;
 }
 function iaRespaldo_(sh, g, ped, motivo, res) {
   res.respaldo++;
-  iaMarcar_(sh, g, '⏭️ ' + String(motivo || '').slice(0, 150));
+  iaHechoAnotar_(g);
+  iaMarcar_(sh, g, '⏭️ ' + iaCorte_(String(motivo || ''), 150));
   try { waAutoResponder_(sh, g.de, { id:ped.id || '', oc:ped.oc || '' }, g.filas[g.filas.length - 1].nom); } catch (e) {}
 }
 function iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res) {
@@ -3532,32 +3594,43 @@ function iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res) {
   else if ((u.por[g.de] || 0) >= iaNum_('IA_MAX_NUMERO', IA_MAX_NUMERO_DEF)) motivo = 'este número ya llegó al tope de respuestas de Claude por hoy (' + u.por[g.de] + ')';
   if (motivo) return iaRespaldo_(sh, g, ped, motivo, res);
   /* 2. Claude */
-  var ctx = iaContexto_(g, ped, hoja, B), r = iaLlamar_(ctx.system, ctx.user);
+  var ctx = iaContexto_(g, ped, hoja, B), tc = Date.now(), r = iaLlamar_(ctx.system, ctx.user);
   if (r.aviso) res.aviso = r.aviso;
-  if (r.uso || r.ok) iaUsoAnotar_(g.de, r, false);
+  iaUsoAnotar_(r.uso || r.ok ? g.de : '', r, false, (Date.now() - tc) / 1000);
   if (r.reintentar) {
     if (g.n + 1 >= IA_INTENTOS) return iaRespaldo_(sh, g, ped, 'Claude no contestó: ' + r.detalle, res);
     res.reintentos++; res.error = r.detalle; iaMarcar_(sh, g, '⏳' + (g.n + 1)); iaDespertar_(); return;
   }
   if (r.fatal) { iaPausar_(r.detalle); res.error = r.detalle; return iaRespaldo_(sh, g, ped, r.detalle, res); }
   if (!r.ok) return iaRespaldo_(sh, g, ped, r.detalle || 'Claude no devolvió una respuesta', res);
-  /* 3. Al cliente */
+  /* 3. Al cliente. Desde acá, pase lo que pase con la hoja, este mensaje ya está contestado (IA_HECHO): nunca dos respuestas. */
   var o = r.o, txt = o.contestar ? iaLimpiarRespuesta_(o.respuesta, ctx.enlaces) : '', envio = null;
+  if (o.contestar && !txt) return iaRespaldo_(sh, g, ped, 'la respuesta de Claude quedó vacía', res);
+  iaHechoAnotar_(g);
   if (txt) {
-    var cuerpo = '🤖 _Asistente automático · ' + ctx.marca + '_\n\n' + txt;
-    envio = waPost_(cfg, { messaging_product:'whatsapp', to:g.de, type:'text', text:{ body:cuerpo, preview_url:false } });
+    var cuerpo = '🤖 _Asistente automático · ' + ctx.marca + '_\n\n' + txt, msg = { messaging_product:'whatsapp', to:g.de, type:'text', text:{ body:cuerpo, preview_url:false } };
+    envio = waPost_(cfg, msg);
+    if (!envio.ok && envio.reintentar) {   // Meta pasajero: una vez más enseguida (Claude ya cobró: no se le vuelve a preguntar)
+      try { if (typeof Utilities !== 'undefined' && Utilities.sleep) Utilities.sleep(2000); } catch (e) {}
+      envio = waPost_(cfg, msg);
+    }
+    /* Lo que se le mandó va en la P: la J («Meta dice») la pisa el «enviado / entregado / leído» de Meta. */
     sh.appendRow([B.txt, ped.id || '', ped.oc || '', '🤖 Respuesta IA', ult.nom || '', g.de, '(texto)', envio.ok ? '✅ enviado' : '❌ error',
-                  envio.ok ? (envio.id || '') : envio.detalle, cuerpo.slice(0, 1200), '', Date.now()]);
+                  envio.ok ? (envio.id || '') : envio.detalle, '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]);
     if (envio.ok) { res.contestados++; var uu = iaUsoHoy_(); uu.r++; try { PropertiesService.getScriptProperties().setProperty('IA_USO', JSON.stringify(uu)); } catch (e) {} }
+    else res.error = 'no se pudo mandar la respuesta de Claude: ' + String(envio.detalle || '').slice(0, 120);
   } else res.sinRespuesta++;
-  /* 4. Las filas del cliente: el último mensaje lleva todo; los de antes, «↓» (van junto con ese). */
-  var estado = (!txt ? '🤖 no hacía falta contestar' : envio.ok ? '🤖 contestó' : '❌ no se pudo mandar: ' + String(envio.detalle || '').slice(0, 100)) + (o.urgente ? ' · 🚨 urgente' : '');
-  var atendida = (!envio || envio.ok) && !o.urgente && IA_RESUELVE.indexOf(o.categoria) >= 0 ? '🤖 Claude · ' + B.txt : '';
+  /* 4. Las filas del cliente: el último mensaje lleva todo; los de antes, «↓» (van junto con ese). Si Meta no la entregó, la P queda
+        vacía (no se le contestó) y la vendedora lo ve pendiente con el porqué. */
+  var mando = !!(envio && envio.ok);
+  var estado = (!txt ? '🤖 no hacía falta contestar' : mando ? '🤖 contestó' : '❌ no se pudo mandar la respuesta de Claude: ' + String(envio.detalle || '').slice(0, 100)) + (o.urgente ? ' · 🚨 urgente' : '');
+  var atendida = (!txt || mando) && !o.urgente && IA_RESUELVE.indexOf(o.categoria) >= 0 ? '🤖 Claude · ' + B.txt : '';
   g.filas.forEach(function (f, i) {
-    var row = iaFila_(sh, f.w); if (!row) return;
     var esUlt = i === g.filas.length - 1;
-    sh.getRange(row, IA_COL, 1, 4).setValues([[esUlt ? estado : '🤖 ↓ junto con el mensaje siguiente', esUlt ? o.categoria : '', esUlt ? o.resumen : '', esUlt ? txt : '']]);
-    if (atendida && !String(sh.getRange(row, 11).getValue() || '')) sh.getRange(row, 11).setValue(atendida);
+    iaFilas_(sh, f.w).forEach(function (row) {
+      sh.getRange(row, IA_COL, 1, 4).setValues([[esUlt ? estado : '🤖 ↓ junto con el mensaje siguiente', esUlt ? o.categoria : '', esUlt ? o.resumen : '', esUlt && mando ? txt : '']]);
+      if (atendida && !String(sh.getRange(row, 11).getValue() || '')) sh.getRange(row, 11).setValue(atendida);
+    });
   });
   /* 5. Urgente y la entrega es hoy o el próximo día con camión: a logística, una vez por pedido y por día. */
   var p = ped.p;
@@ -3581,7 +3654,7 @@ function iaAvisarLogistica_(cfg, p, resumen, B) {
     if (r.ok) n++;
     filas.push([B.txt, String(p.id || ''), String(p.oc || ''), 'IA → Logística', (cfg.prueba ? '(prueba) ' : '') + L.nombre, num, pl, r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle]);
   });
-  waAnotar_(filas);
+  waAnotar_(filas);   // de a una con appendRow (desde 2026-10-14-b): no pisa lo que el webhook anota mientras tanto
   return n;
 }
 /** ▶️ Correr desde el editor: UNA consulta de prueba a Claude con un pedido inventado. No le manda nada a nadie por WhatsApp.
@@ -3597,7 +3670,7 @@ function probarAsistente(texto) {
               txt:typeof texto === 'string' && texto ? texto : 'Hola, ¿a qué hora llega mi colchón? ¿Y cuánto tengo que pagar?' }] };
     var ctx = iaContexto_(g, { p:p, otros:[], id:'prueba', oc:'10-999' }, null, B), t0 = Date.now(), r = iaLlamar_(ctx.system, ctx.user);
     var seg = Math.round((Date.now() - t0) / 100) / 10;
-    if (r.uso) iaUsoAnotar_('', r, false);
+    iaUsoAnotar_('', r, false, seg);
     if (r.aviso) log('⚠️ ' + r.aviso);
     if (r.ok) {
       log('✅ Claude contestó en ' + seg + ' s (modelo ' + (r.modelo || '?') + '; ' + r.uso.tin + ' tokens de entrada y ' + r.uso.tout + ' de salida ≈ USD ' + iaCostoUsd_(r.uso).toFixed(4) + ').');
@@ -3613,7 +3686,7 @@ function probarAsistente(texto) {
 function iaEstado_() {
   var u = iaUsoHoy_(), pz = Number(prop_('IA_PAUSA_HASTA')) || 0;
   return { activa:iaActiva_(), clave:!!iaClave_(), prendida:!!prop_('IA_ACTIVA'), solo:iaSolo_().length, pausa:pz > Date.now() ? { hasta:waBo_(pz).txt, motivo:prop_('IA_PAUSA_MOTIVO') } : null,
-           hoy:{ consultas:u.n, contestadas:u.r }, total:{ consultas:u.tot.n, desde:u.tot.desde, usd:Math.round(iaCostoUsd_(u.tot) * 100) / 100 },
+           hoy:{ consultas:u.n, contestadas:u.r, segundos:Number(u.seg) || 0 }, total:{ consultas:u.tot.n, desde:u.tot.desde, usd:Math.round(iaCostoUsd_(u.tot) * 100) / 100 },
            ultimo:waJsonProp_('IA_ULTIMO', null), pendientes:!!prop_('IA_PEND') };
 }
 

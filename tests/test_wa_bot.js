@@ -823,5 +823,124 @@ function conPedido(props, extra) {
   chk('sin IA_ACTIVA: probar dice que sale la automática de siempre', /Claude todavía no le contesta a los clientes \(falta IA_ACTIVA = 1\)/.test(S2.ctx.probarAntesDeImplementar().lineas.join('\n')));
 }
 
+// ══ 15b. Lo que encontró la revisión independiente de la 14-b (antes de darle el .gs al dueño) ══════════════
+console.log('\n── 15b. Claude: nunca dos respuestas, memoria de lo que contestó, solo SUS pedidos, enlaces, emojis, Meta y la hoja que fallan ──');
+const hojaBot = (S) => S.ctx.SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bot WhatsApp');
+const metaDice = (S, value) => S.ctx.doPost({ parameter: { wa: 'clave-hook' }, postData: { contents: JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'X', changes: [{ field: 'messages',
+  value: Object.assign({ messaging_product: 'whatsapp', metadata: { phone_number_id: '1234567890' } }, value) }] }] }) } })._t;
+{
+  const { S } = conPedido();
+  let visto = '';
+  conClaude(S, (b) => { visto = b.messages[0].content; return claude(); });
+  escribe(S, '59170111222', '¿A qué hora llega?'); pasar(1); S.ctx.iaDespierta();
+  const fr = S.hoja().find(f => f[3] === '🤖 Respuesta IA'), ts = String(Math.floor(RELOJ.ms / 1000));
+  ['sent', 'delivered', 'read'].forEach(st => metaDice(S, { statuses: [{ id: fr[8], status: st, timestamp: ts }] }));
+  const fr2 = S.hoja().find(f => f[3] === '🤖 Respuesta IA');
+  chk('lo que contestó Claude va en la P; la J es de Meta («👁️ leído») y no lo pisa', /^👁️ leído/.test(fr2[9]) && /^🤖 _Asistente automático · Heaven Colchones_\n\n¡Hola Juan!/.test(fr2[15]), [fr2[9], String(fr2[15]).slice(0, 60)]);
+  pasar(3); escribe(S, '59170111222', '¿Y el sábado?'); pasar(1); S.ctx.iaDespierta();
+  chk('cuando el cliente vuelve a escribir, Claude ve lo que le contestó antes (no «leído»)', /asistente: ¡Hola Juan! 👋 Tu pedido llega el jueves/.test(visto) && !/asistente: 👁️/.test(visto) && /cliente: ¿A qué hora llega\?/.test(visto), visto.slice(visto.indexOf('<conversacion>'), visto.indexOf('</conversacion>')));
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  escribe(S, '59170111222', '¿A qué hora llega?');
+  const H = hojaBot(S), orig = H.getRange; let fallar = true;
+  H.getRange = (f, c, n, k) => { const r = orig(f, c, n, k); if (c === 13 && k === 4 && fallar) { fallar = false; r.setValues = () => { throw new Error('Service Spreadsheets timed out'); }; } return r; };
+  pasar(1); S.ctx.iaDespierta();
+  chk('la hoja falla DESPUÉS de mandar: el mensaje no vuelve a la fila de espera', textos(S).length === 1 && cli(S)[0][12].charAt(0) !== '⏳', cli(S)[0][12]);
+  pasar(6); S.ctx.iaDespierta(); pasar(6); S.repaso(); S.ctx.iaDespierta();
+  chk('…y nunca se contesta dos veces (ni Claude ni la automática)', iaLl(S).length === 1 && textos(S).length === 1, { claude: iaLl(S).length, wa: textos(S).length });
+  /* Aunque una fila vuelva a quedar «⏳» (la marca no llegó a escribirse), lo recuerdan las Propiedades. */
+  cli(S)[0][12] = '⏳0'; S.P.IA_PEND = '1'; pasar(1); S.ctx.iaDespierta();
+  chk('una fila que quedó «⏳» pero ya se contestó: no se vuelve a contestar y se corrige', iaLl(S).length === 1 && textos(S).length === 1 && cli(S)[0][12] === '🤖 ya contestado', cli(S)[0][12]);
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  escribe(S, '59170111222', '¿A qué hora llega?');
+  const H = hojaBot(S); H._datos.push(H._datos[H._datos.length - 1].slice());   // Meta lo entregó dos veces a la vez: dos filas con el mismo wamid
+  pasar(1); S.ctx.iaDespierta();
+  chk('el mismo mensaje anotado dos veces: UNA consulta, UNA respuesta, y las DOS filas quedan contestadas', iaLl(S).length === 1 && textos(S).length === 1 && cli(S).length === 2 && cli(S).every(f => f[12] === '🤖 contestó'), cli(S).map(f => f[12]));
+  for (let i = 0; i < 4; i++) { pasar(6); S.repaso(); S.ctx.iaDespierta(); }
+  chk('…y en las vueltas siguientes no se vuelve a contestar', iaLl(S).length === 1 && textos(S).length === 1);
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  escribe(S, '59170111222', '¿A qué hora llega?');
+  cli(S)[0][12] = '⏳0@' + RELOJ.ms;                       // otra vuelta lo tomó y está preguntándole a Claude
+  pasar(1); escribe(S, '59170111222', '¿hola?'); pasar(1); S.ctx.iaDespierta();
+  chk('el cliente escribe mientras otra vuelta contesta su mensaje anterior: ese número espera (no dos respuestas cruzadas)', iaLl(S).length === 0 && cli(S)[1][12] === '⏳' && iaTrig(S) === 1, cli(S).map(f => f[12]));
+}
+{
+  const { S, p } = conPedido();
+  const edu = ped({ id: 'edu1', vendedor: 'Eduardo Viscarra', cliente: 'MULTICENTER', celular: '70111222', productos: [{ desc: 'COLCHON', cant: 40, precio: 1000 }] });
+  S.guardar(edu);
+  p.celular = '70999000'; S.guardar(p);                      // la vendedora corrigió el celular: el que escribe ya no es este cliente
+  let visto = '';
+  conClaude(S, (b) => { visto = b.messages[0].content; return claude({ categoria: 'otro', resumen: 'Pregunta quién es', respuesta: '¡Hola! Somos de Multiespumas.' }); });
+  escribe(S, '59170111222', '¿Quién es?'); pasar(1); S.ctx.iaDespierta();
+  chk('el pedido de la fila es de OTRO celular ahora: Claude no ve sus datos', !/JUAN CARLOS ROCA/.test(visto) && /No encontramos ningún pedido de este número/.test(visto), visto.slice(visto.indexOf('<pedidos>'), visto.indexOf('</pedidos>')));
+  chk('…ni un pedido de Eduardo de ese número (el bot nunca le escribe a sus clientes)', !/MULTICENTER/.test(visto) && !/× COLCHON/.test(visto));
+}
+{
+  const { S } = conPedido();
+  let visto = '';
+  conClaude(S, (b) => { visto = JSON.stringify(b); return claude(); });
+  escribe(S, '59170111222', 'x'.repeat(499) + '😀 y más');   // la hoja guarda 500 letras: el emoji cae justo en el corte
+  pasar(1); S.ctx.iaDespierta();
+  const cont = JSON.parse(visto).messages[0].content;
+  chk('un emoji justo en el corte: ni la hoja ni el pedido a Claude llevan medio emoji', cli(S)[0][9] === 'x'.repeat(499) && /x{499}\n<\/mensaje_cliente>/.test(cont) &&
+      !/[\ud800-\udbff](?![\udc00-\udfff])/.test(cont) && !/\\ud83d/i.test(visto), cli(S)[0][9].length);
+  chk('…y los cortes no parten un emoji ni dejan mitades sueltas (iaCorte_, iaUnicode_)', S.ctx.iaCorte_('ab😀', 3) === 'ab' && S.ctx.iaCorte_('ab😀', 4) === 'ab😀' && S.ctx.iaUnicode_('a\ud83d b \ude00c 😀') === 'a b c 😀');
+  chk('el filtro de enlaces: el de su vendedora con «*…*» o un emoji pegado sobrevive; wa.me de otro, www y «algo.com/…» se van', (() => {
+    const L = ['https://wa.me/59170000001'], t = S.ctx.iaLimpiarRespuesta_('👉 *https://wa.me/59170000001*👍 o wa.me/59170000001 o www.malo.com o wa.me/59179999999 o estafa.com/x. Av. Banzer.', L);
+    return t === '👉 *https://wa.me/59170000001*👍 o https://wa.me/59170000001 o o o. Av. Banzer.';
+  })(), S.ctx.iaLimpiarRespuesta_('👉 *https://wa.me/59170000001*👍 o wa.me/59170000001 o www.malo.com o wa.me/59179999999 o estafa.com/x. Av. Banzer.', ['https://wa.me/59170000001']));
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude({ respuesta: 'http://estafa.example' }));
+  escribe(S, '59170111222', '¿A qué hora?'); pasar(1); S.ctx.iaDespierta();
+  chk('si después de sacar los enlaces no queda nada: la automática (y no queda «atendido» sin que le llegue nada)', /^⏭️ la respuesta de Claude quedó vacía/.test(cli(S)[0][12]) && !/^🤖 Claude/.test(cli(S)[0][10]) && /Este número solo envía/.test((textos(S)[0] || {}).t), cli(S)[0].slice(10, 13));
+}
+{
+  const { S } = conPedido();
+  S.meta.responder = (b) => (b && b.model) ? claude() : (b && b.type === 'text') ? { code: 500, body: { error: { message: 'Internal error', code: 1 } } } : null;
+  escribe(S, '59170111222', '¿A qué hora llega?'); pasar(1); S.ctx.iaDespierta();
+  const c = cli(S)[0], R = S.ctx.waRespuestasLeer_()[0];
+  chk('Meta falla al mandar la respuesta de Claude: se reintenta una vez enseguida (sin volver a preguntarle a Claude)', iaLl(S).length === 1 && textos(S).length === 2, { claude: iaLl(S).length, wa: textos(S).length });
+  chk('…y si igual falla: «❌ no se pudo mandar», sin «le contestó» y pendiente para la vendedora', /^❌ no se pudo mandar la respuesta de Claude/.test(c[12]) && c[15] === '' && !c[10] && R.resp === '' && R.at === '', c.slice(10));
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  escribe(S, '59170111222', '¿A qué hora llega?');
+  const orig = S.ctx.readAll; S.ctx.readAll = () => { throw new Error('Exceeded maximum execution time'); };
+  pasar(1); S.ctx.iaDespierta();
+  chk('no se pudo leer la planilla: NO se le pregunta a Claude («no encontramos tu pedido» sería mentira); queda para la vuelta siguiente', iaLl(S).length === 0 && textos(S).length === 0 && cli(S)[0][12] === '⏳1' && iaTrig(S) === 1, cli(S)[0][12]);
+  S.ctx.readAll = orig; pasar(1); S.ctx.iaDespierta();
+  chk('…y en la vuelta siguiente contesta con su pedido', iaLl(S).length === 1 && /JUAN CARLOS ROCA/.test(iaLl(S)[0].body.messages[0].content) && textos(S).length === 1);
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  escribe(S, '59170111222', 'Hola');
+  escribe(S, '59170111222', '', 'Juan', { type: 'reaction', reaction: { message_id: 'wamid.1', emoji: '👍' } });
+  escribe(S, '59170111222', '¿A qué hora llega?'); pasar(1); S.ctx.iaDespierta();
+  const R = S.ctx.waRespuestasLeer_(), head = R.find(x => x.txt === '¿A qué hora llega?');
+  chk('una reacción en el medio: «Hola» va adentro de la respuesta principal, no de la reacción', head && JSON.stringify(head.antes) === '["Hola"]' && !R.some(x => x.txt === 'Hola'), R.map(x => x.txt + '|' + JSON.stringify(x.antes || [])));
+}
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  for (let i = 0; i < 8; i++) escribe(S, '5917055500' + i, 'hola', 'C' + i);
+  pasar(1); S.ctx.iaDespierta();
+  chk('muchos números a la vez: como mucho 6 por vuelta (los demás no quedan tomados esperando)', iaLl(S).length === 6 && cli(S).filter(f => f[12] === '⏳').length === 2 && iaTrig(S) === 1, cli(S).map(f => f[12]));
+  pasar(1); S.ctx.iaDespierta();
+  chk('…y la vuelta siguiente contesta los que faltaban', iaLl(S).length === 8 && textos(S).length === 8);
+  chk('probar dice cuántos segundos se esperó a Claude hoy (cuentan para los 90 min de disparadores)', /\d+ s esperando a Claude/.test(S.ctx.probarAntesDeImplementar().lineas.join('\n')));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;
