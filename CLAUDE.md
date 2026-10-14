@@ -748,6 +748,12 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   y **en «Sin vehículo» se asigna el camión ahí mismo** (§4ie, `cvAsignar` = `setVehiculo` sin reabrir fichas: vehículo + primer
   chofer). `c.stops` de `cargaVivaDatos` = los pedidos de cada camión.
 - `tests/test_camiones_admin.js` (27). ⚠️ En una prueba de tildes, el doble de `apiList` tiene que devolver las filas del sistema.
+- **🌅🌆 Mañana y tarde por separado** (§4la, 14/10; dueño: *«¿solo muestra los AM?… sí, hazlo, separa mañana y tarde»*): `cargaChkKey(fecha,
+  veh, prod, lugar, turno)` — lo de la TARDE lleva `|~PM` al final; la mañana y lo sin turno siguen con la clave de SIEMPRE (lo ya tildado
+  no se pierde). `cargaVivaDatos` arma las líneas por turno (`l.t`), las fichas (`cv3dColsPintar`) ponen «🌅 Mañana»/«🌆 Tarde» con lo
+  cargado de cada uno, y la Lista de carga separa con `cargaSeccionesHtml(o, fecha, k, t)` (cartel `.carga-turno` solo si hay tarde: un
+  camión solo de la mañana se ve como siempre). `depCargado`, `cv3dPedidos` y `textoCargaChk` usan el turno del pedido (`normTurno`).
+  ⚠️ Todo lo que lea un tilde de carga de un producto tiene que pasar el turno. `tests/test_carga_turnos.js` (16).
 - **🚛 En 3D, por camión (§4jq, 10/10, PUBLICADA 16:21, `e497b11`; dueño: *«publica y veamos»*)**: con `CV_3D` (prendido salvo `me_cv3d`=0; APAGADO en Playwright)
   la imagen se reemplaza por la escena 3D (`cv3dConstruir`: camión en su andén con lo cargado, un montacargas por producto que falta,
   Sin vehículo, Banzer, Moreno) y el panel oscuro por **una ficha clara por camión** abajo (`cv3dColsPintar`, `#cv-cols`) con los

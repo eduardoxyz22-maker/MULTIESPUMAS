@@ -383,6 +383,10 @@ tbody tr:hover{background:var(--teal-lt)}
 .carga-fecha{margin-bottom:22px}
 .carga-fecha-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:#0f766e;color:#fff;font-weight:800;font-size:1rem;padding:9px 14px;border-radius:9px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .carga-stop{padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem;cursor:pointer;border-radius:6px;transition:background .12s}
+.carga-turno{margin:0 0 12px;padding:8px 10px 2px;border-radius:10px;border:1px solid #fde4b0;background:#fffaf0}
+.carga-turno[data-turno="PM"]{border-color:#ddd6fe;background:#faf7ff}
+.carga-turno-h{font-weight:800;font-size:.95rem;margin-bottom:6px;color:#9a5b00}.carga-turno[data-turno="PM"] .carga-turno-h{color:#5b21b6}
+.carga-turno-h span{font-weight:600;font-size:.8rem;color:#6b7280}
 .carga-stop.atc{box-shadow:inset 4px 0 0 var(--atc);padding-left:9px}
 .carga-stop.rpt{box-shadow:inset 4px 0 0 var(--rpt);padding-left:9px}
 .carga-stop:hover{background:#f0fbfa;box-shadow:inset 3px 0 0 var(--teal)}
@@ -2218,6 +2222,9 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cvc h4{ cursor:pointer; }
 .cvc.listo{ background:linear-gradient(180deg,#f0fdf4,#fff 60%); }
 .cvc-l{ display:grid; grid-template-columns:22px 1.7em minmax(0,1fr); gap:2px 6px; align-items:start; font-size:.84rem; padding:5px 0; border-bottom:1px dashed var(--gray-md); cursor:pointer; }
+.cvc-turno{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0 2px; padding:5px 10px; border-radius:9px; font-weight:800; font-size:.84rem; background:#fff7e6; color:#9a5b00; }
+.cvc-turno.pm{ background:#f3efff; color:#5b21b6; }
+.cvc-turno span{ margin-left:auto; font-weight:600; font-size:.76rem; color:#6b7280; }
 .cvc-l input{ width:18px; height:18px; margin:1px 0 0; accent-color:#2d6fd6; cursor:pointer; }
 .cvc-l>b{ text-align:right; color:#00807a; }
 .cvc-l .cvc-p{ font-weight:700; text-decoration:underline dotted rgba(0,0,0,.25); text-underline-offset:3px; }
@@ -15716,8 +15723,11 @@ function cargaDiaKey(){ return CARGA_DIA==='hoy'?todayStr():CARGA_DIA==='manana'
    🚚 (26/09) Lo que se carga en BANZER lleva su propia tilde: un cuarto pedazo `@Banzer` al final
    (`2026-09-24|CAMION 1|TITANIO ICE 160x190|@Banzer`). Las de fábrica quedan con la clave de SIEMPRE
    (hay tildes guardadas hoy en `__carga_chk__`), y la fecha sigue adelante: se podan solas igual. */
-function cargaChkKey(fecha,veh,prod,lugar){
+function cargaChkKey(fecha,veh,prod,lugar,turno){
   var a=[fecha,veh,prod]; if(lugar) a.push('@'+lugar);
+  /* 🌅🌆 (14/10, dueño: «separá mañana y tarde») lo de la TARDE tiene su propio tilde (`…|~PM`): el camión sale a la mañana con lo
+     suyo y vuelve a cargar para la tarde. La mañana (y lo sin turno) sigue con la clave de siempre: lo ya tildado no se pierde. */
+  if(turno==='PM') a.push('~PM');
   return a.map(function(x){ return String(x==null?'':x).replace(/;/g,','); }).join('|');
 }
 /* Los depósitos de salida de un producto en la carga: {nombre: unidades} («Banzer»: 2). */
@@ -15742,9 +15752,9 @@ function textoCargaChk(obj){
   STATE.forEach(function(p){
     if(!p || p.fecha || esVentaTienda(p) || esFilaSistema(p)) return;
     (p.productos||[]).forEach(function(x){
-      var veh=vehiculoDe(p)||'Sin vehículo', kk=cargaProdKey(x)||'(sin detalle)';
-      vivas[cargaChkKey('', veh, kk)]=1;
-      Object.keys(cargaSaleDe(x)).forEach(function(n){ vivas[cargaChkKey('', veh, kk, n)]=1; });   // (26/09) la tilde de Banzer
+      var veh=vehiculoDe(p)||'Sin vehículo', kk=cargaProdKey(x)||'(sin detalle)', t=normTurno(p.turno);
+      vivas[cargaChkKey('', veh, kk, '', t)]=1;
+      Object.keys(cargaSaleDe(x)).forEach(function(n){ vivas[cargaChkKey('', veh, kk, n, t)]=1; });   // (26/09) la tilde de Banzer
     });
   });
   return Object.keys(obj||{}).filter(function(k){
@@ -16214,8 +16224,34 @@ function cargaAgrupar(list){
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
   return { byV:byV, order:order };
 }
+/* 🏭 / 🏪 lo que sube al camión `k` en un turno (`o` = su grupo de `cargaAgrupar`), con los tildes de ese turno */
+function cargaSeccionesHtml(o, fecha, k, t){
+  var pk=Object.keys(o.prod).sort();   // (lo que va entero a Banzer no entra acá: ver arriba)
+  /* 🚚 (26/09) Dos bloques, como pidió el dueño: «🏭 Cargar en fábrica» (lo de siempre, con la tilde de
+     siempre) y «🏪 Cargar en Banzer» —a veces pasa el mismo camión, a veces sale otro—, cada uno con
+     sus tildes (`cargaChkKey(…, 'Banzer')`). */
+  var html='<div style="margin-bottom:10px" data-carga-lugar="fabrica"><div class="lb" style="margin-bottom:6px">🏭 Cargar en fábrica</div>'+
+    (pk.length ? pk.map(function(kk){
+      // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
+      var ck=cargaChkKey(fecha,k,kk,'',t), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
+      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+'</label>'; }).join('')
+      /* (26/09, noche) Solo si hay un depósito que nombrar: un camión con un pedido SIN productos decía
+         «Nada: todo lo de este camión se carga en .» — como antes de Banzer, queda vacío. */
+      : (o.saleOrden.length ? '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>' : ''))+'</div>';
+  o.saleOrden.forEach(function(n){
+    var sk=Object.keys(o.sale[n]).sort(), tb=0; sk.forEach(function(kk){ tb+=o.sale[n][kk]; });
+    html+='<div style="margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px" data-carga-lugar="'+esc(n)+'"><div class="lb" style="margin-bottom:6px;color:#0369a1">🏪 Cargar en '+esc(n)+' <span style="font-weight:600;text-transform:none">· '+tb+' bulto'+(tb===1?'':'s')+'</span></div>'+
+      sk.map(function(kk){
+        var ck=cargaChkKey(fecha,k,kk,n,t);
+        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> <span>'+esc(kk)+'</span></label>';
+      }).join('')+'</div>';
+  });
+  return html;
+}
 function cargaBloquesHtml(list, fecha){
   var G=cargaAgrupar(list), byV=G.byV, order=G.order;
+  var GT={ AM:cargaAgrupar(list.filter(function(p){ return normTurno(p.turno)!=='PM'; })).byV,
+            PM:cargaAgrupar(list.filter(function(p){ return normTurno(p.turno)==='PM'; })).byV };
   var html='';
   order.forEach(function(k){
     var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
@@ -16229,25 +16265,15 @@ function cargaBloquesHtml(list, fecha){
         (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
         '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span>'+(nSinStock?(' · <span style="color:#c0392b">⛔ '+nSinStock+' con faltante</span>'):'')+(nEnProd?(' · <span style="color:#a67c00">📥 '+nEnProd+' por recoger de '+esc(cargaAlmTxt(o))+'</span>'):'')+(nSale?(' · <span style="color:#0369a1">🏪 '+nSale+' con carga en '+esc(o.saleOrden.join(' y '))+'</span>'):'')+'</span></div>';
     html+='<div class="cc-lugar no-print"></div>';   // 🚛 el camión cargándose (§4im): se dibuja con los tildes, en cargaCamionesPintar
-    var pk=Object.keys(o.prod).sort();   // (lo que va entero a Banzer no entra acá: ver arriba)
-    /* 🚚 (26/09) Dos bloques, como pidió el dueño: «🏭 Cargar en fábrica» (lo de siempre, con la tilde de
-       siempre) y «🏪 Cargar en Banzer» —a veces pasa el mismo camión, a veces sale otro—, cada uno con
-       sus tildes (`cargaChkKey(…, 'Banzer')`). */
-    html+='<div style="margin-bottom:10px" data-carga-lugar="fabrica"><div class="lb" style="margin-bottom:6px">🏭 Cargar en fábrica</div>'+
-      (pk.length ? pk.map(function(kk){
-        // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
-        var ck=cargaChkKey(fecha,k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
-        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+'</label>'; }).join('')
-        /* (26/09, noche) Solo si hay un depósito que nombrar: un camión con un pedido SIN productos decía
-           «Nada: todo lo de este camión se carga en .» — como antes de Banzer, queda vacío. */
-        : (o.saleOrden.length ? '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>' : ''))+'</div>';
-    o.saleOrden.forEach(function(n){
-      var sk=Object.keys(o.sale[n]).sort(), tb=0; sk.forEach(function(kk){ tb+=o.sale[n][kk]; });
-      html+='<div style="margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px" data-carga-lugar="'+esc(n)+'"><div class="lb" style="margin-bottom:6px;color:#0369a1">🏪 Cargar en '+esc(n)+' <span style="font-weight:600;text-transform:none">· '+tb+' bulto'+(tb===1?'':'s')+'</span></div>'+
-        sk.map(function(kk){
-          var ck=cargaChkKey(fecha,k,kk,n);
-          return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> <span>'+esc(kk)+'</span></label>';
-        }).join('')+'</div>';
+    /* 🌅🌆 (14/10, dueño: «separá mañana y tarde») lo de cada turno en su sección, con su propio tilde (`cargaChkKey(…, t)`). Un camión
+       solo con la mañana se ve como siempre; con la tarde, cada parte lleva su cartel. */
+    var tur=['AM','PM'].filter(function(t){ return GT[t][k]; }), dos=tur.length>1 || tur[0]==='PM';
+    tur.forEach(function(t){
+      var ot=GT[t][k];
+      if(dos) html+='<div class="carga-turno" data-turno="'+t+'"><div class="carga-turno-h">'+(t==='PM'?'🌆 Tarde':'🌅 Mañana')+
+        ' <span>· '+ot.bultos+' bulto'+(ot.bultos===1?'':'s')+' · '+ot.stops.length+' parada'+(ot.stops.length===1?'':'s')+'</span></div>';
+      html+=cargaSeccionesHtml(ot, fecha, k, t);
+      if(dos) html+='</div>';
     });
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
@@ -16384,6 +16410,9 @@ function cargaVivaDatos(){
   /* (12/10, dueño: «el 3D solo lo metido, no lo del borrador de Kommo») sin borradores de Kommo ni filas del sistema: lo mismo que
      «📍 Lo del día, por lugar» (`cierreEntEntra`). Los ✅ siguen: sus tildes de carga cuentan. */
   var list=STATE.filter(function(p){ return !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p) && p.fecha===fecha; }), G=cargaAgrupar(list), cams=[], porK={};
+  /* 🌅🌆 (14/10, dueño: «separá mañana y tarde») las líneas van por turno, cada una con su tilde (`l.t`, `cargaChkKey(…, t)`) */
+  var GT={ AM:cargaAgrupar(list.filter(function(p){ return normTurno(p.turno)!=='PM'; })).byV,
+           PM:cargaAgrupar(list.filter(function(p){ return normTurno(p.turno)==='PM'; })).byV };
   var orden=Object.keys(VEHICULOS).slice();
   G.order.forEach(function(k){ if(orden.indexOf(k)<0) orden.push(k); });
   var sin=orden.indexOf('Sin vehículo'); if(sin>=0){ orden.splice(sin,1); if(G.byV['Sin vehículo']) orden.push('Sin vehículo'); }
@@ -16392,16 +16421,19 @@ function cargaVivaDatos(){
     var o=G.byV[k], c={ k:k, sin:(k==='Sin vehículo'), lineas:[], total:0, dentro:0, paradas:0, choferes:[], stops:[] };
     if(o){
       c.paradas=o.stops.length; c.stops=o.stops; c.choferes=Object.keys(o.choferes);
-      Object.keys(o.prod).sort().forEach(function(kk){
-        var u=o.prod[kk]; if(!(u>0)) return;
-        var alm=Object.keys(o.prodAlm[kk]||{}).map(function(a){ return recogerCanon(a)==='' ? 'Moreno' : a; }).join(' + ');
-        c.lineas.push({ kk:kk, u:u, key:cargaChkKey(fecha,k,kk), lugar:'fabrica', no:o.prodNo[kk]||0, rec:o.prodProd[kk]||0, alm:alm||'Moreno' });
-        if(o.prodProd[kk]){ im.u+=o.prodProd[kk]; (alm||'Moreno').split(' + ').forEach(function(a){ im.alm[a]=1; }); }
-      });
-      o.saleOrden.forEach(function(n){
-        Object.keys(o.sale[n]).sort().forEach(function(kk){
-          var u=o.sale[n][kk]; if(!(u>0)) return;
-          c.lineas.push({ kk:kk, u:u, key:cargaChkKey(fecha,k,kk,n), lugar:n });
+      ['AM','PM'].forEach(function(t){
+        var ot=GT[t][k]; if(!ot) return;
+        Object.keys(ot.prod).sort().forEach(function(kk){
+          var u=ot.prod[kk]; if(!(u>0)) return;
+          var alm=Object.keys(ot.prodAlm[kk]||{}).map(function(a){ return recogerCanon(a)==='' ? 'Moreno' : a; }).join(' + ');
+          c.lineas.push({ kk:kk, u:u, key:cargaChkKey(fecha,k,kk,'',t), lugar:'fabrica', no:ot.prodNo[kk]||0, rec:ot.prodProd[kk]||0, alm:alm||'Moreno', t:t });
+          if(ot.prodProd[kk]){ im.u+=ot.prodProd[kk]; (alm||'Moreno').split(' + ').forEach(function(a){ im.alm[a]=1; }); }
+        });
+        ot.saleOrden.forEach(function(n){
+          Object.keys(ot.sale[n]).sort().forEach(function(kk){
+            var u=ot.sale[n][kk]; if(!(u>0)) return;
+            c.lineas.push({ kk:kk, u:u, key:cargaChkKey(fecha,k,kk,n,t), lugar:n, t:t });
+          });
         });
       });
     } else if(VEHICULOS[k]) c.choferes=VEHICULOS[k].slice();
@@ -16487,7 +16519,7 @@ function cvPintarCapa(D){
 }
 function cvFilaHtml(l, extra){
   var z=l.no?'<div class="z no">⛔ '+l.no+' sin stock</div>':(l.rec?'<div class="z re">📥 '+l.rec+' recoger de '+esc(l.alm)+'</div>':'');
-  return '<div class="cv-fila'+(l.on?' on':'')+'" data-k="'+esc(l.key)+'" data-l="'+esc(l.lugar)+'" data-u="'+l.u+'" onclick="cvTildar(this)"><div class="tk">'+(l.on?'✓':'')+'</div><div class="tx"><b>'+l.u+'× '+esc(l.kk)+'</b>'+(extra||'')+z+'</div></div>';
+  return '<div class="cv-fila'+(l.on?' on':'')+'" data-k="'+esc(l.key)+'" data-l="'+esc(l.lugar)+'" data-u="'+l.u+'" onclick="cvTildar(this)"><div class="tk">'+(l.on?'✓':'')+'</div><div class="tx"><b>'+l.u+'× '+esc(l.kk)+'</b>'+(l.t==='PM'?'<div class="z pm">🌆 de la tarde</div>':'')+(extra||'')+z+'</div></div>';
 }
 /* 🏪 / 📥 El panel de Banzer y el de Moreno (§4ic): lo de ese lugar para ese día, separado por camión. */
 function cvPanelLugar(D, el){
@@ -31188,11 +31220,11 @@ function depPendientes(mine){
 /* 🚚 Cuánto de este renglón ya está en el camión: los MISMOS tildes de la Lista de carga (`cargaChkKey`, por día, camión, producto y
    lugar). Un tilde es del producto en ese camión ese día: si está, ese renglón está cargado. */
 function depCargado(p, x){
-  var v=vehiculoDe(p)||'Sin vehículo', f=String(p.fecha||''), kk=cargaProdKey(x)||'(sin detalle)', c=Number(x.cant)||0, sm={}, en=0, car=0;
+  var v=vehiculoDe(p)||'Sin vehículo', f=String(p.fecha||''), kk=cargaProdKey(x)||'(sin detalle)', c=Number(x.cant)||0, sm={}, en=0, car=0, t=normTurno(p.turno);
   if(!f || c<=0) return { u:0, v:v };
   try{ sm=cargaSaleDe(x)||{}; }catch(e){ sm={}; }
-  Object.keys(sm).forEach(function(n){ en+=sm[n]; if(isCargaChk(cargaChkKey(f,v,kk,n))) car+=sm[n]; });
-  var cf=Math.max(0, c-en); if(cf>0 && isCargaChk(cargaChkKey(f,v,kk))) car+=cf;
+  Object.keys(sm).forEach(function(n){ en+=sm[n]; if(isCargaChk(cargaChkKey(f,v,kk,n,t))) car+=sm[n]; });   // 🌅🌆 (14/10) el tilde de su turno
+  var cf=Math.max(0, c-en); if(cf>0 && isCargaChk(cargaChkKey(f,v,kk,'',t))) car+=cf;
   return { u:Math.min(c, car), v:v };
 }
 /* Agrupa por cliente y, dentro, por producto + medida: `u` unidades, `car` ya en un camión (`cam` = por camión), `falta` = u − car,
@@ -31942,10 +31974,18 @@ function cv3dColsPintar(D){
         return '<div class="cvc-asig"><button type="button" class="dep-ped" data-id="'+esc(p.id)+'" onclick="showPedidoModal(this.dataset.id)"><b>'+esc(p.cliente||'(sin cliente)')+'</b> · '+esc([ocEtiq(p.oc), turnoDe(p), cvU(n)].filter(Boolean).join(' · '))+'</button>'+
           '<select class="cvc-sel" data-id="'+esc(p.id)+'" onchange="cvAsignar(this.getAttribute(\'data-id\'), this.value)"><option value="">🚚 Asignar camión…</option>'+opts+'</select></div>'; }).join('');
     }
-    h+=lineas.map(function(l){
+    var linHtml=function(l){
       return '<label class="cvc-l'+(l.on?' on':'')+(l.cu===0?' cero':'')+'"><input type="checkbox" data-k="'+esc(l.key)+'"'+(l.on?' checked':'')+(l.cu===0?' disabled':'')+' onchange="cv3dTildar(this)">'+
-        '<b>'+l.u+'</b><span class="cvc-p" data-k="'+esc(c.k)+'" data-kk="'+esc(l.kk)+'" onclick="event.preventDefault();cv3dPedidosDe(this)">'+esc(l.kk)+'</span><span class="dep-ests">'+est(l)+'</span></label>';
-    }).join('');
+        '<b>'+l.u+'</b><span class="cvc-p" data-k="'+esc(c.k)+'" data-kk="'+esc(l.kk)+'" data-t="'+esc(l.t||'')+'" onclick="event.preventDefault();cv3dPedidosDe(this)">'+esc(l.kk)+'</span><span class="dep-ests">'+est(l)+'</span></label>';
+    };
+    /* 🌅🌆 (14/10, dueño: «separá mañana y tarde») con algo de la tarde, cada turno con su cartel y lo cargado de ese turno */
+    if(!lineas.some(function(l){ return l.t==='PM'; })) h+=lineas.map(linHtml).join('');
+    else ['AM','PM'].forEach(function(t){
+      var ls=lineas.filter(function(l){ return (l.t||'AM')===t; }); if(!ls.length) return;
+      var tot=ls.reduce(function(a,l){ return a+l.cu; },0), den=ls.reduce(function(a,l){ return a+(l.on?l.cu:0); },0);
+      h+='<div class="cvc-turno '+(t==='PM'?'pm':'am')+'" data-turno="'+t+'">'+(t==='PM'?'🌆 Tarde':'🌅 Mañana')+
+        '<span>'+(tot && den>=tot ? '✅ cargado' : (den+' de '+cvU(tot)+' en el camión'))+'</span></div>'+ls.map(linHtml).join('');
+    });
     if(!c.sin && !c.total) h+='<div class="dep-leyc">Ningún pedido de '+dia+' tiene este camión.</div>';
     h+=cvSalioHtml(D, c);
     if(!c.sin && c.stops.length) h+='<details class="cvc-paradas"><summary>📍 '+c.paradas+' parada'+(c.paradas===1?'':'s')+'</summary>'+c.stops.map(function(p){
@@ -31968,8 +32008,8 @@ function cv3dTildar(inp){
   setCargaChk(inp.getAttribute('data-k'), inp.checked);
   renderCargaSiActiva(); cargaVivaPintar();
 }
-function cv3dPedidosDe(sp){ var D=cargaVivaDatos(), c=D.porK[sp.getAttribute('data-k')], kk=sp.getAttribute('data-kk'); if(!c) return;
-  var l=c.lineas.filter(function(x){ return x.kk===kk; })[0]; if(l) cv3dPedidos(c, l); }
+function cv3dPedidosDe(sp){ var D=cargaVivaDatos(), c=D.porK[sp.getAttribute('data-k')], kk=sp.getAttribute('data-kk'), t=sp.getAttribute('data-t')||''; if(!c) return;
+  var l=c.lineas.filter(function(x){ return x.kk===kk && (!t || x.t===t); })[0]; if(l) cv3dPedidos(c, l); }
 /* el andén del camión elegido en el panel, más marcado */
 function cv3dMarcar(){ (CV3D.marca||[]).forEach(function(o){ o.m.opacity=(o.k===CV_SEL && CV_VISTA==='')?.34:.16; }); }
 function cv3dVerTodo(){ var W=DEP.w3; if(!W) return;
@@ -32000,7 +32040,7 @@ function cv3dLugarPanel(v){
 }
 /* la ventana de pedidos (la de Mis pedidos, §4jm) con los de ESE camión que llevan ese producto */
 function cv3dPedidos(c, l){
-  var peds=c.stops.filter(function(p){ return (p.productos||[]).some(function(x){ return cargaProdKey(x)===l.kk; }); });
+  var peds=c.stops.filter(function(p){ return (!l.t || normTurno(p.turno)===l.t) && (p.productos||[]).some(function(x){ return cargaProdKey(x)===l.kk; }); });   // (14/10) los de su turno
   cv3dAbrir({ peds:peds, tit:'🚚 '+esc(c.sin?'Sin vehículo':c.k), sub:esc(l.kk)+' · '+l.u+(l.on?' ya en el camión':' por cargar')+(l.no?(' · ⛔ '+l.no+' sin stock'):'')+(l.rec?(' · 📥 '+l.rec+' traer de '+esc(l.alm)):'')+' · ',
     es:function(x){ return cargaProdKey(x)===l.kk; }, abrir:'showPedidoModal' });
 }

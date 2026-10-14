@@ -14427,3 +14427,16 @@ contacto o sumar el valor de las compras que hizo)»*.
   compras/fecha, vendedor y última compra/nota (se pueden borrar en el Excel).
 - `tests/test_clientes_excel.js` (23; contra `3e2dd38` no existe el botón). Verdes: test_adm_tools, test_onclicks, test_buscar.
 - **PUBLICADO 14/10, `61dbaf8`** (dueño: «publica»), Pages OK: pedidos.html, CLAUDE.md, `tests/test_clientes_excel.js`. Volver atrás: `3e2dd38`.
+
+## §4la — 🌅🌆 La carga separada en mañana y tarde (14/10)
+El dueño, con la captura de los camiones de Administración: *«¿solo muestra los AM?»*. No: las fichas sumaban lo del día entero y no
+decían el turno; los 3 de la tarde que veía estaban en «Sin vehículo» porque todavía no tenían camión. *«Sí, hazlo, separa mañana y tarde»*.
+- **Tildes**: `cargaChkKey(fecha, veh, prod, lugar, turno)`: la TARDE agrega `|~PM`; la mañana (y lo sin turno, `normTurno` → AM) queda
+  con la clave de siempre. Lo tildado antes del cambio para un producto que estaba en los dos turnos queda como de la mañana.
+- `cargaVivaDatos`: `cargaAgrupar` por turno (`GT`), cada línea con `t`; el total del camión suma los dos. Fichas (`cv3dColsPintar`):
+  con algo de la tarde, «🌅 Mañana · ✅ cargado / N de M» y «🌆 Tarde · …» con sus productos abajo. Panel 2D: «🌆 de la tarde» en la fila.
+- Lista de carga: `cargaSeccionesHtml(o, fecha, k, t)` (lo que era el cuerpo de `cargaBloquesHtml`), una vez por turno; el cartel
+  `.carga-turno` solo si el camión tiene tarde. Paradas y encabezado, como siempre.
+- `depCargado` (la fábrica de Eduardo), `cv3dPedidos` (los pedidos de una línea: solo los de su turno) y `textoCargaChk` (las claves sin
+  fecha) con el turno. La ciudad (patio) toma las líneas como vienen (claves distintas).
+- `tests/test_carga_turnos.js` (16; contra `61dbaf8` falla). El globito de cada 3 min: el dueño lo vio («ya vi que sí muestra»); no se tocó.
