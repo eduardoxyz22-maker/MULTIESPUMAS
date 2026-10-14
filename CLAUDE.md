@@ -693,7 +693,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
-## 📇 Clientes para Excel (§4kz, 14/10; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*; en la rama)
+## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
   con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por
   cliente, junta por los últimos 8 números del celular o, sin celular, por nombre) o «Repetir el contacto» (una fila por venta).

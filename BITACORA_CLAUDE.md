@@ -14426,3 +14426,4 @@ contacto o sumar el valor de las compras que hizo)»*.
   compró. Afuera: ATC, RPT, pedidos internos, borradores de Kommo. Eduardo y ROHO se pueden elegir. Después de las 3 columnas pedidas van
   compras/fecha, vendedor y última compra/nota (se pueden borrar en el Excel).
 - `tests/test_clientes_excel.js` (23; contra `3e2dd38` no existe el botón). Verdes: test_adm_tools, test_onclicks, test_buscar.
+- **PUBLICADO 14/10, `61dbaf8`** (dueño: «publica»), Pages OK: pedidos.html, CLAUDE.md, `tests/test_clientes_excel.js`. Volver atrás: `3e2dd38`.
