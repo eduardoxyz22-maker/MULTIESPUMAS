@@ -680,9 +680,16 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - Fila del sistema **`__anuncio__`** (`ANUNCIO_ID`, en `esFilaSistema`; JSON `{v,t,d,ts,por}`; quitar = `t` vacío; sin sello: gana el último).
   El servidor no cambió.
 - Administración → «📤 Mensajes y partes» → **«📢 Decir anuncio»** (`#anu-btn`, `anuncioAbrir`, solo con la contraseña).
-- **Vendedores** (`anuncioRepite`: sin clave y sin rol admin/logística): globo naranja con sonido apenas llega y cada `ANUNCIO_CADA_MS` (3 min;
-  reloj de 15 s en `asisMontar`); primero en los avisos y **sin «Entendido»** (`fijo`). Administración y logística: una vez, sin repetir.
-- `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (27). Bitácora §4ks.
+- **📣 Eduardo lo GRITA en TODOS los aparatos** (§4kw, 14/10, dueño: *«haz que grite, tiemble la pantalla, que Eduardo aparezca con su
+  megáfono gritando!»*; antes era un globito y solo a los vendedores, y el dueño con la clave lo veía una vez): apenas llega y cada
+  `ANUNCIO_CADA_MS` (3 min; reloj de 15 s en `asisMontar`). `anuncioGrito` = pantalla entera `#anu-grito` (z 10050) con Eduardo grande,
+  megáfono SVG (`anuncioMegafonoSvg`) y ondas; tiembla (`body.anu-tiembla` sobre `.header`/`.nav`/`.wrap`: ⚠️ nunca sobre `body`, saltarían
+  los `fixed`); sirena WebAudio (`anuncioSirena`) y la voz del navegador (`anuncioHablar`, castellano, sin emojis). Mientras habla no se
+  cierra; tocar, «Entendido» o Esc lo cierran y lo callan. 🔇 = sin sirena ni voz. Escribiendo (`anuncioEscribiendo`, 8 s) espera. Sin un
+  toque el navegador no deja sonar: sale callado (`ANUNCIO.sinVoz`) y el primer toque lo hace gritar (`anuncioEscuchar`). Espera la risa
+  de Halloween (`window.hwRisaAudio`). En los avisos de Eduardo sigue primero y **sin «Entendido»** (`fijo`).
+- `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (44; ⚠️ Playwright evalúa con «gesto del
+  usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
 ## 🏙️ El Patio de carga 3D (§4kn, 13/10; dueño: *«Me gusta, publica y vemos cómo queda»*)
 La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13) pasada al panel con los datos de verdad. El que putea a todos se llama **EDUARDO** (antes «Garnícula»; dueño, 13/10: *«cambia el nombre de garnicula a EDUARDO»*; en el código sigue `gar`/`GARN`).

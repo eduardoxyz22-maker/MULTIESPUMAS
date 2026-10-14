@@ -226,6 +226,17 @@ def gps_del_dia():
                   (f" · volvió {u.get('vu')}" if u.get('vu') else "") +
                   f" · paradas {len(par)} ({len(con)} en un pedido, {sum(len(q[4]) for q in con)} pedido(s) nombrados) · registro: " +
                   (", ".join(f"{k} {n}" for k, n in sorted(tipos.items())) or "vacío"))
+    # 📢 (14/10) el anuncio de Administración: si está puesto y desde cuándo (sin el texto: este registro es público)
+    an = [p for p in (j.get("pedidos") or []) if isinstance(p, dict) and str(p.get("id")) == "__anuncio__"]
+    if not an:
+        print("   📢 anuncio: no hay fila __anuncio__ en la planilla (nunca se publicó uno)")
+    else:
+        try:
+            o = json.loads(an[0].get("observaciones") or "{}")
+        except Exception:
+            o = {}
+        t = str(o.get("t") or "").strip()
+        print(f"   📢 anuncio: {'PUESTO (' + str(len(t)) + ' letras) desde el ' + str(o.get('d') or '?') if t else 'quitado (la fila está, sin texto)'}")
     ped = [p for p in (j.get("pedidos") or []) if _sale_en_camion(p)]
     de_hoy = [p for p in ped if str(p.get("fecha") or "")[:10] == hoy]
     print(f"   ── pedidos de HOY que salen en camión: {len(de_hoy)} ──")
