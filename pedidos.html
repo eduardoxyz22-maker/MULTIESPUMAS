@@ -940,6 +940,16 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .wa-resp-b .btn{width:auto;min-height:36px}
 .wa-resp-ok{background:#16a34a;color:#fff;border:0}
 .wa-resp-at{font-size:.8rem;color:#166534;font-weight:700}
+/* 🧠 (14/10, §4lc) lo que entendió y contestó Claude */
+.wa-resp-c.urg{border:2px solid #dc2626;background:#fef2f2}
+.wa-resp-antes{font-size:.85rem;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.wa-resp-ia{margin:4px 0 2px;display:flex;flex-direction:column;gap:3px}
+.wa-resp-cat{align-self:flex-start;font-size:.75rem;font-weight:800;padding:2px 8px;border-radius:999px;background:#e0e7ff;color:#3730a3}
+.wa-resp-cat.urg{background:#dc2626;color:#fff}
+.wa-resp-res{font-size:.85rem;font-weight:700;color:#1e293b}
+.wa-resp-bot{font-size:.82rem;color:#334155;background:#f1f5f9;border-radius:8px;padding:5px 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.wa-resp-hechas{margin-top:8px;font-size:.8rem;color:#166534;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wa-resp-hechas .btn{width:auto;min-height:32px}
 </style>
 <script>
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
@@ -3941,7 +3951,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-14-a';   // (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-14-b';   // (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -33204,13 +33214,34 @@ function waRespDeVend(v){ return waRespPend().filter(function(r){ var p=waRespPe
 function waRespHora(t){ t=String(t||''); if(!/GMT|^\d{4}-\d{2}-\d{2}T/.test(t)) return t;   // «12/10 17:09» ya viene bien: no tocar
   var ms=Date.parse(t); if(!isFinite(ms)) return t;
   var d=new Date(ms-4*3600000).toISOString(); return d.slice(8,10)+'/'+d.slice(5,7)+' '+d.slice(11,16); }
+/* 🧠 (14/10, §4lc) Claude le contesta al cliente (servidor 2026-10-14-b): cada respuesta trae `ia` (qué pasó), `cat` (qué quiere), `res`
+   (el resumen para la vendedora), `resp` (lo que le contestó), `urg` y `antes` (los mensajes que contestó junto con este). Lo que Claude
+   resolvió solo (cuándo llega, el saldo, «ok») llega con `at` = «🤖 Claude · …»: no es pendiente, se cuenta abajo y se puede ver. */
+var WA_RESP_CAT={ hora:'⏰ Pregunta cuándo llega', saldo:'💵 Pregunta por el saldo', cambio:'📅 Quiere cambiar la entrega', no_esta:'🏠 No va a estar',
+  direccion:'📍 Dirección', confirma:'👍 Confirma', reclamo:'⚠️ Reclamo', otro:'💬 Otra consulta' };
+var WA_RESP_VER_IA=false;
+function waRespIaHtml(r){
+  if(!r || !r.ia) return '';
+  var ia=String(r.ia), h='';
+  if(ia.charAt(0)==='⏳') return '<div class="wa-resp-ia"><div class="wa-resp-bot">⏳ Claude lo está leyendo: en un minuto le contesta.</div></div>';
+  if(/^⏭️/.test(ia)) return '<div class="wa-resp-ia"><div class="wa-resp-bot">🤖 Le llegó la respuesta automática de siempre ('+esc(ia.replace(/^⏭️\s*/,''))+').</div></div>';
+  if(/^—/.test(ia)) return '<div class="wa-resp-ia"><div class="wa-resp-bot">'+esc(ia.replace(/^—\s*/,''))+'</div></div>';
+  if(r.cat) h+='<span class="wa-resp-cat'+(r.urg?' urg':'')+'">'+esc(WA_RESP_CAT[r.cat]||'💬 Consulta')+(r.urg?' · 🚨 urgente':'')+'</span>';
+  if(r.res) h+='<div class="wa-resp-res">🧠 '+esc(r.res)+'</div>';
+  if(r.resp) h+='<div class="wa-resp-bot">🤖 Claude le contestó: «'+esc(r.resp)+'»</div>';
+  else if(/no hacía falta/.test(ia)) h+='<div class="wa-resp-bot">🤖 No hacía falta contestarle.</div>';
+  if(/^❌/.test(ia)) h+='<div class="wa-resp-bot">'+esc(ia)+'</div>';
+  return h ? '<div class="wa-resp-ia">'+h+'</div>' : '';
+}
 function waRespCard(r){
   var p=waRespPed(r), quien=r.nom || (p && p.cliente) || r.num, wa=r.num ? ('https://wa.me/'+String(r.num).replace(/[^0-9]/g,'')) : '';
   var ped=p ? [p.oc ? ('OC '+p.oc) : '', p.cliente||'', p.vendedor||'', p.fecha ? ('entrega '+fmtFechaCorta(p.fecha)+(p.turno?(' '+normTurno(p.turno)):'')) : ''].filter(Boolean).join(' · ')
             : (r.oc ? ('OC '+r.oc) : 'No sé de qué pedido es');
-  return '<div class="wa-resp-c'+(r.at?' hecha':'')+'">'+
+  return '<div class="wa-resp-c'+(r.at?' hecha':'')+(r.urg && !r.at?' urg':'')+'">'+
     '<div class="wa-resp-q"><b>'+esc(quien)+'</b> <small>'+esc(waRespHora(r.t))+(r.num?(' · +'+esc(r.num)):'')+'</small></div>'+
+    ((r.antes||[]).length ? '<div class="wa-resp-antes">'+r.antes.map(function(x){ return '«'+esc(x)+'»'; }).join('<br>')+'</div>' : '')+
     '<div class="wa-resp-txt">«'+esc(r.txt||'')+'»</div>'+
+    waRespIaHtml(r)+
     '<div class="wa-resp-p">'+esc(ped)+'</div>'+
     '<div class="wa-resp-b">'+
       (p ? '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(p.id)+'\')">📋 Abrir el pedido</button>' : '')+
@@ -33219,19 +33250,35 @@ function waRespCard(r){
             : '<button type="button" class="btn btn-sm wa-resp-ok" onclick="waRespAtender(\''+esc(r.w)+'\')">✓ Ya lo atendí</button>')+
     '</div></div>';
 }
-function waRespHtml(lista, quien, kPleg){
-  if(!lista.length) return '';
+function waRespHtml(lista, quien, kPleg, hechas){
+  hechas=hechas||[];
+  if(!lista.length && !hechas.length) return '';
   var pl=!!kPleg && misPlegado(kPleg);   // 🙈 (13/10) se pliega: en Mis pedidos (dueño) y en Administración (dueño: «lo mismo en administración»)
+  var conIa=lista.some(function(r){ return !!r.ia; });
+  var tit=lista.length ? ('💬 '+lista.length+' cliente'+(lista.length===1?'':'s')+' le respondi'+(lista.length===1?'ó':'eron')+' al bot de WhatsApp')
+                       : ('🤖 Claude atendió solo '+hechas.length+' consulta'+(hechas.length===1?'':'s')+' de clientes');
+  var sub=!lista.length ? '' : conIa
+    ? '🤖 Claude ya le contestó al cliente con los datos de su pedido. Acá queda lo que necesita una persona (cambiar la entrega, no va a estar, reclamos): escribile y después tocá «✓ Ya lo atendí».'
+    : 'El bot solo manda avisos y no lee: ya le contestó al cliente que te escriba por el WhatsApp de siempre. Escribile vos y después tocá «✓ Ya lo atendí».';
+  var pie=hechas.length ? ('<div class="wa-resp-hechas">🤖 En los últimos 7 días Claude resolvió solo '+hechas.length+' consulta'+(hechas.length===1?'':'s')+' (cuándo llega, el saldo, confirmaciones): no hace falta hacer nada.'+
+    ' <button type="button" class="btn btn-ghost btn-sm" onclick="WA_RESP_VER_IA=!WA_RESP_VER_IA; waRespPintar()">'+(WA_RESP_VER_IA?'Ocultar':'Ver cuáles')+'</button></div>'+
+    (WA_RESP_VER_IA ? hechas.map(waRespCard).join('') : '')) : '';
   return '<div class="wa-resp">'+
-    '<div class="wa-resp-tit">'+(kPleg?misPlegarBtn(kPleg):'')+'💬 '+lista.length+' cliente'+(lista.length===1?'':'s')+' le respondi'+(lista.length===1?'ó':'eron')+' al bot de WhatsApp'+(quien?(' · '+esc(quien)):'')+'</div>'+
-    (pl ? '' : ('<div class="wa-resp-sub">El bot solo manda avisos y no lee: ya le contestó al cliente que te escriba por el WhatsApp de siempre. Escribile vos y después tocá «✓ Ya lo atendí».</div>'+
-    lista.map(waRespCard).join('')))+'</div>';
+    '<div class="wa-resp-tit">'+(kPleg?misPlegarBtn(kPleg):'')+tit+(quien?(' · '+esc(quien)):'')+'</div>'+
+    (pl ? '' : ((sub?'<div class="wa-resp-sub">'+sub+'</div>':'')+lista.map(waRespCard).join('')+pie))+'</div>';
+}
+function waRespIaHechas(v){
+  return WA_RESP.filter(function(r){
+    if(String(r.at||'').indexOf('🤖')!==0 || String(r.ia||'').indexOf('🤖')!==0) return false;   // una reacción (👍) no es una consulta
+    if(!v) return true;
+    var p=waRespPed(r); return !!p && mismoVendedor(p.vendedor, v);
+  });
 }
 function waRespPintar(){
   var m=document.getElementById('wa-resp-mis'), a=document.getElementById('wa-resp-adm');
   if(m){ var v=(document.getElementById('mis-vendedor')||{}).value||''; var todos=MIS_TODOS && UNLOCKED;
-    m.innerHTML = todos ? waRespHtml(waRespPend(), 'todos', 'wa-mis') : (v ? waRespHtml(waRespDeVend(v.trim()), '', 'wa-mis') : ''); }
-  if(a) a.innerHTML = (UNLOCKED || nxLS(LS_ADM_DEV) || quienRol()==='logistica') ? waRespHtml(waRespPend(), '', 'wa-adm') : '';
+    m.innerHTML = todos ? waRespHtml(waRespPend(), 'todos', 'wa-mis', waRespIaHechas('')) : (v ? waRespHtml(waRespDeVend(v.trim()), '', 'wa-mis', waRespIaHechas(v.trim())) : ''); }
+  if(a) a.innerHTML = (UNLOCKED || nxLS(LS_ADM_DEV) || quienRol()==='logistica') ? waRespHtml(waRespPend(), '', 'wa-adm', waRespIaHechas('')) : '';
 }
 function waRespAtender(w){
   var r=null; WA_RESP.forEach(function(x){ if(x.w===w) r=x; }); if(!r) return;
@@ -33768,7 +33815,8 @@ function asisAvisos(){
     var rsp = (vis==='mis' && v) ? waRespDeVend(v) : (((vis==='admin' && (UNLOCKED || nxLS(LS_ADM_DEV))) || (esLog && asisVeAdm())) ? waRespPend() : []);
     if(rsp.length) A.unshift({ k:'resp|'+rsp.map(function(r){ return r.w; }).join(','), sev:'ro', ico:'💬',
       t:rsp.length+' cliente'+(rsp.length===1?'':'s')+' le respondi'+(rsp.length===1?'ó':'eron')+' al bot de WhatsApp',
-      x:'«'+String(rsp[0].txt||'').slice(0,90)+'». El bot no lee: escribile por el WhatsApp de siempre y después tocá «✓ Ya lo atendí».',
+      x: rsp[0].res ? ('🧠 '+String(rsp[0].res).slice(0,110)+(rsp[0].urg?' · 🚨 urgente':'')+'. Claude ya le contestó con los datos del pedido; esto necesita a una persona: escribile y después tocá «✓ Ya lo atendí».')   // 🧠 (14/10, §4lc)
+                    : ('«'+String(rsp[0].txt||'').slice(0,90)+'». El bot no lee: escribile por el WhatsApp de siempre y después tocá «✓ Ya lo atendí».'),
       b:['Ver', "asisIr('"+(vis==='mis'?'#wa-resp-mis':'#wa-resp-adm')+"')"] });
   }catch(e){}
   try{ var R=asisResumenDia(); if(R) A.unshift(R); }catch(e){}   // ☀️ (E) el resumen del día va primero

@@ -864,7 +864,18 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   están en la TARDE y van ENTEROS en la carga (tildes de «🌆 Tarde»; copia los tildes a «🌅 Mañana»), con `reproAplicar(…, forzar,
   {adelanto:1})`. El servidor: evento `e` → plantilla **`pedido_en_camino`** solo al cliente (respaldo `cambio_entrega_v2` → `cambio_entrega`);
   sin `adelanto` o de otro día, el cambio de siempre. Nada se marca ✅. `tests/test_adelanto.js` (14), `test_wa_bot` §14.
-- `tests/test_wa_bot.js` (126), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb.
+- **🧠 Claude le contesta al cliente** (§4lc, 14/10, dueño: *«Entiende y contesta»*, con Claude Opus 5.5 y USD 100 de crédito; servidor
+  `2026-10-14-b` en la rama, SIN implementar): el webhook pone «⏳» en la columna M (no contesta en el momento) y `iaRepaso` (disparador
+  `iaDespierta` a los 30 s + al final de `waRepaso`) junta los mensajes de cada número con 20 s de quietud, le pasa a Claude SU pedido de la
+  planilla y lo hablado en 24 h, y le manda la respuesta firmada «🤖 _Asistente automático · <marca>_». Columnas N/O/P = qué quiere, resumen,
+  lo que le contestó; hora/saldo/confirma sin urgencia = atendido «🤖 Claude»; urgente con entrega hoy o el próximo camión → `logistica_cambio`
+  (una vez por pedido y día). 🚫 Claude no cambia nada ni marca ✅; el texto del cliente va entre `<mensaje_cliente>` con `<`/`>` cambiados.
+  Si falla (clave, crédito, refusal, 3 × ocupado, topes `IA_TOPE_DIA` 300 / `IA_MAX_NUMERO` 8, más de 6 h) sale la automática de siempre.
+  Llamada cruda (`iaLlamar_`): `x-api-key`, `anthropic-version: 2023-06-01`, beta `server-side-fallback-2026-07-01` + `fallbacks:'default'`,
+  `output_config` con `effort:'low'` y `json_schema`, SIN `thinking`; un 400 que no es crédito → una vez la consulta simple.
+  Propiedades: `ANTHROPIC_API_KEY` (NUNCA en el código ni en el chat), `IA_ACTIVA`=1, `IA_SOLO` (probar con un número). `probarAsistente` desde
+  el editor (una consulta, sin WhatsApp). Página: `waRespIaHtml`/`waRespIaHechas`. `test_wa_bot` §15, `tests/test_wa_claude.js` (11).
+- `tests/test_wa_bot.js` (178), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)

@@ -14492,3 +14492,61 @@ mañana»* · *«2. no, no lo pasa: debería ser automático, al marcar cargado 
 - **PÁGINA PUBLICADA 14/10 15:58 de Bolivia, `c68a00c`** (dueño: «Sí, publicá»), Pages OK (run 38628105032): pedidos.html,
   google-apps-script.gs, CLAUDE.md, tests/test_adelanto.js, test_wa_bot.js, test_servidor.js, test_gps.js. Volver atrás: `2bd1bf3`.
 
+
+## §4lc — 🧠 Claude le contesta al cliente que le escribe al bot (14/10)
+El dueño, con USD 100 de crédito en la API de Claude: *«¿cómo los usamos?»*. Le propuse seis ideas; eligió la **A** (que el bot entienda
+y conteste lo que escriben los clientes), con **«Entiende y contesta»** y **Claude Opus 5.5** (también le gustaron la E —la Sala de
+expertos del dashboard de Kommo con Claude en vez de Gemini— y la F —Eduardo contestando cualquier pregunta con los datos de la planilla—,
+para después).
+- **Servidor `2026-10-14-b`** (sección «🧠 CLAUDE LE CONTESTA AL CLIENTE» del `.gs`, después de `waRespAtendida_`):
+  · El webhook (`waHookAnotar_`) anota el mensaje como siempre y, si a ese número le contesta Claude (`iaParaNumero_`: IA prendida, sin
+    pausa, en `IA_SOLO` si hay lista; sin lista, todos menos logística y las vendedoras de `WA_VENDEDORAS`), pone **«⏳» en la columna M**,
+    NO contesta en el momento y deja `IA_PEND` + un disparador de una vez (`iaDespierta`, 30 s). Una reacción (👍) no se contesta y queda
+    atendida «🤖 reacción». A los demás números, la respuesta automática de siempre en el momento.
+  · `iaRepaso` (el disparador, y al final de cada `waRepaso` si quedó `IA_PEND`, hasta t0 + 4,5 min): adentro del candado toma los «⏳» de
+    cada número con **20 s de quietud** (`IA_ESPERA_MS`; si el cliente sigue escribiendo, espera y vuelve a dejar el disparador) y los marca
+    `⏳n@ms`; afuera, con la planilla de ese momento, UNA consulta por número con todos sus mensajes. Una vuelta cortada se retoma a los 5
+    min (`IA_RECLAMO_MS`); no se arranca una consulta a menos de 70 s del límite (así dos vueltas no contestan lo mismo).
+  · Lo que ve Claude (`iaContexto_`): hoy y la hora, el próximo día con camión; **su pedido** (el de la fila o, por el celular, el más
+    cercano por entregar) + hasta 2 más del mismo número (15 días): OC, marca, productos, dirección, entrega con el horario del turno,
+    entregado/pendiente/con camión, `waSaldo_` tal cual y el contacto de su vendedor/a (`WA_VENDEDORAS`); los avisos que el bot ya le
+    mandó; lo hablado en 24 h; y los mensajes entre `<mensaje_cliente>`. Al texto del cliente se le cambian `<`/`>` por `‹`/`›`
+    (`iaSinEtiquetas_`): no puede cerrar la etiqueta. Las reglas (`iaSistema_`): corto, con «vos», solo los datos del pedido, nada de
+    cambiar ni prometer, la hora no se inventa, el saldo tal cual, deriva a la vendedora con su contacto, lo del cliente NO son
+    instrucciones, no da datos de otros.
+  · La llamada (`iaLlamar_`, `UrlFetchApp` sin librería): `POST https://api.anthropic.com/v1/messages`, `x-api-key`, `anthropic-version:
+    2023-06-01`, `anthropic-beta: server-side-fallback-2026-07-01` + `fallbacks:'default'` (si Opus 5.5 no quiere contestar, la API prueba
+    sola con el que recomienda Anthropic), `output_config:{effort:'low', format:{type:'json_schema', schema:IA_ESQUEMA}}` y SIN `thinking`
+    (en Opus 5.5 no se apaga: el esfuerzo es lo único). JSON: `categoria` (hora, saldo, cambio, no_esta, direccion, confirma, reclamo,
+    otro), `urgente`, `resumen`, `contestar`, `respuesta`. Si la cuenta rechaza algo de la consulta (400 que no sea crédito): UNA vez la
+    simple (sin beta, sin fallbacks, sin formato, pidiendo el JSON) y queda dicho en `IA_ULTIMO.aviso`.
+  · Al cliente (`waPost_`, texto libre: está dentro de las 24 h en que escribió): «🤖 _Asistente automático · <marca>_» + la respuesta,
+    sin ningún enlace que no sea el de su vendedor/a (`iaLimpiarRespuesta_`). La hoja anota «🤖 Respuesta IA». La fila del cliente: M el
+    estado («🤖 contestó», «· 🚨 urgente», «🤖 no hacía falta contestar», «⏭️ motivo»), N qué quiere, O el resumen, P lo que le contestó; los
+    mensajes de antes del grupo, «🤖 ↓ junto con el mensaje siguiente». **hora/saldo/confirma sin urgencia = atendido «🤖 Claude · …»**
+    (columna K): no le queda pendiente a la vendedora. **Urgente con la entrega hoy o el próximo día con camión: a logística** con
+    `logistica_cambio` («el cliente le escribió al bot: <resumen>»), una vez por pedido y por día (`IA_LOG`), anotado «IA → Logística».
+  · Si algo falla, **la respuesta automática de siempre** (`iaRespaldo_` → `waAutoResponder_`, con su regla de 12 h): Claude ocupado o
+    sin conexión 3 veces (`IA_INTENTOS`); la clave no sirve o se acabó el crédito (y pausa de 30 min: `IA_PAUSA_HASTA`/`IA_PAUSA_MOTIVO`,
+    mientras tanto todos reciben la automática en el momento); `refusal`; el JSON no vino; mensaje de hace más de 6 h; IA apagada con
+    mensajes esperando; los topes (`IA_TOPE_DIA` 300 consultas/día, `IA_MAX_NUMERO` 8 por número y día).
+  · Lo gastado en `IA_USO` (por día y desde siempre, tokens; Opus 5.5 = USD 4 / 20 por millón): unos USD 0,01-0,02 por respuesta.
+    `probarAntesDeImplementar` §13 (solo lee), `estadoBotWhatsApp().claude`, y **`probarAsistente(texto)`** desde el editor: UNA consulta
+    con un pedido inventado, no manda WhatsApp, dice si la clave anda, cuánto tardó, el costo y qué contestaría.
+  · `waRespuestasLeer_` lee 16 columnas y devuelve `ia`, `cat`, `res`, `resp`, `urg` y `antes` (los «↓» van adentro de su mensaje).
+    `waHookTxtMsg_` en castellano: «[foto]», «[audio]», «[ubicación] … (lat, lng)».
+  · Propiedades del script (NUNCA en el código ni en el chat): `ANTHROPIC_API_KEY`, `IA_ACTIVA`=1, `IA_SOLO` (opcional: los números que
+    sí, para probar), `IA_MODELO`/`IA_ESFUERZO`/`IA_TOPE_DIA`/`IA_MAX_NUMERO` (opcionales).
+- **Página** (`SCRIPT_VERSION_ESPERADA` = `2026-10-14-b`): cada tarjeta de «💬 le respondieron al bot» dice qué quiere (`WA_RESP_CAT`),
+  «🧠 <resumen>», «🤖 Claude le contestó: «…»» (`waRespIaHtml`), los mensajes de antes arriba, en rojo si es urgente; si Claude no pudo,
+  «🤖 Le llegó la respuesta automática de siempre (motivo)». El texto de arriba cambia a «Claude ya le contestó… acá queda lo que necesita
+  una persona», y abajo «🤖 En los últimos 7 días Claude resolvió solo N consultas… · Ver cuáles» (`waRespIaHechas`, sin las reacciones).
+  El aviso de Eduardo usa el resumen. Con respuestas de antes de Claude (sin `ia`), todo igual que hasta hoy.
+- Pruebas: `test_wa_bot` §15 (+52 → 178: la llamada entera, los dos mensajes juntos, la espera, lo urgente a logística una vez, 529 ×3,
+  401, crédito, refusal, 400 → la simple, IA_SOLO, logística y reacciones afuera, topes, «ok» sin respuesta, la etiqueta que no se cierra,
+  enlaces, apagada con pendientes, el repaso de respaldo, 6 h, probarAsistente, probar), `tests/test_wa_claude.js` (11, el panel),
+  `test_servidor` §11 con la versión nueva.
+- ⚠️ Lo que NO hace: no cambia nada del pedido ni marca ✅; no escucha audios ni mira fotos (pide que lo escriba); no contesta a logística
+  ni a las vendedoras; no avisa por WhatsApp a la vendedora (lo ve en el panel). Orden para prender: el dueño implementa el `.gs` 14-b →
+  pone `ANTHROPIC_API_KEY` → corre `probarAsistente` → `IA_ACTIVA`=1 con `IA_SOLO`=su número → prueba escribiéndole al bot → saca
+  `IA_SOLO`. La página se publica después de implementar el `.gs`.
