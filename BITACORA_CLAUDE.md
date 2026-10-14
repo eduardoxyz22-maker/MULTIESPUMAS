@@ -14394,3 +14394,16 @@ que entré recién al panel. haz que grite, tiemble la pantalla, que Eduardo apa
 - Propuesta que quedó: saldo = el del 1° + RPT entregadas (`sucursalDeRpt`) − ventas de tienda − marcas «🏬 Tienda» (`recogeDeTienda`)
   ± pases entre tiendas; se ve en Stock, en el cuadrito del formulario y en el botón «🏬 Tienda». Ya existe `stockTiendas`/`renderTiendas`
   (vendió/recibió 30 días). Falta: formato del archivo del 1° (preguntarle), el pase entre tiendas y que diga «armalo».
+
+## §4ky — 📣 El grito, una sola vez; después el globo callado cada 3 min (14/10)
+El dueño, con la captura del grito en su compu (*«YA TENEMOS INSUMOS PARA FABRICAR SEMI, ICE, TITANIO LATEX»*): *«un solo grito así
+como está la captura, de pantalla, gigante al ingresar al panel, y luego Eduardo en pequeño cada 3 min… porque si sale en pantalla
+completa cada 3 min sería molesto… y luego el pequeño saca el anuncio cada 3 min sin molestar, solo muestra el globo de anuncio»*.
+- `anuncioTic`: un anuncio que esta página todavía no gritó (`a.ts !== ANUNCIO.ts`: al entrar, o uno nuevo) → `anuncioGrito` (lo de
+  §4kw, igual). El mismo, cada 3 min → **`anuncioRecordar`**: el globo de Eduardo en la esquina (`asisGlobo(…, calladito)`, clase
+  `asis-anuncio` y su CSS de vuelta, 20 s), sin sirena, voz ni «pop»; con la ventana de Eduardo abierta, solo salta. Con el grito
+  todavía en pantalla no se pone el globo encima.
+- Textos: «Te lo recuerdo cada 3 minutos…» (vendedor), «Eduardo lo grita en todos los aparatos al entrar al panel y lo recuerda cada
+  3 minutos…» (Administración).
+- `tests/test_anuncio.js` → 47 (contra `c8322dd`, lo publicado a las 10:05: 7 rojas). ⚠️ El toque de los primeros 700 ms no cierra el
+  grito (es el que lo hace sonar): una prueba que lo cierre tiene que dejar pasar el tiempo antes.
