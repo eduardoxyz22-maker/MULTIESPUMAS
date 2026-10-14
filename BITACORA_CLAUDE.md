@@ -14600,3 +14600,11 @@ mantenimiento, así que solo por mañana»*.
   pedido de prueba estaba borrado) y no salió la automática al instante (señal de que el webhook 14-b lo dejó «⏳»); Claude contestó a
   los pocos minutos (el disparador de una vez tarda 1-2 min, a lo sumo el repaso de 5). Falta: probar «no voy a estar» y una
   inyección, sacar `IA_SOLO` y «publica» para las tarjetas del panel.
+- **⚡ Al vuelo (servidor `2026-10-14-c`, 14/10 noche; dueño: *«¿no demora mucho en responder? Escribo y demora 3-5 min»*)**: el
+  disparador de una vez de Google (`after(30000)`) sale cuando Google quiere (1-5 min). Ahora el MISMO aviso de Meta, después de anotar
+  el mensaje, espera `IA_VUELO_MS` = 5 s (`Utilities.sleep`) y llama a `iaRepaso(…, true, {nums, quieto:4000})` solo para esos números
+  (`iaAlVuelo_`): ~15 s en total. Si en esos 5 s llegó otro mensaje del mismo número, este aviso no contesta (todavía no hay 4 s de
+  quietud) y lo contesta el aviso del último, con todos juntos. El disparador sigue de respaldo (y no repite: `IA_HECHO`). Meta espera
+  la respuesta del aviso mientras tanto: si la repite, el repetido no se anota (mismo wamid). Lo que espera el aviso NO cuenta para los
+  90 min/día de disparadores. `IA_AL_VUELO` = 0 lo apaga sin reimplementar. `test_wa_bot` §15c (+8 → 208). Página: `SCRIPT_VERSION_ESPERADA`
+  = 14-c (sin otro cambio). `.gs` 4.342 líneas.

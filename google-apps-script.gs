@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-14-b';   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-14-c';   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-14-b';
+  var ESTA_VERSION = '2026-10-14-c';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -3072,7 +3072,7 @@ function waHookAnotar_(est, resp) {
     if (r > rYa) c.setValue(txt);   // nunca para atrás (Meta puede mandar «entregado» después de «leído»)
   });
   if (resp.length) waHookEncabezados_(sh);
-  var cfgIa = null, hayIa = false;
+  var cfgIa = null, hayIa = false, numsIa = [];
   resp.forEach(function (m) {
     var w = String(m.id || ''); if (!w || fila[w]) return;   // Meta lo mandó dos veces
     var de = String(m.from || ''), ped = waHookPedidoDe_(datos, fila, m, de), ms = (Number(m.timestamp) * 1000) || Date.now();
@@ -3085,12 +3085,13 @@ function waHookAnotar_(est, resp) {
                   conIa && reac ? '🤖 reacción · ' + waBo_(Date.now()).txt : '', ms,
                   conIa ? (reac ? '— reacción: no se contesta' : '⏳') : '']);
     fila[w] = sh.getLastRow();
-    if (conIa) { if (!reac) hayIa = true; return; }
+    if (conIa) { if (!reac) { hayIa = true; if (numsIa.indexOf(de) < 0) numsIa.push(de); } return; }
     try { waAutoResponder_(sh, de, ped, m._nom); } catch (er) {}
   });
   if (hayIa) {
     try { PropertiesService.getScriptProperties().setProperty('IA_PEND', String(Date.now())); } catch (er) {}
-    try { iaDespertar_(); } catch (er) {}
+    try { iaDespertar_(); } catch (er) {}                 // de respaldo: si lo de abajo no llega, el disparador lo contesta
+    try { iaAlVuelo_(numsIa); } catch (er) {}             // ⚡ (2026-10-14-c) y enseguida, acá mismo
   }
   meta.resp = (Number(meta.resp) || 0) + resp.length;
   try { PropertiesService.getScriptProperties().setProperty('WA_META', JSON.stringify(meta)); } catch (er) {}
@@ -3212,7 +3213,15 @@ var IA_ESFUERZO_DEF = 'low';
 var IA_BETA = 'server-side-fallback-2026-07-01';   // el de `fallbacks: 'default'` (el de la lista de modelos es otro y no se mezclan)
 var IA_MAX_TOKENS = 8000;            // el pensamiento cuenta acá: con esfuerzo bajo usa poco, pero no hay que quedarse corto
 var IA_ESPERA_MS = 20000;            // quietud del cliente antes de contestar (por si manda otro mensaje)
-var IA_DESP_MS = 30000;              // el disparador de una vez
+var IA_DESP_MS = 30000;              // el disparador de una vez (de respaldo desde la 14-c)
+/* ⚡ (2026-10-14-c, dueño: «¿no demora mucho en responder? Escribo y demora 3-5 min») El disparador de una vez de Google no sale a
+   los 30 s: sale cuando Google quiere (1-5 min). Ahora el MISMO aviso de Meta, después de anotar el mensaje, espera IA_VUELO_MS por
+   si el cliente manda otro enseguida y contesta ahí (~15 s). Si mientras esperaba llegó otro mensaje de ese número, este no hace
+   nada: lo contesta el aviso del último, con todos juntos. Meta espera la respuesta del aviso mientras tanto: si se cansa y lo
+   vuelve a mandar, el repetido no se anota (mismo wamid) y IA_HECHO impide contestar dos veces. Lo que espera el aviso no cuenta
+   para los 90 min/día de disparadores. `IA_AL_VUELO` = 0 en Propiedades lo apaga sin reimplementar (vuelve a 1-5 min). */
+var IA_VUELO_MS = 5000;
+var IA_VUELO_QUIETO_MS = 4000;       // el último mensaje del número tiene que tener al menos esto (los tiempos de Meta vienen en segundos)
 var IA_RECLAMO_MS = 5 * 60000;       // una vuelta que tomó mensajes y se cortó: a los 5 minutos otra los vuelve a tomar
 var IA_VIEJO_MS = 6 * 3600000;       // más viejo (el bot estuvo parado): Claude no contesta tarde, sale la automática
 var IA_INTENTOS = 3;                 // intentos con Claude ocupado o sin conexión; después, la automática
@@ -3268,6 +3277,12 @@ function iaDespertar_() {
     PropertiesService.getScriptProperties().setProperty('IA_DESP_HASTA', String(Date.now() + IA_DESP_MS + 90000));
     return true;
   } catch (e) { return false; }
+}
+function iaAlVuelo_(nums) {
+  if (!nums || !nums.length || String(prop_('IA_AL_VUELO')) === '0') return null;
+  if (typeof Utilities === 'undefined' || typeof Utilities.sleep !== 'function') return null;
+  Utilities.sleep(IA_VUELO_MS);
+  return iaRepaso(Date.now() + 3 * 60000, true, { nums:nums, quieto:IA_VUELO_QUIETO_MS });
 }
 function iaDespierta() {
   kTriggersDe_('iaDespierta').forEach(function (t) { try { ScriptApp.deleteTrigger(t); } catch (e) {} });
@@ -3330,7 +3345,8 @@ function iaUnicode_(t) { return String(t || '').replace(/[\ud800-\udbff](?![\udc
 
 /** ⏱ Contesta lo que espera a Claude. `limite` = hasta cuándo puede arrancar una consulta (ms); `mirar` = leer la hoja aunque
     no esté la marca IA_PEND (el disparador de una vez: el mensaje que lo creó ya está en la hoja). */
-function iaRepaso(limite, mirar) {
+function iaRepaso(limite, mirar, op) {
+  op = op || {};
   var t0 = Date.now(), fin = Number(limite) || (t0 + IA_CORRIDA_MS), props = PropertiesService.getScriptProperties();
   var res = { ts:new Date(t0).toISOString(), grupos:0, contestados:0, sinRespuesta:0, respaldo:0, reintentos:0, logistica:0, esperan:0, error:'' };
   var pend0 = prop_('IA_PEND');
@@ -3349,6 +3365,7 @@ function iaRepaso(limite, mirar) {
       var r = filas[i], est = String(r[12] || '');
       if (String(r[3] || '') !== '💬 Respondió' || est.charAt(0) !== '⏳') continue;
       var de = String(r[5] || ''), ms = Number(r[11]) || 0, w = String(r[8] || '');
+      if (op.nums && op.nums.indexOf(de) < 0) continue;   // ⚡ al vuelo: solo los números de ESTE aviso
       if (w && hecho[iaHuella_(w)]) { sh.getRange(desde + i, IA_COL).setValue('🤖 ya contestado'); continue; }   // contestado, y la hoja no llegó a decirlo
       var mm = est.match(/^⏳(\d*)(?:@(\d+))?/), n = Number(mm && mm[1]) || 0, tom = Number(mm && mm[2]) || 0;
       /* Otra vuelta lo está contestando: ese NÚMERO entero espera (si no, un mensaje nuevo suyo se contestaba acá y la otra vuelta
@@ -3363,15 +3380,15 @@ function iaRepaso(limite, mirar) {
     orden.forEach(function (d) {
       var g = por[d];
       if (ocupado[d] || grupos.length >= IA_GRUPOS_MAX) { quedan++; return; }
-      if (viva && t0 - g.ultMs < IA_ESPERA_MS) { quedan++; return; }   // el cliente todavía está escribiendo
+      if (viva && t0 - g.ultMs < (op.quieto || IA_ESPERA_MS)) { quedan++; return; }   // el cliente todavía está escribiendo
       g.filas.forEach(function (f) { sh.getRange(f.fila, IA_COL).setValue('⏳' + g.n + '@' + t0); });
       g.extra.forEach(function (x) { sh.getRange(x, IA_COL).setValue('⏳' + g.n + '@' + t0); });
       grupos.push(g);
     });
-    if (!grupos.length && !quedan && prop_('IA_PEND') === pend0) { try { props.deleteProperty('IA_PEND'); } catch (e) {} }
+    if (!grupos.length && !quedan && !op.nums && prop_('IA_PEND') === pend0) { try { props.deleteProperty('IA_PEND'); } catch (e) {} }
   } finally { lock.releaseLock(); }
-  if (quedan) iaDespertar_();
-  if (!grupos.length) return iaGuardarRes_(res);
+  if (quedan && !op.nums) iaDespertar_();   // al vuelo: lo que no estaba listo lo contesta el aviso siguiente o el disparador de respaldo
+  if (!grupos.length) return op.nums ? res : iaGuardarRes_(res);
   /* 2. Afuera del candado: Claude y WhatsApp, con la planilla de ahora. */
   var cfg = waConfig_(), B = waBo_(t0), recs = null, hoja = null;
   /* Sin la planilla, Claude diría «no encontramos tu pedido» a todos: se espera a la vuelta siguiente. */

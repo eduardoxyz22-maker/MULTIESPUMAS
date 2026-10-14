@@ -942,5 +942,45 @@ const metaDice = (S, value) => S.ctx.doPost({ parameter: { wa: 'clave-hook' }, p
   chk('probar dice cuántos segundos se esperó a Claude hoy (cuentan para los 90 min de disparadores)', /\d+ s esperando a Claude/.test(S.ctx.probarAntesDeImplementar().lineas.join('\n')));
 }
 
+// ══ 15c. (2026-10-14-c) Al vuelo: el mismo aviso de Meta contesta en ~15 s ══════════════
+console.log('\n── 15c. Al vuelo: contesta en el mismo aviso (5 s de espera), juntos si llega otro mensaje, apagable ──');
+{
+  const { S } = conPedido();
+  conClaude(S, () => claude());
+  let dormido = 0; S.ctx.Utilities.sleep = (ms) => { dormido += ms; RELOJ.ms += ms; };   // el «Utilities.sleep» de Google: acá corre el reloj
+  const t0 = RELOJ.ms;
+  escribe(S, '59170111222', '¿A qué hora llega mi colchón?');
+  chk('el mismo aviso espera 5 s y contesta ahí: 1 consulta y el WhatsApp ya salió, sin esperar al disparador', iaLl(S).length === 1 && textos(S).length === 1 && dormido === 5000 && cli(S)[0][12] === '🤖 contestó', { claude: iaLl(S).length, wa: textos(S).length, dormido });
+  chk('…en unos segundos desde que escribió (no 1-5 min)', (RELOJ.ms - t0) <= 10000, RELOJ.ms - t0);
+  S.limpiar(); pasar(1); S.ctx.iaDespierta(); S.repaso();
+  chk('…y el disparador de respaldo no lo vuelve a contestar', iaLl(S).length === 0 && textos(S).length === 0);
+}
+{
+  const { S } = conPedido();
+  let visto = '';
+  conClaude(S, (b) => { visto = b.messages[0].content; return claude(); });
+  /* Dos mensajes seguidos: mientras el aviso del primero espera, llega el segundo (su aviso entra, espera y contesta los dos). */
+  let n = 0; S.ctx.Utilities.sleep = (ms) => { RELOJ.ms += ms > 3000 && n === 0 ? 2000 : ms; if (n++ === 0) { escribe(S, '59170111222', 'es para mañana'); RELOJ.ms += 3000; } };
+  escribe(S, '59170111222', 'Hola, ¿a qué hora llega?');
+  chk('dos mensajes seguidos: UNA consulta con los dos y UNA respuesta (el aviso del primero no contesta)', iaLl(S).length === 1 && textos(S).length === 1 && /Juan: Hola, ¿a qué hora llega\?\n[^\n]*Juan: es para mañana/.test(visto), { claude: iaLl(S).length, wa: textos(S).length });
+  chk('…las dos filas quedan contestadas (la primera «↓ junto con el siguiente»)', /^🤖 ↓/.test(cli(S)[0][12]) && cli(S)[1][12] === '🤖 contestó', cli(S).map(f => f[12]));
+}
+{
+  const { S } = conPedido({ IA_AL_VUELO: '0' });
+  conClaude(S, () => claude());
+  S.ctx.Utilities.sleep = (ms) => { RELOJ.ms += ms; };
+  escribe(S, '59170111222', '¿A qué hora?');
+  chk('IA_AL_VUELO = 0: como antes, espera al disparador (se apaga sin reimplementar)', iaLl(S).length === 0 && cli(S)[0][12] === '⏳' && iaTrig(S) === 1);
+  pasar(1); S.ctx.iaDespierta();
+  chk('…y el disparador lo contesta', iaLl(S).length === 1 && textos(S).length === 1);
+}
+{
+  const { S } = conPedido({ IA_SOLO: '59170999888' });
+  conClaude(S, () => claude());
+  S.ctx.Utilities.sleep = (ms) => { RELOJ.ms += ms; };
+  escribe(S, '59170111222', 'hola');
+  chk('un número que no es de Claude (IA_SOLO): la automática al instante, sin esperar 5 s ni preguntarle a Claude', iaLl(S).length === 0 && /Este número solo envía/.test((textos(S)[0] || {}).t));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;
