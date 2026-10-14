@@ -14480,3 +14480,8 @@ mañana»* · *«2. no, no lo pasa: debería ser automático, al marcar cargado 
 - **Batería entera (14/10)**: 185 suites, 6.454 comprobaciones; la única roja fue `test_patio` (37/1, la que tropieza con la máquina
   cargada) y sola da 38/0. En la rama `3096750` (+ esta nota). Enlace del `.gs` 2026-10-14-a fijo a `3096750…` (3.755 líneas, termina en
   `}` con `return borrador;` antes). Volver atrás: ✏️ a la versión anotada Y pegar la 13-c de `b2c831d…` (3.735 líneas).
+- **Servidor `2026-10-14-a` IMPLEMENTADO 14/10 ~11:45 por el dueño** (probar ✅ 11:40: stock 25.007/50.000 = 50 %, lectura 1.147.793 → 328.308,
+  1.359 filas, bot con 1 de logística —Ernesto; David todavía no está en `WA_LOGISTICA`—, Meta: 1 «undeliverable» #131026 del 13/10 18:55,
+  GPS 4 de 4). `crearPlantillasWhatsApp` 11:41: las seis v2 «ya existía» y **`pedido_en_camino: creada (PENDING)`**: mientras Meta no la
+  apruebe sale el cambio de día v2. Página: espera «publica».
+

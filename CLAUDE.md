@@ -859,7 +859,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   en Propiedades, nunca en el código); «tu vendedor/a» por `waTuVend_` (`WA_VENDEDOR_HOMBRE`). **Sin entregado automático** (dueño, 12/10):
   el cierre de entregas no tilda nada solo y fecha pasada sin ✅ = «❓ Sin confirmar»; la regla del stock (§4co) no cambió.
 - **🚀 Lo de la tarde que sale cargado a la mañana** (§4lb, 14/10, dueño: *«Ernesto no va a "reprogramar"… debería ser automático, al
-  marcar cargado y saliendo»*; en la rama, servidor `2026-10-14-a` SIN implementar): al salir un camión antes de las 12:00 («🚚 Ya salió» o
+  marcar cargado y saliendo»*; en la rama; servidor `2026-10-14-a` IMPLEMENTADO 14/10 ~11:45 por el dueño, plantilla `pedido_en_camino` creada 11:41, en revisión de Meta; volver atrás: ✏️ a la versión anotada Y pegar la 13-c de `b2c831d…`, 3.735 líneas): al salir un camión antes de las 12:00 («🚚 Ya salió» o
   el GPS de hace ≤ 60 min, en un aparato de logística/Administración), `adelantoAlSalir` pasa a AM los pedidos de HOY de ese camión que
   están en la TARDE y van ENTEROS en la carga (tildes de «🌆 Tarde»; copia los tildes a «🌅 Mañana»), con `reproAplicar(…, forzar,
   {adelanto:1})`. El servidor: evento `e` → plantilla **`pedido_en_camino`** solo al cliente (respaldo `cambio_entrega_v2` → `cambio_entrega`);
