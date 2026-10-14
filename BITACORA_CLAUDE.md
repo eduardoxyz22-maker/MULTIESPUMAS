@@ -14440,3 +14440,7 @@ decían el turno; los 3 de la tarde que veía estaban en «Sin vehículo» porqu
 - `depCargado` (la fábrica de Eduardo), `cv3dPedidos` (los pedidos de una línea: solo los de su turno) y `textoCargaChk` (las claves sin
   fecha) con el turno. La ciudad (patio) toma las líneas como vienen (claves distintas).
 - `tests/test_carga_turnos.js` (16; contra `61dbaf8` falla). El globito de cada 3 min: el dueño lo vio («ya vi que sí muestra»); no se tocó.
+- **PUBLICADO 14/10, `2bd1bf3`** (dueño: «publica»), Pages OK: pedidos.html, CLAUDE.md, `tests/test_carga_turnos.js`. Antes, en verde:
+  test_carga_turnos 16, test_asistente_ak 38, test_banzer_salida 77, test_camion_salio 11, test_camiones_3d 28, test_camiones_admin 40,
+  test_carga_sync 9, test_gps_pagina 58, test_mis_deposito 27, test_recoger_tienda 20, test_rev3_admin 48, test_rev4_atc_flete 57,
+  test_vistas_4im 29, test_patio 38. Volver atrás: `61dbaf8`.
