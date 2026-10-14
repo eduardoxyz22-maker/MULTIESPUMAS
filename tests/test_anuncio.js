@@ -1,17 +1,19 @@
 /* 📢 EL ANUNCIO DE ADMINISTRACIÓN (13/10) y 📣 EL GRITO (14/10). El dueño: «crea un botón en administración "decir anuncio" para que
    Eduardo lo repita cada 3 min a los vendedores, por ejemplo a veces quiero avisar "no hay insumos para el ICE" hasta nuevo aviso»; y
    al otro día: «a Eduardo no lo veo gritando el anuncio cada 3 min como acordamos… haz que grite, tiemble la pantalla, que Eduardo
-   aparezca con su megáfono gritando!».
+   aparezca con su megáfono gritando!»; y enseguida: «si sale en pantalla completa cada 3 min sería molesto… solo la primera vez, tal
+   como está, y luego el pequeño saca el anuncio cada 3 min sin molestar, solo muestra el globo de anuncio».
 
    ⚠️ LO QUE ESTA PRUEBA CUIDA (las de §3-§4 fallan contra lo publicado, `60a98e8`: ahí era un globito y solo a los vendedores):
    1. El botón «📢 Decir anuncio» está en Administración y abre la ventana; sin la contraseña no la abre.
    2. Publicarlo guarda la fila del sistema `__anuncio__` (que NO es un pedido) con el texto; vacío o repetido no guarda.
-   3. Eduardo lo GRITA apenas llega: pantalla entera con Eduardo, su megáfono y el texto; la pantalla tiembla; sirena y la voz del
-      navegador en castellano (sin emojis). Mientras habla no se cierra; después se va solo. Otra vez a los 3 minutos, no antes.
+   3. Eduardo lo GRITA UNA VEZ al entrar: pantalla entera con Eduardo, su megáfono y el texto; la pantalla tiembla; sirena y la voz
+      del navegador en castellano (sin emojis). Mientras habla no se cierra; después se va solo. A los 3 minutos (no antes) NO vuelve
+      a gritar: sale el GLOBO de Eduardo con el anuncio, callado; y así cada 3 minutos. Un anuncio NUEVO sí se grita.
       Tocar en cualquier lado, «Entendido» o Esc lo cierran y lo callan. Con 🔇 sale la pantalla, sin sirena ni voz. Si la persona
       está escribiendo, espera a que termine. La risa de Halloween se espera. No tiene «Entendido» en los avisos de Eduardo.
    4. El navegador no deja sonar sin un toque: al abrir la página grita callado y el PRIMER toque lo hace gritar (sin cerrarlo).
-   5. En logística y en Administración TAMBIÉN se repite cada 3 minutos; con la clave, el grito trae «✏️ Cambiar o quitar».
+   5. En logística y en Administración TAMBIÉN (grito al entrar y globo cada 3 min); con la clave, el grito trae «✏️ Cambiar o quitar».
    6. Quitarlo deja la fila con el texto vacío, cierra el grito y Eduardo deja de gritarlo. Si el servidor no lo guarda, lo dice.
    Datos SINTÉTICOS. Reloj clavado en el miércoles 14/10/2026.
    Se corre:  node tests/test_anuncio.js   (desde la raíz del repo) */
@@ -56,6 +58,8 @@ function PREPARAR(){
     return { ve:!!g && !g.hidden, txt:g ? g.textContent : '', mega:q('svg.ag-mega'), img:q('.ag-yo img'), ondas:q('.ag-ondas i'), cambiar:q('.ag-cambiar'),
       tiembla:document.body.classList.contains('anu-tiembla') }; };
   window.HABLA=function(){ return window._habla.filter(function(h){ return /Atención/.test(h.t); }); };
+  window.GLOBO=function(){ var g=document.getElementById('asis-globo'); return { ve:!!g && !g.hidden, anu:!!g && g.classList.contains('asis-anuncio'), txt:g ? g.textContent : '' }; };
+  window.OTRO_GRITO=function(){ ANUNCIO.ts=-1; anuncioTic(); };   // como si Administración pusiera uno nuevo: se grita
   window.CALLAR_OTROS=function(){ asisAvisos().forEach(function(a){ if(!a.anuncio) ASIS.anunciados[a.k]=1; }); };   // se mira solo el anuncio
 }
 
@@ -123,7 +127,7 @@ function PREPARAR(){
     return { k:a.k, anuncio:!!a.anuncio, cambiar:cambiar, entendido:entendido, igual:igual, est:est, n:n, quitar:!!document.getElementById('anu-quitar'), x:a.x };
   });
   chk('en Administración queda PRIMERO en los avisos de Eduardo, con «✏️ Cambiar o quitar» y sin «Entendido»', r.anuncio && r.cambiar && !r.entendido, r);
-  chk('y dice que lo grita en todos los aparatos cada 3 minutos', /grita en todos los aparatos cada 3 minutos/.test(r.x), r.x);
+  chk('y dice que lo grita al entrar y lo recuerda cada 3 minutos', /grita en todos los aparatos al entrar al panel y lo recuerda cada 3 minutos/.test(r.x), r.x);
   chk('al reabrir, la ventana trae el anuncio puesto y el botón «🗑 Quitar anuncio»', /ICE/.test(r.igual) && r.quitar, r);
   chk('el mismo texto otra vez no vuelve a guardar', r.n===1 && /mismo/.test(r.est), r);
   await page.close();
@@ -140,7 +144,7 @@ function PREPARAR(){
   });
   chk('apenas llega, Eduardo aparece en pantalla entera con su megáfono, las ondas y el anuncio', r.g.ve && r.g.img && r.g.mega && r.g.ondas && /No hay insumos para el ICE/.test(r.g.txt) && /Anuncio de Administración/.test(r.g.txt), r);
   chk('la pantalla tiembla y avisa a los lectores de pantalla (alertdialog); ya no es el globito', r.g.tiembla && r.rol==='alertdialog' && !r.globo, r);
-  chk('el vendedor no ve «Cambiar o quitar» y lee que se lo grita cada 3 minutos', !r.g.cambiar && /cada 3 minutos/.test(r.g.txt), r.g.txt);
+  chk('el vendedor no ve «Cambiar o quitar» y lee que se lo recuerda cada 3 minutos', !r.g.cambiar && /recuerdo cada 3 minutos/.test(r.g.txt), r.g.txt);
   await page.clock.runFor(1200);
   r = await ev(page, () => ({ tiembla:document.body.classList.contains('anu-tiembla'), sir:_sirenas, h:HABLA().length }));
   chk('el temblor dura un segundo y suena la sirena; la voz todavía no (espera la sirena)', !r.tiembla && r.sir===1 && r.h===0, r);
@@ -156,13 +160,23 @@ function PREPARAR(){
   await page.clock.runFor(118000);  // 2 min 23 s desde que llegó
   r = await ev(page, () => ({ g:GRITO(), sir:_sirenas, h:HABLA().length }));
   chk('antes de los 3 minutos no lo repite', !r.g.ve && r.sir===1 && r.h===1, r);
-  await page.clock.runFor(53000);   // 3 min 16 s: el reloj mira cada 15 s, así que grita entre los 3:00 y los 3:15
-  r = await ev(page, () => ({ g:GRITO(), sir:_sirenas }));
+  r = await ev(page, () => { window._p0=_pops; return {}; });
+  await page.clock.runFor(53000);   // 3 min 16 s: el reloj mira cada 15 s, así que recuerda entre los 3:00 y los 3:15
+  r = await ev(page, () => ({ g:GRITO(), gl:GLOBO(), sir:_sirenas, pops:_pops-_p0 }));
   await page.clock.runFor(2000);
   let r2 = await ev(page, () => ({ h:HABLA().length }));
-  chk('a los 3 minutos lo vuelve a gritar, con sirena y voz', r.g.ve && /ICE/.test(r.g.txt) && r.sir===2 && r2.h===2, [r, r2]);
-  r = await ev(page, () => { var c0=_cancel; document.getElementById('anu-grito').click(); return { g:GRITO(), callo:_cancel>c0 }; });
-  chk('tocar en cualquier lado lo cierra y lo calla', !r.g.ve && r.callo, r);
+  chk('a los 3 minutos NO vuelve la pantalla entera: sale el globo de Eduardo con el anuncio', !r.g.ve && r.gl.ve && r.gl.anu && /ICE/.test(r.gl.txt) && /Anuncio de Administración/.test(r.gl.txt), r);
+  chk('y el globo es callado: sin sirena, sin voz y sin «pop»', r.sir===1 && r2.h===1 && r.pops===0, [r, r2]);
+  await page.clock.runFor(21000);
+  r = await ev(page, () => ({ gl:GLOBO() }));
+  chk('el globo se va solo a los 20 segundos', !r.gl.ve, r.gl);
+  await page.clock.runFor(160000);  // ~6 min 20 s: el segundo recordatorio
+  r = await ev(page, () => ({ g:GRITO(), gl:GLOBO(), sir:_sirenas }));
+  chk('y así cada 3 minutos: otra vez el globo, nunca la pantalla entera', !r.g.ve && r.gl.ve && r.gl.anu && r.sir===1, r);
+  r = await ev(page, () => { OTRO_GRITO(); return { a:GRITO().ve }; });
+  await page.clock.runFor(1000);   // el toque de los primeros 700 ms no lo cierra (es el que lo hace gritar)
+  r = await ev(page, (a) => { var c0=_cancel; document.getElementById('anu-grito').click(); return { a:a, g:GRITO(), callo:_cancel>c0 }; }, r.a);
+  chk('un anuncio NUEVO sí se grita en grande; tocar en cualquier lado lo cierra y lo calla', r.a && !r.g.ve && r.callo, r);
   r = await ev(page, () => {
     var A=asisAvisos(), a=A[0]||{};
     asisPosponer(a.k, 24*3600000);   // aunque alguien lo esconda a mano, sigue
@@ -172,12 +186,12 @@ function PREPARAR(){
       cambiar:/Cambiar o quitar/.test(html), x:a.x, hayEl:!!el };
   });
   chk('en los avisos de Eduardo va primero, sin «Entendido» ni «En 1 hora», y esconderlo a mano no lo esconde', r.hayEl && r.primero && r.sigue && !r.entendido && !r.luego, r);
-  chk('el vendedor no ve «Cambiar o quitar» y lee que se repite cada 3 minutos', !r.cambiar && /cada 3 minutos/.test(r.x), r);
+  chk('en los avisos el vendedor no ve «Cambiar o quitar» y lee que se lo recuerda cada 3 minutos', !r.cambiar && /recuerdo cada 3 minutos/.test(r.x), r);
   /* «Entendido» y Esc */
   r = await ev(page, () => {
-    ANUNCIO.ult-=ANUNCIO_CADA_MS; anuncioTic(); var abierto=GRITO().ve;
+    OTRO_GRITO(); var abierto=GRITO().ve;
     document.querySelector('#anu-grito .ag-ok').click(); var tras=GRITO().ve;
-    ANUNCIO.ult-=ANUNCIO_CADA_MS; anuncioTic(); var otra=GRITO().ve;
+    OTRO_GRITO(); var otra=GRITO().ve;
     document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true }));
     return { abierto:abierto, tras:tras, otra:otra, esc:GRITO().ve };
   });
@@ -199,7 +213,7 @@ function PREPARAR(){
     localStorage.removeItem(ASIS_LS_MUDO); anuncioGritoCerrar();
     var inp=document.getElementById('f-cliente') || document.querySelector('input[type=text]'); inp.focus();
     inp.value='Juan Pér'; inp.dispatchEvent(new Event('input', { bubbles:true }));
-    ANUNCIO.ult-=ANUNCIO_CADA_MS; anuncioTic();
+    OTRO_GRITO();
     return { g:GRITO(), foco:document.activeElement===inp, id:inp.id };
   });
   chk('si está escribiendo en un campo, no le tapa el formulario: espera', !r.g.ve && r.foco, r);
@@ -210,7 +224,7 @@ function PREPARAR(){
     anuncioGritoCerrar(); document.activeElement.blur();
     window._risaFin=null; window.hwRisaAudio={ paused:false, ended:false, addEventListener:function(ev, fn){ if(ev==='ended') window._risaFin=fn; } };
     var s0=_sirenas, h0=HABLA().length; window._s0=s0; window._h0=h0;
-    ANUNCIO.ult-=ANUNCIO_CADA_MS; anuncioTic(); return { g:GRITO() };
+    OTRO_GRITO(); return { g:GRITO() };
   });
   await page.clock.runFor(3000);
   r2 = await ev(page, () => ({ sir:_sirenas-_s0, h:HABLA().length-_h0, espera:typeof window._risaFin==='function' }));
@@ -258,16 +272,16 @@ function PREPARAR(){
   });
   chk('logística lo ve gritado al llegar y primero en los avisos', r.g1.ve && /ICE/.test(r.g1.txt) && r.primero, r);
   await page.clock.runFor(3*60000+16000);
-  r = await ev(page, () => ({ g:GRITO(), sir:_sirenas-_s0 }));
-  chk('y a los 3 minutos se lo vuelve a gritar, con sirena (antes, a logística no)', r.g.ve && r.sir===1, r);
+  r = await ev(page, () => ({ g:GRITO(), gl:GLOBO(), sir:_sirenas-_s0 }));
+  chk('y a los 3 minutos le sale el globo del anuncio (antes, a logística no), sin pantalla entera ni sirena', !r.g.ve && r.gl.ve && r.gl.anu && r.sir===0, r);
   r = await ev(page, async () => {
     anuncioGritoCerrar(); quienRol(''); UNLOCKED=true;
-    ANUNCIO.ult-=ANUNCIO_CADA_MS; anuncioTic(); var g=GRITO();
+    OTRO_GRITO(); var g=GRITO();
     document.querySelector('#anu-grito .ag-cambiar').click();
     var box=document.getElementById('anu');
     return { g:g, cerro:!GRITO().ve, ventana:!!box && !box.hidden };
   });
-  chk('con la contraseña también se repite, y el grito trae «✏️ Cambiar o quitar»', r.g.ve && r.g.cambiar, r.g);
+  chk('con la contraseña también, y el grito trae «✏️ Cambiar o quitar»', r.g.ve && r.g.cambiar, r.g);
   chk('«✏️ Cambiar o quitar» cierra el grito y abre la ventana del anuncio', r.cerro && r.ventana, r);
   await page.close();
 
@@ -292,8 +306,8 @@ function PREPARAR(){
   chk('«🗑 Quitar anuncio» guarda la fila con el texto vacío: no hay anuncio, ni aviso, ni botón marcado, y el grito se cierra', r.gritando && r.id==='__anuncio__' && r.t==='' && r.leido===null && !r.aviso && !r.btnOn && !r.grito, r);
   r = await ev(page, () => { UNLOCKED=false; quienRol(''); var s0=_sirenas; ANUNCIO.ult=0; anuncioTic(); asisRefrescar(); return { g:GRITO(), sir:_sirenas-s0 }; });
   await page.clock.runFor(4*60000);
-  r2 = await ev(page, () => ({ g:GRITO(), sir:_sirenas }));
-  chk('quitado, Eduardo ya no lo grita (ni a los 4 minutos)', !r.g.ve && r.sir===0 && !r2.g.ve, [r, r2.g.ve]);
+  r2 = await ev(page, () => ({ g:GRITO(), gl:GLOBO(), sir:_sirenas }));
+  chk('quitado, Eduardo ya no lo grita ni lo recuerda (ni a los 4 minutos)', !r.g.ve && r.sir===0 && !r2.g.ve && !(r2.gl.ve && r2.gl.anu), [r, r2.g.ve, r2.gl]);
   await page.close();
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
