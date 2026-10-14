@@ -13155,7 +13155,16 @@ function diaSabado(fecha){ return dowDe(fecha)===6; }
 /* (29/09, §4gy) El camión no sale en feriados (dueño: «no sale en feriados»): sin cupo, como el domingo. `FERIADOS` está más
    abajo en la página: se pregunta con `typeof` por si algo lo llama antes de que se lea esa línea. */
 function feriadoDe(f){ return (typeof FERIADOS!=='undefined' && FERIADOS && FERIADOS[f]) || ''; }
-function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0 || feriadoDe(fecha)) return 0; if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
+/* 🔧 (14/10, dueño: «REDUCE LOS CUPOS DE MAÑANA 15: 4 MENOS EN LA MAÑANA Y 4 MENOS EN LA TARDE, tendremos un camión en
+   mantenimiento, así que solo por mañana») Los cupos de UN día distintos de los de siempre. Todo lo que mira cupos pasa por
+   `limTurno`; los carteles dicen por qué con `cupoFechaNota`. Pasada la fecha no hace nada (se puede borrar la línea).
+   ⚠️ El portero del servidor no la conoce (sigue en 12 / 13): frena el formulario, no una página sin F5. */
+var CUPOS_FECHA = { '2026-10-15': { AM:8, PM:9, motivo:'un camión en mantenimiento' } };
+function cupoFechaDe(fecha){ return (CUPOS_FECHA && CUPOS_FECHA[fecha]) || null; }
+function cupoFechaNota(fecha){ var e=cupoFechaDe(fecha); return e ? ' · <span class="cupo-nota">🔧 Este día hay menos cupos ('+esc(e.motivo||'cambio de logística')+')</span>' : ''; }
+function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0 || feriadoDe(fecha)) return 0;
+  var e=cupoFechaDe(fecha); if(e && e[turno]!=null) return Math.max(0, Number(e[turno])||0);
+  if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
 function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
 /* ---- Turno y atraso ----
@@ -13233,10 +13242,10 @@ function renderCupoFormBase(){
       cupoVerBtn(fecha,'AM')+(rAMs<=0?_ed:'');
     return;
   }
-  var uAM=cuposUsadosTurno(fecha,'AM'), uPM=cuposUsadosTurno(fecha,'PM');
-  var rAM=Math.max(0,CUPOS_AM-uAM), rPM=Math.max(0,CUPOS_PM-uPM);
-  var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?CUPOS_PM:CUPOS_AM, usaSel=turno==='PM'?uPM:uAM;
-  var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
+  var uAM=cuposUsadosTurno(fecha,'AM'), uPM=cuposUsadosTurno(fecha,'PM'), lAMf=limTurno(fecha,'AM'), lPMf=limTurno(fecha,'PM');   // 🔧 (14/10) el límite de ESE día
+  var rAM=Math.max(0,lAMf-uAM), rPM=Math.max(0,lPMf-uPM);
+  var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?lPMf:lAMf, usaSel=turno==='PM'?uPM:uAM;
+  var linea='🌅 AM: <b>'+rAM+'</b>/'+lAMf+' · 🌆 PM: <b>'+rPM+'</b>/'+lPMf+' libres'+cupoFechaNota(fecha);
   if(restSel<=0){
     /* ⚠️ El número REAL, no el límite (§4fh). Antes decía «(12/12)» calculado como
        `lim+'/'+lim`, así que un día con 13 —administración puede forzar uno con la clave,
@@ -15457,7 +15466,7 @@ function renderAdmin(){
       var uA=cuposUsadosTurno(cdia,'AM'), uP=cuposUsadosTurno(cdia,'PM');
       var demas=(uA>lAM?(uA-lAM):0)+(uP>lPM?(uP-lPM):0);
       cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
-      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'')+
+      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+lAM+' · 🌆 PM: <b>'+rPM+'</b>/'+lPM+' libres'+(full?' — <b>LLENO</b>':'')+cupoFechaNota(cdia)+
         (demas?(' · ⚠️ <b>'+demas+'</b> forzado'+(demas===1?'':'s')+' de más ('+uA+' AM · '+uP+' PM)'):'');
     }
   }
