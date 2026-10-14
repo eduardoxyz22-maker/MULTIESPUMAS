@@ -14577,3 +14577,18 @@ para después).
   los arreglos, 187 suites / 6.506 en verde. Enlace del `.gs` 2026-10-14-b fijo a `e39b2615f150697c1f2f958f1acaf160b9ca2d39` (4.325
   líneas, termina en `}` con `return borrador;` antes). Volver atrás: ✏️ a la versión anotada Y pegar la 14-a de `c68a00c` (3.755 líneas).
   La página espera la 14-b: se publica DESPUÉS de implementar.
+
+## §4ld — 🔧 Cupos del jueves 15/10: 8 AM y 9 PM (14/10)
+El dueño (14/10, ~18:15): *«REDUCE LOS CUPOS DE MAÑANA 15: 4 MENOS EN LA MAÑANA Y 4 MENOS EN LA TARDE, tendremos un camión en
+mantenimiento, así que solo por mañana»*.
+- Página: **`CUPOS_FECHA = { '2026-10-15': { AM:8, PM:9, motivo:'un camión en mantenimiento' } }`** junto a `CUPOS_AM`/`CUPOS_PM`;
+  `limTurno` la mira antes del sábado (todo lo que cuenta cupos pasa por ahí: formulario, freno de `submitPedido`, Administración,
+  agenda de 7 días, reprogramar, encabezado, cierre). Los dos carteles que todavía imprimían `CUPOS_AM`/`CUPOS_PM` a mano (el del
+  formulario y el de Administración) usan el límite de ESE día y agregan `cupoFechaNota` («🔧 Este día hay menos cupos (…)»).
+  Pasada la fecha no hace nada. Para otro día: una línea más en `CUPOS_FECHA`.
+- ⚠️ El portero del servidor (`porteroFecha_`) sigue en 12 / 13: frena el formulario de una página con F5, no una vieja ni una
+  carrera entre dos vendedoras. Lo que ya estaba agendado no se mueve solo: si el 15 ya tenía más de 8 AM / 9 PM, el cartel lo
+  cuenta como «de más» y logística decide.
+- `tests/test_cupos_fecha.js` (7); `test_cierre_reprogramar` acepta «de 8» (reloj clavado el 14/10).
+- **PUBLICADA 14/10 18:24 de Bolivia, `d14db54`** (solo `pedidos.html` + las dos pruebas, encima de `c68a00c`; sin lo de Claude,
+  que sigue en la rama). En la rama: `aa4c0df`.
