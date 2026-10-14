@@ -14484,4 +14484,11 @@ mañana»* · *«2. no, no lo pasa: debería ser automático, al marcar cargado 
   1.359 filas, bot con 1 de logística —Ernesto; David todavía no está en `WA_LOGISTICA`—, Meta: 1 «undeliverable» #131026 del 13/10 18:55,
   GPS 4 de 4). `crearPlantillasWhatsApp` 11:41: las seis v2 «ya existía» y **`pedido_en_camino: creada (PENDING)`**: mientras Meta no la
   apruebe sale el cambio de día v2. Página: espera «publica».
+- 15:48-15:54: `verPlantillasWhatsApp` mostró primero 6 (sin `pedido_en_camino`: el editor había quedado con el código VIEJO, seguramente
+  otra pestaña); el dueño volvió a pegar la 14-a (3.755 líneas), `verPlantillasWhatsApp` → 7, **`pedido_en_camino` ✅ aprobada**; probar ✅;
+  volvió a implementar. El «el GPS contestó 30400» de las 15:52 fue de un momento (`probarGps` 15:54: token vigente, 4 de 4 camiones).
+  ⚠️ Si vuelve a aparecer y se queda: `gpsRepaso` solo suelta el token con 401/403 o «token» en el texto; un 30400 que fuera de token
+  dejaría el GPS parado hasta la renovación de las 5 h 30 (propuesto: soltarlo a la 2ª falla seguida; NO hecho).
+- **PÁGINA PUBLICADA 14/10 15:58 de Bolivia, `c68a00c`** (dueño: «Sí, publicá»), Pages OK (run 38628105032): pedidos.html,
+  google-apps-script.gs, CLAUDE.md, tests/test_adelanto.js, test_wa_bot.js, test_servidor.js, test_gps.js. Volver atrás: `2bd1bf3`.
 
