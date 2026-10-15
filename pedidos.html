@@ -1554,6 +1554,10 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <!-- 📄 (15/10, §4le) El informe del mes en PDF, tipo presentación. -->
           <button class="btn btn-sm" id="atc-informe-btn" style="background:#a21caf;color:#fff;font-weight:700" onclick="abrirInformeAtc()" title="Un informe del mes elegido, tipo presentación: cuántas entraron, por qué, qué productos, dónde están hoy, cuánto tardan y el detalle">📄 Informe PDF</button>
         </div>
+        <div class="field">
+          <!-- 🔗 (15/10, §4lf) Completa lo que les falta a las ATC (motivo, fecha de compra, detalle) con las tarjetas de Trello. -->
+          <button class="btn btn-sm" id="atc-trello-btn" style="background:#0079bf;color:#fff;font-weight:700" onclick="abrirAtcTrello()" title="Busca cada ATC del panel en el tablero de Trello (por el celular o el nombre) y propone el motivo, la fecha de compra y el detalle que falten. Revisás y guardás.">🔗 Completar con Trello</button>
+        </div>
       </div>
 
       <div class="metrics" id="atc-metrics"></div>
@@ -2892,6 +2896,28 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .ai-cols-l div{ flex:1 1 0; text-align:center; font-size:12.5px; color:#475569; font-weight:700; }
 .ai-cols-l div span{ display:block; font-weight:600; color:#94a3b8; font-size:11.5px; }
 .ai-vacio{ border:2px dashed #e2e8f0; border-radius:16px; padding:46px; text-align:center; color:#64748b; font-size:18px; }
+/* 🔗 Completar las ATC con Trello (15/10, §4lf) */
+.atct-res{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+.atct-res span{ background:#fff; border:1px solid var(--gray-md); border-radius:999px; padding:4px 11px; font-size:.78rem; }
+.atct-res b{ font-size:.9rem; }
+.atct-sec{ font-weight:800; font-size:.9rem; margin:16px 0 8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.atct-sec small{ font-weight:600; color:var(--muted); font-size:.76rem; }
+.atct-f{ background:#fff; border:1px solid var(--gray-md); border-left:5px solid #0079bf; border-radius:12px; padding:10px 12px; margin-bottom:9px; }
+.atct-f.nom{ border-left-color:#d97706; }
+.atct-f.hecha{ opacity:.6; border-left-color:#16a34a; }
+.atct-h{ display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; font-size:.84rem; }
+.atct-h a{ color:#0079bf; font-weight:700; }
+.atct-por{ font-size:.72rem; font-weight:800; border-radius:999px; padding:1px 8px; background:#e0f2fe; color:#075985; }
+.atct-por.nom{ background:#fef3c7; color:#92400e; }
+.atct-c{ display:grid; grid-template-columns:auto 130px 1fr; gap:6px 10px; align-items:center; margin-top:8px; font-size:.82rem; }
+.atct-c label{ display:contents; }
+.atct-c input[type=checkbox]{ width:18px; height:18px; }
+.atct-c select, .atct-c input[type=date], .atct-c textarea{ width:100%; min-width:0; font:inherit; font-size:.82rem; }
+.atct-c textarea{ min-height:52px; resize:vertical; }
+.atct-c .lb2{ font-weight:700; color:var(--text); }
+.atct-c .dice{ grid-column:2 / -1; margin-top:-3px; font-size:.72rem; color:var(--muted); overflow-wrap:anywhere; }
+.atct-sin{ font-size:.8rem; color:var(--muted); background:#fff; border:1px dashed var(--gray-md); border-radius:10px; padding:8px 11px; }
+@media (max-width:640px){ .atct-c{ grid-template-columns:auto 1fr; } .atct-c .lb2{ grid-column:2; } .atct-c select, .atct-c input[type=date], .atct-c textarea{ grid-column:2; } }
 @media print{
   body.printing-atci > *{ display:none !important; }
   body.printing-atci #atci-ov{ display:block !important; position:static !important; background:#fff !important; }
@@ -3317,6 +3343,9 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
 <div class="no-print atci-ayuda" id="atci-estado">Las ATC que <b>entraron</b> en el mes elegido. Lo de «dónde están» es como están <b>hoy</b>.</div>
 <div id="atci-body"><div id="atci-hojas"></div></div></div>
+<!-- 🔗 (15/10, §4lf) Completar las ATC con lo que dice Trello: propone, se revisa y se guarda solo lo tildado. -->
+<div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
+<div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -17629,6 +17658,264 @@ function atciPdf(){
   });
 }
 /* ==========================================================================
+   🔗 COMPLETAR LAS ATC CON TRELLO (§4lf, 15/10, dueño: «tenés la api del trello, descargá o revisá todas las atc que tenemos en el panel
+   con las del trello y añadí los datos faltantes en el panel, como motivo y fecha de garantía o contrato (cuándo fue la compra)»).
+   · Trello no se lee desde el panel (la clave es un secreto de GitHub y el repo es público): se lee `atc-semanal.csv`, el respaldo del
+     tablero que el workflow «Reporte Semanal ATC» baja de la API todos los días y deja al lado de esta página.
+   · De cada tarjeta (`atctTarjeta`): los celulares (`atctCels`), la fecha de compra (`atctCompra`: solo con día, mes y año pegados a
+     «compra/compró/vendió»; mes y año o el año solo se MUESTRAN, no se inventa el día), la fecha de la ATC («FECHA 29/07/2026» o la del
+     título), el motivo con las palabras del reclamo (`atctMotivo`, la lista `ATC_MOTIVOS`) y el reclamo limpio (`atctDetalle`).
+   · El cruce (`atctCruzar`): mismo celular (fuerte) o el mismo nombre (dos palabras o más); la fecha de la ATC desempata.
+   · Solo completa lo VACÍO —motivo, fecha de compra, detalle—, nunca pisa lo que ya está (se vuelve a mirar al guardar). Se revisa
+     antes: lo encontrado por el celular viene tildado; por el nombre solo, sin tildar. Guarda de a una (`mergeAtcDatos` +
+     `persistPedido`) y deja `tre` = el enlace de la tarjeta. Solo con la contraseña de Administración.
+   ========================================================================== */
+var ATCT_CSV='atc-semanal.csv', ATCT={ tarj:[], filas:[], fecha:'', ocupado:false };
+var ATCT_MOTIVOS=[
+  ['Hundimiento',          /UNDID|HUNDID|HUNDIM|UNDIM|SE HUNDE|SE UNDE|SOBRESALID|DESNIVEL|DEFORMAD|BAJO EN EL MEDIO|SE HA BAJADO|SE BAJO|ORILLAS? (DEL COLCHON )?ESTA MUY FLEXIBLE/],
+  ['Resortes',             /RESORTE/],
+  ['Ruido',                /RUIDO|SONID|SUENA|CRUJ|RECHIN/],
+  ['Patas',                /\bPATAS?\b/],
+  ['Retapizado / costura', /DESCOSTUR|COSTURA|RIBETE|RETAPIZ|DESPEGAD|DESPRENDID/],
+  ['Tela / pillow',        /\bTELA\b|PILLOW|HUEQU|AGUJER|\bROT[OA]\b|BOLITAS|MANCHA|DECOLOR/],
+  ['Cambio de producto',   /CAMBIO DE (PRODUCTO|COLCHON|MODELO|MEDIDA)|QUIERE CAMBIAR|LO QUIERE (MAS )?(DURO|BLANDO)|MUY DURO|DEMASIADO DURO/],
+  ['Cotización',           /COTIZ|NO (TIENE|CUBRE)( LA)? GARANTIA|SIN GARANTIA/]
+];
+var ATCT_MESES={ ENE:1, FEB:2, MAR:3, ABR:4, MAY:5, JUN:6, JUL:7, AGO:8, SEP:9, SET:9, OCT:10, NOV:11, DIC:12 };
+var ATCT_ROTULOS=/^(CLIENTE|FECHA|NRO|N°|TELEFONO|TELF|CELULAR|CEL\b|DIRECCION|VENDEDOR|VENDEDORA|ASESOR|CODIGO|LINEA|DATOS DEL|ADJUNTAR|FECHA DE VISITA|COMODIN|FACTURA|NIT|CI\b|UBICACION|PEDIDO|DIA Y HORA)/;
+/* lo que es dirección, no reclamo */
+var ATCT_DIRECCION=/^(AV\b|AV\.|AVENIDA|CALLE|C\/|BARRIO|B\/|ZONA|URB|URBANIZACION|CONDOMINIO|EDIF|EDIFICIO|PROLONGACION|CARRETERA|\d+(ER|DO|TO|MO|VO|NO)? ANILLO|ENTRE)\b/;
+/* lo que sí habla del reclamo: si alguna parte lo dice, quedan solo esas */
+var ATCT_RECLAMO=/COLCHON|SOMIER|CAMA|RESORTE|UNDI|HUNDI|RUIDO|SUENA|PATA|TELA|COSTUR|GARANTIA|RECLAM|CLIENTE (DICE|INDICA|SOLICITA|QUIERE)|ORILLA|BAJAD|ROT[OA]|BOLITA|PILLOW|DOLOR|COMODIN/;
+/* CSV con comillas (el del respaldo trae comas y saltos de línea adentro de la descripción). */
+function atctCsv(texto){
+  var s=String(texto||'').replace(/^﻿/, ''), filas=[], fila=[], campo='', q=false;
+  for(var i=0;i<s.length;i++){
+    var c=s.charAt(i);
+    if(q){ if(c==='"'){ if(s.charAt(i+1)==='"'){ campo+='"'; i++; } else q=false; } else campo+=c; continue; }
+    if(c==='"') q=true;
+    else if(c===','){ fila.push(campo); campo=''; }
+    else if(c==='\n' || c==='\r'){ if(c==='\r' && s.charAt(i+1)==='\n') i++; fila.push(campo); campo=''; if(fila.length>1 || fila[0]) filas.push(fila); fila=[]; }
+    else campo+=c;
+  }
+  if(campo || fila.length){ fila.push(campo); filas.push(fila); }
+  var cab=(filas.shift()||[]).map(function(h){ return String(h).trim(); });
+  return filas.map(function(f){ var o={}; cab.forEach(function(h, j){ o[h]=f[j]==null ? '' : f[j]; }); return o; });
+}
+function atctMay(t){ return sinTildes(String(t||'')).toUpperCase(); }
+/* Los celulares de Bolivia que aparezcan (8 cifras que empiezan con 6 o 7; con o sin 591, guiones o espacios). */
+function atctCels(t){
+  var out=[], s=String(t||''), re=/(^|[^0-9])((?:\+?591[\s.-]?)?[67](?:[\s.-]?\d){7})(?![\s.-]?\d)/g, m;
+  while((m=re.exec(s))){ var d=m[2].replace(/\D/g,'').slice(-8); if(out.indexOf(d)<0) out.push(d); }
+  return out;
+}
+function atctCel8(c){ var d=String(c||'').replace(/\D/g,''); var m=d.match(/(?:591)?([67]\d{7})$/); if(m) return m[1]; var x=atctCels(c); return x[0]||''; }
+function atctIso(d, m, y){
+  y=+y; if(y<100) y+=2000; m=+m; d=+d;
+  if(!(y>=2005 && y<=2100 && m>=1 && m<=12 && d>=1 && d<=31)) return '';
+  var f=new Date(y, m-1, d); if(f.getMonth()!==m-1) return '';
+  return y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d;
+}
+function atctMesNum(t){ var k=String(t||'').slice(0,3); return ATCT_MESES[k]||0; }
+/* La fecha de compra. `f` solo con día, mes y año; `txt` = lo que dice, también si es mes y año o el año solo. */
+function atctCompra(t){
+  var u=atctMay(t).replace(/[\t ]+/g,' '), m;
+  var PAL='(?:FECHA DE COMPRA|FECHA COMPRA|COMPRAD[OA]|COMPRO|COMPRA|SE VENDIO|VENDID[OA]|LO ADQUIRIO|ADQUIRID[OA])';
+  m=u.match(new RegExp(PAL+'[^0-9A-Z]{0,4}(?:(?:EL|DEL|EN|EN EL|EN FECHA)\\s+)?[:\\s-]*(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{2,4})'));
+  if(m){ var f=atctIso(m[1], m[2], m[3]); if(f) return { f:f, txt:m[0].trim() }; }
+  m=u.match(new RegExp(PAL+'[^0-9]{0,14}?(\\d{1,2})[\\s\\/.-]*(?:DE\\s+)?(ENE\\w*|FEB\\w*|MAR\\w*|ABR\\w*|MAY\\w*|JUN\\w*|JUL\\w*|AGO\\w*|SEP\\w*|SET\\w*|OCT\\w*|NOV\\w*|DIC\\w*)[\\s\\/.-]*(?:DE(?:L)?\\s+)?(\\d{4})'));
+  if(m && atctMesNum(m[2])){ var f2=atctIso(m[1], atctMesNum(m[2]), m[3]); if(f2) return { f:f2, txt:m[0].trim() }; }
+  m=u.match(new RegExp(PAL+'[^0-9]{0,14}?(ENE\\w*|FEB\\w*|MAR\\w*|ABR\\w*|MAY\\w*|JUN\\w*|JUL\\w*|AGO\\w*|SEP\\w*|SET\\w*|OCT\\w*|NOV\\w*|DIC\\w*)[\\s\\/.-]*(?:DE(?:L)?\\s+)?(20[0-3]\\d)'));
+  if(m && atctMesNum(m[1])) return { f:'', txt:m[0].trim() };
+  m=u.match(new RegExp(PAL+'[^0-9]{0,30}?(20[0-3]\\d)(?![\\/.-]?\\d)'));
+  if(m) return { f:'', txt:m[0].trim() };
+  return null;
+}
+/* El día en que se pidió la ATC en Trello: «FECHA 29/07/2026» (no la de compra) o el del título («ATC ISABEL-03-10-2026 …»). */
+function atctFechaAtc(desc, titulo){
+  var u=atctMay(desc).replace(/[\t ]+/g,' '), m=u.match(/(?:^|[^A-Z])FECHA[\s:]+(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m){ var f=atctIso(m[1], m[2], m[3]); if(f) return f; }
+  m=String(titulo||'').match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  return m ? atctIso(m[1], m[2], m[3]) : '';
+}
+function atctMotivo(t){
+  var u=atctMay(t).replace(/\s+/g, ' ');
+  for(var i=0;i<ATCT_MOTIVOS.length;i++){
+    var m=u.match(ATCT_MOTIVOS[i][1]); if(!m) continue;
+    /* la frase alrededor, para que se vea de dónde sale (sin cortar palabras) */
+    var a=Math.max(0, m.index-40), b=Math.min(u.length, m.index+m[0].length+40);
+    var frase=u.slice(a, b).replace(/^\S*\s/, a>0 ? '' : '$&').replace(/\s\S*$/, b<u.length ? '' : '$&').replace(/\|/g, '·').trim();
+    return { mot:ATCT_MOTIVOS[i][0], txt:m[0], frase:frase };
+  }
+  return null;
+}
+/* El reclamo, sin los rótulos del formato, las imágenes ni los enlaces. */
+function atctDetalle(desc){
+  var s=String(desc||'').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/https?:\/\/\S+/g, ' ').replace(/[​-‍⁠﻿]/g, '').replace(/\t+/g, ' ');
+  var partes=s.split(/\s*\|\s*/).map(function(x){ return x.replace(/\s+/g,' ').trim(); }).filter(function(x){
+    if(!x || !/[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}/.test(x)) return false;
+    var u=atctMay(x).replace(/^[^A-Z0-9]+/, '');
+    if(ATCT_ROTULOS.test(u)) return false;
+    if(/^A[TR]C\b/.test(u)) return false;                       // el título repetido
+    if(ATCT_DIRECCION.test(u)) return false;                       // la dirección
+    if(/\.(XLSX?|DOCX?|PDF|JPE?G|PNG|WEBP)\b/.test(u)) return false;   // el nombre de un adjunto
+    return x.split(' ').length>=3;
+  }).map(function(x){ return x.replace(/^\s*DETALLES? DEL RECLAMO\s*[:.-]?\s*/i, ''); }).filter(function(x){ return x.split(' ').length>=3; });
+  var hablan=partes.filter(function(x){ return ATCT_RECLAMO.test(atctMay(x)); });
+  if(hablan.length) partes=hablan;
+  var out=[], vis={};
+  partes.forEach(function(x){ var k=atctMay(x); if(!vis[k]){ vis[k]=1; out.push(x); } });
+  return atciCorta(out.join(' · '), 320);
+}
+var ATCT_NO_NOMBRE={ ATC:1, ARC:1, CLIENTE:1, MIRIAN:1, ISABEL:1, CAROLA:1, NORMA:1, ROHO:1, LATEX:1, XLSX:1, DEL:1, LOS:1, LAS:1, SRA:1, SR:1,
+  COLCHON:1, SOMIER:1, TIENDA:1, PLZ:1, POR:1, GARANTIA:1, REPARACION:1, CAMBIO:1, HUNDIMIENTO:1, ORTOPEDICO:1, NUEVO:1, COTIZAR:1, CON:1, PARA:1 };
+/* Las palabras del nombre del cliente: el campo CLIENTE si está; si no, el título sin «ATC» ni la vendedora del principio. */
+function atctNombre(desc, titulo){
+  var u=atctMay(desc).replace(/[\t ]+/g,' '), m=u.match(/CLIENTE(?:\s*:)?\s+(?:CLIENTE\s+)?([A-ZÑ][A-ZÑ .]{3,60}?)\s+(?:FECHA|NRO|CODIGO|TELEFONO|CELULAR|DIRECCION|\|)/);
+  var base=m ? m[1] : atctMay(titulo).replace(/^\W*A[TR]C\W*/, '').replace(/^(MIRIAN|MARIA|ISABEL|CAROLA|NORMA|ROHO)\b\W*/, '').replace(/\bCLIENTE\b\W*/g, ' ');
+  return base.replace(/[^A-ZÑ ]/g, ' ').split(/\s+/).filter(function(w){ return w.length>=3 && !ATCT_NO_NOMBRE[w]; });
+}
+function atctTarjeta(r){
+  var desc=r.Descripcion||'', tit=r.Tarjeta||'', todo=tit+' | '+desc;
+  return { tit:tit, lista:r.Lista||'', url:r.URL||'', arch:/^s/i.test(String(r.Archivada||'')),
+    cels:atctCels(todo), compra:atctCompra(todo), fecha:atctFechaAtc(desc, tit), mot:atctMotivo(todo), det:atctDetalle(desc), nom:atctNombre(desc, tit) };
+}
+function atctNombrePanel(p){ return atctMay(p&&p.cliente).replace(/[^A-ZÑ ]/g, ' ').split(/\s+/).filter(function(w){ return w.length>=3 && !ATCT_NO_NOMBRE[w]; }); }
+/* Qué le falta a una ATC del panel. */
+function atctFaltan(p){
+  var a=atcDe(p)||{}, f=[];
+  if(!a.mot) f.push('mot'); if(!a.fcom) f.push('fcom'); if(!String(a.det||'').trim()) f.push('det');
+  return f;
+}
+/* Cada ATC del panel con lo que le falta, contra las tarjetas: la mejor por celular; si no, por nombre (2+ palabras). */
+function atctCruzar(tarj){
+  var atcs=STATE.filter(function(p){ return p && esATC(p.oc) && (p.productos||[]).length; });
+  return atcs.map(function(p){
+    var falta=atctFaltan(p), cel=atctCel8(p.celular), nom=atctNombrePanel(p), entro=atcEntro(p), mejor=null, pts=0, por='';
+    tarj.forEach(function(t){
+      var c=!!(cel && t.cels.indexOf(cel)>=0);
+      var comunes=nom.filter(function(w){ return t.nom.indexOf(w)>=0; }).length, n=comunes>=2 || (comunes>=1 && nom.length===1 && t.nom.length===1);
+      if(!c && !n) return;
+      var cerca=!!(t.fecha && entro && diasEntreFechas(t.fecha, entro)<=25);
+      var s=(c ? 10 : 0)+(n ? 3+comunes : 0)+(cerca ? 2 : 0)+(t.compra && t.compra.f ? 0.5 : 0)+(t.mot ? 0.3 : 0);
+      if(s>pts){ pts=s; mejor=t; por=c ? 'cel' : 'nom'; }
+    });
+    return { p:p, falta:falta, t:mejor, por:por };
+  });
+}
+function atctTraerCsv(){
+  return fetch(ATCT_CSV+'?_='+Date.now(), { cache:'no-store' }).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    ATCT.fecha=r.headers.get('last-modified')||'';
+    return r.text();
+  });
+}
+function abrirAtcTrello(){
+  if(!UNLOCKED){ toast('🔒 Hace falta la contraseña de Administración: entrá primero a la pestaña Administración.', 'err', 6000); return; }
+  var ov=document.getElementById('atct-ov'), body=document.getElementById('atct-body'); if(!ov || !body) return;
+  ov.style.display='flex';
+  body.innerHTML='<div class="atct-sin">⏳ Leyendo el respaldo de Trello…</div>';
+  document.getElementById('atct-info').textContent='';
+  atctTraerCsv().then(function(txt){
+    ATCT.tarj=atctCsv(txt).filter(function(r){ return r.Tarjeta || r.Descripcion; }).map(atctTarjeta);
+    atctPintar();
+  }).catch(function(e){
+    body.innerHTML='<div class="atct-sin" style="color:#b91c1c">⚠️ No se pudo leer el respaldo de Trello ('+esc(String((e && e.message) || e))+'). Probá de nuevo en un rato.</div>';
+  });
+}
+function atctCerrar(){ var ov=document.getElementById('atct-ov'); if(ov) ov.style.display='none'; }
+function atctFechaTxt(){ var d=ATCT.fecha ? new Date(ATCT.fecha) : null; return (d && !isNaN(d)) ? ('respaldo del '+fmtFecha(isoLocal(d))) : 'último respaldo'; }
+function atctFila(F, i){
+  var p=F.p, t=F.t, a=atcDe(p)||{}, tilde=(F.por==='cel'), filas='';
+  var cb=function(k, si, hay){ return '<input type="checkbox" data-i="'+i+'" data-k="'+k+'"'+(si && hay ? ' checked' : '')+(hay ? '' : '')+'>'; };
+  if(F.falta.indexOf('mot')>=0){
+    var mp=t.mot ? t.mot.mot : '';
+    filas+='<label>'+cb('mot', tilde, !!mp)+'<span class="lb2">Motivo</span><select data-i="'+i+'" data-c="mot" onchange="atctTocar(this)"><option value="">— elegí —</option>'+
+      ATC_MOTIVOS.map(function(m){ return '<option'+(m===mp ? ' selected' : '')+'>'+esc(m)+'</option>'; }).join('')+'</select></label>'+
+      '<div class="dice">'+(t.mot ? 'Trello dice «'+esc((t.mot.frase||t.mot.txt).toLowerCase())+'»' : 'Trello no dice el motivo: elegilo si lo sabés')+'</div>';
+  }
+  if(F.falta.indexOf('fcom')>=0){
+    var cf=t.compra && t.compra.f ? t.compra.f : '', ok=cf && (!atcEntro(p) || cf<=atcEntro(p));
+    filas+='<label>'+cb('fcom', tilde, !!ok)+'<span class="lb2">Fecha de compra</span><input type="date" data-i="'+i+'" data-c="fcom" max="'+esc(todayStr())+'" value="'+esc(ok ? cf : '')+'" oninput="atctTocar(this)"></label>'+
+      '<div class="dice">'+(t.compra ? ('Trello dice «'+esc(t.compra.txt.toLowerCase())+'»'+(cf && !ok ? ' — es posterior a la ATC: no se pone' : (!cf ? ' — sin el día: ponelo si lo sabés' : ''))) : 'Trello no dice cuándo la compró')+'</div>';
+  }
+  if(F.falta.indexOf('det')>=0){
+    filas+='<label>'+cb('det', tilde, !!t.det)+'<span class="lb2">Detalle</span><textarea data-i="'+i+'" data-c="det" oninput="atctTocar(this)">'+esc(t.det||'')+'</textarea></label>'+
+      (t.det ? '' : '<div class="dice">Trello no trae el reclamo escrito</div>');
+  }
+  return '<div class="atct-f'+(F.por==='nom' ? ' nom' : '')+'" id="atct-f'+i+'">'+
+    '<div class="atct-h"><b>🎧 '+esc(p.oc||'')+'</b><span>'+esc(p.cliente||'')+(p.celular ? ' · 📞 '+esc(p.celular) : '')+' · entró el '+esc(fmtFecha(atcEntro(p)))+'</span>'+
+      '<span>⟷ 🗂️ «'+esc(atciCorta(t.tit, 60))+'» <small style="color:var(--muted)">('+esc(t.lista)+(t.arch ? ', archivada' : '')+')</small>'+(t.url ? ' <a href="'+esc(t.url)+'" target="_blank" rel="noopener">abrir</a>' : '')+'</span>'+
+      '<span class="atct-por'+(F.por==='nom' ? ' nom' : '')+'">'+(F.por==='cel' ? '📞 mismo celular' : '👤 mismo nombre · revisá')+'</span></div>'+
+    '<div class="atct-c">'+filas+'</div></div>';
+}
+function atctPintar(){
+  var body=document.getElementById('atct-body'); if(!body) return;
+  var F=atctCruzar(ATCT.tarj); ATCT.filas=F;
+  var falta=F.filter(function(x){ return x.falta.length; }), cel=[], nom=[], sin=[];
+  falta.forEach(function(x){ if(!x.t) sin.push(x); else if(x.por==='cel') cel.push(x); else nom.push(x); });
+  var completas=F.length-falta.length;
+  document.getElementById('atct-info').textContent=ATCT.tarj.length+' tarjetas de Trello ('+atctFechaTxt()+') · '+F.length+' ATC en el panel';
+  var idx=function(x){ return F.indexOf(x); };
+  var h='<div class="atct-res"><span>🎧 <b>'+F.length+'</b> ATC en el panel</span><span>✔️ <b>'+completas+'</b> ya completas</span>'+
+    '<span>📞 <b>'+cel.length+'</b> encontradas por el celular</span><span>👤 <b>'+nom.length+'</b> solo por el nombre</span><span>❓ <b>'+sin.length+'</b> sin tarjeta</span></div>'+
+    '<div class="atct-sin" style="margin-bottom:10px">Solo se completa lo que <b>está vacío</b> (motivo, fecha de compra y detalle); lo que ya tiene la ATC no se toca. Revisá lo tildado y tocá <b>💾 Guardar lo tildado</b>.</div>';
+  if(cel.length) h+='<div class="atct-sec">📞 Encontradas por el celular <small>vienen tildadas</small></div>'+cel.map(function(x){ return atctFila(x, idx(x)); }).join('');
+  if(nom.length) h+='<div class="atct-sec">👤 Encontradas solo por el nombre <small>sin tildar: abrí la tarjeta y confirmá que es el mismo cliente</small></div>'+nom.map(function(x){ return atctFila(x, idx(x)); }).join('');
+  if(sin.length) h+='<div class="atct-sec">❓ Sin tarjeta en Trello <small>a estas les falta algo y no aparecen en el tablero</small></div><div class="atct-sin">'+
+    sin.map(function(x){ return '<b>'+esc(x.p.oc||'')+'</b> '+esc(x.p.cliente||'')+' <span style="color:var(--muted)">(falta '+x.falta.map(function(k){ return { mot:'motivo', fcom:'fecha de compra', det:'detalle' }[k]; }).join(', ')+')</span>'; }).join('<br>')+'</div>';
+  if(!falta.length) h+='<div class="atct-sin" style="color:#15803d">✅ Todas las ATC del panel ya tienen motivo, fecha de compra y detalle.</div>';
+  body.innerHTML=h;
+  atctContar();
+}
+/* Tocar un campo lo tilda (si quedó con algo). */
+function atctTocar(el){
+  var i=el.getAttribute('data-i'), k=el.getAttribute('data-c'), cb=document.querySelector('#atct-body input[type=checkbox][data-i="'+i+'"][data-k="'+k+'"]');
+  if(cb) cb.checked=!!String(el.value||'').trim();
+  atctContar();
+}
+function atctTildados(){
+  var por={};
+  [].forEach.call(document.querySelectorAll('#atct-body input[type=checkbox]:checked'), function(cb){
+    var i=cb.getAttribute('data-i'), k=cb.getAttribute('data-k'), c=document.querySelector('#atct-body [data-i="'+i+'"][data-c="'+k+'"]');
+    var v=c ? String(c.value||'').trim() : ''; if(!v) return;
+    (por[i]=por[i]||{})[k]=v;
+  });
+  return por;
+}
+function atctContar(){ var n=Object.keys(atctTildados()).length, b=document.getElementById('atct-guardar'); if(b){ b.textContent='💾 Guardar lo tildado ('+n+' ATC)'; b.disabled=!n || ATCT.ocupado; } }
+function atctGuardar(){
+  if(ATCT.ocupado) return;
+  var por=atctTildados(), ids=Object.keys(por);
+  if(!ids.length){ toast('No hay nada tildado para guardar', 'err'); return; }
+  ATCT.ocupado=true; atctContar();
+  var ok=0, cola=0, mal=0, nada=0, k=0;
+  var una=function(){
+    if(k>=ids.length) return Promise.resolve();
+    var i=ids[k++], F=ATCT.filas[+i], p=F && findById(F.p.id), c=por[i], a=p ? (atcDe(p)||{}) : null, cambios={}, n=0;
+    if(!p || !esATC(p.oc)){ nada++; return una(); }
+    /* se vuelve a mirar lo que tiene AHORA: si alguien lo completó mientras tanto, no se pisa */
+    if(c.mot && !a.mot && ATC_MOTIVOS.indexOf(c.mot)>=0){ cambios.mot=c.mot; n++; }
+    if(c.fcom && !a.fcom && /^\d{4}-\d{2}-\d{2}$/.test(c.fcom) && c.fcom<=todayStr()){ cambios.fcom=c.fcom; n++; }
+    if(c.det && !String(a.det||'').trim()){ cambios.det=c.det.slice(0, 600); n++; }
+    if(!n){ nada++; return una(); }
+    if(F.t && F.t.url && !a.tre) cambios.tre=F.t.url;
+    mergeAtcDatos(p, cambios);
+    return Promise.resolve(persistPedido(p)).then(function(res){
+      if(res && res.ok) ok++; else if(res && res.local) cola++; else mal++;
+      var fila=document.getElementById('atct-f'+i); if(fila) fila.classList.add('hecha');
+    }, function(){ mal++; }).then(una);
+  };
+  toast('⏳ Guardando '+ids.length+' ATC…', 'ok');
+  una().then(function(){
+    ATCT.ocupado=false;
+    var t='✅ Completadas '+ok+' ATC'+(cola ? ' · '+cola+' quedaron en cola (se mandan solas)' : '')+(mal ? ' · ⚠️ '+mal+' no se pudieron guardar' : '')+(nada ? ' · '+nada+' ya estaban completas' : '');
+    toast(t, mal ? 'err' : 'ok', 8000);
+    try{ renderAtc(); }catch(e){}
+    atctPintar();
+  });
+}
+/* ==========================================================================
    👋 ¿QUIÉN ESTÁ USANDO EL PANEL? (12/10, dueño: «falta que al entrar al panel cada vendedor se identifique»)
    Al abrir el panel (una vez por pestaña: `sessionStorage` `me_quien_ok`; recargar la misma pestaña no vuelve a preguntar) Eduardo
    pregunta quién es. Tocar un nombre lo recuerda en el aparato (`setVendedorMem`, el mismo «Tu nombre» de siempre), lo pone en el
@@ -18006,6 +18293,8 @@ function verAtc(id){
 
       texto('Detalle del desperfecto — lo que dijo el cliente', atcDetalle(p)||p.observaciones)+
       texto('Qué se hizo', atcQueSeHizo(p))+
+      /* 🔗 (15/10, §4lf) la tarjeta de Trello de donde se completaron datos */
+      ((atcDe(p)||{}).tre && /^https:\/\/trello\.com\//.test((atcDe(p)||{}).tre) ? ('<div style="margin-top:10px;font-size:.8rem"><a href="'+esc((atcDe(p)||{}).tre)+'" target="_blank" rel="noopener" style="color:#0079bf;font-weight:700">🗂️ Ver su tarjeta en Trello</a></div>') : '')+
 
       '<div style="margin-top:14px">'+
         '<div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px">Cómo viene</div>'+
