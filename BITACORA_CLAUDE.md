@@ -14637,3 +14637,25 @@ e importante tipo presentación sobre las ATC del mes, que uno puede elegir el m
   (tarjetas de Claude, `SCRIPT_VERSION_ESPERADA` 14-c) sigue en la rama. En main pasaron `test_atc_informe` 37, `test_atc` 81,
   `test_atc_4jz` 15, `test_onclicks` 5, `test_cupos_fecha` 7. Batería de la rama: `test_getlog` y `test_escenas_form` dieron 1 roja
   cada una con la máquina cargada y pasan solas.
+
+## §4lf — 🔗 Completar las ATC con lo que dice Trello (15/10)
+El dueño (15/10): *«https://trello.com/b/cFbJp9DO/atc — tenés la api del trello, descargá o revisá todas las atc que tenemos en el panel
+con las del trello y añadí los datos faltantes en el panel, como motivo y fecha de garantía o contrato (cuándo fue la compra)»*.
+- **Por qué no lo hice yo directo**: desde esta sesión no hay salida a `api.trello.com` ni a Google (el proxy los rechaza) y la clave de
+  Trello es un secreto de GitHub. Pero el workflow «Reporte Semanal ATC» ya baja el tablero entero de la API todos los días a
+  `atc-semanal.csv` (88 tarjetas, también las archivadas), que Pages sirve al lado de `pedidos.html`. El cruce lo hace el PANEL, que es
+  el que tiene las ATC y las guarda con sus sellos.
+- Pestaña ATC → **«🔗 Completar con Trello»** (`#atc-trello-btn`, `abrirAtcTrello`, ventana `#atct-ov`; solo con la contraseña de
+  Administración). Lee el CSV (`atctTraerCsv`, sin caché; la fecha del respaldo sale del `Last-Modified`), y de cada tarjeta
+  (`atctTarjeta`): celulares (`atctCels`: 8 cifras con 6/7, con o sin 591, guiones o espacios; no un NIT de 7), **fecha de compra**
+  (`atctCompra`: solo con día, mes y año pegados a «fecha de compra / compró / compra / se vendió»; «junio-2022» o «COMPRO 2024» se
+  MUESTRAN y no se inventa el día), la fecha de la ATC («FECHA 29/07/2026» o la del título), el **motivo** (`atctMotivo`, palabras →
+  `ATC_MOTIVOS`, con la frase de donde sale) y el reclamo limpio (`atctDetalle`: sin rótulos, dirección, imágenes ni adjuntos).
+- **Cruce** (`atctCruzar`): mismo celular (fuerte) o mismo nombre (2+ palabras; el campo CLIENTE o el título sin «ATC» ni la
+  vendedora); la fecha de la ATC desempata. **Solo completa lo VACÍO** (motivo, fecha de compra, detalle), y lo vuelve a mirar al
+  guardar (si alguien lo llenó mientras tanto, no se pisa). Por el celular viene tildado; solo por el nombre, sin tildar («abrí la
+  tarjeta y confirmá»). Una fecha de compra posterior a la ATC no se propone. Guarda de a una (`mergeAtcDatos` + `persistPedido`) y
+  deja **`a.tre`** = el enlace de la tarjeta → la ficha de la ATC muestra «🗂️ Ver su tarjeta en Trello».
+- Con el respaldo real (probado en el scratchpad, sin datos al repo): 88 tarjetas, 74 con celular, 30 con la fecha de compra entera,
+  66 con el motivo reconocido, 48 con el reclamo escrito.
+- `tests/test_atc_trello.js` (24, CSV y ATC inventadas).

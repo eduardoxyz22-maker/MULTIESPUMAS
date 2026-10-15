@@ -703,6 +703,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   ⚠️ En el CSS de las hojas nada de `color-mix()`/`oklch()` ni `box-shadow` en la copia (html2canvas los pinta mal); tablas con
   `table-layout:fixed` + `white-space:normal`. `tests/test_atc_informe.js` (37; `ATCI_LIBS_DIR` con las librerías de npm, `ATCI_SALIDA` deja PDF y capturas).
 
+## 🔗 Completar las ATC con Trello (§4lf, 15/10; dueño: *«revisá todas las atc del panel con las del trello y añadí los datos faltantes: motivo y fecha de compra»*)
+- Pestaña ATC → **«🔗 Completar con Trello»** (`abrirAtcTrello`, `#atct-ov`, solo con la contraseña). Lee `atc-semanal.csv` (el respaldo diario del
+  tablero que baja el workflow «Reporte Semanal ATC»: el panel no tiene la clave de Trello) y cruza cada ATC por **celular** (tildado) o **nombre**
+  (sin tildar). **Solo completa lo vacío** (motivo, fecha de compra, detalle; se vuelve a mirar al guardar) y deja `a.tre` = la tarjeta (la ficha
+  muestra «🗂️ Ver su tarjeta en Trello»). La fecha de compra solo con día/mes/año (`atctCompra`); mes/año o año solo se muestran. `tests/test_atc_trello.js` (24).
+
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
   con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por
