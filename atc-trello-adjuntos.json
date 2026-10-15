@@ -1,9 +1,9 @@
 {
- "generado": "2026-10-15T14:19:49Z",
+ "generado": "2026-10-15T15:07:37Z",
  "resumen": {
   "adjuntos": 124,
   "con_fecha": 37,
-  "de_antes": 108,
+  "de_antes": 91,
   "errores": 0,
   "excel": 0,
   "excel_casillero": {
@@ -12,9 +12,9 @@
    "texto": 1,
    "vacio": 3
   },
-  "fotos": 15,
+  "fotos": 32,
   "grandes": 0,
-  "leidos_ia": 0,
+  "leidos_ia": 17,
   "otros": 1,
   "pdf": 0,
   "pendientes": 0,
@@ -1620,7 +1620,8 @@
    "fcomTxt": "",
    "fuente": "la foto «WhatsApp_Image_2026-04-25_at_3.57.43_PM.jpeg»",
    "reclamo": "",
-   "tipo": "otro"
+   "tipo": "otro",
+   "v": 2
   },
   "69efc6302abdb588ff845d70": {
    "cels": [],
@@ -1779,7 +1780,8 @@
    "fcomTxt": "",
    "fuente": "la factura «a998a474-b522-4d54-9c1b-1c7da7a60f41.jpg»",
    "reclamo": "",
-   "tipo": "factura"
+   "tipo": "factura",
+   "v": 2
   },
   "6a0245cb7a8cc629a20dce32": {
    "cels": [],
@@ -1812,8 +1814,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM.jpeg»",
-   "reclamo": "Costura lateral del colchón descosida, tela separada dejando expuestas las capas de espuma.",
-   "tipo": "foto_producto"
+   "reclamo": "Costura lateral del forro descosida, tela separada dejando expuestas las espumas internas.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a074010e97a1a74554e4aa0": {
    "cels": [],
@@ -1821,8 +1824,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM_(1).jpeg»",
-   "reclamo": "Tela lateral del colchón rota y despegada, con espumas internas expuestas y deformadas.",
-   "tipo": "foto_producto"
+   "reclamo": "Colchón con tela lateral rota y espumas internas expuestas y deformadas.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a0740518080c715307955bc": {
    "cels": [
@@ -1863,7 +1867,8 @@
    "fcomTxt": "",
    "fuente": "la foto «86044d47-15d7-4f93-8c2a-6c3a96a10994.jpg»",
    "reclamo": "",
-   "tipo": "foto_producto"
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a0c70049b166b6aa3c4b66b": {
    "cels": [],
@@ -1871,8 +1876,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «80c80005-a1dd-4cdc-9d65-c7ccaa4565fd.jpg»",
-   "reclamo": "Tela lateral del colchón rota, se ve y sale la espuma interior por el costado.",
-   "tipo": "foto_producto"
+   "reclamo": "Tela lateral del colchón rota, con la espuma expuesta y desprendida.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a0c700933608081e9530be2": {
    "cels": [
@@ -1912,8 +1918,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «372f2f46-f6ff-462e-97c0-d162dcbe46dd.jpg»",
-   "reclamo": "Tela de la base rota con agujero, madera de la base dañada y con mancha alrededor de un orificio.",
-   "tipo": "foto_producto"
+   "reclamo": "Tela del colchón/base rota con agujero en la madera y mancha oscura en la estructura",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a1609d6f62e87a051f9d342": {
    "cels": [],
@@ -1921,8 +1928,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «76b9f006-9d0b-47ca-a5e1-19d74327d7e4.jpg»",
-   "reclamo": "Tela de la base rota/despegada, dejando expuesta la estructura de madera con tornillo.",
-   "tipo": "foto_producto"
+   "reclamo": "Tela de la base desprendida, deja ver la estructura de madera y un tornillo.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a19f9081077534ed3ec7931": {
    "cels": [
@@ -1978,8 +1986,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «0cdae8b2-660c-4854-94e8-79866f1a7d42.jpg»",
-   "reclamo": "Tela de la base rota dejando expuesta la madera con un agujero y mancha oscura.",
-   "tipo": "foto_producto"
+   "reclamo": "Tela rota en la base, con madera expuesta y mancha alrededor de un agujero",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a302c44c352b7794d3529d1": {
    "cels": [
@@ -2045,7 +2054,8 @@
    "fcomTxt": "",
    "fuente": "la foto «f28c70c6-c769-4eb1-be5f-fbf8c94cd84f.jpg»",
    "reclamo": "",
-   "tipo": "foto_producto"
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a359cc75829c6d5dab74a52": {
    "cels": [
@@ -2172,7 +2182,8 @@
    "fcomTxt": "",
    "fuente": "la foto «356c3b30-b64c-473e-a9ae-27b11789a834.jpg»",
    "reclamo": "",
-   "tipo": "foto_producto"
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a4d0917dcf99d7c1f12096c": {
    "cels": [
@@ -2212,8 +2223,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM.jpeg»",
-   "reclamo": "Costura lateral del colchón descosida/abierta, tela separada dejando expuestas las espumas internas.",
-   "tipo": "foto_producto"
+   "reclamo": "Costura lateral del colchón descosida, tela separada dejando expuestas las espumas internas.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a4d0917dcf99d7c1f120984": {
    "cels": [],
@@ -2221,8 +2233,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM_(1).jpeg»",
-   "reclamo": "Tela lateral del colchón rota y despegada, con espumas internas expuestas y deformadas.",
-   "tipo": "foto_producto"
+   "reclamo": "Colchón con la tela lateral rota y la espuma interna expuesta y deformada.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a4d0917dcf99d7c1f120986": {
    "cels": [
@@ -2338,7 +2351,8 @@
    "fcomTxt": "",
    "fuente": "la foto «WhatsApp_Image_2026-07-17_at_11.17.29.jpeg»",
    "reclamo": "",
-   "tipo": "foto_producto"
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a5fc02f635af32315a173aa": {
    "cels": [
@@ -2400,8 +2414,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «9a929713-df39-4528-bfe3-450bc753b647.jpg»",
-   "reclamo": "Base del colchón (somier) hundida/rota en el centro, con la tela inferior desprendida y combada.",
-   "tipo": "foto_producto"
+   "reclamo": "Base o somier del colchón hundido y despegado en el centro, con abertura visible.",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a6a2a3d1f85badde568c4a0": {
    "cels": [
@@ -2499,8 +2514,9 @@
    "fcom": "",
    "fcomTxt": "",
    "fuente": "la foto «726fe4b6-562c-4b91-a3dd-4ae5600d5a54.jpg»",
-   "reclamo": "",
-   "tipo": "foto_producto"
+   "reclamo": "Manchas visibles en la superficie del colchón",
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a7118b9e477ff031fa8b7a2": {
    "cels": [],
@@ -2509,7 +2525,8 @@
    "fcomTxt": "",
    "fuente": "la foto «b1b13929-7a5b-4079-98f0-0cc635329e91.jpg»",
    "reclamo": "",
-   "tipo": "foto_producto"
+   "tipo": "foto_producto",
+   "v": 2
   },
   "6a79d401fc24e5db89237a92": {
    "cels": [
