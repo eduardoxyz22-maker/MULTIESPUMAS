@@ -14890,3 +14890,6 @@ El dueño, recién publicado §4lh: *«ash faltó que al crear la ATC se genere 
 - Después: **«📧 Correo de la ATC»** en la ficha (`verAtc` → `atcCorreoVer`, con «← Volver a la ficha») y «📲 Reenviar» de Mis pedidos también lo
   trae. Una edición de ATC sigue con «✓ Cambios guardados» (sin correo): para reenviarlo, desde la ficha. OC y RPT no cambian.
 - `tests/test_atc_correo.js` (32; 15 rojas contra `a21dfe7`).
+- **PUBLICADO 15/10, `ea4978a`** (encima de `a21dfe7`: `pedidos.html` + la prueba), Pages OK. Antes: `test_atc_correo` 32 y
+  `test_atc_obligatorio` 57 en la copia de main; en la rama, las 14 que miran la ventana de guardado o la ATC en verde (`test_atc` 81,
+  `test_auditoria` 175, `test_rpt` 110, `test_rev5_pedidos` 49…). Falta que el dueño diga a qué correo va (para `ATC_CORREO_PARA`). Todos F5.

@@ -703,7 +703,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   CUENTA fotos de la entrega; `fotosDe` para guardar/comparar la fila. `abrirVisor(pid,i,'atc')`, `atcFotosTiraHtml` en la ficha ATC y los modales.
   El eco del formulario compara contra `rec` (lo mandado). Una página sin F5 no conoce nada de esto: al publicar, todos F5.
 - `tests/test_atc_obligatorio.js` (57). Bitácora §4lh.
-- **📧 El correo de la ATC** (§4li, 15/10; dueño: *«que al crear la ATC se genere el mensaje para copiar al correo, y ellas enviar»*): al guardar
+- **📧 El correo de la ATC** (§4li, 15/10, PUBLICADO `ea4978a`; dueño: *«que al crear la ATC se genere el mensaje para copiar al correo, y ellas enviar»*): al guardar
   una ATC sale «✅ ATC guardada» con `#atc-correo` ARRIBA del WhatsApp: Para (por compu, `me_atc_correo`; si no, `ATC_CORREO_PARA`, hoy vacío),
   Asunto (`atcCorreoAsunto`) y Mensaje (`atcCorreoTexto`: todo lo de la ATC + enlaces de Drive de las fotos). Copiar / «📧 Abrir en Gmail» /
   «✉️ Otro correo» (`atcCorreoUrl`). El panel NO manda nada. También desde la ficha («📧 Correo de la ATC», `atcCorreoVer`). `tests/test_atc_correo.js` (32).
