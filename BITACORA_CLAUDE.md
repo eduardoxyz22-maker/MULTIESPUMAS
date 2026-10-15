@@ -14608,6 +14608,12 @@ mantenimiento, así que solo por mañana»*.
   la respuesta del aviso mientras tanto: si la repite, el repetido no se anota (mismo wamid). Lo que espera el aviso NO cuenta para los
   90 min/día de disparadores. `IA_AL_VUELO` = 0 lo apaga sin reimplementar. `test_wa_bot` §15c (+8 → 208). Página: `SCRIPT_VERSION_ESPERADA`
   = 14-c (sin otro cambio). `.gs` 4.342 líneas.
+- **15/10 ~12:00: en marcha para todos.** El diagnóstico de la lectura (corrida 38764567355, 11:56) dice versión `2026-10-14-c`: el dueño
+  la implementó. El dueño: *«Ya activé el bot, quité el IA solo»* → Claude le contesta a todos los clientes que le escriben al bot. Se
+  publicó la página de las tarjetas (`15eb607`: `pedidos.html` + el `.gs` 14-c + `test_wa_bot`/`test_wa_claude`/`test_servidor`, encima de
+  `d74791d`); antes, el panel publicado seguía diciendo «el bot no lee». En la copia de main: `test_wa_bot` 208, `test_servidor` 367,
+  `test_wa_claude` 11, `test_wa_resp` 7, `test_wa_pagina` 12, `test_adelanto` 14, `test_asistente` 24, `test_onclicks` 5.
+  ⚠️ Desde hoy el registro de Actions SÍ se lee con `get_job_logs` (job id + `return_content`): el diagnóstico dice la versión del servidor.
 
 ## §4le — 📄 Informe de ATC en PDF, del mes que se elija (15/10)
 El dueño (15/10): *«En la pestaña de ATC del panel quiero un botón que genere un informe en PDF y ese informe muestre lo más relevante

@@ -918,7 +918,8 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   {adelanto:1})`. El servidor: evento `e` → plantilla **`pedido_en_camino`** solo al cliente (respaldo `cambio_entrega_v2` → `cambio_entrega`);
   sin `adelanto` o de otro día, el cambio de siempre. Nada se marca ✅. `tests/test_adelanto.js` (14), `test_wa_bot` §14.
 - **🧠 Claude le contesta al cliente** (§4lc, 14/10, dueño: *«Entiende y contesta»*, con Claude Opus 5.5 y USD 100 de crédito; 14-b
-  IMPLEMENTADO 14/10 ~19:05 por el dueño, primera respuesta real 19:13; **`2026-10-14-c` en la rama, SIN implementar**): el webhook pone «⏳» en la columna M y
+  IMPLEMENTADO 14/10 ~19:05 por el dueño, primera respuesta real 19:13; **`2026-10-14-c` IMPLEMENTADO** (el diagnóstico del 15/10 11:56 lo lee);
+  **15/10: el dueño sacó `IA_SOLO` — Claude le contesta a TODOS los clientes**; las tarjetas del panel PUBLICADAS 15/10, `15eb607`): el webhook pone «⏳» en la columna M y
   **⚡ desde la 14-c contesta AL VUELO** (dueño: *«escribo y demora 3-5 min»*): `iaAlVuelo_` espera 5 s (`IA_VUELO_MS`) y procesa SOLO sus
   números con 4 s de quietud (`IA_VUELO_QUIETO_MS`) → ~15 s; el tiempo del webhook no gasta la cuota de disparadores; `IA_AL_VUELO`=0 lo apaga
   sin reimplementar. De respaldo sigue `iaRepaso` (disparador `iaDespierta` a los 30 s + al final de `waRepaso`), que junta los mensajes de cada número con 20 s de quietud, le pasa a Claude SU pedido de la
