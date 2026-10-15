@@ -14725,3 +14725,56 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   «Completar con Trello»** (4 de julio, 4 de agosto, 1 de septiembre, 0 de octubre) · 13 sin el bloque de datos de ATC · 25 con algo
   vacío, solo 4 con una tarjeta del mismo celular. Las 8 de OCTUBRE ya estaban completas: el informe de octubre no cambia. Agosto es el
   flojo (16 ATC, motivo 2, fecha 3). El informe no tiene caché: lee `STATE` al abrir.
+
+### §4le-c — 🛒 El informe de ATC con la fecha de compra y sin «y N más» (15/10)
+- **El dueño** (con 3 capturas del informe): *«Y la fecha de compra, si para eso hicimos el bot en GitHub… NO ME PUSISTE EL DATO MÁS
+  IMPORTANTE, que era en la foto de la garantía decía la fecha de compra»* y *«Y DICE Y X MÁS. Si mi jefe quiere ver los demás, ¿qué onda?»*.
+- **Hecho**: columna «Compra» (`atciCompraTd`) en «Las que más esperan», en las hojas que siguen y en el detalle: la guardada en la ATC o, con
+  📎, la de Trello (texto o adjuntos) SOLO con el mismo celular y nunca posterior a la ATC (`atciTrelloMapa`; `atciTraerTrello` al abrir el
+  informe y se redibuja; el informe no guarda nada). «Lo más importante» dice cuántas la tienen. Nada queda en «y N más»: `ATCI_TOP`=8 en el
+  recuadro y el resto en hojas aparte (`atciProductosResto` 16 por hoja, `atciAbiertasResto` 13 por hoja); «Quién las cargó» con más de 6
+  va entero en dos columnas (`.ai-vlist`). `test_atc_informe` §1c-1d → 67 (la versión anterior se cae en §1c).
+- **PUBLICADO 15/10 ~10:50, `e468cc0`**, Pages OK.
+
+### §4lf-c — 📥 Las ATC que están en Trello y no en el panel (15/10)
+- **El dueño**: *«24 sin fecha de compra? si en el Trello creo que todas están con fecha de compra… ahí abajo es la fecha de compra»* (foto
+  del certificado de garantía de Leonela Sossa, FECHA «jueves, 23 de diciembre de 2021»), *«y las que están en Trello y no en el panel
+  deberían estar, si cuando creamos las ATC "exportamos" todas las del Trello»* y *«LA FECHA DE CREACIÓN no es lo mismo que la fecha de
+  compra… en los certificados que subieron las fotos, SI NO TIENEN anotado fecha compra»*.
+- **Lo que se midió** (diagnóstico de la lectura `547eed0`, corrida 38755283018, renglón por renglón SIN nombres):
+  · La tarjeta de Leonela Sossa SÍ tenía la fecha leída (23/12/2021, del Excel adjunto, igual que el certificado). Pero su ATC no está en el
+    panel.
+  · Las 22-24 ATC del panel sin fecha de compra son de agosto-septiembre (ATC 08-0xx, 09-0xx): 19 sin ninguna tarjeta parecida. En Trello se
+    crearon 6 tarjetas en agosto, 2 en septiembre y 1 en octubre; en el panel entraron 16, 21 y 8. **Esas ATC nunca estuvieron en Trello**:
+    su fecha de compra no está en ningún archivo que el panel pueda leer.
+  · **72 de 88 tarjetas de Trello no tienen su ATC en el panel** (por celular o 2+ palabras del nombre): devueltas 56 → 50 no están (25 con
+    fecha de compra), solicitadas 13 → 5, POST VENT 5 → 5, programadas 4 → 3, en producción 3 → 3, archivadas 6. Las tarjetas son de
+    nov-2025 a jul-2026: «exportamos todas» no pasó; se cargaron unas pocas (9 con el enlace de su tarjeta).
+- **El certificado de garantía en las fotos** (`bccdbf6`): la pregunta a Claude ahora lo nombra (tipo `certificado`; la FECHA de abajo = la de
+  compra) y las fotos leídas antes SIN fecha se releen una vez (`PREGUNTA_V`=2). Se releyeron las 17 (corrida 38757403337): **ninguna tenía
+  fecha** (15 eran fotos del colchón, 1 factura ilegible, 1 otra). Las 15 fotos que no se leen son de tarjetas que ya tienen la fecha. O sea:
+  en Trello hay fecha de compra en **42 de 88** tarjetas, no en todas; las demás no tienen certificado ni factura adjuntos, o el Excel es el
+  formato viejo sin ese casillero (50). El workflow corre también al cambiar `trello_adjuntos.py`.
+- **El viaje de cada tarjeta** (`herramientas/trello_historial.py` + `.github/workflows/trello-historial.yml`, `f09e624`): la API de Trello sin
+  Claude (listas, tarjetas también archivadas, acciones `createCard`/`updateCard:idList`… de a 1000). `atc-trello-historial.json`: por tarjeta
+  `sl`, `creada`/`creadaMs` (del id), lista de hoy, archivada, última actividad y `pasos` (primera vez en cada lista, día de Bolivia). Solo
+  códigos de tarjeta, fechas y listas; el registro imprime cuentas. Primera corrida: 88 de 88; 55 de las 57 devueltas con el día en que
+  entraron a «DEVUELTAS», 17 con el de «EN PRODUCCION».
+- **Panel** (`425546c`): «🔗 Completar con Trello» arriba lleva «📥 En Trello y no en el panel» (`atctFueraArmar`/`atctFueraHtml`/`atctTraer`/
+  `atctNuevaAtc`):
+  · ENTRÓ = el día en que se creó la tarjeta (`ts`); la fecha de COMPRA = la de la tarjeta o sus adjuntos, si no es posterior (nunca la de
+    creación).
+  · Estado por la lista de hoy: devuelta (o POST VENT que pasó por devueltas) → cerrada con `ent`=`pdev`= día de DEVUELTAS y `rec`= día de
+    PRODUCCIÓN si lo hay; lista → `dev`; en fábrica → ✅ (= recogida, regla de §4br); solicitada/programada → por recoger.
+  · **Sin `fecha` de viaje a propósito**: el portero del `.gs` corre en TODA alta con fecha (sin `forzar`) y un día pasado da `dia_cerrado`/
+    `cupos_llenos`; sin fecha no ocupa cupo y `waAlGuardar_` sale antes (el bot no avisa nada). Con `pdev`+`rec`, `atcRecogida` da el recojo
+    de verdad para el tramo del informe; sin `rec` no se inventa.
+  · Id `atc-tre-<sl>` (traer dos veces no duplica), N° `nextOcMes(entró,'ATC')` de la más vieja a la más nueva, vendedora del título
+    (MIRIAN/MARIA/ISABEL/CAROLA…), producto del texto (`atctProducto`: «LINEA… MODELO…» o el primer pedazo con una palabra de producto;
+    si no, «(Trello no dice el producto)»), `observaciones` «🗂️ Traída de Trello (lista): enlace», `a.tre`, `a.trh=1`.
+  · No se ofrece la que ya está; sin tildar: archivada, POST VENT sin devolver, la misma en dos tarjetas (mismo celular o 2+ palabras),
+    abierta sin movimiento en Trello hace más de 60 días (`ATCT_QUIETA_DIAS`). Con el panel vacío y los archivos reales: 88 ofrecidas, 64
+    tildadas, 41 con fecha de compra.
+  · `atctCruzar` reconoce la traída por su enlace/id (nunca se cruza con otra tarjeta). `atctTarjeta` guarda `desc`.
+  · `test_atc_trello` §6 → 49.
+- **PUBLICADO 15/10 ~11:30, `0169c1a`** (con el historial y las fotos releídas). Lo trae a la planilla el dueño, tocando el botón.

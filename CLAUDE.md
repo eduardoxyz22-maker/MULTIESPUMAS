@@ -704,6 +704,10 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   `table-layout:fixed` + `white-space:normal`. `tests/test_atc_informe.js` (55; `ATCI_LIBS_DIR` con las librerías de npm, `ATCI_SALIDA` deja PDF y capturas).
 - **🗂️ «Todas, desde el inicio»** (§4le-b, 15/10, PUBLICADO `e05ba67`; dueño: *«elegir mes seleccionado o TODAS»*): selector `#atci-alc` → `atciDatos('todas')` (mismas
   cuentas, sin comparar con un mes; tendencia mes por mes desde la primera, hasta 12; «Por mes, en promedio»; abiertas por mes de entrada).
+- **🛒 La fecha de compra y sin «y N más»** (§4le-c, 15/10, PUBLICADO `e468cc0`; dueño: *«NO ME PUSISTE EL DATO MÁS IMPORTANTE»* y *«si mi jefe quiere ver
+  los demás, ¿qué onda?»*): columna «Compra» en las que esperan, las que siguen y el detalle (`atciCompraTd`): la guardada o, con 📎, la de Trello
+  SOLO del mismo celular y no posterior (`atciTrelloMapa`, carga `atciTraerTrello` al abrir; el informe no guarda nada). Lo que no entra va en
+  hojas aparte (`atciProductosResto`, `atciAbiertasResto`) y «Quién las cargó» va entero (`.ai-vlist` con más de 6). `test_atc_informe` §1c-1d (67).
 
 ## 🔗 Completar las ATC con Trello (§4lf, 15/10, PUBLICADO 09:54, `f4239a3`; adjuntos §4lf-b PUBLICADO 10:19, `e2c3e5f`; dueño: *«revisá todas las atc del panel con las del trello y añadí los datos faltantes: motivo y fecha de compra»*)
 - Pestaña ATC → **«🔗 Completar con Trello»** (`abrirAtcTrello`, `#atct-ov`, solo con la contraseña). Lee `atc-semanal.csv` (el respaldo diario del
@@ -719,6 +723,21 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   casillero de fecha de compra (solo «NRO DE FACTURA»): ahí no hay más que sacar.
   **Trello se deja de usar (dueño, 15/10)**: el workflow quedó SOLO A MANO (`df92a42`; la clave de Claude de GitHub vence). El CSV y el JSON
   quedan en el repo como foto final. «Reporte Semanal ATC» sigue prendido hasta que cierren el tablero.
+  🧾 **El certificado de garantía** (dueño: *«en los certificados que subieron las fotos»*): la pregunta a Claude lo nombra (la FECHA de abajo
+  = la de compra; `PREGUNTA_V`=2) y una foto leída antes sin fecha se relee UNA vez. Releídas las 17 (15/10): ninguna tenía fecha (15 fotos del
+  colchón). El lector corre también al cambiar `trello_adjuntos.py`.
+- **📥 Las ATC que están en Trello y no en el panel** (§4lf-c, 15/10, PUBLICADO `0169c1a`; dueño: *«deberían estar, si cuando creamos las ATC
+  "exportamos" todas las del trello»*: NO estaban, 72 de 88). En «🔗 Completar con Trello», arriba: lista para revisar + **«📥 Traer al panel»**.
+  · El viaje sale de **`atc-trello-historial.json`** (`herramientas/trello_historial.py`, API de Trello SIN Claude, corre al cambiar el script):
+  día de creación de la tarjeta (= ENTRÓ la ATC, `ts`; ⚠️ NUNCA la fecha de compra) y la primera vez en cada lista.
+  · Estado por la lista de hoy: devuelta → cerrada (`ent`=`pdev`= día que entró a DEVUELTAS, `rec`= a PRODUCCIÓN), lista (`dev`), en fábrica
+  (`entregado`=✅ = recogida), solicitada/programada → por recoger. **Sin `fecha` de viaje**: no ocupan cupo, el portero no las mira (un alta
+  con fecha pasada la frena `dia_cerrado`) y el bot no manda nada (`waAlGuardar_` sale sin fecha). Id `atc-tre-<tarjeta>`; N° = `nextOcMes`
+  del mes en que entró. Compra = la de la tarjeta o sus adjuntos, si no es posterior a la ATC. `a.trh=1`.
+  · No se ofrece la que ya está (mismo celular, 2+ palabras del nombre, el enlace o el id). Sin tildar: archivadas, POST VENT sin devolver,
+  la misma en dos tarjetas, abiertas quietas > 60 días (`ATCT_QUIETA_DIAS`). `atctCruzar` reconoce la traída por su enlace.
+  · Las 24 del panel SIN fecha de compra son de agosto-octubre y Trello casi no las tiene (en esos meses se crearon 9 tarjetas y entraron 45
+  ATC al panel): esa fecha hay que pedirla. `tests/test_atc_trello.js` §6 (49).
 
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
