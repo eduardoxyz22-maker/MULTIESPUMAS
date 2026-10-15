@@ -14804,3 +14804,24 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   comentario en la celda, no se tocó. Cada celda dice de dónde salió.
 - La copia no traía la fecha porque `copiarAtc` no la tenía: ahora va **tercera, al lado de «Entró»** (donde la pone el dueño).
   `test_rev2_atc` §4 → 36 (2 rojas contra el panel de antes). **PUBLICADO `d74791d`**.
+
+## §4lg — 🧽 Bloki, el asistente que cambia de traje (15/10)
+El dueño mandó su dibujo («Bloki, el asistente de Multiespumas · Un bloque de espuma con la franja turquesa del colchón. Cambia de traje según
+quién usa el panel»: Bloki, Vendedor, Logística, Contabilidad, Anuncio) y cinco capturas de cómo lo quería en el panel (de una copia sin
+conexión: por eso el cartel «No se pudo leer la planilla» en todas), con *«espera que pase todo antes de arrancar algo»* y después *«Listo
+arranca»*.
+- **Dibujo**: SVG a mano en la página (`blokiSvg`), copiando el de él: cuerpo blanco redondeado con borde negro, brillo celeste arriba a la
+  izquierda, crucecitas del acolchado, la franja turquesa abajo con la costura blanca de rayitas, mejillas rosadas, una mano que saluda y pies
+  turquesa. Por traje: chispa · gorra turquesa con visera y tablita con tildes · casco amarillo, chaleco naranja y camioncito · anteojos
+  redondos, lápiz y calculadora · megáfono turquesa, ondas rojas, cejas de enojo y la boca abierta. Como `data:` en un `<img>` (las
+  animaciones de adentro del SVG andan igual; `prefers-reduced-motion` las apaga).
+- **Dónde**: la esquina (112×104; en el celular 80×76, el globo corrido a la par), la cabecera de la ventana (sin el recuadro blanco de la
+  foto), «¿Quién está usando el panel?» (Bloki saluda), la ventana «📢 Decir anuncio» y el grito (Bloki grande con su megáfono; las ondas
+  amarillas salen de la boca del megáfono; se fue `anuncioMegafonoSvg`). Textos: «Soy Bloki…», «Bloki lo grita…», «Lo que le preguntaron a
+  Bloki y no supo». «preguntale a Eduardo por WhatsApp» queda: es el dueño.
+- **El traje** (`blokiTraje`/`blokiPoner`): quién eligió ser manda; si nadie, la pestaña; con el globo del anuncio, el megáfono
+  (`ASIS.anuncioFig`, `asisGloboOcultar`). Botón nuevo **«🧾 Contabilidad»** en «¿Quién está usando el panel?» (rol `conta`, «Sigo en
+  Contabilidad», saludo «Me pongo los anteojos de Contabilidad»).
+- Pruebas: `tests/test_bloki.js` 19 (contra `15eb607`: 3 bien · 16 mal); `test_asistente` 24, `test_asistente_ak` 38, `test_asistente_rev` 17,
+  `test_anuncio` 47, `test_quien` 13, `test_adm_tools` 6, `test_onclicks` 5, `test_halloween` 22, `test_patio` 26.
+

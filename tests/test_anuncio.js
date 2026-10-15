@@ -55,7 +55,7 @@ function PREPARAR(){
     ts:Date.now()-86400000, fotos:[], chofer:'', vehiculo:'', maps:'https://maps.app.goo.gl/x', celular:'70000000', zona:'Norte' }; };
   window.FILA=function(t, ts){ return filaSistema(ANUNCIO_ID, '📢 ANUNCIO', JSON.stringify({ v:1, t:t, d:todayStr()+' 09:15', ts:ts||Date.now(), por:'Administración' })); };
   window.GRITO=function(){ var g=document.getElementById('anu-grito'), q=function(s){ return !!(g && g.querySelector(s)); };
-    return { ve:!!g && !g.hidden, txt:g ? g.textContent : '', mega:q('svg.ag-mega'), img:q('.ag-yo img'), ondas:q('.ag-ondas i'), cambiar:q('.ag-cambiar'),
+    return { ve:!!g && !g.hidden, txt:g ? g.textContent : '', mega:q('.ag-yo img[data-traje="anuncio"]'), img:q('.ag-yo img'),   /* 🧽 (15/10) el megáfono viene en el dibujo de Bloki */ ondas:q('.ag-ondas i'), cambiar:q('.ag-cambiar'),
       tiembla:document.body.classList.contains('anu-tiembla') }; };
   window.HABLA=function(){ return window._habla.filter(function(h){ return /Atención/.test(h.t); }); };
   window.GLOBO=function(){ var g=document.getElementById('asis-globo'); return { ve:!!g && !g.hidden, anu:!!g && g.classList.contains('asis-anuncio'), txt:g ? g.textContent : '' }; };
@@ -142,7 +142,7 @@ function PREPARAR(){
     var g=document.getElementById('anu-grito');
     return { g:GRITO(), rol:g && g.getAttribute('role'), globo:!document.getElementById('asis-globo').hidden };
   });
-  chk('apenas llega, Eduardo aparece en pantalla entera con su megáfono, las ondas y el anuncio', r.g.ve && r.g.img && r.g.mega && r.g.ondas && /No hay insumos para el ICE/.test(r.g.txt) && /Anuncio de Administración/.test(r.g.txt), r);
+  chk('apenas llega, Bloki aparece en pantalla entera con su megáfono, las ondas y el anuncio', r.g.ve && r.g.img && r.g.mega && r.g.ondas && /No hay insumos para el ICE/.test(r.g.txt) && /Anuncio de Administración/.test(r.g.txt), r);
   chk('la pantalla tiembla y avisa a los lectores de pantalla (alertdialog); ya no es el globito', r.g.tiembla && r.rol==='alertdialog' && !r.globo, r);
   chk('el vendedor no ve «Cambiar o quitar» y lee que se lo recuerda cada 3 minutos', !r.g.cambiar && /recuerdo cada 3 minutos/.test(r.g.txt), r.g.txt);
   await page.clock.runFor(1200);

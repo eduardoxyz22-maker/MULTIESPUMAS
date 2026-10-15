@@ -75,7 +75,7 @@ function PREPARAR(){
     return { img:img && img.getAttribute('src'), n:(document.getElementById('asis-n')||{}).textContent, nOculto:(document.getElementById('asis-n')||{}).hidden,
              ks:asisAvisos().map(function(a){ return a.k.split('|')[0]+':'+a.t; }), globo:!document.getElementById('asis-globo').hidden };
   });
-  chk('el asistente es el 3D del dueño de cuerpo entero', /asistente\/eduardo-3d\.webp/.test(r.img||''), r);
+  chk('🧽 (15/10) el asistente es Bloki, el bloque de espuma (un SVG con su traje, sin la foto 3D de antes)', /^data:image\/svg\+xml/.test(r.img||'') && !/eduardo-3d/.test(r.img||''), (r.img||'').slice(0,60));
   chk('avisa: clientes de mañana sin avisar, el saldo de hace 13 días y el pedido sin ubicación (3), solo de Mirian',
       r.n==='3' && !r.nOculto && r.ks.some(function(k){ return /^m1:.*Mañana se entrega 1 pedido tuyo/.test(k); }) &&
       r.ks.some(function(k){ return /^deben:1 cliente tuyo/.test(k); }) && r.ks.some(function(k){ return /^sinub:1 pedido sin ubicación/.test(k); }) &&

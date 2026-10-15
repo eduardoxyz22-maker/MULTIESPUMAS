@@ -996,7 +996,23 @@ No es control de acceso. En Playwright no sale salvo `QUIEN_PRUEBA`. `tests/test
 filtro de estado; tocar un paso filtra), motivos en barras que filtran y tarjetas bajo 900 px (`me_atc_tabla`). Solo presentación: la tabla
 `#tbl-atc` se sigue armando. `tests/test_atc_4jz.js`. Bitácora §4jz.
 
-## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*)
+## 🧽 Bloki, el asistente (§4lg, 15/10; dueño, con su dibujo y cinco capturas: *«Bloki, el asistente de Multiespumas · un bloque de espuma con la franja turquesa del colchón. Cambia de traje según quién usa el panel»*; en la rama)
+- Reemplaza la figura 3D de Eduardo en TODO el asistente: la esquina (`#asis-yo`), la cabecera de la ventana («Soy Bloki, tu asistente del panel»),
+  «¿Quién está usando el panel?», la ventana «📢 Decir anuncio» y el grito del anuncio. Las fotos `asistente/eduardo-*.webp` quedan sin usar.
+- **Es un SVG armado en la página** (`blokiSvg(traje)` → `blokiSrc` = `data:image/svg+xml`, memo por traje), sin archivos: cinco trajes
+  (`BLOKI_TRAJES`): `bloki` (chispa), `vendedor` (gorra y tablita), `logistica` (casco, chaleco y camión), `conta` (anteojos, lápiz y calculadora),
+  `anuncio` (megáfono y cejas de enojo). El saludo de la mano, el parpadeo y el megáfono que vibra van ADENTRO del SVG (sin movimiento con
+  «reducir movimiento»); el balanceo sigue en `.asis-fig`.
+- **El traje** = `blokiTraje()`: el globo del anuncio a la vista (`ASIS.anuncioFig`) → `anuncio`; si no, quién eligió ser (`quienRol`:
+  `logistica`, **`conta` —botón nuevo «🧾 Contabilidad» en «¿Quién está usando…?»—**, `admin` → `bloki`; un nombre de vendedor → `vendedor`); si
+  nadie eligió, la pestaña (Nuevo pedido y Mis pedidos → vendedor, Contabilidad → contabilidad, lo demás → bloki). `blokiPoner()` cambia solo
+  el `src` de la figura (al refrescar, al cambiar de pestaña y al elegir quién es). `asisGloboOcultar()` esconde el globo y le saca el megáfono.
+  ⚠️ El rol `conta` NO ve lo de logística (`asisVeAdm`) ni el resumen de logística: solo cambia el traje y deja «Todos» en Contabilidad.
+- ⚠️ **Solo el ASISTENTE se llama Bloki**: Eduardo sigue siendo el dueño/vendedor («La fábrica de Eduardo», «preguntale a Eduardo por WhatsApp»,
+  la nota de venta, Multicenter) y el EDUARDO de la ciudad 3D.
+- `tests/test_bloki.js` (19; 16 rojas contra `15eb607`); `test_asistente` y `test_anuncio` cambiaron a conciencia (miraban la foto y el megáfono suelto).
+
+## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*) — desde §4lg la figura es BLOKI (arriba); lo demás sigue
 Su imagen 3D de cuerpo entero en la esquina (`asistente/eduardo-3d.webp`, cabecera `eduardo-busto.webp`; `?v=` en `ASIS_IMG`/`ASIS_BUSTO`).
 Avisa según la pestaña (`asisAvisos`: Mis pedidos del vendedor elegido, al guardar, Administración, Contabilidad) leyendo las cuentas de
 siempre, ayuda «¿Cómo hago…?» (`ASIS_AYUDA`) y sonido WebAudio. Solo mira: nada va a la planilla; «Entendido» y 🔇 por aparato. En Playwright
