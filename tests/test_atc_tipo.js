@@ -237,6 +237,19 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…el archivo lo dice en el nombre', /^Informe-ATC-STC-octubre-2026\.pdf$/.test(inf.arch) && /^Informe-ATC-garantia-todas-al-/.test(inf.archG), [inf.arch, inf.archG]);
   chk('…y con los dos tipos juntos, «Lo más importante» cuenta cuántas de cada uno', inf.lomas, inf.pt);
 
+  // ============ 8. 🧽 Bloki lo sabe (dueño: «¿el pendejito ya enseña y sabe también?») ============
+  const bk = await ev(() => {
+    var q=function(t){ var i=asisBuscar(t); return i.length ? ASIS_AYUDA[i[0]].q : '(nada)'; };
+    var una=function(t){ return ASIS_AYUDA.filter(function(a){ return a.q.indexOf(t)>=0; })[0]||{}; };
+    return { correo:q('como mando el correo'), outlook:q('outlook'), stc:q('stc'), garantia:q('garantia o contra costo'), sin:q('sin marcar'),
+             busco:q('como busco un pedido'), fC:[].concat(una('correo de una ATC').f), fT:[].concat(una('contra costo (STC)').f), cargo:(una('cargo una ATC').p||[]).join(' ') };
+  });
+  chk('🧽 Bloki sabe cómo mandar el correo de la ATC («correo», «outlook»)', /correo de una ATC/.test(bk.correo) && /correo de una ATC/.test(bk.outlook), [bk.correo, bk.outlook]);
+  chk('…y cómo separar garantía y contra costo («stc», «garantía o contra costo», «sin marcar»)', [bk.stc, bk.garantia, bk.sin].every(function(x){ return /contra costo \(STC\)/.test(x); }), [bk.stc, bk.garantia, bk.sin]);
+  chk('…«stc» no lo confunde con «encontrar» (sigue «¿Cómo busco un pedido?» para lo suyo)', /busco un pedido/.test(bk.busco), bk.busco);
+  chk('…al cargar una ATC dice que hay que marcar garantía o contra costo', /garantía o 🔧 contra costo/.test(bk.cargo), bk.cargo);
+  chk('…y señala el filtro «Tipo» de la pestaña ATC', bk.fT.indexOf('#atc-tipo')>=0, bk.fT);
+
   chk('sin errores de la página', errors.length===0, errors.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

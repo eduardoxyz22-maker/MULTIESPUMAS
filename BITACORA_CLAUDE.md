@@ -14923,3 +14923,12 @@ tenemos programado. Solo es para marcar y filtrar la información al llenar, por
   formulario): `test_atc`, `test_atc_obligatorio` (y la copia: 17 columnas), `test_atc_correo`, `test_rev2_form`, `test_rev5_pedidos`.
 - **PUBLICADO 15/10, `8af3831`** (encima de `ea4978a`: `pedidos.html` + 7 pruebas), Pages OK. Antes: en la copia de main `test_atc_tipo` 43 y
   `test_atc_obligatorio` 57; en la rama, las 15 suites de ATC y de la ventana de guardado en verde. Todos F5: una página vieja guarda ATC sin la marca.
+- Batería entera después de publicar: 195 suites; un solo rojo, `test_mispedidos` 32/1 con la máquina cargada, que sola da 33/0.
+
+## §4lk — 🧽 Bloki enseña lo de las ATC de hoy (15/10)
+El dueño: *«el pendejito ya enseña y sabe también?»*. Bloki ya decía, al cargar una ATC, que hay que marcar garantía o contra costo
+(§4lj), pero no sabía del correo ni del filtro. Dos respuestas más AL FINAL de `ASIS_AYUDA` (21 en total, 17 para un vendedor:
+`test_asistente` NT/NV): «¿Cómo mando el correo de una ATC?» (señala la lista de la pestaña ATC) y «¿Cómo separo las de garantía y las de
+contra costo (STC)?» (señala `#atc-tipo`). Sinónimos `mail`/`email`/`gmail`/`outlook` → correo y `stc` ↔ `costo`. ⚠️ NO «contra»: está
+adentro de «en**contra**r» y mandaba «stc» a «¿Cómo busco un pedido?». Se pensó un botón «➕ Nueva ATC» en la pestaña ATC y el dueño dijo que
+no hacía falta (se crea desde «＋ Nuevo pedido» → 🎧 ATC): no se puso. `test_atc_tipo` §8 (→ 48).
