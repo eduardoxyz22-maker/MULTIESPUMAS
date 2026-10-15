@@ -663,6 +663,258 @@ def abrir_enlace_directo(ident, u):
     return texto
 
 
+# 📍 (15/10, §4ln) Los enlaces que pegan las vendedoras y el panel NO resuelve. El dueño: «son las vendedoras que publican la
+#    ubicación y no resolvés el enlace, eso quiero resolver». Lo mismo que lee la página (`coordsDeLink`, con Waze y el Plus Code
+#    sin codificar) y, lo que no, por TIPO: enlace corto, búsqueda de Google (con nombre o solo `kgmid`), Maps con `q=`/`ftid`…
+#    Después se prueba: (1) el servidor como hoy (`geocode`), (2) desde acá, abrir el `kgmid` en Maps, (3) el texto de `q=` (nombre
+#    y dirección del lugar) al geocodificador del servidor. ⚠️ Registro PÚBLICO: solo CUENTAS por tipo y método; nunca el enlace, el
+#    nombre del lugar, la dirección ni las coordenadas.
+def _lee_la_pagina(u):
+    """¿La página saca la ubicación de este enlace sin internet? (como `coordsDeLink` de pedidos.html, §4ln incluido)"""
+    from urllib.parse import unquote_plus
+    if _coords_en(u):
+        return True
+    d = unquote_plus(u)
+    if re.search(r"(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)", u, re.I) and re.search(r"[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=", u):
+        return True
+    if re.search(r"\d+\s*°", d):
+        return True
+    for t in (d, u):
+        m = re.search(r"(^|[^0-9A-Za-z+])([23456789CFGHJMPQRVWXcfghjmpqrvwx]{4,8})\+([23456789CFGHJMPQRVWXcfghjmpqrvwx]{2,3})(?![0-9A-Za-z+])", t)
+        if m and len(m.group(2)) % 2 == 0:
+            return True
+    return False
+
+
+def _tipo_enlace(u):
+    from urllib.parse import urlparse, parse_qs
+    if re.search(r"maps\.app\.goo\.gl|goo\.gl/maps", u):
+        return "enlace corto de Maps"
+    if re.search(r"waze\.com", u):
+        return "Waze"
+    try:
+        q = parse_qs(urlparse(u).query)
+    except Exception:
+        q = {}
+    if re.search(r"google\.[a-z.]+/search", u):
+        return "búsqueda de Google con el nombre" if (q.get("q") and q["q"][0].strip()) else "búsqueda de Google SOLO con kgmid"
+    if re.search(r"google\.[a-z.]+/maps|maps\.google\.", u):
+        if "/place/" in u:
+            return "Maps /place/ sin coordenadas"
+        if q.get("q"):
+            return "Maps ?q=texto" + (" + ftid" if q.get("ftid") else "")
+        if q.get("cid") or q.get("ftid"):
+            return "Maps con cid/ftid"
+        return "Maps, otro"
+    if not re.match(r"https?://", u, re.I):
+        return "texto (no es un enlace)"
+    return "otro sitio"
+
+
+def _q_de(u):
+    from urllib.parse import urlparse, parse_qs
+    try:
+        q = parse_qs(urlparse(u).query).get("q")
+        return q[0].strip() if q else ""
+    except Exception:
+        return ""
+
+
+def _kgmid_de(u):
+    from urllib.parse import unquote
+    m = re.search(r"[?&]kgmid=([^&#]+)", u)
+    return unquote(m.group(1)) if m else ""
+
+
+def _abrir_maps(url):
+    """Abre una dirección de Maps como un navegador, siguiendo los saltos. Devuelve (url final, cuerpo) — no imprime nada."""
+    abrir = _rq.build_opener(_SinSeguir)
+    cur, cuerpo = url, ""
+    for _ in range(6):
+        req = _rq.Request(cur, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                                                       "Chrome/124.0 Safari/537.36", "Accept-Language": "es-BO,es;q=0.9"})
+        try:
+            r = abrir.open(req, timeout=30)
+            cuerpo = r.read().decode("utf-8", "replace")
+            return cur, cuerpo
+        except _er.HTTPError as e:
+            loc = e.headers.get("Location") if e.headers else None
+            if e.code in (301, 302, 303, 307, 308) and loc:
+                cur = loc if loc.startswith("http") else re.sub(r"^(https?://[^/]+).*$", r"\1", cur) + loc
+                continue
+            return cur, ""
+        except Exception:
+            return cur, ""
+    return cur, cuerpo
+
+
+def _coords_cuerpo_maps(cuerpo):
+    """La página de un lugar de Maps: la imagen de vista previa trae el centro (`staticmap?center=LAT%2CLNG`), y la página abre
+       centrada en el lugar (`APP_INITIALIZATION_STATE`)."""
+    m = re.search(r"staticmap\?center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)", cuerpo or "")
+    if m:
+        return "staticmap"
+    if _coords_en(cuerpo):
+        return "en la página"
+    return ""
+
+
+def enlaces_sin_resolver(base):
+    print("\n── 📍 los enlaces de ubicación que el panel NO lee solo: de qué tipo son y qué los resuelve (solo cuentas) ──")
+    ped = _PEDIDOS
+    if not isinstance(ped, list):
+        print("   (no hay lista leída)")
+        return
+    hoy = datetime.now(BO).date()
+    desde = (hoy - timedelta(days=60)).isoformat()
+    tot = lee = 0
+    pend = []
+    for p in ped:
+        if not isinstance(p, dict) or not _sale_en_camion(p):
+            continue
+        if str(p.get("fecha") or "") < desde:
+            continue
+        u = str(p.get("maps") or "").strip()
+        if not u:
+            continue
+        tot += 1
+        if _lee_la_pagina(u):
+            lee += 1
+            continue
+        pend.append(u)
+    tipos = {}
+    for u in pend:
+        tipos.setdefault(_tipo_enlace(u), []).append(u)
+    print(f"   pedidos con enlace (entrega desde el {desde}): {tot} · la página los lee sola: {lee} · NO: {len(pend)}")
+    for t, L in sorted(tipos.items(), key=lambda x: -len(x[1])):
+        print(f"   · {t}: {len(L)}")
+    if not pend:
+        return
+    # 1) el servidor, como hoy (lo que abre queda en su hoja «Geo» y el panel lo usa)
+    resuelve = {}
+    unicos = list(dict.fromkeys(pend))[:80]
+    for i in range(0, len(unicos), 20):
+        lote = unicos[i:i + 20]
+        crudo = pedir(f"el servidor intenta {len(lote)} enlace(s) (lote {i // 20 + 1})", base, {"action": "geocode", "links": lote})
+        try:
+            j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+        except Exception:
+            continue
+        for g in j.get("geo") or []:
+            if isinstance(g, dict) and g.get("lat") is not None:
+                resuelve[g.get("link")] = "aprox" if g.get("aprox") else "exacto"
+    print("   ── lo que resuelve el servidor HOY, por tipo ──")
+    for t, L in sorted(tipos.items(), key=lambda x: -len(x[1])):
+        L2 = [u for u in dict.fromkeys(L) if u in unicos]
+        ok = [u for u in L2 if u in resuelve]
+        print(f"   · {t}: {len(ok)} de {len(L2)}" + (f" ({sum(1 for u in ok if resuelve[u] == 'aprox')} por la dirección, aproximados)" if ok else ""))
+    falta = [u for u in unicos if u not in resuelve]
+    if not falta:
+        return
+    # 2) búsqueda de Google SOLO con kgmid: ¿Maps abre ese lugar? (desde acá; el servidor lo haría igual con UrlFetchApp)
+    kg = [u for u in falta if _kgmid_de(u)]
+    if kg:
+        r = {"coords en la dirección": 0, "staticmap": 0, "en la página": 0, "trae q= (nombre)": 0, "nada": 0}
+        for u in kg[:15]:
+            fin, cuerpo = _abrir_maps("https://www.google.com/maps?kgmid=" + _kgmid_de(u) + "&hl=es")
+            if _coords_en(fin):
+                r["coords en la dirección"] += 1
+            elif _coords_cuerpo_maps(cuerpo):
+                r[_coords_cuerpo_maps(cuerpo)] += 1
+            elif _q_de(fin):
+                r["trae q= (nombre)"] += 1
+            else:
+                r["nada"] += 1
+        print(f"   ── abrir el kgmid en Maps (desde GitHub, {min(15, len(kg))} de {len(kg)}) ──")
+        print("   " + " · ".join(f"{k}: {n}" for k, n in r.items()))
+    # 3) el texto de q= (nombre y dirección del lugar) al geocodificador del servidor
+    textos = {}
+    for u in falta:
+        t = _q_de(u)
+        if not t and re.search(r"maps\.app\.goo\.gl|goo\.gl/maps", u):
+            fin, _c = _abrir_maps(u)
+            t = _q_de(fin)
+        if t and len(t) >= 8 and not re.match(r"https?://", t):
+            textos[u] = t
+    if textos:
+        L = list(dict.fromkeys(textos.values()))[:40]
+        crudo = pedir(f"el servidor busca {len(L)} nombre(s)/dirección(es) sacados de q=", base, {"action": "geocode", "links": L})
+        try:
+            j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+            ok = sum(1 for g in j.get("geo") or [] if isinstance(g, dict) and g.get("lat") is not None)
+            print(f"   ── por el texto de q=: el servidor ubicó {ok} de {len(L)} (aproximados: el lugar, no la puerta) ──")
+        except Exception:
+            print("   (el servidor no contestó JSON)")
+    sin_nada = [u for u in falta if u not in textos and not _kgmid_de(u)]
+    print(f"   sin coordenadas, sin nombre y sin kgmid: {len(sin_nada)} (esos solo los arregla quien cargó el pedido)")
+
+
+# 🤖 (15/10) EL BOT CON CLAUDE. El dueño: «después revisás cómo va el bot inteligente». Lo que contestaron los clientes en los
+#    últimos 7 días (`waRespuestas`, la hoja «Bot WhatsApp») y qué hizo Claude con cada mensaje (columna M). ⚠️ Registro PÚBLICO:
+#    solo cuentas, horas y categorías; nunca el número, el nombre, el mensaje ni la respuesta.
+def bot_ia(base):
+    print("\n── 🤖 el bot con Claude: los mensajes de clientes de los últimos 7 días (solo cuentas) ──")
+    crudo = pedir("lo que contestaron los clientes (waRespuestas)", base, {"action": "waRespuestas"})
+    try:
+        j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+    except Exception:
+        print("   no es JSON")
+        return
+    R = [x for x in (j.get("resp") or []) if isinstance(x, dict)]
+    if not R:
+        print(f"   ninguno (versión {j.get('version')!r})")
+        return
+    ahora = datetime.now(BO)
+    por_dia = {}
+    cats, saltos = {}, {}
+    ult = {"msg": 0, "contesto": 0}
+    esperando = []
+    for x in R:
+        ms = x.get("ms") or 0
+        dia = datetime.fromtimestamp(ms / 1000, BO).strftime("%d/%m") if ms else "?"
+        ia = str(x.get("ia") or "")
+        if ia.startswith("—"):
+            k = "reacción (no se contesta)"
+        elif not ia:
+            k = "sin Claude (la automática)"
+        elif ia.startswith("⏳"):
+            k = "esperando a Claude"
+            esperando.append(ms)
+        elif ia.startswith("🤖 contestó") or ia.startswith("🤖 ya contestado"):
+            k = "Claude contestó"
+            ult["contesto"] = max(ult["contesto"], ms)
+        elif ia.startswith("🤖 no hacía falta"):
+            k = "no hacía falta contestar"
+        elif ia.startswith("⏭️"):
+            k = "salteado (salió la automática)"
+            m = re.sub(r"\d+", "N", ia[2:].strip())[:60]
+            saltos[m] = saltos.get(m, 0) + 1
+        elif ia.startswith("❌"):
+            k = "❌ no se pudo mandar"
+        else:
+            k = "otro"
+        d = por_dia.setdefault(dia, {})
+        d[k] = d.get(k, 0) + 1
+        if x.get("urg"):
+            d["🚨 urgentes"] = d.get("🚨 urgentes", 0) + 1
+        if x.get("at"):
+            d["✓ atendidos"] = d.get("✓ atendidos", 0) + 1
+        if x.get("cat"):
+            cats[x["cat"]] = cats.get(x["cat"], 0) + 1
+        ult["msg"] = max(ult["msg"], ms)
+    print(f"   {len(R)} mensaje(s) · servidor {j.get('version')!r} · el último a las {_hora_bo(ult['msg'])}" +
+          (f" · Claude contestó por última vez uno de las {_hora_bo(ult['contesto'])}" if ult["contesto"] else " · ⚠️ Claude no contestó ninguno"))
+    for dia in sorted(por_dia, key=lambda s: (s[3:], s[:2])):
+        print(f"   {dia}: " + " · ".join(f"{k} {n}" for k, n in sorted(por_dia[dia].items())))
+    if cats:
+        print("   qué querían (lo que dijo Claude): " + " · ".join(f"{k} {n}" for k, n in sorted(cats.items(), key=lambda x: -x[1])))
+    if saltos:
+        print("   por qué se salteó: " + " · ".join(f"{k} {n}" for k, n in sorted(saltos.items(), key=lambda x: -x[1])))
+    if esperando:
+        viejo = round((ahora.timestamp() * 1000 - min(esperando)) / 60000)
+        print(f"   ⏳ esperando a Claude: {len(esperando)} · el más viejo hace {viejo} min" + (" ⚠️ (el repaso no corre)" if viejo > 15 else ""))
+
+
 def _atc_de(p):
     pr = p.get("productos") or []
     if isinstance(pr, str):
@@ -858,6 +1110,9 @@ def main():
     # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
     ubicacion_almacenes(pagina or PANEL_URL)
     ubicacion_pedidos(pagina or PANEL_URL)
+    # 6) 🤖 (15/10) el bot con Claude y 📍 los enlaces que el panel no resuelve.
+    bot_ia(pagina or PANEL_URL)
+    enlaces_sin_resolver(pagina or PANEL_URL)
 
 
 if __name__ == "__main__":
