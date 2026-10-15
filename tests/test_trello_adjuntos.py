@@ -84,6 +84,14 @@ chk(d2["cels"] == ["61234567"] and d2["reclamo"] == "ruido en los resortes", "Ex
 X3 = xlsx([["FECHA DE COMPRA", "2022"], ["CLIENTE", "Otro Inventado"]])
 d3 = T.xlsx_datos(X3, HOY)
 chk(d3["fcom"] == "" and d3["fcomTxt"] == "2022", "Excel: el año solo queda como texto, sin inventar el día")
+chk(d["rot"] == "fecha" and d3["rot"] == "texto", "Excel: el casillero dice cómo estaba (fecha / texto)")
+X4 = xlsx([["CLIENTE", "Otro"], [None, "FECHA DE COMPRA", None, "DIRECCION", "Av. 13/09/2021"], [None, 44100]])
+d4 = T.xlsx_datos(X4, HOY)
+chk(d4["fcom"] == "2020-09-26" and d4["rot"] == "fecha", "Excel: la fecha DEBAJO del rótulo (formato en columna), sin tomar la de la dirección: %r" % d4)
+X5 = xlsx([["FECHA DE COMPRA", None, "DIRECCION", "calle 5"], ["TELEFONO", "70000000"]])
+d5 = T.xlsx_datos(X5, HOY)
+chk(d5["fcom"] == "" and d5["fcomTxt"] == "" and d5["rot"] == "vacio", "Excel: el casillero vacío no toma el rótulo de al lado: %r" % d5)
+chk(T.xlsx_datos(xlsx([["CLIENTE", "x"]]), HOY)["rot"] == "sin", "Excel: sin el rótulo de la fecha = «sin»")
 
 # ─────────────── 3. lo que contesta Claude ───────────────
 i1 = T.interpretar({"tipo": "factura", "fecha_compra": "2024-02-29", "fecha_compra_texto": "29/02/2024", "celular": "591 7 1234567",
@@ -170,6 +178,15 @@ J2 = json.load(open(T.SALIDA, encoding="utf-8"))
 chk(len(CLAUDE_PIDE) == n, "corrida 2: lo ya leído NO se le vuelve a mandar a Claude")
 chk(J2["resumen"]["de_antes"] == 2 and {t["sl"]: t["fcom"] for t in J2["tarjetas"]} == {"AAAA1111": "2021-09-13", "BBBB2222": "2022-11-20"},
     "corrida 2: mismo resultado con lo guardado")
+chk(J2["resumen"]["excel_casillero"] == {"fecha": 1, "vacio": 0, "texto": 0, "sin": 0} and "Excel: con la fecha 1" in log2, "el resumen cuenta cómo estaba el casillero de cada Excel")
+
+# un Excel leído con la versión de antes (sin `rot`) se vuelve a leer, gratis (sin Claude)
+J2["vistos"]["a2"].pop("rot"); J2["vistos"]["a2"]["fcom"] = ""
+json.dump(J2, open(T.SALIDA, "w", encoding="utf-8"))
+rc, log2b = correr(T.SALIDA)
+J2b = json.load(open(T.SALIDA, encoding="utf-8"))
+chk(len(CLAUDE_PIDE) == n and J2b["vistos"]["a2"].get("rot") == "fecha" and {t["sl"]: t["fcom"] for t in J2b["tarjetas"]}["AAAA1111"] == "2021-09-13",
+    "un Excel de la versión de antes se relee (sin gastar en Claude)")
 
 # sin crédito: se cortan las fotos, devuelve 2, lo del Excel se guarda igual
 os.remove(T.SALIDA)

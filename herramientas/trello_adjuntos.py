@@ -96,6 +96,10 @@ def _col(ref):
 
 def xlsx_filas(datos):
     """Las filas de la PRIMERA hoja como listas de textos (las celdas vacías no se guardan)."""
+    return [[v for _, v in f] for f in xlsx_celdas(datos)]
+
+def xlsx_celdas(datos):
+    """Las filas de la PRIMERA hoja como listas de (columna, texto), sin las celdas vacías."""
     z = zipfile.ZipFile(io.BytesIO(datos))
     comp = []
     if "xl/sharedStrings.xml" in z.namelist():
@@ -119,29 +123,43 @@ def xlsx_filas(datos):
             if val:
                 celdas.append((_col(c.get("r") or "A1"), val))
         if celdas:
-            filas.append([v for _, v in sorted(celdas)])
+            filas.append(sorted(celdas))
     return filas
 
 ROTULO_COMPRA = re.compile(r"FECHA\s*(DE\s*)?COMPRA|COMPRADO\s*EL|FECHA\s*DE\s*VENTA")
 
+OTRO_ROTULO = re.compile(r"^(CLIENTE|FECHA|NRO|N°|TELEFONO|TELF|CELULAR|DIRECCION|VENDEDOR|ASESOR|CODIGO|FACTURA|NIT|PRODUCTO|LINEA|"
+                         r"MEDIDA|DETALLE|DATOS|ZONA|SUCURSAL|TIENDA|OBSERVAC|C\.?I\b)")
+
 def xlsx_datos(datos, hoy=None):
-    """Del formato ATC en Excel: la fecha de compra (la celda que sigue al rótulo), los celulares, el cliente y el reclamo."""
-    filas = xlsx_filas(datos)
-    out = {"fcom": "", "fcomTxt": "", "cels": [], "cliente": "", "reclamo": ""}
+    """Del formato ATC en Excel: la fecha de compra (al lado del rótulo o debajo), los celulares, el cliente y el reclamo.
+       `rot` dice cómo estaba el casillero de la fecha (para contar, sin datos): fecha / texto / vacio / sin (no hay rótulo)."""
+    celdas = xlsx_celdas(datos)
+    filas = [[v for _, v in f] for f in celdas]
+    out = {"fcom": "", "fcomTxt": "", "cels": [], "cliente": "", "reclamo": "", "rot": "sin"}
     reclamo_sig = False
-    for f in filas:
+    for r, f in enumerate(filas):
         up = [sin_tildes(x).upper() for x in f]
         for i, u in enumerate(up):
             if ROTULO_COMPRA.search(u) and not out["fcom"]:
-                resto = u[ROTULO_COMPRA.search(u).end():]
-                cand = [resto] + f[i + 1:i + 4]
+                if out["rot"] == "sin":
+                    out["rot"] = "vacio"
+                col = celdas[r][i][0]
+                cand = [u[ROTULO_COMPRA.search(u).end():]]
+                for _, v in celdas[r][i + 1:i + 4]:            # a la derecha, hasta el próximo rótulo
+                    if OTRO_ROTULO.match(sin_tildes(v).upper().strip()):
+                        break
+                    cand.append(v)
+                abajo = celdas[r + 1] if r + 1 < len(celdas) else []
+                if not any(c2 <= col + 2 and OTRO_ROTULO.match(sin_tildes(v).upper().strip()) for c2, v in abajo):
+                    cand += [v for c2, v in abajo if col <= c2 <= col + 2][:2]      # o debajo (formato en columna), si abajo no empieza otro rótulo
                 for c in cand:
                     fe = fecha_de_texto(c, hoy)
                     if fe:
-                        out["fcom"], out["fcomTxt"] = fe, str(c).strip()[:40]
+                        out["fcom"], out["fcomTxt"], out["rot"] = fe, str(c).strip()[:40], "fecha"
                         break
-                    if str(c).strip() and not out["fcomTxt"]:
-                        out["fcomTxt"] = str(c).strip()[:40]
+                    if re.search(r"[0-9A-Za-z]", str(c)) and not out["fcomTxt"]:
+                        out["fcomTxt"], out["rot"] = str(c).strip()[:40], "texto"
             if re.fullmatch(r"CLIENTE\s*:?", u) and i + 1 < len(f) and not out["cliente"]:
                 out["cliente"] = f[i + 1][:60]
             if re.search(r"TELEFONO|CELULAR", u):
@@ -335,6 +353,9 @@ def main():
     tarjetas = []
     for c in cards:
         atts = sorted([a for a in (c.get("attachments") or []) if a.get("isUpload")], key=orden_adjunto)
+        for a in atts:                                    # un Excel leído con la versión de antes (sin `rot`) se vuelve a leer: es gratis
+            if a["id"] in vistos and vistos[a["id"]].get("tipo") == "excel" and "rot" not in vistos[a["id"]]:
+                del vistos[a["id"]]
         lecturas = [vistos[a["id"]] for a in atts if a["id"] in vistos]
         cuenta["adjuntos"] += len(atts)
         cuenta["de_antes"] += len(lecturas)
@@ -391,6 +412,11 @@ def main():
     # los vistos de adjuntos que ya no existen se van
     vivos = {a["id"] for c in cards for a in (c.get("attachments") or [])}
     vistos = {k: v for k, v in vistos.items() if k in vivos}
+    rot = {"fecha": 0, "vacio": 0, "texto": 0, "sin": 0}
+    for v in vistos.values():
+        if v.get("tipo") == "excel":
+            rot[v.get("rot", "sin")] = rot.get(v.get("rot", "sin"), 0) + 1
+    cuenta["excel_casillero"] = rot
     salida = {"generado": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
               "tablero": BOARD, "resumen": cuenta, "tarjetas": tarjetas, "vistos": vistos}
     with open(SALIDA, "w", encoding="utf-8") as f:
@@ -398,6 +424,7 @@ def main():
     print("Tarjetas: %(tarjetas)d · adjuntos: %(adjuntos)d (Excel %(excel)d, fotos %(fotos)d, PDF %(pdf)d, otros %(otros)d)" % cuenta)
     print("Leídos con Claude ahora: %(leidos_ia)d · ya leídos antes: %(de_antes)d · errores: %(errores)d · muy grandes: %(grandes)d" % cuenta)
     print("Fotos sin leer porque la tarjeta ya tenía la fecha: %(ya_tenia)d · quedan para la próxima corrida: %(pendientes)d" % cuenta)
+    print("Excel: con la fecha %(fecha)d · el casillero vacío %(vacio)d · con algo que no es una fecha %(texto)d · sin el casillero %(sin)d" % rot)
     print("Tarjetas con la fecha de compra entera: %d" % cuenta["con_fecha"])
     if not clave:
         print("⚠️ Sin ANTHROPIC_API_KEY: solo se leyeron los Excel (%d fotos/PDF sin leer)." % cuenta["sin_clave"])
