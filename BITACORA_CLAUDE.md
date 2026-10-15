@@ -14982,3 +14982,23 @@ Mirando los enlaces de la lista, dos tipos traen la ubicación EXACTA y `coordsD
 - **Propuesto, sin hacer (espera al dueño)**: que el bot guarde en el pedido la ubicación que el cliente manda por WhatsApp (📎 → Ubicación:
   Meta la manda con latitud y longitud; el `.gs` ya la anota en «Bot WhatsApp» como «[ubicación] … (lat, lng)», `waTextoDe_`, pero no la
   pasa al pedido) y que Claude se la pida al cliente cuando el pedido no tiene una que se pueda leer. Es un `.gs` nuevo.
+- **PUBLICADO 15/10 ~18:40 de Bolivia, `19ee2bc`** (junto con §4ll y §4lm; batería entera 194 suites en verde antes de publicar).
+- **El dueño aclaró** (15/10): *«son las vendedoras que publican la ubicación y no resolvés el enlace, eso quiero resolver»* (no el bot).
+
+### §4ln-b — 📍 El servidor `2026-10-15-a`: los lugares con nombre por el texto de `q=` (15/10, EN LA RAMA; lo implementa el dueño)
+**Lo que midió el diagnóstico** (`herramientas/diagnostico_lectura.py` → `enlaces_sin_resolver`, corridas 34-36 en la rama, solo cuentas):
+505 pedidos con enlace (entregas desde el 16/08): la página lee sola 484. **No: 21** = 16 enlaces cortos de Maps (el servidor de hoy abre 8,
+por la dirección) + 3 «maps?q=<nombre y dirección>&ftid=…» (0) + 2 búsquedas de Google con el nombre en `q=` (0). Mandando el **texto de
+`q=`** al geocodificador del servidor: **9 de 9** ubicados (aproximados). Quedan ~3 sin coordenadas, sin nombre y sin `kgmid`: esos solo
+los arregla quien cargó el pedido.
+- ⚠️ **La «imagen de vista previa» de Maps (`staticmap?center=` en la página) NO sirve**: es el centro de QUIEN PIDE. Desde GitHub cayó a
+  ~7.700 km de PTF y de Banzer (comparado con sus coordenadas de verdad). No volver a probarla. Google no le da el pin de un lugar con
+  nombre a un programa (§4ht ya lo había visto).
+- **`.gs` 2026-10-15-a**: `extractCoords` = lo de la página (Waze `%2C`, el Plus Code sin codificar); `resolveOne`, sin coordenadas en ningún
+  lado, busca `nombreDeLugar` y si no **`textoDeQ_`** (el `q=` del enlace final o del original, que no sea coordenadas ni Plus Code) →
+  `geocodeTexto` (aproximado, solo dentro de Santa Cruz, como siempre). Nada más cambia. `test_servidor` §24 (7; 5 rojas contra la 14-c).
+  `SCRIPT_VERSION`/`ESTA_VERSION`/`SCRIPT_VERSION_ESPERADA` = `2026-10-15-a` (la página con la espera nueva sale DESPUÉS de implementar).
+- **El GPS hoy** (mismo diagnóstico, 18:24): 4 camiones reportando, posiciones de hace 1 min, salidas y paradas anotadas. De los 14 pedidos
+  de hoy, 9 tienen un pin que el panel lee y 5 no tienen enlace: el GPS «se paró» en 3. Sin pin no puede nombrar el pedido.
+- **El bot con Claude** (7 días): 28 mensajes de clientes; desde que Claude contesta (14/10 a la noche), contestó 6, ninguno esperando ni
+  con error, 1 urgente avisado a logística (qué querían: confirma 3, hora 2, no_esta 1).

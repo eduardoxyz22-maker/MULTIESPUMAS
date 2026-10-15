@@ -418,6 +418,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
   📍 **Waze y el Plus Code en `maps?q=`** (§4ln, 15/10): `coordsDeLink` lee `ll=…%2C…` (Waze) y el Plus Code con el «+» sin codificar
   («maps?q=8R6C+72P,+Santa+Cruz»). Las búsquedas de Google (`google.com/search?…kgmid=`) no traen ubicación: no se inventa. `test_ubicar` §5.
+  **Servidor `2026-10-15-a`** (§4ln-b, en la rama; lo implementa el dueño): lo mismo en `extractCoords` y, sin coordenadas, el texto de `q=`
+  (`textoDeQ_`: nombre y dirección de un lugar con nombre o de una búsqueda de Google) → `geocodeTexto`, aproximado. Medido: de 21 enlaces que
+  no se leían, 9 de 9 con texto se ubican. ⚠️ El `staticmap?center=` de la página de Maps es el centro de QUIEN PIDE (~7.700 km): no usarlo.
 - **⏳ Primera carga con reintentos y cartel** (§4di): al abrir, el panel muestra la copia
   guardada en el dispositivo (`loadMirror`; en una compu nueva, nada = todo en 0) y pide la
   planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo
@@ -951,7 +954,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   están en la TARDE y van ENTEROS en la carga (tildes de «🌆 Tarde»; copia los tildes a «🌅 Mañana»), con `reproAplicar(…, forzar,
   {adelanto:1})`. El servidor: evento `e` → plantilla **`pedido_en_camino`** solo al cliente (respaldo `cambio_entrega_v2` → `cambio_entrega`);
   sin `adelanto` o de otro día, el cambio de siempre. Nada se marca ✅. `tests/test_adelanto.js` (14), `test_wa_bot` §14.
-- **🧠 Claude le contesta al cliente** (§4lc, 14/10, dueño: *«Entiende y contesta»*, con Claude Opus 5.5 y USD 100 de crédito; 14-b
+- **🧠 Claude le contesta al cliente** (§4lc, 14/10, dueño: *«Entiende y contesta»*, con Claude y USD 100 de crédito; 14-b
   IMPLEMENTADO 14/10 ~19:05 por el dueño, primera respuesta real 19:13; **`2026-10-14-c` IMPLEMENTADO** (el diagnóstico del 15/10 11:56 lo lee);
   **15/10: el dueño sacó `IA_SOLO` — Claude le contesta a TODOS los clientes**; las tarjetas del panel PUBLICADAS 15/10, `15eb607`): el webhook pone «⏳» en la columna M y
   **⚡ desde la 14-c contesta AL VUELO** (dueño: *«escribo y demora 3-5 min»*): `iaAlVuelo_` espera 5 s (`IA_VUELO_MS`) y procesa SOLO sus
