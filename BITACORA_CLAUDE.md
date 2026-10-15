@@ -14824,4 +14824,6 @@ arranca»*.
   Contabilidad», saludo «Me pongo los anteojos de Contabilidad»).
 - Pruebas: `tests/test_bloki.js` 19 (contra `15eb607`: 3 bien · 16 mal); `test_asistente` 24, `test_asistente_ak` 38, `test_asistente_rev` 17,
   `test_anuncio` 47, `test_quien` 13, `test_adm_tools` 6, `test_onclicks` 5, `test_halloween` 22, `test_patio` 26.
+- **PUBLICADO 15/10, `cd028a8`** (dueño: *«¿Ya publicaste?»*): `pedidos.html` + las tres pruebas, encima de `15eb607`. En la copia de main:
+  `test_bloki` 19, `test_asistente` 24, `test_anuncio` 47, `test_quien` 13.
 

@@ -996,7 +996,7 @@ No es control de acceso. En Playwright no sale salvo `QUIEN_PRUEBA`. `tests/test
 filtro de estado; tocar un paso filtra), motivos en barras que filtran y tarjetas bajo 900 px (`me_atc_tabla`). Solo presentación: la tabla
 `#tbl-atc` se sigue armando. `tests/test_atc_4jz.js`. Bitácora §4jz.
 
-## 🧽 Bloki, el asistente (§4lg, 15/10; dueño, con su dibujo y cinco capturas: *«Bloki, el asistente de Multiespumas · un bloque de espuma con la franja turquesa del colchón. Cambia de traje según quién usa el panel»*; en la rama)
+## 🧽 Bloki, el asistente (§4lg, 15/10; dueño, con su dibujo y cinco capturas: *«Bloki, el asistente de Multiespumas · un bloque de espuma con la franja turquesa del colchón. Cambia de traje según quién usa el panel»*; PUBLICADO 15/10, `cd028a8`)
 - Reemplaza la figura 3D de Eduardo en TODO el asistente: la esquina (`#asis-yo`), la cabecera de la ventana («Soy Bloki, tu asistente del panel»),
   «¿Quién está usando el panel?», la ventana «📢 Decir anuncio» y el grito del anuncio. Las fotos `asistente/eduardo-*.webp` quedan sin usar.
 - **Es un SVG armado en la página** (`blokiSvg(traje)` → `blokiSrc` = `data:image/svg+xml`, memo por traje), sin archivos: cinco trajes
