@@ -14689,5 +14689,16 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   texto y lo dice). Por tarjeta (`atctSl` = el shortLink de la URL): **el texto escrito manda**; del adjunto entran los celulares (más
   cruces por celular), la fecha si el texto no la tiene ENTERA (con «📎 En la factura «…» dice «…»»), el reclamo y el motivo si faltan
   («📎 Leído de…»), el nombre y el día de creación de la tarjeta. Arriba: «📎 fotos y Excel adjuntos leídos el … (N con la fecha de compra)».
-- Pruebas: `tests/test_trello_adjuntos.py` (53: fechas, el Excel armado en la prueba, Claude y Trello de mentira, una vez por adjunto,
-  sin crédito, sin clave, el registro sin datos), `test_atc_trello` §5 (→ 33).
+- Pruebas: `tests/test_trello_adjuntos.py` (61: fechas, el Excel armado en la prueba —al lado, debajo, en otra hoja, casillero vacío—,
+  Claude y Trello de mentira, una vez por adjunto, relectura gratis de Excel viejos, sin crédito, sin clave, el registro sin datos),
+  `test_atc_trello` §5 (→ 33).
+- **Lo que encontró (15/10, corridas en la rama)**: 88 tarjetas, 124 adjuntos (82 Excel, 41 fotos, 1 otro). Claude leyó 26 fotos, 0 errores
+  (15 fotos no se leyeron porque su tarjeta ya tenía la fecha). **37 tarjetas con la fecha de compra entera** (28 del Excel, 6 de fotos, 3
+  de facturas). Excel: 28 con la fecha, 3 con el casillero vacío, 1 con algo que no es fecha y **50 SIN el casillero**: son el formato
+  viejo, cuyos únicos rótulos de fecha son «NRO DE FACTURA» y «FECHA DE VISITA TECNICA» (no tiene fecha de compra). Con el respaldo real
+  en el panel: fecha entera 30 → **42** de 88, reclamo 46 → 84, celular 74 → 81, motivo 67 → 74.
+  ⚠️ Idea para el dueño: en esos 50 está el **N° de factura**: con el sistema de ventas se podría sacar la fecha.
+- `fx` (en `vistos`): los rótulos con FECHA/COMPRA/FACTURA de cada Excel, con los números como «#» (diagnóstico, sin datos). Un Excel
+  leído sin `fx` se relee solo y gratis. El workflow no guarda si solo cambió `generado` (`git diff -I'"generado":'`).
+- **PUBLICADO 15/10 10:19 de Bolivia, `e2c3e5f`** (`pedidos.html` con el parche del panel sobre `f4239a3` + el lector, el workflow, las
+  pruebas y el JSON ya leído: la corrida de `main` no gastó en Claude, `d6ef424` solo cambió el resumen). Pages OK.

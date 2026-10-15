@@ -703,7 +703,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   ⚠️ En el CSS de las hojas nada de `color-mix()`/`oklch()` ni `box-shadow` en la copia (html2canvas los pinta mal); tablas con
   `table-layout:fixed` + `white-space:normal`. `tests/test_atc_informe.js` (37; `ATCI_LIBS_DIR` con las librerías de npm, `ATCI_SALIDA` deja PDF y capturas).
 
-## 🔗 Completar las ATC con Trello (§4lf, 15/10, PUBLICADO 09:54, `f4239a3`; dueño: *«revisá todas las atc del panel con las del trello y añadí los datos faltantes: motivo y fecha de compra»*)
+## 🔗 Completar las ATC con Trello (§4lf, 15/10, PUBLICADO 09:54, `f4239a3`; adjuntos §4lf-b PUBLICADO 10:19, `e2c3e5f`; dueño: *«revisá todas las atc del panel con las del trello y añadí los datos faltantes: motivo y fecha de compra»*)
 - Pestaña ATC → **«🔗 Completar con Trello»** (`abrirAtcTrello`, `#atct-ov`, solo con la contraseña). Lee `atc-semanal.csv` (el respaldo diario del
   tablero que baja el workflow «Reporte Semanal ATC»: el panel no tiene la clave de Trello) y cruza cada ATC por **celular** (tildado) o **nombre**
   (sin tildar). **Solo completa lo vacío** (motivo, fecha de compra, detalle; se vuelve a mirar al guardar) y deja `a.tre` = la tarjeta (la ficha
@@ -712,7 +712,9 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   (workflow «Leer adjuntos de Trello (ATC)», 19:10 de Bolivia, secretos `TRELLO_API_KEY`, `TRELLO_TOKEN`, `ANTHROPIC_API_KEY`) lee los Excel directo y
   las fotos/PDF con Claude, UNA vez por adjunto (`vistos`), y deja `atc-trello-adjuntos.json`; una tarjeta con la fecha entera no gasta en sus otras
   fotos. ⚠️ Registro público: el script imprime SOLO cantidades. En el panel (`atctSumarAdjuntos`) **el texto de la tarjeta manda**; del adjunto
-  entran celulares, la fecha si el texto no la tiene entera («📎 En la factura «…» dice…»), reclamo/motivo/nombre si faltan. `tests/test_trello_adjuntos.py` (53).
+  entran celulares, la fecha si el texto no la tiene entera («📎 En la factura «…» dice…»), reclamo/motivo/nombre si faltan. `tests/test_trello_adjuntos.py` (61).
+  **PUBLICADO 15/10 10:19, `e2c3e5f`**. Con los datos reales: fecha entera en 42 de 88 tarjetas (antes 30). 50 Excel son el formato viejo, sin
+  casillero de fecha de compra (solo «NRO DE FACTURA»): ahí no hay más que sacar.
 
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
