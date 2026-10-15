@@ -198,6 +198,30 @@ J2b = json.load(open(T.SALIDA, encoding="utf-8"))
 chk(len(CLAUDE_PIDE) == n and J2b["vistos"]["a2"].get("rot") == "fecha" and {t["sl"]: t["fcom"] for t in J2b["tarjetas"]}["AAAA1111"] == "2021-09-13",
     "un Excel de la versión de antes se relee (sin gastar en Claude)")
 
+# 🧾 (15/10, dueño: «en los certificados que subieron las fotos» está la fecha de compra) una foto leída con la pregunta de ANTES y sin
+# fecha se vuelve a leer UNA vez (ahora la pregunta nombra el certificado de garantía); una ya leída con la de ahora, no
+chk("CERTIFICADO DE GARANTÍA" in T.PEDIDO and "FECHA" in T.PEDIDO and "certificado" in T.ESQUEMA["properties"]["tipo"]["enum"],
+    "la pregunta a Claude nombra el certificado de garantía y su FECHA")
+CARDS.append({"id": "66f000000000000000000003", "name": "ATC Eulogia", "url": "https://trello.com/c/CCCC3333/3-atc", "closed": False,
+              "attachments": [{"id": "c1", "fileName": "WhatsApp Image 1.jpeg", "isUpload": True, "bytes": 10},
+                              {"id": "c2", "fileName": "WhatsApp Image 2.jpeg", "isUpload": True, "bytes": 10}]})
+ARCH.update({"c1": b"FOTO-c1", "c2": b"FOTO-c2"})
+LEE[b"FOTO-c1"] = {"tipo": "certificado", "fecha_compra": "2021-12-23", "fecha_compra_texto": "jueves, 23 de diciembre de 2021",
+                   "celular": "", "cliente": "Eulogia Inventada", "reclamo": ""}
+LEE[b"FOTO-c2"] = {"tipo": "foto_producto", "fecha_compra": "", "fecha_compra_texto": "", "celular": "", "cliente": "", "reclamo": ""}
+J2b["vistos"]["c1"] = {"tipo": "foto_producto", "fcom": "", "fcomTxt": "", "cels": [], "cliente": "", "reclamo": "", "fuente": "la foto"}
+J2b["vistos"]["c2"] = {"tipo": "foto_producto", "fcom": "", "fcomTxt": "", "cels": [], "cliente": "", "reclamo": "", "fuente": "la foto", "v": 2}
+json.dump(J2b, open(T.SALIDA, "w", encoding="utf-8"))
+CLAUDE_PIDE.clear()
+rc, log2c = correr(T.SALIDA)
+J2c = json.load(open(T.SALIDA, encoding="utf-8"))
+porc = {t["sl"]: t for t in J2c["tarjetas"]}
+chk(CLAUDE_PIDE == [b"FOTO-c1"], "solo se vuelve a leer la foto de la pregunta de antes sin fecha (no la ya leída con la de ahora): %r" % CLAUDE_PIDE)
+chk(porc.get("CCCC3333", {}).get("fcom") == "2021-12-23" and porc["CCCC3333"]["fuente"].startswith("el certificado de garantía «"),
+    "la fecha sale del certificado de garantía y lo dice: %r" % porc.get("CCCC3333"))
+chk(J2c["vistos"]["c1"].get("v") == T.PREGUNTA_V, "la foto releída queda anotada con la pregunta de ahora (no se vuelve a leer)")
+CARDS.pop(); CLAUDE_PIDE.clear()
+
 # sin crédito: se cortan las fotos, devuelve 2, lo del Excel se guarda igual
 os.remove(T.SALIDA)
 CREDITO["hay"] = False

@@ -28,6 +28,7 @@ MODELO = os.environ.get("IA_MODELO", "claude-opus-5-5")
 MAX_IA = int(os.environ.get("ATCT_MAX_IA", "300") or 300)
 MINUTOS = float(os.environ.get("ATCT_MINUTOS", "40") or 40)   # después de esto no se leen más fotos: lo que falta, la próxima corrida
 MAX_BYTES = 4_800_000          # Claude acepta hasta 5 MB por imagen
+PREGUNTA_V = 2                 # 2 (15/10): la pregunta nombra el CERTIFICADO DE GARANTÍA (la fecha de abajo es la de compra)
 FOTOS = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}
 
 # ──────────────────────────── fechas, celulares y textos (sin red: se prueban solos) ────────────────────────────
@@ -197,16 +198,19 @@ def _xlsx_hoja_datos(celdas, out, hoy):
 
 # ──────────────────────────── Claude ────────────────────────────
 ESQUEMA = {"type": "object", "additionalProperties": False,
-           "properties": {"tipo": {"type": "string", "enum": ["formulario", "factura", "foto_producto", "otro"]},
+           "properties": {"tipo": {"type": "string", "enum": ["formulario", "factura", "certificado", "foto_producto", "otro"]},
                           "fecha_compra": {"type": "string"}, "fecha_compra_texto": {"type": "string"},
                           "celular": {"type": "string"}, "cliente": {"type": "string"}, "reclamo": {"type": "string"}},
            "required": ["tipo", "fecha_compra", "fecha_compra_texto", "celular", "cliente", "reclamo"]}
 PEDIDO = ("Es un archivo adjunto de un reclamo de atención al cliente (ATC) de una fábrica de colchones de Bolivia (Multiespumas / "
-          "Heaven / Sueña). Puede ser el formulario de ATC, una factura o nota de venta, o una foto del colchón.\n"
+          "Heaven / Sueña). Puede ser el formulario de ATC, una factura o nota de venta, el CERTIFICADO DE GARANTÍA o una foto del colchón.\n"
           "Leé SOLO lo que se vea con claridad, sin inventar:\n"
-          "- tipo: formulario, factura (o nota de venta), foto_producto u otro.\n"
+          "- tipo: formulario, factura (o nota de venta), certificado (el «CERTIFICADO DE GARANTÍA»), foto_producto u otro.\n"
           "- fecha_compra: cuándo COMPRÓ el cliente el producto, como AAAA-MM-DD. En una factura o nota de venta es su fecha. En el "
-          "formulario es «FECHA DE COMPRA», NO la «FECHA» del formulario. Si solo se lee el mes y el año o el año solo, dejala vacía.\n"
+          "CERTIFICADO DE GARANTÍA es la fecha escrita abajo, sobre la palabra «FECHA» (por ejemplo «jueves, 23 de diciembre de 2021»): "
+          "es el día en que se le vendió. En el formulario de ATC es «FECHA DE COMPRA», NO la «FECHA» del formulario. Si solo se lee el "
+          "mes y el año o el año solo, dejala vacía. Si en la foto se ve un certificado o una factura, aunque también se vea el colchón, "
+          "el tipo es ese.\n"
           "- fecha_compra_texto: lo que dice tal cual (por ejemplo «13/09/2021» o «junio 2022»), o vacío.\n"
           "- celular: el del cliente, solo números; vacío si no hay.\n- cliente: su nombre; vacío si no hay.\n"
           "- reclamo: el problema del colchón en una frase corta (máximo 20 palabras); vacío si no se dice.\n"
@@ -314,7 +318,7 @@ def achicar(datos, ext):
     except Exception:
         return datos, FOTOS[ext]
 
-PRIMERO = re.compile(r"FACTUR|NOTA|RECIBO|FORMUL|ATC|GARANT|COMPRA|VENTA", re.I)
+PRIMERO = re.compile(r"FACTUR|NOTA|RECIBO|FORMUL|ATC|GARANT|CERTIF|COMPRA|VENTA", re.I)
 
 def orden_adjunto(att):
     """Primero los Excel (gratis), después los PDF, después las fotos que por el nombre parecen la factura o el formulario."""
@@ -328,7 +332,7 @@ def orden_adjunto(att):
 
 def juntar(lecturas):
     """Lo de todos los adjuntos de una tarjeta en uno: la fecha del Excel primero, después la de una factura, después cualquier foto."""
-    orden = {"excel": 0, "factura": 1, "formulario": 2, "pdf": 3, "foto_producto": 5, "otro": 4}
+    orden = {"excel": 0, "factura": 1, "certificado": 1, "formulario": 2, "pdf": 3, "foto_producto": 5, "otro": 4}
     ls = sorted([l for l in lecturas if l and not l.get("error")], key=lambda l: orden.get(l.get("tipo"), 4))
     out = {"fcom": "", "fcomTxt": "", "fuente": "", "cels": [], "cliente": "", "reclamo": ""}
     for l in ls:
@@ -372,6 +376,11 @@ def main():
         for a in atts:                                    # un Excel leído con la versión de antes (sin `rot`) se vuelve a leer: es gratis
             if a["id"] in vistos and vistos[a["id"]].get("tipo") == "excel" and "fx" not in vistos[a["id"]]:
                 del vistos[a["id"]]
+            # (15/10, dueño: «en los certificados que subieron las fotos» está la fecha de compra) una foto leída con la pregunta de
+            # antes —que no nombraba el certificado de garantía— y que no dio la fecha, se vuelve a leer UNA vez con la de ahora
+            elif a["id"] in vistos and vistos[a["id"]].get("tipo") != "excel" and not vistos[a["id"]].get("fcom") \
+                    and int(vistos[a["id"]].get("v") or 1) < PREGUNTA_V:
+                del vistos[a["id"]]
         lecturas = [vistos[a["id"]] for a in atts if a["id"] in vistos]
         cuenta["adjuntos"] += len(atts)
         cuenta["de_antes"] += len(lecturas)
@@ -408,7 +417,8 @@ def main():
                         fatal = r["error"]; cuenta["errores"] += 1; continue
                     if r.get("error"):
                         cuenta["errores"] += 1; continue
-                    r["fuente"] = ("la factura" if r.get("tipo") == "factura" else "el formulario" if r.get("tipo") == "formulario" else "la foto") + " «%s»" % nom[:60]
+                    r["fuente"] = {"factura": "la factura", "formulario": "el formulario", "certificado": "el certificado de garantía"}.get(r.get("tipo"), "la foto") + " «%s»" % nom[:60]
+                    r["v"] = PREGUNTA_V
                 else:
                     cuenta["otros"] += 1; continue
             except Exception as e:                       # un adjunto que no baja o no se lee no frena a los demás
