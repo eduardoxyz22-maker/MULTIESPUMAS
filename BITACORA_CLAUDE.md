@@ -14659,3 +14659,5 @@ con las del trello y añadí los datos faltantes en el panel, como motivo y fech
 - Con el respaldo real (probado en el scratchpad, sin datos al repo): 88 tarjetas, 74 con celular, 30 con la fecha de compra entera,
   66 con el motivo reconocido, 48 con el reclamo escrito.
 - `tests/test_atc_trello.js` (24, CSV y ATC inventadas).
+- **PUBLICADO 15/10 09:54 de Bolivia, `f4239a3`** (pedido operativo del dueño: completar los datos exige la herramienta publicada; no escribe
+  nada sin su revisión). Solo `pedidos.html` + la prueba, encima de `9cdb86d`; lo del bot sigue en la rama.
