@@ -19019,6 +19019,7 @@ function verAtc(id){
                      ? '<button class="btn btn-sm" style="width:auto;background:#0369a1;color:#fff;font-weight:700" onclick="closeModal();abrirProgramarDevAtc(\''+esc(p.id)+'\')">🔁 '+(atcDevProg(p)?'Cambiar devolución':'Programar devolución')+'</button>'
                      : '<button class="btn btn-sm" style="width:auto;opacity:.55;cursor:not-allowed" disabled title="Primero hay que recogerlo: la devolución se programa después del recojo">🔁 Programar devolución</button>'))+
                    '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
+        '<button class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--teal-border);color:#065f5b;font-weight:700" onclick="atcCorreoVer(\''+esc(p.id)+'\')">📧 Correo de la ATC</button>'+   // 📧 (§4li)
         '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
     '</div>');
@@ -22284,6 +22285,99 @@ function atcLineaWa(p){
   if(pz.length && !atcViajeDevolucion(p)) L.push('📦 Se le recoge: '+pz.join(' · ')+(atcRecibidoNota(p)?(' ('+atcRecibidoNota(p)+')'):''));
   if(atcComodinAviso(p)) L.push(atcComodinAviso(p));
   return L.join('\n');
+}
+/* ============================================================================
+   📧 EL CORREO DE LA ATC (15/10, §4li) — dueño: *«falta que al crear la ATC se genere el mensaje para copiar al correo, y ellas enviar»*.
+   Al guardar una ATC (y desde su ficha) sale el correo armado: Para (lo que se escribió la última vez en ESA compu, o
+   ATC_CORREO_PARA), Asunto y Cuerpo con todo lo de la ATC (motivo, detalle, fecha de compra, qué se recoge, comodín, recojo) y los
+   enlaces a las fotos del producto (Drive, «cualquiera con el enlace»: se abren sin cuenta). Copiar, o abrir en Gmail o en el
+   programa de correo. El panel NO manda nada: lo manda la vendedora.
+   ========================================================================== */
+var ATC_CORREO_PARA='';                       // si el dueño da una dirección fija, va acá (la de cada compu manda)
+var ATC_CORREO_LS='me_atc_correo';
+function atcCorreoPara(){ try{ var v=localStorage.getItem(ATC_CORREO_LS); if(v!=null) return v; }catch(e){} return ATC_CORREO_PARA; }
+function atcCorreoParaGuardar(v){ try{ localStorage.setItem(ATC_CORREO_LS, String(v||'').trim()); }catch(e){} }
+function atcCorreoAsunto(p){
+  var pr=(p.productos||[])[0]||{};
+  return ['ATC '+String(ocEtiq(p.oc)||'').replace(/^ATC\s*/i,''), (p.cliente||''), (atcMotivo(p)||'sin motivo'),
+          ((pr.desc||'')+(pr.medida?(' '+pr.medida):'')).trim()].filter(Boolean).join(' · ');
+}
+function atcCorreoTexto(p){
+  var L=[], fc=atcFechaCompra(p), pz=atcRecibido(p), fot=atcFotos(p);
+  var prod=(p.productos||[]).map(function(x){
+    return '   - '+(x.desc||'')+(x.medida?(' '+x.medida):'')+(x.codigo?(' (cód '+x.codigo+')'):'')+' x '+(x.cant||1);
+  });
+  L.push('Buen día:', '', 'Se generó la siguiente atención al cliente (ATC):', '');
+  L.push('N° ATC: '+ocEtiq(p.oc));
+  L.push('Fecha en que entró: '+fmtFecha(atcEntro(p)));
+  L.push('Vendedor/a: '+(p.vendedor||''));
+  L.push('', 'CLIENTE');
+  L.push('Nombre: '+(p.cliente||''));
+  if(p.celular) L.push('Celular: '+p.celular);
+  if(p.zona||p.direccion) L.push('Dirección: '+[p.zona, p.direccion].filter(Boolean).join(' — '));
+  if(p.maps) L.push('Ubicación: '+p.maps);
+  L.push('', 'PRODUCTO');
+  prod.forEach(function(x){ L.push(x); });
+  L.push('Fecha de compra: '+(fc ? (fmtFecha(fc)+' ('+antiguedadTxt(fc, atcEntro(p))+')') : 'sin anotar'));
+  L.push('', 'RECLAMO');
+  L.push('Motivo: '+(atcMotivo(p)||'sin anotar'));
+  L.push('Detalle: '+(atcDetalle(p)||'sin anotar'));
+  L.push('Se le recoge: '+(pz.length ? pz.join(', ') : 'sin anotar')+(atcRecibidoNota(p)?(' ('+atcRecibidoNota(p)+')'):''));
+  L.push('Comodín: '+(atcComodin(p) ? 'Sí, se le deja' : 'No'));
+  if(p.fecha) L.push('Recojo programado: '+fmtFecha(p.fecha)+(normTurno(p.turno)?(' · turno '+normTurno(p.turno)):''));
+  if(p.observaciones) L.push('Observaciones: '+p.observaciones);
+  if(fot.length){
+    L.push('', 'FOTOS DEL PRODUCTO');
+    fot.forEach(function(f, i){ L.push('   Foto '+(i+1)+': '+fotoVer(fidLimpio(f))); });
+  }
+  L.push('', 'Saludos,', (p.vendedor||''));
+  return L.join('\n');
+}
+/* El bloque del correo, para la ventana de «ATC guardada» y la ficha. Los campos se pueden retocar antes de copiar. */
+function atcCorreoHtml(p){
+  var lb='font-size:.72rem;font-weight:800;color:#065f5b;text-transform:uppercase;letter-spacing:.04em;margin:8px 0 3px';
+  return '<div id="atc-correo" style="background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:12px;padding:12px 13px;margin-bottom:14px">'+
+    '<div style="font-weight:800;color:#065f5b;font-size:.95rem">📧 Correo de la ATC — copialo y mandalo vos</div>'+
+    '<div style="font-size:.76rem;color:var(--muted);margin-top:2px">El panel no lo manda solo. Revisalo, y mandalo desde tu correo.</div>'+
+    '<div style="'+lb+'">Para</div>'+
+    /* type="text" con teclado de correo: el estilo de los campos del panel no incluye type="email" (quedaba chico y sin borde). */
+    '<input type="text" inputmode="email" id="atc-correo-para" value="'+esc(atcCorreoPara())+'" placeholder="A quién se manda (queda guardado en esta compu)" autocomplete="email" autocapitalize="off" spellcheck="false" onchange="atcCorreoParaGuardar(this.value)">'+
+    '<div style="'+lb+'">Asunto</div>'+
+    '<input type="text" id="atc-correo-asunto" value="'+esc(atcCorreoAsunto(p))+'">'+
+    '<div style="'+lb+'">Mensaje</div>'+
+    '<textarea class="wa-text" id="atc-correo-texto" style="min-height:220px">'+esc(atcCorreoTexto(p))+'</textarea>'+
+    '<div class="modal-actions" style="margin-top:8px">'+
+      '<button class="btn btn-primary btn-sm" style="flex:1;min-width:140px" onclick="atcCorreoCopiar()">📋 Copiar el mensaje</button>'+
+      '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--teal-border);color:#065f5b" onclick="atcCorreoCopiar(\'asunto\')">📋 Copiar el asunto</button>'+
+      '<button class="btn btn-sm" style="background:#c5221f;color:#fff;font-weight:700" onclick="atcCorreoAbrir(\'gmail\')">📧 Abrir en Gmail</button>'+
+      '<button class="btn btn-sm btn-ghost" onclick="atcCorreoAbrir(\'mailto\')">✉️ Otro correo</button>'+
+    '</div></div>';
+}
+function atcCorreoVals(){
+  var g=function(id){ return String((document.getElementById(id)||{}).value||''); };
+  var para=g('atc-correo-para').trim(); if(para) atcCorreoParaGuardar(para);
+  return { para:para, asunto:g('atc-correo-asunto'), texto:g('atc-correo-texto') };
+}
+function atcCorreoCopiar(que){
+  var v=atcCorreoVals();
+  copyText(que==='asunto' ? v.asunto : v.texto);
+}
+function atcCorreoUrl(modo, v){
+  if(modo==='gmail') return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(v.para)+'&su='+encodeURIComponent(v.asunto)+'&body='+encodeURIComponent(v.texto);
+  return 'mailto:'+encodeURIComponent(v.para).replace(/%40/g,'@')+'?subject='+encodeURIComponent(v.asunto)+'&body='+encodeURIComponent(v.texto);
+}
+function atcCorreoAbrir(modo){
+  var v=atcCorreoVals();
+  if(!v.para) toast('Ojo: falta el «Para». Escribí el correo de destino (o ponelo en tu correo antes de mandar).','err',6000);
+  if(modo==='gmail') window.open(atcCorreoUrl('gmail', v), '_blank');
+  else window.location.href=atcCorreoUrl('mailto', v);
+}
+/* Desde la ficha de la ATC: el mismo correo, para mandarlo (o reenviarlo) después. */
+function atcCorreoVer(id){
+  var p=findById(id); if(!p) return;
+  openModal('<div class="modal-h"><h3>📧 Correo de '+esc(ocEtiq(p.oc)||'la ATC')+'</h3><button class="modal-x" onclick="verAtc(\''+esc(String(p.id).replace(/'/g,''))+'\')">✕</button></div>'+
+    '<div class="modal-b">'+atcCorreoHtml(p)+
+      '<div class="modal-actions"><button class="btn btn-ghost btn-sm" onclick="verAtc(\''+esc(String(p.id).replace(/'/g,''))+'\')">← Volver a la ficha</button></div></div>');
 }
 function pedidoText(p){
   if(esRPT(p&&p.oc)) return rptText(p);
@@ -29167,7 +29261,7 @@ function closeModal(){ document.getElementById('modal').classList.remove('on'); 
 function showWhatsappModal(rec, volverA, reenvio){
   var text=pedidoText(rec);
   var salir = esc(volverA || 'closeModal()');
-  var _rpt=esRPT(rec&&rec.oc), _rid=String((rec&&rec.id)||'').replace(/'/g,'');
+  var _rpt=esRPT(rec&&rec.oc), _atc=esATC(rec&&rec.oc), _rid=String((rec&&rec.id)||'').replace(/'/g,'');
   /* 🏪 §4do — EN UNA REPOSICIÓN, EL EXCEL VA PRIMERO Y GRANDE. El dueño abrió el archivo que
      bajó y encontró el mensaje de WhatsApp pegado en la columna A: *«¿qué paja es ese Excel
      que genera? yo te pasé un formato»*. El Excel estaba bien —es otro botón—, pero esta
@@ -29178,12 +29272,15 @@ function showWhatsappModal(rec, volverA, reenvio){
     ? ('<button class="btn" style="width:100%;background:var(--rpt);color:#fff;font-weight:800;font-size:.95rem;padding:13px" onclick="bajarRptExcel(\''+_rid+'\')">⬇️ Bajar el Excel del formato — es lo que va por correo a logística</button>'+
        '<p style="font-size:.78rem;color:var(--muted);margin:9px 0 14px;text-align:center">Se baja como <b>'+esc(nombreArchivoRpt(rec))+'</b>. Adjuntalo al correo tal cual.</p>')
     : '';
-  var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':(_rpt?'✅ Reposición guardada':'✅ Pedido guardado'))+'</h3>'+
+  /* 📧 (§4li) En una ATC, el CORREO va primero (como el Excel de la RPT): es lo que la vendedora tiene que mandar. */
+  var _correo = _atc ? atcCorreoHtml(rec) : '';
+  var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':(_rpt?'✅ Reposición guardada':(_atc?'✅ ATC guardada':'✅ Pedido guardado')))+'</h3>'+
       '<button class="modal-x" onclick="'+salir+'">✕</button></div>'+
     '<div class="modal-b">'+
-      _excel+
+      _excel+_correo+
       '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">'+
         (_rpt ? '📲 Y este es el <b>mensaje para WhatsApp</b> — para avisar, no para el correo:'
+         : _atc ? '📲 Y este es el <b>mensaje para el grupo de WhatsApp</b> — el aviso de siempre, aparte del correo:'
               : ('Copiá'+(reenvio?' la venta':' el pedido')+' y pegalo en WhatsApp, o abrí WhatsApp directo:'))+'</p>'+
       '<textarea class="wa-text" id="wa-text" readonly>'+esc(text)+'</textarea>'+
       '<div class="modal-actions">'+

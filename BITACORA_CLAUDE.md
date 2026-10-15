@@ -14873,3 +14873,20 @@ que guarden sin antes completar todos los datos»*.
   ⚠️ Todos F5: una página vieja deja guardar ATC sin los datos nuevos.
 - Batería entera con §4lh (la rama, `88b2eac`): 193 suites, 6.742 en verde; una sola roja, `test_asistente` 23/1 con la máquina cargada, que
   sola da 24/0.
+
+## §4li — 📧 El correo de la ATC, listo para copiar y mandar (15/10)
+El dueño, recién publicado §4lh: *«ash faltó que al crear la ATC se genere el mensaje para copiar al correo, y ellas enviar»*.
+- Al guardar una ATC nueva la ventana dice **«✅ ATC guardada»** y ARRIBA del mensaje de WhatsApp (como el Excel de la RPT, §4do) va el bloque
+  **`#atc-correo`** (`atcCorreoHtml`): **Para** (`#atc-correo-para`), **Asunto** (`atcCorreoAsunto`: «ATC 10-001 · CLIENTE · Motivo · PRODUCTO
+  medida») y **Mensaje** (`atcCorreoTexto`): N° ATC, cuándo entró, vendedor/a; CLIENTE (nombre, celular, dirección, ubicación); PRODUCTO (cada
+  renglón y la fecha de compra con hace cuánto, `antiguedadTxt`); RECLAMO (motivo, detalle, qué se le recoge, comodín, recojo programado,
+  observaciones); FOTOS DEL PRODUCTO (enlaces de Drive, `fotoVer`: se abren sin cuenta por el `setSharing` de §4cd) y «Saludos,» + la vendedora.
+  Los tres campos se pueden retocar antes: copiar y abrir toman lo que está escrito (`atcCorreoVals`).
+- Botones: «📋 Copiar el mensaje», «📋 Copiar el asunto», «📧 Abrir en Gmail» (borrador de Gmail con Para/Asunto/Mensaje, `atcCorreoUrl('gmail')`)
+  y «✉️ Otro correo» (`mailto:`). Sin «Para», abrir avisa y abre igual. **El panel no manda nada: lo manda la vendedora.**
+- **El «Para»** se recuerda POR COMPU (`localStorage` `me_atc_correo`); sin nada guardado usa `ATC_CORREO_PARA` (hoy vacío: el dueño no dio la
+  dirección todavía; cuando la dé, va ahí y la de cada compu sigue mandando). Es `type="text" inputmode="email"`: el CSS del panel no estiliza
+  `type="email"` (salía chico y sin borde).
+- Después: **«📧 Correo de la ATC»** en la ficha (`verAtc` → `atcCorreoVer`, con «← Volver a la ficha») y «📲 Reenviar» de Mis pedidos también lo
+  trae. Una edición de ATC sigue con «✓ Cambios guardados» (sin correo): para reenviarlo, desde la ficha. OC y RPT no cambian.
+- `tests/test_atc_correo.js` (32; 15 rojas contra `a21dfe7`).
