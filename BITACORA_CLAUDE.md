@@ -14661,3 +14661,33 @@ con las del trello y añadí los datos faltantes en el panel, como motivo y fech
 - `tests/test_atc_trello.js` (24, CSV y ATC inventadas).
 - **PUBLICADO 15/10 09:54 de Bolivia, `f4239a3`** (pedido operativo del dueño: completar los datos exige la herramienta publicada; no escribe
   nada sin su revisión). Solo `pedidos.html` + la prueba, encima de `9cdb86d`; lo del bot sigue en la rama.
+
+### §4lf-b — 📎 La fecha de compra que está en las FOTOS y Excel adjuntos (15/10)
+El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso en el trello está en fotos»* → propuse leer los adjuntos
+(Excel directo, fotos con Claude desde GitHub) → *«ya puse mi api key en github»* (secreto `ANTHROPIC_API_KEY` del repositorio).
+- **`herramientas/trello_adjuntos.py`** (solo stdlib; Pillow si está, para achicar las fotos a 2000 px en JPEG y enderezarlas): baja de la
+  API de Trello las tarjetas del tablero (también archivadas) con sus adjuntos; baja cada archivo con la cabecera
+  `Authorization: OAuth oauth_consumer_key=…, oauth_token=…` (los adjuntos ya no bajan con la clave en la dirección).
+  · **Excel (.xlsx)**: directo, sin IA (`xlsx_filas`/`xlsx_datos`): la celda después de «FECHA DE COMPRA» (texto, número de Excel o en la
+    misma celda), TELEFONO/CELULAR, CLIENTE, DETALLES DEL RECLAMO. La «FECHA» del formulario NO es la de compra.
+  · **Fotos y PDF**: a Claude (la misma llamada cruda del `.gs`: `x-api-key`, beta `server-side-fallback-2026-07-01` + `fallbacks:'default'`,
+    `output_config` `effort:'low'` + `json_schema`; un 400 que no es crédito → la consulta simple pidiendo JSON). Esquema: tipo
+    (formulario/factura/foto_producto/otro), fecha_compra (AAAA-MM-DD solo si se lee entera; mes y año → vacía), el texto tal cual,
+    celular, cliente, reclamo. Una fecha del futuro o de antes de 2005 se descarta.
+  · **Gasta poco**: cada adjunto se lee UNA vez (`vistos` por id, en el mismo JSON); las tarjetas más nuevas primero; dentro de cada una,
+    Excel → PDF → fotos que por el nombre parecen factura/formulario → las demás; **una tarjeta que ya tiene la fecha entera no gasta en
+    sus otras fotos** (`ya_tenia`); tope `ATCT_MAX_IA` (300) y `ATCT_MINUTOS` (40) por corrida (lo que falta, la siguiente). Sin crédito
+    o con la clave mala corta las fotos, guarda lo de los Excel y sale con 2.
+  · `juntar`: la fecha del Excel primero, después la de una factura, después cualquier foto.
+  · 🔒 **El registro de Actions es público: imprime solo cantidades** (`test_trello_adjuntos` busca nombres, celulares, fechas, claves y
+    nombres de archivo en lo impreso). El JSON (`atc-trello-adjuntos.json`, servido por Pages) guarda lo mismo que ya publica el CSV.
+- **`.github/workflows/trello-adjuntos.yml`**: todos los días 23:10 UTC (19:10 de Bolivia, después del respaldo de las 17:00), a mano, y al
+  pushear el script o el workflow (en CUALQUIER rama: así se corrió la primera vez, en la rama). Guarda el JSON en la rama que lo corrió
+  (`HEAD:${GITHUB_REF_NAME}`, 4 intentos con `pull --rebase`), también si el script salió con error (lo de los Excel no se pierde).
+  ⚠️ La primera corrida falló al instante: un `run:` de una línea con «: » adentro rompe el YAML (validar con `yaml.safe_load`).
+- **Panel** (`atctTraerAdj`/`atctTomarAdj`/`atctSumarAdjuntos`): «🔗 Completar con Trello» lee también el JSON (si no está, sigue con el
+  texto y lo dice). Por tarjeta (`atctSl` = el shortLink de la URL): **el texto escrito manda**; del adjunto entran los celulares (más
+  cruces por celular), la fecha si el texto no la tiene ENTERA (con «📎 En la factura «…» dice «…»»), el reclamo y el motivo si faltan
+  («📎 Leído de…»), el nombre y el día de creación de la tarjeta. Arriba: «📎 fotos y Excel adjuntos leídos el … (N con la fecha de compra)».
+- Pruebas: `tests/test_trello_adjuntos.py` (53: fechas, el Excel armado en la prueba, Claude y Trello de mentira, una vez por adjunto,
+  sin crédito, sin clave, el registro sin datos), `test_atc_trello` §5 (→ 33).

@@ -707,7 +707,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - Pestaña ATC → **«🔗 Completar con Trello»** (`abrirAtcTrello`, `#atct-ov`, solo con la contraseña). Lee `atc-semanal.csv` (el respaldo diario del
   tablero que baja el workflow «Reporte Semanal ATC»: el panel no tiene la clave de Trello) y cruza cada ATC por **celular** (tildado) o **nombre**
   (sin tildar). **Solo completa lo vacío** (motivo, fecha de compra, detalle; se vuelve a mirar al guardar) y deja `a.tre` = la tarjeta (la ficha
-  muestra «🗂️ Ver su tarjeta en Trello»). La fecha de compra solo con día/mes/año (`atctCompra`); mes/año o año solo se muestran. `tests/test_atc_trello.js` (24).
+  muestra «🗂️ Ver su tarjeta en Trello»). La fecha de compra solo con día/mes/año (`atctCompra`); mes/año o año solo se muestran. `tests/test_atc_trello.js` (33).
+- **📎 Las fotos y Excel adjuntos** (§4lf-b, dueño: *«eso en el trello está en fotos… ya puse mi api key en github»*): `herramientas/trello_adjuntos.py`
+  (workflow «Leer adjuntos de Trello (ATC)», 19:10 de Bolivia, secretos `TRELLO_API_KEY`, `TRELLO_TOKEN`, `ANTHROPIC_API_KEY`) lee los Excel directo y
+  las fotos/PDF con Claude, UNA vez por adjunto (`vistos`), y deja `atc-trello-adjuntos.json`; una tarjeta con la fecha entera no gasta en sus otras
+  fotos. ⚠️ Registro público: el script imprime SOLO cantidades. En el panel (`atctSumarAdjuntos`) **el texto de la tarjeta manda**; del adjunto
+  entran celulares, la fecha si el texto no la tiene entera («📎 En la factura «…» dice…»), reclamo/motivo/nombre si faltan. `tests/test_trello_adjuntos.py` (53).
 
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
