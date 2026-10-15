@@ -68,6 +68,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var pr=document.querySelector('#f-productos .prod-desc'); pr.value=o.prod||'SEMI ORTOPEDICO';
     var md=document.querySelector('#f-productos .prod-medida'); if(md) md.value='140x190';
     var cn=document.querySelector('#f-productos .prod-cant'); if(cn) cn.value='1';
+    /* (15/10, §4lh) detalle, fecha de compra y «qué se le recoge» son obligatorios: si la prueba no los pasa, van unos válidos
+       (lo que se prueba acá es otra cosa; lo obligatorio lo cuida `test_atc_obligatorio`). */
+    if(o.detalle===undefined) o.detalle='no descansa bien, hundido en un lado';
+    if(o.compra===undefined)  o.compra='2024-07-13';
+    if(o.piezas===undefined)  o.piezas=['col'];
     if(o.motivo!=null)  _el('f-atc-motivo').value=o.motivo;
     if(o.detalle!=null) _el('f-atc-detalle').value=o.detalle;
     if(o.compra!=null)  _el('f-atc-compra').value=o.compra;

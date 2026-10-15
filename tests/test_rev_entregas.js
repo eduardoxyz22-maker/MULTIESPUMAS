@@ -48,7 +48,7 @@ const BASE = `
   window._atcConDev=function(id, fecha, turno){
     STATE=STATE.filter(function(p){ return p.id!==id; });
     STATE.push(_P({id:id, oc:'ATC 09-0'+id.length, fecha:'2026-09-21', entregado:true, cliente:'CLIENTE '+id,
-      productos:[{desc:'SOFT', medida:'140x190', cant:1, atc:{mot:'Hundimiento'}}]}));
+      productos:[{desc:'SOFT', medida:'140x190', cant:1, atc:{mot:'Hundimiento', det:'hundido en el medio, no retoma su forma', fcom:'2024-05-10', r_col:true}}]}));   // (§4lh) completa: si no, ✏️ Editar no guarda
     saveMirror();
     abrirProgramarDevAtc(id);
     document.getElementById('pdev-fecha').value=fecha; segSet('pdev-turno', turno);

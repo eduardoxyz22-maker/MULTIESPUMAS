@@ -105,7 +105,8 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
     D.confirm=true;
     const r = await page.evaluate(async () => {
       var atc=function(id, fecha, turno, entregado){ return P({ id:id, oc:'ATC 09-0'+id.slice(-2), cliente:'CLIENTE '+id, fecha:fecha, turno:turno, entregado:!!entregado,
-        productos:[{desc:'SOFT', medida:'140x190', cant:1, atc:{mot:'Hundimiento'}}] }); };
+        /* (15/10, §4lh) con los datos que ahora son obligatorios: si no, ✏️ Editar no la deja guardar */
+        productos:[{desc:'SOFT', medida:'140x190', cant:1, atc:{mot:'Hundimiento', det:'hundido en el medio, no retoma su forma', fcom:'2024-05-10', r_col:true}}] }); };
       await cargar([ atc('A11','2026-09-21','AM',true), atc('A12','2026-09-21','AM',true), atc('A13','2026-09-21','AM',true),
                      atc('A14','2026-09-22','PM',true), atc('A15','2026-09-21','AM',true) ]);
       var programar=function(id, f, t){ abrirProgramarDevAtc(id); document.getElementById('pdev-fecha').value=f; segSet('pdev-turno', t); guardarProgramarDevAtc(id); };
