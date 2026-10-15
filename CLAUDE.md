@@ -738,6 +738,8 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   la misma en dos tarjetas, abiertas quietas > 60 días (`ATCT_QUIETA_DIAS`). `atctCruzar` reconoce la traída por su enlace.
   · Las 24 del panel SIN fecha de compra son de agosto-octubre y Trello casi no las tiene (en esos meses se crearon 9 tarjetas y entraron 45
   ATC al panel): esa fecha hay que pedirla. `tests/test_atc_trello.js` §6 (56).
+  · **«📋 Copiar» de la pestaña ATC trae la «Fecha de compra» tercera, al lado de «Entró»** (§4lf-d, 15/10, PUBLICADO `d74791d`): como la
+  columna que el dueño completaba a mano en su Excel. `test_rev2_atc` §4.
   · **El avance a la vista** (15/10, PUBLICADO `1eadf0a`; dueño: *«no sé si está cargando, guardando o qué»*): barra «Guardando en la planilla:
   N de M», botón «⏳ Guardando N de M…» y estado por renglón (`#atct-fe<i>`); se guardan DE A UNA (1-3 min para 70). No se ofrecen la tarjeta
   de ejemplo, fotos sueltas ni la plantilla (`atctNoEsAtc`); «Tildar las recomendadas» reemplaza a «Tildar todas» (tildaba la de ejemplo y

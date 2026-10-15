@@ -14785,3 +14785,16 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   misma ATC en dos tarjetas pide además ≤10 días o el mismo producto (Paola Silvana Guzmán tenía dos reclamos distintos, nov. y dic.);
   «🗂️ Ya traídas de Trello» deja sacar una (o todas las que no son ATC / archivadas) con el borrado de siempre. Con los archivos reales
   y el panel vacío: 84 ofrecidas, 55 recomendadas, 4 que no son ATC. `test_atc_trello` → 56. **PUBLICADO `1eadf0a`**.
+
+### §4lf-d — 🗓️ La fecha de compra en el Excel del dueño y en «📋 Copiar» (15/10)
+- El dueño subió su Excel de ATC (la copia de la matriz pegada a mano, con «FECHA DE COMPRA» como 3ª columna, en amarillo las que le
+  faltaban) y pidió *«colócale la fecha de compra»*. Para leer las ATC del panel sin datos de clientes en un registro público, el
+  diagnóstico las dejó **cifradas** con una llave pública (la privada vivió solo en el scratchpad y se borró al terminar); se revirtió
+  todo (`42e5709`: fuera `atc-cifrado.txt`, la llave pública y el paso del workflow, que vuelve a `contents: read`).
+- El archivo devuelto (por el chat, no al repo) solo tocó la columna C: 10 fechas del panel (verde), 4 a revisar (naranja: dos donde el
+  panel y Trello no coinciden, una deducida del mismo cliente y celular, una que el panel sacó de una tarjeta de OTRA persona con el mismo
+  celular), 10 siguen vacías (amarillo: ni el panel ni Trello la tienen; una con fecha del panel POSTERIOR a la ATC, que no puede ser la
+  compra). Una que el dueño ya tenía (año 2024) contradice al panel (2022, del formulario adjunto en Trello; la tarjeta dice «compró 2024»):
+  comentario en la celda, no se tocó. Cada celda dice de dónde salió.
+- La copia no traía la fecha porque `copiarAtc` no la tenía: ahora va **tercera, al lado de «Entró»** (donde la pone el dueño).
+  `test_rev2_atc` §4 → 36 (2 rojas contra el panel de antes). **PUBLICADO `d74791d`**.
