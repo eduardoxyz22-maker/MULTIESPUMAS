@@ -267,6 +267,7 @@ const BASE = `
       STATE=[];
       _atcConDev('m1','2026-09-28','PM');
       marcarRecogidoFab('m1');                                   // logística ya lo trajo de la fábrica (hoy)
+      (function(){ var p=STATE.filter(function(x){ return x.id==='m1'; })[0], a=p&&atcDe(p); if(a) a.fcom='2024-02-14'; })();   // (15/10) fecha de compra
       var copiado=''; copyText=function(t){ copiado=t; };
       showView('atc'); await new Promise(function(r){ setTimeout(r,150); });
       segSet('atc-mode','todo'); renderAtc(); copiarAtc();
@@ -278,8 +279,10 @@ const BASE = `
     const col=(n)=>dato[enc.indexOf(n)];
     chk('⚠️ la copia trae una fila de encabezado (antes, pegada en Excel, no se sabía qué era cada columna)',
         enc[0]==='N° ATC' && enc.indexOf('Motivo')>=0 && enc.length===dato.length, J(enc));
-    chk('control: las columnas de siempre siguen en el mismo lugar (N° ATC, entró, cliente… qué se hizo)',
-        J(enc.slice(0,13))===J(['N° ATC','Entró','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica','Al cliente','Días','Qué se hizo']) && dato[0]==='ATC 09-02', J(enc.slice(0,13)));
+    /* (15/10) «Fecha de compra» va TERCERA, donde la puso el dueño a mano en su Excel; las demás siguen en su orden */
+    chk('control: N° ATC, entró, FECHA DE COMPRA (15/10, como el Excel del dueño), cliente… qué se hizo',
+        J(enc.slice(0,14))===J(['N° ATC','Entró','Fecha de compra','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica','Al cliente','Días','Qué se hizo']) && dato[0]==='ATC 09-02', J(enc.slice(0,14)));
+    chk('⚠️ trae la fecha de compra de la ATC (15/10: el dueño la completaba a mano en su Excel)', col('Fecha de compra')==='14/02/2024', col('Fecha de compra'));
     chk('⚠️ trae el «🏭 Recogido de fábrica» que muestra la matriz (antes no estaba)', col('Recogido de fábrica')==='23/09/2026', col('Recogido de fábrica'));
     chk('⚠️ …y la devolución programada con su turno', col('Devolución programada')==='28/09/2026 PM', col('Devolución programada'));
     await page.close();
