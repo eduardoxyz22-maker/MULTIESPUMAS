@@ -14648,6 +14648,7 @@ El dueño: *«al descargar PDF quiero que me permita elegir mes seleccionado o T
   anteriores»; motivos sin la columna del mes anterior; «Dónde están» con las abiertas por el mes en que entraron. `atciEtq(D)` es el
   rótulo (pie, info); archivo `Informe-ATC-todas-al-15-octubre-2026.pdf`.
 - `test_atc_informe` → 55 (§1b y la ventana con «Todas», el PDF de «Todas»; con `ATCI_SALIDA` también capturas `todasN.png`).
+- **PUBLICADO 15/10 de Bolivia, `e05ba67`** (pedido directo del dueño sobre una herramienta que ya usa; solo el informe). Pages OK.
 
 ## §4lf — 🔗 Completar las ATC con lo que dice Trello (15/10)
 El dueño (15/10): *«https://trello.com/b/cFbJp9DO/atc — tenés la api del trello, descargá o revisá todas las atc que tenemos en el panel

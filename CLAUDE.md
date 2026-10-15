@@ -702,7 +702,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   (`#atci-render`). Sin internet → ventana de imprimir; el `@page` apaisado vive solo con la ventana abierta (`atciPaginaCss`).
   ⚠️ En el CSS de las hojas nada de `color-mix()`/`oklch()` ni `box-shadow` en la copia (html2canvas los pinta mal); tablas con
   `table-layout:fixed` + `white-space:normal`. `tests/test_atc_informe.js` (55; `ATCI_LIBS_DIR` con las librerías de npm, `ATCI_SALIDA` deja PDF y capturas).
-- **🗂️ «Todas, desde el inicio»** (§4le-b, 15/10, dueño: *«elegir mes seleccionado o TODAS»*): selector `#atci-alc` → `atciDatos('todas')` (mismas
+- **🗂️ «Todas, desde el inicio»** (§4le-b, 15/10, PUBLICADO `e05ba67`; dueño: *«elegir mes seleccionado o TODAS»*): selector `#atci-alc` → `atciDatos('todas')` (mismas
   cuentas, sin comparar con un mes; tendencia mes por mes desde la primera, hasta 12; «Por mes, en promedio»; abiertas por mes de entrada).
 
 ## 🔗 Completar las ATC con Trello (§4lf, 15/10, PUBLICADO 09:54, `f4239a3`; adjuntos §4lf-b PUBLICADO 10:19, `e2c3e5f`; dueño: *«revisá todas las atc del panel con las del trello y añadí los datos faltantes: motivo y fecha de compra»*)
