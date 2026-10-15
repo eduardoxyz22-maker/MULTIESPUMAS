@@ -729,6 +729,47 @@ def atc_del_panel():
     cruzan = [p for p in falta if cel8(p) and cel8(p) in cels_t]
     print(f"   les falta algo (motivo, fecha o detalle): {len(falta)} · de esas, con una tarjeta de Trello del mismo celular: {len(cruzan)} · "
           f"sin celular en el panel: {len([p for p in falta if not cel8(p)])}")
+    # (15/10) solo la FECHA DE COMPRA: de las que no la tienen, cuántas la podrían sacar de Trello (por celular o por nombre)
+    try:
+        import csv as _csv, unicodedata as _ud
+        def may(s):
+            return "".join(c for c in _ud.normalize("NFD", str(s or "")) if _ud.category(c) != "Mn").upper()
+        NO = set("ATC ARC CLIENTE MIRIAN ISABEL CAROLA NORMA ROHO LATEX XLSX DEL LOS LAS SRA COLCHON SOMIER TIENDA PLZ POR GARANTIA "
+                 "REPARACION CAMBIO HUNDIMIENTO ORTOPEDICO NUEVO COTIZAR CON PARA MARIA FECHA TELEFONO DIRECCION".split())
+        def palabras(s):
+            return {w for w in re.sub(r"[^A-ZÑ ]", " ", may(s)).split() if len(w) >= 3 and w not in NO}
+        PAL = r"(?:FECHA DE COMPRA|FECHA COMPRA|COMPRAD[OA]|COMPRO|COMPRA|SE VENDIO|VENDID[OA])[^0-9A-Z]{0,4}(?:(?:EL|DEL|EN|EN EL|EN FECHA)\s+)?[:\s-]*(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})"
+        adjs = {}
+        if os.path.exists(adj):
+            for t in json.load(open(adj, encoding="utf-8")).get("tarjetas", []):
+                adjs[t.get("sl")] = t
+        tarj = []
+        for r in _csv.DictReader(open(os.path.join(aqui, "atc-semanal.csv"), encoding="utf-8-sig")):
+            todo = (r.get("Tarjeta") or "") + " | " + (r.get("Descripcion") or "")
+            sl = (re.search(r"/c/([A-Za-z0-9]+)", r.get("URL") or "") or [None, ""])[1]
+            a = adjs.get(sl) or {}
+            cs = {re.sub(r"\D", "", m.group(1))[-8:] for m in re.finditer(r"(?:^|[^0-9])((?:\+?591[\s.-]?)?[67](?:[\s.-]?\d){7})(?![\s.-]?\d)", todo)}
+            cs.update(str(c)[-8:] for c in a.get("cels", []))
+            tiene = bool(re.search(PAL, re.sub(r"[\t ]+", " ", may(todo)))) or bool(a.get("fcom"))
+            tarj.append({"cels": cs, "nom": palabras(r.get("Tarjeta") or "") | palabras(a.get("cliente") or ""), "f": tiene})
+        sin = [p for p in atcs if not (_atc_de(p) or {}).get("fcom")]
+        c = {"cel_f": 0, "cel_sin": 0, "nom_f": 0, "nom_sin": 0, "nada": 0}
+        for p in sin:
+            ce, nm = cel8(p), palabras(p.get("cliente") or "")
+            porcel = [t for t in tarj if ce and ce in t["cels"]]
+            pornom = [t for t in tarj if len(nm & t["nom"]) >= 2]
+            if porcel:
+                c["cel_f" if any(t["f"] for t in porcel) else "cel_sin"] += 1
+            elif pornom:
+                c["nom_f" if any(t["f"] for t in pornom) else "nom_sin"] += 1
+            else:
+                c["nada"] += 1
+        print(f"   SIN fecha de compra en el panel: {len(sin)} → con tarjeta del mismo celular que trae la fecha {c['cel_f']} · "
+              f"del mismo celular pero sin fecha {c['cel_sin']} · solo por el nombre, con fecha {c['nom_f']} · solo por el nombre, sin fecha "
+              f"{c['nom_sin']} · sin tarjeta en Trello {c['nada']}")
+        print(f"   tarjetas de Trello con la fecha de compra: {sum(1 for t in tarj if t['f'])} de {len(tarj)}")
+    except Exception as ex:
+        print(f"   (no pude cruzar las fechas con Trello: {type(ex).__name__})")
 
 
 def main():
