@@ -14608,3 +14608,28 @@ mantenimiento, así que solo por mañana»*.
   la respuesta del aviso mientras tanto: si la repite, el repetido no se anota (mismo wamid). Lo que espera el aviso NO cuenta para los
   90 min/día de disparadores. `IA_AL_VUELO` = 0 lo apaga sin reimplementar. `test_wa_bot` §15c (+8 → 208). Página: `SCRIPT_VERSION_ESPERADA`
   = 14-c (sin otro cambio). `.gs` 4.342 líneas.
+
+## §4le — 📄 Informe de ATC en PDF, del mes que se elija (15/10)
+El dueño (15/10): *«En la pestaña de ATC del panel quiero un botón que genere un informe en PDF y ese informe muestre lo más relevante
+e importante tipo presentación sobre las ATC del mes, que uno puede elegir el mes. No quiero todas las ATC, sino que uno elija el mes»*.
+- Botón **«📄 Informe PDF»** (`#atc-informe-btn`) en los filtros de la pestaña ATC → ventana `#atci-ov` con el mes (arranca en el que
+  se mira en la pestaña; con «Todo», el de hoy), la vista previa y **«⬇️ Descargar PDF»** / «🖨 Imprimir».
+- **El mes = las ATC que ENTRARON ese mes** (`atcEntro`). Las de meses anteriores que siguen abiertas van APARTE («vienen de meses
+  anteriores»): en el informe no se mezclan, a diferencia de la pestaña (§4ea). «Dónde están» es el estado de HOY y la portada lo dice.
+- Solo lee, con las cuentas de la pestaña (`atcEstado`, `atcDias`, `atcMotivo`, `atcRecogida`, `atcRecogidoFab`, `atcEntregada`,
+  `atcFechaCompra`, `atcComodin`, `marcaDe`). Cuentas en **`atciDatos(mes)`** (sin pantalla) y hojas en **`atciHojas(D)`**.
+- Hojas A4 apaisadas de 1123×794 px: portada (3 números) · resumen (6 fichas + «⭐ Lo más importante» en palabras) · motivos (con lo
+  cerrado en verde y el mes anterior) + antigüedad de la compra + comodines + «lo que contaron los clientes» · productos (con sus
+  motivos) + dona de marcas + quién las cargó · dónde están (los 6 pasos, las que más esperan, las de meses anteriores) · tiempos (los
+  tres tramos + el circuito, cerradas y abiertas por días) · los últimos 6 meses · el detalle (11 por hoja, celdas de 2 renglones).
+- **El PDF**: html2canvas 1.4.1 le saca una foto (×2) a una COPIA sin achicar de cada hoja (`#atci-render`, debajo de la ventana) y
+  jsPDF 2.5.1 arma `Informe-ATC-<mes>-<año>.pdf` (A4 apaisado, ~1,8 MB con 8 hojas); las dos de cdnjs, recién al tocar el botón
+  (`atciCargarLibs`, 20 s). Sin internet a cdnjs: ventana de imprimir («Guardar como PDF»), con `@page` apaisado SOLO mientras el
+  informe está abierto (`atciPaginaCss`).
+  ⚠️ Para que la foto no salga en blanco ni rara: **nada de `color-mix()`/`oklch()`** en el CSS de las hojas (html2canvas no los
+  entiende) y **sin `box-shadow` en la copia** (`#atci-render .ai-pag`: la pintaba como un velo gris encima de toda la hoja). Las
+  tablas del informe llevan `table-layout:fixed` y `white-space:normal` (el `td` del panel es `nowrap` y la tabla se salía de la hoja).
+- Probado con 45 ATC de textos largos: ninguna hoja se sale (portada aparte: los círculos de adorno se recortan a propósito).
+- `tests/test_atc_informe.js` (37): las cuentas con un fixture a mano, el botón, las 8 hojas, cambiar de mes, un mes vacío, el PDF de
+  verdad (jsPDF y html2canvas servidos desde `npm i jspdf@2.5.1 html2canvas@1.4.1`: `ATCI_LIBS_DIR`; sin ellos esa parte se saltea
+  y lo dice), sin internet → imprimir, y el `@page` que se va al cerrar. Con `ATCI_SALIDA=<carpeta>` deja el PDF y las capturas.

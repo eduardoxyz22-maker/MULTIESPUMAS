@@ -693,6 +693,16 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
+## 📄 Informe de ATC en PDF (§4le, 15/10, en la rama; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)
+- Pestaña ATC → **«📄 Informe PDF»** (`#atc-informe-btn`, `abrirInformeAtc`, ventana `#atci-ov`): el mes arranca en el de la pestaña. **Mes = las
+  ATC que ENTRARON** (`atcEntro`); las abiertas de meses anteriores van APARTE. Estado = el de HOY. Cuentas en `atciDatos(mes)` (las de la
+  pestaña: `atcEstado`, `atcDias`…; no calcular nada aparte), hojas en `atciHojas(D)`: A4 apaisadas 1123×794 px (portada, resumen + «Lo más
+  importante», motivos, productos/marcas, dónde están, tiempos, 6 meses, detalle de 11 por hoja).
+- **⬇️ Descargar PDF** = html2canvas 1.4.1 + jsPDF 2.5.1 de cdnjs, cargados al tocar (`atciCargarLibs`), sobre una copia sin `zoom` ni sombra
+  (`#atci-render`). Sin internet → ventana de imprimir; el `@page` apaisado vive solo con la ventana abierta (`atciPaginaCss`).
+  ⚠️ En el CSS de las hojas nada de `color-mix()`/`oklch()` ni `box-shadow` en la copia (html2canvas los pinta mal); tablas con
+  `table-layout:fixed` + `white-space:normal`. `tests/test_atc_informe.js` (37; `ATCI_LIBS_DIR` con las librerías de npm, `ATCI_SALIDA` deja PDF y capturas).
+
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
   con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por

@@ -1560,6 +1560,10 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="copiarAtc()">📋 Copiar</button>
         </div>
+        <div class="field">
+          <!-- 📄 (15/10, §4le) El informe del mes en PDF, tipo presentación. -->
+          <button class="btn btn-sm" id="atc-informe-btn" style="background:#a21caf;color:#fff;font-weight:700" onclick="abrirInformeAtc()" title="Un informe del mes elegido, tipo presentación: cuántas entraron, por qué, qué productos, dónde están hoy, cuánto tardan y el detalle">📄 Informe PDF</button>
+        </div>
       </div>
 
       <div class="metrics" id="atc-metrics"></div>
@@ -2784,6 +2788,129 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
   .atv-pasos{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; overflow:visible; } .atv-paso{ min-width:0; } .atv-flecha{ display:none; } }
 @media (prefers-reduced-motion:reduce){ .atv-paso, .atv-mb, .atv-mb-b i, .atv-c, .atv-onda, .atv-paso.late::after{ animation:none!important; } }
 
+/* 📄 Informe de ATC en PDF (15/10, §4le). Hojas A4 apaisadas de 1123×794 px (= 297×210 mm a 96 ppp), achicadas en pantalla con
+   `zoom` (atciEscala). ⚠️ Sin color-mix(), oklch() ni variables raras: html2canvas no los entiende y la hoja sale en blanco. Colores
+   escritos y rgba() nomás. Nada animado: la foto de la hoja se saca en el acto. */
+.atci-bar{ padding:9px 12px; background:#86198f; color:#fff; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.atci-bar input[type=month]{ border:none; border-radius:7px; padding:4px 8px; font:inherit; font-size:.82rem; font-weight:700; color:#86198f; width:auto; }
+.atci-ayuda{ padding:6px 14px; font-size:.78rem; color:#4b5563; background:#fff; border-bottom:1px solid #d7dde2; }
+.atci-ayuda.ocupado{ background:#fdf4ff; color:#86198f; font-weight:700; }
+#atci-body{ flex:1; overflow:auto; padding:16px; }
+#atci-hojas{ width:1123px; margin:0 auto; }
+.ai-pag{ width:1123px; height:794px; position:relative; overflow:hidden; box-sizing:border-box; margin:0 0 22px; padding:40px 54px 60px;
+  background:#fff; color:#1e293b; font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif; font-size:15px; line-height:1.4;
+  box-shadow:0 14px 34px -20px rgba(15,23,42,.55); }
+.ai-pag *{ box-sizing:border-box; }
+/* la copia que se fotografía para el PDF: sin la sombra de la vista previa (html2canvas la pinta como un velo gris sobre la hoja) */
+#atci-render .ai-pag{ box-shadow:none; margin:0; }
+.ai-franja{ position:absolute; left:0; top:0; right:0; height:7px; background:linear-gradient(90deg,#00B5AD 0%,#00B5AD 55%,#a21caf 55%,#a21caf 100%); }
+.ai-cab{ margin:0 0 20px; }
+.ai-kick{ font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#a21caf; }
+.ai-cab h2{ margin:4px 0 0; font-size:30px; line-height:1.15; font-weight:850; color:#0f172a; letter-spacing:-.01em; }
+.ai-cab p{ margin:6px 0 0; font-size:15px; color:#64748b; }
+.ai-pie{ position:absolute; left:54px; right:54px; bottom:22px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0;
+  padding-top:9px; font-size:11.5px; color:#94a3b8; }
+.ai-pie b{ color:#0f766e; font-weight:800; }
+.ai-cuerpo{ position:relative; }
+.ai-g2{ display:grid; grid-template-columns:1.25fr 1fr; gap:28px; }
+.ai-g2b{ display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.ai-caja{ border:1px solid #e2e8f0; border-radius:14px; padding:16px 18px; background:#fff; }
+.ai-caja h3{ margin:0 0 12px; font-size:15px; font-weight:800; color:#0f172a; }
+.ai-caja h3 small{ font-weight:600; color:#94a3b8; font-size:12px; margin-left:6px; }
+.ai-nota{ font-size:12px; color:#64748b; margin-top:10px; }
+/* la portada */
+.ai-portada{ padding:0; color:#fff; background:#0b3b39; }
+.ai-port-fondo{ position:absolute; inset:0; background:linear-gradient(135deg,#0b3b39 0%,#0f5e59 52%,#5b1063 100%); }
+.ai-port-c1{ position:absolute; width:560px; height:560px; border-radius:50%; right:-150px; top:-170px; background:rgba(217,70,239,.22); }
+.ai-port-c2{ position:absolute; width:300px; height:300px; border-radius:50%; left:-120px; top:-140px; background:rgba(0,181,173,.22); }
+.ai-port-in{ position:absolute; left:64px; right:64px; top:56px; bottom:46px; }
+.ai-logo{ display:flex; align-items:center; gap:10px; font-size:17px; font-weight:800; letter-spacing:.02em; }
+.ai-logo span b{ font-weight:900; }
+.ai-port-kick{ margin-top:92px; font-size:14px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:#f5d0fe; }
+.ai-port-t{ margin:10px 0 0; font-size:54px; line-height:1.04; font-weight:900; letter-spacing:-.02em; }
+.ai-port-mes{ margin-top:10px; font-size:30px; font-weight:700; color:#99f6e4; }
+.ai-port-nums{ position:absolute; left:0; right:0; bottom:58px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.ai-port-n{ background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22); border-radius:16px; padding:16px 20px; }
+.ai-port-n b{ display:block; font-size:44px; line-height:1; font-weight:900; }
+.ai-port-n span{ display:block; margin-top:8px; font-size:14px; color:rgba(255,255,255,.82); }
+.ai-port-pie{ position:absolute; left:0; right:0; bottom:0; font-size:12px; color:rgba(255,255,255,.7); }
+/* fichas grandes */
+.ai-kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.ai-kpi{ border:1px solid #e2e8f0; border-left:6px solid #00B5AD; border-radius:14px; padding:13px 16px 12px; background:#fff; }
+.ai-kpi small{ display:block; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#64748b; }
+.ai-kpi b{ display:block; font-size:38px; line-height:1.05; font-weight:900; margin-top:4px; font-variant-numeric:tabular-nums; }
+.ai-kpi span{ display:block; font-size:12.5px; color:#64748b; margin-top:3px; }
+.ai-kpi b em{ font-style:normal; font-size:18px; font-weight:700; color:#64748b; }
+.ai-lomas{ margin-top:18px; border-radius:14px; background:#fdf4ff; border:1px solid #f5d0fe; padding:14px 20px; }
+.ai-lomas h3{ margin:0 0 8px; font-size:15px; font-weight:850; color:#86198f; }
+.ai-lomas ul{ margin:0; padding:0 0 0 20px; display:grid; gap:5px; font-size:14.5px; }
+.ai-lomas li b{ color:#0f172a; }
+/* barras */
+.ai-brs{ display:grid; gap:9px; }
+.ai-br{ display:grid; grid-template-columns:190px 1fr 132px; align-items:center; gap:12px; }
+.ai-br-l{ font-size:13.5px; font-weight:700; color:#1e293b; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ai-br-t{ height:18px; border-radius:999px; background:#eef2f5; overflow:hidden; position:relative; }
+.ai-br-t i{ position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:#00B5AD; }
+.ai-br-t em{ position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:#15803d; }
+.ai-br-v{ font-size:13px; color:#64748b; white-space:nowrap; text-align:right; font-variant-numeric:tabular-nums; }
+.ai-br-v b{ color:#0f172a; font-size:15px; margin-right:3px; }
+.ai-br-s{ grid-column:1 / -1; margin-top:-6px; font-size:11.5px; color:#64748b; overflow:hidden; white-space:nowrap; }
+.ai-dichos{ display:grid; grid-template-columns:1fr 1fr; gap:10px 22px; }
+.ai-dicho q{ display:block; font-size:14px; font-style:italic; color:#1e293b; quotes:'«' '»'; }
+.ai-dicho span{ display:block; font-size:11.5px; color:#94a3b8; margin-top:2px; }
+.ai-leyenda{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:12px; color:#64748b; margin-top:12px; }
+.ai-leyenda i{ display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:5px; }
+/* la dona */
+.ai-dona{ display:flex; align-items:center; gap:20px; }
+.ai-dona-g{ position:relative; width:170px; height:170px; flex:0 0 170px; }
+.ai-dona-c{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.ai-dona-c b{ font-size:34px; line-height:1; font-weight:900; } .ai-dona-c span{ font-size:11.5px; color:#64748b; margin-top:3px; }
+.ai-dona-l{ display:grid; gap:7px; font-size:13.5px; } .ai-dona-l i{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:7px; vertical-align:-1px; }
+/* el viaje */
+.ai-pasos{ display:flex; align-items:stretch; gap:0; }
+.ai-paso{ flex:1 1 0; border-radius:14px; padding:14px 8px 12px; text-align:center; border:2px solid #e2e8f0; background:#f8fafc; }
+.ai-paso .ico{ font-size:24px; line-height:1; } .ai-paso b{ display:block; font-size:36px; line-height:1.05; font-weight:900; margin-top:6px; font-variant-numeric:tabular-nums; }
+.ai-paso span{ display:block; font-size:12.5px; font-weight:700; color:#475569; margin-top:2px; }
+.ai-flecha{ flex:0 0 22px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:20px; font-weight:900; }
+/* tablas */
+.ai-tabla{ width:100%; border-collapse:collapse; font-size:12.5px; table-layout:fixed; }
+.ai-tabla th, .ai-tabla td{ white-space:normal; overflow-wrap:anywhere; }
+.ai-tabla th{ white-space:nowrap; overflow:hidden; padding-left:8px; padding-right:6px; }
+.ai-c2{ max-height:2.7em; line-height:1.35; overflow:hidden; }
+.ai-c1{ max-height:1.35em; line-height:1.35; overflow:hidden; white-space:nowrap; }
+.ai-tabla th{ text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:#64748b; background:#f1f5f9; padding:8px 9px; border-bottom:2px solid #e2e8f0; }
+.ai-tabla td{ padding:7px 9px; border-bottom:1px solid #eef2f5; vertical-align:top; }
+.ai-tabla tr:nth-child(even) td{ background:#fafbfc; }
+.ai-tabla .n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ai-tabla .oc{ white-space:nowrap; font-weight:800; color:#a21caf; }
+.ai-est{ display:inline-block; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:800; white-space:nowrap; color:#fff; }
+.ai-dias{ display:inline-block; min-width:34px; text-align:center; border-radius:999px; padding:2px 7px; font-weight:900; font-size:12px; }
+.ai-dias.ok{ background:#dcfce7; color:#15803d; } .ai-dias.ojo{ background:#fef3c7; color:#b45309; } .ai-dias.mal{ background:#fee2e2; color:#b91c1c; }
+/* tramos y columnas */
+.ai-tramos{ display:flex; align-items:stretch; gap:0; }
+.ai-tramo{ flex:1 1 0; border-radius:14px; padding:14px 16px; background:#f0fdfa; border:1px solid #99f6e4; }
+.ai-tramo small{ display:block; font-size:12px; font-weight:800; color:#0f766e; text-transform:uppercase; letter-spacing:.05em; }
+.ai-tramo b{ display:block; font-size:34px; font-weight:900; line-height:1.1; margin-top:4px; font-variant-numeric:tabular-nums; }
+.ai-tramo span{ display:block; font-size:12px; color:#64748b; }
+.ai-cols{ display:flex; align-items:flex-end; gap:16px; height:250px; padding:0 4px; border-bottom:2px solid #e2e8f0; }
+.ai-col{ flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+.ai-col-v{ font-size:15px; font-weight:900; margin-bottom:5px; font-variant-numeric:tabular-nums; }
+.ai-col-b{ width:62%; border-radius:10px 10px 0 0; background:#e9b3f2; position:relative; overflow:hidden; }
+.ai-col-b i{ position:absolute; left:0; right:0; bottom:0; background:#a21caf; }
+.ai-col-b.sel{ background:#b5ece8; } .ai-col-b.sel i{ background:#00B5AD; }
+.ai-cols-l{ display:flex; gap:16px; padding:8px 4px 0; }
+.ai-cols-l div{ flex:1 1 0; text-align:center; font-size:12.5px; color:#475569; font-weight:700; }
+.ai-cols-l div span{ display:block; font-weight:600; color:#94a3b8; font-size:11.5px; }
+.ai-vacio{ border:2px dashed #e2e8f0; border-radius:16px; padding:46px; text-align:center; color:#64748b; font-size:18px; }
+@media print{
+  body.printing-atci > *{ display:none !important; }
+  body.printing-atci #atci-ov{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-atci #atci-ov .no-print{ display:none !important; }
+  body.printing-atci #atci-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-atci #atci-hojas{ zoom:1 !important; }
+  body.printing-atci .ai-pag{ margin:0 !important; box-shadow:none !important; break-after:page; page-break-after:always; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+
 @media (prefers-reduced-motion:reduce){ .asis *, .asis-foco{ animation:none!important; } }
 /* A · la barra y B · la dona */
 .cx-vivo{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:12px; margin:0 0 16px; align-items:start; }
@@ -3196,6 +3323,10 @@ html.con-pasos{ scroll-padding-bottom:84px; }
   <div class="cli-g cli-g-v"><span class="lb">Vendedores <button type="button" class="cli-mini" onclick="cliTodos(true)">Todos</button><button type="button" class="cli-mini" onclick="cliTodos(false)">Ninguno</button></span><div id="cli-vends" class="cli-vends"></div></div>
 </div>
 <div id="cli-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<!-- 📄 (15/10, §4le) Informe de ATC del mes: hojas A4 apaisadas que se ven achicadas y se bajan como PDF. -->
+<div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
+<div class="no-print atci-ayuda" id="atci-estado">Las ATC que <b>entraron</b> en el mes elegido. Lo de «dónde están» es como están <b>hoy</b>.</div>
+<div id="atci-body"><div id="atci-hojas"></div></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -17077,6 +17208,435 @@ function atvPintar(list, mesSel){
         (UNLOCKED?('<button type="button" class="rowbtn" onclick="event.stopPropagation();abrirDevolucionAtc(\''+esc(p.id)+'\')" title="Anotar recojo, devolución de fábrica o entrega al cliente">📦 Anotar avance</button>'):'')+'</div>'+
     '</div>';
   }).join('')+'</div>';
+}
+/* ==========================================================================
+   📄 INFORME DE ATC EN PDF (§4le, 15/10, dueño: «en la pestaña de ATC del panel quiero un botón que genere un informe en PDF y ese
+   informe muestre lo más relevante e importante tipo presentación sobre las ATC del mes, que uno puede elegir el mes. No quiero todas
+   las ATC, sino que uno elija el mes»).
+   · El mes = las ATC que ENTRARON ese mes (`atcEntro`). Las de meses anteriores que siguen abiertas se cuentan APARTE («vienen de
+     antes»): acá no se mezclan con las del mes, como sí hace la pestaña.
+   · Solo lee, con las cuentas de la pestaña (`atcEstado`, `atcDias`, `atcMotivo`, `atcRecogida`, `atcRecogidoFab`, `atcEntregada`,
+     `atcFechaCompra`, `atcComodin`). «Dónde están» es como están HOY, y la portada lo dice.
+   · Hojas A4 apaisadas (ATCI_W×ATCI_H px = 297×210 mm). «⬇️ Descargar PDF» le saca una foto a cada hoja (html2canvas) y arma el PDF
+     (jsPDF), las dos de cdnjs y recién al tocarlo; si no cargan (sin internet), se abre la ventana de imprimir («Guardar como PDF»).
+   · Las cuentas en `atciDatos(mes)` (sin pantalla: las prueba `tests/test_atc_informe.js`) y las hojas en `atciHojas(D)`.
+   ========================================================================== */
+var ATCI_W=1123, ATCI_H=794, ATCI_FILAS=11, ATCI_OCUPADO=false, ATCI_ULT=null;
+var ATCI_LIBS=[
+  { ok:function(){ return !!(window.jspdf && window.jspdf.jsPDF); }, src:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' },
+  { ok:function(){ return typeof window.html2canvas==='function'; }, src:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js' }
+];
+var ATCI_SIN_MOTIVO='(sin motivo anotado)';
+var ATCI_EDADES=[ { t:'Menos de 6 meses', max:183 }, { t:'De 6 a 12 meses', max:366 }, { t:'De 1 a 2 años', max:731 }, { t:'Más de 2 años', max:1e8 } ];
+var ATCI_PLAZOS=[ { t:'Hasta 7 días', max:7 }, { t:'De 8 a 15 días', max:15 }, { t:'De 16 a 30 días', max:30 }, { t:'Más de 30 días', max:1e8 } ];
+var ATCI_LOGO='<svg width="30" height="22" viewBox="0 0 21 15" aria-hidden="true"><path d="M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z" fill="#e9609a"/><path d="M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z" fill="#f08a24"/><path d="M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z" fill="#f6c437"/></svg>';
+var ATCI_AYUDA='Las ATC que <b>entraron</b> en el mes elegido; «dónde están» es como están <b>hoy</b>. «⬇️ Descargar PDF» baja el archivo (en el iPad queda en Archivos → Descargas).';
+function atciMesMas(ym, n){
+  var y=+String(ym).slice(0,4), m=+String(ym).slice(5,7)-1+n;
+  while(m<0){ m+=12; y--; } while(m>11){ m-=12; y++; }
+  return y+'-'+(m<9?'0':'')+(m+1);
+}
+function atciMesTxt(ym){ var m=String(ym||'').match(/^(\d{4})-(\d{2})/); if(!m) return String(ym||''); var t=MESES_ES[+m[2]-1]; return t.charAt(0).toUpperCase()+t.slice(1)+' '+m[1]; }
+function atciMesCorto(ym){ var m=String(ym||'').match(/^(\d{4})-(\d{2})/); if(!m) return ''; var t=MESES_ES[+m[2]-1].slice(0,3); return t.charAt(0).toUpperCase()+t.slice(1)+' '+m[1].slice(2); }
+function atciNum(x){ return x==null ? '—' : String(x).replace('.', ','); }
+function atciPc(n, t){ return t ? Math.round(n/t*100) : 0; }
+function atciProm(a){ if(!a.length) return null; var s=0; a.forEach(function(x){ s+=x; }); return Math.round(s/a.length*10)/10; }
+function atciMediana(a){ if(!a.length) return null; var b=a.slice().sort(function(x,y){ return x-y; }), k=Math.floor(b.length/2); return b.length%2 ? b[k] : Math.round((b[k-1]+b[k])/2*10)/10; }
+/* Días entre dos fechas del circuito: solo si están las dos y van en orden. */
+function atciEntre(a, b){ if(!a || !b || String(b)<String(a)) return null; var d=diasEntreFechas(a, b); return d>=1e9 ? null : d; }
+function atciCorta(t, n){ t=String(t||'').replace(/\s+/g,' ').trim(); if(t.length<=n) return t; var c=t.slice(0, n-1).replace(/\s+\S*$/,''); return (c||t.slice(0, n-1))+'…'; }
+function atciTinte(hex, a){ var m=String(hex).match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? ('rgba('+parseInt(m[1],16)+','+parseInt(m[2],16)+','+parseInt(m[3],16)+','+(a==null?0.1:a)+')') : '#f8fafc'; }
+function atciEnPlazo(d, L){ for(var i=0;i<L.length;i++) if(d<=L[i].max) return i; return L.length-1; }
+function atciEstCorto(k){ for(var i=0;i<ATV_PASOS.length;i++) if(ATV_PASOS[i].k===k) return ATV_PASOS[i].t; return k; }
+/* El semáforo de los días, el mismo de las tarjetas de la pestaña. */
+function atciSem(p){ var d=atcDias(p); if(d==null) return ''; return atcEstado(p)==='cerrada' ? 'ok' : (d>15 ? 'mal' : (d>7 ? 'ojo' : 'ok')); }
+/* Los modelos de una ATC, una vez cada uno (dos renglones del mismo colchón son UNA ATC de ese colchón). */
+function atciModelos(p){
+  var v={}, out=[];
+  (p.productos||[]).forEach(function(x){ var t=String((x&&x.desc)||'').replace(/\s+/g,' ').trim().toUpperCase(), k=normNombre(t); if(t && !v[k]){ v[k]=1; out.push(t); } });
+  return out;
+}
+/* Cuenta por una clave (sin mayúsculas ni tildes) y ordena de mayor a menor; muestra la escritura que más se repite. */
+function atciContar(list, claveDe){
+  var o={}, orden=[];
+  list.forEach(function(p){
+    [].concat(claveDe(p)||[]).forEach(function(t){
+      t=String(t||'').trim(); if(!t) return;
+      var k=normNombre(t)||t;
+      if(!o[k]){ o[k]={ k:k, n:0, esc:{} }; orden.push(k); }
+      o[k].n++; o[k].esc[t]=(o[k].esc[t]||0)+1;
+    });
+  });
+  return orden.map(function(k){ var x=o[k], best='', bn=0; for(var e in x.esc) if(x.esc[e]>bn){ bn=x.esc[e]; best=e; } return { k:k, lbl:best, n:x.n }; })
+    .sort(function(a, b){ return (b.n-a.n) || (a.lbl<b.lbl ? -1 : 1); });
+}
+function atciMotivoDe(p){ return atcMotivo(p)||ATCI_SIN_MOTIVO; }
+function atciMotTopK(mot){ for(var i=0;i<mot.length;i++) if(mot[i].k!==normNombre(ATCI_SIN_MOTIVO)) return mot[i].k; return ''; }
+/* Todas las cuentas del informe. Sin pantalla: se puede probar sola. */
+function atciDatos(mes){
+  var hoy=todayStr(), mes0=String(mes||hoy.slice(0,7)).slice(0,7), ant=atciMesMas(mes0, -1);
+  var todas=STATE.filter(function(p){ return p && esATC(p.oc); });
+  var delMes=function(ym){ return todas.filter(function(p){ return atcEntro(p).slice(0,7)===ym; }); };
+  var del=delMes(mes0).sort(function(a, b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y ? -1 : 1; return (a.ts||0)-(b.ts||0); });
+  var delAnt=delMes(ant), n=del.length;
+  var antes=todas.filter(function(p){ var e=atcEntro(p).slice(0,7); return !!e && e<mes0 && atcEstado(p)!=='cerrada'; })
+    .sort(function(a, b){ return (atcDias(b)||0)-(atcDias(a)||0); });
+  var est={}; ATV_PASOS.forEach(function(o){ est[o.k]=0; });
+  var cerr=[], abiertas=[], sinMot=0, comodin=0, comodinAb=0;
+  del.forEach(function(p){
+    var e=atcEstado(p); est[e]=(est[e]||0)+1;
+    if(e==='cerrada') cerr.push(p); else abiertas.push(p);
+    if(!atcMotivo(p)) sinMot++;
+    if(atcComodin(p)){ comodin++; if(e!=='cerrada') comodinAb++; }
+  });
+  abiertas.sort(function(a, b){ return (atcDias(b)||0)-(atcDias(a)||0); });
+  var diasC=cerr.map(atcDias).filter(function(d){ return d!=null; });
+  var diasA=abiertas.map(atcDias).filter(function(d){ return d!=null; });
+  /* por qué: cuántas, cuántas ya cerradas y cuántas el mes anterior */
+  var mot=atciContar(del, atciMotivoDe);
+  mot.forEach(function(m){
+    m.sin=(m.k===normNombre(ATCI_SIN_MOTIVO));
+    m.c=cerr.filter(function(p){ return normNombre(atciMotivoDe(p))===m.k; }).length;
+    m.ant=delAnt.filter(function(p){ return normNombre(atciMotivoDe(p))===m.k; }).length;
+  });
+  var motTop=mot.filter(function(m){ return !m.sin; })[0]||null;
+  /* qué productos, de qué marca y quién las cargó */
+  var prod=atciContar(del, atciModelos), vend=atciContar(del, function(p){ return String(p.vendedor||'').trim()||'(sin vendedor)'; });
+  prod.forEach(function(x){ x.mot=atciContar(del.filter(function(p){ return atciModelos(p).some(function(t){ return normNombre(t)===x.k; }); }), atciMotivoDe); });
+  /* lo que contaron los clientes: primero los del motivo que más se repite */
+  var kTop=atciMotTopK(mot), dichos=del.filter(function(p){ return !!String(atcDetalle(p)||'').trim(); })
+    .sort(function(a, b){ var x=(normNombre(atciMotivoDe(a))===kTop)?0:1, y=(normNombre(atciMotivoDe(b))===kTop)?0:1; return x-y; }).slice(0, mot.length>6 ? 2 : 4);
+  var marcas=MARCAS.map(function(g){ return { k:g.k, lbl:g.lbl, col:g.col, n:0 }; }).concat([{ k:'', lbl:'Otros', col:'#94a3b8', n:0 }]);
+  del.forEach(function(p){ var k=marcaDe(p.vendedor)||''; marcas.forEach(function(m){ if(m.k===k) m.n++; }); });
+  /* cuánto hacía que lo había comprado (lo que dice si hay garantía) */
+  var edades=ATCI_EDADES.map(function(x){ return { lbl:x.t, n:0 }; }), sinEdad=0;
+  del.forEach(function(p){ var d=atciEntre(atcFechaCompra(p), atcEntro(p)); if(d==null){ sinEdad++; return; } edades[atciEnPlazo(d, ATCI_EDADES)].n++; });
+  /* cuánto tarda cada tramo del circuito */
+  var tRec=[], tFab=[], tVue=[];
+  del.forEach(function(p){
+    var e=atcEntro(p), r=atcFueRecogida(p) ? atcRecogida(p) : '', f=atcRecogidoFab(p), c=atcEntregada(p);
+    if(r && r<=hoy){ var d1=atciEntre(e, r); if(d1!=null) tRec.push(d1); }
+    if(r && f){ var d2=atciEntre(r, f); if(d2!=null) tFab.push(d2); }
+    if(f && c){ var d3=atciEntre(f, c); if(d3!=null) tVue.push(d3); }
+  });
+  var distC=ATCI_PLAZOS.map(function(x){ return { lbl:x.t, n:0 }; }), distA=ATCI_PLAZOS.map(function(x){ return { lbl:x.t, n:0 }; });
+  diasC.forEach(function(d){ distC[atciEnPlazo(d, ATCI_PLAZOS)].n++; });
+  diasA.forEach(function(d){ distA[atciEnPlazo(d, ATCI_PLAZOS)].n++; });
+  /* los últimos 6 meses */
+  var tend=[];
+  for(var i=5;i>=0;i--){
+    var ym=atciMesMas(mes0, -i), L=delMes(ym), C=L.filter(function(p){ return !!atcEntregada(p); });
+    tend.push({ ym:ym, n:L.length, c:C.length, prom:atciProm(C.map(atcDias).filter(function(d){ return d!=null; })) });
+  }
+  var prom=atciProm(diasC), promAnt=tend[4].prom, mas15=abiertas.filter(function(p){ return (atcDias(p)||0)>15; }).length;
+  var antTxt=MESES_ES[+ant.slice(5,7)-1];
+  /* «Lo más importante», en palabras */
+  var I=[];
+  if(!n) I.push('En '+esc(MESES_ES[+mes0.slice(5,7)-1])+' no entró ninguna ATC.');
+  else {
+    var dif=n-delAnt.length;
+    I.push('Entraron <b>'+n+'</b> ATC'+(delAnt.length ? (dif===0 ? ', igual que en '+esc(antTxt) : ': <b>'+Math.abs(dif)+(dif>0?' más':' menos')+'</b> que en '+esc(antTxt)+' ('+delAnt.length+')') : ' (en '+esc(antTxt)+' no entró ninguna)')+'.');
+    if(motTop) I.push('El motivo que más se repitió fue <b>«'+esc(motTop.lbl)+'»</b>: '+motTop.n+' de '+n+' ('+atciPc(motTop.n, n)+'%).');
+    if(prod[0] && prod[0].n>=2) I.push('El producto con más ATC fue <b>'+esc(prod[0].lbl)+'</b> ('+prod[0].n+').');
+    I.push(cerr.length
+      ? ('Ya se le devolvió el producto al cliente en <b>'+cerr.length+' de '+n+'</b> ('+atciPc(cerr.length, n)+'%). El circuito completo tardó <b>'+atciNum(prom)+' días</b> en promedio'+(promAnt!=null ? ' (en '+esc(antTxt)+', '+atciNum(promAnt)+')' : '')+'.')
+      : 'Todavía ninguna volvió al cliente.');
+    if(mas15) I.push('<b>'+mas15+'</b> siguen abiertas hace más de 15 días.');
+    if(est.lista) I.push('<b>'+est.lista+'</b> ya están listas en fábrica y falta programar la devolución: el cliente sigue esperando.');
+    if(est.recogerfab) I.push('<b>'+est.recogerfab+'</b> hay que ir a buscarlas a la fábrica: la entrega es en 2 días hábiles o menos.');
+    if(sinMot) I.push('<b>'+sinMot+'</b> no tienen el motivo anotado: no se sabe por qué se generaron.');
+    if(comodinAb) I.push('<b>'+comodinAb+'</b> cliente'+(comodinAb===1?' tiene':'s tienen')+' un comodín que hay que recuperar al devolverle el suyo.');
+  }
+  if(antes.length) I.push('Además quedan <b>'+antes.length+'</b> ATC de meses anteriores sin cerrar.');
+  var tL=(typeof ULTIMO_REFRESCO!=='undefined' && ULTIMO_REFRESCO) || 0, z=function(v){ return (v<10?'0':'')+v; };
+  return {
+    mes:mes0, ant:ant, antTxt:antTxt, hoy:hoy, hora:horaCorta(), enCurso:(mes0===hoy.slice(0,7)),
+    fuente: tL ? ('planilla leída a las '+z(new Date(tL).getHours())+':'+z(new Date(tL).getMinutes())) : 'la copia guardada en este aparato',
+    n:n, nAnt:delAnt.length, del:del, antes:antes, est:est, cerr:cerr, abiertas:abiertas, sinMot:sinMot, comodin:comodin, comodinAb:comodinAb,
+    prom:prom, promAnt:promAnt, med:atciMediana(diasC), max:(diasC.length ? Math.max.apply(null, diasC) : null), mas15:mas15,
+    mot:mot, motTop:motTop, prod:prod, dichos:dichos, vend:vend, marcas:marcas, edades:edades, sinEdad:sinEdad,
+    tRec:tRec, tFab:tFab, tVue:tVue, distC:distC, distA:distA, tend:tend, I:I
+  };
+}
+/* ---- las piezas de las hojas ---- */
+function atciHoja(kick, titulo, sub, cuerpo){
+  return '<section class="ai-pag"><div class="ai-franja"></div>'+
+    '<header class="ai-cab"><div class="ai-kick">'+kick+'</div><h2>'+titulo+'</h2>'+(sub?('<p>'+sub+'</p>'):'')+'</header>'+
+    '<div class="ai-cuerpo">'+cuerpo+'</div>'+
+    '<footer class="ai-pie"><span><b>Multiespumas</b> · Informe de ATC · {{MES}}</span><span>{{PAG}}</span></footer></section>';
+}
+/* Barras: `n` el largo; `c` (opcional) lo cerrado, en verde, encima. */
+function atciBarras(items, total, col, cols){
+  var max=0; items.forEach(function(x){ if(x.n>max) max=x.n; });
+  var st=cols ? ' style="grid-template-columns:'+cols+'"' : '';
+  return '<div class="ai-brs">'+items.map(function(x){
+    var w=(max && x.n) ? Math.max(2, Math.round(x.n/max*100)) : 0, wc=(max && x.c) ? Math.round(x.c/max*100) : 0;
+    return '<div class="ai-br"'+st+'><span class="ai-br-l">'+esc(atciCorta(x.lbl, 24))+'</span>'+
+      '<span class="ai-br-t"><i style="width:'+w+'%;background:'+(x.col||col||'#00B5AD')+'"></i>'+(x.c!=null ? '<em style="width:'+wc+'%"></em>' : '')+'</span>'+
+      '<span class="ai-br-v"><b>'+x.n+'</b>'+(total ? ' '+atciPc(x.n, total)+'%' : '')+(x.extra||'')+'</span>'+
+      (x.sub ? '<span class="ai-br-s">'+esc(x.sub)+'</span>' : '')+'</div>';
+  }).join('')+'</div>';
+}
+function atciDona(partes, centro, sub){
+  var tot=0; partes.forEach(function(x){ tot+=x.n; });
+  var r=62, C=2*Math.PI*r, off=0, arcos='';
+  partes.forEach(function(x){
+    if(!x.n || !tot) return;
+    var L=x.n/tot*C;
+    arcos+='<circle cx="85" cy="85" r="'+r+'" fill="none" stroke="'+x.col+'" stroke-width="26" stroke-dasharray="'+L.toFixed(2)+' '+(C-L+0.01).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 85 85)"/>';
+    off+=L;
+  });
+  return '<div class="ai-dona"><div class="ai-dona-g"><svg width="170" height="170" viewBox="0 0 170 170"><circle cx="85" cy="85" r="'+r+'" fill="none" stroke="#eef2f5" stroke-width="26"/>'+arcos+'</svg>'+
+    '<div class="ai-dona-c"><b>'+centro+'</b><span>'+sub+'</span></div></div>'+
+    '<div class="ai-dona-l">'+partes.filter(function(x){ return x.n>0; }).map(function(x){ return '<div><i style="background:'+x.col+'"></i><b>'+x.n+'</b> '+esc(x.lbl)+' <span style="color:#94a3b8">('+atciPc(x.n, tot)+'%)</span></div>'; }).join('')+'</div></div>';
+}
+function atciKpi(col, lbl, val, sub, chico){
+  return '<div class="ai-kpi" style="border-left-color:'+col+'"><small>'+lbl+'</small><b style="color:'+col+(chico?';font-size:23px;line-height:1.2;margin-top:8px':'')+'">'+val+'</b><span>'+sub+'</span></div>';
+}
+function atciProdTxt(p){ return (p.productos||[]).map(function(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }).filter(Boolean).join(' · ')||'—'; }
+function atciDiasPill(p){ var d=atcDias(p); return d==null ? '—' : '<span class="ai-dias '+atciSem(p)+'">'+d+'</span>'; }
+function atciEstPill(p){ var e=atcEstado(p); return '<span class="ai-est" style="background:'+atvColor(e)+'">'+esc(atciEstCorto(e))+'</span>'; }
+/* ---- las hojas ---- */
+function atciPortada(D){
+  var num=function(v, t){ return '<div class="ai-port-n"><b>'+v+'</b><span>'+t+'</span></div>'; };
+  return '<section class="ai-pag ai-portada"><div class="ai-port-fondo"></div><div class="ai-port-c1"></div><div class="ai-port-c2"></div><div class="ai-port-in">'+
+    '<div class="ai-logo">'+ATCI_LOGO+'<span>Multi<b>ESPUMAS</b></span></div>'+
+    '<div class="ai-port-kick">Atención al cliente · ATC</div>'+
+    '<h1 class="ai-port-t">Informe de ATC</h1>'+
+    '<div class="ai-port-mes">'+esc(atciMesTxt(D.mes))+(D.enCurso ? ' <span style="font-size:18px;color:#ccfbf1;font-weight:600">· mes en curso, hasta el '+esc(fmtFecha(D.hoy))+'</span>' : '')+'</div>'+
+    '<div class="ai-port-nums">'+
+      num(D.n, 'ATC entraron en el mes')+
+      num(D.cerr.length+(D.n ? '<small style="font-size:20px;font-weight:700;opacity:.8"> · '+atciPc(D.cerr.length, D.n)+'%</small>' : ''), 'ya volvieron al cliente')+
+      num(atciNum(D.prom), 'días tardó el circuito completo, en promedio')+
+    '</div>'+
+    '<div class="ai-port-pie">Estado al '+esc(fmtFecha(D.hoy))+' a las '+esc(D.hora)+' · '+esc(D.fuente)+' · Multiespumas</div>'+
+  '</div></section>';
+}
+function atciResumen(D){
+  var dif=D.n-D.nAnt, antC=esc(D.antTxt.slice(0,3))+'.';
+  var vs=D.nAnt ? (dif===0 ? 'igual que '+esc(D.antTxt) : ((dif>0?'▲ ':'▼ ')+Math.abs(dif)+(dif>0?' más':' menos')+' que '+esc(D.antTxt)+' ('+D.nAnt+')')) : 'en '+esc(D.antTxt)+' no entró ninguna';
+  var kpis='<div class="ai-kpis">'+
+    atciKpi('#a21caf', 'Entraron', D.n, vs)+
+    atciKpi('#15803d', 'Volvieron al cliente', D.cerr.length+' <em>de '+D.n+'</em>', D.n ? (atciPc(D.cerr.length, D.n)+'% ya cerradas') : '—')+
+    atciKpi(D.mas15 ? '#dc2626' : '#d97706', 'Siguen abiertas', D.abiertas.length, D.abiertas.length ? (D.mas15 ? D.mas15+' hace más de 15 días' : 'ninguna pasa de 15 días') : 'ninguna pendiente')+
+    atciKpi('#0f766e', 'Días del circuito', atciNum(D.prom), D.cerr.length ? ('mediana '+atciNum(D.med)+' · la más larga '+D.max+(D.promAnt!=null ? ' · '+antC+' '+atciNum(D.promAnt) : '')) : 'todavía ninguna cerrada')+
+    atciKpi('#7c3aed', 'Motivo que más se repite', D.motTop ? esc(atciCorta(D.motTop.lbl, 26)) : '—', D.motTop ? (D.motTop.n+' de '+D.n+' ('+atciPc(D.motTop.n, D.n)+'%)') : 'sin motivos anotados', true)+
+    atciKpi('#64748b', 'De meses anteriores', D.antes.length, D.antes.length ? 'siguen sin cerrar hoy' : 'no queda ninguna abierta')+
+  '</div>';
+  var lomas='<div class="ai-lomas"><h3>⭐ Lo más importante</h3><ul>'+D.I.slice(0, 9).map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul></div>';
+  return atciHoja('Resumen del mes', 'Cómo fue '+esc(MESES_ES[+D.mes.slice(5,7)-1])+' en atención al cliente', D.enCurso ? 'Mes en curso: hasta hoy, '+esc(fmtFecha(D.hoy))+'.' : '', kpis+lomas);
+}
+function atciMotivos(D){
+  var antC=esc(D.antTxt.slice(0,3))+'.';
+  var items=D.mot.map(function(m){ return { lbl:m.lbl, n:m.n, c:m.c, col:(m.sin ? '#dc2626' : '#00B5AD'), extra:' · '+antC+' '+m.ant }; });
+  var izq='<div class="ai-caja"><h3>💬 Por qué se generaron <small>'+D.n+' ATC</small></h3>'+atciBarras(items, D.n)+
+    '<div class="ai-leyenda"><span><i style="background:#00B5AD"></i>entraron</span><span><i style="background:#15803d"></i>ya cerradas</span><span>«'+antC+'» = las del mes anterior, para comparar</span></div></div>';
+  var conFecha=D.n-D.sinEdad;
+  var der='<div class="ai-caja"><h3>🗓️ Cuánto hacía que lo habían comprado <small>'+conFecha+' con fecha de compra</small></h3>'+
+    (conFecha ? atciBarras(D.edades, conFecha, '#a21caf', '150px 1fr 76px') : '<div class="ai-nota">Ninguna tiene la fecha de compra anotada.</div>')+
+    (D.sinEdad ? '<div class="ai-nota">'+D.sinEdad+' sin la fecha de compra anotada.</div>' : '')+
+    '<div class="ai-nota" style="margin-top:14px;font-size:13px;color:#1e293b">🛏️ <b>Con comodín:</b> '+D.comodin+(D.comodinAb ? ' · <b style="color:#b91c1c">'+D.comodinAb+' todavía en casa del cliente</b>' : '')+'</div></div>';
+  var dichos=D.dichos.length ? ('<div class="ai-caja" style="margin-top:18px"><h3>🗣️ Lo que contaron los clientes</h3><div class="ai-dichos">'+D.dichos.map(function(p){
+      return '<div class="ai-dicho"><q>'+esc(atciCorta(atcDetalle(p), 120))+'</q><span>'+esc(p.oc||'')+' · '+esc(atciCorta(atciProdTxt(p), 40))+' · '+esc(atcMotivo(p)||'sin motivo')+'</span></div>';
+    }).join('')+'</div></div>') : '';
+  return atciHoja('Los motivos', '¿Por qué se generaron?', 'Cada barra es un motivo; lo verde es lo que ya volvió al cliente.', '<div class="ai-g2">'+izq+der+'</div>'+dichos);
+}
+function atciProductos(D){
+  var top=D.prod.slice(0, 8).map(function(x){ return { lbl:x.lbl, n:x.n, sub:(x.mot||[]).slice(0, 4).map(function(m){ return m.lbl+' '+m.n; }).join(' · ') }; });
+  var resto=D.prod.slice(8), unos=resto.reduce(function(s, x){ return s+x.n; }, 0);
+  var izq='<div class="ai-caja"><h3>🛏️ Qué productos <small>cuántas ATC tuvo cada uno y por qué</small></h3>'+(top.length ? atciBarras(top, D.n, '#a21caf') : '<div class="ai-nota">Sin productos.</div>')+
+    (resto.length ? '<div class="ai-nota">Y '+resto.length+' producto'+(resto.length===1?'':'s')+' más ('+unos+' ATC).</div>' : '')+'</div>';
+  var tv=D.vend.slice(0, 6);
+  var der='<div class="ai-caja"><h3>🏷️ De qué marca</h3>'+atciDona(D.marcas, D.n, 'ATC')+'</div>'+
+    '<div class="ai-caja" style="margin-top:16px"><h3>👤 Quién las cargó</h3>'+atciBarras(tv, D.n, '#0369a1', '150px 1fr 76px')+(D.vend.length>6 ? '<div class="ai-nota">Y '+(D.vend.length-6)+' más.</div>' : '')+'</div>';
+  return atciHoja('Productos y marcas', '¿Qué productos y de qué marca?', 'Una ATC con dos renglones del mismo producto cuenta una vez.', '<div class="ai-g2"><div>'+izq+'</div><div>'+der+'</div></div>');
+}
+function atciDonde(D){
+  var pasos='<div class="ai-pasos">'+ATV_PASOS.map(function(o){
+    var n=D.est[o.k]||0;
+    return '<div class="ai-paso" style="border-color:'+(n ? o.c : '#e2e8f0')+';background:'+(n ? atciTinte(o.c) : '#f8fafc')+'"><div class="ico">'+o.ico+'</div><b style="color:'+(n ? o.c : '#94a3b8')+'">'+n+'</b><span>'+esc(o.t)+'</span></div>';
+  }).join('<div class="ai-flecha">›</div>')+'</div>';
+  var top=D.abiertas.slice(0, 8);
+  var izq='<div class="ai-caja"><h3>⏳ Las que más esperan <small>'+D.abiertas.length+' abiertas del mes</small></h3>'+(top.length
+    ? ('<table class="ai-tabla"><colgroup><col style="width:96px"><col><col style="width:116px"><col style="width:136px"><col style="width:52px"></colgroup>'+
+       '<thead><tr><th>N° ATC</th><th>Cliente</th><th>Motivo</th><th>Está</th><th class="n">Días</th></tr></thead><tbody>'+top.map(function(p){
+        return '<tr><td class="oc">'+esc(p.oc||'')+'</td><td><div class="ai-c1"><b>'+esc(atciCorta(p.cliente, 24))+'</b></div></td><td><div class="ai-c1">'+esc(atciCorta(atcMotivo(p)||'—', 18))+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td></tr>';
+      }).join('')+'</tbody></table>'+(D.abiertas.length>8 ? '<div class="ai-nota">Y '+(D.abiertas.length-8)+' más (están en el detalle).</div>' : ''))
+    : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ Todas las ATC de este mes ya volvieron al cliente.</div>')+'</div>';
+  var cuentaAntes={}; D.antes.forEach(function(p){ var e=atcEstado(p); cuentaAntes[e]=(cuentaAntes[e]||0)+1; });
+  var vieja=D.antes[0];
+  var der='<div class="ai-caja"><h3>📦 Vienen de meses anteriores <small>siguen sin cerrar</small></h3>'+(D.antes.length
+    ? ('<div style="font-size:42px;font-weight:900;color:#64748b;line-height:1">'+D.antes.length+'</div>'+
+       '<div style="margin-top:12px">'+atciBarras(ATV_PASOS.filter(function(o){ return cuentaAntes[o.k]; }).map(function(o){ return { lbl:o.ico+' '+o.t, n:cuentaAntes[o.k], col:o.c }; }), D.antes.length, null, '150px 1fr 76px')+'</div>'+
+       (vieja ? '<div class="ai-nota">La más vieja: <b>'+esc(vieja.oc||'')+'</b> · '+esc(atciCorta(vieja.cliente, 24))+' · entró el '+esc(fmtFecha(atcEntro(vieja)))+' ('+atcDias(vieja)+' días).</div>' : ''))
+    : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ No queda ninguna abierta de meses anteriores.</div>')+'</div>';
+  return atciHoja('Dónde están hoy', '¿Dónde están las ATC del mes?', 'Como están hoy, '+esc(fmtFecha(D.hoy))+'. Cada paso es una parte del viaje: recoger → fábrica → volver al cliente.',
+    pasos+'<div class="ai-g2" style="margin-top:22px">'+izq+der+'</div>');
+}
+function atciTiempos(D){
+  var tramo=function(t, a, nota){ var pr=atciProm(a); return '<div class="ai-tramo"><small>'+t+'</small><b>'+atciNum(pr)+(pr!=null ? ' <span style="display:inline;font-size:16px;color:#64748b">días</span>' : '')+'</b><span>'+(a.length ? 'promedio de '+a.length+' ATC · '+nota : 'todavía sin datos')+'</span></div>'; };
+  var tramos='<div class="ai-tramos">'+
+    tramo('🚚 Hasta el recojo', D.tRec, 'desde que entró hasta que se fue a buscar')+'<div class="ai-flecha">›</div>'+
+    tramo('🏭 En fábrica', D.tFab, 'del recojo hasta que se trajo de la fábrica')+'<div class="ai-flecha">›</div>'+
+    tramo('✅ Hasta el cliente', D.tVue, 'de la fábrica hasta que lo tuvo el cliente')+'<div class="ai-flecha">=</div>'+
+    '<div class="ai-tramo" style="background:#fdf4ff;border-color:#f5d0fe"><small style="color:#a21caf">Circuito completo</small><b>'+atciNum(D.prom)+(D.prom!=null ? ' <span style="display:inline;font-size:16px;color:#64748b">días</span>' : '')+'</b><span>'+(D.cerr.length ? 'de las '+D.cerr.length+' cerradas · mediana '+atciNum(D.med) : 'todavía ninguna cerrada')+'</span></div>'+
+  '</div>';
+  var nC=D.distC.reduce(function(s, x){ return s+x.n; }, 0), nA=D.distA.reduce(function(s, x){ return s+x.n; }, 0);
+  var cols=['#15803d', '#65a30d', '#d97706', '#dc2626'];
+  var conCol=function(L){ return L.map(function(x, i){ return { lbl:x.lbl, n:x.n, col:cols[i] }; }); };
+  var cuerpo=tramos+'<div class="ai-g2b" style="margin-top:22px">'+
+    '<div class="ai-caja"><h3>✅ Las cerradas: cuánto tardaron <small>'+nC+'</small></h3>'+(nC ? atciBarras(conCol(D.distC), nC, null, '140px 1fr 80px') : '<div class="ai-nota">Todavía ninguna cerrada.</div>')+'</div>'+
+    '<div class="ai-caja"><h3>⏳ Las abiertas: hace cuánto entraron <small>'+nA+'</small></h3>'+(nA ? atciBarras(conCol(D.distA), nA, null, '140px 1fr 80px') : '<div class="ai-nota">No queda ninguna abierta.</div>')+'</div>'+
+  '</div><div class="ai-nota">Cada tramo se mide con las ATC que tienen las dos fechas anotadas. El recojo es el día del viaje que se programó; «de la fábrica» es cuando logística lo trajo.</div>';
+  return atciHoja('Los tiempos', '¿Cuánto tardan?', 'Del día en que entró la ATC al día en que el cliente tuvo su producto de vuelta.', cuerpo);
+}
+function atciTendencia(D){
+  var max=0; D.tend.forEach(function(t){ if(t.n>max) max=t.n; });
+  var cols='<div class="ai-cols">'+D.tend.map(function(t){
+    var h=max ? Math.max(t.n ? 6 : 0, Math.round(t.n/max*205)) : 0, hc=t.n ? Math.round(t.c/t.n*100) : 0, sel=(t.ym===D.mes);
+    return '<div class="ai-col"><div class="ai-col-v" style="color:'+(sel ? '#0f766e' : '#a21caf')+'">'+t.n+'</div><div class="ai-col-b'+(sel ? ' sel' : '')+'" style="height:'+h+'px"><i style="height:'+hc+'%"></i></div></div>';
+  }).join('')+'</div>';
+  var lbls='<div class="ai-cols-l">'+D.tend.map(function(t){
+    return '<div'+(t.ym===D.mes ? ' style="color:#0f766e"' : '')+'>'+esc(atciMesCorto(t.ym))+'<span>'+(t.n ? (t.c+(t.c===1 ? ' cerrada · ' : ' cerradas · ')+(t.prom!=null ? atciNum(t.prom)+' d' : '—')) : 'ninguna')+'</span></div>';
+  }).join('')+'</div>';
+  var cuerpo='<div class="ai-caja" style="padding:22px 26px 18px">'+cols+lbls+
+    '<div class="ai-leyenda"><span><i style="background:#e9b3f2"></i>entraron en el mes</span><span><i style="background:#a21caf"></i>de esas, ya cerradas</span><span><i style="background:#00B5AD"></i>el mes de este informe</span><span>«d» = días del circuito, en promedio</span></div></div>'+
+    '<div class="ai-nota">Las ATC de cada mes se cuentan como están hoy: una de hace meses que se cerró la semana pasada figura cerrada en su mes.</div>';
+  return atciHoja('Cómo viene', 'Los últimos 6 meses', 'Cuántas entraron cada mes, cuántas ya volvieron al cliente y cuánto tardaron.', cuerpo);
+}
+function atciDetalle(D){
+  var hojas=[], tot=Math.ceil(D.n/ATCI_FILAS)||0;
+  for(var h=0;h<tot;h++){
+    var L=D.del.slice(h*ATCI_FILAS, (h+1)*ATCI_FILAS);
+    var tabla='<table class="ai-tabla"><colgroup><col style="width:88px"><col style="width:64px"><col style="width:150px"><col style="width:176px"><col style="width:112px"><col style="width:126px"><col style="width:50px"><col></colgroup>'+
+      '<thead><tr><th>N° ATC</th><th>Entró</th><th>Cliente</th><th>Producto</th><th>Motivo</th><th>Está</th><th class="n">Días</th><th>Desperfecto · qué se hizo</th></tr></thead><tbody>'+
+      L.map(function(p){
+        var hizo=atcQueSeHizo(p);
+        return '<tr><td class="oc">'+esc(p.oc||'')+'</td><td class="n">'+esc(fmtFechaCorta(atcEntro(p)))+'</td><td><div class="ai-c2"><b>'+esc(atciCorta(p.cliente, 34))+'</b></div></td>'+
+          '<td><div class="ai-c2">'+esc(atciCorta(atciProdTxt(p), 46))+'</div></td><td><div class="ai-c2">'+(atcMotivo(p) ? esc(atcMotivo(p)) : '<b style="color:#dc2626">sin motivo</b>')+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td>'+
+          '<td><div class="'+(hizo ? 'ai-c1' : 'ai-c2')+'">'+esc(atciCorta(atcDetalle(p)||p.observaciones||'—', hizo ? 36 : 70))+'</div>'+(hizo ? '<div class="ai-c1" style="color:#0f766e">✔ '+esc(atciCorta(hizo, 34))+'</div>' : '')+'</td></tr>';
+      }).join('')+'</tbody></table>';
+    hojas.push(atciHoja('Detalle', 'Las '+D.n+' ATC de '+esc(MESES_ES[+D.mes.slice(5,7)-1])+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''), '', tabla));
+  }
+  return hojas;
+}
+/* Todas las hojas, numeradas. Sin ATC en el mes: la portada, una hoja que lo dice (con lo que viene de antes) y la tendencia. */
+function atciHojas(D){
+  var H=[atciPortada(D)];
+  if(D.n){ H.push(atciResumen(D), atciMotivos(D), atciProductos(D), atciDonde(D), atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D)); }
+  else {
+    H.push(atciHoja('Resumen del mes', 'En '+esc(MESES_ES[+D.mes.slice(5,7)-1])+' no entró ninguna ATC', '',
+      '<div class="ai-vacio">📭 No hay ATC cargadas con fecha de entrada en '+esc(atciMesTxt(D.mes))+'.</div>'+
+      (D.antes.length ? '<div class="ai-lomas"><h3>⭐ Lo que queda</h3><ul><li>Quedan <b>'+D.antes.length+'</b> ATC de meses anteriores sin cerrar.</li></ul></div>' : '')));
+    H.push(atciTendencia(D));
+  }
+  var mesT=esc(atciMesTxt(D.mes));
+  return H.map(function(h, i){ return h.replace('{{MES}}', mesT).replace('{{PAG}}', 'Hoja '+(i+1)+' de '+H.length); });
+}
+/* ---- la ventana ---- */
+function atciAbierto(){ var ov=document.getElementById('atci-ov'); return !!(ov && ov.style.display!=='none'); }
+function atciEstado(t, ocupado){ var e=document.getElementById('atci-estado'); if(!e) return; e.classList.toggle('ocupado', !!ocupado); e.innerHTML=t||ATCI_AYUDA; }
+/* La hoja va apaisada SOLO mientras el informe está abierto: el `@page` es de toda la página y los otros impresos son verticales. */
+function atciPaginaCss(si){
+  var s=document.getElementById('atci-page');
+  if(si && !s){ s=document.createElement('style'); s.id='atci-page'; s.textContent='@page{ size:A4 landscape; margin:0; }'; document.head.appendChild(s); }
+  if(!si && s) s.parentNode.removeChild(s);
+}
+function atciEscala(){
+  var b=document.getElementById('atci-body'), h=document.getElementById('atci-hojas'); if(!b || !h) return;
+  var w=b.clientWidth-32, z=w>0 ? Math.min(1, w/ATCI_W) : 1;
+  h.style.zoom=String(Math.round(z*1000)/1000);
+}
+function abrirInformeAtc(){
+  var ov=document.getElementById('atci-ov'); if(!ov) return;
+  var inp=document.getElementById('atci-mes'), hoy=todayStr();
+  /* arranca en el mes que se está mirando en la pestaña (o en el de hoy, con «Todo») */
+  var mTab=(segVal('atc-mode')==='mes') ? ((document.getElementById('atc-mes')||{}).value||'') : '';
+  if(inp){ inp.max=hoy.slice(0,7); if(mTab || !inp.value) inp.value=mTab||hoy.slice(0,7); }
+  ov.style.display='flex';
+  atciPaginaCss(true);
+  atciEstado();
+  atciPintar();
+  window.addEventListener('resize', atciEscala);
+  /* Con la planilla de hace más de un minuto, se relee y se vuelve a dibujar: el informe tiene que salir al día. */
+  if(CONNECTED && !(ULTIMO_REFRESCO && Date.now()-ULTIMO_REFRESCO<60000)){
+    atciEstado('⏳ Trayendo la planilla para que el informe salga al día…', true);
+    refrescarEstado().catch(function(){}).then(function(){
+      if(!atciAbierto() || ATCI_OCUPADO) return;
+      atciPintar(); atciEstado();
+    });
+  }
+}
+function atciPintar(){
+  var inp=document.getElementById('atci-mes'), box=document.getElementById('atci-hojas'); if(!box) return;
+  var D=atciDatos((inp && inp.value) || todayStr().slice(0,7)), H=atciHojas(D);
+  ATCI_ULT=D;
+  box.innerHTML=H.join('');
+  var info=document.getElementById('atci-info'); if(info) info.textContent=atciMesTxt(D.mes)+' · '+D.n+' ATC · '+H.length+' hojas';
+  atciEscala();
+}
+function atciCerrar(){
+  var ov=document.getElementById('atci-ov'); if(ov) ov.style.display='none';
+  window.removeEventListener('resize', atciEscala);
+  atciPaginaCss(false);
+}
+function atciArchivo(mes){ var m=String(mes||'').match(/^(\d{4})-(\d{2})/); return 'Informe-ATC-'+(m ? (MESES_ES[+m[2]-1]+'-'+m[1]) : 'mes')+'.pdf'; }
+function atciImprimir(){ atciPaginaCss(true); document.body.classList.add('printing-atci'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-atci'); }, 600); }
+/* Las dos librerías, de cdnjs, una sola vez. Si una no llega en 20 s, se rinde. */
+function atciCargarLibs(){
+  return new Promise(function(ok, mal){
+    var faltan=ATCI_LIBS.filter(function(l){ return !l.ok(); });
+    if(!faltan.length){ ok(); return; }
+    var quedan=faltan.length, listo=false;
+    var t=setTimeout(function(){ if(!listo){ listo=true; mal(new Error('tardo')); } }, 20000);
+    faltan.forEach(function(l){
+      var s=document.createElement('script'); s.src=l.src; s.async=true;
+      s.onload=function(){ if(listo) return; if(--quedan===0){ listo=true; clearTimeout(t); if(ATCI_LIBS.every(function(x){ return x.ok(); })) ok(); else mal(new Error('no_cargo')); } };
+      s.onerror=function(){ if(listo) return; listo=true; clearTimeout(t); if(s.parentNode) s.parentNode.removeChild(s); mal(new Error('no_cargo')); };
+      document.head.appendChild(s);
+    });
+  });
+}
+function atciPdf(){
+  if(ATCI_OCUPADO) return;
+  if(!ATCI_ULT || !document.querySelector('#atci-hojas .ai-pag')) atciPintar();
+  var D=ATCI_ULT, nombre=atciArchivo(D.mes), btn=document.getElementById('atci-pdf'), host=null;
+  ATCI_OCUPADO=true; if(btn) btn.disabled=true;
+  atciEstado('⏳ Preparando el PDF…', true);
+  atciCargarLibs().then(function(){
+    /* Se fotografía una copia SIN achicar, debajo de la ventana: con el `zoom` de la vista previa la foto saldría corrida. */
+    host=document.createElement('div'); host.id='atci-render';
+    host.style.cssText='position:absolute;left:0;top:0;width:'+ATCI_W+'px;z-index:0;pointer-events:none;';
+    host.innerHTML=document.getElementById('atci-hojas').innerHTML;
+    document.body.appendChild(host);
+    var hojas=[].slice.call(host.querySelectorAll('.ai-pag')), i=0;
+    var pdf=new window.jspdf.jsPDF({ orientation:'landscape', unit:'mm', format:'a4', compress:true });
+    var una=function(){
+      if(i>=hojas.length) return Promise.resolve();
+      atciEstado('⏳ Armando el PDF… hoja '+(i+1)+' de '+hojas.length, true);
+      return window.html2canvas(hojas[i], { scale:2, backgroundColor:'#ffffff', logging:false, useCORS:true, scrollX:0, scrollY:-(window.scrollY||0),
+          windowWidth:Math.max(1300, document.documentElement.clientWidth) }).then(function(cv){
+        if(i>0) pdf.addPage('a4', 'landscape');
+        pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 297, 210, undefined, 'FAST');
+        i++; return una();
+      });
+    };
+    return una().then(function(){
+      pdf.setProperties({ title:'Informe de ATC · '+atciMesTxt(D.mes), author:'Multiespumas', creator:'Panel de pedidos' });
+      downloadBlob(pdf.output('blob'), nombre, 'application/pdf');
+      atciEstado('✅ Listo: se bajó <b>'+esc(nombre)+'</b> ('+hojas.length+' hojas).');
+      toast('📄 PDF listo: '+nombre, 'ok');
+    });
+  }).catch(function(e){
+    console.error(e);
+    var sinLibs=!!(e && (e.message==='no_cargo' || e.message==='tardo'));
+    atciEstado(sinLibs ? '⚠️ No se pudo bajar lo que arma el PDF (¿sin internet?). Se abre la ventana de imprimir: elegí <b>«Guardar como PDF»</b>.'
+                       : '⚠️ No se pudo armar el PDF ('+esc(String((e && e.message) || e).slice(0, 120))+'). Probá con <b>🖨 Imprimir</b> → «Guardar como PDF».');
+    if(sinLibs) atciImprimir();
+  }).then(function(){
+    if(host && host.parentNode) host.parentNode.removeChild(host);
+    ATCI_OCUPADO=false; if(btn) btn.disabled=false;
+  });
 }
 /* ==========================================================================
    👋 ¿QUIÉN ESTÁ USANDO EL PANEL? (12/10, dueño: «falta que al entrar al panel cada vendedor se identifique»)
