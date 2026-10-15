@@ -14826,4 +14826,6 @@ arranca»*.
   `test_anuncio` 47, `test_quien` 13, `test_adm_tools` 6, `test_onclicks` 5, `test_halloween` 22, `test_patio` 26.
 - **PUBLICADO 15/10, `cd028a8`** (dueño: *«¿Ya publicaste?»*): `pedidos.html` + las tres pruebas, encima de `15eb607`. En la copia de main:
   `test_bloki` 19, `test_asistente` 24, `test_anuncio` 47, `test_quien` 13.
+- Batería entera con Bloki (la rama, `66171f7`): 192 suites, 6.685 en verde; una sola roja, `test_mispedidos` 32/1 con la máquina cargada, que
+  sola da 33/0.
 
