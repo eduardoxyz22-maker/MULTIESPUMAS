@@ -192,7 +192,9 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
     fila('POST VENT (COMERCIAL)','ATC MARIA - RUTH MONTEAGUDO','TELEFONO 70000666 | no tiene garantia, hacer cotizacion','No','https://trello.com/c/G06/6-atc'),
     fila('POST VENT (COMERCIAL)','ATC MIRIAN - OSCAR VILLALBA','TELEFONO 70000777 | SEMI ORTOPEDICO 2.5 PLZ / se hunde','No','https://trello.com/c/G07/7-atc'),
     fila('ATC SOLICITADAS COM','ATC MIRIAN - SIN HISTORIA','TELEFONO 70000888 | cruje la base','No','https://trello.com/c/G08/8-atc'),
-    fila('ATC SOLICITADAS COM','ATC MARIA - OLVIDADA ENTRETELA','TELEFONO 70000999 | se hundió','No','https://trello.com/c/G09/9-atc')
+    fila('ATC SOLICITADAS COM','ATC MARIA - OLVIDADA ENTRETELA','TELEFONO 70000999 | se hundió','No','https://trello.com/c/G09/9-atc'),
+    fila('ATC EN PRODUCCION','Cliente Alberto Pareja (Ejemplo)','Fecha solicitada: |  | Vendedora: |  | Adjuntar solicitud de Garantía (WORD)','Sí','https://trello.com/c/G10/10-atc'),
+    fila('ATC DEVUELTAS LOG','ATC MARIA - ANA LUZMILA','TELEFONO 70000333 | TITANIO ICE 2 PLZ | se hundió el centro','No','https://trello.com/c/G11/11-atc')
   ].join('\n')+'\n';
   const ms = f => new Date(f+'T10:00:00-04:00').getTime();
   const HIST = { generado:'2026-10-15T11:02:00-04:00', tablero:'x', tarjetas:[
@@ -205,6 +207,8 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
     { sl:'G05', creada:'2026-01-05', creadaMs:ms('2026-01-05'), lista:'ATC DEVUELTAS LOG', archivada:true, ultima:'2026-01-20', pasos:[ { l:'ATC DEVUELTAS LOG', f:'2026-01-20' } ] },
     { sl:'G06', creada:'2026-04-01', creadaMs:ms('2026-04-01'), lista:'POST VENT (COMERCIAL)', archivada:false, ultima:'2026-04-02', pasos:[ { l:'POST VENT (COMERCIAL)', f:'2026-04-01' } ] },
     { sl:'G09', creada:'2025-12-10', creadaMs:ms('2025-12-10'), lista:'ATC SOLICITADAS COM', archivada:false, ultima:'2026-01-05', pasos:[ { l:'ATC SOLICITADAS COM', f:'2025-12-10' } ] },
+    { sl:'G10', creada:'2025-11-19', creadaMs:ms('2025-11-19'), lista:'ATC EN PRODUCCION', archivada:true, ultima:'2025-11-19', pasos:[] },
+    { sl:'G11', creada:'2026-01-10', creadaMs:ms('2026-01-10'), lista:'ATC DEVUELTAS LOG', archivada:false, ultima:'2026-01-30', pasos:[ { l:'ATC DEVUELTAS LOG', f:'2026-01-30' } ] },
     { sl:'G07', creada:'2026-02-15', creadaMs:ms('2026-02-15'), lista:'POST VENT (COMERCIAL)', archivada:false, ultima:'2026-03-01', pasos:[ { l:'ATC DEVUELTAS LOG', f:'2026-02-28' }, { l:'POST VENT (COMERCIAL)', f:'2026-03-01' } ] }
   ] };
   await page.evaluate(({ CSV2, HIST }) => {
@@ -221,10 +225,13 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
   await page.waitForTimeout(250);
   r = await page.evaluate(() => {
     var F={}; ATCT.fuera.forEach(function(x){ F[x.sl]={ est:x.est, entro:x.entro, r:x.r, dev:x.dev, ent:x.ent, fcom:x.fcom, vend:x.vend, prod:x.prod, cli:x.cliente, tilde:x.tilde, nota:x.nota }; });
-    return { F:F, sls:ATCT.fuera.map(function(x){ return x.sl; }).join(), txt:document.getElementById('atct-body').innerText, btn:document.getElementById('atct-traer').textContent };
+    return { F:F, sls:ATCT.fuera.map(function(x){ return x.sl; }).join(), txt:document.getElementById('atct-body').innerText, btn:document.getElementById('atct-traer').textContent,
+      basura:(ATCT.basura||[]).map(function(b){ return atctSl(b.t.url)+':'+b.por; }).join() };
   });
   chk('se ofrecen las que NO están en el panel (no la de Juan Roca, que ya está por el celular), de la más nueva a la más vieja',
-    r.sls.indexOf('AAA111')<0 && /^G04,G02,G03,G06,G01,G07,G05,G09/.test(r.sls) && r.sls.indexOf('G08')>=0, r.sls);
+    r.sls.indexOf('AAA111')<0 && /^G04,G02,G03,G06,G01,G07,G11,G05,G09/.test(r.sls) && r.sls.indexOf('G08')>=0, r.sls);
+  chk('la tarjeta de EJEMPLO de Trello no se ofrece (y arriba se dice cuántas no son una ATC)', r.sls.indexOf('G10')<0 && /^G10:la tarjeta de ejemplo/.test(r.basura) && /No se ofrecen 1 tarjetas que no son una ATC/.test(r.txt), r.basura);
+  chk('el mismo cliente con OTRO reclamo meses antes (otro producto) es otra ATC: viene tildada, no «parece la misma»', r.F.G11 && r.F.G11.tilde && !r.F.G11.nota && r.F.G11.est==='cerrada', r.F.G11);
   chk('devuelta: cerrada el día que entró a «DEVUELTAS» (25/03), recogida el 05/03, lista el 20/03; entró el 02/03 (creación de la tarjeta)',
     r.F.G01.est==='cerrada' && r.F.G01.ent==='2026-03-25' && r.F.G01.r==='2026-03-05' && r.F.G01.dev==='2026-03-20' && r.F.G01.entro==='2026-03-02', r.F.G01);
   chk('la fecha de COMPRA sale del certificado de garantía (23/12/2021), no de la creación; vendedora, cliente y producto de la tarjeta',
@@ -238,19 +245,31 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
     !r.F.G05.tilde && /archivada/.test(r.F.G05.nota) && !r.F.G06.tilde && /POST VENT/.test(r.F.G06.nota) && r.F.G08 && !r.F.G08.tilde && /sin el historial/.test(r.F.G08.nota), r.F);
   chk('una abierta que en Trello no se movió en más de 60 días se ofrece SIN tildar y lo dice', r.F.G09 && r.F.G09.est==='sinrecoger' && !r.F.G09.tilde && /sin movimiento desde el 05\/01\/26/.test(r.F.G09.nota), r.F.G09);
   chk('arriba lo explica: el día en que se creó la tarjeta, la fecha de compra de la tarjeta o sus adjuntos, sin día de viaje; y el botón cuenta 5',
-    /En Trello y no en el panel/.test(r.txt) && /creó la tarjeta/.test(r.txt) && /certificado de garantía/.test(r.txt) && /sin día de viaje/i.test(r.txt) && /Traer al panel \(5 ATC\)/.test(r.btn), r.btn);
+    /En Trello y no en el panel/.test(r.txt) && /creó la tarjeta/.test(r.txt) && /certificado de garantía/.test(r.txt) && /sin día de viaje/i.test(r.txt) && /Traer al panel \(6 ATC\)/.test(r.btn), r.btn);
+  r = await page.evaluate(() => { atctFueraTodas(false); var a=document.getElementById('atct-traer').textContent; atctFueraTodas('rec'); return [a, document.getElementById('atct-traer').textContent, typeof document.querySelector('[onclick*="atctFueraTodas(true)"]')]; });
+  chk('«Destildar todas» y «Tildar las recomendadas» (vuelve a las 6 propuestas); ya no hay «Tildar todas»', /\(0 ATC\)/.test(r[0]) && /\(6 ATC\)/.test(r[1]) && r[2]==='object' && !(await page.evaluate(() => !!document.querySelector('[onclick*="atctFueraTodas(true)"]'))), r);
 
   r = await page.evaluate(async () => {
+    /* el avance se ve mientras guarda: un apiSave lento para mirarlo a la mitad */
+    var lento=apiSave, mitad=null; apiSave=function(p){ return new Promise(function(ok){ setTimeout(function(){ ok(lento(p)); }, 60); }); };
     atctTraer();
-    for(var i=0;i<80 && ATCT.ocupado;i++) await new Promise(function(ok){ setTimeout(ok, 50); });
+    await new Promise(function(ok){ setTimeout(ok, 100); });
+    mitad={ av:(document.getElementById('atct-av-t')||{}).textContent||'', btn:document.getElementById('atct-traer').textContent, va:[].map.call(document.querySelectorAll('.atct-fu .t4.va'), function(e){ return e.textContent; }).join('|') };
+    for(var i=0;i<120 && ATCT.ocupado;i++) await new Promise(function(ok){ setTimeout(ok, 50); });
+    apiSave=lento;
+    window.__mitad=mitad;
     var G=function(sl){ var p=findById('atc-tre-'+sl); if(!p) return null; var a=atcDe(p)||{};
       return { oc:p.oc, fecha:p.fecha, turno:p.turno, ent:p.entregado, est:atcEstado(p), dias:atcDias(p), entro:atcEntro(p), a:a, vend:p.vendedor, cli:p.cliente, cel:p.celular, prod:p.productos[0].desc, obs:p.observaciones }; };
-    return { ids:__guardados.map(function(x){ return x.id; }).join(), G01:G('G01'), G02:G('G02'), G03:G('G03'), G04:G('G04'), G07:G('G07'), G05:G('G05'),
-      sinFecha:__guardados.every(function(x){ return x.fecha===''; }), resto:ATCT.fuera.map(function(x){ return x.sl; }).join(), t:(document.getElementById('toast')||{}).textContent||'' };
+    return { ids:__guardados.map(function(x){ return x.id; }).join(), G11:G('G11'), G01:G('G01'), G02:G('G02'), G03:G('G03'), G04:G('G04'), G07:G('G07'), G05:G('G05'),
+      sinFecha:__guardados.every(function(x){ return x.fecha===''; }), resto:ATCT.fuera.map(function(x){ return x.sl; }).join(), t:(document.getElementById('toast')||{}).textContent||'',
+      mitad:window.__mitad, fin:(document.getElementById('atct-av-t')||{}).textContent||'' };
   });
-  chk('«Traer al panel» guarda las 5 tildadas, de la más vieja a la más nueva, y lo dice', r.ids==='atc-tre-G07,atc-tre-G01,atc-tre-G03,atc-tre-G02,atc-tre-G04' && /Traídas 5 ATC de Trello/.test(r.t), [r.ids, r.t]);
-  chk('el N° de ATC es del mes en que ENTRÓ (febrero, marzo, septiembre ×2, octubre después de la 10-001 que ya estaba)',
-    r.G07.oc==='ATC 02-001' && r.G01.oc==='ATC 03-001' && r.G03.oc==='ATC 09-001' && r.G02.oc==='ATC 09-002' && r.G04.oc==='ATC 10-002', [r.G07.oc, r.G01.oc, r.G03.oc, r.G02.oc, r.G04.oc]);
+  chk('«Traer al panel» guarda las 6 tildadas, de la más vieja a la más nueva, y lo dice', r.ids==='atc-tre-G11,atc-tre-G07,atc-tre-G01,atc-tre-G03,atc-tre-G02,atc-tre-G04' && /Traídas 6 ATC de Trello/.test(r.t), [r.ids, r.t]);
+  chk('mientras guarda SE VE: «Guardando en la planilla: N de 6», el botón «⏳ Guardando N de 6…» y el renglón «⏳ guardando…»',
+    /Guardando en la planilla: \d de 6/.test(r.mitad.av) && /⏳ Guardando \d de 6…/.test(r.mitad.btn) && /guardando…/.test(r.mitad.va), r.mitad);
+  chk('al terminar lo dice: «Terminó: 6 guardadas en la planilla»', /Terminó: 6 guardadas en la planilla/.test(r.fin), r.fin);
+  chk('el N° de ATC es del mes en que ENTRÓ (enero, febrero, marzo, septiembre ×2, octubre después de la 10-001 que ya estaba)',
+    r.G11 && r.G11.oc==='ATC 01-001' && r.G07.oc==='ATC 02-001' && r.G01.oc==='ATC 03-001' && r.G03.oc==='ATC 09-001' && r.G02.oc==='ATC 09-002' && r.G04.oc==='ATC 10-002', [r.G07.oc, r.G01.oc, r.G03.oc, r.G02.oc, r.G04.oc]);
   chk('todas SIN día de viaje ni turno (no ocupan cupo, el bot no les manda nada)', r.sinFecha && r.G01.turno==='', r.sinFecha);
   chk('la devuelta queda ✅ Entregada: entró el 02/03, 23 días de circuito, recojo 05/03, compra 23/12/2021 y el enlace de la tarjeta',
     r.G01.est==='cerrada' && r.G01.ent===true && r.G01.entro==='2026-03-02' && r.G01.dias===23 && r.G01.a.rec==='2026-03-05' && r.G01.a.fcom==='2021-12-23' &&
@@ -265,7 +284,26 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
     return { cruce:F.map(function(x){ return x.p.id+':'+(x.t ? atctSl(x.t.url) : '—'); }).join(), n:D.n, cerr:D.cerr.length, tRec:D.tRec.length };
   });
   chk('cada traída se cruza con SU tarjeta (por el enlace) al completar', r.cruce.split(',').every(function(s){ var m=s.match(/atc-tre-(\w+):(\w+)/); return m && m[1]===m[2]; }), r.cruce);
-  chk('el informe «Todas» las cuenta: 6 ATC (1 + 5), 2 cerradas; el tramo «hasta el recojo» solo con el recojo de verdad de Trello (G01, no G07)', r.n===6 && r.cerr===2 && r.tRec===1, r);
+  chk('el informe «Todas» las cuenta: 7 ATC (1 + 6), 3 cerradas; el tramo «hasta el recojo» solo con el recojo de verdad de Trello (G01, no G07 ni G11)', r.n===7 && r.cerr===3 && r.tRec===1, r);
+  r = await page.evaluate(async () => {
+    /* 🗂️ las ya traídas: se listan, y una que no debía entrar (la de ejemplo) se saca con el borrado de siempre */
+    var ej=atctNuevaAtc({ t:{ tit:'Cliente Alberto Pareja (Ejemplo)', url:'https://trello.com/c/G10/10-atc', cels:[], nom:[], mot:null, det:'' }, sl:'G10', lista:'ATC EN PRODUCCION', arch:true,
+      entro:'2025-11-19', ms:new Date('2025-11-19T10:00:00-04:00').getTime(), est:'fabrica', r:'2025-11-19', cliente:'ALBERTO PAREJA EJEMPLO' });
+    upsert(ej); atctPintar();
+    var tx=document.getElementById('atct-body').innerText, malas=atctTraidas().filter(function(x){ return x.por; }).map(function(x){ return x.p.id+':'+x.por; }).join();
+    /* la planilla todavía la tiene hasta que se borra (el doble de apiList devolvía lo de la pantalla, que ya la sacó) */
+    var enHoja=JSON.parse(JSON.stringify(ej)), listaVieja=apiList;
+    apiList=function(){ return Promise.resolve({ ok:true, pedidos:JSON.parse(JSON.stringify(STATE)).concat(__borrados.length ? [] : [enHoja]) }); };
+    window.__borrados=[]; apiDelete=function(id){ __borrados.push(id); return Promise.resolve({ ok:true }); };
+    atctSacarMalas();
+    for(var i=0;i<60 && findById('atc-tre-G10');i++) await new Promise(function(ok){ setTimeout(ok, 50); });
+    for(var j=0;j<60 && !__borrados.length;j++) await new Promise(function(ok){ setTimeout(ok, 50); });
+    await new Promise(function(ok){ setTimeout(ok, 150); });
+    apiList=listaVieja;
+    return { tx:tx, malas:malas, borrados:__borrados.join(), sigue:!!findById('atc-tre-G10'), otras:atctTraidas().length, tx2:document.getElementById('atct-body').innerText };
+  });
+  chk('«🗂️ Ya traídas de Trello: 7 · 1 no deberían estar» con la de ejemplo marcada', /Ya traídas de Trello: 7 · 1 no deberían estar/.test(r.tx) && r.malas==='atc-tre-G10:la tarjeta de ejemplo de Trello', [r.malas, (r.tx.match(/Ya traídas[^\n]*/)||[''])[0]]);
+  chk('«🗑 Sacar las que no son ATC» la borra en la planilla (con el borrado de siempre) y quedan las 6 buenas', r.borrados==='atc-tre-G10' && !r.sigue && r.otras===6 && /Ya traídas de Trello: 6/.test(r.tx2) && !/no deberían estar/.test(r.tx2), [r.borrados, r.sigue, r.otras, (r.tx2.match(/Ya traídas[^\n]*/)||[''])[0]]);
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

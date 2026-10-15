@@ -2932,6 +2932,14 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .atct-fu .t1 b{ font-size:.86rem; } .atct-fu .t1 small{ color:var(--muted); }
 .atct-fu .t2, .atct-fu .t3{ color:#334155; overflow-wrap:anywhere; }
 .atct-fu .t3 i{ color:#b45309; font-style:normal; font-weight:700; }
+.atct-fu .t4{ font-weight:800; font-size:.78rem; } .atct-fu .t4:empty{ display:none; }
+.atct-fu .t4.va{ color:#0369a1; } .atct-fu .t4.ok{ color:#15803d; } .atct-fu .t4.cola{ color:#b45309; } .atct-fu .t4.mal{ color:#b91c1c; }
+.atct-traidas{ margin-top:12px; background:#fff; border:1px solid var(--gray-md); border-radius:10px; padding:8px 11px; font-size:.82rem; }
+.atct-traidas summary{ cursor:pointer; font-weight:700; }
+.atct-traidas .atct-fuera{ margin-top:6px; max-height:32vh; }
+.atct-av{ display:flex; align-items:center; gap:10px; margin-top:8px; font-size:.82rem; font-weight:700; color:#0f172a; flex-wrap:wrap; }
+.atct-av-b{ flex:1 1 220px; height:10px; background:#e2e8f0; border-radius:999px; overflow:hidden; min-width:0; }
+.atct-av-b i{ display:block; height:100%; width:0; background:#00B5AD; transition:width .25s; }
 @media (max-width:640px){ .atct-c{ grid-template-columns:auto 1fr; } .atct-c .lb2{ grid-column:2; } .atct-c select, .atct-c input[type=date], .atct-c textarea{ grid-column:2; } }
 @media print{
   body.printing-atci > *{ display:none !important; }
@@ -18047,7 +18055,7 @@ function atctPintar(){
   if(sin.length) h+='<div class="atct-sec">❓ Sin tarjeta en Trello <small>a estas les falta algo y no aparecen en el tablero</small></div><div class="atct-sin">'+
     sin.map(function(x){ return '<b>'+esc(x.p.oc||'')+'</b> '+esc(x.p.cliente||'')+' <span style="color:var(--muted)">(falta '+x.falta.map(function(k){ return { mot:'motivo', fcom:'fecha de compra', det:'detalle' }[k]; }).join(', ')+')</span>'; }).join('<br>')+'</div>';
   if(!falta.length) h+='<div class="atct-sin" style="color:#15803d">✅ Todas las ATC del panel ya tienen motivo, fecha de compra y detalle.</div>';
-  body.innerHTML=atctFueraHtml()+'<div class="atct-sec" style="margin-top:18px">🧩 Completar las ATC que ya están en el panel</div>'+h;
+  body.innerHTML=atctFueraHtml()+atctTraidasHtml()+'<div class="atct-sec" style="margin-top:18px">🧩 Completar las ATC que ya están en el panel</div>'+h;
   atctContar();
   atctFueraContar();
 }
@@ -18159,11 +18167,30 @@ function atctMismaTarjeta(a, b){
   if(a.cels.some(function(c){ return b.cels.indexOf(c)>=0; })) return true;
   return a.nom.filter(function(w){ return b.nom.indexOf(w)>=0; }).length>=2;
 }
+/* (15/10) Dos tarjetas del MISMO cliente son la misma ATC solo si entraron a menos de `ATCT_MISMA_DIAS` o dicen el mismo producto:
+   un cliente con dos reclamos distintos (Paola Silvana Guzmán: noviembre un PLATA, diciembre un TITANIO) son dos ATC. */
+var ATCT_MISMA_DIAS=10;
+function atctMismaAtc(A, B){
+  if(!atctMismaTarjeta(A.t, B.t)) return false;
+  if(A.ms && B.ms && Math.abs(A.ms-B.ms)<=ATCT_MISMA_DIAS*864e5) return true;
+  return !!(A.prod && B.prod && A.prod===B.prod);
+}
+/* Lo que hay en el tablero y no es una ATC: la tarjeta de ejemplo de Trello, una foto suelta convertida en tarjeta, la plantilla
+   («LINEA … MODELO … plaza … medidas» sin cliente). No se ofrecen. */
+function atctNoEsAtc(t){
+  var tit=String(t.tit||'').trim(), u=atctMay(tit);
+  if(/\bEJEMPLO\b/.test(u)) return 'la tarjeta de ejemplo de Trello';
+  if(/\.(JPE?G|PNG|WEBP|GIF|PDF|XLSX?|DOCX?)$/.test(u)) return 'una foto o un archivo suelto, no una ATC';
+  if(/^LINEA\b/.test(u) && /\bMODELO\b/.test(u)) return 'la plantilla de la tarjeta, sin cliente';
+  return '';
+}
 /* Las tarjetas que faltan, con lo que tendría cada ATC al traerla. */
 function atctFueraArmar(){
   var atcs=STATE.filter(function(p){ return p && esATC(p.oc); }), L=[];
+  ATCT.basura=[];
   (ATCT.tarj||[]).forEach(function(t){
     var sl=atctSl(t.url); if(!sl || atctEnPanel(t, atcs)) return;
+    var no=atctNoEsAtc(t); if(no){ ATCT.basura.push({ t:t, por:no }); return; }
     var h=ATCT.hist && ATCT.hist[sl], lista=(h && h.lista) || t.lista || '', U=atctMay(lista), arch=h ? !!h.archivada : !!t.arch;
     var F={ t:t, h:h, sl:sl, lista:lista, arch:arch, post:/POST/.test(U), entro:(h && h.creada) || '', ms:(h && Number(h.creadaMs)) || 0,
       r:atctPaso(h, /PRODUC/), dev:atctPaso(h, /LISTAS/), ent:atctPaso(h, /DEVUELT/), est:'', nota:'' };
@@ -18179,7 +18206,7 @@ function atctFueraArmar(){
   });
   /* la misma ATC en dos tarjetas: la que se queda tildada es la no archivada, la que no es de «POST VENT» y la más nueva */
   var pref=L.slice().sort(function(a, b){ return (a.arch-b.arch) || ((a.post && !a.ent)-(b.post && !b.ent)) || (b.ms-a.ms); });
-  pref.forEach(function(F, i){ for(var j=0;j<i;j++) if(!pref[j].dup && atctMismaTarjeta(pref[j].t, F.t)){ F.dup=pref[j]; break; } });
+  pref.forEach(function(F, i){ for(var j=0;j<i;j++) if(!pref[j].dup && atctMismaAtc(pref[j], F)){ F.dup=pref[j]; break; } });
   L.forEach(function(F){
     if(!F.h) F.nota='sin el historial de Trello: no se sabe cuándo entró';
     else if(F.arch) F.nota='archivada en Trello';
@@ -18205,7 +18232,8 @@ function atctFueraHtml(){
     'La <b>fecha de compra</b> es la que dice la tarjeta o sus adjuntos (certificado de garantía, factura, Excel); si no está, queda vacía. '+
     'Van <b>sin día de viaje</b>: no ocupan cupo ni le avisan a nadie. Las «por recoger» quedan para que logística las programe.<br>'+
     Object.keys(ATCT_EST_TXT).filter(function(k){ return cuenta[k]; }).map(function(k){ return ATCT_EST_TXT[k]+' <b>'+cuenta[k]+'</b>'; }).join(' · ')+
-    ' · 🛒 con fecha de compra <b>'+L.filter(function(F){ return F.fcom; }).length+'</b></div>';
+    ' · 🛒 con fecha de compra <b>'+L.filter(function(F){ return F.fcom; }).length+'</b>'+
+    ((ATCT.basura||[]).length ? '<br>No se ofrecen '+ATCT.basura.length+' tarjetas que no son una ATC: '+esc(ATCT.basura.map(function(b){ return b.por; }).filter(function(x, i, a){ return a.indexOf(x)===i; }).join(', '))+'.' : '')+'</div>';
   h+='<div class="atct-fuera">'+L.map(function(F, i){
     var t=F.t, c=t.compra;
     return '<label class="atct-fu'+(F.tilde ? '' : ' no')+'" id="atct-fu'+i+'"><input type="checkbox" data-fu="'+i+'"'+(F.tilde ? ' checked' : '')+' onchange="atctFueraContar()">'+
@@ -18213,13 +18241,56 @@ function atctFueraHtml(){
       '<span class="t2">'+ATCT_EST_TXT[F.est]+(F.est==='cerrada' && F.ent ? ' el '+esc(atciFechaCorta(F.ent)) : (F.est==='lista' && F.dev ? ' desde el '+esc(atciFechaCorta(F.dev)) : (F.est==='fabrica' && F.r ? ' desde el '+esc(atciFechaCorta(F.r)) : '')))+
         ' · entró el '+esc(atciFechaCorta(F.entro)||'—')+(F.vend ? ' · '+esc(F.vend) : '')+(F.prod ? ' · '+esc(F.prod) : '')+'</span>'+
       '<span class="t3">🛒 '+(F.fcom ? '<b>compra '+esc(atciFechaCorta(F.fcom))+'</b>'+(c && c.de ? ' <small>(📎 '+esc(c.de)+')</small>' : '') : '<span style="color:var(--muted)">sin fecha de compra'+(c && c.txt ? ' («'+esc(String(c.txt).toLowerCase())+'»)' : '')+'</span>')+
-        (t.mot ? ' · '+esc(t.mot.mot) : '')+(F.nota ? ' · <i>'+esc(F.nota)+'</i>' : '')+'</span></label>';
+        (t.mot ? ' · '+esc(t.mot.mot) : '')+(F.nota ? ' · <i>'+esc(F.nota)+'</i>' : '')+'</span><span class="t4" id="atct-fe'+i+'"></span></label>';
   }).join('')+'</div>'+
+  '<div id="atct-av" class="atct-av" hidden><div class="atct-av-b"><i id="atct-av-i"></i></div><span id="atct-av-t"></span></div>'+
   '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-primary btn-sm" id="atct-traer" onclick="atctTraer()">📥 Traer al panel</button>'+
-  '<button class="btn btn-ghost btn-sm" onclick="atctFueraTodas(true)">Tildar todas</button><button class="btn btn-ghost btn-sm" onclick="atctFueraTodas(false)">Destildar todas</button></div>';
+  '<button class="btn btn-ghost btn-sm" onclick="atctFueraTodas(\'rec\')" title="Vuelve a lo que el panel propone: sin archivadas, repetidas, POST VENT ni abiertas olvidadas">Tildar las recomendadas</button>'+
+  '<button class="btn btn-ghost btn-sm" onclick="atctFueraTodas(false)">Destildar todas</button></div>';
   return h;
 }
-function atctFueraTodas(si){ [].forEach.call(document.querySelectorAll('#atct-body input[data-fu]'), function(cb){ cb.checked=!!si; }); atctFueraContar(); }
+/* «Tildar las recomendadas» vuelve a lo propuesto (las archivadas, repetidas, POST VENT y abiertas olvidadas, sin tildar); una por una se
+   puede tildar cualquiera. Ya no hay «Tildar todas»: tildaba la tarjeta de ejemplo y las repetidas (dueño, 15/10, con todo tildado). */
+/* 🗂️ Las YA traídas de Trello (id `atc-tre-…`), para poder sacar una que no debía entrar: la tarjeta de ejemplo, una archivada, una
+   repetida. Sacar = el borrado de siempre (`realDelete`: mira que nadie la haya cambiado y borra con el sello). */
+function atctTraidas(){
+  return STATE.filter(function(p){ return p && String(p.id||'').indexOf('atc-tre-')===0; }).map(function(p){
+    var sl=String(p.id).slice(8), t=(ATCT.tarj||[]).filter(function(x){ return atctSl(x.url)===sl; })[0]||null, h=ATCT.hist && ATCT.hist[sl];
+    var por=t ? atctNoEsAtc(t) : '';
+    if(!por && (h ? h.archivada : (t && t.arch))) por='archivada en Trello';
+    return { p:p, t:t, por:por };
+  }).sort(function(a, b){ return (b.por ? 1 : 0)-(a.por ? 1 : 0) || (Number(a.p.ts)||0)-(Number(b.p.ts)||0); });
+}
+function atctTraidasHtml(){
+  var T=atctTraidas(); if(!T.length) return '';
+  var malas=T.filter(function(x){ return x.por; });
+  return '<details class="atct-traidas"'+(malas.length ? ' open' : '')+'><summary>🗂️ Ya traídas de Trello: <b>'+T.length+'</b>'+(malas.length ? ' · <b style="color:#b45309">'+malas.length+' no deberían estar</b>' : '')+'</summary>'+
+    (malas.length ? '<div style="margin:6px 0"><button class="btn btn-sm" style="background:#b45309;color:#fff" onclick="atctSacarMalas()">🗑 Sacar las '+malas.length+' que no son ATC o están archivadas</button></div>' : '')+
+    '<div class="atct-fuera">'+T.map(function(x){
+      var p=x.p;
+      return '<div class="atct-fu'+(x.por ? ' no' : '')+'" style="cursor:default"><span></span><span class="t1"><b>'+esc(p.oc||'')+'</b> '+esc(p.cliente||'')+'</span>'+
+        '<span class="t2">'+esc(ATCT_EST_TXT[{ cerrada:'cerrada', lista:'lista', fabrica:'fabrica' }[atcEstado(p)]||'sinrecoger']||'')+' · entró el '+esc(atciFechaCorta(atcEntro(p)))+
+          (x.por ? ' · <i style="color:#b45309;font-style:normal;font-weight:700">'+esc(x.por)+'</i>' : '')+'</span>'+
+        '<span class="t3"><button class="btn btn-ghost btn-sm" data-id="'+esc(p.id)+'" onclick="atctSacar(this.dataset.id)">🗑 Sacar del panel</button></span></div>';
+    }).join('')+'</div></details>';
+}
+function atctSacar(id){
+  var p=findById(id); if(!p || String(id).indexOf('atc-tre-')!==0) return;
+  if(!confirm('¿Sacar del panel la '+(p.oc||'ATC')+' de '+(p.cliente||'')+' (traída de Trello)?')) return;
+  Promise.resolve(realDelete(id)).then(function(){ try{ renderAtc(); }catch(e){} atctPintar(); });
+}
+function atctSacarMalas(){
+  var M=atctTraidas().filter(function(x){ return x.por; }); if(!M.length) return;
+  if(!confirm('¿Sacar del panel estas '+M.length+' ATC traídas de Trello?\n\n'+M.map(function(x){ return '· '+(x.p.oc||'')+' '+(x.p.cliente||'')+' — '+x.por; }).join('\n'))) return;
+  var k=0, una=function(){ if(k>=M.length) return Promise.resolve(); var id=M[k++].p.id; return Promise.resolve(realDelete(id)).then(una, una); };
+  una().then(function(){ try{ renderAtc(); }catch(e){} atctPintar(); });
+}
+function atctFueraTodas(si){
+  [].forEach.call(document.querySelectorAll('#atct-body input[data-fu]'), function(cb){
+    var F=ATCT.fuera[+cb.getAttribute('data-fu')]; cb.checked=si==='rec' ? !!(F && F.tilde) : !!si;
+  });
+  atctFueraContar();
+}
 function atctFueraTildadas(){
   return [].filter.call(document.querySelectorAll('#atct-body input[data-fu]:checked'), function(){ return true; }).map(function(cb){ return ATCT.fuera[+cb.getAttribute('data-fu')]; }).filter(Boolean);
 }
@@ -18249,24 +18320,41 @@ function atctTraer(){
   if(!L.length){ toast('No hay ninguna tarjeta tildada', 'err'); return; }
   if(!confirm('Se van a cargar '+L.length+' ATC de Trello en el panel, con sus días y sin día de viaje (no ocupan cupo ni le avisan a nadie). ¿Seguimos?')) return;
   ATCT.ocupado=true; atctFueraContar(); atctContar();
+  [].forEach.call(document.querySelectorAll('#atct-body input[data-fu]'), function(cb){ cb.disabled=true; });
   /* de la más vieja a la más nueva: así el N° de cada mes sale en orden */
   L=L.slice().sort(function(a, b){ return a.ms-b.ms; });
-  var ok=0, cola=0, mal=0, ya=0, k=0;
+  var ok=0, cola=0, mal=0, ya=0, k=0, N=L.length;
+  /* (15/10, dueño: «no sé si está cargando, guardando o qué, cuando le doy cargar») se guardan de a una, y se ve: la barra, el botón
+     y cada renglón dicen cómo va. */
+  var est=function(F, txt, cls){ var e=document.getElementById('atct-fe'+ATCT.fuera.indexOf(F)); if(e){ e.textContent=txt; e.className='t4 '+(cls||''); } };
+  var avance=function(){
+    var hechas=ok+cola+mal+ya, av=document.getElementById('atct-av'), b=document.getElementById('atct-traer');
+    if(av){ av.hidden=false; var i=document.getElementById('atct-av-i'); if(i) i.style.width=Math.round(100*hechas/N)+'%';
+      var t=document.getElementById('atct-av-t'); if(t) t.textContent=(hechas<N ? '⏳ Guardando en la planilla: '+hechas+' de '+N+' · no recargues la página' : '✅ Listo: '+hechas+' de '+N)+
+        (ok ? ' · ✅ '+ok+' guardadas' : '')+(cola ? ' · ⏳ '+cola+' en cola' : '')+(mal ? ' · ⚠️ '+mal+' no se pudieron' : '')+(ya ? ' · '+ya+' ya estaban' : ''); }
+    if(b) b.textContent=hechas<N ? '⏳ Guardando '+(hechas+1)+' de '+N+'…' : '📥 Traer al panel';
+  };
   var una=function(){
     if(k>=L.length) return Promise.resolve();
     var F=L[k++];
-    if(findById('atc-tre-'+F.sl)){ ya++; return una(); }
+    if(findById('atc-tre-'+F.sl)){ ya++; est(F, '✔ ya estaba', 'ok'); avance(); return una(); }
+    est(F, '⏳ guardando…', 'va'); avance();
     var rec=atctNuevaAtc(F);
     return Promise.resolve(persistPedido(rec)).then(function(res){
-      if(res && res.ok) ok++; else if(res && res.local) cola++; else mal++;
-    }, function(){ mal++; }).then(una);
+      if(res && res.ok){ ok++; est(F, '✅ en el panel · '+rec.oc, 'ok'); }
+      else if(res && res.local){ cola++; est(F, '⏳ en cola: se manda sola', 'cola'); }
+      else { mal++; est(F, '⚠️ no se pudo guardar'+(res && res.error ? ' ('+res.error+')' : ''), 'mal'); }
+    }, function(){ mal++; est(F, '⚠️ no se pudo guardar', 'mal'); }).then(function(){ avance(); return una(); });
   };
-  toast('⏳ Trayendo '+L.length+' ATC de Trello…', 'ok');
+  avance();
   una().then(function(){
     ATCT.ocupado=false;
     toast('📥 Traídas '+ok+' ATC de Trello'+(cola ? ' · '+cola+' quedaron en cola (se mandan solas)' : '')+(mal ? ' · ⚠️ '+mal+' no se pudieron guardar' : '')+(ya ? ' · '+ya+' ya estaban' : ''), mal ? 'err' : 'ok', 9000);
     try{ renderAtc(); }catch(e){}
     atctPintar();
+    var av=document.getElementById('atct-av'), t=document.getElementById('atct-av-t');
+    if(av && t){ av.hidden=false; t.textContent='✅ Terminó: '+ok+' guardadas en la planilla'+(cola ? ' · '+cola+' en cola' : '')+(mal ? ' · ⚠️ '+mal+' no se pudieron' : '')+(ya ? ' · '+ya+' ya estaban' : '');
+      var i=document.getElementById('atct-av-i'); if(i) i.style.width='100%'; }
   });
 }
 /* ==========================================================================
