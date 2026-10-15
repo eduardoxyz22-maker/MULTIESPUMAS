@@ -121,6 +121,59 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
   r = await page.evaluate(() => { var S=STATE; STATE=[]; var D=atciDatos('todas'), H=atciHojas(D); STATE=S; return { n:D.n, I:D.I.join(), h:H.length, t:H.join('') }; });
   chk('todas, sin ninguna ATC: lo dice y no se rompe', r.n===0 && /Todavía no hay ninguna ATC/.test(r.I) && r.h===3 && /No hay ninguna ATC cargada/.test(r.t), r);
 
+  /* ---- 1c. 🛒 la fecha de compra (15/10, dueño: «NO ME PUSISTE EL DATO MÁS IMPORTANTE… en la foto de la garantía decía la fecha de compra»):
+     la guardada; si no, la de Trello SOLO con el mismo celular y nunca posterior a la ATC, marcada con 📎 ---- */
+  r = await page.evaluate(async () => {
+    var orig=[atctTraerCsv, atctTraerAdj], cel={};
+    ['a03','a04','a05','a06'].forEach(function(id){ var p=findById(id); cel[id]=p.celular; });
+    findById('a03').celular='70000003'; findById('a04').celular='70000004'; findById('a05').celular='591 70000005'; findById('a06').celular='70000006';
+    var fila=function(lista, tit, desc, url){ return [ 'ATC', lista, tit, desc, '', 'Pendiente', 'No', '', '', 'No', url ].map(function(x){ return '"'+String(x).replace(/"/g,'""')+'"'; }).join(','); };
+    var CSV='﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,Etiquetas,Asignado_a,Archivada,URL\n'+[
+      fila('ATC SOLICITADAS COM', 'ATC MIRIAN - LUIS SOSA', 'TELEFONO 70000003 | FECHA DE COMPRA 13/09/2021 | suena un resorte', 'https://trello.com/c/T03/3-luis'),
+      fila('ATC SOLICITADAS COM', 'ATC ISABEL - ROSA VACA', 'TELEFONO 79990000 | FECHA DE COMPRA 01/02/2022 | cruje', 'https://trello.com/c/T04/4-rosa'),      // solo el nombre: no
+      fila('ATC SOLICITADAS COM', 'ATC JONATHAN - EVA ROJAS', 'TELEFONO 70000005 | no dijo', 'https://trello.com/c/T05/5-eva'),                  // la fecha está en la FOTO
+      fila('ATC SOLICITADAS COM', 'ATC FERNANDO - OSCAR LIMA', 'TELEFONO 70000006 | SE VENDIO EL 01/12/2026 | se hunde', 'https://trello.com/c/T06/6-oscar') // posterior: no
+    ].join('\n')+'\n';
+    atctTraerCsv=function(){ return Promise.resolve(CSV); };
+    atctTraerAdj=function(){ return Promise.resolve({ generado:'2026-10-15T23:20:00Z', tarjetas:[
+      { sl:'T05', fcom:'2021-12-23', fcomTxt:'jueves, 23 de diciembre de 2021', fuente:'la foto «garantia.jpg»', cels:['70000005'], cliente:'EVA ROJAS', reclamo:'' } ] }); };
+    ATCI_TRELLO.tarj=null; await atciTraerTrello();
+    var D=atciDatos('2026-10'), H=atciHojas(D), tx=function(h){ var d=document.createElement('div'); d.innerHTML=h; document.body.appendChild(d); var t=d.innerText; d.remove(); return t; };
+    var out={ M:Object.keys(D.trelloM).sort().map(function(k){ return k+':'+D.trelloM[k].f; }).join(), edTre:D.edTre, sinEdad:D.sinEdad, edades:D.edades.map(function(x){ return x.n; }).join(),
+      I:D.I.join(' | '), mot:tx(H[2]), donde:tx(H[4]), det:tx(H[H.length-1]), detH:H[H.length-1], hojas:H.length };
+    atctTraerCsv=orig[0]; atctTraerAdj=orig[1]; ATCI_TRELLO.tarj=null;
+    for(var id in cel) findById(id).celular=cel[id];
+    return out;
+  });
+  chk('Trello da la fecha a 2: a03 por el texto (13/09/2021) y a05 por la FOTO de la garantía (23/12/2021); a04 (solo el nombre) y a06 (posterior a la ATC) no',
+    r.M==='a03:2021-09-13,a05:2021-12-23', r.M);
+  chk('la antigüedad las cuenta: 4 con fecha (2 según Trello), 2 sin', r.edTre===2 && r.sinEdad===2 && r.edades==='1,0,1,2', r);
+  chk('«Lo más importante» lo dice: «la tienen 4 de 6 (2 según Trello, sin guardar todavía: 📎); a 2 les falta»', /Fecha de compra: la tienen <b>4 de 6<\/b> \(2 según Trello, sin guardar todavía: 📎\); a <b>2<\/b> les falta\./.test(r.I), r.I);
+  chk('la hoja de motivos: «4 con fecha de compra · 📎 2 según Trello»', /4 con fecha de compra · 📎 2 según Trello/.test(r.mot) && /2 sin la fecha de compra anotada/.test(r.mot), r.mot.slice(0, 600));
+  chk('«Las que más esperan» tiene la columna «Compra»: 📎 13/09/21 para la de 12 días', /Compra/i.test(r.donde) && /ATC 10-003[\s\S]{0,60}📎 13\/09\/21/.test(r.donde), r.donde.slice(0, 900));
+  chk('el detalle: «Compra» con la guardada (01/03/25), la de Trello con 📎 (23/12/21) y «—» la que no tiene; abajo explica el 📎',
+    /ATC 10-001[\s\S]{0,120}01\/03\/25/.test(r.det) && /ATC 10-005[\s\S]{0,120}📎 23\/12\/21/.test(r.det) && /ATC 10-004[\s\S]{0,120}—/.test(r.det) &&
+    /📎 = la fecha de compra la dice Trello \(mismo celular\)/.test(r.det) && /title="La dice Trello \(la foto «garantia\.jpg»\)/.test(r.detH), r.det.slice(0, 900));
+  chk('sin Trello cargado, el informe no inventa nada (sigue igual)', await page.evaluate(() => { var D=atciDatos('2026-10'); return D.edTre===0 && D.sinEdad===4 && !/según Trello/.test(D.I.join()); }), '');
+
+  /* ---- 1d. nada queda en «y N más» (15/10, dueño: «Y DICE Y X MÁS. Si mi jefe quiere ver los demás, ¿qué onda?») ---- */
+  r = await page.evaluate(() => {
+    var S=STATE, ts=function(f){ return new Date(f+'T10:00:00-04:00').getTime(); }, V=['Ana Uno','Bea Dos','Ceci Tres','Dora Cuatro','Ema Cinco','Fede Seis','Gabi Siete','Hugo Ocho','Ines Nueve'];
+    STATE=[];
+    for(var i=1;i<=20;i++){ var d=('0'+Math.min(i,14)).slice(-2);
+      STATE.push({ id:'z'+i, oc:'ATC 10-'+('00'+(100+i)).slice(-3), fecha:'2026-10-25', turno:'AM', cliente:'CLIENTE '+i, vendedor:V[i%9], celular:'7100'+('000'+i).slice(-4), ts:ts('2026-10-'+d), entregado:false,
+        productos:[{ desc:'PRODUCTO NUMERO '+i, medida:'140x190', cant:1, atc:{ mot:'Hundimiento', fcom:'2024-0'+(1+i%9)+'-01' } }] }); }
+    var D=atciDatos('2026-10'), H=atciHojas(D), tx=function(h){ var d=document.createElement('div'); d.innerHTML=h; document.body.appendChild(d); var t=d.innerText; d.remove(); return t; };
+    var T=H.map(tx); STATE=S;
+    return { n:H.length, tit:T.map(function(t){ return (t.match(/Los otros \d+ productos|Las que siguen esperando: \d+ a \d+ de \d+|Las \d+ ATC de octubre[^\n]*/)||[''])[0]; }).filter(Boolean),
+      prod:T[3], resto:T[4], donde:T[5], ab:T[6], todo:T.join('\n') };
+  });
+  chk('20 ATC con 20 productos: los 12 que no entran van en «Los otros 12 productos», del 9 al 20', r.tit.indexOf('Los otros 12 productos')>=0 && /^9\s+PRODUCTO NUMERO/m.test(r.resto) && /20\s+PRODUCTO NUMERO/.test(r.resto) && /siguen en la hoja siguiente/.test(r.prod), r.tit);
+  chk('las abiertas que no entran en «Las que más esperan» siguen en «Las que siguen esperando: 9 a 20 de 20», con la fecha de compra', r.tit.indexOf('Las que siguen esperando: 9 a 20 de 20')>=0 && /Compra/i.test(r.ab) && /\d{2}\/\d{2}\/24/.test(r.ab) && (r.ab.match(/ATC 10-1\d\d/g)||[]).length===12, r.ab.slice(0, 500));
+  chk('«Quién las cargó» con 9 vendedores: están los 9, en dos columnas', ['Ana Uno','Bea Dos','Ceci Tres','Dora Cuatro','Ema Cinco','Fede Seis','Gabi Siete','Hugo Ocho','Ines Nueve'].every(function(v){ return r.prod.indexOf(v)>=0; }) && /Quién las cargó\s*9/.test(r.prod), r.prod.slice(-500));
+  chk('en ninguna hoja queda un «Y N más» sin mostrar (solo «siguen en la hoja siguiente»)', !/Y \d+ (más|productos? más)[^:]*\.\s*$/m.test(r.todo) && !/Y \d+ más\.|\(están en el detalle\)/.test(r.todo), (r.todo.match(/Y \d+[^\n]*/g)||[]).join(' / '));
+  chk('las hojas: portada, resumen, motivos, productos, los otros productos, dónde, las que siguen, tiempos, tendencia y 2 de detalle (11 + 9) = 11', r.n===11, r.n);
+
   /* ---- 2. el botón y la ventana ---- */
   r = await page.evaluate(() => {
     showView('atc'); segSet('atc-mode','mes'); document.getElementById('atc-mes').value='2026-10'; renderAtc();
