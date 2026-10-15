@@ -693,7 +693,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
-## 🎧 La ATC no se guarda sin sus datos + 📷 hasta 2 fotos del producto (§4lh, 15/10; dueño: *«no les permita guardar si no tienen todos los datos llenados… fecha de compra, motivo… detallar. Añade… adjuntar fotos del producto, hasta dos imágenes»*)
+## 🎧 La ATC no se guarda sin sus datos + 📷 hasta 2 fotos del producto (§4lh, 15/10, PUBLICADO `a21dfe7`; dueño: *«no les permita guardar si no tienen todos los datos llenados… fecha de compra, motivo… detallar. Añade… adjuntar fotos del producto, hasta dos imágenes»*)
 - Obligatorio al crear Y al editar por el formulario (`atcFaltan`/`atcFaltanDe` en `submitPedido`): motivo, detalle (≥ `ATC_DETALLE_MIN`=10 letras),
   fecha de compra (ni futura, ni posterior a cuando entró la ATC, ni antes de 2000) y qué se le recoge (≥1 casilla). Fotos NO obligatorias.
   Recuadro `#atc-falta` + `atcCampoListo`; «Para guardar» (`fxDerPintar`) las lista. 🔑 Con la clave de Administración, una ATC vieja a la que YA
