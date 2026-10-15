@@ -663,6 +663,74 @@ def abrir_enlace_directo(ident, u):
     return texto
 
 
+def _atc_de(p):
+    pr = p.get("productos") or []
+    if isinstance(pr, str):
+        try:
+            pr = json.loads(pr)
+        except Exception:
+            pr = []
+    for x in pr if isinstance(pr, list) else []:
+        if isinstance(x, dict) and isinstance(x.get("atc"), dict):
+            return x["atc"]
+    return None
+
+
+def atc_del_panel():
+    """🎧 (15/10) Las ATC de la planilla: cuántas tienen motivo, fecha de compra y detalle, cuántas se completaron desde Trello
+    (`tre`) y con cuántas cruzaría «🔗 Completar con Trello» por el celular. Solo cuentas: este registro es público."""
+    print("\n── 🎧 las ATC del panel y lo de Trello (solo cuentas) ──")
+    j = _LISTA
+    if not j:
+        print("   (no hubo una lectura buena de la planilla)")
+        return
+    atcs = [p for p in (j.get("pedidos") or []) if isinstance(p, dict) and re.match(r"^ATC\b", str(p.get("oc") or "").strip(), re.I)]
+    def entro(p):
+        t = float(p.get("ts") or 0)
+        return datetime.fromtimestamp(t / 1000, BO).date().isoformat() if t else str(p.get("fecha") or "")[:10]
+    por = {}
+    tot = {"n": 0, "mot": 0, "fcom": 0, "det": 0, "tre": 0, "sin_datos": 0}
+    for p in atcs:
+        a = _atc_de(p) or {}
+        m = entro(p)[:7] or "(sin fecha)"
+        c = por.setdefault(m, {"n": 0, "mot": 0, "fcom": 0, "det": 0, "tre": 0})
+        for d in (c, tot):
+            d["n"] += 1
+            d["mot"] += 1 if a.get("mot") else 0
+            d["fcom"] += 1 if a.get("fcom") else 0
+            d["det"] += 1 if str(a.get("det") or "").strip() else 0
+            d["tre"] += 1 if str(a.get("tre") or "").startswith("https://trello.com/") else 0
+        if not _atc_de(p):
+            tot["sin_datos"] += 1
+    print(f"   ATC en la planilla: {tot['n']} · con motivo {tot['mot']} · con fecha de compra {tot['fcom']} · con detalle {tot['det']} · "
+          f"guardadas desde «Completar con Trello» {tot['tre']}" + (f" · sin el bloque de datos de ATC {tot['sin_datos']}" if tot["sin_datos"] else ""))
+    for m in sorted(por)[-6:]:
+        c = por[m]
+        print(f"   · entraron en {m}: {c['n']} · motivo {c['mot']} · fecha de compra {c['fcom']} · detalle {c['det']} · desde Trello {c['tre']}")
+    # el cruce por celular contra el respaldo de Trello (el CSV y lo leído de los adjuntos, los dos al lado de la página)
+    cels_t = set()
+    try:
+        import csv as _csv
+        aqui = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+        for r in _csv.DictReader(open(os.path.join(aqui, "atc-semanal.csv"), encoding="utf-8-sig")):
+            for mm in re.finditer(r"(?:^|[^0-9])((?:\+?591[\s.-]?)?[67](?:[\s.-]?\d){7})(?![\s.-]?\d)", (r.get("Tarjeta") or "") + " | " + (r.get("Descripcion") or "")):
+                cels_t.add(re.sub(r"\D", "", mm.group(1))[-8:])
+        adj = os.path.join(aqui, "atc-trello-adjuntos.json")
+        if os.path.exists(adj):
+            for t in json.load(open(adj, encoding="utf-8")).get("tarjetas", []):
+                cels_t.update(str(c)[-8:] for c in t.get("cels", []))
+    except Exception as ex:
+        print(f"   (no pude leer el respaldo de Trello: {type(ex).__name__})")
+    def cel8(p):
+        d = re.sub(r"\D", "", str(p.get("celular") or ""))
+        mm = re.search(r"(?:591)?([67]\d{7})$", d)
+        return mm.group(1) if mm else ""
+    falta = [p for p in atcs if not ((_atc_de(p) or {}).get("mot") and (_atc_de(p) or {}).get("fcom") and str((_atc_de(p) or {}).get("det") or "").strip())]
+    cruzan = [p for p in falta if cel8(p) and cel8(p) in cels_t]
+    print(f"   les falta algo (motivo, fecha o detalle): {len(falta)} · de esas, con una tarjeta de Trello del mismo celular: {len(cruzan)} · "
+          f"sin celular en el panel: {len([p for p in falta if not cel8(p)])}")
+
+
 def main():
     pagina = url_de_la_pagina()
     if not PANEL_URL and not pagina:
@@ -685,6 +753,8 @@ def main():
     en_dos_tramos(pagina or PANEL_URL)
     # 4b) 🛰️ (13/10) El GPS de hoy y las entregas marcadas, con la primera lectura buena.
     gps_del_dia()
+    # 4c) 🎧 (15/10) Las ATC: qué tienen y cuántas se completaron desde Trello.
+    atc_del_panel()
     # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
     ubicacion_almacenes(pagina or PANEL_URL)
     ubicacion_pedidos(pagina or PANEL_URL)
