@@ -1,0 +1,49 @@
+name: Historial de las tarjetas de Trello (ATC)
+
+# §4lf-c (15/10): cuándo se creó cada tarjeta del tablero ATC y cuándo pasó por cada lista (recojo, fábrica, devuelta), para traer al
+# panel las ATC que están en Trello y no en el panel con sus días de verdad. Solo la API de Trello (sin Claude). Deja
+# atc-trello-historial.json al lado de la página. ⚠️ El registro es público: el script imprime solo cantidades.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'herramientas/trello_historial.py'
+      - '.github/workflows/trello-historial.yml'
+
+concurrency:
+  group: trello-historial-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  leer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Leer el historial
+        env:
+          TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
+          TRELLO_TOKEN:   ${{ secrets.TRELLO_TOKEN }}
+        run: python3 herramientas/trello_historial.py
+
+      - name: Guardar lo leído
+        run: |
+          [ -f atc-trello-historial.json ] || { echo "no hay nada que guardar"; exit 0; }
+          if git ls-files --error-unmatch atc-trello-historial.json >/dev/null 2>&1 && git diff --quiet -I'"generado":' -- atc-trello-historial.json; then
+            echo "sin cambios"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add atc-trello-historial.json
+          FECHA=$(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')
+          git commit -m "Historial de Trello leído $FECHA (auto)" || { echo "sin cambios"; exit 0; }
+          for i in 1 2 3 4; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then exit 0; fi
+            sleep $((i * 5))
+            git pull --rebase origin "${GITHUB_REF_NAME}" || { git rebase --abort || true; }
+          done
+          echo "❌ no se pudo guardar el JSON"; exit 1

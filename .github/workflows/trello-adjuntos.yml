@@ -7,8 +7,13 @@ name: Leer adjuntos de Trello (ATC)
 
 # 15/10, dueño: «la clave api de claude es de 3 horas, porque el trello ya no se usará, centralizaremos todo en el panel».
 # Ya se leyeron los 124 adjuntos: sin corrida diaria ni al pushear (con la clave vencida fallaría). Queda solo a mano (Run workflow).
+# (15/10, dueño: «en los certificados que subieron las fotos» está la fecha de compra) también corre cuando cambia el lector: así se
+# vuelven a leer las fotos que antes no dieron fecha (la pregunta ahora nombra el certificado de garantía). Cada foto, una vez.
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'herramientas/trello_adjuntos.py'
 
 concurrency:
   group: trello-adjuntos-${{ github.ref_name }}

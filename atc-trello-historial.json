@@ -1,0 +1,1516 @@
+{
+ "generado": "2026-10-15T11:02:51-04:00",
+ "tablero": "cFbJp9DO",
+ "listas": [
+  "ATC SOLICITADAS COM",
+  "ATC PROGRAMADAS PARA RECOJO LOG",
+  "ATC LISTAS PARA DEVOLVER PROD",
+  "ATC EN PRODUCCION",
+  "ATC DEVUELTAS LOG",
+  "POST VENT (COMERCIAL)"
+ ],
+ "tarjetas": [
+  {
+   "sl": "xJsWJHHO",
+   "creada": "2025-11-19",
+   "creadaMs": 1763563133000,
+   "lista": "ATC EN PRODUCCION",
+   "archivada": true,
+   "ultima": "2025-12-29",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-11-19"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2025-11-19"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2025-11-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2025-11-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2025-11-19"
+    }
+   ]
+  },
+  {
+   "sl": "zAKCujUF",
+   "creada": "2025-11-24",
+   "creadaMs": 1764010345000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2025-12-09",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-11-24"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2025-11-25"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2025-12-09"
+    }
+   ]
+  },
+  {
+   "sl": "LLuGpnYn",
+   "creada": "2025-12-10",
+   "creadaMs": 1765403482000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2025-12-15",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2025-12-15"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2025-12-15"
+    }
+   ]
+  },
+  {
+   "sl": "qRFronOD",
+   "creada": "2025-12-10",
+   "creadaMs": 1765403547000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-12-10"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2025-12-15"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2025-12-22"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "khYWZywS",
+   "creada": "2025-12-10",
+   "creadaMs": 1765403572000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": true,
+   "ultima": "2025-12-10",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-12-10"
+    }
+   ]
+  },
+  {
+   "sl": "OIMNEOdy",
+   "creada": "2025-12-10",
+   "creadaMs": 1765403892000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2025-12-22",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-12-10"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2025-12-15"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2025-12-22"
+    }
+   ]
+  },
+  {
+   "sl": "zxcsrICW",
+   "creada": "2025-12-10",
+   "creadaMs": 1765404114000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-12-10"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "16cY8JGj",
+   "creada": "2025-12-13",
+   "creadaMs": 1765636708000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-12-13"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2025-12-15"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2025-12-16"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "KK668J1D",
+   "creada": "2025-12-13",
+   "creadaMs": 1765638899000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2025-12-13"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2025-12-15"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "LFih8V91",
+   "creada": "2026-01-17",
+   "creadaMs": 1768659546000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-02-09",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "LS791aHp",
+   "creada": "2026-01-17",
+   "creadaMs": 1768659732000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "RQgYCRty",
+   "creada": "2026-01-17",
+   "creadaMs": 1768659888000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "BnL7wOEy",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660160000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "HHqZGztf",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660331000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "VqB7dIeN",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660469000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-19",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-19"
+    }
+   ]
+  },
+  {
+   "sl": "oZNx9ntO",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660606000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "jyQ4bOCf",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660697000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-19",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-19"
+    }
+   ]
+  },
+  {
+   "sl": "jyAyedfw",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660803000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "7sPUh44C",
+   "creada": "2026-01-17",
+   "creadaMs": 1768660910000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-01-30",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-01-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-01-30"
+    }
+   ]
+  },
+  {
+   "sl": "HjYKHCiL",
+   "creada": "2026-01-21",
+   "creadaMs": 1769026526000,
+   "lista": "POST VENT (COMERCIAL)",
+   "archivada": false,
+   "ultima": "2026-06-09",
+   "pasos": [
+    {
+     "l": "POST VENT (COMERCIAL)",
+     "f": "2026-02-09"
+    }
+   ]
+  },
+  {
+   "sl": "0Kxjfh2z",
+   "creada": "2026-01-30",
+   "creadaMs": 1769806077000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-02-09",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-02-09"
+    }
+   ]
+  },
+  {
+   "sl": "4tHx35qg",
+   "creada": "2026-02-12",
+   "creadaMs": 1770920593000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-02-25",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-02-12"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-02-24"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-02-25"
+    }
+   ]
+  },
+  {
+   "sl": "UvJdrvZT",
+   "creada": "2026-03-19",
+   "creadaMs": 1773954244000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-03-20",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-03-20"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-03-20"
+    }
+   ]
+  },
+  {
+   "sl": "VffAOaMy",
+   "creada": "2026-03-19",
+   "creadaMs": 1773954428000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-03-20",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-03-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-03-20"
+    }
+   ]
+  },
+  {
+   "sl": "C2GDcnzV",
+   "creada": "2026-03-19",
+   "creadaMs": 1773954551000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-03-20",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-03-20"
+    }
+   ]
+  },
+  {
+   "sl": "U5vNseI1",
+   "creada": "2026-03-19",
+   "creadaMs": 1773954835000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-03-20"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-03-31"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "8wY4lw50",
+   "creada": "2026-03-19",
+   "creadaMs": 1773955735000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-03-20"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-03-20"
+    }
+   ]
+  },
+  {
+   "sl": "hNenIlDI",
+   "creada": "2026-03-19",
+   "creadaMs": 1773956155000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-03-20"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-03-25"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "pG7SOO72",
+   "creada": "2026-03-19",
+   "creadaMs": 1773958215000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-03-20"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-03-25"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-03-31"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "5Kw3pLXd",
+   "creada": "2026-03-19",
+   "creadaMs": 1773959417000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "gcOX2HPX",
+   "creada": "2026-03-20",
+   "creadaMs": 1774035496000,
+   "lista": "ATC PROGRAMADAS PARA RECOJO LOG",
+   "archivada": false,
+   "ultima": "2026-04-29",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-03-20"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-29"
+    }
+   ]
+  },
+  {
+   "sl": "lEq6gOAq",
+   "creada": "2026-03-20",
+   "creadaMs": 1774036235000,
+   "lista": "POST VENT (COMERCIAL)",
+   "archivada": false,
+   "ultima": "2026-06-09",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-29"
+    },
+    {
+     "l": "POST VENT (COMERCIAL)",
+     "f": "2026-06-09"
+    }
+   ]
+  },
+  {
+   "sl": "pPSqaIpI",
+   "creada": "2026-03-20",
+   "creadaMs": 1774040478000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-03-21"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-03-25"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-03-31"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "nsyNdAWy",
+   "creada": "2026-03-24",
+   "creadaMs": 1774362641000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-06-09",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-03-26"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-06-09"
+    }
+   ]
+  },
+  {
+   "sl": "g5GmuG0h",
+   "creada": "2026-03-25",
+   "creadaMs": 1774469843000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-06-09",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-03-25"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-03-26"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-06-09"
+    }
+   ]
+  },
+  {
+   "sl": "HRj17cqp",
+   "creada": "2026-03-25",
+   "creadaMs": 1774471790000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-03-25",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-03-25"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-03-25"
+    }
+   ]
+  },
+  {
+   "sl": "IWUPT4VU",
+   "creada": "2026-03-26",
+   "creadaMs": 1774550207000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "BonocdY1",
+   "creada": "2026-04-02",
+   "creadaMs": 1775138654000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-04-02"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "eo1WhRQ1",
+   "creada": "2026-04-11",
+   "creadaMs": 1775916209000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-11",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-14"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-05-11"
+    }
+   ]
+  },
+  {
+   "sl": "UwqPyBdW",
+   "creada": "2026-04-14",
+   "creadaMs": 1776182231000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-14"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "v2AMLeUj",
+   "creada": "2026-04-14",
+   "creadaMs": 1776188425000,
+   "lista": "ATC PROGRAMADAS PARA RECOJO LOG",
+   "archivada": true,
+   "ultima": "2026-04-14",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-04-14"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "MjNCI7bK",
+   "creada": "2026-04-14",
+   "creadaMs": 1776188803000,
+   "lista": "ATC PROGRAMADAS PARA RECOJO LOG",
+   "archivada": false,
+   "ultima": "2026-08-04",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-04-14"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-14"
+    }
+   ]
+  },
+  {
+   "sl": "9u5NgCHS",
+   "creada": "2026-04-20",
+   "creadaMs": 1776704386000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-11",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-29"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-05-11"
+    }
+   ]
+  },
+  {
+   "sl": "XGcgUbCk",
+   "creada": "2026-04-25",
+   "creadaMs": 1777132638000,
+   "lista": "POST VENT (COMERCIAL)",
+   "archivada": false,
+   "ultima": "2026-06-09",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-29"
+    },
+    {
+     "l": "POST VENT (COMERCIAL)",
+     "f": "2026-06-09"
+    }
+   ]
+  },
+  {
+   "sl": "6FnAZutE",
+   "creada": "2026-04-27",
+   "creadaMs": 1777320894000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": true,
+   "ultima": "2026-04-27",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-04-27"
+    }
+   ]
+  },
+  {
+   "sl": "iRKHpg7N",
+   "creada": "2026-04-27",
+   "creadaMs": 1777321477000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-04-27",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-04-27"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-04-27"
+    }
+   ]
+  },
+  {
+   "sl": "JSoSgwHw",
+   "creada": "2026-04-28",
+   "creadaMs": 1777392938000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-07",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-04-28"
+    },
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-04-28"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-04-30"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-05-07"
+    }
+   ]
+  },
+  {
+   "sl": "3bhmqnUp",
+   "creada": "2026-04-30",
+   "creadaMs": 1777592838000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-11",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-05-11"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-05-11"
+    }
+   ]
+  },
+  {
+   "sl": "F61B4I9O",
+   "creada": "2026-04-30",
+   "creadaMs": 1777594461000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-11",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-05-11"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-05-11"
+    }
+   ]
+  },
+  {
+   "sl": "I7ceXJ8r",
+   "creada": "2026-05-05",
+   "creadaMs": 1777996725000,
+   "lista": "POST VENT (COMERCIAL)",
+   "archivada": false,
+   "ultima": "2026-06-09",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-05-11"
+    },
+    {
+     "l": "POST VENT (COMERCIAL)",
+     "f": "2026-06-09"
+    }
+   ]
+  },
+  {
+   "sl": "Xp6RGhM1",
+   "creada": "2026-05-05",
+   "creadaMs": 1778010668000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-05",
+   "pasos": []
+  },
+  {
+   "sl": "7M5PULcU",
+   "creada": "2026-05-11",
+   "creadaMs": 1778533141000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-05-28",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-05-11"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-05-11"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-05-24"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-05-28"
+    }
+   ]
+  },
+  {
+   "sl": "Nl4RjOfg",
+   "creada": "2026-05-11",
+   "creadaMs": 1778533753000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "gwyGDiyR",
+   "creada": "2026-05-15",
+   "creadaMs": 1778859775000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": true,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-06-09"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-06-09"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-06-23"
+    }
+   ]
+  },
+  {
+   "sl": "IxwNAVwG",
+   "creada": "2026-05-19",
+   "creadaMs": 1779199992000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "qQhF6QtR",
+   "creada": "2026-05-26",
+   "creadaMs": 1779829158000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-08-04",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-06-09"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-06-23"
+    }
+   ]
+  },
+  {
+   "sl": "0g5OXRef",
+   "creada": "2026-05-29",
+   "creadaMs": 1780086816000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-05-29"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-06-09"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "UutFp2Df",
+   "creada": "2026-06-01",
+   "creadaMs": 1780342803000,
+   "lista": "POST VENT (COMERCIAL)",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "POST VENT (COMERCIAL)",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "67u6KRug",
+   "creada": "2026-06-09",
+   "creadaMs": 1781037714000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-06-23",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-06-09"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-06-23"
+    }
+   ]
+  },
+  {
+   "sl": "2OnkZZCy",
+   "creada": "2026-06-15",
+   "creadaMs": 1781541833000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "1fVQOMSd",
+   "creada": "2026-06-16",
+   "creadaMs": 1781621690000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "DKafkMoQ",
+   "creada": "2026-06-19",
+   "creadaMs": 1781880074000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "Dm5EcR84",
+   "creada": "2026-06-19",
+   "creadaMs": 1781898439000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-06-23"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "24fCO3iV",
+   "creada": "2026-06-23",
+   "creadaMs": 1782228846000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "cs5Hs0AB",
+   "creada": "2026-06-26",
+   "creadaMs": 1782504662000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": true,
+   "ultima": "2026-07-07",
+   "pasos": []
+  },
+  {
+   "sl": "JnBB2IBX",
+   "creada": "2026-06-26",
+   "creadaMs": 1782505055000,
+   "lista": "ATC EN PRODUCCION",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "ye4Yy1Rq",
+   "creada": "2026-06-26",
+   "creadaMs": 1782514877000,
+   "lista": "ATC EN PRODUCCION",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "tG68wBKg",
+   "creada": "2026-06-30",
+   "creadaMs": 1782847256000,
+   "lista": "ATC EN PRODUCCION",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": [
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-07-07"
+    }
+   ]
+  },
+  {
+   "sl": "BtpNNSfD",
+   "creada": "2026-07-07",
+   "creadaMs": 1783433495000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-07-07",
+   "pasos": []
+  },
+  {
+   "sl": "KPYUf9DZ",
+   "creada": "2026-07-10",
+   "creadaMs": 1783728422000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-10",
+   "pasos": []
+  },
+  {
+   "sl": "scDxG9IA",
+   "creada": "2026-07-10",
+   "creadaMs": 1783729614000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-10",
+   "pasos": []
+  },
+  {
+   "sl": "qLzcOOKT",
+   "creada": "2026-07-14",
+   "creadaMs": 1784041515000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-14",
+   "pasos": []
+  },
+  {
+   "sl": "1xruGc7f",
+   "creada": "2026-07-17",
+   "creadaMs": 1784328793000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-09-19",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-07-17"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-07-17"
+    },
+    {
+     "l": "ATC EN PRODUCCION",
+     "f": "2026-07-21"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-09-19"
+    }
+   ]
+  },
+  {
+   "sl": "8RvniaYx",
+   "creada": "2026-07-21",
+   "creadaMs": 1784656842000,
+   "lista": "ATC PROGRAMADAS PARA RECOJO LOG",
+   "archivada": false,
+   "ultima": "2026-07-21",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-07-21"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-07-21"
+    }
+   ]
+  },
+  {
+   "sl": "h8iifxZe",
+   "creada": "2026-07-23",
+   "creadaMs": 1784844980000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-23",
+   "pasos": []
+  },
+  {
+   "sl": "npToNEND",
+   "creada": "2026-07-28",
+   "creadaMs": 1785250140000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-28",
+   "pasos": []
+  },
+  {
+   "sl": "dR8xdvhh",
+   "creada": "2026-07-29",
+   "creadaMs": 1785342414000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-29",
+   "pasos": []
+  },
+  {
+   "sl": "sTqv7Zxq",
+   "creada": "2026-07-29",
+   "creadaMs": 1785342769000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-29",
+   "pasos": []
+  },
+  {
+   "sl": "trFrw2kt",
+   "creada": "2026-07-31",
+   "creadaMs": 1785523093000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-07-31",
+   "pasos": []
+  },
+  {
+   "sl": "jbgFh706",
+   "creada": "2026-08-03",
+   "creadaMs": 1785766239000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-08-03",
+   "pasos": []
+  },
+  {
+   "sl": "RpxPadat",
+   "creada": "2026-08-03",
+   "creadaMs": 1785796746000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-08-03",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-08-03"
+    }
+   ]
+  },
+  {
+   "sl": "JK23bgHn",
+   "creada": "2026-08-10",
+   "creadaMs": 1786369024000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-08-10",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-08-10"
+    }
+   ]
+  },
+  {
+   "sl": "NBYh38Zo",
+   "creada": "2026-08-19",
+   "creadaMs": 1787180757000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-08-19",
+   "pasos": []
+  },
+  {
+   "sl": "YshEnHfK",
+   "creada": "2026-08-24",
+   "creadaMs": 1787597707000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-09-21",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-08-24"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-08-24"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-09-19"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-09-21"
+    }
+   ]
+  },
+  {
+   "sl": "7UYvx9tt",
+   "creada": "2026-08-27",
+   "creadaMs": 1787844547000,
+   "lista": "ATC SOLICITADAS COM",
+   "archivada": false,
+   "ultima": "2026-08-27",
+   "pasos": []
+  },
+  {
+   "sl": "YZ3TuQZ1",
+   "creada": "2026-09-19",
+   "creadaMs": 1789837239000,
+   "lista": "ATC LISTAS PARA DEVOLVER PROD",
+   "archivada": false,
+   "ultima": "2026-09-19",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-09-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-09-19"
+    }
+   ]
+  },
+  {
+   "sl": "BcVtuxae",
+   "creada": "2026-09-19",
+   "creadaMs": 1789837505000,
+   "lista": "ATC DEVUELTAS LOG",
+   "archivada": false,
+   "ultima": "2026-09-21",
+   "pasos": [
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-09-19"
+    },
+    {
+     "l": "ATC LISTAS PARA DEVOLVER PROD",
+     "f": "2026-09-19"
+    },
+    {
+     "l": "POST VENT (COMERCIAL)",
+     "f": "2026-09-21"
+    },
+    {
+     "l": "ATC DEVUELTAS LOG",
+     "f": "2026-09-21"
+    }
+   ]
+  },
+  {
+   "sl": "jC50Zywy",
+   "creada": "2026-10-03",
+   "creadaMs": 1791038195000,
+   "lista": "ATC PROGRAMADAS PARA RECOJO LOG",
+   "archivada": false,
+   "ultima": "2026-10-03",
+   "pasos": [
+    {
+     "l": "ATC SOLICITADAS COM",
+     "f": "2026-10-03"
+    },
+    {
+     "l": "ATC PROGRAMADAS PARA RECOJO LOG",
+     "f": "2026-10-03"
+    }
+   ]
+  }
+ ]
+}
