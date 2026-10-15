@@ -14829,3 +14829,42 @@ arranca»*.
 - Batería entera con Bloki (la rama, `66171f7`): 192 suites, 6.685 en verde; una sola roja, `test_mispedidos` 32/1 con la máquina cargada, que
   sola da 33/0.
 
+
+## §4lh — 🎧 La ATC no se guarda sin sus datos + 📷 hasta 2 fotos del producto (15/10)
+El dueño, después del informe de ATC de julio a octubre (49 ATC: faltaban 4 motivos, 5 detalles, 11 fechas de compra y una compra era
+POSTERIOR a la ATC): *«que los vendedores deban llenar correctamente los datos faltantes, como ser fecha de compra, y no les permita guardar
+si no tienen todos los datos llenados, como ser la fecha de compra, motivo. Deben seleccionar cuál es el motivo, aparte de las observaciones,
+detallar. Añade la función adjuntar imágenes para que puedan adjuntar fotos del producto, hasta dos imágenes… publica… no les puedes permitir
+que guarden sin antes completar todos los datos»*.
+- **Obligatorio en el formulario** (`atcFaltan` → `atcFaltanDe`, en `submitPedido`): el **motivo** (de la lista, como antes), el **detalle**
+  (ahora un cuadro de 3 líneas, al menos `ATC_DETALLE_MIN`=10 letras sin contar espacios), la **fecha de compra** (no del futuro, no anterior a
+  `ATC_COMPRA_DESDE`=2000, y al editar no posterior a cuando ENTRÓ la ATC) y **qué se le recoge** (al menos una casilla). Las fotos NO son
+  obligatorias (el dueño dijo «para que puedan adjuntar… hasta dos»). Recuadro rojo `#atc-falta` arriba del bloque con lo que falta, que se va
+  achicando al completar (`atcCampoListo`); el aviso lo dice en palabras; «Para guardar» de la pantalla ancha (`fxDerPintar`) lo lista.
+- Vale al CREAR y al EDITAR («datos faltantes»). **🔑 Excepción** (revisión, ver abajo): con la clave de Administración, una ATC VIEJA a la que
+  YA le faltaba eso mismo se puede guardar igual después de un `confirm` (`atcFaltanHeredados`); lo que la ATC sí tenía no se borra ni con la
+  clave, y lo nuevo se exige siempre. Sin eso, para corregirle la dirección a una de las ~70 traídas de Trello había que inventar una fecha.
+- El detalle se guarda en UNA línea (los saltos pasan a « · »): «📋 Copiar» de la pestaña ATC va por tabulaciones y una fila partida corría
+  todas las columnas; `copiarAtc` además limpia tabulaciones y saltos de cada celda.
+- **📷 Fotos del producto** (`ATC_FOTOS_MAX`=2): botón en el bloque de la ATC, varias de una vez (se suben de a una, solo las que entran; el
+  aviso del tope va al final), con el mismo canal que los comprobantes (`fotoCronometro` + `subirFoto`). `FORM_ATC_FOTOS` hasta guardar;
+  `ATC_FOTO_GEN` tira una subida que termina después de cambiar de formulario; no deja guardar mientras sube una.
+  · Al guardar quedan en `atc.fot` (dentro del JSON de productos) **y en `p.fotos`** (columna 29): el barrido de huérfanas del servidor
+    (`idsFotoEnUso_`, §4ep) solo mira la columna de pagos y la de fotos — con solo `atc.fot` al otro día pasaban a «Fotos huérfanas» y a los 30
+    días a la papelera. Sin cambiar el `.gs`.
+  · **`fotosEntregaDe(p)`** = la columna menos las del producto: lo usan TODO lo que muestra o cuenta fotos de la ENTREGA (`fotosHtml`,
+    `quitarFoto` —índice de esa tira—, `abrirVisor`, estadísticas de entregas, tarjeta del chofer, `rechazoPerdido`). Lo que guarda o compara la
+    fila sigue con `fotosDe`. `abrirVisor(pid, i, 'atc')` recorre las del producto. `fotoEnUso` mira también `atc.fot`.
+  · Se ven en la ficha de la ATC (`verAtc`, «📷 Fotos del producto») y en las fichas de Mis pedidos, carga y pedido (`atcFotosTiraHtml`).
+  · Quitar una recién subida la borra de Drive; una que la ATC ya tenía sale del pedido al guardar. `imagenesSinPegar` las incluye (avisa al
+    salir); pasar la ATC a OC borra las nuevas (`pintarMotivoAtc`); al editar una ATC y pasarla a OC sus fotos salen de la columna. Volver a
+    tocar «🎧 ATC» NO las borra (`descartarImagenesSinPegar(true)` en `pintarDocTipo` = solo las de pago).
+  · El eco del guardado (`verificarEcoForm`) compara contra lo que se MANDÓ (`rec`), no contra `prev`: quitar a propósito una foto daba «SE
+    GUARDÓ INCOMPLETO». Las del producto que no llegan se nombran aparte («foto del producto»).
+- Bloki: «¿Cómo cargo una ATC?» dice lo obligatorio y lo de las fotos.
+- **Revisión independiente (agente)**: 4 pruebas en rojo por la regla (arregladas: `test_rev2_form`, `test_rev5_pedidos`, `test_rev4_atc_flete`,
+  `test_rev_entregas` cargan ATC completas), el bloqueo de ATC viejas para Administración (→ la excepción con clave), el falso «INCOMPLETO», volver
+  a tocar ATC borraba las fotos, el detalle de varias líneas rompía la copia, `fotoEnUso`, ATC→OC, subida tardía y el aviso cuando faltan otros
+  campos (ahora dice «Completá los campos marcados en rojo» y va al primero). Queda: una página SIN F5 crea ATC sin la regla y muestra las fotos
+  del producto como de la entrega (con ✕): al publicar, todos F5.
+- Pruebas: `tests/test_atc_obligatorio.js` (57; corre contra otra página con `PEDIDOS=`), `test_atc` (81, con datos completos por defecto).

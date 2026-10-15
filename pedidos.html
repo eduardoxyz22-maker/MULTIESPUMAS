@@ -4638,7 +4638,11 @@ function verificarEcoForm(srv, rec, prev){
   try{
     if(!srv) return;
     var imgs=compsArr(FORM_COMPS).concat(typeof FORM_COMPS2!=='undefined'?compsArr(FORM_COMPS2):[]);
-    var faltan=ecoFaltantes(imgs, prev?fotosDe(prev):[], srv, (document.getElementById('f-nota')||{}).value, (rec.productos||[]).length);
+    /* 📷 (15/10, §4lh) Las fotos que se MANDARON (`rec`), no las de antes: quitar a propósito una foto del producto de una ATC
+       daba «SE GUARDÓ INCOMPLETO». Las de la entrega siguen con su nombre; las del producto se cuentan aparte. */
+    var faltan=ecoFaltantes(imgs, fotosEntregaDe(rec), srv, (document.getElementById('f-nota')||{}).value, (rec.productos||[]).length);
+    var fsrv=fotosDe(srv).map(fidLimpio), sinAtc=atcFotos(rec).filter(function(id){ return fsrv.indexOf(id)<0; });
+    if(sinAtc.length) faltan.push(sinAtc.length+' foto'+(sinAtc.length>1?'s':'')+' del producto');
     ecoAvisar(rec, faltan, 'formulario');
   }catch(e){}
 }
@@ -4697,7 +4701,8 @@ function rechazoPerdido(rec, srv){
     var cob=cobrosDe(rec||{}).filter(cobroDeLaPuerta).filter(function(c){ var k=clave(c); if(libres[k]>0){ libres[k]--; return false; } return true; })
       .map(function(c){ return { txt:cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' del '+fmtFechaCorta(c.fecha)):'')+(limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'') }; });
     if(cob.length) out.cobros=cob;
-    var fs=compsArr(rec&&rec.fotos), fsv=compsArr(srv&&srv.fotos), nf=fs.filter(function(f){ return fsv.indexOf(f)<0; }).length;
+    /* (§4lh) solo las fotos de la ENTREGA: el aviso es del chofer («volvé a subirla»); las del producto de una ATC son de la vendedora */
+    var fs=compsArr(rec ? fotosEntregaDe(rec) : []), fsv=compsArr(srv&&srv.fotos), nf=fs.filter(function(f){ return fsv.indexOf(f)<0; }).length;
     if(nf) out.fotos=nf;
     return (out.entregado || out.cobros || out.fotos) ? out : null;
   }catch(e){ return null; }
@@ -4928,6 +4933,7 @@ function fotoEnUso(fid){
   for(var i=0;i<STATE.length;i++){
     var q=STATE[i]; if(!q) continue;
     if(imgsPagoDe(q).indexOf(fid)>=0) return true;
+    if(typeof atcFotos==='function' && atcFotos(q).indexOf(fid)>=0) return true;   // 📷 (§4lh) las del producto de una ATC
     var fs=q.fotos||[]; for(var j=0;j<fs.length;j++){ if(fidLimpio(fs[j])===fid) return true; }
   }
   return false;
@@ -4988,18 +4994,19 @@ function flushPending(){
    estaban. Ahora se la frena, y si sale igual, las imágenes se borran de Drive en el momento:
    sin foto y sin duda.
    ========================================================================== */
-function imagenesSinPegar(){
+function imagenesSinPegar(soloPago){
   var todas=compsArr(FORM_COMPS).concat(typeof FORM_COMPS2!=='undefined'?compsArr(FORM_COMPS2):[]);
-  /* 📷 (§4lh) …y las fotos del producto de la ATC recién subidas (las que la ATC ya tenía no cuentan). */
-  var atcF=(typeof FORM_ATC_FOTOS!=='undefined') ? compsArr(FORM_ATC_FOTOS) : [];
+  /* 📷 (§4lh) …y las fotos del producto de la ATC recién subidas (las que la ATC ya tenía no cuentan). `soloPago`: sin ellas
+     (cambiar el tipo de documento NO las borra; volver a tocar «🎧 ATC» las borraba). */
+  var atcF=(!soloPago && typeof FORM_ATC_FOTOS!=='undefined') ? compsArr(FORM_ATC_FOTOS) : [];
   if(!todas.length && !atcF.length) return [];
   var ya=[], yaAtc=[];
   if(EDIT_ID){ var prev=findById(EDIT_ID); if(prev){ ya=compsArr(metodoFormulario(prev).comps); var mx=(typeof mixtoDe==='function')?mixtoDe(prev):null; if(mx) ya=ya.concat(compsArr(mx.comps!=null?mx.comps:mx.comp)); yaAtc=atcFotos(prev); } }
   return todas.filter(function(id){ return ya.indexOf(id)<0; })
     .concat(atcF.filter(function(id){ return yaAtc.indexOf(id)<0; }));
 }
-function descartarImagenesSinPegar(){
-  var ids=imagenesSinPegar(); if(!ids.length) return 0;
+function descartarImagenesSinPegar(soloPago){
+  var ids=imagenesSinPegar(soloPago); if(!ids.length) return 0;
   FORM_COMPS=compsArr(FORM_COMPS).filter(function(id){ return ids.indexOf(id)<0; });
   if(typeof FORM_COMPS2!=='undefined') FORM_COMPS2=compsArr(FORM_COMPS2).filter(function(id){ return ids.indexOf(id)<0; });
   if(typeof FORM_ATC_FOTOS!=='undefined'){ FORM_ATC_FOTOS=compsArr(FORM_ATC_FOTOS).filter(function(id){ return ids.indexOf(id)<0; }); renderAtcFotosForm(); }
@@ -11521,9 +11528,13 @@ function submitPedido(){
   /* 🎧 Sin motivo la ATC no sirve para lo que se pidió: no habría con qué contar POR QUÉ
      se generan (§4bq). (15/10, §4lh) Y el dueño pidió más: motivo, DETALLE, FECHA DE COMPRA y qué se le recoge son
      obligatorios (`atcFaltan`), al crear y al editar. El recuadro rojo del bloque dice qué falta y se va achicando. */
-  var faltaAtc=[];
+  var faltaAtc=[], okSinAtc=ok;
   if(docTipoSel()==='ATC'){
-    faltaAtc=atcFaltan(EDIT_ID ? findById(EDIT_ID) : null);
+    var _prevAtc=EDIT_ID ? findById(EDIT_ID) : null;
+    faltaAtc=atcFaltan(_prevAtc);
+    /* 🔑 Con la clave de Administración, una ATC vieja a la que YA le faltaba eso se puede guardar igual, preguntando. */
+    if(faltaAtc.length && UNLOCKED && atcFaltanHeredados(faltaAtc, _prevAtc).length===faltaAtc.length &&
+       confirm('🎧 Esta ATC ya estaba guardada sin: '+atcFaltanTxt(faltaAtc)+'.\n\nUn vendedor NO puede guardarla así. Vos tenés la clave de Administración.\n\nAceptar: guardarla igual, sin completarlo.\nCancelar: completarlo ahora.')) faltaAtc=[];
     faltaAtc.forEach(function(x){ markErr(x.id); });
     if(faltaAtc.length) ok=false;
   }
@@ -11532,11 +11543,12 @@ function submitPedido(){
   var faltaSuc = _rpt && !cliente;
   if(!ok){
     toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
-        : faltaMotivo ? ('🎧 No se puede guardar la ATC: falta '+atcFaltanTxt(faltaAtc)+'.')
+        : faltaMotivo ? ((okSinAtc ? '' : 'Completá los campos marcados en rojo (*). ')+'🎧 No se puede guardar la ATC: falta '+atcFaltanTxt(faltaAtc)+'.')
         : faltaSuc ? '🏪 Poné a qué SUCURSAL va la reposición — es a dónde tiene que ir el camión.'
         : 'Completá los campos marcados (*)','err');
     if(faltaSuc){ var fs2=document.getElementById('f-rpt-suc'); if(fs2){ fs2.focus(); fs2.scrollIntoView({block:'center'}); } }
-    if(faltaMotivo){ var fm=document.getElementById(faltaAtc[0].id); if(fm){ try{ if(fm.focus) fm.focus(); }catch(e){} fm.scrollIntoView({block:'center'}); } }
+    if(faltaMotivo){ var fm=okSinAtc ? document.getElementById(faltaAtc[0].id) : (document.querySelector('#view-form .err')||document.getElementById(faltaAtc[0].id));
+      if(fm){ try{ if(fm.focus) fm.focus(); }catch(e){} fm.scrollIntoView({block:'center'}); } }
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
     return;
   }
@@ -12242,6 +12254,10 @@ function submitPedido(){
      ⚠️ Va DESPUÉS de armar `rec` y rescatando lo anterior a propósito: los productos que
      salen del formulario son objetos NUEVOS, así que sin este rescate la vendedora
      borraría la devolución que anotó logística con solo corregir una dirección. */
+  /* 📷 (§4lh) Una ATC pasada a OC/RPT al editar pierde su `atc`: sus fotos del producto no pueden quedar como «fotos de la entrega». */
+  if(!esATC(rec.oc) && prev && atcFotos(prev).length){
+    var _fp=atcFotos(prev); rec.fotos=fotosDe(rec).filter(function(x){ return _fp.indexOf(fidLimpio(x))<0; });
+  }
   if(esATC(rec.oc)){
     var _pAtc = prev ? (atcDe(prev)||{}) : {};
     /* ⚠️ Se copia TODO lo anterior y se pisan SOLO los dos campos que maneja el formulario.
@@ -12250,7 +12266,7 @@ function submitPedido(){
        silencio. Copiando entero, cualquier campo futuro sobrevive solo. */
     var _n={}; for(var _k in _pAtc) _n[_k]=_pAtc[_k];
     _n.mot  = document.getElementById('f-atc-motivo').value||'';
-    _n.det  = document.getElementById('f-atc-detalle').value.trim();
+    _n.det  = document.getElementById('f-atc-detalle').value.replace(/\s*[\r\n]+\s*/g,' · ').trim();   // (§4lh) una línea: «📋 Copiar» va por tabulaciones
     _n.fcom = document.getElementById('f-atc-compra').value||'';
     _n.com  = segVal('f-atc-comodin')==='SI';
     _n.rnota= document.getElementById('f-atc-rnota').value.trim();
@@ -12837,7 +12853,7 @@ function pintarDocTipo(limpiar){
        van a la papelera como al salir del formulario (nunca una que algún pedido nombra, §4fy).
        ⚠️ Las que el pedido en edición YA tenía se quedan: sacarlas borraría un pago registrado. */
     segSet('f-metodo',''); segSet('f-banco','');
-    if(imagenesSinPegar().length) descartarImagenesSinPegar();   // antes que toggleMixto, que suelta FORM_COMPS2
+    if(imagenesSinPegar(true).length) descartarImagenesSinPegar(true);   // antes que toggleMixto, que suelta FORM_COMPS2 · (§4lh) solo las de PAGO: las fotos de la ATC las maneja `pintarMotivoAtc`
     if(MIXTO) toggleMixto(false);
     updateMetodoVisibility();
   }
@@ -12915,6 +12931,7 @@ function pintarMotivoAtc(limpiar){
     FORM_ATC_FOTOS=compsArr(FORM_ATC_FOTOS).filter(function(id){ return _nuevas.indexOf(id)<0; });
     renderAtcFotosForm();
   }
+  if(!atc && limpiar && ATC_FOTO_SUBIENDO>0){ ATC_FOTO_GEN++; ATC_FOTO_SUBIENDO=0; renderAtcFotosForm(); }   // la que termina después se tira
 }
 /* Debajo de la fecha de compra dice hace cuánto fue. No decide nada solo —la garantía la
    define la empresa, no el panel— pero le pone el dato adelante a quien atiende. */
@@ -12939,11 +12956,17 @@ function pintarAntiguedadAtc(){
 var ATC_DETALLE_MIN=10;              // letras sin contar espacios: «hundido» solo no dice qué pasa ni dónde
 var ATC_COMPRA_DESDE='2000-01-01';   // antes de esto es un error de tipeo del año
 function atcFaltan(prev){
-  var out=[];
-  var mot=String((document.getElementById('f-atc-motivo')||{}).value||'');
-  var det=String((document.getElementById('f-atc-detalle')||{}).value||'').replace(/\s+/g,' ').trim();
-  var fc=String((document.getElementById('f-atc-compra')||{}).value||'');
   var pz=leerPiezasAtc(), algun=false; for(var k in pz) if(pz[k]) algun=true;
+  return atcFaltanDe({ mot:(document.getElementById('f-atc-motivo')||{}).value, det:(document.getElementById('f-atc-detalle')||{}).value,
+                       fcom:(document.getElementById('f-atc-compra')||{}).value, algun:algun }, prev);
+}
+/* La misma cuenta sobre datos sueltos: la usa el formulario y, para una ATC ya guardada, `atcFaltanHeredados`. */
+function atcFaltanDe(d, prev){
+  var out=[];
+  var mot=String((d&&d.mot)||'');
+  var det=String((d&&d.det)||'').replace(/\s+/g,' ').trim();
+  var fc=String((d&&d.fcom)||'');
+  var algun=!!(d&&d.algun);
   if(!mot) out.push({id:'f-atc-motivo', corto:'el motivo', txt:'el <b>motivo</b> (elegilo de la lista)'});
   if(!det) out.push({id:'f-atc-detalle', corto:'el detalle', txt:'el <b>detalle</b>: qué le pasa al producto'});
   else if(det.replace(/\s/g,'').length<ATC_DETALLE_MIN)
@@ -12957,6 +12980,16 @@ function atcFaltan(prev){
               txt:'una <b>fecha de compra</b> que no sea posterior a '+(prev?('la ATC (entró el '+fmtFecha(hasta)+')'):'hoy')});
   if(!algun) out.push({id:'f-atc-piezas', corto:'qué se le recoge', txt:'<b>qué se le recoge</b> al cliente (marcá al menos uno)'});
   return out;
+}
+/* 🔑 Una ATC VIEJA (guardada antes de §4lh, o traída de Trello) a la que ya le faltaba algo: un vendedor tiene que completarlo, pero
+   Administración (con la clave) puede guardarla igual después de confirmarlo — si no, para corregirle la dirección tendría que
+   inventar una fecha de compra que nadie sabe. Solo vale para lo que YA faltaba igual en lo guardado; lo nuevo se exige siempre. */
+function atcFaltanHeredados(f, prev){
+  if(!prev || !esATC(prev.oc) || !f.length) return [];
+  var a=atcDe(prev)||{}, algun=ATC_PIEZAS.some(function(x){ return !!a['r_'+x.k]; });
+  var antes=atcFaltanDe({ mot:a.mot, det:a.det, fcom:a.fcom, algun:algun }, prev), k={};
+  antes.forEach(function(x){ k[x.id+'|'+x.corto]=1; });
+  return f.filter(function(x){ return k[x.id+'|'+x.corto]; });
 }
 function atcFaltanTxt(f){
   var c=f.map(function(x){ return x.corto; });
@@ -19012,7 +19045,8 @@ function copiarAtc(){
               (atcEntregada(p)?fmtFecha(atcEntregada(p)):''),
               (d==null?'':(d+' días')), (atcQueSeHizo(p)||''),
               (atcRecogidoFab(p)?fmtFecha(atcRecogidoFab(p)):''),
-              (atcDevProg(p)?(fmtFecha(atcDevProg(p))+' '+atcDevTurno(p)).trim():'')].join('\t');
+              (atcDevProg(p)?(fmtFecha(atcDevProg(p))+' '+atcDevTurno(p)).trim():'')]
+             .map(function(c){ return String(c==null?'':c).replace(/[\t\r\n]+/g,' '); }).join('\t');   // (§4lh) un salto de línea corría las columnas
     }).join('\n');
   copyText(txt); toast('Matriz de ATC copiada ✓','ok');
 }

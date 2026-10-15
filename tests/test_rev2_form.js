@@ -311,7 +311,10 @@ function INIT(){
   await esc('5. Método elegido y después sin pago (o pasada a ATC/RPT)', async () => {
     const S = servidor();
     const A = await abrir(S);
-    const motivoAtc = () => A.evaluate(() => { var s=document.getElementById('f-atc-motivo'); for(var i=0;i<s.options.length;i++){ if(s.options[i].value){ s.value=s.options[i].value; break; } } });
+    /* (15/10, §4lh) …y lo demás que la ATC exige ahora: detalle, fecha de compra y qué se le recoge */
+    const motivoAtc = () => A.evaluate(() => { var s=document.getElementById('f-atc-motivo'); for(var i=0;i<s.options.length;i++){ if(s.options[i].value){ s.value=s.options[i].value; break; } }
+      document.getElementById('f-atc-detalle').value='hundido en el medio, no retoma su forma'; document.getElementById('f-atc-compra').value='2024-05-10';
+      var pz=document.getElementById('f-pz-col'); if(pz) pz.checked=true; });
     // 5a · adelanto con método, y después el adelanto a 0: la venta queda toda por cobrar
     await empezar(A, 'SE ARREPINTIO DEL ADELANTO', { nota:'2101' });
     await tipear(A, '#f-acuenta', '500'); await elegir(A, 'f-metodo', 'Efectivo'); await tipear(A, '#f-saldo', '2500');

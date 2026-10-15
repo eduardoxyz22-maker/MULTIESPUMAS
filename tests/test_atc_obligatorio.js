@@ -21,7 +21,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   await page.goto('file://' + path.resolve(process.env.PEDIDOS || 'pedidos.html'), { waitUntil:'load' });
   await page.clock.runFor(400);
   /* Contra una página sin esto (PEDIDOS=…), una función que falta no corta la prueba: el chequeo queda en rojo. */
-  const ev=(f,a)=>page.evaluate(f,a).catch(e=>new Proxy({ __err:String((e&&e.message)||e).slice(0,140) },{ get:(t,k)=>(k in t)?t[k]:[] }));
+  const VACIO=new Proxy(function(){}, { get:(t,k)=> k==='length' ? 0 : (k===Symbol.toPrimitive || k==='toString') ? (()=>'') : (typeof k==='string' && k in Array.prototype) ? Array.prototype[k].bind([]) : VACIO });
+  /* …y un paso que se cuelga (contra una página sin esto, una promesa que nunca vuelve) se corta a los 25 s. */
+  const ev=(f,a)=>Promise.race([page.evaluate(f,a), new Promise((_,rej)=>setTimeout(()=>rej(new Error('colgado 25 s')),25000))])
+    .catch(e=>new Proxy({ __err:String((e&&e.message)||e).slice(0,140) },{ get:(t,k)=>(k in t)?t[k]:VACIO }));
 
   await ev(() => {
     document.getElementById('conn-form').style.display='none';
@@ -250,6 +253,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   // ============ 12. editar una ATC VIEJA a la que le faltan datos pide completarlos ============
   const vieja = await ev(async () => {
+    UNLOCKED=false;                                         // una VENDEDORA: sin la clave tiene que completar sí o sí
     window.subirFoto=function(){ window._subidas++; return Promise.resolve({ok:true, fotoId:'FOTOATC'+window._subidas, version:'x'}); };
     var ts=new Date('2026-08-20T10:00:00-04:00').getTime();
     var p={ id:'vieja-1', oc:'ATC 08-099', fecha:'2026-08-22', turno:'AM', vendedor:'Carola Chavez', cliente:'CLIENTE VIEJO', celular:'70000001',
@@ -275,6 +279,84 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('✏️ una ATC vieja sin fecha de compra ni detalle no se vuelve a guardar sin completarlos', vieja.igual && /fecha de compra/.test(vieja.falta1) && /detalle/.test(vieja.falta1), vieja.falta1);
   chk('…una compra POSTERIOR a cuando entró la ATC tampoco', vieja.igual2 && /posterior a la ATC \(entró el 20\/08\/2026\)/.test(vieja.falta2), vieja.falta2);
   chk('…completa, se guarda con todo', vieja.fcom==='2023-05-04' && /hundido del lado/.test(vieja.det) && vieja.mot==='Hundimiento', vieja);
+
+  // ============ 12b. 🔑 con la clave de Administración, una ATC vieja se puede guardar igual (preguntando) ============
+  const adm = await ev(async () => {
+    UNLOCKED=true;
+    var ts=new Date('2026-08-20T10:00:00-04:00').getTime();
+    var mk=function(id){ var p={ id:id, oc:'ATC 08-0'+id.slice(-2), fecha:'2026-08-22', turno:'AM', vendedor:'Carola Chavez', cliente:'TRELLO '+id, celular:'70000002',
+      zona:'Sur', direccion:'Calle 3', ts:ts, rev:2, fotos:[], productos:[{desc:'ORO ORTOPEDICO', medida:'140x190', cant:1, atc:{ mot:'Hundimiento', det:'hundido del lado derecho' }}] };
+      STATE.push(p); window._pl.push(JSON.parse(JSON.stringify(p))); return p; };
+    mk('adm-91'); mk('adm-92'); mk('adm-93');
+    var preg=[], resp=false, _cf=window.confirm; window.confirm=function(m){ preg.push(m); return resp; };
+    var dir=function(id){ return (window._pl.filter(function(x){ return x.id===id; })[0]||{}).direccion; };
+    // a) Cancelar: no se guarda
+    editPedido('adm-91'); await new Promise(r=>setTimeout(r,200));
+    document.getElementById('f-direccion').value='Calle nueva 1'; resp=false; submitPedido(); await new Promise(r=>setTimeout(r,300));
+    var a={ preg:preg.slice(), dir:dir('adm-91'), falta:document.getElementById('atc-falta').textContent };
+    // b) Aceptar: se guarda con la dirección nueva y la ATC sigue sin fecha de compra (no se inventa nada)
+    preg=[]; editPedido('adm-92'); await new Promise(r=>setTimeout(r,200));
+    document.getElementById('f-direccion').value='Calle nueva 2'; resp=true; submitPedido(); await new Promise(r=>setTimeout(r,300));
+    var q=findById('adm-92'); var b={ preg:preg.slice(), dir:dir('adm-92'), fcom:atcFechaCompra(q), det:atcDetalle(q) };
+    // c) lo que la ATC SÍ tenía no se puede borrar ni con la clave: vaciar el detalle frena sin preguntar
+    preg=[]; editPedido('adm-93'); await new Promise(r=>setTimeout(r,200));
+    document.getElementById('f-atc-detalle').value=''; document.getElementById('f-direccion').value='Calle nueva 3'; resp=true;
+    submitPedido(); await new Promise(r=>setTimeout(r,300));
+    var c={ preg:preg.slice(), dir:dir('adm-93'), falta:document.getElementById('atc-falta').textContent };
+    window.confirm=_cf; UNLOCKED=true;
+    return { a:a, b:b, c:c };
+  });
+  chk('🔑 Administración que edita una ATC vieja sin fecha de compra: le PREGUNTA (no la frena en seco)', adm.a.preg.length===1 && /ya estaba guardada sin/.test(adm.a.preg[0]||''), adm.a.preg);
+  chk('…«Cancelar» no guarda y marca lo que falta', adm.a.dir==='Calle 3' && /fecha de compra/.test(adm.a.falta), adm.a);
+  chk('…«Aceptar» guarda el cambio y la ATC sigue sin fecha de compra (no se inventa)', adm.b.dir==='Calle nueva 2' && adm.b.fcom==='' && /hundido/.test(adm.b.det), adm.b);
+  chk('…pero lo que la ATC SÍ tenía no se borra ni con la clave: vaciar el detalle frena sin preguntar', adm.c.preg.length===0 && adm.c.dir==='Calle 3' && /detalle/.test(adm.c.falta), adm.c);
+
+  // ============ 12c. volver a tocar «🎧 ATC» no borra las fotos ============
+  const toca = await ev(async () => {
+    window._borradas=[];
+    showView('form'); resetForm(); segSet('f-doc-tipo','ATC'); setDocTipo();
+    await atcFotosElegidas({ target:{ files:[new File(['x'],'h.jpg',{type:'image/jpeg'})], value:'' } });
+    var antes=FORM_ATC_FOTOS.slice();
+    var b=document.querySelector('#f-doc-tipo button[data-val="ATC"]'); if(b) b.click(); else { segSet('f-doc-tipo','ATC'); setDocTipo(); }
+    await new Promise(r=>setTimeout(r,50));
+    return { antes:antes, despues:FORM_ATC_FOTOS.slice(), borradas:window._borradas.slice() };
+  });
+  chk('🎧 tocar de nuevo «ATC» con una foto lista NO la borra', toca.antes.length===1 && String(toca.despues)===String(toca.antes) && toca.borradas.length===0, toca);
+
+  // ============ 12d. el servidor devuelve la fila: quitar a propósito una foto NO da «SE GUARDÓ INCOMPLETO» ============
+  const eco = await ev(async () => {
+    var orig=apiSave;
+    apiSave=function(rec){ var g=JSON.parse(JSON.stringify(rec)); window._pl=window._pl.filter(function(x){return x.id!==g.id;}).concat([g]); return Promise.resolve({ok:true, pedido:JSON.parse(JSON.stringify(g))}); };
+    window._toasts=[]; var tOrig=toast; toast=function(m,t){ window._toasts.push(String(t||'')+': '+m); return tOrig.apply(this, arguments); };
+    var p=STATE.filter(function(x){ return x.cliente==='CON FOTOS'; })[0];
+    editPedido(p.id); await new Promise(r=>setTimeout(r,200));
+    quitarAtcFotoForm(0); submitPedido(); await new Promise(r=>setTimeout(r,400));
+    apiSave=orig; toast=tOrig;
+    return { incompleto: window._toasts.filter(function(t){ return /INCOMPLETO/.test(t); }), fot: atcFotos(findById(p.id)) };
+  });
+  chk('📷 quitar una foto guardada y guardar NO da «SE GUARDÓ INCOMPLETO» (el eco mira lo que se mandó)', eco.incompleto.length===0 && eco.fot.length===1, eco);
+
+  // ============ 12e. el detalle con varias líneas queda en una (la copia de la pestaña ATC no se corre) ============
+  await llenar(Object.assign({}, ok, { cliente:'DOS LINEAS', detalle:'hundido en el medio\ndel lado derecho' }));
+  r = await guardar();
+  const cop = await ev(() => {
+    var p=STATE.filter(function(x){ return x.cliente==='DOS LINEAS'; })[0];
+    var txt=''; var o=window.copyText; window.copyText=function(t){ txt=t; }; copiarAtc(); window.copyText=o;
+    var filas=txt.split('\n').filter(function(l){ return /\t/.test(l); });
+    return { det: atcDetalle(p), cols: filas.map(function(l){ return l.split('\t').length; }) };
+  });
+  chk('el detalle de dos líneas se guarda en una sola', r.guardo && cop.det==='hundido en el medio · del lado derecho', cop.det);
+  chk('…y «📋 Copiar» de la pestaña ATC da 16 columnas en TODAS las filas', cop.cols.length>1 && cop.cols.every(function(n){ return n===16; }), cop.cols);
+
+  // ============ 12f. una ATC pasada a OC al editar no deja sus fotos como «fotos de la entrega» ============
+  const aOc = await ev(async () => {
+    var p=STATE.filter(function(x){ return x.cliente==='CON FOTOS'; })[0]; p.fotos=fotosDe(p).concat(['FOTOCHOFER3']);
+    editPedido(p.id); await new Promise(r=>setTimeout(r,200));
+    segSet('f-doc-tipo','OC'); setDocTipo(); document.getElementById('f-nota').value='7777';
+    submitPedido(); await new Promise(r=>setTimeout(r,400));
+    var q=findById(p.id); return { oc:q.oc, col:fotosDe(q) };
+  });
+  chk('ATC pasada a OC: las fotos del producto salen de la columna y las del chofer quedan', !/^ATC/.test(aOc.oc) && !aOc.col.some(function(f){ return /^FOTOATC/.test(f); }) && aOc.col.indexOf('FOTOCHOFER3')>=0, aOc);
 
   // ============ 13. «Para guardar» (pantalla ancha) cuenta lo de la ATC ============
   await llenar({ motivo:'Ruido' });

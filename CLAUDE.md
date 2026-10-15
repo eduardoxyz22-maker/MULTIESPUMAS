@@ -693,6 +693,17 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
+## 🎧 La ATC no se guarda sin sus datos + 📷 hasta 2 fotos del producto (§4lh, 15/10; dueño: *«no les permita guardar si no tienen todos los datos llenados… fecha de compra, motivo… detallar. Añade… adjuntar fotos del producto, hasta dos imágenes»*)
+- Obligatorio al crear Y al editar por el formulario (`atcFaltan`/`atcFaltanDe` en `submitPedido`): motivo, detalle (≥ `ATC_DETALLE_MIN`=10 letras),
+  fecha de compra (ni futura, ni posterior a cuando entró la ATC, ni antes de 2000) y qué se le recoge (≥1 casilla). Fotos NO obligatorias.
+  Recuadro `#atc-falta` + `atcCampoListo`; «Para guardar» (`fxDerPintar`) las lista. 🔑 Con la clave de Administración, una ATC vieja a la que YA
+  le faltaba lo mismo se guarda igual tras un `confirm` (`atcFaltanHeredados`); lo que tenía no se borra ni con clave. El detalle se guarda en una línea.
+- 📷 `ATC_FOTOS_MAX`=2, `FORM_ATC_FOTOS`, `atcFotosElegidas`/`subirAtcFoto`/`quitarAtcFotoForm`. Quedan en `atc.fot` **y** en `p.fotos` (columna 29:
+  la única que cuida el barrido de huérfanas del servidor, §4ep). ⚠️ **`fotosEntregaDe(p)`** (la columna sin las del producto) para todo lo que MUESTRA o
+  CUENTA fotos de la entrega; `fotosDe` para guardar/comparar la fila. `abrirVisor(pid,i,'atc')`, `atcFotosTiraHtml` en la ficha ATC y los modales.
+  El eco del formulario compara contra `rec` (lo mandado). Una página sin F5 no conoce nada de esto: al publicar, todos F5.
+- `tests/test_atc_obligatorio.js` (57). Bitácora §4lh.
+
 ## 📄 Informe de ATC en PDF (§4le, 15/10, PUBLICADO 09:31 de Bolivia, `9cdb86d`; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)
 - Pestaña ATC → **«📄 Informe PDF»** (`#atc-informe-btn`, `abrirInformeAtc`, ventana `#atci-ov`): el mes arranca en el de la pestaña. **Mes = las
   ATC que ENTRARON** (`atcEntro`); las abiertas de meses anteriores van APARTE. Estado = el de HOY. Cuentas en `atciDatos(mes)` (las de la
