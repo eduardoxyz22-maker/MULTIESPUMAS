@@ -14982,7 +14982,7 @@ Mirando los enlaces de la lista, dos tipos traen la ubicación EXACTA y `coordsD
 - **Propuesto, sin hacer (espera al dueño)**: que el bot guarde en el pedido la ubicación que el cliente manda por WhatsApp (📎 → Ubicación:
   Meta la manda con latitud y longitud; el `.gs` ya la anota en «Bot WhatsApp» como «[ubicación] … (lat, lng)», `waTextoDe_`, pero no la
   pasa al pedido) y que Claude se la pida al cliente cuando el pedido no tiene una que se pueda leer. Es un `.gs` nuevo.
-- **PUBLICADO 15/10 ~18:40 de Bolivia, `19ee2bc`** (junto con §4ll y §4lm; batería entera 194 suites en verde antes de publicar).
+- **PUBLICADO 15/10 18:30 de Bolivia, `19ee2bc`, Pages OK** (junto con §4ll y §4lm; batería entera 194 suites en verde antes de publicar).
 - **El dueño aclaró** (15/10): *«son las vendedoras que publican la ubicación y no resolvés el enlace, eso quiero resolver»* (no el bot).
 
 ### §4ln-b — 📍 El servidor `2026-10-15-a`: los lugares con nombre por el texto de `q=` (15/10, EN LA RAMA; lo implementa el dueño)
