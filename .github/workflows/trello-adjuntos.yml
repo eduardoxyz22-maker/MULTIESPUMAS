@@ -5,14 +5,10 @@ name: Leer adjuntos de Trello (ATC)
 # al lado de la página: el botón «🔗 Completar con Trello» del panel lo suma a lo del texto. Cada adjunto se lee UNA vez.
 # ⚠️ El registro es público: el script imprime solo cantidades, nunca datos de clientes.
 
+# 15/10, dueño: «la clave api de claude es de 3 horas, porque el trello ya no se usará, centralizaremos todo en el panel».
+# Ya se leyeron los 124 adjuntos: sin corrida diaria ni al pushear (con la clave vencida fallaría). Queda solo a mano (Run workflow).
 on:
-  schedule:
-    - cron: '10 23 * * *'   # 19:10 de Bolivia, después del respaldo de las 17:00 y lejos de los del panel
   workflow_dispatch:
-  push:
-    paths:
-      - 'herramientas/trello_adjuntos.py'
-      - '.github/workflows/trello-adjuntos.yml'
 
 concurrency:
   group: trello-adjuntos-${{ github.ref_name }}
