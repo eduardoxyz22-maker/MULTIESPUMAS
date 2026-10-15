@@ -18769,13 +18769,15 @@ function copiarAtc(){
   if(!list.length){ toast('No hay ATC para copiar','err'); return; }
   /* (26/09) Con encabezado —pegada en Excel no se sabía qué era cada columna— y con lo que la
      matriz muestra desde §4eb: el «recogido de fábrica» y la devolución programada. Van AL FINAL
-     para no correr las de siempre. */
-  var enc=['N° ATC','Entró','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica',
+     para no correr las de siempre.
+     (15/10) La fecha de compra va al lado de «Entró», donde la puso el dueño a mano en su Excel («ATC_OCTUBRE_2026»): la tiene la ATC
+     y la copia no la traía. */
+  var enc=['N° ATC','Entró','Fecha de compra','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica',
            'Al cliente','Días','Qué se hizo','Recogido de fábrica','Devolución programada'];
   var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+'\n\n'+enc.join('\t')+'\n'+
     list.map(function(p){
       var d=atcDias(p);
-      return [ocEtiq(p.oc), fmtFecha(atcEntro(p)), (p.cliente||''), (p.vendedor||''),
+      return [ocEtiq(p.oc), fmtFecha(atcEntro(p)), (atcFechaCompra(p)?fmtFecha(atcFechaCompra(p)):''), (p.cliente||''), (p.vendedor||''),
               prodText(p.productos), (atcMotivo(p)||'SIN MOTIVO'), (atcDetalle(p)||''),
               atcEstadoLbl(atcEstado(p)).lbl.replace(/^\S+\s/,''),
               (atcRecogida(p)?fmtFecha(atcRecogida(p)):''),
