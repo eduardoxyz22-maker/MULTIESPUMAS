@@ -2812,6 +2812,12 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .ai-caja h3{ margin:0 0 12px; font-size:15px; font-weight:800; color:#0f172a; }
 .ai-caja h3 small{ font-weight:600; color:#94a3b8; font-size:12px; margin-left:6px; }
 .ai-nota{ font-size:12px; color:#64748b; margin-top:10px; }
+.ai-tre{ color:#7c3aed; font-weight:800; white-space:nowrap; }
+.ai-vlist{ display:grid; grid-template-columns:1fr 1fr; gap:6px 18px; font-size:13px; }
+.ai-vlist div{ display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid #eef2f5; padding:3px 0; }
+.ai-vlist span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1e293b; font-weight:700; }
+.ai-vlist b{ color:#0369a1; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ai-vlist em{ font-style:normal; color:#94a3b8; font-weight:600; font-size:11.5px; }
 /* la portada */
 .ai-portada{ padding:0; color:#fff; background:#0b3b39; }
 .ai-port-fondo{ position:absolute; inset:0; background:linear-gradient(135deg,#0b3b39 0%,#0f5e59 52%,#5b1063 100%); }
@@ -17246,6 +17252,9 @@ var ATCI_LIBS=[
   { ok:function(){ return typeof window.html2canvas==='function'; }, src:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js' }
 ];
 var ATCI_SIN_MOTIVO='(sin motivo anotado)', ATCI_TODAS_MESES=12;
+/* (15/10, dueño: «Y DICE Y X MÁS. Si mi jefe quiere ver los demás, ¿qué onda?»): nada queda en «y N más». Lo que no entra en su recuadro
+   sigue en hojas aparte (las abiertas y los productos) y quien las cargó va entero en el recuadro. */
+var ATCI_TOP=8, ATCI_FILAS_AB=13, ATCI_FILAS_PROD=16;
 var ATCI_EDADES=[ { t:'Menos de 6 meses', max:183 }, { t:'De 6 a 12 meses', max:366 }, { t:'De 1 a 2 años', max:731 }, { t:'Más de 2 años', max:1e8 } ];
 var ATCI_PLAZOS=[ { t:'Hasta 7 días', max:7 }, { t:'De 8 a 15 días', max:15 }, { t:'De 16 a 30 días', max:30 }, { t:'Más de 30 días', max:1e8 } ];
 var ATCI_LOGO='<svg width="30" height="22" viewBox="0 0 21 15" aria-hidden="true"><path d="M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z" fill="#e9609a"/><path d="M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z" fill="#f08a24"/><path d="M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z" fill="#f6c437"/></svg>';
@@ -17335,8 +17344,13 @@ function atciDatos(mes){
   var marcas=MARCAS.map(function(g){ return { k:g.k, lbl:g.lbl, col:g.col, n:0 }; }).concat([{ k:'', lbl:'Otros', col:'#94a3b8', n:0 }]);
   del.forEach(function(p){ var k=marcaDe(p.vendedor)||''; marcas.forEach(function(m){ if(m.k===k) m.n++; }); });
   /* cuánto hacía que lo había comprado (lo que dice si hay garantía) */
-  var edades=ATCI_EDADES.map(function(x){ return { lbl:x.t, n:0 }; }), sinEdad=0;
-  del.forEach(function(p){ var d=atciEntre(atcFechaCompra(p), atcEntro(p)); if(d==null){ sinEdad++; return; } edades[atciEnPlazo(d, ATCI_EDADES)].n++; });
+  var edades=ATCI_EDADES.map(function(x){ return { lbl:x.t, n:0 }; }), sinEdad=0, edTre=0, trelloM=atciTrelloMapa();
+  del.forEach(function(p){
+    var c=atciCompra(p, trelloM), d=c ? atciEntre(c.f, atcEntro(p)) : null;
+    if(d==null){ sinEdad++; return; }
+    if(c.tre) edTre++;
+    edades[atciEnPlazo(d, ATCI_EDADES)].n++;
+  });
   /* cuánto tarda cada tramo del circuito */
   var tRec=[], tFab=[], tVue=[];
   del.forEach(function(p){
@@ -17382,6 +17396,8 @@ function atciDatos(mes){
     if(est.lista) I.push('<b>'+est.lista+'</b> ya están listas en fábrica y falta programar la devolución: el cliente sigue esperando.');
     if(est.recogerfab) I.push('<b>'+est.recogerfab+'</b> hay que ir a buscarlas a la fábrica: la entrega es en 2 días hábiles o menos.');
     if(sinMot) I.push('<b>'+sinMot+'</b> no tienen el motivo anotado: no se sabe por qué se generaron.');
+    if(sinEdad || edTre) I.push('Fecha de compra: la tienen <b>'+(n-sinEdad)+' de '+n+'</b>'+(edTre ? ' ('+edTre+' según Trello, sin guardar todavía: 📎)' : '')+
+      (sinEdad ? '; a <b>'+sinEdad+'</b> les falta.' : '.'));
     if(comodinAb) I.push('<b>'+comodinAb+'</b> cliente'+(comodinAb===1?' tiene':'s tienen')+' un comodín que hay que recuperar al devolverle el suyo.');
   }
   if(antes.length) I.push('Además quedan <b>'+antes.length+'</b> ATC de meses anteriores sin cerrar.');
@@ -17392,7 +17408,7 @@ function atciDatos(mes){
     fuente: tL ? ('planilla leída a las '+z(new Date(tL).getHours())+':'+z(new Date(tL).getMinutes())) : 'la copia guardada en este aparato',
     n:n, nAnt:delAnt.length, del:del, antes:antes, est:est, cerr:cerr, abiertas:abiertas, sinMot:sinMot, comodin:comodin, comodinAb:comodinAb,
     prom:prom, promAnt:promAnt, med:atciMediana(diasC), max:(diasC.length ? Math.max.apply(null, diasC) : null), mas15:mas15,
-    mot:mot, motTop:motTop, prod:prod, dichos:dichos, vend:vend, marcas:marcas, edades:edades, sinEdad:sinEdad,
+    mot:mot, motTop:motTop, prod:prod, dichos:dichos, vend:vend, marcas:marcas, edades:edades, sinEdad:sinEdad, edTre:edTre, trelloM:trelloM,
     tRec:tRec, tFab:tFab, tVue:tVue, distC:distC, distA:distA, tend:tend, I:I
   };
 }
@@ -17432,6 +17448,40 @@ function atciKpi(col, lbl, val, sub, chico){
   return '<div class="ai-kpi" style="border-left-color:'+col+'"><small>'+lbl+'</small><b style="color:'+col+(chico?';font-size:23px;line-height:1.2;margin-top:8px':'')+'">'+val+'</b><span>'+sub+'</span></div>';
 }
 function atciProdTxt(p){ return (p.productos||[]).map(function(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }).filter(Boolean).join(' · ')||'—'; }
+/* 🛒 La fecha de compra (15/10, dueño: «NO ME PUSISTE EL DATO MÁS IMPORTANTE… en la foto de la garantía decía la fecha de compra»):
+   la guardada en la ATC; si no está, la que dice Trello (el texto de la tarjeta o lo leído de sus fotos y Excel, §4lf-b), SOLO cuando
+   la tarjeta es del MISMO CELULAR (lo que «Completar con Trello» trae tildado) y la fecha no es posterior a la ATC. Lo de Trello va con
+   📎 y se dice cuántas faltan guardar: el informe no escribe nada. */
+var ATCI_TRELLO={ tarj:null, cargando:false };
+function atciTraerTrello(){
+  if(ATCI_TRELLO.cargando || typeof atctTraerCsv!=='function') return Promise.resolve();
+  ATCI_TRELLO.cargando=true;
+  return Promise.all([atctTraerCsv(), atctTraerAdj()]).then(function(r){
+    atctTomarAdj(r[1]);
+    ATCI_TRELLO.tarj=atctCsv(r[0]).filter(function(x){ return x.Tarjeta || x.Descripcion; }).map(atctTarjeta);
+  }).catch(function(){}).then(function(){ ATCI_TRELLO.cargando=false; });
+}
+function atciTrelloMapa(){
+  var M={}; if(!ATCI_TRELLO.tarj || !ATCI_TRELLO.tarj.length) return M;
+  atctCruzar(ATCI_TRELLO.tarj).forEach(function(F){
+    var t=F.t, e=atcEntro(F.p), f=t && t.compra && t.compra.f;
+    if(F.por!=='cel' || !f || (e && f>e)) return;
+    M[F.p.id]={ f:f, de:t.compra.de||'el texto de la tarjeta', url:t.url||'' };
+  });
+  return M;
+}
+function atciCompra(p, M){
+  var f=atcFechaCompra(p);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(f)) return { f:f, tre:false };
+  var t=M && M[p.id];
+  return t ? { f:t.f, tre:true, de:t.de } : null;
+}
+function atciFechaCorta(f){ var m=String(f||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'/'+m[2]+'/'+m[1].slice(2) : ''; }
+function atciCompraTd(p, D){
+  var c=atciCompra(p, D.trelloM);
+  if(!c) return '<span style="color:#94a3b8">—</span>';
+  return c.tre ? '<span class="ai-tre" title="La dice Trello ('+esc(c.de)+'): todavía no está guardada en la ATC">📎 '+esc(atciFechaCorta(c.f))+'</span>' : esc(atciFechaCorta(c.f));
+}
 function atciDiasPill(p){ var d=atcDias(p); return d==null ? '—' : '<span class="ai-dias '+atciSem(p)+'">'+d+'</span>'; }
 function atciEstPill(p){ var e=atcEstado(p); return '<span class="ai-est" style="background:'+atvColor(e)+'">'+esc(atciEstCorto(e))+'</span>'; }
 /* ---- las hojas ---- */
@@ -17476,7 +17526,7 @@ function atciMotivos(D){
   var izq='<div class="ai-caja"><h3>💬 Por qué se generaron <small>'+D.n+' ATC</small></h3>'+atciBarras(items, D.n)+
     '<div class="ai-leyenda"><span><i style="background:#00B5AD"></i>entraron</span><span><i style="background:#15803d"></i>ya cerradas</span>'+(D.todas ? '' : '<span>«'+antC+'» = las del mes anterior, para comparar</span>')+'</div></div>';
   var conFecha=D.n-D.sinEdad;
-  var der='<div class="ai-caja"><h3>🗓️ Cuánto hacía que lo habían comprado <small>'+conFecha+' con fecha de compra</small></h3>'+
+  var der='<div class="ai-caja"><h3>🗓️ Cuánto hacía que lo habían comprado <small>'+conFecha+' con fecha de compra'+(D.edTre ? ' · 📎 '+D.edTre+' según Trello' : '')+'</small></h3>'+
     (conFecha ? atciBarras(D.edades, conFecha, '#a21caf', '150px 1fr 76px') : '<div class="ai-nota">Ninguna tiene la fecha de compra anotada.</div>')+
     (D.sinEdad ? '<div class="ai-nota">'+D.sinEdad+' sin la fecha de compra anotada.</div>' : '')+
     '<div class="ai-nota" style="margin-top:14px;font-size:13px;color:#1e293b">🛏️ <b>Con comodín:</b> '+D.comodin+(D.comodinAb ? ' · <b style="color:#b91c1c">'+D.comodinAb+' todavía en casa del cliente</b>' : '')+'</div></div>';
@@ -17486,26 +17536,44 @@ function atciMotivos(D){
   return atciHoja('Los motivos', '¿Por qué se generaron?', 'Cada barra es un motivo; lo verde es lo que ya volvió al cliente.', '<div class="ai-g2">'+izq+der+'</div>'+dichos);
 }
 function atciProductos(D){
-  var top=D.prod.slice(0, 8).map(function(x){ return { lbl:x.lbl, n:x.n, sub:(x.mot||[]).slice(0, 4).map(function(m){ return m.lbl+' '+m.n; }).join(' · ') }; });
-  var resto=D.prod.slice(8), unos=resto.reduce(function(s, x){ return s+x.n; }, 0);
+  var top=D.prod.slice(0, ATCI_TOP).map(function(x){ return { lbl:x.lbl, n:x.n, sub:(x.mot||[]).slice(0, 4).map(function(m){ return m.lbl+' '+m.n; }).join(' · ') }; });
+  var resto=D.prod.slice(ATCI_TOP), unos=resto.reduce(function(s, x){ return s+x.n; }, 0);
   var izq='<div class="ai-caja"><h3>🛏️ Qué productos <small>cuántas ATC tuvo cada uno y por qué</small></h3>'+(top.length ? atciBarras(top, D.n, '#a21caf') : '<div class="ai-nota">Sin productos.</div>')+
-    (resto.length ? '<div class="ai-nota">Y '+resto.length+' producto'+(resto.length===1?'':'s')+' más ('+unos+' ATC).</div>' : '')+'</div>';
-  var tv=D.vend.slice(0, 6);
+    (resto.length ? '<div class="ai-nota">Y '+resto.length+' producto'+(resto.length===1?'':'s')+' más ('+unos+' ATC): <b>siguen en la hoja siguiente</b>.</div>' : '')+'</div>';
+  /* quién las cargó: con barras hasta 6; con más, todos en dos columnas (no queda nadie afuera) */
+  var quien=D.vend.length<=6 ? atciBarras(D.vend, D.n, '#0369a1', '150px 1fr 76px')
+    : '<div class="ai-vlist">'+D.vend.map(function(v){ return '<div><span>'+esc(atciCorta(v.lbl, 22))+'</span><b>'+v.n+' <em>'+atciPc(v.n, D.n)+'%</em></b></div>'; }).join('')+'</div>';
   var der='<div class="ai-caja"><h3>🏷️ De qué marca</h3>'+atciDona(D.marcas, D.n, 'ATC')+'</div>'+
-    '<div class="ai-caja" style="margin-top:16px"><h3>👤 Quién las cargó</h3>'+atciBarras(tv, D.n, '#0369a1', '150px 1fr 76px')+(D.vend.length>6 ? '<div class="ai-nota">Y '+(D.vend.length-6)+' más.</div>' : '')+'</div>';
+    '<div class="ai-caja" style="margin-top:16px"><h3>👤 Quién las cargó <small>'+D.vend.length+'</small></h3>'+quien+'</div>';
   return atciHoja('Productos y marcas', '¿Qué productos y de qué marca?', 'Una ATC con dos renglones del mismo producto cuenta una vez.', '<div class="ai-g2"><div>'+izq+'</div><div>'+der+'</div></div>');
+}
+/* Los productos que no entraron en el recuadro, con cuántas ATC y por qué. */
+function atciProductosResto(D){
+  var R=D.prod.slice(ATCI_TOP), hojas=[], tot=Math.ceil(R.length/ATCI_FILAS_PROD);
+  for(var h=0;h<tot;h++){
+    var L=R.slice(h*ATCI_FILAS_PROD, (h+1)*ATCI_FILAS_PROD), desde=ATCI_TOP+1+h*ATCI_FILAS_PROD;
+    var tabla='<table class="ai-tabla"><colgroup><col style="width:46px"><col style="width:330px"><col style="width:70px"><col style="width:60px"><col></colgroup>'+
+      '<thead><tr><th class="n">#</th><th>Producto</th><th class="n">ATC</th><th class="n">%</th><th>Por qué</th></tr></thead><tbody>'+
+      L.map(function(x, i){
+        return '<tr><td class="n">'+(desde+i)+'</td><td><b>'+esc(x.lbl)+'</b></td><td class="n"><b>'+x.n+'</b></td><td class="n">'+atciPc(x.n, D.n)+'%</td><td>'+
+          esc((x.mot||[]).map(function(m){ return m.lbl+' '+m.n; }).join(' · ')||'—')+'</td></tr>';
+      }).join('')+'</tbody></table>';
+    hojas.push(atciHoja('Productos y marcas', 'Los otros '+R.length+' productos'+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''),
+      h ? '' : 'Siguen los que no entraron en la hoja anterior, del que tuvo más ATC al que tuvo menos.', tabla));
+  }
+  return hojas;
 }
 function atciDonde(D){
   var pasos='<div class="ai-pasos">'+ATV_PASOS.map(function(o){
     var n=D.est[o.k]||0;
     return '<div class="ai-paso" style="border-color:'+(n ? o.c : '#e2e8f0')+';background:'+(n ? atciTinte(o.c) : '#f8fafc')+'"><div class="ico">'+o.ico+'</div><b style="color:'+(n ? o.c : '#94a3b8')+'">'+n+'</b><span>'+esc(o.t)+'</span></div>';
   }).join('<div class="ai-flecha">›</div>')+'</div>';
-  var top=D.abiertas.slice(0, 8);
+  var top=D.abiertas.slice(0, ATCI_TOP);
   var izq='<div class="ai-caja"><h3>⏳ Las que más esperan <small>'+D.abiertas.length+(D.todas ? ' abiertas' : ' abiertas del mes')+'</small></h3>'+(top.length
-    ? ('<table class="ai-tabla"><colgroup><col style="width:96px"><col><col style="width:116px"><col style="width:136px"><col style="width:52px"></colgroup>'+
-       '<thead><tr><th>N° ATC</th><th>Cliente</th><th>Motivo</th><th>Está</th><th class="n">Días</th></tr></thead><tbody>'+top.map(function(p){
-        return '<tr><td class="oc">'+esc(p.oc||'')+'</td><td><div class="ai-c1"><b>'+esc(atciCorta(p.cliente, 24))+'</b></div></td><td><div class="ai-c1">'+esc(atciCorta(atcMotivo(p)||'—', 18))+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td></tr>';
-      }).join('')+'</tbody></table>'+(D.abiertas.length>8 ? '<div class="ai-nota">Y '+(D.abiertas.length-8)+' más (están en el detalle).</div>' : ''))
+    ? ('<table class="ai-tabla"><colgroup><col style="width:88px"><col><col style="width:78px"><col style="width:104px"><col style="width:128px"><col style="width:46px"></colgroup>'+
+       '<thead><tr><th>N° ATC</th><th>Cliente</th><th>Compra</th><th>Motivo</th><th>Está</th><th class="n">Días</th></tr></thead><tbody>'+top.map(function(p){
+        return '<tr><td class="oc">'+esc(p.oc||'')+'</td><td><div class="ai-c1"><b>'+esc(atciCorta(p.cliente, 24))+'</b></div></td><td class="n">'+atciCompraTd(p, D)+'</td><td><div class="ai-c1">'+esc(atciCorta(atcMotivo(p)||'—', 18))+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td></tr>';
+      }).join('')+'</tbody></table>'+(D.abiertas.length>ATCI_TOP ? '<div class="ai-nota">Y '+(D.abiertas.length-ATCI_TOP)+' más: <b>siguen en la hoja siguiente</b>, de la que más espera a la que menos.</div>' : ''))
     : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ Todas las ATC '+(D.todas ? '' : 'de este mes ')+'ya volvieron al cliente.</div>')+'</div>';
   var cuentaAntes={}; D.antes.forEach(function(p){ var e=atcEstado(p); cuentaAntes[e]=(cuentaAntes[e]||0)+1; });
   var vieja=D.antes[0];
@@ -17524,6 +17592,23 @@ function atciDonde(D){
   }
   return atciHoja('Dónde están hoy', D.todas ? '¿Dónde están todas las ATC?' : '¿Dónde están las ATC del mes?', 'Como están hoy, '+esc(fmtFecha(D.hoy))+'. Cada paso es una parte del viaje: recoger → fábrica → volver al cliente.',
     pasos+'<div class="ai-g2" style="margin-top:22px">'+izq+der+'</div>');
+}
+/* Las abiertas que no entraron en «Las que más esperan», de la que más espera a la que menos. */
+function atciAbiertasResto(D){
+  var R=D.abiertas.slice(ATCI_TOP), hojas=[], tot=Math.ceil(R.length/ATCI_FILAS_AB);
+  for(var h=0;h<tot;h++){
+    var L=R.slice(h*ATCI_FILAS_AB, (h+1)*ATCI_FILAS_AB), desde=ATCI_TOP+1+h*ATCI_FILAS_AB, hasta=desde+L.length-1;
+    var tabla='<table class="ai-tabla"><colgroup><col style="width:40px"><col style="width:90px"><col style="width:60px"><col style="width:170px"><col style="width:180px"><col style="width:80px"><col style="width:120px"><col style="width:128px"><col style="width:50px"></colgroup>'+
+      '<thead><tr><th class="n">#</th><th>N° ATC</th><th>Entró</th><th>Cliente</th><th>Producto</th><th>Compra</th><th>Motivo</th><th>Está</th><th class="n">Días</th></tr></thead><tbody>'+
+      L.map(function(p, i){
+        return '<tr><td class="n">'+(desde+i)+'</td><td class="oc">'+esc(p.oc||'')+'</td><td class="n">'+esc(fmtFechaCorta(atcEntro(p)))+'</td><td><div class="ai-c2"><b>'+esc(atciCorta(p.cliente, 34))+'</b></div></td>'+
+          '<td><div class="ai-c2">'+esc(atciCorta(atciProdTxt(p), 50))+'</div></td><td class="n">'+atciCompraTd(p, D)+'</td><td><div class="ai-c2">'+(atcMotivo(p) ? esc(atcMotivo(p)) : '<b style="color:#dc2626">sin motivo</b>')+'</div></td>'+
+          '<td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td></tr>';
+      }).join('')+'</tbody></table>';
+    hojas.push(atciHoja('Dónde están hoy', 'Las que siguen esperando: '+desde+' a '+hasta+' de '+D.abiertas.length,
+      h ? '' : 'Siguen las abiertas que no entraron en la hoja anterior, de la que más espera a la que menos.', tabla));
+  }
+  return hojas;
 }
 function atciTiempos(D){
   var tramo=function(t, a, nota){ var pr=atciProm(a); return '<div class="ai-tramo"><small>'+t+'</small><b>'+atciNum(pr)+(pr!=null ? ' <span style="display:inline;font-size:16px;color:#64748b">días</span>' : '')+'</b><span>'+(a.length ? 'promedio de '+a.length+' ATC · '+nota : 'todavía sin datos')+'</span></div>'; };
@@ -17561,14 +17646,15 @@ function atciDetalle(D){
   var hojas=[], tot=Math.ceil(D.n/ATCI_FILAS)||0;
   for(var h=0;h<tot;h++){
     var L=D.del.slice(h*ATCI_FILAS, (h+1)*ATCI_FILAS);
-    var tabla='<table class="ai-tabla"><colgroup><col style="width:88px"><col style="width:64px"><col style="width:150px"><col style="width:176px"><col style="width:112px"><col style="width:126px"><col style="width:50px"><col></colgroup>'+
-      '<thead><tr><th>N° ATC</th><th>Entró</th><th>Cliente</th><th>Producto</th><th>Motivo</th><th>Está</th><th class="n">Días</th><th>Desperfecto · qué se hizo</th></tr></thead><tbody>'+
+    var tabla='<table class="ai-tabla"><colgroup><col style="width:86px"><col style="width:58px"><col style="width:138px"><col style="width:150px"><col style="width:80px"><col style="width:104px"><col style="width:122px"><col style="width:46px"><col></colgroup>'+
+      '<thead><tr><th>N° ATC</th><th>Entró</th><th>Cliente</th><th>Producto</th><th>Compra</th><th>Motivo</th><th>Está</th><th class="n">Días</th><th>Desperfecto · qué se hizo</th></tr></thead><tbody>'+
       L.map(function(p){
         var hizo=atcQueSeHizo(p);
         return '<tr><td class="oc">'+esc(p.oc||'')+'</td><td class="n">'+esc(fmtFechaCorta(atcEntro(p)))+'</td><td><div class="ai-c2"><b>'+esc(atciCorta(p.cliente, 34))+'</b></div></td>'+
-          '<td><div class="ai-c2">'+esc(atciCorta(atciProdTxt(p), 46))+'</div></td><td><div class="ai-c2">'+(atcMotivo(p) ? esc(atcMotivo(p)) : '<b style="color:#dc2626">sin motivo</b>')+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td>'+
+          '<td><div class="ai-c2">'+esc(atciCorta(atciProdTxt(p), 46))+'</div></td><td class="n">'+atciCompraTd(p, D)+'</td><td><div class="ai-c2">'+(atcMotivo(p) ? esc(atcMotivo(p)) : '<b style="color:#dc2626">sin motivo</b>')+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td>'+
           '<td><div class="'+(hizo ? 'ai-c1' : 'ai-c2')+'">'+esc(atciCorta(atcDetalle(p)||p.observaciones||'—', hizo ? 36 : 70))+'</div>'+(hizo ? '<div class="ai-c1" style="color:#0f766e">✔ '+esc(atciCorta(hizo, 34))+'</div>' : '')+'</td></tr>';
-      }).join('')+'</tbody></table>';
+      }).join('')+'</tbody></table>'+
+      (L.some(function(p){ var c=atciCompra(p, D.trelloM); return c && c.tre; }) ? '<div class="ai-nota">📎 = la fecha de compra la dice Trello (mismo celular) y todavía no está guardada en la ATC: se guarda en «🔗 Completar con Trello».</div>' : '');
     hojas.push(atciHoja('Detalle', (D.todas ? 'Todas las ATC: '+D.n : 'Las '+D.n+' ATC de '+esc(MESES_ES[+D.mes.slice(5,7)-1]))+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''), '', tabla));
   }
   return hojas;
@@ -17576,7 +17662,11 @@ function atciDetalle(D){
 /* Todas las hojas, numeradas. Sin ATC en el mes: la portada, una hoja que lo dice (con lo que viene de antes) y la tendencia. */
 function atciHojas(D){
   var H=[atciPortada(D)];
-  if(D.n){ H.push(atciResumen(D), atciMotivos(D), atciProductos(D), atciDonde(D), atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D)); }
+  if(D.n){
+    H.push(atciResumen(D), atciMotivos(D), atciProductos(D)); H=H.concat(atciProductosResto(D));
+    H.push(atciDonde(D)); H=H.concat(atciAbiertasResto(D));
+    H.push(atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D));
+  }
   else {
     H.push(D.todas ? atciHoja('Resumen', 'Todavía no hay ATC', '', '<div class="ai-vacio">📭 No hay ninguna ATC cargada en el panel.</div>') : atciHoja('Resumen del mes', 'En '+esc(MESES_ES[+D.mes.slice(5,7)-1])+' no entró ninguna ATC', '',
       '<div class="ai-vacio">📭 No hay ATC cargadas con fecha de entrada en '+esc(atciMesTxt(D.mes))+'.</div>'+
@@ -17612,6 +17702,8 @@ function abrirInformeAtc(){
   atciEstado();
   atciPintar();
   window.addEventListener('resize', atciEscala);
+  /* lo de Trello (fecha de compra que todavía no está guardada): llega en un momento y se vuelve a dibujar */
+  atciTraerTrello().then(function(){ if(atciAbierto() && !ATCI_OCUPADO && ATCI_TRELLO.tarj) atciPintar(); });
   /* Con la planilla de hace más de un minuto, se relee y se vuelve a dibujar: el informe tiene que salir al día. */
   if(CONNECTED && !(ULTIMO_REFRESCO && Date.now()-ULTIMO_REFRESCO<60000)){
     atciEstado('⏳ Trayendo la planilla para que el informe salga al día…', true);
