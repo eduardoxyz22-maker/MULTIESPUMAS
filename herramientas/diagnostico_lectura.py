@@ -533,14 +533,6 @@ def ubicacion_almacenes(base):
         t = abrir_enlace_directo(ident, u)
         if t:
             textos.append((ident, t))
-    # (15/10, §4ln) La página final de Maps trae la imagen de vista previa con el centro (`staticmap?center=`): ¿es el lugar?
-    conocidos = {n.lower(): (la, lo) for n, la, lo, _r in GPS_LUGARES}
-    for ident, u in links:
-        _fin, cuerpo = _abrir_maps(u)
-        sm = _staticmap(cuerpo)
-        ref = conocidos.get(ident.lower())
-        print(f"   {ident}: la imagen de vista previa " + (f"trae el centro, a {round(_dist_m(sm[0], sm[1], ref[0], ref[1]))} m de donde está de verdad"
-              if sm and ref else ("trae el centro" if sm else "NO trae el centro")))
     # Lo que Google puso en `q=` (nombre/dirección del lugar), preguntado al geocodificador del servidor (aproximado).
     if textos:
         crudo2 = pedir("📍 los lugares por su dirección escrita (geocode de texto del servidor)", base,
@@ -679,8 +671,8 @@ def abrir_enlace_directo(ident, u):
 # 📍 (15/10, §4ln) Los enlaces que pegan las vendedoras y el panel NO resuelve. El dueño: «son las vendedoras que publican la
 #    ubicación y no resolvés el enlace, eso quiero resolver». Lo mismo que lee la página (`coordsDeLink`, con Waze y el Plus Code
 #    sin codificar) y, lo que no, por TIPO: enlace corto, búsqueda de Google (con nombre o solo `kgmid`), Maps con `q=`/`ftid`…
-#    Después se prueba: (1) el servidor como hoy (`geocode`), (2) desde acá, abrir el `kgmid` en Maps, (3) el texto de `q=` (nombre
-#    y dirección del lugar) al geocodificador del servidor. ⚠️ Registro PÚBLICO: solo CUENTAS por tipo y método; nunca el enlace, el
+#    Después se prueba: (1) el servidor como hoy (`geocode`), (2) el texto de `q=` (nombre y dirección del lugar) al geocodificador del
+#    servidor (lo que hace solo el `.gs` 2026-10-15-a). ⚠️ Registro PÚBLICO: solo CUENTAS por tipo y método; nunca el enlace, el
 #    nombre del lugar, la dirección ni las coordenadas.
 def _lee_la_pagina(u):
     """¿La página saca la ubicación de este enlace sin internet? (como `coordsDeLink` de pedidos.html, §4ln incluido)"""
@@ -761,26 +753,6 @@ def _abrir_maps(url):
     return cur, cuerpo
 
 
-def _coords_cuerpo_maps(cuerpo):
-    """La página de un lugar de Maps: la imagen de vista previa trae el centro (`staticmap?center=LAT%2CLNG`), y la página abre
-       centrada en el lugar (`APP_INITIALIZATION_STATE`)."""
-    m = re.search(r"staticmap\?center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)", cuerpo or "")
-    if m:
-        return "staticmap"
-    if _coords_en(cuerpo):
-        return "en la página"
-    return ""
-
-
-def _staticmap(cuerpo):
-    m = re.search(r"staticmap\?center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)", cuerpo or "")
-    return (float(m.group(1)), float(m.group(2))) if m else None
-
-
-def _tramo_m(d):
-    return "< 100 m" if d < 100 else "100-300 m" if d < 300 else "300 m-1 km" if d < 1000 else "1-3 km" if d < 3000 else "> 3 km"
-
-
 def enlaces_sin_resolver(base):
     print("\n── 📍 los enlaces de ubicación que el panel NO lee solo: de qué tipo son y qué los resuelve (solo cuentas) ──")
     ped = _PEDIDOS
@@ -833,22 +805,6 @@ def enlaces_sin_resolver(base):
     falta = [u for u in unicos if u not in resuelve]
     if not falta:
         return
-    # 2) búsqueda de Google SOLO con kgmid: ¿Maps abre ese lugar? (desde acá; el servidor lo haría igual con UrlFetchApp)
-    kg = [u for u in falta if _kgmid_de(u)]
-    if kg:
-        r = {"coords en la dirección": 0, "staticmap": 0, "en la página": 0, "trae q= (nombre)": 0, "nada": 0}
-        for u in kg[:15]:
-            fin, cuerpo = _abrir_maps("https://www.google.com/maps?kgmid=" + _kgmid_de(u) + "&hl=es")
-            if _coords_en(fin):
-                r["coords en la dirección"] += 1
-            elif _coords_cuerpo_maps(cuerpo):
-                r[_coords_cuerpo_maps(cuerpo)] += 1
-            elif _q_de(fin):
-                r["trae q= (nombre)"] += 1
-            else:
-                r["nada"] += 1
-        print(f"   ── abrir el kgmid en Maps (desde GitHub, {min(15, len(kg))} de {len(kg)}) ──")
-        print("   " + " · ".join(f"{k}: {n}" for k, n in r.items()))
     # 3) el texto de q= (nombre y dirección del lugar) al geocodificador del servidor
     textos = {}
     for u in falta:
@@ -867,37 +823,8 @@ def enlaces_sin_resolver(base):
             print(f"   ── por el texto de q=: el servidor ubicó {ok} de {len(L)} (aproximados: el lugar, no la puerta) ──")
         except Exception:
             print("   (el servidor no contestó JSON)")
-    # 4) la página final de Maps (y la del kgmid) con la imagen de vista previa: ¿trae el centro del lugar? ¿coincide con el texto?
-    sm = {}
-    for u in falta:
-        kg = _kgmid_de(u)
-        _fin, cuerpo = _abrir_maps(("https://www.google.com/maps?kgmid=" + kg + "&hl=es") if kg else u)
-        c = _staticmap(cuerpo)
-        if c:
-            sm[u] = c
-    por_tipo = {}
-    for u in falta:
-        t = _tipo_enlace(u)
-        por_tipo.setdefault(t, [0, 0])
-        por_tipo[t][0] += 1
-        por_tipo[t][1] += 1 if u in sm else 0
-    print("   ── la imagen de vista previa de Maps (staticmap) trae el centro: " +
-          " · ".join(f"{t} {b} de {a}" for t, (a, b) in por_tipo.items()) + " ──")
-    if textos and sm:
-        L2 = [t for u, t in textos.items() if u in sm]
-        if L2:
-            crudo = pedir(f"comparar: el servidor busca el texto de {len(L2)} que también trajeron el centro", base, {"action": "geocode", "links": list(dict.fromkeys(L2))})
-            try:
-                g = {x.get("link"): x for x in (json.loads((crudo or b"{}").decode("utf-8", "replace")).get("geo") or []) if isinstance(x, dict)}
-            except Exception:
-                g = {}
-            tramos = {}
-            for u, t in textos.items():
-                x = g.get(t)
-                if u in sm and x and x.get("lat") is not None:
-                    k = _tramo_m(_dist_m(sm[u][0], sm[u][1], x["lat"], x["lng"]))
-                    tramos[k] = tramos.get(k, 0) + 1
-            print("   distancia entre el centro de la vista previa y el texto buscado: " + (" · ".join(f"{k}: {n}" for k, n in tramos.items()) or "—"))
+    # ⚠️ (15/10) La «imagen de vista previa» de la página de Maps (`staticmap?center=`) NO es el lugar: es el centro de quien pide
+    #    (desde GitHub cayó a ~7.700 km de PTF). Google no le da el pin de un lugar con nombre a un programa (§4ht, §4ln).
     sin_nada = [u for u in falta if u not in textos and not _kgmid_de(u)]
     print(f"   sin coordenadas, sin nombre y sin kgmid: {len(sin_nada)} (esos solo los arregla quien cargó el pedido)")
 
