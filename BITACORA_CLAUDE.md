@@ -14708,3 +14708,8 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   entra al panel recién cuando el dueño toca «Guardar lo tildado» (desde acá no hay salida a Google). El secreto `ANTHROPIC_API_KEY` de
   GitHub también lo nombra `panel.yml` (`--bake-ai`), pero la IA horneada está pausada: borrarlo no rompe nada hoy.
   «Reporte Semanal ATC» (Trello → CSV, 17:00) sigue prendido: apagarlo cuando cierren el tablero.
+- **«el informe en pdf… veo que no» (15/10 ~10:25)**: el diagnóstico de la lectura (`atc_del_panel`, nuevo, solo cuentas; corrida
+  38751316815, servidor **2026-10-14-c**) dijo: 50 ATC en la planilla · motivo 34 · fecha de compra 28 · detalle 33 · **9 guardadas desde
+  «Completar con Trello»** (4 de julio, 4 de agosto, 1 de septiembre, 0 de octubre) · 13 sin el bloque de datos de ATC · 25 con algo
+  vacío, solo 4 con una tarjeta del mismo celular. Las 8 de OCTUBRE ya estaban completas: el informe de octubre no cambia. Agosto es el
+  flojo (16 ATC, motivo 2, fecha 3). El informe no tiene caché: lee `STATE` al abrir.
