@@ -253,6 +253,11 @@ def gps_del_dia():
     for v, c in sorted(por.items()):
         print(f"   · {v}: {c['n']} pedido(s) · ✅ marcados {c['ok']} · el GPS se paró en {c['gps']} · las dos cosas {c['ambos']}")
     tot = {k: sum(c[k] for c in por.values()) for k in ("n", "ok", "gps", "ambos")}
+    pin = sum(1 for p in de_hoy if str(p.get("maps") or "").strip() and _lee_la_pagina(str(p.get("maps"))))
+    sin_pin = sum(1 for p in de_hoy if not str(p.get("maps") or "").strip())
+    if de_hoy:
+        print(f"   los de hoy con un pin que el panel lee: {pin} de {len(de_hoy)} · sin enlace: {sin_pin} · con enlace que no lee: {len(de_hoy) - pin - sin_pin} "
+              "(sin pin, el GPS no puede decir «se paró en este pedido»)")
     if de_hoy:
         print(f"   TOTAL hoy: {tot['n']} · ✅ {tot['ok']} · GPS {tot['gps']} · los dos {tot['ambos']}")
     print("   ── los últimos 7 días: ¿se marca el ✅? (el cierre de entregas) ──")
@@ -528,6 +533,14 @@ def ubicacion_almacenes(base):
         t = abrir_enlace_directo(ident, u)
         if t:
             textos.append((ident, t))
+    # (15/10, §4ln) La página final de Maps trae la imagen de vista previa con el centro (`staticmap?center=`): ¿es el lugar?
+    conocidos = {n.lower(): (la, lo) for n, la, lo, _r in GPS_LUGARES}
+    for ident, u in links:
+        _fin, cuerpo = _abrir_maps(u)
+        sm = _staticmap(cuerpo)
+        ref = conocidos.get(ident.lower())
+        print(f"   {ident}: la imagen de vista previa " + (f"trae el centro, a {round(_dist_m(sm[0], sm[1], ref[0], ref[1]))} m de donde está de verdad"
+              if sm and ref else ("trae el centro" if sm else "NO trae el centro")))
     # Lo que Google puso en `q=` (nombre/dirección del lugar), preguntado al geocodificador del servidor (aproximado).
     if textos:
         crudo2 = pedir("📍 los lugares por su dirección escrita (geocode de texto del servidor)", base,
@@ -759,6 +772,15 @@ def _coords_cuerpo_maps(cuerpo):
     return ""
 
 
+def _staticmap(cuerpo):
+    m = re.search(r"staticmap\?center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)", cuerpo or "")
+    return (float(m.group(1)), float(m.group(2))) if m else None
+
+
+def _tramo_m(d):
+    return "< 100 m" if d < 100 else "100-300 m" if d < 300 else "300 m-1 km" if d < 1000 else "1-3 km" if d < 3000 else "> 3 km"
+
+
 def enlaces_sin_resolver(base):
     print("\n── 📍 los enlaces de ubicación que el panel NO lee solo: de qué tipo son y qué los resuelve (solo cuentas) ──")
     ped = _PEDIDOS
@@ -845,6 +867,37 @@ def enlaces_sin_resolver(base):
             print(f"   ── por el texto de q=: el servidor ubicó {ok} de {len(L)} (aproximados: el lugar, no la puerta) ──")
         except Exception:
             print("   (el servidor no contestó JSON)")
+    # 4) la página final de Maps (y la del kgmid) con la imagen de vista previa: ¿trae el centro del lugar? ¿coincide con el texto?
+    sm = {}
+    for u in falta:
+        kg = _kgmid_de(u)
+        _fin, cuerpo = _abrir_maps(("https://www.google.com/maps?kgmid=" + kg + "&hl=es") if kg else u)
+        c = _staticmap(cuerpo)
+        if c:
+            sm[u] = c
+    por_tipo = {}
+    for u in falta:
+        t = _tipo_enlace(u)
+        por_tipo.setdefault(t, [0, 0])
+        por_tipo[t][0] += 1
+        por_tipo[t][1] += 1 if u in sm else 0
+    print("   ── la imagen de vista previa de Maps (staticmap) trae el centro: " +
+          " · ".join(f"{t} {b} de {a}" for t, (a, b) in por_tipo.items()) + " ──")
+    if textos and sm:
+        L2 = [t for u, t in textos.items() if u in sm]
+        if L2:
+            crudo = pedir(f"comparar: el servidor busca el texto de {len(L2)} que también trajeron el centro", base, {"action": "geocode", "links": list(dict.fromkeys(L2))})
+            try:
+                g = {x.get("link"): x for x in (json.loads((crudo or b"{}").decode("utf-8", "replace")).get("geo") or []) if isinstance(x, dict)}
+            except Exception:
+                g = {}
+            tramos = {}
+            for u, t in textos.items():
+                x = g.get(t)
+                if u in sm and x and x.get("lat") is not None:
+                    k = _tramo_m(_dist_m(sm[u][0], sm[u][1], x["lat"], x["lng"]))
+                    tramos[k] = tramos.get(k, 0) + 1
+            print("   distancia entre el centro de la vista previa y el texto buscado: " + (" · ".join(f"{k}: {n}" for k, n in tramos.items()) or "—"))
     sin_nada = [u for u in falta if u not in textos and not _kgmid_de(u)]
     print(f"   sin coordenadas, sin nombre y sin kgmid: {len(sin_nada)} (esos solo los arregla quien cargó el pedido)")
 
