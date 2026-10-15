@@ -768,8 +768,52 @@ def atc_del_panel():
               f"del mismo celular pero sin fecha {c['cel_sin']} · solo por el nombre, con fecha {c['nom_f']} · solo por el nombre, sin fecha "
               f"{c['nom_sin']} · sin tarjeta en Trello {c['nada']}")
         print(f"   tarjetas de Trello con la fecha de compra: {sum(1 for t in tarj if t['f'])} de {len(tarj)}")
+        # (15/10, dueño: «24 sin fecha de compra? en el Trello creo que todas están con fecha») — renglón por renglón, SIN nombres:
+        # el N° solo si tiene la forma «ATC MM-NNN» (los títulos copiados de Trello llevan el nombre del cliente).
+        listas = []
+        for r in _csv.DictReader(open(os.path.join(aqui, "atc-semanal.csv"), encoding="utf-8-sig")):
+            listas.append(((r.get("Lista") or "").strip(), (r.get("Archivada") or "").strip()))
+        def cruce(p):
+            ce, nm = cel8(p), palabras(p.get("cliente") or "")
+            porcel = [i for i, t in enumerate(tarj) if ce and ce in t["cels"]]
+            if porcel:
+                return "cel", porcel
+            n2 = [i for i, t in enumerate(tarj) if len(nm & t["nom"]) >= 2]
+            if n2:
+                return "nom2", n2
+            n1 = [i for i, t in enumerate(tarj) if nm & t["nom"]]
+            return ("nom1", n1) if n1 else ("", [])
+        print("   las que NO tienen fecha de compra, una por una (sin nombres):")
+        for p in sorted(sin, key=entro):
+            oc = str(p.get("oc") or "").strip()
+            oc = oc if re.match(r"^ATC\s*\d{2}-\d{3}$", oc, re.I) else "(N° con otro formato)"
+            como, cuales = cruce(p)
+            pal = len(palabras(p.get("cliente") or ""))
+            det = (f"tarjeta por {'celular' if como == 'cel' else ('2+ palabras del nombre' if como == 'nom2' else '1 palabra del nombre')}: {len(cuales)}"
+                   f" · con fecha {sum(1 for i in cuales if tarj[i]['f'])} · listas {sorted({listas[i][0] for i in cuales})}") if como else "ninguna tarjeta parecida"
+            print(f"     · {oc} · entró {entro(p)} · celular {'sí' if cel8(p) else 'NO'} · palabras del nombre {pal} · {det}")
+        # y al revés: qué tarjetas de Trello no tienen su ATC en el panel
+        usadas = set()
+        for p in atcs:
+            como, cuales = cruce(p)
+            if como in ("cel", "nom2"):
+                usadas.update(cuales)
+        por_l = {}
+        for i, t in enumerate(tarj):
+            l = listas[i][0] + (" (archivada)" if listas[i][1].lower().startswith("s") else "")
+            d = por_l.setdefault(l, {"n": 0, "en_panel": 0, "fuera": 0, "fuera_con_fecha": 0})
+            d["n"] += 1
+            if i in usadas:
+                d["en_panel"] += 1
+            else:
+                d["fuera"] += 1
+                d["fuera_con_fecha"] += 1 if t["f"] else 0
+        print(f"   tarjetas de Trello SIN su ATC en el panel: {len(tarj) - len(usadas)} de {len(tarj)} (por celular o 2+ palabras del nombre)")
+        for l in sorted(por_l, key=lambda k: -por_l[k]["n"]):
+            d = por_l[l]
+            print(f"     · {l}: {d['n']} · en el panel {d['en_panel']} · no están {d['fuera']} (con fecha de compra {d['fuera_con_fecha']})")
     except Exception as ex:
-        print(f"   (no pude cruzar las fechas con Trello: {type(ex).__name__})")
+        print(f"   (no pude cruzar las fechas con Trello: {type(ex).__name__}: {str(ex)[:80]})")
 
 
 def main():
