@@ -2933,6 +2933,15 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .atct-c .lb2{ font-weight:700; color:var(--text); }
 .atct-c .dice{ grid-column:2 / -1; margin-top:-3px; font-size:.72rem; color:var(--muted); overflow-wrap:anywhere; }
 .atct-sin{ font-size:.8rem; color:var(--muted); background:#fff; border:1px dashed var(--gray-md); border-radius:10px; padding:8px 11px; }
+/* 📥 (15/10, §4lf-c) las tarjetas de Trello que no están en el panel */
+.atct-fuera{ display:flex; flex-direction:column; gap:5px; max-height:46vh; overflow:auto; padding-right:2px; }
+.atct-fu{ display:grid; grid-template-columns:22px minmax(0,1fr); column-gap:8px; row-gap:1px; align-items:start; background:#fff; border:1px solid var(--gray-md);
+  border-left:5px solid #0079bf; border-radius:10px; padding:7px 10px; font-size:.8rem; cursor:pointer; }
+.atct-fu.no{ border-left-color:#cbd5e1; background:#f8fafc; }
+.atct-fu input{ grid-row:1 / span 3; margin-top:3px; width:17px; height:17px; }
+.atct-fu .t1 b{ font-size:.86rem; } .atct-fu .t1 small{ color:var(--muted); }
+.atct-fu .t2, .atct-fu .t3{ color:#334155; overflow-wrap:anywhere; }
+.atct-fu .t3 i{ color:#b45309; font-style:normal; font-weight:700; }
 @media (max-width:640px){ .atct-c{ grid-template-columns:auto 1fr; } .atct-c .lb2{ grid-column:2; } .atct-c select, .atct-c input[type=date], .atct-c textarea{ grid-column:2; } }
 @media print{
   body.printing-atci > *{ display:none !important; }
@@ -17812,7 +17821,7 @@ function atciPdf(){
      antes: lo encontrado por el celular viene tildado; por el nombre solo, sin tildar. Guarda de a una (`mergeAtcDatos` +
      `persistPedido`) y deja `tre` = el enlace de la tarjeta. Solo con la contraseña de Administración.
    ========================================================================== */
-var ATCT_CSV='atc-semanal.csv', ATCT_ADJ='atc-trello-adjuntos.json', ATCT={ tarj:[], filas:[], fecha:'', ocupado:false, adjPor:null, adj:null };
+var ATCT_CSV='atc-semanal.csv', ATCT_ADJ='atc-trello-adjuntos.json', ATCT_HIST='atc-trello-historial.json', ATCT={ tarj:[], filas:[], fecha:'', ocupado:false, adjPor:null, adj:null, hist:null, fuera:[] };
 var ATCT_MOTIVOS=[
   ['Hundimiento',          /UNDID|HUNDID|HUNDIM|UNDIM|SE HUNDE|SE UNDE|SOBRESALID|DESNIVEL|DEFORMAD|BAJO EN EL MEDIO|SE HA BAJADO|SE BAJO|ORILLAS? (DEL COLCHON )?ESTA MUY FLEXIBLE/],
   ['Resortes',             /RESORTE/],
@@ -17920,7 +17929,7 @@ function atctNombre(desc, titulo){
 function atctSl(url){ var m=String(url||'').match(/\/c\/([A-Za-z0-9]+)/); return m ? m[1] : ''; }
 function atctTarjeta(r){
   var desc=r.Descripcion||'', tit=r.Tarjeta||'', todo=tit+' | '+desc;
-  var t={ tit:tit, lista:r.Lista||'', url:r.URL||'', arch:/^s/i.test(String(r.Archivada||'')),
+  var t={ tit:tit, desc:desc, lista:r.Lista||'', url:r.URL||'', arch:/^s/i.test(String(r.Archivada||'')),
     cels:atctCels(todo), compra:atctCompra(todo), fecha:atctFechaAtc(desc, tit), mot:atctMotivo(todo), det:atctDetalle(desc), nom:atctNombre(desc, tit) };
   return atctSumarAdjuntos(t, ATCT.adjPor && ATCT.adjPor[atctSl(t.url)]);
 }
@@ -17955,7 +17964,10 @@ function atctCruzar(tarj){
   var atcs=STATE.filter(function(p){ return p && esATC(p.oc) && (p.productos||[]).length; });
   return atcs.map(function(p){
     var falta=atctFaltan(p), cel=atctCel8(p.celular), nom=atctNombrePanel(p), entro=atcEntro(p), mejor=null, pts=0, por='';
+    var suya=atctSl((atcDe(p)||{}).tre) || (String(p.id||'').indexOf('atc-tre-')===0 ? String(p.id).slice(8) : '');
     tarj.forEach(function(t){
+      /* la que se trajo de esa tarjeta (📥, o completada antes con su enlace) es esa tarjeta, aunque el nombre o el celular no ayuden */
+      if(suya && atctSl(t.url)===suya){ if(30>pts){ pts=30; mejor=t; por='cel'; } return; }
       var c=!!(cel && t.cels.indexOf(cel)>=0);
       var comunes=nom.filter(function(w){ return t.nom.indexOf(w)>=0; }).length, n=comunes>=2 || (comunes>=1 && nom.length===1 && t.nom.length===1);
       if(!c && !n) return;
@@ -17989,8 +18001,9 @@ function abrirAtcTrello(){
   ov.style.display='flex';
   body.innerHTML='<div class="atct-sin">⏳ Leyendo el respaldo de Trello…</div>';
   document.getElementById('atct-info').textContent='';
-  Promise.all([atctTraerCsv(), atctTraerAdj()]).then(function(r){
+  Promise.all([atctTraerCsv(), atctTraerAdj(), atctTraerHist()]).then(function(r){
     atctTomarAdj(r[1]);
+    atctTomarHist(r[2]);
     ATCT.tarj=atctCsv(r[0]).filter(function(x){ return x.Tarjeta || x.Descripcion; }).map(atctTarjeta);
     atctPintar();
   }).catch(function(e){
@@ -18044,8 +18057,9 @@ function atctPintar(){
   if(sin.length) h+='<div class="atct-sec">❓ Sin tarjeta en Trello <small>a estas les falta algo y no aparecen en el tablero</small></div><div class="atct-sin">'+
     sin.map(function(x){ return '<b>'+esc(x.p.oc||'')+'</b> '+esc(x.p.cliente||'')+' <span style="color:var(--muted)">(falta '+x.falta.map(function(k){ return { mot:'motivo', fcom:'fecha de compra', det:'detalle' }[k]; }).join(', ')+')</span>'; }).join('<br>')+'</div>';
   if(!falta.length) h+='<div class="atct-sin" style="color:#15803d">✅ Todas las ATC del panel ya tienen motivo, fecha de compra y detalle.</div>';
-  body.innerHTML=h;
+  body.innerHTML=atctFueraHtml()+'<div class="atct-sec" style="margin-top:18px">🧩 Completar las ATC que ya están en el panel</div>'+h;
   atctContar();
+  atctFueraContar();
 }
 /* Tocar un campo lo tilda (si quedó con algo). */
 function atctTocar(el){
@@ -18090,6 +18104,177 @@ function atctGuardar(){
     ATCT.ocupado=false;
     var t='✅ Completadas '+ok+' ATC'+(cola ? ' · '+cola+' quedaron en cola (se mandan solas)' : '')+(mal ? ' · ⚠️ '+mal+' no se pudieron guardar' : '')+(nada ? ' · '+nada+' ya estaban completas' : '');
     toast(t, mal ? 'err' : 'ok', 8000);
+    try{ renderAtc(); }catch(e){}
+    atctPintar();
+  });
+}
+/* ==========================================================================
+   📥 LAS ATC QUE ESTÁN EN TRELLO Y NO EN EL PANEL (15/10, §4lf-c). El dueño: «las que están en Trello y no en el panel deberían
+   estar, si cuando creamos las ATC "exportamos" todas las del Trello». No estaban: de 88 tarjetas, 72 no tienen su ATC en el panel
+   (sobre todo las ya devueltas, de noviembre a julio). Trello deja de usarse, así que se traen acá, revisadas a mano.
+   · El viaje de cada tarjeta sale de `atc-trello-historial.json` (`herramientas/trello_historial.py`, la API de Trello sin IA): el
+     día en que se creó (= entró la ATC, NUNCA la fecha de compra) y la primera vez que pasó por cada lista.
+   · La fecha de COMPRA es la de siempre de Trello: el texto de la tarjeta o lo leído de sus fotos y Excel (el certificado de
+     garantía, la factura, el formulario, §4lf-b). Si no está, queda vacía: no se inventa.
+   · Estado según la lista de HOY: devuelta → cerrada (ent = el día que entró a «DEVUELTAS»); lista para devolver → lista (dev);
+     en producción → en fábrica (recogida); solicitada o programada → por recoger, sin día (logística la programa).
+   · Se cargan SIN fecha de viaje (`fecha` vacía): no ocupan cupo, no pasan por el portero de días cerrados ni le mandan nada a
+     nadie (el bot mira `fecha`). El recojo queda en `rec` y la devolución en `pdev`/`ent`, como una ATC cerrada del panel.
+   · Id `atc-tre-<código de la tarjeta>`: traer dos veces la misma no la duplica. N° de ATC del mes en que entró (`nextOcMes`).
+   · No se ofrecen las que ya parecen estar (mismo celular, 2+ palabras del nombre o el enlace de la tarjeta). Vienen sin tildar:
+     las archivadas, las de «POST VENT» que nunca se devolvieron y las que parecen la misma que otra tarjeta.
+   ========================================================================== */
+function atctTraerHist(){
+  return fetch(ATCT_HIST+'?_='+Date.now(), { cache:'no-store' }).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+}
+function atctTomarHist(j){
+  ATCT.hist=null;
+  if(!j || !Array.isArray(j.tarjetas)) return;
+  var por={}; j.tarjetas.forEach(function(x){ if(x && x.sl) por[x.sl]=x; });
+  ATCT.hist=por;
+}
+var ATCT_VEND=[[/^MIRIAN\b/,'Mirian Salazar'],[/^MARIA\b/,'Maria Flores'],[/^ISABEL\b/,'Isabel Robledo'],[/^CAROLA\b/,'Carola Chavez'],[/^JONATHAN\b/,'Jonathan Monje'],[/^ROHO\b/,'ROHO']];
+function atctVendedora(tit){
+  var u=atctMay(tit).replace(/^\W*A[TR]C\W*/, '');
+  for(var i=0;i<ATCT_VEND.length;i++) if(ATCT_VEND[i][0].test(u)) return ATCT_VEND[i][1];
+  return '';
+}
+var ATCT_PRODUCTO=/(TITANIO|\bTIT\b|\bICE\b|ORTOPEDIC|\bORTOP\b|SOMIER|BAHIA|MEMORY|LATEX|FLEX|PEDIC|\bORO\b|PLATA|ESPECIAL|CARIOCA|PREMIER|MORFEO|\bEURO\b|SMART|POCKET|VISCO|AMAZON|COLCHON)/;
+/* El producto, como lo escribieron en la tarjeta («TIT ICE 2.5 PLZ», «LINEA titanio MODELO ICE…»). Sin eso, se dice que no está. */
+function atctProducto(desc){
+  var s=String(desc||'').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/https?:\/\/\S+/g, ' ').replace(/[​-‍⁠﻿*▪️•]/g, ' ');
+  var m=atctMay(s).replace(/[\t ]+/g, ' ').match(/LINEA\s+([A-ZÑ0-9 .,]+?)\s+MODELO\s+([A-ZÑ0-9 .,]+?)\s+(?:PLAZA|PLZ|MEDIDA)/);
+  if(m) return (m[1]+' '+m[2]).replace(/\s+/g, ' ').trim().slice(0, 60);
+  var partes=s.split(/\s*\|\s*|\t+/);
+  for(var i=0;i<partes.length;i++){
+    var u=atctMay(partes[i]).replace(/\s+/g, ' ').replace(/^[^A-Z0-9]+/, '').replace(/^RECOGER\s+/, '').trim();
+    if(!u || u.length>70 || !ATCT_PRODUCTO.test(u)) continue;
+    if(ATCT_DIRECCION.test(u) || ATCT_ROTULOS.test(u) || /^A[TR]C\b/.test(u) || /\.(XLSX?|JPE?G|PNG|PDF)\b/.test(u)) continue;
+    return u.split(/\s+(?:\/|-|=|\()\s*/)[0].trim().slice(0, 60);
+  }
+  return '';
+}
+function atctPaso(h, rx){ var p=(h && h.pasos||[]).filter(function(x){ return rx.test(atctMay(x.l)); })[0]; return p ? p.f : ''; }
+/* ¿Esta tarjeta ya tiene su ATC en el panel? */
+function atctEnPanel(t, atcs){
+  var sl=atctSl(t.url);
+  return atcs.some(function(p){
+    if(sl && (p.id==='atc-tre-'+sl || atctSl((atcDe(p)||{}).tre)===sl)) return true;
+    var cel=atctCel8(p.celular); if(cel && t.cels.indexOf(cel)>=0) return true;
+    var nom=atctNombrePanel(p), c=nom.filter(function(w){ return t.nom.indexOf(w)>=0; }).length;
+    return c>=2 || (c>=1 && nom.length===1 && t.nom.length===1);
+  });
+}
+function atctMismaTarjeta(a, b){
+  if(a.cels.some(function(c){ return b.cels.indexOf(c)>=0; })) return true;
+  return a.nom.filter(function(w){ return b.nom.indexOf(w)>=0; }).length>=2;
+}
+/* Las tarjetas que faltan, con lo que tendría cada ATC al traerla. */
+function atctFueraArmar(){
+  var atcs=STATE.filter(function(p){ return p && esATC(p.oc); }), L=[];
+  (ATCT.tarj||[]).forEach(function(t){
+    var sl=atctSl(t.url); if(!sl || atctEnPanel(t, atcs)) return;
+    var h=ATCT.hist && ATCT.hist[sl], lista=(h && h.lista) || t.lista || '', U=atctMay(lista), arch=h ? !!h.archivada : !!t.arch;
+    var F={ t:t, h:h, sl:sl, lista:lista, arch:arch, post:/POST/.test(U), entro:(h && h.creada) || '', ms:(h && Number(h.creadaMs)) || 0,
+      r:atctPaso(h, /PRODUC/), dev:atctPaso(h, /LISTAS/), ent:atctPaso(h, /DEVUELT/), est:'', nota:'' };
+    if(/DEVUELT/.test(U) || (F.post && F.ent)){ F.est='cerrada'; F.ent=F.ent || (h && h.ultima) || F.entro; }
+    else if(/LISTAS/.test(U)){ F.est='lista'; F.dev=F.dev || (h && h.ultima) || F.entro; }
+    else if(/PRODUC/.test(U)){ F.est='fabrica'; F.r=F.r || (h && h.ultima) || F.entro; }
+    else F.est='sinrecoger';
+    if(F.ent && F.entro && F.ent<F.entro) F.ent=F.entro;
+    var cf=t.compra && t.compra.f; F.fcom=(cf && F.entro && cf<=F.entro) ? cf : '';
+    F.cliente=atciCorta(String((ATCT.adjPor && ATCT.adjPor[sl] && ATCT.adjPor[sl].cliente) || t.nom.join(' ') || atctMay(t.tit).replace(/^\W*A[TR]C\W*/, '')).toUpperCase().replace(/\s+/g, ' ').trim(), 60);
+    F.vend=atctVendedora(t.tit); F.prod=atctProducto(t.tit+' | '+(t.desc||''));
+    L.push(F);
+  });
+  /* la misma ATC en dos tarjetas: la que se queda tildada es la no archivada, la que no es de «POST VENT» y la más nueva */
+  var pref=L.slice().sort(function(a, b){ return (a.arch-b.arch) || ((a.post && !a.ent)-(b.post && !b.ent)) || (b.ms-a.ms); });
+  pref.forEach(function(F, i){ for(var j=0;j<i;j++) if(!pref[j].dup && atctMismaTarjeta(pref[j].t, F.t)){ F.dup=pref[j]; break; } });
+  L.forEach(function(F){
+    if(!F.h) F.nota='sin el historial de Trello: no se sabe cuándo entró';
+    else if(F.arch) F.nota='archivada en Trello';
+    else if(F.dup) F.nota='parece la misma que «'+atciCorta(F.dup.t.tit, 40)+'»';
+    else if(F.post && !F.ent) F.nota='«POST VENT (comercial)»: nunca pasó por «devueltas»';
+    /* una abierta que en Trello no se movió en 60 días seguramente quedó olvidada ahí: se ofrece, pero sin tildar */
+    else if(F.est!=='cerrada' && F.h && (F.h.ultima || F.entro) && diasEntreFechas(F.h.ultima || F.entro, todayStr())>ATCT_QUIETA_DIAS)
+      F.nota='abierta en Trello, sin movimiento desde el '+atciFechaCorta(F.h.ultima || F.entro)+': ¿sigue pendiente?';
+    F.tilde=!F.nota;
+  });
+  L.sort(function(a, b){ return b.ms-a.ms; });
+  ATCT.fuera=L;
+  return L;
+}
+var ATCT_EST_TXT={ cerrada:'✅ Devuelta', lista:'📦 Lista en fábrica', fabrica:'🏭 En fábrica', sinrecoger:'🚚 Por recoger' }, ATCT_QUIETA_DIAS=60;
+function atctFueraHtml(){
+  var L=atctFueraArmar(), nT=(ATCT.tarj||[]).length;
+  var h='<div class="atct-sec">📥 En Trello y no en el panel <small>'+L.length+' de '+nT+' tarjetas</small></div>';
+  if(!ATCT.hist) return h+'<div class="atct-sin" style="color:#b45309">⚠️ Falta el historial de Trello (cuándo se creó cada tarjeta y por qué listas pasó): sin eso no se pueden traer con sus días.</div>';
+  if(!L.length) return h+'<div class="atct-sin" style="color:#15803d">✅ Todas las tarjetas de Trello ya tienen su ATC en el panel.</div>';
+  var cuenta={}; L.forEach(function(F){ cuenta[F.est]=(cuenta[F.est]||0)+1; });
+  h+='<div class="atct-sin" style="margin-bottom:8px">Se cargan como ATC del panel con el día en que se <b>creó la tarjeta</b> (cuándo entró la ATC) y el de cada paso. '+
+    'La <b>fecha de compra</b> es la que dice la tarjeta o sus adjuntos (certificado de garantía, factura, Excel); si no está, queda vacía. '+
+    'Van <b>sin día de viaje</b>: no ocupan cupo ni le avisan a nadie. Las «por recoger» quedan para que logística las programe.<br>'+
+    Object.keys(ATCT_EST_TXT).filter(function(k){ return cuenta[k]; }).map(function(k){ return ATCT_EST_TXT[k]+' <b>'+cuenta[k]+'</b>'; }).join(' · ')+
+    ' · 🛒 con fecha de compra <b>'+L.filter(function(F){ return F.fcom; }).length+'</b></div>';
+  h+='<div class="atct-fuera">'+L.map(function(F, i){
+    var t=F.t, c=t.compra;
+    return '<label class="atct-fu'+(F.tilde ? '' : ' no')+'" id="atct-fu'+i+'"><input type="checkbox" data-fu="'+i+'"'+(F.tilde ? ' checked' : '')+' onchange="atctFueraContar()">'+
+      '<span class="t1"><b>'+esc(F.cliente||t.tit)+'</b> <small>«'+esc(atciCorta(t.tit, 50))+'»'+(t.url ? ' <a href="'+esc(t.url)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">abrir</a>' : '')+'</small></span>'+
+      '<span class="t2">'+ATCT_EST_TXT[F.est]+(F.est==='cerrada' && F.ent ? ' el '+esc(atciFechaCorta(F.ent)) : (F.est==='lista' && F.dev ? ' desde el '+esc(atciFechaCorta(F.dev)) : (F.est==='fabrica' && F.r ? ' desde el '+esc(atciFechaCorta(F.r)) : '')))+
+        ' · entró el '+esc(atciFechaCorta(F.entro)||'—')+(F.vend ? ' · '+esc(F.vend) : '')+(F.prod ? ' · '+esc(F.prod) : '')+'</span>'+
+      '<span class="t3">🛒 '+(F.fcom ? '<b>compra '+esc(atciFechaCorta(F.fcom))+'</b>'+(c && c.de ? ' <small>(📎 '+esc(c.de)+')</small>' : '') : '<span style="color:var(--muted)">sin fecha de compra'+(c && c.txt ? ' («'+esc(String(c.txt).toLowerCase())+'»)' : '')+'</span>')+
+        (t.mot ? ' · '+esc(t.mot.mot) : '')+(F.nota ? ' · <i>'+esc(F.nota)+'</i>' : '')+'</span></label>';
+  }).join('')+'</div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-primary btn-sm" id="atct-traer" onclick="atctTraer()">📥 Traer al panel</button>'+
+  '<button class="btn btn-ghost btn-sm" onclick="atctFueraTodas(true)">Tildar todas</button><button class="btn btn-ghost btn-sm" onclick="atctFueraTodas(false)">Destildar todas</button></div>';
+  return h;
+}
+function atctFueraTodas(si){ [].forEach.call(document.querySelectorAll('#atct-body input[data-fu]'), function(cb){ cb.checked=!!si; }); atctFueraContar(); }
+function atctFueraTildadas(){
+  return [].filter.call(document.querySelectorAll('#atct-body input[data-fu]:checked'), function(){ return true; }).map(function(cb){ return ATCT.fuera[+cb.getAttribute('data-fu')]; }).filter(Boolean);
+}
+function atctFueraContar(){
+  var b=document.getElementById('atct-traer'); if(!b) return;
+  var n=atctFueraTildadas().length;
+  b.textContent='📥 Traer al panel ('+n+' ATC)'; b.disabled=!n || ATCT.ocupado;
+}
+/* La ATC del panel que sale de una tarjeta (sin guardar). */
+function atctNuevaAtc(F){
+  var t=F.t, a={ mot:t.mot ? t.mot.mot : '', det:String(t.det||'').slice(0, 600), fcom:F.fcom||'', tre:t.url||'', trh:1 }, entregado=false;
+  if(F.est==='cerrada'){ a.ent=F.ent; a.pdev=F.ent; a.rec=F.r||''; if(F.dev) a.dev=F.dev; entregado=true; }
+  else if(F.est==='lista'){ a.dev=F.dev; if(F.r) a.rec=F.r; entregado=true; }
+  else if(F.est==='fabrica'){ a.rec=F.r; entregado=true; }
+  return {
+    id:'atc-tre-'+F.sl, fecha:'', nota:'', oc:nextOcMes(F.entro, 'ATC'), vendedor:F.vend||'', cliente:F.cliente||'(sin nombre en Trello)',
+    productos:[{ desc:F.prod||'(Trello no dice el producto)', medida:'', cant:1, atc:a }],
+    celular:t.cels[0]||'', turno:'', zona:'', direccion:'', maps:'',
+    pagado:false, metodoPago:'', cobradoBs:0, acuenta:0, saldo:0,
+    observaciones:'🗂️ Traída de Trello ('+F.lista+(F.arch ? ', archivada' : '')+'): '+(t.url||''), garantia:'', facturarA:'', nit:'',
+    estado:'', entregado:entregado, verificado:false, vehiculo:'', chofer:'', nroDia:'', ts:F.ms, fotos:[]
+  };
+}
+function atctTraer(){
+  if(ATCT.ocupado) return;
+  var L=atctFueraTildadas();
+  if(!L.length){ toast('No hay ninguna tarjeta tildada', 'err'); return; }
+  if(!confirm('Se van a cargar '+L.length+' ATC de Trello en el panel, con sus días y sin día de viaje (no ocupan cupo ni le avisan a nadie). ¿Seguimos?')) return;
+  ATCT.ocupado=true; atctFueraContar(); atctContar();
+  /* de la más vieja a la más nueva: así el N° de cada mes sale en orden */
+  L=L.slice().sort(function(a, b){ return a.ms-b.ms; });
+  var ok=0, cola=0, mal=0, ya=0, k=0;
+  var una=function(){
+    if(k>=L.length) return Promise.resolve();
+    var F=L[k++];
+    if(findById('atc-tre-'+F.sl)){ ya++; return una(); }
+    var rec=atctNuevaAtc(F);
+    return Promise.resolve(persistPedido(rec)).then(function(res){
+      if(res && res.ok) ok++; else if(res && res.local) cola++; else mal++;
+    }, function(){ mal++; }).then(una);
+  };
+  toast('⏳ Trayendo '+L.length+' ATC de Trello…', 'ok');
+  una().then(function(){
+    ATCT.ocupado=false;
+    toast('📥 Traídas '+ok+' ATC de Trello'+(cola ? ' · '+cola+' quedaron en cola (se mandan solas)' : '')+(mal ? ' · ⚠️ '+mal+' no se pudieron guardar' : '')+(ya ? ' · '+ya+' ya estaban' : ''), mal ? 'err' : 'ok', 9000);
     try{ renderAtc(); }catch(e){}
     atctPintar();
   });

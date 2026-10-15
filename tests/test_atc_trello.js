@@ -179,6 +179,93 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
   chk('se guarda con la fecha del adjunto y el enlace de su tarjeta', r==='2023-04-10|Cotización|https://trello.com/c/FFF666/6-atc-otro', r);
   r = await page.evaluate(() => { atctTomarAdj(null); return [ATCT.adjPor, ATCT.adj, atctAdjTxt()]; });
   chk('sin el archivo de los adjuntos sigue con el texto y lo dice', r[0]===null && r[1]===null && /todavía sin leer las fotos/.test(r[2]), r);
+
+  /* ---- 6. 📥 LAS QUE ESTÁN EN TRELLO Y NO EN EL PANEL (15/10, §4lf-c; dueño: «las que están en Trello y no en el panel deberían
+     estar»). Con el historial de cada tarjeta (`atc-trello-historial.json`): cuándo se creó y cuándo pasó por cada lista. ---- */
+  const CSV2 = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,Etiquetas,Asignado_a,Archivada,URL\n'+[
+    fila('ATC DEVUELTAS LOG','ATCMARIA - JUAN ROCA','TELEFONO 7011-1222 | FECHA DE COMPRA 13/09/2021 | se hundió el colchón en el centro','No','https://trello.com/c/AAA111/1-atc-juan'),
+    fila('ATC DEVUELTAS LOG','ATC MIRIAN -- LEONELA INVENTADA','ATC MIRIAN LEONELA INVENTADA |  | 78449545 |  | TIT ICE 2.5 PLZ |  | ESTA UNDIDO LOS LATERALES Y DEMASIADO BLANDO','No','https://trello.com/c/G01/1-atc'),
+    fila('ATC EN PRODUCCION','ATC ISABEL - PEDRO PRUEBA','TELEFONO 70000222 | LINEA\ttitanio\tMODELO\tICE\tplaza\t2plz | SUENA UN RESORTE del medio | COMPRO EL 05/10/2026','No','https://trello.com/c/G02/2-atc'),
+    fila('ATC LISTAS PARA DEVOLVER PROD','ATC MARIA - ANA LUZMILA','TELEFONO 70000333 | ORO ORTOPEDICO 3.5 PLZ | la tela tiene bolitas','No','https://trello.com/c/G03/3-atc'),
+    fila('ATC SOLICITADAS COM','ATC CAROLA - EVA MARGARITA','TELEFONO 70000444 | compro 2024 | las patas del somier están rotas','No','https://trello.com/c/G04/4-atc'),
+    fila('ATC DEVUELTAS LOG','ATCMARIA EVA MARGARITA','TELEFONO 70000444 | patas rotas','Sí','https://trello.com/c/G05/5-atc'),
+    fila('POST VENT (COMERCIAL)','ATC MARIA - RUTH MONTEAGUDO','TELEFONO 70000666 | no tiene garantia, hacer cotizacion','No','https://trello.com/c/G06/6-atc'),
+    fila('POST VENT (COMERCIAL)','ATC MIRIAN - OSCAR VILLALBA','TELEFONO 70000777 | SEMI ORTOPEDICO 2.5 PLZ / se hunde','No','https://trello.com/c/G07/7-atc'),
+    fila('ATC SOLICITADAS COM','ATC MIRIAN - SIN HISTORIA','TELEFONO 70000888 | cruje la base','No','https://trello.com/c/G08/8-atc'),
+    fila('ATC SOLICITADAS COM','ATC MARIA - OLVIDADA ENTRETELA','TELEFONO 70000999 | se hundió','No','https://trello.com/c/G09/9-atc')
+  ].join('\n')+'\n';
+  const ms = f => new Date(f+'T10:00:00-04:00').getTime();
+  const HIST = { generado:'2026-10-15T11:02:00-04:00', tablero:'x', tarjetas:[
+    { sl:'AAA111', creada:'2026-09-30', creadaMs:ms('2026-09-30'), lista:'ATC DEVUELTAS LOG', archivada:false, ultima:'2026-10-10', pasos:[] },
+    { sl:'G01', creada:'2026-03-02', creadaMs:ms('2026-03-02'), lista:'ATC DEVUELTAS LOG', archivada:false, ultima:'2026-03-26', pasos:[
+      { l:'ATC SOLICITADAS COM', f:'2026-03-02' }, { l:'ATC EN PRODUCCION', f:'2026-03-05' }, { l:'ATC LISTAS PARA DEVOLVER PROD', f:'2026-03-20' }, { l:'ATC DEVUELTAS LOG', f:'2026-03-25' } ] },
+    { sl:'G02', creada:'2026-09-28', creadaMs:ms('2026-09-28'), lista:'ATC EN PRODUCCION', archivada:false, ultima:'2026-10-01', pasos:[ { l:'ATC EN PRODUCCION', f:'2026-10-01' } ] },
+    { sl:'G03', creada:'2026-09-10', creadaMs:ms('2026-09-10'), lista:'ATC LISTAS PARA DEVOLVER PROD', archivada:false, ultima:'2026-10-05', pasos:[ { l:'ATC LISTAS PARA DEVOLVER PROD', f:'2026-10-05' } ] },
+    { sl:'G04', creada:'2026-10-08', creadaMs:ms('2026-10-08'), lista:'ATC SOLICITADAS COM', archivada:false, ultima:'2026-10-08', pasos:[ { l:'ATC SOLICITADAS COM', f:'2026-10-08' } ] },
+    { sl:'G05', creada:'2026-01-05', creadaMs:ms('2026-01-05'), lista:'ATC DEVUELTAS LOG', archivada:true, ultima:'2026-01-20', pasos:[ { l:'ATC DEVUELTAS LOG', f:'2026-01-20' } ] },
+    { sl:'G06', creada:'2026-04-01', creadaMs:ms('2026-04-01'), lista:'POST VENT (COMERCIAL)', archivada:false, ultima:'2026-04-02', pasos:[ { l:'POST VENT (COMERCIAL)', f:'2026-04-01' } ] },
+    { sl:'G09', creada:'2025-12-10', creadaMs:ms('2025-12-10'), lista:'ATC SOLICITADAS COM', archivada:false, ultima:'2026-01-05', pasos:[ { l:'ATC SOLICITADAS COM', f:'2025-12-10' } ] },
+    { sl:'G07', creada:'2026-02-15', creadaMs:ms('2026-02-15'), lista:'POST VENT (COMERCIAL)', archivada:false, ultima:'2026-03-01', pasos:[ { l:'ATC DEVUELTAS LOG', f:'2026-02-28' }, { l:'POST VENT (COMERCIAL)', f:'2026-03-01' } ] }
+  ] };
+  await page.evaluate(({ CSV2, HIST }) => {
+    atctCerrar(); __guardados=[];
+    var ts=function(f){ return new Date(f+'T10:00:00-04:00').getTime(); };
+    STATE=[ { id:'p1', oc:'ATC 10-001', fecha:'2026-10-20', turno:'AM', cliente:'JUAN ROCA', vendedor:'Maria Flores', celular:'70111222', ts:ts('2026-10-02'),
+              productos:[{ desc:'TITANIO', medida:'140x190', cant:1, atc:{ mot:'Hundimiento', det:'x', fcom:'2021-09-13' } }] } ];
+    atctTraerCsv=function(){ return Promise.resolve(CSV2); };
+    atctTraerAdj=function(){ return Promise.resolve({ generado:'2026-10-15T15:07:00Z', tarjetas:[
+      { sl:'G01', fcom:'2021-12-23', fcomTxt:'jueves, 23 de diciembre de 2021', fuente:'el certificado de garantía «garantia.jpg»', cels:['78449545'], cliente:'LEONELA INVENTADA', reclamo:'' } ] }); };
+    atctTraerHist=function(){ return Promise.resolve(HIST); };
+    document.getElementById('atc-trello-btn').click();
+  }, { CSV2, HIST });
+  await page.waitForTimeout(250);
+  r = await page.evaluate(() => {
+    var F={}; ATCT.fuera.forEach(function(x){ F[x.sl]={ est:x.est, entro:x.entro, r:x.r, dev:x.dev, ent:x.ent, fcom:x.fcom, vend:x.vend, prod:x.prod, cli:x.cliente, tilde:x.tilde, nota:x.nota }; });
+    return { F:F, sls:ATCT.fuera.map(function(x){ return x.sl; }).join(), txt:document.getElementById('atct-body').innerText, btn:document.getElementById('atct-traer').textContent };
+  });
+  chk('se ofrecen las que NO están en el panel (no la de Juan Roca, que ya está por el celular), de la más nueva a la más vieja',
+    r.sls.indexOf('AAA111')<0 && /^G04,G02,G03,G06,G01,G07,G05,G09/.test(r.sls) && r.sls.indexOf('G08')>=0, r.sls);
+  chk('devuelta: cerrada el día que entró a «DEVUELTAS» (25/03), recogida el 05/03, lista el 20/03; entró el 02/03 (creación de la tarjeta)',
+    r.F.G01.est==='cerrada' && r.F.G01.ent==='2026-03-25' && r.F.G01.r==='2026-03-05' && r.F.G01.dev==='2026-03-20' && r.F.G01.entro==='2026-03-02', r.F.G01);
+  chk('la fecha de COMPRA sale del certificado de garantía (23/12/2021), no de la creación; vendedora, cliente y producto de la tarjeta',
+    r.F.G01.fcom==='2021-12-23' && r.F.G01.vend==='Mirian Salazar' && r.F.G01.cli==='LEONELA INVENTADA' && r.F.G01.prod==='TIT ICE 2.5 PLZ', r.F.G01);
+  chk('en producción: en fábrica desde el 01/10; una «compra» posterior a la ATC no se pone; «LINEA… MODELO…» = el producto',
+    r.F.G02.est==='fabrica' && r.F.G02.r==='2026-10-01' && r.F.G02.fcom==='' && r.F.G02.prod==='TITANIO ICE' && r.F.G02.vend==='Isabel Robledo', r.F.G02);
+  chk('lista para devolver desde el 05/10; solicitada = por recoger (y «compro 2024» sin día no inventa la fecha)',
+    r.F.G03.est==='lista' && r.F.G03.dev==='2026-10-05' && r.F.G04.est==='sinrecoger' && r.F.G04.fcom==='', [r.F.G03, r.F.G04]);
+  chk('vienen tildadas G01, G02, G03, G04 y la de POST VENT que sí se devolvió (G07); sin tildar: la archivada, la POST VENT sin devolver y la sin historial',
+    r.F.G01.tilde && r.F.G02.tilde && r.F.G03.tilde && r.F.G04.tilde && r.F.G07.tilde && r.F.G07.est==='cerrada' && r.F.G07.ent==='2026-02-28' &&
+    !r.F.G05.tilde && /archivada/.test(r.F.G05.nota) && !r.F.G06.tilde && /POST VENT/.test(r.F.G06.nota) && r.F.G08 && !r.F.G08.tilde && /sin el historial/.test(r.F.G08.nota), r.F);
+  chk('una abierta que en Trello no se movió en más de 60 días se ofrece SIN tildar y lo dice', r.F.G09 && r.F.G09.est==='sinrecoger' && !r.F.G09.tilde && /sin movimiento desde el 05\/01\/26/.test(r.F.G09.nota), r.F.G09);
+  chk('arriba lo explica: el día en que se creó la tarjeta, la fecha de compra de la tarjeta o sus adjuntos, sin día de viaje; y el botón cuenta 5',
+    /En Trello y no en el panel/.test(r.txt) && /creó la tarjeta/.test(r.txt) && /certificado de garantía/.test(r.txt) && /sin día de viaje/i.test(r.txt) && /Traer al panel \(5 ATC\)/.test(r.btn), r.btn);
+
+  r = await page.evaluate(async () => {
+    atctTraer();
+    for(var i=0;i<80 && ATCT.ocupado;i++) await new Promise(function(ok){ setTimeout(ok, 50); });
+    var G=function(sl){ var p=findById('atc-tre-'+sl); if(!p) return null; var a=atcDe(p)||{};
+      return { oc:p.oc, fecha:p.fecha, turno:p.turno, ent:p.entregado, est:atcEstado(p), dias:atcDias(p), entro:atcEntro(p), a:a, vend:p.vendedor, cli:p.cliente, cel:p.celular, prod:p.productos[0].desc, obs:p.observaciones }; };
+    return { ids:__guardados.map(function(x){ return x.id; }).join(), G01:G('G01'), G02:G('G02'), G03:G('G03'), G04:G('G04'), G07:G('G07'), G05:G('G05'),
+      sinFecha:__guardados.every(function(x){ return x.fecha===''; }), resto:ATCT.fuera.map(function(x){ return x.sl; }).join(), t:(document.getElementById('toast')||{}).textContent||'' };
+  });
+  chk('«Traer al panel» guarda las 5 tildadas, de la más vieja a la más nueva, y lo dice', r.ids==='atc-tre-G07,atc-tre-G01,atc-tre-G03,atc-tre-G02,atc-tre-G04' && /Traídas 5 ATC de Trello/.test(r.t), [r.ids, r.t]);
+  chk('el N° de ATC es del mes en que ENTRÓ (febrero, marzo, septiembre ×2, octubre después de la 10-001 que ya estaba)',
+    r.G07.oc==='ATC 02-001' && r.G01.oc==='ATC 03-001' && r.G03.oc==='ATC 09-001' && r.G02.oc==='ATC 09-002' && r.G04.oc==='ATC 10-002', [r.G07.oc, r.G01.oc, r.G03.oc, r.G02.oc, r.G04.oc]);
+  chk('todas SIN día de viaje ni turno (no ocupan cupo, el bot no les manda nada)', r.sinFecha && r.G01.turno==='', r.sinFecha);
+  chk('la devuelta queda ✅ Entregada: entró el 02/03, 23 días de circuito, recojo 05/03, compra 23/12/2021 y el enlace de la tarjeta',
+    r.G01.est==='cerrada' && r.G01.ent===true && r.G01.entro==='2026-03-02' && r.G01.dias===23 && r.G01.a.rec==='2026-03-05' && r.G01.a.fcom==='2021-12-23' &&
+    r.G01.a.tre==='https://trello.com/c/G01/1-atc' && r.G01.a.mot==='Hundimiento' && r.G01.cel==='78449545' && r.G01.vend==='Mirian Salazar' && /Traída de Trello/.test(r.G01.obs), r.G01);
+  chk('en producción → 🏭 En fábrica; lista → 📦 Lista; solicitada → 🚚 Por recoger (sin ✅)',
+    r.G02.est==='fabrica' && r.G02.ent===true && r.G03.est==='lista' && r.G04.est==='sinrecoger' && r.G04.ent===false, [r.G02.est, r.G03.est, r.G04.est]);
+  chk('la archivada no se trajo y, con su gemela ya en el panel (mismo celular que G04), deja de ofrecerse; quedan la POST VENT sin devolver y la sin historial',
+    r.G05===null && r.resto.split(',').sort().join()==='G06,G08,G09', r.resto);
+  r = await page.evaluate(() => {
+    var F=atctCruzar(ATCT.tarj).filter(function(x){ return String(x.p.id).indexOf('atc-tre-')===0; });
+    var D=atciDatos('todas');
+    return { cruce:F.map(function(x){ return x.p.id+':'+(x.t ? atctSl(x.t.url) : '—'); }).join(), n:D.n, cerr:D.cerr.length, tRec:D.tRec.length };
+  });
+  chk('cada traída se cruza con SU tarjeta (por el enlace) al completar', r.cruce.split(',').every(function(s){ var m=s.match(/atc-tre-(\w+):(\w+)/); return m && m[1]===m[2]; }), r.cruce);
+  chk('el informe «Todas» las cuenta: 6 ATC (1 + 5), 2 cerradas; el tramo «hasta el recojo» solo con el recojo de verdad de Trello (G01, no G07)', r.n===6 && r.cerr===2 && r.tRec===1, r);
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
