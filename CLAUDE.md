@@ -693,7 +693,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
-## 📄 Informe de ATC en PDF (§4le, 15/10, en la rama; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)
+## 📄 Informe de ATC en PDF (§4le, 15/10, PUBLICADO 09:31 de Bolivia, `9cdb86d`; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)
 - Pestaña ATC → **«📄 Informe PDF»** (`#atc-informe-btn`, `abrirInformeAtc`, ventana `#atci-ov`): el mes arranca en el de la pestaña. **Mes = las
   ATC que ENTRARON** (`atcEntro`); las abiertas de meses anteriores van APARTE. Estado = el de HOY. Cuentas en `atciDatos(mes)` (las de la
   pestaña: `atcEstado`, `atcDias`…; no calcular nada aparte), hojas en `atciHojas(D)`: A4 apaisadas 1123×794 px (portada, resumen + «Lo más

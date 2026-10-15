@@ -14633,3 +14633,7 @@ e importante tipo presentación sobre las ATC del mes, que uno puede elegir el m
 - `tests/test_atc_informe.js` (37): las cuentas con un fixture a mano, el botón, las 8 hojas, cambiar de mes, un mes vacío, el PDF de
   verdad (jsPDF y html2canvas servidos desde `npm i jspdf@2.5.1 html2canvas@1.4.1`: `ATCI_LIBS_DIR`; sin ellos esa parte se saltea
   y lo dice), sin internet → imprimir, y el `@page` que se va al cerrar. Con `ATCI_SALIDA=<carpeta>` deja el PDF y las capturas.
+- **PUBLICADO 15/10 09:31 de Bolivia, `9cdb86d`** (dueño: «publica»): solo `pedidos.html` + la prueba, encima de `8a5f14c`; lo del bot
+  (tarjetas de Claude, `SCRIPT_VERSION_ESPERADA` 14-c) sigue en la rama. En main pasaron `test_atc_informe` 37, `test_atc` 81,
+  `test_atc_4jz` 15, `test_onclicks` 5, `test_cupos_fecha` 7. Batería de la rama: `test_getlog` y `test_escenas_form` dieron 1 roja
+  cada una con la máquina cargada y pasan solas.
