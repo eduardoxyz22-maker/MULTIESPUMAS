@@ -48,6 +48,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var md=document.querySelector('#f-productos .prod-medida'); if(md) md.value='160x190';
     var cn=document.querySelector('#f-productos .prod-cant'); if(cn) cn.value='1';
     if((o.tipo||'ATC')==='ATC'){
+      segSet('f-atc-tipo','gar');   // (15/10, §4lj)
       document.getElementById('f-atc-motivo').value='Hundimiento';
       document.getElementById('f-atc-detalle').value='hundido en el medio\ndel lado derecho, no retoma su forma';
       document.getElementById('f-atc-compra').value='2025-03-10';

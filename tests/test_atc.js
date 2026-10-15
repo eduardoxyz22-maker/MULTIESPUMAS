@@ -73,6 +73,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     if(o.detalle===undefined) o.detalle='no descansa bien, hundido en un lado';
     if(o.compra===undefined)  o.compra='2024-07-13';
     if(o.piezas===undefined)  o.piezas=['col'];
+    if(o.tipo===undefined)    o.tipo='gar';        // (15/10, §4lj) garantía o contra costo, también obligatorio
+    if(o.tipo)                segSet('f-atc-tipo', o.tipo);
     if(o.motivo!=null)  _el('f-atc-motivo').value=o.motivo;
     if(o.detalle!=null) _el('f-atc-detalle').value=o.detalle;
     if(o.compra!=null)  _el('f-atc-compra').value=o.compra;

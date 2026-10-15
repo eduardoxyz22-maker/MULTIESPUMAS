@@ -314,6 +314,7 @@ function INIT(){
     /* (15/10, §4lh) …y lo demás que la ATC exige ahora: detalle, fecha de compra y qué se le recoge */
     const motivoAtc = () => A.evaluate(() => { var s=document.getElementById('f-atc-motivo'); for(var i=0;i<s.options.length;i++){ if(s.options[i].value){ s.value=s.options[i].value; break; } }
       document.getElementById('f-atc-detalle').value='hundido en el medio, no retoma su forma'; document.getElementById('f-atc-compra').value='2024-05-10';
+      segSet('f-atc-tipo','gar');   // (15/10, §4lj) garantía o contra costo
       var pz=document.getElementById('f-pz-col'); if(pz) pz.checked=true; });
     // 5a · adelanto con método, y después el adelanto a 0: la venta queda toda por cobrar
     await empezar(A, 'SE ARREPINTIO DEL ADELANTO', { nota:'2101' });
