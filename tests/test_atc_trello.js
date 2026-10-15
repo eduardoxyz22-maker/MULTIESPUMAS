@@ -124,6 +124,61 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
   });
   chk('tildando la del nombre a mano y poniendo el día, se guarda eso (el detalle sin tildar no)', r.a3==='Retapizado / costura|2022-06-15||https://trello.com/c/CCC333/3-atc-luis' && r.n===4, r);
   chk('después de guardar, la lista se rehace con lo que sigue faltando', r.rest.indexOf('a2')<0, r.rest);
+
+  /* ---- 5. lo leído de los ADJUNTOS de cada tarjeta (§4lf-b: fotos con Claude y Excel, `atc-trello-adjuntos.json`) ---- */
+  r = await page.evaluate(() => {
+    var t=atctSumarAdjuntos({ tit:'x', cels:['70000009'], compra:null, fecha:'', mot:null, det:'', nom:[] },
+      { cels:['7012-3456', '70000009'], fcom:'', fcomTxt:'junio 2022', fuente:'la foto «a.jpg»', reclamo:'  suenan   los resortes del medio', cliente:'Pedro Inventado Suarez', creada:'2026-09-30' });
+    var u=atctSumarAdjuntos({ tit:'y', cels:[], compra:{ f:'2021-01-02', txt:'compro 02/01/2021' }, fecha:'2026-10-01', mot:{ mot:'Patas', txt:'PATA' }, det:'escrito', nom:['ANA'] },
+      { cels:[], fcom:'2019-05-05', fcomTxt:'05/05/2019', fuente:'la factura «f.jpg»', reclamo:'se hundió', cliente:'Otra', creada:'2026-09-01' });
+    var v=atctSumarAdjuntos({ tit:'z', cels:[], compra:{ f:'', txt:'COMPRO 2024' }, fecha:'', mot:null, det:'', nom:[] }, { fcom:'2024-03-03', fcomTxt:'03/03/2024', fuente:'la factura «g.jpg»' });
+    return { t:t, u:u, v:v.compra };
+  });
+  chk('adjunto: suma los celulares, el reclamo, el motivo, el nombre y el día; mes y año solos quedan como texto (de qué archivo sale)',
+    r.t.cels.join()==='70000009,70123456' && r.t.compra && r.t.compra.f==='' && r.t.compra.txt==='junio 2022' && r.t.compra.de==='la foto «a.jpg»' &&
+    r.t.det==='suenan los resortes del medio' && r.t.mot && r.t.mot.mot==='Resortes' && r.t.mot.de==='la foto «a.jpg»' && r.t.nom.join(' ')==='PEDRO INVENTADO SUAREZ' && r.t.fecha==='2026-09-30', r.t);
+  chk('adjunto: lo que el texto de la tarjeta ya dice NO se reemplaza (fecha entera, motivo, detalle, nombre, día)',
+    r.u.compra.f==='2021-01-02' && !r.u.compra.de && r.u.mot.mot==='Patas' && r.u.det==='escrito' && r.u.nom.join()==='ANA' && r.u.fecha==='2026-10-01', r.u);
+  chk('adjunto: con «COMPRO 2024» en el texto (sin día), la fecha entera de la factura sí entra', r.v.f==='2024-03-03' && r.v.de==='la factura «g.jpg»', r.v);
+
+  await page.evaluate(() => {
+    atctCerrar(); __guardados=[];
+    var ts=function(f){ return new Date(f+'T10:00:00-04:00').getTime(); };
+    var A=function(id, oc, entro, cel, cli, atc){ return { id:id, oc:oc, fecha:'2026-10-20', turno:'AM', cliente:cli, vendedor:'Maria Flores', celular:cel, ts:ts(entro), productos:[{ desc:'TITANIO', medida:'140x190', cant:1, atc:atc }] }; };
+    STATE=[
+      A('b1','ATC 10-011','2026-10-02','70111222','JUAN ROCA', { mot:'Hundimiento', det:'escrito', fcom:'' }),     // el texto dice 13/09/2021: gana al adjunto
+      A('b3','ATC 10-013','2026-10-05','60000003','PEDRO GOMEZ', { mot:'x', det:'y', fcom:'' }),                     // solo el celular del Excel la encuentra
+      A('b5','ATC 10-015','2026-10-07','69999998','NADIE CONOCIDO', { mot:'', det:'', fcom:'' })                     // el celular y la fecha de la factura
+    ];
+    atctTraerAdj=function(){ return Promise.resolve({ generado:'2026-10-15T23:20:00Z', tarjetas:[
+      { sl:'AAA111', fcom:'2020-01-01', fcomTxt:'01/01/2020', fuente:'la foto «x.jpg»', cels:[], cliente:'', reclamo:'' },
+      { sl:'CCC333', fcom:'2022-06-20', fcomTxt:'20/06/2022', fuente:'el Excel «ATC Luis.xlsx»', cels:['60000003'], cliente:'', reclamo:'' },
+      { sl:'FFF666', fcom:'2023-04-10', fcomTxt:'10/04/2023', fuente:'la factura «f.jpg»', cels:['69999998'], cliente:'NADIE CONOCIDO', reclamo:'' },
+      { sl:'ZZZ999', fcom:'2023-01-01', fcomTxt:'01/01/2023', fuente:'la foto', cels:['60000003'], cliente:'', reclamo:'' }       // una tarjeta que el CSV no trae: no se usa
+    ] }); };
+    document.getElementById('atc-trello-btn').click();
+  });
+  await page.waitForTimeout(200);
+  r = await page.evaluate(() => {
+    var f=function(id){ var i=ATCT.filas.findIndex(function(x){ return x.p.id===id; }); return document.getElementById('atct-f'+i); };
+    var cb=function(id, k){ var el=f(id); var c=el && el.querySelector('input[type=checkbox][data-k="'+k+'"]'); return c ? c.checked : null; };
+    var val=function(id, k){ var el=f(id); var c=el && el.querySelector('[data-c="'+k+'"]'); return c ? c.value : null; };
+    return { info:document.getElementById('atct-info').textContent, b1:[val('b1','fcom'), f('b1').innerText], b3:[cb('b3','fcom'), val('b3','fcom'), f('b3').innerText],
+      b5:[cb('b5','fcom'), val('b5','fcom'), cb('b5','mot'), val('b5','mot')] };
+  });
+  chk('arriba dice que se leyeron los adjuntos y cuándo (3 tarjetas del respaldo… 4 con fecha en el archivo)', /📎 fotos y Excel adjuntos leídos el 15\/10\/2026 \(4 con la fecha de compra\)/.test(r.info), r.info);
+  chk('la fecha escrita en la tarjeta gana a la de un adjunto', r.b1[0]==='2021-09-13' && !/📎/.test(r.b1[1]), r.b1);
+  chk('con el celular del Excel se encuentra (tildada) y la fecha dice de qué archivo sale', r.b3[0]===true && r.b3[1]==='2022-06-20' && /📎 En el Excel «ATC Luis\.xlsx» dice «20\/06\/2022»/.test(r.b3[2]) && /mismo celular/.test(r.b3[2]), r.b3);
+  chk('la que no tenía tarjeta ahora la tiene por el celular de la factura: fecha de la factura y motivo del texto', r.b5.join()==='true,2023-04-10,true,Cotización', r.b5);
+  r = await page.evaluate(async () => {
+    atctGuardar();
+    for(var i=0;i<50 && ATCT.ocupado;i++) await new Promise(function(ok){ setTimeout(ok, 50); });
+    var a=atcDe(findById('b5'))||{};
+    return [a.fcom, a.mot, a.tre].join('|');
+  });
+  chk('se guarda con la fecha del adjunto y el enlace de su tarjeta', r==='2023-04-10|Cotización|https://trello.com/c/FFF666/6-atc-otro', r);
+  r = await page.evaluate(() => { atctTomarAdj(null); return [ATCT.adjPor, ATCT.adj, atctAdjTxt()]; });
+  chk('sin el archivo de los adjuntos sigue con el texto y lo dice', r[0]===null && r[1]===null && /todavía sin leer las fotos/.test(r[2]), r);
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

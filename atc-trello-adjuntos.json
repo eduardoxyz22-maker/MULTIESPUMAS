@@ -1,0 +1,2641 @@
+{
+ "generado": "2026-10-15T14:18:10Z",
+ "resumen": {
+  "adjuntos": 124,
+  "con_fecha": 37,
+  "de_antes": 26,
+  "errores": 0,
+  "excel": 82,
+  "excel_casillero": {
+   "fecha": 28,
+   "sin": 50,
+   "texto": 1,
+   "vacio": 3
+  },
+  "fotos": 15,
+  "grandes": 0,
+  "leidos_ia": 0,
+  "otros": 1,
+  "pdf": 0,
+  "pendientes": 0,
+  "sin_clave": 0,
+  "tarjetas": 88,
+  "ya_tenia": 15
+ },
+ "tablero": "cFbJp9DO",
+ "tarjetas": [
+  {
+   "cels": [
+    "75348044"
+   ],
+   "cliente": "OSCAR ORTIZ",
+   "creada": "2026-10-03",
+   "fcom": "2021-11-18",
+   "fcomTxt": "44518",
+   "fuente": "el Excel «ATC_OSCAR_ORTIZ.xlsx»",
+   "reclamo": "SESACION DEL COLCHON NO ESTA TAN FIRME EN LOS LADOS DONDE SE HECHAN.",
+   "sl": "jC50Zywy",
+   "url": "https://trello.com/c/jC50Zywy/89-atc-isabel-03-10-2026-oscar-ortiz"
+  },
+  {
+   "cels": [
+    "70812425"
+   ],
+   "cliente": "CARLOS ERINQUE CAPOBIANCO",
+   "creada": "2026-09-19",
+   "fcom": "2024-02-14",
+   "fcomTxt": "45336",
+   "fuente": "el Excel «ATC_CARLOS_ENRIQUE__CAPOBIANCO_SANDOVAL_LATEX_.xlsx»",
+   "reclamo": "Hundimiento en el colchon Y DEFORMACION",
+   "sl": "BcVtuxae",
+   "url": "https://trello.com/c/BcVtuxae/88-atc-cliente-carlos-enrique-capobibianco-latex"
+  },
+  {
+   "cels": [
+    "70812425"
+   ],
+   "cliente": "CARLOS ERINQUE CAPOBIANCO",
+   "creada": "2026-09-19",
+   "fcom": "2024-02-14",
+   "fcomTxt": "45336",
+   "fuente": "el Excel «ATC_CARLOS_ENRIQUE__CAPOBIANCO_SANDOVAL__.xlsx»",
+   "reclamo": "Hundimiento en el colchon Y DEFORMACION",
+   "sl": "YZ3TuQZ1",
+   "url": "https://trello.com/c/YZ3TuQZ1/87-atc-isabel-cliente-carlos-enrique-capobianco-bambu"
+  },
+  {
+   "cels": [
+    "78000564"
+   ],
+   "cliente": "ESTHER ALVAN TORREZ",
+   "creada": "2026-08-27",
+   "fcom": "2025-09-06",
+   "fcomTxt": "45906",
+   "fuente": "el Excel «ATC_04-08_ESTHER_ALVAN_TORREZ.xlsx»",
+   "reclamo": "el colchon tiene hundimiento es la segunda vez que esta solicitando la atencion - se la atendio el 05/01/2026 por favor solicita que lo revisen bien o que le cambien el colchon",
+   "sl": "7UYvx9tt",
+   "url": "https://trello.com/c/7UYvx9tt/86-atc-carola-04-08-esther-alvan-torrez"
+  },
+  {
+   "cels": [
+    "77374259"
+   ],
+   "cliente": "ALEJANDRO NUÑEZ RODRIGUEZ",
+   "creada": "2026-08-24",
+   "fcom": "2026-05-30",
+   "fcomTxt": "46172",
+   "fuente": "el Excel «ATC_ALEJANDRO_NU%C3%91EZ_RODRIGUEZ.xlsx»",
+   "reclamo": "DEFORMIDAD EN LA PARTE DERECHA DEL COLCHON",
+   "sl": "YshEnHfK",
+   "url": "https://trello.com/c/YshEnHfK/85-atc-alejandro-nu%C3%B1ez-rodriguez"
+  },
+  {
+   "cels": [
+    "78449545"
+   ],
+   "cliente": "LEONELA SOSSA",
+   "creada": "2026-08-19",
+   "fcom": "2021-12-23",
+   "fcomTxt": "44553",
+   "fuente": "el Excel «FORMATO_ATC_2026_-_HEAVEN_(1).xlsx»",
+   "reclamo": "ESTA UNDIDO LOS LATERALES Y MUY  BLANDO = LA CLIENTE LO QUIERE BIEN DURO COMO EL ORO ORTOPEDICO",
+   "sl": "NBYh38Zo",
+   "url": "https://trello.com/c/NBYh38Zo/84-atc-mirian-leonela-sossa"
+  },
+  {
+   "cels": [
+    "77013705"
+   ],
+   "cliente": "BETARIZ MERCUZZHY",
+   "creada": "2026-08-10",
+   "fcom": "2026-08-05",
+   "fcomTxt": "46239",
+   "fuente": "el Excel «ATC_BEATRIZ_MERGUZZHY.xlsx»",
+   "reclamo": "Cliente compro hace unos dias el Oro Anatomico Viscolastico. Quiere que vayan a revisar su colchon porque lo siente durisimo, no es igual a la sensacion que probo en la tienda.",
+   "sl": "JK23bgHn",
+   "url": "https://trello.com/c/JK23bgHn/83-atc-beatriz-merguzzhy"
+  },
+  {
+   "cels": [
+    "77817185"
+   ],
+   "cliente": "CARMEN SCHRUPP TERRAZAS",
+   "creada": "2026-08-03",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL COLCHON EN UNA DE LAS PUNTAS SE BAJA EL SOMIER EN LA PARTE DE ABAJO TIENE COMO UNA TABLA SUELTA Y DONDE AGARRA LA PLANCHA QUE UNE EL COLCHON  -   LA ATENCION ES PARA EL COLCHON Y SOMIER POR FAVOR",
+   "sl": "RpxPadat",
+   "url": "https://trello.com/c/RpxPadat/81-atc-01-08-carola-carmen-schrupp-terrazas"
+  },
+  {
+   "cels": [
+    "77363400"
+   ],
+   "cliente": "CINDY CANEDO",
+   "creada": "2026-08-03",
+   "fcom": "2024-07-13",
+   "fcomTxt": "45486",
+   "fuente": "el Excel «ATENCION_CLIENTE_CINDY_CANEDO_2026_-_HEAVEN_(1)_(1)_(1).xlsx»",
+   "reclamo": "EL COLCHON  ESTA DEFORMADO DE UN LADO EL CLIENTE NO ESTA DESCANSANDO BIEN      POR FAVOR HACERLE LA REPARACION INTERNA ( TIENE GARANTIA LO COMPRO  13-07-2024)       POR FAVOR TAMBIEN LLEVARLE UN COMODIN PARA PRESTARLE",
+   "sl": "jbgFh706",
+   "url": "https://trello.com/c/jbgFh706/80-atcmaria-cindy-canedo"
+  },
+  {
+   "cels": [
+    "76056727"
+   ],
+   "cliente": "DALCY RIVERO",
+   "creada": "2026-07-31",
+   "fcom": "2022-04-01",
+   "fcomTxt": "44652",
+   "fuente": "el Excel «FORMATO_ATC_2026_-_HEAVEN_(1).xlsx»",
+   "reclamo": "ESTA UNDIDO LOS LATERALES--LLEVAR COMODIN-COMPRA 2024 TIENE GARANTIA",
+   "sl": "trFrw2kt",
+   "url": "https://trello.com/c/trFrw2kt/79-atc-mirian"
+  },
+  {
+   "cels": [
+    "71372804"
+   ],
+   "cliente": "VIVIANA BABY POMA BLANCO",
+   "creada": "2026-07-29",
+   "fcom": "2020-11-23",
+   "fcomTxt": "44158",
+   "fuente": "el Excel «COTIZACION_ATENCION_AL_CLIENTE_VIVIANA_BABY_POMA_BLANCO2026_»",
+   "reclamo": "LA CLIENTA QUIERE QUE POR FAVOR LE HAGAN UNA COTIZACION DEL RETAPIZADO DE SU COLCHON EN LA PARTE SUPERIOR",
+   "sl": "sTqv7Zxq",
+   "url": "https://trello.com/c/sTqv7Zxq/78-atcmaria-viviana-baby-poma-blanco"
+  },
+  {
+   "cels": [
+    "78491115"
+   ],
+   "cliente": "ADRIANA DALCY JUSTINIANO VIVEROS",
+   "creada": "2026-07-29",
+   "fcom": "2021-09-13",
+   "fcomTxt": "44452",
+   "fuente": "el Excel «ATENCION_CLIENTE_ADRIANA_DALCY_JUSTINIANO_VIVEROS2026_-_HEAV»",
+   "reclamo": "EL COLCHON   EN LOS LADOS LATERALES SE CREA COMO UN BULTO Y NO ESTA UNIFORME   POR FAVOR HACERLE LA REPARACION INTERNA ( TIENE GARANTIA LO COMPRO EL 13-09-2021) POR FAVOR PROGRAMARLO Y LLAMAR A LA CLIENTA TAMBIEN LLEVAR ",
+   "sl": "dR8xdvhh",
+   "url": "https://trello.com/c/dR8xdvhh/77-atc-maria-adriana-dalcy-justiniano-viveros"
+  },
+  {
+   "cels": [
+    "75587224"
+   ],
+   "cliente": "CARMELO TORRICO - NORKA ELIZABETH",
+   "creada": "2026-07-28",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL SOMIER ESTA QUEBRADO",
+   "sl": "npToNEND",
+   "url": "https://trello.com/c/npToNEND/76-atc-02-07-carola-carmelo-torrico"
+  },
+  {
+   "cels": [
+    "78491115"
+   ],
+   "cliente": "MILTON DIEZ",
+   "creada": "2026-07-23",
+   "fcom": "2022-04-01",
+   "fcomTxt": "44652",
+   "fuente": "el Excel «FORMATO_ATC_2026_-_HEAVEN_(1).xlsx»",
+   "reclamo": "SE DESCOSTURO TODOS LOS LATERALES--LLEVAR COMODIN",
+   "sl": "h8iifxZe",
+   "url": "https://trello.com/c/h8iifxZe/75-atc-mirian-milton-diez"
+  },
+  {
+   "cels": [
+    "77784216"
+   ],
+   "cliente": "KAREN VANESA ESCALANTE",
+   "creada": "2026-07-21",
+   "fcom": "2022-10-19",
+   "fcomTxt": "44853",
+   "fuente": "el Excel «ATC_KAREN_VANESA_ESCALANTE_.xlsx»",
+   "reclamo": "Hundimiento en el colchon . se arruga la tela del forro. Hasta mas de la mitad del colchón",
+   "sl": "8RvniaYx",
+   "url": "https://trello.com/c/8RvniaYx/74-karen-vanesa-escalante"
+  },
+  {
+   "cels": [
+    "61509156"
+   ],
+   "cliente": "ZACARIAS RUA ROMERO",
+   "creada": "2026-07-17",
+   "fcom": "",
+   "fcomTxt": "2022",
+   "fuente": "el Excel «ATC_ZACARIAS_RUA_ROMERO_.xlsx»",
+   "reclamo": "Hundimiento en el colchon",
+   "sl": "1xruGc7f",
+   "url": "https://trello.com/c/1xruGc7f/73-atc-zacarias-rua-romero"
+  },
+  {
+   "cels": [
+    "75353664"
+   ],
+   "cliente": "JUAQN CARVAJAL",
+   "creada": "2026-07-14",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL SOMIER ES MAS PEQUEÑO 137X190 CM = CLIENTE QUIERE QUE MIDA 140X190 CM--COMPRA JUNIO-2026",
+   "sl": "qLzcOOKT",
+   "url": "https://trello.com/c/qLzcOOKT/72-atc-mirian-juan-carvajal"
+  },
+  {
+   "cels": [
+    "75002386"
+   ],
+   "cliente": "ANA MARIA MENDEZ",
+   "creada": "2026-07-10",
+   "fcom": "2022-06-22",
+   "fcomTxt": "miércoles, 22 de junio de 2022",
+   "fuente": "la foto «e0be98ce-e370-4ea6-88d6-dd7da5098274.jpg»",
+   "reclamo": "ESTA 5TA ATC DESDE EL AÑO 2022-PRESENTA EL MISMO PROBLEMA LA ORILLA UNDIDA Y ES SOLO ESA OREILLA-YA USO LA OTRA ORILLA Y ESTA BIEN -NO QUIERE REPARACION QUIERE UN CAMBIO DE PRODUCTO",
+   "sl": "scDxG9IA",
+   "url": "https://trello.com/c/scDxG9IA/71-atc-mirian-ana-maria-mendez"
+  },
+  {
+   "cels": [
+    "70863187"
+   ],
+   "cliente": "lorena oyola arias",
+   "creada": "2026-07-10",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "esta sobresalido en el medio-lo compro 2024 en la tienda de la santos dumont-quiere que recojan el producto 14 o 15 julio",
+   "sl": "KPYUf9DZ",
+   "url": "https://trello.com/c/KPYUf9DZ/70-atc-lorena-oyola-aras"
+  },
+  {
+   "cels": [
+    "70863187",
+    "78464681"
+   ],
+   "cliente": "lorena oyola arias",
+   "creada": "2026-07-07",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "esta sobresalido en el medio-lo compro 2024 en la tienda de la santos dumont-quiere que recojan el producto 14 o 15 julio",
+   "sl": "BtpNNSfD",
+   "url": "https://trello.com/c/BtpNNSfD/69-atenci%C3%B3n-al-cliente-reclamos-y-cotizaci%C3%B3n-de-colchones"
+  },
+  {
+   "cels": [
+    "76015080"
+   ],
+   "cliente": "jesus valenzuela",
+   "creada": "2026-06-30",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "esta undido-compro en la tienda mutualista 2023",
+   "sl": "tG68wBKg",
+   "url": "https://trello.com/c/tG68wBKg/68-atc-mirian-jesus-valenzuela"
+  },
+  {
+   "cels": [
+    "70043865"
+   ],
+   "cliente": "CINTHIA TOMASI HINOJOSA",
+   "creada": "2026-06-26",
+   "fcom": "2021-12-19",
+   "fcomTxt": "OC -19-12-21",
+   "fuente": "la foto «image.png»",
+   "reclamo": "La clienta dice que tiene undimiento, en los dos lados donde uno se acuestan y tambien por favor que se lo revisen los resortes gracias( tiene garantia lo compro el 19-12-2021) Por favor, programarlo y avisarle a la clie",
+   "sl": "ye4Yy1Rq",
+   "url": "https://trello.com/c/ye4Yy1Rq/67-atcmaria-cinthia-tomasi-hinojosa"
+  },
+  {
+   "cels": [
+    "70043865"
+   ],
+   "cliente": "CINTHIA TOMASI H",
+   "creada": "2026-06-26",
+   "fcom": "2021-09-09",
+   "fcomTxt": "jueves, 9 de septiembre de 2021",
+   "fuente": "la foto «image.png»",
+   "reclamo": "La clienta dice que tiene undimiento, y se sinten los resortes estan levantandose ( tiene garantia lo compro el 09-09-2021) Por favor, programarlo y avisarle a la clienta gracias E",
+   "sl": "JnBB2IBX",
+   "url": "https://trello.com/c/JnBB2IBX/66-atcmaria-cinthia-tomasi-h"
+  },
+  {
+   "cels": [
+    "70863187"
+   ],
+   "cliente": "lorena oyola arias",
+   "creada": "2026-06-26",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "esta sobresalido en el medio-lo compro 2024 en la tienda de la santos dumont-quiere que recojan el producto 14 o 15 julio",
+   "sl": "cs5Hs0AB",
+   "url": "https://trello.com/c/cs5Hs0AB/65-atc-mirian-lorena-oyola"
+  },
+  {
+   "cels": [
+    "74664100"
+   ],
+   "cliente": "Concepcion Claros",
+   "creada": "2026-06-23",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "Por favor, la clienta quiere que le coticen el retapizado de su colchon, de una cara, y tambien todo completo. El colchon lo esta recogiendo Israel hoy dia 23-06-26 E",
+   "sl": "24fCO3iV",
+   "url": "https://trello.com/c/24fCO3iV/64-atc-maria-concepcion-claros"
+  },
+  {
+   "cels": [
+    "69173805"
+   ],
+   "cliente": "JUDITH ORTIZ",
+   "creada": "2026-06-19",
+   "fcom": "2026-01-31",
+   "fcomTxt": "46053",
+   "fuente": "el Excel «ATC_JUDITH_ORTIZ.xlsx»",
+   "reclamo": "El colchón no tiene ni 4 meses de uso y hace notamos que se hunde mucho en el lado derecho y eso rotamos con mi pareja al dormir y yo peso 78 kilos y mi pareja 62 lo cual se supone que aguanta más peso , y cuando lo traj",
+   "sl": "Dm5EcR84",
+   "url": "https://trello.com/c/Dm5EcR84/63-atc-judith-ortizxlsx"
+  },
+  {
+   "cels": [
+    "78181991"
+   ],
+   "cliente": "LORENA JAUREGUI",
+   "creada": "2026-06-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "ESTA UNDIDO UNDIDO-LLEVAR COMODIN--NO EN CUENTRA SU GARANTIA INDICA QUE COMPRO SU COLCHON 2022",
+   "sl": "DKafkMoQ",
+   "url": "https://trello.com/c/DKafkMoQ/62-atc-mirian-lorena-jauregui"
+  },
+  {
+   "cels": [
+    "77331026"
+   ],
+   "cliente": "JUAN CARLOS TORREZ QUISBERT",
+   "creada": "2026-06-16",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "COMPRA NOV-2025 EN ROHO- LA TELA DEL EDREDONADO ESTA DESPRENDIDO DEL COLCHON-QUIERE Q LO PEGUEN BIEN--LLEVAR COMODIN",
+   "sl": "1fVQOMSd",
+   "url": "https://trello.com/c/1fVQOMSd/61-atc-mirian-juan-carlos-torrez"
+  },
+  {
+   "cels": [
+    "74664100"
+   ],
+   "cliente": "Concepcion Claros",
+   "creada": "2026-06-15",
+   "fcom": "2021-08-16",
+   "fcomTxt": "lunes, 16 de agosto de 2021",
+   "fuente": "la foto «image.png»",
+   "reclamo": "El colchon tiene undimiento en las dos partes donde se acuesta  y edredonado esta como desprendido (le cubre la garantia lo compro el 16-agosto 2021) Por favor programarlo para avisarle al cliente tambien llevar un comod",
+   "sl": "2OnkZZCy",
+   "url": "https://trello.com/c/2OnkZZCy/60-atcmaria-concepcion-claros"
+  },
+  {
+   "cels": [
+    "75023220"
+   ],
+   "cliente": "ERWIN VARGAS",
+   "creada": "2026-06-09",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL HUECO DE LA MADERA ESTA MAL NO AGARRA LA PATITA= REVISAR EL SOMIER = COMPRO ASE 2 AÑOS EN LA TIEWNDA BUENOS AIRES = NO ENCUENTRA SU GARANTIA DICE",
+   "sl": "67u6KRug",
+   "url": "https://trello.com/c/67u6KRug/59-atc-mirian-erwin-vargas"
+  },
+  {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "creada": "2026-06-01",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "El colchon ya lo recogio el Sr. Israel Lopez  hoy dia lunes 01-06-26 pero la clienta quiere que le coticen por favor tambien el pegado de las espumas y tambien revisar la parte interna. (Es cllienta de los Mueble Liberta",
+   "sl": "UutFp2Df",
+   "url": "https://trello.com/c/UutFp2Df/58-atcmaria-maria-lourdes-campbell"
+  },
+  {
+   "cels": [
+    "70913804"
+   ],
+   "cliente": "WALTER MOLLINEDO",
+   "creada": "2026-05-29",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "TIENE LA TELA ANTERIOR QUE SALIO CON DEFECTO QUE SE HACE HUEQUITO = LO CUAL CUBRE LA GARANTIA",
+   "sl": "0g5OXRef",
+   "url": "https://trello.com/c/0g5OXRef/57-atc-mirian-walter-mollenedo"
+  },
+  {
+   "cels": [
+    "75023220"
+   ],
+   "cliente": "JOAQUIN VARGAS",
+   "creada": "2026-05-26",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "SE ROMPIO LA MADERA DONDE VAS LAS PATAS DEL SOMIER = 2 PATAS--CLIENTE COMPRO 2024 COMPRO EN LA TIENDA BS AS",
+   "sl": "qQhF6QtR",
+   "url": "https://trello.com/c/qQhF6QtR/56-atc-mirian-joaquin-vargas"
+  },
+  {
+   "cels": [
+    "73513535"
+   ],
+   "cliente": "ruben dario calle",
+   "creada": "2026-05-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "esta descosturado, SUENA LOS RESORTES- y ESTA undido los laterales-llevar comodin-perdio su garantia-es amigo de la sra TATIANA ARAUZ-LA VENTA ESTA ANOMBRE DE RUBEN DARIO CALLE  o  CLAUDIA NOGALES",
+   "sl": "IxwNAVwG",
+   "url": "https://trello.com/c/IxwNAVwG/55-atc-mirian-ruben-dario-calle"
+  },
+  {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "creada": "2026-05-15",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "sl": "gwyGDiyR",
+   "url": "https://trello.com/c/gwyGDiyR/54-atcmaria-maria-lourdes-campbell"
+  },
+  {
+   "cels": [],
+   "cliente": "JUAN FERNANDO MENDEZ STELZER",
+   "creada": "2026-05-11",
+   "fcom": "2025-09-19",
+   "fcomTxt": "viernes, 19 de septiembre de 2025",
+   "fuente": "la foto «931be884-ca4f-46a9-9554-10df39c732ac.jpg»",
+   "reclamo": "",
+   "sl": "Nl4RjOfg",
+   "url": "https://trello.com/c/Nl4RjOfg/53-atc-mirian-juan-fernando-mendez"
+  },
+  {
+   "cels": [
+    "67974848"
+   ],
+   "cliente": "MORONI SALAZAR",
+   "creada": "2026-05-11",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "TIENE UNDIMIENTO COMPRO 2022 CON LA SRA NANCY--LLEVAR COMODIN---CALLE YAPACANI 309-VILLA BONITA ZONA URUBO",
+   "sl": "7M5PULcU",
+   "url": "https://trello.com/c/7M5PULcU/52-atc-isabel-moroni-salazar"
+  },
+  {
+   "cels": [
+    "73170103"
+   ],
+   "cliente": "katty lijeron",
+   "creada": "2026-05-05",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "Por favor hacer una cotizacion reparacion interna tiene undimientos en la orilla (no tiene garantia) E",
+   "sl": "Xp6RGhM1",
+   "url": "https://trello.com/c/Xp6RGhM1/51-atcmaria-katty-lijeron"
+  },
+  {
+   "cels": [
+    "72176832"
+   ],
+   "cliente": "VIVIANA DELGADILLO",
+   "creada": "2026-05-05",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL CLIENTE DICE QUE SU COLCHON TIENE UNDIMIENTO SE VE DESDE EL LADO IZQUIERDO EL 3ER RESORTE HASTA EL 6TO POR FAVOR QUIERE UNA COTIZACION YA NO TIENE GARANTIA (ESPERO SU PRONTA RESPUESTA PARA AVISARLE A LA CLIENTA GRACIA",
+   "sl": "I7ceXJ8r",
+   "url": "https://trello.com/c/I7ceXJ8r/50-atcmaria-viviana-delgadillo"
+  },
+  {
+   "cels": [
+    "69000087"
+   ],
+   "cliente": "ERIKA VARGAS ROSAS",
+   "creada": "2026-04-30",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "LA TELA SE ISO AHUGERITOS, VINO ESE LOTE DE MALA CALIDAD-POR LO CUAL SI CUBRE LA GARANTIA-LLEVAR COMODIN",
+   "sl": "F61B4I9O",
+   "url": "https://trello.com/c/F61B4I9O/49-arc-mirian-erika-vargas"
+  },
+  {
+   "cels": [
+    "77377400"
+   ],
+   "cliente": "ORLANDO LANDIVAR JORDAN",
+   "creada": "2026-04-30",
+   "fcom": "2022-12-05",
+   "fcomTxt": "05/12/2022",
+   "fuente": "la factura «e46443b4-135a-4177-87ce-2840ec459cb8.jpg»",
+   "reclamo": "CLIENTE COMPRO EN ROHO SEMIPEDIC 1,5 PLZ EL 05-12-2022--LOS RESORTES ESTAN SOBRESALIDOS-EL COLCHON DEFORMADO",
+   "sl": "3bhmqnUp",
+   "url": "https://trello.com/c/3bhmqnUp/48-atc-mirian-orlando-landivar"
+  },
+  {
+   "cels": [
+    "73102866"
+   ],
+   "cliente": "ALEXIS GUARANA",
+   "creada": "2026-04-28",
+   "fcom": "2024-01-09",
+   "fcomTxt": "45300",
+   "fuente": "el Excel «ATC_ALEXIS_GUARANA.xlsx»",
+   "reclamo": "Descosturado en la tela que rodea el colchon y enlas orillas ha perdido consistencia como si no tuviera resortes.",
+   "sl": "JSoSgwHw",
+   "url": "https://trello.com/c/JSoSgwHw/47-atc-alexis-guarana"
+  },
+  {
+   "cels": [],
+   "cliente": "NANCY NOGALES",
+   "creada": "2026-04-27",
+   "fcom": "2025-10-15",
+   "fcomTxt": "15/10/2025",
+   "fuente": "la factura «WhatsApp_Image_2026-04-27_at_4.20.45_PM.jpeg»",
+   "reclamo": "Hundimiento del colchón ortopédico; se realizó cambio por garantía el 25/4/26.",
+   "sl": "iRKHpg7N",
+   "url": "https://trello.com/c/iRKHpg7N/46-atc-charcas-el-dia-25-4-26-se-realizo-cambio-de-colchon-por-hundimiento-ortopedico-20-plz-el-cliente-dejo-el-colchon-hundido-en"
+  },
+  {
+   "cels": [
+    "73170103"
+   ],
+   "cliente": "katty lijeron",
+   "creada": "2026-04-25",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "Por favor hacer una cotizacion reparacion interna tiene undimientos en la orilla (no tiene garantia) E",
+   "sl": "XGcgUbCk",
+   "url": "https://trello.com/c/XGcgUbCk/44-atcmaria"
+  },
+  {
+   "cels": [
+    "75678775",
+    "69242223"
+   ],
+   "cliente": "ROSA MARIA LIMA",
+   "creada": "2026-04-14",
+   "fcom": "2021-05-11",
+   "fcomTxt": "11/05/2021",
+   "fuente": "la factura «WhatsApp_Image_2026-04-14_at_11.36.45_AM.jpeg»",
+   "reclamo": "EL CLIENTE DICE QUE SU COLCHON TIENE UNDIMIENTO EN LOS DOS LADOS LATERALES  DONDE DUERMEN NO ESTAN DURMIENTO BIEN DICE QUE SU ESPOSA EMBARAZADA ESTA CON UN DOLOR DE CIATICO (TIENE GARANTIA LO COMPRO EL 11-05-2021) POR FA",
+   "sl": "UwqPyBdW",
+   "url": "https://trello.com/c/UwqPyBdW/40-atc-maria"
+  },
+  {
+   "cels": [
+    "72646033"
+   ],
+   "cliente": "elizabeth ROSY CAYOJA VIDAL",
+   "creada": "2026-04-11",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL CLIENTE COMPRO 26-03-2026-- INDICA QUE SUENA PENSO Q ERA LA CAMA PERO NO ES",
+   "sl": "eo1WhRQ1",
+   "url": "https://trello.com/c/eo1WhRQ1/38-atc-mirian-elizabeth-cayoja"
+  },
+  {
+   "cels": [
+    "70833394"
+   ],
+   "cliente": "ENRIQUE URENDA AILY",
+   "creada": "2026-04-02",
+   "fcom": "2022-11-01",
+   "fcomTxt": "44866",
+   "fuente": "el Excel «ATC_03-03_ENRIQUE_URENDA_AILY.xlsx»",
+   "reclamo": "SIENTE HUNDIMIENTO POR PARTES EN SU COLCHON",
+   "sl": "BonocdY1",
+   "url": "https://trello.com/c/BonocdY1/37-atc-03-03-carola-enrique-urenda"
+  },
+  {
+   "cels": [
+    "72646033"
+   ],
+   "cliente": "elizabeth ROSY CAYOJA VIDAL",
+   "creada": "2026-03-26",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL CLIENTE COMPRO 26-03-2026-- INDICA QUE SUENA PENSO Q ERA LA CAMA PERO NO ES",
+   "sl": "IWUPT4VU",
+   "url": "https://trello.com/c/IWUPT4VU/36-atc-mirian-elizabeth-cayoya"
+  },
+  {
+   "cels": [
+    "72686220"
+   ],
+   "cliente": "ARIEL ARANIBAR",
+   "creada": "2026-03-24",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL CLIENTE DICE QUE LA PATITA DE SU SOMIER NO AJUSTA LE QUEDA BAILANDA POR FAVOR IR A SU DOMICILIO A REVISARLO POR AHÍ SU SOMIER ESTA MAL ( TIENE GARANTIA LO COMPRO 29-12-2021) EL SOLO ESTA EN SU DOMICILIO DESPUES DE LAS",
+   "sl": "nsyNdAWy",
+   "url": "https://trello.com/c/nsyNdAWy/33-atc-maria-cliente-ariel-aranibar"
+  },
+  {
+   "cels": [
+    "76009909"
+   ],
+   "cliente": "DANIEL VALVERDE",
+   "creada": "2026-03-20",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "SE SIENTE LOS RESORTES Y TAMBIEN SUENAN-LLEVAR COMODIN",
+   "sl": "pPSqaIpI",
+   "url": "https://trello.com/c/pPSqaIpI/32-atc-mirian-daniel-valverde"
+  },
+  {
+   "cels": [
+    "75324238"
+   ],
+   "cliente": "Victor Hugo Salvarierra",
+   "creada": "2026-03-20",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "La clienta quiere que le hagan una cotizacion de su colchon  tiene undimiento en la parte donde van las caderas en el lado de su esposo, y en lado de ella (no tiene garantia) Por favor, espero su pronta respuesta para av",
+   "sl": "lEq6gOAq",
+   "url": "https://trello.com/c/lEq6gOAq/39-atc-maria"
+  },
+  {
+   "cels": [
+    "77038555"
+   ],
+   "cliente": "Susana Vargas",
+   "creada": "2026-03-20",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "Por favor hacer una cotizacion de retapizado  ambas caras del colchon no cubre la garantia (Por favor, tambien hacer la cotizacion con la tela del especial semiortopedico serian dos cotizaciones ) estare atenta a su pron",
+   "sl": "gcOX2HPX",
+   "url": "https://trello.com/c/gcOX2HPX/31-atc-maria"
+  },
+  {
+   "cels": [
+    "77813441"
+   ],
+   "cliente": "ELDER ARAUZ",
+   "creada": "2026-03-19",
+   "fcom": "2021-07-26",
+   "fcomTxt": "lunes, 26 de julio de 2021",
+   "fuente": "la foto «WhatsApp_Image_2026-03-19_at_3.27.40_PM.jpeg»",
+   "reclamo": "El cliente dice que tiene undimiento y tambien suenan los resortes no esta descansando bien tiene garantia lo compro 26 de julio del 2021 (por favor tambien hacer la cotizacion del retapizado por qur no cubre la garantia",
+   "sl": "5Kw3pLXd",
+   "url": "https://trello.com/c/5Kw3pLXd/30-atc-maria"
+  },
+  {
+   "cels": [
+    "70833394"
+   ],
+   "cliente": "LEIDY ALCOBA CAMPOS",
+   "creada": "2026-03-19",
+   "fcom": "2022-02-05",
+   "fcomTxt": "44597",
+   "fuente": "el Excel «ATC_01-03_LEIDY_ALCOBA_CAMPOS.xlsx»",
+   "reclamo": "se ha desprendido el edredonado se levanta su garantia esta a nombre de juan carlos palavecino morales",
+   "sl": "pG7SOO72",
+   "url": "https://trello.com/c/pG7SOO72/29-atc-leidy-alcoba-campos"
+  },
+  {
+   "cels": [
+    "77813441"
+   ],
+   "cliente": "ELDER ARAUZ",
+   "creada": "2026-03-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "El cliente dice que tiene undimiento y tambien suenan los resortes no esta descansando bien tiene garantia lo compro 26 de julio del 2021 (por favor tambien hacer la cotizacion del retapizado por qur no cubre la garantia",
+   "sl": "hNenIlDI",
+   "url": "https://trello.com/c/hNenIlDI/28-atc-elder-arauz"
+  },
+  {
+   "cels": [
+    "70960666"
+   ],
+   "cliente": "mauricio rene olea reque",
+   "creada": "2026-03-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "historial del colchon: compro 15-09-2020 viscolastico 2,5 plz -se le hiso una atc 07-09-2022 (en la cual le cambiaron el colchon por el oro ortopedico 2,5 plz)---y en24-10-2024 SE HIZO ATC- Y  fefrero-2026 se le hiso OTR",
+   "sl": "8wY4lw50",
+   "url": "https://trello.com/c/8wY4lw50/27-atc-mirian-mauricio-olea"
+  },
+  {
+   "cels": [
+    "77312767"
+   ],
+   "cliente": "MOIRA  CRISTINA CASTEDO",
+   "creada": "2026-03-19",
+   "fcom": "2023-05-18",
+   "fcomTxt": "45064",
+   "fuente": "el Excel «ATC_-_MOIRA_CRISTINA_CASTEDO.xlsx»",
+   "reclamo": "COMPRO 5 COLCHONES TROPICALES Y UNO DE ELLOS TIENE LOS RESORTES DESPROPORCIONADOS Y CON POCO TIEMPO DE USO. Resortes del borde sobresalidos",
+   "sl": "U5vNseI1",
+   "url": "https://trello.com/c/U5vNseI1/26-atc-moira-cristina-castedo"
+  },
+  {
+   "cels": [
+    "76650610"
+   ],
+   "cliente": "VIVIAN ESCALANTE PANIAGUA",
+   "creada": "2026-03-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "SE SIENTE LOS RESORTES DE LOPS LATERALES-Y LE LASTIMA DICE--TIENEG ARANTIA --ES DEL 2023",
+   "sl": "C2GDcnzV",
+   "url": "https://trello.com/c/C2GDcnzV/25-atc-mirian-vivian-escalante-paniagua"
+  },
+  {
+   "cels": [
+    "70860506"
+   ],
+   "cliente": "juan pablo bejarano",
+   "creada": "2026-03-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "quiere cotizar-retapizado completo",
+   "sl": "VffAOaMy",
+   "url": "https://trello.com/c/VffAOaMy/24-atc-mirian-juan-pablo-bejarano"
+  },
+  {
+   "cels": [
+    "60861514"
+   ],
+   "cliente": "ROCIO ZELAYA",
+   "creada": "2026-03-19",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "LO SIENTE MUY CALIENTE EN LA ESPALDA BAJA-FECHA DE ENTREGA-23-02-2026",
+   "sl": "UvJdrvZT",
+   "url": "https://trello.com/c/UvJdrvZT/23-atc-mirian-rocio-zelaya"
+  },
+  {
+   "cels": [
+    "73102866"
+   ],
+   "cliente": "TATIANA AMUSQUIVAR",
+   "creada": "2026-01-30",
+   "fcom": "2022-12-09",
+   "fcomTxt": "44904",
+   "fuente": "el Excel «Copia_de_TATIANA_AMUSQUIVAR.xlsx»",
+   "reclamo": "EL COLCHON TIENE HUNDIMIENTOS Y SE SIENTEN LOS RESORTES, VINO EL AÑO PASADO , LO LLEVARON Y LO ARREGLARON PERO QUEDÓ MAL CON BOLAS. QUIERE  CAMBIAR POR OTRO COLCHON, YA QUE SE LO HAN ARREGLADO UNA VEZ .",
+   "sl": "0Kxjfh2z",
+   "url": "https://trello.com/c/0Kxjfh2z/21-atc-tatiana-amusquivar"
+  },
+  {
+   "cels": [],
+   "cliente": "RUTH MONTECINOS",
+   "creada": "2026-01-21",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL COLCHON ESTA MUY UNDIDO-EL CAMA BOX ESTA CON LA CAJA SALIDA Y SE SALIO LAS PATAS CON RUEDAS-SIN GARANTIA--COTIZAR TRABAJO",
+   "sl": "HjYKHCiL",
+   "url": "https://trello.com/c/HjYKHCiL/20-atc-ruth-montecinos"
+  },
+  {
+   "cels": [
+    "72608237"
+   ],
+   "cliente": "CESAR SANCHEZ",
+   "creada": "2026-01-17",
+   "fcom": "2022-06-29",
+   "fcomTxt": "29/06/2022",
+   "fuente": "el Excel «ATC_CESAR_SANCHEZ.xlsx»",
+   "reclamo": "EL CLIENTE INDICA QUE EL CAJON DE ESPUMA ESTA APLASTADO, TIENE GARANTIA. RECOGER DE 3 A 5 AVISAR UNA HORA ANTES NO VIVE NADIE",
+   "sl": "7sPUh44C",
+   "url": "https://trello.com/c/7sPUh44C/19-atc-cesar-sanchez-roho"
+  },
+  {
+   "cels": [
+    "77859684"
+   ],
+   "cliente": "SAMUEL CUELLAR",
+   "creada": "2026-01-17",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "SE ROMPIO 1 PATA CON RUEDA--CAMBIAR TODAS LAS RUEDAS X FIJAS = LLEVAR 4 PATAS FJAS",
+   "sl": "jyAyedfw",
+   "url": "https://trello.com/c/jyAyedfw/18-atc-samuel-cuellar"
+  },
+  {
+   "cels": [
+    "75004885"
+   ],
+   "cliente": "JAVIER GUTIERREZ  VALLE",
+   "creada": "2026-01-17",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL COLCHON NO TIENE GARANTIA, REPARACION PARTE INTERNA,SE COBRARA EL MONTO DE BS 1842",
+   "sl": "jyQ4bOCf",
+   "url": "https://trello.com/c/jyQ4bOCf/17-atc-javier-gutierrez-valle"
+  },
+  {
+   "cels": [
+    "78520120"
+   ],
+   "cliente": "VALENTINA ROESSLER",
+   "creada": "2026-01-17",
+   "fcom": "2022-05-12",
+   "fcomTxt": "44693",
+   "fuente": "el Excel «ATC_VALENTINA_ROESSLER.xlsx»",
+   "reclamo": "EL CLIENTE INDICA QUE EL COLCHON TIENE UN BULTO ASI COMO UNA BOLITA EN EL PILLOW Y LE MOLESTA PARA DESCANSAR. TIENE GARANTIA",
+   "sl": "oZNx9ntO",
+   "url": "https://trello.com/c/oZNx9ntO/16-atc-valentina-roessler"
+  },
+  {
+   "cels": [
+    "68784033"
+   ],
+   "cliente": "ROBERTO CARLOS GUTIERREZ",
+   "creada": "2026-01-17",
+   "fcom": "2023-02-13",
+   "fcomTxt": "13/02/2023",
+   "fuente": "el Excel «ATC_ROBERTO_CARLOS_GUTIERREZ.xlsx»",
+   "reclamo": "EL COLCHON TIENE HUNDIMIENTO, CUBRE GARANTIA,  NO REQUIERE COMODIN.",
+   "sl": "VqB7dIeN",
+   "url": "https://trello.com/c/VqB7dIeN/15-atc-roberto-carlos-gutierrez"
+  },
+  {
+   "cels": [
+    "78585813"
+   ],
+   "cliente": "LY MASSIEL CASTEDO SORIA",
+   "creada": "2026-01-17",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "SE QUEBRO LA MADERA EN UNA ESQUINA DE LA PATA--COTIZAR EL TRABAJO",
+   "sl": "HHqZGztf",
+   "url": "https://trello.com/c/HHqZGztf/14-atc-mirian-ly-massielcastedo-soria-cotizar-trabajo"
+  },
+  {
+   "cels": [
+    "75015430"
+   ],
+   "cliente": "willian albert escobar",
+   "creada": "2026-01-17",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "el colchon esta undido--tien garantia-llevar comodin",
+   "sl": "BnL7wOEy",
+   "url": "https://trello.com/c/BnL7wOEy/13-atc-mirian-willian-escobar"
+  },
+  {
+   "cels": [
+    "75034633"
+   ],
+   "cliente": "MILENKA MENACHO",
+   "creada": "2026-01-17",
+   "fcom": "2024-05-27",
+   "fcomTxt": "45439",
+   "fuente": "el Excel «ATC_03-11_MILENKA_MENACHO.xlsx»",
+   "reclamo": "LE HA SALIDO UNAS BOLITAS A LA TELA DEL EDREDONADO",
+   "sl": "RQgYCRty",
+   "url": "https://trello.com/c/RQgYCRty/12-atc-03-11-milenka-menacho"
+  },
+  {
+   "cels": [
+    "78000564"
+   ],
+   "cliente": "ESTHER ALVAN TORREZ",
+   "creada": "2026-01-17",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "EL COLCHON ESTA UNDIDOLLEVAR COMODIN",
+   "sl": "LS791aHp",
+   "url": "https://trello.com/c/LS791aHp/11-atc-esther-alvan-torrez"
+  },
+  {
+   "cels": [
+    "72632522"
+   ],
+   "cliente": "JULIA ALVAREZ",
+   "creada": "2026-01-17",
+   "fcom": "2025-10-31",
+   "fcomTxt": "31/10/2025",
+   "fuente": "el Excel «ATC_JULIA_ALVAREZ.xlsx»",
+   "reclamo": "LA CLIENTA INDICA QUE EL COLCHON TIENE UN SONIDO RARO QUE NO LA DEJA DESCANSAR BIEN, ELLA COMPRO COLCHON Y SOMIER, QUIERE UNA SOLUCION LO MAS RAPIDO POSIBLE CASO CONTRARIO PIDE EL CAMBIO DE COLCHON.",
+   "sl": "LFih8V91",
+   "url": "https://trello.com/c/LFih8V91/10-atc-julia-alvarez"
+  },
+  {
+   "cels": [
+    "66994565"
+   ],
+   "cliente": "RICARDO  FERNANDEZ BEJARANO",
+   "creada": "2025-12-13",
+   "fcom": "2023-07-29",
+   "fcomTxt": "29/07/2023",
+   "fuente": "el Excel «ATC_RICARDO_FERNADEZ_BEJARANO.xlsx»",
+   "reclamo": "EL CLIENTE INDICA QUE LA ORILLA DEL COLCHON ESTA MUY  FLEXIBLE. TIENE GARANTIA LLEVAR COMODIN",
+   "sl": "16cY8JGj",
+   "url": "https://trello.com/c/16cY8JGj/8-atc-ricardo-fernandez-bejarano"
+  },
+  {
+   "cels": [
+    "72100758"
+   ],
+   "cliente": "MARCELO JOHNSON MUÑIZ",
+   "creada": "2025-12-10",
+   "fcom": "2020-11-25",
+   "fcomTxt": "25/11/2020",
+   "fuente": "el Excel «ATC_MARCELO_JOHNSON_MU%C3%91IZ.xlsx»",
+   "reclamo": "EL CLIENTE TIENE UN COLCHON PLATA SEMIORTOPEDICO 2 PLZ Y PLATA JUNIOR DE 1,5 PLZ EN AMBOS CASOS TIENE HUNDIMIENTO. SOLICITA COTIZACION DE CAMBIO DE PANEL Y SOLICITA RETAPIZADO PRECIOS POR SEPARADO. NO TIENE GARANTIA. LO ",
+   "sl": "zxcsrICW",
+   "url": "https://trello.com/c/zxcsrICW/7-atc-marcelo-johnson-mu%C3%B1iz"
+  },
+  {
+   "cels": [
+    "65029201"
+   ],
+   "cliente": "JOSELIN CHAVEZ SUAREZ",
+   "creada": "2025-12-10",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "",
+   "reclamo": "CAMBIAR LAS PATAS DEL SOMIER 6 UND-ESTAN DISPAREJAS--EL COLCHON ESTA UNDIDO--LLEVAR COMODIN",
+   "sl": "OIMNEOdy",
+   "url": "https://trello.com/c/OIMNEOdy/5-atc-joselin-chavez-suarez"
+  },
+  {
+   "cels": [
+    "75078342"
+   ],
+   "cliente": "INI GERALDINE FEENEY SUAREZ",
+   "creada": "2025-12-10",
+   "fcom": "2022-08-10",
+   "fcomTxt": "44783",
+   "fuente": "el Excel «ATC_01-12_INI_GERALDINE_FEENEY_SUAREZ.xlsx»",
+   "reclamo": "SE HA BAJADO EN LAS ORILLAS POR FAVOR ENVIAR A 2 O MAS PERSONAS PORQUE DEBEN BAJARLO POR EL BALCON",
+   "sl": "qRFronOD",
+   "url": "https://trello.com/c/qRFronOD/3-ini-geraldine-feeney-suarez"
+  },
+  {
+   "cels": [
+    "78501760"
+   ],
+   "cliente": "PAOLA SILVANA GUZMAN VARGAS",
+   "creada": "2025-12-10",
+   "fcom": "2020-11-25",
+   "fcomTxt": "25/11/2020",
+   "fuente": "el Excel «ATC_PAOLA_SILVANA_GUZMAN_VARGASxlsx.xlsx»",
+   "reclamo": "EL COLCHON TIENE HUNDIMIENTO Y LOS RESORTES LASTIMAN,CUBRE GARANTIA, URGENTE POR FAVOR LA GARANTIA VENCE FIN DE MES",
+   "sl": "LLuGpnYn",
+   "url": "https://trello.com/c/LLuGpnYn/6-atc-paola-silvana-guzman"
+  }
+ ],
+ "vistos": {
+  "6939ecaa34a65e937188f357": {
+   "cels": [
+    "75078342"
+   ],
+   "cliente": "INI GERALDINE FEENEY SUAREZ",
+   "fcom": "2022-08-10",
+   "fcomTxt": "44783",
+   "fuente": "el Excel «ATC_01-12_INI_GERALDINE_FEENEY_SUAREZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE HA BAJADO EN LAS ORILLAS POR FAVOR ENVIAR A 2 O MAS PERSONAS PORQUE DEBEN BAJARLO POR EL BALCON",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6939ed568659198ee895b521": {
+   "cels": [
+    "65029201"
+   ],
+   "cliente": "JOSELIN CHAVEZ SUAREZ",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "CAMBIAR LAS PATAS DEL SOMIER 6 UND-ESTAN DISPAREJAS--EL COLCHON ESTA UNDIDO--LLEVAR COMODIN",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6939ed880fa076d6e7bdd3ae": {
+   "cels": [
+    "78501760"
+   ],
+   "cliente": "PAOLA SILVANA GUZMAN VARGAS",
+   "fcom": "2020-11-25",
+   "fcomTxt": "25/11/2020",
+   "fuente": "el Excel «ATC_PAOLA_SILVANA_GUZMAN_VARGASxlsx.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON TIENE HUNDIMIENTO Y LOS RESORTES LASTIMAN,CUBRE GARANTIA, URGENTE POR FAVOR LA GARANTIA VENCE FIN DE MES",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6939ede1ca76239067c48fc6": {
+   "cels": [
+    "72100758"
+   ],
+   "cliente": "MARCELO JOHNSON MUÑIZ",
+   "fcom": "2020-11-25",
+   "fcomTxt": "25/11/2020",
+   "fuente": "el Excel «ATC_MARCELO_JOHNSON_MU%C3%91IZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE TIENE UN COLCHON PLATA SEMIORTOPEDICO 2 PLZ Y PLATA JUNIOR DE 1,5 PLZ EN AMBOS CASOS TIENE HUNDIMIENTO. SOLICITA COTIZACION DE CAMBIO DE PANEL Y SOLICITA RETAPIZADO PRECIOS POR SEPARADO. NO TIENE GARANTIA. LO ",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "693d7aaef73739ff94063d19": {
+   "cels": [
+    "66994565"
+   ],
+   "cliente": "RICARDO  FERNANDEZ BEJARANO",
+   "fcom": "2023-07-29",
+   "fcomTxt": "29/07/2023",
+   "fuente": "el Excel «ATC_RICARDO_FERNADEZ_BEJARANO.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE INDICA QUE LA ORILLA DEL COLCHON ESTA MUY  FLEXIBLE. TIENE GARANTIA LLEVAR COMODIN",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "696b9ad8e8239ac068fecf7b": {
+   "cels": [
+    "72632522"
+   ],
+   "cliente": "JULIA ALVAREZ",
+   "fcom": "2025-10-31",
+   "fcomTxt": "31/10/2025",
+   "fuente": "el Excel «ATC_JULIA_ALVAREZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "LA CLIENTA INDICA QUE EL COLCHON TIENE UN SONIDO RARO QUE NO LA DEJA DESCANSAR BIEN, ELLA COMPRO COLCHON Y SOMIER, QUIERE UNA SOLUCION LO MAS RAPIDO POSIBLE CASO CONTRARIO PIDE EL CAMBIO DE COLCHON.",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "696b9b579aa011acbfcb1699": {
+   "cels": [
+    "78000564"
+   ],
+   "cliente": "ESTHER ALVAN TORREZ",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-3_-_copia.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON ESTA UNDIDOLLEVAR COMODIN",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "696b9bfd0ee1575cc0c1ead7": {
+   "cels": [
+    "75034633"
+   ],
+   "cliente": "MILENKA MENACHO",
+   "fcom": "2024-05-27",
+   "fcomTxt": "45439",
+   "fuente": "el Excel «ATC_03-11_MILENKA_MENACHO.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "LE HA SALIDO UNAS BOLITAS A LA TELA DEL EDREDONADO",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "696b9cfeea5b5a2cc1926963": {
+   "cels": [
+    "75015430"
+   ],
+   "cliente": "willian albert escobar",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN_WILLIAN_ESCOBAR.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "el colchon esta undido--tien garantia-llevar comodin",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "696b9dd0fa7259011db9621e": {
+   "cels": [
+    "78585813"
+   ],
+   "cliente": "LY MASSIEL CASTEDO SORIA",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-LY_MASSIELCASTEDO_SORIA--COTIZAR-TRABAJO.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE QUEBRO LA MADERA EN UNA ESQUINA DE LA PATA--COTIZAR EL TRABAJO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "696b9e353281ae1ce77f3bfa": {
+   "cels": [
+    "68784033"
+   ],
+   "cliente": "ROBERTO CARLOS GUTIERREZ",
+   "fcom": "2023-02-13",
+   "fcomTxt": "13/02/2023",
+   "fuente": "el Excel «ATC_ROBERTO_CARLOS_GUTIERREZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON TIENE HUNDIMIENTO, CUBRE GARANTIA,  NO REQUIERE COMODIN.",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "696b9ead4d2b480550ac2498": {
+   "cels": [
+    "78520120"
+   ],
+   "cliente": "VALENTINA ROESSLER",
+   "fcom": "2022-05-12",
+   "fcomTxt": "44693",
+   "fuente": "el Excel «ATC_VALENTINA_ROESSLER.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE INDICA QUE EL COLCHON TIENE UN BULTO ASI COMO UNA BOLITA EN EL PILLOW Y LE MOLESTA PARA DESCANSAR. TIENE GARANTIA",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "696b9ef91bb57f3184e6d2f0": {
+   "cels": [
+    "75004885"
+   ],
+   "cliente": "JAVIER GUTIERREZ  VALLE",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC_JAVIER_GUTIERREZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON NO TIENE GARANTIA, REPARACION PARTE INTERNA,SE COBRARA EL MONTO DE BS 1842",
+   "rot": "vacio",
+   "tipo": "excel"
+  },
+  "696b9f667653461152171044": {
+   "cels": [
+    "77859684"
+   ],
+   "cliente": "SAMUEL CUELLAR",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-SAMUEL_CUELLAR.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE ROMPIO 1 PATA CON RUEDA--CAMBIAR TODAS LAS RUEDAS X FIJAS = LLEVAR 4 PATAS FJAS",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "696b9fd8781e7fe290cb79b0": {
+   "cels": [
+    "72608237"
+   ],
+   "cliente": "CESAR SANCHEZ",
+   "fcom": "2022-06-29",
+   "fcomTxt": "29/06/2022",
+   "fuente": "el Excel «ATC_CESAR_SANCHEZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE INDICA QUE EL CAJON DE ESPUMA ESTA APLASTADO, TIENE GARANTIA. RECOGER DE 3 A 5 AVISAR UNA HORA ANTES NO VIVE NADIE",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6971342f3c3ece1702a54e3f": {
+   "cels": [],
+   "cliente": "RUTH MONTECINOS",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-_RUTH_MONTECINOS.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON ESTA MUY UNDIDO-EL CAMA BOX ESTA CON LA CAJA SALIDA Y SE SALIO LAS PATAS CON RUEDAS-SIN GARANTIA--COTIZAR TRABAJO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "697d19183f705ddfddca4e6b": {
+   "cels": [
+    "73102866"
+   ],
+   "cliente": "TATIANA AMUSQUIVAR",
+   "fcom": "2022-12-09",
+   "fcomTxt": "44904",
+   "fuente": "el Excel «Copia_de_TATIANA_AMUSQUIVAR.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON TIENE HUNDIMIENTOS Y SE SIENTEN LOS RESORTES, VINO EL AÑO PASADO , LO LLEVARON Y LO ARREGLARON PERO QUEDÓ MAL CON BOLAS. QUIERE  CAMBIAR POR OTRO COLCHON, YA QUE SE LO HAN ARREGLADO UNA VEZ .",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "69bc6508e555b6dabe3de7a6": {
+   "cels": [
+    "60861514"
+   ],
+   "cliente": "ROCIO ZELAYA",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC_MIRIAN---ROCIO_ZELAYA.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "LO SIENTE MUY CALIENTE EN LA ESPALDA BAJA-FECHA DE ENTREGA-23-02-2026",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bc65aea52114f6cc03984a": {
+   "cels": [
+    "70860506"
+   ],
+   "cliente": "juan pablo bejarano",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN--JUAN_PABLO_BEJARANO.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "quiere cotizar-retapizado completo",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bc663e6b71485fd0e02b93": {
+   "cels": [
+    "76650610"
+   ],
+   "cliente": "VIVIAN ESCALANTE PANIAGUA",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN--VIVIAN_ESCALANTE_PANIAGUA.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE SIENTE LOS RESORTES DE LOPS LATERALES-Y LE LASTIMA DICE--TIENEG ARANTIA --ES DEL 2023",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bc673f7322994034c72feb": {
+   "cels": [
+    "77312767"
+   ],
+   "cliente": "MOIRA  CRISTINA CASTEDO",
+   "fcom": "2023-05-18",
+   "fcomTxt": "45064",
+   "fuente": "el Excel «ATC_-_MOIRA_CRISTINA_CASTEDO.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "COMPRO 5 COLCHONES TROPICALES Y UNO DE ELLOS TIENE LOS RESORTES DESPROPORCIONADOS Y CON POCO TIEMPO DE USO. Resortes del borde sobresalidos",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "69bc6be9040153b27179eafe": {
+   "cels": [
+    "70960666"
+   ],
+   "cliente": "mauricio rene olea reque",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC_MIRIAN--MAURICIO_OLEA.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "historial del colchon: compro 15-09-2020 viscolastico 2,5 plz -se le hiso una atc 07-09-2022 (en la cual le cambiaron el colchon por el oro ortopedico 2,5 plz)---y en24-10-2024 SE HIZO ATC- Y  fefrero-2026 se le hiso OTR",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bc6c6d24126277aa45454f": {
+   "cels": [
+    "77813441"
+   ],
+   "cliente": "ELDER ARAUZ",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-_Elder_Arauz.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "El cliente dice que tiene undimiento y tambien suenan los resortes no esta descansando bien tiene garantia lo compro 26 de julio del 2021 (por favor tambien hacer la cotizacion del retapizado por qur no cubre la garantia",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bc7755997bcfe9ee42524a": {
+   "cels": [
+    "70833394"
+   ],
+   "cliente": "LEIDY ALCOBA CAMPOS",
+   "fcom": "2022-02-05",
+   "fcomTxt": "44597",
+   "fuente": "el Excel «ATC_01-03_LEIDY_ALCOBA_CAMPOS.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "se ha desprendido el edredonado se levanta su garantia esta a nombre de juan carlos palavecino morales",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "69bc7968492e3a6ca4b5c9d2": {
+   "cels": [
+    "77813441"
+   ],
+   "cliente": "ELDER ARAUZ",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Elder_Arauz(1)_(1)_(1)_(1)_(1)_(1)_(2)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "El cliente dice que tiene undimiento y tambien suenan los resortes no esta descansando bien tiene garantia lo compro 26 de julio del 2021 (por favor tambien hacer la cotizacion del retapizado por qur no cubre la garantia",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bc79b98ca5a38108722d7e": {
+   "cels": [],
+   "cliente": "Elder Arauz",
+   "fcom": "2021-07-26",
+   "fcomTxt": "lunes, 26 de julio de 2021",
+   "fuente": "la foto «WhatsApp_Image_2026-03-19_at_3.27.40_PM.jpeg»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "69bda39d293744f8e6061ef1": {
+   "cels": [
+    "77038555"
+   ],
+   "cliente": "Susana Vargas",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Cotizacion_clienta_Susana_Vargas(1)_(1)_»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor hacer una cotizacion de retapizado  ambas caras del colchon no cubre la garantia (Por favor, tambien hacer la cotizacion con la tela del especial semiortopedico serian dos cotizaciones ) estare atenta a su pron",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69bdb758126c34fde14a5478": {
+   "cels": [
+    "76009909"
+   ],
+   "cliente": "DANIEL VALVERDE",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE SIENTE LOS RESORTES Y TAMBIEN SUENAN-LLEVAR COMODIN",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69c2a59d102751f885f10381": {
+   "cels": [
+    "72686220"
+   ],
+   "cliente": "ARIEL ARANIBAR",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Ariel_Aranibar1)_(1)_(1)_(1)_(1)_(1)_(2)»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE DICE QUE LA PATITA DE SU SOMIER NO AJUSTA LE QUEDA BAILANDA POR FAVOR IR A SU DOMICILIO A REVISARLO POR AHÍ SU SOMIER ESTA MAL ( TIENE GARANTIA LO COMPRO 29-12-2021) EL SOLO ESTA EN SU DOMICILIO DESPUES DE LAS",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69ce7d35827411d3f53b9e4f": {
+   "cels": [
+    "70833394"
+   ],
+   "cliente": "ENRIQUE URENDA AILY",
+   "fcom": "2022-11-01",
+   "fcomTxt": "44866",
+   "fuente": "el Excel «ATC_03-03_ENRIQUE_URENDA_AILY.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SIENTE HUNDIMIENTO POR PARTES EN SU COLCHON",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "69da54ccc44162fc9d9183b6": {
+   "cels": [
+    "72646033"
+   ],
+   "cliente": "elizabeth ROSY CAYOJA VIDAL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE COMPRO 26-03-2026-- INDICA QUE SUENA PENSO Q ERA LA CAMA PERO NO ES",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69da54fa27d857fd53d9a4e2": {
+   "cels": [
+    "72646033"
+   ],
+   "cliente": "elizabeth ROSY CAYOJA VIDAL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE COMPRO 26-03-2026-- INDICA QUE SUENA PENSO Q ERA LA CAMA PERO NO ES",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69dd582ebfdc53879cd2ea6c": {
+   "cels": [
+    "75324238"
+   ],
+   "cliente": "Victor Hugo Salvarierra",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Aatencion_al_cliente_Victor_Hugo_Salvatierra_(1)_(1)_(1)_(1)»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "La clienta quiere que le hagan una cotizacion de su colchon  tiene undimiento en la parte donde van las caderas en el lado de su esposo, y en lado de ella (no tiene garantia) Por favor, espero su pronta respuesta para av",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69de649a56903967e5edadc5": {
+   "cels": [
+    "75678775"
+   ],
+   "cliente": "ROSA MARIA LIMA",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Rosa_Maria_Lima1)_(1)_(1)_(1)_(1)_(1)_(2»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE DICE QUE SU COLCHON TIENE UNDIMIENTO EN LOS DOS LADOS LATERALES  DONDE DUERMEN NO ESTAN DURMIENTO BIEN DICE QUE SU ESPOSA EMBARAZADA ESTA CON UN DOLOR DE CIATICO (TIENE GARANTIA LO COMPRO EL 11-05-2021) POR FA",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69de64cbfc59ffbb82448f82": {
+   "cels": [
+    "69242223"
+   ],
+   "cliente": "ROSA MARIA LIMA",
+   "fcom": "2021-05-11",
+   "fcomTxt": "11/05/2021",
+   "fuente": "la factura «WhatsApp_Image_2026-04-14_at_11.36.45_AM.jpeg»",
+   "reclamo": "",
+   "tipo": "factura"
+  },
+  "69ece54bb66e617ffd13cfd7": {
+   "cels": [
+    "73170103"
+   ],
+   "cliente": "katty lijeron",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Cotizacion_Katty_Lijeron(1)_(1)_(1)_(1)_»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor hacer una cotizacion reparacion interna tiene undimientos en la orilla (no tiene garantia) E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69efc3be5f23e25e132d7eb4": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «WhatsApp_Image_2026-04-25_at_3.57.43_PM.jpeg»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "69efc6302abdb588ff845d70": {
+   "cels": [],
+   "cliente": "NANCY NOGALES",
+   "fcom": "2025-10-15",
+   "fcomTxt": "15/10/2025",
+   "fuente": "la factura «WhatsApp_Image_2026-04-27_at_4.20.45_PM.jpeg»",
+   "reclamo": "Hundimiento del colchón ortopédico; se realizó cambio por garantía el 25/4/26.",
+   "tipo": "factura"
+  },
+  "69f0ddeaeb5f6e7526092fc9": {
+   "cels": [
+    "73102866"
+   ],
+   "cliente": "ALEXIS GUARANA",
+   "fcom": "2024-01-09",
+   "fcomTxt": "45300",
+   "fuente": "el Excel «ATC_ALEXIS_GUARANA.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Descosturado en la tela que rodea el colchon y enlas orillas ha perdido consistencia como si no tuviera resortes.",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "69f3ea1bcde67320e2bf958d": {
+   "cels": [
+    "77377400"
+   ],
+   "cliente": "ORLANDO LANDIVAR JORDAN",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "CLIENTE COMPRO EN ROHO SEMIPEDIC 1,5 PLZ EL 05-12-2022--LOS RESORTES ESTAN SOBRESALIDOS-EL COLCHON DEFORMADO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69f3ea23c0187ed3fb5967a7": {
+   "cels": [
+    "77377400"
+   ],
+   "cliente": "ORLANDO LANDIVAR JORDAN",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "CLIENTE COMPRO EN ROHO SEMIPEDIC 1,5 PLZ EL 05-12-2022--LOS RESORTES ESTAN SOBRESALIDOS-EL COLCHON DEFORMADO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69f3ea2aec4b39d1908732aa": {
+   "cels": [
+    "77377400"
+   ],
+   "cliente": "ORLANDO LANDIVAR JORDAN",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "CLIENTE COMPRO EN ROHO SEMIPEDIC 1,5 PLZ EL 05-12-2022--LOS RESORTES ESTAN SOBRESALIDOS-EL COLCHON DEFORMADO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69f3eaa99a1ed868a8828494": {
+   "cels": [],
+   "cliente": "ORLANDO LANDIVAR JORDAN",
+   "fcom": "2022-12-05",
+   "fcomTxt": "05/12/2022",
+   "fuente": "la factura «e46443b4-135a-4177-87ce-2840ec459cb8.jpg»",
+   "reclamo": "",
+   "tipo": "factura"
+  },
+  "69f3f135a8229f3f83a4dcfb": {
+   "cels": [
+    "69000087"
+   ],
+   "cliente": "ERIKA VARGAS ROSAS",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "LA TELA SE ISO AHUGERITOS, VINO ESE LOTE DE MALA CALIDAD-POR LO CUAL SI CUBRE LA GARANTIA-LLEVAR COMODIN",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69fa1493a2aefb4a97571b3b": {
+   "cels": [
+    "72176832"
+   ],
+   "cliente": "VIVIANA DELGADILLO",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Viviana_Delgadillo1)_(1)_(1)_(1)_(1)_(1)»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL CLIENTE DICE QUE SU COLCHON TIENE UNDIMIENTO SE VE DESDE EL LADO IZQUIERDO EL 3ER RESORTE HASTA EL 6TO POR FAVOR QUIERE UNA COTIZACION YA NO TIENE GARANTIA (ESPERO SU PRONTA RESPUESTA PARA AVISARLE A LA CLIENTA GRACIA",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "69fa4aa41e0bda965d931c80": {
+   "cels": [
+    "73170103"
+   ],
+   "cliente": "katty lijeron",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «Atencion_al_cliente_Cotizacion_Katty_Lijeron(1)_(1)_(1)_(1)_»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor hacer una cotizacion reparacion interna tiene undimientos en la orilla (no tiene garantia) E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a0243849eaa3fc3cd70ee27": {
+   "cels": [
+    "67974848"
+   ],
+   "cliente": "MORONI SALAZAR",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-ISABEL.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "TIENE UNDIMIENTO COMPRO 2022 CON LA SRA NANCY--LLEVAR COMODIN---CALLE YAPACANI 309-VILLA BONITA ZONA URUBO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a0243f32036ea0f2995060c": {
+   "cels": [
+    "67974848"
+   ],
+   "cliente": "Moroni Salazar",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la factura «a998a474-b522-4d54-9c1b-1c7da7a60f41.jpg»",
+   "reclamo": "",
+   "tipo": "factura"
+  },
+  "6a0245cb7a8cc629a20dce32": {
+   "cels": [],
+   "cliente": "JUAN FERNANDO MENDEZ STELZER",
+   "fcom": "2025-09-19",
+   "fcomTxt": "viernes, 19 de septiembre de 2025",
+   "fuente": "la foto «931be884-ca4f-46a9-9554-10df39c732ac.jpg»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "6a073fa6f5523410a81261a2": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION_AL_CLIENTE_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a07400006ec599b272dde6c": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM.jpeg»",
+   "reclamo": "Costura lateral del colchón descosida, tela separada dejando expuestas las capas de espuma.",
+   "tipo": "foto_producto"
+  },
+  "6a074010e97a1a74554e4aa0": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM_(1).jpeg»",
+   "reclamo": "Tela lateral del colchón rota y despegada, con espumas internas expuestas y deformadas.",
+   "tipo": "foto_producto"
+  },
+  "6a0740518080c715307955bc": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION_AL_CLIENTE_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a07407d58cb3272dc8dea69": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION_AL_CLIENTE_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a0c700327611b4173feadbd": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «86044d47-15d7-4f93-8c2a-6c3a96a10994.jpg»",
+   "reclamo": "",
+   "tipo": "foto_producto"
+  },
+  "6a0c70049b166b6aa3c4b66b": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «80c80005-a1dd-4cdc-9d65-c7ccaa4565fd.jpg»",
+   "reclamo": "Tela lateral del colchón rota, se ve y sale la espuma interior por el costado.",
+   "tipo": "foto_producto"
+  },
+  "6a0c700933608081e9530be2": {
+   "cels": [
+    "73513535"
+   ],
+   "cliente": "ruben dario calle",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "esta descosturado, SUENA LOS RESORTES- y ESTA undido los laterales-llevar comodin-perdio su garantia-es amigo de la sra TATIANA ARAUZ-LA VENTA ESTA ANOMBRE DE RUBEN DARIO CALLE  o  CLAUDIA NOGALES",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a1609b65c6ad615a367d405": {
+   "cels": [
+    "75023220"
+   ],
+   "cliente": "JOAQUIN VARGAS",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE ROMPIO LA MADERA DONDE VAS LAS PATAS DEL SOMIER = 2 PATAS--CLIENTE COMPRO 2024 COMPRO EN LA TIENDA BS AS",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a1609d4ade7521ab7798338": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «372f2f46-f6ff-462e-97c0-d162dcbe46dd.jpg»",
+   "reclamo": "Tela de la base rota con agujero, madera de la base dañada y con mancha alrededor de un orificio.",
+   "tipo": "foto_producto"
+  },
+  "6a1609d6f62e87a051f9d342": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «76b9f006-9d0b-47ca-a5e1-19d74327d7e4.jpg»",
+   "reclamo": "Tela de la base rota/despegada, dejando expuesta la estructura de madera con tornillo.",
+   "tipo": "foto_producto"
+  },
+  "6a19f9081077534ed3ec7931": {
+   "cels": [
+    "70913804"
+   ],
+   "cliente": "WALTER MOLLINEDO",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "TIENE LA TELA ANTERIOR QUE SALIO CON DEFECTO QUE SE HACE HUEQUITO = LO CUAL CUBRE LA GARANTIA",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a1de0dda995e883bb3b8635": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION___CLIENTA_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(1»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "El colchon ya lo recogio el Sr. Israel Lopez  hoy dia lunes 01-06-26 pero la clienta quiere que le coticen por favor tambien el pegado de las espumas y tambien revisar la parte interna. (Es cllienta de los Mueble Liberta",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a287adcc3f248c0bc154122": {
+   "cels": [
+    "75023220"
+   ],
+   "cliente": "ERWIN VARGAS",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL HUECO DE LA MADERA ESTA MAL NO AGARRA LA PATITA= REVISAR EL SOMIER = COMPRO ASE 2 AÑOS EN LA TIEWNDA BUENOS AIRES = NO ENCUENTRA SU GARANTIA DICE",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a287adfe24c237801f671ba": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «0cdae8b2-660c-4854-94e8-79866f1a7d42.jpg»",
+   "reclamo": "Tela de la base rota dejando expuesta la madera con un agujero y mancha oscura.",
+   "tipo": "foto_producto"
+  },
+  "6a302c44c352b7794d3529d1": {
+   "cels": [
+    "74664100"
+   ],
+   "cliente": "Concepcion Claros",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION___CLIENTA_CONCEPCION_CLAROS__(1)_(1)_(1)_(1)_(1)_(1»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "El colchon tiene undimiento en las dos partes donde se acuesta  y edredonado esta como desprendido (le cubre la garantia lo compro el 16-agosto 2021) Por favor programarlo para avisarle al cliente tambien llevar un comod",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a302c797fb25be61013e1d5": {
+   "cels": [],
+   "cliente": "CONCEPCION CLAROS",
+   "fcom": "2021-08-16",
+   "fcomTxt": "lunes, 16 de agosto de 2021",
+   "fuente": "la foto «image.png»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "6a3164037a8016a0e41a282e": {
+   "cels": [
+    "77331026"
+   ],
+   "cliente": "JUAN CARLOS TORREZ QUISBERT",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "COMPRA NOV-2025 EN ROHO- LA TELA DEL EDREDONADO ESTA DESPRENDIDO DEL COLCHON-QUIERE Q LO PEGUEN BIEN--LLEVAR COMODIN",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a355516d9a9981bd78ae862": {
+   "cels": [
+    "78181991"
+   ],
+   "cliente": "LORENA JAUREGUI",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "ESTA UNDIDO UNDIDO-LLEVAR COMODIN--NO EN CUENTRA SU GARANTIA INDICA QUE COMPRO SU COLCHON 2022",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a355583f02e7ba3e990a5a2": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «f28c70c6-c769-4eb1-be5f-fbf8c94cd84f.jpg»",
+   "reclamo": "",
+   "tipo": "foto_producto"
+  },
+  "6a359cc75829c6d5dab74a52": {
+   "cels": [
+    "69173805"
+   ],
+   "cliente": "JUDITH ORTIZ",
+   "fcom": "2026-01-31",
+   "fcomTxt": "46053",
+   "fuente": "el Excel «ATC_JUDITH_ORTIZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "El colchón no tiene ni 4 meses de uso y hace notamos que se hunde mucho en el lado derecho y eso rotamos con mi pareja al dormir y yo peso 78 kilos y mi pareja 62 lo cual se supone que aguanta más peso , y cuando lo traj",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a3aa8b533d7cd5087aeab95": {
+   "cels": [
+    "74664100"
+   ],
+   "cliente": "Concepcion Claros",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION___CLIENTA_(cotizacion)__CONCEPCION_CLAROS__(1)_(1)_»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor, la clienta quiere que le coticen el retapizado de su colchon, de una cara, y tambien todo completo. El colchon lo esta recogiendo Israel hoy dia 23-06-26 E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a3edd1c862c704397d7ff89": {
+   "cels": [
+    "70863187"
+   ],
+   "cliente": "lorena oyola arias",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "esta sobresalido en el medio-lo compro 2024 en la tienda de la santos dumont-quiere que recojan el producto 14 o 15 julio",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a3edf408f803ce9f20150d0": {
+   "cels": [
+    "70043865"
+   ],
+   "cliente": "CINTHIA TOMASI H",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION___CLIENTA_CINTHIA_TOMASI_H_(1)_(1)_(1)_(1)_(1)_(1)_»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "La clienta dice que tiene undimiento, y se sinten los resortes estan levantandose ( tiene garantia lo compro el 09-09-2021) Por favor, programarlo y avisarle a la clienta gracias E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a3edf6f858e01ce3709fe6c": {
+   "cels": [],
+   "cliente": "CINTHIA TOMASI H",
+   "fcom": "2021-09-09",
+   "fcomTxt": "jueves, 9 de septiembre de 2021",
+   "fuente": "la foto «image.png»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "6a3f053c875507a6e6db2504": {
+   "cels": [
+    "70043865"
+   ],
+   "cliente": "CINTHIA TOMASI HINOJOSA",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION___CLIENTA_CINTHIA_TOMASI_HINOJOSA_(1)_(1)_(1)_(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "La clienta dice que tiene undimiento, en los dos lados donde uno se acuestan y tambien por favor que se lo revisen los resortes gracias( tiene garantia lo compro el 19-12-2021) Por favor, programarlo y avisarle a la clie",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a3f05691eb217c017862e85": {
+   "cels": [
+    "70043865"
+   ],
+   "cliente": "Cinthia Tomasi Hinojosa",
+   "fcom": "2021-12-19",
+   "fcomTxt": "OC -19-12-21",
+   "fuente": "la foto «image.png»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "6a441765099d603cef9f24e8": {
+   "cels": [
+    "76015080"
+   ],
+   "cliente": "jesus valenzuela",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-teresa-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "esta undido-compro en la tienda mutualista 2023",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a441777566e99f50a143d55": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «356c3b30-b64c-473e-a9ae-27b11789a834.jpg»",
+   "reclamo": "",
+   "tipo": "foto_producto"
+  },
+  "6a4d0917dcf99d7c1f12096c": {
+   "cels": [
+    "70863187"
+   ],
+   "cliente": "lorena oyola arias",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "esta sobresalido en el medio-lo compro 2024 en la tienda de la santos dumont-quiere que recojan el producto 14 o 15 julio",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a4d0917dcf99d7c1f120974": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION_AL_CLIENTE_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a4d0917dcf99d7c1f12097c": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM.jpeg»",
+   "reclamo": "Costura lateral del colchón descosida/abierta, tela separada dejando expuestas las espumas internas.",
+   "tipo": "foto_producto"
+  },
+  "6a4d0917dcf99d7c1f120984": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «WhatsApp_Image_2026-05-14_at_6.20.10_PM_(1).jpeg»",
+   "reclamo": "Tela lateral del colchón rota y despegada, con espumas internas expuestas y deformadas.",
+   "tipo": "foto_producto"
+  },
+  "6a4d0917dcf99d7c1f120986": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION_AL_CLIENTE_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a4d0917dcf99d7c1f120988": {
+   "cels": [
+    "78464681"
+   ],
+   "cliente": "MARIA LOURDES CAMPBELL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATENCION_AL_CLIENTE_COTIZACION_MARIA_LOURDES_CAMPBELL__(1)_(»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Por favor realizar cotizacion de un colchon de 2,0plz el ribete esta todo descosturado. E",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a5189a1b98c76be188f8d89": {
+   "cels": [
+    "70863187"
+   ],
+   "cliente": "lorena oyola arias",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "esta sobresalido en el medio-lo compro 2024 en la tienda de la santos dumont-quiere que recojan el producto 14 o 15 julio",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a518dd66b2b8f8ee5a24d2b": {
+   "cels": [],
+   "cliente": "ANA MARIA MENDEZ",
+   "fcom": "2022-06-22",
+   "fcomTxt": "miércoles, 22 de junio de 2022",
+   "fuente": "la foto «e0be98ce-e370-4ea6-88d6-dd7da5098274.jpg»",
+   "reclamo": "",
+   "tipo": "otro"
+  },
+  "6a518ddc78f0b9fc78d2715f": {
+   "cels": [
+    "75002386"
+   ],
+   "cliente": "ANA MARIA MENDEZ",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-ANA_MARIA_MENDEZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "ESTA 5TA ATC DESDE EL AÑO 2022-PRESENTA EL MISMO PROBLEMA LA ORILLA UNDIDA Y ES SOLO ESA OREILLA-YA USO LA OTRA ORILLA Y ESTA BIEN -NO QUIERE REPARACION QUIERE UN CAMBIO DE PRODUCTO",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a56547fc50f5657cdfe9b57": {
+   "cels": [
+    "75353664"
+   ],
+   "cliente": "JUAQN CARVAJAL",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC-MIRIAN-2.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL SOMIER ES MAS PEQUEÑO 137X190 CM = CLIENTE QUIERE QUE MIDA 140X190 CM--COMPRA JUNIO-2026",
+   "rot": "sin",
+   "tipo": "excel"
+  },
+  "6a5ab2de8fec45d2406c81ed": {
+   "cels": [
+    "61509156"
+   ],
+   "cliente": "ZACARIAS RUA ROMERO",
+   "fcom": "",
+   "fcomTxt": "2022",
+   "fuente": "el Excel «ATC_ZACARIAS_RUA_ROMERO_.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Hundimiento en el colchon",
+   "rot": "texto",
+   "tipo": "excel"
+  },
+  "6a5ab3208d0f925ac1c9aa5c": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «WhatsApp_Image_2026-07-17_at_11.17.29.jpeg»",
+   "reclamo": "",
+   "tipo": "foto_producto"
+  },
+  "6a5fc02f635af32315a173aa": {
+   "cels": [
+    "77784216"
+   ],
+   "cliente": "KAREN VANESA ESCALANTE",
+   "fcom": "2022-10-19",
+   "fcomTxt": "44853",
+   "fuente": "el Excel «ATC_KAREN_VANESA_ESCALANTE_.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Hundimiento en el colchon . se arruga la tela del forro. Hasta mas de la mitad del colchón",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a6293107d1684271ec9f69b": {
+   "cels": [
+    "78491115"
+   ],
+   "cliente": "MILTON DIEZ",
+   "fcom": "2022-04-01",
+   "fcomTxt": "44652",
+   "fuente": "el Excel «FORMATO_ATC_2026_-_HEAVEN_(1).xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SE DESCOSTURO TODOS LOS LATERALES--LLEVAR COMODIN",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a68c2bba50a4e9389bd0b26": {
+   "cels": [
+    "75587224"
+   ],
+   "cliente": "CARMELO TORRICO - NORKA ELIZABETH",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC_02-07_CARMELO_TORRICO_-_NORKA_ELIZABETH.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL SOMIER ESTA QUEBRADO",
+   "rot": "vacio",
+   "tipo": "excel"
+  },
+  "6a68c346a642e65338523fd7": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «9a929713-df39-4528-bfe3-450bc753b647.jpg»",
+   "reclamo": "Base del colchón (somier) hundida/rota en el centro, con la tela inferior desprendida y combada.",
+   "tipo": "foto_producto"
+  },
+  "6a6a2a3d1f85badde568c4a0": {
+   "cels": [
+    "78491115"
+   ],
+   "cliente": "ADRIANA DALCY JUSTINIANO VIVEROS",
+   "fcom": "2021-09-13",
+   "fcomTxt": "44452",
+   "fuente": "el Excel «ATENCION_CLIENTE_ADRIANA_DALCY_JUSTINIANO_VIVEROS2026_-_HEAV»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON   EN LOS LADOS LATERALES SE CREA COMO UN BULTO Y NO ESTA UNIFORME   POR FAVOR HACERLE LA REPARACION INTERNA ( TIENE GARANTIA LO COMPRO EL 13-09-2021) POR FAVOR PROGRAMARLO Y LLAMAR A LA CLIENTA TAMBIEN LLEVAR ",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a6a2bbad534f5671a664808": {
+   "cels": [
+    "71372804"
+   ],
+   "cliente": "VIVIANA BABY POMA BLANCO",
+   "fcom": "2020-11-23",
+   "fcomTxt": "44158",
+   "fuente": "el Excel «COTIZACION_ATENCION_AL_CLIENTE_VIVIANA_BABY_POMA_BLANCO2026_»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "LA CLIENTA QUIERE QUE POR FAVOR LE HAGAN UNA COTIZACION DEL RETAPIZADO DE SU COLCHON EN LA PARTE SUPERIOR",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a6ceba7c8082b9a30536a7d": {
+   "cels": [
+    "76056727"
+   ],
+   "cliente": "DALCY RIVERO",
+   "fcom": "2022-04-01",
+   "fcomTxt": "44652",
+   "fuente": "el Excel «FORMATO_ATC_2026_-_HEAVEN_(1).xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "ESTA UNDIDO LOS LATERALES--LLEVAR COMODIN-COMPRA 2024 TIENE GARANTIA",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a70a1eb3d656db808168aee": {
+   "cels": [
+    "77363400"
+   ],
+   "cliente": "CINDY CANEDO",
+   "fcom": "2024-07-13",
+   "fcomTxt": "45486",
+   "fuente": "el Excel «ATENCION_CLIENTE_CINDY_CANEDO_2026_-_HEAVEN_(1)_(1)_(1).xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON  ESTA DEFORMADO DE UN LADO EL CLIENTE NO ESTA DESCANSANDO BIEN      POR FAVOR HACERLE LA REPARACION INTERNA ( TIENE GARANTIA LO COMPRO  13-07-2024)       POR FAVOR TAMBIEN LLEVARLE UN COMODIN PARA PRESTARLE",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a7118af71f0e736f54bdc9f": {
+   "cels": [
+    "77817185"
+   ],
+   "cliente": "CARMEN SCHRUPP TERRAZAS",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "el Excel «ATC_01-08_CARMEN_SCHRUPP_TERRAZAS.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "EL COLCHON EN UNA DE LAS PUNTAS SE BAJA EL SOMIER EN LA PARTE DE ABAJO TIENE COMO UNA TABLA SUELTA Y DONDE AGARRA LA PLANCHA QUE UNE EL COLCHON  -   LA ATENCION ES PARA EL COLCHON Y SOMIER POR FAVOR",
+   "rot": "vacio",
+   "tipo": "excel"
+  },
+  "6a7118b7c6e06ea3801cbcb5": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «726fe4b6-562c-4b91-a3dd-4ae5600d5a54.jpg»",
+   "reclamo": "",
+   "tipo": "foto_producto"
+  },
+  "6a7118b9e477ff031fa8b7a2": {
+   "cels": [],
+   "cliente": "",
+   "fcom": "",
+   "fcomTxt": "",
+   "fuente": "la foto «b1b13929-7a5b-4079-98f0-0cc635329e91.jpg»",
+   "reclamo": "",
+   "tipo": "foto_producto"
+  },
+  "6a79d401fc24e5db89237a92": {
+   "cels": [
+    "77013705"
+   ],
+   "cliente": "BETARIZ MERCUZZHY",
+   "fcom": "2026-08-05",
+   "fcomTxt": "46239",
+   "fuente": "el Excel «ATC_BEATRIZ_MERGUZZHY.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Cliente compro hace unos dias el Oro Anatomico Viscolastico. Quiere que vayan a revisar su colchon porque lo siente durisimo, no es igual a la sensacion que probo en la tienda.",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a8637351492a43f6ad453a3": {
+   "cels": [
+    "78449545"
+   ],
+   "cliente": "LEONELA SOSSA",
+   "fcom": "2021-12-23",
+   "fcomTxt": "44553",
+   "fuente": "el Excel «FORMATO_ATC_2026_-_HEAVEN_(1).xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "ESTA UNDIDO LOS LATERALES Y MUY  BLANDO = LA CLIENTE LO QUIERE BIEN DURO COMO EL ORO ORTOPEDICO",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a8c957a844978756e434302": {
+   "cels": [
+    "77374259"
+   ],
+   "cliente": "ALEJANDRO NUÑEZ RODRIGUEZ",
+   "fcom": "2026-05-30",
+   "fcomTxt": "46172",
+   "fuente": "el Excel «ATC_ALEJANDRO_NU%C3%91EZ_RODRIGUEZ.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "DEFORMIDAD EN LA PARTE DERECHA DEL COLCHON",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6a9057efe4dfe14ae105777e": {
+   "cels": [
+    "78000564"
+   ],
+   "cliente": "ESTHER ALVAN TORREZ",
+   "fcom": "2025-09-06",
+   "fcomTxt": "45906",
+   "fuente": "el Excel «ATC_04-08_ESTHER_ALVAN_TORREZ.xlsx»",
+   "fx": [
+    "NRO DE FACTURA",
+    "FECHA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "el colchon tiene hundimiento es la segunda vez que esta solicitando la atencion - se la atendio el 05/01/2026 por favor solicita que lo revisen bien o que le cambien el colchon",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6aaec137e43a48de0c0de219": {
+   "cels": [
+    "70812425"
+   ],
+   "cliente": "CARLOS ERINQUE CAPOBIANCO",
+   "fcom": "2024-02-14",
+   "fcomTxt": "45336",
+   "fuente": "el Excel «ATC_CARLOS_ENRIQUE__CAPOBIANCO_SANDOVAL_LATEX_.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Hundimiento en el colchon Y DEFORMACION",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6aaec1ffbb878d4cb3bc64af": {
+   "cels": [
+    "70812425"
+   ],
+   "cliente": "CARLOS ERINQUE CAPOBIANCO",
+   "fcom": "2024-02-14",
+   "fcomTxt": "45336",
+   "fuente": "el Excel «ATC_CARLOS_ENRIQUE__CAPOBIANCO_SANDOVAL__.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "Hundimiento en el colchon Y DEFORMACION",
+   "rot": "fecha",
+   "tipo": "excel"
+  },
+  "6ac11358ba8406bc7431a8ad": {
+   "cels": [
+    "75348044"
+   ],
+   "cliente": "OSCAR ORTIZ",
+   "fcom": "2021-11-18",
+   "fcomTxt": "44518",
+   "fuente": "el Excel «ATC_OSCAR_ORTIZ.xlsx»",
+   "fx": [
+    "FECHA",
+    "NRO DE FACTURA",
+    "FECHA DE COMPRA",
+    "FECHA DE VISITA TECNICA"
+   ],
+   "reclamo": "SESACION DEL COLCHON NO ESTA TAN FIRME EN LOS LADOS DONDE SE HECHAN.",
+   "rot": "fecha",
+   "tipo": "excel"
+  }
+ }
+}
