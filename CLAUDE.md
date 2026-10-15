@@ -715,6 +715,8 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   entran celulares, la fecha si el texto no la tiene entera («📎 En la factura «…» dice…»), reclamo/motivo/nombre si faltan. `tests/test_trello_adjuntos.py` (61).
   **PUBLICADO 15/10 10:19, `e2c3e5f`**. Con los datos reales: fecha entera en 42 de 88 tarjetas (antes 30). 50 Excel son el formato viejo, sin
   casillero de fecha de compra (solo «NRO DE FACTURA»): ahí no hay más que sacar.
+  **Trello se deja de usar (dueño, 15/10)**: el workflow quedó SOLO A MANO (`df92a42`; la clave de Claude de GitHub vence). El CSV y el JSON
+  quedan en el repo como foto final. «Reporte Semanal ATC» sigue prendido hasta que cierren el tablero.
 
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores

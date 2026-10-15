@@ -14702,3 +14702,9 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   leído sin `fx` se relee solo y gratis. El workflow no guarda si solo cambió `generado` (`git diff -I'"generado":'`).
 - **PUBLICADO 15/10 10:19 de Bolivia, `e2c3e5f`** (`pedidos.html` con el parche del panel sobre `f4239a3` + el lector, el workflow, las
   pruebas y el JSON ya leído: la corrida de `main` no gastó en Claude, `d6ef424` solo cambió el resumen). Pages OK.
+- **Trello se deja (dueño, 15/10, 10:3x)**: *«la clave api de claude es de 3 horas, porque el trello ya no se usará, centralizaremos todo
+  en el panel»*. El workflow quedó **solo a mano** (sin cron ni push: con la clave vencida fallaría), publicado en `main` `df92a42`.
+  `atc-semanal.csv` y `atc-trello-adjuntos.json` quedan en el repo: «🔗 Completar con Trello» sigue andando sin Trello. Lo de Trello
+  entra al panel recién cuando el dueño toca «Guardar lo tildado» (desde acá no hay salida a Google). El secreto `ANTHROPIC_API_KEY` de
+  GitHub también lo nombra `panel.yml` (`--bake-ai`), pero la IA horneada está pausada: borrarlo no rompe nada hoy.
+  «Reporte Semanal ATC» (Trello → CSV, 17:00) sigue prendido: apagarlo cuando cierren el tablero.
