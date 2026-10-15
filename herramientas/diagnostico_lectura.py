@@ -704,6 +704,21 @@ def atc_del_panel():
             tot["sin_datos"] += 1
     print(f"   ATC en la planilla: {tot['n']} · con motivo {tot['mot']} · con fecha de compra {tot['fcom']} · con detalle {tot['det']} · "
           f"guardadas desde «Completar con Trello» {tot['tre']}" + (f" · sin el bloque de datos de ATC {tot['sin_datos']}" if tot["sin_datos"] else ""))
+    # (15/10) las TRAÍDAS de Trello con «📥 Traer al panel» (id atc-tre-<tarjeta>): cuántas y cómo quedaron
+    tra = [p for p in atcs if str(p.get("id") or "").startswith("atc-tre-")]
+    if tra:
+        est = {}
+        for p in tra:
+            a = _atc_de(p) or {}
+            e = "cerrada" if a.get("ent") else ("lista" if a.get("dev") else ("fábrica" if p.get("entregado") else "por recoger"))
+            est[e] = est.get(e, 0) + 1
+        ej = sum(1 for p in tra if "EJEMPLO" in str(p.get("cliente") or "").upper())
+        print(f"   📥 traídas de Trello: {len(tra)} · " + " · ".join(f"{k} {v}" for k, v in sorted(est.items())) +
+              f" · con fecha de compra {sum(1 for p in tra if (_atc_de(p) or {}).get('fcom'))}" +
+              f" · la de ejemplo {ej} · archivadas en Trello {sum(1 for p in tra if 'archivada' in str(p.get('observaciones') or ''))}" +
+              f" · la más vieja guardada {min(datetime.fromtimestamp(float(p.get('ts') or 0) / 1000, BO).date().isoformat() for p in tra)}")
+    else:
+        print("   📥 traídas de Trello: ninguna todavía")
     for m in sorted(por)[-6:]:
         c = por[m]
         print(f"   · entraron en {m}: {c['n']} · motivo {c['mot']} · fecha de compra {c['fcom']} · detalle {c['det']} · desde Trello {c['tre']}")
