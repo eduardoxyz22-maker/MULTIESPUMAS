@@ -14933,3 +14933,52 @@ contra costo (STC)?» (señala `#atc-tipo`). Sinónimos `mail`/`email`/`gmail`/`
 adentro de «en**contra**r» y mandaba «stc» a «¿Cómo busco un pedido?». Se pensó un botón «➕ Nueva ATC» en la pestaña ATC y el dueño dijo que
 no hacía falta (se crea desde «＋ Nuevo pedido» → 🎧 ATC): no se puso. `test_atc_tipo` §8 (→ 48).
 - **PUBLICADO 15/10, `48fe59c`** (encima de `8af3831`), Pages OK. En la copia de main: `test_atc_tipo` 48, `test_asistente` 24.
+
+## §4ll — 🧩 El informe de ATC: «¿Qué líneas y por qué?», por marca (15/10)
+El dueño: *«en el informe que generas falta un consolidado de productos y línea: oro, titanio, especial… ejemplo 9 titanio por hundimiento,
+3 especial semi ortopédico… y separar las marcas, Heaven y Sueña, tú tienes esos datos para separar»*.
+- **Hoja(s) nueva(s) «Por marca y línea»** (`atciLineasHojas`), después de «Productos y marcas» y antes de «Dónde están hoy». Una tabla por
+  marca (Heaven, Sueña, ROHO, sin marca; solo las que tienen ATC): cada **línea** en negrita con su total y una columna por **motivo**, y
+  debajo sus **productos** («↳ TITANIO ICE»). Arriba de cada marca, «Lo que más se repite» (línea × motivo con 2 o más, sin «Otro»):
+  «9 TITANIO por hundimiento». Las marcas van una detrás de otra y llenan la hoja; lo que no entra sigue en la siguiente con «· sigue» y la
+  línea repetida (`ATCI_LIN_ALTO`/`ATCI_LIN_PX`: altos medidos de la hoja impresa; `test_atc_lineas` mide que nada pise el pie).
+- **Marca** (`atciProdsAtc`): la del NOMBRE del producto (`stockMarcaDeNombre`, la de «Qué producir») y, si no la dice, la de quien cargó
+  la ATC (`marcaDe`). FLEX/PEDIC (también DYNAMIPEDIC, SEMI PEDIC) = ROHO. ⚠️ **La dona «De qué marca» cambió a la misma regla**
+  (`atciMarcaAtc`; antes era el vendedor): si no, una hoja decía una cosa y la otra otra. `test_atc_informe` cambió a conciencia
+  (MEMORY FLEX de un vendedor de Sueña ahora es ROHO).
+- **Línea** (`ATCI_LINEAS`, `atciLineaDe`): la PRIMERA palabra de una línea que aparece en el nombre, según la marca. Solo palabras que en
+  la lista de precios son de UNA línea: ICE y LATEX = TITANIO; VISCOLASTICO y BI RELAX = ORO. «SEMI ORTOPEDICO» a secas en Heaven NO se
+  adivina (ESPECIAL o PLATA): va a «Sin línea en el nombre», como lo escribieron. En Sueña SEMIORTOPÉDICO sí es línea.
+- **Producto** (`atciNomBase` + `ATCI_RELLENO`): sin medidas (2.5 PLZ, 160X200 CM, 1 1/2), sin años ni números, sin COLCHON/la marca/
+  «compro»/«retapizado», con las abreviaturas escritas enteras (`ATCI_ALIAS`: TIT, TTIANIO, SEMI ORTOP, DYNAMI PEDIC, ALM/…), sin palabras
+  repetidas («TITANIO ICE TITANIO»). Con un código de la lista (`CODIGOS`), el nombre de la lista. Una ATC cuenta UNA vez por marca, por
+  línea y por producto (colchón + somier de la misma línea = 1 en la línea).
+- Probado con los nombres reales del CSV de Trello (en el scratchpad, nunca en el repo): TIT ICE, SEMI ORTOP, ORO ANATOMICO ORO, SOMIER ICE…
+- `tests/test_atc_lineas.js` §1-4 (marca/línea/producto, cuentas, hojas, tipo). `test_atc_informe` (hojas +1, la dona), `test_atc_tipo` (clave).
+
+## §4lm — 🧹 La barra de ATC: menos botones, «Copiar» en la ficha y el informe solo para gerencia (15/10)
+El dueño, con una captura de la barra: *«acomodá eso por dios, demasiados botones… copiar debería estar en la ficha desplegable al tocar una
+ATC; completar Trello ya no sirve, ya importamos todo»* y *«informe PDF: ese botón solo es para gerencia, solo debe salir cuando colocan la
+clave o ingresan como administración o logística»*.
+- **Fuera de la barra** «📋 Copiar» y «🔗 Completar con Trello». `abrirAtcTrello` y `copiarAtc` (la lista) quedan sin botón (las pruebas los
+  llaman directo). La nota del 📎 del informe ya no manda a «Completar con Trello».
+- **«📋 Copiar» en la ficha** (`#atc-copiar-una` → `copiarAtcUna`): SOLO la fila de esa ATC, sin encabezado, con las MISMAS 17 columnas de
+  siempre (`ATC_COPIA_ENC`/`atcCopiaFila`, que usa también `copiarAtc`), para pegarla debajo de las otras en el Excel.
+- **«📄 Informe PDF» solo gerencia** (`atcVeInforme` = `asisVeAdm`: rol Administración o Logística de «¿Quién está usando el panel?», la clave
+  o el aparato de Administración). `#atc-informe-wrap` arranca escondido y lo pintan `renderAtc`, `mostrarBotonesTodos` (clave) y
+  `quienElegir`; `abrirInformeAtc` no abre para un vendedor (aviso). Contabilidad (`conta`) no lo ve. Bloki lo dice («Con la clave…»).
+- `tests/test_atc_lineas.js` §5-6. `test_atc_trello` (llama `abrirAtcTrello()`), `test_atc_informe` y `test_atc_tipo` (con `UNLOCKED`).
+
+## §4ln — 📍 Dos enlaces que traían la ubicación adentro y el panel no leía (15/10)
+El dueño, con capturas de «📍 Revisar ubicaciones»: *«ahora que tenemos bot con IA, ¿no hay manera de obtener las ubicaciones directo?»*.
+Mirando los enlaces de la lista, dos tipos traen la ubicación EXACTA y `coordsDeLink` no la leía:
+- **Waze** `ul.waze.com/ul?ll=-17.86782500%2C-63.15540100…`: la coma va codificada (`%2C`) y el parámetro se buscaba con «,». Ahora también
+  con `%2C`.
+- **Google Maps con Plus Code** `maps?q=8R6C+72P,+Santa+Cruz+de+la+Sierra…`: el «+» va SIN codificar y al decodificar se volvía espacio
+  («8R6C 72P»). Ahora también se busca el Plus Code en el enlace tal cual.
+- Lo que NO trae ubicación: las búsquedas de Google (`google.com/search?…kgmid=/g/…`), que son el resultado de buscar un negocio, a veces con
+  el nombre en `q=` («DPM EXPRESS CARGO») y a veces sin nada. Esas no se inventan; los `maps.app.goo.gl` los abre el servidor (§4ht).
+- `tests/test_ubicar.js` §5 (27; 2 rojas contra `48fe59c`), y ahora acepta `PEDIDOS=`.
+- **Propuesto, sin hacer (espera al dueño)**: que el bot guarde en el pedido la ubicación que el cliente manda por WhatsApp (📎 → Ubicación:
+  Meta la manda con latitud y longitud; el `.gs` ya la anota en «Bot WhatsApp» como «[ubicación] … (lat, lng)», `waTextoDe_`, pero no la
+  pasa al pedido) y que Claude se la pida al cliente cuando el pedido no tiene una que se pueda leer. Es un `.gs` nuevo.

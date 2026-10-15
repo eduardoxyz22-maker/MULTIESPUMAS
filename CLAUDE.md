@@ -416,6 +416,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   con pedidos de fechas relativas: se pudren solos con el calendario. Los dos tienen el reloj
   de la página clavado en el 08/09 (`page.clock.setFixedTime`). Si se cambia un Excel, mover
   esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
+  📍 **Waze y el Plus Code en `maps?q=`** (§4ln, 15/10): `coordsDeLink` lee `ll=…%2C…` (Waze) y el Plus Code con el «+» sin codificar
+  («maps?q=8R6C+72P,+Santa+Cruz»). Las búsquedas de Google (`google.com/search?…kgmid=`) no traen ubicación: no se inventa. `test_ubicar` §5.
 - **⏳ Primera carga con reintentos y cartel** (§4di): al abrir, el panel muestra la copia
   guardada en el dispositivo (`loadMirror`; en una compu nueva, nada = todo en 0) y pide la
   planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo
@@ -714,6 +716,15 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   (`atcTiposHtml`), columna «Tipo» al FINAL de «📋 Copiar», asunto/mensaje del correo, línea del WhatsApp, «🔧 STC» en `atcChip` y el informe PDF
   (`#atci-tipo`, `atciDatos(mes, tipo)`). `tests/test_atc_tipo.js` (48).
 - **🧽 Bloki lo enseña** (§4lk, PUBLICADO `48fe59c`): «¿Cómo mando el correo de una ATC?» y «¿Cómo separo las de garantía y las de contra costo (STC)?» al final de
+- **🧩 El informe por marca y línea** (§4ll, 15/10; dueño: *«9 titanio por hundimiento, 3 especial semi ortopédico… separar Heaven y Sueña»*): hoja(s)
+  «¿Qué líneas y por qué?» después de «Productos y marcas» (`atciLineasHojas`): por marca, cada línea con su total y una columna por motivo, y
+  debajo sus productos; «Lo que más se repite» (2+). Marca = la del NOMBRE del producto (`stockMarcaDeNombre`), si no la de quien la cargó;
+  ⚠️ la dona «De qué marca» usa la MISMA regla (`atciMarcaAtc`). Línea = la primera palabra de una línea de esa marca (`ATCI_LINEAS`; ICE/LATEX
+  = TITANIO); «SEMI ORTOPEDICO» a secas en Heaven NO se adivina («Sin línea en el nombre»). Producto = `atciNomBase` (sin medidas, abreviaturas
+  enteras). Las marcas llenan la hoja y siguen en otra con «· sigue» (`ATCI_LIN_ALTO`, medido). `tests/test_atc_lineas.js` §1-4.
+- **🧹 La barra de ATC** (§4lm, 15/10; dueño: *«demasiados botones»*): sin «📋 Copiar» ni «🔗 Completar con Trello» (las funciones quedan). «📋 Copiar»
+  va en la ficha (`copiarAtcUna`: SOLO su fila, las mismas 17 columnas, `atcCopiaFila`). **«📄 Informe PDF» solo gerencia** (`atcVeInforme` =
+  `asisVeAdm`: la clave, Administración o Logística; Contabilidad y vendedores no). `tests/test_atc_lineas.js` §5-6.
   `ASIS_AYUDA` (21; 17 para un vendedor). Sinónimo `stc:'costo'` — ⚠️ nunca «contra» (está adentro de «encontrar»).
 
 ## 📄 Informe de ATC en PDF (§4le, 15/10, PUBLICADO 09:31 de Bolivia, `9cdb86d`; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)

@@ -1612,16 +1612,11 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="refreshAtc()">🔄 Actualizar</button>
         </div>
-        <div class="field">
-          <button class="btn btn-ghost btn-sm" onclick="copiarAtc()">📋 Copiar</button>
-        </div>
-        <div class="field">
-          <!-- 📄 (15/10, §4le) El informe del mes en PDF, tipo presentación. -->
+        <!-- 🧹 (15/10, §4lm, dueño: «demasiados botones… copiar debería estar en la ficha… completar Trello ya no sirve, ya importamos
+             todo»): «📋 Copiar» pasó a la ficha de cada ATC (`copiarAtcUna`) y «🔗 Completar con Trello» se sacó (`abrirAtcTrello` queda). -->
+        <div class="field" id="atc-informe-wrap" style="display:none">
+          <!-- 📄 (15/10, §4le) El informe del mes en PDF, tipo presentación. Solo gerencia (§4lm): con la clave o como Administración / Logística. -->
           <button class="btn btn-sm" id="atc-informe-btn" style="background:#a21caf;color:#fff;font-weight:700" onclick="abrirInformeAtc()" title="Un informe del mes elegido, tipo presentación: cuántas entraron, por qué, qué productos, dónde están hoy, cuánto tardan y el detalle">📄 Informe PDF</button>
-        </div>
-        <div class="field">
-          <!-- 🔗 (15/10, §4lf) Completa lo que les falta a las ATC (motivo, fecha de compra, detalle) con las tarjetas de Trello. -->
-          <button class="btn btn-sm" id="atc-trello-btn" style="background:#0079bf;color:#fff;font-weight:700" onclick="abrirAtcTrello()" title="Busca cada ATC del panel en el tablero de Trello (por el celular o el nombre) y propone el motivo, la fecha de compra y el detalle que falten. Revisás y guardás.">🔗 Completar con Trello</button>
         </div>
       </div>
 
@@ -2940,6 +2935,25 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .ai-tabla tr:nth-child(even) td{ background:#fafbfc; }
 .ai-tabla .n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .ai-tabla .oc{ white-space:nowrap; font-weight:800; color:#a21caf; }
+/* 🧩 por marca y línea (§4ll): líneas en negrita, sus productos debajo; cada columna, un motivo */
+.ai-lin-top{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:0 0 14px; font-size:13px; color:#64748b; }
+.ai-lin-top > span:first-child{ font-weight:800; text-transform:uppercase; letter-spacing:.05em; font-size:11.5px; }
+.ai-lin-chip{ border:1px solid #e2e8f0; border-radius:999px; padding:4px 13px; background:#fff; color:#1e293b; font-size:13.5px; white-space:nowrap; }
+.ai-lin-chip b{ font-size:17px; font-weight:900; margin-right:3px; }
+.ai-lin-cab{ display:flex; align-items:baseline; gap:12px; border-left:6px solid #94a3b8; padding:1px 0 1px 12px; margin:0 0 7px; }
+.ai-lin-cab > b{ font-size:20px; font-weight:900; }
+.ai-lin-cab span{ font-size:13.5px; color:#64748b; } .ai-lin-cab span b{ color:#0f172a; }
+.ai-lin th{ white-space:normal; overflow-wrap:normal; word-break:normal; text-transform:none; letter-spacing:0; font-size:10.5px; line-height:1.2; padding:7px 2px; vertical-align:bottom; text-align:center; }
+.ai-lin th:first-child{ text-align:left; padding-left:12px; }
+.ai-lin td{ padding:4px 4px; text-align:center; vertical-align:middle; font-variant-numeric:tabular-nums; }
+.ai-lin tr:nth-child(even) td{ background:transparent; }
+.ai-lin td.ai-lin-n{ text-align:left; padding-left:12px; }
+.ai-lin tr.l td{ border-top:2px solid #e2e8f0; background:#f8fafc; font-weight:800; font-size:13.5px; color:#0f172a; padding-top:6px; padding-bottom:6px; }
+.ai-lin tr.l td.ai-lin-n{ border-left:5px solid #94a3b8; }
+.ai-lin tr.p td{ font-size:12px; color:#334155; }
+.ai-lin tr.p td.ai-lin-n{ padding-left:28px; color:#475569; }
+.ai-lin .ai-lin-c{ display:inline-block; min-width:30px; border-radius:7px; padding:2px 6px; font-weight:800; color:#0f172a; }
+.ai-lin td.t{ font-weight:900; color:#0f172a; }
 .ai-est{ display:inline-block; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:800; white-space:nowrap; color:#fff; }
 .ai-dias{ display:inline-block; min-width:34px; text-align:center; border-radius:999px; padding:2px 7px; font-weight:900; font-size:12px; }
 .ai-dias.ok{ background:#dcfce7; color:#15803d; } .ai-dias.ojo{ background:#fef3c7; color:#b45309; } .ai-dias.mal{ background:#fee2e2; color:#b91c1c; }
@@ -17369,7 +17383,13 @@ function atcLista(sinEstado){
   list.sort(function(a,b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y?1:-1; return (b.ts||0)-(a.ts||0); });
   return list;
 }
+/* 📄 (15/10, §4lm) El informe PDF es para gerencia (dueño: «solo debe salir cuando colocan la clave o ingresan como administración
+   o logística»): la misma regla que lo de logística de Bloki (`asisVeAdm`: el rol elegido en «¿Quién está usando el panel?», la clave
+   o el aparato de Administración). Un vendedor no ve el botón y, si igual llega, `abrirInformeAtc` no abre. */
+function atcVeInforme(){ try{ return asisVeAdm(); }catch(e){ return !!UNLOCKED; } }
+function atcInformeVisible(){ var w=document.getElementById('atc-informe-wrap'); if(w) w.style.display=atcVeInforme() ? '' : 'none'; }
 function renderAtc(){
+  atcInformeVisible();
   llenarSelectAtcMotivo('atc-motivo', true);
   var list=atcLista();
   /* El embudo completo: dónde está trabada cada una. */
@@ -17659,6 +17679,105 @@ function atciContar(list, claveDe){
     .sort(function(a, b){ return (b.n-a.n) || (a.lbl<b.lbl ? -1 : 1); });
 }
 function atciMotivoDe(p){ return atcMotivo(p)||ATCI_SIN_MOTIVO; }
+/* 🧩 (§4ll, 15/10) Marca y línea de cada producto (dueño: «falta un consolidado de productos y línea: oro, titanio, especial…
+   ejemplo 9 titanio por hundimiento, 3 especial semi ortopédico… y separar las marcas, Heaven y Sueña»).
+   · La MARCA sale del nombre del producto (`stockMarcaDeNombre`, la misma de «Qué producir») y, si el nombre no la dice, de quién
+     cargó la ATC (`marcaDe`). FLEX/PEDIC = ROHO, en su propio bloque.
+   · La LÍNEA, de la primera palabra de una línea que aparece en el nombre, según la marca. Solo palabras que en la lista de precios son
+     de UNA línea (ICE y LATEX = TITANIO; VISCOLASTICO y BI RELAX = ORO). «SEMI ORTOPEDICO» a secas en Heaven no se adivina (puede ser
+     ESPECIAL o PLATA): va a «Sin línea en el nombre», escrito como lo cargaron. En Sueña, SEMIORTOPÉDICO sí es una línea.
+   · El PRODUCTO, el nombre sin medidas, sin «COLCHON» ni la marca, con las abreviaturas de siempre (TIT, SEMI ORTOP…). Con un código de
+     la lista de precios, el nombre de la lista. */
+var ATCI_MARCAS=[
+  { k:'heaven', lbl:'Heaven', ico:'💚', col:'#00B5AD', txt:'#0f766e' },
+  { k:'suena',  lbl:'Sueña',  ico:'🛏️', col:'#FFD400', txt:'#a16207' },
+  { k:'roho',   lbl:'ROHO (FLEX / PEDIC)', ico:'🔷', col:'#1d4ed8', txt:'#1d4ed8' },
+  { k:'',       lbl:'Sin marca', ico:'❓', col:'#94a3b8', txt:'#475569' }
+];
+var ATCI_SIN_LINEA='Sin línea en el nombre';
+var ATCI_LINEAS={
+  heaven:[ [/\bTITANIO\b|\bICE\b|\bLATEX\b/, 'TITANIO'], [/\bORO\b|\bVISCOLASTICO\b|\bBI RELAX\b/, 'ORO'], [/\bESPECIAL\b/, 'ESPECIAL'], [/\bPLATA\b/, 'PLATA'],
+           [/\bDREAM\b/, 'DREAM'], [/\bTROPICAL\b/, 'TROPICAL'], [/\bALMOHADAS?\b/, 'ALMOHADA'], [/\bCOLCHONETA\b/, 'COLCHONETA'] ],
+  suena:[ [/\bPREMIER DELUXE\b/, 'PREMIER DELUXE'], [/\bCONFORT PLUS\b/, 'CONFORT PLUS'], [/\bESSENTIAL\b/, 'ESSENTIAL'], [/\bLITE\b/, 'LITE'], [/\bSMART\b/, 'SMART'],
+          [/\bSOFT\b/, 'SOFT'], [/\bSEMIORTOPEDICO\b/, 'SEMIORTOPÉDICO'], [/\bORTOPEDICO\b/, 'ORTOPÉDICO'], [/\bBAHIA\b/, 'BAHÍA'], [/\bCARIOCA\b/, 'CARIOCA'],
+          [/\bMOVEL PRO\b/, 'MOVEL PRO'], [/\bCUNA\b/, 'CUNA'], [/\bCAMPING\b|\bCOLCHONETA\b/, 'COLCHONETA'], [/\bRESPALDAR\b/, 'RESPALDAR'] ],
+  roho:[ [/\bFLEX\b/, 'FLEX'], [/PEDIC\b/, 'PEDIC'], [/\bSOMIER NEGRO\b/, 'SOMIER NEGRO'] ]
+};
+var ATCI_ALIAS=[
+  [/\bTTIANIO\b|\bTITANO\b|\bTITANEO\b|\bTIT\b\.?/g, 'TITANIO'], [/\bSEMI[\s.\-]*ORTOP(?:EDICO)?\b\.?/g, 'SEMIORTOPEDICO'], [/\bORTOP\b\.?/g, 'ORTOPEDICO'],
+  [/\bDYNAMI\s*C?\s*-?\s*PEDIC\b/g, 'DYNAMIC PEDIC'], [/\bSEMI\s+PEDIC\b/g, 'SEMIPEDIC'], [/\bBI\s*-?\s*RELAX\b/g, 'BI RELAX'], [/\bAMAZAON\b/g, 'AMAZON'],
+  [/\bALM\b\s*\/?/g, 'ALMOHADA ']
+];
+/* palabras que no dicen qué producto es (la marca la dice el bloque) */
+var ATCI_RELLENO=/\b(?:COLCHON(?:ES)?|DE|DEL|LA|EL|LOS|LAS|UN|UNA|EN|CON|Y|CM|MTS?|PLAZAS?|PLZS?|PZ|MEDIDA|PRODUCTO|COMPRO|COMPLETO|RETAPIZADO|LINEA|MODELO|HEAVEN|SUENA|ROHO)\b/g;
+/* El nombre, listo para buscar la línea: mayúsculas sin tildes, sin medidas y con las abreviaturas escritas enteras. */
+function atciNomBase(t){
+  var s=stockNorm(t);
+  s=s.replace(/\b\d+\s+\d\/\d\b/g, ' ')                                                                    // 1 1/2
+     .replace(/\b\d+(?:[.,]\d+)?\s*(?:PLZS?|PLAZAS?|PZ)\b\.?/g, ' ')                                      // 2.5 PLZ, 2PLZ
+     .replace(/\b\d+(?:[.,]\d+)?\s*[X*]\s*\d+(?:[.,]\d+)?(?:\s*[X*]\s*\d+(?:[.,]\d+)?)?\s*(?:CM|MTS?)?\b/g, ' ')   // 160X200 CM
+     .replace(/\b(?:19|20)\d\d\b/g, ' ');                                                                    // «COMPRO EN 2021»
+  ATCI_ALIAS.forEach(function(a){ s=s.replace(a[0], a[1]); });
+  return s.replace(/[^A-Z0-9 ]+/g, ' ').replace(/\b\d+\b/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function atciLineaDe(marca, s){
+  var L=ATCI_LINEAS[marca]||[], best='', at=1e9;
+  L.forEach(function(r){ var i=s.search(r[0]); if(i>=0 && i<at){ at=i; best=r[1]; } });
+  return best;
+}
+/* Los productos de una ATC con su marca, línea y nombre (dos renglones del mismo producto, una vez). */
+function atciProdsAtc(p){
+  var mv=marcaDe(p && p.vendedor)||'', vis={}, out=[];
+  ((p && p.productos)||[]).forEach(function(x){
+    var cod=String((x && x.codigo)||'').trim().toUpperCase(), c=cod && CODIGOS[cod], orig=c ? c.d : String((x && x.desc)||'');
+    if(!String(orig).trim()) return;
+    var s=atciNomBase(orig);
+    var marca=stockMarcaDeNombre(orig) || (/PEDIC\b|\bFLEX\b|\bROHO\b/.test(s) ? 'roho' : '') || (/\bTITANIO\b|\bICE\b|\bLATEX\b|\bVISCOLASTICO\b|\bBI RELAX\b/.test(s) ? 'heaven' : '') || mv;
+    var lin=atciLineaDe(marca, s)||ATCI_SIN_LINEA;
+    var vist={}, prod=s.replace(ATCI_RELLENO, ' ').split(/\s+/).filter(function(w){ if(!w || vist[w]) return false; vist[w]=1; return true; }).join(' ');
+    prod=prod||s||stockNorm(orig);
+    var k=marca+'|'+lin+'|'+prod;
+    if(vis[k]) return; vis[k]=1;
+    out.push({ marca:marca, lin:lin, prod:prod });
+  });
+  return out;
+}
+/* La marca de una ATC (la dona): la del primer producto; sin productos, la de quién la cargó. */
+function atciMarcaAtc(p){ var x=atciProdsAtc(p)[0]; return x ? x.marca : (marcaDe(p && p.vendedor)||''); }
+/* Por marca → línea → producto, cuántas ATC y por qué. Una ATC cuenta UNA vez por marca, por línea y por producto. */
+function atciLineas(del){
+  var B={}, sinProd=0, ordenMot=ATC_MOTIVOS.concat([ATCI_SIN_MOTIVO]);
+  ATCI_MARCAS.forEach(function(m){ B[m.k]={ k:m.k, lbl:m.lbl, ico:m.ico, col:m.col, txt:m.txt, ids:{}, n:0, mot:{}, L:{} }; });
+  var suma=function(o, id, mot){ if(o.ids[id]) return; o.ids[id]=1; o.n++; o.mot[mot]=(o.mot[mot]||0)+1; };
+  del.forEach(function(p, i){
+    var ps=atciProdsAtc(p), id=p.id||p.oc||('i'+i), mot=atciMotivoDe(p);
+    if(!ps.length){ sinProd++; return; }
+    ps.forEach(function(x){
+      var b=B[x.marca]||B[''];
+      suma(b, id, mot);
+      var L=b.L[x.lin]||(b.L[x.lin]={ lbl:x.lin, sin:(x.lin===ATCI_SIN_LINEA), ids:{}, n:0, mot:{}, P:{} });
+      suma(L, id, mot);
+      var P=L.P[x.prod]||(L.P[x.prod]={ lbl:x.prod, ids:{}, n:0, mot:{} });
+      suma(P, id, mot);
+    });
+  });
+  var porN=function(a, b){ return (b.n-a.n) || (a.lbl<b.lbl ? -1 : 1); };
+  var marcas=ATCI_MARCAS.map(function(m){
+    var b=B[m.k];
+    var mots=Object.keys(b.mot).map(function(t){ return { lbl:t, n:b.mot[t], sin:(t===ATCI_SIN_MOTIVO) }; })
+      .sort(function(a, c){ return (a.sin-c.sin) || (c.n-a.n) || (ordenMot.indexOf(a.lbl)-ordenMot.indexOf(c.lbl)); });
+    var lineas=Object.keys(b.L).map(function(k){
+      var L=b.L[k];
+      return { lbl:L.lbl, sin:L.sin, n:L.n, mot:L.mot, prods:Object.keys(L.P).map(function(q){ var P=L.P[q]; return { lbl:P.lbl, n:P.n, mot:P.mot }; }).sort(porN) };
+    }).sort(function(a, c){ return (a.sin-c.sin) || porN(a, c); });
+    /* lo que más se repite: línea × motivo («9 TITANIO por Hundimiento») */
+    var top=[];
+    lineas.forEach(function(L){ if(L.sin) return; Object.keys(L.mot).forEach(function(t){ if(t!==ATCI_SIN_MOTIVO) top.push({ n:L.mot[t], lin:L.lbl, mot:t }); }); });
+    top.sort(function(a, c){ return (c.n-a.n) || (a.lin<c.lin ? -1 : 1); });
+    return { k:m.k, lbl:m.lbl, ico:m.ico, col:m.col, txt:m.txt, n:b.n, mots:mots, lineas:lineas, top:top.slice(0, 4) };
+  });
+  return { marcas:marcas, sinProd:sinProd };
+}
 function atciMotTopK(mot){ for(var i=0;i<mot.length;i++) if(mot[i].k!==normNombre(ATCI_SIN_MOTIVO)) return mot[i].k; return ''; }
 /* Todas las cuentas del informe. Sin pantalla: se puede probar sola. */
 /* `mes` = 'AAAA-MM' (las que entraron ese mes) o 'todas' (15/10, dueño: «elegir mes seleccionado o TODAS desde el inicio de los
@@ -17702,8 +17821,10 @@ function atciDatos(mes, tipo){
   /* lo que contaron los clientes: primero los del motivo que más se repite */
   var kTop=atciMotTopK(mot), dichos=del.filter(function(p){ return !!String(atcDetalle(p)||'').trim(); })
     .sort(function(a, b){ var x=(normNombre(atciMotivoDe(a))===kTop)?0:1, y=(normNombre(atciMotivoDe(b))===kTop)?0:1; return x-y; }).slice(0, mot.length>6 ? 2 : 4);
-  var marcas=MARCAS.map(function(g){ return { k:g.k, lbl:g.lbl, col:g.col, n:0 }; }).concat([{ k:'', lbl:'Otros', col:'#94a3b8', n:0 }]);
-  del.forEach(function(p){ var k=marcaDe(p.vendedor)||''; marcas.forEach(function(m){ if(m.k===k) m.n++; }); });
+  /* 🧩 (§4ll) la marca es la del PRODUCTO (la misma de la hoja «Por marca y línea»); si el nombre no la dice, la de quién la cargó */
+  var marcas=ATCI_MARCAS.map(function(g){ return { k:g.k, lbl:g.lbl, col:g.col, n:0 }; });
+  del.forEach(function(p){ var k=atciMarcaAtc(p); marcas.forEach(function(m){ if(m.k===k) m.n++; }); });
+  var lin=atciLineas(del);
   /* cuánto hacía que lo había comprado (lo que dice si hay garantía) */
   var edades=ATCI_EDADES.map(function(x){ return { lbl:x.t, n:0 }; }), sinEdad=0, edTre=0, trelloM=atciTrelloMapa();
   del.forEach(function(p){
@@ -17775,7 +17896,7 @@ function atciDatos(mes, tipo){
     fuente: tL ? ('planilla leída a las '+z(new Date(tL).getHours())+':'+z(new Date(tL).getMinutes())) : 'la copia guardada en este aparato',
     n:n, nAnt:delAnt.length, del:del, antes:antes, est:est, cerr:cerr, abiertas:abiertas, sinMot:sinMot, comodin:comodin, comodinAb:comodinAb,
     prom:prom, promAnt:promAnt, med:atciMediana(diasC), max:(diasC.length ? Math.max.apply(null, diasC) : null), mas15:mas15,
-    mot:mot, motTop:motTop, prod:prod, dichos:dichos, vend:vend, marcas:marcas, edades:edades, sinEdad:sinEdad, edTre:edTre, trelloM:trelloM,
+    mot:mot, motTop:motTop, prod:prod, dichos:dichos, vend:vend, marcas:marcas, lin:lin, edades:edades, sinEdad:sinEdad, edTre:edTre, trelloM:trelloM,
     tRec:tRec, tFab:tFab, tVue:tVue, distC:distC, distA:distA, tend:tend, I:I
   };
 }
@@ -17817,7 +17938,7 @@ function atciKpi(col, lbl, val, sub, chico){
 function atciProdTxt(p){ return (p.productos||[]).map(function(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }).filter(Boolean).join(' · ')||'—'; }
 /* 🛒 La fecha de compra (15/10, dueño: «NO ME PUSISTE EL DATO MÁS IMPORTANTE… en la foto de la garantía decía la fecha de compra»):
    la guardada en la ATC; si no está, la que dice Trello (el texto de la tarjeta o lo leído de sus fotos y Excel, §4lf-b), SOLO cuando
-   la tarjeta es del MISMO CELULAR (lo que «Completar con Trello» trae tildado) y la fecha no es posterior a la ATC. Lo de Trello va con
+   la tarjeta es del MISMO CELULAR (lo que «Completar con Trello» traía tildado; el botón se sacó en §4lm) y la fecha no es posterior a la ATC. Lo de Trello va con
    📎 y se dice cuántas faltan guardar: el informe no escribe nada. */
 var ATCI_TRELLO={ tarj:null, cargando:false };
 function atciTraerTrello(){
@@ -17931,6 +18052,79 @@ function atciProductosResto(D){
   }
   return hojas;
 }
+/* 🧩 (§4ll) Qué líneas y por qué, por marca (las que tienen ATC): cada línea con su total y sus motivos, y debajo sus productos.
+   Las marcas van una detrás de otra y llenan la hoja (una marca chica entra debajo de la otra); lo que no entra sigue en la hoja
+   siguiente, con la marca y la línea repetidas arriba. Los altos son de la hoja impresa (ATCI_H): `ATCI_LIN_ALTO` es lo que entra
+   debajo del título (la primera hoja tiene además la explicación). */
+var ATCI_LIN_ALTO={ primera:568, otras:575 }, ATCI_LIN_PX={ cab:40, chips:44, thead:42, l:36, p:30, sep:14 };
+function atciLineasHojas(D){
+  var M=((D.lin && D.lin.marcas)||[]).filter(function(b){ return b.n>0; });
+  if(!M.length) return [];
+  var X=ATCI_LIN_PX, hojas=[], cur=[], usado=0, conSin=false;
+  var cerrar=function(){ if(cur.length) hojas.push({ html:cur.join(''), sin:conSin }); cur=[]; usado=0; conSin=false; };
+  var cabe=function(){ return hojas.length ? ATCI_LIN_ALTO.otras : ATCI_LIN_ALTO.primera; };
+  M.forEach(function(b){
+    var filas=[];
+    b.lineas.forEach(function(L){
+      filas.push({ t:'l', L:L });
+      var solo=(L.prods.length===1 && normNombre(L.prods[0].lbl)===normNombre(L.lbl));
+      if(!solo) L.prods.forEach(function(P){ filas.push({ t:'p', L:L, P:P }); });
+    });
+    var max=0; b.lineas.forEach(function(L){ for(var t in L.mot) if(L.mot[t]>max) max=L.mot[t]; });
+    var mots=b.mots, wN=250, wT=62, wM=Math.max(54, Math.floor((1015-wN-wT)/Math.max(1, mots.length)));
+    var celda=function(n, fuerte){
+      if(!n) return '<td></td>';
+      var a=max ? (0.12+0.55*n/max) : 0.12;
+      return '<td><span class="ai-lin-c" style="background:'+atciTinte(b.col, fuerte ? a : a*0.6)+'">'+n+'</span></td>';
+    };
+    var fila=function(f, sigue){
+      var o=(f.t==='l') ? f.L : f.P, nom;
+      if(f.t==='l') nom='<div class="ai-c1">'+esc(f.L.lbl)+(sigue ? ' <span style="font-weight:600;color:#94a3b8;font-size:11.5px">(sigue)</span>' : '')+'</div>';
+      else nom='<div class="ai-c1">↳ '+esc((normNombre(f.P.lbl)===normNombre(f.L.lbl) && !f.L.sin) ? f.P.lbl+' (sin decir el modelo)' : f.P.lbl)+'</div>';
+      return '<tr class="'+f.t+'"><td class="ai-lin-n"'+(f.t==='l' ? ' style="border-left-color:'+(f.L.sin ? '#cbd5e1' : b.col)+'"' : '')+'>'+nom+'</td>'+
+        '<td class="t">'+(f.t==='l' || sigue ? o.n : '<span style="font-weight:700">'+o.n+'</span>')+'</td>'+
+        mots.map(function(m){ return celda(o.mot[m.lbl]||0, f.t==='l' && !sigue); }).join('')+'</tr>';
+    };
+    var cabT='<colgroup><col style="width:'+wN+'px"><col style="width:'+wT+'px">'+mots.map(function(){ return '<col style="width:'+wM+'px">'; }).join('')+'</colgroup>'+
+      '<thead><tr><th>Línea · producto</th><th>ATC</th>'+mots.map(function(m){ return '<th'+(m.sin ? ' style="color:#dc2626"' : '')+'>'+esc(m.sin ? 'Sin motivo' : m.lbl)+'</th>'; }).join('')+'</tr></thead>';
+    /* lo que más se repite: solo lo que pasó más de una vez (con todo en 1 no dice nada) */
+    var top=b.top.filter(function(x){ return x.n>=2 && x.mot!=='Otro'; });
+    var chips=top.length ? '<div class="ai-lin-top"><span>Lo que más se repite</span>'+top.map(function(x){
+      return '<span class="ai-lin-chip"><b style="color:'+b.txt+'">'+x.n+'</b> '+esc(x.lin)+' por '+esc(x.mot.toLowerCase())+'</span>'; }).join('')+'</div>' : '';
+    var chipsH=top.length ? X.chips*Math.ceil(top.reduce(function(s, x){ return s+x.lin.length+x.mot.length+10; }, 22)/100) : 0;
+    var i=0, primera=true;
+    while(i<filas.length){
+      var cab=X.cab+(primera ? chipsH : 0)+X.thead, sep=usado ? X.sep : 0;
+      if(usado && usado+sep+cab+X.l*2>cabe()){ cerrar(); sep=0; }
+      var lugar=cabe()-usado-sep-cab, alto=0, cuerpo='';
+      if(!primera && filas[i].t==='p'){ cuerpo+=fila({ t:'l', L:filas[i].L }, true); alto+=X.l; }
+      var n0=i;
+      while(i<filas.length){
+        var h=(filas[i].t==='l') ? X.l : X.p;
+        if(alto+h>lugar && i>n0) break;
+        cuerpo+=fila(filas[i], false); alto+=h; i++;
+      }
+      if(filas.slice(n0, i).some(function(f){ return f.L.sin; })) conSin=true;
+      cur.push('<div class="ai-lin-bloque"'+(sep ? ' style="margin-top:'+X.sep+'px"' : '')+'>'+
+        '<div class="ai-lin-cab" style="border-left-color:'+b.col+'"><b style="color:'+b.txt+'">'+b.ico+' '+esc(b.lbl)+'</b>'+
+          '<span><b>'+b.n+'</b> de las '+D.n+' ATC ('+atciPc(b.n, D.n)+'%)'+(primera ? '' : ' · sigue')+'</span></div>'+
+        (primera ? chips : '')+'<table class="ai-tabla ai-lin">'+cabT+'<tbody>'+cuerpo+'</tbody></table></div>');
+      usado+=sep+cab+alto;
+      primera=false;
+      if(i<filas.length) cerrar();
+    }
+  });
+  cerrar();
+  var tot=hojas.length;
+  return hojas.map(function(H, h){
+    var nota='<div class="ai-nota">Cada número es cuántas ATC. Una ATC con dos productos de la misma línea cuenta una vez en la línea.'+
+      (H.sin ? ' «'+esc(ATCI_SIN_LINEA)+'»: el nombre que cargaron no dice la línea (va como lo escribieron).' : '')+
+      (h===tot-1 && D.lin.sinProd ? ' <b>'+D.lin.sinProd+'</b> ATC sin producto anotado no entran acá.' : '')+'</div>';
+    return atciHoja('Por marca y línea', '¿Qué líneas y por qué?'+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''),
+      h ? '' : 'Cada línea con sus motivos y, debajo, sus productos. La marca la dice el producto (si no, quien cargó la ATC).',
+      H.html+nota);
+  });
+}
 function atciDonde(D){
   var pasos='<div class="ai-pasos">'+ATV_PASOS.map(function(o){
     var n=D.est[o.k]||0;
@@ -18022,7 +18216,7 @@ function atciDetalle(D){
           '<td><div class="ai-c2">'+esc(atciCorta(atciProdTxt(p), 46))+'</div></td><td class="n">'+atciCompraTd(p, D)+'</td><td><div class="ai-c2">'+(atcMotivo(p) ? esc(atcMotivo(p)) : '<b style="color:#dc2626">sin motivo</b>')+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td>'+
           '<td><div class="'+(hizo ? 'ai-c1' : 'ai-c2')+'">'+esc(atciCorta(atcDetalle(p)||p.observaciones||'—', hizo ? 36 : 70))+'</div>'+(hizo ? '<div class="ai-c1" style="color:#0f766e">✔ '+esc(atciCorta(hizo, 34))+'</div>' : '')+'</td></tr>';
       }).join('')+'</tbody></table>'+
-      (L.some(function(p){ var c=atciCompra(p, D.trelloM); return c && c.tre; }) ? '<div class="ai-nota">📎 = la fecha de compra la dice Trello (mismo celular) y todavía no está guardada en la ATC: se guarda en «🔗 Completar con Trello».</div>' : '');
+      (L.some(function(p){ var c=atciCompra(p, D.trelloM); return c && c.tre; }) ? '<div class="ai-nota">📎 = la fecha de compra la dice Trello (mismo celular) y todavía no está guardada en la ATC.</div>' : '');
     hojas.push(atciHoja('Detalle', (D.todas ? 'Todas las ATC: '+D.n : 'Las '+D.n+' ATC de '+esc(MESES_ES[+D.mes.slice(5,7)-1]))+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''), '', tabla));
   }
   return hojas;
@@ -18031,7 +18225,7 @@ function atciDetalle(D){
 function atciHojas(D){
   var H=[atciPortada(D)];
   if(D.n){
-    H.push(atciResumen(D), atciMotivos(D), atciProductos(D)); H=H.concat(atciProductosResto(D));
+    H.push(atciResumen(D), atciMotivos(D), atciProductos(D)); H=H.concat(atciProductosResto(D), atciLineasHojas(D));
     H.push(atciDonde(D)); H=H.concat(atciAbiertasResto(D));
     H.push(atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D));
   }
@@ -18060,6 +18254,7 @@ function atciEscala(){
 }
 function abrirInformeAtc(){
   var ov=document.getElementById('atci-ov'); if(!ov) return;
+  if(!atcVeInforme()){ toast('📄 El informe de ATC es para gerencia: entrá con la clave de Administración o como Administración / Logística','err',7000); return; }   // (§4lm)
   var inp=document.getElementById('atci-mes'), hoy=todayStr();
   /* arranca en el mes que se está mirando en la pestaña (o en el de hoy, con «Todo») */
   var mTab=(segVal('atc-mode')==='mes') ? ((document.getElementById('atc-mes')||{}).value||'') : '';
@@ -18771,6 +18966,7 @@ function quienSaludo(v, rol){
 function quienElegir(v, rol){
   v=String(v||'').trim();
   setVendedorMem(v); quienRol(v ? '' : (rol||'')); quienSesion(v || rol || 'ok');
+  try{ atcInformeVisible(); }catch(e){}   // 📄 (§4lm) el informe, solo gerencia
   var f=document.getElementById('f-vendedor');
   if(f && !EDIT_ID){ f.value=v; try{ applyVendedorLite(); }catch(e){} try{ fxFormPintar(); }catch(e){} }
   var m=document.getElementById('mis-vendedor'); if(m) m.value=v;
@@ -19119,6 +19315,7 @@ function verAtc(id){
                      : '<button class="btn btn-sm" style="width:auto;opacity:.55;cursor:not-allowed" disabled title="Primero hay que recogerlo: la devolución se programa después del recojo">🔁 Programar devolución</button>'))+
                    '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
         '<button class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--teal-border);color:#065f5b;font-weight:700" onclick="atcCorreoVer(\''+esc(p.id)+'\')">📧 Correo de la ATC</button>'+   // 📧 (§4li)
+        '<button class="btn btn-ghost btn-sm" id="atc-copiar-una" style="width:auto" onclick="copiarAtcUna(\''+esc(p.id)+'\')" title="Copia esta ATC en una fila, con las mismas columnas de siempre: se pega en el Excel">📋 Copiar</button>'+   // 🧹 (§4lm)
         '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
     '</div>');
@@ -19152,35 +19349,45 @@ function atcTipoMarcar(id, t){
     else toast('⚠️ No se pudo guardar la marca en la planilla. Probá de nuevo en un rato.','err',7000);
   }, function(){ toast('⚠️ No se pudo guardar la marca en la planilla. Probá de nuevo en un rato.','err',7000); });
 }
-/* Copia la matriz para pegarla en WhatsApp o Excel. */
+/* Copia la matriz para pegarla en WhatsApp o Excel.
+   (26/09) Con encabezado —pegada en Excel no se sabía qué era cada columna— y con lo que la
+   matriz muestra desde §4eb: el «recogido de fábrica» y la devolución programada. Van AL FINAL
+   para no correr las de siempre.
+   (15/10) La fecha de compra va al lado de «Entró», donde la puso el dueño a mano en su Excel («ATC_OCTUBRE_2026»): la tiene la ATC
+   y la copia no la traía.
+   (15/10, §4lj) «Tipo» (garantía / contra costo) va AL FINAL, como lo de §4eb: no corre las columnas de siempre.
+   🧹 (15/10, §4lm) El botón de la barra se fue (dueño: «demasiados botones, copiar debería estar en la ficha»): la ficha copia SU
+   fila (`copiarAtcUna`), con las MISMAS columnas, para pegarla debajo de las otras en el Excel. `copiarAtc` (la lista) queda sin botón. */
+var ATC_COPIA_ENC=['N° ATC','Entró','Fecha de compra','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica',
+                   'Al cliente','Días','Qué se hizo','Recogido de fábrica','Devolución programada','Tipo'];
+function atcCopiaFila(p){
+  var d=atcDias(p);
+  return [ocEtiq(p.oc), fmtFecha(atcEntro(p)), (atcFechaCompra(p)?fmtFecha(atcFechaCompra(p)):''), (p.cliente||''), (p.vendedor||''),
+          prodText(p.productos), (atcMotivo(p)||'SIN MOTIVO'), (atcDetalle(p)||''),
+          atcEstadoLbl(atcEstado(p)).lbl.replace(/^\S+\s/,''),
+          (atcRecogida(p)?fmtFecha(atcRecogida(p)):''),
+          (atcDevuelta(p)?fmtFecha(atcDevuelta(p)):''),
+          (atcEntregada(p)?fmtFecha(atcEntregada(p)):''),
+          (d==null?'':(d+' días')), (atcQueSeHizo(p)||''),
+          (atcRecogidoFab(p)?fmtFecha(atcRecogidoFab(p)):''),
+          (atcDevProg(p)?(fmtFecha(atcDevProg(p))+' '+atcDevTurno(p)).trim():''),
+          atcTipoTxt(atcTipo(p))]
+         .map(function(c){ return String(c==null?'':c).replace(/[\t\r\n]+/g,' '); }).join('\t');   // (§4lh) un salto de línea corría las columnas
+}
 function copiarAtc(){
   var list=atcLista();
   if(!list.length){ toast('No hay ATC para copiar','err'); return; }
-  /* (26/09) Con encabezado —pegada en Excel no se sabía qué era cada columna— y con lo que la
-     matriz muestra desde §4eb: el «recogido de fábrica» y la devolución programada. Van AL FINAL
-     para no correr las de siempre.
-     (15/10) La fecha de compra va al lado de «Entró», donde la puso el dueño a mano en su Excel («ATC_OCTUBRE_2026»): la tiene la ATC
-     y la copia no la traía. */
-  /* (15/10, §4lj) «Tipo» (garantía / contra costo) va AL FINAL, como lo de §4eb: no corre las columnas de siempre. */
-  var enc=['N° ATC','Entró','Fecha de compra','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica',
-           'Al cliente','Días','Qué se hizo','Recogido de fábrica','Devolución programada','Tipo'];
   var _tip=(document.getElementById('atc-tipo')||{}).value||'';
-  var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+atciTipoEtq({ tipo:_tip })+'\n\n'+enc.join('\t')+'\n'+
-    list.map(function(p){
-      var d=atcDias(p);
-      return [ocEtiq(p.oc), fmtFecha(atcEntro(p)), (atcFechaCompra(p)?fmtFecha(atcFechaCompra(p)):''), (p.cliente||''), (p.vendedor||''),
-              prodText(p.productos), (atcMotivo(p)||'SIN MOTIVO'), (atcDetalle(p)||''),
-              atcEstadoLbl(atcEstado(p)).lbl.replace(/^\S+\s/,''),
-              (atcRecogida(p)?fmtFecha(atcRecogida(p)):''),
-              (atcDevuelta(p)?fmtFecha(atcDevuelta(p)):''),
-              (atcEntregada(p)?fmtFecha(atcEntregada(p)):''),
-              (d==null?'':(d+' días')), (atcQueSeHizo(p)||''),
-              (atcRecogidoFab(p)?fmtFecha(atcRecogidoFab(p)):''),
-              (atcDevProg(p)?(fmtFecha(atcDevProg(p))+' '+atcDevTurno(p)).trim():''),
-              atcTipoTxt(atcTipo(p))]
-             .map(function(c){ return String(c==null?'':c).replace(/[\t\r\n]+/g,' '); }).join('\t');   // (§4lh) un salto de línea corría las columnas
-    }).join('\n');
+  var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+atciTipoEtq({ tipo:_tip })+'\n\n'+ATC_COPIA_ENC.join('\t')+'\n'+
+    list.map(atcCopiaFila).join('\n');
   copyText(txt); toast('Matriz de ATC copiada ✓','ok');
+}
+/* 📋 La ficha: SOLO la fila de esta ATC (sin encabezado), lista para pegar debajo de las otras en el Excel. */
+function copiarAtcUna(id){
+  var p=STATE.find(function(x){ return x && x.id===id; });
+  if(!p){ toast('No encuentro esa ATC','err'); return; }
+  copyText(atcCopiaFila(p));
+  toast('✓ '+(ocEtiq(p.oc)||'La ATC')+' copiada: pegala en una fila del Excel (mismas columnas de siempre)','ok');
 }
 
 /* ============================================================================
@@ -19674,6 +19881,7 @@ function mostrarBotonesTodos(){
   if(b) b.style.display = UNLOCKED ? '' : 'none';
   // 📈 (28/09) La pestaña «Proyección del mes» de Contabilidad, solo con la contraseña de Administración.
   var py=document.getElementById('cta-tab-proy'); if(py) py.style.display = UNLOCKED ? '' : 'none';
+  try{ atcInformeVisible(); }catch(e){}   // 📄 (§4lm) el informe de ATC, solo gerencia
   if(!UNLOCKED && contaTab()==='proy'){ segSet('cta-tab','ventas'); setContaTab('ventas'); }
   if(!UNLOCKED){ MIS_TODOS=false; CHO_TODOS=false; }
   pintarBotonTodos('mis-todos-btn', MIS_TODOS);
@@ -32075,11 +32283,14 @@ function coordsDeLink(u){
     var ln=(+m[5])+(+m[6])/60+(+m[7])/3600; if(/[WOwo]/.test(m[8])) ln=-ln;
     return validaCoord(la,ln);
   }
-  // 2b) Plus Code en el nombre del lugar (es el pin exacto, más preciso que el "@")
-  var pc=plusCodeDeTexto(d);
+  // 2b) Plus Code en el nombre del lugar (es el pin exacto, más preciso que el "@").
+  //     📍 (15/10, §4ln) también tal cual en el enlace: «maps?q=8R6C+72P,+Santa+Cruz…» trae el «+» SIN codificar, y al decodificar
+  //     se volvía espacio («8R6C 72P») y no se reconocía.
+  var pc=plusCodeDeTexto(d)||plusCodeDeTexto(u);
   if(pc){ var gp=olcCoords(pc); if(gp) return gp; }
-  // 3) parámetros explícitos
+  // 3) parámetros explícitos (📍 §4ln: también con la coma codificada, «ll=-17.867825%2C-63.155401» de Waze)
   if((m=u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return validaCoord(m[1],m[2]);
+  if((m=u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)/i))) return validaCoord(m[1],m[2]);
   // 4) centro del mapa (menos preciso, pero mejor que nada)
   if((m=u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return validaCoord(m[1],m[2]);
   // 5) par suelto en la ruta
@@ -35882,7 +36093,7 @@ var ASIS_AYUDA=[
   { q:'¿Me mostrás el panel? (recorrido guiado)', k:'recorrido guiado tutorial empezar nueva nuevo ayuda aprender mostrar panel', v:'form', f:'#asis-yo', tour:1, p:['Te llevo paso a paso por lo principal: el pedido nuevo, el saldo, el día y Mis pedidos.','Tarda un minuto. Lo podés cortar cuando quieras.'] },
   /* (15/10, dueño: «¿el pendejito ya enseña y sabe también?») lo de las ATC de hoy: el correo (§4li) y garantía / contra costo (§4lj) */
   { q:'¿Cómo mando el correo de una ATC?', k:'correo mail email gmail outlook mandar enviar atc reclamo', v:'atc', f:['#tbl-atc','#atv-cards','#view-atc'], p:['Al guardar una ATC sale «✅ ATC guardada» con el correo ya armado, arriba del mensaje de WhatsApp.','Revisalo y tocá «📧 Abrir en Gmail» (o «✉️ Otro correo»): el correo sale de TU cuenta. También podés «📋 Copiar el mensaje».','El «Para» queda guardado en tu compu: la próxima vez ya está.','Para mandarlo después: en 🎧 ATC abrí la ATC (🔍) y tocá «📧 Correo de la ATC».'] },
-  { q:'¿Cómo separo las de garantía y las de contra costo (STC)?', k:'garantia contra costo stc tipo filtrar separar marcar sin marcar reparacion', v:'atc', f:'#atc-tipo', p:['Al cargar la ATC marcás 🛡️ Garantía o 🔧 Contra costo (STC): sin eso no se guarda.','En 🎧 ATC, el filtro «Tipo» muestra solo una de las dos (o las «❓ Sin marcar»); arriba ves cuántas hay de cada una.','Las viejas sin marcar: abrí su ficha (🔍) y tocá «🛡️ Garantía» o «🔧 Contra costo».','El 📄 Informe PDF también se saca de un solo tipo. Las recogidas y las fechas no cambian.'] }
+  { q:'¿Cómo separo las de garantía y las de contra costo (STC)?', k:'garantia contra costo stc tipo filtrar separar marcar sin marcar reparacion', v:'atc', f:'#atc-tipo', p:['Al cargar la ATC marcás 🛡️ Garantía o 🔧 Contra costo (STC): sin eso no se guarda.','En 🎧 ATC, el filtro «Tipo» muestra solo una de las dos (o las «❓ Sin marcar»); arriba ves cuántas hay de cada una.','Las viejas sin marcar: abrí su ficha (🔍) y tocá «🛡️ Garantía» o «🔧 Contra costo».','Con la clave (o como Administración / Logística), el 📄 Informe PDF también se saca de un solo tipo. Las recogidas y las fechas no cambian.'] }
 ];
 /* 🗣️ (12/10, F) Cómo habla la gente: cada palabra suma las del panel que quiere decir. */
 var ASIS_SINONIMOS={ plata:'pago cobro', cobrar:'pago cobro', cobre:'pago cobro', pagar:'pago', pagaron:'pago', deposito:'pago qr', deposite:'pago qr',

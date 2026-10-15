@@ -79,7 +79,7 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
   /* ---- 3. la ventana ---- */
   r = await page.evaluate(() => { UNLOCKED=false; var t0=document.getElementById('toast'); abrirAtcTrello(); return { ov:document.getElementById('atct-ov').style.display, t:(document.getElementById('toast')||{}).textContent||'' }; });
   chk('sin la contraseña de Administración no abre (y lo dice)', r.ov==='none' && /contraseña de Administración/.test(r.t), r);
-  await page.evaluate(() => { UNLOCKED=true; showView('atc'); document.getElementById('atc-trello-btn').click(); });
+  await page.evaluate(() => { UNLOCKED=true; showView('atc'); abrirAtcTrello();   /* (§4lm) el botón se sacó de la barra: la ventana sigue */ });
   await page.waitForTimeout(200);
   r = await page.evaluate(() => {
     var b=document.getElementById('atct-body'), f=function(id){ var i=ATCT.filas.findIndex(function(x){ return x.p.id===id; }); return document.getElementById('atct-f'+i); };
@@ -156,7 +156,7 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
       { sl:'FFF666', fcom:'2023-04-10', fcomTxt:'10/04/2023', fuente:'la factura «f.jpg»', cels:['69999998'], cliente:'NADIE CONOCIDO', reclamo:'' },
       { sl:'ZZZ999', fcom:'2023-01-01', fcomTxt:'01/01/2023', fuente:'la foto', cels:['60000003'], cliente:'', reclamo:'' }       // una tarjeta que el CSV no trae: no se usa
     ] }); };
-    document.getElementById('atc-trello-btn').click();
+    abrirAtcTrello();   /* (§4lm) el botón se sacó de la barra: la ventana sigue */
   });
   await page.waitForTimeout(200);
   r = await page.evaluate(() => {
@@ -220,7 +220,7 @@ const CSV = '﻿Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,
     atctTraerAdj=function(){ return Promise.resolve({ generado:'2026-10-15T15:07:00Z', tarjetas:[
       { sl:'G01', fcom:'2021-12-23', fcomTxt:'jueves, 23 de diciembre de 2021', fuente:'el certificado de garantía «garantia.jpg»', cels:['78449545'], cliente:'LEONELA INVENTADA', reclamo:'' } ] }); };
     atctTraerHist=function(){ return Promise.resolve(HIST); };
-    document.getElementById('atc-trello-btn').click();
+    abrirAtcTrello();   /* (§4lm) el botón se sacó de la barra: la ventana sigue */
   }, { CSV2, HIST });
   await page.waitForTimeout(250);
   r = await page.evaluate(() => {

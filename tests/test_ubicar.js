@@ -27,7 +27,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   const errores=[]; page.on('pageerror',e=>errores.push(e.message));
   page.on('dialog',d=>d.accept());
   await page.route(/^https?:/, r=>r.abort());
-  await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });
+  await page.goto('file://' + (process.env.PEDIDOS || path.resolve('pedidos.html')), { waitUntil:'load' });
   await page.waitForTimeout(300);
 
   const faltan = await page.evaluate(() => ['ubicables','ubicConsulta','ubicarPorDireccion','ubicarSinLinkMapa','mapaSinLinkList','esUbicAprox','ubicarImportadosRoho']
@@ -142,6 +142,23 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('el panel del importador cuenta el resultado: «1 de 2 quedaron en el mapa»', /1 de 2/.test(r.caja) && /aproximados/.test(r.caja), r.caja.slice(0,120));
   chk('se guardó primero el pedido y después su ubicación (dos guardadas para N1, una para N2)',
       JSON.stringify(r.saves)===JSON.stringify(['N1:sin link','N2:sin link','N1:con link']), r.saves.join(' / '));
+
+  // ══ 5. 📍 (15/10, §4ln) enlaces que traen la ubicación adentro y el panel no leía ══
+  console.log('\n── 5. Waze con la coma codificada y el Plus Code tal cual en «maps?q=» ──');
+  r = await page.evaluate(() => {
+    var f=function(u){ var c=coordsDeLink(u); return c ? (+c.lat).toFixed(4)+','+(+c.lng).toFixed(4) : null; };
+    return {
+      waze:f('https://ul.waze.com/ul?ll=-17.86782500%2C-63.15540100&navigate=yes&utm_campaign=default&utm_source=waze_website&utm_medium=lm_share_location'),
+      plus:f('https://www.google.com/maps?q=8R6C+72P,+Santa+Cruz+de+la+Sierra&ftid=0x93f1e7007b2e3267:0xdb68a5879b7e10f1&entry=gps&shh=CAE&g_st=iwb'),
+      plusOlc:(function(){ var g=olcCoords('8R6C+72P'); return (+g.lat).toFixed(4)+','+(+g.lng).toFixed(4); })(),
+      viejo:f('https://www.google.com/maps?q=-17.78,-63.18'),
+      busca:f('https://www.google.com/search?client=ms-android&hs=YXoq&kgmid=/g/11y42vszyr&shem=epsd1')
+    };
+  });
+  chk('Waze «ll=-17.86782500%2C-63.15540100» → -17.8678,-63.1554', r.waze==='-17.8678,-63.1554', r.waze);
+  chk('«maps?q=8R6C+72P,+Santa+Cruz…» → el Plus Code (lo mismo que leerlo solo)', !!r.plus && r.plus===r.plusOlc, r.plus+' vs '+r.plusOlc);
+  chk('lo de siempre sigue igual (q=-17.78,-63.18)', r.viejo==='-17.7800,-63.1800', r.viejo);
+  chk('una búsqueda de Google sin coordenadas ni nombre sigue sin ubicar (no se inventa)', r.busca===null, r.busca);
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
