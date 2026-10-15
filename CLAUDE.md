@@ -713,7 +713,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   marcan desde la ficha (`atcTipoMarcar`; cambiar una ya marcada pide la clave). Filtro «Tipo» en la pestaña (`#atc-tipo` → `atcLista`) con chips
   (`atcTiposHtml`), columna «Tipo» al FINAL de «📋 Copiar», asunto/mensaje del correo, línea del WhatsApp, «🔧 STC» en `atcChip` y el informe PDF
   (`#atci-tipo`, `atciDatos(mes, tipo)`). `tests/test_atc_tipo.js` (48).
-- **🧽 Bloki lo enseña** (§4lk): «¿Cómo mando el correo de una ATC?» y «¿Cómo separo las de garantía y las de contra costo (STC)?» al final de
+- **🧽 Bloki lo enseña** (§4lk, PUBLICADO `48fe59c`): «¿Cómo mando el correo de una ATC?» y «¿Cómo separo las de garantía y las de contra costo (STC)?» al final de
   `ASIS_AYUDA` (21; 17 para un vendedor). Sinónimo `stc:'costo'` — ⚠️ nunca «contra» (está adentro de «encontrar»).
 
 ## 📄 Informe de ATC en PDF (§4le, 15/10, PUBLICADO 09:31 de Bolivia, `9cdb86d`; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)

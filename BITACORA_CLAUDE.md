@@ -14932,3 +14932,4 @@ El dueño: *«el pendejito ya enseña y sabe también?»*. Bloki ya decía, al c
 contra costo (STC)?» (señala `#atc-tipo`). Sinónimos `mail`/`email`/`gmail`/`outlook` → correo y `stc` ↔ `costo`. ⚠️ NO «contra»: está
 adentro de «en**contra**r» y mandaba «stc» a «¿Cómo busco un pedido?». Se pensó un botón «➕ Nueva ATC» en la pestaña ATC y el dueño dijo que
 no hacía falta (se crea desde «＋ Nuevo pedido» → 🎧 ATC): no se puso. `test_atc_tipo` §8 (→ 48).
+- **PUBLICADO 15/10, `48fe59c`** (encima de `8af3831`), Pages OK. En la copia de main: `test_atc_tipo` 48, `test_asistente` 24.
