@@ -831,6 +831,51 @@ def atc_del_panel():
         print(f"   (no pude cruzar las fechas con Trello: {type(ex).__name__}: {str(ex)[:80]})")
 
 
+def atc_cifrado():
+    """🔐 (15/10, dueño: «a este Excel colócale la fecha de compra») La fecha de compra de cada ATC vive en el panel, y este registro es
+    público: nada de clientes en claro. Si está `herramientas/clave_diag_publica.pem`, se arma la lista de ATC (N°, id, cliente,
+    celular, fecha de compra, cuándo entró, producto) y se imprime CIFRADA: AES-256 con una clave al azar, y esa clave con la llave
+    pública (RSA-OAEP). Solo quien tiene la llave privada (no está en el repo) la puede leer. Sin la llave pública, no se imprime nada."""
+    import subprocess, tempfile, base64, secrets
+    aqui = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+    pub = os.path.join(aqui, "clave_diag_publica.pem")
+    j = _LISTA
+    if not os.path.exists(pub) or not j:
+        return
+    atcs = []
+    for p in (j.get("pedidos") or []):
+        if not isinstance(p, dict) or not re.match(r"^ATC\b", str(p.get("oc") or "").strip(), re.I):
+            continue
+        a = _atc_de(p) or {}
+        pr = p.get("productos") or []
+        if isinstance(pr, str):
+            try:
+                pr = json.loads(pr)
+            except Exception:
+                pr = []
+        atcs.append({"oc": p.get("oc"), "id": p.get("id"), "cliente": p.get("cliente"), "celular": p.get("celular"),
+                     "vendedor": p.get("vendedor"), "ts": p.get("ts"), "fcom": a.get("fcom") or "", "tre": a.get("tre") or "",
+                     "prod": " | ".join(str((x or {}).get("desc") or "") for x in pr if isinstance(x, dict))})
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            clave = secrets.token_hex(32)
+            dat = os.path.join(d, "d.json"); open(dat, "w", encoding="utf-8").write(json.dumps(atcs, ensure_ascii=False))
+            cla = os.path.join(d, "k.txt"); open(cla, "w").write(clave)
+            subprocess.run(["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-salt", "-in", dat, "-out", dat + ".enc", "-pass", "file:" + cla], check=True)
+            subprocess.run(["openssl", "pkeyutl", "-encrypt", "-pubin", "-inkey", pub, "-pkeyopt", "rsa_padding_mode:oaep",
+                            "-in", cla, "-out", cla + ".enc"], check=True)
+            k64 = base64.b64encode(open(cla + ".enc", "rb").read()).decode()
+            d64 = base64.b64encode(open(dat + ".enc", "rb").read()).decode()
+        print("\n── 🔐 las ATC del panel, CIFRADAS (solo se leen con la llave privada, que no está en el repo) ──")
+        print("   ATC: %d" % len(atcs))
+        print("CIFRADO-CLAVE " + k64)
+        for i in range(0, len(d64), 3000):
+            print("CIFRADO-DATOS " + d64[i:i + 3000])
+        print("CIFRADO-FIN")
+    except Exception as ex:
+        print("   (no se pudo cifrar: %s)" % type(ex).__name__)
+
+
 def main():
     pagina = url_de_la_pagina()
     if not PANEL_URL and not pagina:
@@ -855,6 +900,7 @@ def main():
     gps_del_dia()
     # 4c) 🎧 (15/10) Las ATC: qué tienen y cuántas se completaron desde Trello.
     atc_del_panel()
+    atc_cifrado()
     # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
     ubicacion_almacenes(pagina or PANEL_URL)
     ubicacion_pedidos(pagina or PANEL_URL)
