@@ -1,0 +1,56 @@
+name: Leer adjuntos de Trello (ATC)
+
+# §4lf-b (15/10): la fecha de compra de las ATC muchas veces está en una FOTO o en el Excel adjunto de la tarjeta de Trello.
+# Baja los adjuntos, lee los Excel directo y las fotos/PDF con Claude (ANTHROPIC_API_KEY), y deja atc-trello-adjuntos.json
+# al lado de la página: el botón «🔗 Completar con Trello» del panel lo suma a lo del texto. Cada adjunto se lee UNA vez.
+# ⚠️ El registro es público: el script imprime solo cantidades, nunca datos de clientes.
+
+on:
+  schedule:
+    - cron: '10 23 * * *'   # 19:10 de Bolivia, después del respaldo de las 17:00 y lejos de los del panel
+  workflow_dispatch:
+  push:
+    paths:
+      - 'herramientas/trello_adjuntos.py'
+      - '.github/workflows/trello-adjuntos.yml'
+
+concurrency:
+  group: trello-adjuntos-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  leer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pillow (para achicar las fotos antes de mandarlas)
+        run: pip install --quiet pillow || echo "sin Pillow: las fotos van tal cual"
+
+      - name: Leer los adjuntos
+        env:
+          TRELLO_API_KEY:    ${{ secrets.TRELLO_API_KEY }}
+          TRELLO_TOKEN:      ${{ secrets.TRELLO_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ATCT_MINUTOS: '40'
+        run: python3 herramientas/trello_adjuntos.py
+
+      - name: Guardar lo leído
+        if: success() || failure()
+        run: |
+          [ -f atc-trello-adjuntos.json ] || { echo "no hay nada que guardar"; exit 0; }
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add atc-trello-adjuntos.json
+          FECHA=$(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')
+          git commit -m "Adjuntos de Trello leídos $FECHA (auto)" || { echo "sin cambios"; exit 0; }
+          for i in 1 2 3 4; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then exit 0; fi
+            sleep $((i * 5))
+            git pull --rebase origin "${GITHUB_REF_NAME}" || { git rebase --abort || true; }
+          done
+          echo "❌ no se pudo guardar el JSON"; exit 1

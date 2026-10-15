@@ -17680,7 +17680,7 @@ function atciPdf(){
      antes: lo encontrado por el celular viene tildado; por el nombre solo, sin tildar. Guarda de a una (`mergeAtcDatos` +
      `persistPedido`) y deja `tre` = el enlace de la tarjeta. Solo con la contraseña de Administración.
    ========================================================================== */
-var ATCT_CSV='atc-semanal.csv', ATCT={ tarj:[], filas:[], fecha:'', ocupado:false };
+var ATCT_CSV='atc-semanal.csv', ATCT_ADJ='atc-trello-adjuntos.json', ATCT={ tarj:[], filas:[], fecha:'', ocupado:false, adjPor:null, adj:null };
 var ATCT_MOTIVOS=[
   ['Hundimiento',          /UNDID|HUNDID|HUNDIM|UNDIM|SE HUNDE|SE UNDE|SOBRESALID|DESNIVEL|DEFORMAD|BAJO EN EL MEDIO|SE HA BAJADO|SE BAJO|ORILLAS? (DEL COLCHON )?ESTA MUY FLEXIBLE/],
   ['Resortes',             /RESORTE/],
@@ -17785,10 +17785,31 @@ function atctNombre(desc, titulo){
   var base=m ? m[1] : atctMay(titulo).replace(/^\W*A[TR]C\W*/, '').replace(/^(MIRIAN|MARIA|ISABEL|CAROLA|NORMA|ROHO)\b\W*/, '').replace(/\bCLIENTE\b\W*/g, ' ');
   return base.replace(/[^A-ZÑ ]/g, ' ').split(/\s+/).filter(function(w){ return w.length>=3 && !ATCT_NO_NOMBRE[w]; });
 }
+function atctSl(url){ var m=String(url||'').match(/\/c\/([A-Za-z0-9]+)/); return m ? m[1] : ''; }
 function atctTarjeta(r){
   var desc=r.Descripcion||'', tit=r.Tarjeta||'', todo=tit+' | '+desc;
-  return { tit:tit, lista:r.Lista||'', url:r.URL||'', arch:/^s/i.test(String(r.Archivada||'')),
+  var t={ tit:tit, lista:r.Lista||'', url:r.URL||'', arch:/^s/i.test(String(r.Archivada||'')),
     cels:atctCels(todo), compra:atctCompra(todo), fecha:atctFechaAtc(desc, tit), mot:atctMotivo(todo), det:atctDetalle(desc), nom:atctNombre(desc, tit) };
+  return atctSumarAdjuntos(t, ATCT.adjPor && ATCT.adjPor[atctSl(t.url)]);
+}
+/* §4lf-b: lo que se leyó de los ADJUNTOS de la tarjeta (fotos con Claude, Excel directo; `herramientas/trello_adjuntos.py`) completa
+   lo que el texto no dice. El texto escrito manda; del adjunto entran los celulares, la fecha de compra si el texto no la tiene entera
+   (diciendo de qué archivo sale), el reclamo, el motivo y el nombre si faltan, y el día de creación como fecha de la ATC. */
+function atctSumarAdjuntos(t, a){
+  if(!a) return t;
+  (a.cels||[]).forEach(function(c){ c=atctCel8(c); if(c && t.cels.indexOf(c)<0) t.cels.push(c); });
+  var fa=/^\d{4}-\d{2}-\d{2}$/.test(String(a.fcom||'')) ? a.fcom : '';
+  if(!(t.compra && t.compra.f)){
+    if(fa) t.compra={ f:fa, txt:String(a.fcomTxt||fa), de:String(a.fuente||'un adjunto') };
+    else if(!t.compra && a.fcomTxt) t.compra={ f:'', txt:String(a.fcomTxt), de:String(a.fuente||'un adjunto') };
+  }
+  var rec=String(a.reclamo||'').replace(/\s+/g, ' ').trim();
+  if(!t.det && rec){ t.det=atciCorta(rec, 320); t.detDe=String(a.fuente||'un adjunto'); }
+  if(!t.mot && rec){ var mo=atctMotivo(rec); if(mo){ mo.de=String(a.fuente||'un adjunto'); t.mot=mo; } }
+  if(!t.nom.length && a.cliente) t.nom=atctNombre('CLIENTE '+a.cliente+' |', '');
+  if(!t.fecha && a.creada) t.fecha=a.creada;
+  t.adj=1;
+  return t;
 }
 function atctNombrePanel(p){ return atctMay(p&&p.cliente).replace(/[^A-ZÑ ]/g, ' ').split(/\s+/).filter(function(w){ return w.length>=3 && !ATCT_NO_NOMBRE[w]; }); }
 /* Qué le falta a una ATC del panel. */
@@ -17820,20 +17841,36 @@ function atctTraerCsv(){
     return r.text();
   });
 }
+/* Lo leído de los adjuntos (si todavía no hay, o no se puede leer, sigue solo con el texto). */
+function atctTraerAdj(){
+  return fetch(ATCT_ADJ+'?_='+Date.now(), { cache:'no-store' }).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+}
+function atctTomarAdj(j){
+  ATCT.adjPor=null; ATCT.adj=null;
+  if(!j || !Array.isArray(j.tarjetas)) return;
+  var por={}; j.tarjetas.forEach(function(x){ if(x && x.sl) por[x.sl]=x; });
+  ATCT.adjPor=por; ATCT.adj={ generado:String(j.generado||''), n:j.tarjetas.length, conFecha:j.tarjetas.filter(function(x){ return x.fcom; }).length };
+}
 function abrirAtcTrello(){
   if(!UNLOCKED){ toast('🔒 Hace falta la contraseña de Administración: entrá primero a la pestaña Administración.', 'err', 6000); return; }
   var ov=document.getElementById('atct-ov'), body=document.getElementById('atct-body'); if(!ov || !body) return;
   ov.style.display='flex';
   body.innerHTML='<div class="atct-sin">⏳ Leyendo el respaldo de Trello…</div>';
   document.getElementById('atct-info').textContent='';
-  atctTraerCsv().then(function(txt){
-    ATCT.tarj=atctCsv(txt).filter(function(r){ return r.Tarjeta || r.Descripcion; }).map(atctTarjeta);
+  Promise.all([atctTraerCsv(), atctTraerAdj()]).then(function(r){
+    atctTomarAdj(r[1]);
+    ATCT.tarj=atctCsv(r[0]).filter(function(x){ return x.Tarjeta || x.Descripcion; }).map(atctTarjeta);
     atctPintar();
   }).catch(function(e){
     body.innerHTML='<div class="atct-sin" style="color:#b91c1c">⚠️ No se pudo leer el respaldo de Trello ('+esc(String((e && e.message) || e))+'). Probá de nuevo en un rato.</div>';
   });
 }
 function atctCerrar(){ var ov=document.getElementById('atct-ov'); if(ov) ov.style.display='none'; }
+function atctAdjTxt(){
+  var a=ATCT.adj; if(!a) return ' · todavía sin leer las fotos ni los Excel adjuntos';
+  var d=a.generado ? new Date(a.generado) : null;
+  return ' · 📎 fotos y Excel adjuntos leídos'+((d && !isNaN(d)) ? ' el '+fmtFecha(isoLocal(d)) : '')+' ('+a.conFecha+' con la fecha de compra)';
+}
 function atctFechaTxt(){ var d=ATCT.fecha ? new Date(ATCT.fecha) : null; return (d && !isNaN(d)) ? ('respaldo del '+fmtFecha(isoLocal(d))) : 'último respaldo'; }
 function atctFila(F, i){
   var p=F.p, t=F.t, a=atcDe(p)||{}, tilde=(F.por==='cel'), filas='';
@@ -17842,16 +17879,16 @@ function atctFila(F, i){
     var mp=t.mot ? t.mot.mot : '';
     filas+='<label>'+cb('mot', tilde, !!mp)+'<span class="lb2">Motivo</span><select data-i="'+i+'" data-c="mot" onchange="atctTocar(this)"><option value="">— elegí —</option>'+
       ATC_MOTIVOS.map(function(m){ return '<option'+(m===mp ? ' selected' : '')+'>'+esc(m)+'</option>'; }).join('')+'</select></label>'+
-      '<div class="dice">'+(t.mot ? 'Trello dice «'+esc((t.mot.frase||t.mot.txt).toLowerCase())+'»' : 'Trello no dice el motivo: elegilo si lo sabés')+'</div>';
+      '<div class="dice">'+(t.mot ? (t.mot.de ? '📎 En '+esc(t.mot.de)+' dice' : 'Trello dice')+' «'+esc((t.mot.frase||t.mot.txt).toLowerCase())+'»' : 'Trello no dice el motivo: elegilo si lo sabés')+'</div>';
   }
   if(F.falta.indexOf('fcom')>=0){
     var cf=t.compra && t.compra.f ? t.compra.f : '', ok=cf && (!atcEntro(p) || cf<=atcEntro(p));
     filas+='<label>'+cb('fcom', tilde, !!ok)+'<span class="lb2">Fecha de compra</span><input type="date" data-i="'+i+'" data-c="fcom" max="'+esc(todayStr())+'" value="'+esc(ok ? cf : '')+'" oninput="atctTocar(this)"></label>'+
-      '<div class="dice">'+(t.compra ? ('Trello dice «'+esc(t.compra.txt.toLowerCase())+'»'+(cf && !ok ? ' — es posterior a la ATC: no se pone' : (!cf ? ' — sin el día: ponelo si lo sabés' : ''))) : 'Trello no dice cuándo la compró')+'</div>';
+      '<div class="dice">'+(t.compra ? ((t.compra.de ? '📎 En '+esc(t.compra.de)+' dice' : 'Trello dice')+' «'+esc(t.compra.txt.toLowerCase())+'»'+(cf && !ok ? ' — es posterior a la ATC: no se pone' : (!cf ? ' — sin el día: ponelo si lo sabés' : ''))) : 'Trello no dice cuándo la compró')+'</div>';
   }
   if(F.falta.indexOf('det')>=0){
     filas+='<label>'+cb('det', tilde, !!t.det)+'<span class="lb2">Detalle</span><textarea data-i="'+i+'" data-c="det" oninput="atctTocar(this)">'+esc(t.det||'')+'</textarea></label>'+
-      (t.det ? '' : '<div class="dice">Trello no trae el reclamo escrito</div>');
+      (t.det ? (t.detDe ? '<div class="dice">📎 Leído de '+esc(t.detDe)+'</div>' : '') : '<div class="dice">Trello no trae el reclamo escrito</div>');
   }
   return '<div class="atct-f'+(F.por==='nom' ? ' nom' : '')+'" id="atct-f'+i+'">'+
     '<div class="atct-h"><b>🎧 '+esc(p.oc||'')+'</b><span>'+esc(p.cliente||'')+(p.celular ? ' · 📞 '+esc(p.celular) : '')+' · entró el '+esc(fmtFecha(atcEntro(p)))+'</span>'+
@@ -17865,7 +17902,7 @@ function atctPintar(){
   var falta=F.filter(function(x){ return x.falta.length; }), cel=[], nom=[], sin=[];
   falta.forEach(function(x){ if(!x.t) sin.push(x); else if(x.por==='cel') cel.push(x); else nom.push(x); });
   var completas=F.length-falta.length;
-  document.getElementById('atct-info').textContent=ATCT.tarj.length+' tarjetas de Trello ('+atctFechaTxt()+') · '+F.length+' ATC en el panel';
+  document.getElementById('atct-info').textContent=ATCT.tarj.length+' tarjetas de Trello ('+atctFechaTxt()+') · '+F.length+' ATC en el panel'+atctAdjTxt();
   var idx=function(x){ return F.indexOf(x); };
   var h='<div class="atct-res"><span>🎧 <b>'+F.length+'</b> ATC en el panel</span><span>✔️ <b>'+completas+'</b> ya completas</span>'+
     '<span>📞 <b>'+cel.length+'</b> encontradas por el celular</span><span>👤 <b>'+nom.length+'</b> solo por el nombre</span><span>❓ <b>'+sin.length+'</b> sin tarjeta</span></div>'+
