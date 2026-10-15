@@ -92,6 +92,16 @@ X5 = xlsx([["FECHA DE COMPRA", None, "DIRECCION", "calle 5"], ["TELEFONO", "7000
 d5 = T.xlsx_datos(X5, HOY)
 chk(d5["fcom"] == "" and d5["fcomTxt"] == "" and d5["rot"] == "vacio", "Excel: el casillero vacío no toma el rótulo de al lado: %r" % d5)
 chk(T.xlsx_datos(xlsx([["CLIENTE", "x"]]), HOY)["rot"] == "sin", "Excel: sin el rótulo de la fecha = «sin»")
+# la fecha en la SEGUNDA hoja; y los rótulos de fecha se anotan sin los números
+b = io.BytesIO()
+ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+with zipfile.ZipFile(b, "w") as z:
+    z.writestr("xl/worksheets/sheet1.xml", '<worksheet %s><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>TELEFONO 70001111</t></is></c></row></sheetData></worksheet>' % ns)
+    z.writestr("xl/worksheets/sheet2.xml", '<worksheet %s><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Fecha de compra: 02/02/2022</t></is></c></row></sheetData></worksheet>' % ns)
+    z.writestr("xl/worksheets/sheet10.xml", '<worksheet %s><sheetData></sheetData></worksheet>' % ns)
+d6 = T.xlsx_datos(b.getvalue(), HOY)
+chk(d6["fcom"] == "2022-02-02" and d6["cels"] == ["70001111"], "Excel: busca en todas las hojas: %r" % d6)
+chk(d6["fx"] == ["FECHA DE COMPRA: ##/##/####"], "Excel: el rótulo de la fecha se anota sin los números: %r" % d6["fx"])
 
 # ─────────────── 3. lo que contesta Claude ───────────────
 i1 = T.interpretar({"tipo": "factura", "fecha_compra": "2024-02-29", "fecha_compra_texto": "29/02/2024", "celular": "591 7 1234567",
@@ -181,7 +191,7 @@ chk(J2["resumen"]["de_antes"] == 2 and {t["sl"]: t["fcom"] for t in J2["tarjetas
 chk(J2["resumen"]["excel_casillero"] == {"fecha": 1, "vacio": 0, "texto": 0, "sin": 0} and "Excel: con la fecha 1" in log2, "el resumen cuenta cómo estaba el casillero de cada Excel")
 
 # un Excel leído con la versión de antes (sin `rot`) se vuelve a leer, gratis (sin Claude)
-J2["vistos"]["a2"].pop("rot"); J2["vistos"]["a2"]["fcom"] = ""
+J2["vistos"]["a2"].pop("rot"); J2["vistos"]["a2"].pop("fx", None); J2["vistos"]["a2"]["fcom"] = ""
 json.dump(J2, open(T.SALIDA, "w", encoding="utf-8"))
 rc, log2b = correr(T.SALIDA)
 J2b = json.load(open(T.SALIDA, encoding="utf-8"))

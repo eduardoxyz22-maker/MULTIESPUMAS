@@ -100,16 +100,22 @@ def xlsx_filas(datos):
 
 def xlsx_celdas(datos):
     """Las filas de la PRIMERA hoja como listas de (columna, texto), sin las celdas vacías."""
+    h = xlsx_hojas(datos)
+    return h[0] if h else []
+
+def xlsx_hojas(datos):
+    """Todas las hojas (sheet1, sheet2… en ese orden), cada una como filas de (columna, texto)."""
     z = zipfile.ZipFile(io.BytesIO(datos))
     comp = []
     if "xl/sharedStrings.xml" in z.namelist():
         for si in ET.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", NS):
             comp.append("".join(x.text or "" for x in si.iter("{%s}t" % NS["m"])))
-    hojas = sorted(n for n in z.namelist() if re.fullmatch(r"xl/worksheets/sheet\d+\.xml", n))
-    if not hojas:
-        return []
+    hojas = sorted((n for n in z.namelist() if re.fullmatch(r"xl/worksheets/sheet\d+\.xml", n)), key=lambda n: int(re.search(r"(\d+)\.xml$", n).group(1)))
+    return [_hoja(z.read(h), comp) for h in hojas]
+
+def _hoja(xml, comp):
     filas = []
-    for row in ET.fromstring(z.read(hojas[0])).iter("{%s}row" % NS["m"]):
+    for row in ET.fromstring(xml).iter("{%s}row" % NS["m"]):
         celdas = []
         for c in row.findall("m:c", NS):
             t, v = c.get("t"), c.find("m:v", NS)
@@ -134,9 +140,20 @@ OTRO_ROTULO = re.compile(r"^(CLIENTE|FECHA|NRO|N°|TELEFONO|TELF|CELULAR|DIRECCI
 def xlsx_datos(datos, hoy=None):
     """Del formato ATC en Excel: la fecha de compra (al lado del rótulo o debajo), los celulares, el cliente y el reclamo.
        `rot` dice cómo estaba el casillero de la fecha (para contar, sin datos): fecha / texto / vacio / sin (no hay rótulo)."""
-    celdas = xlsx_celdas(datos)
-    filas = [[v for _, v in f] for f in celdas]
     out = {"fcom": "", "fcomTxt": "", "cels": [], "cliente": "", "reclamo": "", "rot": "sin"}
+    fx = []
+    for celdas in xlsx_hojas(datos):
+        _xlsx_hoja_datos(celdas, out, hoy)
+        for f in celdas:                                   # para contar qué rótulos de fecha usan (sin datos: los números van como #)
+            for _, v in f:
+                u = re.sub(r"\d", "#", sin_tildes(v).upper().strip())
+                if len(u) <= 40 and re.search(r"FECHA|COMPRA|FACTURA|NOTA DE VENTA|GARANTIA", u) and u not in fx and len(fx) < 12:
+                    fx.append(u)
+    out["fx"] = fx
+    return out
+
+def _xlsx_hoja_datos(celdas, out, hoy):
+    filas = [[v for _, v in f] for f in celdas]
     reclamo_sig = False
     for r, f in enumerate(filas):
         up = [sin_tildes(x).upper() for x in f]
@@ -177,7 +194,6 @@ def xlsx_datos(datos, hoy=None):
         if reclamo_sig and not out["reclamo"] and not any(re.search(r"DETALLES?\s+DEL\s+RECLAMO", u) for u in up):
             out["reclamo"] = " ".join(f).strip()[:220]
             reclamo_sig = False
-    return out
 
 # ──────────────────────────── Claude ────────────────────────────
 ESQUEMA = {"type": "object", "additionalProperties": False,
@@ -354,7 +370,7 @@ def main():
     for c in cards:
         atts = sorted([a for a in (c.get("attachments") or []) if a.get("isUpload")], key=orden_adjunto)
         for a in atts:                                    # un Excel leído con la versión de antes (sin `rot`) se vuelve a leer: es gratis
-            if a["id"] in vistos and vistos[a["id"]].get("tipo") == "excel" and "rot" not in vistos[a["id"]]:
+            if a["id"] in vistos and vistos[a["id"]].get("tipo") == "excel" and "fx" not in vistos[a["id"]]:
                 del vistos[a["id"]]
         lecturas = [vistos[a["id"]] for a in atts if a["id"] in vistos]
         cuenta["adjuntos"] += len(atts)
@@ -425,6 +441,13 @@ def main():
     print("Leídos con Claude ahora: %(leidos_ia)d · ya leídos antes: %(de_antes)d · errores: %(errores)d · muy grandes: %(grandes)d" % cuenta)
     print("Fotos sin leer porque la tarjeta ya tenía la fecha: %(ya_tenia)d · quedan para la próxima corrida: %(pendientes)d" % cuenta)
     print("Excel: con la fecha %(fecha)d · el casillero vacío %(vacio)d · con algo que no es una fecha %(texto)d · sin el casillero %(sin)d" % rot)
+    rots = {}
+    for v in vistos.values():                             # rótulos (no datos) de los Excel sin el casillero, para saber dónde ponen la compra
+        if v.get("tipo") == "excel" and v.get("rot") == "sin":
+            for u in v.get("fx", []):
+                rots[u] = rots.get(u, 0) + 1
+    if rots:
+        print("Rótulos con FECHA/COMPRA/FACTURA en los Excel sin el casillero: " + " · ".join("«%s» %d" % (k, n) for k, n in sorted(rots.items(), key=lambda x: -x[1])[:15]))
     print("Tarjetas con la fecha de compra entera: %d" % cuenta["con_fecha"])
     if not clave:
         print("⚠️ Sin ANTHROPIC_API_KEY: solo se leyeron los Excel (%d fotos/PDF sin leer)." % cuenta["sin_clave"])
