@@ -14893,3 +14893,31 @@ El dueño, recién publicado §4lh: *«ash faltó que al crear la ATC se genere 
 - **PUBLICADO 15/10, `ea4978a`** (encima de `a21dfe7`: `pedidos.html` + la prueba), Pages OK. Antes: `test_atc_correo` 32 y
   `test_atc_obligatorio` 57 en la copia de main; en la rama, las 14 que miran la ventana de guardado o la ATC en verde (`test_atc` 81,
   `test_auditoria` 175, `test_rpt` 110, `test_rev5_pedidos` 49…). Falta que el dueño diga a qué correo va (para `ATC_CORREO_PARA`). Todos F5.
+
+## §4lj — 🛡️🔧 Garantía o contra costo (STC) en las ATC: marcar y filtrar (15/10)
+El dueño: *«debemos añadir la opción de marcar qué tipo de ATC: si de reparación por garantía o reparación contra costo (STC), para no
+mezclar la data y ensuciar»*. Le propuse ejemplos (urgencia, cobro, número propio) y aclaró: *«las recogidas y fechas se mantienen como lo
+tenemos programado. Solo es para marcar y filtrar la información al llenar, porque no discernimos ahorita qué es qué»*.
+- **La marca vive adentro de la ATC**: `atc.tipo` = `'gar'` | `'stc'` (`ATC_TIPOS`, `atcTipo(p)`). El número sigue «ATC …»: el circuito
+  (recojo, fábrica, devolución, cupos, camión), los estados, los avisos y el bot de WhatsApp —que reconoce las ATC por el número en el
+  `.gs`— no cambian. Con un número propio «STC …» el bot le habría mandado la confirmación de venta al cliente (y las páginas sin F5).
+  No se tocó el cobro: una ATC sigue sin cobrarse en el panel, sea garantía o contra costo.
+- **Formulario**: `#f-atc-tipo` (dos botones, sin elegir de entrada) arriba del bloque; obligatorio en `atcFaltanDe` (primero de la lista),
+  con el mismo recuadro, rojo y aviso de §4lh; `atcTipoElegido` saca el rojo y repinta «Para guardar» (los botones no disparan
+  input/change). Al editar vuelve la marca; una vieja sin marca vuelve sin elegir y una vendedora tiene que marcarla; con la clave se
+  guarda igual tras el `confirm` de `atcFaltanHeredados` (sigue «sin marcar»).
+- **Las de antes NO se adivinan**: quedan «❓ Sin marcar» (`b-tsin`). Se marcan desde la ficha (`atcTipoFichaHtml` → `atcTipoMarcar`:
+  `mergeAtcDatos` + `persistPedido`, solo `tipo`) o al editarlas. Sin clave se marca una sin marca; cambiar una ya marcada pide la clave.
+- **Pestaña ATC**: filtro «Tipo» (`#atc-tipo`: Todas / Garantía / Contra costo / Sin marcar) en `atcLista`, que usan la tabla, las fichas,
+  el viaje, los motivos y «📋 Copiar»; chips con cuántas de cada tipo (`atcTiposHtml`, con los demás filtros; tocar uno filtra); la marca
+  en la tabla (debajo del N°) y en las tarjetas; el buscador encuentra «stc», «garantía», «sin marcar».
+- **Copiar**: columna «Tipo» AL FINAL (17 columnas; no corre las de siempre) y el encabezado dice el filtro. **Correo**: «Tipo: …» en el
+  mensaje y el asunto «ATC 10-001 (Garantía) · …» / «(Contra costo - STC)», sin emoji ni paréntesis dobles. **WhatsApp**:
+  «🎧 *Atención al cliente* · 🔧 Contra costo (STC) — …». **Listas del panel** (`atcChip`): la de contra costo lleva «🔧 STC»; la de
+  garantía queda como siempre.
+- **Informe PDF**: selector `#atci-tipo` (arranca con el de la pestaña); `atciDatos(mes, tipo)` filtra TODO (el mes, el anterior, las de
+  antes, la tendencia); cada hoja dice «· Solo …» (`atciTipoEtq` dentro de `atciEtq`), la portada también, y el archivo
+  `Informe-ATC-STC-…`/`-garantia-`. Con los dos tipos, «Lo más importante» cuenta cuántas de cada uno (`D.porTipo`).
+- Colores: garantía verde (`#047857`), contra costo índigo (`#4338ca`); naranja no (se confunde con los avisos en ámbar).
+- `tests/test_atc_tipo.js` (43; 18 rojas contra `ea4978a`). Cambiaron a conciencia (marcan «garantía» al cargar una ATC por el
+  formulario): `test_atc`, `test_atc_obligatorio` (y la copia: 17 columnas), `test_atc_correo`, `test_rev2_form`, `test_rev5_pedidos`.

@@ -267,6 +267,7 @@ function INIT(){
       /* (15/10, §4lh) lo que la ATC exige ahora además del motivo */
       document.getElementById('f-atc-detalle').value='el sómier hace ruido al moverse'; document.getElementById('f-atc-compra').value='2024-05-10';
       document.getElementById('f-pz-som').checked=true;
+      segSet('f-atc-tipo','gar');   // (15/10, §4lj) garantía o contra costo
       submitPedido(); await esperar(700); await quieto(); try{ closeModal(); }catch(e){}
       return window._toasts.filter(function(t){ return /^err/.test(t); });
     });

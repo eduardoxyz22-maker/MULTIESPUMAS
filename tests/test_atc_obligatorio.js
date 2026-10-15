@@ -53,6 +53,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var pr=document.querySelector('#f-productos .prod-desc'); pr.value='TITANIO LATEX';
     var md=document.querySelector('#f-productos .prod-medida'); if(md) md.value='160x190';
     var cn=document.querySelector('#f-productos .prod-cant'); if(cn) cn.value='1';
+    segSet('f-atc-tipo', o.tipo===undefined ? 'gar' : o.tipo);   // (15/10, §4lj) garantía o contra costo: lo cuida test_atc_tipo
     if(o.motivo!=null)  document.getElementById('f-atc-motivo').value=o.motivo;
     if(o.detalle!=null) document.getElementById('f-atc-detalle').value=o.detalle;
     if(o.compra!=null)  document.getElementById('f-atc-compra').value=o.compra;
@@ -272,6 +273,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var falta2=document.getElementById('atc-falta').textContent;
     var igual2=(JSON.stringify(window._pl.filter(function(x){ return x.id==='vieja-1'; })[0])===n0);
     document.getElementById('f-atc-compra').value='2023-05-04';
+    segSet('f-atc-tipo','gar');   // (15/10, §4lj) la vieja tampoco tenía garantía/contra costo: se marca también
     submitPedido(); await new Promise(r=>setTimeout(r,300));
     var q=findById('vieja-1');
     return { falta1:falta1, igual:igual, falta2:falta2, igual2:igual2, fcom:atcFechaCompra(q), det:atcDetalle(q), mot:atcMotivo(q) };
@@ -346,7 +348,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { det: atcDetalle(p), cols: filas.map(function(l){ return l.split('\t').length; }) };
   });
   chk('el detalle de dos líneas se guarda en una sola', r.guardo && cop.det==='hundido en el medio · del lado derecho', cop.det);
-  chk('…y «📋 Copiar» de la pestaña ATC da 16 columnas en TODAS las filas', cop.cols.length>1 && cop.cols.every(function(n){ return n===16; }), cop.cols);
+  chk('…y «📋 Copiar» de la pestaña ATC da 17 columnas en TODAS las filas (desde §4lj, con «Tipo» al final)', cop.cols.length>1 && cop.cols.every(function(n){ return n===17; }), cop.cols);
 
   // ============ 12f. una ATC pasada a OC al editar no deja sus fotos como «fotos de la entrega» ============
   const aOc = await ev(async () => {
