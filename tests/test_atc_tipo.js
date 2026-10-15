@@ -220,6 +220,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ============ 7. el informe PDF ============
   const inf = await ev(async () => {
     var Dt=atciDatos('todas',''), Ds=atciDatos('todas','stc'), Dg=atciDatos('todas','gar');
+    UNLOCKED=true;   // 📄 (§4lm) el informe es de gerencia
     var s=document.getElementById('atc-tipo'); s.value='stc'; renderAtc();
     abrirInformeAtc(); await new Promise(r=>setTimeout(r,300));
     var sel=(document.getElementById('atci-tipo')||{}).value, info=(document.getElementById('atci-info')||{}).textContent||'';
@@ -227,7 +228,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var hojas=document.getElementById('atci-hojas').textContent.replace(/\s+/g,' ');
     document.getElementById('atci-tipo').value=''; atciPintar();
     var hojasT=document.getElementById('atci-hojas').textContent.replace(/\s+/g,' ');
-    atciCerrar(); s.value=''; renderAtc();
+    atciCerrar(); s.value=''; UNLOCKED=false; renderAtc();
     return { nT:Dt.n, nS:Ds.n, nG:Dg.n, pt:Dt.porTipo, etq:atciEtq(Ds), arch:atciArchivo('2026-10','stc'), archG:atciArchivo('todas','gar'),
              sel:sel, info:info, solo:/Solo contra costo \(STC\)/.test(hojas), port:/🔧 Solo contra costo/.test(hojas), lomas:/Por tipo: 3 de garantía y 1 contra costo \(STC\)/.test(hojasT) };
   });

@@ -416,6 +416,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   con pedidos de fechas relativas: se pudren solos con el calendario. Los dos tienen el reloj
   de la página clavado en el 08/09 (`page.clock.setFixedTime`). Si se cambia un Excel, mover
   esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
+  📍 **Waze y el Plus Code en `maps?q=`** (§4ln, 15/10): `coordsDeLink` lee `ll=…%2C…` (Waze) y el Plus Code con el «+» sin codificar
+  («maps?q=8R6C+72P,+Santa+Cruz»). Las búsquedas de Google (`google.com/search?…kgmid=`) no traen ubicación: no se inventa. `test_ubicar` §5.
 - **⏳ Primera carga con reintentos y cartel** (§4di): al abrir, el panel muestra la copia
   guardada en el dispositivo (`loadMirror`; en una compu nueva, nada = todo en 0) y pide la
   planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo
@@ -693,6 +695,91 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
 - `asisRefrescar` no lo cuenta entre los nuevos y llama a `anuncioTic`. `tests/test_anuncio.js` (47; ⚠️ Playwright evalúa con «gesto del
   usuario», así que `navigator.userActivation` siempre dice que sí: la prueba simula el primer toque con `anuncioPuedeSonar`). Bitácora §4ks, §4kw.
 
+## 🎧 La ATC no se guarda sin sus datos + 📷 hasta 2 fotos del producto (§4lh, 15/10, PUBLICADO `a21dfe7`; dueño: *«no les permita guardar si no tienen todos los datos llenados… fecha de compra, motivo… detallar. Añade… adjuntar fotos del producto, hasta dos imágenes»*)
+- Obligatorio al crear Y al editar por el formulario (`atcFaltan`/`atcFaltanDe` en `submitPedido`): motivo, detalle (≥ `ATC_DETALLE_MIN`=10 letras),
+  fecha de compra (ni futura, ni posterior a cuando entró la ATC, ni antes de 2000) y qué se le recoge (≥1 casilla). Fotos NO obligatorias.
+  Recuadro `#atc-falta` + `atcCampoListo`; «Para guardar» (`fxDerPintar`) las lista. 🔑 Con la clave de Administración, una ATC vieja a la que YA
+  le faltaba lo mismo se guarda igual tras un `confirm` (`atcFaltanHeredados`); lo que tenía no se borra ni con clave. El detalle se guarda en una línea.
+- 📷 `ATC_FOTOS_MAX`=2, `FORM_ATC_FOTOS`, `atcFotosElegidas`/`subirAtcFoto`/`quitarAtcFotoForm`. Quedan en `atc.fot` **y** en `p.fotos` (columna 29:
+  la única que cuida el barrido de huérfanas del servidor, §4ep). ⚠️ **`fotosEntregaDe(p)`** (la columna sin las del producto) para todo lo que MUESTRA o
+  CUENTA fotos de la entrega; `fotosDe` para guardar/comparar la fila. `abrirVisor(pid,i,'atc')`, `atcFotosTiraHtml` en la ficha ATC y los modales.
+  El eco del formulario compara contra `rec` (lo mandado). Una página sin F5 no conoce nada de esto: al publicar, todos F5.
+- `tests/test_atc_obligatorio.js` (57). Bitácora §4lh.
+- **📧 El correo de la ATC** (§4li, 15/10, PUBLICADO `ea4978a`; dueño: *«que al crear la ATC se genere el mensaje para copiar al correo, y ellas enviar»*): al guardar
+  una ATC sale «✅ ATC guardada» con `#atc-correo` ARRIBA del WhatsApp: Para (por compu, `me_atc_correo`; si no, `ATC_CORREO_PARA`, hoy vacío),
+  Asunto (`atcCorreoAsunto`) y Mensaje (`atcCorreoTexto`: todo lo de la ATC + enlaces de Drive de las fotos). Copiar / «📧 Abrir en Gmail» /
+  «✉️ Otro correo» (`atcCorreoUrl`). El panel NO manda nada. También desde la ficha («📧 Correo de la ATC», `atcCorreoVer`). `tests/test_atc_correo.js` (32).
+- **🛡️🔧 Garantía o contra costo (STC)** (§4lj, 15/10, PUBLICADO `8af3831`; dueño: *«solo es para marcar y filtrar la información al llenar… las recogidas y fechas
+  se mantienen»*): `atc.tipo` = `gar`|`stc` (`atcTipo`), OBLIGATORIO en el formulario (`#f-atc-tipo`, en `atcFaltanDe`). El número sigue «ATC …»:
+  nada del circuito, estados, cobro ni del bot cambia (con «STC …» el bot del `.gs` lo tomaba como venta). Las viejas quedan «❓ Sin marcar» y se
+  marcan desde la ficha (`atcTipoMarcar`; cambiar una ya marcada pide la clave). Filtro «Tipo» en la pestaña (`#atc-tipo` → `atcLista`) con chips
+  (`atcTiposHtml`), columna «Tipo» al FINAL de «📋 Copiar», asunto/mensaje del correo, línea del WhatsApp, «🔧 STC» en `atcChip` y el informe PDF
+  (`#atci-tipo`, `atciDatos(mes, tipo)`). `tests/test_atc_tipo.js` (48).
+- **🧽 Bloki lo enseña** (§4lk, PUBLICADO `48fe59c`): «¿Cómo mando el correo de una ATC?» y «¿Cómo separo las de garantía y las de contra costo (STC)?» al final de
+- **🧩 El informe por marca y línea** (§4ll, 15/10; dueño: *«9 titanio por hundimiento, 3 especial semi ortopédico… separar Heaven y Sueña»*): hoja(s)
+  «¿Qué líneas y por qué?» después de «Productos y marcas» (`atciLineasHojas`): por marca, cada línea con su total y una columna por motivo, y
+  debajo sus productos; «Lo que más se repite» (2+). Marca = la del NOMBRE del producto (`stockMarcaDeNombre`), si no la de quien la cargó;
+  ⚠️ la dona «De qué marca» usa la MISMA regla (`atciMarcaAtc`). Línea = la primera palabra de una línea de esa marca (`ATCI_LINEAS`; ICE/LATEX
+  = TITANIO); «SEMI ORTOPEDICO» a secas en Heaven NO se adivina («Sin línea en el nombre»). Producto = `atciNomBase` (sin medidas, abreviaturas
+  enteras). Las marcas llenan la hoja y siguen en otra con «· sigue» (`ATCI_LIN_ALTO`, medido). `tests/test_atc_lineas.js` §1-4.
+- **🧹 La barra de ATC** (§4lm, 15/10; dueño: *«demasiados botones»*): sin «📋 Copiar» ni «🔗 Completar con Trello» (las funciones quedan). «📋 Copiar»
+  va en la ficha (`copiarAtcUna`: SOLO su fila, las mismas 17 columnas, `atcCopiaFila`). **«📄 Informe PDF» solo gerencia** (`atcVeInforme` =
+  `asisVeAdm`: la clave, Administración o Logística; Contabilidad y vendedores no). `tests/test_atc_lineas.js` §5-6.
+  `ASIS_AYUDA` (21; 17 para un vendedor). Sinónimo `stc:'costo'` — ⚠️ nunca «contra» (está adentro de «encontrar»).
+
+## 📄 Informe de ATC en PDF (§4le, 15/10, PUBLICADO 09:31 de Bolivia, `9cdb86d`; dueño: *«un botón que genere un informe en PDF… tipo presentación… sobre las ATC del mes, que uno puede elegir el mes»*)
+- Pestaña ATC → **«📄 Informe PDF»** (`#atc-informe-btn`, `abrirInformeAtc`, ventana `#atci-ov`): el mes arranca en el de la pestaña. **Mes = las
+  ATC que ENTRARON** (`atcEntro`); las abiertas de meses anteriores van APARTE. Estado = el de HOY. Cuentas en `atciDatos(mes)` (las de la
+  pestaña: `atcEstado`, `atcDias`…; no calcular nada aparte), hojas en `atciHojas(D)`: A4 apaisadas 1123×794 px (portada, resumen + «Lo más
+  importante», motivos, productos/marcas, dónde están, tiempos, 6 meses, detalle de 11 por hoja).
+- **⬇️ Descargar PDF** = html2canvas 1.4.1 + jsPDF 2.5.1 de cdnjs, cargados al tocar (`atciCargarLibs`), sobre una copia sin `zoom` ni sombra
+  (`#atci-render`). Sin internet → ventana de imprimir; el `@page` apaisado vive solo con la ventana abierta (`atciPaginaCss`).
+  ⚠️ En el CSS de las hojas nada de `color-mix()`/`oklch()` ni `box-shadow` en la copia (html2canvas los pinta mal); tablas con
+  `table-layout:fixed` + `white-space:normal`. `tests/test_atc_informe.js` (55; `ATCI_LIBS_DIR` con las librerías de npm, `ATCI_SALIDA` deja PDF y capturas).
+- **🗂️ «Todas, desde el inicio»** (§4le-b, 15/10, PUBLICADO `e05ba67`; dueño: *«elegir mes seleccionado o TODAS»*): selector `#atci-alc` → `atciDatos('todas')` (mismas
+  cuentas, sin comparar con un mes; tendencia mes por mes desde la primera, hasta 12; «Por mes, en promedio»; abiertas por mes de entrada).
+- **🛒 La fecha de compra y sin «y N más»** (§4le-c, 15/10, PUBLICADO `e468cc0`; dueño: *«NO ME PUSISTE EL DATO MÁS IMPORTANTE»* y *«si mi jefe quiere ver
+  los demás, ¿qué onda?»*): columna «Compra» en las que esperan, las que siguen y el detalle (`atciCompraTd`): la guardada o, con 📎, la de Trello
+  SOLO del mismo celular y no posterior (`atciTrelloMapa`, carga `atciTraerTrello` al abrir; el informe no guarda nada). Lo que no entra va en
+  hojas aparte (`atciProductosResto`, `atciAbiertasResto`) y «Quién las cargó» va entero (`.ai-vlist` con más de 6). `test_atc_informe` §1c-1d (67).
+
+## 🔗 Completar las ATC con Trello (§4lf, 15/10, PUBLICADO 09:54, `f4239a3`; adjuntos §4lf-b PUBLICADO 10:19, `e2c3e5f`; dueño: *«revisá todas las atc del panel con las del trello y añadí los datos faltantes: motivo y fecha de compra»*)
+- Pestaña ATC → **«🔗 Completar con Trello»** (`abrirAtcTrello`, `#atct-ov`, solo con la contraseña). Lee `atc-semanal.csv` (el respaldo diario del
+  tablero que baja el workflow «Reporte Semanal ATC»: el panel no tiene la clave de Trello) y cruza cada ATC por **celular** (tildado) o **nombre**
+  (sin tildar). **Solo completa lo vacío** (motivo, fecha de compra, detalle; se vuelve a mirar al guardar) y deja `a.tre` = la tarjeta (la ficha
+  muestra «🗂️ Ver su tarjeta en Trello»). La fecha de compra solo con día/mes/año (`atctCompra`); mes/año o año solo se muestran. `tests/test_atc_trello.js` (33).
+- **📎 Las fotos y Excel adjuntos** (§4lf-b, dueño: *«eso en el trello está en fotos… ya puse mi api key en github»*): `herramientas/trello_adjuntos.py`
+  (workflow «Leer adjuntos de Trello (ATC)», 19:10 de Bolivia, secretos `TRELLO_API_KEY`, `TRELLO_TOKEN`, `ANTHROPIC_API_KEY`) lee los Excel directo y
+  las fotos/PDF con Claude, UNA vez por adjunto (`vistos`), y deja `atc-trello-adjuntos.json`; una tarjeta con la fecha entera no gasta en sus otras
+  fotos. ⚠️ Registro público: el script imprime SOLO cantidades. En el panel (`atctSumarAdjuntos`) **el texto de la tarjeta manda**; del adjunto
+  entran celulares, la fecha si el texto no la tiene entera («📎 En la factura «…» dice…»), reclamo/motivo/nombre si faltan. `tests/test_trello_adjuntos.py` (61).
+  **PUBLICADO 15/10 10:19, `e2c3e5f`**. Con los datos reales: fecha entera en 42 de 88 tarjetas (antes 30). 50 Excel son el formato viejo, sin
+  casillero de fecha de compra (solo «NRO DE FACTURA»): ahí no hay más que sacar.
+  **Trello se deja de usar (dueño, 15/10)**: el workflow quedó SOLO A MANO (`df92a42`; la clave de Claude de GitHub vence). El CSV y el JSON
+  quedan en el repo como foto final. «Reporte Semanal ATC» sigue prendido hasta que cierren el tablero.
+  🧾 **El certificado de garantía** (dueño: *«en los certificados que subieron las fotos»*): la pregunta a Claude lo nombra (la FECHA de abajo
+  = la de compra; `PREGUNTA_V`=2) y una foto leída antes sin fecha se relee UNA vez. Releídas las 17 (15/10): ninguna tenía fecha (15 fotos del
+  colchón). El lector corre también al cambiar `trello_adjuntos.py`.
+- **📥 Las ATC que están en Trello y no en el panel** (§4lf-c, 15/10, PUBLICADO `0169c1a`; dueño: *«deberían estar, si cuando creamos las ATC
+  "exportamos" todas las del trello»*: NO estaban, 72 de 88). En «🔗 Completar con Trello», arriba: lista para revisar + **«📥 Traer al panel»**.
+  · El viaje sale de **`atc-trello-historial.json`** (`herramientas/trello_historial.py`, API de Trello SIN Claude, corre al cambiar el script):
+  día de creación de la tarjeta (= ENTRÓ la ATC, `ts`; ⚠️ NUNCA la fecha de compra) y la primera vez en cada lista.
+  · Estado por la lista de hoy: devuelta → cerrada (`ent`=`pdev`= día que entró a DEVUELTAS, `rec`= a PRODUCCIÓN), lista (`dev`), en fábrica
+  (`entregado`=✅ = recogida), solicitada/programada → por recoger. **Sin `fecha` de viaje**: no ocupan cupo, el portero no las mira (un alta
+  con fecha pasada la frena `dia_cerrado`) y el bot no manda nada (`waAlGuardar_` sale sin fecha). Id `atc-tre-<tarjeta>`; N° = `nextOcMes`
+  del mes en que entró. Compra = la de la tarjeta o sus adjuntos, si no es posterior a la ATC. `a.trh=1`.
+  · No se ofrece la que ya está (mismo celular, 2+ palabras del nombre, el enlace o el id). Sin tildar: archivadas, POST VENT sin devolver,
+  la misma en dos tarjetas, abiertas quietas > 60 días (`ATCT_QUIETA_DIAS`). `atctCruzar` reconoce la traída por su enlace.
+  · Las 24 del panel SIN fecha de compra son de agosto-octubre y Trello casi no las tiene (en esos meses se crearon 9 tarjetas y entraron 45
+  ATC al panel): esa fecha hay que pedirla. `tests/test_atc_trello.js` §6 (56).
+  · **«📋 Copiar» de la pestaña ATC trae la «Fecha de compra» tercera, al lado de «Entró»** (§4lf-d, 15/10, PUBLICADO `d74791d`): como la
+  columna que el dueño completaba a mano en su Excel. `test_rev2_atc` §4.
+  · **El avance a la vista** (15/10, PUBLICADO `1eadf0a`; dueño: *«no sé si está cargando, guardando o qué»*): barra «Guardando en la planilla:
+  N de M», botón «⏳ Guardando N de M…» y estado por renglón (`#atct-fe<i>`); se guardan DE A UNA (1-3 min para 70). No se ofrecen la tarjeta
+  de ejemplo, fotos sueltas ni la plantilla (`atctNoEsAtc`); «Tildar las recomendadas» reemplaza a «Tildar todas» (tildaba la de ejemplo y
+  las repetidas). Misma ATC = mismo cliente Y (≤ `ATCT_MISMA_DIAS`=10 o mismo producto: `atctMismaAtc`). **«🗂️ Ya traídas de Trello»**
+  (`atctTraidas`) con «🗑 Sacar del panel» (`realDelete`, el borrado de siempre) y «Sacar las que no son ATC o están archivadas».
+
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores
   con tildes (todos de entrada; la lista = `VENDEDORES` + los de las ventas, sin `CONTA_INTERNOS`); «Sumar sus compras» (un renglón por
@@ -859,12 +946,28 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   en Propiedades, nunca en el código); «tu vendedor/a» por `waTuVend_` (`WA_VENDEDOR_HOMBRE`). **Sin entregado automático** (dueño, 12/10):
   el cierre de entregas no tilda nada solo y fecha pasada sin ✅ = «❓ Sin confirmar»; la regla del stock (§4co) no cambió.
 - **🚀 Lo de la tarde que sale cargado a la mañana** (§4lb, 14/10, dueño: *«Ernesto no va a "reprogramar"… debería ser automático, al
-  marcar cargado y saliendo»*; en la rama; servidor `2026-10-14-a` IMPLEMENTADO 14/10 ~11:45 por el dueño, plantilla `pedido_en_camino` creada 11:41, en revisión de Meta; volver atrás: ✏️ a la versión anotada Y pegar la 13-c de `b2c831d…`, 3.735 líneas): al salir un camión antes de las 12:00 («🚚 Ya salió» o
+  marcar cargado y saliendo»*; PÁGINA PUBLICADA 14/10 15:58, `c68a00c`; servidor `2026-10-14-a` IMPLEMENTADO 14/10 por el dueño (re-pegado y reimplementado ~15:50: el editor había vuelto al código viejo), plantilla `pedido_en_camino` APROBADA por Meta; volver atrás: ✏️ a la versión anotada Y pegar la 13-c de `b2c831d…`, 3.735 líneas): al salir un camión antes de las 12:00 («🚚 Ya salió» o
   el GPS de hace ≤ 60 min, en un aparato de logística/Administración), `adelantoAlSalir` pasa a AM los pedidos de HOY de ese camión que
   están en la TARDE y van ENTEROS en la carga (tildes de «🌆 Tarde»; copia los tildes a «🌅 Mañana»), con `reproAplicar(…, forzar,
   {adelanto:1})`. El servidor: evento `e` → plantilla **`pedido_en_camino`** solo al cliente (respaldo `cambio_entrega_v2` → `cambio_entrega`);
   sin `adelanto` o de otro día, el cambio de siempre. Nada se marca ✅. `tests/test_adelanto.js` (14), `test_wa_bot` §14.
-- `tests/test_wa_bot.js` (126), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb.
+- **🧠 Claude le contesta al cliente** (§4lc, 14/10, dueño: *«Entiende y contesta»*, con Claude y USD 100 de crédito; 14-b
+  IMPLEMENTADO 14/10 ~19:05 por el dueño, primera respuesta real 19:13; **`2026-10-14-c` IMPLEMENTADO** (el diagnóstico del 15/10 11:56 lo lee);
+  **15/10: el dueño sacó `IA_SOLO` — Claude le contesta a TODOS los clientes**; las tarjetas del panel PUBLICADAS 15/10, `15eb607`): el webhook pone «⏳» en la columna M y
+  **⚡ desde la 14-c contesta AL VUELO** (dueño: *«escribo y demora 3-5 min»*): `iaAlVuelo_` espera 5 s (`IA_VUELO_MS`) y procesa SOLO sus
+  números con 4 s de quietud (`IA_VUELO_QUIETO_MS`) → ~15 s; el tiempo del webhook no gasta la cuota de disparadores; `IA_AL_VUELO`=0 lo apaga
+  sin reimplementar. De respaldo sigue `iaRepaso` (disparador `iaDespierta` a los 30 s + al final de `waRepaso`), que junta los mensajes de cada número con 20 s de quietud, le pasa a Claude SU pedido de la
+  planilla y lo hablado en 24 h, y le manda la respuesta firmada «🤖 _Asistente automático · <marca>_». Columnas N/O/P = qué quiere, resumen,
+  lo que le contestó; hora/saldo/confirma sin urgencia = atendido «🤖 Claude»; urgente con entrega hoy o el próximo camión → `logistica_cambio`
+  (una vez por pedido y día). 🚫 Claude no cambia nada ni marca ✅; el texto del cliente va entre `<mensaje_cliente>` con `<`/`>` cambiados.
+  Si falla (clave, crédito, refusal, 3 × ocupado, topes `IA_TOPE_DIA` 300 / `IA_MAX_NUMERO` 8, más de 6 h) sale la automática de siempre.
+  Llamada cruda (`iaLlamar_`): `x-api-key`, `anthropic-version: 2023-06-01`, beta `server-side-fallback-2026-07-01` + `fallbacks:'default'`,
+  `output_config` con `effort:'low'` y `json_schema`, SIN `thinking`; un 400 que no es crédito → una vez la consulta simple.
+  Propiedades: `ANTHROPIC_API_KEY` (NUNCA en el código ni en el chat), `IA_ACTIVA`=1, `IA_SOLO` (probar con un número). `probarAsistente` desde
+  el editor (una consulta, sin WhatsApp). Página: `waRespIaHtml`/`waRespIaHechas`. `test_wa_bot` §15, §15b y §15c (al vuelo), `tests/test_wa_claude.js` (11).
+  ⚠️ **Nunca dos respuestas**: `IA_HECHO` (Propiedades) se anota ANTES de mandar y la toma de mensajes lo respeta; un número con un mensaje
+  tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
+- `tests/test_wa_bot.js` (208), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
 A «Datos de las HH:MM» (`asisDatos`) · B «⏰ En 1 hora / 🌙 Mañana», «Entendido» vence a las 24 h (`me_asis_vistos` = hasta cuándo, `asisPosponer`)
@@ -927,7 +1030,23 @@ No es control de acceso. En Playwright no sale salvo `QUIEN_PRUEBA`. `tests/test
 filtro de estado; tocar un paso filtra), motivos en barras que filtran y tarjetas bajo 900 px (`me_atc_tabla`). Solo presentación: la tabla
 `#tbl-atc` se sigue armando. `tests/test_atc_4jz.js`. Bitácora §4jz.
 
-## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*)
+## 🧽 Bloki, el asistente (§4lg, 15/10; dueño, con su dibujo y cinco capturas: *«Bloki, el asistente de Multiespumas · un bloque de espuma con la franja turquesa del colchón. Cambia de traje según quién usa el panel»*; PUBLICADO 15/10, `cd028a8`)
+- Reemplaza la figura 3D de Eduardo en TODO el asistente: la esquina (`#asis-yo`), la cabecera de la ventana («Soy Bloki, tu asistente del panel»),
+  «¿Quién está usando el panel?», la ventana «📢 Decir anuncio» y el grito del anuncio. Las fotos `asistente/eduardo-*.webp` quedan sin usar.
+- **Es un SVG armado en la página** (`blokiSvg(traje)` → `blokiSrc` = `data:image/svg+xml`, memo por traje), sin archivos: cinco trajes
+  (`BLOKI_TRAJES`): `bloki` (chispa), `vendedor` (gorra y tablita), `logistica` (casco, chaleco y camión), `conta` (anteojos, lápiz y calculadora),
+  `anuncio` (megáfono y cejas de enojo). El saludo de la mano, el parpadeo y el megáfono que vibra van ADENTRO del SVG (sin movimiento con
+  «reducir movimiento»); el balanceo sigue en `.asis-fig`.
+- **El traje** = `blokiTraje()`: el globo del anuncio a la vista (`ASIS.anuncioFig`) → `anuncio`; si no, quién eligió ser (`quienRol`:
+  `logistica`, **`conta` —botón nuevo «🧾 Contabilidad» en «¿Quién está usando…?»—**, `admin` → `bloki`; un nombre de vendedor → `vendedor`); si
+  nadie eligió, la pestaña (Nuevo pedido y Mis pedidos → vendedor, Contabilidad → contabilidad, lo demás → bloki). `blokiPoner()` cambia solo
+  el `src` de la figura (al refrescar, al cambiar de pestaña y al elegir quién es). `asisGloboOcultar()` esconde el globo y le saca el megáfono.
+  ⚠️ El rol `conta` NO ve lo de logística (`asisVeAdm`) ni el resumen de logística: solo cambia el traje y deja «Todos» en Contabilidad.
+- ⚠️ **Solo el ASISTENTE se llama Bloki**: Eduardo sigue siendo el dueño/vendedor («La fábrica de Eduardo», «preguntale a Eduardo por WhatsApp»,
+  la nota de venta, Multicenter) y el EDUARDO de la ciudad 3D.
+- `tests/test_bloki.js` (19; 16 rojas contra `15eb607`); `test_asistente` y `test_anuncio` cambiaron a conciencia (miraban la foto y el megáfono suelto).
+
+## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*) — desde §4lg la figura es BLOKI (arriba); lo demás sigue
 Su imagen 3D de cuerpo entero en la esquina (`asistente/eduardo-3d.webp`, cabecera `eduardo-busto.webp`; `?v=` en `ASIS_IMG`/`ASIS_BUSTO`).
 Avisa según la pestaña (`asisAvisos`: Mis pedidos del vendedor elegido, al guardar, Administración, Contabilidad) leyendo las cuentas de
 siempre, ayuda «¿Cómo hago…?» (`ASIS_AYUDA`) y sonido WebAudio. Solo mira: nada va a la planilla; «Entendido» y 🔇 por aparato. En Playwright
