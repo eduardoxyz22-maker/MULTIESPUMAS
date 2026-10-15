@@ -737,7 +737,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   · No se ofrece la que ya está (mismo celular, 2+ palabras del nombre, el enlace o el id). Sin tildar: archivadas, POST VENT sin devolver,
   la misma en dos tarjetas, abiertas quietas > 60 días (`ATCT_QUIETA_DIAS`). `atctCruzar` reconoce la traída por su enlace.
   · Las 24 del panel SIN fecha de compra son de agosto-octubre y Trello casi no las tiene (en esos meses se crearon 9 tarjetas y entraron 45
-  ATC al panel): esa fecha hay que pedirla. `tests/test_atc_trello.js` §6 (49).
+  ATC al panel): esa fecha hay que pedirla. `tests/test_atc_trello.js` §6 (56).
+  · **El avance a la vista** (15/10, PUBLICADO `1eadf0a`; dueño: *«no sé si está cargando, guardando o qué»*): barra «Guardando en la planilla:
+  N de M», botón «⏳ Guardando N de M…» y estado por renglón (`#atct-fe<i>`); se guardan DE A UNA (1-3 min para 70). No se ofrecen la tarjeta
+  de ejemplo, fotos sueltas ni la plantilla (`atctNoEsAtc`); «Tildar las recomendadas» reemplaza a «Tildar todas» (tildaba la de ejemplo y
+  las repetidas). Misma ATC = mismo cliente Y (≤ `ATCT_MISMA_DIAS`=10 o mismo producto: `atctMismaAtc`). **«🗂️ Ya traídas de Trello»**
+  (`atctTraidas`) con «🗑 Sacar del panel» (`realDelete`, el borrado de siempre) y «Sacar las que no son ATC o están archivadas».
 
 ## 📇 Clientes para Excel (§4kz, 14/10, PUBLICADO `61dbaf8`; dueño: *«un botón para exportar Excel en administración… por mes, o todo, y elegir de qué vendedores (en plural): nombre del cliente, número de celular, valor de la compra»*)
 - Administración → «🏭 Stock y ventas» → **«📇 Clientes (Excel)»** (`#cli-btn`, `abrirClientes`, ventana `#cli-overlay`). Un mes o Todo; vendedores

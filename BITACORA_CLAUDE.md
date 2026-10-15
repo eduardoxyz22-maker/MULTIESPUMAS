@@ -14778,3 +14778,10 @@ El dueño: *«nuestro trello del panel no tiene campos de fecha de compra… eso
   · `atctCruzar` reconoce la traída por su enlace/id (nunca se cruza con otra tarjeta). `atctTarjeta` guarda `desc`.
   · `test_atc_trello` §6 → 49.
 - **PUBLICADO 15/10 ~11:30, `0169c1a`** (con el historial y las fotos releídas). Lo trae a la planilla el dueño, tocando el botón.
+- **«no sé si está cargando, guardando o qué» (15/10 ~11:40, con captura: las 71 tildadas, también archivadas, «parece la misma» y
+  «ALBERTO PAREJA EJEMPLO»)**. El diagnóstico (corrida 38761649645, 11:36, `54e1171` cuenta las `atc-tre-`): **ninguna traída todavía**
+  (50 ATC). El botón no mostraba nada mientras guardaba de a una (solo un aviso corto al principio): ahora barra, botón y renglón dicen
+  cómo va. La tarjeta de ejemplo, las fotos sueltas y la plantilla no se ofrecen; «Tildar todas» pasó a «Tildar las recomendadas»; la
+  misma ATC en dos tarjetas pide además ≤10 días o el mismo producto (Paola Silvana Guzmán tenía dos reclamos distintos, nov. y dic.);
+  «🗂️ Ya traídas de Trello» deja sacar una (o todas las que no son ATC / archivadas) con el borrado de siempre. Con los archivos reales
+  y el panel vacío: 84 ofrecidas, 55 recomendadas, 4 que no son ATC. `test_atc_trello` → 56. **PUBLICADO `1eadf0a`**.
