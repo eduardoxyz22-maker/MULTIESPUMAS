@@ -14,7 +14,7 @@ on:
       - '.github/workflows/diagnostico-lectura.yml'
 
 permissions:
-  contents: read
+  contents: write     # (15/10) solo para guardar `atc-cifrado.txt` en una rama de trabajo (nunca en main): ver el último paso
 
 jobs:
   leer:
@@ -28,3 +28,17 @@ jobs:
         env:
           PANEL_URL: ${{ secrets.PANEL_URL }}
         run: python herramientas/diagnostico_lectura.py
+      # 🔐 (15/10) Si el script dejó las ATC CIFRADAS (solo se leen con la llave privada, que no está en el repo), se guardan en la
+      # rama que lo corrió para poder bajarlas. Nunca en main.
+      - name: Guardar lo cifrado (solo en una rama de trabajo)
+        if: github.ref_name != 'main'
+        run: |
+          [ -f atc-cifrado.txt ] || { echo "no hay nada cifrado"; exit 0; }
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add atc-cifrado.txt
+          git commit -m "ATC cifradas para completar el Excel (auto)" || exit 0
+          for i in 1 2 3 4; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then exit 0; fi
+            sleep $((i * 5)); git pull --rebase origin "${GITHUB_REF_NAME}" || { git rebase --abort || true; }
+          done

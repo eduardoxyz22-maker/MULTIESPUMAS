@@ -872,6 +872,9 @@ def atc_cifrado():
         for i in range(0, len(d64), 3000):
             print("CIFRADO-DATOS " + d64[i:i + 3000])
         print("CIFRADO-FIN")
+        # y en un archivo, para la rama de trabajo (el registro de Actions no se puede bajar desde todos lados)
+        with open(os.path.join(aqui, "..", "atc-cifrado.txt"), "w") as f:
+            f.write("CIFRADO-CLAVE " + k64 + "\n" + "".join("CIFRADO-DATOS " + d64[i:i + 3000] + "\n" for i in range(0, len(d64), 3000)) + "CIFRADO-FIN\n")
     except Exception as ex:
         print("   (no se pudo cifrar: %s)" % type(ex).__name__)
 
