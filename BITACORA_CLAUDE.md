@@ -14871,3 +14871,5 @@ que guarden sin antes completar todos los datos»*.
 - **PUBLICADO 15/10 ~14:37 de Bolivia, `a21dfe7`** (dueño: *«ya publica s?»*), encima del panel automático `b94251a`: `pedidos.html` + las 7
   pruebas. Pages OK (run «pages build and deployment» de `a21dfe7`, success). En la copia de main: `test_atc_obligatorio` 57, `test_atc` 81.
   ⚠️ Todos F5: una página vieja deja guardar ATC sin los datos nuevos.
+- Batería entera con §4lh (la rama, `88b2eac`): 193 suites, 6.742 en verde; una sola roja, `test_asistente` 23/1 con la máquina cargada, que
+  sola da 24/0.
