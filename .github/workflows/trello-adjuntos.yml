@@ -29,7 +29,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Pillow (para achicar las fotos antes de mandarlas)
-        run: pip install --quiet pillow || echo "sin Pillow: las fotos van tal cual"
+        run: |
+          pip install --quiet pillow || echo "sin Pillow, las fotos van tal cual"
 
       - name: Leer los adjuntos
         env:
