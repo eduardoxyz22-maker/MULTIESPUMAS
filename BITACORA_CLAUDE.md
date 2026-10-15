@@ -14921,3 +14921,5 @@ tenemos programado. Solo es para marcar y filtrar la información al llenar, por
 - Colores: garantía verde (`#047857`), contra costo índigo (`#4338ca`); naranja no (se confunde con los avisos en ámbar).
 - `tests/test_atc_tipo.js` (43; 18 rojas contra `ea4978a`). Cambiaron a conciencia (marcan «garantía» al cargar una ATC por el
   formulario): `test_atc`, `test_atc_obligatorio` (y la copia: 17 columnas), `test_atc_correo`, `test_rev2_form`, `test_rev5_pedidos`.
+- **PUBLICADO 15/10, `8af3831`** (encima de `ea4978a`: `pedidos.html` + 7 pruebas), Pages OK. Antes: en la copia de main `test_atc_tipo` 43 y
+  `test_atc_obligatorio` 57; en la rama, las 15 suites de ATC y de la ventana de guardado en verde. Todos F5: una página vieja guarda ATC sin la marca.

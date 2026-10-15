@@ -707,7 +707,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   una ATC sale «✅ ATC guardada» con `#atc-correo` ARRIBA del WhatsApp: Para (por compu, `me_atc_correo`; si no, `ATC_CORREO_PARA`, hoy vacío),
   Asunto (`atcCorreoAsunto`) y Mensaje (`atcCorreoTexto`: todo lo de la ATC + enlaces de Drive de las fotos). Copiar / «📧 Abrir en Gmail» /
   «✉️ Otro correo» (`atcCorreoUrl`). El panel NO manda nada. También desde la ficha («📧 Correo de la ATC», `atcCorreoVer`). `tests/test_atc_correo.js` (32).
-- **🛡️🔧 Garantía o contra costo (STC)** (§4lj, 15/10; dueño: *«solo es para marcar y filtrar la información al llenar… las recogidas y fechas
+- **🛡️🔧 Garantía o contra costo (STC)** (§4lj, 15/10, PUBLICADO `8af3831`; dueño: *«solo es para marcar y filtrar la información al llenar… las recogidas y fechas
   se mantienen»*): `atc.tipo` = `gar`|`stc` (`atcTipo`), OBLIGATORIO en el formulario (`#f-atc-tipo`, en `atcFaltanDe`). El número sigue «ATC …»:
   nada del circuito, estados, cobro ni del bot cambia (con «STC …» el bot del `.gs` lo tomaba como venta). Las viejas quedan «❓ Sin marcar» y se
   marcan desde la ficha (`atcTipoMarcar`; cambiar una ya marcada pide la clave). Filtro «Tipo» en la pestaña (`#atc-tipo` → `atcLista`) con chips
