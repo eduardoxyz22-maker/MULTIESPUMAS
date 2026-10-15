@@ -106,7 +106,18 @@ input[type=text],input[type=tel],input[type=url],input[type=number],input[type=d
   width:100%;padding:11px 13px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;color:var(--text);background:#fff;transition:border .15s,box-shadow .15s}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-lt)}
 textarea{resize:vertical;min-height:58px}
-input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt)}
+input.err,textarea.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt)}
+/* 🎧 (§4lh) las casillas de «qué se le recoge» y las fotos de la ATC, marcadas cuando faltan */
+#f-atc-piezas.err{outline:2px solid var(--red);outline-offset:3px;border-radius:8px;background:var(--red-lt)}
+.atc-falta{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:9px;padding:8px 11px;font-size:.8rem;margin:2px 0 10px;line-height:1.45}
+.atc-falta b{font-weight:800}
+.atc-fotos{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.atc-fotos .foto{position:relative;width:92px;height:92px;border-radius:10px;overflow:hidden;border:1px solid var(--teal-border);background:#fff}
+.atc-fotos .foto img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}
+.atc-fotos .foto button{position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(15,23,42,.72);color:#fff;font-size:.8rem;cursor:pointer;line-height:26px;padding:0}
+.atc-fotos .atc-foto-add{width:92px;height:92px;border-radius:10px;border:2px dashed var(--teal-border);background:#fff;color:#065f5b;font-size:.74rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;text-align:center}
+.atc-fotos .atc-foto-add span{font-size:1.5rem;line-height:1}
+.atc-fotos .atc-foto-sub{font-size:.78rem;color:#065f5b;font-weight:700}
 .num-money{position:relative}
 .num-money::before{content:'Bs';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.82rem;font-weight:700;color:var(--muted);pointer-events:none}
 .num-money input{padding-left:38px}
@@ -1077,24 +1088,27 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
            visible, así que el dueño preguntó "¿dónde sale el motivo?". Va pegado al
            selector que lo hace aparecer. -->
       <div id="wrap-atc-motivo" style="display:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:12px 13px 4px;margin-bottom:14px">
-        <div style="font-size:.8rem;color:#065f5b;margin-bottom:9px">🎧 <b>Atención al cliente</b> — contá por qué se genera, para poder seguirla después en la pestaña <b>ATC</b>.</div>
+        <div style="font-size:.8rem;color:#065f5b;margin-bottom:9px">🎧 <b>Atención al cliente</b> — contá por qué se genera, para poder seguirla después en la pestaña <b>ATC</b>. Todo lo marcado con <span class="req">*</span> es obligatorio.</div>
+        <div id="atc-falta" class="atc-falta" hidden></div>
         <div class="grid2">
           <div class="field">
             <label class="lb">Motivo del reclamo <span class="req">*</span></label>
-            <select id="f-atc-motivo"><option value="">Elegí el motivo…</option></select>
+            <select id="f-atc-motivo" onchange="atcCampoListo(this)"><option value="">Elegí el motivo…</option></select>
           </div>
           <div class="field">
-            <label class="lb">Detalle del desperfecto <span class="hint">(qué dijo el cliente)</span></label>
-            <input type="text" id="f-atc-detalle" placeholder="Ej. hundido en el medio, no descansa bien" autocomplete="off">
+            <label class="lb">Detalle del desperfecto <span class="req">*</span> <span class="hint">(qué le pasa, con tus palabras)</span></label>
+            <textarea id="f-atc-detalle" rows="3" placeholder="Ej. hundido en el medio del lado derecho, no retoma su forma" autocomplete="off" oninput="atcCampoListo(this)"></textarea>
           </div>
         </div>
         <!-- Del formato en papel se toman SOLO estos dos (§4bs). El resto del Excel ya lo
              tiene el pedido (cliente, teléfono, dirección, vendedora, producto, medida) y
-             el N° de factura el dueño dijo expresamente que no hace falta. -->
+             el N° de factura el dueño dijo expresamente que no hace falta.
+             (15/10, §4lh) El dueño: «no les permita guardar si no tienen todos los datos llenados, como ser la fecha de
+             compra, motivo… detallar». Motivo, detalle, fecha de compra y qué se le recoge son OBLIGATORIOS (`atcFaltan`). -->
         <div class="grid2">
           <div class="field">
-            <label class="lb">Fecha de compra <span class="hint">(para saber si está en garantía)</span></label>
-            <input type="date" id="f-atc-compra" onchange="pintarAntiguedadAtc()">
+            <label class="lb">Fecha de compra <span class="req">*</span> <span class="hint">(de la factura, la nota de venta o la garantía)</span></label>
+            <input type="date" id="f-atc-compra" onchange="pintarAntiguedadAtc();atcCampoListo(this)">
             <div id="atc-antiguedad" style="font-size:.76rem;margin-top:4px"></div>
           </div>
           <div class="field">
@@ -1109,9 +1123,16 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
              —el Excel lo llena ella—, y sirve para que al devolver se sepa qué hay que
              llevar de vuelta: el clásico "faltan las patas". -->
         <div class="field" style="margin-top:2px">
-          <label class="lb">¿Qué se le recoge al cliente?</label>
+          <label class="lb">¿Qué se le recoge al cliente? <span class="req">*</span> <span class="hint">(marcá al menos uno)</span></label>
           <div id="f-atc-piezas" style="display:flex;gap:14px;flex-wrap:wrap;padding:4px 0 6px"></div>
           <input type="text" id="f-atc-rnota" placeholder="Aclaración, si hace falta (ej. sómier sin una pata)" autocomplete="off">
+        </div>
+        <!-- 📷 (15/10, §4lh) Fotos del producto, hasta ATC_FOTOS_MAX. Suben a Drive apenas se eligen (como los comprobantes) y
+             quedan en el pedido al guardar: dentro de la ATC (`atc.fot`) y también en la columna de fotos, que es la que mira el
+             barrido de huérfanas del servidor (si no, a los 30 días iban a la papelera). -->
+        <div class="field" id="wrap-atc-fotos" style="margin-top:6px">
+          <label class="lb">📷 Fotos del producto <span class="hint">(hasta 2 — las que te mandó el cliente o las que sacaste vos)</span></label>
+          <div id="f-atc-fotos-box"></div>
         </div>
       </div>
 
@@ -1782,6 +1803,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 <input type="file" id="roho-input" accept=".xlsx" style="display:none" onchange="onRohoArchivo(event)">
 <input type="file" id="exist-input" accept=".xlsx" style="display:none" onchange="onExistArchivo(event)">
 <input type="file" id="fcomp-input" accept="image/*" multiple style="display:none" onchange="compVarias(event, onCompFormElegido)">
+<input type="file" id="atcfoto-input" accept="image/*" multiple style="display:none" onchange="atcFotosElegidas(event)">
 <style>
 /* ✨ §4ik (09/10): las seis vistas nuevas. Solo miran. */
 .vis-caja{ background:#fff; border:1px solid var(--gray-md); border-radius:12px; padding:0 14px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
@@ -4968,15 +4990,19 @@ function flushPending(){
    ========================================================================== */
 function imagenesSinPegar(){
   var todas=compsArr(FORM_COMPS).concat(typeof FORM_COMPS2!=='undefined'?compsArr(FORM_COMPS2):[]);
-  if(!todas.length) return [];
-  var ya=[];
-  if(EDIT_ID){ var prev=findById(EDIT_ID); if(prev){ ya=compsArr(metodoFormulario(prev).comps); var mx=(typeof mixtoDe==='function')?mixtoDe(prev):null; if(mx) ya=ya.concat(compsArr(mx.comps!=null?mx.comps:mx.comp)); } }
-  return todas.filter(function(id){ return ya.indexOf(id)<0; });
+  /* 📷 (§4lh) …y las fotos del producto de la ATC recién subidas (las que la ATC ya tenía no cuentan). */
+  var atcF=(typeof FORM_ATC_FOTOS!=='undefined') ? compsArr(FORM_ATC_FOTOS) : [];
+  if(!todas.length && !atcF.length) return [];
+  var ya=[], yaAtc=[];
+  if(EDIT_ID){ var prev=findById(EDIT_ID); if(prev){ ya=compsArr(metodoFormulario(prev).comps); var mx=(typeof mixtoDe==='function')?mixtoDe(prev):null; if(mx) ya=ya.concat(compsArr(mx.comps!=null?mx.comps:mx.comp)); yaAtc=atcFotos(prev); } }
+  return todas.filter(function(id){ return ya.indexOf(id)<0; })
+    .concat(atcF.filter(function(id){ return yaAtc.indexOf(id)<0; }));
 }
 function descartarImagenesSinPegar(){
   var ids=imagenesSinPegar(); if(!ids.length) return 0;
   FORM_COMPS=compsArr(FORM_COMPS).filter(function(id){ return ids.indexOf(id)<0; });
   if(typeof FORM_COMPS2!=='undefined') FORM_COMPS2=compsArr(FORM_COMPS2).filter(function(id){ return ids.indexOf(id)<0; });
+  if(typeof FORM_ATC_FOTOS!=='undefined'){ FORM_ATC_FOTOS=compsArr(FORM_ATC_FOTOS).filter(function(id){ return ids.indexOf(id)<0; }); renderAtcFotosForm(); }
   /* Nunca una imagen que algún pedido todavía nombra (§4fy): la regla de `borrarFotoSiNadieLaUsa`. Acá
      se escapaba y así se iba a la papelera el comprobante de una venta ya guardada (25/09). */
   if(CONNECTED) ids.forEach(function(id){ if(!fotoEnUso(id)) apiBorrarFoto(fidLimpio(id)).catch(function(){}); });
@@ -11493,20 +11519,31 @@ function submitPedido(){
   if(!VENTA_TIENDA && !document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
   /* 🎧 Sin motivo la ATC no sirve para lo que se pidió: no habría con qué contar POR QUÉ
-     se generan. Es el único campo nuevo obligatorio, y solo en las ATC (§4bq). */
-  var faltaMotivo=false;
-  if(docTipoSel()==='ATC' && !document.getElementById('f-atc-motivo').value){
-    markErr('f-atc-motivo'); ok=false; faltaMotivo=true;
+     se generan (§4bq). (15/10, §4lh) Y el dueño pidió más: motivo, DETALLE, FECHA DE COMPRA y qué se le recoge son
+     obligatorios (`atcFaltan`), al crear y al editar. El recuadro rojo del bloque dice qué falta y se va achicando. */
+  var faltaAtc=[];
+  if(docTipoSel()==='ATC'){
+    faltaAtc=atcFaltan(EDIT_ID ? findById(EDIT_ID) : null);
+    faltaAtc.forEach(function(x){ markErr(x.id); });
+    if(faltaAtc.length) ok=false;
   }
+  pintarAtcFalta(faltaAtc);
+  var faltaMotivo=faltaAtc.length>0;
   var faltaSuc = _rpt && !cliente;
   if(!ok){
     toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
-        : faltaMotivo ? '🎧 Elegí el motivo del reclamo — es lo que después permite saber por qué se generan las ATC.'
+        : faltaMotivo ? ('🎧 No se puede guardar la ATC: falta '+atcFaltanTxt(faltaAtc)+'.')
         : faltaSuc ? '🏪 Poné a qué SUCURSAL va la reposición — es a dónde tiene que ir el camión.'
         : 'Completá los campos marcados (*)','err');
     if(faltaSuc){ var fs2=document.getElementById('f-rpt-suc'); if(fs2){ fs2.focus(); fs2.scrollIntoView({block:'center'}); } }
-    if(faltaMotivo){ var fm=document.getElementById('f-atc-motivo'); if(fm){ fm.focus(); fm.scrollIntoView({block:'center'}); } }
+    if(faltaMotivo){ var fm=document.getElementById(faltaAtc[0].id); if(fm){ try{ if(fm.focus) fm.focus(); }catch(e){} fm.scrollIntoView({block:'center'}); } }
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
+    return;
+  }
+  /* 📷 (§4lh) Una foto del producto que todavía está subiendo se perdería: el pedido se guardaría sin ella. */
+  if(docTipoSel()==='ATC' && ATC_FOTO_SUBIENDO>0){
+    toast('📷 Esperá que termine de subir la foto del producto y volvé a tocar Guardar.','err',7000);
+    try{ document.getElementById('wrap-atc-fotos').scrollIntoView({block:'center'}); }catch(e){}
     return;
   }
   var _cantMal=cantidadesMal();   // (26/09) 0, 2,5, −2 o vacía: no se inventa otra cantidad
@@ -12218,6 +12255,14 @@ function submitPedido(){
     _n.com  = segVal('f-atc-comodin')==='SI';
     _n.rnota= document.getElementById('f-atc-rnota').value.trim();
     var _pz=leerPiezasAtc(); for(var _k2 in _pz) _n[_k2]=_pz[_k2];
+    /* 📷 (§4lh) Las fotos del producto: en la ATC (`fot`) y en la columna de fotos, sin tocar las de la entrega del chofer.
+       Sale de la columna solo la que la vendedora quitó; entra la nueva. */
+    var _fAntes=prev ? atcFotos(prev) : [], _fAhora=compsArr(FORM_ATC_FOTOS).slice(0, ATC_FOTOS_MAX);
+    if(_fAhora.length) _n.fot=_fAhora; else delete _n.fot;
+    var _col=fotosDe(rec).filter(function(x){ var f=fidLimpio(x); return !(_fAntes.indexOf(f)>=0 && _fAhora.indexOf(f)<0); });
+    var _colL=_col.map(fidLimpio);
+    _fAhora.forEach(function(f){ if(_colL.indexOf(f)<0){ _col.push(f); _colL.push(f); } });
+    rec.fotos=_col;
     // (25/09) si vivía en su día de devolución, la fecha del formulario ES la de la devolución
     // (26/09) …también con el ✅ puesto (`atcViajeDevolucion`): con `atcEnDevolucion` la entregada quedaba en el día viejo
     if(prev && atcViajeDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
@@ -12860,6 +12905,16 @@ function pintarMotivoAtc(limpiar){
      ⚠️ Esconder esos dos campos —y limpiarlos— ahora lo hace `pintarDocTipo`: la RPT
      necesita exactamente lo mismo. */
   pintarAntiguedadAtc();
+  if(!atc) pintarAtcFalta(null);
+  /* 📷 (§4lh) Si la persona pasa la ATC a OC, las fotos del producto recién subidas no se guardarían en ningún lado: se
+     borran ahora (las que la ATC ya tenía se quedan en el pedido hasta que se guarde). */
+  if(!atc && limpiar && compsArr(FORM_ATC_FOTOS).length){
+    var _prevA=EDIT_ID ? findById(EDIT_ID) : null, _ya=_prevA ? atcFotos(_prevA) : [];
+    var _nuevas=compsArr(FORM_ATC_FOTOS).filter(function(id){ return _ya.indexOf(id)<0; });
+    _nuevas.forEach(function(id){ borrarFotoSiNadieLaUsa(id); });
+    FORM_ATC_FOTOS=compsArr(FORM_ATC_FOTOS).filter(function(id){ return _nuevas.indexOf(id)<0; });
+    renderAtcFotosForm();
+  }
 }
 /* Debajo de la fecha de compra dice hace cuánto fue. No decide nada solo —la garantía la
    define la empresa, no el panel— pero le pone el dato adelante a quien atiende. */
@@ -12870,6 +12925,164 @@ function pintarAntiguedadAtc(){
   if(f>todayStr()){ el.innerHTML='<span style="color:var(--red);font-weight:700">⚠️ esa fecha es del futuro</span>'; return; }
   el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
+/* ============================================================================
+   🎧 LO QUE UNA ATC NECESITA PARA GUARDARSE (15/10, §4lh)
+   El dueño: *«que los vendedores deban llenar correctamente los datos faltantes, como ser fecha de compra, y no les
+   permita guardar si no tienen todos los datos llenados… Deben seleccionar cuál es el motivo, aparte de las observaciones,
+   detallar»*. En el informe de ATC del 15/10 (49 de julio a octubre) faltaban 4 motivos, 5 detalles y 11 fechas de compra,
+   y una compra era POSTERIOR a la ATC. Hasta acá solo el motivo era obligatorio (§4bq).
+   Obligatorio: motivo (de la lista), detalle (al menos ATC_DETALLE_MIN letras), fecha de compra (no del futuro, no posterior
+   a cuando entró la ATC, no antes de ATC_COMPRA_DESDE) y qué se le recoge (al menos una casilla). Vale al CREAR y al EDITAR:
+   abrir una ATC vieja a la que le falta algo pide completarlo («los datos faltantes»). Las fotos NO son obligatorias.
+   Devuelve lo que falta: [{id, txt (con <b>), corto}] — vacío = se puede guardar.
+   ========================================================================== */
+var ATC_DETALLE_MIN=10;              // letras sin contar espacios: «hundido» solo no dice qué pasa ni dónde
+var ATC_COMPRA_DESDE='2000-01-01';   // antes de esto es un error de tipeo del año
+function atcFaltan(prev){
+  var out=[];
+  var mot=String((document.getElementById('f-atc-motivo')||{}).value||'');
+  var det=String((document.getElementById('f-atc-detalle')||{}).value||'').replace(/\s+/g,' ').trim();
+  var fc=String((document.getElementById('f-atc-compra')||{}).value||'');
+  var pz=leerPiezasAtc(), algun=false; for(var k in pz) if(pz[k]) algun=true;
+  if(!mot) out.push({id:'f-atc-motivo', corto:'el motivo', txt:'el <b>motivo</b> (elegilo de la lista)'});
+  if(!det) out.push({id:'f-atc-detalle', corto:'el detalle', txt:'el <b>detalle</b>: qué le pasa al producto'});
+  else if(det.replace(/\s/g,'').length<ATC_DETALLE_MIN)
+    out.push({id:'f-atc-detalle', corto:'un detalle más completo', txt:'un <b>detalle</b> más completo (al menos '+ATC_DETALLE_MIN+' letras: qué le pasa y dónde)'});
+  var hasta=(prev && atcEntro(prev)) || todayStr();
+  if(!fc) out.push({id:'f-atc-compra', corto:'la fecha de compra', txt:'la <b>fecha de compra</b>'});
+  else if(!/^\d{4}-\d{2}-\d{2}$/.test(fc) || fc<ATC_COMPRA_DESDE)
+    out.push({id:'f-atc-compra', corto:'una fecha de compra válida', txt:'una <b>fecha de compra</b> válida (revisá el año)'});
+  else if(fc>hasta)
+    out.push({id:'f-atc-compra', corto:'una fecha de compra que no sea posterior a '+(prev?'la ATC':'hoy'),
+              txt:'una <b>fecha de compra</b> que no sea posterior a '+(prev?('la ATC (entró el '+fmtFecha(hasta)+')'):'hoy')});
+  if(!algun) out.push({id:'f-atc-piezas', corto:'qué se le recoge', txt:'<b>qué se le recoge</b> al cliente (marcá al menos uno)'});
+  return out;
+}
+function atcFaltanTxt(f){
+  var c=f.map(function(x){ return x.corto; });
+  return c.length>1 ? (c.slice(0,-1).join(', ')+' y '+c[c.length-1]) : (c[0]||'');
+}
+/* El recuadro rojo arriba del bloque de la ATC: se muestra al intentar guardar y se va actualizando mientras se completa. */
+function pintarAtcFalta(f){
+  var box=document.getElementById('atc-falta'); if(!box) return;
+  if(!f || !f.length){ box.hidden=true; box.innerHTML=''; return; }
+  box.innerHTML='⛔ <b>No se puede guardar la ATC todavía.</b> Falta: '+f.map(function(x){ return x.txt; }).join(' · ')+'.';
+  box.hidden=false;
+}
+/* Al completar un campo marcado, se le saca el rojo y el recuadro dice lo que queda (solo si ya se intentó guardar). */
+function atcCampoListo(){
+  var box=document.getElementById('atc-falta');
+  if(!box || box.hidden || docTipoSel()!=='ATC') return;
+  var f=atcFaltan(EDIT_ID ? findById(EDIT_ID) : null), ids={};
+  f.forEach(function(x){ ids[x.id]=1; });
+  ['f-atc-motivo','f-atc-detalle','f-atc-compra','f-atc-piezas'].forEach(function(id){
+    var e=document.getElementById(id); if(e && !ids[id]) e.classList.remove('err');
+  });
+  pintarAtcFalta(f);
+}
+
+/* ============================================================================
+   📷 FOTOS DEL PRODUCTO DE LA ATC (15/10, §4lh) — dueño: *«añade la función adjuntar imágenes para que puedan adjuntar
+   fotos del producto, hasta dos imágenes»*.
+   · Suben a Drive apenas se eligen (el mismo canal que los comprobantes: `fotoCronometro` + `subirFoto`) y viven en
+     FORM_ATC_FOTOS hasta guardar.
+   · Al guardar quedan en DOS lugares: dentro de la ATC (`atc.fot`, para saber cuáles son del producto) y en la columna de
+     fotos del pedido (`p.fotos`), que es la que mira el barrido de huérfanas del servidor (§4ep): si solo estuvieran en el
+     JSON de productos, al día siguiente pasaban a «Fotos huérfanas» y a los 30 días a la papelera.
+   · Por eso todo lo que muestra o cuenta las fotos DE LA ENTREGA usa `fotosEntregaDe(p)` (las de la columna menos las del
+     producto); lo que guarda o compara la fila entera sigue con `fotosDe(p)`.
+   ========================================================================== */
+var ATC_FOTOS_MAX=2;
+var FORM_ATC_FOTOS=[], ATC_FOTO_SUBIENDO=0, ATC_FOTO_GEN=0;
+function atcFotos(p){ var a=atcDe(p); return compsArr(a && a.fot).slice(0, ATC_FOTOS_MAX); }
+function fotosEntregaDe(p){
+  var f=atcFotos(p), todas=fotosDe(p);
+  if(!f.length) return todas;
+  return todas.filter(function(x){ return f.indexOf(fidLimpio(x))<0; });
+}
+function renderAtcFotosForm(){
+  var box=document.getElementById('f-atc-fotos-box'); if(!box) return;
+  var arr=compsArr(FORM_ATC_FOTOS).slice(0, ATC_FOTOS_MAX);
+  var h=arr.map(function(fid,i){
+    return '<span class="foto">'+fotoImgHtml(fid,{alt:'Foto del producto '+(i+1), title:'Ver en grande', onclick:'atcFotoVer('+i+')'})+
+      '<button type="button" title="Quitar esta foto" onclick="quitarAtcFotoForm('+i+')">✕</button></span>';
+  }).join('');
+  if(ATC_FOTO_SUBIENDO>0) h+='<span class="atc-foto-sub">⏳ Subiendo la foto… esperá un momento</span>';
+  else if(arr.length<ATC_FOTOS_MAX)
+    h+='<button type="button" class="atc-foto-add" id="atc-foto-add" onclick="adjuntarAtcFoto()"><span>📷</span>'+(arr.length?'Agregar otra foto':'Adjuntar foto')+'</button>';
+  box.innerHTML='<div class="atc-fotos">'+h+'</div>'+
+    '<div style="font-size:.72rem;color:var(--muted);margin-top:4px">'+
+      (arr.length ? ('✅ '+arr.length+' de '+ATC_FOTOS_MAX+(arr.length===1?' foto lista':' fotos listas')+' — quedan con la ATC al guardar')
+                  : 'De la galería o con la cámara. Ayuda a fábrica a ver el problema antes de recogerlo.')+'</div>';
+}
+function atcFotoVer(i){ var a=compsArr(FORM_ATC_FOTOS); if(a[i]) window.open(fotoVer(fidLimpio(a[i])),'_blank'); }
+function adjuntarAtcFoto(){
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir la foto','err'); return; }
+  if(compsArr(FORM_ATC_FOTOS).length+ATC_FOTO_SUBIENDO>=ATC_FOTOS_MAX){ toast('Ya están las '+ATC_FOTOS_MAX+' fotos: quitá una para cambiarla','err'); return; }
+  var el=document.getElementById('atcfoto-input'); if(!el) return;
+  el.value=''; el.click();
+}
+/* Se pueden elegir varias de una vez: se suben de a una y solo las que entran en el tope. */
+function atcFotosElegidas(ev){
+  var inp=ev && ev.target; if(!inp) return Promise.resolve();
+  var fs=Array.prototype.slice.call(inp.files||[]);
+  try{ inp.value=''; }catch(e){}
+  var libres=ATC_FOTOS_MAX-compsArr(FORM_ATC_FOTOS).length-ATC_FOTO_SUBIENDO;
+  if(libres<=0){ if(fs.length) toast('Ya están las '+ATC_FOTOS_MAX+' fotos: quitá una para cambiarla','err'); return Promise.resolve(); }
+  var eligio=fs.length;
+  if(eligio>libres) fs=fs.slice(0, libres);
+  var i=0, sig=function(){ if(i>=fs.length) return; return subirAtcFoto(fs[i++]).then(sig, sig); };
+  /* El aviso del tope va AL FINAL: dicho antes, el «Foto lista ✓» de cada subida lo tapaba y no se veía. */
+  return Promise.resolve(sig()).then(function(){
+    if(eligio>libres) toast('Elegiste '+eligio+' fotos y son hasta '+ATC_FOTOS_MAX+' por ATC: se '+(libres===1?'subió la primera':('subieron las primeras '+libres))+'.','err',7000);
+  });
+}
+function subirAtcFoto(f){
+  if(!f || compsArr(FORM_ATC_FOTOS).length>=ATC_FOTOS_MAX) return Promise.resolve();
+  var gen=ATC_FOTO_GEN;                               // si el formulario cambia mientras sube, la foto no se pega a otro pedido
+  ATC_FOTO_SUBIENDO++; renderAtcFotosForm();
+  toast('Achicando y subiendo la foto…','ok');
+  var cli=String((document.getElementById('f-cliente')||{}).value||'');
+  var tirar=function(fid){ if(fid && CONNECTED && !fotoEnUso(fid)) apiBorrarFoto(fidLimpio(fid)).catch(function(){}); };
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+    return subirFoto('form', 'atc_'+cli, dataUrl);
+  }).then(function(res){
+    if(gen!==ATC_FOTO_GEN){ if(res && res.fotoId) tirar(res.fotoId); return; }
+    ATC_FOTO_SUBIENDO=Math.max(0, ATC_FOTO_SUBIENDO-1);
+    if(!res || !res.ok || !res.fotoId){
+      renderAtcFotosForm();
+      toast(res && res.version ? ('No se pudo guardar la foto ('+(res.error||'error')+')')
+                               : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
+      return;
+    }
+    if(compsArr(FORM_ATC_FOTOS).length>=ATC_FOTOS_MAX){ tirar(res.fotoId); renderAtcFotosForm(); return; }
+    FORM_ATC_FOTOS=compsArr(FORM_ATC_FOTOS).concat([res.fotoId]);
+    renderAtcFotosForm();
+    toast((FORM_ATC_FOTOS.length<ATC_FOTOS_MAX ? 'Foto lista ✓ — podés sumar otra' : 'Las '+ATC_FOTOS_MAX+' fotos listas ✓')+' · '+fotoTiempoTxt(),'ok');
+  }).catch(function(e){
+    if(gen!==ATC_FOTO_GEN) return;
+    ATC_FOTO_SUBIENDO=Math.max(0, ATC_FOTO_SUBIENDO-1);
+    renderAtcFotosForm();
+    toast('No se pudo subir la foto: '+motivoDeError(e),'err');
+  });
+}
+/* Quitar: una recién subida (que ningún pedido nombra) se borra de Drive en el momento; una que la ATC ya tenía sale del
+   pedido al guardar (y el barrido de huérfanas se la lleva). */
+function quitarAtcFotoForm(i){
+  var arr=compsArr(FORM_ATC_FOTOS), fid=arr[i]; if(!fid) return;
+  arr.splice(i,1); FORM_ATC_FOTOS=arr; renderAtcFotosForm();
+  var prev=EDIT_ID ? findById(EDIT_ID) : null;
+  if(!(prev && atcFotos(prev).indexOf(fid)>=0)) borrarFotoSiNadieLaUsa(fid);
+}
+/* Las fotos del producto ya guardadas, para las fichas. Tocar una abre el visor de la app con esas dos. */
+function atcFotosTiraHtml(p){
+  var a=atcFotos(p); if(!a.length) return '';
+  var pid=String(p.id).replace(/[^\w-]/g,'');
+  return '<div class="atc-fotos">'+a.map(function(fid,i){
+    return '<span class="foto">'+fotoImgHtml(fid,{alt:'Foto del producto '+(i+1), title:'Ver la foto en grande',
+      onclick:"abrirVisor('"+pid+"',"+i+",'atc')"})+'</span>';
+  }).join('')+'</div>';
+}
 /* (02/10, §4hg) La pestaña conserva un pedido NUEVO a medio llenar, pero abrir otra edición
    lo reemplazaba sin preguntar. Comparar con el formulario vacío, no con STATE; incluir
    productos, montos y campos de ATC/RPT, aun cuando se completaron automáticamente. */
@@ -12879,7 +13092,7 @@ function formNuevoHuella(){
     if(e.type==='file' || e.id==='f-vendedor') return null;
     return [e.id||e.tagName, e.type==='checkbox'?e.checked:e.value];
   });
-  return JSON.stringify([campos, VENTA_TIENDA, docTipoSel(), segVal('f-pagado'), segVal('f-turno'), FORM_COMPS, FORM_COMPS2]);
+  return JSON.stringify([campos, VENTA_TIENDA, docTipoSel(), segVal('f-pagado'), segVal('f-turno'), FORM_COMPS, FORM_COMPS2, FORM_ATC_FOTOS]);
 }
 function confirmarReemplazoForm(){
   var b=document.getElementById('f-submit');
@@ -12911,6 +13124,7 @@ function resetForm(){
   document.getElementById('f-atc-rnota').value='';
   segSet('f-atc-comodin','NO');
   pintarPiezasAtc(); ponerPiezasAtc({});
+  FORM_ATC_FOTOS=[]; ATC_FOTO_SUBIENDO=0; ATC_FOTO_GEN++; renderAtcFotosForm(); pintarAtcFalta(null);   // 📷🎧 (§4lh)
   pintarDocTipo();
   document.getElementById('f-vendedor').value=getVendedorMem(); applyVendedorLite();
   document.getElementById('f-cliente').value='';
@@ -12971,6 +13185,7 @@ function editPedido(id){
   document.getElementById('f-atc-rnota').value=atcRecibidoNota(rec);
   segSet('f-atc-comodin', atcComodin(rec)?'SI':'NO');
   pintarPiezasAtc(); ponerPiezasAtc(atcDe(rec)||{});
+  FORM_ATC_FOTOS=atcFotos(rec); ATC_FOTO_SUBIENDO=0; ATC_FOTO_GEN++; renderAtcFotosForm(); pintarAtcFalta(null);   // 📷🎧 (§4lh)
   pintarDocTipo();
   document.getElementById('f-vendedor').value=rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
@@ -13627,6 +13842,12 @@ function fxDerPintar(){
   var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
   if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); }
+  if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
+    var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
+    if(!lite) chk.push(['Celular',!!cel]);
+    chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
+    chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
+  }
   h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){ return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div></div>';
   if(v && !EDIT_ID){
     var o=fxMesDe(nombreCanonico(v)), hoy=todayStr(), nH=0, bH=0;
@@ -18443,7 +18664,7 @@ function pintarPiezasAtc(){
   if(box.children.length) return;                       // ya están dibujadas
   box.innerHTML=ATC_PIEZAS.map(function(x){
     return '<label style="display:flex;align-items:center;gap:6px;font-size:.86rem">'+
-      '<input type="checkbox" id="f-pz-'+esc(x.k)+'" style="width:17px;height:17px"> '+esc(x.lbl)+'</label>';
+      '<input type="checkbox" id="f-pz-'+esc(x.k)+'" style="width:17px;height:17px" onchange="atcCampoListo()"> '+esc(x.lbl)+'</label>';
   }).join('');
 }
 function leerPiezasAtc(){
@@ -18737,6 +18958,9 @@ function verAtc(id){
       '</div>'+
 
       texto('Detalle del desperfecto — lo que dijo el cliente', atcDetalle(p)||p.observaciones)+
+      /* 📷 (15/10, §4lh) las fotos del producto que subió la vendedora; tocar una abre el visor */
+      '<div style="margin-top:12px"><div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px">📷 Fotos del producto</div>'+
+        (atcFotos(p).length ? atcFotosTiraHtml(p) : '<div style="font-size:.8rem;color:var(--muted)">sin fotos — se pueden agregar con ✏️ Editar</div>')+'</div>'+
       texto('Qué se hizo', atcQueSeHizo(p))+
       /* 🔗 (15/10, §4lf) la tarjeta de Trello de donde se completaron datos */
       ((atcDe(p)||{}).tre && /^https:\/\/trello\.com\//.test((atcDe(p)||{}).tre) ? ('<div style="margin-top:10px;font-size:.8rem"><a href="'+esc((atcDe(p)||{}).tre)+'" target="_blank" rel="noopener" style="color:#0079bf;font-weight:700">🗂️ Ver su tarjeta en Trello</a></div>') : '')+
@@ -19436,7 +19660,7 @@ function renderChofer(){
       '</div>'+
       '<div class="cho-acc">'+
         '<button class="cho-btn ent'+(p.entregado?' on':'')+'" onclick="choEntregado(\''+p.id+'\')">'+(p.entregado?'✓ Entregado':'✅ Marcar entregado')+'</button>'+
-        '<button class="cho-btn foto" onclick="pedirFoto(\''+p.id+'\')">📷 '+(fotosDe(p).length?('Otra foto ('+fotosDe(p).length+')'):'Foto de la entrega')+'</button>'+
+        '<button class="cho-btn foto" onclick="pedirFoto(\''+p.id+'\')">📷 '+(fotosEntregaDe(p).length?('Otra foto ('+fotosEntregaDe(p).length+')'):'Foto de la entrega')+'</button>'+
         (cobrosDe(p).some(cobroDeLaPuerta)?('<button class="cho-btn cob" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+   // §4fy: solo los de la puerta
       '</div>'+
     '</div>';
@@ -19476,7 +19700,7 @@ function agruparPorCamion(list){
     var g=grupos[k];
     g.list.push(p);
     (p.productos||[]).forEach(function(x){ g.unid+=Number(x.cant)||0; });
-    g.fotos+=fotosDe(p).length;
+    g.fotos+=fotosEntregaDe(p).length;              // 📷 (§4lh) sin las fotos del producto de una ATC
     var sal=Number(p.saldo)||0; if(sal>0.01) g.porCobrar+=sal;
     if(!noSeCobra(p)) g.flete=r2(g.flete+envioPorCobrar(p));   // (26/09) el flete pactado, aparte de la venta (§4ai)
     cobrosVisibles(p).forEach(function(cb){
@@ -19508,7 +19732,7 @@ function entregasDatos(fecha){
   delDia.forEach(function(p){ if(!noSeCobra(p)) tot.flete=r2(tot.flete+envioPorCobrar(p)); });
   hechos.forEach(function(p){
     (p.productos||[]).forEach(function(x){ tot.unid+=Number(x.cant)||0; });
-    var f=fotosDe(p).length; tot.fotos+=f; if(!f) tot.sinFoto++;
+    var f=fotosEntregaDe(p).length; tot.fotos+=f; if(!f) tot.sinFoto++;
     cobrosVisibles(p).forEach(function(cb){
       tot.cobrado+=Number(cb.monto)||0;
       tot.porMetodo[cb.metodo]=(tot.porMetodo[cb.metodo]||0)+(Number(cb.monto)||0);
@@ -19540,7 +19764,7 @@ function entregaCardHtml(p, dn, pendiente){
        : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT: no es «sin monto»
        : sinMontoAnotado(p) ? badgeSinMonto()
                   : '<span class="badge b-gray">Sin saldo'+(fleteTxt?' de la venta':'')+'</span>');
-  var fotos=fotosDe(p);
+  var fotos=fotosEntregaDe(p);
   return '<div class="ent-card '+docCls(p)+'">'+
     '<div class="ent-top">'+
       (dn?('<span class="ent-n">#'+dn+'</span>'):'')+
@@ -19635,7 +19859,7 @@ function entregasTexto(){
       L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.oc?(ocEtiq(p.oc)+' · '):'')+(p.cliente||'')+
         (cob.length?('  → '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')):
           ((Number(p.saldo)||0)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+fleteDe(p)+
-        (fotosDe(p).length?'  📷':''));
+        (fotosEntregaDe(p).length?'  📷':''));
     });
   });
   if(d.faltan.length){
@@ -19844,10 +20068,14 @@ function onFotoElegida(ev){
 }
 function quitarFoto(id, idx){
   var p=findById(id); if(!p) return;
-  var arr=fotosDe(p).slice();
-  if(idx<0||idx>=arr.length) return;
+  /* 📷 (§4lh) El índice es el de la tira de la ENTREGA (`fotosEntregaDe`): las fotos del producto de una ATC viven en la
+     misma columna pero no se muestran ni se borran desde acá. */
+  var vis=fotosEntregaDe(p);
+  if(idx<0||idx>=vis.length) return;
   if(!confirm('¿Borrar esta foto de la entrega?')) return;
-  var fid=arr[idx]; arr.splice(idx,1); p.fotos=arr;
+  var fid=vis[idx], arr=fotosDe(p).slice(), j=arr.indexOf(fid);
+  if(j<0) return;
+  arr.splice(j,1); p.fotos=arr;
   persistPedido(p); renderChoferSiActivo(); renderMis();
   borrarFotoSiNadieLaUsa(fid);                       // §4fy
   if(document.getElementById('modal').classList.contains('on')) reabrirFicha(p.id);
@@ -19855,7 +20083,7 @@ function quitarFoto(id, idx){
 }
 /* Tira de fotos. conBorrar solo donde corresponde (chofer y administración). */
 function fotosHtml(p, conBorrar){
-  var a=fotosDe(p);
+  var a=fotosEntregaDe(p);                           // 📷 (§4lh) sin las fotos del producto de una ATC
   if(!a.length) return '';
   return '<div class="fotos">'+a.map(function(fid,i){
     return '<span class="foto">'+
@@ -19868,11 +20096,12 @@ function fotosHtml(p, conBorrar){
 /* Visor de fotos: se abre DENTRO de la app, encima de todo, y se pasa de una a otra
    con ‹ › o con las flechas del teclado. Antes había que salir a Drive en otra pestaña. */
 var VISOR={ids:[], i:0, tit:'', pid:''};
-function abrirVisor(pid, idx){
+function abrirVisor(pid, idx, cual){
   var p=findById(pid); if(!p) return;
-  var a=fotosDe(p); if(!a.length) return;
+  /* 📷 (§4lh) `cual==='atc'` = las fotos del producto de la ATC; si no, las de la entrega (como las muestra `fotosHtml`). */
+  var a=(cual==='atc') ? atcFotos(p) : fotosEntregaDe(p); if(!a.length) return;
   VISOR={ ids:a, i:Math.min(Math.max(0, idx||0), a.length-1), pid:pid,
-          tit:(p.cliente||'')+(p.oc?(' · '+ocEtiq(p.oc)):'')+' · '+fmtFecha(p.fecha) };
+          tit:(p.cliente||'')+(p.oc?(' · '+ocEtiq(p.oc)):'')+(cual==='atc'?' · fotos del producto':(' · '+fmtFecha(p.fecha))) };
   renderVisor();
 }
 function renderVisor(){
@@ -20395,7 +20624,8 @@ function showMisModal(id){
     row('Cobro', cobro)+
     (envioTotal(p)>0 ? row('🚚 Recargo por entrega', envioResumenHtml(p)) : '')+
     row('Entrega', entrega)+row('Stock', estadoStockBadge(p))+row('Chofer', choferVal)+
-    row('Fotos de la entrega', fotosHtml(p, false));
+    row('Fotos de la entrega', fotosHtml(p, false))+
+    (atcFotos(p).length ? row('📷 Fotos del producto', atcFotosTiraHtml(p)) : '');   // 🎧 (§4lh)
   /* El flete se cobra en la puerta: acá es donde la vendedora lo reporta. */
   var fleteSec = envioPendiente(p)
     ? ('<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
@@ -28973,7 +29203,8 @@ function showCargaModal(id){
     row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+
     row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Vehículo', vehTxt)+
-    row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>');
+    row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>')+
+    (atcFotos(p).length ? row('📷 Fotos del producto', atcFotosTiraHtml(p)) : '');   // 🎧 (§4lh)
   var accionesSec=
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
@@ -29075,6 +29306,7 @@ function showPedidoModal(id){
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano acá abajo">a mano: '+esc(p.estado)+'</span>'):''))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>')+
+    (atcFotos(p).length ? row('📷 Fotos del producto', atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
   /* 🎧 Ni una ATC ni una RPT se cobran (§4fy): no son ventas y Contabilidad no las muestra, así
      que lo que se anotara acá no aparecía en ningún lado — y el aviso mandaba a «revisá el monto
@@ -35367,7 +35599,7 @@ var ASIS_AYUDA=[
   { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Si es QR o tarjeta, adjuntá la foto del comprobante.','Lo que paga después lo registra Contabilidad desde la ficha de la venta.'] },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
   { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','Siempre podés guardar igual: es un aviso.'] },
-  { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Cargá el cliente y qué hay que reparar.','No se cobra: la parte del pago se esconde sola.'] },
+  { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Obligatorio: el motivo, el detalle de qué le pasa, la fecha de compra y qué se le recoge. Sin eso no se guarda.','Podés adjuntar hasta 2 fotos del producto. No se cobra: la parte del pago se esconde sola.'] },
   { q:'¿Cómo pido reposición para mi tienda (RPT)?', k:'rpt reposicion tienda sucursal', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido elegí 🏪 RPT.','Elegí la sucursal: la dirección y la zona se completan solas.','Cargá los productos y marcá si es Reposición o Adicional.','Al guardar, bajá el Excel y mandalo por correo.'] },
   { q:'¿Cómo aviso a mis clientes de mañana?', k:'avisar cliente whatsapp manana entrega', v:'mis', f:'#mis-vendedor', p:['Entrá a 📋 Mis pedidos y elegí tu nombre.','Desde las 17:00 aparece «🔔 Mañana» con tus clientes.','Tocá 💬 WhatsApp en cada uno: el mensaje sale armado.'] },
   { q:'¿Cómo busco un pedido?', k:'buscar encontrar pedido nota cliente producto', v:'mis', f:['#mis-q','#mis-vendedor'], p:['En 📋 Mis pedidos, escribí en el buscador el N° de nota, el cliente, el producto o la OC.','Busca en todos tus pedidos, no solo en los de este mes.'] },
