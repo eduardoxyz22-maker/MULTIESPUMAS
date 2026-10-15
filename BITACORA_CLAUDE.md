@@ -14638,6 +14638,17 @@ e importante tipo presentación sobre las ATC del mes, que uno puede elegir el m
   `test_atc_4jz` 15, `test_onclicks` 5, `test_cupos_fecha` 7. Batería de la rama: `test_getlog` y `test_escenas_form` dieron 1 roja
   cada una con la máquina cargada y pasan solas.
 
+## §4le-b — 🗂️ El informe de ATC con «Todas, desde el inicio» (15/10)
+El dueño: *«al descargar PDF quiero que me permita elegir mes seleccionado o TODAS desde el inicio de los tiempos»*.
+- Selector `#atci-alc` en la barra del informe («📅 Un mes» / «🗂️ Todas, desde el inicio»); con «Todas» el mes se esconde
+  (`inp.hidden`). Lo que se ve es lo que baja. Abrirlo mirando un mes en la pestaña ATC vuelve a «Un mes».
+- `atciDatos('todas')`: todas las ATC del panel (las MISMAS cuentas), sin «mes anterior» ni «de meses anteriores»; `desde` = el mes de
+  la primera, `meses`, `mesTop`. Tendencia mes por mes desde la primera (`ATCI_TODAS_MESES`=12 como mucho, y lo dice). «Lo más
+  importante» abre con «Desde <mes> entraron N ATC: X por mes» y «el mes con más». Resumen: «Por mes, en promedio» en vez de «De meses
+  anteriores»; motivos sin la columna del mes anterior; «Dónde están» con las abiertas por el mes en que entraron. `atciEtq(D)` es el
+  rótulo (pie, info); archivo `Informe-ATC-todas-al-15-octubre-2026.pdf`.
+- `test_atc_informe` → 55 (§1b y la ventana con «Todas», el PDF de «Todas»; con `ATCI_SALIDA` también capturas `todasN.png`).
+
 ## §4lf — 🔗 Completar las ATC con lo que dice Trello (15/10)
 El dueño (15/10): *«https://trello.com/b/cFbJp9DO/atc — tenés la api del trello, descargá o revisá todas las atc que tenemos en el panel
 con las del trello y añadí los datos faltantes en el panel, como motivo y fecha de garantía o contrato (cuándo fue la compra)»*.

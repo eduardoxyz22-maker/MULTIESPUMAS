@@ -2796,7 +2796,7 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
    `zoom` (atciEscala). ⚠️ Sin color-mix(), oklch() ni variables raras: html2canvas no los entiende y la hoja sale en blanco. Colores
    escritos y rgba() nomás. Nada animado: la foto de la hoja se saca en el acto. */
 .atci-bar{ padding:9px 12px; background:#86198f; color:#fff; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.atci-bar input[type=month]{ border:none; border-radius:7px; padding:4px 8px; font:inherit; font-size:.82rem; font-weight:700; color:#86198f; width:auto; }
+.atci-bar input[type=month], .atci-bar select{ border:none; border-radius:7px; padding:4px 8px; font:inherit; font-size:.82rem; font-weight:700; color:#86198f; width:auto; background:#fff; }
 .atci-ayuda{ padding:6px 14px; font-size:.78rem; color:#4b5563; background:#fff; border-bottom:1px solid #d7dde2; }
 .atci-ayuda.ocupado{ background:#fdf4ff; color:#86198f; font-weight:700; }
 #atci-body{ flex:1; overflow:auto; padding:16px; }
@@ -3350,7 +3350,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 </div>
 <div id="cli-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <!-- 📄 (15/10, §4le) Informe de ATC del mes: hojas A4 apaisadas que se ven achicadas y se bajan como PDF. -->
-<div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
+<div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><select id="atci-alc" onchange="atciPintar()" aria-label="Qué ATC entran en el informe"><option value="mes">📅 Un mes</option><option value="todas">🗂️ Todas, desde el inicio</option></select><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
 <div class="no-print atci-ayuda" id="atci-estado">Las ATC que <b>entraron</b> en el mes elegido. Lo de «dónde están» es como están <b>hoy</b>.</div>
 <div id="atci-body"><div id="atci-hojas"></div></div></div>
 <!-- 🔗 (15/10, §4lf) Completar las ATC con lo que dice Trello: propone, se revisa y se guarda solo lo tildado. -->
@@ -17255,16 +17255,18 @@ var ATCI_LIBS=[
   { ok:function(){ return !!(window.jspdf && window.jspdf.jsPDF); }, src:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' },
   { ok:function(){ return typeof window.html2canvas==='function'; }, src:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js' }
 ];
-var ATCI_SIN_MOTIVO='(sin motivo anotado)';
+var ATCI_SIN_MOTIVO='(sin motivo anotado)', ATCI_TODAS_MESES=12;
 var ATCI_EDADES=[ { t:'Menos de 6 meses', max:183 }, { t:'De 6 a 12 meses', max:366 }, { t:'De 1 a 2 años', max:731 }, { t:'Más de 2 años', max:1e8 } ];
 var ATCI_PLAZOS=[ { t:'Hasta 7 días', max:7 }, { t:'De 8 a 15 días', max:15 }, { t:'De 16 a 30 días', max:30 }, { t:'Más de 30 días', max:1e8 } ];
 var ATCI_LOGO='<svg width="30" height="22" viewBox="0 0 21 15" aria-hidden="true"><path d="M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z" fill="#e9609a"/><path d="M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z" fill="#f08a24"/><path d="M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z" fill="#f6c437"/></svg>';
-var ATCI_AYUDA='Las ATC que <b>entraron</b> en el mes elegido; «dónde están» es como están <b>hoy</b>. «⬇️ Descargar PDF» baja el archivo (en el iPad queda en Archivos → Descargas).';
+var ATCI_AYUDA='Las ATC que <b>entraron</b> en el mes elegido, o <b>todas</b> desde la primera («🗂️ Todas»); «dónde están» es como están <b>hoy</b>. «⬇️ Descargar PDF» baja el archivo (en el iPad queda en Archivos → Descargas).';
 function atciMesMas(ym, n){
   var y=+String(ym).slice(0,4), m=+String(ym).slice(5,7)-1+n;
   while(m<0){ m+=12; y--; } while(m>11){ m-=12; y++; }
   return y+'-'+(m<9?'0':'')+(m+1);
 }
+/* Lo que cubre el informe, en palabras: «Octubre 2026» o «Todas las ATC · desde julio 2026». */
+function atciEtq(D){ return D.todas ? 'Todas las ATC · desde '+atciMesTxt(D.desde).toLowerCase() : atciMesTxt(D.mes); }
 function atciMesTxt(ym){ var m=String(ym||'').match(/^(\d{4})-(\d{2})/); if(!m) return String(ym||''); var t=MESES_ES[+m[2]-1]; return t.charAt(0).toUpperCase()+t.slice(1)+' '+m[1]; }
 function atciMesCorto(ym){ var m=String(ym||'').match(/^(\d{4})-(\d{2})/); if(!m) return ''; var t=MESES_ES[+m[2]-1].slice(0,3); return t.charAt(0).toUpperCase()+t.slice(1)+' '+m[1].slice(2); }
 function atciNum(x){ return x==null ? '—' : String(x).replace('.', ','); }
@@ -17302,14 +17304,19 @@ function atciContar(list, claveDe){
 function atciMotivoDe(p){ return atcMotivo(p)||ATCI_SIN_MOTIVO; }
 function atciMotTopK(mot){ for(var i=0;i<mot.length;i++) if(mot[i].k!==normNombre(ATCI_SIN_MOTIVO)) return mot[i].k; return ''; }
 /* Todas las cuentas del informe. Sin pantalla: se puede probar sola. */
+/* `mes` = 'AAAA-MM' (las que entraron ese mes) o 'todas' (15/10, dueño: «elegir mes seleccionado o TODAS desde el inicio de los
+   tiempos»): todas las ATC del panel, sin «mes anterior» con qué comparar ni «de meses anteriores», y la tendencia mes por mes desde la
+   primera. Las cuentas son las mismas. */
 function atciDatos(mes){
-  var hoy=todayStr(), mes0=String(mes||hoy.slice(0,7)).slice(0,7), ant=atciMesMas(mes0, -1);
+  var hoy=todayStr(), TT=(mes==='todas'), mes0=TT ? 'todas' : String(mes||hoy.slice(0,7)).slice(0,7), ant=TT ? '' : atciMesMas(mes0, -1);
   var todas=STATE.filter(function(p){ return p && esATC(p.oc); });
   var delMes=function(ym){ return todas.filter(function(p){ return atcEntro(p).slice(0,7)===ym; }); };
-  var del=delMes(mes0).sort(function(a, b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y ? -1 : 1; return (a.ts||0)-(b.ts||0); });
-  var delAnt=delMes(ant), n=del.length;
-  var antes=todas.filter(function(p){ var e=atcEntro(p).slice(0,7); return !!e && e<mes0 && atcEstado(p)!=='cerrada'; })
+  var del=(TT ? todas.slice() : delMes(mes0)).sort(function(a, b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y ? -1 : 1; return (a.ts||0)-(b.ts||0); });
+  var delAnt=TT ? [] : delMes(ant), n=del.length;
+  var antes=TT ? [] : todas.filter(function(p){ var e=atcEntro(p).slice(0,7); return !!e && e<mes0 && atcEstado(p)!=='cerrada'; })
     .sort(function(a, b){ return (atcDias(b)||0)-(atcDias(a)||0); });
+  var desde=hoy.slice(0,7);
+  del.forEach(function(p){ var e=atcEntro(p).slice(0,7); if(/^\d{4}-\d{2}$/.test(e) && e<desde) desde=e; });
   var est={}; ATV_PASOS.forEach(function(o){ est[o.k]=0; });
   var cerr=[], abiertas=[], sinMot=0, comodin=0, comodinAb=0;
   del.forEach(function(p){
@@ -17351,20 +17358,31 @@ function atciDatos(mes){
   var distC=ATCI_PLAZOS.map(function(x){ return { lbl:x.t, n:0 }; }), distA=ATCI_PLAZOS.map(function(x){ return { lbl:x.t, n:0 }; });
   diasC.forEach(function(d){ distC[atciEnPlazo(d, ATCI_PLAZOS)].n++; });
   diasA.forEach(function(d){ distA[atciEnPlazo(d, ATCI_PLAZOS)].n++; });
-  /* los últimos 6 meses */
-  var tend=[];
-  for(var i=5;i>=0;i--){
-    var ym=atciMesMas(mes0, -i), L=delMes(ym), C=L.filter(function(p){ return !!atcEntregada(p); });
+  /* los últimos 6 meses; con «todas», mes por mes desde la primera (los últimos ATCI_TODAS_MESES si son más) */
+  var tend=[], meses=1, tendCorta=false;
+  if(TT){
+    for(var ym1=desde; ym1<=hoy.slice(0,7); ym1=atciMesMas(ym1, 1)) meses++;
+    meses=Math.max(1, meses-1);
+  }
+  var nT=TT ? Math.min(meses, ATCI_TODAS_MESES) : 6, ult=TT ? hoy.slice(0,7) : mes0;
+  tendCorta=TT && meses>nT;
+  for(var i=nT-1;i>=0;i--){
+    var ym=atciMesMas(ult, -i), L=delMes(ym), C=L.filter(function(p){ return !!atcEntregada(p); });
     tend.push({ ym:ym, n:L.length, c:C.length, prom:atciProm(C.map(atcDias).filter(function(d){ return d!=null; })) });
   }
-  var prom=atciProm(diasC), promAnt=tend[4].prom, mas15=abiertas.filter(function(p){ return (atcDias(p)||0)>15; }).length;
-  var antTxt=MESES_ES[+ant.slice(5,7)-1];
+  var mesTop=null; if(TT) tend.forEach(function(t){ if(t.n && (!mesTop || t.n>mesTop.n)) mesTop=t; });
+  var prom=atciProm(diasC), promAnt=TT ? null : tend[4].prom, mas15=abiertas.filter(function(p){ return (atcDias(p)||0)>15; }).length;
+  var antTxt=TT ? '' : MESES_ES[+ant.slice(5,7)-1];
   /* «Lo más importante», en palabras */
   var I=[];
-  if(!n) I.push('En '+esc(MESES_ES[+mes0.slice(5,7)-1])+' no entró ninguna ATC.');
-  else {
+  if(!n) I.push(TT ? 'Todavía no hay ninguna ATC cargada en el panel.' : 'En '+esc(MESES_ES[+mes0.slice(5,7)-1])+' no entró ninguna ATC.');
+  else if(TT){
+    I.push('Desde '+esc(atciMesTxt(desde).toLowerCase())+' entraron <b>'+n+'</b> ATC: '+atciNum(Math.round(n/meses*10)/10)+' por mes en promedio ('+meses+(meses===1 ? ' mes' : ' meses')+').');
+    if(mesTop && meses>1) I.push('El mes con más ATC fue <b>'+esc(atciMesTxt(mesTop.ym).toLowerCase())+'</b> ('+mesTop.n+').');
+  }
+  if(n){
     var dif=n-delAnt.length;
-    I.push('Entraron <b>'+n+'</b> ATC'+(delAnt.length ? (dif===0 ? ', igual que en '+esc(antTxt) : ': <b>'+Math.abs(dif)+(dif>0?' más':' menos')+'</b> que en '+esc(antTxt)+' ('+delAnt.length+')') : ' (en '+esc(antTxt)+' no entró ninguna)')+'.');
+    if(!TT) I.push('Entraron <b>'+n+'</b> ATC'+(delAnt.length ? (dif===0 ? ', igual que en '+esc(antTxt) : ': <b>'+Math.abs(dif)+(dif>0?' más':' menos')+'</b> que en '+esc(antTxt)+' ('+delAnt.length+')') : ' (en '+esc(antTxt)+' no entró ninguna)')+'.');
     if(motTop) I.push('El motivo que más se repitió fue <b>«'+esc(motTop.lbl)+'»</b>: '+motTop.n+' de '+n+' ('+atciPc(motTop.n, n)+'%).');
     if(prod[0] && prod[0].n>=2) I.push('El producto con más ATC fue <b>'+esc(prod[0].lbl)+'</b> ('+prod[0].n+').');
     I.push(cerr.length
@@ -17379,7 +17397,8 @@ function atciDatos(mes){
   if(antes.length) I.push('Además quedan <b>'+antes.length+'</b> ATC de meses anteriores sin cerrar.');
   var tL=(typeof ULTIMO_REFRESCO!=='undefined' && ULTIMO_REFRESCO) || 0, z=function(v){ return (v<10?'0':'')+v; };
   return {
-    mes:mes0, ant:ant, antTxt:antTxt, hoy:hoy, hora:horaCorta(), enCurso:(mes0===hoy.slice(0,7)),
+    mes:mes0, todas:TT, desde:desde, meses:meses, mesTop:mesTop, tendCorta:tendCorta,
+    ant:ant, antTxt:antTxt, hoy:hoy, hora:horaCorta(), enCurso:(!TT && mes0===hoy.slice(0,7)),
     fuente: tL ? ('planilla leída a las '+z(new Date(tL).getHours())+':'+z(new Date(tL).getMinutes())) : 'la copia guardada en este aparato',
     n:n, nAnt:delAnt.length, del:del, antes:antes, est:est, cerr:cerr, abiertas:abiertas, sinMot:sinMot, comodin:comodin, comodinAb:comodinAb,
     prom:prom, promAnt:promAnt, med:atciMediana(diasC), max:(diasC.length ? Math.max.apply(null, diasC) : null), mas15:mas15,
@@ -17432,9 +17451,11 @@ function atciPortada(D){
     '<div class="ai-logo">'+ATCI_LOGO+'<span>Multi<b>ESPUMAS</b></span></div>'+
     '<div class="ai-port-kick">Atención al cliente · ATC</div>'+
     '<h1 class="ai-port-t">Informe de ATC</h1>'+
-    '<div class="ai-port-mes">'+esc(atciMesTxt(D.mes))+(D.enCurso ? ' <span style="font-size:18px;color:#ccfbf1;font-weight:600">· mes en curso, hasta el '+esc(fmtFecha(D.hoy))+'</span>' : '')+'</div>'+
+    '<div class="ai-port-mes">'+(D.todas
+      ? 'Todas las ATC <span style="font-size:18px;color:#ccfbf1;font-weight:600">· desde '+esc(atciMesTxt(D.desde).toLowerCase())+' hasta el '+esc(fmtFecha(D.hoy))+'</span>'
+      : esc(atciMesTxt(D.mes))+(D.enCurso ? ' <span style="font-size:18px;color:#ccfbf1;font-weight:600">· mes en curso, hasta el '+esc(fmtFecha(D.hoy))+'</span>' : ''))+'</div>'+
     '<div class="ai-port-nums">'+
-      num(D.n, 'ATC entraron en el mes')+
+      num(D.n, D.todas ? 'ATC en total' : 'ATC entraron en el mes')+
       num(D.cerr.length+(D.n ? '<small style="font-size:20px;font-weight:700;opacity:.8"> · '+atciPc(D.cerr.length, D.n)+'%</small>' : ''), 'ya volvieron al cliente')+
       num(atciNum(D.prom), 'días tardó el circuito completo, en promedio')+
     '</div>'+
@@ -17443,23 +17464,27 @@ function atciPortada(D){
 }
 function atciResumen(D){
   var dif=D.n-D.nAnt, antC=esc(D.antTxt.slice(0,3))+'.';
-  var vs=D.nAnt ? (dif===0 ? 'igual que '+esc(D.antTxt) : ((dif>0?'▲ ':'▼ ')+Math.abs(dif)+(dif>0?' más':' menos')+' que '+esc(D.antTxt)+' ('+D.nAnt+')')) : 'en '+esc(D.antTxt)+' no entró ninguna';
+  var vs=D.todas ? ('desde '+esc(atciMesTxt(D.desde).toLowerCase())+' · '+D.meses+(D.meses===1 ? ' mes' : ' meses'))
+    : (D.nAnt ? (dif===0 ? 'igual que '+esc(D.antTxt) : ((dif>0?'▲ ':'▼ ')+Math.abs(dif)+(dif>0?' más':' menos')+' que '+esc(D.antTxt)+' ('+D.nAnt+')')) : 'en '+esc(D.antTxt)+' no entró ninguna');
   var kpis='<div class="ai-kpis">'+
     atciKpi('#a21caf', 'Entraron', D.n, vs)+
     atciKpi('#15803d', 'Volvieron al cliente', D.cerr.length+' <em>de '+D.n+'</em>', D.n ? (atciPc(D.cerr.length, D.n)+'% ya cerradas') : '—')+
     atciKpi(D.mas15 ? '#dc2626' : '#d97706', 'Siguen abiertas', D.abiertas.length, D.abiertas.length ? (D.mas15 ? D.mas15+' hace más de 15 días' : 'ninguna pasa de 15 días') : 'ninguna pendiente')+
     atciKpi('#0f766e', 'Días del circuito', atciNum(D.prom), D.cerr.length ? ('mediana '+atciNum(D.med)+' · la más larga '+D.max+(D.promAnt!=null ? ' · '+antC+' '+atciNum(D.promAnt) : '')) : 'todavía ninguna cerrada')+
     atciKpi('#7c3aed', 'Motivo que más se repite', D.motTop ? esc(atciCorta(D.motTop.lbl, 26)) : '—', D.motTop ? (D.motTop.n+' de '+D.n+' ('+atciPc(D.motTop.n, D.n)+'%)') : 'sin motivos anotados', true)+
-    atciKpi('#64748b', 'De meses anteriores', D.antes.length, D.antes.length ? 'siguen sin cerrar hoy' : 'no queda ninguna abierta')+
+    (D.todas
+      ? atciKpi('#64748b', 'Por mes, en promedio', atciNum(Math.round(D.n/D.meses*10)/10), D.mesTop && D.meses>1 ? ('el que más: '+esc(atciMesCorto(D.mesTop.ym))+' ('+D.mesTop.n+')') : 'ATC por mes')
+      : atciKpi('#64748b', 'De meses anteriores', D.antes.length, D.antes.length ? 'siguen sin cerrar hoy' : 'no queda ninguna abierta'))+
   '</div>';
   var lomas='<div class="ai-lomas"><h3>⭐ Lo más importante</h3><ul>'+D.I.slice(0, 9).map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul></div>';
+  if(D.todas) return atciHoja('Resumen', 'Todas las ATC, desde '+esc(atciMesTxt(D.desde).toLowerCase()), 'Hasta hoy, '+esc(fmtFecha(D.hoy))+'.', kpis+lomas);
   return atciHoja('Resumen del mes', 'Cómo fue '+esc(MESES_ES[+D.mes.slice(5,7)-1])+' en atención al cliente', D.enCurso ? 'Mes en curso: hasta hoy, '+esc(fmtFecha(D.hoy))+'.' : '', kpis+lomas);
 }
 function atciMotivos(D){
   var antC=esc(D.antTxt.slice(0,3))+'.';
-  var items=D.mot.map(function(m){ return { lbl:m.lbl, n:m.n, c:m.c, col:(m.sin ? '#dc2626' : '#00B5AD'), extra:' · '+antC+' '+m.ant }; });
+  var items=D.mot.map(function(m){ return { lbl:m.lbl, n:m.n, c:m.c, col:(m.sin ? '#dc2626' : '#00B5AD'), extra:(D.todas ? '' : ' · '+antC+' '+m.ant) }; });
   var izq='<div class="ai-caja"><h3>💬 Por qué se generaron <small>'+D.n+' ATC</small></h3>'+atciBarras(items, D.n)+
-    '<div class="ai-leyenda"><span><i style="background:#00B5AD"></i>entraron</span><span><i style="background:#15803d"></i>ya cerradas</span><span>«'+antC+'» = las del mes anterior, para comparar</span></div></div>';
+    '<div class="ai-leyenda"><span><i style="background:#00B5AD"></i>entraron</span><span><i style="background:#15803d"></i>ya cerradas</span>'+(D.todas ? '' : '<span>«'+antC+'» = las del mes anterior, para comparar</span>')+'</div></div>';
   var conFecha=D.n-D.sinEdad;
   var der='<div class="ai-caja"><h3>🗓️ Cuánto hacía que lo habían comprado <small>'+conFecha+' con fecha de compra</small></h3>'+
     (conFecha ? atciBarras(D.edades, conFecha, '#a21caf', '150px 1fr 76px') : '<div class="ai-nota">Ninguna tiene la fecha de compra anotada.</div>')+
@@ -17486,12 +17511,12 @@ function atciDonde(D){
     return '<div class="ai-paso" style="border-color:'+(n ? o.c : '#e2e8f0')+';background:'+(n ? atciTinte(o.c) : '#f8fafc')+'"><div class="ico">'+o.ico+'</div><b style="color:'+(n ? o.c : '#94a3b8')+'">'+n+'</b><span>'+esc(o.t)+'</span></div>';
   }).join('<div class="ai-flecha">›</div>')+'</div>';
   var top=D.abiertas.slice(0, 8);
-  var izq='<div class="ai-caja"><h3>⏳ Las que más esperan <small>'+D.abiertas.length+' abiertas del mes</small></h3>'+(top.length
+  var izq='<div class="ai-caja"><h3>⏳ Las que más esperan <small>'+D.abiertas.length+(D.todas ? ' abiertas' : ' abiertas del mes')+'</small></h3>'+(top.length
     ? ('<table class="ai-tabla"><colgroup><col style="width:96px"><col><col style="width:116px"><col style="width:136px"><col style="width:52px"></colgroup>'+
        '<thead><tr><th>N° ATC</th><th>Cliente</th><th>Motivo</th><th>Está</th><th class="n">Días</th></tr></thead><tbody>'+top.map(function(p){
         return '<tr><td class="oc">'+esc(p.oc||'')+'</td><td><div class="ai-c1"><b>'+esc(atciCorta(p.cliente, 24))+'</b></div></td><td><div class="ai-c1">'+esc(atciCorta(atcMotivo(p)||'—', 18))+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td></tr>';
       }).join('')+'</tbody></table>'+(D.abiertas.length>8 ? '<div class="ai-nota">Y '+(D.abiertas.length-8)+' más (están en el detalle).</div>' : ''))
-    : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ Todas las ATC de este mes ya volvieron al cliente.</div>')+'</div>';
+    : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ Todas las ATC '+(D.todas ? '' : 'de este mes ')+'ya volvieron al cliente.</div>')+'</div>';
   var cuentaAntes={}; D.antes.forEach(function(p){ var e=atcEstado(p); cuentaAntes[e]=(cuentaAntes[e]||0)+1; });
   var vieja=D.antes[0];
   var der='<div class="ai-caja"><h3>📦 Vienen de meses anteriores <small>siguen sin cerrar</small></h3>'+(D.antes.length
@@ -17499,7 +17524,15 @@ function atciDonde(D){
        '<div style="margin-top:12px">'+atciBarras(ATV_PASOS.filter(function(o){ return cuentaAntes[o.k]; }).map(function(o){ return { lbl:o.ico+' '+o.t, n:cuentaAntes[o.k], col:o.c }; }), D.antes.length, null, '150px 1fr 76px')+'</div>'+
        (vieja ? '<div class="ai-nota">La más vieja: <b>'+esc(vieja.oc||'')+'</b> · '+esc(atciCorta(vieja.cliente, 24))+' · entró el '+esc(fmtFecha(atcEntro(vieja)))+' ('+atcDias(vieja)+' días).</div>' : ''))
     : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ No queda ninguna abierta de meses anteriores.</div>')+'</div>';
-  return atciHoja('Dónde están hoy', '¿Dónde están las ATC del mes?', 'Como están hoy, '+esc(fmtFecha(D.hoy))+'. Cada paso es una parte del viaje: recoger → fábrica → volver al cliente.',
+  if(D.todas){
+    /* con «todas» no hay «meses anteriores»: las abiertas, por el mes en que entraron */
+    var pm={}; D.abiertas.forEach(function(p){ var e=atcEntro(p).slice(0,7)||'?'; pm[e]=(pm[e]||0)+1; });
+    var ks=Object.keys(pm).sort();
+    der='<div class="ai-caja"><h3>📅 Las abiertas, por el mes en que entraron <small>'+D.abiertas.length+'</small></h3>'+(ks.length
+      ? atciBarras(ks.map(function(k){ return { lbl:atciMesTxt(k), n:pm[k], col:'#64748b' }; }), D.abiertas.length, null, '150px 1fr 76px')
+      : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ No queda ninguna abierta.</div>')+'</div>';
+  }
+  return atciHoja('Dónde están hoy', D.todas ? '¿Dónde están todas las ATC?' : '¿Dónde están las ATC del mes?', 'Como están hoy, '+esc(fmtFecha(D.hoy))+'. Cada paso es una parte del viaje: recoger → fábrica → volver al cliente.',
     pasos+'<div class="ai-g2" style="margin-top:22px">'+izq+der+'</div>');
 }
 function atciTiempos(D){
@@ -17522,16 +17555,17 @@ function atciTiempos(D){
 function atciTendencia(D){
   var max=0; D.tend.forEach(function(t){ if(t.n>max) max=t.n; });
   var cols='<div class="ai-cols">'+D.tend.map(function(t){
-    var h=max ? Math.max(t.n ? 6 : 0, Math.round(t.n/max*205)) : 0, hc=t.n ? Math.round(t.c/t.n*100) : 0, sel=(t.ym===D.mes);
+    var h=max ? Math.max(t.n ? 6 : 0, Math.round(t.n/max*205)) : 0, hc=t.n ? Math.round(t.c/t.n*100) : 0, sel=(!D.todas && t.ym===D.mes);
     return '<div class="ai-col"><div class="ai-col-v" style="color:'+(sel ? '#0f766e' : '#a21caf')+'">'+t.n+'</div><div class="ai-col-b'+(sel ? ' sel' : '')+'" style="height:'+h+'px"><i style="height:'+hc+'%"></i></div></div>';
   }).join('')+'</div>';
   var lbls='<div class="ai-cols-l">'+D.tend.map(function(t){
-    return '<div'+(t.ym===D.mes ? ' style="color:#0f766e"' : '')+'>'+esc(atciMesCorto(t.ym))+'<span>'+(t.n ? (t.c+(t.c===1 ? ' cerrada · ' : ' cerradas · ')+(t.prom!=null ? atciNum(t.prom)+' d' : '—')) : 'ninguna')+'</span></div>';
+    return '<div'+(!D.todas && t.ym===D.mes ? ' style="color:#0f766e"' : '')+'>'+esc(atciMesCorto(t.ym))+'<span>'+(t.n ? (t.c+(t.c===1 ? ' cerrada · ' : ' cerradas · ')+(t.prom!=null ? atciNum(t.prom)+' d' : '—')) : 'ninguna')+'</span></div>';
   }).join('')+'</div>';
   var cuerpo='<div class="ai-caja" style="padding:22px 26px 18px">'+cols+lbls+
-    '<div class="ai-leyenda"><span><i style="background:#e9b3f2"></i>entraron en el mes</span><span><i style="background:#a21caf"></i>de esas, ya cerradas</span><span><i style="background:#00B5AD"></i>el mes de este informe</span><span>«d» = días del circuito, en promedio</span></div></div>'+
-    '<div class="ai-nota">Las ATC de cada mes se cuentan como están hoy: una de hace meses que se cerró la semana pasada figura cerrada en su mes.</div>';
-  return atciHoja('Cómo viene', 'Los últimos 6 meses', 'Cuántas entraron cada mes, cuántas ya volvieron al cliente y cuánto tardaron.', cuerpo);
+    '<div class="ai-leyenda"><span><i style="background:#e9b3f2"></i>entraron en el mes</span><span><i style="background:#a21caf"></i>de esas, ya cerradas</span>'+(D.todas ? '' : '<span><i style="background:#00B5AD"></i>el mes de este informe</span>')+'<span>«d» = días del circuito, en promedio</span></div></div>'+
+    '<div class="ai-nota">Las ATC de cada mes se cuentan como están hoy: una de hace meses que se cerró la semana pasada figura cerrada en su mes.'+
+    (D.tendCorta ? ' Se ven los últimos '+D.tend.length+' meses; el resto de las hojas cuenta todas.' : '')+'</div>';
+  return atciHoja('Cómo viene', D.todas ? (D.tendCorta ? 'Los últimos '+D.tend.length+' meses' : 'Mes por mes, desde el inicio') : 'Los últimos 6 meses', 'Cuántas entraron cada mes, cuántas ya volvieron al cliente y cuánto tardaron.', cuerpo);
 }
 function atciDetalle(D){
   var hojas=[], tot=Math.ceil(D.n/ATCI_FILAS)||0;
@@ -17545,7 +17579,7 @@ function atciDetalle(D){
           '<td><div class="ai-c2">'+esc(atciCorta(atciProdTxt(p), 46))+'</div></td><td><div class="ai-c2">'+(atcMotivo(p) ? esc(atcMotivo(p)) : '<b style="color:#dc2626">sin motivo</b>')+'</div></td><td>'+atciEstPill(p)+'</td><td class="n">'+atciDiasPill(p)+'</td>'+
           '<td><div class="'+(hizo ? 'ai-c1' : 'ai-c2')+'">'+esc(atciCorta(atcDetalle(p)||p.observaciones||'—', hizo ? 36 : 70))+'</div>'+(hizo ? '<div class="ai-c1" style="color:#0f766e">✔ '+esc(atciCorta(hizo, 34))+'</div>' : '')+'</td></tr>';
       }).join('')+'</tbody></table>';
-    hojas.push(atciHoja('Detalle', 'Las '+D.n+' ATC de '+esc(MESES_ES[+D.mes.slice(5,7)-1])+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''), '', tabla));
+    hojas.push(atciHoja('Detalle', (D.todas ? 'Todas las ATC: '+D.n : 'Las '+D.n+' ATC de '+esc(MESES_ES[+D.mes.slice(5,7)-1]))+(tot>1 ? ' <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+tot+')</span>' : ''), '', tabla));
   }
   return hojas;
 }
@@ -17554,12 +17588,12 @@ function atciHojas(D){
   var H=[atciPortada(D)];
   if(D.n){ H.push(atciResumen(D), atciMotivos(D), atciProductos(D), atciDonde(D), atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D)); }
   else {
-    H.push(atciHoja('Resumen del mes', 'En '+esc(MESES_ES[+D.mes.slice(5,7)-1])+' no entró ninguna ATC', '',
+    H.push(D.todas ? atciHoja('Resumen', 'Todavía no hay ATC', '', '<div class="ai-vacio">📭 No hay ninguna ATC cargada en el panel.</div>') : atciHoja('Resumen del mes', 'En '+esc(MESES_ES[+D.mes.slice(5,7)-1])+' no entró ninguna ATC', '',
       '<div class="ai-vacio">📭 No hay ATC cargadas con fecha de entrada en '+esc(atciMesTxt(D.mes))+'.</div>'+
       (D.antes.length ? '<div class="ai-lomas"><h3>⭐ Lo que queda</h3><ul><li>Quedan <b>'+D.antes.length+'</b> ATC de meses anteriores sin cerrar.</li></ul></div>' : '')));
     H.push(atciTendencia(D));
   }
-  var mesT=esc(atciMesTxt(D.mes));
+  var mesT=esc(atciEtq(D));
   return H.map(function(h, i){ return h.replace('{{MES}}', mesT).replace('{{PAG}}', 'Hoja '+(i+1)+' de '+H.length); });
 }
 /* ---- la ventana ---- */
@@ -17582,6 +17616,7 @@ function abrirInformeAtc(){
   /* arranca en el mes que se está mirando en la pestaña (o en el de hoy, con «Todo») */
   var mTab=(segVal('atc-mode')==='mes') ? ((document.getElementById('atc-mes')||{}).value||'') : '';
   if(inp){ inp.max=hoy.slice(0,7); if(mTab || !inp.value) inp.value=mTab||hoy.slice(0,7); }
+  var alc=document.getElementById('atci-alc'); if(alc && mTab) alc.value='mes';      // mirando un mes en la pestaña, arranca en ese mes
   ov.style.display='flex';
   atciPaginaCss(true);
   atciEstado();
@@ -17598,10 +17633,12 @@ function abrirInformeAtc(){
 }
 function atciPintar(){
   var inp=document.getElementById('atci-mes'), box=document.getElementById('atci-hojas'); if(!box) return;
-  var D=atciDatos((inp && inp.value) || todayStr().slice(0,7)), H=atciHojas(D);
+  var alc=document.getElementById('atci-alc'), TT=!!(alc && alc.value==='todas');
+  if(inp) inp.hidden=TT;
+  var D=atciDatos(TT ? 'todas' : ((inp && inp.value) || todayStr().slice(0,7))), H=atciHojas(D);
   ATCI_ULT=D;
   box.innerHTML=H.join('');
-  var info=document.getElementById('atci-info'); if(info) info.textContent=atciMesTxt(D.mes)+' · '+D.n+' ATC · '+H.length+' hojas';
+  var info=document.getElementById('atci-info'); if(info) info.textContent=atciEtq(D)+' · '+D.n+' ATC · '+H.length+' hojas';
   atciEscala();
 }
 function atciCerrar(){
@@ -17609,7 +17646,10 @@ function atciCerrar(){
   window.removeEventListener('resize', atciEscala);
   atciPaginaCss(false);
 }
-function atciArchivo(mes){ var m=String(mes||'').match(/^(\d{4})-(\d{2})/); return 'Informe-ATC-'+(m ? (MESES_ES[+m[2]-1]+'-'+m[1]) : 'mes')+'.pdf'; }
+function atciArchivo(mes){
+  if(mes==='todas'){ var h=todayStr().match(/^(\d{4})-(\d{2})-(\d{2})/); return 'Informe-ATC-todas-al-'+(h ? (+h[3])+'-'+MESES_ES[+h[2]-1]+'-'+h[1] : 'hoy')+'.pdf'; }
+  var m=String(mes||'').match(/^(\d{4})-(\d{2})/); return 'Informe-ATC-'+(m ? (MESES_ES[+m[2]-1]+'-'+m[1]) : 'mes')+'.pdf';
+}
 function atciImprimir(){ atciPaginaCss(true); document.body.classList.add('printing-atci'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-atci'); }, 600); }
 /* Las dos librerías, de cdnjs, una sola vez. Si una no llega en 20 s, se rinde. */
 function atciCargarLibs(){
