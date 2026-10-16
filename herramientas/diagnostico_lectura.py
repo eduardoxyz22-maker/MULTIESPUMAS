@@ -835,7 +835,7 @@ def enlaces_sin_resolver(base):
 # 🛏️ (16/10) LAS ALMOHADAS. El dueño: «ayer logística me reclamó que el panel decía 0 y el Excel 17». Cómo las escriben en los pedidos
 #    (código, nombre y medida tal cual, contados) y con qué clave quedaron en el stock. ⚠️ Registro PÚBLICO: solo productos y cuentas;
 #    nunca un cliente, un vendedor ni un número de pedido.
-def almohadas():
+def almohadas(base=None):
     print("\n── 🛏️ las almohadas: cómo se escriben en los pedidos y cómo están en el stock (solo productos y cuentas) ──")
     ped = _PEDIDOS
     if not isinstance(ped, list):
@@ -889,6 +889,44 @@ def almohadas():
         print(f"   stock {nom} (corte {a.get('f')} {a.get('hora') or ''}): " + (" · ".join(f"{k} = {v}" for k, v in sorted(u.items())) or "ninguna"))
         if cods:
             print("      sus códigos: " + " · ".join(f"{c} → {k}" for c, k in sorted(cods.items())))
+    # Los renglones de almohadas de los últimos 7 días y los que vienen: cómo los marcó logística o la revisión (✔ ok / 📥 im /
+    # ✗ no / 🏭 prod). Solo día, turno, producto y la marca: ni cliente ni número de pedido.
+    desde = (datetime.now(BO) - timedelta(days=7)).date().isoformat()
+    filas = []
+    for p in ped:
+        if not isinstance(p, dict) or str(p.get("id") or "").startswith("__") or str(p.get("fecha") or "") < desde:
+            continue
+        prods = p.get("productos")
+        if isinstance(prods, str):
+            try:
+                prods = json.loads(prods)
+            except Exception:
+                prods = []
+        for x in prods or []:
+            if not isinstance(x, dict):
+                continue
+            d = re.sub(r"\s+", " ", str(x.get("desc") or "")).strip().upper()
+            if not d or not es.search(d) or no.search(d):
+                continue
+            filas.append((str(p.get("fecha") or ""), str(p.get("turno") or "-"), str(x.get("codigo") or "-"), d[:30],
+                          str(x.get("medida") or "-"), x.get("cant"), str(x.get("chk") or "sin marca"), str(x.get("chkDe") or ""),
+                          "✅" if p.get("entregado") else "", "kommo" if str(p.get("id") or "").startswith("kommo-") else ""))
+    print(f"   renglones de almohadas con entrega desde {desde}: {len(filas)}")
+    for f in sorted(filas):
+        print("   · " + " | ".join(str(c) for c in f))
+    if base:
+        crudo = pedir("lo que dijo el Excel de las almohadas, día por día (histStockLeer)", base, {"action": "histStockLeer", "desde": desde})
+        try:
+            j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+        except Exception:
+            j = {}
+        for dia in j.get("dias") or []:
+            for alm, n in sorted((dia.get("datos") or {}).items()):
+                if not isinstance(n, dict):
+                    continue
+                u = {k: v for k, v in (n.get("u") or {}).items() if es.search(str(k)) and not no.search(str(k))}
+                print(f"   {dia.get('fecha')} · {str(alm)[:22]} (corte {n.get('f')} {n.get('h') or ''}): " +
+                      (" · ".join(f"{k} = {v}" for k, v in sorted(u.items())) or "ninguna"))
 
 
 # 🤖 (15/10) EL BOT CON CLAUDE. El dueño: «después revisás cómo va el bot inteligente». Lo que contestaron los clientes en los
@@ -1148,7 +1186,7 @@ def main():
     # 4b) 🛰️ (13/10) El GPS de hoy y las entregas marcadas, con la primera lectura buena.
     gps_del_dia()
     # 4b2) 🛏️ (16/10) las almohadas: cómo se escriben y cómo están en el stock.
-    almohadas()
+    almohadas(pagina or PANEL_URL)
     # 4c) 🎧 (15/10) Las ATC: qué tienen y cuántas se completaron desde Trello.
     atc_del_panel()
     # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
