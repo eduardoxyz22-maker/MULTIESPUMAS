@@ -187,6 +187,16 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     depósito»; `IM - PRODUCTOTERMINADO` = la fábrica = «en fábrica», **no se suma**.
   - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
     **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
+  - 📚 **Los tres almacenes en UN Excel** (§4lp, 16/10, dueño: *«logística me está pidiendo usar esta planilla que ya trae los 3
+    almacenes»*; en la rama): el mismo reporte con un bloque por almacén (`105003 | PRODUCTOS TERMINADOS FAB.` … `TOTAL : | … | 523`) y
+    arriba «Almacén Inicial / Final : IM». ⚠️ **Lo publicado hasta `6a55598` lo toma ENTERO como IM con los tres SUMADOS** (1.648 el 16/10).
+    `existSecciones` parte los bloques (cierran con su «TOTAL :» del mismo almacén), `existLeer(filas, almForzado)` lee cada uno con el
+    nombre del BLOQUE (manda sobre el encabezado) y `existLoteDe` arma la cola **`EXIST_COLA`**: la vista previa de cada almacén, uno
+    detrás del otro y en el orden del archivo (PTF → Banzer → IM), con «N de M», «Usar … y seguir con X», «⏭ Saltar» (`existSaltar`) y
+    «Cancelar todo» (`existCancelar`). Mismo control y misma regla del día que subir tres Excel. El TOTAL del bloque distinto de lo leído
+    se avisa (`totalReporte`). Un archivo sin bloques sigue igual. `tests/test_existencias_tres.js` (17; 15 rojas contra `6a55598`).
+  - 🎨 El encabezado del «📋 Plan de stock» va CLARO con letra oscura (§4lp, 16/10, dueño: *«fondo negro, letra gris… no leo»*): el
+    `thead th` general es negro, y una tabla que ponga su color de letra en `th` tiene que poner también su fondo. `tests/test_stock_contraste.js`.
   - **🤖 Revisión automática** (§4cq, §4cr): `stockAsignar()` reparte el stock entre los
     pedidos pendientes **por fecha de entrega** (FIFO) y marca solo ✔ hay / 📥 recoger de
     Moreno / ✗ no hay. Una línea que no se cubre entera NO reserva nada. No toca líneas 🏭,
@@ -418,9 +428,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
   📍 **Waze y el Plus Code en `maps?q=`** (§4ln, 15/10): `coordsDeLink` lee `ll=…%2C…` (Waze) y el Plus Code con el «+» sin codificar
   («maps?q=8R6C+72P,+Santa+Cruz»). Las búsquedas de Google (`google.com/search?…kgmid=`) no traen ubicación: no se inventa. `test_ubicar` §5.
-  **Servidor `2026-10-15-a`** (§4ln-b, en la rama; lo implementa el dueño): lo mismo en `extractCoords` y, sin coordenadas, el texto de `q=`
-  (`textoDeQ_`: nombre y dirección de un lugar con nombre o de una búsqueda de Google) → `geocodeTexto`, aproximado. Medido: de 21 enlaces que
-  no se leían, 9 de 9 con texto se ubican. ⚠️ El `staticmap?center=` de la página de Maps es el centro de QUIEN PIDE (~7.700 km): no usarlo.
+  **Servidor `2026-10-15-a`** (§4ln-b; IMPLEMENTADO 16/10 por el dueño, página PUBLICADA 16/10, `6a55598`; volver atrás: ✏️ a la versión
+  anotada Y pegar la 14-c de `19ee2bc…`): lo mismo en `extractCoords` y, sin coordenadas, el texto de `q=`
+  (`textoDeQ_`: nombre y dirección de un lugar con nombre o de una búsqueda de Google) → `geocodeTexto`, aproximado. Medido con el servidor
+  ya implementado (16/10): de 21 enlaces que la página no lee, el servidor ubica **18** (antes 8); los 3 que quedan no traen nada que buscar. ⚠️ El `staticmap?center=` de la página de Maps es el centro de QUIEN PIDE (~7.700 km): no usarlo.
 - **⏳ Primera carga con reintentos y cartel** (§4di): al abrir, el panel muestra la copia
   guardada en el dispositivo (`loadMirror`; en una compu nueva, nada = todo en 0) y pide la
   planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo
@@ -573,9 +584,15 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).
-  **Siguen SIN arreglar** (el dueño no pidió): un pedido confirmado en el cierre que después se reprograma queda ✅ en la fecha nueva (los 🌆 PM
-  van tildados A PROPÓSITO: dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*);
-  `heredarMarcas` pierde `prodU/prodC/prodRm/eF/eT/eQ`. Antes de tocar el cierre o el control del corte, leer §4hq.
+  Los 🌆 PM van tildados A PROPÓSITO (dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*). Antes de tocar el
+  cierre o el control del corte, leer §4hq.
+- **✅ Un pedido entregado que se mueve a otro día no se entregó** (§4lo, 16/10, dueño eligió la «F»; en la rama): `entregadoSeMueve(p, f,
+  desde)` = ✅, no ATC ni venta de tienda, fecha nueva distinta y **≥ hoy** → `entregadoDeshacer` (sin ✅ ni `eF/eT/eQ`). 📅 Reprogramar y
+  ✏️ Editar PREGUNTAN antes (`entregadoMueveTxt`; Cancelar no toca/no guarda); `reproAplicar` (cierre, adelanto) lo aplica solo. A un día que
+  ya pasó = corregir el registro: queda ✅. Destildar a mano (`toggleEntregado`, `quickEntregado`, `choEntregado`) y guardar un pedido no
+  entregado sacan el registro del cierre (`entregaRegistroBorrar`: su `eF` manda en las salidas del stock). **`heredarMarcas`** pasa
+  `prodU/prodC/prodRm` (misma cantidad, como `prodF/prodR`) y el registro del cierre a TODOS los renglones. `tests/test_reprogramar_entregado.js`
+  (26; 18 rojas contra `6a55598`).
 - **🏷️ Un código que la lista aprendió después ya no parte el producto** (§4ia, 08/10, dueño: *«Si, salen dos, está partido.
   Arréglalo»*; PUBLICADA 08/10 15:54, `409a077`): pasó de verdad con el SUEÑA LITE 105 (CH2531, en `CODIGOS` desde el 05/10): 20 en
   una fila, los pedidos en otra con 0, y el control del Excel con «−20 / +20 sin explicar». `stockMigrar` ahora reescribe el

@@ -2078,8 +2078,10 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .pl-chip.on{ background:#1b2a2b; color:#fff; border-color:#1b2a2b; }
 .pl-tabla{ overflow-x:auto; }
 .pl-tabla table{ border-collapse:collapse; width:100%; min-width:900px; font-size:.84rem; }
-.pl-tabla th{ text-align:left; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:5px 8px; border-bottom:2px solid #dfe8e8; vertical-align:bottom; }
-.pl-tabla th small{ display:block; text-transform:none; letter-spacing:0; font-weight:400; }
+/* (16/10, dueño: «fondo negro, letra gris casi negra… no leo») el `thead th` general del panel es negro: acá el encabezado va CLARO con
+   letra oscura, sin heredar el negro con la letra gris de esta tabla. */
+.pl-tabla th{ text-align:left; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; background:#e3f3f1; color:#0f3d3a; font-weight:800; padding:7px 8px; border-bottom:2px solid #8fd0c6; vertical-align:bottom; }
+.pl-tabla th small{ display:block; text-transform:none; letter-spacing:0; font-weight:600; color:#2f5f5a; }
 .pl-tabla td{ padding:7px 8px; border-bottom:1px solid #eef2f3; vertical-align:top; }
 .pl-tabla td small{ display:block; color:var(--muted); font-size:.74rem; }
 .pl-fila{ cursor:pointer; } .pl-fila:hover td,.pl-fila.abierta td{ background:#f6f9f9; }
@@ -3441,7 +3443,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
@@ -5693,12 +5695,20 @@ function teniaRevision(p){
 function heredarMarcas(nuevos, viejos){
   var porClave={};
   (viejos||[]).forEach(function(x){ if(x) porClave[prodClave(x)]=x; });
+  /* ✅ (16/10, §4lo) El registro del cierre de entregas (`eF` día de la entrega, `eT` cuándo se confirmó, `eQ` quién) es del
+     PEDIDO, aunque viaje adentro de cada producto: corregir un pedido entregado desde ✏️ Editar lo borraba, y con eso «quién
+     confirmó» y el día real de la entrega (que manda en las salidas del stock, §4iz). Va a todos los renglones —también a uno
+     nuevo o con otra cantidad—; si el pedido deja de estar entregado, `submitPedido` lo saca (`entregaRegistroBorrar`). */
+  var reg=null;
+  (viejos||[]).some(function(x){ if(x && x.eT){ reg={ eF:x.eF, eT:x.eT, eQ:x.eQ }; return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
-    if(!v) return x;                                   // producto nuevo: nadie lo revisó
+    if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
     /* ⚠️ La CANTIDAD también cuenta. El almacén no dijo "hay ALMOHADA", dijo "hay 2
        almohadas". Si la vendedora las pasa a 5, esa revisión ya no vale para nada. */
-    if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return x; }
+    if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return conReg(x); }
+    conReg(x);
     if(v.chk)    x.chk=v.chk;
     /* 📥 …y DE DÓNDE se recoge (§4ey). Va pegado a `chk`: sin esta línea, corregir cualquier
        cosa del pedido desde el formulario dejaba el producto marcado «hay que ir a buscarlo»
@@ -5714,6 +5724,13 @@ function heredarMarcas(nuevos, viejos){
        medición de `stockTiemposFabrica` perdía esa muestra. */
     if(v.prodF)  x.prodF=v.prodF;
     if(v.prodR)  x.prodR=v.prodR;
+    /* 🏭 (16/10, §4lo) …y la llegada PARCIAL de la línea 🏭 que anotó el control del corte (§4hn, Codex R5): cuántas llegaron
+       (`prodU`), qué cortes las anotaron (`prodC`, para no contarlas dos veces) y que el sello lo puso el Excel (`prodRm`). Sin
+       esto, corregir el pedido borraba lo llegado: dejaba de estar reservado para este cliente y el próximo Excel lo volvía a
+       contar como «entrada sin explicar». Con otra cantidad no se copia (como `prodF`/`prodR`): hay que revisarla de nuevo. */
+    if(v.prodU!=null) x.prodU=v.prodU;
+    if(v.prodC)  x.prodC=v.prodC.slice();
+    if(v.prodRm) x.prodRm=v.prodRm;
     /* 📥 La marca del lead de Kommo (`klead`) no es una revisión: viaja con el pedido aunque
        cambie la cantidad. Sin esto, corregir cualquier cosa del pedido la perdía y el robot
        volvía a traer el borrador (§4es). */
@@ -12353,6 +12370,14 @@ function submitPedido(){
     if(prev && atcViajeDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
     setAtcDatos(rec, _n);
   }
+  /* ✅ (16/10, §4lo) Un pedido ENTREGADO que se pasa desde ✏️ Editar a hoy o más adelante no se entregó: se pregunta y pierde el ✅
+     (ver `entregadoSeMueve`). Cancelar deja el formulario como está, sin guardar. Y un pedido que no está entregado no lleva el
+     registro del cierre (`eF`, que manda en las salidas del stock, quedaba de un ✅ destildado). */
+  if(isEdit && prev && entregadoSeMueve(rec, rec.fecha, prev.fecha)){
+    if(!confirm(entregadoMueveTxt(prev, rec.fecha))) return;
+    entregadoDeshacer(rec);
+  }
+  if(!rec.entregado) entregaRegistroBorrar(rec);
 
   /* ⚠️ AVISO A LOGÍSTICA: «ESTE PEDIDO FUE MODIFICADO».
      Si el jefe de almacén ya lo había revisado (verificado o con productos tickeados) y
@@ -16192,18 +16217,41 @@ function reproConfirmar(){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí la nueva fecha','err'); return; }
   if(f===p.fecha && t===normTurno(p.turno)){ toast('Es la misma fecha y el mismo turno','err'); return; }
   var avisos=reproAvisos(p,f,t);
+  var _saleEnt=entregadoSeMueve(p, f);
+  if(_saleEnt && !confirm(entregadoMueveTxt(p, f))) return;   // ✅ (16/10, §4lo)
   if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
   if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
   // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
   reproAplicar(p, f, t, avisos.length>0);
-  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
+  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓'+(_saleEnt?' · ya no figura entregado':''),'ok');
   reproVolver();                          // vuelve a la ficha desde la que se abrió
+}
+/* ✅ (16/10, §4lo; auditoría del 06/10, §4hq) UN PEDIDO ENTREGADO QUE SE MUEVE A OTRO DÍA NO SE ENTREGÓ.
+   Pasaba con los 🌆 PM que el cierre de las 16:30 propone tildados (a propósito: dueño, 06/10) y que después se reprogramaban
+   —📅 Reprogramar, «No salió · reprogramar» del cierre o ✏️ Editar—: quedaban ✅ en la fecha NUEVA. No volvían al cierre, el
+   chofer los veía grises «Entregado», no salían en «Sin entregar», el bot no le avisaba el día nuevo al cliente y el stock los
+   daba por salidos. Ahora, movido a HOY o más adelante, pierde el ✅ y el registro del cierre (preguntando antes donde hay una
+   persona). Movido a un día que YA PASÓ es corregir el registro: queda ✅. La ATC y la venta de tienda quedan afuera: el ✅ de
+   una ATC es el recojo o la devolución (`atcAlMarcarEntregado`) y la venta de tienda no tiene día. */
+function entregadoSeMueve(p, f, desde){
+  var d=(desde!=null) ? desde : (p && p.fecha);
+  f=String(f||'');
+  return !!(p && p.entregado && !esATC(p.oc) && !esVentaTienda(p) && /^\d{4}-\d{2}-\d{2}$/.test(f) && f!==String(d||'') && f>=todayStr());
+}
+function entregaRegistroBorrar(p){ ((p && p.productos)||[]).forEach(function(x){ if(x){ delete x.eF; delete x.eT; delete x.eQ; } }); }
+function entregadoDeshacer(p){ if(!p) return; p.entregado=false; entregaRegistroBorrar(p); }
+function entregadoMueveTxt(p, f){
+  var c=cierreEntDe(p);
+  return '✅ Este pedido figura ENTREGADO'+(c&&c.q?(' (lo confirmó '+c.q+')'):'')+'.\n\n'+
+         'Si lo pasás al '+fmtFecha(f)+' es porque no se entregó: se le saca el ✅ y vuelve a «sin entregar» '+
+         '(el chofer lo ve, entra al cierre de ese día y el bot le avisa el día nuevo al cliente, como en cualquier cambio).\n\n¿Seguir?';
 }
 /* Mover un pedido a otro día/turno, lo mismo desde 📅 Reprogramar y desde el cierre de entregas (13/10): número del día nuevo, la ATC
    que vive en su devolución la sigue, y con avisos confirmados va con `forzar`. Devuelve la promesa del guardado. */
 function reproAplicar(p, f, t, forzar, extra){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
+  if(entregadoSeMueve(p, f)) entregadoDeshacer(p);   // ✅ (16/10, §4lo) movido a otro día: no se entregó
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
   atcSeguirViaje(p, _enDev);
@@ -20656,7 +20704,7 @@ function choEntregado(id){
      `rechazoFirme` ya puso en STATE). La plata NO se reintenta así: ahí el otro pudo haber
      registrado ese mismo pago. */
   var marcar=function(q, intento){
-    q.entregado=quiere; atcAlMarcarEntregado(q);
+    q.entregado=quiere; atcAlMarcarEntregado(q); if(!quiere) entregaRegistroBorrar(q);   // (16/10, §4lo)
     return persistPedido(q).then(function(r){
       if(intento>0 || !(r && r.error==='conflicto')) return r;
       var s=findById(id); if(!s) return r;
@@ -22064,7 +22112,7 @@ function copiarBusca(){
 
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
    QR + tarjeta), cada uno con su monto. Se guardan como texto en el campo
@@ -28139,12 +28187,43 @@ function existHoraDePie(filas){
   }
   return null;
 }
+/* 📚 (16/10, §4lp) Lo que falta del archivo con varios almacenes: el que se está mirando es EXIST_IMP y los que siguen esperan acá,
+   en el orden del archivo (PTF, Banzer, IM: el de fábrica antes que Moreno, como pide el control del corte). */
+var EXIST_COLA=[];
+function existLoteDe(filas, delNombre){
+  var secs=existSecciones(filas); if(!secs.length) return null;
+  var pie=existHoraDePie(filas), lista=[], err='';
+  secs.forEach(function(s, i){
+    var r=existLeer(filas.slice(0, s.hdr+1).concat(filas.slice(s.desde, s.hasta+1)), s.alm);
+    if(r.error){ if(!err) err=s.alm+': '+r.error; return; }
+    r.totalReporte=s.total;
+    existPonerHora(r, pie, delNombre);
+    existAlinearHora(r);
+    if(secs.length>1) r.lote={ i:i+1, n:secs.length, alms:secs.map(function(x){ return x.alm; }) };
+    lista.push(r);
+  });
+  return err ? { error:err } : { lista:lista };
+}
+function existCancelar(){ EXIST_COLA=[]; EXIST_IMP=null; closeModal(); }
+/* ⏭ Saltar un almacén del archivo (su Excel no entra, o no se quiere usar todavía) y seguir con el próximo. */
+function existSaltar(){
+  if(!EXIST_COLA.length){ existCancelar(); return; }
+  EXIST_IMP=EXIST_COLA.shift(); renderImportExist();
+}
 function onExistArchivo(ev){
   var f=ev.target.files && ev.target.files[0]; if(!f) return;
   toast('Leyendo '+f.name+'…','ok');
   var delNombre=existHoraDeNombre(f.name);
+  EXIST_COLA=[];
   f.arrayBuffer().then(xlsxDescomprimir).then(function(archivos){
-    var _filas=xlsxHoja(archivos), r=existLeer(_filas);
+    var _filas=xlsxHoja(archivos);
+    var L=existLoteDe(_filas, delNombre);
+    if(L){
+      if(L.error){ toast('❌ '+L.error,'err',9000); return; }
+      EXIST_IMP=L.lista.shift(); EXIST_COLA=L.lista; renderImportExist();
+      return;
+    }
+    var r=existLeer(_filas);
     if(r.error){ toast('❌ '+r.error,'err',9000); return; }
     existPonerHora(r, existHoraDePie(_filas), delNombre);
     existAlinearHora(r);                                  // (06/10) el mismo archivo ya subido con la hora del nombre
@@ -28222,11 +28301,11 @@ function existFecha(v){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return '';
   return f>todayStr() ? '' : f;
 }
-function existLeer(filas){
+function existLeer(filas, almForzado){
   if(!filas || !filas.length) return {error:'El archivo está vacío.'};
   var cab=filas.slice(0,14).map(existTxt).join(' ~ ');
   if(/DETALLE VENTAS|NOTA DE VENTA PARA PROVEEDOR/.test(cab) && !/EXISTENCIAS/.test(cab))
-    return {error:'Ese es el reporte de VENTAS, no el de existencias. En el sistema de Moreno sacá «EXISTENCIAS ALMACEN» eligiendo UN almacén.'};
+    return {error:'Ese es el reporte de VENTAS, no el de existencias. En el sistema de Moreno sacá «EXISTENCIAS ALMACEN» (de un almacén, o de los tres juntos).'};
   if(!/EXISTENCIAS/.test(cab))
     return {error:'No parece el reporte «EXISTENCIAS ALMACEN». Fijate que sea ese y que salga con los títulos.'};
   /* ⚠️ EL REPORTE LO DICE ÉL MISMO: «(Productos con existencia <> 0)». O sea que lo que NO
@@ -28246,10 +28325,12 @@ function existLeer(filas){
     }
   }
   var limpiar=function(t){ return String(t||'').replace(/^\s*[\d]+(?:-[\d]+)+\s+/,'').replace(/\s+/g,' ').trim(); };
-  var alm=limpiar(almIni)||limpiar(almFin);
+  /* 📚 (16/10, §4lp) Con el almacén que dice el BLOQUE (`existSecciones`), el de arriba no cuenta: el reporte de los tres almacenes
+     trae «Almacén Inicial / Final : IM» y adentro PTF, Banzer e IM. */
+  var alm=almForzado ? limpiar(almForzado) : (limpiar(almIni)||limpiar(almFin));
   if(!alm) return {error:'No encontré de qué almacén es el reporte (falta la fila «Almacén Inicial»).'};
-  if(limpiar(almIni) && limpiar(almFin) && limpiar(almIni)!==limpiar(almFin))
-    return {error:'El reporte mezcla almacenes («'+limpiar(almIni)+'» a «'+limpiar(almFin)+'»). Sacá uno por vez: en el sistema poné el MISMO almacén como inicial y final.'};
+  if(!almForzado && limpiar(almIni) && limpiar(almFin) && limpiar(almIni)!==limpiar(almFin))
+    return {error:'El reporte mezcla almacenes («'+limpiar(almIni)+'» a «'+limpiar(almFin)+'»). No encontré dónde empieza y termina cada uno (las filas con el nombre del almacén y su «TOTAL :»): sacalo de nuevo con los títulos, o uno por vez poniendo el MISMO almacén como inicial y final.'};
 
   // Encabezados de la tabla de productos
   var iHdr=-1, cCod='', cNom='', conocidas={}, cCant='';
@@ -28320,6 +28401,46 @@ function existLeer(filas){
 function conocidasCol(hdr, txt){
   for(var k in hdr){ if(String(hdr[k]||'').toUpperCase().replace(/\s+/g,' ').trim()===txt) return k; }
   return '__no__';
+}
+/* 📚 (16/10, §4lp) LOS TRES ALMACENES EN UN SOLO ARCHIVO. El dueño: *«logística me está pidiendo usar esta planilla que ya trae los
+   3 almacenes»*. Es el mismo reporte «EXISTENCIAS ALMACEN» del sistema de Moreno, con un bloque por almacén:
+       105003 | PRODUCTOS TERMINADOS FAB.          ← empieza (el código del almacén y su nombre, sin producto)
+       …los productos…
+       TOTAL : | PRODUCTOS TERMINADOS FAB. | 523   ← termina
+   y arriba «Almacén Inicial / Final : IM». ⚠️ Sin esto, el panel lo tomaba entero como IM (Moreno) con las unidades de los tres
+   SUMADAS (1.648 en el del 16/10) y PTF y Banzer quedaban sin tocar. Devuelve los bloques que cierran con su «TOTAL :» del mismo
+   almacén ({alm, desde, hasta, total, hdr}); un reporte sin bloques (o de forma desconocida) devuelve [] y se lee como siempre. */
+function existSecciones(filas){
+  var out=[]; if(!filas || !filas.length) return out;
+  var iHdr=-1, cCod='', cNom='';
+  for(var h=0;h<Math.min(filas.length,25) && iHdr<0;h++){
+    var cod='', nom='';
+    for(var k in filas[h]){
+      var t=String(filas[h][k]||'').toUpperCase().replace(/\s+/g,' ').trim();
+      if(/^C[ÓO]DIGO PRODUCTO$/.test(t)) cod=k; else if(/^NOMBRE PRODUCTO$/.test(t)) nom=k;
+    }
+    if(cod && nom){ iHdr=h; cCod=cod; cNom=nom; }
+  }
+  if(iHdr<0) return out;
+  var cur=null;
+  for(var r=iHdr+1;r<filas.length;r++){
+    var f=filas[r];
+    var vals=Object.keys(f).sort(function(a,b){ return colNum(a)-colNum(b); })
+      .map(function(c){ return String(f[c]==null?'':f[c]).replace(/\s+/g,' ').trim(); }).filter(function(v){ return !!v; });
+    if(!vals.length) continue;
+    var esNum=function(v){ return /^-?[\d.,]+$/.test(v) && isFinite(Number(v.replace(',','.'))); };
+    if(/^TOTAL\s*:?$/i.test(vals[0])){                                  // «TOTAL :» cierra el bloque (no «TOTAL GENERAL :»)
+      var nomT='', tot=null;
+      vals.slice(1).forEach(function(v){ if(esNum(v)) tot=Number(v.replace(',','.')); else if(!nomT) nomT=v; });
+      if(cur && nomT && normNombre(nomT)===normNombre(cur.alm)){ cur.hasta=r; cur.total=tot; out.push(cur); }
+      cur=null; continue;
+    }
+    if(f[cCod] || f[cNom] || vals.length>3) continue;                  // un producto, una línea, un subtotal
+    var codA=vals.filter(function(v){ return /^\d{2}-\d{2}-\d{3}$|^\d{5,7}(\.0+)?$/.test(v); })[0];
+    var nomA=vals.filter(function(v){ return /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(v) && !/SUBTOTAL/i.test(v); })[0];
+    if(codA && nomA && vals.length===2) cur={ alm:nomA, cod:codA, desde:r, hasta:-1, total:null, hdr:iHdr };
+  }
+  return out;
 }
 /* Los pedidos a fábrica que ya deberían haber llegado: si llegaron, están DENTRO de este
    conteo y dejarlos abiertos los contaría dos veces (§4cp). */
@@ -28883,6 +29004,7 @@ function renderImportExist(){
   /* 📅 (06/10) Solo el Excel del día: el de otro día se muestra, se dice por qué no entra y no hay botón para usarlo. */
   var noHoy=existNoEsDeHoy(R);
   if(noHoy){
+    EXIST_COLA=[];                                       // 📚 (§4lp) los otros almacenes del mismo archivo son del mismo día: tampoco entran
     openModal('<div class="modal-h" style="background:#7f1d1d"><h3>⛔ Este Excel no es de hoy</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
       '<div class="modal-b" id="exist-no-hoy">'+
       '<div style="background:#fdecec;border:1px solid #f3b4b4;border-left:4px solid var(--red);color:#7f1d1d;border-radius:8px;padding:11px 14px;margin-bottom:12px;font-size:.88rem">'+
@@ -28890,19 +29012,27 @@ function renderImportExist(){
         'El panel trabaja con las existencias de hoy: un Excel de otro día volvería atrás el stock de ese almacén y todo lo que se calcula con él.'+
         '<div style="margin-top:8px">Sacá el reporte de nuevo en el sistema de Moreno («EXISTENCIAS ALMACEN», con la fecha de hoy) y subí ese.</div>'+
       '</div>'+
+      (R.lote?lin('📚 El archivo trae <b>'+R.lote.n+' almacenes</b>: ninguno entra.'):'')+
       lin('🏬 Almacén: <b>'+esc(R.almacen)+'</b>')+
       lin('📅 Existencias al <b>'+(R.fecha?fmtFecha(R.fecha):'—')+'</b>'+(R.hora?(' <b>'+esc(R.hora)+'</b>'):'')+(R.sacado && R.sacado!==R.fecha?(' · sacado el '+fmtFecha(R.sacado)):''))+
       '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button></div></div>', true);
     return;
   }
-  var html='<div class="modal-h" style="background:#7c2d12"><h3>📥 Existencias de almacén</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+
+  var sigue=(EXIST_COLA||[]).map(function(x){ return stockAlmCorto(x.almacen); });
+  var lote=R.lote ? ('<div id="exist-lote" style="background:#eef2ff;border:1px solid #c7d2fe;border-left:4px solid #4f46e5;color:#312e81;border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:.86rem">'+
+      '📚 Este archivo trae <b>'+R.lote.n+' almacenes</b>. Vas por el <b>'+R.lote.i+' de '+R.lote.n+'</b>: <b>'+esc(stockAlmCorto(R.almacen))+'</b>.'+
+      (sigue.length ? (' Al tocar «Usar» sigue <b>'+sigue.map(esc).join('</b> y después <b>')+'</b>.') : ' Es el último.')+
+      '<div style="font-size:.78rem;margin-top:3px;color:#4338ca">Es lo mismo que subir un Excel por almacén: cada uno con su control, uno detrás del otro.</div></div>') : '';
+  var totMal=(R.totalReporte!=null && Math.abs(Number(R.totalReporte)-Number(R.total))>0.001);
+  var html='<div class="modal-h" style="background:#7c2d12"><h3>📥 Existencias de almacén'+(R.lote?(' · '+R.lote.i+' de '+R.lote.n):'')+'</h3><button class="modal-x" onclick="existCancelar()">✕</button></div>'+
+    '<div class="modal-b">'+lote+
     '<div style="background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:11px 14px;margin-bottom:12px">'+
       lin('🏬 Almacén: <b>'+esc(R.almacen)+'</b>')+
       lin('📅 Existencias al <b>'+fmtFecha(R.fecha)+'</b>'+(R.hora?(' <b>'+esc(R.hora)+'</b>'):'')+(R.fechaDeHora?' <span style="color:var(--amber);font-weight:700">· el archivo no traía «existencias al»: se usa el día en que se sacó</span>':''))+
       lin('📦 <b>'+R.items.length+'</b> productos · <b>'+stockUnid(R.total)+'</b> unidades'+(enCat<R.items.length?(' · <span style="color:var(--muted)">'+enCat+' se reconocen del catálogo, '+(R.items.length-enCat)+' quedan con su nombre</span>'):''))+
       (R.repetidos?lin('<span style="color:var(--muted)">'+R.repetidos+' renglones eran del mismo producto: se sumaron</span>'):'')+
       (R.malos?lin('<span style="color:var(--amber)">'+R.malos+' renglones sin cantidad legible: se saltean</span>'):'')+
+      (totMal?lin('<span id="exist-total-mal" style="color:#b45309;font-weight:700">⚠️ El reporte dice '+stockUnid(R.totalReporte)+' unidades en este almacén y el panel leyó '+stockUnid(R.total)+': revisá antes de usarlo.</span>'):'')+
     '</div>'+
     '<div style="margin-bottom:12px"><label class="lb">¿Qué almacén es este?</label>'+
       '<select id="exist-rol" style="width:100%" onchange="existRepintarControl()">'+
@@ -28937,8 +29067,9 @@ function renderImportExist(){
       '</tbody></table></div>'+
       (R.items.length>80?('<div style="font-size:.78rem;color:var(--muted);margin-top:6px">Se muestran los primeros 80 de '+R.items.length+'.</div>'):'')+
     '<div class="modal-actions" style="margin-top:14px">'+
-      '<button class="btn btn-primary btn-sm" id="exist-usar" style="flex:1;min-width:200px;background:#7c2d12" onclick="confirmarImportExist()">💾 Usar estas existencias</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
+      '<button class="btn btn-primary btn-sm" id="exist-usar" style="flex:1;min-width:200px;background:#7c2d12" onclick="confirmarImportExist()">💾 Usar estas existencias'+(sigue.length?(' y seguir con '+esc(sigue[0])):'')+'</button>'+
+      (sigue.length?('<button class="btn btn-ghost btn-sm" id="exist-saltar" onclick="existSaltar()">⏭ Saltar este y seguir con '+esc(sigue[0])+'</button>'):'')+
+      '<button class="btn btn-ghost btn-sm" onclick="existCancelar()">'+(sigue.length?'Cancelar todo':'Cancelar')+'</button>'+
     '</div></div>';
   openModal(html, true);
   existBotonUsar();
@@ -29021,6 +29152,8 @@ function confirmarImportExist(){
   STOCK.v=2; if(!(Number(STOCK.v2t)>0)) STOCK.v2t=Date.now();   // desde cuándo esta planilla la escribe una página con el control (Codex H7)
   var stockProm=guardarStock(); closeModal(); renderStock(); renderAdmin();
   EXIST_IMP=null;
+  /* 📚 (16/10, §4lp) El archivo con varios almacenes: el próximo, sobre el stock que este acaba de dejar (como subir el Excel que sigue). */
+  if(EXIST_COLA && EXIST_COLA.length){ EXIST_IMP=EXIST_COLA.shift(); renderImportExist(); }
   var resumen=(rol==='log'?'Depósito actualizado':'Existencias de '+stockAlmCorto(R.almacen)+' actualizadas')+': '+
         R.items.length+' productos, '+stockUnid(R.total)+' unidades al '+fmtFecha(R.fecha)+
         (cerrados?('. Cerraste '+cerrados+' pedido'+(cerrados===1?'':'s')+' a fábrica desde el control.'):'')+
@@ -29892,6 +30025,7 @@ function setEstado(id,val){
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
+  if(!p.entregado) entregaRegistroBorrar(p);   // ✅ (16/10, §4lo) destildado: sin el registro del cierre (su `eF` manda en el stock)
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   guardarDurable(p);
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
