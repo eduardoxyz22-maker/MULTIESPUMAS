@@ -3196,7 +3196,7 @@ function waRespAtendida_(body) {
 /* ============================================================================
  * 🧠 (2026-10-14-b) CLAUDE LE CONTESTA AL CLIENTE
  *
- * El dueño (14/10), con USD 100 de crédito en la API de Claude: «Entiende y contesta», con Claude Opus 5.5. Hasta acá, a todo lo
+ * El dueño (14/10), con USD 100 de crédito en la API de Claude: «Entiende y contesta», con Claude. Hasta acá, a todo lo
  * que un cliente le escribía al bot le llegaba lo mismo: «este número no lee, escribile a tu vendedora». Ahora:
  *   · El webhook anota el mensaje como siempre (fila «💬 Respondió») con «⏳» en la columna M y deja un disparador de una vez
  *     (`iaDespierta`, ~30 s). No contesta en el momento: el cliente suele mandar dos o tres mensajes seguidos, y Meta no puede
@@ -3213,7 +3213,7 @@ function waRespAtendida_(body) {
  *     planilla y deriva a la vendedora con su WhatsApp.
  *   · Si algo sale mal (sin crédito, la clave no sirve, Claude no contesta, se pasó un tope) sale la respuesta automática de siempre.
  *   · La llamada: POST /v1/messages, sin librería (Apps Script no tiene la de Anthropic), con salida en JSON fijo
- *     (`output_config.format`), esfuerzo `low` (es una respuesta corta) y `fallbacks: 'default'` (si Claude Opus 5.5 no quiere
+ *     (`output_config.format`), esfuerzo `low` (es una respuesta corta) y `fallbacks: 'default'` (si el modelo no quiere
  *     contestar, la API prueba sola con el modelo que recomienda Anthropic).
  * Propiedades del script (NUNCA en el código ni en el chat: el repo es público):
  *      ANTHROPIC_API_KEY = la clave de la consola de Claude
@@ -3249,7 +3249,7 @@ var IA_HIST_MS = 24 * 3600000;       // lo hablado que Claude ve
 var IA_CORRIDA_MS = 4 * 60000;
 var IA_GRUPOS_MAX = 6;               // números por vuelta (los demás, a la vuelta siguiente: así no esperan tomados)
 var IA_HECHO_TOPE = 250;             // mensajes ya contestados que se recuerdan (IA_HECHO, 48 h): una propiedad aguanta 9 KB
-var IA_PRECIO_IN = 4, IA_PRECIO_OUT = 20;   // USD por millón de tokens (Claude Opus 5.5): solo para estimar el gasto
+var IA_PRECIO_IN = 4, IA_PRECIO_OUT = 20;   // USD por millón de tokens (el modelo de `IA_MODELO_DEF`): solo para estimar el gasto
 var IA_COL = 13;                     // M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
 var IA_CATS = ['hora', 'saldo', 'cambio', 'no_esta', 'direccion', 'confirma', 'reclamo', 'otro'];
 var IA_RESUELVE = ['hora', 'saldo', 'confirma'];   // si no es urgente, queda atendido por Claude

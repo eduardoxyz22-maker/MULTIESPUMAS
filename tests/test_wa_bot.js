@@ -661,7 +661,7 @@ function conPedido(props, extra) {
   const h = L[0].o.headers, b = L[0].body;
   chk('la llamada: api.anthropic.com/v1/messages con x-api-key, anthropic-version 2023-06-01 y el beta de los respaldos', L[0].url === 'https://api.anthropic.com/v1/messages' && h['x-api-key'] === 'sk-de-mentira' &&
       h['anthropic-version'] === '2023-06-01' && h['anthropic-beta'] === 'server-side-fallback-2026-07-01' && L[0].o.contentType === 'application/json', h);
-  chk('claude-opus-5-5, `fallbacks: default`, esfuerzo bajo, salida en JSON fijo (5 campos) y SIN `thinking` (Opus 5.5 no lo deja apagar)', b.model === 'claude-opus-5-5' && b.fallbacks === 'default' && b.output_config.effort === 'low' &&
+  chk('el modelo de IA_MODELO_DEF, `fallbacks: default`, esfuerzo bajo, salida en JSON fijo (5 campos) y SIN `thinking` (ese modelo no lo deja apagar)', b.model === 'claude-opus-5-5' && b.fallbacks === 'default' && b.output_config.effort === 'low' &&
       b.output_config.format.type === 'json_schema' && b.output_config.format.schema.required.length === 5 && b.output_config.format.schema.additionalProperties === false && !('thinking' in b) && b.max_tokens >= 4000, b.output_config);
   const user = b.messages[0].content;
   chk('Claude ve el pedido: OC, cliente, productos, «jueves 15/10 por la tarde», el horario y el saldo tal cual', user.indexOf('OC ' + p.oc) >= 0 && /JUAN CARLOS ROCA/.test(user) && /1 × TITANIO LATEX 140x190/.test(user) &&

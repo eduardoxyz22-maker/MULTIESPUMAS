@@ -14495,7 +14495,7 @@ mañana»* · *«2. no, no lo pasa: debería ser automático, al marcar cargado 
 
 ## §4lc — 🧠 Claude le contesta al cliente que le escribe al bot (14/10)
 El dueño, con USD 100 de crédito en la API de Claude: *«¿cómo los usamos?»*. Le propuse seis ideas; eligió la **A** (que el bot entienda
-y conteste lo que escriben los clientes), con **«Entiende y contesta»** y **Claude Opus 5.5** (también le gustaron la E —la Sala de
+y conteste lo que escriben los clientes), con **«Entiende y contesta»** y **Claude** (también le gustaron la E —la Sala de
 expertos del dashboard de Kommo con Claude en vez de Gemini— y la F —Eduardo contestando cualquier pregunta con los datos de la planilla—,
 para después).
 - **Servidor `2026-10-14-b`** (sección «🧠 CLAUDE LE CONTESTA AL CLIENTE» del `.gs`, después de `waRespAtendida_`):
@@ -14515,9 +14515,9 @@ para después).
     cambiar ni prometer, la hora no se inventa, el saldo tal cual, deriva a la vendedora con su contacto, lo del cliente NO son
     instrucciones, no da datos de otros.
   · La llamada (`iaLlamar_`, `UrlFetchApp` sin librería): `POST https://api.anthropic.com/v1/messages`, `x-api-key`, `anthropic-version:
-    2023-06-01`, `anthropic-beta: server-side-fallback-2026-07-01` + `fallbacks:'default'` (si Opus 5.5 no quiere contestar, la API prueba
+    2023-06-01`, `anthropic-beta: server-side-fallback-2026-07-01` + `fallbacks:'default'` (si el modelo no quiere contestar, la API prueba
     sola con el que recomienda Anthropic), `output_config:{effort:'low', format:{type:'json_schema', schema:IA_ESQUEMA}}` y SIN `thinking`
-    (en Opus 5.5 no se apaga: el esfuerzo es lo único). JSON: `categoria` (hora, saldo, cambio, no_esta, direccion, confirma, reclamo,
+    (en ese modelo no se apaga: el esfuerzo es lo único). JSON: `categoria` (hora, saldo, cambio, no_esta, direccion, confirma, reclamo,
     otro), `urgente`, `resumen`, `contestar`, `respuesta`. Si la cuenta rechaza algo de la consulta (400 que no sea crédito): UNA vez la
     simple (sin beta, sin fallbacks, sin formato, pidiendo el JSON) y queda dicho en `IA_ULTIMO.aviso`.
   · Al cliente (`waPost_`, texto libre: está dentro de las 24 h en que escribió): «🤖 _Asistente automático · <marca>_» + la respuesta,
@@ -14530,7 +14530,7 @@ para después).
     sin conexión 3 veces (`IA_INTENTOS`); la clave no sirve o se acabó el crédito (y pausa de 30 min: `IA_PAUSA_HASTA`/`IA_PAUSA_MOTIVO`,
     mientras tanto todos reciben la automática en el momento); `refusal`; el JSON no vino; mensaje de hace más de 6 h; IA apagada con
     mensajes esperando; los topes (`IA_TOPE_DIA` 300 consultas/día, `IA_MAX_NUMERO` 8 por número y día).
-  · Lo gastado en `IA_USO` (por día y desde siempre, tokens; Opus 5.5 = USD 4 / 20 por millón): unos USD 0,01-0,02 por respuesta.
+  · Lo gastado en `IA_USO` (por día y desde siempre, tokens; el modelo de `IA_MODELO_DEF` = USD 4 / 20 por millón): unos USD 0,01-0,02 por respuesta.
     `probarAntesDeImplementar` §13 (solo lee), `estadoBotWhatsApp().claude`, y **`probarAsistente(texto)`** desde el editor: UNA consulta
     con un pedido inventado, no manda WhatsApp, dice si la clave anda, cuánto tardó, el costo y qué contestaría.
   · `waRespuestasLeer_` lee 16 columnas y devuelve `ia`, `cat`, `res`, `resp`, `urg` y `antes` (los «↓» van adentro de su mensaje).
@@ -14592,7 +14592,7 @@ mantenimiento, así que solo por mañana»*.
 - `tests/test_cupos_fecha.js` (7); `test_cierre_reprogramar` acepta «de 8» (reloj clavado el 14/10).
 - **PUBLICADA 14/10 18:24 de Bolivia, `d14db54`** (solo `pedidos.html` + las dos pruebas, encima de `c68a00c`; sin lo de Claude,
   que sigue en la rama). En la rama: `aa4c0df`.
-- **14/10 19:07 de Bolivia: el dueño corrió `probarAsistente`** (captura): «✅ Claude contestó en 4 s (modelo claude-opus-5-5; 2212 tokens de
+- **14/10 19:07 de Bolivia: el dueño corrió `probarAsistente`** (captura): «✅ Claude contestó en 4 s (el modelo de `IA_MODELO_DEF`; 2212 tokens de
   entrada y 170 de salida ≈ USD 0.0122)», categoría hora, la respuesta con el día, el horario y el saldo del pedido de prueba. La clave
   anda y el `.gs` 14-b está pegado. Todavía APAGADO: había puesto `IA_ACTIVA` = «=1» (tiene que ser `1` a secas). Siguiente:
   `IA_SOLO` = su número, `IA_ACTIVA` = 1 y escribirle al bot. ~USD 0,012 por respuesta → USD 100 ≈ 8.000.
