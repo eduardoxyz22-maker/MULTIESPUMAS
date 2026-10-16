@@ -15086,7 +15086,7 @@ El dueño: *«ayer logística me reclamó que el panel decía 0 saldos y el Exce
 - **Lo que contestó el dueño (16/10)**: *«1 no, la que más se vende es la CD1403 la 50x70»* (los nombres quedan como están: NO se
   cambió el de la 50x70 ni la regla de «ALMOHADA» 50x90 sin código) y *«LA NASA ES LA CH1195; las otras 3 son nuevas, debemos añadirlas en
   la lista desplegable de productos»*.
-- **Hecho (en la rama)**: CH1244 «TRAVESSEIRO GELFLEX NASA ALTO DUOFLEX», CH2533 «NASA ALTO FREEZE DUOFLEX» y CH1246 «ALMOHADA TRAVESSEIRO
+- **Hecho y PUBLICADO (16/10 11:42 de Bolivia, `27f0134`, Pages OK; antes, 11 suites relacionadas en verde, 576 comprobaciones)**: CH1244 «TRAVESSEIRO GELFLEX NASA ALTO DUOFLEX», CH2533 «NASA ALTO FREEZE DUOFLEX» y CH1246 «ALMOHADA TRAVESSEIRO
   ANTISOFOCANTE NASA» en `CODIGOS`, con el nombre del Excel y `m:""`. ⚠️ A propósito: así su clave de la lista (`stockNorm(d)|`) es la
   MISMA que el Excel ya les había dado con el nombre crudo (`stockClaveCruda`), y no se parte nada (ni fotos, ni historial, ni la hoja
   «Historial stock»). Si algún día se les cambia el nombre, `stockMigrar` mueve las unidades (§4ia), pero el historial de días queda

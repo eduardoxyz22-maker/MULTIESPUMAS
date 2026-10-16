@@ -198,7 +198,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - 🛏️ **Las almohadas** (§4lq, 16/10): no había cruce entre la 50x70 (CD1403, «ALMOHADA») y la 50x90 (CD1459, «ALMOHADA FIBRA
     SILICONADA»); el «0 y 17» era la 50x70 en Banzer con más vendido sin entregar que stock. Los nombres quedan (dueño: *«1 no»*). La
     NASA que se vende es la **CH1195** (ALM/NASA); **CH1244, CH2533 y CH1246 entraron a `CODIGOS` con el nombre del Excel y SIN medida**
-    (en la rama): así su clave es la misma que ya tenían en el stock y no se parten. `PRY_NO_UNIDAD` lleva `TRAVESSEIRO` y `NASA` (si no,
+    (PUBLICADO 16/10 11:42, `27f0134`, Pages OK): así su clave es la misma que ya tenían en el stock y no se parten. `PRY_NO_UNIDAD` lleva `TRAVESSEIRO` y `NASA` (si no,
     la Proyección las contaba como colchones). `tests/test_almohadas_nasa.js` (20).
   - 🎨 El encabezado del «📋 Plan de stock» va CLARO con letra oscura (§4lp, 16/10, dueño: *«fondo negro, letra gris… no leo»*): el
     `thead th` general es negro, y una tabla que ponga su color de letra en `th` tiene que poner también su fondo. `tests/test_stock_contraste.js`.
