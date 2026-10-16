@@ -15008,7 +15008,7 @@ los arregla quien cargó el pedido.
   y sin `kgmid`: los arregla quien cargó el pedido. Lo que se ubica queda en la hoja «Geo» del servidor y el panel lo usa solo.
 - En esa misma corrida, dos consultas `geocode` (la de los almacenes y la de las direcciones escritas) dieron **404 de Google en 33-36 s**;
   las cuatro siguientes, 200. Esas dos van por `geocodeTexto` directo (texto, no enlace), un camino que la 15-a no tocó: es el 404 de a ratos
-  de §4fx. Si se repite en las corridas siguientes, mirarlo.
+  de §4fx. En la corrida siguiente (la de `main`, 09:52) no se repitió: las mismas dos en 1,6 s, y los 18 de 21 iguales.
 - **Página publicada** (`6a55598`): `SCRIPT_VERSION_ESPERADA='2026-10-15-a'` + el `.gs`, `test_servidor`, `test_wa_bot`, `CLAUDE.md` y el
   diagnóstico. Volver atrás de la 15-a = ✏️ a la versión anotada Y pegar la 14-c (enlace fijo a `19ee2bc…`, 4.342 líneas).
 - Comentarios sin el nombre del modelo (`856fd7a`): en el `.gs`, la bitácora y `test_wa_bot` queda solo `IA_MODELO_DEF`, que es lo que la API
