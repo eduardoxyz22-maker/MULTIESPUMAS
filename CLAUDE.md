@@ -188,13 +188,18 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
     **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
   - 📚 **Los tres almacenes en UN Excel** (§4lp, 16/10, dueño: *«logística me está pidiendo usar esta planilla que ya trae los 3
-    almacenes»*; en la rama): el mismo reporte con un bloque por almacén (`105003 | PRODUCTOS TERMINADOS FAB.` … `TOTAL : | … | 523`) y
+    almacenes»*; PUBLICADO 16/10 11:10, `92d08ff`): el mismo reporte con un bloque por almacén (`105003 | PRODUCTOS TERMINADOS FAB.` … `TOTAL : | … | 523`) y
     arriba «Almacén Inicial / Final : IM». ⚠️ **Lo publicado hasta `6a55598` lo toma ENTERO como IM con los tres SUMADOS** (1.648 el 16/10).
     `existSecciones` parte los bloques (cierran con su «TOTAL :» del mismo almacén), `existLeer(filas, almForzado)` lee cada uno con el
     nombre del BLOQUE (manda sobre el encabezado) y `existLoteDe` arma la cola **`EXIST_COLA`**: la vista previa de cada almacén, uno
     detrás del otro y en el orden del archivo (PTF → Banzer → IM), con «N de M», «Usar … y seguir con X», «⏭ Saltar» (`existSaltar`) y
     «Cancelar todo» (`existCancelar`). Mismo control y misma regla del día que subir tres Excel. El TOTAL del bloque distinto de lo leído
     se avisa (`totalReporte`). Un archivo sin bloques sigue igual. `tests/test_existencias_tres.js` (17; 15 rojas contra `6a55598`).
+  - 🛏️ **Las almohadas** (§4lq, 16/10): no había cruce entre la 50x70 (CD1403, «ALMOHADA») y la 50x90 (CD1459, «ALMOHADA FIBRA
+    SILICONADA»); el «0 y 17» era la 50x70 en Banzer con más vendido sin entregar que stock. Los nombres quedan (dueño: *«1 no»*). La
+    NASA que se vende es la **CH1195** (ALM/NASA); **CH1244, CH2533 y CH1246 entraron a `CODIGOS` con el nombre del Excel y SIN medida**
+    (en la rama): así su clave es la misma que ya tenían en el stock y no se parten. `PRY_NO_UNIDAD` lleva `TRAVESSEIRO` y `NASA` (si no,
+    la Proyección las contaba como colchones). `tests/test_almohadas_nasa.js` (20).
   - 🎨 El encabezado del «📋 Plan de stock» va CLARO con letra oscura (§4lp, 16/10, dueño: *«fondo negro, letra gris… no leo»*): el
     `thead th` general es negro, y una tabla que ponga su color de letra en `th` tiene que poner también su fondo. `tests/test_stock_contraste.js`.
   - **🤖 Revisión automática** (§4cq, §4cr): `stockAsignar()` reparte el stock entre los
@@ -586,7 +591,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).
   Los 🌆 PM van tildados A PROPÓSITO (dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*). Antes de tocar el
   cierre o el control del corte, leer §4hq.
-- **✅ Un pedido entregado que se mueve a otro día no se entregó** (§4lo, 16/10, dueño eligió la «F»; en la rama): `entregadoSeMueve(p, f,
+- **✅ Un pedido entregado que se mueve a otro día no se entregó** (§4lo, 16/10, dueño eligió la «F»; PUBLICADO 16/10 11:10, `92d08ff`): `entregadoSeMueve(p, f,
   desde)` = ✅, no ATC ni venta de tienda, fecha nueva distinta y **≥ hoy** → `entregadoDeshacer` (sin ✅ ni `eF/eT/eQ`). 📅 Reprogramar y
   ✏️ Editar PREGUNTAN antes (`entregadoMueveTxt`; Cancelar no toca/no guarda); `reproAplicar` (cierre, adelanto) lo aplica solo. A un día que
   ya pasó = corregir el registro: queda ✅. Destildar a mano (`toggleEntregado`, `quickEntregado`, `choEntregado`) y guardar un pedido no
