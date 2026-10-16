@@ -15083,3 +15083,14 @@ El dueño: *«ayer logística me reclamó que el panel decía 0 saldos y el Exce
   vendedoras escriben la 50x70 como «fibra siliconada». Y la «ALM/NASA» que venden (CH1195) casi no está en el Excel (1), mientras hay
   229 almohadas NASA con otros códigos; un pedido del 19/10 de 4 ALM/NASA está marcado «✔ hay en PTF», donde no hay CH1195.
   Preguntado al dueño si alguna de esas NASA es la misma.
+- **Lo que contestó el dueño (16/10)**: *«1 no, la que más se vende es la CD1403 la 50x70»* (los nombres quedan como están: NO se
+  cambió el de la 50x70 ni la regla de «ALMOHADA» 50x90 sin código) y *«LA NASA ES LA CH1195; las otras 3 son nuevas, debemos añadirlas en
+  la lista desplegable de productos»*.
+- **Hecho (en la rama)**: CH1244 «TRAVESSEIRO GELFLEX NASA ALTO DUOFLEX», CH2533 «NASA ALTO FREEZE DUOFLEX» y CH1246 «ALMOHADA TRAVESSEIRO
+  ANTISOFOCANTE NASA» en `CODIGOS`, con el nombre del Excel y `m:""`. ⚠️ A propósito: así su clave de la lista (`stockNorm(d)|`) es la
+  MISMA que el Excel ya les había dado con el nombre crudo (`stockClaveCruda`), y no se parte nada (ni fotos, ni historial, ni la hoja
+  «Historial stock»). Si algún día se les cambia el nombre, `stockMigrar` mueve las unidades (§4ia), pero el historial de días queda
+  con la clave vieja. Probado con el Excel real en el scratchpad: mismas seis filas, mismos números, el cuadrito dice «hay».
+  `PRY_NO_UNIDAD` suma `TRAVESSEIROS?` y `NASA`: sin eso la «Proyección del mes» contaba «NASA ALTO FREEZE DUOFLEX» y «TRAVESSEIRO…»
+  como COLCHONES por descarte (también escritas sin código, ya en lo publicado). En el Excel las cuatro NASA son almohadas; ningún
+  colchón se llama NASA. `tests/test_almohadas_nasa.js` (20; 7 rojas contra `92d08ff`).
