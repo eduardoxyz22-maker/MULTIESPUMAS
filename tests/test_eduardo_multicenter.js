@@ -343,7 +343,7 @@ function NUMEROS(k){
   chk('una venta de Carola a Multicenter no dice «Lo vendió Eduardo» (es un pedido puntual)',
       !/Lo vendió Eduardo/.test(txt2.fila) && /pedido puntual/i.test(txt2.fila), (txt2.fila.match(/[^.]*pedido puntual[^.]*/i)||[txt2.fila.slice(0,200)])[0]);
   chk('lo que se copia para la fábrica dice cuánto es de Eduardo a Multicenter y que el mes es lo probable de cinco estimaciones',
-      /14 de Eduardo a Multicenter/.test(txt2.copia) && /lo probable entre los últimos 30, 60 y 90 días/.test(txt2.copia) && /Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda/.test(txt2.copia),
+      /14 de Eduardo a Multicenter/.test(txt2.copia) && /lo probable entre los últimos 30 días, el promedio de los 2 y de los 3 últimos meses cerrados/.test(txt2.copia)   /* (16/10, §4lr U8) el texto dice lo que hace: 60/90 son meses CERRADOS */ && /Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda/.test(txt2.copia),
       txt2.copia.slice(0,500));
 
   // ═══ El ejemplo de antes y después ════════════════════════════════════════════════════════════════════════

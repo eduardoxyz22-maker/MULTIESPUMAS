@@ -264,8 +264,10 @@ const BASE = `
       _subir(R, ['.exist-fab[data-id="fab"]']); await confirmarImportExist();
       var x=findById('fab').productos[0];
       out.sellada={ prodU:x.prodU, prodR:x.prodR, chk:x.chk, comp:_fila(K).comp, aFab:_fila(K).aFab, dep:_fila(K).deposito, compro:stockComprometido(K) };
-      /* Mañana se entrega: salida común; el depósito baja a 10 y el Excel de pasado mañana con 10 cuadra. */
-      findById('fab').entregado=true;
+      /* Se entrega (antes de su día): salida común; el depósito baja a 10 y el Excel de pasado mañana con 10 cuadra.
+         (16/10, §4lr U12) Un ✅ antes de su fecha lleva el día real (`eF`, lo pone `entregaAdelantadaAnotar` al marcar): sin día real,
+         un ✅ con fecha futura NO salió (regla del dueño de §4lo). */
+      findById('fab').entregado=true; entregaAdelantadaAnotar(findById('fab'));
       out.entregada={ dep:_fila(K).deposito, comp:_fila(K).comp };
       var C=stockConciliar(_R(_adel(2),'09:00:00',{[K]:10,[K2]:4}), 'log', false);
       out.c={ cuadran:C.resumen.cuadran, con:C.resumen.con };

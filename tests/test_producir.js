@@ -204,7 +204,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('el título nombra la semana, los 15 días y octubre', r && /esta semana, los próximos 15 días y octubre/.test(r.t));
   // Desde §4du el resumen del bloque trae el RANGO del mes: «octubre: 18 (rango 6–19)» (§4hd: sin la medida especial CH1389).
   chk('el bloque Heaven resume 7 días: 1 · 15 días: 9 · octubre: 17 (rango 5–18) · 1ª quincena 12 · 2ª 5', r && /7 días: 1 · 15 días: 9 · octubre: 17 \(rango 5–18\) · 1ª quincena 12 · 2ª 5/.test(r.t), r && r.t.slice(0,600));
-  chk('las columnas dicen hasta qué día llega cada horizonte (17/09 y 25/09) y qué queda el 01/10', r && /hasta el 17\/09/.test(r.t) && /hasta el 25\/09/.test(r.t) && /queda el 01\/10/.test(r.t));
+  /* (16/10, §4lr U17) Las columnas dicen lo que CUBRE cada número (antes «hasta el hoy+7 / hoy+15», que no era lo que cubría). */
+  chk('las columnas dicen qué cubre cada horizonte (15 incluye 7, el mes va además) y qué queda el 01/10', r && /incluye lo de 7: no sumar/.test(r.t) && /además de 15 días/.test(r.t) && /queda el 01\/10/.test(r.t));
   chk('la fila del TITANIO ICE muestra ritmo, hay 5 (3 acá · 2 Moreno) y los cinco números', r && /TITANIO ICE/.test(r.filaH) && /3 acá · 2 Moreno/.test(r.filaH) && /15 d: 10 en 5 entregas/.test(r.filaH) && /30 d: 18 en 9 entregas/.test(r.filaH), r && r.filaH);
   chk('hay botones para copiar cada horizonte por fábrica (7 días, 15 días, octubre)', r && r.botones.some(function(b){ return /📋 7 días/.test(b); }) && r.botones.some(function(b){ return /📋 15 días/.test(b); }) && r.botones.some(function(b){ return /📋 octubre/.test(b); }), r && r.botones.join(' | '));
   /* ⚠️ Desde que el PILLOW FLEX se fue a su bloque, en este fixture ninguna medida junta
@@ -267,9 +268,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { mes:mes, sem:sem, nada:nada, otros:otros };
   });
   chk('el texto de «sin asignar» reparte por medida con la escritura unificada (130x190 3 · 140x190 4)', /MORFEO · 140x190: 4/.test(r.otros) && /XYZ PLUS · 130X190(CM)?: 3/.test(r.otros) && /Total: 7 unidades · por medida: 130x190 3 · 140x190 4/.test(r.otros), r.otros);
-  chk('el texto de octubre lleva el producto con su código, la cantidad y el reparto por quincena', /PRODUCIR PARA OCTUBRE \(TODO EL MES\) — INDUSTRIAS MORENO · HEAVEN/.test(r.mes) && /TITANIO ICE · 160x190 \(cód CH1201\): 17 — 1ª quincena 12 · 2ª quincena 5/.test(r.mes), r.mes);
+  chk('el texto de octubre lleva el producto con su código, la cantidad y el reparto por quincena', /PRODUCIR PARA OCTUBRE \(ADEMÁS DE LO DE 15 DÍAS\) — INDUSTRIAS MORENO · HEAVEN/.test(r.mes) && /TITANIO ICE · 160x190 \(cód CH1201\): 17 — 1ª quincena 12 · 2ª quincena 5/.test(r.mes), r.mes);
   chk('…y cierra con el total y el reparto por medida, sin plata', /Total: 17 unidades · por medida: 160x190 17/.test(r.mes) && !/Bs/.test(r.mes));
-  chk('el de la semana dice 1 para el TITANIO ICE y explica qué cubre', /PRODUCIR PARA ESTA SEMANA/.test(r.sem) && /TITANIO ICE · 160x190 \(cód CH1201\): 1 —/.test(r.sem) && /Total: 1 unidad ·/.test(r.sem) && /Cubre lo vendido sin entregar/.test(r.sem), r.sem);
+  chk('el de la semana dice 1 para el TITANIO ICE y explica qué cubre', /PRODUCIR PARA 7 DÍAS/.test(r.sem) && /TITANIO ICE · 160x190 \(cód CH1201\): 1 —/.test(r.sem) && /Total: 1 unidad ·/.test(r.sem) && /Cubre lo vendido sin entregar/.test(r.sem), r.sem);
   chk('si no hay nada que producir no copia nada (avisa)', r.nada==='');
 
   /* ---------- 7. Ver también los cubiertos, y sin conteo no hay cuadro ---------- */
