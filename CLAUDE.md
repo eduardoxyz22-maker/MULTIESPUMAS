@@ -187,6 +187,16 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     depósito»; `IM - PRODUCTOTERMINADO` = la fábrica = «en fábrica», **no se suma**.
   - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
     **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
+  - 📚 **Los tres almacenes en UN Excel** (§4lp, 16/10, dueño: *«logística me está pidiendo usar esta planilla que ya trae los 3
+    almacenes»*; en la rama): el mismo reporte con un bloque por almacén (`105003 | PRODUCTOS TERMINADOS FAB.` … `TOTAL : | … | 523`) y
+    arriba «Almacén Inicial / Final : IM». ⚠️ **Lo publicado hasta `6a55598` lo toma ENTERO como IM con los tres SUMADOS** (1.648 el 16/10).
+    `existSecciones` parte los bloques (cierran con su «TOTAL :» del mismo almacén), `existLeer(filas, almForzado)` lee cada uno con el
+    nombre del BLOQUE (manda sobre el encabezado) y `existLoteDe` arma la cola **`EXIST_COLA`**: la vista previa de cada almacén, uno
+    detrás del otro y en el orden del archivo (PTF → Banzer → IM), con «N de M», «Usar … y seguir con X», «⏭ Saltar» (`existSaltar`) y
+    «Cancelar todo» (`existCancelar`). Mismo control y misma regla del día que subir tres Excel. El TOTAL del bloque distinto de lo leído
+    se avisa (`totalReporte`). Un archivo sin bloques sigue igual. `tests/test_existencias_tres.js` (17; 15 rojas contra `6a55598`).
+  - 🎨 El encabezado del «📋 Plan de stock» va CLARO con letra oscura (§4lp, 16/10, dueño: *«fondo negro, letra gris… no leo»*): el
+    `thead th` general es negro, y una tabla que ponga su color de letra en `th` tiene que poner también su fondo. `tests/test_stock_contraste.js`.
   - **🤖 Revisión automática** (§4cq, §4cr): `stockAsignar()` reparte el stock entre los
     pedidos pendientes **por fecha de entrega** (FIFO) y marca solo ✔ hay / 📥 recoger de
     Moreno / ✗ no hay. Una línea que no se cubre entera NO reserva nada. No toca líneas 🏭,

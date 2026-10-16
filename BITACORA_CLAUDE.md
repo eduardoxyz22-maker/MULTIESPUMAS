@@ -15034,3 +15034,34 @@ El dueño, después de la lista de mejoras: *«F podría ser»*. Son los dos err
   revisa de nuevo). Y el registro del cierre (`eF/eT/eQ`) a TODOS los renglones, también a uno agregado o con otra cantidad: es del pedido.
 - `tests/test_reprogramar_entregado.js` (26; **18 rojas contra `6a55598`**, lo publicado). Reloj clavado en el viernes 16/10 10:00.
 - Batería entera: 197 suites, 6.903 comprobaciones, 0 rojas. Solo la página: el `.gs` sigue `2026-10-15-a`.
+
+### §4lp — 📚 Los tres almacenes en un solo Excel (16/10, EN LA RAMA)
+El dueño, con el archivo de logística (`Excel_16-10-2026_10_12_15.xlsx`): *«para cargar el stock y reposición logística me está pidiendo
+usar esta planilla que ya trae los 3 almacenes»*. Es el mismo reporte «EXISTENCIAS ALMACEN» del sistema de Moreno (pie «iv380_34»), con
+un bloque por almacén: una fila `105003 | PRODUCTOS TERMINADOS FAB.`, sus productos y `TOTAL : | PRODUCTOS TERMINADOS FAB. | 523`; después
+Banzer (105025, 551) e IM (105103, 574) y `TOTAL GENERAL : 1648`. Arriba dice «Almacén Inicial / Final : 01-05-103 IM».
+- 🚨 **Lo publicado lo toma ENTERO como IM**: medido con la planilla real en la página de `6a55598`, «IM - PRODUCTOTERMINADO», 200
+  productos, **1.648 unidades** (los tres sumados) y PTF y Banzer sin tocar. Se le avisó al dueño: no subirla hasta publicar esto.
+- `existSecciones(filas)`: después de la fila de títulos, un bloque EMPIEZA en una fila de dos valores (el código del almacén —`105003`
+  o `01-05-003`— y su nombre) sin producto, y TERMINA en `TOTAL :` con el mismo nombre (`normNombre`); «TOTAL GENERAL» y «SUBTOTAL» no
+  cuentan. Un bloque sin su TOTAL no entra. Sin bloques → `[]` y el archivo se lee como siempre.
+- `existLeer(filas, almForzado)`: con el nombre del bloque no mira «Almacén Inicial/Final» (ni su error de «mezcla almacenes»). Con un
+  solo bloque también manda el bloque.
+- `existLoteDe` → cada bloque con los títulos de arriba, la hora del pie del archivo y `totalReporte`; `onExistArchivo` muestra el
+  primero y deja los demás en **`EXIST_COLA`** (se vacía al subir otro archivo, al cancelar y si el archivo no es de hoy).
+  `confirmarImportExist` abre el próximo después de guardar: cada uno se concilia contra el stock que dejó el anterior, igual que subir
+  tres Excel. Orden = el del archivo (PTF, Banzer, IM: el de fábrica antes que Moreno).
+- Vista previa: cartel `#exist-lote` («Este archivo trae 3 almacenes. Vas por el 1 de 3…»), «💾 Usar estas existencias y seguir con
+  Banzer», «⏭ Saltar este y seguir con…» (`existSaltar`: ese almacén queda como estaba) y «Cancelar todo» (`existCancelar`). Si el TOTAL del
+  bloque no coincide con lo leído, `#exist-total-mal` lo avisa (no frena: el sistema puede traer cantidades negativas que se saltean).
+- Con la planilla real en la página nueva: PTF 100 productos / 523, Banzer 108 / 551, IM 104 / 574, los tres totales iguales al reporte,
+  hora 10:10:16 del pie; roles los de siempre (fábrica / salen camiones / ir a buscar).
+- `tests/test_existencias_tres.js` (17; **15 rojas contra `6a55598`**). Datos sintéticos: la planilla real NO va al repo (es pública).
+- 🎨 **El encabezado del «📋 Plan de stock» no se leía** (dueño, mismo día, con captura: *«corregí el color de eso, no leo: fondo negro,
+  letra gris casi negra también… en stock y reposición»*). El `thead th` general del panel es negro (`var(--black)`) y `.pl-tabla th` le
+  ponía `color:var(--muted)`: gris 107 sobre 26, contraste 3,3. Ahora `.pl-tabla th` lleva fondo claro propio (`#e3f3f1`) y letra
+  oscura (`#0f3d3a`, negrita). Revisados con el navegador los 30 encabezados de la pantalla de Stock (con «Más vistas» y los
+  desplegables abiertos): todos ≥ 4,5. `tests/test_stock_contraste.js` (4; 2 rojas contra `6a55598`). ⚠️ Una tabla nueva que ponga
+  su propio color de letra en `th` tiene que poner también el fondo: si no, hereda el negro.
+- Batería entera con §4lo + §4lp: 199 suites, 6.924 comprobaciones, 0 rojas (`test_mispedidos` dio 1 roja una vez con la máquina cargada
+  y 33/33 sola y en la corrida siguiente). Solo la página: el `.gs` sigue `2026-10-15-a`.
