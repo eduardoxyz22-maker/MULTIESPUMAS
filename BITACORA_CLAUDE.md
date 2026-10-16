@@ -15065,3 +15065,21 @@ Banzer (105025, 551) e IM (105103, 574) y `TOTAL GENERAL : 1648`. Arriba dice «
   su propio color de letra en `th` tiene que poner también el fondo: si no, hereda el negro.
 - Batería entera con §4lo + §4lp: 199 suites, 6.924 comprobaciones, 0 rojas (`test_mispedidos` dio 1 roja una vez con la máquina cargada
   y 33/33 sola y en la corrida siguiente). Solo la página: el `.gs` sigue `2026-10-15-a`.
+
+### §4lq — 🛏️ «El panel decía 0 y el Excel 17» en las almohadas (16/10, solo diagnóstico, nada cambiado en la página)
+El dueño: *«ayer logística me reclamó que el panel decía 0 saldos y el Excel decía 17, fijate si no cruzaste con las de 50x70 y 50x90»*.
+- **No hay cruce**. Diagnóstico (`almohadas()` en `herramientas/diagnostico_lectura.py`, corridas del 16/10 15:21 y 15:24 UTC) y la
+  copia local con el Excel de los tres almacenes: cada código va a su fila y los números del panel son los del Excel.
+  CD1403 «ALMOHADA 50X70 EXPO 2019» → `ALMOHADA|50X70` (hoy PTF 2 · Banzer 9); CD1459 «ALMOHADA 50X90» → `ALMOHADA FIBRA
+  SILICONADA|50X90` (PTF 11 · IM 6 = 17); CH1195 «ALMOHADA VISCOLASTICA NASA» → `ALM/NASA|50X70` (Banzer 1); CH1244, CH2533 y CH1246
+  (NASA, no están en la lista de precios) con su nombre crudo.
+- **El 17 es la 50x70 en Banzer** (Excel del 15/10 13:26; la hoja «Historial stock»: 33 → 29 → 27 → 21 → 17 → 9 del 10 al 16/10).
+  El panel también los tenía, pero había **22 almohadas 50x70 vendidas sin entregar** (pedidos del 16/10 al 05/12, cuatro de Kommo
+  para diciembre): libres 0, faltaban ~3. Hoy 11 contra 22 → «🚨 Pedí 15 ya». Es la regla de siempre (libre = almacén − vendido).
+- **En los pedidos** (221 renglones): CD1403 «ALMOHADA» 50x70 169 · CH1195 «ALM/NASA» 28 · CD1459 «ALMOHADA FIBRA SILICONADA» 50x90 8 ·
+  sin código «ALMOHADA FIBRA SILICONADA» 50x70 7 (Kommo; `PROD_ALIAS_MEDIDA` los lleva bien a CD1403). Nadie escribió «ALMOHADA» 50x90
+  sin código (hoy eso caería como 📐 medida especial y en una fila aparte con 0: se ofreció al dueño arreglarlo).
+- **Lo que puede confundir** (ofrecido, sin hacer): el panel llama «ALMOHADA» a la 50x70 y «ALMOHADA FIBRA SILICONADA» a la 50x90; las
+  vendedoras escriben la 50x70 como «fibra siliconada». Y la «ALM/NASA» que venden (CH1195) casi no está en el Excel (1), mientras hay
+  229 almohadas NASA con otros códigos; un pedido del 19/10 de 4 ALM/NASA está marcado «✔ hay en PTF», donde no hay CH1195.
+  Preguntado al dueño si alguna de esas NASA es la misma.
