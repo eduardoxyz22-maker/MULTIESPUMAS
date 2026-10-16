@@ -15097,3 +15097,16 @@ El dueño: *«ayer logística me reclamó que el panel decía 0 saldos y el Exce
 - Batería entera con §4lq (terminó después de publicar): 200 suites, 6.922 bien, 2 mal. `test_guardado` 1 roja con la máquina cargada
   y 18/18 sola. `test_mispedidos` «tres pedidos de refresco a la vez NO hacen tres consultas» (cuenta 2) falla a veces, y **falla igual
   contra `92d08ff`** (3 de 4 corridas): una lectura de más cuando la máquina está lenta, no viene de este cambio. Queda anotado; no se tocó.
+
+### §4lr — 🔎 Revisión «ultracode» de Stock y reposición para la reunión con logística del jueves 22/10 (16/10, en curso)
+El dueño: *«revisá, analizá, verificá, simulá y corroborá stock y reposición… debe ser PRECISO y perfecto… la reunión con logística
+es el jueves 22… qué se pedirá a producción para los 7-15-otro mes… creo que tenemos falla»*, y mandó la auditoría de Astra
+(`AUDITORIA_MULTIESPUMAS_PARA_CLAUDE.md`, sobre `6a55598`: D1–D8 de fórmulas, I05–I13 del lector, conciliación con datos reales).
+- **Datos reales sin exponerlos**: el diagnóstico (`stock_cifrado()` en `herramientas/diagnostico_lectura.py`) arma la planilla entera +
+  el «Historial stock» desde el 01/08, la comprime y la CIFRA (AES-256 con clave al azar + esa clave con RSA-OAEP,
+  `herramientas/clave_diag_publica.pem`); el workflow la guarda como `stock-cifrado.txt` SOLO en la rama de trabajo (nunca en main) y yo
+  la descifro en el scratchpad con la llave privada, que no sale de ahí. Leído 16/10 12:01: 1.421 filas, 7 días de historial. El archivo
+  cifrado se sacó de la rama apenas se descifró. ⚠️ Cada push del diagnóstico lo vuelve a generar (sirve para refrescar el 22/10).
+- Arnés local (scratchpad, no en el repo): abre `pedidos.html` publicado sin red, con la planilla real y el reloj fijo, y vuelca por
+  producto lo que calcula el panel. Hoy (16/10 12:00): 328 productos; pedir 185 a 7 días, 345 a 15, 417 el mes que viene; 84 son
+  ALMOHADA 50x70 (ritmo 4,6/día, todo reserva preventiva).
