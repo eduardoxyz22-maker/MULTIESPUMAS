@@ -15013,3 +15013,24 @@ los arregla quien cargó el pedido.
   diagnóstico. Volver atrás de la 15-a = ✏️ a la versión anotada Y pegar la 14-c (enlace fijo a `19ee2bc…`, 4.342 líneas).
 - Comentarios sin el nombre del modelo (`856fd7a`): en el `.gs`, la bitácora y `test_wa_bot` queda solo `IA_MODELO_DEF`, que es lo que la API
   usa. Solo comentarios: lo implementado anda igual.
+
+### §4lo — ✅ Un pedido entregado que se reprograma ya no queda ✅ + 🏭 editar ya no borra lo llegado (16/10, EN LA RAMA)
+El dueño, después de la lista de mejoras: *«F podría ser»*. Son los dos errores que dejó anotados la auditoría del 06/10 (§4hq).
+- **El ✅ en la fecha nueva.** A las 16:30 el cierre propone tildados también los 🌆 PM (a propósito, dueño 06/10). Si uno no salía y
+  después se reprogramaba —📅 Reprogramar, «No salió · reprogramar» del cierre o ✏️ Editar— seguía `entregado:true` en el día nuevo: no
+  volvía al cierre, el chofer lo veía gris «Entregado», no salía en «Sin entregar», el bot no le avisaba el día nuevo al cliente
+  (`waNoCliente_` saltea entregados) y el stock lo daba por salido.
+  · `entregadoSeMueve(p, f, desde)`: ✅, no ATC (su ✅ es el recojo o la devolución, `atcAlMarcarEntregado`), no venta de tienda, fecha
+  nueva distinta y **≥ hoy**. Movido a un día que YA PASÓ es corregir el registro: queda ✅ (no se pregunta).
+  · 📅 Reprogramar y ✏️ Editar **preguntan** (`entregadoMueveTxt`: dice quién lo confirmó y que el bot le va a avisar al cliente);
+  Cancelar no mueve ni guarda (en el formulario, la edición queda abierta). `reproAplicar` lo aplica solo (el cierre y el adelanto pasan
+  por ahí; el adelanto es el mismo día, no toca). El aviso de 📅 suma «· ya no figura entregado».
+  · `entregadoDeshacer(p)` = `entregado:false` + `entregaRegistroBorrar(p)` (sin `eF/eT/eQ`).
+- **El registro del cierre que quedaba de un ✅ destildado.** `eF` (el día real) manda en las salidas del stock (§4iz): un ✅ destildado
+  a mano lo dejaba en los productos. Ahora `toggleEntregado`, `quickEntregado` y `choEntregado` lo sacan al destildar, y `submitPedido`
+  guarda sin registro todo pedido que no está entregado.
+- **`heredarMarcas` (✏️ Editar)**: pasa `prodU` (cuántas llegaron de la línea 🏭), `prodC` (qué cortes las anotaron: sin esto el próximo
+  Excel las volvía a contar) y `prodRm` (el sello lo puso el Excel) con la misma regla que `prodF/prodR` (misma cantidad; con otra, se
+  revisa de nuevo). Y el registro del cierre (`eF/eT/eQ`) a TODOS los renglones, también a uno agregado o con otra cantidad: es del pedido.
+- `tests/test_reprogramar_entregado.js` (26; **18 rojas contra `6a55598`**, lo publicado). Reloj clavado en el viernes 16/10 10:00.
+- Batería entera: 197 suites, 6.903 comprobaciones, 0 rojas. Solo la página: el `.gs` sigue `2026-10-15-a`.

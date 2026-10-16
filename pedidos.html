@@ -5693,12 +5693,20 @@ function teniaRevision(p){
 function heredarMarcas(nuevos, viejos){
   var porClave={};
   (viejos||[]).forEach(function(x){ if(x) porClave[prodClave(x)]=x; });
+  /* ✅ (16/10, §4lo) El registro del cierre de entregas (`eF` día de la entrega, `eT` cuándo se confirmó, `eQ` quién) es del
+     PEDIDO, aunque viaje adentro de cada producto: corregir un pedido entregado desde ✏️ Editar lo borraba, y con eso «quién
+     confirmó» y el día real de la entrega (que manda en las salidas del stock, §4iz). Va a todos los renglones —también a uno
+     nuevo o con otra cantidad—; si el pedido deja de estar entregado, `submitPedido` lo saca (`entregaRegistroBorrar`). */
+  var reg=null;
+  (viejos||[]).some(function(x){ if(x && x.eT){ reg={ eF:x.eF, eT:x.eT, eQ:x.eQ }; return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
-    if(!v) return x;                                   // producto nuevo: nadie lo revisó
+    if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
     /* ⚠️ La CANTIDAD también cuenta. El almacén no dijo "hay ALMOHADA", dijo "hay 2
        almohadas". Si la vendedora las pasa a 5, esa revisión ya no vale para nada. */
-    if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return x; }
+    if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return conReg(x); }
+    conReg(x);
     if(v.chk)    x.chk=v.chk;
     /* 📥 …y DE DÓNDE se recoge (§4ey). Va pegado a `chk`: sin esta línea, corregir cualquier
        cosa del pedido desde el formulario dejaba el producto marcado «hay que ir a buscarlo»
@@ -5714,6 +5722,13 @@ function heredarMarcas(nuevos, viejos){
        medición de `stockTiemposFabrica` perdía esa muestra. */
     if(v.prodF)  x.prodF=v.prodF;
     if(v.prodR)  x.prodR=v.prodR;
+    /* 🏭 (16/10, §4lo) …y la llegada PARCIAL de la línea 🏭 que anotó el control del corte (§4hn, Codex R5): cuántas llegaron
+       (`prodU`), qué cortes las anotaron (`prodC`, para no contarlas dos veces) y que el sello lo puso el Excel (`prodRm`). Sin
+       esto, corregir el pedido borraba lo llegado: dejaba de estar reservado para este cliente y el próximo Excel lo volvía a
+       contar como «entrada sin explicar». Con otra cantidad no se copia (como `prodF`/`prodR`): hay que revisarla de nuevo. */
+    if(v.prodU!=null) x.prodU=v.prodU;
+    if(v.prodC)  x.prodC=v.prodC.slice();
+    if(v.prodRm) x.prodRm=v.prodRm;
     /* 📥 La marca del lead de Kommo (`klead`) no es una revisión: viaja con el pedido aunque
        cambie la cantidad. Sin esto, corregir cualquier cosa del pedido la perdía y el robot
        volvía a traer el borrador (§4es). */
@@ -12353,6 +12368,14 @@ function submitPedido(){
     if(prev && atcViajeDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
     setAtcDatos(rec, _n);
   }
+  /* ✅ (16/10, §4lo) Un pedido ENTREGADO que se pasa desde ✏️ Editar a hoy o más adelante no se entregó: se pregunta y pierde el ✅
+     (ver `entregadoSeMueve`). Cancelar deja el formulario como está, sin guardar. Y un pedido que no está entregado no lleva el
+     registro del cierre (`eF`, que manda en las salidas del stock, quedaba de un ✅ destildado). */
+  if(isEdit && prev && entregadoSeMueve(rec, rec.fecha, prev.fecha)){
+    if(!confirm(entregadoMueveTxt(prev, rec.fecha))) return;
+    entregadoDeshacer(rec);
+  }
+  if(!rec.entregado) entregaRegistroBorrar(rec);
 
   /* ⚠️ AVISO A LOGÍSTICA: «ESTE PEDIDO FUE MODIFICADO».
      Si el jefe de almacén ya lo había revisado (verificado o con productos tickeados) y
@@ -16192,18 +16215,41 @@ function reproConfirmar(){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí la nueva fecha','err'); return; }
   if(f===p.fecha && t===normTurno(p.turno)){ toast('Es la misma fecha y el mismo turno','err'); return; }
   var avisos=reproAvisos(p,f,t);
+  var _saleEnt=entregadoSeMueve(p, f);
+  if(_saleEnt && !confirm(entregadoMueveTxt(p, f))) return;   // ✅ (16/10, §4lo)
   if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
   if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
   // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
   reproAplicar(p, f, t, avisos.length>0);
-  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
+  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓'+(_saleEnt?' · ya no figura entregado':''),'ok');
   reproVolver();                          // vuelve a la ficha desde la que se abrió
+}
+/* ✅ (16/10, §4lo; auditoría del 06/10, §4hq) UN PEDIDO ENTREGADO QUE SE MUEVE A OTRO DÍA NO SE ENTREGÓ.
+   Pasaba con los 🌆 PM que el cierre de las 16:30 propone tildados (a propósito: dueño, 06/10) y que después se reprogramaban
+   —📅 Reprogramar, «No salió · reprogramar» del cierre o ✏️ Editar—: quedaban ✅ en la fecha NUEVA. No volvían al cierre, el
+   chofer los veía grises «Entregado», no salían en «Sin entregar», el bot no le avisaba el día nuevo al cliente y el stock los
+   daba por salidos. Ahora, movido a HOY o más adelante, pierde el ✅ y el registro del cierre (preguntando antes donde hay una
+   persona). Movido a un día que YA PASÓ es corregir el registro: queda ✅. La ATC y la venta de tienda quedan afuera: el ✅ de
+   una ATC es el recojo o la devolución (`atcAlMarcarEntregado`) y la venta de tienda no tiene día. */
+function entregadoSeMueve(p, f, desde){
+  var d=(desde!=null) ? desde : (p && p.fecha);
+  f=String(f||'');
+  return !!(p && p.entregado && !esATC(p.oc) && !esVentaTienda(p) && /^\d{4}-\d{2}-\d{2}$/.test(f) && f!==String(d||'') && f>=todayStr());
+}
+function entregaRegistroBorrar(p){ ((p && p.productos)||[]).forEach(function(x){ if(x){ delete x.eF; delete x.eT; delete x.eQ; } }); }
+function entregadoDeshacer(p){ if(!p) return; p.entregado=false; entregaRegistroBorrar(p); }
+function entregadoMueveTxt(p, f){
+  var c=cierreEntDe(p);
+  return '✅ Este pedido figura ENTREGADO'+(c&&c.q?(' (lo confirmó '+c.q+')'):'')+'.\n\n'+
+         'Si lo pasás al '+fmtFecha(f)+' es porque no se entregó: se le saca el ✅ y vuelve a «sin entregar» '+
+         '(el chofer lo ve, entra al cierre de ese día y el bot le avisa el día nuevo al cliente, como en cualquier cambio).\n\n¿Seguir?';
 }
 /* Mover un pedido a otro día/turno, lo mismo desde 📅 Reprogramar y desde el cierre de entregas (13/10): número del día nuevo, la ATC
    que vive en su devolución la sigue, y con avisos confirmados va con `forzar`. Devuelve la promesa del guardado. */
 function reproAplicar(p, f, t, forzar, extra){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
+  if(entregadoSeMueve(p, f)) entregadoDeshacer(p);   // ✅ (16/10, §4lo) movido a otro día: no se entregó
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
   atcSeguirViaje(p, _enDev);
@@ -20656,7 +20702,7 @@ function choEntregado(id){
      `rechazoFirme` ya puso en STATE). La plata NO se reintenta así: ahí el otro pudo haber
      registrado ese mismo pago. */
   var marcar=function(q, intento){
-    q.entregado=quiere; atcAlMarcarEntregado(q);
+    q.entregado=quiere; atcAlMarcarEntregado(q); if(!quiere) entregaRegistroBorrar(q);   // (16/10, §4lo)
     return persistPedido(q).then(function(r){
       if(intento>0 || !(r && r.error==='conflicto')) return r;
       var s=findById(id); if(!s) return r;
@@ -22064,7 +22110,7 @@ function copiarBusca(){
 
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
    QR + tarjeta), cada uno con su monto. Se guardan como texto en el campo
@@ -29892,6 +29938,7 @@ function setEstado(id,val){
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
+  if(!p.entregado) entregaRegistroBorrar(p);   // ✅ (16/10, §4lo) destildado: sin el registro del cierre (su `eF` manda en el stock)
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   guardarDurable(p);
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
