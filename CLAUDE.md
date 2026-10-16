@@ -188,7 +188,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
     **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
   - 📚 **Los tres almacenes en UN Excel** (§4lp, 16/10, dueño: *«logística me está pidiendo usar esta planilla que ya trae los 3
-    almacenes»*; en la rama): el mismo reporte con un bloque por almacén (`105003 | PRODUCTOS TERMINADOS FAB.` … `TOTAL : | … | 523`) y
+    almacenes»*; PUBLICADO 16/10 11:10, `92d08ff`): el mismo reporte con un bloque por almacén (`105003 | PRODUCTOS TERMINADOS FAB.` … `TOTAL : | … | 523`) y
     arriba «Almacén Inicial / Final : IM». ⚠️ **Lo publicado hasta `6a55598` lo toma ENTERO como IM con los tres SUMADOS** (1.648 el 16/10).
     `existSecciones` parte los bloques (cierran con su «TOTAL :» del mismo almacén), `existLeer(filas, almForzado)` lee cada uno con el
     nombre del BLOQUE (manda sobre el encabezado) y `existLoteDe` arma la cola **`EXIST_COLA`**: la vista previa de cada almacén, uno
@@ -586,7 +586,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).
   Los 🌆 PM van tildados A PROPÓSITO (dueño, 06/10, *«que logística destilde lo que no se entregó. Habíamos quedado»*). Antes de tocar el
   cierre o el control del corte, leer §4hq.
-- **✅ Un pedido entregado que se mueve a otro día no se entregó** (§4lo, 16/10, dueño eligió la «F»; en la rama): `entregadoSeMueve(p, f,
+- **✅ Un pedido entregado que se mueve a otro día no se entregó** (§4lo, 16/10, dueño eligió la «F»; PUBLICADO 16/10 11:10, `92d08ff`): `entregadoSeMueve(p, f,
   desde)` = ✅, no ATC ni venta de tienda, fecha nueva distinta y **≥ hoy** → `entregadoDeshacer` (sin ✅ ni `eF/eT/eQ`). 📅 Reprogramar y
   ✏️ Editar PREGUNTAN antes (`entregadoMueveTxt`; Cancelar no toca/no guarda); `reproAplicar` (cierre, adelanto) lo aplica solo. A un día que
   ya pasó = corregir el registro: queda ✅. Destildar a mano (`toggleEntregado`, `quickEntregado`, `choEntregado`) y guardar un pedido no

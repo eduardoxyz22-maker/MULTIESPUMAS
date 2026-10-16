@@ -15014,7 +15014,7 @@ los arregla quien cargó el pedido.
 - Comentarios sin el nombre del modelo (`856fd7a`): en el `.gs`, la bitácora y `test_wa_bot` queda solo `IA_MODELO_DEF`, que es lo que la API
   usa. Solo comentarios: lo implementado anda igual.
 
-### §4lo — ✅ Un pedido entregado que se reprograma ya no queda ✅ + 🏭 editar ya no borra lo llegado (16/10, EN LA RAMA)
+### §4lo — ✅ Un pedido entregado que se reprograma ya no queda ✅ + 🏭 editar ya no borra lo llegado (16/10, PUBLICADO 11:10 de Bolivia, `92d08ff`)
 El dueño, después de la lista de mejoras: *«F podría ser»*. Son los dos errores que dejó anotados la auditoría del 06/10 (§4hq).
 - **El ✅ en la fecha nueva.** A las 16:30 el cierre propone tildados también los 🌆 PM (a propósito, dueño 06/10). Si uno no salía y
   después se reprogramaba —📅 Reprogramar, «No salió · reprogramar» del cierre o ✏️ Editar— seguía `entregado:true` en el día nuevo: no
@@ -15035,7 +15035,7 @@ El dueño, después de la lista de mejoras: *«F podría ser»*. Son los dos err
 - `tests/test_reprogramar_entregado.js` (26; **18 rojas contra `6a55598`**, lo publicado). Reloj clavado en el viernes 16/10 10:00.
 - Batería entera: 197 suites, 6.903 comprobaciones, 0 rojas. Solo la página: el `.gs` sigue `2026-10-15-a`.
 
-### §4lp — 📚 Los tres almacenes en un solo Excel (16/10, EN LA RAMA)
+### §4lp — 📚 Los tres almacenes en un solo Excel (16/10, PUBLICADO 11:10 de Bolivia, `92d08ff`, Pages OK 11:11)
 El dueño, con el archivo de logística (`Excel_16-10-2026_10_12_15.xlsx`): *«para cargar el stock y reposición logística me está pidiendo
 usar esta planilla que ya trae los 3 almacenes»*. Es el mismo reporte «EXISTENCIAS ALMACEN» del sistema de Moreno (pie «iv380_34»), con
 un bloque por almacén: una fila `105003 | PRODUCTOS TERMINADOS FAB.`, sus productos y `TOTAL : | PRODUCTOS TERMINADOS FAB. | 523`; después
