@@ -832,6 +832,65 @@ def enlaces_sin_resolver(base):
     print(f"   sin coordenadas, sin nombre y sin kgmid: {len(sin_nada)} (esos solo los arregla quien cargó el pedido)")
 
 
+# 🛏️ (16/10) LAS ALMOHADAS. El dueño: «ayer logística me reclamó que el panel decía 0 y el Excel 17». Cómo las escriben en los pedidos
+#    (código, nombre y medida tal cual, contados) y con qué clave quedaron en el stock. ⚠️ Registro PÚBLICO: solo productos y cuentas;
+#    nunca un cliente, un vendedor ni un número de pedido.
+def almohadas():
+    print("\n── 🛏️ las almohadas: cómo se escriben en los pedidos y cómo están en el stock (solo productos y cuentas) ──")
+    ped = _PEDIDOS
+    if not isinstance(ped, list):
+        print("   (no hay lista leída)")
+        return
+    es = re.compile(r"ALMOH|NASA|TRAVESS|CERVICAL|\bPILLOW\b(?!\s+(PEDIC|FLEX))", re.I)
+    no = re.compile(r"COLCHON|FORRO|PROTECT|FUNDA", re.I)
+    hoy = datetime.now(BO).date().isoformat()
+    grupos = {}
+    for p in ped:
+        if not isinstance(p, dict) or str(p.get("id") or "").startswith("__"):
+            continue
+        prods = p.get("productos")
+        if isinstance(prods, str):
+            try:
+                prods = json.loads(prods)
+            except Exception:
+                prods = []
+        for x in prods or []:
+            if not isinstance(x, dict):
+                continue
+            d = re.sub(r"\s+", " ", str(x.get("desc") or "")).strip().upper()
+            if not d or not es.search(d) or no.search(d):
+                continue
+            k = (str(x.get("codigo") or "").strip().upper() or "(sin código)", d, re.sub(r"\s+", "", str(x.get("medida") or "")).upper() or "(sin medida)")
+            g = grupos.setdefault(k, [0, 0, 0])
+            g[0] += 1
+            try:
+                g[1] += int(float(x.get("cant") or 0))
+            except Exception:
+                pass
+            if not p.get("entregado") and str(p.get("fecha") or "") >= hoy:
+                g[2] += 1
+    print(f"   renglones con almohadas en la planilla: {sum(g[0] for g in grupos.values())} · formas distintas de escribirlas: {len(grupos)}")
+    for (cod, d, m), g in sorted(grupos.items(), key=lambda kv: -kv[1][0])[:40]:
+        print(f"   · {cod:12} | {d[:44]:44} | {m:12} | {g[0]:3} renglones · {g[1]:3} u · {g[2]:2} por entregar")
+    fila = next((p for p in ped if isinstance(p, dict) and p.get("id") == "__stock__"), None)
+    try:
+        s = json.loads(str((fila or {}).get("observaciones") or ""))
+    except Exception:
+        s = None
+    if not isinstance(s, dict):
+        print("   (no pude abrir el stock)")
+        return
+    alms = [("PTF", s.get("c") or {})] + [(str(n)[:22], v) for n, v in (s.get("g") or {}).items()]
+    for nom, a in alms:
+        if not isinstance(a, dict):
+            continue
+        u = {k: v for k, v in (a.get("u") or {}).items() if es.search(str(k)) and not no.search(str(k))}
+        cods = {c: k for c, k in (a.get("cod") or {}).items() if es.search(str(k)) and not no.search(str(k))}
+        print(f"   stock {nom} (corte {a.get('f')} {a.get('hora') or ''}): " + (" · ".join(f"{k} = {v}" for k, v in sorted(u.items())) or "ninguna"))
+        if cods:
+            print("      sus códigos: " + " · ".join(f"{c} → {k}" for c, k in sorted(cods.items())))
+
+
 # 🤖 (15/10) EL BOT CON CLAUDE. El dueño: «después revisás cómo va el bot inteligente». Lo que contestaron los clientes en los
 #    últimos 7 días (`waRespuestas`, la hoja «Bot WhatsApp») y qué hizo Claude con cada mensaje (columna M). ⚠️ Registro PÚBLICO:
 #    solo cuentas, horas y categorías; nunca el número, el nombre, el mensaje ni la respuesta.
@@ -1088,6 +1147,8 @@ def main():
     en_dos_tramos(pagina or PANEL_URL)
     # 4b) 🛰️ (13/10) El GPS de hoy y las entregas marcadas, con la primera lectura buena.
     gps_del_dia()
+    # 4b2) 🛏️ (16/10) las almohadas: cómo se escriben y cómo están en el stock.
+    almohadas()
     # 4c) 🎧 (15/10) Las ATC: qué tienen y cuántas se completaron desde Trello.
     atc_del_panel()
     # 5) 📍 (§4ht) Dónde quedan los almacenes de salida, y cuántas entregas se pueden ubicar.
