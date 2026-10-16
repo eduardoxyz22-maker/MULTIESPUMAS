@@ -1163,6 +1163,50 @@ def atc_del_panel():
         print(f"   (no pude cruzar las fechas con Trello: {type(ex).__name__}: {str(ex)[:80]})")
 
 
+def stock_cifrado(base=None):
+    """🔐 (16/10, dueño: «revisá, analizá, verificá, simulá y corroborá stock y reposición… para la reunión con logística del jueves 22»).
+    Para simular con la MISMA cuenta del panel hace falta la planilla entera (pedidos + `__stock__` + el «Historial stock»), y este
+    registro es PÚBLICO: nada en claro. Si está `herramientas/clave_diag_publica.pem`, se arma ese paquete, se comprime y se guarda CIFRADO
+    en `stock-cifrado.txt`: AES-256 con una clave al azar, y esa clave con la llave pública (RSA-OAEP). Solo quien tiene la llave privada
+    (no está en el repo) lo puede abrir. El paso del workflow lo guarda en la rama de trabajo, nunca en main. Acá solo se imprimen cuentas."""
+    import subprocess, tempfile, base64, secrets, gzip
+    aqui = os.path.dirname(os.path.abspath(__file__))
+    pub = os.path.join(aqui, "clave_diag_publica.pem")
+    j = _LISTA
+    if not os.path.exists(pub) or not j:
+        return
+    hist = None
+    if base:
+        crudo = pedir("el «Historial stock» desde el 01/08 (para el paquete cifrado)", base, {"action": "histStockLeer", "desde": "2026-08-01"})
+        try:
+            hist = json.loads((crudo or b"{}").decode("utf-8", "replace"))
+        except Exception:
+            hist = None
+    paquete = {"leido": datetime.now(BO).isoformat(), "lista": j, "hist": hist}
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            clave = secrets.token_hex(32)
+            dat = os.path.join(d, "d.json.gz")
+            with gzip.open(dat, "wt", encoding="utf-8") as g:
+                g.write(json.dumps(paquete, ensure_ascii=False))
+            cla = os.path.join(d, "k.txt"); open(cla, "w").write(clave)
+            subprocess.run(["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-salt", "-in", dat, "-out", dat + ".enc", "-pass", "file:" + cla], check=True)
+            subprocess.run(["openssl", "pkeyutl", "-encrypt", "-pubin", "-inkey", pub, "-pkeyopt", "rsa_padding_mode:oaep",
+                            "-in", cla, "-out", cla + ".enc"], check=True)
+            k64 = base64.b64encode(open(cla + ".enc", "rb").read()).decode()
+            d64 = base64.b64encode(open(dat + ".enc", "rb").read()).decode()
+        with open("stock-cifrado.txt", "w") as f:
+            f.write("CIFRADO-CLAVE " + k64 + "\n")
+            for i in range(0, len(d64), 3000):
+                f.write("CIFRADO-DATOS " + d64[i:i + 3000] + "\n")
+            f.write("CIFRADO-FIN\n")
+        ped = j.get("pedidos") or []
+        print("\n── 🔐 la planilla para simular el stock, CIFRADA en stock-cifrado.txt (solo se abre con la llave privada, que no está en el repo) ──")
+        print(f"   filas: {len(ped)} · días del historial: {len((hist or {}).get('dias') or [])} · tamaño cifrado: {len(d64):,} letras".replace(",", "."))
+    except Exception as ex:
+        print("   (no se pudo cifrar: %s)" % type(ex).__name__)
+
+
 def main():
     pagina = url_de_la_pagina()
     if not PANEL_URL and not pagina:
@@ -1195,6 +1239,8 @@ def main():
     # 6) 🤖 (15/10) el bot con Claude y 📍 los enlaces que el panel no resuelve.
     bot_ia(pagina or PANEL_URL)
     enlaces_sin_resolver(pagina or PANEL_URL)
+    # 7) 🔐 (16/10) la planilla entera, cifrada, para simular el stock con la misma cuenta del panel.
+    stock_cifrado(pagina or PANEL_URL)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ on:
       - '.github/workflows/diagnostico-lectura.yml'
 
 permissions:
-  contents: read
+  contents: write     # (16/10) solo para guardar `stock-cifrado.txt` en una rama de trabajo (nunca en main): ver el último paso
 
 jobs:
   leer:
@@ -28,3 +28,17 @@ jobs:
         env:
           PANEL_URL: ${{ secrets.PANEL_URL }}
         run: python herramientas/diagnostico_lectura.py
+      # 🔐 (16/10) Si el script dejó la planilla CIFRADA (solo se lee con la llave privada, que no está en el repo), se guarda en la
+      # rama que lo corrió para poder bajarla. Nunca en main.
+      - name: Guardar lo cifrado (solo en una rama de trabajo)
+        if: github.ref_name != 'main'
+        run: |
+          [ -f stock-cifrado.txt ] || { echo "no hay nada cifrado"; exit 0; }
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add stock-cifrado.txt
+          git commit -m "Planilla cifrada para simular el stock (auto)" || exit 0
+          for i in 1 2 3 4; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then exit 0; fi
+            sleep $((i * 5)); git pull --rebase origin "${GITHUB_REF_NAME}" || { git rebase --abort || true; }
+          done
