@@ -786,6 +786,7 @@ def enlaces_sin_resolver(base):
         return
     # 1) el servidor, como hoy (lo que abre queda en su hoja «Geo» y el panel lo usa)
     resuelve = {}
+    ver = None
     unicos = list(dict.fromkeys(pend))[:80]
     for i in range(0, len(unicos), 20):
         lote = unicos[i:i + 20]
@@ -794,10 +795,12 @@ def enlaces_sin_resolver(base):
             j = json.loads((crudo or b"{}").decode("utf-8", "replace"))
         except Exception:
             continue
+        ver = ver or j.get("version")
         for g in j.get("geo") or []:
             if isinstance(g, dict) and g.get("lat") is not None:
                 resuelve[g.get("link")] = "aprox" if g.get("aprox") else "exacto"
-    print("   ── lo que resuelve el servidor HOY, por tipo ──")
+    # Desde el .gs 2026-10-15-a el servidor lee Waze, el Plus Code sin codificar y, sin coordenadas, busca el texto de q=.
+    print(f"   ── lo que resuelve el servidor HOY ({ver!r}), por tipo ──")
     for t, L in sorted(tipos.items(), key=lambda x: -len(x[1])):
         L2 = [u for u in dict.fromkeys(L) if u in unicos]
         ok = [u for u in L2 if u in resuelve]

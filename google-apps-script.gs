@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-14-c';   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-15-a';   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-14-c';
+  var ESTA_VERSION = '2026-10-15-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -1511,9 +1511,22 @@ function resolveOne(url) {
   }
   // Nada de coordenadas en ningun lado. Si el enlace al menos dice QUE lugar es
   // (/maps/place/DPM+EXPRESS+CARGO,+Av.+Tres+Pasos…), lo buscamos por nombre.
-  var nom = nombreDeLugar(finalUrl) || nombreDeLugar(url);
+  /* 📍 (2026-10-15-a, §4ln) también el texto de `q=`: los enlaces cortos de un lugar con nombre terminan en «maps?q=<nombre y
+     dirección>&ftid=…», y una búsqueda de Google compartida desde el celular («google.com/search?…&q=DPM+EXPRESS+CARGO») trae el
+     nombre ahí. Aproximado (el lugar, no la puerta) y solo dentro de Santa Cruz, como siempre. */
+  var nom = nombreDeLugar(finalUrl) || nombreDeLugar(url) || textoDeQ_(finalUrl) || textoDeQ_(url);
   if (nom) return geocodeTexto(nom);
   return null;
+}
+/** El texto de `q=` de un enlace de Google, si es un nombre o una dirección (no coordenadas ni un Plus Code). */
+function textoDeQ_(u) {
+  var m = String(u || '').match(/[?&]q=([^&#]+)/);
+  if (!m) return '';
+  var t = m[1];
+  try { t = decodeURIComponent(t.replace(/\+/g, ' ')); } catch (e) { t = t.replace(/\+/g, ' '); }
+  t = t.replace(/\s+/g, ' ').trim();
+  if (!t || /^https?:/i.test(t) || /^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(t) || plusCodeDeTexto(t) || plusCodeDeTexto(m[1])) return '';
+  return t;
 }
 
 function okCoord(a, b) {
@@ -1593,9 +1606,12 @@ function extractCoords(u) {
     var ln = (+m[5]) + (+m[6]) / 60 + (+m[7]) / 3600; if (/[WOwo]/.test(m[8])) ln = -ln;
     return okCoord(la, ln);
   }
-  var pc = plusCodeDeTexto(d);
+  /* 📍 (2026-10-15-a, §4ln) el Plus Code también tal cual en el enlace («maps?q=8R6C+72P,+Santa+Cruz…»: el «+» va sin codificar y al
+     decodificar se volvía espacio) y la coma codificada de Waze («ll=-17.867825%2C-63.155401»). Lo mismo que `coordsDeLink` de la página. */
+  var pc = plusCodeDeTexto(d) || plusCodeDeTexto(u);
   if (pc) { var gp = olcCoords(pc); if (gp) return gp; }
   if ((m = u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
+  if ((m = u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)/i))) return okCoord(m[1], m[2]);
   if ((m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
   if ((m = u.match(/[\/=](-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/))) return okCoord(m[1], m[2]);
   return null;
@@ -3180,7 +3196,7 @@ function waRespAtendida_(body) {
 /* ============================================================================
  * 🧠 (2026-10-14-b) CLAUDE LE CONTESTA AL CLIENTE
  *
- * El dueño (14/10), con USD 100 de crédito en la API de Claude: «Entiende y contesta», con Claude Opus 5.5. Hasta acá, a todo lo
+ * El dueño (14/10), con USD 100 de crédito en la API de Claude: «Entiende y contesta», con Claude. Hasta acá, a todo lo
  * que un cliente le escribía al bot le llegaba lo mismo: «este número no lee, escribile a tu vendedora». Ahora:
  *   · El webhook anota el mensaje como siempre (fila «💬 Respondió») con «⏳» en la columna M y deja un disparador de una vez
  *     (`iaDespierta`, ~30 s). No contesta en el momento: el cliente suele mandar dos o tres mensajes seguidos, y Meta no puede
@@ -3197,7 +3213,7 @@ function waRespAtendida_(body) {
  *     planilla y deriva a la vendedora con su WhatsApp.
  *   · Si algo sale mal (sin crédito, la clave no sirve, Claude no contesta, se pasó un tope) sale la respuesta automática de siempre.
  *   · La llamada: POST /v1/messages, sin librería (Apps Script no tiene la de Anthropic), con salida en JSON fijo
- *     (`output_config.format`), esfuerzo `low` (es una respuesta corta) y `fallbacks: 'default'` (si Claude Opus 5.5 no quiere
+ *     (`output_config.format`), esfuerzo `low` (es una respuesta corta) y `fallbacks: 'default'` (si el modelo no quiere
  *     contestar, la API prueba sola con el modelo que recomienda Anthropic).
  * Propiedades del script (NUNCA en el código ni en el chat: el repo es público):
  *      ANTHROPIC_API_KEY = la clave de la consola de Claude
@@ -3233,7 +3249,7 @@ var IA_HIST_MS = 24 * 3600000;       // lo hablado que Claude ve
 var IA_CORRIDA_MS = 4 * 60000;
 var IA_GRUPOS_MAX = 6;               // números por vuelta (los demás, a la vuelta siguiente: así no esperan tomados)
 var IA_HECHO_TOPE = 250;             // mensajes ya contestados que se recuerdan (IA_HECHO, 48 h): una propiedad aguanta 9 KB
-var IA_PRECIO_IN = 4, IA_PRECIO_OUT = 20;   // USD por millón de tokens (Claude Opus 5.5): solo para estimar el gasto
+var IA_PRECIO_IN = 4, IA_PRECIO_OUT = 20;   // USD por millón de tokens (el modelo de `IA_MODELO_DEF`): solo para estimar el gasto
 var IA_COL = 13;                     // M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
 var IA_CATS = ['hora', 'saldo', 'cambio', 'no_esta', 'direccion', 'confirma', 'reclamo', 'otro'];
 var IA_RESUELVE = ['hora', 'saldo', 'confirma'];   // si no es urgente, queda atendido por Claude

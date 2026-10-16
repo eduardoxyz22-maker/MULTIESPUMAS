@@ -418,6 +418,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
   📍 **Waze y el Plus Code en `maps?q=`** (§4ln, 15/10): `coordsDeLink` lee `ll=…%2C…` (Waze) y el Plus Code con el «+» sin codificar
   («maps?q=8R6C+72P,+Santa+Cruz»). Las búsquedas de Google (`google.com/search?…kgmid=`) no traen ubicación: no se inventa. `test_ubicar` §5.
+  **Servidor `2026-10-15-a`** (§4ln-b, en la rama; lo implementa el dueño): lo mismo en `extractCoords` y, sin coordenadas, el texto de `q=`
+  (`textoDeQ_`: nombre y dirección de un lugar con nombre o de una búsqueda de Google) → `geocodeTexto`, aproximado. Medido: de 21 enlaces que
+  no se leían, 9 de 9 con texto se ubican. ⚠️ El `staticmap?center=` de la página de Maps es el centro de QUIEN PIDE (~7.700 km): no usarlo.
 - **⏳ Primera carga con reintentos y cartel** (§4di): al abrir, el panel muestra la copia
   guardada en el dispositivo (`loadMirror`; en una compu nueva, nada = todo en 0) y pide la
   planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo

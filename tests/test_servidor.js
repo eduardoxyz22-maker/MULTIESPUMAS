@@ -1696,8 +1696,8 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-14-c',
-      vG==='2026-10-14-c' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-15-a',
+      vG==='2026-10-15-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
@@ -1783,6 +1783,36 @@ console.log('\n── 23. 📚 La hoja «Historial stock»: una fila por día, j
     const v = cargar([HDR30], {});
     chk('⚠️ i. …y sin la hoja, que se arma sola (no frena)', v.ctx.probarAntesDeImplementar().lineas.some(l => /✅ La hoja «Historial stock» todavía no existe/.test(l)));
   } else chk('i. está probarAntesDeImplementar', false);
+}
+
+// ══ 24. 📍 LOS ENLACES QUE PEGAN LAS VENDEDORAS (2026-10-15-a, §4ln) ═══════════════════════════
+/* El dueño: «son las vendedoras que publican la ubicación y no resolvés el enlace, eso quiero resolver». Waze trae la coma
+   codificada, Maps trae el Plus Code con el «+» sin codificar, y un lugar con nombre termina en «maps?q=<nombre y dirección>&ftid=…»
+   (o una búsqueda de Google con «&q=NOMBRE»): sin coordenadas, pero con qué buscar. Una búsqueda SOLO con kgmid no se inventa. */
+console.log('\n── 24. 📍 enlaces de Waze, Plus Code y lugares con nombre (resolveOne) ──');
+{
+  const a = cargar([HDR], {});
+  const pedidas = [], buscadas = [];
+  a.ctx.UrlFetchApp = { fetch: (u, o) => {
+    pedidas.push(u);
+    if (/maps\.app\.goo\.gl\/conNombre/.test(u) && o && o.followRedirects === false)
+      return { getResponseCode: () => 302, getAllHeaders: () => ({ Location:'https://www.google.com/maps?q=DPM+EXPRESS+CARGO,+Av.+Tres+Pasos+al+Frente&ftid=0x93f1:0xdb68' }), getContentText: () => '' };
+    return { getResponseCode: () => 200, getAllHeaders: () => ({}), getContentText: () => '<html>nada</html>' };
+  } };
+  a.ctx.Maps = { newGeocoder: () => { const g = { setRegion: () => g, setBounds: () => g,
+    geocode: (t) => { buscadas.push(t); return { status:'OK', results:[{ geometry:{ location:{ lat:-17.75, lng:-63.17 } } }] }; } }; return g; } };
+  const r = (u) => { const c = a.ctx.resolveOne(u); return c ? (+c.lat).toFixed(4) + ',' + (+c.lng).toFixed(4) + (c.aprox ? ' aprox' : '') : null; };
+  const n0 = pedidas.length;
+  chk('⚠️ a. Waze «ll=-17.86782500%2C-63.15540100»: exacto y sin salir a internet', r('https://ul.waze.com/ul?ll=-17.86782500%2C-63.15540100&navigate=yes') === '-17.8678,-63.1554' && pedidas.length === n0);
+  chk('⚠️ b. «maps?q=8R6C+72P,+Santa+Cruz…&ftid=…»: el Plus Code, exacto y sin salir a internet', r('https://www.google.com/maps?q=8R6C+72P,+Santa+Cruz+de+la+Sierra&ftid=0x93f1e7007b2e3267:0xdb68a5879b7e10f1') === '-17.6893,-63.1799' && pedidas.length === n0);
+  chk('⚠️ c. un enlace corto a un lugar con nombre («?q=<nombre y dirección>&ftid=…»): se busca ese texto, aproximado',
+    r('https://maps.app.goo.gl/conNombre') === '-17.7500,-63.1700 aprox' && /DPM EXPRESS CARGO, Av\. Tres Pasos al Frente/.test(buscadas.join('|')), buscadas.join(' | '));
+  chk('⚠️ d. una búsqueda de Google compartida con el nombre («&q=DPM+EXPRESS+CARGO»): se busca el nombre, aproximado',
+    r('https://www.google.com/search?client=ms-android-xiaomi&hs=KwOB&kgmid=/g/11gggbmch5&q=DPM+EXPRESS+CARGO&shem=epsd1') === '-17.7500,-63.1700 aprox' && buscadas.indexOf('DPM EXPRESS CARGO, Santa Cruz de la Sierra, Bolivia') >= 0, buscadas.join(' | '));
+  const b0 = buscadas.length;
+  chk('e. una búsqueda SOLO con kgmid (sin nombre ni coordenadas): no se inventa nada', r('https://www.google.com/search?client=ms-android&hs=YXoq&kgmid=/g/11y42vszyr&shem=epsd1') === null && buscadas.length === b0);
+  chk('f. lo de siempre sigue igual: «maps?q=-17.78,-63.18» exacto', r('https://www.google.com/maps?q=-17.78,-63.18') === '-17.7800,-63.1800');
+  chk('g. textoDeQ_: ni coordenadas ni un Plus Code cuentan como «nombre»', typeof a.ctx.textoDeQ_==='function' && a.ctx.textoDeQ_('https://www.google.com/maps?q=-17.78,-63.18') === '' && a.ctx.textoDeQ_('https://www.google.com/maps?q=8R6C+72P,+Santa+Cruz') === '');
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
