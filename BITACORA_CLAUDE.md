@@ -14985,7 +14985,7 @@ Mirando los enlaces de la lista, dos tipos traen la ubicación EXACTA y `coordsD
 - **PUBLICADO 15/10 18:30 de Bolivia, `19ee2bc`, Pages OK** (junto con §4ll y §4lm; batería entera 194 suites en verde antes de publicar).
 - **El dueño aclaró** (15/10): *«son las vendedoras que publican la ubicación y no resolvés el enlace, eso quiero resolver»* (no el bot).
 
-### §4ln-b — 📍 El servidor `2026-10-15-a`: los lugares con nombre por el texto de `q=` (15/10, EN LA RAMA; lo implementa el dueño)
+### §4ln-b — 📍 El servidor `2026-10-15-a`: los lugares con nombre por el texto de `q=` (15/10; IMPLEMENTADO 16/10 por el dueño, página PUBLICADA 16/10, `6a55598`)
 **Lo que midió el diagnóstico** (`herramientas/diagnostico_lectura.py` → `enlaces_sin_resolver`, corridas 34-36 en la rama, solo cuentas):
 505 pedidos con enlace (entregas desde el 16/08): la página lee sola 484. **No: 21** = 16 enlaces cortos de Maps (el servidor de hoy abre 8,
 por la dirección) + 3 «maps?q=<nombre y dirección>&ftid=…» (0) + 2 búsquedas de Google con el nombre en `q=` (0). Mandando el **texto de
@@ -15002,3 +15002,14 @@ los arregla quien cargó el pedido.
   de hoy, 9 tienen un pin que el panel lee y 5 no tienen enlace: el GPS «se paró» en 3. Sin pin no puede nombrar el pedido.
 - **El bot con Claude** (7 días): 28 mensajes de clientes; desde que Claude contesta (14/10 a la noche), contestó 6, ninguno esperando ni
   con error, 1 urgente avisado a logística (qué querían: confirma 3, hora 2, no_esta 1).
+- **16/10: el dueño lo implementó** («implementado»). El respaldo de Kommo de las 07:45 todavía decía 14-c; el diagnóstico de las 09:44
+  (corrida 38, en la rama) ya contesta **`2026-10-15-a`**. Los 21 enlaces que la página no lee: el servidor ubica **18** (antes 8): enlaces
+  cortos 13 de 16 (8 aproximados), «maps?q=…&ftid» 3 de 3, búsquedas de Google 2 de 2 (aproximadas). Quedan 3 sin coordenadas, sin nombre
+  y sin `kgmid`: los arregla quien cargó el pedido. Lo que se ubica queda en la hoja «Geo» del servidor y el panel lo usa solo.
+- En esa misma corrida, dos consultas `geocode` (la de los almacenes y la de las direcciones escritas) dieron **404 de Google en 33-36 s**;
+  las cuatro siguientes, 200. Esas dos van por `geocodeTexto` directo (texto, no enlace), un camino que la 15-a no tocó: es el 404 de a ratos
+  de §4fx. Si se repite en las corridas siguientes, mirarlo.
+- **Página publicada** (`6a55598`): `SCRIPT_VERSION_ESPERADA='2026-10-15-a'` + el `.gs`, `test_servidor`, `test_wa_bot`, `CLAUDE.md` y el
+  diagnóstico. Volver atrás de la 15-a = ✏️ a la versión anotada Y pegar la 14-c (enlace fijo a `19ee2bc…`, 4.342 líneas).
+- Comentarios sin el nombre del modelo (`856fd7a`): en el `.gs`, la bitácora y `test_wa_bot` queda solo `IA_MODELO_DEF`, que es lo que la API
+  usa. Solo comentarios: lo implementado anda igual.
