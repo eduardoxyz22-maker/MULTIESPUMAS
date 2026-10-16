@@ -15094,3 +15094,6 @@ El dueño: *«ayer logística me reclamó que el panel decía 0 saldos y el Exce
   `PRY_NO_UNIDAD` suma `TRAVESSEIROS?` y `NASA`: sin eso la «Proyección del mes» contaba «NASA ALTO FREEZE DUOFLEX» y «TRAVESSEIRO…»
   como COLCHONES por descarte (también escritas sin código, ya en lo publicado). En el Excel las cuatro NASA son almohadas; ningún
   colchón se llama NASA. `tests/test_almohadas_nasa.js` (20; 7 rojas contra `92d08ff`).
+- Batería entera con §4lq (terminó después de publicar): 200 suites, 6.922 bien, 2 mal. `test_guardado` 1 roja con la máquina cargada
+  y 18/18 sola. `test_mispedidos` «tres pedidos de refresco a la vez NO hacen tres consultas» (cuenta 2) falla a veces, y **falla igual
+  contra `92d08ff`** (3 de 4 corridas): una lectura de más cuando la máquina está lenta, no viene de este cambio. Queda anotado; no se tocó.
