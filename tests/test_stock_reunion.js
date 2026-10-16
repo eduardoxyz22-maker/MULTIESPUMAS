@@ -24,6 +24,8 @@
    RN-U3  Un «Ya pedí» vencido sin que ningún Excel lo muestre se DICE en la fila («reclamá o volvé a pedir»): no cambia la cuenta.
    RN-U17 Los títulos de 7 / 15 días / el mes dicen lo que cubre el número (15 incluye 7; el mes va además de 15).
    RN-U19 «Cómo se calcula la reposición» cierra con los números de la cuenta (lo vendido dentro del horizonte).
+   RN-U7  (decisión del dueño, 16/10: «La RPT cuenta como venta») Las ALMOHADAS que van a las tiendas por RPT arman el ritmo y su venta de
+          tienda no se suma otra vez; un colchón por RPT sigue sin ser venta (§4dk).
 
    Reloj CLAVADO: viernes 16/10/2026, 12:00 de Bolivia.
    Se corre:  node tests/test_stock_reunion.js          (desde la raíz del repo)
@@ -292,6 +294,29 @@ function PREPARAR(){
   chk('RN-U17a. la copia del mes dice que va ADEMÁS de lo de 15 días (no «todo el mes»)', /además de lo de 15 días/i.test(u17.copia||'') && !/todo el mes/i.test(u17.copia||''), u17);
   chk('RN-U17b. las columnas de «Qué producir» dicen que 15 días incluye 7 y que el mes va además', u17.encab===true, u17);
   chk('RN-U19. la explicación usa lo vendido DENTRO del horizonte (las 4 de diciembre aparte)', u17.comp===4 && u17.compH===0 && /0 unidades ya vendidas que se entregan hasta el/.test(u17.expl||'') && /4 más vendidas para después/.test(u17.expl||''), u17);
+
+  /* ── U7. Almohadas: la RPT es la venta (dueño, 16/10) ── */
+  const u7 = await ev(async () => {
+    var KA=_k('CD1403','ALMOHADA','50x70'), KC=_k('CS1014','COLCHON CONFORT PLUS','180x190');
+    var ps=[];
+    // 4 reposiciones a tiendas en los últimos 15 días: 6 almohadas y 1 colchón cada una
+    [-2,-5,-8,-11].forEach(function(d, i){ var f=stockSumarDias('2026-10-16', d);
+      ps.push(_ped('p-rpt'+i, f, [{ codigo:'CD1403', desc:'ALMOHADA', medida:'50x70', cant:6, precio:0 }, { codigo:'CS1014', desc:'COLCHON CONFORT PLUS', medida:'180x190', cant:1, precio:0 }],
+        { oc:'RPT 10-0'+(10+i), cliente:'Charcas', entregado:true, ts:_ts(f,'09:00:00') })); });
+    // 3 ventas de tienda de almohadas (2 c/u): ya se contaron cuando se mandaron
+    [-3,-6,-9].forEach(function(d, i){ var f=stockSumarDias('2026-10-16', d);
+      ps.push(_ped('p-vt'+i, '', [{ codigo:'CD1403', desc:'ALMOHADA', medida:'50x70', cant:2, precio:100 }], { oc:'OC 10-2'+i, direccion:DIR_TIENDA+' · Charcas', zona:ZONA_TIENDA, entregado:true, ts:_ts(f,'10:00:00') })); });
+    await _cargar(ps, _stock(function(st){ st.c.u[KA]=10; st.c.u[KC]=5; }));
+    var d=stockData(), a=d.lista.filter(function(o){ return o.k===KA; })[0], c=d.lista.filter(function(o){ return o.k===KC; })[0];
+    var vt=ps.filter(function(p){ return /^p-vt/.test(p.id); }).map(function(p){ return esVentaTienda(findById(p.id)); });
+    return { almRot:a.vendidosRotacion, almTienda:a.vendidosTiendaAlm, almRota:a.rotacion, colRot:c.vendidosRotacion, colRpt:c.vendidosRpt, vt:vt,
+             idx:(ventasPanelIndex()[KA]||{})['2026-10']||0, idxC:(ventasPanelIndex()[KC]||{})['2026-10']||0 };
+  });
+  chk('RN-U7a. (control) las 3 ventas de tienda se leen como venta de tienda', (u7.vt||[]).every(Boolean), u7);
+  chk('RN-U7b. las almohadas que van a las tiendas por RPT arman el ritmo (24 en 4 entregas)', u7.almRot===24 && u7.almRota!=='baja', u7);
+  chk('RN-U7c. …y su venta de tienda NO se suma otra vez', u7.almTienda===6 && u7.almRot===24, u7);
+  chk('RN-U7d. un COLCHÓN que va por RPT sigue sin ser venta (§4dk)', u7.colRot===0 && u7.colRpt===4, u7);
+  chk('RN-U7e. el índice del mes cuenta igual: 24 almohadas en octubre, 0 colchones', u7.idx===24 && u7.idxC===0, u7);
 
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();

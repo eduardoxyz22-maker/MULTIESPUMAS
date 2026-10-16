@@ -24669,6 +24669,19 @@ function stockPuntual(p){
   if(stockEsMulticenter(p) || stockEsConsignacion(p)) return true;   // las MISMAS definiciones que la excepción (arriba)
   return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(normNombre(p.cliente||''));
 }
+/* 🛏️ (16/10, §4lr U7, dueño: «La RPT cuenta como venta») LAS ALMOHADAS: lo que se manda a las tiendas por RPT ES la venta. En sep-oct
+   las tiendas recibieron 115 almohadas y cargaron 38 ventas de tienda: las regalan o las venden sin cargarlas. Para las almohadas la RPT
+   arma el ritmo (15 días, 30 días y el índice del mes) y la venta de tienda de almohadas NO (ya se contó cuando se la mandaron: si no,
+   iría dos veces). Para todo lo demás sigue la regla de §4dk: la RPT cambia el colchón de lugar, no lo vende. ⚠️ Toda cuenta de demanda
+   pasa por `stockEsDemanda(p, k)`, renglón por renglón; `stockPedidoUnico(p)` sigue siendo la regla del PEDIDO. */
+function stockEsAlmohadaK(k){ return /^(ALMOHADAS?|ALM|TRAVESSEIROS?|NASA)\b/.test(String(k||'').split('|')[0]); }
+function stockEsDemanda(p, k){
+  if(stockEsAlmohadaK(k)){
+    if(esRPT(p&&p.oc)) return true;             // la almohada que va a la tienda es la venta…
+    if(esVentaTienda(p)) return false;          // …y la que la tienda vende ya se contó cuando se la mandaron
+  }
+  return !stockPedidoUnico(p);
+}
 function stockPedidoUnico(p){
   if(esRPT(p&&p.oc)) return true;               // 1. una reposición de tienda nunca es venta
   if(stockEduardoMulticenter(p)) return false;  // 2. Eduardo → Multicenter: demanda (dueño, 28/09)
@@ -24719,7 +24732,7 @@ function stockData(extra){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compIds:[], compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, vendidosRptDem:0, vendidosTiendaAlm:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compIds:[], compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
       enSale:0, salePor:{}, salSale:{}, confSale:{},        // (26/09) los depósitos de salida (Banzer), aparte
@@ -24751,8 +24764,10 @@ function stockData(extra){
       if(fs>=desde && fs<=hoy){
         o.vendidos+=c;
         var ek=stockEntregaClave(p, fs);          // 🏬 (29/09) los pedidos de Multicenter del mismo día son UNA entrega
-        if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
-        else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
+        var dem=stockEsDemanda(p, o.k);           // 🛏️ (16/10, §4lr U7) renglón por renglón: las almohadas de la RPT son demanda
+        if(!dem && stockEsAlmohadaK(o.k) && esVentaTienda(p)) o.vendidosTiendaAlm+=c;   // ya contada en su RPT
+        else if(!dem){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
+        else {o.vendidosRotacion+=c; if(esRPT(p.oc)) o.vendidosRptDem+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
           if(stockEduardoMulticenter(p)) o.vendidosEduMc+=c;   // 🏬 (28/09) cuánto de eso es Eduardo → Multicenter
           if(!o.ventasRotacion[ek]){o.ventasRotacion[ek]=1;o.nVentasRotacion++;}}
 
@@ -24765,7 +24780,7 @@ function stockData(extra){
          viene se vendió este mes. El sistema de facturación lo cuenta así, y el plan del
          mes tiene que cuadrar con él. La rotación de 15 días sigue por fecha de salida. */
       var fv=contaFecha(p)||fs;
-      if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
+      if(fv>=desde30 && fv<=hoy && stockEsDemanda(p, o.k)){
         /* 🏬 (30/09, decisión del dueño: «cuando se entrega es la fecha que yo coloco de entrega») Los pedidos de Multicenter del
            mismo día se juntan por la FECHA DE ENTREGA también acá, como en los 15 días (R4-3): con la de venta, los mismos pedidos
            daban 1 entrega en la tabla y 3-4 en el plan del mes. La ventana se sigue midiendo por fecha de venta (§4dv). */
@@ -26671,12 +26686,13 @@ function ventasPanelIndex(){
        la misma excepción que el ritmo de 15 y 30 días). Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
        con una venta única de 40 de Eduardo en agosto, «producir en octubre» subía de 9 a 24
        por las estimaciones de 60 d / 90 d / tendencia, con el mismo ritmo de 30 días. */
-    if(!stockCuenta(p) || stockPedidoUnico(p)) return;
+    if(!stockCuenta(p)) return;
     var m=String(contaFecha(p)||fechaSalida(p)||'').slice(0,7); if(!m || m<desde) return;   // por fecha de venta (§4dv)
     (p.productos||[]).forEach(function(x){
       if(esProdDeTienda(x)) return;
       var c=Number(x.cant)||0; if(!(c>0)) return;
       var k=stockClave(x); if(!k||k==='|') return;
+      if(!stockEsDemanda(p, k)) return;          // 🛏️ (16/10, §4lr U7) la misma regla que el ritmo, renglón por renglón
       var s=idx[k]=idx[k]||{}; s[m]=(s[m]||0)+c;
     });
   });
@@ -26816,7 +26832,7 @@ function renderProducir(d){
       '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirGrafToggle()">'+(visPref('qp', true)?'📊 Ocultar gráfico':'📊 Ver gráfico')+'</button>'+   // §4ik
       '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
     '</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT). Productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT), <b>salvo las almohadas</b>: lo que se manda a las tiendas cuenta como venta y su venta de tienda no (dueño, 16/10). Productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
       'Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni cliente: ahí están <b>todas</b> las ventas. '+
       '<b>Hay</b> suma lo de acá, lo de los otros almacenes y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
       '<b>'+esc(MS.nombre)+'</b> va <b>además</b> de lo de 15 días (lo que hay que tener hasta fin de '+esc(MS.nombre)+' es 15 días + '+esc(MS.nombre)+') y es un <b>rango</b>: lo que dan los últimos 30 días, el promedio de los 2 y de los 3 últimos meses CERRADOS (este mes todavía no entra), el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
@@ -26900,6 +26916,9 @@ function stockTiendas(MS){
       var c=Number(x.cant)||0; if(!(c>0)) return;
       var k=stockClave(x); if(!k||k==='|') return;
       var r=fila(suc,k);
+      /* 🛏️ (16/10, §4lr U7) Almohadas: lo que la tienda recibe es lo que vende (dueño: «la RPT cuenta como venta»); su venta de tienda
+         no se suma otra vez. Sin esto, la pantalla decía que en las tiendas «sobraban» ~55 almohadas 50x70. */
+      if(stockEsAlmohadaK(k)){ if(rpt){ r.r+=c; r.v+=c; r.nv++; T[suc].r+=c; T[suc].v+=c; } return; }
       if(rpt){ r.r+=c; T[suc].r+=c; } else { r.v+=c; r.nv++; T[suc].v+=c; }
     });
   });
@@ -26995,7 +27014,7 @@ function copiarProducir(k, h){
   t+='\nTotal: '+tot+(tot===1?' unidad':' unidades')+' · por medida: '+Object.keys(porMed).sort().map(function(m){ return m+' '+porMed[m]; }).join(' · ');
   /* (28/09, 2ª revisión) Decía «cuenta con lo vendido en los últimos 30 días, sin pedidos puntuales»: el número es lo
      PROBABLE entre cinco estimaciones (§4du), y desde §4gm cuenta a Eduardo a Multicenter. */
-  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Va además de lo de '+PRODUCIR_QUINCENA+' días. Es lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados, el mismo mes del año pasado y la tendencia: ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda.';
+  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Va además de lo de '+PRODUCIR_QUINCENA+' días. Es lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados, el mismo mes del año pasado y la tendencia: ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda (salvo las almohadas: lo que va a las tiendas cuenta como venta).';
   else t+='\nCubre lo vendido sin entregar y lo que tarda la fábrica + margen + '+(col==='sem'?'la semana':(PRODUCIR_QUINCENA+' días'))+' de venta, menos lo que hay acá, en Moreno y en camino.';
   copyText(t);
   toast('Copiado: producir para '+etq+' ✓','ok');
@@ -34476,12 +34495,13 @@ function stockRankingDatos(hoy){
   var S=[], idx={};
   for(var i=RANK_SEMANAS-1;i>=0;i--){ var hasta=stockSumarDias(hoy,-7*i), desde=stockSumarDias(hasta,-6); S.push({ desde:desde, hasta:hasta, u:{} }); }
   STATE.forEach(function(p){
-    if(!stockCuenta(p) || stockPedidoUnico(p)) return;
+    if(!stockCuenta(p)) return;
     var f=fechaSalida(p); if(!f || f>hoy || f<S[0].desde) return;
     var w=null; for(var j=0;j<S.length;j++) if(f>=S[j].desde && f<=S[j].hasta){ w=S[j]; break; } if(!w) return;
     (p.productos||[]).forEach(function(x){
       if(esProdDeTienda(x)) return;
       var c=Number(x.cant)||0, k=stockClave(x); if(!(c>0) || !k || k==='|') return;
+      if(!stockEsDemanda(p, k)) return;          // 🛏️ (16/10, §4lr U7) las reglas de la rotación
       w.u[k]=(w.u[k]||0)+c; idx[k]=1;
     });
   });
