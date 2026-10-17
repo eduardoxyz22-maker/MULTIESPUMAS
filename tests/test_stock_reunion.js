@@ -24,6 +24,8 @@
    RN-U3  Un «Ya pedí» vencido sin que ningún Excel lo muestre se DICE en la fila («reclamá o volvé a pedir»): no cambia la cuenta.
    RN-U17 Los títulos de 7 / 15 días / el mes dicen lo que cubre el número (15 incluye 7; el mes va además de 15).
    RN-U19 «Cómo se calcula la reposición» cierra con los números de la cuenta (lo vendido dentro del horizonte).
+   AP1-13 (decisión del dueño, 17/10: «Sí, que se acuerde solo») «En producción» automático: el panel anota lo que pide el día del Excel,
+          lo cuenta desde el día siguiente, lo cierra con la entrada neta del lote (no con un traspaso), avisa si no aparece y la celda no crece.
    RN-U7  (decisión del dueño, 16/10: «La RPT cuenta como venta») Las ALMOHADAS que van a las tiendas por RPT arman el ritmo y su venta de
           tienda no se suma otra vez; un colchón por RPT sigue sin ser venta (§4dk).
 
@@ -317,6 +319,80 @@ function PREPARAR(){
   chk('RN-U7c. …y su venta de tienda NO se suma otra vez', u7.almTienda===6 && u7.almRot===24, u7);
   chk('RN-U7d. un COLCHÓN que va por RPT sigue sin ser venta (§4dk)', u7.colRot===0 && u7.colRpt===4, u7);
   chk('RN-U7e. el índice del mes cuenta igual: 24 almohadas en octubre, 0 colchones', u7.idx===24 && u7.idxC===0, u7);
+
+  /* ── 🏭 «En producción» automático (dueño, 17/10: «Sí, que se acuerde solo») ── */
+  const ap1 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    // 5 vendidos para la semana que viene y nada en ningún almacén: el panel pide fabricar
+    var p=_ped('p-ap', '2026-10-23', [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:5, precio:1000 }]);
+    await _cargar([p], _stock(function(st){ st.c.u[K]=0; st.g[_IM].u[K]=0; }));
+    var o0=_fila(K), antes=o0.fabricar;
+    var anot=stockAutoAnotar(todayStr());
+    var o1=_fila(K), e=stockAutoDe(K, todayStr());
+    var div=document.createElement('div'); div.innerHTML=stockAutoHtml(o1);
+    return { antes:antes, anot:anot.length, u:e&&e.u, fabHoy:o1.fabricar, camHoy:o1.enCamino, txt:div.innerText, ap:JSON.stringify(STOCK.ap).length };
+  });
+  chk('AP1. (control) sin nada en los almacenes el panel pide fabricar 5', ap1.antes===5, ap1);
+  chk('AP2. al terminar el Excel del día el panel ANOTA lo que pide (5) — y ese día no cuenta: «Pedir 7 días» sigue diciendo 5', ap1.u===5 && ap1.fabHoy===5 && ap1.camHoy===0, ap1);
+  chk('AP3. la fila lo dice: «📌 Hoy se piden 5 a la fábrica»', /Hoy se piden/.test(ap1.txt||''), ap1);
+
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00-04:00'));   // sábado: al día siguiente
+  const ap2 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    var o=_fila(K), div=document.createElement('div'); div.innerHTML=stockAutoHtml(o);
+    // lo que guarda la celda vuelve igual y la poda no lo saca
+    var S=leerStock({ observaciones:JSON.stringify(STOCK) });
+    return { fab:o.fabricar, cam:o.enCamino, txt:div.innerText, leido:JSON.stringify(S.ap||{}) };
+  });
+  chk('AP4. al día siguiente cuenta como EN PRODUCCIÓN: «Pedir 7 días» ya no lo vuelve a pedir (0) y en camino 5', ap2.fab===0 && ap2.cam===5, ap2);
+  chk('AP5. la fila dice «🏭 En producción: 5 (lo pidió el panel el 16/10)»', /En producción: 5/.test(ap2.txt||'') && /16\/10/.test(ap2.txt||''), ap2);
+  chk('AP6. leer la celda guardada trae lo mismo', /"2026-10-16":\[5,0/.test(ap2.leido||''), ap2);
+
+  const ap3 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    // el lote del día siguiente: Moreno (IM) muestra +3 y PTF nada → entran 3
+    var L={ dia:todayStr(), roles:{ log:1, otro:1 }, dif:{}, ent:{}, n:2, hu:['a','b'] }; L.dif[K]=3;
+    var prod=existLoteProduccion(L), c1=stockAutoConsumir(prod, todayStr(), 'lote-1'), c2=stockAutoConsumir(prod, todayStr(), 'lote-1');
+    var o=_fila(K);
+    return { prod:prod[K], c1:c1.length, c2:c2.length, cam:o.enCamino, fab:o.fabricar };
+  });
+  chk('AP7. la entrada del lote (3 en Moreno) cierra 3 de lo anotado: quedan 2 en producción', ap3.prod===3 && ap3.c1===1 && ap3.cam===2, ap3);
+  chk('AP8. el MISMO lote dos veces no cierra dos veces', ap3.c2===0 && ap3.cam===2, ap3);
+
+  const ap4 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    // un traspaso de Moreno a PTF en el mismo archivo (+4 PTF, −4 IM) NO es producción
+    var L={ dia:todayStr(), roles:{ log:1, otro:1 }, dif:{}, ent:{}, n:2, hu:['c','d'] }; L.dif[K]=0;
+    var Lt={ dia:todayStr(), roles:{ log:1, otro:1, sale:1 }, dif:{}, ent:{}, n:3, hu:['e'] }; Lt.dif[K]=4-4;
+    // con la recogida anotada: PTF esperaba +4 (ent) y cuadra; IM −4 → neto 0
+    var Lr={ dia:todayStr(), roles:{ log:1, otro:1 }, dif:{}, ent:{}, n:2, hu:['f'] }; Lr.dif[K]=-4; Lr.ent[K]=4;
+    return { t:existLoteProduccion(Lt)[K]||0, r:existLoteProduccion(Lr)[K]||0 };
+  });
+  chk('AP9. un traspaso entre almacenes no cuenta como producción (con o sin la recogida anotada)', ap4.t===0 && ap4.r===0, ap4);
+
+  await page.clock.setFixedTime(new Date('2026-10-26T12:00:00-04:00'));   // lunes 26: pasó la llegada esperada + 2 días hábiles
+  const ap5 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    var o=_fila(K), div=document.createElement('div'); div.innerHTML=stockAutoHtml(o);
+    return { cam:o.enCamino, txt:div.innerText, vence:stockAutoVence('2026-10-16') };
+  });
+  chk('AP10. lo que no apareció a tiempo deja de contar y avisa «¿se pidió?»', ap5.cam===0 && /se pidió\?/.test(ap5.txt||''), ap5);
+
+  const ap6 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    stockAutoNoSePidio(K, '2026-10-16');
+    var o=_fila(K), div=document.createElement('div'); div.innerHTML=stockAutoHtml(o);
+    // junta de dos equipos: el más nuevo manda en lo pedido; lo que llegó, el mayor
+    var b={}, m={ X:{ '2026-10-16':[5,0,0,0,100] } }, s2={ X:{ '2026-10-16':[7,2,1,0,200] } };
+    var F=fusAuto(b, m, s2).X['2026-10-16'];
+    // la poda: lo anulado de un día que pasó se va; lo de hace más de 12 días también
+    var S={ ap:{ A:{ '2026-10-10':[3,0,0,1,1] }, B:{ '2026-10-01':[3,0,0,0,1] }, C:{ '2026-10-25':[3,1,0,0,1] } } }; stockPodarAuto(S, '2026-10-26');
+    return { txt:div.innerText, F:F, poda:Object.keys(S.ap) };
+  });
+  chk('AP11. «No se pidió» lo saca de la fila', typeof ap6.txt==='string' && !/se pidió\?/.test(ap6.txt), ap6);
+  chk('AP12. la junta de dos equipos: la versión más nueva manda (7, a mano) y lo llegado es el mayor (2)', ap6.F && ap6.F[0]===7 && ap6.F[1]===2 && ap6.F[2]===1, ap6);
+  chk('AP13. la poda deja solo lo vigente (la celda no crece)', JSON.stringify(ap6.poda)==='["C"]', ap6);
+  await page.clock.setFixedTime(new Date('2026-10-16T12:00:00-04:00'));
 
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();

@@ -23093,6 +23093,8 @@ function leerStock(p){
       if(Number(o.v)>0) d.v=Number(o.v);
       if(Number(o.v2t)>0) d.v2t=Number(o.v2t);
       if(Number(o.pv)>0) d.pv=Number(o.pv);         // 🧓 (06/10) qué página la escribió (ver STOCK_PV)
+      if(o.ap && typeof o.ap==='object') d.ap=o.ap;   // 🏭 (17/10, §4lr) lo que el panel anotó como pedido a la fábrica
+      if(Array.isArray(o.apL)) d.apL=o.apL.slice(0,8);
       if(o.c && typeof o.c==='object'){
         d.c.f=String(o.c.f||''); d.c.u=(o.c.u&&typeof o.c.u==='object')?o.c.u:{};
         if(o.c.hora) d.c.hora=String(o.c.hora); if(o.c.inc) d.c.inc=true; if(o.c.alm) d.c.alm=String(o.c.alm);
@@ -23408,6 +23410,7 @@ function stockPodar(S, hoy){
     return null;
   }).filter(function(q){ return !!q; });
   stockPodarControl(S, hoy);
+  stockPodarAuto(S, hoy);                       // 🏭 (17/10, §4lr) lo anotado por el panel: hasta STOCK_AUTO_DIAS
   return S;
 }
 /* ✂️ (06/10) LO DEL CONTROL DEL CORTE, STOCK_CONTROL_DIAS DÍAS. El dueño: «cada día te subo la lista actualizada»: lo que
@@ -23803,6 +23806,8 @@ function stockFusionar(b, m, s, modo){
   out.pv=STOCK_PV;                                     // 🧓 (06/10) lo que junta esta página es de una página al día (ver STOCK_PV)
   var v2=[b.v2t, m.v2t, s.v2t].map(Number).filter(function(x){ return x>0; }); if(v2.length) out.v2t=Math.min.apply(null, v2);
   out.p=fusPorId(b.p, m.p, s.p, sinBase, fusPedidoFab);
+  out.ap=fusAuto(b.ap, m.ap, s.ap);                    // 🏭 (17/10, §4lr) por producto y día
+  var apl=[]; [m.apL, s.apL, b.apL].forEach(function(L){ (L||[]).forEach(function(x){ if(apl.indexOf(x)<0) apl.push(x); }); }); if(apl.length) out.apL=apl.slice(0,8);
   out.h=fusPorId(b.h, m.h, s.h, sinBase)
         .sort(function(x,y){ return (Number(y&&y.ts)||0)-(Number(x&&x.ts)||0); }).slice(0,STOCK_HIST);
   out=JSON.parse(JSON.stringify(out));            // que no comparta objetos con ninguna de las tres
@@ -24849,6 +24854,17 @@ function stockData(extra){
     if(q.ya && stockEsperado(q,T)<todayStr()) return;   // (§4iy) el «✓ Ya pedí» vale hasta el día en que tendría que llegar; si el Excel no lo muestra, se vuelve a pedir
     o.enCamino+=Number(q.u)||0;
     o.pedidos.push({ id:q.id, u:Number(q.u)||0, fab:stockFabNorm(q.fab), f:q.f, llega:stockEsperado(q,T), tipo:q.tipo||'fabrica', de:q.de||'', arr:q.arr||'' });   // (16/10, §4lr U21) `arr`: el cuadrito cuenta desde el día en que arrancó (§4jd)
+  });
+  /* 🏭 (17/10, §4lr) Lo que el panel anotó SOLO como pedido a la fábrica (`STOCK.ap`, `stockAutoAnotar`): cuenta desde el día siguiente
+     hasta la llegada esperada + la gracia; lo que llegó, lo anulado y lo vencido no cuenta (el vencido se avisa en la fila). No cambia
+     la última fábrica anotada: sale de la cuenta, no de logística. */
+  Object.keys(STOCK.ap||{}).forEach(function(k){
+    stockAutoLista(k).forEach(function(e){
+      if(!stockAutoCuenta(e, hoy)) return;
+      var o=grupo(k), u=stockAutoPend(e);
+      o.enCamino+=u;
+      o.pedidos.push({ id:'ap|'+k+'|'+e.f, u:u, fab:'', f:e.f, llega:stockAutoEsp(e.f), tipo:'fabrica', de:'', arr:e.f, auto:1 });
+    });
   });
   /* Lo que hay en los OTROS almacenes (la fábrica). NO se suma al depósito: de ahí no sale
      ningún camión — primero hay que traerlo. Pero cambia qué hacer: si falta acá y hay allá,
@@ -28290,7 +28306,47 @@ function existLoteDe(filas, delNombre){
   });
   return err ? { error:err } : { lista:lista };
 }
-function existCancelar(){ EXIST_COLA=[]; EXIST_IMP=null; closeModal(); }
+function existCancelar(){ EXIST_COLA=[]; EXIST_IMP=null; closeModal(); existLoteTerminar(); }
+/* 🏭 (17/10, §4lr) EL LOTE DEL DÍA: lo que cambió en cada almacén del archivo, sumado. Al terminar (último almacén confirmado,
+   «Saltar» del último o «Cancelar todo» con alguno ya usado) cierra lo que el panel anotó y llegó, y anota lo que pide hoy. */
+var EXIST_LOTE=null;
+function existLoteAnotar(R, rol, C){
+  var dia=String(R.fecha||'');
+  if(!EXIST_LOTE || EXIST_LOTE.dia!==dia) EXIST_LOTE={ dia:dia, roles:{}, dif:{}, ent:{}, n:0, hu:[] };
+  var L=EXIST_LOTE; L.roles[rol]=1; L.n++; L.hu.push(existHuella(R));
+  if(!C || C.sinPrevio || C.corteViejo){ L.sinBase=(L.sinBase||0)+1; return; }
+  (C.todas||[]).forEach(function(x){ L.dif[x.k]=(L.dif[x.k]||0)+(Number(x.dif)||0); if(rol==='log') L.ent[x.k]=(L.ent[x.k]||0)+(Number(x.ent)||0); });
+}
+/* La entrada de cada producto en el lote. Con PTF y Moreno en el mismo archivo: la suma de las diferencias de todos los almacenes
+   + lo que el control de PTF ya esperaba como llegada (una recogida anotada): lo que pasó de un almacén a otro se anula. Con un solo
+   almacén: lo hecho en Moreno entra a IM y lo de Multiespumas a PTF; lo de Banzer solo no cuenta (viene de los otros dos). */
+function existLoteProduccion(L){
+  var prod={}; if(!L) return prod;
+  var completo=!!(L.roles.log && L.roles.otro) && !L.sinBase, fab=null;
+  if(!completo){ fab={}; stockData().lista.forEach(function(o){ fab[o.k]=o.fabLead||''; }); }
+  Object.keys(L.dif).forEach(function(k){
+    var n;
+    if(completo) n=(L.dif[k]||0)+(L.ent[k]||0);
+    else if(L.roles.otro && !L.roles.log && fab[k]==='MORENO') n=L.dif[k]||0;
+    else if(L.roles.log && !L.roles.otro && fab[k]==='MULTI') n=(L.dif[k]||0)+(L.ent[k]||0);
+    else n=0;
+    if(n>0) prod[k]=Math.round(n);
+  });
+  return prod;
+}
+function existLoteCerrar(){
+  var L=EXIST_LOTE; EXIST_LOTE=null;
+  if(!L || !L.n || L.dia!==todayStr()) return { cerrados:[], anotados:[] };
+  var cerrados=stockAutoConsumir(existLoteProduccion(L), L.dia, L.dia+'|'+L.hu.join(','));
+  var anotados=stockAutoAnotar(L.dia);
+  return { cerrados:cerrados, anotados:anotados };
+}
+/* Para los caminos que terminan el lote sin pasar por «Usar» (Saltar el último, Cancelar todo): cierra y guarda. */
+function existLoteTerminar(){
+  if(!EXIST_LOTE || !EXIST_LOTE.n) { EXIST_LOTE=null; return; }
+  var r=existLoteCerrar();
+  if(r.cerrados.length || r.anotados.length){ stockOlvidarIndice(); guardarStock(); try{ renderStock(); }catch(e){} }
+}
 /* ⏭ Saltar un almacén del archivo (su Excel no entra, o no se quiere usar todavía) y seguir con el próximo. */
 function existSaltar(){
   if(!EXIST_COLA.length){ existCancelar(); return; }
@@ -28301,6 +28357,7 @@ function onExistArchivo(ev){
   toast('Leyendo '+f.name+'…','ok');
   var delNombre=existHoraDeNombre(f.name);
   EXIST_COLA=[];
+  existLoteTerminar();                           // 🏭 (17/10) un lote a medias se cierra con lo que alcanzó a usar
   f.arrayBuffer().then(xlsxDescomprimir).then(function(archivos){
     var _filas=xlsxHoja(archivos);
     var L=existLoteDe(_filas, delNombre);
@@ -28679,7 +28736,7 @@ function stockConciliar(R, rol, inc){
   var alm = rol==='log' ? '' : String(R.almacen||'');
   var previo = rol==='log' ? STOCK.c : ((STOCK.g||{})[R.almacen]||null);
   var out={ filas:[], sinPrevio:false, corteViejo:false, ventana:null, previoF:String((previo&&previo.f)||''), previoHora:String((previo&&previo.hora)||''),
-            resumen:{ cuadran:0, con:0, llegaron:0, faltan:0, sinDato:0 } };
+            resumen:{ cuadran:0, con:0, llegaron:0, faltan:0, sinDato:0 }, todas:[] };
   if(!previo || !previo.f || !previo.u){ out.sinPrevio=true; return out; }
   /* (05/10, Codex H5) El orden es por fecha Y hora: un Excel de las 09:00 subido después del de las 16:00 del mismo día es
      más viejo. Mismo día con hora de un solo lado: no se sabe cuál es más nuevo → exige el tilde, como un corte viejo. */
@@ -28760,6 +28817,7 @@ function stockConciliar(R, rol, inc){
       fila.esperado=prevU+fila.entradas-fila.salidas-fila.smanual;
     }
     fila.dif=exc-fila.esperado;
+    out.todas.push({ k:k, dif:fila.dif, ent:fila.entradas||0 });   // 🏭 (17/10) TODAS las claves (también las que cuadran): la entrada neta del lote
     /* Lo detectado en cortes anteriores que sigue sin asignar, contra lo pendiente de este producto. */
     if(rol==='log') detVivas.filter(function(x){ return x.k===k; }).forEach(function(x){ var u0=Number(x.u)||0; sugerir(fila, x.id, x.f, u0); fila.detPrev.push({ id:x.id, f:x.f, u:u0 }); });
     if(fila.dif===0){ if(fila.sug.length){ fila.tipo='det'; out.filas.push(fila); } else { fila.tipo='cuadra'; out.resumen.cuadran++; } return; }
@@ -29273,6 +29331,9 @@ function confirmarImportExist(){
      anota las salidas sin pedido. Nada se cierra por fecha. Las diferencias del corte van al historial. */
   var ctrl=existAplicarControl(R, rolCtrl, incCtrl, C0);
   var cerrados=ctrl.cerrados.length;
+  /* 🏭 (17/10, §4lr) El lote del día: con el último almacén del archivo, se cierra lo que llegó y se anota lo que pide hoy el panel. */
+  existLoteAnotar(R, rolCtrl, C0);
+  var auto = (EXIST_COLA && EXIST_COLA.length) ? null : existLoteCerrar();
   /* (06/10) Las diferencias van al historial solo para el depósito de acá y los de salida (Banzer): las de Moreno son
      información y no tienen nada que deshacer. Cuánto se guardan lo dice la poda por días (`stockPodarControl`). */
   if(STOCK.h[0] && (rolGuardado==='log' || rolGuardado==='sale')){
@@ -29290,7 +29351,9 @@ function confirmarImportExist(){
         R.items.length+' productos, '+stockUnid(R.total)+' unidades al '+fmtFecha(R.fecha)+
         (cerrados?('. Cerraste '+cerrados+' pedido'+(cerrados===1?'':'s')+' a fábrica desde el control.'):'')+
         (ctrl.fab.length?(' Anotada la llegada de '+ctrl.fab.length+' línea'+(ctrl.fab.length===1?'':'s')+' hecha'+(ctrl.fab.length===1?'':'s')+' a pedido.'):'')+
-        (ctrl.salidas.length?(' Anotada'+(ctrl.salidas.length===1?'':'s')+' '+ctrl.salidas.length+' salida'+(ctrl.salidas.length===1?'':'s')+' sin pedido.'):'');
+        (ctrl.salidas.length?(' Anotada'+(ctrl.salidas.length===1?'':'s')+' '+ctrl.salidas.length+' salida'+(ctrl.salidas.length===1?'':'s')+' sin pedido.'):'')+
+        (auto && auto.cerrados.length?(' 🏭 Llegó lo que el panel había pedido de '+auto.cerrados.length+' producto'+(auto.cerrados.length===1?'':'s')+'.'):'')+
+        (auto && auto.anotados.length?(' 📌 El panel anotó lo que hay que pedir hoy a la fábrica ('+auto.anotados.length+' producto'+(auto.anotados.length===1?'':'s')+').'):'');
   /* (05/10, Codex H3) El stock y los pedidos tocados son filas distintas de la planilla (no hay transacción): se ESPERA a
      las dos partes y se dice la verdad. Lo que no entró queda en la cola durable (§4hh) y se reintenta solo, sin duplicar
      (las recepciones y `prodC` llevan el id del corte). */
@@ -35009,8 +35072,140 @@ function planYaVigentes(o){ var hoy=todayStr(), T=stockTiemposFabrica(); return 
    Se muestran los de la última semana. */
 var PLAN_YA_VENCIDO_DIAS=7;
 function planYaVencidos(o){ var hoy=todayStr(), T=stockTiemposFabrica(); return (STOCK.p||[]).filter(function(q){ if(!q || !q.ya || q.r || q.k!==o.k) return false; var e=stockEsperado(q,T); return e<hoy && stockDias(e,hoy)<=PLAN_YA_VENCIDO_DIAS; }); }
+/* ============================================================================
+   🏭 «EN PRODUCCIÓN» AUTOMÁTICO (17/10, §4lr; dueño: *«todos los días tienes los saldos de almacén y sabes cuándo entra y cuándo
+   sale»* y, a la propuesta, *«Sí, que se acuerde solo»*). Lo que se mandó a fabricar y todavía no terminó no está en ningún Excel: en
+   esos 2-4 días el panel lo volvía a pedir (del 09 al 16/10, entre 30 % y 38 % de más en «Pedir 7 días»). Logística pide con su propio
+   Excel y correo (§4hx) y no tilda «Ya pedí», así que el panel se ACUERDA SOLO:
+   · Al terminar de subir los Excel del día (el archivo con los 3 almacenes), anota como pedido a la fábrica lo que dice «Pedir 7 días»
+     de cada producto (`STOCK.p` con `auto:1`, id `ap:` del producto y el día: dos equipos anotan el MISMO). Ese día no cuenta (es lo
+     que logística tiene que pedir HOY); desde el día siguiente cuenta como «en camino» hasta la llegada esperada (48 h + 1, la regla del
+     cuadrito) más `STOCK_AUTO_GRACIA` días hábiles.
+   · Lo que ENTRA se ve en los Excel: la entrada neta del lote (lo que cambió en los 3 almacenes juntos, sumando lo que salió a clientes:
+     los traspasos entre almacenes se anulan solos) cierra los anotados abiertos de ese producto, el más viejo primero (`stockAutoConsumir`).
+   · Si no aparece a tiempo, deja de contar y la fila avisa «no apareció en ningún Excel: ¿se pidió?».
+   · En la fila: corregir la cantidad (logística pidió otra), «No se pidió» y «Llegó». «✓ Ya pedí» a mano reemplaza al de hoy.
+   ⚠️ Funciona si logística pide lo que dice el panel: si no, lo corrige en la fila. ========================================================= */
+var STOCK_AUTO_GRACIA=2, STOCK_AUTO_DIAS=12;
+/* Compacto: la celda del stock corta en 50.000 letras (§4hl). `STOCK.ap` = {clave: {día: [pedido, llegó, a mano, anulado, cuándo (s)]}}. */
+function stockAutoEsp(f){ return sigDiaHabil(saldoSaleDeFabrica(f)); }
+function stockAutoVence(f){ var e=stockAutoEsp(f); for(var i=0;i<STOCK_AUTO_GRACIA;i++) e=sigDiaHabil(e); return e; }
+function stockAutoLista(k){
+  var m=((STOCK.ap||{})[k])||{};
+  return Object.keys(m).sort().map(function(f){ var a=m[f]||[]; return { k:k, f:f, u:Math.max(0,Math.round(Number(a[0])||0)), rec:Math.max(0,Math.round(Number(a[1])||0)), man:!!a[2], no:!!a[3], t:Number(a[4])||0 }; });
+}
+function stockAutoPend(e){ return Math.max(0, (e.u||0)-(e.rec||0)); }
+function stockAutoCuenta(e, hoy){ hoy=hoy||todayStr(); return !!(e && !e.no && e.f<hoy && stockAutoPend(e)>0 && stockAutoVence(e.f)>=hoy); }
+function stockAutoPoner(e){
+  STOCK.ap=STOCK.ap||{}; var m=STOCK.ap[e.k]=STOCK.ap[e.k]||{};
+  m[e.f]=[e.u||0, e.rec||0, e.man?1:0, e.no?1:0, Math.floor(Date.now()/1000)];
+}
+/* La junta de dos copias: por producto y día, la versión más nueva (`t`) manda en lo pedido, lo anulado y lo corregido; lo que llegó
+   es el MAYOR de las copias (una llegada no se des-anota). Lo que un lado podó por fecha, el otro también lo poda. */
+function fusAuto(b, m, s){
+  var out={}, ks={};
+  [b, m, s].forEach(function(X){ Object.keys(X||{}).forEach(function(k){ ks[k]=1; }); });
+  Object.keys(ks).forEach(function(k){
+    var fs={};
+    [b, m, s].forEach(function(X){ Object.keys(((X||{})[k])||{}).forEach(function(f){ fs[f]=1; }); });
+    Object.keys(fs).forEach(function(f){
+      var vs=[m, s, b].map(function(X){ return (((X||{})[k])||{})[f]; }).filter(function(a){ return Array.isArray(a); });
+      if(!vs.length) return;
+      var g=vs.slice().sort(function(x,y){ return (Number(y[4])||0)-(Number(x[4])||0); })[0].slice();
+      g[1]=Math.max.apply(null, vs.map(function(a){ return Number(a[1])||0; }));
+      (out[k]=out[k]||{})[f]=g;
+    });
+  });
+  return out;
+}
+function stockPodarAuto(S, hoy){
+  if(!S || !S.ap || typeof S.ap!=='object') return S;
+  hoy=hoy||todayStr();
+  var lim=stockSumarDias(hoy, -STOCK_AUTO_DIAS), ayer=stockSumarDias(hoy, -1);
+  Object.keys(S.ap).forEach(function(k){
+    var m=S.ap[k]; if(!m || typeof m!=='object'){ delete S.ap[k]; return; }
+    Object.keys(m).forEach(function(f){
+      var a=m[f]; if(!Array.isArray(a)){ delete m[f]; return; }
+      var u=Number(a[0])||0, rec=Number(a[1])||0;
+      if(f<lim || (f<hoy && (a[3] || u<=0)) || (rec>=u && f<ayer)) delete m[f];
+    });
+    if(!Object.keys(m).length) delete S.ap[k];
+  });
+  if(Array.isArray(S.apL)) S.apL=S.apL.slice(0,8);
+  return S;
+}
+/* Cierra lo anotado y abierto con la entrada de cada producto (`prod` = {clave: unidades}): primero lo que todavía cuenta (el más
+   viejo primero), después lo vencido (así deja de avisar «¿se pidió?»). Una vez por lote (`STOCK.apL`). */
+function stockAutoConsumir(prod, dia, lote){
+  var hoy=todayStr(), out=[], lid=huellaId(String(lote||''));
+  STOCK.apL=STOCK.apL||[];
+  if(lote && STOCK.apL.indexOf(lid)>=0) return out;
+  Object.keys(prod||{}).forEach(function(k){
+    var resto=Math.round(Number(prod[k])||0); if(!(resto>0)) return;
+    var L=stockAutoLista(k).filter(function(e){ return !e.no && e.f<hoy && stockAutoPend(e)>0; });
+    L.filter(function(e){ return stockAutoCuenta(e, hoy); }).concat(L.filter(function(e){ return !stockAutoCuenta(e, hoy); })).forEach(function(e){
+      if(!(resto>0)) return;
+      var t=Math.min(resto, stockAutoPend(e)); e.rec+=t; resto-=t; stockAutoPoner(e);
+      out.push({ k:k, f:e.f, u:t });
+    });
+  });
+  if(lote) STOCK.apL=[lid].concat(STOCK.apL).slice(0,8);
+  return out;
+}
+/* Anota lo que pide hoy el panel («Pedir 7 días», `o.fabricar`). Lo corregido a mano o anulado no se pisa; con un «✓ Ya pedí» de
+   hoy a mano, ese manda. */
+function stockAutoAnotar(dia){
+  var hoy=todayStr(); if((dia||hoy)!==hoy) return [];
+  var d=stockData(), out=[];
+  d.lista.forEach(function(o){
+    if(o.descont) return;
+    var u=Math.max(0, Math.round(Number(o.fabricar)||0));
+    var e=stockAutoLista(o.k).filter(function(x){ return x.f===hoy; })[0];
+    if(e){ if(e.man || e.no || e.rec) return; if(e.u!==u){ e.u=u; stockAutoPoner(e); out.push({ k:o.k, u:u }); } return; }
+    if(!(u>0)) return;
+    if((STOCK.p||[]).some(function(x){ return x && x.ya && !x.r && x.k===o.k && x.f===hoy; })) return;
+    stockAutoPoner({ k:o.k, f:hoy, u:u, rec:0 }); out.push({ k:o.k, u:u });
+  });
+  return out;
+}
+/* Los botones de la fila. */
+function stockAutoDe(k, f){ return stockAutoLista(k).filter(function(e){ return e.f===f; })[0]||null; }
+function stockAutoNoSePidio(k, f){
+  var e=stockAutoDe(k, f); if(!e) return;
+  e.no=true; stockAutoPoner(e); stockOlvidarIndice(); guardarStock(); renderStock();
+  toast('Anotado: eso no se pidió. El panel lo vuelve a pedir si hace falta.','ok',5000);
+}
+function stockAutoLlego(k, f){
+  var e=stockAutoDe(k, f); if(!e || !stockAutoPend(e)) return;
+  e.rec=e.u; stockAutoPoner(e); stockOlvidarIndice(); guardarStock(); renderStock();
+  toast('Anotado: llegó. Ya está (o va a estar) en el Excel del día.','ok',5000);
+}
+function stockAutoCambiar(k, f, val){
+  var e=stockAutoDe(k, f); if(!e) return;
+  var u=Math.max(0, Math.round(Number(String(val||'').replace(',','.'))||0));
+  e.u=u; e.man=true; e.no=!u; stockAutoPoner(e); stockOlvidarIndice(); guardarStock(); renderStock();
+}
+function stockAutoHtml(o){
+  var hoy=todayStr(), h='';
+  stockAutoLista(o.k).forEach(function(e){
+    if(e.no) return;
+    var pend=stockAutoPend(e), llega=stockAutoEsp(e.f), vence=stockAutoVence(e.f);
+    if(!pend && e.f!==hoy) return;
+    var bot=function(t, fn){ return ' <button type="button" class="btn btn-ghost btn-sm" style="padding:0 6px;font-size:.72rem" data-k="'+esc(o.k)+'" data-f="'+esc(e.f)+'" onclick="event.stopPropagation();'+fn+'(this.dataset.k,this.dataset.f)">'+t+'</button>'; };
+    if(e.f===hoy){
+      if(!(e.u>0)) return;
+      h+='<div class="pl-auto" onclick="event.stopPropagation()" style="font-size:.76rem;color:#0f766e;margin-top:3px">📌 Hoy se piden <input type="text" inputmode="numeric" value="'+e.u+'" data-k="'+esc(o.k)+'" data-f="'+esc(e.f)+'" onchange="stockAutoCambiar(this.dataset.k,this.dataset.f,this.value)" style="width:42px;padding:0 4px;font-size:.76rem"> a la fábrica'+
+        ' (lo anota el panel: desde mañana cuenta como en producción)'+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+    } else if(vence>=hoy){
+      h+='<div class="pl-auto" style="font-size:.76rem;color:#075985;margin-top:3px">🏭 En producción: '+stockUnid(pend)+(pend<e.u?(' de '+stockUnid(e.u)):'')+' (lo pidió el panel el '+fmtFechaCorta(e.f)+') · llega ~'+fmtFechaCorta(llega)+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+    } else if(stockDias(vence, hoy)<=PLAN_YA_VENCIDO_DIAS){
+      h+='<div class="pl-auto" style="font-size:.76rem;color:#92400e;margin-top:3px">⚠️ El panel pidió '+stockUnid(pend)+' el '+fmtFechaCorta(e.f)+' y no apareció en ningún Excel (tenía que llegar ~'+fmtFechaCorta(llega)+'): ¿se pidió? Ya no se cuenta.'+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+    }
+  });
+  return h;
+}
 function planYaHtml(o){
-  var hoy=todayStr(), T=stockTiemposFabrica(), h='';
+  var hoy=todayStr(), T=stockTiemposFabrica(), h=stockAutoHtml(o);
   planYaVencidos(o).forEach(function(q){
     h+='<div class="pl-ya-venc" style="font-size:.76rem;color:#92400e;margin-top:3px">⚠️ Ya pedí '+stockUnid(q.u)+' el '+fmtFechaCorta(q.f)+': tenía que llegar el '+fmtFechaCorta(stockEsperado(q,T))+
       ' y ningún Excel lo mostró. Ya no se cuenta: reclamá a la fábrica o volvé a pedir.</div>';
@@ -35020,6 +35215,7 @@ function planYaHtml(o){
       (q.f===hoy?' hoy':(' el '+fmtFechaCorta(q.f)))+' · se entrega desde ~'+fmtFechaCorta(stockEsperado(q,T))+'</label>';
   });
   if(!(o.fabricar>0) || o.descont || !(o.aviso==='urgente'||o.aviso==='pedir'||o.aviso==='revisar')) return h;
+  var _ah=stockAutoDe(o.k, hoy); if(_ah && !_ah.no && _ah.u>0) return h;   // 🏭 (17/10) lo de hoy ya lo anotó el panel
   return h+'<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> Ya pedí '+stockUnid(o.fabricar)+(h?' más':'')+'</label>';
 }
 function planYaPedi(k, on, id){
@@ -35029,6 +35225,8 @@ function planYaPedi(k, on, id){
        y la junta por id los une (antes eran dos pedidos de 66 → 132 en camino y el panel dejaba de pedir). «Ya pedí N más» lleva el
        número de tildes de hoy que ya había (los dos equipos que lo tocan a la vez también coinciden). */
     var hoyY=todayStr(), nHoy=(STOCK.p||[]).filter(function(q){ return q && q.ya && !q.r && q.k===k && q.f===hoyY; }).length;
+    /* 🏭 (17/10) Si el panel ya anotó solo lo de hoy, «Ya pedí» lo reemplaza (no se cuenta dos veces). */
+    stockAutoLista(k).forEach(function(e){ if(e.f===hoyY && !e.no && !e.rec){ e.no=true; stockAutoPoner(e); } });
     var id='fy:'+huellaId(k+'|'+hoyY+(nHoy?('|'+nHoy):''));
     if((STOCK.p||[]).some(function(q){ return q && q.id===id; })) return;
     /* `esp` fijo al tildar: si no, el día de llegada se recalculaba con el piso de CADA día (§4iy) y el tilde no vencía nunca. */
