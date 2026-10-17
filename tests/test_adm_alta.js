@@ -224,7 +224,7 @@ const BASE = `
       var conPunt=armar([ window._P({id:'mc', fecha:'2026-08-20', ts:ago, vendedor:'Carola Chavez', cliente:'MULTICENTER', productos:H(40)}) ]);
       var conRpt=armar([ window._P({id:'rpt', fecha:'2026-08-20', ts:ago, oc:'RPT 08-001', cliente:'Charcas', productos:H(40)}) ]);
       abrirStock(); var el=document.getElementById('producir'); var cabecera=el?el.textContent.replace(/\s+/g,' '):''; closeStock();
-      return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,520) };
+      return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,900) };   // (17/10, §4lr U7) el cartel dice además la excepción de las almohadas: el texto creció
     }, BASE);
     /* (§4iz, E1-6) «mes>0» se fue: el 20/09 lo que «15 días» manda a producir ya llega en octubre y el mes no lo vuelve a pedir. */
     chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6, J(r.sin));

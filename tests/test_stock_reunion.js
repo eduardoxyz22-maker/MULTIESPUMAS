@@ -394,6 +394,59 @@ function PREPARAR(){
   chk('AP13. la poda deja solo lo vigente (la celda no crece)', JSON.stringify(ap6.poda)==='["C"]', ap6);
   await page.clock.setFixedTime(new Date('2026-10-16T12:00:00-04:00'));
 
+  /* ── Arreglos chicos (17/10): lo que se ve tiene que decir lo mismo que la cuenta ── */
+  const ch = await ev(async () => {
+    var r={}, K=_k('CH1151','SOMIER TITANIO LATEX','200x200'), KS=_k('CS1014','COLCHON CONFORT PLUS','180x190');
+    var fila=function(d, k){ return d.lista.filter(function(x){ return x.k===k; })[0]; };
+    // U39a: lo vendido para DICIEMBRE (fuera del horizonte de «Pedir») no es «⛔ Ya falta»
+    await _cargar([_ped('p-dic','2026-12-02',[{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:1, precio:1000 }])], _stock(function(st){ st.c.u[K]=0; }));
+    var d=stockData(), o=fila(d, K); stockProducir(d);
+    r.u39a={ fab:o.fabricar, comp:o.comp, reloj:sfReloj(o).txt };
+    // U39b + U40: tres entregas hace 18-25 días (ritmo de 30 días, ninguna en 15)
+    var ps=[['p-a','2026-09-22'],['p-b','2026-09-25'],['p-c','2026-09-28']].map(function(x){
+      return _ped(x[0], x[1], [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:1, precio:1000 }], { entregado:true, ts:_ts(x[1],'09:00:00') }); });
+    await _cargar(ps, _stock(function(st){ st.c.u[K]=0; }));
+    d=stockData(); o=fila(d, K); stockProducir(d);
+    r.u39b={ reloj:sfReloj(o).txt, pMes:o._pMes };
+    await _cargar(ps, _stock(function(st){ st.c.u[K]=1; }));
+    d=stockData(); o=fila(d, K); stockProducir(d);
+    r.u40={ aviso:o.aviso, pMes:o._pMes, pQuin:o._pQuin, accion:String(sfAccion(o)).replace(/<[^>]+>/g,'') };
+    // U42: PTF «negativo» con el Excel de hoy (un ✅ de hoy después del corte de las 08:00) y algo para pedir
+    var hoy=todayStr();
+    await _cargar([ _ped('p-neg', hoy, [{ codigo:'CS1014', desc:'COLCHON CONFORT PLUS', medida:'180x190', cant:1, precio:1000 }], { entregado:true, ts:_ts(hoy,'07:00:00') }),
+                    _ped('p-pend', '2026-10-20', [{ codigo:'CS1014', desc:'COLCHON CONFORT PLUS', medida:'180x190', cant:2, precio:1000 }]) ],
+                  _stock(function(st){ st.c.u[KS]=0; }));
+    d=stockData(); o=fila(d, KS);
+    var _cp=copyText, cap=''; copyText=function(t){ cap=t; }; try{ copiarStock(); } finally { copyText=_cp; }
+    r.u42={ dep:o.deposito, txt:(typeof stockNegTxt==='function'?stockNegTxt(o):'volvé a contar'), copia:cap };
+    // U43: dos fábricas (Heaven → Moreno, Sueña → Multiespumas), cada una con su lista, y los tres botones en el Plan
+    await _cargar([ _ped('p-h', '2026-10-20', [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:3, precio:1000 }]),
+                    _ped('p-s', '2026-10-20', [{ codigo:'CS1014', desc:'COLCHON CONFORT PLUS', medida:'180x190', cant:2, precio:1000 }]) ],
+                  _stock(function(st){ st.c.u[K]=0; st.c.u[KS]=0; }));
+    cap=''; copyText=function(t){ cap=t; }; try{ if(typeof copiarProducirTodo==='function') copiarProducirTodo('quin'); } finally { copyText=_cp; }
+    PLAN_F='todos'; PLAN_TODOS=true; try{ STOCK_FILTRO.q=''; }catch(e){}
+    renderStock();
+    var bots=[].map.call(document.querySelectorAll('#stk-plan .pl-copias button'), function(b){ return b.textContent; });
+    r.u43={ n:(cap.match(/🏭 PRODUCIR PARA/g)||[]).length, cap:cap, bots:bots };
+    // U50 + U51: catálogo y Bahía
+    r.u50={ ch2441:(CODIGOS.CH2441||{}).m, ch2453:CODIGOS.CH2453||null };
+    r.u51={ bahia:stockCariocaDescontinuado('BAHIA|105X190'), colchon:stockCariocaDescontinuado('COLCHON BAHIA|140X190'), otro:stockCariocaDescontinuado('BAHIA BLANCA|105X190') };
+    // U37: la leyenda de «Vende por día»
+    r.u37=/lo que el EQUIPO entregó/.test(document.getElementById('stock-body') ? document.getElementById('stock-body').innerHTML : '');
+    return r;
+  });
+  chk('RN-U39a. lo vendido para diciembre no dice «⛔ Ya falta» con «Pedir» en 0', ch.u39a && ch.u39a.comp===1 && !/Ya falta/.test(ch.u39a.reloj||'') && /más adelante/.test(ch.u39a.reloj||''), ch.u39a);
+  chk('RN-U39b. con 0 en todos lados y el plan pidiendo para el mes, no dice «Alcanza más de 45 días»', ch.u39b && ch.u39b.pMes>0 && /Sin stock · lo pide el plan del mes/.test(ch.u39b.reloj||''), ch.u39b);
+  chk('RN-U40. «💤 Sobra» no dice «no pedir más» cuando el plan del mes pide (dice cuánto)', ch.u40 && ch.u40.aviso==='sobra' && ch.u40.pMes>0 && !/no pedir más/.test(ch.u40.accion) && /el plan pide/.test(ch.u40.accion), ch.u40);
+  chk('RN-U42a. (control) PTF da −1 con un ✅ de hoy que el Excel de las 08:00 ya restaba', ch.u42 && ch.u42.dep===-1, ch.u42 && { dep:ch.u42.dep });
+  chk('RN-U42b. con el Excel de HOY no manda a «volvé a contar»: dice que revise las entregas', ch.u42 && /revisá las entregas/.test(ch.u42.txt) && !/volvé a contar/.test(ch.u42.txt), ch.u42 && ch.u42.txt);
+  chk('RN-U42c. la copia para fábrica nunca escribe «quedan -1»', ch.u42 && /CONFORT PLUS/.test(ch.u42.copia) && !/quedan -/.test(ch.u42.copia), ch.u42 && ch.u42.copia);
+  chk('RN-U43a. «📋 15 días» copia las DOS fábricas, cada una con su lista', ch.u43 && ch.u43.n===2 && /MULTI/i.test(ch.u43.cap) && /MORENO/i.test(ch.u43.cap), ch.u43 && { n:ch.u43.n, cap:(ch.u43.cap||'').slice(0,300) });
+  chk('RN-U43b. el Plan tiene los tres botones (7 días, 15 días, el mes)', ch.u43 && ch.u43.bots.length===3 && /7 días/.test(ch.u43.bots[0]) && /15 días/.test(ch.u43.bots[1]), ch.u43 && ch.u43.bots);
+  chk('RN-U50. CH2441 es el 105x190 (como el Excel) y CH2453 (160 negro) está en la lista', ch.u50 && ch.u50.ch2441==='105x190' && ch.u50.ch2453 && ch.u50.ch2453.m==='160x190', ch.u50);
+  chk('RN-U51. el colchón Bahía con la clave cruda «BAHIA» también es descontinuado (y «BAHIA BLANCA» no)', ch.u51 && ch.u51.bahia===true && ch.u51.colchon===true && ch.u51.otro===false, ch.u51);
+  chk('RN-U37. la leyenda de «Vende por día» dice lo que cuenta (el EQUIPO, con las reglas)', ch.u37===true, ch.u37);
+
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

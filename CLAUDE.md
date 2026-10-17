@@ -634,6 +634,29 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
     con la hora de Bolivia (`new Date(f+'T'+h+'-04:00')`); con el reloj clavado, `Date.now()` es SIEMPRE el mismo instante (y
     coincide con `c.t`): no sirve para «antes/después».
 
+## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10; en la rama, SIN publicar)
+Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado dos veces). Lo que hay que respetar:
+- **El plazo medido** (`stockTiemposFabrica`): con un empate en el corte de las 6 últimas llegadas entran TODAS (si no, dependía del
+  orden de las filas: Moreno daba 7 con los mismos datos; ahora 4, confirmado por el dueño). **Una fábrica por producto**: `o.fabLead`
+  (la del bloque de «Qué producir»), nunca la última 🏭 de un pedido.
+- **Un ✅ con fecha futura y sin `eF` no salió** (`stockEntregadoFuturo`, regla de §4lo); marcar ✅ antes del día anota `eF` = hoy
+  (`entregaAdelantadaAnotar`). Un camino nuevo que marque ✅ tiene que llamarla.
+- **Detecciones del Excel**: `stockDetectadoReparto` (cada detección contra los pedidos a fábrica ANTERIORES a su corte, con capacidad)
+  y `stockMenosDetectado` en la proyección y el cuadrito. No volver a restar lo detectado «a las primeras llegadas».
+- **🛏️ Almohadas: la RPT ES la venta** (dueño, 16/10): `stockEsDemanda(p, k)` renglón por renglón (ALMOHADA/ALM/TRAVESSEIRO/NASA:
+  la RPT cuenta y su venta de tienda no; lo demás = `!stockPedidoUnico(p)`). Ritmo, 30 días, índice del mes, ranking y tiendas.
+- **🏭 «En producción» automático** (dueño, 17/10: *«Sí, que se acuerde solo»*): al terminar los Excel del día el panel anota «Pedir 7
+  días» en **`STOCK.ap`** (`{clave:{día:[u, llegó, a mano, anulado, t]}}`); cuenta desde el día siguiente hasta `stockAutoVence`; lo
+  cierra la entrada NETA del lote de los 3 almacenes (`existLoteProduccion`, un traspaso se anula; una vez por lote, `STOCK.apL`); si
+  no aparece avisa «¿se pidió?». `fusAuto` en `stockFusionar`, `stockPodarAuto` en `stockPodar`. ⚠️ No guardarlo en `STOCK.p` (la
+  celda corta en 50.000).
+- **El lector de varios almacenes** (`existSeccionesError`): un archivo que no se entiende NO se lee entero como un almacén.
+- **«📍 Banzer o PTF» NO es para pedir a producción** (su plan es otra cuenta, §4hw): en la reunión vale el Plan de stock / Qué producir.
+- El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
+- Pendiente con el dueño, el más grande: **U2** («ya incluye las entregas del día» es por día entero y el Excel de las ~10:00 ya trae el
+  camión de la mañana: hasta el cierre de las 16:30 «Pedir 7 días» queda ~+20). Lista completa y datos para logística: bitácora §4lr.
+- `tests/test_stock_reunion.js` (56; 48 rojas contra `27f0134`).
+
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:

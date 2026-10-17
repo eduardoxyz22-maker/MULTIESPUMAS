@@ -15098,7 +15098,7 @@ El dueño: *«ayer logística me reclamó que el panel decía 0 saldos y el Exce
   y 18/18 sola. `test_mispedidos` «tres pedidos de refresco a la vez NO hacen tres consultas» (cuenta 2) falla a veces, y **falla igual
   contra `92d08ff`** (3 de 4 corridas): una lectura de más cuando la máquina está lenta, no viene de este cambio. Queda anotado; no se tocó.
 
-### §4lr — 🔎 Revisión «ultracode» de Stock y reposición para la reunión con logística del jueves 22/10 (16/10, en curso)
+### §4lr — 🔎 Revisión «ultracode» de Stock y reposición para la reunión con logística del jueves 22/10 (16-17/10, en la rama, SIN publicar)
 El dueño: *«revisá, analizá, verificá, simulá y corroborá stock y reposición… debe ser PRECISO y perfecto… la reunión con logística
 es el jueves 22… qué se pedirá a producción para los 7-15-otro mes… creo que tenemos falla»*, y mandó la auditoría de Astra
 (`AUDITORIA_MULTIESPUMAS_PARA_CLAUDE.md`, sobre `6a55598`: D1–D8 de fórmulas, I05–I13 del lector, conciliación con datos reales).
@@ -15110,3 +15110,101 @@ es el jueves 22… qué se pedirá a producción para los 7-15-otro mes… creo 
 - Arnés local (scratchpad, no en el repo): abre `pedidos.html` publicado sin red, con la planilla real y el reloj fijo, y vuelca por
   producto lo que calcula el panel. Hoy (16/10 12:00): 328 productos; pedir 185 a 7 días, 345 a 15, 417 el mes que viene; 84 son
   ALMOHADA 50x70 (ritmo 4,6/día, todo reserva preventiva).
+- **La revisión** (workflow de 81 agentes): 10 revisores por tema (lectura del Excel, saldo, lo vendido, ritmo, pedir, el mes, las
+  vistas, Astra…) + recálculo a ciegas + simulación día por día del 09 al 16/10 con la planilla real. Salieron **59 hallazgos únicos
+  (U1–U59)**; cada uno lo verificaron DOS agentes por separado, intentando refutarlo, y un crítico final buscó lo que nadie miró.
+  Todo en el scratchpad (`ultra/`): scripts, salidas y veredictos. Nada de eso va al repo (datos reales).
+- **Arreglado sin decisión del dueño** (fallas de cuenta o de lo que se ve; cada una con su comprobación en `tests/test_stock_reunion.js`):
+  · **U1** el plazo medido de la fábrica no depende del ORDEN de las filas: con un empate en el corte de las 6 últimas llegadas entran
+    todas (`stockTiemposFabrica`). Con los datos reales Moreno daba 7 días por tomar 1 de 8 llegadas empatadas del 09/10; con todas, 4
+    (= el piso de 48 h + 1). El dueño lo confirmó (*«Sí, 4 días»*).
+  · **U5** una sola fábrica por producto, la de su bloque de «Qué producir» (`o.fabLead`): un 🏭 anotado a mano en otra fábrica
+    cambiaba el plazo y la copia.
+  · **U12** un ✅ con fecha que todavía no llegó y sin `eF` no salió (regla del dueño de §4lo, `stockEntregadoFuturo`); marcar ✅ antes
+    del día anota `eF` = hoy (`entregaAdelantadaAnotar` en `quickEntregado`, `toggleEntregado` y el chofer).
+  · **U18 / U9 / U41** el Plan lista todo lo que «Qué producir» pide (sumaba 396 para el mes contra 417); sin venta en 15 días pero con
+    ritmo de 30, «📦 Sin rotación… el plan pide N» (nunca «✅ Alcanza» con 0); «Su historia» calcula el plan como el Plan.
+  · **U24** `DYNAMICPEDIC` pegado (ROHO) = DYNAMIC PEDIC (`PROD_ALIAS`).
+  · **U22 / U23 / U20 / U21** (Astra D1, D2, D8, D5): `stockDetectadoReparto` reparte cada detección del Excel contra los pedidos a
+    fábrica ANTERIORES a su corte, con capacidad (una orden no explica dos detecciones); la proyección (`stockMenosDetectado`) y el
+    cuadrito restan lo detectado a ESA orden; el cuadrito usa `arr` (después de las 16:30 arranca al día siguiente).
+  · **U31** aviso del Excel viejo de Banzer y de Moreno (`stockCortesViejos`, banner en Stock y línea en el cuadrito).
+  · **U30** un archivo de varios almacenes que no se entiende NUNCA se lee entero como uno (sumaba los tres en IM): `existSeccionesError`;
+    la fila que abre un bloque se reconoce aunque traiga código y nombre juntos.
+  · **U3** un «Ya pedí» vencido sin que ningún Excel lo muestre se DICE en la fila (`planYaVencidos`, 7 días): la cuenta no cambia.
+  · **U17 / U8 / U19** los títulos y la copia de 7 / 15 días / el mes dicen lo que cubre el número (15 incluye 7; el mes va ADEMÁS de 15;
+    el mes usa meses CERRADOS) y «Cómo se calcula» usa los números de la cuenta (lo vendido dentro del horizonte, lo en camino vigente).
+  · **U39** «Se corta»: lo vendido para diciembre ya no dice «⛔ Ya falta» con «Pedir» en 0, y con 0 en todos lados y el plan del mes
+    pidiendo dice «Sin stock · lo pide el plan…» (no «Alcanza más de 45 días»).
+  · **U40** «💤 Sobra» con el plan del mes pidiendo dice cuánto pide (como «Pedido único», §4jd A1-7).
+  · **U42** PTF «negativo» con el Excel de HOY dice «revisá las entregas (¿salieron de Banzer? ¿el Excel ya las traía?)», no «volvé a
+    contar» (`stockNegTxt`); la copia para fábrica nunca escribe «quedan -2».
+  · **U43** el Plan tiene «📋 7 días / 15 días / <mes>»: cada fábrica con su lista y su total (`textoProducir`, `copiarProducirTodo`).
+  · **U50** `CH2441` es el RESPALDAR PRAG. 105x190 (como el Excel) y `CH2453` (160 negro) está en la lista. **U51** el colchón Bahía con
+    la clave cruda «BAHIA» es descontinuado. **U37** la leyenda de «Vende por día» dice lo que cuenta.
+- **Decisiones del dueño (16-17/10)**:
+  · **Almohadas: «La RPT cuenta como venta»** (U7). En sep-oct las tiendas recibieron 115 almohadas por RPT y cargaron 38 ventas de
+    tienda. `stockEsAlmohadaK` + **`stockEsDemanda(p, k)`** renglón por renglón: para ALMOHADA/ALM/TRAVESSEIRO/NASA la RPT arma el ritmo
+    de 15 y 30 días, el índice del mes, el ranking y «Qué va a pedir cada tienda», y su venta de tienda NO se suma otra vez. Un colchón
+    por RPT sigue sin ser venta (§4dk). ⚠️ Todo camino nuevo que cuente demanda de un renglón pasa por `stockEsDemanda`, no por
+    `stockPedidoUnico` a secas.
+  · **«En producción» automático: «Sí, que se acuerde solo»** (U4; el dueño: *«todos los días tienes los saldos de almacén y sabés
+    cuándo entra y cuándo sale»*). Logística pide con su Excel y correo (§4hx) y no tilda «Ya pedí»: lo pedido y no terminado no está
+    en ningún Excel y el panel lo volvía a pedir cada día (30-38 % de más en «Pedir 7 días» del 09 al 16/10). Ahora, al terminar de
+    subir los Excel del día, el panel ANOTA lo que dice «Pedir 7 días» de cada producto en **`STOCK.ap`** (compacto:
+    `{clave:{día:[pedido, llegó, a mano, anulado, cuándo]}}`). Ese día no cuenta; desde el siguiente es «en producción» hasta la llegada
+    esperada (48 h + 1, `stockAutoEsp`) + `STOCK_AUTO_GRACIA`=2 días hábiles. Lo cierra la **entrada neta del lote** (los 3 almacenes
+    juntos más lo entregado: un traspaso se anula, `existLoteProduccion`), una vez por lote (`STOCK.apL`). Si no aparece, deja de contar
+    y la fila dice «⚠️ El panel pidió N el DD/MM y no apareció en ningún Excel: ¿se pidió?». En la fila: corregir la cantidad, «No se
+    pidió», «Llegó»; «✓ Ya pedí» de hoy a mano reemplaza al automático. Junta de dos equipos `fusAuto` (por producto y día, la versión
+    más nueva manda, lo llegado es el mayor); poda `stockPodarAuto` (12 días) en los tres caminos (`leerStock`, `stockFusionar`,
+    `filaStock` vía `stockPodar`). Con un Excel suelto (no el de los 3), `existLoteProduccion` usa el del almacén de la fábrica.
+    **Simulado con la planilla real del 09 al 16/10** (`backtest_auto.js`, scratchpad): la suma de «Pedir 7 días» de cada día bajó de
+    1.330 a 498. El primer día anota todo lo pendiente (231 u). El 16/10 vuelve a subir a 133 porque la fábrica NO hizo 83 de las 121
+    almohadas anotadas el 09/10: venció, avisa «¿se pidió?» y el panel las vuelve a pedir (es la verdad, no un error). Lo consumido es
+    poco frente a lo producido porque la fábrica hizo muchos productos que el panel no había pedido.
+  · **Lo vendido + el ritmo SUMADOS (§4ii): «Dejarlo así»** (U15). **Plazo de Moreno: «Sí, 4 días»**.
+  · **ROHO**: preguntó si sus pedidos cuentan. Ya cuentan: en 15 días los 61 pedidos de ROHO (102 u) arman el ritmo; en 30 días quedan
+    afuera solo 2 (14 u) que van a sus propias «TIENDA n» (puntuales, §4dj).
+- **Números con la planilla real del 16/10 a las 12:00** (lo que pide la versión de la rama, sin nada anotado todavía):
+  · publicado (`27f0134`): 7 días **185**, 15 días **345**, el mes **417** → rama: **210 / 392 / 424**.
+  · Por fábrica: Heaven (Moreno) 166 / 282 / 210 · Sueña (Multiespumas) 30 / 74 / 141 · ROHO-FLEX-PEDIC (Moreno) 12 / 34 / 73 · sin
+    fábrica (CLOUD 105 y 140, una venta cada uno) 2 / 2 / 0.
+  · Cambian 18 productos y cada cambio se explica: plazo 7 → 4 (7 y 15 días bajan 1 a 5 por producto; lo que no se pide ahora pasa al
+    mes), almohadas con la RPT (ALMOHADA 50x70 84 → 117 a 7 días, ritmo 4,6 → 7,9 por día; ALM/NASA 13 → 21), DYNAMICPEDIC se junta con
+    DYNAMIC PEDIC 160 (bloque ROHO, 2 / 2 / 8), y dos ✅ con fecha futura vuelven a reservarse (ORO ORTOPEDICO 160x198, ESPECIAL
+    SEMIORTOPEDICO 160x190).
+- **Sin arreglar a propósito** (se explica por qué):
+  · **U45** (un mes sin ventas no cuenta como 0 en el plan del mes): contando ceros, MORFEO 140 pasa de 0 a 21 por una compra única de
+    agosto (peor). El total no cambia. Queda.
+  · **Latentes sin efecto hoy** (0 casos en los datos): U32 (anular una recepción que pasó el Excel de origen devuelve la resta
+    entera), U33 (el Historial guarda la foto ya restada por recogidas), U34 (una orden sin `esp` cambia de fecha según cuándo se mira:
+    hoy no hay órdenes sin `esp`), U48 (un código conocido por el sistema pero no por la lista ni el Excel se parte por nombre), U49
+    (medida con «CM»), U52 (casos raros del lector: cantidad vacía, unidades, miles con punto).
+- **Para decidir con el dueño** (no son errores de cuenta: cada uno choca con una regla suya o necesita saber cómo trabaja logística):
+  · ⚠️ **U2, el más grande**: «ya incluye las entregas del día» es un sí/no para el DÍA entero, pero el Excel de las ~10:00 YA trae
+    descontado el camión de la mañana (12 de 13 unidades del 16/10 ya faltaban a las 10:05). Con la casilla sin marcar (como se subió)
+    el panel las resta otra vez; y antes del cierre de las 16:30 (sin ✅) además las RESERVA: «Pedir 7 días» +20 hasta el cierre. El
+    Excel de la tarde con la casilla marcada no resta lo de la tarde ya entregado. Propuesta: dos casillas, «ya cargaron la mañana» y
+    «ya cargaron la tarde», propuestas por la hora; lo de un turno incluido no se reserva ni se resta, con ✅ o sin él.
+  · U11 (el mes descuenta el resto de octubre con el ritmo de 30 días y «15 días» con el de 15), U14 (un pedido vencido con una línea 🏭
+    pendiente: las otras líneas se dan por entregadas), U16 (la venta de tienda y lo 🏭 arman un ritmo que se resta de PTF+Banzer), U25
+    (alias «ESPECIAL TROPICAL» = HEAVEN TROPICAL / SOMIER TROPICAL: confirmar), U29 y U44 (el cuadrito del vendedor usa TODO lo vendido
+    y sin ritmo: dice «no hay» por una venta de diciembre o «✅ disponible» donde el Plan dice «Pedí ya»), U35 (15 días por fecha de
+    entrega, 30 días por fecha de venta), U36 (pedidos internos ALBA/ALZER arman ritmo: 29 u de ALBA en 15 días), U46 («Lite» y
+    «ANTIALERGICO» sin «ESPECIAL»), CLOUD sin fábrica, el redondeo para arriba por producto (+30 en el mes), y Sueña: «📍 Banzer o PTF»
+    dice traer de Multiespumas y el Plan «traé de Moreno» (IM).
+  · El crítico: «📍 Banzer o PTF» tiene su PROPIO plan de 7/15/30 días (lo vendido + ritmo × H, sin plazo, margen ni reserva, §4hw:
+    51 / 146 / 344 el 16/10): es para dónde tener el stock, NO para pedir a producción. En la reunión, el número es el del Plan de stock
+    / Qué producir. Y el mes por producto se equivoca ±60 % (septiembre y octubre, probado hacia atrás): el TOTAL acierta (±5 %).
+- **Datos para logística** (no son del panel): pedidos con fecha pasada sin ✅ que el Excel dice que no salieron (OC 09-316, 10-064,
+  10-096, 10-020, 10-045, 10-164); ventas con el código de otra medida (OC 09-222 COLT0060→COLT0062, 09-340 CH2532→CH2531, 10-094
+  CS1030→CS1029); productos partidos que se pueden unir con 🔗 (PATAS PARA SOMIER / PATAS METALICAS, MILA, ESSENTIAL); pedidos
+  repetidos probables; 26 borradores de Kommo sin productos que ya tienen pedido; salidas sin pedido (NASA ALTO FREEZE −100,
+  TRAVESSEIRO −76: ¿a dónde fueron?); líneas 🏭 abiertas de hace 8-20 días; dos pedidos para diciembre (09-145, 09-368). El caso
+  «0 en el panel y 17 en el Excel» (U10) no se reprodujo: pedir captura si vuelve a pasar.
+- Pruebas: **`tests/test_stock_reunion.js` (56; 48 rojas contra `27f0134`)**. Cambiadas a conciencia: `test_producir` (títulos nuevos),
+  `test_eduardo_multicenter` (texto del mes), `test_rev_corte_codex` R5 (un ✅ con fecha futura anota `eF`), `test_adm_alta` (la
+  cabecera del Plan es más larga: mira 900 letras).
+- Commits en la rama: `6fcc29c` (fallas de cuenta), `a026d08` (almohadas), `ee3d9f8` («en producción» automático) y el de los arreglos
+  chicos (U37, U39, U40, U42, U43, U50, U51). Solo la página: el `.gs` sigue `2026-10-15-a`. Al publicar, todos F5.
