@@ -72,7 +72,7 @@ const J=(x)=>JSON.stringify(x);
              visible:!!(q && r && r.width>0 && r.height>0), top:r?Math.round(r.top):null, right:r?Math.round(r.right):null, ancho:window.innerWidth,
              valor:q?q.value:null, foco:document.activeElement===q, caret:q?q.selectionStart:null,
              q:STOCK_FILTRO.q, buscando:!!document.getElementById('stk-buscando'),
-             cuadros:{ producir:!!document.getElementById('producir'), revision:/🤖 Revisión automática · /.test(body.textContent), tiendas:/🏪|tiendas/i.test(body.textContent) },
+             cuadros:{ producir:!!document.getElementById('producir'), revision:/🤖 Revisión automática · /.test(body.textContent), tiendas:!!document.getElementById('tiendas') },   // (17/10) por el cuadro: la leyenda de «Vende por día» nombra las tiendas (§4lr U37)
              filas:filas };
   });
 

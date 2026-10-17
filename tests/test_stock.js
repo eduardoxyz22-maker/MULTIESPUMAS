@@ -317,7 +317,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('un depósito negativo no se muestra como número raro', negativo.dep<0, negativo.dep);
   chk('⚠️ …dice que se entregó más de lo contado y que hay que volver a contar',
-      /más de lo contado/.test(negativo.txt) && /volv[ée] a contar/.test(negativo.txt), (negativo.txt.match(/se entregaron[^·]*/)||[''])[0].slice(0,80));
+      /más de lo contado/.test(negativo.txt) && /(volv[ée] a contar|subí el Excel de hoy)/.test(negativo.txt)   /* (17/10, §4lr U42) con un corte viejo: «subí el Excel de hoy» */, (negativo.txt.match(/se entregaron[^·]*/)||[''])[0].slice(0,80));
 
   // ══ 6. Un conteo nuevo borra el error acumulado ════════════════════════════
   console.log('\n── 6. Volver a contar corrige la deriva ──');
