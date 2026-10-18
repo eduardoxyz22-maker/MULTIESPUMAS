@@ -14173,7 +14173,7 @@ function fxBuscaChip(x){
     if(!STOCK_CARGADO) return '';
     var k=stockInfo({ desc:x.d, medida:x.m, codigo:x.code }).k; if(!k || k==='|') return '';
     var v=saldoVeredicto(k, 1, saldoSinId(), saldoFechaForm(), true), t=v.tipo;
-    if(t==='hay') return '<span class="fx-bc ok">✅ '+(v.libres!=null?(Math.max(0,v.libres)+' libre'+(v.libres===1?'':'s')):'hay')+'</span>';
+    if(t==='hay') return '<span class="fx-bc ok">✅ '+(v.libres!=null?(Math.max(0,v.libres)+' libre'+(v.libres===1?'':'s')+saldoAlaFechaTxt(v, 'al')):'hay')+'</span>';   // 📅 (§4ls) a la fecha, si hay ventas para después
     if(t==='moreno') return '<span class="fx-bc mo">📥 en Moreno</span>';
     if(t==='recogida') return '<span class="fx-bc mo">🚚 viene</span>';
     if(t==='prod') return '<span class="fx-bc pr">⏳ en producción</span>';
@@ -24288,6 +24288,9 @@ function productoDeAlmacen(code){
     if((typeof STOCK_CARGADO!=='undefined' && !STOCK_CARGADO) || !stockHayAlgunExcel()) return null;
     var h0=ventasHistPorCodigo()[code]; if(!h0) return null;
     var hm=normMedida(h0.m||'')||normMedida(medidaDeTexto(h0.n)), hd=nombreSinMedida(h0.n)||String(h0.n||'').trim();
+    /* 📐 (18/10, §4ls H6) Un «Med.Esp.» del sistema trae en su columna de medida la ESTÁNDAR (CH1779 «ORO BI RELAX Med.Esp. 2.5PLZ
+       160X200CM» con «160x190»): el renglón quedaba con la medida equivocada y el cuadrito no decía 📐. Manda la del nombre. */
+    if(/MED\.?\s*ESP/i.test(String(h0.n||''))){ var hmn=normMedida(medidaDeTexto(h0.n)); if(hmn) hm=hmn; }
     if(!hd || !hm) return null;
     return { d:hd, m:hm, k:stockClaveCruda({ desc:hd, medida:hm }), code:code, hist:true };
   }
@@ -25565,7 +25568,8 @@ function saldoMedidaEspecial(x){
   var cat=CODIGOS[String((x&&x.codigo)||'').trim().toUpperCase()];
   if(cat && cat.m && saldoMismaMedida(cat.m, m)) return false;              // el código ES de esta medida
   var alm=cat ? null : productoDeAlmacen(x&&x.codigo);                      // (29/09) …o es de un producto del almacén en esta medida
-  if(alm && alm.m && saldoMismaMedida(alm.m, m)) return false;
+  // (18/10, §4ls H6) …lo completado desde el histórico (`hist`) no: no está en ningún Excel. Un «Med.Esp.» agotado es 📐.
+  if(alm && !alm.hist && alm.m && saldoMismaMedida(alm.m, m)) return false;
   var c=stockEnCatalogo({ desc:x.desc, medida:can });                       // sin el código: ¿este producto en esta medida?
   if(c && c.m && saldoMismaMedida(c.m, can)) return false;
   if(stockHayEnInventario(stockInfo({ desc:x.desc, medida:can }).k) || stockHayEnInventario(stockInfo({ desc:x.desc, medida:m }).k)) return false;
@@ -25658,7 +25662,8 @@ function saldoClasificar(f, prevPorClave, esPrev){
   var x=f.x;
   f.esp=saldoMedidaEspecial(x);
   f.codOtro=saldoCodigoOtro(x);
-  var pv=esPrev ? x : (prevPorClave ? prevPorClave[prodClave(x)] : null);
+  var pv=esPrev ? x : (prevPorClave ? (prevPorClave[prodClave(x)] ||
+          (x.medTxt ? prevPorClave[prodClave({ desc:x.desc, medida:'', codigo:x.codigo })] : null)) : null);   // (§4ls H7) guardado sin medida
   /* 🏭 va ANTES que 📐 (27/09): una medida especial es justo lo que logística manda a fabricar, y la ya pedida para este
      pedido dice cuándo llega (no «esperá ~X días» contados desde hoy, con una línea roja que no corresponde). */
   f.fab=(!f.codOtro && pv && enProduccion(pv) && (esPrev || (Number(pv.cant)||0)===(Number(x.cant)||0))) ? pv : null;
@@ -25671,6 +25676,22 @@ function saldoClasificar(f, prevPorClave, esPrev){
 /* ¿El renglón sale del saldo del almacén? (los otros no piden lectura ni muestran «Consultando…») */
 function saldoDelAlmacen(f){ return !!(f && f.completo && !f.esp && !f.codOtro && !f.fab); }
 
+/* 📐 (18/10, §4ls H7) La medida escrita en el NOMBRE con el campo «Medida» vacío («oro ortopedico 180x190»): la pestaña Stock la
+   entiende (`stockInfo` la saca del texto), pero el renglón no estaba «completo» y no había cuadrito, ni pregunta al guardar, ni
+   reserva — tampoco el 📐 de una medida especial («TITANIO ICE 180X200»). Para el cuadrito (nunca para el campo ni para guardar) se
+   usa esa medida; `medTxt` marca que salió del nombre: lo guardado se sigue buscando con la medida vacía (`saldoClasificar`). */
+function saldoConMedidaDelNombre(x, cat, alm){
+  if(!x || String(x.medida||'').trim() || (cat && !cat.m) || (alm && !alm.m)) return x;
+  var mt=normMedida(medidaDeTexto(String(x.desc||'')));
+  if(!mt) return x;
+  var y=Object.assign({}, x); y.medida=mt; y.medTxt=1; return y;
+}
+/* Lo mismo para una línea YA GUARDADA (la pregunta al guardar y el mensaje de Bloki la miran igual que a su renglón). */
+function saldoMedidaGuardada(x){
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod], alm=null;
+  if(!cat && cod){ try{ alm=productoDeAlmacen(cod); }catch(e){ alm=null; } }
+  return saldoConMedidaDelNombre(x, cat, alm);
+}
 /* Los renglones del formulario, con su clave de stock y la cantidad TOTAL de ese producto en el pedido. */
 function saldoFilasForm(){
   var cards=document.querySelectorAll('#f-productos .prod-card'), filas=[], tot={}, nro={}, activo=saldoAvisoActivo();
@@ -25682,15 +25703,19 @@ function saldoFilasForm(){
     var medida=ms ? (ms.value==='Otros' ? String((mo||{}).value||'').trim() : String(ms.value||'')) : '';
     var codigo=String((c.querySelector('.prod-codigo')||{}).value||'').trim();
     var qt=String((c.querySelector('.prod-cant')||{}).value||'').trim(), cant=Number(qt);
-    var cat=CODIGOS[codigo.toUpperCase()], x={ desc:desc, medida:medida, codigo:codigo, cant:cant };
+    var cat=CODIGOS[codigo.toUpperCase()];
     var alm=(!cat && codigo) ? productoDeAlmacen(codigo) : null;   // 🏷️ (29/09) un código del almacén que la lista no tiene
+    var x=saldoConMedidaDelNombre({ desc:desc, medida:medida, codigo:codigo, cant:cant }, cat, alm);   // 📐 (§4ls H7)
     /* Completo = producto + medida (o un código del catálogo o del almacén que no lleva medida) + una cantidad entera de 1
        para arriba. A medio escribir no se dice nada: un «TITAN» no es «no hay». */
-    var completo=activo && !!desc && !!(medida || (cat && !cat.m) || (alm && !alm.m)) && qt!=='' && cant>=1 && Math.floor(cant)===cant &&
+    var completo=activo && !!desc && !!(x.medida || (cat && !cat.m) || (alm && !alm.m)) && qt!=='' && cant>=1 && Math.floor(cant)===cant &&
                  !esProdDeTienda(x) && !esCombo(desc);
     var f={ card:c, box:box, x:x, completo:completo, k:'', g:'', cat:false, total:0, nRen:0 };
     if(completo){
-      var inf=stockInfo(x); f.k=inf.k; f.cat=!!inf.cat;
+      /* 🏷️ (18/10, §4ls H6) Un código AGOTADO que se completó desde el histórico (`alm.hist`, §4hd X-3) se le pregunta a la cuenta
+         como uno del catálogo: el aviso ya le dijo a la vendedora «se agotó, su saldo es 0», y el cuadrito quedaba gris («No
+         encuentro este producto»), sin la pregunta al guardar ni la reserva. Ahora dice «🏭 NO HAY» con saldo 0. */
+      var inf=stockInfo(x); f.k=inf.k; f.cat=!!inf.cat || !!(alm && alm.hist);
       if(!f.k || f.k==='|') f.completo=false;
       else { saldoClasificar(f, prevPorClave); tot[f.g]=(tot[f.g]||0)+cant; nro[f.g]=(nro[f.g]||0)+1; }
     }
@@ -25701,6 +25726,21 @@ function saldoFilasForm(){
 }
 
 /* El veredicto para UN producto y una cantidad (`idEditado`: el pedido que se edita, que no se cuenta). */
+/* 📅 (18/10, §4ls, decisión 3 del dueño: «para prometer un día descuenta solo lo vendido con fecha hasta ese día —no lo vendido para
+   dentro de 10 días—; abajo sigue diciendo cuánto hay pendiente en total») LA RESERVA ES POR FECHA, como reparte la revisión
+   automática (`stockAsignar`, FIFO por fecha de entrega). Para prometer el día D (la fecha elegida, o el primer día con cupo desde
+   el que podría salir) se descuenta solo lo vendido sin entregar con fecha ≤ D (`stockCompHasta`, de la MISMA `o.compPor` de
+   `stockData`; lo atrasado cuenta como de hoy) más lo de este pedido. Si alcanza, «✅ DISPONIBLE» aunque haya ventas para después:
+   esas tienen tiempo de reponerse (el Plan de stock ya las pide). Antes se descontaba TODO lo pendiente y el cuadrito decía
+   «🏭 NO HAY» con stock a mano (09-16/10: 10 de 104 renglones, 7 de ellos ALMOHADA 50x70: 35 a mano, 34 vendidas, 4 hasta su
+   fecha).
+   · Cada escalón (a mano → Moreno y recogidas → lo que viene de fábrica → mandar a producir) mira SU día: el que prometería
+     (`saldoDiaConCupo`) o la fecha elegida si es ese día o después. Lo que llega cubre primero lo vendido hasta ese día.
+   · `v.pend` sigue siendo TODO lo pendiente; `v.pendFecha` lo de hasta `v.fechaRes`, `v.pendDespues` el resto. `v.libres` y
+     `v.faltan` son A LA FECHA (y es lo que viaja en la reserva del servidor: lo que se prometió); `v.libresTotal`, en total.
+   · `v.despues`: si con este pedido lo vendido para después del día ya no alcanza, cuánto falta y antes de qué día hay que
+     reponerlo (y si lo que se puede traer o fabricar no llega a tiempo, qué pedido se atrasaría).
+   · ⚠️ Lo DISCONTINUADO va en total, como antes: no se repone, así que lo vendido para después no tiene de dónde salir. */
 function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
   var hoy=todayStr(), cant=Math.max(1, Number(cantidad)||1);
   var v={ k:clave, cant:cant, tipo:'sin', color:'gris', sinLibre:false, sinId:idEditado||'' };
@@ -25719,42 +25759,94 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
   v.prod=fab.reduce(function(s,q){ return s+(Number(q.u)||0); }, 0);
   if(mano==null){ v.tipo='sincontar'; return v; }
   v.alm=mano+v.moreno+v.recogida;
-  v.libres=v.alm-v.pend;                      // puede dar negativo: hay más vendido que lo que hay
-  var disp='';
-  if(mano-v.pend>=cant){ v.tipo='hay'; v.color='verde'; disp=hoy; }
-  else if(v.libres>=cant){
+  v.libresTotal=v.alm-v.pend;                 // en total: puede dar negativo (hay más vendido que lo que hay)
+  /* 📅 (§4ls) El día de cada escalón y lo vendido hasta ese día. La fecha elegida vale si no es de un día que ya pasó; en «a mano»
+     también la de hoy (Eduardo y ROHO pueden agendar para hoy). */
+  var porFecha=!v.descont, fe=(fechaElegida && String(fechaElegida)>=hoy) ? String(fechaElegida) : '';
+  var cupo={}, prox=proximoDiaEntrega();
+  var diaCupo=function(min){ if(!cupo[min]) cupo[min]=saldoDiaConCupo(min, idEditado); return cupo[min]; };
+  var diaRes=function(min, aMano){ if(fe && (aMano || fe>=min)) return fe; return diaCupo(min).f || min; };
+  var pendA=function(d){ return porFecha ? stockCompHasta(o, d) : v.pend; };
+  var disp='', D='', Dvisto='', sup=0, resto=[];
+  var fabS=fab.map(function(q){ return { u:Number(q.u)||0, llega:(q.arr||q.f) ? saldoSaleDeFabrica(q.arr||q.f) : q.llega }; })   // (§4jd) desde el día en que arrancó
+              .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); });
+  var lotesFab=function(desde){ return fabS.slice(desde).map(function(q){ return { u:q.u, d:stockSumarDias(saldoMax(q.llega||hoy, hoy), 1) }; }); };
+  var ent=saldoEntradas(v, o, hoy);
+  D=diaRes(prox, true); Dvisto=D;
+  if(mano-pendA(D)>=cant){
+    v.tipo='hay'; v.color='verde'; disp=hoy; sup=mano;
+    resto=ent.map(function(e){ return { u:e.u, d:stockSumarDias(e.disp, 1) }; }).concat(lotesFab(0));
+  }
+  else {
     /* 🚚 (28/09, revisión de Codex) Lo que no está a mano llega en fechas DISTINTAS: lo que sigue en Moreno se trae en
        `STOCK_DIAS_RECOGIDA`, pero lo que ya va en una recogida PROGRAMADA llega el día de esa recogida (el que eligió
        logística). Antes todo era «se trae en 1 día»: con la recogida para el 05/10, el 23/09 decía «programá desde el
-       viernes 25». Se consume por fecha: primero lo ya vendido (`pend`), después este pedido. */
-    var ent=saldoEntradas(v, o, hoy), need=v.pend+cant-mano, cum=0, e=null;
-    for(var j=0;j<ent.length;j++){ cum+=ent[j].u; if(cum>=need-1e-9){ e=ent[j]; break; } }
+       viernes 25». Se consume por fecha: primero lo ya vendido hasta ese día, después este pedido. */
+    var cum=mano, e=null, Dj='';
+    for(var j=0;j<ent.length;j++){
+      cum+=ent[j].u; Dj=diaRes(saldoMax(prox, stockSumarDias(ent[j].disp, 1)), false); if(Dj>Dvisto) Dvisto=Dj;
+      if(cum-pendA(Dj)>=cant-1e-9){ e=ent[j]; D=Dj; sup=cum; resto=ent.slice(j+1).map(function(x){ return { u:x.u, d:stockSumarDias(x.disp, 1) }; }).concat(lotesFab(0)); break; }
+    }
     if(e && e.rec){ v.tipo='recogida'; v.color='ambar'; v.llega=e.llega; v.atrasada=e.atrasada; v.recDe=e.de; disp=e.disp; }
     // 📥 (28/09) no mira la hora (dueño: «se cargó lunes, se recoge martes, se entrega miércoles»): se recoge el día hábil siguiente
-    else { v.tipo='moreno'; v.color='ambar'; v.recoge=saldoDiaRecoge(); disp=v.recoge; }
+    else if(e){ v.tipo='moreno'; v.color='ambar'; v.recoge=saldoDiaRecoge(); disp=v.recoge; }
+    else {
+      v.sinLibre=true;
+      /* Lo que viene de fábrica cubre primero lo que ya está vendido (hasta ese día), y recién después este pedido.
+         🏭 (28/09) Cada pedido a fábrica sale `DIAS_PRODUCCION` días hábiles después del día en que se pidió (la regla del
+         dueño, la misma de «hay que mandar a producir»): si no, el día que logística lo pide la promesa se corría un día. */
+      var cumF=v.alm;
+      for(var i=0;i<fabS.length;i++){
+        cumF+=fabS[i].u;
+        var ll=fabS[i].llega||saldoSaleDeFabrica(diaArranque()), Di=diaRes(saldoMax(prox, stockSumarDias(saldoMax(ll, hoy), 1)), false);
+        if(cumF-pendA(Di)>=cant-1e-9){ v.llega=ll; D=Di; sup=cumF; resto=lotesFab(i+1); break; }
+      }
+      if(v.llega){ v.tipo='prod'; v.color='ambar'; v.atrasada=(v.llega<hoy); disp=saldoMax(v.llega, hoy); }
+      else if(v.descont){ v.tipo='nofab'; v.color='rojo'; D=Dvisto; }
+      /* 🏭 (28/09) «se manda a producir martes a las 8, debería salir en 48 horas y las otras 24 son para recoger y entregar»:
+         la fábrica arranca `diaArranque()` (la hora de corte), sale `DIAS_PRODUCCION` días hábiles después y ese día se recoge. */
+      else { v.tipo='pedir'; v.color='rojo'; v.arranca=diaArranque(); v.sale=saldoSaleDeFabrica(v.arranca); disp=v.sale;
+             D=diaRes(saldoMax(prox, stockSumarDias(v.sale, 1)), false); }
+      /* Lo que no alcanza se dice al día más lejano que se miró: con una recogida programada para más adelante que la fábrica, el día
+         de la fábrica contaría esas unidades como libres sin que lleguen. */
+      if(Dvisto>D) D=Dvisto;
+    }
   }
-  else {
-    v.sinLibre=true;
-    /* Lo que viene de fábrica cubre primero lo que ya está vendido (lo que falta), y recién después este pedido.
-       🏭 (28/09) Cada pedido a fábrica sale `DIAS_PRODUCCION` días hábiles después del día en que se pidió (la regla del
-       dueño, la misma de «hay que mandar a producir»): si no, el día que logística lo pide la promesa se corría un día. */
-    var falta=cant-v.libres, cum=0;
-    var fabS=fab.map(function(q){ return { u:Number(q.u)||0, llega:(q.arr||q.f) ? saldoSaleDeFabrica(q.arr||q.f) : q.llega }; })   // (§4jd) desde el día en que arrancó
-                .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); });
-    for(var i=0;i<fabS.length;i++){ cum+=fabS[i].u; if(cum>=falta-1e-9){ v.llega=fabS[i].llega||saldoSaleDeFabrica(diaArranque()); break; } }
-    if(v.llega){ v.tipo='prod'; v.color='ambar'; v.atrasada=(v.llega<hoy); disp=saldoMax(v.llega, hoy); }
-    else if(v.descont){ v.tipo='nofab'; v.color='rojo'; }
-    /* 🏭 (28/09) «se manda a producir martes a las 8, debería salir en 48 horas y las otras 24 son para recoger y entregar»:
-       la fábrica arranca `diaArranque()` (la hora de corte), sale `DIAS_PRODUCCION` días hábiles después y ese día se recoge. */
-    else { v.tipo='pedir'; v.color='rojo'; v.arranca=diaArranque(); v.sale=saldoSaleDeFabrica(v.arranca); disp=v.sale; }
-  }
+  v.fechaRes=D; v.porFecha=porFecha;
+  v.pendFecha=pendA(D); v.pendDespues=Math.max(0, v.pend-v.pendFecha);
+  v.libres=v.alm-v.pendFecha;                 // A LA FECHA: puede dar negativo
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
+  if(!v.sinLibre && v.pendDespues>0)
+    v.despues=saldoDespues(o, D, sup-v.pendFecha-cant, resto, stockSumarDias(saldoSaleDeFabrica(diaArranque()), 1));
   if(disp){
-    var min=(v.tipo==='hay') ? proximoDiaEntrega() : saldoMax(proximoDiaEntrega(), stockSumarDias(disp,1));
-    saldoPonerDia(v, min, idEditado);
+    var min=(v.tipo==='hay') ? prox : saldoMax(prox, stockSumarDias(disp,1));
+    saldoPonerDia(v, min, idEditado, diaCupo(min));
     if(v.tipo!=='hay' && fechaElegida && fechaElegida<min) v.fechaCorta=fechaElegida;
   }
   return v;
+}
+/* 📅 (18/10, §4ls) Lo vendido para DESPUÉS del día prometido, con este pedido adentro: `queda` = lo que sobra del escalón que lo
+   cubrió (a mano; con Moreno; con lo que viene de fábrica), `lotes` = lo que todavía puede llegar `{u, d}` (d = desde qué día sale) y
+   `P` = desde qué día sale lo que se mande a producir HOY. Devuelve null si alcanza, o `{ u, antes, atrasa }`: cuántas faltan, la
+   primera fecha que queda corta (antes de esa hay que reponer) y, si lo que se puede traer o fabricar no llega a tiempo, la fecha
+   del pedido que se atrasaría. El orden es el de la revisión automática: por fecha de entrega. */
+function saldoDespues(o, D, queda, lotes, P){
+  var fechas=Object.keys((o&&o.compPor)||{}).filter(function(f){ return f>D; }).sort();
+  var tot=0; fechas.forEach(function(f){ tot+=o.compPor[f]; });
+  queda=Math.max(0, Number(queda)||0);
+  if(!(tot>queda+1e-9)) return null;
+  var L=(lotes||[]).filter(function(l){ return l && l.u>0; }).sort(function(a,b){ return a.d<b.d ? -1 : (a.d>b.d ? 1 : 0); });
+  var out={ u:tot-queda, antes:'', atrasa:'' }, cum=0;
+  for(var i=0;i<fechas.length;i++){
+    var f=fechas[i]; cum+=o.compPor[f];
+    var corto=cum-queda; if(!(corto>1e-9)) continue;
+    if(!out.antes) out.antes=f;
+    if(!out.atrasa && (!P || f<P)){
+      var extra=0; L.forEach(function(l){ if(l.d<=f) extra+=l.u; });
+      if(corto>extra+1e-9) out.atrasa=f;
+    }
+  }
+  return out;
 }
 /* 🚚 (28/09) Lo que NO está a mano, por el día en que llega a fábrica: lo que sigue en Moreno (se trae en
    `STOCK_DIAS_RECOGIDA`) y cada recogida programada con SU fecha (`llega` = la que eligió logística). `enRecogida` se
@@ -25778,8 +25870,8 @@ function saldoEntradas(v, o, hoy){
 /* 📅 El día que se promete y cuánto espera el cliente. (28/09, revisión de Codex) Si en `SALDO_DIAS_CUPO` días no hay
    ningún turno libre, NO se promete ninguno (`sinCupo`): antes se devolvía el primer día igual, cerrado o lleno, y el
    cuadrito decía «podés programar desde mañana» con mañana cerrado. */
-function saldoPonerDia(v, min, sinId){
-  var c=saldoDiaConCupo(min, sinId);
+function saldoPonerDia(v, min, sinId, c){   // `c` (§4ls): el día con cupo, si ya se buscó
+  c=c || saldoDiaConCupo(min, sinId);
   v.minimo=min; v.desde=c.f; v.turnos=c.turnos;
   if(c.sinCupo){ v.sinCupo=true; v.espera=null; if(v.color==='verde') v.color='ambar'; }   // «hay» sin día para entregar no es verde
   else v.espera=Math.max(1, stockDias(todayStr(), c.f));
@@ -25905,23 +25997,43 @@ function saldoTitulo(v){
 /* 🧮 (01/10) «Faltan 2» con «En almacén 2 · Pendientes de entrega 3» confundía al dueño («¿qué pasa con las matemáticas?»):
    el libre negativo no se muestra, así que no se ve que ya se había vendido 1 de más ANTES de este pedido. La cuenta, con
    todas las letras: faltan = pendientes + lo de este pedido − en almacén (es exactamente `v.faltan`). */
+/* 📅 (18/10, §4ls) Con ventas para DESPUÉS del día que se promete, los números son A ESA FECHA y lo dicen («Pendientes hasta el
+   20/10», «Libres para el 20/10»); el total va en su propia línea (`saldoTotalHtml`). Sin nada para después, el total y lo de la
+   fecha son lo mismo y se dice como siempre. */
+function saldoAlaFechaTxt(v, pre){ return (v && v.pendDespues>0 && v.fechaRes) ? (' '+pre+' '+fmtFechaCorta(v.fechaRes)) : ''; }
 function saldoFaltanCuentaTxt(v){
-  var partes=[];
-  if(v.pend>0) partes.push(stockUnid(v.pend)+' pendiente'+(v.pend===1?'':'s'));
+  var partes=[], p=(v.pendFecha!=null) ? v.pendFecha : v.pend;
+  if(p>0) partes.push(stockUnid(p)+' pendiente'+(p===1?'':'s')+saldoAlaFechaTxt(v, 'hasta el'));
   partes.push(stockUnid(v.cant)+' de este pedido');
   return '('+partes.join(' + ')+' − '+stockUnid(v.alm)+' en almacén)';
 }
 function saldoNumerosHtml(v){
-  var h=[];
+  var h=[], aF=saldoAlaFechaTxt(v, 'para el');
   if(v.alm!=null) h.push('En almacén <b>'+stockUnid(v.alm)+'</b>');
-  if(v.pend!=null) h.push('Pendientes de entrega <b>'+stockUnid(v.pend)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
+  if(v.pend!=null){
+    if(v.pendDespues>0) h.push('Pendientes'+saldoAlaFechaTxt(v, 'hasta el')+' <b>'+stockUnid(v.pendFecha)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
+    else h.push('Pendientes de entrega <b>'+stockUnid(v.pend)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
+  }
   if(v.alm!=null){
-    if(v.libres>=v.cant) h.push('Libres <b>'+stockUnid(v.libres)+'</b>');
-    else { if(v.libres>0) h.push('Libres <b>'+stockUnid(v.libres)+'</b>'); h.push('Faltan <b>'+stockUnid(v.faltan)+'</b> '+saldoFaltanCuentaTxt(v)); }
+    if(v.libres>=v.cant) h.push('Libres'+aF+' <b>'+stockUnid(v.libres)+'</b>');
+    else { if(v.libres>0) h.push('Libres'+aF+' <b>'+stockUnid(v.libres)+'</b>'); h.push('Faltan'+aF+' <b>'+stockUnid(v.faltan)+'</b> '+saldoFaltanCuentaTxt(v)); }
   }
   if(v.prod>0) h.push('En producción <b>'+stockUnid(v.prod)+'</b>');
   if(v.nRen>1) h.push('este pedido lleva <b>'+stockUnid(v.cant)+'</b> (en '+v.nRen+' renglones)');
   return h.join(' · ');
+}
+/* 📅 (§4ls) La segunda línea: «Pendiente en total: 34 (30 para después del 20/10)». Solo cuando hay algo para después. */
+function saldoTotalHtml(v){
+  if(!v || !(v.pendDespues>0) || !v.fechaRes) return '';
+  return 'Pendiente en total: <b>'+stockUnid(v.pend)+'</b> ('+stockUnid(v.pendDespues)+' para después del '+esc(fmtFechaCorta(v.fechaRes))+')';
+}
+/* 📅 (§4ls) El aviso ámbar: con este pedido, lo vendido para después del día ya no alcanza y hay que reponer antes de una fecha.
+   Si lo que se puede traer o fabricar no llega a tiempo, lo dice más fuerte: ese pedido se atrasaría. */
+function saldoDespuesTxt(v){
+  var d=v && v.despues; if(!d || !(d.u>0)) return '';
+  var base='⚠️ Con este pedido, a lo vendido para después del '+fmtFechaCorta(v.fechaRes)+' le '+(d.u===1?'va':'van')+' a faltar '+stockUnid(d.u);
+  if(d.atrasa) return base+' y lo que se puede traer o fabricar no llega antes del '+fmtFechaCorta(d.atrasa)+': el pedido de ese día se atrasaría. Avisá a logística (el Plan de stock ya pide reponerlo).';
+  return base+': hay que reponer antes del '+fmtFechaCorta(d.antes)+'. El Plan de stock ya lo pide.';
 }
 function saldoCorteTxt(){
   var c=STOCK.c||{}; if(!c.f) return '';
@@ -25993,6 +26105,8 @@ function saldoCajaHtml(v){
     return h;
   }
   var n=saldoNumerosHtml(v); if(n) h+='<div class="ps-n">'+n+'</div>';
+  var tl=saldoTotalHtml(v); if(tl) h+='<div class="ps-n ps-tot">'+tl+'</div>';                 // 📅 (§4ls) el total, aparte
+  var dp=saldoDespuesTxt(v); if(dp) h+='<div class="ps-w ps-desp">'+esc(dp)+'</div>';          // 📅 (§4ls) lo de después no alcanza
   if(v.desconocido) h+='<div class="ps-n">No encuentro este producto en el saldo del almacén: revisá el nombre y la medida.</div>';
   if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
   saldoAvisos().forEach(function(a){ h+='<div class="ps-w">'+esc(a)+'</div>'; });
@@ -26102,6 +26216,7 @@ function saldoFilasAGuardar(prev, isEdit, deBorrador){
   if(edita){
     (prev.productos||[]).forEach(function(x){
       if(!x || esProdDeTienda(x)) return;
+      x=saldoMedidaGuardada(x);                                          // 📐 (§4ls H7) como su renglón del formulario
       var g=saldoClasificar({ x:x, k:stockClave(x) }, null, true).g;       // el mismo grupo que su renglón del formulario
       prevQ[g]=(prevQ[g]||0)+(Number(x.cant)||0);
     });
@@ -26126,7 +26241,7 @@ function saldoAlertaTxt(v){
                                  (v.cod ? (' ⚠️ El código '+v.cod.code+' es del '+saldoCodNombre(v.cod)+': borralo del renglón.') : '');
   if(v.tipo==='codigo')   return 'el código '+v.cod.code+' es de '+saldoCodNombre(v.cod)+', no de lo que dice el renglón: corregí el código o '+
                                  (v.cod.por==='medida' ? 'la medida' : 'el producto')+'. '+saldoCodBienTxt(v);
-  var f='no hay saldo libre (faltan '+stockUnid(v.faltan)+').';
+  var f='no hay saldo libre'+saldoAlaFechaTxt(v, 'para el')+' (faltan '+stockUnid(v.faltan)+').';   // 📅 (§4ls) a la fecha, si hay ventas para después
   if(v.tipo==='prod')  return f+' Está en producción: llega el '+fmtFechaCorta(v.llega)+', el cliente espera '+saldoDiasTxt(v.espera)+'.';
   if(v.tipo==='pedir') return f+' Hay que mandar a producir (avisá a logística): el cliente espera '+saldoDiasTxt(v.espera)+'.';
   if(v.tipo==='nofab') return 'ya no se fabrica y no alcanza'+(v.libres>0 ? (' (quedan '+stockUnid(v.libres)+')') : ' (no queda ninguno)')+'.';
@@ -26192,7 +26307,11 @@ function saldoReservaArmar(){
       if(!saldoDelAlmacen(f) || vistos[f.g]) return; vistos[f.g]=1;
       var l={ k:f.k, u:f.total, conocidos:saldoIdsConClave(f.k), nombre:saldoNombre(f.x) }, v=null;
       try{ v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat); }catch(e){ v=null; }
-      if(v && v.libres!=null && isFinite(Number(v.libres))) l.libres=Number(v.libres);   // sin número (sin contar, desconocido): se anota, no se avisa
+      /* 📅 (18/10, §4ls) `libres` es A LA FECHA que se prometió (`v.libres`, la reserva por fecha): lo vendido para después no lo
+         descuenta. Sin número (sin contar, desconocido): se anota, no se avisa. `tipo`, `fecha` y `porFecha` se quedan acá, para
+         el aviso de vuelta (`saldoAvisoServidor`): al servidor no van. */
+      if(v && v.libres!=null && isFinite(Number(v.libres))) l.libres=Number(v.libres);
+      if(v){ l.tipo=v.tipo; l.fecha=v.fechaRes||''; l.porFecha=!!(v.pendDespues>0); }
       lineas.push(l);
     });
     if(!lineas.length) return null;
@@ -26207,11 +26326,20 @@ function saldoReservaArmar(){
    la edición para reprogramar la entrega. */
 function saldoAvisoServidor(rec, saldo, reserva){
   try{
-    var nombres={}; ((reserva&&reserva.lineas)||[]).forEach(function(l){ nombres[l.k]=l.nombre; });
+    var nombres={}, lin={}; ((reserva&&reserva.lineas)||[]).forEach(function(l){ nombres[l.k]=l.nombre; lin[l.k]=l; });
+    /* 🔇 (18/10, §4ls H2) Si el vendedor ya había visto «🏭 NO HAY» (mandar a producir) o «🛑 YA NO SE FABRICA» —y le preguntó antes
+       de guardar—, lo que vendió otro no le cambia nada: esa espera no depende de cuántas falten. La ventana era una alarma de más.
+       Con «⏳ EN PRODUCCIÓN», Moreno o «hay» sí se avisa: la venta del otro puede correr su fecha. */
+    saldo=(saldo||[]).filter(function(s){ var l=lin[s.k]; return !(l && (l.tipo==='pedir' || l.tipo==='nofab')); });
+    if(!saldo.length) return;
     var aQuien=esRPT(rec&&rec.oc) ? 'a la sucursal' : 'al cliente';
     var items=saldo.map(function(s){
-      var nom=nombres[s.k] || String(s.k||'').split('|').filter(function(t){ return t; }).join(' ');
-      return '<li><b>otro vendedor vendió '+esc(stockUnid(s.otros))+' de '+esc(nom)+'</b>: ya no hay saldo libre (faltan '+esc(stockUnid(s.faltan))+').</li>';
+      var nom=nombres[s.k] || String(s.k||'').split('|').filter(function(t){ return t; }).join(' '), l=lin[s.k];
+      /* 📅 (§4ls) Con la reserva por fecha, el servidor no sabe para qué día vendió el otro: si fue para después del nuestro, no nos
+         quita nada. Se dice «puede que» y el pedido abierto (que relee la planilla) dice la verdad. */
+      var que=(l && l.porFecha && l.fecha) ? ('para el '+fmtFechaCorta(l.fecha)+' puede que ya no alcance (faltarían '+stockUnid(s.faltan)+')')
+                                          : ('ya no hay saldo libre (faltan '+stockUnid(s.faltan)+')');
+      return '<li><b>otro vendedor vendió '+esc(stockUnid(s.otros))+' de '+esc(nom)+'</b>: '+esc(que)+'.</li>';
     }).join('');
     var m=document.getElementById('modal'), box=document.getElementById('modal-box');
     SALDO_MODAL_PREVIO=(m && box && m.classList.contains('on')) ? { html:box.innerHTML, ancha:box.classList.contains('ancha') } : null;
@@ -36853,6 +36981,7 @@ function asisMsgEspera(rec){
   var G={}, orden=[];
   (rec.productos||[]).forEach(function(x){
     if(!x || esProdDeTienda(x) || esCombo(x.desc||'') || !(Number(x.cant)>=1)) return;
+    x=saldoMedidaGuardada(x);                                         // 📐 (§4ls H7) la medida escrita en el nombre, como el cuadrito
     var inf=stockInfo(x); if(!inf.k || inf.k==='|') return;
     var f=saldoClasificar({ x:x, k:inf.k, cat:!!inf.cat, completo:true, total:0, nRen:0 }, null, true);
     if(!G[f.g]){ G[f.g]=f; orden.push(f.g); }
@@ -36900,7 +37029,7 @@ var ASIS_AYUDA=[
   { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar', v:'form', f:'#f-cliente', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago y tocá «Guardar pedido».'] },
   { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Si es QR o tarjeta, adjuntá la foto del comprobante.','Lo que paga después lo registra Contabilidad desde la ficha de la venta.'] },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
-  { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','Siempre podés guardar igual: es un aviso.'] },
+  { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','📅 Los números son para el día que elegiste: lo vendido para después no se descuenta, y abajo dice cuánto hay pendiente en total.','Siempre podés guardar igual: es un aviso.'] },
   { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Obligatorio: si es 🛡️ garantía o 🔧 contra costo (STC), el motivo, el detalle de qué le pasa, la fecha de compra y qué se le recoge. Sin eso no se guarda.','Podés adjuntar hasta 2 fotos del producto. No se cobra: la parte del pago se esconde sola.'] },
   { q:'¿Cómo pido reposición para mi tienda (RPT)?', k:'rpt reposicion tienda sucursal', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido elegí 🏪 RPT.','Elegí la sucursal: la dirección y la zona se completan solas.','Cargá los productos y marcá si es Reposición o Adicional.','Al guardar, bajá el Excel y mandalo por correo.'] },
   { q:'¿Cómo aviso a mis clientes de mañana?', k:'avisar cliente whatsapp manana entrega', v:'mis', f:'#mis-vendedor', p:['Entrá a 📋 Mis pedidos y elegí tu nombre.','Desde las 17:00 aparece «🔔 Mañana» con tus clientes.','Tocá 💬 WhatsApp en cada uno: el mensaje sale armado.'] },

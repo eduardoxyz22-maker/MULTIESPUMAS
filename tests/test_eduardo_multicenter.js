@@ -294,9 +294,12 @@ function NUMEROS(k){
   chk('…y la caché del formulario se rehace con la corrección (no queda una foto vieja)', c.saldoCant===c.saldoIni-5, [c.saldoIni, c.saldoCant]);
   /* El cuadrito del saldo usa lo pendiente de TODOS, los almacenes y la fábrica; nunca el ritmo ni `stockPedidoUnico`.
      Lo pendiente de Eduardo (a Multicenter o a quien sea) ya contaba antes: con los mismos pedidos da IGUAL. */
+  /* (18/10, §4ls, decisión 3) El cuadrito reserva POR FECHA: lo pendiente de Eduardo es para dentro de 6 días, así que para mañana
+     no se descuenta. Se compara para el MISMO día de ese pendiente, donde las dos páginas descuentan todo lo pendiente. */
   const cuadrito = (P) => P.evaluate(() => {
     var K=ESCENARIO({ rpt:true, mc:true, pend:true }); STOCK_CARGADO=true; if(typeof SALDO_GEN!=='undefined') SALDO_GEN++;
-    return [1,4,9].map(function(n){ var v=saldoVeredicto(K.KT, n, '', '', true); return [n, v.tipo, v.alm, v.pend, v.libres, v.faltan].join('|'); });
+    var f=stockSumarDias(todayStr(), 6);
+    return [1,4,9].map(function(n){ var v=saldoVeredicto(K.KT, n, '', f, true); return [n, v.tipo, v.alm, v.pend, v.libres, v.faltan].join('|'); });
   });
   const cuN = await cuadrito(NUEVA), cuV = await cuadrito(VIEJA);
   chk('el cuadrito del formulario da lo mismo que en la página publicada (lo pendiente de Eduardo ya contaba)', JSON.stringify(cuN)===JSON.stringify(cuV), { nueva:cuN, antes:cuV });

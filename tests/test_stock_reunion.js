@@ -213,7 +213,9 @@ function PREPARAR(){
     });
     var p=_ped('p-u20', '2026-10-24', [{ codigo:'CS1014', desc:'COLCHON CONFORT PLUS', medida:'180x190', cant:3, precio:1000 }]);
     await _cargar([p], st);
-    var v=saldoVeredicto(K, 1, '', '', true);
+    /* (18/10, §4ls, decisión 3) Para el MISMO día que lo vendido (24/10): con la reserva por fecha, para antes del 24/10 las 3
+       contadas están libres y el cuadrito dice «✅ hay» (lo cuida `test_stock_rev2_cuadrito_fecha`). Acá se mira U20. */
+    var v=saldoVeredicto(K, 1, '', '2026-10-24', true);
     return { tipo:v.tipo, llega:v.llega||'', libres:v.libres };
   });
   chk('RN-U20. vendido todo lo contado: el cuadrito dice «🏭 NO HAY · mandar a producir», no «⏳ en producción» con lo que ya llegó', u20.tipo==='pedir', u20);

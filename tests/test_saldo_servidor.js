@@ -13,7 +13,8 @@
       160x190 … faltan 1», su pedido SÍ quedó en la planilla, y «Entendido» le devuelve el mensaje para el grupo. A A no le sale
       nada. El guardado de B llevó `reserva` con la hora de su lectura y sin el id de A.
    2. Otra vuelta: A vende de nuevo (a A el formulario le pregunta antes, como siempre) y B guarda otra vez con la copia vieja:
-      «vendió 2 … faltan 3». «✏️ Abrir el pedido» relee la planilla y abre la edición: el cuadrito ya cuenta a todos («Faltan 3»).
+      como B ya veía «🏭 NO HAY», no le sale la ventana (18/10, §4ls H2: la espera de mandar a producir no depende de cuántas
+      falten). «✏️ Abrir el pedido» relee la planilla y abre la edición: el cuadrito ya cuenta a todos («Faltan 3»).
    3. Con el .gs de ANTES (2026-09-30-a, `git show 4a950cc`): la página manda `reserva` igual, el servidor la ignora, no sale
       ninguna ventana y todo sigue como siempre (ni error, ni cola).
    Datos SINTÉTICOS (el repo es público). Reloj clavado en el miércoles 23/09/2026, 15:00 de Bolivia.
@@ -210,12 +211,15 @@ function INIT_DOS(vend){
   await vender(B, 'CLIENTE DE B 2', 1);                  // B sigue con la copia vieja: su propio B1 sí lo tiene (lo guardó acá)
   const mB3 = await B.evaluate(() => _modal());
   const idB2 = (S.filas().find(f => f.cliente==='CLIENTE DE B 2')||{}).id;
-  chk('⚠️ B guarda otro con la copia vieja: le preguntó antes por lo SUYO (faltan 1: ya tenía 1 pendiente), y el servidor agrega lo de A: «otro vendedor vendió 2 … (faltan 3)»',
-      !!idB2 && B.__dialogos.length===1 && /faltan 1/.test(B.__dialogos[0]) && mB3.on && /otro vendedor vendió 2 de TITANIO ICE 160x190: ya no hay saldo libre \(faltan 3\)/.test(mB3.txt), [B.__dialogos.map(d => d.slice(0,120)), mB3.txt.slice(0,200)]);
-  // «✏️ Abrir el pedido» relee la planilla (ya sin la copia congelada: Google volvió a contestar bien) y abre la edición
+  /* 🔇 (18/10, §4ls H2) B ya veía «🏭 NO HAY» (mandar a producir) y le preguntó ANTES de guardar: lo que vendió A no le cambia nada
+     (esa espera no depende de cuántas falten). Antes le salía igual la ventana «otro vendedor vendió 2 … (faltan 3)»: una alarma de
+     más. El servidor sigue contestando `saldo` (no se tocó el .gs); la página ya no abre la ventana. */
+  chk('⚠️ B guarda otro con la copia vieja: le preguntó antes por lo SUYO (faltan 1: ya tenía 1 pendiente) y, como ya veía «🏭 NO HAY», NO le sale la ventana de «otro vendedor» (H2) — lo de siempre',
+      !!idB2 && B.__dialogos.length===1 && /faltan 1/.test(B.__dialogos[0]) && mB3.on && !/otro vendedor/i.test(mB3.txt) && /Pedido guardado/.test(mB3.txt), [B.__dialogos.map(d => d.slice(0,120)), mB3.txt.slice(0,200)]);
+  // «✏️ Abrir el pedido» (el botón de la ventana de §1) relee la planilla (ya sin la copia congelada: Google volvió a contestar bien) y abre la edición
   await B.evaluate(() => { window.__ctl.congelar=false; });
   const lecAntes = await B.evaluate(() => window.__ctl.lecturas);
-  const tocoAbrir = await tocarModal(B, 'Abrir el pedido');
+  const tocoAbrir = await B.evaluate((id) => { try{ closeModal(); }catch(e){} saldoAvisoAbrir(id); return true; }, idB2);
   await B.waitForTimeout(1200);
   const ab = await B.evaluate(() => ({ enForm:document.getElementById('view-form').classList.contains('active'), edit:EDIT_ID, modal:_modal().on, caja:_caja0(), lecturas:window.__ctl.lecturas,
                                       cli:document.getElementById('f-cliente').value, n:STATE.filter(function(p){ return /^CLIENTE/.test(p.cliente||''); }).length }));
