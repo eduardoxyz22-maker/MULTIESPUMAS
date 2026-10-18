@@ -94,6 +94,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     seed([ ped('n1',1,diasAdelante(3),'no') ], 0, 5);
     A=stockAsignar();
     out.nohay={ n:(A.noHayConStock||[]).length, en:((A.noHayConStock||[])[0]||{en:[]}).en.map(function(e){ return e.u; }).join('+'), faltan:(A.faltan||[]).length };
+    // (18/10, §4ls V-REV-1) la ✗ ahora se reparte con lo sin marcar: con stock se PROPONE la marca (y Aplicar la corrige)
+    lin=null; A.pedidos.forEach(function(e){ if(e.p.id==='n1') lin=(e.lineas||[])[0]; });
+    out.nohay.prop=lin?{ ahora:lin.ahora, cambia:lin.cambia, contra:lin.contra, sale:(lin.almPor||[]).map(function(e){ return (e.sale?'S':'')+e.u; }).join('+') }:null;
     seed([ ped('n2',1,diasAdelante(3),'no') ], 0, 0, 0);
     A=stockAsignar(); out.nohay.faltanSin=(A.faltan||[]).map(function(f){ return f.u; }).join(',');
 
@@ -132,7 +135,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('5b. …y se lista «marcado PTF, pero 2 están en Banzer»', r.realoja.re.length===1 && /\|PTF\|2$/.test(r.realoja.re[0]) && /con las unidades en otro/.test(r.realoja.html), r.realoja);
   chk('5c. lo marcado de hoy se lleva la de Moreno antes que el sin marcar de después', r.orden.sr===0 && r.orden.re===1 && r.orden.s2==='no', r.orden);
   chk('6. lo 🏭 llegado y contado no se le propone a otro pedido', r.prod.ue===2 && r.prod.s3==='no', r.prod);
-  chk('7a. un «✗ no hay» con 5 en Banzer se lista como «se puede entregar»', r.nohay.n===1 && r.nohay.en==='5', r.nohay);
+  /* (18/10, §4ls V-REV-1) Antes la ✗ marcada quedaba fija y solo se avisaba en verde («cambiá la marca»); ahora la revisión la
+     reparte por fecha y PROPONE «✔ hay en Banzer» (no contradice a nadie): Aplicar la corrige y ya no hace falta listarla aparte. */
+  chk('7a. un «✗ no hay» con 5 en Banzer se propone «✔ hay en Banzer» (Aplicar la corrige; no queda en la lista de «se puede entregar»)',
+      r.nohay.n===0 && r.nohay.prop && r.nohay.prop.ahora==='ok' && r.nohay.prop.cambia===true && r.nohay.prop.contra===false && r.nohay.prop.sale==='S1', r.nohay);
   chk('7b. un ✗ sin stock en ningún lado entra en los faltantes de la revisión', r.nohay.faltanSin==='1', r.nohay);
   chk('8. el mes: «queda» = hay + lo de 15 días − lo que se gasta hasta el 31, puede ser negativo', r.mes.queda===r.mes.esperado && r.mes.mes===Math.max(0, r.mes.nec-r.mes.queda), r.mes);
   chk('9. un atrasado entregado HOY (día del cierre) baja del Excel de hoy; sin ese día, no', r.ef.con===8 && r.ef.sin===10, r.ef);
