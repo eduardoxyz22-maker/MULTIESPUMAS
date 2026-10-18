@@ -430,7 +430,7 @@ function PREPARAR(){
       return _ped(x[0], x[1], [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:1, precio:1000 }], { entregado:true, ts:_ts(x[1],'09:00:00') }); });
     await _cargar(ps, _stock(function(st){ st.c.u[K]=0; }));
     d=stockData(); o=fila(d, K); stockProducir(d);
-    r.u39b={ reloj:sfReloj(o).txt, pMes:o._pMes };
+    r.u39b={ reloj:sfReloj(o).txt, pMes:o._pMes, pQuin:o._pQuin };
     await _cargar(ps, _stock(function(st){ st.c.u[K]=1; }));
     d=stockData(); o=fila(d, K); stockProducir(d);
     r.u40={ aviso:o.aviso, pMes:o._pMes, pQuin:o._pQuin, accion:String(sfAccion(o)).replace(/<[^>]+>/g,'') };
@@ -459,7 +459,9 @@ function PREPARAR(){
     return r;
   });
   chk('RN-U39a. lo vendido para diciembre no dice «⛔ Ya falta» con «Pedir» en 0', ch.u39a && ch.u39a.comp===1 && !/Ya falta/.test(ch.u39a.reloj||'') && /más adelante/.test(ch.u39a.reloj||''), ch.u39a);
-  chk('RN-U39b. con 0 en todos lados y el plan pidiendo para el mes, no dice «Alcanza más de 45 días»', ch.u39b && ch.u39b.pMes>0 && /Sin stock · lo pide el plan del mes/.test(ch.u39b.reloj||''), ch.u39b);
+  /* 📅 (18/10, §4ls Mes-VM4, a conciencia) Lo que falta para terminar octubre al ritmo de 30 días (2) ahora está en «15 días», no en
+     noviembre: el reloj dice «lo pide el plan de 15 días». Lo que cuida la prueba no cambia: nunca «Alcanza más de 45 días». */
+  chk('RN-U39b. con 0 en todos lados y el plan pidiendo (15 días o el mes), no dice «Alcanza más de 45 días»', ch.u39b && (ch.u39b.pMes>0 || ch.u39b.pQuin>0) && /Sin stock · lo pide el plan (de 15 días|del mes)/.test(ch.u39b.reloj||'') && !/Alcanza/.test(ch.u39b.reloj||''), ch.u39b);
   chk('RN-U40. «💤 Sobra» no dice «no pedir más» cuando el plan del mes pide (dice cuánto)', ch.u40 && ch.u40.aviso==='sobra' && ch.u40.pMes>0 && !/no pedir más/.test(ch.u40.accion) && /el plan pide/.test(ch.u40.accion), ch.u40);
   chk('RN-U42a. (control) PTF da −1 con un ✅ de hoy que el Excel de las 08:00 ya restaba', ch.u42 && ch.u42.dep===-1, ch.u42 && { dep:ch.u42.dep });
   chk('RN-U42b. con el Excel de HOY no manda a «volvé a contar»: dice que revise las entregas', ch.u42 && /revisá las entregas/.test(ch.u42.txt) && !/volvé a contar/.test(ch.u42.txt), ch.u42 && ch.u42.txt);

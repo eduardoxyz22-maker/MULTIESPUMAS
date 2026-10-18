@@ -243,7 +243,7 @@ const BASE = `
     chk('…ni un pedido PUNTUAL (MULTICENTER de otro vendedor) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
     chk('…ni una reposición de tienda', r.conRpt.idx===6 && r.conRpt.mes===r.sin.mes, 'con RPT: '+J(r.conRpt));
     chk('la cabecera del cuadro dice la verdad: equipo + Eduardo a Multicenter, sin otras puntuales ni RPT, y qué productos entran',
-        /ventas del equipo \+ ventas de Eduardo a Multicenter/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /mismo mes del año pasado/.test(r.cabecera), r.cabecera.slice(0,320));
+        /ventas del equipo \+ ventas de Eduardo a Multicenter/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /Productos que rotan/.test(r.cabecera), r.cabecera.slice(0,320));   // 🔁 (18/10, §4ls Mes-VM9, a conciencia) ya no entra lo que no rota por «el mismo mes del año pasado»
     await page.close();
   }
 

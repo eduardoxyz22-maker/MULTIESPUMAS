@@ -47,11 +47,13 @@ const habilesEntre=(a,b,fer)=>{ let n=0; for(let f=sumar(a,1); f<=b; f=sumar(f,1
    los días hábiles de los próximos 15 − lo que hay (acá + Moreno); el mes = su venta (días hábiles) − lo que el 1° queda sobre el objetivo. */
 function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
   const libre=aca, pedir=(libre<=R.s || libre<0) ? Math.max(0, Math.ceil(R.S-libre-1e-9)) : 0, sem=pedir-Math.min(moreno, pedir), hay=aca+moreno;
-  const quin=Math.max(sem, Math.ceil(R.S+R.mu*habilesEntre(hoy, sumar(hoy,15), fer)-hay-1e-9), 0);
-  const queda=Math.floor(hay+quin-(R.S+R.mu*habilesEntre(hoy, finActual, fer))+1e-9);
+  const quin0=Math.max(sem, Math.ceil(R.S+R.mu*habilesEntre(hoy, sumar(hoy,15), fer)-hay-1e-9), 0);
+  const queda0=Math.floor(hay+quin0-(R.S+R.mu*habilesEntre(hoy, finActual, fer))+1e-9);
+  /* 📅 (18/10, §4ls Mes-VM4) Lo que falta antes del 1° (queda < 0) va en 15 días, no en el mes que viene: el mes empieza con queda 0. */
+  const antes=Math.max(0,-queda0), quin=quin0+antes, queda=queda0+antes;
   const nec=Math.ceil(R.mu*habilesEntre(sumar(ini,-1), fin, fer)-1e-9), mes=Math.max(0, nec-queda);
   const mes1=Math.min(mes, Math.max(0, Math.ceil(nec*0.7-1e-9)-queda));
-  return { pedir, sem, quin, mesNec:nec, mesQueda:queda, mes, mes1, mes2:mes-mes1 };
+  return { pedir, sem, quin, quin0, antes, mesNec:nec, mesQueda:queda, mes, mes1, mes2:mes-mes1 };
 }
 
 (async () => {
@@ -188,7 +190,9 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
       r.H && JSON.stringify([r.H.o.objetivo, r.H.o.puntoPedido, RH.obj, RH.pp]));
   chk('7 días = exactamente lo que dice la tabla de stock (lo libre 3 ≤ 6: pedir 5 hasta el objetivo, 2 se traen de Moreno → fabricar 3)',
       r.H && r.H.sem===EH.sem && r.H.o.fabricar===EH.sem && EH.sem===3 && EH.pedir===5, r.H && (r.H.sem+' vs '+r.H.o.fabricar+' · regla '+EH.sem));
-  chk('15 días: el objetivo + la venta de los días hábiles de los próximos 15 − lo que hay (5) → 11', r.H && r.H.quin===EH.quin && EH.quin===11, r.H && (r.H.quin+' · regla '+EH.quin));
+  /* 📅 (18/10, §4ls Mes-VM4, a conciencia) …y lo que falta para terminar septiembre (el 30/09 quedarían 3 bajo el objetivo: la venta del 26
+     al 30/09) va ACÁ, no en octubre: hay que producirlo ya. 11 + 3 = 14. */
+  chk('15 días: el objetivo + la venta de los días hábiles de los próximos 15 − lo que hay (5) → 11, + los 3 que faltan para terminar septiembre → 14', r.H && r.H.quin===EH.quin && EH.quin0===11 && EH.antes===3 && EH.quin===14 && r.H.antes===3, r.H && (r.H.quin+' · regla '+EH.quin+' ('+EH.quin0+' + '+EH.antes+')'));
   /* octubre: la regla es la de §4ec/§4ds (revisada en §4er: coherente): se necesita lo PROBABLE del
      rango (mediana de 30 d / 60 d / 90 d / año pasado / tendencia), EN ENTEROS para arriba. Sin
      historia del TITANIO ICE, el rango sale del ritmo de 30 d: 0,6×31 = 18,6 → 19; quedan 0 el
@@ -203,15 +207,22 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
   /* 🎯 (18/10, §4ls) REEMPLAZA a «lo probable del rango (mediana de 30 d · oct-25 · tendencia) − lo que queda el 1°» para lo que rota:
      octubre = la venta de la regla (μ) × sus 27 días hábiles = 18,7 → 19, menos lo que el 1/10 quede POR ENCIMA del objetivo (el objetivo
      se mantiene). Con lo de 15 días el 30/09 quedan 3 por DEBAJO del objetivo (−3: la venta del 26 al 30/09), que se suman → producir 22. */
-  chk('octubre: la venta de la regla × 27 días hábiles → 19; el 1/10 quedan 3 bajo el objetivo → producir 22 (sin rango: el ritmo es el de la regla)',
-      r.H && r.H.mesNec===EH.mesNec && r.H.mesQueda===EH.mesQueda && r.H.mes===EH.mes && EH.mesNec===19 && EH.mesQueda===-3 && EH.mes===22 && r.H.rango==null,
+  /* 📅 (§4ls Mes-VM4, a conciencia) Antes: «el 1/10 quedan 3 bajo el objetivo → producir 22 (1ª quincena 17)». Esos 3 hacen falta en
+     SEPTIEMBRE: ahora van en 15 días y octubre es solo octubre (queda 0 → 19; 70 % → 14 y 5). 15 días + octubre da lo mismo (33). */
+  chk('octubre: la venta de la regla × 27 días hábiles → 19; lo que faltaba antes del 1/10 ya está en 15 días → queda 0, producir 19 (sin rango: el ritmo es el de la regla)',
+      r.H && r.H.mesNec===EH.mesNec && r.H.mesQueda===EH.mesQueda && r.H.mes===EH.mes && EH.mesNec===19 && EH.mesQueda===0 && EH.mes===19 && r.H.rango==null && (r.H.quin+r.H.mes)===33,
       r.H && JSON.stringify([r.H.mesNec,r.H.mesQueda,r.H.mes,'regla',EH.mesNec,EH.mesQueda,EH.mes]));
-  chk('el 70% (14 + los 3 que faltan = 17) para la 1ª quincena y el resto (5) para la 2ª', r.H && r.H.mes1===EH.mes1 && r.H.mes2===EH.mes2 && EH.mes1===17 && EH.mes2===5, r.H && (r.H.mes1+' · '+r.H.mes2));
+  chk('el 70% (14) para la 1ª quincena y el resto (5) para la 2ª', r.H && r.H.mes1===EH.mes1 && r.H.mes2===EH.mes2 && EH.mes1===14 && EH.mes2===5, r.H && (r.H.mes1+' · '+r.H.mes2));
   // Sueña: nada en 15 días (no rota), 6 en 3 entregas en 30 → 0,2/día. Solo el mes
-  chk('COLCHON SOFT: sin rotación en 15 días → 7 y 15 días en cero', r.S && r.S.o.rota===false && r.S.sem===0 && r.S.quin===0, r.S && JSON.stringify([r.S.sem,r.S.quin]));
-  /* El SOFT (COLT0048) SÍ tiene historia en VENTAS_HIST (oct-25 = 34): el rango junta 30 d (6,2), el
-     año pasado (34) y la tendencia (17); la MEDIANA es 17 → producir 17 (70% → 12 + 5). */
-  chk('…pero 3 entregas en 30 días sí es ritmo del mes: 0,2/día; con la historia (oct-25 = 34, tendencia 17) el probable es 17 + lo que falta antes del 1° → producir 21 (16 + 5)', r.S && Math.abs(r.S.o.porDiaMes-0.2)<1e-9 && r.S.mes===21 && r.S.mes1===16 && r.S.mes2===5, r.S && JSON.stringify([r.S.o.porDiaMes,r.S.mes,r.S.mes1,r.S.mes2]));
+  /* 📅 (§4ls Mes-VM4, a conciencia) 7 días en cero (no rota en 15 días). Lo que hace falta para terminar septiembre al ritmo de 30 días
+     (0,2 × 21 días = 4,2; hay 1 → faltan 4) iba a «octubre · 1ª quincena»: ahora va en 15 días. */
+  chk('COLCHON SOFT: sin rotación en 15 días → 7 días en cero; 15 días = solo lo que falta para terminar septiembre (4)', r.S && r.S.o.rota===false && r.S.sem===0 && r.S.quin===4 && r.S.antes===4, r.S && JSON.stringify([r.S.sem,r.S.quin,r.S.antes]));
+  /* El SOFT (COLT0048) SÍ tiene historia en VENTAS_HIST (jun-26 = 29, jul-26 = 41, oct-25 = 34).
+     0️⃣ (18/10, §4ls Mes-VM2/U45, a conciencia) Agosto no tiene ventas en el panel (las 3 entregas se cargaron en septiembre): ahora es un 0,
+     no «sin datos», y entran el 60 d ((0 + 41) / 2 = 20,9) y el 90 d ((0 + 41 + 29) / 3 = 23,8). El rango es {30 d 6,2 · tendencia 17 ·
+     60 d 20,9 · 90 d 23,8 · oct-25 34}: la MEDIANA es 20,9 → 21; el 1/10 queda 0 (lo de septiembre ya está en 15 días) → producir 21
+     (70 % → 15 + 6). Antes: {6,2 · 17 · 34} → 17 + 4 de septiembre = 21 (16 + 5). */
+  chk('…pero 3 entregas en 30 días sí es ritmo del mes: 0,2/día; con la historia (5 estimaciones, agosto = 0) el probable es 21 → producir 21 (15 + 6)', r.S && Math.abs(r.S.o.porDiaMes-0.2)<1e-9 && r.S.mes===21 && r.S.mes1===15 && r.S.mes2===6 && r.S.rango && r.S.rango.n===5 && r.S.mesQueda===0, r.S && JSON.stringify([r.S.o.porDiaMes,r.S.mes,r.S.mes1,r.S.mes2,r.S.rango&&r.S.rango.n,r.S.mesQueda]));
   chk('COLCHON SOFT cae en el bloque de Sueña (Multiespumas)', r.S && r.S.bloque==='suena');
   // Eduardo: el MORFEO vendido sin entregar se cubre (4), pero no arma ritmo ni mes
   chk('el MORFEO de Eduardo: se cubren los 4 vendidos sin entregar en 7 y 15 días, nada para octubre', r.M && r.M.sem===4 && r.M.quin===4 && r.M.mes===0 && r.M.o.porDia===0 && r.M.o.porDiaMes===0, r.M && JSON.stringify([r.M.sem,r.M.quin,r.M.mes]));
@@ -227,15 +238,17 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
   chk('⚠️ …y va al bloque de ROHO en Industrias Moreno, por su NOMBRE (ya no a «sin asignar»)', r.F && r.F.bloque==='roho' && r.F.por==='marca', r.F && JSON.stringify([r.F.bloque, r.F.por]));
   chk('lo discontinuado (CARIOCA PREMIER), lo de tienda (PROTECTOR) y la ATC no aparecen en ningún bloque', !r.claves.some(function(k){ return /CARIOCA|PROTECTOR/.test(k); }), r.claves.join(' | '));
   chk('la quincena nunca pide menos que la semana', [r.H,r.S,r.M,r.F].every(function(f){ return f && f.quin>=f.sem; }));
+  chk('📅 (§4ls Mes-VM4) ningún producto empieza el mes que viene con «queda» negativo: lo que falta antes del 1° está en 15 días', [r.H,r.S,r.M,r.F,r.X].every(function(f){ return f && f.mesQueda>=0; }), JSON.stringify([r.H,r.S,r.M,r.F,r.X].map(function(f){ return f&&f.mesQueda; })));
   /* XYZ PLUS: 4 en 4 entregas en 15 días (rota). Antes: 0,27/día × 8 = 2,1 → 3; × 20 = 5,3 → 6; mes 0,13 × 31 → 5 − lo que quedaba → 2 (1+1).
      🎯 (§4ls) Ahora: 4 en 26 días hábiles (μ 0,15), objetivo 2, punto de pedido 0; con 0 en el depósito se pide hasta el objetivo → 2; 15
-     días: 2 + la venta de 12 días hábiles (1,8) → 4; octubre: 0,15 × 27 = 4,2 → 5, y el 1/10 queda 1 bajo el objetivo → 6 (5 + 1). */
-  chk('XYZ PLUS (nombre suelto, medida «130X190CM»): 2 · 4 · 6 (5+1), en «sin fábrica asignada», y la medida queda 130x190',
-      r.X && r.X.sem===EX.sem && r.X.quin===EX.quin && r.X.mes===EX.mes && r.X.mes1===EX.mes1 && r.X.mes2===EX.mes2 && EX.sem===2 && EX.quin===4 && EX.mes===6 && EX.mes1===5 && r.X.bloque==='otros' && r.X.md==='130x190',
+     días: 2 + la venta de 12 días hábiles (1,8) → 4; octubre: 0,15 × 27 = 4,2 → 5, y el 1/10 queda 1 bajo el objetivo → 6 (5 + 1).
+     📅 (§4ls Mes-VM4, a conciencia) Ese 1 hace falta en septiembre: 15 días 5, octubre 5 (4 + 1). */
+  chk('XYZ PLUS (nombre suelto, medida «130X190CM»): 2 · 5 · 5 (4+1), en «sin fábrica asignada», y la medida queda 130x190',
+      r.X && r.X.sem===EX.sem && r.X.quin===EX.quin && r.X.mes===EX.mes && r.X.mes1===EX.mes1 && r.X.mes2===EX.mes2 && EX.sem===2 && EX.quin===5 && EX.mes===5 && EX.mes1===4 && r.X.bloque==='otros' && r.X.md==='130x190',
       r.X && JSON.stringify([r.X.sem,r.X.quin,r.X.mes,r.X.mes1,r.X.mes2,r.X.bloque,r.X.md,'regla',EX]));
-  chk('totales por bloque: Heaven 3 · 11 · 22 (17+5); Sueña 0 · 0 · 21 (16+5, no rota: sin cambios); sin asignar 6 · 8 · 6 (5+1) = MORFEO 4 · 4 · 0 + XYZ',
+  chk('totales por bloque: Heaven 3 · 14 · 19 (14+5); Sueña 0 · 4 · 21 (15+6, no rota); sin asignar 6 · 9 · 5 (4+1) = MORFEO 4 · 4 · 0 + XYZ',
       r.tot.heaven.sem===EH.sem && r.tot.heaven.quin===EH.quin && r.tot.heaven.mes===EH.mes && r.tot.heaven.mes1===EH.mes1 && r.tot.heaven.mes2===EH.mes2 &&
-      r.tot.suena.mes===21 && r.tot.suena.mes1===16 && r.tot.suena.mes2===5 && r.tot.suena.sem===0 &&
+      r.tot.suena.mes===21 && r.tot.suena.mes1===15 && r.tot.suena.mes2===6 && r.tot.suena.sem===0 && r.tot.suena.quin===4 && r.tot.suena.antes===4 && r.tot.heaven.antes===3 &&
       r.tot.otros.sem===4+EX.sem && r.tot.otros.quin===4+EX.quin && r.tot.otros.mes===EX.mes && r.tot.otros.mes1===EX.mes1 && r.tot.otros.mes2===EX.mes2, JSON.stringify(r.tot));
   chk('⚠️ …y el PILLOW FLEX ya no está en «sin asignar»: hace bloque aparte con sus 7 de octubre (4+3)', r.tot.roho && r.tot.roho.n===1 && r.tot.roho.sem===0 && r.tot.roho.quin===0 && r.tot.roho.mes===EF.mes && r.tot.roho.mes1===EF.mes1 && r.tot.roho.mes2===EF.mes2 && EF.mes1===4, JSON.stringify(r.tot.roho));
   chk('el pie de «sin asignar» reparte por medida: 130x190 y 140x190', r.tot.otros.medidas.length===2 && r.tot.otros.medidas.indexOf('130x190')>=0 && r.tot.otros.medidas.indexOf('140x190')>=0, JSON.stringify(r.tot.otros.medidas));
@@ -271,7 +284,7 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
   chk('el título nombra la semana, los 15 días y octubre', r && /esta semana, los próximos 15 días y octubre/.test(r.t));
   // Desde §4du el resumen del bloque trae el RANGO del mes: «octubre: 18 (rango 6–19)» (§4hd: sin la medida especial CH1389).
   /* 🎯 (18/10, §4ls) Lo que rota ya no tiene rango (mín–máx según qué historia se mire): su mes sale de la venta de la regla. */
-  chk('el bloque Heaven resume 7 días: 3 · 15 días: 11 · octubre: 22 · 1ª quincena 17 · 2ª 5 (sin rango: el TITANIO rota)', r && /7 días: 3 · 15 días: 11 · octubre: 22 · 1ª quincena 17 · 2ª 5/.test(r.t) && !/octubre: 22 \(rango/.test(r.t), r && (r.t.match(/7 días: \d[^·]*·[^·]*·[^·]*·[^·]*·[^·]*/)||[r.t.slice(0,300)])[0]);
+  chk('el bloque Heaven resume 7 días: 3 · 15 días: 14 (incluye 3 para terminar septiembre) · octubre: 19 · 1ª quincena 14 · 2ª 5 (sin rango: el TITANIO rota)', r && /7 días: 3 · 15 días: 14 \(incluye 3 para terminar septiembre\) · octubre: 19 · 1ª quincena 14 · 2ª 5/.test(r.t) && !/octubre: 19 \(rango/.test(r.t), r && (r.t.match(/7 días: \d[^·]*·[^·]*·[^·]*·[^·]*·[^·]*/)||[r.t.slice(0,300)])[0]);
   /* (16/10, §4lr U17) Las columnas dicen lo que CUBRE cada número (antes «hasta el hoy+7 / hoy+15», que no era lo que cubría). */
   chk('las columnas dicen qué cubre cada horizonte (15 incluye 7, el mes va además) y qué queda el 01/10', r && /incluye lo de 7: no sumar/.test(r.t) && /además de 15 días/.test(r.t) && /queda el 01\/10/.test(r.t));
   chk('la fila del TITANIO ICE muestra ritmo, hay 5 (3 acá · 2 Moreno) y los cinco números', r && /TITANIO ICE/.test(r.filaH) && /3 acá · 2 Moreno/.test(r.filaH) && /15 d: 10 en 5 entregas/.test(r.filaH) && /30 d: 18 en 9 entregas/.test(r.filaH), r && r.filaH);
@@ -297,7 +310,7 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
     document.getElementById('producir').querySelector('tr.producir-med[data-b="heaven"][data-md="160x190"]').click();
     return document.getElementById('producir').querySelectorAll('tr.producir-modelo').length;
   });
-  chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus cinco números (3 · 11 · 22 · 17 · 5) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='3 11 22 17 5', JSON.stringify(r5b.sub));
+  chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus cinco números (3 · 14 · 19 · 14 · 5) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='3 14 19 14 5', JSON.stringify(r5b.sub));
   chk('la fila abierta marca ▾ y las otras medidas siguen cerradas', /▾ por medida · 160x190/.test(r5b.med) && r5b.otrosCerrado===true, r5b.med);
   chk('tocarla de nuevo la cierra', r5c===0, String(r5c));
 
@@ -320,7 +333,7 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
   chk('la tabla scrollea dentro de su propia caja (si no, el encabezado clavado no sirve de nada)', rf && !rf.sinCaja && /vh|px/.test(rf.alto) && (rf.scroll==='auto'||rf.scroll==='scroll'), JSON.stringify(rf&&{alto:rf.alto,scroll:rf.scroll}));
   chk('el encabezado queda clavado arriba, con fondo propio y por encima de las filas', rf && rf.thPos==='sticky' && rf.thTop==='0px' && Number(rf.thZ)>=2 && /rgb/.test(rf.thFondo), JSON.stringify(rf&&{p:rf.thPos,t:rf.thTop,z:rf.thZ,f:rf.thFondo}));
   chk('la fila del TOTAL queda clavada abajo mientras se recorre la lista', rf && rf.totPos==='sticky' && rf.totBottom==='0px' && /rgb/.test(rf.totFondo), JSON.stringify(rf&&{p:rf.totPos,b:rf.totBottom,f:rf.totFondo}));
-  chk('el TOTAL dice de qué fábrica es y repite qué es cada número (7 d · 15 d · octubre · 1ª q · 2ª q)', rf && /TOTAL Industrias Moreno · Heaven/.test(rf.totTxt) && /3 7 d/.test(rf.totTxt) && /11 15 d/.test(rf.totTxt) && /22 octubre/.test(rf.totTxt) && /17 1ª q/.test(rf.totTxt) && /5 2ª q/.test(rf.totTxt), rf && rf.totTxt);
+  chk('el TOTAL dice de qué fábrica es y repite qué es cada número (7 d · 15 d · octubre · 1ª q · 2ª q)', rf && /TOTAL Industrias Moreno · Heaven/.test(rf.totTxt) && /3 7 d/.test(rf.totTxt) && /14 15 d/.test(rf.totTxt) && /19 octubre/.test(rf.totTxt) && /14 1ª q/.test(rf.totTxt) && /5 2ª q/.test(rf.totTxt), rf && rf.totTxt);
   chk('el bloque «sin fábrica asignada» pide que el dueño diga dónde se hacen', r && /Decí en cuál se hacen/.test(r.t) && /nombres fuera del catálogo/.test(r.t) && !/Flex y Pedic/.test(r.t));
   chk('nada de plata en el cuadro: ni Bs ni montos', r && !/Bs\b/.test(r.t) && !/\$/.test(r.t));
   chk('la pantalla no tiró errores', errors.length===0, errors.join(' | '));
@@ -336,8 +349,8 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
     return { mes:mes, sem:sem, nada:nada, otros:otros };
   });
   chk('el texto de «sin asignar» reparte por medida con la escritura unificada (130x190 2 · 140x190 4)', /MORFEO · 140x190: 4/.test(r.otros) && /XYZ PLUS · 130X190(CM)?: 2/.test(r.otros) && /Total: 6 unidades · por medida: 130x190 2 · 140x190 4/.test(r.otros), r.otros);
-  chk('el texto de octubre lleva el producto con su código, la cantidad, el reparto por quincena y el objetivo', /PRODUCIR PARA OCTUBRE \(ADEMÁS DE LO DE 15 DÍAS\) — INDUSTRIAS MORENO · HEAVEN/.test(r.mes) && /TITANIO ICE · 160x190 \(cód CH1201\): 22 — 1ª quincena 17 · 2ª quincena 5/.test(r.mes) && /vende 18 en 26 días hábiles, tener 8/.test(r.mes), r.mes);
-  chk('…y cierra con el total y el reparto por medida, sin plata', /Total: 22 unidades · por medida: 160x190 22/.test(r.mes) && !/Bs/.test(r.mes));
+  chk('el texto de octubre lleva el producto con su código, la cantidad, el reparto por quincena y el objetivo', /PRODUCIR PARA OCTUBRE \(ADEMÁS DE LO DE 15 DÍAS\) — INDUSTRIAS MORENO · HEAVEN/.test(r.mes) && /TITANIO ICE · 160x190 \(cód CH1201\): 19 — 1ª quincena 14 · 2ª quincena 5/.test(r.mes) && /vende 18 en 26 días hábiles, tener 8/.test(r.mes), r.mes);
+  chk('…y cierra con el total y el reparto por medida, sin plata', /Total: 19 unidades · por medida: 160x190 19/.test(r.mes) && !/Bs/.test(r.mes));
   /* 🎯 (§4ls) La explicación ya no es «cubre lo vendido sin entregar + la venta de fábrica + margen + reserva»: es la regla del objetivo. */
   chk('el de la semana dice 3 para el TITANIO ICE y explica la regla (punto de pedido, objetivo, Moreno primero)', /PRODUCIR PARA 7 DÍAS/.test(r.sem) && /TITANIO ICE · 160x190 \(cód CH1201\): 3 —/.test(r.sem) && /Total: 3 unidades ·/.test(r.sem) && /baja al punto de pedido/.test(r.sem) && /se pide hasta el objetivo/.test(r.sem) && /primero se trae de Moreno/.test(r.sem), r.sem);
   chk('si no hay nada que producir no copia nada (avisa)', r.nada==='');
