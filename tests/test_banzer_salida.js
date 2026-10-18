@@ -385,7 +385,7 @@ const J=x=>JSON.stringify(x);
     inicio();
     out.banzer=subir(BANZER, 7, '15:30:00');
     confirmarImportExist(); stockOlvidarIndice();
-    out.tras={ al:STOCK.al[BANZER], g:(STOCK.g[BANZER]||{u:{}}).u[K], inc:!!(STOCK.g[BANZER]||{}).inc, aca:STOCK.c.u[K], sale:_fila().enSale };
+    out.tras={ al:STOCK.al[BANZER], g:(STOCK.g[BANZER]||{u:{}}).u[K], inc:!!(STOCK.g[BANZER]||{}).inc, incT:(STOCK.g[BANZER]||{}).incT||'', aca:STOCK.c.u[K], sale:_fila().enSale };
     out.im=subir(IMN, 5, '08:00:00'); closeModal();
     // «fábrica» para el Excel de Banzer: pregunta antes de reemplazar el conteo de acá
     inicio(); subir(BANZER, 7, '15:30:00');
@@ -406,7 +406,10 @@ const J=x=>JSON.stringify(x);
   chk('⚠️ el diálogo de existencias tiene tres opciones, con «🚚 … TAMBIÉN salen camiones (Banzer)»', r.banzer?.ops?.length===3 && r.banzer.ops.some(o=>/^sale=.*TAMBIÉN salen camiones/.test(o)), J([r.banzer?.ops, r.__error]));
   chk('⚠️ …y para el Excel de Banzer viene elegida la nueva', r.banzer?.val==='sale', J(r.banzer?.val));
   chk('⚠️ al confirmar, Banzer queda como depósito de salida con su conteo; el de fábrica no se toca', r.tras?.al==='sale' && r.tras?.g===7 && r.tras?.aca===4 && r.tras?.sale===7, J(r.tras));
-  chk('…el Excel de la tarde queda anotado como «ya incluye las entregas del día» (para descontar como el de acá)', r.tras?.inc===true, J(r.tras));
+  /* 🚚 (18/10, §4ls U2, decisión 2 del dueño) Ya no hay una casilla por día: son dos, la mañana y la tarde. A las 15:30, sin dato del camión,
+     se propone la MAÑANA (desde las 09:30) y todavía no la tarde (desde las 16:00): queda `incT:'am'`. Antes la casilla única se marcaba
+     desde las 12:00 y daba por incluida también la tarde, que a esa hora todavía no se cargó. */
+  chk('…el Excel de las 15:30 queda anotado como «ya trae la carga de la mañana» (la tarde, desde las 16:00), como el de acá', r.tras?.incT==='am' && r.tras?.inc===false, J(r.tras));
   chk('el Excel de Moreno viene con «ir a traer» elegido, y no ofrece «salen camiones»', r.im?.val==='otro' && !(r.im?.ops||[]).some(o=>/^sale=/.test(o)), J(r.im));
   chk('elegir «fábrica» para Banzer sigue preguntando antes de reemplazar el conteo de acá, y nombra la opción de Banzer',
       /DEPÓSITO DE FÁBRICA/.test(r.log?.msg||'') && /TAMBIÉN salen camiones/.test(r.log?.msg||'') && r.log?.alm==='PRODUCTOS TERMINADOS FAB.' && r.log?.aca===4, J(r.log));
