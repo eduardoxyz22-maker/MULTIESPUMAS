@@ -234,8 +234,12 @@ const BASE = `
        ⚠️ (30/09, §4hd, a conciencia) 9 → 18: el histórico ya no suma al TITANIO ICE 160x190 la medida especial 160X200
        (CH1389, otro código, X-4): oct-25 = 6 y la tendencia 18 (antes 8 y 24), y la mediana de {8,3 · 29,1 · 25,2 · 6 · 18}
        es 18. La regla de Multicenter no cambió. */
-    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40) y al plan del mes (octubre 9 → 18), pero no al ritmo de 30 días (es de antes de la ventana)',
-        r.conEduMc.idx===46 && r.sin.mesNec===9 && r.conEduMc.mesNec===18 && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
+    /* 🎯 (18/10, §4ls, decisión 4 del dueño, a conciencia) Este producto ROTA (4 entregas del equipo en 15 días): desde §4ls su mes
+       sale de la regla del objetivo (la venta de los últimos 26 días hábiles × los días hábiles del mes, sin el rango de 5 estimaciones),
+       así que la compra de agosto —fuera de esa ventana— ya no lo mueve (antes 9 → 18 por el índice). El índice de agosto sí la tiene:
+       es lo que usa el mes de lo que NO rota (test_eduardo_multicenter). */
+    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40); el mes de lo que ROTA sale del objetivo (sin rango) y la compra de agosto no lo mueve, ni al ritmo de 30 días',
+        r.conEduMc.idx===46 && r.sin.est===null && r.conEduMc.mesNec===r.sin.mesNec && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
     chk('…ni un pedido PUNTUAL (MULTICENTER de otro vendedor) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
     chk('…ni una reposición de tienda', r.conRpt.idx===6 && r.conRpt.mes===r.sin.mes, 'con RPT: '+J(r.conRpt));
     chk('la cabecera del cuadro dice la verdad: equipo + Eduardo a Multicenter, sin otras puntuales ni RPT, y qué productos entran',

@@ -96,9 +96,12 @@ function PREPARAR(){
   /* ── A. Programar la recogida que propone la fila (1.1) ── */
   const a = await E(async () => {
     var K=_k('CH1129','COLCHON TITANIO LATEX','140x190');
-    // 12 vendidas en 6 entregas del equipo (0,8 por día, rotación media: margen 2, reserva 3); 4 en PTF y 2 en Moreno
-    var ventas=_ventas('CH1129','COLCHON TITANIO LATEX','140x190', ['2026-10-05','2026-10-07','2026-10-09','2026-10-12','2026-10-13','2026-10-15'], 2);
-    await _cargar(ventas, _stock(function(st){ st.c.u[K]=4; st.g[_IM].u[K]=2; }));
+    /* 🎯 (18/10, §4ls, decisión 4, a conciencia) Con el punto de pedido y el objetivo (la venta de los últimos 26 días hábiles), las 12
+       de antes en 6 entregas pedían solo 2 (las traía Moreno) y el caso dejaba de tener algo para fabricar. Ahora son 24 en 12 entregas
+       (6 en los últimos 15 días: rotación media, 0,8 por día): objetivo 10, punto de pedido 8; con 6 en PTF y 2 en Moreno se pide
+       10 − 6 = 4: traé 2 de Moreno y pedí 2, como antes. */
+    var ventas=_ventas('CH1129','COLCHON TITANIO LATEX','140x190', ['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','2026-10-01','2026-10-05','2026-10-07','2026-10-09','2026-10-12','2026-10-13','2026-10-15'], 2);
+    await _cargar(ventas, _stock(function(st){ st.c.u[K]=6; st.g[_IM].u[K]=2; }));
     var o=_fila(K), antes={ aviso:o.aviso, fab:o.fabricar, rec:o.recoger, acc:sfAccion(o), grupo:planGrupoDe(o) };
     // la recogida que propone la fila, por el camino de la pantalla (su sugerencia y el día de mañana)
     abrirStockRecogida(K);

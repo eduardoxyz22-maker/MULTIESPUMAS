@@ -74,8 +74,12 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     var atras=function(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); };
     var adel =function(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); };
     window._adel=adel; window._atras=atras;
-    var P=function(o){ return Object.assign({id:'p'+Math.random(),fecha:todayStr(),oc:'',vendedor:'Carola Chavez',
-      cliente:'C',celular:'70000000',turno:'AM',zona:'N',direccion:'x',maps:'',pagado:true,saldo:0,ts:Date.now(),
+    /* 🎯 (18/10, §4ls, a conciencia) Lo ya entregado se CARGÓ el día que se vendió (`ts` de ese día), no hoy: el objetivo de lo que
+       rota mide la venta por FECHA DE VENTA (los últimos 26 días hábiles). Con todo cargado «hoy», el panel veía 32 colchones vendidos
+       el mismo día y un desvío enorme. Lo de 15 y 30 días no cambia (miran la entrega y los 30 días de venta). */
+    var P=function(o){ var ts=(o && o.fecha && o.fecha<todayStr()) ? new Date(o.fecha+'T10:00:00').getTime() : Date.now();
+      return Object.assign({id:'p'+Math.random(),fecha:todayStr(),oc:'',vendedor:'Carola Chavez',
+      cliente:'C',celular:'70000000',turno:'AM',zona:'N',direccion:'x',maps:'',pagado:true,saldo:0,ts:ts,
       metodoPago:'',observaciones:'',estado:'',entregado:false,vehiculo:'',chofer:'',garantia:'',nota:'',acuenta:0,
       facturarA:'',nit:'',nroDia:1,verificado:true,fotos:[]},o); };
     STATE=[];

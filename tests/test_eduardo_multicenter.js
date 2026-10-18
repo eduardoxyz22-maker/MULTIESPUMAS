@@ -82,7 +82,8 @@ function NUMEROS(k){
            v30:o.v30, n30:o.n30, porDiaMes:r2(o.porDiaMes), comp:o.comp, pedir:o.pedir, recoger:o.recoger, fabricar:o.fabricar, margen:o.margen, cubrir:o.cubrir,
            sem:f&&f.sem, quin:f&&f.quin, mesNec:f&&f.mesNec, mes:f&&f.mes, mesQueda:f&&f.mesQueda, mesMin:f&&f.mesMin, mesMax:f&&f.mesMax,
            est:f&&f.rango ? f.rango.est.map(function(e){ return e.n+'='+(Math.round(e.v*10)/10); }).join(' | ') : null,
-           ago:I['2026-08']||0, sep:I['2026-09']||0 };
+           ago:I['2026-08']||0, sep:I['2026-09']||0,
+           objS:o.objS, obj:o.objetivo, pp:o.puntoPedido, libre:(typeof stockLibreObj==='function'?stockLibreObj(o):null) };   // 🎯 (§4ls) undefined en la página de antes
 }
 
 (async () => {
@@ -154,19 +155,21 @@ function NUMEROS(k){
   chk('índice mensual del panel (60 d / 90 d / tendencia): agosto +18 (la del 06/08 y la del 23/08) y septiembre +8 (la del 06/09)',
       nMc.T.ago===nBase.T.ago+18 && nMc.T.sep===nBase.T.sep+8, { base:[nBase.T.ago, nBase.T.sep], con:[nMc.T.ago, nMc.T.sep] });
   /* Los números exactos del ejemplo del informe (reloj clavado): si cambian, cambió una regla — mirarlo a conciencia. */
-  chk('rotación media → ALTA (18 unidades en 2 tramos): margen 2 → 4 días, reserva 3 → 7',
-      nBase.T.rotacion==='media' && nBase.T.margen===2 && nBase.T.cubrir===3 && nMc.T.rotacion==='alta' && nMc.T.margen===4 && nMc.T.cubrir===7,
-      { base:[nBase.T.rotacion, nBase.T.margen, nBase.T.cubrir], con:[nMc.T.rotacion, nMc.T.margen, nMc.T.cubrir] });
-  /* (§4iy) El 10/09 (jueves) la fábrica tiene piso de 4 días (sale el sábado, el domingo no hay camión): 12 → 13, 14 → 15, 22 → 23. */
-  chk('7 días de «Qué producir» 1 → 13 = fabricar de la tabla; pedir 3 → 15 (recoger 2 de Moreno + fabricar 13)',
-      nBase.T.sem===1 && nBase.T.pedir===3 && nBase.T.recoger===2 && nMc.T.sem===13 && nMc.T.pedir===15 && nMc.T.recoger===2 && nMc.T.fabricar===13,
-      { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem] });
-  /* (30/09, §4hd) Sin la medida especial CH1389 en el histórico: oct-25 = 6 y tendencia 18 (antes 8 y 24), así que el rango
-     arranca en 6, el máximo sin Multicenter es el ritmo de 30 d (18,6 → 19) y con Multicenter la mediana es el 90 d (20,4 → 21). */
-  chk('15 días 9 → 23 y octubre 15 → 21 (rango 5–18 → 1–29)',
-      /* (§4iz, E1-6) el rango de «producir» descuenta lo que el 15 días ya manda: 6–19 → 5–18 y 6–34 → 1–29 (lo que se NECESITA no cambia) */
-      nBase.T.quin===9 && nMc.T.quin===23 && nBase.T.mesNec===15 && nMc.T.mesNec===21 && nBase.T.mesMin===5 && nBase.T.mesMax===18 && nMc.T.mesMin===1 && nMc.T.mesMax===29,
-      { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.mesMin, nBase.T.mesMax], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.mesMin, nMc.T.mesMax] });
+  /* 🎯 (18/10, §4ls, decisión 4 del dueño, a conciencia) Lo que rota ya no lleva «margen 2 → 4 días, reserva 3 → 7»: tiene punto de
+     pedido y objetivo, con la venta de los últimos 26 días hábiles (por fecha de venta), y Eduardo a Multicenter entra ahí como en la
+     rotación. QUÉ rota no cambió (media → alta). El margen y la reserva de antes quedan en 0. */
+  chk('rotación media → ALTA (18 unidades en 2 tramos), y el objetivo sube con lo de Eduardo a Multicenter (margen y reserva de antes en 0)',
+      nBase.T.rotacion==='media' && nMc.T.rotacion==='alta' && nBase.T.margen===0 && nBase.T.cubrir===0 && nMc.T.margen===0 && nMc.T.cubrir===0 && nBase.T.objS!=null && nMc.T.obj>nBase.T.obj,
+      { base:[nBase.T.rotacion, nBase.T.obj, nBase.T.pp], con:[nMc.T.rotacion, nMc.T.obj, nMc.T.pp] });
+  /* Con 3 acá y 2 en Moreno, lo libre es 3 (nada vendido sin entregar): si llegó al punto de pedido se pide hasta el objetivo, primero los
+     2 de Moreno. «Qué producir» 7 días = fabricar de la tabla. */
+  chk('7 días de «Qué producir» = fabricar de la tabla = hasta el objetivo − 3 libres − 2 de Moreno; con Eduardo a Multicenter, más',
+      nBase.T.libre===3 && nMc.T.libre===3 && nBase.T.pedir===Math.ceil(nBase.T.objS-3-1e-9) && nMc.T.pedir===Math.ceil(nMc.T.objS-3-1e-9) &&
+      nBase.T.recoger===2 && nMc.T.recoger===2 && nBase.T.sem===nBase.T.pedir-2 && nMc.T.sem===nMc.T.pedir-2 && nMc.T.fabricar===nMc.T.sem && nMc.T.sem>nBase.T.sem,
+      { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem, nBase.T.objS], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem, nMc.T.objS] });
+  chk('15 días y octubre suben con Eduardo a Multicenter; el mes de lo que rota sale del objetivo (sin el rango de 5 estimaciones)',
+      nMc.T.quin>nBase.T.quin && nBase.T.quin>=nBase.T.sem && nMc.T.mesNec>nBase.T.mesNec && nBase.T.est===null && nMc.T.est===null && nBase.T.mesMin==null && nMc.T.mesMax==null,
+      { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.est], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.est] });
   // En la publicada esas ventas SÍ se veían, pero solo en los carteles de «no cuentan» (únicos de Eduardo y puntuales):
   // ningún número de la proyección se movía. Se comparan solo los de la proyección.
   const PROY = ['vendidosRotacion','nVentasRotacion','rotacion','porDia','v30','n30','porDiaMes','comp','pedir','recoger','fabricar','margen','cubrir',
@@ -185,7 +188,9 @@ function NUMEROS(k){
 
   // ═══ 7. Las demás ventas no cambian ═══════════════════════════════════════════════════════════════════════
   console.log('\n── 7. Sin Eduardo → Multicenter, todo da IGUAL que en la página publicada ──');
-  const MES_NUEVO = ['mes','mesQueda','mesMin','mesMax'];   // (§4iz, E1-6/10) cambiaron a propósito contra la página publicada
+  /* (§4iz, E1-6/10) cambiaron a propósito contra la página publicada; 🎯 (18/10, §4ls, decisión 4) y TODO el «cuánto» de lo que rota
+     (punto de pedido y objetivo en vez de margen + reserva): se compara lo demás (venta, rotación, ritmo de 15 y 30 días, lo vendido, el índice). */
+  const MES_NUEVO = ['mes','mesQueda','mesMin','mesMax','pedir','recoger','fabricar','margen','cubrir','sem','quin','mesNec','est','objS','obj','pp','libre'];
   const comunes = (a, b) => { const out={}; Object.keys(b).forEach(k => { if(k!=='vendidosEduMc' && k!=='v30EduMc' && MES_NUEVO.indexOf(k)<0) out[k]=a[k]; }); return out; };
   chk('TITANIO ICE sin ventas de Eduardo a Multicenter: cada número igual que antes (15 d, 30 d, 7 d, 15 d, el mes, el rango y el índice)',
       JSON.stringify(comunes(nBase.T, vBase.T))===JSON.stringify(comunes(vBase.T, vBase.T)), { nueva:comunes(nBase.T, vBase.T), antes:vBase.T });

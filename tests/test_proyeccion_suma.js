@@ -6,7 +6,11 @@
    Ahora se SUMAN (la misma regla que el dueño dio para Banzer o PTF, §4hw).
    Se prueba con el caso de su captura armado con datos inventados (reloj clavado en el jueves 08/10/2026 a las 10:00 de Bolivia):
      · 7 días = 11 (antes 3), 15 días = 22 (antes 13), y «cubre hasta» se corre por la venta que viene; desde §4iy (piso de 4 días
-       de fábrica un jueves) son 14 (12 a fabricar + 2 de Moreno) y 23: lo que miden las comprobaciones de abajo;
+       de fábrica un jueves) son 14 (12 a fabricar + 2 de Moreno) y 23;
+     · 🎯 (18/10, §4ls, decisión 4 del dueño, a conciencia) lo que rota se pide hasta el OBJETIVO cuando lo libre baja al punto de
+       pedido (la venta de los últimos 26 días hábiles, ver `stockObjetivo`): «ritmo × (fábrica + margen + reserva)» ya no existe. La
+       suma de §4ii queda igual: lo libre = lo que hay − lo vendido sin entregar, así que se pide objetivo + vendido − lo que hay
+       (acá, objetivo + 9 − 4). Las ventas se cargan el día que se vendieron (`ts`): el objetivo mira la fecha de venta;
      · lo que rota poco (sin ritmo) sigue pidiendo solo lo vendido, como antes;
      · para TODOS los productos de la tabla: lo que se pide alcanza para lo vendido MÁS el ritmo;
      · el «Cómo se calcula» dice «Se suman».
@@ -45,11 +49,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var n=0, P=function(o){ n++; return Object.assign({ id:'t'+n, oc:'10-'+(100+n), vendedor:'Maria Flores', cliente:'CLIENTE '+n, celular:'7000'+(1000+n),
       turno:'AM', zona:'Norte', direccion:'x', maps:'', pagado:true, saldo:0, ts:Date.now()-n*1000, metodoPago:'', observaciones:'', estado:'',
       entregado:false, vehiculo:'', chofer:'', garantia:'', nota:String(500+n), acuenta:0, facturarA:'', nit:'', nroDia:1, verificado:true, fotos:[] }, o); };
-    var L=[];
-    /* 14 unidades en 12 entregas del equipo en los últimos 15 días (ritmo 0,93/día, rotación «media») */
-    [1,1,1,1,1,1,1,1,1,1,2,2].forEach(function(u,i){ L.push(P({ fecha:dia(-(i+1)), entregado:true, productos:[Object.assign({cant:u},SEMI)] })); });
-    /* 9 vendidas y sin entregar, de mañana a la semana que viene */
-    [1,2,3,4,5,6,7,8,9].forEach(function(d){ L.push(P({ fecha:dia(d), productos:[Object.assign({cant:1},SEMI)] })); });
+    var ts=function(f){ return new Date(f+'T10:00:00-04:00').getTime(); };
+    var L=[]; window._ventasS=[];
+    /* 14 unidades en 12 entregas del equipo en los últimos 15 días (ritmo 0,93/día, rotación «media»), cargadas el día de la venta */
+    [1,1,1,1,1,1,1,1,1,1,2,2].forEach(function(u,i){ var f=dia(-(i+1)); L.push(P({ fecha:f, ts:ts(f), entregado:true, productos:[Object.assign({cant:u},SEMI)] })); _ventasS.push({ f:f, u:u, ek:'t'+n }); });
+    /* 9 vendidas y sin entregar, de mañana a la semana que viene (vendidas una por día en los últimos 9 días) */
+    [1,2,3,4,5,6,7,8,9].forEach(function(d){ L.push(P({ fecha:dia(d), ts:ts(dia(-d)), productos:[Object.assign({cant:1},SEMI)] })); _ventasS.push({ f:dia(-d), u:1, ek:'t'+n }); });
     /* lo que rota poco: 1 entrega en 15 días y 2 vendidas sin entregar */
     L.push(P({ fecha:dia(-3), entregado:true, productos:[Object.assign({cant:1},POCO)] }));
     L.push(P({ fecha:dia(4), productos:[Object.assign({cant:2},POCO)] }));
@@ -62,15 +67,31 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var d=stockData(), o=d.lista.filter(function(x){ return x.k===_kS; })[0]; if(!o) return null;
     var MS=stockMesSiguiente(todayStr()), pr=stockProducirDe(o, MS, ventasPanelIndex ? ventasPanelIndex() : null);
     return { comp:o.comp, porDia:+o.porDia.toFixed(3), rot:o.rotacion, lead:o.lead, margen:o.margen, cubrir:o.cubrir, hay:stockHaySalir(o), enOtros:o.enOtros,
-      pedir:o.pedir, recoger:o.recoger, fabricar:o.fabricar, sem:pr.sem, quin:pr.quin, corte:o.corte, dias:o.dias, aviso:o.aviso };
+      pedir:o.pedir, recoger:o.recoger, fabricar:o.fabricar, sem:pr.sem, quin:pr.quin, corte:o.corte, dias:o.dias, aviso:o.aviso,
+      objS:o.objS, obj:o.objetivo, pp:o.puntoPedido, compH:stockCompHorizonte(o), c19:stockCompHasta(o, stockSumarDias(todayStr(), 19)),
+      ventas:window._ventasS, fer:Object.keys(FERIADOS||{}).concat(Object.keys(FERIADOS_PASADOS||{})) };
   });
   chk('el escenario es el de la captura: 9 sin entregar, 0,93 por día (rotación media), 4 en Banzer y 2 en Moreno',
-    r && r.comp===9 && r.porDia===0.933 && r.rot==='media' && r.hay===4 && r.enOtros===2, r);
-  /* (§4iy) El 08/10 es jueves: la fábrica tiene piso de 4 días (sale el sábado y el domingo no hay camión), no 3. Todo sube 0,93. */
-  chk('7 días: 9 vendidas + 0,93 × 9 días (4 fábrica + 2 margen + 3 reserva) = 17,4 − 4 para cargar → pedir 14: traer 2 de Moreno y PRODUCIR 12 (antes 3)',
-    r && r.lead===4 && r.pedir===14 && r.recoger===2 && r.fabricar===12 && r.sem===12, r);
-  chk('15 días: 9 + 0,93 × 21 = 28,6 − 6 (Banzer + Moreno) → 23 (antes 13), nunca menos que la de 7 días',
-    r && r.quin===23 && r.quin>=r.sem, r);
+    r && r.comp===9 && r.porDia===0.933 && r.rot==='media' && r.hay===4 && r.enOtros===2, r && { comp:r.comp, porDia:r.porDia, rot:r.rot, hay:r.hay, enOtros:r.enOtros });
+  /* 🎯 (§4ls) La regla, calculada acá aparte (la de la revisión 2): venta por día hábil de los últimos 26 días hábiles, punto de pedido
+     μ×5 + z·σ·√5, objetivo + 1 día. Lo libre = 4 − 9 vendidas = −5: se pide hasta el objetivo, o sea objetivo + 5 (§4ii: SE SUMAN). */
+  {
+    const sumar=(f,k)=>{ const d=new Date(f+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+k); return d.toISOString().slice(0,10); };
+    const fer=new Set(r?r.fer:[]), habil=f=>new Date(f+'T12:00:00Z').getUTCDay()!==0 && !fer.has(f), HOY='2026-10-08';
+    const dias=[]; for(let f=HOY; dias.length<48; f=sumar(f,-1)) if(habil(f)) dias.push(f);
+    const pos={}; dias.forEach((x,i)=>pos[x]=i); const serie=new Array(26).fill(0), ord={};
+    for(const v of (r?r.ventas:[])){ let g=v.f; while(!(g in pos) && g>=dias[47]) g=sumar(g,-1); if(!(g in pos)) continue; if(pos[g]<26) serie[pos[g]]+=v.u; ord[v.ek]=(ord[v.ek]||0)+v.u; }
+    const mu=serie.reduce((a,b)=>a+b,0)/26, sd=Math.sqrt(serie.reduce((a,x)=>a+(x-mu)*(x-mu),0)/25);
+    const tam=Object.values(ord).sort((a,b)=>a-b), q75=tam[Math.floor(0.75*(tam.length-1))];
+    const z=mu*5>=4?1.645:1.28, prot=mu*5+z*sd*Math.sqrt(5), S=Math.max(prot+mu, q75), s=Math.min(S-1, prot);
+    const libre=4-9, pedir=(libre<=s||libre<0)?Math.ceil(S-libre-1e-9):0;
+    let h15=0; for(let f=sumar(HOY,1); f<=sumar(HOY,15); f=sumar(f,1)) if(habil(f)) h15++;
+    const quin=Math.max(pedir-2, Math.ceil((r?r.c19:0)+S+mu*h15-6-1e-9), 0);
+    chk('🎯 7 días: lo vendido (9) se SUMA al objetivo ('+Math.ceil(S-1e-9)+'): libre 4 − 9 = −5 → pedir '+pedir+' (objetivo + 5): traer 2 de Moreno y PRODUCIR '+(pedir-2),
+      r && Math.abs(r.objS-S)<1e-9 && r.pedir===pedir && pedir===Math.ceil(S-1e-9)+5 && r.recoger===2 && r.fabricar===pedir-2 && r.sem===pedir-2 && r.compH===9, r && { pedir:r.pedir, rec:r.recoger, fab:r.fabricar, sem:r.sem, objS:r.objS, S, compH:r.compH });
+    chk('🎯 15 días: lo vendido + el objetivo + la venta de los días hábiles de esos 15 días − 6 (Banzer + Moreno) = '+quin+', nunca menos que la de 7 días',
+      r && r.quin===quin && r.quin>=r.sem, r && { quin:r.quin, esperado:quin, sem:r.sem });
+  }
   chk('el aviso pide fabricar (no «alcanza»)', r && (r.aviso==='urgente'||r.aviso==='pedir'), r && r.aviso);
 
   console.log('\n── 2. Lo que rota poco sigue como antes ──');
@@ -82,14 +103,16 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var mal=[];
     stockData().lista.forEach(function(o){
       var hay=stockHaySalir(o); if(hay==null || o.descont) return;
-      var nec=(o.comp||0)+o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir));
-      var cubre=hay+stockEnCaminoSeguro(o)+o.pedir;
-      if(cubre+1e-9<nec) mal.push(o.desc+' '+o.medida+': cubre '+cubre+' y hacen falta '+nec.toFixed(2));
+      /* 🎯 (§4ls) Cuando se pide, lo que hay + lo que viene + lo que se pide alcanza para lo vendido MÁS el objetivo (lo que rota) o para
+         lo vendido (lo que no rota): `stockNecesario`, la misma cuenta. */
+      var nec=stockNecesario(o), cubre=hay+stockEnCaminoSeguro(o)+o.pedir;
+      if(o.pedir>0 && cubre+1e-9<nec) mal.push(o.desc+' '+o.medida+': cubre '+cubre+' y hacen falta '+nec.toFixed(2));
+      if(!o.rota && o.pedir!==Math.max(0, Math.ceil(stockCompHorizonte(o)-hay-stockEnCaminoSeguro(o)-1e-9))) mal.push(o.desc+': lo que no rota pide solo lo vendido');
       if(o.fabricar+o.recoger!==o.pedir) mal.push(o.desc+': producir + traer ≠ pedir');
     });
     return mal;
   });
-  chk('lo que hay + lo que viene + lo que se pide alcanza para lo vendido MÁS el ritmo, en cada producto', Array.isArray(r) && r.length===0, r);
+  chk('cuando se pide, lo que hay + lo que viene + lo que se pide alcanza para lo vendido MÁS el objetivo, en cada producto', Array.isArray(r) && r.length===0, r);
 
   console.log('\n── 4. «Cubre hasta» cuenta la venta que viene ──');
   r = await ev(()=>{ var o=stockData().lista.filter(function(x){ return x.k===_kS; })[0];
@@ -99,7 +122,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
   console.log('\n── 5. El «Cómo se calcula» lo dice ──');
   r = await ev(()=>{ var o=stockData().lista.filter(function(x){ return x.k===_kS; })[0]; var t=document.createElement('div'); t.innerHTML=stockSaldoDetalleHtml(o); return t.innerText.replace(/\s+/g,' '); });
-  chk('dice «Se suman» y la necesidad 17,40', typeof r==='string' && /Se suman/.test(r) && !/Se toma el mayor/.test(r) && /17[.,]40/.test(r), typeof r==='string' ? (r.match(/Cómo se calcula.{0,400}/)||[r.slice(0,300)])[0] : r);
+  /* 🎯 (§4ls) Con el objetivo, la suma se ve en «lo libre»: lo que hay MENOS lo vendido, y se pide hasta el objetivo. */
+  chk('dice que lo vendido se resta de lo libre (4 − 9 = −5) y que se pide hasta el objetivo (objetivo + 5)', typeof r==='string' && /Lo libre = 4 para cargar \(PTF \+ Banzer\) \+ 0 que viene − 9 unidades ya vendidas que se entregan hasta el [0-9/]+ = -5/.test(r) && /se pide hasta el objetivo, \d+ − \(-5\) = \d+/.test(r) && !/Se toma el mayor/.test(r), typeof r==='string' ? (r.match(/Cómo se calcula.{0,700}/)||[r.slice(0,300)])[0] : r);
 
   chk('ningún error de JavaScript', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

@@ -2077,7 +2077,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .pl-chip{ border:1px solid var(--gray-md); background:#fff; border-radius:999px; padding:3px 10px; font:inherit; font-size:.8rem; font-weight:600; cursor:pointer; }
 .pl-chip.on{ background:#1b2a2b; color:#fff; border-color:#1b2a2b; }
 .pl-tabla{ overflow-x:auto; }
-.pl-tabla table{ border-collapse:collapse; width:100%; min-width:900px; font-size:.84rem; }
+.pl-tabla table{ border-collapse:collapse; width:100%; min-width:980px; font-size:.84rem; }
 /* (16/10, dueño: «fondo negro, letra gris casi negra… no leo») el `thead th` general del panel es negro: acá el encabezado va CLARO con
    letra oscura, sin heredar el negro con la letra gris de esta tabla. */
 .pl-tabla th{ text-align:left; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; background:#e3f3f1; color:#0f3d3a; font-weight:800; padding:7px 8px; border-bottom:2px solid #8fd0c6; vertical-align:bottom; }
@@ -2087,7 +2087,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .pl-fila{ cursor:pointer; } .pl-fila:hover td,.pl-fila.abierta td{ background:#f6f9f9; }
 .pl-fila.pl-marca td{ background:#e2ecfb; }
 .pl-nm{ font-weight:800; }
-.pl-p7 b,.pl-p15 b,.pl-pm b,.pl-comp b,.pl-hay b{ font-size:1rem; font-variant-numeric:tabular-nums; }
+.pl-p7 b,.pl-p15 b,.pl-pm b,.pl-comp b,.pl-hay b,.pl-tener b{ font-size:1rem; font-variant-numeric:tabular-nums; }
+.pl-obj{ font-size:.8rem; color:#0f3d3a; margin-top:6px; } .pl-ley{ font-size:.74rem; color:var(--muted); line-height:1.4; }
 .pl-cero{ color:var(--muted); }
 .pl-hoy{ color:#b4182b; font-weight:700; }
 .pl-que{ display:inline-block; border-radius:8px; padding:3px 8px; font-weight:800; font-size:.78rem; }
@@ -22992,6 +22993,27 @@ var PRODUCIR_1RA=0.7;         // qué parte del mes tiene que estar hecha para l
    Con menos de 3 entregas distintas no se estima ningún ritmo: se cubre lo que está VENDIDO
    Y SIN ENTREGAR (eso es real y hay que tenerlo) y nada más. */
 var STOCK_VENTAS_MIN=3;
+/* 🎯 (18/10, §4ls, decisión 4 del dueño) CUÁNTO TENER DE LO QUE ROTA: PUNTO DE PEDIDO Y OBJETIVO. La regla que armó y validó la
+   revisión 2 con la demanda real de agosto a octubre (simulación «paso 2»: +3 a +4 puntos de ventas con stock con la
+   misma plata) y que el dueño aprobó el 18/10. QUÉ rota NO cambia (≥3 entregas distintas del equipo en 15 días, Eduardo afuera salvo a
+   Multicenter, §4dj/§4gm): esto cambia solo CUÁNTO se tiene de lo que rota (`stockObjetivo`, la única cuenta):
+     · la venta se mide con los últimos STOCK_OBJ_VENTANA días hábiles (≈ 1 mes), por fecha de venta: μ por día hábil y su desvío σ;
+     · punto de pedido = μ × (fábrica + revisión) + z·σ·√(fábrica + revisión): la venta de 5 días hábiles más un margen por los días en
+       que se vende más (z = STOCK_OBJ_Z_ALTO si en esos 5 días se esperan ≥ STOCK_OBJ_ALTO unidades: lo que vende mucho, más margen);
+     · objetivo = punto de pedido + STOCK_OBJ_EXTRA día de venta (las almohadas, STOCK_OBJ_EXTRA_ALMOHADA: valen poco), y nunca menos
+       que el pedido típico (el 75 % de las entregas de las últimas 8 semanas es de ese tamaño o menos);
+     · cuando LO LIBRE (PTF + Banzer + lo que viene seguro − lo vendido para los próximos 15 días) baja al punto de pedido, se pide
+       hasta el objetivo: primero se trae de Moreno y lo que falta se fabrica.
+   Lo que no rota sigue igual: solo lo ya vendido. ⚠️ El plazo es el de la regla validada (4 días hábiles, lo medido el 16/10 en las
+   dos fábricas): si logística confirma otro, se cambia acá. El plazo de los AVISOS («🚨 ya» = se corta antes de que llegue) sigue
+   siendo el medido (`o.lead`). */
+var STOCK_OBJ_VENTANA=26;        // días hábiles con que se mide la venta de lo que rota (≈ 1 mes)
+var STOCK_OBJ_TIPICO=48;         // días hábiles (8 semanas) para el pedido típico
+var STOCK_OBJ_FABRICA=4;         // días hábiles de fábrica
+var STOCK_OBJ_REVISION=1;        // se revisa todos los días
+var STOCK_OBJ_EXTRA=1;           // objetivo = punto de pedido + 1 día de venta
+var STOCK_OBJ_EXTRA_ALMOHADA=5;  // las almohadas: 5 días de venta
+var STOCK_OBJ_Z=1.28, STOCK_OBJ_Z_ALTO=1.645, STOCK_OBJ_ALTO=4;
 var STOCK_HIST=15;            // cuántos cortes se recuerdan como mucho (solo el resumen: fecha, hora, cuántos); (06/10) y solo de los últimos STOCK_CONTROL_DIAS días, más el último de cada almacén
 /* 🧓 (06/10) QUÉ PÁGINA ESCRIBIÓ EL STOCK. `filaStock` pone `pv` en cada guardado; una página de antes no lo conoce y al
    guardar lo pierde (su `leerStock` arma el stock solo con los campos que conoce). Una copia sin `pv` la escribió una
@@ -24901,6 +24923,7 @@ function stockData(extra){
   var desde30=diasAtras(STOCK_VENTANA_MES-1);   // la ventana larga, solo para el plan del mes que viene (§4dr)
   var T=stockTiemposFabrica();
   var vArr=stockVentaDesde(), vPiso=stockLeadPisoArranque();   // 📅 (18/10, §4ls VF1) los días de venta, desde que arranca la fábrica
+  var OV=stockObjVentana(hoy);   // 🎯 (18/10, §4ls, decisión 4) los días hábiles del punto de pedido y el objetivo
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
@@ -24959,6 +24982,16 @@ function stockData(extra){
         var ek30=stockEntregaClave(p, fs);
         o.v30+=c; if(!o.ventas30[ek30]){ o.ventas30[ek30]=1; o.n30++; }
         if(stockEduardoMulticenter(p)) o.v30EduMc+=c;          // 🏬 (28/09)
+      }
+      /* 🎯 (18/10, §4ls, decisión 4 del dueño) La venta para el punto de pedido y el objetivo (`stockObjetivo`): por día hábil (los
+         últimos STOCK_OBJ_VENTANA) y el tamaño de cada entrega (las últimas 8 semanas: el pedido típico), por FECHA DE VENTA y con las
+         MISMAS reglas de demanda que la rotación (`stockEsDemanda`: equipo + Eduardo a Multicenter, la almohada de la RPT…). */
+      if(fv>=OV.ini && fv<=hoy){
+        var gi=OV.pos[fv];
+        if(gi!=null && gi>=0 && stockEsDemanda(p, o.k)){
+          if(gi<OV.nMu){ o.objDia=o.objDia||{}; o.objDia[gi]=(o.objDia[gi]||0)+c; if(stockEduardoMulticenter(p)) o.objEduMc=(o.objEduMc||0)+c; }
+          var eko=stockEntregaClave(p, fs); o.objOrd=o.objOrd||{}; o.objOrd[eko]=(o.objOrd[eko]||0)+c;
+        }
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
@@ -25119,6 +25152,7 @@ function stockData(extra){
     o.ventaDesde=vArr; o.leadVenta=Math.max(vPiso, lt.base!=null ? lt.base : o.lead);   // 📅 (18/10, §4ls VF1) ver `stockLeadVenta`
     o.margen=stockMargen(o);
     o.cubrir=o.rotacion==='alta'?STOCK_CUBRIR:(o.rotacion==='media'?3:0);
+    stockObjetivo(o, OV);   // 🎯 (18/10, §4ls, decisión 4) punto de pedido y objetivo de lo que rota (deja `margen` y `cubrir` en 0)
     // (26/09) …o más marcado «✔ hay en Banzer» que lo que dice el Excel de Banzer.
     o.revisarStock=(o.deposito!=null && (o.confirmadoAqui||0)>Math.max(0,o.deposito)) || o.revisarSale.length>0;
     o.compPronto=0; Object.keys(o.compPor).forEach(function(f){ if(stockDias(hoy,f)<=o.lead) o.compPronto+=o.compPor[f]; });
@@ -25250,12 +25284,19 @@ function stockAvisoDe(o){
      SEMIORTOPÉDICO 140 iban al carril «Revisar», los galpones no los contaban y la copia para fábrica decía «PROVISIONAL». Lo marcado
      de más en los pedidos quiere decir que hay MENOS de lo que dice el Excel, no más: si ni pidiendo hoy llega, es urgente igual, y
      `o.revisarStock` sigue en true para que la acción lo diga («· revisá el saldo»). */
+  /* 🎯 (18/10, §4ls, decisión 4 del dueño) Lo que rota tiene PUNTO DE PEDIDO: «pedir» es que lo libre llegó a él (`stockObjDispara`), no
+     que se corte dentro de fábrica + margen. «🚨 ya» sigue siendo que se corta antes de lo que tarda la fábrica (`o.lead`), pero solo con
+     algo para pedir: sobre el punto de pedido, lo que viene alcanza («🚚 Ya pedido») o no hace falta nada. Así el aviso dice SIEMPRE lo
+     mismo que «Pedir 7 días»: pedir ⇔ hay unidades para pedir. */
+  var obj=stockObjActivo(o);
   if(o.revisarStock){
-    if(stockDescontinuadoK(o.k) || o.dias==null) return 'revisar';
+    if(stockDescontinuadoK(o.k)) return 'revisar';
+    if(obj) return !stockObjDispara(o) ? 'revisar' : ((o.dias!=null && o.dias<=o.lead) ? 'urgente' : 'pedir');
+    if(o.dias==null) return 'revisar';
     return o.dias<=o.lead ? 'urgente' : (o.dias<o.lead+o.margen ? 'pedir' : 'revisar');   // el carril «Revisar» queda para lo que no urge (≤: §4jd)
   }
   if(stockHaySalir(o)==null) return o.vendidos>0 ? 'sincontar' : '';
-  var falta = (o.dias!=null && o.dias<o.lead+o.margen);
+  var falta = obj ? stockObjDispara(o) : (o.dias!=null && o.dias<o.lead+o.margen);
   /* Falta acá, pero en la fábrica hay de sobra: no es un pedido a fábrica, es mandar la
      camioneta. Es una acción distinta y mucho más rápida, así que se dice distinto. */
   if(o.descont && o.enOtros>0 && o.comp>(stockHaySalir(o)||0)+stockEnCaminoSeguro(o)) return 'traer';
@@ -25265,8 +25306,11 @@ function stockAvisoDe(o){
   if(o.descont) return falta ? 'agotado' : (o.sobra ? 'sobra' : '');
   /* (§4jd, A1-3) con `dias === lead` HOY es el último día para pedir: pedido hoy llega justo, mañana llega tarde (DREAM REFORZADO 180:
      vendido para el 14/10, 5 días de fábrica, el viernes decía «esta semana» y el sábado ya no llegaba). «Esta semana» = queda holgura. */
-  if(o.dias!=null && o.dias<=o.lead) return 'urgente';          // ni pidiendo mañana llega a tiempo
-  if(falta) return 'pedir';                                     // se corta dentro de fábrica + margen
+  if(obj){ if(falta) return (o.dias!=null && o.dias<=o.lead) ? 'urgente' : 'pedir'; }   // 🎯 (§4ls) llegó al punto de pedido
+  else {
+    if(o.dias!=null && o.dias<=o.lead) return 'urgente';        // ni pidiendo mañana llega a tiempo
+    if(falta) return 'pedir';                                   // se corta dentro de fábrica + margen
+  }
   if(o.enCamino>0) return 'pedido';                             // ya está pedido y con eso alcanza
   if(o.sobra) return 'sobra';
   /* 📦 Se vendió, pero sin rotación. No es una alarma, es una aclaración — si no, el renglón
@@ -25380,12 +25424,72 @@ function stockCompHorizonte(o){
   Object.keys((o&&o.compPor)||{}).forEach(function(f){ if(f>lim) lejos+=o.compPor[f]; });
   return Math.max(0,(o.comp||0)-lejos);
 }
-function stockNecesario(o){ return stockCompHorizonte(o) + o.porDia*(stockLeadVenta(o)+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)); }
+/* 🎯 (18/10, §4ls, decisión 4 del dueño) LA VENTANA DE DÍAS HÁBILES DE LA REGLA (`STOCK_OBJ_*`): los últimos STOCK_OBJ_TIPICO días
+   hábiles hasta hoy (lunes a sábado sin feriados, `pryDiaHabil`: el calendario de la proyección) y, para cada día corrido de la ventana,
+   a qué día hábil va la venta (domingo o feriado → el hábil anterior, como en la simulación que validó la regla). `pos[día]` 0 = el más
+   nuevo; los primeros STOCK_OBJ_VENTANA son los del ritmo. Una vez por `stockData`. */
+function stockObjVentana(hoy){
+  var dias=[], f=hoy, n=0;
+  while(dias.length<STOCK_OBJ_TIPICO && n<500){ if(pryDiaHabil(f)) dias.push(f); f=stockSumarDias(f,-1); n++; }
+  var V={ dias:dias, pos:{}, ini:dias[dias.length-1]||hoy, nMu:Math.min(STOCK_OBJ_VENTANA, dias.length) };
+  for(var d=V.ini, i=dias.length-1, j=-1, g=0; d<=hoy && g<800; d=stockSumarDias(d,1), g++){ if(i>=0 && dias[i]===d){ j=i; i--; } V.pos[d]=j; }
+  V.iniMu=dias[V.nMu-1]||hoy;
+  return V;
+}
+/* Días hábiles en (a, b]: sin `a`, con `b`. */
+function stockHabilesEntre(a, b){ var n=0, f=stockSumarDias(a,1); for(var g=0; f && f<=b && g<800; f=stockSumarDias(f,1), g++) if(pryDiaHabil(f)) n++; return n; }
+/* 🎯 (18/10, §4ls, decisión 4 del dueño) CUÁNTO TENER DE LO QUE ROTA — LA ÚNICA CUENTA (`STOCK_OBJ_*`, ver arriba). La llama `stockData`
+   una vez por producto, con la venta ya juntada (`o.objDia`: unidades por día hábil; `o.objOrd`: unidades por entrega, `stockEntregaClave`),
+   y de acá salen `stockNecesario`, `stockCuantoPedir` y `stockAvisoDe`, o sea el Plan, la cinta, las fichas, «Qué producir», la copia para
+   la fábrica, «Cómo se calcula» y el «tener» de Banzer o PTF. Deja en `o`:
+     · objMu / objSd: la venta por día hábil y su desvío (últimos STOCK_OBJ_VENTANA días hábiles, por fecha de venta); objVendidos, el total;
+     · objTipico: el pedido típico (8 semanas); objZ, objMargen (z·σ·√5, en unidades), objExtra (días de venta sobre el punto de pedido);
+     · objPP / objS: punto de pedido y objetivo con decimales (la cuenta); puntoPedido / objetivo: en unidades (lo que se muestra; se pide
+       si lo libre queda en el punto de pedido o menos).
+   Solo para lo que rota y se sigue fabricando: lo demás queda con `objS` null y se pide solo lo vendido (como siempre). `o.margen` y
+   `o.cubrir` (días de margen y de reserva de la regla de antes) quedan en 0: los reemplaza el objetivo. ⚠️ `o.porDia` NO cambia: el ritmo
+   de 15 días sigue siendo el de la proyección («Se corta»), del plan de «Banzer o PTF» y de las vistas (cambiar cómo se mide el ritmo es
+   otra decisión del dueño, «ritmo 15+30», que no se tomó); esta ventana es solo la de la regla del cuánto. */
+function stockObjetivo(o, V){
+  o.objS=null; o.objPP=null; o.objetivo=null; o.puntoPedido=null;
+  if(!o.rota || !V || !V.nMu) return null;
+  var dia=o.objDia||{}, n=V.nMu, tot=0, sq=0, i, x;
+  for(i=0;i<n;i++) tot+=Number(dia[i])||0;
+  var mu=tot/n;
+  for(i=0;i<n;i++){ x=(Number(dia[i])||0)-mu; sq+=x*x; }
+  var sd=Math.sqrt(sq/Math.max(1,n-1));
+  o.objVendidos=tot; o.objMu=mu; o.objSd=sd; o.objDesde=V.iniMu;
+  if(stockDescontinuadoK(o.k)) return null;            // 🛑 ya no se fabrica: solo lo vendido, de lo que queda
+  var tam=Object.keys(o.objOrd||{}).map(function(e){ return o.objOrd[e]; }).sort(function(a,b){ return a-b; });
+  if(!tam.length) tam=[1];
+  var tipico=tam[Math.floor(0.75*(tam.length-1))];
+  var LR=STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION;
+  var z=(mu*LR>=STOCK_OBJ_ALTO) ? STOCK_OBJ_Z_ALTO : STOCK_OBJ_Z;
+  var prot=mu*LR + z*sd*Math.sqrt(LR);
+  var extra=stockEsAlmohadaK(o.k) ? STOCK_OBJ_EXTRA_ALMOHADA : STOCK_OBJ_EXTRA;
+  var S=Math.max(prot + mu*extra, tipico);
+  o.objTipico=tipico; o.objZ=z; o.objMargen=z*sd*Math.sqrt(LR); o.objExtra=extra;
+  o.objS=S; o.objPP=Math.min(S-1, prot);
+  o.objetivo=Math.ceil(S-1e-9); o.puntoPedido=Math.floor(o.objPP+1e-9);
+  o.margen=0; o.cubrir=0;
+  return o;
+}
+function stockObjActivo(o){ return !!(o && o.objS!=null && !o.descont); }
+/* LO LIBRE de la regla: PTF + Banzer + lo que viene seguro − lo vendido para los próximos 15 días. null = sin contar. */
+function stockLibreObj(o){ var hay=stockHaySalir(o); return hay==null ? null : hay+stockEnCaminoSeguro(o)-stockCompHorizonte(o); }
+/* ¿Llegó al punto de pedido? (o lo libre ya es negativo: lo vendido sin stock se pide siempre, el mismo día) */
+function stockObjDispara(o){ var l=stockLibreObj(o); return l!=null && (l<=o.objPP || l<0); }
+/* 🎯 (§4ls) Con objetivo, lo que hay que TENER (en lo que hay + lo que viene) es lo vendido para los próximos 15 días + el objetivo. */
+function stockNecesario(o){
+  if(stockObjActivo(o)) return stockCompHorizonte(o) + o.objS;
+  return stockCompHorizonte(o) + o.porDia*(stockLeadVenta(o)+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir));
+}
 /* Cuánto pedir: todo lo ya vendido MÁS lo que cubre fábrica + margen + una semana de venta (§4ii: antes «o», el mayor),
-   menos lo que hay y lo que viene. */
+   menos lo que hay y lo que viene. 🎯 (18/10, §4ls) Lo que rota: hasta el objetivo, y solo si lo libre llegó al punto de pedido. */
 function stockCuantoPedir(o){
   var hay=stockHaySalir(o);
   if(hay==null || o.descont) return 0;               // lo discontinuado no se pide: no lo hacen más
+  if(stockObjActivo(o)) return stockObjDispara(o) ? Math.max(0, Math.ceil(o.objS-stockLibreObj(o)-1e-9)) : 0;
   var necesario=stockNecesario(o);
   // Una llegada atrasada requiere seguimiento, no duplicar la orden de fabricación.
   var camino=stockEnCaminoSeguro(o);   // 🧮 (§4hn) sin contar como seguro lo que una detección sin asignar ya podría ser
@@ -25394,6 +25498,35 @@ function stockCuantoPedir(o){
      (26/09) `hay` ya suma lo de Banzer: de ahí también sale el camión. */
   var falta=Math.ceil(necesario-(hay+camino)-1e-9);
   return Math.max(0,falta);
+}
+/* 🎯 (18/10, §4ls) El objetivo y el punto de pedido EN PALABRAS, con los MISMOS números de la cuenta (`stockObjetivo`, `stockLibreObj`):
+   el Plan, la tabla, «Cómo se calcula» y la copia para la fábrica dicen esto y nada calculado aparte. */
+function stockObjCorto(o){   // «tener 14 · pedí al bajar a 11 · libre 9»
+  if(!stockObjActivo(o)) return '';
+  var l=stockLibreObj(o);
+  return 'tener '+stockUnid(o.objetivo)+' · pedí al bajar a '+stockUnid(o.puntoPedido)+(l!=null?(' · libre '+stockUnid(l)):'');
+}
+function stockObjPorque(o){   // la razón del número de hoy, en una línea
+  if(!stockObjActivo(o)) return '';
+  var l=stockLibreObj(o); if(l==null) return '';
+  var cp=stockCuantoPedir(o);
+  return 'lo libre (PTF + Banzer + lo que viene − lo vendido para '+STOCK_HORIZ_VENDIDO+' días) es <b>'+stockUnid(l)+'</b>'+
+    (cp>0 ? ('; llegó al punto de pedido (<b>'+stockUnid(o.puntoPedido)+'</b>) → pedí hasta tener <b>'+stockUnid(o.objetivo)+'</b>: '+stockUnid(cp))
+          : ('; todavía no llega al punto de pedido (<b>'+stockUnid(o.puntoPedido)+'</b>): no se pide'));
+}
+function stockObjCuentaHtml(o){   // la cuenta entera, para «Cómo se calcula»
+  if(!stockObjActivo(o)) return '';
+  var LR=STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION, l=stockLibreObj(o), cp=stockCuantoPedir(o);
+  return '<p><b>Lo que rota: punto de pedido y objetivo.</b> Vendió <b>'+stockUnid(o.objVendidos||0)+'</b> en los últimos '+STOCK_OBJ_VENTANA+' días hábiles'+
+      (o.objDesde?(' (desde el '+esc(fmtFechaCorta(o.objDesde))+', por fecha de venta)'):'')+': <b>'+stockNum(o.objMu,2)+' por día hábil</b>, con un desvío de '+stockNum(o.objSd,2)+'.</p>'+
+    '<p>Punto de pedido = la venta de '+LR+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión): '+stockNum(o.objMu*LR,2)+
+      ' + un margen por los días en que se vende más ('+stockNum(o.objZ,3).replace(/0+$/,'')+' × '+stockNum(o.objSd,2)+' × √'+LR+' = '+stockNum(o.objMargen,2)+') = <b>'+stockNum(o.objPP,2)+'</b> → <b>'+stockUnid(o.puntoPedido)+'</b>.</p>'+
+    '<p>Objetivo = punto de pedido + '+o.objExtra+' día'+(o.objExtra===1?'':'s')+' de venta'+(o.objExtra!==STOCK_OBJ_EXTRA?' (almohada: valen poco)':'')+
+      ', y nunca menos que el pedido típico ('+stockUnid(o.objTipico)+') = <b>'+stockNum(o.objS,2)+'</b> → <b>'+stockUnid(o.objetivo)+'</b>.</p>'+
+    (l!=null ? ('<p>Lo libre = '+stockUnid(stockHaySalir(o))+' para cargar (PTF + Banzer) + '+stockUnid(stockEnCaminoSeguro(o))+' que viene − '+stockUnid(stockCompHorizonte(o))+
+      ' unidades ya vendidas que se entregan hasta el '+esc(fmtFechaCorta(stockCompHorizonteLim(o)))+' = <b>'+stockUnid(l)+'</b>. '+
+      (cp>0 ? ('Llegó al punto de pedido: se pide hasta el objetivo, '+stockUnid(o.objetivo)+' − '+(l<0?('('+stockUnid(l)+')'):stockUnid(l))+' = <b>'+stockUnid(cp)+'</b>'+(o.recoger>0?(' (primero '+stockUnid(o.recoger)+' de Moreno, el resto se fabrica)'):'')+'.')
+            : ('Está sobre el punto de pedido: hoy no se pide.'))+'</p>') : '');
 }
 function stockEnDias(n){ return n===0 ? 'hoy' : n===1 ? 'mañana' : ('en '+n+' días'); }
 
@@ -26478,6 +26611,15 @@ function stockSaldoDetalleHtml(o){
     html+='<p><b>No se puede calcular el faltante sin un conteo de fábrica.</b></p>';
   }else if(o.descont){
     html+='<p><b>Este producto ya no se fabrica.</b> Se vende lo disponible; un faltante requiere revisar alternativas con ventas.</p>';
+  }else if(stockObjActivo(o)){
+    /* 🎯 (18/10, §4ls, decisión 4) Lo que rota: la cuenta del punto de pedido y el objetivo, con sus números (`stockObjCuentaHtml`). */
+    html+='<div style="margin-top:12px"><b>Cómo se calcula la reposición</b>'+stockObjCuentaHtml(o)+
+      (compLejos>0?('<p>('+stockUnid(compLejos)+' más vendidas para después del '+esc(fmtFechaCorta(horizLim))+': entran cuando se acerquen.)</p>'):'');
+    if(o.aviso==='traer') html+='<p><b>Recoger '+stockUnid(o.pedir)+' de Moreno / otros almacenes</b>: hay '+stockUnid(o.enOtros||0)+' allí.</p>';
+    else if(o.fabricar>0) html+='<p><b>El panel propone fabricar '+stockUnid(o.fabricar)+'.</b>'+(o.recoger>0?(' Y traer '+stockUnid(o.recoger)+' de Moreno.'):'')+'</p>';
+    else html+='<p><b>No hay una orden de reposición.</b> '+(o.enCamino?'Ya hay unidades pendientes de llegada.':'Se pide cuando lo libre llegue al punto de pedido.')+'</p>';
+    if(o.corte) html+='<p>Primer faltante proyectado (a '+stockNum(o.porDia,2)+' por día): <b>'+esc(fmtFecha(o.corte))+'</b>. Plazo de fábrica: '+o.lead+' días'+(o.leadMedido?' (medido).':' (estimado).')+'</p>';
+    html+='</div>';
   }else{
     html+='<div style="margin-top:12px"><b>Cómo se calcula la reposición</b><p>'+stockUnid(compH)+' unidades ya vendidas que se entregan hasta el '+esc(fmtFechaCorta(horizLim))+
       (compLejos>0?(' ('+stockUnid(compLejos)+' más vendidas para después: entran cuando se acerquen)'):'');
@@ -26503,7 +26645,9 @@ function abrirStockPedidos(k){
   var html='<div class="modal-h"><h3>Pedidos · '+esc(nombre)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">';
   if(stockCariocaDescontinuado(k)) html+='<p style="padding:12px;background:#fff4d6;color:#7c4b00"><b>Descontinuado · solo saldos de almacén.</b> Línea de reemplazo: Essential, Confort Plus y Premier Deluxe. Confirmar modelo y medida con ventas; no se sustituyen automáticamente los pedidos.</p>';
   if(o) html+=stockSaldoDetalleHtml(o);
-  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
+  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':
+    stockObjActivo(o)?('rotación '+(o.rotacion==='alta'?'alta':'media')+': '+stockObjCorto(o)+'. Cuando lo libre baja al punto de pedido se pide hasta el objetivo (primero de Moreno, el resto se fabrica).'):   // 🎯 (§4ls)
+    o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
     /* (28/09, 2ª revisión) Sin pedidos únicos no se dice nada: decía «0 de eduardo, excluidas» al lado de «incluye 6 de
@@ -26644,6 +26788,8 @@ function renderStock(){
     if(o.aviso==='urgente') return chico('la fábrica tarda '+o.lead+' día'+(o.lead===1?'':'s')+(q?('; los '+o.enCamino+' en camino llegan el '+fmtFechaCorta(q.llega)+', tarde'):'')+' → pedí <b>'+o.fabricar+'</b> ya'+(o.enOtros?('; hay '+stockOtrosTxt(o)+' para traer ya mismo'):''),'#8a1c24');
     /* 🚚 (18/10, §4ls Man-VM1) Si el aviso no sale de que se corte (`o.pedirReserva`: antes decía «✅ Alcanza», «📦» o «🚚 Ya pedido»),
        «se corta antes de fábrica + margen» era falso: lo que pide es la reserva. */
+    /* 🎯 (18/10, §4ls, decisión 4) Lo que rota se pide cuando lo libre llega al punto de pedido: eso es lo que se dice. */
+    if(o.aviso==='pedir' && stockObjActivo(o)) return chico(stockObjPorque(o)+stockYaVieneTxt(o)+(o.enOtros?('; hay '+stockOtrosTxt(o)+': primero eso'):''),'#7c4b00');
     if(o.aviso==='pedir' && o.pedirReserva) return chico('no se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días), pero lo vendido + la reserva por rotación piden más de lo que hay y viene → pedí <b>'+o.fabricar+'</b> esta semana'+stockYaVieneTxt(o)+(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):''),'#7c4b00');
     if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.fabricar+'</b> esta semana'+(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):''),'#7c4b00');
     if(o.aviso==='traer')   return chico('se corta '+stockEnDias(o.dias)+', pero <b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+Math.max(1,o.pedir)+'</b>, no hace falta pedir','#075985');
@@ -26689,7 +26835,10 @@ function renderStock(){
             (o.vendidosEduMc?(' (incluye '+o.vendidosEduMc+' de Eduardo a Multicenter)'):'')+   // 🏬 (28/09)
             (o.vendidosUnicos?(' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
-          ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?(stockUnicoEtq(o)+': pedido único'):'Poca rotación: solo pedidos confirmados'):o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
+          (stockObjActivo(o)?('<br>Por día: '+stockUnid(o.objVendidos||0)+' en '+STOCK_OBJ_VENTANA+' días hábiles ('+stockNum(o.objMu,2)+' por día hábil)'):'')+   // 🎯 (§4ls) el ritmo de la regla
+          ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?(stockUnicoEtq(o)+': pedido único'):'Poca rotación: solo pedidos confirmados'):
+            stockObjActivo(o)?((o.rotacion==='media'?'Rotación media':'Rotación alta')+' · '+stockObjCorto(o)):   // 🎯 (§4ls) el objetivo, no la reserva de antes
+            o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
           '</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">'+esc(stockNegTxt(o))+'</span>')
@@ -26866,12 +27015,18 @@ function revSoltarHtml(L){
         s.de.map(function(d){ return 'soltar '+d.u+' de '+ver(d.id, d.oc)+' ('+fmtFechaCorta(d.fecha)+')'; }).join(' y ')+(s.cubre<s.falta?(' · igual faltan '+(s.falta-s.cubre)):'')+'</li>';
     }).join('')+'</ul></div>';
 }
+/* 🎯 (18/10, §4ls) La regla en una frase, para lo que se copia (la fábrica, logística). */
+function stockObjReglaTxt(){
+  return 'Lo que rota: cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido '+
+    '(la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles + un margen), se pide hasta el objetivo (+'+STOCK_OBJ_EXTRA+' día de venta; las almohadas, +'+STOCK_OBJ_EXTRA_ALMOHADA+'): '+
+    'primero se trae de Moreno y lo que falta se fabrica. Lo que no rota: solo lo vendido.';
+}
 /* El mensaje para mandarle a la fábrica, con lo que hay que pedir y por qué. */
 function copiarStock(){
   var d=stockData();
   var a=d.lista.filter(function(o){ return o.fabricar>0&&(o.aviso==='urgente'||o.aviso==='pedir'||o.aviso==='revisar'); });
   var tr=d.lista.filter(function(o){return o.recoger>0;});
-  if(!a.length && !tr.length){ toast('No hay nada para pedir ni traer: nada se corta dentro de lo que tarda la fábrica más el margen.','ok',5000); return; }
+  if(!a.length && !tr.length){ toast('No hay nada para pedir ni traer: lo que rota está sobre su punto de pedido y lo vendido está cubierto.','ok',5000); return; }
   var t='';
   /* Traer y pedir son DOS mandados distintos, a dos personas distintas: lo que ya está
      fabricado se va a buscar hoy, lo que no hay que producirlo. Van separados (§4cp). */
@@ -26892,14 +27047,15 @@ function copiarStock(){
          (o.enSale?(' + '+stockSaleTxt(o)):'')+       // (26/09) Banzer
          (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
          (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
-         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':''))
+         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':'')+
+                    (stockObjActivo(o)?(', tener '+stockUnid(o.objetivo)+' (se pide al bajar a '+stockUnid(o.puntoPedido)+')'):''))   // 🎯 (§4ls)
                  : (stockSoloEduardo(o) ? (', '+stockUnicoEtq(o)+': pedido único')
                     : o.vendidosRotacion>0 ? (', pedido puntual — '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s'))
                                            : ', es para un pedido puntual'))+
          (o.dias!=null?(', se corta '+stockEnDias(o.dias)+' ('+fmtFechaCorta(o.corte)+')'):'')+
          (o.comp?(', '+stockUnid(o.comp)+' ya vendidos sin entregar'):'')+'\n';
     });
-    t+='\nCubre lo ya vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días + lo que tarda la fábrica + el margen + hasta '+STOCK_CUBRIR+' días de venta (3 en lo que vende poco; nada en lo que no rota).';
+    t+='\n'+stockObjReglaTxt();
   }
   copyText(t);
   toast((tr.length&&a.length)?'Copiado: lo que hay que traer y lo que hay que pedir ✓':(tr.length?'Lo que hay que traer, copiado ✓':'Pedido a fábrica copiado ✓'),'ok');
@@ -27094,6 +27250,28 @@ function stockProducirDe(o, MS, PI){
   var hay=stockHaySalir(o)+stockEnCaminoSeguro(o)+(o.enOtros||0);   // (§4iz, E1-2) lo «en camino» que el Excel ya mostró no se cuenta dos veces
   r.hay=hay; r.ok=true;
   r.sem=Math.max(0, o.fabricar||0);
+  /* 🎯 (18/10, §4ls, decisión 4 del dueño) LO QUE ROTA, CON SU OBJETIVO: las tres columnas con la MISMA regla (y la misma venta, la de
+     los últimos STOCK_OBJ_VENTANA días hábiles) que «7 días» — como la calculó la revisión 2 para 15 días y noviembre:
+     · 15 días = lo vendido que se entrega hasta 15 días + la fábrica después + la venta de los días hábiles de esos 15 días + el
+       objetivo puesto al final, menos lo que hay (acá, Banzer, Moreno y lo que viene). Nunca menos que «7 días».
+     · el mes = la venta de sus días hábiles + lo ya vendido para ese mes, menos lo que el 1° quede POR ENCIMA del objetivo (que se
+       mantiene: lo que llega al punto de pedido se repone hasta el objetivo, también a fin de mes). Sin rango: el ritmo es el de la regla.
+     Lo que no rota (o rota solo en 30 días) sigue con la cuenta de siempre, abajo. */
+  if(stockObjActivo(o)){
+    var vd=o.ventaDesde||hoy, mu=o.objMu||0;
+    /* La venta de los días hábiles DESPUÉS de hoy (como la regla, que ya no cuenta hoy): no se corre con el corte de las 16:30 —el
+       objetivo no depende de la hora—; lo vendido, hasta 15 días + la fábrica desde que arranca (como «7 días», `stockCompHorizonte`). */
+    var nec15o=stockCompHasta(o, stockSumarDias(vd, PRODUCIR_QUINCENA+STOCK_OBJ_FABRICA)) + o.objS + mu*stockHabilesEntre(hoy, stockSumarDias(hoy, PRODUCIR_QUINCENA));
+    r.quin=Math.max(r.sem, Math.ceil(nec15o-hay-1e-9), 0);
+    var consumoO=stockCompHasta(o, MS.finActual) + o.objS + mu*stockHabilesEntre(hoy, MS.finActual);
+    r.mesQueda=Math.floor(hay+r.quin-consumoO+1e-9);
+    r.mesNec=Math.ceil(stockCompHasta(o, MS.fin, MS.ini) + mu*stockHabilesEntre(stockSumarDias(MS.ini,-1), MS.fin) - 1e-9);
+    r.rango=null; r.mesMin=null; r.mesMax=null; r.obj=true;
+    r.mes=Math.max(0, r.mesNec-r.mesQueda);
+    r.mes1=Math.min(r.mes, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-r.mesQueda));
+    r.mes2=r.mes-r.mes1;
+    return r;
+  }
   /* 📅 (18/10, §4ls VF1) Los días de venta, desde que arranca la fábrica (`stockLeadVenta`, como «7 días»): el día hasta el que entra lo
      vendido es el mismo (la llegada + 15), pero después del corte ya no se cuenta hoy como día de venta. */
   var lv=stockLeadVenta(o);
@@ -27185,7 +27363,9 @@ function renderProducir(d){
     '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT), <b>salvo las almohadas</b>: lo que se manda a las tiendas cuenta como venta y su venta de tienda no (dueño, 16/10). Productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
       'Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni cliente: ahí están <b>todas</b> las ventas. '+
       '<b>Hay</b> suma lo de acá, lo de los otros almacenes y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
-      '<b>'+esc(MS.nombre)+'</b> va <b>además</b> de lo de 15 días (lo que hay que tener hasta fin de '+esc(MS.nombre)+' es 15 días + '+esc(MS.nombre)+') y es un <b>rango</b>: lo que dan los últimos 30 días, el promedio de los 2 y de los 3 últimos meses CERRADOS (este mes todavía no entra), el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
+      /* 🎯 (18/10, §4ls, decisión 4) Lo que rota tiene objetivo: las tres columnas con la regla del punto de pedido. */
+      '🎯 <b>Lo que rota</b>: <b>7 días</b> es lo de hoy (cuando lo libre baja al punto de pedido, hasta el objetivo); <b>15 días</b> suma la venta de los días hábiles de esos 15 días con el objetivo puesto al final; <b>'+esc(MS.nombre)+'</b>, la venta del último mes ('+STOCK_OBJ_VENTANA+' días hábiles) por sus días hábiles, menos lo que el '+fmtFechaCorta(MS.ini)+' quede por encima del objetivo (que se mantiene). '+
+      'Para lo demás, <b>'+esc(MS.nombre)+'</b> va <b>además</b> de lo de 15 días (lo que hay que tener hasta fin de '+esc(MS.nombre)+' es 15 días + '+esc(MS.nombre)+') y es un <b>rango</b>: lo que dan los últimos 30 días, el promedio de los 2 y de los 3 últimos meses CERRADOS (este mes todavía no entra), el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
       'En el pie de cada bloque, <b>tocá una medida</b> para ver qué modelos la componen.</div>';
   R.bloques.forEach(function(B){
     var filas=B.filas.filter(function(f){ return f.algo || PRODUCIR_VER_TODO; });
@@ -27205,9 +27385,9 @@ function renderProducir(d){
     if(visPref('qp', true)) html+=producirGraficoSvg(B, MS);   // 📊 por medida (§4ik)
     html+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:1040px">'+
       '<thead><tr><th>Producto</th><th>Vende por día</th><th>Hay</th><th>Cubre hasta</th>'+
-      '<th>7 días<br><span style="font-weight:400;font-size:.85em">lo vendido + fábrica + margen + reserva</span></th>'+   // (16/10, §4lr U17) no «hasta el hoy+7»
+      '<th>7 días<br><span style="font-weight:400;font-size:.85em">hoy: lo vendido + hasta el objetivo</span></th>'+   // (16/10, §4lr U17) no «hasta el hoy+7»; 🎯 (§4ls) el objetivo
       '<th>15 días<br><span style="font-weight:400;font-size:.85em">incluye lo de 7: no sumar</span></th>'+
-      '<th>'+esc(MS.nombre)+'<br><span style="font-weight:400;font-size:.85em">además de 15 días · probable (mín–máx) · queda el '+fmtFechaCorta(MS.ini)+' · producir</span></th>'+
+      '<th>'+esc(MS.nombre)+'<br><span style="font-weight:400;font-size:.85em">además de 15 días · necesita (mín–máx) · queda el '+fmtFechaCorta(MS.ini)+' · producir</span></th>'+
       '<th>1ª quincena</th><th>2ª quincena</th></tr></thead><tbody>'+
       filas.map(function(f){
         var o=f.o, b=f.bloque;
@@ -27215,7 +27395,8 @@ function renderProducir(d){
           '<td><b>'+esc(stockNombre(o))+'</b>'+(o.cod?('<br><span style="color:var(--muted);font-size:.9em">cód '+esc(o.cod)+'</span>'):'')+
             (b.por==='fabrica'?('<br><span style="color:#7c4b00;font-size:.8em">acá por la última vez que se pidió a '+esc(b.fab)+'</span>'):(B.k==='otros'&&b.marca==='roho'?'<br><span style="color:#7c4b00;font-size:.8em">línea que vende ROHO</span>':''))+'</td>'+
           '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
-            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+(o.vendidosEduMc?(' · '+o.vendidosEduMc+' de Eduardo a Multicenter'):'')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.v30EduMc?(' · '+o.v30EduMc+' de Eduardo a Multicenter'):'')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+'</span></td>'+
+            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+(o.vendidosEduMc?(' · '+o.vendidosEduMc+' de Eduardo a Multicenter'):'')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.v30EduMc?(' · '+o.v30EduMc+' de Eduardo a Multicenter'):'')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+
+            (stockObjActivo(o)?('<br>'+STOCK_OBJ_VENTANA+' días hábiles: '+stockUnid(o.objVendidos||0)+' · '+stockNum(o.objMu,2)+'/día hábil · tener '+stockUnid(o.objetivo)+', pedir al bajar a '+stockUnid(o.puntoPedido)):'')+'</span></td>'+   // 🎯 (§4ls)
           '<td><b>'+stockUnid(f.hay)+'</b><br><span style="color:var(--muted);font-size:.88em">'+stockUnid(Math.max(0,o.deposito||0))+' acá'+(o.enSale?(' · '+stockUnid(o.enSale)+' '+esc(saleAlmTxt(o))):'')+(o.enOtros?(' · '+stockUnid(o.enOtros)+' Moreno'):'')+(o.enCamino?(' · '+stockUnid(o.enCamino)+' en camino'):'')+(o.comp?('<br>'+stockUnid(o.comp)+' vendidos sin entregar'):'')+'</span></td>'+
           '<td>'+producirCubreTxt(f)+'</td>'+
           '<td>'+num(f.sem,true)+'</td>'+
@@ -27367,7 +27548,7 @@ function copiarProducirTexto(B, h, MS, hoy){
   /* (16/10, §4lr U17) Los títulos dicen lo que cubre el número: «7 días» no es «hasta el día de hoy+7» (cubre lo vendido + lo que tarda
      la fábrica + el margen + la reserva: 9 a 17 días según el producto), «15 días» INCLUYE lo de 7 y el mes va ADEMÁS de 15 días. Con
      «(todo el mes)» se podía mandar «7 días + noviembre» y quedar cortos 149 a fin de noviembre (16/10). */
-  var etq=(h==='sem')?('7 días (lo vendido + lo que tarda la fábrica + margen + reserva)')
+  var etq=(h==='sem')?('7 días (hoy: lo vendido + lo que falta para el objetivo)')
          :(h==='quin')?(PRODUCIR_QUINCENA+' días (ya incluye lo de 7 días: no sumar)')
          :(MS.nombre+' (además de lo de '+PRODUCIR_QUINCENA+' días)');
   if(!filas.length){ toast('Nada que producir para '+etq+' en '+B.titulo+'.','ok',5000); return; }
@@ -27378,14 +27559,16 @@ function copiarProducirTexto(B, h, MS, hoy){
     t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+': '+f[col]+
        (col==='mes'?(' — 1ª quincena '+f.mes1+' · 2ª quincena '+f.mes2):'')+
        ' — hay '+stockUnid(f.hay)+(o.comp?(', '+stockUnid(o.comp)+' vendidos sin entregar'):'')+
-       ((col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'+(o.v30EduMc?(' ('+o.v30EduMc+' de Eduardo a Multicenter)'):''))
+       ((col==='mes'&&stockObjActivo(o))?(', vende '+stockUnid(o.objVendidos||0)+' en '+STOCK_OBJ_VENTANA+' días hábiles'+(o.objEduMc?(' ('+o.objEduMc+' de Eduardo a Multicenter)'):'')+', tener '+stockUnid(o.objetivo)):   // 🎯 (§4ls)
+        (col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'+(o.v30EduMc?(' ('+o.v30EduMc+' de Eduardo a Multicenter)'):''))
                                     :(o.porDia>0?(', vende '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':'')):''))+'\n';
   });
   t+='\nTotal: '+tot+(tot===1?' unidad':' unidades')+' · por medida: '+Object.keys(porMed).sort().map(function(m){ return m+' '+porMed[m]; }).join(' · ');
   /* (28/09, 2ª revisión) Decía «cuenta con lo vendido en los últimos 30 días, sin pedidos puntuales»: el número es lo
      PROBABLE entre cinco estimaciones (§4du), y desde §4gm cuenta a Eduardo a Multicenter. */
-  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Va además de lo de '+PRODUCIR_QUINCENA+' días. Es lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados, el mismo mes del año pasado y la tendencia: ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda (salvo las almohadas: lo que va a las tiendas cuenta como venta).';
-  else t+='\nCubre lo vendido sin entregar y lo que tarda la fábrica + margen + '+(col==='sem'?'la semana':(PRODUCIR_QUINCENA+' días'))+' de venta, menos lo que hay acá, en Moreno y en camino.';
+  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Va además de lo de '+PRODUCIR_QUINCENA+' días. Lo que rota: la venta del último mes ('+STOCK_OBJ_VENTANA+' días hábiles) por los días hábiles de '+MS.nombre+', más lo ya vendido para ese mes, menos lo que el 1° quede por encima del objetivo (el objetivo se mantiene). Lo demás: lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados, el mismo mes del año pasado y la tendencia. Ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda (salvo las almohadas: lo que va a las tiendas cuenta como venta).';
+  else if(col==='sem') t+='\n'+stockObjReglaTxt()+' Menos lo que hay en PTF, Banzer, Moreno y en camino.';
+  else t+='\nLo que rota: lo vendido sin entregar + la venta de los días hábiles de los próximos '+PRODUCIR_QUINCENA+' días + el objetivo puesto al final; lo que no rota, lo vendido. Menos lo que hay en PTF, Banzer, Moreno y en camino.';
   copyText(t);
   toast('Copiado: producir para '+etq+' ✓','ok');
 }
@@ -32649,7 +32832,7 @@ function almPintarTabla(){
   var sel=ALM_K ? A.filas.filter(function(f){ return f.k===ALM_K; })[0] : null;
   var h='<div style="background:#fff;border:1px solid var(--gray-md);border-radius:11px;padding:12px 14px;margin-bottom:14px">'+
     '<div style="font-weight:800;font-size:.98rem;color:#1e3a5f;margin-bottom:4px">📦 Qué tener en cada depósito</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;line-height:1.45">«Tener» es lo que pide la pantalla de Stock (lo vendido sin entregar más el ritmo por los días de fábrica, margen y reserva), repartido según de qué lado se entregó cada producto. Lo que se vende poco no se reparte: queda todo en PTF. Tocá un producto para ver sus entregas en el mapa.</div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;line-height:1.45">«Tener» es la cuenta de la pantalla de Stock (lo vendido sin entregar más el objetivo de lo que rota), repartido según de qué lado se entregó cada producto. Lo que se vende poco no se reparte: queda todo en PTF. Tocá un producto para ver sus entregas en el mapa.</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+chips+'</div>'+
     almTotalesHtml(A)+
     (sel?('<div style="font-size:.8rem;margin-bottom:8px;color:#1e3a5f">🗺️ En el mapa: <b>'+esc(sel.nombre)+'</b> · <a href="#" onclick="almVerProducto(\'\');return false">ver todas las entregas</a></div>'):'')+
@@ -35242,7 +35425,8 @@ function sfEstado(o){
    ya no es «🚚 Ya pedido» (`stockData`, `o.pedirReserva`), así que la acción tiene que decir que lo programado sigue en camino. Solo en
    ese caso: un «pedir»/«urgente» de siempre (se corta dentro de fábrica + margen) dice lo que dijo siempre. */
 function stockYaVieneTxt(o){
-  if(!o || !o.pedirReserva) return '';
+  /* 🎯 (18/10, §4ls) …y lo que rota con su objetivo: se pide hasta el objetivo contando lo que viene, así que también se dice qué viene. */
+  if(!o || !(o.pedirReserva || (stockObjActivo(o) && (o.fabricar||0)>0))) return '';
   var rec=0, fab=0;
   (o&&o.pedidos||[]).forEach(function(q){ var u=Number(q&&q.u)||0; if(!(u>0)) return; if(q.tipo==='recogida') rec+=u; else fab+=u; });
   var t=[];
@@ -35263,6 +35447,9 @@ function sfAccion(o){
     case 'sobra':   return (o._pQuin>0||o._pMes>0) ? ('💤 Sin entregas en 15 días · el plan pide '+stockUnid(o._pQuin>0?o._pQuin:o._pMes)+(o._pQuin>0?' en 15 días':' el mes que viene')) : '💤 Sobra: no pedir más';   // (17/10, §4lr U40) como 'unico' (§4jd A1-7)
     case 'sincontar': return 'Sin contar: subí el Excel';
   }
+  /* 🎯 (18/10, §4ls) Lo que rota se pide cuando lo libre llega al punto de pedido: si al ritmo de 15 días igual se corta antes de que llegue
+     la fábrica, que se entienda por qué no se pide. */
+  if(stockObjActivo(o) && o.dias!=null && o.dias<=o.lead) return '✅ Alcanza · lo libre está sobre el punto de pedido';
   return '✅ Alcanza';
 }
 function sfDiaTxt(iso){
@@ -35499,10 +35686,15 @@ function stockPlanHtml(d, lista){
       '<td data-l="Vendido sin entregar" class="pl-comp">'+num(o.comp||0)+'</td>'+
       '<td data-l="Se corta" class="pl-corta"><span class="'+((h!=null&&((o.dias!=null&&o.dias<=0)||/falta/.test(r.txt)))?'pl-hoy':'')+'">'+esc(corta)+'</span></td>'+
       '<td data-l="Qué hacer hoy" class="pl-q"><span class="pl-que pl-'+(x.g||'gris')+'">'+(x.g==='ya'?'<i class="late-dot"></i>':'')+sfAccion(o)+'</span>'+planYaHtml(o)+'</td>'+
+      /* 🎯 (18/10, §4ls, decisión 4) El objetivo y el punto de pedido de cada producto (`stockObjetivo`): lo que rota se pide hasta el
+         objetivo cuando lo libre baja al punto de pedido; lo demás, «a pedido» (solo lo vendido). */
+      '<td data-l="Tener" class="pl-tener">'+(stockObjActivo(o) ? ('<b>'+stockUnid(o.objetivo)+'</b><small>pedí al bajar a '+stockUnid(o.puntoPedido)+(h!=null?(' · libre '+stockUnid(stockLibreObj(o))):'')+'</small>')
+        : '<span class="pl-cero">a pedido</span>')+'</td>'+
       '<td data-l="Pedir · 7 días" class="pl-p7">'+num(x.p7)+'</td>'+
       '<td data-l="Pedir · 15 días" class="pl-p15">'+num(x.p15)+'</td>'+
       '<td data-l="Pedir · '+esc(MS.nombre)+'" class="pl-pm">'+num(x.pm)+'</td></tr>';
-    if(ab) tr+='<tr class="pl-det"><td colspan="8">'+stockTermoFila(o, hoy)+
+    if(ab) tr+='<tr class="pl-det"><td colspan="9">'+stockTermoFila(o, hoy)+
+      (stockObjActivo(o) && h!=null ? ('<div class="pl-obj">🎯 '+stockObjPorque(o)+'.</div>') : '')+
       '<div class="pl-bot"><button type="button" class="btn btn-sm" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">🧾 Ver pedidos</button>'+
       '<button type="button" class="btn btn-sm" data-k="'+esc(o.k)+'" onclick="sfElegir(this.dataset.k)">📈 Su historia</button>'+
       (o.aviso==='traer'?'<button type="button" class="btn btn-sm" data-k="'+esc(o.k)+'" onclick="abrirStockRecogida(this.dataset.k)">🚚 Programar recogida</button>':'')+
@@ -35516,8 +35708,10 @@ function stockPlanHtml(d, lista){
       '<span class="pl-copias" style="display:inline-flex;gap:4px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'sem\')">📋 7 días</button><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'quin\')">📋 15 días</button><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'mes\')">📋 '+esc(MS.nombre)+'</button></span></div>'+
     '<div class="pl-chips">'+chip('todos','Todos')+chip('ya','🚨 Pedir ya')+chip('sem','🏭 Esta semana')+chip('tr','🚚 Traer')+chip('rev','⚠️ Revisar')+chip('ok','✅ Alcanza')+'</div>'+
     '<div class="pl-tabla"><table><thead><tr><th>Producto</th><th>Hay<small>PTF · Banzer · Moreno</small></th><th>Vendido<small>sin entregar</small></th><th>Se corta</th><th>Qué hacer hoy</th>'+
+      '<th>Tener<small>objetivo · punto de pedido</small></th>'+
       '<th>Pedir<small>7 días</small></th><th>Pedir<small>15 días</small></th><th>Pedir<small>'+esc(MS.nombre)+'</small></th></tr></thead><tbody>'+
-      (filas || '<tr><td colspan="8" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
+      (filas || '<tr><td colspan="9" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
+    '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, '+STOCK_OBJ_EXTRA+' día más (las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'). Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>'+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;renderStock()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
 }

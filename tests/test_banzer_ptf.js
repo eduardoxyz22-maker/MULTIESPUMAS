@@ -88,8 +88,11 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
     // el punto medio entre PTF y Banzer, que caía sobre su línea; la de logística pasa 1 km más al este.
     window.MEDIO=[-17.72997,-63.14015];
     var n=0;
-    window._P=function(o){ n++; return Object.assign({ id:'t'+n, fecha:_d(3), oc:'10-'+(100+n), vendedor:'Maria Flores', cliente:'CLIENTE '+n,
-      celular:'70000000', turno:'AM', zona:'', direccion:'Calle '+n, maps:'', pagado:true, saldo:0, ts:Date.now(), metodoPago:'',
+    /* (18/10, §4ls, decisión 4) Cada venta se cargó el día de su entrega (`ts`), no toda «ahora»: el «tener» de lo que rota sale de su
+       objetivo, con la venta POR DÍA DE VENTA (`contaFecha`); con `ts:Date.now()` el fixture vendía todo hoy. Lo de mañana se vendió hoy. */
+    window._P=function(o){ n++; var f=(o && o.fecha!=null) ? o.fecha : _d(3), ts=(f && f<=todayStr()) ? new Date(f+'T09:00:00-04:00').getTime() : Date.now();
+      return Object.assign({ id:'t'+n, fecha:_d(3), oc:'10-'+(100+n), vendedor:'Maria Flores', cliente:'CLIENTE '+n,
+      celular:'70000000', turno:'AM', zona:'', direccion:'Calle '+n, maps:'', pagado:true, saldo:0, ts:ts, metodoPago:'',
       observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
       nroDia:1, verificado:false, fotos:[] }, o); };
     var pr=function(cod, d, m, c){ return { desc:d, medida:m, codigo:cod, cant:c }; };
@@ -210,9 +213,15 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
       out[nom]={ acc:f.acc, mover:f.mover, luego:f.luego, nivel:f.nivel, objP:f.objP, objB:f.objB, hoyP:f.hoyP, hoyB:f.hoyB, por:f.por, rot:f.o.rotacion,
                  necesario:Math.ceil(stockNecesario(f.o)-1e-9) };
     });
-    // La cuenta de «cuánto pedir» no cambió con `stockNecesario`: la misma fórmula de siempre, a mano.
+    /* La cuenta de «cuánto pedir», a mano. 🎯 (18/10, §4ls, decisión 4 del dueño) Para lo que ROTA reemplaza a «lo vendido + ritmo ×
+       (fábrica + margen + reserva) − lo que hay»: se pide hasta el objetivo (lo vendido + el objetivo − lo libre) cuando lo libre llega al
+       punto de pedido. Lo que no rota sigue con la fórmula de siempre (ritmo 0: lo vendido − lo que hay). */
     var igual=stockData().lista.every(function(o){
       var hay=stockHaySalir(o); if(hay==null || o.descont) return stockCuantoPedir(o)===0;
+      if(o.objS!=null){
+        var libre=hay+stockEnCaminoSeguro(o)-stockCompHorizonte(o);
+        return stockCuantoPedir(o)===((libre<=o.objPP || libre<0) ? Math.max(0, Math.ceil(o.objS-libre-1e-9)) : 0);
+      }
       var nec=o.comp + o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir));   // (§4ii) sumados, no el mayor
       return stockCuantoPedir(o)===Math.max(0, Math.ceil(nec-(hay+stockEnCaminoSeguro(o))-1e-9));
     });
@@ -220,19 +229,20 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   });
   const o=r.out;
   chk('«tener en total» es la cuenta de Stock (`stockNecesario`) en los cinco', ['A','C','D','F'].every(k=>o[k] && o[k].nivel===o[k].necesario) && o.E && o.E.nivel===0, J(Object.keys(o).map(k=>[k,o[k]&&o[k].nivel,o[k]&&o[k].necesario])));
-  chk('…y «cuánto pedir» es vendido sin entregar + ritmo (§4ii)', r.igual===true);
-  /* La venta de tienda (5) cuenta para la ROTACIÓN, como en la tabla de Stock (14 en 15 días → 0,93/día × 8 días = 7,5 →
-     tener 8), pero NO para el lado: no tiene dirección de entrega.
-     (§4ii, 08/10) Y se SUMA a las 2 vendidas sin entregar: 7,5 + 2 = 9,5 → tener 10 (antes, el mayor: 8). */
-  chk('⚠️ TITANIO ICE (rota, 75 % Banzer, tener 10 = 2 vendidas + 7,5 de ritmo, §4ii): conviene PTF 2 · Banzer 8 → «pasar 8 a Banzer» (a PTF le sobran 8)',
+  chk('…y «cuánto pedir» es la cuenta de Stock: hasta el objetivo al llegar al punto de pedido lo que rota (§4ls), vendido sin entregar + ritmo lo demás (§4ii)', r.igual===true);
+  /* 🎯 (18/10, §4ls, decisión 4 del dueño) «Tener» de lo que rota = lo vendido sin entregar + su OBJETIVO (antes: + ritmo de 15 días ×
+     fábrica, margen y reserva). La venta de tienda (5) cuenta para la venta del objetivo, como en la tabla de Stock, pero NO para el lado:
+     no tiene dirección de entrega. TITANIO ICE: 16 en 26 días hábiles (las 2 de mañana se vendieron hoy) → objetivo 8; + 2 vendidas = 10
+     (antes 7,5 + 2 → 10 también). ORO BI RELAX: 8 → objetivo 4 (antes 5). TITANIO LATEX: 4 → 2 (antes 3). ORO ANATOMICO: 10 → 5 (antes 6). */
+  chk('⚠️ TITANIO ICE (rota, 75 % Banzer, tener 10 = 2 vendidas + objetivo 8): conviene PTF 2 · Banzer 8 → «pasar 8 a Banzer» (a PTF le sobran 8)',
     o.A && o.A.rot==='media' && o.A.nivel===10 && o.A.objP===2 && o.A.objB===8 && o.A.acc==='pasar' && o.A.mover===8 && o.A.luego===0, J(o.A));
-  chk('⚠️ ORO BI RELAX (12 % Banzer, tener 5): Banzer tiene 6 y le tocan 1 → «no mandar más» (5 de más), nunca traer a PTF',
-    o.C && o.C.objB===1 && o.C.objP===4 && o.C.acc==='noMas' && o.C.mover===5, J(o.C));
-  chk('⚠️ TITANIO LATEX (todo Banzer, tener 3, sin nada en ningún lado): «lo próximo que llegue: 3 a Banzer»',
-    o.D && o.D.objB===3 && o.D.objP===0 && o.D.acc==='llega' && o.D.luego===3 && o.D.mover===0, J(o.D));
+  chk('⚠️ ORO BI RELAX (12 % Banzer, tener 4 = su objetivo): Banzer tiene 6 y le toca 1 → «no mandar más» (5 de más), nunca traer a PTF',
+    o.C && o.C.nivel===4 && o.C.objB===1 && o.C.objP===3 && o.C.acc==='noMas' && o.C.mover===5, J(o.C));
+  chk('⚠️ TITANIO LATEX (todo Banzer, tener 2 = su objetivo, sin nada en ningún lado): «lo próximo que llegue: 2 a Banzer»',
+    o.D && o.D.nivel===2 && o.D.objB===2 && o.D.objP===0 && o.D.acc==='llega' && o.D.luego===2 && o.D.mover===0, J(o.D));
   chk('ORO ORTOPEDICO (2 entregas: no rota): no se reparte, todo en PTF, y Banzer que tiene 3 → «no mandar más»',
     o.E && o.E.rot==='baja' && o.E.por==='poca' && o.E.objB===0 && o.E.acc==='noMas' && o.E.mover===3, J(o.E));
-  chk('ORO ANATOMICO (50 %, tener 6): PTF 3 · Banzer 3 y hay 3 y 3 → «bien repartido»', o.F && o.F.objP===3 && o.F.objB===3 && o.F.acc==='bien', J(o.F));
+  chk('ORO ANATOMICO (50 %, tener 5 = su objetivo): PTF 2 · Banzer 3 y hay 3 y 3 → «bien repartido»', o.F && o.F.nivel===5 && o.F.objP===2 && o.F.objB===3 && o.F.acc==='bien', J(o.F));
 
   // ══ 5. La tabla ═════════════════════════════════════════════════════════════════════
   console.log('\n── 5. La tabla: filtros, búsqueda y tocar un producto ──');
@@ -243,9 +253,9 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   r = await tabla();
   chk('arranca en «Para hacer»: los 4 que hay que mover, primero los que se pasan', r.filas.length===4 && /TITANIO ICE/.test(r.filas[0]) && /TITANIO LATEX/.test(r.filas[1]), J(r.filas));
   chk('…con los cuatro filtros y sus cuentas', J(r.chips)===J(['Para hacer (4)','🏪 Tener en Banzer (4)','Con entregas (5)','Todos (5)']), J(r.chips));
-  chk('…y dice qué hacer con palabras', /Pasar 8 a Banzer/.test(r.texto) && /Lo próximo que llegue: 3 a Banzer/.test(r.texto) && /No mandar más a Banzer/.test(r.texto) && /se vende poco y tiene 3/.test(r.texto), r.texto.slice(0,300));
+  chk('…y dice qué hacer con palabras', /Pasar 8 a Banzer/.test(r.texto) && /Lo próximo que llegue: 2 a Banzer/.test(r.texto) && /No mandar más a Banzer/.test(r.texto) && /se vende poco y tiene 3/.test(r.texto), r.texto.slice(0,300));
   chk('…con el total de lo que hay que mover arriba de la tabla',
-    /pasar a Banzer 8 unidades de 1 producto · 🏭 de lo próximo que llegue, mandar a Banzer 3 de 1 producto · ✋ no mandar más a Banzer: 2 productos/.test(r.texto), r.texto.slice(0,500));
+    /pasar a Banzer 8 unidades de 1 producto · 🏭 de lo próximo que llegue, mandar a Banzer 2 de 1 producto · ✋ no mandar más a Banzer: 2 productos/.test(r.texto), r.texto.slice(0,500));
   chk('…sin proponer nunca traer de Banzer a PTF', !/(traer|pasar|llevar)[^.]{0,30}de Banzer/i.test(r.texto) && !/a PTF\b[^.]{0,10}(desde|de) Banzer/i.test(r.texto), r.texto.match(/[^.]{0,40}de Banzer[^.]{0,20}/i)||'');
   await page.click('#alm-tabla button:has-text("Tener en Banzer")');
   r = await tabla();
@@ -301,10 +311,10 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
   console.log('\n── 8. «📋 Copiar para logística» ──');
   r = await page.evaluate(() => { var t=''; var v=copyText; copyText=function(x){ t=x; }; try{ almCopiar(); } finally { copyText=v; } return t; });
   chk('⚠️ dice qué pasar a Banzer, qué mandar de lo próximo que llegue y qué no mandar más',
-    /PASAR DE PTF A BANZER\n• TITANIO ICE · 160x190: 8/.test(r) && /LO PRÓXIMO QUE LLEGUE[^\n]*\n• TITANIO LATEX · 140x190: 3/.test(r) &&
+    /PASAR DE PTF A BANZER\n• TITANIO ICE · 160x190: 8/.test(r) && /LO PRÓXIMO QUE LLEGUE[^\n]*\n• TITANIO LATEX · 140x190: 2/.test(r) &&
     /NO MANDAR MÁS A BANZER[^\n]*\n(• [^\n]+\n?)*• ORO BI RELAX · 140x190 \(tiene 6, conviene 1\)/.test(r) && /ORO ORTOPEDICO · 140x190 \(tiene 3\)/.test(r), r);
   chk('⚠️ arranca con qué TENER en Banzer, de mayor a menor, y cuánto hay hoy (lo demás, en PTF)',
-    /TENER EN BANZER \(lo demás, en PTF\)\n• TITANIO ICE · 160x190: 8 \(hoy 0\)\n• ORO ANATOMICO VISCOLASTICO · 140x190: 3 \(hoy 3\)\n• TITANIO LATEX · 140x190: 3 \(hoy 0\)\n• ORO BI RELAX · 140x190: 1 \(hoy 6\)\n/.test(r), r);
+    /TENER EN BANZER \(lo demás, en PTF\)\n• TITANIO ICE · 160x190: 8 \(hoy 0\)\n• ORO ANATOMICO VISCOLASTICO · 140x190: 3 \(hoy 3\)\n• TITANIO LATEX · 140x190: 2 \(hoy 0\)\n• ORO BI RELAX · 140x190: 1 \(hoy 6\)\n/.test(r), r);
   const mover = r.split('🚚')[1]||'';
   chk('…y en lo que hay que mover no está el bien repartido, ni nada para traer de Banzer', !/ANATOMICO/.test(mover) && !/(TRAER|DE BANZER A)/.test(r), mover);
 
