@@ -26,6 +26,8 @@
    RN-U19 «Cómo se calcula la reposición» cierra con los números de la cuenta (lo vendido dentro del horizonte).
    AP1-13 (decisión del dueño, 17/10: «Sí, que se acuerde solo») «En producción» automático: el panel anota lo que pide el día del Excel,
           lo cuenta desde el día siguiente, lo cierra con la entrada neta del lote (no con un traspaso), avisa si no aparece y la celda no crece.
+          🔌 (18/10, §4ls) El dueño lo APAGÓ hasta el jueves (`STOCK_AUTO_ACTIVO=false`): el bloque lo PRENDE al empezar y lo apaga al
+          terminar. AP0 y AP14: apagado no anota ni cuenta (lo demás del apagado, en `test_stock_rev2_auto_off.js`).
    RN-U7  (decisión del dueño, 16/10: «La RPT cuenta como venta») Las ALMOHADAS que van a las tiendas por RPT arman el ritmo y su venta de
           tienda no se suma otra vez; un colchón por RPT sigue sin ser venta (§4dk).
 
@@ -321,7 +323,18 @@ function PREPARAR(){
   chk('RN-U7e. el índice del mes cuenta igual: 24 almohadas en octubre, 0 colchones', u7.idx===24 && u7.idxC===0, u7);
 
   /* ── 🏭 «En producción» automático (dueño, 17/10: «Sí, que se acuerde solo») ── */
+  /* 🔌 (18/10, §4ls) Viene APAGADO (decisión del dueño): apagado, terminar el Excel del día no anota nada. */
+  const ap0 = await ev(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    var p=_ped('p-ap', '2026-10-23', [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:5, precio:1000 }]);
+    await _cargar([p], _stock(function(st){ st.c.u[K]=0; st.g[_IM].u[K]=0; }));
+    var def=(typeof STOCK_AUTO_ACTIVO==='undefined') ? 'no existe' : STOCK_AUTO_ACTIVO;
+    var anot=stockAutoAnotar(todayStr()), o=_fila(K);
+    return { def:def, anot:anot.length, ap:JSON.stringify(STOCK.ap||{}), fab:o.fabricar, cam:o.enCamino };
+  });
+  chk('AP0. 🔌 apagado (como viene, decisión del dueño 18/10) el panel NO anota nada: «Pedir 7 días» 5, nada guardado', ap0.def===false && ap0.anot===0 && ap0.ap==='{}' && ap0.fab===5 && ap0.cam===0, ap0);
   const ap1 = await ev(async () => {
+    STOCK_AUTO_ACTIVO=true;                      // 🔌 (18/10, §4ls) AP1-AP13 prueban el automático PRENDIDO
     var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
     // 5 vendidos para la semana que viene y nada en ningún almacén: el panel pide fabricar
     var p=_ped('p-ap', '2026-10-23', [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:5, precio:1000 }]);
@@ -387,11 +400,19 @@ function PREPARAR(){
     var F=fusAuto(b, m, s2).X['2026-10-16'];
     // la poda: lo anulado de un día que pasó se va; lo de hace más de 12 días también
     var S={ ap:{ A:{ '2026-10-10':[3,0,0,1,1] }, B:{ '2026-10-01':[3,0,0,0,1] }, C:{ '2026-10-25':[3,1,0,0,1] } } }; stockPodarAuto(S, '2026-10-26');
-    return { txt:div.innerText, F:F, poda:Object.keys(S.ap) };
+    /* 🔌 (18/10, §4ls) Termina el bloque: se APAGA otra vez. Algo anotado el 23/10 (vigente el 26) cuenta prendido y apagado no. */
+    STOCK.ap[K]={ '2026-10-23':[4,0,0,0,Math.floor(Date.now()/1000)] };
+    var camOn=_fila(K).enCamino;
+    STOCK_AUTO_ACTIVO=false;
+    var oOff=_fila(K), dOff=document.createElement('div'); dOff.innerHTML=stockAutoHtml(oOff);
+    var anotOff=stockAutoAnotar(todayStr()).length;
+    return { txt:div.innerText, F:F, poda:Object.keys(S.ap), camOn:camOn, camOff:oOff.enCamino, txtOff:dOff.innerText, anotOff:anotOff, sigue:!!(STOCK.ap[K]||{})['2026-10-23'] };
   });
   chk('AP11. «No se pidió» lo saca de la fila', typeof ap6.txt==='string' && !/se pidió\?/.test(ap6.txt), ap6);
   chk('AP12. la junta de dos equipos: la versión más nueva manda (7, a mano) y lo llegado es el mayor (2)', ap6.F && ap6.F[0]===7 && ap6.F[1]===2 && ap6.F[2]===1, ap6);
   chk('AP13. la poda deja solo lo vigente (la celda no crece)', JSON.stringify(ap6.poda)==='["C"]', ap6);
+  chk('AP14. 🔌 apagado otra vez: lo anotado (4, vigente) deja de contar y de mostrarse, no se anota nada, y queda guardado para cuando se prenda',
+      ap6.camOn===4 && ap6.camOff===0 && !/En producción/.test(ap6.txtOff||'') && ap6.anotOff===0 && ap6.sigue===true, ap6);
   await page.clock.setFixedTime(new Date('2026-10-16T12:00:00-04:00'));
 
   /* ── Arreglos chicos (17/10): lo que se ve tiene que decir lo mismo que la cuenta ── */

@@ -24857,8 +24857,9 @@ function stockData(extra){
   });
   /* 🏭 (17/10, §4lr) Lo que el panel anotó SOLO como pedido a la fábrica (`STOCK.ap`, `stockAutoAnotar`): cuenta desde el día siguiente
      hasta la llegada esperada + la gracia; lo que llegó, lo anulado y lo vencido no cuenta (el vencido se avisa en la fila). No cambia
-     la última fábrica anotada: sale de la cuenta, no de logística. */
-  Object.keys(STOCK.ap||{}).forEach(function(k){
+     la última fábrica anotada: sale de la cuenta, no de logística.
+     🔌 (18/10, §4ls) Con `STOCK_AUTO_ACTIVO` apagado (decisión del dueño) lo guardado no cuenta: ni acá ni en el cuadrito del vendedor. */
+  if(STOCK_AUTO_ACTIVO) Object.keys(STOCK.ap||{}).forEach(function(k){
     stockAutoLista(k).forEach(function(e){
       if(!stockAutoCuenta(e, hoy)) return;
       var o=grupo(k), u=stockAutoPend(e);
@@ -28331,6 +28332,7 @@ function existCancelar(){ EXIST_COLA=[]; EXIST_IMP=null; closeModal(); existLote
    «Saltar» del último o «Cancelar todo» con alguno ya usado) cierra lo que el panel anotó y llegó, y anota lo que pide hoy. */
 var EXIST_LOTE=null;
 function existLoteAnotar(R, rol, C){
+  if(!STOCK_AUTO_ACTIVO){ EXIST_LOTE=null; return; }   // 🔌 (18/10, §4ls) apagado: no se arma el lote
   var dia=String(R.fecha||'');
   if(!EXIST_LOTE || EXIST_LOTE.dia!==dia) EXIST_LOTE={ dia:dia, roles:{}, dif:{}, ent:{}, n:0, hu:[] };
   var L=EXIST_LOTE; L.roles[rol]=1; L.n++; L.hu.push(existHuella(R));
@@ -28356,6 +28358,7 @@ function existLoteProduccion(L){
 }
 function existLoteCerrar(){
   var L=EXIST_LOTE; EXIST_LOTE=null;
+  if(!STOCK_AUTO_ACTIVO) return { cerrados:[], anotados:[] };   // 🔌 (18/10, §4ls) apagado: nada que cerrar ni anotar
   if(!L || !L.n || L.dia!==todayStr()) return { cerrados:[], anotados:[] };
   var cerrados=stockAutoConsumir(existLoteProduccion(L), L.dia, L.dia+'|'+L.hu.join(','));
   var anotados=stockAutoAnotar(L.dia);
@@ -35123,6 +35126,17 @@ function planYaVencidos(o){ var hoy=todayStr(), T=stockTiemposFabrica(); return 
    · En la fila: corregir la cantidad (logística pidió otra), «No se pidió» y «Llegó». «✓ Ya pedí» a mano reemplaza al de hoy.
    ⚠️ Funciona si logística pide lo que dice el panel: si no, lo corrige en la fila. ========================================================= */
 var STOCK_AUTO_GRACIA=2, STOCK_AUTO_DIAS=12;
+/* 🔌 (18/10, §4ls; decisión del dueño: el «en producción» automático queda APAGADO hasta el jueves 22/10, la reunión con logística).
+   La revisión 2 midió que todavía no está listo: anota como pedido lo que nadie mandó a la fábrica (logística pide con su Excel y su
+   correo), una página sin F5 lo borra y juntar copias revive lo que ya llegó. El código queda entero, detrás de este interruptor:
+   · APAGADO (false): al subir el Excel no se anota ni se cierra nada (`stockAutoAnotar`, `stockAutoConsumir`, `existLoteAnotar`,
+     `existLoteCerrar`); lo anotado NO cuenta como «en camino» (`stockData`, y con eso el cuadrito del vendedor, `saldoVeredicto`); la
+     fila no lo muestra (`stockAutoHtml`), el Plan vuelve a ofrecer SIEMPRE «Ya pedí» (`planYaHtml`) y tildarlo no toca lo anotado
+     (`planYaPedi`); el aviso del Excel no dice «el panel anotó lo que hay que pedir hoy».
+   · Lo que ya esté guardado en `STOCK.ap`/`STOCK.apL` se sigue LEYENDO, JUNTANDO y PODANDO igual (`leerStock`, `stockFusionar`,
+     `stockPodar`, `filaStock`): no se pierde para cuando se prenda.
+   · PRENDIDO (true): todo como el 17/10. */
+var STOCK_AUTO_ACTIVO=false;
 /* Compacto: la celda del stock corta en 50.000 letras (§4hl). `STOCK.ap` = {clave: {día: [pedido, llegó, a mano, anulado, cuándo (s)]}}. */
 function stockAutoEsp(f){ return sigDiaHabil(saldoSaleDeFabrica(f)); }
 function stockAutoVence(f){ var e=stockAutoEsp(f); for(var i=0;i<STOCK_AUTO_GRACIA;i++) e=sigDiaHabil(e); return e; }
@@ -35173,6 +35187,7 @@ function stockPodarAuto(S, hoy){
 /* Cierra lo anotado y abierto con la entrada de cada producto (`prod` = {clave: unidades}): primero lo que todavía cuenta (el más
    viejo primero), después lo vencido (así deja de avisar «¿se pidió?»). Una vez por lote (`STOCK.apL`). */
 function stockAutoConsumir(prod, dia, lote){
+  if(!STOCK_AUTO_ACTIVO) return [];               // 🔌 (18/10, §4ls) apagado: no se cierra nada ni se anota el lote
   var hoy=todayStr(), out=[], lid=huellaId(String(lote||''));
   STOCK.apL=STOCK.apL||[];
   if(lote && STOCK.apL.indexOf(lid)>=0) return out;
@@ -35191,6 +35206,7 @@ function stockAutoConsumir(prod, dia, lote){
 /* Anota lo que pide hoy el panel («Pedir 7 días», `o.fabricar`). Lo corregido a mano o anulado no se pisa; con un «✓ Ya pedí» de
    hoy a mano, ese manda. */
 function stockAutoAnotar(dia){
+  if(!STOCK_AUTO_ACTIVO) return [];               // 🔌 (18/10, §4ls) apagado: el panel no anota nada como pedido
   var hoy=todayStr(); if((dia||hoy)!==hoy) return [];
   var d=stockData(), out=[];
   d.lista.forEach(function(o){
@@ -35222,6 +35238,7 @@ function stockAutoCambiar(k, f, val){
   e.u=u; e.man=true; e.no=!u; stockAutoPoner(e); stockOlvidarIndice(); guardarStock(); renderStock();
 }
 function stockAutoHtml(o){
+  if(!STOCK_AUTO_ACTIVO) return '';               // 🔌 (18/10, §4ls) apagado: lo guardado no se muestra (no cuenta)
   var hoy=todayStr(), h='';
   stockAutoLista(o.k).forEach(function(e){
     if(e.no) return;
@@ -35251,7 +35268,7 @@ function planYaHtml(o){
       (q.f===hoy?' hoy':(' el '+fmtFechaCorta(q.f)))+' · se entrega desde ~'+fmtFechaCorta(stockEsperado(q,T))+'</label>';
   });
   if(!(o.fabricar>0) || o.descont || !(o.aviso==='urgente'||o.aviso==='pedir'||o.aviso==='revisar')) return h;
-  var _ah=stockAutoDe(o.k, hoy); if(_ah && !_ah.no && _ah.u>0) return h;   // 🏭 (17/10) lo de hoy ya lo anotó el panel
+  if(STOCK_AUTO_ACTIVO){ var _ah=stockAutoDe(o.k, hoy); if(_ah && !_ah.no && _ah.u>0) return h; }   // 🏭 (17/10) lo de hoy ya lo anotó el panel; 🔌 (18/10, §4ls) apagado, la casilla va siempre
   return h+'<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> Ya pedí '+stockUnid(o.fabricar)+(h?' más':'')+'</label>';
 }
 function planYaPedi(k, on, id){
@@ -35262,7 +35279,7 @@ function planYaPedi(k, on, id){
        número de tildes de hoy que ya había (los dos equipos que lo tocan a la vez también coinciden). */
     var hoyY=todayStr(), nHoy=(STOCK.p||[]).filter(function(q){ return q && q.ya && !q.r && q.k===k && q.f===hoyY; }).length;
     /* 🏭 (17/10) Si el panel ya anotó solo lo de hoy, «Ya pedí» lo reemplaza (no se cuenta dos veces). */
-    stockAutoLista(k).forEach(function(e){ if(e.f===hoyY && !e.no && !e.rec){ e.no=true; stockAutoPoner(e); } });
+    if(STOCK_AUTO_ACTIVO) stockAutoLista(k).forEach(function(e){ if(e.f===hoyY && !e.no && !e.rec){ e.no=true; stockAutoPoner(e); } });   // 🔌 (18/10, §4ls) apagado, lo guardado no se toca
     var id='fy:'+huellaId(k+'|'+hoyY+(nHoy?('|'+nHoy):''));
     if((STOCK.p||[]).some(function(q){ return q && q.id===id; })) return;
     /* `esp` fijo al tildar: si no, el día de llegada se recalculaba con el piso de CADA día (§4iy) y el tilde no vencía nunca. */
