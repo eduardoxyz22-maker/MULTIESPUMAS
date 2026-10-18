@@ -1820,7 +1820,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
-<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)modalFondo()"><div class="modal" id="modal-box"></div></div>
 <div id="mapa-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-ruta-btn" class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="toggleMapaRuta()">☑ 🛣️ Recorrido</button><button id="mapa-solosin" class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button id="mapa-ubicar" class="btn btn-sm" style="display:none;background:#fff;color:#7c3aed;font-weight:700" onclick="ubicarSinLinkMapa()" title="Busca en el servidor la dirección escrita de los pedidos que no tienen link de Maps y los pone en el mapa, marcados como aproximados (la cuadra, no la puerta).">📍 Ubicar por dirección</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div class="mapa-cv" style="flex:1;min-height:0;position:relative"><div id="mapa-canvas" style="position:absolute;inset:0"></div><div id="mapa-flota" aria-live="polite"></div></div><div id="mapa-ruta-panel"></div></div>
 <div id="ruta-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="visor" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.92);flex-direction:column" onclick="if(event.target===this)cerrarVisor()"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap"><b id="visor-tit" style="font-size:.92rem"></b><span id="visor-n" style="font-size:.8rem;opacity:.75"></span><a id="visor-drive" href="#" target="_blank" rel="noopener" style="margin-left:auto;color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:20px">⬇ Original</a><button onclick="cerrarVisor()" style="border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer">✕ Cerrar</button></div><div style="flex:1;min-height:0;display:flex;align-items:center;gap:6px;padding:0 8px 14px"><button id="visor-ant" onclick="visorMover(-1)" class="visor-nav">‹</button><img id="visor-img" alt="Foto de la entrega" style="flex:1;min-width:0;max-height:100%;object-fit:contain;border-radius:10px"><button id="visor-sig" onclick="visorMover(1)" class="visor-nav">›</button></div></div>
@@ -23121,6 +23121,7 @@ function leerStock(p){
         d.c.f=String(o.c.f||''); d.c.u=(o.c.u&&typeof o.c.u==='object')?o.c.u:{};
         if(o.c.hora) d.c.hora=String(o.c.hora); stockIncPoner(d.c, stockIncTurnos(o.c)); if(o.c.alm) d.c.alm=String(o.c.alm);   // 🚚 (§4ls) `inc` = los dos turnos, `incT` = uno
         if(o.c.solo0) d.c.solo0=true;
+        if(o.c.mano) d.c.mano=1;                         // 📋 (18/10, §4ls Man-VM2) lo contó una persona («Conté a mano»), aunque lleve el almacén
         if(o.c.cod && typeof o.c.cod==='object') d.c.cod=o.c.cod;
         if(Number(o.c.t)>0) d.c.t=Number(o.c.t);        // §4fz-b: CUÁNDO se anotó el conteo (lo anterior ya está adentro)
       }
@@ -23348,9 +23349,18 @@ function stockFundirDifs(d){
    ⚠️ (26/09) Con un Excel de la tarde que «ya incluye las entregas del día» (`c.inc`), lo que llegaba
    ESE día DESPUÉS de subirlo se cortaba por la fecha: «✅ Sumadas 5» y el depósito igual, porque
    `filaStock` lo podaba al guardar. Con hora de los dos lados, ese día manda la hora. */
+/* ⏱️ (18/10, §4ls VE9) EL DÍA DEL CORTE MANDA LA HORA DEL CORTE (la del archivo), no la de SUBIDA (`c.t`): lo anotado como llegado a las
+   10:30 no está en el Excel de las 10:10 aunque se haya subido (o vuelto a subir) a las 10:40. Antes se daba por incluido y desaparecía
+   del depósito hasta el Excel siguiente. La misma regla que las salidas a mano (`stockMovDespuesDelCorte`) y que la ventana del control
+   (`stockMovEnVentana`). Sin la hora del corte o de la entrada, la de antes. */
 function stockEntradaVale(S, f, ts){
   var c=(S&&S.c)||{};
   if(!c.f) return true;
+  f=String(f||'');
+  if(c.hora && Number(ts)>0 && f){
+    if(f!==String(c.f)) return f>String(c.f);
+    var h=horaDeTs(ts); if(h && isoDeTsBolivia(ts)===f) return h>String(c.hora);
+  }
   var conHora=Number(ts)>0 && Number(c.t)>0;
   if(String(f||'')<((stockIncTodo(c) && !conHora) ? stockSumarDias(c.f,1) : c.f)) return false;   // (§4ls) una llegada no tiene turno: «el día entero» = los dos
   return !(conHora && Number(ts)<=Number(c.t));
@@ -24709,9 +24719,11 @@ function stockCorteViejo(){
   /* Solo para cortes que VINIERON de un Excel (por eso `alm`) y les faltan los datos que
      el panel aprendió después. A un conteo hecho a mano no se le reprocha nada: se le
      ofrece, aparte y en tono suave, que suba el Excel. */
-  return !!(STOCK.c && STOCK.c.f && STOCK.c.alm) && !(STOCK.c.solo0 && STOCK.c.cod && Object.keys(STOCK.c.cod).length);
+  return !!(STOCK.c && STOCK.c.f && STOCK.c.alm && !STOCK.c.mano) && !(STOCK.c.solo0 && STOCK.c.cod && Object.keys(STOCK.c.cod).length);
 }
-function stockConteoAMano(){ return !!(STOCK.c && STOCK.c.f && !STOCK.c.alm); }
+/* 📋 (18/10, §4ls Man-VM2) Un conteo a mano lleva `mano:1` y, desde ahora, el almacén y el «lo que no figura está en 0» del Excel que
+   reemplazó; el de antes no traía ni almacén. Los dos son «a mano». */
+function stockConteoAMano(){ return !!(STOCK.c && STOCK.c.f && (STOCK.c.mano || !STOCK.c.alm)); }
 function stockDesdeSalidas(){
   var f=STOCK.c.f||''; if(!f) return '';
   return stockIncTodo(STOCK.c) ? stockSumarDias(f,1) : f;   // 🚚 (§4ls) con un solo turno incluido, el día del corte decide la línea (`stockBajaDelCorte`)
@@ -24820,6 +24832,26 @@ function stockEsperado(q, T){
   for(var n=0; n<30 && !diaHabil(e); n++) e=stockSumarDias(e,1);   // (§4iz, E1-8) ni domingo ni feriado: ese día no llega nada
   return e;
 }
+/* 🚚 (18/10, §4ls Man-VM3) UNA RECOGIDA VENCE COMO EL «✓ YA PEDÍ»: deja de contar como «en camino» (y de apartar lo de Moreno), pero NO se
+   cierra sola (§4hn: nada se cierra por fecha) — sigue en la lista para tocar «📥 Llegó» o ✕. Vence cuando ya hay un Excel de PTF de un
+   día POSTERIOR al de ir a buscarla (ese Excel ya dice si llegó: si la trae, el control la ofrece; si no, no fue), o a los
+   STOCK_RECOGIDA_VENCE_DIAS de ese día sin Excel. Antes quedaba «en camino» para siempre: pasados los 3 días de la detección del Excel
+   volvía a descontarse de lo que hay que pedir y retenía lo que quedaba en Moreno («🚚 Ya pedido · ⚠️ reclamar»). */
+var STOCK_RECOGIDA_VENCE_DIAS=2;
+/* El día de ir a buscar la recogida vencida (sin cerrar) más vieja de un producto, o ''. */
+function stockRecogidaVencidaDe(k){
+  var hoy=todayStr(), f='';
+  (STOCK.p||[]).forEach(function(q){ if(q && q.k===k && stockRecogidaVencida(q, hoy)){ var e=String(stockEsperado(q)||''); if(!f || e<f) f=e; } });
+  return f;
+}
+function stockRecogidaVencida(q, hoy){
+  if(!q || q.tipo!=='recogida' || q.r) return false;
+  hoy=hoy||todayStr();
+  var esp=String(stockEsperado(q)||''); if(!esp) return false;
+  var cf=String(((typeof STOCK!=='undefined' && STOCK && STOCK.c)||{}).f||'');
+  if(cf && cf>esp) return true;
+  return stockSumarDias(esp, STOCK_RECOGIDA_VENCE_DIAS)<hoy;
+}
 
 /* ---- La foto completa, un renglón por producto ---- */
 /* Los pedidos de Eduardo (el dueño) no son rotación: son pedidos puntuales suyos (§4de).
@@ -24911,7 +24943,7 @@ function stockUnicoQuien(o){
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
   if(!isFinite(n)) return 0;
-  (STOCK.p||[]).forEach(function(q){if(q&&!q.r&&q.tipo==='recogida'&&q.k===k&&q.de===alm)n-=Number(q.u)||0;});
+  (STOCK.p||[]).forEach(function(q){if(q&&!q.r&&q.tipo==='recogida'&&q.k===k&&q.de===alm&&!stockRecogidaVencida(q))n-=Number(q.u)||0;});   // 🚚 (§4ls Man-VM3) la vencida ya no aparta
   return Math.max(0,n);
 }
 
@@ -24919,7 +24951,7 @@ function stockLibreOrigen(k,alm){
    aviso de saldo del formulario pregunta por un producto del catálogo que nunca se vendió ni figura
    en ningún Excel, y la respuesta tiene que salir de ESTA misma cuenta (§4gj). Sin `extra`, igual que siempre. */
 function stockData(extra){
-  var hoy=todayStr(), desde=diasAtras(STOCK_VENTANA-1), conteo=STOCK.c.f||'', desdeSal=stockDesdeSalidas();
+  var hoy=todayStr(), desde=diasAtras(STOCK_VENTANA-1), conteo=STOCK.c.f||'', desdeSal=stockDesdeSalidas(), recVenc=[];
   var desde30=diasAtras(STOCK_VENTANA_MES-1);   // la ventana larga, solo para el plan del mes que viene (§4dr)
   var T=stockTiemposFabrica();
   var vArr=stockVentaDesde(), vPiso=stockLeadPisoArranque();   // 📅 (18/10, §4ls VF1) los días de venta, desde que arranca la fábrica
@@ -25060,6 +25092,7 @@ function stockData(extra){
     var o=grupo(q.k); if(q.tipo!=='recogida')ultFab(o, q.f, q.fab);
     if(q.r) return;
     if(q.ya && stockEsperado(q,T)<todayStr()) return;   // (§4iy) el «✓ Ya pedí» vale hasta el día en que tendría que llegar; si el Excel no lo muestra, se vuelve a pedir
+    if(stockRecogidaVencida(q, hoy)){ recVenc.push(q); return; }   // 🚚 (18/10, §4ls Man-VM3) la recogida vencida: no cuenta, pero se sigue viendo para cerrarla
     o.enCamino+=Number(q.u)||0;
     o.pedidos.push({ id:q.id, u:Number(q.u)||0, fab:stockFabNorm(q.fab), f:q.f, llega:stockEsperado(q,T), tipo:q.tipo||'fabrica', de:q.de||'', arr:q.arr||'' });   // (16/10, §4lr U21) `arr`: el cuadrito cuenta desde el día en que arrancó (§4jd)
   });
@@ -25091,7 +25124,9 @@ function stockData(extra){
          va en camino a fábrica: sigue existiendo, y el saldo del formulario lo suma (`enRecogida`, §4gj).
          Exactamente lo restado —ni más ni menos—, así nunca se cuenta dos veces. No cambia ninguna otra cuenta. */
       var bruto=Number((s.u||{})[k]); if(isFinite(bruto) && bruto>v) grupo(k).enRecogida+=bruto-v;
-      if(sale){ if(g[k]) v-=(g[k].salSale[nm]||0); if(!(v>0)) return; var os=grupo(k); os.enSale+=v; os.salePor[nm]=(os.salePor[nm]||0)+v; return; }
+      /* 📤 (18/10, §4ls Man-VM5) …y lo que salió de ahí SIN pedido (anotado con «📤 Salió sin pedido» eligiendo ese depósito) y su Excel
+         todavía no trae. Antes solo bajaba PTF: lo que salía de Banzer para Multicenter no se podía anotar. */
+      if(sale){ if(g[k]) v-=(g[k].salSale[nm]||0); v-=stockSalidasManualesDe(k, nm); if(!(v>0)) return; var os=grupo(k); os.enSale+=v; os.salePor[nm]=(os.salePor[nm]||0)+v; return; }
       if(!(v>0)) return;
       var o=grupo(k); o.enOtros+=v; o.otrosAlm[nm]=(o.otrosAlm[nm]||0)+v;
     });
@@ -25194,7 +25229,8 @@ function stockData(extra){
   return { lista:lista, desde:desde, hoy:hoy, contado:conteo, diasConteo:edad, otrosAlm:otrosAlm, saleAlm:saleAlm,
            traer:lista.filter(function(o){ return o.aviso==='traer'; }),
            conteoViejo:(edad!=null && edad>STOCK_RECONTAR), nConteo:Object.keys(STOCK.c.u||{}).length,
-           fabricas:T, abiertos:lista.reduce(function(a,o){ return a.concat(o.pedidos.map(function(q){ return { id:q.id, u:q.u, fab:q.fab, f:q.f, llega:q.llega, k:o.k, nombre:stockNombre(o), tipo:q.tipo, de:q.de }; })); },[]),
+           fabricas:T, abiertos:lista.reduce(function(a,o){ return a.concat(o.pedidos.map(function(q){ return { id:q.id, u:q.u, fab:q.fab, f:q.f, llega:q.llega, k:o.k, nombre:stockNombre(o), tipo:q.tipo, de:q.de }; })); },[])
+             .concat(recVenc.map(function(q){ var o=g[q.k]; return { id:q.id, u:Number(q.u)||0, fab:'', f:q.f, llega:stockEsperado(q,T), k:q.k, nombre:o?stockNombre(o):stockNombreClave(q.k), tipo:'recogida', de:q.de||'', vencida:true }; })),   // 🚚 (§4ls Man-VM3)
            sobran:lista.filter(function(o){ return o.sobra; }) };
 }
 /* Día por día: lo que hay + lo que llega − lo que se va. Lo que se va cada día es LO MAYOR
@@ -25922,7 +25958,10 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
     }
     if(e && e.rec){ v.tipo='recogida'; v.color='ambar'; v.llega=e.llega; v.atrasada=e.atrasada; v.recDe=e.de; disp=e.disp; }
     // 📥 (28/09) no mira la hora (dueño: «se cargó lunes, se recoge martes, se entrega miércoles»): se recoge el día hábil siguiente
-    else if(e){ v.tipo='moreno'; v.color='ambar'; v.recoge=saldoDiaRecoge(); disp=v.recoge; }
+    else if(e){ v.tipo='moreno'; v.color='ambar'; v.recoge=saldoDiaRecoge(); disp=v.recoge;
+      /* 🚚 (18/10, §4ls Man-VM3) Una recogida VENCIDA ya no cuenta (lo de Moreno vuelve a estar libre), pero se avisa: puede haber llegado
+         sin que nadie la cerrara. */
+      var rv=stockRecogidaVencidaDe(clave); if(rv) v.recVenc=rv; }
     else {
       v.sinLibre=true;
       /* Lo que viene de fábrica cubre primero lo que ya está vendido (hasta ese día), y recién después este pedido.
@@ -26101,7 +26140,8 @@ function saldoTitulo(v){
     case 'hay':    return v.sinCupo ? ('✅ HAY EN ALMACÉN'+dc+sc) : ('✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc);
     /* 📥 (28/09) Se recoge el día hábil siguiente: si no es mañana (sábado, domingo, feriado), se dice qué día. */
     case 'moreno': return '📥 HAY EN MORENO · '+((!v.recoge || v.recoge===stockSumarDias(todayStr(), STOCK_DIAS_RECOGIDA)) ? ('se trae en '+trae) : ('logística lo recoge el '+saldoDiaTxt(v.recoge)))+
-                          (v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc;
+                          (v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc+
+                          (v.recVenc ? (' · ⚠️ la recogida era para el '+saldoDiaTxt(v.recVenc)+' y todavía no llegó: confirmala con logística') : '');   // 🚚 (§4ls Man-VM3)
     /* 🚚 (28/09, revisión de Codex) Lo que ya va en una recogida programada llega el día que eligió logística, no «en 1 día».
        Si se puede adelantar, lo confirma logística: no se promete. */
     case 'recogida': return v.atrasada
@@ -26724,6 +26764,10 @@ function renderStock(){
       'los <b>códigos</b> del almacén (con ellos el panel encuentra productos aunque el nombre esté escrito distinto) y saber que '+
       '<b>lo que no figura en el Excel está en cero</b> — o sea, que hay que fabricarlo. Mientras tanto, esos productos salen como «sin contar».'+
       ' <button class="btn btn-sm" style="background:#7c2d12;color:#fff;font-weight:700;margin-left:6px" onclick="abrirImportExist()">📥 Subir existencias</button></div>';
+  }else if(stockConteoAMano() && STOCK.c.solo0){
+    /* 📋 (18/10, §4ls Man-VM2) Contado a mano SOBRE un Excel: lo no anotado quedó como estaba y lo que el Excel no traía sigue en 0. */
+    html+='<div id="stk-conteo-mano" style="background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.84rem;color:var(--muted)">'+
+      '📋 Conteo <b>a mano</b>'+(STOCK.c.hora?(' de las '+esc(String(STOCK.c.hora).slice(0,5))):'')+', sobre el último Excel: lo que no se anotó quedó como estaba y lo que ese Excel no traía sigue en cero.</div>';
   }else if(stockConteoAMano()){
     html+='<div style="background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.84rem;color:var(--muted)">'+
       'Este conteo se hizo <b>a mano</b>, así que solo sabe de los productos que alguien anotó. '+
@@ -26869,7 +26913,7 @@ function renderStock(){
       d.abiertos.map(function(q){
         return '<tr><td><b>'+esc(q.nombre)+'</b></td><td><b>'+stockUnid(q.u)+'</b></td>'+
           '<td>'+(q.tipo==='recogida'?('🚚 recoger de '+esc(stockAlmCorto(q.de||'Moreno'))):('🏭 fabricar'+(q.fab?(' · '+esc(q.fab)):'')))+'</td>'+
-          '<td>'+fmtFecha(q.f)+'</td><td>'+fmtFecha(q.llega)+'</td>'+
+          '<td>'+fmtFecha(q.f)+'</td><td>'+fmtFecha(q.llega)+(q.vencida?('<br><span class="stk-rec-vencida" style="color:#b45309;font-size:.82em;font-weight:700">⚠️ venció: ya no cuenta como en camino. ¿Llegó? Cerrala con 📥 · si no fue, ✕</span>'):'')+'</td>'+   // 🚚 (§4ls Man-VM3)
           '<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó</button> '+
           '<button class="btn btn-ghost btn-sm" data-id="'+esc(q.id)+'" onclick="cancelarStockPedido(this.getAttribute(\'data-id\'))">✕</button></td></tr>';
       }).join('')+'</tbody></table></div></div>';
@@ -27638,8 +27682,10 @@ function abrirStockConteo(){
        con el Excel de hace 3 días (TITANIO 10, salieron 6 → hay 4), dejar el renglón sin tocar
        guardaba 10 con fecha de hoy y el panel prometía 6 colchones que no están. */
     var v=(o.deposito!=null) ? Math.max(0, o.deposito) : null;
+    /* 📋 (18/10, §4ls Man-VM2) `data-real` = lo que el panel calcula EXACTO (un PTF negativo, −12): el campo muestra 0, pero guardar sin
+       tocar tiene que dejar −12, no 0. */
     return '<tr><td><b>'+esc(stockNombre(o))+'</b>'+(o.porDia>0?('<br><span style="color:var(--muted);font-size:.92em">se venden '+stockNum(o.porDia)+' por día</span>'):'')+'</td>'+
-      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" data-def="'+(v!=null?esc(String(v)):'')+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
+      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" data-def="'+(v!=null?esc(String(v)):'')+'" data-real="'+(o.deposito!=null?esc(String(o.deposito)):'')+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
   }).join('');
   var html='<div class="modal-h" style="background:#7c2d12"><h3>📋 Conté el depósito</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
@@ -27670,12 +27716,14 @@ function guardarStockConteo(){
      hoy (§4cn), así que el número del panel se guarda con esas entregas sumadas: queda igual.
      🚚 (§4ls) …las de los turnos que este conteo NO trae (lo de los que trae ya no se descuenta), y sin lo de hoy sin ✅ que con este
      conteo pasa a «ya salió»: lo libre queda igual. */
-  var quieto=function(k, hay){ return Math.max(0, Math.max(0, Number(hay)||0) + stockSalidas(k, hoy, '', cN) - (fueraPasa[k]||0)); };
+  /* 📋 (18/10, §4ls Man-VM2) SIN recortar a 0: un PTF negativo (−12 PATAS) guardado sin tocar queda −12. Antes `max(0,…)` lo borraba
+     (y con eso cambiaban la fila y sus avisos aunque nadie hubiera contado nada). Lo que se ESCRIBE sigue siendo ≥ 0. */
+  var quieto=function(k, hay){ return (Number(hay)||0) + stockSalidas(k, hoy, '', cN) - (fueraPasa[k]||0); };
   [].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')).forEach(function(el){
     var k=el.getAttribute('data-k'); vistos[k]=1;
     var t=String(el.value||'').trim(); if(t==='') return;
-    var def=String(el.getAttribute('data-def')||'');
-    var v=(def!=='' && Math.abs(Number(t)-Number(def))<1e-9) ? quieto(k, def) : Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
+    var def=String(el.getAttribute('data-def')||''), real=String(el.getAttribute('data-real')||'');
+    var v=(def!=='' && Math.abs(Number(t)-Number(def))<1e-9) ? quieto(k, real!==''?real:def) : Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
     u[k]=v; n++;
   });
   if(!n){ toast('No anotaste ninguna cantidad.','err'); return; }
@@ -27684,7 +27732,23 @@ function guardarStockConteo(){
   var viejo=STOCK.c||{}, dep={};
   stockData().lista.forEach(function(o){ dep[o.k]=o.deposito; });
   Object.keys(viejo.u||{}).forEach(function(k){ if(!vistos[k] && u[k]==null && dep[k]!=null) u[k]=quieto(k, dep[k]); });
-  STOCK.c={ f:hoy, u:u, t:Date.now() };   // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
+  /* 📋 (18/10, §4ls Man-VM2) «LO QUE NO FIGURA ESTÁ EN 0» SE CONSERVA. El Excel declara que trae todo lo que tiene existencia
+     (`solo0`): lo que no viene vale 0 = «no hay, producir». El conteo a mano reescribía el corte sin esa marca, y los 191 productos que
+     el Excel no traía pasaban a «sin contar» (el plan del mes perdía 67 u; SOMIER ORO 160 con 6 en Banzer dejaba de pedirse). Ahora el
+     conteo hereda la marca, y lo que ese 0 ya tenía encima (una salida, una llegada) se escribe con su número: guardar sin tocar nada
+     no cambia nada. */
+  if(viejo.solo0) Object.keys(dep).forEach(function(k){
+    if(vistos[k] || u[k]!=null || dep[k]==null || (viejo.u||{})[k]!=null) return;
+    var q=quieto(k, dep[k]); if(Math.abs(q)>1e-9) u[k]=q;
+  });
+  var tC=Date.now();
+  STOCK.c={ f:hoy, u:u, t:tC };           // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
+  /* 📋 (18/10, §4ls Man-VM2) …y la HORA del conteo (la del corte: con ella se comparan las llegadas y las salidas anotadas de hoy, VE9) y el
+     almacén del Excel que reemplaza (sin él, subir otro almacén como «fábrica» no preguntaba nada). `mano:1` = lo contó una persona:
+     así sigue diciendo «conteo a mano» aunque lleve el almacén. */
+  STOCK.c.hora=horaDeTs(tC); STOCK.c.mano=1;
+  if(viejo.alm) STOCK.c.alm=String(viejo.alm);
+  if(viejo.solo0) STOCK.c.solo0=true;
   stockIncPoner(STOCK.c, incN);           // 🚚 (§4ls) qué turnos ya salieron cuando se contó
   /* (26/09) Los códigos del último Excel dicen QUÉ es cada renglón (§4cy): sin ellos, al releer la
      fila `stockMigrar` volvía a sumar el CH1297 (10) al SOMIER NEGRO (2) → «hay 12». */
@@ -27812,9 +27876,12 @@ function abrirStockEntrada(){
   var ops=lista.map(opEnt).join('');
   var abiertos=d.abiertos.map(function(q){
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--gray-lt);font-size:.84rem">'+
-      '<span style="flex:1;min-width:180px"><b>'+esc(q.nombre)+'</b><br><span style="color:var(--muted);font-size:.92em">'+q.u+' pedidas'+(q.fab?(' a '+esc(q.fab)):'')+' el '+fmtFechaCorta(q.f)+' · llegaban ~'+fmtFechaCorta(q.llega)+'</span></span>'+
+      '<span style="flex:1;min-width:180px"><b>'+esc(q.nombre)+'</b><br><span style="color:var(--muted);font-size:.92em">'+q.u+' '+(q.tipo==='recogida'?('a recoger de '+esc(stockAlmCorto(q.de||'Moreno'))):('pedidas'+(q.fab?(' a '+esc(q.fab)):'')))+' el '+fmtFechaCorta(q.f)+' · llegaban ~'+fmtFechaCorta(q.llega)+'</span>'+
+        (q.vencida?'<br><span style="color:#b45309;font-size:.88em;font-weight:700">⚠️ venció: ya no cuenta como en camino</span>':'')+'</span>'+   // 🚚 (§4ls Man-VM3)
       '<input type="number" min="1" step="1" inputmode="numeric" id="stk-rec-'+esc(q.id)+'" value="'+q.u+'" style="width:76px" title="Cuántas llegaron">'+
-      '<button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" data-id="'+esc(q.id)+'" onclick="recibirStockPedido(this.getAttribute(\'data-id\'))">✅ Llegó</button></div>';
+      '<button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" data-id="'+esc(q.id)+'" onclick="recibirStockPedido(this.getAttribute(\'data-id\'))">✅ Llegó</button>'+
+      /* 🚚 (18/10, §4ls Man-VM3) Acá aparece la pregunta «¿el Excel de PTF ya las trae?» (`stockRecogidaPreguntar`). */
+      '<div id="stk-rec-preg-'+esc(q.id)+'" class="stk-rec-preg" style="flex-basis:100%"></div></div>';
   }).join('');
   var html='<div class="modal-h" style="background:#b45309"><h3>📥 Llegó de fábrica</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
@@ -27844,9 +27911,94 @@ function guardarStockEntrada(){
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Sumadas '+u+' unidades al depósito'+(fab?(' ('+fab+')'):''),'ok');
 }
+/* 🚚 (18/10, §4ls Man-VM3) ¿EL EXCEL DE PTF YA LA TRAE? Las entradas sin explicar de PTF que pueden ser ESTA recogida: detecciones de un
+   Excel de PTF sacado DESPUÉS de programarla (la misma regla del reparto y de la vista previa: `stockPedidoAt` < `stockDetAt`), sin asignar,
+   del producto; las más viejas primero. Si no hay ninguna, el Excel no mostró nada de más: las unidades llegaron después y se suman. */
+function stockRecogidaDetecciones(q){
+  if(!q || q.tipo!=='recogida') return [];
+  var at=stockPedidoAt(q);
+  return (STOCK.det||[]).filter(function(x){ return x && x.k===q.k && !x.alm && !x.an && (Number(x.u)||0)>0 && at<stockDetAt(x.f, x.hora); })
+    .sort(function(a,b){ var A=stockDetAt(a.f,a.hora), B=stockDetAt(b.f,b.hora); return A<B?-1:(A>B?1:0); });
+}
+/* El corte de PTF anterior a uno (para `ev.p` de la recepción, que lee `stockRecYaEnFoto`): el último del historial antes de esa hora. */
+function stockCortePrevioDe(f, hora){
+  var at=stockDetAt(f, hora), mejor=null, mAt='';
+  (STOCK.h||[]).forEach(function(x){ if(!x || x.rol!=='log') return; var a=stockDetAt(x.f, x.hora); if(a<at && a>mAt){ mAt=a; mejor=x; } });
+  return mejor ? [String(mejor.f||''), String(mejor.hora||'')] : null;
+}
+/* La pregunta, en el renglón de «📥 Llegó de fábrica». Sin el renglón (otra pantalla), devuelve false y se pregunta con un diálogo. */
+function stockRecogidaPreguntar(q, u, dets){
+  var el=document.getElementById('stk-rec-preg-'+q.id); if(!el) return false;
+  var n=0; dets.forEach(function(d){ n+=Number(d.u)||0; });
+  var ya=Math.min(u, n), d0=dets[0], id=esc(String(q.id));
+  el.innerHTML='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;color:#7c4b00;border-radius:8px;padding:8px 11px;margin-top:6px;font-size:.82rem">'+
+    '🚚 <b>El Excel de PTF del '+esc(fmtFechaCorta(d0.f))+(d0.hora?(' '+esc(String(d0.hora).slice(0,5))):'')+' ya mostró '+stockUnid(n)+' de más sin explicar</b> de este producto, y se sacó DESPUÉS de programar esta recogida. ¿Son estas?'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+
+      '<button type="button" class="btn btn-sm stk-rec-excel" style="background:#0a6b47;color:#fff;font-weight:700" onclick="recibirStockPedido(\''+id+'\',\'excel\')">✅ Sí, ya están en ese Excel: cerrarla sin sumarlas otra vez'+(ya<u?(' ('+ya+' de '+u+'; las otras '+(u-ya)+' se suman)'):'')+'</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm stk-rec-sumar" onclick="recibirStockPedido(\''+id+'\',\'sumar\')">➕ No, llegaron después: sumarlas a PTF</button>'+
+    '</div></div>';
+  return true;
+}
+/* ↪️ (18/10, §4ls V-REV-3) Las líneas «📥 recoger» que esperaban ESTA recogida: del mismo producto, todo lo que se va a buscar de ESE
+   almacén (sin parte en Banzer: esa se deja a mano), sin entregar; de la entrega más cercana a la más lejana, tildadas hasta cubrir lo que
+   llegó. Antes nada las tocaba: la línea seguía «📥 recoger de IM», la revisión le apartaba de Moreno la última unidad y la Lista de carga
+   mandaba a buscar lo que ya estaba en PTF. */
+function stockRecogidaLineas(q, u){
+  var L=[], resto=Math.max(0, Math.round(Number(u)||0));
+  STATE.forEach(function(p){
+    if(!p || !stockCuenta(p) || p.entregado || esVentaTienda(p)) return;
+    (p.productos||[]).forEach(function(x, i){
+      if(!x || !esRecoger(x) || recogeDeTienda(x) || stockClave(x)!==q.k) return;
+      var pa=prodPartes(x), trae=pa.filter(function(e){ return e.tipo==='trae'; });
+      if(!trae.length || pa.some(function(e){ return e.tipo==='sale'; }) || trae.some(function(e){ return !recogerMismo(e.de, q.de||''); })) return;
+      var ut=0; trae.forEach(function(e){ ut+=e.u; });
+      L.push({ id:p.id, i:i, u:ut, f:String(fechaSalida(p)||p.fecha||''), oc:ocEtiq(p.oc)||'—', cli:String(p.cliente||'') });
+    });
+  });
+  L.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
+  L.forEach(function(l){ if(l.u<=resto){ l.on=true; resto-=l.u; } });
+  return L;
+}
+function stockRecogidaOfrecerLineas(q, u, toastTxt){
+  var L=stockRecogidaLineas(q, u); if(!L.length) return false;
+  STOCK_REC_LINEAS={ q:q.id, L:L };
+  var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Llegaron '+stockUnid(u)+' de '+esc(stockAlmCorto(q.de||'Moreno'))+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" id="stk-rec-lineas">'+
+      (toastTxt?('<div style="font-size:.84rem;color:var(--muted);margin-bottom:8px">'+esc(toastTxt)+'</div>'):'')+
+      '<p style="font-size:.86rem;margin:0 0 8px">Estas líneas esperaban la recogida (<b>📥 recoger de '+esc(stockAlmCorto(q.de||'Moreno'))+'</b>). Ahora están en PTF: '+
+        '¿las paso a <b>✔ hay acá</b>? Así la Lista de carga ya no manda a buscarlas y la revisión no les aparta lo de Moreno.</p>'+
+      L.map(function(l, n){ return '<label style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
+        '<input type="checkbox" class="stk-rec-linea" data-n="'+n+'"'+(l.on?' checked':'')+' style="width:18px;height:18px">'+
+        '<b>'+esc(l.oc)+'</b> <span>'+esc(l.cli)+'</span> <span style="color:var(--muted)">'+stockUnid(l.u)+' · para el '+esc(fmtFechaCorta(l.f))+'</span></label>'; }).join('')+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-primary btn-sm" id="stk-rec-lineas-ok" style="flex:1;min-width:200px;background:#0a6b47" onclick="stockRecogidaPasarLineas()">✔ Pasar las tildadas a «hay acá»</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Dejarlas como están</button>'+
+      '</div></div>';
+  openModal(html);
+  return true;
+}
+var STOCK_REC_LINEAS=null;
+function stockRecogidaPasarLineas(){
+  var E=STOCK_REC_LINEAS; if(!E) { closeModal(); return []; }
+  var hechos=[];
+  [].slice.call(document.querySelectorAll('#modal-box input.stk-rec-linea')).forEach(function(c){
+    if(!c.checked) return; var l=E.L[Number(c.getAttribute('data-n'))]; if(!l) return;
+    var p=findById(l.id), x=p && p.productos && p.productos[l.i]; if(!x || !esRecoger(x)) return;
+    x.chk='ok'; delete x.chkDe; delete x.chkDes;           // ✔ hay ACÁ: lo trajo la recogida
+    syncVerificado(p); upsert(p); hechos.push(p);
+  });
+  STOCK_REC_LINEAS=null;
+  if(hechos.length){ saveMirror(); hechos.forEach(function(p){ persistPedido(p); }); }
+  closeModal(); renderStock(); renderAdmin(); try{ refreshCarga(); }catch(e){}
+  if(hechos.length) toast('✔ '+hechos.length+' pedido'+(hechos.length===1?'':'s')+' pasado'+(hechos.length===1?'':'s')+' a «hay acá».','ok',5000);
+  return hechos.map(function(p){ return p.id; });
+}
 /* Llegó lo que estaba pedido: se cierra el pedido, se suma al depósito y queda medido
-   cuánto tardó. Si llegaron menos, el resto queda pendiente de recepción. */
-function recibirStockPedido(id){
+   cuánto tardó. Si llegaron menos, el resto queda pendiente de recepción.
+   🚚 (18/10, §4ls Man-VM3) `modo` (solo recogidas): 'excel' = el Excel de PTF ya las trae (se cierra con esa detección, sin sumar otra
+   vez); 'sumar' = llegaron después. Sin `modo` y con una detección que puede ser esta recogida, se PREGUNTA (antes se sumaban siempre:
+   PTF contaba 2 colchones que no existen hasta el próximo Excel). */
+function recibirStockPedido(id, modo){
   var q=(STOCK.p||[]).filter(function(x){ return x&&x.id===id&&!x.r; })[0];
   if(!q){ toast('Ese pedido ya no está en la lista.','err'); return; }
   var inp=document.getElementById('stk-rec-'+id);
@@ -27854,16 +28006,26 @@ function recibirStockPedido(id){
   if(!(u>0)){ toast('Poné cuántas unidades llegaron.','err'); return; }
   if(inp&&inp.disabled)return;
   if(u>Number(q.u)){toast('La recepción supera las '+q.u+' unidades pendientes.','err');return;}
+  var dets=(q.tipo==='recogida' && modo!=='sumar') ? stockRecogidaDetecciones(q) : [];
+  if(dets.length && modo!=='excel'){
+    if(stockRecogidaPreguntar(q, u, dets)) return;                 // espera el toque en el renglón
+    var n0=0; dets.forEach(function(d){ n0+=Number(d.u)||0; });
+    modo=confirm('El Excel de PTF del '+fmtFechaCorta(dets[0].f)+(dets[0].hora?(' '+String(dets[0].hora).slice(0,5)):'')+' ya mostró '+n0+' de más sin explicar de este producto, y se sacó después de programar esta recogida.\n\n'+
+                 '¿Son estas? Aceptar = sí, ya están en ese Excel (se cierra sin sumarlas otra vez). Cancelar = llegaron después (se suman).') ? 'excel' : 'sumar';
+  }
+  if(modo!=='excel') dets=[];
+  var yaEn=0; dets.forEach(function(d){ yaEn+=Number(d.u)||0; }); yaEn=Math.min(u, yaEn);
+  var resto=u-yaEn;
   var sinResta=false;
-  if(q.tipo==='recogida'){
+  if(q.tipo==='recogida' && resto>0){
     /* ⚠️ (26/09) Si el último reporte de allá ya no tiene esas unidades, se sacó DESPUÉS de
        retirarlas (el Excel de Moreno del día, con la camioneta ya cargada). Antes esto se negaba
        («No alcanza el saldo del almacén de origen») y la llegada no se podía anotar nunca: los
        colchones estaban acá y el panel no los veía. Ahora se pregunta, y la recepción va marcada
        `nr`: se suma acá y NO se le descuenta al almacén (su reporte ya no las tiene). */
     var alm=q.de || stockAlmPorDefecto(), fuente=(STOCK.g||{})[alm], hayAlla=(fuente&&fuente.u) ? Number(fuente.u[q.k]) : NaN;
-    if(!(isFinite(hayAlla) && hayAlla>=u)){
-      if(!confirm('El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+u+': lo más probable es que se sacó DESPUÉS de retirarlas.\n\n¿Llegaron igual? Se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.')) return;
+    if(!(isFinite(hayAlla) && hayAlla>=resto)){
+      if(!confirm('El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+resto+': lo más probable es que se sacó DESPUÉS de retirarlas.\n\n¿Llegaron igual? Se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.')) return;
       sinResta=true;
     }
   }
@@ -27877,18 +28039,35 @@ function recibirStockPedido(id){
      ⚠️ Una RECOGIDA no crea unidades: las mueve. Si se suman acá y no se restan de allá, el
      panel las cuenta dos veces hasta el próximo Excel de ese almacén (§4cr). */
   q.total=q.total||Number(q.u);
-  var rec=stockRecNuevo(u, todayStr());
-  if(sinResta) rec.nr=1;                          // (26/09) no se resta del almacén de origen: ver arriba
-  stockRecsDe(q).push(rec);
+  var recs=stockRecsDe(q), rec=null, ts=Date.now();
+  /* 🚚 (§4ls Man-VM3) Lo que el Excel ya traía: la recepción nace de ESA detección, como si se hubiera tildado en su vista previa (sin
+     entrada: ya está en el conteo; `ev` = el corte, para que un Excel corregido la anule y para saber si Moreno ya la tenía descontada). */
+  var falta=yaEn;
+  dets.forEach(function(d){
+    var t=Math.min(falta, Number(d.u)||0); if(!(t>0)) return;
+    var rid=existRecId(d.id, q.id); if(recs.some(function(r){ return r && r.id===rid; })) rid='r'+uid();
+    var ev={ c:[String(d.f||''), String(d.hora||''), String(d.hu||'')], d:d.id, q:cierreEntQuien()||'' }, pv=stockCortePrevioDe(d.f, d.hora); if(pv) ev.p=pv;
+    recs.push({ id:rid, u:t, f:todayStr(), ts:ts, se:1, ev:ev }); falta-=t;
+  });
+  if(yaEn>0) q.enConteo=true;
+  if(resto>0){
+    rec=stockRecNuevo(resto, todayStr());
+    if(sinResta) rec.nr=1;                          // (26/09) no se resta del almacén de origen: ver arriba
+    recs.push(rec);
+  }
   stockNormalizarRecepciones(STOCK);
   var pendiente=q.r ? 0 : (Number(q.u)||0);
   var _g=(STOCK.g||{})[q.de || stockAlmPorDefecto()];
-  var movido=!!(q.tipo==='recogida' && _g && _g.rs && _g.rs[rec.id] && !_g.rs[rec.id].nr);   // la marca de una `nr` no es una resta (26/09)
+  var movido=!!(q.tipo==='recogida' && rec && _g && _g.rs && _g.rs[rec.id] && !_g.rs[rec.id].nr);   // la marca de una `nr` no es una resta (26/09)
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   var dias=stockDias(q.f, todayStr());
-  toast('✅ Llegaron '+u+(q.tipo==='recogida'?(' de '+stockAlmCorto(q.de||'Moreno')):(q.fab?(' de '+stockFabNorm(q.fab)):''))+
-        ' en '+dias+' día'+(dias===1?'':'s')+'. '+(pendiente>0?('Quedan '+pendiente+' pendientes. '):'Recepción completa. ')+'Se suman acá'+(movido?' y se descuentan de allá':'')+(sinResta?' (allá no se descuentan: su último reporte ya no las tenía)':'')+
-        (STOCK.c.f?'':' (falta cargar las existencias de acá una vez)')+'.','ok',7000);
+  var txt='✅ Llegaron '+u+(q.tipo==='recogida'?(' de '+stockAlmCorto(q.de||'Moreno')):(q.fab?(' de '+stockFabNorm(q.fab)):''))+
+        ' en '+dias+' día'+(dias===1?'':'s')+'. '+(pendiente>0?('Quedan '+pendiente+' pendientes. '):'Recepción completa. ')+
+        (yaEn>0 ? (yaEn+' ya estaban en el Excel de PTF: no se suman otra vez'+(resto>0?('; las otras '+resto+' se suman acá'):'')) : ('Se suman acá'+(movido?' y se descuentan de allá':'')+(sinResta?' (allá no se descuentan: su último reporte ya no las tenía)':'')))+
+        (STOCK.c.f?'':' (falta cargar las existencias de acá una vez)')+'.';
+  /* ↪️ (§4ls V-REV-3) Y las líneas «📥» que la esperaban: se ofrece pasarlas a «✔ hay acá». */
+  if(q.tipo==='recogida' && stockRecogidaOfrecerLineas(q, u, txt)) return;
+  toast(txt,'ok',7000);
 }
 
 /* ---- Unir a mano dos nombres del mismo producto (§4co) ---- */
@@ -28882,7 +29061,42 @@ function existLoteDe(filas, delNombre){
   });
   return err ? { error:err } : { lista:lista };
 }
-function existCancelar(){ EXIST_COLA=[]; EXIST_IMP=null; closeModal(); existLoteTerminar(); }
+function existCancelar(){ EXIST_COLA=[]; EXIST_IMP=null; closeModal(); existLoteTerminar(); existRepintarAlFinal(); }
+/* ⏳ (18/10, §4ls VB-2/VB-5) «💾 Usar estas existencias y seguir con …»: el botón se apaga y dice «Guardando…» ANTES de trabajar (antes la
+   pantalla quedaba congelada 0,5–1 s sin decir nada —3 s en un aparato lento— y un segundo toque caía en el botón del almacén siguiente,
+   que se abría en el mismo lugar: se confirmaba Banzer sin verlo). El botón del almacén que sigue queda apagado hasta que termina el
+   guardado del anterior (al menos 0,9 s, como mucho 8 s). `confirmarImportExist` sigue igual (las pruebas la llaman directo). */
+var EXIST_GUARDANDO=false, EXIST_REPINTAR=false;
+function existUsarToque(btn){
+  if(EXIST_GUARDANDO || (btn && btn.disabled)) return;
+  EXIST_GUARDANDO=true;
+  var antes=EXIST_IMP;
+  if(btn){ btn.setAttribute('data-txt', btn.textContent); btn.disabled=true; btn.textContent='⏳ Guardando…'; btn.style.opacity='.7'; }
+  setTimeout(function(){
+    var prom=null;
+    try{ prom=confirmarImportExist(); }
+    catch(e){ EXIST_GUARDANDO=false; if(btn){ btn.disabled=false; btn.textContent=btn.getAttribute('data-txt')||btn.textContent; btn.style.opacity=''; } throw e; }
+    if(EXIST_IMP===antes){            // no se usó (un aviso, un «Cancelar» en una pregunta): el botón vuelve
+      EXIST_GUARDANDO=false;
+      var b0=document.getElementById('exist-usar');
+      if(b0){ b0.textContent=b0.getAttribute('data-txt')||b0.textContent; b0.style.opacity=''; b0.disabled=false; existBotonUsar(); }
+      return;
+    }
+    var nuevo=EXIST_IMP ? document.getElementById('exist-usar') : null, t0=Date.now();
+    if(nuevo){ nuevo.setAttribute('data-txt', nuevo.textContent); nuevo.disabled=true; nuevo.textContent='⏳ Guardando '+((antes&&antes.esLog)?'PTF':stockAlmCorto((antes&&antes.almacen)||''))+'…'; nuevo.style.opacity='.6'; }
+    var listo=function(){
+      setTimeout(function(){
+        EXIST_GUARDANDO=false;
+        var b=document.getElementById('exist-usar');
+        if(nuevo && b===nuevo){ b.textContent=b.getAttribute('data-txt')||b.textContent; b.style.opacity=''; b.disabled=false; existBotonUsar(); }
+      }, Math.max(0, 900-(Date.now()-t0)));
+    };
+    Promise.race([Promise.resolve(prom), new Promise(function(r){ setTimeout(r, 8000); })]).then(listo, listo);
+  }, 30);
+}
+/* Entre un almacén y el siguiente del MISMO archivo no se redibuja la pantalla de Stock ni Administración (no se ven: la vista previa las
+   tapa, y era ~0,25 s por almacén): se redibujan una vez, al terminar. */
+function existRepintarAlFinal(){ if(!EXIST_REPINTAR) return; EXIST_REPINTAR=false; try{ renderStock(); renderAdmin(); }catch(e){} }
 /* 🏭 (17/10, §4lr) EL LOTE DEL DÍA: lo que cambió en cada almacén del archivo, sumado. Al terminar (último almacén confirmado,
    «Saltar» del último o «Cancelar todo» con alguno ya usado) cierra lo que el panel anotó y llegó, y anota lo que pide hoy. */
 var EXIST_LOTE=null;
@@ -29310,7 +29524,11 @@ function stockSalidasVentana(k, v, alm){
   });
   return n;
 }
-function stockEntradasVentana(k, v){ var n=0; (STOCK.e||[]).forEach(function(x){ if(x && x.k===k && !x.rec && stockMovEnVentana(x.f, x.ts, v)) n+=Number(x.u)||0; }); return n; }
+/* 🧮 (18/10, §4ls VE2) TAMBIÉN las de «✅ Llegó» (`rec`, la entrada de una recepción): son lo anotado como llegado, que es justamente lo
+   que el control dice que suma («Esperado = lo del corte anterior + lo anotado como llegado − lo que salió»). Sin ellas, las 4 anotadas
+   a las 09:00 aparecían en el Excel de las 10:10 como «+4 entrada sin explicar», con la sugerencia de cerrar el pedido otra vez y una
+   detección falsa. Las recepciones que cierra el propio control no tienen entrada (`se`): siguen afuera solas. */
+function stockEntradasVentana(k, v){ var n=0; (STOCK.e||[]).forEach(function(x){ if(x && x.k===k && stockMovEnVentana(x.f, x.ts, v)) n+=Number(x.u)||0; }); return n; }
 /* ⚠️ Las salidas con `pre` explicaron UN Excel (ya estaban adentro de ese conteo): nunca entran a una ventana posterior. */
 function stockSalidasManualesVentana(k, v, alm){ var n=0; (STOCK.sm||[]).forEach(function(x){ if(x && !x.pre && !x.an && x.k===k && String(x.alm||'')===String(alm||'') && stockMovEnVentana(x.f, x.ts, v)) n+=Number(x.u)||0; }); return n; }
 /* ¿Un movimiento anotado a mano (salida sin pedido) es POSTERIOR al corte vigente? Por día; el día del corte, por la HORA
@@ -29326,6 +29544,14 @@ function stockMovDespuesDelCorte(S, f, ts){
 }
 /* Las salidas anotadas a mano de acá que ningún Excel incluye todavía: bajan el depósito como una entrega. */
 function stockSalidasManuales(k){ var n=0; (STOCK.sm||[]).forEach(function(x){ if(x && !x.pre && !x.an && !x.alm && x.k===k && stockMovDespuesDelCorte(STOCK, x.f, x.ts)) n+=Number(x.u)||0; }); return n; }
+/* 📤 (18/10, §4ls Man-VM5) Lo mismo para un depósito de salida (Banzer): las anotadas con su nombre, contra SU Excel (la misma regla de
+   corte: por día y, el día del corte, por la hora del archivo). */
+function stockSalidasManualesDe(k, nm){
+  var c=(STOCK.g||{})[nm]; if(!c || !c.f) return 0;
+  var S={ c:c }, n=0;
+  (STOCK.sm||[]).forEach(function(x){ if(x && !x.pre && !x.an && x.alm && String(x.alm)===String(nm) && x.k===k && stockMovDespuesDelCorte(S, x.f, x.ts)) n+=Number(x.u)||0; });
+  return n;
+}
 /* La cuenta entera, producto por producto. `rol`: 'log' (acá), 'sale' (Banzer), 'otro' (Moreno: solo informativo). */
 function stockConciliar(R, rol, inc){
   var alm = rol==='log' ? '' : String(R.almacen||'');
@@ -29338,14 +29564,22 @@ function stockConciliar(R, rol, inc){
   var rf=String(R.fecha||''), rh=String(R.hora||''), pf=String(previo.f), ph=String(previo.hora||'');
   if(rf<pf){ out.corteViejo=true; return out; }
   if(rf===pf && rh!==ph){
-    if(rh && ph){ if(rh<ph){ out.corteViejo=true; return out; } }
+    if(rh && ph){
+      if(rh<ph){
+        out.corteViejo=true;
+        /* 📋 (18/10, §4ls Man-VM2) El conteo a mano ahora lleva su hora (la de anotarlo): un Excel sacado antes es más viejo, y se dice
+           con el texto del conteo a mano, no con el de «otro Excel más nuevo». */
+        if(rol==='log' && previo.mano){ out.previoAMano=true; out.previoHora=String(ph).slice(0,5); }
+        return out;
+      }
+    }
     /* (06/10) El vigente no dice la hora (un conteo a mano, un archivo sin pie) pero se SUBIÓ antes de la hora de este:
        se contó antes, así que este es más nuevo. Si no, no se sabe cuál es más nuevo y no entra (ya no hay «usarlo igual»). */
     else if(!(rh && !ph && stockSubidoAntesDe(previo, rf, rh))){
       out.corteViejo=true;
       /* El vigente es un CONTEO A MANO (📋 Conté a mano: sin almacén ni hora): su hora es la de anotarlo, y es más nuevo que este
          Excel. No es «falta la hora de un Excel». */
-      if(rh && !ph && rol==='log' && !previo.alm && Number(previo.t)>0){ out.previoAMano=true; out.previoHora=horaDeTs(previo.t).slice(0,5); }
+      if(rh && !ph && rol==='log' && (previo.mano || !previo.alm) && Number(previo.t)>0){ out.previoAMano=true; out.previoHora=horaDeTs(previo.t).slice(0,5); }
       else out.ambiguo=true;
       return out;
     }
@@ -29385,9 +29619,14 @@ function stockConciliar(R, rol, inc){
      ayer sin asignar y la de hoy ofrecían las dos el mismo pedido de 5 (tildar las dos lo cerraba con 10), y el pedido
      siguiente quedaba sin ofrecer. Las detecciones viejas van primero (el pedido más viejo, a la más vieja). */
   var ofrecido={};
-  var sugerir=function(fila, detId, detF, resto){
+  /* 🧮 (18/10, §4ls VE8) `detHora`: solo lo pedido ANTES de esa detección (la del Excel del 14/10 12:38 no puede ser la recogida programada
+     el 16/10 a las 15:00). Antes se ofrecían las detecciones viejas primero contra cualquier pedido: se gastaba la recogida con entradas
+     que no eran ella y la llegada de hoy quedaba como detección nueva sin asignar. */
+  var sugerir=function(fila, detId, detF, resto, detHora){
+    var dAt=stockDetAt(detF, detHora);
     pendientesDe(fila.k).forEach(function(q){
-      if(!resto) return; var pend=pendDe(q)-(ofrecido[q.id]||0); if(pend<=0) return;
+      if(!resto) return; if(!(stockPedidoAt(q)<dAt)) return;
+      var pend=pendDe(q)-(ofrecido[q.id]||0); if(pend<=0) return;
       var u=Math.min(resto, pend);
       fila.sug.push({ d:detId, df:detF, q:q.id, u:u, pend:pend, f:String(q.f||''), fab:String(q.fab||''), tipo:q.tipo||'fabrica', de:String(q.de||''), llega:stockEsperado(q) }); resto-=u;
       ofrecido[q.id]=(ofrecido[q.id]||0)+u;
@@ -29415,7 +29654,7 @@ function stockConciliar(R, rol, inc){
     fila.dif=exc-fila.esperado;
     out.todas.push({ k:k, dif:fila.dif, ent:fila.entradas||0 });   // 🏭 (17/10) TODAS las claves (también las que cuadran): la entrada neta del lote
     /* Lo detectado en cortes anteriores que sigue sin asignar, contra lo pendiente de este producto. */
-    if(rol==='log') detVivas.filter(function(x){ return x.k===k; }).forEach(function(x){ var u0=Number(x.u)||0; sugerir(fila, x.id, x.f, u0); fila.detPrev.push({ id:x.id, f:x.f, u:u0 }); });
+    if(rol==='log') detVivas.filter(function(x){ return x.k===k; }).forEach(function(x){ var u0=Number(x.u)||0; sugerir(fila, x.id, x.f, u0, x.hora); fila.detPrev.push({ id:x.id, f:x.f, u:u0 }); });
     if(fila.dif===0){ if(fila.sug.length){ fila.tipo='det'; out.filas.push(fila); } else { fila.tipo='cuadra'; out.resumen.cuadran++; } return; }
     out.resumen.con++;
     var resto=Math.abs(fila.dif);
@@ -29447,7 +29686,7 @@ function stockConciliar(R, rol, inc){
         /* (c) pedidos a fábrica y recogidas pendientes, el más viejo primero: SUGERENCIA, destildada. La detección de
            este corte se llama d:<corte>|<producto>; la recepción que nazca de ella, x:<detección>|<pedido>. */
         fila.det=existDetId(corteId, k);
-        resto=sugerir(fila, fila.det, String(R.fecha||''), resto);
+        resto=sugerir(fila, fila.det, String(R.fecha||''), resto, String(R.hora||''));
       }
       fila.sinExplicar=resto;
     } else {
@@ -29655,16 +29894,22 @@ function stockNormalizarDetecciones(S){
    vista previa del Excel, `sugerir`). Antes cada detección volvía a usar las mismas unidades (dos detecciones de 5 contra un pedido
    de 5 daban 10 «quizás ya llegó» y se pedían 5 de más), y la proyección le restaba lo detectado a la llegada NUEVA aunque lo
    detectado fuera de un pedido vencido («se corta» cuando no se cortaba). `por` = {id del pedido: unidades que explica}. */
+/* 🧮 (18/10, §4ls VE8) El MOMENTO de un pedido a fábrica o recogida y el de una detección, comparables como texto («AAAA-MM-DD|HH:MM:SS»;
+   un pedido sin hora es de las 00:00 de su día, una detección sin hora de las 23:59). Una entrada que el Excel mostró a las 10:10 no
+   puede ser lo pedido después: la MISMA regla para el reparto (`stockDetectadoReparto`) y para lo que ofrece la vista previa (`sugerir`
+   en `stockConciliar`). */
+function stockPedidoAt(q){ var ts=q && (q.t||q.ts); return String((q&&q.f)||'')+'|'+(ts?horaDeTs(ts):'00:00:00'); }
+function stockDetAt(f, hora){ var h=String(hora||''); return String(f||'')+'|'+(h ? (h.length===5 ? h+':00' : h) : '23:59:59'); }
 function stockDetectadoReparto(k, T){
   T=T||stockTiemposFabrica();
   var hoy=todayStr(), cmp=function(a,b){ return a.at<b.at?-1:(a.at>b.at?1:0); };
   var r={ n:0, por:{} };
-  var qs=(STOCK.p||[]).filter(function(q){ return q && q.k===k && !q.r && !(q.ya && stockEsperado(q,T)<hoy); })
-    .map(function(q, i){ var ts=q.t||q.ts; return { id:(q.id!=null?q.id:('#'+i)), u:Number(q.u)||0, at:String(q.f||'')+'|'+(ts?horaDeTs(ts):'00:00:00') }; })
+  var qs=(STOCK.p||[]).filter(function(q){ return q && q.k===k && !q.r && !(q.ya && stockEsperado(q,T)<hoy) && !stockRecogidaVencida(q, hoy); })   // 🚚 (§4ls Man-VM3) la recogida vencida tampoco
+    .map(function(q, i){ return { id:(q.id!=null?q.id:('#'+i)), u:Number(q.u)||0, at:stockPedidoAt(q) }; })
     .sort(cmp);
   if(!qs.length) return r;
   var dets=(STOCK.det||[]).filter(function(x){ return x && x.k===k && !x.alm && !x.an && Number(x.u)>0; })
-    .map(function(x){ return { u:Number(x.u)||0, at:String(x.f||'')+'|'+(x.hora?String(x.hora).length===5?x.hora+':00':String(x.hora):'23:59:59') }; })
+    .map(function(x){ return { u:Number(x.u)||0, at:stockDetAt(x.f, x.hora) }; })
     .sort(cmp);
   var resto=qs.map(function(q){ return Math.max(0, q.u); });
   dets.forEach(function(d){
@@ -29723,23 +29968,52 @@ function existRecsViejasHtml(){
     '</div>';
 }
 function existAnularRecVieja(qid, rid){ if(stockAnularRecepcion(qid, rid, 'cerrada por fecha desde una página vieja')) existRepintarControl(); }
-/* 📤 Una salida sin pedido en el panel, anotada a mano desde la pantalla de stock (Multicenter grande, un préstamo…). */
+/* 📤 Una salida sin pedido en el panel, anotada a mano desde la pantalla de stock (Multicenter grande, un préstamo…).
+   📤 (18/10, §4ls Man-VM5) Pregunta DE QUÉ DEPÓSITO salió: PTF o un depósito de salida (Banzer; un pedido grande de Multicenter puede
+   salir de ahí). Antes guardaba siempre PTF: lo de Banzer no se podía anotar, y anotado igual dejaba PTF en negativo (que se cuenta como
+   0) y se perdía casi entera. Y abajo, las anotadas con «↩️ anular» (lápida: nunca se borran, la junta las reviviría). */
+function stockSalidaDepositos(){
+  var L=[{ v:'', n:'PTF (acá en fábrica)' }];
+  Object.keys(STOCK.g||{}).forEach(function(nm){ var g=STOCK.g[nm]; if(g && g.f && almEsSalida(nm)) L.push({ v:nm, n:saleNombre(nm) }); });
+  return L;
+}
+function stockSalidasAnotadas(){
+  var hoy=todayStr(), desde=stockSumarDias(hoy, -STOCK_CONTROL_DIAS);
+  return (STOCK.sm||[]).filter(function(x){ return x && !x.pre && x.k && String(x.f||'')>=desde; })
+    .sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
+}
+function stockSalidasAnotadasHtml(){
+  var L=stockSalidasAnotadas(); if(!L.length) return '';
+  return '<div id="stk-sal-lista" style="margin-top:16px;border-top:1px solid var(--line);padding-top:10px">'+
+    '<div style="font-weight:700;font-size:.86rem;margin-bottom:4px">Anotadas estos días</div>'+
+    L.map(function(x){
+      var dep=x.alm ? saleNombre(x.alm) : 'PTF';
+      return '<div class="stk-sal-fila" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:5px 0;font-size:.84rem;border-top:1px solid var(--gray-lt)'+(x.an?';opacity:.6':'')+'">'+
+        '<span style="flex:1;min-width:180px"><b>'+esc(stockNombreClave(x.k))+'</b> · '+stockUnid(x.u)+' de '+esc(dep)+' el '+esc(fmtFechaCorta(x.f))+(x.m?(' · '+esc(x.m)):'')+'</span>'+
+        (x.an ? '<span style="color:var(--muted)">anulada</span>'
+              : '<button type="button" class="rv-toggle stk-sal-anular" data-id="'+esc(String(x.id))+'" onclick="anularStockSalida(this.getAttribute(\'data-id\'))">↩️ anular</button>')+
+      '</div>';
+    }).join('')+'</div>';
+}
 function abrirStockSalida(){
   var d=stockData(), lista=stockConMovimiento(d);
   if(!STOCK.c.f){ toast('Primero subí el Excel del depósito: sin un corte, una salida no tiene de dónde restar.','err',7000); return; }
   var op=function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+'</option>'; };
   STOCK_ELEGIR['stk-sal']={ base:lista, todos:stockElegibles(d), op:op };
+  var deps=stockSalidaDepositos();
   var html='<div class="modal-h" style="background:#78350f"><h3>📤 Salió sin pedido en el panel</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
-      '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Para lo que sale del depósito sin un pedido cargado acá (un pedido grande de Multicenter que va directo a logística, por ejemplo). Baja el depósito como una entrega hasta el próximo Excel, y el control del corte lo cuenta como salida documentada.</p>'+
+      '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Para lo que sale de un depósito sin un pedido cargado acá (un pedido grande de Multicenter que va directo a logística, por ejemplo). Baja ese depósito como una entrega hasta su próximo Excel, y el control del corte lo cuenta como salida documentada.</p>'+
       '<div><label class="lb">Producto</label>'+stockElegirBuscador('stk-sal')+'<select id="stk-sal-k" style="width:100%">'+lista.map(op).join('')+'</select>'+stockElegirNota('stk-sal')+'</div>'+
+      '<div style="margin-top:10px"><label class="lb">¿De qué depósito salió?</label><select id="stk-sal-dep" style="width:100%">'+
+        deps.map(function(x){ return '<option value="'+esc(x.v)+'">'+esc(x.n)+'</option>'; }).join('')+'</select></div>'+
       '<div style="margin-top:10px"><label class="lb">¿Cuántas unidades salieron?</label><input type="number" min="1" step="1" inputmode="numeric" id="stk-sal-u" placeholder="Ej. 10" style="width:100%"></div>'+
       '<div style="margin-top:10px"><label class="lb">Motivo</label><input type="text" id="stk-sal-m" value="Multicenter" maxlength="40" style="width:100%"></div>'+
       '<div style="margin-top:10px"><label class="lb">¿Qué día?</label><input type="date" id="stk-sal-f" value="'+esc(todayStr())+'" max="'+esc(todayStr())+'" style="width:100%"></div>'+
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-primary btn-sm" style="flex:1;min-width:180px;background:#78350f" onclick="guardarStockSalida()">💾 Anotar la salida</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
-      '</div></div>';
+      '</div>'+stockSalidasAnotadasHtml()+'</div>';
   openModal(html);
 }
 function guardarStockSalida(){
@@ -29747,13 +30021,26 @@ function guardarStockSalida(){
   var u=Math.round(Number((document.getElementById('stk-sal-u')||{}).value)||0);
   var m=String((document.getElementById('stk-sal-m')||{}).value||'').trim().slice(0,40);
   var f=String((document.getElementById('stk-sal-f')||{}).value||todayStr());
+  var dep=String((document.getElementById('stk-sal-dep')||{}).value||'');
   if(!k){ toast('Elegí el producto.','err'); return; }
   if(!(u>0)){ toast('Poné cuántas unidades salieron.','err'); return; }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || f>todayStr()){ toast('La fecha no puede ser de mañana.','err'); return; }
-  var d=stockDesdeSalidas(), pre = !!(d && f<d);    // anterior al corte vigente: ya está adentro del Excel, solo documenta
-  STOCK.sm=(STOCK.sm||[]).concat([{ id:'m'+uid(), k:k, u:u, f:f, ts:Date.now(), m:m, alm:'', pre:pre?1:0 }]);
+  if(dep && !((STOCK.g||{})[dep] && almEsSalida(dep))) dep='';
+  /* Anterior al corte vigente DE ESE DEPÓSITO: ya está adentro de su Excel, solo documenta. */
+  var d=dep ? stockDesdeSalidasDe(dep) : stockDesdeSalidas(), pre = !!(d && f<d);
+  STOCK.sm=(STOCK.sm||[]).concat([{ id:'m'+uid(), k:k, u:u, f:f, ts:Date.now(), m:m, alm:dep, pre:pre?1:0 }]);
   guardarStock(); closeModal(); renderStock(); renderAdmin();
-  toast('📤 Anotadas '+stockUnid(u)+' unidades que salieron sin pedido'+(m?(' ('+m+')'):'')+(pre?'. Son de antes del corte: quedan como documentación, no se descuentan dos veces.':'.'),'ok',8000);
+  toast('📤 Anotadas '+stockUnid(u)+' unidades que salieron sin pedido de '+(dep?saleNombre(dep):'PTF')+(m?(' ('+m+')'):'')+(pre?'. Son de antes del corte: quedan como documentación, no se descuentan dos veces.':'.'),'ok',8000);
+}
+/* ↩️ Lápida sobre una salida anotada a mano (la junta por id revive lo borrado: nunca se borra). Vuelve a sumar a su depósito. */
+function anularStockSalida(id){
+  var x=(STOCK.sm||[]).filter(function(s){ return s && String(s.id)===String(id); })[0];
+  if(!x || x.an){ toast('Esa salida ya no está o ya se anuló.','err'); return false; }
+  x.an={ t:Date.now(), q:cierreEntQuien()||'', m:'anulada a mano' };
+  guardarStock(); renderStock(); renderAdmin();
+  var el=document.getElementById('stk-sal-lista'); if(el) el.outerHTML=stockSalidasAnotadasHtml();
+  toast('↩️ Anulada: '+stockUnid(x.u)+' de '+stockNombreClave(x.k)+' vuelven a '+(x.alm?saleNombre(x.alm):'PTF')+'.','ok',6000);
+  return true;
 }
 /* Un Excel CORREGIDO del mismo corte (misma fecha y hora, otra huella): lo que cerró la versión anterior se anula
    (lápida, causa «corte reemplazado») y la vista previa lo vuelve a sugerir. Nunca se suma como llegada nueva. */
@@ -29872,7 +30159,7 @@ function renderImportExist(){
       '</tbody></table></div>'+
       (R.items.length>80?('<div style="font-size:.78rem;color:var(--muted);margin-top:6px">Se muestran los primeros 80 de '+R.items.length+'.</div>'):'')+
     '<div class="modal-actions" style="margin-top:14px">'+
-      '<button class="btn btn-primary btn-sm" id="exist-usar" style="flex:1;min-width:200px;background:#7c2d12" onclick="confirmarImportExist()">💾 Usar estas existencias'+(sigue.length?(' y seguir con '+esc(sigue[0])):'')+'</button>'+
+      '<button class="btn btn-primary btn-sm" id="exist-usar" style="flex:1;min-width:200px;background:#7c2d12" onclick="existUsarToque(this)">💾 Usar estas existencias'+(sigue.length?(' y seguir con '+esc(sigue[0])):'')+'</button>'+
       (sigue.length?('<button class="btn btn-ghost btn-sm" id="exist-saltar" onclick="existSaltar()">⏭ Saltar este y seguir con '+esc(sigue[0])+'</button>'):'')+
       '<button class="btn btn-ghost btn-sm" onclick="existCancelar()">'+(sigue.length?'Cancelar todo':'Cancelar')+'</button>'+
     '</div></div>';
@@ -29924,7 +30211,10 @@ function confirmarImportExist(){
     Object.keys(STOCK.g).forEach(function(nm){ if(STOCK.al[nm]==='log') delete STOCK.g[nm]; });
     STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', alm:R.almacen, solo0:!!R.solo0, cod:stockCodRecordar((STOCK.c||{}).cod, R.cods||{}), t:Date.now() };
     stockIncPoner(STOCK.c, inc);   // 🚚 (§4ls) `inc:true` = los dos turnos; uno solo = `incT`
-    STOCK.e=[];                     // el conteo ya incluye todo lo que llegó hasta esa fecha
+    /* El conteo ya incluye todo lo que llegó hasta la hora del corte. ⏱️ (18/10, §4ls VE9) Lo anotado DESPUÉS de esa hora no está en el
+       archivo y se queda (antes se borraba todo: volver a subir el mismo Excel de las 10:10 a las 10:40 hacía desaparecer las 9 u
+       anotadas a las 10:30). Las de las recepciones las rearma `stockNormalizarRecepciones` con la misma regla. */
+    STOCK.e=(STOCK.e||[]).filter(function(x){ return x && Number(x.ts)>0 && stockEntradaVale(STOCK, x.f, x.ts); });   // sin hora no se sabe: como antes, adentro
   }else{
     /* §4fz-b: `t` = cuándo se subió esta foto (una recepción anotada antes ya está adentro del
        Excel: no se le resta), `rs` = qué recepciones se le restaron después. */
@@ -29947,7 +30237,8 @@ function confirmarImportExist(){
   /* 🧮 (§4hn) Lo tildado en el control: cierra SOLO lo que logística confirmó, sella las llegadas de lo hecho a pedido y
      anota las salidas sin pedido. Nada se cierra por fecha. Las diferencias del corte van al historial. */
   var ctrl=existAplicarControl(R, rolCtrl, incCtrl, C0);
-  var cerrados=ctrl.cerrados.length;
+  /* 🧮 (18/10, §4ls VE8) Pedidos DISTINTOS, no tildes: dos detecciones (la de ayer y la de hoy) contra el mismo pedido son un pedido. */
+  var cerrados=(function(){ var v={}; ctrl.cerrados.forEach(function(c){ v[c.q]=1; }); return Object.keys(v).length; })();
   /* 🏭 (17/10, §4lr) El lote del día: con el último almacén del archivo, se cierra lo que llegó y se anota lo que pide hoy el panel. */
   existLoteAnotar(R, rolCtrl, C0);
   var auto = (EXIST_COLA && EXIST_COLA.length) ? null : existLoteCerrar();
@@ -29960,7 +30251,9 @@ function confirmarImportExist(){
     else if(ctrl.d.length) STOCK.h[0].d=ctrl.d;
   }
   STOCK.v=2; if(!(Number(STOCK.v2t)>0)) STOCK.v2t=Date.now();   // desde cuándo esta planilla la escribe una página con el control (Codex H7)
-  var stockProm=guardarStock(); closeModal(); renderStock(); renderAdmin();
+  var stockProm=guardarStock(); closeModal();
+  if(EXIST_COLA && EXIST_COLA.length) EXIST_REPINTAR=true;     // ⏳ (§4ls VB-5) se redibuja al terminar el archivo
+  else { EXIST_REPINTAR=false; renderStock(); renderAdmin(); }
   EXIST_IMP=null;
   /* 📚 (16/10, §4lp) El archivo con varios almacenes: el próximo, sobre el stock que este acaba de dejar (como subir el Excel que sigue). */
   if(EXIST_COLA && EXIST_COLA.length){ EXIST_IMP=EXIST_COLA.shift(); renderImportExist(); }
@@ -30534,14 +30827,34 @@ function irAImportadosRoho(mes){
 }
 
 /* `ancha` = esta ventana lleva una tabla y no entra en el ancho de una ficha (§4ck). */
+/* ⬆️ (18/10, §4ls VB-2/VB-3) Una ventana NUEVA se abre desde arriba. Antes heredaba el desplazamiento de la anterior: la vista previa de
+   Banzer abría con su título «2 de 3» y su control fuera de la pantalla y el botón «Usar y seguir con Moreno» justo debajo del dedo (dos
+   toques confirmaban Banzer sin verlo), y la ficha de un pedido abierta desde la revisión caía en la mitad, sin el N° ni la ✕. Repintar
+   la MISMA ventana (mismo título: tildar algo, «ver todas») conserva dónde estaba. */
+function modalTitulo(){ var h=document.querySelector('#modal-box .modal-h h3'); return h ? String(h.textContent||'') : ''; }
 function openModal(html, ancha){
-  var box=document.getElementById('modal-box');
+  var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
+  var antes=ov.classList.contains('on') ? modalTitulo() : null;
   box.innerHTML=html;
   box.classList.toggle('ancha', !!ancha);
-  document.getElementById('modal').classList.add('on');
+  ov.classList.add('on');
+  if(antes===null || antes!==modalTitulo()){ ov.scrollTop=0; box.scrollTop=0; }
   acomodarFichas();                        // el reporte y los productos traen sus fichas
 }
 function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+/* 📥 (18/10, §4ls VE4) Tocar AFUERA de la ventana (o Esc) con la vista previa del Excel abierta y almacenes del mismo archivo todavía por
+   ver NO la cierra: antes la cerraba sin cancelar, Banzer y Moreno quedaban sin cargar sin ningún aviso, y volver a subir el archivo
+   medía mal. Con el último almacén (o uno solo), tocar afuera es «Cancelar» (`existCancelar`). Las demás ventanas, como siempre. */
+function modalFondo(){
+  if(EXIST_IMP && document.getElementById('exist-usar')){
+    if(EXIST_COLA && EXIST_COLA.length){
+      toast('📚 Faltan '+EXIST_COLA.length+(EXIST_COLA.length===1?' almacén':' almacenes')+' de este archivo ('+EXIST_COLA.map(function(x){ return stockAlmCorto(x.almacen); }).join(', ')+'). Tocá «Usar…», «⏭ Saltar» o «Cancelar todo».','err',7000);
+      return;
+    }
+    existCancelar(); return;
+  }
+  closeModal();
+}
 
 /* `volverA` = qué hacer al salir. Sin él cierra, como siempre (recién guardado). Desde una
    ficha se le pasa cómo volver a ella, para no dejar a la vendedora en el aire. */
@@ -30941,11 +31254,66 @@ function cierreEntFila(p, atrasado){
     '<span class="badge b-gray">'+(normTurno(p.turno)==='PM'?'🌆 PM':'🌅 AM')+'</span>'+
     '<span style="color:var(--muted)">'+esc(vehiculoDe(p)||'sin camión')+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>'+
     (atrasado ? '' : cierreEntGpsHtml(p))+
-    (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>'+
-      '<span style="font-size:.8rem;color:var(--muted)">¿qué día se entregó? <input type="date" class="cie-ent-dia" data-id="'+esc(String(p.id))+'" value="'+esc(CIERRE_ENT_DIA[p.id]||hoy)+'" max="'+esc(hoy)+'" min="'+esc(p.fecha)+'" onchange="cierreEntDia(this.getAttribute(\'data-id\'), this.value)" style="width:140px;padding:3px 6px"></span>') : '')+
+    (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
     '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" style="margin-left:auto" data-id="'+esc(String(p.id))+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: pasalo a otro día sin salir del cierre">📅 No salió · reprogramar</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
-  '</label>'+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
+  '</label>'+(atrasado ? cierreEntDiaHtml(p) : '')+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
+}
+/* 📅 (18/10, §4ls Cie-C5) ¿QUÉ DÍA SE ENTREGÓ UN ATRASADO? Lo elige la persona: «el día que tenía» o «hoy» (u otro día), y cada botón dice
+   qué hace en el stock. Antes el campo arrancaba en HOY y el plan usaba hoy si nadie lo tocaba: un cierre hecho a la mañana siguiente
+   dejaba lo de la tarde de ayer «entregado hoy» — se restaba del Excel de hoy, que ya no lo tenía (OC 10-187: Banzer 4 en vez de 5 y
+   «−1 salida sin explicar» en el control). Ese `eF` manda en las salidas del stock y en la ventana del control. Sin elegir, no se
+   confirma. Si su día es el día hábil anterior (el cierre de ayer hecho hoy), se PROPONE ese, a la vista. */
+function cierreEntHabilAnterior(hoy){
+  var d=hoy||todayStr();
+  for(var i=0;i<10;i++){ d=stockSumarDias(d,-1); if(!diaDomingo(d) && !(typeof feriadoDe==='function' && feriadoDe(d))) return d; }
+  return d;
+}
+/* Lo que el ✅ con el día `dia` resta de cada Excel vigente: {'' (PTF) | nombre del depósito de salida: unidades}. La MISMA regla de las
+   salidas (`stockSalidas` para PTF, `salSale` de `stockData` para Banzer: `stockBajaDelCorte` con `eF` = ese día). */
+function cierreEntEfecto(p, dia){
+  var por={};
+  if(!p || !stockCuenta(p) || esVentaTienda(p)) return por;
+  (p.productos||[]).forEach(function(x){
+    if(!x || esProdDeTienda(x) || recogeDeTienda(x) || x.chk==='no' || !(Number(x.cant)>0)) return;
+    var xx=Object.assign({}, x, { eF:dia });
+    if(enProduccion(x)){ var u0=prodUnidEnConteo(x); if(u0>0 && stockBajaDelCorte(p, xx, dia, STOCK.c)) por['']=(por['']||0)+u0; return; }
+    prodPartesCarga(x).forEach(function(e){
+      var nm=(e.tipo==='sale') ? (almEnStock(e.de)||'') : '', c=(e.tipo==='sale') ? (nm ? (STOCK.g||{})[nm] : null) : STOCK.c;
+      if(e.tipo==='sale' && !nm) return;
+      if(c && c.f && stockBajaDelCorte(p, xx, dia, c)) por[nm]=(por[nm]||0)+e.u;
+    });
+  });
+  return por;
+}
+function cierreEntEfectoTxt(p, dia){
+  var por=cierreEntEfecto(p, dia), ks=Object.keys(por).filter(function(k){ return por[k]>0; });
+  if(!ks.length) return 'no baja el stock: el Excel vigente ya no lo tiene';
+  return 'baja '+ks.map(function(k){ return (k?saleNombre(k):'PTF')+' '+stockUnid(por[k]); }).join(' · ')+' (el Excel vigente todavía lo tenía)';
+}
+function cierreEntDiaHtml(p){
+  var hoy=todayStr(), id=esc(String(p.id)), dia=CIERRE_ENT_DIA[p.id]||'', on=!!CIERRE_ENT_SEL[p.id];
+  var b=function(f, txt){ var act=(dia===f);
+    return '<button type="button" class="btn btn-sm cie-dia-btn'+(act?' on':'')+'" data-f="'+esc(f)+'" style="text-align:left;line-height:1.25;'+(act?'background:#0a6b47;color:#fff;border-color:#0a6b47':'')+'" onclick="cierreEntElegirDia(\''+id+'\',\''+esc(f)+'\')">'+
+      (act?'✔ ':'')+esc(txt)+'<br><span style="font-size:.78em;font-weight:400;opacity:.9">'+esc(cierreEntEfectoTxt(p, f))+'</span></button>'; };
+  var otro=(dia && dia!==p.fecha && dia!==hoy) ? dia : '';
+  return '<div class="cie-dia" id="cie-dia-'+id+'" data-id="'+id+'" style="margin:0 0 8px 26px;padding:8px 10px;border:1px dashed #f0d264;border-radius:10px;background:#fffdf5;font-size:.82rem;display:grid;gap:6px">'+
+    '<div><b>¿Qué día se entregó?</b> Elegilo vos: el panel no lo adivina.'+
+      (on && !dia ? ' <span class="cie-dia-falta" style="color:#b91c1c;font-weight:700">⚠️ Falta elegir el día para confirmarlo</span>' : '')+'</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">'+b(p.fecha, 'El día que tenía ('+diaSemana(p.fecha)+' '+fmtFechaCorta(p.fecha)+')')+b(hoy, 'Hoy ('+fmtFechaCorta(hoy)+')')+'</div>'+
+    '<div style="color:var(--muted)">u otro día: <input type="date" class="cie-ent-dia" data-id="'+id+'" value="'+esc(otro)+'" max="'+esc(hoy)+'" min="'+esc(p.fecha)+'" onchange="cierreEntDia(this.getAttribute(\'data-id\'), this.value)" style="width:140px;padding:3px 6px">'+
+      (otro ? (' <span>'+esc(cierreEntEfectoTxt(p, otro))+'</span>') : '')+'</div>'+
+  '</div>';
+}
+function cierreEntDiaRepintar(id){
+  var el=document.getElementById('cie-dia-'+id), p=findById(id); if(el && p) el.outerHTML=cierreEntDiaHtml(p);
+}
+/* Elegir el día tilda el pedido (eligió cuándo se entregó: se entregó). */
+function cierreEntElegirDia(id, f){
+  id=String(id); if(!/^\d{4}-\d{2}-\d{2}$/.test(String(f||''))) return;
+  CIERRE_ENT_DIA[id]=f;
+  var c=document.querySelector('#modal-box .cie-ent-chk[data-id="'+CSS.escape(id)+'"]');
+  if(c && !c.checked){ c.checked=true; cierreEntToggle(id, true); } else cierreEntDiaRepintar(id);
 }
 /* 📅 (13/10, dueño, con la captura del cierre: «al tildar lo entregado debería permitir ahí mismo reprogramar lo que no se entregó»)
    Cada renglón sin tildar tiene «📅 No salió · reprogramar»: abre debajo el día (Hoy PM si era de la mañana · el próximo camión · el
@@ -31025,6 +31393,7 @@ function renderCierreEntregas(){
   /* 📅 (13/10) se repinta al abrir/usar «reprogramar»: que la lista no salte arriba */
   var _mb=document.getElementById('modal-box'), _ab=document.getElementById('modal')&&document.getElementById('modal').classList.contains('on') && _mb && _mb.querySelector('.cie-ent');
   var _sc=_ab ? [_mb.scrollTop, _ab.scrollTop] : null;
+  var _qi=_ab ? document.getElementById('cie-ent-quien') : null, _qv=_qi ? _qi.value : null;   // 📅 (18/10, §4ls) lo escrito en «¿Quién cierra?» no se pierde al repintar
   var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Cierre de entregas · '+esc(fmtFecha(hoy))+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b cie-ent">'+
     '<div class="metrics cie-met">'+mc('#0a6b47','Para hoy',H.length,'programados sin confirmar')+mc('#22A06B','Tildados',cierreEntTildados().length,'se confirman al tocar el botón')+
@@ -31034,13 +31403,13 @@ function renderCierreEntregas(){
       'Abrir esta lista no cambia nada. Antes de confirmar el panel <b>relee la planilla</b>: lo que otro equipo reprogramó, borró o ya marcó se saltea y se avisa. '+
       'Los destildados siguen pendientes: <b>si no salieron, tocá «📅 No salió · reprogramar»</b> en su renglón (un pedido con la fecha pasada y sin tildar se da por entregado).</p>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><label class="lb" for="cie-ent-quien" style="margin:0">¿Quién cierra?</label>'+
-      '<input id="cie-ent-quien" type="text" value="'+esc(cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
+      '<input id="cie-ent-quien" type="text" value="'+esc(_qv!=null?_qv:cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
     cierreEntGpsResumenHtml(H)+
     cierreEntRpHechosHtml()+
     '<div class="cie-sec" style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
     (H.length ? H.map(function(p){ return cierreEntFila(p,false); }).join('') : '<div style="font-size:.86rem;color:var(--muted);padding:6px 0">No queda ninguno sin confirmar.</div>')+
     (A.length ? ('<div class="cie-sec atr" style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
-      '<div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">Vienen destildados a propósito: nunca se confirman por omisión. Si uno sí se entregó, tildalo y decí qué día.</div>'+
+      '<div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">Vienen destildados a propósito: nunca se confirman por omisión. Si uno sí se entregó, tildalo y elegí qué día: <b>el día que tenía</b> u <b>hoy</b> (cada botón dice qué hace en el stock).</div>'+
       A.map(function(p){ return cierreEntFila(p,true); }).join('')) : '')+
     '<div class="modal-actions" style="margin-top:14px">'+
       '<button id="cie-ent-confirmar" class="btn btn-primary btn-sm" style="flex:1;min-width:220px;background:#0a6b47" onclick="confirmarCierreEntregas()">'+cierreEntBotonTxt()+'</button>'+
@@ -31094,9 +31463,21 @@ function cierreEntAvanceHtml(){
 function cierreEntTildados(){ return Object.keys(CIERRE_ENT_SEL).filter(function(id){ return CIERRE_ENT_SEL[id]; }); }
 function cierreEntBotonTxt(){ var n=cierreEntTildados().length; return n ? ('✅ Confirmar '+n+' entrega'+(n===1?'':'s')) : 'Nada tildado'; }
 function cierreEntToggle(id, on){ CIERRE_ENT_SEL[String(id)]=!!on; var b=document.getElementById('cie-ent-confirmar'); if(b) b.textContent=cierreEntBotonTxt();
+  /* 📅 (18/10, §4ls Cie-C5) Un atrasado tildado: si su día es el hábil anterior, se propone ese (a la vista); si no, se pide elegirlo. */
+  var _p=findById(String(id)), _hoy=todayStr();
+  if(_p && _p.fecha && _p.fecha<_hoy){
+    if(on && !CIERRE_ENT_DIA[String(id)] && _p.fecha===cierreEntHabilAnterior(_hoy)) CIERRE_ENT_DIA[String(id)]=_p.fecha;
+    cierreEntDiaRepintar(String(id));
+  }
   var av=document.getElementById('cie-av'); if(av) av.outerHTML=cierreEntAvanceHtml();
   var fs=document.querySelectorAll('#modal-box .cie-met .mc-val'); if(fs[1]) fs[1].textContent=String(cierreEntTildados().length); }
-function cierreEntDia(id, v){ if(/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))) CIERRE_ENT_DIA[String(id)]=v; }
+function cierreEntDia(id, v){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))) return;
+  CIERRE_ENT_DIA[String(id)]=v;
+  /* 📅 (§4ls Cie-C5) Elegir un día = se entregó: se tilda, y el recuadro dice qué hace en el stock. */
+  var c=document.querySelector('#modal-box .cie-ent-chk[data-id="'+CSS.escape(String(id))+'"]');
+  if(c && !c.checked){ c.checked=true; cierreEntToggle(String(id), true); } else cierreEntDiaRepintar(String(id));
+}
 /* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
 /* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
    que no entregan lo reprograman». La marca «no salió» (`eX`) que pedía Codex (R2) se hizo y se sacó el mismo día. */
@@ -31114,7 +31495,7 @@ function cierreEntPendienteGuardar(x){ try{ if(x) localStorage.setItem(LS_CIERRE
 function cierreEntPlan(quien){
   var hoy=todayStr(), ids=cierreEntTildados(), antes={}, dias={};
   ids.forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; });
-  ids.forEach(function(id){ var a=antes[id]||{}; dias[id]= a.hoy ? hoy : (CIERRE_ENT_DIA[id]||hoy); });
+  ids.forEach(function(id){ var a=antes[id]||{}; dias[id]= a.hoy ? hoy : (CIERRE_ENT_DIA[id]||''); });   // 📅 (§4ls Cie-C5) un atrasado sin día elegido no tiene día
   return { ids:ids, antes:antes, dias:dias, quien:String(quien||''), hoy:hoy, ts:Date.now() };
 }
 /* Aplica un plan sobre el STATE recién leído: saltea lo borrado, lo reprogramado y lo que otro equipo ya marcó. Espera los
@@ -31145,6 +31526,13 @@ function confirmarCierreEntregas(){
   cierreEntSetQuien(quien);
   var plan=cierreEntPlan(quien);
   if(!plan.ids.length){ toast('No hay ninguna entrega tildada.','err'); return Promise.resolve(null); }
+  /* 📅 (18/10, §4ls Cie-C5) Un atrasado tildado sin el día elegido no se confirma: ese día manda en el stock. */
+  var sinDia=plan.ids.filter(function(id){ return !(plan.antes[id]||{}).hoy && !plan.dias[id]; });
+  if(sinDia.length){
+    sinDia.forEach(function(id){ cierreEntDiaRepintar(id); });
+    toast('📅 Falta elegir qué día se entregó '+sinDia.map(function(id){ var p=findById(id); return p ? (ocEtiq(p.oc)||p.cliente||id) : id; }).join(', ')+': «el día que tenía» u «hoy». Cambia lo que se descuenta del stock.','err',9000);
+    return Promise.resolve(null);
+  }
   var btn=document.getElementById('cie-ent-confirmar'); if(btn){ btn.disabled=true; btn.textContent='⏳ Releyendo la planilla…'; }
   CIERRE_ENT_EN_CURSO=true;
   var relectura = CONNECTED ? refrescarEstadoYa().catch(function(){ return false; }) : Promise.resolve(false);
@@ -37950,7 +38338,7 @@ document.addEventListener('DOMContentLoaded',function(){
   window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
   document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)
   document.getElementById('f-acuenta').addEventListener('input',updateMetodoVisibility);
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') modalFondo(); });   // 📥 (§4ls VE4) la vista previa del Excel no se cierra con almacenes por ver
   refreshDatalists();
   resetForm();
   updateStats();
