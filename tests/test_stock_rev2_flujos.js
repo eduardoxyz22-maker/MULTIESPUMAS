@@ -16,7 +16,8 @@
         después de esa hora (VE9).
    FL9  Cierre de entregas: el día de un atrasado lo elige la persona («el día que tenía» / «hoy»), cada botón dice qué hace en el stock,
         el día hábil anterior se propone a la vista, y sin elegir no se confirma (Cie-C5).
-   FL10 Vista previa del Excel: tocar afuera (o Esc) no la cierra mientras queden almacenes del archivo; con el último, es «Cancelar» (VE4).
+   FL10 Vista previa del Excel: tocar afuera (o Esc) no la cierra mientras queden almacenes del archivo (VE4); con el último del archivo
+        tampoco: avisa, y «Cancelar» dice qué no se usó (19/10, §4ls verificación final, PA-7; antes con el último era «Cancelar» callado).
    FL11 Una ventana nueva se abre desde arriba; repintar la misma conserva el lugar (VB-3).
    FL12 «Usar y seguir» se apaga y dice «Guardando…»: un segundo toque no confirma el almacén siguiente sin verlo (VB-2/VB-5).
 
@@ -375,7 +376,11 @@ async function abrir(browser, file, reloj){
     confirmarImportExist(); confirmarImportExist();      // PTF y Banzer: queda Moreno, el último
     out.ultimo=EXIST_IMP && EXIST_IMP.almacen;
     ov.dispatchEvent(new MouseEvent('click', { bubbles:true }));
-    out.fueraUltimo={ abierta:ov.classList.contains('on'), imp:EXIST_IMP };
+    /* ✏️ (19/10, §4ls verificación final, PA-7) Con el ÚLTIMO almacén de un archivo de varios, tocar afuera ya NO es «Cancelar»: avisa como
+       en los otros (antes descartaba Moreno callado). «Cancelar» sí cierra y dice qué no se usó. */
+    out.fueraUltimo={ abierta:ov.classList.contains('on'), imp:!!EXIST_IMP && EXIST_IMP.almacen, toast:/Falta decidir el Excel de/.test(window._toasts.slice(-1)[0]||'') };
+    existCancelar();
+    out.cancelaUltimo={ abierta:ov.classList.contains('on'), imp:EXIST_IMP, toast:/No se usó el Excel de/.test(window._toasts.slice(-1)[0]||'') };
     /* VB-3: una ventana nueva se abre arriba; la misma ventana repintada, no. */
     var largo=function(t){ return '<div class="modal-h"><h3>'+t+'</h3></div><div class="modal-b"><div style="height:3000px">largo</div></div>'; };
     openModal(largo('Ventana A')); ov.scrollTop=800; var a=ov.scrollTop;
@@ -403,7 +408,9 @@ async function abrir(browser, file, reloj){
   chk('FL10a · tocar afuera de la vista previa con almacenes del archivo por ver NO la cierra y dice cuáles faltan (antes se cerraba sin cancelar)',
       r.fuera && r.fuera.abierta && r.fuera.imp==='PRODUCTOS TERMINADOS FAB.' && r.fuera.cola===2 && r.fuera.toast, J([r.fuera, r.__error]));
   chk('FL10b · Esc tampoco', r.esc && r.esc.abierta && r.esc.imp, J(r.esc));
-  chk('FL10c · con el último almacén (Moreno), tocar afuera es «Cancelar»: cierra y no deja nada colgado', r.ultimo==='IM - PRODUCTOTERMINADO' && r.fueraUltimo && !r.fueraUltimo.abierta && r.fueraUltimo.imp===null, J([r.ultimo, r.fueraUltimo]));
+  chk('FL10c · con el último almacén (Moreno), tocar afuera tampoco lo descarta: avisa «Falta decidir…» (19/10, PA-7); «Cancelar» cierra, no deja nada colgado y dice qué no se usó',
+      r.ultimo==='IM - PRODUCTOTERMINADO' && r.fueraUltimo && r.fueraUltimo.abierta && r.fueraUltimo.imp==='IM - PRODUCTOTERMINADO' && r.fueraUltimo.toast &&
+      r.cancelaUltimo && !r.cancelaUltimo.abierta && r.cancelaUltimo.imp===null && r.cancelaUltimo.toast, J([r.ultimo, r.fueraUltimo, r.cancelaUltimo]));
   chk('FL11a · una ventana NUEVA se abre desde arriba (antes heredaba los 800 px de la anterior)', r.nueva && r.nueva[0]>0 && r.nueva[1]===0, J(r.nueva));
   chk('control · FL11b · repintar la MISMA ventana conserva el lugar', r.misma===500, J(r.misma));
   chk('FL12a · «Usar y seguir» se apaga y dice «Guardando…» apenas se toca', r.toque1 && /Guardando/.test(r.toque1.txt) && r.toque1.apagado, J(r.toque1));
