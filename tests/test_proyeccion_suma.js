@@ -68,7 +68,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var MS=stockMesSiguiente(todayStr()), pr=stockProducirDe(o, MS, ventasPanelIndex ? ventasPanelIndex() : null);
     return { comp:o.comp, porDia:+o.porDia.toFixed(3), rot:o.rotacion, lead:o.lead, margen:o.margen, cubrir:o.cubrir, hay:stockHaySalir(o), enOtros:o.enOtros,
       pedir:o.pedir, recoger:o.recoger, fabricar:o.fabricar, sem:pr.sem, quin:pr.quin, corte:o.corte, dias:o.dias, aviso:o.aviso,
-      objS:o.objS, obj:o.objetivo, pp:o.puntoPedido, compH:stockCompHorizonte(o), c19:stockCompHasta(o, stockSumarDias(todayStr(), 19)), c31:stockCompHasta(o, MS.finActual), antes:pr.antes||0,
+      objS:o.objS, obj:o.objetivo, pp:o.puntoPedido, compH:stockCompHorizonte(o), c19:stockCompHasta(o, stockSumarDias(todayStr(), 19)),
       ventas:window._ventasS, fer:Object.keys(FERIADOS||{}).concat(Object.keys(FERIADOS_PASADOS||{})) };
   });
   chk('el escenario es el de la captura: 9 sin entregar, 0,93 por día (rotación media), 4 en Banzer y 2 en Moreno',
@@ -86,15 +86,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     const z=mu*5>=4?1.645:1.28, prot=mu*5+z*sd*Math.sqrt(5), S=Math.max(prot+mu, q75), s=Math.min(S-1, prot);
     const libre=4-9, pedir=(libre<=s||libre<0)?Math.ceil(S-libre-1e-9):0;
     let h15=0; for(let f=sumar(HOY,1); f<=sumar(HOY,15); f=sumar(f,1)) if(habil(f)) h15++;
-    const quin0=Math.max(pedir-2, Math.ceil((r?r.c19:0)+S+mu*h15-6-1e-9), 0);
-    /* 📅 (18/10, §4ls Mes-VM4, a conciencia) …más lo que falta para terminar octubre (el objetivo puesto el 31/10, con la venta de los días
-       hábiles hasta ese día): antes se sumaba a noviembre. */
-    let hM=0; for(let f=sumar(HOY,1); f<='2026-10-31'; f=sumar(f,1)) if(habil(f)) hM++;
-    const queda0=Math.floor(6+quin0-((r?r.c31:0)+S+mu*hM)+1e-9), antes=Math.max(0,-queda0), quin=quin0+antes;
+    const quin=Math.max(pedir-2, Math.ceil((r?r.c19:0)+S+mu*h15-6-1e-9), 0);
     chk('🎯 7 días: lo vendido (9) se SUMA al objetivo ('+Math.ceil(S-1e-9)+'): libre 4 − 9 = −5 → pedir '+pedir+' (objetivo + 5): traer 2 de Moreno y PRODUCIR '+(pedir-2),
       r && Math.abs(r.objS-S)<1e-9 && r.pedir===pedir && pedir===Math.ceil(S-1e-9)+5 && r.recoger===2 && r.fabricar===pedir-2 && r.sem===pedir-2 && r.compH===9, r && { pedir:r.pedir, rec:r.recoger, fab:r.fabricar, sem:r.sem, objS:r.objS, S, compH:r.compH });
-    chk('🎯 15 días: lo vendido + el objetivo + la venta de los días hábiles de esos 15 días − 6 (Banzer + Moreno) = '+quin0+', + '+antes+' para terminar octubre = '+quin+', nunca menos que la de 7 días',
-      r && r.quin===quin && r.antes===antes && r.quin>=r.sem, r && { quin:r.quin, esperado:quin, quin0:quin0, antes:r.antes, sem:r.sem });
+    /* 📅 (18/10, §4ls, corrector) Sin «Mes-VM4»: lo que falta para terminar octubre vuelve a sumarse a noviembre (§4iz E1-6), no a 15 días. */
+    chk('🎯 15 días: lo vendido + el objetivo + la venta de los días hábiles de esos 15 días − 6 (Banzer + Moreno) = '+quin+', nunca menos que la de 7 días',
+      r && r.quin===quin && r.quin>=r.sem, r && { quin:r.quin, esperado:quin, sem:r.sem });
   }
   chk('el aviso pide fabricar (no «alcanza»)', r && (r.aviso==='urgente'||r.aviso==='pedir'), r && r.aviso);
 

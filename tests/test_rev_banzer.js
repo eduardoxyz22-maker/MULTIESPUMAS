@@ -168,7 +168,9 @@ async function abrir(browser, ruta, errores){
   chk('(así estaba) la página vieja guarda el stock SIN `inc` en la foto de Banzer', deVieja.inc===false, J(deVieja.inc));
   r = await ev((obs) => {
     STOCK=leerStock({observaciones:obs}); STOCK_CARGADO=true; stockOlvidarIndice();
-    STATE=[ _P({ id:'e1', fecha:todayStr(), entregado:true, productos:[_tit(2,{chk:'ok', chkDe:'Banzer'})] }) ];
+    /* ✏️ (18/10, §4ls, corrector, a conciencia) el pedido se cargó a la mañana (08:00), ANTES del Excel de las 17:30: con `ts` = ahora (18:30)
+       era un pedido cargado DESPUÉS del Excel, que no puede estar adentro de él (`stockCargadoDespuesDelCorte`) y se restaba. */
+    STATE=[ _P({ id:'e1', fecha:todayStr(), entregado:true, ts:new Date(todayStr()+'T08:00:00-04:00').getTime(), productos:[_tit(2,{chk:'ok', chkDe:'Banzer'})] }) ];
     var o=_fila(); return { inc:!!STOCK.g[BANZER].inc, sale:o.enSale, dep:o.deposito };
   }, deVieja.obs);
   chk('⚠️ leída en el panel nuevo, la foto de Banzer sigue diciendo «ya incluye las entregas de hoy» (sale del historial)', r.inc===true, J([r, r.__error]));
@@ -184,7 +186,9 @@ async function abrir(browser, ruta, errores){
   });
   r = await ev((obs) => {
     STOCK=leerStock({observaciones:obs}); STOCK_CARGADO=true; stockOlvidarIndice();
-    STATE=[ _P({ id:'e1', fecha:todayStr(), entregado:true, productos:[_tit(2,{chk:'ok', chkDe:'Banzer'})] }) ];
+    /* ✏️ (18/10, §4ls, corrector, a conciencia) el pedido se cargó a la mañana (08:00), ANTES del Excel de las 17:30: con `ts` = ahora (18:30)
+       era un pedido cargado DESPUÉS del Excel, que no puede estar adentro de él (`stockCargadoDespuesDelCorte`) y se restaba. */
+    STATE=[ _P({ id:'e1', fecha:todayStr(), entregado:true, ts:new Date(todayStr()+'T08:00:00-04:00').getTime(), productos:[_tit(2,{chk:'ok', chkDe:'Banzer'})] }) ];
     var o=_fila(); return { inc:!!STOCK.g[BANZER].inc, sale:o.enSale, esSalida:almEsSalida(BANZER) };
   }, subeVieja);
   chk('⚠️ el Excel de Banzer subido desde la página vieja con «ya incluye las entregas del día» se respeta (5, no 3)', r.inc===true && r.sale===5 && r.esSalida===true, J([r, r.__error]));

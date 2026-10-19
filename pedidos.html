@@ -16969,8 +16969,19 @@ function cargaSeccionesHtml(o, fecha, k, t){
    en la Lista de carga como carga normal: «🏪 Cargar en Banzer 1× TITANIO ICE 180x190» con 0 en los tres almacenes. Ahora la línea lo dice.
    No cambia ninguna marca ni lo que se tilda. Se calcula UNA vez por dibujo de la lista (`CARGA_SR`: pedido|producto de la carga → faltan). */
 var CARGA_SR=null;
+/* ⚡ (18/10, §4ls, corrector) La revisión entera se arma UNA vez por estado de los datos, no en cada dibujo de la Lista de carga (con la
+   planilla real, 6 → 116 ms por dibujo; ~0,45 s en un celular): se rehace cuando cambian los pedidos o el stock (`SALDO_GEN`, que sube
+   `saveMirror` y `guardarStock`; un STOCK leído de nuevo es otro objeto), el día o el filtro de la revisión. */
+var CARGA_SR_MEMO=null;
+function cargaSinRespAsignar(){
+  var f=[SALDO_GEN, STATE.length, todayStr(), REVSTK_DIAS, REVSTK_SOLO_VACIOS, STOCK_CARGADO].join('|');
+  if(CARGA_SR_MEMO && CARGA_SR_MEMO.f===f && CARGA_SR_MEMO.st===STOCK && CARGA_SR_MEMO.state===STATE) return CARGA_SR_MEMO.A;
+  var A=stockAsignar();
+  CARGA_SR_MEMO={ f:f, st:STOCK, state:STATE, A:A };
+  return A;
+}
 function cargaSinRespMapa(list){
-  var m={}, A=null; try{ A=stockAsignar(); }catch(e){ return m; }
+  var m={}, A=null; try{ A=cargaSinRespAsignar(); }catch(e){ return m; }
   var porId={}; (list||[]).forEach(function(p){ if(p && p.id!=null) porId[p.id]=p; });
   (A.sinRespaldo||[]).forEach(function(r){
     var p=porId[r.id]; if(!p) return;
@@ -24585,16 +24596,25 @@ function stockIncNorm(t){
   if(t===true) return { am:true, pm:true };
   var s=String(t||'').toLowerCase(); return { am:s.indexOf('am')>=0, pm:s.indexOf('pm')>=0 };
 }
-/* Qué turnos de SU día ya trae un corte. `inc:true` = los dos (y lo guardado antes de esto); `incT` = uno solo. */
+/* Qué turnos de SU día ya trae un corte. `inc:true` + `incT:'ampm'` = los dos (lo que escribe esta página); `incT` = uno solo.
+   🧓 (18/10, §4ls, corrector) `inc:true` SIN `incT` es la casilla única de la página de antes («ya incluye las entregas del día», que se
+   proponía marcada desde las 12:00: pasó 4 veces del 14 al 15/10): `leg:true`. Se lee con la regla de antes —lo de ese día con ✅ no se
+   resta otra vez, pero lo SIN ✅ sigue reservado (`stockFueraHoy` no lo saca)—: a las 13:26 la tarde todavía estaba en el depósito y,
+   leída como «los dos turnos», dejaba de reservarse. Cualquier `inc` verdadero que no sea texto (un `1`) vale como `true`. */
 function stockIncTurnos(c){
-  c=c||{}; if(c.inc===true) return { am:true, pm:true };
-  return stockIncNorm(c.incT || (typeof c.inc==='string' ? c.inc : ''));
+  c=c||{};
+  var it=(typeof c.incT==='string' ? c.incT : '');
+  if(c.inc===true || (c.inc && typeof c.inc!=='string')){
+    var n=stockIncNorm(it);
+    return (n.am && n.pm) ? { am:true, pm:true } : { am:true, pm:true, leg:true };
+  }
+  return stockIncNorm(it || (typeof c.inc==='string' ? c.inc : ''));
 }
 function stockIncTodo(c){ var t=stockIncTurnos(c); return t.am && t.pm; }
 function stockIncPoner(c, t){
-  if(!c) return c; t=stockIncNorm(t);
+  if(!c) return c; var leg=!!(t && typeof t==='object' && t.leg); t=stockIncNorm(t);
   delete c.inc; delete c.incT;
-  if(t.am && t.pm) c.inc=true; else if(t.am) c.incT='am'; else if(t.pm) c.incT='pm';
+  if(t.am && t.pm){ c.inc=true; if(!leg) c.incT='ampm'; } else if(t.am) c.incT='am'; else if(t.pm) c.incT='pm';
   return c;
 }
 function stockCorteTurnos(f, t){ return stockIncPoner({ f:String(f||'') }, t); }
@@ -24605,12 +24625,25 @@ function stockTurnoLinea(p){ return normTurno(p && p.turno)==='PM' ? 'pm' : 'am'
    un solo turno incluido queda «después» del Excel (se resta), como antes. */
 function stockAntesDelCorte(p, x, f, c){
   if(!c || !c.f || !f || String(f)!==String(c.f)) return false;
+  if(stockCargadoDespuesDelCorte(p, c)) return false;   // (18/10, §4ls, corrector) no existía cuando se sacó el Excel
   var t=stockIncTurnos(c);
   if(t.am && t.pm) return true;
   if(!t.am && !t.pm) return false;
   var fp=fechaSalida(p);
   if(x && x.eF && fp && String(x.eF)!==String(fp)) return false;
   return stockTurnoLinea(p)==='pm' ? t.pm : t.am;
+}
+/* 🕙 (18/10, §4ls, corrector) Un pedido CARGADO el día del corte después de la hora del Excel (o, en un conteo a mano sin hora, después
+   de guardarlo) no existía cuando se sacó: no puede faltar en él, aunque su turno ya haya salido. Pasó de verdad: RPT 10-007 de la
+   mañana del 12/10 cargada a las 12:18 con el Excel de PTF de las 10:19; RPT 10-008 del 15/10 cargada a las 10:05 con el de las 10:04.
+   Sin esto se daba por «ya salió de ese Excel»: no se reservaba, con ✅ no se restaba y el Excel de la tarde la marcaba «salida sin
+   explicar» (el lado que deja sin stock). `p.ts` = cuándo se cargó (no cambia al editar). */
+function stockCargadoDespuesDelCorte(p, c){
+  var ts=Number(p && p.ts); if(!(ts>0) || !c || !c.f) return false;
+  if(isoDeTsBolivia(ts)!==String(c.f)) return false;
+  var hc=stockHoraMin(c.hora);
+  if(hc!=null) return stockHoraMin(horaDeTs(ts))>hc;
+  var tc=Number(c.t); return tc>0 && ts>tc;
 }
 /* ¿Esta salida (el día `fsx`) baja el conteo `c`? Después del Excel, sí; antes o adentro de él, no. Sin Excel no hay de qué bajar. */
 function stockBajaDelCorte(p, x, fsx, c){
@@ -24633,12 +24666,15 @@ function stockFueraHoy(p, x, cAca, soloAca){
   var hoy=todayStr(); if(fechaSalida(p)!==hoy) return 0;
   if(esRecoger(x) || x.chk==='no' || enProduccionPendiente(x)) return 0;
   var ca=cAca||STOCK.c;
-  if(enProduccion(x)) return stockAntesDelCorte(p, x, hoy, ca) ? prodUnidEnConteo(x) : 0;   // lo 🏭 llegado y contado, del depósito de acá
+  if(enProduccion(x)) return stockFueraDelCorte(p, x, hoy, ca) ? prodUnidEnConteo(x) : 0;   // lo 🏭 llegado y contado, del depósito de acá
   var n=0;
-  prodPartesCarga(x).forEach(function(e){ if(soloAca && e.tipo==='sale') return; if(stockAntesDelCorte(p, x, hoy, stockCorteDeParte(e, ca))) n+=e.u; });
+  prodPartesCarga(x).forEach(function(e){ if(soloAca && e.tipo==='sale') return; if(stockFueraDelCorte(p, x, hoy, stockCorteDeParte(e, ca))) n+=e.u; });
   return n;
 }
-function stockParteFueraHoy(p, x, e){ return stockAntesDelCorte(p, x, todayStr(), stockCorteDeParte(e)); }
+/* 🧓 (18/10, §4ls, corrector) Lo SIN ✅ de hoy solo deja de reservarse con la regla por turno: la casilla única de la página de antes
+   (`leg`) lo seguía reservando hasta el ✅. */
+function stockFueraDelCorte(p, x, f, c){ return !!c && !stockIncTurnos(c).leg && stockAntesDelCorte(p, x, f, c); }
+function stockParteFueraHoy(p, x, e){ return stockFueraDelCorte(p, x, todayStr(), stockCorteDeParte(e)); }
 /* Las salidas de HOY de cada camión (HH:MM, de la más temprana a la más tarde): la marca «🚚 Ya salió» y lo que dijo el GPS (cada
    salida a repartir; un viaje a recoger a Moreno o un traslado entre depósitos no cuentan). Antes de las STOCK_INC_TARDE_SALE es el
    viaje de la mañana; desde ahí, el de la tarde. */
@@ -24650,10 +24686,16 @@ function stockCamionSalidas(veh){
   try{ if(GPS_SALIO[hoy+'|'+veh]) pon(GPS_SALIO[hoy+'|'+veh]); }catch(e){}
   return L.sort();
 }
-function stockCamionSaleTurno(veh, t){
-  var L=stockCamionSalidas(veh), m=stockHoraMin(STOCK_INC_TARDE_SALE);
-  for(var i=0;i<L.length;i++){ var h=stockHoraMin(L[i]); if(t==='pm' ? h>=m : h<m) return L[i]; }
-  return '';
+function stockCamionSaleTurno(veh, t, ambos){
+  var L=stockCamionSalidas(veh), m=stockHoraMin(STOCK_INC_TARDE_SALE), am='', i;
+  for(i=0;i<L.length;i++){ if(stockHoraMin(L[i])<m){ am=L[i]; break; } }
+  /* (18/10, §4ls, corrector) Un camión con pedidos de la MAÑANA cuya única salida fue después de las 13:00 hizo el viaje de la mañana
+     tarde: esa salida es la de la mañana (antes se tomaba como la de la tarde y la mañana quedaba «por la hora», ya cargada). Para la
+     tarde de ese mismo camión (`ambos`), esa primera salida no cuenta. */
+  if(t!=='pm') return am || (ambos!==false ? (L[0]||'') : '');
+  var pmL=L.filter(function(h){ return stockHoraMin(h)>=m; });
+  if(!am && ambos && pmL.length) pmL=pmL.slice(1);
+  return pmL[0]||'';
 }
 /* Lo que se PROPONE al subir el Excel (o al contar a mano a la hora `hora`): por turno, ¿esa carga ya había salido? Con el dato del
    camión (GPS o «🚚 Ya salió») de los pedidos de hoy de ese turno que salen de ese depósito: sí, si salió a más tardar
@@ -24676,7 +24718,11 @@ function stockIncPropuesta(hora, dep){
   var hh=stockHoraHM(hora);
   ['am','pm'].forEach(function(t){
     var desde=(t==='am') ? STOCK_INC_AM : STOCK_INC_PM, antes=[], tarde=[], o=out[t];
-    Object.keys(veh[t]).sort().forEach(function(v){ var s=stockCamionSaleTurno(v, t); if(!s) return; (stockHoraMin(s)<=hm+STOCK_INC_CAMION_MIN ? antes : tarde).push(v+' '+s); });
+    /* (18/10, §4ls, corrector) Un camión de ese turno SIN dato de salida no se ignora: decide la hora (antes de las STOCK_INC_AM /
+       STOCK_INC_PM, «todavía no»). Si no, con uno que salió y otro sin dato la casilla quedaba marcada para los dos. */
+    var sinDato=[];
+    Object.keys(veh[t]).sort().forEach(function(v){ var s=stockCamionSaleTurno(v, t, t==='pm' ? !!veh.am[v] : true); if(!s){ sinDato.push(v); return; } (stockHoraMin(s)<=hm+STOCK_INC_CAMION_MIN ? antes : tarde).push(v+' '+s); });
+    if((antes.length || tarde.length) && sinDato.length){ (hm>=stockHoraMin(desde) ? antes : tarde).push(sinDato.join(', ')+' (sin dato del camión: por la hora)'); }
     if(antes.length || tarde.length){
       o.v=!tarde.length; o.camion=true;
       o.txt = !tarde.length ? ('🚚 '+antes.join(', ')+': salió hasta '+STOCK_INC_CAMION_MIN+' min después del Excel ('+hh+') → esa carga ya no está en él.')
@@ -24695,8 +24741,11 @@ function stockIncPropuesta(hora, dep){
 function stockIncDelHistorial(d){
   if(!d) return;
   var poner=function(s, alm){
-    if(!s || !s.f || !alm || s.inc===true || s.incT) return;
+    /* (§4ls, corrector) `inc:true` sin `incT` puede ser lo que dejó la página de antes al guardar un corte de los dos turnos
+       (`incT:'ampm'`, que no conoce): si su renglón lo tiene, se repone; si el renglón tampoco lo tiene, es la casilla de antes. */
+    if(!s || !s.f || !alm || s.incT) return;
     var hh=(d.h||[]).filter(function(x){ return x && x.alm===alm && String(x.f||'')===String(s.f) && String(x.hora||'')===String(s.hora||''); })[0];
+    if(s.inc===true){ if(hh && hh.incT) stockIncPoner(s, stockIncTurnos(hh)); return; }
     if(hh && (hh.inc===true || hh.incT)) stockIncPoner(s, stockIncTurnos(hh));
   };
   if(d.c) poner(d.c, d.c.alm);
@@ -24813,8 +24862,11 @@ function stockMuestrasFabrica(){
      NO cuándo llegó. Medir con eso inventaría un tiempo de fábrica que nadie observó. */
   (STOCK.p||[]).forEach(function(q){ if(q&&q.r&&!q.enConteo&&q.tipo!=='recogida') add(q.fab,q.f,q.r); });
   /* 🏭 (18/10, §4ls Cie-C2) De las líneas 🏭 de un pedido se mide SOLO con un día que pasó de verdad: el «llegó» (`prodR`) o, si se entregó
-     sin «llegó», el día REAL de la entrega que anotó el cierre o el ✅ adelantado (`x.eF`). Nunca la fecha AGENDADA (la eligió el cliente:
-     mide la espera del cliente, no la fábrica) ni un día que todavía no llegó. Y UNA muestra por pedido y fábrica: las líneas de un mismo
+     sin «llegó», el día REAL de la entrega que anotó el cierre o el ✅ adelantado (`x.eF`). Nunca la fecha agendada A SECAS ni un día que
+     todavía no llegó. ⚠️ (18/10, §4ls, corrector) Pero el cierre tilda lo de HOY: en el uso normal `eF` ES el día agendado, así que la muestra
+     sigue midiendo hasta la entrega (la espera del cliente, U1a, pendiente del dueño). Con la planilla real del 16/10 las 10 muestras con
+     `eF` salen del único cierre (09/10) y Multiespumas queda medida con 2 (6 días): «con menos de 3 muestras, el plazo general» es decisión
+     del dueño. Y UNA muestra por pedido y fábrica: las líneas de un mismo
      pedido son un solo encargo (la mediana de sus días). Antes un solo ✅ de la OC 09-371 (3 líneas 🏭 del 30/09, agendada el 20/10) metía
      tres muestras de 20 días con fecha futura, que el orden ponía «entre las últimas»: Moreno pasaba de 5 a 14 días y «Pedir 7 días» de
      227 a 374. */
@@ -24995,7 +25047,14 @@ function stockUnicoQuien(o){
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
   if(!isFinite(n)) return 0;
-  (STOCK.p||[]).forEach(function(q){if(q&&!q.r&&q.tipo==='recogida'&&q.k===k&&q.de===alm&&!stockRecogidaVencida(q))n-=Number(q.u)||0;});   // 🚚 (§4ls Man-VM3) la vencida ya no aparta
+  /* 🚚 (§4ls Man-VM3) la vencida ya no aparta… (18/10, §4ls, corrector) …salvo que el Excel de SU almacén sea del día de ir a buscarla o
+     de antes: ese Excel todavía muestra las unidades que la camioneta ya se llevó (se saltó Moreno, o se subió solo PTF), y soltarlas
+     las contaba dos veces («🚚 Traé 2 de Moreno» en vez de «Pedí 1 ya · traé 1»). */
+  (STOCK.p||[]).forEach(function(q){
+    if(!(q&&!q.r&&q.tipo==='recogida'&&q.k===k&&q.de===alm)) return;
+    if(stockRecogidaVencida(q) && String(corte.f||'')>String(stockEsperado(q)||'')) return;
+    n-=Number(q.u)||0;
+  });
   return Math.max(0,n);
 }
 
@@ -25511,6 +25570,10 @@ function stockLeadVenta(o){ return (o && o.leadVenta!=null) ? o.leadVenta : ((o&
 /* El día hasta el que lo ya vendido entra en «pedir ya / 7 días»: fábrica + margen + reserva, nunca menos de 15 días, desde que arranca. */
 function stockCompHorizonteLim(o){
   var H=Math.max(STOCK_HORIZ_VENDIDO, stockLeadVenta(o)+(o.margen||0)+(o.cubrir==null?STOCK_CUBRIR:o.cubrir));
+  /* 🎯 (18/10, §4ls, corrector) Lo que rota con objetivo: lo vendido hasta HOY + 15 (la regla validada, `LIM15`), no desde que arranca la
+     fábrica: con eso lo libre bajaba 4 a las 16:31 por un pedido para el día 16 y «Pedir 7 días» saltaba (12 → 8 contra un punto de
+     pedido de 9: pedía 3), el sábado a la tarde también. El objetivo no depende de la hora. */
+  if(stockObjActivo(o)) return stockSumarDias(todayStr(), H);
   return stockSumarDias((o&&o.ventaDesde)||todayStr(), H);
 }
 function stockCompHorizonte(o){
@@ -25917,9 +25980,21 @@ function saldoDelAlmacen(f){ return !!(f && f.completo && !f.esp && !f.codOtro &
    usa esa medida; `medTxt` marca que salió del nombre: lo guardado se sigue buscando con la medida vacía (`saldoClasificar`). */
 function saldoConMedidaDelNombre(x, cat, alm){
   if(!x || String(x.medida||'').trim() || (cat && !cat.m) || (alm && !alm.m)) return x;
-  var mt=normMedida(medidaDeTexto(String(x.desc||'')));
+  var mt=saldoMedidaCompletaDelNombre(String(x.desc||''));
   if(!mt) return x;
   var y=Object.assign({}, x); y.medida=mt; y.medTxt=1; return y;
+}
+/* ⌨️ (18/10, §4ls, corrector) Solo una medida ESCRITA ENTERA: dos números de al menos 40 («180x190», «50x70», «160X200») o plazas con
+   su palabra («2,5 PLZ»). Con el nombre a medio escribir no se dice nada (§4gj): «TITANIO ICE 1» salía como 1 plaza (90x190, gris «No
+   encuentro…») y «TITANIO ICE 160X19» como 📐 medida especial. El número suelto al final («SOMIER NEGRO 2,5») tampoco: es lo que se ve
+   mientras se tipea. */
+function saldoMedidaCompletaDelNombre(t){
+  var s=String(t==null?'':t).toLowerCase().replace(/[×✕✖]/g,'x');
+  var m=s.match(/(\d{2,3})\s*[x*]\s*(\d{2,3})/);
+  if(m) return (+m[1]>=40 && +m[2]>=40) ? normMedida(m[1]+'x'+m[2]) : '';
+  var p=s.match(/(\d+(?:[.,]\d+)?)\s*(?:plz|plazas?)\b/);
+  if(p){ var k=medidaPlzNum(p[1]); if(k) return normMedida(k); }
+  return '';
 }
 /* Lo mismo para una línea YA GUARDADA (la pregunta al guardar y el mensaje de Bloki la miran igual que a su renglón). */
 function saldoMedidaGuardada(x){
@@ -26023,12 +26098,20 @@ function saldoCandidatos(clave, S){
       /* ✏️ (18/10, §4ls textos, VI-7) …o el mismo nombre APRETADO (sin espacios ni guiones): «ECOFLEX» / «ECO-FLEX» es el NUEVO ECO FLEX y
          «ESPECIALORTOPEDICO» (como lo escribe el propio Excel) el ESPECIAL ORTOPEDICO D/C. Solo para PROPONER «¿Es X?»: no une nada. */
       var apr=function(t){ return String(t||'').replace(/[\s\-\.\/]+/g,''); }, apC=apr(pa[0]);
+      /* (18/10, §4ls, corrector) …pero por PALABRAS ENTERAS Y SEGUIDAS: lo apretado tiene que ser dos o más palabras seguidas de la clave
+         («ECO FLEX» → «ECOFLEX»), o dos o más palabras seguidas del nombre tienen que ser UNA palabra de la clave («ANTI ALERGICO» →
+         «ANTIALERGICO»). Con «está adentro» a secas, «SOMIER» proponía SOMIER BAHIA BEIGE o TITANIO ICE, «COLCHON» cualquier colchón y
+         «PEDIC» el ESPECIAL ORTOPEDICO (PEDIC queda adentro de ORTOPEDICO). */
+      var juntas=function(ws){ var o={}; for(var i=0;i<ws.length;i++){ var t=ws[i]; for(var j=i+1;j<ws.length;j++){ t+=ws[j]; var a=apr(t); if(a.length>=5) o[a]=1; } } return o; };
+      var nWs=String(pa[0]||'').split(' ').filter(Boolean), juntasN=juntas(nWs);
       var mirar=function(u){ Object.keys(u||{}).forEach(function(k){
         var kp=String(k).split('|'); if(kp[1]!==m) return;
         var r=cuenta(String(kp[0]||'').split(' '));
         if(r.com<2 || (r.com!==nW && r.com!==r.n)){
-          var apK=apr(kp[0]);
-          if(apC.length>=5 && apK.length>=5 && (apK.indexOf(apC)>=0 || apC.indexOf(apK)>=0)) poner(k, '', '', apK===apC, 2);
+          var apK=apr(kp[0]), kWs=String(kp[0]||'').split(' ').filter(Boolean);
+          var igual=(apC.length>=5 && apK===apC);
+          var une=igual || (apC.length>=5 && !!juntas(kWs)[apC]) || kWs.some(function(w){ return !!juntasN[apr(w)]; });
+          if(une) poner(k, '', '', igual, 2);
           return;
         }
         poner(k, '', '', r.com===nW && r.n===nW, r.com);
@@ -26102,7 +26185,10 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
     else if(e){ v.tipo='moreno'; v.color='ambar'; v.recoge=saldoDiaRecoge(); disp=v.recoge;
       /* 🚚 (18/10, §4ls Man-VM3) Una recogida VENCIDA ya no cuenta (lo de Moreno vuelve a estar libre), pero se avisa: puede haber llegado
          sin que nadie la cerrara. */
-      var rv=stockRecogidaVencidaDe(clave); if(rv) v.recVenc=rv; }
+      var rv=stockRecogidaVencidaDe(clave); if(rv){ v.recVenc=rv;
+        /* (18/10, §4ls, corrector) …y si un Excel de PTF posterior mostró una entrada sin explicar de este producto, puede ser ella: «todavía
+           no llegó» no es seguro. */
+        v.recVencDet=(STOCK.p||[]).some(function(q){ return q && q.k===clave && stockRecogidaVencida(q) && stockRecogidaDetecciones(q).length>0; }); } }
     else {
       v.sinLibre=true;
       /* Lo que viene de fábrica cubre primero lo que ya está vendido (hasta ese día), y recién después este pedido.
@@ -26129,12 +26215,19 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
   v.pendFecha=pendA(D); v.pendDespues=Math.max(0, v.pend-v.pendFecha);
   v.libres=v.alm-v.pendFecha;                 // A LA FECHA: puede dar negativo
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
-  if(!v.sinLibre && v.pendDespues>0)
+  /* (18/10, §4ls, corrector) …también con «⏳ EN PRODUCCIÓN»: este pedido se queda con lo que viene de fábrica (`sup` = lo que cubre ese
+     lote) y a lo vendido para después le puede faltar; antes no se decía nada (y antes de la reserva por fecha decía «🏭 NO HAY»). */
+  if((!v.sinLibre || v.tipo==='prod') && v.pendDespues>0)
     v.despues=saldoDespues(o, D, sup-v.pendFecha-cant, resto, stockSumarDias(saldoSaleDeFabrica(diaArranque()), 1));
   if(disp){
     var min=(v.tipo==='hay') ? prox : saldoMax(prox, stockSumarDias(disp,1));
     saldoPonerDia(v, min, idEditado, diaCupo(min));
     if(v.tipo!=='hay' && fechaElegida && fechaElegida<min) v.fechaCorta=fechaElegida;
+    /* (18/10, §4ls, corrector) «✅ hay» se miró para la fecha ELEGIDA (un día lleno, o hoy para Eduardo y ROHO); si esa fecha es antes
+       del primer día con cupo que promete el título y para ese día ya no alcanza (lo que hay está vendido para esos días), se dice
+       «para el DD/MM sí; para el X ya no»: si no, «podés programar desde el X» prometía un día que el mismo cuadrito, para el X, daba
+       «🏭 NO HAY». */
+    if(v.tipo==='hay' && porFecha && fe && v.desde && fe<v.desde && mano-pendA(v.desde)<cant) v.soloFecha=fe;
   }
   return v;
 }
@@ -26159,6 +26252,9 @@ function saldoDespues(o, D, queda, lotes, P){
       if(corto>extra+1e-9) out.atrasa=f;
     }
   }
+  /* (18/10, §4ls, corrector) Si la primera fecha corta es JUSTO el primer día en que llega lo que se manda a producir hoy, llega a tiempo
+     solo si se pide hoy (antes del corte): el texto lo dice. */
+  if(!out.atrasa && P && out.antes===P) out.hoy=diaArranque();
   return out;
 }
 /* 🚚 (28/09) Lo que NO está a mano, por el día en que llega a fábrica: lo que sigue en Moreno (se trae en
@@ -26261,7 +26357,8 @@ function saldoDesdeTxt(v){
 function saldoDiasTxt(n){ return (n==null) ? ('hasta que haya cupo ('+saldoSinCupoTxt()+')') : ('~'+n+' día'+(n===1?'':'s')); }
 /* 🚚 De qué almacén viene la recogida («MORENO» si es IM, o el nombre corto del otro). */
 function saldoRecDeTxt(v){ return (recogerCanon(v&&v.recDe) ? stockAlmCorto(v.recDe) : 'Moreno').toUpperCase(); }
-function saldoNombre(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }
+/* (18/10, §4ls, corrector) Con la medida sacada del NOMBRE (`medTxt`, H7) el nombre ya la dice: no se repite («TITANIO ICE 160X190 160x190»). */
+function saldoNombre(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida&&!x.medTxt)?(' '+x.medida):''); }
 function saldoCodNombre(c){ return String((c&&c.d)||'')+((c&&c.m)?(' '+c.m):''); }
 /* 🏷️ Cuál sería el código bueno (o que no hay), para el renglón con el código de otro. */
 function saldoCodBienTxt(v){
@@ -26280,11 +26377,12 @@ function saldoTitulo(v){
   var trae=STOCK_DIAS_RECOGIDA+' día'+(STOCK_DIAS_RECOGIDA===1?'':'s');
   var sc=' · ⚠️ SIN CUPO: '+saldoSinCupoTxt();       // (28/09) ningún turno libre en 60 días: no se promete un día
   switch(v.tipo){
-    case 'hay':    return v.sinCupo ? ('✅ HAY EN ALMACÉN'+dc+sc) : ('✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc);
+    case 'hay':    if(v.soloFecha && !v.sinCupo) return '✅ DISPONIBLE para el '+saldoDiaTxt(v.soloFecha)+' (la fecha elegida) · para el '+saldoDiaTxt(v.desde)+' ya no alcanza: lo que hay está vendido para esos días'+dc;   // (§4ls, corrector)
+                   return v.sinCupo ? ('✅ HAY EN ALMACÉN'+dc+sc) : ('✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc);
     /* 📥 (28/09) Se recoge el día hábil siguiente: si no es mañana (sábado, domingo, feriado), se dice qué día. */
     case 'moreno': return '📥 HAY EN MORENO · '+((!v.recoge || v.recoge===stockSumarDias(todayStr(), STOCK_DIAS_RECOGIDA)) ? ('se trae en '+trae) : ('logística lo recoge el '+saldoDiaTxt(v.recoge)))+
                           (v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc+
-                          (v.recVenc ? (' · ⚠️ la recogida era para el '+saldoDiaTxt(v.recVenc)+' y todavía no llegó: confirmala con logística') : '');   // 🚚 (§4ls Man-VM3)
+                          (v.recVenc ? (' · ⚠️ la recogida era para el '+saldoDiaTxt(v.recVenc)+(v.recVencDet ? ': el Excel de PTF de después mostró una entrada sin explicar (¿es ella?); que logística la cierre' : ' y todavía no llegó: confirmala con logística')) : '');   // 🚚 (§4ls Man-VM3)
     /* 🚚 (28/09, revisión de Codex) Lo que ya va en una recogida programada llega el día que eligió logística, no «en 1 día».
        Si se puede adelantar, lo confirma logística: no se promete. */
     case 'recogida': return v.atrasada
@@ -26349,6 +26447,10 @@ function saldoDespuesTxt(v){
   var d=v && v.despues; if(!d || !(d.u>0)) return '';
   var base='⚠️ Con este pedido, a lo vendido para después del '+fmtFechaCorta(v.fechaRes)+' le '+(d.u===1?'va':'van')+' a faltar '+stockUnid(d.u);
   if(d.atrasa) return base+' y lo que se puede traer o fabricar no llega antes del '+fmtFechaCorta(d.atrasa)+': el pedido de ese día se atrasaría. Avisá a logística (el Plan de stock ya pide reponerlo).';
+  if(d.hoy){
+    var _h=todayStr(), _hc=horaCorteTxt(diaSabado(_h) ? HORA_CORTE_SABADO : HORA_CORTE);
+    return base+': hay que reponer antes del '+fmtFechaCorta(d.antes)+' y para eso hay que mandarlo a producir '+(d.hoy===_h ? ('HOY, antes de las '+_hc) : ('el '+saldoDiaTxt(d.hoy)+' a primera hora'))+'. Avisá a logística (el Plan de stock ya lo pide).';
+  }
   return base+': hay que reponer antes del '+fmtFechaCorta(d.antes)+'. El Plan de stock ya lo pide.';
 }
 function saldoCorteTxt(){
@@ -26587,6 +26689,9 @@ function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
     var f=r.f, v, t='';
     try{ v=saldoVeredictoFila(f, sinId, fecha); }catch(e){ return; }
     if(r.cambia && (v.sinLibre || v.tipo==='codigo')) t=saldoAlertaTxt(v);
+    /* ❓ (18/10, §4ls, corrector, VI-1) «No reconozco» también se pregunta: antes de VI-1 esto salía como «hay que mandar a producir» y,
+       con el cuadrito nuevo, guardar no decía nada (el Plan igual lo pide como un producto aparte). */
+    else if(r.cambia && v.noRec) t='❓ no reconozco este producto: ni la lista de precios ni el Excel de los almacenes lo tienen con este nombre. Revisá el nombre o el código'+((v.cand&&v.cand.length)?(' (¿es '+v.cand.map(function(c){ return c.nombre||c.k||''; }).filter(Boolean).slice(0,2).join(' o ')+'?)'):'')+'; si es un producto nuevo, avisá a logística.';
     if(v.fechaCorta) t+=(t?' ':'')+'Para el '+saldoDiaTxt(v.fechaCorta)+' no llega: programá '+saldoDesdeTxt(v)+'.';
     if(t){ var ar=saldoArrancaTxt(v); if(ar) t+=' '+ar; }                   // 🕔 (28/09) por qué empieza otro día
     if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); if(!primero) primero=f.box; }
@@ -26734,10 +26839,13 @@ function closeStock(){ var ov=document.getElementById('stock-overlay'); if(ov) o
 /* ✏️ (18/10, §4ls textos, VF6) «MORENO tarda ~4 días (medido 13 veces)» atribuía a la medición el número de la REGLA: lo medido es la
    mediana (`t.base`, 3 en Moreno) y el plazo que usan los avisos (`t.dias`) es el mayor entre eso y las 48 h hábiles + 1 contadas desde
    que arranca la fábrica (corte de las 16:30), que cambia con el día y la hora. Ahora se dicen las dos cosas, con la fecha. */
+/* (18/10, §4ls, corrector) El día de entrega nunca cae en domingo o feriado (como «Se corta», `stockCorteVer`): el miércoles 21/10 con
+   Moreno medido 4 días decía «se entrega desde el dom 25/10». */
+function stockEntregaDesde(hoy, d){ var f=stockSumarDias(hoy, d); return diaHabil(f) ? f : sigDiaHabil(f); }
 function stockFabricaTxt(t, nombre){
   var hoy=todayStr(), d=Math.max(1, t.dias||0), regla=!t.medido || d>(t.base||0);
   return nombre+': '+(t.medido ? ('medido '+t.base+' día'+(t.base===1?'':'s')+(t.prestado ? ' (según la otra fábrica)' : (' ('+t.n+(t.n===1?' vez':' veces')+')'))) : 'sin medir')+
-    ' · lo que se pide hoy se entrega desde el '+sfDiaTxt(stockSumarDias(hoy, d))+(regla?' (48 h hábiles + 1)':'');
+    ' · lo que se pide hoy se entrega desde el '+sfDiaTxt(stockEntregaDesde(hoy, d))+(regla?' (48 h hábiles + 1)':'');
 }
 /* Lo mismo para «Plazo de fábrica: N días» del detalle de un producto: decía «(medido)» también cuando N era la regla. */
 function stockPlazoPorqueTxt(o){
@@ -26750,7 +26858,7 @@ function stockPlazoPorqueTxt(o){
    el buscador a otro renglón). La explicación entera (`stockFabricaTxt`, con «48 h hábiles + 1») va en el `title`. */
 function stockFabricasTxt(T, largo){
   if(largo) return PROD_LUGARES.map(function(L){ return stockFabricaTxt(T.de(L.corto), L.corto); }).join(' · ');
-  var hoy=todayStr(), F=PROD_LUGARES.map(function(L){ var t=T.de(L.corto); return { n:L.corto, t:t, f:stockSumarDias(hoy, Math.max(1, t.dias||0)) }; });
+  var hoy=todayStr(), F=PROD_LUGARES.map(function(L){ var t=T.de(L.corto); return { n:L.corto, t:t, f:stockEntregaDesde(hoy, Math.max(1, t.dias||0)) }; });
   var med=function(x){ return x.n+': '+(x.t.medido ? ('medido '+x.t.base+' día'+(x.t.base===1?'':'s')) : 'sin medir'); };
   if(F.every(function(x){ return x.f===F[0].f; })) return F.map(med).join(' · ')+' · lo que se pide hoy se entrega desde el '+sfDiaTxt(F[0].f);
   return F.map(function(x){ return med(x)+', se entrega desde el '+sfDiaTxt(x.f); }).join(' · ');
@@ -26766,6 +26874,9 @@ function stockPedidosDetalle(k){
       var n=Number(x.cant)||0;
       if(!n || esProdDeTienda(x) || stockClave(x)!==k) return;
       var salio=stockSalio(p,x), fs=fechaSalida(p), grupo;
+      /* 🏬 (18/10, §4ls, corrector, T8) «Recoger de una tienda» no consume el depósito (`stockData` lo saltea): no va en «Vendido sin
+         entregar · consume depósito». Lo entregado sí sigue en el historial de la ventana (cuenta para la rotación). */
+      if(!salio && recogeDeTienda(x)) return;
       /* (26/09) El «✗ no hay» de un día que ya pasó va a SU grupo. `stockSalio` da falso para un ✗ (no
          salió, y sigue comprometido: §4de), así que caía en «Vendido sin entregar» y este grupo —que
          lo buscaba entre lo «salido»— no aparecía nunca. La cuenta no cambia: el título lo dice. */
@@ -26865,7 +26976,7 @@ function abrirStockPedidos(k){
   var html='<div class="modal-h"><h3>Pedidos · '+esc(nombre)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">';
   if(stockCariocaDescontinuado(k)) html+='<p style="padding:12px;background:#fff4d6;color:#7c4b00"><b>Descontinuado · solo saldos de almacén.</b> Línea de reemplazo: Essential, Confort Plus y Premier Deluxe. Confirmar modelo y medida con ventas; no se sustituyen automáticamente los pedidos.</p>';
   if(o) html+=stockSaldoDetalleHtml(o);
-  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional: '+stockRepoTxt(o)+'; confirmar la diferencia entre marcas e inventario.':   // ✏️ (§4ls VV9)
+  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?((o.fabricar>0||o.recoger>0)?('reposición provisional: '+stockRepoTxt(o)+'; '):'por ahora nada que pedir; ')+'confirmar la diferencia entre marcas e inventario.':   // ✏️ (§4ls VV9)
     stockObjActivo(o)?('rotación '+(o.rotacion==='alta'?'alta':'media')+': '+stockObjCorto(o)+'. Cuando lo libre baja al punto de pedido se pide hasta el objetivo (primero de Moreno, el resto se fabrica).'):   // 🎯 (§4ls)
     o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
@@ -27007,7 +27118,7 @@ function renderStock(){
     html+=renderTiendas(d, stockMesSiguiente(d.hoy));   // no depende del conteo: sale de las ventas y las reposiciones
   }
   var badge=function(o){
-    if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · '+esc(stockPediTraeTxt(o))+'</button>';   // ✏️ (§4ls VV9) «pedí 3 · traé 1», no «reposición 4»
+    if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo'+((o.fabricar>0||o.recoger>0)?(' · '+esc(stockPediTraeTxt(o))):'')+'</button>';   // (§4ls, corrector) sin «pedí 0»   // ✏️ (§4ls VV9) «pedí 3 · traé 1», no «reposición 4»
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
       'Hay que pedirlo a la fábrica ya (con el Excel y el correo de siempre). Lo que llegue se ve en el Excel del día.');
     if(o.aviso==='pedir')   return bpedir(o,'🏭 Pedir esta semana','background:var(--amber-lt,#fff4d6);color:#7c4b00;border:1px solid #f0d264',
@@ -27025,9 +27136,9 @@ function renderStock(){
     var q=o.pedidos[0];
     if(o.revisarStock && (o.revisarSale||[]).length && !(o.deposito!=null && (o.confirmadoAqui||0)>Math.max(0,o.deposito))){
       var rs=o.revisarSale[0];   // (26/09) lo que no cierra es lo de Banzer
-      return chico('Hay <b>'+stockUnid(o.confSale[rs]||0)+'</b> unidades marcadas «✔ hay en '+esc(saleNombre(rs))+'», pero su inventario indica <b>'+stockUnid(o.salePor[rs]||0)+'</b>. Reposición calculada: '+stockRepoTxt(o)+'. Confirmá el saldo antes de pedir.','#7c4b00');
+      return chico('Hay <b>'+stockUnid(o.confSale[rs]||0)+'</b> unidades marcadas «✔ hay en '+esc(saleNombre(rs))+'», pero su inventario indica <b>'+stockUnid(o.salePor[rs]||0)+'</b>. '+((o.fabricar>0||o.recoger>0)?('Reposición calculada: '+stockRepoTxt(o)+'. '):'Por ahora no hace falta pedir nada. ')+'Confirmá el saldo antes de pedir.','#7c4b00');
     }
-    if(o.revisarStock) return chico('Hay <b>'+o.confirmadoAqui+'</b> unidades marcadas como disponibles, pero el inventario indica <b>'+stockUnid(Math.max(0,o.deposito||0))+'</b>. Reposición calculada: '+stockRepoTxt(o)+', incluyendo cobertura por rotación. Confirmá el saldo antes de pedir.','#7c4b00');
+    if(o.revisarStock) return chico('Hay <b>'+o.confirmadoAqui+'</b> unidades marcadas como disponibles, pero el inventario indica <b>'+stockUnid(Math.max(0,o.deposito||0))+'</b>. '+((o.fabricar>0||o.recoger>0)?('Reposición calculada: '+stockRepoTxt(o)+', incluyendo cobertura por rotación. '):'Por ahora no hace falta pedir nada. ')+'Confirmá el saldo antes de pedir.','#7c4b00');   // (§4ls, corrector) sin «fabricar 0»
     /* ✏️ (18/10, §4ls textos, VV2/VV8) Lo que llega desde hoy y lo atrasado, por separado; y cuántos traer de Moreno («pedí 3 ya y traé 1»). */
     var LL=stockLlegadas(o);
     var traeTxt=function(sep){ return o.recoger>0 ? (sep+'traé <b>'+stockUnid(o.recoger)+'</b> de Moreno (hay '+stockOtrosTxt(o)+')') : ''; };
@@ -27040,7 +27151,7 @@ function renderStock(){
     if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.fabricar+'</b> esta semana'+(o.recoger>0?traeTxt(' y '):(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):'')),'#7c4b00');
     /* ✏️ (§4ls) «Traé» = `o.recoger` (§4ix, nunca `max(1,…)`); y lo que rota pasa a «traer» por el punto de pedido aunque la proyección no
        se corte en 45 días (`o.dias` null): decía «se corta en null días». */
-    if(o.aviso==='traer')   return chico((o.dias!=null?('se corta '+stockEnDias(o.dias)+', pero '):(stockObjActivo(o)?'lo libre llegó al punto de pedido, pero ':''))+'<b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+stockUnid(o.recoger||o.pedir)+'</b>, no hace falta pedir','#075985');
+    if(o.aviso==='traer')   return chico((o.dias!=null?('se corta '+stockEnDias(o.dias)+', pero '):(stockObjActivo(o)?'lo libre llegó al punto de pedido, pero ':''))+'<b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+stockUnid(o.recoger||o.pedir)+'</b>, no hace falta pedir'+esc(stockDescontNoLlegaTxt(o)),'#075985');
     /* ✏️ (18/10, §4ls textos, VV7/VV8) «Confirmar la llegada: hay un faltante antes de recibir» solo si es cierto: hay algo atrasado
        (reclamar) o el corte cae ANTES de la primera llegada. Si el corte es después, lo que se dice es hasta cuándo alcanza. */
     if(o.aviso==='pedido'){
@@ -27048,7 +27159,7 @@ function renderStock(){
       return chico((LL.fut?(stockUnid(LL.fut)+' pendiente'+(LL.fut===1?'':'s')+' · fecha prevista '+fmtFechaCorta(LL.f)+(LL.fab?(' de '+esc(LL.fab)):'')):'')+
         (LL.atr?((LL.fut?'<br>':'')+'⚠️ '+stockUnid(LL.atr)+' con la llegada atrasada desde el '+fmtFechaCorta(LL.fa)+': reclamar'):'')+
         (o.detectado?('<br>🧮 '+stockUnid(o.detectado)+' vista'+(o.detectado===1?'':'s')+' en el Excel sin pedido asignado: puede ser esta llegada. Se asigna al subir el próximo Excel, en el control del corte.'):'')+
-        (o.corte ? (antesDeRecibir ? '<br>Confirmar la llegada: hay un faltante antes de recibir. No duplicar la orden.' : ('<br>Con lo pedido alcanza hasta el '+fmtFechaCorta(stockCorteVer(o))+'.')) : ''),'#075985');
+        (o.corte ? (antesDeRecibir ? '<br>Confirmar la llegada: hay un faltante antes de recibir. No duplicar la orden.' : ('<br>Con lo pedido alcanza hasta el '+fmtFechaCorta(stockAlcanzaHasta(o))+'.')) : ''),'#075985');
     }
     if(o.aviso==='agotado') return chico('quedan <b>'+stockUnid(Math.max(0,o.deposito))+'</b>'+(o.dias!=null?(' y se cortan '+stockEnDias(o.dias)):'')+(o.comp?(' con '+stockUnid(o.comp)+' ya vendidos'):'')+'. La fábrica ya no lo hace: que ventas no ofrezca más de lo que hay.','#7f1d1d');
     /* Solo la CONSECUENCIA (§4dc): el dato («15 en 15 días · 1 entrega») ya está dos líneas
@@ -27113,7 +27224,7 @@ function renderStock(){
           (o.aFab?('<br><span style="color:#a67c00;font-size:.9em">+'+o.aFab+' que trae la fábrica para clientes</span>'):'')+
           (o.atrasados?('<br><span style="color:var(--muted);font-size:.85em">'+o.atrasados+' de días pasados sin marcar ✓: se dan por entregados</span>'):'')+'</td>'+
         '<td>'+(stockHaySalir(o)==null ? '<span style="color:var(--muted)">—</span>'
-                : o.dias!=null ? ('<b>'+fmtFechaCorta(stockCorteVer(o))+'</b><br><span style="font-size:.92em;color:'+(o.aviso==='urgente'?'var(--red)':'var(--muted)')+'">'+stockEnDias(o.dias)+'</span>')   // (§4ls VF5) nunca un domingo
+                : o.dias!=null ? ('<b>'+fmtFechaCorta(stockCorteVer(o))+'</b><br><span style="font-size:.92em;color:'+(o.aviso==='urgente'?'var(--red)':'var(--muted)')+'">'+stockCorteEnDias(o)+'</span>')   // (§4ls VF5) nunca un domingo, y los días hasta ese día
                 : ('<span style="color:var(--green);font-weight:700">no en '+STOCK_HORIZONTE+' días</span>'))+'</td>'+
         '<td>'+badge(o)+porque(o)+'</td></tr>';
     }).join('') : '<tr><td colspan="'+nCols+'" style="padding:26px;text-align:center;color:var(--muted)">'+(visiblesAntes?'Ningún producto coincide con el filtro. <a style="cursor:pointer;color:#0f766e;font-weight:700" onclick="stockFiltroLimpiar()">Limpiar filtros</a>':'Todavía no hay pedidos con productos para medir.')+'</td></tr>')+
@@ -27533,19 +27644,14 @@ function stockRangoMes(o, MS, PI){
   var med=vs.length%2 ? vs[(vs.length-1)/2] : (vs[vs.length/2-1]+vs[vs.length/2])/2;
   return { est:est, min:vs[0], max:vs[vs.length-1], prob:med, n:est.length };
 }
-/* 📅 (18/10, §4ls Mes-VM4) LO QUE FALTA ANTES DEL 1° NO ES DEL MES QUE VIENE. Si con lo que hay + «15 días» no se llega al último día de
-   este mes («queda» negativo, §4iz E1-6), esas unidades se sumaban al mes que viene y enteras a su 1ª quincena: el 01/11, 108 u que hacían
-   falta en noviembre salían como «diciembre · 1ª quincena» (NUEVO ECO FLEX 105: «diciembre 39 · queda −14 · producir 53»). Ahora se
-   suman a «15 días» —es lo que hay que producir ya— y `r.antes` dice cuántas son, para que la pantalla y la copia lo digan. Ni se pierden
-   ni se cuentan dos veces: 15 días + el mes da lo mismo que antes; el mes que viene empieza con «queda 0». */
-function stockProducirAntes(r){
-  r.antes=Math.max(0, -(r.mesQueda||0));
-  if(r.antes>0){ r.quin+=r.antes; r.mesQueda+=r.antes; }
-  return r;
-}
+/* 📅 (18/10, §4ls, corrector) «Mes-VM4» (lo que falta antes del 1° pasaba de «el mes que viene» a «15 días») SE SACÓ: no estaba en la
+   lista de arreglos (1.12), su verificador lo marcó como decisión del dueño (U11, pendiente) y cambiaba «15 días» y «el mes» de lo que
+   tiene objetivo en la primera mitad de cada mes (al 03/11: 15 días 499 → 744), contra la decisión 5 («el mes que viene» de la regla
+   nueva no se cambia) y contra §4dr (el ritmo de 30 días es solo para el mes). Vuelve la regla de §4iz E1-6: «queda» negativo se suma
+   al mes que viene. */
 function stockProducirDe(o, MS, PI){
   var hoy=todayStr();
-  var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, hay:0, ok:false, antes:0 };
+  var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, hay:0, ok:false };
   if(stockHaySalir(o)==null || o.descont) return r;
   /* El tope en 0 va sobre el DEPÓSITO solo (§4ew): con conteo viejo (contados 3, salieron 8 →
      −5) y 5 en Moreno, «Hay» decía 0 y el negativo se comía lo de Moreno, mientras la tabla de
@@ -27562,17 +27668,23 @@ function stockProducirDe(o, MS, PI){
        mantiene: lo que llega al punto de pedido se repone hasta el objetivo, también a fin de mes). Sin rango: el ritmo es el de la regla.
      Lo que no rota (o rota solo en 30 días) sigue con la cuenta de siempre, abajo. */
   if(stockObjActivo(o)){
-    var vd=o.ventaDesde||hoy, mu=o.objMu||0;
+    var mu=o.objMu||0;
     /* La venta de los días hábiles DESPUÉS de hoy (como la regla, que ya no cuenta hoy): no se corre con el corte de las 16:30 —el
-       objetivo no depende de la hora—; lo vendido, hasta 15 días + la fábrica desde que arranca (como «7 días», `stockCompHorizonte`). */
-    var nec15o=stockCompHasta(o, stockSumarDias(vd, PRODUCIR_QUINCENA+STOCK_OBJ_FABRICA)) + o.objS + mu*stockHabilesEntre(hoy, stockSumarDias(hoy, PRODUCIR_QUINCENA));
+       objetivo no depende de la hora—; lo vendido, hasta hoy + 15 días + la fábrica.
+       (18/10, §4ls, corrector) …desde HOY, como la regla validada (`comp19`): con «desde que arranca la fábrica» el límite se corría un día
+       a las 16:30 y el sábado a la tarde (lo mismo en lo libre, `stockCompHorizonteLim`). */
+    var nec15o=stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+STOCK_OBJ_FABRICA)) + o.objS + mu*stockHabilesEntre(hoy, stockSumarDias(hoy, PRODUCIR_QUINCENA));
     r.quin=Math.max(r.sem, Math.ceil(nec15o-hay-1e-9), 0);
     var consumoO=stockCompHasta(o, MS.finActual) + o.objS + mu*stockHabilesEntre(hoy, MS.finActual);
-    r.mesQueda=Math.floor(hay+r.quin-consumoO+1e-9);
-    stockProducirAntes(r);   // 📅 (§4ls Mes-VM4) lo que falta antes del 1° va en 15 días, no en el mes que viene
-    r.mesNec=Math.ceil(stockCompHasta(o, MS.fin, MS.ini) + mu*stockHabilesEntre(stockSumarDias(MS.ini,-1), MS.fin) - 1e-9);
+    /* (18/10, §4ls, corrector) El mes se redondea UNA vez, como la regla validada (`ceil(μ·hábiles + vendido − lo que sobra)`): con
+       «para arriba lo que se necesita − para abajo lo que queda» (§4ds) daba +1 en 20 de los 38 productos que rotan el 16/10 (611 u en
+       vez de 591). Lo que queda sigue SIN tope (§4iz E1-6: lo que falta antes del 1° se suma al mes). Para que la fila cierre igual
+       («necesita − queda = producir», §4ds) «queda» se muestra como necesita − producir. */
+    var qRaw=hay+r.quin-consumoO, necRaw=stockCompHasta(o, MS.fin, MS.ini) + mu*stockHabilesEntre(stockSumarDias(MS.ini,-1), MS.fin);
+    r.mesNec=Math.ceil(necRaw-1e-9);
     r.rango=null; r.mesMin=null; r.mesMax=null; r.obj=true;
-    r.mes=Math.max(0, r.mesNec-r.mesQueda);
+    r.mes=Math.max(0, Math.ceil(necRaw-qRaw-1e-9));
+    r.mesQueda=r.mes>0 ? (r.mesNec-r.mes) : Math.floor(qRaw+1e-9);
     r.mes1=Math.min(r.mes, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-r.mesQueda));
     r.mes2=r.mes-r.mes1;
     return r;
@@ -27593,7 +27705,6 @@ function stockProducirDe(o, MS, PI){
      a fin de mes el 15 días y el mes pedían lo mismo dos veces: ALMOHADA 50x70 el 20/10, 77 + 95). Y SIN tope en 0: si no alcanza para
      llegar al 31, «queda» es negativo (lo que falta antes del 1°) y el mes lo suma — antes esas unidades no estaban en ninguna columna. */
   r.mesQueda=Math.floor(hay+r.quin-consumoResto+1e-9);
-  stockProducirAntes(r);   // 📅 (§4ls Mes-VM4) ver ahí
   /* 🎯 El rango (§4du): se necesita lo PROBABLE; el mínimo y el máximo se muestran al lado
      para que quien decide vea cuánto puede moverse. Lo ya vendido para ese mes es piso. */
   var comp=stockCompHasta(o, MS.fin, MS.ini), R=stockRangoMes(o, MS, PI);
@@ -27616,7 +27727,7 @@ function producirMedidaEtq(m){
 }
 function stockProducir(d){
   var MS=stockMesSiguiente(d.hoy), bloques={}, PI=ventasPanelIndex();   // una sola pasada por STATE para todo el plan (§4ec)
-  PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,mes:0,mes1:0,mes2:0,mesMin:0,mesMax:0,antes:0}, medidas:{} }; });
+  PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,mes:0,mes1:0,mes2:0,mesMin:0,mesMax:0}, medidas:{} }; });
   var cubiertos=0, sinContar=0;
   d.lista.forEach(function(o){
     if(o.descont) return;
@@ -27627,14 +27738,13 @@ function stockProducir(d){
     var r=stockProducirDe(o, MS, PI), b=stockBloqueDe(o), B=bloques[b.k];
     var f={ o:o, bloque:b, algo:(r.sem>0||r.quin>0||r.mes>0), md:producirMedidaEtq(o.medida) };
     o._pQuin=r.quin; o._pMes=r.mes;   // (§4jd, A1-7) para que «📦 Pedido único» no contradiga a las columnas de 15 días / el mes
-    PRODUCIR_COLS.forEach(function(c){ f[c]=r[c]; }); f.mesNec=r.mesNec; f.mesQueda=r.mesQueda; f.hay=r.hay; f.rango=r.rango; f.mesMin=r.mesMin; f.mesMax=r.mesMax; f.antes=r.antes||0;
+    PRODUCIR_COLS.forEach(function(c){ f[c]=r[c]; }); f.mesNec=r.mesNec; f.mesQueda=r.mesQueda; f.hay=r.hay; f.rango=r.rango; f.mesMin=r.mesMin; f.mesMax=r.mesMax;
     if(!f.algo) cubiertos++;
     B.filas.push(f);
     if(f.algo){
       var md=f.md, M=B.medidas[md]=B.medidas[md]||{sem:0,quin:0,mes:0,mes1:0,mes2:0};
       PRODUCIR_COLS.forEach(function(c){ B.tot[c]+=r[c]; M[c]+=r[c]; });
       B.tot.mesMin+=(r.mesMin!=null?r.mesMin:r.mes); B.tot.mesMax+=(r.mesMax!=null?r.mesMax:r.mes);
-      B.tot.antes+=(r.antes||0);   // 📅 (§4ls Mes-VM4) cuánto de «15 días» es para terminar este mes
     }
   });
   Object.keys(bloques).forEach(function(k){
@@ -27646,7 +27756,7 @@ function stockProducir(d){
    pero el del mes no, una estimación gruesa con el del mes. */
 function producirCubreTxt(f){
   var o=f.o;
-  if(o.dias!=null) return '<b>'+fmtFechaCorta(stockCorteVer(o))+'</b><br><span style="font-size:.9em;color:'+(o.dias<o.lead?'var(--red)':'var(--muted)')+'">'+stockEnDias(o.dias)+'</span>';   // (§4ls VF5)
+  if(o.dias!=null) return '<b>'+fmtFechaCorta(stockCorteVer(o))+'</b><br><span style="font-size:.9em;color:'+(o.dias<o.lead?'var(--red)':'var(--muted)')+'">'+stockCorteEnDias(o)+'</span>';   // (§4ls VF5)
   var n=stockCubreMesDias(o);   // ✏️ (§4ls VV6) la MISMA cuenta que «Se corta» del Plan
   if(n!=null) return (n<=0 ? '<b>ya</b><br><span style="font-size:.9em;color:var(--muted)">lo que hay ya está vendido</span>' : ('<b>~'+n+' día'+(n===1?'':'s')+'</b><br><span style="font-size:.9em;color:var(--muted)">al ritmo del mes</span>'));
   return '<span style="color:var(--green);font-weight:700">más de '+STOCK_HORIZONTE+' días</span>';
@@ -27676,7 +27786,7 @@ function renderProducir(d){
       /* 🎯 (18/10, §4ls, decisión 4) Lo que rota tiene objetivo: las tres columnas con la regla del punto de pedido. */
       '🎯 <b>Lo que rota</b>: <b>7 días</b> es lo de hoy (cuando lo libre baja al punto de pedido, hasta el objetivo); <b>15 días</b> suma la venta de los días hábiles de esos 15 días con el objetivo puesto al final; <b>'+esc(MS.nombre)+'</b>, la venta del último mes ('+STOCK_OBJ_VENTANA+' días hábiles) por sus días hábiles, menos lo que el '+fmtFechaCorta(MS.ini)+' quede por encima del objetivo (que se mantiene). '+
       'Para lo demás, <b>'+esc(MS.nombre)+'</b> va <b>además</b> de lo de 15 días (lo que hay que tener hasta fin de '+esc(MS.nombre)+' es 15 días + '+esc(MS.nombre)+') y es un <b>rango</b>: lo que dan los últimos 30 días, el promedio de los 2 y de los 3 últimos meses CERRADOS (este mes todavía no entra; un mes sin ventas cuenta como 0), el mismo mes del año pasado y la tendencia (este mes contra el mismo mes del año pasado); lo que no rota no se fabrica por el año pasado: solo se cubre lo ya vendido. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
-      '<b>Lo que falta para terminar '+esc(MESES_ES[+hoy.slice(5,7)-1])+'</b> (lo que no alcanza antes del '+fmtFechaCorta(MS.ini)+') va en <b>15 días</b>, no en '+esc(MS.nombre)+': hay que producirlo ya. '+
+      'Si lo que hay + 15 días no llega al '+fmtFechaCorta(MS.ini)+', «queda» es negativo y lo que falta se suma a <b>'+esc(MS.nombre)+'</b>. '+
       'En el pie de cada bloque, <b>tocá una medida</b> para ver qué modelos la componen.</div>';
   R.bloques.forEach(function(B){
     var filas=B.filas.filter(function(f){ return f.algo || PRODUCIR_VER_TODO; });
@@ -27684,7 +27794,7 @@ function renderProducir(d){
     html+='<div style="border:1px solid var(--gray-md);border-left:4px solid '+B.col+';border-radius:9px;padding:10px 12px;margin-top:10px">'+
       '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">'+
         '<b style="color:'+B.col+';font-size:.92rem">'+B.ico+' '+esc(B.titulo)+'</b>'+
-        '<span style="font-size:.78rem;color:var(--muted)">7 días: <b>'+B.tot.sem+'</b> · 15 días: <b>'+B.tot.quin+'</b>'+(B.tot.antes?(' (incluye '+B.tot.antes+' para terminar '+esc(MESES_ES[+hoy.slice(5,7)-1])+')'):'')+' · '+esc(MS.nombre)+': <b>'+B.tot.mes+'</b>'+((B.tot.mesMin!==B.tot.mes||B.tot.mesMax!==B.tot.mes)?(' <span title="mínimo – máximo, según qué historia se mire">(rango '+B.tot.mesMin+'–'+B.tot.mesMax+')</span>'):'')+(B.tot.mes?(' · 1ª quincena '+B.tot.mes1+' · 2ª '+B.tot.mes2):'')+'</span>'+
+        '<span style="font-size:.78rem;color:var(--muted)">7 días: <b>'+B.tot.sem+'</b> · 15 días: <b>'+B.tot.quin+'</b> · '+esc(MS.nombre)+': <b>'+B.tot.mes+'</b>'+((B.tot.mesMin!==B.tot.mes||B.tot.mesMax!==B.tot.mes)?(' <span title="mínimo – máximo, según qué historia se mire">(rango '+B.tot.mesMin+'–'+B.tot.mesMax+')</span>'):'')+(B.tot.mes?(' · 1ª quincena '+B.tot.mes1+' · 2ª '+B.tot.mes2):'')+'</span>'+
         (B.tot.sem||B.tot.quin||B.tot.mes ? ('<span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">'+
           (B.tot.sem?('<button class="btn btn-sm" style="background:#fff;border:1px solid '+B.col+';color:'+B.col+';font-weight:700;padding:2px 8px;font-size:.72rem" onclick="copiarProducir(\''+B.k+'\',\'sem\')">📋 7 días</button>'):'')+
           (B.tot.quin?('<button class="btn btn-sm" style="background:#fff;border:1px solid '+B.col+';color:'+B.col+';font-weight:700;padding:2px 8px;font-size:.72rem" onclick="copiarProducir(\''+B.k+'\',\'quin\')">📋 15 días</button>'):'')+
@@ -27697,7 +27807,7 @@ function renderProducir(d){
     html+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:1040px">'+
       '<thead><tr><th>Producto</th><th>Vende por día</th><th>Hay + en camino<br><span style="font-weight:400;font-size:.85em">PTF · Banzer · Moreno · lo que viene</span></th><th>Cubre hasta</th>'+   // ✏️ (§4ls VV4) no es el «Hay» del Plan
       '<th>7 días<br><span style="font-weight:400;font-size:.85em">hoy: lo vendido + hasta el objetivo</span></th>'+   // (16/10, §4lr U17) no «hasta el hoy+7»; 🎯 (§4ls) el objetivo
-      '<th>15 días<br><span style="font-weight:400;font-size:.85em">incluye lo de 7: no sumar · y lo que falta para terminar '+esc(MESES_ES[+hoy.slice(5,7)-1])+'</span></th>'+
+      '<th>15 días<br><span style="font-weight:400;font-size:.85em">incluye lo de 7: no sumar</span></th>'+
       '<th>'+esc(MS.nombre)+'<br><span style="font-weight:400;font-size:.85em">además de 15 días · necesita (mín–máx) · queda el '+fmtFechaCorta(MS.ini)+' · producir</span></th>'+
       '<th>1ª quincena</th><th>2ª quincena</th></tr></thead><tbody>'+
       filas.map(function(f){
@@ -27711,7 +27821,7 @@ function renderProducir(d){
           '<td><b>'+stockUnid(f.hay)+'</b><br><span style="color:var(--muted);font-size:.88em">'+stockUnid(Math.max(0,o.deposito||0))+' acá'+(o.enSale?(' · '+stockUnid(o.enSale)+' '+esc(saleAlmTxt(o))):'')+(o.enOtros?(' · '+stockUnid(o.enOtros)+' Moreno'):'')+(o.enCamino?(' · '+stockUnid(o.enCamino)+' en camino'):'')+(o.comp?('<br>'+stockUnid(o.comp)+' vendidos sin entregar'):'')+'</span></td>'+
           '<td>'+producirCubreTxt(f)+'</td>'+
           '<td>'+num(f.sem,true)+'</td>'+
-          '<td>'+num(f.quin,true)+(f.antes?('<br><span style="font-size:.8em;color:var(--muted)" title="lo que no alcanza antes del '+esc(fmtFechaCorta(MS.ini))+': se produce ya, no en '+esc(MS.nombre)+'">incluye '+f.antes+' para terminar '+esc(MESES_ES[+hoy.slice(5,7)-1])+'</span>'):'')+'</td>'+   // 📅 (§4ls Mes-VM4)
+          '<td>'+num(f.quin,true)+'</td>'+
           '<td>'+producirRangoTxt(f)+'</td>'+
           '<td>'+num(f.mes1)+'</td><td>'+num(f.mes2)+'</td></tr>';
       }).join('')+
@@ -27826,7 +27936,7 @@ function renderTiendas(d, MS){
 /* «73 (34–90) · 0 · 73» con el detalle de cada estimación al pasar el mouse. */
 function producirRangoTxt(f){
   var R=f.rango, num=function(n){ return n>0 ? ('<b style="font-size:1.05em;color:#7c2d12">'+n+'</b>') : '<span style="color:var(--muted)">—</span>'; };
-  var qd=f.mesQueda<0 ? ('<span style="color:var(--red)" title="faltan antes del 1°">'+f.mesQueda+'</span>') : f.mesQueda;   // (§4iz) negativo = falta antes del 1° (desde §4ls Mes-VM4 eso va en 15 días: queda ≥ 0)
+  var qd=f.mesQueda<0 ? ('<span style="color:var(--red)" title="faltan antes del 1°: se suman al mes">'+f.mesQueda+'</span>') : f.mesQueda;   // (§4iz) negativo = falta antes del 1°
   if(!R) return '<span style="color:var(--muted)">'+f.mesNec+' · '+qd+' · </span>'+num(f.mes);
   var mn=Math.ceil(R.min-1e-9), mx=Math.ceil(R.max-1e-9);
   var tit=R.est.map(function(e){ return e.n+': '+Math.round(e.v)+' ('+e.t+')'; }).join('\n')+'\nprobable = mediana de las '+R.n;
@@ -27874,7 +27984,6 @@ function copiarProducirTexto(B, h, MS, hoy){
     var o=f.o; tot+=f[col]; porMed[f.md]=(porMed[f.md]||0)+f[col];
     t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+': '+f[col]+
        (col==='mes'?(' — 1ª quincena '+f.mes1+' · 2ª quincena '+f.mes2):'')+
-       ((col==='quin'&&f.antes)?(' (incluye '+f.antes+' para terminar '+MESES_ES[+hoy.slice(5,7)-1]+')'):'')+   // 📅 (§4ls Mes-VM4)
        /* ✏️ (18/10, §4ls textos, VV4) «— hay 115» al lado de un Plan que dice «Hay 9»: lo que viene en camino va aparte, con el desglose. */
        ' — hay '+stockHayTxt(o)+(o.comp?(', '+stockUnid(o.comp)+' vendidos sin entregar'):'')+
        ((col==='mes'&&stockObjActivo(o))?(', vende '+stockUnid(o.objVendidos||0)+' en '+STOCK_OBJ_VENTANA+' días hábiles'+(o.objEduMc?(' ('+o.objEduMc+' de Eduardo a Multicenter)'):'')+', tener '+stockUnid(o.objetivo)):   // 🎯 (§4ls)
@@ -27886,7 +27995,7 @@ function copiarProducirTexto(B, h, MS, hoy){
      PROBABLE entre cinco estimaciones (§4du), y desde §4gm cuenta a Eduardo a Multicenter. */
   if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Va además de lo de '+PRODUCIR_QUINCENA+' días. Se descuenta lo que hay en PTF, Banzer, Moreno y en camino. Lo que rota: la venta del último mes ('+STOCK_OBJ_VENTANA+' días hábiles) por los días hábiles de '+MS.nombre+', más lo ya vendido para ese mes, menos lo que el 1° quede por encima del objetivo (el objetivo se mantiene). Lo que rota solo en '+STOCK_VENTANA_MES+' días: lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados (un mes sin ventas cuenta 0), el mismo mes del año pasado y la tendencia. Lo que no rota, solo lo ya vendido. Ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda (salvo las almohadas: lo que va a las tiendas cuenta como venta).';
   else if(col==='sem') t+='\n'+stockObjReglaTxt()+' Menos lo que hay en PTF, Banzer, Moreno y en camino.';
-  else t+='\nLo que rota: lo vendido sin entregar + la venta de los días hábiles de los próximos '+PRODUCIR_QUINCENA+' días + el objetivo puesto al final; lo que no rota, lo vendido. Menos lo que hay en PTF, Banzer, Moreno y en camino. Incluye lo que falta para terminar '+MESES_ES[+hoy.slice(5,7)-1]+'.';
+  else t+='\nLo que rota: lo vendido sin entregar + la venta de los días hábiles de los próximos '+PRODUCIR_QUINCENA+' días + el objetivo puesto al final; lo que no rota, lo vendido. Menos lo que hay en PTF, Banzer, Moreno y en camino.';
   copyText(t);
   toast('Copiado: producir para '+etq+' ✓','ok');
 }
@@ -27955,11 +28064,13 @@ function abrirStockConteo(){
     /* ⚠️ (26/09) El número puesto es lo que el panel calcula que hay HOY, no el del último corte:
        con el Excel de hace 3 días (TITANIO 10, salieron 6 → hay 4), dejar el renglón sin tocar
        guardaba 10 con fecha de hoy y el panel prometía 6 colchones que no están. */
-    var v=(o.deposito!=null) ? Math.max(0, o.deposito) : null;
-    /* 📋 (18/10, §4ls Man-VM2) `data-real` = lo que el panel calcula EXACTO (un PTF negativo, −12): el campo muestra 0, pero guardar sin
-       tocar tiene que dejar −12, no 0. */
-    return '<tr><td><b>'+esc(stockNombre(o))+'</b>'+(o.porDia>0?('<br><span style="color:var(--muted);font-size:.92em">se venden '+stockNum(o.porDia)+' por día</span>'):'')+'</td>'+
-      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" data-def="'+(v!=null?esc(String(v)):'')+'" data-real="'+(o.deposito!=null?esc(String(o.deposito)):'')+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
+    /* 📋 (18/10, §4ls Man-VM2) `data-real` = lo que el panel calcula EXACTO (un PTF negativo, −12): guardar sin tocar tiene que dejar −12.
+       (§4ls, corrector) …y el campo MUESTRA el negativo, con su nota: si mostraba 0, quien contó y encontró 0 no podía decirlo (lo dejaba
+       o escribía «0», igual a lo mostrado = «sin tocar») y quedaba −3: cada llegada se sumaba sobre −3 (llegan 5, el panel decía 2). */
+    var v=(o.deposito!=null) ? o.deposito : null, neg=(v!=null && v<0);
+    return '<tr><td><b>'+esc(stockNombre(o))+'</b>'+(o.porDia>0?('<br><span style="color:var(--muted);font-size:.92em">se venden '+stockNum(o.porDia)+' por día</span>'):'')+
+      (neg?('<br><span class="stk-conteo-neg" style="color:#8a1c24;font-size:.88em">⚠️ el panel calcula '+v+': se entregaron más de lo contado. Si contaste, poné lo que hay (0 si no hay).</span>'):'')+'</td>'+
+      '<td style="width:120px"><input type="number"'+(neg?'':' min="0"')+' step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" data-def="'+(v!=null?esc(String(v)):'')+'" data-real="'+(o.deposito!=null?esc(String(o.deposito)):'')+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
   }).join('');
   var html='<div class="modal-h" style="background:#7c2d12"><h3>📋 Conté el depósito</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
@@ -28231,12 +28342,25 @@ function stockRecogidaLineas(q, u){
       var pa=prodPartes(x), trae=pa.filter(function(e){ return e.tipo==='trae'; });
       if(!trae.length || pa.some(function(e){ return e.tipo==='sale'; }) || trae.some(function(e){ return !recogerMismo(e.de, q.de||''); })) return;
       var ut=0; trae.forEach(function(e){ ut+=e.u; });
-      L.push({ id:p.id, i:i, u:ut, f:String(fechaSalida(p)||p.fecha||''), oc:ocEtiq(p.oc)||'—', cli:String(p.cliente||'') });
+      /* ⚠️ (18/10, §4ls, corrector) Una línea 📥 NO sale por la fecha (espera la recogida, `stockSalio`), pero pasada a ✔ sí: si su día ya
+         pasó, la regla de siempre (§4co, fecha pasada sin ✅ = salió) la da por entregada ese día y libera su unidad; si es de HOY de un
+         turno que el Excel ya trae (U2), la da por salida con ese camión aunque la recogida llegó después. Esas se ofrecen DESTILDADAS y
+         con el aviso: hay que reprogramarlas primero. */
+      var fs=String(fechaSalida(p)||p.fecha||''), hoy=todayStr(), riesgo='';
+      if(fs && fs<hoy) riesgo='pasada';
+      else if(fs===hoy && stockAntesDelCorte(p, x, hoy, STOCK.c)) riesgo='turno';
+      L.push({ id:p.id, i:i, u:ut, f:fs, oc:ocEtiq(p.oc)||'—', cli:String(p.cliente||''), riesgo:riesgo });
     });
   });
   L.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
-  L.forEach(function(l){ if(l.u<=resto){ l.on=true; resto-=l.u; } });
+  L.forEach(function(l){ if(!l.riesgo && l.u<=resto){ l.on=true; resto-=l.u; } });
   return L;
+}
+function stockRecogidaRiesgoTxt(l){
+  if(!l || !l.riesgo) return '';
+  return l.riesgo==='pasada'
+    ? ('⚠️ era para el '+fmtFechaCorta(l.f)+': pasada a ✔ se da por entregada ese día y suelta su unidad. Reprogramala primero.')
+    : ('⚠️ es de un turno de hoy que el Excel de PTF ya trae: pasada a ✔ se da por salida con ese camión. Reprogramala primero.');
 }
 function stockRecogidaOfrecerLineas(q, u, toastTxt){
   var L=stockRecogidaLineas(q, u); if(!L.length) return false;
@@ -28248,7 +28372,8 @@ function stockRecogidaOfrecerLineas(q, u, toastTxt){
         '¿las paso a <b>✔ hay acá</b>? Así la Lista de carga ya no manda a buscarlas y la revisión no les aparta lo de Moreno.</p>'+
       L.map(function(l, n){ return '<label style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
         '<input type="checkbox" class="stk-rec-linea" data-n="'+n+'"'+(l.on?' checked':'')+' style="width:18px;height:18px">'+
-        '<b>'+esc(l.oc)+'</b> <span>'+esc(l.cli)+'</span> <span style="color:var(--muted)">'+stockUnid(l.u)+' · para el '+esc(fmtFechaCorta(l.f))+'</span></label>'; }).join('')+
+        '<b>'+esc(l.oc)+'</b> <span>'+esc(l.cli)+'</span> <span style="color:var(--muted)">'+stockUnid(l.u)+' · para el '+esc(fmtFechaCorta(l.f))+'</span>'+
+        (l.riesgo?('<span class="stk-rec-riesgo" style="display:block;color:#8a1c24;font-size:.8rem">'+esc(stockRecogidaRiesgoTxt(l))+'</span>'):'')+'</label>'; }).join('')+
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-primary btn-sm" id="stk-rec-lineas-ok" style="flex:1;min-width:200px;background:#0a6b47" onclick="stockRecogidaPasarLineas()">✔ Pasar las tildadas a «hay acá»</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Dejarlas como están</button>'+
@@ -28456,6 +28581,29 @@ var REVSTK_DIAS='todos';  // hoy · manana · semana · todos
 var REVSTK_SOLO_VACIOS=true;    // proteger lo revisado es el comportamiento normal
 var REVSTK_GUARDANDO=false;
 
+/* 🔁 (18/10, §4ls, corrector) LA ✗ QUE SIGUE COMO ESTÁ (no se reparte en la 2ª vuelta, como antes de V-REV-1): la de una entrega a más
+   de STOCK_HORIZ_VENDIDO (15) días. Repartida, quedaba ✔ protegida y le sacaba la unidad a los pedidos más cercanos que entraban después
+   (repetido del 09 al 16/10: lo apartado para más de 14 días pasaba de ~10 a ~20 u; el 10/10 cinco ✗ del 30-31/10 pasaron a ✔). Cuando
+   entra en los 15 días se reparte por fecha como las demás.
+   ⚠️ NO se usa `o.contradice` («un chofer marcó ✗ — contá de nuevo»): mira la FECHA del pedido, no cuándo se puso la ✗, así que es
+   verdadero también en el caso de V-REV-1 (✗ puesta antes de que llegara el stock): dejarla quieta deshacía el arreglo. Si una ✗ puesta
+   DESPUÉS del Excel tiene que mandar sobre él es decisión del dueño. */
+function revStkNoQuedaComoEsta(p, o){
+  var f=String((p&&p.fecha)||'');
+  return !!f && f>stockSumarDias(todayStr(), STOCK_HORIZ_VENDIDO);
+}
+/* ¿Un pedido de HOY en adelante entra en el filtro de días de la revisión («Hoy» / «Mañana» / «7 días» / «Todos»)? (§4ls, corrector: la
+   misma regla para el reparto y para contar las ATC.) */
+function revStkLimDias(){
+  var hoy=todayStr();
+  return REVSTK_DIAS==='hoy' ? hoy : REVSTK_DIAS==='manana' ? proximoDiaEntrega() : REVSTK_DIAS==='semana' ? diasAdelante(7) : '';
+}
+function revStkEnDias(f, lim){
+  if(lim==null) lim=revStkLimDias();
+  if(REVSTK_DIAS==='manana' && f!==proximoDiaEntrega()) return false;
+  if(lim && REVSTK_DIAS!=='manana' && f>lim) return false;
+  return true;
+}
 /* Los pedidos que entran en el reparto, en el orden en que se llevan el stock. */
 function revStkPedidos(todos){
   var hoy=todayStr(), lim='';
@@ -28473,9 +28621,7 @@ function revStkPedidos(todos){
        ✗ no hay, que es una venta viva esperando stock. Esa sí entra, y primero. */
     // (26/09) «📥» = lo que hay que ir a BUSCAR (`esRecoger`): lo de Banzer con fecha pasada salió, como el ✔.
     if(f && f<hoy) return (p.productos||[]).some(function(x){ return (x.chk==='no'||esRecoger(x)) && !enProduccion(x); });
-    if(!todos && REVSTK_DIAS==='manana' && f!==proximoDiaEntrega()) return false;
-    if(lim && REVSTK_DIAS!=='manana' && f>lim) return false;
-    return true;
+    return todos || revStkEnDias(f, lim);
   });
   return lista.sort(function(a,b){
     var fa=a.fecha||'9999-99-99', fb=b.fecha||'9999-99-99';
@@ -28612,7 +28758,7 @@ function stockAsignar(){
       // En pedidos vencidos solo sigue pendiente la línea «no hay» (y la que hay que ir a buscar).
       if(p.fecha && p.fecha<todayStr() && x.chk!=='no' && !rec) return;
       if(x.chk==='no'){
-        if(enReparto[p.id]) return;   // 🔁 (§4ls V-REV-1) va a la 2ª vuelta, por fecha, como una línea sin marcar
+        if(enReparto[p.id] && !revStkNoQuedaComoEsta(p, info[k])) return;   // 🔁 (§4ls V-REV-1) va a la 2ª vuelta, por fecha, como una línea sin marcar
         /* (§4iz, E2-8) Un ✗ es una venta esperando stock: entra en «📋 faltantes de esta revisión» (antes solo lo veía el Plan). */
         var _o=info[k]||{};
         if(!stockDescontinuadoK(k)){ if(!faltaPorProd[k]) faltaPorProd[k]={k:k, nom:(_o.desc?stockNombre(_o):(x.desc||'')), cod:_o.cod||x.codigo||'', u:0, ped:[], alm:{}};
@@ -28698,7 +28844,8 @@ function stockAsignar(){
       var migra=(x.chk==='im' && hay);
       if(enProduccion(x)){ tot.aFab++; return; }          // la trae la fábrica para este cliente
       if(p.fecha && p.fecha<todayStr() && antes!=='no' && !rec) return;
-      if(REVSTK_SOLO_VACIOS && antes && antes!=='no'){   // 🔁 (18/10, §4ls V-REV-1) la ✗ se reparte acá, por fecha, como lo sin marcar
+      var _xQueda=(antes==='no' && revStkNoQuedaComoEsta(p, info[stockClave(x)]));   // (§4ls, corrector) ver `revStkNoQuedaComoEsta`
+      if(REVSTK_SOLO_VACIOS && antes && (antes!=='no' || _xQueda)){   // 🔁 (18/10, §4ls V-REV-1) la ✗ se reparte acá, por fecha, como lo sin marcar
         var kr=stockClave(x), ir=info[kr]||{};
         if(migra){
           // Su reserva ya se hizo arriba, en su lugar: acá solo se propone reescribir la marca.
@@ -28829,10 +28976,15 @@ function stockAsignar(){
       // 🔁 (18/10, §4ls V-REV-1) Pasar una ✗ a ✔/📥 porque llegó stock no contradice a nadie: logística dijo «no hay» y ahora hay.
       var contra=(cambia && antes!=='' && antes!=='no' && !(antesEf===ahora && mismoLugar));
       if(contra) tot.contra++;
+      /* ↩️ (18/10, §4ls, corrector) …pero se DICE: la ✗ la puso una persona, y si la puso DESPUÉS del Excel (contó y no estaba) el panel no
+         lo sabe. No cuenta como «contradice» (no se resalta ni frena) y no cambia qué se propone: si una ✗ posterior al Excel tiene que mandar
+         sobre él es decisión del dueño. Solo que quien aplica lo vea antes de tocar «Aplicar». */
+      var deNo=(antes==='no' && ahora!=='no');
+      if(deNo) tot.deNo=(tot.deNo||0)+1;
       lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora, alm:almIM, almPor:porLinea, hayIMPor:hayIMPor,
                    almAntes:((antes==='im'||antes==='ok')?recogerDe(x):''), almAntesPor:((antes==='im'||antes==='ok')?partesAntes:null),
                    deDep:deDep, deIM:deIM+prog, deSale:deSale, prog:hayProg, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, haySale:haySale,
-                   cambia:cambia, contra:contra, migra:(migra && ahora==='ok' && mismoLugar), descont:desc});
+                   cambia:cambia, contra:contra, deNo:deNo, migra:(migra && ahora==='ok' && mismoLugar), descont:desc});
     });
     if(lineas.length) pedidos.push({p:p, lineas:lineas, firma:JSON.stringify(p)});
   });
@@ -28867,6 +29019,7 @@ function stockAsignar(){
   STATE.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado || !esATCPedido(p)) return;
     if((p.fecha||'')<hoyA && !(p.productos||[]).some(function(x){ return x.chk==='no' && !enProduccion(x); })) return;
+    if((p.fecha||'')>=hoyA && !revStkEnDias(p.fecha||'')) return;   // (18/10, §4ls, corrector, T9) con el mismo filtro de días que el reparto
     tot.atc++;
   });
   var ord=function(m){ return Object.keys(m).map(function(k){ return m[k]; }).filter(function(o){ return o.u>0; }).sort(function(a,b){ return b.u-a.u; }); };
@@ -28966,6 +29119,10 @@ function renderStockRevisar(){
     (R.tot.contra?('<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.82rem;color:#7c4b00">'+
       '⚠️ En <b>'+R.tot.contra+'</b> línea'+(R.tot.contra===1?'':'s')+' el panel dice algo <b>distinto de lo que alguien ya había marcado a mano</b>. Están resaltadas abajo. '+
       'Si preferís no tocar esas, marcá la casilla de acá abajo.</div>'):'')+
+    /* ↩️ (18/10, §4ls, corrector) Las ✗ puestas a mano que pasan a ✔/📥 porque llegó stock (V-REV-1): no contradicen, pero se dicen. */
+    (R.tot.deNo?('<div class="rev-deno-aviso" style="background:#fffbeb;border:1px solid #f0d264;border-radius:8px;padding:8px 13px;margin-bottom:10px;font-size:.8rem;color:#7c4b00">'+
+      '↩️ <b>'+R.tot.deNo+'</b> línea'+(R.tot.deNo===1?'':'s')+' marcada'+(R.tot.deNo===1?'':'s')+' «✗ no hay» a mano pasa'+(R.tot.deNo===1?'':'n')+' a ✔/📥 porque el Excel tiene stock. '+
+      'Si alguien la marcó DESPUÉS de contar (el Excel ya no vale para esa), no apliques: contá de nuevo primero.</div>'):'')+
     /* 📥 La marca dice un almacén y el stock está en otro: se reserva igual, pero el que va
        a buscar tiene que enterarse ANTES de subirse a la camioneta (§4ey). */
     revAlmMalHtml(R.almMal, true)+   // ✏️ (§4ls V-REV-4) la misma caja que el cuadro fijo
@@ -28996,7 +29153,8 @@ function renderStockRevisar(){
                 l.deIM+' a recoger de '+esc(recogerPorTxt((l.almPor||[]).filter(function(e){ return !e.sale; })))+(l.prog?(' ('+l.prog+' ya en la recogida programada)'):'')+'</span>'):'')+
               (l.ahora==='no'?('<br><span style="color:var(--red);font-size:.88em">'+revStkDesglose(l)+'</span>'):'')+'</td>'+
             '<td>'+revStkMarca(l.antes, l.almAntesPor)+'</td>'+
-            '<td>'+revStkMarca(l.ahora, l.almPor)+(l.contra?'<br><span style="color:#7c4b00;font-size:.8em">⚠️ cambia lo marcado a mano</span>':'')+'</td></tr>';
+            '<td>'+revStkMarca(l.ahora, l.almPor)+(l.contra?'<br><span style="color:#7c4b00;font-size:.8em">⚠️ cambia lo marcado a mano</span>':'')+
+              (l.deNo?'<br><span class="rev-deno" style="color:#7c4b00;font-size:.8em">↩️ estaba «✗ no hay» a mano: el Excel tiene stock. Si se contó después del Excel, no apliques</span>':'')+'</td></tr>';   // (§4ls, corrector)
         }).join('');
       }).join('')+
       '</tbody></table></div>';
@@ -29152,8 +29310,10 @@ function aplicarStockRevisar(){
     if(!p || p.entregado || JSON.stringify(p)!==g.firma){
       omitidos++; setTimeout(uno,0); return;
     }
+    var seQuito=false;   // (§4ls, corrector) una ✗ que pasó a otra marca: el «No hay» del pedido salía de ella
     g.lineas.forEach(function(l){
       var x=(p.productos||[])[l.i]; if(!x) return;
+      if(x.chk==='no' && l.ahora!=='no') seQuito=true;
       x.chk=l.ahora; lineas++;
       /* 📥 …y de qué almacén se va a buscar (§4ey). Vacío = IM, como siempre. Si el stock
          está repartido y ninguno cubre la línea entera, se guarda el DESGLOSE: decir un
@@ -29172,7 +29332,7 @@ function aplicarStockRevisar(){
         }
       } else { delete x.chkDe; delete x.chkDes; }
     });
-    syncVerificado(p); upsert(p);
+    syncVerificado(p, seQuito); upsert(p);
     if(!CONNECTED){ queuePending(p); ok++; setTimeout(uno,0); return; }
     /* `apiSave` ya aplica el sello del servidor y ya trata los rechazos firmes (§4ce):
        acá solo hay que contar y encolar lo que sea un problema de red, no un «no» firme. */
@@ -29803,8 +29963,10 @@ function stockSalioVentana(p, x, v){
      antes (ya no estaba en él: no vuelve a restarse, si no el Excel de hoy lo mostraba como «entrada sin explicar» y el lote como
      producción); el día de ESTE corte, entra lo de los turnos que este Excel ya trae. */
   var nt=v.turnos || stockIncNorm(!!v.incluyeHasta), pt=v.prevTurnos || stockIncNorm(!!v.prevInc);
-  if(!v.mismo && v.prevF && f===v.prevF && stockAntesDelCorte(p, x, f, stockCorteTurnos(v.prevF, pt))) return false;
-  if(f===v.hasta) return stockAntesDelCorte(p, x, f, stockCorteTurnos(v.hasta, nt));
+  /* 🕙 (18/10, §4ls, corrector) …con la HORA de cada Excel: lo cargado después de un Excel no estaba adentro (`stockCargadoDespuesDelCorte`). */
+  var cP=stockCorteTurnos(v.prevF, pt), cN=stockCorteTurnos(v.hasta, nt); if(v.prevHora) cP.hora=v.prevHora; if(v.hora) cN.hora=v.hora;
+  if(!v.mismo && v.prevF && f===v.prevF && stockAntesDelCorte(p, x, f, cP)) return false;
+  if(f===v.hasta) return stockAntesDelCorte(p, x, f, cN);
   if(p.entregado) return true;
   return true;                                             // fecha pasada dentro de la ventana y sin cierre que diga lo contrario: salió (convención de siempre)
 }
@@ -30551,6 +30713,7 @@ function confirmarImportExist(){
   STOCK.h=[{ id:String(R.almacen)+'|'+String(R.fecha||'')+'|'+String(R.hora||''), f:R.fecha, hora:R.hora||'', alm:R.almacen, rol:rolGuardado, n:R.items.length, u:tu, ts:Date.now(), inc:incTodo, hu:existHuella(R) }]
           .concat((STOCK.h||[]).filter(function(x){ return !(x && x.alm===R.almacen && x.f===R.fecha && String(x.hora||'')===String(R.hora||'')); })).slice(0,STOCK_HIST);
   if(!incTodo && (inc.am || inc.pm)) STOCK.h[0].incT = inc.am ? 'am' : 'pm';   // 🚚 (§4ls) de acá lo repone `stockIncDelHistorial` si una página vieja lo borra
+  else if(incTodo) STOCK.h[0].incT='ampm';   // 🧓 (§4ls, corrector) los dos turnos con la regla nueva (sin esto, `inc:true` = la casilla de antes)
   /* 🧮 (§4hn) Lo tildado en el control: cierra SOLO lo que logística confirmó, sella las llegadas de lo hecho a pedido y
      anota las salidas sin pedido. Nada se cierra por fecha. Las diferencias del corte van al historial. */
   var ctrl=existAplicarControl(R, rolCtrl, incCtrl, C0);
@@ -31148,7 +31311,9 @@ function irAImportadosRoho(mes){
    Banzer abría con su título «2 de 3» y su control fuera de la pantalla y el botón «Usar y seguir con Moreno» justo debajo del dedo (dos
    toques confirmaban Banzer sin verlo), y la ficha de un pedido abierta desde la revisión caía en la mitad, sin el N° ni la ✕. Repintar
    la MISMA ventana (mismo título: tildar algo, «ver todas») conserva dónde estaba. */
-function modalTitulo(){ var h=document.querySelector('#modal-box .modal-h h3'); return h ? String(h.textContent||'') : ''; }
+/* (18/10, §4ls, corrector) Sin los números: «⚠️ 5 pedidos sin camión» repintado como «4 pedidos…» después de asignar uno es la MISMA
+   ventana (no vuelve arriba); «Ventana A» → «Ventana B» sí es otra. */
+function modalTitulo(){ var h=document.querySelector('#modal-box .modal-h h3'); return h ? String(h.textContent||'').replace(/\d+([.,]\d+)?/g,'#') : ''; }
 function openModal(html, ancha){
   var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
   var antes=ov.classList.contains('on') ? modalTitulo() : null;
@@ -31603,7 +31768,14 @@ function cierreEntEfecto(p, dia){
   });
   return por;
 }
+/* (18/10, §4ls, corrector) ¿Alguna línea de este pedido entra en el stock? Una ATC, una venta de tienda o un pedido solo de productos de
+   tienda, ✗ o «recoger de una tienda» no toca el stock: decir «el Excel vigente ya no lo tiene» daba un motivo falso. */
+function cierreEntTocaStock(p){
+  if(!p || !stockCuenta(p) || esVentaTienda(p)) return false;
+  return (p.productos||[]).some(function(x){ return x && !esProdDeTienda(x) && !recogeDeTienda(x) && x.chk!=='no' && Number(x.cant)>0; });
+}
 function cierreEntEfectoTxt(p, dia){
+  if(!cierreEntTocaStock(p)) return 'no toca el stock';
   var por=cierreEntEfecto(p, dia), ks=Object.keys(por).filter(function(k){ return por[k]>0; });
   if(!ks.length) return 'no baja el stock: el Excel vigente ya no lo tiene';
   return 'baja '+ks.map(function(k){ return (k?saleNombre(k):'PTF')+' '+stockUnid(por[k]); }).join(' · ')+' (el Excel vigente todavía lo tenía)';
@@ -31715,8 +31887,10 @@ function cierreEntRpHechosHtml(){
   return '<div class="cie-rp-hechos"><b>📅 Reprogramados en este cierre · '+CIERRE_ENT_RP_HECHOS.length+'</b>'+
     CIERRE_ENT_RP_HECHOS.map(function(h){ return '<div>'+esc(h.oc)+' · '+esc(h.cli)+': '+esc(fmtFechaCorta(h.de.f))+' '+esc(h.de.t)+' → <b>'+esc(fmtFechaCorta(h.a.f))+' '+esc(h.a.t)+'</b></div>'; }).join('')+'</div>';
 }
+var CIERRE_ENT_HOY='';   // (§4ls, corrector) el día con el que se dibujó la lista del cierre
 function renderCierreEntregas(){
   var hoy=todayStr(), H=cierreEntHoy(hoy), A=cierreEntAtrasados(hoy);
+  CIERRE_ENT_HOY=hoy;
   /* 📅 (13/10) se repinta al abrir/usar «reprogramar»: que la lista no salte arriba */
   var _mb=document.getElementById('modal-box'), _ab=document.getElementById('modal')&&document.getElementById('modal').classList.contains('on') && _mb && _mb.querySelector('.cie-ent');
   var _sc=_ab ? [_mb.scrollTop, _ab.scrollTop] : null;
@@ -31824,7 +31998,9 @@ function cierreEntPendienteGuardar(x){ try{ if(x) localStorage.setItem(LS_CIERRE
 /* El plan de un cierre: qué se tilda (con el día declarado) y cómo estaba cada pedido al abrir. Lo destildado no entra: no se
    le escribe nada (dueño, 05/10). */
 function cierreEntPlan(quien){
-  var hoy=todayStr(), ids=cierreEntTildados(), antes={}, dias={};
+  /* 📅 (18/10, §4ls, corrector) «Hoy» es el de la lista DIBUJADA (`CIERRE_ENT_HOY`): abierto a las 23:58 y confirmado a las 00:02, un
+     tildado en «Programados para hoy» pasaba a atrasado sin día y sin botones para elegirlo (el cierre quedaba trabado). */
+  var hoy=CIERRE_ENT_HOY||todayStr(), ids=cierreEntTildados(), antes={}, dias={};
   ids.forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; });
   ids.forEach(function(id){ var a=antes[id]||{}; dias[id]= a.hoy ? hoy : (CIERRE_ENT_DIA[id]||''); });   // 📅 (§4ls Cie-C5) un atrasado sin día elegido no tiene día
   return { ids:ids, antes:antes, dias:dias, quien:String(quien||''), hoy:hoy, ts:Date.now() };
@@ -32267,7 +32443,7 @@ function setProdProduccion(id, idx, lugar){
      llegó (cuando pasa a ✔ hay). Van adentro del producto, como todo lo demás. */
   if(apagar){ delete x.prodF; delete x.prodR; } else if(!x.prodF){ x.prodF=todayStr(); delete x.prodR; }
   if(x.chk==='prod') x.chk = apagar ? '' : 'no';   // migrar el valor viejo a la marca nueva
-  syncVerificado(p);   // el "Estado de stock" de abajo se marca solo: ya se pidió a fábrica
+  syncVerificado(p, apagar);   // el "Estado de stock" de abajo se marca solo: ya se pidió a fábrica (apagar el 🏭 lo corrige)
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   reabrirFicha(id);
@@ -32309,7 +32485,8 @@ function lugaresProd(p){
   });
   return l.length?(' · '+l.join(' + ')):'';
 }
-function syncVerificado(p){
+/* `seQuito` (18/10, §4ls, corrector): quien llama acaba de SACAR una marca 🏭 o ✗ (de ahí salía el «En producción» / «No hay»). */
+function syncVerificado(p, seQuito){
   var pr=p.productos||[]; if(!pr.length) return;
   var todosOk=true, algunoNo=false, algunoIM=false, algunoSin=false, algunoMarcado=false;
   for(var i=0;i<pr.length;i++){
@@ -32335,7 +32512,10 @@ function syncVerificado(p){
   else if(todosOk) p.estado='En stock';
   /* ✏️ (18/10, §4ls textos, Man-VM9) Sin ninguna línea en producción ni «✗ no hay», el estado de stock se limpia aunque queden líneas sin
      revisar: desmarcar 🏭 dejaba el pedido «En producción» (columna Estado y color de la fila) con la insignia «⬜ Sin revisar». */
-  else if(p.estado==='No hay'||p.estado==='En producción') p.estado='';   // se corrigió
+  /* (18/10, §4ls, corrector) …pero solo si se acaba de sacar una 🏭 o ✗ (`seQuito`) o ya no queda ninguna línea sin revisar: el estado
+     puesto A MANO con los botones de la ficha («🔴 No hay · reprogramar», «🟡 En producción», `setEstado`) se perdía apenas alguien
+     marcaba ✔ en otra línea. */
+  else if((p.estado==='No hay'||p.estado==='En producción') && (seQuito || (algunoMarcado && !algunoSin))) p.estado='';   // se corrigió
 }
 function setProdChk(id, idx, val, de){
   var p=findById(id); if(!p||!p.productos||!p.productos[idx]) return;
@@ -32349,7 +32529,7 @@ function setProdChk(id, idx, val, de){
   /* 🚚 (26/09) Con Banzer pasa lo mismo con el ✔: «✔» (acá) y «✔ Banzer» son dos lugares. «El mismo»
      es el botón que está ENCENDIDO: la marca de antes «📥 Banzer» enciende «✔ Banzer» (`prodHay`), y
      tocarlo la apaga en vez de reescribirla. */
-  var mismo;
+  var mismo, eraNo=(x.chk==='no');
   if(val==='im') mismo=esRecoger(x) && recogerMismo(recogerDe(x), de);
   else if(val==='ok') mismo=prodHay(x) && saleMismo(recogerDe(x), de);
   else mismo=(x.chk===val);
@@ -32360,7 +32540,7 @@ function setProdChk(id, idx, val, de){
   else if(x.chk==='ok' && saleCanon(de)) x.chkDe=saleCanon(de);          // ✔ Banzer: de ahí sale el camión
   else delete x.chkDe;
   if(x.chk==='ok' && enProduccion(x) && x.prodF && !x.prodR) x.prodR=todayStr();   // llegó lo pedido a fábrica (§4co)
-  syncVerificado(p);
+  syncVerificado(p, eraNo && x.chk!=='no');   // (§4ls, corrector) sacar una ✗ corrige el «No hay» que salía de ella
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   reabrirFicha(id);
@@ -36236,7 +36416,9 @@ function stockYaVieneTxt(o){
   /* ✏️ (18/10, §4ls textos) Lo que tenía que llegar antes de hoy NO «viene»: se reclama (§4hn: lo vencido no se da por llegado). Con
      «ya vienen 2 de fábrica» de un pedido atrasado se perdía el «⚠️ reclamar» que decía la fila cuando era «🚚 Ya pedido». */
   var rec=0, fab=0, atr=0, atrF='', hoy=todayStr();
-  (o&&o.pedidos||[]).forEach(function(q){ var u=Number(q&&q.u)||0; if(!(u>0)) return;
+  /* (18/10, §4ls, corrector) …sin lo que el Excel ya mostró (`stockMenosDetectado`, la misma cuenta que `stockEnCaminoSeguro`): con una
+     detección el texto decía más «ya vienen» que lo que contaba la fila. */
+  stockMenosDetectado(o, (o&&o.pedidos)||[]).forEach(function(q){ var u=Number(q&&q.u)||0; if(!(u>0)) return;
     if(q.llega && q.llega<hoy){ atr+=u; if(!atrF || q.llega<atrF) atrF=q.llega; return; }
     if(q.tipo==='recogida') rec+=u; else fab+=u; });
   var t=[];
@@ -36289,6 +36471,16 @@ function stockCorteVer(o){
   if(!o || !o.corte) return '';
   return diaHabil(o.corte) ? o.corte : sigDiaHabil(o.corte);
 }
+/* (18/10, §4ls, corrector, VF5) «en N días» contado hasta el día que se MUESTRA (`stockCorteVer`): «26/10 · en 9 días» contaba hasta el
+   domingo 25. `o.dias` no cambia (lo usan los avisos). */
+function stockCorteEnDias(o){ var f=stockCorteVer(o); return f ? stockEnDias(Math.max(0, stockDias(todayStr(), f))) : stockEnDias(o.dias); }
+/* (§4ls, corrector, VV7) «Con lo pedido alcanza hasta el …» = el último día hábil ANTES del corte (el corte es el primer día SIN stock). */
+function stockAlcanzaHasta(o){
+  if(!o || !o.corte) return '';
+  var f=stockSumarDias(o.corte, -1), hoy=todayStr();
+  for(var n=0; n<10 && f>hoy && !diaHabil(f); n++) f=stockSumarDias(f, -1);
+  return f<hoy ? hoy : f;
+}
 /* ✏️ (18/10, §4ls textos, VV7/VV8) Lo en camino partido en lo que llega desde hoy y lo atrasado (tenía que llegar antes de hoy y ningún
    Excel lo mostró: se reclama). La tabla decía «20 llegan ~14/10» el 16/10 con 11 atrasados y 9 para el 19/10. */
 function stockLlegadas(o){
@@ -36303,7 +36495,7 @@ function sfAccion(o){
   switch(o.aviso){
     case 'urgente': return '🚨 Pedí '+stockUnid(o.fabricar)+' ya'+(o.recoger>0?(' · traé '+stockUnid(o.recoger)+' de Moreno'):'')+stockYaVieneTxt(o)+(o.revisarStock?' · ⚠️ revisá el saldo':'');
     case 'pedir':   return '🏭 Pedí '+stockUnid(o.fabricar)+' esta semana'+(o.recoger>0?(' · traé '+stockUnid(o.recoger)+' de Moreno'):'')+stockYaVieneTxt(o)+(o.revisarStock?' · ⚠️ revisá el saldo':'');
-    case 'traer':   return '🚚 Traé '+stockUnid(o.recoger||o.pedir)+' de Moreno'+(o.revisarStock?' · ⚠️ revisá el saldo':'');
+    case 'traer':   return '🚚 Traé '+stockUnid(o.recoger||o.pedir)+' de Moreno'+stockDescontNoLlegaTxt(o)+(o.revisarStock?' · ⚠️ revisá el saldo':'');
     case 'revisar': return '⚠️ Revisá el saldo'+(o.fabricar>0?(' · igual pedí '+stockUnid(o.fabricar)):' antes de pedir')+(o.recoger>0?(' · traé '+stockUnid(o.recoger)+' de Moreno'):'');   // (§4iv) el número no se esconde; (§4ls VV9) ni lo de Moreno
     /* ✏️ (18/10, §4ls textos, Man-VM10) Una recogida programada no es un pedido a fábrica: «🚚 Ya pedido» se leía como que la fábrica
        ya tenía el pedido. */
@@ -36317,18 +36509,33 @@ function sfAccion(o){
      (regla del dueño: no tener stock de lo que no se vende). «✅ Alcanza» con «Hay 0» se leía como que había, mientras el cuadrito del
      vendedor decía «🏭 NO HAY». La cuenta no cambia: no se pide nada. */
   if(sfSinStockAPedido(o)) return '📦 Sin stock: se fabrica a pedido';
+  if(sfSinStockDescont(o)) return '🛑 Sin stock: ya no se fabrica';   // (18/10, §4ls, corrector) lo descontinuado no se fabrica ni a pedido (§4cz)
   /* 🎯 (18/10, §4ls) Lo que rota se pide cuando lo libre llega al punto de pedido: si al ritmo de 15 días igual se corta antes de que llegue
      la fábrica, que se entienda por qué no se pide. */
   /* ✏️ (18/10, §4ls textos, VV10) «✅ Alcanza» es para hoy y los 7 días: si el plan igual pide para 15 días o el mes, se dice. */
   if(stockObjActivo(o) && o.dias!=null && o.dias<=o.lead) return '✅ Alcanza esta semana · lo libre está sobre el punto de pedido'+stockPlanPideTxt(o);
   return stockPlanPideTxt(o) ? ('✅ Alcanza esta semana'+stockPlanPideTxt(o)) : '✅ Alcanza';
 }
+/* 🛑 (18/10, §4ls, corrector, Man-VM8) Un descontinuado con algo en Moreno pero menos que lo vendido: «🚚 Traé 2 de Moreno» no decía que
+   las otras 3 no van a llegar nunca (ya no se fabrica). Lo vendido − lo que hay en los tres almacenes − lo que viene seguro. */
+function stockDescontNoLlega(o){
+  if(!o || !o.descont) return 0;
+  return Math.max(0, Math.ceil((Number(o.comp)||0) - (stockHaySalir(o)||0) - (Number(o.enOtros)||0) - stockEnCaminoSeguro(o) - 1e-9));
+}
+function stockDescontNoLlegaTxt(o){ var n=stockDescontNoLlega(o); return n>0 ? (' · 🛑 '+stockUnid(n)+' vendido'+(n===1?'':'s')+' no '+(n===1?'llega':'llegan')+': ya no se fabrica') : ''; }
 /* Todo lo en camino de la fila son recogidas de Moreno (ninguna fábrica tiene el pedido). */
 function stockSoloRecogidas(o){ var P=(o&&o.pedidos)||[]; return P.length>0 && P.every(function(q){ return q.tipo==='recogida'; }); }
 /* (H4) Lo que no rota, sin nada en PTF, Banzer ni Moreno, sin nada vendido pendiente ni en camino, y sin plan: se hace a pedido. */
 function sfSinStockAPedido(o){
-  var h=sfHay(o); if(h==null || o.aviso) return false;
+  var h=sfHay(o); if(h==null || o.aviso || o.descont) return false;   // (§4ls, corrector) lo descontinuado no «se fabrica a pedido»
   return !stockObjActivo(o) && (Math.max(0,h)+(o.enOtros||0))<=0 && !(o.comp>0) && !(o.enCamino>0) && !stockPlanPideTxt(o);
+}
+/* 🛑 (18/10, §4ls, corrector) Lo mismo para lo que YA NO SE FABRICA (x:1 / Carioca descontinuada): con 0 en todos lados decía «📦 Sin stock:
+   se fabrica a pedido» mientras el cuadrito del vendedor decía «🛑 YA NO SE FABRICA» y la regla del dueño (§4cz/§4dc) dice que nunca
+   entra en «hay que fabricar». */
+function sfSinStockDescont(o){
+  var h=sfHay(o); if(h==null || !o.descont || (o.aviso && o.aviso!=='sobra')) return false;
+  return (Math.max(0,h)+(o.enOtros||0))<=0 && !(o.comp>0) && !(o.enCamino>0);
 }
 function sfDiaTxt(iso){
   var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return fmtFechaCorta(iso);
@@ -36353,20 +36560,30 @@ function sfReloj(o){
   /* ✏️ (18/10, §4ls textos, VV5) «Ya falta» solo si lo que llega NO lo cubre a tiempo: la MISMA proyección día por día
      (`stockProyectar`) sin el ritmo de venta, o sea solo lo vendido contra lo que hay y lo que llega antes de cada entrega. Antes un
      pedido que llegaba el 19/10 para una venta del 21/10 decía «⛔ Ya falta» en rojo mientras la tabla decía «no en 45 días». */
-  var cubre=null;
+  var cubre=null, conMoreno=false;
   if(compH>hayT){
-    var p0=stockProyectar(Object.assign({}, o, { porDia:0 }));
-    if(!(p0.corte==null || p0.corte>stockCompHorizonteLim(o))) return { txt:'⛔ Ya falta para lo vendido', pct:3 };
+    var p0=stockProyectar(Object.assign({}, o, { porDia:0 })), limH=stockCompHorizonteLim(o);
+    if(!(p0.corte==null || p0.corte>limH)){
+      /* (18/10, §4ls, corrector, VV5) …contando también lo de MORENO (se trae en un día): con 0 en PTF y Banzer, 5 en Moreno, 6 vendidos
+         y 2 que llegan antes decía «⛔ Ya falta» al lado de «🚚 Traé 4 de Moreno». */
+      var pM=(o.enOtros||0)>0 ? stockProyectar(Object.assign({}, o, { porDia:0, paraSalir:(stockHaySalir(o)||0)+(o.enOtros||0) })) : p0;
+      if(!(pM.corte==null || pM.corte>limH)) return { txt:'⛔ Ya falta para lo vendido', pct:3 };
+      conMoreno=true;
+    }
     cubre=stockLlegadas(o);
   }
   if(o.dias!=null) return { txt:(o.dias<=0?'⏳ Se corta hoy':('⏳ Se corta el '+sfDiaTxt(stockCorteVer(o)))), pct:Math.max(4,Math.min(100,o.dias/STOCK_HORIZONTE*100)) };   // (§4ls VF5) nunca un domingo
-  if(cubre && cubre.f) return { txt:'🚚 Lo vendido lo cubre lo que llega el '+sfDiaTxt(cubre.f), pct:50 };
+  if(cubre && cubre.f) return { txt:'🚚 Lo vendido lo cubre lo que llega el '+sfDiaTxt(cubre.f)+(conMoreno?' y lo que se trae de Moreno':''), pct:50 };
+  if(conMoreno) return { txt:'🚚 Lo vendido se cubre trayendo de Moreno', pct:40 };
   if((o.comp||0)>hayT) return { txt:'📅 Lo vendido para más adelante entra en «Pedir» cuando se acerque', pct:60 };
   if(hayT<=0 && (o._pQuin>0 || o._pMes>0)) return { txt:'Sin stock · lo pide el plan '+(o._pQuin>0?'de 15 días':'del mes'), pct:8 };
   /* ✏️ (§4ls VV6) Sin ritmo de 15 días pero con el del mes: los días que da ese ritmo, la MISMA cuenta de «Cubre hasta» de Qué producir. */
   var nm=stockCubreMesDias(o);
   if(nm!=null && nm<STOCK_HORIZONTE) return { txt:(nm<=0 ? '⏳ Lo que hay ya está vendido: se corta ya, al ritmo del mes' : ('⏳ Se corta en ~'+nm+' día'+(nm===1?'':'s')+', al ritmo del mes')), pct:Math.max(4,Math.min(100,nm/STOCK_HORIZONTE*100)) };
   if(sfSinStockAPedido(o)) return { txt:'Sin stock · se hace a pedido', pct:0 };   // ✏️ (§4ls H4) nunca «Alcanza» con 0 en todos lados
+  if(sfSinStockDescont(o)) return { txt:'Sin stock · ya no se fabrica', pct:0 };      // (§4ls, corrector)
+  /* (18/10, §4ls, corrector, H4) …tampoco lo que no rota y no se repone («📦 Pedido único») con 0 en los tres almacenes. */
+  if(o.aviso==='unico' && hayT<=0 && !(o.comp>0) && !(o.enCamino>0)) return { txt:'Sin stock · no se repone (sin rotación)', pct:0 };
   return { txt:'Alcanza más de '+STOCK_HORIZONTE+' días', pct:100 };
 }
 /* La torrecita de cada ficha: PTF, Banzer y Moreno apilados; arriba, en rojo transparente, lo que falta para tener. */
@@ -36539,7 +36756,9 @@ function stockCintaHtml(d){
      pero el de «Traer» lo cuenta: si no, logística mirando la cinta no veía 5 de las 8 recogidas que dice «📋 Copiar el pedido». */
   var junto=d.lista.filter(function(o){ var g=planGrupoDe(o); return g && g!=='tr' && (o.recoger||0)>0; }).length;
   ['ya','sem','tr','rev'].forEach(function(t){
-    var L=por[t]; if(!L.length) return;
+    /* (18/10, §4ls, corrector, VV2) Sin ningún producto «solo traer», el carril de «Traer» igual aparece si hay que traer algo junto con un
+       pedido: si no, «(+N junto con un pedido)» no se veía nunca. */
+    var L=por[t]; if(!L.length && !(t==='tr' && junto)) return;
     var c=L.map(cintaColchonHtml).join(''), corre=L.length>=4;
     var eco=corre ? c.replace(/<button /g,'<button tabindex="-1" aria-hidden="true" ') : '';
     h+='<div class="ci-est ci-'+t+'" data-c="'+t+'"><div class="ci-placa"><b>'+(t==='ya'?'<i class="late-dot"></i>':'')+CINTA_T[t].tit+' · '+L.length+(t==='tr'&&junto?(' (+'+junto+' junto con un pedido)'):'')+'</b><small>'+CINTA_T[t].txt+'</small></div>'+
@@ -36880,7 +37099,12 @@ function sfSalidas(k, desde, hasta, porTurno){
    `STOCK.h`, si todavía está) o, si no, la hora del Excel con la propuesta sin dato del camión (la mañana desde STOCK_INC_AM, la tarde
    desde STOCK_INC_PM; `stockIncPropuesta`). Sin hora, ninguno. */
 function sfCorteInc(f, h){
-  var hh=((typeof STOCK!=='undefined' && STOCK && STOCK.h)||[]).filter(function(x){ return x && String(x.f||'')===String(f) && String(x.hora||'')===String(h||'') && (x.inc===true || x.incT); })[0];
+  /* (18/10, §4ls, corrector) El renglón de ESE corte se lee igual que `stockData` (`stockIncTurnos`), también cuando logística contestó
+     «NO incluye» (`inc:false`): antes solo se tomaba con `inc:true`/`incT`, el «no» se ignoraba y mandaba la hora (10:05 ≥ 09:30 = «la
+     mañana ya salió»), así que lo de la mañana no se sumaba y salía «PATAS +12 entraron» con 0 en todos los Excel. De PTF primero (las
+     salidas que se suman son de todos lados, y el de PTF es el que manda la hora del día). */
+  var H=((typeof STOCK!=='undefined' && STOCK && STOCK.h)||[]).filter(function(x){ return x && String(x.f||'')===String(f) && String(x.hora||'')===String(h||'') && ('inc' in x || x.incT); });
+  var hh=H.filter(function(x){ return x.rol==='log'; })[0] || H[0];
   if(hh) return stockIncTurnos(hh);
   var m=stockHoraMin(h); if(m==null) return { am:false, pm:false };
   return { am:m>=stockHoraMin(STOCK_INC_AM), pm:m>=stockHoraMin(STOCK_INC_PM) };
@@ -36927,15 +37151,15 @@ function sfElegir(k){
    todos los Excel). El punto de hoy sin Excel de hoy va aparte: un círculo hueco «estimado hoy», sin triángulo. El historial se lee
    con las uniones a mano (🔗, `stockAliasDe`) de ahora. */
 function sfHistSvg(o, dias, desde, hoy){
-  var sal=sfSalidas(o.k, desde, hoy), tur=sfSalidas(o.k, desde, hoy, true), por={}, horaDe={}, W=640, H=210, L=34, R=14, T=18, B=30;
+  var sal=sfSalidas(o.k, desde, hoy), tur=sfSalidas(o.k, desde, hoy, true), por={}, horaDe={}, esta={}, W=640, H=210, L=34, R=14, T=18, B=30;
   (dias||[]).forEach(function(x){
-    var n=0, hay=false, h='';
+    var n=0, hay=false, h='', en=false;
     Object.keys(x.datos||{}).forEach(function(a){
       var dA=x.datos[a]||{}, u=dA.u||{};
-      Object.keys(u).forEach(function(k){ if(k===o.k || stockAliasDe(k)===o.k) n+=Number(u[k])||0; });
+      Object.keys(u).forEach(function(k){ if(k===o.k || stockAliasDe(k)===o.k){ n+=Number(u[k])||0; en=true; } });
       hay=true; if(dA.h && (a==='PTF' || !h)) h=String(dA.h);
     });
-    if(hay){ por[x.fecha]=n; horaDe[x.fecha]=h; }
+    if(hay){ por[x.fecha]=n; horaDe[x.fecha]=h; esta[x.fecha]=en; }
   });
   var est=(por[hoy]==null) ? sfTotal(o) : null;    // sin Excel de hoy en el historial: lo que calcula el panel, solo como estimado
   var F=[]; for(var i=0;i<30;i++) F.push(stockSumarDias(desde,i));
@@ -36950,7 +37174,8 @@ function sfHistSvg(o, dias, desde, hoy){
   F.forEach(function(f,i){ if(sal[f]){ var hh=(H-T-B)*sal[f]/mx; s+='<rect x="'+(X(i)-3).toFixed(1)+'" y="'+(H-B-hh).toFixed(1)+'" width="6" height="'+hh.toFixed(1)+'" rx="2" fill="#CE2939" fill-opacity=".75"><title>'+fmtFechaCorta(f)+': salieron '+sal[f]+'</title></rect>'; } });
   var pts=[], prev=null, prevF='';
   F.forEach(function(f,i){ if(por[f]==null) return; pts.push(X(i).toFixed(1)+','+Y(por[f]).toFixed(1));
-    if(prev!=null){ var ent=por[f]-prev+sfSalidasEntre(tur, prevF, sfCorteInc(prevF, horaDe[prevF]), f, sfCorteInc(f, horaDe[f])); if(ent>=1){ s+='<polygon points="'+X(i).toFixed(1)+','+(Y(por[f])-15).toFixed(1)+' '+(X(i)-5).toFixed(1)+','+(Y(por[f])-6).toFixed(1)+' '+(X(i)+5).toFixed(1)+','+(Y(por[f])-6).toFixed(1)+'" fill="#22A06B"><title>'+fmtFechaCorta(f)+': entraron '+stockUnid(ent)+'</title></polygon><text x="'+X(i).toFixed(1)+'" y="'+(Y(por[f])-18).toFixed(1)+'" text-anchor="middle" style="fill:#0a8a55;font-weight:800">+'+stockUnid(ent)+'</text>'; } }
+    /* (§4ls, corrector) Un producto que no figura en NINGUNO de los dos Excel (0 y 0) no «entró»: lo que salió entre los dos salió de otro lado. */
+    if(prev!=null && (esta[prevF] || esta[f])){ var ent=por[f]-prev+sfSalidasEntre(tur, prevF, sfCorteInc(prevF, horaDe[prevF]), f, sfCorteInc(f, horaDe[f])); if(ent>=1){ s+='<polygon points="'+X(i).toFixed(1)+','+(Y(por[f])-15).toFixed(1)+' '+(X(i)-5).toFixed(1)+','+(Y(por[f])-6).toFixed(1)+' '+(X(i)+5).toFixed(1)+','+(Y(por[f])-6).toFixed(1)+'" fill="#22A06B"><title>'+fmtFechaCorta(f)+': entraron '+stockUnid(ent)+'</title></polygon><text x="'+X(i).toFixed(1)+'" y="'+(Y(por[f])-18).toFixed(1)+'" text-anchor="middle" style="fill:#0a8a55;font-weight:800">+'+stockUnid(ent)+'</text>'; } }
     prev=por[f]; prevF=f; });
   if(pts.length>1) s+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#00A09A" stroke-width="2.5" stroke-linejoin="round"/>';
   if(por[hoy]!=null) s+='<circle cx="'+X(29).toFixed(1)+'" cy="'+Y(por[hoy]).toFixed(1)+'" r="4.5" fill="#00A09A"><title>hoy: '+stockUnid(por[hoy])+' (Excel)</title></circle>';
@@ -38144,7 +38369,7 @@ function asisMsgEspera(rec){
   });
   var L=[], hasta=String(rec.fecha||''), sinDia=false, raros=0;
   orden.forEach(function(g){
-    var f=G[g], v=saldoVeredictoFila(f, rec.id, rec.fecha), x=f.x, nom=String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'');
+    var f=G[g], v=saldoVeredictoFila(f, rec.id, rec.fecha), x=f.x, nom=saldoNombre(x);   // (§4ls, corrector) sin repetir la medida del nombre
     var que='';
     if(/^(moreno|recogida)$/.test(v.tipo)) que='lo traemos de nuestro depósito';
     else if(/^(prod|pedir|especial)$/.test(v.tipo) || (v.tipo==='fabcli' && !v.yaLlego)) que='se fabrica'+(v.tipo==='especial'?' a tu medida':'');

@@ -255,8 +255,8 @@ async function abrir(browser, file, reloj){
   chk('control: el MORFEO de una sola compra de 45 no pide nada para noviembre', r && (r.morfeo==='no planifica' || (r.morfeo && r.morfeo.mes===0)), r);
   chk('RS9 lo que rota en 30 días: septiembre sin ventas cuenta 0 → entra el 60 d ((0 + 10) / 2)', r && r.est && r.est.some(function(e){ return e[0]==='60 d' && e[1]>0 && e[1]<6; }), r);
 
-  // ═══ RS10. Mes-VM4 ═══
-  console.log('\n── RS10. Lo que falta antes del 1° va en 15 días (Mes-VM4) ──');
+  // ═══ RS10. Mes-VM4 (SACADO por el corrector) ═══
+  console.log('\n── RS10. Lo que falta antes del 1° vuelve al mes que viene (Mes-VM4 sacado, §4ls corrector) ──');
   await page.context().close();
   page = await abrir(browser, PEDIDOS, '2026-10-05T10:00:00-04:00');
   r = await corre(page, async () => {
@@ -268,7 +268,10 @@ async function abrir(browser, file, reloj){
     P.bloques.forEach(function(B){ B.filas.forEach(function(x){ if(x.o.k===KS) f=x; }); });
     return f ? { sem:f.sem, quin:f.quin, antes:f.antes, mes:f.mes, queda:f.mesQueda, rotaMes:f.o.rotaMes, rota:f.o.rota } : null;
   });
-  chk('RS10 lo que falta para terminar octubre está en «15 días» y noviembre empieza con «queda» 0 (no negativo)', r && r.rota===false && r.rotaMes===true && r.antes>0 && r.quin===r.antes && r.queda===0, r);
+  /* ✏️ (18/10, §4ls, corrector, a conciencia) Mes-VM4 se sacó: no estaba en la lista de arreglos (1.12), su verificador lo marcó como
+     decisión del dueño (U11) y cambiaba «15 días» y «el mes» de lo que tiene objetivo (decisión 5). Vuelve §4iz E1-6: «queda» negativo
+     se suma al mes que viene; «15 días» de lo que rota solo en 30 días sigue en cero (§4dr: ese ritmo es solo para el mes). */
+  chk('RS10 sin Mes-VM4: lo que falta para terminar octubre se suma a noviembre («queda» negativo) y «15 días» no lo lleva', r && r.rota===false && r.rotaMes===true && !r.antes && r.quin===0 && r.queda<0 && r.mes>0, r);
 
   // ═══ RS11-RS13. Banzer o PTF ═══
   console.log('\n── RS11-RS13. Banzer o PTF (BP2, BP5, BP1) ──');
@@ -333,6 +336,43 @@ async function abrir(browser, file, reloj){
   chk('RS14 sin Excel de hoy, las 3 entregas de hoy NO dibujan «+3 entraron», y la salida de la tarde del 05/10 no es una entrada', r && r.ent && r.ent.length===0, r);
   chk('RS14 …el punto de hoy va como «estimado hoy» (hueco)', r && r.est===true, r);
   chk('RS14 …y una entrada de verdad cuenta lo que salió ENTRE los dos cortes (la tarde del 05/10): «entraron 7» (antes 5)', r && r.ent2 && r.ent2.length===1 && r.ent2[0]==='entraron 7', r);
+
+  // ═══ RS15. Lo que encontraron los verificadores (§4ls, corrector) ═══
+  console.log('\n── RS15. VV3 con «no incluye», Man-VM8 parcial, VI-1 al guardar ──');
+  r = await corre(page, async () => {
+    var KT=_k('CH1201','TITANIO ICE','160x190'), KZ=_k('CH1212','SOMIER TITANIO ICE','140x190'), hoy=todayStr(), d1=_d(-2), d2=_d(-1), out={};
+    /* (VV3) El Excel del 06/10 a las 10:05 con «NO incluye las entregas» (`inc:false`, la respuesta de logística): las 3 de la mañana del 06/10
+       todavía estaban en él (5 → 5): no «entraron 3». El SOMIER no está en ningún Excel (0 y 0) y salieron 12: tampoco «entraron». */
+    var peds=[ _ped({ fecha:d2, turno:'AM', entregado:true, productos:[_lin('CH1201','TITANIO ICE','160x190',3)] }),
+               _ped({ fecha:d2, turno:'AM', entregado:true, productos:[_lin('CH1212','SOMIER TITANIO ICE','140x190',12)] }) ];
+    await _cargar(peds, _stock(function(st){ st.c.u[KT]=5; st.h=[{ f:d2, hora:'10:05:32', alm:_LOG, rol:'log', n:1, u:5, ts:_ts(d2,'10:10:00'), inc:false },
+                                                               { f:d1, hora:'10:05:32', alm:_LOG, rol:'log', n:1, u:5, ts:_ts(d1,'10:10:00'), inc:false }]; }, { f:d2, hora:'10:05:32' }));
+    var u1={}, u2={}; u1[KT]=5; u2[KT]=5;
+    var dias=[ { fecha:d1, datos:{ PTF:{ f:d1, h:'10:05:32', u:u1 } } }, { fecha:d2, datos:{ PTF:{ f:d2, h:'10:05:32', u:u2 } } } ];
+    out.entT=(sfHistSvg(_fila(KT), dias, _d(-29), hoy).match(/entraron [0-9]+/g)||[]);
+    out.entZ=(_fila(KZ) ? (sfHistSvg(_fila(KZ), dias, _d(-29), hoy).match(/entraron [0-9]+/g)||[]) : ['sin fila']);
+    /* (Man-VM8) ESPECIAL JUNIOR (ya no se fabrica): 5 vendidos, 0 en PTF y Banzer, 2 en Moreno. */
+    var KJ=_k('CH1075','ESPECIAL JUNIOR','105x190');
+    await _cargar([ _ped({ fecha:_d(4), productos:[_lin('CH1075','ESPECIAL JUNIOR','105x190',5)] }) ], _stock(function(st){ st.c.u[KJ]=0; st.g[_BZ].u[KJ]=0; st.g[_IM].u[KJ]=2; }));
+    var oj=_fila(KJ); out.jun={ aviso:oj.aviso, acc:sfAccion(oj) };
+    /* (VI-1) Al guardar, un renglón que el panel no reconoce también se pregunta. */
+    await _cargar([], _stock(function(st){ st.c.u[KT]=4; }));
+    showView('form'); resetForm();
+    var c=document.querySelector('#f-productos .prod-card'), fire=function(e,t){ e.dispatchEvent(new Event(t||'input', { bubbles:true })); };
+    var de=c.querySelector('.prod-desc'); de.value='COLCHON MARCIANO RARO'; fire(de);
+    var me=c.querySelector('.prod-medida'); me.value='160x190'; fire(me,'change');
+    var q=c.querySelector('.prod-cant'); q.value='1'; fire(q);
+    var f=document.getElementById('f-fecha'); f.value=_d(3); fire(f,'change');
+    var msg='', cf=window.confirm; window.confirm=function(m){ msg=String(m||''); return true; };
+    try{ saldoConfirmarAlGuardar(null, false, false); }finally{ window.confirm=cf; }
+    out.preg=msg;
+    return out;
+  });
+  chk('RS15a (VV3) con «NO incluye las entregas» (`inc:false`) contestado: las 3 de la mañana no dibujan «+3 entraron» (antes se leía la hora)', r && r.entT && r.entT.length===0, r);
+  chk('RS15b (VV3) un producto que no figura en ninguno de los dos Excel no «entró» aunque hayan salido 12 (el caso de las PATAS)', r && r.entZ && r.entZ.length===0, r);
+  chk('RS15c (Man-VM8) un descontinuado con 2 en Moreno y 5 vendidos: «🚚 Traé 2 de Moreno» Y dice que 3 no llegan (ya no se fabrica)',
+      r && r.jun && r.jun.aviso==='traer' && /Traé 2 de Moreno/.test(r.jun.acc) && /3 vendidos no llegan: ya no se fabrica/.test(r.jun.acc), r && r.jun);
+  chk('RS15d (VI-1) al guardar, el renglón que el panel no reconoce SÍ se pregunta («❓ no reconozco este producto»)', r && /no reconozco este producto/.test(r.preg||''), r && r.preg);
 
   const errs=page._err.filter(function(e){ return !/Leaflet|L is not defined|ensureLeaflet|tile/i.test(e); });
   chk('sin errores de JS', errs.length===0, errs.join(' | '));

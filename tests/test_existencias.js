@@ -125,7 +125,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
        incluye las entregas del día» arranca SIN marcar (el lado que no deja sin avisar, lo que
        promete su consejo — test_rev_stock §4). Este escenario es el de un Excel que YA las
        incluye (el depósito queda en lo del Excel): se marca a mano, como haría logística. */
-    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true;
+    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true; var _incPm=document.getElementById('exist-inc-pm'); if(_incPm) _incPm.checked=true;   /* (§4ls, corrector) «el día entero» = las dos casillas (mañana y tarde) */
     confirmarImportExist();
     var d=stockData(), t=d.lista.filter(function(o){ return o.k===KT; })[0];
     return { fecha:STOCK.c.f, n:Object.keys(STOCK.c.u).length, entradas:STOCK.e.length,
@@ -144,7 +144,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   console.log('\n── 3. Subir el mismo archivo dos veces ──');
   await subir(LOG);
   r = await page.evaluate(() => {
-    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true;   // el mismo Excel, que ya incluye las entregas (ver §2)
+    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true; var _incPm=document.getElementById('exist-inc-pm'); if(_incPm) _incPm.checked=true;   /* (§4ls, corrector) «el día entero» = las dos casillas (mañana y tarde) */   // el mismo Excel, que ya incluye las entregas (ver §2)
     confirmarImportExist();
     return { titanio:stockDeposito(KT), n:Object.keys(STOCK.c.u).length, almo:stockDeposito(KA) };
   });
@@ -331,7 +331,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   await subir(LOG);
   r = await page.evaluate(() => {
     var txt=(document.getElementById('modal-box')||{}).textContent||'';
-    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true;   // el mismo Excel, que ya incluye las entregas (ver §2)
+    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true; var _incPm=document.getElementById('exist-inc-pm'); if(_incPm) _incPm.checked=true;   /* (§4ls, corrector) «el día entero» = las dos casillas (mañana y tarde) */   // el mismo Excel, que ya incluye las entregas (ver §2)
     confirmarImportExist();
     var d=stockData(), t=d.lista.filter(function(o){ return o.k===KT; })[0];
     var T=stockTiemposFabrica();

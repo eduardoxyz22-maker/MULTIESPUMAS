@@ -279,6 +279,41 @@ function PREPARAR(){
   const stockKOro = 'ORO ORTOPEDICO|180X190';
   chk('CF12c. (H7) …y ese renglón viaja en la reserva del servidor (con los 6 libres)', cf12.r && cf12.r.lineas && cf12.r.lineas.length===1 && cf12.r.lineas[0].libres===6 && cf12.r.lineas[0].k===stockKOro, cf12.r);
 
+  /* ── CF13. Lo que encontraron los verificadores (§4ls, corrector) ── */
+  const cf13 = await ev(async()=>{
+    var out={};
+    /* (1) «⏳ EN PRODUCCIÓN» también avisa lo de después: 0 a mano, 1 pedida a fábrica el 19/10 (sale hoy), 1 vendida para el 23/10 y
+       un pedido de 1 para el 22/10. */
+    var st=_stock({ aca:{TIT:0} }); st.p=[{ id:'fq1', k:K.TIT, u:1, fab:'MORENO', f:'2026-10-19', esp:'', r:'' }];
+    await _cargar([_ped('2026-10-23','TIT',1)], st);
+    out.prod=_v('TIT', 1, '2026-10-22');
+    /* (2) La fecha elegida ANTES del primer día con cupo (Eduardo agenda para hoy): 2 a mano y 2 vendidas para mañana. */
+    await _cargar([_ped('2026-10-22','TIT',2)], _stock({ aca:{TIT:2} }));
+    out.hoy=_v('TIT', 1, '2026-10-21');
+    /* (3) Con el nombre a medio escribir no sale el cuadrito («TITANIO ICE 1», «TITANIO ICE 160X19»). */
+    await _cargar([], _stock({ aca:{TIT:5} }));
+    _nuevo(); _fecha('2026-10-22'); _renglon(0, { desc:'TITANIO ICE 1', medida:'', cant:1 }); out.medio1=_caja(0);
+    _nuevo(); _fecha('2026-10-22'); _renglon(0, { desc:'TITANIO ICE 160X19', medida:'', cant:1 }); out.medio2=_caja(0);
+    _nuevo(); _fecha('2026-10-22'); _renglon(0, { desc:'TITANIO ICE 160X190', medida:'', cant:1 }); out.entero=_caja(0);
+    /* (4) La medida sacada del nombre no se repite en el nombre. */
+    out.nombre=saldoNombre({ desc:'TITANIO ICE 160X190', medida:'160x190', medTxt:1 });
+    /* (5) «Hay que reponer antes del 24/10» con el 24/10 = el primer día que llega lo que se manda a producir HOY: lo dice. */
+    await _cargar([_ped('2026-10-24','TIT',3)], _stock({ aca:{TIT:0}, im:{TIT:3} }));
+    out.reponer=_v('TIT', 1, '2026-10-23');
+    _nuevo();
+    return out;
+  });
+  chk('CF13a. ⏳ EN PRODUCCIÓN con lo vendido para después: el aviso de que a lo de después le va a faltar SÍ sale (antes, nada)',
+      cf13.prod && cf13.prod.tipo==='prod' && cf13.prod.despues && cf13.prod.despues.u===1 && /le va a faltar 1/.test(cf13.prod.html||''), cf13.prod);
+  chk('CF13b. la fecha elegida (hoy) antes del primer día con cupo: «✅ DISPONIBLE para el … (la fecha elegida) · para el jue 22/10 ya no alcanza» (antes prometía «desde mañana»)',
+      cf13.hoy && cf13.hoy.tipo==='hay' && /\(la fecha elegida\)/.test(cf13.hoy.titulo||'') && /ya no alcanza/.test(cf13.hoy.titulo||'') && !/podés programar/.test(cf13.hoy.titulo||''), cf13.hoy && cf13.hoy.titulo);
+  chk('CF13c. con el nombre a medio escribir («TITANIO ICE 1», «TITANIO ICE 160X19») no hay cuadrito; con «TITANIO ICE 160X190» sí',
+      cf13.medio1 && (!cf13.medio1.existe || cf13.medio1.hidden) && cf13.medio2 && (!cf13.medio2.existe || cf13.medio2.hidden) && cf13.entero && cf13.entero.existe && !cf13.entero.hidden && cf13.entero.tipo==='hay',
+      [cf13.medio1, cf13.medio2, cf13.entero && cf13.entero.tipo]);
+  chk('CF13d. la medida sacada del nombre no se repite («TITANIO ICE 160X190», no «… 160X190 160x190»)', cf13.nombre==='TITANIO ICE 160X190', cf13.nombre);
+  chk('CF13e. reponer justo para el primer día que llega lo de hoy: dice que hay que mandarlo a producir HOY, antes de las 16:30',
+      cf13.reponer && cf13.reponer.despues && cf13.reponer.despues.hoy && /producir HOY, antes de las 16:30/.test(cf13.reponer.html||''), cf13.reponer);
+
   /* ── Controles: lo que NO cambia ── */
   const ctl = await ev(async()=>{
     await _cargar([_ped('2026-10-22','TIT',1)], _stock({ aca:{TIT:6} }));

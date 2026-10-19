@@ -415,6 +415,10 @@ function PREPARAR(){
   chk('AP13. la poda deja solo lo vigente (la celda no crece)', JSON.stringify(ap6.poda)==='["C"]', ap6);
   chk('AP14. 🔌 apagado otra vez: lo anotado (4, vigente) deja de contar y de mostrarse, no se anota nada, y queda guardado para cuando se prenda',
       ap6.camOn===4 && ap6.camOff===0 && !/En producción/.test(ap6.txtOff||'') && ap6.anotOff===0 && ap6.sigue===true, ap6);
+  /* 🔌 (18/10, §4ls, corrector) Apagarlo en una evaluación APARTE, pase lo que pase arriba: si algo de AP1-AP13 tiraba un error antes de la
+     línea de `ap6`, el resto de la prueba corría con el automático prendido y una falla podía esconder a otra. */
+  const apOff = await ev(() => { STOCK_AUTO_ACTIVO=false; return STOCK_AUTO_ACTIVO; });
+  chk('AP15. 🔌 el automático queda APAGADO para el resto de la prueba (como viene)', apOff===false, apOff);
   await page.clock.setFixedTime(new Date('2026-10-16T12:00:00-04:00'));
 
   /* ── Arreglos chicos (17/10): lo que se ve tiene que decir lo mismo que la cuenta ── */

@@ -196,8 +196,12 @@ async function abrir(browser, file, reloj, vp){
     out.vv7b=_conFila(K.KA, { aviso:'pedido', corte:_d(2), dias:2, pedidos:[{ u:2, llega:_d(3), fab:'MORENO', tipo:'fabrica' }], enCamino:2, reclamar:[] }, function(){ return leer(K.KA); });
     out.vv8=_conFila(K.KA, { aviso:'pedido', corte:null, dias:null, pedidos:[{ u:11, llega:_d(-2), fab:'MORENO', tipo:'fabrica' }, { u:9, llega:_d(3), fab:'MORENO', tipo:'fabrica' }], enCamino:20, reclamar:[{ u:11, llega:_d(-2) }] }, function(){ return leer(K.KA); });
     out.vv9=_conFila(K.KT, { aviso:'revisar', revisarStock:true, confirmadoAqui:3, deposito:0, fabricar:3, recoger:1, pedir:4 }, function(){ return leer(K.KT); });
+    /* (§4ls, corrector) Lo que rota pasa a «traer» por el punto de pedido aunque no se corte en 45 días (`o.dias` null): no «se corta en null días». */
+    out.nul=_conFila(K.KT, { aviso:'traer', dias:null, corte:null, objS:10, objPP:6, recoger:2, pedir:2, fabricar:0, revisarStock:false }, function(){ return leer(K.KT); });
     return out;
   });
+  chk('TX7b (234e277) «🚚 traer» de lo que rota sin corte en 45 días: «lo libre llegó al punto de pedido, pero ya está fabricado», nunca «se corta en null días»',
+      r && /lo libre llegó al punto de pedido, pero/.test(r.nul||'') && !/null/.test(r.nul||''), r && (r.nul||'').slice(0,300));
   chk('TX5 con el corte DESPUÉS de la llegada: «Con lo pedido alcanza hasta el …», no «hay un faltante antes de recibir»', r && /Con lo pedido alcanza hasta el/.test(r.vv7||'') && !/faltante antes de recibir/.test(r.vv7||''), r && r.vv7);
   chk('control: con el corte ANTES de la llegada sigue «Confirmar la llegada: hay un faltante antes de recibir»', r && /faltante antes de recibir/.test(r.vv7b||''), r && r.vv7b);
   chk('TX6 «En camino»: «9 llegan ~19/10» y «⚠️ 11 atrasados desde el 14/10 (reclamar)», nunca «llegan ~14/10»', r && /9 llegan ~19\/10/.test(r.vv8||'') && /11 atrasados desde el 14\/10/.test(r.vv8||'') && !/llegan ~14\/10/.test(r.vv8||''), r && r.vv8);
@@ -353,8 +357,10 @@ async function abrir(browser, file, reloj, vp){
     var desp=(STOCK.p||[]).filter(function(q){ return q.ya && q.k===K; });
     out.vm7={ antes:antes, despues:desp.length, fab:fab, u:desp.map(function(q){ return q.u; }) };
     // Man-VM9
+    /* ✏️ (18/10, §4ls, corrector, a conciencia) Como lo llama `setProdProduccion` al APAGAR el 🏭 (`seQuito`): sin esa marca, un estado
+       puesto a mano (`setEstado`) también se borraba al tocar cualquier otra línea. */
     var p={ id:'m9', estado:'En producción', productos:[{ desc:'TITANIO ICE', medida:'160x190', cant:1, codigo:'CH1201' }] };
-    syncVerificado(p); out.vm9=p.estado;
+    syncVerificado(p, true); out.vm9=p.estado;
     // Man-VM10 (1): «más» solo con un «Ya pedí» vigente; (2) el vencido parcial
     STOCK.p=[{ id:'fyv', k:K, u:2, total:5, ru:3, fab:'MORENO', f:_d(-9), arr:_d(-9), esp:_d(-5), r:'', ya:1 }];
     var o=_fila(K); var h=document.createElement('div'); h.innerHTML=planYaHtml(o); out.vm10=_txt(h);
@@ -491,6 +497,72 @@ async function abrir(browser, file, reloj, vp){
   chk('TX17 (VB-6) en 390 px la barra fija de arriba ocupa menos de 250 px (antes ~400, media pantalla)', r && r.h>0 && r.h<250, r);
   chk('control: la página no se sale de costado', r && r.ancho<=392, r);
   const errores=page._err.slice();
+  await page._ctx.close();
+
+  // ═══ TX30. Lo que encontraron los verificadores (§4ls, corrector) ═══
+  console.log('\n── TX30. Descontinuado sin stock, días hábiles, tiendas, ATC, pedido único, candidatos, carga, estado a mano, «en N días», pedí 0, Moreno, cinta ──');
+  page = await abrir(browser, PEDIDOS, '2026-10-16T12:00:00-04:00');
+  r = await corre(page, async () => {
+    var out={}, KJ=_k('CH1075','ESPECIAL JUNIOR','105x190'), KT=_k('CH1201','TITANIO ICE','160x190'), KU=_k('CH1129','TITANIO LATEX','140x190');
+    /* (H4) Lo que ya no se fabrica, con 0 en todos lados y nada vendido; (H4 a medias) un «pedido único» con 0 en todos lados. */
+    await _cargar([ _ped({ fecha:_d(-3), entregado:true, productos:[_lin('CH1129','TITANIO LATEX','140x190',1)] }) ],
+                  _stock(function(st){ st.c.u[KJ]=0; st.g[_BZ].u[KJ]=0; st.g[_IM].u[KJ]=0; st.c.u[KU]=0; st.g[_BZ].u[KU]=0; st.g[_IM].u[KU]=0; }));
+    var oj=_fila(KJ), ou=_fila(KU);
+    out.desc={ acc:oj&&sfAccion(oj), rel:oj&&sfReloj(oj).txt }; out.unico={ aviso:ou&&ou.aviso, rel:ou&&sfReloj(ou).txt };
+    /* (VF5 / VV7) «en N días» hasta el día que se muestra, y «alcanza hasta» = el día hábil antes del corte. */
+    out.enDias=stockCorteEnDias({ corte:'2026-10-25', dias:9 }); out.hasta=stockAlcanzaHasta({ corte:'2026-10-26' });
+    /* (T8) «Recoger de una tienda» no va en «Vendido sin entregar · consume depósito». */
+    await _cargar([ _ped({ id:'t1', fecha:_d(2), productos:[_lin('CH1201','TITANIO ICE','160x190',1,{ chk:'im', chkDe:'Tienda Mia Plaza' })] }),
+                    _ped({ id:'t2', fecha:_d(2), productos:[_lin('CH1201','TITANIO ICE','160x190',1)] }),
+                    _ped({ id:'a1', oc:'ATC 10-001', fecha:_d(6), productos:[_lin('CH1201','TITANIO ICE','160x190',1)] }) ], _stock(function(st){ st.c.u[KT]=3; }));
+    out.pend=stockPedidosDetalle(KT).pendientes.map(function(g){ return g.p.id; });
+    /* (T9) La ficha «🎧 ATC» de la revisión con el filtro de días: la del 22/10 no entra con «Hoy». */
+    REVSTK_DIAS='hoy'; out.atcHoy=stockAsignar().tot.atc; REVSTK_DIAS='todos'; out.atcTodos=stockAsignar().tot.atc;
+    /* (V-REV-8) La revisión de la Lista de carga se arma UNA vez mientras no cambien los datos. */
+    var A1=cargaSinRespAsignar(), A2=cargaSinRespAsignar(); saveMirror(); var A3=cargaSinRespAsignar();
+    out.memo={ igual:A1===A2, nueva:A3!==A2 };
+    /* (Man-VM9) Un estado puesto A MANO no se borra al marcar ✔ en OTRA línea; apagar el 🏭 sí lo limpia. */
+    await _cargar([ _ped({ id:'e1', fecha:_d(4), productos:[_lin('CH1201','TITANIO ICE','160x190',1), _lin('CH1201','TITANIO ICE','160x190',1)] }) ], _stock(function(st){ st.c.u[KT]=3; }));
+    var pe=findById('e1'); pe.estado='No hay'; setProdChk('e1', 0, 'ok', ''); out.manual=findById('e1').estado;
+    setProdProduccion('e1', 1, 'MORENO'); setProdProduccion('e1', 1, 'MORENO'); out.trasProd=findById('e1').estado;
+    /* (VV5) 0 en PTF y Banzer, 5 en Moreno, 6 vendidos y 2 que llegan antes: no es «⛔ Ya falta». */
+    await _cargar([ _ped({ fecha:_d(4), productos:[_lin('CH1201','TITANIO ICE','160x190',6)] }) ],
+                  _stock(function(st){ st.c.u[KT]=0; st.g[_BZ].u[KT]=0; st.g[_IM].u[KT]=5; st.p=[{ id:'f1', k:KT, u:2, fab:'MORENO', f:_d(-2), esp:_d(2), r:'' }]; }));
+    out.moreno=sfReloj(_fila(KT)).txt;
+    /* (VV2) Sin ningún «solo traer», el carril de «Traer» igual aparece con lo que va junto con un pedido. */
+    await _cargar([ _ped({ fecha:_d(1), productos:[_lin('CH1201','TITANIO ICE','160x190',4)] }) ], _stock(function(st){ st.c.u[KT]=0; st.g[_IM].u[KT]=1; }));
+    var dd=stockData(); out.cinta=/junto con un pedido/.test(stockCintaHtml(dd)); out.trSolo=dd.lista.filter(function(o){ return planGrupoDe(o)==='tr'; }).length;
+    /* (VI-7) Los candidatos por PALABRAS ENTERAS: «SOMIER» 140 no propone el SOMIER BAHIA BEIGE ni «PEDIC» el ESPECIAL ORTOPEDICO; «ECOFLEX»
+       sigue proponiendo el NUEVO ECO FLEX. */
+    var KS1=stockClaveCruda({ desc:'SOMIER BAHIA BEIGE', medida:'140x190' }), KS2=stockClaveCruda({ desc:'ESPECIAL ORTOPEDICO D/C', medida:'140x190' }), KE=_k('CH1332','NUEVO ECO FLEX','140x190');
+    await _cargar([], _stock(function(st){ st.c.u[KS1]=3; st.c.u[KS2]=2; st.c.u[KE]=6; }));
+    var cand=function(d){ return saldoCandidatos(stockInfo({ desc:d, medida:'140x190', codigo:'' }).k, saldoDatos()).map(function(c){ return c.k; }); };
+    out.cand={ somier:cand('SOMIER'), pedic:cand('PEDIC'), eco:cand('ECOFLEX'), KS1:KS1, KS2:KS2, KE:KE };
+    /* (Man-VM8 en la tabla, VV9) «⚠️ Revisar saldo» sin nada que pedir no dice «pedí 0». */
+    var KB=await _base();
+    out.revisar=_conFila(KB.KT, { aviso:'revisar', revisarStock:true, confirmadoAqui:3, deposito:0, fabricar:0, recoger:0, pedir:0 }, function(){ abrirStock(); var t=_txt(document.querySelector('#stock-body tr[data-stock-k="'+KB.KT+'"]')); try{ closeStock(); }catch(e){} return t; });
+    return out;
+  });
+  chk('TX30a (H4) lo que YA NO SE FABRICA con 0 en todos lados dice «🛑 Sin stock: ya no se fabrica», nunca «se fabrica a pedido»',
+      r && r.desc && /Sin stock: ya no se fabrica/.test(r.desc.acc||'') && /ya no se fabrica/.test(r.desc.rel||'') && !/a pedido/.test((r.desc.acc||'')+(r.desc.rel||'')), r && r.desc);
+  chk('TX30b (H4) un «pedido único» con 0 en los tres almacenes no dice «Alcanza más de 45 días»', r && r.unico && r.unico.aviso==='unico' && !/Alcanza/.test(r.unico.rel||'') && /Sin stock/.test(r.unico.rel||''), r && r.unico);
+  chk('TX30c (VF5) «en N días» cuenta hasta el día que se muestra (corte el domingo 25 → lunes 26/10 = en 10 días); (VV7) «alcanza hasta» el sábado 24',
+      r && r.enDias==='en 10 días' && r.hasta==='2026-10-24', r && [r.enDias, r.hasta]);
+  chk('TX30d (T8) «recoger de una tienda» no figura en «Vendido sin entregar · consume depósito»; lo demás sí', r && r.pend && r.pend.indexOf('t1')<0 && r.pend.indexOf('t2')>=0, r && r.pend);
+  chk('TX30e (T9) la ficha «🎧 ATC» respeta el filtro de días: con «Hoy» la del 22/10 no cuenta (0); con «Todos», 1', r && r.atcHoy===0 && r.atcTodos===1, r && [r.atcHoy, r.atcTodos]);
+  chk('TX30f (V-REV-8) la Lista de carga reusa la revisión mientras no cambien los datos, y la rehace cuando cambian', r && r.memo && r.memo.igual && r.memo.nueva, r && r.memo);
+  chk('TX30g (Man-VM9) el «No hay» puesto a mano sigue al marcar ✔ en otra línea; prender y apagar el 🏭 lo corrige', r && r.manual==='No hay' && r.trasProd==='', r && [r.manual, r.trasProd]);
+  chk('TX30h (VV5) con 5 en Moreno y 2 en camino para 6 vendidos, no dice «⛔ Ya falta»: se cubre trayendo de Moreno', r && r.moreno && !/Ya falta/.test(r.moreno), r && r.moreno);
+  chk('TX30i (VV2) sin ningún «solo traer», el carril «Traer» aparece con «(+1 junto con un pedido)»', r && r.cinta===true && r.trSolo===0, r && [r.cinta, r.trSolo]);
+  chk('TX30l (VI-7) «SOMIER» no propone el SOMIER BAHIA BEIGE ni «PEDIC» el ESPECIAL ORTOPEDICO (palabras enteras); «ECOFLEX» sí el NUEVO ECO FLEX',
+      r && r.cand && r.cand.somier.indexOf(r.cand.KS1)<0 && r.cand.pedic.indexOf(r.cand.KS2)<0 && r.cand.eco.indexOf(r.cand.KE)>=0, r && r.cand);
+  chk('TX30j «⚠️ Revisar saldo» sin nada que pedir no dice «pedí 0» ni «fabricar 0»', r && /Revisar saldo/.test(r.revisar||'') && !/pedí 0/.test(r.revisar||'') && !/fabricar 0/.test(r.revisar||''), r && (r.revisar||'').slice(0,300));
+  await page._ctx.close();
+  page = await abrir(browser, PEDIDOS, '2026-10-21T12:00:00-04:00');
+  r = await corre(page, async () => ({ uno:stockFabricaTxt({ dias:4, medido:true, base:4, n:6 }, 'MORENO'),
+                                       todas:stockFabricasTxt({ de:function(){ return { dias:4, medido:true, base:4, n:6 }; } }) }));
+  chk('TX30k (VF6) el miércoles 21/10 con Moreno medido 4 días la barra dice «se entrega desde el lun 26/10», nunca el domingo 25',
+      r && /lun 26\/10/.test(r.uno||'') && !/dom 25\/10/.test(r.uno||'') && /lun 26\/10/.test(r.todas||'') && !/dom 25/.test(r.todas||''), r);
   await page._ctx.close();
 
   chk('sin errores de JavaScript en ninguna de las páginas (también con «Más vistas» cerrado)', ERRS.length===0, ERRS.slice(0,3));

@@ -142,7 +142,9 @@ const J=x=>JSON.stringify(x);
     o=_fila(); out.b={ dep:o.deposito, sale:o.enSale, comp:o.comp };
     // (c) el Excel de Banzer de la tarde, «ya incluye las entregas de hoy»: lo de hoy no se descuenta
     _alm(4, 5, null, { incBanzer:true });
-    STATE=[ _P({ id:'e5', fecha:todayStr(), entregado:true, productos:[_tit(2,{chk:'ok', chkDe:'Banzer'})] }) ];
+    /* ✏️ (18/10, §4ls, corrector, a conciencia) El pedido se cargó a la MAÑANA (08:00), antes del Excel: con `ts` = ahora (18:30) era un
+       pedido cargado DESPUÉS del Excel, que no puede estar adentro de él (`stockCargadoDespuesDelCorte`) y se restaba. */
+    STATE=[ _P({ id:'e5', fecha:todayStr(), entregado:true, ts:new Date(todayStr()+'T08:00:00-04:00').getTime(), productos:[_tit(2,{chk:'ok', chkDe:'Banzer'})] }) ];
     o=_fila(); out.c={ dep:o.deposito, sale:o.enSale };
     // (d) una línea repartida: 1 de acá y 2 de Banzer, entregada hoy
     _alm(4, 5, null);

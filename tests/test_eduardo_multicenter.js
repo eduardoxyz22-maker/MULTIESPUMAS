@@ -167,6 +167,12 @@ function NUMEROS(k){
       nBase.T.libre===3 && nMc.T.libre===3 && nBase.T.pedir===Math.ceil(nBase.T.objS-3-1e-9) && nMc.T.pedir===Math.ceil(nMc.T.objS-3-1e-9) &&
       nBase.T.recoger===2 && nMc.T.recoger===2 && nBase.T.sem===nBase.T.pedir-2 && nMc.T.sem===nMc.T.pedir-2 && nMc.T.fabricar===nMc.T.sem && nMc.T.sem>nBase.T.sem,
       { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem, nBase.T.objS], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem, nMc.T.objS] });
+  /* 🔢 (18/10, §4ls, corrector) Los números EXACTOS de la regla nueva con este ejemplo (reloj clavado): las comprobaciones de arriba son
+     relativas («sube», «= objetivo − 3 − 2») y cualquier objetivo que subiera con Multicenter las pasaba. Si cambian, cambió una regla. */
+  const EXACTO = { base:{ obj:8, pp:6, sem:3, quin:11, mesNec:19, mes:22 }, mc:{ obj:17, pp:15, sem:12, quin:27, mesNec:34, mes:38 } };
+  const exN = (T) => ({ obj:T.obj, pp:T.pp, sem:T.sem, quin:T.quin, mesNec:T.mesNec, mes:T.mes });
+  chk('números exactos de la regla nueva (punto de pedido y objetivo), sin y con Eduardo a Multicenter',
+      JSON.stringify({ base:exN(nBase.T), mc:exN(nMc.T) })===JSON.stringify(EXACTO), { base:exN(nBase.T), mc:exN(nMc.T) });
   chk('15 días y octubre suben con Eduardo a Multicenter; el mes de lo que rota sale del objetivo (sin el rango de 5 estimaciones)',
       nMc.T.quin>nBase.T.quin && nBase.T.quin>=nBase.T.sem && nMc.T.mesNec>nBase.T.mesNec && nBase.T.est===null && nMc.T.est===null && nBase.T.mesMin==null && nMc.T.mesMax==null,
       { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.est], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.est] });

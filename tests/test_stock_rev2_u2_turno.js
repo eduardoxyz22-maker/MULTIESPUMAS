@@ -112,7 +112,9 @@ async function abrir(browser, file, reloj){
     out.sin=foto();
     _ent('a01'); _ent('s01'); out.am=foto();
     _ent('p01'); out.pm=foto();
-    await _cargar(peds(), _stock(function(st){ st.c.u[_K]=10; }, { inc:true })); out.todo=foto();
+    await _cargar(peds(), _stock(function(st){ st.c.u[_K]=10; }, { inc:'ampm' })); out.todo=foto();
+    /* (§4ls, corrector) `inc:true` SIN `incT` = la casilla única de la página de antes: lo de hoy sin ✅ sigue reservado y con ✅ no se resta. */
+    await _cargar(peds(), _stock(function(st){ st.c.u[_K]=10; }, { inc:true })); out.leg=foto(); _ent('a01'); out.legEnt=foto();
     await _cargar(peds(), _stock(function(st){ st.c.u[_K]=10; }, {})); out.nada=foto(); _ent('a01'); _ent('s01'); _ent('p01'); out.nadaEnt=foto();
     return out;
   });
@@ -121,7 +123,12 @@ async function abrir(browser, file, reloj){
   chk('UT1c · con ✅ lo de la mañana NO se resta otra vez: PTF sigue en 10 (antes 7) y comp 4', r.am && r.am.dep===10 && r.am.comp===4, J(r.am));
   chk('UT1d · el cierre no mueve lo libre: 6 antes y después del ✅ (antes 3, con la mañana contada dos veces)', r.sin && r.am && r.sin.libre===6 && r.am.libre===6, J([r.sin, r.am]));
   chk('UT1e · lo de la TARDE (turno no incluido) sigue reservado y, con ✅, se resta: PTF 9, comp 3, libre 6', r.pm && r.pm.dep===9 && r.pm.comp===3 && r.pm.libre===6, J(r.pm));
-  chk('UT1f · `inc:true` (lo guardado antes) = los dos turnos: nada de hoy se reserva ni se resta (PTF 10, comp 3)', r.todo && r.todo.dep===10 && r.todo.comp===3, J(r.todo));
+  chk('UT1f · los dos turnos con la regla nueva (`inc:true` + `incT:"ampm"`): nada de hoy se reserva ni se resta (PTF 10, comp 3)', r.todo && r.todo.dep===10 && r.todo.comp===3, J(r.todo));
+  /* ✏️ (18/10, §4ls, corrector, a conciencia) Antes UT1f esperaba esto mismo de `inc:true` a secas. Pero `inc:true` sin `incT` es lo que deja
+     la página SIN F5 con la casilla única marcada desde las 12:00 (el 14/10 a las 12:38 y el 15/10 a las 13:26): leído como «los dos
+     turnos», lo de la tarde que todavía estaba en el depósito dejaba de reservarse. */
+  chk('UT1g · 🧓 `inc:true` sin `incT` (la casilla de la página de antes): lo de hoy sin ✅ SIGUE reservado (comp 7) y con ✅ no se resta otra vez (PTF 10)',
+      r.leg && r.leg.comp===7 && r.leg.dep===10 && r.legEnt && r.legEnt.dep===10 && r.legEnt.comp===5, J([r.leg, r.legEnt]));
   chk('control · sin ningún turno marcado, como siempre: se reserva todo (7) y con ✅ se resta (PTF 6)', r.nada && r.nada.comp===7 && r.nadaEnt.dep===6, J([r.nada, r.nadaEnt]));
 
   // ═══ UT2. Banzer ═══
@@ -283,6 +290,53 @@ async function abrir(browser, file, reloj){
   chk('UT8a · se lee (PTF y Banzer), se guarda (`filaStock` → `leerStock`) y se junta (`stockFusionar`) con el turno', r.leido==='am' && r.bz==='am' && J(r.guardado)===J(['am','am']) && r.junta==='am', J(r));
   chk('UT8b · `inc:"am"` (escrito por otro) se lee como la mañana, no como los dos', r.texto && r.texto[0]==='am' && r.texto[1]===true, J(r.texto));
   chk('control · UT8c · una llegada y una salida a mano (no tienen turno) solo se dan por incluidas con los dos turnos', r.entradaAm===true && r.entradaTodo===false && r.smAm===true && r.smTodo===false, J(r));
+  // ═══ UT10. Lo que encontraron los verificadores (§4ls, corrector) ═══
+  console.log('\n── UT10. Cargado después del Excel, la casilla de antes, camión sin dato, inc:1 ──');
+  r = await corre(page, async () => {
+    var hoy=todayStr(), out={};
+    /* U1: Excel de PTF de las 10:19 con la mañana incluida; una RPT de la MAÑANA de 5 cargada a las 12:18 (no existía cuando se sacó el
+       Excel) y una de 2 cargada a las 09:00 (sí estaba: ya salió con el camión). 8 en PTF. */
+    var peds=[ _ped('t01', hoy, 'AM', [_lin(_T,5)], { ts:_ts(hoy,'12:18:00') }), _ped('t02', hoy, 'AM', [_lin(_T,2)], { ts:_ts(hoy,'09:00:00') }) ];
+    await _cargar(peds, _stock(function(st){ st.c.u[_K]=8; st.c.hora='10:19:33'; }, { inc:'am' }));
+    var o=_fila(_K); out.sin={ comp:o.comp, dep:o.deposito, ids:o.compIds.map(function(c){ return c.id; }) };
+    _ent('t01'); _ent('t02'); o=_fila(_K); out.ent={ comp:o.comp, dep:o.deposito };
+    /* …y el control del Excel de la tarde: lo cargado después del de las 10:19 salió en la ventana; lo de las 09:00 ya no estaba. */
+    var v=stockVentanaCorte({ f:hoy, hora:'10:19:33', incT:'am' }, { fecha:hoy, hora:'16:40:00' }, { am:true, pm:true });
+    out.vent={ t01:stockSalioVentana(findById('t01'), findById('t01').productos[0], v), t02:stockSalioVentana(findById('t02'), findById('t02').productos[0], v) };
+    /* U2: con las DOS casillas, la página nueva guarda `inc:true` + `incT:"ampm"` (corte y renglón del historial); si una página vieja le
+       saca el `incT`, el historial lo devuelve. */
+    await _cargar([], _stock(function(st){ st.c.u[_K]=3; st.c.hora='08:00:00'; }, {}));
+    EXIST_IMP={ fecha:hoy, hora:'16:40:00', sacado:hoy, sinFecha:false, almacen:_LOG, items:[{ cod:'CH1201', desc:'TITANIO ICE 2.5PLZ 160X190CM', medida:'160x190', cant:3, cat:true, k:_K }], total:3,
+                repetidos:0, malos:0, colCant:'AY', solo0:true, cods:{ CH1201:_K }, esLog:true, conocido:true };
+    renderImportExist();
+    var am=document.getElementById('exist-inc'), pm=document.getElementById('exist-inc-pm'); if(am) am.checked=true; if(pm) pm.checked=true;
+    await confirmarImportExist(); stockOlvidarIndice();
+    out.dos={ inc:STOCK.c.inc, incT:STOCK.c.incT||'', hInc:STOCK.h[0] && STOCK.h[0].inc, hT:STOCK.h[0] && STOCK.h[0].incT };
+    var d=JSON.parse(JSON.stringify(STOCK)); delete d.c.incT; stockIncDelHistorial(d); out.repuesto=d.c.incT||'';
+    /* U3: Carry salió 08:50; el Foton nuevo (también de la mañana) no tiene dato. Excel de las 09:00 → la mañana SIN marcar. */
+    await _cargar([ _ped('v01', hoy, 'AM', [_lin(_T,1)], { vehiculo:'Carry' }), _ped('v02', hoy, 'AM', [_lin(_T,1)], { vehiculo:'Foton nuevo' }) ], _stock(function(st){ st.c.u[_K]=5; }, {}));
+    CARGA_CHK[cargaChkKey(hoy,'Carry',CARGA_SALIO)+'|08:50']=1;
+    var q=stockIncPropuesta('09:00:00',''); out.sinDato={ v:q.am.v, txt:q.am.txt };
+    /* …y los dos de la mañana con «Ya salió» a las 13:10 (el viaje de la mañana, tarde): el Excel de las 10:05 NO trae la mañana. */
+    delete CARGA_CHK[cargaChkKey(hoy,'Carry',CARGA_SALIO)+'|08:50'];
+    CARGA_CHK[cargaChkKey(hoy,'Carry',CARGA_SALIO)+'|13:10']=1; CARGA_CHK[cargaChkKey(hoy,'Foton nuevo',CARGA_SALIO)+'|13:10']=1;
+    var q2=stockIncPropuesta('10:05:32',''); out.tarde={ am:q2.am.v, pm:q2.pm.v, txt:q2.am.txt };
+    /* U4: un `inc` verdadero que no sea `true` (un 1) vale como los dos turnos. */
+    out.uno=stockIncTurnos({ inc:1 });
+    return out;
+  });
+  chk('UT10a · lo de la MAÑANA cargado DESPUÉS de la hora del Excel (12:18 con el de las 10:19) se reserva (comp 5, libre 3); lo cargado antes, no',
+      r.sin && r.sin.comp===5 && r.sin.ids.indexOf('t01')>=0 && r.sin.ids.indexOf('t02')<0 && r.sin.dep===8, J(r.sin||r));
+  chk('UT10b · …y con ✅ SÍ baja ese Excel (PTF 3: el 5 no estaba adentro); lo de las 09:00 no se resta otra vez', r.ent && r.ent.dep===3 && r.ent.comp===0, J(r.ent));
+  chk('UT10c · …y en el control del Excel de la tarde cuenta como salida de la ventana (sin «salida sin explicar»); lo de las 09:00, no',
+      r.vent && r.vent.t01===true && r.vent.t02===false, J(r.vent));
+  chk('UT10d · las DOS casillas se guardan `inc:true` + `incT:"ampm"` (corte e historial) y, si una página vieja saca el `incT`, el historial lo repone',
+      r.dos && r.dos.inc===true && r.dos.incT==='ampm' && r.dos.hInc===true && r.dos.hT==='ampm' && r.repuesto==='ampm', J([r.dos, r.repuesto]));
+  chk('UT10e · un camión de la mañana SIN dato de salida decide por la hora: Carry salió 08:50, el Foton sin dato y el Excel de las 09:00 → la mañana sin marcar (antes, marcada)',
+      r.sinDato && r.sinDato.v===false && /sin dato/.test(r.sinDato.txt||''), J(r.sinDato));
+  chk('UT10f · la única salida de un camión de la mañana, a las 13:10, es el viaje de la mañana: el Excel de las 10:05 NO trae la mañana (antes, por la hora, sí)',
+      r.tarde && r.tarde.am===false && r.tarde.pm===false, J(r.tarde));
+  chk('UT10g · `inc:1` vale como los dos turnos', r.uno && r.uno.am===true && r.uno.pm===true, J(r.uno));
   errores.push.apply(errores, page._err);
   await page.close();
 

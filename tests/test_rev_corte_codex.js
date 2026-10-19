@@ -111,7 +111,9 @@ const BASE = `
     const r = await page.evaluate((base) => {
       eval(base); _base();
       /* Hoy a las 15:00 se entregó y se confirmó (cierre) un pedido de 2; el Excel es de las 09:00 de hoy. */
-      STATE.push(_P({id:'hoy', fecha:todayStr(), entregado:true, productos:H(2,{ eF:todayStr(), eT:_ts(todayStr(),'15:00:00'), eQ:'Marisol' })}));
+      /* ✏️ (18/10, §4ls, corrector, a conciencia) cargado a las 08:00, ANTES del Excel de las 09:00: con `ts` = ahora (15:00) era un pedido
+         que no existía cuando se sacó el Excel (`stockCargadoDespuesDelCorte`) y la casilla no podía incluirlo. */
+      STATE.push(_P({id:'hoy', fecha:todayStr(), entregado:true, ts:_ts(todayStr(),'08:00:00'), productos:H(2,{ eF:todayStr(), eT:_ts(todayStr(),'15:00:00'), eQ:'Marisol' })}));
       var R9=_R(todayStr(),'09:00:00',{[K]:10,[K2]:4});
       var v9=stockVentanaCorte(STOCK.c, R9, false);
       var out={};

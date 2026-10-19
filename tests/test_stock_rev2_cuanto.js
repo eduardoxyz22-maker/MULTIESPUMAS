@@ -272,8 +272,11 @@ const PATRON=['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','
     // la cuenta aparte: hay = 4 + 1 (Moreno); vendido 2 el 28/10 (dentro de 15 + 4) y 3 el 12/11 (noviembre)
     const hay=5, h15=habilesEntre(HOY, sumar(HOY,15), fer), hResto=habilesEntre(HOY,'2026-10-31',fer), hNov=habilesEntre('2026-10-31','2026-11-30',fer);
     const quin=Math.max(o9.sem||0, Math.ceil(2 + R.S + R.mu*h15 - hay - 1e-9), 0);
-    const queda=Math.floor(hay + quin - (2 + R.S + R.mu*hResto) + 1e-9);
-    const nec=Math.ceil(3 + R.mu*hNov - 1e-9), mes=Math.max(0, nec-queda);
+    /* (18/10, §4ls, corrector, a conciencia) El mes se redondea UNA vez, como la regla validada (`tabla.py`: ceil(μ·hábiles + vendido −
+       lo que sobra)); «queda» se muestra como necesita − producir para que la fila cierre. Con «ceil − floor» daba +1 en 20 de 38
+       productos que rotan el 16/10 (611 u contra 591). */
+    const qRaw=hay + quin - (2 + R.S + R.mu*hResto), necRaw=3 + R.mu*hNov;
+    const nec=Math.ceil(necRaw - 1e-9), mes=Math.max(0, Math.ceil(necRaw - qRaw - 1e-9)), queda=mes>0 ? nec-mes : Math.floor(qRaw + 1e-9);
     chk('O9a. 15 días = lo vendido + el objetivo + la venta de los días hábiles de esos 15 días − lo que hay ('+quin+')', o9.quin===quin && o9.quin>=o9.sem, { pagina:o9.quin, aparte:quin, sem:o9.sem, h15 });
     chk('O9b. el mes = su venta + lo vendido para el mes − lo que el 1° queda sobre el objetivo ('+nec+' · '+queda+' · '+mes+'), sin rango', o9.mes===mes && o9.mesNec===nec && o9.mesQueda===queda && o9.rango==null, { pagina:[o9.mesNec,o9.mesQueda,o9.mes], aparte:[nec,queda,mes] });
   }
@@ -291,6 +294,21 @@ const PATRON=['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','
   }, { pat:PATRON });
   const a12 = await corre(E), a1631 = await corre(E2);
   chk('O10. «Pedir 7 días», «15 días» y el objetivo dan lo mismo a las 12:00 y a las 16:31', a12.sem===a1631.sem && a12.quin===a1631.quin && a12.obj===a1631.obj && a12.sem>0, { a12, a1631 });
+  /* O11 (§4ls, corrector). Lo libre de la regla cuenta lo vendido hasta HOY + 15 (`LIM15` de la regla validada), no hasta 15 días desde que
+     arranca la fábrica: con un pedido para el día 16 (01/11), a las 16:31 (la fábrica arranca mañana) lo libre bajaba y «Pedir 7 días»
+     saltaba. */
+  const corre11 = async (EE) => EE(async (a) => {
+    var K=_k('CH1129','TITANIO LATEX','140x190');
+    var vend=_ventas('CH1129','TITANIO LATEX','140x190', a.pat.map(function(f){ return { f:f, u:2 }; }));
+    var pend=[_ped('2026-11-01',[{ codigo:'CH1129', desc:'TITANIO LATEX', medida:'140x190', cant:4, precio:1000 }])];
+    await _cargar(vend.concat(pend), _stock(function(st){ st.c.u[K]=20; }));
+    var d=stockData(), f=null; stockProducir(d).bloques.forEach(function(B){ B.filas.forEach(function(x){ if(x.o.k===K) f=x; }); });
+    var o=_fila(K);
+    return { libre:stockLibreObj(o), compH:stockCompHorizonte(o), sem:f?f.sem:0, quin:f?f.quin:0, fab:o.fabricar };
+  }, { pat:PATRON });
+  const b12 = await corre11(E), b1631 = await corre11(E2);
+  chk('O11. lo libre del objetivo cuenta lo vendido hasta hoy + 15: el pedido para el 01/11 no entra ni a las 12:00 ni a las 16:31 (lo libre y «Pedir 7 días» no saltan)',
+      b12.libre===b1631.libre && b12.compH===0 && b1631.compH===0 && b12.fab===b1631.fab && b12.quin===b1631.quin, { b12, b1631 });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

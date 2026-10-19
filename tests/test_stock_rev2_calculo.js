@@ -224,6 +224,38 @@ function PREPARAR(){
   chk('C6. lo que ya viene en camino cubre la ✗ UNA vez: «✗ No alcanza» no pide los 2 que ya están pedidos', c6.todos===0, c6);
   chk('C7. …también con el filtro «Hoy» (la ✗ queda en la 1ª vuelta)', c6.hoy===0, c6);
 
+  /* ── C8 (§4ls, corrector). La ✗ de una entrega LEJANA (a más de 15 días) no se reparte: queda ✗ y no se lleva una ✔ protegida que
+     después le falta a un pedido más cercano. La de dentro de 15 días sí (C1). ── */
+  const c8 = await E(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    var L=_ped('2026-11-10', [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:1, precio:1000, chk:'no' }]);
+    await _cargar([L], _stock(function(st){ st.c.u[K]=1; }));
+    REVSTK_DIAS='todos'; abrirStockRevisar();
+    var cs=revStkCambios(), toca=cs.some(function(g){ return g.p.id===L.id; });
+    try{ closeModal(); }catch(e){}
+    /* …y «ya viene» sin lo que el Excel ya mostró (la misma cuenta que «en camino seguro»). */
+    var txt=stockYaVieneTxt({ pedirReserva:true, fabricar:1, pedidos:[{ id:'q1', u:2, llega:'2026-10-20', tipo:'' }], detPor:{ q1:1 } });
+    return { toca:toca, chk:STATE.filter(function(p){ return p.id===L.id; })[0].productos[0].chk, txt:txt };
+  });
+  chk('C8a. la ✗ de una entrega a más de 15 días (10/11) no se propone ✔ aunque haya 1 en PTF (antes: ✔ protegida que le faltaba a uno más cercano)', c8.toca===false && c8.chk==='no', c8);
+  chk('C8b. «ya viene(n) N de fábrica» sin lo que el Excel ya mostró: 2 pedidos − 1 detectado → «ya viene 1 de fábrica» (antes «ya vienen 2»)', /ya viene 1 de fábrica/.test(c8.txt||''), c8.txt);
+
+  /* ── C9 (§4ls, corrector). La ✗ puesta a mano que pasa a ✔ no «contradice» (V-REV-1), pero la revisión lo DICE: si alguien la marcó
+     después de contar, quien aplica tiene que verlo. No cambia qué se propone. ── */
+  const c9 = await E(async () => {
+    var K=_k('CH1151','SOMIER TITANIO LATEX','200x200');
+    var A=_ped('2026-10-19', [{ codigo:'CH1151', desc:'SOMIER TITANIO LATEX', medida:'200x200', cant:1, precio:1000, chk:'no' }]);
+    await _cargar([A], _stock(function(st){ st.c.u[K]=1; }));
+    REVSTK_DIAS='todos'; abrirStockRevisar();
+    var cs=revStkCambios(), l=null; cs.forEach(function(g){ g.lineas.forEach(function(x){ if(g.p.id===A.id) l=x; }); });
+    var box=document.getElementById('modal-box'), txt=box ? (box.textContent||'') : '';
+    var out={ ahora:l&&l.ahora, deNo:!!(l&&l.deNo), contra:REVSTK.tot.contra, n:REVSTK.tot.deNo||0, aviso:!!(box && box.querySelector('.rev-deno-aviso')), nota:/estaba «✗ no hay» a mano/.test(txt) };
+    try{ closeModal(); }catch(e){}
+    return out;
+  });
+  chk('C9. la ✗ a mano que pasa a ✔ se sigue proponiendo y sin «contradice» (C2), pero la revisión avisa «↩️ estaba ✗ no hay a mano… si se contó después del Excel, no apliques»',
+      c9.ahora==='ok' && c9.deNo===true && c9.contra===0 && c9.n===1 && c9.aviso===true && c9.nota===true, c9);
+
   await page.close();
 
   /* ═══ D. Los días de venta desde que arranca la fábrica (1.4) ═══ */

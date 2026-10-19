@@ -135,7 +135,8 @@ async function abrir(browser, file, reloj){
   chk('FL1b · el corte conserva «lo que no figura está en 0», el almacén del Excel y la hora del conteo, y queda como conteo a mano', r.c && r.c.solo0 && r.c.alm==='PRODUCTOS TERMINADOS FAB.' && /^12:00/.test(r.c.hora) && r.c.mano===1 && r.aMano===true && r.viejo===false, J([r.c, r.aMano, r.viejo]));
   chk('FL1c · lo que el Excel no traía no pasa a «sin contar»: el SOMIER 160 (con una salida de hoy) sigue en −1 y el que solo está en Banzer, fuera de la lista del conteo, en 0 (antes «sin contar»)',
       r.k3 && r.k3.dep===-1 && r.k5 && r.k5.dep===0 && r.k5.enLista===false, J([r.k3, r.k5]));
-  chk('FL1d · el PTF negativo se muestra 0 en el campo pero queda −3 (antes 0)', r.negCampo==='0' && r.c && r.c.negBase===-3, J([r.negCampo, r.c && r.c.negBase]));
+  /* ✏️ (18/10, §4ls, corrector, a conciencia) El campo MUESTRA el −3 (con su nota): si mostraba 0, quien contó 0 no podía decirlo. */
+  chk('FL1d · el PTF negativo se muestra −3 en el campo y queda −3 sin tocarlo (antes 0)', r.negCampo==='-3' && r.c && r.c.negBase===-3, J([r.negCampo, r.c && r.c.negBase]));
   chk('FL1e · se guarda y se lee igual (`filaStock` → `leerStock`)', r.leido && r.leido.mano===1 && r.leido.solo0 && r.leido.alm && r.leido.hora, J(r.leido));
   chk('control · FL1f · un Excel sacado ANTES del conteo no entra y lo dice con el texto del conteo a mano', r.excelViejo && r.excelViejo.viejo && r.excelViejo.aMano && /conteo a mano/.test(r.excelViejo.txt), J(r.excelViejo));
   errores.push.apply(errores, page._err); await page.close();
@@ -410,6 +411,79 @@ async function abrir(browser, file, reloj){
       r.trasToque && /2 de 3/.test(r.trasToque.tit) && r.trasToque.imp==='Almacen Distribucion Banzer' && r.trasToque.bz===r.bz0 && r.bz0!=='11:30:00', J([r.bz0, r.trasToque]));
   chk('FL12c · el botón del almacén que sigue arranca apagado («Guardando PTF…») y un toque ahí no hace nada', r.trasToque && r.trasToque.b2apagado && /Guardando/.test(r.trasToque.b2) && r.trasToque2 && /2 de 3/.test(r.trasToque2.tit) && r.trasToque2.bz===r.bz0, J([r.trasToque, r.trasToque2]));
   chk('FL12d · terminado el guardado, el botón vuelve: «💾 Usar estas existencias y seguir con …»', r.despues && /Usar estas existencias y seguir con/.test(r.despues.txt) && !r.despues.apagado, J(r.despues));
+  errores.push.apply(errores, page._err); await page.close();
+
+  // ═══ FL13. Lo que encontraron los verificadores (§4ls, corrector) ═══
+  console.log('\n── FL13. Líneas 📥 vencidas, conteo de un negativo, Moreno viejo, cierre a medianoche, ventanas, ATC, recogida atrasada ──');
+  page = await abrir(browser, PEDIDOS, '2026-10-17T11:20:00-04:00');
+  r = await corre(page, async () => {
+    var out={};
+    /* (V-REV-3) La llegada de una recogida: la línea 📥 del 16/10 (ya pasó) se ofrece DESTILDADA y avisa; la del 18/10, tildada. */
+    var peds=[ _ped('q11', '2026-10-16', 'AM', [_lin(_T,2,{ chk:'im' })]), _ped('q12', '2026-10-18', 'AM', [_lin(_T,2,{ chk:'im' })]) ];
+    await _cargar(peds, _stock(function(s){ s.c.u[_K]=0; s.g[_IM].u[_K]=9;
+      s.p=[{ id:'rc4', k:_K, u:2, tipo:'recogida', de:_IM, fab:'', f:'2026-10-16', esp:'2026-10-17', r:'', t:_ts('2026-10-16','12:05:00') }]; }, { f:'2026-10-17', hora:'10:10:00' }));
+    abrirStockEntrada(); recibirStockPedido('rc4');
+    out.lineas=(STOCK_REC_LINEAS && STOCK_REC_LINEAS.L || []).map(function(l){ return [l.id, !!l.on, l.riesgo||'']; });
+    var box=document.getElementById('stk-rec-lineas'); out.aviso=box ? /Reprogramala primero/.test(box.textContent||'') : false;
+    closeModal();
+    /* (Man-VM2) Conté a mano: el −3 se puede corregir a 0. */
+    await _cargar([ _ped('n01', proximoDiaEntrega(), 'AM', [_lin(_S,1)]) ], _stock(function(s){ s.c.u[_K2]=-3; }, { f:'2026-10-17', hora:'10:00:00' }));
+    abrirStockConteo();
+    var neg=[].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')).filter(function(x){ return x.getAttribute('data-k')===_K2; })[0];
+    out.negNota=!!document.querySelector('#modal-box .stk-conteo-neg');
+    if(neg){ neg.value='0'; neg.dispatchEvent(new Event('input', { bubbles:true })); }
+    guardarStockConteo(); out.negGuardado=(STOCK.c.u||{})[_K2];
+    /* (Man-VM3b) Recogida vencida (Excel de PTF del 17/10) con el Excel de Moreno del 15/10, de ANTES de ir a buscarla: todavía muestra lo
+       que la camioneta se llevó, así que lo sigue apartando (libre 1, no 3). Con el de Moreno del 17/10, libre 3. */
+    var rc=function(){ return [{ id:'rc5', k:_K, u:2, tipo:'recogida', de:_IM, fab:'', f:'2026-10-15', esp:'2026-10-16', r:'', t:_ts('2026-10-15','15:00:00') }]; };
+    await _cargar([ _ped('p05', '2026-10-21', 'AM', [_lin(_T,6)]) ], _stock(function(s){ s.c.u[_K]=1; s.g[_IM].u[_K]=3; s.g[_IM].f='2026-10-15'; s.p=rc(); }, { f:'2026-10-17', hora:'10:00:00' }));
+    out.libreViejo=stockLibreOrigen(_K,_IM);
+    await _cargar([ _ped('p05', '2026-10-21', 'AM', [_lin(_T,6)]) ], _stock(function(s){ s.c.u[_K]=1; s.g[_IM].u[_K]=3; s.p=rc(); }, { f:'2026-10-17', hora:'10:00:00' }));
+    out.libreNuevo=stockLibreOrigen(_K,_IM);
+    /* (test_rev8 §10) La recogida ATRASADA de 1 día (sin Excel de PTF posterior): el cuadrito dice «🚚 VIENE DE … todavía no llegó». */
+    await _cargar([], _stock(function(s){ s.c.u[_K]=0; s.g[_IM].u[_K]=3;
+      s.p=[{ id:'rc6', k:_K, u:2, tipo:'recogida', de:_IM, fab:'', f:'2026-10-15', esp:'2026-10-16', r:'', t:_ts('2026-10-15','15:00:00') }]; }, { f:'2026-10-16', hora:'10:00:00' }));
+    var v1=saldoVeredicto(_K, 2, '', '2026-10-20', true); out.atr={ tipo:v1.tipo, t:saldoTitulo(v1) };
+    /* …y VENCIDA con un Excel de PTF posterior que mostró una entrada sin explicar: no dice «todavía no llegó» a secas. */
+    await _cargar([], _stock(function(s){ s.c.u[_K]=0; s.g[_IM].u[_K]=3;
+      s.p=[{ id:'rc7', k:_K, u:2, tipo:'recogida', de:_IM, fab:'', f:'2026-10-15', esp:'2026-10-16', r:'', t:_ts('2026-10-15','15:00:00') }];
+      s.det=[{ id:'d:x1', k:_K, u:2, t:2, f:'2026-10-17', hora:'10:00:00' }]; }, { f:'2026-10-17', hora:'10:00:00' }));
+    var v2=saldoVeredicto(_K, 2, '', '2026-10-20', true); out.venc={ tipo:v2.tipo, t:saldoTitulo(v2) };
+    /* (VB-3) La misma ventana con otro número en el título no vuelve arriba. */
+    var ov=document.getElementById('modal'), largo=function(t){ return '<div class="modal-h"><h3>'+t+'</h3></div><div class="modal-b" style="height:3000px">x</div>'; };
+    openModal(largo('⚠️ 5 pedidos sin camión · hoy')); ov.scrollTop=600; openModal(largo('⚠️ 4 pedidos sin camión · hoy')); out.scroll=ov.scrollTop; closeModal();
+    /* (Cie-C5) Una ATC atrasada: el botón del día no dice «el Excel vigente ya no lo tiene». */
+    var atc=_ped('a91', '2026-10-15', 'AM', [_lin(_T,1)], { oc:'ATC 10-091' });
+    out.atc=cierreEntEfectoTxt(atc, '2026-10-15');
+    return out;
+  });
+  chk('FL13a · (V-REV-3) la línea 📥 de un día que ya pasó se ofrece DESTILDADA y avisa «reprogramala primero»; la del 18/10, tildada',
+      J(r.lineas)===J([['q11',false,'pasada'],['q12',true,'']]) && r.aviso===true, J([r.lineas, r.aviso, r.__error]));
+  chk('FL13b · (Man-VM2) «Conté a mano» con un PTF en −3: lo muestra con su nota y escribir 0 lo deja en 0 (antes quedaba −3)', r.negNota===true && r.negGuardado===0, J([r.negNota, r.negGuardado]));
+  chk('FL13c · (Man-VM3b) la recogida vencida sigue apartando lo de Moreno mientras su Excel sea de antes de ir a buscarla (libre 1); con el de después, 3',
+      r.libreViejo===1 && r.libreNuevo===3, J([r.libreViejo, r.libreNuevo]));
+  chk('FL13d · (rev8 §10) una recogida atrasada de 1 día (sin Excel de PTF posterior) sigue diciendo «🚚 VIENE DE … todavía no llegó»',
+      r.atr && r.atr.tipo==='recogida' && /VIENE DE/.test(r.atr.t) && /todavía no llegó/.test(r.atr.t), J(r.atr));
+  chk('FL13e · vencida y con una entrada sin explicar en el Excel de después: «mostró una entrada sin explicar (¿es ella?)», no «todavía no llegó»',
+      r.venc && r.venc.tipo==='moreno' && /entrada sin explicar/.test(r.venc.t) && !/todavía no llegó/.test(r.venc.t), J(r.venc));
+  chk('FL13f · (VB-3) repintar la misma ventana con otro número en el título conserva el lugar (600)', r.scroll===600, J(r.scroll));
+  chk('FL13g · (Cie-C5) en una ATC el botón del día dice «no toca el stock», no «el Excel vigente ya no lo tiene»', r.atc==='no toca el stock', J(r.atc));
+  errores.push.apply(errores, page._err); await page.close();
+
+  /* (Cie-C5) El cierre abierto a las 23:58 y confirmado a las 00:02: lo tildado «de hoy» se entrega el día de la lista (16/10). */
+  page = await abrir(browser, PEDIDOS, '2026-10-16T23:58:00-04:00');
+  await corre(page, async () => {
+    await _cargar([ _ped('m01', '2026-10-16', 'AM', [_lin(_T,1)]) ], _stock(function(s){ s.c.u[_K]=3; }, { f:'2026-10-16', hora:'10:00:00' }));
+    abrirCierreEntregas();
+    var c=document.querySelector('.cie-ent-chk[data-id="m01"]'); c.checked=true; c.dispatchEvent(new Event('change'));
+    document.getElementById('cie-ent-quien').value='Marisol';
+  });
+  await page.clock.setFixedTime(new Date('2026-10-17T00:02:00-04:00'));
+  r = await corre(page, async () => {
+    var res=await confirmarCierreEntregas(); var p=findById('m01');
+    return { ok:res!==null, ent:!!(p && p.entregado), eF:p && p.productos[0].eF || '', falta:/Falta elegir/.test(window._toasts.slice(-1)[0]||'') };
+  });
+  chk('FL13h · (Cie-C5) el cierre que cruza la medianoche no se traba: entrega el día de la lista (16/10), sin pedir el día', r.ok && r.ent && r.eF==='2026-10-16' && !r.falta, J(r));
   errores.push.apply(errores, page._err); await page.close();
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,400));
