@@ -15316,3 +15316,35 @@ a vender, por si acaso»*.
   (punto de pedido y objetivo), `c973028` (flujos), `084071b` (resto), `19ceb25` (textos), `18fb452` (correcciones de los 8
   verificadores). Solo la página: el `.gs` sigue `2026-10-15-a`. Al publicar, todos F5 (una página sin F5 sube el Excel con la casilla
   única: se lee como `leg`).
+- **🔎 Verificación final de `18fb452` (19/10, workflow de 21 agentes: 7 temas en worktrees propios + un verificador por tema + crítico +
+  4 arregladores + batería)**. Lo que se COMPROBÓ: las cuentas dan el mismo número en todas las vistas (Plan, Qué producir, cinta, fichas,
+  tabla, «Cómo se calcula», copias, cuadrito) a 5 horas distintas; la regla de cuánto tener recalculada a ciegas en Python coincide en 12
+  momentos (0 diferencias, 318/318 productos el 16/10); los Excel reales del 09 al 16/10 subidos día por día por la pantalla dan un control
+  más limpio (174 → 162 filas, el doble descuento del camión desaparece) sin esconder diferencias reales; el cuadrito por fecha contra las
+  ventas reales: 0 vendidas dos veces entre ventas del panel; la regla de la página en el simulador = el paso 2 validado (80,4 % de lo que
+  rota con stock al venderse; panel de antes 75,3 %). Arreglos (cada uno con prueba con dientes):
+  · `5d0dc82` cuenta/vistas: «🧾 Ver pedidos» con el turno (lo que salió en el camión de la mañana va a «Ya salió hoy»), «Su historia» guarda
+    qué contestó logística (`it` en la hoja «Historial stock»; lo viejo queda «≈ estimado»), «📦 Sin rotación en 15 días · el plan pide N»
+    en vez de «Pedido único» cuando el plan pide, domingos fuera del termómetro, la copia y «Cómo se calcula», la fila del mes que no cerraba,
+    «el mes» reparte aparte lo que falta antes del 1° (`r.antes`, sin cambiar ningún total), «(primero N de Moreno: no hace falta fabricar)».
+  · `22d4615` Excel/flujos: lo anotado a mano después de un corte de mañana y tarde cuenta como posterior; «Conté a mano» sin tocar al día
+    siguiente ya no inventa negativos; el conteo deja renglón en el historial; las salidas a mano de un depósito sobreviven a la poda mientras
+    sean posteriores a SU Excel; poda de recogidas cerradas y «Ya pedí» vencidos (`PLAN_YA_VENCIDO_DIAS`); el control junta un traspaso
+    PTF↔Banzer del mismo día; textos de las casillas de turno en IM y en el conteo. ⚠️ CO-2 (leer `leg` por la hora) se probó y NO se dejó:
+    la planilla real lo contradice.
+  · `225ccf6` cuadrito: lo 🏭 de otro pedido ya salido de fábrica y sin sello queda apartado en el cuadrito y en la revisión (no en el Plan:
+    queda para decidir, el pedido de hoy pasaría de 208 a 210); «para el X sí, desde el Y ya no» también en 📥/⏳; medida «105X190CM» =
+    105x190 (`stockMedidaEstandar`); el chip del buscador separa «a mano» de «en Moreno»; el aviso del servidor relee antes de abrirse.
+  · `ad25885` pantalla + crítico: el Plan entra en el celular (336 px), «↩️ Deshacer» a la vista, el corte anterior cargado por la página vieja
+    se supone por la hora, Stock 3 veces más rápido en un aparato lento (abrir 732 → 237 ms), «← Volver a la revisión», contraste ≥ 4,5,
+    reprogramar ANTES avisa si rompe una promesa ✅ de otro pedido (CR-1), volver a subir el mismo Excel con otras casillas corrige el control
+    (CR-2). `e3ed48a` formato de la prueba.
+  · Pruebas nuevas `tests/test_stock_final_{cuenta,excel,cuadrito,pantalla}.js` (33, 41, 32, 54). **Batería entera: 213 suites, 7.502
+    comprobaciones, 0 mal.** Números del 16/10 12:00 SIN cambios: pedido de hoy 208 (14 de Moreno + 194 a fabricar), Qué producir 194/476/653.
+  · **Para la reunión (lo que encontró el tema «anticipar»)**: (1) con el automático apagado, si logística no tilda «✓ Ya pedí» al mandar el
+    pedido a la fábrica, «Pedir hoy» repite lo mismo cada día (ALMOHADA 50x70: 692 u sumadas del 09 al 16/10 con objetivo 96); (2) el cuadrito
+    promete 48 h + 1 y la regla cuenta 4 días hábiles: si la fábrica tarda 4, el 29 % de lo prometido «a producir» llega tarde; con la fábrica
+    cumpliendo 48 h + 1, depende de a qué hora logística pasa el pedido (10:00 → 46 % tarde; 16:30 → 0,5 %). Hay que fijar UN plazo y la hora
+    del pedido diario. (3) Lo que no rota con stock: 1.141 u, ~Bs 1,77 M a precio de venta, nada se repone.
+  · Queda para decidir (no se hizo): Plan que aparte lo 🏭 ya llegado; los dos ritmos; una columna aparte para «antes del 1°»; CO-1 parte 2
+    (proteger `mano`/`incT` de la página vieja exige `.gs` nuevo con `sf≥4`: mientras tanto, todos F5).

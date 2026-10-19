@@ -679,7 +679,12 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   protegidas; plazo medido solo con `prodR`/`eF` (una muestra por pedido). Recogidas que vencen (`STOCK_RECOGIDA_VENCE_DIAS`), «Conté a
   mano» con `mano:1`, «Salió sin pedido» con depósito y lápida `an`, control del Excel con protectores aparte (`existControlFueraHtml`).
 - Números 16/10 12:00: pedido de hoy 221 → **208** (= la regla validada, 325/325); Qué producir 210/392/424 → **194/476/653**.
-- Pruebas `tests/test_stock_rev2_{auto_off,calculo,u2_turno,cuadrito_fecha,cuanto,flujos,resto,textos}.js`. Batería 209 / 7.342 / 0 mal.
+- Pruebas `tests/test_stock_rev2_{auto_off,calculo,u2_turno,cuadrito_fecha,cuanto,flujos,resto,textos}.js`. 
+- **Verificación final (19/10)**: `5d0dc82`, `22d4615`, `225ccf6`, `ad25885`, `e3ed48a`; pruebas `tests/test_stock_final_{cuenta,excel,
+  cuadrito,pantalla}.js`. Batería **213 / 7.502 / 0 mal**. ⚠️ `renderStock` dibuja con una foto (`STOCK_DIBUJO`/`stockMemo`): stockData,
+  stockTiemposFabrica, ventasPanelIndex y stockProducir se calculan UNA vez por dibujo; algo que cambie el stock en medio de un dibujo tiene
+  que llamar a `renderStock` de nuevo. `stockSalidas(k)` lee de `stockSalidasMapa` (una pasada). La hoja «Historial stock» guarda `it`
+  (qué turnos traía cada Excel). Lo 🏭 de otro ya salido de fábrica lo apartan el cuadrito y la revisión (`stockFabVencidoU`), el Plan NO.
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
