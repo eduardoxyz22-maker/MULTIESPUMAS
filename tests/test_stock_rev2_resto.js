@@ -271,7 +271,9 @@ async function abrir(browser, file, reloj){
   /* ✏️ (18/10, §4ls, corrector, a conciencia) Mes-VM4 se sacó: no estaba en la lista de arreglos (1.12), su verificador lo marcó como
      decisión del dueño (U11) y cambiaba «15 días» y «el mes» de lo que tiene objetivo (decisión 5). Vuelve §4iz E1-6: «queda» negativo
      se suma al mes que viene; «15 días» de lo que rota solo en 30 días sigue en cero (§4dr: ese ritmo es solo para el mes). */
-  chk('RS10 sin Mes-VM4: lo que falta para terminar octubre se suma a noviembre («queda» negativo) y «15 días» no lo lleva', r && r.rota===false && r.rotaMes===true && !r.antes && r.quin===0 && r.queda<0 && r.mes>0, r);
+  /* ✏️ (19/10, §4ls CU-1, a conciencia) `antes` ya no es «lo que pasó a 15 días» (Mes-VM4, sacado): es la parte de «el mes» que falta para
+     terminar octubre, dicha aparte (mes = antes + 1ª + 2ª quincena). Sigue sumándose al mes y «15 días» no la lleva. */
+  chk('RS10 sin Mes-VM4: lo que falta para terminar octubre se suma a noviembre («queda» negativo, dicho aparte) y «15 días» no lo lleva', r && r.rota===false && r.rotaMes===true && r.antes===-r.queda && r.quin===0 && r.queda<0 && r.mes>0, r);
 
   // ═══ RS11-RS13. Banzer o PTF ═══
   console.log('\n── RS11-RS13. Banzer o PTF (BP2, BP5, BP1) ──');
@@ -327,10 +329,11 @@ async function abrir(browser, file, reloj){
     var dias=[ { fecha:d1, datos:{ PTF:{ f:d1, h:'10:00', u:(function(){ var u={}; u[KT]=10; return u; })() } } },
                { fecha:d2, datos:{ PTF:{ f:d2, h:'10:00', u:(function(){ var u={}; u[KT]=8; return u; })() } } } ];
     var svg=sfHistSvg(o, dias, _d(-29), hoy);
-    var ent=(svg.match(/entraron [0-9]+/g)||[]);
+    /* ✏️ (19/10, §4ls VI-5, a conciencia) Estos renglones no guardan qué turnos traía su Excel (`it`): el «+N» sale marcado «≈». */
+    var ent=(svg.match(/entraron ≈?[0-9]+/g)||[]);
     /* Una entrada de verdad: el 06/10 el Excel dice 15 → entraron 7 (15 − 10 + 2). */
     var dias2=JSON.parse(JSON.stringify(dias)); dias2[1].datos.PTF.u[KT]=15;
-    var ent2=(sfHistSvg(o, dias2, _d(-29), hoy).match(/entraron [0-9]+/g)||[]);
+    var ent2=(sfHistSvg(o, dias2, _d(-29), hoy).match(/entraron ≈?[0-9]+/g)||[]).map(function(t){ return t.replace('≈',''); });
     return { ent:ent, est:/class="sf-est"/.test(svg) || /estimado hoy/.test(svg), ent2:ent2 };
   });
   chk('RS14 sin Excel de hoy, las 3 entregas de hoy NO dibujan «+3 entraron», y la salida de la tarde del 05/10 no es una entrada', r && r.ent && r.ent.length===0, r);

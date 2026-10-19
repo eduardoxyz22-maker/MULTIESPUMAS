@@ -135,11 +135,12 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
     apiPost=function(b){ window._pedidos.push(b.action); if(b.action==='histStockLeer') return Promise.resolve({ ok:true, dias:dias }); return Promise.resolve({ ok:false }); };
     sfElegir(_K.oro); await new Promise(function(ok){ setTimeout(ok,60); });
     var m=document.getElementById('modal-box')||document.body;
-    var o={ linea:!!m.querySelector('.sf-hist polyline'), entra:[].slice.call(m.querySelectorAll('.sf-hist svg text')).map(function(t){ return t.textContent; }).filter(function(t){ return /^\+/.test(t); }), pidio:window._pedidos };
+    /* ✏️ (19/10, §4ls VI-5, a conciencia) Estos renglones no dicen la hora ni qué turnos traía su Excel: el «+N» sale marcado «≈» (estimado). */
+    var o={ linea:!!m.querySelector('.sf-hist polyline'), entra:[].slice.call(m.querySelectorAll('.sf-hist svg text')).map(function(t){ return t.textContent; }).filter(function(t){ return /^≈?\+/.test(t); }), pidio:window._pedidos };
     closeModal(); return o;
   });
   chk('con el servidor nuevo dibuja la línea de lo que había (de la hoja «Historial stock»)', ()=>(r.linea && r.pidio.indexOf('histStockLeer')>=0), r);
-  chk('y marca lo que entró: el día que el saldo subió (+5 el 05/10: de 7 a 12 con 1 salida = 6)', ()=>(r.entra.indexOf('+6')>=0), r.entra);
+  chk('y marca lo que entró: el día que el saldo subió (+5 el 05/10: de 7 a 12 con 1 salida = 6)', ()=>(r.entra.indexOf('+6')>=0 || r.entra.indexOf('≈+6')>=0), r.entra);   // (19/10, §4ls VI-5) «≈» = estimado (renglones sin hora ni turnos)
   if(SHOTS){ await ev(()=>{ sfElegir(_K.oro); }); await page.waitForTimeout(300); await page.screenshot({ path:path.join(SHOTS,'f4_historia.png') }); await ev(()=>closeModal()); }
 
   /* ══ 5. El Excel del día ══ */
@@ -246,8 +247,12 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
     return o;
   });
   chk('la caja «🌡️ El termómetro de cada producto» está entre las fichas y el catálogo, abierta', ()=>(r.hay && r.abierto && r.entreFichasYCatalogo), r);
-  chk('el 🔴 del ORO cae en el día que se corta (la MISMA cuenta de «⏳ Se corta el…» de su ficha)', ()=>(r.oro.dias!=null && Math.abs(r.oro.punto - r.oro.dias/17*100)<0.05 && r.oro.pie.indexOf(sfDiaTxtNode(r.oro.corteVer))>=0), r.oro);   // ✏️ (18/10, §4ls VF5, a conciencia) el texto dice el día HÁBIL: el corte del dom 11/10 se lee «lun 12/10»; el 🔴 sigue en el día de la cuenta
-  chk('el 🚚 cae en hoy + lo que tarda la fábrica («si pedís hoy»), y entre los dos la franja «N días sin stock»', ()=>{ var n=Math.max(1,r.oro.lead); return Math.abs(r.oro.cami - n/17*100)<0.05 && (n>r.oro.dias ? r.oro.sin!==null && r.oro.pie.indexOf((n-r.oro.dias)+' día'+((n-r.oro.dias)===1?'':'s')+' sin stock')>=0 : true) && /si pedís hoy/.test(r.oro.pie); }, r.oro);
+  /* ✏️ (19/10, §4ls VI-2, a conciencia) El 🔴 y los días sin stock también desde el día HÁBIL que dice el texto (`stockCorteVer`): con el 🔴 en
+     el domingo y la llegada en un día hábil, «N días sin stock» contaba el domingo (sin camión). */
+  const diasA=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+  const corteV=()=>diasA('2026-10-09', r.oro.corteVer);
+  chk('el 🔴 del ORO cae en el día que se corta (la MISMA cuenta de «⏳ Se corta el…» de su ficha)', ()=>(r.oro.dias!=null && Math.abs(r.oro.punto - corteV()/17*100)<0.05 && r.oro.pie.indexOf(sfDiaTxtNode(r.oro.corteVer))>=0), r.oro);   // ✏️ (18/10, §4ls VF5, a conciencia) el texto dice el día HÁBIL: el corte del dom 11/10 se lee «lun 12/10»
+  chk('el 🚚 cae en hoy + lo que tarda la fábrica («si pedís hoy»), y entre los dos la franja «N días sin stock»', ()=>{ var n=Math.max(1,r.oro.lead), c=corteV(); return Math.abs(r.oro.cami - n/17*100)<0.05 && (n>c ? r.oro.sin!==null && r.oro.pie.indexOf((n-c)+' día'+((n-c)===1?'':'s')+' sin stock')>=0 : true) && /si pedís hoy/.test(r.oro.pie); }, r.oro);   // (19/10, §4ls VI-2) mar 13/10: un día hábil; «sin stock» desde el lun 12/10
   chk('el que se corta primero va arriba (ordenados por el día del corte)', ()=>(r.orden.length>=2 && r.orden.every(function(x,i,A){ return i===0 || A[i-1]<=x; })), r.orden);
   chk('el TITANIO (sobra, no se corta en estos días) no ocupa lugar', ()=>(!r.titEsta), [r.titDias, r.titAviso]);
   // ✏️ (18/10, §4ls VV4, a conciencia) «hay para cargar 8»: es PTF + Banzer, no el «Hay» del Plan (que suma Moreno)
