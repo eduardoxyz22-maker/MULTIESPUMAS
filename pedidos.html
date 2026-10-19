@@ -14195,6 +14195,12 @@ function fxBuscaChip(x){
     if(!STOCK_CARGADO) return '';
     var k=stockInfo({ desc:x.d, medida:x.m, codigo:x.code }).k; if(!k || k==='|') return '';
     var v=saldoVeredicto(k, 1, saldoSinId(), saldoFechaForm(), true), t=v.tipo;
+    /* 📥 (19/10, §4ls verificación final, CD-4) Con algo en Moreno (o en camino de Moreno), el número al lado del ✅ es lo que hay A MANO
+       (PTF + Banzer, menos lo vendido hasta la fecha) y Moreno va aparte, con las palabras del cuadrito: «✅ 33 libres» con 2 a mano y 31 en
+       Moreno invitaba a prometer para mañana lo que hay que ir a buscar (56 de 120 chips «✅» el 16/10). Sin Moreno, como siempre. */
+    var otrosM=(Number(v.moreno)||0)+(Number(v.recogida)||0);
+    if(t==='hay' && otrosM>0 && v.mano!=null) return '<span class="fx-bc ok">✅ '+stockUnid(Math.max(0, v.mano-(v.pendFecha||0)))+' a mano'+saldoAlaFechaTxt(v, 'al')+
+                                                     ' · +'+stockUnid(otrosM)+' en '+(v.variosMoreno ? 'Moreno y otros' : 'Moreno')+'</span>';
     if(t==='hay') return '<span class="fx-bc ok">✅ '+(v.libres!=null?(Math.max(0,v.libres)+' libre'+(v.libres===1?'':'s')+saldoAlaFechaTxt(v, 'al')):'hay')+'</span>';   // 📅 (§4ls) a la fecha, si hay ventas para después
     if(t==='moreno') return '<span class="fx-bc mo">📥 en Moreno</span>';
     if(t==='recogida') return '<span class="fx-bc mo">🚚 viene</span>';
@@ -24481,8 +24487,25 @@ function stockHayEnInventario(k){
   return false;
 }
 var STOCK_MEMO={};   // desc|medida|código → {auto, cat, cruda}. Se calcula una vez por nombre distinto.
+/* 📏 (19/10, §4ls verificación final, CD-3) Una medida ESTÁNDAR escrita con «CM», en metros o con espacios («105X190CM», «160 x 190 cm»,
+   «1,60 x 1,90») es la estándar: antes armaba otra clave ('ORO ORTOPEDICO|105X190CM'), el cuadrito decía «❓ NO RECONOZCO» con 3 en PTF
+   (la 10-150, 12/10) y el pedido quedaba en Stock en una fila aparte. La MISMA regla que el 📐 de medida especial (`saldoMedidaCanon`, §4gk),
+   pero solo si la medida ENTERA es «N x M»: «105X190 + 2CM DE ALTURA C/CAJON» es otro producto y no se toca, y lo que no es una de las
+   medidas de siempre («180X200CM») tampoco. Pasa por `stockInfo`: el formulario, Bloki y la pestaña Stock usan la misma clave. */
+var MEDIDA_NXM=/^\s*\d+(?:[.,]\d+)?\s*(?:m|mts?)?\s*[xX×✕✖*]\s*\d+(?:[.,]\d+)?\s*(?:cm|cms|m|mts?)?\.?\s*$/i;
+var MEDIDA_EST_MEMO=Object.create(null);   // medida escrita → la estándar ('' = queda como está). Pura: se recuerda (stockInfo es muy llamada)
+function stockMedidaEstandar(x){
+  var m=String((x&&x.medida)||''); if(!m) return x;
+  var c=MEDIDA_EST_MEMO[m];
+  if(c===undefined){
+    c='';
+    if(MEDIDA_NXM.test(m) && !esMedidaConocida(m)){ var cc=saldoMedidaCanon(m); if(cc && esMedidaConocida(cc)) c=cc; }
+    MEDIDA_EST_MEMO[m]=c;
+  }
+  return c ? Object.assign({}, x, { medida:c }) : x;
+}
 function stockInfo(x){
-  x=prodAliasMedida(x);
+  x=prodAliasMedida(stockMedidaEstandar(x));
   var raw=stockNorm(x&&x.desc)+'|'+stockNorm(x&&x.medida)+'|'+stockNorm(x&&x.codigo);
   var m=STOCK_MEMO[raw];
   if(!m){
@@ -25113,6 +25136,7 @@ function stockData(extra){
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
       vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, vendidosRptDem:0, vendidosTiendaAlm:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compIds:[], compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      fabVenc:0, fabVencPor:{}, fabVencIds:[],                // 🏭 (19/10, §4ls CD-1) lo hecho a pedido para otro que ya salió de fábrica (`stockFabVencidoU`)
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
       enSale:0, salePor:{}, salSale:{}, confSale:{},        // (26/09) los depósitos de salida (Banzer), aparte
@@ -25120,6 +25144,7 @@ function stockData(extra){
     return g[k];
   };
   var meter=function(x){
+    x=stockMedidaEstandar(x);                // 📏 (§4ls CD-3) «105X190CM» = 105x190, también en el nombre de la fila
     var info=stockInfo(x); if(info.k==='|') return null;
     var o=grupo(info.k), nom=stockNombreDe(info,x), esNativo=(info.k===info.auto);
     if(info.cat && info.cat.por==='parecido') o.parecido=true;
@@ -25220,8 +25245,13 @@ function stockData(extra){
       if(hecho){
         /* (05/10, Codex R5) Lo llegado y contado se RESERVA para ese cliente (`comp`, como un «✔ hay»); lo que falta llegar
            sigue siendo «lo trae la fábrica» (`aFab`): no sale del depósito. */
-        var ue2=prodUnidEnConteo(x), ur2=Math.max(0, ue2-fu);
-        if(ur2>0){ var fd2=p.fecha && p.fecha>hoy?p.fecha:hoy; o.comp+=ur2; o.compPor[fd2]=(o.compPor[fd2]||0)+ur2; o.compIds.push({ id:p.id, c:ur2, f:fd2 }); }
+        var ue2=prodUnidEnConteo(x), ur2=Math.max(0, ue2-fu), fd2=p.fecha && p.fecha>hoy?p.fecha:hoy;
+        if(ur2>0){ o.comp+=ur2; o.compPor[fd2]=(o.compPor[fd2]||0)+ur2; o.compIds.push({ id:p.id, c:ur2, f:fd2 }); }
+        /* 🏭 (19/10, §4ls verificación final, CD-1) …y lo que sin sello ya tendría que estar en el Excel de PTF o Banzer va APARTE
+           (`fabVencPor`): solo lo usan el cuadrito del vendedor (`saldoVeredicto`) y la revisión automática (`stockAsignar`), para no
+           prometer esa unidad a otro cliente. `comp`, `aFab` y la proyección no cambian. */
+        var uv2=stockFabVencidoU(p, x);
+        if(uv2>0){ o.fabVenc+=uv2; o.fabVencPor[fd2]=(o.fabVencPor[fd2]||0)+uv2; o.fabVencIds.push({ id:p.id, c:uv2, f:fd2 }); }
         o.aFab+=c-ue2; return;
       }
       if(fu>=c) return;
@@ -26185,7 +26215,11 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
     return v;
   }
   var mano=stockHaySalir(o);                  // acá + Banzer: de ahí sale el camión. null = sin contar
-  v.pend=o.comp||0; v.aca=(o.deposito==null) ? null : Math.max(0, o.deposito); v.banzer=o.enSale||0;
+  /* 🏭 (19/10, §4ls CD-1) Lo hecho a pedido para OTRO cliente que ya salió de fábrica y está (casi seguro) en el Excel de PTF o Banzer
+     se aparta a SU fecha, como lo vendido: si no, «✅ DISPONIBLE» prometía esa unidad (la 10-162 y la 10-207). Con tope en lo que hay a
+     mano (si no está, no hay qué apartar). `oC` = lo vendido + eso, por fecha: la MISMA cuenta para la fecha, el total y lo de después. */
+  var fv=saldoFabVencidos(o, mano), oC=fv.u>0 ? { compPor:fv.compPor } : o;
+  v.pend=(o.comp||0)+fv.u; v.fabVenc=fv.u; v.aca=(o.deposito==null) ? null : Math.max(0, o.deposito); v.banzer=o.enSale||0; v.mano=mano;
   v.moreno=o.enOtros||0; v.recogida=o.enRecogida||0; v.descont=!!o.descont;
   v.hayBanzer=S.d.saleAlm.length>0; v.hayMoreno=S.d.otrosAlm.length>0; v.variosMoreno=S.d.otrosAlm.length>1;
   /* (16/10, §4lr U20, Astra D8) Sin lo que el Excel ya contó: esas unidades ya están en `mano`; si no, se prometía «⏳ en producción» una
@@ -26201,7 +26235,7 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
   var cupo={}, prox=proximoDiaEntrega();
   var diaCupo=function(min){ if(!cupo[min]) cupo[min]=saldoDiaConCupo(min, idEditado); return cupo[min]; };
   var diaRes=function(min, aMano){ if(fe && (aMano || fe>=min)) return fe; return diaCupo(min).f || min; };
-  var pendA=function(d){ return porFecha ? stockCompHasta(o, d) : v.pend; };
+  var pendA=function(d){ return porFecha ? stockCompHasta(oC, d) : v.pend; };   // 🏭 (§4ls CD-1) con lo hecho a pedido ya llegado (`oC`)
   var disp='', D='', Dvisto='', sup=0, resto=[];
   var fabS=fab.map(function(q){ return { u:Number(q.u)||0, llega:(q.arr||q.f) ? saldoSaleDeFabrica(q.arr||q.f) : q.llega }; })   // (§4jd) desde el día en que arrancó
               .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); });
@@ -26255,12 +26289,13 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
   }
   v.fechaRes=D; v.porFecha=porFecha;
   v.pendFecha=pendA(D); v.pendDespues=Math.max(0, v.pend-v.pendFecha);
+  if(fv.u>0){ v.fabVencFecha=0; Object.keys(fv.por).forEach(function(f){ if(!porFecha || f<=D) v.fabVencFecha+=fv.por[f]; }); }   // 🏭 (§4ls CD-1) cuánto de eso entra a la fecha
   v.libres=v.alm-v.pendFecha;                 // A LA FECHA: puede dar negativo
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
   /* (18/10, §4ls, corrector) …también con «⏳ EN PRODUCCIÓN»: este pedido se queda con lo que viene de fábrica (`sup` = lo que cubre ese
      lote) y a lo vendido para después le puede faltar; antes no se decía nada (y antes de la reserva por fecha decía «🏭 NO HAY»). */
   if((!v.sinLibre || v.tipo==='prod') && v.pendDespues>0)
-    v.despues=saldoDespues(o, D, sup-v.pendFecha-cant, resto, stockSumarDias(saldoSaleDeFabrica(diaArranque()), 1));
+    v.despues=saldoDespues(oC, D, sup-v.pendFecha-cant, resto, stockSumarDias(saldoSaleDeFabrica(diaArranque()), 1));
   if(disp){
     var min=(v.tipo==='hay') ? prox : saldoMax(prox, stockSumarDias(disp,1));
     saldoPonerDia(v, min, idEditado, diaCupo(min));
@@ -26269,9 +26304,23 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
        del primer día con cupo que promete el título y para ese día ya no alcanza (lo que hay está vendido para esos días), se dice
        «para el DD/MM sí; para el X ya no»: si no, «podés programar desde el X» prometía un día que el mismo cuadrito, para el X, daba
        «🏭 NO HAY». */
-    if(v.tipo==='hay' && porFecha && fe && v.desde && fe<v.desde && mano-pendA(v.desde)<cant) v.soloFecha=fe;
+    /* 📅 (19/10, §4ls verificación final, CD-2) …y lo mismo en los otros escalones (📥 Moreno, 🚚 la recogida, ⏳ lo que viene de fábrica):
+       `sup` es lo que cubre ese escalón. Con el viernes lleno, «📥 HAY EN MORENO · programá desde el sábado» y, en la misma caja, para el
+       sábado «🏭 NO HAY». 🏭 «mandar a producir» no: lo que se fabrica es para este pedido. */
+    if(porFecha && fe && v.desde && fe<v.desde && (v.tipo==='hay' || v.tipo==='moreno' || v.tipo==='recogida' || v.tipo==='prod') && sup-pendA(v.desde)<cant) v.soloFecha=fe;
   }
   return v;
+}
+/* 🏭 (19/10, §4ls CD-1) Lo hecho a pedido para otros clientes que ya salió de fábrica (`o.fabVencPor`, de `stockFabVencidoU`), con tope en
+   lo que hay a mano (`mano`, PTF + Banzer): si no está, no hay qué apartar. El tope se reparte por fecha (lo más cercano primero, como
+   la revisión automática). Devuelve `{ u, por, compPor }`: `compPor` = lo vendido (`o.compPor`) + eso, que es lo que el cuadrito usa
+   para la fecha, el total y lo de después. */
+function saldoFabVencidos(o, mano){
+  var por={}, u=0, tope=Math.max(0, Number(mano)||0), fv=(o && o.fabVencPor) || {};
+  Object.keys(fv).sort().forEach(function(f){ var n=Math.min(Number(fv[f])||0, tope-u); if(n>0){ por[f]=n; u+=n; } });
+  var compPor={}; Object.keys((o && o.compPor) || {}).forEach(function(f){ compPor[f]=o.compPor[f]; });
+  Object.keys(por).forEach(function(f){ compPor[f]=(compPor[f]||0)+por[f]; });
+  return { u:u, por:por, compPor:compPor };
 }
 /* 📅 (18/10, §4ls) Lo vendido para DESPUÉS del día prometido, con este pedido adentro: `queda` = lo que sobra del escalón que lo
    cubrió (a mano; con Moreno; con lo que viene de fábrica), `lotes` = lo que todavía puede llegar `{u, d}` (d = desde qué día sale) y
@@ -26412,6 +26461,11 @@ function saldoCodBienTxt(v){
 function saldoCodEspecialTxt(c){
   return '⚠️ El código '+c.code+' es del '+saldoCodNombre(c)+': borralo de este renglón, o el almacén saca ese colchón.';
 }
+/* 📅 (19/10, §4ls CD-2) La fecha elegida alcanza, pero el primer día con cupo (el que prometería «programá desde…») ya no: lo de ese
+   escalón está vendido para esos días. Como «✅ DISPONIBLE para el X (la fecha elegida)», en 📥 / 🚚 / ⏳. */
+function saldoSoloFechaTxt(v){
+  return 'para el '+saldoDiaTxt(v.soloFecha)+' (la fecha elegida) sí; para el '+saldoDiaTxt(v.desde)+' ya no alcanza: lo que hay está vendido para esos días';
+}
 function saldoTitulo(v){
   /* ❓ (18/10, §4ls VI-1) Nunca «🏭 NO HAY» para un nombre que el panel no reconoce: no se sabe qué producto es. */
   if(v.noRec) return '❓ NO RECONOZCO ESTE PRODUCTO · ni la lista de precios ni el Excel de los almacenes lo tienen con este nombre';
@@ -26423,15 +26477,16 @@ function saldoTitulo(v){
                    return v.sinCupo ? ('✅ HAY EN ALMACÉN'+dc+sc) : ('✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc);
     /* 📥 (28/09) Se recoge el día hábil siguiente: si no es mañana (sábado, domingo, feriado), se dice qué día. */
     case 'moreno': return '📥 HAY EN MORENO · '+((!v.recoge || v.recoge===stockSumarDias(todayStr(), STOCK_DIAS_RECOGIDA)) ? ('se trae en '+trae) : ('logística lo recoge el '+saldoDiaTxt(v.recoge)))+
-                          (v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc+
+                          (v.sinCupo ? sc : (v.soloFecha ? (': '+saldoSoloFechaTxt(v)) : (': programá '+saldoDesdeTxt(v))))+dc+
                           (v.recVenc ? (' · ⚠️ la recogida era para el '+saldoDiaTxt(v.recVenc)+(v.recVencDet ? ': el Excel de PTF de después mostró una entrada sin explicar (¿es ella?); que logística la cierre' : ' y todavía no llegó: confirmala con logística')) : '');   // 🚚 (§4ls Man-VM3)
     /* 🚚 (28/09, revisión de Codex) Lo que ya va en una recogida programada llega el día que eligió logística, no «en 1 día».
        Si se puede adelantar, lo confirma logística: no se promete. */
     case 'recogida': return v.atrasada
-      ? ('🚚 VIENE DE '+saldoRecDeTxt(v)+' · la recogida era para el '+saldoDiaTxt(v.llega)+' y todavía no llegó: confirmala con logística'+(v.sinCupo ? sc : (' · programá '+saldoDesdeTxt(v)))+dc)
-      : ('🚚 VIENE DE '+saldoRecDeTxt(v)+' · logística lo trae el '+saldoDiaTxt(v.llega)+(v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)+' (si logística la puede adelantar, que te lo confirme)'))+dc);
+      ? ('🚚 VIENE DE '+saldoRecDeTxt(v)+' · la recogida era para el '+saldoDiaTxt(v.llega)+' y todavía no llegó: confirmala con logística'+(v.sinCupo ? sc : (v.soloFecha ? (' · '+saldoSoloFechaTxt(v)) : (' · programá '+saldoDesdeTxt(v))))+dc)
+      : ('🚚 VIENE DE '+saldoRecDeTxt(v)+' · logística lo trae el '+saldoDiaTxt(v.llega)+(v.sinCupo ? sc : (v.soloFecha ? (': '+saldoSoloFechaTxt(v)) : (': programá '+saldoDesdeTxt(v)+' (si logística la puede adelantar, que te lo confirme)')))+dc);
     /* ⏳ y 🏭 no repiten el día: si la fecha elegida es antes de lo posible, la línea roja de abajo lo dice («programá desde…»). */
-    case 'prod':   return '⏳ EN PRODUCCIÓN · '+(v.sinCupo ? ('llega el '+fmtFechaCorta(v.llega)+sc) : ('decile al cliente que espere '+saldoDiasTxt(v.espera)+' (llega el '+fmtFechaCorta(v.llega)+')'))+
+    case 'prod':   return '⏳ EN PRODUCCIÓN · '+(v.sinCupo ? ('llega el '+fmtFechaCorta(v.llega)+sc) :
+                          (v.soloFecha ? ('llega el '+fmtFechaCorta(v.llega)+': '+saldoSoloFechaTxt(v)) : ('decile al cliente que espere '+saldoDiasTxt(v.espera)+' (llega el '+fmtFechaCorta(v.llega)+')')))+
                           (v.atrasada ? ' — la llegada está atrasada: confirmala con logística' : '');
     case 'pedir':  return '🏭 NO HAY · '+(v.sinCupo ? ('hay que mandar a producir (avisá a logística)'+sc) : ('decile al cliente que espere '+saldoDiasTxt(v.espera)+': hay que mandar a producir (avisá a logística)'));
     case 'nofab':  return '🛑 YA NO SE FABRICA · '+(v.libres>0 ? ('quedan '+stockUnid(v.libres)+' y el pedido lleva '+v.cant) : 'no queda ninguno')+': no se puede vender, ofrecé otro modelo';
@@ -26467,8 +26522,11 @@ function saldoNumerosHtml(v){
   var h=[], aF=saldoAlaFechaTxt(v, 'para el');
   if(v.alm!=null) h.push('En almacén <b>'+stockUnid(v.alm)+'</b>');
   if(v.pend!=null){
-    if(v.pendDespues>0) h.push('Pendientes'+saldoAlaFechaTxt(v, 'hasta el')+' <b>'+stockUnid(v.pendFecha)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
-    else h.push('Pendientes de entrega <b>'+stockUnid(v.pend)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
+    /* 🏭 (19/10, §4ls CD-1) Lo hecho a pedido para otro cliente que ya salió de fábrica se aparta como lo vendido, y se dice. */
+    var fvN=(v.pendDespues>0) ? (v.fabVencFecha||0) : (v.fabVenc||0);
+    var fvT=fvN>0 ? (' (incluye '+stockUnid(fvN)+' 🏭 hecho'+(fvN===1?'':'s')+' a pedido para otro cliente, que ya salió de fábrica)') : '';
+    if(v.pendDespues>0) h.push('Pendientes'+saldoAlaFechaTxt(v, 'hasta el')+' <b>'+stockUnid(v.pendFecha)+'</b>'+(v.sinId ? ' (sin este pedido)' : '')+fvT);
+    else h.push('Pendientes de entrega <b>'+stockUnid(v.pend)+'</b>'+(v.sinId ? ' (sin este pedido)' : '')+fvT);
   }
   if(v.alm!=null){
     if(v.libres>=v.cant) h.push('Libres'+aF+' <b>'+stockUnid(v.libres)+'</b>');
@@ -26809,30 +26867,74 @@ function saldoAvisoServidor(rec, saldo, reserva){
        de guardar—, lo que vendió otro no le cambia nada: esa espera no depende de cuántas falten. La ventana era una alarma de más.
        Con «⏳ EN PRODUCCIÓN», Moreno o «hay» sí se avisa: la venta del otro puede correr su fecha. */
     saldo=(saldo||[]).filter(function(s){ var l=lin[s.k]; return !(l && (l.tipo==='pedir' || l.tipo==='nofab')); });
-    if(!saldo.length) return;
-    var aQuien=esRPT(rec&&rec.oc) ? 'a la sucursal' : 'al cliente';
-    var items=saldo.map(function(s){
-      var nom=nombres[s.k] || String(s.k||'').split('|').filter(function(t){ return t; }).join(' '), l=lin[s.k];
-      /* 📅 (§4ls) Con la reserva por fecha, el servidor no sabe para qué día vendió el otro: si fue para después del nuestro, no nos
-         quita nada. Se dice «puede que» y el pedido abierto (que relee la planilla) dice la verdad. */
-      var que=(l && l.porFecha && l.fecha) ? ('para el '+fmtFechaCorta(l.fecha)+' puede que ya no alcance (faltarían '+stockUnid(s.faltan)+')')
-                                          : ('ya no hay saldo libre (faltan '+stockUnid(s.faltan)+')');
-      return '<li><b>otro vendedor vendió '+esc(stockUnid(s.otros))+' de '+esc(nom)+'</b>: '+esc(que)+'.</li>';
-    }).join('');
+    if(!saldo.length) return Promise.resolve(false);
+    /* 📅 (19/10, §4ls verificación final, CD-5) El servidor compara solo CANTIDADES: no sabe para qué día vendió el otro. Con la reserva por
+       fecha (decisión 3) el aviso firme «ya no hay saldo libre» le llegaba al que, por fecha, SÍ tenía stock (B vende para el viernes, A
+       para el jueves: a A «avisale al cliente que puede demorar», y al releer el cuadrito le decía ✅ a A y 🏭 a B). Antes de abrir la
+       ventana se relee la planilla (`conTope`, 4 s, como «✏️ Abrir el pedido») y se vuelve a hacer la cuenta del cuadrito con este
+       pedido adentro: si sigue cubierto no hay alarma (una línea), si ya no, se dice con los números de ahora. Sin relectura, o con
+       una que todavía no trae lo del otro (la caché de 20 s de doGet, §4gn), «puede que». No cambia el .gs. */
+    return conTope(CONNECTED ? refrescarEstado() : Promise.resolve(false), 4000).then(function(leido){
+      return saldoAvisoServidorAbrir(rec, saldo, lin, nombres, !!leido);
+    }, function(){ return saldoAvisoServidorAbrir(rec, saldo, lin, nombres, false); });
+  }catch(e){ return Promise.resolve(false); }
+}
+/* ¿Este pedido sigue cubierto con la planilla de ahora? ✅ siempre; si antes del guardado decía 📥 / 🚚 / ⏳, el mismo escalón (o uno
+   mejor) sin que la fecha quede corta también: la venta del otro no le corrió el día. */
+var SALDO_ESCALON={ hay:4, moreno:3, recogida:3, prod:2, pedir:1, nofab:0 };
+function saldoSigueCubierto(v, l){
+  if(!v) return false;
+  if(v.tipo==='hay') return true;
+  if(v.fechaCorta || v.sinCupo) return false;
+  var r=SALDO_ESCALON[v.tipo], ra=SALDO_ESCALON[(l&&l.tipo)||'hay'];
+  return r!=null && ra!=null && ra<4 && r>=ra;
+}
+function saldoAvisoServidorAbrir(rec, saldo, lin, nombres, leido){
+  try{
+    var aQuien=esRPT(rec&&rec.oc) ? 'a la sucursal' : 'al cliente', yo=String((rec&&rec.id)||''), fRec=String((rec&&rec.fecha)||'');
+    var items=[], tranquilos=[], producir=false;
+    if(leido) SALDO_CACHE=null;
+    saldo.forEach(function(s){
+      var nom=nombres[s.k] || String(s.k||'').split('|').filter(function(t){ return t; }).join(' '), l=lin[s.k]||{}, v=null;
+      /* La relectura sirve solo si ya trae lo del otro: algún pedido de esa clave que la lectura de antes no conocía. */
+      if(leido){
+        var con=(l.conocidos||[]).map(String), nuevos=saldoIdsConClave(s.k).filter(function(id){ return id!==yo && con.indexOf(id)<0; });
+        if(nuevos.length){ try{ v=saldoVeredicto(s.k, Number(l.u)||Number(s.u)||1, yo, fRec, true); }catch(e){ v=null; } }
+      }
+      if(v && SALDO_ESCALON[v.tipo]!=null && !v.desconocido){
+        if(saldoSigueCubierto(v, l)){ tranquilos.push(nom); return; }
+        if(v.tipo==='pedir') producir=true;
+        var fq=fRec || v.fechaRes || '';
+        items.push('<li><b>otro vendedor vendió '+esc(stockUnid(s.otros))+' de '+esc(nom)+'</b>: con la planilla de ahora'+(fq ? (', para el '+esc(fmtFechaCorta(fq))) : '')+
+                   ' ya no alcanza'+(v.faltan>0 ? (' (faltan '+esc(stockUnid(v.faltan))+')') : '')+'. El cuadrito dice: «'+esc(saldoTitulo(v))+'».</li>');
+        return;
+      }
+      /* Sin relectura (o vieja): el servidor no sabe la fecha del otro. Si vendió para después, no nos quita nada: «puede que». */
+      producir=true;
+      var fl=l.fecha||fRec;
+      var que=fl ? ('para el '+fmtFechaCorta(fl)+' puede que ya no alcance (faltarían '+stockUnid(s.faltan)+')') : ('puede que ya no haya saldo libre (faltarían '+stockUnid(s.faltan)+')');
+      items.push('<li><b>otro vendedor vendió '+esc(stockUnid(s.otros))+' de '+esc(nom)+'</b>: '+esc(que)+'.</li>');
+    });
+    if(!items.length){
+      if(tranquilos.length) toast('ℹ️ Otro vendedor vendió '+tranquilos.join(', ')+' para otra fecha: tu pedido sigue cubierto'+(fRec ? (' para el '+fmtFechaCorta(fRec)) : '')+'.', 'ok', 7000);
+      return false;
+    }
     var m=document.getElementById('modal'), box=document.getElementById('modal-box');
     SALDO_MODAL_PREVIO=(m && box && m.classList.contains('on')) ? { html:box.innerHTML, ancha:box.classList.contains('ancha') } : null;
-    var id=String((rec&&rec.id)||'').replace(/'/g,'');
+    var id=yo.replace(/'/g,'');
     openModal('<div class="modal-h" style="background:var(--amber)"><h3>⚠️ Mientras guardabas, otro vendedor vendió lo mismo</h3></div>'+
       '<div class="modal-b" style="font-size:.9rem;line-height:1.5">'+
-        '<ul style="margin:0 0 10px 18px">'+items+'</ul>'+
-        '<p><b>Tu pedido quedó guardado igual.</b> Avisale '+aQuien+' que puede demorar (hay que mandar a producir) o reprogramá la entrega: '+
+        '<ul style="margin:0 0 10px 18px">'+items.join('')+'</ul>'+
+        (tranquilos.length ? ('<p>'+esc(tranquilos.join(', '))+': sigue cubierto (el otro vendió para otra fecha).</p>') : '')+
+        '<p><b>Tu pedido quedó guardado igual.</b> Avisale '+aQuien+' que puede demorar'+(producir ? ' (hay que mandar a producir)' : '')+' o reprogramá la entrega: '+
         'abrí el pedido para ver desde qué día llega.</p>'+
         '<div class="modal-actions" style="margin-top:12px">'+
           '<button class="btn btn-primary btn-sm" style="flex:1;min-width:150px" onclick="saldoAvisoAbrir(\''+id+'\')">✏️ Abrir el pedido</button>'+
           '<button class="btn btn-ghost btn-sm" onclick="saldoAvisoCerrar()">Entendido</button>'+
         '</div>'+
       '</div>');
-  }catch(e){}
+    return true;
+  }catch(e){ return false; }
 }
 function saldoAvisoCerrar(){
   var p=SALDO_MODAL_PREVIO; SALDO_MODAL_PREVIO=null;
@@ -28847,6 +28949,12 @@ function stockAsignar(){
       if(!enProduccion(x) || stockSalio(p,x)) return;
       var ue=prodUnidEnConteo(x)-stockFueraHoy(p,x), k=stockClave(x);   // 🚚 (18/10, §4ls U2) lo que ya salió con su turno no reserva
       if(ue>0 && dep[k]!=null) dep[k]=Math.max(0, dep[k]-ue);
+      /* 🏭 (19/10, §4ls verificación final, CD-1) …y lo que SIN sello ya salió de fábrica antes del Excel vigente (`stockFabVencidoU`): está
+         (casi seguro) en PTF o en Banzer y es de ese cliente. Se aparta igual que en el cuadrito del vendedor, PTF primero y después Banzer
+         (solo los depósitos de salida: de Moreno no). Antes la revisión le proponía «✔ hay» de esa misma unidad a otro pedido. No cambia
+         ninguna marca ni sella nada. */
+      var uv=stockFabVencidoU(p, x);
+      if(uv>0){ var t=(dep[k]!=null) ? Math.min(uv, dep[k]) : 0; if(t>0){ dep[k]-=t; uv-=t; } if(uv>0) tomarIM(k, uv, null, true, true); }
     });
   });
   /* 🔁 (18/10, §4ls V-REV-1/V-REV-2) La «✗ no hay» NO es una reserva de logística: es una venta esperando stock. En el modo normal se
@@ -32644,6 +32752,28 @@ function prodUnidEnConteo(x){
   var u=prodUnidEnStock(x); if(!(u>0)) return 0;
   if(x.prodRm==='excel' || (x.prodC||[]).length) return u;
   return stockEntradaVale(STOCK, String(x.prodR||''), 0) ? 0 : u;
+}
+/* 🏭 (19/10, §4ls verificación final, CD-1) Lo hecho a pedido para OTRO cliente que YA tendría que estar en el almacén. Una línea 🏭 sin
+   sello (`prodR`) no reserva nada: «lo trae la fábrica para ese cliente» (`aFab`). Pero cuando su salida de fábrica (`prodF` + las 48 h
+   del dueño, `saldoSaleDeFabrica`) ya es anterior o igual al Excel vigente de PTF o Banzer, esa unidad casi seguro está contada en ese
+   Excel: logística casi nunca sella la llegada (187 de 190 líneas 🏭 sin sello en la revisión 2). Con la reserva por fecha (decisión 3)
+   el cuadrito se la prometía «✅ DISPONIBLE» a otro cliente: la 10-162 (13/10) con la unidad de la 10-095 y la 10-207 (15/10) con la de
+   la 10-173; las dos se terminaron fabricando. Devuelve cuántas unidades de la línea son eso (las que faltan sellar). NO sella, no marca
+   ni da nada por llegado (§4hn: nada se cierra por fecha) y no toca `aFab` ni la proyección: solo se apartan. Una fecha que ya pasó
+   no (fecha pasada sin ✅ = salió, §4co), ni lo de hoy cuyo turno el Excel ya no trae (decisión 2: salió con el camión). */
+function stockFabVencidoU(p, x){
+  if(!p || !x || !enProduccionPendiente(x) || p.entregado || esVentaTienda(p) || esProdDeTienda(x) || recogeDeTienda(x)) return 0;
+  var hoy=todayStr(), fs=fechaSalida(p), pf=String(x.prodF||'');
+  if(!fs || fs<hoy || !pf) return 0;
+  var ex=stockFabVencCorte(); if(!ex || saldoSaleDeFabrica(pf)>ex) return 0;
+  if(fs===hoy && stockFueraDelCorte(p, x, hoy, STOCK.c)) return 0;
+  return Math.max(0, (Number(x.cant)||0)-prodUnidEnConteo(x));
+}
+/* El Excel vigente más nuevo de donde salen los camiones (PTF o un depósito de salida, Banzer): ahí aparece lo que llega de fábrica. */
+function stockFabVencCorte(){
+  var f=String((STOCK.c&&STOCK.c.f)||'');
+  Object.keys(STOCK.g||{}).forEach(function(nm){ if(almEsSalida(nm)){ var g=String(((STOCK.g||{})[nm]||{}).f||''); if(g>f) f=g; } });
+  return f;
 }
 /* Dónde se mandó a producir. Va DENTRO del producto (x.prodEn) y no en una columna nueva
    del pedido: los productos viajan como JSON en `_productos_json`, así que un campo nuevo

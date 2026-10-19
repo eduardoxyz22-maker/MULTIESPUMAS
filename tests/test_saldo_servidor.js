@@ -10,7 +10,7 @@
    ⚠️ LO QUE ESTA PRUEBA CUIDA (dos celulares contra el .gs de verdad, con un Google de mentira):
    1. A y B leen «Libres 1». A guarda; B guarda SIN que su lectura traiga a A (la de antes de guardar le vuelve la misma copia:
       lo que pasa con la caché de 20 s de doGet, §4fx/§4gn). A B le sale la ventana «otro vendedor vendió 1 de TITANIO ICE
-      160x190 … faltan 1», su pedido SÍ quedó en la planilla, y «Entendido» le devuelve el mensaje para el grupo. A A no le sale
+      160x190 … puede que ya no alcance (faltarían 1)» (19/10, §4ls CD-5: la relectura todavía no trae a A), su pedido SÍ quedó en la planilla, y «Entendido» le devuelve el mensaje para el grupo. A A no le sale
       nada. El guardado de B llevó `reserva` con la hora de su lectura y sin el id de A.
    2. Otra vuelta: A vende de nuevo (a A el formulario le pregunta antes, como siempre) y B guarda otra vez con la copia vieja:
       como B ya veía «🏭 NO HAY», no le sale la ventana (18/10, §4ls H2: la espera de mandar a producir no depende de cuántas
@@ -185,8 +185,12 @@ function INIT_DOS(vend){
   chk('⚠️ B guarda sin que su lectura traiga a A: NO le preguntó nada antes (para su copia había 1 libre)…', B.__dialogos.length===0, B.__dialogos);
   chk('⚠️ …su guardado llevó `reserva` con la hora de ESA lectura (la de antes de A), libres 1 y sin el id de A en `conocidos`',
       saveB && saveB.reserva && saveB.reserva.visto===vistoB && saveB.reserva.lineas[0].libres===1 && saveB.reserva.lineas[0].conocidos.indexOf(idA1)<0, saveB && saveB.reserva);
-  chk('⚠️ …y le sale la ventana: «Mientras guardabas, otro vendedor vendió lo mismo» · «otro vendedor vendió 1 de TITANIO ICE 160x190: ya no hay saldo libre (faltan 1)»',
-      mB.on && /Mientras guardabas, otro vendedor vendió lo mismo/.test(mB.txt) && /otro vendedor vendió 1 de TITANIO ICE 160x190: ya no hay saldo libre \(faltan 1\)/.test(mB.txt), mB.txt.slice(0,300));
+  /* ✏️ (19/10, §4ls verificación final, CD-5, a conciencia) Antes de abrir la ventana la página relee la planilla y rehace la cuenta. Acá
+     la relectura de B sigue siendo la copia de ANTES (congelada: la caché de doGet), que todavía no trae a A: con esa no se decide, y como
+     el servidor no sabe para qué día vendió el otro, se dice «puede que ya no alcance (faltarían 1)». Antes, el «ya no hay saldo libre»
+     firme, que con la reserva por fecha (decisión 3) le llegaba también al que por fecha SÍ tenía stock. */
+  chk('⚠️ …y le sale la ventana: «Mientras guardabas, otro vendedor vendió lo mismo» · «otro vendedor vendió 1 de TITANIO ICE 160x190: para el … puede que ya no alcance (faltarían 1)»',
+      mB.on && /Mientras guardabas, otro vendedor vendió lo mismo/.test(mB.txt) && /otro vendedor vendió 1 de TITANIO ICE 160x190: para el \d\d\/\d\d puede que ya no alcance \(faltarían 1\)/.test(mB.txt), mB.txt.slice(0,300));
   chk('⚠️ …que dice que el pedido quedó guardado igual, qué hacer (avisar al cliente o reprogramar) y tiene «✏️ Abrir el pedido» y «Entendido»',
       /Tu pedido quedó guardado igual/.test(mB.txt) && /Avisale al cliente que puede demorar \(hay que mandar a producir\) o reprogramá la entrega/.test(mB.txt) &&
       mB.botones.indexOf('✏️ Abrir el pedido')>=0 && mB.botones.indexOf('Entendido')>=0, mB.botones);

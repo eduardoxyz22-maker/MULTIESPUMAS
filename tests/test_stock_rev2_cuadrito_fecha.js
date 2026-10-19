@@ -221,23 +221,30 @@ function PREPARAR(){
       [dlg7, cf7.c && cf7.c.txt, cf7.v.fechaRes]);
 
   /* ── CF8 (H2). La ventana «otro vendedor vendió lo mismo» ── */
+  /* ✏️ (19/10, §4ls verificación final, CD-5, a conciencia) `saldoAvisoServidor` ahora relee la planilla ANTES de abrir la ventana y
+     devuelve una promesa: se espera. Acá va SIN conexión (no puede releer), que es el caso de «puede que»: el servidor no sabe para qué
+     día vendió el otro. Antes CF8c esperaba el «ya no hay saldo libre (faltan 1)» firme, que es justo lo que CD-5 mostró equivocado
+     cuando el otro vendió para después. Lo de releer y decidir se prueba en `test_stock_final_cuadrito` FCU5. */
   const cf8 = await ev(async()=>{
     try{ closeModal(); }catch(e){}
+    var cn=CONNECTED; CONNECTED=false;
     var rec={ id:'p-h2', oc:'OC 10-999' }, s=[{ k:K.TIT, u:1, libres:-1, otros:1, faltan:3 }];
-    saldoAvisoServidor(rec, s, { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'pedir' }] });
+    try{
+    await saldoAvisoServidor(rec, s, { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'pedir' }] });
     var a=document.getElementById('modal').classList.contains('on'); try{ closeModal(); }catch(e){}
-    saldoAvisoServidor(rec, s, { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'nofab' }] });
+    await saldoAvisoServidor(rec, s, { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'nofab' }] });
     var b=document.getElementById('modal').classList.contains('on'); try{ closeModal(); }catch(e){}
-    saldoAvisoServidor(rec, [{ k:K.TIT, u:1, libres:1, otros:1, faltan:1 }], { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'hay' }] });
+    await saldoAvisoServidor(rec, [{ k:K.TIT, u:1, libres:1, otros:1, faltan:1 }], { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'hay' }] });
     var c=document.getElementById('modal').classList.contains('on'), ct=document.getElementById('modal-box').innerText.replace(/\s+/g,' '); try{ closeModal(); }catch(e){}
-    saldoAvisoServidor(rec, [{ k:K.TIT, u:1, libres:1, otros:1, faltan:1 }], { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'hay', porFecha:true, fecha:'2026-10-22' }] });
+    await saldoAvisoServidor(rec, [{ k:K.TIT, u:1, libres:1, otros:1, faltan:1 }], { lineas:[{ k:K.TIT, nombre:'TITANIO ICE 160x190', tipo:'hay', porFecha:true, fecha:'2026-10-22' }] });
     var d=document.getElementById('modal').classList.contains('on'), dt=document.getElementById('modal-box').innerText.replace(/\s+/g,' '); try{ closeModal(); }catch(e){}
+    } finally { CONNECTED=cn; }
     return { a:a, b:b, c:c, ct:ct, d:d, dt:dt };
   });
   chk('CF8a. (H2) si el vendedor ya veía «🏭 NO HAY» (mandar a producir), lo que vendió otro no le abre ninguna ventana', cf8.a===false, cf8);
   chk('CF8b. (H2) …ni si veía «🛑 YA NO SE FABRICA»', cf8.b===false, cf8);
-  chk('CF8c. (control) si veía «✅ hay», la ventana sale como siempre: «ya no hay saldo libre (faltan 1)»',
-      cf8.c===true && /otro vendedor vendió 1 de TITANIO ICE 160x190: ya no hay saldo libre \(faltan 1\)/.test(cf8.ct), cf8.ct && cf8.ct.slice(0,200));
+  chk('CF8c. (control) si veía «✅ hay», la ventana sale; sin poder releer dice «puede que ya no haya saldo libre (faltarían 1)» (CD-5, 19/10: antes el «ya no hay» firme)',
+      cf8.c===true && /otro vendedor vendió 1 de TITANIO ICE 160x190: puede que ya no haya saldo libre \(faltarían 1\)/.test(cf8.ct), cf8.ct && cf8.ct.slice(0,200));
   chk('CF8d. con la reserva por fecha dice «para el 22/10 puede que ya no alcance (faltarían 1)» (el servidor no sabe la fecha del otro)',
       cf8.d===true && /para el 22\/10 puede que ya no alcance \(faltarían 1\)/.test(cf8.dt), cf8.dt && cf8.dt.slice(0,200));
 
