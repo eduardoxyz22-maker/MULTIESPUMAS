@@ -23149,6 +23149,9 @@ function esTextoDeTienda(t){
 /* (18/10, §4ls T1) Más tareas que entraron como renglones: «POR CONFIRMAR», «POR FAVOR IR HACER MEDICION», «CORTES DE LAMINAS» (un
    pedido interno) y «PS QUE RECOGIERON…» (una nota de recogida). Con un pedido pendiente pedían «🚨 Pedí 1 ya» por algo que no existe. */
 var PROD_NO_STOCK=/^VARIOS$|^(?:A\s+)?RECOGER\b|\bTAPIZADO\b|\bDESPERDICIOS?\b|\bESPONJA PICADA\b|^POR\s+(?:CONFIRMAR|FAVOR)\b|\bMEDICION\b|\bCORTES?\s+(?:DE\s+)?LAMINAS?\b|^PS\s+QUE\b/;
+/* 🔎 (19/10, §4ls verificación final, CO-5) De esas, las que dicen que el PRODUCTO todavía no está definido (el viaje del pedido en Mis
+   pedidos dice «Producto por confirmar», no «📦 Mercadería»). */
+var PROD_POR_CONFIRMAR=/^POR\s+(?:CONFIRMAR|FAVOR)\b|\bMEDICION\b/;
 function esProdDeTienda(x){
   var t=String((x&&x.desc)||''); if(esTextoDeTienda(t)) return true;
   // Con un código del catálogo es un producto aunque el nombre diga «VARIOS»: el código manda.
@@ -23475,7 +23478,12 @@ function stockPodar(S, hoy){
   hoy=hoy||todayStr();
   var tope=stockSumarDias(hoy, -STOCK_RECIBIDOS_TOPE), corte=stockSumarDias(hoy, -STOCK_RECIBIDOS_DIAS);
   var yaTope=stockSumarDias(hoy, -15);   // (§4iy) un «✓ Ya pedí» que nunca se asignó a una llegada se va a los 15 días
-  var P=(S.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=tope) && !(q.ya && !q.r && String(q.f||'')<yaTope); });
+  /* 📏 (19/10, §4ls verificación final, CO-6) …o antes: PLAN_YA_VENCIDO_DIAS días después del día en que tenía que llegar (`esp`, fijo
+     desde que se tildó). Pasado eso ninguna cuenta lo mira: no cuenta como «en camino» (vence en `esp`), no entra en el reparto de lo
+     detectado y el Plan deja de mostrarlo para reclamar (`planYaVencidos`). Con «Ya pedí» de uso diario era lo que más llenaba la celda
+     (40 vivos a la vez, ~270 letras cada uno). */
+  var yaEsp=stockSumarDias(hoy, -((typeof PLAN_YA_VENCIDO_DIAS==='number') ? PLAN_YA_VENCIDO_DIAS : 7));   // (la constante vive con el Plan, más abajo)
+  var P=(S.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=tope) && !(q.ya && !q.r && (String(q.f||'')<yaTope || (q.esp && String(q.esp)<yaEsp))); });
   var viejo=function(q){ return !!q.r && String(q.r)<corte; };
   var fabDe=function(q){ return q.tipo==='recogida' ? '' : stockFabNorm(q.fab); };
   // (b) por producto: la fecha del pedido más nuevo, y la del pedido a fábrica más nuevo CON fábrica (como `ultFab`)
@@ -23498,10 +23506,13 @@ function stockPodar(S, hoy){
     var rs=(((S.g||{})[q.de||stockAlmPorDefectoDe(S)])||{}).rs||{};
     return Object.keys(rs).some(function(rid){ var e=rs[rid]; return !!e && e.q===q.id && (Number(e.u)||0)>0; });
   };
+  /* 📏 (19/10, §4ls verificación final, CO-6) Una RECOGIDA cerrada no queda como muestra por ser «el pedido más nuevo de su producto»:
+     no mide la fábrica (`mide`), no da la última fábrica pedida (`fabDe` vacío) y el renglón del producto lo sostiene el Excel de Moreno.
+     Solo la que su almacén todavía nombra (`rsVivo`). Con recogidas diarias eran ~20 muestras (≈2.500–4.300 letras de la celda). */
   S.p=P.map(function(q){
     if(!viejo(q)) return q;
     var f=String(q.f||'');
-    if(muestra(q) || f===ultK[q.k] || (fabDe(q) && f===ultFab[q.k]) || rsVivo(q)) return stockMuestraDe(q);
+    if(muestra(q) || (q.tipo!=='recogida' && f===ultK[q.k]) || (fabDe(q) && f===ultFab[q.k]) || rsVivo(q)) return stockMuestraDe(q);
     return null;
   }).filter(function(q){ return !!q; });
   stockPodarControl(S, hoy);
@@ -23521,18 +23532,29 @@ function stockPodarControl(S, hoy){
   if(!S) return S;
   var lim=stockSumarDias(hoy||todayStr(), -STOCK_CONTROL_DIAS);
   S.det=(S.det||[]).filter(function(x){ return x && x.k && x.id!=null && String(x.f||'')>=lim; });
-  S.sm=(S.sm||[]).filter(function(x){ return x && x.k && x.id!=null && (String(x.f||'')>=lim || (!x.pre && !x.an && !x.alm && stockMovDespuesDelCorte(S, x.f, x.ts))); });
+  /* 📤 (19/10, §4ls verificación final, CO-3) …también la de un depósito de salida (Banzer, `x.alm`, Man-VM5), contra SU Excel: antes
+     solo se conservaba la de PTF y la de Banzer se borraba a los 3 días aunque su Excel fuera anterior y la siguiera restando (Banzer
+     volvía a tener las 2 que ya salieron). Sin la foto de ese depósito (o sin fecha) no se guarda para siempre. */
+  var smViva=function(x){
+    if(x.pre || x.an) return false;
+    if(!x.alm) return stockMovDespuesDelCorte(S, x.f, x.ts);
+    var cg=(S.g||{})[x.alm]; return !!(cg && cg.f) && stockMovDespuesDelCorte({ c:cg }, x.f, x.ts);
+  };
+  S.sm=(S.sm||[]).filter(function(x){ return x && x.k && x.id!=null && (String(x.f||'')>=lim || smViva(x)); });
+  /* 📋 (19/10, CO-1) El renglón de un «Conté a mano» (`rol:'mano'`) va aparte: no es el último EXCEL de su almacén (si no, las diferencias
+     del Excel de PTF se recortaban como si ya hubiera otro corte encima). */
+  var hClave=function(x){ return String(x.alm)+(x.rol==='mano' ? '|📋' : ''); };
   var visto={};
   S.h=(S.h||[]).filter(function(x){
     if(!x) return false;
-    var ultimo=!visto[x.alm]; visto[x.alm]=1;
+    var hk=hClave(x), ultimo=!visto[hk]; visto[hk]=1;
     return ultimo || String(x.f||'')>=lim;
   }).slice(0, STOCK_HIST);
   /* Las diferencias: enteras solo las del último corte de cada almacén (las mira la corrección de ese mismo Excel, B6); de
      los anteriores quedan las que tienen algo para deshacer («↩️ no había llegado») o que se anotó. */
   var primero={};
   S.h.forEach(function(x){
-    var ultimo=!primero[x.alm]; primero[x.alm]=1;
+    var hk=hClave(x), ultimo=!primero[hk]; primero[hk]=1;
     if(!x.d) return;
     if(String(x.f||'')<lim){ delete x.d; return; }
     if(!ultimo){ x.d=x.d.filter(function(e){ return e && e[2] && e[2].length; }); if(!x.d.length) delete x.d; }
@@ -24606,6 +24628,11 @@ function stockIncNorm(t){
    proponía marcada desde las 12:00: pasó 4 veces del 14 al 15/10): `leg:true`. Se lee con la regla de antes —lo de ese día con ✅ no se
    resta otra vez, pero lo SIN ✅ sigue reservado (`stockFueraHoy` no lo saca)—: a las 13:26 la tarde todavía estaba en el depósito y,
    leída como «los dos turnos», dejaba de reservarse. Cualquier `inc` verdadero que no sea texto (un `1`) vale como `true`. */
+/* 🧓 (19/10, §4ls verificación final, CO-2 NO se cambió) Se probó leer la casilla de antes POR LA HORA de su Excel (antes de las 16:00, solo
+   la mañana) y la planilla real dijo lo contrario: con el Excel de Banzer del 15/10 13:26 la tarde ✅ (OC 10-165) ya NO estaba en él (el
+   del 16/10 10:05 tenía lo mismo) y leída «solo la mañana» aparecía «+1 entrada sin explicar»; con el del 14/10 12:38, +4 en PTF y +1 en
+   Banzer, y ninguna «−1» se iba. El camión de la tarde se carga desde las 13:00 (STOCK_INC_TARDE_SALE): quien marcó la casilla a las 13:26
+   tenía razón. Sigue «los dos turnos» para restar y la regla prudente para reservar lo sin ✅. */
 function stockIncTurnos(c){
   c=c||{};
   var it=(typeof c.incT==='string' ? c.incT : '');
@@ -24707,7 +24734,9 @@ function stockCamionSaleTurno(veh, t, ambos){
    STOCK_INC_CAMION_MIN minutos después de la hora del Excel; si uno ya salió y otro no, queda sin marcar y lo dice. Sin dato del
    camión: la mañana desde las STOCK_INC_AM y la tarde desde las STOCK_INC_PM. `dep`: '' = PTF; el nombre = un depósito de salida
    (Banzer); null = un almacén al que se va a buscar (de ahí no salen camiones: solo la hora). Sin hora, nada marcado (§4cn). */
-function stockIncPropuesta(hora, dep){
+/* ✏️ (19/10, §4ls verificación final, EX-6) `conteo`: la propuesta es para «📋 Conté a mano» (la hora es la de contar, no la de un
+   Excel): el texto lo dice así. Antes decía «salió hasta 15 min después del Excel (12:30)» en un conteo, donde no hay ningún Excel. */
+function stockIncPropuesta(hora, dep, conteo){
   var hoy=todayStr(), hm=stockHoraMin(hora), out={ am:{ v:false, txt:'' }, pm:{ v:false, txt:'' } };
   if(hm==null){ out.sinHora=true; return out; }
   var veh={ am:{}, pm:{} };
@@ -24721,6 +24750,9 @@ function stockIncPropuesta(hora, dep){
     if(sale) veh[stockTurnoLinea(p)][v]=1;
   });
   var hh=stockHoraHM(hora);
+  var salioAntes = conteo ? ('ya había salido cuando contás ('+hh+') → esa carga ya no está en el depósito.') : ('salió hasta '+STOCK_INC_CAMION_MIN+' min después del Excel ('+hh+') → esa carga ya no está en él.');
+  var salioDespues = conteo ? ('salió después de la hora en que contás ('+hh+') → todavía estaba en el depósito.') : ('salió más de '+STOCK_INC_CAMION_MIN+' min después del Excel ('+hh+') → todavía estaba en el depósito.');
+  var esDe = conteo ? ('contás a las '+hh) : ('el Excel es de las '+hh);
   ['am','pm'].forEach(function(t){
     var desde=(t==='am') ? STOCK_INC_AM : STOCK_INC_PM, antes=[], tarde=[], o=out[t];
     /* (18/10, §4ls, corrector) Un camión de ese turno SIN dato de salida no se ignora: decide la hora (antes de las STOCK_INC_AM /
@@ -24730,12 +24762,12 @@ function stockIncPropuesta(hora, dep){
     if((antes.length || tarde.length) && sinDato.length){ (hm>=stockHoraMin(desde) ? antes : tarde).push(sinDato.join(', ')+' (sin dato del camión: por la hora)'); }
     if(antes.length || tarde.length){
       o.v=!tarde.length; o.camion=true;
-      o.txt = !tarde.length ? ('🚚 '+antes.join(', ')+': salió hasta '+STOCK_INC_CAMION_MIN+' min después del Excel ('+hh+') → esa carga ya no está en él.')
-            : !antes.length ? ('🚚 '+tarde.join(', ')+': salió más de '+STOCK_INC_CAMION_MIN+' min después del Excel ('+hh+') → todavía estaba en el depósito.')
+      o.txt = !tarde.length ? ('🚚 '+antes.join(', ')+': '+salioAntes)
+            : !antes.length ? ('🚚 '+tarde.join(', ')+': '+salioDespues)
             : ('🚚 '+antes.join(', ')+' ya había salido y '+tarde.join(', ')+' todavía no ('+hh+'): queda sin marcar, decidí vos.');
     } else {
       o.v = hm>=stockHoraMin(desde);
-      o.txt = 'Sin dato del camión (GPS o «🚚 Ya salió»): '+(o.v ? ('el Excel es de las '+hh+', desde las '+desde+' se da por cargada.') : ('el Excel es de las '+hh+', antes de las '+desde+': todavía no se cargó.'));
+      o.txt = 'Sin dato del camión (GPS o «🚚 Ya salió»): '+(o.v ? (esDe+', desde las '+desde+' se da por cargada.') : (esDe+', antes de las '+desde+': todavía no se cargó.'));
     }
   });
   return out;
@@ -24748,8 +24780,13 @@ function stockIncDelHistorial(d){
   var poner=function(s, alm){
     /* (§4ls, corrector) `inc:true` sin `incT` puede ser lo que dejó la página de antes al guardar un corte de los dos turnos
        (`incT:'ampm'`, que no conoce): si su renglón lo tiene, se repone; si el renglón tampoco lo tiene, es la casilla de antes. */
-    if(!s || !s.f || !alm || s.incT) return;
-    var hh=(d.h||[]).filter(function(x){ return x && x.alm===alm && String(x.f||'')===String(s.f) && String(x.hora||'')===String(s.hora||''); })[0];
+    if(!s || !s.f) return;
+    var hh=(d.h||[]).filter(function(x){ return x && String(x.alm||'')===String(alm||'') && String(x.f||'')===String(s.f) && String(x.hora||'')===String(s.hora||''); })[0];
+    /* 📋 (19/10, §4ls verificación final, CO-1) Un «Conté a mano» que la página publicada guardó sin `mano` (su renglón `rol:'mano'` lo
+       dice): vuelve a ser «a mano». Sin almacén (un conteo sin ningún Excel antes) solo cuenta ese renglón. */
+    if(hh && hh.rol==='mano'){ if(!s.mano && s===d.c) s.mano=1; }
+    else if(!alm) return;
+    if(s.incT) return;
     if(s.inc===true){ if(hh && hh.incT) stockIncPoner(s, stockIncTurnos(hh)); return; }
     if(hh && (hh.inc===true || hh.incT)) stockIncPoner(s, stockIncTurnos(hh));
   };
@@ -28141,7 +28178,7 @@ function abrirStockConteo(){
       'Desde este conteo, el panel descuenta solo lo que se va entregando y suma lo que llega de fábrica.</p>'+
       /* 🚚 (18/10, §4ls Man-VM12) Las mismas dos casillas del Excel: lo contado DESPUÉS del camión ya no tiene esa carga. Antes se
          daba siempre por contado antes del camión: a las 12:30 se escribía 7 y la fila decía 6 (la entrega de la mañana, otra vez). */
-      stockIncCasillasHtml('conteo-inc', stockIncPropuesta(horaDeTs(Date.now()), ''), todayStr(), '', 'Lo que contás ahora')   /* ⚠️ no «stk-…»: guardar lee input[id^="stk-"] */+
+      stockIncCasillasHtml('conteo-inc', stockIncPropuesta(horaDeTs(Date.now()), '', true), todayStr(), '', 'Lo que contás ahora')   /* ⚠️ no «stk-…»: guardar lee input[id^="stk-"] */+
       (lista.length?('<div style="max-height:52vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px"><table class="roho-tabla stk-tabla" style="min-width:0"><tbody>'+filas+'</tbody></table></div>')
                    :'<div style="color:var(--muted);padding:14px">Todavía no hay productos con movimiento para contar.</div>')+
       '<div class="modal-actions" style="margin-top:14px">'+
@@ -28165,7 +28202,12 @@ function guardarStockConteo(){
      conteo pasa a «ya salió»: lo libre queda igual. */
   /* 📋 (18/10, §4ls Man-VM2) SIN recortar a 0: un PTF negativo (−12 PATAS) guardado sin tocar queda −12. Antes `max(0,…)` lo borraba
      (y con eso cambiaban la fila y sus avisos aunque nadie hubiera contado nada). Lo que se ESCRIBE sigue siendo ≥ 0. */
-  var quieto=function(k, hay){ return (Number(hay)||0) + stockSalidas(k, hoy, '', cN) - (fueraPasa[k]||0); };
+  /* 🚚 (19/10, §4ls verificación final, EX-2) …pero nunca más «ya salió» que lo que el depósito TENÍA: una línea de hoy de la mañana sin
+     ✅ de un producto con 0 en PTF no se pudo cargar en el camión (no había). Restarla igual dejaba el depósito en −2 y, al volver a abrir
+     el conteo, la fila decía «⚠️ el panel calcula −2: se entregaron más de lo contado», que no pasó (17/10 10:40 con la planilla real:
+     6 negativos nuevos en PTF, −9 u). Lo que el depósito sí tenía sigue igual que antes (lo libre no se mueve). Que la línea deje de
+     reservarse al marcar la mañana es la decisión 2 («con ✅ o sin ✅»), y no cambia. */
+  var quieto=function(k, hay){ hay=Number(hay)||0; return hay + stockSalidas(k, hoy, '', cN) - Math.min(fueraPasa[k]||0, Math.max(0, hay)); };
   [].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')).forEach(function(el){
     var k=el.getAttribute('data-k'); vistos[k]=1;
     var t=String(el.value||'').trim(); if(t==='') return;
@@ -28201,6 +28243,15 @@ function guardarStockConteo(){
      fila `stockMigrar` volvía a sumar el CH1297 (10) al SOMIER NEGRO (2) → «hay 12». */
   if(viejo.cod && typeof viejo.cod==='object' && Object.keys(viejo.cod).length) STOCK.c.cod=viejo.cod;
   STOCK.e=[];                       // el conteo de hoy ya incluye todo lo que llegó antes (lo pedido y no llegado sigue en camino)
+  /* 🧓 (19/10, §4ls verificación final, CO-1) Su renglón en el historial, como un Excel pero con `rol:'mano'`: la página publicada (sin F5)
+     rearma el corte solo con lo que conoce y al guardar el stock le borra `mano` y el turno (`incT`), pero conserva el historial tal cual.
+     De acá los repone `stockIncDelHistorial` (sin esto, el ✅ de la mañana se restaba otra vez —PTF 7 → 5— y desaparecía el cartel «📋
+     Conteo a mano»). No es un Excel: `stockCortePrevioDe`, el control y «Su historia» lo saltean, y la poda lo guarda aparte del último
+     Excel de PTF (`stockPodarControl`). */
+  var tuC=0; Object.keys(u).forEach(function(k){ tuC+=Number(u[k])||0; });
+  var hM={ id:String(STOCK.c.alm||'')+'|'+hoy+'|'+STOCK.c.hora, f:hoy, hora:STOCK.c.hora, alm:String(STOCK.c.alm||''), rol:'mano', mano:1, n:n, u:tuC, ts:tC, inc:!!(incN.am && incN.pm) };
+  if(incN.am || incN.pm) hM.incT=(incN.am && incN.pm) ? 'ampm' : (incN.am ? 'am' : 'pm');
+  STOCK.h=[hM].concat((STOCK.h||[]).filter(function(x){ return !(x && x.alm===hM.alm && x.f===hM.f && String(x.hora||'')===String(hM.hora)); })).slice(0,STOCK_HIST);
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Conteo guardado: '+n+' producto'+(n===1?'':'s')+'. Desde acá el panel lleva la cuenta solo.','ok',6000);
 }
@@ -29280,18 +29331,20 @@ function abrirStockHistorial(){
   var h=(STOCK.h||[]);
   var html='<div class="modal-h" style="background:#7c2d12"><h3>📜 Historial de cortes</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
-    (h.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:9px">Cada vez que se sube un Excel de existencias queda anotado acá. Se guardan los de los últimos '+STOCK_CONTROL_DIAS+' días (y siempre el último de cada almacén); lo de antes se borra solo, para que la celda del stock no se llene.</p>'+
+    (h.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:9px">Cada vez que se sube un Excel de existencias (o se guarda un «📋 Conté a mano») queda anotado acá. Se guardan los de los últimos '+STOCK_CONTROL_DIAS+' días (y siempre el último de cada almacén); lo de antes se borra solo, para que la celda del stock no se llene.</p>'+
       '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Corte</th><th>Almacén</th><th>Productos</th><th>Unidades</th></tr></thead><tbody>'+
       h.map(function(x,i){
         /* (26/09) El anterior DEL MISMO almacén, no el renglón de abajo: subiendo el de acá y el de
            Moreno el mismo día, el de abajo es siempre del otro y «contra el anterior» no salía nunca. */
-        var prev=h.slice(i+1).filter(function(y){ return y && y.alm===x.alm; })[0]||null;
+        var esMano=(x.rol==='mano');   // 📋 (19/10, CO-1) un «Conté a mano» (no es un Excel): se compara con el conteo anterior
+        var prev=h.slice(i+1).filter(function(y){ return y && y.alm===x.alm && (y.rol==='mano')===esMano; })[0]||null;
         var dif=prev? (x.u-prev.u) : null;
         return '<tr><td><b>'+fmtFecha(x.f)+'</b>'+(x.hora?(' '+esc(x.hora)):'')+
-          '<br><span style="color:var(--muted);font-size:.9em">subido '+tsFmt(x.ts)+'</span></td>'+
+          '<br><span style="color:var(--muted);font-size:.9em">'+(esMano?'anotado ':'subido ')+tsFmt(x.ts)+'</span></td>'+
           /* (26/09, noche) El Excel de Banzer subido con el diálogo de ANTES quedó anotado 'otro' (no había otra
              opción) y decía «(no sale camión)»: para 'otro' decide `almEsSalida`, como en todo el panel. */
-          '<td>'+esc(stockAlmNombre(x.alm))+(x.rol==='log'?'':((x.rol==='sale' || (x.rol!=='trae' && almEsSalida(x.alm)))?' <span style="color:var(--muted)">(también sale camión)</span>':' <span style="color:var(--muted)">(no sale camión)</span>'))+'</td>'+
+          '<td>'+(esMano ? ('📋 Conteo a mano'+(x.alm?(' <span style="color:var(--muted)">('+esc(stockAlmNombre(x.alm))+')</span>'):''))
+            : esc(stockAlmNombre(x.alm))+(x.rol==='log'?'':((x.rol==='sale' || (x.rol!=='trae' && almEsSalida(x.alm)))?' <span style="color:var(--muted)">(también sale camión)</span>':' <span style="color:var(--muted)">(no sale camión)</span>')))+'</td>'+
           '<td>'+x.n+'</td><td><b>'+stockUnid(x.u)+'</b>'+
           (dif!=null?('<br><span style="color:'+(dif<0?'var(--red)':'var(--green)')+';font-size:.9em">'+(dif>0?'+':'')+stockUnid(dif)+' contra el anterior</span>'):'')+'</td></tr>'+stockHistDifHtml(x);
       }).join('')+'</tbody></table>')
@@ -29570,13 +29623,14 @@ function existLoteDe(filas, delNombre){
   if(eS) return { error:eS };                   // 🧮 (16/10, §4lr U30)
   if(!secs.length) return null;
   var pie=existHoraDePie(filas), lista=[], err='';
+  var par={};   // 🔁 (19/10, §4ls EX-8) lo que cada almacén del archivo dejó para juntar con el otro (`existParOtro`): el MISMO objeto para todos
   secs.forEach(function(s, i){
     var r=existLeer(filas.slice(0, s.hdr+1).concat(filas.slice(s.desde, s.hasta+1)), s.alm);
     if(r.error){ if(!err) err=s.alm+': '+r.error; return; }
     r.totalReporte=s.total;
     existPonerHora(r, pie, delNombre);
     existAlinearHora(r);
-    if(secs.length>1) r.lote={ i:i+1, n:secs.length, alms:secs.map(function(x){ return x.alm; }) };
+    if(secs.length>1) r.lote={ i:i+1, n:secs.length, alms:secs.map(function(x){ return x.alm; }), par:par };
     lista.push(r);
   });
   return err ? { error:err } : { lista:lista };
@@ -30002,12 +30056,18 @@ function stockSubidoAntesDe(c, f, h){ var t=Number(c&&c.t)||0; return t>0 && iso
    dos partes la tienen (R7): en el día del corte anterior, después de ese conteo; en el día de este corte, hasta este conteo
    (sin hora de un lado, el día del corte entra solo con la casilla). */
 function stockMovEnVentana(f, ts, v){
-  f=String(f||''); if(!f || !v || f<v.desde || f>v.hasta) return false;
-  var h=horaDeTs(ts);
-  /* (06/10, auditoría §4hq 5d) Antes devolvía acá mismo: con los dos cortes el MISMO día (09:00 y 16:00), una salida anotada
-     a las 16:20 «explicaba» el Excel de las 16:00 y aparecía una entrada sin explicar. El día del corte anterior mira
-     las dos puntas. */
-  if(f===v.prevF && !v.prevInc && v.prevHora && h && !(h>v.prevHora)) return false;
+  f=String(f||''); if(!f || !v || f>v.hasta) return false;
+  var h=stockMovHora(f, ts);
+  /* ⏱️ (19/10, §4ls verificación final, EX-1) La ventana de los MOVIMIENTOS anotados arranca el día del corte anterior aunque aquel
+     trajera los dos turnos: lo anotado ese día DESPUÉS de su hora no estaba en él (la regla de `stockMovDespuesDelCorte` y de
+     `stockEntradaVale`). Antes arrancaba el día siguiente (`desde`) y la llegada de las 17:00, que sí subió el depósito, aparecía al
+     otro día como «+3 entrada sin explicar» con una detección nueva; la salida de las 17:00, como «−2 sin explicar». Sin hora de un lado,
+     lo de antes: con los dos turnos ese día queda afuera. Las líneas de los pedidos siguen por turno (`stockSalioVentana`, `desde`). */
+  if(v.prevF && !v.mismo && f<=v.prevF){
+    if(f<v.prevF) return false;
+    if(v.prevHora && h){ if(!(h>v.prevHora)) return false; }   // (06/10, auditoría §4hq 5d) el día del corte anterior mira las dos puntas
+    else if(v.prevInc) return false;
+  } else if(f<v.desde) return false;
   if(f===v.hasta){ if(v.hora && h) return h<=v.hora; return v.incluyeHasta; }
   return true;
 }
@@ -30060,10 +30120,18 @@ function stockSalidasManualesVentana(k, v, alm){ var n=0; (STOCK.sm||[]).forEach
 function stockMovDespuesDelCorte(S, f, ts){
   var c=(S&&S.c)||{}; if(!c.f) return true; f=String(f||'');
   if(f>c.f) return true; if(f<c.f) return false;
+  /* ⏱️ (19/10, §4ls verificación final, EX-1) CON HORA DE LOS DOS LADOS MANDA LA HORA, también con un corte de los dos turnos (un Excel
+     desde las 16:00, uno de la tarde con el camión ya salido, un «Conté a mano» de la tarde): lo anotado a las 17:00 no está en el Excel
+     de las 16:10. Antes «los dos turnos» se miraba primero y la salida de las 17:00 quedaba «de antes del corte» (`pre`, no bajaba nada)
+     y la llegada sí subía el depósito (`stockEntradaVale`, VE9): las cuatro funciones decían cosas distintas. Sin una de las dos horas,
+     lo de antes: con «los dos turnos», el día entero está adentro. La hora del movimiento vale solo si es de ESE día (`stockMovHora`). */
+  var h=stockMovHora(f, ts); if(c.hora && h) return h>String(c.hora);
   if(stockIncTodo(c)) return false;                          // (§4ls) una salida a mano no tiene turno: «el día entero» = los dos
-  var h=horaDeTs(ts); if(c.hora && h) return h>String(c.hora);
   return true;
 }
+/* La hora de Bolivia de un movimiento anotado (`ts`), solo si es del MISMO día `f`: una salida de ayer anotada hoy no dice a qué hora
+   salió (la hora de anotarla es de otro día). La misma regla que `stockEntradaVale`. */
+function stockMovHora(f, ts){ return (Number(ts)>0 && f && isoDeTsBolivia(ts)===String(f)) ? horaDeTs(ts) : ''; }
 /* Las salidas anotadas a mano de acá que ningún Excel incluye todavía: bajan el depósito como una entrega. */
 function stockSalidasManuales(k){ var n=0; (STOCK.sm||[]).forEach(function(x){ if(x && !x.pre && !x.an && !x.alm && x.k===k && stockMovDespuesDelCorte(STOCK, x.f, x.ts)) n+=Number(x.u)||0; }); return n; }
 /* 📤 (18/10, §4ls Man-VM5) Lo mismo para un depósito de salida (Banzer): las anotadas con su nombre, contra SU Excel (la misma regla de
@@ -30075,7 +30143,52 @@ function stockSalidasManualesDe(k, nm){
   return n;
 }
 /* La cuenta entera, producto por producto. `rol`: 'log' (acá), 'sale' (Banzer), 'otro' (Moreno: solo informativo). */
-function stockConciliar(R, rol, inc){
+/* 🔁 (19/10, §4ls verificación final, EX-8) PTF Y BANZER EN EL MISMO ARCHIVO: una diferencia de un lado que el otro tiene al revés, el
+   mismo día y del mismo producto, casi siempre es la misma unidad contada en el depósito equivocado: un traspaso PTF → Banzer (PTF −N,
+   Banzer +N; el 14/10, 9 productos) o una carga hecha en Banzer sin la marca ✔ Banzer (el panel la restó de PTF: PTF +N, Banzer −N;
+   el 16/10, 5 productos de la OC 10-203, la RPT 10-009 y la nota 192660). Cada almacén se conciliaba solo: dos «sin explicar» por
+   producto y el + de PTF quedaba como DETECCIÓN, que resta «en camino seguro». Ahora la parte que se compensa (la menor de las dos) se
+   dice como lo que probablemente es, no se ofrece como «salida sin pedido» y no se anota como entrada nueva. Solo mira: no mueve stock
+   ni marca pedidos (pedirle a logística que marque ✔ Banzer y avise los traspasos). Del otro almacén se toma lo que dejó al confirmarse
+   (`R.lote.par`) o, si todavía espera en la cola del archivo, su control con la propuesta de casillas (una vez por archivo). */
+function existParOtro(R, rol){
+  var L=R && R.lote && R.lote.par; if(!L || (rol!=='log' && rol!=='sale')) return null;
+  var quiero = rol==='log' ? 'sale' : 'log', f=String(R.fecha||''), out={ d:{}, oc:{}, alm:'' }, hay=false;
+  var sumar=function(x, a){ hay=true; if(!out.alm) out.alm=a;
+    Object.keys(x.d||{}).forEach(function(k){ out.d[k]=(out.d[k]||0)+(Number(x.d[k])||0); });
+    Object.keys(x.oc||{}).forEach(function(k){ out.oc[k]=(out.oc[k]||[]).concat(x.oc[k]); }); };
+  Object.keys(L).forEach(function(a){ var x=L[a]; if(a.charAt(0)!=='_' && x && x.rol===quiero && x.f===f) sumar(x, a); });
+  (EXIST_COLA||[]).forEach(function(Rx){
+    if(!Rx || !Rx.lote || Rx.lote.par!==L || String(Rx.fecha||'')!==f || L[Rx.almacen]) return;
+    var rx = Rx.esLog ? 'log' : ((existPuedeSalir(Rx.almacen) && almEsSalida(Rx.almacen)) ? 'sale' : 'otro');
+    if(rx!==quiero) return;
+    L._cola=L._cola||{};
+    if(!L._cola[Rx.almacen]){
+      var pr=stockIncPropuesta(Rx.hora, existIncDep(Rx, rx));
+      L._cola[Rx.almacen]=existParBase(stockConciliar(Rx, rx, { am:pr.am.v, pm:pr.pm.v }, { sinPar:true }), rx, Rx);
+    }
+    if(L._cola[Rx.almacen].ok) sumar(L._cola[Rx.almacen], Rx.almacen);
+  });
+  return hay ? out : null;
+}
+/* Lo que un almacén deja para juntar: por producto, la diferencia que le queda SIN explicar antes de juntar (con signo) y, en PTF, los
+   pedidos cuya salida se restó de PTF (para decir cuáles serían los de «sin la marca ✔ Banzer»). */
+function existParBase(C, rol, R){
+  var out={ ok:!!(C && !C.sinPrevio && !C.corteViejo), rol:rol, f:String((R&&R.fecha)||''), d:{}, oc:{} };
+  if(!out.ok) return out;
+  (C.filas||[]).forEach(function(x){ if(x.parLibre>0) out.d[x.k]=(x.dif>0?1:-1)*x.parLibre; if(x.parOc && x.parOc.length) out.oc[x.k]=x.parOc; });
+  return out;
+}
+/* Los pedidos de la ventana cuya salida se restó de PTF (sin la marca ✔ Banzer), de un producto: los candidatos a «salió de Banzer». */
+function existParOcs(k, v){
+  var L=[];
+  STATE.forEach(function(p){ ((p&&p.productos)||[]).forEach(function(x){
+    if(L.length>=6 || !x || enProduccion(x) || esProdDeTienda(x) || recogeDeTienda(x) || stockClave(x)!==k || !(stockUnidAca(x)>0) || !stockSalioVentana(p, x, v)) return;
+    var e=ocEtiq(p.oc); if(e && L.indexOf(e)<0) L.push(e);
+  }); });
+  return L;
+}
+function stockConciliar(R, rol, inc, opt){
   var alm = rol==='log' ? '' : String(R.almacen||'');
   var previo = rol==='log' ? STOCK.c : ((STOCK.g||{})[R.almacen]||null);
   var out={ filas:[], sinPrevio:false, corteViejo:false, ventana:null, previoF:String((previo&&previo.f)||''), previoHora:String((previo&&previo.hora)||''),
@@ -30126,6 +30239,25 @@ function stockConciliar(R, rol, inc){
   var _nt=stockIncNorm(inc);   // 🚚 (§4ls) los turnos que trae este Excel
   var v=out.mismoCorte ? { desde:String(R.fecha||''), hasta:String(R.fecha||''), incluyeHasta:!!(_nt.am && _nt.pm), turnos:_nt, mismo:true } : stockVentanaCorte(previo, R, inc); out.ventana=v;
   var corteId=existCorteId(R);
+  /* 🔁 (19/10, §4ls EX-8) El otro depósito de salida del mismo archivo (PTF ↔ Banzer). `parTomar` = cuánto de esta diferencia compensa la
+     del otro al revés; deja anotado lo que quedaba sin explicar antes (`parLibre`, lo que mira el otro). */
+  var PAR=(opt && opt.sinPar) ? null : existParOtro(R, rol), nomPar=PAR ? (PAR.alm ? stockAlmCorto(PAR.alm) : '') : '';
+  var parTomar=function(fila, resto){
+    fila.parLibre=resto;
+    if(!PAR || !(resto>0)) return 0;
+    var od=Number(PAR.d[fila.k])||0; if(!od || (od>0)===(fila.dif>0)) return 0;
+    var u=Math.min(resto, Math.abs(od)); if(!(u>0)) return 0;
+    var otro=(rol==='log') ? (nomPar||'Banzer') : 'PTF', ocs=(rol==='log' ? (fila.parOc||[]) : (PAR.oc[fila.k]||[])).slice(0,4);
+    var ocTxt=ocs.length ? (' ('+ocs.join(', ')+')') : '';
+    var cuanto=otro+' tiene '+(od>0?'+':'−')+stockUnid(Math.abs(od))+' sin explicar en este mismo archivo';
+    var txt = (rol==='log')
+      ? (fila.dif>0 ? ('🔁 ¿salió de '+otro+' sin la marca ✔ '+otro+'? '+cuanto+ocTxt+': no se anota como entrada nueva')
+                    : ('🔁 ¿traspaso de PTF a '+otro+'? '+cuanto))
+      : (fila.dif<0 ? ('🔁 ¿salió de acá sin la marca ✔ '+stockAlmCorto(R.almacen)+'? '+cuanto+ocTxt)
+                    : ('🔁 ¿traspaso de PTF a acá? '+cuanto));
+    fila.causas.push({ t:'par', u:u, txt:txt }); fila.par={ u:u, otro:od };
+    return u;
+  };
   /* Detecciones anteriores sin asignar (de otros cortes de este almacén): se vuelven a ofrecer contra lo pendiente. */
   var detVivas=(STOCK.det||[]).filter(function(x){ return x && !x.an && String(x.alm||'')===alm && (Number(x.u)||0)>0 && !(x.f===String(R.fecha||'') && String(x.hora||'')===String(R.hora||'') && x.hu!==huNueva); });
   /* Lo pendiente de cada pedido, contando como NO recibido lo que cerró una versión anterior de este mismo corte (al
@@ -30211,11 +30343,16 @@ function stockConciliar(R, rol, inc){
             fila.fab.push({ id:p.id, idx:i, oc:ocEtiq(p.oc), cliente:String(p.cliente||''), u:u, falta:falta, cant:cant, prodF:String(x.prodF||'') }); resto-=u;
           });
         });
+        /* 🔁 (19/10, §4ls EX-8) lo que Banzer tiene de menos en el mismo archivo: probablemente salió de allá sin la marca ✔ Banzer
+           (el panel lo restó de acá). No es una entrada: no se anota como detección ni se sugiere contra un pedido a fábrica. */
+        if(R.lote && R.lote.par) fila.parOc=existParOcs(k, v);
+        var pu=parTomar(fila, resto); if(pu){ fila.explicado=(fila.explicado||0)+pu; resto-=pu; }
         /* (c) pedidos a fábrica y recogidas pendientes, el más viejo primero: SUGERENCIA, destildada. La detección de
            este corte se llama d:<corte>|<producto>; la recepción que nazca de ella, x:<detección>|<pedido>. */
         fila.det=existDetId(corteId, k);
         resto=sugerir(fila, fila.det, String(R.fecha||''), resto, String(R.hora||''));
       }
+      else if(rol==='sale') resto-=parTomar(fila, resto);   // 🔁 (19/10, EX-8) un traspaso desde PTF
       fila.sinExplicar=resto;
     } else {
       fila.tipo='menos'; out.resumen.faltan+=-fila.dif;
@@ -30230,6 +30367,7 @@ function stockConciliar(R, rol, inc){
           });
         });
       }
+      if(rol==='log' || rol==='sale') resto-=parTomar(fila, resto);   // 🔁 (19/10, §4ls EX-8) traspaso a Banzer, o salió de Banzer sin la marca
       fila.sinExplicar=resto;
     }
     out.filas.push(fila);
@@ -30321,9 +30459,22 @@ function stockIncCasillasHtml(idAm, prop, fecha, onch, que){
   '</div>';
 }
 function stockIncLeer(idAm){ var a=document.getElementById(idAm), b=document.getElementById(idAm+'-pm'); return { am:!!(a && a.checked), pm:!!(b && b.checked) }; }
+/* ✏️ (19/10, §4ls verificación final, EX-6) Las dos casillas de los turnos solo donde salen camiones: el depósito de fábrica ('' = PTF) y
+   uno de salida (Banzer, su nombre). De un almacén al que se va a BUSCAR (Moreno, `null`) no sale ninguno: antes se preguntaba igual
+   «¿ya trae lo que salió en los camiones?» tres veces por archivo (con la mañana marcada por la hora) y lo que se guardaba no lo usaba
+   ninguna cuenta. Si se cambia «¿Qué almacén es?», la caja se rearma con la propuesta de ese depósito. */
+function existIncDep(R, rol){ return rol==='log' ? '' : (rol==='sale' ? (almEnStock(R.almacen)||R.almacen) : null); }
+function existIncZonaHtml(R, rol){
+  var dep=existIncDep(R, rol);
+  if(dep===null) return '<div id="exist-inc-no" style="background:#f8fafc;border:1px dashed var(--gray-md);border-radius:8px;padding:7px 12px;margin-bottom:10px;font-size:.8rem;color:var(--muted)">🚚 De este almacén no salen camiones (se va a buscar): no hace falta decir qué turnos trae.</div>';
+  return stockIncCasillasHtml('exist-inc', stockIncPropuesta(R.hora, dep), R.fecha, 'existRepintarControl()', 'Este Excel'+(R.hora?(' (de las '+esc(stockHoraHM(R.hora))+')'):''));
+}
 function existRepintarControl(){
   var R=EXIST_IMP; if(!R) return;
-  var rol=(document.getElementById('exist-rol')||{}).value||'otro', inc=stockIncLeer('exist-inc');   // 🚚 (§4ls) mañana y tarde
+  var rol=(document.getElementById('exist-rol')||{}).value||'otro';
+  var z=document.getElementById('exist-inc-zona');
+  if(z && z.getAttribute('data-rol')!==rol){ z.innerHTML=existIncZonaHtml(R, rol); z.setAttribute('data-rol', rol); }   // ✏️ (19/10, EX-6)
+  var inc=(rol==='otro') ? { am:false, pm:false } : stockIncLeer('exist-inc');   // 🚚 (§4ls) mañana y tarde
   var el=document.getElementById('exist-control'); if(el) el.innerHTML=existControlHtml(R, rol, inc);
   existBotonUsar();
 }
@@ -30567,9 +30718,12 @@ function guardarStockSalida(){
   if(!(u>0)){ toast('Poné cuántas unidades salieron.','err'); return; }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || f>todayStr()){ toast('La fecha no puede ser de mañana.','err'); return; }
   if(dep && !((STOCK.g||{})[dep] && almEsSalida(dep))) dep='';
-  /* Anterior al corte vigente DE ESE DEPÓSITO: ya está adentro de su Excel, solo documenta. */
-  var d=dep ? stockDesdeSalidasDe(dep) : stockDesdeSalidas(), pre = !!(d && f<d);
-  STOCK.sm=(STOCK.sm||[]).concat([{ id:'m'+uid(), k:k, u:u, f:f, ts:Date.now(), m:m, alm:dep, pre:pre?1:0 }]);
+  /* Anterior al corte vigente DE ESE DEPÓSITO: ya está adentro de su Excel, solo documenta.
+     ⏱️ (19/10, §4ls verificación final, EX-1) Con la MISMA regla que la baja del depósito y la ventana del control
+     (`stockMovDespuesDelCorte`): el día del corte, por la hora. Antes era solo por día y, con un corte de los dos turnos (el Excel de
+     las 16:10), la salida anotada a las 17:00 quedaba «de antes del corte»: no bajaba nada y el Excel siguiente la marcaba «−2 sin explicar». */
+  var tsS=Date.now(), cS=dep ? (STOCK.g||{})[dep] : STOCK.c, pre = !!(cS && cS.f) && !stockMovDespuesDelCorte({ c:cS }, f, tsS);
+  STOCK.sm=(STOCK.sm||[]).concat([{ id:'m'+uid(), k:k, u:u, f:f, ts:tsS, m:m, alm:dep, pre:pre?1:0 }]);
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('📤 Anotadas '+stockUnid(u)+' unidades que salieron sin pedido de '+(dep?saleNombre(dep):'PTF')+(m?(' ('+m+')'):'')+(pre?'. Son de antes del corte: quedan como documentación, no se descuentan dos veces.':'.'),'ok',8000);
 }
@@ -30637,8 +30791,9 @@ function renderImportExist(){
      salió»: salió hasta 15 min después del Excel) o, sin ese dato, por la hora (la mañana desde las 09:30, la tarde desde las 16:00).
      Antes era una sola y se marcaba recién desde las 12:00: el Excel de las 10:05 ya no tenía el camión de la mañana y el panel lo
      descontaba otra vez. */
-  var incDep = R.esLog ? '' : ((existPuedeSalir(R.almacen) && almEsSalida(R.almacen)) ? (almEnStock(R.almacen)||R.almacen) : null);
-  var incProp=stockIncPropuesta(R.hora, incDep), incPorDefecto={ am:incProp.am.v, pm:incProp.pm.v };
+  var rolIni = R.esLog ? 'log' : ((existPuedeSalir(R.almacen) && almEsSalida(R.almacen)) ? 'sale' : 'otro');
+  var incDep = existIncDep(R, rolIni);
+  var incProp=stockIncPropuesta(R.hora, incDep), incPorDefecto = (incDep===null) ? { am:false, pm:false } : { am:incProp.am.v, pm:incProp.pm.v };
   /* 📅 (06/10) Solo el Excel del día: el de otro día se muestra, se dice por qué no entra y no hay botón para usarlo. */
   var noHoy=existNoEsDeHoy(R);
   if(noHoy){
@@ -30686,10 +30841,10 @@ function renderImportExist(){
       '</select>'+
       (R.conocido?'':'<div style="font-size:.78rem;color:var(--amber);margin-top:4px">Es la primera vez que subís este almacén: elegí qué es y el panel lo recuerda.</div>')+
     '</div>'+
-    stockIncCasillasHtml('exist-inc', incProp, R.fecha, 'existRepintarControl()', 'Este Excel'+(R.hora?(' (de las '+esc(stockHoraHM(R.hora))+')'):''))+
+    '<div id="exist-inc-zona" data-rol="'+rolIni+'">'+existIncZonaHtml(R, rolIni)+'</div>'+
     (hab?('<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Reemplaza el conteo anterior de este almacén ('+(previo.f?('del '+fmtFecha(previo.f)):'sin fecha')+', '+hab+' productos). Lo que no esté en este archivo queda en cero: el reporte trae todo lo que tiene existencia.</div>')
         :'<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Es el primer conteo de este almacén.</div>')+
-    '<div id="exist-control">'+existControlHtml(R, R.esLog?'log':((existPuedeSalir(R.almacen)&&almEsSalida(R.almacen))?'sale':'otro'), incPorDefecto)+'</div>'+
+    '<div id="exist-control">'+existControlHtml(R, rolIni, incPorDefecto)+'</div>'+
     '<div style="max-height:38vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px">'+
       '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Producto</th><th style="width:90px">Cantidad</th></tr></thead><tbody>'+
       R.items.slice(0,80).map(function(i){
@@ -30734,8 +30889,10 @@ function confirmarImportExist(){
   try{ STOCK_DELTA_ANTES=sfFotoDe(stockData().lista); }catch(e){ STOCK_DELTA_ANTES=null; }   // 📥 (§4ip) para mostrar qué subió y qué bajó
   var rolCtrl = rol==='log' ? 'log' : (rol==='sale' ? 'sale' : 'otro');
   var incCtrl=stockIncLeer('exist-inc');   // 🚚 (18/10, §4ls U2) {am, pm}: qué turnos ya salieron cuando se sacó este Excel
+  if(rolCtrl==='otro') incCtrl={ am:false, pm:false };   // ✏️ (19/10, EX-6) de un almacén al que se va a buscar no sale ningún camión
   var C0=stockConciliar(R, rolCtrl, incCtrl);
   if(C0.corteViejo){ toast('⛔ '+existCorteViejoTxt(C0),'err',10000); return; }
+  if(R.lote && R.lote.par && (rolCtrl==='log' || rolCtrl==='sale')) R.lote.par[R.almacen]=existParBase(C0, rolCtrl, R);   // 🔁 (19/10, §4ls EX-8) para el otro depósito del archivo
   var u={};
   R.items.forEach(function(i){ u[i.k]=(u[i.k]||0)+i.cant; });
   /* El rol que se guarda: 'log' (fábrica), 'sale' (Banzer) o 'trae' («ir a buscar» elegido para uno que podría
@@ -31832,15 +31989,22 @@ function cierreEntEfecto(p, dia){
 }
 /* (18/10, §4ls, corrector) ¿Alguna línea de este pedido entra en el stock? Una ATC, una venta de tienda o un pedido solo de productos de
    tienda, ✗ o «recoger de una tienda» no toca el stock: decir «el Excel vigente ya no lo tiene» daba un motivo falso. */
+function cierreEntLineasStock(p){ return (p.productos||[]).filter(function(x){ return x && !esProdDeTienda(x) && !recogeDeTienda(x) && x.chk!=='no' && Number(x.cant)>0; }); }
 function cierreEntTocaStock(p){
   if(!p || !stockCuenta(p) || esVentaTienda(p)) return false;
-  return (p.productos||[]).some(function(x){ return x && !esProdDeTienda(x) && !recogeDeTienda(x) && x.chk!=='no' && Number(x.cant)>0; });
+  return cierreEntLineasStock(p).length>0;
 }
+/* 🏭 (19/10, §4ls verificación final, EX-7 / CO-4) Lo hecho a pedido que todavía no llegó (🏭 sin sello) no está en ningún Excel: si es
+   todo lo que tiene el pedido, «no toca el stock: se hace a pedido y todavía no llegó» (antes decía «el Excel vigente ya no lo tiene»,
+   un motivo falso: OC 10-173 del 15/10 en el cierre del 16/10); si se mezcla con otras líneas, se aclara al lado de lo que sí baja. */
 function cierreEntEfectoTxt(p, dia){
   if(!cierreEntTocaStock(p)) return 'no toca el stock';
+  var L=cierreEntLineasStock(p), fab=L.filter(function(x){ return enProduccionPendiente(x); }).length;
+  if(fab && fab===L.length) return 'no toca el stock: se hace a pedido y todavía no llegó';
+  var nota = fab ? ' · lo hecho a pedido que todavía no llegó no toca el stock' : '';
   var por=cierreEntEfecto(p, dia), ks=Object.keys(por).filter(function(k){ return por[k]>0; });
-  if(!ks.length) return 'no baja el stock: el Excel vigente ya no lo tiene';
-  return 'baja '+ks.map(function(k){ return (k?saleNombre(k):'PTF')+' '+stockUnid(por[k]); }).join(' · ')+' (el Excel vigente todavía lo tenía)';
+  if(!ks.length) return 'no baja el stock: el Excel vigente ya no lo tiene'+nota;
+  return 'baja '+ks.map(function(k){ return (k?saleNombre(k):'PTF')+' '+stockUnid(por[k]); }).join(' · ')+' (el Excel vigente todavía lo tenía)'+nota;
 }
 function cierreEntDiaHtml(p){
   var hoy=todayStr(), id=esc(String(p.id)), dia=CIERRE_ENT_DIA[p.id]||'', on=!!CIERRE_ENT_SEL[p.id];
@@ -36406,7 +36570,12 @@ function saludCerrar(){ clearTimeout(SALUD_TIMER); var ov=document.getElementByI
 function pedidoViajeDatos(p){
   var hoy=todayStr(), lin=(p.productos||[]).filter(function(x){ return x && !esProdDeTienda(x) && Number(x.cant)>0; });
   var merc;
-  if(!lin.length) merc={ hecho:true, lbl:'Mercadería' };
+  /* 🔎 (19/10, §4ls verificación final, CO-5) Un pedido cuyo único renglón es una nota («POR CONFIRMAR», «POR FAVOR IR HACER MEDICION»):
+     §4ls T1 la sacó del stock (bien) y el viaje pasaba a «📦 Mercadería» lista, con el producto todavía sin definir. Sin entregar, dice
+     «Producto por confirmar». Lo de tienda de verdad (protectores, sábanas) sigue como «Mercadería». */
+  var porConf=!lin.length && !p.entregado && (p.productos||[]).some(function(x){ return x && PROD_POR_CONFIRMAR.test(stockNorm(String(x.desc||''))); });
+  if(porConf) merc={ hecho:false, lbl:'Producto por confirmar', ico:'🔎' };
+  else if(!lin.length) merc={ hecho:true, lbl:'Mercadería' };
   else if(lin.some(function(x){ return x.chk==='no'; })) merc={ hecho:false, lbl:'Sin stock', ico:'⛔' };
   else if(lin.some(enProduccionPendiente)) merc={ hecho:false, lbl:'En producción', ico:'🏭' };
   else if(lin.some(esRecoger)) merc={ hecho:false, lbl:'A recoger', ico:'📥' };
@@ -37187,7 +37356,7 @@ function sfCorteInc(f, h, it){
      «NO incluye» (`inc:false`): antes solo se tomaba con `inc:true`/`incT`, el «no» se ignoraba y mandaba la hora (10:05 ≥ 09:30 = «la
      mañana ya salió»), así que lo de la mañana no se sumaba y salía «PATAS +12 entraron» con 0 en todos los Excel. De PTF primero (las
      salidas que se suman son de todos lados, y el de PTF es el que manda la hora del día). */
-  var H=((typeof STOCK!=='undefined' && STOCK && STOCK.h)||[]).filter(function(x){ return x && String(x.f||'')===String(f) && String(x.hora||'')===String(h||'') && ('inc' in x || x.incT); });
+  var H=((typeof STOCK!=='undefined' && STOCK && STOCK.h)||[]).filter(function(x){ return x && x.rol!=='mano' && String(x.f||'')===String(f) && String(x.hora||'')===String(h||'') && ('inc' in x || x.incT); });   // (19/10, CO-1) un «Conté a mano» no es un Excel
   var hh=H.filter(function(x){ return x.rol==='log'; })[0] || H[0];
   if(hh) return stockIncTurnos(hh);
   var m=stockHoraMin(h); if(m==null) return { am:false, pm:false, est:true };
