@@ -409,6 +409,6 @@ async function abrir(browser, reloj, aparato){
 
   chk('sin errores de página', ERRS.length===0, ERRS.slice(0,5));
   await browser.close();
-  console.log('\n'+PASS+' bien, '+FAIL+' mal');
+  console.log('\n'+PASS+' bien · '+FAIL+' mal');   // con «·»: `tests/correr.sh` cuenta esta línea (con coma salía «ok (sin resumen)»)
   process.exit(FAIL?1:0);
 })();
