@@ -15208,3 +15208,111 @@ es el jueves 22… qué se pedirá a producción para los 7-15-otro mes… creo 
   cabecera del Plan es más larga: mira 900 letras).
 - Commits en la rama: `6fcc29c` (fallas de cuenta), `a026d08` (almohadas), `ee3d9f8` («en producción» automático) y el de los arreglos
   chicos (U37, U39, U40, U42, U43, U50, U51). Solo la página: el `.gs` sigue `2026-10-15-a`. Al publicar, todos F5.
+
+### §4ls — 📦 Stock: la revisión 2 implementada con las decisiones del dueño del 18/10 (18-19/10, en la rama, SIN publicar)
+El dueño (17/10), después del informe de §4lr: *«necesito que los agentes verifiquen, corroboren realmente si está funcionando la
+pestaña de stock y reposición… anticipar cada uno de los pedidos y la producción… no deberíamos darle un plazo de 72 horas al cliente,
+sino anticipar a tener el stock, pero el stock de los productos que sí tienen rotación, para no estoquearnos de productos que no se van
+a vender, por si acaso»*.
+- **La revisión 2** (workflow de ~100 agentes, 17-18/10, todo en el scratchpad `ultra2/`, nada al repo): 14 temas (lectura del Excel,
+  cuadrito, cierre, fechas, identidad, mes, vistas, revisión automática, Banzer o PTF, tiendas, botones, flujos a mano, concurrencia,
+  «en producción» automático), cada hallazgo verificado aparte → **129 problemas confirmados**; 9 simulaciones con la demanda real
+  (pronóstico, políticas, clases, almacenes, fábrica, espera, temporada…) y la tabla de objetivos por producto (`objetivos/`); un crítico
+  (plazo variable, camión que no sale, venta grande, lanzamientos).
+- **Decisiones del dueño (18/10)**, las ÚNICAS reglas nuevas de esta tanda:
+  1. **«En producción» automático APAGADO hasta el jueves** (`STOCK_AUTO_ACTIVO=false`): el código de §4lr queda; apagado no anota,
+     no cuenta lo anotado como «en camino» (ni en el Plan ni en el cuadrito), no muestra nada y «Ya pedí» se ofrece siempre. Lo guardado
+     en `STOCK.ap/apL` se sigue leyendo, juntando y podando. Antes de prenderlo: la Prioridad 0 del informe (página vieja, junta de tres
+     copias, un solo reparto con «Ya pedí», lo anotado antes de prender, camión que no sale).
+  2. **U2 por turno**: la casilla única «ya incluye las entregas del día» pasó a DOS: «ya trae la carga de la mañana» (`#exist-inc`, la de
+     siempre) y «ya trae la de la tarde» (`#exist-inc-pm`); lo mismo en «📋 Conté a mano» (`#conteo-inc`, `#conteo-inc-pm`). Las propone
+     `stockIncPropuesta`: con dato del camión (GPS o «🚚 Ya salió») manda el camión (el turno ya salió si el camión salió hasta
+     `STOCK_INC_CAMION_MIN`=15 min después de la hora del Excel; un camión del turno sin dato decide por la hora); sin dato, la mañana
+     desde `STOCK_INC_AM`=09:30 y la tarde desde `STOCK_INC_PM`=16:00 (`STOCK_INC_TARDE_SALE`=13:00 separa los viajes). Lo de HOY de un
+     turno incluido no se reserva (`stockFueraHoy`) ni se resta otra vez (`stockBajaDelCorte`), con ✅ o sin ✅; una línea sin turno es de
+     la mañana. Vale en `stockData` (PTF y Banzer, cada uno con su Excel), `stockSalidas`, `stockComprometido`, la revisión automática
+     (ficha «🚚 ya salieron hoy», `tot.yaSalio`), el control del corte (la ventana por turno, `stockVentanaCorte` → `turnos`/`prevTurnos`)
+     y el conteo a mano. **Un pedido cargado DESPUÉS de la hora del Excel no estaba en él** (`stockCargadoDespuesDelCorte`, por `p.ts`):
+     se reserva y se resta (RPT 10-007 del 12/10, cargada 12:18 con el Excel de las 10:19). **Dónde se guarda**: `inc:true` sigue
+     siendo «los dos» para lo de antes, y el turno va en `incT` (`'am'`, `'pm'` o `'ampm'`) en `STOCK.c`, `STOCK.g[nm]` y el historial
+     (`h[].incT`; `stockIncDelHistorial` lo repone si una página sin F5 lo borra). ⚠️ Un `inc:true` SIN `incT` lo escribió una página
+     vieja (que proponía la casilla marcada desde las 12:00): se lee como `leg` y NO saca de lo reservado lo de la tarde sin ✅. Medido
+     con la planilla real (Excel de las 10:05 del 16/10): a las 10:10 «Pedir 7 días» −18 y lo reservado −24 u (la mañana contada dos
+     veces); después del cierre ya no quedan 10 PTF negativos; el control del Excel del día siguiente queda en 0 diferencias.
+  3. **El cuadrito del vendedor reserva por fecha** (`saldoVeredicto`): para prometer el día D descuenta solo lo vendido sin entregar
+     con fecha ≤ D (más este pedido), cada escalón (a mano → Moreno/recogidas → lo que viene de fábrica → mandar a producir) con su día.
+     `v.libres`/`v.faltan` son A LA FECHA (`v.pendFecha`, `v.fechaRes`) y `v.pend` sigue siendo el TOTAL; abajo «Pendiente en total: N
+     (M para después del DD/MM)» y, si con este pedido a lo de después le falta, el aviso ámbar «hay que reponer antes del…» o «el pedido
+     de ese día se atrasaría · avisá a logística» (`saldoDespues`; también con ⏳ EN PRODUCCIÓN; «mandarlo a producir HOY, antes de las
+     16:30» cuando hace falta). Lo descontinuado sigue descontando todo. La reserva del servidor (`saldoReservaArmar`) manda el libre A LA
+     FECHA. Con las ventas reales del 09 al 16/10: 90 de 126 renglones «✅ DISPONIBLE» (antes 81); los 10 que decían «NO HAY» con stock
+     (7 de ALMOHADA 50x70) ahora dan ✅. Arreglados también H2 (la ventana «otro vendedor vendió» no sale si ya veía «NO HAY»), H6 (un
+     código agotado del histórico dice «🏭 NO HAY») y H7 (con «Medida» vacía usa la medida COMPLETA escrita en el nombre).
+  4. **«Cuánto tener» de lo que rota = punto de pedido y objetivo** (paso 2 del informe, la regla validada en `objetivos/`), en UN lugar:
+     `stockObjetivo` (+ `stockObjVentana`, `stockLibreObj`, `stockObjDispara`, constantes `STOCK_OBJ_*`). QUÉ rota NO cambió (§4dj: ≥3
+     entregas distintas del equipo en 15 días, Eduardo afuera salvo Multicenter). Para lo que rota: μ y σ = venta por día hábil de los
+     últimos `STOCK_OBJ_VENTANA`=26 días hábiles **por fecha de venta** (`stockEsDemanda`, `stockEntregaClave`); punto de pedido =
+     μ·5 + z·σ·√5 (4 días hábiles de fábrica + 1 de revisión; z 1,28, o 1,645 si μ·5 ≥ 4); objetivo = punto de pedido + 1 día de venta
+     (almohadas +5, `STOCK_OBJ_EXTRA_ALMOHADA`), nunca menos que el pedido típico (q75 de 8 semanas). Lo libre = PTF + Banzer + lo que viene
+     seguro − lo vendido para los próximos 15 días (desde HOY); si baja al punto de pedido (o es negativo) se pide hasta el objetivo:
+     primero se trae de Moreno y el resto se fabrica. Lo vendido se SUMA (§4ii). Lo que no rota pide solo lo vendido, como siempre. El
+     Plan tiene la columna «Tener» (objetivo · se pide al bajar a · libre). ⚠️ `o.porDia` (ritmo de 15 días por entrega) NO cambió: lo
+     siguen usando «Se corta», el plan de «Banzer o PTF» y textos («se venden N por día»): hay dos ritmos en pantalla (el «ritmo 15+30»
+     no está aprobado).
+  5. **Fin de mes con el objetivo puesto**: «el mes que viene» de lo que rota = lo vendido para el mes + μ × días hábiles del mes − lo que
+     el 1° quede por encima del objetivo (deja el objetivo puesto el último día), redondeado UNA vez (como la regla validada).
+- **Errores arreglados** (prioridad 1 y 2 del informe; detalle por id en los mensajes de los commits):
+  · 1.1 con fabricar > 0 el aviso nunca queda «🚚 Ya pedido»: «🏭 Pedí N · ya viene la recogida de M» (`o.pedirReserva`,
+    `stockYaVieneTxt`; lo atrasado aparte, «⚠️ reclamá»). 1.2 el plazo medido de la fábrica sale solo del «llegó» (`prodR`) o del día
+    real (`eF`), una muestra por pedido, nunca de la fecha agendada ni futura. 1.3 la ✗ marcada se vuelve a repartir por fecha (con stock
+    pasa a ✔/📥 y Aplicar la escribe) SOLO si la entrega es dentro de 15 días (`revStkNoQuedaComoEsta`: una ✗ lejana se volvía una ✔
+    protegida que le faltaba después a un pedido más cercano); las ✔ y 📥 de logística siguen protegidas; una ✗ puesta a mano lo dice
+    («↩️ estaba ✗ no hay a mano…», `tot.deNo`). 1.4 después de las 16:30 los días de venta se cuentan desde que arranca la fábrica
+    (`o.leadVenta`, `o.ventaDesde`; el plazo de los avisos no cambió).
+  · 1.5 «📋 Conté a mano» guardado sin tocar no cambia nada (`mano:1`, `solo0`, hora; un negativo se muestra y escribir 0 lo deja en 0).
+    1.6 «✅ Llegó» de una recogida que el Excel de PTF ya trae pregunta antes de sumar; las recogidas vencen (`STOCK_RECOGIDA_VENCE_DIAS`=2
+    o un Excel de PTF posterior) sin cerrarse solas y siguen apartando en Moreno mientras el Excel de Moreno no sea posterior; al llegar
+    se ofrece pasar sus líneas 📥 a ✔ (las de fecha pasada o de un turno ya salido, destildadas). 1.7 «📤 Salió sin pedido» pregunta el
+    depósito y se anula (lápida `an`). 1.8 control del Excel: las llegadas anotadas entran en lo esperado, una detección no se ofrece
+    contra un pedido posterior a su corte, el día del corte compara con la hora del corte; protectores y servicios van aparte, plegados y
+    sin casillas (`existControlFueraHtml`). 1.9 en el cierre, el día de un atrasado lo elige la persona («el día que tenía» / «hoy»).
+    0.9 la vista previa del Excel no se cierra tocando afuera con almacenes pendientes; «Usar y seguir» dice «Guardando…».
+  · 1.11 un nombre que ni la lista ni los Excel conocen dice «❓ NO RECONOZCO ESTE PRODUCTO» (con candidatos por palabras enteras) y no
+    «🏭 NO HAY»; al guardar se pregunta. El buscador de Stock busca en todo. 1.12 (Mes-VM9) **lo que no rota no se fabrica en «el mes»
+    por el año pasado ni por 60/90 días: solo se cubre lo vendido** (va con el pedido del dueño: no tener stock «por si acaso»; −34 u en
+    noviembre en 17 productos); Mes-VM2: un mes sin venta cuenta 0 desde la primera venta. ⚠️ Mes-VM4 (mover a «15 días» lo que falta
+    antes del 1°) se hizo y se SACÓ: movía 15 días/mes de lo que tiene objetivo en la primera mitad de cada mes; vuelve §4iz E1-6.
+    1.13 «📍 Banzer o PTF»: la tabla, las acciones y la copia salen del MISMO plan de 15 días (`almTablaDe`; ⚠️ su «Tener» NO es el
+    objetivo del Plan: esa pantalla es para dónde tener el stock, no para pedir), las almohadas RPT cuentan para el lado, sin Excel de
+    Banzer no manda llevar ni traer. 1.14 los N° de la revisión abren el pedido. 1.15 «Su historia» dibuja entradas solo entre dos Excel.
+    1.16 tareas y errores de tipeo fuera del stock (`PROD_TIENDA`, `PROD_NO_STOCK`), una venta de tienda destildada no entra a la revisión,
+    un descontinuado vendido sin stock dice «🛑 Se acaba» / «N vendidos no llegan».
+  · Prioridad 2 (textos): «Pedí N · traé M» en todas las vistas; «⛔ Ya falta» solo si lo que llega (Moreno incluido) no cubre; «Se
+    corta» nunca un domingo o feriado (`stockCorteVer`); «✅ Alcanza esta semana · el plan pide N…»; «📦 Sin stock: se fabrica a pedido»
+    (o «🛑 ya no se fabrica» / «no se repone»); el Plan dice «15 días · incluye los 7» y «<mes> · además de 15 días»; «Más vistas» se arma
+    al abrirlo (`MAS_VISTAS_PRUEBA` en las pruebas); la Lista de carga avisa «⚠️ N sin stock detrás» (reusa la revisión); botones y
+    contraste en el celular; «Ya pedí» con deshacer 2 min (`PLAN_YA_ULT`).
+- **Números con la planilla real del 16/10 a las 12:00** (antes de §4ls `78e591a` → `18fb452`):
+  · **Pedido de hoy (traer de Moreno + fabricar): 11 + 210 = 221 → 14 + 194 = 208**; igual a la regla validada en los 325 productos.
+  · «Qué producir» 7 días / 15 días / el mes: **210 / 392 / 424 → 194 / 476 / 653**. Moreno 178/316/283 → 167/372/482 (Heaven
+    166/282/210 → 158/321/356; ROHO 12/34/73 → 9/51/126); Multiespumas (Sueña) 30/74/141 → 25/102/171; sin fábrica 2/2/0.
+  · Por qué: los 7 días bajan 16 (se pide solo al llegar al punto de pedido, sin la reserva de 3-7 días); los 15 días suben 84 (venta de
+    26 días hábiles + el objetivo puesto al final); el mes sube 229 (+267 de lo que rota por la decisión 5, −34 Mes-VM9, −4 Mes-VM2 y
+    redondeo). Lo que más cambia: ALMOHADA 50x70 117/180/72 → 101/189/162 (punto de pedido 61, objetivo 96), ALM/NASA 21/31/18 → 31/54/41,
+    NUEVO ECO FLEX 105 0/3/17 → 0/18/52. Sueña sube en el aviso porque Multiespumas queda medida con 2 muestras reales (6 días; 1.2).
+  · El automático apagado no mueve nada (la planilla no tiene `STOCK.ap`).
+- **Pruebas**: 8 nuevas — `test_stock_rev2_auto_off` (20), `_calculo` (29), `_u2_turno` (46), `_cuadrito_fecha` (36), `_cuanto` (33),
+  `_flujos` (51), `_resto` (36), `_textos` (80) — cada una con dientes contra la página de antes; `test_stock_reunion` 59. Cambiadas a
+  conciencia (la regla vieja de reserva/margen la reemplaza la del objetivo, o el texto cambió): test_stock, test_producir,
+  test_banzer_ptf, test_proyeccion_suma, test_stock_4ix/4iz/4iy, test_adm_alta, test_eduardo_multicenter, test_existencias,
+  test_saldo_almacen, test_saldo_servidor, test_ventas_panel, test_fichas_4ip, test_cierre_reprogramar, test_banzer_salida,
+  test_rev_banzer, test_rev_corte_codex y los .cjs de rotación. **Batería entera: 209 suites, 7.342 comprobaciones, 0 mal** (19/10).
+- **Queda para decidir con el dueño** (no se implementó): con menos de 3 muestras usar el plazo general (Multiespumas 6 días con 2); si
+  una ✗ puesta DESPUÉS del Excel manda sobre él; 1.4 es la decisión n.º 9 del informe (días hábiles); Mes-VM9 (confirmarlo); los dos
+  ritmos en pantalla; ROHO cargado por tandas infla su σ (¿el Excel de ROHO trae la fecha de venta?); la pregunta al guardar no dice «se
+  atrasaría»; margen de la promesa con plazo variable (crítico H1); venta grande suelta (H3); lanzamientos (H4); «Hoy PM» sin GPS; 1.10
+  (la reserva del servidor con fecha: `.gs` nuevo).
+- Commits: `6725424` (automático apagado), `2df7276` (1.1-1.4), `238c12a` (U2 por turno), `f6581e5` (cuadrito por fecha), `234e277`
+  (punto de pedido y objetivo), `c973028` (flujos), `084071b` (resto), `19ceb25` (textos), `18fb452` (correcciones de los 8
+  verificadores). Solo la página: el `.gs` sigue `2026-10-15-a`. Al publicar, todos F5 (una página sin F5 sube el Excel con la casilla
+  única: se lee como `leg`).

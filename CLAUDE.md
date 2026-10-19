@@ -634,7 +634,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
     con la hora de Bolivia (`new Date(f+'T'+h+'-04:00')`); con el reloj clavado, `Date.now()` es SIEMPRE el mismo instante (y
     coincide con `c.t`): no sirve para «antes/después».
 
-## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10; en la rama, SIN publicar)
+## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10, y §4ls, 18-19/10; en la rama, SIN publicar)
 Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado dos veces). Lo que hay que respetar:
 - **El plazo medido** (`stockTiemposFabrica`): con un empate en el corte de las 6 últimas llegadas entran TODAS (si no, dependía del
   orden de las filas: Moreno daba 7 con los mismos datos; ahora 4, confirmado por el dueño). **Una fábrica por producto**: `o.fabLead`
@@ -649,13 +649,37 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   días» en **`STOCK.ap`** (`{clave:{día:[u, llegó, a mano, anulado, t]}}`); cuenta desde el día siguiente hasta `stockAutoVence`; lo
   cierra la entrada NETA del lote de los 3 almacenes (`existLoteProduccion`, un traspaso se anula; una vez por lote, `STOCK.apL`); si
   no aparece avisa «¿se pidió?». `fusAuto` en `stockFusionar`, `stockPodarAuto` en `stockPodar`. ⚠️ No guardarlo en `STOCK.p` (la
-  celda corta en 50.000).
+  celda corta en 50.000). 🔌 **APAGADO desde el 18/10** (dueño, decisión 1 de §4ls: «apagarlo hasta el jueves»):
+  `STOCK_AUTO_ACTIVO=false` — no anota, no cuenta lo anotado, no muestra nada; lo guardado se sigue leyendo/juntando/podando. Prenderlo
+  solo después de la Prioridad 0 del informe de la revisión 2 (bitácora §4ls). Una prueba del automático lo prende y lo APAGA aparte.
 - **El lector de varios almacenes** (`existSeccionesError`): un archivo que no se entiende NO se lee entero como un almacén.
 - **«📍 Banzer o PTF» NO es para pedir a producción** (su plan es otra cuenta, §4hw): en la reunión vale el Plan de stock / Qué producir.
 - El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
-- Pendiente con el dueño, el más grande: **U2** («ya incluye las entregas del día» es por día entero y el Excel de las ~10:00 ya trae el
-  camión de la mañana: hasta el cierre de las 16:30 «Pedir 7 días» queda ~+20). Lista completa y datos para logística: bitácora §4lr.
-- `tests/test_stock_reunion.js` (56; 48 rojas contra `27f0134`).
+- `tests/test_stock_reunion.js` (59; 48 rojas contra `27f0134`). Lista completa y datos para logística: bitácora §4lr.
+
+### §4ls — la revisión 2 implementada (18-19/10; en la rama, SIN publicar; decisiones del dueño del 18/10)
+- **U2 por turno** (decisión 2): dos casillas al subir el Excel, `#exist-inc` (mañana) y `#exist-inc-pm` (tarde), igual en «Conté a
+  mano» (`#conteo-inc`, `#conteo-inc-pm`); las propone `stockIncPropuesta` (camión: GPS/«🚚 Ya salió» con `STOCK_INC_CAMION_MIN`; sin
+  dato, `STOCK_INC_AM`=09:30 y `STOCK_INC_PM`=16:00). Lo de HOY de un turno incluido no se reserva (`stockFueraHoy`) ni se resta otra vez
+  (`stockBajaDelCorte`), con ✅ o sin ✅; sin turno = mañana. ⚠️ El turno se guarda en **`incT`** (`'am'|'pm'|'ampm'`) en `STOCK.c`,
+  `STOCK.g[nm]` y `h[]`; `inc:true` sin `incT` es de una página vieja (`leg`: no saca lo de la tarde sin ✅). ⚠️ Un pedido cargado
+  después de la hora del Excel no estaba en él (`stockCargadoDespuesDelCorte`, por `p.ts`): una prueba que arme un pedido de hoy tiene
+  que darle un `ts` ANTERIOR a la hora de su Excel. Todo lo que reserve o descuente lo de hoy pasa por `stockAntesDelCorte`.
+- **Cuadrito por fecha** (decisión 3, `saldoVeredicto`): `v.libres`/`v.faltan` son A LA FECHA prometida (`v.pendFecha`, `v.fechaRes`),
+  `v.pend` es el TOTAL; aviso ámbar `saldoDespues` (a lo vendido para después le falta / se atrasaría). La reserva del servidor manda
+  el libre a la fecha. Lo descontinuado descuenta todo.
+- **Cuánto tener de lo que rota** (decisión 4): UNA cuenta, `stockObjetivo` (`STOCK_OBJ_*`): μ/σ de 26 días hábiles por FECHA DE VENTA,
+  punto de pedido μ·5+z·σ·√5, objetivo = punto + 1 día (almohadas +5), libre = PTF+Banzer+seguro en camino − vendido 15 días desde hoy;
+  se pide hasta el objetivo al llegar al punto (Moreno primero). Qué rota NO cambió (§4dj). Lo que no rota: solo lo vendido. ⚠️ El
+  margen/reserva de §4dj ya no deciden CUÁNTO pedir de lo que rota; `o.porDia` (15 días) sigue en «Se corta» y en Banzer o PTF (dos
+  ritmos en pantalla, a propósito hasta que el dueño decida). **El mes** (decisión 5): deja el objetivo puesto el último día, redondeo
+  único. **Lo que no rota no se fabrica en el mes por historia** (Mes-VM9). ⚠️ Mes-VM4 se probó y se SACÓ (no mover a 15 días lo que
+  falta antes del 1°).
+- **Revisión automática**: la ✗ se reparte por fecha solo si la entrega es dentro de 15 días (`revStkNoQuedaComoEsta`); ✔/📥
+  protegidas; plazo medido solo con `prodR`/`eF` (una muestra por pedido). Recogidas que vencen (`STOCK_RECOGIDA_VENCE_DIAS`), «Conté a
+  mano» con `mano:1`, «Salió sin pedido» con depósito y lápida `an`, control del Excel con protectores aparte (`existControlFueraHtml`).
+- Números 16/10 12:00: pedido de hoy 221 → **208** (= la regla validada, 325/325); Qué producir 210/392/424 → **194/476/653**.
+- Pruebas `tests/test_stock_rev2_{auto_off,calculo,u2_turno,cuadrito_fecha,cuanto,flujos,resto,textos}.js`. Batería 209 / 7.342 / 0 mal.
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
