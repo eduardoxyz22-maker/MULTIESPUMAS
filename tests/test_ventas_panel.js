@@ -102,7 +102,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var tsDe=function(ym,dd){ return new Date(+ym.slice(0,4), +ym.slice(5,7)-1, dd, 10, 0, 0, 0).getTime(); };
     var E=mk({id:'sE', ts:tsDe(m2,10), fecha:proximoDiaEntrega(), entregado:false, verificado:false,
               productos:[{desc:'COLCHON SOFT', medida:'140x190', codigo:'COLT0048', cant:4}]});
-    STATE=JSON.parse(JSON.stringify(base)).concat([E]);
+    /* 🔁 (18/10, §4ls Mes-VM9, a conciencia) El mes estima solo lo que ROTA (la regla del panel: 3 entregas en 30 días): tres entregas
+       chicas de hace 17-24 días hacen que el SOFT rote en 30 días (no en 15: lo que rota en 15 sale del objetivo, sin rango), sin tocar
+       los meses m1/m2 que mira el 60 d (se cargaron hoy). */
+    var rot=[17,20,24].map(function(n){ return mk({ id:'sR'+n, ts:Date.now(), fecha:diasAtras(n), productos:[{desc:'COLCHON SOFT', medida:'140x190', codigo:'COLT0048', cant:1}] }); });
+    STATE=JSON.parse(JSON.stringify(base)).concat([E]).concat(rot);
     a=JSON.parse(JSON.stringify(A)); a.ts=tsDe(m1,15); a.fecha=m1+'-16'; a.productos[0].cant=20; upsert(a);
     var d=stockData(), P=stockProducir(d), f=null; P.bloques.forEach(function(Bq){ Bq.filas.forEach(function(x){ if(x.o.k===K) f=x; }); });
     var e60=f&&f.rango&&f.rango.est.filter(function(e){ return e.n==='60 d'; })[0];
@@ -110,7 +114,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var de=function(ym){ return PK[ym]!=null ? PK[ym] : (H[ym]||0); };
     var esperado=(de(m1)+de(m2))/2*MS.dias/30.4;
     chk('el plan del mes (60 d) usa las 20 unidades corregidas', !!e60 && PK[m1]===20 && Math.abs(e60.v-esperado)<1e-6,
-        e60?(e60.v.toFixed(2)+' esperado '+esperado.toFixed(2)+' · '+m1+' '+PK[m1]+' · '+m2+' '+de(m2)):'sin fila en el plan');
+        e60?(e60.v.toFixed(2)+' esperado '+esperado.toFixed(2)+' · '+m1+' '+PK[m1]+' · '+m2+' '+de(m2)):('sin fila en el plan · '+JSON.stringify(f ? { rota:f.o.rota, rotaMes:f.o.rotaMes, n30:f.o.n30, v30:f.o.v30, rango:f.rango && f.rango.est.map(function(e){ return e.n; }) } : null)));
     var P2=stockProducir(d), f2=null; P2.bloques.forEach(function(Bq){ Bq.filas.forEach(function(x){ if(x.o.k===K) f2=x; }); });
     chk('recalcular el plan da lo mismo (una sola pasada por STATE por plan)', f2 && f && f2.mes===f.mes && f2.mesNec===f.mesNec, f?(f.mesNec+' → '+(f2&&f2.mesNec)):'');
     // 10. control

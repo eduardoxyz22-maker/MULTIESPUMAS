@@ -282,8 +282,10 @@ function INIT_DOS(vend){
       T.jun && /ps-verde/.test(T.jun.cls) && /ya no se fabrica: quedan 2/.test(T.jun.txt), T.jun && [T.jun.cls, T.jun.txt]);
   chk('🚚 lo entregado DESPUÉS del corte ya está descontado: SOMIER TITANIO ICE 140x190 acá 3 − 2 entregados hoy = 1',
       /En almacén 1 · Pendientes de entrega 0 · Libres 1/.test((T.som||{}).txt||'') && T.tSom && T.tSom.aca===1, [(T.som||{}).txt, T.tSom]);
-  chk('⬜ un producto que no está ni en el catálogo ni en el almacén: GRIS «Sin saldo cargado: consultá con logística»',
-      T.raro && !T.raro.hidden && /ps-gris/.test(T.raro.cls) && /Sin saldo cargado: consultá con logística/.test(T.raro.txt), T.raro && [T.raro.cls, T.raro.txt]);
+  /* ❓ (18/10, §4ls VI-1, a conciencia) Con los Excel cargados, un nombre que ni la lista ni ningún Excel conocen dice «no reconozco este
+     producto» (antes «Sin saldo cargado», el mismo texto que sin ningún Excel: no decía qué hacer). Sigue gris y nunca «🏭 NO HAY». */
+  chk('⬜ un producto que no está ni en el catálogo ni en el almacén: GRIS «❓ NO RECONOZCO ESTE PRODUCTO» (nunca «NO HAY»)',
+      T.raro && !T.raro.hidden && /ps-gris/.test(T.raro.cls) && /NO RECONOZCO ESTE PRODUCTO/.test(T.raro.txt) && !/NO HAY/.test(T.raro.txt), T.raro && [T.raro.cls, T.raro.txt]);
   chk('ningún cuadrito dice NaN, undefined ni un número negativo',
       ['tit','alm','pil','oro','jun','som','raro'].every(k => T[k] && T[k].txt && !/NaN|undefined|−\d|-\d+ /.test(T[k].txt)), ['tit','alm','pil','oro'].map(k => T[k] && T[k].txt));
 

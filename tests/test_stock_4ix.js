@@ -36,11 +36,15 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var o=fila();
     out.n1={ rev:o.revisarStock, aviso:o.aviso, accion:sfAccion(o), grupo:planGrupoDe(o), dias:o.dias, lead:o.lead };
 
-    // 2. vende 2 por día (15 entregas en 15 días), hay 18: alcanza más que la fábrica + margen, pero no la reserva de 7 días.
+    // 2. vende 2 por día (15 entregas en 15 días). 🎯 (18/10, §4ls, decisión 4, a conciencia) Antes, con 18 a mano «alcanzaba más que
+    //    la fábrica + margen, pero no la reserva de 7 días». Ahora lo que rota se pide al llegar al PUNTO DE PEDIDO: con lo libre justo
+    //    ahí (no se corta antes de la fábrica) hay algo para fabricar y el aviso tiene que decirlo (§4ix M1, la misma regla).
     var L=[]; for(var i=1;i<=15;i++) L.push(ped('h'+i,2,diasAtras(i)));
     seed(L, 18);
+    var pp=fila().puntoPedido;
+    seed(L, pp);
     o=fila();
-    out.m1={ aviso:o.aviso, fab:o.fabricar, dias:o.dias, lead:o.lead, mg:o.margen, rot:o.rotacion, accion:sfAccion(o) };
+    out.m1={ aviso:o.aviso, fab:o.fabricar, dias:o.dias, lead:o.lead, mg:o.margen, rot:o.rotacion, accion:sfAccion(o), pp:pp };
 
     // 3. sin rotación: 1 vendido para dentro de 3 días y 1 para dentro de 40, con 0.
     seed([ ped('c1',1,diasAdelante(3)), ped('c2',1,diasAdelante(40)) ], 0);

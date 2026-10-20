@@ -64,12 +64,16 @@ const PREP = `
     var MS={ ini:'2026-11-01', dias:30 }, o={ k:'X|Y', porDiaMes:0 };
     var vh=window.ventasHistIndex; window.ventasHistIndex=function(){ return { 'X|Y':{ '2025-11':20, '2025-10':12 } }; };
     var dormido=stockRangoMes(o, MS, { 'X|Y':{} });
-    var vivo=stockRangoMes(o, MS, { 'X|Y':{ '2026-09':3 } });
+    /* 🔁 (18/10, §4ls Mes-VM9, a conciencia) El mes aplica la regla de rotación del panel: con 3 unidades el mes pasado pero SIN rotación
+       (menos de 3 entregas en 30 días) ya no estima por el año pasado (antes sí: «vivo»). Con rotación de 30 días, sí. */
+    var sinRota=stockRangoMes(o, MS, { 'X|Y':{ '2026-09':3 } });
+    var vivo=stockRangoMes({ k:'X|Y', rotaMes:true, porDiaMes:0.1 }, MS, { 'X|Y':{ '2026-09':3 } });
     window.ventasHistIndex=vh;
-    return { dormido:dormido, vivo:vivo && vivo.est.map(function(e){ return e.n; }) };
+    return { dormido:dormido, sinRota:sinRota, vivo:vivo && vivo.est.map(function(e){ return e.n; }) };
   });
   chk('2a. sin ventas en 30 días ni el mes pasado ni este: el año pasado no cuenta', r2.dormido===null, r2);
-  chk('2b. con ventas el mes pasado, el año pasado sigue contando', Array.isArray(r2.vivo) && r2.vivo.indexOf('nov 25')>=0 || (r2.vivo||[]).some(function(n){ return /25/.test(n); }), r2);
+  chk('2b. con ventas el mes pasado y ritmo de 30 días, el año pasado sigue contando', Array.isArray(r2.vivo) && r2.vivo.indexOf('nov 25')>=0 || (r2.vivo||[]).some(function(n){ return /25/.test(n); }), r2);
+  chk('2c. (§4ls Mes-VM9) con ventas el mes pasado pero sin rotación, el año pasado NO estima el mes', r2.sinRota===null, r2);
 
   // 3. venta de tienda
   const r3 = await page.evaluate(()=>{

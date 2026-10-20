@@ -111,7 +111,9 @@ const BASE = `
     const r = await page.evaluate((base) => {
       eval(base); _base();
       /* Hoy a las 15:00 se entregó y se confirmó (cierre) un pedido de 2; el Excel es de las 09:00 de hoy. */
-      STATE.push(_P({id:'hoy', fecha:todayStr(), entregado:true, productos:H(2,{ eF:todayStr(), eT:_ts(todayStr(),'15:00:00'), eQ:'Marisol' })}));
+      /* ✏️ (18/10, §4ls, corrector, a conciencia) cargado a las 08:00, ANTES del Excel de las 09:00: con `ts` = ahora (15:00) era un pedido
+         que no existía cuando se sacó el Excel (`stockCargadoDespuesDelCorte`) y la casilla no podía incluirlo. */
+      STATE.push(_P({id:'hoy', fecha:todayStr(), entregado:true, ts:_ts(todayStr(),'08:00:00'), productos:H(2,{ eF:todayStr(), eT:_ts(todayStr(),'15:00:00'), eQ:'Marisol' })}));
       var R9=_R(todayStr(),'09:00:00',{[K]:10,[K2]:4});
       var v9=stockVentanaCorte(STOCK.c, R9, false);
       var out={};
@@ -264,8 +266,10 @@ const BASE = `
       _subir(R, ['.exist-fab[data-id="fab"]']); await confirmarImportExist();
       var x=findById('fab').productos[0];
       out.sellada={ prodU:x.prodU, prodR:x.prodR, chk:x.chk, comp:_fila(K).comp, aFab:_fila(K).aFab, dep:_fila(K).deposito, compro:stockComprometido(K) };
-      /* Mañana se entrega: salida común; el depósito baja a 10 y el Excel de pasado mañana con 10 cuadra. */
-      findById('fab').entregado=true;
+      /* Se entrega (antes de su día): salida común; el depósito baja a 10 y el Excel de pasado mañana con 10 cuadra.
+         (16/10, §4lr U12) Un ✅ antes de su fecha lleva el día real (`eF`, lo pone `entregaAdelantadaAnotar` al marcar): sin día real,
+         un ✅ con fecha futura NO salió (regla del dueño de §4lo). */
+      findById('fab').entregado=true; entregaAdelantadaAnotar(findById('fab'));
       out.entregada={ dep:_fila(K).deposito, comp:_fila(K).comp };
       var C=stockConciliar(_R(_adel(2),'09:00:00',{[K]:10,[K2]:4}), 'log', false);
       out.c={ cuadran:C.resumen.cuadran, con:C.resumen.con };
@@ -349,15 +353,19 @@ const BASE = `
       /* Sin hora en el Excel nuevo: el día del corte entra solo con la casilla (nada se adivina por la hora). */
       var v2=stockVentanaCorte(STOCK.c, _R(hoy,'',{}), false), v3=stockVentanaCorte(STOCK.c, _R(hoy,'',{}), true);
       out.sinHora=[stockEntradasVentana(K, v2), stockEntradasVentana(K, v3)];
-      /* Si el corte ANTERIOR ya incluía las entregas de su día, su día no entra entero (lo de ayer, ni antes ni después). */
-      STOCK.c.inc=true; var v4=stockVentanaCorte(STOCK.c, R, false); out.prevInc={ desde:v4.desde===hoy, entradas:stockEntradasVentana(K, v4) };
+      /* Si el corte ANTERIOR ya incluía las entregas de su día, su día no entra entero para las LÍNEAS de los pedidos (`desde`).
+         ✏️ (19/10, §4ls verificación final, EX-1, a conciencia) …pero los MOVIMIENTOS anotados con hora sí: lo anotado ese día después de la
+         hora de aquel corte (e2, 10:00 contra 09:00) no estaba en él (la misma regla de `stockEntradaVale` y `stockMovDespuesDelCorte`).
+         Antes daba 12 y la llegada de las 10:00, que subió el depósito, aparecía en el Excel de hoy como «+2 entrada sin explicar».
+         Los dos turnos con la regla nueva (`incT:'ampm'`). */
+      STOCK.c.inc=true; STOCK.c.incT='ampm'; var v4=stockVentanaCorte(STOCK.c, R, false); out.prevInc={ desde:v4.desde===hoy, entradas:stockEntradasVentana(K, v4) };
       return out;
     }, BASE);
     chk('R7 · la ventana lleva las dos horas (09:00 → 09:00) y no incluye el día del corte sin la casilla', r.v.prevHora==='09:00:00' && r.v.hora==='09:00:00' && r.v.incluyeHasta===false, J(r.v));
     chk('R7 · movimientos: antes del corte anterior NO · después SÍ · antes del nuevo SÍ · a la hora exacta SÍ · después del nuevo NO', J(r.mov)===J([false,true,true,true,false]), J(r.mov));
     chk('R7 · entradas 2 + 4 + 8 = 14, salida manual de las 08:00 = 1 (la de las 09:30 queda para el corte siguiente): esperado 23, cuadra', r.entradas===14 && r.sman===1 && r.cuadra.fila===false && r.cuadra.cuadran===2, J([r.entradas, r.sman, r.cuadra]));
     chk('R7 · sin hora en el Excel: el día del corte entra entero solo con la casilla (2 sin ella, 30 con ella)', J(r.sinHora)===J([2,30]), J(r.sinHora));
-    chk('R7 · si el corte anterior ya incluía las entregas de su día, la ventana arranca al día siguiente: solo las de hoy (12)', r.prevInc.desde===true && r.prevInc.entradas===12, J(r.prevInc));
+    chk('R7 · si el corte anterior ya incluía las entregas de su día, las LÍNEAS arrancan al día siguiente; los movimientos con hora, después de su hora: 2 + 4 + 8 = 14 (EX-1)', r.prevInc.desde===true && r.prevInc.entradas===14, J(r.prevInc));
   });
 
   // ═══ R8 ═══════════════════════════════════════════════════════════════════════════════

@@ -63,6 +63,9 @@ function BASE(){
   const ev = (fn, arg) => page.evaluate(fn, arg).catch(e => ({ error:String(e.message||e).slice(0,300) }));
 
   console.log('\n── 1. El botón y el recuadro ──');
+  /* 🌆 (18/10, §4ls Cie-C7, a conciencia) «Hoy PM» se ofrece después de las 13:00 solo si el GPS del camión está al día y no lo vio salir a
+     la tarde (a las 17:00 sin GPS ya no se ofrece). Acá el GPS del Foton dice que todavía no salió. */
+  await ev(() => { window.gpsDiaDe=function(v){ return v==='Foton nuevo' ? { ev:[] } : null; }; });
   let r = await ev(() => { _armar(); showView('admin'); abrirCierreEntregas();
     var bs=Array.from(document.querySelectorAll('#modal-box .cie-rp-btn')).map(function(b){ return b.getAttribute('data-id'); });
     return { bs:bs, filas:_filas(), prox:proximoDiaEntrega() }; });

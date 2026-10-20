@@ -10,10 +10,11 @@
    ⚠️ LO QUE ESTA PRUEBA CUIDA (dos celulares contra el .gs de verdad, con un Google de mentira):
    1. A y B leen «Libres 1». A guarda; B guarda SIN que su lectura traiga a A (la de antes de guardar le vuelve la misma copia:
       lo que pasa con la caché de 20 s de doGet, §4fx/§4gn). A B le sale la ventana «otro vendedor vendió 1 de TITANIO ICE
-      160x190 … faltan 1», su pedido SÍ quedó en la planilla, y «Entendido» le devuelve el mensaje para el grupo. A A no le sale
+      160x190 … puede que ya no alcance (faltarían 1)» (19/10, §4ls CD-5: la relectura todavía no trae a A), su pedido SÍ quedó en la planilla, y «Entendido» le devuelve el mensaje para el grupo. A A no le sale
       nada. El guardado de B llevó `reserva` con la hora de su lectura y sin el id de A.
    2. Otra vuelta: A vende de nuevo (a A el formulario le pregunta antes, como siempre) y B guarda otra vez con la copia vieja:
-      «vendió 2 … faltan 3». «✏️ Abrir el pedido» relee la planilla y abre la edición: el cuadrito ya cuenta a todos («Faltan 3»).
+      como B ya veía «🏭 NO HAY», no le sale la ventana (18/10, §4ls H2: la espera de mandar a producir no depende de cuántas
+      falten). «✏️ Abrir el pedido» relee la planilla y abre la edición: el cuadrito ya cuenta a todos («Faltan 3»).
    3. Con el .gs de ANTES (2026-09-30-a, `git show 4a950cc`): la página manda `reserva` igual, el servidor la ignora, no sale
       ninguna ventana y todo sigue como siempre (ni error, ni cola).
    Datos SINTÉTICOS (el repo es público). Reloj clavado en el miércoles 23/09/2026, 15:00 de Bolivia.
@@ -184,8 +185,12 @@ function INIT_DOS(vend){
   chk('⚠️ B guarda sin que su lectura traiga a A: NO le preguntó nada antes (para su copia había 1 libre)…', B.__dialogos.length===0, B.__dialogos);
   chk('⚠️ …su guardado llevó `reserva` con la hora de ESA lectura (la de antes de A), libres 1 y sin el id de A en `conocidos`',
       saveB && saveB.reserva && saveB.reserva.visto===vistoB && saveB.reserva.lineas[0].libres===1 && saveB.reserva.lineas[0].conocidos.indexOf(idA1)<0, saveB && saveB.reserva);
-  chk('⚠️ …y le sale la ventana: «Mientras guardabas, otro vendedor vendió lo mismo» · «otro vendedor vendió 1 de TITANIO ICE 160x190: ya no hay saldo libre (faltan 1)»',
-      mB.on && /Mientras guardabas, otro vendedor vendió lo mismo/.test(mB.txt) && /otro vendedor vendió 1 de TITANIO ICE 160x190: ya no hay saldo libre \(faltan 1\)/.test(mB.txt), mB.txt.slice(0,300));
+  /* ✏️ (19/10, §4ls verificación final, CD-5, a conciencia) Antes de abrir la ventana la página relee la planilla y rehace la cuenta. Acá
+     la relectura de B sigue siendo la copia de ANTES (congelada: la caché de doGet), que todavía no trae a A: con esa no se decide, y como
+     el servidor no sabe para qué día vendió el otro, se dice «puede que ya no alcance (faltarían 1)». Antes, el «ya no hay saldo libre»
+     firme, que con la reserva por fecha (decisión 3) le llegaba también al que por fecha SÍ tenía stock. */
+  chk('⚠️ …y le sale la ventana: «Mientras guardabas, otro vendedor vendió lo mismo» · «otro vendedor vendió 1 de TITANIO ICE 160x190: para el … puede que ya no alcance (faltarían 1)»',
+      mB.on && /Mientras guardabas, otro vendedor vendió lo mismo/.test(mB.txt) && /otro vendedor vendió 1 de TITANIO ICE 160x190: para el \d\d\/\d\d puede que ya no alcance \(faltarían 1\)/.test(mB.txt), mB.txt.slice(0,300));
   chk('⚠️ …que dice que el pedido quedó guardado igual, qué hacer (avisar al cliente o reprogramar) y tiene «✏️ Abrir el pedido» y «Entendido»',
       /Tu pedido quedó guardado igual/.test(mB.txt) && /Avisale al cliente que puede demorar \(hay que mandar a producir\) o reprogramá la entrega/.test(mB.txt) &&
       mB.botones.indexOf('✏️ Abrir el pedido')>=0 && mB.botones.indexOf('Entendido')>=0, mB.botones);
@@ -210,12 +215,15 @@ function INIT_DOS(vend){
   await vender(B, 'CLIENTE DE B 2', 1);                  // B sigue con la copia vieja: su propio B1 sí lo tiene (lo guardó acá)
   const mB3 = await B.evaluate(() => _modal());
   const idB2 = (S.filas().find(f => f.cliente==='CLIENTE DE B 2')||{}).id;
-  chk('⚠️ B guarda otro con la copia vieja: le preguntó antes por lo SUYO (faltan 1: ya tenía 1 pendiente), y el servidor agrega lo de A: «otro vendedor vendió 2 … (faltan 3)»',
-      !!idB2 && B.__dialogos.length===1 && /faltan 1/.test(B.__dialogos[0]) && mB3.on && /otro vendedor vendió 2 de TITANIO ICE 160x190: ya no hay saldo libre \(faltan 3\)/.test(mB3.txt), [B.__dialogos.map(d => d.slice(0,120)), mB3.txt.slice(0,200)]);
-  // «✏️ Abrir el pedido» relee la planilla (ya sin la copia congelada: Google volvió a contestar bien) y abre la edición
+  /* 🔇 (18/10, §4ls H2) B ya veía «🏭 NO HAY» (mandar a producir) y le preguntó ANTES de guardar: lo que vendió A no le cambia nada
+     (esa espera no depende de cuántas falten). Antes le salía igual la ventana «otro vendedor vendió 2 … (faltan 3)»: una alarma de
+     más. El servidor sigue contestando `saldo` (no se tocó el .gs); la página ya no abre la ventana. */
+  chk('⚠️ B guarda otro con la copia vieja: le preguntó antes por lo SUYO (faltan 1: ya tenía 1 pendiente) y, como ya veía «🏭 NO HAY», NO le sale la ventana de «otro vendedor» (H2) — lo de siempre',
+      !!idB2 && B.__dialogos.length===1 && /faltan 1/.test(B.__dialogos[0]) && mB3.on && !/otro vendedor/i.test(mB3.txt) && /Pedido guardado/.test(mB3.txt), [B.__dialogos.map(d => d.slice(0,120)), mB3.txt.slice(0,200)]);
+  // «✏️ Abrir el pedido» (el botón de la ventana de §1) relee la planilla (ya sin la copia congelada: Google volvió a contestar bien) y abre la edición
   await B.evaluate(() => { window.__ctl.congelar=false; });
   const lecAntes = await B.evaluate(() => window.__ctl.lecturas);
-  const tocoAbrir = await tocarModal(B, 'Abrir el pedido');
+  const tocoAbrir = await B.evaluate((id) => { try{ closeModal(); }catch(e){} saldoAvisoAbrir(id); return true; }, idB2);
   await B.waitForTimeout(1200);
   const ab = await B.evaluate(() => ({ enForm:document.getElementById('view-form').classList.contains('active'), edit:EDIT_ID, modal:_modal().on, caja:_caja0(), lecturas:window.__ctl.lecturas,
                                       cli:document.getElementById('f-cliente').value, n:STATE.filter(function(p){ return /^CLIENTE/.test(p.cliente||''); }).length }));

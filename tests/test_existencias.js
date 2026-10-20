@@ -74,8 +74,12 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     var atras=function(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); };
     var adel =function(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); };
     window._adel=adel; window._atras=atras;
-    var P=function(o){ return Object.assign({id:'p'+Math.random(),fecha:todayStr(),oc:'',vendedor:'Carola Chavez',
-      cliente:'C',celular:'70000000',turno:'AM',zona:'N',direccion:'x',maps:'',pagado:true,saldo:0,ts:Date.now(),
+    /* 🎯 (18/10, §4ls, a conciencia) Lo ya entregado se CARGÓ el día que se vendió (`ts` de ese día), no hoy: el objetivo de lo que
+       rota mide la venta por FECHA DE VENTA (los últimos 26 días hábiles). Con todo cargado «hoy», el panel veía 32 colchones vendidos
+       el mismo día y un desvío enorme. Lo de 15 y 30 días no cambia (miran la entrega y los 30 días de venta). */
+    var P=function(o){ var ts=(o && o.fecha && o.fecha<todayStr()) ? new Date(o.fecha+'T10:00:00').getTime() : Date.now();
+      return Object.assign({id:'p'+Math.random(),fecha:todayStr(),oc:'',vendedor:'Carola Chavez',
+      cliente:'C',celular:'70000000',turno:'AM',zona:'N',direccion:'x',maps:'',pagado:true,saldo:0,ts:ts,
       metodoPago:'',observaciones:'',estado:'',entregado:false,vehiculo:'',chofer:'',garantia:'',nota:'',acuenta:0,
       facturarA:'',nit:'',nroDia:1,verificado:true,fotos:[]},o); };
     STATE=[];
@@ -121,7 +125,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
        incluye las entregas del día» arranca SIN marcar (el lado que no deja sin avisar, lo que
        promete su consejo — test_rev_stock §4). Este escenario es el de un Excel que YA las
        incluye (el depósito queda en lo del Excel): se marca a mano, como haría logística. */
-    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true;
+    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true; var _incPm=document.getElementById('exist-inc-pm'); if(_incPm) _incPm.checked=true;   /* (§4ls, corrector) «el día entero» = las dos casillas (mañana y tarde) */
     confirmarImportExist();
     var d=stockData(), t=d.lista.filter(function(o){ return o.k===KT; })[0];
     return { fecha:STOCK.c.f, n:Object.keys(STOCK.c.u).length, entradas:STOCK.e.length,
@@ -140,7 +144,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   console.log('\n── 3. Subir el mismo archivo dos veces ──');
   await subir(LOG);
   r = await page.evaluate(() => {
-    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true;   // el mismo Excel, que ya incluye las entregas (ver §2)
+    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true; var _incPm=document.getElementById('exist-inc-pm'); if(_incPm) _incPm.checked=true;   /* (§4ls, corrector) «el día entero» = las dos casillas (mañana y tarde) */   // el mismo Excel, que ya incluye las entregas (ver §2)
     confirmarImportExist();
     return { titanio:stockDeposito(KT), n:Object.keys(STOCK.c.u).length, almo:stockDeposito(KA) };
   });
@@ -189,7 +193,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
      traer ya mismo» es el del rojo (PEDIR YA). Lo que importa en los dos casos: que no
      esconda que en la fábrica hay unidades. */
   chk('…pero avisa igual que hay 1 en la fábrica, y que no alcanza',
-      /hay 1 en Moreno/.test(r.texto) && /no alcanza|para traer ya mismo/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);   // (§4ii) con lo vendido + el ritmo sumados se corta antes: «PEDIR YA» dice «para traer ya mismo»
+      /hay 1 en Moreno/.test(r.texto) && /no alcanza|para traer ya mismo|traé 1 de Moreno/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);   // (§4ii) con lo vendido + el ritmo sumados se corta antes: «PEDIR YA» dice «para traer ya mismo»; ✏️ (18/10, §4ls VV2, a conciencia) desde que «Pedí N · traé M» se dice igual en todas las vistas, la tabla dice «pedí N ya y traé 1 de Moreno (hay 1 en Moreno)»
 
   // ══ 4b. Lo que NO está en el reporte está en CERO, no «sin contar» ════════
   console.log('\n── 4b. Lo que no figura en el corte ──');
@@ -327,7 +331,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   await subir(LOG);
   r = await page.evaluate(() => {
     var txt=(document.getElementById('modal-box')||{}).textContent||'';
-    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true;   // el mismo Excel, que ya incluye las entregas (ver §2)
+    var _inc=document.getElementById('exist-inc'); if(_inc) _inc.checked=true; var _incPm=document.getElementById('exist-inc-pm'); if(_incPm) _incPm.checked=true;   /* (§4ls, corrector) «el día entero» = las dos casillas (mañana y tarde) */   // el mismo Excel, que ya incluye las entregas (ver §2)
     confirmarImportExist();
     var d=stockData(), t=d.lista.filter(function(o){ return o.k===KT; })[0];
     var T=stockTiemposFabrica();

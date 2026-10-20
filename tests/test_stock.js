@@ -71,9 +71,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var atras=function(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); };
     var adel =function(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); };
     window._atras=atras; window._adel=adel;
-    var P=function(o){ return Object.assign({id:'p'+Math.random(),fecha:todayStr(),oc:'',vendedor:'Carola Chavez',
+    /* (18/10, §4ls, decisión 4) La venta se cargó el día de su entrega (`ts`), no toda «ahora»: desde §4ls lo que rota tiene objetivo y
+       punto de pedido medidos con la venta POR DÍA DE VENTA (`contaFecha`), y con `ts:Date.now()` en todos los pedidos el fixture
+       vendía 40 colchones en un solo día. Lo que se entrega más adelante (v1, v2, f1) se vendió hoy. */
+    var P=function(o){ var f=(o&&o.fecha)||todayStr(), ts=(f && f<=todayStr()) ? new Date(f+'T09:00:00-04:00').getTime() : Date.now();
+      return Object.assign({id:'p'+Math.random(),fecha:todayStr(),oc:'',vendedor:'Carola Chavez',
       cliente:'C',celular:'70000000',turno:'AM',zona:'Norte',direccion:'x',maps:'',pagado:true,saldo:0,
-      ts:Date.now(),metodoPago:'',observaciones:'',estado:'',entregado:false,vehiculo:'',chofer:'',
+      ts:ts,metodoPago:'',observaciones:'',estado:'',entregado:false,vehiculo:'',chofer:'',
       garantia:'',nota:'',acuenta:0,facturarA:'',nit:'',nroDia:1,verificado:true,fotos:[]},o); };
     var eco =function(n,x){ return [Object.assign({desc:'ECO FLEX',medida:'140x190',codigo:'',cant:n},x||{})]; };
     var ecoR=function(n){ return [{desc:'COLCHON ECO FLEX 2 PLAZAS 140X190CM FLEX',medida:'140X190',codigo:'RH-77',cant:n}]; };
@@ -259,10 +263,28 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
      mayor de los dos, la cuenta miraba solo lo vendido y decía 4). */
   chk('⚠️ se corta EN 2 DÍAS: lo vendido para esos días + 1 por día que se va a vender ya no entra en 12',
       r.eco.dias===2 && r.eco.corte===r.corte2, r.eco.dias+' días · '+r.eco.corte);
-  chk('⚠️ …2 días es menos que los 3 de fábrica → PEDIR YA', r.eco.aviso==='urgente' && r.eco.margen===2, r.eco.aviso+' · margen '+r.eco.margen);
-  // 30 comprometidos desde 91ddcd8 (los 4 ✗ no hay de días pasados ya cuentan, ver §1) + 1/día × (3 + 2 + 7) − 12 = 30 (§4ii: antes 30 − 12 = 18).
-  chk('…y dice cuánto pedir: 30 vendidos + 12 de venta (3 fábrica + 2 margen + 7 reserva) − 12 que hay = 30', r.eco.pedir===30, r.eco.pedir);
-  chk('el ECO FLEX vende parejo (1 por tramo de 5 días) → margen de 2 días, «venta pareja»', r.eco.cv<0.01, 'cv '+r.eco.cv);
+  /* 🎯 (18/10, §4ls, decisión 4 del dueño) REEMPLAZA a la regla de antes: «lo vendido + ritmo × (fábrica 3 + margen 2 + reserva 7) − lo que
+     hay» (con este fixture, 30 + 12 − 12 = 30). El ECO FLEX rota, así que tiene PUNTO DE PEDIDO y OBJETIVO: la venta de los últimos 26
+     días hábiles POR DÍA DE VENTA (μ, σ), punto de pedido = μ·5 + z·σ·√5 (z 1,28; 1,645 si μ·5 ≥ 4), objetivo = eso + 1 día de venta
+     (nunca menos que el pedido típico). Los días de margen y de reserva quedan en 0: los reemplaza el objetivo.
+     La venta del objetivo: 15 entregados o por entregar en los últimos 15 días + 25 vendidos HOY para pasado mañana y dentro de 4 días
+     (v1, v2) + 3 hechos a pedido (f1) = 43; de hoy, 29 (el borrador de Kommo no cuenta). */
+  chk('⚠️ …2 días es menos que los 3 de fábrica → PEDIR YA (sin días de margen ni de reserva: los reemplaza el objetivo)',
+      r.eco.aviso==='urgente' && r.eco.margen===0 && r.eco.cubrir===0 && r.eco.objetivo>0, r.eco.aviso+' · margen '+r.eco.margen+' · reserva '+r.eco.cubrir+' · objetivo '+r.eco.objetivo);
+  chk('🎯 la venta del objetivo es por día de venta: 43 en 26 días hábiles, 29 de hoy (sin el borrador de Kommo)',
+      r.eco.objVendidos===43 && (r.eco.objDia||{})[0]===29 && Math.abs(r.eco.objMu-43/26)<1e-9, r.eco.objVendidos+' · hoy '+(r.eco.objDia||{})[0]+' · μ '+r.eco.objMu);
+  (function(){
+    var o=r.eco, dia=o.objDia||{}, n=26, mu=0, sq=0, i;
+    for(i=0;i<n;i++) mu+=(dia[i]||0); mu/=n;
+    for(i=0;i<n;i++) sq+=Math.pow((dia[i]||0)-mu,2);
+    var sd=Math.sqrt(sq/(n-1)), z=(mu*5>=4)?1.645:1.28, pp=mu*5+z*sd*Math.sqrt(5), S=Math.max(pp+mu, o.objTipico);
+    chk('🎯 el objetivo sale de la regla: max(μ·5 + z·σ·√5 + μ, pedido típico), z 1,645 porque μ·5 ≥ 4',
+        o.objZ===1.645 && Math.abs(o.objSd-sd)<1e-9 && Math.abs(o.objS-S)<1e-9 && o.objetivo===Math.ceil(S-1e-9) && Math.abs(o.objPP-Math.min(S-1,pp))<1e-9,
+        'z '+o.objZ+' · σ '+o.objSd+' · objetivo '+o.objetivo+' · punto de pedido '+o.puntoPedido);
+  })();
+  // 30 comprometidos desde 91ddcd8 (los 4 ✗ no hay de días pasados ya cuentan, ver §1) + el objetivo − 12 que hay (§4ii: lo vendido se SUMA).
+  chk('…y dice cuánto pedir: 30 vendidos + el objetivo − 12 que hay', r.eco.pedir===Math.ceil(r.eco.objS+30-12-1e-9) && r.eco.pedir>30, r.eco.pedir+' (objetivo '+r.eco.objetivo+')');
+  chk('el ECO FLEX entrega parejo (1 por tramo de 5 días): «venta pareja» (desde §4ls solo lo describe; el margen sale del objetivo)', r.eco.cv<0.01, 'cv '+r.eco.cv);
   chk('⚠️ el PILLOW con 30 en depósito y 2 vendidos en 4 semanas es PLATA PARADA', r.pill.aviso==='sobra' && r.pill.sobra===true, r.pill.aviso);
   chk('el MEMORY FLEX con 40 (para 40 días) ni sobra ni falta', r.mem.aviso==='', r.mem.aviso+' · corte en '+r.mem.dias+' días');
   chk('lo que hay que pedir va primero en la lista', /ECO FLEX/.test(r.primero), r.primero);
@@ -317,7 +339,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('un depósito negativo no se muestra como número raro', negativo.dep<0, negativo.dep);
   chk('⚠️ …dice que se entregó más de lo contado y que hay que volver a contar',
-      /más de lo contado/.test(negativo.txt) && /volv[ée] a contar/.test(negativo.txt), (negativo.txt.match(/se entregaron[^·]*/)||[''])[0].slice(0,80));
+      /más de lo contado/.test(negativo.txt) && /(volv[ée] a contar|subí el Excel de hoy)/.test(negativo.txt)   /* (17/10, §4lr U42) con un corte viejo: «subí el Excel de hoy» */, (negativo.txt.match(/se entregaron[^·]*/)||[''])[0].slice(0,80));
 
   // ══ 6. Un conteo nuevo borra el error acumulado ════════════════════════════
   console.log('\n── 6. Volver a contar corrige la deriva ──');
@@ -386,15 +408,18 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   r = await page.evaluate(() => {
     var p=STATE.filter(function(x){ return x.id==='v1'; })[0]; p.entregado=false; p.fecha=window._adel(2);   // se deshace lo de §5
     STATE=STATE.filter(function(x){ return x.id!=='f2'; });
-    STOCK={ c:{f:todayStr(), u:{}}, e:[], p:[{id:'fp1', k:K, u:30, fab:'MORENO', f:todayStr(), esp:'', r:''}], a:{} };   // (§4ii) 30: con 20 ya no alcanza para lo vendido + la venta
-    STOCK.c.u[K]=12;
+    /* (18/10, §4ls) Se pide EXACTO lo que dice el panel (lo vendido + el objetivo − lo que hay, §3), no 30 fijos: con la regla de antes
+       30 alcanzaban para lo vendido + 12 de venta; con el objetivo hace falta lo que el objetivo diga. */
+    STOCK={ c:{f:todayStr(), u:{}}, e:[], p:[], a:{} }; STOCK.c.u[K]=12;
+    var U=stockData().lista.filter(o=>/ECO FLEX/.test(o.desc))[0].pedir; window._U8=U;
+    STOCK.p=[{id:'fp1', k:K, u:U, fab:'MORENO', f:todayStr(), esp:'', r:''}];
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     renderAdmin(); renderStock();
-    return { eco:eco, llega:window._adel(3), banner:(document.getElementById('adm-stock')||{}).textContent||'',
+    return { eco:eco, U:U, libre:stockLibreObj(eco), llega:window._adel(3), banner:(document.getElementById('adm-stock')||{}).textContent||'',
              pantalla:((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' ') };
   });
-  chk('⚠️ con 30 pedidas a Moreno (llegan en ~3 días) el ECO FLEX pasa a «ya pedido» y NO molesta más',
-      r.eco.aviso==='pedido' && r.eco.enCamino===30, r.eco.aviso+' · '+r.eco.enCamino+' en camino');
+  chk('⚠️ con lo que pide ('+r.U+') pedido a Moreno (llega en ~3 días) el ECO FLEX pasa a «ya pedido» y NO molesta más: lo libre con lo que viene llega al objetivo',
+      r.eco.aviso==='pedido' && r.eco.enCamino===r.U && r.eco.pedir===0 && r.libre>=r.eco.objS-1e-9, r.eco.aviso+' · '+r.eco.enCamino+' en camino · libre '+r.libre+' · objetivo '+r.eco.objetivo);
   chk('…llegan el día que la fábrica suele tardar', r.eco.pedidos[0].llega===r.llega, r.eco.pedidos[0].llega);
   chk('…y recuerda que sin ese pedido se cortaba en 2 días', r.eco.sinCamino===2, r.eco.sinCamino);
   chk('el aviso de Administración se calla', r.banner.trim()==='', r.banner.slice(0,80));
@@ -420,12 +445,12 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     var T=stockTiemposFabrica();
     return { hayInput:hayInput, r:STOCK.p[0].r, entrada:STOCK.e[STOCK.e.length-1], deposito:eco.deposito, enCamino:eco.enCamino, aviso:eco.aviso,
-             moreno:T.de('MORENO'), hoy:todayStr() };
+             pedir:eco.pedir, moreno:T.de('MORENO'), hoy:todayStr(), U:window._U8 };
   });
   chk('«📥 Llegó de fábrica» ofrece lo que estaba pedido', r.hayInput===true);
-  chk('⚠️ al marcar que llegó: se cierra el pedido, se suma al depósito (12+30) y ya no está en camino',
-      r.r===r.hoy && r.entrada && r.entrada.u===30 && r.entrada.de==='fp1' && r.deposito===42 && r.enCamino===0, r.deposito+' · '+r.enCamino+' · '+JSON.stringify(r.entrada));
-  chk('…y con 42 para 30 vendidos + la venta de los próximos días ya no hay nada que pedir', r.aviso==='', r.aviso);
+  chk('⚠️ al marcar que llegó: se cierra el pedido, se suma al depósito (12+'+r.U+') y ya no está en camino',
+      r.r===r.hoy && r.entrada && r.entrada.u===r.U && r.entrada.de==='fp1' && r.deposito===12+r.U && r.enCamino===0, r.deposito+' · '+r.enCamino+' · '+JSON.stringify(r.entrada));
+  chk('…y con '+(12+r.U)+' para 30 vendidos + el objetivo ya no hay nada que pedir', r.aviso==='' && r.pedir===0, r.aviso+' · pedir '+r.pedir);
   chk('⚠️ …y quedó MEDIDO cuánto tardó Moreno esta vez (3 días)', r.moreno.medido===true && r.moreno.n===1 && r.moreno.dias===3, JSON.stringify(r.moreno));
 
   // ══ 9. Cuánto tarda cada fábrica, medido ═══════════════════════════════════
@@ -540,25 +565,37 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   // ══ 12. El margen crece si la venta es a los saltos ════════════════════════
   console.log('\n── 12. Venta a los saltos, margen más grande ──');
+  /* 🎯 (18/10, §4ls, decisión 4 del dueño) REEMPLAZA a la regla de antes: «a los saltos (cv de los 3 tramos de 5 días > 1) → margen de 5
+     días en vez de 2». Desde §4ls el margen de lo que rota es z·σ·√5 en UNIDADES, con σ = el desvío de la venta por día hábil de los últimos
+     26 (por día de venta): la venta a los saltos se ve en σ, sin tramos. El MEMORY vendió 5 el lunes 05/10 y 9 el sábado 03/10 (4 ese día +
+     5 del domingo 04/10, que se cuenta el sábado: el domingo no es día hábil) y 1 el miércoles 30/09: 15 en 26 días hábiles. */
   r = await page.evaluate(() => {
     var d=stockData(), mem=d.lista.filter(o=>/MEMORY/.test(o.desc))[0];
-    /* Vende 1 por día. Se le deja stock para (fábrica + margen − 1) días: con el margen de
-       5 hay que pedir; con los 2 fijos de antes (3+2=5) esos 6 días «alcanzaban». */
-    var dias=mem.lead+mem.margen-1;
-    STOCK.c.u[KM]=dias;
-    d=stockData(); mem=d.lista.filter(o=>/MEMORY/.test(o.desc))[0];
+    var pp=mem.puntoPedido;
+    STOCK.c.u[KM]=pp;          // justo en el punto de pedido: se pide
+    d=stockData(); var enPP=d.lista.filter(o=>/MEMORY/.test(o.desc))[0];
+    STOCK.c.u[KM]=pp+1;        // una más: todavía no
+    d=stockData(); var arriba=d.lista.filter(o=>/MEMORY/.test(o.desc))[0];
     var eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
-    return { margen:mem.margen, cv:mem.cv, txt:stockVentaTxt(mem), aviso:mem.aviso, dias:mem.dias, lead:mem.lead, esperado:dias, ecoMargen:eco.margen, ecoTxt:stockVentaTxt(eco) };
+    return { mem:mem, cv:mem.cv, txt:stockVentaTxt(mem), pp:pp, enPP:{aviso:enPP.aviso, pedir:enPP.pedir, objS:enPP.objS},
+             arriba:{aviso:arriba.aviso, pedir:arriba.pedir}, eco:{margen:eco.margen, z:eco.objZ, txt:stockVentaTxt(eco)} };
   });
-  /* §4dc: 14 de las 15 unidades cayeron en el tramo de los últimos 5 días, 1 sola en el
-     tramo del medio y ninguna en el más viejo — vendió MUCHO (≥15, «rotación alta») pero a
-     los saltos (cv≈1,27). Con «rotación media» este margen sería fijo (2), sin mirar el
-     desvío: acá lo mira porque hay volumen de sobra para confiar en el patrón. */
-  chk('⚠️ el MEMORY vendió 14 de 15 en el último tramo de 5 días y nada en el más viejo: «a los saltos» → margen de 5 días, no 2',
-      r.margen===5 && r.cv>1 && r.txt==='venta a los saltos', r.margen+' · cv '+r.cv+' · '+r.txt);
-  chk('⚠️ …así que con stock para '+r.esperado+' días (fábrica '+r.lead+' + margen 5 − 1) ya hay que pedir; con margen fijo de 2 no avisaba',
-      r.aviso==='pedir' && r.dias===r.esperado && r.esperado>=5, r.aviso+' · corte en '+r.dias);
-  chk('el ECO FLEX, parejo, sigue con 2', r.ecoMargen===2 && r.ecoTxt==='venta pareja', r.ecoMargen+' · '+r.ecoTxt);
+  (function(){
+    var m=r.mem, dia=m.objDia||{}, sd=0, mu=15/26, i;
+    chk('🎯 el MEMORY: 15 en 26 días hábiles por día de venta (5 el lunes, 9 el sábado con el domingo, 1 el miércoles)',
+        m.objVendidos===15 && dia[1]===5 && dia[2]===9 && dia[5]===1 && Math.abs(m.objMu-mu)<1e-9, JSON.stringify(dia));
+    for(i=0;i<26;i++) sd+=Math.pow((dia[i]||0)-mu,2); sd=Math.sqrt(sd/25);
+    chk('⚠️ vende a los saltos (cv '+(Math.round(r.cv*100)/100)+', «'+r.txt+'»): el margen z·σ·√5 ('+(Math.round(m.objMargen*10)/10)+') es casi el DOBLE de lo que vende en 5 días ('+(Math.round(m.objMu*5*10)/10)+'), sin días de margen',
+        r.txt==='venta a los saltos' && m.margen===0 && m.objZ===1.28 && Math.abs(m.objSd-sd)<1e-9 && Math.abs(m.objMargen-1.28*sd*Math.sqrt(5))<1e-9 && m.objMargen>1.9*m.objMu*5,
+        'σ '+m.objSd+' · margen '+m.objMargen);
+    chk('🎯 …el pedido típico (q75 de las entregas de 8 semanas) es 5 y el objetivo sale de la cuenta, no del típico',
+        m.objTipico===5 && Math.abs(m.objS-(m.objMu*5+m.objMargen+m.objMu))<1e-9, 'típico '+m.objTipico+' · objetivo '+m.objetivo);
+  })();
+  chk('⚠️ …con lo libre justo en el punto de pedido ('+r.pp+') se pide hasta el objetivo; con una más, todavía no',
+      r.enPP.aviso==='pedir' && r.enPP.pedir===Math.ceil(r.enPP.objS-r.pp-1e-9) && r.arriba.aviso==='' && r.arriba.pedir===0,
+      r.enPP.aviso+' '+r.enPP.pedir+' · '+r.arriba.aviso+' '+r.arriba.pedir);
+  chk('el ECO FLEX entrega parejo («venta pareja»: lo dice, ya no decide) y por día de venta vende 1,65 por día hábil → μ·5 ≥ 4 → z 1,645, sin días de margen',
+      r.eco.margen===0 && r.eco.z===1.645 && r.eco.txt==='venta pareja', r.eco.margen+' · z '+r.eco.z+' · '+r.eco.txt);
 
   // ══ 13. Unir a mano lo que el catálogo no conoce ═══════════════════════════
   console.log('\n── 13. «COLCHON XYZ» y «XYZ PLUS» son el mismo: se unen a mano ──');
@@ -602,15 +639,18 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     copiarStock();
     window.copyText=window._copyOrig;
     var eco=stockData().lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
-    window._esp14=Math.ceil(eco.comp + eco.porDia*(eco.lead+eco.margen+eco.cubrir) - 0 - 6 - 1e-9);
+    /* (18/10, §4ls) Antes: lo vendido + ritmo × (fábrica + margen + reserva) − lo que hay − lo que viene. Ahora, para lo que rota: lo vendido
+       + el OBJETIVO − lo que hay − lo que viene (se pide porque lo libre, 0 + 6 − 30, quedó bajo el punto de pedido). */
+    window._esp14=Math.ceil(stockCompHorizonte(eco) + eco.objS - 0 - 6 - 1e-9); window._obj14=[eco.objetivo, eco.puntoPedido];
     window._comp14=eco.comp;
     return copiado;
   });
-  const esp14 = await page.evaluate(() => [window._esp14, window._comp14]);
+  const esp14 = await page.evaluate(() => [window._esp14, window._comp14, window._obj14]);
   chk('arma el mensaje para la fábrica', /PEDIDO A F[ÁA]BRICA/.test(r), r.split('\n')[0]);
-  // 30 comprometidos desde 91ddcd8 (§1) + la venta de fábrica + margen + reserva − 0 − 6 en camino (§4ii: antes 30 − 0 − 6 = 24).
-  chk('⚠️ dice cuántas unidades pedir: 30 vendidos + ritmo × (fábrica + margen + reserva) − 0 que hay − 6 en camino',
-      esp14[1]===30 && esp14[0]>24 && new RegExp('pedir '+esp14[0]+'\\b').test(r), [esp14, (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100)]);
+  // 30 comprometidos desde 91ddcd8 (§1) + el objetivo (§4ls; antes, la venta de fábrica + margen + reserva) − 0 − 6 en camino (§4ii: antes 30 − 0 − 6 = 24).
+  chk('⚠️ dice cuántas unidades pedir: 30 vendidos + el objetivo − 0 que hay − 6 en camino, y cuánto tener y cuándo pedir',
+      esp14[1]===30 && esp14[0]>24 && new RegExp('pedir '+esp14[0]+'\\b').test(r) && r.indexOf('tener '+esp14[2][0]+' (se pide al bajar a '+esp14[2][1]+')')>=0,
+      [esp14, (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,140)]);
   chk('…y por qué: lo que queda, lo que viene, lo que se vende por día y cuándo se corta',
       /quedan 0/.test(r) && /6 en camino/.test(r) && /por día/.test(r) && /se corta hoy/.test(r), (r.match(/quedan[^\n]*/)||[''])[0].slice(0,140));
 

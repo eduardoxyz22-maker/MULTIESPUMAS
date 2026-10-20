@@ -224,7 +224,7 @@ const BASE = `
       var conPunt=armar([ window._P({id:'mc', fecha:'2026-08-20', ts:ago, vendedor:'Carola Chavez', cliente:'MULTICENTER', productos:H(40)}) ]);
       var conRpt=armar([ window._P({id:'rpt', fecha:'2026-08-20', ts:ago, oc:'RPT 08-001', cliente:'Charcas', productos:H(40)}) ]);
       abrirStock(); var el=document.getElementById('producir'); var cabecera=el?el.textContent.replace(/\s+/g,' '):''; closeStock();
-      return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,520) };
+      return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,900) };   // (17/10, §4lr U7) el cartel dice además la excepción de las almohadas: el texto creció
     }, BASE);
     /* (§4iz, E1-6) «mes>0» se fue: el 20/09 lo que «15 días» manda a producir ya llega en octubre y el mes no lo vuelve a pedir. */
     chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6, J(r.sin));
@@ -234,12 +234,16 @@ const BASE = `
        ⚠️ (30/09, §4hd, a conciencia) 9 → 18: el histórico ya no suma al TITANIO ICE 160x190 la medida especial 160X200
        (CH1389, otro código, X-4): oct-25 = 6 y la tendencia 18 (antes 8 y 24), y la mediana de {8,3 · 29,1 · 25,2 · 6 · 18}
        es 18. La regla de Multicenter no cambió. */
-    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40) y al plan del mes (octubre 9 → 18), pero no al ritmo de 30 días (es de antes de la ventana)',
-        r.conEduMc.idx===46 && r.sin.mesNec===9 && r.conEduMc.mesNec===18 && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
+    /* 🎯 (18/10, §4ls, decisión 4 del dueño, a conciencia) Este producto ROTA (4 entregas del equipo en 15 días): desde §4ls su mes
+       sale de la regla del objetivo (la venta de los últimos 26 días hábiles × los días hábiles del mes, sin el rango de 5 estimaciones),
+       así que la compra de agosto —fuera de esa ventana— ya no lo mueve (antes 9 → 18 por el índice). El índice de agosto sí la tiene:
+       es lo que usa el mes de lo que NO rota (test_eduardo_multicenter). */
+    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40); el mes de lo que ROTA sale del objetivo (sin rango) y la compra de agosto no lo mueve, ni al ritmo de 30 días',
+        r.conEduMc.idx===46 && r.sin.est===null && r.conEduMc.mesNec===r.sin.mesNec && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
     chk('…ni un pedido PUNTUAL (MULTICENTER de otro vendedor) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
     chk('…ni una reposición de tienda', r.conRpt.idx===6 && r.conRpt.mes===r.sin.mes, 'con RPT: '+J(r.conRpt));
     chk('la cabecera del cuadro dice la verdad: equipo + Eduardo a Multicenter, sin otras puntuales ni RPT, y qué productos entran',
-        /ventas del equipo \+ ventas de Eduardo a Multicenter/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /mismo mes del año pasado/.test(r.cabecera), r.cabecera.slice(0,320));
+        /ventas del equipo \+ ventas de Eduardo a Multicenter/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /Productos que rotan/.test(r.cabecera), r.cabecera.slice(0,320));   // 🔁 (18/10, §4ls Mes-VM9, a conciencia) ya no entra lo que no rota por «el mismo mes del año pasado»
     await page.close();
   }
 
