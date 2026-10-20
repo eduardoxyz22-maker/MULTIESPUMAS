@@ -15364,7 +15364,7 @@ a vender, por si acaso»*.
     `#00B5AD`/`#00A09A`, encabezado `--grad-header`, Inter), sin los bloques de modo oscuro. Versión 5. También se arregló que la tarjeta de la
     clave seguía a la vista después de entrar (`.ingreso{display:flex}` le ganaba a `[hidden]`), y los textos que decían «todavía sin publicar».
 
-### §4lt — 🏪 Cuánto del pedido a producción es por las tiendas (19-20/10, en la rama, SIN publicar)
+### §4lt — 🏪 Cuánto del pedido a producción es por las tiendas (19-20/10; PUBLICADO 20/10 con §4lt-c, `b42198c`)
 El dueño (19/10): *«la idea es tener un consolidado general para hacer el pedido a producción, pero veo que no tomas en cuenta lo que
 pedirán las tiendas, en especial de Sueña, y hoy omiten eso creo»*. Medido con la planilla real del 16/10 12:00 (scratchpad `tiendas/`):
 - **Las tiendas YA están en el pedido**: la venta de tienda es demanda (§4iy) y, en almohadas, la RPT (§4lr U7); lo que una tienda pidió y
@@ -15388,7 +15388,7 @@ pedirán las tiendas, en especial de Sueña, y hoy omiten eso creo»*. Medido co
   2 / 2 / 0 (el CLOUD pedido por una tienda), ROHO 0; el pedido sigue en 194 / 476 / 653.
 - `tests/test_stock_tiendas_parte.js` (17; 10 rojas contra `a21a3d2`).
 
-#### §4lt-b — 📦 El total a producir y 🗺️ qué va a dónde (20/10, en la rama, SIN publicar)
+#### §4lt-b — 📦 El total a producir y 🗺️ qué va a dónde (20/10; nunca se publicó así: el cuadro y la planilla pasaron a la ventana de §4lt-c)
 El dueño, enojado, al ver noviembre de Sueña: *«dice pedir 15 y sin embargo las tiendas han vendido 30 o 35… la idea es que el qué producir
 muestre la totalidad de lo que tiene que producir… y luego mostrar una planilla o desglose de qué va a dónde, ya sea almacén Banzer, productos
 terminados fábrica o almacén de las tiendas… para los siguientes 7, 15 y 30 días, o para el siguiente mes»*.
@@ -15424,7 +15424,7 @@ terminados fábrica o almacén de las tiendas… para los siguientes 7, 15 y 30 
   el modelo abierto tiene 6 números), `test_stock_tiendas_parte` (la cuenta devuelve `.v`), `test_eduardo_multicenter` (lee el texto en
   `.prod-como`).
 
-#### §4lt-c — 🏭 «Pedido a producción»: el total y qué va a dónde en una ventana aparte (20/10; en la rama, a publicar)
+#### §4lt-c — 🏭 «Pedido a producción»: el total y qué va a dónde en una ventana aparte (20/10; PUBLICADO 20/10 00:25 de Bolivia, `b42198c`)
 El dueño, al ver §4lt-b: *«No se va a ver muy cargado el qué va a qué. La idea es que simplemente al hacer el pedido se genere el consolidado y
 ahí muestre qué pedir a producción y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes, según la
 proyección. O se abra una pestaña o tabla que muestre eso, porque la verdad que lo veo muy cargado de stock y reposición. Dame un ejemplo»*.

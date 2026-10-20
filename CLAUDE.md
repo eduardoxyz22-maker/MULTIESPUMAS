@@ -657,7 +657,7 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
 - `tests/test_stock_reunion.js` (59; 48 rojas contra `27f0134`). Lista completa y datos para logística: bitácora §4lr.
 - 🏪 **Las tiendas ya están en el pedido a producción, y el panel lo dice** (§4lt, 19/10; dueño eligió «Mostrarlo en el panel», sin cambiar
-  números; en la rama): la venta de tienda es demanda, en almohadas la RPT; la RPT de un colchón NO suma encima (contaría dos veces). El Plan
+  números; PUBLICADO 20/10 con §4lt-c): la venta de tienda es demanda, en almohadas la RPT; la RPT de un colchón NO suma encima (contaría dos veces). El Plan
   (`.pl-tiendas`) y cada TOTAL de «Qué producir» (`tr.prod-tiendas`) dicen cuánto es por las tiendas = pedido − el mismo pedido con
   `STOCK_SIN_TIENDAS` (`stockTiendasParteCalc`, un momento después de dibujar, 60 s de caché). ⚠️ Ese interruptor es SOLO para medir: siempre
   en `finally`, y con `STOCK_DIBUJO` apartado. Tiendas Roho no carga ventas y su RPT no cuenta: decisión pendiente del dueño.
@@ -665,7 +665,7 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - 📦 **El total a producir** (§4lt-b, 20/10): la columna del mes va ADEMÁS de 15 días, así que `f.tot = quin + mes` («Hasta el 30/11») va en
   cada fila, medida, TOTAL, encabezado y copia (`copiarProducir(k,'tot')`). ⚠️ Una cuenta nueva del total sale de `B.tot`/`f.tot`, nunca aparte.
 - 🏭 **«Pedido a producción», una ventana aparte** (§4lt-c, 20/10; dueño: *«lo veo muy cargado… al hacer el pedido se genere el consolidado…
-  y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes»*; vio el ejemplo y dijo «Publica»; en la rama, a publicar):
+  y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes»*; vio el ejemplo y dijo «Publica»; PUBLICADO 20/10 00:25 de Bolivia, `b42198c`):
   `#pap-overlay` (z 3100) desde la barra de Stock (`#stk-pap-btn`), el Plan (`.pl-pap`) y la línea de «Qué producir» (`#prod-pap`; el cuadro
   del total y la planilla de §4lt-b se sacaron de ahí). Plazos 7 (sin fecha: U17) / 15 / **30 días** (`f.d30` = el mayor de la cuenta de 15 días
   con `PRODUCIR_30` y el piso de fin de mes —`antes` + la parte del mes que viene que cae adentro—, tope `quin + mes`, `stockProducirD30`) /
