@@ -822,6 +822,10 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-total{border:1px solid var(--teal);border-left-width:4px;border-radius:10px;background:#f0fdfa;margin-bottom:12px}
 /* 📈 (29/09, §4gu) Cómo se proyectó cada grupo, la prueba con los meses cerrados y el patrón del mes. */
 .pry-pie{padding:7px 12px 9px;border-top:1px solid var(--gray-md);font-size:.74rem;color:var(--muted);line-height:1.45}
+.pry-roho-prods{margin:8px 0 0}
+.pry-roho-prods summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--teal-strong,#00A09A);padding:6px 0;min-height:36px;display:flex;align-items:center}
+.pry-roho-prods td small{color:var(--muted);font-weight:600;margin-left:4px}
+.pry-roho-prods th.r,.pry-roho-prods td.r{text-align:right;font-variant-numeric:tabular-nums}
 .pry-cuerpo{padding:2px 12px 10px}
 .pry-linea{font-size:.78rem;line-height:1.5;margin:10px 0 4px;color:var(--text)}
 .pry-intro{font-size:.78rem;line-height:1.5;color:var(--muted);margin:-4px 0 12px}
@@ -7740,15 +7744,21 @@ function pryUnidadesDe(p){
 }
 /* Todas las ventas que cuentan, en una pasada: grupo (la marca, 'sin' o 'mayor'), vendedor, entrega, el día en que se
    cargó, el monto y las unidades. La misma puerta que Ventas: `fueraDeConta` (sin ATC, RPT ni ROHO) y la entrega agendada. */
+/* 🛏️ (20/10, dueño: *«Ernesto cargó las ventas… está en el panel como vendedor ROHO… te sirve para medir sus ventas»*) ROHO va
+   APARTE del equipo (no entra en Contabilidad ni en el total) y se mide en UNIDADES: Ernesto no carga el precio de los colchones.
+   Sin las ATC, las RPT ni lo que ROHO manda a sus tiendas («TIENDA n»: es mover mercadería, la misma regla del stock). */
+function pryRohoCuenta(p){
+  return !!p && esRoho(p.vendedor) && !esATC(p.oc) && !esRPT(p.oc) && !STOCK_ROHO_TIENDA.test(normNombre(p.cliente||''));
+}
 function pryVentas(){
   var out=[];
   STATE.forEach(function(p){
-    var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : '');
+    var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : (pryRohoCuenta(p) ? 'roho' : ''));
     if(!amb) return;
     var f=fechaSalida(p); if(!f) return;
     var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p), ts=Number(p.ts)||0;
     /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). */
-    out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (marcaDe(v)||'sin')), v:v, vk:amb+'|'+(normNombre(v)||v),
+    out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (amb==='roho' ? 'roho' : (marcaDe(v)||'sin'))), v:v, vk:amb+'|'+(normNombre(v)||v),
                f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
   });
   return out;
@@ -7872,18 +7882,18 @@ function proyeccionMes(ym){
   var filas={};
   V.forEach(function(x){
     if(x.ym!==ym) return;
-    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0 });
+    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0, ua:0, ub:0 });
     r.n++; if(!(x.bs>0.009)) r.sinMonto++;
     r.u+=x.u; r.c+=x.c; r.s+=x.s;
-    if(x.f<=hoy) r.a=r2(r.a+x.bs); else r.b=r2(r.b+x.bs);
+    if(x.f<=hoy){ r.a=r2(r.a+x.bs); r.ua+=x.u; } else { r.b=r2(r.b+x.bs); r.ub+=x.u; }
   });
   /* Con qué se proyecta cada grupo (`porque` dice por qué va con el ritmo). Una marca con historia va con su curva, para
      la marca ENTERA (K = lo que vendió la marca este mes), y cada vendedor lleva la misma proporción; salvo que en la
      prueba el ritmo se haya equivocado menos. */
-  ['suena','heaven','sin','mayor'].forEach(function(g){
+  ['suena','heaven','sin','mayor','roho'].forEach(function(g){
     var o={ m:'ritmo', f:0, meses:[], porque:'' };
     if(estado==='curso'){
-      if(g==='mayor' || g==='sin') o.porque=g;
+      if(g==='mayor' || g==='sin' || g==='roho') o.porque=g;
       else{
         var c=pryCurva(V, g, hist);
         if(!c.ok) o.porque='historia';
@@ -7918,8 +7928,24 @@ function proyeccionMes(ym){
   });
   var sinMarca=tienda.filter(function(r){ return !r.marca; }), sinTot=suma(sinMarca), equipo=suma(tienda);
   equipo.proy=r2(marcas.reduce(function(s,m){ return s+m.tot.proy; }, 0)+sinTot.proy);
+  /* 🛏️ ROHO, en unidades y con el ritmo (como los mayoristas): lo entregado hasta hoy + lo agendado, o el ritmo si da más. */
+  var roho=lista.filter(function(r){ return r.amb==='roho'; }), rohoTot={ n:0, u:0, c:0, s:0, ua:0, ub:0 };
+  roho.forEach(function(r){ ['n','u','c','s','ua','ub'].forEach(function(k){ rohoTot[k]+=r[k]; }); });
+  rohoTot.proyU = estado==='cerrado' ? rohoTot.u : (rohoTot.ua + Math.max(rohoTot.ub, Math.round(dt>0 ? rohoTot.ua/dt*dr : 0)));
+  /* Sus productos (dueño, 20/10: «¿muestra los productos?»): los mismos renglones que cuentan como unidades (un combo, 2), por producto. */
+  var rohoProd={};
+  STATE.forEach(function(p){
+    if(!pryRohoCuenta(p)) return;
+    var f=fechaSalida(p); if(!f || f.slice(0,7)!==ym) return;
+    (p.productos||[]).forEach(function(x){
+      var t=pryTipoProd(x), n=(Number(x&&x.cant)||0)*(t==='combo' ? 2 : 1); if(!t || !(n>0)) return;
+      var k=stockClave(x), o=rohoProd[k]||(rohoProd[k]={ k:k, cod:String((x&&x.codigo)||'').trim(), u:0, ua:0, ub:0 });
+      o.u+=n; if(f<=hoy) o.ua+=n; else o.ub+=n;
+    });
+  });
+  rohoTot.prods=Object.keys(rohoProd).map(function(k){ return rohoProd[k]; }).sort(function(a,b){ return (b.u-a.u) || (a.k<b.k?-1:1); });
   return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
-           equipo:equipo, mayor:{ filas:mayor, tot:suma(mayor) }, metodos:metodos, hist:hist, V:V, pruebas:pruebas, errores:errores };
+           equipo:equipo, mayor:{ filas:mayor, tot:suma(mayor) }, roho:{ filas:roho, tot:rohoTot }, metodos:metodos, hist:hist, V:V, pruebas:pruebas, errores:errores };
 }
 /* Cuánto se equivocó cada forma en los meses CERRADOS de la prueba, marca por marca: el promedio del error (sin signo)
    solo en las fechas en que están las dos, para compararlas en las mismas fechas. */
@@ -7956,7 +7982,8 @@ function pryErrores(pruebas){
    · Por marca (sus metas son por marca, §4gu) y el equipo entero; sin mayoristas.
    · Unidades: `pryUnidadesDe` (colchones y somieres; un combo es uno de cada).
    ========================================================================== */
-var PRY_CMP='', PRY_CMP_DE='';   // el mes elegido en «Comparar con», y para qué mes se eligió
+var PRY_CMP='', PRY_CMP_DE='';
+var PRY_ROHO_ABIERTO=false;   // 🛏️ «Ver sus productos» de ROHO, abierto o cerrado (se mantiene al repintar)   // el mes elegido en «Comparar con», y para qué mes se eligió
 var PRY_TRAMOS=['Antes del 1°','Del 1 al 7','Del 8 al 14','Del 15 al 21','Del 22 al 28','Del 29 al fin','Después del fin'];
 function pryTramo(reg, ym){
   if(reg<ym+'-01') return 0;
@@ -8142,6 +8169,11 @@ function renderProyeccion(){
   if(R.sinMarca.filas.length) h+=mc('var(--amber)','⚠️ Sin marca', fmtBs(R.sinMarca.tot.vendido), nV(R.sinMarca.tot.n)+' · '+nU(R.sinMarca.tot.u)+' de vendedores que no están en ninguna marca');
   if(R.mayor.filas.length) h+=mc('#1d6fb8','🏭 Mayoristas', fmtBs(R.mayor.tot.vendido),
           nV(R.mayor.tot.n)+' · '+nU(R.mayor.tot.u)+' de '+esc(mayoristasTxt())+' · aparte del equipo'+(conProy ? (' · 📈 proyección '+fmtBs0(R.mayor.tot.proy)) : ''));
+  /* 🛏️ ROHO en unidades (sus pedidos no traen precio): aparte del equipo, como los mayoristas. */
+  var RT=R.roho && R.roho.tot;
+  if(RT && RT.n) h+=mc('#475569','🛏️ ROHO', nU(RT.u),
+          nV(RT.n)+' · '+RT.c+' colchones y '+RT.s+' somieres · aparte del equipo'+(conProy ? (' · 📈 proyección '+nU(RT.proyU)) : '')+
+          ' · sin plata: Ernesto no carga el precio');
   box.innerHTML=h;
   try{ cxFichasVivas(box, 'cxPryF'); }catch(e){}
   try{ cxPryPintar(R); }catch(e){}   // ✨ (§4jw, K) la curva de cada marca
@@ -8201,6 +8233,24 @@ function renderProyeccion(){
            '<span><b>'+fmtBs(g.tot.vendido)+'</b>'+(conProy ? (' · <b class="pry-p">📈 '+fmtBs0(g.tot.proy)+'</b>') : '')+'</span></div>'+
            g.filas.map(filaHtml).join('')+metodoPie(k, nombre, g)+'</div>';
   };
+  /* 🛏️ ROHO: en unidades, con lo entregado hasta hoy y lo agendado; la proyección con el ritmo. */
+  var rohoGrupo=function(){
+    var G=R.roho; if(!G || !G.tot.n) return '';
+    var T=G.tot, det=[nV(T.n), T.c+' colchones', T.s+' somieres'];
+    if(R.estado==='curso' && T.ub) det.push('agendado '+nU(T.ub));
+    return '<div class="pry-grupo" style="border-left-color:#475569"><div class="pry-gh"><b>🛏️ ROHO (aparte del equipo, en unidades)</b>'+
+           '<span><b>'+esc(nU(T.u))+'</b>'+(conProy ? (' · <b class="pry-p">📈 '+esc(nU(T.proyU))+'</b>') : '')+'</span></div>'+
+           '<div class="pry-fila"><div class="pry-q"><b>ROHO</b><small>'+esc(det.join(' · '))+'</small></div>'+
+           '<div class="pry-n"><b>'+esc(nU(T.u))+'</b>'+(conProy ? ('<small class="pry-p">📈 '+esc(nU(T.proyU))+'</small>') : '')+'</div></div>'+
+           ((T.prods||[]).length ? ('<details class="pry-roho-prods"'+(PRY_ROHO_ABIERTO ? ' open' : '')+' ontoggle="PRY_ROHO_ABIERTO=this.open"><summary>📦 Ver sus productos ('+T.prods.length+')</summary>'+
+             '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>Producto</th><th>Medida</th>'+(R.estado==='curso' ? '<th class="r">Entregado</th><th class="r">Agendado</th>' : '')+'<th class="r">Unidades</th></tr></thead><tbody>'+
+             T.prods.map(function(o){ var p=o.k.split('|');
+               return '<tr><td>'+esc(p[0]||o.k)+(o.cod ? ' <small>'+esc(o.cod)+'</small>' : '')+'</td><td>'+esc((p[1]||'').toLowerCase())+'</td>'+
+                 (R.estado==='curso' ? ('<td class="r">'+(o.ua||'·')+'</td><td class="r">'+(o.ub||'·')+'</td>') : '')+'<td class="r"><b>'+o.u+'</b></td></tr>'; }).join('')+
+             '</tbody></table></div></details>') : '')+
+           (curso ? '<div class="pry-pie">'+esc('📈 Con el ritmo, en unidades: lo entregado hasta hoy ('+T.ua+') + lo agendado hasta fin de mes ('+T.ub+'), o lo que da el ritmo si es más. '+
+             'Sin plata: los pedidos de ROHO no traen el precio. Con la lista de precios de ROHO se puede contar también en Bs.')+'</div>' : '')+'</div>';
+  };
   var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n)+' · '+nU(E.u))+'</small></div>'+
             '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
   document.getElementById('pry-vendedores').innerHTML='<div class="cua-box"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
@@ -8208,8 +8258,8 @@ function renderProyeccion(){
     (E.n || R.mayor.filas.length
       ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m, m.g.k); }).join('')+
         grupo('⚠️','Sin marca','var(--amber)', R.sinMarca, 'sin')+total+
-        grupo('🏭','Mayoristas (aparte del equipo)','#1d6fb8', R.mayor, 'mayor')
-      : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>')+'</div>';
+        grupo('🏭','Mayoristas (aparte del equipo)','#1d6fb8', R.mayor, 'mayor')+rohoGrupo()
+      : (R.roho && R.roho.tot.n ? rohoGrupo() : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>'))+'</div>';
 
   document.getElementById('pry-altura').innerHTML=pryAlturaHtml(R);
   var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
@@ -8223,7 +8273,7 @@ function renderProyeccion(){
     '• <b>🏁 Elige la prueba</b>: con dos meses cerrados o más, cada marca va con la forma (la curva o el ritmo) que menos se equivocó en «🧪 ¿Qué tan bien proyecta?». Con un solo mes cerrado, va la curva. El ritmo, aunque gane, recién desde el '+PRY_DIAS_RITMO+'° día hábil del mes.<br>'+
     '• <b>Con el ritmo</b> cuando la marca todavía no tiene un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas, y siempre los mayoristas y los que no están en ninguna marca: lo que tiene entrega hasta hoy + lo que falta del mes, que es lo ya agendado de mañana a fin de mes, o lo que da el ritmo si es más. <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados), por vendedor.<br>'+
     '• Los meses cerrados cuentan desde '+esc(mesNombre(PRY_PRIMER_MES))+' (el panel se empezó a usar a fines de julio).<br>'+
-    '• No entran las ATC ni las reposiciones de tienda (no son ventas), ni ROHO. Los mayoristas van aparte.<br>'+
+    '• No entran las ATC ni las reposiciones de tienda (no son ventas). Los mayoristas van aparte. <b>ROHO</b> también va aparte y en unidades (sus pedidos no traen precio), sin lo que manda a sus tiendas.<br>'+
     '• <b>📦 Unidades</b>: colchones (también colchonetas y colchones de bebé) y somieres, con su cantidad. No cuentan almohadas, respaldares, patas, protectores, sábanas, mantas ni otros accesorios. Un combo cuenta como un colchón y un somier. Si un renglón escrito a mano dice «colchón + 2 almohadas», cuenta el colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata.<br>'+
     '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta ahora, contra lo que otro mes tenía cargado al mismo día y a la misma hora (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
     '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó a otro mes no está en la curva del mes de antes.'+
