@@ -276,7 +276,8 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
   r = await page.evaluate(() => {
     var el=document.getElementById('producir'); if(!el) return null;
     var t=el.textContent.replace(/\s+/g,' ');
-    return { t:t, html:el.innerHTML, bloques:el.querySelectorAll('table').length, botones:Array.from(el.querySelectorAll('button')).map(function(b){ return b.textContent.trim(); }),
+    return { t:t, html:el.innerHTML, bloques:el.querySelectorAll('.prod-wrap table').length,   // (20/10) sin contar el cuadro del total ni la planilla «qué va a dónde»
+             botones:Array.from(el.querySelectorAll('button')).map(function(b){ return b.textContent.trim(); }),
              filaH:(function(){ var tr=el.querySelector('tr[data-producir-k="'+window._K.H.replace(/"/g,'\\"')+'"]'); return tr?tr.textContent.replace(/\s+/g,' '):''; })() };
   });
   chk('la pantalla de stock muestra el cuadro «🏭 Qué producir» con los cuatro bloques', r && r.bloques===4 && /Industrias Moreno · Heaven/.test(r.t) && /Industrias Moreno · ROHO \(FLEX \/ PEDIC\)/.test(r.t) && /Multiespumas · Sueña/.test(r.t) && /Sin fábrica asignada/.test(r.t), r && r.t.slice(0,240));
@@ -309,7 +310,7 @@ function columnas(R, aca, moreno, hoy, finActual, ini, fin, fer){
     document.getElementById('producir').querySelector('tr.producir-med[data-b="heaven"][data-md="160x190"]').click();
     return document.getElementById('producir').querySelectorAll('tr.producir-modelo').length;
   });
-  chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus cinco números (3 · 11 · 22 · 14 · 5) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='3 11 22 14 5', JSON.stringify(r5b.sub));   // (§4ls CU-1) 22 = 3 antes del 1° + 14 + 5
+  chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus seis números (3 · 11 · 22 · 14 · 5 · 33 = hasta el 31/10, 15 días + octubre) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='3 11 22 14 5 33', JSON.stringify(r5b.sub));   // (§4ls CU-1) 22 = 3 antes del 1° + 14 + 5
   chk('la fila abierta marca ▾ y las otras medidas siguen cerradas', /▾ por medida · 160x190/.test(r5b.med) && r5b.otrosCerrado===true, r5b.med);
   chk('tocarla de nuevo la cierra', r5c===0, String(r5c));
 

@@ -15388,3 +15388,39 @@ pedirán las tiendas, en especial de Sueña, y hoy omiten eso creo»*. Medido co
   2 / 2 / 0 (el CLOUD pedido por una tienda), ROHO 0; el pedido sigue en 194 / 476 / 653.
 - `tests/test_stock_tiendas_parte.js` (17; 10 rojas contra `a21a3d2`).
 
+#### §4lt-b — 📦 El total a producir y 🗺️ qué va a dónde (20/10, en la rama, SIN publicar)
+El dueño, enojado, al ver noviembre de Sueña: *«dice pedir 15 y sin embargo las tiendas han vendido 30 o 35… la idea es que el qué producir
+muestre la totalidad de lo que tiene que producir… y luego mostrar una planilla o desglose de qué va a dónde, ya sea almacén Banzer, productos
+terminados fábrica o almacén de las tiendas… para los siguientes 7, 15 y 30 días, o para el siguiente mes»*.
+- **La respuesta a su pregunta**: sí, las tiendas YA estaban (§4lt). Lo que confundía: la columna del mes va ADEMÁS de 15 días, no es el
+  total. Con la planilla del 16/10: SEMIORTOP 105 = 28 + 31 = **59 hasta el 30/11** (las tiendas vendieron 22 de 31 en 30 días); SOFT 140 =
+  18 + 29 = 47; ORTOPÉDICO SUEÑA 140 = 7 + 15 = 22.
+- **Hecho (solo muestra, ningún número cambia)**:
+  · `f.tot` = `quin + mes` en `stockProducirCalc` (fila, medida, `B.tot.tot`): columna **«Hasta el <fin del mes que viene>»** al final de la
+    tabla (10 columnas), en el encabezado de cada bloque («en total hasta el 30/11: N») y botón «📋 Todo hasta el 30/11» (`copiarProducir(k,'tot')`,
+    `copiarProducirTodo('tot')`). Se eligió «hasta fin del mes que viene» y no un «30 días» nuevo: sale de los números que ya están (una sola
+    verdad) y es la opción «o para el siguiente mes» del dueño.
+  · **`producirTotalGenHtml(R)`** arriba de «Qué producir» (`#prod-total-gen`): una fila por fábrica, Próximos 7 días · Próximos 15 días ·
+    Hasta el 30/11 (acumulados, «no se suman»), TOTAL de todas y la fila «🏪 De esto, para las tiendas» (`data-tp="total"` en el `<tr>`, llega
+    después). La explicación larga quedó plegada en «ℹ️ Cómo sale cada número» (`.prod-como`).
+  · **La parte de las tiendas va producto por producto** (`stockTiendasParteCalc` devuelve `{v, porK, R}`; `porK[k][h]` = mín(base,
+    máx(0, base − sin)) para sem/quin/mes/tot) y la línea de cada bloque es su suma: con la planilla del 16/10 da lo mismo que restar los
+    totales (Heaven 59/106/96, Sueña 16/74/105).
+  · **🗺️ Qué va a dónde** (`<details id="prod-rep">`, abierto, `visPref('qrep')`; cuerpo `#prod-rep-cuerpo` lleno por `stockTiendasParteLlenar`
+    con `producirRepHtml`): plazo 7 días / 15 días / hasta el 30/11 (`PRODUCIR_REP_H`, `me_prod_rep_h`). Por fábrica, una tabla Producto ·
+    Producir · PTF · Banzer · una columna por tienda, TOTAL, y «📋 Copiar la planilla» (`textoProducirReparto`). Cada fila suma EXACTO lo de
+    «Qué producir» (`producirRepartoFila`, `producirRepartir` con el resto mayor):
+    – **tiendas** = la parte de las tiendas de ese producto, entre las tiendas según su venta de tienda de 30 días (lo que es demanda:
+      `stockEsDemanda`; en almohadas, la RPT) + lo que pidió por RPT y falta entregarle (`compIds`); sin nada en 30 días, 90; sin nada, «Tiendas».
+    – **PTF y Banzer** = el resto, con la regla de «📍 Banzer o PTF»: `sB` de las entregas a clientes de `ALM_ZONA_DIAS` (pin → `almLado`,
+      sin pin → zona escrita, `almLadoFrac`); a Banzer `round(sB × (resto + hay) − lo que Banzer tiene hoy)`, entre 0 y el resto. Lo que rota
+      poco, lo discontinuado y lo de menos de `ALM_MIN_UNID` unidades ubicadas: todo a PTF, con el porqué.
+  · Con la planilla del 16/10 (15 días): Heaven 321 → PTF 67 · Banzer 148 · tiendas 106; ROHO 51 → 8 · 43; Sueña 102 → 26 · 2 · tiendas 74
+    (Charcas 31 · Carmelo 22 · Mutualista 21). Banzer pesa porque 70 % de los clientes de Heaven de 60 días caen del lado de Banzer y el
+    Excel de PTF de ese día traía casi todo en 0.
+- ⚠️ La planilla es una GUÍA de a dónde mandar lo producido: la revisión automática (PTF → Banzer → IM) y «📍 Banzer o PTF» no cambiaron.
+  Las tiendas no tienen Excel: su parte es por lo que venden, no por lo que les falta.
+- `tests/test_producir_reparto.js` (35; 25 rojas contra `ec3a32e`). A conciencia: `test_producir` (cuenta solo las tablas de `.prod-wrap`;
+  el modelo abierto tiene 6 números), `test_stock_tiendas_parte` (la cuenta devuelve `.v`), `test_eduardo_multicenter` (lee el texto en
+  `.prod-como`).
+

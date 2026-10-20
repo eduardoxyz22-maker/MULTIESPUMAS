@@ -324,7 +324,8 @@ function NUMEROS(k){
     var p=document.getElementById('producir'), t=p?p.textContent.replace(/\s+/g,' '):'';
     var fila=document.querySelector('#producir tr[data-producir-k*="TITANIO ICE"]'), ft=fila?fila.textContent.replace(/\s+/g,' '):'';
     var stk=document.getElementById('stock-body'), st=stk?stk.textContent.replace(/\s+/g,' '):'';
-    closeStock(); return { cab:t.slice(0,700), fila:ft, tabla:/incluye 8 de Eduardo a Multicenter/.test(st) }; });
+    closeStock(); return { cab:(function(){ var c=p&&p.querySelector('.prod-como'); return (c?c.textContent.replace(/\s+/g,' '):t).slice(0,1500); })(),   // (20/10) la explicación quedó en «ℹ️ Cómo sale cada número», debajo del total y la planilla
+                          fila:ft, tabla:/incluye 8 de Eduardo a Multicenter/.test(st) }; });
   chk('la cabecera de «Qué producir»: «ventas del equipo + ventas de Eduardo a Multicenter; sin otras ventas puntuales … ni reposiciones de tienda (RPT)»',
       /ventas del equipo \+ ventas de Eduardo a Multicenter; sin otras ventas puntuales \(las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda\) ni reposiciones de tienda \(RPT\)/.test(txt.cab) && /no dice vendedor ni cliente/.test(txt.cab), txt.cab);
   chk('la fila del TITANIO ICE dice cuánto es de Multicenter (15 d: 8 · 30 d: 14)', /8 de Eduardo a Multicenter/.test(txt.fila) && /14 de Eduardo a Multicenter/.test(txt.fila), txt.fila.slice(0,300));

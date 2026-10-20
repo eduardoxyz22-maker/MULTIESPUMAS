@@ -67,7 +67,8 @@ const ERRS=[];
   console.log('\n── TP1. La parte de las tiendas ──');
   let r = await page.evaluate(() => {
     if(typeof stockTiendasParteCalc!=='function') return { falta:true };
-    var d=stockData(), R=stockProducirCalc(d), base=stockTiendasTotales(R), v=stockTiendasParteCalc(null);
+    var d=stockData(), R=stockProducirCalc(d), base={}, v=stockTiendasParteCalc(null).v;   // (20/10) la cuenta devuelve también lo de cada producto
+    R.bloques.forEach(function(B){ base[B.k]={ sem:B.tot.sem, quin:B.tot.quin, mes:B.tot.mes }; });
     var f=function(k){ var o=d.lista.filter(function(x){ return x.k===k; })[0]; return o ? { fab:o.fabricar||0, rota:o.objS!=null, comp:o.comp||0 } : null; };
     return { base:base, v:v, s140:f(_K.s140), s160:f(_K.s160), alm:f(_K.alm), ti:f(_K.ti), flag:STOCK_SIN_TIENDAS };
   });
