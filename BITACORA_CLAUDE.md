@@ -15363,3 +15363,28 @@ a vender, por si acaso»*.
     los mismos colores que el panel»*): la página quedó SIEMPRE clara con los tokens de `pedidos.html` (fondo `--bg-app`, tarjetas blancas,
     `#00B5AD`/`#00A09A`, encabezado `--grad-header`, Inter), sin los bloques de modo oscuro. Versión 5. También se arregló que la tarjeta de la
     clave seguía a la vista después de entrar (`.ingreso{display:flex}` le ganaba a `[hidden]`), y los textos que decían «todavía sin publicar».
+
+### §4lt — 🏪 Cuánto del pedido a producción es por las tiendas (19-20/10, en la rama, SIN publicar)
+El dueño (19/10): *«la idea es tener un consolidado general para hacer el pedido a producción, pero veo que no tomas en cuenta lo que
+pedirán las tiendas, en especial de Sueña, y hoy omiten eso creo»*. Medido con la planilla real del 16/10 12:00 (scratchpad `tiendas/`):
+- **Las tiendas YA están en el pedido**: la venta de tienda es demanda (§4iy) y, en almohadas, la RPT (§4lr U7); lo que una tienda pidió y
+  falta entregarle es «vendido sin entregar». La RPT de un colchón NO suma encima a propósito (sería contar dos veces el mismo colchón).
+- **Las tiendas de Sueña sí cargan sus ventas**: Charcas 122, Mutualista 78, Carmelo 59 u en 60 días (95, 59 y 51 ventas de tienda).
+  De la demanda de Sueña en 30 días (269 u), 132 vienen de las tiendas.
+- **Cuánto pesa** (7 días / 15 días / el mes): Sueña 25 / 102 / 171 → sin las tiendas 9 / 28 / 66 (de 14 productos Sueña que rotan,
+  6 rotan SOLO por las tiendas); Heaven 158 / 321 / 356 → 99 / 215 / 260 (casi todo almohadas que piden las tiendas); ROHO igual.
+- **Lo que queda afuera** (dicho al dueño, sin cambiar nada): Tiendas Roho no carga ventas (28 u de RPT en 60 días que no cuentan, por la
+  regla de ROHO a tienda = puntual); 10 productos Sueña vendidos en tienda que no rotan (14 u en 30 días: 1 a 3 ventas cada uno); Carmelo
+  vendió 59 en 60 días y recibió 10 por RPT (su mercadería llega por otro lado: preguntar); el stock de exhibición de cada tienda (no hay
+  Excel de las tiendas). El histórico del sistema (`VENTAS_HIST`) no separa tiendas: la parte «del mes» es aproximada.
+- **Decisión del dueño** (de 4 opciones): *«Mostrarlo en el panel»* — SIN cambiar ningún número. No eligió contar Tiendas Roho ni
+  sumarlo a la página de la reunión.
+- **Hecho**: `STOCK_SIN_TIENDAS` (en `stockEsDemanda`: venta de tienda y RPT no son demanda; en `stockData`: la RPT pendiente no reserva) solo
+  para MEDIR; `stockTiendasParteCalc(base)` = pedido de siempre − el mismo sin las tiendas, por bloque de «Qué producir» (7 / 15 / mes), con
+  `STOCK_DIBUJO` apartado (ninguna memoria del dibujo se usa ni se ensucia) y el interruptor en `finally`. Se calcula un momento DESPUÉS de
+  dibujar (`stockTiendasParteLuego`, 60 ms; ~0,1 s en la compu) y vale 60 s con la misma planilla (`stockTiendasParteVigente`, como el Plan).
+  Se ve en el Plan (`.pl-tiendas`: «Las tiendas ya están en este pedido. Es por ellas: Heaven … · Sueña …») y debajo del TOTAL de cada bloque
+  de «Qué producir» (`tr.prod-tiendas`, escondida si es 0). Con la planilla real da Sueña 16 / 74 / 105, Heaven 59 / 106 / 96, Sin fábrica
+  2 / 2 / 0 (el CLOUD pedido por una tienda), ROHO 0; el pedido sigue en 194 / 476 / 653.
+- `tests/test_stock_tiendas_parte.js` (17; 10 rojas contra `a21a3d2`).
+

@@ -2103,6 +2103,7 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .pl-ya-chk input{ width:22px !important; height:22px !important; }
 .pl-ya-undo{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 8px; padding:7px 10px; border:1px solid #b9e3df; border-left:4px solid #0f766e; border-radius:8px; background:#f0fbfa; font-size:.84rem; color:#0f4f49; }
 .pl-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.pl-tiendas{ font-size:.8rem; line-height:1.45; background:var(--teal-lt); border-left:3px solid var(--teal); border-radius:6px; padding:7px 10px; margin:0 0 8px; }
 .pl-chip{ border:1px solid var(--gray-md); background:#fff; border-radius:999px; padding:3px 10px; font:inherit; font-size:.8rem; font-weight:600; cursor:pointer; }
 .pl-chip.on{ background:#1b2a2b; color:#fff; border-color:#1b2a2b; }
 .pl-tabla{ overflow-x:auto; }
@@ -25158,6 +25159,7 @@ function stockPuntual(p){
    pasa por `stockEsDemanda(p, k)`, renglón por renglón; `stockPedidoUnico(p)` sigue siendo la regla del PEDIDO. */
 function stockEsAlmohadaK(k){ return /^(ALMOHADAS?|ALM|TRAVESSEIROS?|NASA)\b/.test(String(k||'').split('|')[0]); }
 function stockEsDemanda(p, k){
+  if(STOCK_SIN_TIENDAS && p && (esRPT(p.oc) || esVentaTienda(p))) return false;   // 🏪 (19/10) solo para medir la parte de las tiendas
   if(stockEsAlmohadaK(k)){
     if(esRPT(p&&p.oc)) return true;             // la almohada que va a la tienda es la venta…
     if(esVentaTienda(p)) return false;          // …y la que la tienda vende ya se contó cuando se la mandaron
@@ -25327,6 +25329,7 @@ function stockData(extra){
         else if(hecho){ var ue=prodUnidEnConteo(x); if(ue>0 && stockBajaDelCorte(p, x, fsx, STOCK.c)) o.salidas+=ue; }
         return;
       }
+      if(STOCK_SIN_TIENDAS && esRPT(p.oc)) return;   // 🏪 (19/10) la cuenta «sin las tiendas»: lo que pidieron y falta entregarles tampoco
       /* 🚚 (18/10, §4ls U2, decisión 2 del dueño) Lo de HOY de un turno que el Excel de hoy ya no tiene (salió con el camión) no
          se reserva, tenga ✅ o no: si no, se contaba dos veces —ausente del Excel y además «vendido sin entregar»— hasta el cierre. */
       var fu=stockFueraHoy(p, x);
@@ -27280,7 +27283,7 @@ function planRepintar(){
   if(!stockPlanVigente()){ renderStock(); return; }
   var u=STOCK_PLAN_ULT, el=document.getElementById('stk-plan'), memo=STOCK_DIBUJO;
   STOCK_DIBUJO=u.memo;
-  try{ el.outerHTML=stockPlanHtml(u.d, u.lista); } finally { STOCK_DIBUJO=memo; }
+  try{ el.outerHTML=stockPlanHtml(u.d, u.lista); stockTiendasParteLuego(); } finally { STOCK_DIBUJO=memo; }
 }
 function renderStock(){
   if(STOCK_DIBUJO) return renderStockAhora();
@@ -27592,6 +27595,7 @@ function renderStockAhora(){
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
   body.innerHTML=html;
+  stockTiendasParteLuego();                                                        // 🏪 (19/10) cuánto del pedido es por las tiendas
   if(document.getElementById('rk') && !RANK_TIMER) stockRankingSemana(RANK_SEM);   // 🏆 (§4im)
   stockAvisosMarcar();                                                             // 🔔 (§4im)
   // (05/10) El buscador vive en la barra de arriba y NO se redibuja con la tabla: el cursor se queda donde está.
@@ -28085,6 +28089,81 @@ function stockProducirCalc(d){
   });
   return { mes:MS, hoy:d.hoy, bloques:PRODUCIR_BLOQUES.map(function(b){ return bloques[b.k]; }), cubiertos:cubiertos, sinContar:sinContar };
 }
+/* 🏪 CUÁNTO DEL PEDIDO ES POR LAS TIENDAS (19/10, dueño: *«la idea es tener un consolidado general para hacer el pedido a producción,
+   pero veo que no tomas en cuenta lo que pedirán las tiendas, en especial de Sueña»*; de las opciones eligió «Mostrarlo en el panel»:
+   SIN cambiar ningún número). Las tiendas YA están en el pedido: su venta de tienda es demanda (§4iy), en almohadas lo es la RPT (§4lr U7),
+   y lo que pidieron y falta entregarles es «vendido sin entregar». Con la planilla del 16/10: Sueña 25 / 102 / 171 → sin las tiendas
+   9 / 28 / 66; Heaven 158 / 321 / 356 → 99 / 215 / 260 (casi todo almohadas). Esto solo lo DICE, por bloque de «Qué producir» y en el Plan:
+   el pedido de siempre menos el MISMO pedido calculado sin la demanda de las tiendas (`STOCK_SIN_TIENDAS`: sin venta de tienda ni RPT).
+   ⚠️ Es una segunda cuenta entera (stockData + stockProducirCalc, ~0,1 s en la compu): se hace un momento DESPUÉS de dibujar
+   (`stockTiendasParteLuego`) para no volver lento abrir Stock, y vale 60 s con la misma planilla y el mismo stock, como el Plan. Mientras
+   `STOCK_SIN_TIENDAS` está prendido no corre nada más (es todo sincrónico) y `STOCK_DIBUJO` se aparta: ninguna memoria del dibujo se usa
+   ni se ensucia. */
+var STOCK_SIN_TIENDAS=false, STOCK_TP=null, STOCK_TP_TIMER=null;
+var STOCK_TP_NOMBRE={ heaven:'Heaven', roho:'ROHO', suena:'Sueña', otros:'Sin fábrica' };
+function stockTiendasParteVigente(){
+  var u=STOCK_TP;
+  return !!(u && u.st===STOCK && u.state===STATE && u.n===STATE.length && u.gen===SALDO_GEN && u.hoy===todayStr() && Date.now()-u.t<60000);
+}
+function stockTiendasTotales(R){ var o={}; R.bloques.forEach(function(B){ o[B.k]={ sem:B.tot.sem, quin:B.tot.quin, mes:B.tot.mes }; }); return o; }
+/* `base` = los totales del pedido de siempre (los del dibujo, si los hay: así no se cuenta dos veces); sin ellos, se calculan. */
+function stockTiendasParteCalc(base){
+  var memo=STOCK_DIBUJO, sin;
+  STOCK_DIBUJO=null;
+  try{
+    if(!base) base=stockTiendasTotales(stockProducirCalc(stockData()));
+    STOCK_SIN_TIENDAS=true;
+    sin=stockTiendasTotales(stockProducirCalc(stockData()));
+  } finally { STOCK_SIN_TIENDAS=false; STOCK_DIBUJO=memo; }
+  var out={};
+  Object.keys(base).forEach(function(k){
+    var b=base[k], s=sin[k]||{sem:0,quin:0,mes:0};
+    out[k]={ sem:Math.max(0, b.sem-s.sem), quin:Math.max(0, b.quin-s.quin), mes:Math.max(0, b.mes-s.mes) };
+  });
+  return out;
+}
+function stockTiendasParteHtml(cual){
+  var v=stockTiendasParteVigente() ? STOCK_TP.v : null, MS=stockMesSiguiente(todayStr());
+  if(!v) return '🏪 Calculando cuánto de esto es por las tiendas…';
+  var nada=function(x){ return !x || !(x.sem||x.quin||x.mes); };
+  var tres=function(x){ return '<b>'+x.sem+'</b> en 7 días · <b>'+x.quin+'</b> en 15 días · <b>'+x.mes+'</b> en '+esc(MS.nombre); };
+  var aclara=' <span style="color:var(--muted)">Es lo que venden las tiendas y, en almohadas, lo que piden con la reposición. Ya está sumado: no lo agregues otra vez.</span>';
+  if(cual==='plan'){
+    var L=PRODUCIR_BLOQUES.filter(function(b){ return !nada(v[b.k]); });
+    if(!L.length) return '🏪 Nada del pedido de hoy viene de las tiendas.';
+    return '🏪 <b>Las tiendas ya están en este pedido.</b> Es por ellas: '+L.map(function(b){ var x=v[b.k];
+      return '<b>'+esc(STOCK_TP_NOMBRE[b.k]||b.k)+'</b> '+x.sem+' · '+x.quin+' · '+x.mes; }).join(' &nbsp;·&nbsp; ')+
+      ' <span style="color:var(--muted)">(7 días · 15 días · '+esc(MS.nombre)+').</span>'+aclara;
+  }
+  return nada(v[cual]) ? '' : ('🏪 De esto, por las tiendas: '+tres(v[cual])+'.'+aclara);
+}
+function stockTiendasParteLlenar(){
+  var els=document.querySelectorAll('[data-tp]');
+  for(var i=0;i<els.length;i++){
+    var h=stockTiendasParteHtml(els[i].getAttribute('data-tp'));
+    els[i].innerHTML=h;
+    var fila=els[i].closest('tr'); if(fila) fila.hidden=!h;
+  }
+}
+/* Después de dibujar Stock o el Plan: con la cuenta vigente llena enseguida; si no, la hace un momento después (una sola vez). */
+function stockTiendasParteLuego(){
+  if(!document.querySelector('[data-tp]')) return;
+  if(stockTiendasParteVigente()){ stockTiendasParteLlenar(); return; }
+  var base=null;
+  if(STOCK_DIBUJO && STOCK_DIBUJO.prod && STOCK_DIBUJO.prodD && STOCK_DIBUJO.prodD.hoy===todayStr()) base=stockTiendasTotales(STOCK_DIBUJO.prod);
+  var foto={ st:STOCK, state:STATE, n:STATE.length, gen:SALDO_GEN, hoy:todayStr() };
+  if(STOCK_TP_TIMER) clearTimeout(STOCK_TP_TIMER);
+  STOCK_TP_TIMER=setTimeout(function(){
+    STOCK_TP_TIMER=null;
+    if(foto.st!==STOCK || foto.state!==STATE || foto.n!==STATE.length || foto.gen!==SALDO_GEN) base=null;   // cambió algo: la base también se rehace
+    if(!document.querySelector('[data-tp]')) return;
+    try{
+      var v=stockTiendasParteCalc(base);
+      STOCK_TP={ v:v, st:STOCK, state:STATE, n:STATE.length, gen:SALDO_GEN, hoy:todayStr(), t:Date.now() };
+    }catch(e){ return; }
+    stockTiendasParteLlenar();
+  }, 60);
+}
 /* «Cubre hasta»: el corte día por día de la tabla (ritmo de 15 días); si ese ritmo es cero
    pero el del mes no, una estimación gruesa con el del mes. */
 function producirCubreTxt(f){
@@ -28160,6 +28239,8 @@ function renderProducir(d){
       }).join('')+
       '</tbody><tfoot>'+
       '<tr class="prod-total"><td colspan="4"><b>TOTAL '+esc(B.titulo)+'</b></td><td><b>'+B.tot.sem+'</b> <span style="font-weight:400;color:var(--muted)">7 d</span></td><td><b>'+B.tot.quin+'</b> <span style="font-weight:400;color:var(--muted)">15 d</span></td><td><b>'+B.tot.mes+'</b> <span style="font-weight:400;color:var(--muted)">'+esc(MS.nombre)+'</span>'+(B.tot.antes?('<br><span style="font-weight:400;font-size:.85em;color:#7c4b00">incluye '+B.tot.antes+' para terminar '+esc(producirMesActualNombre(MS))+'</span>'):'')+'</td><td><b>'+B.tot.mes1+'</b> <span style="font-weight:400;color:var(--muted)">1ª q</span></td><td><b>'+B.tot.mes2+'</b> <span style="font-weight:400;color:var(--muted)">2ª q</span></td></tr>'+
+      (function(){ var h=stockTiendasParteHtml(B.k);   // 🏪 (19/10) cuánto de este TOTAL es por las tiendas (no suma nada)
+        return '<tr class="prod-tiendas"'+(h?'':' hidden')+'><td colspan="9" data-tp="'+esc(B.k)+'" style="font-size:.8rem;font-weight:400;background:var(--teal-lt);border-left:3px solid var(--teal);padding:7px 10px;line-height:1.45">'+h+'</td></tr>'; })()+
       Object.keys(B.medidas).sort().map(function(md){
         var M=B.medidas[md], abierta=!!PRODUCIR_MED_ABIERTA[B.k+'|'+md];
         var modelos=abierta ? filas.filter(function(f){ return f.algo && f.md===md; }) : [];
@@ -37469,6 +37550,7 @@ function stockPlanHtml(d, lista){
       /* (17/10, §4lr U43) Las tres columnas, cada fábrica con su lista (antes solo «7 días» y todo mezclado; lo demás estaba plegado). */
       '<span class="pl-copias" style="display:inline-flex;gap:4px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'sem\')">📋 7 días</button><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'quin\')">📋 15 días</button><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'mes\')">📋 '+esc(MS.nombre)+'</button></span></div>'+
     planYaUndoHtml()+   // ↩️ (§4ls VB-7)
+    '<div class="pl-tiendas" data-tp="plan">'+stockTiendasParteHtml('plan')+'</div>'+   // 🏪 (19/10) las tiendas ya están en el pedido
     '<div class="pl-chips">'+chip('todos','Todos')+chip('ya','🚨 Pedir ya')+chip('sem','🏭 Esta semana')+chip('tr','🚚 Traer')+chip('rev','⚠️ Revisar')+chip('ok','✅ Alcanza')+'</div>'+
     '<div class="pl-tabla"><table><thead><tr><th>Producto</th><th>Hay<small>PTF · Banzer · Moreno</small></th><th>Vendido<small>sin entregar</small></th><th>Se corta</th><th>Qué hacer hoy</th>'+
       '<th>Tener<small>objetivo · punto de pedido</small></th>'+

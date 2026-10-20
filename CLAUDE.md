@@ -656,6 +656,12 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - **«📍 Banzer o PTF» NO es para pedir a producción** (su plan es otra cuenta, §4hw): en la reunión vale el Plan de stock / Qué producir.
 - El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
 - `tests/test_stock_reunion.js` (59; 48 rojas contra `27f0134`). Lista completa y datos para logística: bitácora §4lr.
+- 🏪 **Las tiendas ya están en el pedido a producción, y el panel lo dice** (§4lt, 19/10; dueño eligió «Mostrarlo en el panel», sin cambiar
+  números; en la rama): la venta de tienda es demanda, en almohadas la RPT; la RPT de un colchón NO suma encima (contaría dos veces). El Plan
+  (`.pl-tiendas`) y cada TOTAL de «Qué producir» (`tr.prod-tiendas`) dicen cuánto es por las tiendas = pedido − el mismo pedido con
+  `STOCK_SIN_TIENDAS` (`stockTiendasParteCalc`, un momento después de dibujar, 60 s de caché). ⚠️ Ese interruptor es SOLO para medir: siempre
+  en `finally`, y con `STOCK_DIBUJO` apartado. Tiendas Roho no carga ventas y su RPT no cuenta: decisión pendiente del dueño.
+  `tests/test_stock_tiendas_parte.js`.
 - 🎨 **Lo que se le publica al dueño (páginas, artefactos con clave) va SIEMPRE claro, con los colores del panel** (dueño, 19/10: *«no uses
   fondo negro… usa los mismos colores que el panel»*): fondo `--bg-app`, tarjetas blancas, turquesa `#00B5AD`/`#00A09A`, encabezado `--grad-header`,
   letra Inter, y SIN modo oscuro aunque el aparato lo tenga.
