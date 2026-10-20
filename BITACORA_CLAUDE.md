@@ -15209,7 +15209,7 @@ es el jueves 22… qué se pedirá a producción para los 7-15-otro mes… creo 
 - Commits en la rama: `6fcc29c` (fallas de cuenta), `a026d08` (almohadas), `ee3d9f8` («en producción» automático) y el de los arreglos
   chicos (U37, U39, U40, U42, U43, U50, U51). Solo la página: el `.gs` sigue `2026-10-15-a`. Al publicar, todos F5.
 
-### §4ls — 📦 Stock: la revisión 2 implementada con las decisiones del dueño del 18/10 (18-19/10, en la rama, SIN publicar)
+### §4ls — 📦 Stock: la revisión 2 implementada con las decisiones del dueño del 18/10 (18-19/10, PUBLICADA 19/10 20:20 de Bolivia, `bd3164c`)
 El dueño (17/10), después del informe de §4lr: *«necesito que los agentes verifiquen, corroboren realmente si está funcionando la
 pestaña de stock y reposición… anticipar cada uno de los pedidos y la producción… no deberíamos darle un plazo de 72 horas al cliente,
 sino anticipar a tener el stock, pero el stock de los productos que sí tienen rotación, para no estoquearnos de productos que no se van
@@ -15348,3 +15348,14 @@ a vender, por si acaso»*.
     del pedido diario. (3) Lo que no rota con stock: 1.141 u, ~Bs 1,77 M a precio de venta, nada se repone.
   · Queda para decidir (no se hizo): Plan que aparte lo 🏭 ya llegado; los dos ritmos; una columna aparte para «antes del 1°»; CO-1 parte 2
     (proteger `mano`/`incT` de la página vieja exige `.gs` nuevo con `sf≥4`: mientras tanto, todos F5).
+  · **Publicado el 19/10 a las 20:20 de Bolivia (`bd3164c`)**. El dueño: *«En 11 min cuando se reinicien los token publica»*. Worktree desde
+    `origin/main` (`17ad3b8`, que solo traía commits automáticos del dashboard y del reporte de ATC desde `27f0134`) con `pedidos.html`,
+    `CLAUDE.md` y 35 pruebas de la rama (37 archivos; sin bitácora, herramientas ni workflows de la rama). `pedidos.html` idéntico a la rama,
+    `node --check` bien, sin workflows corriendo, y `test_stock_final_pantalla` 54, `test_stock_reunion` 59 y `test_stock_rev2_cuanto` 33 en
+    verde sobre el árbol publicado. El `.gs` no cambió. Todos F5.
+  · **La página de la reunión** (artefacto privado del dueño, versión 4): la lista entera de lo que no rota con stock (157 productos, 1.118 u sin
+    vender, Bs 1,71 M a precio de venta; grupos «ninguna venta en 90 días» 65 / «se vende poco» 63 / «se vende seguido pero no 3 entregas en 15
+    días» 29 / descontinuados 16; última venta del panel o mes del sistema; 229 u de las almohadas NASA nuevas salen sin pedido, no están
+    dormidas) y **ingreso con clave**: todo el texto y los números van cifrados (AES-256-GCM, PBKDF2-SHA256 600.000 vueltas) y solo quedan a la
+    vista la pantalla de ingreso y el código que dibuja. La clave se le pasó al dueño por el chat; NO está en el repo. Hacerla pública lo hace él
+    desde «Compartir».

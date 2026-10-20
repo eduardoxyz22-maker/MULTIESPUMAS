@@ -634,7 +634,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
     con la hora de Bolivia (`new Date(f+'T'+h+'-04:00')`); con el reloj clavado, `Date.now()` es SIEMPRE el mismo instante (y
     coincide con `c.t`): no sirve para «antes/después».
 
-## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10, y §4ls, 18-19/10; en la rama, SIN publicar)
+## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10, y §4ls, 18-19/10; PUBLICADO 19/10 20:20 de Bolivia, `bd3164c`; el `.gs` no cambió)
 Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado dos veces). Lo que hay que respetar:
 - **El plazo medido** (`stockTiemposFabrica`): con un empate en el corte de las 6 últimas llegadas entran TODAS (si no, dependía del
   orden de las filas: Moreno daba 7 con los mismos datos; ahora 4, confirmado por el dueño). **Una fábrica por producto**: `o.fabLead`
@@ -657,7 +657,7 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
 - `tests/test_stock_reunion.js` (59; 48 rojas contra `27f0134`). Lista completa y datos para logística: bitácora §4lr.
 
-### §4ls — la revisión 2 implementada (18-19/10; en la rama, SIN publicar; decisiones del dueño del 18/10)
+### §4ls — la revisión 2 implementada (18-19/10; PUBLICADA 19/10 20:20, `bd3164c`; decisiones del dueño del 18/10)
 - **U2 por turno** (decisión 2): dos casillas al subir el Excel, `#exist-inc` (mañana) y `#exist-inc-pm` (tarde), igual en «Conté a
   mano» (`#conteo-inc`, `#conteo-inc-pm`); las propone `stockIncPropuesta` (camión: GPS/«🚚 Ya salió» con `STOCK_INC_CAMION_MIN`; sin
   dato, `STOCK_INC_AM`=09:30 y `STOCK_INC_PM`=16:00). Lo de HOY de un turno incluido no se reserva (`stockFueraHoy`) ni se resta otra vez
