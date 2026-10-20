@@ -656,6 +656,9 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - **«📍 Banzer o PTF» NO es para pedir a producción** (su plan es otra cuenta, §4hw): en la reunión vale el Plan de stock / Qué producir.
 - El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
 - `tests/test_stock_reunion.js` (59; 48 rojas contra `27f0134`). Lista completa y datos para logística: bitácora §4lr.
+- 🎨 **Lo que se le publica al dueño (páginas, artefactos con clave) va SIEMPRE claro, con los colores del panel** (dueño, 19/10: *«no uses
+  fondo negro… usa los mismos colores que el panel»*): fondo `--bg-app`, tarjetas blancas, turquesa `#00B5AD`/`#00A09A`, encabezado `--grad-header`,
+  letra Inter, y SIN modo oscuro aunque el aparato lo tenga.
 
 ### §4ls — la revisión 2 implementada (18-19/10; PUBLICADA 19/10 20:20, `bd3164c`; decisiones del dueño del 18/10)
 - **U2 por turno** (decisión 2): dos casillas al subir el Excel, `#exist-inc` (mañana) y `#exist-inc-pm` (tarde), igual en «Conté a

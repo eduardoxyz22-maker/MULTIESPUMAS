@@ -15359,3 +15359,7 @@ a vender, por si acaso»*.
     dormidas) y **ingreso con clave**: todo el texto y los números van cifrados (AES-256-GCM, PBKDF2-SHA256 600.000 vueltas) y solo quedan a la
     vista la pantalla de ingreso y el código que dibuja. La clave se le pasó al dueño por el chat; NO está en el repo. Hacerla pública lo hace él
     desde «Compartir».
+  · **Colores** (dueño, 19/10, al ver la página en su aparato con modo oscuro: *«no uses fondo negro y etc en lo que publicaras con clave. Usa
+    los mismos colores que el panel»*): la página quedó SIEMPRE clara con los tokens de `pedidos.html` (fondo `--bg-app`, tarjetas blancas,
+    `#00B5AD`/`#00A09A`, encabezado `--grad-header`, Inter), sin los bloques de modo oscuro. Versión 5. También se arregló que la tarjeta de la
+    clave seguía a la vista después de entrar (`.ingreso{display:flex}` le ganaba a `[hidden]`), y los textos que decían «todavía sin publicar».
