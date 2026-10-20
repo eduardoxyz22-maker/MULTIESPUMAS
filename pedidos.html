@@ -28548,7 +28548,7 @@ function producirRepartoFila(f, h, porK, D){
    La cuenta se hace al abrir y con 🔄 Actualizar; si la de las tiendas (`STOCK_TP`) está vigente, se usa esa (no se calcula dos veces).
    ⚠️ Todas las clases llevan «pap-» adelante (una que se llame como una de la página hereda sus reglas).
    ========================================================================== */
-var PAP=null, PAP_S=null, PAP_COPIA='', PAP_INIT=false, PAP_TIMER=null, PAP_LEYENDO=false, PAP_LEIDO_ERR='', PAP_FOCO_ANTES=null, PAP_FORZAR_TRAS=false;
+var PAP=null, PAP_S=null, PAP_COPIA='', PAP_INIT=false, PAP_TIMER=null, PAP_LEYENDO=false, PAP_LEIDO_ERR='', PAP_FOCO_ANTES=null, PAP_FORZAR_TRAS=false, PAP_STOCK_SUCIO=false;
 var PAP_H=['sem','quin','d30','tot'];
 var PAP_FAB={ MORENO:'Industrias Moreno', MULTI:'Multiespumas' };
 var PAP_COL={ P:'#007C76', B:'#4f46e5', T:'#be185d' }, PAP_FONDO={ P:'#EAF6F5', B:'#EEF0FE', T:'#FDF0F6' };
@@ -28667,6 +28667,8 @@ function cerrarPap(){
   var ov=document.getElementById('pap-overlay'), estaba=papAbierto(); if(ov) ov.style.display='none';
   var h=document.getElementById('pap-hoja'); if(h) h.hidden=true;
   if(PAP_TIMER){ clearTimeout(PAP_TIMER); PAP_TIMER=null; }
+  /* Si la ventana leyó la planilla y trajo algo nuevo, Stock (que quedó detrás, con lo de antes) se redibuja al volver. */
+  if(PAP_STOCK_SUCIO){ PAP_STOCK_SUCIO=false; var so=document.getElementById('stock-overlay'); if(so && so.style.display==='flex') try{ renderStock(); }catch(e){} }
   var f=PAP_FOCO_ANTES; PAP_FOCO_ANTES=null;
   if(estaba && f && f.focus && document.contains(f)) try{ f.focus({ preventScroll:true }); }catch(e){}
 }
@@ -28677,6 +28679,7 @@ function papLeer(forzarCuenta){
   var fin=function(ok){
     PAP_LEYENDO=false; PAP_LEIDO_ERR=ok ? '' : (ULTIMO_ERROR || 'no se pudo leer la planilla');
     if(PAP_FORZAR_TRAS){ PAP_FORZAR_TRAS=false; forzarCuenta=true; }
+    if(ok) PAP_STOCK_SUCIO=true;
     if(!papAbierto()) return;
     if(forzarCuenta){ papCalcularLuego(true); return; }
     if(PAP && PAP.listo && PAP.firma!=null && PAP.firma!==papFirma()){ try{ PAP=papDatos(false); }catch(e){ PAP={ hoy:todayStr(), error:String(e && e.message || e), listo:true, t:Date.now() }; } papPintar(); }
@@ -28748,7 +28751,8 @@ function papPintar(){
   var pe=document.getElementById('pap-pedir'), dn=document.getElementById('pap-donde');
   if(D.sinConteo || D.error){
     document.getElementById('pap-plazos').innerHTML='';
-    var msg=D.sinConteo ? '📭 Todavía no hay conteo del depósito: subí el Excel de existencias (📥 Subir existencias, en Stock) para que se calcule el pedido.'
+    var msg=(D.sinConteo && !STOCK_CARGADO && CONNECTED) ? '⏳ Todavía no llegó el stock de la planilla: esperá un momento y tocá 🔄 Actualizar.'
+      : D.sinConteo ? '📭 Todavía no hay conteo del depósito: subí el Excel de existencias (📥 Subir existencias, en Stock) para que se calcule el pedido.'
       : ('⚠️ No se pudo calcular el pedido ('+esc(D.error)+'). Tocá 🔄 Actualizar; si sigue, avisá.');
     pe.innerHTML=dn.innerHTML='<div class="pap-vacio">'+msg+'</div>';
     papMedirCtrl(); return;

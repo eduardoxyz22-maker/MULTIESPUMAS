@@ -389,7 +389,11 @@ const ERRS=[];
     document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true })); out.cierraEsc=ov.style.display==='none';
     // Sin conteo del depósito: lo dice, sin números.
     var _sd=stockData; stockData=function(){ var d=_sd.apply(null, arguments); d.contado=false; return d; };
-    try{ abrirPap(); await new Promise(function(res){ setTimeout(res, 150); }); out.sinConteo=_txt(document.getElementById('pap-pedir')); out.sinPlazos=!document.querySelector('#pap-plazos .pap-pz'); }
+    try{ abrirPap(); await new Promise(function(res){ setTimeout(res, 150); }); out.sinConteo=_txt(document.getElementById('pap-pedir')); out.sinPlazos=!document.querySelector('#pap-plazos .pap-pz'); cerrarPap();
+      // …y si el stock de la planilla todavía no llegó, no pide «subí el Excel»: dice que espere.
+      var _sc=STOCK_CARGADO, _re=refrescarEstado; STOCK_CARGADO=false; refrescarEstado=function(){ return Promise.resolve(false); };
+      try{ abrirPap(); await new Promise(function(res){ setTimeout(res, 150); }); out.esperando=_txt(document.getElementById('pap-pedir')); }
+      finally{ STOCK_CARGADO=_sc; refrescarEstado=_re; } }
     finally{ stockData=_sd; cerrarPap(); }
     return out;
   });
@@ -409,7 +413,7 @@ const ERRS=[];
   });
   chk('RP9h si la cuenta falla lo dice («No se pudo calcular el pedido»), sin plazos, y con 🔄 vuelve', er && /No se pudo calcular el pedido \(prueba\)/.test(er.txt) && er.sinPlazos && er.volvio, er);
   chk('RP9i el 30/01/2027, «30 días» llega hasta el 28/02 (no pasa el fin de febrero)', await page.evaluate(() => typeof papPlazos==='function' && papPlazos({ hoy:'2027-01-30', MS:stockMesSiguiente('2027-01-30') })[2].hasta==='28/02'));
-  chk('RP9c sin conteo del depósito lo dice (subí el Excel de existencias) y no muestra plazos', /no hay conteo del depósito/.test(r.sinConteo||'') && r.sinPlazos, r.sinConteo);
+  chk('RP9c sin conteo del depósito lo dice (subí el Excel de existencias) y no muestra plazos; si el stock todavía no llegó, dice que espere', /no hay conteo del depósito/.test(r.sinConteo||'') && r.sinPlazos && /Todavía no llegó el stock de la planilla/.test(r.esperando||''), [r.sinConteo, r.esperando]);
   // ═══ RP10. Avisos, leer la planilla, foco, la hoja de copiar y la letra ═══
   console.log('\n── RP10. Excel viejo, sin contar, 🔄 lee la planilla, foco, hoja y letra ──');
   r = await page.evaluate(async () => {
@@ -445,6 +449,11 @@ const ERRS=[];
     out.antes=PAP.TODAS.filter(function(f){ return f.antes>0; }).map(function(f){ return [f.nombre, f.quin, f.antes, f.mes]; });
     var Fa=null; PAP.FABS.forEach(function(F){ F.bloques.forEach(function(b){ b.filas.forEach(function(f){ if(f.antes>0) Fa=F; }); }); });
     out.antesCopia=Fa ? papTextoFab(Fa, 'tot') : '';
+    // Stock (detrás) se redibuja al cerrar si la ventana leyó la planilla.
+    abrirStock(); await espera(80);
+    var dib=0, _rs=renderStock; renderStock=function(){ dib++; return _rs.apply(null, arguments); };
+    try{ abrirPap(); await listo(); var d0=dib; cerrarPap(); out.redibujo=dib>d0; } finally { renderStock=_rs; }
+    abrirPap(); await listo();
     // La letra de los botones (la regla general no les gana a las clases).
     out.peso={ pest:+getComputedStyle(ov.querySelector('.pap-pestana')).fontWeight, btn:+getComputedStyle(ov.querySelector('.pap-btn')).fontWeight, cfab:+getComputedStyle(ov.querySelector('.pap-cfab')).fontWeight };
     // La hoja de copiar (sin portapapeles) se cierra tocando afuera.
@@ -473,6 +482,7 @@ const ERRS=[];
   chk('RP10e los botones conservan su letra (pestañas 650, botones 700, fichas 600)', r && r.peso.pest>=650 && r.peso.btn>=700 && r.peso.cfab>=600, r && r.peso);
   chk('RP10f sin portapapeles sale la hoja con el texto; tocar afuera la cierra, y Esc cierra la hoja sin cerrar la ventana', r && r.hoja.abierta && /PEDIDO A PRODUCCIÓN/.test(r.hoja.txt) && r.hoja.cerro && r.hoja.escSoloHoja, r && r.hoja);
   chk('RP10g al cerrar con Esc el foco vuelve al botón «🏭 Pedido a producción» de la barra de Stock', r && r.foco, r && r.foco);
+  chk('RP10h si la ventana leyó la planilla, Stock (detrás) se redibuja al cerrarla', r && r.redibujo, r && r.redibujo);
 
   await page.setViewportSize({ width:390, height:844 });
   await abrirVentana();
