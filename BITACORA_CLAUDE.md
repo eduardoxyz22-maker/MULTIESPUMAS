@@ -15514,7 +15514,7 @@ en 15 ni en 30?»*. Se le explicó y dijo *«hacer que si recomiendas»* → se 
 - `tests/test_pap_clientes.js` (30; 19 rojas contra `b42198c`). `test_producir_reparto`, `test_stock_tiendas_parte` y `test_producir` siguen en verde.
 - Queda latente (0 casos hoy): la tienda se reconoce por el texto escrito («MIAPLAZA» o «SALIÓ DE TIENDA - Mia Plaza» con guion caerían por la vendedora).
 
-#### §4lt-e — 🛏️ ROHO en la Proyección del mes, aparte y en unidades (20/10; en la rama, espera «publica»)
+#### §4lt-e — 🛏️ ROHO en la Proyección del mes, aparte y en unidades (20/10; PUBLICADO 20/10 12:43 de Bolivia, `dfec4b5`)
 El dueño, al ver la página de la reunión: *«hay productos de roho que sí se venden, ernesto cargó las ventas, incluso está en el panel
 como vendedor roho, solo que no aparece en la lista de vendedores»* + *«te sirve para medir sus ventas y qué tener»*; eligió «Proyección del
 mes» y avisó: *«ernesto no pone precio de los colchones, tendría que pasarte yo la lista de precio para medir cuánto se vendió»*.
@@ -15527,3 +15527,10 @@ mes» y avisó: *«ernesto no pone precio de los colchones, tendría que pasarte
   Contabilidad. Con la planilla del 16/10: octubre 119 u (97 colchones, 22 somieres), proyección 199; septiembre 176 u.
 - **Plata**: cuando el dueño pase la lista de precios de ROHO, se puede valorizar (no hecho).
 - `test_proyeccion` (128): «ROHO no aparece» cambió a conciencia por «ROHO va aparte, al final y en unidades» + `pryRohoCuenta`.
+- **📦 Sus productos** (dueño: *«¿muestra los productos en la proyección en ROHO?»*, `5e9ab43`): `R.roho.tot.prods` = por clave de stock
+  (`stockClave`), unidades del renglón (combo = 2) con entregado (`ua`) y agendado (`ub`); en el grupo, `<details class="pry-roho-prods">`
+  «📦 Ver sus productos (N)» (abierto o no queda en `PRY_ROHO_ABIERTO`). Con el 16/10: suman 119 = el total (NUEVO ECO FLEX 105 26, 140 22,
+  FORTE FLEX 140 9…). `test_proyeccion` → 130.
+- **Publicación** (dueño: «ok publica»): SOLO ROHO (`ff35c40` + `5e9ab43`) sobre `main`; §4lt-d (Mia Plaza «para clientes de») queda en la
+  rama SIN publicar (el dueño: *«está bien como está»*). Antes de subir: `node --check` y test_proyeccion 130, test_conta_4jw 40,
+  test_pry_plata 7, test_rev30_proyeccion 12, test_ventas_marcas 22, todo en verde sobre la copia de `main`; ningún workflow corriendo.

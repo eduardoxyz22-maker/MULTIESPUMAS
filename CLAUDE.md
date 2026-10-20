@@ -1757,7 +1757,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   (`#pry-plata`) parte lo vendido del mes por marca en cobrado en el mes / antes / falta (cargadas en el mes o antes) y muestra cómo se
   llega a la ficha del Cuadre (+ cobros del mes de OTRAS ventas + fletes). Mismas ventas que la ficha y mismos pagos que el Cuadre
   (`contaPagos`): si se toca una de las dos, revisar esta. `tests/test_pry_plata.js`.
-- **🛏️ ROHO aparte y en unidades** (§4lt-e, 20/10; dueño: *«Ernesto cargó las ventas… te sirve para medir sus ventas»*; en la rama, espera «publica»):
+- **🛏️ ROHO aparte y en unidades** (§4lt-e, 20/10; dueño: *«Ernesto cargó las ventas… te sirve para medir sus ventas»*; PUBLICADO 20/10 12:43, `dfec4b5`, con «📦 Ver sus productos», `R.roho.tot.prods`):
   `pryRohoCuenta` (sin ATC/RPT ni «TIENDA n») → `R.roho` con el ritmo en UNIDADES (sus pedidos no traen precio); ficha y grupo al final, fuera
   del TOTAL EQUIPO, de las curvas y de Contabilidad. Para Bs hace falta la lista de precios de ROHO (la pasa el dueño).
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
