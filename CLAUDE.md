@@ -634,7 +634,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
     con la hora de Bolivia (`new Date(f+'T'+h+'-04:00')`); con el reloj clavado, `Date.now()` es SIEMPRE el mismo instante (y
     coincide con `c.t`): no sirve para «antes/después».
 
-## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10, y §4ls, 18-19/10; en la rama, SIN publicar)
+## 📋 Stock para la reunión con logística del 22/10 (§4lr, 16-17/10, y §4ls, 18-19/10; PUBLICADO 19/10 20:20 de Bolivia, `bd3164c`; el `.gs` no cambió)
 Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado dos veces). Lo que hay que respetar:
 - **El plazo medido** (`stockTiemposFabrica`): con un empate en el corte de las 6 últimas llegadas entran TODAS (si no, dependía del
   orden de las filas: Moreno daba 7 con los mismos datos; ahora 4, confirmado por el dueño). **Una fábrica por producto**: `o.fabLead`
@@ -656,8 +656,30 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - **«📍 Banzer o PTF» NO es para pedir a producción** (su plan es otra cuenta, §4hw): en la reunión vale el Plan de stock / Qué producir.
 - El Plan tiene «📋 7 días / 15 días / <mes>» por fábrica (`copiarProducirTodo`). PTF negativo con el Excel de hoy: `stockNegTxt`.
 - `tests/test_stock_reunion.js` (59; 48 rojas contra `27f0134`). Lista completa y datos para logística: bitácora §4lr.
+- 🏪 **Las tiendas ya están en el pedido a producción, y el panel lo dice** (§4lt, 19/10; dueño eligió «Mostrarlo en el panel», sin cambiar
+  números; PUBLICADO 20/10 con §4lt-c): la venta de tienda es demanda, en almohadas la RPT; la RPT de un colchón NO suma encima (contaría dos veces). El Plan
+  (`.pl-tiendas`) y cada TOTAL de «Qué producir» (`tr.prod-tiendas`) dicen cuánto es por las tiendas = pedido − el mismo pedido con
+  `STOCK_SIN_TIENDAS` (`stockTiendasParteCalc`, un momento después de dibujar, 60 s de caché). ⚠️ Ese interruptor es SOLO para medir: siempre
+  en `finally`, y con `STOCK_DIBUJO` apartado. Tiendas Roho no carga ventas y su RPT no cuenta: decisión pendiente del dueño.
+  `tests/test_stock_tiendas_parte.js`.
+- 📦 **El total a producir** (§4lt-b, 20/10): la columna del mes va ADEMÁS de 15 días, así que `f.tot = quin + mes` («Hasta el 30/11») va en
+  cada fila, medida, TOTAL, encabezado y copia (`copiarProducir(k,'tot')`). ⚠️ Una cuenta nueva del total sale de `B.tot`/`f.tot`, nunca aparte.
+- 🏭 **«Pedido a producción», una ventana aparte** (§4lt-c, 20/10; dueño: *«lo veo muy cargado… al hacer el pedido se genere el consolidado…
+  y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes»*; vio el ejemplo y dijo «Publica»; PUBLICADO 20/10 de madrugada):
+  `#pap-overlay` (z 3100) desde la barra de Stock (`#stk-pap-btn`), el Plan (`.pl-pap`) y la línea de «Qué producir» (`#prod-pap`; el cuadro
+  del total y la planilla de §4lt-b se sacaron de ahí). Plazos 7 (sin fecha: U17) / 15 / **30 días** (`f.d30` = el mayor de la cuenta de 15 días
+  con `PRODUCIR_30` y el piso de fin de mes —`antes` + la parte del mes que viene que cae adentro—, tope `quin + mes`, `stockProducirD30`) /
+  «Todo <el mes que viene>» (`f.tot`, con «N para terminar <este mes>» aparte), cada uno incluye al anterior; lo de las tiendas no achica al
+  alargar el plazo. Al abrir y con 🔄 lee la planilla (con Stock abierto no se relee sola); avisa el Excel que no es de hoy y lo que no está contado. Pestaña «📦 Qué pedir a producción» (por FÁBRICA:
+  Industrias Moreno = Heaven + ROHO, Multiespumas = Sueña; «📋 Copiar para <fábrica>») y «🗺️ Qué va a dónde» (PTF / Banzer / cada tienda con
+  `producirRepartoFila`: suma exacto; tiendas por su venta de tienda de 30 días + la RPT pendiente; el resto con la regla de «📍 Banzer o PTF»).
+  Solo mira. ⚠️ Clases `pap-*` (no reusar nombres del panel); la cuenta sale de `stockProducirCalc`/`STOCK_TP`, nunca aparte.
+  `tests/test_producir_reparto.js` (64).
+- 🎨 **Lo que se le publica al dueño (páginas, artefactos con clave) va SIEMPRE claro, con los colores del panel** (dueño, 19/10: *«no uses
+  fondo negro… usa los mismos colores que el panel»*): fondo `--bg-app`, tarjetas blancas, turquesa `#00B5AD`/`#00A09A`, encabezado `--grad-header`,
+  letra Inter, y SIN modo oscuro aunque el aparato lo tenga.
 
-### §4ls — la revisión 2 implementada (18-19/10; en la rama, SIN publicar; decisiones del dueño del 18/10)
+### §4ls — la revisión 2 implementada (18-19/10; PUBLICADA 19/10 20:20, `bd3164c`; decisiones del dueño del 18/10)
 - **U2 por turno** (decisión 2): dos casillas al subir el Excel, `#exist-inc` (mañana) y `#exist-inc-pm` (tarde), igual en «Conté a
   mano» (`#conteo-inc`, `#conteo-inc-pm`); las propone `stockIncPropuesta` (camión: GPS/«🚚 Ya salió» con `STOCK_INC_CAMION_MIN`; sin
   dato, `STOCK_INC_AM`=09:30 y `STOCK_INC_PM`=16:00). Lo de HOY de un turno incluido no se reserva (`stockFueraHoy`) ni se resta otra vez
