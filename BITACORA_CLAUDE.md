@@ -15514,7 +15514,7 @@ en 15 ni en 30?»*. Se le explicó y dijo *«hacer que si recomiendas»* → se 
 - `tests/test_pap_clientes.js` (30; 19 rojas contra `b42198c`). `test_producir_reparto`, `test_stock_tiendas_parte` y `test_producir` siguen en verde.
 - Queda latente (0 casos hoy): la tienda se reconoce por el texto escrito («MIAPLAZA» o «SALIÓ DE TIENDA - Mia Plaza» con guion caerían por la vendedora).
 
-#### §4lt-e — 🛏️ ROHO en la Proyección del mes, aparte y en unidades (20/10; PUBLICADO 20/10 12:43 de Bolivia, `dfec4b5`)
+#### §4lt-e — 🛏️ ROHO en la Proyección del mes, aparte y en unidades (20/10; PUBLICADO 20/10 12:43 de Bolivia, `dfec4b5`, Pages OK 12:44)
 El dueño, al ver la página de la reunión: *«hay productos de roho que sí se venden, ernesto cargó las ventas, incluso está en el panel
 como vendedor roho, solo que no aparece en la lista de vendedores»* + *«te sirve para medir sus ventas y qué tener»*; eligió «Proyección del
 mes» y avisó: *«ernesto no pone precio de los colchones, tendría que pasarte yo la lista de precio para medir cuánto se vendió»*.
