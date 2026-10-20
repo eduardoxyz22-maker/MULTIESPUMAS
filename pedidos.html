@@ -839,6 +839,10 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-total{border:1px solid var(--teal);border-left-width:4px;border-radius:10px;background:#f0fdfa;margin-bottom:12px}
 /* 📈 (29/09, §4gu) Cómo se proyectó cada grupo, la prueba con los meses cerrados y el patrón del mes. */
 .pry-pie{padding:7px 12px 9px;border-top:1px solid var(--gray-md);font-size:.74rem;color:var(--muted);line-height:1.45}
+.pry-roho-prods{margin:8px 0 0}
+.pry-roho-prods summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--teal-strong,#00A09A);padding:6px 0;min-height:36px;display:flex;align-items:center}
+.pry-roho-prods td small{color:var(--muted);font-weight:600;margin-left:4px}
+.pry-roho-prods th.r,.pry-roho-prods td.r{text-align:right;font-variant-numeric:tabular-nums}
 .pry-cuerpo{padding:2px 12px 10px}
 .pry-linea{font-size:.78rem;line-height:1.5;margin:10px 0 4px;color:var(--text)}
 .pry-intro{font-size:.78rem;line-height:1.5;color:var(--muted);margin:-4px 0 12px}
@@ -7945,6 +7949,18 @@ function proyeccionMes(ym){
   var roho=lista.filter(function(r){ return r.amb==='roho'; }), rohoTot={ n:0, u:0, c:0, s:0, ua:0, ub:0 };
   roho.forEach(function(r){ ['n','u','c','s','ua','ub'].forEach(function(k){ rohoTot[k]+=r[k]; }); });
   rohoTot.proyU = estado==='cerrado' ? rohoTot.u : (rohoTot.ua + Math.max(rohoTot.ub, Math.round(dt>0 ? rohoTot.ua/dt*dr : 0)));
+  /* Sus productos (dueño, 20/10: «¿muestra los productos?»): los mismos renglones que cuentan como unidades (un combo, 2), por producto. */
+  var rohoProd={};
+  STATE.forEach(function(p){
+    if(!pryRohoCuenta(p)) return;
+    var f=fechaSalida(p); if(!f || f.slice(0,7)!==ym) return;
+    (p.productos||[]).forEach(function(x){
+      var t=pryTipoProd(x), n=(Number(x&&x.cant)||0)*(t==='combo' ? 2 : 1); if(!t || !(n>0)) return;
+      var k=stockClave(x), o=rohoProd[k]||(rohoProd[k]={ k:k, cod:String((x&&x.codigo)||'').trim(), u:0, ua:0, ub:0 });
+      o.u+=n; if(f<=hoy) o.ua+=n; else o.ub+=n;
+    });
+  });
+  rohoTot.prods=Object.keys(rohoProd).map(function(k){ return rohoProd[k]; }).sort(function(a,b){ return (b.u-a.u) || (a.k<b.k?-1:1); });
   return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
            equipo:equipo, mayor:{ filas:mayor, tot:suma(mayor) }, roho:{ filas:roho, tot:rohoTot }, metodos:metodos, hist:hist, V:V, pruebas:pruebas, errores:errores };
 }
@@ -7983,7 +7999,8 @@ function pryErrores(pruebas){
    · Por marca (sus metas son por marca, §4gu) y el equipo entero; sin mayoristas.
    · Unidades: `pryUnidadesDe` (colchones y somieres; un combo es uno de cada).
    ========================================================================== */
-var PRY_CMP='', PRY_CMP_DE='';   // el mes elegido en «Comparar con», y para qué mes se eligió
+var PRY_CMP='', PRY_CMP_DE='';
+var PRY_ROHO_ABIERTO=false;   // 🛏️ «Ver sus productos» de ROHO, abierto o cerrado (se mantiene al repintar)   // el mes elegido en «Comparar con», y para qué mes se eligió
 var PRY_TRAMOS=['Antes del 1°','Del 1 al 7','Del 8 al 14','Del 15 al 21','Del 22 al 28','Del 29 al fin','Después del fin'];
 function pryTramo(reg, ym){
   if(reg<ym+'-01') return 0;
@@ -8242,6 +8259,12 @@ function renderProyeccion(){
            '<span><b>'+esc(nU(T.u))+'</b>'+(conProy ? (' · <b class="pry-p">📈 '+esc(nU(T.proyU))+'</b>') : '')+'</span></div>'+
            '<div class="pry-fila"><div class="pry-q"><b>ROHO</b><small>'+esc(det.join(' · '))+'</small></div>'+
            '<div class="pry-n"><b>'+esc(nU(T.u))+'</b>'+(conProy ? ('<small class="pry-p">📈 '+esc(nU(T.proyU))+'</small>') : '')+'</div></div>'+
+           ((T.prods||[]).length ? ('<details class="pry-roho-prods"'+(PRY_ROHO_ABIERTO ? ' open' : '')+' ontoggle="PRY_ROHO_ABIERTO=this.open"><summary>📦 Ver sus productos ('+T.prods.length+')</summary>'+
+             '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>Producto</th><th>Medida</th>'+(R.estado==='curso' ? '<th class="r">Entregado</th><th class="r">Agendado</th>' : '')+'<th class="r">Unidades</th></tr></thead><tbody>'+
+             T.prods.map(function(o){ var p=o.k.split('|');
+               return '<tr><td>'+esc(p[0]||o.k)+(o.cod ? ' <small>'+esc(o.cod)+'</small>' : '')+'</td><td>'+esc((p[1]||'').toLowerCase())+'</td>'+
+                 (R.estado==='curso' ? ('<td class="r">'+(o.ua||'·')+'</td><td class="r">'+(o.ub||'·')+'</td>') : '')+'<td class="r"><b>'+o.u+'</b></td></tr>'; }).join('')+
+             '</tbody></table></div></details>') : '')+
            (curso ? '<div class="pry-pie">'+esc('📈 Con el ritmo, en unidades: lo entregado hasta hoy ('+T.ua+') + lo agendado hasta fin de mes ('+T.ub+'), o lo que da el ritmo si es más. '+
              'Sin plata: los pedidos de ROHO no traen el precio. Con la lista de precios de ROHO se puede contar también en Bs.')+'</div>' : '')+'</div>';
   };

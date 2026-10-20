@@ -199,6 +199,9 @@ function PREPARAR(){
   chk('Maria Flores: su venta de agosto no es de septiembre y la ATC no es venta → vendido Bs 8.000, proyección Bs 13.000', r.mf && r.mf.vendido===8000 && r.mf.n===1 && r.mf.proy===13000, r.mf);
   chk('no entran ni la RPT (Carola) ni ROHO en el equipo, las marcas ni los mayoristas', !r.cc && !r.roho, [r.cc, r.roho]);
   chk('ROHO va APARTE (20/10, dueño: «te sirve para medir sus ventas»): su venta del 10/09 en `R.roho`, en unidades', r.rohoT && r.rohoT.n===1, r.rohoT);
+  chk('📦 los productos de ROHO suman lo mismo que su total de unidades', r.rohoT && Array.isArray(r.rohoT.prods)
+      && r.rohoT.prods.reduce(function(s, o){ return s+o.u; }, 0)===r.rohoT.u
+      && r.rohoT.prods.every(function(o){ return o.u===o.ua+o.ub; }), r.rohoT && r.rohoT.prods);
   chk('Isabel: una venta sin monto anotado cuenta como venta pero no suma plata', r.ir && r.ir.n===1 && r.ir.vendido===0 && r.ir.sinMonto===1, r.ir);
   chk('un vendedor que no está en ninguna marca va a «Sin marca» (Pedro Nuevo: Bs 1.000, proyección Bs 1.625)', r.pn && !r.pn.marca && r.sin.vendido===1000 && r.sin.proy===1625, [r.pn, r.sin]);
   chk('🛏️ Sueña = Mauricio + Juan Pablo: vendido Bs 39.000, proyección Bs 50.000', r.sue && r.sue.vendido===39000 && r.sue.proy===50000, r.sue);
@@ -242,6 +245,7 @@ function PREPARAR(){
   chk('ni la ATC ni la RPT aparecen en la lista; ROHO, al final, aparte y en unidades (sin plata: sus pedidos no traen precio)',
       !/Carola Chavez/.test(r.vend) && /🛏️ ROHO \(aparte del equipo, en unidades\)/.test(r.vend) && r.vend.indexOf('🛏️ ROHO') > r.vend.indexOf('Mayoristas') &&
       !/Bs/.test(r.vend.slice(r.vend.indexOf('🛏️ ROHO'), r.vend.indexOf('🛏️ ROHO')+120)), r.vend);
+  chk('ROHO trae «📦 Ver sus productos» (20/10, dueño: «¿muestra los productos?»)', /📦 Ver sus productos \(\d+\)/.test(r.vend), r.vend);
   chk('aviso: «1 venta sin monto anotado no suma nada: completala en Ventas»', /1 venta sin monto anotado no suma nada: completala en Ventas/.test(r.nota), r.nota);
   chk('el cuadro «Cómo se cuenta» dice que es lo VENDIDO por entrega agendada, no lo cobrado', /Es lo VENDIDO, no lo cobrado/.test(r.como) && /entrega agendada/.test(r.como), r.como);
 
