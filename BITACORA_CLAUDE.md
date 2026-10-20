@@ -15482,3 +15482,34 @@ archivo del scratchpad `ejemplo/final.html`, con los datos del 16/10). Respuesta
   (ritmo = 15 días con 15; piso de fin de mes; tope; tiendas que no achican), RP9 nada cambia, ✕/Esc, sin conteo, el error al calcular, 390 px,
   RP10 lectura de la planilla, Excel viejo, sin contar, «para terminar octubre», letra, hoja y foco.
 
+
+#### §4lt-d — 👥 «Qué va a dónde»: para clientes de cada tienda, las tiendas en 0 con el porqué y un reparto que no achica (20/10; en la rama, espera «publica»)
+El dueño, con la captura de 7 días (Buenos Aires 14, Carmelo 12, Charcas 9, Mutualista 6, Central 1): *«no te faltó Mia Plaza?»* y *«no aparece ni en 7 ni
+en 15 ni en 30?»*. Se le explicó y dijo *«hacer que si recomiendas»* → se hizo lo recomendado (no cambia ningún número del pedido).
+- **No era un error** (investigación con 5 agentes, planilla del 16/10 con el reloj al 16 y al 20/10): la columna de cada tienda es lo de su LOCAL (venta
+  de tienda que es demanda + almohadas por RPT, 30 días: la misma ventana del pedido). Mia Plaza vende casi todo con entrega a domicilio: de 186 colchones
+  de Mirian e Isabel desde agosto, 176 fueron a la casa del cliente (salen de PTF/Banzer). En 30 días su local vendió DREAM 180 y ORO ORTO 120 (no se
+  producen: no rotan, nada pendiente) y pidió 10 almohadas 50x90 (tampoco en el plan); su RPT de 50x70 + NASA es del 09/09 (fuera de 30 días). El
+  ESPECIAL SEMI 140 vendido el 17/09 le daba 1 en 15/30/mes hasta el 16/10. Sacar SOLO a Mia Plaza cambia el pedido 0/0/0/0 al 20/10 (contrafáctico).
+  Atribución verificada: 18 de 18 filas de Mia Plaza de 90 días caen en Mia Plaza.
+- **Backtest de la ventana de pesos** (venta de tienda desde el 04/08, RPT de almohadas desde el 09/09): 30 vs 45/60/90 días mueve 1-2 puntos (ruido); en
+  almohadas todas dan igual (12 RPT). **No se cambió la ventana**: con 90 días Mia Plaza «aparecía» con ~12 almohadas que el pedido calculó por otras
+  tiendas (se las sacaba a Charcas/BA/Mutualista). Si algún día la RPT de almohadas de 31-90 días tiene que contar, es una decisión de CANTIDAD (U7):
+  se cambia junto en el pedido y en `producirDestinos`, nunca solo en el reparto.
+- **Hecho (solo muestra)**:
+  · **👥 «PTF y Banzer · para clientes de cada tienda»** (`producirTiendaCliente`: `sucursalDeVendedor`; Eduardo; ROHO → «Tiendas Roho»; `CONTA_INTERNOS`
+    → «Pedidos internos»; otro → su nombre): `producirDestinos` devuelve `C[k]={P:{tienda:u},B:{…}}` con los MISMOS clientes de `ALM_ZONA_DIAS` que deciden
+    PTF/Banzer (por lado; sin ubicar, mitad y mitad) + lo vendido sin entregar (`compIds`, `vistoC` evita contar dos veces). `producirRepartoFila` deja
+    `r.CP`/`r.CB` (suman EXACTO `r.P`/`r.B`; sin clientes del producto, «Sin datos»). Se ve en fichas debajo de «Cada tienda», en la lista de PTF/Banzer
+    (`.pap-ldcli`), en el detalle de un producto y en las copias («Para clientes de: …»).
+  · **Las tiendas en 0** (`papCeros`, las 7 de `SUCURSALES`): «0» + el porqué (su local no vendió nada que se fabrique / lo que movió no hay que pedirlo
+    en este plazo / es poco al lado de las otras) + «Sus clientes: N, salen de PTF o Banzer»; la que más clientes tiene, primero. En la copia, «NADA PARA
+    SU LOCAL EN ESTE PLAZO».
+  · **`producirRepartirParejo`** (Sainte-Laguë, de a una unidad; empate: más peso, después el nombre) reemplaza al resto mayor en el reparto entre tiendas
+    y entre clientes: un plazo más largo nunca le da menos a una tienda (con pesos 1/3/3 el resto mayor daba 1/1/1 con 3 y 0/2/2 con 4). `producirRepartir`
+    sigue para los porcentajes de las fichas. Con la planilla real movió 1 unidad (7 días: Charcas 30→31, Carmelo 5→4).
+  · `visto90`: una RPT de almohadas pendiente cargada hace 31-90 días ya no se suma dos veces en T90 (no tenía efecto: T90 solo se usa sin T).
+- Con la planilla del 16/10 y el reloj al 20/10 (7 días): PTF 31 · Banzer 65 · tiendas 73, iguales a lo publicado; para clientes de Mia Plaza 35, Central 26,
+  Buenos Aires 17, Tiendas Roho 8…; en 30 días Mia Plaza 125 y Tiendas Roho 135.
+- `tests/test_pap_clientes.js` (30; 19 rojas contra `b42198c`). `test_producir_reparto`, `test_stock_tiendas_parte` y `test_producir` siguen en verde.
+- Queda latente (0 casos hoy): la tienda se reconoce por el texto escrito («MIAPLAZA» o «SALIÓ DE TIENDA - Mia Plaza» con guion caerían por la vendedora).

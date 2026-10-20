@@ -656,6 +656,21 @@ th.sortable:hover{color:var(--teal-dk)}
 .pap-ct::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--pap-ti)}
 .pap-ct b{font-size:16px;font-weight:800;color:var(--pap-ti)}
 .pap-ct[aria-pressed="true"]{border-color:var(--pap-ti);box-shadow:0 0 0 2px var(--pap-ti) inset;background:var(--pap-ti-claro)}
+/* 20/10: las tiendas en 0 con el porqué, y «para clientes de» (lo de PTF y Banzer por la tienda de quien vendió). */
+.pap-ceros{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pap-ceros li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:baseline;font-size:13.5px;color:var(--pap-gris);background:var(--pap-velo);border:1px dashed var(--pap-linea);border-radius:10px;padding:8px 12px}
+.pap-cero-nom{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.pap-cero-nom b{color:#2D2D2D;font-weight:700;font-size:14px}
+.pap-cero-nom i{font-style:normal;font-weight:800;color:#9aa5a4}
+.pap-cero-cli{color:var(--pap-hondo);font-weight:700}
+.pap-cli{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--pap-linea);padding-top:12px}
+.pap-clis{display:flex;flex-wrap:wrap;gap:6px}
+.pap-cl{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:4px 12px;border:1px solid var(--pap-linea);border-radius:999px;background:#fff;font-size:13.5px;font-weight:600}
+.pap-cl b{font-weight:800;color:var(--pap-hondo);font-variant-numeric:tabular-nums}
+.pap-cl-sin{color:var(--pap-gris);border-style:dashed}
+.pap-cli-nota{margin:0;font-size:12.5px;color:var(--pap-gris);max-width:72ch}
+.pap-ldcli{display:flex;gap:6px;margin:0;padding:9px 16px;font-size:13.5px;color:#2D2D2D;background:#fff;border-bottom:1px solid var(--pap-linea)}
+.pap-ldcli b{color:var(--pap-hondo);font-variant-numeric:tabular-nums}
 .pap-ldet{background:#fff;border:1.5px solid var(--c);border-radius:14px;overflow:hidden;box-shadow:var(--pap-sombra-s);scroll-margin-top:calc(var(--pap-ctrl-h) + 10px)}
 .pap-ldcab{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--pap-linea);background:var(--fondo)}
 .pap-ldizq{display:flex;align-items:center;gap:10px 16px}
@@ -745,6 +760,8 @@ th.sortable:hover{color:var(--teal-dk)}
   .pap-ct{justify-content:space-between;padding:6px 12px 6px 10px;gap:6px;font-size:13.5px}
   .pap-ct span{flex:1 1 auto;min-width:0;text-align:left;line-height:1.15}
   .pap-ldacc .pap-btn{flex:1 1 auto}
+  .pap-ceros li{grid-template-columns:minmax(0,1fr);padding:8px 10px;font-size:13px}
+  .pap-ldcli{padding:9px 12px}
 }
 @media (min-width:900px){
   .pap-fcue .pap-filas,.pap-ldet .pap-filas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:-1px}
@@ -28456,16 +28473,37 @@ function stockTiendasParteLuego(){
        que lo compraron en los últimos `ALM_ZONA_DIAS` (por su pin; sin pin, por su zona escrita), y a Banzer va lo que le falta para su
        parte de lo que hay que tener (`sB × (lo de los clientes + lo que hay)` menos lo que Banzer tiene HOY). Lo que rota poco, lo
        discontinuado y lo de menos de `ALM_MIN_UNID` unidades ubicadas: todo a PTF, como en «📍 Banzer o PTF».
-   Cada fila suma exacto lo que dice «Qué producir» (el resto de los redondeos va al que más tiene).
+     · 👥 PARA CLIENTES DE (20/10): lo de PTF y de Banzer, por la tienda de quien le vendió al cliente (`producirTiendaCliente`): los
+       mismos clientes de `ALM_ZONA_DIAS` + lo vendido sin entregar (`compIds`). SOLO se muestra; no cambia adónde va.
+   Cada fila suma exacto lo que dice «Qué producir». Entre las tiendas (y entre los clientes) se reparte de a una unidad
+   (`producirRepartirParejo`): un plazo más largo nunca le da menos a una tienda.
    ========================================================================== */
 function almLadoFrac(p, Z){
   var pt=almPunto(p); if(pt) return almLado(pt);
   var z=Z[almZonaClave(p.zona)]; return (z && z.n>=ALM_ZONA_MIN) ? { P:z.P/z.n, B:z.B/z.n } : null;
 }
+/* 👥 (20/10, dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*) De qué tienda es quien le vendió al cliente: lo que sale de PTF o
+   Banzer a la casa del cliente se muestra «para clientes de» esa tienda (SOLO para mostrar: no cambia adónde va ni cuánto se pide). Mia Plaza
+   vende casi todo con entrega a domicilio (176 de 186 colchones desde agosto) y en la columna de su local quedaba en 0. Sin tienda, el vendedor
+   (Eduardo; ROHO → Tiendas Roho). */
+function producirTiendaCliente(p){
+  var s=sucursalDeVendedor(p && p.vendedor); if(s) return s;
+  if(stockEsEduardo(p)) return 'Eduardo';
+  var v=String((p && p.vendedor)||'').trim();
+  if(/ROHO/i.test(v)) return 'Tiendas Roho';
+  if(v && cliEsInterno(v)) return 'Pedidos internos';   // ALBA, FABRICA… (`CONTA_INTERNOS`)
+  return v ? v.split(/\s+/).slice(0,2).join(' ') : 'Sin vendedor';
+}
 function producirDestinos(R){
   var hoy=todayStr(), d30=diasAtras(STOCK_VENTANA_MES-1), d90=diasAtras(89), dLado=diasAtras(ALM_ZONA_DIAS-1), Z=almZonas();
-  var T={}, T90={}, L={}, visto={}, porId={};
+  var T={}, T90={}, L={}, C={}, visto={}, visto90={}, vistoC={}, porId={};
   var sumar=function(M, k, n, c){ var m=M[k]||(M[k]={}); m[n]=(m[n]||0)+c; };
+  /* Los clientes, por lado: sin ubicar, mitad y mitad (pesa en los dos). */
+  var cliSumar=function(k, p, c, lado){
+    var m=C[k]||(C[k]={ P:{}, B:{} }), t=producirTiendaCliente(p), fp=lado ? lado.P : 0.5, fb=lado ? lado.B : 0.5;
+    if(fp>0) m.P[t]=(m.P[t]||0)+c*fp;
+    if(fb>0) m.B[t]=(m.B[t]||0)+c*fb;
+  };
   STATE.forEach(function(p){
     if(!p) return;
     if(p.id!=null) porId[p.id]=p;
@@ -28478,7 +28516,7 @@ function producirDestinos(R){
       var suc=(rpt ? sucursalDeRpt(p) : sucursalDeVenta(p)) || 'Otra tienda';
       lin.forEach(function(x){
         var k=stockClave(x); if(!stockEsDemanda(p, k)) return;
-        var c=Number(x.cant)||0; sumar(T90, k, suc, c);
+        var c=Number(x.cant)||0; sumar(T90, k, suc, c); visto90[p.id+'|'+k]=1;
         if(f>=d30){ sumar(T, k, suc, c); visto[p.id+'|'+k]=1; }
       });
       return;
@@ -28490,17 +28528,52 @@ function producirDestinos(R){
       if(lado===null) lado=almLadoFrac(p, Z)||false;
       var c=Number(x.cant)||0, l=L[k]||(L[k]={ P:0, B:0, u:0 });
       l.u+=c; if(lado){ l.P+=c*lado.P; l.B+=c*lado.B; }
+      cliSumar(k, p, c, lado); vistoC[p.id+'|'+k]=1;
     });
   });
-  /* Lo que una tienda pidió por RPT y falta entregarle (está en «vendido sin entregar» del pedido de siempre): va a ESA tienda. */
+  /* Lo que una tienda pidió por RPT y falta entregarle (está en «vendido sin entregar» del pedido de siempre): va a ESA tienda.
+     ⚠️ Cada ventana con su marca: una RPT pendiente de 31 a 90 días ya estaba en T90 (antes se sumaba dos veces).
+     Lo vendido a un cliente y sin entregar también dice de qué tienda es (`C`, solo para mostrar). */
   R.bloques.forEach(function(B){ B.filas.forEach(function(f){
     (f.o.compIds||[]).forEach(function(e){
-      var p=porId[e.id]; if(!p || !esRPT(p.oc) || visto[e.id+'|'+f.o.k]) return;
-      var suc=sucursalDeRpt(p)||'Otra tienda'; sumar(T, f.o.k, suc, e.c); sumar(T90, f.o.k, suc, e.c);
+      var p=porId[e.id], kk=e.id+'|'+f.o.k; if(!p) return;
+      if(!esRPT(p.oc)){
+        if(!esVentaTienda(p) && !vistoC[kk]){ cliSumar(f.o.k, p, e.c, almLadoFrac(p, Z)||false); vistoC[kk]=1; }
+        return;
+      }
+      var suc=sucursalDeRpt(p)||'Otra tienda';
+      if(!visto[kk]) sumar(T, f.o.k, suc, e.c);
+      if(!visto90[kk]) sumar(T90, f.o.k, suc, e.c);
     });
   }); });
-  return { T:T, T90:T90, L:L };
+  return { T:T, T90:T90, L:L, C:C };
 }
+/* Reparte `n` en enteros que suman exacto `n`, de a una unidad, siempre al que más le corresponde por su peso (Sainte-Laguë: W/(2·a+1);
+   empate: más peso, después el nombre). A diferencia del resto mayor (`producirRepartir`), un plazo más largo NUNCA le da menos a nadie:
+   con pesos 1/3/3, el resto mayor daba 1/1/1 con 3 unidades y 0/2/2 con 4 (20/10, revisión de «Qué va a dónde»). */
+function producirRepartirParejo(n, W){
+  var out={}, nom=Object.keys(W||{}).filter(function(x){ return W[x]>0; });
+  if(!(n>0) || !nom.length) return out;
+  nom.sort(function(a,b){ return (W[b]-W[a]) || (a<b?-1:(a>b?1:0)); });
+  nom.forEach(function(x){ out[x]=0; });
+  for(var u=0; u<n; u++){
+    var mej=nom[0], mv=-1;
+    for(var i=0;i<nom.length;i++){ var v=W[nom[i]]/(2*out[nom[i]]+1); if(v>mv*(1+1e-12)){ mv=v; mej=nom[i]; } }
+    out[mej]++;
+  }
+  nom.forEach(function(x){ if(!out[x]) delete out[x]; });
+  return out;
+}
+/* Los pesos de los clientes de un lado (PTF o Banzer); si ese lado no tiene, los de los dos. */
+function producirPesosCli(Cm, lado){
+  if(!Cm) return {};
+  var W={}, ok=false;
+  Object.keys(Cm[lado]||{}).forEach(function(t){ if(Cm[lado][t]>0){ W[t]=Cm[lado][t]; ok=true; } });
+  if(ok) return W;
+  ['P','B'].forEach(function(s){ Object.keys(Cm[s]||{}).forEach(function(t){ if(Cm[s][t]>0) W[t]=(W[t]||0)+Cm[s][t]; }); });
+  return W;
+}
+var PAP_SIN_CLI='Sin datos';
 /* Reparte `n` entre los nombres de `W` en proporción, en enteros que suman exacto `n` (lo que sobra de redondear va al de más resto). */
 function producirRepartir(n, W){
   var out={}, nom=Object.keys(W||{}).filter(function(x){ return W[x]>0; });
@@ -28513,12 +28586,12 @@ function producirRepartir(n, W){
   return out;
 }
 function producirRepartoFila(f, h, porK, D){
-  var o=f.o, n=f[h]||0, out={ n:n, P:0, B:0, T:{}, s:0, porque:'' };
+  var o=f.o, n=f[h]||0, out={ n:n, P:0, B:0, T:{}, s:0, porque:'', CP:{}, CB:{} };
   if(!(n>0)) return out;
   var s=Math.min(n, Math.max(0, (porK[o.k] && porK[o.k][h])||0)), c=n-s;
   if(s>0){
     var W=D.T[o.k]; if(!W || !Object.keys(W).length) W=D.T90[o.k];
-    out.T=(W && Object.keys(W).length) ? producirRepartir(s, W) : { 'Tiendas':s };
+    out.T=(W && Object.keys(W).length) ? producirRepartirParejo(s, W) : { 'Tiendas':s };
     out.s=s;
   }
   if(c>0){
@@ -28530,6 +28603,14 @@ function producirRepartoFila(f, h, porK, D){
       var b=Math.max(0, Math.min(c, Math.round((L.B/ub)*(c+(f.hay||0))-almHoyBanzer(o))));
       out.B=b; out.P=c-b;
     }
+    /* 👥 Para clientes de qué tienda (solo para mostrar): sin clientes del producto, «Sin datos». */
+    var Cm=D.C && D.C[o.k];
+    [['P','CP'],['B','CB']].forEach(function(x){
+      var u=out[x[0]]; if(!(u>0)) return;
+      var r=producirRepartirParejo(u, producirPesosCli(Cm, x[0]));
+      if(!Object.keys(r).length){ r={}; r[PAP_SIN_CLI]=u; }
+      out[x[1]]=r;
+    });
   }
   return out;
 }
@@ -28606,7 +28687,7 @@ function papDatos(forzar){
     var b=stockBloqueDe(o).k; (sinC[b]=sinC[b]||[]).push(stockNombre(o));
   });
   BLOQUES.forEach(function(Q){ Q.sinC=sinC[Q.k]||[]; });
-  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, listo:true, t:Date.now(), viejos:stockCortesViejos(), sinC:sinC, firma:papFirma() };
+  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, D:tp.D, listo:true, t:Date.now(), viejos:stockCortesViejos(), sinC:sinC, firma:papFirma() };
 }
 /* Una huella barata de lo que entra en la cuenta (la planilla y el stock): si una lectura trae lo mismo, no se recalcula. */
 function papFirma(){
@@ -28800,6 +28881,9 @@ function papDetalle(f, p){
   h+='<dt>Vendido sin entregar</dt><dd><b>'+papFmt(f.comp)+'</b></dd>';
   if(p==='tot') h+='<dt>Se arma con</dt><dd>'+esc(papPartesTot(f, 'de').join(' + ') || '0')+'</dd>';
   h+='<dt>Va a</dt><dd><div class="pap-va">'+papDestinos(r).map(function(x){ return '<span>'+x[0]+' '+esc(x[1])+' <b>'+papFmt(x[2])+'</b></span>'; }).join('')+'</div></dd>';
+  var cl={}; [r.CP, r.CB].forEach(function(M){ Object.keys(M||{}).forEach(function(t){ if(M[t]>0) cl[t]=(cl[t]||0)+M[t]; }); });
+  var cls=Object.keys(cl).sort(function(a,b){ return ((a===PAP_SIN_CLI)-(b===PAP_SIN_CLI)) || (cl[b]-cl[a]) || a.localeCompare(b, 'es'); });
+  if(cls.length) h+='<dt>PTF y Banzer, para clientes de</dt><dd><div class="pap-va">'+cls.map(function(t){ return '<span>👥 '+esc(t)+' <b>'+papFmt(cl[t])+'</b></span>'; }).join('')+'</div></dd>';
   if(r.porque && PAP_PORQUE[r.porque]) h+='<dt>Ojo</dt><dd>'+PAP_PORQUE[r.porque]+'</dd>';
   return h+'</dl>';
 }
@@ -28872,11 +28956,15 @@ function papPintarPedir(){
 function papLugares(p){
   var L={ P:{ id:'P', nom:'PTF', largo:'Productos terminados fábrica', ico:'🏭', n:0, c:0, col:PAP_COL.P },
           B:{ id:'B', nom:'Banzer', largo:'Almacén Banzer', ico:'🏪', n:0, c:0, col:PAP_COL.B },
-          T:{ id:'T', nom:'Tiendas', largo:'Todas las tiendas', ico:'🏬', n:0, c:0, col:PAP_COL.T } }, T={};
+          T:{ id:'T', nom:'Tiendas', largo:'Todas las tiendas', ico:'🏬', n:0, c:0, col:PAP_COL.T } }, T={}, CL={};
+  var cli=function(M, lado){ Object.keys(M||{}).forEach(function(t){
+    var u=M[t]; if(!(u>0)) return;
+    var x=CL[t]||(CL[t]={ nom:t, n:0, P:0, B:0, sin:t===PAP_SIN_CLI }); x.n+=u; x[lado]+=u;
+  }); };
   PAP.TODAS.forEach(function(f){
     var r=f.rep[p]; if(!r || !r.n) return;
-    if(r.P){ L.P.n+=r.P; L.P.c++; }
-    if(r.B){ L.B.n+=r.B; L.B.c++; }
+    if(r.P){ L.P.n+=r.P; L.P.c++; cli(r.CP, 'P'); }
+    if(r.B){ L.B.n+=r.B; L.B.c++; cli(r.CB, 'B'); }
     var enT=false;
     Object.keys(r.T||{}).forEach(function(t){
       if(!(r.T[t]>0)) return; enT=true;
@@ -28886,7 +28974,42 @@ function papLugares(p){
     if(enT) L.T.c++;
   });
   var tiendas=Object.keys(T).map(function(k){ return T[k]; }).sort(function(a,b){ return (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
-  return { P:L.P, B:L.B, T:L.T, tiendas:tiendas, todos:[L.P, L.B, L.T].concat(tiendas), total:papSuma(PAP.TODAS, p) };
+  /* «Sin datos» va al final; lo demás, de más a menos. */
+  var clientes=Object.keys(CL).map(function(k){ return CL[k]; }).sort(function(a,b){ return (a.sin-b.sin) || (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
+  var LS={ P:L.P, B:L.B, T:L.T, tiendas:tiendas, todos:[L.P, L.B, L.T].concat(tiendas), total:papSuma(PAP.TODAS, p), clientes:clientes, CL:CL };
+  LS.ceros=papCeros(LS, p);
+  return LS;
+}
+/* Las tiendas que en este plazo no reciben nada para su local, con el porqué: lo de su local en 30 días (venta de tienda que es demanda
+   y almohadas pedidas por RPT: los mismos pesos del reparto) y lo de sus clientes, que sale de PTF o Banzer. */
+function papCeros(LS, p){
+  var D=PAP.D||{}, dem={}, con={}, enPlazo={};
+  Object.keys(D.T||{}).forEach(function(k){ var W=D.T[k]; Object.keys(W).forEach(function(t){ dem[t]=(dem[t]||0)+(W[t]||0); }); });
+  /* ¿Tuvo peso en algún producto que este plazo reparte entre las tiendas? (entonces le tocó 0 por ser poco al lado de las otras) */
+  PAP.TODAS.forEach(function(f){
+    var r=f.rep[p]; if(!r || !(r.s>0)) return;
+    var W=(D.T||{})[f.k]; if(!W || !Object.keys(W).length) W=(D.T90||{})[f.k];
+    Object.keys(W||{}).forEach(function(t){ if(W[t]>0) enPlazo[t]=1; });
+  });
+  LS.tiendas.forEach(function(t){ con[t.nom]=1; });
+  /* La que más clientes tiene, primero (es la que más se extraña). */
+  var cliN=function(nm){ return LS.CL[nm] ? LS.CL[nm].n : 0; };
+  return SUCURSALES.map(function(s){ return s.n; }).filter(function(nm){ return !con[nm]; })
+    .sort(function(a,b){ return (cliN(b)-cliN(a)) || a.localeCompare(b, 'es'); }).map(function(nm){
+    var u=Math.round(dem[nm]||0), c=LS.CL[nm] ? LS.CL[nm].n : 0;
+    var pq=!u ? 'en 30 días su local no vendió nada que se fabrique ni pidió almohadas'
+      : enPlazo[nm] ? 'lo de su local en 30 días ('+u+' u.) es poco al lado de las otras tiendas'
+      : 'lo que movió su local en 30 días ('+u+' u.) no hay que pedirlo en este plazo';
+    return { nom:nm, dem:u, cli:c, porque:pq, clientes:c>0 ? ('sus clientes: '+papFmt(c)+', salen de PTF o Banzer') : '' };
+  });
+}
+function papCliTxt(LSo, sep){
+  return (LSo||[]).map(function(x){ return x.nom+' '+papFmt(x.n); }).join(sep||' · ');
+}
+/* Los clientes de UN depósito ('P' o 'B'), de más a menos. */
+function papCliDe(LS, lado){
+  return LS.clientes.filter(function(x){ return x[lado]>0; }).map(function(x){ return { nom:x.nom, n:x[lado], sin:x.sin }; })
+    .sort(function(a,b){ return (a.sin-b.sin) || (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
 }
 function papCuantoA(f, p, id){
   var r=f.rep[p]; if(!r) return 0;
@@ -28950,6 +29073,10 @@ function papDetalleLugar(l, p){
     '<div class="pap-ldnum">'+papFmt(l.n)+'</div></div>'+
     '<div class="pap-ldacc"><button type="button" class="pap-btn" data-pap-copiar-lugar="'+esc(l.id)+'">📋 Copiar lo de '+esc(l.id==='T'?'las tiendas':l.nom)+'</button>'+
     '<button type="button" class="pap-btn pap-claro" data-pap="lugar-cerrar" aria-label="Cerrar la lista">✕ Cerrar</button></div></div>';
+  if(l.id==='P' || l.id==='B'){
+    var cl=papCliDe(papLugares(p), l.id);
+    if(cl.length) h+='<p class="pap-ldcli">👥 <span>Para clientes de: '+cl.map(function(x){ return esc(x.nom)+' <b>'+papFmt(x.n)+'</b>'; }).join(' · ')+'</span></p>';
+  }
   G.forEach(function(g){
     if(G.length>1 || l.id==='T') h+='<div class="pap-banda" style="--c:'+g.col+'"><span>'+esc(g.et)+'</span><span>'+papFmt(g.n)+'</span></div>';
     h+='<ul class="pap-filas">'+g.filas.map(function(x){ return papFilaLugarHtml(x.f, x.n, p, l.id, g.conMarca); }).join('')+'</ul>';
@@ -28994,15 +29121,28 @@ function papPintarDonde(){
   }
   var deps=[LS.P, LS.B, LS.T].filter(function(l){ return l.n>0; }), PC=papPcts(deps);
   h+=papBarraHtml(LS)+'<div class="pap-lugs">'+deps.map(function(l){ return papFichaDep(l, PC[l.id], LS.tiendas.length); }).join('')+'</div>';
-  if(LS.tiendas.length) h+='<div class="pap-ctiendas"><div class="pap-eti">Cada tienda</div><div class="pap-chips">'+
-    LS.tiendas.map(function(t){ return '<button type="button" class="pap-ct" data-pap-lugar="'+esc(t.id)+'" aria-pressed="'+(PAP_S.lugar===t.id)+'"><span>'+esc(t.nom)+'</span><b>'+papFmt(t.n)+'</b></button>'; }).join('')+'</div></div>';
+  if(LS.tiendas.length || LS.ceros.length){
+    h+='<div class="pap-ctiendas"><div class="pap-eti">Cada tienda · para su local</div>';
+    if(LS.tiendas.length) h+='<div class="pap-chips">'+
+      LS.tiendas.map(function(t){ return '<button type="button" class="pap-ct" data-pap-lugar="'+esc(t.id)+'" aria-pressed="'+(PAP_S.lugar===t.id)+'"><span>'+esc(t.nom)+'</span><b>'+papFmt(t.n)+'</b></button>'; }).join('')+'</div>';
+    /* 20/10: las que no reciben nada para su local también se nombran, con el porqué (si no, parecía que el panel se olvidó de Mia Plaza). */
+    if(LS.ceros.length) h+='<ul class="pap-ceros" aria-label="Tiendas sin nada para su local en este plazo">'+LS.ceros.map(function(z){
+      return '<li><span class="pap-cero-nom"><b>'+esc(z.nom)+'</b><i>0</i></span><span>'+esc(papCap(z.porque))+(z.clientes?'. <b class="pap-cero-cli">'+esc(papCap(z.clientes))+'</b>':'')+'.</span></li>';
+    }).join('')+'</ul>';
+    h+='</div>';
+  }
+  if(LS.clientes.length) h+='<div class="pap-cli"><div class="pap-eti">👥 PTF y Banzer · para clientes de cada tienda</div><div class="pap-clis">'+
+    LS.clientes.map(function(x){ return '<span class="pap-cl'+(x.sin?' pap-cl-sin':'')+'" title="'+esc('PTF '+x.P+' · Banzer '+x.B)+'"><span>'+esc(x.nom)+'</span><b>'+papFmt(x.n)+'</b></span>'; }).join('')+'</div>'+
+    '<p class="pap-cli-nota">Según la tienda de quien le vendió al cliente. Ya están adentro de PTF y Banzer: salen de ahí a la casa del cliente, no van a la tienda.</p></div>';
   h+='<p class="pap-ayuda" style="margin:0">Tocá un lugar para ver qué productos lleva.</p></section>';
   var sel=null; LS.todos.forEach(function(l){ if(l.id===PAP_S.lugar) sel=l; });
   if(sel) h+=papDetalleLugar(sel, p);
   h+='<details class="pap-como" id="pap-tabla-prod"'+(tablaAbierta?' open':'')+'><summary>📊 Ver todo en una tabla, por producto</summary>'+papTablaHtml(p, LS)+'</details>';
   h+='<details class="pap-como" id="pap-como-donde"'+(comoAbierto?' open':'')+'><summary>¿Cómo se reparte?</summary><ul>'+
     '<li>Es lo mismo que se pide a producción, repartido: en cada producto, PTF + Banzer + tiendas = lo que se pide.</li>'+
-    '<li>A cada tienda va lo que ella vendió o pidió de ese producto en los últimos 30 días (si no hay, en 90).</li>'+
+    '<li>A cada tienda, para su local, va lo que ella vendió desde la tienda o pidió de ese producto en los últimos 30 días (si no hay, en 90). Lo que vende con entrega a domicilio no va a la tienda: sale de PTF o Banzer.</li>'+
+    '<li>«👥 Para clientes de» dice, de lo que va a PTF y Banzer, de qué tienda es quien le vendió al cliente (por los clientes de los últimos '+ALM_ZONA_DIAS+' días y lo vendido sin entregar). Solo informa: no cambia adónde va.</li>'+
+    '<li>Una tienda con 0 dice por qué: lo que movió su local no hay que pedirlo en ese plazo, o es poco al lado de las otras.</li>'+
     '<li>Lo de los clientes se reparte entre PTF y Banzer según de qué lado de la línea de logística viven los que lo compraron en los últimos '+ALM_ZONA_DIAS+' días. A Banzer va lo que le falta para su parte, contando lo que ya tiene hoy.</li>'+
     '<li>Lo que se vende poco o tiene pocos datos: lo que no es de una tienda va a PTF. Lo de las tiendas igual va a cada tienda.</li>'+
     '<li>Solo muestra: no marca pedidos ni mueve stock.</li>'+
@@ -29055,8 +29195,14 @@ function papTextoTodo(p){
   var vj=papViejoTxt(); if(vj) L.push(vj);
   [LS.P, LS.B].concat(LS.tiendas).filter(function(l){ return l.n>0; }).forEach(function(l){
     L.push('', papNombreLugarCopia(l)+' ('+papFmt(l.n)+'):');
+    var cl=(l.id==='P' || l.id==='B') ? papCliDe(LS, l.id) : [];
+    if(cl.length) L.push('Para clientes de: '+papCliTxt(cl, ', '));
     papFilasDeLugar(p, l.id).forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
   });
+  if(LS.ceros.length){
+    L.push('', 'NADA PARA SU LOCAL EN ESTE PLAZO:');
+    LS.ceros.forEach(function(z){ L.push('• '+z.nom+': '+z.porque+(z.clientes?' ('+z.clientes+')':'')); });
+  }
   L.push('', 'TOTAL: '+papFmt(LS.total)+' unidades (PTF '+papFmt(LS.P.n)+' · Banzer '+papFmt(LS.B.n)+' · tiendas '+papFmt(LS.T.n)+')');
   return L.join('\n');
 }
@@ -29065,6 +29211,7 @@ function papTextoLugar(id, p){
   if(!l) return '';
   var L=['QUÉ VA A '+(l.tienda?'LA ':'')+papNombreLugarCopia(l), papPlazoLinea(P), papHoyTxt(PAP)+' · de lo que se pide a producción'];
   var vj=papViejoTxt(); if(vj) L.push(vj);
+  if(id==='P' || id==='B'){ var cl=papCliDe(papLugares(p), id); if(cl.length) L.push('Para clientes de: '+papCliTxt(cl, ', ')); }
   papGrupos(p, id).forEach(function(g){
     L.push('', (id==='T' ? 'TIENDA '+g.et.replace(/^🏬 /,'').toUpperCase() : g.et.replace(/^\S+ /,'').toUpperCase())+' ('+papFmt(g.n)+'):');
     g.filas.forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });

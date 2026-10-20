@@ -675,6 +675,12 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   `producirRepartoFila`: suma exacto; tiendas por su venta de tienda de 30 días + la RPT pendiente; el resto con la regla de «📍 Banzer o PTF»).
   Solo mira. ⚠️ Clases `pap-*` (no reusar nombres del panel); la cuenta sale de `stockProducirCalc`/`STOCK_TP`, nunca aparte.
   `tests/test_producir_reparto.js` (64).
+  · **👥 Para clientes de cada tienda y las tiendas en 0** (§4lt-d, 20/10; dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*; en la rama, espera
+  «publica»): la columna de una tienda es lo de su LOCAL; Mia Plaza vende casi todo a domicilio (sale de PTF/Banzer). Lo de PTF y Banzer se muestra «para
+  clientes de» la tienda de quien vendió (`producirTiendaCliente`, `D.C`, `r.CP`/`r.CB`, solo para mostrar) y las tiendas sin nada para su local salen con
+  «0» y el porqué (`papCeros`). Entre tiendas se reparte con `producirRepartirParejo` (un plazo más largo nunca da menos). ⚠️ NO alargar la ventana de
+  pesos para «hacer aparecer» una tienda: le daría unidades que el pedido calculó por otras (backtest: 30/60/90 días dan casi lo mismo).
+  `tests/test_pap_clientes.js` (30).
 - 🎨 **Lo que se le publica al dueño (páginas, artefactos con clave) va SIEMPRE claro, con los colores del panel** (dueño, 19/10: *«no uses
   fondo negro… usa los mismos colores que el panel»*): fondo `--bg-app`, tarjetas blancas, turquesa `#00B5AD`/`#00A09A`, encabezado `--grad-header`,
   letra Inter, y SIN modo oscuro aunque el aparato lo tenga.
