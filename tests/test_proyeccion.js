@@ -189,7 +189,7 @@ function PREPARAR(){
     var m=function(k){ return R.marcas.filter(function(x){ return x.g.k===k; })[0].tot; };
     return { dt:R.dt, dr:R.dr, estado:R.estado, E:R.equipo, sue:m('suena'), hea:m('heaven'), sin:R.sinMarca.tot, may:R.mayor.tot,
              mau:f('Mauricio Merida'), jp:f('Juan Pablo Paredes'), mf:f('Maria Flores'), ir:f('Isabel Robledo'), pn:f('Pedro Nuevo'),
-             ed:f('Eduardo Añez'), roho:f('ROHO'), cc:f('Carola Chavez') };
+             ed:f('Eduardo Añez'), roho:f('ROHO'), cc:f('Carola Chavez'), rohoT:(R.roho && R.roho.tot) || null };
   });
   chk('días hábiles: pasaron 16 (del 1 al 18, sin los domingos 6 y 13) y faltan 10', r.dt===16 && r.dr===10 && r.estado==='curso', [r.dt, r.dr, r.estado, r.__error]);
   chk('Mauricio: la cargada en AGOSTO que se entrega en septiembre cuenta, la de octubre no, y la venta de tienda cuenta por el día que se cargó → vendido Bs 28.000 (hasta hoy 24.000 + agendado 4.000)',
@@ -197,7 +197,8 @@ function PREPARAR(){
   chk('Mauricio: ritmo 24.000 ÷ 16 = 1.500 por día × 10 = 15.000, más que lo agendado → proyección 24.000 + 15.000 = Bs 39.000', r.mau && r.mau.proy===39000, r.mau);
   chk('Juan Pablo: lo agendado (9.000) es más que el ritmo (125 × 10) → se toma lo agendado: proyección Bs 11.000', r.jp && r.jp.proy===11000 && r.jp.vendido===11000, r.jp);
   chk('Maria Flores: su venta de agosto no es de septiembre y la ATC no es venta → vendido Bs 8.000, proyección Bs 13.000', r.mf && r.mf.vendido===8000 && r.mf.n===1 && r.mf.proy===13000, r.mf);
-  chk('no entran ni la RPT (Carola) ni ROHO', !r.cc && !r.roho, [r.cc, r.roho]);
+  chk('no entran ni la RPT (Carola) ni ROHO en el equipo, las marcas ni los mayoristas', !r.cc && !r.roho, [r.cc, r.roho]);
+  chk('ROHO va APARTE (20/10, dueño: «te sirve para medir sus ventas»): su venta del 10/09 en `R.roho`, en unidades', r.rohoT && r.rohoT.n===1, r.rohoT);
   chk('Isabel: una venta sin monto anotado cuenta como venta pero no suma plata', r.ir && r.ir.n===1 && r.ir.vendido===0 && r.ir.sinMonto===1, r.ir);
   chk('un vendedor que no está en ninguna marca va a «Sin marca» (Pedro Nuevo: Bs 1.000, proyección Bs 1.625)', r.pn && !r.pn.marca && r.sin.vendido===1000 && r.sin.proy===1625, [r.pn, r.sin]);
   chk('🛏️ Sueña = Mauricio + Juan Pablo: vendido Bs 39.000, proyección Bs 50.000', r.sue && r.sue.vendido===39000 && r.sue.proy===50000, r.sue);
@@ -238,7 +239,9 @@ function PREPARAR(){
       /Sueña Bs 39\.000,00 · 📈 Bs 50\.000/.test(r.vend) && /Heaven Bs 8\.000,00 · 📈 Bs 13\.000/.test(r.vend) &&
       /TOTAL EQUIPO 10 ventas · 10 unidades Bs 48\.000,00 📈 Bs 64\.625/.test(r.vend) && /Mayoristas \(aparte del equipo\) Bs 25\.000,00 · 📈 Bs 32\.500 Eduardo Añez/.test(r.vend) &&
       r.vend.indexOf('TOTAL EQUIPO') < r.vend.indexOf('Mayoristas'), r.vend);
-  chk('ni la ATC, ni la RPT, ni ROHO aparecen en la lista', !/ROHO|Carola Chavez/.test(r.vend), r.vend);
+  chk('ni la ATC ni la RPT aparecen en la lista; ROHO, al final, aparte y en unidades (sin plata: sus pedidos no traen precio)',
+      !/Carola Chavez/.test(r.vend) && /🛏️ ROHO \(aparte del equipo, en unidades\)/.test(r.vend) && r.vend.indexOf('🛏️ ROHO') > r.vend.indexOf('Mayoristas') &&
+      !/Bs/.test(r.vend.slice(r.vend.indexOf('🛏️ ROHO'), r.vend.indexOf('🛏️ ROHO')+120)), r.vend);
   chk('aviso: «1 venta sin monto anotado no suma nada: completala en Ventas»', /1 venta sin monto anotado no suma nada: completala en Ventas/.test(r.nota), r.nota);
   chk('el cuadro «Cómo se cuenta» dice que es lo VENDIDO por entrega agendada, no lo cobrado', /Es lo VENDIDO, no lo cobrado/.test(r.como) && /entrega agendada/.test(r.como), r.como);
 
@@ -654,6 +657,16 @@ function PREPARAR(){
   });
   chk('agosto de 2026 tuvo 24 días hábiles (sin el 6 y el 7), septiembre 25 (sin el 25) y octubre 27', r.hay && r.ago===24 && r.sep===25 && r.oct===27, r);
   chk('…y las entregas no miran atrás: el cupo del 25/09 no cambia (el cuadrito y los cupos usan `FERIADOS`, que es para adelante)', r.cupo25===12, r);
+
+  r = await page.evaluate(() => {
+    if(typeof pryRohoCuenta!=='function') return null;
+    return { venta:pryRohoCuenta({ vendedor:'ROHO', oc:'10-500', cliente:'JUAN PEREZ' }),
+             tienda:pryRohoCuenta({ vendedor:'ROHO', oc:'10-501', cliente:'TIENDA 3' }),
+             rpt:pryRohoCuenta({ vendedor:'ROHO', oc:'RPT 10-002', cliente:'Tiendas Roho' }),
+             atc:pryRohoCuenta({ vendedor:'ROHO', oc:'ATC 10-003', cliente:'JUAN PEREZ' }),
+             otro:pryRohoCuenta({ vendedor:'Maria Flores', oc:'10-502', cliente:'JUAN PEREZ' }) };
+  });
+  chk('ROHO cuenta sus ventas a clientes, no lo que manda a «TIENDA n» (como el stock), ni RPT, ni ATC', r && r.venta && !r.tienda && !r.rpt && !r.atc && !r.otro, r);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

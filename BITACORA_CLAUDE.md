@@ -15513,3 +15513,17 @@ en 15 ni en 30?»*. Se le explicó y dijo *«hacer que si recomiendas»* → se 
   Buenos Aires 17, Tiendas Roho 8…; en 30 días Mia Plaza 125 y Tiendas Roho 135.
 - `tests/test_pap_clientes.js` (30; 19 rojas contra `b42198c`). `test_producir_reparto`, `test_stock_tiendas_parte` y `test_producir` siguen en verde.
 - Queda latente (0 casos hoy): la tienda se reconoce por el texto escrito («MIAPLAZA» o «SALIÓ DE TIENDA - Mia Plaza» con guion caerían por la vendedora).
+
+#### §4lt-e — 🛏️ ROHO en la Proyección del mes, aparte y en unidades (20/10; en la rama, espera «publica»)
+El dueño, al ver la página de la reunión: *«hay productos de roho que sí se venden, ernesto cargó las ventas, incluso está en el panel
+como vendedor roho, solo que no aparece en la lista de vendedores»* + *«te sirve para medir sus ventas y qué tener»*; eligió «Proyección del
+mes» y avisó: *«ernesto no pone precio de los colchones, tendría que pasarte yo la lista de precio para medir cuánto se vendió»*.
+- **Corrección de lo dicho en §4lt** («Tiendas Roho no carga ventas»): ROHO SÍ carga sus ventas (vendedor ROHO, a clientes). Con la planilla
+  del 16/10: 195 pedidos y 338 u en 60 días; 324 u ya cuentan en el stock y en «Qué producir» (solo quedan afuera 2 pedidos «ROHO a TIENDA n»,
+  14 u, regla de `stockPuntual`). Lo que no hay es venta de tienda del local «Tiendas Roho»: por eso su columna en «Qué va a dónde» da 0.
+- **Proyección**: `pryRohoCuenta(p)` (ROHO, sin ATC/RPT ni «TIENDA n») → `amb:'roho'`, `g:'roho'` en `pryVentas`; `proyeccionMes` devuelve
+  `R.roho = { filas, tot:{ n, u, c, s, ua, ub, proyU } }` con el RITMO en unidades (entregado hasta hoy + máx(agendado, ritmo × hábiles que
+  faltan)). Ficha «🛏️ ROHO» y grupo «ROHO (aparte del equipo, en unidades)» al final; no entra en el TOTAL EQUIPO, ni en las curvas, ni en
+  Contabilidad. Con la planilla del 16/10: octubre 119 u (97 colchones, 22 somieres), proyección 199; septiembre 176 u.
+- **Plata**: cuando el dueño pase la lista de precios de ROHO, se puede valorizar (no hecho).
+- `test_proyeccion` (128): «ROHO no aparece» cambió a conciencia por «ROHO va aparte, al final y en unidades» + `pryRohoCuenta`.
