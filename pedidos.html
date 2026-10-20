@@ -523,46 +523,230 @@ th.sortable:hover{color:var(--teal-dk)}
 .prod-wrap{max-height:70vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px}
 .prod-wrap thead th{top:0;z-index:3}
 .prod-wrap tfoot tr.prod-total td{position:sticky;bottom:0;z-index:2;background:#f4f6f7;border-top:2px solid var(--gray-md);font-weight:700}
-/* 📦 (20/10) El total de todas las fábricas, la columna «hasta el …» y la planilla «🗺️ Qué va a dónde». */
+/* 📦 (20/10) La columna «hasta el …» de cada bloque. El total y «qué va a dónde» están en la ventana «🏭 Pedido a producción». */
 #producir .prod-th-tot,#producir .prod-td-tot{background:#fdf3ec;border-left:2px solid #e8c9b3}
 #producir thead th.prod-th-tot{background:#f6e3d6;color:#7c2d12}
 #producir tfoot tr.prod-total td.prod-td-tot{background:#f6e3d6}
-.prod-totgen{border:1px solid #e8c9b3;border-radius:10px;background:#fffaf6;padding:10px 12px;margin:4px 0 10px}
-.ptg-tit{font-weight:800;color:#7c2d12;font-size:.95rem;margin-bottom:6px}
-.ptg-caja{overflow-x:auto}
-.ptg-t{border-collapse:collapse;width:100%;min-width:480px;font-size:.86rem;font-variant-numeric:tabular-nums}
-.ptg-t th,.ptg-t td{padding:6px 9px;border-bottom:1px solid #eedccf;text-align:right;vertical-align:top}
-.ptg-t th:first-child,.ptg-t td:first-child{text-align:left}
-.ptg-t thead th{background:#f6e3d6;color:#7c2d12;font-size:.78rem;text-transform:none;letter-spacing:0;position:static;border-bottom:2px solid #e8c9b3}
-.ptg-t tfoot td{font-size:.95rem;background:#fdf3ec}
-.ptg-t td b{font-size:1.05em}
-.ptg-t tr.ptg-tiendas td{font-size:.84rem;background:var(--teal-lt);line-height:1.45;color:#155e75}
-.ptg-t tr.ptg-tiendas td:first-child{border-left:3px solid var(--teal);text-align:left}
-.ptg-sub{font-weight:400;font-size:.78em;color:var(--muted)}
-.ptg-nota{font-size:.78rem;color:var(--muted);margin:7px 0 6px;line-height:1.45}
-.ptg-bot{display:flex;gap:6px;flex-wrap:wrap}
-.ptg-bot .btn{background:#fff;border:1px solid #7c2d12;color:#7c2d12;font-weight:700;padding:3px 9px;font-size:.74rem}
-.ptg-bot .btn.ptg-fuerte{background:#7c2d12;color:#fff}
-.prod-rep{border:1px solid var(--gray-md);border-radius:10px;padding:8px 12px;margin:0 0 10px;background:#fff}
-.prod-rep>summary{cursor:pointer;font-size:.88rem;color:#155e75;padding:2px 0}
-.prod-rep-nota{font-size:.78rem;color:var(--muted);line-height:1.45;margin:6px 0 8px}
-.prod-rep-hs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-.prod-rep-hs .btn{background:#fff;border:1px solid #155e75;color:#155e75;font-weight:700;padding:3px 9px;font-size:.74rem}
-.prod-rep-hs .btn.sel{background:#155e75;color:#fff}
-.prod-rep-hs .btn.btn-ghost{border-color:var(--gray-md);color:var(--text)}
-.prod-rep-bl{border-left:4px solid #155e75;padding:4px 0 2px 10px;margin:10px 0 4px}
-.prod-rep-tit{font-size:.82rem;line-height:1.5;margin-bottom:5px}
-.prod-rep-caja{max-height:60vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px}
-.prod-rep-t{min-width:560px;table-layout:auto;font-variant-numeric:tabular-nums}
-.prod-rep-t th:first-child,.prod-rep-t td:first-child{min-width:210px}
-.prod-rep-t td:not(:first-child),.prod-rep-t th:not(:first-child){white-space:nowrap}
-.prod-rep-t thead th{position:sticky;top:0;z-index:3}
-.prod-rep-t tfoot tr.prod-total td{position:sticky;bottom:0;z-index:2;background:#f4f6f7;border-top:2px solid var(--gray-md);font-weight:700}
-.prod-rep-t td:not(:first-child),.prod-rep-t th:not(:first-child){text-align:center}
-.prod-rep .pr-ptf{color:#0f766e}.prod-rep .pr-bz{color:#1d4ed8}.prod-rep .pr-ti{color:#155e75}
-.prod-rep-t td.pr-ptf{background:#f0faf8}.prod-rep-t td.pr-bz{background:#f2f6ff}.prod-rep-t td.pr-ti{background:#f2f8fa}
+.prod-pap{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;border:1px solid var(--teal-border);border-radius:10px;background:var(--teal-lt);padding:8px 12px;margin:4px 0 10px;font-size:.86rem;font-variant-numeric:tabular-nums;color:#134e4a}
+.prod-pap b{color:#007C76}
+.prod-pap .btn{margin-left:auto;background:#007C76;color:#fff;font-weight:700;padding:6px 12px;font-size:.8rem}
 .prod-como{margin:0 0 6px}
 .prod-como>summary{cursor:pointer;font-size:.8rem;color:var(--muted)}
+/* 🏭 (20/10) «PEDIDO A PRODUCCIÓN»: la ventana aparte que se abre desde Stock (el ejemplo que aprobó el dueño). Todo lleva «pap-»
+   adelante: una clase que se llame como una de la página hereda sus reglas (pasó con `.toast` en la ciudad). Siempre clara. */
+#pap-overlay{display:none;position:fixed;inset:0;z-index:3100;flex-direction:column;background:#f4f7ff;background-image:var(--bg-app);color:#2D2D2D;font-family:var(--font-sans);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums;
+  --pap-hondo:#007C76; --pap-claro:#E6F7F6; --pap-borde:#99DDD9; --pap-velo:#F2FAF9; --pap-gris:#6B6B6B; --pap-linea:#E3ECEB; --pap-sup:#F6FAFA;
+  --pap-ambar-claro:#FEF3C7; --pap-ambar-tx:#8A4A06; --pap-ti:#be185d; --pap-ti-claro:#FDF0F6; --pap-foco:#1d4ed8;
+  --pap-sombra:0 1px 2px rgba(16,74,78,.06),0 8px 24px rgba(16,74,78,.09); --pap-sombra-s:0 1px 2px rgba(16,74,78,.07),0 2px 8px rgba(16,74,78,.05);
+  --pap-pad:16px; --pap-ctrl-h:130px}
+#pap-overlay [hidden]{display:none!important}
+#pap-overlay button{font:inherit;color:inherit;cursor:pointer}
+#pap-overlay button:focus-visible,#pap-overlay summary:focus-visible{outline:3px solid var(--pap-foco);outline-offset:2px;border-radius:8px}
+.pap-cab{flex:none;background:var(--grad-header);color:#fff;display:flex;align-items:center;gap:8px 12px;padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px))}
+.pap-cab-tx{flex:1 1 auto;min-width:0}
+.pap-cab-tx b{display:block;font-size:1.15rem;font-weight:800;line-height:1.2}
+.pap-cab-tx span{display:block;font-size:.8rem;opacity:.92;font-weight:500}
+.pap-cab-btn{flex:none;min-height:42px;min-width:44px;padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff!important;font-weight:700;font-size:.86rem}
+.pap-cuerpo{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+/* El espacio de abajo va ADENTRO (no en la caja que scrollea): si no, el TOTAL fijo de la tabla queda 40 px arriba del borde. */
+.pap-pag{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+.pap-panel{display:flex;flex-direction:column;gap:14px}
+.pap-eti{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pap-gris)}
+.pap-ctrl{position:sticky;top:0;z-index:20;background:#f2f6fd;margin:0 calc(-1 * var(--pap-pad));padding:12px var(--pap-pad) 10px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid transparent}
+.pap-ctrl.pap-pegado{border-bottom-color:var(--pap-linea);box-shadow:0 10px 18px -12px rgba(16,74,78,.35)}
+.pap-pestanas{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--pap-claro);border:1px solid var(--pap-borde);border-radius:12px;padding:4px}
+.pap-pestana{min-height:46px;border:0;border-radius:9px;background:transparent;font-size:15px;font-weight:650;color:#355856!important;padding:6px 10px;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.pap-pestana[aria-selected="true"]{background:#fff;color:var(--pap-hondo)!important;box-shadow:0 1px 2px rgba(0,80,76,.15),0 2px 8px rgba(0,80,76,.08)}
+.pap-plazos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pap-pz{min-height:56px;border:1.5px solid var(--pap-borde);background:#fff;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 4px;text-align:center;box-shadow:var(--pap-sombra-s);min-width:0}
+.pap-pz-et{font-size:16px;font-weight:750;line-height:1.15}
+.pap-pz-n{font-size:12.5px;font-weight:600;color:var(--pap-gris);line-height:1.25}
+.pap-pz-n b{font-weight:750;color:#2D2D2D}
+.pap-pz[aria-pressed="true"]{background:var(--pap-hondo);border-color:var(--pap-hondo);color:#fff!important;box-shadow:0 2px 10px rgba(0,124,118,.28)}
+.pap-pz[aria-pressed="true"] .pap-pz-n,.pap-pz[aria-pressed="true"] .pap-pz-n b{color:#fff}
+.pap-nota{margin:-6px 2px 0;font-size:13px;color:var(--pap-gris)}
+.pap-ayuda{margin:0 2px;font-size:13px;color:var(--pap-gris)}
+.pap-cargando{padding:28px 8px;text-align:center;color:var(--pap-gris);font-size:15px}
+.pap-vacio{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;padding:18px;font-size:15px;box-shadow:var(--pap-sombra-s)}
+.pap-tot{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;padding:18px;box-shadow:var(--pap-sombra-s);display:flex;flex-direction:column;gap:10px}
+.pap-totn{font-size:clamp(46px,10vw,68px);font-weight:800;line-height:1;color:var(--pap-hondo);letter-spacing:-.02em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pap-totn span{font-size:18px;font-weight:650;color:var(--pap-gris);letter-spacing:0}
+.pap-totn.pap-chico{font-size:clamp(38px,8vw,52px)}
+.pap-tots{font-size:14px;color:var(--pap-gris);font-weight:600;margin-top:-2px}
+.pap-tots b{color:#2D2D2D}
+.pap-tfabs{display:flex;flex-wrap:wrap;gap:8px}
+.pap-cfab{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 14px;border:1px solid var(--pap-linea);background:var(--pap-sup);border-radius:999px;font-size:14px;font-weight:600}
+.pap-cfab b{font-size:16px;font-weight:800;color:var(--c)}
+.pap-tti{margin:0;font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;background:var(--pap-ti-claro);border:1px solid #F5CFE0;border-radius:10px;padding:4px 12px}
+.pap-tti b{color:var(--pap-ti)}
+.pap-link{border:0;background:none;padding:6px 2px;min-height:40px;color:var(--pap-hondo)!important;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.pap-btn{min-height:44px;padding:9px 16px;border-radius:10px;border:1px solid var(--pap-hondo);background:var(--pap-hondo);color:#fff!important;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:8px;justify-content:center;text-align:center;line-height:1.2}
+.pap-btn.pap-claro{background:#fff;color:var(--pap-hondo)!important;border-color:var(--pap-borde)}
+.pap-fabs{display:flex;flex-direction:column;gap:12px}
+.pap-fab{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;box-shadow:var(--pap-sombra-s);overflow:hidden;scroll-margin-top:calc(var(--pap-ctrl-h) + 10px)}
+.pap-fcab{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:0 4px}
+.pap-ftog{display:grid;grid-template-columns:auto minmax(0,1fr) auto 22px;align-items:center;gap:12px;width:100%;min-height:72px;padding:14px 12px 14px 16px;border:0;background:#fff;text-align:left}
+.pap-facc{padding:0 16px 0 0;display:flex;align-items:center}
+.pap-fico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:21px}
+.pap-ftit b{display:block;font-size:17px;font-weight:750;line-height:1.2}
+.pap-ftit small{display:block;font-size:13px;color:var(--pap-gris);margin-top:2px;line-height:1.35}
+.pap-ftit small i{font-style:normal;font-weight:700;color:#2D2D2D}
+.pap-ftit small span{white-space:nowrap}
+.pap-fnum{font-size:30px;font-weight:800;line-height:1;text-align:right}
+.pap-fnum small{display:block;font-size:11.5px;font-weight:600;color:var(--pap-gris);margin-top:4px;letter-spacing:.02em}
+.pap-chev{width:22px;height:22px;color:var(--pap-gris);transition:transform .18s ease}
+.pap-ftog[aria-expanded="true"] .pap-chev{transform:rotate(180deg)}
+.pap-fcue{border-top:1px solid var(--pap-linea)}
+.pap-fsuma{margin:0;padding:10px 16px;font-size:13px;color:var(--pap-gris);background:var(--pap-velo);border-bottom:1px solid var(--pap-linea)}
+.pap-fsuma b{color:#2D2D2D}
+.pap-banda{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px 8px;font-size:12.5px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--c);background:var(--pap-sup);border-bottom:1px solid var(--pap-linea)}
+.pap-banda span:last-child{font-size:14px;letter-spacing:0}
+.pap-filas + .pap-banda{border-top:1px solid var(--pap-linea)}
+.pap-aviso{margin:0;padding:10px 16px;font-size:13.5px;color:var(--pap-ambar-tx);background:var(--pap-ambar-claro);border-bottom:1px solid #F3D9A4}
+.pap-filas{list-style:none;margin:0;padding:0}
+.pap-fila + .pap-fila{border-top:1px solid var(--pap-linea)}
+.pap-fbtn,.pap-fq{display:grid;grid-template-columns:minmax(0,1fr) auto 18px;gap:10px;align-items:center;width:100%;min-height:54px;padding:9px 16px;background:#fff;border:0;text-align:left}
+.pap-fq{grid-template-columns:minmax(0,1fr) auto}
+.pap-fbtn:hover{background:var(--pap-velo)}
+.pap-fnom{min-width:0}
+.pap-fnom b{font-size:15px;font-weight:650;line-height:1.25;overflow-wrap:anywhere}
+.pap-md{display:inline-block;font-size:12px;font-weight:650;color:#355856;background:var(--pap-claro);border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px;white-space:nowrap}
+.pap-fmeta{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;font-size:12.5px;color:var(--pap-gris);margin-top:2px}
+.pap-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c);vertical-align:0}
+.pap-tag{font-size:11.5px;font-weight:650;color:#4b5563;background:#F1F3F5;border-radius:6px;padding:1px 6px}
+.pap-ti{font-weight:700;color:var(--pap-ti)}
+.pap-fn{font-size:21px;font-weight:750;text-align:right;min-width:2.2ch;line-height:1.1}
+.pap-fn small{display:block;font-size:12px;font-weight:600;color:var(--pap-gris);white-space:nowrap;margin-top:2px}
+.pap-fchev{width:18px;height:18px;color:#9aa5a4;transition:transform .18s ease}
+.pap-fbtn[aria-expanded="true"]{background:var(--pap-velo)}
+.pap-fbtn[aria-expanded="true"] .pap-fchev{transform:rotate(180deg)}
+.pap-det{margin:0;padding:4px 16px 14px;background:var(--pap-velo);display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:14px}
+.pap-det dt{color:var(--pap-gris);font-weight:600}
+.pap-det dd{margin:0;min-width:0}
+.pap-gris{color:var(--pap-gris)}
+.pap-va{display:flex;flex-wrap:wrap;gap:6px}
+.pap-va span{display:inline-flex;gap:5px;align-items:center;background:#fff;border:1px solid var(--pap-linea);border-radius:999px;padding:2px 9px;font-size:13px;white-space:nowrap}
+.pap-va b{font-weight:750}
+.pap-como{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;box-shadow:var(--pap-sombra-s)}
+.pap-como summary{list-style:none;cursor:pointer;min-height:48px;padding:12px 16px;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--pap-hondo)}
+.pap-como summary::-webkit-details-marker{display:none}
+.pap-como summary::after{content:"";flex:none;width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px;transition:transform .18s ease}
+.pap-como[open] summary::after{transform:rotate(225deg);margin-top:4px}
+.pap-como ul{margin:0;padding:0 16px 16px 34px;display:flex;flex-direction:column;gap:6px;font-size:14px;max-width:72ch}
+.pap-dcab{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;box-shadow:var(--pap-sombra-s);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.pap-dtop{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;justify-content:space-between}
+.pap-dtop > div{display:flex;flex-direction:column;gap:8px}
+.pap-barra{display:flex;gap:2px;height:36px;border-radius:9px;overflow:hidden;background:#EDF3F3}
+.pap-barra i{flex-grow:var(--g);flex-shrink:1;flex-basis:0;min-width:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-style:normal;font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;transition:opacity .15s}
+.pap-barra i.pap-apag{opacity:.22}
+.pap-lugs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pap-fi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-width:0;background:#fff;border:1.5px solid var(--pap-linea);border-radius:12px;padding:10px 12px 10px 17px;min-height:86px;overflow:hidden}
+.pap-fi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--c)}
+.pap-fi-nom{font-size:14.5px;font-weight:700;line-height:1.2}
+.pap-fi-n{font-size:32px;font-weight:800;line-height:1.05;color:var(--c)}
+.pap-fi-pie{font-size:12px;color:var(--pap-gris);line-height:1.25}
+.pap-fi[aria-pressed="true"]{border-color:var(--c);box-shadow:0 0 0 2px var(--c) inset;background:var(--fondo)}
+.pap-ctiendas{display:flex;flex-direction:column;gap:6px}
+.pap-chips{display:flex;flex-wrap:wrap;gap:8px}
+.pap-ct{position:relative;display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:6px 14px 6px 12px;border:1.5px solid var(--pap-linea);border-radius:999px;background:#fff;font-size:14px;font-weight:600;overflow:hidden}
+.pap-ct::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--pap-ti)}
+.pap-ct b{font-size:16px;font-weight:800;color:var(--pap-ti)}
+.pap-ct[aria-pressed="true"]{border-color:var(--pap-ti);box-shadow:0 0 0 2px var(--pap-ti) inset;background:var(--pap-ti-claro)}
+.pap-ldet{background:#fff;border:1.5px solid var(--c);border-radius:14px;overflow:hidden;box-shadow:var(--pap-sombra-s);scroll-margin-top:calc(var(--pap-ctrl-h) + 10px)}
+.pap-ldcab{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--pap-linea);background:var(--fondo)}
+.pap-ldizq{display:flex;align-items:center;gap:10px 16px}
+.pap-ldtit b{display:block;font-size:17px;font-weight:750;line-height:1.2}
+.pap-ldtit span{font-size:13.5px;color:var(--pap-gris);font-weight:600}
+.pap-ldnum{font-size:28px;font-weight:800;color:var(--c);line-height:1}
+.pap-ldacc{display:flex;flex-wrap:wrap;gap:8px}
+.pap-porque{font-size:11.5px;font-weight:650;color:#7a5a12;background:#FBF3DC;border-radius:6px;padding:1px 6px}
+.pap-tcaja{overflow-x:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--pap-linea)}
+#pap-overlay table.pap-tabla{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;white-space:normal}
+#pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:9px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--pap-linea);color:#2D2D2D;text-transform:none;letter-spacing:0}
+#pap-overlay .pap-tabla thead th{background:var(--pap-claro);color:#2D2D2D;font-weight:750;font-size:12px;white-space:normal;line-height:1.2;vertical-align:bottom;min-width:40px;position:static;border-bottom:1px solid var(--pap-linea)}
+#pap-overlay .pap-tabla thead th.pap-thc{color:var(--c);box-shadow:inset 0 -3px 0 var(--c)}
+#pap-overlay .pap-tabla th:first-child,#pap-overlay .pap-tabla td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:190px;max-width:280px;white-space:normal;box-shadow:1px 0 0 var(--pap-linea)}
+#pap-overlay .pap-tabla thead th:first-child{background:var(--pap-claro);z-index:2}
+#pap-overlay .pap-tabla tbody tr:hover{background:transparent}
+#pap-overlay .pap-tabla td.pap-cero{color:#c1c9c8}
+#pap-overlay .pap-tabla td.pap-n{font-weight:750}
+#pap-overlay .pap-tabla tr.pap-tbanda td{background:var(--pap-sup);color:var(--c);font-weight:750;font-size:12.5px}
+#pap-overlay .pap-tabla tr.pap-tbanda td:first-child{background:var(--pap-sup);text-transform:uppercase;letter-spacing:.04em}
+#pap-overlay .pap-tabla tfoot td{font-weight:800;background:#EAF6F5;border-bottom:0;border-top:1px solid var(--pap-borde)}
+#pap-overlay .pap-tabla tfoot td:first-child{background:#EAF6F5}
+.pap-tnom b{font-weight:650}
+.pap-tnom small{display:block;color:var(--pap-gris);font-size:12px}
+.pap-tcaja.pap-cabe{overflow:visible}
+@media (min-width:700px){ #pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:9px 6px} #pap-overlay .pap-solo-cel{display:none} }
+@media (max-width:699px){
+  #pap-overlay .pap-col-t{display:none}
+  #pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:8px 3px}
+  #pap-overlay .pap-tabla thead th{font-size:11.5px;min-width:32px}
+  #pap-overlay .pap-tabla th:first-child,#pap-overlay .pap-tabla td:first-child{min-width:112px;max-width:160px;padding-left:8px}
+  .pap-tnom b{font-size:12.5px;overflow-wrap:break-word}
+}
+.pap-tnota{margin:0;padding:0 16px 10px;font-size:12.5px;color:var(--pap-gris)}
+#pap-overlay .pap-tcaja.pap-cabe thead th{position:sticky;top:var(--pap-ctrl-h);z-index:3}
+#pap-overlay .pap-tcaja.pap-cabe thead th:first-child{z-index:4}
+#pap-overlay .pap-tcaja.pap-cabe tfoot td{position:sticky;bottom:0;z-index:3}
+#pap-overlay .pap-tcaja.pap-cabe tfoot td:first-child{z-index:4}
+.pap-hoja-fondo{position:absolute;inset:0;z-index:40;background:rgba(15,92,138,.22);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.pap-hoja{background:#fff;border-radius:14px;width:100%;max-width:560px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--pap-sombra)}
+.pap-hoja b{font-size:16px}
+.pap-hoja p{margin:0;font-size:13.5px;color:var(--pap-gris)}
+.pap-hoja textarea{width:100%;min-height:220px;max-height:50vh;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#2D2D2D;border:1px solid var(--pap-borde);border-radius:10px;padding:10px;resize:vertical;background:var(--pap-sup)}
+@media (max-width:699px){
+  .pap-fcab{grid-template-columns:minmax(0,1fr)}
+  .pap-facc{padding:0 12px 12px}
+  .pap-facc .pap-btn{width:100%}
+}
+@media (max-width:599px){
+  #pap-overlay{--pap-pad:12px}
+  .pap-cuerpo{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .pap-cab-tx b{font-size:1.02rem}
+  .pap-cab-tx span{font-size:.74rem}
+  .pap-cab-btn{min-height:44px;padding:5px 10px;font-size:1rem}
+  .pap-cab-txt{display:none}
+  .pap-pag{gap:12px}
+  .pap-ctrl{padding-top:8px;padding-bottom:7px;gap:6px}
+  .pap-pestanas{padding:3px}
+  .pap-pestana{font-size:13.5px;padding:3px 6px;min-height:40px;line-height:1.15}
+  .pap-plazos{gap:5px}
+  .pap-pz{min-height:48px;padding:3px 2px}
+  .pap-pz-et{font-size:13px;line-height:1.1;letter-spacing:-.01em}
+  .pap-pz-n{font-size:12px}
+  .pap-fi-ico,.pap-fi-prod,.pap-pz-u,.pap-pz-al{display:none}
+  .pap-tot{padding:16px}
+  .pap-facc .pap-btn{font-size:14px;padding:9px 10px}
+  .pap-ftog{gap:10px;padding:12px 10px 12px 12px}
+  .pap-fico{width:36px;height:36px;font-size:18px;border-radius:10px}
+  .pap-fnum{font-size:26px}
+  .pap-fbtn,.pap-fq{padding:9px 12px}
+  .pap-det{padding:4px 12px 14px;grid-template-columns:minmax(0,1fr)}
+  .pap-det dt{margin-top:4px}
+  .pap-banda,.pap-fsuma,.pap-aviso{padding-left:12px;padding-right:12px}
+  .pap-dcab{padding:14px}
+  .pap-dtop .pap-btn{width:100%}
+  .pap-lugs{gap:8px}
+  .pap-fi{padding:9px 8px 9px 13px;min-height:80px}
+  .pap-fi::before{width:5px}
+  .pap-fi-nom{font-size:13.5px}
+  .pap-fi-n{font-size:26px}
+  .pap-fi-pie{font-size:11.5px}
+  .pap-ldcab{padding:12px}
+  .pap-ldizq{width:100%;justify-content:space-between}
+  .pap-ldacc{width:100%}
+  .pap-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pap-ct{justify-content:space-between;padding:6px 12px 6px 10px;gap:6px;font-size:13.5px}
+  .pap-ct span{flex:1 1 auto;min-width:0;text-align:left;line-height:1.15}
+  .pap-ldacc .pap-btn{flex:1 1 auto}
+}
+@media (min-width:900px){
+  .pap-fcue .pap-filas,.pap-ldet .pap-filas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:-1px}
+  .pap-fcue .pap-fila,.pap-ldet .pap-fila{border-top:0;border-bottom:1px solid var(--pap-linea)}
+  .pap-fcue .pap-fila:nth-child(even),.pap-ldet .pap-fila:nth-child(even){border-left:1px solid var(--pap-linea)}
+}
+@media (prefers-reduced-motion:reduce){ #pap-overlay *{transition:none!important;animation:none!important} }
 .wa-text{width:100%;min-height:210px;font-family:inherit;font-size:.82rem;line-height:1.5;border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;white-space:pre-wrap;background:var(--gray-lt);color:var(--text);resize:vertical}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .wa-btn{background:#25D366;color:#fff}
@@ -2112,6 +2296,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ci-col.somier::after{ content:""; position:absolute; bottom:0; left:14px; right:14px; height:7px; background:linear-gradient(90deg,#94693d 0 9px,transparent 9px calc(100% - 9px),#94693d calc(100% - 9px)); }
 .ci-col:hover .ci-cuerpo{ filter:brightness(1.04); } .ci-col:focus-visible{ outline:3px solid var(--teal); outline-offset:2px; }
 .pl-caja{ background:#fff; border:1px solid #dfe8e8; border-radius:14px; padding:10px 12px; margin-bottom:12px; display:grid; gap:8px; min-width:0; }
+.pl-pap{ background:#fff; color:#007C76; border:1.5px solid #007C76 !important; font-weight:800; }   /* 🏭 (20/10) abre la ventana «Pedido a producción» */
 .pl-copiar{ background:#0f766e; color:#fff; font-weight:800; }   /* ✏️ (18/10, §4ls VB-8) blanco sobre #00B5AD era 2,56:1: con el teal oscuro, ~5,5:1 */
 /* ✏️ (18/10, §4ls textos, VB-8) Contraste: «pedí N» de la cinta (ámbar 3,4:1) y los «✔ hay» / «✓ alcanza» verdes (3,04:1) de Stock y de
    la ventana de la revisión, a un color que se lee al sol. Los nombres del catálogo y del ranking van en dos renglones en vez de cortarse. */
@@ -3519,7 +3704,9 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><span class="stk-acc"><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></span><button class="btn btn-sm stk-cerrar" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><span class="stk-acc"><button class="btn btn-sm" id="stk-pap-btn" style="background:#fff;color:#007C76;font-weight:800" onclick="abrirPap()" title="Qué pedir a cada fábrica y qué va a dónde (PTF, Banzer y cada tienda), para 7, 15 y 30 días y el mes que viene.">🏭 Pedido a producción</button><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></span><button class="btn btn-sm stk-cerrar" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<!-- 🏭 (20/10) «Pedido a producción»: qué pedir a cada fábrica y qué va a dónde (PTF, Banzer, cada tienda), para 7, 15 y 30 días y el mes que viene. Se abre desde Stock. -->
+<div id="pap-overlay" role="dialog" aria-modal="true" aria-labelledby="pap-tit"><div class="pap-cab no-print"><div class="pap-cab-tx"><b id="pap-tit">🏭 Pedido a producción</b><span id="pap-sub">Se abre desde Stock</span></div><button type="button" class="pap-cab-btn" data-pap="actualizar" aria-label="Actualizar" title="Vuelve a calcular con lo último de la planilla y del stock.">🔄<span class="pap-cab-txt"> Actualizar</span></button><button type="button" class="pap-cab-btn" data-pap="cerrar" aria-label="Cerrar">✕<span class="pap-cab-txt"> Cerrar</span></button></div><div id="pap-cuerpo" class="pap-cuerpo"><div class="pap-pag"><div class="pap-ctrl" id="pap-ctrl"><div class="pap-pestanas" role="tablist" aria-label="Qué querés ver"><button type="button" class="pap-pestana" role="tab" id="pap-tab-pedir" aria-controls="pap-pedir" aria-selected="true" data-pap-tab="pedir">📦 Qué pedir a producción</button><button type="button" class="pap-pestana" role="tab" id="pap-tab-donde" aria-controls="pap-donde" aria-selected="false" data-pap-tab="donde">🗺️ Qué va a dónde</button></div><div class="pap-plazos" id="pap-plazos" role="group" aria-label="¿Para cuánto tiempo?"></div></div><p class="pap-nota">Cada plazo ya trae al anterior (15 días incluye los 7): no se suman.</p><div id="pap-pedir" class="pap-panel" role="tabpanel" aria-labelledby="pap-tab-pedir"></div><div id="pap-donde" class="pap-panel" role="tabpanel" aria-labelledby="pap-tab-donde" hidden></div></div></div><div class="pap-hoja-fondo" id="pap-hoja" hidden><div class="pap-hoja" role="dialog" aria-modal="true" aria-labelledby="pap-hoja-tit"><b id="pap-hoja-tit">Copiá este texto</b><p>No se pudo copiar solo. Mantené apretado el texto y elegí «Copiar».</p><textarea id="pap-hoja-tx" readonly></textarea><button type="button" class="pap-btn" data-pap="hoja-ok">Listo</button></div></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
@@ -23156,6 +23343,7 @@ var STOCK_VENTA_MIN=8;
 /* 🏭 QUÉ PRODUCIR (§4dr): la semana, los próximos 15 días y el mes que viene. */
 var PRODUCIR_SEMANA=7;        // «para la semana»
 var PRODUCIR_QUINCENA=15;     // «para los próximos 15 días»
+var PRODUCIR_30=30;           // 🏭 (20/10) «para los próximos 30 días», solo en la ventana «Pedido a producción»
 var STOCK_VENTANA_MES=30;     // sobre cuántos días se mide la venta para el plan del mes («si en septiembre se vendieron 70 soft…»)
 var PRODUCIR_1RA=0.7;         // qué parte del mes tiene que estar hecha para la 1ª quincena (dueño, 10/09: «el 70% por lo menos»)
 /* 🔁 CUÁNTAS ENTREGAS DISTINTAS DEL EQUIPO HACEN FALTA PARA LLAMARLO «ROTACIÓN».
@@ -28012,7 +28200,7 @@ function stockRangoMes(o, MS, PI){
    al mes que viene. */
 function stockProducirDe(o, MS, PI){
   var hoy=todayStr();
-  var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, antes:0, hay:0, ok:false };
+  var r={ sem:0, quin:0, d30:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, antes:0, hay:0, ok:false };
   if(stockHaySalir(o)==null || o.descont) return r;
   /* El tope en 0 va sobre el DEPÓSITO solo (§4ew): con conteo viejo (contados 3, salieron 8 →
      −5) y 5 en Moreno, «Hay» decía 0 y el negativo se comía lo de Moreno, mientras la tabla de
@@ -28036,6 +28224,9 @@ function stockProducirDe(o, MS, PI){
        a las 16:30 y el sábado a la tarde (lo mismo en lo libre, `stockCompHorizonteLim`). */
     var nec15o=stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+STOCK_OBJ_FABRICA)) + o.objS + mu*stockHabilesEntre(hoy, stockSumarDias(hoy, PRODUCIR_QUINCENA));
     r.quin=Math.max(r.sem, Math.ceil(nec15o-hay-1e-9), 0);
+    /* 🏭 (20/10) 30 días, para la ventana «Pedido a producción»: la MISMA cuenta que 15 días con 30 (tope abajo, con el mes). */
+    var nec30o=stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_30+STOCK_OBJ_FABRICA)) + o.objS + mu*stockHabilesEntre(hoy, stockSumarDias(hoy, PRODUCIR_30));
+    r.d30=Math.max(r.quin, Math.ceil(nec30o-hay-1e-9), 0);
     var consumoO=stockCompHasta(o, MS.finActual) + o.objS + mu*stockHabilesEntre(hoy, MS.finActual);
     /* (18/10, §4ls, corrector) El mes se redondea UNA vez, como la regla validada (`ceil(μ·hábiles + vendido − lo que sobra)`): con
        «para arriba lo que se necesita − para abajo lo que queda» (§4ds) daba +1 en 20 de los 38 productos que rotan el 16/10 (611 u en
@@ -28055,6 +28246,7 @@ function stockProducirDe(o, MS, PI){
     r.antes=r.mes-sig;
     r.mes1=Math.min(sig, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-(r.antes>0 ? 0 : r.mesQueda)));
     r.mes2=sig-r.mes1;
+    r.d30=Math.min(r.d30, r.quin+r.mes);   // 30 días nunca más que «todo el mes que viene» (solo pasa el 30 y 31/01)
     return r;
   }
   /* 📅 (18/10, §4ls VF1) Los días de venta, desde que arranca la fábrica (`stockLeadVenta`, como «7 días»): el día hasta el que entra lo
@@ -28062,6 +28254,8 @@ function stockProducirDe(o, MS, PI){
   var lv=stockLeadVenta(o);
   var nec15=stockCompHasta(o, stockSumarDias(o.ventaDesde||hoy, PRODUCIR_QUINCENA+lv)) + o.porDia*(lv+o.margen+PRODUCIR_QUINCENA);   // ➕ sumados, no el mayor (§4ii)
   r.quin=Math.max(r.sem, Math.ceil(nec15-hay-1e-9), 0);
+  var nec30=stockCompHasta(o, stockSumarDias(o.ventaDesde||hoy, PRODUCIR_30+lv)) + o.porDia*(lv+o.margen+PRODUCIR_30);   // 🏭 (20/10) igual que 15 días
+  r.d30=Math.max(r.quin, Math.ceil(nec30-hay-1e-9), 0);
   var pdm=o.porDiaMes||0, diasResto=stockDias(hoy, MS.finActual)+1;
   var consumoResto=stockCompHasta(o, MS.finActual) + pdm*diasResto;   // ➕ (§4ix, M2) sumados, como en 7 y 15 días (§4ii)
   /* ⚠️ EN ENTEROS, Y QUE CIERREN (§4ds). Antes «necesita» y «queda» se redondeaban cada
@@ -28086,6 +28280,7 @@ function stockProducirDe(o, MS, PI){
   var sigN=r.mes-r.antes;
   r.mes1=Math.min(sigN, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-Math.max(0, r.mesQueda)));
   r.mes2=sigN-r.mes1;
+  r.d30=Math.min(r.d30, r.quin+r.mes);
   return r;
 }
 var PRODUCIR_COLS=['sem','quin','mes','mes1','mes2'];
@@ -28103,7 +28298,7 @@ function stockProducir(d){
 }
 function stockProducirCalc(d){
   var MS=stockMesSiguiente(d.hoy), bloques={}, PI=ventasPanelIndex();   // una sola pasada por STATE para todo el plan (§4ec)
-  PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,mes:0,mes1:0,mes2:0,mesMin:0,mesMax:0,antes:0,tot:0}, medidas:{} }; });
+  PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,d30:0,mes:0,mes1:0,mes2:0,mesMin:0,mesMax:0,antes:0,tot:0}, medidas:{} }; });
   var cubiertos=0, sinContar=0;
   d.lista.forEach(function(o){
     if(o.descont) return;
@@ -28118,12 +28313,13 @@ function stockProducirCalc(d){
     /* 📦 (20/10, dueño: *«que muestre la totalidad de lo que tiene que producir»*) «el mes» va ADEMÁS de 15 días: lo que hay que producir
        hasta fin del mes que viene es la suma. Se dice en su propia columna para que nadie lea «noviembre 15» como el total. */
     f.tot=r.quin+r.mes;
+    f.d30=r.d30;   // 🏭 (20/10) entre 15 días y el total: solo lo muestra la ventana «Pedido a producción»
     if(!f.algo) cubiertos++;
     B.filas.push(f);
     if(f.algo){
       var md=f.md, M=B.medidas[md]=B.medidas[md]||{sem:0,quin:0,mes:0,mes1:0,mes2:0,tot:0};
       PRODUCIR_COLS.forEach(function(c){ B.tot[c]+=r[c]; M[c]+=r[c]; });
-      B.tot.tot+=f.tot; M.tot+=f.tot;
+      B.tot.tot+=f.tot; M.tot+=f.tot; B.tot.d30+=f.d30;
       B.tot.mesMin+=(r.mesMin!=null?r.mesMin:r.mes); B.tot.mesMax+=(r.mesMax!=null?r.mesMax:r.mes);
       B.tot.antes+=(r.antes||0);   // (§4ls CU-1) lo que falta antes del 1°, dentro de «el mes»
     }
@@ -28153,8 +28349,8 @@ function stockTiendasParteVigente(){
    lo de siempre): con eso la planilla «🗺️ Qué va a dónde» reparte cada producto y la línea de cada bloque es la suma de esas mismas
    partes (antes se restaban los totales del bloque: con la planilla del 16/10 da lo mismo). `baseR` = el «Qué producir» de siempre (el del
    dibujo, si lo hay: así no se calcula dos veces); sin él, se calcula. */
-var STOCK_TP_H=['sem','quin','mes','tot'];
-function stockTiendasPorK(R){ var o={}; R.bloques.forEach(function(B){ B.filas.forEach(function(f){ o[f.o.k]={ sem:f.sem, quin:f.quin, mes:f.mes, tot:f.tot }; }); }); return o; }
+var STOCK_TP_H=['sem','quin','d30','mes','tot'];
+function stockTiendasPorK(R){ var o={}; R.bloques.forEach(function(B){ B.filas.forEach(function(f){ o[f.o.k]={ sem:f.sem, quin:f.quin, d30:f.d30, mes:f.mes, tot:f.tot }; }); }); return o; }
 function stockTiendasParteCalc(baseR){
   var memo=STOCK_DIBUJO, sinR;
   STOCK_DIBUJO=null;
@@ -28165,7 +28361,7 @@ function stockTiendasParteCalc(baseR){
   } finally { STOCK_SIN_TIENDAS=false; STOCK_DIBUJO=memo; }
   var sinK=stockTiendasPorK(sinR), v={}, porK={};
   baseR.bloques.forEach(function(B){
-    var t=v[B.k]={ sem:0, quin:0, mes:0, tot:0 };
+    var t=v[B.k]={ sem:0, quin:0, d30:0, mes:0, tot:0 };
     B.filas.forEach(function(f){
       var s=sinK[f.o.k]||{}, x=porK[f.o.k]={};
       STOCK_TP_H.forEach(function(h){ var b=f[h]||0; x[h]=Math.min(b, Math.max(0, b-(s[h]||0))); t[h]+=x[h]; });
@@ -28175,16 +28371,10 @@ function stockTiendasParteCalc(baseR){
 }
 function stockTiendasParteHtml(cual){
   var v=stockTiendasParteVigente() ? STOCK_TP.v : null, MS=stockMesSiguiente(todayStr());
-  if(!v) return cual==='total' ? '<td colspan="4">🏪 Calculando cuánto de esto es para las tiendas…</td>' : '🏪 Calculando cuánto de esto es por las tiendas…';
+  if(!v) return '🏪 Calculando cuánto de esto es por las tiendas…';
   var nada=function(x){ return !x || !(x.sem||x.quin||x.mes); };
   var tres=function(x){ return '<b>'+x.sem+'</b> en 7 días · <b>'+x.quin+'</b> en 15 días · <b>'+x.mes+'</b> en '+esc(MS.nombre)+' · <b>'+x.tot+'</b> hasta el '+fmtFechaCorta(MS.fin); };
   var aclara=' <span style="color:var(--muted)">Es lo que venden las tiendas y, en almohadas, lo que piden con la reposición. Ya está sumado: no lo agregues otra vez.</span>';
-  if(cual==='total'){
-    var T={ sem:0, quin:0, mes:0, tot:0 };
-    PRODUCIR_BLOQUES.forEach(function(b){ var x=v[b.k]; if(x) STOCK_TP_H.forEach(function(h){ T[h]+=x[h]||0; }); });
-    /* Una fila más del cuadro del total, debajo de cada columna (el `data-tp` va en el `<tr>`). */
-    return '<td>🏪 <b>De esto, para las tiendas</b><br><span class="ptg-sub">ya está sumado arriba; cuánto para cada una, en «🗺️ Qué va a dónde»</span></td><td><b>'+T.sem+'</b></td><td><b>'+T.quin+'</b></td><td><b>'+T.tot+'</b></td>';
-  }
   if(cual==='plan'){
     var L=PRODUCIR_BLOQUES.filter(function(b){ return !nada(v[b.k]); });
     if(!L.length) return '🏪 Nada del pedido de hoy viene de las tiendas.';
@@ -28201,11 +28391,10 @@ function stockTiendasParteLlenar(){
     els[i].innerHTML=h;
     var fila=els[i].closest('tr'); if(fila) fila.hidden=!h;
   }
-  var rep=document.getElementById('prod-rep-cuerpo'); if(rep) rep.innerHTML=producirRepHtml();
 }
 /* Después de dibujar Stock o el Plan: con la cuenta vigente llena enseguida; si no, la hace un momento después (una sola vez). */
 function stockTiendasParteLuego(){
-  if(!document.querySelector('[data-tp],#prod-rep-cuerpo')) return;
+  if(!document.querySelector('[data-tp]')) return;
   if(stockTiendasParteVigente()){ stockTiendasParteLlenar(); return; }
   var base=null;
   if(STOCK_DIBUJO && STOCK_DIBUJO.prod && STOCK_DIBUJO.prodD && STOCK_DIBUJO.prodD.hoy===todayStr()) base=STOCK_DIBUJO.prod;
@@ -28214,7 +28403,7 @@ function stockTiendasParteLuego(){
   STOCK_TP_TIMER=setTimeout(function(){
     STOCK_TP_TIMER=null;
     if(foto.st!==STOCK || foto.state!==STATE || foto.n!==STATE.length || foto.gen!==SALDO_GEN) base=null;   // cambió algo: la base también se rehace
-    if(!document.querySelector('[data-tp],#prod-rep-cuerpo')) return;
+    if(!document.querySelector('[data-tp]')) return;
     try{
       var c=stockTiendasParteCalc(base);
       STOCK_TP={ v:c.v, porK:c.porK, R:c.R, D:producirDestinos(c.R), st:STOCK, state:STATE, n:STATE.length, gen:SALDO_GEN, hoy:todayStr(), t:Date.now() };
@@ -28224,8 +28413,9 @@ function stockTiendasParteLuego(){
 }
 /* ============================================================================
    🗺️ QUÉ VA A DÓNDE (20/10, dueño: *«la idea es que el qué producir muestre la totalidad de lo que tiene que producir… y luego mostrar
-   una planilla o desglose de qué va a dónde, ya sea almacén Banzer, productos terminados fábrica o almacén de las tiendas»*).
-   SOLO REPARTE el número de «Qué producir» de cada producto (7 días, 15 días o hasta fin del mes que viene); no cambia ninguno ni marca nada:
+   una planilla o desglose de qué va a dónde, ya sea almacén Banzer, productos terminados fábrica o almacén de las tiendas»*). Se ve en la
+   ventana «🏭 Pedido a producción» (pestaña «🗺️ Qué va a dónde», abajo).
+   SOLO REPARTE el número de «Qué producir» de cada producto (7, 15 o 30 días, o todo el mes que viene); no cambia ninguno ni marca nada:
      · TIENDAS: la parte del pedido que es por ellas (`STOCK_TP.porK`, la misma de la línea «🏪 De esto, por las tiendas»), repartida entre
        las tiendas según cuánto de ese producto le tocó a cada una en los últimos 30 días: su venta de tienda (lo que es demanda,
        `stockEsDemanda`: en almohadas, la reposición) y lo que pidió por RPT y falta entregarle. Sin nada de eso en 90 días, «tiendas».
@@ -28235,12 +28425,6 @@ function stockTiendasParteLuego(){
        discontinuado y lo de menos de `ALM_MIN_UNID` unidades ubicadas: todo a PTF, como en «📍 Banzer o PTF».
    Cada fila suma exacto lo que dice «Qué producir» (el resto de los redondeos va al que más tiene).
    ========================================================================== */
-var PRODUCIR_REP_H=(function(){ try{ var v=localStorage.getItem('me_prod_rep_h'); return (v==='sem'||v==='quin'||v==='tot')?v:'quin'; }catch(e){ return 'quin'; } })();
-function producirRepVer(h){
-  PRODUCIR_REP_H=h; try{ localStorage.setItem('me_prod_rep_h', h); }catch(e){}
-  var rep=document.getElementById('prod-rep-cuerpo'); if(rep && stockTiendasParteVigente()) rep.innerHTML=producirRepHtml(); else renderStock();
-}
-function producirRepAbrir(el){ visPrefSet('qrep', !!(el && el.open)); }
 function almLadoFrac(p, Z){
   var pt=almPunto(p); if(pt) return almLado(pt);
   var z=Z[almZonaClave(p.zona)]; return (z && z.n>=ALM_ZONA_MIN) ? { P:z.P/z.n, B:z.B/z.n } : null;
@@ -28316,79 +28500,549 @@ function producirRepartoFila(f, h, porK, D){
   }
   return out;
 }
-var PRODUCIR_REP_ETQ={ sem:'7 días', quin:'15 días' };
-function producirRepEtq(h, MS){ return PRODUCIR_REP_ETQ[h] || ('hasta el '+fmtFechaCorta(MS.fin)); }
-/* Las filas de un bloque y su total, para la pantalla y para copiar. */
-function producirRepBloque(B, h, TP){
-  var filas=[], tot={ n:0, P:0, B:0, T:{} };
-  B.filas.forEach(function(f){
-    if(!(f[h]>0)) return;
-    var r=producirRepartoFila(f, h, TP.porK||{}, TP.D);
-    r.f=f; filas.push(r);
-    tot.n+=r.n; tot.P+=r.P; tot.B+=r.B;
-    Object.keys(r.T).forEach(function(x){ tot.T[x]=(tot.T[x]||0)+r.T[x]; });
-  });
-  filas.sort(function(a,b){ return (b.n-a.n) || stockNombre(a.f.o).localeCompare(stockNombre(b.f.o)); });
-  var tiendas=Object.keys(tot.T).sort(function(a,b){ return (tot.T[b]-tot.T[a]) || (a<b?-1:1); });
-  return { B:B, filas:filas, tot:tot, tiendas:tiendas };
+/* ============================================================================
+   🏭 PEDIDO A PRODUCCIÓN (20/10, dueño: *«la idea es que simplemente al hacer el pedido se genere el consolidado y ahí muestre qué pedir a
+   producción, y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes… o se abra una pestaña o tabla
+   que muestre eso, porque la verdad que lo veo muy cargado de stock y reposición»*; vio el ejemplo y dijo «Publica»).
+   Una ventana aparte (`#pap-overlay`), que se abre desde la barra de Stock, el «📋 Plan de stock» y «Qué producir». SOLO MIRA: no marca
+   pedidos, no toca el stock ni la planilla.
+     · Los números son los de «Qué producir» (`stockProducirCalc`): 7 días, 15 días, 30 días (`f.d30`, la misma cuenta que 15 días con 30)
+       y «Todo <el mes que viene>» (`f.tot` = 15 días + el mes, hasta su último día). Cada plazo ya incluye al anterior: no se suman.
+     · Pestaña 1, «📦 Qué pedir a producción»: el total y una tarjeta por FÁBRICA (Industrias Moreno = Heaven + ROHO; Multiespumas = Sueña;
+       lo que no tiene fábrica, aparte), con la marca adentro y «📋 Copiar para <fábrica>».
+     · Pestaña 2, «🗺️ Qué va a dónde»: lo mismo repartido entre PTF, Banzer y cada tienda (`producirRepartoFila`), producto por producto:
+       PTF + Banzer + tiendas = lo que se pide, exacto.
+   La cuenta se hace al abrir y con 🔄 Actualizar; si la de las tiendas (`STOCK_TP`) está vigente, se usa esa (no se calcula dos veces).
+   ⚠️ Todas las clases llevan «pap-» adelante (una que se llame como una de la página hereda sus reglas).
+   ========================================================================== */
+var PAP=null, PAP_S=null, PAP_COPIA='', PAP_INIT=false, PAP_TIMER=null;
+var PAP_H=['sem','quin','d30','tot'];
+var PAP_FAB={ MORENO:'Industrias Moreno', MULTI:'Multiespumas' };
+var PAP_COL={ P:'#007C76', B:'#4f46e5', T:'#be185d' }, PAP_FONDO={ P:'#EAF6F5', B:'#EEF0FE', T:'#FDF0F6' };
+var PAP_PORQUE={ poca:'Se vende poco: lo que no es de una tienda va a PTF.', datos:'Hay pocos datos de dónde se entrega: lo que no es de una tienda va a PTF.', descont:'Ya no se fabrica: lo que no es de una tienda va a PTF.' };
+var PAP_PORQUE_CORTO={ poca:'se vende poco', datos:'pocos datos', descont:'ya no se fabrica' };
+var PAP_DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+var PAP_CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+function papEstadoNuevo(){ return { tab:'pedir', plazo:'sem', cerradas:{}, filas:{}, lugar:'' }; }
+function papFmt(n){ return String(Math.round(n||0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function papDiaSem(iso){ var x=String(iso||'').split('-'); return x.length<3 ? '' : PAP_DIAS[new Date(+x[0], +x[1]-1, +x[2]).getDay()]; }
+function papCap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function papHoyTxt(D){ return papCap(papDiaSem(D.hoy))+' '+fmtFecha(D.hoy); }
+
+/* 📦 La línea de «Qué producir»: los cuatro totales y el botón. Los mismos números que la ventana (los totales de cada bloque). */
+function producirPapLineaHtml(R){
+  var T={ sem:0, quin:0, d30:0, tot:0 };
+  R.bloques.forEach(function(B){ PAP_H.forEach(function(h){ T[h]+=B.tot[h]||0; }); });
+  return '<div id="prod-pap" class="prod-pap">🏭 <span><b>Pedido a producción</b>, todas las fábricas: 7 días <b>'+papFmt(T.sem)+'</b> · '+PRODUCIR_QUINCENA+' días <b>'+papFmt(T.quin)+'</b> · '+
+    PRODUCIR_30+' días <b>'+papFmt(T.d30)+'</b> · todo '+esc(R.mes.nombre)+' <b>'+papFmt(T.tot)+'</b></span>'+
+    '<button type="button" class="btn btn-sm" onclick="abrirPap()">Ver qué pedir y qué va a dónde</button></div>';
 }
-function producirRepLugaresTxt(r, tiendas){
-  var l=[]; if(r.P) l.push('PTF '+r.P); if(r.B) l.push('Banzer '+r.B);
-  (tiendas||Object.keys(r.T)).forEach(function(x){ if(r.T[x]) l.push(x+' '+r.T[x]); });
-  return l.join(' · ');
-}
-function producirRepHtml(){
-  if(!stockTiendasParteVigente() || !STOCK_TP.R || !STOCK_TP.D) return '<div style="font-size:.82rem;color:var(--muted)">🗺️ Calculando qué va a dónde…</div>';
-  var R=STOCK_TP.R, MS=R.mes, h=PRODUCIR_REP_H, html='';
-  html+='<div class="prod-rep-hs" role="group" aria-label="Para cuántos días">'+['sem','quin','tot'].map(function(x){
-      return '<button type="button" class="btn btn-sm'+(x===h?' sel':'')+'" aria-pressed="'+(x===h)+'" onclick="producirRepVer(\''+x+'\')">'+esc(producirRepEtq(x, MS).replace(/^h/,'H'))+(x==='tot'?(' <span style="font-weight:400">(15 días + '+esc(MS.nombre)+')</span>'):'')+'</button>';
-    }).join('')+
-    '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="copiarProducirReparto()">📋 Copiar la planilla</button></div>';
-  var hayAlgo=false;
+
+/* ---- La cuenta ---- */
+function papDatos(forzar){
+  var hoy=todayStr(), d=stockData();
+  if(!d.contado) return { hoy:hoy, sinConteo:true, listo:true, t:Date.now() };
+  var tp=null;
+  if(!forzar && stockTiendasParteVigente() && STOCK_TP.R && STOCK_TP.D && STOCK_TP.porK) tp=STOCK_TP;
+  if(!tp){
+    var c=stockTiendasParteCalc(null);
+    tp=STOCK_TP={ v:c.v, porK:c.porK, R:c.R, D:producirDestinos(c.R), st:STOCK, state:STATE, n:STATE.length, gen:SALDO_GEN, hoy:hoy, t:Date.now() };
+  }
+  var R=tp.R, porK=tp.porK||{}, FABS=[], TODAS=[], BLOQUES=[];
   R.bloques.forEach(function(B){
-    var Q=producirRepBloque(B, h, STOCK_TP); if(!Q.filas.length) return;
-    hayAlgo=true;
-    var tc=0; Q.tiendas.forEach(function(x){ tc+=Q.tot.T[x]; });
-    html+='<div class="prod-rep-bl" style="border-left-color:'+B.col+'">'+
-      '<div class="prod-rep-tit"><b style="color:'+B.col+'">'+B.ico+' '+esc(B.titulo)+'</b> · producir <b>'+Q.tot.n+'</b> → '+
-        '<span class="pr-ptf">🏭 PTF <b>'+Q.tot.P+'</b></span> · <span class="pr-bz">🏪 Banzer <b>'+Q.tot.B+'</b></span>'+
-        (tc?(' · <span class="pr-ti">🏬 tiendas <b>'+tc+'</b> ('+Q.tiendas.map(function(x){ return esc(x)+' '+Q.tot.T[x]; }).join(' · ')+')</span>'):'')+'</div>'+
-      '<div class="prod-rep-caja"><table class="roho-tabla stk-tabla prod-rep-t"><thead><tr><th>Producto</th><th>Producir</th><th class="pr-ptf">🏭 PTF</th><th class="pr-bz">🏪 Banzer</th>'+
-        Q.tiendas.map(function(x){ return '<th class="pr-ti">🏬 '+esc(x)+'</th>'; }).join('')+'</tr></thead><tbody>'+
-      Q.filas.map(function(r){
-        var o=r.f.o, nota=r.porque==='poca'?'rota poco: a PTF':(r.porque==='datos'?'pocos datos de dónde se entrega: a PTF':(r.porque==='descont'?'ya no se fabrica: a PTF':''));
-        var cel=function(v){ return v>0 ? ('<b>'+v+'</b>') : '<span style="color:var(--muted)">—</span>'; };
-        return '<tr data-rep-k="'+esc(o.k)+'"><td><b>'+esc(stockNombre(o))+'</b>'+(o.cod?(' <span style="color:var(--muted);font-size:.88em">cód '+esc(o.cod)+'</span>'):'')+
-            (nota?('<br><span style="color:var(--muted);font-size:.85em">'+nota+'</span>'):'')+'</td>'+
-          '<td><b style="color:#7c2d12">'+r.n+'</b></td><td class="pr-ptf">'+cel(r.P)+'</td><td class="pr-bz">'+cel(r.B)+'</td>'+
-          Q.tiendas.map(function(x){ return '<td class="pr-ti">'+cel(r.T[x]||0)+'</td>'; }).join('')+'</tr>';
-      }).join('')+
-      '</tbody><tfoot><tr class="prod-total"><td><b>TOTAL</b></td><td><b>'+Q.tot.n+'</b></td><td class="pr-ptf"><b>'+Q.tot.P+'</b></td><td class="pr-bz"><b>'+Q.tot.B+'</b></td>'+
-        Q.tiendas.map(function(x){ return '<td class="pr-ti"><b>'+Q.tot.T[x]+'</b></td>'; }).join('')+'</tr></tfoot></table></div></div>';
+    var sinFab=!B.fab, nom=sinFab ? 'Sin fábrica asignada' : (PAP_FAB[B.fab]||B.fab), F=null;
+    FABS.forEach(function(x){ if(x.nombre===nom) F=x; });
+    if(!F){ F={ k:'f'+FABS.length, nombre:nom, col:B.col, ico:sinFab?B.ico:'🏭', sinFab:sinFab, bloques:[] }; FABS.push(F); }
+    var i=B.titulo.indexOf(' · '), marca=(sinFab||i<0) ? '' : B.titulo.slice(i+3);
+    var Q={ k:B.k, marca:marca, corta:marca.replace(/\s*\(.*\)\s*$/,''), ico:B.ico, col:B.col, fab:F, filas:[] };
+    B.filas.forEach(function(f, idx){
+      if(!(f.sem>0 || f.quin>0 || f.d30>0 || f.tot>0)) return;
+      var o=f.o, rep={};
+      PAP_H.forEach(function(h){ rep[h]=producirRepartoFila(f, h, porK, tp.D); });
+      var g={ id:B.k+'|'+o.k, k:o.k, idx:idx, bloque:Q, nombre:stockNombre(o), base:o.desc, medida:o.medida ? f.md : '', cod:o.cod||'', rota:!!o.rota,
+        hay:f.hay||0, ptf:Math.max(0, o.deposito||0), bz:almHoyBanzer(o), mor:o.enOtros||0, cam:stockEnCaminoSeguro(o), comp:o.comp||0,
+        sem:f.sem||0, quin:f.quin||0, d30:f.d30||0, mes:f.mes||0, tot:f.tot||0, tiendas:porK[o.k]||{}, rep:rep };
+      Q.filas.push(g); TODAS.push(g);
+    });
+    F.bloques.push(Q); BLOQUES.push(Q);
   });
-  if(!hayAlgo) html+='<div style="font-size:.82rem;color:var(--muted)">Nada que producir para '+esc(producirRepEtq(h, MS))+'.</div>';
-  return html;
+  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, listo:true, t:Date.now() };
 }
-function textoProducirReparto(h){
-  if(!stockTiendasParteVigente() || !STOCK_TP.R || !STOCK_TP.D) return null;
-  var R=STOCK_TP.R, MS=R.mes, partes=[];
-  R.bloques.forEach(function(B){
-    var Q=producirRepBloque(B, h, STOCK_TP); if(!Q.filas.length) return;
-    var t=B.titulo.toUpperCase()+' — producir '+Q.tot.n+'\n';
-    Q.filas.forEach(function(r){ var o=r.f.o; t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+': '+r.n+' → '+producirRepLugaresTxt(r, Q.tiendas)+'\n'; });
-    t+='Total: '+Q.tot.n+' → '+producirRepLugaresTxt(Q.tot, Q.tiendas);
-    partes.push(t);
+function papPlazos(D){
+  var h=D.hoy, MS=D.MS||stockMesSiguiente(h);
+  var p=function(k, n){ return { k:k, et:n+' días', frase:n+' días', prox:'los próximos '+n+' días', hasta:fmtFechaCorta(stockSumarDias(h, n)) }; };
+  return [ p('sem', 7), p('quin', PRODUCIR_QUINCENA), p('d30', PRODUCIR_30),
+    { k:'tot', et:'Todo '+MS.nombre, frase:'todo '+MS.nombre, prox:'todo '+MS.nombre, hasta:fmtFechaCorta(MS.fin) } ];
+}
+function papPlazo(k){ var L=papPlazos(PAP); for(var i=0;i<L.length;i++) if(L[i].k===k) return L[i]; return L[0]; }
+function papPlazoLinea(P){ return 'Para '+P.prox+' (del '+fmtFechaCorta(PAP.hoy)+' al '+P.hasta+')'; }
+function papSuma(filas, p){ var s=0; filas.forEach(function(f){ s+=f[p]||0; }); return s; }
+function papSumaFab(F, p){ var s=0; F.bloques.forEach(function(b){ s+=papSuma(b.filas, p); }); return s; }
+function papOrden(filas, p){ return filas.filter(function(f){ return (f[p]||0)>0; }).sort(function(a,b){ return (b[p]-a[p]) || (a.idx-b.idx); }); }
+function papCodTxt(f){ return f.cod ? 'cód '+f.cod : 'sin código'; }
+function papTiendasDe(f, p){ return (f.tiendas && f.tiendas[p]) || 0; }
+function papEtBloque(B){ return B.fab.sinFab ? (B.ico+' Sin fábrica asignada') : (B.ico+' '+B.corta+' · '+B.fab.nombre); }
+
+/* ---- Abrir, cerrar, actualizar ---- */
+function papAbierto(){ var ov=document.getElementById('pap-overlay'); return !!(ov && ov.style.display==='flex'); }
+function abrirPap(){
+  var ov=document.getElementById('pap-overlay'); if(!ov) return;
+  papIniciar();
+  PAP_S=papEstadoNuevo();   // siempre abre en «Qué pedir · 7 días», sin nada abierto (como el ejemplo)
+  ov.style.display='flex';
+  var sc=document.getElementById('pap-cuerpo'); if(sc) sc.scrollTop=0;
+  papCalcularLuego(false);
+  try{ document.getElementById('pap-tab-pedir').focus({ preventScroll:true }); }catch(e){}
+}
+function cerrarPap(){
+  var ov=document.getElementById('pap-overlay'); if(ov) ov.style.display='none';
+  var h=document.getElementById('pap-hoja'); if(h) h.hidden=true;
+  if(PAP_TIMER){ clearTimeout(PAP_TIMER); PAP_TIMER=null; }
+}
+function papActualizar(){ papCalcularLuego(true); }
+/* La cuenta tarda un poco (dos «Qué producir» enteros): primero se dibuja «Calculando…» y después la cuenta. */
+function papCalcularLuego(forzar){
+  PAP=null;
+  ['pap-pedir','pap-donde'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML='<div class="pap-cargando">⏳ Calculando el pedido…</div>'; });
+  var pz=document.getElementById('pap-plazos'); if(pz) pz.innerHTML='';
+  if(PAP_TIMER) clearTimeout(PAP_TIMER);
+  PAP_TIMER=setTimeout(function(){
+    PAP_TIMER=null;
+    if(!papAbierto()) return;
+    try{ PAP=papDatos(forzar); }
+    catch(e){ PAP={ hoy:todayStr(), error:String(e && e.message || e), listo:true, t:Date.now() }; }
+    papPintar();
+  }, 30);
+}
+function papIniciar(){
+  if(PAP_INIT) return; PAP_INIT=true;
+  var ov=document.getElementById('pap-overlay');
+  ov.addEventListener('click', papClick);
+  ov.addEventListener('toggle', function(ev){ if(ev.target && ev.target.id==='pap-tabla-prod') papAjustarTabla(); }, true);
+  var sc=document.getElementById('pap-cuerpo');
+  if(sc) sc.addEventListener('scroll', papMarcarPegado, { passive:true });
+  document.addEventListener('keydown', function(e){
+    if(e.key!=='Escape' || !papAbierto()) return;
+    var h=document.getElementById('pap-hoja');
+    if(h && !h.hidden){ h.hidden=true; return; }
+    cerrarPap();
   });
-  if(!partes.length) return '';
-  return '🗺️ QUÉ VA A DÓNDE — PRODUCIR PARA '+producirRepEtq(h, MS).toUpperCase()+(h==='tot'?(' (15 DÍAS + '+MS.nombre.toUpperCase()+')'):'')+' — '+fmtFecha(R.hoy)+'\n\n'+
-    partes.join('\n\n')+
-    '\n\nTiendas: lo que el pedido tiene por ellas, según lo que vendió cada una en los últimos 30 días (en almohadas, lo que pidió por reposición) y lo que pidió y falta entregarle. PTF y Banzer: el resto, según de qué lado de la línea de logística viven los clientes que lo compraron en los últimos '+ALM_ZONA_DIAS+' días y lo que ya tiene Banzer hoy; lo que rota poco, a PTF.';
+  var rT=null;
+  window.addEventListener('resize', function(){ clearTimeout(rT); rT=setTimeout(function(){ if(papAbierto() && PAP && PAP.TODAS){ papMedirCtrl(); papAjustarBarra(); papAjustarTabla(); papMarcarPegado(); } }, 120); });
 }
-function copiarProducirReparto(){
-  var t=textoProducirReparto(PRODUCIR_REP_H);
-  if(t==null){ toast('Todavía se está calculando: probá en un segundo.','warn',4000); return; }
-  if(!t){ toast('Nada que producir para '+producirRepEtq(PRODUCIR_REP_H, stockMesSiguiente(todayStr()))+'.','ok',4000); return; }
-  copyText(t); toast('Copiado: qué va a dónde ✓','ok');
+
+/* ---- Pintar ---- */
+function papPintar(){
+  var D=PAP; if(!D || !papAbierto()) return;
+  var sub=document.getElementById('pap-sub');
+  var d=new Date(D.t), hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  if(sub) sub.textContent='Datos de hoy, '+papDiaSem(D.hoy)+' '+fmtFechaCorta(D.hoy)+' · calculado a las '+hm;
+  document.querySelectorAll('#pap-overlay [data-pap-tab]').forEach(function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-pap-tab')===PAP_S.tab)); });
+  var pe=document.getElementById('pap-pedir'), dn=document.getElementById('pap-donde');
+  pe.hidden=PAP_S.tab!=='pedir'; dn.hidden=PAP_S.tab!=='donde';
+  if(D.sinConteo || D.error){
+    document.getElementById('pap-plazos').innerHTML='';
+    var msg=D.sinConteo ? '📭 Todavía no hay conteo del depósito: subí el Excel de existencias (📥 Subir existencias, en Stock) para que se calcule el pedido.'
+      : ('⚠️ No se pudo calcular el pedido ('+esc(D.error)+'). Tocá 🔄 Actualizar; si sigue, avisá.');
+    pe.innerHTML=dn.innerHTML='<div class="pap-vacio">'+msg+'</div>';
+    papMedirCtrl(); return;
+  }
+  papPintarPlazos();
+  if(PAP_S.tab==='pedir') papPintarPedir(); else papPintarDonde();
+  papMedirCtrl();
+}
+function papPintarPlazos(){
+  document.getElementById('pap-plazos').innerHTML=papPlazos(PAP).map(function(P){
+    var n=papSuma(PAP.TODAS, P.k);
+    return '<button type="button" class="pap-pz" data-pap-plazo="'+P.k+'" aria-pressed="'+(PAP_S.plazo===P.k)+'" aria-label="'+esc(P.et+': '+papFmt(n)+' unidades, hasta el '+P.hasta)+'">'+
+      '<span class="pap-pz-et">'+esc(P.et)+'</span>'+
+      '<span class="pap-pz-n"><b>'+papFmt(n)+'</b><span class="pap-pz-u"> unid.</span><span class="pap-pz-al"> · al '+P.hasta+'</span></span></button>';
+  }).join('');
+}
+
+/* ---- Pestaña 1: qué pedir ---- */
+function papDestinos(r){
+  var out=[];
+  if(r.P) out.push(['🏭', 'PTF', r.P]);
+  if(r.B) out.push(['🏪', 'Banzer', r.B]);
+  Object.keys(r.T||{}).filter(function(t){ return r.T[t]>0; }).sort(function(a,b){ return r.T[b]-r.T[a]; }).forEach(function(t){ out.push(['🏬', t, r.T[t]]); });
+  return out;
+}
+function papDetalle(f, p){
+  var r=f.rep[p]||{ P:0, B:0, T:{} }, MS=PAP.MS;
+  var h='<dl class="pap-det">';
+  h+='<dt>Hoy hay</dt><dd><b>'+papFmt(f.hay)+'</b> <span class="pap-gris">· PTF '+papFmt(f.ptf)+' · Banzer '+papFmt(f.bz)+' · Moreno '+papFmt(f.mor)+' · en camino '+papFmt(f.cam)+'</span></dd>';
+  h+='<dt>Vendido sin entregar</dt><dd><b>'+papFmt(f.comp)+'</b></dd>';
+  if(p==='tot') h+='<dt>Se arma con</dt><dd>'+papFmt(f.quin)+' de '+PRODUCIR_QUINCENA+' días + '+papFmt(f.mes)+' de '+esc(MS.nombre)+'</dd>';
+  h+='<dt>Va a</dt><dd><div class="pap-va">'+papDestinos(r).map(function(x){ return '<span>'+x[0]+' '+esc(x[1])+' <b>'+papFmt(x[2])+'</b></span>'; }).join('')+'</div></dd>';
+  if(r.porque && PAP_PORQUE[r.porque]) h+='<dt>Ojo</dt><dd>'+PAP_PORQUE[r.porque]+'</dd>';
+  return h+'</dl>';
+}
+function papFilaHtml(f, p){
+  var abierta=!!PAP_S.filas[f.id], ti=papTiendasDe(f, p);
+  return '<li class="pap-fila"><button type="button" class="pap-fbtn" data-pap-fila="'+esc(f.id)+'" aria-expanded="'+abierta+'">'+
+    '<span class="pap-fnom"><b>'+esc(f.base)+'</b>'+(f.medida?'<span class="pap-md">'+esc(f.medida)+'</span>':'')+
+    '<span class="pap-fmeta"><span>'+esc(papCodTxt(f))+'</span>'+(f.rota?'':'<span class="pap-tag">se vende poco</span>')+
+    (ti?'<span class="pap-ti">🏬 '+papFmt(ti)+' para tiendas</span>':'')+'</span></span>'+
+    '<span class="pap-fn">'+papFmt(f[p])+(p==='tot'?'<small>'+papFmt(f.quin)+' + '+papFmt(f.mes)+'</small>':'')+'</span>'+
+    '<span class="pap-fchev">'+PAP_CHEV+'</span></button>'+(abierta?papDetalle(f, p):'')+'</li>';
+}
+function papFabHtml(F, p){
+  var n=papSumaFab(F, p), abierta=!PAP_S.cerradas[F.k], MS=PAP.MS;
+  var bls=F.bloques.filter(function(b){ return papSuma(b.filas, p)>0; });
+  var nProd=0; bls.forEach(function(b){ nProd+=papOrden(b.filas, p).length; });
+  var piezas=bls.filter(function(b){ return b.marca; }).map(function(b){ return '<span>'+b.ico+' '+esc(b.corta)+' <i>'+papFmt(papSuma(b.filas, p))+'</i></span>'; });
+  piezas.push('<span>'+nProd+(nProd===1?' producto':' productos')+'</span>');
+  var h='<article class="pap-fab" id="pap-fab-'+F.k+'" style="--c:'+F.col+'">'+
+    '<div class="pap-fcab"><button type="button" class="pap-ftog" data-pap-fab-abrir="'+F.k+'" aria-expanded="'+abierta+'" aria-controls="pap-fabc-'+F.k+'">'+
+    '<span class="pap-fico" style="background:'+F.col+'1c">'+F.ico+'</span>'+
+    '<span class="pap-ftit"><b>'+esc(F.nombre)+'</b><small>'+piezas.join(' · ')+'</small></span>'+
+    '<span class="pap-fnum" style="color:'+F.col+'">'+papFmt(n)+'<small>unidades</small></span>'+
+    '<span class="pap-chev">'+PAP_CHEV+'</span></button>'+
+    '<div class="pap-facc"><button type="button" class="pap-btn'+(F.sinFab?' pap-claro':'')+'" data-pap-copiar-fab="'+F.k+'">📋 '+
+    (F.sinFab?'Copiar la lista':'Copiar para '+esc(F.nombre))+'</button></div></div>';
+  h+='<div class="pap-fcue" id="pap-fabc-'+F.k+'"'+(abierta?'':' hidden')+'>';
+  if(F.sinFab) h+='<p class="pap-aviso">Todavía no tienen fábrica: decí a cuál van para sumarlos a su pedido.</p>';
+  if(p==='tot'){
+    var q=0, m=0; F.bloques.forEach(function(b){ q+=papSuma(b.filas, 'quin'); m+=papSuma(b.filas, 'mes'); });
+    h+='<p class="pap-fsuma"><b>'+papFmt(n)+'</b> = '+papFmt(q)+' de '+PRODUCIR_QUINCENA+' días + '+papFmt(m)+' de '+esc(MS.nombre)+'. Debajo de cada número, lo mismo: '+PRODUCIR_QUINCENA+' días + '+esc(MS.nombre)+'.</p>';
+  }
+  bls.forEach(function(b){
+    if(bls.length>1 && b.marca) h+='<div class="pap-banda" style="--c:'+b.col+'"><span>'+b.ico+' '+esc(b.marca)+'</span><span>'+papFmt(papSuma(b.filas, p))+'</span></div>';
+    h+='<ul class="pap-filas">'+papOrden(b.filas, p).map(function(f){ return papFilaHtml(f, p); }).join('')+'</ul>';
+  });
+  return h+'</div></article>';
+}
+function papPintarPedir(){
+  var p=PAP_S.plazo, P=papPlazo(p), MS=PAP.MS;
+  var tot=papSuma(PAP.TODAS, p), tiend=0;
+  PAP.TODAS.forEach(function(f){ tiend+=papTiendasDe(f, p); });
+  var h='<section class="pap-tot" aria-label="Total a pedir">'+
+    '<div class="pap-eti">Pedir a producción · '+esc(P.frase)+' · hasta el '+P.hasta+'</div>'+
+    '<div class="pap-totn">'+papFmt(tot)+'<span>unidades</span></div>';
+  if(p==='tot') h+='<div class="pap-tots">= <b>'+papFmt(papSuma(PAP.TODAS, 'quin'))+'</b> de '+PRODUCIR_QUINCENA+' días + <b>'+papFmt(papSuma(PAP.TODAS, 'mes'))+'</b> de '+esc(MS.nombre)+'</div>';
+  h+='<div class="pap-tfabs">'+PAP.FABS.map(function(F){
+    var n=papSumaFab(F, p); if(!n) return '';
+    return '<button type="button" class="pap-cfab" data-pap-fab-ir="'+F.k+'" style="--c:'+F.col+'"><span>'+F.ico+'</span><span>'+esc(F.nombre)+'</span><b>'+papFmt(n)+'</b></button>';
+  }).join('')+'</div>';
+  if(tiend) h+='<p class="pap-tti"><span>🏬 <b>'+papFmt(tiend)+'</b> son para reponer las tiendas: ya están adentro del total.</span><button type="button" class="pap-link" data-pap="ir-tiendas">Ver a qué tienda va</button></p>';
+  h+='</section>';
+  if(!tot) h+='<div class="pap-vacio">✅ Nada que pedir a producción para '+esc(P.prox)+': lo que hay alcanza.</div>';
+  else {
+    h+='<p class="pap-ayuda">Tocá un producto para ver cuánto hay hoy y adónde va.</p>';
+    h+='<div class="pap-fabs">'+PAP.FABS.filter(function(F){ return papSumaFab(F, p)>0; }).map(function(F){ return papFabHtml(F, p); }).join('')+'</div>';
+  }
+  var caja=document.getElementById('pap-pedir'), viejo=caja.querySelector('#pap-como-pedir'), comoAbierto=!!(viejo && viejo.open);
+  h+='<details class="pap-como" id="pap-como-pedir"'+(comoAbierto?' open':'')+'><summary>¿Cómo se calcula?</summary><ul>'+
+    '<li>7 días, '+PRODUCIR_QUINCENA+' días y «Todo '+esc(MS.nombre)+'» son los mismos números de «Qué producir» en Stock, juntados por fábrica. '+PRODUCIR_30+' días sale con la misma cuenta que '+PRODUCIR_QUINCENA+' días.</li>'+
+    '<li>Es lo que hay que fabricar para cubrir el plazo desde hoy, ya descontado lo que hay en PTF, Banzer y Moreno y lo que viene en camino.</li>'+
+    '<li>Cada plazo ya incluye al anterior: no los sumes entre sí. «Todo '+esc(MS.nombre)+'» = lo de '+PRODUCIR_QUINCENA+' días + lo que hace falta en '+esc(MS.nombre)+', hasta el '+fmtFechaCorta(MS.fin)+'.</li>'+
+    '<li>Lo que venden las tiendas ya está adentro: la marquita 🏬 dice cuánto es en cada producto.</li>'+
+    '<li>Un producto que en el plazo da 0 no aparece.</li>'+
+    '</ul></details>';
+  caja.innerHTML=h;
+}
+
+/* ---- Pestaña 2: qué va a dónde ---- */
+function papLugares(p){
+  var L={ P:{ id:'P', nom:'PTF', largo:'Productos terminados fábrica', ico:'🏭', n:0, c:0, col:PAP_COL.P },
+          B:{ id:'B', nom:'Banzer', largo:'Almacén Banzer', ico:'🏪', n:0, c:0, col:PAP_COL.B },
+          T:{ id:'T', nom:'Tiendas', largo:'Todas las tiendas', ico:'🏬', n:0, c:0, col:PAP_COL.T } }, T={};
+  PAP.TODAS.forEach(function(f){
+    var r=f.rep[p]; if(!r || !r.n) return;
+    if(r.P){ L.P.n+=r.P; L.P.c++; }
+    if(r.B){ L.B.n+=r.B; L.B.c++; }
+    var enT=false;
+    Object.keys(r.T||{}).forEach(function(t){
+      if(!(r.T[t]>0)) return; enT=true;
+      if(!T[t]) T[t]={ id:'T:'+t, nom:t, largo:'Tienda '+t, ico:'🏬', n:0, c:0, tienda:t, col:PAP_COL.T };
+      T[t].n+=r.T[t]; T[t].c++; L.T.n+=r.T[t];
+    });
+    if(enT) L.T.c++;
+  });
+  var tiendas=Object.keys(T).map(function(k){ return T[k]; }).sort(function(a,b){ return (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
+  return { P:L.P, B:L.B, T:L.T, tiendas:tiendas, todos:[L.P, L.B, L.T].concat(tiendas), total:papSuma(PAP.TODAS, p) };
+}
+function papCuantoA(f, p, id){
+  var r=f.rep[p]; if(!r) return 0;
+  if(id==='P') return r.P||0;
+  if(id==='B') return r.B||0;
+  if(id==='T'){ var s=0; Object.keys(r.T||{}).forEach(function(t){ if(r.T[t]>0) s+=r.T[t]; }); return s; }
+  return (r.T && r.T[id.slice(2)]) || 0;
+}
+function papFilasDeLugar(p, id, filas){
+  return (filas||PAP.TODAS).map(function(f){ return { f:f, n:papCuantoA(f, p, id) }; }).filter(function(x){ return x.n>0; })
+    .sort(function(a,b){ return (b.n-a.n) || a.f.nombre.localeCompare(b.f.nombre, 'es'); });
+}
+/* Los porcentajes de las fichas se reparten juntos para que sumen 100 (como `producirRepartir`): 277 / 469 / 383 de 1.129 dan 24 + 42 + 34. */
+function papPcts(ls){
+  var out={}, t=0; ls.forEach(function(l){ if(l.n>0) t+=l.n; });
+  if(!(t>0)) return out;
+  var W={}; ls.forEach(function(l){ if(l.n>0) W[l.id]=l.n; });
+  var r=producirRepartir(100, W); ls.forEach(function(l){ out[l.id]=r[l.id]||0; });
+  return out;
+}
+function papPcTxt(v, n){ return (!v && n>0) ? '&lt;1' : String(v||0); }
+function papBarraHtml(LS){
+  var sel=PAP_S.lugar;
+  /* Cada tramo lleva sus rótulos del más largo al más corto; `papAjustarBarra` elige UNO para todos. */
+  var seg=function(n, col, ico, nom, on, corto){ return n>0 ? '<i class="'+(on?'':'pap-apag')+'" style="--g:'+n+';background:'+col+'"'+
+    ' data-r0="'+esc((ico?ico+' ':'')+nom+' '+papFmt(n))+'" data-r1="'+esc((corto||nom)+' '+papFmt(n))+'" data-r2="'+esc(corto||nom)+'" data-r3="'+papFmt(n)+'"'+
+    ' title="'+esc(nom+': '+papFmt(n))+'"></i>' : ''; };
+  var h=seg(LS.P.n, PAP_COL.P, '🏭', 'PTF', !sel || sel==='P')+seg(LS.B.n, PAP_COL.B, '🏪', 'Banzer', !sel || sel==='B');
+  if(sel && sel.indexOf('T:')===0){
+    var t=null; LS.tiendas.forEach(function(x){ if(x.id===sel) t=x; });
+    var nS=t ? t.n : 0;
+    h+=seg(nS, PAP_COL.T, '🏬', t?t.nom:'', true)+seg(LS.T.n-nS, PAP_COL.T, '', 'Otras tiendas', false, 'Otras');
+  } else h+=seg(LS.T.n, PAP_COL.T, '🏬', 'Tiendas', !sel || sel==='T');
+  return '<div class="pap-barra" role="img" aria-label="'+esc('PTF '+LS.P.n+', Banzer '+LS.B.n+', tiendas '+LS.T.n)+'">'+h+'</div>';
+}
+function papFichaDep(l, pct, nT){
+  return '<button type="button" class="pap-fi" data-pap-lugar="'+l.id+'" aria-pressed="'+(PAP_S.lugar===l.id)+'" style="--c:'+l.col+';--fondo:'+PAP_FONDO[l.id]+'">'+
+    '<span class="pap-fi-nom"><span class="pap-fi-ico">'+l.ico+' </span>'+esc(l.nom)+'</span><span class="pap-fi-n">'+papFmt(l.n)+'</span>'+
+    '<span class="pap-fi-pie">'+papPcTxt(pct, l.n)+' %<span class="pap-fi-prod"> · '+(l.id==='T' ? nT+(nT===1?' tienda':' tiendas') : l.c+' prod.')+'</span></span></button>';
+}
+function papFilaLugarHtml(f, n, p, id, conMarca){
+  var r=f.rep[p];
+  var pq=(id==='P' && r.porque && PAP_PORQUE_CORTO[r.porque]) ? '<span class="pap-porque">'+PAP_PORQUE_CORTO[r.porque]+': va a PTF</span>' : '';
+  return '<li class="pap-fila"><div class="pap-fq"><span class="pap-fnom"><b>'+esc(f.base)+'</b>'+(f.medida?'<span class="pap-md">'+esc(f.medida)+'</span>':'')+
+    '<span class="pap-fmeta">'+(conMarca?'<span><span class="pap-dot" style="--c:'+f.bloque.col+'"></span> '+esc(f.bloque.corta||'Sin fábrica')+'</span>':'')+
+    '<span>'+esc(papCodTxt(f))+'</span>'+pq+'</span></span>'+
+    '<span class="pap-fn">'+papFmt(n)+'</span></div></li>';
+}
+function papGrupos(p, id){
+  /* Por tienda cuando se mira «todas las tiendas»; si no, por marca (así se ve qué trae Moreno y qué Multiespumas). */
+  if(id==='T') return papLugares(p).tiendas.map(function(t){ return { et:'🏬 '+t.nom, col:PAP_COL.T, n:t.n, filas:papFilasDeLugar(p, t.id), conMarca:true }; });
+  return PAP.BLOQUES.map(function(B){
+    var filas=papFilasDeLugar(p, id, B.filas), n=0; filas.forEach(function(x){ n+=x.n; });
+    return { et:papEtBloque(B), col:B.col, n:n, filas:filas, conMarca:false };
+  }).filter(function(g){ return g.n>0; });
+}
+function papDetalleLugar(l, p){
+  var P=papPlazo(p), G=papGrupos(p, l.id), k=l.id.charAt(0);
+  var h='<section class="pap-ldet" id="pap-lugar-det" style="--c:'+l.col+';--fondo:'+PAP_FONDO[k]+'" aria-label="'+esc('Lo que va a '+l.nom)+'">'+
+    '<div class="pap-ldcab"><div class="pap-ldizq"><div class="pap-ldtit"><b>'+l.ico+' '+esc(l.largo)+'</b><span>'+esc(P.frase)+' · hasta el '+P.hasta+'</span></div>'+
+    '<div class="pap-ldnum">'+papFmt(l.n)+'</div></div>'+
+    '<div class="pap-ldacc"><button type="button" class="pap-btn" data-pap-copiar-lugar="'+esc(l.id)+'">📋 Copiar lo de '+esc(l.id==='T'?'las tiendas':l.nom)+'</button>'+
+    '<button type="button" class="pap-btn pap-claro" data-pap="lugar-cerrar" aria-label="Cerrar la lista">✕ Cerrar</button></div></div>';
+  G.forEach(function(g){
+    if(G.length>1 || l.id==='T') h+='<div class="pap-banda" style="--c:'+g.col+'"><span>'+esc(g.et)+'</span><span>'+papFmt(g.n)+'</span></div>';
+    h+='<ul class="pap-filas">'+g.filas.map(function(x){ return papFilaLugarHtml(x.f, x.n, p, l.id, g.conMarca); }).join('')+'</ul>';
+  });
+  return h+'</section>';
+}
+function papTablaHtml(p, LS){
+  /* En el celular las tiendas van sumadas en una columna (así la tabla entra y el encabezado y el total quedan a la vista). */
+  var cols=[LS.P, LS.B, LS.T].filter(function(l){ return l.n>0; }).concat(LS.tiendas);
+  var clase=function(l){ return l.id==='T' ? ' pap-solo-cel' : (l.tienda ? ' pap-col-t' : ''); };
+  var tot={};
+  var h='<p class="pap-tnota pap-solo-cel">En el celular las tiendas van sumadas: tocá una tienda arriba para ver lo suyo.</p>'+
+    '<div class="pap-tcaja" id="pap-tabla-caja"><table class="pap-tabla"><thead><tr><th scope="col">Producto</th><th scope="col">Pedir</th>'+
+    cols.map(function(l){ return '<th scope="col" class="pap-thc'+clase(l)+'" style="--c:'+l.col+'"'+(l.tienda?' title="Tienda '+esc(l.nom)+'"':'')+'>'+esc(l.nom)+'</th>'; }).join('')+'</tr></thead><tbody>';
+  PAP.BLOQUES.forEach(function(B){
+    var filas=B.filas.filter(function(f){ return f.rep[p] && f.rep[p].n>0; }).sort(function(a,b){ return (b.rep[p].n-a.rep[p].n) || (a.idx-b.idx); });
+    if(!filas.length) return;
+    h+='<tr class="pap-tbanda" style="--c:'+B.col+'"><td>'+esc(papEtBloque(B))+'</td><td>'+papFmt(papSuma(filas, p))+'</td>'+
+      cols.map(function(l){ var v=0; filas.forEach(function(f){ v+=papCuantoA(f, p, l.id); }); return '<td class="'+clase(l).trim()+'">'+(v?papFmt(v):'·')+'</td>'; }).join('')+'</tr>';
+    filas.forEach(function(f){
+      h+='<tr><td class="pap-tnom"><b>'+esc(f.base)+'</b>'+(f.medida?' <span class="pap-md">'+esc(f.medida)+'</span>':'')+'<small>'+esc(papCodTxt(f))+'</small></td><td class="pap-n">'+papFmt(f.rep[p].n)+'</td>';
+      cols.forEach(function(l){ var v=papCuantoA(f, p, l.id); tot[l.id]=(tot[l.id]||0)+v; h+='<td class="'+(v?'':'pap-cero')+clase(l)+'">'+(v?papFmt(v):'·')+'</td>'; });
+      h+='</tr>';
+    });
+  });
+  h+='</tbody><tfoot><tr><td>Total</td><td>'+papFmt(LS.total)+'</td>'+cols.map(function(l){ return '<td class="'+clase(l).trim()+'">'+papFmt(tot[l.id]||0)+'</td>'; }).join('')+'</tr></tfoot></table></div>';
+  return h;
+}
+function papPintarDonde(){
+  var p=PAP_S.plazo, P=papPlazo(p), LS=papLugares(p);
+  if(PAP_S.lugar && !LS.todos.some(function(l){ return l.id===PAP_S.lugar && l.n>0; })) PAP_S.lugar='';
+  var caja=document.getElementById('pap-donde');
+  var tablaAbierta=!!(caja.querySelector('#pap-tabla-prod') && caja.querySelector('#pap-tabla-prod').open);
+  var comoAbierto=!!(caja.querySelector('#pap-como-donde') && caja.querySelector('#pap-como-donde').open);
+  var h='<section class="pap-dcab" aria-label="Reparto">'+
+    '<div class="pap-dtop"><div><div class="pap-eti">Reparto · '+esc(P.frase)+' · hasta el '+P.hasta+'</div>'+
+    '<div class="pap-totn pap-chico">'+papFmt(LS.total)+'<span>unidades</span></div></div>'+
+    (LS.total ? '<button type="button" class="pap-btn pap-claro" data-pap="copiar-todo">📋 Copiar todo el reparto</button>' : '')+'</div>';
+  if(!LS.total){
+    h+='<div class="pap-ayuda" style="margin:0">✅ Nada que repartir para '+esc(P.prox)+': no hay nada que pedir a producción.</div></section>';
+    caja.innerHTML=h; return;
+  }
+  var deps=[LS.P, LS.B, LS.T].filter(function(l){ return l.n>0; }), PC=papPcts(deps);
+  h+=papBarraHtml(LS)+'<div class="pap-lugs">'+deps.map(function(l){ return papFichaDep(l, PC[l.id], LS.tiendas.length); }).join('')+'</div>';
+  if(LS.tiendas.length) h+='<div class="pap-ctiendas"><div class="pap-eti">Cada tienda</div><div class="pap-chips">'+
+    LS.tiendas.map(function(t){ return '<button type="button" class="pap-ct" data-pap-lugar="'+esc(t.id)+'" aria-pressed="'+(PAP_S.lugar===t.id)+'"><span>'+esc(t.nom)+'</span><b>'+papFmt(t.n)+'</b></button>'; }).join('')+'</div></div>';
+  h+='<p class="pap-ayuda" style="margin:0">Tocá un lugar para ver qué productos lleva.</p></section>';
+  var sel=null; LS.todos.forEach(function(l){ if(l.id===PAP_S.lugar) sel=l; });
+  if(sel) h+=papDetalleLugar(sel, p);
+  h+='<details class="pap-como" id="pap-tabla-prod"'+(tablaAbierta?' open':'')+'><summary>📊 Ver todo en una tabla, por producto</summary>'+papTablaHtml(p, LS)+'</details>';
+  h+='<details class="pap-como" id="pap-como-donde"'+(comoAbierto?' open':'')+'><summary>¿Cómo se reparte?</summary><ul>'+
+    '<li>Es lo mismo que se pide a producción, repartido: en cada producto, PTF + Banzer + tiendas = lo que se pide.</li>'+
+    '<li>A cada tienda va lo que ella vendió o pidió de ese producto en los últimos 30 días (si no hay, en 90).</li>'+
+    '<li>Lo de los clientes se reparte entre PTF y Banzer según de qué lado de la línea de logística viven los que lo compraron en los últimos '+ALM_ZONA_DIAS+' días. A Banzer va lo que le falta para su parte, contando lo que ya tiene hoy.</li>'+
+    '<li>Lo que se vende poco o tiene pocos datos: lo que no es de una tienda va a PTF. Lo de las tiendas igual va a cada tienda.</li>'+
+    '<li>Solo muestra: no marca pedidos ni mueve stock.</li>'+
+    '</ul></details>';
+  caja.innerHTML=h;
+  papAjustarBarra(); papAjustarTabla();
+}
+
+/* ---- Textos para copiar ---- */
+function papLineaProd(f, n, p){
+  var t='• '+f.nombre+' ('+papCodTxt(f)+'): '+papFmt(n), MS=PAP.MS;
+  if(p==='tot'){
+    if(!f.quin) t+=' (todo para '+MS.nombre+')';
+    else if(!f.mes) t+=' (todo para los '+PRODUCIR_QUINCENA+' días)';
+    else t+=' ('+papFmt(f.quin)+' para los '+PRODUCIR_QUINCENA+' días + '+papFmt(f.mes)+' para '+MS.nombre+')';
+  }
+  return t;
+}
+function papTextoFab(F, p){
+  var P=papPlazo(p), hoy=papHoyTxt(PAP);
+  var L=F.sinFab ? ['PRODUCTOS SIN FÁBRICA ASIGNADA', papPlazoLinea(P), hoy, 'Falta decidir a qué fábrica van.']
+    : ['PEDIDO A PRODUCCIÓN · '+F.nombre.toUpperCase(), papPlazoLinea(P), hoy];
+  if(p==='tot' && !F.sinFab) L.push('Lo de los '+PRODUCIR_QUINCENA+' días es lo primero que hace falta.');
+  var bls=F.bloques.filter(function(b){ return papSuma(b.filas, p)>0; });
+  bls.forEach(function(b){
+    L.push('');
+    if(b.marca) L.push(b.marca.toUpperCase()+':');
+    papOrden(b.filas, p).forEach(function(f){ L.push(papLineaProd(f, f[p], p)); });
+    if(bls.length>1 && b.marca) L.push('Subtotal '+b.corta+': '+papFmt(papSuma(b.filas, p)));
+  });
+  L.push('', 'TOTAL: '+papFmt(papSumaFab(F, p))+' unidades');
+  return L.join('\n');
+}
+function papNombreLugarCopia(l){ return l.tienda ? 'TIENDA '+l.nom.toUpperCase() : (l.id==='T' ? 'LAS TIENDAS' : l.nom.toUpperCase()); }
+function papTextoTodo(p){
+  var P=papPlazo(p), LS=papLugares(p);
+  var L=['QUÉ VA A DÓNDE', papPlazoLinea(P), papHoyTxt(PAP)+' · de lo que se pide a producción'];
+  [LS.P, LS.B].concat(LS.tiendas).filter(function(l){ return l.n>0; }).forEach(function(l){
+    L.push('', papNombreLugarCopia(l)+' ('+papFmt(l.n)+'):');
+    papFilasDeLugar(p, l.id).forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
+  });
+  L.push('', 'TOTAL: '+papFmt(LS.total)+' unidades (PTF '+papFmt(LS.P.n)+' · Banzer '+papFmt(LS.B.n)+' · tiendas '+papFmt(LS.T.n)+')');
+  return L.join('\n');
+}
+function papTextoLugar(id, p){
+  var P=papPlazo(p), l=null; papLugares(p).todos.forEach(function(x){ if(x.id===id) l=x; });
+  if(!l) return '';
+  var L=['QUÉ VA A '+(l.tienda?'LA ':'')+papNombreLugarCopia(l), papPlazoLinea(P), papHoyTxt(PAP)+' · de lo que se pide a producción'];
+  papGrupos(p, id).forEach(function(g){
+    L.push('', (id==='T' ? 'TIENDA '+g.et.replace(/^🏬 /,'').toUpperCase() : g.et.replace(/^\S+ /,'').toUpperCase())+' ('+papFmt(g.n)+'):');
+    g.filas.forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
+  });
+  L.push('', 'TOTAL: '+papFmt(l.n)+' unidades');
+  return L.join('\n');
+}
+/* Copiar: el portapapeles; si el aparato no deja, la hoja con el texto para copiarlo a mano (nunca un `prompt`). */
+function papCopiar(t, que){
+  PAP_COPIA=t;
+  var ok=function(){ toast('✅ Copiado: '+que+'. Pegalo en WhatsApp o en el correo.','ok'); };
+  var aMano=function(){
+    var hecho=false;
+    try{ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); hecho=document.execCommand('copy'); ta.remove(); }catch(e){}
+    if(hecho){ ok(); return; }
+    var h=document.getElementById('pap-hoja'), tx=document.getElementById('pap-hoja-tx');
+    if(!h || !tx) return;
+    tx.value=t; h.hidden=false;
+    setTimeout(function(){ try{ tx.focus(); tx.select(); tx.setSelectionRange(0, t.length); tx.scrollTop=0; }catch(e){} }, 30);
+  };
+  try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(ok, aMano); return; } }catch(e){}
+  aMano();
+}
+
+/* ---- Medidas: alto de lo fijo, rótulos de la barra, tabla que entra ---- */
+function papMedirCtrl(){ var c=document.getElementById('pap-ctrl'), ov=document.getElementById('pap-overlay'); if(c && ov && c.offsetHeight) ov.style.setProperty('--pap-ctrl-h', c.offsetHeight+'px'); }
+function papAjustarBarra(){
+  /* Todos los tramos con el MISMO tipo de rótulo: «🏭 PTF 101», si no entra en alguno «PTF 101», después solo el nombre y por último solo el
+     número. Un tramo tan chico que no entra ni el número queda vacío (tiene su título) y no obliga a los demás a achicarse. */
+  document.querySelectorAll('#pap-overlay .pap-barra').forEach(function(bar){
+    var segs=[].slice.call(bar.querySelectorAll('i'));
+    var cabe=function(el, k){ el.textContent=el.getAttribute('data-r'+k); return el.scrollWidth<=el.clientWidth+1; };
+    var usan=segs.filter(function(el){ return cabe(el, 3) || cabe(el, 2); });
+    var k=0;
+    while(k<3 && !usan.every(function(el){ return cabe(el, k); })) k++;
+    segs.forEach(function(el){ if(!(usan.indexOf(el)>=0 && cabe(el, k))) el.textContent=''; });
+  });
+}
+function papAjustarTabla(){
+  var caja=document.getElementById('pap-tabla-caja');
+  if(!caja || !caja.offsetParent) return;
+  caja.classList.remove('pap-cabe');
+  if(caja.scrollWidth<=caja.clientWidth+1) caja.classList.add('pap-cabe');
+}
+function papArriba(){ var sc=document.getElementById('pap-cuerpo'); if(sc && sc.scrollTop>0) sc.scrollTop=0; }
+function papMarcarPegado(){ var c=document.getElementById('pap-ctrl'), sc=document.getElementById('pap-cuerpo'); if(c && sc) c.classList.toggle('pap-pegado', sc.scrollTop>2); }
+
+/* ---- Los toques (uno solo para toda la ventana) ---- */
+function papClick(ev){
+  var el=ev.target && ev.target.closest ? ev.target.closest('button') : null;
+  if(!el) return;
+  var a=function(n){ return el.getAttribute(n); }, que=a('data-pap');
+  if(que==='cerrar'){ cerrarPap(); return; }
+  if(que==='actualizar'){ papActualizar(); return; }
+  if(que==='hoja-ok'){ document.getElementById('pap-hoja').hidden=true; return; }
+  if(!PAP || !PAP.TODAS) return;
+  if(a('data-pap-tab')){ var t=a('data-pap-tab'); if(PAP_S.tab!==t){ PAP_S.tab=t; papPintar(); papArriba(); } return; }
+  if(que==='ir-tiendas'){
+    PAP_S.tab='donde'; PAP_S.lugar='T'; papPintar(); papArriba();
+    try{ document.getElementById('pap-tab-donde').focus({ preventScroll:true }); }catch(e){}
+    var det=document.getElementById('pap-lugar-det'); if(det) det.scrollIntoView({ behavior:'smooth', block:'start' });   // si no, en el celular queda abajo y no se ve que pasó algo
+    return;
+  }
+  if(a('data-pap-plazo')){
+    var pz=a('data-pap-plazo');
+    if(PAP_S.plazo!==pz){ PAP_S.plazo=pz; papPintar(); papArriba(); }
+    var b=document.querySelector('#pap-overlay [data-pap-plazo="'+pz+'"]'); if(b) try{ b.focus({ preventScroll:true }); }catch(e){}
+    return;
+  }
+  if(a('data-pap-fab-abrir')){
+    var k=a('data-pap-fab-abrir'), abrir=!!PAP_S.cerradas[k];
+    if(abrir) delete PAP_S.cerradas[k]; else PAP_S.cerradas[k]=1;
+    el.setAttribute('aria-expanded', String(abrir));
+    var c=document.getElementById('pap-fabc-'+k); if(c) c.hidden=!abrir;
+    return;
+  }
+  if(a('data-pap-fab-ir')){
+    var kf=a('data-pap-fab-ir'); delete PAP_S.cerradas[kf];
+    var tog=document.querySelector('#pap-overlay [data-pap-fab-abrir="'+kf+'"]'); if(tog) tog.setAttribute('aria-expanded', 'true');
+    var cu=document.getElementById('pap-fabc-'+kf); if(cu) cu.hidden=false;
+    var art=document.getElementById('pap-fab-'+kf); if(art) art.scrollIntoView({ behavior:'smooth', block:'start' });
+    return;
+  }
+  if(a('data-pap-fila')){
+    var id=a('data-pap-fila'), ab=!PAP_S.filas[id];
+    if(ab) PAP_S.filas[id]=1; else delete PAP_S.filas[id];
+    el.setAttribute('aria-expanded', String(ab));
+    var li=el.parentNode, viejo=li.querySelector('.pap-det'); if(viejo) viejo.parentNode.removeChild(viejo);
+    if(ab){ var f=null; PAP.TODAS.forEach(function(x){ if(x.id===id) f=x; }); if(f) li.insertAdjacentHTML('beforeend', papDetalle(f, PAP_S.plazo)); }
+    return;
+  }
+  if(a('data-pap-lugar')){
+    var lu=a('data-pap-lugar');
+    PAP_S.lugar=(PAP_S.lugar===lu) ? '' : lu;
+    papPintarDonde();
+    var bl=null; document.querySelectorAll('#pap-overlay [data-pap-lugar]').forEach(function(x){ if(x.getAttribute('data-pap-lugar')===lu) bl=x; });
+    if(bl) try{ bl.focus({ preventScroll:true }); }catch(e){}
+    var det2=document.getElementById('pap-lugar-det');
+    if(det2 && PAP_S.lugar){ var r=det2.getBoundingClientRect(); if(r.top>window.innerHeight-140) det2.scrollIntoView({ behavior:'smooth', block:'start' }); }
+    return;
+  }
+  if(que==='lugar-cerrar'){
+    var era=PAP_S.lugar; PAP_S.lugar=''; papPintarDonde();
+    document.querySelectorAll('#pap-overlay [data-pap-lugar]').forEach(function(x){ if(x.getAttribute('data-pap-lugar')===era) try{ x.focus({ preventScroll:true }); }catch(e){} });
+    return;
+  }
+  if(a('data-pap-copiar-fab')){
+    var F=null; PAP.FABS.forEach(function(x){ if(x.k===a('data-pap-copiar-fab')) F=x; });
+    if(F) papCopiar(papTextoFab(F, PAP_S.plazo), (F.sinFab ? 'la lista sin fábrica' : 'el pedido a '+F.nombre)+', '+papPlazo(PAP_S.plazo).frase);
+    return;
+  }
+  if(a('data-pap-copiar-lugar')){
+    var idl=a('data-pap-copiar-lugar'), l=null; papLugares(PAP_S.plazo).todos.forEach(function(x){ if(x.id===idl) l=x; });
+    papCopiar(papTextoLugar(idl, PAP_S.plazo), 'lo de '+(l ? (l.id==='T' ? 'las tiendas' : l.nom) : '')+', '+papPlazo(PAP_S.plazo).frase);
+    return;
+  }
+  if(que==='copiar-todo'){ papCopiar(papTextoTodo(PAP_S.plazo), 'todo el reparto de '+papPlazo(PAP_S.plazo).frase); return; }
 }
 /* «Cubre hasta»: el corte día por día de la tabla (ritmo de 15 días); si ese ritmo es cero
    pero el del mes no, una estimación gruesa con el del mes. */
@@ -28405,30 +29059,6 @@ function producirVerTodo(){ PRODUCIR_VER_TODO=!PRODUCIR_VER_TODO; renderStock();
    de esas medidas, qué modelos, sería ideal» — dueño, 10/09). Sobrevive al redibujo. */
 var PRODUCIR_MED_ABIERTA={};
 function producirMedida(k, md){ var id=k+'|'+md; if(PRODUCIR_MED_ABIERTA[id]) delete PRODUCIR_MED_ABIERTA[id]; else PRODUCIR_MED_ABIERTA[id]=1; renderStock(); }
-/* 📦 EL TOTAL A PRODUCIR, TODAS LAS FÁBRICAS (20/10, dueño: *«que muestre un consolidado o total de lo que se tiene que producir para los
-   siguientes 7, 15 y 30 días, o para el siguiente mes»*). Los mismos totales de cada bloque, juntos y ACUMULADOS: 15 días ya incluye
-   7, y «hasta el <fin del mes que viene>» = 15 días + la columna del mes (que va además de 15 días). Nada se calcula aparte. */
-function producirTotalGenHtml(R){
-  var MS=R.mes, T={ sem:0, quin:0, tot:0 }, filas='';
-  R.bloques.forEach(function(B){
-    if(B.k==='otros' && !B.tot.tot && !B.tot.sem) return;
-    T.sem+=B.tot.sem; T.quin+=B.tot.quin; T.tot+=B.tot.tot;
-    var n=function(v){ return v>0 ? ('<b>'+v+'</b>') : '<span style="color:var(--muted)">—</span>'; };
-    filas+='<tr><td><span style="color:'+B.col+';font-weight:700">'+B.ico+' '+esc(B.titulo)+'</span></td><td>'+n(B.tot.sem)+'</td><td>'+n(B.tot.quin)+'</td><td>'+n(B.tot.tot)+
-      (B.tot.tot?('<br><span class="ptg-sub">15 días '+B.tot.quin+' + '+esc(MS.nombre)+' '+B.tot.mes+'</span>'):'')+'</td></tr>';
-  });
-  return '<div id="prod-total-gen" class="prod-totgen">'+
-    '<div class="ptg-tit">📦 Total a producir — todas las fábricas, en unidades</div>'+
-    '<div class="ptg-caja"><table class="ptg-t"><thead><tr><th>Fábrica</th><th>Próximos 7 días</th><th>Próximos '+PRODUCIR_QUINCENA+' días</th><th>Hasta el '+fmtFechaCorta(MS.fin)+'<br><span class="ptg-sub">'+PRODUCIR_QUINCENA+' días + '+esc(MS.nombre)+'</span></th></tr></thead><tbody>'+filas+'</tbody>'+
-      '<tfoot><tr><td><b>TOTAL</b></td><td><b>'+T.sem+'</b></td><td><b>'+T.quin+'</b></td><td><b>'+T.tot+'</b></td></tr>'+
-      '<tr class="ptg-tiendas" data-tp="total">'+stockTiendasParteHtml('total')+'</tr></tfoot></table></div>'+
-    '<div class="ptg-nota">Cada columna <b>ya incluye la anterior</b>: no se suman. Lo que viene de las tiendas (lo que venden y, en almohadas, lo que piden por reposición) ya está adentro. Abajo, cada bloque dice <b>'+esc(MS.nombre)+'</b> aparte: va <b>además</b> de los '+PRODUCIR_QUINCENA+' días.</div>'+
-    '<div class="ptg-bot">'+
-      '<button type="button" class="btn btn-sm" onclick="copiarProducirTodo(\'sem\')">📋 Copiar 7 días</button>'+
-      '<button type="button" class="btn btn-sm" onclick="copiarProducirTodo(\'quin\')">📋 Copiar '+PRODUCIR_QUINCENA+' días</button>'+
-      '<button type="button" class="btn btn-sm ptg-fuerte" onclick="copiarProducirTodo(\'tot\')">📋 Copiar todo hasta el '+fmtFechaCorta(MS.fin)+'</button>'+
-    '</div></div>';
-}
 function renderProducir(d){
   if(!d.contado) return '';
   var R=stockProducir(d), MS=R.mes, hoy=R.hoy;
@@ -28442,11 +29072,7 @@ function renderProducir(d){
       '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirGrafToggle()">'+(visPref('qp', true)?'📊 Ocultar gráfico':'📊 Ver gráfico')+'</button>'+   // §4ik
       '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
     '</div>'+
-    producirTotalGenHtml(R)+
-    /* 🗺️ (20/10) La planilla de qué va a dónde: se llena un momento después (necesita la cuenta sin las tiendas, `stockTiendasParteLuego`). */
-    '<details id="prod-rep" class="prod-rep"'+(visPref('qrep', true)?' open':'')+' ontoggle="producirRepAbrir(this)"><summary>🗺️ <b>Qué va a dónde</b> — de lo que hay que producir, cuánto para PTF, para Banzer y para cada tienda</summary>'+
-      '<div class="prod-rep-nota">Reparte el número de arriba, producto por producto; no cambia ninguno. <b>Tiendas</b>: la parte del pedido que es por ellas (lo que venden y, en almohadas, lo que piden por reposición), según lo que vendió cada una en los últimos 30 días y lo que pidió y falta entregarle. <b>PTF y Banzer</b>: lo de los clientes, según de qué lado de la línea de logística viven los que lo compraron en los últimos '+ALM_ZONA_DIAS+' días (como en «📍 Banzer o PTF») y lo que ya tiene Banzer hoy; lo que rota poco, a PTF.</div>'+
-      '<div id="prod-rep-cuerpo">'+producirRepHtml()+'</div></details>'+
+    producirPapLineaHtml(R)+   // 🏭 (20/10) el total de todas las fábricas y «qué va a dónde» van en su ventana
     '<details class="prod-como"><summary>ℹ️ Cómo sale cada número</summary>'+
     '<div style="font-size:.8rem;color:var(--muted);margin:6px 0 4px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT), <b>salvo las almohadas</b>: lo que se manda a las tiendas cuenta como venta y su venta de tienda no (dueño, 16/10). Productos que rotan ('+STOCK_VENTAS_MIN+'+ entregas en '+STOCK_VENTANA+' o '+STOCK_VENTANA_MES+' días) o con algo vendido sin entregar. '+
       'Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni cliente: ahí están <b>todas</b> las ventas. '+
@@ -37824,6 +38450,7 @@ function stockPlanHtml(d, lista){
      Sumando las tres columnas del 16/10 daba 1.026 en vez de 816; «7 días + noviembre», 634. */
   return '<div class="pl-caja" id="stk-plan"><div class="pl-cab"><b>📋 Plan de stock</b><span>lo que hay, lo vendido sin entregar y lo que hay que pedir para 7 días, 15 días (incluye los 7: no sumar) y '+esc(MS.nombre)+' (además de 15 días) · tocá un producto para ver su termómetro</span>'+
       '<button type="button" class="btn btn-sm pl-copiar" onclick="copiarStock()">📋 Copiar el pedido para fábrica</button>'+
+      '<button type="button" class="btn btn-sm pl-pap" onclick="abrirPap()" title="Qué pedir a cada fábrica y qué va a PTF, a Banzer y a cada tienda, para 7, 15 y 30 días y '+esc(MS.nombre)+'.">🏭 Pedido a producción</button>'+   // 🏭 (20/10)
       /* (17/10, §4lr U43) Las tres columnas, cada fábrica con su lista (antes solo «7 días» y todo mezclado; lo demás estaba plegado). */
       '<span class="pl-copias" style="display:inline-flex;gap:4px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'sem\')">📋 7 días</button><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'quin\')">📋 15 días</button><button type="button" class="btn btn-ghost btn-sm" onclick="copiarProducirTodo(\'mes\')">📋 '+esc(MS.nombre)+'</button></span></div>'+
     planYaUndoHtml()+   // ↩️ (§4ls VB-7)

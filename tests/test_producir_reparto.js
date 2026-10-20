@@ -1,22 +1,29 @@
-/* 📦 EL TOTAL A PRODUCIR Y 🗺️ QUÉ VA A DÓNDE (20/10; dueño: «la idea es que el qué producir muestre la totalidad de lo que tiene que
-   producir… y luego mostrar una planilla o desglose de qué va a dónde, ya sea almacén Banzer, productos terminados fábrica o almacén de
-   las tiendas… para los siguientes 7, 15 y 30 días, o para el siguiente mes»).
+/* 🏭 PEDIDO A PRODUCCIÓN: el total, «qué va a dónde» y la ventana aparte (20/10; dueño: «la idea es que simplemente al hacer el pedido
+   se genere el consolidado y ahí muestre qué pedir a producción, y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y
+   para el siguiente mes… o se abra una pestaña o tabla»; vio el ejemplo y dijo «Publica»).
 
    RP1  La columna «Hasta el <fin del mes que viene>» = 15 días + el mes, producto por producto, por medida y en el TOTAL de cada bloque.
-   RP2  El cuadro «📦 Total a producir»: una fila por fábrica, 7 / 15 / hasta el 30/11 (acumulados), el TOTAL de todas y la fila de las
-        tiendas (que llega un momento después).
-   RP3  El reparto de cada producto suma EXACTO lo que dice «Qué producir» (7 días, 15 días y hasta el 30/11), y la parte de las tiendas
+   RP2  «Qué producir» ya no trae el cuadro del total ni la planilla: una línea con 7 / 15 / 30 días / todo noviembre y el botón; el botón
+        también está en la barra de Stock y en el Plan de stock.
+   RP3  El reparto de cada producto suma EXACTO lo que dice «Qué producir» (7, 15 y 30 días y hasta el 30/11), y la parte de las tiendas
         es la misma de la línea «🏪 De esto, por las tiendas».
    RP4  A dónde va: la venta de tienda de Charcas y Mutualista se reparte 2 a 1 (lo que vendió cada una); la reposición pendiente de
         Carmelo, a Carmelo; la almohada que va por RPT, a Mia Plaza; el TITANIO de clientes de los dos lados de la línea, a PTF y a
         Banzer; el que Banzer ya tiene de sobra, todo a PTF; lo que no rota, a PTF.
-   RP5  La planilla en pantalla: una tabla por fábrica con una columna por tienda, TOTAL que cierra y los botones 7 / 15 / hasta el 30/11.
-   RP6  Copiar: la planilla («QUÉ VA A DÓNDE») y «todo hasta el 30/11» de todas las fábricas y de un bloque.
-   RP7  No cambia ningún número del pedido; el interruptor «sin tiendas» queda apagado; en el celular (390 px) nada se sale de la caja.
+   RP5  La ventana, pestaña «📦 Qué pedir a producción»: abre en 7 días, los cuatro plazos con su total, el número grande, una tarjeta por
+        fábrica (Industrias Moreno = Heaven + ROHO; Multiespumas = Sueña), cada producto con su número, el detalle al tocarlo y
+        «🏬 N son para reponer las tiendas».
+   RP6  Pestaña «🗺️ Qué va a dónde»: PTF + Banzer + tiendas = el total, los porcentajes suman 100, cada tienda con su lista, la tabla
+        por producto cierra por fila y por columna, y «Ver a qué tienda va» lleva ahí.
+   RP7  Copiar: el pedido de una fábrica, todo el reparto y lo de una tienda; «todo hasta el 30/11» de siempre.
+   RP8  30 días: la misma cuenta que 15 días (con 15 da lo mismo que 15 días), nunca menos que 15 días ni más que el total; cada plazo
+        incluye al anterior.
+   RP9  No cambia ningún número del pedido; el interruptor «sin tiendas» queda apagado; sin conteo lo dice; ✕ y Esc cierran; en el celular
+        (390 px) nada se sale de la pantalla y la cabecera entra en una línea.
 
    Reloj CLAVADO (martes 20/10, 10:30 de Bolivia). Red cortada, datos sintéticos (el repo es público).
    Se corre:  node tests/test_producir_reparto.js
-   Dientes:   PEDIDOS=/ruta/a/pedidos_ec3a32e.html node tests/test_producir_reparto.js   (sin el total ni la planilla: rojas RP1-RP6) */
+   Dientes:   PEDIDOS=/ruta/a/pedidos_66fb470.html node tests/test_producir_reparto.js   (sin ventana ni 30 días: rojas RP2, RP3, RP5-RP9) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path'), fs = require('fs');
 let PASS=0, FAIL=0;
@@ -100,39 +107,29 @@ const ERRS=[];
   chk('RP1e la fila del TITANIO ICE 160 la muestra (10 celdas, la última = 15 días + noviembre)', r && r.n===10 && r.f && r.celda===String(r.f.tot), r && { celda:r.celda, n:r.n, f:r.f });
   chk('RP1f el TOTAL del bloque y su encabezado la dicen («hasta el 30/11», «en total hasta el 30/11: N»)', r && /hasta el 30\/11/.test(r.tot) && /en total hasta el 30\/11: \d+/.test(r.cab), r && r.tot);
 
-  // ═══ RP2. El cuadro del total ═══
-  console.log('\n── RP2. «📦 Total a producir» ──');
-  await page.waitForFunction(() => { var t=document.querySelector('#prod-total-gen [data-tp="total"]'); return t && !/Calculando/.test(t.textContent); }, null, { timeout:8000 }).catch(()=>{});
-  r = await page.evaluate(() => {
-    var g=document.getElementById('prod-total-gen'); if(!g) return null;
-    var R=stockProducir(stockData()), bl={}, T={ sem:0, quin:0, tot:0 };
-    R.bloques.forEach(function(B){ bl[B.k]={ sem:B.tot.sem, quin:B.tot.quin, tot:B.tot.tot, mes:B.tot.mes }; T.sem+=B.tot.sem; T.quin+=B.tot.quin; T.tot+=B.tot.tot; });
-    var filas=[].map.call(g.querySelectorAll('tbody tr'), function(tr){ return [].map.call(tr.cells, function(td){ return _txt(td).trim(); }); });
-    var pie=[].map.call(g.querySelectorAll('tfoot tr')[0].cells, function(td){ return _txt(td).trim(); });
-    var ti=g.querySelector('tr[data-tp="total"]'), v=STOCK_TP && STOCK_TP.v, TT={ sem:0, quin:0, tot:0 };
-    if(v) Object.keys(v).forEach(function(k){ TT.sem+=v[k].sem; TT.quin+=v[k].quin; TT.tot+=v[k].tot; });
-    var enProducir=!!(document.getElementById('producir') && document.getElementById('producir').contains(g));
-    var antesDeBloques=enProducir && !!(g.compareDocumentPosition(document.querySelector('#producir .prod-wrap')) & Node.DOCUMENT_POSITION_FOLLOWING);
-    return { th:[].map.call(g.querySelectorAll('thead th'), function(x){ return _txt(x).trim(); }), filas:filas, pie:pie, bl:bl, T:T,
-             ti:ti?[].map.call(ti.cells, function(td){ return _txt(td).trim(); }):null, TT:TT, txt:_txt(g), enProducir:enProducir, antes:antesDeBloques,
-             botones:[].map.call(g.querySelectorAll('button'), function(b){ return _txt(b).trim(); }) };
+  // ═══ RP2. «Qué producir» queda liviano ═══
+  console.log('\n── RP2. La línea de «Qué producir» y los botones ──');
+  r = await page.evaluate(async () => {
+    visPrefSet('masVistas', true); abrirStock(); renderStock();
+    await new Promise(function(res){ setTimeout(res, 80); });
+    var pr=document.getElementById('producir'), li=document.getElementById('prod-pap');
+    var R=stockProducirCalc(stockData()), T={ sem:0, quin:0, d30:0, tot:0 };
+    R.bloques.forEach(function(B){ Object.keys(T).forEach(function(h){ T[h]+=B.tot[h]||0; }); });
+    return { li:li?_txt(li):null, enProducir:!!(pr && li && pr.contains(li)), T:T, viejo:!!(document.getElementById('prod-total-gen') || document.getElementById('prod-rep')),
+             barra:!!document.querySelector('#stock-overlay .stk-acc #stk-pap-btn'), plan:!!document.querySelector('#stk-plan .pl-pap'),
+             boton:!!(li && li.querySelector('button')) };
   });
-  chk('RP2a está arriba de todo en «Qué producir», antes de los bloques', r && r.enProducir && r.antes, r && { en:r.enProducir, antes:r.antes });
-  chk('RP2b columnas: Próximos 7 días · Próximos 15 días · Hasta el 30/11 (15 días + noviembre)', r && /Próximos 7 días/.test(r.th[1]) && /Próximos 15 días/.test(r.th[2]) && /Hasta el 30\/11/.test(r.th[3]) && /15 días \+ noviembre/.test(r.th[3]), r && r.th);
-  chk('RP2c una fila por fábrica con sus totales (Heaven y Sueña) y «15 días N + noviembre M» debajo',
-    r && ['heaven','suena'].every(function(k){ var b=r.bl[k], tit=k==='heaven'?/Heaven/:/Sueña/;
-      return r.filas.some(function(f){ return tit.test(f[0]) && f[1]===String(b.sem||'—') && f[2]===String(b.quin||'—') && f[3].indexOf(String(b.tot))===0 && f[3].indexOf('15 días '+b.quin+' + noviembre '+b.mes)>=0; }); }), r && { filas:r.filas, bl:r.bl });
-  chk('RP2d el TOTAL de todas las fábricas es la suma', r && r.pie[0]==='TOTAL' && r.pie[1]===String(r.T.sem) && r.pie[2]===String(r.T.quin) && r.pie[3]===String(r.T.tot), r && { pie:r.pie, T:r.T });
-  chk('RP2e la fila «De esto, para las tiendas» trae los tres números debajo de cada columna (la suma de cada bloque)', r && r.ti && r.ti.length===4 && /para las tiendas/.test(r.ti[0]) && r.ti[1]===String(r.TT.sem) && r.ti[2]===String(r.TT.quin) && r.ti[3]===String(r.TT.tot) && r.TT.tot>0, r && { ti:r.ti, TT:r.TT });
-  chk('RP2f dice que cada columna ya incluye la anterior y que noviembre va además de 15 días', r && /ya incluye la anterior/.test(r.txt) && /no se suman/.test(r.txt) && /además/.test(r.txt), r && r.txt);
-  chk('RP2g botones para copiar 7 días, 15 días y todo hasta el 30/11', r && r.botones.some(function(b){ return /Copiar 7 días/.test(b); }) && r.botones.some(function(b){ return /Copiar 15 días/.test(b); }) && r.botones.some(function(b){ return /Copiar todo hasta el 30\/11/.test(b); }), r && r.botones);
+  chk('RP2a «Qué producir» trae la línea con 7 días · 15 días · 30 días · todo noviembre (los totales de los bloques)',
+    r.li && r.enProducir && r.li.indexOf('7 días '+r.T.sem)>=0 && r.li.indexOf('15 días '+r.T.quin)>=0 && r.li.indexOf('30 días '+r.T.d30)>=0 && r.li.indexOf('todo noviembre '+r.T.tot)>=0, r);
+  chk('RP2b ya no están el cuadro «📦 Total a producir» ni la planilla «🗺️ Qué va a dónde» adentro de «Qué producir»', r.viejo===false, r);
+  chk('RP2c el botón «🏭 Pedido a producción» está en la línea, en la barra de Stock y en el Plan de stock', r.boton && r.barra && r.plan, r);
 
   // ═══ RP3. El reparto suma exacto ═══
   console.log('\n── RP3. Cada producto, repartido entero ──');
   r = await page.evaluate(() => {
     if(typeof producirRepartoFila!=='function' || !STOCK_TP || !STOCK_TP.R) return { falta:true };
     var malos=[], filas=0, partes={}, porBloque={};
-    ['sem','quin','tot'].forEach(function(h){
+    ['sem','quin','d30','tot'].forEach(function(h){
       STOCK_TP.R.bloques.forEach(function(B){
         var s=0;
         B.filas.forEach(function(f){
@@ -148,7 +145,7 @@ const ERRS=[];
   });
   chk('RP3a hay reparto para cada producto y cada plazo', !r.falta && r.filas>=12, r.falta?'no hay producirRepartoFila':r.filas);
   if(!r.falta){
-    chk('RP3b cada fila suma EXACTO lo que dice «Qué producir» (PTF + Banzer + tiendas), en 7, 15 días y hasta el 30/11', r.malos.length===0, r.malos.slice(0,3));
+    chk('RP3b cada fila suma EXACTO lo que dice «Qué producir» (PTF + Banzer + tiendas), en 7, 15 y 30 días y hasta el 30/11', r.malos.length===0, r.malos.slice(0,3));
     chk('RP3c lo de las tiendas de cada bloque = la línea «🏪 De esto, por las tiendas» del bloque', Object.keys(r.porBloque).every(function(k){ return r.porBloque[k][0]===r.porBloque[k][1]; }), r.porBloque);
   }
 
@@ -173,67 +170,189 @@ const ERRS=[];
     chk('RP4f SOMIER ORO (una venta, no rota): a PTF, con el porqué', so && so.n===1 && so.P===1 && so.porque==='poca', so);
   } else chk('RP4 existe el reparto', false, 'no hay producirRepartoFila');
 
-  // ═══ RP5. La planilla en pantalla ═══
-  console.log('\n── RP5. La planilla «🗺️ Qué va a dónde» ──');
-  r = await page.evaluate(async () => {
-    var rep=document.getElementById('prod-rep'); if(!rep) return null;
+  // ═══ RP5. La ventana: qué pedir ═══
+  console.log('\n── RP5. La ventana «🏭 Pedido a producción»: qué pedir ──');
+  const abrirVentana = async () => {
+    await page.evaluate(() => { var b=document.querySelector('#stock-overlay #stk-pap-btn'); if(b) b.click(); });
+    await page.waitForFunction(() => window.PAP && PAP.listo, null, { timeout:15000 }).catch(()=>{});
+  };
+  await abrirVentana();
+  r = await page.evaluate(() => {
+    if(typeof PAP==='undefined' || !PAP || !PAP.TODAS) return null;
+    var ov=document.getElementById('pap-overlay'), R=stockProducirCalc(stockData()), T={}, porFab={};
+    ['sem','quin','d30','tot'].forEach(function(h){ T[h]=0; R.bloques.forEach(function(B){ T[h]+=B.tot[h]||0; var f=B.fab||''; porFab[f+'|'+h]=(porFab[f+'|'+h]||0)+(B.tot[h]||0); }); });
+    var pz=[].map.call(ov.querySelectorAll('.pap-pz'), function(b){ return { k:b.getAttribute('data-pap-plazo'), et:_txt(b.querySelector('.pap-pz-et')).trim(), n:_txt(b.querySelector('.pap-pz-n b')).trim(), on:b.getAttribute('aria-pressed') }; });
     var leer=function(){
-      var bls=[].map.call(rep.querySelectorAll('.prod-rep-bl'), function(b){
-        var th=[].map.call(b.querySelectorAll('thead th'), function(x){ return _txt(x).trim(); });
-        var pie=[].map.call(b.querySelectorAll('tfoot tr.prod-total td'), function(x){ return _txt(x).trim(); });
-        var filas=[].map.call(b.querySelectorAll('tbody tr'), function(tr){ return [].map.call(tr.cells, function(td){ return _txt(td).trim(); }); });
-        return { tit:_txt(b.querySelector('.prod-rep-tit')), th:th, pie:pie, filas:filas };
-      });
-      return { bls:bls, sel:_txt(rep.querySelector('.prod-rep-hs .sel')).trim() };
+      var p=document.getElementById('pap-pedir');
+      return { tot:_txt(p.querySelector('.pap-totn')).replace('unidades','').trim(), eti:_txt(p.querySelector('.pap-eti')),
+        fabs:[].map.call(p.querySelectorAll('.pap-cfab'), function(c){ return _txt(c).trim(); }),
+        tti:_txt(p.querySelector('.pap-tti')), tots:_txt(p.querySelector('.pap-tots')),
+        cards:[].map.call(p.querySelectorAll('.pap-fab'), function(a){ return { tit:_txt(a.querySelector('.pap-ftit b')), n:_txt(a.querySelector('.pap-fnum')).replace('unidades','').trim(),
+          filas:[].map.call(a.querySelectorAll('.pap-fbtn'), function(b){ return { id:b.getAttribute('data-pap-fila'), n:_txt(b.querySelector('.pap-fn')).trim() }; }) }; }) };
     };
-    var abierto=rep.open, a=leer();
-    producirRepVer('tot'); var b=leer();
-    producirRepVer('sem'); var c=leer();
-    producirRepVer('quin');
-    return { abierto:abierto, a:a, b:b, c:c, guardado:(function(){ try{ return localStorage.getItem('me_prod_rep_h'); }catch(e){ return null; } })(), txt:_txt(rep) };
+    var a=leer();
+    var out={ visible:ov.style.display==='flex', sel:_txt(ov.querySelector('[aria-selected="true"]')).trim(), pz:pz, T:T, porFab:porFab, sem:a };
+    ['quin','d30','tot'].forEach(function(h){ ov.querySelector('[data-pap-plazo="'+h+'"]').click(); out[h]=leer(); });
+    var tiK={}; ['sem','quin','d30','tot'].forEach(function(h){ var s=0; PAP.TODAS.forEach(function(f){ s+=(f.tiendas&&f.tiendas[h])||0; }); tiK[h]=s; }); out.tiK=tiK;
+    var fv={}; PAP.TODAS.forEach(function(f){ fv[f.id]={ sem:f.sem, quin:f.quin, d30:f.d30, tot:f.tot, quinMes:f.quin+' + '+f.mes }; }); out.fv=fv;
+    // Abrir un producto: el detalle dice cuánto hay y a dónde va.
+    ov.querySelector('[data-pap-plazo="quin"]').click();
+    var b=ov.querySelector('#pap-pedir .pap-fbtn'); b.click();
+    var dl=b.parentNode.querySelector('.pap-det'), f=null; PAP.TODAS.forEach(function(x){ if(x.id===b.getAttribute('data-pap-fila')) f=x; });
+    out.det={ txt:_txt(dl), abierto:b.getAttribute('aria-expanded'), va:[].map.call(dl?dl.querySelectorAll('.pap-va b'):[], function(x){ return +x.textContent; }), n:f&&f.quin };
+    b.click(); out.det.cerrado=!b.parentNode.querySelector('.pap-det');
+    return out;
   });
-  chk('RP5a está abierta y explica cómo reparte (tiendas, línea de logística, lo que tiene Banzer)', r && r.abierto && /línea de logística/.test(r.txt) && /no cambia ninguno/.test(r.txt) && /lo que ya tiene Banzer/.test(r.txt), r && r.txt.slice(0,300));
-  var suena=r && r.a.bls.filter(function(b){ return /Sueña/.test(b.tit); })[0];
-  chk('RP5b Sueña (15 días): columnas Producto · Producir · PTF · Banzer · Charcas · Mutualista · Carmelo', suena && suena.th[0]==='Producto' && /Producir/.test(suena.th[1]) && /PTF/.test(suena.th[2]) && /Banzer/.test(suena.th[3]) &&
-    ['Charcas','Mutualista','Carmelo'].every(function(n){ return suena.th.some(function(t){ return t.indexOf(n)>=0; }); }), suena && suena.th);
-  var cierra=function(bl){ if(!bl || !bl.pie.length) return false; for(var i=1;i<bl.pie.length;i++){ var s=0; bl.filas.forEach(function(f){ var v=parseInt(f[i],10); if(v>0) s+=v; }); if(String(s)!==bl.pie[i]) return false; } return true; };
-  chk('RP5c el TOTAL de cada tabla es la suma de sus columnas', r && r.a.bls.length>=2 && r.a.bls.every(cierra), r && r.a.bls.map(function(b){ return [b.tit.slice(0,40), b.pie]; }));
-  chk('RP5d cada fila: Producir = PTF + Banzer + tiendas', r && r.a.bls.every(function(bl){ return bl.filas.every(function(f){ var s=0; for(var i=2;i<f.length;i++){ var v=parseInt(f[i],10); if(v>0) s+=v; } return String(s)===f[1]; }); }), r && r.a.bls[0] && r.a.bls[0].filas.slice(0,3));
-  chk('RP5e el título de cada fábrica dice el total y a dónde va («producir N → PTF · Banzer · tiendas (…)»)', suena && /producir \d+ → 🏭 PTF \d+ · 🏪 Banzer \d+ · 🏬 tiendas \d+ \(/.test(suena.tit), suena && suena.tit);
-  chk('RP5f los botones cambian el plazo (15 días → hasta el 30/11 → 7 días) y lo recuerda', r && /15 días/.test(r.a.sel) && /Hasta el 30\/11/.test(r.b.sel) && /7 días/.test(r.c.sel) && r.guardado==='quin', r && [r.a.sel, r.b.sel, r.c.sel, r.guardado]);
-  chk('RP5g «hasta el 30/11» reparte más que 15 días, y 7 días menos o igual', r && (function(){ var n=function(x){ var s=0; x.bls.forEach(function(b){ s+=parseInt(b.pie[1],10)||0; }); return s; }; return n(r.b)>=n(r.a) && n(r.c)<=n(r.a) && n(r.b)>0; })(), r && 'ok');
+  chk('RP5a abre en la pestaña «📦 Qué pedir a producción» y en 7 días', r && r.visible && /Qué pedir a producción/.test(r.sel) && r.pz.length===4 && r.pz[0].on==='true', r && { sel:r.sel, pz:r.pz });
+  chk('RP5b los cuatro plazos: 7 días · 15 días · 30 días · Todo noviembre, cada uno con el total de «Qué producir»',
+    r && ['7 días','15 días','30 días','Todo noviembre'].every(function(e,i){ return r.pz[i].et===e; }) && ['sem','quin','d30','tot'].every(function(h,i){ return r.pz[i].n===String(r.T[h]).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }), r && { pz:r.pz, T:r.T });
+  chk('RP5c el número grande cambia con el plazo y es el total (7 → 15 → 30 → todo noviembre), «todo noviembre» dice 15 días + noviembre',
+    r && r.sem.tot===String(r.T.sem) && r.quin.tot===String(r.T.quin) && r.d30.tot===String(r.T.d30) && r.tot.tot===String(r.T.tot).replace(/\B(?=(\d{3})+(?!\d))/g,'.') && /de 15 días \+ \d+ de noviembre/.test(r.tot.tots) && /hasta el 30\/11/i.test(r.tot.eti), r && [r.sem.tot, r.quin.tot, r.d30.tot, r.tot.tot, r.tot.tots, r.T]);
+  chk('RP5d por fábrica: Industrias Moreno = Heaven + ROHO; Multiespumas = Sueña (en las tarjetas y en las fichas de arriba)',
+    r && r.quin.cards.some(function(c){ return c.tit==='Industrias Moreno' && c.n===String(r.porFab['MORENO|quin']); }) && r.quin.cards.some(function(c){ return c.tit==='Multiespumas' && c.n===String(r.porFab['MULTI|quin']); }) &&
+    r.quin.fabs.some(function(t){ return /Industrias Moreno/.test(t) && t.indexOf(String(r.porFab['MORENO|quin']))>=0; }), r && { cards:r.quin.cards.map(function(c){ return [c.tit, c.n]; }), porFab:r.porFab });
+  chk('RP5e cada producto con su número del plazo, de mayor a menor, y en «todo noviembre» abajo «15 días + noviembre»',
+    r && ['sem','quin','d30'].every(function(h){ return r[h].cards.every(function(c){ var prev=1e9; return c.filas.every(function(x){ var ok=x.n===String(r.fv[x.id][h]) && r.fv[x.id][h]<=prev; prev=r.fv[x.id][h]; return ok; }); }); }) &&
+    r.tot.cards.every(function(c){ return c.filas.every(function(x){ return x.n.indexOf(String(r.fv[x.id].tot))===0 && x.n.indexOf(r.fv[x.id].quinMes)>0; }); }), r && r.quin.cards);
+  chk('RP5f «🏬 N son para reponer las tiendas» = la parte de las tiendas del plazo', r && ['quin','tot'].every(function(h){ return r[h].tti.indexOf(String(r.tiK[h])+' son para reponer las tiendas')>=0; }) && r.tiK.quin>0, r && { tti:r.quin.tti, tiK:r.tiK });
+  chk('RP5g tocar un producto abre «Hoy hay · Vendido sin entregar · Va a» (los lugares suman su número) y se vuelve a cerrar',
+    r && r.det.abierto==='true' && /Hoy hay/.test(r.det.txt) && /Vendido sin entregar/.test(r.det.txt) && /Va a/.test(r.det.txt) && r.det.va.reduce(function(a,b){ return a+b; },0)===r.det.n && r.det.cerrado, r && r.det);
 
-  // ═══ RP6. Copiar ═══
-  console.log('\n── RP6. Copiar ──');
+  // ═══ RP6. Qué va a dónde ═══
+  console.log('\n── RP6. Pestaña «🗺️ Qué va a dónde» ──');
   r = await page.evaluate(() => {
-    if(typeof copiarProducirReparto!=='function') return { rep:'', todo:'', uno:'', s:{ tot:-1, quin:0, mes:0 } };
-    var rep=_copia(function(){ copiarProducirReparto(); });
-    var todo=_copia(function(){ copiarProducirTodo('tot'); });
-    var uno=_copia(function(){ copiarProducir('suena','tot'); });
+    if(typeof PAP==='undefined' || !PAP || !PAP.TODAS) return null;
+    var ov=document.getElementById('pap-overlay'), out={};
+    ov.querySelector('[data-pap-plazo="quin"]').click();
+    ov.querySelector('[data-pap-tab="donde"]').click();
+    var d=document.getElementById('pap-donde');
+    out.sel=_txt(ov.querySelector('[aria-selected="true"]')).trim(); out.ocultoPedir=document.getElementById('pap-pedir').hidden;
+    out.tot=+_txt(d.querySelector('.pap-totn')).replace(/\D/g,'');
+    out.fichas=[].map.call(d.querySelectorAll('.pap-fi'), function(b){ return { id:b.getAttribute('data-pap-lugar'), n:+_txt(b.querySelector('.pap-fi-n')).replace(/\D/g,''), pct:+(_txt(b.querySelector('.pap-fi-pie')).match(/(\d+) %/)||[0,0])[1] }; });
+    out.chips=[].map.call(d.querySelectorAll('.pap-ct'), function(b){ return { id:b.getAttribute('data-pap-lugar'), n:+_txt(b.querySelector('b')) }; });
+    var s=0; PAP.TODAS.forEach(function(f){ s+=f.quin; }); out.esperado=s;
+    // Una tienda: su lista suma lo que dice su ficha.
+    var ch=d.querySelector('.pap-ct[data-pap-lugar="T:Charcas"]');
+    if(ch){ ch.click(); var det=document.getElementById('pap-lugar-det');
+      out.charcas={ n:+_txt(det.querySelector('.pap-ldnum')), suma:[].reduce.call(det.querySelectorAll('.pap-fn'), function(a,x){ return a+(+x.textContent.replace(/\D/g,'')); }, 0), tit:_txt(det.querySelector('.pap-ldtit b')),
+        filas:[].map.call(det.querySelectorAll('.pap-fq'), function(x){ return _txt(x.querySelector('.pap-fnom b')); }) };
+      det.querySelector('[data-pap="lugar-cerrar"]').click(); out.cerro=!document.getElementById('pap-lugar-det'); }
+    // La tabla por producto.
+    var tp=document.getElementById('pap-tabla-prod'); tp.open=true;
+    var th=[].map.call(tp.querySelectorAll('thead th'), function(x){ return _txt(x).trim(); });
+    var filas=[].filter.call(tp.querySelectorAll('tbody tr'), function(tr){ return !tr.classList.contains('pap-tbanda'); }).map(function(tr){ return [].map.call(tr.cells, function(td){ return _txt(td).trim(); }); });
+    var pie=[].map.call(tp.querySelectorAll('tfoot td'), function(td){ return _txt(td).trim(); });
+    out.tabla={ th:th, filas:filas, pie:pie };
+    // «Ver a qué tienda va» desde la pestaña 1.
+    ov.querySelector('[data-pap-tab="pedir"]').click();
+    var ir=ov.querySelector('[data-pap="ir-tiendas"]'); if(ir) ir.click();
+    out.irTiendas={ tab:_txt(ov.querySelector('[aria-selected="true"]')).trim(), lugar:PAP_S.lugar, det:_txt(document.querySelector('#pap-lugar-det .pap-ldtit b')) };
+    return out;
+  });
+  const num=x=>+String(x||'').replace(/\./g,'').replace(/\D/g,'')||0;
+  chk('RP6a la pestaña cambia y el total del reparto = lo que se pide (15 días)', r && /Qué va a dónde/.test(r.sel) && r.ocultoPedir && r.tot===r.esperado && r.tot>0, r && { sel:r.sel, tot:r.tot, esp:r.esperado });
+  chk('RP6b PTF + Banzer + Tiendas = el total y los porcentajes suman 100', r && r.fichas.length>=2 && r.fichas.reduce(function(a,f){ return a+f.n; },0)===r.tot && r.fichas.reduce(function(a,f){ return a+f.pct; },0)===100, r && r.fichas);
+  var fT=r && r.fichas.filter(function(f){ return f.id==='T'; })[0];
+  chk('RP6c cada tienda tiene su ficha (Charcas, Mutualista, Carmelo, Mia Plaza) y suman lo de «Tiendas»', r && fT && ['T:Charcas','T:Mutualista','T:Carmelo','T:Mia Plaza'].every(function(id){ return r.chips.some(function(c){ return c.id===id && c.n>0; }); }) && r.chips.reduce(function(a,c){ return a+c.n; },0)===fT.n, r && { chips:r.chips, T:fT });
+  chk('RP6d tocar Charcas muestra lo suyo (el SOFT 140) y la lista suma su número; «✕ Cerrar» la cierra', r && r.charcas && r.charcas.suma===r.charcas.n && /Tienda Charcas/.test(r.charcas.tit) && r.charcas.filas.some(function(x){ return /COLCHON SOFT/.test(x); }) && r.cerro, r && r.charcas);
+  var cierraT=function(t){ if(!t || !t.pie.length) return false; var okFil=t.filas.every(function(f){ return f.length===t.th.length; });
+    for(var i=1;i<t.pie.length;i++){ var s=0; t.filas.forEach(function(f){ s+=num(f[i]); }); if(s!==num(t.pie[i])) return false; } return okFil; };
+  chk('RP6e la tabla por producto: Producto · Pedir · PTF · Banzer · cada tienda, y el Total cierra por columna', r && r.tabla.th[0]==='Producto' && r.tabla.th[1]==='Pedir' && r.tabla.th.indexOf('Charcas')>=0 && cierraT(r.tabla) && num(r.tabla.pie[1])===r.tot, r && { th:r.tabla.th, pie:r.tabla.pie });
+  chk('RP6f en cada fila de la tabla: Pedir = PTF + Banzer + tiendas (sin contar la columna «Tiendas» sumada del celular)', r && r.tabla.filas.every(function(f){
+      var s=0; for(var i=2;i<f.length;i++){ if(r.tabla.th[i]==='Tiendas') continue; s+=num(f[i]); } return s===num(f[1]); }), r && r.tabla.filas.slice(0,3));
+  chk('RP6g «Ver a qué tienda va» lleva a «Qué va a dónde» con las tiendas abiertas', r && /Qué va a dónde/.test(r.irTiendas.tab) && r.irTiendas.lugar==='T' && /Todas las tiendas/.test(r.irTiendas.det), r && r.irTiendas);
+
+  // ═══ RP7. Copiar ═══
+  console.log('\n── RP7. Copiar ──');
+  r = await page.evaluate(() => {
+    if(typeof PAP==='undefined' || !PAP || !PAP.TODAS) return { fab:'', todo:'', lugar:'', tot:'', uno:'', s:{} };
+    var ov=document.getElementById('pap-overlay'), out={};
+    var copia=function(sel){ PAP_COPIA=''; var b=ov.querySelector(sel); if(b) b.click(); var h=document.getElementById('pap-hoja'); if(h) h.hidden=true; return PAP_COPIA; };
+    ov.querySelector('[data-pap-tab="pedir"]').click(); ov.querySelector('[data-pap-plazo="quin"]').click();
+    var F=null; PAP.FABS.forEach(function(x){ if(x.nombre==='Multiespumas') F=x; });
+    out.fab=copia('[data-pap-copiar-fab="'+F.k+'"]'); out.fabN=papSumaFab(F,'quin');
+    ov.querySelector('[data-pap-tab="donde"]').click();
+    out.todo=copia('[data-pap="copiar-todo"]');
+    var ch=ov.querySelector('.pap-ct[data-pap-lugar="T:Charcas"]'); if(ch) ch.click();
+    out.lugar=copia('[data-pap-copiar-lugar="T:Charcas"]');
+    out.tot=_copia(function(){ copiarProducirTodo('tot'); });
+    out.uno=_copia(function(){ copiarProducir('suena','tot'); });
     var R=stockProducir(stockData()), s=R.bloques.filter(function(b){ return b.k==='suena'; })[0];
-    return { rep:rep, todo:todo, uno:uno, s:{ tot:s.tot.tot, quin:s.tot.quin, mes:s.tot.mes } };
+    out.s={ tot:s.tot.tot, quin:s.tot.quin, mes:s.tot.mes };
+    return out;
   });
-  chk('RP6a «📋 Copiar la planilla»: «QUÉ VA A DÓNDE», cada producto con «→ PTF … · Banzer … · Charcas …» y el total', /QUÉ VA A DÓNDE — PRODUCIR PARA 15 DÍAS/.test(r.rep) && /COLCHON SOFT · 140x190[^\n]*: \d+ → (Charcas|Mutualista) \d+/.test(r.rep) && /Total: \d+ → /.test(r.rep) && /línea de logística/.test(r.rep), r.rep.slice(0,500));
-  chk('RP6b «📋 Copiar todo hasta el 30/11» de todas las fábricas: cada producto con «15 días N + noviembre M»', /PRODUCIR TODO HASTA EL 30\/11 \(15 DÍAS \+ NOVIEMBRE\)/.test(r.todo) && /15 días \d+ \+ noviembre \d+/.test(r.todo) && /HEAVEN/.test(r.todo) && /SUEÑA/.test(r.todo), r.todo.slice(0,400));
-  chk('RP6c el de un bloque (Sueña) cierra con su total = 15 días + noviembre', new RegExp('Total: '+r.s.tot+' unidades').test(r.uno) && r.s.tot===r.s.quin+r.s.mes, { s:r.s, t:r.uno.slice(-300) });
+  chk('RP7a «📋 Copiar para Multiespumas»: «PEDIDO A PRODUCCIÓN · MULTIESPUMAS», el plazo con fechas, SUEÑA, cada producto y el TOTAL',
+    /^PEDIDO A PRODUCCIÓN · MULTIESPUMAS\nPara los próximos 15 días \(del 20\/10 al 04\/11\)\nMartes 20\/10\/2026/.test(r.fab) && /SUEÑA:/.test(r.fab) && /• COLCHON SOFT · 140x190 \(cód COLT0048\): \d+/.test(r.fab) && new RegExp('TOTAL: '+r.fabN+' unidades$').test(r.fab), r.fab.slice(0,400));
+  chk('RP7b «📋 Copiar todo el reparto»: «QUÉ VA A DÓNDE», PTF, BANZER y cada tienda con su lista, y el total partido', /^QUÉ VA A DÓNDE/.test(r.todo) && /\nPTF \(\d+\):/.test(r.todo) && /\nTIENDA CHARCAS \(\d+\):/.test(r.todo) && /TOTAL: \d+ unidades \(PTF \d+ · Banzer \d+ · tiendas \d+\)$/.test(r.todo), r.todo.slice(0,500));
+  chk('RP7c «📋 Copiar lo de Charcas»: «QUÉ VA A LA TIENDA CHARCAS», por marca, y su total', /^QUÉ VA A LA TIENDA CHARCAS/.test(r.lugar) && /SUEÑA · MULTIESPUMAS \(\d+\):/.test(r.lugar) && /TOTAL: \d+ unidades$/.test(r.lugar), r.lugar);
+  chk('RP7d «📋 Copiar todo hasta el 30/11» de siempre (Plan): cada producto con «15 días N + noviembre M»', /PRODUCIR TODO HASTA EL 30\/11 \(15 DÍAS \+ NOVIEMBRE\)/.test(r.tot) && /15 días \d+ \+ noviembre \d+/.test(r.tot) && /HEAVEN/.test(r.tot) && /SUEÑA/.test(r.tot), r.tot.slice(0,400));
+  chk('RP7e el de un bloque (Sueña) cierra con su total = 15 días + noviembre', new RegExp('Total: '+r.s.tot+' unidades').test(r.uno) && r.s.tot===r.s.quin+r.s.mes, { s:r.s, t:r.uno.slice(-300) });
 
-  // ═══ RP7. Nada cambia y entra en el celular ═══
-  console.log('\n── RP7. Ningún número cambia; celular ──');
+  // ═══ RP8. 30 días ═══
+  console.log('\n── RP8. 30 días ──');
   r = await page.evaluate(() => {
+    var lee=function(){ var o={}; stockProducirCalc(stockData()).bloques.forEach(function(B){ B.filas.forEach(function(f){ o[f.o.k]={ sem:f.sem, quin:f.quin, d30:f.d30, tot:f.tot, mes:f.mes }; }); }); return o; };
+    var a=lee(), out={ a:a, con15:{}, con400:{}, bt:{} };
+    if(typeof PRODUCIR_30==='undefined') return out;
+    var v=PRODUCIR_30;
+    try{ PRODUCIR_30=PRODUCIR_QUINCENA; out.con15=lee(); PRODUCIR_30=400; out.con400=lee(); } finally { PRODUCIR_30=v; }
+    var R=stockProducirCalc(stockData()); out.bt={}; R.bloques.forEach(function(B){ var s=0; B.filas.forEach(function(f){ if(f.algo) s+=f.d30; }); out.bt[B.k]=[B.tot.d30, s]; });
+    return out;
+  });
+  const ks=Object.keys(r.a||{});
+  chk('RP8a cada producto: 7 días ≤ 15 días ≤ 30 días ≤ todo noviembre', ks.length>=4 && ks.every(k=>{ const x=r.a[k]; return typeof x.d30==='number' && x.sem<=x.quin && x.quin<=x.d30 && x.d30<=x.tot; }), r.a);
+  chk('RP8b es la misma cuenta que 15 días: con 15 en lugar de 30, da exacto lo de 15 días', ks.every(k=>r.con15[k] && r.con15[k].d30===r.con15[k].quin), ks.map(k=>[k, r.con15[k]]));
+  chk('RP8c nunca más que «todo noviembre» (con un plazo de 400 días, queda en el total)', ks.every(k=>r.con400[k] && r.con400[k].d30===r.con400[k].tot), ks.map(k=>[k, r.con400[k]]));
+  chk('RP8d hay algo más en 30 días que en 15 (el TITANIO ICE 160, que rota) y el total del bloque es la suma', ks.some(k=>r.a[k].d30>r.a[k].quin) && Object.keys(r.bt).length>0 && Object.keys(r.bt).every(k=>r.bt[k][0]===r.bt[k][1]), r.bt);
+
+  // ═══ RP9. Nada cambia, cerrar, sin conteo y celular ═══
+  console.log('\n── RP9. Ningún número cambia; cerrar; sin conteo; celular ──');
+  r = await page.evaluate(async () => {
     var foto=function(){ var d=stockData(); return JSON.stringify(stockPlanDatos(d, d.lista).map(function(x){ return [x.o.k, x.p7, x.p15, x.pm, x.o.fabricar, x.o.comp, x.o.objetivo]; })); };
     var antes=foto();
-    if(typeof producirDestinos==='function'){ var c=stockTiendasParteCalc(null); producirDestinos(c.R); }
-    else if(typeof stockTiendasParteCalc==='function') stockTiendasParteCalc(null);
-    return { igual:antes===foto(), flag:STOCK_SIN_TIENDAS };
+    if(typeof papDatos==='function') papDatos(true);
+    var out={ igual:antes===foto(), flag:STOCK_SIN_TIENDAS };
+    if(typeof abrirPap!=='function') return out;
+    var ov=document.getElementById('pap-overlay');
+    // ✕ cierra; Esc cierra; 🔄 rehace la cuenta.
+    abrirPap(); await new Promise(function(res){ setTimeout(res, 150); });
+    var p0=PAP; ov.querySelector('[data-pap="actualizar"]').click(); await new Promise(function(res){ setTimeout(res, 150); });
+    out.actualizo=!!(PAP && PAP!==p0 && PAP.listo);
+    ov.querySelector('[data-pap="cerrar"]').click(); out.cierraX=ov.style.display==='none';
+    abrirPap(); await new Promise(function(res){ setTimeout(res, 150); });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true })); out.cierraEsc=ov.style.display==='none';
+    // Sin conteo del depósito: lo dice, sin números.
+    var _sd=stockData; stockData=function(){ var d=_sd.apply(null, arguments); d.contado=false; return d; };
+    try{ abrirPap(); await new Promise(function(res){ setTimeout(res, 150); }); out.sinConteo=_txt(document.getElementById('pap-pedir')); out.sinPlazos=!document.querySelector('#pap-plazos .pap-pz'); }
+    finally{ stockData=_sd; cerrarPap(); }
+    return out;
   });
-  chk('RP7a el Plan da lo mismo antes y después del reparto, y el interruptor queda apagado', r.igual && r.flag===false, r);
+  chk('RP9a el Plan da lo mismo antes y después de la ventana, y el interruptor queda apagado', r.igual && r.flag===false, r);
+  chk('RP9b «🔄 Actualizar» rehace la cuenta; «✕ Cerrar» y Esc cierran la ventana', r.actualizo && r.cierraX && r.cierraEsc, r);
+  chk('RP9c sin conteo del depósito lo dice (subí el Excel de existencias) y no muestra plazos', /no hay conteo del depósito/.test(r.sinConteo||'') && r.sinPlazos, r.sinConteo);
   await page.setViewportSize({ width:390, height:844 });
+  await abrirVentana();
   r = await page.evaluate(async () => {
-    renderStock(); await new Promise(function(res){ setTimeout(res, 300); });
-    var med=function(id){ var e=document.getElementById(id); return e ? { sw:e.scrollWidth, cw:e.clientWidth } : null; };
-    return { pr:med('producir'), tg:med('prod-total-gen'), rep:med('prod-rep') };
+    if(typeof PAP==='undefined' || !PAP) return null;
+    var ov=document.getElementById('pap-overlay'), sc=document.getElementById('pap-cuerpo'), out={};
+    var cab=ov.querySelector('.pap-cab'), bts=[].slice.call(cab.querySelectorAll('.pap-cab-btn')), tit=cab.querySelector('.pap-cab-tx');
+    out.cabUnaLinea=bts.every(function(b){ return Math.abs(b.getBoundingClientRect().top-bts[0].getBoundingClientRect().top)<2 && b.getBoundingClientRect().top<tit.getBoundingClientRect().bottom; });
+    out.botonAlto=bts.every(function(b){ return b.getBoundingClientRect().height>=44; });
+    var medir=function(){ return { sw:sc.scrollWidth, cw:sc.clientWidth, doc:document.documentElement.scrollWidth, vw:window.innerWidth }; };
+    out.pedir=medir();
+    ov.querySelector('[data-pap-plazo="tot"]').click(); out.tot=medir();
+    ov.querySelector('[data-pap-tab="donde"]').click();
+    var tp=document.getElementById('pap-tabla-prod'); tp.open=true; papAjustarTabla();
+    await new Promise(function(res){ setTimeout(res, 100); });
+    out.donde=medir();
+    out.caja=(function(){ var c=document.getElementById('pap-tabla-caja'); return { sw:c.scrollWidth, cw:c.clientWidth }; })();
+    out.colTiendas=[].map.call(tp.querySelectorAll('thead th'), function(x){ return getComputedStyle(x).display!=='none' ? _txt(x).trim() : null; }).filter(Boolean);
+    return out;
   });
-  chk('RP7b en 390 px el total y la planilla no se salen de su caja (las tablas scrollean adentro)', r.pr && r.tg && r.rep && r.pr.sw<=r.pr.cw+1 && r.tg.sw<=r.tg.cw+1 && r.rep.sw<=r.rep.cw+1, r);
+  const cabe=m=>m && m.sw<=m.cw+1 && m.doc<=m.vw+1;
+  chk('RP9d en 390 px la cabecera entra en una línea (🔄 y ✕ sin texto, de 44 px)', r && r.cabUnaLinea && r.botonAlto, r);
+  chk('RP9e en 390 px nada se sale de la pantalla en las dos pestañas', r && cabe(r.pedir) && cabe(r.tot) && cabe(r.donde), r);
+  chk('RP9f en el celular la tabla suma las tiendas en una columna y entra a lo ancho', r && r.colTiendas.indexOf('Tiendas')>=0 && r.colTiendas.indexOf('Charcas')<0 && r.caja.sw<=r.caja.cw+1, r && { col:r.colTiendas, caja:r.caja });
 
   chk('sin errores de la página', ERRS.length===0, ERRS.slice(0,3));
   await browser.close();
