@@ -15424,3 +15424,61 @@ terminados fábrica o almacén de las tiendas… para los siguientes 7, 15 y 30 
   el modelo abierto tiene 6 números), `test_stock_tiendas_parte` (la cuenta devuelve `.v`), `test_eduardo_multicenter` (lee el texto en
   `.prod-como`).
 
+#### §4lt-c — 🏭 «Pedido a producción»: el total y qué va a dónde en una ventana aparte (20/10; en la rama, a publicar)
+El dueño, al ver §4lt-b: *«No se va a ver muy cargado el qué va a qué. La idea es que simplemente al hacer el pedido se genere el consolidado y
+ahí muestre qué pedir a producción y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes, según la
+proyección. O se abra una pestaña o tabla que muestre eso, porque la verdad que lo veo muy cargado de stock y reposición. Dame un ejemplo»*.
+Se armaron tres diseños con un panel de jueces y se le publicó el ganador como ejemplo (artefacto https://claude.ai/artifact/XtxbwxPD9zhsWQjrRRNA7M,
+archivo del scratchpad `ejemplo/final.html`, con los datos del 16/10). Respuesta: *«Publica»*.
+- **La ventana** (`#pap-overlay`, z 3100, encima de Stock): se abre con «🏭 Pedido a producción» de la barra de Stock (`#stk-pap-btn`, el primero),
+  del «📋 Plan de stock» (`.pl-pap`) y de la línea de «Qué producir» (`#prod-pap`, `producirPapLineaHtml`). Abre SIEMPRE en «Qué pedir · 7 días».
+  · Plazos: **7 días · 15 días · 30 días · Todo <el mes que viene>** (botones arriba, fijos al bajar, con el total de cada uno). Cada plazo ya
+    incluye al anterior: no se suman. «Todo noviembre» = `f.tot` (15 días + noviembre, hasta el 30/11).
+  · Pestaña **«📦 Qué pedir a producción»**: el total grande, fichas por FÁBRICA (Industrias Moreno = Heaven + ROHO; Multiespumas = Sueña; «Sin
+    fábrica asignada» aparte), «🏬 N son para reponer las tiendas: ya están adentro del total» con «Ver a qué tienda va», y una tarjeta por fábrica
+    con la marca adentro y «📋 Copiar para <fábrica>» (`papTextoFab`: «PEDIDO A PRODUCCIÓN · …», el plazo con fechas, cada producto, subtotal por
+    marca y TOTAL). Tocar un producto: Hoy hay (PTF · Banzer · Moreno · en camino), vendido sin entregar, «Se arma con» (todo el mes) y «Va a».
+  · Pestaña **«🗺️ Qué va a dónde»**: el total, una barra PTF / Banzer / Tiendas, tres fichas con % (suman 100, `papPcts` con `producirRepartir`),
+    una ficha por tienda; tocar un lugar abre su lista (por marca; en «Tiendas», por tienda) con «📋 Copiar lo de …»; «📋 Copiar todo el reparto»;
+    y plegada «📊 Ver todo en una tabla» (Producto · Pedir · PTF · Banzer · cada tienda; en el celular las tiendas van sumadas en una columna).
+  · «🔄 Actualizar» rehace la cuenta; «✕ Cerrar» y Esc vuelven a Stock. Sin conteo del depósito, lo dice.
+  · **Solo mira**: no marca pedidos, no toca el stock ni la planilla.
+- **30 días** (`r.d30` en `stockProducirDe`, `f.d30`, `B.tot.d30`, `PRODUCIR_30`=30): el MAYOR de dos cuentas, nunca menos que 15 días ni más
+  que `quin + mes` (`stockProducirD30`):
+  · la del ritmo (`r.d30Ritmo`), la MISMA que 15 días con 30: lo que rota, lo vendido hasta hoy+30+la fábrica + objetivo + μ × hábiles de 30
+    días; lo demás, lo vendido + `porDia × (fábrica + margen + 30)`;
+  · el piso de fin de mes: si los 30 días llegan a fin de mes, `antes` (lo que falta para terminar este mes, §4ls CU-1), y si pasan el 1°, la
+    parte del mes que viene que cae adentro por días corridos (`(mes − antes) × días cubiertos / días del mes`). Sin esto, lo que rota SOLO en
+    30 días (ritmo de 15 en 0) daba 0 en «30 días» y su número entero en «Todo noviembre» (revisión del 20/10: 14 productos, 55 u).
+  Con la planilla del 16/10, 30 días = **824** (el ejemplo decía 739: le faltaban esas dos cosas). La parte de las tiendas también (`STOCK_TP_H`)
+  y **no achica al alargar el plazo** (7 → 15 → 30 → todo el mes, `stockTiendasParteCalc`): sin las tiendas el mes sigue contando su venta por
+  la historia del sistema, y una tienda daba 10 en 30 días y 7 en el total.
+- **«Qué producir» quedó liviano**: sin `#prod-total-gen` ni `#prod-rep` (se borraron `producirTotalGenHtml`, `producirRepHtml`, `producirRepVer`,
+  `PRODUCIR_REP_H`, `textoProducirReparto`, `copiarProducirReparto` y su CSS), una línea con los cuatro totales y el botón. Siguen la columna
+  «Hasta el 30/11», las líneas «🏪 De esto, por las tiendas» de cada bloque y del Plan, y las copias de siempre.
+- **La cuenta**: `papDatos` usa `STOCK_TP` si está vigente (60 s, misma planilla y stock) y si no la hace (`stockTiendasParteCalc` + `producirDestinos`)
+  y la deja en `STOCK_TP`. Con la planilla del 16/10 12:00 tarda ~1,2 s y da EXACTO lo del ejemplo: 194 · 476 · 739 · 1.129; 15 días PTF 101 ·
+  Banzer 193 · tiendas 182 (Charcas 76, Buenos Aires 48, Mutualista 32, Carmelo 22, Central 3, Mia Plaza 1); todo noviembre PTF 277 · Banzer 469 ·
+  tiendas 383. Industrias Moreno 167 / 372 / 566 / 854; Multiespumas 25 / 102 / 171 / 273; sin fábrica 2. (Con el piso de fin de mes de abajo,
+  30 días pasó a 824: Moreno 629, Multiespumas 193.)
+- ⚠️ Todas las clases llevan `pap-` (una clase que se llame como una de la página hereda sus reglas) y la tabla pone fondo Y color en `th`
+  (el `thead th` del panel es negro). El espacio de abajo va en `.pap-pag`, no en la caja que scrollea: si no, el TOTAL fijo de la tabla quedaba
+  40 px arriba del borde. Copiar: portapapeles; si no deja, `execCommand`; si tampoco, la hoja `#pap-hoja` con el texto (nunca un `prompt`).
+  `PAP_COPIA` guarda lo último copiado (para las pruebas).
+- **Revisión independiente antes de publicar** (4 revisores: números, pantalla con la planilla real, código, pruebas; 22 hallazgos, todos
+  MEDIA o BAJA). Arreglado:
+  · 🔄 Actualizar y abrir la ventana **leen la planilla** (`papLeer` → `refrescarEstado`): con Stock abierto el panel no relee solo (`autoOcupado`).
+    Al abrir se calcula YA con lo que hay y, si la lectura trae algo nuevo (`papFirma`: filas + stock), se recalcula sin perder dónde se está.
+    La cabecera dice «planilla de las HH:MM» o «⚠️ sin conexión: lo leído a las HH:MM».
+  · **«No es el Excel del día»** arriba de las dos pestañas (`stockCortesViejos`, como Stock) y en las copias («⚠️ Con el Excel de PTF del 16/10»).
+  · Lo que se vende y **no está en el Excel de PTF** (`deposito==null`) se dice con el nombre arriba y en la copia de su fábrica.
+  · «Todo noviembre» dice **«N para terminar octubre»** aparte (copia, detalle, totales; `f.antes`).
+  · **7 días sin fecha** (U17: es «lo vendido + hasta el objetivo», no hasta hoy+7); 30 días nunca pasa el fin del mes que viene.
+  · «Hoy hay» → «Hay + en camino» (VV4). La letra de los botones (`:where(#pap-overlay) button`, si no le ganaba a las clases). Cabecera en una
+    línea en el celular y compacta acostado. Foco que vuelve al botón y Tab que no se sale. La hoja de copiar se cierra tocando afuera. 44 px.
+    La tabla con las tiendas sumadas hasta 767 px (iPad mini). `vertical-align` de la tabla. La pestaña correcta mientras calcula.
+- `tests/test_producir_reparto.js` reescrita (64; 48 rojas contra `66fb470`): RP2 la línea y los botones (que abren), RP5 qué pedir (Heaven + ROHO
+  en una tarjeta, «Sin fábrica asignada»), RP6 qué va a dónde en los cuatro plazos (cierra por fila y por columna), RP7 copias, RP8 los 30 días
+  (ritmo = 15 días con 15; piso de fin de mes; tope; tiendas que no achican), RP9 nada cambia, ✕/Esc, sin conteo, el error al calcular, 390 px,
+  RP10 lectura de la planilla, Excel viejo, sin contar, «para terminar octubre», letra, hoja y foco.
+

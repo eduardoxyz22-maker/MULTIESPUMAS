@@ -662,13 +662,19 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   `STOCK_SIN_TIENDAS` (`stockTiendasParteCalc`, un momento después de dibujar, 60 s de caché). ⚠️ Ese interruptor es SOLO para medir: siempre
   en `finally`, y con `STOCK_DIBUJO` apartado. Tiendas Roho no carga ventas y su RPT no cuenta: decisión pendiente del dueño.
   `tests/test_stock_tiendas_parte.js`.
-- 📦 **El total a producir y 🗺️ qué va a dónde** (§4lt-b, 20/10; dueño: *«que muestre la totalidad… y luego qué va a dónde: Banzer, PTF o
-  las tiendas»*; en la rama): la columna del mes va ADEMÁS de 15 días, así que `f.tot = quin + mes` («Hasta el 30/11») va en cada fila,
-  medida, TOTAL, encabezado y copia (`copiarProducir(k,'tot')`). Arriba, `#prod-total-gen` (todas las fábricas, 7 / 15 / hasta fin del mes
-  que viene, acumulados). Debajo, `#prod-rep` reparte CADA número de «Qué producir» (suma exacto): tiendas = su parte (`STOCK_TP.porK`)
-  según la venta de tienda de 30 días + la RPT pendiente; el resto a PTF/Banzer con la regla de «📍 Banzer o PTF» (`sB` + lo que Banzer ya
-  tiene). Solo muestra: ningún número cambia. ⚠️ Una cuenta nueva del total sale de `B.tot`/`f.tot`, nunca aparte.
-  `tests/test_producir_reparto.js`.
+- 📦 **El total a producir** (§4lt-b, 20/10): la columna del mes va ADEMÁS de 15 días, así que `f.tot = quin + mes` («Hasta el 30/11») va en
+  cada fila, medida, TOTAL, encabezado y copia (`copiarProducir(k,'tot')`). ⚠️ Una cuenta nueva del total sale de `B.tot`/`f.tot`, nunca aparte.
+- 🏭 **«Pedido a producción», una ventana aparte** (§4lt-c, 20/10; dueño: *«lo veo muy cargado… al hacer el pedido se genere el consolidado…
+  y en otra pestaña qué va a qué tienda en los próximos 7 días, 15, 30 y para el siguiente mes»*; vio el ejemplo y dijo «Publica»; en la rama, a publicar):
+  `#pap-overlay` (z 3100) desde la barra de Stock (`#stk-pap-btn`), el Plan (`.pl-pap`) y la línea de «Qué producir» (`#prod-pap`; el cuadro
+  del total y la planilla de §4lt-b se sacaron de ahí). Plazos 7 (sin fecha: U17) / 15 / **30 días** (`f.d30` = el mayor de la cuenta de 15 días
+  con `PRODUCIR_30` y el piso de fin de mes —`antes` + la parte del mes que viene que cae adentro—, tope `quin + mes`, `stockProducirD30`) /
+  «Todo <el mes que viene>» (`f.tot`, con «N para terminar <este mes>» aparte), cada uno incluye al anterior; lo de las tiendas no achica al
+  alargar el plazo. Al abrir y con 🔄 lee la planilla (con Stock abierto no se relee sola); avisa el Excel que no es de hoy y lo que no está contado. Pestaña «📦 Qué pedir a producción» (por FÁBRICA:
+  Industrias Moreno = Heaven + ROHO, Multiespumas = Sueña; «📋 Copiar para <fábrica>») y «🗺️ Qué va a dónde» (PTF / Banzer / cada tienda con
+  `producirRepartoFila`: suma exacto; tiendas por su venta de tienda de 30 días + la RPT pendiente; el resto con la regla de «📍 Banzer o PTF»).
+  Solo mira. ⚠️ Clases `pap-*` (no reusar nombres del panel); la cuenta sale de `stockProducirCalc`/`STOCK_TP`, nunca aparte.
+  `tests/test_producir_reparto.js` (64).
 - 🎨 **Lo que se le publica al dueño (páginas, artefactos con clave) va SIEMPRE claro, con los colores del panel** (dueño, 19/10: *«no uses
   fondo negro… usa los mismos colores que el panel»*): fondo `--bg-app`, tarjetas blancas, turquesa `#00B5AD`/`#00A09A`, encabezado `--grad-header`,
   letra Inter, y SIN modo oscuro aunque el aparato lo tenga.

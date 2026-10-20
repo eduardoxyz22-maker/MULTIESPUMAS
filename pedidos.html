@@ -529,7 +529,8 @@ th.sortable:hover{color:var(--teal-dk)}
 #producir tfoot tr.prod-total td.prod-td-tot{background:#f6e3d6}
 .prod-pap{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;border:1px solid var(--teal-border);border-radius:10px;background:var(--teal-lt);padding:8px 12px;margin:4px 0 10px;font-size:.86rem;font-variant-numeric:tabular-nums;color:#134e4a}
 .prod-pap b{color:#007C76}
-.prod-pap .btn{margin-left:auto;background:#007C76;color:#fff;font-weight:700;padding:6px 12px;font-size:.8rem}
+.prod-pap>span{flex:1 1 260px;min-width:0}
+.prod-pap .btn{margin-left:auto;background:#007C76;color:#fff;font-weight:700;padding:6px 12px;font-size:.8rem;min-height:44px}
 .prod-como{margin:0 0 6px}
 .prod-como>summary{cursor:pointer;font-size:.8rem;color:var(--muted)}
 /* 🏭 (20/10) «PEDIDO A PRODUCCIÓN»: la ventana aparte que se abre desde Stock (el ejemplo que aprobó el dueño). Todo lleva «pap-»
@@ -540,13 +541,14 @@ th.sortable:hover{color:var(--teal-dk)}
   --pap-sombra:0 1px 2px rgba(16,74,78,.06),0 8px 24px rgba(16,74,78,.09); --pap-sombra-s:0 1px 2px rgba(16,74,78,.07),0 2px 8px rgba(16,74,78,.05);
   --pap-pad:16px; --pap-ctrl-h:130px}
 #pap-overlay [hidden]{display:none!important}
-#pap-overlay button{font:inherit;color:inherit;cursor:pointer}
+/* Con :where la regla pesa como «button» a secas: si no, le ganaba a las clases .pap-* y los botones perdían la negrita (revisión 20/10). */
+:where(#pap-overlay) button{font:inherit;color:inherit;cursor:pointer}
 #pap-overlay button:focus-visible,#pap-overlay summary:focus-visible{outline:3px solid var(--pap-foco);outline-offset:2px;border-radius:8px}
 .pap-cab{flex:none;background:var(--grad-header);color:#fff;display:flex;align-items:center;gap:8px 12px;padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px))}
 .pap-cab-tx{flex:1 1 auto;min-width:0}
 .pap-cab-tx b{display:block;font-size:1.15rem;font-weight:800;line-height:1.2}
-.pap-cab-tx span{display:block;font-size:.8rem;opacity:.92;font-weight:500}
-.pap-cab-btn{flex:none;min-height:42px;min-width:44px;padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff!important;font-weight:700;font-size:.86rem}
+.pap-cab-tx>span{display:block;font-size:.8rem;opacity:.92;font-weight:500}
+.pap-cab-btn{flex:none;min-height:44px;min-width:44px;padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff!important;font-weight:700;font-size:.86rem}
 .pap-cuerpo{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 /* El espacio de abajo va ADENTRO (no en la caja que scrollea): si no, el TOTAL fijo de la tabla queda 40 px arriba del borde. */
 .pap-pag{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
@@ -567,6 +569,8 @@ th.sortable:hover{color:var(--teal-dk)}
 .pap-nota{margin:-6px 2px 0;font-size:13px;color:var(--pap-gris)}
 .pap-ayuda{margin:0 2px;font-size:13px;color:var(--pap-gris)}
 .pap-cargando{padding:28px 8px;text-align:center;color:var(--pap-gris);font-size:15px}
+.pap-alerta{margin:0;padding:10px 14px;border-radius:12px;background:#FEF3C7;border:1px solid #F3D9A4;border-left:4px solid #D97706;color:#8A4A06;font-size:14px;line-height:1.45}
+.pap-alerta b{color:#6b3a04}
 .pap-vacio{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;padding:18px;font-size:15px;box-shadow:var(--pap-sombra-s)}
 .pap-tot{background:#fff;border:1px solid var(--pap-linea);border-radius:14px;padding:18px;box-shadow:var(--pap-sombra-s);display:flex;flex-direction:column;gap:10px}
 .pap-totn{font-size:clamp(46px,10vw,68px);font-weight:800;line-height:1;color:var(--pap-hondo);letter-spacing:-.02em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -579,7 +583,7 @@ th.sortable:hover{color:var(--teal-dk)}
 .pap-cfab b{font-size:16px;font-weight:800;color:var(--c)}
 .pap-tti{margin:0;font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;background:var(--pap-ti-claro);border:1px solid #F5CFE0;border-radius:10px;padding:4px 12px}
 .pap-tti b{color:var(--pap-ti)}
-.pap-link{border:0;background:none;padding:6px 2px;min-height:40px;color:var(--pap-hondo)!important;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.pap-link{border:0;background:none;padding:6px 2px;min-height:44px;color:var(--pap-hondo)!important;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .pap-btn{min-height:44px;padding:9px 16px;border-radius:10px;border:1px solid var(--pap-hondo);background:var(--pap-hondo);color:#fff!important;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:8px;justify-content:center;text-align:center;line-height:1.2}
 .pap-btn.pap-claro{background:#fff;color:var(--pap-hondo)!important;border-color:var(--pap-borde)}
 .pap-fabs{display:flex;flex-direction:column;gap:12px}
@@ -662,7 +666,7 @@ th.sortable:hover{color:var(--teal-dk)}
 .pap-porque{font-size:11.5px;font-weight:650;color:#7a5a12;background:#FBF3DC;border-radius:6px;padding:1px 6px}
 .pap-tcaja{overflow-x:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--pap-linea)}
 #pap-overlay table.pap-tabla{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;white-space:normal}
-#pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:9px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--pap-linea);color:#2D2D2D;text-transform:none;letter-spacing:0}
+#pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:9px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--pap-linea);color:#2D2D2D;text-transform:none;letter-spacing:0;vertical-align:middle}
 #pap-overlay .pap-tabla thead th{background:var(--pap-claro);color:#2D2D2D;font-weight:750;font-size:12px;white-space:normal;line-height:1.2;vertical-align:bottom;min-width:40px;position:static;border-bottom:1px solid var(--pap-linea)}
 #pap-overlay .pap-tabla thead th.pap-thc{color:var(--c);box-shadow:inset 0 -3px 0 var(--c)}
 #pap-overlay .pap-tabla th:first-child,#pap-overlay .pap-tabla td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:190px;max-width:280px;white-space:normal;box-shadow:1px 0 0 var(--pap-linea)}
@@ -677,8 +681,9 @@ th.sortable:hover{color:var(--teal-dk)}
 .pap-tnom b{font-weight:650}
 .pap-tnom small{display:block;color:var(--pap-gris);font-size:12px}
 .pap-tcaja.pap-cabe{overflow:visible}
-@media (min-width:700px){ #pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:9px 6px} #pap-overlay .pap-solo-cel{display:none} }
-@media (max-width:699px){
+/* Hasta 767 px las tiendas van sumadas: entre 700 y 767 (iPad mini parado) la tabla con una columna por tienda no entraba. */
+@media (min-width:768px){ #pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:9px 6px} #pap-overlay .pap-solo-cel{display:none} }
+@media (max-width:767px){
   #pap-overlay .pap-col-t{display:none}
   #pap-overlay .pap-tabla th,#pap-overlay .pap-tabla td{padding:8px 3px}
   #pap-overlay .pap-tabla thead th{font-size:11.5px;min-width:32px}
@@ -704,9 +709,9 @@ th.sortable:hover{color:var(--teal-dk)}
   #pap-overlay{--pap-pad:12px}
   .pap-cuerpo{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
   .pap-cab-tx b{font-size:1.02rem}
-  .pap-cab-tx span{font-size:.74rem}
+  .pap-cab-tx>span{font-size:.74rem}
   .pap-cab-btn{min-height:44px;padding:5px 10px;font-size:1rem}
-  .pap-cab-txt{display:none}
+  .pap-cab-txt,.pap-sub-l{display:none}
   .pap-pag{gap:12px}
   .pap-ctrl{padding-top:8px;padding-bottom:7px;gap:6px}
   .pap-pestanas{padding:3px}
@@ -745,6 +750,15 @@ th.sortable:hover{color:var(--teal-dk)}
   .pap-fcue .pap-filas,.pap-ldet .pap-filas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:-1px}
   .pap-fcue .pap-fila,.pap-ldet .pap-fila{border-top:0;border-bottom:1px solid var(--pap-linea)}
   .pap-fcue .pap-fila:nth-child(even),.pap-ldet .pap-fila:nth-child(even){border-left:1px solid var(--pap-linea)}
+}
+/* Celular acostado: lo que queda fijo arriba (cabecera, pestañas y plazos) no puede comerse la mitad de la pantalla. */
+@media (max-height:520px){
+  .pap-cab{padding-top:calc(4px + env(safe-area-inset-top,0px));padding-bottom:4px}
+  .pap-cab-tx>span{display:none}
+  .pap-cab-btn{min-height:40px}
+  .pap-ctrl{padding-top:6px;padding-bottom:6px;gap:5px}
+  .pap-pestana{min-height:38px}
+  .pap-pz{min-height:42px}
 }
 @media (prefers-reduced-motion:reduce){ #pap-overlay *{transition:none!important;animation:none!important} }
 .wa-text{width:100%;min-height:210px;font-family:inherit;font-size:.82rem;line-height:1.5;border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;white-space:pre-wrap;background:var(--gray-lt);color:var(--text);resize:vertical}
@@ -28246,7 +28260,7 @@ function stockProducirDe(o, MS, PI){
     r.antes=r.mes-sig;
     r.mes1=Math.min(sig, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-(r.antes>0 ? 0 : r.mesQueda)));
     r.mes2=sig-r.mes1;
-    r.d30=Math.min(r.d30, r.quin+r.mes);   // 30 días nunca más que «todo el mes que viene» (solo pasa el 30 y 31/01)
+    stockProducirD30(r, hoy, MS);
     return r;
   }
   /* 📅 (18/10, §4ls VF1) Los días de venta, desde que arranca la fábrica (`stockLeadVenta`, como «7 días»): el día hasta el que entra lo
@@ -28280,8 +28294,23 @@ function stockProducirDe(o, MS, PI){
   var sigN=r.mes-r.antes;
   r.mes1=Math.min(sigN, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-Math.max(0, r.mesQueda)));
   r.mes2=sigN-r.mes1;
-  r.d30=Math.min(r.d30, r.quin+r.mes);
+  stockProducirD30(r, hoy, MS);
   return r;
+}
+/* 🏭 (20/10) 30 días, la segunda mitad: el plazo cruza fin de mes. Lo que falta para terminar este mes (`antes`, §4ls CU-1) ya hay que
+   hacerlo si los 30 días llegan a fin de mes, y del mes que viene entra la parte de sus días corridos que cae dentro de los 30 (del 1° al
+   hoy+30). Sin esto, lo que rota solo en 30 días (ritmo de 15 días en 0) daba 0 en «30 días» y su número entero en «Todo <mes>» (revisión
+   del 20/10: 14 productos, 55 u). Se toma el mayor de las dos cuentas (`r.d30Ritmo` es la del ritmo) y nunca más que 15 días + el mes:
+   el tope solo actúa cuando hoy+30 pasa el fin del mes que viene (el 30 y 31/01) o el último día de un mes. */
+function stockProducirD30(r, hoy, MS){
+  r.d30Ritmo=r.d30;
+  var h30=stockSumarDias(hoy, PRODUCIR_30), piso=r.quin;
+  if(h30>=MS.finActual) piso+=(r.antes||0);
+  if(h30>=MS.ini){
+    var cub=Math.min(MS.dias, stockDias(MS.ini, h30)+1), sig=Math.max(0, r.mes-(r.antes||0));
+    piso+=Math.ceil(sig*cub/MS.dias-1e-9);
+  }
+  r.d30=Math.min(Math.max(r.d30, piso), r.quin+r.mes);
 }
 var PRODUCIR_COLS=['sem','quin','mes','mes1','mes2'];
 /* La medida como etiqueta del pie: «130X190CM», «160X200» y «140x190» son la misma forma de
@@ -28364,7 +28393,11 @@ function stockTiendasParteCalc(baseR){
     var t=v[B.k]={ sem:0, quin:0, d30:0, mes:0, tot:0 };
     B.filas.forEach(function(f){
       var s=sinK[f.o.k]||{}, x=porK[f.o.k]={};
-      STOCK_TP_H.forEach(function(h){ var b=f[h]||0; x[h]=Math.min(b, Math.max(0, b-(s[h]||0))); t[h]+=x[h]; });
+      STOCK_TP_H.forEach(function(h){ var b=f[h]||0; x[h]=Math.min(b, Math.max(0, b-(s[h]||0))); });
+      /* 🏭 (20/10) Lo de las tiendas no achica al alargar el plazo (7 → 15 → 30 días → todo el mes que viene): sin las tiendas, el mes
+         sigue contando su venta por la historia del sistema (que no separa tiendas), y una tienda daba 10 en 30 días y 7 en el total. */
+      var ant=0; ['sem','quin','d30','tot'].forEach(function(h){ x[h]=Math.min(f[h]||0, Math.max(x[h], ant)); ant=x[h]; });
+      STOCK_TP_H.forEach(function(h){ t[h]+=x[h]; });
     });
   });
   return { v:v, porK:porK, R:baseR };
@@ -28515,7 +28548,7 @@ function producirRepartoFila(f, h, porK, D){
    La cuenta se hace al abrir y con 🔄 Actualizar; si la de las tiendas (`STOCK_TP`) está vigente, se usa esa (no se calcula dos veces).
    ⚠️ Todas las clases llevan «pap-» adelante (una que se llame como una de la página hereda sus reglas).
    ========================================================================== */
-var PAP=null, PAP_S=null, PAP_COPIA='', PAP_INIT=false, PAP_TIMER=null;
+var PAP=null, PAP_S=null, PAP_COPIA='', PAP_INIT=false, PAP_TIMER=null, PAP_LEYENDO=false, PAP_LEIDO_ERR='', PAP_FOCO_ANTES=null, PAP_FORZAR_TRAS=false;
 var PAP_H=['sem','quin','d30','tot'];
 var PAP_FAB={ MORENO:'Industrias Moreno', MULTI:'Multiespumas' };
 var PAP_COL={ P:'#007C76', B:'#4f46e5', T:'#be185d' }, PAP_FONDO={ P:'#EAF6F5', B:'#EEF0FE', T:'#FDF0F6' };
@@ -28533,7 +28566,7 @@ function papHoyTxt(D){ return papCap(papDiaSem(D.hoy))+' '+fmtFecha(D.hoy); }
 function producirPapLineaHtml(R){
   var T={ sem:0, quin:0, d30:0, tot:0 };
   R.bloques.forEach(function(B){ PAP_H.forEach(function(h){ T[h]+=B.tot[h]||0; }); });
-  return '<div id="prod-pap" class="prod-pap">🏭 <span><b>Pedido a producción</b>, todas las fábricas: 7 días <b>'+papFmt(T.sem)+'</b> · '+PRODUCIR_QUINCENA+' días <b>'+papFmt(T.quin)+'</b> · '+
+  return '<div id="prod-pap" class="prod-pap"><span>🏭 <b>Pedido a producción</b>, todas las fábricas: 7 días <b>'+papFmt(T.sem)+'</b> · '+PRODUCIR_QUINCENA+' días <b>'+papFmt(T.quin)+'</b> · '+
     PRODUCIR_30+' días <b>'+papFmt(T.d30)+'</b> · todo '+esc(R.mes.nombre)+' <b>'+papFmt(T.tot)+'</b></span>'+
     '<button type="button" class="btn btn-sm" onclick="abrirPap()">Ver qué pedir y qué va a dónde</button></div>';
 }
@@ -28561,26 +28594,58 @@ function papDatos(forzar){
       PAP_H.forEach(function(h){ rep[h]=producirRepartoFila(f, h, porK, tp.D); });
       var g={ id:B.k+'|'+o.k, k:o.k, idx:idx, bloque:Q, nombre:stockNombre(o), base:o.desc, medida:o.medida ? f.md : '', cod:o.cod||'', rota:!!o.rota,
         hay:f.hay||0, ptf:Math.max(0, o.deposito||0), bz:almHoyBanzer(o), mor:o.enOtros||0, cam:stockEnCaminoSeguro(o), comp:o.comp||0,
-        sem:f.sem||0, quin:f.quin||0, d30:f.d30||0, mes:f.mes||0, tot:f.tot||0, tiendas:porK[o.k]||{}, rep:rep };
+        sem:f.sem||0, quin:f.quin||0, d30:f.d30||0, mes:f.mes||0, antes:f.antes||0, tot:f.tot||0, tiendas:porK[o.k]||{}, rep:rep };
       Q.filas.push(g); TODAS.push(g);
     });
     F.bloques.push(Q); BLOQUES.push(Q);
   });
-  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, listo:true, t:Date.now() };
+  /* Lo que se vende y no está en el Excel de PTF no entra en la cuenta (como «N sin contar» en «Qué producir»): se dice, con el nombre. */
+  var sinC={};
+  d.lista.forEach(function(o){
+    if(o.descont || !(o.rota || o.porDiaMes>0 || o.comp>0) || o.deposito!=null) return;
+    var b=stockBloqueDe(o).k; (sinC[b]=sinC[b]||[]).push(stockNombre(o));
+  });
+  BLOQUES.forEach(function(Q){ Q.sinC=sinC[Q.k]||[]; });
+  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, listo:true, t:Date.now(), viejos:stockCortesViejos(), sinC:sinC, firma:papFirma() };
+}
+/* Una huella barata de lo que entra en la cuenta (la planilla y el stock): si una lectura trae lo mismo, no se recalcula. */
+function papFirma(){
+  var s=STATE.length+'#';
+  for(var i=0;i<STATE.length;i++){ var p=STATE[i]; if(p) s+=p.id+':'+(p.rev||0)+':'+(p.ts||0)+':'+(p.entregado?1:0)+'|'; }
+  try{ s+=JSON.stringify(STOCK); }catch(e){}
+  return s;
 }
 function papPlazos(D){
   var h=D.hoy, MS=D.MS||stockMesSiguiente(h);
-  var p=function(k, n){ return { k:k, et:n+' días', frase:n+' días', prox:'los próximos '+n+' días', hasta:fmtFechaCorta(stockSumarDias(h, n)) }; };
-  return [ p('sem', 7), p('quin', PRODUCIR_QUINCENA), p('d30', PRODUCIR_30),
+  var p=function(k, n, tope){ var f=stockSumarDias(h, n); if(tope && f>tope) f=tope; return { k:k, et:n+' días', frase:n+' días', prox:'los próximos '+n+' días', hasta:fmtFechaCorta(f) }; };
+  /* (U17, §4lr) «7 días» no es «hasta hoy+7»: es lo vendido + lo que falta para el objetivo (cubre de 9 a 17 días según el producto). */
+  return [ { k:'sem', et:'7 días', frase:'7 días', prox:'hoy (7 días)', hasta:'', nota:'lo vendido + hasta el objetivo' },
+    p('quin', PRODUCIR_QUINCENA), p('d30', PRODUCIR_30, MS.fin),
     { k:'tot', et:'Todo '+MS.nombre, frase:'todo '+MS.nombre, prox:'todo '+MS.nombre, hasta:fmtFechaCorta(MS.fin) } ];
 }
 function papPlazo(k){ var L=papPlazos(PAP); for(var i=0;i<L.length;i++) if(L[i].k===k) return L[i]; return L[0]; }
-function papPlazoLinea(P){ return 'Para '+P.prox+' (del '+fmtFechaCorta(PAP.hoy)+' al '+P.hasta+')'; }
+function papPlazoLinea(P){ return P.hasta ? ('Para '+P.prox+' (del '+fmtFechaCorta(PAP.hoy)+' al '+P.hasta+')') : '7 días: lo vendido + lo que falta para el objetivo (el pedido de hoy)'; }
+function papHastaTxt(P){ return P.hasta ? ('hasta el '+P.hasta) : P.nota; }
 function papSuma(filas, p){ var s=0; filas.forEach(function(f){ s+=f[p]||0; }); return s; }
 function papSumaFab(F, p){ var s=0; F.bloques.forEach(function(b){ s+=papSuma(b.filas, p); }); return s; }
 function papOrden(filas, p){ return filas.filter(function(f){ return (f[p]||0)>0; }).sort(function(a,b){ return (b[p]-a[p]) || (a.idx-b.idx); }); }
 function papCodTxt(f){ return f.cod ? 'cód '+f.cod : 'sin código'; }
 function papTiendasDe(f, p){ return (f.tiendas && f.tiendas[p]) || 0; }
+/* «Todo <mes>» = 15 días + lo que falta para terminar este mes (`antes`, §4ls CU-1) + lo del mes que viene: en palabras, sin ceros. */
+function papPartesTot(f, de){
+  var MS=PAP.MS, sig=Math.max(0, (f.mes||0)-(f.antes||0)), out=[];
+  if(f.quin) out.push(papFmt(f.quin)+' '+de+' '+PRODUCIR_QUINCENA+' días');
+  if(f.antes) out.push(papFmt(f.antes)+' para terminar '+producirMesActualNombre(MS));
+  if(sig) out.push(papFmt(sig)+' '+de+' '+MS.nombre);
+  return out;
+}
+function papSumaTxt(filas){
+  var S=papSumaPartes(filas), MS=PAP.MS, out=[papFmt(S.quin)+' de '+PRODUCIR_QUINCENA+' días'];
+  if(S.antes) out.push(papFmt(S.antes)+' para terminar '+producirMesActualNombre(MS));
+  out.push(papFmt(S.mes2)+' de '+MS.nombre);
+  return out.join(' + ');
+}
+function papSumaPartes(filas){ var q=0, a=0, m=0; filas.forEach(function(f){ q+=f.quin||0; a+=f.antes||0; m+=(f.mes||0)-(f.antes||0); }); return { quin:q, antes:a, mes:m, mes2:Math.max(0,m) }; }
 function papEtBloque(B){ return B.fab.sinFab ? (B.ico+' Sin fábrica asignada') : (B.ico+' '+B.corta+' · '+B.fab.nombre); }
 
 /* ---- Abrir, cerrar, actualizar ---- */
@@ -28588,21 +28653,52 @@ function papAbierto(){ var ov=document.getElementById('pap-overlay'); return !!(
 function abrirPap(){
   var ov=document.getElementById('pap-overlay'); if(!ov) return;
   papIniciar();
+  PAP_FOCO_ANTES=document.activeElement;   // al cerrar, el foco vuelve al botón que la abrió
   PAP_S=papEstadoNuevo();   // siempre abre en «Qué pedir · 7 días», sin nada abierto (como el ejemplo)
   ov.style.display='flex';
   var sc=document.getElementById('pap-cuerpo'); if(sc) sc.scrollTop=0;
   papCalcularLuego(false);
+  /* Con Stock abierto el panel no relee solo (`autoOcupado`): se calcula YA con lo que hay y, de fondo, se lee la planilla; si trae algo
+     nuevo, se vuelve a calcular sin perder dónde se está. */
+  papLeer(false);
   try{ document.getElementById('pap-tab-pedir').focus({ preventScroll:true }); }catch(e){}
 }
 function cerrarPap(){
-  var ov=document.getElementById('pap-overlay'); if(ov) ov.style.display='none';
+  var ov=document.getElementById('pap-overlay'), estaba=papAbierto(); if(ov) ov.style.display='none';
   var h=document.getElementById('pap-hoja'); if(h) h.hidden=true;
   if(PAP_TIMER){ clearTimeout(PAP_TIMER); PAP_TIMER=null; }
+  var f=PAP_FOCO_ANTES; PAP_FOCO_ANTES=null;
+  if(estaba && f && f.focus && document.contains(f)) try{ f.focus({ preventScroll:true }); }catch(e){}
 }
-function papActualizar(){ papCalcularLuego(true); }
+/* 🔄 Actualizar: lee la planilla (con Stock abierto no se relee sola) y recién después vuelve a calcular. */
+function papActualizar(){ papLeer(true); }
+function papLeer(forzarCuenta){
+  if(PAP_LEYENDO){ if(forzarCuenta) PAP_FORZAR_TRAS=true; return; }   // 🔄 tocado mientras ya se leía: se recalcula al terminar
+  var fin=function(ok){
+    PAP_LEYENDO=false; PAP_LEIDO_ERR=ok ? '' : (ULTIMO_ERROR || 'no se pudo leer la planilla');
+    if(PAP_FORZAR_TRAS){ PAP_FORZAR_TRAS=false; forzarCuenta=true; }
+    if(!papAbierto()) return;
+    if(forzarCuenta){ papCalcularLuego(true); return; }
+    if(PAP && PAP.listo && PAP.firma!=null && PAP.firma!==papFirma()){ try{ PAP=papDatos(false); }catch(e){ PAP={ hoy:todayStr(), error:String(e && e.message || e), listo:true, t:Date.now() }; } papPintar(); }
+    else papCabecera();
+  };
+  if(typeof refrescarEstado!=='function' || !CONNECTED){ fin(false); return; }
+  PAP_LEYENDO=true; papCabecera();
+  refrescarEstado().then(function(ok){ fin(!!ok); }, function(){ fin(false); });
+}
+function papCabecera(){
+  var sub=document.getElementById('pap-sub'); if(!sub) return;
+  var hoy=(PAP && PAP.hoy) || todayStr();
+  var hm=function(t){ var d=new Date(t); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); };
+  var lec=PAP_LEYENDO ? '⏳ leyendo la planilla…'
+    : PAP_LEIDO_ERR ? ('⚠️ sin conexión: lo leído a las '+(ULTIMO_REFRESCO ? hm(ULTIMO_REFRESCO) : '—'))
+    : (ULTIMO_REFRESCO ? ('planilla de las '+hm(ULTIMO_REFRESCO)) : '');
+  sub.innerHTML='<span class="pap-sub-l">Hoy, </span>'+esc(papDiaSem(hoy))+' '+fmtFechaCorta(hoy)+(lec ? (' · '+esc(lec)) : '');
+}
 /* La cuenta tarda un poco (dos «Qué producir» enteros): primero se dibuja «Calculando…» y después la cuenta. */
 function papCalcularLuego(forzar){
   PAP=null;
+  papPestanasAplicar();   // al reabrir, mientras calcula, ya se ve la pestaña que corresponde (no la de la vez anterior)
   ['pap-pedir','pap-donde'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML='<div class="pap-cargando">⏳ Calculando el pedido…</div>'; });
   var pz=document.getElementById('pap-plazos'); if(pz) pz.innerHTML='';
   if(PAP_TIMER) clearTimeout(PAP_TIMER);
@@ -28622,24 +28718,34 @@ function papIniciar(){
   var sc=document.getElementById('pap-cuerpo');
   if(sc) sc.addEventListener('scroll', papMarcarPegado, { passive:true });
   document.addEventListener('keydown', function(e){
-    if(e.key!=='Escape' || !papAbierto()) return;
+    if(!papAbierto()) return;
     var h=document.getElementById('pap-hoja');
-    if(h && !h.hidden){ h.hidden=true; return; }
-    cerrarPap();
+    if(e.key==='Escape'){ if(h && !h.hidden){ h.hidden=true; return; } cerrarPap(); return; }
+    /* Tab no se sale de la ventana (es un diálogo): del último botón vuelve al primero, y al revés. */
+    if(e.key!=='Tab') return;
+    var caja=(h && !h.hidden) ? h : ov;
+    var f=[].filter.call(caja.querySelectorAll('button,summary,textarea,[href],[tabindex]:not([tabindex="-1"])'), function(x){ return !x.disabled && x.offsetParent!==null; });
+    if(!f.length) return;
+    var a=document.activeElement, i=f.indexOf(a);
+    if(e.shiftKey && (i<=0)){ e.preventDefault(); f[f.length-1].focus(); }
+    else if(!e.shiftKey && (i===-1 || i===f.length-1)){ e.preventDefault(); f[0].focus(); }
   });
   var rT=null;
   window.addEventListener('resize', function(){ clearTimeout(rT); rT=setTimeout(function(){ if(papAbierto() && PAP && PAP.TODAS){ papMedirCtrl(); papAjustarBarra(); papAjustarTabla(); papMarcarPegado(); } }, 120); });
 }
 
 /* ---- Pintar ---- */
-function papPintar(){
-  var D=PAP; if(!D || !papAbierto()) return;
-  var sub=document.getElementById('pap-sub');
-  var d=new Date(D.t), hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-  if(sub) sub.textContent='Datos de hoy, '+papDiaSem(D.hoy)+' '+fmtFechaCorta(D.hoy)+' · calculado a las '+hm;
+function papPestanasAplicar(){
+  if(!PAP_S) return;
   document.querySelectorAll('#pap-overlay [data-pap-tab]').forEach(function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-pap-tab')===PAP_S.tab)); });
   var pe=document.getElementById('pap-pedir'), dn=document.getElementById('pap-donde');
-  pe.hidden=PAP_S.tab!=='pedir'; dn.hidden=PAP_S.tab!=='donde';
+  if(pe) pe.hidden=PAP_S.tab!=='pedir'; if(dn) dn.hidden=PAP_S.tab!=='donde';
+}
+function papPintar(){
+  var D=PAP; if(!D || !papAbierto()) return;
+  papCabecera();
+  papPestanasAplicar();
+  var pe=document.getElementById('pap-pedir'), dn=document.getElementById('pap-donde');
   if(D.sinConteo || D.error){
     document.getElementById('pap-plazos').innerHTML='';
     var msg=D.sinConteo ? '📭 Todavía no hay conteo del depósito: subí el Excel de existencias (📥 Subir existencias, en Stock) para que se calcule el pedido.'
@@ -28654,12 +28760,27 @@ function papPintar(){
 function papPintarPlazos(){
   document.getElementById('pap-plazos').innerHTML=papPlazos(PAP).map(function(P){
     var n=papSuma(PAP.TODAS, P.k);
-    return '<button type="button" class="pap-pz" data-pap-plazo="'+P.k+'" aria-pressed="'+(PAP_S.plazo===P.k)+'" aria-label="'+esc(P.et+': '+papFmt(n)+' unidades, hasta el '+P.hasta)+'">'+
+    return '<button type="button" class="pap-pz" data-pap-plazo="'+P.k+'" aria-pressed="'+(PAP_S.plazo===P.k)+'" aria-label="'+esc(P.et+': '+papFmt(n)+' unidades, '+papHastaTxt(P))+'">'+
       '<span class="pap-pz-et">'+esc(P.et)+'</span>'+
-      '<span class="pap-pz-n"><b>'+papFmt(n)+'</b><span class="pap-pz-u"> unid.</span><span class="pap-pz-al"> · al '+P.hasta+'</span></span></button>';
+      '<span class="pap-pz-n"><b>'+papFmt(n)+'</b><span class="pap-pz-u"> unid.</span><span class="pap-pz-al"> · '+(P.hasta ? ('al '+P.hasta) : 'hoy')+'</span></span></button>';
   }).join('');
 }
 
+/* ⚠️ Arriba de las dos pestañas: el Excel que no es de hoy (como el cartel de Stock) y, en «qué pedir», lo que no entra por no estar contado. */
+function papAvisosHtml(D, conSinC){
+  var h='';
+  if(D.viejos && D.viejos.length){
+    var ultH=stockUltimoHabil(), hoy=todayStr();
+    h+='<p class="pap-alerta">⚠️ <b>No es el Excel del día:</b> '+D.viejos.map(function(x){ return esc(x.nombre)+' es del '+fmtFechaCorta(x.f); }).join(' · ')+
+      '. Con eso estos números pueden cambiar: '+(ultH===hoy ? 'subí el de hoy (📥 Subir existencias, en Stock) y tocá 🔄 Actualizar.' : ('falta el del '+fmtFechaCorta(ultH)+'.'))+'</p>';
+  }
+  if(conSinC){
+    var nom=[]; Object.keys(D.sinC||{}).forEach(function(k){ nom=nom.concat(D.sinC[k]); });
+    if(nom.length) h+='<p class="pap-alerta">⚠️ <b>'+nom.length+(nom.length===1?' producto que se vende no está':' productos que se venden no están')+' en el Excel de PTF</b> y '+(nom.length===1?'no entra':'no entran')+' en este pedido: '+
+      esc(nom.slice(0,6).join(' · '))+(nom.length>6?(' y '+(nom.length-6)+' más'):'')+'.</p>';
+  }
+  return h;
+}
 /* ---- Pestaña 1: qué pedir ---- */
 function papDestinos(r){
   var out=[];
@@ -28671,9 +28792,9 @@ function papDestinos(r){
 function papDetalle(f, p){
   var r=f.rep[p]||{ P:0, B:0, T:{} }, MS=PAP.MS;
   var h='<dl class="pap-det">';
-  h+='<dt>Hoy hay</dt><dd><b>'+papFmt(f.hay)+'</b> <span class="pap-gris">· PTF '+papFmt(f.ptf)+' · Banzer '+papFmt(f.bz)+' · Moreno '+papFmt(f.mor)+' · en camino '+papFmt(f.cam)+'</span></dd>';
+  h+='<dt>Hay + en camino</dt><dd><b>'+papFmt(f.hay)+'</b> <span class="pap-gris">· PTF '+papFmt(f.ptf)+' · Banzer '+papFmt(f.bz)+' · Moreno '+papFmt(f.mor)+' · en camino '+papFmt(f.cam)+'</span></dd>';
   h+='<dt>Vendido sin entregar</dt><dd><b>'+papFmt(f.comp)+'</b></dd>';
-  if(p==='tot') h+='<dt>Se arma con</dt><dd>'+papFmt(f.quin)+' de '+PRODUCIR_QUINCENA+' días + '+papFmt(f.mes)+' de '+esc(MS.nombre)+'</dd>';
+  if(p==='tot') h+='<dt>Se arma con</dt><dd>'+esc(papPartesTot(f, 'de').join(' + ') || '0')+'</dd>';
   h+='<dt>Va a</dt><dd><div class="pap-va">'+papDestinos(r).map(function(x){ return '<span>'+x[0]+' '+esc(x[1])+' <b>'+papFmt(x[2])+'</b></span>'; }).join('')+'</div></dd>';
   if(r.porque && PAP_PORQUE[r.porque]) h+='<dt>Ojo</dt><dd>'+PAP_PORQUE[r.porque]+'</dd>';
   return h+'</dl>';
@@ -28704,8 +28825,8 @@ function papFabHtml(F, p){
   h+='<div class="pap-fcue" id="pap-fabc-'+F.k+'"'+(abierta?'':' hidden')+'>';
   if(F.sinFab) h+='<p class="pap-aviso">Todavía no tienen fábrica: decí a cuál van para sumarlos a su pedido.</p>';
   if(p==='tot'){
-    var q=0, m=0; F.bloques.forEach(function(b){ q+=papSuma(b.filas, 'quin'); m+=papSuma(b.filas, 'mes'); });
-    h+='<p class="pap-fsuma"><b>'+papFmt(n)+'</b> = '+papFmt(q)+' de '+PRODUCIR_QUINCENA+' días + '+papFmt(m)+' de '+esc(MS.nombre)+'. Debajo de cada número, lo mismo: '+PRODUCIR_QUINCENA+' días + '+esc(MS.nombre)+'.</p>';
+    var todasF=[]; F.bloques.forEach(function(b){ todasF=todasF.concat(b.filas); });
+    h+='<p class="pap-fsuma"><b>'+papFmt(n)+'</b> = '+esc(papSumaTxt(todasF))+'. Debajo de cada número: '+PRODUCIR_QUINCENA+' días + '+esc(MS.nombre)+(papSumaPartes(todasF).antes?(' (con lo que falta para terminar '+esc(producirMesActualNombre(MS))+')'):'')+'.</p>';
   }
   bls.forEach(function(b){
     if(bls.length>1 && b.marca) h+='<div class="pap-banda" style="--c:'+b.col+'"><span>'+b.ico+' '+esc(b.marca)+'</span><span>'+papFmt(papSuma(b.filas, p))+'</span></div>';
@@ -28717,10 +28838,10 @@ function papPintarPedir(){
   var p=PAP_S.plazo, P=papPlazo(p), MS=PAP.MS;
   var tot=papSuma(PAP.TODAS, p), tiend=0;
   PAP.TODAS.forEach(function(f){ tiend+=papTiendasDe(f, p); });
-  var h='<section class="pap-tot" aria-label="Total a pedir">'+
-    '<div class="pap-eti">Pedir a producción · '+esc(P.frase)+' · hasta el '+P.hasta+'</div>'+
+  var h=papAvisosHtml(PAP, true)+'<section class="pap-tot" aria-label="Total a pedir">'+
+    '<div class="pap-eti">Pedir a producción · '+esc(P.frase)+' · '+esc(papHastaTxt(P))+'</div>'+
     '<div class="pap-totn">'+papFmt(tot)+'<span>unidades</span></div>';
-  if(p==='tot') h+='<div class="pap-tots">= <b>'+papFmt(papSuma(PAP.TODAS, 'quin'))+'</b> de '+PRODUCIR_QUINCENA+' días + <b>'+papFmt(papSuma(PAP.TODAS, 'mes'))+'</b> de '+esc(MS.nombre)+'</div>';
+  if(p==='tot') h+='<div class="pap-tots">= '+esc(papSumaTxt(PAP.TODAS))+'</div>';
   h+='<div class="pap-tfabs">'+PAP.FABS.map(function(F){
     var n=papSumaFab(F, p); if(!n) return '';
     return '<button type="button" class="pap-cfab" data-pap-fab-ir="'+F.k+'" style="--c:'+F.col+'"><span>'+F.ico+'</span><span>'+esc(F.nombre)+'</span><b>'+papFmt(n)+'</b></button>';
@@ -28821,7 +28942,7 @@ function papGrupos(p, id){
 function papDetalleLugar(l, p){
   var P=papPlazo(p), G=papGrupos(p, l.id), k=l.id.charAt(0);
   var h='<section class="pap-ldet" id="pap-lugar-det" style="--c:'+l.col+';--fondo:'+PAP_FONDO[k]+'" aria-label="'+esc('Lo que va a '+l.nom)+'">'+
-    '<div class="pap-ldcab"><div class="pap-ldizq"><div class="pap-ldtit"><b>'+l.ico+' '+esc(l.largo)+'</b><span>'+esc(P.frase)+' · hasta el '+P.hasta+'</span></div>'+
+    '<div class="pap-ldcab"><div class="pap-ldizq"><div class="pap-ldtit"><b>'+l.ico+' '+esc(l.largo)+'</b><span>'+esc(P.frase)+' · '+esc(papHastaTxt(P))+'</span></div>'+
     '<div class="pap-ldnum">'+papFmt(l.n)+'</div></div>'+
     '<div class="pap-ldacc"><button type="button" class="pap-btn" data-pap-copiar-lugar="'+esc(l.id)+'">📋 Copiar lo de '+esc(l.id==='T'?'las tiendas':l.nom)+'</button>'+
     '<button type="button" class="pap-btn pap-claro" data-pap="lugar-cerrar" aria-label="Cerrar la lista">✕ Cerrar</button></div></div>';
@@ -28859,8 +28980,8 @@ function papPintarDonde(){
   var caja=document.getElementById('pap-donde');
   var tablaAbierta=!!(caja.querySelector('#pap-tabla-prod') && caja.querySelector('#pap-tabla-prod').open);
   var comoAbierto=!!(caja.querySelector('#pap-como-donde') && caja.querySelector('#pap-como-donde').open);
-  var h='<section class="pap-dcab" aria-label="Reparto">'+
-    '<div class="pap-dtop"><div><div class="pap-eti">Reparto · '+esc(P.frase)+' · hasta el '+P.hasta+'</div>'+
+  var h=papAvisosHtml(PAP, false)+'<section class="pap-dcab" aria-label="Reparto">'+
+    '<div class="pap-dtop"><div><div class="pap-eti">Reparto · '+esc(P.frase)+' · '+esc(papHastaTxt(P))+'</div>'+
     '<div class="pap-totn pap-chico">'+papFmt(LS.total)+'<span>unidades</span></div></div>'+
     (LS.total ? '<button type="button" class="pap-btn pap-claro" data-pap="copiar-todo">📋 Copiar todo el reparto</button>' : '')+'</div>';
   if(!LS.total){
@@ -28890,9 +29011,9 @@ function papPintarDonde(){
 function papLineaProd(f, n, p){
   var t='• '+f.nombre+' ('+papCodTxt(f)+'): '+papFmt(n), MS=PAP.MS;
   if(p==='tot'){
-    if(!f.quin) t+=' (todo para '+MS.nombre+')';
-    else if(!f.mes) t+=' (todo para los '+PRODUCIR_QUINCENA+' días)';
-    else t+=' ('+papFmt(f.quin)+' para los '+PRODUCIR_QUINCENA+' días + '+papFmt(f.mes)+' para '+MS.nombre+')';
+    var pt=papPartesTot(f, 'para');
+    if(pt.length===1 && !f.antes) t+=f.quin ? (' (todo para los '+PRODUCIR_QUINCENA+' días)') : (' (todo para '+MS.nombre+')');
+    else if(pt.length) t+=' ('+pt.join(' + ').replace(' para '+PRODUCIR_QUINCENA+' días', ' para los '+PRODUCIR_QUINCENA+' días')+')';
   }
   return t;
 }
@@ -28900,7 +29021,12 @@ function papTextoFab(F, p){
   var P=papPlazo(p), hoy=papHoyTxt(PAP);
   var L=F.sinFab ? ['PRODUCTOS SIN FÁBRICA ASIGNADA', papPlazoLinea(P), hoy, 'Falta decidir a qué fábrica van.']
     : ['PEDIDO A PRODUCCIÓN · '+F.nombre.toUpperCase(), papPlazoLinea(P), hoy];
-  if(p==='tot' && !F.sinFab) L.push('Lo de los '+PRODUCIR_QUINCENA+' días es lo primero que hace falta.');
+  if(p==='tot' && !F.sinFab){
+    var fl=[]; F.bloques.forEach(function(b){ fl=fl.concat(b.filas); });
+    L.push(papSumaPartes(fl).antes ? ('Lo de los '+PRODUCIR_QUINCENA+' días y lo que falta para terminar '+producirMesActualNombre(PAP.MS)+' es lo primero que hace falta.')
+      : ('Lo de los '+PRODUCIR_QUINCENA+' días es lo primero que hace falta.'));
+  }
+  var vj=papViejoTxt(); if(vj) L.push(vj);
   var bls=F.bloques.filter(function(b){ return papSuma(b.filas, p)>0; });
   bls.forEach(function(b){
     L.push('');
@@ -28908,13 +29034,21 @@ function papTextoFab(F, p){
     papOrden(b.filas, p).forEach(function(f){ L.push(papLineaProd(f, f[p], p)); });
     if(bls.length>1 && b.marca) L.push('Subtotal '+b.corta+': '+papFmt(papSuma(b.filas, p)));
   });
+  var sc=[]; F.bloques.forEach(function(b){ sc=sc.concat(b.sinC||[]); });
   L.push('', 'TOTAL: '+papFmt(papSumaFab(F, p))+' unidades');
+  if(sc.length) L.push('Sin contar (no están en el Excel de PTF, no entran en este pedido): '+sc.join(' · '));
   return L.join('\n');
+}
+/* Para la copia: de qué día es el Excel, si no es de hoy. */
+function papViejoTxt(){
+  var v=(PAP && PAP.viejos) || [];
+  return v.length ? ('⚠️ Con el Excel de '+v.map(function(x){ return x.nombre+' del '+fmtFechaCorta(x.f); }).join(', ')+' (no es el de hoy).') : '';
 }
 function papNombreLugarCopia(l){ return l.tienda ? 'TIENDA '+l.nom.toUpperCase() : (l.id==='T' ? 'LAS TIENDAS' : l.nom.toUpperCase()); }
 function papTextoTodo(p){
   var P=papPlazo(p), LS=papLugares(p);
   var L=['QUÉ VA A DÓNDE', papPlazoLinea(P), papHoyTxt(PAP)+' · de lo que se pide a producción'];
+  var vj=papViejoTxt(); if(vj) L.push(vj);
   [LS.P, LS.B].concat(LS.tiendas).filter(function(l){ return l.n>0; }).forEach(function(l){
     L.push('', papNombreLugarCopia(l)+' ('+papFmt(l.n)+'):');
     papFilasDeLugar(p, l.id).forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
@@ -28926,6 +29060,7 @@ function papTextoLugar(id, p){
   var P=papPlazo(p), l=null; papLugares(p).todos.forEach(function(x){ if(x.id===id) l=x; });
   if(!l) return '';
   var L=['QUÉ VA A '+(l.tienda?'LA ':'')+papNombreLugarCopia(l), papPlazoLinea(P), papHoyTxt(PAP)+' · de lo que se pide a producción'];
+  var vj=papViejoTxt(); if(vj) L.push(vj);
   papGrupos(p, id).forEach(function(g){
     L.push('', (id==='T' ? 'TIENDA '+g.et.replace(/^🏬 /,'').toUpperCase() : g.et.replace(/^\S+ /,'').toUpperCase())+' ('+papFmt(g.n)+'):');
     g.filas.forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
@@ -28975,6 +29110,7 @@ function papMarcarPegado(){ var c=document.getElementById('pap-ctrl'), sc=docume
 
 /* ---- Los toques (uno solo para toda la ventana) ---- */
 function papClick(ev){
+  if(ev.target && ev.target.id==='pap-hoja'){ ev.target.hidden=true; return; }   // tocar afuera de la hoja la cierra
   var el=ev.target && ev.target.closest ? ev.target.closest('button') : null;
   if(!el) return;
   var a=function(n){ return el.getAttribute(n); }, que=a('data-pap');
