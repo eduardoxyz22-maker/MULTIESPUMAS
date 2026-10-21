@@ -60,7 +60,9 @@ async function preparar(page){
   await page.clock.setFixedTime(new Date('2026-10-13T10:00:00-04:00'));
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   page.on('dialog',d=>d.accept());
-  await page.route('https://**', r=>r.abort());
+  // (21/10) `page.route` NO corta el fetch de una página abierta como archivo (file://): la planilla real llegaba igual.
+  // `ctx.route` sí (medido: 0 respuestas de Google).
+  await ctx.route(/^https:\/\//, r=>r.abort());
   await page.goto(ARCH, { waitUntil:'load' });
   await page.waitForTimeout(300);
   await preparar(page);
@@ -93,6 +95,10 @@ async function preparar(page){
   chk('lo del día para David: 2 de Eduardo, 1 de ROHO, 1 de Multicenter', r.dia.eduardo===2 && r.dia.roho===1 && r.dia.multi===1, r.dia);
   chk('…1 sin camión, 1 con ✗ sin stock, 1 de días pasados sin ✅', r.dia.sinCamion===1 && r.dia.faltan===1 && r.dia.sinMarcar===1, r.dia);
   chk('…y en qué camión va lo de Eduardo y lo de ROHO', r.dia.eduardoCam==='6663-CCP' && r.dia.rohoCam==='5655-KSC', [r.dia.eduardoCam, r.dia.rohoCam]);
+  // 💁‍♀️ (21/10, dueño: «poné un NPC en la ciudad que se llame Isabel y viva siguiendo y tratando a Ernesto») lo que le reclama sale de SUS pedidos
+  chk('lo de Isabel para reclamarle a Ernesto: 1 pedido de hoy, sin camión, sin ✗', r.dia.isabel===1 && r.dia.isabelSin===1 && r.dia.isabelFalta===0 && r.dia.isabelCam==='', [r.dia.isabel, r.dia.isabelSin, r.dia.isabelFalta, r.dia.isabelCam]);
+  { const src=fs.readFileSync(path.resolve('patio.js'),'utf8');
+    chk('en la ciudad hay una ISABEL (al lado de EDUARDO, ERNESTO y DAVID) que le reclama a Ernesto', /isa:\{ P:ISA, n:'ISABEL'/.test(src) && /var ISA_FRASES=\[/.test(src) && /function isaPaso\(/.test(src) && /davPaso\(dt, t\); isaPaso\(dt, t\);/.test(src)); }
 
   console.log('\n── 3. La tilde y «Ya salió» son los de siempre ──');
   r = await page.evaluate(() => { var fn=patioDatos().cams.filter(function(c){ return c.k==='Foton nuevo'; })[0], l=fn.lineas.filter(function(l){ return /TITANIO/.test(l.prod); })[0];
@@ -142,6 +148,10 @@ async function con3D(){
   const page = await ctx.newPage();
   // sin reloj fijo: con el reloj de Playwright quieto, el reloj de three.js no avanza y nada se mueve (la fecha la arma el fixture con todayStr)
   const errors=[]; page.on('pageerror',e=>errors.push(e.message)); page.on('dialog',d=>d.accept());
+  // (21/10) sin esto la página leía la planilla DE VERDAD al abrir (la lectura tardía pisaba los pedidos de la prueba y por eso
+  // «tildar», «el montacargas» y «Ya salió» salían rojas). Todo https se corta con `ctx.route` (`page.route` no corta el fetch de un file://);
+  // three.js se sirve de la copia local (las rutas de la página van antes que las del contexto)
+  await ctx.route(/^https:\/\//, r=>r.abort());
   await page.route('**/three.min.js', r=>r.fulfill({ body:fs.readFileSync(path.join(TH,'build/three.min.js')), contentType:'text/javascript' }));
   await page.route('**/OrbitControls.js', r=>r.fulfill({ body:fs.readFileSync(path.join(TH,'examples/js/controls/OrbitControls.js')), contentType:'text/javascript' }));
   await page.route('https://fonts.googleapis.com/**', r=>r.abort());
@@ -169,6 +179,19 @@ async function con3D(){
   await page.waitForTimeout(700);
   const f2 = await page.evaluate(() => ({ E:patioEstado(), etq:[].map.call(document.querySelectorAll('#pt-ov .etq.fuego'), function(e){ return e.textContent; }) }));
   chk('el Fidalga en llamas: 27 llamas que se mueven y su cartel «🔥 FIDALGA»', f1.fuego===27 && f2.E.fuegoAlto!==f1.fuegoAlto && f2.etq.join()==='🔥 FIDALGA', [f1.fuego, f1.fuegoAlto, f2.E.fuegoAlto, f2.etq]);
+  // 💁‍♀️ Isabel va pegada a Ernesto, lo para, le reclama y él le contesta; después lo suelta y él sigue con lo suyo
+  //    (sin placa de video la ciudad va a ~2 cuadros por segundo: `patioNpcAvanzar` adelanta a la gente sin dibujar)
+  r = await page.evaluate(() => { var dist=function(n){ return Math.hypot(n.isa[0]-n.ern[0], n.isa[1]-n.ern[1]); }, L=[], n, tr=null, rs=null, su=null, i;
+    for(i=0;i<16;i++){ n=patioNpcAvanzar(1.5); L.push(Math.round(dist(n)*10)/10); }
+    for(i=0;i<400 && !tr;i++){ n=patioNpcAvanzar(.25); if(n.isa[2]==='trata') tr=n; }
+    for(i=0;i<60 && tr && !rs;i++){ n=patioNpcAvanzar(.1); if(n.ern[3]) rs=n; }
+    for(i=0;i<200 && tr && !su;i++){ n=patioNpcAvanzar(.1); if(n.isa[2]==='sigue') su=n; }
+    var segui=[]; for(i=0;i<20;i++){ n=patioNpcAvanzar(1.5); segui.push(Math.round(dist(n)*10)/10); }
+    return { L:L, tr:tr, rs:rs, su:su, segui:segui }; });
+  chk('Isabel anda pegada a Ernesto (a menos de 6 m, vaya él a los andenes o a la oficina)', r.L.slice(3).concat(r.segui).every(d=>d<6), [r.L, r.segui]);
+  chk('…lo para y le reclama (con el celular en la mano): 📱 en su globo, Ernesto quieto escuchando', !!r.tr && /^📱 .*Ernesto/i.test(r.tr.isa[3]) && r.tr.ern[2]==='escucha', r.tr);
+  chk('…y Ernesto le contesta a ella', !!r.rs && /Isabel/.test(r.rs.ern[3]) && r.rs.ern[2]==='escucha', r.rs && r.rs.ern);
+  chk('…después lo suelta y Ernesto sigue con lo suyo', !!r.su && r.su.ern[2]!=='escucha', r.su && r.su.ern);
   await page.screenshot({ path:path.join(process.env.PATIO_FOTOS||'/tmp','patio_1.png'), timeout:120000 }).catch(e=>console.log('(sin foto: '+e.message.split('\n')[0]+')'));
   // tildar desde la ficha
   await page.evaluate(() => document.querySelector('#pt-ir-cam button[data-cam="Foton nuevo"]').click()); await page.waitForTimeout(800);

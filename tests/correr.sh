@@ -9,6 +9,14 @@ cd "$(dirname "$0")/.." || exit 1
 # suites que arman fechas con `new Date()` en Node (roho, existencias) fallan sin que
 # nada esté roto (§4de). Se fija la zona para que los dos relojes digan lo mismo.
 export TZ="${TZ:-America/La_Paz}"
+# 🚫 (21/10) Las pruebas abren pedidos.html como archivo (file://) y la página se conecta SOLA a la planilla de verdad al
+# abrir. Antes el contenedor no tenía salida a Google y no pasaba nada; desde que la tiene, la primera lectura traía las
+# 1.393 filas reales (y pisaba los pedidos de la prueba), y una prueba que guardara sin servidor de mentira podía
+# ESCRIBIR en la planilla real. `page.route('https://**', abort)` NO lo corta (no frena el fetch de un file://).
+# Esta salida muerta sí: el navegador de las pruebas no llega a ningún https (lo que una prueba sirve con
+# `route.fulfill` sigue andando, porque nunca sale a la red). Para correr una prueba suelta, lo mismo:
+#   HTTPS_PROXY=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 node tests/test_x.js
+export HTTPS_PROXY=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 http_proxy=http://127.0.0.1:9
 # ⚠️ El 22/09 `test_conta_alta` creció, pasó de 220 s con la máquina cargada y `timeout` lo
 # mató ANTES del resumen y ANTES de su primer ✗: salía «ok (sin resumen)» —o sea, verde— con
 # 3 comprobaciones en rojo adentro. Por eso ahora se mira el CÓDIGO DE SALIDA: 124 es
