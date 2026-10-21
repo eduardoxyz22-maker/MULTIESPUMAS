@@ -15535,7 +15535,7 @@ mes» y avisó: *«ernesto no pone precio de los colchones, tendría que pasarte
   rama SIN publicar (el dueño: *«está bien como está»*). Antes de subir: `node --check` y test_proyeccion 130, test_conta_4jw 40,
   test_pry_plata 7, test_rev30_proyeccion 12, test_ventas_marcas 22, todo en verde sobre la copia de `main`; ningún workflow corriendo.
 
-### §4lu — 💁‍♀️ ISABEL en la ciudad, y las pruebas ya no tocan la planilla real (21/10; en la rama, espera «publica»)
+### §4lu — 💁‍♀️ ISABEL en la ciudad, y las pruebas ya no tocan la planilla real (21/10; PUBLICADO 21/10 17:47 de Bolivia, `a651e05`, Pages OK 17:48)
 El dueño: *«poné un NPC en la ciudad, que se llame Isabel y viva siguiendo y tratando a Ernesto»*. «Tratando» = reclamándole/retándolo
 (como David, pero desde ventas). Isabel Robledo es vendedora de Mia Plaza (`VENDEDOR_SUCURSAL`).
 - **La figura** (`patio.js`): `persona({ camisa:0xd6336c, …, melena:true, cel:true })` — dos opciones nuevas de `persona`: `melena` (pelo
@@ -15567,3 +15567,9 @@ El dueño: *«poné un NPC en la ciudad, que se llame Isabel y viva siguiendo y 
   otras tres): medido, el navegador de las pruebas no llega a ningún https (`ERR_PROXY_CONNECTION_FAILED`, 0 filas) y lo servido con
   `route.fulfill` sigue andando. `no_proxy` NO sirve (hay salida directa). `test_patio` usa además `ctx.route(/^https:\/\//, abort)`
   (ese sí corta). ⚠️ **Una prueba suelta se corre con esas variables** (está en la cabecera de `correr.sh`).
+- **Batería entera con la salida muerta** (21/10): 213 suites, 2 rojas. `test_patio` 43/1 con la máquina cargada (la parte 3D tiene esperas
+  con tope); sola, 44/0 dos veces (también sobre la copia de `main` que se publicó). `test_ventas_marcas` 21/1 («a 1180 px: «Bs 1.255.567,89»
+  entra entero, se achica solo ese»: con la letra de hoy el monto entra SIN achicarse, `letra`=`letraChica`=27,2): falla igual contra el `main`
+  publicado ANTES de esto y con o sin internet, así que no es de §4lu. Queda para mirar aparte (la prueba supone que el monto no entra).
+- **Publicación** (dueño: «me avisas y publicas»): solo `patio.js`, la línea de `PATIO_V` de `pedidos.html`, `tests/test_patio.js` y
+  `tests/correr.sh` sobre `main`; lo de Mia Plaza (§4lt-d) sigue en la rama sin publicar.

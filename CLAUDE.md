@@ -917,7 +917,7 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
 - **🔥 El Fidalga en llamas** (§4kq-b, 13/10, dueño: *«nomás por diversión»*): manzana `'385,385'`, al lado de la obra. Solo adorno.
   `fidalga()`/`fuegoPaso()` en `patio_real/fuego.js` (adelante de `p3_vivo.js`); ⚠️ `var FUEGO;` sin valor (corre después del armado).
   EDUARDO (el de la ciudad) dice *«¡Carajo, otra vez se está quemando un Fidalga!»* (dueño) en `s_npc.js`; el asistente del panel, no.
-- **💁‍♀️ ISABEL** (§4lu, 21/10, dueño: *«que se llame Isabel y viva siguiendo y tratando a Ernesto»*; en la rama): vendedora de Mia Plaza, fucsia,
+- **💁‍♀️ ISABEL** (§4lu, 21/10, dueño: *«que se llame Isabel y viva siguiendo y tratando a Ernesto»*; PUBLICADO 21/10 17:47, `a651e05`): vendedora de Mia Plaza, fucsia,
   pelo largo y celular (`persona` con `melena`/`cel`); `isaPaso` la lleva pegada atrás de Ernesto y cada 11-18 s lo PARA (como David: `ERNN.st='escucha'`)
   si está libre (`isaErnLibre`) y le reclama con SUS pedidos del día (`dia.isabel*`); él contesta. Solo adorno. ⚠️ `patio.js` se edita DIRECTO
   (los fuentes de `armar.py` ya no existen). `window.patioNpcAvanzar(seg)` = solo para las pruebas (sin placa de video la ciudad va a ~2 cuadros/s).
