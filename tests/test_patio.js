@@ -202,6 +202,17 @@ async function con3D(){
   await page.waitForFunction(() => { var c=patioEstado().camiones.filter(function(c){ return c.k==='Foton nuevo'; })[0], it=c.items.filter(function(i){ return /TITANIO/.test(i.prod); })[0]; return it && it.st==='camion' && !it.pend; }, null, { timeout:120000, polling:500 }).catch(()=>{});
   r = await page.evaluate(() => { var c=patioEstado().camiones.filter(function(c){ return c.k==='Foton nuevo'; })[0], it=c.items.filter(function(i){ return /TITANIO/.test(i.prod); })[0]; return { it:it, dentro:c.dentro }; });
   chk('el montacargas lo sube: queda en el camión, sin pallet afuera', r.it && r.it.st==='camion' && !r.it.pend && !r.it.pallet && r.dentro===2, r);
+  // (21/10, captura del dueño) «📦 Por cargar» salía en tres columnas de 70 px por tarjeta y el panel tapaba la ciudad de arriba abajo
+  r = await page.evaluate(async () => { document.querySelector('#pt-tabs button[data-t="esp"]').click(); await new Promise(res=>setTimeout(res,300));
+    var cu=document.getElementById('pt-tab-cuerpo'), cs=getComputedStyle(cu), gs=[].map.call(cu.querySelectorAll('.pc .pc-g'), function(g){ return Math.round(g.getBoundingClientRect().width); });
+    var cam=cu.querySelector('.pc[data-k] details.pc-cam'), sel0=patioEstado().sel, abiertoAntes=cam?cam.open:null;
+    if(cam) cam.querySelector('summary').click(); await new Promise(res=>setTimeout(res,200));
+    var r={ tres:!!cu.querySelector('[style*="repeat(3"]'), gs:gs, max:cs.maxHeight, ov:cs.overflowY, cam:!!cam, abiertoAntes:abiertoAntes, abierto:cam?cam.open:null, sel0:sel0, sel1:patioEstado().sel };
+    var pl=document.getElementById('pt-pl-pie'); pl.click(); r.plegado=getComputedStyle(cu).display; pl.click(); return r; });
+  chk('Por cargar: sin las tres columnas apretadas, cada grupo a lo ancho de la tarjeta', !r.tres && r.gs.length>0 && r.gs.every(w=>w>=220), r);
+  chk('…el panel de abajo tiene un tope de alto y baja con su barra (no tapa la ciudad)', r.ov==='auto' && parseFloat(r.max)<=360, [r.max, r.ov]);
+  chk('…«🚚 En el camión» arranca plegado y abrirlo no cambia el camión elegido', r.cam && r.abiertoAntes===false && r.abierto===true && r.sel0===r.sel1, r);
+  chk('…«▾ Achicar» esconde de verdad el cuerpo del panel', r.plegado==='none', r.plegado);
   // «Ya salió»
   await page.evaluate(() => { camionSalioMarcar('Foton nuevo', true); PATIO_ABIERTO && patioEstado(); });
   await page.waitForFunction(() => { var c=patioEstado().camiones.filter(function(c){ return c.k==='Foton nuevo'; })[0]; return c && (c.enCalle || c.saliendo); }, null, { timeout:30000, polling:500 }).catch(()=>{});
