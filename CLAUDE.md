@@ -921,7 +921,7 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
   pelo largo y celular (`persona` con `melena`/`cel`); `isaPaso` la lleva pegada atrás de Ernesto y cada 11-18 s lo PARA (como David: `ERNN.st='escucha'`)
   si está libre (`isaErnLibre`) y le reclama con SUS pedidos del día (`dia.isabel*`); él contesta. Solo adorno. ⚠️ `patio.js` se edita DIRECTO
   (los fuentes de `armar.py` ya no existen). `window.patioNpcAvanzar(seg)` = solo para las pruebas (sin placa de video la ciudad va a ~2 cuadros/s).
-- **📦 «Por cargar» legible** (§4lv, 21/10, captura del dueño; en la rama, espera «publica»): en `tabEsp` cada grupo es un renglón a lo ancho (no tres columnas de 70 px), «🚚 En el camión» plegado, el cuerpo de abajo con tope de alto en pantalla ancha, y «▾ Achicar» esconde `#pt-tab-cuerpo` (la regla decía `#tab-cuerpo`).
+- **📦 «Por cargar» legible** (§4lv, 21/10, captura del dueño; PUBLICADO 21/10 18:24, `fa5d524`): en `tabEsp` cada grupo es un renglón a lo ancho (no tres columnas de 70 px), «🚚 En el camión» plegado, el cuerpo de abajo con tope de alto en pantalla ancha, y «▾ Achicar» esconde `#pt-tab-cuerpo` (la regla decía `#tab-cuerpo`).
 - `tests/test_patio.js` (48 con `PATIO_THREE=<paquete three 0.128>`, que se baja con `npm pack three@0.128.0`). Bitácora §4kn, §4kq.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar

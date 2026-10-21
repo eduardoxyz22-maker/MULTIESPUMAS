@@ -15574,7 +15574,7 @@ El dueño: *«poné un NPC en la ciudad, que se llame Isabel y viva siguiendo y 
 - **Publicación** (dueño: «me avisas y publicas»): solo `patio.js`, la línea de `PATIO_V` de `pedidos.html`, `tests/test_patio.js` y
   `tests/correr.sh` sobre `main`; lo de Mia Plaza (§4lt-d) sigue en la rama sin publicar.
 
-### §4lv — 📦 «Por cargar» de la ciudad legible (21/10; en la rama, espera «publica»)
+### §4lv — 📦 «Por cargar» de la ciudad legible (21/10; PUBLICADO 21/10 18:24 de Bolivia, `fa5d524`)
 - **Qué pasaba** (captura del dueño: *«al abrir la ciudad el por cargar sale así...»*): cada tarjeta de camión partía «Por cargar / Sin stock /
   En el camión» en tres columnas (`grid-template-columns:repeat(3,…)` adentro de una tarjeta de 230 px → ~70 px cada una, una palabra por
   renglón) y `#pt-tab-cuerpo` no tenía tope de alto: el panel de abajo crecía y tapaba la ciudad de arriba abajo. Y «▾ Achicar» no achicaba:
@@ -15584,3 +15584,5 @@ El dueño: *«poné un NPC en la ciudad, que se llame Isabel y viva siguiendo y 
   `pintarTab` lo deja abierto al repintar, `data-d`). Lo de «Sin camión», igual (PTF/Banzer, Moreno, sin stock, solo los que tienen algo).
   Tarjetas de 300 px mínimo (`.rutas.pcs`). En pantalla ancha el cuerpo tiene tope `min(42vh,360px)` y baja con su barra. `PATIO_V='20261021b'`.
 - `test_patio` §5: 4 comprobaciones nuevas → 48/0 con `PATIO_THREE`.
+- **Publicación** (dueño: «publica»): solo `patio.js`, la línea de `PATIO_V` de `pedidos.html` y `tests/test_patio.js` sobre `main` (`fa5d524`);
+  `test_patio` 48/0 sobre esa copia antes de subir. Lo de Mia Plaza (§4lt-d) sigue en la rama sin publicar.
