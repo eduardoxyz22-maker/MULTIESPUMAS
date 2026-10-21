@@ -495,6 +495,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   `tests/test_lectura.js`, `tests/test_traer.py`.
 - **`correr.sh` corre también los `.py`** (§4fx): antes `test_traer.py`, `test_kommo.py` y
   `test_duplicados.py` quedaban afuera de la batería.
+- 🚫 **Las pruebas NO pueden llegar a la planilla real** (§4lu, 21/10): el contenedor ahora tiene salida a Google y `page.route('https://**',
+  abort)` NO corta el fetch de un file:// (las pruebas leían las 1.393 filas reales). `correr.sh` exporta `HTTPS_PROXY=http://127.0.0.1:9`
+  (y `https_proxy`/`HTTP_PROXY`/`http_proxy`): el navegador no llega a ningún https y `route.fulfill` sigue andando. Una prueba SUELTA se corre
+  con esas variables. Para cortar dentro de una prueba: `ctx.route(/^https:\/\//, r=>r.abort())` (ese sí corta).
 - **📷 Subir una foto (§4dq)**: las 4 rutas pasan por `fotoCronometro` → `achicarFoto`
   (`createImageBitmap`, con `achicarFotoLento` de reserva) y `conTopeDuro(…, 90 s)`. ⚠️ Un
   `fetch` **no tiene tope**: sin él, si Google se cuelga el cartel dice «subiendo» para
@@ -913,7 +917,11 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
 - **🔥 El Fidalga en llamas** (§4kq-b, 13/10, dueño: *«nomás por diversión»*): manzana `'385,385'`, al lado de la obra. Solo adorno.
   `fidalga()`/`fuegoPaso()` en `patio_real/fuego.js` (adelante de `p3_vivo.js`); ⚠️ `var FUEGO;` sin valor (corre después del armado).
   EDUARDO (el de la ciudad) dice *«¡Carajo, otra vez se está quemando un Fidalga!»* (dueño) en `s_npc.js`; el asistente del panel, no.
-- `tests/test_patio.js` (22 sin 3D; +16 con `PATIO_THREE=<paquete three 0.128>`). Bitácora §4kn, §4kq.
+- **💁‍♀️ ISABEL** (§4lu, 21/10, dueño: *«que se llame Isabel y viva siguiendo y tratando a Ernesto»*; en la rama): vendedora de Mia Plaza, fucsia,
+  pelo largo y celular (`persona` con `melena`/`cel`); `isaPaso` la lleva pegada atrás de Ernesto y cada 11-18 s lo PARA (como David: `ERNN.st='escucha'`)
+  si está libre (`isaErnLibre`) y le reclama con SUS pedidos del día (`dia.isabel*`); él contesta. Solo adorno. ⚠️ `patio.js` se edita DIRECTO
+  (los fuentes de `armar.py` ya no existen). `window.patioNpcAvanzar(seg)` = solo para las pruebas (sin placa de video la ciudad va a ~2 cuadros/s).
+- `tests/test_patio.js` (44 con `PATIO_THREE=<paquete three 0.128>`, que se baja con `npm pack three@0.128.0`). Bitácora §4kn, §4kq.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá

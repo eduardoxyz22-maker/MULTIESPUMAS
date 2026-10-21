@@ -15534,3 +15534,36 @@ mes» y avisó: *«ernesto no pone precio de los colchones, tendría que pasarte
 - **Publicación** (dueño: «ok publica»): SOLO ROHO (`ff35c40` + `5e9ab43`) sobre `main`; §4lt-d (Mia Plaza «para clientes de») queda en la
   rama SIN publicar (el dueño: *«está bien como está»*). Antes de subir: `node --check` y test_proyeccion 130, test_conta_4jw 40,
   test_pry_plata 7, test_rev30_proyeccion 12, test_ventas_marcas 22, todo en verde sobre la copia de `main`; ningún workflow corriendo.
+
+### §4lu — 💁‍♀️ ISABEL en la ciudad, y las pruebas ya no tocan la planilla real (21/10; en la rama, espera «publica»)
+El dueño: *«poné un NPC en la ciudad, que se llame Isabel y viva siguiendo y tratando a Ernesto»*. «Tratando» = reclamándole/retándolo
+(como David, pero desde ventas). Isabel Robledo es vendedora de Mia Plaza (`VENDEDOR_SUCURSAL`).
+- **La figura** (`patio.js`): `persona({ camisa:0xd6336c, …, melena:true, cel:true })` — dos opciones nuevas de `persona`: `melena` (pelo
+  largo atrás y a los costados) y `cel` (celular con la pantalla prendida en la mano izquierda). Cartel `ISABEL` fucsia (`.etq.npc.isa`) y
+  globo fucsia con «📱 » (`.etq.habla.isa`; `decir` elige la clase por `k==='isa'`). Arranca al lado de la oficina de Ernesto.
+- **Lo que hace** (`isaPaso`, `ISAN`, llamado en `npcPaso` después de `davPaso`): va pegada atrás de Ernesto, un poco al costado (2,3 m
+  según hacia dónde mira él; corre si quedó a más de 6 m; nunca más cerca de 1,2 m: si él se da vuelta no se le mete adentro). Cada 11-18 s,
+  si está a menos de 3,4 m y **Ernesto está libre** (`isaErnLibre`: no lo reta David —`DAVN.st==='ronda'`—, no lo putea Eduardo, no está
+  hablando ni contestando), lo PARA como David (`ERNN.st='escucha'`, guarda `antes`/`pathAntes` y se los devuelve) y le reclama; a los 3,6 s
+  Ernesto le contesta (`isaResp`) y a los 7,2 s lo suelta. Cuando David lo reta, ella aplaude («¡Eso, David, decile!»). Tocarla: dice algo +
+  aviso «ISABEL, vendedora de Mia Plaza: vive siguiendo a Ernesto para que salgan sus pedidos».
+- **Lo que le reclama sale de SUS pedidos del día** (`patioDatos().dia.isabel/isabelCam/isabelSin/isabelFalta/isabelOc`, sin entregar,
+  vendedor «ISABEL»): sin camión («¿Lo llevo yo en micro?»), ✗ sin stock (la OC), en qué camión van, y si va tarde la hora. Ernesto contesta
+  con el camión o «ahorita le asigno camión». Lo demás son frases fijas (`ISA_FRASES`, `ISA_RESP`, `ISA_APLAUDE`, `ISA_CHAU`). Sin malas
+  palabras (las de Eduardo quedan para Eduardo). Solo adorno: no escribe nada.
+- `PATIO_V`='20261021a'. ⚠️ Los fuentes de `patio.js` (`cuerpo.js`/`armar.py` de §4kn) quedaron en el scratchpad de una sesión vieja y ya no
+  existen: **desde ahora se edita `patio.js` directo** (y `node --check patio.js`).
+- **Para probar sin placa de video**: en el contenedor la ciudad va a ~2 cuadros por segundo (swiftshader; en el iPad/compu del dueño va
+  normal). `window.patioNpcAvanzar(seg)` (→ `api.npcAvanzar`) adelanta a la gente sin dibujar, SOLO para las pruebas.
+- `tests/test_patio.js` → 44 (con `PATIO_THREE`): §2 lo de Isabel en `dia` y que existe; con 3D, que anda pegada (<6 m en 36 muestras),
+  que lo para con «📱 … Ernesto», que él le contesta con «Isabel» y que después lo suelta. three.js 0.128 se baja con `npm pack three@0.128.0`.
+- 🚨 **Lo que apareció de paso: las pruebas leían la planilla REAL.** El contenedor ahora llega a Google (antes el proxy lo rechazaba, §4ga),
+  y las pruebas abren `pedidos.html` como archivo: la página se conecta sola al abrir. Medido: `page.route('https://**', abort)` **no corta**
+  el fetch de un file:// (0 llamadas al manejador; llegaron las 1.393 filas reales). Por eso «tildar», «el montacargas» y «Ya salió» de
+  `test_patio` 3D salían rojas (la lectura real llegaba tarde y pisaba los pedidos de la prueba: «TITANIO ICE 180x190», «18 pedidos»). 52 suites
+  abren el panel sin ningún corte. Lo que se revisó: los guardados de esas pruebas van al `apiSave` de mentira; lo único que salió solo fueron
+  lecturas (`list`, `gpsRuta`, `waRespuestas`), el `histStock` del Excel del día (el mismo dato que ya estaba) y el aviso de «dispositivo»
+  del `list`. Ningún pedido escrito. **Arreglo**: `tests/correr.sh` exporta una salida muerta (`HTTPS_PROXY=http://127.0.0.1:9` y las
+  otras tres): medido, el navegador de las pruebas no llega a ningún https (`ERR_PROXY_CONNECTION_FAILED`, 0 filas) y lo servido con
+  `route.fulfill` sigue andando. `no_proxy` NO sirve (hay salida directa). `test_patio` usa además `ctx.route(/^https:\/\//, abort)`
+  (ese sí corta). ⚠️ **Una prueba suelta se corre con esas variables** (está en la cabecera de `correr.sh`).
