@@ -15586,3 +15586,25 @@ El dueño: *«poné un NPC en la ciudad, que se llame Isabel y viva siguiendo y 
 - `test_patio` §5: 4 comprobaciones nuevas → 48/0 con `PATIO_THREE`.
 - **Publicación** (dueño: «publica»): solo `patio.js`, la línea de `PATIO_V` de `pedidos.html` y `tests/test_patio.js` sobre `main` (`fa5d524`);
   `test_patio` 48/0 sobre esa copia antes de subir. Lo de Mia Plaza (§4lt-d) sigue en la rama sin publicar.
+
+### §4lw — 🔎 ¿Acertó el pronóstico de stock del 16/10? (verificado el 21-22/10; solo análisis, nada cambió en el panel)
+El dueño (21/10): *«verificá stock, si va bien el cálculo… cuando lo hiciste era fecha 16… mirá si tus proyecciones predijeron bien»*.
+- **Cómo**: la planilla real leída (solo lectura) el 21/10 18:53 y el «Historial stock». Un arnés en el scratchpad corre el panel publicado
+  con la planilla COMO ESTABA el 16/10 12:00 (sin los 91 pedidos cargados después, 20 ✅ posteriores deshechos) y los Excel del 16/10: da
+  196 / 474 / 654 (anotado ese día: 194 / 476 / 653), o sea la reconstrucción es fiel. Se compara con lo vendido y entregado del 17 al 21/10
+  (4 días hábiles) y con el Excel del 21/10. Scripts y datos solo en el scratchpad (`verif/`), nada al repo. Un workflow de agentes se cortó
+  por el límite de uso; sus cuentas de ventas y faltantes se rehicieron aparte y coinciden.
+- ⚠️ **No hay Excel del 17, 19 ni 20/10**: el panel trabajó tres días hábiles con el stock del viernes (el del 21/10 se subió a las 08:04).
+- **Ventas** (36 productos que rotan): pronóstico 107 u en 4 días hábiles, vendido 84 (+28 %, casi todo almohadas: 50x70 27 vs 20, NASA 7
+  vs 0; sin almohadas 73 vs 64). Sueña 32,5 vs 33; ROHO 21 vs 19. Por producto el error es grande (4 días, pocas unidades), pero **33 de 36
+  quedaron dentro de la banda del margen de seguridad** (lo esperado por diseño, 90-95 %). El ritmo de 15 días (`porDia`, el de «Se corta»)
+  pronosticó 131 contra 85 entregados: «Se corta» salió pesimista. 62 u se vendieron de 36 productos que no rotaban (1-6 cada uno): a
+  propósito no se pronostican (regla del dueño, sin stock «por si acaso»).
+- **Faltantes hoy** (vendido > PTF + Banzer, nada en Moreno): 14 productos, 36 u; 19 son ALMOHADA 50x70. 9 de los 14 estaban avisados
+  el 16/10; los 5 no avisados son ventas sueltas posteriores de productos sin rotación (un pedido de ROHO del 20/10 con 3 DYNAMIC PEDIC 180 y
+  3 SOMIER ORO 180, unidades de 200x200/180). De las 16 alarmas del 16/10, 5 faltan hoy y 11 no (entró producción o se vendió menos).
+- **Producción** (estimada: cambio de los 3 almacenes + 118 u entregadas en el medio): entraron ~366 u en 46 productos. De las 196 que el
+  panel pedía a 7 días ya entraron 88 (45 %); sin almohadas 72 de 91 (79 %). ALMOHADA 50x70: el panel pedía 105, logística anotó «Ya pedí»
+  74 el 16/10 y entraron ~16. Los 5 «Ya pedí» del 16/10 (91 u, esperados el 21/10) llevan 23. Entraron 200 NASA (se pedían 32) y 84 u
+  de 31 productos que el panel no pedía.
+- **El plan hoy** (21/10 18:57): 7 días 79, 15 días 299, el mes 537 (el 16/10: 196 / 474 / 654), por lo que entró y lo que se vendió menos.
