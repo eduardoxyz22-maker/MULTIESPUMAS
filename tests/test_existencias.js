@@ -66,7 +66,9 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     STOCK={ c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{} };
     window._guardadas=[];
     apiSave=function(rec){ window._guardadas.push(JSON.parse(JSON.stringify(rec))); return Promise.resolve({ok:true,pedido:rec}); };
-    apiList=function(){ return Promise.resolve({ok:true,pedidos:[]}); };
+    /* 🌅🌙 (23/10, §4lx, a conciencia) Subir el Excel relee la planilla antes de la vista previa: el servidor de mentira devuelve lo
+       mismo que tiene este aparato (como la planilla de verdad), no una lista vacía que borraba los pedidos del ejemplo. */
+    apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify((STATE||[]).filter(function(p){ return !esFilaSistema(p); })))}); };
     /* ⚠️ La carga de arranque del panel (acá sin red) se reintenta sola a los 3 s, 8 s…, y el
        reintento usa ESTE apiList, que devuelve la planilla VACÍA: con la máquina cargada llegaba
        a mitad de la prueba y borraba los pedidos del ejemplo (§4fy). Se apaga al arrancar. */
