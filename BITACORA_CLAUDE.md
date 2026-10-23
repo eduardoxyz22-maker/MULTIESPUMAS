@@ -15609,7 +15609,7 @@ El dueño (21/10): *«verificá stock, si va bien el cálculo… cuando lo hicis
   de 31 productos que el panel no pedía.
 - **El plan hoy** (21/10 18:57): 7 días 79, 15 días 299, el mes 537 (el 16/10: 196 / 474 / 654), por lo que entró y lo que se vendió menos.
 
-### §4lx — 🌅🌙 Dos Excel de stock por día: la mañana ANTES de cargar y otro al FINAL del día (23/10, en la rama, SIN publicar)
+### §4lx — 🌅🌙 Dos Excel de stock por día: la mañana ANTES de cargar y otro al FINAL del día (23/10, PUBLICADO 23/10 ~15:00 de Bolivia, `4724a33`, Pages OK)
 El dueño (23/10): *«el corte de cada día lo subirán en las mañanas, el de stock y reposición, ANTES DE CARGAR los camiones, Y OTRO AL FINAL
 DEL DÍA, para que mejoremos con los stock, reposición y mejoras»*.
 - **Qué hace el panel con eso** (prueba de punta a punta, `tests/test_dos_cortes.js`, 26): el Excel de la mañana se propone con las DOS
@@ -15629,6 +15629,9 @@ DEL DÍA, para que mejoremos con los stock, reposición y mejoras»*.
   · `STOCK_HIST` 15 → 24 (2 por día × 3 almacenes × 3 días). La detección vieja dice la hora del Excel («… del 26/10 a las 18:30»).
   · Pruebas que esperaban la rutina vieja (Excel a las 10:05 después de cargar) cambiaron a conciencia: `test_stock_rev2_u2_turno`
     UT3a/UT4/UT5f, `test_stock_final_excel` FE10.
-- **Queda para decidir** (no hecho): el Historial guarda el Excel más NUEVO de cada día y almacén (`histGuardar_`): con dos por día se
-  pierde la foto de la mañana en la hoja. Para medir la producción del día alcanza el control del corte; si se quiere la foto, es un cambio
-  del `.gs`.
+- **Decidido por el dueño (23/10: «está bien que se guarde el último saldo»)**: la hoja «Historial stock» sigue guardando solo el Excel más
+  NUEVO de cada día y almacén (`histGuardar_`); la foto de la mañana no va a la hoja. No cambiar el `.gs` por esto.
+- **Publicación** (dueño: «publica»): sobre `main` solo `pedidos.html` y las 5 pruebas tocadas (el parche 9837df7..eba9a2c; lo de Mia Plaza
+  §4lt-d sigue en la rama sin publicar). Sobre esa copia: test_dos_cortes 26, u2_turno 46, final_excel 41, existencias 54, corte_del_dia 56,
+  control_corte 32, rev_corte_codex 45, final_pantalla 54, existencias_tres 17, todo 0 mal. La revisión de otros agentes se cortó por un
+  reinicio de la máquina y no dio resultado.
