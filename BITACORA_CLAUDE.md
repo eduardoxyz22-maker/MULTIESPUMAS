@@ -15642,3 +15642,9 @@ la fecha anterior: `difPedido` solo decía «📅 cambió la fecha de entrega».
 (lo lee `nxAvisarCambio` con la misma regex). Solo para los cambios desde ahora; el del 10-272 no se puede recuperar desde el panel
 (no hay acción del servidor que lea la hoja «Bot WhatsApp», donde está la confirmación con la fecha original, y la copia leída el
 21/10 18:53 es de antes de que se cargara a las 19:29). `tests/test_modif_fecha.js` (4; 3 rojas contra `0f5b7b2`).
+- **👤 Y quién lo cambió** (23/10, dueño: *«¿y también marca QUIÉN modificó?»* → «sí hazlo y publica»; PUBLICADO `19b2d10`, Pages OK): el nombre
+  del aviso era el VENDEDOR del pedido (`m.q`), no quien lo editó. Ahora `marcarModificado` guarda además **`m.por`** = `quienEdita()` (lo
+  elegido en «¿Quién está usando el panel?» en ese aparato: el nombre, o Logística/Administración/Contabilidad; `'?'` si nadie eligió).
+  El aviso: «**Carola Chavez** lo cambió el … (el pedido es de Isabel Robledo)»; misma persona, sin repetir; sin `por` (marcas de antes o
+  aparato sin elegir) «Lo cambiaron el … (el pedido es de X; no se sabe quién lo cambió)» (`modQuienHtml`/`modDeQuienTxt`). `m.q` no
+  cambió (lo lee una página vieja). No es control de acceso. `test_modif_fecha` → 9.
