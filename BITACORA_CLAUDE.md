@@ -15648,3 +15648,24 @@ la fecha anterior: `difPedido` solo decía «📅 cambió la fecha de entrega».
   El aviso: «**Carola Chavez** lo cambió el … (el pedido es de Isabel Robledo)»; misma persona, sin repetir; sin `por` (marcas de antes o
   aparato sin elegir) «Lo cambiaron el … (el pedido es de X; no se sabe quién lo cambió)» (`modQuienHtml`/`modDeQuienTxt`). `m.q` no
   cambió (lo lee una página vieja). No es control de acceso. `test_modif_fecha` → 9.
+
+### §4lz — 🗂️ La ficha de Administración para logística (23/10, PUBLICADA `d96cd4d`, Pages OK)
+El dueño: *«hay demasiada información junta, la ficha se abre en vertical… a logística le cuesta leer las observaciones… solo le interesa el
+nombre, ubicación, lugar, número… más sencillo, modernizado»*. Vio tres muestras (A dos columnas, B tres columnas, C panel al costado) y eligió
+la **B**, con la plata afuera, «En stock / En producción / No hay» A LA VISTA (*«logística sí lo usa»*), arriba cuándo ingresó y para cuándo, y
+para las observaciones la opción **(b)**.
+- `showPedidoModal` reescrita (mismas funciones y botones adentro): `openModal(html, true)` + clase `fl-ficha` (1180 px; `openModal` la saca en
+  cualquier otra ventana). Arriba: aviso de modificado en UNA franja (`avisoModifHtml(p, false, true)`, mismo «ESTE PEDIDO FUE MODIFICADO» y
+  «Ya lo revisé»), N° del día, cliente, «Pedido N · vendió X», 📥 Ingresó (`fichaIngresoTxt`), 🚚 Entrega, camión, listo/entregado.
+  Observaciones en amarillo grande. Tres columnas: 📍 Dónde entregar (zona, dirección, Maps / cambiar ubicación, 📞 tel:, 💬 WhatsApp con
+  `misWaCliente`) · 📦 Qué se carga y de dónde (`fichaProdsHtml`/`fichaLugarHtml`, `prodResumen`; las marcas de `prodRevList` en
+  `<details>` «Cambiar de dónde sale cada producto», `FICHA_MARCAS_ABIERTA`; Estado de stock = `estadoStockBadge` «🤖 se pone solo» + los tres
+  `estadoBtn`; fotos del producto ATC) · 🚛 Camión y entrega (selects, interruptores `fichaSw` Listo/Entregado, fotos). RPT (`botonesRpt`)
+  debajo. «Más datos (venta, cobro, facturación)» = `<details>` (`FICHA_MAS_ABIERTA`) con nota, OC, vendedor, celular, garantía, facturar,
+  NIT, cobro y «Marcar como pagado». La ficha de la Lista de carga (`showCargaModal`) y la de Mis pedidos NO cambiaron.
+- 📝 **(b)**: `obsAntesDeListo(id, hacer)`: prender «Listo para cargar» en un pedido CON observaciones abre `#obs-conf` (texto en grande,
+  «Cancelar» / «✓ Las leí, marcar listo»); apagarlo o sin observaciones, directo. Lo usan `verificadoConObs` (ficha) y `quickVerificado`
+  (📦 de la tabla → `quickVerificadoYa`). En Playwright va directo salvo `window.OBS_PRUEBA`. El «Listo» que pone solo la revisión
+  automática (`syncVerificado`) no pregunta.
+- ⚠️ En una prueba, lo de adentro de un `<details>` cerrado NO tiene `display:none` en Chromium: mirar con `checkVisibility()`.
+- `tests/test_ficha_logistica.js` (14). Batería: 217 suites, solo `test_ventas_marcas` 21/1 (la de siempre).

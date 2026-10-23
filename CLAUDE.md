@@ -930,6 +930,13 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
 - **📦 «Por cargar» legible** (§4lv, 21/10, captura del dueño; PUBLICADO 21/10 18:24, `fa5d524`): en `tabEsp` cada grupo es un renglón a lo ancho (no tres columnas de 70 px), «🚚 En el camión» plegado, el cuerpo de abajo con tope de alto en pantalla ancha, y «▾ Achicar» esconde `#pt-tab-cuerpo` (la regla decía `#tab-cuerpo`).
 - `tests/test_patio.js` (48 con `PATIO_THREE=<paquete three 0.128>`, que se baja con `npm pack three@0.128.0`). Bitácora §4kn, §4kq.
 
+## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
+`showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres
+columnas (dónde entregar / qué se carga y de dónde + Estado de stock con sus tres botones A LA VISTA / camión y entrega); venta, cobro y
+facturación en «Más datos» (`<details>`). Las marcas de cada producto en «Cambiar de dónde sale…». **Prender «Listo para cargar» con
+observaciones pregunta «¿Las leíste?»** (`obsAntesDeListo`: ficha y 📦 de la tabla; directo en Playwright salvo `OBS_PRUEBA`). ⚠️ No
+volver a poner la plata a la vista ni a esconder los botones de stock (dueño). `tests/test_ficha_logistica.js` (14).
+
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
