@@ -6063,8 +6063,17 @@ function cambiaronProductos(antes, ahora){
 }
 /* La marca que queda pegada al pedido. Corta a propósito: entra en una celda y se lee
    de un vistazo en la tabla. */
+/* 👤 (23/10, dueño: «¿y también marca QUIÉN modificó?») `q` sigue siendo la vendedora DEL PEDIDO (lo lee una página vieja); `por` es
+   quien está usando el panel en ese aparato (lo que eligió en «¿Quién está usando el panel?»: su nombre, o Logística / Administración /
+   Contabilidad). '?' = nadie eligió en ese aparato. No es una contraseña: es el nombre que la persona eligió. */
+function quienEdita(){
+  var v=''; try{ v=String(getVendedorMem()||'').trim(); }catch(e){}
+  if(v) return v;
+  var r=''; try{ r=quienRol(); }catch(e){}
+  return ({ admin:'Administración', logistica:'Logística', conta:'Contabilidad' })[r]||'';
+}
 function marcarModificado(rec, quien, cambios){
-  var m={ f:todayStr(), h:horaCorta(), q:String(quien||'').trim(), d:cambios.slice(0,6) };
+  var m={ f:todayStr(), h:horaCorta(), q:String(quien||'').trim(), por:quienEdita()||'?', d:cambios.slice(0,6) };
   (rec.productos||[]).forEach(function(x){ if(x) x.mod=m; });
 }
 function modDe(p){
@@ -6083,14 +6092,26 @@ function verVistoModif(id){
 }
 function horaCorta(){ var d=new Date(), z=function(n){return (n<10?'0':'')+n;}; return z(d.getHours())+':'+z(d.getMinutes()); }
 /* El cartel para el jefe de almacén. `compacto` = la versión de una línea para la tabla. */
+/* 👤 Quién lo cambió: `por` (desde el 23/10). Una marca de antes (sin `por`) o de un aparato donde nadie eligió su nombre no
+   dice quién: se nombra solo de quién es el pedido. */
+function modQuienHtml(m){
+  var por=String((m&&m.por)||'');
+  return (por && por!=='?') ? ('<b>'+esc(por)+'</b> lo cambió') : 'Lo cambiaron';
+}
+function modDeQuienTxt(m){
+  var por=String((m&&m.por)||''), q=String((m&&m.q)||'');
+  var conocido = por && por!=='?';
+  if(conocido && (!q || mismoVendedor(por, q))) return '';
+  return ' ('+(q?('el pedido es de '+esc(q)):'')+(conocido?'':((q?'; ':'')+'no se sabe quién lo cambió'))+')';
+}
 function avisoModifHtml(p, compacto){
   var m=modDe(p); if(!m) return '';
   if(compacto) return '<span class="badge b-red" title="Lo cambiaron después de que ustedes lo revisaron">⚠️ MODIFICADO</span>';
   return '<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
     'border-radius:9px;padding:11px 14px;margin-bottom:11px;font-size:.85rem;color:#8a1c24">'+
     '<b>⚠️ ESTE PEDIDO FUE MODIFICADO después de que ustedes lo revisaron.</b><br>'+
-    '<span style="font-size:.9em">'+esc(m.q||'La vendedora')+' lo cambió el '+esc(fmtFecha(m.f))+
-    (m.h?(' a las '+esc(m.h)):'')+'. Revisá el stock de nuevo antes de cargar el camión.</span>'+
+    '<span style="font-size:.9em">'+modQuienHtml(m)+' el '+esc(fmtFecha(m.f))+
+    (m.h?(' a las '+esc(m.h)):'')+modDeQuienTxt(m)+'. Revisá el stock de nuevo antes de cargar el camión.</span>'+
     ((m.d&&m.d.length)?('<div style="margin-top:7px;background:#fff;border-radius:7px;padding:8px 11px">'+
       m.d.map(function(t){ return '<div>'+esc(t)+'</div>'; }).join('')+'</div>'):'')+
     '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700;width:100%;margin-top:9px" '+
