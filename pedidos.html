@@ -6039,8 +6039,11 @@ function difPedido(antes, ahora){
   if(dA!==dB) out.push('🏠 cambió la dirección');
   var zA=String((antes&&antes.zona)||'').trim(), zB=String((ahora&&ahora.zona)||'').trim();
   if(zA!==zB) out.push('🗺️ cambió de zona: '+(zA||'—')+' → '+(zB||'—'));
-  if(String((antes&&antes.fecha)||'')!==String((ahora&&ahora.fecha)||'')) out.push('📅 cambió la fecha de entrega');
-  if(normTurno(antes&&antes.turno)!==normTurno(ahora&&ahora.turno)) out.push('🕐 cambió de turno');
+  /* 📅 (23/10, dueño: «¿para qué fecha entró originalmente?») el día y el turno de ANTES quedan escritos: el pedido no guarda otro rastro */
+  var fA=String((antes&&antes.fecha)||''), fB=String((ahora&&ahora.fecha)||'');
+  if(fA!==fB) out.push('📅 cambió la fecha de entrega: del '+(fA?fmtFechaCorta(fA):'—')+' al '+(fB?fmtFechaCorta(fB):'—'));
+  var tA=normTurno(antes&&antes.turno), tB=normTurno(ahora&&ahora.turno);
+  if(tA!==tB) out.push('🕐 cambió de turno: '+(tA||'sin turno')+' → '+(tB||'sin turno'));
   return out;
 }
 /* ⚠️ se llama prodCorto y no prodResumen porque MÁS ABAJO ya hay un prodResumen(pedido)
