@@ -25030,6 +25030,11 @@ function stockDesdeSalidasDe(nm){
    `incT` aparte, una página sin F5 sigue como siempre (descuenta otra vez lo de la mañana, el lado que pide de más) y, si lo borra al
    guardar, el historial (`h[].incT`) lo devuelve (`stockIncDelHistorial`). */
 var STOCK_INC_AM='09:30', STOCK_INC_PM='16:00', STOCK_INC_CAMION_MIN=15, STOCK_INC_TARDE_SALE='13:00';
+/* 🌅🌙 (23/10, dueño: «el corte de cada día lo subirán en las mañanas, ANTES DE CARGAR los camiones, Y OTRO AL FINAL DEL DÍA») Con la rutina
+   nueva el Excel de la mañana es de ANTES de cargar: sin dato del camión, la casilla de la mañana se propone recién desde el mediodía (el
+   GPS o «🚚 Ya salió» siguen mandando). STOCK_INC_AM (09:30) queda para «📋 Conté a mano» y para estimar los Excel viejos del historial
+   (los de las ~10:00, que ya traían el camión de la mañana). */
+var STOCK_INC_AM_EXCEL='12:00';
 function stockHoraMin(h){ var m=String(h==null?'':h).match(/^\s*(\d{1,2}):(\d{2})/); return m ? (+m[1])*60+(+m[2]) : null; }
 function stockHoraHM(h){ var m=stockHoraMin(h); if(m==null) return ''; var a=Math.floor(m/60), b=m%60; return (a<10?'0':'')+a+':'+(b<10?'0':'')+b; }
 /* {am, pm} desde cualquier forma: un objeto, `true` (los dos), `false`/vacío (ninguno), 'am' | 'pm' | 'ampm'. */
@@ -25147,11 +25152,12 @@ function stockCamionSaleTurno(veh, t, ambos){
 /* Lo que se PROPONE al subir el Excel (o al contar a mano a la hora `hora`): por turno, ¿esa carga ya había salido? Con el dato del
    camión (GPS o «🚚 Ya salió») de los pedidos de hoy de ese turno que salen de ese depósito: sí, si salió a más tardar
    STOCK_INC_CAMION_MIN minutos después de la hora del Excel; si uno ya salió y otro no, queda sin marcar y lo dice. Sin dato del
-   camión: la mañana desde las STOCK_INC_AM y la tarde desde las STOCK_INC_PM. `dep`: '' = PTF; el nombre = un depósito de salida
+   camión: la mañana desde las STOCK_INC_AM_EXCEL (un Excel; desde el 23/10 el de la mañana es de antes de cargar) o STOCK_INC_AM (al
+   contar a mano) y la tarde desde las STOCK_INC_PM. `dep`: '' = PTF; el nombre = un depósito de salida
    (Banzer); null = un almacén al que se va a buscar (de ahí no salen camiones: solo la hora). Sin hora, nada marcado (§4cn). */
 /* ✏️ (19/10, §4ls verificación final, EX-6) `conteo`: la propuesta es para «📋 Conté a mano» (la hora es la de contar, no la de un
    Excel): el texto lo dice así. Antes decía «salió hasta 15 min después del Excel (12:30)» en un conteo, donde no hay ningún Excel. */
-function stockIncPropuesta(hora, dep, conteo){
+function stockIncPropuesta(hora, dep, conteo, amDesde){
   var hoy=todayStr(), hm=stockHoraMin(hora), out={ am:{ v:false, txt:'' }, pm:{ v:false, txt:'' } };
   if(hm==null){ out.sinHora=true; return out; }
   var veh={ am:{}, pm:{} };
@@ -25169,7 +25175,7 @@ function stockIncPropuesta(hora, dep, conteo){
   var salioDespues = conteo ? ('salió después de la hora en que contás ('+hh+') → todavía estaba en el depósito.') : ('salió más de '+STOCK_INC_CAMION_MIN+' min después del Excel ('+hh+') → todavía estaba en el depósito.');
   var esDe = conteo ? ('contás a las '+hh) : ('el Excel es de las '+hh);
   ['am','pm'].forEach(function(t){
-    var desde=(t==='am') ? STOCK_INC_AM : STOCK_INC_PM, antes=[], tarde=[], o=out[t];
+    var desde=(t==='am') ? (amDesde || (conteo ? STOCK_INC_AM : STOCK_INC_AM_EXCEL)) : STOCK_INC_PM, antes=[], tarde=[], o=out[t];
     /* (18/10, §4ls, corrector) Un camión de ese turno SIN dato de salida no se ignora: decide la hora (antes de las STOCK_INC_AM /
        STOCK_INC_PM, «todavía no»). Si no, con uno que salió y otro sin dato la casilla quedaba marcada para los dos. */
     var sinDato=[];
@@ -31805,7 +31811,7 @@ function stockIncPrevioSupuesto(previo, R, rol){
   var hh=(STOCK.h||[]).filter(function(x){ return x && String(x.alm||'')===alm && String(x.f||'')===String(previo.f) && String(x.hora||'')===String(previo.hora); })[0];
   if(!hh || hh.incT || hh.inc===true || hh.rol==='mano' || previo.mano) return null;   // sin renglón no se adivina; un conteo a mano dice su hora real
   var dep=existIncDep(R, rol); if(dep===null) return null;
-  var pr=stockIncPropuesta(previo.hora, dep);
+  var pr=stockIncPropuesta(previo.hora, dep, false, STOCK_INC_AM);   // (23/10) lo escribió la página de antes: con la rutina de antes (el de las ~10:00 ya traía la mañana)
   return (pr.am.v || pr.pm.v) ? { am:!!pr.am.v, pm:!!pr.pm.v } : null;
 }
 /* 🔁 (19/10, §4ls verificación final, CR-2) EL MISMO ARCHIVO OTRA VEZ CON OTRA RESPUESTA DE LOS TURNOS: es la única forma de corregir la
@@ -32130,6 +32136,7 @@ function stockIncCasillasHtml(idAm, prop, fecha, onch, que){
     linea(idAm, 'am', '🌅', 'mañana', ' <span style="color:var(--muted)">(y lo que va sin turno)</span>')+
     linea(idAm+'-pm', 'pm', '🌆', 'tarde', '')+
     '<div style="color:var(--muted);margin-top:6px;font-size:.95em">Lo de un turno marcado <b>no se reserva ni se descuenta otra vez</b>, tenga ✅ o no: el camión ya se lo llevó. Lo de un turno sin marcar sigue reservado y se descuenta cuando sale.</div>'+
+    (idAm==='exist-inc'?'<div class="inc-rutina" style="color:var(--teal-dk);margin-top:6px;font-size:.95em">📋 Rutina: el Excel de la <b>mañana</b> se saca <b>antes de cargar</b> los camiones (las dos sin marcar) y el del <b>final del día</b>, cuando ya salieron los de la mañana y la tarde (las dos marcadas). El panel lo propone así; con el GPS o «🚚 Ya salió», manda lo que hizo el camión.</div>':'')+
     (prop.sinHora?'<div style="color:#7c4b00;margin-top:6px">⚠️ El archivo no trae la hora: decí vos qué turnos ya habían salido cuando se sacó (sin marcar = antes del camión). El control del corte usa esta respuesta; no se asume nada.</div>':'')+
   '</div>';
 }

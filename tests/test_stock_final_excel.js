@@ -255,9 +255,9 @@ async function abrir(browser, reloj){
   chk('control: un pedido solo de tienda (protector) sigue «📦 Mercadería», y uno ya entregado también', r && r.c3 && r.c3.lbl==='Mercadería' && r.c3.hecho===true && r.c4 && r.c4.hecho===true, r);
   await page._ctx.close();
 
-  // ═══ FE10. EX-8 — viernes 16/10 10:20, el archivo de los tres almacenes (PTF y Banzer) ═══
+  // ═══ FE10. EX-8 — viernes 16/10 12:20, el archivo de los tres almacenes (PTF y Banzer) del mediodía (ya salió la mañana) ═══
   console.log('\n── FE10. PTF y Banzer en el mismo archivo: lo que uno tiene al revés que el otro (EX-8) ──');
-  page = await abrir(browser, '2026-10-16T10:20:00-04:00');
+  page = await abrir(browser, '2026-10-16T12:20:00-04:00');
   r = await corre(page, async () => {
     var K=_k('CH1201','TITANIO ICE','160x190'), J=_k('CH1220','TITANIO ICE','140x190'), M=_k('CH1222','TITANIO ICE','200x200'), hoy=todayStr();
     var st=_stock(function(st){
@@ -272,8 +272,8 @@ async function abrir(browser, reloj){
     var u1={}; u1[K]=10; u1[J]=2; u1[M]=6;      // PTF: K +2 (8 esperado), J −3, M +2
     var u2={}; u2[K]=0; u2[J]=3; u2[M]=2;       // Banzer: K −2, J +3, M +1
     var par={};
-    var R1={ almacen:_LOG, fecha:hoy, hora:'10:05:00', solo0:true, items:it(u1), total:18, repetidos:0, malos:0, cods:{}, esLog:true, conocido:true, lote:{ i:1, n:2, alms:[_LOG,_BZ], par:par } };
-    var R2={ almacen:_BZ, fecha:hoy, hora:'10:05:00', solo0:true, items:it(u2), total:5, repetidos:0, malos:0, cods:{}, esLog:false, conocido:true, lote:{ i:2, n:2, alms:[_LOG,_BZ], par:par } };
+    var R1={ almacen:_LOG, fecha:hoy, hora:'12:05:00', solo0:true, items:it(u1), total:18, repetidos:0, malos:0, cods:{}, esLog:true, conocido:true, lote:{ i:1, n:2, alms:[_LOG,_BZ], par:par } };
+    var R2={ almacen:_BZ, fecha:hoy, hora:'12:05:00', solo0:true, items:it(u2), total:5, repetidos:0, malos:0, cods:{}, esLog:false, conocido:true, lote:{ i:2, n:2, alms:[_LOG,_BZ], par:par } };
     var fila=function(C, k){ var f=C.filas.filter(function(x){ return x.k===k; })[0]||{}; return { dif:f.dif, sin:f.sinExplicar, par:(f.causas||[]).filter(function(c){ return c.t==='par'; }).map(function(c){ return c.u+': '+c.txt; }), sug:(f.sug||[]).length }; };
     var out={};
     // sin el otro almacén (un Excel solo): como antes

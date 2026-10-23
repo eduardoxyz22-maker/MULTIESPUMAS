@@ -11,9 +11,10 @@
    UT1  PTF: lo de la MAÑANA de hoy sin ✅ no se reserva (y lo sin turno tampoco); con ✅ no se resta otra vez; lo de la TARDE sí se
         reserva y, con ✅, se resta. El cierre no mueve lo libre. `inc:true` (lo guardado antes) = los dos turnos.
    UT2  Banzer, con su propio Excel: lo mismo (comp, confSale y lo que queda para cargar).
-   UT3  La propuesta (`stockIncPropuesta`): sin dato del camión, la mañana desde las 09:30 y la tarde desde las 16:00; con el camión
+   UT3  La propuesta (`stockIncPropuesta`): sin dato del camión, la mañana desde las 12:00 (rutina del 23/10: el Excel de la mañana
+        es de antes de cargar; antes, 09:30) y la tarde desde las 16:00; con el camión
         («🚚 Ya salió» / GPS), lo que diga el camión (hasta 15 min después del Excel); dos camiones que no coinciden: sin marcar.
-   UT4  La vista previa del Excel tiene las DOS casillas (la de la mañana marcada a las 10:05) y lo elegido se guarda en el corte
+   UT4  La vista previa del Excel tiene las DOS casillas (la de la mañana marcada al mediodía) y lo elegido se guarda en el corte
         (`incT:'am'`, sin `inc`) y en su renglón del historial.
    UT5  El control del corte (y el lote): por turno. El Excel de la tarde del mismo día y el del día siguiente cuadran; antes, «+2 entrada
         sin explicar», detección, «¿llegó lo hecho a pedido? → sellar» y +2 de «producción» en el lote.
@@ -151,7 +152,7 @@ async function abrir(browser, file, reloj){
   r = await corre(page, async () => {
     var hoy=todayStr(), out={}, P=function(h,d){ var q=stockIncPropuesta(h, d==null?'':d); return [q.am.v, q.pm.v, !!q.am.camion, !!q.pm.camion]; };
     await _cargar([], _stock(null, {}));
-    out.h1005=P('10:05:32'); out.h0910=P('09:10:00'); out.h1620=P('16:20:00'); out.sinHora=stockIncPropuesta('', '').sinHora===true;
+    out.h1005=P('10:05:32'); out.h1205=P('12:05:00'); out.h0910=P('09:10:00'); out.h1620=P('16:20:00'); out.sinHora=stockIncPropuesta('', '').sinHora===true;
     var peds=[ _ped('c01', hoy, 'AM', [_lin(_T,1)], { vehiculo:'Carry' }), _ped('c02', hoy, 'PM', [_lin(_T,1)], { vehiculo:'Foton encarpado' }) ];
     await _cargar(peds, _stock(function(st){ st.c.u[_K]=5; }, {}));
     CARGA_CHK[cargaChkKey(hoy,'Carry',CARGA_SALIO)+'|10:16']=1;
@@ -163,8 +164,10 @@ async function abrir(browser, file, reloj){
     out.mixto=P('10:05:32'); out.mixtoTxt=stockIncPropuesta('10:05:32','').am.txt;
     return out;
   });
-  chk('UT3a · sin dato del camión: a las 10:05 la mañana sí y la tarde no; a las 09:10 ninguna; a las 16:20 las dos; sin hora, nada',
-      r.h1005 && J(r.h1005)===J([true,false,false,false]) && J(r.h0910)===J([false,false,false,false]) && J(r.h1620)===J([true,true,false,false]) && r.sinHora===true, J(r));
+  /* (23/10, rutina del dueño: el Excel de la mañana se saca ANTES de cargar) sin dato del camión, la mañana recién desde el mediodía
+     (`STOCK_INC_AM_EXCEL`); antes, desde las 09:30. */
+  chk('UT3a · sin dato del camión: a las 10:05 ninguna (el de la mañana es de antes de cargar), a las 12:05 la mañana sí y la tarde no; a las 09:10 ninguna; a las 16:20 las dos; sin hora, nada',
+      r.h1005 && J(r.h1005)===J([false,false,false,false]) && J(r.h1205)===J([true,false,false,false]) && J(r.h0910)===J([false,false,false,false]) && J(r.h1620)===J([true,true,false,false]) && r.sinHora===true, J(r));
   chk('UT3b · con «🚚 Ya salió» manda el camión: Carry 10:16 con el Excel de las 10:05 → ya cargado; con el de las 09:50 → todavía no (aunque sea después de las 09:30)',
       r.cam1005 && r.cam1005[0]===true && r.cam1005[2]===true && r.cam0950[0]===false && r.cam0950[2]===true && /Carry 10:16/.test(r.txt||''), J([r.cam1005, r.cam0950, r.txt]));
   chk('UT3c · la tarde también: el Foton salió 16:35 → el Excel de las 16:10 NO la trae (la hora sola diría que sí); el de las 16:25, sí',
@@ -176,7 +179,7 @@ async function abrir(browser, file, reloj){
   r = await corre(page, async () => {
     var hoy=todayStr(), out={};
     await _cargar([ _ped('d01', hoy, 'AM', [_lin(_T,2)], { entregado:true }) ], _stock(function(st){ st.c.u[_K]=12; }, { hora:'08:00:00', subido:'08:05:00' }));
-    EXIST_IMP={ fecha:hoy, hora:'10:05:32', sacado:hoy, sinFecha:false, almacen:_LOG, items:[{ cod:'CH1201', desc:'TITANIO ICE 2.5PLZ 160X190CM', medida:'160x190', cant:10, cat:true, k:_K }], total:10,
+    EXIST_IMP={ fecha:hoy, hora:'12:00:00', sacado:hoy, sinFecha:false, almacen:_LOG, items:[{ cod:'CH1201', desc:'TITANIO ICE 2.5PLZ 160X190CM', medida:'160x190', cant:10, cat:true, k:_K }], total:10,
                 repetidos:0, malos:0, colCant:'AY', solo0:true, cods:{ CH1201:_K }, esLog:true, conocido:true };
     renderImportExist();
     var am=document.getElementById('exist-inc'), pm=document.getElementById('exist-inc-pm');
@@ -187,10 +190,10 @@ async function abrir(browser, file, reloj){
     out.dep=_fila(_K).deposito;
     return out;
   });
-  chk('UT4a · dos casillas: la de la MAÑANA marcada y la de la TARDE sin marcar para el Excel de las 10:05 (antes una sola, sin marcar)', r.am===true && r.pm===false, J([r.am, r.pm]));
+  chk('UT4a · dos casillas: la de la MAÑANA marcada y la de la TARDE sin marcar para el Excel del mediodía (antes una sola, sin marcar)', r.am===true && r.pm===false, J([r.am, r.pm]));
   chk('UT4b · la ventana dice qué hace cada una ("mañana", "tarde", no se reserva ni se descuenta otra vez)', /carga de la mañana/.test(r.txt||'') && /carga de la tarde/.test(r.txt||'') && /no se reserva ni se descuenta otra vez/.test(r.txt||''), (r.txt||'').slice(0,300));
   chk('UT4c · se guarda en el corte como `incT:"am"` (sin `inc`) y en su renglón del historial', r.c && r.c.incT==='am' && !r.c.inc && r.h.incT==='am' && r.h.inc===false, J([r.c, r.h]));
-  chk('UT4d · el ✅ de la mañana ya no baja el Excel de las 10:05: PTF 10 (antes 8)', r.dep===10, J(r.dep));
+  chk('UT4d · el ✅ de la mañana ya no baja el Excel del mediodía: PTF 10 (antes 8)', r.dep===10, J(r.dep));
 
   // ═══ UT5. El control del corte y el lote ═══
   console.log('\n── UT5. El control del corte (y el lote), por turno ──');
@@ -228,12 +231,12 @@ async function abrir(browser, file, reloj){
     var C=stockConciliar(R(9), 'log', inc), f=C.filas.filter(function(x){ return x.k===_K; })[0];
     out.v1={ dif:f?f.dif:0, inc:inc };
     var p3=_ped('f03', hoy, 'AM', [_lin(_T,3)]); STATE.push(p3); stockOlvidarIndice();
-    var C2=stockConciliar(R(6), 'log', inc), f2=C2.filas.filter(function(x){ return x.k===_K; })[0];
+    var C2=stockConciliar(R(6), 'log', { am:true, pm:false }), f2=C2.filas.filter(function(x){ return x.k===_K; })[0];
     out.v2={ dif:f2?f2.dif:0 };
     return out;
   });
   chk('UT5e · el Excel del día siguiente (17/10 10:10) = el del 16/10 − lo de la tarde: cuadra (antes +2, VE10)', r.v1 && r.v1.dif===0, J(r));
-  chk('UT5f · …y con una entrega de la mañana del 17/10 ya cargada (la casilla de la mañana propuesta a las 10:10), también cuadra', r.v2 && r.v2.dif===0, J(r.v2));
+  chk('UT5f · …y con una entrega de la mañana del 17/10 ya cargada (la casilla de la mañana marcada: el Excel ya la traía), también cuadra', r.v2 && r.v2.dif===0, J(r.v2));
   await page.close();
 
   page = await abrir(browser, PEDIDOS, '2026-10-16T12:00:00-04:00');
