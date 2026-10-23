@@ -15635,3 +15635,10 @@ DEL DÍA, para que mejoremos con los stock, reposición y mejoras»*.
   §4lt-d sigue en la rama sin publicar). Sobre esa copia: test_dos_cortes 26, u2_turno 46, final_excel 41, existencias 54, corte_del_dia 56,
   control_corte 32, rev_corte_codex 45, final_pantalla 54, existencias_tres 17, todo 0 mal. La revisión de otros agentes se cortó por un
   reinicio de la máquina y no dio resultado.
+
+### §4ly — 📅 El aviso «PEDIDO MODIFICADO» dice de qué fecha y turno a cuál (23/10, PUBLICADO `377e017`, Pages OK)
+El dueño, con la captura del 10-272 (Isabel cambió la fecha el 23/10 14:35): *«¿para qué fecha entró originalmente?»*. El pedido no guarda
+la fecha anterior: `difPedido` solo decía «📅 cambió la fecha de entrega». Ahora dice «… del 22/10 al 24/10» y «🕐 cambió de turno: PM → AM»
+(lo lee `nxAvisarCambio` con la misma regex). Solo para los cambios desde ahora; el del 10-272 no se puede recuperar desde el panel
+(no hay acción del servidor que lea la hoja «Bot WhatsApp», donde está la confirmación con la fecha original, y la copia leída el
+21/10 18:53 es de antes de que se cargara a las 19:29). `tests/test_modif_fecha.js` (4; 3 rojas contra `0f5b7b2`).
