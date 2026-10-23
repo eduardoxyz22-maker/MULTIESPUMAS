@@ -23469,7 +23469,7 @@ var STOCK_OBJ_REVISION=1;        // se revisa todos los días
 var STOCK_OBJ_EXTRA=1;           // objetivo = punto de pedido + 1 día de venta
 var STOCK_OBJ_EXTRA_ALMOHADA=5;  // las almohadas: 5 días de venta
 var STOCK_OBJ_Z=1.28, STOCK_OBJ_Z_ALTO=1.645, STOCK_OBJ_ALTO=4;
-var STOCK_HIST=15;            // cuántos cortes se recuerdan como mucho (solo el resumen: fecha, hora, cuántos); (06/10) y solo de los últimos STOCK_CONTROL_DIAS días, más el último de cada almacén
+var STOCK_HIST=24;            // (23/10: 15 → 24, dos Excel por día × 3 almacenes × 3 días = 18) cuántos cortes se recuerdan como mucho (solo el resumen: fecha, hora, cuántos); (06/10) y solo de los últimos STOCK_CONTROL_DIAS días, más el último de cada almacén
 /* 🧓 (06/10) QUÉ PÁGINA ESCRIBIÓ EL STOCK. `filaStock` pone `pv` en cada guardado; una página de antes no lo conoce y al
    guardar lo pierde (su `leerStock` arma el stock solo con los campos que conoce). Una copia sin `pv` la escribió una
    página vieja (sin F5): esa no tiene «solo el Excel del día», puede volver atrás un corte y (la de antes del 05/10) borra
@@ -31317,13 +31317,20 @@ function existSaltar(){
   if(!EXIST_COLA.length){ existCancelar(); return; }
   EXIST_IMP=EXIST_COLA.shift(); renderImportExist();
 }
+var EXIST_RELEER_MS=15000;   // (23/10) cuánto se espera la lectura de la planilla antes de mostrar la vista previa del Excel
 function onExistArchivo(ev){
   var f=ev.target.files && ev.target.files[0]; if(!f) return;
   toast('Leyendo '+f.name+'…','ok');
   var delNombre=existHoraDeNombre(f.name);
   EXIST_COLA=[];
   existLoteTerminar();                           // 🏭 (17/10) un lote a medias se cierra con lo que alcanzó a usar
-  f.arrayBuffer().then(xlsxDescomprimir).then(function(archivos){
+  /* 🌅🌙 (23/10, rutina de dos Excel por día) Antes de armar la vista previa se relee la planilla: el control compara contra el ÚLTIMO
+     corte, que pudo subirlo otro aparato (el de la mañana en la oficina, el de la noche desde el celular), y contra los ✅ del cierre.
+     Sin esa lectura comparaba con lo de este aparato (con Stock abierto no se relee solo). Si no se puede leer, se avisa y sigue. */
+  var relee = CONNECTED ? conTope(refrescarEstadoYa(), EXIST_RELEER_MS) : Promise.resolve(true);
+  Promise.all([relee, f.arrayBuffer().then(xlsxDescomprimir)]).then(function(rs){
+    var archivos=rs[1];
+    if(rs[0]===false) toast('⚠️ No se pudo leer la planilla: el control compara contra el último corte que tiene este aparato','warn',9000);
     var _filas=xlsxHoja(archivos);
     var L=existLoteDe(_filas, delNombre);
     if(L){
@@ -31676,7 +31683,12 @@ function stockMovEnVentana(f, ts, v){
    solo si el Excel lo incluye. Lo que hay que ir a buscar y lo ✗ no salió (misma regla que `stockSalio`). */
 function stockSalioVentana(p, x, v){
   if(!p || !x || !v || !stockCuenta(p)) return false;
-  var f=x.eF||fechaSalida(p); if(!f || f<v.desde || f>v.hasta) return false;   // (§4iz, E2-7) el día real que anotó el cierre
+  var f=x.eF||fechaSalida(p); if(!f || f>v.hasta) return false;   // (§4iz, E2-7) el día real que anotó el cierre
+  /* 🌙 (23/10, rutina de dos Excel por día) El día del Excel del FINAL DEL DÍA (los dos turnos) también entra, pero solo lo que ese Excel
+     no podía tener: lo cargado después de su hora (`stockAntesDelCorte` → `stockCargadoDespuesDelCorte`, abajo). Antes la ventana
+     arrancaba al día siguiente y una venta para hoy cargada a las 19:00 y entregada no se restaba en el Excel de la mañana siguiente:
+     salía «salida sin explicar». */
+  if(f<v.desde && !(v.prevF && !v.mismo && f===v.prevF)) return false;
   if(!enProduccionPendiente(x) && (esRecoger(x) || x.chk==='no')) return false;   // una línea 🏭 vive con «✗ no hay» hasta que llega: su salida cuenta igual
   if(esVentaTienda(p)) return false;                      // (§4iy) la venta de tienda sale del stock de la tienda, no de PTF
   /* ⚠️ (05/10, Codex H1) El DÍA DEL CORTE lo decide la casilla «ya incluye las entregas», no la marca ✅: una entrega
@@ -31941,7 +31953,7 @@ function stockConciliar(R, rol, inc, opt){
       if(!resto) return; if(!(stockPedidoAt(q)<dAt)) return;
       var pend=pendDe(q)-(ofrecido[q.id]||0); if(pend<=0) return;
       var u=Math.min(resto, pend);
-      fila.sug.push({ d:detId, df:detF, q:q.id, u:u, pend:pend, f:String(q.f||''), fab:String(q.fab||''), tipo:q.tipo||'fabrica', de:String(q.de||''), llega:stockEsperado(q) }); resto-=u;
+      fila.sug.push({ d:detId, df:detF, dh:String(detHora||''), q:q.id, u:u, pend:pend, f:String(q.f||''), fab:String(q.fab||''), tipo:q.tipo||'fabrica', de:String(q.de||''), llega:stockEsperado(q) }); resto-=u;
       ofrecido[q.id]=(ofrecido[q.id]||0)+u;
     });
     return resto;
@@ -32117,7 +32129,8 @@ function existSugHtml(f){
   return (f.sug||[]).map(function(s){
     var deAntes = s.d!==f.det;
     return '<label style="display:block;cursor:pointer"><input type="checkbox" class="exist-sug" data-d="'+esc(String(s.d))+'" data-q="'+esc(String(s.q))+'" data-k="'+esc(f.k)+'" data-u="'+s.u+'"> '+
-      (deAntes?('<span style="color:#7c4b00">'+stockUnid(s.u)+' detectad'+(s.u===1?'a':'as')+' en el Excel del '+esc(fmtFechaCorta(s.df))+' sin asignar:</span> '):'')+
+      /* 🌅🌙 (23/10) con dos Excel por día, la hora dice cuál de los dos (el de la mañana o el del final del día) */
+      (deAntes?('<span style="color:#7c4b00">'+stockUnid(s.u)+' detectad'+(s.u===1?'a':'as')+' en el Excel del '+esc(fmtFechaCorta(s.df))+(s.dh?(' a las '+esc(String(s.dh).slice(0,5))):'')+' sin asignar:</span> '):'')+
       '¿Es '+(s.tipo==='recogida'?'la recogida de '+esc(stockAlmCorto(s.de||'Moreno')):'el pedido a '+esc(s.fab||'fábrica'))+' del <b>'+esc(fmtFechaCorta(s.f))+'</b> ('+stockUnid(s.pend)+' pendientes'+(s.llega<todayStr()?', vencido':'')+')? → cerrar '+stockUnid(s.u)+'</label>';
   }).join('');
 }
@@ -32136,9 +32149,21 @@ function stockIncCasillasHtml(idAm, prop, fecha, onch, que){
     linea(idAm, 'am', '🌅', 'mañana', ' <span style="color:var(--muted)">(y lo que va sin turno)</span>')+
     linea(idAm+'-pm', 'pm', '🌆', 'tarde', '')+
     '<div style="color:var(--muted);margin-top:6px;font-size:.95em">Lo de un turno marcado <b>no se reserva ni se descuenta otra vez</b>, tenga ✅ o no: el camión ya se lo llevó. Lo de un turno sin marcar sigue reservado y se descuenta cuando sale.</div>'+
-    (idAm==='exist-inc'?'<div class="inc-rutina" style="color:var(--teal-dk);margin-top:6px;font-size:.95em">📋 Rutina: el Excel de la <b>mañana</b> se saca <b>antes de cargar</b> los camiones (las dos sin marcar) y el del <b>final del día</b>, cuando ya salieron los de la mañana y la tarde (las dos marcadas). El panel lo propone así; con el GPS o «🚚 Ya salió», manda lo que hizo el camión.</div>':'')+
+    (idAm==='exist-inc'?'<div class="inc-rutina" style="color:var(--teal-dk);margin-top:6px;font-size:.95em">📋 Rutina: el Excel de la <b>mañana</b> se saca <b>antes de cargar</b> los camiones (las dos sin marcar) y el del <b>final del día</b>, con los camiones de vuelta y <b>después del ✅ Cierre de entregas</b> (lo que no se entregó, ya reprogramado; las dos marcadas). El panel lo propone así; con el GPS o «🚚 Ya salió», manda lo que hizo el camión.</div>':'')+
+    stockIncSinCierreHtml(idAm, prop, fecha)+
     (prop.sinHora?'<div style="color:#7c4b00;margin-top:6px">⚠️ El archivo no trae la hora: decí vos qué turnos ya habían salido cuando se sacó (sin marcar = antes del camión). El control del corte usa esta respuesta; no se asume nada.</div>':'')+
   '</div>';
+}
+/* 🌙 (23/10, rutina de dos Excel por día) El Excel del final del día con la tarde marcada da por salido todo lo de hoy: si queda algún
+   pedido sin ✅ en el Cierre de entregas y no salió, el control lo resta igual y el Excel lo muestra como «entrada sin explicar» (y al otro
+   día sigue como salido: fecha pasada sin ✅ = salió). Se avisa antes de usarlo; no frena nada. */
+function stockIncSinCierreHoy(fecha){
+  var n=0; (STATE||[]).forEach(function(p){ if(cierreEntEntra(p) && String(p.fecha)===String(fecha) && stockCuenta(p)) n++; }); return n;
+}
+function stockIncSinCierreHtml(idAm, prop, fecha){
+  if(idAm!=='exist-inc' || !prop || !prop.pm || !prop.pm.v || String(fecha||'')!==todayStr()) return '';
+  var n=stockIncSinCierreHoy(fecha); if(!n) return '';
+  return '<div class="inc-sin-cierre" style="color:#7c4b00;margin-top:6px">⚠️ Hoy quedan <b>'+n+'</b> pedido'+(n===1?'':'s')+' sin ✅ en el <b>Cierre de entregas</b>. Con la tarde marcada el panel los da por salidos: si alguno no salió, reprogramalo antes de usar este Excel (si no, aparece como «entrada sin explicar»).</div>';
 }
 function stockIncLeer(idAm){ var a=document.getElementById(idAm), b=document.getElementById(idAm+'-pm'); return { am:!!(a && a.checked), pm:!!(b && b.checked) }; }
 /* ✏️ (19/10, §4ls verificación final, EX-6) Las dos casillas de los turnos solo donde salen camiones: el depósito de fábrica ('' = PTF) y

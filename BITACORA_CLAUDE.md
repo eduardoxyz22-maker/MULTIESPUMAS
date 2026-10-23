@@ -15608,3 +15608,27 @@ El dueño (21/10): *«verificá stock, si va bien el cálculo… cuando lo hicis
   74 el 16/10 y entraron ~16. Los 5 «Ya pedí» del 16/10 (91 u, esperados el 21/10) llevan 23. Entraron 200 NASA (se pedían 32) y 84 u
   de 31 productos que el panel no pedía.
 - **El plan hoy** (21/10 18:57): 7 días 79, 15 días 299, el mes 537 (el 16/10: 196 / 474 / 654), por lo que entró y lo que se vendió menos.
+
+### §4lx — 🌅🌙 Dos Excel de stock por día: la mañana ANTES de cargar y otro al FINAL del día (23/10, en la rama, SIN publicar)
+El dueño (23/10): *«el corte de cada día lo subirán en las mañanas, el de stock y reposición, ANTES DE CARGAR los camiones, Y OTRO AL FINAL
+DEL DÍA, para que mejoremos con los stock, reposición y mejoras»*.
+- **Qué hace el panel con eso** (prueba de punta a punta, `tests/test_dos_cortes.js`, 26): el Excel de la mañana se propone con las DOS
+  casillas sin marcar (lo de hoy queda reservado) y cuadra contra el de anoche; el de la noche, con las dos marcadas: lo entregado hoy no
+  es «salida sin explicar» y lo que entró de fábrica en el día SÍ aparece como entrada (es lo que se quiere medir). Banzer igual.
+- **Cambios** (`563a2cb` + este):
+  · `STOCK_INC_AM_EXCEL`='12:00': sin dato del camión, el Excel de la mañana se da por cargado recién desde el mediodía (antes 09:30, cuando
+    se sacaba a las ~10:00 con el camión ya cargado). «📋 Conté a mano» sigue con 09:30; el corte de una página vieja se estima con 09:30
+    (`stockIncPrevioSupuesto` pasa `amDesde`). Con GPS o «🚚 Ya salió», manda el camión.
+  · La vista previa explica la rutina (`.inc-rutina`): el de la noche va con los camiones de vuelta y **después del ✅ Cierre de entregas**.
+  · Con la tarde marcada y pedidos de hoy sin ✅, aviso ámbar (`stockIncSinCierreHtml`): el control los da por salidos y lo que no salió
+    aparecería como «entrada sin explicar». No frena.
+  · `stockSalioVentana`: el día del Excel de la noche (dos turnos) también entra, pero solo lo cargado después de su hora (antes, una venta
+    de Eduardo de las 19:00 entregada ese día salía como «salida sin explicar» al otro día).
+  · `onExistArchivo` relee la planilla antes de la vista previa (`EXIST_RELEER_MS`=15 s, `conTope`): el último corte pudo subirlo otro
+    aparato y con Stock abierto no se relee solo. Sin lectura, toast y sigue.
+  · `STOCK_HIST` 15 → 24 (2 por día × 3 almacenes × 3 días). La detección vieja dice la hora del Excel («… del 26/10 a las 18:30»).
+  · Pruebas que esperaban la rutina vieja (Excel a las 10:05 después de cargar) cambiaron a conciencia: `test_stock_rev2_u2_turno`
+    UT3a/UT4/UT5f, `test_stock_final_excel` FE10.
+- **Queda para decidir** (no hecho): el Historial guarda el Excel más NUEVO de cada día y almacén (`histGuardar_`): con dos por día se
+  pierde la foto de la mañana en la hoja. Para medir la producción del día alcanza el control del corte; si se quiere la foto, es un cambio
+  del `.gs`.

@@ -12,6 +12,10 @@
    DC4  Un Excel de la mañana sacado TARDE (09:45): con «🚚 Ya salió» a las 10:30 manda el camión; SIN dato del camión la mañana se
         propone recién desde el mediodía (`STOCK_INC_AM_EXCEL`; antes 09:30, cuando el Excel se sacaba a las ~10:00 con el camión ya
         cargado). «📋 Conté a mano» sigue con las 09:30. La vista previa explica la rutina.
+   DC5  Lo cargado DESPUÉS del Excel de la noche y entregado se resta en el de la mañana siguiente; lo de antes, no otra vez.
+   DC6  Subir el Excel relee la planilla antes de la vista previa (el último corte pudo subirlo otro aparato); sin lectura, avisa.
+   DC7  El Excel de la noche avisa los pedidos de hoy sin ✅ en el Cierre de entregas.
+   DC8  Una detección vieja dice de qué Excel del día es (la hora).
    Reloj CLAVADO en cada paso. Red cortada, servidor simulado, datos sintéticos (el repo es público).
    Se corre:  node tests/test_dos_cortes.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -148,6 +152,98 @@ async function abrir(browser, reloj){
   chk('DC3b · contra el de anoche cuadra (nada salió en la noche)', r.cuadra===0, J(r.cuadra));
   chk('DC3c · si la fábrica entregó a la noche, aparece como entrada (+2)', r.noche===2, J(r.noche));
   chk('DC3d · lo del martes queda reservado (3); PTF 11', r.fila && r.fila.comp===3 && r.fila.dep===11, J(r.fila));
+  await page.context().close();
+
+  // ═══ DC5. Una venta del lunes cargada DESPUÉS del Excel de la noche y entregada ═══
+  console.log('\n── DC5. Lunes 19:00: Eduardo carga una venta para hoy y sale; el Excel del martes 08:00 ya no la tiene ──');
+  page = await abrir(browser, '2026-10-27T08:05:00-04:00');
+  r = await corre(page, async ([stock, peds]) => {
+    var out={};
+    var extra=_ped('a05', '2026-10-26', 'PM', [_lin(_T,1,{ eF:'2026-10-26' })], { vehiculo:'Foton nuevo', entregado:true, vendedor:'Eduardo', ts:_ts('2026-10-26','19:00:00') });
+    await _cargar(peds.concat([extra]), JSON.parse(stock));
+    var C=stockConciliar(_excel(_LOG, 'log', '08:00:00', { 'CH1201|TITANIO ICE|160x190':10 }), 'log', { am:false, pm:false });
+    var f=(C.todas||C.filas||[]).filter(function(x){ return x.k===_K; })[0];
+    out.dif=f ? f.dif : 0;
+    // la del lunes cargada a las 15:00 (antes del Excel de las 18:30) sigue sin restarse otra vez: con ella el Excel de 11 cuadra
+    var p=findById('a05'); p.ts=_ts('2026-10-26','15:00:00'); stockOlvidarIndice();
+    var C2=stockConciliar(_excel(_LOG, 'log', '08:00:00', { 'CH1201|TITANIO ICE|160x190':11 }), 'log', { am:false, pm:false });
+    var f2=(C2.todas||C2.filas||[]).filter(function(x){ return x.k===_K; })[0];
+    out.dif2=f2 ? f2.dif : 0;
+    return out;
+  }, [stock2, peds2]);
+  if(r.__error) console.log(r.__error);
+  chk('DC5a · lo cargado después del Excel de la noche y entregado se resta en el de la mañana siguiente (11 − 1 = 10 cuadra)', r.dif===0, J(r));
+  chk('DC5b · lo cargado ANTES del Excel de la noche no se resta otra vez (ya no estaba en él)', r.dif2===0, J(r));
+  await page.context().close();
+
+  // ═══ DC6. Antes de la vista previa se relee la planilla ═══
+  console.log('\n── DC6. Subir el Excel relee la planilla (el último corte pudo subirlo otro aparato) ──');
+  page = await abrir(browser, '2026-10-26T18:35:00-04:00');
+  r = await corre(page, async () => {
+    var out={}, hoy=todayStr();
+    await _cargar([], _stock(function(s){ s.c.u[_K]=10; }, { f:'2026-10-26', hora:'08:00:00', subido:'08:05:00' }));
+    // otro aparato subió el de las 12:00 (PTF 8); este no lo vio (con Stock abierto no se relee solo)
+    _SRV.stock=_stock(function(s){ s.c.u[_K]=8; }, { f:'2026-10-26', hora:'12:00:00', subido:'12:05:00' });
+    var R=_excel(_LOG, 'log', '18:30:00', { 'CH1201|TITANIO ICE|160x190':8 });
+    var msgs=[], tOrig=window.toast; window.toast=function(m){ msgs.push(String(m)); return tOrig.apply(this, arguments); };
+    window.xlsxDescomprimir=function(){ return Promise.resolve({}); }; window.xlsxHoja=function(){ return []; };
+    window.existLoteDe=function(){ return null; }; window.existLeer=function(){ return JSON.parse(JSON.stringify(R)); };
+    window.existPonerHora=function(){}; window.existAlinearHora=function(){};
+    var arch={ name:'EXISTENCIAS.xlsx', arrayBuffer:function(){ return Promise.resolve(new ArrayBuffer(0)); } };
+    out.antes=STOCK.c.hora;
+    onExistArchivo({ target:{ files:[arch] } });
+    for(var i=0;i<40 && !(EXIST_IMP && document.getElementById('exist-inc')); i++) await new Promise(function(r){ setTimeout(r, 50); });
+    out.despues=STOCK.c.hora;
+    var C=stockConciliar(EXIST_IMP, 'log', { am:true, pm:true }), f=(C.todas||C.filas||[]).filter(function(x){ return x.k===_K; })[0];
+    out.dif=f ? f.dif : 0;
+    // si la lectura no contesta, se avisa y la vista previa sale igual
+    closeModal && closeModal(); EXIST_IMP=null;
+    EXIST_RELEER_MS=300; apiList=function(){ return new Promise(function(){}); };
+    onExistArchivo({ target:{ files:[arch] } });
+    for(var j=0;j<40 && !(EXIST_IMP && document.getElementById('exist-inc')); j++) await new Promise(function(r){ setTimeout(r, 50); });
+    out.sinLectura=!!(EXIST_IMP && document.getElementById('exist-inc'));
+    out.aviso=msgs.filter(function(m){ return /No se pudo leer la planilla/.test(m); }).length;
+    return out;
+  });
+  if(r.__error) console.log(r.__error);
+  chk('DC6a · al subir el Excel se relee la planilla y el control compara contra el corte de las 12:00 de otro aparato (8 → 8 cuadra)', r.antes==='08:00:00' && r.despues==='12:00:00' && r.dif===0, J(r));
+  chk('DC6b · si la planilla no contesta, se avisa y la vista previa sale igual', r.sinLectura && r.aviso===1, J(r));
+  await page.context().close();
+
+  // ═══ DC7. El Excel de la noche avisa lo de hoy sin ✅ en el Cierre de entregas ═══
+  console.log('\n── DC7. Excel de las 18:30 con pedidos de hoy sin cerrar ──');
+  page = await abrir(browser, '2026-10-26T18:35:00-04:00');
+  r = await corre(page, async () => {
+    var out={}, hoy=todayStr();
+    await _cargar([ _ped('c01', hoy, 'AM', [_lin(_T,2)], { vehiculo:'Foton nuevo' }), _ped('c02', hoy, 'PM', [_lin(_T,1)], { vehiculo:'Foton nuevo' }),
+                    _ped('c03', '2026-10-27', 'AM', [_lin(_T,1)], { vehiculo:'Foton nuevo' }) ], _stock(function(s){ s.c.u[_K]=10; }, { f:hoy, hora:'08:00:00', subido:'08:05:00' }));
+    var mk=function(h){ EXIST_IMP={ fecha:hoy, hora:h, sacado:hoy, sinFecha:false, almacen:_LOG, items:[{ cod:'CH1201', desc:'TITANIO ICE', medida:'160x190', cant:7, cat:true, k:_K }], total:7,
+                repetidos:0, malos:0, colCant:'AY', solo0:true, cods:{}, esLog:true, conocido:true }; renderImportExist();
+                return ((document.querySelector('#modal-box .inc-sin-cierre')||{}).textContent||'').replace(/\s+/g,' '); };
+    out.noche=mk('18:30:00');
+    out.rutina=((document.querySelector('#modal-box .inc-rutina')||{}).textContent||'').replace(/\s+/g,' ');
+    out.manana=mk('08:00:00');
+    _ent('c01'); _ent('c02'); out.cerrados=mk('18:30:00');
+    return out;
+  });
+  if(r.__error) console.log(r.__error);
+  chk('DC7a · el Excel de la noche avisa los 2 pedidos de hoy sin ✅ (el de mañana no cuenta)', /\b2\b/.test(r.noche||'') && /Cierre de entregas/.test(r.noche||''), r.noche);
+  chk('DC7b · la rutina dice que el del final del día va después del Cierre de entregas', /después del ✅ Cierre de entregas/.test(r.rutina||''), r.rutina);
+  chk('DC7c · el Excel de la mañana no avisa nada (no trae la tarde); con todo cerrado, tampoco', !r.manana && !r.cerrados, J([r.manana, r.cerrados]));
+  await page.context().close();
+
+  // ═══ DC8. La detección vieja dice de qué Excel del día es ═══
+  console.log('\n── DC8. Martes 08:00: lo que entró el lunes a la noche se ofrece contra el pedido a fábrica, con la hora ──');
+  page = await abrir(browser, '2026-10-27T08:05:00-04:00');
+  r = await corre(page, async ([stock, peds]) => {
+    var st=JSON.parse(stock);
+    st.p=(st.p||[]).concat([{ id:'q-dc8', k:_K, u:4, f:'2026-10-24', fab:'Industrias Moreno', tipo:'fabrica', t:_ts('2026-10-24','12:00:00') }]);
+    await _cargar(peds, st);
+    EXIST_IMP=_excel(_LOG, 'log', '08:00:00', { 'CH1201|TITANIO ICE|160x190':11 }); renderImportExist();
+    return ((document.getElementById('modal-box')||{}).textContent||'').replace(/\s+/g,' ').match(/detectad\w+ en el Excel del [^:]*?(a las \d\d:\d\d )?sin asignar/);
+  }, [stock2, peds2]);
+  if(r && r.__error) console.log(r.__error);
+  chk('DC8 · la entrada de anoche se ofrece con la hora del Excel («… a las 18:30 sin asignar»)', r && /a las 18:30 sin asignar/.test(r[0]||''), J(r));
   await page.context().close();
 
   // ═══ DC4. Un Excel de la mañana sacado tarde, pero antes de que salga el camión ═══

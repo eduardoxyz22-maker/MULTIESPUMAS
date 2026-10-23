@@ -697,6 +697,12 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   `STOCK.g[nm]` y `h[]`; `inc:true` sin `incT` es de una página vieja (`leg`: no saca lo de la tarde sin ✅). ⚠️ Un pedido cargado
   después de la hora del Excel no estaba en él (`stockCargadoDespuesDelCorte`, por `p.ts`): una prueba que arme un pedido de hoy tiene
   que darle un `ts` ANTERIOR a la hora de su Excel. Todo lo que reserve o descuente lo de hoy pasa por `stockAntesDelCorte`.
+  🌅🌙 **Dos Excel por día** (§4lx, 23/10, dueño: la mañana ANTES de cargar y otro al FINAL del día; en la rama, sin publicar): sin dato del
+  camión el Excel de la mañana se da por cargado desde `STOCK_INC_AM_EXCEL`=12:00 (conteo a mano y página vieja siguen con 09:30); el de la
+  noche va después del ✅ Cierre de entregas (aviso `stockIncSinCierreHtml`); `stockSalioVentana` deja entrar el día del corte anterior con
+  los dos turnos solo para lo cargado después de su hora; `onExistArchivo` relee la planilla antes de la vista previa (`EXIST_RELEER_MS`);
+  `STOCK_HIST`=24. ⚠️ Una prueba con un Excel «de la mañana» después de las 09:30 tiene que marcar la casilla a mano o usar ≥12:00.
+  `tests/test_dos_cortes.js` (26).
 - **Cuadrito por fecha** (decisión 3, `saldoVeredicto`): `v.libres`/`v.faltan` son A LA FECHA prometida (`v.pendFecha`, `v.fechaRes`),
   `v.pend` es el TOTAL; aviso ámbar `saldoDespues` (a lo vendido para después le falta / se atrasaría). La reserva del servidor manda
   el libre a la fecha. Lo descontinuado descuenta todo.
