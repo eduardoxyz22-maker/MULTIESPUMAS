@@ -769,6 +769,70 @@ th.sortable:hover{color:var(--teal-dk)}
 .dl-row:last-child{border-bottom:none}
 .dl-k{width:96px;flex:none;color:var(--muted);font-weight:700;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
 .dl-v{flex:1;color:var(--text);word-break:break-word}
+/* 🗂️ (23/10) La ficha de Administración para logística (`showPedidoModal`): ancha, observaciones arriba y tres columnas */
+.modal.fl-ficha{max-width:min(1180px,96vw)}
+.modal.fl-ficha .fl-h{background:linear-gradient(135deg,#00B5AD,#00A09A)}
+.fl-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.fl-num{background:#00A09A;color:#fff;border-radius:14px;padding:8px 14px;text-align:center;line-height:1;flex:none}
+.fl-num b{display:block;font-size:1.9rem}.fl-num small{font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;opacity:.9}
+.fl-cli{flex:1;min-width:220px}.fl-cli .n{font-size:1.45rem;font-weight:800;color:#12302e;line-height:1.15;word-break:break-word}
+.fl-cli .s{color:#5b6b70;font-size:.9rem;margin-top:3px}
+.fl-pills{display:flex;gap:8px;flex-wrap:wrap}
+.fl-pill{border-radius:12px;padding:8px 12px;font-weight:700;font-size:.9rem;background:#f1f7f7;border:1px solid #d5e9e7;color:#0f3d3a}
+.fl-pill.ok{background:#e8f7ee;border-color:#bfe6cc;color:#166534}
+.fl-dato{display:flex;flex-direction:column;line-height:1.15}.fl-dato small{font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:#5b7b78;font-weight:800}
+.fl-ent{background:#00A09A;border-color:#00A09A;color:#fff}.fl-ent small{color:#d9f5f3}
+.fl-obs{background:#fff4c2;border:2px solid #f2b705;border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start}
+.fl-obs .i{font-size:2rem;line-height:1;flex:none}.fl-obs-c{flex:1;min-width:0}
+.fl-obs .t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8a6400}
+.fl-obs .x{font-size:1.12rem;font-weight:600;color:#2d2200;line-height:1.45;margin-top:2px;white-space:pre-wrap;word-break:break-word}
+.fl-g{display:grid;grid-template-columns:1fr 1.3fr .95fr;gap:14px;align-items:start}
+.fl-c{background:#fff;border:1px solid #e3eaea;border-radius:14px;padding:14px 16px;min-width:0}
+.fl-c h4{margin:0 0 10px;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#00A09A}
+.fl-sub{margin:12px 0 6px;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#00A09A;font-weight:800}
+.fl-dir{font-size:1rem;line-height:1.4;color:#1d2b2b;word-break:break-word}
+.fl-zona{display:inline-block;background:#eaf6f5;color:#00756f;border-radius:8px;padding:3px 9px;font-weight:800;font-size:.85rem;margin-bottom:6px}
+.fl-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.fl-btn{display:inline-flex;align-items:center;gap:4px;border-radius:10px;padding:9px 12px;font-weight:700;font-size:.88rem;border:1px solid #d5e2e2;background:#fff;color:#16302e;cursor:pointer;text-decoration:none;font-family:inherit}
+.fl-btn.p{background:#00A09A;border-color:#00A09A;color:#fff}.fl-btn.w{background:#25D366;border-color:#25D366;color:#fff}.fl-btn.a{background:var(--amber);border-color:var(--amber);color:#fff;width:100%;justify-content:center}
+.fl-prod{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef3f3}
+.fl-prod:last-of-type{border-bottom:none}
+.fl-q{min-width:40px;height:40px;border-radius:10px;background:#12302e;color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex:none}
+.fl-pn{flex:1;min-width:0;font-weight:700;color:#16302e;font-size:.95rem;word-break:break-word}.fl-pn small{display:block;color:#7a8a8e;font-weight:500;font-size:.8rem}
+.fl-pls{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.fl-pl{font-weight:800;font-size:.82rem;border-radius:9px;padding:5px 9px;white-space:nowrap}
+.fl-pl.aca{background:#e6f4f3;color:#00756f}.fl-pl.sale{background:#e7effc;color:#1d4fa8}.fl-pl.trae{background:#fff1e3;color:#a14b00}.fl-pl.no{background:#fdecee;color:#a51d2b}.fl-pl.sin{background:#f1f3f3;color:#6b7b85}
+.fl-res{margin-top:6px;font-size:.82rem}
+.fl-vacio{color:var(--muted);font-size:.88rem}
+.fl-marcas{margin-top:8px;border-top:1px solid #eef3f3;padding-top:8px}
+.fl-marcas summary, .fl-mas summary{cursor:pointer;font-weight:700;color:#00756f;font-size:.86rem}
+.fl-marcas-in{margin-top:8px}.fl-ayuda{margin-bottom:6px}
+.fl-est{margin-top:12px;padding-top:12px;border-top:1px solid #eef3f3}
+.fl-est-t{display:block;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#00A09A;margin-bottom:6px}
+.fl-est-t i{font-style:normal;text-transform:none;letter-spacing:0;color:#7a8a8e;font-weight:600}
+.fl-auto{background:#f4f6f6;border-radius:10px;padding:8px 12px;margin-bottom:8px}
+.fl-sel{display:grid;grid-template-columns:1fr;gap:8px}
+.fl-sw{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #e3eaea;background:#fff;margin-top:8px;font-weight:700;font-size:.95rem;color:#16302e;cursor:pointer;font-family:inherit;text-align:left}
+.fl-sw.on{background:#e8f7ee;border-color:#bfe6cc;color:#166534}
+.fl-tog{width:46px;height:26px;border-radius:99px;background:#cfd8d8;position:relative;flex:none;transition:background .15s}.fl-tog:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.fl-sw.on .fl-tog{background:#16a34a}.fl-sw.on .fl-tog:after{left:23px}
+.fl-mas{margin-top:14px;border:1px solid #e3eaea;border-radius:12px;padding:10px 14px;background:#fafcfc}
+.fl-mas-in{margin-top:8px}
+.fl-pie{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.fl-pie .fl-borrar{margin-left:auto;color:var(--red);border-color:var(--red-border)}
+.fl-pie .fl-listo{width:auto;min-width:130px}
+@media(max-width:900px){.fl-g{grid-template-columns:1fr}.fl-pie .fl-borrar{margin-left:0}}
+@media(max-width:600px){.fl-obs{flex-wrap:wrap}.fl-pills{width:100%}.fl-pie .fl-listo{width:100%}}
+.fl-mod{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--red-lt);border:1px solid var(--red-border);border-left:6px solid var(--red);border-radius:12px;padding:9px 12px;margin-bottom:12px;font-size:.86rem;color:#8a1c24}
+.fl-mod-t{font-weight:800}.fl-mod-d{font-weight:600}.fl-mod .btn{margin-left:auto;width:auto}
+#obs-conf{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
+#obs-conf[hidden]{display:none}
+#obs-conf .obs-c{background:#fff;border-radius:16px;max-width:560px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
+#obs-conf .obs-h{background:#f2b705;color:#2d2200;padding:14px 18px;font-weight:800;font-size:1.05rem}
+#obs-conf .obs-b{padding:16px 18px}
+#obs-conf .obs-k{font-size:.8rem;color:#6b7b85;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+#obs-conf .obs-x{background:#fff4c2;border:2px solid #f2b705;border-radius:12px;padding:12px 14px;font-size:1.08rem;font-weight:600;line-height:1.45;color:#2d2200;white-space:pre-wrap;word-break:break-word}
+#obs-conf .obs-a{display:flex;gap:10px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap}
 /* Sub-pestañas dentro de Contabilidad (Ventas / Cuadre) */
 .subtabs button{padding:10px 18px;font-size:.84rem}
 .cua-box{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);padding:16px 18px;margin-bottom:18px}
@@ -6104,8 +6168,12 @@ function modDeQuienTxt(m){
   if(conocido && (!q || mismoVendedor(por, q))) return '';
   return ' ('+(q?('el pedido es de '+esc(q)):'')+(conocido?'':((q?'; ':'')+'no se sabe quién lo cambió'))+')';
 }
-function avisoModifHtml(p, compacto){
+function avisoModifHtml(p, compacto, linea){
   var m=modDe(p); if(!m) return '';
+  /* 🗂️ (23/10) en la ficha nueva de Administración, en UNA franja: lo mismo, con «Ya lo revisé» al costado */
+  if(linea) return '<div class="fl-mod"><span class="fl-mod-t">⚠️ ESTE PEDIDO FUE MODIFICADO</span><span>'+modQuienHtml(m)+' el '+esc(fmtFechaCorta(m.f))+(m.h?(' '+esc(m.h)):'')+modDeQuienTxt(m)+'</span>'+
+    ((m.d&&m.d.length)?('<span class="fl-mod-d">'+m.d.map(function(t){ return esc(t); }).join(' · ')+'</span>'):'')+
+    '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700" onclick="'+esc("verVistoModif('"+String(p.id)+"')")+'">✓ Ya lo revisé</button></div>';
   if(compacto) return '<span class="badge b-red" title="Lo cambiaron después de que ustedes lo revisaron">⚠️ MODIFICADO</span>';
   return '<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
     'border-radius:9px;padding:11px 14px;margin-bottom:11px;font-size:.85rem;color:#8a1c24">'+
@@ -22576,7 +22644,8 @@ function copiarBusca(){
 }
 
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
-function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
+function quickVerificado(id){ obsAntesDeListo(id, function(){ quickVerificadoYa(id); }); }   // 📝 (23/10) con observaciones, primero se leen
+function quickVerificadoYa(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
 function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
@@ -33135,6 +33204,7 @@ function openModal(html, ancha){
   var antes=ov.classList.contains('on') ? modalTitulo() : null;
   box.innerHTML=html;
   box.classList.toggle('ancha', !!ancha);
+  box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
   ov.classList.add('on');
   if(antes===null || antes!==modalTitulo()){ ov.scrollTop=0; box.scrollTop=0; }
   acomodarFichas();                        // el reporte y los productos traen sus fichas
@@ -33321,90 +33391,150 @@ function eliminarDesdeCarga(id){
   closeModal(); realDelete(id);
 }
 
+/* 🗂️ (23/10, dueño: «hay demasiada información junta… logística sólo quiere el nombre, la ubicación, el lugar, el número… que no se olviden de
+   leer las observaciones… más sencillo, modernizado»; eligió la «B» de las muestras) La FICHA DE ADMINISTRACIÓN, ancha y para logística:
+   arriba el N° del día, el cliente, cuándo ingresó y para cuándo es; las observaciones en amarillo grande; y tres columnas: dónde entregar /
+   qué se carga y de dónde (con el estado de stock, que se pone solo con la marca de cada producto, y sus tres botones para corregir) /
+   camión y entrega. La venta, el cobro y la facturación quedan en «Más datos» (no se borró nada: mismas funciones, mismos botones).
+   Las marcas de cada producto quedan en «✏️ Cambiar de dónde sale…»; la revisión automática las pone casi siempre. */
+var FICHA_MAS_ABIERTA=false, FICHA_MARCAS_ABIERTA=false;
+function fichaLugarHtml(x){
+  if(!x) return '';
+  if(x.chk==='no') return '<span class="fl-pl no">✗ No hay</span>';
+  var pa=prodPartes(x);
+  if(!pa.length) return (enProduccion(x) && !x.prodR) ? '<span class="fl-pl trae">🏭 En producción'+esc(prodDondeSePide(x)?(' · '+prodLugarCorto(prodDondeSePide(x))):'')+'</span>' : '<span class="fl-pl sin">Sin revisar</span>';
+  var varias=pa.length>1;
+  return pa.map(function(e){
+    var n=e.tipo==='aca' ? '🏭 PTF' : e.tipo==='sale' ? ('🏪 '+saleNombre(e.de)) : (recogeTiendaDe(e.de) ? ('🏬 '+recogerAlmCorto(e.de)) : ('📥 '+(e.de ? recogerAlmCorto(e.de) : 'Moreno')));
+    return '<span class="fl-pl '+e.tipo+'">'+esc(n+(varias?(' '+e.u):''))+'</span>';
+  }).join(' ');
+}
+function fichaProdsHtml(p){
+  var pr=(p&&p.productos)||[];
+  if(!pr.length) return '<div class="fl-vacio">Sin productos</div>';
+  return pr.map(function(x){
+    return '<div class="fl-prod"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn">'+esc(x.desc||'—')+
+      '<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small></div><div class="fl-pls">'+fichaLugarHtml(x)+'</div></div>';
+  }).join('');
+}
+function fichaIngresoTxt(p){
+  var ts=Number(p&&p.ts); if(!(ts>0)) return '—';
+  return fmtFechaCorta(isoDeTsBolivia(ts))+' · '+horaDeTs(ts).slice(0,5);
+}
+function fichaSw(on, label, onclick, extra){
+  return '<button type="button" class="fl-sw'+(on?' on':'')+'" onclick="'+onclick+'" aria-pressed="'+(on?'true':'false')+'"><span>'+label+'</span><span class="fl-tog"></span></button>'+(extra||'');
+}
 function showPedidoModal(id){
   var p=findById(id); if(!p) return;
   if(REV_VOLVER && (REV_VOLVER.id!==String(id) || !document.getElementById('modal').classList.contains('on'))) REV_VOLVER=null;   // 👆 (19/10, §4ls PA-9) «← Volver a la revisión» solo para el pedido abierto desde ahí, con la ventana abierta
-  var dnum=dayNumMap()[p.id];
+  var dnum=dayNumMap()[p.id], pid=String(p.id).replace(/'/g,"\\'");
   MODAL_KIND='admin';
-  var prod=prodRevList(p);
+  var rpt=esRPT(p.oc), atc=esATC(p.oc);
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
-  var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p))
            :noSeCobra(p)?'<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT: no es «sin monto»
            :(sinMontoAnotado(p)?badgeSinMonto():('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(anticipoDe(p)&&cobroMetodoTxt(anticipoDe(p))?(' · '+esc(cobroMetodoTxt(anticipoDe(p)))):'')+'</span>'):'')));
-  var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
-    row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
-    row('Ingresado', esc(tsFmt(p.ts)))+
-    row('Nota de venta', esc(p.nota))+
-    row(esATC(p.oc)?'N° ATC':esRPT(p.oc)?'N° de pedido':'N° OC', esc(p.oc))+row(esRPT(p.oc)?'Solicitado por':'Vendedor', esc(p.vendedor))+row(esRPT(p.oc)?'Sucursal de destino':'Cliente', '<b>'+esc(p.cliente)+'</b>')+
-    row('Celular', esc(p.celular))+row('Productos'+prodAyuda(), prod+prodResumen(p))+row('Zona', esc(p.zona))+
-    row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
-    row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
-    row('Estado', estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano acá abajo">a mano: '+esc(p.estado)+'</span>'):''))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
-    row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>')+
-    (atcFotos(p).length ? row('📷 Fotos del producto', atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
-    row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
-  /* 🎧 Ni una ATC ni una RPT se cobran (§4fy): no son ventas y Contabilidad no las muestra, así
-     que lo que se anotara acá no aparecía en ningún lado — y el aviso mandaba a «revisá el monto
-     en Contabilidad», donde no están. */
-  var mark = (!p.pagado && !esRPT(p.oc) && !esATC(p.oc)) ? (
-    '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
-      '<div class="lb" style="margin-bottom:8px">💵 Marcar como pagado — ¿con qué pagó?</div>'+
+  /* 🎧 Ni una ATC ni una RPT se cobran (§4fy): no son ventas y Contabilidad no las muestra. */
+  var mark = (!p.pagado && !rpt && !atc) ? (
+      '<div class="lb" style="margin:12px 0 8px">💵 Marcar como pagado — ¿con qué pagó?</div>'+
       '<div class="modal-actions">'+
         '<button class="btn btn-sm" style="background:var(--green);color:#fff" onclick="markPaid(\''+p.id+'\',\'Efectivo\')">💵 Efectivo</button>'+
-        /* 📱 Un botón POR BANCO (§4fy): «QR» a secas quedaba como una fila suelta en el Cierre
-           por forma de pago, al lado de «QR BISA», y no se podía cruzar con ningún extracto. */
+        /* 📱 Un botón POR BANCO (§4fy) */
         bancosParaCobrar(p).map(function(b){
           return '<button class="btn btn-sm" style="background:var(--series-blue,#3B82F6);color:#fff" onclick="markPaid(\''+p.id+'\',\'QR\',\''+esc(b)+'\')">📱 QR '+esc(b)+'</button>';
         }).join('')+
         '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
-      '</div>'+
-    '</div>') : '';
-  var rptSec = botonesRpt(p);
-  var stockSec =
-    '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
-      '<div class="lb" style="margin-bottom:8px">📦 Estado de stock</div>'+
-      '<div class="modal-actions">'+
-        estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
-        estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
-        estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">'+
-        '<div class="lb">✅ ¿Verificado / listo para cargar?</div>'+
-        '<button class="btn btn-sm" style="'+(p.verificado?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleVerificado(\''+p.id+'\')">'+(p.verificado?'✓ SÍ, verificado':'Marcar verificado')+'</button>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">'+
-        '<div class="lb">🚚 ¿Entregado?</div>'+
-        '<button class="btn btn-sm" style="'+(p.entregado?'background:var(--green);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleEntregado(\''+p.id+'\')">'+(p.entregado?'✓ SÍ, entregado':'Marcar entregado')+'</button>'+
-        cierreEntTxt(p)+
+      '</div>') : '';
+  var turnoTxt=p.turno ? (normTurno(p.turno)==='PM' ? '🌆 Tarde' : '🌅 Mañana') : 'sin turno';
+  var top='<div class="fl-top">'+
+      '<div class="fl-num"><b>'+(dnum?('#'+dnum):'—')+'</b><small>del día</small></div>'+
+      '<div class="fl-cli"><div class="n">'+esc(p.cliente||'—')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+'</div></div>'+
+      '<div class="fl-pills">'+
+        '<span class="fl-pill fl-dato"><small>📥 Ingresó</small>'+esc(fichaIngresoTxt(p))+'</span>'+
+        '<span class="fl-pill fl-dato fl-ent"><small>🚚 Entrega</small>'+esc(p.fecha?fmtFecha(p.fecha):'Sin fecha')+' · '+turnoTxt+'</span>'+
+        '<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'+
+        (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
+      '</div></div>';
+  var obs=String(p.observaciones||'').trim();
+  var obsHtml=obs ? ('<div class="fl-obs"><div class="i">📝</div><div class="fl-obs-c"><div class="t">Observaciones — leer antes de cargar</div><div class="x">'+esc(obs)+'</div></div></div>') : '';
+  var cel=String(p.celular||'').trim(), wa=(typeof misWaCliente==='function') ? misWaCliente(cel) : '';
+  var telNum=cel.replace(/[^0-9+]/g,'');
+  var colDonde='<div class="fl-c"><h4>📍 Dónde entregar</h4>'+
+      (p.zona?('<span class="fl-zona">'+esc(p.zona)+'</span>'):'')+
+      '<div class="fl-dir">'+(p.direccion?esc(p.direccion):'<span style="color:var(--muted)">Sin dirección escrita</span>')+'</div>'+
+      '<div class="fl-btns">'+
+        (p.maps ? ('<a class="fl-btn p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button type="button" class="fl-btn" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button>')
+                : ('<button type="button" class="fl-btn a" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>'))+
+        (cel ? ('<a class="fl-btn" href="tel:'+esc(telNum)+'">📞 '+esc(cel)+'</a>') : '')+
+        (wa ? ('<a class="fl-btn w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>') : '')+
       '</div>'+
     '</div>';
-  var despachoSec =
-    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
-      '<div class="lb" style="margin-bottom:8px">🚛 Vehículo y chofer</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
+  var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaProdsHtml(p)+
+      '<div class="fl-res">'+prodResumen(p)+'</div>'+
+      '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>✏️ Cambiar de dónde sale cada producto</summary><div class="fl-marcas-in">'+
+        '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div>'+prodRevList(p)+'</div></details>'+
+      '<div class="fl-est"><span class="fl-est-t">📦 Estado de stock <i>· 🤖 se pone solo con la marca de cada producto</i></span>'+
+        '<div class="fl-auto">'+estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+'</div>'+
+        '<div class="modal-actions">'+
+          estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
+          estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
+          estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
+        '</div></div>'+
+      (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     '</div>';
-  var ubicSec =
-    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
-      '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
-      (p.maps
-        ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
-        : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
+  var colCamion='<div class="fl-c"><h4>🚛 Camión y entrega</h4>'+
+      '<div class="fl-sel">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
+      fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
+      fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+
+      '<div class="fl-sub">📷 Fotos de la entrega</div>'+fotosHtml(p, true)+
+      '<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>'+
     '</div>';
-  var html='<div class="modal-h"><h3>Pedido'+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      avisoModifHtml(p)+body+rptSec+mark+stockSec+despachoSec+ubicSec+
-      '<div class="modal-actions" style="margin-top:16px">'+
+  var mas='<details class="fl-mas"'+(FICHA_MAS_ABIERTA?' open':'')+' ontoggle="FICHA_MAS_ABIERTA=this.open"><summary>Más datos (venta, cobro, facturación)</summary><div class="fl-mas-in">'+
+      row('Nota de venta', esc(p.nota))+
+      row(atc?'N° ATC':rpt?'N° de pedido':'N° OC', esc(p.oc))+row(rpt?'Solicitado por':'Vendedor', esc(p.vendedor))+
+      row('Ingresado', esc(tsFmt(p.ts)))+row('Celular', esc(p.celular))+row('Garantía a', esc(p.garantia))+
+      row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer))+
+      mark+
+    '</div></details>';
+  var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b fl-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
+      avisoModifHtml(p, false, true)+top+obsHtml+
+      '<div class="fl-g">'+colDonde+colCarga+colCamion+'</div>'+
+      botonesRpt(p)+mas+
+      '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
-        '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red);border-color:var(--red-border)" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
+        '<button class="btn btn-ghost btn-sm fl-borrar" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
+        '<button class="btn btn-primary fl-listo" onclick="closeModal()">✓ Listo</button>'+
       '</div>'+
-      '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
     '</div>';
-  openModal(html);
+  openModal(html, true);
+  var box=document.getElementById('modal-box'); if(box) box.classList.add('fl-ficha');
 }
-
+/* 📝 (23/10, dueño eligió la «B»: «que no se olviden de leer las observaciones») Prender «Listo para cargar» en un pedido CON observaciones
+   pasa por una ventana que las muestra en grande: «✓ Las leí, marcar listo» o «Cancelar». Apagarlo, o un pedido sin observaciones, va
+   directo. Vale para la ficha y para el 📦 de la tabla. En Playwright va directo salvo `window.OBS_PRUEBA` (las pruebas de siempre
+   marcan verificado sin pasar por la ventana). */
+function obsPreguntaActiva(){ return !(navigator.webdriver && !window.OBS_PRUEBA); }
+function obsAntesDeListo(id, hacer){
+  var p=findById(id); if(!p) return;
+  var obs=String(p.observaciones||'').trim();
+  if(p.verificado || !obs || !obsPreguntaActiva()){ hacer(); return; }
+  var ov=document.getElementById('obs-conf');
+  if(!ov){ ov=document.createElement('div'); ov.id='obs-conf'; ov.className='no-print'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="obs-c" role="dialog" aria-modal="true" aria-labelledby="obs-t">'+
+      '<div class="obs-h" id="obs-t">📝 Antes de marcarlo «Listo para cargar»</div>'+
+      '<div class="obs-b"><div class="obs-k">Observaciones de '+esc(p.cliente||'este pedido')+'</div><div class="obs-x">'+esc(obs)+'</div>'+
+      '<div class="obs-a"><button type="button" class="fl-btn" id="obs-no">Cancelar</button><button type="button" class="fl-btn p" id="obs-si">✓ Las leí, marcar listo</button></div></div></div>';
+  ov.hidden=false;
+  var cerrar=function(){ ov.hidden=true; ov.innerHTML=''; };
+  document.getElementById('obs-no').onclick=cerrar;
+  document.getElementById('obs-si').onclick=function(){ cerrar(); hacer(); };
+  ov.onclick=function(e){ if(e.target===ov) cerrar(); };
+  try{ document.getElementById('obs-si').focus(); }catch(e){}
+}
+function verificadoConObs(id){ obsAntesDeListo(id, function(){ toggleVerificado(id); }); }
 function markPaid(id, metodo, banco){
   var p=findById(id); if(!p) return;
   if(esATC(p.oc) || esRPT(p.oc)){ toast(noSeCobraTxt(p),'err',6000); showPedidoModal(id); return; }   // §4fy
