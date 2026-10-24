@@ -1,5 +1,5 @@
 /* 🤖 (24/10, dueño: «lo del bot de administración mejor que se muestre en una pestaña nueva de solo BOT, y solo se habilite cuando se coloca
-   la clave de administración o ingresan como logística. Así vamos liberando espacio y limpiando administración»).
+   la clave de administración o ingresan como logística»; 24/10 tarde: *«logística, Eduardo o administración… o ponen la clave»*. Así vamos liberando espacio y limpiando administración»).
    Se corre:  node tests/test_bot_tab.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path');
@@ -22,7 +22,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
     quienElegir('', 'logistica'); out.log=!t.hidden; out.badge=(t.querySelector('.nx-tb')||{}).textContent||'';
     showView('bot'); out.abre=document.getElementById('view-bot').classList.contains('active') && document.getElementById('tab-bot').classList.contains('active');
     out.lista=document.querySelectorAll('#wa-resp-adm .wa-resp-c').length;
-    quienElegir('', 'admin'); out.adminSinClave=t.hidden && document.getElementById('view-admin').classList.contains('active');
+    quienElegir('', 'admin'); out.admin=!t.hidden;
+    quienElegir('Carola Chavez'); out.vendSinVer=t.hidden && document.getElementById('view-admin').classList.contains('active');
+    quienElegir('Eduardo Añez'); out.eduardo=!t.hidden;
+    quienElegir('Carola Chavez'); localStorage.setItem('me_adm_dev','1'); botTabPintar(); out.compuAdm=t.hidden;
     UNLOCKED=true; botTabPintar(); out.clave=!t.hidden;
     WA_RESP=[]; showView('bot'); out.vacio=!document.getElementById('bot-vacio').hidden;
     return out;
@@ -32,7 +35,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
   chk('las respuestas al bot viven en la pestaña Bot, no en Administración', r.enBot, r);
   chk('entrando como Logística aparece, con el número de respuestas sin atender', r.log && r.badge==='2', r);
   chk('abre la pestaña con las respuestas', r.abre && r.lista===2, r);
-  chk('cambiar a «Administración» sin la clave la esconde (y sale de ahí)', r.adminSinClave, r);
+  chk('entrando como «Administración» aparece (dueño, 24/10)', r.admin, r);
+  chk('una vendedora no la ve (y si estaba ahí, sale a Administración)', r.vendSinVer, r);
+  chk('Eduardo la ve (dueño, 24/10)', r.eduardo, r);
+  chk('⚠️ la compu donde alguna vez se puso la clave (me_adm_dev) ya NO alcanza: hace falta la clave de esta visita', r.compuAdm, r);
   chk('con la clave de Administración aparece', r.clave, r);
   chk('sin respuestas dice «✅ No hay respuestas de clientes esperando»', r.vacio, r);
   chk('sin errores en la página', errs.length===0, errs);
