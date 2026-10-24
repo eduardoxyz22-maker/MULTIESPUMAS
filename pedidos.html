@@ -33605,18 +33605,19 @@ function fichaObsChips(p){
     if(/DOBLE BOLSA|2 BOLSAS|DOS BOLSAS/.test(t)) add('🛍️','Doble bolsa','bolsa'); else if(/\bBOLSA/.test(t)) add('🛍️','Con bolsa','bolsa');
     if(/ESQUINER/.test(t)) add('📐','Esquineros','esq');
     if(/PLASTICO|NYLON|STRETCH/.test(t)) add('🎁','Envolver en plástico','plast');
-    var h=t.match(/(\d+|UNA|MEDIA)\s*(HORAS?|HRS?|H)\b[^.]{0,8}?ANTES/);
-    if(/LLAMAR|LLAMEN|LLAME\b|AVISAR|AVISEN|COMUNICAR/.test(t)) add('📞', h ? ('Llamar '+(h[1]==='UNA'?'1':h[1]==='MEDIA'?'½':h[1])+' h antes') : 'Llamar antes', 'llamar');
+    var N=fichaNota(p);   // 📞 🕐 💵 lo que la NOTA pide, leído UNA vez (la plata del pedido sigue en «Más datos»)
+    if(N.llamar) add('📞','Llamar '+N.llamar,'llamar');
     var pi=t.match(/(\d+)\s*(?:ER|ERO|DO|RO|TO|MO|VO|NO|°|º)?\s*PISO/) || t.match(/PISO\s*(?:N\S*\s*)?(\d+)/);
     if(pi) add('🪜','Subir al piso '+pi[1],'piso'); else if(/ESCALERA/.test(t)) add('🪜','Hay escaleras','piso'); else if(/\bSUBIR/.test(t)) add('🪜','Hay que subirlo','piso');
     if(/(RETIRAR|LLEVAR|LLEVARSE|RECOGER|SACAR)\s+(?:EL\s+|SU\s+|LOS\s+)?(?:COLCHON(?:ES)?\s+)?VIEJO|COLCHON(ES)? VIEJO/.test(t)) add('♻️','Retirar el colchón viejo','viejo');
     if(/\bARMA(R|DO|RLO|RLA)\b|INSTALA|ENSAMBL/.test(t)) add('🔧','Armarlo en la casa','armar');
-    var e=t.match(/ENTRE\s+(?:LAS?\s+)?(\d{1,2}(?::\d{2})?)\s*(?:Y|A|-)\s*(?:LAS?\s+)?(\d{1,2}(?::\d{2})?)/);
-    var a=t.match(/(ANTES|DESPUES|DESDE|HASTA|A PARTIR)\s+DE\s+LAS?\s+(\d{1,2}(?::\d{2})?)/) || t.match(/(ANTES|DESPUES|DESDE|HASTA)\s+LAS?\s+(\d{1,2}(?::\d{2})?)/);
-    if(e) add('🕐','Entre las '+e[1]+' y las '+e[2],'hora'); else if(a) add('🕐',flCap(a[1]==='DESPUES'?'después':a[1])+' de las '+a[2],'hora');
+    // 🕐 (24/10, dueño: «cuando ponen hora en texto no identifica la etiqueta») la hora sale de fichaNota: «de 11 a 12», «a las 12:00»,
+    //    «a partir de las 2:30 de la tarde», «después del medio día», «al final de la tarde»; si solo dice «coordinar la hora», eso
+    var hTx=N.hora || N.horaTxt;
+    if(hTx) add('🕐', hTx.charAt(0).toUpperCase()+hTx.slice(1), 'hora');
+    else if(/(COORDINAR|CONFIRMAR|PREGUNTAR|ACORDAR)[^.·]{0,40}HORA/.test(t)) add('🕐','Coordinar la hora','hora');
     if(/FACTURA/.test(t)) add('🧾','Llevar la factura','fact');
     if(/FRAGIL|CUIDADO/.test(t)) add('⚠️','Con cuidado','cuid');
-    var N=fichaNota(p);   // 💵 lo que la NOTA pide cobrar (la plata del pedido sigue en «Más datos»)
     if(N.cobrar) add('💵','Cobrar '+fmtBs0(N.cobrar),'cobra'); else if(N.contra) add('💵','Cobra al entregar','cobra');
     if(N.tarjetero) add('💳','Llevar el tarjetero','tarj');
   }
@@ -33782,31 +33783,46 @@ function fichaNota(p){
     while((mc=re.exec(sinUrl.replace(/\s(?=\d)/g,'')))) if(mc[2]!==cel){ N.recibeCel=mc[2]; break; }
   }
   // 📞 llamar antes
-  if(/LLAMAR|LLAMEN|LLAME\b|LLMAR|AVISAR|AVISEN|AVIASAR|COMUNICAR/.test(T)){
-    var mh=T.match(/(\d+|UNA|MEDIA)\s*(HORAS?|HRS?|H|MIN(?:UTOS)?)\b[^.]{0,8}?ANTES/);
-    N.llamar = mh ? ((mh[1]==='UNA'?'1':mh[1]==='MEDIA'?'½':mh[1])+(/^MIN/.test(mh[2])?' min':' h')+' antes') : 'antes';
+  if(/LLAMAR|LLAMEN|LLAME\b|LLMAR|AVISAR|AVISEN|AVISA\b|AVISE\b|AVIASAR|COMUNICAR/.test(T)){
+    var mh=T.match(/(\d+|UNA|MEDIA|DOS|TRES)\s*(HORAS?|HRS?|H|MIN(?:UTOS)?)\b[^.]{0,8}?ANTES/);
+    N.llamar = mh ? ((({ UNA:'1', MEDIA:'½', DOS:'2', TRES:'3' })[mh[1]]||mh[1])+(/^MIN/.test(mh[2])?' min':' h')+' antes') : 'antes';
   }
-  // 🕐 el horario (y de qué turno es)
+  // 🕐 el horario (y de qué turno es). «2:30 de la tarde» = 2:30 PM; «apartir» = «a partir»
+  var T0=T; T=T.replace(/APARTIR/g,'A PARTIR').replace(/(\d)\s+:(\d{2})/g,'$1:$2').replace(/(\d{1,2}(?::\d{2})?)\s*(?:HRS?\.?\s*)?(?:EN )?ADELANTE/g,'DESDE LAS $1').replace(/(\d{1,2}(?::\d{2})?)\s*(?:HRS?\.?\s*)?(?:DE|EN|POR) LA (TARDE|NOCHE|MANANA)\b/g, function(m, h, d){ return h+(d==='MANANA'?' AM':' PM'); });
   var e=T.match(/\b(?:ENTRE|DE)\s+(?:LAS?\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM|HRS?)?\s*(?:Y|A|-|HASTA)\s*(?:LAS?\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM|HRS?)?\b/);
+  if(!e){   // «10-11 AM», «12:00 a 12:30 am» (sin «de/entre» adelante, con am/pm al final)
+    var e2=T.match(/(?:^|[^\d:\/.])(\d{1,2})(?::(\d{2}))?\s*(?:A|-)\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/);
+    if(e2) e=[e2[0], e2[1], e2[2], '', e2[3], e2[4], e2[5]];
+  }
   var a=T.match(/\b(ANTES|DESPUES|DESDE|HASTA|A PARTIR)\s+(?:DE\s+)?(?:LAS?\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM|HRS?)?\b/);
   var s=T.match(/\b(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/);
   if(e && Number(e[1])<=23 && Number(e[4])<=23){
     var am2=(e[6]==='PM'||e[6]==='AM')?e[6]:'';
     var h1=flHora(e[1], e[3]==='PM'||e[3]==='AM'?e[3]:(am2==='PM' && Number(e[1])<Number(e[4])?'PM':'')), h2=flHora(e[4], am2);
     N.hora='entre las '+e[1]+(e[2]?':'+e[2]:'')+' y las '+e[4]+(e[5]?':'+e[5]:'')+(am2?' '+am2.toLowerCase():'');
-    N.horaT = h1<12 ? 'AM' : 'PM'; N.horaTxt=e[0].trim();
+    N.horaT = h1<12 ? 'AM' : (h1>=13 ? 'PM' : ''); N.horaTxt=e[0].trim();   // «de 12 a 12:30» = el mediodía: no choca con ningún turno
   } else if(a){
     var hh=flHora(a[2], a[4]==='PM'||a[4]==='AM'?a[4]:'');
-    N.hora=({ ANTES:'antes', DESPUES:'después', DESDE:'desde', HASTA:'hasta', 'A PARTIR':'a partir' })[a[1]]+' de las '+a[2]+(a[3]?':'+a[3]:'');
+    N.hora=({ ANTES:'antes de las', DESPUES:'después de las', DESDE:'desde las', HASTA:'hasta las', 'A PARTIR':'a partir de las' })[a[1]]+' '+a[2]+(a[3]?':'+a[3]:'')+((a[4]==='AM'||a[4]==='PM')?' '+a[4].toLowerCase():'');
     N.horaT = (a[1]==='ANTES'||a[1]==='HASTA') ? (hh<=13?'AM':'') : (hh>=13?'PM':(hh<12?'AM':''));
     N.horaTxt=a[0].trim();
   } else if(s){
     var hs=flHora(s[1], s[3]); N.hora='a las '+s[1]+(s[2]?':'+s[2]:'')+' '+s[3].toLowerCase(); N.horaT=hs<12?'AM':'PM'; N.horaTxt=s[0].trim();
   } else if(/ANTES DEL? MEDIO ?DIA/.test(T)){ N.hora='antes del mediodía'; N.horaT='AM'; N.horaTxt='antes del medio día'; }
-  if(!N.horaT){
-    if(/(POR|EN) LA TARDE|\bENTREGA (EN LA )?PM\b|\bTURNO PM\b/.test(T)){ N.horaT='PM'; N.horaTxt=N.horaTxt||'por la tarde'; }
-    else if(/(POR|EN) LA MANANA|\bENTREGA (EN LA )?AM\b|\bTURNO AM\b/.test(T)){ N.horaT='AM'; N.horaTxt=N.horaTxt||'por la mañana'; }
+  else if(/DESPUES DEL? MEDIO ?DIA/.test(T)){ N.hora='después del mediodía'; N.horaT='PM'; N.horaTxt='después del medio día'; }
+  else if(/\bAL MEDIO ?DIA/.test(T)){ N.hora='al mediodía'; N.horaTxt='al medio día'; }
+  else {
+    var hm=T.match(/\bA LAS (\d{1,2})(?::(\d{2}))?\b/) || T.match(/(?:^|[^\d:])(\d{1,2}):(\d{2})(?![\d:])/);   // «a las 10», «horario 12:00»
+    if(hm && Number(hm[1])<=23 && (!hm[2] || Number(hm[2])<=59)){
+      var h0=flHora(hm[1], ''); N.hora='a las '+hm[1]+(hm[2]?':'+hm[2]:''); N.horaT=h0<12?'AM':(h0>=13?'PM':''); N.horaTxt=N.hora;
+    }
   }
+  if(!N.horaT){
+    var fin=/FINAL DE LA TARDE/.test(T), tem=/TEMPRANO/.test(T) && !/TARDE/.test(T);
+    if(/(POR|EN|TRANSCURSO DE) LA TARDE|FINAL DE LA TARDE|\bENTREGA (EN LA )?PM\b|\bTURNO PM\b/.test(T)){ N.horaT='PM'; N.horaTxt=N.horaTxt||(fin?'al final de la tarde':'por la tarde'); }
+    else if(/(POR|EN|TRANSCURSO DE) LA (MANANA|MNANAN?|MANNA|MANANAN)\b|\bENTREGA (EN LA )?AM\b|\bTURNO AM\b/.test(T) || tem){ N.horaT='AM'; N.horaTxt=N.horaTxt||(tem?'temprano':'por la mañana'); }
+  }
+  T=T0;
   // 💵 lo que la nota pide cobrar
   var mb=T.match(/COBRAR\s*(?:EL\s+SALDO\s*)?(?:DE\s*)?(?:BS\.?\s*)?(\d[\d.,]*)/) || T.match(/SALDO\s*(?:A COBRAR|POR COBRAR|PENDIENTE)?\s*(?:DE\s*)?(?:BS\.?\s*)?(\d[\d.,]*)/);
   if(mb){ var mo=parseMonto(mb[1]); if(mo>=10) N.cobrar=mo; }
@@ -33910,7 +33926,7 @@ function fichaQueHacer(p, N, ret){
   var carga=orden.map(function(k, i){ var u=lug[k]; return /^en /.test(k) ? ((i===0?'Cargar ':'')+'<b>'+u+(i===0?(' bulto'+(u===1?'':'s')):'')+' '+esc(k)+'</b>') : ('<b>'+u+' '+esc(k)+'</b>'); }).join(' y ');
   var dia=p.fecha ? ((function(t){ var w=t.split(' '); return w.length>1 ? (w[0].slice(0,3)+' '+w[1]) : t; })(nxDiaTxt(p.fecha))+(p.turno?(' a la '+(normTurno(p.turno)==='PM'?'tarde':'mañana')):'')) : 'sin fecha';
   var donde=ret ? ('lo retira el cliente en <b>'+esc(ret.donde)+'</b>, '+esc(dia)) : ('entregar <b>'+esc(dia)+(N.hora?(', '+esc(N.hora)):'')+'</b>'+(p.zona?(' · '+esc(p.zona)):''));
-  var tel=N.llamar ? ('📞 llamar <b>'+esc(N.llamar)+' a '+esc(N.recibe||'el cliente')+'</b>') : (N.recibe ? ('👤 recibe <b>'+esc(N.recibe)+'</b>') : '');
+  var tel=N.llamar ? ('📞 llamar <b>'+esc(N.llamar)+(N.recibe?(' a '+esc(N.recibe)):' al cliente')+'</b>') : (N.recibe ? ('👤 recibe <b>'+esc(N.recibe)+'</b>') : '');
   var partes=[carga||'<b>nada que cargar</b>', donde]; if(tel) partes.push(tel);
   return '<div class="fl-qh"><span class="fl-qh-k">🧭 Qué hacer</span>'+partes.map(function(t){ return '<span>'+t+'</span>'; }).join('<span class="fl-qh-s">›</span>')+'</div>';
 }
