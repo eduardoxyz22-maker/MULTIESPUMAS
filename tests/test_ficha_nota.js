@@ -67,6 +67,20 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('reabrir la ficha ya no dice «después de que lo viste»', r.despues2===false, r.despues2);
   chk('la nota del recuadro amarillo va limpia', !/32218/.test(r.obsX), r.obsX.slice(0,80));
   chk('bultos: sin lo de tienda ni lo que no se lleva; lo de tienda aparte', /3 bultos/.test(r.bultos) && /protector/i.test(r.tiendita), { b:r.bultos, t:r.tiendita });
+  // 🕐 (24/10, dueño: «cuando ponen hora en texto no identifica la etiqueta») cada forma de escribir la hora sale como etiqueta
+  const horas=await page.evaluate(()=>{
+    var C=function(o){ return fichaObsChips({ id:'h', observaciones:o, productos:[] }).map(function(c){ return c.t; }).join(' | '); };
+    return { a:C('POR FAVOR LLAMAR AL CLIENTE UNA HORA ANTES GRACIAS'), b:C('LA ENTREGA DE 11 A 12'), c:C('HORARIO DE ENTREGA 12:00'),
+      d:C('LA ENTREGA POR FAVOR APARTIR DE LAS 2:30 DE LA TARDE'), e:C('ENTREGAR DESPUES DEL MEDIO DIA'), f:C('ENTREGA AL FINAL DE LA TARDE'),
+      g:C('10-11 AM. LLEVAR COMODIN'), h:C('PUEDE RECIBIR DE 4:00 EN ADELANTE'), i:C('COORDINAR LA HORA Y SU UBICACION'), j:C('LLAMAR DOS HORAS ANTES'),
+      k:C('EN LA MAÑANA HASTA LAS 11 AM ESTARA EN CASA'), l:C('ENTREGA EN EL TRANSCURSO DE LA TARDE'),
+      q:(function(){ var p={ id:'q', observaciones:'LLAMAR UNA HORA ANTES', productos:[] }; return fichaQueHacer(p, fichaNota(p), null).replace(/<[^>]+>/g,''); })(),
+      t12:fichaNota({ observaciones:'VIERNES 12:00 A 12:30 AM ESTARA EN CASA' }).horaT };
+  });
+  chk('🕐 la hora escrita de muchas formas sale como etiqueta', horas.a==='Llamar 1 h antes' && /Entre las 11 y las 12/.test(horas.b) && /A las 12:00/.test(horas.c) && /A partir de las 2:30 pm/.test(horas.d) &&
+    /Después del mediodía/.test(horas.e) && /Al final de la tarde/.test(horas.f) && /Entre las 10 y las 11 am/.test(horas.g) && /Desde las 4:00/.test(horas.h) &&
+    /Coordinar la hora/.test(horas.i) && /Llamar 2 h antes/.test(horas.j) && /Hasta las 11 am/.test(horas.k) && /Por la tarde/.test(horas.l), horas);
+  chk('«llamar 1 h antes al cliente» (no «a el cliente») y «de 12 a 12:30» no choca con ningún turno', /llamar 1 h antes al cliente/.test(horas.q) && horas.t12==='', { q:horas.q, t:horas.t12 });
   chk('lo de tienda NO se repite en la lista de productos y la línea dice su medida (dueño, 24/10)', !/PROTECTOR/i.test(r.prodsTxt) && /protector de colchon 160×190/i.test(r.tiendita), { p:r.prodsTxt, t:r.tiendita });
   chk('el renglón que no se lleva sale tachado y dice por qué', /NASA/.test(r.no) && /No se lleva/.test(r.no), r.no);
   chk('lo que cambió, en el renglón (antes 1, ahora 2) y lo quitado aparte', /antes 1, ahora 2/.test(r.cam) && /BASE DE MADERA/.test(r.quit) && /LO QUITARON/.test(r.quit), { c:r.cam, q:r.quit });
