@@ -906,6 +906,9 @@ th.sortable:hover{color:var(--teal-dk)}
 @media(min-width:901px){.modal.fl-ficha .fl-g{grid-template-columns:minmax(0,1fr) 360px}}
 .modal.fl-ficha{max-width:min(1440px,97vw)}
 .modal.fl-ficha .fl-lado{display:grid;gap:12px;min-width:0;align-content:start}
+.modal.fl-ficha .fl-est-abajo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:10px;border:1px solid #e3eaea;border-radius:12px;padding:8px 12px;background:#fafcfc}
+.modal.fl-ficha .fl-est-abajo .modal-actions{margin:0;display:flex;gap:6px;flex-wrap:wrap}
+.modal.fl-ficha .fl-est-abajo .fl-marcas{margin:0 0 0 auto;border:0;padding:0}
 .modal.fl-ficha .fl-izq{display:grid;gap:12px;min-width:0;align-content:start}.modal.fl-ficha .fl-izq > .fl-obs{margin-bottom:0}
 .modal.fl-ficha .fl-modp{flex-wrap:nowrap}.modal.fl-ficha .fl-modp > span{flex:1;min-width:0}.modal.fl-ficha .fl-modok{white-space:nowrap;flex:none}
 .modal.fl-ficha .fl-mapa{height:105px}
@@ -34017,17 +34020,18 @@ function showPedidoModal(id){
   var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
   var sug=ret ? null : fichaSugerido(p);
   var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N)+
-      '<div class="fl-est"><b>Stock:</b> '+estadoStockBadge(p)+(aMano?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+
+      (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
+    '</div>';
+  /* (24/10, dueño: «eso de stock como se marca solo podría ir abajo») el estado de stock y sus tres botones, en una franja debajo de las
+     dos columnas: siguen a la vista (logística los usa), pero ya no ocupan la columna de los productos. */
+  var stockHtml=
+      '<div class="fl-est fl-est-abajo"><b>Stock:</b> '+estadoStockBadge(p)+(aMano?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+
         ' <span class="fl-est-t">(se pone solo con la marca de cada producto)</span>'+
         '<div class="modal-actions">'+
           estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
           estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
           estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
-        '</div></div>'+
-      '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>❓ Qué quiere decir cada botón</summary><div class="fl-marcas-in">'+
-        '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div></div></details>'+
-      (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
-    '</div>';
+        '</div></div>';
   var colCamion='<div class="fl-c"><h4>'+(ret?'🏪 Entrega al cliente':'🚛 Camión y entrega')+'</h4>'+
       (sug ? ('<div class="fl-sug"><div><b>💡 '+esc(sug.v)+'</b><i>'+esc(sug.por)+'</i></div>'+
         '<button type="button" class="fl-btn fl-btn-s p" onclick="fichaSugUsar(\''+pid+'\',\''+esc(sug.v).replace(/'/g,"\\'")+'\')">✓ Usar este</button></div>') : '')+
@@ -34056,7 +34060,7 @@ function showPedidoModal(id){
       top+modHtml+fichaQueHacer(p, N, ret)+
       /* (24/10, dueño con un dibujo: «optimizar aún más el espacio») dos columnas desde arriba: a la izquierda «Antes de cargar» + lo que
          se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
-      '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+
+      '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+stockHtml+
       botonesRpt(p)+mas+
       '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
