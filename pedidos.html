@@ -1256,6 +1256,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .nx-tab.on{ background:var(--c); border-color:var(--c); color:#fff; }
 .nx-tab .nx-num{ background:var(--tl); }
 .nx-sug-lista{ display:grid; gap:6px; margin-top:6px; }
+.nx-sug-min{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px; background:#eaf6f5; border:1px solid #c9e7e4; border-radius:12px; padding:8px 12px; margin:0 0 14px; color:#0f3d3a; font-size:.88rem; }
+.nx-sug-min .nx-btn{ margin-left:auto; --cd:#00756f; --bd:#9fd6d1; }
+.nx-tab.nx-sug-ocultar{ background:#fff; color:#5b6b70; }
 .nx-flecha{ flex:none; color:var(--c); font-weight:900; animation:nx-flecha 1.2s ease-in-out infinite; }
 @keyframes nx-flecha{ 50%{ transform:translateX(4px); } }
 .nx-sug-v{ flex:0 1 190px; min-width:120px; } .nx-sug-v select{ width:100%; } .nx-sug-v small{ display:block; font-size:.7rem; color:var(--cd); font-weight:700; margin-top:2px; }
@@ -40174,6 +40177,9 @@ function nxSugDatos(dia){
   });
   return { dia:dia, lista:lista, cams:orden.map(function(v){ return cams[v]; }) };
 }
+var LS_SUG_OCULTO='me_sug_oculto';
+function nxSugVisible(){ try{ return localStorage.getItem(LS_SUG_OCULTO)!=='1'; }catch(e){ return true; } }
+function nxSugMostrar(si){ try{ if(si) localStorage.removeItem(LS_SUG_OCULTO); else localStorage.setItem(LS_SUG_OCULTO,'1'); }catch(e){} nxSugPintar(); }
 function nxSugPintar(){
   var el=document.getElementById('nx-sug'); if(!el) return;
   if(!UNLOCKED){ el.innerHTML=''; el._h=''; return; }
@@ -40181,6 +40187,14 @@ function nxSugPintar(){
   if(NX_SUG_DIA==='hoy' && !nH) NX_SUG_DIA='manana';
   var D=nxSugDatos(nxSugDia());
   if(!D.lista.length && !nH){ el.innerHTML=''; el._h=''; return; }
+  /* 🙈 (24/10, dueño: «pon botón ocultar esto, no lo usan creo») Escondido queda UNA línea con cuántos esperan camión y «Mostrar»,
+     para que no se pierda el aviso. Por aparato (`LS_SUG_OCULTO`), como «Ocultar camiones». */
+  if(!nxSugVisible()){
+    var nTot=nM+nH, hm=nTot ? ('<div class="nx-sug-min" id="nx-sug-caja">🚚 <b>Sin camión:</b>'+esc(' '+[nM?(nM+' para el '+nxDiaTxt(proximoDiaEntrega())):'', nH?(nH+' para hoy'):''].filter(Boolean).join(' y '))+
+      '<button type="button" class="nx-btn nx-btn-suave" onclick="nxSugMostrar(true)">👁️ Mostrar las sugerencias</button></div>') : '';
+    if(el._h!==hm){ el.innerHTML=hm; el._h=hm; }
+    return;
+  }
   var chip=function(k, lbl, n){ return '<button type="button" class="nx-tab'+(NX_SUG_DIA===k?' on':'')+'" onclick="NX_SUG_DIA=\''+k+'\';nxSugPintar()">'+lbl+' <span class="nx-num">'+n+'</span></button>'; };
   var opts=function(sel){ return Object.keys(VEHICULOS).map(function(v){ return '<option'+(v===sel?' selected':'')+'>'+esc(v)+'</option>'; }).join(''); };
   var filas=D.lista.map(function(s,i){
@@ -40200,7 +40214,8 @@ function nxSugPintar(){
   var h='<div class="nx nx-teal nx-sug" id="nx-sug-caja">'+
     '<div class="nx-cab">'+nxIco('cam')+'<div class="nx-cuerpo"><div class="nx-tit">'+(D.lista.length?('⚠️ Sin camión para '+esc(NX_SUG_DIA==='hoy'?('hoy '+nxDiaTxt(D.dia)):nxCuandoTxt(D.dia))+' · '+D.lista.length+' pedido'+(D.lista.length===1?'':'s')):('✅ '+(NX_SUG_DIA==='hoy'?'Hoy':'Mañana')+' todos tienen camión'))+'</div>'+
       '<div class="nx-sub">El panel propone el camión que ya va a esa zona; si ninguno va, el más cerca o el que lleva menos paradas. Vos decidís.</div></div>'+
-      '<div class="nx-tabs">'+chip('manana', nxDiaTxt(proximoDiaEntrega()).split(' ')[0].replace(/^./,function(c){ return c.toUpperCase(); }), nM)+(nH?chip('hoy','Hoy',nH):'')+'</div></div>'+
+      '<div class="nx-tabs">'+chip('manana', nxDiaTxt(proximoDiaEntrega()).split(' ')[0].replace(/^./,function(c){ return c.toUpperCase(); }), nM)+(nH?chip('hoy','Hoy',nH):'')+
+        '<button type="button" class="nx-tab nx-sug-ocultar" onclick="nxSugMostrar(false)" title="Esconder esta caja en este aparato">🙈 Ocultar</button></div></div>'+
     (D.lista.length?('<div class="nx-acc" style="justify-content:flex-start;margin:8px 0 2px"><button type="button" class="nx-btn" onclick="nxSugAceptarTodas()">✓ Aceptar todas ('+D.lista.length+')</button>'+
       (Object.keys(NX_SUG_CAMBIO).length?'<button type="button" class="nx-btn nx-btn-suave" onclick="NX_SUG_CAMBIO={};nxSugPintar()">↺ Volver a lo sugerido</button>':'')+'</div>'+
       '<div class="nx-sug-lista">'+filas+'</div>'):'')+
