@@ -2529,7 +2529,11 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .af-hd{display:flex;gap:10px;align-items:center;padding:12px 12px 10px 14px}
 .af-tu{display:flex;flex-direction:column;align-items:center;gap:4px;flex:none;min-width:34px}
 .af-tu b{font-size:.95rem;font-weight:800;line-height:1;color:#00756f;background:#e6f6f5;border-radius:10px;min-width:32px;height:30px;display:grid;place-items:center;padding:0 5px}
-.af-tu i{font-style:normal;font-size:.8rem;line-height:1}
+/* (24/10) la línea de la OC y la vendedora pasa por debajo del estado: así el 🌅/🌆 va a la derecha sin cortar el nombre */
+.af-hd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:start}
+.af-hd>.af-tu{grid-row:1/3;align-self:center}.af-hd>.af-who{display:contents}.af-who>b{grid-column:2;grid-row:1;align-self:center}
+.af-hd>.af-e{grid-column:3;grid-row:1;max-width:none}.af-who>.af-sub{grid-column:2/4;grid-row:2}
+.af-who .af-sub{display:flex;align-items:center;gap:6px}.af-sub em{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.af-sub .af-turno{font-style:normal;font-size:.8rem;line-height:1;margin-left:auto;flex:none}
 .af-who{flex:1;min-width:0}.af-who b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:.9rem;overflow:hidden;line-height:1.2}.af-who span{display:block;color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .af-e{align-self:flex-start;display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:.66rem;font-weight:800;white-space:nowrap;max-width:48%;overflow:hidden;text-overflow:ellipsis;flex:none}
 .af-e.ok,.af-e.stk{background:#e7f6ee;color:#0f6b3a}.af-e.mod{background:#fff3cd;color:#8a5a00}.af-e.no{background:#fde4e6;color:#a3242e}.af-e.sr{background:#f1f4f4;color:#4d6b6a}
@@ -16587,8 +16591,10 @@ function admFichaHtml(p, dn){
   var btn=function(ic, t, fn, cl){ return '<button type="button" class="'+(cl||'')+'" onclick="event.stopPropagation();'+fn+'" title="'+esc(t)+'">'+ic+'<small>'+esc(t)+'</small></button>'; };
   return '<div class="af-f af-'+E.c.split(' ')[0]+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0">'+
     '<div class="af-hd">'+(function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «el número es una cosa y el sticker otra»: el turno solo, a la izquierda)
-        return '<span class="af-tu'+(t==='PM'?' pm':t==='AM'?' am':'')+'" title="'+(t==='PM'?'Turno tarde':t==='AM'?'Turno mañana':'Sin turno')+'"><b>'+(N||'—')+'</b><i>'+(t==='PM'?'🌆':t==='AM'?'🌅':'🕓')+'</i></span>'; })()+   // (24/10, dueño) el N° chico arriba, el emoji del turno abajo, el fondo del turno
-      '<div class="af-who"><b>'+esc(p.cliente||'—')+'</b><span>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+'</span></div>'+
+        return '<span class="af-tu"><b>'+(N||'—')+'</b></span>'; })()+   // (24/10, dueño) el N° del día solo, con su fondo
+      '<div class="af-who"><b>'+esc(p.cliente||'—')+'</b><span class="af-sub"><em>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+'</em>'+
+        (function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «a la derecha, en la misma línea de la OC y la vendedora»)
+          return '<i class="af-turno" title="'+(t==='PM'?'Turno tarde':t==='AM'?'Turno mañana':'Sin turno')+'">'+(t==='PM'?'🌆':t==='AM'?'🌅':'🕓')+'</i>'; })()+'</span></div>'+
       '<span class="af-e '+E.c+'"'+(E.title?(' title="'+esc(E.title)+'"'):'')+'>'+esc(E.t)+'</span></div>'+
     '<div class="af-ps">'+(filas||'<div class="af-mas">Sin productos</div>')+'</div>'+nt+
     '<div class="af-inf">'+dir+cam+cob+'</div>'+
