@@ -34327,6 +34327,8 @@ function showPedidoModal(id){
   var box=document.getElementById('modal-box'); if(box) box.classList.add('fl-ficha');
   if(mapaPt) fichaMapaPintar(mapaPt);
   fichaAcomodar();
+  /* (24/10) …y otra vez cuando la ventana terminó de abrir y cargó la letra: medida antes, el alto de las columnas podía salir en 0 */
+  try{ requestAnimationFrame(fichaAcomodar); setTimeout(fichaAcomodar, 350); }catch(e){}
 }
 /* 📐 (24/10, dueño: «dependiendo del pedido queda un poco vacío») Si la columna de la derecha (dónde + camión) es más alta que la de los
    productos, la tira del stock sube a llenar el hueco de la izquierda; si no, queda abajo a lo ancho. Se mide después de dibujar (el mapa
@@ -34336,6 +34338,7 @@ function fichaAcomodar(){
   var izq=box.querySelector('.fl-izq'), lado=box.querySelector('.fl-lado'), est=box.querySelector('.fl-est-abajo'); if(!izq || !lado || !est) return;
   if(izq.getBoundingClientRect().left>=lado.getBoundingClientRect().left-5) return;   // una columna
   var g=box.querySelector('.fl-g'), alto=function(e){ return e.getBoundingClientRect().height; };
+  if(!alto(izq) || !alto(lado)) return;   // todavía sin dibujar: lo hace la próxima medida
   /* Mucho hueco (pedido corto): «Dónde» y «Camión» lado a lado, así la ficha baja a la mitad. Si con eso los productos quedan más altos
      que la derecha (la fila se parte), vuelve como estaba. */
   if(g && alto(lado)-alto(izq)>220 && box.getBoundingClientRect().width>=1180){
