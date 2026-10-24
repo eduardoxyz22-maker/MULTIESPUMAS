@@ -940,6 +940,11 @@ volver a poner la plata a la vista ni a esconder los botones de stock (dueño). 
 dirección; «recoger el colchón viejo» NO), avisos (`fichaAvisos`), camión sugerido (= `nxSugDatos`), ◀ ▶ del día (`fichaVecinos`), HOY/MAÑANA
 (`fichaDias`), la suma de precios en «Más datos» (`prodResumen(p,true)`). «Sin camión» con «🙈 Ocultar» (`me_sug_oculto`) y reparto por GRUPOS de
 zona, parejo entre todos los que trabajan, zona por el mapa y mapita. ⚠️ El dueño quiere ideas de la FICHA, no de camiones. `test_ficha_mejoras`, `test_sug_reparto`.
+**Compacta, una pantalla de PC (§4mb, 24/10, PUBLICADA `08c5073`)**: la nota leída (`fichaNota`: recibe, horario, cobrar, lo que no se lleva) y lo que no
+coincide (`fichaContras`, ⛔) en «Antes de cargar» con etiquetas para tildar (`me_ficha_tilde`) y la nota plegada; «MODIFICADO… DESPUÉS de que lo viste»
+(`me_ficha_vista`) y cambios por renglón; «🧭 Qué hacer» en una línea; los botones de dónde sale A LA VISTA en cada producto (`prodBtnsHtml(…,true)`:
+«✔ PTF»); lo de tienda SOLO en la línea de los bultos; Dónde + Camión a la derecha; la tira del stock abajo (sin «Qué quiere decir cada botón»).
+⚠️ No volver a esconder los botones de los productos ni a repetir lo de tienda. `tests/test_ficha_nota.js`.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá

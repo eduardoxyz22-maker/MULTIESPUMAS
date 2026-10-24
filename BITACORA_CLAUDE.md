@@ -15699,3 +15699,31 @@ captura de la caja «Sin camión» proponiendo la **Carry para los 14 pedidos**:
 - Pruebas: `test_ficha_mejoras.js` (23), `test_sug_ocultar.js` (5), `test_sug_reparto.js` (11). Batería: 218 suites, solo la roja de
   siempre (`test_ventas_marcas` 1180 px).
 - El dueño NO quiso: las ideas de camiones para la ficha («no es vaina de los camiones») ni M1-M4. Pidió ideas de la FICHA en sí.
+
+### §4mb — 🗂️ La ficha de logística compacta, en UNA pantalla de PC (24/10, PUBLICADA `08c5073`)
+El dueño: *«no me gustan tus sugerencias… mejorar la ficha que ve logística»* → mostrarle 1-7 + 1-6 → *«se ve demasiado lleno»* → una
+ficha de PC → *«si ya crea etiquetas, lo veo redundante mostrar de nuevo el texto; un botón de leer observación»* → *«es logística el que
+elige dónde se carga: no veo los botones de PTF, IM»* → *«parece captura modo celular… mal distribuido»* → dos dibujos (mover «Antes de
+cargar» a la izquierda y subir la columna de la derecha; el stock abajo porque se pone solo) → *«¿Qué quiere decir cada botón? Ni creo que
+lo usen»* (se sacó) → *«si ya decís que es de tienda, ¿para qué repetís el protector?»* (se sacó de la lista) → *«así me gusta, publica»*.
+- **La nota leída** (`fichaNota(p)`): quién recibe y su celular (`fichaNombreLimpio`), llamar N h antes, horario (y turno), cobrar Bs N,
+  tarjetero, «no armar», una fecha escrita, un mapa, lo que «ya se entregó» (`noLlevar`: se tacha, «✂️ No se lleva»). La nota limpia
+  saca «OC- …», «Importado del Excel de ROHO», etc. **`fichaContras`** = lo que NO coincide (horario vs turno, cobrar con el pedido
+  PAGADO, «no armar», fecha de la nota): ⛔ rojo en «Antes de cargar».
+- **Etiquetas para tildar** por aparato (`fichaTildar`/`fichaTildes`, `me_ficha_tilde`): «¿Las leíste?» (`obsAntesDeListo`) solo pregunta
+  lo que falta; todo tildado → directo. La nota entera va plegada en «📝 Leer la nota completa» cuando ya salió en etiquetas.
+- **«✏️ ESTE PEDIDO FUE MODIFICADO»** en la franja de arriba con «DESPUÉS de que lo viste en este aparato» (`fichaVistaDe`/
+  `fichaVistaAnotar`, `me_ficha_vista`, una vez por apertura: `FICHA_ABIERTA_ID`) y lo que cambió por renglón (`fichaCambiosProd`:
+  🆕 NUEVO, 🔢 antes N, ahora M, ➖ LO QUITARON).
+- **🧭 QUÉ HACER** en una línea (`fichaQueHacer`): bultos por lugar › entregar día, turno, horario, zona › llamar/recibe.
+- **Productos**: `fichaBultos` (colchones, somieres, almohadas, otros; lo de TIENDA en su línea, con la medida, y **NO se repite en la
+  lista**: `fichaProdsHtml` lo saltea), medida grande, 📐 ESPECIAL, y **los botones de dónde sale A LA VISTA en la fila** (`prodBtnsHtml(p,
+  x, i, true)` = «✔ PTF» en vez de «✔ hay acá»). ⚠️ No volver a esconder esos botones: logística elige ahí.
+- **Mapita** (`fichaMapaPunto`/`fichaMapaPintar`, Leaflet; apagado en Playwright salvo `FX_PRUEBA`) con PTF y Banzer y los km.
+- **Armado**: `.fl-g` = izquierda (`.fl-izq`: «Antes de cargar» + «Qué se carga») | derecha 360 px (`.fl-lado`: Dónde + Camión compacto);
+  debajo la tira del stock (`.fl-est-abajo`: estado + 🟢🟡🔴, sin la leyenda «Qué quiere decir cada botón»); «Más datos» plegado.
+  Ancho `min(1440px, 97vw)`.
+- Pruebas: `tests/test_ficha_nota.js` (24). Cambiaron a conciencia: `test_ficha_logistica` (cuenta `.fl-c`), `test_banzer_salida`
+  («✔ PTF»), `test_fichas_4ip` (`.fl-pls .fl-pl`), `test_ficha_mejoras` (Maps). Batería en la copia publicada: 222 suites; rojas solo
+  las de siempre los sábados (`test_banzer`, `test_circuito`) y `test_ventas_marcas` (1180 px); `test_mispedidos` y `test_rev7_celular`
+  salieron rojas con la máquina cargada y solas pasan (también en `main`).
