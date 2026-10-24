@@ -37,7 +37,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     localStorage.setItem('me_ficha_vista', JSON.stringify({ n1:new Date('2026-10-23T10:05:00-04:00').getTime() }));
     showPedidoModal('n1');
     var box=document.getElementById('modal-box'), t=function(sel){ var e=box.querySelector(sel); return e?e.textContent.replace(/\s+/g,' '):''; };
-    out.qh=t('.fl-qh'); out.contra=t('.fl-contra'); out.modp=t('.fl-modp'); out.leer=!!box.querySelector('details.fl-leer') && !box.querySelector('details.fl-leer').open; out.obsX=t('.fl-obs .x'); out.bultos=t('.fl-bultos'); out.tiendita=t('.fl-tiendita');
+    out.qh=t('.fl-qh'); out.contra=t('.fl-contra'); out.modp=t('.fl-modp'); out.leer=!!box.querySelector('details.fl-leer') && !box.querySelector('details.fl-leer').open; out.obsX=t('.fl-obs .x'); out.bultos=t('.fl-bultos'); out.tiendita=t('.fl-tiendita'); out.prodsTxt=[].map.call(box.querySelectorAll('.fl-prod .fl-pnn'), function(e){ return e.textContent; }).join(' | ');
     out.no=t('.fl-prod-no'); out.cam=t('.fl-prod-cam'); out.quit=t('.fl-prod-quit'); out.med=[].map.call(box.querySelectorAll('.fl-med'), function(e){ return e.textContent; });
     out.recibe=[].map.call(box.querySelectorAll('.fl-per'), function(e){ return e.textContent; }).join(' | '); out.mapa=!!box.querySelector('#fl-mapa');
     // reabrir: «lo viste antes» ya no avisa (se anotó la vista)
@@ -67,6 +67,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('reabrir la ficha ya no dice «después de que lo viste»', r.despues2===false, r.despues2);
   chk('la nota del recuadro amarillo va limpia', !/32218/.test(r.obsX), r.obsX.slice(0,80));
   chk('bultos: sin lo de tienda ni lo que no se lleva; lo de tienda aparte', /3 bultos/.test(r.bultos) && /protector/i.test(r.tiendita), { b:r.bultos, t:r.tiendita });
+  chk('lo de tienda NO se repite en la lista de productos y la línea dice su medida (dueño, 24/10)', !/PROTECTOR/i.test(r.prodsTxt) && /protector de colchon 160×190/i.test(r.tiendita), { p:r.prodsTxt, t:r.tiendita });
   chk('el renglón que no se lleva sale tachado y dice por qué', /NASA/.test(r.no) && /No se lleva/.test(r.no), r.no);
   chk('lo que cambió, en el renglón (antes 1, ahora 2) y lo quitado aparte', /antes 1, ahora 2/.test(r.cam) && /BASE DE MADERA/.test(r.quit) && /LO QUITARON/.test(r.quit), { c:r.cam, q:r.quit });
   chk('la medida en grande', r.med.indexOf('160×190')>=0 && r.med.indexOf('50×70')>=0, r.med);
