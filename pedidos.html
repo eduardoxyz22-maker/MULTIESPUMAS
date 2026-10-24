@@ -17049,9 +17049,11 @@ function admHoyPintar(H){
     '<div class="ah-cupos"><span class="ah-cupos-t">🎟️ Cupos '+esc(H.sale?'de hoy':nxDiaTxt(H.cupos.f))+'</span>'+admCupoTxt(H.cupos)+
       (H.cuposProx?('<span class="ah-cupos-t ah-cupos-2">'+esc(nxDiaTxt(H.cuposProx.f))+'</span>'+admCupoTxt(H.cuposProx)):'')+'</div>'+
     '<div class="ah-hoy-acc"><button type="button" onclick="admSecPoner(\'cam\');admIrA(\'carga-viva\')" title="Los camiones, sin camión, por lugar y el calendario">🚚 Camiones</button>'+
-      '<button type="button" onclick="abrirCarga()" title="Qué sube a cada camión">📦 Carga</button>'+
+      /* (24/10, dueño: «en vez de pedidos pondría stock y reposición… ahí cargan las planillas de almacén y saldos»; «en vez de salud,
+         importar ROHO: Ernesto sube ahí sus pedidos») Lista de carga y Salud del día siguen en Herramientas y en «Camiones y día». */
+      '<button type="button" onclick="abrirStock()" title="Stock y reposición: subir los Excel de los almacenes, saldos y qué pedir">📦 Stock</button>'+
       '<button type="button" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones y las paradas del día">🏙️ Ciudad</button>'+
-      '<button type="button" onclick="saludDelDia(true)" title="La salud del día">🌅 Salud</button></div>';
+      '<button type="button" onclick="abrirImportRoho()" title="Importar ROHO: subir el Excel de ROHO y se crean los pedidos">📥 ROHO</button></div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 /* ---------- 🗂️ las tres pestañas ---------- */
