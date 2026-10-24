@@ -64,6 +64,16 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   const lug=await page.evaluate(()=>{ admLugaresMostrar(false); var a=document.getElementById('adm-lugares').textContent; var det=!!document.getElementById('adm-lugares-det');
     admLugaresMostrar(true); return { a:a, det:det, vuelve:!!document.getElementById('adm-lugares-det') }; });
   chk('8 · «Lo del día, por lugar» se oculta (queda «👁️ Mostrar») y vuelve', !lug.det && /Mostrar/.test(lug.a) && lug.vuelve, lug);
+  const tda=await page.evaluate(()=>{
+    var col={ desc:'TITANIO ICE', medida:'160x190', cant:1, chk:'ok' };
+    var pro=function(ex){ return Object.assign({ desc:'PROTECTOR DE COLCHON IMPER. GELATTO 2.5P', medida:'especial', cant:1 }, ex); };
+    var P=function(prs){ return { id:'t', oc:'10-999', fecha:'2026-10-22', turno:'AM', productos:prs }; };
+    return { recoge:admFichaColor(P([col, pro({ chk:'im', chkDe:'Tienda Central' })])), sinMarca:admFichaColor(P([col, pro({})])),
+             noHay:admFichaColor(P([col, pro({ chk:'no' })])), soloTienda:admFichaColor(P([pro({ chk:'im', chkDe:'Tienda Central' })])),
+             colchonFalta:admFichaColor(P([Object.assign({}, col, { chk:'no' }), pro({})])) };
+  });
+  chk('9 · lo de tienda (protector) no cuenta para el color, esté marcado como esté (dueño, 24/10: lo entregan en tienda): verde; un colchón sin stock sí es rojo',
+      tda.recoge==='stock' && tda.sinMarca==='stock' && tda.noHay==='stock' && tda.soloTienda==='stock' && tda.colchonFalta==='nohay', tda);
   chk('sin errores en la página', errs.length===0, errs);
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

@@ -16588,6 +16588,11 @@ function admFichaColor(p){
   if(esATC(p.oc)) return 'atc';
   if(esRPT(p.oc)) return 'rpt';
   if(p.entregado) return '';
+  /* (24/10, dueño: «protectores y adicionales NO se recogen de tienda… los entregan ellos en tienda al momento de la compra,
+     por más que el vendedor lo diga») Lo de tienda (`esProdDeTienda`) no cuenta para el color, esté marcado como esté. */
+  var carga=(p.productos||[]).filter(function(x){ return !esProdDeTienda(x); });
+  if(!carga.length) return 'stock';
+  p=Object.assign({}, p, { productos:carga });
   if(rowKind(p)==='nohay') return 'nohay';
   var b=estadoStock(p).badge;
   /* (24/10, dueño: «¿no debería ser rojo? no está completa y le falta algo para entregarse») Dos colores: verde = listo para
@@ -16603,8 +16608,7 @@ function admFichaHtml(p, dn){
     var m=String(x.medida||'').trim(), mk=!m ? '' : (normMedida(m)==='50x70' ? ' af-m5070' : hasEspecial({productos:[x]}) ? ' af-mesp' : '');
     return '<div class="af-pl"><span class="af-c">'+esc(String(x.cant||0))+'</span><span class="af-nm">'+esc(x.desc||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
   }).join('')+(carga.length>MAX?('<div class="af-mas">+'+(carga.length-MAX)+' producto'+(carga.length-MAX===1?'':'s')+' más</div>'):'')+
-    (tienda.length?('<div class="af-mas">🛍️ '+tienda.length+' de tienda'+   // (24/10) si hay que ir a buscarlo, que se vea de dónde (si no, la ficha roja no dice por qué)
-      tienda.filter(function(x){ return esRecoger(x) || x.chk==='no'; }).map(function(x){ return prodLugarTag(x); }).join('')+'</div>'):'');
+    (tienda.length?('<div class="af-mas">🛍️ '+tienda.length+' de tienda</div>'):'');   // lo entrega la tienda: no se recoge ni cuenta (dueño, 24/10)
   var chips=[]; try{ chips=fichaObsChips(p); }catch(e){}
   var nt=chips.length ? ('<div class="af-nt">'+chips.slice(0,4).map(function(c){ return '<span>'+esc(c.i+' '+c.t)+'</span>'; }).join('')+(chips.length>4?'<span>+'+(chips.length-4)+'</span>':'')+'</div>') : '';
   var ret=null; try{ ret=fichaRetira(p); }catch(e){}
