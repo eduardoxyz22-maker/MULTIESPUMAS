@@ -971,6 +971,7 @@ en una línea. `tests/test_ficha_auto.js`.
 - Fichas grandes `#adm-secs`: **📦 Stock y reposición** (abre; avisa si falta el Excel de hoy) · **📥 Importar ROHO** (abre) · **🧰 Herramientas** (vista).
   Vistas `.adm-sec[data-sec=ped|cam|her]`, por aparato `me_adm_sec`; `admRevelar` abre la vista de lo que Bloki señala. Herramientas = los mismos botones.
 - Barra de filtros única (mes con ‹ ›, «🃏 Fichas | ☰ Tabla»); cada día y turno dice listos y cupos (sin la barrita verde).
+- Se sale de Herramientas y de Camiones y día con «← Volver a los pedidos» o tocando la ficha de Herramientas otra vez (`20a686a`).
 - ⚠️ En Playwright todo junto como antes salvo `window.ADM_TABS_PRUEBA`. `tests/test_adm_arriba.js` (25). Bitácora §4me.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar

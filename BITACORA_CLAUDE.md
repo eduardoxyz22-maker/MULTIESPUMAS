@@ -15814,3 +15814,8 @@ usá bien los espacios»*; después: *«Stock y reposición y ROHO los quiero ab
   avisos a la vista. Una prueba nueva de esta parte prende `ADM_TABS_PRUEBA`. Al imprimir sale solo la lista.
 - `tests/test_adm_arriba.js` (25). Batería en la copia publicada: 224 suites, 7.758 bien; rojas solo `test_banzer`, `test_ventas_marcas` (las de
   siempre) y `test_mispedidos` (32/1 con la máquina cargada, 33/0 sola).
+- **Salir de Herramientas (24/10 noche, PUBLICADO `20a686a`)**: el dueño, con captura del iPad: *«al entrar a herramientas, ¿cómo salgo de ahí?»* (solo
+  se salía con «📦 Pedidos» de la tarjeta «Hoy», que quedaba arriba, fuera de la pantalla). Ahora: **«← Volver a los pedidos»** arriba de
+  «🧰 Herramientas» y de «🚚 Camiones y día» (`.adm-volver`, visible solo con las pestañas: `#admin-content.adm-tabs-on`), y **tocar la ficha
+  de Herramientas otra vez vuelve a los pedidos** (dice «← tocá de nuevo para volver a los pedidos»). `test_adm_arriba` (26). Batería en la copia
+  publicada: solo los rojos de siempre.
