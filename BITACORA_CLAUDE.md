@@ -15753,7 +15753,7 @@ cortos, *«dependiendo del pedido queda un poco vacío… ¿cómo podemos optimi
   pidió «mejorar aún más la D» → D2: fichas miniatura en grilla por turno/camión/zona, tildar varias + barra de acciones, camión ahí mismo,
   sugerencia del stock y etiquetas de la nota, los 7 botones con nombre (incluye 📅 Reprogramar), «☰ Tabla» para volver. Espera su respuesta.
 
-### §4md — 🃏 Administración en fichas, 🌅⇄🌆 de un toque y la pestaña «🤖 Bot» (24/10, PUBLICADA `3b4327b`)
+### §4md — 🃏 Administración en fichas, 🌅⇄🌆 de un toque y la pestaña «🤖 Bot» (24/10, PUBLICADA `3b4327b` + `6992638`)
 El dueño, con la tabla de 16 columnas: *«debemos modernizar esta tabla… ¿fichas miniatura como en Mis pedidos?»* → muestras A–G → *«la tabla es la
 vista "resumen" de lo relevante y deben abrir la ficha para editar; los botones rápidos: entregó, editar, reprogramar, borrar, WhatsApp»* → la «G»
 armada con pedidos reales, pulida en ~15 vueltas de capturas → *«todo ok, publica y verifica que no haya errores»*.
@@ -15773,7 +15773,8 @@ armada con pedidos reales, pulida en ~15 vueltas de capturas → *«todo ok, pub
   *«no se recoge de tienda… los entregan ellos en tienda al momento de la compra, por más que el vendedor lo diga»*; *«se puede malinterpretar con
   recoger en la tienda»*). Se ve al abrir la ficha. Solo con cosas de tienda: «Nada para cargar». Lo mismo en «📍 Lo del día, por lugar»
   (`admLugaresDatos`). Un COLCHÓN marcado «🏬 Tienda X» (§4kr) sí: ficha roja con «🏬 Tienda X».
-- **Abajo**: 📍 que abre el mapa directo (gris sin enlace) + dirección; camión. **Sin «Cobrar»** (*«eso no le importa a logística»*).
+- **Abajo**: 📍 que abre el mapa directo (gris sin enlace) + dirección; camión. **Sin «Cobrar»** (*«eso no le importa a logística»*), tampoco la
+  etiqueta «💵 Cobrar» de la nota (`c.k==='cobra'`, se vio con los datos reales después de publicar: `6992638`); en la ficha grande sigue.
 - **Botones**: Entregó (`quickEntregado`) · WhatsApp (`copyPedido`) · Editar · Reprog. · **A tarde/A mañana** (`admTurnoPuede`: no el sábado,
   entregado ni venta de tienda; `admTurnoCambiar` pregunta y usa `cambiarTurno`, el de la ficha grande) · Borrar.
 - **«Ocultar» en «📍 Lo del día, por lugar»** (`admLugaresMostrar`, `me_lugares_oculto`).

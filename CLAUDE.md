@@ -950,10 +950,10 @@ cada producto dice «Stock para este pedido: …» con «💡 Marcar…» y «�
 de «Aplicar»; lo marcado a mano no se toca); `fichaAcomodar` pone Dónde y Camión lado a lado en un pedido corto; la nota sin nada para tildar va
 en una línea. `tests/test_ficha_auto.js`.
 
-## 🃏 Administración en fichas + 🤖 pestaña Bot (§4md, 24/10, PUBLICADA `3b4327b`; dueño: *«la tabla es la vista resumen… abrir la ficha para editar»*)
+## 🃏 Administración en fichas + 🤖 pestaña Bot (§4md, 24/10, PUBLICADA `3b4327b` + `6992638`; dueño: *«la tabla es la vista resumen… abrir la ficha para editar»*)
 - `admVista()` = 'fichas' (por compu, `me_adm_vista`); **en Playwright sigue la TABLA salvo `window.ADM_FICHAS_PRUEBA`** (las pruebas de siempre la leen).
   `admFichasPintar`/`admFichaHtml`: por día y turno; N° del día con fondo; 🌅/🌆 a la DERECHA de «OC · vendedora»; botones Entregó · WhatsApp ·
-  Editar · Reprog. · A tarde/A mañana (`admTurnoPuede`/`admTurnoCambiar` → `cambiarTurno`) · Borrar; 📍 abre el mapa; **sin «Cobrar»**.
+  Editar · Reprog. · A tarde/A mañana (`admTurnoPuede`/`admTurnoCambiar` → `cambiarTurno`) · Borrar; 📍 abre el mapa; **sin «Cobrar»** (ni el saldo ni la etiqueta 💵 de la nota).
 - **Arriba a la derecha solo lo que los productos no dicen** (Entregado, Modificado/Cambió la fecha, Salió, ✅ Listo). ⚠️ No repetir el stock ahí.
 - **Color de la ficha (`admFichaColor`)**: 🟢 listo · 🔴 le falta algo (sin stock/sin revisar/producción/ir a buscar) · 🩷 ATC · 🟤 RPT café. Nada
   más (sin amarillo, violeta, naranja de ficha entera). 50×70 y medida especial se marcan en la medida del producto.
