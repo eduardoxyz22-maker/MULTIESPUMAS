@@ -15787,3 +15787,30 @@ armada con pedidos reales, pulida en ~15 vueltas de capturas → *«todo ok, pub
   ⚠️ Ya NO `LS_ADM_DEV`: la compu donde una vez se puso la clave quedaba marcada para siempre. Bloki avisa respuestas al bot solo con `botVe()`.
   `test_bot_tab` (12).
 - Pruebas: `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Batería en la copia publicada: 225 suites, 7.728 bien; rojas solo `test_banzer`/`test_circuito` (sábado) y `test_ventas_marcas` (1180 px), las de siempre. `test_mispedidos` salió 32/1 con la máquina cargada y 33/0 sola. `test_saldo_almacen` cambió a conciencia (la lista de pestañas incluye `tab-bot`).
+
+### §4me — ✨ Arriba de Administración: «📋 Para hacer» + «☀️ Hoy» + fichas grandes (24/10, PUBLICADA `07d522a`)
+El dueño, con captura: *«parece noticiero de alertas»*; vio tres muestras y eligió *«un mix de la B con la C»*, *«más pulido, más estético…
+usá bien los espacios»*; después: *«Stock y reposición y ROHO los quiero abajo en esos grandes… y Pedidos y Camiones y día donde estaban»*.
+- **`#adm-top`** = `#adm-hacer` + `#adm-hoy` (grid 1.62fr/1fr, mismo alto). **Nada se calcula aparte**: cada cartel de siempre deja sus números en
+  **`ADM_AV`** al dibujarse (`renderStockAviso` → `stock`, `renderRevisar` → `rev` con `diaSin`/`ocRep`, `renderRptAtrasadas` → `rpt`,
+  `renderFueraDelMes` → `fuera`, `renderBorradoresHuerfanos` → `borr`, `renderCierreEntAviso` → `cierre`) y `admHacerDatos` los ordena: rojo → ámbar
+  → info. Sin camión sale de `nxSugSin` (hoy y `proximoDiaEntrega`; rojo desde `NX_A3_HORA`); «ir a buscar hoy» de `admLugaresDatos`. Tres a la
+  vista, el resto en «▾ Ver N más» (`ADM_HACER_MAS`). Cada uno con su botón (`admSugIr`, `abrirStockRevisar`, `admRevisarVer`, `abrirCierreEntregas`…).
+- **Los carteles completos siguen enteros** (mismos ids) en `#adm-avisos`, plegado; «📄 Avisos completos» (`admAvisosAbrir`). `#cupo-admin` vive ahí.
+- **«☀️ Hoy»** (`admHoyDatos`, con `cargaVivaDatos` en CV_DIA='hoy' y el CV_SEL repuesto): camiones con la carga completa (anillo), bultos por
+  cargar, listos, salieron (`camionSalio`), sin camión y los cupos de hoy y del próximo reparto (`limTurno`/`cuposUsadosTurno`). Domingo/feriado: el
+  próximo reparto. Botones: **📦 Pedidos · 🚚 Camiones y día** (cambian lo de abajo; encendido el que se ve) **· 🏙️ Ciudad**.
+- **Fichas grandes** (`#adm-secs`, `admSecsPintar`): **📦 Stock y reposición** (abre `abrirStock`; dice si falta el Excel de hoy, por `STOCK.c.f`) ·
+  **📥 Importar ROHO** (`abrirImportRoho`) · **🧰 Herramientas** (pestaña). Las vistas `.adm-sec[data-sec=ped|cam|her]`; la elegida por aparato
+  (`me_adm_sec`, `admSecPoner`). Con «Camiones y día» escondida no se dibujan los camiones ni el mapa de sugerencias (miden la caja): se rearman al
+  mostrarla. `admRevelar(el)`: Bloki (`asisPrimero`) y «Asignar ahora» (`nxA3Ir`) abren la pestaña o los avisos donde vive lo que señalan.
+- **Herramientas**: los MISMOS botones (ids y onclick verificados uno por uno) en cuatro tarjetas de dos columnas, con `data-d` abajo (`::after`).
+  Salud del día, Ocultar camiones y Ver la ciudad van en la barra de «Camiones y día».
+- **Barra de filtros única**: Día/Mes/Todo, el mes con ‹ › (`admMesMover`), buscador con 🔎, Actualizar y **«🃏 Fichas | ☰ Tabla»** (`.af-sw2`, antes
+  «Ver como tabla»: `test_adm_fichas` 1 y 7 cambiaron a conciencia). Etiquetas visibles solo para lectores de pantalla.
+- **Cada día y turno de las fichas**: en vez de la barrita verde, «✅ N de M listos», «🛣️ N salieron» y «🎟️ quedan N cupos / turno lleno / N de más»;
+  un día pasado, «🚚 N de M entregados».
+- ⚠️ **En Playwright todo se ve junto como antes** (`admTabsActivas()` = false salvo `window.ADM_TABS_PRUEBA`): sin tarjetas arriba, sin pestañas, los
+  avisos a la vista. Una prueba nueva de esta parte prende `ADM_TABS_PRUEBA`. Al imprimir sale solo la lista.
+- `tests/test_adm_arriba.js` (25). Batería en la copia publicada: 224 suites, 7.758 bien; rojas solo `test_banzer`, `test_ventas_marcas` (las de
+  siempre) y `test_mispedidos` (32/1 con la máquina cargada, 33/0 sola).

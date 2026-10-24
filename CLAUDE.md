@@ -963,6 +963,16 @@ en una línea. `tests/test_ficha_auto.js`.
   ESA visita o eligiendo Logística, Administración o Eduardo (`f555b4a`); ⚠️ NO con `me_adm_dev` (queda para siempre). `test_saldo_almacen`
   cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
 
+## ✨ Arriba de Administración: «Para hacer» + «Hoy» + fichas grandes (§4me, 24/10, PUBLICADA `07d522a`; dueño: *«parece noticiero de alertas… un mix de la B con la C»*)
+- `#adm-hacer` ordena los avisos de siempre (rojo → ámbar → info, tres a la vista) con los números que cada cartel deja en **`ADM_AV`** al dibujarse;
+  ⚠️ nada se cuenta aparte. Los carteles enteros siguen con sus ids en `#adm-avisos` («📄 Avisos completos»). Un cartel nuevo de Administración
+  deja sus números en `ADM_AV` y entra en `admHacerDatos`.
+- `#adm-hoy` (`admHoyDatos`: `cargaVivaDatos` de hoy, `camionSalio`, cupos): botones **📦 Pedidos · 🚚 Camiones y día** (cambian lo de abajo) **· 🏙️ Ciudad**.
+- Fichas grandes `#adm-secs`: **📦 Stock y reposición** (abre; avisa si falta el Excel de hoy) · **📥 Importar ROHO** (abre) · **🧰 Herramientas** (vista).
+  Vistas `.adm-sec[data-sec=ped|cam|her]`, por aparato `me_adm_sec`; `admRevelar` abre la vista de lo que Bloki señala. Herramientas = los mismos botones.
+- Barra de filtros única (mes con ‹ ›, «🃏 Fichas | ☰ Tabla»); cada día y turno dice listos y cupos (sin la barrita verde).
+- ⚠️ En Playwright todo junto como antes salvo `window.ADM_TABS_PRUEBA`. `tests/test_adm_arriba.js` (25). Bitácora §4me.
+
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
