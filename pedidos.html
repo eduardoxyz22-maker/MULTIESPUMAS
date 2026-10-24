@@ -926,6 +926,19 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal.fl-ficha .fl-est-abajo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:10px;border:1px solid #e3eaea;border-radius:12px;padding:8px 12px;background:#fafcfc}
 .modal.fl-ficha .fl-est-abajo .modal-actions{margin:0;display:flex;gap:6px;flex-wrap:wrap}
 .modal.fl-ficha .fl-est-abajo .fl-marcas{margin:0 0 0 auto;border:0;padding:0}
+.modal.fl-ficha .fl-est-izq{margin-top:0}
+@media(min-width:901px){.modal.fl-ficha .fl-g.fl-tres{grid-template-columns:minmax(0,1fr) 700px}.modal.fl-ficha .fl-g.fl-tres .fl-lado{grid-template-columns:1fr 1fr;align-items:start}}
+/* ✨ (24/10) lo que hay de cada producto y la sugerencia del stock */
+.fl-hay{order:4;flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:4px 0 0 46px;font-size:.78rem;color:#35615e}
+.fl-hay > span{min-width:0}.fl-hay.no{color:#8a1c24}
+.fl-hay-b{border:1px solid #f3c969;background:#fff7e0;color:#7a4b00;border-radius:999px;padding:3px 11px;font-size:.78rem;font-weight:800;cursor:pointer;min-height:28px}
+.fl-hay-b:hover{background:#ffefc2}.fl-hay-b.fl-hay-o{border-color:#d7dfe0;background:#fff;color:#4a5b5d;font-weight:700}
+.fl-c h4 .fl-auto{margin-left:auto;text-transform:none;letter-spacing:0;border:0;background:linear-gradient(135deg,#00B5AD,#00A09A);color:#fff;border-radius:999px;padding:5px 13px;font-size:.78rem;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,160,154,.3)}
+.fl-c h4:has(.fl-auto){display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fl-obs-min{background:#fffbea;border:1px solid #f3dc8a;border-radius:12px;padding:8px 12px;font-size:.84rem}
+.fl-obs-min > summary{cursor:pointer;font-weight:800;color:#8a6400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-obs-min > summary i{font-weight:500;color:#6b5a1e;font-style:normal;margin-left:6px}
+.fl-obs-min[open] > summary i{display:none}.fl-obs-min .x{margin-top:6px}
 .modal.fl-ficha .fl-izq{display:grid;gap:12px;min-width:0;align-content:start}.modal.fl-ficha .fl-izq > .fl-obs{margin-bottom:0}
 .modal.fl-ficha .fl-modp{flex-wrap:nowrap}.modal.fl-ficha .fl-modp > span{flex:1;min-width:0}.modal.fl-ficha .fl-modok{white-space:nowrap;flex:none}
 .modal.fl-ficha .fl-mapa{height:105px}
@@ -31227,6 +31240,26 @@ function revStkMostrarAvance(hechos,total,cliente,resultado,aviso){
   if(resultado) listo.focus();
 }
 
+/* La marca que propone la revisión, puesta en UNA línea (la usan «Aplicar» de la revisión y «✨ Como dice el stock» de la ficha). */
+function revStkMarcarLinea(x, l){
+  x.chk=l.ahora;
+  /* 📥 …y de qué almacén se va a buscar (§4ey). Vacío = IM, como siempre. Si el stock
+     está repartido y ninguno cubre la línea entera, se guarda el DESGLOSE: decir un
+     solo lugar manda a alguien a buscar 4 donde hay 3.
+     🚚 (26/09) Lo mismo con el ✔: «✔ hay en Banzer» guarda el depósito en `chkDe` (vacío = acá), y
+     si se parte entre acá y Banzer va el desglose con lo de acá primero (`de:''`). En un 📥 lo de acá
+     queda implícito (lo que el desglose no nombra es de acá), como siempre. */
+  if(l.ahora==='im' || l.ahora==='ok'){
+    var pr=(l.almPor||[]).filter(function(e){ return (Number(e.u)||0)>0; });
+    var fuera=pr.map(function(e){ return { de:(e.sale ? saleCanon(e.alm) : recogerCanon(e.alm)), u:Number(e.u)||0 }; });
+    if(!fuera.length){ delete x.chkDe; delete x.chkDes; }
+    else{
+      if(fuera[0].de) x.chkDe=fuera[0].de; else delete x.chkDe;
+      if(fuera.length>1 || (l.deDep>0)) x.chkDes=((l.ahora==='ok' && l.deDep>0) ? [{ de:'', u:l.deDep }] : []).concat(fuera);
+      else delete x.chkDes;
+    }
+  } else { delete x.chkDe; delete x.chkDes; }
+}
 function aplicarStockRevisar(){
   if(REVSTK_GUARDANDO) return;
   if(!REVSTK || REVSTK.firma!==JSON.stringify([STATE,STOCK])){
@@ -31265,23 +31298,7 @@ function aplicarStockRevisar(){
     g.lineas.forEach(function(l){
       var x=(p.productos||[])[l.i]; if(!x) return;
       if(x.chk==='no' && l.ahora!=='no') seQuito=true;
-      x.chk=l.ahora; lineas++;
-      /* 📥 …y de qué almacén se va a buscar (§4ey). Vacío = IM, como siempre. Si el stock
-         está repartido y ninguno cubre la línea entera, se guarda el DESGLOSE: decir un
-         solo lugar manda a alguien a buscar 4 donde hay 3.
-         🚚 (26/09) Lo mismo con el ✔: «✔ hay en Banzer» guarda el depósito en `chkDe` (vacío = acá), y
-         si se parte entre acá y Banzer va el desglose con lo de acá primero (`de:''`). En un 📥 lo de acá
-         queda implícito (lo que el desglose no nombra es de acá), como siempre. */
-      if(l.ahora==='im' || l.ahora==='ok'){
-        var pr=(l.almPor||[]).filter(function(e){ return (Number(e.u)||0)>0; });
-        var fuera=pr.map(function(e){ return { de:(e.sale ? saleCanon(e.alm) : recogerCanon(e.alm)), u:Number(e.u)||0 }; });
-        if(!fuera.length){ delete x.chkDe; delete x.chkDes; }
-        else{
-          if(fuera[0].de) x.chkDe=fuera[0].de; else delete x.chkDe;
-          if(fuera.length>1 || (l.deDep>0)) x.chkDes=((l.ahora==='ok' && l.deDep>0) ? [{ de:'', u:l.deDep }] : []).concat(fuera);
-          else delete x.chkDes;
-        }
-      } else { delete x.chkDe; delete x.chkDes; }
+      revStkMarcarLinea(x, l); lineas++;
     });
     syncVerificado(p, seQuito); upsert(p);
     if(!CONNECTED){ queuePending(p); ok++; setTimeout(uno,0); return; }
@@ -33709,7 +33726,63 @@ function fichaLugarHtml(x){
 }
 /* (24/10) 4 · la medida y el código en grande (la medida especial en rojo), 2 · lo que cambió marcado en el renglón (y lo que quitaron,
    tachado), 6 · lo que la nota dice que NO se lleva, tachado. Sin `N` (otra pantalla) se ve como antes. */
-function fichaProdsHtml(p, N){
+/* ✨ (24/10, dueño: «¿cómo podemos optimizar, mejorar, estructurar y AUTOMATIZAR esto?») Cada producto de la ficha dice de dónde sale
+   según el stock y, si su marca no es esa, lo propone con un toque. La cuenta es la MISMA de la 🤖 Revisión automática (`stockAsignar`:
+   reparte por fecha de entrega, PTF → Banzer → IM) y la marca se pone con la MISMA función (`revStkMarcarLinea`). Solo propone: nada se
+   marca sin que logística toque. «✨ Marcar como dice el stock» toca solo lo SIN marcar o «✗ no hay» (como «Aplicar» de la revisión:
+   lo marcado a mano se respeta); el botón de cada producto, aunque esté marcado. */
+var FICHA_REV=null;
+function fichaRevistaStock(forzar){
+  var c=FICHA_REV, ahora=Date.now();
+  if(!forzar && c && c.st===STATE && c.stk===STOCK && c.gen===SALDO_GEN && c.n===STATE.length && ahora-c.t<60000) return c.A;
+  var A=null; try{ A=stockAsignar(); }catch(e){ A=null; }
+  FICHA_REV={ st:STATE, stk:STOCK, gen:SALDO_GEN, n:STATE.length, t:ahora, A:A };
+  return A;
+}
+function fichaSugStock(p, forzar){
+  if(!p || p.entregado || !stockCuenta(p) || esVentaTienda(p) || !STOCK_CARGADO) return null;
+  var A=fichaRevistaStock(forzar); if(!A) return null;
+  var g=A.pedidos.filter(function(g){ return String(g.p.id)===String(p.id); })[0]; if(!g) return null;
+  if(g.firma!==JSON.stringify(p)){ A=fichaRevistaStock(true); g=A && A.pedidos.filter(function(g){ return String(g.p.id)===String(p.id); })[0]; if(!g) return null; }
+  var por={}; g.lineas.forEach(function(l){ por[l.i]=l; });
+  return { g:g, por:por };
+}
+function fichaSugAuto(l){ return l && l.cambia && !l.sinContar && (l.antes==='' || l.antes==='no' || l.migra); }
+function fichaSugEtq(l){
+  if(l.ahora==='no') return '✗ No hay';
+  var por=(l.almPor||[]).filter(function(e){ return (Number(e.u)||0)>0; }), t=[];
+  var sale=por.filter(function(e){ return e.sale; }), trae=por.filter(function(e){ return !e.sale; });
+  if(l.deDep>0) t.push('PTF');
+  if(sale.length) t.push(salePorTxt(sale));
+  if(l.ahora==='im') return '📥 '+(t.length?(t.join(' + ')+' + '):'')+'recoger de '+recogerPorTxt(trae);
+  return '✔ '+(t.join(' + ')||'PTF');
+}
+function fichaHayTxt(l){
+  if(!l) return '';
+  if(l.sinContar) return 'No está en los Excel de hoy: no se sabe cuánto hay';
+  var cab='Stock para este pedido: ';
+  var por=l.hayIMPor||[], t=[];
+  if(l.hayDep) t.push('PTF '+l.hayDep);
+  if(l.haySale) t.push(salePorTxt(por.filter(function(e){ return e.sale; }))+' '+l.haySale);
+  if(l.prog) t.push(l.prog+' ya en camino');
+  if(l.hayIM) t.push(recogerPorTxt(por.filter(function(e){ return !e.sale; }))+' '+l.hayIM);
+  if(l.falta) t.push('<b>faltan '+l.falta+(l.descont?' · ya no se fabrica':' → fabricar')+'</b>');
+  return t.length ? (cab+t.join(' · ')) : 'No hay en ningún depósito';
+}
+function fichaSugUsarStock(id, cual){
+  var p=findById(id); if(!p) return;
+  var S=fichaSugStock(p, true); if(!S){ toast('No hay propuesta del stock para este pedido.','err'); return; }
+  var ls=S.g.lineas.filter(function(l){ return l.cambia && !l.sinContar && (cual==='todo' ? fichaSugAuto(l) : String(l.i)===String(cual)); });
+  if(!ls.length){ reabrirFicha(id); return; }
+  var seQuito=false;
+  ls.forEach(function(l){ var x=(p.productos||[])[l.i]; if(!x) return; if(x.chk==='no' && l.ahora!=='no') seQuito=true; revStkMarcarLinea(x, l); });
+  syncVerificado(p, seQuito); upsert(p); saveMirror(); renderAdmin(); refreshCarga(); FICHA_REV=null;
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok) && !RECHAZOS_FIRMES[res&&res.error]) queuePending(p); }, function(){ queuePending(p); }); }
+  else queuePending(p);
+  toast('✨ '+ls.length+' producto'+(ls.length===1?'':'s')+' marcado'+(ls.length===1?'':'s')+' como dice el stock','ok');
+  reabrirFicha(id);
+}
+function fichaProdsHtml(p, N, S){
   var pr=(p&&p.productos)||[];
   if(!pr.length) return '<div class="fl-vacio">Sin productos</div>';
   var C=N ? fichaCambiosProd(p) : { nuevo:{}, cant:{}, quitados:[] };
@@ -33723,8 +33796,16 @@ function fichaProdsHtml(p, N){
               : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
     return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
       (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que ya se entregó</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div>'+
-      (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
+      (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+
+      (S && !no && S.por[ix] ? fichaHayHtml(p, S.por[ix]) : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
   }).join('')+C.quitados.map(function(t){ return '<div class="fl-prod fl-prod-quit"><div class="fl-q">✕</div><div class="fl-pn"><span class="fl-pnn">'+esc(t)+'</span><small>➖ LO QUITARON del pedido: no se carga</small></div></div>'; }).join('');
+}
+function fichaHayHtml(p, l){
+  var txt=fichaHayTxt(l); if(!txt) return '';
+  var pid=String(p.id).replace(/'/g,"\\'");
+  var sug=(l.cambia && !l.sinContar) ? ('<button type="button" class="fl-hay-b'+(fichaSugAuto(l)?'':' fl-hay-o')+'" onclick="fichaSugUsarStock(\''+pid+'\','+l.i+')" title="La 🤖 Revisión automática: reparte por fecha de entrega, PTF → Banzer → IM">'+
+      '💡 Marcar '+esc(fichaSugEtq(l))+'</button>') : '';
+  return '<div class="fl-hay'+(l.ahora==='no'?' no':'')+'"><span>📊 '+txt+'</span>'+sug+'</div>';
 }
 function fichaIngresoTxt(p){
   var ts=Number(p&&p.ts); if(!(ts>0)) return '—';
@@ -34156,7 +34237,11 @@ function showPedidoModal(id){
       ? ('<details class="fl-leer"><summary>📝 Leer la nota completa</summary><div class="x">'+esc(N.limpio||N.crudo)+'</div>'+
           (N.limpio!==N.crudo?('<div class="fl-orig">Como la escribió el vendedor: '+esc(N.crudo)+'</div>'):'')+'</details>')
       : ('<div class="x">'+esc(N.limpio||N.crudo)+'</div>'+(N.limpio!==N.crudo?('<details class="fl-orig"><summary>ver la nota como la escribió el vendedor</summary><div>'+esc(N.crudo)+'</div></details>'):'')));
-  var obsHtml=(obs || chips.length || contras.length || avisos.length) ? ('<div class="fl-obs"><div class="t">📝 Antes de cargar'+(obs||chips.length?' — leer y tildar':'')+'</div>'+
+  var soloNota=obs && leida && !chips.length && !contras.length && !avisos.length;
+  if(soloNota && !String(N.limpio||'').trim()){ soloNota=false; obs=''; }   // todo lo de la nota ya está arriba (quién recibe…): nada que mostrar   // (24/10) nada para tildar: la nota en una línea, no un recuadro vacío
+  var obsHtml=soloNota ? ('<details class="fl-obs fl-obs-min"><summary>📝 Nota del vendedor <i>'+esc((N.limpio||N.crudo).slice(0,90))+((N.limpio||N.crudo).length>90?'…':'')+'</i></summary><div class="x">'+esc(N.limpio||N.crudo)+'</div>'+
+        (N.limpio!==N.crudo?('<div class="fl-orig">Como la escribió el vendedor: '+esc(N.crudo)+'</div>'):'')+'</details>')
+    : (obs || chips.length || contras.length || avisos.length) ? ('<div class="fl-obs"><div class="t">📝 Antes de cargar'+(obs||chips.length?' — leer y tildar':'')+'</div>'+
       (contras.length?('<ul class="fl-contra">'+contras.map(function(t){ return '<li>⛔ '+esc(t)+'</li>'; }).join('')+'</ul>'):'')+
       (avisos.length?('<ul class="fl-avisos">'+avisos.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'):'')+
       fichaChipsHtml(chips, p.id)+notaHtml+'</div>') : '';
@@ -34184,7 +34269,10 @@ function showPedidoModal(id){
     '</div>');
   var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
   var sug=ret ? null : fichaSugerido(p);
-  var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N)+
+  var S=fichaSugStock(p), nAuto=S ? S.g.lineas.filter(fichaSugAuto).length : 0;
+  var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde'+
+        (nAuto ? ('<button type="button" class="fl-auto" onclick="fichaSugUsarStock(\''+pid+'\',\'todo\')" title="Marca lo que está sin marcar o en «✗ no hay» como dice la 🤖 Revisión automática">✨ Marcar '+(nAuto===1?'el producto':('los '+nAuto))+' como dice el stock</button>') : '')+
+      '</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N, S)+
       (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     '</div>';
   /* (24/10, dueño: «eso de stock como se marca solo podría ir abajo») el estado de stock y sus tres botones, en una franja debajo de las
@@ -34238,6 +34326,24 @@ function showPedidoModal(id){
   openModal(html, true);
   var box=document.getElementById('modal-box'); if(box) box.classList.add('fl-ficha');
   if(mapaPt) fichaMapaPintar(mapaPt);
+  fichaAcomodar();
+}
+/* 📐 (24/10, dueño: «dependiendo del pedido queda un poco vacío») Si la columna de la derecha (dónde + camión) es más alta que la de los
+   productos, la tira del stock sube a llenar el hueco de la izquierda; si no, queda abajo a lo ancho. Se mide después de dibujar (el mapa
+   tiene alto fijo, así que no cambia después). En el celular (una sola columna) no se toca. */
+function fichaAcomodar(){
+  var box=document.getElementById('modal-box'); if(!box) return;
+  var izq=box.querySelector('.fl-izq'), lado=box.querySelector('.fl-lado'), est=box.querySelector('.fl-est-abajo'); if(!izq || !lado || !est) return;
+  if(izq.getBoundingClientRect().left>=lado.getBoundingClientRect().left-5) return;   // una columna
+  var g=box.querySelector('.fl-g'), alto=function(e){ return e.getBoundingClientRect().height; };
+  /* Mucho hueco (pedido corto): «Dónde» y «Camión» lado a lado, así la ficha baja a la mitad. Si con eso los productos quedan más altos
+     que la derecha (la fila se parte), vuelve como estaba. */
+  if(g && alto(lado)-alto(izq)>220 && box.getBoundingClientRect().width>=1180){
+    g.classList.add('fl-tres');
+    if(alto(izq)>alto(lado)+40) g.classList.remove('fl-tres');
+  }
+  var hueco=alto(lado)-alto(izq);
+  if(hueco>alto(est)+12){ izq.appendChild(est); est.classList.add('fl-est-izq'); }
 }
 var FICHA_ABIERTA_ID='', FICHA_VISTO_ANT=0;
 /* 📝 (23/10, dueño eligió la «B»: «que no se olviden de leer las observaciones») Prender «Listo para cargar» en un pedido CON observaciones
