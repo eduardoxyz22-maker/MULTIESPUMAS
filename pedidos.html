@@ -825,6 +825,35 @@ th.sortable:hover{color:var(--teal-dk)}
 @media(max-width:600px){.fl-obs{flex-wrap:wrap}.fl-pills{width:100%}.fl-pie .fl-listo{width:100%}}
 .fl-mod{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--red-lt);border:1px solid var(--red-border);border-left:6px solid var(--red);border-radius:12px;padding:9px 12px;margin-bottom:12px;font-size:.86rem;color:#8a1c24}
 .fl-mod-t{font-weight:800}.fl-mod-d{font-weight:600}.fl-mod .btn{margin-left:auto;width:auto}
+/* ✨ (24/10) etiquetas de las observaciones, avisos, retira el cliente, camión sugerido, ◀ ▶ y los días */
+.fl-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.fl-chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1.5px solid #f2b705;color:#5a4100;border-radius:99px;padding:5px 11px;font-weight:800;font-size:.9rem}
+.fl-chip-prov{background:#fde7d2;border-color:#e8833a;color:#7a3300}
+.fl-chip-cobra{background:#fdecee;border-color:#e3a0a8;color:#8a1c24}
+.fl-top + .fl-chips{margin:0 0 12px}
+.fl-avisos{background:#fff8ec;border:1px solid #f3cf95;border-left:6px solid var(--amber);border-radius:12px;padding:10px 14px;margin-bottom:14px;color:#6b4300;font-size:.9rem}
+.fl-avisos b{display:block;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#8a5a00;margin-bottom:4px}
+.fl-avisos ul{margin:0;padding-left:18px;display:grid;gap:3px}.fl-avisos li{font-weight:600}
+.fl-hace{display:block;font-style:normal;font-size:.72rem;font-weight:700;opacity:.8;margin-top:2px}
+.fl-ent-hoy{background:#d6336c;border-color:#d6336c}.fl-ent-hoy .fl-hace{opacity:1;font-weight:900;letter-spacing:.04em}
+.fl-ent-man{background:#e8833a;border-color:#e8833a}.fl-ent-man .fl-hace{opacity:1;font-weight:900;letter-spacing:.04em}
+.fl-ent-pas{background:#6b7b85;border-color:#6b7b85}
+.fl-pill.fl-ret{background:#e7effc;border-color:#bcd0f3;color:#1d4fa8}
+.fl-retira{background:#e7effc;border:2px solid #9bb8ec;border-radius:12px;padding:14px;color:#173f88}
+.fl-retira b{display:block;font-size:1.15rem;line-height:1.25}.fl-retira small{display:block;margin-top:4px;font-size:.85rem;color:#3d5f9c}
+.fl-dir-ret{margin-top:10px;font-size:.88rem;color:#5b6b70}
+.fl-ret-nota{font-size:.84rem;color:#5b6b70;margin-bottom:8px}
+.fl-sug{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eaf6f5;border:1.5px dashed #00A09A;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.fl-sug small{display:block;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:#00756f;font-weight:800}
+.fl-sug b{display:block;font-size:1.05rem;color:#12302e}.fl-sug i{display:block;font-style:normal;font-size:.8rem;color:#5b6b70}
+.fl-sug .fl-btn{flex:none}
+.fl-h{gap:10px}
+.fl-nav{display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:8px}
+.fl-navb{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:10px;padding:7px 11px;font-weight:800;font-size:.86rem;cursor:pointer;font-family:inherit;min-height:36px}
+.fl-navb:hover{background:rgba(255,255,255,.32)}.fl-navb.off{opacity:.35;cursor:default}
+.fl-navt{color:#e6fbf9;font-size:.8rem;font-weight:700;white-space:nowrap}
+@media(max-width:600px){.fl-navt{display:none}.fl-sug{flex-wrap:wrap}.fl-sug .fl-btn{width:100%;justify-content:center}}
+#obs-conf .fl-chips{margin:0 0 10px}
 #obs-conf{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
 #obs-conf[hidden]{display:none}
 #obs-conf .obs-c{background:#fff;border-radius:16px;max-width:560px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
@@ -33424,6 +33453,136 @@ function fichaIngresoTxt(p){
 function fichaSw(on, label, onclick, extra){
   return '<button type="button" class="fl-sw'+(on?' on':'')+'" onclick="'+onclick+'" aria-pressed="'+(on?'true':'false')+'"><span>'+label+'</span><span class="fl-tog"></span></button>'+(extra||'');
 }
+/* ✨ (24/10, dueño: «a, b, c, d, e, g, i») Lo que la ficha le resume a logística. Todo SOLO MIRA: lee el texto que escribió el
+   vendedor y las cuentas de siempre; no cambia el pedido salvo los botones de siempre («✓ Usar este» = el mismo «Aceptar» de A1).
+   A · las observaciones en etiquetas (el texto entero sigue abajo). */
+function flMay(s){ return sinTildes(s).toUpperCase().replace(/\s+/g,' '); }
+function flCap(s){ return String(s||'').toLowerCase().replace(/(^|\s)\S/g, function(c){ return c.toUpperCase(); }); }
+var FL_PARA=['Y','PARA','CON','EL','LA','LOS','LAS','POR','QUE','A','EN','SE','DE','DEL','LLAMAR','ENTREGAR','LLEVAR','AL'];
+function fichaProvincia(t){   // «… PROVINCIA - PORTACHUELO» → 'Portachuelo'; «provincia» sola → ''; no dice → null
+  var m=t.match(/PROVINCIA\b[\s\-–:,(]*(?:DE\s+)?([A-Z][A-Z ]*)?/); if(!m) return null;
+  var w=String(m[1]||'').trim().split(' '), out=[];
+  for(var i=0;i<w.length && out.length<3;i++){ if(!w[i]) continue; if(FL_PARA.indexOf(w[i])>=0) break; out.push(w[i]); }
+  return flCap(out.join(' '));
+}
+function fichaObsChips(p){
+  var obs=String((p&&p.observaciones)||'').trim(), t=' '+flMay(obs)+' ', out=[];
+  var add=function(i, txt, k){ out.push({ i:i, t:txt, k:k }); };
+  if(obs){
+    if(/DOBLE BOLSA|2 BOLSAS|DOS BOLSAS/.test(t)) add('🛍️','Doble bolsa','bolsa'); else if(/\bBOLSA/.test(t)) add('🛍️','Con bolsa','bolsa');
+    if(/ESQUINER/.test(t)) add('📐','Esquineros','esq');
+    if(/PLASTICO|NYLON|STRETCH/.test(t)) add('🎁','Envolver en plástico','plast');
+    var h=t.match(/(\d+|UNA|MEDIA)\s*(HORAS?|HRS?|H)\b[^.]{0,8}?ANTES/);
+    if(/LLAMAR|LLAMEN|LLAME\b|AVISAR|AVISEN|COMUNICAR/.test(t)) add('📞', h ? ('Llamar '+(h[1]==='UNA'?'1':h[1]==='MEDIA'?'½':h[1])+' h antes') : 'Llamar antes', 'llamar');
+    var pi=t.match(/(\d+)\s*(?:ER|ERO|DO|RO|TO|MO|VO|NO|°|º)?\s*PISO/) || t.match(/PISO\s*(?:N\S*\s*)?(\d+)/);
+    if(pi) add('🪜','Subir al piso '+pi[1],'piso'); else if(/ESCALERA/.test(t)) add('🪜','Hay escaleras','piso'); else if(/\bSUBIR/.test(t)) add('🪜','Hay que subirlo','piso');
+    if(/(RETIRAR|LLEVAR|LLEVARSE|RECOGER|SACAR)\s+(?:EL\s+|SU\s+|LOS\s+)?(?:COLCHON(?:ES)?\s+)?VIEJO|COLCHON(ES)? VIEJO/.test(t)) add('♻️','Retirar el colchón viejo','viejo');
+    if(/\bARMA(R|DO|RLO|RLA)\b|INSTALA|ENSAMBL/.test(t)) add('🔧','Armarlo en la casa','armar');
+    var e=t.match(/ENTRE\s+(?:LAS?\s+)?(\d{1,2}(?::\d{2})?)\s*(?:Y|A|-)\s*(?:LAS?\s+)?(\d{1,2}(?::\d{2})?)/);
+    var a=t.match(/(ANTES|DESPUES|DESDE|HASTA|A PARTIR)\s+DE\s+LAS?\s+(\d{1,2}(?::\d{2})?)/) || t.match(/(ANTES|DESPUES|DESDE|HASTA)\s+LAS?\s+(\d{1,2}(?::\d{2})?)/);
+    if(e) add('🕐','Entre las '+e[1]+' y las '+e[2],'hora'); else if(a) add('🕐',flCap(a[1]==='DESPUES'?'después':a[1])+' de las '+a[2],'hora');
+    if(/FACTURA/.test(t)) add('🧾','Llevar la factura','fact');
+    if(/FRAGIL|CUIDADO/.test(t)) add('⚠️','Con cuidado','cuid');
+    if(/COBRAR|CONTRA ?ENTREGA|PAGA(RA)? AL (ENTREGAR|RECIBIR)|CANCELA(RA)? AL (ENTREGAR|RECIBIR)/.test(t)) add('💵','Cobra al entregar','cobra');
+  }
+  var pv=fichaProvincia(' '+flMay([p&&p.observaciones, p&&p.direccion, p&&p.zona].join(' . '))+' ');
+  if(pv!==null) add('🛣️','Va a provincia'+(pv?(' · '+pv):''),'prov');
+  return out;
+}
+function fichaChipsHtml(ch){
+  return ch.length ? ('<div class="fl-chips">'+ch.map(function(c){ return '<span class="fl-chip fl-chip-'+c.k+'">'+c.i+' '+esc(c.t)+'</span>'; }).join('')+'</div>') : '';
+}
+/* B · El cliente lo retira: lo dice la DIRECCIÓN («RECOGERÁ DE ALMACÉN … BANZER», «retira en tienda») o las observaciones con el cliente
+   nombrado («el cliente lo recoge», «retirará de fábrica»). «Recoger el colchón viejo» no es esto: en las observaciones hace falta el
+   cliente o el verbo en futuro con el lugar. No cambia nada: la ficha deja de mostrar el mapa y el camión pasa a un costado. */
+var FL_RETIRA='(RECOGE|RECOGERA|RECOGEN|RECOGERAN|RETIRA|RETIRARA|RETIRAN|RETIRARAN|RECOJO|RETIRO|PASA A (?:RECOGER|BUSCAR|RETIRAR)|PASARA A (?:RECOGER|BUSCAR|RETIRAR)|VIENE A (?:RECOGER|BUSCAR|RETIRAR)|VENDRA A (?:RECOGER|BUSCAR|RETIRAR))';
+function fichaRetira(p){
+  if(!p || esVentaTienda(p)) return null;
+  var dir=' '+flMay(p.direccion)+' ', obs=' '+flMay(p.observaciones)+' ';
+  var enDir=new RegExp('[^A-Z]'+FL_RETIRA+'[^A-Z]').test(dir) || /CLIENTE (LO |LOS )?(RECOGE|RETIRA|PASA)/.test(dir);
+  var enObs=/CLIENTE (LO |LOS |LA |LAS )?(RECOGE|RECOGERA|RETIRA|RETIRARA|PASA|PASARA|VIENE|VENDRA)/.test(obs) ||
+    /[^A-Z](RECOGERA|RETIRARA|PASARA A (RECOGER|BUSCAR|RETIRAR)|VENDRA A (RECOGER|BUSCAR|RETIRAR)) (DE|EN|DEL|POR) (EL |LA )?(ALMACEN|FABRICA|TIENDA|BANZER|PTF|DEPOSITO|PLANTA)/.test(obs);
+  if(!enDir && !enObs) return null;
+  var t=enDir ? dir : obs, donde='el depósito';
+  if(/BANZER/.test(t)) donde='Banzer';
+  else if(/PTF|FABRICA|PRODUCTOS TERMINADOS|PARQUE INDUSTRIAL|PLANTA/.test(t)) donde='PTF (fábrica)';
+  else if(/MORENO/.test(t)) donde='Moreno';
+  else {
+    for(var i=0;i<SUCURSALES.length;i++){ if(t.indexOf(' '+flMay(SUCURSALES[i].n)+' ')>=0){ donde='la tienda '+SUCURSALES[i].n; break; } }
+    if(donde==='el depósito' && /TIENDA/.test(t)) donde='la tienda';
+  }
+  return { donde:donde };
+}
+/* G · Cuántos días: «hace 3 días», «HOY», «MAÑANA», «faltan 7 días». */
+function fichaDias(iso){
+  var d=diasEntre(todayStr(), iso);
+  if(!iso) return { t:'', c:'' };
+  return d===0 ? { t:'HOY', c:'hoy' } : d===1 ? { t:'MAÑANA', c:'man' } : d>1 ? { t:'faltan '+d+' días', c:'' } : { t:'hace '+(-d)+' día'+(d===-1?'':'s'), c:'pas' };
+}
+function fichaHaceTxt(ts){
+  ts=Number(ts); if(!(ts>0)) return '';
+  var d=diasEntre(isoDeTsBolivia(ts), todayStr());
+  return d<=0 ? 'hoy' : d===1 ? 'ayer' : ('hace '+d+' días');
+}
+/* C · Lo que no cierra (solo avisa). */
+function fichaAvisos(p, ret, chips){
+  var a=[]; if(!p || p.entregado || esVentaTienda(p)) return a;
+  var hoy=todayStr(), f=p.fecha||'', veh=vehiculoDe(p), pr=p.productos||[], nNo=0, nSin=0;
+  pr.forEach(function(x){ if(enProduccion(x)) return; if(x.chk==='no') nNo++; else if(!prodHay(x) && !esRecoger(x) && !recogeDeTienda(x)) nSin++; });
+  if(!f) a.push('📅 No tiene fecha de entrega.');
+  else if(f<hoy) a.push('📅 Era para el '+fmtFechaCorta(f)+' y no figura «🚚 Entregado»: si salió, marcalo; si no, reprogramalo.');
+  if(f && f>=hoy && feriadoDe(f)) a.push('🚫 El '+fmtFechaCorta(f)+' es feriado ('+feriadoDe(f)+'): el camión no sale.');
+  if(ret){
+    if(veh) a.push('🏪 El cliente lo retira, pero tiene camión ('+veh+'): ¿hace falta?');
+    // Lo retira en un depósito y lo marcado sale de OTRO: hay que pasarlo antes de que venga
+    var enB=/^Banzer/.test(ret.donde), enP=/^PTF/.test(ret.donde), otro=0;
+    if(enB || enP) pr.forEach(function(x){ prodPartes(x).forEach(function(e){ if(enB ? (e.tipo==='aca' || e.tipo==='trae') : (e.tipo==='sale' || e.tipo==='trae')) otro+=Number(e.u)||Number(x.cant)||1; }); });
+    if(otro) a.push('🔁 Lo retira en '+ret.donde+' pero '+otro+' unidad'+(otro===1?' sale':'es salen')+' de otro lado: hay que llevarl'+(otro===1?'a':'as')+' a '+(enB?'Banzer':'PTF')+' antes de que venga.');
+  }
+  else {
+    if(p.verificado && !veh) a.push('🚛 Está «Listo para cargar» y no tiene camión.');
+    if(!String(p.maps||'').trim()) a.push('📍 No tiene ubicación: pedile el enlace a '+(p.vendedor||'quien lo vendió')+'.');
+    if(!String(p.celular||'').trim()) a.push('📞 No tiene el celular del cliente.');
+    var pv=(chips||[]).filter(function(c){ return c.k==='prov'; })[0];
+    if(pv) a.push('🛣️ '+pv.t+': confirmá que el camión pueda ir'+(veh?'':' y asigná uno')+'.');
+  }
+  if(nNo && f && diasEntre(hoy, f)<=2) a.push('✗ '+nNo+' producto'+(nNo===1?'':'s')+' sin stock y la entrega es '+(f<hoy?'de un día que ya pasó':f===hoy?'hoy':('el '+nxDiaTxt(f)))+': reprogramá o pedilo a fábrica.');
+  else if(nNo && p.verificado) a.push('✗ Está «Listo para cargar» y '+nNo+' producto'+(nNo===1?' no tiene':'s no tienen')+' stock.');
+  if(nSin && p.verificado) a.push('⬜ Está «Listo para cargar» y '+nSin+' producto'+(nSin===1?' está':'s están')+' sin revisar.');
+  return a;
+}
+/* D · El camión sugerido: la MISMA cuenta de «Sin camión» (A1, `nxSugDatos`). «✓ Usar este» = el «Aceptar» de siempre. */
+function fichaSugerido(p){
+  if(!p || p.entregado || vehiculoDe(p) || !p.fecha || p.fecha<todayStr() || esVentaTienda(p)) return null;
+  var D=nxSugDatos(p.fecha);
+  for(var i=0;i<D.lista.length;i++) if(String(D.lista[i].p.id)===String(p.id)) return D.lista[i].v ? D.lista[i] : null;
+  return null;
+}
+function fichaSugUsar(id, v){
+  var p=findById(id);
+  if(nxSugAplicar(id, v)){ toast('🚚 '+((p&&p.cliente)||'Pedido')+' → '+v,'ok'); if(typeof nxBadges==='function') nxBadges(); }
+  reabrirFicha(id);
+}
+/* E · ◀ ▶ el pedido anterior y el siguiente del MISMO día (por el N° del día), sin cerrar. También con las flechas del teclado. */
+var FICHA_VEC=null;
+function fichaVecinos(p){
+  if(!p || !p.fecha) return null;
+  var m=dayNumMap(), l=(STATE||[]).filter(function(q){ return q && q.fecha===p.fecha && !esFilaSistema(q) && m[q.id]; });
+  l.sort(function(a,b){ return m[a.id]-m[b.id]; });
+  for(var i=0;i<l.length;i++) if(String(l[i].id)===String(p.id)) return { prev:l[i-1]||null, next:l[i+1]||null, i:i+1, n:l.length, m:m };
+  return null;
+}
+function fichaIr(d){
+  var q=FICHA_VEC && (d<0 ? FICHA_VEC.prev : FICHA_VEC.next); if(!q) return;
+  MODAL_KIND='admin'; showPedidoModal(q.id);
+}
+document.addEventListener('keydown', function(e){
+  if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+  var box=document.getElementById('modal-box'), ov=document.getElementById('modal'), oc=document.getElementById('obs-conf');
+  if(!box || !ov || !ov.classList.contains('on') || !box.classList.contains('fl-ficha') || (oc && !oc.hidden)) return;
+  var a=document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  fichaIr(e.key==='ArrowLeft' ? -1 : 1);
+});
 function showPedidoModal(id){
   var p=findById(id); if(!p) return;
   if(REV_VOLVER && (REV_VOLVER.id!==String(id) || !document.getElementById('modal').classList.contains('on'))) REV_VOLVER=null;   // 👆 (19/10, §4ls PA-9) «← Volver a la revisión» solo para el pedido abierto desde ahí, con la ventana abierta
@@ -33446,35 +33605,47 @@ function showPedidoModal(id){
         '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
       '</div>') : '';
   var turnoTxt=p.turno ? (normTurno(p.turno)==='PM' ? '🌆 Tarde' : '🌅 Mañana') : 'sin turno';
+  var ret=fichaRetira(p), chips=fichaObsChips(p), avisos=fichaAvisos(p, ret, chips), dias=fichaDias(p.fecha), hace=fichaHaceTxt(p.ts);
+  var vec=fichaVecinos(p); FICHA_VEC=vec;
   var top='<div class="fl-top">'+
       '<div class="fl-num"><b>'+(dnum?('#'+dnum):'—')+'</b><small>del día</small></div>'+
       '<div class="fl-cli"><div class="n">'+esc(p.cliente||'—')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+'</div></div>'+
       '<div class="fl-pills">'+
-        '<span class="fl-pill fl-dato"><small>📥 Ingresó</small>'+esc(fichaIngresoTxt(p))+'</span>'+
-        '<span class="fl-pill fl-dato fl-ent"><small>🚚 Entrega</small>'+esc(p.fecha?fmtFecha(p.fecha):'Sin fecha')+' · '+turnoTxt+'</span>'+
-        '<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'+
+        '<span class="fl-pill fl-dato"><small>📥 Ingresó</small>'+esc(fichaIngresoTxt(p))+(hace?('<i class="fl-hace">'+esc(hace)+'</i>'):'')+'</span>'+
+        '<span class="fl-pill fl-dato fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'"><small>🚚 Entrega</small>'+esc(p.fecha?nxDiaTxt(p.fecha):'Sin fecha')+' · '+turnoTxt+
+          (dias.t&&!p.entregado?('<i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'+
+        (ret ? ('<span class="fl-pill fl-ret">🏪 Retira en '+esc(ret.donde)+'</span>') : ('<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'))+
         (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
       '</div></div>';
   var obs=String(p.observaciones||'').trim();
-  var obsHtml=obs ? ('<div class="fl-obs"><div class="i">📝</div><div class="fl-obs-c"><div class="t">Observaciones — leer antes de cargar</div><div class="x">'+esc(obs)+'</div></div></div>') : '';
+  var obsHtml=obs ? ('<div class="fl-obs"><div class="i">📝</div><div class="fl-obs-c"><div class="t">Observaciones — leer antes de cargar</div>'+fichaChipsHtml(chips)+'<div class="x">'+esc(obs)+'</div></div></div>')
+                  : fichaChipsHtml(chips);   // sin observaciones, «🛣️ Va a provincia» puede salir de la dirección o la zona
+  var avisosHtml=avisos.length ? ('<div class="fl-avisos"><b>⚠️ Revisá antes de cargar</b><ul>'+avisos.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul></div>') : '';
   var cel=String(p.celular||'').trim(), wa=(typeof misWaCliente==='function') ? misWaCliente(cel) : '';
   var telNum=cel.replace(/[^0-9+]/g,'');
-  var colDonde='<div class="fl-c"><h4>📍 Dónde entregar</h4>'+
+  var contacto=(cel ? ('<a class="fl-btn" href="tel:'+esc(telNum)+'">📞 '+esc(cel)+'</a>') : '')+
+        (wa ? ('<a class="fl-btn w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>') : '');
+  var colDonde=ret ? ('<div class="fl-c"><h4>🏪 No se entrega: lo retira el cliente</h4>'+
+      '<div class="fl-retira"><b>El cliente lo retira en '+esc(ret.donde)+'</b><small>No va en camión ni hace falta el mapa. Tenelo listo para cuando venga.</small></div>'+
+      (p.direccion?('<div class="fl-dir fl-dir-ret">'+esc(p.direccion)+'</div>'):'')+
+      '<div class="fl-btns">'+contacto+'</div>'+
+    '</div>') : ('<div class="fl-c"><h4>📍 Dónde entregar</h4>'+
       (p.zona?('<span class="fl-zona">'+esc(p.zona)+'</span>'):'')+
       '<div class="fl-dir">'+(p.direccion?esc(p.direccion):'<span style="color:var(--muted)">Sin dirección escrita</span>')+'</div>'+
       '<div class="fl-btns">'+
         (p.maps ? ('<a class="fl-btn p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button type="button" class="fl-btn" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button>')
                 : ('<button type="button" class="fl-btn a" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>'))+
-        (cel ? ('<a class="fl-btn" href="tel:'+esc(telNum)+'">📞 '+esc(cel)+'</a>') : '')+
-        (wa ? ('<a class="fl-btn w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>') : '')+
+        contacto+
       '</div>'+
-    '</div>';
+    '</div>');
+  var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
+  var sug=ret ? null : fichaSugerido(p);
   var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaProdsHtml(p)+
-      '<div class="fl-res">'+prodResumen(p)+'</div>'+
+      '<div class="fl-res">'+prodResumen(p, true)+'</div>'+
       '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>✏️ Cambiar de dónde sale cada producto</summary><div class="fl-marcas-in">'+
         '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div>'+prodRevList(p)+'</div></details>'+
       '<div class="fl-est"><span class="fl-est-t">📦 Estado de stock <i>· 🤖 se pone solo con la marca de cada producto</i></span>'+
-        '<div class="fl-auto">'+estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+'</div>'+
+        '<div class="fl-auto">'+estadoStockBadge(p)+(aMano?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+'</div>'+
         '<div class="modal-actions">'+
           estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
           estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
@@ -33482,7 +33653,10 @@ function showPedidoModal(id){
         '</div></div>'+
       (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     '</div>';
-  var colCamion='<div class="fl-c"><h4>🚛 Camión y entrega</h4>'+
+  var colCamion='<div class="fl-c"><h4>'+(ret?'🏪 Entrega al cliente':'🚛 Camión y entrega')+'</h4>'+
+      (sug ? ('<div class="fl-sug"><div><small>💡 Camión sugerido</small><b>🚚 '+esc(sug.v)+'</b><i>'+esc(sug.por)+'</i></div>'+
+        '<button type="button" class="fl-btn p" onclick="fichaSugUsar(\''+pid+'\',\''+esc(sug.v).replace(/'/g,"\\'")+'\')">✓ Usar este</button></div>') : '')+
+      (ret ? '<div class="fl-ret-nota">Lo retira el cliente: no hace falta camión. Si igual lo llevan, elegilo acá.</div>' : '')+
       '<div class="fl-sel">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
       fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
       fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+
@@ -33493,12 +33667,18 @@ function showPedidoModal(id){
       row('Nota de venta', esc(p.nota))+
       row(atc?'N° ATC':rpt?'N° de pedido':'N° OC', esc(p.oc))+row(rpt?'Solicitado por':'Vendedor', esc(p.vendedor))+
       row('Ingresado', esc(tsFmt(p.ts)))+row('Celular', esc(p.celular))+row('Garantía a', esc(p.garantia))+
-      row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer))+
+      row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+row('Precios', prodPlataHtml(p).replace(/margin-top:4px/,'margin-top:0'))+
+      row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer))+
       mark+
     '</div></details>';
-  var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+  var navB=function(q, d){
+    return q ? ('<button type="button" class="fl-navb" onclick="fichaIr('+d+')" title="'+esc((d<0?'Anterior: ':'Siguiente: ')+(q.cliente||''))+'">'+(d<0?('◀ #'+vec.m[q.id]):('#'+vec.m[q.id]+' ▶'))+'</button>')
+             : ('<span class="fl-navb off">'+(d<0?'◀':'▶')+'</span>');
+  };
+  var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
+  var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      avisoModifHtml(p, false, true)+top+obsHtml+
+      avisoModifHtml(p, false, true)+top+obsHtml+avisosHtml+
       '<div class="fl-g">'+colDonde+colCarga+colCamion+'</div>'+
       botonesRpt(p)+mas+
       '<div class="fl-pie">'+
@@ -33525,7 +33705,7 @@ function obsAntesDeListo(id, hacer){
   if(!ov){ ov=document.createElement('div'); ov.id='obs-conf'; ov.className='no-print'; document.body.appendChild(ov); }
   ov.innerHTML='<div class="obs-c" role="dialog" aria-modal="true" aria-labelledby="obs-t">'+
       '<div class="obs-h" id="obs-t">📝 Antes de marcarlo «Listo para cargar»</div>'+
-      '<div class="obs-b"><div class="obs-k">Observaciones de '+esc(p.cliente||'este pedido')+'</div><div class="obs-x">'+esc(obs)+'</div>'+
+      '<div class="obs-b"><div class="obs-k">Observaciones de '+esc(p.cliente||'este pedido')+'</div>'+fichaChipsHtml(fichaObsChips(p))+'<div class="obs-x">'+esc(obs)+'</div>'+
       '<div class="obs-a"><button type="button" class="fl-btn" id="obs-no">Cancelar</button><button type="button" class="fl-btn p" id="obs-si">✓ Las leí, marcar listo</button></div></div></div>';
   ov.hidden=false;
   var cerrar=function(){ ov.hidden=true; ov.innerHTML=''; };
@@ -34759,7 +34939,7 @@ function prodAyuda(){
   return '<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay'+(salen?(' acá · ✔ '+esc(salen)+' (se carga allá)'):'')+' · ✗ no hay · 📥 recoger de '+esc(almacenes)+' · 🏬 recoger de una tienda &nbsp;|&nbsp; 🏭 ya se pidió a fábrica: MORENO o MULTI (se combina)</div>';
 }
 /* Resumen de la revisión: cuántos hay / faltan / hay que recoger */
-function prodResumen(p){
+function prodResumen(p, sinPlata){   // `sinPlata` (24/10): la ficha de logística muestra la suma de los precios en «Más datos» (`prodPlataHtml`)
   var pr=p.productos||[]; if(!pr.length) return '';
   var nOk=0,nNo=0,nIM=0,nSin=0,nProd=0,nSale=0;
   for(var i=0;i<pr.length;i++){ var c=pr[i].chk; if(prodHay(pr[i])){ nOk++; if(prodSaleDe(pr[i]).length) nSale++; } else if(c==='no')nNo++; else if(esRecoger(pr[i]))nIM++; else nSin++; if(enProduccion(pr[i]))nProd++; }
@@ -34770,15 +34950,17 @@ function prodResumen(p){
     (nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de '+esc(recogerLugaresTxt(p))+'</b>'):'')+
     (nSin?(' · <b style="color:var(--amber)">'+nSin+' sin revisar</b>'):'')+
     (nProd?(' · <b style="color:#a67c00">🏭 '+nProd+' pedido'+(nProd===1?'':'s')+' a fábrica'+esc(lugaresProd(p))+'</b>'):'')+'</div>';
-  // Los precios, si están cargados. Se avisa cuando no cuadran con lo anotado como venta.
-  if(tienePrecios(p)){
-    var d=difPrecios(p);
-    t+='<div style="font-size:.76rem;margin-top:4px"><b style="color:var(--teal-dk)">Los ítems suman '+fmtBs(prodTotal(p))+'</b>'+
-      (preciosAMedias(p) ? ' <span style="color:var(--amber);font-weight:700">· faltan precios</span>'
-        : (precioDescuadra(p) ? (' <span style="color:var(--amber);font-weight:700">· '+fmtBs(Math.abs(d))+' de '+(d>0?'más':'menos')+' que el total ('+fmtBs(ventaTotal(p))+')</span>')
-                              : ' <span style="color:var(--green);font-weight:700">· cuadra ✅</span>'))+'</div>';
-  }
+  if(!sinPlata) t+=prodPlataHtml(p);
   return t;
+}
+// Los precios, si están cargados. Se avisa cuando no cuadran con lo anotado como venta.
+function prodPlataHtml(p){
+  if(!tienePrecios(p)) return '';
+  var d=difPrecios(p);
+  return '<div style="font-size:.76rem;margin-top:4px"><b style="color:var(--teal-dk)">Los ítems suman '+fmtBs(prodTotal(p))+'</b>'+
+    (preciosAMedias(p) ? ' <span style="color:var(--amber);font-weight:700">· faltan precios</span>'
+      : (precioDescuadra(p) ? (' <span style="color:var(--amber);font-weight:700">· '+fmtBs(Math.abs(d))+' de '+(d>0?'más':'menos')+' que el total ('+fmtBs(ventaTotal(p))+')</span>')
+                            : ' <span style="color:var(--green);font-weight:700">· cuadra ✅</span>'))+'</div>';
 }
 function prodChkIcon(x){
   var sp=prodHay(x) ? prodSaleDe(x) : [];
