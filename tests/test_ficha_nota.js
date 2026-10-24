@@ -37,11 +37,11 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     localStorage.setItem('me_ficha_vista', JSON.stringify({ n1:new Date('2026-10-23T10:05:00-04:00').getTime() }));
     showPedidoModal('n1');
     var box=document.getElementById('modal-box'), t=function(sel){ var e=box.querySelector(sel); return e?e.textContent.replace(/\s+/g,' '):''; };
-    out.qh=t('.fl-qh'); out.contra=t('.fl-contra'); out.obsX=t('.fl-obs .x'); out.bultos=t('.fl-bultos'); out.tiendita=t('.fl-tiendita');
+    out.qh=t('.fl-qh'); out.contra=t('.fl-contra'); out.modp=t('.fl-modp'); out.leer=!!box.querySelector('details.fl-leer') && !box.querySelector('details.fl-leer').open; out.obsX=t('.fl-obs .x'); out.bultos=t('.fl-bultos'); out.tiendita=t('.fl-tiendita');
     out.no=t('.fl-prod-no'); out.cam=t('.fl-prod-cam'); out.quit=t('.fl-prod-quit'); out.med=[].map.call(box.querySelectorAll('.fl-med'), function(e){ return e.textContent; });
-    out.recibe=t('.fl-recibe'); out.mapa=!!box.querySelector('#fl-mapa');
+    out.recibe=[].map.call(box.querySelectorAll('.fl-per'), function(e){ return e.textContent; }).join(' | '); out.mapa=!!box.querySelector('#fl-mapa');
     // reabrir: «lo viste antes» ya no avisa (se anotó la vista)
-    closeModal(); showPedidoModal('n1'); out.despues2=/DESPUÉS de que lo viste/.test(t('.fl-contra'));
+    closeModal(); showPedidoModal('n1'); out.despues2=/DESPUÉS de que lo viste/.test(t('.fl-modp'));
     // las etiquetas se tildan y la pregunta solo pide lo que falta; todo tildado → directo
     window.OBS_PRUEBA=1;
     var chips=[].slice.call(box.querySelectorAll('.fl-obs button.fl-chip')); out.nChips=chips.length;
@@ -60,8 +60,10 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('ROHO: «Recibe: … · WhatsApp: …» y sin «Importado del Excel de ROHO»', r.R.recibe==='MARIOLY BALCAZAR' && r.R.cel==='70014456' && r.R.limpio==='CASA PORTON PLOMO', r.R);
   chk('«NO ARMAR PEDIDO – solo para registro» es una contradicción', r.S.some(x=>/no armar/i.test(x)), r.S);
   chk('«1 1/2 plazas» no es una fecha', r.U==='', r.U);
-  chk('QUÉ HACER: carga en PTF, preparar doble bolsa y tarjetero, entregar con horario, llamar a Jaime', /Cargar en PTF/.test(r.qh) && /doble bolsa/.test(r.qh) && /llevar el tarjetero/.test(r.qh) && /entre las 11 y las 12/.test(r.qh) && /Llamar 1 h antes/.test(r.qh) && /Sr\. Jaime/.test(r.qh) && !/NASA/.test(r.qh), r.qh);
-  chk('⛔ el horario de la nota contradice el turno, «cobrar» con el pedido pagado, y lo cambiaron después de que lo vieron', /TARDE/.test(r.contra) && /figura PAGADO/.test(r.contra) && /DESPUÉS de que lo viste/.test(r.contra), r.contra);
+  chk('QUÉ HACER en una línea: 3 bultos en PTF (sin la NASA ni lo de tienda) › entregar con el horario › llamar a Jaime', /Cargar 3 bultos en PTF/.test(r.qh) && /entre las 11 y las 12/.test(r.qh) && /llamar 1 h antes a Sr\. Jaime/.test(r.qh), r.qh);
+  chk('la nota queda plegada («Leer la nota completa») porque ya salió en etiquetas', r.leer, r.leer);
+  chk('⛔ el horario de la nota contradice el turno y «cobrar» con el pedido pagado', /TARDE/.test(r.contra) && /figura PAGADO/.test(r.contra), r.contra);
+  chk('✏️ la franja del cambio dice «DESPUÉS de que lo viste»', /DESPUÉS de que lo viste/.test(r.modp), r.modp);
   chk('reabrir la ficha ya no dice «después de que lo viste»', r.despues2===false, r.despues2);
   chk('la nota del recuadro amarillo va limpia', !/32218/.test(r.obsX), r.obsX.slice(0,80));
   chk('bultos: sin lo de tienda ni lo que no se lleva; lo de tienda aparte', /3 bultos/.test(r.bultos) && /protector/i.test(r.tiendita), { b:r.bultos, t:r.tiendita });

@@ -799,11 +799,11 @@ th.sortable:hover{color:var(--teal-dk)}
 .fl-pill.ok{background:#e8f7ee;border-color:#bfe6cc;color:#166534}
 .fl-dato{display:flex;flex-direction:column;line-height:1.15}.fl-dato small{font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:#5b7b78;font-weight:800}
 .fl-ent{background:#00A09A;border-color:#00A09A;color:#fff}.fl-ent small{color:#d9f5f3}
-.fl-obs{background:#fff4c2;border:2px solid #f2b705;border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start}
+.fl-obs{background:#fff8d6;border:2px solid #f2b705;border-radius:14px;padding:10px 14px;margin-bottom:12px;display:grid;gap:8px}
 .fl-obs .i{font-size:2rem;line-height:1;flex:none}.fl-obs-c{flex:1;min-width:0}
 .fl-obs .t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8a6400}
-.fl-obs .x{font-size:1.12rem;font-weight:600;color:#2d2200;line-height:1.45;margin-top:2px;white-space:pre-wrap;word-break:break-word}
-.fl-g{display:grid;grid-template-columns:1fr 1.3fr .95fr;gap:14px;align-items:start}
+.fl-obs .x{font-size:.95rem;font-weight:500;color:#3a2d00;line-height:1.45;margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.fl-g{display:grid;grid-template-columns:1.45fr 1fr .85fr;gap:12px;align-items:start}
 .fl-c{background:#fff;border:1px solid #e3eaea;border-radius:14px;padding:14px 16px;min-width:0}
 .fl-c h4{margin:0 0 10px;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#00A09A}
 .fl-sub{margin:12px 0 6px;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#00A09A;font-weight:800}
@@ -871,6 +871,48 @@ th.sortable:hover{color:var(--teal-dk)}
 .fl-navt{color:#e6fbf9;font-size:.8rem;font-weight:700;white-space:nowrap}
 @media(max-width:600px){.fl-navt{display:none}.fl-sug{flex-wrap:wrap}.fl-sug .fl-btn{width:100%;justify-content:center}}
 #obs-conf .fl-chips{margin:0 0 10px}
+/* 🗂️ (24/10) la ficha compacta */
+.fl-top{margin-bottom:8px}.fl-cli .n{font-size:1.3rem}.fl-cli .s{font-size:.84rem}.fl-num b{font-size:1.6rem}.fl-num{padding:6px 12px}
+.fl-pill{padding:6px 11px;font-size:.85rem}.fl-ent .fl-hace{display:inline;margin:0 0 0 4px;font-weight:900;letter-spacing:.04em}
+.fl-modp{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;background:#fdecee;border:1px solid #f1b3ba;border-radius:10px;padding:6px 10px;margin-bottom:10px;font-size:.85rem;color:#8a1c24}
+.fl-modp.fuerte{border-left:6px solid var(--red)}.fl-modp i{font-style:normal;color:#7a5200}
+.fl-modok{margin-left:auto;background:var(--red);color:#fff;border:0;border-radius:8px;padding:5px 10px;font-weight:800;font-size:.8rem;cursor:pointer;font-family:inherit}
+.fl-qh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:9px 14px;font-size:.98rem}
+.fl-qh-s{color:#9bb}.fl-qh .fl-qh-k{min-width:0;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#00756f}
+.fl-obs .t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8a6400}
+.fl-obs ul{margin:0;padding:6px 10px 6px 28px;border-radius:9px;display:grid;gap:2px;font-size:.88rem;font-weight:700}
+.fl-obs ul.fl-contra{background:#fdecee;color:#7d1620;border:0;border-left:0;list-style:none;padding-left:10px}
+.fl-obs ul.fl-avisos{background:#fff1d6;color:#6b4300;border:0;margin:0}
+.fl-obs .fl-chips{margin:0}
+.fl-leer summary{cursor:pointer;font-weight:800;color:#8a6400;font-size:.85rem}
+.fl-leer .fl-orig{margin-top:4px}
+.fl-per{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.88rem;margin-top:7px}
+.fl-lnk{background:none;border:0;color:#00756f;font-weight:700;cursor:pointer;padding:0;font-family:inherit;font-size:.82rem}
+.fl-btn.fl-btn-s.a{width:auto}
+.fl-c .fl-mapa{height:100px}
+.fl-est{display:block;margin-top:8px;padding-top:8px;font-size:.84rem}.fl-est .fl-est-t{display:inline;font-size:.76rem;letter-spacing:0;text-transform:none;color:#7a8a8e;font-weight:600}
+.fl-est .modal-actions{margin-top:6px}
+.modal.fl-ficha .fl-prod{padding:5px 0;gap:8px}
+.modal.fl-ficha .fl-q{min-width:32px;height:32px;font-size:.95rem;border-radius:8px}
+.modal.fl-ficha .fl-pn{font-size:.88rem}
+.modal.fl-ficha .fl-mc{margin-top:2px;gap:4px}
+.modal.fl-ficha .fl-med{font-size:.86rem;padding:0 7px;border-width:1.5px}
+.modal.fl-ficha .fl-cod{font-size:.74rem;padding:1px 6px}
+.modal.fl-ficha .fl-cam{font-size:.72rem;padding:0 6px}
+.modal.fl-ficha .fl-pl{font-size:.76rem;padding:3px 7px}
+.modal.fl-ficha .fl-prod-no .fl-mc{display:none}
+.modal.fl-ficha .fl-no-t,.modal.fl-ficha .fl-prod-quit small{font-size:.74rem;margin-top:1px}
+.modal.fl-ficha .fl-bultos{padding:5px 10px;font-size:.86rem}
+.modal.fl-ficha .fl-tiendita{font-size:.76rem;padding:3px 8px}
+.modal.fl-ficha .fl-c{padding:10px 12px}
+.modal.fl-ficha .fl-c h4{margin-bottom:7px}
+.modal.fl-ficha .fl-sw{padding:7px 10px;margin-top:6px;font-size:.9rem}
+.modal.fl-ficha .fl-sug{padding:6px 9px;margin-bottom:6px}.modal.fl-ficha .fl-sug b{font-size:.95rem}.modal.fl-ficha .fl-sug i{font-size:.74rem}
+.modal.fl-ficha .fl-est .modal-actions .btn{padding:4px 9px;font-size:.78rem;min-height:0}
+.modal.fl-ficha .fl-mas{margin-top:10px;padding:7px 12px}
+.modal.fl-ficha .fl-pie{margin-top:10px}
+.modal.fl-ficha .fl-dir{font-size:.92rem}
+.modal.fl-ficha .fl-sub{margin:8px 0 4px}
 /* 🧠 (24/10) qué hacer, la nota leída, lo que no coincide, los bultos, la medida grande, lo que cambió y el mapita */
 .fl-qh{background:#eaf6f5;border:1.5px solid #9fd6d1;border-radius:14px;padding:12px 16px;margin-bottom:12px}
 .fl-qh-t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#00756f;margin-bottom:6px}
@@ -33637,6 +33679,7 @@ function fichaLugarHtml(x){
   if(!x) return '';
   if(x.chk==='no') return '<span class="fl-pl no">✗ No hay</span>';
   var pa=prodPartes(x);
+  if(!pa.length && esProdDeTienda(x)) return '<span class="fl-pl sin">🛍️ De tienda</span>';   // (24/10) protectores, sábanas…: no salen de PTF ni Banzer
   if(!pa.length) return (enProduccion(x) && !x.prodR) ? '<span class="fl-pl trae">🏭 En producción'+esc(prodDondeSePide(x)?(' · '+prodLugarCorto(prodDondeSePide(x))):'')+'</span>' : '<span class="fl-pl sin">Sin revisar</span>';
   var varias=pa.length>1;
   return pa.map(function(e){
@@ -33963,45 +34006,37 @@ function fichaCambiosProd(p){
 }
 /* 5 · los bultos (lo que se carga) y lo de tienda aparte */
 function fichaBultos(p, N){
-  var u=0, col=0, som=0, otr=0, tienda=[];
+  var u=0, col=0, som=0, alm=0, otr=0, tienda=[];
   ((p&&p.productos)||[]).forEach(function(x, ix){
     if(N.noLlevar.indexOf(ix)>=0) return;
     var n=Number(x.cant)||0;
     if(esProdDeTienda(x)){ tienda.push(n+' '+String(x.desc||'').toLowerCase()); return; }
     u+=n; var t=pryTipoProd(x);
-    if(t==='colchon') col+=n; else if(t==='somier') som+=n; else if(t==='combo'){ col+=n; som+=n; } else otr+=n;
+    if(t==='colchon') col+=n; else if(t==='somier') som+=n; else if(t==='combo'){ col+=n; som+=n; } else if(/ALMOHAD|\bALM\b|NASA|TRAVESSEIRO/.test(flMay(x.desc))) alm+=n; else otr+=n;
   });
-  var det=[]; if(col) det.push(col+' colchón'+(col===1?'':'es')); if(som) det.push(som+' somier'+(som===1?'':'es')); if(otr) det.push(otr+' otro'+(otr===1?'':'s'));
+  var det=[]; if(col) det.push(col+' colchón'+(col===1?'':'es')); if(som) det.push(som+' somier'+(som===1?'':'es')); if(alm) det.push(alm+' almohada'+(alm===1?'':'s')); if(otr) det.push(otr+' otro'+(otr===1?'':'s'));
   return '<div class="fl-bultos"><b>📦 '+u+' bulto'+(u===1?'':'s')+'</b>'+(det.length?(' · '+det.join(' · ')):'')+'</div>'+
     (tienda.length?('<div class="fl-tiendita">🛍️ De tienda, no sale de PTF ni Banzer: '+esc(tienda.join(', '))+'</div>'):'');
 }
-/* 1 · «Qué hacer», en una sola mirada: qué se carga y dónde, cómo se prepara, adónde y cuándo, a quién se llama */
-function fichaQueHacer(p, N, ret, chips){
+/* 1 · «Qué hacer», en UNA línea (24/10, ficha compacta): cuántos bultos y de dónde › adónde y cuándo (con el horario de la nota) ›
+   a quién llamar. Lo que se prepara va en las etiquetas de «Antes de cargar», no acá. */
+function fichaQueHacer(p, N, ret){
   var lug={}, orden=[];
   ((p&&p.productos)||[]).forEach(function(x, ix){
     if(N.noLlevar.indexOf(ix)>=0 || esProdDeTienda(x)) return;
-    var pa=prodPartes(x), donde;
-    if(x.chk==='no') donde='✗ Sin stock';
-    else if(!pa.length) donde=(enProduccion(x)&&!x.prodR)?'🏭 En producción':'⬜ Sin revisar';
-    else donde=pa.map(function(e2){ return e2.tipo==='aca'?'🏭 Cargar en PTF':e2.tipo==='sale'?('🏪 Cargar en '+saleNombre(e2.de)):(recogeTiendaDe(e2.de)?('🏬 Traer de '+recogerAlmCorto(e2.de)):('📥 Traer de '+(e2.de?recogerAlmCorto(e2.de):'Moreno'))); })[0];
-    if(!lug[donde]){ lug[donde]=[]; orden.push(donde); }
-    lug[donde].push((Number(x.cant)||0)+' '+String(x.desc||'—')+(x.medida?(' '+x.medida):''));
+    var n=Number(x.cant)||0, pa=prodPartes(x);
+    var add=function(k, u){ if(!lug[k]){ lug[k]=0; orden.push(k); } lug[k]+=u; };
+    if(x.chk==='no') add('✗ sin stock', n);
+    else if(!pa.length) add((enProduccion(x)&&!x.prodR)?'🏭 en producción':'⬜ sin revisar', n);
+    else pa.forEach(function(e2){ var u=Number(e2.u)||n; add(e2.tipo==='aca'?'en PTF':e2.tipo==='sale'?('en '+saleNombre(e2.de)):('📥 traer de '+(recogeTiendaDe(e2.de)?recogerAlmCorto(e2.de):(e2.de?recogerAlmCorto(e2.de):'Moreno'))), u); });
   });
-  var L=[];
-  orden.forEach(function(d){ L.push('<div class="fl-qh-l"><span class="fl-qh-k">'+esc(d)+'</span><span>'+esc(lug[d].join(' · '))+'</span></div>'); });
-  var prep=chips.filter(function(c){ return /^(bolsa|esq|plast|viejo|armar|piso|fact|cuid|tarj)$/.test(c.k); }).map(function(c){ return c.t.toLowerCase(); });
-  if(prep.length) L.push('<div class="fl-qh-l"><span class="fl-qh-k">🧰 Preparar</span><span>'+esc(prep.join(' · '))+'</span></div>');
-  var cuando=p.fecha ? (nxDiaTxt(p.fecha)+(p.turno?(' a la '+(normTurno(p.turno)==='PM'?'tarde':'mañana')):'')) : 'sin fecha';
-  L.push('<div class="fl-qh-l"><span class="fl-qh-k">'+(ret?'🏪 Lo retira':'🚚 Entregar')+'</span><span>'+esc(ret ? ('el cliente en '+ret.donde+', '+cuando) : ((p.zona?(p.zona+', '):'')+cuando))+
-    (N.hora?(' · <b>🕐 '+esc(N.hora)+'</b>'):'')+'</span></div>');
-  var aQuien=N.recibe || (N.recibeCel?'el número de la nota':''), celQ=N.recibeCel || flCel(p.celular);
-  if(N.llamar || N.recibe){
-    var wa=celQ ? misWaCliente(celQ) : '';
-    L.push('<div class="fl-qh-l fl-qh-tel"><span class="fl-qh-k">📞 '+(N.llamar?('Llamar '+esc(N.llamar)):'Recibe')+'</span><span>'+
-      (aQuien?('a <b>'+esc(aQuien)+'</b>'+(N.recibe&&N.llamar?' (recibe)':'')):'al cliente')+
-      (celQ?(' <a class="fl-btn fl-btn-s" href="tel:'+celQ+'">📞 '+celQ+'</a>'):'')+(wa?(' <a class="fl-btn fl-btn-s w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬</a>'):'')+'</span></div>');
-  }
-  return '<div class="fl-qh"><div class="fl-qh-t">🧭 Qué hacer</div>'+L.join('')+'</div>';
+  var tot=0; orden.forEach(function(k){ tot+=lug[k]; });
+  var carga=orden.map(function(k, i){ var u=lug[k]; return /^en /.test(k) ? ((i===0?'Cargar ':'')+'<b>'+u+(i===0?(' bulto'+(u===1?'':'s')):'')+' '+esc(k)+'</b>') : ('<b>'+u+' '+esc(k)+'</b>'); }).join(' y ');
+  var dia=p.fecha ? ((function(t){ var w=t.split(' '); return w.length>1 ? (w[0].slice(0,3)+' '+w[1]) : t; })(nxDiaTxt(p.fecha))+(p.turno?(' a la '+(normTurno(p.turno)==='PM'?'tarde':'mañana')):'')) : 'sin fecha';
+  var donde=ret ? ('lo retira el cliente en <b>'+esc(ret.donde)+'</b>, '+esc(dia)) : ('entregar <b>'+esc(dia)+(N.hora?(', '+esc(N.hora)):'')+'</b>'+(p.zona?(' · '+esc(p.zona)):''));
+  var tel=N.llamar ? ('📞 llamar <b>'+esc(N.llamar)+' a '+esc(N.recibe||'el cliente')+'</b>') : (N.recibe ? ('👤 recibe <b>'+esc(N.recibe)+'</b>') : '');
+  var partes=[carga||'<b>nada que cargar</b>', donde]; if(tel) partes.push(tel);
+  return '<div class="fl-qh"><span class="fl-qh-k">🧭 Qué hacer</span>'+partes.map(function(t){ return '<span>'+t+'</span>'; }).join('<span class="fl-qh-s">›</span>')+'</div>';
 }
 /* 7 · el mapita del lugar, con la distancia a PTF (no se baja en las pruebas, salvo `FX_PRUEBA`) */
 function fichaMapaPunto(p, N){
@@ -34056,64 +34091,75 @@ function showPedidoModal(id){
   if(FICHA_ABIERTA_ID!==String(p.id) || !document.getElementById('modal').classList.contains('on')){ FICHA_VISTO_ANT=fichaVistaDe(p.id); FICHA_ABIERTA_ID=String(p.id); fichaVistaAnotar(p.id); }
   var despues=fichaCambioDespues(p, FICHA_VISTO_ANT);
   var mapaPt=ret ? null : fichaMapaPunto(p, N);
+  /* 🗂️ (24/10, dueño: «ármala» — la ficha compacta, UNA pantalla de PC) Cada cosa en un solo lugar: arriba quién y cuándo, el cambio
+     en una franja finita, «Qué hacer» en una línea, «Antes de cargar» con lo que no coincide + las etiquetas para tildar + la nota
+     plegada (dueño: «si ya crea etiquetas… lo veo redundando mostrar de nuevo el texto»; sin etiquetas ni datos sacados, la nota se ve
+     entera), y tres columnas: qué se carga / dónde / camión. «¿Las leíste?» al marcar listo sigue mostrando la nota entera. */
+  var mod=modDe(p), modOtros=(mod&&mod.d) ? mod.d.filter(function(t){ return !/^(➕|🔢|➖) /.test(String(t)); }) : [];
+  var modHtml=mod ? ('<div class="fl-modp'+(despues?' fuerte':'')+'"><span>✏️ '+modQuienHtml(mod)+' el '+esc(fmtFechaCorta(mod.f))+(mod.h?(' '+esc(mod.h)):'')+modDeQuienTxt(mod)+
+      (despues?' · <b>DESPUÉS de que lo viste en este aparato</b>':'')+(modOtros.length?(' · '+modOtros.map(function(t){ return esc(t); }).join(' · ')):'')+
+      ((mod.d||[]).some(function(t){ return /^(➕|🔢|➖) /.test(String(t)); })?' · <i>productos: marcados en amarillo</i>':'')+'</span>'+
+      '<button type="button" class="fl-modok" onclick="'+esc("verVistoModif('"+String(p.id)+"')")+'">✓ Ya lo revisé</button></div>') : '';
   var top='<div class="fl-top">'+
       '<div class="fl-num"><b>'+(dnum?('#'+dnum):'—')+'</b><small>del día</small></div>'+
-      '<div class="fl-cli"><div class="n">'+esc(p.cliente||'—')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+'</div></div>'+
+      '<div class="fl-cli"><div class="n">'+esc(p.cliente||'—')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+
+        ' · 📥 Ingresó '+esc(fichaIngresoTxt(p))+(hace?(' ('+esc(hace)+')'):'')+'</div></div>'+
       '<div class="fl-pills">'+
-        '<span class="fl-pill fl-dato"><small>📥 Ingresó</small>'+esc(fichaIngresoTxt(p))+(hace?('<i class="fl-hace">'+esc(hace)+'</i>'):'')+'</span>'+
-        '<span class="fl-pill fl-dato fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'"><small>🚚 Entrega</small>'+esc(p.fecha?nxDiaTxt(p.fecha):'Sin fecha')+' · '+turnoTxt+
-          (dias.t&&!p.entregado?('<i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'+
+        '<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">🚚 Entrega '+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
+          (dias.t&&!p.entregado?(' <i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'+
         (ret ? ('<span class="fl-pill fl-ret">🏪 Retira en '+esc(ret.donde)+'</span>') : ('<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'))+
         (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
       '</div></div>';
   var obs=String(p.observaciones||'').trim();
-  // 4 · la nota LIMPIA (sin N° de OC, enlaces ni «Importado del Excel de ROHO»); la original, a un toque
-  var obsHtml=obs ? ('<div class="fl-obs"><div class="i">📝</div><div class="fl-obs-c"><div class="t">Observaciones — leer antes de cargar</div>'+fichaChipsHtml(chips, p.id)+
-      (N.limpio?('<div class="x">'+esc(N.limpio)+'</div>'):'')+
-      (N.limpio!==N.crudo?('<details class="fl-orig"><summary>ver la nota como la escribió el vendedor</summary><div>'+esc(N.crudo)+'</div></details>'):'')+'</div></div>')
-                  : fichaChipsHtml(chips, p.id);   // sin observaciones, «🛣️ Va a provincia» puede salir de la dirección o la zona
-  var rojo=contras.concat(despues?[despues]:[]);
-  var contrasHtml=rojo.length ? ('<div class="fl-contra"><b>⛔ Ojo: la nota y el pedido no coinciden</b><ul>'+rojo.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul></div>') : '';
-  var avisosHtml=avisos.length ? ('<div class="fl-avisos"><b>⚠️ Revisá antes de cargar</b><ul>'+avisos.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul></div>') : '';
+  // 📝 «Antes de cargar»: lo que no coincide (rojo) + lo que falta (ámbar) + las etiquetas para tildar + la nota (plegada si ya se leyó en etiquetas)
+  var leida=chips.length || N.recibe || N.hora || N.llamar || N.cobrar || N.noLlevar.length;
+  var notaHtml=!obs ? '' : (leida
+      ? ('<details class="fl-leer"><summary>📝 Leer la nota completa</summary><div class="x">'+esc(N.limpio||N.crudo)+'</div>'+
+          (N.limpio!==N.crudo?('<div class="fl-orig">Como la escribió el vendedor: '+esc(N.crudo)+'</div>'):'')+'</details>')
+      : ('<div class="x">'+esc(N.limpio||N.crudo)+'</div>'+(N.limpio!==N.crudo?('<details class="fl-orig"><summary>ver la nota como la escribió el vendedor</summary><div>'+esc(N.crudo)+'</div></details>'):'')));
+  var obsHtml=(obs || chips.length || contras.length || avisos.length) ? ('<div class="fl-obs"><div class="t">📝 Antes de cargar'+(obs||chips.length?' — leer y tildar':'')+'</div>'+
+      (contras.length?('<ul class="fl-contra">'+contras.map(function(t){ return '<li>⛔ '+esc(t)+'</li>'; }).join('')+'</ul>'):'')+
+      (avisos.length?('<ul class="fl-avisos">'+avisos.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'):'')+
+      fichaChipsHtml(chips, p.id)+notaHtml+'</div>') : '';
   var cel=String(p.celular||'').trim(), wa=(typeof misWaCliente==='function') ? misWaCliente(cel) : '';
   var telNum=cel.replace(/[^0-9+]/g,'');
-  var contacto=(cel ? ('<a class="fl-btn" href="tel:'+esc(telNum)+'">📞 '+esc(cel)+'</a>') : '')+
-        (wa ? ('<a class="fl-btn w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>') : '');
+  var contacto=(cel ? ('<a class="fl-btn fl-btn-s" href="tel:'+esc(telNum)+'">📞 '+esc(cel)+'</a>') : '')+
+        (wa ? ('<a class="fl-btn fl-btn-s w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬</a>') : '');
+  var waR=N.recibeCel ? misWaCliente(N.recibeCel) : '';
+  var recibeHtml=N.recibe ? ('<div class="fl-per">👤 Recibe: <b>'+esc(N.recibe)+'</b>'+(N.recibeCel?(' <a class="fl-btn fl-btn-s" href="tel:'+N.recibeCel+'">📞 '+N.recibeCel+'</a>'):'')+(waR?(' <a class="fl-btn fl-btn-s w" href="'+esc(waR)+'" target="_blank" rel="noopener">💬</a>'):'')+'</div>') : '';
   var colDonde=ret ? ('<div class="fl-c"><h4>🏪 No se entrega: lo retira el cliente</h4>'+
       '<div class="fl-retira"><b>El cliente lo retira en '+esc(ret.donde)+'</b><small>No va en camión ni hace falta el mapa. Tenelo listo para cuando venga.</small></div>'+
-      (p.direccion?('<div class="fl-dir fl-dir-ret">'+esc(p.direccion)+'</div>'):'')+
-      '<div class="fl-btns">'+contacto+'</div>'+
+      (p.direccion?('<div class="fl-dir fl-dir-ret">'+esc(p.direccion)+'</div>'):'')+recibeHtml+
+      (contacto?('<div class="fl-per">🙋 Cliente '+contacto+'</div>'):'')+
     '</div>') : ('<div class="fl-c"><h4>📍 Dónde entregar</h4>'+
       (p.zona?('<span class="fl-zona">'+esc(p.zona)+'</span>'):'')+
       '<div class="fl-dir">'+(p.direccion?esc(p.direccion):'<span style="color:var(--muted)">Sin dirección escrita</span>')+'</div>'+
-      (N.recibe?('<div class="fl-recibe">👤 Recibe: <b>'+esc(N.recibe)+'</b>'+(N.recibeCel?(' · <a href="tel:'+N.recibeCel+'">'+N.recibeCel+'</a>'):'')+'</div>'):'')+
-      (mapaPt?('<div class="fl-mapa" id="fl-mapa"></div><div class="fl-mapa-t">📍 a <b>'+fxMapaKm(ALM_UBIC[0], mapaPt).toFixed(1).replace('.',',')+' km</b> de PTF'+(ALM_UBIC[1]?(' · '+fxMapaKm(ALM_UBIC[1], mapaPt).toFixed(1).replace('.',',')+' km de '+esc(ALM_UBIC[1].nombre)):'')+
-        (mapaPt.aprox?' · ≈ ubicación aproximada: preguntá la casa':'')+(mapaPt.nota?' · 📝 la ubicación estaba pegada en la nota':'')+'</div>'):'')+
-      '<div class="fl-btns">'+
-        ((!p.maps && N.mapa) ? ('<a class="fl-btn p" href="'+esc(N.mapa)+'" target="_blank" rel="noopener">📍 Abrir (de la nota)</a>') : '')+
-        (p.maps ? ('<a class="fl-btn p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button type="button" class="fl-btn" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button>')
-                : ('<button type="button" class="fl-btn a" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>'))+
-        contacto+
-      '</div>'+
+      (mapaPt?('<div class="fl-mapa" id="fl-mapa"></div><div class="fl-mapa-t">a <b>'+fxMapaKm(ALM_UBIC[0], mapaPt).toFixed(1).replace('.',',')+' km</b> de PTF'+(ALM_UBIC[1]?(' · '+fxMapaKm(ALM_UBIC[1], mapaPt).toFixed(1).replace('.',',')+' km de '+esc(ALM_UBIC[1].nombre)):'')+
+        (mapaPt.aprox?' · ≈ aproximada: preguntá la casa':'')+(mapaPt.nota?' · 📝 la ubicación estaba en la nota':'')+'</div>'):'')+
+      recibeHtml+
+      '<div class="fl-per">🙋 Cliente '+(contacto||'<span style="color:var(--muted)">sin celular</span>')+
+        ((!p.maps && N.mapa) ? (' <a class="fl-btn fl-btn-s p" href="'+esc(N.mapa)+'" target="_blank" rel="noopener">📍 Maps (de la nota)</a>') : '')+
+        (p.maps ? (' <a class="fl-btn fl-btn-s p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Maps</a>') : '')+'</div>'+
+      '<div class="fl-per">'+(p.maps ? ('<button type="button" class="fl-lnk" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button>')
+                : ('<button type="button" class="fl-btn fl-btn-s a" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>'))+'</div>'+
     '</div>');
   var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
   var sug=ret ? null : fichaSugerido(p);
   var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N)+
-      '<div class="fl-res">'+prodResumen(p, true)+'</div>'+
-      '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>✏️ Cambiar de dónde sale cada producto</summary><div class="fl-marcas-in">'+
-        '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div>'+prodRevList(p)+'</div></details>'+
-      '<div class="fl-est"><span class="fl-est-t">📦 Estado de stock <i>· 🤖 se pone solo con la marca de cada producto</i></span>'+
-        '<div class="fl-auto">'+estadoStockBadge(p)+(aMano?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+'</div>'+
+      '<div class="fl-est"><b>Stock:</b> '+estadoStockBadge(p)+(aMano?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+
+        ' <span class="fl-est-t">(se pone solo con la marca de cada producto)</span>'+
         '<div class="modal-actions">'+
           estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
           estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
           estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
         '</div></div>'+
+      '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>✏️ Cambiar de dónde sale cada producto</summary><div class="fl-marcas-in">'+
+        '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div>'+prodRevList(p)+'</div></details>'+
       (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     '</div>';
   var colCamion='<div class="fl-c"><h4>'+(ret?'🏪 Entrega al cliente':'🚛 Camión y entrega')+'</h4>'+
-      (sug ? ('<div class="fl-sug"><div><small>💡 Camión sugerido</small><b>🚚 '+esc(sug.v)+'</b><i>'+esc(sug.por)+'</i></div>'+
-        '<button type="button" class="fl-btn p" onclick="fichaSugUsar(\''+pid+'\',\''+esc(sug.v).replace(/'/g,"\\'")+'\')">✓ Usar este</button></div>') : '')+
+      (sug ? ('<div class="fl-sug"><div><b>💡 '+esc(sug.v)+'</b><i>'+esc(sug.por)+'</i></div>'+
+        '<button type="button" class="fl-btn fl-btn-s p" onclick="fichaSugUsar(\''+pid+'\',\''+esc(sug.v).replace(/'/g,"\\'")+'\')">✓ Usar este</button></div>') : '')+
       (ret ? '<div class="fl-ret-nota">Lo retira el cliente: no hace falta camión. Si igual lo llevan, elegilo acá.</div>' : '')+
       '<div class="fl-sel">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
       fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
@@ -34126,7 +34172,7 @@ function showPedidoModal(id){
       row(atc?'N° ATC':rpt?'N° de pedido':'N° OC', esc(p.oc))+row(rpt?'Solicitado por':'Vendedor', esc(p.vendedor))+
       row('Ingresado', esc(tsFmt(p.ts)))+row('Celular', esc(p.celular))+row('Garantía a', esc(p.garantia))+
       row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+row('Precios', prodPlataHtml(p).replace(/margin-top:4px/,'margin-top:0'))+
-      row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer))+
+      row('Stock', prodResumen(p, true))+row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer))+
       mark+
     '</div></details>';
   var navB=function(q, d){
@@ -34136,8 +34182,8 @@ function showPedidoModal(id){
   var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      avisoModifHtml(p, false, true)+top+fichaQueHacer(p, N, ret, chips)+contrasHtml+obsHtml+avisosHtml+
-      '<div class="fl-g">'+colDonde+colCarga+colCamion+'</div>'+
+      top+modHtml+fichaQueHacer(p, N, ret)+obsHtml+
+      '<div class="fl-g">'+colCarga+colDonde+colCamion+'</div>'+
       botonesRpt(p)+mas+
       '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
