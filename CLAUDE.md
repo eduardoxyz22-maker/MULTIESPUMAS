@@ -936,6 +936,10 @@ columnas (dónde entregar / qué se carga y de dónde + Estado de stock con sus 
 facturación en «Más datos» (`<details>`). Las marcas de cada producto en «Cambiar de dónde sale…». **Prender «Listo para cargar» con
 observaciones pregunta «¿Las leíste?»** (`obsAntesDeListo`: ficha y 📦 de la tabla; directo en Playwright salvo `OBS_PRUEBA`). ⚠️ No
 volver a poner la plata a la vista ni a esconder los botones de stock (dueño). `tests/test_ficha_logistica.js` (14).
+**Segunda vuelta (§4ma, 24/10, PUBLICADA `3165b85`)**: etiquetas de las observaciones (`fichaObsChips`), «lo retira el cliente» (`fichaRetira`: por la
+dirección; «recoger el colchón viejo» NO), avisos (`fichaAvisos`), camión sugerido (= `nxSugDatos`), ◀ ▶ del día (`fichaVecinos`), HOY/MAÑANA
+(`fichaDias`), la suma de precios en «Más datos» (`prodResumen(p,true)`). «Sin camión» con «🙈 Ocultar» (`me_sug_oculto`) y reparto por GRUPOS de
+zona, parejo entre todos los que trabajan, zona por el mapa y mapita. ⚠️ El dueño quiere ideas de la FICHA, no de camiones. `test_ficha_mejoras`, `test_sug_reparto`.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá

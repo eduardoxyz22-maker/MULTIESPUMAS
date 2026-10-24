@@ -15669,3 +15669,33 @@ para las observaciones la opción **(b)**.
   automática (`syncVerificado`) no pregunta.
 - ⚠️ En una prueba, lo de adentro de un `<details>` cerrado NO tiene `display:none` en Chromium: mirar con `checkVisibility()`.
 - `tests/test_ficha_logistica.js` (14). Batería: 217 suites, solo `test_ventas_marcas` 21/1 (la de siempre).
+
+### §4ma — ✨ La ficha de logística, segunda vuelta, y «Sin camión» que reparte parejo (24/10, PUBLICADA `3165b85`)
+El dueño, con la ficha nueva en el iPad: *«me gusta… ¿cómo la mejoraríamos?»* → eligió **«a, b, c, d, e, g, i»**; después, con la
+captura de la caja «Sin camión» proponiendo la **Carry para los 14 pedidos**: *«pon botón ocultar esto, no lo usan creo»* y eligió
+**«S1, S2, S4, S6»**. Todo solo mira o usa los botones de siempre.
+- **A** `fichaObsChips(p)`: etiquetas sacadas del texto (doble bolsa, esquineros, plástico, llamar N h antes, piso N/escaleras, retirar
+  el colchón viejo, armar, horario «entre las…/después de las…», factura, con cuidado, cobra al entregar) y **🛣️ Va a provincia · lugar**
+  (`fichaProvincia`, también desde la dirección o la zona). El texto entero sigue abajo. También en la ventana «¿Las leíste?».
+- **B** `fichaRetira(p)`: «lo retira el cliente» por la DIRECCIÓN (cualquier «recoge/recogerá/retira/pasa a buscar») o por las
+  observaciones solo con el cliente nombrado o el futuro + lugar («retirará de fábrica»). ⚠️ «Recoger el colchón viejo» NO es retiro.
+  Lugar: Banzer / PTF / Moreno / una sucursal / «el depósito». La ficha esconde el mapa y dice «No va en camión».
+- **C** `fichaAvisos`: sin fecha, fecha pasada sin ✅, feriado, listo y sin camión, sin ubicación, sin celular, provincia, sin stock con
+  entrega ≤ 2 días, listo con algo sin revisar o sin stock, retira con camión asignado, y **retira en Banzer pero sale de PTF** (o al
+  revés) — lo agregué al ver el caso real del dueño (Portachuelo).
+- **D** `fichaSugerido` = la MISMA cuenta de «Sin camión» (`nxSugDatos`); «✓ Usar este» = `nxSugAplicar`.
+- **E** `fichaVecinos`/`fichaIr`: ◀ ▶ del mismo día por el N° del día, y las flechas del teclado (no con un campo enfocado ni con
+  «¿Las leíste?» abierta).
+- **G** `fichaDias`/`fichaHaceTxt`: «hace N días» al ingreso; HOY (rosado), MAÑANA (naranja), «faltan N días», pasada en gris.
+- **I** `prodResumen(p, sinPlata)` + `prodPlataHtml(p)` (la suma de precios va en «Más datos»); «a mano: X» solo si dice otra cosa
+  que lo automático.
+- **🙈 Ocultar «Sin camión»** (`nxSugMostrar`, `me_sug_oculto`, por aparato): queda una línea «🚚 Sin camión: N para el …» con «Mostrar».
+- **S1/S2/S4/S6** (`nxSugDatos` nuevo): S4 un pin sin zona toma la zona de los pedidos con pin a ≤ 1,5 km de los últimos 120 días
+  (`nxSugZonaDePin`); S2 grupos por zona (o pines a ≤ 4 km sin zona), el más grande primero, todo el grupo al mismo camión, «Aceptar
+  los N» (`nxSugAceptarGrupo`) y el camión del grupo (`nxSugCambiarGrupo`); S1 lo que ningún camión cubre va al que lleva MENOS
+  paradas entre TODOS los que trabajan (menos insumos). ⚠️ «Pasa cerca» para un grupo CON zona es solo 1,5 km (con 4 la Carry se
+  llevaba Norte y Centro). S6 mapita Leaflet (`nxSugMapa`, colores `nxSugColor`). Los renglones quedan en «✏️ uno por uno».
+  `test_nueve_4js` cambió a conciencia (pedía «entre los que salen»).
+- Pruebas: `test_ficha_mejoras.js` (23), `test_sug_ocultar.js` (5), `test_sug_reparto.js` (11). Batería: 218 suites, solo la roja de
+  siempre (`test_ventas_marcas` 1180 px).
+- El dueño NO quiso: las ideas de camiones para la ficha («no es vaina de los camiones») ni M1-M4. Pidió ideas de la FICHA en sí.
