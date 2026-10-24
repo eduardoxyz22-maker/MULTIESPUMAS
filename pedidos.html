@@ -35537,6 +35537,7 @@ function admLugaresDatos(f){
     var veh=vehiculoDe(p)||'sin camión';
     (p.productos||[]).forEach(function(x){
       if(!x || !(Number(x.cant)>0)) return;
+      if(esProdDeTienda(x)) return;   // (24/10, dueño) protectores y adicionales los entrega la tienda: no se cargan ni se recogen
       var nom=(x.desc||'')+(x.medida?(' '+x.medida):'');
       if(x.chk==='no'){ C.no.push({ t:nom, u:Number(x.cant), cli:p.cliente||'', veh:veh, id:p.id }); return; }
       var pa=prodPartes(x);
