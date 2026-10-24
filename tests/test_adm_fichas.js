@@ -24,7 +24,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var L=function(ex){ return [_lin('CH1201|TITANIO ICE|160x190',1,Object.assign({ chk:'ok' }, ex||{}))]; };
     var ps=[
       _ped('a1','2026-10-22','AM',L(),{ cliente:'CLIENTE UNO', maps:'https://www.google.com/maps?q=-17.75,-63.17', vehiculo:'Carry', chofer:'Luis Pierre', verificado:true, ts:_ts('2026-10-20','09:00:00'), observaciones:'LLAMAR 1 HORA ANTES' }),
-      _ped('a2','2026-10-22','AM',L({ mod:{ f:'2026-10-21', h:'10:00', d:['📅 cambió la fecha de entrega: del 21/10 al 22/10'] } }),{ cliente:'CLIENTE DOS', ts:_ts('2026-10-20','10:00:00'), pagado:false, saldo:450 }),
+      _ped('a2','2026-10-22','AM',L({ mod:{ f:'2026-10-21', h:'10:00', d:['📅 cambió la fecha de entrega: del 21/10 al 22/10'] } }),{ cliente:'CLIENTE DOS', ts:_ts('2026-10-20','10:00:00'), pagado:false, saldo:450, observaciones:'COBRAR 450 AL ENTREGAR' }),
       _ped('a3','2026-10-22','PM',L({ chk:'no' }),{ cliente:'CLIENTE TRES', ts:_ts('2026-10-20','11:00:00') }),
       _ped('a4','2026-10-24','AM',L(),{ cliente:'CLIENTE SABADO', ts:_ts('2026-10-20','12:00:00') })
     ];
@@ -38,7 +38,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var a1=de('CLIENTE UNO'), a2=de('CLIENTE DOS'), a3=de('CLIENTE TRES'), a4=de('CLIENTE SABADO');
     return { n:F.length, tabla:document.getElementById('tbl-pedidos-w').hidden, grupos:[].map.call(document.querySelectorAll('#adm-fichas .af-gt'), T),
       a1e:T(a1.querySelector('.af-e')), a2e:a2.querySelector('.af-e').className+' '+T(a2.querySelector('.af-e')), a3e:a3.querySelector('.af-e') ? T(a3.querySelector('.af-e')) : '', a3cls:a3.className, a3prod:T(a3.querySelector('.af-ps')),
-      a1nt:a1.querySelector('.af-nt') ? T(a1.querySelector('.af-nt')) : '', a2cob:T(a2.querySelector('.af-inf')), a1cam:T(a1.querySelector('.af-inf')),
+      a1nt:a1.querySelector('.af-nt') ? T(a1.querySelector('.af-nt')) : '', a2cob:T(a2.querySelector('.af-inf'))+(a2.querySelector('.af-nt')?T(a2.querySelector('.af-nt')):''), a1cam:T(a1.querySelector('.af-inf')),
       pin:a1.querySelector('a.af-pin') ? a1.querySelector('a.af-pin').getAttribute('href') : '', pin2:!!a2.querySelector('.af-pin.off'),
       btns:[].map.call(a1.querySelectorAll('.af-tb small'), T), btns4:[].map.call(a4.querySelectorAll('.af-tb small'), T),
       sw:T(document.getElementById('adm-vista')) };
