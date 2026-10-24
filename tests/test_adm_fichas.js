@@ -37,7 +37,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var de=function(n){ return F.filter(function(f){ return /CLIENTE /.test(T(f)) && T(f).indexOf(n)>=0; })[0]; };
     var a1=de('CLIENTE UNO'), a2=de('CLIENTE DOS'), a3=de('CLIENTE TRES'), a4=de('CLIENTE SABADO');
     return { n:F.length, tabla:document.getElementById('tbl-pedidos-w').hidden, grupos:[].map.call(document.querySelectorAll('#adm-fichas .af-gt'), T),
-      a1e:T(a1.querySelector('.af-e')), a2e:a2.querySelector('.af-e').className+' '+T(a2.querySelector('.af-e')), a3e:a3.querySelector('.af-e').className+' '+T(a3.querySelector('.af-e')),
+      a1e:T(a1.querySelector('.af-e')), a2e:a2.querySelector('.af-e').className+' '+T(a2.querySelector('.af-e')), a3e:a3.querySelector('.af-e') ? T(a3.querySelector('.af-e')) : '', a3cls:a3.className, a3prod:T(a3.querySelector('.af-ps')),
       a1nt:a1.querySelector('.af-nt') ? T(a1.querySelector('.af-nt')) : '', a2cob:T(a2.querySelector('.af-inf')), a1cam:T(a1.querySelector('.af-inf')),
       pin:a1.querySelector('a.af-pin') ? a1.querySelector('a.af-pin').getAttribute('href') : '', pin2:!!a2.querySelector('.af-pin.off'),
       btns:[].map.call(a1.querySelectorAll('.af-tb small'), T), btns4:[].map.call(a4.querySelectorAll('.af-tb small'), T),
@@ -45,7 +45,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   });
   chk('1 · cada pedido es una ficha, la tabla escondida y «☰ Ver como tabla»', r.n===4 && r.tabla && /Ver como tabla/.test(r.sw), r);
   chk('1 · agrupadas por día y turno, la mañana antes que la tarde', r.grupos.length===3 && /Mañana/.test(r.grupos[0]) && /Tarde/.test(r.grupos[1]), r.grupos);
-  chk('2 · el estado arriba a la derecha: Listo · ⚠️ Cambió la fecha (parpadea) · 🔴 Sin stock (parpadea)', /Listo/.test(r.a1e) && /late/.test(r.a2e) && /Cambió la fecha/.test(r.a2e) && /late/.test(r.a3e) && /Sin stock/.test(r.a3e), r);
+  chk('2 · arriba a la derecha: Listo · ⚠️ Cambió la fecha (parpadea); sin stock NO se repite arriba (dueño, 24/10): ficha roja + «No hay» en el producto', /Listo/.test(r.a1e) && /late/.test(r.a2e) && /Cambió la fecha/.test(r.a2e) && r.a3e==='' && /af-k-nohay/.test(r.a3cls) && /No hay/.test(r.a3prod), r);
   chk('3 · las etiquetas de la nota y el camión; lo de cobrar NO (dueño, 24/10: no le importa a logística)', /Llamar 1 h antes/.test(r.a1nt) && /Carry/.test(r.a1cam) && !/Cobrar/.test(r.a2cob) && /Sin camión/.test(r.a2cob), r);
   chk('4 · el 📍 abre la ubicación (y sin ubicación queda gris)', /maps\?q=-17.75/.test(r.pin) && r.pin2, { pin:r.pin, gris:r.pin2 });
   chk('5 · los botones: Entregó · WhatsApp · Editar · Reprog. · A tarde · Borrar; el sábado sin «A tarde»', r.btns.join('|')==='Entregó|WhatsApp|Editar|Reprog.|A tarde|Borrar' && r.btns4.indexOf('A tarde')<0, { a1:r.btns, sab:r.btns4 });

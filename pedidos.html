@@ -16620,7 +16620,8 @@ function admFichaHtml(p, dn){
     var m=String(x.medida||'').trim(), mk=!m ? '' : (normMedida(m)==='50x70' ? ' af-m5070' : hasEspecial({productos:[x]}) ? ' af-mesp' : '');
     return '<div class="af-pl"><span class="af-c">'+esc(String(x.cant||0))+'</span><span class="af-nm">'+esc(x.desc||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
   }).join('')+(carga.length>MAX?('<div class="af-mas">+'+(carga.length-MAX)+' producto'+(carga.length-MAX===1?'':'s')+' más</div>'):'')+
-    (tienda.length?('<div class="af-mas">🛍️ '+tienda.length+' de tienda</div>'):'');
+    (tienda.length?('<div class="af-mas">🛍️ '+tienda.length+' de tienda'+   // (24/10) si hay que ir a buscarlo, que se vea de dónde (si no, la ficha roja no dice por qué)
+      tienda.filter(function(x){ return esRecoger(x) || x.chk==='no'; }).map(function(x){ return prodLugarTag(x); }).join('')+'</div>'):'');
   var chips=[]; try{ chips=fichaObsChips(p); }catch(e){}
   var nt=chips.length ? ('<div class="af-nt">'+chips.slice(0,4).map(function(c){ return '<span>'+esc(c.i+' '+c.t)+'</span>'; }).join('')+(chips.length>4?'<span>+'+(chips.length-4)+'</span>':'')+'</div>') : '';
   var ret=null; try{ ret=fichaRetira(p); }catch(e){}
@@ -16637,7 +16638,8 @@ function admFichaHtml(p, dn){
       '<div class="af-who"><b>'+esc(p.cliente||'—')+'</b><span class="af-sub"><em>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+'</em>'+
         (function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «a la derecha, en la misma línea de la OC y la vendedora»)
           return '<i class="af-turno" title="'+(t==='PM'?'Turno tarde':t==='AM'?'Turno mañana':'Sin turno')+'">'+(t==='PM'?'🌆':t==='AM'?'🌅':'🕓')+'</i>'; })()+'</span></div>'+
-      '<span class="af-e '+E.c+'"'+(E.title?(' title="'+esc(E.title)+'"'):'')+'>'+esc(E.t)+'</span></div>'+
+      /* (24/10, dueño: «¿esto no es redundante?») arriba solo lo que los productos NO dicen; el stock lo dice cada producto y el color */
+      (/^(ent|mod|sal|ok)\b/.test(E.c) ? ('<span class="af-e '+E.c+'"'+(E.title?(' title="'+esc(E.title)+'"'):'')+'>'+esc(E.t)+'</span>') : '')+'</div>'+
     '<div class="af-ps">'+(filas||'<div class="af-mas">Sin productos</div>')+'</div>'+nt+
     '<div class="af-inf">'+dir+cam+'</div>'+
     '<div class="af-tb">'+
