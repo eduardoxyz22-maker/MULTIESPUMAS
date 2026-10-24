@@ -2592,9 +2592,18 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ah-cupos-2{margin-left:6px;padding-left:9px;border-left:1px solid rgba(255,255,255,.25)}
 .ah-cu{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.16);border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:600;white-space:nowrap}
 .ah-cu.ah-cu-poco{background:#fde68a;color:#78350f}.ah-cu.ah-cu-0{background:#fecaca;color:#7f1d1d}
-.ah-hoy-acc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ah-hoy-acc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .ah-hoy-acc button{border:0;background:rgba(255,255,255,.95);color:#0b5f5a;font:inherit;font-size:.75rem;font-weight:800;border-radius:10px;padding:7px 6px;cursor:pointer;transition:transform .15s,background .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ah-hoy-acc button:hover{transform:translateY(-1px);background:#fff}
+.ah-hoy-acc button[data-sec]{background:rgba(255,255,255,.78)}
+.ah-hoy-acc button.on{background:#fff;color:#00756f;box-shadow:0 0 0 3px rgba(255,255,255,.4),0 6px 14px -8px rgba(0,0,0,.5)}
+.ah-hoy-acc button.on::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#00B5AD;margin-right:6px;vertical-align:1px}
+/* Stock y reposición e Importar ROHO en la fila grande: abren su ventana */
+.adm-secs .as-acc{position:relative;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.adm-secs .as-acc:hover{background:#fff;box-shadow:0 8px 18px -12px rgba(0,80,76,.55)}
+.adm-secs .as-stk .as-ic{background:#fbeee6}.adm-secs .as-stk .as-t b{color:#7c2d12}
+.adm-secs .as-roho .as-ic{background:#fdecee}.adm-secs .as-roho .as-t b{color:#b42332}
+.adm-secs .as-abre{margin-left:auto;font-weight:900;color:#9fb3b2;font-size:.9rem}
 @keyframes ah-entra{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @keyframes ah-destello{0%{box-shadow:0 0 0 0 rgba(0,181,173,.55)}100%{box-shadow:0 0 0 14px rgba(0,181,173,0)}}
 .ah-destello{animation:ah-destello 1.1s ease-out 2;border-radius:14px}
@@ -2653,7 +2662,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
   .ah-largo{display:none}
   .ah-st small{white-space:normal}
   .ah-hoy-c{grid-template-columns:1fr}.ah-dona{margin:0 auto}
-  .ah-hoy-acc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ah-hoy-acc{grid-template-columns:repeat(3,minmax(0,1fr))}.ah-hoy-acc button{font-size:.7rem}
+  .adm-secs .as-abre{display:none}
   .ah-cupos-2{margin-left:0;padding-left:0;border-left:0}
   #admin-content .adm-filtros .field[style*="flex:1"]{flex-basis:100%}
 }
@@ -16882,6 +16892,7 @@ function admSecAplicar(){
   var on=admTabsActivas(), s=admSec();
   [].forEach.call(document.querySelectorAll('#admin-content .adm-sec'), function(el){ el.hidden=on && el.getAttribute('data-sec')!==s; });
   var bar=document.getElementById('adm-secs'); if(bar){ bar.hidden=!on; if(on) admSecsPintar(); }
+  [].forEach.call(document.querySelectorAll('#adm-hoy .ah-hoy-acc button[data-sec]'), function(b){ b.classList.toggle('on', b.getAttribute('data-sec')===s); });
   var top=document.getElementById('adm-top'); if(top) top.hidden=!on;
   var av=document.getElementById('adm-avisos'); if(av){ av.classList.toggle('cerrado', on && !ADM_AVISOS_OPEN); av.classList.toggle('con-tabs', on); }
 }
@@ -17031,12 +17042,11 @@ function admHoyPintar(H){
       '</div></div>'+
     '<div class="ah-cupos"><span class="ah-cupos-t">🎟️ Cupos '+esc(H.sale?'de hoy':nxDiaTxt(H.cupos.f))+'</span>'+admCupoTxt(H.cupos)+
       (H.cuposProx?('<span class="ah-cupos-t ah-cupos-2">'+esc(nxDiaTxt(H.cuposProx.f))+'</span>'+admCupoTxt(H.cuposProx)):'')+'</div>'+
-    '<div class="ah-hoy-acc"><button type="button" onclick="admSecPoner(\'cam\');admIrA(\'carga-viva\')" title="Los camiones, sin camión, por lugar y el calendario">🚚 Camiones</button>'+
-      /* (24/10, dueño: «en vez de pedidos pondría stock y reposición… ahí cargan las planillas de almacén y saldos»; «en vez de salud,
-         importar ROHO: Ernesto sube ahí sus pedidos») Lista de carga y Salud del día siguen en Herramientas y en «Camiones y día». */
-      '<button type="button" onclick="abrirStock()" title="Stock y reposición: subir los Excel de los almacenes, saldos y qué pedir">📦 Stock</button>'+
-      '<button type="button" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones y las paradas del día">🏙️ Ciudad</button>'+
-      '<button type="button" onclick="abrirImportRoho()" title="Importar ROHO: subir el Excel de ROHO y se crean los pedidos">📥 ROHO</button></div>';
+    /* (24/10, dueño: «en vez de camiones y pedidos y día [en las fichas grandes] Stock y reposición e Importar ROHO, y esos los mueves
+       a donde estaban stock y ROHO») «Pedidos» y «Camiones y día» cambian lo que se ve abajo; el encendido es el que se está viendo. */
+    '<div class="ah-hoy-acc"><button type="button" data-sec="ped" class="'+(admSec()==='ped'?'on':'')+'" onclick="admSecPoner(\'ped\')" title="La lista de pedidos (fichas o tabla)">📦 Pedidos</button>'+
+      '<button type="button" data-sec="cam" class="'+(admSec()==='cam'?'on':'')+'" onclick="admSecPoner(\'cam\')" title="Sin camión, los camiones, lo del día por lugar y el calendario">🚚 Camiones y día</button>'+
+      '<button type="button" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones y las paradas del día">🏙️ Ciudad</button></div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 /* ---------- 🗂️ las tres pestañas ---------- */
@@ -17047,8 +17057,13 @@ function admSecsPintar(){
         : mode==='dia' ? ('el '+fmtFechaCorta((document.getElementById('adm-dia')||{}).value||'')) : 'en total';
   var H=ADM_AV.hoyCam||{}, nT=document.querySelectorAll('#admin-content .adm-tools .at-t, #admin-content .adm-tools .at-aj .btn').length;
   var b=function(k, ic, t, sub){ return '<button type="button" role="tab" aria-selected="'+(s===k)+'" class="'+(s===k?'on':'')+'" onclick="admSecPoner(\''+k+'\')"><span class="as-ic">'+ic+'</span><span class="as-t"><b>'+t+'</b><small>'+sub+'</small></span></button>'; };
-  var h=b('ped','📦','Pedidos', n+' pedido'+(n===1?'':'s')+' '+per)+
-    b('cam','🚚','Camiones y día', (H.cams||0)+' cami'+(H.cams===1?'ón':'ones')+' con carga'+(H.sinCam?(' · <em>'+H.sinCam+' sin camión</em>'):'')+' · calendario')+
+  /* Stock y reposición e Importar ROHO abren su ventana (no son pestañas). */
+  var a=function(fn, cls, ic, t, sub, tit){ return '<button type="button" class="as-acc '+cls+'" onclick="'+fn+'" title="'+esc(tit)+'"><span class="as-ic">'+ic+'</span><span class="as-t"><b>'+t+'</b><small>'+sub+'</small></span><span class="as-abre" aria-hidden="true">↗</span></button>'; };
+  var hoyX=todayStr(), cf=(STOCK && STOCK.c && STOCK.c.f) || '';
+  var stk=!cf ? '<em>todavía no hay ningún Excel cargado</em>' : cf===hoyX ? ('Excel de hoy'+(STOCK.c.hora?(' · '+esc(String(STOCK.c.hora).slice(0,5))):'')+' · saldos y qué pedir')
+        : ('<em>falta el Excel de hoy</em> · el último es del '+esc(fmtFechaCorta(cf)));
+  var h=a('abrirStock()','as-stk','📦','Stock y reposición', stk, 'Subir los Excel de los almacenes, ver los saldos y qué pedir a fábrica')+
+    a('abrirImportRoho()','as-roho','📥','Importar ROHO', 'el Excel de ROHO → pedidos', 'Subí el Excel «DETALLE NOTA DE VENTA PARA PROVEEDOR» de ROHO y se crean los pedidos')+
     b('her','🧰','Herramientas', nT+' herramientas · carga, mensajes, stock, ajustes');
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
