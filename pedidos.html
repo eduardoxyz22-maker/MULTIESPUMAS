@@ -16590,7 +16590,9 @@ function admFichaColor(p){
   if(p.entregado) return '';
   if(rowKind(p)==='nohay') return 'nohay';
   var b=estadoStock(p).badge;
-  return (b!=='b-red' && b!=='b-amber' && b!=='b-gray' && b!=='b-im' && !tieneRecogerIM(p)) ? 'stock' : '';
+  /* (24/10, dueño: «¿no debería ser rojo? no está completa y le falta algo para entregarse») Dos colores: verde = listo para
+     cargar; rojo = le falta algo (sin stock, sin revisar, en producción, ir a buscar). QUÉ le falta lo dice la etiqueta. */
+  return (b!=='b-red' && b!=='b-amber' && b!=='b-gray' && b!=='b-im' && !tieneRecogerIM(p)) ? 'stock' : 'nohay';
 }
 function admFichaHtml(p, dn){
   var pid=String(p.id).replace(/'/g,"\\'"), E=admFichaEstado(p), N=dn[p.id];
@@ -16667,7 +16669,7 @@ function admFichasPintar(list, dn){
   });
   /* 🎨 Qué quiere decir cada color (los de la tabla): solo los que hay en la lista */
   var kinds={}; L.forEach(function(p){ var k=admFichaColor(p); if(k) kinds[k]=1; });
-  var LEY=[['stock','Todo OK'],['nohay','Falta algo'],['atc','ATC'],['rpt','Reposición de tienda (RPT)']];
+  var LEY=[['stock','Listo para cargar'],['nohay','Le falta algo (la etiqueta dice qué)'],['atc','ATC'],['rpt','Reposición de tienda (RPT)']];
   var ley=LEY.filter(function(l){ return kinds[l[0]]; });
   box.innerHTML=(ley.length?('<div class="af-ley">'+ley.map(function(l){ return '<span class="af-k-'+l[0]+'"><i></i>'+l[1]+'</span>'; }).join('')+'</div>'):'')+grupos.map(function(g){
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
