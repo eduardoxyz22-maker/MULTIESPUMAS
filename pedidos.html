@@ -871,6 +871,36 @@ th.sortable:hover{color:var(--teal-dk)}
 .fl-navt{color:#e6fbf9;font-size:.8rem;font-weight:700;white-space:nowrap}
 @media(max-width:600px){.fl-navt{display:none}.fl-sug{flex-wrap:wrap}.fl-sug .fl-btn{width:100%;justify-content:center}}
 #obs-conf .fl-chips{margin:0 0 10px}
+/* 🧠 (24/10) qué hacer, la nota leída, lo que no coincide, los bultos, la medida grande, lo que cambió y el mapita */
+.fl-qh{background:#eaf6f5;border:1.5px solid #9fd6d1;border-radius:14px;padding:12px 16px;margin-bottom:12px}
+.fl-qh-t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#00756f;margin-bottom:6px}
+.fl-qh-l{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:4px 0;font-size:1.02rem;color:#12302e;line-height:1.35}
+.fl-qh-l + .fl-qh-l{border-top:1px dashed #c9e7e4}
+.fl-qh-k{font-weight:800;min-width:150px;color:#0f3d3a}
+.fl-btn-s{padding:4px 9px;font-size:.82rem;border-radius:8px}
+.fl-contra{background:#fdecee;border:1px solid #f1b3ba;border-left:6px solid var(--red);border-radius:12px;padding:10px 14px;margin-bottom:12px;color:#7d1620;font-size:.95rem}
+.fl-contra b{display:block;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.fl-contra ul{margin:0;padding-left:18px;display:grid;gap:3px}.fl-contra li{font-weight:700}
+button.fl-chip{cursor:pointer;font-family:inherit}
+.fl-chip.ok{background:#e8f7ee;border-color:#16a34a;color:#166534}
+.fl-chips-ay{font-size:.74rem;color:#8a6400;align-self:center}
+.fl-orig{margin-top:6px;font-size:.8rem;color:#8a6400}.fl-orig summary{cursor:pointer;font-weight:700}.fl-orig div{white-space:pre-wrap;margin-top:4px;color:#5a4100}
+.fl-bultos{background:#12302e;color:#fff;border-radius:10px;padding:7px 12px;font-size:.92rem;margin-bottom:6px}
+.fl-tiendita{font-size:.82rem;color:#6b4300;background:#fff8ec;border-radius:8px;padding:5px 10px;margin-bottom:6px}
+.fl-mc{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center}
+.fl-med{background:#fff;border:2px solid #12302e;color:#12302e;border-radius:8px;padding:2px 9px;font-weight:900;font-size:1rem;letter-spacing:.02em}
+.fl-med.esp{border-color:var(--red);color:var(--red);background:#fdecee}
+.fl-cod{background:#f1f3f3;color:#334;border-radius:8px;padding:3px 8px;font-weight:800;font-size:.85rem;font-family:ui-monospace,Menlo,monospace}
+.fl-cam{background:#fff1b8;color:#7a5200;border:1px solid #f2b705;border-radius:8px;padding:2px 8px;font-weight:800;font-size:.8rem}
+.fl-prod-cam{background:#fffbe6;border-radius:10px;padding-left:6px;padding-right:6px}
+.fl-prod-no .fl-pnn,.fl-prod-no .fl-mc{text-decoration:line-through;color:#8a8f94;opacity:.8}.fl-prod-no .fl-q{background:#b9c0c4}
+.fl-no-t{display:inline-block;text-decoration:none;color:#a14b00;font-weight:700;font-size:.8rem;margin-top:3px}
+.fl-prod-no .fl-no-t{text-decoration:none}
+.fl-prod-quit{opacity:.85}.fl-prod-quit .fl-q{background:var(--red)}.fl-prod-quit .fl-pnn{text-decoration:line-through;color:#7d1620}.fl-prod-quit small{display:inline-block;text-decoration:none;color:var(--red);font-weight:800}
+.fl-recibe{margin-top:8px;background:#f4f6f6;border-radius:8px;padding:6px 10px;font-size:.92rem}
+.fl-mapa{height:170px;border-radius:10px;border:1px solid #d5e2e2;margin-top:10px;background:#eef3f3;overflow:hidden}
+.fl-mapa-t{font-size:.8rem;color:#5b6b70;margin-top:4px}
+@media(max-width:600px){.fl-qh-k{min-width:0;width:100%}}
 #obs-conf{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
 #obs-conf[hidden]{display:none}
 #obs-conf .obs-c{background:#fff;border-radius:16px;max-width:560px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
@@ -33614,13 +33644,21 @@ function fichaLugarHtml(x){
     return '<span class="fl-pl '+e.tipo+'">'+esc(n+(varias?(' '+e.u):''))+'</span>';
   }).join(' ');
 }
-function fichaProdsHtml(p){
+/* (24/10) 4 · la medida y el código en grande (la medida especial en rojo), 2 · lo que cambió marcado en el renglón (y lo que quitaron,
+   tachado), 6 · lo que la nota dice que NO se lleva, tachado. Sin `N` (otra pantalla) se ve como antes. */
+function fichaProdsHtml(p, N){
   var pr=(p&&p.productos)||[];
   if(!pr.length) return '<div class="fl-vacio">Sin productos</div>';
-  return pr.map(function(x){
-    return '<div class="fl-prod"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn">'+esc(x.desc||'—')+
-      '<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small></div><div class="fl-pls">'+fichaLugarHtml(x)+'</div></div>';
-  }).join('');
+  var C=N ? fichaCambiosProd(p) : { nuevo:{}, cant:{}, quitados:[] };
+  return pr.map(function(x, ix){
+    var no=N && N.noLlevar.indexOf(ix)>=0, k=prodCorto(x), esp=false;
+    try{ esp=!!(N && saldoMedidaEspecial(x)); }catch(e){}
+    var cam=C.nuevo[k] ? '<span class="fl-cam">🆕 NUEVO</span>' : (C.cant[k] ? ('<span class="fl-cam">🔢 antes '+esc(C.cant[k].de)+', ahora '+esc(C.cant[k].a)+'</span>') : '');
+    var med=N ? ((x.medida?('<span class="fl-med'+(esp?' esp':'')+'">'+(esp?'📐 ESPECIAL ':'')+esc(String(x.medida).replace(/x/gi,'×'))+'</span>'):'')+(x.codigo?('<span class="fl-cod">'+esc(x.codigo)+'</span>'):''))
+              : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
+    return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
+      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que ya se entregó</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div></div>';
+  }).join('')+C.quitados.map(function(t){ return '<div class="fl-prod fl-prod-quit"><div class="fl-q">✕</div><div class="fl-pn"><span class="fl-pnn">'+esc(t)+'</span><small>➖ LO QUITARON del pedido: no se carga</small></div></div>'; }).join('');
 }
 function fichaIngresoTxt(p){
   var ts=Number(p&&p.ts); if(!(ts>0)) return '—';
@@ -33659,14 +33697,37 @@ function fichaObsChips(p){
     if(e) add('🕐','Entre las '+e[1]+' y las '+e[2],'hora'); else if(a) add('🕐',flCap(a[1]==='DESPUES'?'después':a[1])+' de las '+a[2],'hora');
     if(/FACTURA/.test(t)) add('🧾','Llevar la factura','fact');
     if(/FRAGIL|CUIDADO/.test(t)) add('⚠️','Con cuidado','cuid');
-    if(/COBRAR|CONTRA ?ENTREGA|PAGA(RA)? AL (ENTREGAR|RECIBIR)|CANCELA(RA)? AL (ENTREGAR|RECIBIR)/.test(t)) add('💵','Cobra al entregar','cobra');
+    var N=fichaNota(p);   // 💵 lo que la NOTA pide cobrar (la plata del pedido sigue en «Más datos»)
+    if(N.cobrar) add('💵','Cobrar '+fmtBs0(N.cobrar),'cobra'); else if(N.contra) add('💵','Cobra al entregar','cobra');
+    if(N.tarjetero) add('💳','Llevar el tarjetero','tarj');
   }
   var pv=fichaProvincia(' '+flMay([p&&p.observaciones, p&&p.direccion, p&&p.zona].join(' . '))+' ');
   if(pv!==null) add('🛣️','Va a provincia'+(pv?(' · '+pv):''),'prov');
   return out;
 }
-function fichaChipsHtml(ch){
-  return ch.length ? ('<div class="fl-chips">'+ch.map(function(c){ return '<span class="fl-chip fl-chip-'+c.k+'">'+c.i+' '+esc(c.t)+'</span>'; }).join('')+'</div>') : '';
+/* 6 · (24/10) Con `id`, cada etiqueta se TOCA y queda «✓ hecha» en ESE aparato (`me_ficha_tilde`; no va a la planilla). Al prender
+   «Listo para cargar», si están todas tildadas no pregunta; si no, pregunta solo por las que faltan. */
+var LS_FICHA_TILDE='me_ficha_tilde';
+function fichaTildes(id){ try{ var o=JSON.parse(localStorage.getItem(LS_FICHA_TILDE)||'{}'); return o[String(id)]||{}; }catch(e){ return {}; } }
+function fichaTildar(id, k){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_FICHA_TILDE)||'{}'), t=o[String(id)]||(o[String(id)]={});
+    if(t[k]) delete t[k]; else t[k]=Date.now();
+    var ks=Object.keys(o); if(ks.length>300) ks.sort(function(a,b){ return fichaTildeT(o[a])-fichaTildeT(o[b]); }).slice(0, ks.length-300).forEach(function(x){ delete o[x]; });
+    localStorage.setItem(LS_FICHA_TILDE, JSON.stringify(o));
+  }catch(e){}
+  reabrirFicha(id);
+}
+function fichaTildeT(t){ var m=0; Object.keys(t||{}).forEach(function(k){ m=Math.max(m, Number(t[k])||0); }); return m; }
+function fichaChipsFaltan(p){ var t=fichaTildes(p.id); return fichaObsChips(p).filter(function(c){ return !t[c.k]; }); }
+function fichaChipsHtml(ch, id){
+  if(!ch.length) return '';
+  var t=id!=null ? fichaTildes(id) : {};
+  return '<div class="fl-chips">'+ch.map(function(c){
+    if(id==null) return '<span class="fl-chip fl-chip-'+c.k+'">'+c.i+' '+esc(c.t)+'</span>';
+    var ok=!!t[c.k];
+    return '<button type="button" class="fl-chip fl-chip-'+c.k+(ok?' ok':'')+'" aria-pressed="'+ok+'" title="'+(ok?'Hecho (tocá para destildar)':'Tocá cuando esté hecho')+'" onclick="fichaTildar(\''+String(id).replace(/'/g,"\\'")+'\',\''+c.k+'\')">'+(ok?'✓ ':'')+c.i+' '+esc(c.t)+'</button>';
+  }).join('')+(id!=null?'<span class="fl-chips-ay">tocá cada una cuando esté hecha</span>':'')+'</div>';
 }
 /* B · El cliente lo retira: lo dice la DIRECCIÓN («RECOGERÁ DE ALMACÉN … BANZER», «retira en tienda») o las observaciones con el cliente
    nombrado («el cliente lo recoge», «retirará de fábrica»). «Recoger el colchón viejo» no es esto: en las observaciones hace falta el
@@ -33759,6 +33820,213 @@ document.addEventListener('keydown', function(e){
   var a=document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
   fichaIr(e.key==='ArrowLeft' ? -1 : 1);
 });
+/* 🧠 (24/10, dueño: «muéstrame 1-7 + 1-6») LA NOTA DEL VENDEDOR, LEÍDA. En la planilla real (531 pedidos desde el 15/09) el 74 % trae
+   observaciones: «lo recibe el Sr. Jaime 7…», «Recibe: … · WhatsApp: …» (ROHO), «llamar 1 hora antes», «de 11 a 12», «cobrar Bs 4740,
+   llevar el tarjetero», «OC- 31906», «VENTA YA ENTREGADA – NO ARMAR PEDIDO», «las ALM NASA ya se entregaron en tienda». La ficha saca
+   de ahí quién recibe, el horario, lo que pide cobrar, lo que NO se lleva y lo que CONTRADICE al pedido; y la nota se muestra limpia
+   (sin números de OC, enlaces ni «Importado del Excel de ROHO»), con la original a un toque. Solo mira: no guarda nada. */
+function flCel(s){ var d=String(s||'').replace(/\D/g,''); return d.length>=8 ? d.slice(-8) : ''; }
+var FL_NO_NOMBRE=['CEL','CELULAR','SALDO','QUE','SU','POR','FAVOR','ENTREGA','EL','LA','Y','EN','A','DE','DEL','TEL','NRO','WSP','WHATSAPP','PAGARA','PAGA','LLAMAR','HASTA','DESDE','ANTES','DESPUES','EFECTIVO','CON','O'];
+/* «RECIBR: MIGUEL GOITIA, COORDINAR ENTREGA CON CLIENTE REF 2 : 7…» → «MIGUEL GOITIA»: hasta la coma, el guion, un número o una palabra
+   que ya no es nombre (visto en la planilla real, 24/10). */
+var FL_CORTA_NOMBRE=['COORDINAR','COORDINA','AVISA','AVISAR','REF','LLAMAR','PEDIR','CEL','CELULAR','WHATSAPP','WSP','SU','POR','FAVOR','PAGADO','ENTREGA','HORARIO','UBICACION','TEL','NRO','O','Y','EN'];
+function fichaNombreLimpio(t){
+  t=String(t||'').replace(/^\s*(RECIB\w*|RECIBR)\s*:\s*/i,'').split(/[,;\-–(]|\d|\+/)[0];
+  var w=t.trim().split(/\s+/), out=[];
+  for(var i=0;i<w.length && out.length<5;i++){ if(FL_CORTA_NOMBRE.indexOf(flMay(w[i]).replace(/[^A-Z]/g,''))>=0) break; out.push(w[i]); }
+  return out.join(' ').trim();
+}
+function flHora(h, ampm){ h=Number(h); if(ampm==='PM' && h<12) h+=12; else if(!ampm && h>=1 && h<=7) h+=12; return h; }
+function fichaNota(p){
+  var crudo=String((p&&p.observaciones)||'').replace(/&#xa;/gi,'\n').trim();
+  var N={ crudo:crudo, limpio:'', recibe:'', recibeCel:'', llamar:'', hora:'', horaT:'', horaTxt:'', cobrar:0, contra:false, tarjetero:false, noArmar:false, noArmarTxt:'', fechaNota:'', mapa:'', noLlevar:[] };
+  if(!crudo) return N;
+  var urls=crudo.match(/https?:\/\/\S+/g)||[];
+  urls.forEach(function(u){ if(!N.mapa && /maps|goo\.gl|waze/i.test(u)) N.mapa=u; });
+  var sinUrl=crudo.replace(/https?:\/\/\S+/g,' ');
+  var T=' '+flMay(sinUrl)+' ';
+  // 👤 quién recibe
+  var mr=sinUrl.match(/Recibe:\s*([^·\n]+?)\s*(?:·|\n|$)/i);
+  if(mr) N.recibe=fichaNombreLimpio(mr[1]);
+  var mw=sinUrl.match(/WhatsApp:\s*([+\d][\d\s-]{6,})/i); if(mw) N.recibeCel=flCel(mw[1]);
+  if(!N.recibe){
+    var m2=sinUrl.match(/\b(?:lo |la |los )?recib(?:e|en|irá|ira)\s+(?:el |la |su )?((?:sr|sra|srta|don|doña|dona|lic)\.?\s+)?([A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]+){0,2})/i)
+         || sinUrl.match(/\bpreguntar por\s+(?:el |la )?((?:sr|sra|don|doña|lic)\.?\s+)?([A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]+){0,1})/i);
+    if(m2){
+      var ws=m2[2].split(/\s+/), nom=[];
+      for(var i=0;i<ws.length;i++){ if(FL_NO_NOMBRE.indexOf(flMay(ws[i]))>=0) break; nom.push(ws[i]); }
+      if(nom.length) N.recibe=flCap((m2[1]?m2[1].trim()+' ':'')+nom.join(' '));
+    }
+  }
+  if(!N.recibeCel){
+    var cel=flCel(p.celular), mc, re=/(^|[^\d.])([67]\d{7})(?!\d)/g;
+    while((mc=re.exec(sinUrl.replace(/\s(?=\d)/g,'')))) if(mc[2]!==cel){ N.recibeCel=mc[2]; break; }
+  }
+  // 📞 llamar antes
+  if(/LLAMAR|LLAMEN|LLAME\b|LLMAR|AVISAR|AVISEN|AVIASAR|COMUNICAR/.test(T)){
+    var mh=T.match(/(\d+|UNA|MEDIA)\s*(HORAS?|HRS?|H|MIN(?:UTOS)?)\b[^.]{0,8}?ANTES/);
+    N.llamar = mh ? ((mh[1]==='UNA'?'1':mh[1]==='MEDIA'?'½':mh[1])+(/^MIN/.test(mh[2])?' min':' h')+' antes') : 'antes';
+  }
+  // 🕐 el horario (y de qué turno es)
+  var e=T.match(/\b(?:ENTRE|DE)\s+(?:LAS?\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM|HRS?)?\s*(?:Y|A|-|HASTA)\s*(?:LAS?\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM|HRS?)?\b/);
+  var a=T.match(/\b(ANTES|DESPUES|DESDE|HASTA|A PARTIR)\s+(?:DE\s+)?(?:LAS?\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM|HRS?)?\b/);
+  var s=T.match(/\b(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/);
+  if(e && Number(e[1])<=23 && Number(e[4])<=23){
+    var am2=(e[6]==='PM'||e[6]==='AM')?e[6]:'';
+    var h1=flHora(e[1], e[3]==='PM'||e[3]==='AM'?e[3]:(am2==='PM' && Number(e[1])<Number(e[4])?'PM':'')), h2=flHora(e[4], am2);
+    N.hora='entre las '+e[1]+(e[2]?':'+e[2]:'')+' y las '+e[4]+(e[5]?':'+e[5]:'')+(am2?' '+am2.toLowerCase():'');
+    N.horaT = h1<12 ? 'AM' : 'PM'; N.horaTxt=e[0].trim();
+  } else if(a){
+    var hh=flHora(a[2], a[4]==='PM'||a[4]==='AM'?a[4]:'');
+    N.hora=({ ANTES:'antes', DESPUES:'después', DESDE:'desde', HASTA:'hasta', 'A PARTIR':'a partir' })[a[1]]+' de las '+a[2]+(a[3]?':'+a[3]:'');
+    N.horaT = (a[1]==='ANTES'||a[1]==='HASTA') ? (hh<=13?'AM':'') : (hh>=13?'PM':(hh<12?'AM':''));
+    N.horaTxt=a[0].trim();
+  } else if(s){
+    var hs=flHora(s[1], s[3]); N.hora='a las '+s[1]+(s[2]?':'+s[2]:'')+' '+s[3].toLowerCase(); N.horaT=hs<12?'AM':'PM'; N.horaTxt=s[0].trim();
+  } else if(/ANTES DEL? MEDIO ?DIA/.test(T)){ N.hora='antes del mediodía'; N.horaT='AM'; N.horaTxt='antes del medio día'; }
+  if(!N.horaT){
+    if(/(POR|EN) LA TARDE|\bENTREGA (EN LA )?PM\b|\bTURNO PM\b/.test(T)){ N.horaT='PM'; N.horaTxt=N.horaTxt||'por la tarde'; }
+    else if(/(POR|EN) LA MANANA|\bENTREGA (EN LA )?AM\b|\bTURNO AM\b/.test(T)){ N.horaT='AM'; N.horaTxt=N.horaTxt||'por la mañana'; }
+  }
+  // 💵 lo que la nota pide cobrar
+  var mb=T.match(/COBRAR\s*(?:EL\s+SALDO\s*)?(?:DE\s*)?(?:BS\.?\s*)?(\d[\d.,]*)/) || T.match(/SALDO\s*(?:A COBRAR|POR COBRAR|PENDIENTE)?\s*(?:DE\s*)?(?:BS\.?\s*)?(\d[\d.,]*)/);
+  if(mb){ var mo=parseMonto(mb[1]); if(mo>=10) N.cobrar=mo; }
+  N.contra=/CONTRA ?ENTREGA|PAGARA AL (MOMENTO|ENTREGAR|RECIBIR)|AL MOMENTO DE LA ENTREGA|COBRAR AL ENTREGAR|COBRAR AL ENTRREGAR|PAGA AL (ENTREGAR|RECIBIR)|SALDO PAGARA/.test(T);
+  N.tarjetero=/TARJETERO|\bPOS\b|CON TARJETA|DATAFONO/.test(T);
+  // ⛔ no hay que armarlo
+  var na=T.match(/NO ARMAR[^.]*|SOLO (ES )?PARA REGISTRO[^.]*|VENTA YA ENTREGADA[^.]*/); if(na){ N.noArmar=true; N.noArmarTxt=na[0].trim(); }
+  // 📅 una fecha escrita en la nota
+  var mf=sinUrl.match(/(?:^|[^\d.\/])(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?(?![\d\/])/);
+  if(mf && p.fecha){   // solo una fecha cerca de la entrega (± 60 días): «1 1/2 plazas» no es el 01/02
+    var d=Number(mf[1]), m=Number(mf[2]);
+    if(d>=1 && d<=31 && m>=1 && m<=12){
+      var iso=p.fecha.slice(0,4)+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d;
+      if(Math.abs(diasEntre(p.fecha, iso))<=60) N.fechaNota=(d<10?'0':'')+d+'/'+(m<10?'0':'')+m;
+    }
+  }
+  // ✂️ lo que la nota dice que NO se lleva («las ALM NASA ya se entregaron en tienda, solo llevar las de FIBRA»)
+  var GEN=['COLCHON','COLCHONES','ALMOHADA','ALMOHADAS','ALM','SOMIER','SOMIERES','PLAZAS','PLAZA','HEAVEN','SUENA','CON','PARA','LAS','LOS','DOS','UNA','UNO'];
+  T.split(/[.;\n]|\bSOLO\b|\bPERO\b/).forEach(function(fr){
+    if(!/YA SE ENTREG|YA ENTREG|SE ENTREGO EN TIENDA|NO LLEVAR|NO SE LLEVA|SALE DE TIENDA|SALDRA DE TIENDA|ENTREGADO EN TIENDA/.test(fr)) return;
+    ((p&&p.productos)||[]).forEach(function(x, ix){
+      var pal=flMay(x.desc).split(/[^A-Z0-9]+/).filter(function(w){ return w.length>=3 && GEN.indexOf(w)<0 && !/^\d+$/.test(w); });
+      if(pal.some(function(w){ return new RegExp('\\b'+w+'\\b').test(fr); }) && N.noLlevar.indexOf(ix)<0) N.noLlevar.push(ix);
+    });
+  });
+  // 🧹 la nota limpia
+  var L=crudo.replace(/https?:\/\/\S+/g,' ')
+    .replace(/·?\s*Importado del Excel de ROHO/gi,' ')
+    .replace(/·?\s*Recibe:\s*(?:RECIBE:\s*)?[^·\n]*/gi,' ')
+    .replace(/·?\s*WhatsApp:\s*[+\d][\d\s-]{6,}/gi,' ')
+    .replace(/\b(?:O\.?\s?C\.?|ORDEN DE COMPRA)\s*[-#:N°º.]*\s*\d{3,}\b/gi,' ')
+    .replace(/^\s*📍\s*[.·]?\s*/,'').replace(/\s*·\s*(·\s*)+/g,' · ').replace(/(^[\s·.,-]+|[\s·,-]+$)/g,'').replace(/[ \t]{2,}/g,' ').trim();
+  N.limpio=L;
+  return N;
+}
+/* ⛔ 2 · Lo que la nota dice y el pedido NO (rojo, arriba). */
+function fichaContras(p, N){
+  var c=[]; if(!p || p.entregado) return c;
+  if(N.noArmar) c.push('La nota dice «'+N.noArmarTxt.toLowerCase()+'»: confirmá antes de cargarlo.');
+  var tu=p.turno ? normTurno(p.turno) : '';
+  if(N.horaT && tu && N.horaT!==tu) c.push('La nota dice «'+N.horaTxt.toLowerCase()+'» y el pedido está en el turno de la '+(tu==='PM'?'TARDE':'MAÑANA')+'.');
+  if(N.fechaNota && p.fecha && N.fechaNota!==fmtFechaCorta(p.fecha)) c.push('La nota habla del '+N.fechaNota+' y la entrega está para el '+fmtFechaCorta(p.fecha)+'.');
+  var deb=Number(p.saldo)||0;
+  if((N.cobrar || N.contra) && !noSeCobra(p) && p.pagado && deb<=0.009) c.push('La nota dice «cobrar'+(N.cobrar?(' '+fmtBs0(N.cobrar)):' al entregar')+'» y el pedido figura PAGADO: confirmá con Contabilidad antes de que salga.');
+  else if(N.cobrar && !p.pagado && deb>0.009 && Math.abs(deb-N.cobrar)>1) c.push('La nota dice cobrar '+fmtBs0(N.cobrar)+' y el saldo del pedido es '+fmtBs0(deb)+'.');
+  return c;
+}
+/* 3 · «Lo viste antes del cambio»: cuándo se abrió por última vez la ficha EN ESTE APARATO (`me_ficha_vista`). */
+var LS_FICHA_VISTA='me_ficha_vista';
+function fichaVistaDe(id){ try{ return Number((JSON.parse(localStorage.getItem(LS_FICHA_VISTA)||'{}'))[String(id)])||0; }catch(e){ return 0; } }
+function fichaVistaAnotar(id){
+  try{ var o=JSON.parse(localStorage.getItem(LS_FICHA_VISTA)||'{}'); o[String(id)]=Date.now();
+    var ks=Object.keys(o); if(ks.length>400) ks.sort(function(a,b){ return o[a]-o[b]; }).slice(0, ks.length-400).forEach(function(k){ delete o[k]; });
+    localStorage.setItem(LS_FICHA_VISTA, JSON.stringify(o)); }catch(e){}
+}
+function fichaCambioDespues(p, visto){
+  var m=modDe(p); if(!m || !visto || !m.f) return '';
+  var t=new Date(m.f+'T'+(m.h||'00:00')+':00').getTime();
+  if(!(t>visto)) return '';
+  var v=new Date(visto), z=function(n){ return (n<10?'0':'')+n; };
+  return 'Lo cambiaron DESPUÉS de que lo viste ('+z(v.getDate())+'/'+z(v.getMonth()+1)+' '+z(v.getHours())+':'+z(v.getMinutes())+' en este aparato): mirá lo marcado en amarillo.';
+}
+/* 2 (de antes) · qué cambió, renglón por renglón, con la marca de modificado (`difPedido`) */
+function fichaCambiosProd(p){
+  var m=modDe(p), out={ nuevo:{}, cant:{}, quitados:[] }; if(!m || !m.d) return out;
+  m.d.forEach(function(t){
+    t=String(t);
+    if(t.indexOf('➕ ')===0) out.nuevo[t.slice(2).trim()]=1;
+    else if(t.indexOf('🔢 ')===0){ var mm=t.slice(2).match(/^(.*) — de (\S+) a (\S+)$/); if(mm) out.cant[mm[1].trim()]={ de:mm[2], a:mm[3] }; }
+    else if(t.indexOf('➖ ')===0) out.quitados.push(t.slice(2).trim());
+  });
+  return out;
+}
+/* 5 · los bultos (lo que se carga) y lo de tienda aparte */
+function fichaBultos(p, N){
+  var u=0, col=0, som=0, otr=0, tienda=[];
+  ((p&&p.productos)||[]).forEach(function(x, ix){
+    if(N.noLlevar.indexOf(ix)>=0) return;
+    var n=Number(x.cant)||0;
+    if(esProdDeTienda(x)){ tienda.push(n+' '+String(x.desc||'').toLowerCase()); return; }
+    u+=n; var t=pryTipoProd(x);
+    if(t==='colchon') col+=n; else if(t==='somier') som+=n; else if(t==='combo'){ col+=n; som+=n; } else otr+=n;
+  });
+  var det=[]; if(col) det.push(col+' colchón'+(col===1?'':'es')); if(som) det.push(som+' somier'+(som===1?'':'es')); if(otr) det.push(otr+' otro'+(otr===1?'':'s'));
+  return '<div class="fl-bultos"><b>📦 '+u+' bulto'+(u===1?'':'s')+'</b>'+(det.length?(' · '+det.join(' · ')):'')+'</div>'+
+    (tienda.length?('<div class="fl-tiendita">🛍️ De tienda, no sale de PTF ni Banzer: '+esc(tienda.join(', '))+'</div>'):'');
+}
+/* 1 · «Qué hacer», en una sola mirada: qué se carga y dónde, cómo se prepara, adónde y cuándo, a quién se llama */
+function fichaQueHacer(p, N, ret, chips){
+  var lug={}, orden=[];
+  ((p&&p.productos)||[]).forEach(function(x, ix){
+    if(N.noLlevar.indexOf(ix)>=0 || esProdDeTienda(x)) return;
+    var pa=prodPartes(x), donde;
+    if(x.chk==='no') donde='✗ Sin stock';
+    else if(!pa.length) donde=(enProduccion(x)&&!x.prodR)?'🏭 En producción':'⬜ Sin revisar';
+    else donde=pa.map(function(e2){ return e2.tipo==='aca'?'🏭 Cargar en PTF':e2.tipo==='sale'?('🏪 Cargar en '+saleNombre(e2.de)):(recogeTiendaDe(e2.de)?('🏬 Traer de '+recogerAlmCorto(e2.de)):('📥 Traer de '+(e2.de?recogerAlmCorto(e2.de):'Moreno'))); })[0];
+    if(!lug[donde]){ lug[donde]=[]; orden.push(donde); }
+    lug[donde].push((Number(x.cant)||0)+' '+String(x.desc||'—')+(x.medida?(' '+x.medida):''));
+  });
+  var L=[];
+  orden.forEach(function(d){ L.push('<div class="fl-qh-l"><span class="fl-qh-k">'+esc(d)+'</span><span>'+esc(lug[d].join(' · '))+'</span></div>'); });
+  var prep=chips.filter(function(c){ return /^(bolsa|esq|plast|viejo|armar|piso|fact|cuid|tarj)$/.test(c.k); }).map(function(c){ return c.t.toLowerCase(); });
+  if(prep.length) L.push('<div class="fl-qh-l"><span class="fl-qh-k">🧰 Preparar</span><span>'+esc(prep.join(' · '))+'</span></div>');
+  var cuando=p.fecha ? (nxDiaTxt(p.fecha)+(p.turno?(' a la '+(normTurno(p.turno)==='PM'?'tarde':'mañana')):'')) : 'sin fecha';
+  L.push('<div class="fl-qh-l"><span class="fl-qh-k">'+(ret?'🏪 Lo retira':'🚚 Entregar')+'</span><span>'+esc(ret ? ('el cliente en '+ret.donde+', '+cuando) : ((p.zona?(p.zona+', '):'')+cuando))+
+    (N.hora?(' · <b>🕐 '+esc(N.hora)+'</b>'):'')+'</span></div>');
+  var aQuien=N.recibe || (N.recibeCel?'el número de la nota':''), celQ=N.recibeCel || flCel(p.celular);
+  if(N.llamar || N.recibe){
+    var wa=celQ ? misWaCliente(celQ) : '';
+    L.push('<div class="fl-qh-l fl-qh-tel"><span class="fl-qh-k">📞 '+(N.llamar?('Llamar '+esc(N.llamar)):'Recibe')+'</span><span>'+
+      (aQuien?('a <b>'+esc(aQuien)+'</b>'+(N.recibe&&N.llamar?' (recibe)':'')):'al cliente')+
+      (celQ?(' <a class="fl-btn fl-btn-s" href="tel:'+celQ+'">📞 '+celQ+'</a>'):'')+(wa?(' <a class="fl-btn fl-btn-s w" href="'+esc(wa)+'" target="_blank" rel="noopener">💬</a>'):'')+'</span></div>');
+  }
+  return '<div class="fl-qh"><div class="fl-qh-t">🧭 Qué hacer</div>'+L.join('')+'</div>';
+}
+/* 7 · el mapita del lugar, con la distancia a PTF (no se baja en las pruebas, salvo `FX_PRUEBA`) */
+function fichaMapaPunto(p, N){
+  var g=almPunto(p); if(g) return { lat:g.lat, lng:g.lng, aprox:esUbicAprox(p.maps), nota:false };
+  if(N && N.mapa){ var c=coordsDeLink(N.mapa); if(c && c.lat!=null) return { lat:Number(c.lat), lng:Number(c.lng), aprox:false, nota:true }; }
+  return null;
+}
+var FICHA_MAPA=null;
+function fichaMapaPintar(pt){
+  var box=document.getElementById('fl-mapa'); if(!box || !pt) return;
+  if(navigator.webdriver && !window.FX_PRUEBA) return;
+  ensureLeafletCallado(function(){
+    box=document.getElementById('fl-mapa'); if(!box || !window.L) return;
+    try{
+      if(FICHA_MAPA){ try{ FICHA_MAPA.remove(); }catch(e){} FICHA_MAPA=null; }
+      var m=L.map(box, { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:false, doubleClickZoom:false });
+      FICHA_MAPA=m;
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(m);
+      var pts=[[pt.lat,pt.lng]];
+      ALM_UBIC.forEach(function(a){ pts.push([a.lat,a.lng]); L.circleMarker([a.lat,a.lng], { radius:6, color:'#fff', weight:2, fillColor:'#12302e', fillOpacity:1 }).addTo(m).bindTooltip(a.nombre, { permanent:true, direction:'top', className:'fx-mtip' }); });
+      L.circleMarker([pt.lat,pt.lng], { radius:10, color:'#fff', weight:3, fillColor:'#00B5AD', fillOpacity:1 }).addTo(m);
+      m.fitBounds(pts, { padding:[18,18], maxZoom:15 });
+    }catch(e){}
+  });
+}
 function showPedidoModal(id){
   var p=findById(id); if(!p) return;
   if(REV_VOLVER && (REV_VOLVER.id!==String(id) || !document.getElementById('modal').classList.contains('on'))) REV_VOLVER=null;   // 👆 (19/10, §4ls PA-9) «← Volver a la revisión» solo para el pedido abierto desde ahí, con la ventana abierta
@@ -33783,6 +34051,11 @@ function showPedidoModal(id){
   var turnoTxt=p.turno ? (normTurno(p.turno)==='PM' ? '🌆 Tarde' : '🌅 Mañana') : 'sin turno';
   var ret=fichaRetira(p), chips=fichaObsChips(p), avisos=fichaAvisos(p, ret, chips), dias=fichaDias(p.fecha), hace=fichaHaceTxt(p.ts);
   var vec=fichaVecinos(p); FICHA_VEC=vec;
+  var N=fichaNota(p), contras=fichaContras(p, N);
+  // 3 · cuándo se vio antes en este aparato (se anota una vez por apertura: tildar una etiqueta repinta y no lo pisa)
+  if(FICHA_ABIERTA_ID!==String(p.id) || !document.getElementById('modal').classList.contains('on')){ FICHA_VISTO_ANT=fichaVistaDe(p.id); FICHA_ABIERTA_ID=String(p.id); fichaVistaAnotar(p.id); }
+  var despues=fichaCambioDespues(p, FICHA_VISTO_ANT);
+  var mapaPt=ret ? null : fichaMapaPunto(p, N);
   var top='<div class="fl-top">'+
       '<div class="fl-num"><b>'+(dnum?('#'+dnum):'—')+'</b><small>del día</small></div>'+
       '<div class="fl-cli"><div class="n">'+esc(p.cliente||'—')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+'</div></div>'+
@@ -33794,8 +34067,13 @@ function showPedidoModal(id){
         (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
       '</div></div>';
   var obs=String(p.observaciones||'').trim();
-  var obsHtml=obs ? ('<div class="fl-obs"><div class="i">📝</div><div class="fl-obs-c"><div class="t">Observaciones — leer antes de cargar</div>'+fichaChipsHtml(chips)+'<div class="x">'+esc(obs)+'</div></div></div>')
-                  : fichaChipsHtml(chips);   // sin observaciones, «🛣️ Va a provincia» puede salir de la dirección o la zona
+  // 4 · la nota LIMPIA (sin N° de OC, enlaces ni «Importado del Excel de ROHO»); la original, a un toque
+  var obsHtml=obs ? ('<div class="fl-obs"><div class="i">📝</div><div class="fl-obs-c"><div class="t">Observaciones — leer antes de cargar</div>'+fichaChipsHtml(chips, p.id)+
+      (N.limpio?('<div class="x">'+esc(N.limpio)+'</div>'):'')+
+      (N.limpio!==N.crudo?('<details class="fl-orig"><summary>ver la nota como la escribió el vendedor</summary><div>'+esc(N.crudo)+'</div></details>'):'')+'</div></div>')
+                  : fichaChipsHtml(chips, p.id);   // sin observaciones, «🛣️ Va a provincia» puede salir de la dirección o la zona
+  var rojo=contras.concat(despues?[despues]:[]);
+  var contrasHtml=rojo.length ? ('<div class="fl-contra"><b>⛔ Ojo: la nota y el pedido no coinciden</b><ul>'+rojo.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul></div>') : '';
   var avisosHtml=avisos.length ? ('<div class="fl-avisos"><b>⚠️ Revisá antes de cargar</b><ul>'+avisos.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul></div>') : '';
   var cel=String(p.celular||'').trim(), wa=(typeof misWaCliente==='function') ? misWaCliente(cel) : '';
   var telNum=cel.replace(/[^0-9+]/g,'');
@@ -33808,7 +34086,11 @@ function showPedidoModal(id){
     '</div>') : ('<div class="fl-c"><h4>📍 Dónde entregar</h4>'+
       (p.zona?('<span class="fl-zona">'+esc(p.zona)+'</span>'):'')+
       '<div class="fl-dir">'+(p.direccion?esc(p.direccion):'<span style="color:var(--muted)">Sin dirección escrita</span>')+'</div>'+
+      (N.recibe?('<div class="fl-recibe">👤 Recibe: <b>'+esc(N.recibe)+'</b>'+(N.recibeCel?(' · <a href="tel:'+N.recibeCel+'">'+N.recibeCel+'</a>'):'')+'</div>'):'')+
+      (mapaPt?('<div class="fl-mapa" id="fl-mapa"></div><div class="fl-mapa-t">📍 a <b>'+fxMapaKm(ALM_UBIC[0], mapaPt).toFixed(1).replace('.',',')+' km</b> de PTF'+(ALM_UBIC[1]?(' · '+fxMapaKm(ALM_UBIC[1], mapaPt).toFixed(1).replace('.',',')+' km de '+esc(ALM_UBIC[1].nombre)):'')+
+        (mapaPt.aprox?' · ≈ ubicación aproximada: preguntá la casa':'')+(mapaPt.nota?' · 📝 la ubicación estaba pegada en la nota':'')+'</div>'):'')+
       '<div class="fl-btns">'+
+        ((!p.maps && N.mapa) ? ('<a class="fl-btn p" href="'+esc(N.mapa)+'" target="_blank" rel="noopener">📍 Abrir (de la nota)</a>') : '')+
         (p.maps ? ('<a class="fl-btn p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button type="button" class="fl-btn" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button>')
                 : ('<button type="button" class="fl-btn a" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>'))+
         contacto+
@@ -33816,7 +34098,7 @@ function showPedidoModal(id){
     '</div>');
   var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
   var sug=ret ? null : fichaSugerido(p);
-  var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaProdsHtml(p)+
+  var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N)+
       '<div class="fl-res">'+prodResumen(p, true)+'</div>'+
       '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>✏️ Cambiar de dónde sale cada producto</summary><div class="fl-marcas-in">'+
         '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div>'+prodRevList(p)+'</div></details>'+
@@ -33854,7 +34136,7 @@ function showPedidoModal(id){
   var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      avisoModifHtml(p, false, true)+top+obsHtml+avisosHtml+
+      avisoModifHtml(p, false, true)+top+fichaQueHacer(p, N, ret, chips)+contrasHtml+obsHtml+avisosHtml+
       '<div class="fl-g">'+colDonde+colCarga+colCamion+'</div>'+
       botonesRpt(p)+mas+
       '<div class="fl-pie">'+
@@ -33867,7 +34149,9 @@ function showPedidoModal(id){
     '</div>';
   openModal(html, true);
   var box=document.getElementById('modal-box'); if(box) box.classList.add('fl-ficha');
+  if(mapaPt) fichaMapaPintar(mapaPt);
 }
+var FICHA_ABIERTA_ID='', FICHA_VISTO_ANT=0;
 /* 📝 (23/10, dueño eligió la «B»: «que no se olviden de leer las observaciones») Prender «Listo para cargar» en un pedido CON observaciones
    pasa por una ventana que las muestra en grande: «✓ Las leí, marcar listo» o «Cancelar». Apagarlo, o un pedido sin observaciones, va
    directo. Vale para la ficha y para el 📦 de la tabla. En Playwright va directo salvo `window.OBS_PRUEBA` (las pruebas de siempre
@@ -33877,11 +34161,13 @@ function obsAntesDeListo(id, hacer){
   var p=findById(id); if(!p) return;
   var obs=String(p.observaciones||'').trim();
   if(p.verificado || !obs || !obsPreguntaActiva()){ hacer(); return; }
+  var ch=fichaObsChips(p), falta=fichaChipsFaltan(p);
+  if(ch.length && !falta.length){ hacer(); return; }   // (24/10) todo tildado en la ficha: ya lo leyó
   var ov=document.getElementById('obs-conf');
   if(!ov){ ov=document.createElement('div'); ov.id='obs-conf'; ov.className='no-print'; document.body.appendChild(ov); }
   ov.innerHTML='<div class="obs-c" role="dialog" aria-modal="true" aria-labelledby="obs-t">'+
       '<div class="obs-h" id="obs-t">📝 Antes de marcarlo «Listo para cargar»</div>'+
-      '<div class="obs-b"><div class="obs-k">Observaciones de '+esc(p.cliente||'este pedido')+'</div>'+fichaChipsHtml(fichaObsChips(p))+'<div class="obs-x">'+esc(obs)+'</div>'+
+      '<div class="obs-b"><div class="obs-k">Observaciones de '+esc(p.cliente||'este pedido')+'</div>'+(falta.length&&falta.length<ch.length?'<div class="obs-k">Te falta tildar:</div>':'')+fichaChipsHtml(falta)+'<div class="obs-x">'+esc(fichaNota(p).limpio||obs)+'</div>'+
       '<div class="obs-a"><button type="button" class="fl-btn" id="obs-no">Cancelar</button><button type="button" class="fl-btn p" id="obs-si">✓ Las leí, marcar listo</button></div></div></div>';
   ov.hidden=false;
   var cerrar=function(){ ov.hidden=true; ov.innerHTML=''; };
