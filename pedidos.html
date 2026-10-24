@@ -1256,6 +1256,32 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .nx-tab.on{ background:var(--c); border-color:var(--c); color:#fff; }
 .nx-tab .nx-num{ background:var(--tl); }
 .nx-sug-lista{ display:grid; gap:6px; margin-top:6px; }
+.nx-sug-grupo{ border-left:5px solid var(--gc,#00A09A); border-radius:12px; background:rgba(255,255,255,.55); padding:6px 6px 6px 8px; display:grid; gap:6px; }
+.nx-sug-gcab{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; padding:4px 4px 2px; }
+.nx-sug-gcab b{ font-size:.98rem; color:#12302e; }
+.nx-sug-gdot{ display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--gc,#00A09A); box-shadow:0 0 0 2px #fff, 0 0 0 3px var(--gc,#00A09A); margin-right:6px; vertical-align:middle; flex:none; }
+.nx-sug-gn{ background:#12302e; color:#fff; border-radius:99px; padding:1px 9px; font-size:.75rem; font-weight:800; }
+.nx-sug-gpor{ font-size:.78rem; color:#5b6b70; font-weight:700; }
+.nx-sug-gsel{ margin-left:auto; width:auto; min-width:150px; }
+.nx-sug-uno summary{ cursor:pointer; list-style:none; display:flex; align-items:flex-start; gap:8px; padding:2px 4px 4px; }
+.nx-sug-uno summary::-webkit-details-marker{ display:none; }
+.nx-sug-nombres{ display:flex; flex-wrap:wrap; gap:5px; flex:1; min-width:0; }
+.nx-sug-nom{ background:#fff; border:1px solid #d5e2e2; border-radius:99px; padding:3px 10px; font-size:.82rem; font-weight:700; color:#16302e; }
+.nx-sug-nom i{ font-style:normal; color:#00756f; font-weight:600; }
+.nx-sug-nom.otro{ border-color:#8b5cf6; color:#5b21b6; }
+.nx-sug-nom.sinubic{ border-color:#f3cf95; color:#b45309; }
+.nx-sug-ver{ flex:none; font-size:.8rem; font-weight:800; color:#00756f; white-space:nowrap; padding-top:4px; }
+.nx-sug-uno[open] .nx-sug-nombres{ display:none; }
+.nx-sug-uno[open] summary{ justify-content:flex-end; }
+.nx-sug-uno[open] .nx-sug-ver:after{ content:' ▴'; }
+.nx-sug-uno > .nx-sug-r{ margin-top:6px; }
+.nx-sug-sinubic .nx-sug-q small{ color:#b45309; font-weight:700; }
+.nx-sug-aviso{ background:#fff8ec; border:1px solid #f3cf95; border-radius:10px; padding:8px 12px; margin:6px 0; color:#6b4300; font-size:.86rem; font-weight:600; }
+.nx-sug-mapa-w{ margin-top:12px; }
+#nx-sug-mapa{ height:320px; border-radius:12px; border:1px solid #c9e7e4; overflow:hidden; background:#eef3f3; }
+.nx-sug-ley{ font-size:.78rem; color:#5b6b70; margin-top:6px; }
+.nx-cam b .nx-sug-gdot{ width:10px; height:10px; }
+@media(max-width:600px){ .nx-sug-gsel{ margin-left:0; width:100%; } #nx-sug-mapa{ height:240px; } }
 .nx-sug-min{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px; background:#eaf6f5; border:1px solid #c9e7e4; border-radius:12px; padding:8px 12px; margin:0 0 14px; color:#0f3d3a; font-size:.88rem; }
 .nx-sug-min .nx-btn{ margin-left:auto; --cd:#00756f; --bd:#9fd6d1; }
 .nx-tab.nx-sug-ocultar{ background:#fff; color:#5b6b70; }
@@ -40146,36 +40172,117 @@ function nxSugPeds(dia){
   return (STATE||[]).filter(function(p){ return p && p.fecha===dia && !p.entregado && !esVentaTienda(p) && !esFilaSistema(p) && !borradorDe(p.id); });
 }
 function nxSugSin(dia){ return nxSugPeds(dia).filter(function(p){ return !vehiculoDe(p); }); }
+/* ✨ (24/10, dueño: «S1, S2, S4, S6») Segunda vuelta, porque en la captura del dueño proponía la Carry para los 14 pedidos (el paso 3
+   elegía «entre los que salen», y el primero que salía se llevaba todo):
+     S4 · un pedido SIN zona escrita pero con pin toma la zona de los pedidos con pin que tiene cerca (`nxSugZonaDePin`, a ≤ 1,5 km);
+          sin zona ni pin se dice «sin ubicación» (igual se le propone camión);
+     S2 · se reparte por GRUPOS (misma zona, o pines a ≤ `NX_SUG_KM` km): todo el grupo al mismo camión, el grupo más grande primero;
+     S1 · un grupo que ningún camión cubre va al que lleva MENOS paradas entre todos los que trabajan (menos el de insumos), así se
+          reparte parejo aunque ese día no salga ninguno todavía.
+   Los pasos 1 (ya va a la zona) y 2 (pasa cerca) no cambiaron. Sigue sin asignar solo: «Aceptar» de siempre. */
+var NX_SUG_ZONA_KM=1.5, NX_SUG_ABIERTOS={};
+function nxSugConocidos(){   // pedidos con pin Y zona de los últimos 120 días: de ahí se aprende la zona de un pin
+  var desde=isoMasDiasSimple(todayStr(), -120), out=[];
+  (STATE||[]).forEach(function(q){ if(!q || esFilaSistema(q) || !q.fecha || q.fecha<desde || !String(q.zona||'').trim()) return; var g=almPunto(q); if(g) out.push({ g:g, z:String(q.zona).trim() }); });
+  return out;
+}
+function isoMasDiasSimple(iso, n){ var d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return isoLocal(d); }
+function nxSugZonaDePin(g, conocidos){
+  var votos={}, mejor=null;
+  conocidos.forEach(function(c){ var d=mapaKmAprox(g, c.g); if(d>NX_SUG_ZONA_KM) return; var k=normNombre(c.z); (votos[k]||(votos[k]={ z:c.z, n:0, d:d })).n++; if(d<votos[k].d) votos[k].d=d; });
+  Object.keys(votos).forEach(function(k){ var v=votos[k]; if(!mejor || v.n>mejor.n || (v.n===mejor.n && v.d<mejor.d)) mejor=v; });
+  return mejor;
+}
+var NX_SUG_COLORES=['#0ea5e9','#8b5cf6','#f59e0b','#64748b','#ec4899','#10b981'];
+function nxSugColor(v){ var i=Object.keys(VEHICULOS).indexOf(v); return NX_SUG_COLORES[(i<0?0:i)%NX_SUG_COLORES.length]; }
 function nxSugDatos(dia){
-  var cams={}, orden=Object.keys(VEHICULOS);
-  orden.forEach(function(v){ cams[v]={ v:v, n:0, zonas:{}, pts:[], nuevos:0 }; });
-  var meter=function(c, p, virtual){
+  var cams={}, orden=Object.keys(VEHICULOS), trabajan=orden.filter(function(v){ return !/insumo/i.test(v); });
+  if(!trabajan.length) trabajan=orden;
+  orden.forEach(function(v){ cams[v]={ v:v, n:0, zonas:{}, pts:[], nuevos:0, col:nxSugColor(v) }; });
+  var meter=function(c, p, virtual, z){
     c.n++; if(virtual) c.nuevos++;
-    var z=normNombre(p.zona); if(z) c.zonas[z]=(c.zonas[z]||0)+1;
+    z=z||normNombre(p.zona); if(z) c.zonas[z]=(c.zonas[z]||0)+1;
     var g=almPunto(p); if(g) c.pts.push(g);
   };
-  var sin=[];
-  nxSugPeds(dia).forEach(function(p){ var v=vehiculoDe(p); if(v && cams[v]) meter(cams[v], p); else if(!v) sin.push(p); });
-  sin.sort(function(a,b){ var za=normNombre(a.zona), zb=normNombre(b.zona); if(za!==zb) return za<zb?-1:1; return (turnoDe(a)||'Z')<(turnoDe(b)||'Z')?-1:1; });
-  var lista=sin.map(function(p){
-    var z=normNombre(p.zona), g=almPunto(p), best=null, por='';
-    if(z){ orden.forEach(function(v){ var c=cams[v], k=c.zonas[z]||0; if(k>0 && (!best || k>(best.zonas[z]||0) || (k===(best.zonas[z]||0) && c.n<best.n))) best=c; });
-      if(best) por='ya va a '+String(p.zona||'').trim(); }
-    if(!best && g){
-      var md=1e9; orden.forEach(function(v){ cams[v].pts.forEach(function(q){ var d=mapaKmAprox(g, q); if(d<md){ md=d; best=cams[v]; } }); });
-      if(best && md<=NX_SUG_KM) por='pasa a ~'+(md<1?'menos de 1':Math.round(md))+' km'; else best=null;
-    }
-    if(!best){
-      var salen=orden.filter(function(v){ return cams[v].n>0; }), cand=salen.length?salen:orden.filter(function(v){ return !/insumo/i.test(v); });
-      cand.forEach(function(v){ if(!best || cams[v].n<best.n) best=cams[v]; });
-      por=salen.length?'el que lleva menos paradas':'ninguno sale todavía ese día';
-    }
-    var elegido=NX_SUG_CAMBIO[p.id] && cams[NX_SUG_CAMBIO[p.id]] ? cams[NX_SUG_CAMBIO[p.id]] : best;
-    if(elegido!==best) por='elegido a mano';
-    if(elegido) meter(elegido, p, true);
-    return { p:p, v:elegido?elegido.v:'', por:por };
+  var sin=[], ya=[];
+  nxSugPeds(dia).forEach(function(p){ var v=vehiculoDe(p); if(v && cams[v]){ meter(cams[v], p); ya.push({ p:p, v:v }); } else if(!v) sin.push(p); });
+  // S4 · la zona de cada uno (la escrita, o la del mapa)
+  var conocidos=null;
+  var items=sin.map(function(p){
+    var zt=String(p.zona||'').trim(), z=normNombre(zt), g=almPunto(p), deMapa='';
+    if(!z && g){ conocidos=conocidos||nxSugConocidos(); var zz=nxSugZonaDePin(g, conocidos); if(zz){ zt=zz.z; z=normNombre(zz.z); deMapa=zz.z; } }
+    return { p:p, z:z, zt:zt, g:g, deMapa:deMapa, sinUbic:!z && !g };
   });
-  return { dia:dia, lista:lista, cams:orden.map(function(v){ return cams[v]; }) };
+  // S2 · grupos: misma zona; sin zona pero con pin, el grupo que tenga un pin cerca; sin nada, todos juntos al final
+  var grupos=[], porZ={};
+  items.forEach(function(it){
+    var gr=null;
+    if(it.z) gr=porZ[it.z];
+    else if(it.g){ grupos.forEach(function(x){ if(!gr && x.k!=='nada' && x.pts.some(function(q){ return mapaKmAprox(it.g, q)<=NX_SUG_KM; })) gr=x; }); }
+    else gr=porZ['\u0000nada'];
+    if(!gr){
+      gr={ k:it.z||(it.g?('pin:'+it.p.id):'nada'), z:it.z, zt:it.zt||(it.g?'Sin zona escrita':'Sin zona ni ubicación'), items:[], pts:[] };
+      grupos.push(gr); if(it.z) porZ[it.z]=gr; else if(!it.g) porZ['\u0000nada']=gr;
+    }
+    gr.items.push(it); if(it.g) gr.pts.push(it.g);
+  });
+  grupos.sort(function(a,b){ if((a.k==='nada')!==(b.k==='nada')) return a.k==='nada'?1:-1; return b.items.length-a.items.length || (a.zt<b.zt?-1:1); });
+  var lista=[];
+  grupos.forEach(function(gr){
+    var best=null, por='';
+    if(gr.z){ orden.forEach(function(v){ var c=cams[v], k=c.zonas[gr.z]||0; if(k>0 && (!best || k>(best.zonas[gr.z]||0) || (k===(best.zonas[gr.z]||0) && c.n<best.n))) best=c; });
+      if(best) por='ya va a '+gr.zt; }
+    if(!best && gr.pts.length){
+      var md=1e9, mc=null; orden.forEach(function(v){ cams[v].pts.forEach(function(q){ gr.pts.forEach(function(g){ var d=mapaKmAprox(g, q); if(d<md){ md=d; mc=cams[v]; } }); }); });
+      if(mc && md<=(gr.z?NX_SUG_ZONA_KM:NX_SUG_KM)){ best=mc; por='pasa a ~'+(md<1?'menos de 1':Math.round(md))+' km'; }   // con zona escrita, solo «al lado» (1,5 km): con 4 km un camión se llevaba las zonas vecinas y no se repartía
+    }
+    if(!best){   // S1 · el que lleva menos paradas entre todos los que trabajan
+      trabajan.forEach(function(v){ if(!best || cams[v].n<best.n) best=cams[v]; });
+      por='reparto parejo: el que lleva menos paradas';
+    }
+    gr.v=best?best.v:''; gr.por=por; gr.ids=[];
+    gr.items.sort(function(a,b){ return (turnoDe(a.p)||'Z')<(turnoDe(b.p)||'Z')?-1:1; });
+    gr.items.forEach(function(it){
+      var p=it.p, elegido=NX_SUG_CAMBIO[p.id] && cams[NX_SUG_CAMBIO[p.id]] ? cams[NX_SUG_CAMBIO[p.id]] : best;
+      var porP=elegido!==best ? 'elegido a mano' : por;
+      if(elegido) meter(elegido, p, true, gr.z);
+      gr.ids.push(String(p.id));
+      lista.push({ p:p, v:elegido?elegido.v:'', por:porP, g:gr.k, zt:gr.zt, deMapa:it.deMapa, sinUbic:it.sinUbic, pt:it.g });
+    });
+  });
+  return { dia:dia, lista:lista, grupos:grupos, ya:ya, cams:orden.map(function(v){ return cams[v]; }) };
+}
+function nxSugCambiarGrupo(k, v){
+  var D=nxSugDatos(nxSugDia());
+  D.grupos.forEach(function(gr){ if(gr.k===k) gr.ids.forEach(function(id){ NX_SUG_CAMBIO[id]=v; }); });
+  nxSugPintar();
+}
+function nxSugAceptarGrupo(k){
+  var D=nxSugDatos(nxSugDia()), n=0, v='';
+  D.lista.forEach(function(s){ if(s.g===k && s.v && nxSugAplicar(s.p.id, s.v)){ n++; v=s.v; } });
+  if(n){ toast('🚚 '+n+' pedido'+(n===1?'':'s')+' → '+v,'ok'); nxBadges(); }
+  nxSugPintar();
+}
+/* S6 · el mapita: cada pedido del día con el color de su camión (lleno = sugerido, con borde blanco = ya asignado) y PTF/Banzer. */
+var NX_SUG_MAPA=null;
+function nxSugMapa(D){
+  var box=document.getElementById('nx-sug-mapa'); if(!box) return;
+  if(navigator.webdriver && !window.FX_PRUEBA) return;          // en las pruebas no se baja el mapa (no hay red)
+  ensureLeafletCallado(function(){
+    box=document.getElementById('nx-sug-mapa'); if(!box || !window.L) return;
+    try{
+      if(NX_SUG_MAPA){ try{ NX_SUG_MAPA.remove(); }catch(e){} NX_SUG_MAPA=null; }
+      var pts=[], m=L.map(box, { zoomControl:true, attributionControl:false, scrollWheelZoom:false });
+      NX_SUG_MAPA=m;
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(m);
+      ALM_UBIC.forEach(function(a){ pts.push([a.lat,a.lng]); L.circleMarker([a.lat,a.lng], { radius:7, color:'#fff', weight:2, fillColor:'#12302e', fillOpacity:1 }).addTo(m).bindTooltip(a.nombre, { permanent:true, direction:'top', className:'fx-mtip' }); });
+      D.ya.forEach(function(y){ var g=almPunto(y.p); if(!g) return; pts.push([g.lat,g.lng]);
+        L.circleMarker([g.lat,g.lng], { radius:6, color:nxSugColor(y.v), weight:3, fillColor:'#fff', fillOpacity:1 }).addTo(m).bindTooltip(esc((y.p.cliente||'')+' · '+y.v+' (ya asignado)')); });
+      D.lista.forEach(function(s){ if(!s.pt || !s.v) return; pts.push([s.pt.lat,s.pt.lng]);
+        L.circleMarker([s.pt.lat,s.pt.lng], { radius:8, color:'#fff', weight:2, fillColor:nxSugColor(s.v), fillOpacity:1 }).addTo(m).bindTooltip(esc((s.p.cliente||'')+' → '+s.v)); });
+      if(pts.length) m.fitBounds(pts, { padding:[24,24], maxZoom:15 });
+    }catch(e){}
+  });
 }
 var LS_SUG_OCULTO='me_sug_oculto';
 function nxSugVisible(){ try{ return localStorage.getItem(LS_SUG_OCULTO)!=='1'; }catch(e){ return true; } }
@@ -40197,32 +40304,55 @@ function nxSugPintar(){
   }
   var chip=function(k, lbl, n){ return '<button type="button" class="nx-tab'+(NX_SUG_DIA===k?' on':'')+'" onclick="NX_SUG_DIA=\''+k+'\';nxSugPintar()">'+lbl+' <span class="nx-num">'+n+'</span></button>'; };
   var opts=function(sel){ return Object.keys(VEHICULOS).map(function(v){ return '<option'+(v===sel?' selected':'')+'>'+esc(v)+'</option>'; }).join(''); };
-  var filas=D.lista.map(function(s,i){
+  var i=0;
+  var fila=function(s){
     var p=s.p, id=String(p.id).replace(/'/g,''), t=turnoDe(p);
-    return '<div class="nx-sug-r" id="nx-sug-'+esc(id)+'" style="animation-delay:'+Math.min(i,10)*55+'ms">'+
+    var lugar=s.sinUbic ? '📍 sin zona ni ubicación' : (s.deMapa ? ('≈ '+s.deMapa+' (por el mapa)') : (p.zona||'sin zona'));
+    return '<div class="nx-sug-r'+(s.sinUbic?' nx-sug-sinubic':'')+'" id="nx-sug-'+esc(id)+'" style="animation-delay:'+Math.min(i++,10)*55+'ms">'+
       '<span class="nx-turno '+(t==='PM'?'pm':'am')+'">'+(t==='PM'?'🌆 PM':(t?'🌅 AM':'—'))+'</span>'+
-      '<div class="nx-sug-q"><b>'+esc(p.cliente||'—')+'</b><small>'+esc([p.zona||'sin zona', ocEtiq(p.oc), (p.productos||[]).length+' producto'+((p.productos||[]).length===1?'':'s')].filter(Boolean).join(' · '))+'</small></div>'+
-      '<span class="nx-flecha" aria-hidden="true">➜</span>'+
-      '<div class="nx-sug-v"><select class="msel" onchange="NX_SUG_CAMBIO[\''+id+'\']=this.value;nxSugPintar()">'+opts(s.v)+'</select><small>'+esc(s.por)+'</small></div>'+
+      '<div class="nx-sug-q"><b>'+esc(p.cliente||'—')+'</b><small>'+esc([lugar, ocEtiq(p.oc), (p.productos||[]).length+' producto'+((p.productos||[]).length===1?'':'s')].filter(Boolean).join(' · '))+'</small></div>'+
+      '<span class="nx-flecha" aria-hidden="true" style="color:'+nxSugColor(s.v)+'">➜</span>'+
+      '<div class="nx-sug-v"><select class="msel" onchange="NX_SUG_CAMBIO[\''+id+'\']=this.value;nxSugPintar()">'+opts(s.v)+'</select>'+(s.por==='elegido a mano'?'<small>elegido a mano</small>':'')+'</div>'+
       '<button type="button" class="nx-btn" onclick="nxSugAceptar(\''+id+'\')">✓ Aceptar</button></div>';
+  };
+  // S2 · un bloque por grupo (zona), con su camión y «Aceptar los N»
+  var filas=(D.grupos||[]).map(function(gr){
+    var ss=D.lista.filter(function(s){ return s.g===gr.k; }); if(!ss.length) return '';
+    var k=String(gr.k).replace(/'/g,''), n=ss.length;
+    return '<div class="nx-sug-grupo" style="--gc:'+nxSugColor(gr.v)+'">'+
+      '<div class="nx-sug-gcab"><span class="nx-sug-gdot"></span><b>'+esc(gr.zt)+'</b><span class="nx-sug-gn">'+n+' pedido'+(n===1?'':'s')+'</span>'+
+        '<span class="nx-sug-gpor">'+esc(gr.por)+'</span>'+
+        '<select class="msel nx-sug-gsel" onchange="nxSugCambiarGrupo(\''+k+'\',this.value)" title="Cambiar el camión de todo el grupo">'+opts(gr.v)+'</select>'+
+        '<button type="button" class="nx-btn" onclick="nxSugAceptarGrupo(\''+k+'\')">✓ Aceptar'+(n>1?(' los '+n):'')+'</button></div>'+
+      '<details class="nx-sug-uno"'+(NX_SUG_ABIERTOS[k]?' open':'')+' ontoggle="NX_SUG_ABIERTOS[\''+k+'\']=this.open">'+
+        '<summary><span class="nx-sug-nombres">'+ss.map(function(s){ var t=turnoDe(s.p);
+          return '<span class="nx-sug-nom'+(s.v!==gr.v?' otro':'')+(s.sinUbic?' sinubic':'')+'">'+(t==='PM'?'🌆':'🌅')+' '+esc(s.p.cliente||'—')+(s.deMapa?' <i>≈ por el mapa</i>':'')+(s.v!==gr.v?(' → '+esc(s.v)):'')+'</span>'; }).join('')+
+        '</span><span class="nx-sug-ver">✏️ uno por uno</span></summary>'+
+        ss.map(fila).join('')+
+      '</details>'+
+    '</div>';
   }).join('');
+  var conPin=D.lista.some(function(s){ return s.pt; });
+  var sinUbic=D.lista.filter(function(s){ return s.sinUbic; }).length;
   var cams=D.cams.map(function(c){
     var zs=Object.keys(c.zonas).slice(0,4);
-    return '<div class="nx-cam'+(c.nuevos?' nx-cam-nuevo':'')+'"><b>🚚 '+esc(c.v)+'</b><span class="nx-cam-n">'+c.n+(c.nuevos?(' <i>+'+c.nuevos+'</i>'):'')+'</span>'+
+    return '<div class="nx-cam'+(c.nuevos?' nx-cam-nuevo':'')+'" style="--gc:'+c.col+'"><b><span class="nx-sug-gdot"></span>🚚 '+esc(c.v)+'</b><span class="nx-cam-n">'+c.n+(c.nuevos?(' <i>+'+c.nuevos+'</i>'):'')+'</span>'+
       '<small>'+(zs.length?esc(zs.map(function(z){ return z.replace(/^./,function(x){ return x.toUpperCase(); }); }).join(' · ')):'sin paradas')+'</small></div>';
   }).join('');
   var h='<div class="nx nx-teal nx-sug" id="nx-sug-caja">'+
     '<div class="nx-cab">'+nxIco('cam')+'<div class="nx-cuerpo"><div class="nx-tit">'+(D.lista.length?('⚠️ Sin camión para '+esc(NX_SUG_DIA==='hoy'?('hoy '+nxDiaTxt(D.dia)):nxCuandoTxt(D.dia))+' · '+D.lista.length+' pedido'+(D.lista.length===1?'':'s')):('✅ '+(NX_SUG_DIA==='hoy'?'Hoy':'Mañana')+' todos tienen camión'))+'</div>'+
-      '<div class="nx-sub">El panel propone el camión que ya va a esa zona; si ninguno va, el más cerca o el que lleva menos paradas. Vos decidís.</div></div>'+
+      '<div class="nx-sub">Agrupados por zona: cada grupo va al camión que ya va ahí, al que pasa cerca o, si no, se reparten parejo. Vos decidís.</div></div>'+
       '<div class="nx-tabs">'+chip('manana', nxDiaTxt(proximoDiaEntrega()).split(' ')[0].replace(/^./,function(c){ return c.toUpperCase(); }), nM)+(nH?chip('hoy','Hoy',nH):'')+
         '<button type="button" class="nx-tab nx-sug-ocultar" onclick="nxSugMostrar(false)" title="Esconder esta caja en este aparato">🙈 Ocultar</button></div></div>'+
     (D.lista.length?('<div class="nx-acc" style="justify-content:flex-start;margin:8px 0 2px"><button type="button" class="nx-btn" onclick="nxSugAceptarTodas()">✓ Aceptar todas ('+D.lista.length+')</button>'+
       (Object.keys(NX_SUG_CAMBIO).length?'<button type="button" class="nx-btn nx-btn-suave" onclick="NX_SUG_CAMBIO={};nxSugPintar()">↺ Volver a lo sugerido</button>':'')+'</div>'+
+      (sinUbic?('<div class="nx-sug-aviso">📍 '+sinUbic+' sin zona ni ubicación: el panel no sabe a dónde van. Pedile el enlace al vendedor (o escribí la zona) y se agrupan solos.</div>'):'')+
       '<div class="nx-sug-lista">'+filas+'</div>'):'')+
     '<div class="nx-sub" style="margin:10px 0 6px;font-weight:800">🚚 Camiones de '+esc(NX_SUG_DIA==='hoy'?'hoy':nxDiaTxt(D.dia))+(D.lista.length?' (con lo sugerido)':'')+'</div>'+
     '<div class="nx-cams">'+cams+'</div>'+
+    (conPin?('<div class="nx-sug-mapa-w"><div id="nx-sug-mapa"></div><div class="nx-sug-ley">🗺️ Cada punto con el color de su camión: <b>lleno</b> = sugerido · <b>con borde</b> = ya asignado · ⚫ PTF y Banzer</div></div>'):'')+
   '</div>';
-  if(el._h!==h){ el.innerHTML=h; el._h=h; }   // repintar igual reiniciaría las animaciones de entrada cada 2 minutos
+  if(el._h!==h){ el.innerHTML=h; el._h=h; if(conPin) nxSugMapa(D); }   // repintar igual reiniciaría las animaciones de entrada cada 2 minutos
 }
 function nxSugAplicar(id, v){
   var p=findById(id); if(!p || !v || !VEHICULOS[v] || vehiculoDe(p)) return false;

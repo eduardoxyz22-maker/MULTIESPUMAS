@@ -305,7 +305,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('lista los 3 sin camión', r.n===3 && /Sin camión para mañana/.test(r.txt), r.txt.slice(0,80));
   chk('el de la misma zona va al camión que ya va ahí (sin mirar mayúsculas)', r.k2.v==='Carry' && /ya va a norte/i.test(r.k2.por), r.k2);
   chk('el que tiene una parada cerca va a ese camión', r.k5.v==='Foton nuevo' && /km/.test(r.k5.por), r.k5);
-  chk('si no, el que lleva menos paradas entre los que salen', (r.k3.v==='Carry'||r.k3.v==='Foton nuevo') && /menos paradas/.test(r.k3.por), r.k3);
+  chk('si no, reparto parejo: el que lleva menos paradas entre TODOS los que trabajan (24/10, dueño: S1)', r.k3.v==='Foton encarpado' && /reparto parejo/.test(r.k3.por), r.k3);
   r = await page.evaluate(async () => {
     nxSugAceptar('K2'); await esperar(500);
     var p=findById('K2'), srv=window.SRV.filter(function(x){ return x.id==='K2'; })[0]||{};
