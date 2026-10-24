@@ -431,9 +431,9 @@ const J=x=>JSON.stringify(x);
     out.t1=tocar('✔ Banzer'); await _esperar(150);
     var x=findById('a').productos[0];
     out.m1={ chk:x.chk, de:x.chkDe||'', on:on(), g:(((window._saves[0]||{}).productos||[])[0]||{}).chkDe||'' };
-    tocar('✔'); await _esperar(150);
+    tocar('✔ PTF'); await _esperar(150);   // (24/10) en la ficha compacta el ✔ de fábrica dice «✔ PTF»
     x=findById('a').productos[0]; out.m2={ chk:x.chk, de:('chkDe' in x)?x.chkDe:'(no)', on:on() };
-    tocar('✔'); await _esperar(150);
+    tocar('✔ PTF'); await _esperar(150);
     x=findById('a').productos[0]; out.m3={ chk:x.chk||'', on:on() };
     out.ayuda=_txt('#modal-box');
     closeModal();
@@ -442,7 +442,7 @@ const J=x=>JSON.stringify(x);
   /* El botón guarda el nombre REAL del almacén cuando su Excel está cargado (§4ey: «01-05-025  Almacen
      Distribucion Banzer»), como el 📥 de antes; «Banzer» a mano y ese nombre son el mismo lugar (`recogerMismo`). */
   chk('⚠️ la ficha tiene «✔ Banzer»: marca «hay en Banzer» a mano y lo guarda en la planilla', r.t1===true && r.m1?.chk==='ok' && /banzer/i.test(r.m1?.de||'') && /banzer/i.test(r.m1?.g||'') && (r.m1?.on||[]).join()==='✔ Banzer', J([r.m1, r.__error]));
-  chk('…tocar «✔» (fábrica) la pasa a fábrica: cambia de lugar, no se apaga', r.m2?.chk==='ok' && r.m2?.de==='(no)' && (r.m2?.on||[]).join()==='✔', J(r.m2));
+  chk('…tocar «✔» (fábrica) la pasa a fábrica: cambia de lugar, no se apaga', r.m2?.chk==='ok' && r.m2?.de==='(no)' && (r.m2?.on||[]).join()==='✔ PTF', J(r.m2));
   chk('…y tocar el mismo la desmarca', r.m3?.chk==='' && (r.m3?.on||[]).length===0, J(r.m3));
 
   // ═══ 11. La tabla, «Qué hacer» y «Qué producir» ══════════════════════════════════════
@@ -529,7 +529,7 @@ const J=x=>JSON.stringify(x);
     showPedidoModal('a'); await _esperar(150);
     var tira=document.querySelector('#modal-box .prod-rev > span:last-child');
     out.flexNone=tira ? /flex:\s*none/.test(tira.getAttribute('style')||'') : null;
-    out.largos=[].slice.call(document.querySelectorAll('#modal-box .prod-rev button')).map(function(b){ return b.textContent.trim(); }).filter(function(t){ return /^✔ ./.test(t); });
+    out.largos=[].slice.call(document.querySelectorAll('#modal-box .prod-rev button')).map(function(b){ return b.textContent.trim(); }).filter(function(t){ return /^✔ (?!PTF$)./.test(t); });   // (24/10) «✔ PTF» es el de fábrica, no un depósito de salida
     closeModal();
     return out;
   });

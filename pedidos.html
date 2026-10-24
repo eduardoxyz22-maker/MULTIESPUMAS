@@ -884,7 +884,7 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal.fl-ficha .fl-cam{font-size:.72rem;padding:0 6px}
 .modal.fl-ficha .fl-pl{font-size:.76rem;padding:3px 7px}
 .modal.fl-ficha .fl-prod-no .fl-mc{display:none}
-.modal.fl-ficha .fl-no-t,.modal.fl-ficha .fl-prod-quit small{font-size:.74rem;margin-top:1px}
+.modal.fl-ficha .fl-no-t,.modal.fl-ficha .fl-prod-quit small{font-size:.74rem;margin-top:1px}.modal.fl-ficha .fl-prod-quit small{margin-left:8px}
 .modal.fl-ficha .fl-bultos{padding:5px 10px;font-size:.86rem}
 .modal.fl-ficha .fl-tiendita{font-size:.76rem;padding:3px 8px}
 .modal.fl-ficha .fl-c{padding:10px 12px}
@@ -896,6 +896,12 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal.fl-ficha .fl-pie{margin-top:10px}
 .modal.fl-ficha .fl-dir{font-size:.92rem}
 .modal.fl-ficha .fl-sub{margin:8px 0 4px}
+.modal.fl-ficha .fl-prod{flex-wrap:wrap}
+.modal.fl-ficha .fl-prbtns{flex-basis:100%;display:block;padding:2px 0 2px 40px;border:0;margin:0;background:none}
+.modal.fl-ficha .fl-prbtns > span{justify-content:flex-start!important}
+.modal.fl-ficha .fl-prbtns .chkbtn{padding:4px 7px;font-size:.76rem;min-height:30px}
+.modal.fl-ficha .fl-prbtns .chk-sep{margin:0 1px}
+@media(min-width:901px){.modal.fl-ficha .fl-g{grid-template-columns:1.8fr 1fr .8fr}}
 /* 🧠 (24/10) qué hacer, la nota leída, lo que no coincide, los bultos, la medida grande, lo que cambió y el mapita */
 .fl-qh{background:#eaf6f5;border:1.5px solid #9fd6d1;border-radius:14px;padding:12px 16px;margin-bottom:12px}
 .fl-qh-t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#00756f;margin-bottom:6px}
@@ -33553,7 +33559,8 @@ function fichaProdsHtml(p, N){
     var med=N ? ((x.medida?('<span class="fl-med'+(esp?' esp':'')+'">'+(esp?'📐 ESPECIAL ':'')+esc(String(x.medida).replace(/x/gi,'×'))+'</span>'):'')+(x.codigo?('<span class="fl-cod">'+esc(x.codigo)+'</span>'):''))
               : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
     return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
-      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que ya se entregó</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div></div>';
+      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que ya se entregó</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div>'+
+      (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
   }).join('')+C.quitados.map(function(t){ return '<div class="fl-prod fl-prod-quit"><div class="fl-q">✕</div><div class="fl-pn"><span class="fl-pnn">'+esc(t)+'</span><small>➖ LO QUITARON del pedido: no se carga</small></div></div>'; }).join('');
 }
 function fichaIngresoTxt(p){
@@ -33949,7 +33956,7 @@ function showPedidoModal(id){
      plegada (dueño: «si ya crea etiquetas… lo veo redundando mostrar de nuevo el texto»; sin etiquetas ni datos sacados, la nota se ve
      entera), y tres columnas: qué se carga / dónde / camión. «¿Las leíste?» al marcar listo sigue mostrando la nota entera. */
   var mod=modDe(p), modOtros=(mod&&mod.d) ? mod.d.filter(function(t){ return !/^(➕|🔢|➖) /.test(String(t)); }) : [];
-  var modHtml=mod ? ('<div class="fl-modp'+(despues?' fuerte':'')+'"><span>✏️ '+modQuienHtml(mod)+' el '+esc(fmtFechaCorta(mod.f))+(mod.h?(' '+esc(mod.h)):'')+modDeQuienTxt(mod)+
+  var modHtml=mod ? ('<div class="fl-modp'+(despues?' fuerte':'')+'"><span><b>⚠️ ESTE PEDIDO FUE MODIFICADO</b> · '+modQuienHtml(mod)+' el '+esc(fmtFechaCorta(mod.f))+(mod.h?(' '+esc(mod.h)):'')+modDeQuienTxt(mod)+
       (despues?' · <b>DESPUÉS de que lo viste en este aparato</b>':'')+(modOtros.length?(' · '+modOtros.map(function(t){ return esc(t); }).join(' · ')):'')+
       ((mod.d||[]).some(function(t){ return /^(➕|🔢|➖) /.test(String(t)); })?' · <i>productos: marcados en amarillo</i>':'')+'</span>'+
       '<button type="button" class="fl-modok" onclick="'+esc("verVistoModif('"+String(p.id)+"')")+'">✓ Ya lo revisé</button></div>') : '';
@@ -34006,8 +34013,8 @@ function showPedidoModal(id){
           estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
           estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
         '</div></div>'+
-      '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>✏️ Cambiar de dónde sale cada producto</summary><div class="fl-marcas-in">'+
-        '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div>'+prodRevList(p)+'</div></details>'+
+      '<details class="fl-marcas"'+(FICHA_MARCAS_ABIERTA?' open':'')+' ontoggle="FICHA_MARCAS_ABIERTA=this.open"><summary>❓ Qué quiere decir cada botón</summary><div class="fl-marcas-in">'+
+        '<div class="fl-ayuda">'+prodAyuda().replace(/^<br>/,'')+'</div></div></details>'+
       (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     '</div>';
   var colCamion='<div class="fl-c"><h4>'+(ret?'🏪 Entrega al cliente':'🚛 Camión y entrega')+'</h4>'+
@@ -35226,12 +35233,19 @@ function prodRevList(p){
     return '<div class="prod-rev">'+
       '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'+prodLugarTag(x)+
         (prodPrecio(x)>0?(' <span style="color:var(--teal-dk);font-weight:700">· '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))+'</span>'):'')+'</span>'+
+      prodBtnsHtml(p, x, i)+'</div>';
+  }).join('');
+}
+/* La tira de botones de cada producto (✔ / ✔ Banzer / ✗ / 📥 / 🏬 / 🏭). (24/10) Sacada de `prodRevList` para que la ficha compacta de
+   logística la ponga A LA VISTA debajo de cada producto (dueño: «es logística el que elige dónde se carga»); `ptf` = el ✔ dice «✔ PTF». */
+function prodBtnsHtml(p, x, i, ptf){
+  return ''+
       /* ⚠️ `flex:none` hacía que la tira de botones tomara SIEMPRE el ancho de todos juntos:
          con seis (dos almacenes y dos fábricas) se iba fuera de la pantalla del celular y
          🏭 MORENO y 🏭 MULTI quedaban sin tocar (§4ey). Con un ancho tope y `wrap` bajan
          solos a la línea de abajo. */
       '<span style="display:flex;gap:5px;flex:0 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-end">'+
-        '<button class="chkbtn'+((prodHay(x) && prodPartes(x).some(function(e){ return e.tipo==='aca'; }))?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá en fábrica">✔</button>'+
+        '<button class="chkbtn'+(ptf?' wide':'')+((prodHay(x) && prodPartes(x).some(function(e){ return e.tipo==='aca'; }))?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá en fábrica (PTF)">'+(ptf?'✔ PTF':'✔')+'</button>'+
         /* 🚚 (26/09) «✔ Banzer»: hay, y se carga en Banzer —de ahí también sale el camión—, sin ir a
            buscar nada. Un botón por depósito de salida (`salidaLista`), con el nombre corto como el 📥. */
         salidaLista().map(function(A){
@@ -35267,8 +35281,7 @@ function prodRevList(p){
         (enProduccion(x) && !prodDondeSePide(x)
           ? '<button class="chkbtn wide prodon" style="border-style:dashed" onclick="setProdProduccion(\''+p.id+'\','+i+',\'\')" title="Está marcado como pedido a fábrica pero no se dijo a cuál. Elegí MORENO o MULTI, o tocá acá para desmarcarlo.">🏭 ¿?</button>'
           : '')+
-      '</span>'+tiendaElegirHtml(p, x, i)+'</div>';
-  }).join('');
+      '</span>'+tiendaElegirHtml(p, x, i);
 }
 /* 🏬 (13/10) El botón «Tienda» abre, debajo del producto, las sucursales para elegir de cuál se recoge (la del vendedor primero). Tocar
    la elegida otra vez —o «Quitar»— saca la marca. Guarda con `setProdChk(…, 'im', 'Tienda <sucursal>')`, como cualquier 📥. */
