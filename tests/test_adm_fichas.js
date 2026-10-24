@@ -46,7 +46,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('1 · cada pedido es una ficha, la tabla escondida y «☰ Ver como tabla»', r.n===4 && r.tabla && /Ver como tabla/.test(r.sw), r);
   chk('1 · agrupadas por día y turno, la mañana antes que la tarde', r.grupos.length===3 && /Mañana/.test(r.grupos[0]) && /Tarde/.test(r.grupos[1]), r.grupos);
   chk('2 · el estado arriba a la derecha: Listo · ⚠️ Cambió la fecha (parpadea) · 🔴 Sin stock (parpadea)', /Listo/.test(r.a1e) && /late/.test(r.a2e) && /Cambió la fecha/.test(r.a2e) && /late/.test(r.a3e) && /Sin stock/.test(r.a3e), r);
-  chk('3 · las etiquetas de la nota, el camión y lo que hay que cobrar', /Llamar 1 h antes/.test(r.a1nt) && /Carry/.test(r.a1cam) && /Cobrar Bs 450/.test(r.a2cob) && /Sin camión/.test(r.a2cob), r);
+  chk('3 · las etiquetas de la nota y el camión; lo de cobrar NO (dueño, 24/10: no le importa a logística)', /Llamar 1 h antes/.test(r.a1nt) && /Carry/.test(r.a1cam) && !/Cobrar/.test(r.a2cob) && /Sin camión/.test(r.a2cob), r);
   chk('4 · el 📍 abre la ubicación (y sin ubicación queda gris)', /maps\?q=-17.75/.test(r.pin) && r.pin2, { pin:r.pin, gris:r.pin2 });
   chk('5 · los botones: Entregó · WhatsApp · Editar · Reprog. · A tarde · Borrar; el sábado sin «A tarde»', r.btns.join('|')==='Entregó|WhatsApp|Editar|Reprog.|A tarde|Borrar' && r.btns4.indexOf('A tarde')<0, { a1:r.btns, sab:r.btns4 });
   const toque=await page.evaluate(async()=>{
