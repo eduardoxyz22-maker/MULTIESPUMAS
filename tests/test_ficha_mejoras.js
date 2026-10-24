@@ -37,7 +37,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var box=document.getElementById('modal-box'), q=function(s){ return box.querySelector(s); };
     var g=q('.fl-g');
     return { txt:box.textContent.replace(/\s+/g,' '), chips:[].slice.call(box.querySelectorAll('.fl-obs .fl-chip, .fl-b > .fl-chips .fl-chip')).map(function(c){ return c.textContent.trim(); }),
-      retira:!!q('.fl-retira'), maps:/Abrir en Maps/.test(box.textContent), avisos:[].slice.call(box.querySelectorAll('.fl-avisos li')).map(function(l){ return l.textContent; }),
+      retira:!!q('.fl-retira'), maps:/📍 Maps/.test(box.textContent), avisos:[].slice.call(box.querySelectorAll('.fl-avisos li')).map(function(l){ return l.textContent; }),
       sug:q('.fl-sug') ? q('.fl-sug').textContent.replace(/\s+/g,' ') : '', colTxt:g?g.textContent.replace(/\s+/g,' '):'', nav:q('.fl-nav')?q('.fl-nav').textContent.replace(/\s+/g,' '):'',
       ent:q('.fl-ent') ? { t:q('.fl-ent').textContent.replace(/\s+/g,' '), c:q('.fl-ent').className } : null,
       masTxt:q('details.fl-mas') ? q('details.fl-mas').textContent.replace(/\s+/g,' ') : '' };
