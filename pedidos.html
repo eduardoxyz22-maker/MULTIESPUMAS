@@ -1863,40 +1863,59 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
     </div>
 
     <div id="admin-content" style="display:none">
-      <div class="card" style="border-radius:0 var(--r-lg) var(--r-lg) var(--r-lg)">
+      <div class="card adm-card" style="border-radius:0 var(--r-lg) var(--r-lg) var(--r-lg)">
         <div id="conn-admin" class="conn off"><span class="dot"></span><span id="conn-admin-txt"></span></div>
-        <!-- 📡 Quién lee la planilla por GET (§4dv): el servidor anota firmas (nunca valores)
-             y acá se muestran, porque Ejecuciones no le deja ver el registro al dueño. -->
-        <div style="margin:4px 0 8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="getlog-btn" class="btn btn-ghost btn-sm" style="width:auto" onclick="verLecturasGet()">📡 ¿Quién lee la planilla?</button>
-          <!-- ⚠️ Guardados rechazados y colas sin enviar (§4el): lo que el servidor dijo que no, y qué dispositivo tiene cosas sin mandar. -->
-          <button type="button" id="rechazos-btn" class="btn btn-ghost btn-sm" style="width:auto;border-color:var(--red-border);color:#8a1c24" onclick="verRechazos()">⚠️ Guardados rechazados / sin enviar</button></div>
-        <div id="getlog-box" style="display:none"></div>
-        <div id="rechazos-box" style="display:none"></div>
-        <div id="cupo-admin" class="cupo ok"></div>
 
-        <div id="nx-a3" class="no-print"></div>   <!-- 🔔 (§4js, A3) a las 15:00, los de mañana sin camión -->
-        <div id="adm-revisar"></div>
+        <!-- ✨ (24/10, §4me; dueño: «parece noticiero de alertas… un mix de la B con la C… más pulido, más bonito») Arriba quedan DOS
+             tarjetas: «📋 Para hacer» (lo más urgente primero, tres a la vista y el resto plegado; cada uno con su botón) y «☀️ Hoy»
+             (camiones completos, bultos por cargar, pedidos listos y los cupos del próximo camión). Las cuentas son las de siempre:
+             cada cartel de abajo deja sus números en `ADM_AV` al dibujarse y `admHacerPintar` los ordena. Los carteles completos
+             siguen existiendo (mismos ids) en «📄 Ver los avisos completos». -->
+        <div id="adm-top" class="adm-top no-print" hidden><section id="adm-hacer" class="ah-card"></section><section id="adm-hoy" class="ah-hoy"></section></div>
 
-        <!-- 🧹 (§4io, 09/10) El resumen de estadísticas (fichas, consolidados, rendición, cupos de 7 días y zonas) se SACÓ: el
-             dueño, *«al tenerlo ya en 3D y los focos de calor, eso ya no es útil para logística, quítalo»*. Lo reemplazan los
-             camiones, el 📅 calendario y los mapas. Los camiones siguen con su botón (§4ib). -->
-        <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px">
+        <div id="adm-avisos" class="adm-avisos">
+          <div class="adm-avisos-cab no-print"><b>📄 Los avisos completos</b><button type="button" class="ah-go" onclick="admAvisosAbrir(false)">▴ Cerrar</button></div>
+          <div id="cupo-admin" class="cupo ok"></div>
+          <div id="nx-a3" class="no-print"></div>   <!-- 🔔 (§4js, A3) a las 15:00, los de mañana sin camión -->
+          <div id="adm-revisar"></div>
+          <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
+               Plegar el resumen no puede esconder entregas que vienen. -->
+          <div id="adm-fuera"></div>
+          <!-- 📦 Lo que más sale y se está por acabar (§4cn). -->
+          <div id="adm-stock"></div>
+          <!-- 📥 Borradores de Kommo que quedaron sin vendedora (§4ca) -->
+          <div id="adm-borradores"></div>
+          <!-- 🏪 Reposiciones de tienda que se quedaron sin entregar (§4do). -->
+          <div id="adm-rpt"></div>
+          <!-- ✅ Cierre de entregas (§4hn): desde las 16:30 de Bolivia, cuántos de hoy siguen sin confirmar. -->
+          <div id="adm-cierre-ent"></div>
+        </div>
+
+        <!-- 🗂️ Tres pestañas: 📦 Pedidos (la lista), 🚚 Camiones y día (camiones, sin camión, por lugar, calendario) y 🧰 Herramientas
+             (los mismos botones de siempre). La elegida se recuerda por aparato (`me_adm_sec`). En Playwright se ven las tres juntas
+             (como antes) salvo `window.ADM_TABS_PRUEBA`. Al imprimir sale solo la lista. -->
+        <div id="adm-secs" class="adm-secs no-print" role="tablist" hidden></div>
+
+        <div class="adm-sec" data-sec="cam">
+          <!-- 🧹 (§4io, 09/10) El resumen de estadísticas se SACÓ: lo reemplazan los camiones, el 📅 calendario y los mapas. -->
+          <div class="adm-cam-bar" style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px"><span class="adm-cam-tit"><b>🚚 Camiones y día</b><small>quién no tiene camión, qué se carga en cada uno, de dónde sale y el calendario</small></span>
           <button class="btn btn-ghost btn-sm no-print" id="adm-salud-btn" style="width:auto" onclick="saludDelDia(true)">🌅 Salud del día</button>
           <button class="btn btn-ghost btn-sm no-print" id="adm-camiones-btn" style="width:auto" onclick="toggleCamionesAdm()">🙈 Ocultar camiones</button>
           <!-- 🏙️ (13/10, dueño: «aún no veo la ciudad») siempre a la vista: el de los camiones no está si se esconden -->
           <button class="btn btn-sm no-print cv-ciudad" id="adm-ciudad-btn" style="width:auto" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones, la carga y las paradas del día">🏙️ Ver la ciudad</button>
         </div>
 
-        <div id="nx-sug" class="no-print"></div>   <!-- 🚚 (§4js, A1) el camión sugerido para los que no tienen -->
-        <div id="carga-viva" class="no-print"></div>
-        <div id="carga-viva-linea" class="no-print" onclick="toggleCamionesAdm()" title="Volver a mostrar los camiones"></div>
-        <div id="adm-cal" class="no-print"></div>   <!-- 📅 debajo de los camiones (dueño, 09/10) -->
-        <div id="adm-lugares" class="no-print"></div>   <!-- 📍 lo de hoy, por lugar (§4ir, dueño: «A, E») -->
+          <div id="nx-sug" class="no-print"></div>   <!-- 🚚 (§4js, A1) el camión sugerido para los que no tienen -->
+          <div id="carga-viva" class="no-print"></div>
+          <div id="carga-viva-linea" class="no-print" onclick="toggleCamionesAdm()" title="Volver a mostrar los camiones"></div>
+          <div id="adm-cal" class="no-print"></div>   <!-- 📅 debajo de los camiones (dueño, 09/10) -->
+          <div id="adm-lugares" class="no-print"></div>   <!-- 📍 lo de hoy, por lugar (§4ir, dueño: «A, E») -->
+        </div>
 
-        <!-- ✨ (12/10, dueño: «nos falta actualizar y modernizar esa parte del panel y lo que lleva dentro») Los mismos botones de siempre
-             (mismo texto, mismo onclick, mismos ids), agrupados por para qué sirven. El texto gris de cada uno sale de `data-d` (::after),
-             así no entra en el textContent que leen las pruebas. -->
-        <div class="btn-row adm-tools" style="margin-bottom:16px">
+        <div class="adm-sec" data-sec="her">
+          <!-- ✨ (12/10) Los mismos botones de siempre (mismo texto, mismo onclick, mismos ids), agrupados por para qué sirven. El texto
+               gris de cada uno sale de `data-d` (::after), así no entra en el textContent que leen las pruebas. -->
+          <div class="btn-row adm-tools" style="margin-bottom:16px">
           <section class="at-g" style="--g:#0f766e"><h5><span>🚚</span> Entregas del día</h5><div class="at-b">
             <button class="btn btn-sm at-t" style="--c:#0f766e" title="Qué sube a cada camión" data-d="qué sube a cada camión" onclick="abrirCarga()">📦 Lista de carga</button>
             <button class="btn btn-sm at-t" style="--c:#00877f" title="El recorrido para el chofer" data-d="el recorrido para el chofer" onclick="abrirRuta()">🧾 Hoja de ruta</button>
@@ -1937,24 +1956,16 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
             <button class="btn btn-ghost btn-sm" onclick="pedirClaveAdmin()" title="La clave que el servidor exige para forzar un pedido a un día cerrado o turno lleno (ADMIN_KEY). Solo dispositivos de administración.">🛡️ Clave de administración</button>
           </div></section>
         </div>
+          <!-- 📡 Quién lee la planilla por GET (§4dv) y ⚠️ Guardados rechazados y colas sin enviar (§4el). -->
+          <div style="margin:4px 0 8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="getlog-btn" class="btn btn-ghost btn-sm" style="width:auto" onclick="verLecturasGet()">📡 ¿Quién lee la planilla?</button>
+          <!-- ⚠️ Guardados rechazados y colas sin enviar (§4el): lo que el servidor dijo que no, y qué dispositivo tiene cosas sin mandar. -->
+          <button type="button" id="rechazos-btn" class="btn btn-ghost btn-sm" style="width:auto;border-color:var(--red-border);color:#8a1c24" onclick="verRechazos()">⚠️ Guardados rechazados / sin enviar</button></div>
+          <div id="getlog-box" style="display:none"></div>
+          <div id="rechazos-box" style="display:none"></div>
+        </div>
 
-        <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
-             Plegar el resumen no puede esconder entregas que vienen. -->
-        <div id="adm-fuera"></div>
-        <!-- 📦 Lo que más sale y se está por acabar (§4cn). Va acá arriba, FUERA del
-             resumen plegable: quedarse sin el colchón que más se vende es una venta
-             perdida, no un detalle. -->
-        <div id="adm-stock"></div>
-        <!-- 📥 Borradores de Kommo que quedaron sin vendedora (§4ca) -->
-        <div id="adm-borradores"></div>
-        <!-- 🏪 Reposiciones de tienda que se quedaron sin entregar (§4do). Va acá arriba y
-             pegado al borde superior al hacer scroll: una tienda sin mercadería no es un
-             detalle que se descubra bajando la tabla. -->
-        <div id="adm-rpt"></div>
-        <!-- ✅ Cierre de entregas (§4hn): desde las 16:30 de Bolivia, cuántos de hoy siguen sin confirmar. -->
-        <div id="adm-cierre-ent"></div>
-        <!-- 🔎 (13/10, dueño: «la barra de la derecha ponla encima de la izquierda») «Ver por / Mes / Buscar» va pegada a la tabla,
-             justo encima de los filtros rápidos (Todos, Hoy, Mañana…): antes estaba arriba de todo, lejos de lo que filtra. Mismos ids. -->
+        <div class="adm-sec" data-sec="ped">
+        <!-- 🔎 (13/10) «Ver por / Mes / Buscar» va pegada a la tabla, justo encima de los filtros rápidos. Mismos ids. -->
         <div class="filters adm-filtros">
           <div class="field">
             <label class="lb">Ver por</label>
@@ -1986,22 +1997,23 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           </div>
           <div class="field" id="wrap-mes">
             <label class="lb">Mes</label>
-            <input type="month" id="adm-mes">
+            <div class="adm-mesnav"><button type="button" class="adm-mesb" onclick="admMesMover(-1)" title="Mes anterior" aria-label="Mes anterior">‹</button><input type="month" id="adm-mes"><button type="button" class="adm-mesb" onclick="admMesMover(1)" title="Mes siguiente" aria-label="Mes siguiente">›</button></div>
           </div>
           <div class="field" style="flex:1;min-width:150px">
             <label class="lb">Buscar</label>
-            <input type="text" id="adm-search" placeholder="Cliente, OC, vendedor, zona…">
+            <div class="adm-busca"><span aria-hidden="true">🔎</span><input type="text" id="adm-search" placeholder="Cliente, OC, vendedor, zona…"></div>
           </div>
           <div class="field">
             <button class="btn btn-ghost btn-sm" id="adm-refresh" onclick="loadFromServer(true)">🔄 Actualizar</button>
           </div>
+          <div class="field adm-vista-f"><div id="adm-vista"></div></div>
         </div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
-        <div id="adm-vista"></div>
         <div id="adm-fichas" class="af" hidden></div>
         <div class="tw tw-tall" id="tbl-pedidos-w"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
         <div id="pedidos-empty" class="empty" style="display:none">No hay pedidos para este filtro todavía.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -2539,6 +2551,149 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 /* 🃏 (24/10) Administración en fichas para mirar (`admFichasPintar`) */
 .af-g{display:flex;align-items:center;gap:10px;margin:14px 0 8px;flex-wrap:wrap}.af-g .af-gt{font-weight:800;color:#24504e;font-size:.95rem;text-transform:capitalize}.af-g i{font-style:normal;color:var(--muted);font-size:.8rem}
 .af-pb{width:160px;height:7px;background:#dce6e6;border-radius:9px;overflow:hidden}.af-pb span{display:block;height:100%;background:#16a34a}
+/* ✨ (§4me, 24/10) Arriba de Administración: «📋 Para hacer» + «☀️ Hoy» + tres pestañas + una sola barra de filtros. */
+.adm-top{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(330px,1fr);gap:14px;align-items:stretch;margin:4px 0 14px}
+.adm-top[hidden]{display:none}
+.ah-card{background:#fff;border:1px solid #e1ebea;border-radius:18px;padding:13px 14px 12px;display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 1px 2px rgba(0,60,60,.04),0 10px 26px -18px rgba(0,60,60,.35)}
+.ah-cab{display:flex;align-items:center;gap:9px;margin:0 2px 10px;min-width:0}
+.ah-cab h4{margin:0;font-size:1.02rem;font-weight:800;color:#13302e;letter-spacing:-.01em;white-space:nowrap}
+.ah-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--teal-lt);font-size:1rem;flex:none}
+.ah-badge{background:#d23645;color:#fff;border-radius:999px;font-size:.68rem;font-weight:900;padding:2px 8px;line-height:1.4}
+.ah-badge.ah-badge-a{background:#d97706}
+.ah-sp{flex:1}
+.ah-cab small{color:var(--muted);font-size:.74rem;font-weight:600;white-space:nowrap}
+.ah-link{border:0;background:transparent;color:var(--teal-dk);font:inherit;font-size:.76rem;font-weight:800;cursor:pointer;padding:4px 6px;border-radius:8px;white-space:nowrap}
+.ah-link:hover{background:var(--teal-lt)}
+.ah-lista{display:grid;gap:7px}
+.ah-it{--c:#d23645;--cb:#fff7f8;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px 8px 6px;border-radius:13px;
+  background:var(--cb);border:1px solid color-mix(in srgb,var(--c) 14%,#fff);position:relative;overflow:hidden;animation:ah-entra .35s ease-out both;transition:transform .15s,box-shadow .15s}
+.ah-it:hover{transform:translateY(-1px);box-shadow:0 8px 18px -14px var(--c)}
+.ah-it::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--c)}
+.ah-it.ah-a{--c:#c2620a;--cb:#fffaf2}.ah-it.ah-i{--c:#2457c5;--cb:#f6f9ff}
+.ah-n{font-size:1.4rem;font-weight:900;color:var(--c);text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+.ah-tx{min-width:0}
+.ah-tx b{display:block;font-size:.87rem;font-weight:800;color:#17302f;line-height:1.3}
+.ah-tx small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.74rem;color:#5d7473;line-height:1.35;margin-top:1px}
+.ah-go{border:1px solid #dbe7e6;background:#fff;color:var(--teal-dk);font:inherit;font-weight:800;font-size:.76rem;border-radius:10px;padding:7px 12px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s}
+.ah-go:hover{border-color:var(--teal);box-shadow:0 4px 12px -8px var(--teal)}
+.ah-go-p{background:linear-gradient(135deg,#00B5AD,#0d8f88);border-color:transparent;color:#fff;box-shadow:0 6px 14px -9px #00B5AD}
+.ah-go-p:hover{color:#fff;filter:brightness(1.05)}
+.ah-mas{border:0;background:transparent;color:var(--teal-dk);font:inherit;font-weight:800;font-size:.79rem;margin-top:8px;padding:5px 4px;text-align:left;cursor:pointer;border-radius:8px;line-height:1.4}
+.ah-mas:hover{background:var(--teal-lt)}
+.ah-vacio{display:flex;align-items:center;gap:12px;padding:16px 14px;border-radius:14px;background:linear-gradient(135deg,#ecfdf3,#f3fbfa);border:1px solid #c9eedb;flex:1}
+.ah-vacio>span{font-size:1.8rem}.ah-vacio b{display:block;color:#15803d;font-size:.95rem}.ah-vacio small{color:#4b6b5b;font-size:.78rem}
+.ah-hoy{border-radius:18px;padding:13px 14px 12px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0;position:relative;overflow:hidden;
+  background:radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.14),transparent 55%),linear-gradient(140deg,#00B5AD 0%,#0f766e 52%,#1e3a5f 100%);
+  box-shadow:0 14px 30px -18px rgba(15,118,110,.8)}
+.ah-hoy-cab{display:flex;align-items:baseline;gap:8px}
+.ah-hoy-cab h4{margin:0;font-size:1.02rem;font-weight:800;flex:1;min-width:0;line-height:1.3}
+.ah-hoy-cab small{font-weight:700;opacity:.85;font-variant-numeric:tabular-nums}
+.ah-hoy-no{font-size:.78rem;font-weight:700;opacity:.9}
+.ah-hoy-c{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center}
+.ah-dona{position:relative;width:96px;height:96px}
+.ah-anillo{width:96px;height:96px;display:block}
+.ah-anillo circle:last-child{transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1)}
+.ah-dona-t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1}
+.ah-dona-t b{font-size:1.35rem;font-weight:900;font-variant-numeric:tabular-nums}.ah-dona-t b i{font-style:normal;font-size:.9rem;opacity:.75}
+.ah-dona-t small{font-size:.56rem;font-weight:700;opacity:.88;margin-top:3px;line-height:1.15}
+.ah-sts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ah-st{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 9px;display:grid;grid-template-columns:auto 1fr;column-gap:7px;align-items:center;min-width:0}
+.ah-st-i{grid-row:span 2;font-size:1rem}
+.ah-st b{font-size:1.15rem;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}.ah-st b i{font-style:normal;font-size:.74rem;font-weight:700;opacity:.8}
+.ah-st small{font-size:.68rem;font-weight:600;opacity:.9;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ah-st.ah-st-mal{background:rgba(255,99,112,.28);border-color:rgba(255,160,168,.5)}
+.ah-st.ah-st-ok{opacity:.78}
+.ah-cupos{display:flex;align-items:center;flex-wrap:wrap;gap:5px 6px;background:rgba(0,0,0,.16);border-radius:12px;padding:7px 9px}
+.ah-cupos-t{font-size:.66rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;opacity:.9;margin-right:2px}
+.ah-cupos-2{margin-left:6px;padding-left:9px;border-left:1px solid rgba(255,255,255,.25)}
+.ah-cu{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.16);border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:600;white-space:nowrap}
+.ah-cu.ah-cu-poco{background:#fde68a;color:#78350f}.ah-cu.ah-cu-0{background:#fecaca;color:#7f1d1d}
+.ah-hoy-acc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ah-hoy-acc button{border:0;background:rgba(255,255,255,.95);color:#0b5f5a;font:inherit;font-size:.75rem;font-weight:800;border-radius:10px;padding:7px 6px;cursor:pointer;transition:transform .15s,background .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ah-hoy-acc button:hover{transform:translateY(-1px);background:#fff}
+@keyframes ah-entra{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes ah-destello{0%{box-shadow:0 0 0 0 rgba(0,181,173,.55)}100%{box-shadow:0 0 0 14px rgba(0,181,173,0)}}
+.ah-destello{animation:ah-destello 1.1s ease-out 2;border-radius:14px}
+/* las pestañas, de borde a borde */
+.adm-secs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px;background:#e9f1f0;border-radius:16px;margin:0 0 12px}
+.adm-secs[hidden]{display:none}
+.adm-secs button{display:flex;align-items:center;gap:10px;border:0;background:transparent;border-radius:12px;padding:8px 12px;font:inherit;text-align:left;cursor:pointer;min-width:0;transition:background .15s,box-shadow .15s}
+.adm-secs button:hover{background:rgba(255,255,255,.55)}
+.adm-secs .as-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:1.05rem;background:rgba(255,255,255,.6);flex:none}
+.adm-secs .as-t{display:flex;flex-direction:column;min-width:0}
+.adm-secs .as-t b{font-size:.9rem;font-weight:800;color:#3c5b59}
+.adm-secs .as-t small{font-size:.71rem;color:#6b8584;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-secs .as-t small em{font-style:normal;font-weight:800;color:#c2410c}
+.adm-secs button.on{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 16px -10px rgba(0,80,76,.5)}
+.adm-secs button.on .as-ic{background:var(--teal-lt)}
+.adm-secs button.on .as-t b{color:var(--teal-dk)}
+#admin-content .adm-sec[hidden]{display:none}
+/* los avisos completos: plegados, se abren desde «Para hacer» */
+.adm-avisos.cerrado{display:none}
+.adm-avisos-cab{display:none}
+.adm-avisos.con-tabs{border:1px dashed #cfe0de;border-radius:16px;padding:10px 12px 2px;margin:0 0 14px;background:#fbfdfd}
+.adm-avisos.con-tabs .adm-avisos-cab{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:.88rem;color:#24504e}
+/* una sola barra de filtros */
+#admin-content .adm-filtros{align-items:center;gap:8px;border:1px solid #e1ebea;border-radius:16px;padding:6px;background:#fbfdfd;margin:0 0 10px}
+#admin-content .adm-filtros .lb{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#admin-content .adm-filtros .field{margin:0;max-width:none}
+#admin-content .adm-filtros .seg{border:0;background:#e9f1f0;border-radius:11px;padding:3px;gap:2px}
+#admin-content .adm-filtros .seg button{padding:7px 14px;border-radius:9px;font-size:.8rem}
+#admin-content .adm-filtros .seg button.active{background:#fff;color:var(--teal-dk);box-shadow:0 1px 4px rgba(0,0,0,.09)}
+#admin-content .adm-filtros input[type=date]{padding:7px 10px;border-radius:11px;font-weight:700;font-size:.84rem}
+.adm-mesnav{display:flex;align-items:center;border:1px solid #dfe9e8;border-radius:11px;background:#fff;overflow:hidden}
+.adm-mesnav input[type=month]{border:0;width:150px;padding:7px 2px;font-weight:800;font-size:.84rem;text-align:center;background:transparent;box-shadow:none}
+.adm-mesb{border:0;background:transparent;color:var(--teal-dk);font:inherit;font-size:1.1rem;font-weight:900;padding:4px 11px;cursor:pointer;line-height:1}
+.adm-mesb:hover{background:var(--teal-lt)}
+.adm-busca{display:flex;align-items:center;gap:7px;border:1px solid #dfe9e8;border-radius:11px;background:#fff;padding:0 4px 0 11px}
+.adm-busca:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-lt)}
+.adm-busca span{font-size:.85rem;opacity:.7}
+.adm-busca input[type=text]{border:0;padding:8px 4px;box-shadow:none!important;font-size:.86rem;background:transparent}
+#admin-content #adm-refresh{width:auto;border-radius:11px;padding:7px 12px;font-size:.8rem}
+.af-sw2{display:inline-flex;background:#e9f1f0;border-radius:11px;padding:3px;gap:2px}
+.af-sw2 button{border:0;background:transparent;font:inherit;font-weight:800;font-size:.79rem;color:#5d7473;padding:6px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.af-sw2 button.on{background:#fff;color:var(--teal-dk);box-shadow:0 1px 4px rgba(0,0,0,.09)}
+#adm-chips .qchip .n{display:inline-block;background:#edf3f3;border-radius:999px;padding:0 7px;margin-left:3px;opacity:1;color:#5d7473;font-weight:800;font-size:.7rem}
+#adm-chips .qchip.active .n{background:rgba(255,255,255,.25);color:#fff}
+/* la cabecera de cada día y turno */
+.af-gc{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 10px;font-size:.74rem;font-weight:800;white-space:nowrap;background:#f1f4f4;color:#4d6b6a}
+.af-gc-ok{background:#e7f8ef;color:#15803d}.af-gc-parte{background:#fff4e2;color:#b45309}.af-gc-cero{background:#f1f4f4;color:#4d6b6a}
+.af-gc-sal{background:#eaf1ff;color:#2457c5}.af-gc-cupo{background:var(--teal-lt);color:#00756f}.af-gc-poco{background:#fff4e2;color:#b45309}
+.af-gc-lleno{background:#fdecee;color:#b42332}.af-gc-mal{background:#d23645;color:#fff}
+@media (max-width:980px){ .adm-top{grid-template-columns:1fr} }
+@media (max-width:700px){
+  .ah-it{grid-template-columns:40px minmax(0,1fr);row-gap:6px}.ah-it .ah-go{grid-column:2;justify-self:start}
+  .ah-cab small{display:none}
+  .adm-secs{gap:3px;padding:4px}.adm-secs button{flex-direction:column;gap:3px;padding:7px 4px;text-align:center}
+  .adm-secs .as-ic{width:28px;height:28px;font-size:.95rem}.adm-secs .as-t small{display:none}.adm-secs .as-t b{font-size:.78rem}
+  .ah-largo{display:none}
+  .ah-st small{white-space:normal}
+  .ah-hoy-c{grid-template-columns:1fr}.ah-dona{margin:0 auto}
+  .ah-hoy-acc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ah-cupos-2{margin-left:0;padding-left:0;border-left:0}
+  #admin-content .adm-filtros .field[style*="flex:1"]{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){ .ah-it,.ah-destello{animation:none} .ah-anillo circle:last-child{transition:none} }
+/* 🧰 (§4me) Herramientas en su pestaña: tarjetas en dos columnas, cada botón con su explicación (`data-d`) abajo */
+.adm-cam-tit{flex:1;min-width:220px;display:flex;flex-direction:column;justify-content:center}.adm-cam-tit b{font-size:.95rem;color:#24504e}.adm-cam-tit small{font-size:.74rem;color:var(--muted)}
+.adm-sec[data-sec="her"] .btn-row.adm-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px!important}
+.adm-sec[data-sec="her"] .at-g{flex-direction:column;align-items:stretch;gap:10px;padding:12px;border-radius:16px;background:#fff;border:1px solid #e1ebea;
+  box-shadow:0 1px 2px rgba(0,60,60,.04),0 10px 24px -20px rgba(0,60,60,.4)}
+.adm-sec[data-sec="her"] .at-g h5{font-size:.74rem;gap:8px;color:color-mix(in srgb,var(--g) 85%,#1f2b2d)}
+.adm-sec[data-sec="her"] .at-g h5 span{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:.95rem;background:color-mix(in srgb,var(--g) 10%,#fff)}
+.adm-sec[data-sec="her"] .at-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;flex:none}
+.adm-sec[data-sec="her"] .adm-tools .at-t{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;white-space:normal;border-radius:12px;padding:9px 11px;font-size:.8rem;line-height:1.25;min-height:54px}
+.adm-sec[data-sec="her"] .adm-tools .at-t[data-d]::after{content:attr(data-d);display:block;font-size:.68rem;font-weight:600;opacity:.75;margin-top:3px}
+.adm-sec[data-sec="her"] .adm-tools .at-xls{grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-radius:12px;padding:7px 10px}
+.adm-sec[data-sec="her"] .at-aj .btn{width:100%;justify-content:flex-start;text-align:left;font-size:.78rem;padding:9px 11px;border-radius:12px;min-height:44px}
+.adm-sec[data-sec="her"] > div[style*="margin:4px 0 8px"]{border-top:1px dashed #d5e3e2;padding-top:10px;margin-top:2px!important}
+@media (max-width:900px){ .adm-sec[data-sec="her"] .btn-row.adm-tools{grid-template-columns:1fr} }
+@media (max-width:560px){ .adm-sec[data-sec="her"] .at-b{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media print{
+  .adm-top,.adm-secs,.adm-avisos,#admin-content .adm-sec[data-sec="cam"],#admin-content .adm-sec[data-sec="her"]{display:none!important}
+  #admin-content .adm-sec[data-sec="ped"]{display:block!important}
+}
 .af-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px;align-items:stretch}
 .af-f{background:#fff;border:1px solid #e3eaea;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;box-shadow:0 1px 2px rgba(0,60,60,.05),0 4px 14px rgba(0,60,60,.04);transition:box-shadow .15s,transform .15s}
 .af-f:hover{box-shadow:0 2px 4px rgba(0,60,60,.08),0 8px 22px rgba(0,60,60,.09);transform:translateY(-1px)}
@@ -16501,9 +16656,11 @@ function rptAtrasadas(lista){
 function renderRptAtrasadas(){
   var el=document.getElementById('adm-rpt'); if(!el) return;
   var list=rptAtrasadas(STATE);
+  ADM_AV.rpt={};
   if(!list.length){ el.className=''; el.innerHTML=''; return; }
   var uno=(list.length===1), peor=diasEntreFechas(String(list[0].fecha), todayStr());
   var quien={}; list.forEach(function(p){ var t=String(p.cliente||'?').trim(); quien[t]=(quien[t]||0)+1; });
+  ADM_AV.rpt={ n:list.length, peor:peor, tiendas:Object.keys(quien).map(function(t){ return t+(quien[t]>1?(' ('+quien[t]+')'):''); }).join(' · ') };   // ✨ (§4me)
   var tiendas=Object.keys(quien).map(function(t){ return esc(t)+(quien[t]>1?(' ('+quien[t]+')'):''); }).join(' · ');
   el.className='revisar rpt-alerta';
   el.innerHTML='<i class="late-dot"></i>🏪 <b>'+list.length+' reposici'+(uno?'ón':'ones')+' de tienda sin entregar</b> — '+
@@ -16519,6 +16676,7 @@ function admVerRptAtrasadas(){ QUICK_FILTER='rpt'; admVerTodoElHistorial(); }
 function renderFueraDelMes(){
   var el=document.getElementById('adm-fuera'); if(!el) return;
   var d=fueraDelMes();
+  ADM_AV.fuera=d ? { n:d.total, mes:mesNombre((document.getElementById('adm-mes')||{}).value||'').split(' ')[0], txt:d.meses.slice(0,3).map(function(mm){ return mesNombre(mm)+' '+d.por[mm]; }).join(' · ') } : {};   // ✨ (§4me)
   if(!d){ el.className=''; el.innerHTML=''; return; }
   var btns=d.meses.slice(0,3).map(function(mm){
     return '<button class="rv-toggle" style="margin-left:8px" onclick="admIrAlMes(\''+esc(mm)+'\')">ver '+
@@ -16673,7 +16831,9 @@ function admTurnoCambiar(id){
 function admFichasPintar(list, dn){
   var box=document.getElementById('adm-fichas'), tw=document.getElementById('tbl-pedidos-w'), sw=document.getElementById('adm-vista');
   var v=admVista();
-  if(sw) sw.innerHTML='<button type="button" class="af-sw" onclick="admVistaPoner(\''+(v==='fichas'?'tabla':'fichas')+'\')">'+(v==='fichas'?'☰ Ver como tabla':'🃏 Ver como fichas')+'</button>';
+  /* (§4me) Fichas | Tabla, las dos a la vista dentro de la barra de filtros */
+  if(sw) sw.innerHTML='<span class="af-sw2" role="group" aria-label="Ver como"><button type="button" class="'+(v==='fichas'?'on':'')+'" onclick="admVistaPoner(\'fichas\')" title="Ver como fichas">🃏 Fichas</button>'+
+    '<button type="button" class="'+(v==='tabla'?'on':'')+'" onclick="admVistaPoner(\'tabla\')" title="Ver como tabla">☰ Tabla</button></span>';
   if(tw) tw.hidden=(v==='fichas');
   if(!box) return;
   box.hidden=(v!=='fichas');
@@ -16698,18 +16858,231 @@ function admFichasPintar(list, dn){
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
     var sal=g.ps.filter(function(p){ return p.entregado || (p.vehiculo && p.fecha===todayStr() && camionSalio(p.fecha, p.vehiculo)); }).length;
     var tt=g.t===0?'🌅 Mañana':g.t===1?'🌆 Tarde':'sin turno';
-    return '<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+' · '+listos+' listo'+(listos===1?'':'s')+(sal?(' · '+sal+' salieron'):'')+'</i>'+
-        '<span class="af-pb"><span style="width:'+Math.round(100*listos/Math.max(1,n))+'%"></span></span></div>'+
+    /* ✨ (§4me, dueño: «¿y qué onda esas barras?») En vez de la barrita: cuántos están listos y cuántos cupos quedan en ese turno
+       (los de `cuposUsadosTurno`/`limTurno`, los mismos del formulario); un día que ya pasó dice cuántos se entregaron. */
+    var pasado=g.f && g.f<todayStr(), ent=g.ps.filter(function(p){ return p.entregado; }).length, gc=[];
+    if(pasado) gc.push('<span class="af-gc '+(ent>=n?'af-gc-ok':'af-gc-gris')+'">🚚 '+ent+' de '+n+' entregado'+(n===1?'':'s')+'</span>');
+    else{
+      gc.push('<span class="af-gc '+(listos>=n?'af-gc-ok':listos?'af-gc-parte':'af-gc-cero')+'">✅ '+listos+' de '+n+' listo'+(n===1?'':'s')+'</span>');
+      if(sal) gc.push('<span class="af-gc af-gc-sal">🛣️ '+sal+' salieron</span>');
+      if(g.f && g.t<2){ var tu=g.t===0?'AM':'PM', lim=limTurno(g.f, tu), us=cuposUsadosTurno(g.f, tu), lib=lim-us;
+        if(lim>0) gc.push('<span class="af-gc '+(lib<0?'af-gc-mal':lib===0?'af-gc-lleno':lib<=3?'af-gc-poco':'af-gc-cupo')+'" title="'+us+' de '+lim+' lugares ocupados en este turno">🎟️ '+
+          (lib<0?((-lib)+' de más (forzado'+(-lib===1?'':'s')+')'):lib===0?'turno lleno':('queda'+(lib===1?'':'n')+' '+lib+' cupo'+(lib===1?'':'s')))+'</span>'); }
+    }
+    return '<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+'</div>'+
       '<div class="af-cg">'+g.ps.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';
   }).join('');
+}
+/* ================================================================================================================================
+   ✨ ARRIBA DE ADMINISTRACIÓN: «📋 Para hacer» + «☀️ Hoy» + tres pestañas (§4me, 24/10)
+   El dueño, con captura: *«parece noticiero de alertas»*; eligió *«un mix de la B con la C»* y pidió *«más pulido, más estético,
+   detallado y cuidado… usá bien los espacios»*. Los carteles de siempre (mismos ids y mismas cuentas) siguen dibujándose: cada uno
+   deja sus números en `ADM_AV` y acá se ordenan en UNA lista, lo más urgente primero, tres a la vista y el resto plegado. El cartel
+   completo se ve en «📄 Avisos completos» (`#adm-avisos`). Abajo, tres pestañas: 📦 Pedidos, 🚚 Camiones y día, 🧰 Herramientas.
+   ⚠️ Nada nuevo se calcula acá: lo de stock sale de `renderStockAviso` (stockData), lo de mañana de `renderRevisar`, lo sin camión de
+   `nxSugSin`, lo de hoy de `cargaVivaDatos` (los tildes de la Lista de carga) y los cupos de `cuposUsadosTurno`/`limTurno`.
+   En Playwright se ve todo junto como antes (las pruebas de siempre) salvo `window.ADM_TABS_PRUEBA`. */
+var ADM_AV={}, LS_ADM_SEC='me_adm_sec', ADM_HACER_MAS=false, ADM_AVISOS_OPEN=false;
+function admTabsActivas(){ try{ return !(navigator.webdriver && !window.ADM_TABS_PRUEBA); }catch(e){ return true; } }
+function admSec(){ try{ var v=localStorage.getItem(LS_ADM_SEC); return /^(ped|cam|her)$/.test(v||'') ? v : 'ped'; }catch(e){ return 'ped'; } }
+function admSecVisible(s){ return !admTabsActivas() || admSec()===s; }
+function admSecPoner(s){
+  try{ localStorage.setItem(LS_ADM_SEC, s); }catch(e){}
+  admSecAplicar();
+  if(s==='cam'){   // lo que se dibuja con medidas (3D, mapa de sugerencias) se rearma recién visible
+    var sg=document.getElementById('nx-sug'); if(sg) sg._h='';
+    try{ nxSugPintar(); }catch(e){} try{ CV_ARMADA=false; cargaVivaPintar(); }catch(e){}
+    setTimeout(function(){ try{ window.dispatchEvent(new Event('resize')); }catch(e){} }, 60);
+  }
+}
+function admSecAplicar(){
+  var on=admTabsActivas(), s=admSec();
+  [].forEach.call(document.querySelectorAll('#admin-content .adm-sec'), function(el){ el.hidden=on && el.getAttribute('data-sec')!==s; });
+  var bar=document.getElementById('adm-secs'); if(bar){ bar.hidden=!on; if(on) admSecsPintar(); }
+  var top=document.getElementById('adm-top'); if(top) top.hidden=!on;
+  var av=document.getElementById('adm-avisos'); if(av){ av.classList.toggle('cerrado', on && !ADM_AVISOS_OPEN); av.classList.toggle('con-tabs', on); }
+}
+function admAvisosAbrir(si, sinScroll){
+  ADM_AVISOS_OPEN=!!si; admSecAplicar();
+  var av=document.getElementById('adm-avisos');
+  if(si && av && !sinScroll){ try{ av.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
+  if(!si){ var h=document.getElementById('adm-hacer'); if(h) try{ h.scrollIntoView({ behavior:'smooth', block:'nearest' }); }catch(e){} }
+  admHacerPintar();
+}
+/* Si algo que se quiere mostrar (Bloki, un aviso, «Asignar ahora») vive en otra pestaña o en los avisos plegados, se abre primero. */
+function admRevelar(el){
+  if(!el || !el.closest || !admTabsActivas()) return;
+  var sec=el.closest('#admin-content .adm-sec'); if(sec && sec.hidden) admSecPoner(sec.getAttribute('data-sec'));
+  if(el.closest('#adm-avisos') && !ADM_AVISOS_OPEN) admAvisosAbrir(true, true);
+}
+function admIrA(id){
+  var el=document.getElementById(id); if(!el) return;
+  admRevelar(el);
+  setTimeout(function(){
+    try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){}
+    el.classList.remove('ah-destello'); void el.offsetWidth; el.classList.add('ah-destello');
+  }, 80);
+}
+function admMesMover(d){
+  var el=document.getElementById('adm-mes'); if(!el) return;
+  var m=String(el.value||monthStr()).match(/^(\d{4})-(\d{2})/); if(!m) return;
+  var t=new Date(+m[1], +m[2]-1+d, 1);
+  el.value=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2);
+  admTopeReset(); renderAdmin();
+}
+/* ---------- 📋 Para hacer ---------- */
+function admNombres(L, n){ n=n||3; var t=L.slice(0,n).map(function(p){ return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' '); });
+  return t.join(', ')+(L.length>n?(' y '+(L.length-n)+' más'):''); }
+function admHacerDatos(){
+  var I=[], hoy=todayStr(), prox=proximoDiaEntrega();
+  var add=function(o){ if(o && o.n>0) I.push(o); };
+  // 🚚 sin camión (hoy y el próximo reparto): la MISMA lista de «💡 Sugerir camión»
+  try{
+    var sH=diaHabil(hoy) ? nxSugSin(hoy) : [], sM=nxSugSin(prox);
+    add({ k:'sincam-h', sev:'r', ic:'🚚', n:sH.length, t:'Sin camión para HOY', s:admNombres(sH), b:'💡 Sugerir camión', p:1, fn:"admSugIr('hoy')", tag:'sin camión hoy' });
+    add({ k:'sincam', sev:(nxHoraAhora()>=NX_A3_HORA?'r':'a'), ic:'🚚', n:sM.length, t:'Sin camión para '+nxCuandoTxt(prox), s:admNombres(sM), b:'💡 Sugerir camión', p:1, fn:"admSugIr('manana')", tag:'sin camión' });
+  }catch(e){}
+  // 🚫 en un día sin camión (feriado o domingo)
+  var R=ADM_AV.rev||{};
+  add({ k:'diasin', sev:'r', ic:'🚫', n:R.diaSin||0, t:'Quedaron en un día sin camión', s:'feriado o domingo: no aparecen en ningún «Mañana» · pasalos a otro día', b:'Ver cuáles', fn:"admIrA('adm-revisar')", tag:'día sin camión' });
+  // 📦 stock
+  var S=ADM_AV.stock||{}, nom=function(a){ return (a||[]).slice(0,2).map(stockNombre).join(', ')+((a||[]).length>2?(' y '+(a.length-2)+' más'):''); };
+  if((S.urge||[]).length) add({ k:'stk', sev:'r', ic:'📦', n:S.urge.length, t:'Se '+(S.urge.length===1?'acaba':'acaban')+' antes de que llegue la fábrica', s:nom(S.urge)+((S.pide||[]).length?(' · también '+S.pide.length+' para pedir esta semana'):''), b:'🤖 Revisión', fn:'abrirStock();abrirStockRevisar()', tag:'se acaban' });
+  else add({ k:'stk-p', sev:'a', ic:'🏭', n:(S.pide||[]).length, t:'Para pedir esta semana', s:nom(S.pide), b:'📦 Ver stock', fn:'abrirStock()', tag:'pedir esta semana' });
+  add({ k:'stk-t', sev:'a', ic:'🚚', n:(S.trae||[]).length, t:'Ya fabricados: hay que traerlos de la fábrica', s:nom(S.trae), b:'📦 Ver stock', fn:'abrirStock()', tag:'traer de fábrica' });
+  add({ k:'stk-c', sev:'a', ic:'✗', n:(S.contra||[]).length, t:'Un chofer marcó «no hay» y según el panel hay', s:nom(S.contra)+' · contá de nuevo', b:'📦 Ver stock', fn:'abrirStock()', tag:'contar de nuevo' });
+  if(S.conteoViejo) add({ k:'stk-v', sev:'a', ic:'🗓️', n:S.diasConteo||1, t:'El conteo del depósito tiene '+(S.diasConteo||'')+' días', s:'subí el Excel de hoy o contá a mano', b:'📦 Ver stock', fn:'abrirStock()', tag:'conteo viejo', nTxt:(S.diasConteo||'')+' d' });
+  // ⚠️ les faltan datos a los del próximo reparto
+  add({ k:'rev', sev:'a', ic:'📝', n:R.n||0, t:'Les faltan datos a los de '+nxCuandoTxt(R.dia||prox), s:R.resumen||'', b:'Ver cuáles', fn:'admRevisarVer()', tag:'faltan datos' });
+  // ✅ cierre de entregas
+  var C=ADM_AV.cierre||{};
+  if(C.pend) add({ k:'cie-p', sev:'r', ic:'⏳', n:C.pend, t:'Cierre de entregas sin sincronizar', s:'se aplica solo con la próxima lectura de la planilla', b:'🔄 Intentar', fn:'refrescarEstado()', tag:'cierre sin sincronizar' });
+  else add({ k:'cie', sev:'a', ic:'✅', n:(C.hoy||0)+(C.atr||0), t:'Cierre de entregas', s:[(C.hoy?(C.hoy+' de hoy sin confirmar'):''),(C.atr?(C.atr+' atrasado'+(C.atr===1?'':'s')+' sin resolver'):'')].filter(Boolean).join(' · '), b:'✅ Hacer el cierre', p:1, fn:'abrirCierreEntregas()', tag:'cierre de entregas' });
+  // 🏪 reposiciones atrasadas
+  var Rp=ADM_AV.rpt||{};
+  add({ k:'rpt', sev:'a', ic:'🏪', n:Rp.n||0, t:'Reposiciones de tienda sin entregar', s:(Rp.tiendas||'')+(Rp.peor?(' · la más vieja, hace '+Rp.peor+' día'+(Rp.peor===1?'':'s')):''), b:'Ver', fn:"admSecPoner('ped');admVerRptAtrasadas()", tag:'reposiciones' });
+  // 📥 Kommo sin vendedora
+  add({ k:'kommo', sev:'a', ic:'📥', n:ADM_AV.borr||0, t:'Ventas de Kommo sin vendedora', s:'no le aparecen a nadie: completalas o corregí el responsable en Kommo', b:'Completar', fn:"admIrA('adm-borradores')", tag:'Kommo' });
+  // 🔢 OC repetidas del período
+  add({ k:'oc', sev:'a', ic:'🔢', n:R.ocRep||0, t:'N° de OC repetido', s:'corregilo desde Editar', b:'Ver', fn:'admRevisarVer()', tag:'OC repetidas' });
+  // 📥 lo de hoy que hay que ir a buscar (Moreno, una tienda)
+  try{
+    var Lg=admLugaresDatos(hoy).C, tr=Lg.trae.concat(Lg.tda), por={};
+    tr.forEach(function(r){ por[r.de||'Moreno']=(por[r.de||'Moreno']||0)+r.u; });
+    var u=tr.reduce(function(a,r){ return a+r.u; },0);
+    add({ k:'busca', sev:'i', ic:'📥', n:u, t:'Hoy hay que ir a buscar', s:Object.keys(por).map(function(k){ return k+' '+por[k]; }).join(' · '), b:'Ver', fn:"ADM_LUG_DIA='hoy';admLugaresPintar();admIrA('adm-lugares')", tag:'ir a buscar hoy', nTxt:stockUnid(u) });
+  }catch(e){}
+  // 📅 entregas fuera del mes que no se ven en la lista
+  var F=ADM_AV.fuera||{};
+  add({ k:'fuera', sev:'i', ic:'📅', n:F.n||0, t:'Entregas fuera de '+(F.mes||'este mes')+' que no se ven en la lista', s:F.txt||'', b:'Ver', fn:"admSecPoner('ped');admIrA('adm-fuera')", tag:'fuera de '+(F.mes||'este mes') });
+  var ord={ r:0, a:1, i:2 };
+  I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
+  return I;
+}
+function admSugIr(d){
+  try{ if(!nxSugVisible()) nxSugMostrar(true); }catch(e){}
+  NX_SUG_DIA=d; admSecPoner('cam'); try{ nxSugPintar(); }catch(e){}
+  admIrA('nx-sug');
+}
+function admRevisarVer(){ REVISAR_OPEN=true; renderRevisar(); admIrA('adm-revisar'); }
+function admHacerFila(o, i){
+  return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms">'+
+    '<span class="ah-n">'+esc(o.nTxt||String(o.n))+'</span>'+
+    '<div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
+    '<button type="button" class="ah-go'+(o.p?' ah-go-p':'')+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>';
+}
+function admHacerPintar(){
+  var el=document.getElementById('adm-hacer'); if(!el || !admTabsActivas()) return;
+  var I=admHacerDatos(), V=ADM_HACER_MAS ? I : I.slice(0,3), resto=I.slice(3);
+  var rojos=I.filter(function(o){ return o.sev==='r'; }).length;
+  var h='<div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+
+      '<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small>'+
+      '<button type="button" class="ah-link" onclick="admAvisosAbrir('+(ADM_AVISOS_OPEN?'false':'true')+')">'+(ADM_AVISOS_OPEN?'▴ Cerrar<span class="ah-largo"> los avisos completos</span>':'📄 Avisos<span class="ah-largo"> completos</span>')+'</button></div>'+
+    (I.length ? ('<div class="ah-lista">'+V.map(admHacerFila).join('')+'</div>'+
+      (resto.length ? ('<button type="button" class="ah-mas" onclick="ADM_HACER_MAS=!ADM_HACER_MAS;admHacerPintar()">'+
+        (ADM_HACER_MAS ? '▴ Ver menos' : ('▾ Ver '+resto.length+' más: '+esc(resto.map(function(o){ return o.tag+' ('+(o.nTxt||o.n)+')'; }).join(' · '))))+'</button>') : ''))
+      : '<div class="ah-vacio"><span>✅</span><div><b>Todo en orden</b><small>No hay nada pendiente ahora: ni pedidos sin camión, ni faltantes, ni avisos de stock.</small></div></div>');
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* ---------- ☀️ Hoy ---------- */
+function admHoyDatos(){
+  var hoy=todayStr(), sale=limTurno(hoy,'AM')>0 || limTurno(hoy,'PM')>0;
+  var memo={ d:CV_DIA, s:CV_SEL }, D=null;
+  try{ CV_DIA=sale ? 'hoy' : 'manana'; D=cargaVivaDatos(); } finally { CV_DIA=memo.d; CV_SEL=memo.s; }
+  var cams=D.cams.filter(function(c){ return !c.sin && c.total>0; });
+  var ok=cams.filter(function(c){ return c.est==='ok'; }).length;
+  var faltan=D.cams.reduce(function(a,c){ return a+Math.max(0, c.total-c.dentro); }, 0);
+  var sinCam=D.porK['Sin vehículo'] ? D.porK['Sin vehículo'].paradas : 0;
+  var salieron=sale ? cams.filter(function(c){ return camionSalio(D.fecha, c.k); }).length : 0;
+  var L=STATE.filter(function(p){ return !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p) && p.fecha===D.fecha; });
+  var listos=L.filter(function(p){ return p.verificado || p.entregado; }).length, ent=L.filter(function(p){ return p.entregado; }).length;
+  var cu=function(f){ var r={ f:f }; ['AM','PM'].forEach(function(t){ var lim=limTurno(f,t), u=cuposUsadosTurno(f,t); r[t]={ lim:lim, u:u, libres:lim-u }; }); return r; };
+  var prox=proximoDiaEntrega();
+  return { hoy:hoy, sale:sale, fecha:D.fecha, cams:cams.length, ok:ok, faltan:faltan, sinCam:sinCam, salieron:salieron, pedidos:L.length, listos:listos, ent:ent,
+           cupos:cu(sale?hoy:prox), cuposProx:(sale && prox!==hoy) ? cu(prox) : null };
+}
+function admCupoTxt(c){
+  var t=function(k, ic){ var x=c[k]; if(!(x.lim>0)) return ''; var l=x.libres;
+    return '<span class="ah-cu'+(l<=0?' ah-cu-0':(l<=3?' ah-cu-poco':''))+'" title="'+(k==='AM'?'Mañana':'Tarde')+': '+x.u+' de '+x.lim+' ocupados">'+ic+' <b>'+(l<0?('+'+(-l)):l)+'</b>'+(l<0?' de más':(l===1?' libre':' libres'))+'</span>'; };
+  var s=t('AM','🌅')+t('PM','🌆');
+  return s || '<span class="ah-cu ah-cu-0">no sale el camión</span>';
+}
+function admHoyPintar(H){
+  var el=document.getElementById('adm-hoy'); if(!el || !admTabsActivas()) return;
+  if(!H){ try{ H=admHoyDatos(); }catch(e){ console.error(e); el.innerHTML=''; el._h=''; return; } }
+  var dn=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dowDe(H.hoy)]||'';
+  var hb=horaBolivia(), hora=('0'+hb.getHours()).slice(-2)+':'+('0'+hb.getMinutes()).slice(-2);
+  var pct=H.cams ? H.ok/H.cams : 0, R=34, L=2*Math.PI*R;
+  var anillo='<svg viewBox="0 0 84 84" class="ah-anillo" aria-hidden="true"><circle cx="42" cy="42" r="'+R+'" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="9"/>'+
+    '<circle cx="42" cy="42" r="'+R+'" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+L.toFixed(1)+'" stroke-dashoffset="'+(L*(1-pct)).toFixed(1)+'" transform="rotate(-90 42 42)"/></svg>';
+  var cuando=H.sale ? '' : (' · <span class="ah-hoy-no">hoy no sale el camión: '+esc(nxDiaTxt(H.fecha))+'</span>');
+  var tile=function(ic, v, t, cls){ return '<div class="ah-st'+(cls?(' '+cls):'')+'"><span class="ah-st-i">'+ic+'</span><b>'+v+'</b><small>'+t+'</small></div>'; };
+  var h='<div class="ah-hoy-cab"><h4>☀️ Hoy, '+esc(dn)+' '+esc(fmtFechaCorta(H.hoy))+cuando+'</h4><small>'+hora+'</small></div>'+
+    '<div class="ah-hoy-c">'+
+      '<div class="ah-dona">'+anillo+'<div class="ah-dona-t"><b>'+H.ok+'<i>/'+H.cams+'</i></b><small>cami'+(H.cams===1?'ón':'ones')+'<br>con carga completa</small></div></div>'+
+      '<div class="ah-sts">'+
+        tile('📦', H.faltan, H.faltan===1?'bulto por cargar':'bultos por cargar', H.faltan?'':'ah-st-ok')+
+        tile('✅', H.listos+'<i> de '+H.pedidos+'</i>', 'pedidos listos'+(H.ent?(' · '+H.ent+' entregado'+(H.ent===1?'':'s')):''))+
+        tile('🛣️', H.salieron+'<i> de '+H.cams+'</i>', 'camiones salieron')+
+        tile('⚠️', H.sinCam, H.sinCam===1?'pedido sin camión':'pedidos sin camión', H.sinCam?'ah-st-mal':'ah-st-ok')+
+      '</div></div>'+
+    '<div class="ah-cupos"><span class="ah-cupos-t">🎟️ Cupos '+esc(H.sale?'de hoy':nxDiaTxt(H.cupos.f))+'</span>'+admCupoTxt(H.cupos)+
+      (H.cuposProx?('<span class="ah-cupos-t ah-cupos-2">'+esc(nxDiaTxt(H.cuposProx.f))+'</span>'+admCupoTxt(H.cuposProx)):'')+'</div>'+
+    '<div class="ah-hoy-acc"><button type="button" onclick="admSecPoner(\'cam\');admIrA(\'carga-viva\')" title="Los camiones, sin camión, por lugar y el calendario">🚚 Camiones</button>'+
+      '<button type="button" onclick="abrirCarga()" title="Qué sube a cada camión">📦 Carga</button>'+
+      '<button type="button" onclick="patioAbrirCiudad()" title="La ciudad en 3D con los camiones y las paradas del día">🏙️ Ciudad</button>'+
+      '<button type="button" onclick="saludDelDia(true)" title="La salud del día">🌅 Salud</button></div>';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* ---------- 🗂️ las tres pestañas ---------- */
+function admSecsPintar(){
+  var el=document.getElementById('adm-secs'); if(!el) return;
+  var s=admSec(), n=ADM_AV.nLista||0, mode=segVal('adm-mode');
+  var per=mode==='mes' ? (function(){ var m=(document.getElementById('adm-mes')||{}).value||''; return m ? ('en '+mesNombre(m).split(' ')[0]) : ''; })()
+        : mode==='dia' ? ('el '+fmtFechaCorta((document.getElementById('adm-dia')||{}).value||'')) : 'en total';
+  var H=ADM_AV.hoyCam||{}, nT=document.querySelectorAll('#admin-content .adm-tools .at-t, #admin-content .adm-tools .at-aj .btn').length;
+  var b=function(k, ic, t, sub){ return '<button type="button" role="tab" aria-selected="'+(s===k)+'" class="'+(s===k?'on':'')+'" onclick="admSecPoner(\''+k+'\')"><span class="as-ic">'+ic+'</span><span class="as-t"><b>'+t+'</b><small>'+sub+'</small></span></button>'; };
+  var h=b('ped','📦','Pedidos', n+' pedido'+(n===1?'':'s')+' '+per)+
+    b('cam','🚚','Camiones y día', (H.cams||0)+' cami'+(H.cams===1?'ón':'ones')+' con carga'+(H.sinCam?(' · <em>'+H.sinCam+' sin camión</em>'):'')+' · calendario')+
+    b('her','🧰','Herramientas', nT+' herramientas · carga, mensajes, stock, ajustes');
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function admArribaPintar(){
+  if(!admTabsActivas()) return;
+  var H=null; try{ H=admHoyDatos(); ADM_AV.hoyCam={ cams:H.cams, sinCam:H.sinCam }; }catch(e){ console.error(e); }
+  try{ admHacerPintar(); }catch(e){ console.error(e); }
+  try{ admHoyPintar(H); }catch(e){ console.error(e); }
+  admSecAplicar();
 }
 function renderAdmin(){
   admCalPintar();   // 📅 (§4im)
   admLugaresPintar();   // 📍 (§4ir)
   renderChips(); renderRevisar(); renderFueraDelMes(); try{ waRespPintar(); }catch(e){} renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
-  try{ nxA3Pintar(); nxSugPintar(); }catch(e){ console.error(e); }   // 🔔🚚 (§4js, A3 y A1)
-  try{ cargaVivaPintar(); }catch(e){ console.error(e); }
+  ADM_AV.nLista=list.length;
+  try{ nxA3Pintar(); if(admSecVisible('cam')) nxSugPintar(); }catch(e){ console.error(e); }   // 🔔🚚 (§4js, A3 y A1)
+  try{ if(admSecVisible('cam')) cargaVivaPintar(); }catch(e){ console.error(e); }   // (§4me) con su pestaña escondida no se dibuja (3D y mapa miden la caja)
+  admArribaPintar();   // ✨ (§4me) «Para hacer», «Hoy» y las pestañas, con lo que acaban de dejar los carteles
 
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
   // allá a la derecha había que scrollear para verla.
@@ -16880,6 +17253,7 @@ function renderRevisar(){
   var manList=STATE.filter(function(p){return p.fecha===man;});
   var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
   var avisoOc = avisoOcRepetidasHtml(), sinCam = sinCamionHtml();   // (30/09, R1-2)
+  ADM_AV.rev={ dia:man, n:0, diaSin:pedidosEnDiaSinCamion().length, ocRep:ocsRepetidas(admPeriodoList()).length };   // ✨ (§4me)
   if(!manList.length || !probl.length){
     // Aunque no haya nada que revisar de mañana, una OC repetida SÍ hay que mostrarla (y los pedidos en un día sin camión).
     el.className = (avisoOc||sinCam) ? 'revisar' : '';
@@ -16889,6 +17263,7 @@ function renderRevisar(){
   var cnt={'sin chofer':0,'sin Maps':0,'sin dirección':0,'sin celular':0};
   probl.forEach(function(o){ o.miss.forEach(function(m){ cnt[m]++; }); });
   var resumen=Object.keys(cnt).filter(function(k){return cnt[k];}).map(function(k){return cnt[k]+' '+k;}).join(' · ');
+  ADM_AV.rev.n=probl.length; ADM_AV.rev.resumen=resumen+' (de '+manList.length+' pedido'+(manList.length===1?'':'s')+')';
   var head='⚠️ <b>Revisar entregas de mañana</b> ('+fmtFecha(man)+'): <b>'+probl.length+'</b> de '+manList.length+' pedidos con datos faltantes &nbsp; '+
     '<button class="rv-toggle" onclick="toggleRevisar()">'+(REVISAR_OPEN?'ocultar':'ver detalle')+'</button>'+
     '<div style="margin-top:4px;font-size:.75rem">'+resumen+'</div>';
@@ -20639,6 +21014,7 @@ function renderBorradoresMis(){
 function renderBorradoresHuerfanos(){
   var box=document.getElementById('adm-borradores'); if(!box) return;
   var lista=borradoresHuerfanos();
+  ADM_AV.borr=lista.length;   // ✨ (§4me)
   if(!lista.length){ box.innerHTML=''; return; }
   precIdxReset();                      // los precios de referencia se recalculan por dibujado
   var n=lista.length;
@@ -27823,6 +28199,7 @@ function saldoAvisoAbrir(id){
 /* ---- El aviso en Administración: solo lo que hay que hacer, y nada más ---- */
 function renderStockAviso(){
   var el=document.getElementById('adm-stock'); if(!el) return;
+  ADM_AV.stock={};
   if(!UNLOCKED || !STOCK.c.f){ el.className=''; el.innerHTML=''; return; }
   var d=stockData();
   var urge=d.lista.filter(function(o){ return o.aviso==='urgente'; });
@@ -27836,6 +28213,7 @@ function renderStockAviso(){
   if(trae.length) partes.push('🚚 <b>'+trae.length+'</b> ya '+(trae.length===1?'está fabricado':'están fabricados')+' y hay que <b>traerlo'+(trae.length===1?'':'s')+' de la fábrica</b>: '+nombres(trae)+'.');
   if(d.conteoViejo) partes.push('⚠️ El conteo del depósito tiene <b>'+d.diasConteo+' días</b>: contá de nuevo.');
   if(contra.length) partes.push('⚠️ Un chofer marcó <b>✗ no hay</b> de '+nombres(contra)+' y según el panel hay: contá de nuevo.');
+  ADM_AV.stock={ urge:urge, pide:pide, trae:trae, contra:contra, conteoViejo:!!d.conteoViejo, diasConteo:d.diasConteo };   // ✨ (§4me) para «Para hacer»
   if(!partes.length){ el.className=''; el.innerHTML=''; return; }
   el.className='revisar';
   el.innerHTML='📦 '+partes.join(' ')+
@@ -34702,6 +35080,7 @@ function cierreEntTxt(p){
 function renderCierreEntAviso(){
   var el=document.getElementById('adm-cierre-ent'); if(!el) return;
   var pend=cierreEntPendiente();
+  ADM_AV.cierre=pend ? { pend:pend.ids.length } : {};   // ✨ (§4me)
   if(pend){
     el.className='revisar';
     el.innerHTML='⏳ <b>Cierre de entregas pendiente de sincronizar</b> — '+pend.ids.length+' tildada'+(pend.ids.length===1?'':'s')+' del '+esc(fmtFecha(pend.hoy))+
@@ -34712,6 +35091,7 @@ function renderCierreEntAviso(){
   }
   var hoy=cierreEntHoy(), atr=cierreEntAtrasados();
   if(!cierreEntEsHora() || (!hoy.length && !atr.length)){ el.className=''; el.innerHTML=''; return; }
+  ADM_AV.cierre={ hoy:hoy.length, atr:atr.length };
   el.className='revisar';
   el.innerHTML='✅ <b>Cierre de entregas</b> — '+
     (hoy.length ? ('<b>'+hoy.length+'</b> pedido'+(hoy.length===1?'':'s')+' de hoy sin confirmar') : 'los de hoy están confirmados')+
@@ -41286,6 +41666,7 @@ function nxA3Pintar(){
   if(el._h!==h || !el.innerHTML){ el.innerHTML=h; el._h=h; }
 }
 function nxA3Ir(){
+  try{ if(admTabsActivas()) admSecPoner('cam'); }catch(e){}   // ✨ (§4me) las sugerencias viven en «🚚 Camiones y día»
   NX_SUG_DIA='manana'; nxSugPintar();
   var c=document.getElementById('nx-sug-caja');
   if(c){ try{ c.scrollIntoView({ block:'start', behavior:'smooth' }); }catch(e){} c.classList.remove('nx-destello'); void c.offsetWidth; c.classList.add('nx-destello'); }
@@ -41714,7 +42095,7 @@ function asisBuscar(q){
 var ASIS_FOCO=null;
 /* (12/10, dueño: «algunos no lleva y muestra») se ve = tiene caja en la pantalla (lo escondido con display:none no tiene) */
 function asisSeVe(el){ if(!el || !el.getBoundingClientRect) return false; var r=el.getBoundingClientRect(); return r.width>0 && r.height>0; }
-function asisPrimero(sels){ var L=[].concat(sels||[]); for(var i=0;i<L.length;i++){ var el=document.querySelector(L[i]); if(asisSeVe(el)) return el; } return null; }
+function asisPrimero(sels){ var L=[].concat(sels||[]); for(var i=0;i<L.length;i++){ var el=document.querySelector(L[i]); try{ if(el && !asisSeVe(el) && typeof admRevelar==='function') admRevelar(el); }catch(e){} if(asisSeVe(el)) return el; } return null; }
 function asisFoco(sel, fijo){
   if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
   var el=(sel && sel.nodeType===1) ? sel : (asisPrimero(sel) || document.querySelector([].concat(sel)[0])); if(!el) return null;

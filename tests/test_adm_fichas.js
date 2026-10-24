@@ -41,9 +41,10 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
       a1nt:a1.querySelector('.af-nt') ? T(a1.querySelector('.af-nt')) : '', a2cob:T(a2.querySelector('.af-inf'))+(a2.querySelector('.af-nt')?T(a2.querySelector('.af-nt')):''), a1cam:T(a1.querySelector('.af-inf')),
       pin:a1.querySelector('a.af-pin') ? a1.querySelector('a.af-pin').getAttribute('href') : '', pin2:!!a2.querySelector('.af-pin.off'),
       btns:[].map.call(a1.querySelectorAll('.af-tb small'), T), btns4:[].map.call(a4.querySelectorAll('.af-tb small'), T),
-      sw:T(document.getElementById('adm-vista')) };
+      sw:T(document.getElementById('adm-vista')), swOn:T(document.querySelector('#adm-vista button.on')) };
   });
-  chk('1 · cada pedido es una ficha, la tabla escondida y «☰ Ver como tabla»', r.n===4 && r.tabla && /Ver como tabla/.test(r.sw), r);
+  /* (§4me) «🃏 Fichas | ☰ Tabla», las dos a la vista en la barra de filtros: la elegida va encendida */
+  chk('1 · cada pedido es una ficha, la tabla escondida y «🃏 Fichas | ☰ Tabla» con Fichas encendida', r.n===4 && r.tabla && /Fichas/.test(r.swOn) && /Tabla/.test(r.sw), r);
   chk('1 · agrupadas por día y turno, la mañana antes que la tarde', r.grupos.length===3 && /Mañana/.test(r.grupos[0]) && /Tarde/.test(r.grupos[1]), r.grupos);
   chk('2 · arriba a la derecha: Listo · ⚠️ Cambió la fecha (parpadea); sin stock NO se repite arriba (dueño, 24/10): ficha roja + «No hay» en el producto', /Listo/.test(r.a1e) && /late/.test(r.a2e) && /Cambió la fecha/.test(r.a2e) && r.a3e==='' && /af-k-nohay/.test(r.a3cls) && /No hay/.test(r.a3prod), r);
   chk('3 · las etiquetas de la nota y el camión; lo de cobrar NO (dueño, 24/10: no le importa a logística)', /Llamar 1 h antes/.test(r.a1nt) && /Carry/.test(r.a1cam) && !/Cobrar/.test(r.a2cob) && /Sin camión/.test(r.a2cob), r);
@@ -58,9 +59,9 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   });
   chk('6 · tocar la ficha abre la ficha grande', toque.abre, toque);
   chk('6 · «A tarde» pasa el pedido a la tarde (cambiarTurno), sin dejar la ficha grande abierta, y sale en el grupo de la tarde', toque.turno==='PM' && !toque.modal && /Tarde/.test(toque.ahora), toque);
-  const tab=await page.evaluate(()=>{ admVistaPoner('tabla'); var t={ tabla:!document.getElementById('tbl-pedidos-w').hidden && document.querySelectorAll('#tbl-pedidos tbody tr').length, fichas:document.getElementById('adm-fichas').hidden, sw:document.getElementById('adm-vista').textContent };
+  const tab=await page.evaluate(()=>{ admVistaPoner('tabla'); var t={ tabla:!document.getElementById('tbl-pedidos-w').hidden && document.querySelectorAll('#tbl-pedidos tbody tr').length, fichas:document.getElementById('adm-fichas').hidden, sw:document.getElementById('adm-vista').textContent, swOn:(document.querySelector('#adm-vista button.on')||{}).textContent };
     admVistaPoner('fichas'); t.vuelve=!document.getElementById('adm-fichas').hidden; return t; });
-  chk('7 · «☰ Ver como tabla» muestra la tabla de siempre y «🃏 Ver como fichas» vuelve', tab.tabla===4 && tab.fichas && /Ver como fichas/.test(tab.sw) && tab.vuelve, tab);
+  chk('7 · «☰ Tabla» muestra la tabla de siempre (encendida) y «🃏 Fichas» vuelve', tab.tabla===4 && tab.fichas && /Tabla/.test(tab.swOn) && /Fichas/.test(tab.sw) && tab.vuelve, tab);
   const lug=await page.evaluate(()=>{ admLugaresMostrar(false); var a=document.getElementById('adm-lugares').textContent; var det=!!document.getElementById('adm-lugares-det');
     admLugaresMostrar(true); return { a:a, det:det, vuelve:!!document.getElementById('adm-lugares-det') }; });
   chk('8 · «Lo del día, por lugar» se oculta (queda «👁️ Mostrar») y vuelve', !lug.det && /Mostrar/.test(lug.a) && lug.vuelve, lug);
