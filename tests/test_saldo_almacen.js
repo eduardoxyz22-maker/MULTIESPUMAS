@@ -606,7 +606,7 @@ function INIT_DOS(vend){
         antes.oculta===true && d1.caja && !d1.caja.hidden && Math.abs((d1.top||0)-(antes.top||0))<1 && d1.y===antes.y && /prod-cant/.test(d1.foco||''), [antes, d1.top, d1.y, d1.foco]);
     chk(ancho+' px: con tres cuadritos (verde, ámbar, rojo) no hay scroll de costado ni un cuadrito que se salga',
         d2.ancho<=d2.vista && !d2.desborda && d2.cajas && /ps-verde/.test(d2.cajas[0]) && /ps-ambar/.test(d2.cajas[1]) && /ps-rojo/.test(d2.cajas[2]), d2);
-    chk(ancho+' px: las pestañas son las de siempre (no se agregó ninguna)', JSON.stringify(d2.pestanas)===JSON.stringify(['tab-form','tab-mis','tab-chofer','tab-conta','tab-atc','tab-admin']), d2.pestanas);
+    chk(ancho+' px: las pestañas son las de siempre (no se agregó ninguna; «🤖 Bot» es del 24/10, §4md)', JSON.stringify(d2.pestanas)===JSON.stringify(['tab-form','tab-mis','tab-chofer','tab-conta','tab-atc','tab-admin','tab-bot']), d2.pestanas);
     await cm.close();
   }
 
