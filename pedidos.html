@@ -903,9 +903,10 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal.fl-ficha .fl-prod > .fl-q{order:0}
 .modal.fl-ficha .fl-prbtns .chkbtn{padding:4px 7px;font-size:.76rem;min-height:30px}
 .modal.fl-ficha .fl-prbtns .chk-sep{margin:0 1px}
-@media(min-width:901px){.modal.fl-ficha .fl-g{grid-template-columns:minmax(0,1fr) 360px;align-items:stretch}}
+@media(min-width:901px){.modal.fl-ficha .fl-g{grid-template-columns:minmax(0,1fr) 360px}}
 .modal.fl-ficha{max-width:min(1440px,97vw)}
-.modal.fl-ficha .fl-lado{display:grid;gap:12px;min-width:0}
+.modal.fl-ficha .fl-lado{display:grid;gap:12px;min-width:0;align-content:start}
+.modal.fl-ficha .fl-izq{display:grid;gap:12px;min-width:0;align-content:start}.modal.fl-ficha .fl-izq > .fl-obs{margin-bottom:0}
 .modal.fl-ficha .fl-modp{flex-wrap:nowrap}.modal.fl-ficha .fl-modp > span{flex:1;min-width:0}.modal.fl-ficha .fl-modok{white-space:nowrap;flex:none}
 .modal.fl-ficha .fl-mapa{height:105px}
 .modal.fl-ficha .fl-lado .fl-sel{grid-template-columns:1fr 1fr}
@@ -34052,8 +34053,10 @@ function showPedidoModal(id){
   var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      top+modHtml+fichaQueHacer(p, N, ret)+obsHtml+
-      '<div class="fl-g">'+colCarga+'<div class="fl-lado">'+colDonde+colCamion+'</div></div>'+   // (24/10) dos columnas: lo que se carga, y al lado dónde + camión
+      top+modHtml+fichaQueHacer(p, N, ret)+
+      /* (24/10, dueño con un dibujo: «optimizar aún más el espacio») dos columnas desde arriba: a la izquierda «Antes de cargar» + lo que
+         se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
+      '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+
       botonesRpt(p)+mas+
       '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+

@@ -33,7 +33,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var estBtns=[].slice.call(box.querySelectorAll('.fl-est button')).filter(vis).map(function(b){ return b.textContent.trim(); });
     var pagar=[].slice.call(box.querySelectorAll('button')).filter(function(b){ return /Efectivo/.test(b.textContent); });
     return { ancho:box.getBoundingClientRect().width, cls:box.className, txt:txt,
-      obsAntes: obs && g ? !!(obs.compareDocumentPosition(g) & Node.DOCUMENT_POSITION_FOLLOWING) : false,
+      obsAntes: obs && g ? !!(obs.compareDocumentPosition(g.querySelector('.fl-c')) & Node.DOCUMENT_POSITION_FOLLOWING) : false, /* (24/10) arriba de los productos, en la columna izquierda */
       obsTxt: obs ? obs.textContent : '', cols: g ? g.querySelectorAll('.fl-c').length : 0, /* (24/10) dos columnas: la de la derecha lleva «Dónde» y «Camión» */ estBtns:estBtns,
       pagarOculto: pagar.length>0 && pagar.every(function(b){ return !vis(b); }), masCerrado: !!mas && !mas.open,
       cobroOculto: !vis([].slice.call(box.querySelectorAll('.dl-k')).filter(function(k){ return /Cobro/.test(k.textContent); })[0]) };
