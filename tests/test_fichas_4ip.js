@@ -168,7 +168,7 @@ const sfDiaTxtNode = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\
     showView('admin'); await new Promise(function(ok){ setTimeout(ok,150); }); segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin();
     var fila=[].filter.call(document.querySelectorAll('#tbl-pedidos tbody tr'), function(tr){ return /CLIENTE/.test(tr.textContent) && tr.querySelector('.lug'); });
     o.tabla=[].map.call(document.querySelectorAll('#tbl-pedidos .prod-cell .lug'), function(x){ return x.textContent; });
-    showPedidoModal('m1'); o.ficha=[].map.call(document.querySelectorAll('#modal-box .prod-rev .lug'), function(x){ return x.textContent; }); closeModal();
+    showPedidoModal('m1'); o.ficha=[].map.call(document.querySelectorAll('#modal-box .fl-pls .fl-pl'), function(x){ return x.textContent; });   // (24/10) la ficha compacta lo dice al lado de cada producto closeModal();
     return o;
   });
   chk('✔ de acá = «🏭 PTF», ✔ en Banzer = «🏪 Banzer», 📥 = «📥 Moreno», partido = «PTF 1 + Banzer 1», ✗ = «No hay», sin marcar = nada',
