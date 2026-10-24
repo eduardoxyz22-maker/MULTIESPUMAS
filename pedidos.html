@@ -40579,7 +40579,15 @@ function waRespIaHechas(v){
 }
 /* 🤖 La pestaña «Bot»: con la clave de Administración, entrando como Logística, o en la compu de Administración (`LS_ADM_DEV`, la que ya
    veía las respuestas en Administración). El número rojo = respuestas de clientes sin atender. */
-function botVe(){ try{ return !!(UNLOCKED || nxLS(LS_ADM_DEV) || quienRol()==='logistica'); }catch(e){ return !!UNLOCKED; } }
+/* (24/10, dueño: «solo accesible cuando entran como logística, Eduardo o administración… o ponen la clave») La clave de ESTA visita o lo elegido en
+   «¿Quién está usando el panel?». ⚠️ Ya NO la compu de Administración (`LS_ADM_DEV`): queda marcada para siempre con la clave de una vez. */
+function botVe(){
+  try{
+    if(UNLOCKED) return true;
+    var r=quienRol(); if(r==='logistica' || r==='admin') return true;
+    return /(^|\s)EDUARDO(\s|$)/i.test(normNombre(getVendedorMem()));
+  }catch(e){ return !!UNLOCKED; }
+}
 function botTabPintar(){
   var t=document.getElementById('tab-bot'); if(!t) return;
   var ve=botVe(); t.hidden=!ve;
@@ -41355,7 +41363,7 @@ function asisAvisos(){
   }
   /* 💬 (12/10, §4kk) Un cliente le contestó al bot: a su vendedora en Mis pedidos, y a logística/administración todos. */
   try{
-    var rsp = (vis==='mis' && v) ? waRespDeVend(v) : ((((vis==='admin' || vis==='bot') && (UNLOCKED || nxLS(LS_ADM_DEV))) || (esLog && asisVeAdm())) ? waRespPend() : []);
+    var rsp = (vis==='mis' && v) ? waRespDeVend(v) : ((((vis==='admin' && (UNLOCKED || nxLS(LS_ADM_DEV))) || vis==='bot') && botVe()) || (esLog && botVe()) ? waRespPend() : []);   // (24/10) solo quien ve la pestaña Bot
     if(rsp.length) A.unshift({ k:'resp|'+rsp.map(function(r){ return r.w; }).join(','), sev:'ro', ico:'💬',
       t:rsp.length+' cliente'+(rsp.length===1?'':'s')+' le respondi'+(rsp.length===1?'ó':'eron')+' al bot de WhatsApp',
       x: rsp[0].res ? ('🧠 '+String(rsp[0].res).slice(0,110)+(rsp[0].urg?' · 🚨 urgente':'')+'. Claude ya le contestó con los datos del pedido; esto necesita a una persona: escribile y después tocá «✓ Ya lo atendí».')   // 🧠 (14/10, §4lc)
