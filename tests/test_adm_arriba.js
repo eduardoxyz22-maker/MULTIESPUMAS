@@ -54,14 +54,22 @@ async function abrir(browser, w, tabs){
     return { top:!document.getElementById('adm-top').hidden, ped:vis('ped'), cam:vis('cam'), her:vis('her'),
       avisos:getComputedStyle(document.getElementById('adm-avisos')).display,
       its:[].map.call(document.querySelectorAll('#adm-hacer .ah-it'), T), mas:T(document.querySelector('#adm-hacer .ah-mas')),
-      badge:T(document.querySelector('#adm-hacer .ah-badge')), secs:T(document.getElementById('adm-secs')), hoy:T(document.getElementById('adm-hoy')) };
+      badge:T(document.querySelector('#adm-hacer .ah-badge')), secs:T(document.getElementById('adm-secs')), hoy:T(document.getElementById('adm-hoy')), hoyOn:T(document.querySelector('#adm-hoy .ah-hoy-acc button.on')) };
   });
   chk('2 · arriba «Para hacer» y «Hoy»; abajo solo la pestaña Pedidos; los avisos completos plegados', r.top && r.ped && !r.cam && !r.her && r.avisos==='none', r);
   chk('2 · «Para hacer»: lo rojo primero (sin camión para HOY) y como mucho tres a la vista', r.its.length<=3 && /Sin camión para HOY/.test(r.its[0]||'') && /HOY SIN/.test(r.its[0]||''), r.its);
   const todos=await page.evaluate(()=>admHacerDatos().map(function(o){ return o.k+':'+o.n; }));
   chk('2 · también sin camión para el viernes (el próximo reparto) y «les faltan datos» a los del viernes', todos.indexOf('sincam:1')>=0 && todos.some(function(x){ return /^rev:1$/.test(x); }), todos);
   chk('2 · el número de «Para hacer» = cuántos avisos hay', String(todos.length)===r.badge, { badge:r.badge, n:todos.length });
-  chk('2 · las pestañas dicen qué hay adentro', /Pedidos/.test(r.secs) && /Camiones y día/.test(r.secs) && /Herramientas/.test(r.secs) && /sin camión/.test(r.secs), r.secs);
+  /* (24/10, dueño) Las fichas grandes: Stock y reposición, Importar ROHO y Herramientas; «Pedidos» y «Camiones y día» van en «Hoy» */
+  chk('2 · las fichas grandes: Stock y reposición (dice de cuándo es el Excel), Importar ROHO y Herramientas', /Stock y reposición/.test(r.secs) && /Excel de hoy/.test(r.secs) && /Importar ROHO/.test(r.secs) && /Herramientas/.test(r.secs) && !/Camiones y día/.test(r.secs), r.secs);
+  chk('2 · «Pedidos» y «Camiones y día» están en «Hoy», con Pedidos encendido', /Pedidos/.test(r.hoy) && /Camiones y día/.test(r.hoy) && /Pedidos/.test(r.hoyOn), { hoy:r.hoy, on:r.hoyOn });
+  const rr=await page.evaluate(()=>{ var b=[].filter.call(document.querySelectorAll('#adm-secs button'), function(x){ return /Stock y reposición/.test(x.textContent); })[0]; b.click();
+    var ab=document.getElementById('stock-overlay').style.display==='flex'; closeStock();
+    [].filter.call(document.querySelectorAll('#adm-hoy button'), function(x){ return /Camiones y día/.test(x.textContent); })[0].click();
+    var cam=!document.querySelector('.adm-sec[data-sec="cam"]').hidden, on=(document.querySelector('#adm-hoy .ah-hoy-acc button.on')||{}).textContent;
+    admSecPoner('ped'); return { ab:ab, cam:cam, on:on }; });
+  chk('2 · «Stock y reposición» abre la pantalla de stock y «Camiones y día» de «Hoy» cambia lo de abajo (y queda encendido)', rr.ab && rr.cam && /Camiones y día/.test(rr.on||''), rr);
   chk('2 · «Hoy»: 1 de 2 pedidos listos y 1 sin camión', /1 de 2\s*pedidos listos/.test(r.hoy) && /1\s*pedido sin camión/.test(r.hoy), r.hoy);
   const cupo=await page.evaluate(()=>({ libres:limTurno('2026-10-22','AM')-cuposUsadosTurno('2026-10-22','AM'), txt:document.querySelector('#adm-hoy .ah-cupos').textContent }));
   chk('2 · «Hoy» dice los cupos que quedan (los de `cuposUsadosTurno`)', cupo.txt.indexOf(cupo.libres+' libres')>=0, cupo);
