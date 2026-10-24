@@ -15781,4 +15781,9 @@ armada con pedidos reales, pulida en ~15 vueltas de capturas → *«todo ok, pub
 - **Pestaña «🤖 Bot»** (`#tab-bot`, `#view-bot`): las respuestas de los clientes (`#wa-resp-adm`) salen de Administración. Solo con `botVe()` =
   la clave, `me_adm_dev` o «Logística» elegido; número = sin atender (`botTabPintar`). Bloki «Ver» lleva ahí.
 - `fichaAcomodar` se vuelve a medir cuando la ventana terminó de abrir (rAF + 350 ms).
+- **🤖 Quién ve la pestaña Bot, corregido (24/10 tarde, PUBLICADO `f555b4a`)**: el dueño, con captura (Administración con candado y la pestaña
+  a la vista): *«solo accesible cuando entran como logística, Eduardo o administración… o ponen la clave»*. `botVe()` = `UNLOCKED` (la clave de
+  ESTA visita) o `quienRol()` 'logistica'/'admin' o el nombre recordado con EDUARDO (`getVendedorMem`, `normNombre` → minúsculas: regex con `i`).
+  ⚠️ Ya NO `LS_ADM_DEV`: la compu donde una vez se puso la clave quedaba marcada para siempre. Bloki avisa respuestas al bot solo con `botVe()`.
+  `test_bot_tab` (12).
 - Pruebas: `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Batería en la copia publicada: 225 suites, 7.728 bien; rojas solo `test_banzer`/`test_circuito` (sábado) y `test_ventas_marcas` (1180 px), las de siempre. `test_mispedidos` salió 32/1 con la máquina cargada y 33/0 sola. `test_saldo_almacen` cambió a conciencia (la lista de pestañas incluye `tab-bot`).

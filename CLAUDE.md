@@ -959,7 +959,8 @@ en una línea. `tests/test_ficha_auto.js`.
   más (sin amarillo, violeta, naranja de ficha entera). 50×70 y medida especial se marcan en la medida del producto.
 - 🛍️ **Lo de tienda (`esProdDeTienda`) no cuenta ni se muestra en la ficha rápida ni en «Lo del día, por lugar»**, aunque lo marquen «recoger de
   tienda» (dueño: lo entregan en la tienda). Un colchón con «🏬 Tienda X» sí (rojo).
-- **Pestaña «🤖 Bot»** (`#tab-bot`/`#view-bot`, `botVe()`, `botTabPintar`): las respuestas al bot salieron de Administración. `test_saldo_almacen`
+- **Pestaña «🤖 Bot»** (`#tab-bot`/`#view-bot`, `botVe()`, `botTabPintar`): las respuestas al bot salieron de Administración. Solo con la clave de
+  ESA visita o eligiendo Logística, Administración o Eduardo (`f555b4a`); ⚠️ NO con `me_adm_dev` (queda para siempre). `test_saldo_almacen`
   cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
 
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
