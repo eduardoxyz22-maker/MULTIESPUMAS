@@ -33714,6 +33714,8 @@ function fichaProdsHtml(p, N){
   if(!pr.length) return '<div class="fl-vacio">Sin productos</div>';
   var C=N ? fichaCambiosProd(p) : { nuevo:{}, cant:{}, quitados:[] };
   return pr.map(function(x, ix){
+    // 🛍️ (24/10, dueño: «si ya lo aclarás, ¿para qué lo volvés a poner?») lo de tienda ya va en la línea de los bultos, con su medida
+    if(N && esProdDeTienda(x) && N.noLlevar.indexOf(ix)<0) return '';
     var no=N && N.noLlevar.indexOf(ix)>=0, k=prodCorto(x), esp=false;
     try{ esp=!!(N && saldoMedidaEspecial(x)); }catch(e){}
     var cam=C.nuevo[k] ? '<span class="fl-cam">🆕 NUEVO</span>' : (C.cant[k] ? ('<span class="fl-cam">🔢 antes '+esc(C.cant[k].de)+', ahora '+esc(C.cant[k].a)+'</span>') : '');
@@ -34031,7 +34033,7 @@ function fichaBultos(p, N){
   ((p&&p.productos)||[]).forEach(function(x, ix){
     if(N.noLlevar.indexOf(ix)>=0) return;
     var n=Number(x.cant)||0;
-    if(esProdDeTienda(x)){ tienda.push(n+' '+String(x.desc||'').toLowerCase()); return; }
+    if(esProdDeTienda(x)){ tienda.push(n+' '+String(x.desc||'').toLowerCase()+(x.medida?(' '+String(x.medida).replace(/x/gi,'×')):'')); return; }
     u+=n; var t=pryTipoProd(x);
     if(t==='colchon') col+=n; else if(t==='somier') som+=n; else if(t==='combo'){ col+=n; som+=n; } else if(/ALMOHAD|\bALM\b|NASA|TRAVESSEIRO/.test(flMay(x.desc))) alm+=n; else otr+=n;
   });
