@@ -101,6 +101,13 @@ async function abrir(browser, w, tabs){
   r=await page.evaluate(()=>{ admSecPoner('her'); var el=asisPrimero(['#nx-sug']); return { el:!!el, cam:!document.querySelector('.adm-sec[data-sec="cam"]').hidden }; });
   chk('4 · Bloki («Mostrame dónde») abre la pestaña donde vive lo que señala', r.el && r.cam, r);
   await page.evaluate(()=>admSecPoner('ped'));
+  /* (24/10, dueño: «al entrar a herramientas, ¿cómo salgo de ahí?») */
+  r=await page.evaluate(()=>{ var ver=function(s){ return !document.querySelector('.adm-sec[data-sec="'+s+'"]').hidden; };
+    admSecPoner('her'); var vb=document.querySelector('.adm-sec[data-sec="her"] .adm-volver button'), visible=!!vb && vb.getBoundingClientRect().height>0;
+    vb.click(); var porBoton=ver('ped') && !ver('her');
+    admSecPoner('her'); [].filter.call(document.querySelectorAll('#adm-secs button'), function(x){ return /Herramientas/.test(x.textContent); })[0].click();
+    var porFicha=ver('ped') && !ver('her'); return { visible:visible, porBoton:porBoton, porFicha:porFicha }; });
+  chk('4 · desde Herramientas se vuelve con «← Volver a los pedidos» o tocando «🧰 Herramientas» otra vez', r.visible && r.porBoton && r.porFicha, r);
 
   /* 5 · Los días de las fichas */
   r=await page.evaluate(()=>{ var T=function(e){ return e.textContent.replace(/\s+/g,' ').trim(); };

@@ -1880,6 +1880,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div id="adm-secs" class="adm-secs no-print" role="tablist" hidden></div>
 
         <div class="adm-sec" data-sec="cam">
+          <div class="adm-volver no-print"><button type="button" onclick="admSecPoner('ped')">← Volver a los pedidos</button></div>
           <!-- 🧹 (§4io, 09/10) El resumen de estadísticas se SACÓ: lo reemplazan los camiones, el 📅 calendario y los mapas. -->
           <div class="adm-cam-bar" style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 10px"><span class="adm-cam-tit"><b>🚚 Camiones y día</b><small>quién no tiene camión, qué se carga en cada uno, de dónde sale y el calendario</small></span>
           <button class="btn btn-ghost btn-sm no-print" id="adm-salud-btn" style="width:auto" onclick="saludDelDia(true)">🌅 Salud del día</button>
@@ -1896,6 +1897,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         </div>
 
         <div class="adm-sec" data-sec="her">
+          <!-- (24/10, dueño: «al entrar a herramientas, ¿cómo salgo de ahí?») -->
+          <div class="adm-volver no-print"><button type="button" onclick="admSecPoner('ped')">← Volver a los pedidos</button><span>o tocá «🧰 Herramientas» de nuevo</span></div>
           <!-- ✨ (12/10) Los mismos botones de siempre (mismo texto, mismo onclick, mismos ids), agrupados por para qué sirven. El texto
                gris de cada uno sale de `data-d` (::after), así no entra en el textContent que leen las pruebas. -->
           <div class="btn-row adm-tools" style="margin-bottom:16px">
@@ -2621,6 +2624,11 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .adm-secs button.on .as-ic{background:var(--teal-lt)}
 .adm-secs button.on .as-t b{color:var(--teal-dk)}
 #admin-content .adm-sec[hidden]{display:none}
+.adm-volver{display:none}
+#admin-content.adm-tabs-on .adm-volver{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.adm-volver button{border:1px solid #cfe0de;background:#fff;color:var(--teal-dk);font:inherit;font-weight:800;font-size:.85rem;border-radius:11px;padding:8px 14px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.adm-volver button:hover{border-color:var(--teal);background:var(--teal-lt)}
+.adm-volver span{font-size:.76rem;color:var(--muted)}
 /* los avisos completos: plegados, se abren desde «Para hacer» */
 .adm-avisos.cerrado{display:none}
 .adm-avisos-cab{display:none}
@@ -16894,6 +16902,7 @@ function admSecAplicar(){
   var bar=document.getElementById('adm-secs'); if(bar){ bar.hidden=!on; if(on) admSecsPintar(); }
   [].forEach.call(document.querySelectorAll('#adm-hoy .ah-hoy-acc button[data-sec]'), function(b){ b.classList.toggle('on', b.getAttribute('data-sec')===s); });
   var top=document.getElementById('adm-top'); if(top) top.hidden=!on;
+  var ac=document.getElementById('admin-content'); if(ac) ac.classList.toggle('adm-tabs-on', on);
   var av=document.getElementById('adm-avisos'); if(av){ av.classList.toggle('cerrado', on && !ADM_AVISOS_OPEN); av.classList.toggle('con-tabs', on); }
 }
 function admAvisosAbrir(si, sinScroll){
@@ -17056,7 +17065,7 @@ function admSecsPintar(){
   var per=mode==='mes' ? (function(){ var m=(document.getElementById('adm-mes')||{}).value||''; return m ? ('en '+mesNombre(m).split(' ')[0]) : ''; })()
         : mode==='dia' ? ('el '+fmtFechaCorta((document.getElementById('adm-dia')||{}).value||'')) : 'en total';
   var H=ADM_AV.hoyCam||{}, nT=document.querySelectorAll('#admin-content .adm-tools .at-t, #admin-content .adm-tools .at-aj .btn').length;
-  var b=function(k, ic, t, sub){ return '<button type="button" role="tab" aria-selected="'+(s===k)+'" class="'+(s===k?'on':'')+'" onclick="admSecPoner(\''+k+'\')"><span class="as-ic">'+ic+'</span><span class="as-t"><b>'+t+'</b><small>'+sub+'</small></span></button>'; };
+  var b=function(k, ic, t, sub){ return '<button type="button" role="tab" aria-selected="'+(s===k)+'" class="'+(s===k?'on':'')+'" onclick="admSecPoner(\''+(s===k?'ped':k)+'\')"><span class="as-ic">'+ic+'</span><span class="as-t"><b>'+t+'</b><small>'+sub+'</small></span></button>'; };
   /* Stock y reposición e Importar ROHO abren su ventana (no son pestañas). */
   var a=function(fn, cls, ic, t, sub, tit){ return '<button type="button" class="as-acc '+cls+'" onclick="'+fn+'" title="'+esc(tit)+'"><span class="as-ic">'+ic+'</span><span class="as-t"><b>'+t+'</b><small>'+sub+'</small></span><span class="as-abre" aria-hidden="true">↗</span></button>'; };
   var hoyX=todayStr(), cf=(STOCK && STOCK.c && STOCK.c.f) || '';
@@ -17064,7 +17073,7 @@ function admSecsPintar(){
         : ('<em>falta el Excel de hoy</em> · el último es del '+esc(fmtFechaCorta(cf)));
   var h=a('abrirStock()','as-stk','📦','Stock y reposición', stk, 'Subir los Excel de los almacenes, ver los saldos y qué pedir a fábrica')+
     a('abrirImportRoho()','as-roho','📥','Importar ROHO', 'el Excel de ROHO → pedidos', 'Subí el Excel «DETALLE NOTA DE VENTA PARA PROVEEDOR» de ROHO y se crean los pedidos')+
-    b('her','🧰','Herramientas', nT+' herramientas · carga, mensajes, stock, ajustes');
+    b('her','🧰','Herramientas', s==='her' ? '← tocá de nuevo para volver a los pedidos' : (nT+' herramientas · carga, mensajes, stock, ajustes'));
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 function admArribaPintar(){
