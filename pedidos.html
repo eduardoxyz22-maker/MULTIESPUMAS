@@ -914,11 +914,21 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal.fl-ficha .fl-dir{font-size:.92rem}
 .modal.fl-ficha .fl-sub{margin:8px 0 4px}
 .modal.fl-ficha .fl-prod{flex-wrap:wrap}
-.modal.fl-ficha .fl-prbtns{flex-basis:100%;display:block;padding:2px 0 2px 40px;border:0;margin:0;background:none}
-.modal.fl-ficha .fl-prbtns > span{justify-content:flex-start!important}
+.modal.fl-ficha .fl-prbtns{order:2;flex:0 1 auto;display:block;padding:0;border:0;margin:0;background:none}
+.modal.fl-ficha .fl-prbtns > span{justify-content:flex-end!important}
+.modal.fl-ficha .fl-prod > .fl-pn{order:1;flex:1 1 230px}.modal.fl-ficha .fl-prod > .fl-pls{order:3}
+.modal.fl-ficha .fl-prod > .fl-q{order:0}
 .modal.fl-ficha .fl-prbtns .chkbtn{padding:4px 7px;font-size:.76rem;min-height:30px}
 .modal.fl-ficha .fl-prbtns .chk-sep{margin:0 1px}
-@media(min-width:901px){.modal.fl-ficha .fl-g{grid-template-columns:1.8fr 1fr .8fr}}
+@media(min-width:901px){.modal.fl-ficha .fl-g{grid-template-columns:minmax(0,1fr) 360px;align-items:stretch}}
+.modal.fl-ficha{max-width:min(1440px,97vw)}
+.modal.fl-ficha .fl-lado{display:grid;gap:12px;min-width:0}
+.modal.fl-ficha .fl-modp{flex-wrap:nowrap}.modal.fl-ficha .fl-modp > span{flex:1;min-width:0}.modal.fl-ficha .fl-modok{white-space:nowrap;flex:none}
+.modal.fl-ficha .fl-mapa{height:105px}
+.modal.fl-ficha .fl-lado .fl-sel{grid-template-columns:1fr 1fr}
+.fl-sws{display:grid;grid-template-columns:1fr 1fr;gap:6px}.fl-sws > :not(.fl-sw){grid-column:1/-1}
+.modal.fl-ficha .fl-sws .fl-sw{margin-top:6px;font-size:.84rem;padding:7px 8px}.modal.fl-ficha .fl-sws .fl-tog{width:38px;height:22px}.modal.fl-ficha .fl-sws .fl-tog:after{width:16px;height:16px}.modal.fl-ficha .fl-sws .fl-sw.on .fl-tog:after{left:19px}
+@media(max-width:420px){.fl-sws{grid-template-columns:1fr}}
 /* 🧠 (24/10) qué hacer, la nota leída, lo que no coincide, los bultos, la medida grande, lo que cambió y el mapita */
 .fl-qh{background:#eaf6f5;border:1.5px solid #9fd6d1;border-radius:14px;padding:12px 16px;margin-bottom:12px}
 .fl-qh-t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#00756f;margin-bottom:6px}
@@ -34169,8 +34179,8 @@ function showPedidoModal(id){
         '<button type="button" class="fl-btn fl-btn-s p" onclick="fichaSugUsar(\''+pid+'\',\''+esc(sug.v).replace(/'/g,"\\'")+'\')">✓ Usar este</button></div>') : '')+
       (ret ? '<div class="fl-ret-nota">Lo retira el cliente: no hace falta camión. Si igual lo llevan, elegilo acá.</div>' : '')+
       '<div class="fl-sel">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
-      fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
-      fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+
+      '<div class="fl-sws">'+fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
+      fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+'</div>'+
       '<div class="fl-sub">📷 Fotos de la entrega</div>'+fotosHtml(p, true)+
       '<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>'+
     '</div>';
@@ -34190,7 +34200,7 @@ function showPedidoModal(id){
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
       top+modHtml+fichaQueHacer(p, N, ret)+obsHtml+
-      '<div class="fl-g">'+colCarga+colDonde+colCamion+'</div>'+
+      '<div class="fl-g">'+colCarga+'<div class="fl-lado">'+colDonde+colCamion+'</div></div>'+   // (24/10) dos columnas: lo que se carga, y al lado dónde + camión
       botonesRpt(p)+mas+
       '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
