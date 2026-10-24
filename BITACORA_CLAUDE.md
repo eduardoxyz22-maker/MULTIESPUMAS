@@ -15752,3 +15752,32 @@ cortos, *«dependiendo del pedido queda un poco vacío… ¿cómo podemos optimi
 - **En curso (sin hacer):** modernizar la tabla de Administración (16 columnas). Muestras A/B/C/D/D2 en el scratchpad (`tabla/`); el dueño
   pidió «mejorar aún más la D» → D2: fichas miniatura en grilla por turno/camión/zona, tildar varias + barra de acciones, camión ahí mismo,
   sugerencia del stock y etiquetas de la nota, los 7 botones con nombre (incluye 📅 Reprogramar), «☰ Tabla» para volver. Espera su respuesta.
+
+### §4md — 🃏 Administración en fichas, 🌅⇄🌆 de un toque y la pestaña «🤖 Bot» (24/10, PUBLICADA `3b4327b`)
+El dueño, con la tabla de 16 columnas: *«debemos modernizar esta tabla… ¿fichas miniatura como en Mis pedidos?»* → muestras A–G → *«la tabla es la
+vista "resumen" de lo relevante y deben abrir la ficha para editar; los botones rápidos: entregó, editar, reprogramar, borrar, WhatsApp»* → la «G»
+armada con pedidos reales, pulida en ~15 vueltas de capturas → *«todo ok, publica y verifica que no haya errores»*.
+- **Fichas** (`admVista()` = 'fichas' por defecto, `me_adm_vista`; en Playwright sigue la TABLA salvo `window.ADM_FICHAS_PRUEBA`: las pruebas de
+  siempre la leen). `admFichasPintar(list, dn)` agrupa por día y turno en el orden del N° del día (barra «N pedidos · M listos · K salieron»);
+  `admFichaHtml(p, dn)`; «☰ Ver como tabla» / «🃏 Ver como fichas»; «Ver más» y los cupos (`admMasPintar`) son los mismos para las dos vistas.
+  Tocar la ficha = la ficha grande (`showPedidoModal`).
+- **Cabecera**: el N° del día con su fondo (solo); cliente (2 líneas); «OC · vendedora» y el 🌅/🌆 (🕓 sin turno) a la DERECHA de esa línea, que
+  pasa por debajo del estado (grid). Dueño: *«1 PM parece una hora»*, *«el número es una cosa y el sticker otra»*, *«el que debe tener fondo es el número»*.
+- **Arriba a la derecha SOLO lo que los productos no dicen** (`admFichaEstado`): 🚚 Entregado · ⚠️ Modificado / ⚠️ Cambió la fecha (parpadea) ·
+  🛣️ Salió · ✅ Listo. Sin stock / en producción / sin revisar / ir a buscar lo dice la etiqueta de cada producto (`prodLugarTag`) — *«¿esto no es redundante?»*.
+- **🎨 El color de la ficha entera** (`admFichaColor`): 🟢 listo para cargar · 🔴 le falta algo (sin stock, sin revisar, en producción, ir a buscar;
+  la etiqueta dice qué) · 🩷 ATC (`--atc`) · 🟤 RPT café (`#7b4a24`; el ámbar se confundía con fucsia/rojo, el azul con Banzer) · entregado apagado.
+  Barra de 5 px a la izquierda + cabecera teñida; leyenda arriba con solo los colores presentes. 50×70 (naranja) y medida especial (📐 celeste)
+  se marcan en la MEDIDA del producto. ⚠️ El amarillo de producción y el violeta de Moreno ya no van en la ficha (el dueño).
+- **🛍️ Lo de tienda (`esProdDeTienda`: protectores, adicionales) NO cuenta ni se muestra en la ficha rápida**, esté marcado como esté (dueño:
+  *«no se recoge de tienda… los entregan ellos en tienda al momento de la compra, por más que el vendedor lo diga»*; *«se puede malinterpretar con
+  recoger en la tienda»*). Se ve al abrir la ficha. Solo con cosas de tienda: «Nada para cargar». Lo mismo en «📍 Lo del día, por lugar»
+  (`admLugaresDatos`). Un COLCHÓN marcado «🏬 Tienda X» (§4kr) sí: ficha roja con «🏬 Tienda X».
+- **Abajo**: 📍 que abre el mapa directo (gris sin enlace) + dirección; camión. **Sin «Cobrar»** (*«eso no le importa a logística»*).
+- **Botones**: Entregó (`quickEntregado`) · WhatsApp (`copyPedido`) · Editar · Reprog. · **A tarde/A mañana** (`admTurnoPuede`: no el sábado,
+  entregado ni venta de tienda; `admTurnoCambiar` pregunta y usa `cambiarTurno`, el de la ficha grande) · Borrar.
+- **«Ocultar» en «📍 Lo del día, por lugar»** (`admLugaresMostrar`, `me_lugares_oculto`).
+- **Pestaña «🤖 Bot»** (`#tab-bot`, `#view-bot`): las respuestas de los clientes (`#wa-resp-adm`) salen de Administración. Solo con `botVe()` =
+  la clave, `me_adm_dev` o «Logística» elegido; número = sin atender (`botTabPintar`). Bloki «Ver» lleva ahí.
+- `fichaAcomodar` se vuelve a medir cuando la ventana terminó de abrir (rAF + 350 ms).
+- Pruebas: `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Batería en la copia publicada: 225 suites, 7.728 bien; rojas solo `test_banzer`/`test_circuito` (sábado) y `test_ventas_marcas` (1180 px), las de siempre. `test_mispedidos` salió 32/1 con la máquina cargada y 33/0 sola. `test_saldo_almacen` cambió a conciencia (la lista de pestañas incluye `tab-bot`).

@@ -950,6 +950,18 @@ cada producto dice «Stock para este pedido: …» con «💡 Marcar…» y «�
 de «Aplicar»; lo marcado a mano no se toca); `fichaAcomodar` pone Dónde y Camión lado a lado en un pedido corto; la nota sin nada para tildar va
 en una línea. `tests/test_ficha_auto.js`.
 
+## 🃏 Administración en fichas + 🤖 pestaña Bot (§4md, 24/10, PUBLICADA `3b4327b`; dueño: *«la tabla es la vista resumen… abrir la ficha para editar»*)
+- `admVista()` = 'fichas' (por compu, `me_adm_vista`); **en Playwright sigue la TABLA salvo `window.ADM_FICHAS_PRUEBA`** (las pruebas de siempre la leen).
+  `admFichasPintar`/`admFichaHtml`: por día y turno; N° del día con fondo; 🌅/🌆 a la DERECHA de «OC · vendedora»; botones Entregó · WhatsApp ·
+  Editar · Reprog. · A tarde/A mañana (`admTurnoPuede`/`admTurnoCambiar` → `cambiarTurno`) · Borrar; 📍 abre el mapa; **sin «Cobrar»**.
+- **Arriba a la derecha solo lo que los productos no dicen** (Entregado, Modificado/Cambió la fecha, Salió, ✅ Listo). ⚠️ No repetir el stock ahí.
+- **Color de la ficha (`admFichaColor`)**: 🟢 listo · 🔴 le falta algo (sin stock/sin revisar/producción/ir a buscar) · 🩷 ATC · 🟤 RPT café. Nada
+  más (sin amarillo, violeta, naranja de ficha entera). 50×70 y medida especial se marcan en la medida del producto.
+- 🛍️ **Lo de tienda (`esProdDeTienda`) no cuenta ni se muestra en la ficha rápida ni en «Lo del día, por lugar»**, aunque lo marquen «recoger de
+  tienda» (dueño: lo entregan en la tienda). Un colchón con «🏬 Tienda X» sí (rojo).
+- **Pestaña «🤖 Bot»** (`#tab-bot`/`#view-bot`, `botVe()`, `botTabPintar`): las respuestas al bot salieron de Administración. `test_saldo_almacen`
+  cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
+
 ## 🚛 Los camiones en Administración (§4hz, 08/10, PUBLICADA 12:36, `2a7c7bd`): lo que hay que respetar
 El dueño, con la imagen que le hizo ChatGPT: *«que solo se vea en administración, no en la pestaña lista de carga, reemplazá
 lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archivos y su prueba.
