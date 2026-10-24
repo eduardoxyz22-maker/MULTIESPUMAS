@@ -15727,3 +15727,28 @@ lo usen»* (se sacó) → *«si ya decís que es de tienda, ¿para qué repetís
   («✔ PTF»), `test_fichas_4ip` (`.fl-pls .fl-pl`), `test_ficha_mejoras` (Maps). Batería en la copia publicada: 222 suites; rojas solo
   las de siempre los sábados (`test_banzer`, `test_circuito`) y `test_ventas_marcas` (1180 px); `test_mispedidos` y `test_rev7_celular`
   salieron rojas con la máquina cargada y solas pasan (también en `main`).
+
+### §4mc — 🕐 La hora de la nota y ✨ la ficha que se acomoda y propone de dónde sale (24/10, PUBLICADA `1816a4a`)
+El dueño, con capturas de la ficha publicada: *«cuando ponen hora en texto no identifica la etiqueta parece»* y, con tres fichas de pedidos
+cortos, *«dependiendo del pedido queda un poco vacío… ¿cómo podemos optimizar, mejorar, estructurar y AUTOMATIZAR esto?»* → *«publica»*.
+- **🕐 Una sola lectura de la hora**: la etiqueta sale de `fichaNota` (antes `fichaObsChips` tenía su propia regex y solo veía «entre…y…» /
+  «después de las…»; «de 11 a 12» salía en «Qué hacer» pero no como etiqueta). `fichaNota` ahora entiende «de 11 a 12», «10-11 AM», «a las
+  12:00»/«horario 12:00», «a partir de las 2:30 de la tarde» (= PM; «apartir» también), «de 4:00 en adelante», «después del/al medio día»,
+  «transcurso/final de la tarde», «temprano», «1 :00» con espacio, «llamar DOS/TRES horas antes», «avisa». Sin hora pero «coordinar la hora»
+  → etiqueta «Coordinar la hora». «de 12 a 12:30» no choca con ningún turno. «llamar … al cliente» (no «a el»). Con las 901 notas reales (solo
+  lectura, en el scratchpad): 138 de 142 que hablan de la hora tienen 🕐 (las 4 que no son «llamar N h antes», ya en 📞); 15 choques
+  hora/turno de verdad.
+- **📊 Cada producto dice cuánto hay y de dónde** (`fichaHayHtml`/`fichaHayTxt`: «Stock para este pedido: Banzer 1»; «faltan N → fabricar»)
+  con **«💡 Marcar ✔ Banzer»** (`fichaSugUsarStock(id, i)`) y arriba **«✨ Marcar los N como dice el stock»** (`'todo'`: solo lo sin marcar o
+  ✗, `fichaSugAuto`). La cuenta es `stockAsignar` (la 🤖 Revisión automática; `fichaRevistaStock`, caché 60 s por STATE/STOCK/SALDO_GEN) y la
+  marca `revStkMarcarLinea` (sacada de `aplicarStockRevisar`, que ahora la usa). Lo marcado a mano no se recalcula ni propone (la revisión con
+  «solo sin marcar»). Sin `STOCK_CARGADO`, nada. Nada se marca sin tocar.
+- **📐 `fichaAcomodar`** después de dibujar: si la derecha es >220 px más alta, `.fl-g.fl-tres` (Dónde y Camión lado a lado, ≥1180 px; si los
+  productos quedan más altos, se deshace); si igual sobra, la tira del stock sube a la izquierda (`.fl-est-izq`).
+- **«Antes de cargar»** sin nada para tildar → una línea `details.fl-obs-min` («📝 Nota del vendedor …»); si `N.limpio` queda vacío (todo ya
+  está arriba, p. ej. ROHO «Recibe: X · Importado…»), no se muestra.
+- Pruebas: `tests/test_ficha_auto.js` (14), `test_ficha_nota` §🕐 (26). Batería en la copia publicada: 223, rojas solo `test_banzer`/`test_circuito`
+  (sábado) y `test_ventas_marcas` (1180 px).
+- **En curso (sin hacer):** modernizar la tabla de Administración (16 columnas). Muestras A/B/C/D/D2 en el scratchpad (`tabla/`); el dueño
+  pidió «mejorar aún más la D» → D2: fichas miniatura en grilla por turno/camión/zona, tildar varias + barra de acciones, camión ahí mismo,
+  sugerencia del stock y etiquetas de la nota, los 7 botones con nombre (incluye 📅 Reprogramar), «☰ Tabla» para volver. Espera su respuesta.
