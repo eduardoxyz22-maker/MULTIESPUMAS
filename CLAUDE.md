@@ -975,6 +975,31 @@ formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro 
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la
 plata va `{v, t:'n', s:2}`. `tests/test_regresiones_128.js`.
 
+## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, EN LA RAMA; espera el «publica»)
+El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
+- **Precios**: `mismoContenido` compara el renglón ENTERO (`prodHuellaComparar`): un reintento viejo ya no pisa una corrección de precios.
+- **«💵 Efectivo en tu mano»** = recibido en efectivo en el MES − retirado en el mes (`cuadrePagos(pe, vend)`, `retirosDe(pe, vend)`).
+- **Durables**: `guardarUbicacion`, `setEstado`, `setProdProduccion`, `setProdChk`, `toggleVerificado` → `guardarDurable`. La tilde de carga entra a la
+  cola al tocarla (`REESCRITA_ESPERA` la frena en `flushPending` durante los 700 ms). Lo forzado que queda en la cola sale forzado (`me_forzar_cola`,
+  por el texto exacto de esa copia). ⚠️ Un botón NUEVO que guarde un pedido va con `guardarDurable`.
+- **Comprobantes**: «N° DE PAGO» y «FOTO» al final; el MONTO solo en la primera fila de cada pago. No mover las columnas de antes.
+- **Recogidas de Moreno**: `g.rs[rid]={k, u:lo restado de verdad, q, c:lo de la recepción, ts}` y `stockRecogidasRepartir(S)` recuenta en orden de
+  `ts`. ⚠️ No volver a restar con `max(0,…)` a secas: anular devolvía lo que no se había restado.
+- **Existencias**: un bloque vacío del archivo de los tres se salta (`saltados`); dos códigos desconocidos con el mismo nombre crudo son dos
+  productos (`colisiones`: la clave la conserva el que la tenía en el corte anterior).
+- **Proyección**: un mes en 0 cuenta (`pryCurva`; un mes SIN ninguna venta del equipo va a `sinDatos`) y la 🧪 prueba usa solo los meses ANTERIORES
+  (`pryPrueba`: `m<ym`). Con la planilla real cambió octubre: Sueña pasó de la curva al ritmo (equipo 1.077.486 → 1.067.634).
+- **🗓️ `diaNegocio()`** = la fecha de Bolivia para la plata y la proyección (Contabilidad, Cuadre, retiros, «Tu día», Proyección). ⚠️ `todayStr()`
+  sigue siendo el reloj de quien mira para todo lo demás (§4fu): no reemplazarlo en bloque.
+- **⌨️ Teclado**: una ficha con `role="button"` sin `onkeydown` se abre con Enter/Espacio (handler global). `openModal` lleva el foco a la ventana
+  (no a un campo), Tab da la vuelta adentro y `closeModal` lo devuelve (`MODAL_FOCO_ANTES`). `formEtiquetar` une cada campo del formulario con su
+  etiqueta (también los renglones de `addProdRow`): un campo nuevo del formulario va con su `<label for>`. 320 px: `.af-cg` con `min(285px,100%)` y
+  `#fx-busca` acotada a la pantalla.
+- Dashboard de ventas (CRM-02/05/06/07/08): días en hora de Bolivia, `<=` el último segundo, sin «Fecha contrato» no publica, meta 0 = 0. ⚠️ Publicarlo
+  dispara el workflow del panel.
+- Pruebas: `test_flw1_precios`, `test_efectivo_tu_dia`, `test_marcas_durables`, `test_form_foco`, `test_comprobantes_pagos`, `test_recogidas_moreno`,
+  `test_existencias_bordes`, `test_mixto_mover`, `test_proyeccion_auditoria`, `test_teclado_320` (+ `test_generar_integridad`, `test_panel_meta`).
+
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
 `showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres
 columnas (dónde entregar / qué se carga y de dónde + Estado de stock con sus tres botones A LA VISTA / camión y entrega); venta, cobro y

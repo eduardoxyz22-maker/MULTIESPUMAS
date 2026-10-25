@@ -15993,3 +15993,58 @@ El dueño pasó el informe nuevo de Codex (el del 25/10, `deb18d8e-INFORME_PARA_
   esa copia: 238 suites, 7.928 bien, 2 rojas conocidas (`test_ventas_marcas`; `test_asistente_rev`, 17/17 sola). La última corrida real del dashboard
   (24/10 22:45) no tenía ninguna lectura fallada: la protección nueva no la habría frenado. Humo con la planilla real (1.430 filas, solo lectura):
   los cuatro pasos a la vista tras Administración y al editar, barra de Stock 366 px en 390, sin errores.
+
+### §4mk — Lo que quedaba del informe de Codex/Astra del 25/10: grupos 1 y 2 (25/10; EN LA RAMA, espera el «publica»)
+El dueño, con la propuesta: Grupo 1 = *«Sí, todo»*; el efectivo de «Tu día» = *«Igual que el Cuadre del mes»*; un almacén vacío en el
+Excel de los tres = *«Saltarlo con un aviso»*; Comprobantes = *«Agregar «N° de pago» y «foto 1 de 2»»*. Cada arreglo tiene su prueba, roja
+contra `main` (`cd0c73d`) y verde en la rama.
+- **FLW-1 · un reintento viejo volvía a poner los precios de antes** (`ef3699b`): `mismoContenido` comparaba de cada renglón solo nombre,
+  medida, código y cantidad, así que el reintento de A se tomaba por un «ok tardío» contra la corrección de precios de B; A se quedaba con
+  el sello de B y sus precios viejos. Ahora compara el renglón entero (`prodHuellaComparar`, sin las claves `_` ni los vacíos).
+  `tests/test_flw1_precios.js` (9; 3 rojas), con el `.gs` real.
+- **FIN-01 · «💵 Efectivo en tu mano»** (`9a3cce9`): lo recibido en efectivo en el MES menos lo retirado en el mes, con las reglas del Cuadre
+  (`cuadrePagos(pe, vend)` y `retirosDe(pe, vend)` aceptan período y vendedor). Negativo → 0 y dice cuánto era del mes pasado. Con la
+  copia del 24/10 cambian mucho (Fernando 0 → 4.860, María 5.250 → 9.650, Mirian 150 → 3.110, Jonathan 27.709 → 18.559): ya se le mostró
+  al dueño antes de elegir. `tests/test_efectivo_tu_dia.js` (7; 6 rojas); `test_mis_arriba` §4 cambió a conciencia.
+- **ORD-1 / FLW-2 / ORD-2 · lo que se perdía al recargar** (`63f7abe`): cinco botones (`guardarUbicacion`, `setEstado`, `setProdProduccion`,
+  `setProdChk`, `toggleVerificado`) pasan por `guardarDurable`; la tilde de la Lista de carga entra a la cola apenas se toca
+  (`reescritaEncolar` + `REESCRITA_ESPERA`, para que `flushPending` no la mande dos veces en el respiro de 700 ms); lo FORZADO por
+  Administración que queda en la cola sale forzado (`me_forzar_cola`: el texto exacto de esa copia; una corrección posterior va normal).
+  `tests/test_marcas_durables.js` (9; 6 rojas), con el `.gs` real y recargando.
+- **Guardar con un dato que falta lleva al campo** (`b1850ca`): en el celular el campo quedaba 2.700 px arriba con el foco en «Guardar».
+  `formIrAlPrimerError` + el aviso «Falta: nota de venta» (`FORM_NOMBRES`, `formFaltanNombres`). `tests/test_form_foco.js` (12; 6 rojas);
+  `test_ayudas_form` llena la nota.
+- **📁 Comprobantes** (`3799b2d`): columnas «N° DE PAGO» y «FOTO» («1 de 2») AL FINAL; el MONTO solo en la primera fila de cada pago (la suma
+  de la columna da lo cobrado); nombres de archivo con centavos (`compsMontoTxt`: 10,10 y 10,20 daban «10») y «-2» para dos pagos iguales.
+  `tests/test_comprobantes_pagos.js` (7).
+- **S3 · dos recogidas de Moreno por más de lo que había** (`ae9bf99`): `g.rs[rid]` = `{k, u:lo que DE VERDAD se restó, q, c:lo que dice la
+  recepción, ts}` y `stockRecogidasRepartir(S)` lo recuenta por almacén y producto en orden de `ts` (no depende del orden de la junta).
+  Anular devolvía lo que no se había restado (6 → 10). Lo que no alcanzó se ve en Stock (`stockRecogidasDeMas`, `#stk-rec-demas`).
+  `tests/test_recogidas_moreno.js` (10; 7 rojas).
+- **Excel de existencias** (`0fb2e49`): un bloque VACÍO (encabezado y «TOTAL : 0») en el archivo de los tres se salta (`existLoteDe` →
+  `saltados`) y se avisa; todos vacíos → «no hay nada que cargar». Dos códigos que la lista no conoce con el mismo nombre crudo ya no se
+  suman (§4cy): la clave de siempre la conserva el código que la tenía en el corte anterior (o el menor), los otros llevan su código en el
+  nombre (`colisiones`, `#exist-colision`). `tests/test_existencias_bordes.js` (7; 6 rojas).
+- **Dashboard de ventas, CRM-02/05/06/07/08** (`bb8ce49`): el día de cada lead/contrato en hora de Bolivia (`fromtimestamp(…, BOL_TZ)`: lo de
+  las 20:00-23:59 caía en el día siguiente para la semana y el «mismo día»); la venta de las 23:59:59 del último día es del mes (`<=`); sin el
+  campo «Fecha contrato» no se publica (`_FALLAS`); una meta en 0 es 0 («No hay meta cargada»); en el histórico viejo un Compradores en 0
+  es un cero. `test_generar_integridad` (18; 3 rojas con `TZ=UTC`), `test_panel_meta` (8; 1 roja). ⚠️ Publicarlo dispara el workflow del panel.
+- **FIN-03 · el pago mixto movía el cobro equivocado** (`abee137`): al corregir el día o el recibo del adelanto, `ctaGuardarPago` movía el
+  PRIMER cobro del mismo día y recibo; ahora el que `mixtoDe` eligió (mismo método, banco y monto). `tests/test_mixto_mover.js` (5; 2 rojas).
+- **FIN-2/3/4 · la proyección del mes** (`16be745`):
+  · FIN-2: un mes cerrado con 0 ventas de la marca (con el panel en uso) entra al promedio (2.000 + 0 = 1.000, antes 2.000); un mes SIN
+    ninguna venta del equipo va aparte (`sinDatos`) y se dice.
+  · FIN-3: la curva de un mes en la 🧪 prueba sale de los meses cerrados ANTES de él (`m<ym`; antes agosto se probaba con septiembre).
+    Agosto, el primer mes entero, queda solo con el ritmo. **Con la planilla real (25/10) cambia la proyección de octubre**: Sueña pasa de la
+    curva al ritmo (en la prueba honesta, septiembre con la curva de agosto, el ritmo erró 9 % y la curva 12 %; antes 12 % y 10 %): el equipo
+    de Bs 1.077.486 a 1.067.634. Heaven sigue con el ritmo. `test_proyeccion` §7/8/9/12/14 cambiaron a conciencia.
+  · FIN-4: `diaNegocio()` = la fecha de Bolivia (`isoDeTsBolivia(Date.now())`) en Contabilidad, Cuadre, retiros, «Tu día» y Proyección: un
+    aparato con la hora en UTC a las 22:00 del 31/10 ya abría noviembre y daba octubre por cerrado. ⚠️ `todayStr()` NO cambió (§4fu: es el
+    reloj de quien mira, 336 usos); solo la plata y la proyección usan el día del negocio.
+  `tests/test_proyeccion_auditoria.js` (12; 8 rojas).
+- **Teclado y 320 px, UI-01/02/04/05** (`9359840`): una ficha con `role="button"` sin `onkeydown` propio se abre con Enter o Espacio (handler
+  global); `openModal` lleva el foco a la ventana (a la ventana, no a un campo: en el celular abriría el teclado), Tab y Mayús+Tab dan la
+  vuelta adentro, `closeModal` lo devuelve a lo que la abrió (nunca a un campo de texto); `formEtiquetar` une los 21 campos del formulario a
+  su etiqueta (`for`) o les pone `aria-label` (también cada renglón de productos, desde `addProdRow`); `.af-cg` con `minmax(min(285px,100%),1fr)`
+  (a 320 px Administración medía 336) y la lista de productos (`#fx-busca`) no pasa del ancho de la pantalla. `tests/test_teclado_320.js` (15;
+  13 rojas). UI-03 (el formulario lleva al error) es el de `b1850ca`.
