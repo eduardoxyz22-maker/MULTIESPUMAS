@@ -15994,7 +15994,7 @@ El dueño pasó el informe nuevo de Codex (el del 25/10, `deb18d8e-INFORME_PARA_
   (24/10 22:45) no tenía ninguna lectura fallada: la protección nueva no la habría frenado. Humo con la planilla real (1.430 filas, solo lectura):
   los cuatro pasos a la vista tras Administración y al editar, barra de Stock 366 px en 390, sin errores.
 
-### §4mk — Lo que quedaba del informe de Codex/Astra del 25/10: grupos 1 y 2 (25/10; EN LA RAMA, espera el «publica»)
+### §4mk — Lo que quedaba del informe de Codex/Astra del 25/10: grupos 1 y 2 (25/10; PUBLICADA 25/10 13:12 de Bolivia, `fd0d889`, Pages OK; dashboard regenerado `31a294b`)
 El dueño, con la propuesta: Grupo 1 = *«Sí, todo»*; el efectivo de «Tu día» = *«Igual que el Cuadre del mes»*; un almacén vacío en el
 Excel de los tres = *«Saltarlo con un aviso»*; Comprobantes = *«Agregar «N° de pago» y «foto 1 de 2»»*. Cada arreglo tiene su prueba, roja
 contra `main` (`cd0c73d`) y verde en la rama.
@@ -16051,3 +16051,34 @@ contra `main` (`cd0c73d`) y verde en la rama.
 - **Batería sobre la rama** (25/10): 247 suites, 8.062 bien, 2 rojas: `test_ventas_marcas` (la conocida) y `test_rev3_admin` d), que devolvía la
   señal antes del intento de los 700 ms de la tilde de carga (ahora la tilde entra a la cola al tocarla): la prueba espera ese intento y suma
   d2 (la señal vuelve dentro del medio segundo: el intento junta las dos tildes, la cola no la manda dos veces). Sola: 49/0 (`b2d8b4c`).
+- **Publicación (25/10, dueño: «Ok publica como dices que sea mejor»)**: `main` = `fd0d889` = `bad6dd4` + SOLO `generar.py`, `panel_template.html`,
+  `pedidos.html` y sus pruebas (el diff `0028fe9..b2d8b4c`; sin §4lt-d ni el `.gs` 25-a). Batería sobre esa copia: 246 suites, 8.023 bien;
+  rojas: `test_ventas_marcas` (la conocida) y `test_rev30_retiros` (por la máquina cargada: sola 15/0). Pages OK; el panel (corrida 539) regeneró
+  el dashboard (`31a294b`): 11 vistas con contenido, sin errores ni NaN. Humo con la planilla real (1.430 filas, solo lectura) a 390 y 1440:
+  0 campos sin nombre, 150 fichas en Administración sin correr de costado, Proyección octubre «en curso», efectivo de «Tu día» = el del Cuadre,
+  Comprobantes con el foco adentro.
+
+### §4ml — El informe de Codex/Astra sobre `f1b5fe2` (el tercero del 25/10): lo que todavía no estaba (EN LA RAMA, `df19e6d`)
+Auditó la versión de la mañana: FIN-02, Comprobantes, `fpVisible`, F12/F13, S3, FIN-2/3/4, el mixto, «Tu día», el almacén vacío y la colisión ya
+estaban arreglados en `cd0c73d`/§4mk. Lo nuevo:
+- **FIN-19 «Quién vendió qué»** contaba un pedido INTERNO (`CONTA_INTERNOS`: FABRICA 999) como venta: ahora afuera y dicho abajo
+  (`fuera.int`); eligiendo a propósito el vendedor interno, se ve.
+- **FIN-06 el flete**: 1,01 cobrado 0,50 + 0,50 quedaba en 1,00 pactado y 0 por cobrar (`resto>0.01`): `resto>0.009`.
+- **OPS-12/13/16 ATC en logística**: `saldoACobrar(p)` (0 para ATC/RPT) en la tarjeta del chofer, Entregas, Envío, Hoja de ruta y Reporte; antes
+  una ATC con 3.000 de cuando era OC sumaba «por cobrar».
+- **OPS-03 la barra de pasos**: «Productos» listo solo con cantidades enteras ≥1 y sin renglones con código/precio y sin producto (lo de Guardar).
+- **FIN-09 deudas sin fecha / futuras**: `deudaEdad`/`deudaEdadTxt` (sin fecha · fecha futura, no «hoy»), con tramo propio en `tramosDeudaHtml`.
+- **PRY «De dónde sale lo vendido»** con centavos (`fmtBs`), **OPS-22 `precioTipico`** con la mediana de siempre (par = promedio de los dos del
+  medio), **ROHO** «Agendado hasta hoy / después» (no «Entregado»).
+- **STK-12/E08** (el corte 3 vs 7 dado por guardado): la raíz era la de FLW-1 y ya está (`mismoContenido` mira el renglón entero, incluida la
+  llegada); el conflicto sale como «rechazado… abrilo y revisá la llegada» en el aviso del Excel. No se armó la prueba de dos navegadores con el
+  Excel: queda medido en la equivalencia.
+- `tests/test_codex_f1b5.js` (13; 11 rojas contra `main`).
+- **Sin tocar**: STK-09 (legado sin `prodCu`: la auditoría recomienda revisión, no migrar), STK-02 (negativos y «1.000,00» de texto se omiten con
+  aviso: política de formato), el combo como SKU propio.
+
+### §4mm — 🪙 El centavo cuenta (25/10, dueño: «Sí, hacelo exacto»; EN LA RAMA, `40fd379`)
+Las 154 comparaciones de plata de `pedidos.html` (las encontró el parser de TypeScript, no un grep: sin comentarios ni textos) van contra 0.005 en vez
+de 0.01; quedan las dos que no son plata (la dona SVG y el sonido). `productos-mes.js` igual (`?v=20261025a`). 100,01 pagado con 100 ya no queda
+«pagada» con el saldo escondido, 0,01 de más se ve como exceso, el aviso de lo entregado sin cobrar suma 0,01 + 0,02. Planilla del 24/10: 0 de 987
+ventas a un centavo (no cambia nada de lo que existe). `tests/test_centavo_exacto.js` (6; 4 rojas contra `main`).

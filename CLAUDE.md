@@ -975,7 +975,7 @@ formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro 
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la
 plata va `{v, t:'n', s:2}`. `tests/test_regresiones_128.js`.
 
-## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, EN LA RAMA; espera el «publica»)
+## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
 - **Precios**: `mismoContenido` compara el renglón ENTERO (`prodHuellaComparar`): un reintento viejo ya no pisa una corrección de precios.
 - **«💵 Efectivo en tu mano»** = recibido en efectivo en el MES − retirado en el mes (`cuadrePagos(pe, vend)`, `retirosDe(pe, vend)`).
@@ -999,6 +999,11 @@ El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»
   dispara el workflow del panel.
 - Pruebas: `test_flw1_precios`, `test_efectivo_tu_dia`, `test_marcas_durables`, `test_form_foco`, `test_comprobantes_pagos`, `test_recogidas_moreno`,
   `test_existencias_bordes`, `test_mixto_mover`, `test_proyeccion_auditoria`, `test_teclado_320` (+ `test_generar_integridad`, `test_panel_meta`).
+- **§4ml (EN LA RAMA)**: «Quién vendió qué» sin los pedidos internos; el centavo del flete; **`saldoACobrar(p)`** (0 para ATC/RPT) en chofer, Entregas,
+  Envío, Hoja de ruta y Reporte —⚠️ un total nuevo de «por cobrar» del camión usa esa función—; la barra de pasos con cantidades válidas; deudas
+  «sin fecha»/«fecha futura» (`deudaEdad`); «De dónde sale lo vendido» con centavos; la mediana de `precioTipico`. `tests/test_codex_f1b5.js`.
+- **🪙 §4mm (EN LA RAMA) el centavo cuenta**: toda comparación de plata va contra **0.005**, nunca 0.01 (los montos ya vienen en centavos, `r2`).
+  ⚠️ Una comparación de plata NUEVA, igual. `tests/test_centavo_exacto.js`.
 
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
 `showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres
