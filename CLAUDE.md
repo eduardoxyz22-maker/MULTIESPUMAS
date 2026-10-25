@@ -706,6 +706,9 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
 - 🎨 **Lo que se le publica al dueño (páginas, artefactos con clave) va SIEMPRE claro, con los colores del panel** (dueño, 19/10: *«no uses
   fondo negro… usa los mismos colores que el panel»*): fondo `--bg-app`, tarjetas blancas, turquesa `#00B5AD`/`#00A09A`, encabezado `--grad-header`,
   letra Inter, y SIN modo oscuro aunque el aparato lo tenga.
+  📸 **Capturas para el dueño** (25/10, §4mo): un `.html` mandado por el chat NO se le abre en la app («sale puro código»). Se le publica una página
+  (Artifact) y, como tiene enlace, con las capturas sacadas de una copia de la planilla con clientes INVENTADOS (nombres, celulares, NIT,
+  direcciones, pines, observaciones), nunca con los datos reales.
 
 ### §4ls — la revisión 2 implementada (18-19/10; PUBLICADA 19/10 20:20, `bd3164c`; decisiones del dueño del 18/10)
 - **U2 por turno** (decisión 2): dos casillas al subir el Excel, `#exist-inc` (mañana) y `#exist-inc-pm` (tarde), igual en «Conté a
