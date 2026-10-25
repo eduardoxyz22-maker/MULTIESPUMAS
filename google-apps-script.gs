@@ -193,7 +193,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-15-a';   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-25-a';   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -223,7 +223,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-15-a';
+  var ESTA_VERSION = '2026-10-25-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -236,7 +236,7 @@ function probarAntesDeImplementar() {
     doGet: typeof doGet, doPost: typeof doPost, doPostCuerpo_: typeof doPostCuerpo_,
     doSave: typeof doSave, doDelete: typeof doDelete, readAll: typeof readAll,
     rowToRec_: typeof rowToRec_, recToRow: typeof recToRow, jsonOut: typeof jsonOut,
-    guardarFoto: typeof guardarFoto, borrarFoto: typeof borrarFoto,
+    guardarFoto: typeof guardarFoto, borrarFoto: typeof borrarFoto, compsCarpeta_: typeof compsCarpeta_,
     barrerFotosHuerfanas: typeof barrerFotosHuerfanas, kommoHook: typeof kommoHook,
     kommoProcesarCola: typeof kommoProcesarCola, kommoRepaso: typeof kommoRepaso,
     instalarDisparadores: typeof instalarDisparadores, estadoKommo: typeof estadoKommo,
@@ -1333,6 +1333,8 @@ function doPostCuerpo_(e) {
   // Fotos de la entrega: van a Drive (en una celda no entran). Tambien sin lock: es lento.
   if (action === 'foto')       return guardarFoto(body);
   if (action === 'borrarFoto') return borrarFoto(body);
+  /* 📁 (2026-10-25-a) Los comprobantes del mes en una carpeta para el contador. Sin candado: copia fotos, no toca la planilla. */
+  if (action === 'compsCarpeta') return compsCarpeta_(body);
   /* 📖 LEER NO NECESITA CANDADO (§4dt).
      `readAll()` es UN solo `getDataRange().getValues()`: una foto de la planilla en un
      instante, no una lectura fila por fila que se pueda mezclar con un guardado a medias.
@@ -2384,6 +2386,53 @@ function fotosFolder_() {
   return f;
 }
 
+/* 📁 (2026-10-25-a, §4mg C2; dueño: «Prepáralo») LOS COMPROBANTES DEL MES EN UNA CARPETA PARA EL CONTADOR.
+   El panel manda, de a tandas, las fotos de los pagos del mes (`archivos` = [{id, nombre}]) y acá se COPIAN con ese nombre
+   («2026-10-05_QR-BISA_3000_ANA-PEREZ.jpg») a «Comprobantes para el contador / Comprobantes AAAA-MM». Las fotos originales no se
+   tocan (siguen donde las mira el panel). Reglas:
+   · Solo se copia una foto que está en la carpeta de fotos del panel (`fotosFolder_`): un id cualquiera de otro Drive, no.
+   · Si ya hay un archivo con ese nombre en la carpeta del mes, no se copia de nuevo (volver a tocar el botón no duplica).
+   · La extensión sale del tipo de la foto (png/jpg), no del nombre que manda el panel.
+   · Tope de tiempo: corta a los ~4 min y devuelve lo que falta (`pendientes`); el panel sigue con otra tanda.
+   · La carpeta NO se comparte: el dueño la comparte con el contador desde Drive. */
+var COMPS_PROP = 'COMPS_CARPETA_ID', COMPS_CARPETA = 'Comprobantes para el contador', COMPS_TOPE_MS = 240000, COMPS_TANDA = 60;
+function compsCarpetaMadre_() {
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty(COMPS_PROP);
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { try { props.deleteProperty(COMPS_PROP); } catch (e2) {} } }
+  var it = DriveApp.getFoldersByName(COMPS_CARPETA), f = it.hasNext() ? it.next() : DriveApp.createFolder(COMPS_CARPETA);
+  try { props.setProperty(COMPS_PROP, f.getId()); } catch (e) {}
+  return f;
+}
+function compsNombre_(t, mime) {
+  var base = String(t == null ? '' : t).replace(/\.(jpe?g|png|webp|gif|heic)$/i, '').replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 120) || 'comprobante';
+  var m = String(mime || '').toLowerCase();
+  return base + (m.indexOf('png') >= 0 ? '.png' : (m.indexOf('webp') >= 0 ? '.webp' : (m.indexOf('pdf') >= 0 ? '.pdf' : '.jpg')));
+}
+function compsCarpeta_(body) {
+  var t0 = Date.now(), mes = String((body && body.mes) || '');
+  if (!/^\d{4}-\d{2}$/.test(mes)) return jsonOut({ ok:false, error:'mes', version:SCRIPT_VERSION });
+  var vend = String((body && body.vendedor) || '').replace(/[^\w\sáéíóúñÁÉÍÓÚÑ\-]+/g, '').trim().slice(0, 40);
+  var lista = Array.isArray(body && body.archivos) ? body.archivos.slice(0, COMPS_TANDA) : [];
+  var madre = compsCarpetaMadre_(), nomMes = 'Comprobantes ' + mes + (vend ? (' - ' + vend) : '');
+  var it = madre.getFoldersByName(nomMes), dest = it.hasNext() ? it.next() : madre.createFolder(nomMes);
+  var fotos = fotosFolder_(), fotosId = fotos.getId();
+  var r = { copiados:0, yaEstaban:0, ajenas:0, fallaron:0, pendientes:[] };
+  for (var i = 0; i < lista.length; i++) {
+    var a = lista[i] || {}, fid = String(a.id || '').replace(/[^A-Za-z0-9_\-]/g, '');
+    if (Date.now() - t0 > COMPS_TOPE_MS) { r.pendientes.push(a); continue; }
+    if (!fid) { r.fallaron++; continue; }
+    try {
+      var f = DriveApp.getFileById(fid), deFotos = false, ps = f.getParents();
+      while (ps.hasNext()) { if (ps.next().getId() === fotosId) { deFotos = true; break; } }
+      if (!deFotos) { r.ajenas++; continue; }
+      var nom = compsNombre_(a.nombre, f.getMimeType());
+      if (dest.getFilesByName(nom).hasNext()) { r.yaEstaban++; continue; }
+      f.makeCopy(nom, dest); r.copiados++;
+    } catch (e) { r.fallaron++; }
+  }
+  return jsonOut({ ok:true, version:SCRIPT_VERSION, carpeta:{ id:dest.getId(), url:dest.getUrl(), nombre:COMPS_CARPETA + ' / ' + nomMes },
+    copiados:r.copiados, yaEstaban:r.yaEstaban, ajenas:r.ajenas, fallaron:r.fallaron, pendientes:r.pendientes });
+}
 function guardarFoto(body) {
   var d = String((body && body.dataUrl) || '');
   var m = d.match(/^data:(image\/[a-z+.\-]+);base64,(.+)$/i);

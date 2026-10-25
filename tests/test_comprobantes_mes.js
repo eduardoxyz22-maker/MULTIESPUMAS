@@ -68,6 +68,24 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('4c. el archivo se llama comprobantes-AAAA-MM', r.nombre==='comprobantes-2026-10.xlsx', r.nombre);
   chk('5. con un vendedor elegido, solo lo suyo', JSON.stringify(r.Lm)===JSON.stringify(['ELSA SUEÑA']), r.Lm);
 
+  /* 6 · 📁 «Armar la carpeta en Drive» (servidor 2026-10-25-a) */
+  const r6 = await ev(async () => {
+    var llamadas=[]; window.apiPost=function(b){ llamadas.push(JSON.parse(JSON.stringify(b)));
+      if(b.action!=='compsCarpeta') return Promise.resolve({ ok:true });
+      var pend = llamadas.length===1 ? b.archivos.slice(1) : [];   // la 1ª tanda «se corta» y devuelve lo que falta
+      return Promise.resolve({ ok:true, carpeta:{ url:'https://drive.google.com/drive/folders/X', nombre:'Comprobantes para el contador / Comprobantes '+b.mes },
+        copiados:b.archivos.length-pend.length, yaEstaban:0, ajenas:0, fallaron:0, pendientes:pend }); };
+    compsAbrir(); await new Promise(function(r){ setTimeout(r, 60); });
+    SERVER_VER='2026-10-15-a'; compsCarpeta(); await new Promise(function(r){ setTimeout(r, 60); });
+    var viejo={ txt:document.getElementById('comps-carpeta').textContent, n:llamadas.length };
+    SERVER_VER='2026-10-25-a'; await compsCarpeta(); await new Promise(function(r){ setTimeout(r, 60); });
+    var nuevo={ txt:document.getElementById('comps-carpeta').textContent, n:llamadas.length, link:(document.querySelector('#comps-carpeta a')||{}).href,
+      nombres:[].concat.apply([], llamadas.map(function(l){ return (l.archivos||[]).map(function(x){ return x.nombre; }); })) };
+    closeModal(); return { viejo:viejo, nuevo:nuevo };
+  });
+  chk('6a. con el servidor de antes NO se llama (lo trataría como un guardado) y lo dice', r6.viejo.n===0 && /2026-10-25-a/.test(r6.viejo.txt), r6.viejo);
+  chk('6b. con el nuevo: sigue con lo que quedó pendiente y termina con el enlace', r6.nuevo.n===2 && /Carpeta lista/.test(r6.nuevo.txt) && /3 de 3 fotos/.test(r6.nuevo.txt) && r6.nuevo.link==='https://drive.google.com/drive/folders/X', r6.nuevo);
+  chk('6c. manda los nombres de archivo de siempre', r6.nuevo.nombres.indexOf('2026-10-05_QR-BISA_3000_ANA-QR_1.jpg')>=0, r6.nuevo.nombres);
   chk('sin errores en la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

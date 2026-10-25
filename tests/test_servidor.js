@@ -1696,8 +1696,8 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-15-a',
-      vG==='2026-10-15-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-25-a',
+      vG==='2026-10-25-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
@@ -1813,6 +1813,48 @@ console.log('\n── 24. 📍 enlaces de Waze, Plus Code y lugares con nombre (
   chk('e. una búsqueda SOLO con kgmid (sin nombre ni coordenadas): no se inventa nada', r('https://www.google.com/search?client=ms-android&hs=YXoq&kgmid=/g/11y42vszyr&shem=epsd1') === null && buscadas.length === b0);
   chk('f. lo de siempre sigue igual: «maps?q=-17.78,-63.18» exacto', r('https://www.google.com/maps?q=-17.78,-63.18') === '-17.7800,-63.1800');
   chk('g. textoDeQ_: ni coordenadas ni un Plus Code cuentan como «nombre»', typeof a.ctx.textoDeQ_==='function' && a.ctx.textoDeQ_('https://www.google.com/maps?q=-17.78,-63.18') === '' && a.ctx.textoDeQ_('https://www.google.com/maps?q=8R6C+72P,+Santa+Cruz') === '');
+}
+
+/* §25 (25/10, §4mg C2, `.gs` 2026-10-25-a) 📁 Los comprobantes del mes en una carpeta para el contador (`compsCarpeta_`): COPIA las
+   fotos de la carpeta del panel con el nombre que manda la página, a «Comprobantes para el contador / Comprobantes AAAA-MM». No
+   copia una foto que no es del panel, no duplica si se toca otra vez, corta por tiempo devolviendo lo que falta y no toca la planilla. */
+console.log('\n── 25. 📁 los comprobantes del mes en una carpeta (compsCarpeta_) ──');
+{
+  const a = cargar([HDR, fila({ id:'p1' })], {});
+  const carpetas = {}, copias = [];
+  const hacerCarpeta = (id, nombre) => { const c = { id, nombre, hijas:{}, archivos:[],
+    getId: () => id, getUrl: () => 'https://drive.google.com/drive/folders/' + id, setSharing(){},
+    getFoldersByName: (n) => { let done = !c.hijas[n]; return { hasNext: () => !done, next: () => { done = true; return c.hijas[n]; } }; },
+    createFolder: (n) => { const h = hacerCarpeta('F_' + n.replace(/\W+/g, ''), n); c.hijas[n] = h; carpetas[h.id] = h; return h; },
+    getFilesByName: (n) => { let done = c.archivos.indexOf(n) < 0; return { hasNext: () => !done, next: () => { done = true; return {}; } }; } };
+    carpetas[id] = c; return c; };
+  const fotos = hacerCarpeta('FOTOS', 'Fotos de entregas MultiEspumas'), raiz = hacerCarpeta('RAIZ', '');
+  const archivo = (id, padre, mime) => ({ getParents: () => { let done = false; return { hasNext: () => !done, next: () => { done = true; return padre; } }; },
+    getMimeType: () => mime, makeCopy: (nom, dest) => { copias.push(id + '>' + nom); dest.archivos.push(nom); return {}; } });
+  const otra = hacerCarpeta('OTRA', 'Mis cosas');
+  const ARCH = { fA: archivo('fA', fotos, 'image/jpeg'), fB: archivo('fB', fotos, 'image/png'), fX: archivo('fX', otra, 'image/jpeg') };
+  a.ctx.DriveApp = {
+    getFolderById: (id) => { if (!carpetas[id]) throw new Error('no'); return carpetas[id]; },
+    getFoldersByName: (n) => raiz.getFoldersByName(n), createFolder: (n) => raiz.createFolder(n),
+    getFileById: (id) => { if (!ARCH[id]) throw new Error('no existe'); return ARCH[id]; },
+    Access: { ANYONE_WITH_LINK:1 }, Permission: { VIEW:1 } };
+  a.ctx.PropertiesService.getScriptProperties().setProperty('FOTOS_FOLDER_ID', 'FOTOS');
+  const filas0 = JSON.stringify(a.sh._data || a.sh.getDataRange().getValues());
+  const pedir = (archivos, mes) => a.post({ action:'compsCarpeta', mes: mes || '2026-10', vendedor:'', archivos });
+  const r1 = pedir([{ id:'fA', nombre:'2026-10-05_QR-BISA_3000_ANA.jpg' }, { id:'fB', nombre:'2026-10-06_TARJETA_500_BETO.jpg' }, { id:'fX', nombre:'x.jpg' }, { id:'NO', nombre:'n.jpg' }]);
+  chk('a. copia las fotos del panel con el nombre de la página (y la extensión de la foto: png)', r1.ok && r1.copiados === 2 &&
+    copias.indexOf('fA>2026-10-05_QR-BISA_3000_ANA.jpg') >= 0 && copias.indexOf('fB>2026-10-06_TARJETA_500_BETO.png') >= 0, JSON.stringify({ r1, copias }));
+  chk('b. una foto que no está en la carpeta del panel no se copia; una que no existe, «fallaron»', r1.ajenas === 1 && r1.fallaron === 1 && copias.every(c => !/^fX/.test(c)), JSON.stringify(r1));
+  chk('c. la carpeta es «Comprobantes para el contador / Comprobantes 2026-10» y devuelve su enlace', r1.carpeta && r1.carpeta.nombre === 'Comprobantes para el contador / Comprobantes 2026-10' && /drive\.google\.com\/drive\/folders\//.test(r1.carpeta.url), JSON.stringify(r1.carpeta));
+  const n1 = copias.length, r2 = pedir([{ id:'fA', nombre:'2026-10-05_QR-BISA_3000_ANA.jpg' }]);
+  chk('d. tocar otra vez no duplica: «ya estaban»', r2.ok && r2.copiados === 0 && r2.yaEstaban === 1 && copias.length === n1, JSON.stringify(r2));
+  a.ctx.COMPS_TOPE_MS = -1;
+  const r3 = pedir([{ id:'fB', nombre:'otro.jpg' }]);
+  chk('e. pasado el tope de tiempo devuelve lo que falta (`pendientes`) para otra tanda', r3.ok && r3.copiados === 0 && r3.pendientes.length === 1 && r3.pendientes[0].id === 'fB', JSON.stringify(r3));
+  a.ctx.COMPS_TOPE_MS = 240000;
+  chk('f. un mes mal escrito: «mes»', pedir([], 'octubre').error === 'mes');
+  chk('g. no toca la planilla', JSON.stringify(a.sh._data || a.sh.getDataRange().getValues()) === filas0);
+  chk('h. el nombre se limpia (sin barras ni caracteres raros)', a.ctx.compsNombre_('../ño che/x?.jpg', 'image/jpeg') === 'o_che_x.jpg' || /^[\w\-]+\.jpg$/.test(a.ctx.compsNombre_('../ño che/x?.jpg', 'image/jpeg')), a.ctx.compsNombre_('../ño che/x?.jpg', 'image/jpeg'));
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

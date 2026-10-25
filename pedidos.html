@@ -2726,6 +2726,9 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cps-tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.72rem;font-weight:800;text-decoration:none}
 .cps-ok{background:#e6f7f6;color:#00756f!important}.cps-mal{background:#fdeaec;color:#CE2939}
 .cps-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:.78rem;color:#55706f}.cps-pie span{flex:1;min-width:200px}
+.cps-carpeta{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f3fbf6;border:1px solid #d5f0df;font-size:.84rem;color:#13302e}
+.cps-carpeta-mal{background:#fffaf2;border-color:#f6e3c2}
+.cps-barra{height:7px;border-radius:9px;background:#e3ecec;overflow:hidden;margin-top:6px}.cps-barra i{display:block;height:100%;background:#00B5AD}
 /* ✅ (§4mg, C3) la lista de control del cierre */
 .c3{margin:12px 0 10px}
 .c3-barra{display:flex;gap:2px;height:8px;border-radius:9px;overflow:hidden;background:#eef2f3}.c3-barra i{display:block}
@@ -5144,7 +5147,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-15-a';   // (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-25-a';   // (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -42006,7 +42009,49 @@ function compsPintar(){
         '<td class="cps-m">'+fmtBs(x.monto)+'</td><td>'+(x.comps.length ? x.comps.map(function(fid, i){ return '<a class="cps-tag cps-ok" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener">📷 '+(x.comps.length>1?(i+1):'ver')+'</a>'; }).join(' ') : '<span class="cps-tag cps-mal">falta</span>')+'</td>'+
         '<td class="cps-nom">'+(x.comps.length ? x.comps.map(function(f,i){ return esc(compsArchivo(x,i)); }).join('<br>') : '—')+'</td></tr>'; }).join(''); }).join('')+
     '</tbody></table></div>'+
-    '<div class="cps-pie"><span>Ordenados por banco y por día · cada foto con un nombre que dice día, banco, monto y cliente.</span><button type="button" class="ah-go ah-go-p" onclick="compsExcel()">⬇️ Excel con los enlaces</button></div>';
+    '<div class="cps-pie"><span>Ordenados por banco y por día · cada foto con un nombre que dice día, banco, monto y cliente.</span><button type="button" class="ah-go" onclick="compsExcel()">⬇️ Excel con los enlaces</button>'+
+      '<button type="button" class="ah-go ah-go-p" id="comps-carpeta-btn" onclick="compsCarpeta()">📁 Armar la carpeta en Drive</button></div><div id="comps-carpeta"></div>';
+}
+/* 📁 (25/10, §4mg C2; dueño: «Prepáralo») «Armar la carpeta en Drive»: el servidor (`.gs` 2026-10-25-a, acción `compsCarpeta`) COPIA
+   cada foto con su nombre a «Comprobantes para el contador / Comprobantes AAAA-MM» y devuelve el enlace. De a tandas de `COMPS_TANDA`
+   (el servidor corta a los ~4 min y devuelve lo que falta); volver a tocar no duplica (lo que ya está, lo saltea). ⚠️ Con un servidor
+   anterior NO se llama: una acción que no conoce la trataría como un guardado. */
+var COMPS_SERVIDOR='2026-10-25-a', COMPS_TANDA=40;
+function compsCarpetaServidorOk(){ return String(SERVER_VER||'')>=COMPS_SERVIDOR; }
+function compsCarpeta(){
+  var mes=(document.getElementById('comps-mes')||{}).value, box=document.getElementById('comps-carpeta'), btn=document.getElementById('comps-carpeta-btn'); if(!mes || !box) return;
+  var aviso=function(t, mal){ box.innerHTML='<div class="cps-carpeta'+(mal?' cps-carpeta-mal':'')+'">'+t+'</div>'; };
+  if(!CONNECTED){ aviso('Sin conexión con la planilla: la carpeta la arma el servidor de Google.', true); return; }
+  if(!compsCarpetaServidorOk()){ aviso('📁 Para armar la carpeta hace falta la versión <b>'+COMPS_SERVIDOR+'</b> del servidor de Google'+(SERVER_VER?(' (está la <b>'+esc(SERVER_VER)+'</b>)'):'')+'. Mientras tanto, el Excel con los enlaces.', true); return; }
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), arch=[];
+  compsMesDatos(mes).forEach(function(x){ x.comps.forEach(function(fid, i){ arch.push({ id:fid, nombre:compsArchivo(x, i) }); }); });
+  if(!arch.length){ aviso('No hay fotos para copiar en ese mes.', true); return; }
+  var tot=arch.length, T={ copiados:0, yaEstaban:0, ajenas:0, fallaron:0 }, carpeta=null, vueltas=0;
+  if(btn) btn.disabled=true;
+  var avance=function(){ var h=T.copiados+T.yaEstaban+T.ajenas+T.fallaron; aviso('⏳ Copiando las fotos a Drive: <b>'+h+' de '+tot+'</b>…<div class="cps-barra"><i style="width:'+Math.round(100*h/tot)+'%"></i></div>'); };
+  var fin=function(err){
+    if(btn) btn.disabled=false;
+    var h=T.copiados+T.yaEstaban;
+    if(err && !carpeta){ aviso('No se pudo armar la carpeta: '+esc(motivoDeError ? motivoDeError(err) : String(err))+'. Probá de nuevo: lo que ya se copió no se repite.', true); return; }
+    aviso('✅ Carpeta lista: <b>'+esc(carpeta.nombre)+'</b> · '+h+' de '+tot+' fotos'+(T.yaEstaban?(' ('+T.yaEstaban+' ya estaban)'):'')+
+      ((T.ajenas||T.fallaron)?('<br><span style="color:#B45309">⚠️ '+(T.ajenas+T.fallaron)+' no se pudieron copiar'+(T.ajenas?' (no están en la carpeta de fotos del panel)':'')+'.</span>'):'')+
+      (err?'<br><span style="color:#B45309">⚠️ Se cortó antes de terminar: tocá otra vez y sigue donde quedó.</span>':'')+
+      '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><a class="ah-go ah-go-p" href="'+esc(carpeta.url)+'" target="_blank" rel="noopener">📂 Abrir la carpeta</a>'+
+      '<button type="button" class="ah-go" onclick="copyText(\''+esc(carpeta.url)+'\')">📋 Copiar el enlace</button></div>'+
+      '<small style="display:block;margin-top:6px;color:#55706f">La carpeta es tuya: para que la vea el contador, compartila desde Drive.</small>');
+  };
+  var lote=function(rest){
+    if(!rest.length || vueltas>60) return fin();
+    vueltas++; avance();
+    var t=rest.slice(0, COMPS_TANDA), resto=rest.slice(COMPS_TANDA);
+    return apiPost({ action:'compsCarpeta', mes:mes, vendedor:vend, archivos:t }).then(function(res){
+      if(!res || !res.ok) throw new Error((res && res.error) || 'sin_respuesta');
+      ['copiados','yaEstaban','ajenas','fallaron'].forEach(function(k){ T[k]+=Number(res[k])||0; });
+      if(res.carpeta) carpeta=res.carpeta;
+      return lote((res.pendientes||[]).concat(resto));
+    });
+  };
+  return lote(arch).catch(function(e){ fin(e); });
 }
 function compsExcel(){
   var mes=(document.getElementById('comps-mes')||{}).value; if(!mes) return;
