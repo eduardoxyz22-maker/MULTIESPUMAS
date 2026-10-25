@@ -936,10 +936,16 @@ código. ⚠️ `CODIGOS[k].d` NO cambia (es la clave del stock). Escrito a mano
 del stock y lo dice («✓ Lo reconocí…»); no pisa uno escrito, no toca un renglón que ya traía el pedido (`data-orig`: el código es parte de
 `prodClave`), nada en medida especial. `tests/test_colchon_nombre.js` (20).
 
-## ✨ Mis pedidos arriba (§4mf, 25/10; en la rama, sin publicar)
+## ✨ Mis pedidos arriba (§4mf, 25/10, PUBLICADO `de2c36b`)
 Con un vendedor elegido: «📋 Para hacer» (`misHacerDatos`, con «✅ Al día») + «☀️ Tu día» (`misTopPintar`; 💵 efectivo desde el último retiro,
 `misEfectivoDatos`) y la bandeja de Kommo en filas (`borrBandejaCompacta`). En Playwright apagado salvo `MIS_TOP_PRUEBA`. «Ver todos» y la
 fábrica de Eduardo, igual. `tests/test_mis_arriba.js` (14).
+
+## ✨ Contabilidad y Stock arriba, colores, cargando y vacíos (§4mg, 25/10; en la rama, sin publicar)
+V2 `cxTopPintar` (Para hacer + libro en Bs por marca; lee `CX_TOP_M`/`CX_TOP_MK`/`cxMarcasDatos`, no cuenta nada; `.cx-nuevo` esconde lo
+viejo; clase `cx-libro`, nunca `.lb`). V3 `stkTopPintar` (4 fichas + «Más» en la barra de Stock; `.s3-on`). V5 `ahBotonCls` (rojo arreglar,
+ámbar revisar, turquesa lo demás). V6 `esqCargando`/`esqMisHtml`/`esqContaHtml`. V7 `vacioPoner` (misma frase + dibujo). En Playwright
+apagados salvo `CX_TOP_PRUEBA`, `STK_TOP_PRUEBA`, `MIS_TOP_PRUEBA`. Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`.
 
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
 `showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres

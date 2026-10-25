@@ -15820,7 +15820,7 @@ usá bien los espacios»*; después: *«Stock y reposición y ROHO los quiero ab
   de Herramientas otra vez vuelve a los pedidos** (dice «← tocá de nuevo para volver a los pedidos»). `test_adm_arriba` (26). Batería en la copia
   publicada: solo los rojos de siempre.
 
-### §4mf — 🛏️ «COLCHON» en la lista y el código que se pone solo (25/10, PUBLICADA `6f3b393`) · ✨ Mis pedidos arriba (25/10, en la rama)
+### §4mf — 🛏️ «COLCHON» en la lista y el código que se pone solo (25/10, PUBLICADA `6f3b393`) · ✨ Mis pedidos arriba (25/10, PUBLICADA `de2c36b`)
 **El pedido del dueño** (25/10): María cargó para el 31/10 «COLCHON TITANIO LATEX» y «COLCHON ORO ANATOMICO» escritos a mano y quedaron SIN
 código; *«si escribo Colchon titanio no sale nada… si pongo titanio látex sí sale y se coloca el código, pero no dice Colchon»*. Eligió la 1
 (código solo) y la 2 (COLCHON en la lista).
@@ -15840,7 +15840,7 @@ código; *«si escribo Colchon titanio no sale nada… si pongo titanio látex s
 - **Skills** en `.claude/skills` (c8908f6, MIT): find-skills, month-end-close, ipados-design-guidelines, ui-ux-pro-max, web-design-guidelines
   (+ `guidelines.md`), systematic-debugging, verification-before-completion. skills.sh está bloqueado desde el contenedor; `npx skills add` anda.
 
-**✨ Mis pedidos arriba (en la rama, todavía NO publicado)** — el dueño aprobó las muestras V1 + T2 + Kommo compacto («ok aprobado»; pidió
+**✨ Mis pedidos arriba (PUBLICADA 25/10, `de2c36b`; Pages OK; probada en `main` con la planilla real, María Flores)** — el dueño aprobó las muestras V1 + T2 + Kommo compacto («ok aprobado»; pidió
 que las dos tarjetas queden simétricas, sin blanco abajo):
 - Con un vendedor elegido (`misTopActivo`; en Playwright salvo `MIS_TOP_PRUEBA`), `#mis-top` = «📋 Para hacer» (`misHacerDatos`: sin stock,
   atrasados, avisar mañana, recargo, sin ubicación, Kommo, saldo del mes, bot; lo que está en 0 va a «✅ Al día») + «☀️ Tu día»
@@ -15851,3 +15851,24 @@ que las dos tarjetas queden simétricas, sin blanco abajo):
 - 📥 **Kommo compacto** (`borrBandejaCompacta`/`borrFilaHtml`): dos grupos («parecen ya cargadas» con `gemeloDe`, «nuevas»), 3 de cada uno, los
   mismos botones (`borrEsLaMisma`, `verFichaGemela`, `completarBorrador`, `descartarBorrador`). Administración sigue con la tarjeta grande.
 - `tests/test_mis_arriba.js` (14).
+
+### §4mg — Contabilidad, Stock, colores, cargando y vacíos (25/10, en la rama `15040a0`…`d97bba3`, sin publicar)
+El dueño aprobó (24-25/10) las muestras V2, V3, V5, V6 y V7 y el orden: V1 → V2 → V5 → V3 → V6+V7 → V4 → C2+C3.
+- **V2 · Contabilidad → Ventas arriba** (`cxTopPintar`, `#cx-top`; dueño: *«contabilidad usa números, no %… no sé cuánto lleva vendido Sueña
+  o Heaven»* y *«no tarjetas dentro de tarjetas»*): «📋 Para hacer» (`cxHacerDatos`: pagos sin terminar, dos veces, con saldo, cobradas de
+  más, sin monto, recargos por cobrar, cobradas sin marcar, por cargar; «Ver» filtra la tabla con `cxTopFiltro` → `CX_FILTRO`, dos filtros
+  nuevos sin chip: `exc` y `envf`) + el libro del período (vendido / cobrado / falta en Bs, la barra, una línea por marca con lo que le falta,
+  y los botones de siempre). ⚠️ No cuenta nada: lee `CX_TOP_M` (de `renderContaMetrics`), `CX_TOP_MK` (de `renderContaMarcas`) y
+  `cxMarcasDatos`. `.cx-nuevo` esconde fichas, grupos, barra, dona y el cartel de dos veces (se siguen armando). Mayoristas: como antes.
+  En Playwright apagado salvo `CX_TOP_PRUEBA`. ⚠️ La clase del libro es `cx-libro`: `.lb` ya es la etiqueta de los campos.
+  Real (24/10): 667.545 = Sueña 187.670 + Heaven 475.035 + sin marca 4.840. `tests/test_conta_arriba.js` (23).
+- **V3 · Stock arriba** (`stkTopPintar`, `#stk-top` dentro de la barra): 4 fichas (Subir los Excel del día —rojo si falta el del último día
+  hábil, `stockCortesViejos`—, Revisión automática con los números de `stockCintaGrupos`, Pedido a producción, Banzer o PTF) + «Más» (6).
+  `.s3-on` esconde `.stk-acc` (que en pantalla ancha es `display:contents`). En Playwright apagado salvo `STK_TOP_PRUEBA`.
+  `tests/test_stock_arriba.js` (9).
+- **V5 · un estilo de botón en «Para hacer»** (`ahBotonCls`): rojo sólido #CE2939 = arreglar, ámbar = revisar, turquesa sólido = lo de siempre,
+  turquesa claro = lo demás (`.ah-go` pasó a turquesa claro). En las tres listas (Mis pedidos, Contabilidad, Administración).
+- **V6 · esqueletos** (`esqCargando`: sin `STATE` y cargando): `esqMisHtml`/`esqContaHtml`; `refreshConta` lo pinta antes de esperar a
+  `apiList`. **V7 · vacíos con dibujo** (`vacioPoner`, `VACIO_SVG`): la MISMA frase de antes + dibujo + botones; con la vista de antes, solo
+  texto (las pruebas la leen). `tests/test_vacio_cargando.js` (8).
+- `test_mis_arriba` y `test_colchon_nombre` imprimían «N bien, M mal» y `correr.sh` los leía «sin resumen»: ahora «·».
