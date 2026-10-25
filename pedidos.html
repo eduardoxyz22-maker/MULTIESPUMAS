@@ -4654,6 +4654,16 @@ function queuePending(rec){
 
 /* 02/10, §4hh: pagos, retiros, entregas, stock y arqueos conservan el intento ANTES
    del transporte, incluso mientras esperan otro guardado del mismo id. */
+/* 🔑 (25/10, auditoría Codex/Astra ORD-2) Un guardado que Administración FORZÓ (día cerrado, turno lleno, con la clave) y que se quedó en
+   la cola sin señal se reenviaba SIN `forzar`: el servidor lo rechazaba por «día cerrado» y salía de la cola. La fila no lleva la marca
+   (viajaría a la planilla y la copiaría la pantalla); se anota aparte, en este aparato, con el texto EXACTO de lo que quedó en la cola:
+   solo ESA copia sale forzada (con la clave de Administración si está, `ADMIN_KEY_LOCAL`, y el servidor la vuelve a mirar). Una
+   corrección posterior del mismo pedido ya no coincide y va normal. */
+var LS_FORZAR_COLA='me_forzar_cola';
+function forzarColaLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_FORZAR_COLA)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
+function forzarColaAnotar(id, txt){ try{ var m=forzarColaLeer(); m[String(id)]=txt; localStorage.setItem(LS_FORZAR_COLA, JSON.stringify(m)); }catch(e){} }
+function forzarColaEs(rec){ var m=forzarColaLeer(), t=m[String(rec&&rec.id)]; return !!t && t===JSON.stringify(rec); }
+function forzarColaOlvidar(id){ try{ var m=forzarColaLeer(); if(m[String(id)]==null) return; delete m[String(id)]; localStorage.setItem(LS_FORZAR_COLA, JSON.stringify(m)); }catch(e){} }
 function colaQuitarExacta(txt){
   if(!txt) return;
   setPending(getPending().filter(function(p){ return JSON.stringify(p)!==txt; }));
@@ -5501,6 +5511,7 @@ function apiSaveAhora(rec, opts){
   }
   var cola=getPending().filter(function(q){ return q && q.id===rec.id && (sis ? q.observaciones===rec.observaciones : JSON.stringify(q)===JSON.stringify(rec)); })[0];
   var colaTxt=cola ? JSON.stringify(cola) : '';
+  if(opts && opts.forzar && colaTxt) forzarColaAnotar(rec.id, colaTxt);   // (25/10, ORD-2) si se queda en la cola, sigue siendo forzado
   var envio=rec;
   if(sis || rec._altaPendiente){ envio={}; for(var _k in rec){ if(Object.prototype.hasOwnProperty.call(rec,_k) && _k!=='_base' && _k!=='_dev' && _k!=='_t' && _k!=='_altaPendiente') envio[_k]=rec[_k]; } }
   var payload={action:'save', pedido:envio};
@@ -5987,14 +5998,15 @@ function flushPending(){
     return chain.then(function(){
       // (02/10, §4hg) El formulario ya está en cola ANTES del envío: no duplicar ese envío ni
       // poner su foto vieja detrás de una corrección que esté esperando turno.
-      if(SAVE_EN_VUELO[rec.id] || SAVE_EN_ESPERA[rec.id]) return;
+      if(SAVE_EN_VUELO[rec.id] || SAVE_EN_ESPERA[rec.id] || (typeof REESCRITA_ESPERA!=='undefined' && REESCRITA_ESPERA[rec.id])) return;
       /* (26/09) Los días cerrados y las tildes de la carga se reescriben ENTERAS: lo que quedó acá sin señal
          se rearma con la planilla de ahora (`mandarReescritaDeCola`); mandado tal cual pisaba lo que otra
          computadora cambió mientras tanto. Las demás filas, como siempre. */
-      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec);
+      var forz=forzarColaEs(rec);   // (25/10, ORD-2) lo que Administración forzó, forzado sigue
+      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec, forz ? {forzar:true} : undefined);
       return envio.then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
-        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])) listos[String(rec.id)]=enviado;
+        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])){ listos[String(rec.id)]=enviado; if(forz) forzarColaOlvidar(rec.id); }
         if(res && !res.ok && RECHAZOS_FIRMES[res.error]) rechazados++;
       }, function(){});
     });
@@ -15891,7 +15903,7 @@ function rechazoTxt(err){
    de un aviso que parece una falla. Acá se cuenta solo lo que de verdad espera: lo que no tiene un envío en curso.
    `apiSave` repinta el pie cuando el envío termina (`fin`), así lo que falló aparece en el acto. */
 function colaEsperando(){
-  return getPending().filter(function(p){ var id=p && p.id; return !(id && (SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id])); });
+  return getPending().filter(function(p){ var id=p && p.id; return !(id && (SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (typeof REESCRITA_ESPERA!=='undefined' && REESCRITA_ESPERA[id]))); });
 }
 function renderColaAviso(){
   var el=document.getElementById('mis-cola'); if(!el) return;
@@ -18161,16 +18173,24 @@ function mandarReescritaDeCola(rec){
    (26/09) Y antes se relee la planilla: con dos cargadores a la vez ganaba el último y lo tildado por el
    otro desaparecía (lo mismo que los días cerrados, 7ee6160). */
 var _cargaT=null;
+/* (25/10, auditoría Codex/Astra FLW-2) Mientras corre el respiro de 700 ms la tilde YA está en la cola de este aparato (con sus
+   `_cambios`): si se recarga la página o se corta la señal en ese medio segundo, la cola la manda después y el otro aparato la ve.
+   Antes vivía solo en la copia local y en la memoria: recargar la perdía. Mientras el temporizador la va a mandar, `flushPending`
+   no la manda dos veces (`REESCRITA_ESPERA`). */
+var REESCRITA_ESPERA={};
 function guardarCargaChk(){
   saveCargaMirror();
   cargaSyncSet('guardando');                            // (§4jh)
   reescritaColaAlDia(CARGA_ID, CARGA_CAMBIOS);
+  try{ reescritaEncolar(filaCarga(), CARGA_CAMBIOS); }catch(e){}
+  REESCRITA_ESPERA[CARGA_ID]=1;
   clearTimeout(_cargaT);
   _cargaT=setTimeout(function(){
+    var listo=function(){ delete REESCRITA_ESPERA[CARGA_ID]; };
     var mandar=function(){
       var cam=reescritaCambios(CARGA_ID, CARGA_CAMBIOS), fila=reescritaConSello(filaCarga());   // (26/09) con el sello con el que se leyó
-      apiSave(fila, { juntar:true }).then(function(res){ if(res&&res.ok){ reescritaConfirmada(CARGA_ID, cam, (res.pedido && String(res.pedido.id)===CARGA_ID) ? res.pedido : fila); cargaSyncSet('ok'); } else { reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); } },
-                         function(){ reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); });
+      apiSave(fila, { juntar:true }).then(function(res){ listo(); if(res&&res.ok){ reescritaConfirmada(CARGA_ID, cam, (res.pedido && String(res.pedido.id)===CARGA_ID) ? res.pedido : fila); cargaSyncSet('ok'); } else { reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); } },
+                         function(){ listo(); reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); });
     };
     if(CONNECTED){
       conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
@@ -18181,7 +18201,7 @@ function guardarCargaChk(){
         saveCargaMirror(); renderCargaSiActiva();
       }, function(){}).then(mandar, mandar);
     }
-    else { reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); }
+    else { delete REESCRITA_ESPERA[CARGA_ID]; reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); }
   }, 700);
 }
 function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
@@ -22901,7 +22921,7 @@ function guardarUbicacion(p, norm, reopen, deVendedora){
         : (_mapsAntes ? '📍 cambió la ubicación' : '📍 le pusieron ubicación') ]);
     }
     upsert(p); saveMirror();
-    if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+    guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
     if(UNLOCKED) renderAdmin();
     refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
     toast(msg, tipo||'ok');
@@ -35672,7 +35692,7 @@ function setEstado(id,val){
   var p=findById(id); if(!p) return;
   p.estado=(p.estado===val)?'':val; // tocar el mismo lo desmarca
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   reabrirFicha(id);
 }
 function toggleEntregado(id){
@@ -36572,7 +36592,7 @@ function setProdProduccion(id, idx, lugar){
   if(x.chk==='prod') x.chk = apagar ? '' : 'no';   // migrar el valor viejo a la marca nueva
   syncVerificado(p, apagar);   // el "Estado de stock" de abajo se marca solo: ya se pidió a fábrica (apagar el 🏭 lo corrige)
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   reabrirFicha(id);
 }
 /* Estado deducido de los tildes, para verlo AL LADO de los productos sin abrir la ficha.
@@ -36669,7 +36689,7 @@ function setProdChk(id, idx, val, de){
   if(x.chk==='ok' && enProduccion(x) && x.prodF && !x.prodR){ x.prodR=todayStr(); x.prodRt=Date.now(); }   // llegó lo pedido a fábrica (§4co); 🏭 (25/10) con la hora: ¿antes o después del Excel de hoy?
   syncVerificado(p, eraNo && x.chk!=='no');   // (§4ls, corrector) sacar una ✗ corrige el «No hay» que salía de ella
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   reabrirFicha(id);
 }
 /* ---- Color de la fila del pedido (misma regla para la tabla y para el Excel) ----
@@ -36953,7 +36973,7 @@ function toggleVerificado(id){
   var p=findById(id); if(!p) return;
   p.verificado=!p.verificado;
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok');
   reabrirFicha(id);
 }
