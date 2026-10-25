@@ -16,11 +16,17 @@ LO QUE CUIDA:
   CRM-03  La vendedora que vendió el mes pasado y este mes no tiene nada sigue contando en el mes anterior: previo
           Ana 1.000 + Beto 9.000 = 10.000 (antes 1.000, porque el equipo salía solo de las que tienen algo este mes).
           Aparece en el equipo con 0 este mes y la marca `soloPrev`.
+  CRM-02  (§4mk) Si Kommo no trae el campo «Fecha contrato», no se publica (lo cerrado saldría por fecha de creación).
+  CRM-05  (§4mk) Una venta con contrato el día 7 a las 22:00 de Bolivia es de la semana 1 (días 1-7), también con el reloj del
+          runner en UTC (ahí ya es el día 8).
+  CRM-07  (§4mk) Una venta con contrato a las 23:59:59 del último día es de ESTE mes.
 
 Se corre:  python3 tests/test_generar_integridad.py
 Dientes:   GENERAR_DIR=/carpeta/con/el/viejo python3 tests/test_generar_integridad.py
 """
-import io, json, os, re, sys, tempfile, contextlib, urllib.parse, urllib.error
+import io, json, os, re, sys, tempfile, contextlib, urllib.parse, urllib.error, time
+
+os.environ["TZ"] = "UTC"; time.tzset()   # como el runner de GitHub Actions: lo que dependa del reloj de la máquina se ve acá
 
 os.environ["KOMMO_TOKEN"] = "tok_de_mentira_1234567890"
 os.environ["KOMMO_SUBDOMAIN"] = "eanez"
@@ -62,6 +68,7 @@ PREV = [lead(2, ANA, P1, P1, 1000), lead(3, BETO, P1, P1, 9000)]
 
 class Falla(Exception):
     pass
+SIN_CONTRATO = False
 
 def fabricar_urlopen(fallar=None):
     """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None."""
@@ -85,8 +92,9 @@ def fabricar_urlopen(fallar=None):
         elif path == "/users":
             body = emb("users", [{"id": ANA, "name": "Ana Prueba - Central"}, {"id": BETO, "name": "Beto Prueba - Central"}])
         elif path == "/leads/custom_fields":
-            body = emb("custom_fields", [{"id": CANAL, "name": "Canal", "type": "select", "enums": [{"id": 1, "value": "Facebook"}]},
-                                         {"id": CONTRATO, "name": "Fecha contrato", "type": "date"}])
+            cfs = [{"id": CANAL, "name": "Canal", "type": "select", "enums": [{"id": 1, "value": "Facebook"}]}]
+            if not SIN_CONTRATO: cfs.append({"id": CONTRATO, "name": "Fecha contrato", "type": "date"})
+            body = emb("custom_fields", cfs)
         elif path == "/leads/loss_reasons": body = emb("loss_reasons", [])
         elif path == "/events": body = emb("events", [])
         elif path == "/contacts": body = emb("contacts", [])
@@ -174,6 +182,27 @@ chk("4. token vencido (todo da 401) → NO se publica un panel en cero", pd is N
 salio, pd, txt, archivos = correr(lambda path, q: 500 if path in ("/contacts", "/leads/loss_reasons") else None)
 chk("5a. sin teléfonos ni razones de pérdida el panel sale igual", pd is not None and salio in (None, 0), (salio, archivos))
 chk("5b. …y el diagnóstico lo dice", pd is not None and "/contacts" in txt, txt[-300:])
+
+# ── 7 · CRM-02: Kommo contesta, pero sin el campo «Fecha contrato» ───────────────────────────────
+SIN_CONTRATO = True
+salio, pd, txt, archivos = correr()
+SIN_CONTRATO = False
+chk("7. sin el campo «Fecha contrato» NO se publica (lo cerrado saldría por fecha de creación)", pd is None and salio not in (None, 0) and "Fecha contrato" in txt, (salio, archivos, txt[-300:]))
+
+# ── 8 · CRM-05 y CRM-07: el día y el último segundo, en hora de Bolivia con el reloj en UTC ───────────
+_CUR0 = CUR[:]
+D7_22 = ts_dia(G.m_start, 7, 22)                 # día 7, 22:00 de Bolivia = día 8, 02:00 UTC
+FIN = int(G.m_end.timestamp())                   # el último segundo del mes
+CUR = _CUR0 + [lead(5, ANA, M1, D7_22, 500), lead(6, ANA, M1, FIN, 700)]
+salio, pd, txt, archivos = correr()
+CUR = _CUR0
+if pd:
+    ana = {t["name"]: t for t in pd["team"]}.get("Ana Prueba", {})
+    wc = (ana.get("weekly") or {}).get("c") or []
+    chk("8a. CRM-05: la venta del día 7 a las 22:00 de Bolivia cuenta en la semana 1 (días 1-7), no en la 2", len(wc) >= 2 and wc[0] >= 2, wc)
+    chk("8b. CRM-07: la venta de las 23:59:59 del último día es de este mes (3 cierres: 1.000 + 500 + 700)", pd["global"]["cierres"] == 3 and pd["global"]["cerrado"] == 2200, pd["global"])
+else:
+    chk("8. (el panel con las ventas de borde no se escribió)", False, txt[-300:])
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())

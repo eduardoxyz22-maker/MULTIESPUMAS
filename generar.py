@@ -446,7 +446,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         # semana del mes (0..4) por fecha de creación + conteo "mismo día"
         _cre = ld.get("created_at", 0)
         try:
-            _day = datetime.datetime.fromtimestamp(_cre).day
+            _day = datetime.datetime.fromtimestamp(_cre, BOL_TZ).day   # (25/10, CRM-05) el día en Bolivia, no en el reloj del runner (UTC)
         except Exception:
             _day = 1
         _wk = min(4, (_day - 1) // 7)
@@ -542,7 +542,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             dd["pipeline"] += price; _pipe_seen.add(ld.get("id"))
         _ct = ld.get("_contract_ts") or 0
         try:
-            _cd = datetime.datetime.fromtimestamp(_ct).day
+            _cd = datetime.datetime.fromtimestamp(_ct, BOL_TZ).day
         except Exception:
             _cd = 1
         _wk = min(4, (_cd - 1) // 7)
@@ -1173,12 +1173,13 @@ def build_history(pd):
         """Adapta el formato viejo (window.DASH, p.ej. el panel de mayo) al moderno.
         'cerrado' sale de la etapa Compradores (es el 'Cerrado en el mes' de ese panel)."""
         G0 = d.get("global") or {}
-        cerr = 0
+        cerr = None
         for s in (d.get("stages") or []):
             if "comprador" in str(s.get("name", "")).lower():
                 cerr = s.get("value", 0) or 0
+        # (25/10, CRM-08) Un Compradores en 0 es un cero de verdad: el pipeline va solo si ese panel no tenía la etapa.
         G = {"leads": G0.get("leads", 0), "cierres": G0.get("cierres", 0),
-             "cerrado": cerr or G0.get("pipeline", 0), "ticket": G0.get("ticket", 0)}
+             "cerrado": cerr if cerr is not None else (G0.get("pipeline", 0) or 0), "ticket": G0.get("ticket", 0)}
         team = [{"name": (t.get("name", "").split(" - ")[0]).strip(),
                  "leads": t.get("leads", 0), "cierres": t.get("cierres", 0),
                  "value": t.get("value", 0), "ticket": t.get("ticket", 0)}
@@ -1248,7 +1249,7 @@ def build_wsp(pd):
         G, M, team = pd["global"], pd["metrics"], pd["team"]
         def bs(v): return f"{int(round(v)):,}".replace(",", ".")
         conv = round(G["cierres"] / G["leads"] * 100, 1) if G["leads"] else 0
-        hoy = datetime.date.today().strftime("%d/%m")
+        hoy = now.strftime("%d/%m")   # (25/10) la fecha de Bolivia: `date.today()` es la del runner (UTC) y después de las 20:00 decía mañana
         rank = sorted(team, key=lambda t: (t["cierres"], t["value"]), reverse=True)
         medals = ["🥇", "🥈", "🥉"] + ["•"] * 10
         rank_lines = "\n".join(
@@ -1687,12 +1688,15 @@ def main():
             if cts is None:
                 continue
             ld["_contract_ts"] = cts
-            if ms <= cts < me:
+            if ms <= cts <= me:          # (25/10, CRM-07) `me`/`pe` son las 23:59:59 del último día: ese segundo es del mes
                 won.append(ld)
-            elif ps <= cts < pe:
+            elif ps <= cts <= pe:
                 won_prev.append(ld)
     else:
         print("  ⚠ no encontré campo 'Fecha contrato'; uso estado actual", file=sys.stderr)
+        # 🛡️ (25/10, auditoría CRM-02) Sin ese campo, «cerrado» saldría por la fecha de CREACIÓN del lead: otro número que el de Kommo
+        # filtrando por «Fecha contrato». Es una fuente financiera obligatoria: no se publica (el panel se queda con su último dato bueno).
+        _FALLAS.append("no encontré el campo «Fecha contrato» (tipo fecha) en los campos de los leads: sin él, lo cerrado se contaría por la fecha de creación")
         for ld in cur:
             if stage_map.get(ld.get("status_id"), {}).get("cls") == "compradores":
                 ld["_contract_ts"] = ld.get("created_at", 0); won.append(ld)
@@ -1734,7 +1738,7 @@ def main():
         if pr <= 0 or cls in ("perdido", "compradores"):
             continue
         try:
-            _pday = datetime.datetime.fromtimestamp(ld.get("created_at", 0)).day
+            _pday = datetime.datetime.fromtimestamp(ld.get("created_at", 0), BOL_TZ).day
         except Exception:
             _pday = 1
         if _pday <= CURDAY:
@@ -1744,7 +1748,7 @@ def main():
     for ld in won_prev:
         pr = ld.get("price") or 0
         try:
-            _pcd = datetime.datetime.fromtimestamp(ld.get("_contract_ts") or 0).day
+            _pcd = datetime.datetime.fromtimestamp(ld.get("_contract_ts") or 0, BOL_TZ).day
         except Exception:
             _pcd = 1
         if pr > 0 and _pcd <= CURDAY:

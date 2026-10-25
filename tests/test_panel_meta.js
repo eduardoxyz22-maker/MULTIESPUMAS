@@ -7,6 +7,7 @@
       PROYECCIÓN, o sea lo que hay que sumar encima del ritmo, comparado con el ritmo de hoy).
    2. CRM-03: la vendedora que solo trabajó el mes anterior aparece con «SIN LEADS ESTE MES» y ninguna vista se rompe ni
       muestra NaN con ella en 0.
+   3. CRM-06 (§4mk): una meta puesta en 0 en este aparato es 0 también en la Proyección (antes volvía a la de fábrica, 400.000).
 
    Los datos los arma el generador DE VERDAD contra el Kommo de mentira de tests/test_generar_integridad.py (--solo-datos);
    acá solo se ajustan la fecha y los montos del caso. Sin red.
@@ -36,10 +37,10 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
   const ctx = await browser.newContext({ viewport: { width: 1500, height: 1000 } });
   await ctx.route(/^https?:\/\//, r => r.abort());
   const errores = [];
-  const abrir = async (vista) => {
+  const abrir = async (vista, metas) => {
     const page = await ctx.newPage();
     page.on('pageerror', e => errores.push(vista + ': ' + (e.stack || e.message)));
-    await page.addInitScript((v) => { try { localStorage.clear(); localStorage.setItem('heaven_view', v); } catch (e) {} }, vista);
+    await page.addInitScript(([v, m]) => { try { localStorage.clear(); localStorage.setItem('heaven_view', v); if (m) localStorage.setItem('heaven_metas_monto_v2', JSON.stringify(m)); } catch (e) {} }, [vista, metas || null]);
     await page.goto('file://' + tmp);
     await page.waitForTimeout(900);
     const txt = await page.evaluate(() => document.body.innerText);
@@ -64,6 +65,9 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
   chk('2a. la marca «SIN LEADS ESTE MES» aparece en el dashboard', marca > 0, marca + ' vistas');
   chk('2b. ninguna vista muestra NaN/Infinity con una vendedora en 0', !nan.length, nan.join(', '));
   chk('2c. el dashboard abre todas las vistas sin errores de JavaScript', !errores.length, errores[0]);
+
+  const proy0 = await abrir('proyeccion', { 'Ana Prueba': 0 });
+  chk('3. CRM-06: con la meta de Ana puesta en 0, la Proyección no vuelve a la de fábrica (400.000) y dice que no hay meta', !/400[.,]000/.test(proy0) && /No hay meta cargada/.test(proy0), (proy0.match(/La proyecci[oó]n base[^\n]*/) || [''])[0] || proy0.slice(0, 200));
 
   await browser.close();
   console.log(`\n${PASS} bien · ${FAIL} mal`);
