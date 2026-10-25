@@ -11326,11 +11326,14 @@ function ctaGuardarPago(id, i, igual){
        `mxM=0`, se los borraba del historial, del Cuadre y de los dos Excel. Es la MISMA plata
        del mismo adelanto pagado en dos veces: se mueven juntos. */
     if(mx && (f!==antF || nota!==antN)){
+      /* ⚠️ (25/10, auditoría Codex/Astra FIN-03) EL que `mixtoDe` eligió (el que cierra el «A cuenta»), no el PRIMERO del mismo día y
+         recibo: con «QR 800 + Efectivo 400» de adelanto y un cobro aparte «Efectivo 100» del mismo día y recibo, se movía el de 100 y el
+         mes quedaba corrido 300. Mismo método, banco, monto, día y recibo que el elegido. */
+      var _esMx=function(_mc){ return !esEnvio(_mc) && _mc.fecha===antF && limpiaNota(_mc.nota)===antN && r2(Number(_mc.monto)||0)===mxM &&
+        String(_mc.metodo||'')===String(mx.metodo||'') && String(_mc.banco||'')===String(mx.banco||''); };
       for(var _mi=0;_mi<cobros.length;_mi++){
         var _mc=cobros[_mi];
-        if(!esEnvio(_mc) && _mc.fecha===antF && limpiaNota(_mc.nota)===antN && (Number(_mc.monto)||0)>0){
-          _mc.fecha=f; _mc.nota=nota; break;
-        }
+        if(_esMx(_mc)){ _mc.fecha=f; _mc.nota=nota; break; }
       }
     }
     p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
