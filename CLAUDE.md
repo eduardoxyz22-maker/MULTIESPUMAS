@@ -999,10 +999,10 @@ El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»
   dispara el workflow del panel.
 - Pruebas: `test_flw1_precios`, `test_efectivo_tu_dia`, `test_marcas_durables`, `test_form_foco`, `test_comprobantes_pagos`, `test_recogidas_moreno`,
   `test_existencias_bordes`, `test_mixto_mover`, `test_proyeccion_auditoria`, `test_teclado_320` (+ `test_generar_integridad`, `test_panel_meta`).
-- **§4ml (EN LA RAMA)**: «Quién vendió qué» sin los pedidos internos; el centavo del flete; **`saldoACobrar(p)`** (0 para ATC/RPT) en chofer, Entregas,
+- **§4ml (PUBLICADO 25/10, `003a095`)**: «Quién vendió qué» sin los pedidos internos; el centavo del flete; **`saldoACobrar(p)`** (0 para ATC/RPT) en chofer, Entregas,
   Envío, Hoja de ruta y Reporte —⚠️ un total nuevo de «por cobrar» del camión usa esa función—; la barra de pasos con cantidades válidas; deudas
   «sin fecha»/«fecha futura» (`deudaEdad`); «De dónde sale lo vendido» con centavos; la mediana de `precioTipico`. `tests/test_codex_f1b5.js`.
-- **🪙 §4mm (EN LA RAMA) el centavo cuenta**: toda comparación de plata va contra **0.005**, nunca 0.01 (los montos ya vienen en centavos, `r2`).
+- **🪙 §4mm (PUBLICADO 25/10, `003a095`) el centavo cuenta**: toda comparación de plata va contra **0.005**, nunca 0.01 (los montos ya vienen en centavos, `r2`).
   ⚠️ Una comparación de plata NUEVA, igual. `tests/test_centavo_exacto.js`.
 
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)

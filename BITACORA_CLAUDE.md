@@ -16058,7 +16058,7 @@ contra `main` (`cd0c73d`) y verde en la rama.
   0 campos sin nombre, 150 fichas en Administración sin correr de costado, Proyección octubre «en curso», efectivo de «Tu día» = el del Cuadre,
   Comprobantes con el foco adentro.
 
-### §4ml — El informe de Codex/Astra sobre `f1b5fe2` (el tercero del 25/10): lo que todavía no estaba (EN LA RAMA, `df19e6d`)
+### §4ml — El informe de Codex/Astra sobre `f1b5fe2` (el tercero del 25/10): lo que todavía no estaba (PUBLICADA 25/10 13:42 de Bolivia, `003a095`)
 Auditó la versión de la mañana: FIN-02, Comprobantes, `fpVisible`, F12/F13, S3, FIN-2/3/4, el mixto, «Tu día», el almacén vacío y la colisión ya
 estaban arreglados en `cd0c73d`/§4mk. Lo nuevo:
 - **FIN-19 «Quién vendió qué»** contaba un pedido INTERNO (`CONTA_INTERNOS`: FABRICA 999) como venta: ahora afuera y dicho abajo
@@ -16077,10 +16077,14 @@ estaban arreglados en `cd0c73d`/§4mk. Lo nuevo:
 - **Sin tocar**: STK-09 (legado sin `prodCu`: la auditoría recomienda revisión, no migrar), STK-02 (negativos y «1.000,00» de texto se omiten con
   aviso: política de formato), el combo como SKU propio.
 
-### §4mm — 🪙 El centavo cuenta (25/10, dueño: «Sí, hacelo exacto»; EN LA RAMA, `40fd379`)
+### §4mm — 🪙 El centavo cuenta (25/10, dueño: «Sí, hacelo exacto»; PUBLICADA 25/10 13:42 de Bolivia, `003a095`)
 Las 154 comparaciones de plata de `pedidos.html` (las encontró el parser de TypeScript, no un grep: sin comentarios ni textos) van contra 0.005 en vez
 de 0.01; quedan las dos que no son plata (la dona SVG y el sonido). `productos-mes.js` igual (`?v=20261025a`). 100,01 pagado con 100 ya no queda
 «pagada» con el saldo escondido, 0,01 de más se ve como exceso, el aviso de lo entregado sin cobrar suma 0,01 + 0,02. Planilla del 24/10: 0 de 987
 ventas a un centavo (no cambia nada de lo que existe). `tests/test_centavo_exacto.js` (6; 4 rojas contra `main`).
 - **Batería sobre la rama con §4ml + §4mm** (25/10): 249 suites, 8.081 bien, 3 rojas: `test_ventas_marcas` (la conocida), `test_asistente_rev` y
   `test_mispedidos` (las inestables de siempre: solas, 17/0 y 33/0). Espera el «publica».
+- **Publicación de §4ml + §4mm (25/10, dueño: «Publica»)**: `main` = `003a095` = `d4744f0` + SOLO `pedidos.html`, `productos-mes.js` y sus dos
+  pruebas (el diff `b2d8b4c..a458cb3`; sin §4lt-d ni el `.gs` 25-a). Batería sobre esa copia: 248 suites, 8.044 bien; rojas: `test_ventas_marcas`
+  (conocida) y `test_mispedidos` (inestable: sola 33/0). Humo con la planilla real a 390 y 1440: igual que §4mk (0 campos sin nombre, 150 fichas,
+  octubre «en curso», sin errores) y 0 ventas a un centavo.
