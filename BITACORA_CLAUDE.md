@@ -16194,3 +16194,4 @@ y `scratchpad/est2/capturas2.js`. Solo apariencia. Lo que se arregló:
 6. **La ficha en el celular (≤600)**: «Qué hacer» sin la flechita «›» suelta; cada parte en su renglón.
 Pruebas: `tests/test_estetica_4mp.js` (9 en compu, iPad parado y celular; 8 rojas contra `0b87635`). Antes/después para el dueño: la MISMA página
 del 25/10 (https://claude.ai/artifact/14zRKXRc2CWp2Wk2SHGax2, versión 2), con clientes inventados.
+Batería sobre la rama con §4mp (25/10): 253 suites, 8.168 bien; roja solo `test_ventas_marcas` (la conocida). Espera el «publica».
