@@ -101,6 +101,9 @@ label.lb .hint{font-weight:500;color:var(--muted);font-size:.68rem}
 .venta-tienda .tienda-only{display:block}
 .tienda-banner{display:none;align-items:center;gap:12px;background:#e6f2f7;border:1px solid #a9cfdf;border-left:4px solid #155e75;border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#0d4a5e}
 .venta-tienda .tienda-banner{display:flex}
+/* (25/10, §4mn, auditoría visual UI-01) El cartel de la venta de tienda se acomoda en dos renglones si hace falta: el texto ya no aplasta al
+   selector de la tienda (medía 18 px en todos los anchos y casi no se podía elegir). */
+.tienda-banner{flex-wrap:wrap}.tienda-banner>span{flex:1 1 260px;min-width:0}.tienda-banner>label{flex:none}#f-tienda-suc{min-width:170px}
 .venta-tienda #cupo-form{display:none}
 input[type=text],input[type=tel],input[type=url],input[type=number],input[type=date],input[type=month],textarea,select{
   width:100%;padding:11px 13px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;color:var(--text);background:#fff;transition:border .15s,box-shadow .15s}
@@ -2159,6 +2162,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         <div id="pry-vendedores"></div>
         <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
         <div id="pry-prueba"></div>
+        <div id="pry-hist"></div>
         <div id="pry-patron"></div>
         <div id="pry-como"></div>
       </div>
@@ -2570,8 +2574,10 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ah-go-p{background:linear-gradient(135deg,#00B5AD,#0d8f88);border-color:transparent;color:#fff;box-shadow:0 6px 14px -9px #00B5AD}
 .ah-go-p:hover{color:#fff;filter:brightness(1.05)}
 .ah-go-r{background:linear-gradient(135deg,#E8414F,#CE2939);border-color:transparent;color:#fff;box-shadow:0 6px 14px -8px #CE2939}
-.ah-go-a{background:linear-gradient(135deg,#F7A928,#E07B06);border-color:transparent;color:#fff;box-shadow:0 6px 14px -8px #D97706}
-.ah-go-r:hover,.ah-go-a:hover{color:#fff;filter:brightness(1.05)}
+/* (25/10, §4mn, auditoría visual UI-04) El naranja vivo queda; la letra va casi negra: blanco sobre este naranja daba 2:1 a 3:1 y costaba leer
+   «Ver quiénes», «Ver stock», «Sugerir camión». Con #2b1700, 8,7:1 a 5,7:1 en las dos puntas del degradé. */
+.ah-go-a{background:linear-gradient(135deg,#F7A928,#E07B06);border-color:transparent;color:#2b1700;box-shadow:0 6px 14px -8px #D97706}
+.ah-go-r:hover{color:#fff;filter:brightness(1.05)}.ah-go-a:hover{color:#2b1700;filter:brightness(1.05)}
 .ah-mas{border:0;background:transparent;color:var(--teal-dk);font:inherit;font-weight:800;font-size:.79rem;margin-top:8px;padding:5px 4px;text-align:left;cursor:pointer;border-radius:8px;line-height:1.4}
 .ah-mas:hover{background:var(--teal-lt)}
 .ah-vacio{display:flex;align-items:center;gap:12px;padding:16px 14px;border-radius:14px;background:linear-gradient(135deg,#ecfdf3,#f3fbfa);border:1px solid #c9eedb;flex:1}
@@ -2636,7 +2642,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .lb-tres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #edf3f2;padding-bottom:10px}
 .lb-tres>div{padding:4px 10px;border-left:1px solid #edf3f2;min-width:0}.lb-tres>div:first-child{border-left:0;padding-left:4px}
 .lb-tres small{display:block;font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#6b8584}
-.lb-tres b{display:block;font-size:1.2rem;font-weight:900;font-variant-numeric:tabular-nums;color:#13302e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-tres b{display:block;font-size:1.2rem;font-weight:900;font-variant-numeric:tabular-nums;color:#13302e;white-space:nowrap;overflow:hidden;overflow-wrap:anywhere}   /* (§4mn) sin «…»: lbMontoEntero achica la letra */
 .lb-tres span{font-size:.72rem;color:#6b8584}
 .lb-tres .lb-ok b{color:#15803d}.lb-tres .lb-mal b{color:#CE2939}
 .lb-toca{cursor:pointer;border-radius:10px;transition:background .15s}.lb-toca:hover{background:#fdf2f3}
@@ -2908,7 +2914,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .af-pin:hover{background:#fbc9cf}.af-pin.off{background:#f1f4f4;filter:grayscale(1);opacity:.55}.af-inf b{color:#16302f}.af-inf .rojo{color:#a3242e;font-weight:700}
 .af-tb{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-top:1px solid #e3eaea}
 .af-tb button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 0 6px;font-size:.95rem;border:0;border-right:1px solid #eef3f3;background:#fff;cursor:pointer;min-height:44px}
-.af-tb button:last-child{border-right:0}.af-tb button:hover{background:#f4f8f8}.af-tb small{font-size:.6rem;font-weight:700;color:var(--muted)}
+.af-tb button:last-child{border-right:0}.af-tb button:hover{background:#f4f8f8}.af-tb small{font-size:.72rem;font-weight:700;color:#4b5f5e;line-height:1.15}   /* (25/10, §4mn) 11,5 px y más oscuro en compu e iPad (con .6rem = 9,6 px costaba leer Entregó, WhatsApp, Editar…) */
+@media (max-width:420px){ .af-tb small{font-size:clamp(.6rem,2.55vw,.68rem)} }   /* en un celular angosto se achica para que los seis botones entren en la ficha */
 .af-tb .on{background:#e7f6ee}.af-tb .on small{color:#0f6b3a}.af-tb .del small{color:#a3242e}
 .lug{ display:inline-block; font-size:.72rem; font-weight:800; border-radius:6px; padding:0 6px; margin-left:2px; white-space:nowrap; line-height:1.55; }
 .lug-aca{ background:#e6f7f6; color:#00736d; } .lug-sale{ background:#e0f2fe; color:#075985; } .lug-trae{ background:#f3e8ff; color:#6b21a8; }
@@ -4254,6 +4261,10 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 }
 @media (min-width:1120px) and (max-width:1299px){ .fx-lado{ padding:12px 11px 10px; } }
 @media (min-width:1300px){ #view-form.active{ grid-template-columns:minmax(270px,340px) minmax(0,720px) minmax(290px,370px); gap:22px; } }
+/* (25/10, §4mn, auditoría visual UI-01) En la venta de tienda la agenda de los camiones no va (no hay entrega): sin esto el formulario caía en la
+   columna angosta de la agenda (340 px en la compu, 236 en el iPad acostado) y la tercera quedaba vacía. Dos columnas: el formulario y el pedido en vivo. */
+@media (min-width:1120px){ #view-form.active.venta-tienda{ grid-template-columns:minmax(0,1fr) 262px; } }
+@media (min-width:1300px){ #view-form.active.venta-tienda{ grid-template-columns:minmax(0,820px) minmax(290px,370px); } }
 .fx-lt{ font-size:.66rem; font-weight:800; color:var(--teal); letter-spacing:.12em; text-transform:uppercase; display:flex; align-items:center; gap:8px; margin:0 0 4px; }
 .fx-lt::after{ content:''; flex:1; height:1px; background:var(--gray-md); }
 .fx-sub{ font-size:.74rem; color:var(--muted); margin:0 0 10px; }
@@ -7123,6 +7134,9 @@ function fueraDeConta(p, ambito){
      mercadería a una sucursal no es vender nada — la venta la hará la tienda después.
      Contarla acá inflaría los totales y descuadraría la caja con una plata que no entró. */
   if(!p || esATC(p.oc) || esRPT(p.oc)) return true;
+  /* (25/10, §4mn) Una fila del sistema (el anuncio, las preguntas a Bloki, lo que dijo la proyección) no es una venta: el anuncio del
+     23/10 salía en Contabilidad → Ventas como una venta de Bs 0 (las otras filas del sistema ya las sacaba `leerCierresDeLista`). */
+  if(esFilaSistema(p)) return true;
   if(ambito==='mayor') return !esMayorista(p);
   return contaExcluido(p.vendedor);
 }
@@ -7758,6 +7772,19 @@ function cxTopPintar(list, vSel, R){
       '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button></div></div>';
   var h=izq+der;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  try{ lbMontoEntero(el); }catch(e){}
+}
+/* 💵 (25/10, §4mn, auditoría visual UI-02) Los tres montos del libro de Ventas (Vendido · Ya cobrado · Falta cobrar) van ENTEROS: en el iPad
+   acostado «Bs 647.735» salía «Bs 647.7…». Primero se achica la letra solo de ese monto (como `fichasMontoEntero`), hasta 14 px; si igual no
+   entra, pasa a dos renglones. Nunca puntos suspensivos en plata. */
+function lbMontoEntero(root){
+  [].slice.call((root||document).querySelectorAll('.lb-tres b')).forEach(function(v){
+    v.style.fontSize=''; v.style.whiteSpace='';
+    if(!v.clientWidth || v.scrollWidth<=v.clientWidth+1) return;
+    var fs=parseFloat(getComputedStyle(v).fontSize)||19, k=0;
+    while(v.scrollWidth>v.clientWidth+1 && fs>14 && k++<12){ fs=Math.max(14, fs*0.94); v.style.fontSize=fs.toFixed(1)+'px'; }
+    if(v.scrollWidth>v.clientWidth+1) v.style.whiteSpace='normal';
+  });
 }
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
@@ -9165,6 +9192,8 @@ function renderProyeccion(){
   document.getElementById('pry-altura').innerHTML=pryAlturaHtml(R);
   var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
+  var _ph=document.getElementById('pry-hist'); if(_ph) _ph.innerHTML=pryHistHtml(R);   // 📒 (§4mn) lo que dijo cada día
+  try{ pryHistQuizas(R); }catch(e){}
   document.getElementById('pry-patron').innerHTML=pryPatronHtml(R);
 
   document.getElementById('pry-como').innerHTML='<div class="cua-box"><div class="cua-t">❓ Cómo se cuenta</div>'+
@@ -9197,6 +9226,124 @@ function pryErrHtml(e){
   if(e==null || !isFinite(e)) return '';
   var a=Math.abs(e), cls = a<=0.1 ? 'pry-ok' : (a<=0.25 ? 'pry-reg' : 'pry-mal');
   return '<small class="'+cls+'">'+(Math.round(e*100)===0 ? '' : (e>0 ? '+' : '−'))+Math.round(a*100)+'%</small>';
+}
+/* ============================================================================
+   📒 (25/10, §4mn; dueño: «si guardar la proyección hazlo») LO QUE DIJO LA PROYECCIÓN CADA DÍA. Hasta hoy se calculaba al abrir la
+   pestaña y se perdía: al cerrar el mes no había cómo saber qué tan cerca estuvo el día 10 o el 20 (la «🧪 prueba» lo RECALCULA con lo
+   vendido de cada día, pero no es lo que el panel dijo ese día: la curva y la elección del método cambian con los meses).
+   · Una foto por día en la fila del sistema `__pry_hist__` (`PRY_HIST_ID`, la misma para todos), JSON `{v:1, d:{'AAAA-MM-DD':{h, dt, dr,
+     v, p, b:{heaven:[vendido, proyección, 'c'|'r'], suena:[…]}, mp, ru}}}`: la hora de Bolivia, los días hábiles que pasaron y faltan, lo
+     vendido y la proyección del equipo, por marca (c = la curva, r = el ritmo), de los mayoristas y de ROHO (unidades). Solo del mes EN
+     CURSO, y de cada día queda la ÚLTIMA foto (la curva mira la hora: la proyección se mueve durante el día).
+   · Cuándo: al mirar Proyección (con la contraseña) como mucho cada `PRY_HIST_CADA`, y SOLA una vez por día desde las `PRY_HIST_HORA`
+     en cualquier aparato con la planilla al día, aunque nadie abra esta pestaña (cada aparato con su respiro, `PRY_HIST_RESPIRO`).
+   · Antes de escribir relee la fila y junta día por día (el servidor no la sella: gana el último que escribe). Guarda `PRY_HIST_DIAS`
+     días y no más de `PRY_HIST_TOPE` letras (Google corta la celda en 50.000). Sin señal no se guarda: lo intenta la próxima vez.
+   · Se ve en Proyección → «📒 Lo que dijo la proyección cada día» (`pryHistHtml`): con el mes cerrado, cuánto se equivocó cada día.
+   · Solo anota y muestra: no cambia ninguna cuenta. En Playwright no escribe salvo `window.PRY_HIST_PRUEBA`.
+   ========================================================================== */
+var PRY_HIST_ID='__pry_hist__', PRY_HIST_CADA=30*60000, PRY_HIST_HORA=17, PRY_HIST_DIAS=400, PRY_HIST_TOPE=40000, PRY_HIST_DESDE='2026-10-25';
+var PRY_HIST_ENV=0, PRY_HIST_ULT=0, PRY_HIST_RESPIRO=Math.floor(Math.random()*20);   // minutos después de las 17:00, cada aparato el suyo
+function pryHistActiva(){ return !(navigator.webdriver && !window.PRY_HIST_PRUEBA); }
+function pryHistLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===PRY_HIST_ID; })[0], d={};
+  try{ var o=JSON.parse((r && r.observaciones)||'{}'); if(o && o.d && typeof o.d==='object') d=o.d; }catch(e){}
+  return d;
+}
+function pryHistEntrada(R){
+  var hb=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; }, b={};
+  R.marcas.forEach(function(m){ var mt=R.metodos[m.g.k]||{}; b[m.g.k]=[Math.round(m.tot.vendido), Math.round(m.tot.proy), mt.m==='curva' ? 'c' : 'r']; });
+  return { h:z(hb.getHours())+':'+z(hb.getMinutes()), dt:R.dt, dr:R.dr, v:Math.round(R.equipo.vendido), p:Math.round(R.equipo.proy), b:b,
+           mp:Math.round((R.mayor && R.mayor.tot.proy)||0), ru:(R.roho && R.roho.tot.proyU)||0 };
+}
+/* Lo de la planilla + la foto de hoy (la más tarde del día gana), sin días de más ni letras de más. */
+function pryHistJuntar(base, dia, ent){
+  var d={}, k; for(k in (base||{})) d[k]=base[k];
+  if(!d[dia] || String(d[dia].h||'')<=String(ent.h||'')) d[dia]=ent;
+  var lim=stockSumarDias(dia, -PRY_HIST_DIAS), ks=Object.keys(d).filter(function(x){ return /^\d{4}-\d{2}-\d{2}$/.test(x) && x>=lim; }).sort(), o={};
+  ks.forEach(function(x){ o[x]=d[x]; });
+  while(ks.length>1 && JSON.stringify({ v:1, d:o }).length>PRY_HIST_TOPE) delete o[ks.shift()];
+  return o;
+}
+function pryHistGuardar(R){
+  if(!pryHistActiva() || PRY_HIST_ENV || !R || R.estado!=='curso' || !CONNECTED || !ULTIMO_REFRESCO) return Promise.resolve(null);
+  var dia=R.hoy, ent=pryHistEntrada(R);
+  PRY_HIST_ENV=1; PRY_HIST_ULT=Date.now();
+  var fin=function(r){ PRY_HIST_ENV=0; return r||null; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) return null;
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===PRY_HIST_ID) srv=p; });
+    var fila=filaSistema(PRY_HIST_ID, '📒 LO QUE DIJO LA PROYECCIÓN CADA DÍA (no tocar: la lee el panel)', JSON.stringify({ v:1, d:pryHistJuntar(pryHistLeer(srv), dia, ent) }));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[PRY_HIST_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(r && r.ok){
+        var g=(r.pedido && String(r.pedido.id)===PRY_HIST_ID) ? r.pedido : fila;
+        STATE=STATE.filter(function(p){ return String(p.id)!==PRY_HIST_ID; }); STATE.push(g);
+        pryHistPintarSiSeVe();
+      }
+      return r;
+    });
+  }).then(fin, function(){ return fin(null); });
+}
+/* Al mirar Proyección: la primera vez y después cada media hora (si hoy no hay ninguna, de nuevo a los 2 minutos de un intento fallido). */
+function pryHistQuizas(R){
+  if(!R || R.estado!=='curso' || !UNLOCKED) return;
+  var t=Date.now()-PRY_HIST_ULT;
+  if(t>=PRY_HIST_CADA || (!pryHistLeer()[R.hoy] && t>=2*60000)) pryHistGuardar(R);
+}
+/* Sola, una vez por día desde las 17:00 (con el respiro de este aparato), si hoy todavía no hay una foto de la tarde. */
+function pryHistAuto(){
+  if(!pryHistActiva() || PRY_HIST_ENV || !CONNECTED || !ULTIMO_REFRESCO || Date.now()-ULTIMO_REFRESCO>5*60000) return;
+  var hb=horaBolivia(), hoy=diaNegocio();
+  if(hb.getHours()*60+hb.getMinutes() < PRY_HIST_HORA*60+PRY_HIST_RESPIRO || hoy.slice(0,7)<PRY_PRIMER_MES) return;
+  var ya=pryHistLeer()[hoy], hh=(PRY_HIST_HORA<10?'0':'')+PRY_HIST_HORA+':00';
+  if((ya && String(ya.h||'')>=hh) || Date.now()-PRY_HIST_ULT<PRY_HIST_CADA) return;
+  pryHistGuardar(proyeccionMes(hoy.slice(0,7)));
+}
+function pryHistPintarSiSeVe(){
+  var el=document.getElementById('pry-hist'); if(!el || !el.offsetParent) return;
+  var inp=document.getElementById('pry-mes');
+  try{ el.innerHTML=pryHistHtml(proyeccionMes((inp && inp.value) || diaNegocio().slice(0,7))); }catch(e){}
+}
+/* La tabla del mes elegido: cada día, lo vendido y lo que dijo la proyección (el equipo y cada marca, con qué se proyectó); con el mes
+   cerrado, el error de cada día contra el cierre (pryErrHtml: ≤10 % verde, ≤25 % ámbar, más, rojo) y el promedio abajo. */
+function pryHistHtml(R){
+  var d=pryHistLeer(), ym=R.ym, dias=Object.keys(d).filter(function(k){ return k.slice(0,7)===ym; }).sort();
+  var cab='<div class="cua-box" id="pry-hist-box"><div class="cua-t">📒 Lo que dijo la proyección cada día — '+esc(mesNombre(ym))+'</div>';
+  if(!dias.length){
+    var t = (ym+'-31')<PRY_HIST_DESDE ? ('El panel guarda lo que dice la proyección desde el '+fmtFechaCorta(PRY_HIST_DESDE)+': de '+mesNombre(ym)+' no hay.')
+          : R.estado==='futuro' ? 'Cuando empiece el mes, el panel va a guardar acá lo que dice la proyección cada día.'
+          : R.estado==='cerrado' ? ('No quedó guardado nada de '+mesNombre(ym)+'.')
+          : 'Todavía no hay nada guardado de este mes. Se guarda solo cada tarde desde las '+PRY_HIST_HORA+':00 (con cualquier aparato que tenga el panel abierto) y cada vez que alguien con la contraseña mira esta pestaña.';
+    return cab+'<div class="pry-intro" style="margin:0">'+esc(t)+'</div></div>';
+  }
+  var cerrado=(R.estado==='cerrado'), real={ eq:R.equipo.vendido }, gs=MARCAS.filter(function(g){ return dias.some(function(k){ return d[k] && d[k].b && d[k].b[g.k]; }); });
+  R.marcas.forEach(function(m){ real[m.g.k]=m.tot.vendido; });
+  var err=function(p, r){ return (cerrado && r>0.009 && p!=null) ? (p-r)/r : null; }, suma={}, n={};
+  var anota=function(k, e){ if(e==null) return; suma[k]=(suma[k]||0)+Math.abs(e); n[k]=(n[k]||0)+1; };
+  var antes=null;
+  var filas=dias.map(function(k){
+    var x=d[k]||{}, eE=err(x.p, real.eq); anota('eq', eE);
+    var mov = (!cerrado && antes && antes.p!=null && x.p!=null && Math.round(x.p-antes.p)!==0) ? ('<small class="pry-va">'+(x.p>antes.p ? '▲ ' : '▼ ')+fmtBs0(Math.abs(x.p-antes.p))+'</small>') : '';
+    antes=x;
+    return '<tr><td>'+esc(pryDiaTxt(k))+'<small>'+esc((x.h ? 'a las '+x.h : '')+(x.dr!=null ? ' · '+pryFaltanTxt(x.dr, true) : ''))+'</small></td>'+
+      '<td>'+fmtBs0(x.v)+'</td>'+
+      '<td><b>'+fmtBs0(x.p)+'</b>'+pryErrHtml(eE)+mov+'</td>'+
+      gs.map(function(g){
+        var b=(x.b||{})[g.k]; if(!b) return '<td>—</td>';
+        var e=err(b[1], real[g.k]); anota(g.k, e);
+        return '<td>'+fmtBs0(b[1])+pryErrHtml(e)+'<small class="pry-va">'+(b[2]==='c' ? 'la curva' : 'el ritmo')+'</small></td>';
+      }).join('')+'</tr>';
+  }).join('');
+  var prom=function(k){ return n[k] ? (Math.round(suma[k]/n[k]*100)+'%') : '—'; };
+  var foot = cerrado ? ('<tfoot><tr><td>Cerró en</td><td></td><td>'+fmtBs0(real.eq)+'</td>'+gs.map(function(g){ return '<td>'+fmtBs0(real[g.k])+'</td>'; }).join('')+'</tr>'+
+                        '<tr><td colspan="2">Se equivocó, en promedio</td><td>'+prom('eq')+'</td>'+gs.map(function(g){ return '<td>'+prom(g.k)+'</td>'; }).join('')+'</tr></tfoot>') : '';
+  var intro = cerrado
+    ? 'Cada día, lo que la proyección dijo esa tarde, contra cómo terminó el mes (el % es cuánto se equivocó: verde hasta 10 %, ámbar hasta 25 %). Si después se reprogramó una entrega a otro mes, el cierre cambia con ella.'
+    : 'Cada día, la última proyección que se guardó (la hora va debajo) y cuánto se movió contra el día anterior. Cuando cierre el mes se ve cuánto se equivocó cada día.';
+  return cab+'<div class="pry-intro">'+esc(intro)+'</div>'+
+    '<div class="pry-scroll"><table class="pry-tabla" id="pry-hist-t"><thead><tr><th>El día</th><th>Ya vendido</th><th>Equipo</th>'+
+    gs.map(function(g){ return '<th>'+g.ico+' '+esc(g.lbl)+'</th>'; }).join('')+'</tr></thead><tbody>'+filas+'</tbody>'+foot+'</table></div></div>';
 }
 /* 🧪 La prueba: los dos últimos meses cerrados y el que está en curso (solo lo que ya pasó), una tabla por marca. */
 function pryPruebaHtml(R){
@@ -16123,7 +16270,7 @@ function autoSelloHtml(){
 }
 function autoArrancar(){
   if(AUTO_TIMER) clearInterval(AUTO_TIMER);
-  AUTO_TIMER=setInterval(function(){ autoRefrescar('tic'); updateFooter(); }, AUTO_MS);
+  AUTO_TIMER=setInterval(function(){ autoRefrescar('tic'); updateFooter(); try{ pryHistAuto(); }catch(e){} }, AUTO_MS);   // 📒 (§4mn) la foto de la tarde de la proyección
   if(MIS_TIMER) clearInterval(MIS_TIMER);
   MIS_TIMER=setInterval(function(){ if(misAlAire()) refreshMis(); }, MIS_MS);
   document.addEventListener('visibilitychange', function(){
@@ -16343,7 +16490,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
@@ -24897,6 +25044,7 @@ function acomodarFichas(){
     }
     fichasMontoEntero(b);
   }
+  try{ lbMontoEntero(document.getElementById('cx-top')); }catch(e){}   // (§4mn) también al cambiar el tamaño de la ventana
 }
 /* (29/09, §4gw) Un monto que no entra en su ficha («Bs 1.101.680,00» en el iPad, o lo de «Todo») se achica hasta entrar,
    en vez de salir cortado con «…». Solo el que no entra: los demás quedan como siempre. */
