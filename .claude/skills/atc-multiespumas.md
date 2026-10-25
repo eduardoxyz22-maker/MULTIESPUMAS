@@ -132,10 +132,14 @@ Repo → **Actions → Reporte Semanal ATC → Run workflow**
 Requiere Python 3 instalado.
 
 ```bat
-set TRELLO_API_KEY=c04c6c3101732a677397280dce583cb0
-set TRELLO_TOKEN=ATTA64e2ddac3794d2bec33562e579713a8d273b410d385265834d6481a862f301e8C1A2C23C
+set TRELLO_API_KEY=<tu clave de Trello: nunca escribirla en este archivo>
+set TRELLO_TOKEN=<tu token de Trello: nunca escribirlo en este archivo>
 python generar_reporte_atc.py
 ```
+
+> 🔒 El repositorio es PÚBLICO: la clave y el token se escriben en la consola en el momento o viven en los secretos
+> de GitHub (`TRELLO_API_KEY`, `TRELLO_TOKEN`). Nunca en este archivo ni en ningún otro del repo (25/10/2026: estaban
+> escritos acá desde mayo y hubo que cambiarlos en Trello).
 
 ### Opción 3: Desde CSV existente
 Si la API de Trello no está disponible, usar `reporte_trello.csv` de la feature branch
