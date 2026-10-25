@@ -42139,10 +42139,17 @@ function compsMesDatos(mes){
       out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c) });
     });
   });
-  return out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
+  out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
+  /* (25/10, auditoría) N° de pago (para el Excel: una fila por foto, pero un pago es uno) y, si dos pagos darían el MISMO nombre de
+     archivo (mismo día, banco, monto y cliente), el segundo lleva «-2»: en Drive no se pisan ni se confunden. */
+  var vistos={};
+  out.forEach(function(x, i){ x.n=i+1; x.dup=0; var b=compsArchivo(x, 0); if(vistos[b]){ vistos[b]++; x.dup=vistos[b]; } else vistos[b]=1; });
+  return out;
 }
 function compsSlug(t){ return sinTildes(String(t||'')).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28); }
-function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+Math.round(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
+/* El monto con centavos cuando los tiene («10,10» y «10,20»: redondeados, los dos eran «10» y daban el mismo nombre). */
+function compsMontoTxt(m){ m=r2(m); return (Math.round(m)===m) ? String(m) : m.toFixed(2).replace('.',','); }
+function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+compsMontoTxt(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.dup?('-'+x.dup):'')+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
 function compsAbrir(){
   var ms=nxMesesCierre(), sel=(segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
   if(ms.indexOf(sel)<0) ms.unshift(sel);
@@ -42216,14 +42223,16 @@ function compsCarpeta(){
 function compsExcel(){
   var mes=(document.getElementById('comps-mes')||{}).value; if(!mes) return;
   var L=compsMesDatos(mes); if(!L.length){ toast('No hay pagos con QR, tarjeta o transferencia en ese mes','err'); return; }
-  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO']];
+  /* (25/10, el dueño eligió) «N° DE PAGO» y «FOTO» («1 de 2») al FINAL, las columnas de siempre en su lugar; el MONTO va solo en la
+     primera fila de cada pago: sumar la columna da lo cobrado, no lo cobrado por la cantidad de fotos. */
+  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO','N° DE PAGO','FOTO']];
   L.forEach(function(x){
-    var base=[x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', { v:r2(x.monto), t:'n', s:2 }, x.envio?'SÍ':''];   // MONTO como NÚMERO en Bs (N-FIN1: sin `t:'n'` salía como texto)
-    if(!x.comps.length) rows.push(base.concat(['FALTA LA FOTO','']));
-    else x.comps.forEach(function(fid, i){ rows.push(base.concat([fotoVer(fid), compsArchivo(x, i)])); });
+    var base=function(conMonto){ return [x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', conMonto ? { v:r2(x.monto), t:'n', s:2 } : '', x.envio?'SÍ':'']; };   // MONTO como NÚMERO en Bs (N-FIN1)
+    if(!x.comps.length) rows.push(base(true).concat(['FALTA LA FOTO', '', { v:x.n, t:'n' }, 'sin foto']));
+    else x.comps.forEach(function(fid, i){ rows.push(base(i===0).concat([fotoVer(fid), compsArchivo(x, i), { v:x.n, t:'n' }, (i+1)+' de '+x.comps.length])); });
   });
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
-  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48}], matrix:rows }]);
+  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48},{w:11},{w:10}], matrix:rows }]);
   downloadBlob(bytes, 'comprobantes-'+mes+(vend?('-'+vend.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de comprobantes descargado — '+L.length+' pago'+(L.length===1?'':'s')+' ✓','ok');
 }
