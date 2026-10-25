@@ -488,6 +488,7 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,40,45,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:4000;padding:20px 12px;overflow-y:auto}
 .modal-overlay.on{display:flex}
 .modal{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:540px;width:100%;margin:auto;overflow:hidden;animation:pop .18s ease}
+#modal-box:focus{outline:none}   /* ⌨️ (§4mk) la ventana recibe el foco al abrir: sin el marco del foco alrededor de toda la ventana */
 @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}
 .modal-h{background:var(--grad-header);background-size:300% 300%;color:#fff;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .modal-h h3{font-size:1rem;font-weight:700}
@@ -2865,7 +2866,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
   .adm-top,.adm-secs,.adm-avisos,#admin-content .adm-sec[data-sec="cam"],#admin-content .adm-sec[data-sec="her"]{display:none!important}
   #admin-content .adm-sec[data-sec="ped"]{display:block!important}
 }
-.af-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px;align-items:stretch}
+.af-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(285px,100%),1fr));gap:12px;align-items:stretch}   /* (§4mk, UI-05) a 320 px la ficha de 285 + los márgenes pasaba el ancho: la página corría de costado */
 .af-f{background:#fff;border:1px solid #e3eaea;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;box-shadow:0 1px 2px rgba(0,60,60,.05),0 4px 14px rgba(0,60,60,.04);transition:box-shadow .15s,transform .15s}
 .af-f:hover{box-shadow:0 2px 4px rgba(0,60,60,.08),0 8px 22px rgba(0,60,60,.09);transform:translateY(-1px)}
 .af-f.af-ent{opacity:.6}.af-f.af-mod{border-color:#f3d48a}.af-f.af-no{border-color:#f4c2c6}
@@ -4637,6 +4638,16 @@ function queuePending(rec){
 
 /* 02/10, §4hh: pagos, retiros, entregas, stock y arqueos conservan el intento ANTES
    del transporte, incluso mientras esperan otro guardado del mismo id. */
+/* 🔑 (25/10, auditoría Codex/Astra ORD-2) Un guardado que Administración FORZÓ (día cerrado, turno lleno, con la clave) y que se quedó en
+   la cola sin señal se reenviaba SIN `forzar`: el servidor lo rechazaba por «día cerrado» y salía de la cola. La fila no lleva la marca
+   (viajaría a la planilla y la copiaría la pantalla); se anota aparte, en este aparato, con el texto EXACTO de lo que quedó en la cola:
+   solo ESA copia sale forzada (con la clave de Administración si está, `ADMIN_KEY_LOCAL`, y el servidor la vuelve a mirar). Una
+   corrección posterior del mismo pedido ya no coincide y va normal. */
+var LS_FORZAR_COLA='me_forzar_cola';
+function forzarColaLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_FORZAR_COLA)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
+function forzarColaAnotar(id, txt){ try{ var m=forzarColaLeer(); m[String(id)]=txt; localStorage.setItem(LS_FORZAR_COLA, JSON.stringify(m)); }catch(e){} }
+function forzarColaEs(rec){ var m=forzarColaLeer(), t=m[String(rec&&rec.id)]; return !!t && t===JSON.stringify(rec); }
+function forzarColaOlvidar(id){ try{ var m=forzarColaLeer(); if(m[String(id)]==null) return; delete m[String(id)]; localStorage.setItem(LS_FORZAR_COLA, JSON.stringify(m)); }catch(e){} }
 function colaQuitarExacta(txt){
   if(!txt) return;
   setPending(getPending().filter(function(p){ return JSON.stringify(p)!==txt; }));
@@ -4694,6 +4705,11 @@ function isoLocal(d){ var m=(d.getMonth()+1),day=d.getDate(); return d.getFullYe
 function fmtFecha(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):String(iso||''); }
 function fmtFechaCorta(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]):String(iso||''); }
 function monthStr(){ return todayStr().slice(0,7); }
+/* 🗓️ (25/10, §4mk, auditoría FIN-4) El DÍA DEL NEGOCIO: la fecha de Bolivia (UTC−4, sin horario de verano), sea cual sea la zona del
+   aparato. Lo usan la plata y la proyección (Contabilidad, Cuadre, retiros, «Tu día», Proyección): un aparato con la hora en UTC a las
+   22:00 del 31/10 de Bolivia ya decía «1/11», daba octubre por cerrado y abría el Cuadre en noviembre. En un aparato bien
+   configurado da lo mismo que `todayStr()`, que sigue siendo el reloj de quien mira para todo lo demás (§4fu). */
+function diaNegocio(){ return isoDeTsBolivia(Date.now()); }
 function fmtBs(n){ n=Number(n)||0; return 'Bs '+n.toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 /* ============================================================================
    N° DE OC — CORRELATIVO MENSUAL AUTOMÁTICO (desde el 01/08/2026)
@@ -5484,6 +5500,7 @@ function apiSaveAhora(rec, opts){
   }
   var cola=getPending().filter(function(q){ return q && q.id===rec.id && (sis ? q.observaciones===rec.observaciones : JSON.stringify(q)===JSON.stringify(rec)); })[0];
   var colaTxt=cola ? JSON.stringify(cola) : '';
+  if(opts && opts.forzar && colaTxt) forzarColaAnotar(rec.id, colaTxt);   // (25/10, ORD-2) si se queda en la cola, sigue siendo forzado
   var envio=rec;
   if(sis || rec._altaPendiente){ envio={}; for(var _k in rec){ if(Object.prototype.hasOwnProperty.call(rec,_k) && _k!=='_base' && _k!=='_dev' && _k!=='_t' && _k!=='_altaPendiente') envio[_k]=rec[_k]; } }
   var payload={action:'save', pedido:envio};
@@ -5726,6 +5743,22 @@ function rechazoRecordar(rec, res){
    pero la respuesta se perdió: la cola reenvía con el rev viejo, el servidor dice
    «conflicto», el panel decía «lo modificó otra persona… volvé a hacer tu cambio» y la
    persona lo hacía de nuevo → duplicado (§4eo). */
+/* Un renglón como lista ordenada de [campo, valor] sin lo vacío ni lo que empieza con «_» (no viaja): `cant` «1» = 1, `precio` 0 = sin precio. */
+function prodHuellaComparar(x){
+  x=x||{}; var o=[];
+  Object.keys(x).sort().forEach(function(k){
+    if(k.charAt(0)==='_' || typeof x[k]==='function') return;
+    var v=x[k];
+    if(v==null || v==='' || v===false || (typeof v==='number' && !v)) return;
+    if(typeof v==='string' && /^-?\d+(\.\d+)?$/.test(v.trim())) v=Number(v);
+    if(typeof v==='number'){ if(!r2(v)) return; v=String(r2(v)); }
+    else if(typeof v==='string'){ v=v.trim(); if(!v) return; }
+    else if(typeof v==='boolean') v='S';
+    else { if(Array.isArray(v) && !v.length) return; v=JSON.stringify(v); }
+    o.push([k, v]);
+  });
+  return o;
+}
 function mismoContenido(a, b){
   if(!a||!b) return false;
   var salta={rev:1, nroDia:1, ts:1, ocCambiada:1, _deBorrador:1, _altaPendiente:1, cobradoBs:1, oc:1};
@@ -5733,7 +5766,11 @@ function mismoContenido(a, b){
   for(var k in a){
     if(salta[k] || !a.hasOwnProperty(k)) continue;
     if(typeof a[k]==='function') continue;
-    if(k==='productos'){ if(JSON.stringify((a[k]||[]).map(function(x){ return [x.desc,x.medida,x.codigo,Number(x.cant)||0]; }))!==JSON.stringify((b[k]||[]).map(function(x){ return [x.desc,x.medida,x.codigo,Number(x.cant)||0]; }))) return false; continue; }
+    /* ⚠️ (25/10, auditoría Codex/Astra FLW-1) El renglón ENTERO: precio, marcas de logística, lo de fábrica… La planilla guarda el JSON
+       tal cual se mandó, así que un «ok tardío» de verdad coincide en todo. Comparando solo nombre/medida/código/cantidad, el reintento
+       viejo de A (1.500 + 1.500) se tomaba por igual a la corrección de B (2.000 + 1.000): A se quedaba con el sello de B y SUS precios, y
+       su próximo guardado volvía a poner 1.500 + 1.500 sin que nadie lo viera. */
+    if(k==='productos'){ if(JSON.stringify((a[k]||[]).map(prodHuellaComparar))!==JSON.stringify((b[k]||[]).map(prodHuellaComparar))) return false; continue; }
     if(k==='fotos'){ if(compsArr(a[k]).join(',')!==compsArr(b[k]).join(',')) return false; continue; }
     if(norm(a[k])!==norm(b[k])) return false;
   }
@@ -5950,14 +5987,15 @@ function flushPending(){
     return chain.then(function(){
       // (02/10, §4hg) El formulario ya está en cola ANTES del envío: no duplicar ese envío ni
       // poner su foto vieja detrás de una corrección que esté esperando turno.
-      if(SAVE_EN_VUELO[rec.id] || SAVE_EN_ESPERA[rec.id]) return;
+      if(SAVE_EN_VUELO[rec.id] || SAVE_EN_ESPERA[rec.id] || (typeof REESCRITA_ESPERA!=='undefined' && REESCRITA_ESPERA[rec.id])) return;
       /* (26/09) Los días cerrados y las tildes de la carga se reescriben ENTERAS: lo que quedó acá sin señal
          se rearma con la planilla de ahora (`mandarReescritaDeCola`); mandado tal cual pisaba lo que otra
          computadora cambió mientras tanto. Las demás filas, como siempre. */
-      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec);
+      var forz=forzarColaEs(rec);   // (25/10, ORD-2) lo que Administración forzó, forzado sigue
+      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec, forz ? {forzar:true} : undefined);
       return envio.then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
-        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])) listos[String(rec.id)]=enviado;
+        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])){ listos[String(rec.id)]=enviado; if(forz) forzarColaOlvidar(rec.id); }
         if(res && !res.ok && RECHAZOS_FIRMES[res.error]) rechazados++;
       }, function(){});
     });
@@ -6544,7 +6582,28 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   d.addEventListener('change', saldoAvisosProgramar); mSel.addEventListener('change', saldoAvisosProgramar);
   card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(reco); card.appendChild(rW); card.appendChild(tot); card.appendChild(sal);
   box.appendChild(card); refreshDelButtons(); pintarTotalProds(); pintarProdRpt();
+  try{ formEtiquetar(card); }catch(e){}       // ⌨️ (§4mk) cada campo del renglón con su nombre
   saldoAvisosProgramar();                     // al abrir un pedido para editarlo, los renglones ya vienen completos
+}
+/* ⌨️ (25/10, §4mk, auditoría UI-04) LOS CAMPOS CON SU NOMBRE. El formulario tenía 21 campos con la etiqueta al lado pero sin unir: un lector de
+   pantalla decía «campo de texto» sin más. Une cada campo a la etiqueta de su casilla (`for`), y si no se puede (los renglones de productos
+   no tienen id) le pone el texto de esa etiqueta como `aria-label`. No cambia nada de lo que se ve. */
+function formEtiquetar(raiz){
+  raiz=raiz||document.getElementById('view-form'); if(!raiz) return;
+  var limpio=function(t){ return String(t||'').replace(/\s+/g,' ').replace(/\s*\*\s*/g,' ').trim(); };
+  [].slice.call(raiz.querySelectorAll('input, select, textarea')).forEach(function(el){
+    if(el.type==='hidden' || el.type==='file' || el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.closest('label')) return;
+    if(el.id && document.querySelector('label[for="'+el.id+'"]')) return;
+    if(el.classList.contains('prod-desc')){ el.setAttribute('aria-label','Producto'); return; }
+    var lb=null, prev=el.previousElementSibling;
+    if(prev && (prev.tagName==='LABEL' || prev.classList.contains('mini-lb') || prev.classList.contains('lb'))) lb=prev;
+    if(!lb){ var f=el.closest('.field'); if(f){ var l=f.querySelector('label.lb, .lb, label'); if(l && !l.querySelector('input,select,textarea') && l.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) lb=l; } }
+    if(lb && lb.tagName==='LABEL' && el.id && !lb.htmlFor && !lb.querySelector('input,select,textarea')){ lb.htmlFor=el.id; return; }
+    var t=limpio(lb ? lb.textContent : '');
+    if(!t && el.id==='f-obs') t='Observaciones';
+    if(!t) t=limpio(el.placeholder||el.title||'');
+    if(t) el.setAttribute('aria-label', t);
+  });
 }
 /* Muestra/esconde lo que es propio de cada tipo en TODOS los renglones a la vez: en una
    reposición no hay precio (no se está vendiendo) y sí hay tipo y observación. */
@@ -6853,6 +6912,24 @@ var PAGO_NO_VISTO=null;
 var EDIT_DESDE='admin';
 function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
 function markErr(id){ document.getElementById(id).classList.add('err'); }
+/* Los nombres de lo marcado en rojo, en el orden del formulario (para el aviso «Falta: …») y el primero a la vista con el foco. */
+var FORM_NOMBRES={ 'f-vendedor':'vendedor', 'f-cliente':'cliente', 'f-celular':'celular', 'f-nota':'nota de venta', 'f-zona':'zona', 'f-oc':'N° de OC',
+  'f-rpt-suc':'sucursal', 'f-fecha':'fecha', 'f-turno':'turno', 'f-direccion':'dirección', 'f-maps':'ubicación' };
+function formFaltanNombres(){
+  var out=[];
+  [].forEach.call(document.querySelectorAll('#view-form .err'), function(e){
+    var n=FORM_NOMBRES[e.id] || (e.classList.contains('prod-desc') ? 'producto' : '');
+    if(!n){ var f=e.closest && e.closest('.field'), l=f && f.querySelector('label'); n=l ? String(l.textContent||'').replace(/[*:]/g,'').trim().toLowerCase() : 'un dato'; }
+    if(out.indexOf(n)<0) out.push(n);
+  });
+  return out.length ? out : ['los campos marcados'];
+}
+function formIrAlPrimerError(){
+  var e=[].filter.call(document.querySelectorAll('#view-form .err'), function(x){ return x.offsetParent!==null; })[0];
+  if(!e) return;
+  try{ e.scrollIntoView({ block:'center' }); }catch(x){ e.scrollIntoView(); }
+  try{ e.focus({ preventScroll:true }); }catch(x){ try{ e.focus(); }catch(y){} }
+}
 function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
 /* 💵 LOS MONTOS DEL FORMULARIO SE LEEN COMO LOS ESCRIBE LA GENTE (26/09). En Bolivia 1.500 se escribe
    con punto y el campo numérico lo deja tal cual («1.500»): `parseFloat` lo leía 1,5, y una venta con
@@ -7102,8 +7179,8 @@ function contaLista(){
     if(fueraDeConta(p, amb)) return false;
     if(vend && !mismoVendedor(p.vendedor, vend)) return false;
     var f=contaFechaBase(p);
-    if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||todayStr());
-    if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
+    if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||diaNegocio());
+    if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
     return true;
   });
   if(q) list=list.filter(function(p){
@@ -7417,11 +7494,11 @@ function contaProdTxt(prods){
   });
 }
 function refreshConta(){
-  var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=todayStr().slice(0,7);
-  var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=todayStr();
-  var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=todayStr();
-  var cm=document.getElementById('cua-mes'); if(cm && !cm.value) cm.value=todayStr().slice(0,7);
-  var pm=document.getElementById('pry-mes'); if(pm && !pm.value) pm.value=todayStr().slice(0,7);
+  var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=diaNegocio().slice(0,7);
+  var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=diaNegocio();
+  var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=diaNegocio();
+  var cm=document.getElementById('cua-mes'); if(cm && !cm.value) cm.value=diaNegocio().slice(0,7);
+  var pm=document.getElementById('pry-mes'); if(pm && !pm.value) pm.value=diaNegocio().slice(0,7);
   llenarSelectContaVendedor();
   var pinta=function(){ llenarSelectContaVendedor(); contaRepintar(); };
   if(!CONNECTED){ pinta(); return; }
@@ -7506,8 +7583,8 @@ function mcToca(color, lbl, val, sub, onclick, ver){
 }
 function contaPeriodoTxt(){
   var modo=segVal('cta-mode')||'mes';
-  if(modo==='dia') return fmtFecha((document.getElementById('cta-dia')||{}).value||todayStr());
-  if(modo==='mes') return mesNombre(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
+  if(modo==='dia') return fmtFecha((document.getElementById('cta-dia')||{}).value||diaNegocio());
+  if(modo==='mes') return mesNombre(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
   return 'todo el historial';
 }
 function porCobrarDatos(origen){
@@ -7612,7 +7689,7 @@ function cxTopPeriodo(){
   var modo=segVal('cta-mode')||'mes', may=function(t){ return String(t).replace(/^./,function(c){ return c.toUpperCase(); }); };
   if(modo==='todo') return 'Todo';
   if(modo==='dia'){ var d=(document.getElementById('cta-dia')||{}).value||''; return d ? fmtFecha(d) : 'El día'; }
-  var m=(document.getElementById('cta-mes')||{}).value||todayStr().slice(0,7);
+  var m=(document.getElementById('cta-mes')||{}).value||diaNegocio().slice(0,7);
   var t=mesNombre(m);
   if(m.slice(0,4)===todayStr().slice(0,4)) t=t.replace(/ de \d{4}$/, '');   // el año, solo si no es este
   return may(t);
@@ -8585,15 +8662,20 @@ function pryHoraTxt(min){ var h=Math.floor(min/60), mm=min%60; return (h<10?'0':
 /* ¿La venta `x` ya estaba cargada el día `d` a los `min` minutos? Sin `min`, cuenta el día entero. */
 function pryCargadaAl(x, d, min){ return x.reg<d || (x.reg===d && (min==null || x.m<=min)); }
 /* La curva de la marca `g` ('heaven' | 'suena') con los meses dados, y lo que vendieron en promedio (`prom`). */
+/* (25/10, §4mk, auditoría FIN-2) Un mes cerrado en que la marca vendió 0 ES un mes (cero de verdad) y entra al promedio: antes se
+   salteaba y agosto 2.000 + septiembre 0 promediaba 2.000 en vez de 1.000. Lo que no entra es un mes SIN DATOS (el panel no tiene
+   ninguna venta del equipo ese mes: no se usaba, no es que no se vendió); va en `sinDatos` para decirlo. */
 function pryCurva(V, g, meses){
-  var por={}, T=0, n=0;
+  var por={}, T=0, n=0, hay={};
   (meses||[]).forEach(function(m){ por[m]=[]; });
   V.forEach(function(x){
-    if(!por[x.ym] || x.amb!=='tienda' || x.g!==g) return;
+    if(!por[x.ym] || x.amb!=='tienda') return;
+    hay[x.ym]=1;
+    if(x.g!==g) return;
     por[x.ym].push(x); T+=x.bs; n++;
   });
-  var ms=(meses||[]).filter(function(m){ return por[m].length; });
-  return { g:g, meses:ms, por:por, T:T, n:n, prom:(ms.length ? T/ms.length : 0), ok:(n>=PRY_MIN_VENTAS && T>0.009) };
+  var ms=(meses||[]).filter(function(m){ return hay[m]; }), sin=(meses||[]).filter(function(m){ return !hay[m]; });
+  return { g:g, meses:ms, sinDatos:sin, por:por, T:T, n:n, prom:(ms.length ? T/ms.length : 0), ok:(n>=PRY_MIN_VENTAS && T>0.009) };
 }
 /* Qué parte de lo que vendieron esos meses ya estaba vendida faltando `r` días hábiles para su cierre (suma sobre suma:
    el mes más grande pesa más). Con `min`, ese día cuenta hasta esa hora (la de ahora, en el mes en curso: §4gy); sin él,
@@ -8684,7 +8766,7 @@ function pryPlataHtml(ym){
   return h;
 }
 function proyeccionMes(ym){
-  var hoy=todayStr(), ini=ym+'-01', fin=pryFinDeMes(ym);
+  var hoy=diaNegocio(), ini=ym+'-01', fin=pryFinDeMes(ym);
   var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
   var dt = estado==='futuro' ? 0 : pryHabiles(ini, estado==='cerrado' ? fin : hoy);
   var dr = estado==='curso' ? pryHabiles(stockSumarDias(hoy,1), fin) : (estado==='futuro' ? pryHabiles(ini, fin) : 0);
@@ -8716,7 +8798,7 @@ function proyeccionMes(ym){
           /* (30/09, R3-1) La hora solo en un día hábil: un domingo o un feriado no se vende, y la curva «a esta hora» subía sola
              de la mañana a la noche (hasta 3,6 %) sin que entrara ninguna venta. */
           var f=pryCurvaF(c, dr, pryDiaHabil(hoy) ? pryMinBo(Date.now()) : null), z=pryMezcla(K, f, c.prom), e=errores[g];
-          o={ m:'curva', f:f, meses:c.meses, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
+          o={ m:'curva', f:f, meses:c.meses, sinDatos:c.sinDatos, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
           if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
         }
       }
@@ -8902,14 +8984,17 @@ function pryAlturaHtml(R){
   return '<div class="cua-box" id="pry-altura-box"><div class="cua-t">'+esc(tit)+'</div>'+h+'</div>';
 }
 /* 🧪 Qué habría dicho cada forma de proyectar en `ym`, en distintas fechas, con lo que estaba vendido ESE día: el ritmo
-   (por vendedor, como la pantalla) y la curva (con la mezcla de `pryMezcla`) armada con los OTROS meses cerrados, curva y
+   (por vendedor, como la pantalla) y la curva (con la mezcla de `pryMezcla`) armada con los meses cerrados ANTES de `ym`, curva y
    promedio. Días 5, 10, 15, 20 y 25, faltando 3 días hábiles y la víspera del último. Del mes en curso, solo las fechas
-   que ya pasaron. */
+   que ya pasaron.
+   (25/10, §4mk, auditoría FIN-3) Solo con lo que se sabía ese día: antes la curva de agosto se armaba con septiembre (un mes que
+   todavía no había pasado), y la prueba medía mejor de lo que la curva puede proyectar de verdad. El primer mes entero no tiene
+   con qué armarla: queda solo con el ritmo. */
 function pryPrueba(V, ym, hist, hoy){
   var ini=ym+'-01', fin=pryFinDeMes(ym), cerrado=(fin<hoy);
   var fechas=[5,10,15,20,25].map(function(d){ return ym+'-'+(d<10?'0':'')+d; }).concat([pryAlDia(ym,3), pryAlDia(ym,1)]);
   fechas=fechas.filter(function(d,i){ return d>=ini && d<=fin && d<hoy && fechas.indexOf(d)===i; }).sort();
-  var otros=hist.filter(function(m){ return m!==ym; });
+  var otros=hist.filter(function(m){ return m<ym; });
   var cur={ suena:pryCurva(V,'suena',otros), heaven:pryCurva(V,'heaven',otros) };
   var tot={ suena:0, heaven:0 };
   V.forEach(function(x){ if(x.ym===ym && cur[x.g]) tot[x.g]+=x.bs; });
@@ -8960,8 +9045,8 @@ function pryPatron(V, ym, g, hist, hoy){
 function renderProyeccion(){
   var box=document.getElementById('pry-metrics'); if(!box) return;
   if(!UNLOCKED){ segSet('cta-tab','ventas'); setContaTab('ventas'); return; }
-  var inp=document.getElementById('pry-mes'); if(inp && !inp.value) inp.value=todayStr().slice(0,7);
-  var R=proyeccionMes((inp && inp.value) || todayStr().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
+  var inp=document.getElementById('pry-mes'); if(inp && !inp.value) inp.value=diaNegocio().slice(0,7);
+  var R=proyeccionMes((inp && inp.value) || diaNegocio().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
   var pc=function(bs){ return E.vendido>0.009 ? Math.round(bs/E.vendido*100)+'%' : '—'; };
   var nV=function(n){ return n+' venta'+(n===1?'':'s'); };
   var nU=function(u){ return u+' unidad'+(u===1?'':'es'); };   // §4gv
@@ -9032,7 +9117,8 @@ function renderProyeccion(){
         ((mt.err && mt.err.n>=PRY_MIN_PARES)
           ? (' En la prueba con '+pryMesesTxt(mt.err.meses)+', la curva se equivocó '+Math.round(mt.err.c*100)+'% en promedio y el ritmo '+Math.round(mt.err.r*100)+'%'+
              (mt.err.r<mt.err.c ? ('; el ritmo va desde el '+PRY_DIAS_RITMO+'° día hábil del mes: antes, con tan pocos días, no hay ritmo.') : '.'))
-          : ' Todavía no se pudo comparar con el ritmo: hace falta otro mes cerrado.');
+          : ' Todavía no se pudo comparar con el ritmo: hace falta otro mes cerrado.')+
+        ((mt.sinDatos||[]).length ? (' Sin contar '+pryMesesTxt(mt.sinDatos)+': el panel no tiene ninguna venta del equipo de ese mes.') : '');
     }
     else if(mt.porque==='prueba') t='📈 Con el ritmo: en la prueba con '+pryMesesTxt(mt.err.meses)+' se equivocó menos ('+Math.round(mt.err.r*100)+'% en promedio, contra '+
       Math.round(mt.err.c*100)+'% de la curva).';
@@ -9127,8 +9213,8 @@ function pryPruebaHtml(R){
   });
   return '<div class="cua-box"><div class="cua-t">🧪 ¿Qué tan bien proyecta? — la prueba con los meses que ya pasaron</div>'+
     '<div class="pry-intro">Para cada mes, lo que habría dicho cada forma de proyectar en distintas fechas, con lo que estaba vendido <b>ese</b> día, '+
-    'contra cómo terminó. <b>El ritmo</b> es la forma de antes; <b>la curva</b>, la de ahora. La curva de un mes se arma con los <b>otros</b> meses cerrados, '+
-    'nunca con él mismo (con la suya acertaría siempre).</div>'+pryGanaHtml(R)+
+    'contra cómo terminó. <b>El ritmo</b> es la forma de antes; <b>la curva</b>, la de ahora. La curva de un mes se arma con los meses cerrados <b>antes</b> de él '+
+    '(lo que se sabía en ese momento), nunca con él mismo ni con uno que vino después.</div>'+pryGanaHtml(R)+
     (h || '<div class="empty" style="padding:12px 0">Todavía no hay fechas para probar.</div>')+'</div>';
 }
 /* Quién ganó, marca por marca, y con qué va el mes en curso (la elección de `proyeccionMes`). */
@@ -9141,7 +9227,7 @@ function pryGanaHtml(R){
              Math.round(e.c*100)+'% → '+esc(mesNombre(cur))+' va con <b>'+(e.r<e.c ? 'el ritmo' : 'la curva')+'</b>'+
              (e.r<e.c ? ' (desde el '+PRY_DIAS_RITMO+'° día hábil; antes, con la curva)' : '')+'.');
   });
-  if(!lin.length) lin.push('Todavía no se pueden comparar: la curva de un mes se prueba con <b>otro</b> mes cerrado, así que hacen falta dos. '+
+  if(!lin.length) lin.push('Todavía no se pueden comparar: la curva de un mes se prueba con un mes cerrado <b>anterior</b>, así que hacen falta dos. '+
                            'Hasta entonces va la curva, y la comparación aparece sola cuando cierre '+esc(pryMesCorto(cur))+'.');
   return '<div class="pry-gana">'+lin.map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>';
 }
@@ -9159,10 +9245,11 @@ function pryPruebaMarca(P, g){
   }).join('');
   var der = P.cerrado ? ('terminó en <b>'+fmtBs0(T)+'</b>') : ('va en <b>'+fmtBs0(T)+'</b> · '+pryFaltanTxt(P.falta));
   var pie=[];
-  if(!c.ok) pie.push('La curva para '+pryMesCorto(P.ym)+' se arma con otro mes cerrado, y todavía no hay uno con al menos '+PRY_MIN_VENTAS+' ventas de '+g.lbl+'.'+
-                     ((P.cerrado && P.hoyYm>P.ym) ? ' Se va a poder probar cuando cierre '+pryMesCorto(P.hoyYm)+'.' : ''));
+  if(!c.ok) pie.push(!(c.meses.length || (c.sinDatos||[]).length)
+                     ? ('La curva para '+pryMesCorto(P.ym)+' se arma con los meses cerrados antes de él, y es el primer mes entero en el panel: queda solo con el ritmo.')
+                     : ('La curva para '+pryMesCorto(P.ym)+' se arma con los meses cerrados antes de él, y no hay uno con al menos '+PRY_MIN_VENTAS+' ventas de '+g.lbl+'.'));
   else pie.push('La curva para '+pryMesCorto(P.ym)+' sale de '+pryMesesTxt(c.meses)+(c.meses.length>1 ? ' (y lo que vendieron en promedio, Bs ' : ' (y lo que vendió, Bs ')+
-                Math.round(c.prom).toLocaleString('es-BO')+').');
+                Math.round(c.prom).toLocaleString('es-BO')+').'+((c.sinDatos||[]).length ? (' Sin contar '+pryMesesTxt(c.sinDatos)+': sin ventas del equipo cargadas en el panel.') : ''));
   if(!P.cerrado) pie.push('El error se ve cuando cierre el mes: hoy cualquier comparación quedaría corta.');
   var foot = (P.cerrado && (nR || nC)) ? ('<tfoot><tr><td colspan="2">Se equivocó, en promedio</td><td>'+(nR ? Math.round(sR/nR*100)+'%' : '—')+'</td><td>'+(nC ? Math.round(sC/nC*100)+'%' : '—')+'</td></tr></tfoot>') : '';
   return '<div class="pry-grupo pry-prueba" data-ym="'+esc(P.ym)+'" data-g="'+esc(k)+'" style="border-left-color:'+g.col+'">'+
@@ -9289,8 +9376,8 @@ function setCuadreModo(m){
 }
 function cuadrePeriodo(){
   var modo=segVal('cua-mode')||'mes';   // el mismo arranque que marca el HTML (§4bp)
-  if(modo==='dia') return {modo:modo, val:((document.getElementById('cua-dia')||{}).value||todayStr())};
-  if(modo==='mes') return {modo:modo, val:(((document.getElementById('cua-mes')||{}).value)||todayStr().slice(0,7))};
+  if(modo==='dia') return {modo:modo, val:((document.getElementById('cua-dia')||{}).value||diaNegocio())};
+  if(modo==='mes') return {modo:modo, val:(((document.getElementById('cua-mes')||{}).value)||diaNegocio().slice(0,7))};
   return {modo:'todo', val:''};
 }
 var MESES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -9312,8 +9399,9 @@ function enPeriodoCuadre(fecha, pe){
   return true;
 }
 /* Un renglón por PAGO (no por venta): es lo que se tilda contra el extracto. */
-function cuadrePagos(){
-  var pe=cuadrePeriodo(), vend=cuadreVendedor(), out=[];
+function cuadrePagos(pe, vend){
+  /* (25/10, FIN-01) `pe`/`vend` opcionales: sin ellos, los de la pantalla del Cuadre. «☀️ Tu día» pide el MES en curso y Todos. */
+  if(!pe) pe=cuadrePeriodo(); if(vend==null) vend=cuadreVendedor(); var out=[];
   STATE.forEach(function(p){
     if(fueraDeConta(p)) return;
     if(!cuadreEsDe(p, vend)) return;
@@ -10418,7 +10506,7 @@ function retFormVacio(){
 }
 function abrirRetiros(){
   RET_FORM=retFormVacio();
-  var m=document.getElementById('ret-mes'); if(m && !m.value) m.value=todayStr().slice(0,7);
+  var m=document.getElementById('ret-mes'); if(m && !m.value) m.value=diaNegocio().slice(0,7);
   document.getElementById('retiros-overlay').style.display='flex';
   llenarSelectRetVendedor();
   renderRetiros();
@@ -11258,11 +11346,14 @@ function ctaGuardarPago(id, i, igual){
        `mxM=0`, se los borraba del historial, del Cuadre y de los dos Excel. Es la MISMA plata
        del mismo adelanto pagado en dos veces: se mueven juntos. */
     if(mx && (f!==antF || nota!==antN)){
+      /* ⚠️ (25/10, auditoría Codex/Astra FIN-03) EL que `mixtoDe` eligió (el que cierra el «A cuenta»), no el PRIMERO del mismo día y
+         recibo: con «QR 800 + Efectivo 400» de adelanto y un cobro aparte «Efectivo 100» del mismo día y recibo, se movía el de 100 y el
+         mes quedaba corrido 300. Mismo método, banco, monto, día y recibo que el elegido. */
+      var _esMx=function(_mc){ return !esEnvio(_mc) && _mc.fecha===antF && limpiaNota(_mc.nota)===antN && r2(Number(_mc.monto)||0)===mxM &&
+        String(_mc.metodo||'')===String(mx.metodo||'') && String(_mc.banco||'')===String(mx.banco||''); };
       for(var _mi=0;_mi<cobros.length;_mi++){
         var _mc=cobros[_mi];
-        if(!esEnvio(_mc) && _mc.fecha===antF && limpiaNota(_mc.nota)===antN && (Number(_mc.monto)||0)>0){
-          _mc.fecha=f; _mc.nota=nota; break;
-        }
+        if(_esMx(_mc)){ _mc.fecha=f; _mc.nota=nota; break; }
       }
     }
     p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
@@ -12774,7 +12865,10 @@ function submitPedido(){
     toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
         : faltaMotivo ? ((okSinAtc ? '' : 'Completá los campos marcados en rojo (*). ')+'🎧 No se puede guardar la ATC: falta '+atcFaltanTxt(faltaAtc)+'.')
         : faltaSuc ? '🏪 Poné a qué SUCURSAL va la reposición — es a dónde tiene que ir el camión.'
-        : 'Completá los campos marcados (*)','err');
+        : ('Falta: '+formFaltanNombres().join(', ')+'. Está marcado en rojo (*).'),'err');
+    /* 📱 (25/10, auditoría Codex/Astra) En el celular el campo que falta podía quedar 2.700 px más arriba y el foco seguía en «Guardar»:
+       la vendedora no veía qué faltaba. Se la lleva al PRIMER campo en rojo (los casos de abajo eligen el suyo). */
+    if(!faltaSuc && !faltaMotivo && !faltaOcRoho) formIrAlPrimerError();
     if(faltaSuc){ var fs2=document.getElementById('f-rpt-suc'); if(fs2){ fs2.focus(); fs2.scrollIntoView({block:'center'}); } }
     if(faltaMotivo){ var fm=okSinAtc ? document.getElementById(faltaAtc[0].id) : (document.querySelector('#view-form .err')||document.getElementById(faltaAtc[0].id));
       if(fm){ try{ if(fm.focus) fm.focus(); }catch(e){} fm.scrollIntoView({block:'center'}); } }
@@ -15348,7 +15442,10 @@ function fxBuscaAbrir(inp){
     return '<div class="fx-bo" data-i="'+i+'"><div class="t"><b>'+esc(x.d ? nombreVenta(x.d, x.code) : o.lb)+'</b> '+esc(x.m||'')+'<div class="c">'+esc(x.code||'')+'</div></div>'+fxBuscaChip(x)+'</div>'; }).join('')+
     (tot>L.length?('<div class="fx-bmas">… y '+(tot-L.length)+' más: escribí otra palabra para achicar</div>'):'');
   var r=inp.getBoundingClientRect();
-  el.style.left=(r.left+window.scrollX)+'px'; el.style.top=(r.bottom+window.scrollY+4)+'px'; el.style.width=Math.max(r.width, 300)+'px';
+  /* (25/10, §4mk, UI-05) Nunca más ancha que la pantalla ni corrida afuera: a 320 px los 300 de la lista, puestos donde empieza el campo, salían
+     por la derecha. */
+  var vw=document.documentElement.clientWidth||window.innerWidth, w=Math.min(Math.max(r.width, 300), vw-16), x=Math.max(8, Math.min(r.left, vw-w-8));
+  el.style.left=(x+window.scrollX)+'px'; el.style.top=(r.bottom+window.scrollY+4)+'px'; el.style.width=w+'px';
   el.hidden=false;
 }
 function fxBuscaElegir(i){
@@ -15853,7 +15950,7 @@ function rechazoTxt(err){
    de un aviso que parece una falla. Acá se cuenta solo lo que de verdad espera: lo que no tiene un envío en curso.
    `apiSave` repinta el pie cuando el envío termina (`fin`), así lo que falló aparece en el acto. */
 function colaEsperando(){
-  return getPending().filter(function(p){ var id=p && p.id; return !(id && (SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id])); });
+  return getPending().filter(function(p){ var id=p && p.id; return !(id && (SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (typeof REESCRITA_ESPERA!=='undefined' && REESCRITA_ESPERA[id]))); });
 }
 function renderColaAviso(){
   var el=document.getElementById('mis-cola'); if(!el) return;
@@ -17201,7 +17298,7 @@ function admFichaHtml(p, dn){
   var cam=ret ? '' : (p.vehiculo ? ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>') : '<div class="rojo">🚛 Sin camión</div>');
   var btn=function(ic, t, fn, cl){ return '<button type="button" class="'+(cl||'')+'" onclick="event.stopPropagation();'+fn+'" title="'+esc(t)+'">'+ic+'<small>'+esc(t)+'</small></button>'; };
   var rk=admFichaColor(p);   // 🎨 (24/10, dueño) la ficha entera: ATC, RPT, verde = todo OK, rojo = falta algo; lo demás va en el producto
-  return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0">'+
+  return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
     '<div class="af-hd">'+(function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «el número es una cosa y el sticker otra»: el turno solo, a la izquierda)
         return '<span class="af-tu"><b>'+(N||'—')+'</b></span>'; })()+   // (24/10, dueño) el N° del día solo, con su fondo
       '<div class="af-who"><b>'+esc(p.cliente||'—')+'</b><span class="af-sub"><em>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+'</em>'+
@@ -18123,16 +18220,24 @@ function mandarReescritaDeCola(rec){
    (26/09) Y antes se relee la planilla: con dos cargadores a la vez ganaba el último y lo tildado por el
    otro desaparecía (lo mismo que los días cerrados, 7ee6160). */
 var _cargaT=null;
+/* (25/10, auditoría Codex/Astra FLW-2) Mientras corre el respiro de 700 ms la tilde YA está en la cola de este aparato (con sus
+   `_cambios`): si se recarga la página o se corta la señal en ese medio segundo, la cola la manda después y el otro aparato la ve.
+   Antes vivía solo en la copia local y en la memoria: recargar la perdía. Mientras el temporizador la va a mandar, `flushPending`
+   no la manda dos veces (`REESCRITA_ESPERA`). */
+var REESCRITA_ESPERA={};
 function guardarCargaChk(){
   saveCargaMirror();
   cargaSyncSet('guardando');                            // (§4jh)
   reescritaColaAlDia(CARGA_ID, CARGA_CAMBIOS);
+  try{ reescritaEncolar(filaCarga(), CARGA_CAMBIOS); }catch(e){}
+  REESCRITA_ESPERA[CARGA_ID]=1;
   clearTimeout(_cargaT);
   _cargaT=setTimeout(function(){
+    var listo=function(){ delete REESCRITA_ESPERA[CARGA_ID]; };
     var mandar=function(){
       var cam=reescritaCambios(CARGA_ID, CARGA_CAMBIOS), fila=reescritaConSello(filaCarga());   // (26/09) con el sello con el que se leyó
-      apiSave(fila, { juntar:true }).then(function(res){ if(res&&res.ok){ reescritaConfirmada(CARGA_ID, cam, (res.pedido && String(res.pedido.id)===CARGA_ID) ? res.pedido : fila); cargaSyncSet('ok'); } else { reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); } },
-                         function(){ reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); });
+      apiSave(fila, { juntar:true }).then(function(res){ listo(); if(res&&res.ok){ reescritaConfirmada(CARGA_ID, cam, (res.pedido && String(res.pedido.id)===CARGA_ID) ? res.pedido : fila); cargaSyncSet('ok'); } else { reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); } },
+                         function(){ listo(); reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); });
     };
     if(CONNECTED){
       conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
@@ -18143,7 +18248,7 @@ function guardarCargaChk(){
         saveCargaMirror(); renderCargaSiActiva();
       }, function(){}).then(mandar, mandar);
     }
-    else { reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); }
+    else { delete REESCRITA_ESPERA[CARGA_ID]; reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); }
   }, 700);
 }
 function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
@@ -22557,15 +22662,20 @@ function misHacerDatos(v, mine){
 /* 💵 (T2) Lo cobrado en efectivo DESDE SU ÚLTIMO RETIRO: no la resta de todo lo cobrado menos todo lo retirado, que con retiros viejos sin
    anotar da números que no cierran (24/10: a Carola le quedaban Bs 15.610 sin ningún cobro después de su último retiro). Lo que tiene un
    chofer es del chofer (`pagoRecibio`, §4eq). */
+/* 💵 (25/10, auditoría FIN-01; el dueño eligió «igual que el Cuadre del mes») Lo que tiene en la mano = el efectivo que RECIBIÓ en el mes en
+   curso − lo que se le RETIRÓ en el mes, parcial o total: el mismo número que «Le queda en la mano» del Cuadre del mes con Todos
+   (`cuadrePagos` + `retirosDe`, las mismas reglas). Antes contaba solo lo cobrado DESPUÉS del último retiro y cualquier retiro lo ponía en 0:
+   un retiro parcial de 500 sobre 700 decía «todo rendido» con 200 en la mano. ⚠️ El 1° de cada mes arranca de nuevo (decisión del
+   dueño): lo cobrado el 30 y rendido el 2 da negativo → se muestra 0 y se dice «N eran de lo cobrado el mes pasado». */
 function misEfectivoDatos(v){
-  var cob=[];
-  (STATE||[]).forEach(function(p){ if(!p || esFilaSistema(p) || fueraDeConta(p)) return;
-    contaPagos(p).forEach(function(c){ if(c.metodo!=='Efectivo' || !((Number(c.monto)||0)>0)) return; if(!mismoVendedor(pagoRecibio(c,p), v)) return; cob.push({ f:c.fecha||contaFecha(p)||'', m:Number(c.monto)||0, p:p }); }); });
-  var ret=retirosTodos().filter(function(r){ return mismoVendedor(r.entrega, v); }).sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
-  var ult=ret[ret.length-1]||null, nuevos=cob.filter(function(c){ return !ult || c.f>ult.fecha; }).sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
-  var tot=0; nuevos.forEach(function(c){ tot=r2(tot+c.m); });
-  var dias=nuevos.length ? Math.round((new Date(todayStr()+'T12:00:00')-new Date(nuevos[0].f+'T12:00:00'))/864e5) : 0;
-  return { tot:tot, nuevos:nuevos, ult:ult, dias:dias };
+  var pe={ modo:'mes', val:diaNegocio().slice(0,7) };
+  var cob=cuadrePagos(pe, '').filter(function(c){ return c.metodo==='Efectivo' && mismoVendedor(pagoRecibio(c, c.p), v); })
+    .map(function(c){ return { f:c.fecha||'', m:Number(c.monto)||0, p:c.p, envio:!!c.envio }; });
+  var ret=retirosDe(pe, '').filter(function(r){ return mismoVendedor(r.entrega, v); }).sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
+  var cobrado=0, retirado=0; cob.forEach(function(c){ cobrado=r2(cobrado+c.m); }); ret.forEach(function(r){ retirado=r2(retirado+r.monto); });
+  var dif=r2(cobrado-retirado);
+  return { tot:Math.max(0, dif), deMas:Math.max(0, -dif), cobrado:cobrado, retirado:retirado, mes:pe.val,
+           nuevos:cob.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); }), retiros:ret, ult:ret[ret.length-1]||null };
 }
 var MIS_EF_ABIERTO=false;
 function misTopPintar(v, mine){
@@ -22596,16 +22706,19 @@ function misTopPintar(v, mine){
       cel('🚚','Entregados del mes', R.ent+' de '+R.n)+
       cel('⏳','Falta cobrar del mes', fmtBs0(R.cobrar), R.cobrar>0?'td-mal':'td-cero')+
       '<div class="td-f td-cash" onclick="MIS_EF_ABIERTO=!MIS_EF_ABIERTO;renderMis()" title="Ver los cobros"><span class="td-i">💵</span><span class="td-t">Efectivo en tu mano<small>'+
-        (E.nuevos.length ? (E.nuevos.length+(E.nuevos.length===1?' cobro':' cobros')+' desde tu último retiro'+(E.ult?(' ('+fmtFechaCorta(E.ult.fecha)+')'):'')+(E.dias>=7?(' · <em>el más viejo, hace '+E.dias+' días</em>'):'')) : 'todo rendido')+
+        (!E.cobrado && !E.retirado ? ('sin efectivo en '+esc(mesN(E.mes)))
+          : ('de '+esc(mesN(E.mes))+': recibiste '+fmtBs0(E.cobrado)+', rendiste '+fmtBs0(E.retirado)+
+             (E.deMas ? (' · <em>'+fmtBs0(E.deMas)+' eran de lo cobrado el mes pasado</em>') : (E.tot ? '' : ' · todo rendido'))))+
       '</small></span><b>'+fmtBs0(E.tot)+'</b></div>'+
     '</div>'+
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
       '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button></div></div>';
-  var det=(MIS_EF_ABIERTO && E.nuevos.length) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
-      E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
-      '<div class="t2-pie">'+(E.ult?('Último retiro: '+esc(fmtFechaCorta(E.ult.fecha))+' · '+fmtBs0(E.ult.monto)):'Todavía no hay retiros anotados')+'</div></div>') : '';
+  var det=(MIS_EF_ABIERTO && (E.nuevos.length || E.retiros.length)) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo de '+esc(mesN(E.mes))+' · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
+      E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+(c.envio?' · 🚚 flete':'')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
+      E.retiros.slice().reverse().map(function(r){ return '<div class="t2-f"><span>'+esc(fmtFechaCorta(r.fecha))+'</span><b>↩ Rendiste'+(r.retira?(' a '+esc(r.retira)):'')+'</b><span class="t2-m">− '+fmtBs(r.monto)+'</span></div>'; }).join('')+
+      '<div class="t2-pie">Recibiste '+fmtBs0(E.cobrado)+' − rendiste '+fmtBs0(E.retirado)+' = '+fmtBs0(r2(E.cobrado-E.retirado))+'. Es lo mismo que «Le queda en la mano» del Cuadre de '+esc(mesN(E.mes))+'.</div></div>') : '';
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
@@ -22855,7 +22968,7 @@ function guardarUbicacion(p, norm, reopen, deVendedora){
         : (_mapsAntes ? '📍 cambió la ubicación' : '📍 le pusieron ubicación') ]);
     }
     upsert(p); saveMirror();
-    if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+    guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
     if(UNLOCKED) renderAdmin();
     refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
     toast(msg, tipo||'ok');
@@ -25681,12 +25794,47 @@ function stockNormalizarRecepciones(S){
     Object.keys(nr).forEach(function(rid){ if(!g.rs[rid]) g.rs[rid]={ k:q.k, u:0, q:q.id, nr:1 }; });
     Object.keys(resta).forEach(function(rid){
       if(g.rs[rid] || g.u[q.k]==null) return;
-      var r=resta[rid];
-      g.u[q.k]=Math.max(0,(Number(g.u[q.k])||0)-(Number(r.u)||0));
-      g.rs[rid]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id };
+      var r=resta[rid], pide=Math.round(Number(r.u)||0), antes=Number(g.u[q.k])||0, sale=Math.max(0, Math.min(antes, pide));
+      g.u[q.k]=antes-sale;
+      /* ⚠️ (25/10, auditoría S3) `u` = lo que DE VERDAD se restó; `c` = lo que dice la recepción; `ts` = el orden. Antes se anotaba la
+         recepción entera aunque el almacén no la tuviera (`max(0,…)`): 6 en Moreno y dos recogidas de 5 → Moreno 0 + PTF 10, y anular
+         las dos le DEVOLVÍA 10 a Moreno (10, no 6). */
+      g.rs[rid]={ k:q.k, u:sale, q:q.id, c:pide, ts:Number(r.ts)||0 };
     });
   });
+  stockRecogidasRepartir(S);
   stockNormalizarDetecciones(S);   // 🧮 (§4hn) lo asignado de cada detección sale de las recepciones vivas
+}
+/* 🚚 (25/10, auditoría Codex/Astra S3) Lo restado a cada almacén por las recogidas, recontado SIN depender del orden en que se anotaron
+   o se juntaron: por almacén y producto, lo que había en la foto (= lo que queda + lo ya restado) se reparte entre las recogidas vivas
+   de la más vieja a la más nueva (`ts`), cada una hasta lo que dice (`c`). Así anular una devuelve justo lo que sacó, la otra toma lo
+   que ahora sí hay, y anular las dos deja la foto como estaba. Lo que no alcanzó queda a la vista (`stockRecogidasDeMas`). Las marcas
+   `nr` (ya estaban en la foto) no restan. Idempotente. */
+function stockRecogidasRepartir(S){
+  Object.keys((S && S.g)||{}).forEach(function(alm){
+    var g=S.g[alm]; if(!g || !g.u || !g.rs) return;
+    var por={};
+    Object.keys(g.rs).forEach(function(rid){ var x=g.rs[rid]; if(!x || x.nr || g.u[x.k]==null) return; (por[x.k]=por[x.k]||[]).push([rid, x]); });
+    Object.keys(por).forEach(function(k){
+      var L=por[k], base=Number(g.u[k])||0;
+      L.forEach(function(e){ base+=Number(e[1].u)||0; });
+      L.sort(function(a,b){ return ((Number(a[1].ts)||0)-(Number(b[1].ts)||0)) || (a[0]<b[0]?-1:(a[0]>b[0]?1:0)); });
+      var queda=base;
+      L.forEach(function(e){ var x=e[1], pide=(x.c!=null ? Math.round(Number(x.c)||0) : Math.round(Number(x.u)||0)); x.c=pide; x.u=Math.max(0, Math.min(pide, queda)); queda-=x.u; });
+      g.u[k]=queda;
+    });
+  });
+}
+/* Lo que las recogidas anotaron de más sobre lo que el almacén tenía: [{alm, k, pide, salio, falta}]. Físicamente no salen 10 de 6:
+   o el Excel de ese almacén estaba atrasado, o la llegada se anotó de más. Se dice; no se corrige solo. */
+function stockRecogidasDeMas(S){
+  var out=[]; S=S||STOCK;
+  Object.keys((S && S.g)||{}).forEach(function(alm){
+    var g=S.g[alm], t={}; if(!g || !g.rs) return;
+    Object.keys(g.rs).forEach(function(rid){ var x=g.rs[rid]; if(!x || x.nr) return; var o=t[x.k]=t[x.k]||{ alm:alm, k:x.k, pide:0, salio:0 }; o.pide+=(x.c!=null?Number(x.c):Number(x.u))||0; o.salio+=Number(x.u)||0; });
+    Object.keys(t).forEach(function(k){ var o=t[k]; o.falta=o.pide-o.salio; if(o.falta>0) out.push(o); });
+  });
+  return out;
 }
 /* Un conteo es la FOTO de un corte (fecha + hora + almacén). */
 function fusIdFoto(x){ return x ? (String(x.f||'')+' '+String(x.hora||'')+' '+String(x.alm||'')) : ''; }
@@ -29074,6 +29222,13 @@ function renderStockAhora(){
   var html='';
   /* §4fz-b: sin haber leído nunca la planilla, lo de abajo NO es el stock del equipo (sale solo
      de los pedidos). Lo que se anote igual se junta con la planilla al conectar (`filaStock`). */
+  /* 🚚 (25/10, S3) Recogidas anotadas por más de lo que tenía el almacén: la diferencia, a la vista. */
+  var _deMas=stockRecogidasDeMas(STOCK);
+  if(_deMas.length){
+    html+='<div id="stk-rec-demas" style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
+      '<b>⚠️ Se anotaron recogidas por más de lo que había.</b> '+_deMas.map(function(o){ return esc(stockNombreClave(o.k))+' de '+esc(stockAlmCorto(o.alm))+': se anotaron <b>'+o.pide+'</b> y su Excel tenía <b>'+o.salio+'</b> (<b>'+o.falta+' sin explicar</b>)'; }).join(' · ')+
+      '. Físicamente no salen más de los que había: o el Excel de ese almacén estaba atrasado, o una llegada se anotó de más. Revisalo con logística y, si sobra una, anulala.</div>';
+  }
   if(!STOCK_CARGADO && CONNECTED){
     html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
       '<b>⏳ Esperando la planilla del equipo.</b> Lo que ves abajo sale solo de los pedidos; en cuanto diga «Conectado» aparece lo contado, lo pedido a fábrica y los almacenes.</div>';
@@ -32526,18 +32681,29 @@ function existLoteDe(filas, delNombre){
   var secs=existSecciones(filas), eS=existSeccionesError(secs);
   if(eS) return { error:eS };                   // 🧮 (16/10, §4lr U30)
   if(!secs.length) return null;
-  var pie=existHoraDePie(filas), lista=[], err='';
+  var pie=existHoraDePie(filas), lista=[], err='', saltados=[], usados=[];
   var par={};   // 🔁 (19/10, §4ls EX-8) lo que cada almacén del archivo dejó para juntar con el otro (`existParOtro`): el MISMO objeto para todos
-  secs.forEach(function(s, i){
+  /* ⏭ (25/10, auditoría; el dueño eligió «saltarlo con un aviso») Un almacén que viene VACÍO (su encabezado y «TOTAL : 0», sin ningún
+     producto) frenaba los tres. Se salta: ese almacén queda con su saldo anterior, los otros se cargan, y se dice. */
+  var vacio=function(s){
+    var h=filas[s.hdr]||{}, cC='', cN='';
+    for(var k in h){ var t=String(h[k]||'').toUpperCase().replace(/\s+/g,' ').trim(); if(/^C[ÓO]DIGO PRODUCTO$/.test(t)) cC=k; else if(/^NOMBRE PRODUCTO$/.test(t)) cN=k; }
+    if(!cC || !cN) return false;
+    for(var i=s.desde+1;i<s.hasta;i++){ var f=filas[i]||{}; if(String(f[cC]==null?'':f[cC]).trim() && String(f[cN]==null?'':f[cN]).trim()) return false; }
+    return true;   // ningún producto entre su encabezado y su «TOTAL :» (los renglones de grupo, «HEAVEN», no cuentan)
+  };
+  secs.forEach(function(s){
+    if(vacio(s)){ saltados.push(s.alm); return; }
     var r=existLeer(filas.slice(0, s.hdr+1).concat(filas.slice(s.desde, s.hasta+1)), s.alm);
     if(r.error){ if(!err) err=s.alm+': '+r.error; return; }
     r.totalReporte=s.total;
     existPonerHora(r, pie, delNombre);
     existAlinearHora(r);
-    if(secs.length>1) r.lote={ i:i+1, n:secs.length, alms:secs.map(function(x){ return x.alm; }), par:par };
-    lista.push(r);
+    lista.push(r); usados.push(s.alm);
   });
-  return err ? { error:err } : { lista:lista };
+  if(!err && !lista.length && saltados.length) err='los almacenes de este archivo vinieron vacíos ('+saltados.join(', ')+'): no hay nada que cargar.';
+  if(lista.length>1) lista.forEach(function(r, i){ r.lote={ i:i+1, n:lista.length, alms:usados.slice(), par:par }; });
+  return err ? { error:err } : { lista:lista, saltados:saltados };
 }
 /* ✏️ (19/10, §4ls verificación final, PA-7) En un archivo de varios almacenes, cancelar dice cuáles NO se usaron: quien cargó PTF y Banzer
    creía haber subido los tres. */
@@ -32646,6 +32812,7 @@ function onExistArchivo(ev){
     var L=existLoteDe(_filas, delNombre);
     if(L){
       if(L.error){ toast('❌ '+L.error,'err',9000); return; }
+      if((L.saltados||[]).length) toast('⏭ El Excel trae '+L.saltados.map(stockAlmCorto).join(', ')+' VACÍO (sin productos): no lo uso y queda con su saldo anterior. Si de verdad quedó sin nada, avisale al dueño.','err',12000);
       EXIST_IMP=L.lista.shift(); EXIST_COLA=L.lista; renderImportExist();
       return;
     }
@@ -32793,6 +32960,25 @@ function existLeer(filas, almForzado){
   if(!cCant) return {error:'No encontré la columna de cantidades.'};
 
   var items=[], repetidos=0, malos=0, total=0, vistos={}, cods={};
+  /* 🏷️ (25/10, auditoría Codex/Astra) DOS CÓDIGOS QUE LA LISTA NO CONOCE CON EL MISMO NOMBRE Y MEDIDA siguen siendo DOS productos
+     (§4cy): antes los dos caían en la misma clave cruda y se sumaban («ZZ001 = 2» y «ZZ002 = 4» → una fila con 6). Se mira el archivo
+     entero primero: si un nombre crudo lo tienen varios códigos desconocidos, se queda con la clave de siempre el que ya la tenía en el
+     corte anterior de este almacén (o, la primera vez, el código menor) y los otros llevan su código en el nombre. Se avisa. */
+  var _previo=(function(){ var esL=normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log'; var o=esL ? (STOCK.c||{}) : (((STOCK.g||{})[alm])||{}); return o.cod||{}; })();
+  var _porCruda={};
+  for(var q0=iHdr+1;q0<filas.length;q0++){
+    var f0=filas[q0], c0=String(f0[cCod]==null?'':f0[cCod]).trim().toUpperCase(), n0=String(f0[cNom]==null?'':f0[cNom]).replace(/\s+/g,' ').trim();
+    if(!c0 || !n0 || CODIGOS[c0]) continue;
+    var b0=stockClaveCruda({ desc:n0, medida:medidaDeTexto(n0) });
+    (_porCruda[b0]=_porCruda[b0]||{})[c0]=1;
+  }
+  var _claveDe={}, colisiones=[];
+  Object.keys(_porCruda).forEach(function(b){
+    var cs=Object.keys(_porCruda[b]).sort(); if(cs.length<2) return;
+    var dueno=cs.filter(function(c){ return _previo[c]===b; })[0] || cs[0];
+    cs.forEach(function(c){ if(c!==dueno){ var pa=b.split('|'); _claveDe[c]=(pa[0]+' '+c)+'|'+(pa[1]||''); } });
+    colisiones.push({ k:b, cods:cs, dueno:dueno });
+  });
   for(var q=iHdr+1;q<filas.length;q++){
     var fq=filas[q];
     var cod2=String(fq[cCod]==null?'':fq[cCod]).trim();
@@ -32812,7 +32998,7 @@ function existLeer(filas, almForzado){
        el código (como hizo en §4cw). Sumar en silencio era el error caro. */
     it.cat=!!CODIGOS[String(it.cod).toUpperCase()];
     it.k=it.cat ? stockClave({desc:it.desc, medida:it.medida, codigo:it.cod})
-                : stockClaveCruda({desc:it.desc, medida:it.medida});
+                : (_claveDe[String(it.cod).toUpperCase()] || stockClaveCruda({desc:it.desc, medida:it.medida}));
     if(it.cod) cods[it.cod.toUpperCase()]=it.k;   // ⚠️ el código es el identificador más fuerte (§4cv)
     if(vistos[it.k]!=null){ items[vistos[it.k]].cant+=cant; repetidos++; }  // mismo producto en dos renglones
     else { vistos[it.k]=items.length; items.push(it); }
@@ -32820,7 +33006,7 @@ function existLeer(filas, almForzado){
   }
   if(!items.length) return {error:'No encontré ningún producto con existencia en el archivo.'};
   return { fecha:fecha||todayStr(), sinFecha:!fecha, almacen:alm, items:items, total:total,
-           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0, cods:cods,
+           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0, cods:cods, colisiones:colisiones,
            esLog: normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log',
            conocido: normNombre(alm)===normNombre(STOCK_ALM_LOG) || !!(STOCK.al||{})[alm] };
 }
@@ -33874,6 +34060,8 @@ function renderImportExist(){
       lin('📅 Existencias al <b>'+fmtFecha(R.fecha)+'</b>'+(R.hora?(' <b>'+esc(R.hora)+'</b>'):'')+(R.fechaDeHora?' <span style="color:var(--amber);font-weight:700">· el archivo no traía «existencias al»: se usa el día en que se sacó</span>':''))+
       lin('📦 <b>'+R.items.length+'</b> productos · <b>'+stockUnid(R.total)+'</b> unidades'+(enCat<R.items.length?(' · <span style="color:var(--muted)">'+enCat+' se reconocen del catálogo, '+(R.items.length-enCat)+' quedan con su nombre</span>'):''))+
       (R.repetidos?lin('<span style="color:var(--muted)">'+R.repetidos+' renglones eran del mismo producto: se sumaron</span>'):'')+
+      ((R.colisiones||[]).length?lin('<span id="exist-colision" style="color:#9a4a07">🏷️ '+R.colisiones.map(function(c){ return esc(c.cods.join(' y '))+' ('+esc(stockNombreClave(c.k))+')'; }).join(' · ')+
+        ': códigos que la lista no conoce con el mismo nombre. Se cuentan <b>aparte</b> (dos códigos son dos productos); si son el mismo, mandale los códigos al dueño para unirlos.</span>'):'')+
       (R.malos?lin('<span style="color:var(--amber)">'+R.malos+' renglones sin cantidad legible: se saltean</span>'):'')+
       (totMal?lin('<span id="exist-total-mal" style="color:#b45309;font-weight:700">⚠️ El reporte dice '+stockUnid(R.totalReporte)+' unidades en este almacén y el panel leyó '+stockUnid(R.total)+': revisá antes de usarlo.</span>'):'')+
     '</div>'+
@@ -34590,17 +34778,49 @@ function irAImportadosRoho(mes){
 /* (18/10, §4ls, corrector) Sin los números: «⚠️ 5 pedidos sin camión» repintado como «4 pedidos…» después de asignar uno es la MISMA
    ventana (no vuelve arriba); «Ventana A» → «Ventana B» sí es otra. */
 function modalTitulo(){ var h=document.querySelector('#modal-box .modal-h h3'); return h ? String(h.textContent||'').replace(/\d+([.,]\d+)?/g,'#') : ''; }
+/* ⌨️ (25/10, §4mk, auditoría UI-02) LA VENTANA Y EL TECLADO. Al abrir, el foco entra a la ventana (a la ventana misma, no a un campo: en el
+   celular eso abriría el teclado) y se recuerda de dónde venía; mientras está abierta, Tab y Mayús+Tab dan la vuelta ADENTRO (antes
+   seguían por la página de atrás, que no se ve); al cerrar, el foco vuelve al botón que la abrió. Vale para toda ventana de `openModal`. */
+var MODAL_FOCO_ANTES=null;
+function modalFocables(box){
+  return [].slice.call(box.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
+    .filter(function(e){ return !e.hidden && e.getClientRects().length>0; });
+}
 function openModal(html, ancha){
   var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
   var antes=ov.classList.contains('on') ? modalTitulo() : null;
+  if(antes===null){ var a=document.activeElement; MODAL_FOCO_ANTES=(a && a!==document.body && !box.contains(a)) ? a : null; }
   box.innerHTML=html;
   box.classList.toggle('ancha', !!ancha);
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
   ov.classList.add('on');
+  box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('tabindex','-1');
+  var h=box.querySelector('.modal-h h3, h3, h2');
+  if(h){ if(!h.id) h.id='modal-tit'; box.setAttribute('aria-labelledby', h.id); } else box.removeAttribute('aria-labelledby');
   if(antes===null || antes!==modalTitulo()){ ov.scrollTop=0; box.scrollTop=0; }
+  if(!box.contains(document.activeElement)){ try{ box.focus({ preventScroll:true }); }catch(e){} }
   acomodarFichas();                        // el reporte y los productos traen sus fichas
 }
-function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+function closeModal(){
+  var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
+  ov.classList.remove('on');
+  /* Vuelve al que la abrió si sigue en la página y se ve; a un campo de texto no (en el celular abriría el teclado). */
+  var v=MODAL_FOCO_ANTES; MODAL_FOCO_ANTES=null;
+  if(estaba && v && document.contains(v) && v.getClientRects().length && !/^(INPUT|TEXTAREA|SELECT)$/.test(v.tagName)){ try{ v.focus({ preventScroll:true }); }catch(e){} }
+}
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Tab') return;
+  var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
+  if(!ov || !box || !ov.classList.contains('on')) return;
+  var t=e.target, dentro=box.contains(t), atras=!dentro && (t===document.body || !!(t.closest && t.closest('.header, .nav, .wrap')));
+  if(!dentro && !atras) return;            // otra ventana encima (el visor de fotos, un aviso): que maneje su teclado
+  var L=modalFocables(box);
+  if(!L.length){ e.preventDefault(); try{ box.focus({ preventScroll:true }); }catch(x){} return; }
+  var i=L.indexOf(t);
+  if(!dentro || t===box){ e.preventDefault(); (e.shiftKey ? L[L.length-1] : L[0]).focus(); return; }
+  if(!e.shiftKey && i===L.length-1){ e.preventDefault(); L[0].focus(); }
+  else if(e.shiftKey && i===0){ e.preventDefault(); L[L.length-1].focus(); }
+});
 /* 📥 (18/10, §4ls VE4) Tocar AFUERA de la ventana (o Esc) con la vista previa del Excel abierta y almacenes del mismo archivo todavía por
    ver NO la cierra: antes la cerraba sin cancelar, Banzer y Moreno quedaban sin cargar sin ningún aviso, y volver a subir el archivo
    medía mal. Con el último almacén (o uno solo), tocar afuera es «Cancelar» (`existCancelar`). Las demás ventanas, como siempre. */
@@ -35038,6 +35258,14 @@ function fichaIr(d){
   var q=FICHA_VEC && (d<0 ? FICHA_VEC.prev : FICHA_VEC.next); if(!q) return;
   MODAL_KIND='admin'; showPedidoModal(q.id);
 }
+/* ⌨️ (25/10, §4mk, auditoría UI-01) Una ficha que se toca (`role="button"`, con `tabindex`) se abre también con Enter o Espacio, como un botón.
+   Solo cuando el foco está EN la ficha (no en un botón de adentro) y la ficha no trae su propio `onkeydown`. */
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Enter' && e.key!==' ') return;
+  var t=e.target;
+  if(!t || !t.getAttribute || t.getAttribute('role')!=='button' || t.hasAttribute('onkeydown') || /^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(t.tagName)) return;
+  e.preventDefault(); t.click();
+});
 document.addEventListener('keydown', function(e){
   if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
   var box=document.getElementById('modal-box'), ov=document.getElementById('modal'), oc=document.getElementById('obs-conf');
@@ -35496,7 +35724,7 @@ function setEstado(id,val){
   var p=findById(id); if(!p) return;
   p.estado=(p.estado===val)?'':val; // tocar el mismo lo desmarca
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   reabrirFicha(id);
 }
 function toggleEntregado(id){
@@ -36396,7 +36624,7 @@ function setProdProduccion(id, idx, lugar){
   if(x.chk==='prod') x.chk = apagar ? '' : 'no';   // migrar el valor viejo a la marca nueva
   syncVerificado(p, apagar);   // el "Estado de stock" de abajo se marca solo: ya se pidió a fábrica (apagar el 🏭 lo corrige)
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   reabrirFicha(id);
 }
 /* Estado deducido de los tildes, para verlo AL LADO de los productos sin abrir la ficha.
@@ -36493,7 +36721,7 @@ function setProdChk(id, idx, val, de){
   if(x.chk==='ok' && enProduccion(x) && x.prodF && !x.prodR){ x.prodR=todayStr(); x.prodRt=Date.now(); }   // llegó lo pedido a fábrica (§4co); 🏭 (25/10) con la hora: ¿antes o después del Excel de hoy?
   syncVerificado(p, eraNo && x.chk!=='no');   // (§4ls, corrector) sacar una ✗ corrige el «No hay» que salía de ella
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   reabrirFicha(id);
 }
 /* ---- Color de la fila del pedido (misma regla para la tabla y para el Excel) ----
@@ -36777,7 +37005,7 @@ function toggleVerificado(id){
   var p=findById(id); if(!p) return;
   p.verificado=!p.verificado;
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  guardarDurable(p);   // (25/10, auditoría ORD-1) la intención queda en este aparato ANTES de mandarla: recargar o perder la señal no la pierde
   toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok');
   reabrirFicha(id);
 }
@@ -41922,10 +42150,17 @@ function compsMesDatos(mes){
       out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c) });
     });
   });
-  return out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
+  out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
+  /* (25/10, auditoría) N° de pago (para el Excel: una fila por foto, pero un pago es uno) y, si dos pagos darían el MISMO nombre de
+     archivo (mismo día, banco, monto y cliente), el segundo lleva «-2»: en Drive no se pisan ni se confunden. */
+  var vistos={};
+  out.forEach(function(x, i){ x.n=i+1; x.dup=0; var b=compsArchivo(x, 0); if(vistos[b]){ vistos[b]++; x.dup=vistos[b]; } else vistos[b]=1; });
+  return out;
 }
 function compsSlug(t){ return sinTildes(String(t||'')).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28); }
-function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+Math.round(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
+/* El monto con centavos cuando los tiene («10,10» y «10,20»: redondeados, los dos eran «10» y daban el mismo nombre). */
+function compsMontoTxt(m){ m=r2(m); return (Math.round(m)===m) ? String(m) : m.toFixed(2).replace('.',','); }
+function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+compsMontoTxt(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.dup?('-'+x.dup):'')+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
 function compsAbrir(){
   var ms=nxMesesCierre(), sel=(segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
   if(ms.indexOf(sel)<0) ms.unshift(sel);
@@ -41999,14 +42234,16 @@ function compsCarpeta(){
 function compsExcel(){
   var mes=(document.getElementById('comps-mes')||{}).value; if(!mes) return;
   var L=compsMesDatos(mes); if(!L.length){ toast('No hay pagos con QR, tarjeta o transferencia en ese mes','err'); return; }
-  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO']];
+  /* (25/10, el dueño eligió) «N° DE PAGO» y «FOTO» («1 de 2») al FINAL, las columnas de siempre en su lugar; el MONTO va solo en la
+     primera fila de cada pago: sumar la columna da lo cobrado, no lo cobrado por la cantidad de fotos. */
+  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO','N° DE PAGO','FOTO']];
   L.forEach(function(x){
-    var base=[x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', { v:r2(x.monto), t:'n', s:2 }, x.envio?'SÍ':''];   // MONTO como NÚMERO en Bs (N-FIN1: sin `t:'n'` salía como texto)
-    if(!x.comps.length) rows.push(base.concat(['FALTA LA FOTO','']));
-    else x.comps.forEach(function(fid, i){ rows.push(base.concat([fotoVer(fid), compsArchivo(x, i)])); });
+    var base=function(conMonto){ return [x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', conMonto ? { v:r2(x.monto), t:'n', s:2 } : '', x.envio?'SÍ':'']; };   // MONTO como NÚMERO en Bs (N-FIN1)
+    if(!x.comps.length) rows.push(base(true).concat(['FALTA LA FOTO', '', { v:x.n, t:'n' }, 'sin foto']));
+    else x.comps.forEach(function(fid, i){ rows.push(base(i===0).concat([fotoVer(fid), compsArchivo(x, i), { v:x.n, t:'n' }, (i+1)+' de '+x.comps.length])); });
   });
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
-  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48}], matrix:rows }]);
+  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48},{w:11},{w:10}], matrix:rows }]);
   downloadBlob(bytes, 'comprobantes-'+mes+(vend?('-'+vend.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de comprobantes descargado — '+L.length+' pago'+(L.length===1?'':'s')+' ✓','ok');
 }
@@ -43489,6 +43726,7 @@ document.addEventListener('DOMContentLoaded',function(){
     admTopeReset(); renderAdmin();
   });
   document.getElementById('f-add-prod').addEventListener('click',function(){ addProdRow(); });
+  try{ formEtiquetar(document.getElementById('view-form')); }catch(e){}   // ⌨️ (§4mk) los campos con su nombre
   document.getElementById('f-submit').addEventListener('click',submitPedido);
   document.getElementById('adm-dia').value=todayStr();
   document.getElementById('adm-mes').value=monthStr();
