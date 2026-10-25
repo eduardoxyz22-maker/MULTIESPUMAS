@@ -16088,3 +16088,44 @@ ventas a un centavo (no cambia nada de lo que existe). `tests/test_centavo_exact
   pruebas (el diff `b2d8b4c..a458cb3`; sin §4lt-d ni el `.gs` 25-a). Batería sobre esa copia: 248 suites, 8.044 bien; rojas: `test_ventas_marcas`
   (conocida) y `test_mispedidos` (inestable: sola 33/0). Humo con la planilla real a 390 y 1440: igual que §4mk (0 campos sin nombre, 150 fichas,
   octubre «en curso», sin errores) y 0 ventas a un centavo.
+
+### §4mn — 🎨 Cuatro arreglos visuales · 📒 lo que dijo la proyección cada día · 🎯 muestra de las metas (25/10, dueño: «Sí, hacé los 4 arreglos y lo de cargar la meta como sería muéstrame y si guardar la proyección hazlo»; en la rama, espera el «publica»)
+De las sugerencias visuales de Codex/Astra sobre `f1b5fe2` (dos `.md` del dueño), los cuatro que eligió:
+- **UI-01 Venta de tienda**: con `.venta-tienda` el formulario caía en la columna de la agenda (340 px en 1440, 236 en 1180) y el selector de la
+  tienda medía 18 px. Ahora `#view-form.active.venta-tienda` usa `minmax(0,1fr) 262px` (1120–1299) y `minmax(0,820px) minmax(290px,370px)` (≥1300):
+  860 px de formulario en 1180, el pedido en vivo al lado; el cartel envuelve (`.tienda-banner{flex-wrap:wrap}`) y el selector mide 170 px.
+- **UI-02 los tres montos de Contabilidad arriba** (`.lb-tres b`): sin `text-overflow:ellipsis`; `lbMontoEntero(root)` achica la letra hasta 14 px
+  si no entra y, si igual no entra, deja partir la línea. Se llama al final de `cxTopPintar` y de `acomodarFichas`.
+- **UI-04 los botones naranjas** (`.ah-go-a`): letra `#2b1700` (contraste 8,7 y 5,72 en las dos puntas del degradé; antes 1,97 y 3,00).
+- **Las etiquetas de los botones de la ficha de Administración** (`.af-tb small`): `.72rem` (11,5 px) en compu e iPad; en ≤420 px
+  `clamp(.6rem,2.55vw,.68rem)` para que los seis entren en 320 px. ⚠️ Con `min-width:0` en el botón «WhatsApp» se cortaba: no ponerlo.
+- `tests/test_visual_4mn.js` (20, en 1440/1180/820/320; 16 rojas contra `003a095`).
+
+**📒 Lo que dijo la proyección cada día** (`2440d4b`). La «🧪 prueba» RECALCULA cada día con lo vendido ese día, pero no es lo que el panel dijo
+(la curva y la elección del método cambian con los meses): hasta hoy eso no quedaba en ningún lado.
+- Fila del sistema **`__pry_hist__`** (`PRY_HIST_ID`, en `esFilaSistema`), JSON `{v:1, d:{'AAAA-MM-DD':{h, dt, dr, v, p, b:{heaven:[vendido,
+  proyección,'c'|'r'], suena:[…]}, mp, ru}}}`. Solo el mes en curso; de cada día queda la ÚLTIMA foto (la curva mira la hora).
+- **Cuándo**: al mirar Proyección con la contraseña (`pryHistQuizas`, como mucho cada `PRY_HIST_CADA` = 30 min; si hoy no hay ninguna, reintenta a
+  los 2 min) y **sola** una vez por día desde las `PRY_HIST_HORA` = 17:00 en cualquier aparato con la planilla leída hace ≤5 min (`pryHistAuto`, en
+  el tic de `AUTO_TIMER`; cada aparato con su respiro de 0-19 min, `PRY_HIST_RESPIRO`). Si hoy ya hay una foto de las 17:00 o más, no escribe.
+- **Cómo**: relee la fila (`apiList`), junta día por día (`pryHistJuntar`: la más tarde del día gana), poda a `PRY_HIST_DIAS` = 400 días y a
+  `PRY_HIST_TOPE` = 40.000 letras (cada día ~160 letras: unos 8 meses), y guarda con `apiSave` (sin cola: sin señal no guarda y lo intenta la
+  próxima vez). El servidor no la sella (gana el último): dos aparatos a la vez escriben lo mismo. **El `.gs` no cambió** (como `__anuncio__`).
+- **Se ve** en Proyección → «📒 Lo que dijo la proyección cada día» (`pryHistHtml`, `#pry-hist`): cada día, la hora, lo vendido, el equipo y cada
+  marca (con «la curva» / «el ritmo»); en curso, ▲▼ contra el día anterior; con el mes cerrado, el error de cada día contra el cierre (`pryErrHtml`)
+  y «Cerró en» + el promedio abajo. Medido con la planilla real: `proyeccionMes` tarda 12-40 ms.
+- En Playwright no escribe salvo `window.PRY_HIST_PRUEBA`.
+- 🐛 **De paso, publicado desde el 13/10**: la fila `__anuncio__` (en la planilla real desde el 23/10) contaba como una **venta de Bs 0** en
+  Contabilidad → Ventas («249 ventas», «Por cargar 174 de 249») y como «1 sin monto» en Proyección: `contaLista` no mira `esFilaSistema` y
+  `leerCierresDeLista` saca de STATE solo las filas del sistema de antes (no el anuncio ni las preguntas a Bloki). Ahora **`fueraDeConta` devuelve
+  true para toda fila del sistema** (raíz: lo usan Ventas, Cuadre, Proyección, Productos del mes). Con la planilla real: 248 ventas, 173 de 248,
+  «1 sin monto»; los montos no cambian.
+- `tests/test_pry_hist.js` (21: la foto de la tarde, una por día, antes de las 17 no, sin señal, la junta, el tope, la pantalla, el mes cerrado con
+  sus errores, la fila no es un pedido, el anuncio no es venta, sin la bandera no escribe). Contra `003a095` no corre (las funciones no existen).
+
+**🎯 Muestra de las metas por marca** (solo mirar, nada en el panel): artefacto https://claude.ai/artifact/5btePeM2nYNDbWdrYhuiaj, con los números
+reales de octubre al 25/10 12:00 y metas de EJEMPLO (Heaven 800.000, Sueña 260.000). (1) Contabilidad → Proyección → «🎯 Metas»: ventana por mes con
+‹ ›, Bs por marca, la suma del equipo, «Copiar las de octubre», «Cómo les fue» (meta, vendido, % y 📈 %). (2) Proyección con una ficha «🎯 Meta del
+equipo» y, por marca, la barra (la barra entera = la meta; vendido + lo que falta para la proyección), «Así no llega / Cerca» y «para llegar: Bs X
+por día hábil, hoy va a Bs Y: hace falta N % más». Preguntas abiertas para el dueño: ¿también en unidades?, ¿por vendedor?, ¿la ven las
+vendedoras?
