@@ -930,6 +930,17 @@ La muestra de la ciudad (https://claude.ai/artifact/DvJvxjSQAQchD5g5h4LVxL, v13)
 - **📦 «Por cargar» legible** (§4lv, 21/10, captura del dueño; PUBLICADO 21/10 18:24, `fa5d524`): en `tabEsp` cada grupo es un renglón a lo ancho (no tres columnas de 70 px), «🚚 En el camión» plegado, el cuerpo de abajo con tope de alto en pantalla ancha, y «▾ Achicar» esconde `#pt-tab-cuerpo` (la regla decía `#tab-cuerpo`).
 - `tests/test_patio.js` (48 con `PATIO_THREE=<paquete three 0.128>`, que se baja con `npm pack three@0.128.0`). Bitácora §4kn, §4kq.
 
+## 🛏️ «COLCHON» en la lista de productos y el código que se pone solo (§4mf, 25/10, PUBLICADO `6f3b393`)
+La lista emergente busca y muestra los colchones con «COLCHON» adelante (`nombreVenta`, por `pryTipoProd`), y al elegir queda ese nombre con su
+código. ⚠️ `CODIGOS[k].d` NO cambia (es la clave del stock). Escrito a mano, al salir del campo `prodCodigoAuto` pone el código con la identidad
+del stock y lo dice («✓ Lo reconocí…»); no pisa uno escrito, no toca un renglón que ya traía el pedido (`data-orig`: el código es parte de
+`prodClave`), nada en medida especial. `tests/test_colchon_nombre.js` (20).
+
+## ✨ Mis pedidos arriba (§4mf, 25/10; en la rama, sin publicar)
+Con un vendedor elegido: «📋 Para hacer» (`misHacerDatos`, con «✅ Al día») + «☀️ Tu día» (`misTopPintar`; 💵 efectivo desde el último retiro,
+`misEfectivoDatos`) y la bandeja de Kommo en filas (`borrBandejaCompacta`). En Playwright apagado salvo `MIS_TOP_PRUEBA`. «Ver todos» y la
+fábrica de Eduardo, igual. `tests/test_mis_arriba.js` (14).
+
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
 `showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres
 columnas (dónde entregar / qué se carga y de dónde + Estado de stock con sus tres botones A LA VISTA / camión y entrega); venta, cobro y
