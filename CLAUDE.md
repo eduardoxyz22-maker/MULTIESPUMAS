@@ -947,7 +947,10 @@ viejo; clase `cx-libro`, nunca `.lb`). V3 `stkTopPintar` (4 fichas + «Más» en
 ámbar revisar, turquesa lo demás). V6 `esqCargando`/`esqMisHtml`/`esqContaHtml`. V7 `vacioPoner` (misma frase + dibujo). En Playwright
 apagados salvo `CX_TOP_PRUEBA`, `STK_TOP_PRUEBA`, `MIS_TOP_PRUEBA`, `FP_PRUEBA`. V4 `fpArmar`/`fpPintar` (el formulario en 4 pasos: mueve los MISMOS
 nodos, «Listo» = `fxPasosEstado`). C3 `nxCierreControl` (lista de control del cierre; rojo bloquea «Bajar», la contraseña lo abre). C2
-`compsAbrir` (comprobantes del mes por banco con nombre de archivo y Excel con enlaces; la carpeta en Drive necesitaría `.gs` nuevo).
+`compsAbrir` (comprobantes del mes por banco con nombre de archivo y Excel con enlaces). 📁 La carpeta en Drive = **servidor `2026-10-25-a`**
+(`compsCarpeta_`, sin candado, solo fotos de la carpeta del panel, no duplica, tope de tiempo con `pendientes`; SIN implementar todavía):
+la página solo la llama con `SERVER_VER` ≥ 25-a. ⚠️ Primero el dueño implementa el `.gs`, después se publica la página. Volver atrás:
+✏️ a la versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas).
 Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_form_pasos`, `test_cierre_control`, `test_comprobantes_mes`.
 
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)

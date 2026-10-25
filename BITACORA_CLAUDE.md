@@ -15885,5 +15885,14 @@ El dueño aprobó (24-25/10) las muestras V2, V3, V5, V6 y V7 y el orden: V1 →
   `tests/test_cierre_control.js` (7).
 - **C2 · comprobantes del mes** (`compsAbrir`/`compsPintar`/`compsExcel`, `compsMesDatos`): pagos del mes que no son efectivo (también el
   flete), por banco y día, sin foto en rojo, nombre de archivo `AAAA-MM-DD_BANCO_MONTO_CLIENTE(_n).jpg`, «⬇️ Excel con los enlaces» (una fila
-  por foto, `fotoVer`). Botón en el libro y en «⬇️ Bajar». ⚠️ «Armar la carpeta en Drive» de la muestra NO está: copiar y renombrar en
-  Drive exige una versión nueva del `.gs`. Real (octubre): 193 pagos, Bs 532.015, 1 sin foto. `tests/test_comprobantes_mes.js` (8).
+  por foto, `fotoVer`). Botón en el libro y en «⬇️ Bajar». «📁 Armar la carpeta en Drive»: ver abajo
+  (servidor nuevo). Real (octubre): 193 pagos, Bs 532.015, 1 sin foto. `tests/test_comprobantes_mes.js` (11).
+- **📁 La carpeta en Drive: servidor `2026-10-25-a`** (25/10, dueño: «Prepáralo»; `d4495c2`, SIN implementar): acción `compsCarpeta`
+  (`compsCarpeta_`, sin candado, no toca la planilla) → copia cada foto con el nombre de la página a «Comprobantes para el contador /
+  Comprobantes AAAA-MM» (`COMPS_PROP`=`COMPS_CARPETA_ID`; la carpeta NO se comparte: la comparte el dueño). Solo fotos de la carpeta del
+  panel (`fotosFolder_`); un nombre que ya está no se copia de nuevo; extensión por el tipo (`compsNombre_`); tandas de hasta 60, corta a
+  los 4 min (`COMPS_TOPE_MS`) y devuelve `pendientes`. Página: «📁 Armar la carpeta en Drive» (`compsCarpeta`, tandas de 40) SOLO con
+  `SERVER_VER` ≥ `2026-10-25-a` (una acción desconocida, el servidor viejo la trataría como guardado); `SCRIPT_VERSION_ESPERADA` subió a
+  25-a. ⚠️ **Orden**: el dueño pega, prueba e implementa el `.gs` PRIMERO; recién después se publica la página. Volver atrás = ✏️ a la
+  versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas). La 25-a: 4.407 líneas, termina en `}`
+  con `return borrador;` antes. `test_servidor` §25 (8) y `test_comprobantes_mes` §6.
