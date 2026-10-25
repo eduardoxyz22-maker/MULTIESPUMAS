@@ -15872,3 +15872,18 @@ El dueño aprobó (24-25/10) las muestras V2, V3, V5, V6 y V7 y el orden: V1 →
   `apiList`. **V7 · vacíos con dibujo** (`vacioPoner`, `VACIO_SVG`): la MISMA frase de antes + dibujo + botones; con la vista de antes, solo
   texto (las pruebas la leen). `tests/test_vacio_cargando.js` (8).
 - `test_mis_arriba` y `test_colchon_nombre` imprimían «N bien, M mal» y `correr.sh` los leía «sin resumen»: ahora «·».
+- **V4 · el formulario en 4 pasos** (`fpArmar`/`fpPintar`/`fpIr`, `FP_PASOS`): barra arriba (pegada debajo del encabezado) + 1 Cliente y
+  venta (fecha, nota, OC, vendedor, cliente, celular, facturar a), 2 Productos, 3 Entrega (turno, garantía, zona, ubicación, dirección),
+  4 Cobro. MUEVE los mismos nodos (mismos ids) y esconde «Datos del pedido»/«Entrega»/el título del cobro con `.fp-oculta`. «Listo» =
+  `fxPasosEstado` (+ la fecha en el 1); un paso con todo escondido (ATC sin cobro, tienda) se saca de la barra. Con V4, la barra del celular
+  (`fxPasosPintar`) se apaga. En Playwright apagado salvo `FP_PRUEBA`. `tests/test_form_pasos.js` (10, incluye guardar).
+- **C3 · el cierre del mes con lista de control** (`nxCierreControl` dentro de `nxCierreHojas`, con los controles ya en ese mes;
+  `nxCierreControlHtml`, `nxCierreBoton`, `nxCierreForzar`): rojo = pagos sin terminar (`nxPstLista(mes)`, ahora acepta el mes), dos veces
+  (`indiceDuplicados` + descartados, sin tocar `DUP_IDX`), sin monto; ámbar = cobradas de más, efectivo sin rendir (`cuadreEfectivo`), con
+  saldo, por cargar. Con rojo, «Bajar el cierre» apagado; «🔑 Cerrar igual» pide la contraseña de Administración (misma cuenta que
+  `tryUnlock`; con `UNLOCKED`, directo). Real (24/10): 3 en rojo, efectivo sin rendir Bs 73.549 (la cuenta del Cuadre del mes).
+  `tests/test_cierre_control.js` (7).
+- **C2 · comprobantes del mes** (`compsAbrir`/`compsPintar`/`compsExcel`, `compsMesDatos`): pagos del mes que no son efectivo (también el
+  flete), por banco y día, sin foto en rojo, nombre de archivo `AAAA-MM-DD_BANCO_MONTO_CLIENTE(_n).jpg`, «⬇️ Excel con los enlaces» (una fila
+  por foto, `fotoVer`). Botón en el libro y en «⬇️ Bajar». ⚠️ «Armar la carpeta en Drive» de la muestra NO está: copiar y renombrar en
+  Drive exige una versión nueva del `.gs`. Real (octubre): 193 pagos, Bs 532.015, 1 sin foto. `tests/test_comprobantes_mes.js` (8).

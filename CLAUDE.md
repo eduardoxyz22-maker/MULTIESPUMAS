@@ -945,7 +945,10 @@ fábrica de Eduardo, igual. `tests/test_mis_arriba.js` (14).
 V2 `cxTopPintar` (Para hacer + libro en Bs por marca; lee `CX_TOP_M`/`CX_TOP_MK`/`cxMarcasDatos`, no cuenta nada; `.cx-nuevo` esconde lo
 viejo; clase `cx-libro`, nunca `.lb`). V3 `stkTopPintar` (4 fichas + «Más» en la barra de Stock; `.s3-on`). V5 `ahBotonCls` (rojo arreglar,
 ámbar revisar, turquesa lo demás). V6 `esqCargando`/`esqMisHtml`/`esqContaHtml`. V7 `vacioPoner` (misma frase + dibujo). En Playwright
-apagados salvo `CX_TOP_PRUEBA`, `STK_TOP_PRUEBA`, `MIS_TOP_PRUEBA`. Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`.
+apagados salvo `CX_TOP_PRUEBA`, `STK_TOP_PRUEBA`, `MIS_TOP_PRUEBA`, `FP_PRUEBA`. V4 `fpArmar`/`fpPintar` (el formulario en 4 pasos: mueve los MISMOS
+nodos, «Listo» = `fxPasosEstado`). C3 `nxCierreControl` (lista de control del cierre; rojo bloquea «Bajar», la contraseña lo abre). C2
+`compsAbrir` (comprobantes del mes por banco con nombre de archivo y Excel con enlaces; la carpeta en Drive necesitaría `.gs` nuevo).
+Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_form_pasos`, `test_cierre_control`, `test_comprobantes_mes`.
 
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
 `showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres
