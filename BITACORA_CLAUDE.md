@@ -16082,3 +16082,5 @@ Las 154 comparaciones de plata de `pedidos.html` (las encontró el parser de Typ
 de 0.01; quedan las dos que no son plata (la dona SVG y el sonido). `productos-mes.js` igual (`?v=20261025a`). 100,01 pagado con 100 ya no queda
 «pagada» con el saldo escondido, 0,01 de más se ve como exceso, el aviso de lo entregado sin cobrar suma 0,01 + 0,02. Planilla del 24/10: 0 de 987
 ventas a un centavo (no cambia nada de lo que existe). `tests/test_centavo_exacto.js` (6; 4 rojas contra `main`).
+- **Batería sobre la rama con §4ml + §4mm** (25/10): 249 suites, 8.081 bien, 3 rojas: `test_ventas_marcas` (la conocida), `test_asistente_rev` y
+  `test_mispedidos` (las inestables de siempre: solas, 17/0 y 33/0). Espera el «publica».
