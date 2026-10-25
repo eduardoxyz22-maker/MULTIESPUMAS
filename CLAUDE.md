@@ -941,7 +941,7 @@ Con un vendedor elegido: «📋 Para hacer» (`misHacerDatos`, con «✅ Al día
 `misEfectivoDatos`) y la bandeja de Kommo en filas (`borrBandejaCompacta`). En Playwright apagado salvo `MIS_TOP_PRUEBA`. «Ver todos» y la
 fábrica de Eduardo, igual. `tests/test_mis_arriba.js` (14).
 
-## ✨ Contabilidad y Stock arriba, colores, cargando y vacíos (§4mg, 25/10; en la rama, sin publicar)
+## ✨ Contabilidad y Stock arriba, colores, cargando y vacíos, 4 pasos, cierre y comprobantes (§4mg, 25/10, PUBLICADO `128bc86`; servidor 25-a SIN implementar: en `main` el `.gs` y `SCRIPT_VERSION_ESPERADA` siguen en 15-a)
 V2 `cxTopPintar` (Para hacer + libro en Bs por marca; lee `CX_TOP_M`/`CX_TOP_MK`/`cxMarcasDatos`, no cuenta nada; `.cx-nuevo` esconde lo
 viejo; clase `cx-libro`, nunca `.lb`). V3 `stkTopPintar` (4 fichas + «Más» en la barra de Stock; `.s3-on`). V5 `ahBotonCls` (rojo arreglar,
 ámbar revisar, turquesa lo demás). V6 `esqCargando`/`esqMisHtml`/`esqContaHtml`. V7 `vacioPoner` (misma frase + dibujo). En Playwright

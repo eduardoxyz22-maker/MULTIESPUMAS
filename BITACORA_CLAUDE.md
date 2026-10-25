@@ -15852,7 +15852,13 @@ que las dos tarjetas queden simétricas, sin blanco abajo):
   mismos botones (`borrEsLaMisma`, `verFichaGemela`, `completarBorrador`, `descartarBorrador`). Administración sigue con la tarjeta grande.
 - `tests/test_mis_arriba.js` (14).
 
-### §4mg — Contabilidad, Stock, colores, cargando y vacíos (25/10, en la rama `15040a0`…`d97bba3`, sin publicar)
+### §4mg — Contabilidad, Stock, colores, cargando y vacíos, formulario en 4 pasos, cierre con lista y comprobantes (25/10, PUBLICADA `128bc86`)
+**Publicación (25/10, dueño: «Y publica»)**: `main` = `128bc86` (de2c36b + los commits de página de §4mg; sin §4lt-d, que sigue en la rama).
+Batería en la copia publicada: rojos de siempre (`test_banzer`, `test_ventas_marcas`, `test_circuito`; `test_mispedidos` solo 33/0); Pages OK;
+probada en `main` con la planilla real. ⚠️ **El servidor sigue en `2026-10-15-a`** (consultado con `geocode` vacío): en `main` el `.gs` y
+`SCRIPT_VERSION_ESPERADA` quedaron en 15-a A PROPÓSITO (sin aviso de «servidor viejo»); el botón de la carpeta se prende solo con
+`SERVER_VER` ≥ 25-a. Cuando el dueño implemente la 25-a: subir a `main` el `.gs` de la rama, `test_servidor` (§11 l y §25) y
+`SCRIPT_VERSION_ESPERADA`='2026-10-25-a'.
 El dueño aprobó (24-25/10) las muestras V2, V3, V5, V6 y V7 y el orden: V1 → V2 → V5 → V3 → V6+V7 → V4 → C2+C3.
 - **V2 · Contabilidad → Ventas arriba** (`cxTopPintar`, `#cx-top`; dueño: *«contabilidad usa números, no %… no sé cuánto lleva vendido Sueña
   o Heaven»* y *«no tarjetas dentro de tarjetas»*): «📋 Para hacer» (`cxHacerDatos`: pagos sin terminar, dos veces, con saldo, cobradas de
