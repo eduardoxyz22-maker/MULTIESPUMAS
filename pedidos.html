@@ -2282,6 +2282,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
           <button id="cta-productos-mes" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirProductosMes()">📦 Productos del mes</button>
           <button id="nx-cierre-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#1d4ed8" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>
+          <button id="comps-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="compsAbrir()">📁 Comprobantes</button>
         </div>
         <div class="cx-gr cx-gr-revisar"><span class="cx-gr-t">🔎 Revisar</span>
           <button id="nx-pst-btn" class="btn btn-primary btn-sm" style="width:auto" onclick="nxPstAbrir()">🧾 Pagos sin terminar</button>
@@ -2708,6 +2709,23 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .fp-ok .fp-est{background:#dcfce7;color:#15803d}.fp-ya .fp-est{background:#ccf3f1;color:#00756f}
 .fp-cuerpo{padding:14px 16px 4px}
 @media (max-width:700px){ .fp-cuerpo{padding:12px 10px 2px} .fp-cab{padding:10px 12px} .fp-b{font-size:.78rem} .fp-av{display:none} }
+/* 📁 (§4mg, C2) comprobantes del mes */
+.cps-sub{font-size:.82rem;color:#55706f;margin:10px 0 8px}
+.cps-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.cps-r{border:1px solid #e1ebea;border-left:5px solid var(--c);border-radius:12px;padding:8px 10px;background:#fff;min-width:0}
+.cps-r span{display:block;font-size:.74rem;font-weight:800;color:#55706f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cps-r b{display:block;font-size:1.3rem;font-weight:900;color:var(--c);font-variant-numeric:tabular-nums}.cps-r small{font-size:.72rem;color:#6b8584}
+.cps-tw{max-height:52vh;overflow:auto;border:1px solid #e1ebea;border-radius:12px}
+.cps-t{width:100%;border-collapse:collapse;font-size:.82rem}
+.cps-t th{position:sticky;top:0;background:#13302e;color:#fff;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;padding:7px 8px;text-align:left}
+.cps-t td{padding:6px 8px;border-bottom:1px solid #edf3f2;vertical-align:top}
+.cps-t td a{cursor:pointer;color:inherit}
+.cps-g td{background:#f3f8f8;font-weight:900;color:#00756f;font-size:.78rem}
+.cps-m{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cps-nom{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;color:#55706f;word-break:break-all}
+.cps-tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.72rem;font-weight:800;text-decoration:none}
+.cps-ok{background:#e6f7f6;color:#00756f!important}.cps-mal{background:#fdeaec;color:#CE2939}
+.cps-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:.78rem;color:#55706f}.cps-pie span{flex:1;min-width:200px}
 /* ✅ (§4mg, C3) la lista de control del cierre */
 .c3{margin:12px 0 10px}
 .c3-barra{display:flex;gap:2px;height:8px;border-radius:9px;overflow:hidden;background:#eef2f3}.c3-barra i{display:block}
@@ -7667,7 +7685,8 @@ function cxTopPintar(list, vSel, R){
     (mks?('<div class="lb-sep">Por marca</div>'+mks+((partes.length>1 && tot>0.009)?('<div class="lb-barra">'+partes.map(function(x){ return '<i style="flex:'+Math.max(0,x.v)+';background:'+x.c+'"></i>'; }).join('')+'</div>'):'')):'')+
     '<div class="lb-acc"><button type="button" class="ah-go ah-go-p" onclick="abrirVentaTienda()">🏪 Venta de tienda</button><button type="button" class="ah-go ah-go-p" onclick="abrirRetiros()">💵 Retiro de efectivo</button>'+
       '<button type="button" class="ah-go" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>'+
-      '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button></div></div>';
+      '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
+      '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button></div></div>';
   var h=izq+der;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
@@ -41941,6 +41960,67 @@ function nxCierreControl(mes){
   (deb.length ? am : ok).push({ n:deb.length, t:deb.length ? (deb.length+' venta'+(deb.length===1?'':'s')+' con saldo: '+fmtBs0(debBs)) : 'Nada por cobrar', s:'pasan al mes que viene como «falta cobrar»', b:'Ver quiénes', fn:"closeModal();abrirPorCobrar('ventas')" });
   (car.length ? am : ok).push({ n:car.length, t:car.length ? (car.length+' venta'+(car.length===1?'':'s')+' por cargar al sistema') : 'Todo cargado al sistema', s:'de '+L.length+' · contabilidad todavía no las registró', b:'Ver', fn:"closeModal();cxTopFiltro('carg')" });
   return { rojo:r, ambar:am, ok:ok };
+}
+/* 📁 (25/10, §4mg, C2; dueño: «c1, 2, 3 aprobado») Los comprobantes del mes para el contador: todos los pagos que NO son efectivo, por
+   banco y por día, con su foto y un nombre de archivo que ya dice día, banco, monto y cliente. «⬇️ Excel con los enlaces» baja una fila por
+   foto con el enlace de Drive (`fotoVer`). Los pagos son los de siempre (`contaPagos`, la misma puerta `fueraDeConta` y el vendedor elegido);
+   solo mira y arma el archivo. ⚠️ «Armar la carpeta en Drive» (copiar y renombrar las fotos) necesita una versión nueva del `.gs`: no está. */
+function compsMesDatos(mes){
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
+    if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    contaPagos(p).forEach(function(c){
+      var f=c.fecha||contaFecha(p), m=Number(c.monto)||0;
+      if(String(f).slice(0,7)!==mes || !(m>0) || c.metodo==='Efectivo') return;
+      out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c) });
+    });
+  });
+  return out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
+}
+function compsSlug(t){ return sinTildes(String(t||'')).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28); }
+function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+Math.round(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
+function compsAbrir(){
+  var ms=nxMesesCierre(), sel=(segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
+  if(ms.indexOf(sel)<0) ms.unshift(sel);
+  openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>📁 Comprobantes del mes · para el contador</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><label class="nx-sub" style="display:block;margin:0 0 4px">Mes</label>'+
+    '<select id="comps-mes" class="msel" onchange="compsPintar()">'+ms.map(function(m){ return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(mesNombre(m).replace(/^./,function(c){ return c.toUpperCase(); }))+'</option>'; }).join('')+'</select>'+
+    '<div id="comps-cuerpo"></div></div>', true);
+  compsPintar();
+}
+function compsPintar(){
+  var box=document.getElementById('comps-cuerpo'), mes=(document.getElementById('comps-mes')||{}).value; if(!box || !mes) return;
+  var L=compsMesDatos(mes), G={}, orden=[], sinFoto=0, tot=0;
+  L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); if(!x.comps.length) sinFoto++; tot=r2(tot+x.monto); });
+  orden.sort(function(a,b){ return G[b].length-G[a].length; });
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), cols=['#00A09A','#2457c5','#7c3aed','#0f766e','#b45309','#64748b'];
+  if(!L.length){ box.innerHTML='<div class="empty u7" style="display:flex">'+VACIO_SVG.caja+'<b>No hay pagos con QR, tarjeta o transferencia en '+esc(mesNombre(mes))+(vend?(' de '+esc(vend)):'')+'.</b></div>'; return; }
+  box.innerHTML='<div class="cps-sub">'+L.length+' pago'+(L.length===1?'':'s')+' con QR, tarjeta o transferencia · '+fmtBs0(tot)+(vend?(' · solo '+esc(vend)):'')+'</div>'+
+    '<div class="cps-res">'+orden.map(function(k,i){ var a=G[k], s2=0; a.forEach(function(x){ s2=r2(s2+x.monto); }); return '<div class="cps-r" style="--c:'+cols[i%cols.length]+'"><span>'+esc(k)+'</span><b>'+a.length+'</b><small>'+fmtBs0(s2)+'</small></div>'; }).join('')+
+      '<div class="cps-r" style="--c:'+(sinFoto?'#CE2939':'#16a34a')+'"><span>📷 Sin foto</span><b>'+sinFoto+'</b><small>'+(sinFoto?'no van a tener comprobante':'todos tienen foto')+'</small></div></div>'+
+    '<div class="cps-tw"><table class="cps-t"><thead><tr><th>Día</th><th>Cliente</th><th>Nota</th><th>Vendedor</th><th style="text-align:right">Monto</th><th>Foto</th><th>Nombre del archivo</th></tr></thead><tbody>'+
+    orden.map(function(k){ return '<tr class="cps-g"><td colspan="7">'+esc(k)+' · '+G[k].length+' pago'+(G[k].length===1?'':'s')+'</td></tr>'+G[k].map(function(x){
+      var id=String(x.p.id).replace(/'/g,'');
+      return '<tr><td>'+esc(fmtFechaCorta(x.f))+'</td><td><a onclick="closeModal();showContaModal(\''+id+'\')"><b>'+esc(String(x.p.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+'</b></a>'+(x.envio?' <small>🚚 flete</small>':'')+'</td><td>'+esc(x.nota||'—')+'</td><td>'+esc(String(x.p.vendedor||'').split(' ')[0])+'</td>'+
+        '<td class="cps-m">'+fmtBs(x.monto)+'</td><td>'+(x.comps.length ? x.comps.map(function(fid, i){ return '<a class="cps-tag cps-ok" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener">📷 '+(x.comps.length>1?(i+1):'ver')+'</a>'; }).join(' ') : '<span class="cps-tag cps-mal">falta</span>')+'</td>'+
+        '<td class="cps-nom">'+(x.comps.length ? x.comps.map(function(f,i){ return esc(compsArchivo(x,i)); }).join('<br>') : '—')+'</td></tr>'; }).join(''); }).join('')+
+    '</tbody></table></div>'+
+    '<div class="cps-pie"><span>Ordenados por banco y por día · cada foto con un nombre que dice día, banco, monto y cliente.</span><button type="button" class="ah-go ah-go-p" onclick="compsExcel()">⬇️ Excel con los enlaces</button></div>';
+}
+function compsExcel(){
+  var mes=(document.getElementById('comps-mes')||{}).value; if(!mes) return;
+  var L=compsMesDatos(mes); if(!L.length){ toast('No hay pagos con QR, tarjeta o transferencia en ese mes','err'); return; }
+  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO']];
+  L.forEach(function(x){
+    var base=[x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', r2(x.monto), x.envio?'SÍ':''];
+    if(!x.comps.length) rows.push(base.concat(['FALTA LA FOTO','']));
+    else x.comps.forEach(function(fid, i){ rows.push(base.concat([fotoVer(fid), compsArchivo(x, i)])); });
+  });
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48}], matrix:rows }]);
+  downloadBlob(bytes, 'comprobantes-'+mes+(vend?('-'+vend.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('Excel de comprobantes descargado — '+L.length+' pago'+(L.length===1?'':'s')+' ✓','ok');
 }
 var NX_CIERRE_FORZADO=false;
 function nxCierreControlHtml(C){
