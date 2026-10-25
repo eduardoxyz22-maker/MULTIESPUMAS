@@ -15932,3 +15932,34 @@ El dueño pasó el informe de Codex/Astra (`INFORME_PARA_CLAUDE.md`, revisaron `
   ni el `.gs` 25-a, que siguen en la rama; `SCRIPT_VERSION_ESPERADA` sigue 15-a). Batería en la copia publicada: 235 suites, 7.880 bien, 2 mal
   (`test_ventas_marcas` de siempre; `test_mispedidos` 32/1 con la máquina cargada y 33/0 sola). Pages OK (corrida 1807). Probada con la
   planilla real: stock igual en los 323 productos que `5bd2b5f`, Administración/Mis pedidos/Contabilidad/Stock sin errores. Todos F5.
+
+### §4mi — 🛡️ El dashboard de ventas no se publica roto · 👥 la vendedora sin leads sigue en el mes anterior · 🎯 cuánto cerrar por día (25/10, auditoría Codex/Astra CRM-01/03/04; en la rama)
+El dueño: «Dale» (paso 3 de la propuesta de §4mh). Todo con un Kommo de mentira; el token real vive solo en GitHub.
+- **CRM-01 · una lectura que falla ya no publica ceros** (`generar.py`): `fetch_paginated` cortaba en la primera página que fallaba y
+  devolvía lo que había traído COMO SI FUERA TODO; con el token vencido (401 en todo) el panel salía entero en cero y el bot lo
+  publicaba. Ahora cada lectura esencial que falla queda en **`_FALLAS`** y `main`, antes de armar nada, imprime qué falló y sale
+  con **`sys.exit(1)`**: no se escribe `index.html`, el paso de commit del workflow no corre, el panel publicado se queda con su último
+  dato bueno («Actualizado dd/mm HH:MM» de esa vez) y la corrida sale en ROJO en Actions (GitHub le manda un correo al dueño). Con 401
+  dice «renovar el secreto KOMMO_TOKEN». **No esenciales** (`esencial=False`, van a `_DIAG` y el panel sale igual): teléfonos de
+  contactos (duplicados), razones de pérdida nativas y nombres de productos del catálogo. `api_get` reintenta DOS veces un 5xx (5 s,
+  10 s) antes de dar la lectura por fallada. ⚠️ El tope de la ventana amplia (`max_pages=40`) NO es una falla: es a propósito.
+  ⚠️ **El token de Kommo vence ~28/10**: con esto, ese día el panel no se va a cero; se queda con el último dato y la corrida en rojo.
+- **CRM-03 · la que trabajó el mes anterior y este mes no tiene nada** (`build_panel_data`): el equipo salía SOLO de `vcur`, así que
+  el «mes anterior» (sumado sobre el equipo en `G_prev`, la historia, el texto para la IA y todas las vistas del template) perdía a
+  esa vendedora: Ana 1.000 + Beto 9.000 se veía 1.000. Ahora `_solo_prev` (en `vprev`, no en `vcur`, con leads/cierres/monto) entra
+  AL FINAL del equipo con 0, sucursal del mes anterior (`suc_prev`), **`soloPrev:true`** y meta 0 si no está en `VENDOR_CFG` (si está,
+  la suya). Template: «SIN LEADS ESTE MES» (`.tag-new.tag-sin`, gris) al lado de cada «NUEVO» (5) y «(sin leads este mes)» en la
+  lista de metas. Con el panel publicado del 24/10 las cinco vendedoras están en los dos meses: hoy no cambia ningún número.
+- **CRM-04 · «habría que cerrar X/día el resto del mes (hoy Y/día)»** (`ViewProyeccion`): X era (meta − PROYECCIÓN) ÷ días = lo que hay
+  que sumar ENCIMA del ritmo proyectado, comparado con el ritmo de hoy. Ahora **`paceNeeded` = (meta − lo ya cerrado) ÷ días que
+  quedan** (el último día, todo lo que falta): cerrado 100.000, meta 400.000, día 10 de 30 → 15.000/día (antes 5.000). Con el panel del
+  24/10 la proyección (606.112) ya pasa la meta de fábrica (585.000): se ve «ya supera la meta» y ese número no aparece.
+- Pruebas: `tests/test_generar_integridad.py` (15; 9 rojas contra el `generar.py` de antes con `GENERAR_DIR`; corre `main()` entero
+  contra un Kommo de mentira en una carpeta temporal; `--solo-datos` imprime su PANEL_DATA) y `tests/test_panel_meta.js` (7; 2 rojas con
+  el template de antes; abre las 11 vistas con esos datos: sin errores ni NaN). `test_paneldup`, `test_halloween`, `test_duplicados`,
+  `test_traer`, `test_humo`, `test_auditoria`: bien.
+- ⚠️ **Publicar esto = subir `generar.py`/`panel_template.html` a `main`, y eso DISPARA el workflow del panel** (regenera el dashboard con
+  Kommo real). Espera el «publica» del dueño.
+- **Visto y NO tocado** (lo dijo la auditoría y lo confirmé): `aggregate` y el corte «mismo día» del mes anterior usan
+  `datetime.datetime.fromtimestamp(ts)` sin zona, o sea la hora del runner (UTC en Actions): un lead de las 20:00-23:59 de Bolivia cae en
+  el día siguiente para la semana y para el corte «al mismo día». Es el mismo error de §4ew, en otro lado. Queda propuesto.

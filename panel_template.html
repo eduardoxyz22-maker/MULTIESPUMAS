@@ -232,7 +232,7 @@ html[data-theme="dark"] .avatar.ring{box-shadow:0 0 0 2px var(--card),0 0 0 4px 
 .mbar{height:7px;background:var(--line2);border-radius:99px;overflow:hidden;width:68px;display:inline-block;vertical-align:middle;margin-right:8px}
 .mbar i{display:block;height:100%;border-radius:99px;background:var(--brand)}
 html[data-theme="dark"] .mbar i{box-shadow:0 0 8px rgba(22,200,191,.6)}
-.tag-new{font-size:.6rem;color:var(--blue);font-weight:800;margin-left:6px;font-family:var(--num-ff)}
+.tag-new{font-size:.6rem;color:var(--blue);font-weight:800;margin-left:6px;font-family:var(--num-ff)}.tag-new.tag-sin{color:var(--faint)}
 
 /* ===== PILLS ===== */
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;padding:3px 10px;border-radius:99px;font-family:var(--num-ff);white-space:nowrap;flex-shrink:0}
@@ -3349,7 +3349,9 @@ function MetasSection() {
       ring: true
     }), v.name, v.nuevo && /*#__PURE__*/React.createElement("span", {
       className: "ww"
-    }, "(nuevo)")), /*#__PURE__*/React.createElement("span", {
+    }, "(nuevo)"), v.soloPrev && /*#__PURE__*/React.createElement("span", {
+      className: "ww"
+    }, "(sin leads este mes)")), /*#__PURE__*/React.createElement("span", {
       className: "meta-right"
     }, /*#__PURE__*/React.createElement("b", {
       className: "meta-cerr",
@@ -3649,7 +3651,10 @@ function TeamTable({
     className: "wn"
   }, v.name, v.nuevo && /*#__PURE__*/React.createElement("span", {
     className: "tag-new"
-  }, "NUEVO")), /*#__PURE__*/React.createElement("div", {
+  }, "NUEVO"), v.soloPrev && /*#__PURE__*/React.createElement("span", {
+        className: "tag-new tag-sin",
+        title: "Trabaj\xF3 el mes anterior y este mes no tiene leads ni cierres: cuenta en la comparaci\xF3n con el mes anterior"
+      }, "SIN LEADS ESTE MES")), /*#__PURE__*/React.createElement("div", {
     className: "ww"
   }, v.suc)))), /*#__PURE__*/React.createElement("td", {
     className: "r num"
@@ -5829,7 +5834,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "tcard-name"
       }, v.name, v.nuevo && /*#__PURE__*/React.createElement("span", {
         className: "tag-new"
-      }, "NUEVO")), /*#__PURE__*/React.createElement("div", {
+      }, "NUEVO"), v.soloPrev && /*#__PURE__*/React.createElement("span", {
+        className: "tag-new tag-sin",
+        title: "Trabaj\xF3 el mes anterior y este mes no tiene leads ni cierres: cuenta en la comparaci\xF3n con el mes anterior"
+      }, "SIN LEADS ESTE MES")), /*#__PURE__*/React.createElement("div", {
         className: "tcard-where"
       }, v.suc)), /*#__PURE__*/React.createElement("div", {
         className: `t24 ${v.promMin == null ? "brand" : v.promMin <= 120 ? "green" : v.promMin <= 480 ? "amber" : "red"}`
@@ -7396,7 +7404,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       d: `Conversión +1pp y ticket +10% a la vez. El techo realista si todo mejora.`
     }];
     const faltaMeta = Math.max(0, totMeta - baseProj);
-    const paceNeeded = left ? Math.round(faltaMeta / left) : 0;
+    // (25/10, auditoría Codex/Astra CRM-04) Lo que hay que cerrar POR DÍA desde hoy para llegar a la meta = lo que FALTA CERRAR
+    // (meta − lo ya cerrado) ÷ los días que quedan. Antes era (meta − proyección) ÷ días, o sea lo que hay que sumar ENCIMA del
+    // ritmo proyectado, y el texto lo comparaba con el ritmo de hoy: cerrado 100.000, meta 400.000, 20 días → «5.000/día» cuando
+    // hacen falta 15.000. El último día (0 días), todo lo que falta.
+    const paceNeeded = Math.round(Math.max(0, totMeta - totCerr) / Math.max(1, left));
     const convNeeded = projLeadsF && ticket ? totMeta / ticket / projLeadsF * 100 : 0;
     return /*#__PURE__*/React.createElement("div", {
       className: "view"
@@ -8150,7 +8162,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "vhead-nm"
     }, v.name.split(" ")[0], v.nuevo && /*#__PURE__*/React.createElement("span", {
       className: "tag-new"
-    }, "NUEVO"), /*#__PURE__*/React.createElement("span", null, v.suc))))), /*#__PURE__*/React.createElement("th", {
+    }, "NUEVO"), v.soloPrev && /*#__PURE__*/React.createElement("span", {
+        className: "tag-new tag-sin",
+        title: "Trabaj\xF3 el mes anterior y este mes no tiene leads ni cierres: cuenta en la comparaci\xF3n con el mes anterior"
+      }, "SIN LEADS ESTE MES"), /*#__PURE__*/React.createElement("span", null, v.suc))))), /*#__PURE__*/React.createElement("th", {
       className: "vhead totcol"
     }, "Equipo"))), /*#__PURE__*/React.createElement("tbody", null, STAGE_ORDER.map(s => {
       const isWin = s === "Compradores";
@@ -8669,7 +8684,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "spot-name"
       }, v.name, v.nuevo && /*#__PURE__*/React.createElement("span", {
         className: "tag-new"
-      }, "NUEVO")), /*#__PURE__*/React.createElement("div", {
+      }, "NUEVO"), v.soloPrev && /*#__PURE__*/React.createElement("span", {
+        className: "tag-new tag-sin",
+        title: "Trabaj\xF3 el mes anterior y este mes no tiene leads ni cierres: cuenta en la comparaci\xF3n con el mes anterior"
+      }, "SIN LEADS ESTE MES")), /*#__PURE__*/React.createElement("div", {
         className: "spot-suc"
       }, v.suc))), /*#__PURE__*/React.createElement("div", {
         className: "spot-grid"
@@ -8893,7 +8911,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "vhead-nm"
       }, v.name.split(" ")[0], v.nuevo && /*#__PURE__*/React.createElement("span", {
         className: "tag-new"
-      }, "NUEVO"), /*#__PURE__*/React.createElement("span", null, v.suc))))), /*#__PURE__*/React.createElement("th", {
+      }, "NUEVO"), v.soloPrev && /*#__PURE__*/React.createElement("span", {
+        className: "tag-new tag-sin",
+        title: "Trabaj\xF3 el mes anterior y este mes no tiene leads ni cierres: cuenta en la comparaci\xF3n con el mes anterior"
+      }, "SIN LEADS ESTE MES"), /*#__PURE__*/React.createElement("span", null, v.suc))))), /*#__PURE__*/React.createElement("th", {
         className: "vhead totcol"
       }, "Equipo"))), /*#__PURE__*/React.createElement("tbody", null, mRows.map((row, ri) => /*#__PURE__*/React.createElement("tr", {
         key: ri

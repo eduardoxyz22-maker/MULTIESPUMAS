@@ -20,6 +20,11 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - ⚠️ Los límites del mes (`m_start`/`m_end`/`p_start`/`p_end`) llevan `tzinfo=BOL_TZ` (UTC−4,
     §4ew): un datetime naive con `.timestamp()` se interpreta en la zona del runner (UTC en
     Actions) y el mes cortaba a las 20:00 de Bolivia. No volver a crearlos sin tzinfo.
+  - 🛡️ **Una lectura de Kommo que falla NO publica** (§4mi, 25/10, auditoría CRM-01; en la rama): `fetch_paginated` anota en `_FALLAS` y
+    `main` sale con `sys.exit(1)` antes de armar nada → no se escribe el panel, el workflow no hace commit y el publicado queda con su
+    último dato bueno. Lo que puede faltar sin mentir va con `esencial=False` (contactos, razones de pérdida, catálogo). ⚠️ Una lectura
+    NUEVA es esencial salvo que se diga lo contrario. 👥 La vendedora del mes anterior sin nada este mes entra al FINAL del equipo con 0,
+    `soloPrev` y meta 0 si no está en `VENDOR_CFG` (CRM-03). `tests/test_generar_integridad.py` (Kommo de mentira, carpeta temporal).
 
 - **`panel_template.html`** — Template React (JSX precompilado a `React.createElement`; validar con `node --check` sobre los bloques `<script>` antes de commitear). Tema claro, header teal `#00B5AD`.
 
