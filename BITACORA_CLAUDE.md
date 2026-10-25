@@ -15902,3 +15902,28 @@ El dueño aprobó (24-25/10) las muestras V2, V3, V5, V6 y V7 y el orden: V1 →
   25-a. ⚠️ **Orden**: el dueño pega, prueba e implementa el `.gs` PRIMERO; recién después se publica la página. Volver atrás = ✏️ a la
   versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas). La 25-a: 4.407 líneas, termina en `}`
   con `return borrador;` antes. `test_servidor` §25 (8) y `test_comprobantes_mes` §6.
+
+### §4mh — 🔐 La clave de Trello fuera del repo · 🏭 lo hecho a pedido que llega en dos veces y el Excel corregido (25/10, auditoría de Codex/Astra; en la rama)
+El dueño pasó el informe de Codex/Astra (`INFORME_PARA_CLAUDE.md`, revisaron `de2c36b`) y dijo «Si arranca» al orden propuesto: 1 la clave,
+2 S1/S2 del stock; después CRM-01/03/04 (dashboard de ventas), ORD-1/ORD-2 (la cola), S3 y teclado/320 px.
+- **🔐 P0, la clave de Trello** (`5bd2b5f`, SUBIDO A `main`, solo `.claude/skills/atc-multiespumas.md`): la clave y el token estaban escritos
+  en el ejemplo «Opción 2: Local» desde mayo (`9b4f1d7`, `763636f`) en un repo PÚBLICO. Quedan marcadores + aviso. ⚠️ Siguen en el
+  HISTORIAL de git y en la punta de otras 16 ramas viejas (`claude/*`, `cloudflare/workers-autoconfig`, `codex/productos-del-mes-20260908`):
+  no se tocaron (no son de esta sesión). Lo que protege de verdad es que el dueño cambie el token (y la clave) en Trello y actualice los
+  secretos `TRELLO_API_KEY`/`TRELLO_TOKEN` de GitHub. Pendiente del dueño; borrar las ramas viejas, si quiere, también.
+- **🏭 S1 · llegó en dos veces** (dueño, nada que decidir: era un error de cuenta): línea 🏭 de 10, el Excel de la mañana trae 3 (se
+  anotan, `prodU`=3, `prodC`) y a la tarde logística marca ✔ porque llegaron las otras 7. `prodUnidEnConteo` daba las 10 por ADENTRO del
+  Excel de la mañana (bastaba un `prodC`): reservaba 10 de un depósito con 3 → **«fabricar 7»**, y el Excel de mañana quedaba con **+7 sin
+  explicar** (detección). Ahora `prodUnidDeCortes(x)` (lo que anotaron los Excel) + `prodUnidAMano(x)` (el resto, con la regla de
+  siempre: `stockEntradaVale` con la HORA del ✔, `x.prodRt`, que `setProdChk` anota). El control del corte (`stockConciliar` (a)) explica
+  las 7 como «llegó lo hecho a pedido de OC …, ✔ anotado a mano» aunque la línea tenga un corte anotado.
+- **↩️ S2 · el MISMO corte corregido** (misma fecha y hora, otro archivo): lo que la versión anterior le anotó a una línea 🏭 quedaba (3 → 0
+  seguía «3 de 10» reservadas de un depósito vacío → «fabricar 3»; 3 → 2 quedaba en 5). Cada corte deja ahora `x.prodCu` = [[id, u, almacén,
+  día, hora]] (máx. 6) y, si sella la línea, `x.prodCk` = la marca de antes. `existAplicarControl` primero DEVUELVE (`prodRevertirCorte`:
+  `prodU`, `prodC`, `prodCu` y, si el sello lo puso esa versión, `prodR`/`prodRm` y vuelve `prodCk`) y después anota lo tildado; la vista
+  previa usa la línea ya devuelta (`prodTrasCorte`) para ofrecer y explicar, y lo avisa en ámbar (`existFabDevueltas`); el toast final
+  también. Cada pedido tocado se guarda UNA vez (antes, un guardado por tilde). `heredarMarcas` copia `prodCu`, `prodCk`, `prodRt`.
+  ⚠️ Una línea anotada por la página de antes (sin `prodCu`) no se puede devolver: queda como estaba. Una página sin F5 que corrija el pedido
+  pierde `prodCu`/`prodRt` (su `heredarMarcas` no los conoce): vuelve a la regla de antes, nada se rompe.
+- Con la planilla real (copia del 24/10, solo lectura): ninguna línea tiene `prodU`/`prodC` todavía; `stockData` da IGUAL en los 323 productos
+  antes y después. `tests/test_parcial_corregido.js` (16; 12 rojas contra `7e8ebb6`).

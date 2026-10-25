@@ -26,6 +26,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - **`.github/workflows/panel.yml`** — Workflow principal: crons 14:00 y 21:00 UTC (10:00/17:00 Bolivia), push a `generar.py`/`panel_template.html`, y botón manual con inputs opcionales `month`/`year` para regenerar meses cerrados. El bot `heaven-bot` commitea el HTML regenerado.
   - La IA horneada (`--bake-ai`) puede estar pausada para acelerar iteración — ver estado en el propio yml y en la bitácora.
 
+## 🔐 Ninguna clave en el repo (es PÚBLICO)
+El 25/10 (§4mh) la auditoría de Codex/Astra encontró la clave y el token de Trello escritos en `.claude/skills/atc-multiespumas.md` desde
+mayo: se sacaron (`5bd2b5f`), pero siguen en el historial y en 16 ramas viejas; el dueño tiene que cambiarlos en Trello. Antes de commitear
+un `.md`, una skill o un ejemplo de consola, que no lleve ninguna clave, token ni contraseña: van en los secretos de GitHub o en las
+Propiedades del script.
+
 ## Credenciales Kommo
 - Subdominio: `eanez`
 - Token: secret `KOMMO_TOKEN` de GitHub Actions (env var; NO está en el código). Expira ~2026-10-28.
@@ -590,6 +596,13 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   MISMA de 📅 Reprogramar de la ficha: `nroDia` nuevo, `atcSeguirViaje`, `forzar` con avisos + `asegurarClaveAdmin`) SIN cerrar el cierre.
   Abrirlo destilda; queda en «📅 Reprogramados en este cierre» (`CIERRE_ENT_RP_HECHOS`). El bot avisa el día nuevo como cualquier cambio.
   `tests/test_cierre_reprogramar.js` (17).
+- **🏭 Lo hecho a pedido que llega en dos veces y el Excel corregido** (§4mh, 25/10, auditoría Codex/Astra S1/S2; en la rama): una línea
+  🏭 tiene DOS partes y van por separado: `prodUnidDeCortes(x)` (lo que anotaron los Excel: `prodU`/`prodC`, en el conteo) y
+  `prodUnidAMano(x)` (el resto, del ✔ a mano: en el conteo solo si `stockEntradaVale` con `prodR` + la HORA `prodRt`). ⚠️ No volver a
+  dar toda la línea por adentro del Excel por tener un `prodC` (reservaba 10 de un depósito con 3 → «fabricar 7»). Cada corte deja
+  `prodCu` [[id, u, almacén, día, hora]] y, si sella, `prodCk` (la marca de antes): un archivo CORREGIDO del mismo corte primero devuelve
+  (`prodRevertirCorte`; vista previa con `prodTrasCorte`, aviso `existFabDevueltas`) y después anota. Un campo nuevo de la línea 🏭 va en
+  `heredarMarcas`. `tests/test_parcial_corregido.js`.
 - Decisiones del dueño (05/10) y lo que falta (etapas 3-4: asignación automática con evidencia, plazos estimados aparte,
   patrones de diferencias, Moreno): bitácora §4hn y `RESPUESTA_CLAUDE.md` §30.
 - 🚨 **Auditoría del 06/10 (bitácora §4hq)**: lo del control del corte quedó arreglado en §4hs (celda, página vieja, B2-B8).

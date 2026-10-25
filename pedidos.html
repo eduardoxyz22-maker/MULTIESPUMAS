@@ -6719,6 +6719,11 @@ function heredarMarcas(nuevos, viejos){
     if(v.prodU!=null) x.prodU=v.prodU;
     if(v.prodC)  x.prodC=v.prodC.slice();
     if(v.prodRm) x.prodRm=v.prodRm;
+    /* 🏭 (25/10, auditoría Astra S1/S2) …cuántas anotó CADA corte (`prodCu`, para devolverlas si ese corte se corrige), la marca de
+       antes del sello del Excel (`prodCk`) y la HORA del ✔ a mano (`prodRt`: lo llegado después del Excel de la mañana no está en él). */
+    if(v.prodCu) x.prodCu=v.prodCu.map(function(e){ return Array.isArray(e) ? e.slice() : e; });
+    if(v.prodCk!=null) x.prodCk=v.prodCk;
+    if(v.prodRt) x.prodRt=v.prodRt;
     /* 📥 La marca del lead de Kommo (`klead`) no es una revisión: viaja con el pedido aunque
        cambie la cantidad. Sin esto, corregir cualquier cosa del pedido la perdía y el robot
        volvía a traer el borrador (§4es). */
@@ -33452,9 +33457,13 @@ function stockConciliar(R, rol, inc, opt){
         STATE.forEach(function(p){
           if(!stockCuenta(p)) return;
           (p.productos||[]).forEach(function(x){
-            if(!resto || !x || !enProduccion(x) || !x.prodR || x.prodRm==='excel' || (x.prodC||[]).length || stockClave(x)!==k) return;
-            if(!stockMovEnVentana(String(x.prodR), 0, v)) return;
-            var u=Math.min(resto, prodUnidEnStock(x)); if(u<=0) return;
+            if(!resto || !x || !enProduccion(x) || stockClave(x)!==k) return;
+            x=prodTrasCorte(x, R, alm);                                        // 🏭 (25/10, S2) sin lo que le anotó la versión anterior de este corte
+            /* 🏭 (25/10, auditoría Astra S1) …también la línea que llegó en dos veces: lo del ✔ a mano (`prodUnidAMano`), no lo que ya
+               había anotado un Excel. Antes una línea con un corte anotado quedaba afuera y el Excel siguiente decía «+7 sin explicar». */
+            var man=prodUnidAMano(x); if(!(man>0)) return;
+            if(!stockMovEnVentana(String(x.prodR), Number(x.prodRt)||0, v)) return;
+            var u=Math.min(resto, man); if(u<=0) return;
             fila.causas.push({ t:'fabLlego', u:u, txt:'llegó lo hecho a pedido de '+ocEtiq(p.oc)+' (✔ anotado a mano el '+fmtFechaCorta(x.prodR)+')' }); fila.explicado=(fila.explicado||0)+u; resto-=u;
           });
         });
@@ -33462,7 +33471,9 @@ function stockConciliar(R, rol, inc, opt){
         STATE.forEach(function(p){
           if(!stockCuenta(p) || p.entregado) return;
           (p.productos||[]).forEach(function(x,i){
-            if(!resto || !x || !enProduccionPendiente(x) || stockClave(x)!==k) return;
+            if(!resto || !x || stockClave(x)!==k) return;
+            x=prodTrasCorte(x, R, alm);                                        // 🏭 (25/10, S2) corregido: lo de la versión anterior se devuelve antes
+            if(!enProduccionPendiente(x)) return;
             if((x.prodC||[]).indexOf(corteId)>=0) return;                      // este mismo archivo ya le anotó su llegada
             var cant=Number(x.cant)||0, falta=cant-prodUnidEnStock(x); if(falta<=0) return;
             var u=Math.min(resto, falta); if(u<=0) return;                       // (05/10, Codex H2) solo lo que falta de la línea
@@ -33538,6 +33549,13 @@ function existControlHtml(R, rol, inc){
                  : (rol==='sale' ? 'En este depósito el panel no cierra nada: lo que llega viene de Moreno sin pasar por el panel. Es información.' : 'Para un almacén al que se va a buscar, la diferencia es solo información: su conteo baja por recogidas y por lo que ese almacén mueve por su cuenta.'))+'</div>';
   var viejas=existRecsViejasHtml();        // 🧓 (05/10, Codex H7) lo que una página vieja dio por llegado por la fecha
   var fueraHtml=existControlFueraHtml(C);  // 🧹 (§4ls VE12)
+  /* ↩️ (25/10, auditoría Astra S2) Un archivo corregido del mismo corte: lo que la versión anterior anotó a lo hecho a pedido se devuelve. */
+  var dev=(rol==='log') ? existFabDevueltas(R, '') : [];
+  if(dev.length){
+    var dn=0; dev.forEach(function(d){ dn+=d.u; });
+    viejas+=caja('↩️ <b>Este archivo corrige uno anterior del mismo corte.</b> Esa versión había anotado <b>'+dn+' unidad'+(dn===1?'':'es')+'</b> como llegadas de lo hecho a pedido ('+
+      dev.map(function(d){ return esc(d.oc)+': '+stockUnid(d.u); }).join(' · ')+'): al usar este archivo se <b>devuelven</b>. Si este también las trae, abajo se vuelven a ofrecer para tildar.', 'amber');
+  }
   if(!C.filas.length) return viejas+caja(cab)+fueraHtml;
   var filas=EXIST_CTRL_TODAS ? C.filas : C.filas.slice(0, STOCK_CTRL_TOPE);
   var tr=filas.map(function(f){
@@ -33654,6 +33672,14 @@ function existAplicarControl(R, rol, inc, C){
   /* Una versión anterior de este mismo corte (otra huella) deja sus detecciones: quedan con LÁPIDA (nunca se borran:
      una copia vieja las reviviría al juntar, Codex H7) y las de ahora las reemplazan. */
   (STOCK.det||[]).forEach(function(x){ if(x && !x.an && String(x.alm||'')===alm && x.f===String(R.fecha||'') && String(x.hora||'')===String(R.hora||'') && x.hu!==hu) x.an={ t:ts, m:'corte reemplazado' }; });
+  /* 🏭 (25/10, auditoría Astra S2) Un archivo CORREGIDO de este mismo corte: lo que la versión anterior le anotó a cada línea 🏭 se
+     devuelve primero (con el sello, si lo había puesto ella). Lo que se tilde ahora se anota sobre la línea ya devuelta. */
+  var aGuardar={}, devueltas=0;
+  if(rol==='log') STATE.forEach(function(p){
+    if(!p || !stockCuenta(p)) return;
+    (p.productos||[]).forEach(function(x){ var n=x && enProduccion(x) ? prodRevertirCorte(x, R, alm) : 0; if(n){ devueltas+=n; aGuardar[String(p.id)]=p; } });
+  });
+  out.devueltas=devueltas;
   /* Lo hecho a pedido que se sella como llegado explica parte de la entrada: se descuenta de la detección. */
   var fabPorK={};
   marcados('exist-fab').forEach(function(c){
@@ -33663,13 +33689,17 @@ function existAplicarControl(R, rol, inc, C){
     var cant=Number(x.cant)||0, u=Math.min(Number(c.getAttribute('data-u'))||0, cant-prodUnidEnStock(x)); if(!(u>0)) return;
     /* (05/10, Codex H2) Llegaron `u` de `cant`: se anota la cantidad; la línea se sella como LLEGADA recién cuando está
        completa (y pasa a «✔ hay», que es lo que logística marcaría a mano). `prodRm='excel'` = sellada desde el control: no
-       mide el plazo de fábrica (§30.7 B). `prodC` = los cortes que le anotaron llegadas (idempotencia). */
+       mide el plazo de fábrica (§30.7 B). `prodC` = los cortes que le anotaron llegadas (idempotencia). 🏭 (25/10) `prodCu` = cuántas
+       anotó cada corte, para devolverlas si ese corte se corrige; `prodCk` = la marca de antes del sello. */
     x.prodU=prodUnidEnStock(x)+u; x.prodC=(x.prodC||[]).concat([out.corte]).slice(-6);
-    if(x.prodU>=cant){ x.prodR=String(R.fecha||todayStr()); x.prodRm='excel'; x.chk='ok'; delete x.chkDe; delete x.chkDes; }
-    out.guardados.push(persistPedido(p));
+    x.prodCu=(x.prodCu||[]).concat([[out.corte, u, alm, String(R.fecha||''), String(R.hora||'')]]).slice(-6);
+    if(x.prodU>=cant){ x.prodCk=String(x.chk||''); x.prodR=String(R.fecha||todayStr()); x.prodRm='excel'; x.chk='ok'; delete x.chkDe; delete x.chkDes; }
+    aGuardar[String(p.id)]=p;
     fabPorK[k]=(fabPorK[k]||0)+u;
     out.fab.push({ id:id, idx:idx, k:k, u:u, completa:!!x.prodR }); (porK[k]=porK[k]||[]).push(['fab', id, u, '']);
   });
+  /* Cada pedido tocado se guarda UNA vez (antes, uno por tilde: dos líneas del mismo pedido eran dos guardados seguidos). */
+  Object.keys(aGuardar).forEach(function(id){ out.guardados.push(persistPedido(aGuardar[id])); });
   /* La DETECCIÓN de cada entrada sin explicar de este corte (rol fábrica): queda anotada aunque no se asigne nada. */
   /* 🔁 (19/10, §4ls verificación final, CR-2) El MISMO archivo con otra respuesta de los turnos: las detecciones de este corte (mismo
      nombre, porque es el mismo archivo) se CORRIGEN a lo que dice la respuesta nueva, sin lápida (con la lápida no podrían volver si se
@@ -34122,6 +34152,7 @@ function confirmarImportExist(){
   var resumen=(rol==='log'?'Depósito actualizado':'Existencias de '+stockAlmCorto(R.almacen)+' actualizadas')+': '+
         R.items.length+' productos, '+stockUnid(R.total)+' unidades al '+fmtFecha(R.fecha)+
         (cerrados?('. Cerraste '+cerrados+' pedido'+(cerrados===1?'':'s')+' a fábrica desde el control.'):'')+
+        (ctrl.devueltas?(' ↩️ Este archivo corrige uno anterior del mismo corte: se devolvieron '+ctrl.devueltas+' unidad'+(ctrl.devueltas===1?'':'es')+' que esa versión había anotado como llegadas de lo hecho a pedido.'):'')+
         (ctrl.fab.length?(' Anotada la llegada de '+ctrl.fab.length+' línea'+(ctrl.fab.length===1?'':'s')+' hecha'+(ctrl.fab.length===1?'':'s')+' a pedido.'):'')+
         (ctrl.salidas.length?(' Anotada'+(ctrl.salidas.length===1?'':'s')+' '+ctrl.salidas.length+' salida'+(ctrl.salidas.length===1?'':'s')+' sin pedido.'):'')+
         (auto && auto.cerrados.length?(' 🏭 Llegó lo que el panel había pedido de '+auto.cerrados.length+' producto'+(auto.cerrados.length===1?'':'s')+'.'):'')+
@@ -36399,11 +36430,60 @@ function prodUnidEnStock(x){ if(!x) return 0; var c=Math.max(0, Number(x.cant)||
    antes del corte vigente (la misma regla por día que una entrada anotada, `stockEntradaVale`). Lo que está en el conteo se
    RESERVA para ese pedido (`comp`) y, al entregarse, sale del depósito como cualquier colchón; lo que todavía no está en el
    conteo sigue siendo «lo trae la fábrica para ese cliente» (`aFab`), como siempre. */
-function prodUnidEnConteo(x){
+/* 🏭 (25/10, auditoría Codex/Astra S1) Una línea que llegó EN DOS VECES: 3 en el Excel de la mañana (`prodU`, `prodC`) y las otras 7
+   con el ✔ a mano de la tarde (`prodR`/`prodRt`). Antes, apenas tenía un corte anotado, las 10 se daban por adentro de ESE Excel (que
+   tenía 3): se reservaban 10 de un depósito con 3, el plan proponía fabricar 7 de nuevo y el Excel siguiente quedaba con «+7 sin
+   explicar». Ahora cada parte va por su lado: lo de los cortes está en el conteo; lo de la marca a mano, con la regla de siempre. */
+function prodUnidDeCortes(x){
   if(!x || !enProduccion(x)) return 0;
   var u=prodUnidEnStock(x); if(!(u>0)) return 0;
-  if(x.prodRm==='excel' || (x.prodC||[]).length) return u;
-  return stockEntradaVale(STOCK, String(x.prodR||''), 0) ? 0 : u;
+  if(x.prodRm==='excel') return u;
+  return (x.prodC||[]).length ? Math.min(u, Math.max(0, Number(x.prodU)||0)) : 0;
+}
+function prodUnidAMano(x){ return (x && x.prodR && x.prodRm!=='excel') ? Math.max(0, prodUnidEnStock(x)-prodUnidDeCortes(x)) : 0; }
+function prodUnidEnConteo(x){
+  if(!x || !enProduccion(x)) return 0;
+  var c=prodUnidDeCortes(x), m=prodUnidAMano(x);
+  return c + (m>0 && !stockEntradaVale(STOCK, String(x.prodR||''), Number(x.prodRt)||0) ? m : 0);
+}
+/* 🏭 (25/10, auditoría Codex/Astra S2) El MISMO corte (almacén, día y hora) subido de nuevo con otro archivo: lo que la versión anterior
+   le anotó a una línea 🏭 se DEVUELVE antes de mirar el corregido (antes quedaba: corregido de 3 a 0, seguía «3 de 10» reservadas de
+   un depósito vacío y el plan proponía fabricar 3). Cada corte deja en `prodCu` [id, unidades, almacén, día, hora]. Una línea anotada
+   por una página de antes (sin `prodCu`) no se puede devolver: queda como estaba. */
+function prodCorteAnteriorU(x, R, alm){
+  if(!x || !R) return 0;
+  var id=existCorteId(R), n=0;
+  (x.prodCu||[]).forEach(function(e){ if(Array.isArray(e) && e[0]!==id && String(e[2]||'')===String(alm||'') && String(e[3]||'')===String(R.fecha||'') && String(e[4]||'')===String(R.hora||'')) n+=Number(e[1])||0; });
+  return n;
+}
+function prodRevertirCorte(x, R, alm){   // cambia la línea; devuelve cuántas devolvió
+  var n=prodCorteAnteriorU(x, R, alm); if(!n) return 0;
+  var id=existCorteId(R), fuera={};
+  x.prodCu=(x.prodCu||[]).filter(function(e){
+    var es=Array.isArray(e) && e[0]!==id && String(e[2]||'')===String(alm||'') && String(e[3]||'')===String(R.fecha||'') && String(e[4]||'')===String(R.hora||'');
+    if(es) fuera[e[0]]=1; return !es; });
+  if(!x.prodCu.length) delete x.prodCu;
+  x.prodC=(x.prodC||[]).filter(function(c){ return !fuera[c]; }); if(!x.prodC.length) delete x.prodC;
+  x.prodU=Math.max(0, (Number(x.prodU)||0)-n); if(!x.prodU) delete x.prodU;
+  if(x.prodRm==='excel' && (Number(x.prodU)||0)<(Number(x.cant)||0)){   // el sello lo había puesto ESA versión: se va, y vuelve la marca de antes
+    delete x.prodR; delete x.prodRm; delete x.prodRt; x.chk=(x.prodCk!=null) ? x.prodCk : ''; delete x.prodCk;
+  }
+  return n;
+}
+/* Qué líneas 🏭 tienen algo de otra versión de este corte (para avisarlo en la vista previa): [{oc, u}]. */
+function existFabDevueltas(R, alm){
+  var l=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || !stockCuenta(p)) return;
+    (p.productos||[]).forEach(function(x){ var n=x && enProduccion(x) ? prodCorteAnteriorU(x, R, alm) : 0; if(n) l.push({ oc:ocEtiq(p.oc), u:n }); });
+  });
+  return l;
+}
+/* La misma línea como quedaría después de devolverle lo del corte anterior, sin tocarla (para la vista previa). */
+function prodTrasCorte(x, R, alm){
+  if(!prodCorteAnteriorU(x, R, alm)) return x;
+  var y=Object.assign({}, x); if(x.prodC) y.prodC=x.prodC.slice(); if(x.prodCu) y.prodCu=x.prodCu.slice();
+  prodRevertirCorte(y, R, alm); return y;
 }
 /* 🏭 (19/10, §4ls verificación final, CD-1) Lo hecho a pedido para OTRO cliente que YA tendría que estar en el almacén. Una línea 🏭 sin
    sello (`prodR`) no reserva nada: «lo trae la fábrica para ese cliente» (`aFab`). Pero cuando su salida de fábrica (`prodF` + las 48 h
@@ -36547,7 +36627,7 @@ function setProdChk(id, idx, val, de){
   if(x.chk==='im' && recogerCanon(de)) x.chkDe=recogerCanon(de);
   else if(x.chk==='ok' && saleCanon(de)) x.chkDe=saleCanon(de);          // ✔ Banzer: de ahí sale el camión
   else delete x.chkDe;
-  if(x.chk==='ok' && enProduccion(x) && x.prodF && !x.prodR) x.prodR=todayStr();   // llegó lo pedido a fábrica (§4co)
+  if(x.chk==='ok' && enProduccion(x) && x.prodF && !x.prodR){ x.prodR=todayStr(); x.prodRt=Date.now(); }   // llegó lo pedido a fábrica (§4co); 🏭 (25/10) con la hora: ¿antes o después del Excel de hoy?
   syncVerificado(p, eraNo && x.chk!=='no');   // (§4ls, corrector) sacar una ✗ corrige el «No hay» que salía de ella
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
