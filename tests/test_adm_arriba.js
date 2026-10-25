@@ -116,7 +116,14 @@ async function abrir(browser, w, tabs){
   const libVie=await page.evaluate(()=>limTurno('2026-10-23','PM')-cuposUsadosTurno('2026-10-23','PM'));
   chk('5 · cada día y turno dice cuántos están listos', /✅ 1 de 2 listos/.test(g(/jueves/i)), r);
   chk('5 · …y cuántos cupos quedan en ese turno', new RegExp('quedan '+libVie+' cupos').test(g(/viernes.*Tarde/i)), { g:g(/viernes.*Tarde/i), libVie:libVie });
-  chk('5 · un día que ya pasó dice cuántos se entregaron', /🚚 1 de 1 entregado/.test(g(/martes/i)), g(/martes/i));
+  /* (§4mo, 25/10) un día que ya pasó con todo entregado va plegado en una línea arriba; con «Ver todo» dice cuántos se entregaron */
+  const pas=await page.evaluate(async()=>{ var T=function(e){ return e ? e.textContent.replace(/\s+/g,' ').trim() : ''; };
+    var linea=T(document.querySelector('#adm-fichas .af-pas'));
+    admPasadosVer(true); await new Promise(function(r){ setTimeout(r, 150); });
+    var gs=[].map.call(document.querySelectorAll('#adm-fichas .af-g'), T); admPasadosVer(false);
+    return { linea:linea, martes:gs.filter(function(t){ return /martes/i.test(t); })[0]||'' }; });
+  chk('5 · un día que ya pasó con todo entregado va plegado arriba y, con «Ver todo», dice cuántos se entregaron',
+      !g(/martes/i) && /plegado/.test(pas.linea) && /1 pedido/.test(pas.linea) && /🚚 1 de 1 entregado/.test(pas.martes) && !/cupo|listo/.test(pas.martes), pas);
   const barra=await page.evaluate(()=>document.querySelectorAll('#adm-fichas .af-pb').length);
   chk('5 · la barrita verde ya no está', barra===0, barra);
 

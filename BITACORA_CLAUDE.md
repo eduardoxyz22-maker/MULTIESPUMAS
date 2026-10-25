@@ -16135,3 +16135,35 @@ vendedoras?
   pruebas. Batería sobre esa copia: 250 suites, 8.086 bien; roja solo `test_ventas_marcas` (la conocida). Pages OK (corrida 1814). Humo con la
   planilla real sobre lo publicado: guarda `__pry_hist__` y lo muestra. Las metas siguen siendo solo la muestra (el dueño las revisa después).
   El `.gs` no cambió (sigue 15-a): basta F5.
+
+### §4mo — 🎨 Lo que se veía mal en la compu y el iPad, mirado con la planilla real (25/10, dueño: «Y sigo esperando mejoras visuales estéticas y no puede ser que códex te enseñe»; en la rama, espera el «publica»)
+Esta vez sin informe de nadie: capturas de las pantallas que más se usan (Nuevo pedido, Mis pedidos, Contabilidad, Proyección, Administración,
+Stock, ATC) en 1440 px (compu) y 1180 px (iPad acostado) con la planilla real (scratchpad, solo lectura), mirarlas una por una, arreglar y volver a
+sacarlas. Solo apariencia: ningún texto que lean las pruebas, cuenta ni botón cambió de lugar. Lo que se arregló:
+1. **El encabezado se achica al bajar** (`hdrScroll`/`hdrMedir`, `body.hdr-chico`): pasadas 120 px se esconde la ciudad con el camión (152 → 84
+   px) y arriba de todo vuelve. El alto escondido pasa a `margin-bottom` del encabezado, así la página no salta (el iPad no compensa solo).
+   ⚠️ Ese margen se junta con el margen de arriba de lo que sigue (las pestañas tienen 20 px: dos márgenes seguidos no se suman, gana el mayor):
+   `hdrMedir` lo mide y lo suma a `--hdr-ruta`; sin eso la página subía 20 px. `--hdr-h` = lo que tapa el encabezado; lo pegajoso (barra de
+   pasos `.fp-barra`, `.fx-lado`, `.qchips-tabla`, `.rpt-alerta`) y `scroll-padding-top` lo usan. `fpPintar` ya no pone `style.top` a mano;
+   `fpIr`/`fxPasoIr` restan `hdrAltoEn(dest)` (el alto que va a tener el encabezado allá abajo).
+2. **Contabilidad → Ventas**: el cliente, el vendedor y «Facturar a» parten el renglón (120-210 px) y los productos tienen 290-380 px: en la
+   compu se leen sin correr la tabla y los renglones bajaron de ~300 px a ~130.
+3. **«Hoy» de Administración** en el iPad: las etiquetas parten el renglón en vez de «bultos por car…».
+4. **«✅ Al día»** en pastillas en una línea; **«Conectado a Google Sheets»** es una pastilla (`conn-solo`) cuando no hay aviso; con el aviso de
+   la clave (hoy, sin `PANEL_KEY`) sigue la franja de siempre.
+5. **Halloween**: la telaraña cruzaba el anillo «PM»; cada anillo lleva un fondo de noche y la letra sombra.
+6. **La barra de pasos en el iPad**: «0 de 4 listos» se cortaba; con `container-type:inline-size` se esconde si la barra mide ≤ 640 px.
+7. **Administración en fichas: los días que ya pasaron** (`admFichasPintar`, `ADM_PASADOS_VER`, `admPasadosVer`): con «Mes» la lista arrancaba
+   en días viejos con todo entregado y lo de mañana quedaba abajo. Ahora de un día pasado se ve SOLO lo que no tiene ✅ (el encabezado del día
+   dice «🚚 1 de 2 entregados · ⏳ 1 sin entregar: es el de abajo»), lo entregado queda plegado en UNA línea arriba (`.af-pas`: «N pedidos ·
+   del … al … · ▾ Ver todo»), y un día pasado con todo entregado ni aparece. Buscando no se pliega nada. «Ver todo» es por visita.
+   ⚠️ El encabezado de un día pasado NO dice cupos ni «listos» (es un `if(pasado){…} else{…}`: la primera versión rompió ese `else` y la prueba
+   lo ataja). Con la planilla real: 105 pedidos plegados del 15/10 al 23/10.
+8. **Filtros**: en una fila de `.filters` los campos miden todos 44 px (el mes 47, la lista 43): los títulos quedan a la misma altura (se
+   notaba en ATC).
+9. **«Herramientas»** (`.as-pes`): blanca como Stock y ROHO, ícono turquesa y «▾» con `::after` (el texto del botón no cambia).
+10. **Stock, la cinta**: la explicación de cada carril con `line-height:1.35` (heredaba 24 px) y la columna a 186 px (el número de «Pedir esta
+    semana · 4» quedaba solo abajo).
+Pruebas: `tests/test_estetica_4mo.js` (35, compu e iPad, reloj clavado en octubre); `test_adm_arriba` §5 cambió a conciencia (esperaba ver el día
+pasado con todo entregado: ahora va plegado y con «Ver todo» dice «1 de 1 entregado», sin cupos). Antes/después para el dueño:
+`scratchpad/antes_despues_4mo.html` (capturas con datos reales: se le mandó como archivo, NO como página publicada).

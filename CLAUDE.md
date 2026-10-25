@@ -977,6 +977,12 @@ plata va `{v, t:'n', s:2}`. `tests/test_regresiones_128.js`.
 🎨 **Cuatro arreglos visuales (§4mn, PUBLICADO 25/10, `f3db549`)**: la venta de tienda usa el ancho (`#view-form.active.venta-tienda`, selector ≥160 px); los tres
 montos de arriba de Contabilidad van enteros (`lbMontoEntero`, sin «…»); los botones naranjas `.ah-go-a` con letra oscura `#2b1700`; las etiquetas
 de la ficha de Administración a `.72rem` (en ≤420 px `clamp`, sin `min-width:0` en los botones). `tests/test_visual_4mn.js`.
+🎨 **Lo que se veía mal en compu e iPad (§4mo, 25/10, en la rama; capturas propias con la planilla real)**: el encabezado se achica al bajar
+(`hdrScroll`/`hdrMedir`, `body.hdr-chico`; el alto escondido pasa a margen y ⚠️ se le suma el margen de arriba de lo que sigue, si no la página
+salta 20 px). **`--hdr-h`** = lo que tapa el encabezado: todo lo pegajoso nuevo va con `top:calc(var(--hdr-h) + …)`, nunca con el alto medido a
+mano; para llevar algo a la vista, `hdrAltoEn(dest)`. Administración en fichas: de un día pasado se ve SOLO lo sin ✅ y lo entregado va plegado
+en `.af-pas` («▾ Ver todo», `ADM_PASADOS_VER`; buscando no se pliega). Ventas de Contabilidad con productos a la vista; campos de `.filters` a
+44 px; «Herramientas» `.as-pes`; anillo PM con fondo en Halloween; «0 de 4 listos» se va si no entra (`@container`). `tests/test_estetica_4mo.js`.
 
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
