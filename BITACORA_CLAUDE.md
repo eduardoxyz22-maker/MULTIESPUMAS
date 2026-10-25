@@ -16089,7 +16089,7 @@ ventas a un centavo (no cambia nada de lo que existe). `tests/test_centavo_exact
   (conocida) y `test_mispedidos` (inestable: sola 33/0). Humo con la planilla real a 390 y 1440: igual que §4mk (0 campos sin nombre, 150 fichas,
   octubre «en curso», sin errores) y 0 ventas a un centavo.
 
-### §4mn — 🎨 Cuatro arreglos visuales · 📒 lo que dijo la proyección cada día · 🎯 muestra de las metas (25/10, dueño: «Sí, hacé los 4 arreglos y lo de cargar la meta como sería muéstrame y si guardar la proyección hazlo»; en la rama, espera el «publica»)
+### §4mn — 🎨 Cuatro arreglos visuales · 📒 lo que dijo la proyección cada día · 🎯 muestra de las metas (25/10, dueño: «Sí, hacé los 4 arreglos y lo de cargar la meta como sería muéstrame y si guardar la proyección hazlo»; PUBLICADO 25/10 ~15:40 de Bolivia, `f3db549`, sin las metas)
 De las sugerencias visuales de Codex/Astra sobre `f1b5fe2` (dos `.md` del dueño), los cuatro que eligió:
 - **UI-01 Venta de tienda**: con `.venta-tienda` el formulario caía en la columna de la agenda (340 px en 1440, 236 en 1180) y el selector de la
   tienda medía 18 px. Ahora `#view-form.active.venta-tienda` usa `minmax(0,1fr) 262px` (1120–1299) y `minmax(0,820px) minmax(290px,370px)` (≥1300):
@@ -16131,3 +16131,7 @@ por día hábil, hoy va a Bs Y: hace falta N % más». Preguntas abiertas para e
 vendedoras?
 - **Batería sobre la rama con §4mn** (25/10): 253 suites, 8.123 bien; rojas: `test_ventas_marcas` (la conocida) y `test_mispedidos` (inestable:
   sola, 33/0). Espera el «publica».
+- **Publicado** (25/10, dueño: *«Ok publica menos lo de metas, lo reviso luego eso»*): `f3db549` sobre `003a095`, solo `pedidos.html` y las dos
+  pruebas. Batería sobre esa copia: 250 suites, 8.086 bien; roja solo `test_ventas_marcas` (la conocida). Pages OK (corrida 1814). Humo con la
+  planilla real sobre lo publicado: guarda `__pry_hist__` y lo muestra. Las metas siguen siendo solo la muestra (el dueño las revisa después).
+  El `.gs` no cambió (sigue 15-a): basta F5.

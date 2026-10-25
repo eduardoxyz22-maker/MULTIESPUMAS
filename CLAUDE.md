@@ -974,7 +974,7 @@ Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la
 plata va `{v, t:'n', s:2}`. `tests/test_regresiones_128.js`.
-🎨 **Cuatro arreglos visuales (§4mn, en la rama)**: la venta de tienda usa el ancho (`#view-form.active.venta-tienda`, selector ≥160 px); los tres
+🎨 **Cuatro arreglos visuales (§4mn, PUBLICADO 25/10, `f3db549`)**: la venta de tienda usa el ancho (`#view-form.active.venta-tienda`, selector ≥160 px); los tres
 montos de arriba de Contabilidad van enteros (`lbMontoEntero`, sin «…»); los botones naranjas `.ah-go-a` con letra oscura `#2b1700`; las etiquetas
 de la ficha de Administración a `.72rem` (en ≤420 px `clamp`, sin `min-width:0` en los botones). `tests/test_visual_4mn.js`.
 
@@ -1897,7 +1897,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
 - **🛏️ ROHO aparte y en unidades** (§4lt-e, 20/10; dueño: *«Ernesto cargó las ventas… te sirve para medir sus ventas»*; PUBLICADO 20/10 12:43, `dfec4b5`, con «📦 Ver sus productos», `R.roho.tot.prods`):
   `pryRohoCuenta` (sin ATC/RPT ni «TIENDA n») → `R.roho` con el ritmo en UNIDADES (sus pedidos no traen precio); ficha y grupo al final, fuera
   del TOTAL EQUIPO, de las curvas y de Contabilidad. Para Bs hace falta la lista de precios de ROHO (la pasa el dueño).
-- **📒 Lo que dijo la proyección cada día** (§4mn, 25/10; dueño: *«si guardar la proyección hazlo»*; en la rama): fila del sistema
+- **📒 Lo que dijo la proyección cada día** (§4mn, 25/10; dueño: *«si guardar la proyección hazlo»*; PUBLICADO `f3db549`): fila del sistema
   **`__pry_hist__`** (`PRY_HIST_ID`, en `esFilaSistema`) con una foto por día del mes en curso (hora, lo vendido, la proyección del equipo, de
   cada marca con «c» curva / «r» ritmo, mayoristas y ROHO). Se guarda al mirar Proyección (cada 30 min como mucho, `pryHistQuizas`) y SOLA una
   vez por día desde las 17:00 en cualquier aparato con la planilla al día (`pryHistAuto`, tic de `AUTO_TIMER`). Relee y junta día por día
