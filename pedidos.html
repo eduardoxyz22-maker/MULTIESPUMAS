@@ -25768,12 +25768,47 @@ function stockNormalizarRecepciones(S){
     Object.keys(nr).forEach(function(rid){ if(!g.rs[rid]) g.rs[rid]={ k:q.k, u:0, q:q.id, nr:1 }; });
     Object.keys(resta).forEach(function(rid){
       if(g.rs[rid] || g.u[q.k]==null) return;
-      var r=resta[rid];
-      g.u[q.k]=Math.max(0,(Number(g.u[q.k])||0)-(Number(r.u)||0));
-      g.rs[rid]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id };
+      var r=resta[rid], pide=Math.round(Number(r.u)||0), antes=Number(g.u[q.k])||0, sale=Math.max(0, Math.min(antes, pide));
+      g.u[q.k]=antes-sale;
+      /* ⚠️ (25/10, auditoría S3) `u` = lo que DE VERDAD se restó; `c` = lo que dice la recepción; `ts` = el orden. Antes se anotaba la
+         recepción entera aunque el almacén no la tuviera (`max(0,…)`): 6 en Moreno y dos recogidas de 5 → Moreno 0 + PTF 10, y anular
+         las dos le DEVOLVÍA 10 a Moreno (10, no 6). */
+      g.rs[rid]={ k:q.k, u:sale, q:q.id, c:pide, ts:Number(r.ts)||0 };
     });
   });
+  stockRecogidasRepartir(S);
   stockNormalizarDetecciones(S);   // 🧮 (§4hn) lo asignado de cada detección sale de las recepciones vivas
+}
+/* 🚚 (25/10, auditoría Codex/Astra S3) Lo restado a cada almacén por las recogidas, recontado SIN depender del orden en que se anotaron
+   o se juntaron: por almacén y producto, lo que había en la foto (= lo que queda + lo ya restado) se reparte entre las recogidas vivas
+   de la más vieja a la más nueva (`ts`), cada una hasta lo que dice (`c`). Así anular una devuelve justo lo que sacó, la otra toma lo
+   que ahora sí hay, y anular las dos deja la foto como estaba. Lo que no alcanzó queda a la vista (`stockRecogidasDeMas`). Las marcas
+   `nr` (ya estaban en la foto) no restan. Idempotente. */
+function stockRecogidasRepartir(S){
+  Object.keys((S && S.g)||{}).forEach(function(alm){
+    var g=S.g[alm]; if(!g || !g.u || !g.rs) return;
+    var por={};
+    Object.keys(g.rs).forEach(function(rid){ var x=g.rs[rid]; if(!x || x.nr || g.u[x.k]==null) return; (por[x.k]=por[x.k]||[]).push([rid, x]); });
+    Object.keys(por).forEach(function(k){
+      var L=por[k], base=Number(g.u[k])||0;
+      L.forEach(function(e){ base+=Number(e[1].u)||0; });
+      L.sort(function(a,b){ return ((Number(a[1].ts)||0)-(Number(b[1].ts)||0)) || (a[0]<b[0]?-1:(a[0]>b[0]?1:0)); });
+      var queda=base;
+      L.forEach(function(e){ var x=e[1], pide=(x.c!=null ? Math.round(Number(x.c)||0) : Math.round(Number(x.u)||0)); x.c=pide; x.u=Math.max(0, Math.min(pide, queda)); queda-=x.u; });
+      g.u[k]=queda;
+    });
+  });
+}
+/* Lo que las recogidas anotaron de más sobre lo que el almacén tenía: [{alm, k, pide, salio, falta}]. Físicamente no salen 10 de 6:
+   o el Excel de ese almacén estaba atrasado, o la llegada se anotó de más. Se dice; no se corrige solo. */
+function stockRecogidasDeMas(S){
+  var out=[]; S=S||STOCK;
+  Object.keys((S && S.g)||{}).forEach(function(alm){
+    var g=S.g[alm], t={}; if(!g || !g.rs) return;
+    Object.keys(g.rs).forEach(function(rid){ var x=g.rs[rid]; if(!x || x.nr) return; var o=t[x.k]=t[x.k]||{ alm:alm, k:x.k, pide:0, salio:0 }; o.pide+=(x.c!=null?Number(x.c):Number(x.u))||0; o.salio+=Number(x.u)||0; });
+    Object.keys(t).forEach(function(k){ var o=t[k]; o.falta=o.pide-o.salio; if(o.falta>0) out.push(o); });
+  });
+  return out;
 }
 /* Un conteo es la FOTO de un corte (fecha + hora + almacén). */
 function fusIdFoto(x){ return x ? (String(x.f||'')+' '+String(x.hora||'')+' '+String(x.alm||'')) : ''; }
@@ -29161,6 +29196,13 @@ function renderStockAhora(){
   var html='';
   /* §4fz-b: sin haber leído nunca la planilla, lo de abajo NO es el stock del equipo (sale solo
      de los pedidos). Lo que se anote igual se junta con la planilla al conectar (`filaStock`). */
+  /* 🚚 (25/10, S3) Recogidas anotadas por más de lo que tenía el almacén: la diferencia, a la vista. */
+  var _deMas=stockRecogidasDeMas(STOCK);
+  if(_deMas.length){
+    html+='<div id="stk-rec-demas" style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
+      '<b>⚠️ Se anotaron recogidas por más de lo que había.</b> '+_deMas.map(function(o){ return esc(stockNombreClave(o.k))+' de '+esc(stockAlmCorto(o.alm))+': se anotaron <b>'+o.pide+'</b> y su Excel tenía <b>'+o.salio+'</b> (<b>'+o.falta+' sin explicar</b>)'; }).join(' · ')+
+      '. Físicamente no salen más de los que había: o el Excel de ese almacén estaba atrasado, o una llegada se anotó de más. Revisalo con logística y, si sobra una, anulala.</div>';
+  }
   if(!STOCK_CARGADO && CONNECTED){
     html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
       '<b>⏳ Esperando la planilla del equipo.</b> Lo que ves abajo sale solo de los pedidos; en cuanto diga «Conectado» aparece lo contado, lo pedido a fábrica y los almacenes.</div>';
