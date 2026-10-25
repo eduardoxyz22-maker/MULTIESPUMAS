@@ -4373,7 +4373,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 .pm-tabla table{width:100%;min-width:850px}.pm-tabla th,.pm-tabla td{padding:10px;white-space:normal!important}.pm-tabla tfoot{font-weight:bold;background:#e8f5f2}
 @media(max-width:650px){.pm-resumen{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-body{padding:12px}.pm-resumen strong{font-size:1.1rem}}
 </style>
-<script src="productos-mes.js?v=20260926a"></script>
+<script src="productos-mes.js?v=20261025a"></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -6971,7 +6971,7 @@ function cobradoFueraDeAcuenta(p){
 function cobradoNoMostrado(p, acuForm){
   if(!p) return 0;
   var c=contaCobrado(p), acuG=Number(p.acuenta)||0, af=Number(acuForm)||0;
-  if(Math.abs(af-acuG)<0.01) return r2(Math.max(0, c-af));
+  if(Math.abs(af-acuG)<0.005) return r2(Math.max(0, c-af));
   var ant=anticipoEscrito(p), adel=Math.max(acuG, ant ? (Number(ant.monto)||0) : 0);
   return r2(Math.max(0, c-adel));
 }
@@ -7210,9 +7210,9 @@ function contaMetodosTxt(p){
    Regla: si hay saldo, decir CUÁNTO se debe; si no hay ningún monto, decir que falta. */
 function sinMontoAnotado(p){
   if(!p || p.pagado) return false;
-  if((Number(p.saldo)||0)>0.01) return false;
-  if((Number(p.acuenta)||0)>0.01) return false;
-  return totalCobrado(p)<=0.01;
+  if((Number(p.saldo)||0)>0.005) return false;
+  if((Number(p.acuenta)||0)>0.005) return false;
+  return totalCobrado(p)<=0.005;
 }
 /* Ámbar y no rojo: no es una deuda, es un dato que falta. El rojo se reserva para la
    plata que de verdad hay que salir a cobrar. */
@@ -7226,16 +7226,16 @@ function cobroRutaTxt(p){
      flete salía «✅ PAGADO» y el chofer no lo cobraba. `f` lo dice aparte, con las palabras de su tarjeta
      (`cobroChoferHtml`). ATC y RPT no cambian. */
   var fleteF=(p && !noSeCobra(p)) ? envioPorCobrar(p) : 0;
-  var f=fleteF>0.01 ? ('🚚 Cobrar también el flete: '+fmtBs(fleteF)+' — aparte de la venta. Avisale a la vendedora, que lo registra con el comprobante.') : '';
+  var f=fleteF>0.005 ? ('🚚 Cobrar también el flete: '+fmtBs(fleteF)+' — aparte de la venta. Avisale a la vendedora, que lo registra con el comprobante.') : '';
   if(p&&p.pagado) return {t:(f?'✅ LA VENTA YA ESTÁ PAGADA':'✅ PAGADO'), c:'#2e7d32', f:f};
   if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32', f:''};   // (25/09)
   if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00', f:f};
-  if((Number(p&&p.saldo)||0)<=0.01) return {t:(f?'✅ NADA QUE COBRAR DE LA VENTA':'✅ NADA QUE COBRAR'), c:'#2e7d32', f:f};
+  if((Number(p&&p.saldo)||0)<=0.005) return {t:(f?'✅ NADA QUE COBRAR DE LA VENTA':'✅ NADA QUE COBRAR'), c:'#2e7d32', f:f};
   return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b', f:f};
 }
 /* El renglón "debe Bs X" solo cuando de verdad hay saldo (si es 0 no dice nada). */
 function debeLinea(p){
-  return (Number(p&&p.saldo)||0)>0.01
+  return (Number(p&&p.saldo)||0)>0.005
     ? '<br><span style="color:var(--red);font-size:.9em">debe '+fmtBs(p.saldo)+'</span>' : '';
 }
 function contaPagoHtml(p){
@@ -7248,7 +7248,7 @@ function contaPagoHtml(p){
   if(acu>0)    return '<span class="badge b-amber">A CUENTA '+fmtBs(acu)+'</span>'+metTxt+debeLinea(p);
   /* Sin saldo y sin marca de pagada, pero CON plata anotada: se dice lo que entró.
      "DEBE Bs 0,00" no le sirve a nadie — no hay deuda que cobrar, lo que falta es la marca. */
-  if(sal<=0.01) return '<span class="badge b-amber">COBRADO '+fmtBs(totalCobrado(p))+'</span>'+metTxt+pie('falta marcarla como pagada');
+  if(sal<=0.005) return '<span class="badge b-amber">COBRADO '+fmtBs(totalCobrado(p))+'</span>'+metTxt+pie('falta marcarla como pagada');
   return '<span class="badge b-red">DEBE '+fmtBs(sal)+'</span>';
 }
 function contaPagoTxt(p){
@@ -7257,8 +7257,8 @@ function contaPagoTxt(p){
   var m=met?(' · '+met):'';
   if(p.pagado) return 'PAGADO'+m;
   if(sinMontoAnotado(p)) return 'SIN MONTO ANOTADO — falta registrar el pago'+m;
-  if(acu>0)    return 'A CUENTA '+fmtBs(acu)+m+(sal>0.01?(' · debe '+fmtBs(sal)):'');
-  if(sal<=0.01) return 'COBRADO '+fmtBs(totalCobrado(p))+m+' · falta marcarla como pagada';
+  if(acu>0)    return 'A CUENTA '+fmtBs(acu)+m+(sal>0.005?(' · debe '+fmtBs(sal)):'');
+  if(sal<=0.005) return 'COBRADO '+fmtBs(totalCobrado(p))+m+' · falta marcarla como pagada';
   return 'DEBE '+fmtBs(sal);
 }
 /* ============================================================================
@@ -7283,7 +7283,7 @@ function preciosAMedias(p){
 }
 /* Cuánto se despega la suma de los ítems del total anotado. 0 = cuadra. */
 function difPrecios(p){ return tienePrecios(p) ? r2(prodTotal(p)-ventaTotal(p)) : 0; }
-function precioDescuadra(p){ return Math.abs(difPrecios(p))>0.01; }
+function precioDescuadra(p){ return Math.abs(difPrecios(p))>0.005; }
 /* ¿Esta "nota" es un N° de talonario de verdad?
    ⚠️ El campo es texto libre y las vendedoras escriben cualquier cosa cuando no tienen el
    recibo a mano: "0", "S/N", "MEDICION", "Atencion al cliente", "MORENO". Agrupar por eso
@@ -7535,8 +7535,8 @@ function renderContaMetrics(list, vSel){
     vendido=r2(vendido+ventaTotal(p));
     cobrado=r2(cobrado+contaCobrado(p));
     var f=contaFaltaCobrar(p);
-    if(f>0.01){ falta=r2(falta+f); nDeben++; }
-    var e=excesoCobro(p); if(e>0.01){ exceso=r2(exceso+e); nExceso++; }
+    if(f>0.005){ falta=r2(falta+f); nDeben++; }
+    var e=excesoCobro(p); if(e>0.005){ exceso=r2(exceso+e); nExceso++; }
     if(regEnSistema(p)) nReg++;
   });
   var n=(list||[]).length, porCargar=n-nReg, quien=vSel?('de '+vSel):'de todo el equipo';
@@ -7550,11 +7550,11 @@ function renderContaMetrics(list, vSel){
        n+' venta'+(n===1?'':'s')+' '+esc(quien))+
     /* Si entró MÁS de lo vendido, decirlo con todas las letras en vez de un "120% de lo
        vendido" que no se entiende: son cobros de más y hay que ir a mirarlos. */
-    mc(exceso>0.01?'var(--amber)':'var(--green)','Ya ingresó', fmtBs(cobrado),
-       exceso>0.01 ? ('⚠️ '+fmtBs(exceso)+' de MÁS en '+nExceso+' venta'+(nExceso===1?'':'s')+' — revisalas')
+    mc(exceso>0.005?'var(--amber)':'var(--green)','Ya ingresó', fmtBs(cobrado),
+       exceso>0.005 ? ('⚠️ '+fmtBs(exceso)+' de MÁS en '+nExceso+' venta'+(nExceso===1?'':'s')+' — revisalas')
        : vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
     /* ⏳ (06/10, §4hr) Con saldo, la ficha se TOCA y abre quiénes son (`abrirPorCobrar`). */
-    (falta>0.01
+    (falta>0.005
       ? mcToca('var(--amber)', 'Falta cobrar', fmtBs(falta),
           nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas', "abrirPorCobrar('ventas')")
       : mc('var(--green)', 'Falta cobrar', '✅ Nada', 'no queda saldo pendiente'))+
@@ -7596,8 +7596,8 @@ function porCobrarDatos(origen){
   var mayor=(contaAmbito()==='mayor');
   var vv=mayor ? mayoristasTxt() : ((document.getElementById('cta-vendedor')||{}).value||'').trim();
   var q=((document.getElementById('cta-search')||{}).value||'').trim();
-  var items=contaLista().map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(contaFaltaCobrar(p)) }; })
-    .filter(function(x){ return x.saldo>0.01; })
+  var items=contaLista().map(function(p){ var f=contaFecha(p); return Object.assign(deudaEdad(f, hoy), { p:p, saldo:r2(contaFaltaCobrar(p)) }); })
+    .filter(function(x){ return x.saldo>0.005; })
     .sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
   return { items:items, quien:(vv||(mayor?'mayoristas':'todo el equipo'))+(q?(' · solo lo que coincide con «'+q+'»'):''),
            periodo:contaPeriodoTxt(), corte:(contaBase()==='entrega'?'por la entrega agendada':'por la fecha de ingreso') };
@@ -7612,7 +7612,7 @@ function abrirPorCobrar(origen){
     return '<tr class="pc-fila" data-id="'+esc(String(p.id))+'" onclick="porCobrarAbrirVenta(\''+origen+'\', this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta para registrar el pago">'+
       '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><span style="color:var(--muted);font-size:.86em">'+esc(ref)+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
-      '<td><span style="color:'+col+'">'+esc(x.desde?fmtFechaCorta(x.desde):'sin fecha')+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+      '<td><span style="color:'+col+'">'+esc(x.sinF ? 'sin fecha' : (fmtFechaCorta(x.desde)+' · '+deudaEdadTxt(x)))+'</span></td>'+
       '<td style="text-align:right;white-space:nowrap">'+fmtBs(ventaTotal(p))+'</td>'+
       '<td style="text-align:right;white-space:nowrap"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
   }).join('');
@@ -7641,7 +7641,7 @@ function copiarPorCobrar(origen){
   var txt='⏳ *Falta cobrar* · '+D.quien+' · '+D.periodo+': *'+fmtBs(cuadreSuma(it))+'* en '+it.length+' venta'+(it.length===1?'':'s')+'\n'+
     it.map(function(x){ var p=x.p;
       return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
-        ' · desde el '+(x.desde?fmtFechaCorta(x.desde):'—')+' ('+(x.dias?(x.dias+' días'):'hoy')+')'+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
+        (x.sinF ? ' · sin fecha' : (' · desde el '+fmtFechaCorta(x.desde)+' ('+deudaEdadTxt(x, true)+')'))+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
   copyText(txt);
 }
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
@@ -7701,11 +7701,11 @@ function cxHacerDatos(list, R){
   add({ sev:'r', ic:'🧾', n:pst.length, t:'Pagos sin terminar', s:Object.keys(porQue).map(function(k){ return porQue[k]+' sin '+k; }).join(' · ')+' · completalos antes del cierre', b:'Completar', p:1, fn:'nxPstAbrir()', ok:'Pagos completos (recibo, foto y banco)' });
   var nd=(DUP_IDX&&DUP_IDX.n)||0;
   add({ sev:'r', ic:'👯', n:nd, t:'Pueden estar cargadas dos veces', s:'revisalas antes de facturar · «Son distintas» las saca del aviso', b:'Revisar', p:1, fn:'cxDupAbrir()', ok:'Ninguna venta cargada dos veces' });
-  var deb=list.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.01; }).sort(function(a,b){ var x=contaFecha(a), y=contaFecha(b); return x<y?-1:(x>y?1:0); });
+  var deb=list.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.005; }).sort(function(a,b){ var x=contaFecha(a), y=contaFecha(b); return x<y?-1:(x>y?1:0); });
   add({ sev:'a', ic:'⏳', n:R.nDebe, t:'Ventas con saldo · '+fmtBs0(R.saldo), s:misNom2(deb)+' · la más vieja primero', b:'Ver quiénes', fn:"abrirPorCobrar('ventas')", ok:'Nada por cobrar' });
   add({ sev:'a', ic:'⚠️', n:M.nExceso||0, t:'Cobradas de más · '+fmtBs0(M.exceso||0), s:'entró más que el total de la venta: revisá si se tipeó de más', b:'Ver', fn:"cxTopFiltro('exc')", ok:'Ninguna cobrada de más' });
   add({ sev:'a', ic:'❓', n:R.nSinMonto, t:'Sin monto anotado', s:'no dicen cuánto se cobró ni cuánto falta: anotá el monto', b:'Ver', fn:"cxTopFiltro('smon')", ok:'Todas tienen monto anotado' });
-  var nEnv=list.filter(function(p){ return envioPorCobrar(p)>0.01; }).length;
+  var nEnv=list.filter(function(p){ return envioPorCobrar(p)>0.005; }).length;
   add({ sev:'a', ic:'🚚', n:nEnv, t:'Recargos por entrega por cobrar · '+fmtBs0(R.enviosFalta), s:'el flete pactado que todavía no entró · va aparte de la venta', b:'Ver', fn:"cxTopFiltro('envf')", ok:'Recargos por entrega cobrados' });
   add({ sev:'i', ic:'⚪', n:R.nSinMarcar, t:'Cobradas sin marcar pagadas', s:'ya entró todo pero nadie las marcó ✅ pagadas', b:'Ver', fn:"cxTopFiltro('smar')", ok:'' });
   var pc=(M.n||0)-(M.nReg||0);
@@ -7733,8 +7733,8 @@ function cxTopPintar(list, vSel, R){
   var quien=vSel ? String(vSel) : 'todo el equipo';
   var cob=Math.min(M.cobrado, M.vendido), fal=Math.min(M.falta, Math.max(0, M.vendido-cob));
   var tres='<div class="lb-tres"><div><small>Vendido</small><b>'+fmtBs0(M.vendido)+'</b><span>'+M.n+' venta'+(M.n===1?'':'s')+'</span></div>'+
-    '<div class="lb-ok"><small>Ya cobrado</small><b>'+fmtBs0(M.cobrado)+'</b><span>'+((M.exceso||0)>0.01?('⚠️ '+fmtBs0(M.exceso)+' de más'):'entró a caja o banco')+'</span></div>'+
-    '<div class="'+(M.falta>0.01?'lb-mal lb-toca':'lb-ok')+'"'+(M.falta>0.01?' onclick="abrirPorCobrar(\'ventas\')" title="Ver quiénes deben"':'')+'><small>Falta cobrar</small><b>'+(M.falta>0.01?fmtBs0(M.falta):'✅ Nada')+'</b><span>'+(M.nDeben ? (M.nDeben+' venta'+(M.nDeben===1?'':'s')+' con saldo') : 'no queda saldo')+'</span></div></div>';
+    '<div class="lb-ok"><small>Ya cobrado</small><b>'+fmtBs0(M.cobrado)+'</b><span>'+((M.exceso||0)>0.005?('⚠️ '+fmtBs0(M.exceso)+' de más'):'entró a caja o banco')+'</span></div>'+
+    '<div class="'+(M.falta>0.005?'lb-mal lb-toca':'lb-ok')+'"'+(M.falta>0.005?' onclick="abrirPorCobrar(\'ventas\')" title="Ver quiénes deben"':'')+'><small>Falta cobrar</small><b>'+(M.falta>0.005?fmtBs0(M.falta):'✅ Nada')+'</b><span>'+(M.nDeben ? (M.nDeben+' venta'+(M.nDeben===1?'':'s')+' con saldo') : 'no queda saldo')+'</span></div></div>';
   var barra=M.vendido>0.009 ? ('<div class="lb-barra" title="Cobrado '+fmtBs0(cob)+' · falta '+fmtBs0(fal)+'"><i style="flex:'+Math.max(0,cob)+';background:#16a34a"></i><i style="flex:'+Math.max(0,fal)+';background:#CE2939"></i>'+
     ((M.vendido-cob-fal)>0.5?('<i style="flex:'+(M.vendido-cob-fal)+';background:#cbd5e1"></i>'):'')+'</div>') : '';
   var mks='', K=CX_TOP_MK||{ M:{}, sin:{n:0}, suya:'' }, D={};
@@ -7742,7 +7742,7 @@ function cxTopPintar(list, vSel, R){
   var lin=function(col, nom, d, k){
     var x=D[k]||{ cob:0, falta:0 };
     return '<div class="lb-f"><span class="lb-t"><i class="lb-pt" style="background:'+col+'"></i>'+esc(nom)+'<small>'+d.n+' venta'+(d.n===1?'':'s')+' · '+d.u+' unidad'+(d.u===1?'':'es')+
-      (x.falta>0.01?(' · <em>falta '+fmtBs0(x.falta)+'</em>'):(d.n?' · todo cobrado':''))+'</small></span><b>'+fmtBs0(d.bs)+'</b></div>';
+      (x.falta>0.005?(' · <em>falta '+fmtBs0(x.falta)+'</em>'):(d.n?' · todo cobrado':''))+'</small></span><b>'+fmtBs0(d.bs)+'</b></div>';
   };
   var partes=[];
   MARCAS.forEach(function(g){ if(K.suya && g.k!==K.suya) return; var d=K.M[g.k]; if(!d) return; mks+=lin(g.col, g.lbl, d, g.k); partes.push({ c:g.col, v:d.bs }); });
@@ -7774,7 +7774,7 @@ function renderConta(){
        anotado o ya están cobradas sin marcar: la tarjeta decía 5 y el resumen 7, y en
        Mayoristas «Con saldo: 3» al lado de «no queda saldo pendiente» (§4cg). */
     if(p.pagado) nPag++;
-    else if(contaFaltaCobrar(p)>0.01) nDebe++;
+    else if(contaFaltaCobrar(p)>0.005) nDebe++;
     else if(sinMontoAnotado(p)) nSinMonto++;
     else nSinMarcar++;                       // cobrada del todo, pero nadie la marcó pagada
     aCuenta+=Number(p.acuenta)||0;
@@ -7802,7 +7802,7 @@ function renderConta(){
     (aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
     (envios>0?(' &nbsp;·&nbsp; 🚚 Recargos de entrega: <b>'+fmtBs(envios)+'</b>'+
       ' <span style="color:var(--muted)">(cobrado '+fmtBs(enviosCob)+
-      (enviosFalta>0.01?(' · <b style="color:var(--red)">por cobrar '+fmtBs(enviosFalta)+'</b>'):'')+')</span>'):'')+
+      (enviosFalta>0.005?(' · <b style="color:var(--red)">por cobrar '+fmtBs(enviosFalta)+'</b>'):'')+')</span>'):'')+
     ' &nbsp;·&nbsp; 🧾 En el sistema: <b>'+nReg+'</b> de '+list.length+
     (list.length-nReg>0?(' <span style="color:var(--amber)">('+(list.length-nReg)+' por cargar)</span>'):'')+
     (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'')+
@@ -7881,7 +7881,7 @@ function envioResumenHtml(p, editable){
       ' <span style="color:var(--muted);font-size:.85em">— va aparte de la venta, no se factura</span>'+
       '<div style="margin-top:3px;font-size:.85em">'+
         '✅ Cobrado: <b>'+fmtBs(cob)+'</b> &nbsp;·&nbsp; '+
-        (falta>0.01
+        (falta>0.005
           ? '<b style="color:var(--red)">⏳ Por cobrar: '+fmtBs(falta)+'</b> <span style="color:var(--muted)">— se cobra al entregar</span>'
           : '<span style="color:var(--green);font-weight:700">✅ Nada por cobrar</span>')+
       '</div>';
@@ -7899,12 +7899,12 @@ function envioResumenHtml(p, editable){
     '<div style="margin-top:7px;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px">'+
       '<div class="lb" style="margin-bottom:6px">✏️ ¿Cuánto falta cobrar de flete?</div>'+
       '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">'+
-        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-env-monto" value="'+(falta>0.01?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-env-monto" value="'+(falta>0.005?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
         '<button class="btn btn-primary btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaGuardarEnvio('"+String(p.id)+"')")+'">Guardar</button>'+
         '<button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaEditarEnvio('"+String(p.id)+"',0)")+'">Cancelar</button>'+
       '</div>'+
       '<div style="font-size:.72rem;color:var(--muted);margin-top:5px">Es lo que <b>todavía hay que cobrarle</b> al cliente por la entrega. '+
-        (cob>0.01?('Los '+fmtBs(cob)+' ya cobrados <b>no se tocan</b>. '):'')+
+        (cob>0.005?('Los '+fmtBs(cob)+' ya cobrados <b>no se tocan</b>. '):'')+
         'Poné <b>0</b> para sacar el recargo. Esto <b>no le cambia el saldo de la venta</b>.</div>'+
     '</div>';
 }
@@ -7915,7 +7915,7 @@ function envioCelda(p){
   if(!(t>0)) return '<span style="color:var(--muted)">—</span>';
   var falta=envioPorCobrar(p), e=enviosDe(p).filter(envioYaCobrado)[0]||{};
   return '<b style="color:var(--amber)">'+fmtBs(t)+'</b>'+
-    (falta>0.01
+    (falta>0.005
       ? '<br><span class="badge b-red" style="font-size:.6rem">⏳ POR COBRAR</span>'
       : '<br><span style="color:var(--muted);font-size:.9em">'+esc(cobroMetodoTxt(e)||'cobrado')+'</span>')+
     compsArr(e.comps!=null?e.comps:e.comp).map(function(fid,k){
@@ -8011,7 +8011,7 @@ function cxVivoPintar(list, vSel, d){
     var cs=box.querySelectorAll('.mc');
     for(var i=0;i<cs.length && i<CX_ESC.length;i++){
       cs[i].classList.add('cx-f', 'cx-f'+(i+1));
-      if(i===2 && d.falta>0.01) cs[i].classList.add('cx-debe');
+      if(i===2 && d.falta>0.005) cs[i].classList.add('cx-debe');
       if(i===3 && d.n-d.nReg>0) cs[i].classList.add('cx-ojo');
       cs[i].insertAdjacentHTML('afterbegin','<span class="cx-esc" aria-hidden="true">'+CX_ESC[i]+'</span>');
     }
@@ -8084,7 +8084,7 @@ function cxMarcasDatos(list){
   M.sin={ k:'sin', lbl:'⚠️ Sin marca', col:'#94a3b8', bs:0, cob:0, falta:0, n:0 }; orden.push('sin');
   (list||[]).forEach(function(p){
     var x=M[marcaDe(p.vendedor)]||M.sin, f=contaFaltaCobrar(p);
-    x.bs=r2(x.bs+ventaTotal(p)); x.cob=r2(x.cob+contaCobrado(p)); if(f>0.01) x.falta=r2(x.falta+f); x.n++;
+    x.bs=r2(x.bs+ventaTotal(p)); x.cob=r2(x.cob+contaCobrado(p)); if(f>0.005) x.falta=r2(x.falta+f); x.n++;
   });
   return orden.map(function(k){ return M[k]; }).filter(function(x){ return x.n; });
 }
@@ -8130,9 +8130,9 @@ function cxBotonesPintar(list, nDebe, saldo){
 var CX_FILTRO=null;   // { k, v } — solo la tabla
 var CX_CHIPS=[
   { k:'pag',  ico:'✅', lbl:'Pagadas',             cls:'k-ok',  f:function(p){ return !!p.pagado; } },
-  { k:'debe', ico:'⏳', lbl:'Con saldo',           cls:'k-sal', f:function(p){ return !p.pagado && contaFaltaCobrar(p)>0.01; } },
-  { k:'smon', ico:'❓', lbl:'Sin monto anotado',   cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.01) && sinMontoAnotado(p); } },
-  { k:'smar', ico:'⚪', lbl:'Cobradas sin marcar', cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.01) && !sinMontoAnotado(p); } },
+  { k:'debe', ico:'⏳', lbl:'Con saldo',           cls:'k-sal', f:function(p){ return !p.pagado && contaFaltaCobrar(p)>0.005; } },
+  { k:'smon', ico:'❓', lbl:'Sin monto anotado',   cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && sinMontoAnotado(p); } },
+  { k:'smar', ico:'⚪', lbl:'Cobradas sin marcar', cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && !sinMontoAnotado(p); } },
   { k:'carg', ico:'📥', lbl:'Por cargar al sistema', cls:'k-car', f:function(p){ return !regEnSistema(p); } },
   { k:'reg',  ico:'🧾', lbl:'Ya en el sistema',    cls:'k-ok',  f:function(p){ return regEnSistema(p); } },
   { k:'env',  ico:'🚚', lbl:'Con recargo',         cls:'k-env', f:function(p){ return envioTotal(p)>0; } },
@@ -8142,8 +8142,8 @@ function cxChipDef(F){
   if(!F) return null;
   if(F.k==='met') return { k:'met', v:F.v, f:function(p){ return contaPagos(p).some(function(c){ return cobroMetodoTxt(c)===F.v; }); } };
   /* ✨ (§4mg) Dos filtros más que abre «Para hacer» (no tienen chip propio): cobradas de más y recargos por cobrar. */
-  if(F.k==='exc') return { k:'exc', f:function(p){ return excesoCobro(p)>0.01; } };
-  if(F.k==='envf') return { k:'envf', f:function(p){ return envioPorCobrar(p)>0.01; } };
+  if(F.k==='exc') return { k:'exc', f:function(p){ return excesoCobro(p)>0.005; } };
+  if(F.k==='envf') return { k:'envf', f:function(p){ return envioPorCobrar(p)>0.005; } };
   return CX_CHIPS.filter(function(c){ return c.k===F.k; })[0]||null;
 }
 function cxFiltrar(list){ var d=cxChipDef(CX_FILTRO); return d ? (list||[]).filter(d.f) : (list||[]); }
@@ -8190,7 +8190,7 @@ function cxVistaCambiar(){ cxLS('me_cx_tabla', cxModoTarjetas() ? '1' : null); r
 function cxEstadoVenta(p){
   if(p.pagado) return { cls:'st-ok', txt:'✅ Pagada' };
   var f=contaFaltaCobrar(p);
-  if(f>0.01) return { cls:'st-sal', txt:'⏳ Debe '+fmtBs(f) };
+  if(f>0.005) return { cls:'st-sal', txt:'⏳ Debe '+fmtBs(f) };
   if(sinMontoAnotado(p)) return { cls:'st-gris', txt:'❓ Sin monto anotado' };
   return { cls:'st-gris', txt:'⚪ Cobrada, sin marcar pagada' };
 }
@@ -8215,7 +8215,7 @@ function cxCardsPintar(list, todas){
       '<div class="cx-vc-pie"><span class="cx-st">'+st.txt+'</span>'+
         pagos.slice(0,3).map(function(c){ return '<span class="cx-pg">'+esc(cobroMetodoTxt(c)||'sin método')+' '+fmtBs0(c.monto)+(esEnvio(c)?' 🚚':'')+'</span>'; }).join('')+
         (pagos.length>3?('<span class="cx-pg">+'+(pagos.length-3)+'</span>'):'')+
-        (env>0 && envioPorCobrar(p)>0.01?('<span class="cx-pg cx-pg-env">🚚 flete por cobrar '+fmtBs0(envioPorCobrar(p))+'</span>'):'')+
+        (env>0 && envioPorCobrar(p)>0.005?('<span class="cx-pg cx-pg-env">🚚 flete por cobrar '+fmtBs0(envioPorCobrar(p))+'</span>'):'')+
       '</div>'+dupChip(p)+
     '</div>';
   }).join('');
@@ -8306,14 +8306,14 @@ function cxIrArqueo(forma){
 /* H · quién tiene el efectivo en la mano (`cuadreEfectivo`: cobrado en efectivo − retirado, por quien recibió la plata). */
 function cxManoPintar(){
   var box=document.getElementById('cx-mano'); if(!box) return;
-  var E=cuadreEfectivo(), filas=E.filas, fuera=(E.fuera||[]).filter(function(o){ return o.monto>0.01; });
+  var E=cuadreEfectivo(), filas=E.filas, fuera=(E.fuera||[]).filter(function(o){ return o.monto>0.005; });
   if(!filas.length && !fuera.length){ box.innerHTML=''; return; }
   /* (12/10, revisión) con una vendedora elegida, lo que cobró un CHOFER de sus ventas va a `fuera`: antes decía «todo recogido» */
   var fueraHtml=fuera.length ? ('<div class="cx-nota" style="color:#7c4b00">🚚 De estas ventas, '+fuera.map(function(o){ return '<b>'+esc(o.nombre)+'</b> cobró '+fmtBs(o.monto); }).join(' · ')+
     ' en efectivo: lo que tiene en la mano se ve eligiendo «Todos».</div>') : '';
-  var con=filas.filter(function(o){ return Math.abs(o.falta)>0.01; });
+  var con=filas.filter(function(o){ return Math.abs(o.falta)>0.005; });
   var cards=con.map(function(o, i){
-    var debe=o.falta>0.01;
+    var debe=o.falta>0.005;
     return '<div class="cx-mano'+(debe?'':' cx-demas')+(o.chofer?' cx-chofer':'')+'" style="animation-delay:'+Math.min(i,8)*60+'ms">'+
       (debe?'<span class="cx-billete" aria-hidden="true"></span>':'')+
       '<div class="cx-mano-q"><b>'+esc(o.nombre)+'</b>'+(o.chofer?' <span class="badge b-amber" style="font-size:.6rem">🚚 chofer</span>':'')+'</div>'+
@@ -8740,7 +8740,8 @@ function pryPlataHtml(ym){
   var hay=function(campo){ return cols.some(function(c){ return Math.abs((G[c.k]||{})[campo]||0)>0.009; }); };
   var fila=function(lbl, campo, cls, signo, nCampo){
     return '<tr'+(cls?(' class="'+cls+'"'):'')+'><td>'+lbl+'</td>'+cols.map(function(c){ var g=G[c.k]||{}, v=g[campo]||0;
-      return '<td>'+(v>0.009 ? ((signo||'')+fmtBs0(v)+(nCampo && g[nCampo] ? (' <small>('+g[nCampo]+')</small>') : '')) : '—')+'</td>'; }).join('')+'</tr>';
+      /* (25/10, §4ml, auditoría Codex) con centavos: es una cuenta que tiene que cerrar (Sueña 0,30 salía «Bs 0» y 0 + 150 daba 151) */
+      return '<td>'+(v>0.009 ? ((signo||'')+fmtBs(v)+(nCampo && g[nCampo] ? (' <small>('+g[nCampo]+')</small>') : '')) : '—')+'</td>'; }).join('')+'</tr>';
   };
   var h='<div class="cua-box" id="pry-plata-box"><div class="cua-t">💵 De dónde sale lo vendido — '+esc(mes)+'</div>'+
     '<div class="pry-intro" style="margin:-4px 0 10px">Lo vendido para '+esc(mes)+' (entrega agendada, lo de las fichas de arriba) partido en lo que ya se cobró, '+
@@ -9143,7 +9144,7 @@ function renderProyeccion(){
            '<div class="pry-fila"><div class="pry-q"><b>ROHO</b><small>'+esc(det.join(' · '))+'</small></div>'+
            '<div class="pry-n"><b>'+esc(nU(T.u))+'</b>'+(conProy ? ('<small class="pry-p">📈 '+esc(nU(T.proyU))+'</small>') : '')+'</div></div>'+
            ((T.prods||[]).length ? ('<details class="pry-roho-prods"'+(PRY_ROHO_ABIERTO ? ' open' : '')+' ontoggle="PRY_ROHO_ABIERTO=this.open"><summary>📦 Ver sus productos ('+T.prods.length+')</summary>'+
-             '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>Producto</th><th>Medida</th>'+(R.estado==='curso' ? '<th class="r">Entregado</th><th class="r">Agendado</th>' : '')+'<th class="r">Unidades</th></tr></thead><tbody>'+
+             '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>Producto</th><th>Medida</th>'+(R.estado==='curso' ? '<th class="r" title="Con entrega agendada hasta hoy (no dice si ya se entregó)">Agendado hasta hoy</th><th class="r">Agendado después</th>' : '')+'<th class="r">Unidades</th></tr></thead><tbody>'+
              T.prods.map(function(o){ var p=o.k.split('|');
                return '<tr><td>'+esc(p[0]||o.k)+(o.cod ? ' <small>'+esc(o.cod)+'</small>' : '')+'</td><td>'+esc((p[1]||'').toLowerCase())+'</td>'+
                  (R.estado==='curso' ? ('<td class="r">'+(o.ua||'·')+'</td><td class="r">'+(o.ub||'·')+'</td>') : '')+'<td class="r"><b>'+o.u+'</b></td></tr>'; }).join('')+
@@ -9573,13 +9574,17 @@ function cuadrePendientes(sinPeriodo){
   var hoy=todayStr(), vend=cuadreVendedor(), pe=cuadrePeriodo();
   return STATE.filter(function(p){
       if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return false;
-      if(p.pagado || !((Number(p.saldo)||0)>0.01)) return false;
+      if(p.pagado || !((Number(p.saldo)||0)>0.005)) return false;
       return sinPeriodo ? true : enPeriodoCuadre(contaFecha(p), pe);
     })
-    .map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(p.saldo) }; })
+    .map(function(p){ var f=contaFecha(p); return Object.assign(deudaEdad(f, hoy), { p:p, saldo:r2(p.saldo) }); })
     .sort(function(a,b){ return b.dias-a.dias; });
 }
 function cuadreSuma(list){ var t=0; (list||[]).forEach(function(x){ t=r2(t+x.saldo); }); return t; }
+/* ⏳ (25/10, §4ml, auditoría Codex FIN-09) La edad de una deuda: sin fecha o con una fecha que todavía no llegó NO es «de hoy». Antes una
+   venta sin ninguna fecha y una agendada para mañana salían «hoy» y en el tramo «0 a 15 días», como si fueran recientes. */
+function deudaEdad(f, hoy){ return { desde:f, dias:Math.max(0,diasEntre(f,hoy)), sinF:!f, fut:!!(f && hoy && f>hoy) }; }
+function deudaEdadTxt(x, largo){ if(x.sinF) return 'sin fecha'; if(x.fut) return 'fecha futura'; return x.dias ? (x.dias+(largo?' días':' d')) : 'hoy'; }
 function diasEntre(a,b){
   if(!a||!b) return 0;
   var x=new Date(a+'T00:00:00'), y=new Date(b+'T00:00:00');
@@ -9610,11 +9615,15 @@ function tramosDeudaHtml(pend){
          {lbl:'16 a 30',     max:30,       col:'#a67c00'},
          {lbl:'31 a 60',     max:60,       col:'var(--amber)'},
          {lbl:'más de 60',   max:1e9,      col:'var(--red)'}];
-  T.forEach(function(t){ t.n=0; t.bs=0; });
+  /* (§4ml) lo sin fecha y lo de fecha futura van en su propio tramo, no en «0 a 15 días» */
+  var SF={lbl:'sin fecha', col:'var(--muted)'}, FU={lbl:'fecha futura', col:'var(--muted)'};
+  T.forEach(function(t){ t.n=0; t.bs=0; }); SF.n=SF.bs=FU.n=FU.bs=0;
   (pend||[]).forEach(function(x){
-    var d=Number(x.dias)||0;
-    for(var i=0;i<T.length;i++) if(d<=T[i].max){ T[i].n++; T[i].bs=r2(T[i].bs+(Number(x.saldo)||0)); break; }
+    var d=Number(x.dias)||0, sal=Number(x.saldo)||0;
+    if(x.sinF || x.fut){ var e=x.sinF ? SF : FU; e.n++; e.bs=r2(e.bs+sal); return; }
+    for(var i=0;i<T.length;i++) if(d<=T[i].max){ T[i].n++; T[i].bs=r2(T[i].bs+sal); break; }
   });
+  T=T.concat([FU, SF]);
   var hay=T.filter(function(t){ return t.n>0; });
   if(hay.length<2) return '';                       // con un solo tramo no aporta nada
   return '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 10px">'+
@@ -9650,11 +9659,11 @@ function cuadreAlertas(pagos){
     /* 🚚 YA SE ENTREGÓ Y SIGUE DEBIENDO: es plata EN LA CALLE. No es lo mismo que un
        saldo de algo que todavía no salió del depósito — eso todavía se puede frenar. */
     var _saldo=Number(p.saldo)||0;
-    if(p.entregado && _saldo>0.01 && !sinMontoAnotado(p)) entregadoDebe.push(p);
+    if(p.entregado && _saldo>0.005 && !sinMontoAnotado(p)) entregadoDebe.push(p);
     /* 🧮 Los precios cargados no dan el total anotado: uno de los dos números está mal. */
     if(precioDescuadra(p)) descuadre.push(p);
     /* 👥 El mismo cliente debiendo en varias notas: se lo llama UNA vez y se cobra todo. */
-    if(_saldo>0.01 && !sinMontoAnotado(p)){
+    if(_saldo>0.005 && !sinMontoAnotado(p)){
       var _k=normNombre(p.cliente);
       if(_k) (porCliente[_k]=porCliente[_k]||[]).push(p);
     }
@@ -9728,7 +9737,7 @@ function cuadreAlertas(pagos){
   if(_pcAl.length){
     A.push({k:'cobrar', sev:'plata', ico:'⏳', txt:'<b>'+_pcAl.length+'</b> venta'+(_pcAl.length===1?'':'s')+' con <b>saldo por cobrar</b> — '+
       fmtBs(cuadreSuma(_pcAl))+' que todavía no entró',
-      det:_pcAl.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.saldo)+(x.p.vendedor?(' · '+x.p.vendedor):'')+' · '+(x.dias?(x.dias+' d'):'hoy'), id:x.p.id}; })});
+      det:_pcAl.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.saldo)+(x.p.vendedor?(' · '+x.p.vendedor):'')+' · '+deudaEdadTxt(x), id:x.p.id}; })});
   }
   /* La venta cargada dos veces: infla el mes y hace facturar de más. Va arriba de todo
      lo demás en importancia, así que se lista con las dos ventas del par juntas para
@@ -9975,7 +9984,7 @@ function renderCuadre(){
      mano de ella (él lo rinde a Contabilidad y su retiro se ve en «Todos»). */
   var enChofer=0; if(vendSel) cuadreEfectivo().fuera.forEach(function(f){ enChofer=r2(enChofer+f.monto); });
   var porRetirar=r2(efectivo-enChofer-retirado);
-  var chTxt=enChofer>0.01?(' · '+fmtBs(enChofer)+' lo tiene el chofer (ver en Todos)'):'';
+  var chTxt=enChofer>0.005?(' · '+fmtBs(enChofer)+' lo tiene el chofer (ver en Todos)'):'';
   var deQuien=vendSel?('de '+vendSel):'del equipo';
 
   box.innerHTML=
@@ -9983,33 +9992,33 @@ function renderCuadre(){
        (recargos>0?(' · 🚚 '+fmtBs(recargos)+' de recargos'):''))+
     mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'lo que se cobró en efectivo')+
     mc('var(--teal-dk)','Bancos y tarjeta',fmtBs(banco),'para conciliar con el extracto')+
-    (sinMet>0.01 ? mc('var(--amber)','⚠️ Sin método anotado',fmtBs(sinMet),'no se sabe si fue caja o banco — abrí la venta y anotá con qué pagó','#7c4b00') : '')+
+    (sinMet>0.005 ? mc('var(--amber)','⚠️ Sin método anotado',fmtBs(sinMet),'no se sabe si fue caja o banco — abrí la venta y anotá con qué pagó','#7c4b00') : '')+
     mc('#7c3aed','Efectivo retirado',fmtBs(retirado),
        rets.length ? (rets.length+' retiro'+(rets.length===1?'':'s')+' · 🧾 '+fmtBs(retirosPorTipo(rets,'Facturado'))+' facturado')
                    : 'todavía no se retiró nada')+
-    mc(Math.abs(porRetirar)<0.01?'var(--green)':(porRetirar>0?'var(--amber)':'var(--red)'),
-       porRetirar<-0.01?'Se retiró de más':'Efectivo por retirar',
-       Math.abs(porRetirar)<0.01?'✅ Nada':fmtBs(Math.abs(porRetirar)),
-       Math.abs(porRetirar)<0.01 ? ('se recogió todo el efectivo'+chTxt)
+    mc(Math.abs(porRetirar)<0.005?'var(--green)':(porRetirar>0?'var(--amber)':'var(--red)'),
+       porRetirar<-0.005?'Se retiró de más':'Efectivo por retirar',
+       Math.abs(porRetirar)<0.005?'✅ Nada':fmtBs(Math.abs(porRetirar)),
+       Math.abs(porRetirar)<0.005 ? ('se recogió todo el efectivo'+chTxt)
          : (porRetirar>0 ? ('sigue en la mano '+esc(deQuien)+' — hay que recogerlo'+chTxt)
                          : 'se retiró más de lo que se cobró en efectivo'))+
     mc(recargos>0?'#0d9488':'var(--muted)','🚚 Transporte cobrado',fmtBs(recargos),
        recargos>0?'flete que ya entró — va aparte de la venta':'no entró nada de flete en el período')+
-    mc(fletePend>0.01?'var(--red)':'var(--green)','🚚 Transporte por cobrar',
-       fletePend>0.01?fmtBs(fletePend):'✅ Nada',
-       fletePend>0.01 ? (fletesN+' entrega'+(fletesN===1?'':'s')+' — se cobra al entregar y hay que reportarlo')
+    mc(fletePend>0.005?'var(--red)':'var(--green)','🚚 Transporte por cobrar',
+       fletePend>0.005?fmtBs(fletePend):'✅ Nada',
+       fletePend>0.005 ? (fletesN+' entrega'+(fletesN===1?'':'s')+' — se cobra al entregar y hay que reportarlo')
                       : 'no queda flete sin cobrar')+
     /* 🛏️💚 Las dos marcas. Van juntas y con el % para que se lea de un vistazo cuánto
        aportó cada caja — y si no suman 100, es que hay plata de alguien sin marca. */
     (function(){
       var M=totalPorMarca(pagos), out='';
-      var pc=function(bs){ return total>0.01 ? (Math.round(bs/total*100)+'% de lo que entró') : 'sin movimientos'; };
+      var pc=function(bs){ return total>0.005 ? (Math.round(bs/total*100)+'% de lo que entró') : 'sin movimientos'; };
       MARCAS.forEach(function(g){
         var d=M[g.k];
         out+=mc(g.col, g.ico+' '+g.lbl, fmtBs(d.bs),
           d.nv ? (d.nv+' venta'+(d.nv===1?'':'s')+' · '+pc(d.bs)) : 'sin ventas en el período', g.txt);
       });
-      if(M.otros.bs>0.01) out+=mc('var(--amber)','⚠️ Sin marca',fmtBs(M.otros.bs),
+      if(M.otros.bs>0.005) out+=mc('var(--amber)','⚠️ Sin marca',fmtBs(M.otros.bs),
         M.otros.nv+' venta'+(M.otros.nv===1?'':'s')+' de vendedores que no están en ninguna marca');
       return out;
     })()+
@@ -10079,7 +10088,7 @@ function renderCuadre(){
   pe.innerHTML='<div class="cua-box" style="margin-bottom:0">'+
     '<div class="cua-t">⏳ Por cobrar — '+fmtBs(pendTotal)+
       ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">de lo vendido en '+esc(cuadrePeriodoTxt())+'</span></div>'+
-    (otroPeriodo>0.01
+    (otroPeriodo>0.005
       ? ('<div style="font-size:.76rem;color:var(--muted);margin:-4px 0 8px">💡 Fuera de este período queda '+fmtBs(otroPeriodo)+
          ' más por cobrar ('+(pendAll.length-pend.length)+' venta'+((pendAll.length-pend.length)===1?'':'s')+'). Elegí <b>Todo</b> para verlas.</div>')
       : '')+
@@ -10090,7 +10099,7 @@ function renderCuadre(){
           var col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
           return '<tr onclick="showContaModal(\''+x.p.id+'\')" style="cursor:pointer"><td><b>'+esc(x.p.cliente||'—')+'</b>'+
             (x.p.nota?('<br><span style="color:var(--muted);font-size:.9em">nota '+esc(x.p.nota)+'</span>'):'')+'</td>'+
-            '<td><span style="color:'+col+'">'+esc(fmtFechaCorta(x.desde))+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+            '<td><span style="color:'+col+'">'+esc(x.sinF ? 'sin fecha' : (fmtFechaCorta(x.desde)+' · '+deudaEdadTxt(x)))+'</span></td>'+
             '<td style="text-align:right"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
         }).join('')+'</tbody></table></div>'+
         (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'. '+
@@ -10105,7 +10114,7 @@ function renderCuadre(){
   RESUMEN_CUA = (al.length
       ? ('<b style="color:var(--red)">🔎 '+al.length+' por revisar</b>')
       : '✅ nada por revisar')
-    + (pendTotal>0.01 ? (' · '+fmtBs(pendTotal)+' por cobrar') : '');
+    + (pendTotal>0.005 ? (' · '+fmtBs(pendTotal)+' por cobrar') : '');
   pintarResumenCua(); acomodarFichas();
   av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar'+
     ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
@@ -10279,12 +10288,12 @@ function cuadreTexto(){
   }
   // ¿se recogió todo el efectivo? Es lo primero que preguntan al cerrar el día.
   var E=cuadreEfectivo();
-  var efe=E.filas.filter(function(o){ return o.cobrado>0.01 || o.ret>0.01; });
+  var efe=E.filas.filter(function(o){ return o.cobrado>0.005 || o.ret>0.005; });
   if(efe.length || E.fuera.length){
     L.push('', '💵 *Efectivo — cobrado vs. retirado:*');
     efe.forEach(function(o){
       L.push('• '+o.nombre+(o.chofer?' (chofer)':'')+': cobró '+fmtBs(o.cobrado)+' · se le retiró '+fmtBs(o.ret)+
-             (Math.abs(o.falta)<0.01 ? '  ✅' : (o.falta>0 ? ('  ⚠️ le quedan '+fmtBs(o.falta)) : ('  ⚠️ se retiró '+fmtBs(Math.abs(o.falta))+' de más'))));
+             (Math.abs(o.falta)<0.005 ? '  ✅' : (o.falta>0 ? ('  ⚠️ le quedan '+fmtBs(o.falta)) : ('  ⚠️ se retiró '+fmtBs(Math.abs(o.falta))+' de más'))));
     });
     E.fuera.forEach(function(f){ L.push('• 🚚 '+f.nombre+' (chofer) recibió '+fmtBs(f.monto)+' de estas ventas — ver en Todos'); });
   }
@@ -10859,7 +10868,7 @@ function renderCuadreRetiros(){
   filas.forEach(function(o){ tot.cobrado=r2(tot.cobrado+o.cobrado); tot.fac=r2(tot.fac+o.fac);
     tot.nofac=r2(tot.nofac+o.nofac); tot.ret=r2(tot.ret+o.ret); tot.falta=r2(tot.falta+o.falta); });
   var enMano=function(n){
-    if(Math.abs(n)<0.01) return '<span class="cua-dif-ok">✅ todo recogido</span>';
+    if(Math.abs(n)<0.005) return '<span class="cua-dif-ok">✅ todo recogido</span>';
     return n>0 ? '<span class="cua-dif-mal">'+fmtBs(n)+'</span>'
                : '<span class="cua-dif-mal">⚠️ se retiró '+fmtBs(Math.abs(n))+' de más</span>';
   };
@@ -11250,8 +11259,8 @@ function ctaGuardarEnvio(id){
   aplicarEnvios(p, arr);
   CTA_ENV_EDIT=false;
   renderCuadreSiActivo(); renderContaSiActiva();
-  toast(m>0 ? ('Flete por cobrar: '+fmtBs(antes)+' → '+fmtBs(m)+(cob>0.01?(' · los '+fmtBs(cob)+' cobrados no se tocaron'):''))
-            : 'Se sacó el recargo por cobrar'+(cob>0.01?(' — quedan los '+fmtBs(cob)+' ya cobrados'):''),'ok');
+  toast(m>0 ? ('Flete por cobrar: '+fmtBs(antes)+' → '+fmtBs(m)+(cob>0.005?(' · los '+fmtBs(cob)+' cobrados no se tocaron'):''))
+            : 'Se sacó el recargo por cobrar'+(cob>0.005?(' — quedan los '+fmtBs(cob)+' ya cobrados'):''),'ok');
   reabrirFicha(id);
 }
 function ctaEditarPago(id, i){
@@ -11360,7 +11369,7 @@ function ctaGuardarPago(id, i, igual){
     /* `p.acuenta` = TODO el adelanto (anticipo + segundo método, §4ej) — salvo que la venta se
        haya cargado «SÍ, pagado»: ahí queda en 0 a propósito (§4cb) y no se toca. Antes
        corregirle la fecha al anticipo de una venta pagada le inventaba un «A cuenta» (§4eu). */
-    if(!(p.pagado && !((Number(p.acuenta)||0)>0.01))) p.acuenta=r2(monto+mxM);
+    if(!(p.pagado && !((Number(p.acuenta)||0)>0.005))) p.acuenta=r2(monto+mxM);
     // aplicarCobros relee el anticipo del ledger, que ya quedó actualizado arriba.
     aplicarCobros(p, cobros, r2(ventaAntes-monto));
   }else{
@@ -11372,7 +11381,7 @@ function ctaGuardarPago(id, i, igual){
        el monto que se anota ES el total, igual que en «💵 Anotar el monto» (`ctaAnotarMonto`).
        Sin esto el objetivo quedaba congelado en 0 y la venta pasaba a saldo −1.500 con un
        «cobro de más» falso en la ficha y en el Cuadre (§4eu). */
-    var objetivo=((Number(c.monto)||0)>0.01) ? objetivoCobro(p) : r2(objetivoCobro(p)+monto);
+    var objetivo=((Number(c.monto)||0)>0.005) ? objetivoCobro(p) : r2(objetivoCobro(p)+monto);
     /* ⚠️ ¿ERA —o PASA A SER— EL 2° MÉTODO DEL ADELANTO (pago mixto, §4ej)? `p.acuenta` es TODO
        el adelanto (anticipo + ese renglón), y solo la rama del anticipo lo recalculaba: corregir
        el QR de un mixto de 500 a 700 bajaba bien el saldo (1.000 → 800) pero dejaba «A cuenta»
@@ -11384,7 +11393,7 @@ function ctaGuardarPago(id, i, igual){
        cual están, sin la fecha que `ctaCobrosConFecha` le rellena a un cobro viejo (con ella,
        un cobro sin fecha «pasaba a ser» del día del anticipo y se reclasificaba como adelanto).
        Si deja de serlo (le cambiaron el día o el recibo), sale del adelanto. */
-    var _antX=anticipoEscrito(p), _acuFija=(p.pagado && !((Number(p.acuenta)||0)>0.01));
+    var _antX=anticipoEscrito(p), _acuFija=(p.pagado && !((Number(p.acuenta)||0)>0.005));
     var _orig=cobrosDe(p), _mxAntes=mixtoEn(_antX, _orig, p);
     var _eraMixto=!!(_mxAntes && _orig.indexOf(_mxAntes)===idx);
     arr[idx].fecha=f; arr[idx].monto=monto; arr[idx].nota=nota;
@@ -11530,7 +11539,7 @@ function ctaBorrarPago(id, i){
     /* ¿Era el 2° método del adelanto (pago mixto, §4ej)? `p.acuenta` es TODO el adelanto (anticipo + ese renglón): al
        irse el renglón, baja al anticipo solo. Igual que al corregirlo (§4fz); la «SÍ, pagado» con «A cuenta» 0 no se toca. */
     var _antX=anticipoEscrito(p), _orig=cobrosDe(p), _mx=mixtoEn(_antX, _orig, p), _eraMixto=!!(_mx && _orig.indexOf(_mx)===idx);
-    var _acuFija=(p.pagado && !((Number(p.acuenta)||0)>0.01));
+    var _acuFija=(p.pagado && !((Number(p.acuenta)||0)>0.005));
     arr.splice(idx,1);
     if(_eraMixto && !_acuFija) p.acuenta=r2(Number(_antX.monto)||0);
     pr=aplicarCobros(p, arr, objetivo);
@@ -11736,7 +11745,7 @@ function showContaModal(id){
     CTA_PAGO=CTA_PAGO_POR_ID[String(id)] || {metodo:'Efectivo', banco:'', comps:[], recibio:''};
     CTA_TIPO=(CTA_PAGO_POR_ID[String(id)] && CTA_PAGO.tipo==='envio') ? 'envio' : 'pago';
     if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+
-      (CTA_TIPO==='envio' ? (' del 🚚 recargo por entrega, esperando que toques «'+(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo')+'».')
+      (CTA_TIPO==='envio' ? (' del 🚚 recargo por entrega, esperando que toques «'+(envioPorCobrar(p)>0.005?'Registrar el cobro del flete':'Anotar el recargo')+'».')
                           : ' esperando que toques «Registrar pago».'),'ok',6000);
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
     CTA_ENV_EDIT=false;             // ni el del flete
@@ -11764,14 +11773,14 @@ function showContaModal(id){
      ENTREGA sin preguntar: fuera de «Ya ingresó», del saldo y del total, y la venta seguía «sin
      monto». Ahora tiene el selector, arranca en «💵 Pago» y ahí dice que primero va el total. */
   var _sinM = sinMontoAnotado(p) && !noSeCobra(p);
-  var esEnv = CTA_TIPO==='envio' || (falta<=0.01 && !_sinM) || (CTA_TIPO!=='pago' && envioPendiente(p));
+  var esEnv = CTA_TIPO==='envio' || (falta<=0.005 && !_sinM) || (CTA_TIPO!=='pago' && envioPendiente(p));
   CTA_FORM_ENV = esEnv;             // 25/09: el botón hace lo que dice el bloque (ver ctaRegistrarPago)
   var _pv = CTA_PAGO_V || {};
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
-  var formPago = (falta>0.01 || !yaEnv || envioPendiente(p) || _sinM)
+  var formPago = (falta>0.005 || !yaEnv || envioPendiente(p) || _sinM)
     ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
-         ((falta>0.01 || _sinM)
+         ((falta>0.005 || _sinM)
            ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+tb('pago','💵 Pago de la venta')+tb('envio','🚚 Recargo por entrega')+'</div>')
            : '')+
          ((!esEnv && _sinM)
@@ -11783,12 +11792,12 @@ function showContaModal(id){
               '</div>')
            : (
          '<div class="lb" style="margin-bottom:8px">'+(esEnv
-             ? (envioPorCobrar(p)>0.01
+             ? (envioPorCobrar(p)>0.005
                  ? '🚚 Cobrar el recargo por entrega — pactado <b style="color:var(--red)">'+fmtBs(envioPorCobrar(p))+'</b> <span style="font-weight:400;color:var(--muted)">sin cobrar</span>'
                  : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
              : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
@@ -11800,7 +11809,7 @@ function showContaModal(id){
               compTiraHtml(CTA_PAGO.comps, 'ctaSacarCompIdx.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntar('+JSON.stringify(p.id)+')',
                 'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
             '</div>') : '')+
-         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'))+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.005?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'))+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -11820,7 +11829,7 @@ function showContaModal(id){
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
       row('Pagos', contaPagosHtml(p))+
       // 25/09: saldo 0 sin NADA anotado no es «PAGADO» (el aviso del Cuadre manda acá a completarla).
-      row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):(sinMontoAnotado(p)?badgeSinMonto():'<span class="badge b-green">PAGADO</span>'))+
+      row('Saldo', falta>0.005?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):(sinMontoAnotado(p)?badgeSinMonto():'<span class="badge b-green">PAGADO</span>'))+
       /* Siempre visible en Contabilidad: si no hubiera recargo, la fila igual da el botón
          para ponerlo — antes, olvidarse el flete al cargar el pedido no tenía arreglo. */
       row('🚚 Recargo por entrega', envioResumenHtml(p, true))+
@@ -11903,7 +11912,7 @@ function ctaEditHtml(p){
       '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
         '<input type="text" inputmode="decimal" autocomplete="off" id="cta-saldo" data-k="sal" data-def="'+_dSal+'" value="'+esc(_vSal)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
     '</div>'+
-    (pagos>0.01?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
+    (pagos>0.005?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
     '<div id="cta-tot-aviso" style="margin-top:9px;font-size:.83rem"></div>'+
     // ⚠️ Por esc(): con JSON.stringify las comillas dobles cortaban el atributo y el botón
     //    quedaba mudo (el mismo bug de §4ac).
@@ -11936,7 +11945,7 @@ function ctaRecalc(){
     : '';
   var a=document.getElementById('cta-tot-aviso'); if(!a) return;
   var txt='Total de la venta: <b>'+fmtBs(total)+'</b>';
-  if(suma>0 && !sin && Math.abs(suma-total)>0.01){
+  if(suma>0 && !sin && Math.abs(suma-total)>0.005){
     var d=r2(suma-total);
     txt+='<div style="margin-top:5px;color:var(--amber);font-weight:700">⚠️ Los precios suman '+fmtBs(suma)+' — hay '+fmtBs(Math.abs(d))+' de '+(d>0?'más':'menos')+' que el total. Puede ser un descuento; si no, revisá.</div>';
   } else if(suma>0 && !sin){
@@ -11972,8 +11981,8 @@ function ctaGuardarMontos(id){
   var _antAct=anticipoDe(p);
   var _montoAnt=r2(_antAct?(Number(_antAct.monto)||0):0);
   var _compsAnt=_antAct?compsArr(_antAct.comps!=null?_antAct.comps:_antAct.comp).length:0;
-  if(_montoAnt>0.01 && acu<_montoAnt-0.01){
-    var _pierde = acu<=0.01;
+  if(_montoAnt>0.005 && acu<_montoAnt-0.005){
+    var _pierde = acu<=0.005;
     if(!confirm('⚠️ '+(_pierde?'SE VA A BORRAR EL PAGO YA REGISTRADO':'SE VA A BAJAR EL PAGO YA REGISTRADO')+'\n\n'+
         'Hoy figura cobrado: '+fmtBs(_montoAnt)+
         (_compsAnt?('  ('+_compsAnt+(_compsAnt===1?' comprobante adjunto':' comprobantes adjuntos')+')'):'')+'\n'+
@@ -12026,7 +12035,7 @@ function aplicarMontos(p, acu, sal){
   var mx=mixtoDe(p), mxM=r2(mx?(Number(mx.monto)||0):0);
   /* Una venta cargada «SÍ, pagado» lleva p.acuenta en 0 a propósito (§4cb): si el adelanto
      no cambió, no se le inventa un «A cuenta». */
-  var _pagSinAcu = !!p.pagado && !((Number(p.acuenta)||0)>0.01);
+  var _pagSinAcu = !!p.pagado && !((Number(p.acuenta)||0)>0.005);
   /* ⚠️ Una venta «PAGADA sin monto» (§4fg) está pagada aunque no se sepa cuánto (25/09): cargarle
      solo el PRECIO de un ítem y guardar la desmarcaba (`yaCobrado` vale 0 apenas se relee la lista),
      el pago desaparecía de la ficha y al chofer le decía «sin monto, preguntá». */
@@ -12034,7 +12043,7 @@ function aplicarMontos(p, acu, sal){
   /* El ledger SOLO se reescribe si el adelanto cambió de verdad. Reescribirlo de gusto
      convertiría un pago viejo (formato suelto, sin fecha) en un renglón del ledger sin
      fecha — plata que después no aparece en los filtros por día ni por mes. */
-  if(Math.abs(acu-antesAcu)>0.01){
+  if(Math.abs(acu-antesAcu)>0.005){
     /* ⚠️ `cobrosReales`, no `cobrosDe` (§4fg, 25/09): en una venta «PAGADA sin monto» el pago de
        mentira se escribía como «Efectivo 0 %REC», y el adelanto nuevo nacía SIN método: el recibo
        quedaba colgado y el pago iba a «sin método anotado», fuera de la caja del Cuadre. Sin
@@ -12061,9 +12070,9 @@ function aplicarMontos(p, acu, sal){
      comprobante: los MISMOS Bs 500 contados dos veces (una como «A cuenta», otra como el
      cobro de QR que sigue en el historial), y el total de la venta inflado en 500. Sin
      anticipo no hay adelanto: el 2° método queda como lo que es, un cobro más. */
-  if(!(_pagSinAcu && Math.abs(acu-antesAcu)<=0.01)) p.acuenta = (acu>0.01) ? r2(acu+mxM) : 0;
+  if(!(_pagSinAcu && Math.abs(acu-antesAcu)<=0.005)) p.acuenta = (acu>0.005) ? r2(acu+mxM) : 0;
   p.saldo=sal;
-  p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0 || _pagadaSinMonto);
+  p.pagado = (sal<=0.005) && (acu>0 || yaCobrado>0 || _pagadaSinMonto);
   persistPedido(p);
 }
 /* Borrar una venta desde Contabilidad. Es para la venta CARGADA DOS VECES (el caso que
@@ -12078,12 +12087,12 @@ function ctaEliminarVenta(id){
      que estaba pagada. Tampoco decía si ya estaba cargada en el sistema contable. */
   var fleteCob=envioCobrado(p);
   var plata=r2((ant?(Number(ant.monto)||0):0)+totalCobrado(p)+fleteCob);
-  var pagSinMonto=!!(p.pagado && !((Number(p.cobradoBs)||0)>0.01) && cobrosDe(p).some(function(c){ return c.sinMonto; }));
+  var pagSinMonto=!!(p.pagado && !((Number(p.cobradoBs)||0)>0.005) && cobrosDe(p).some(function(c){ return c.sinMonto; }));
   var quien=(p.cliente||'esta venta')+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · '+ocEtiq(p.oc)):'');
   var txt='🗑 ELIMINAR ESTA VENTA\n\n'+quien+'\n'+
           'Total de la venta: '+fmtBs(ventaTotal(p))+'\n'+
           'Vendedor: '+(p.vendedor||'—')+'\n\n';
-  if(plata>0.01) txt+='⚠️ Tiene '+fmtBs(plata)+' en pagos anotados'+(fleteCob>0.01?(' (incluye '+fmtBs(fleteCob)+' de flete cobrado)'):'')+'. Se borran también.\n\n';
+  if(plata>0.005) txt+='⚠️ Tiene '+fmtBs(plata)+' en pagos anotados'+(fleteCob>0.005?(' (incluye '+fmtBs(fleteCob)+' de flete cobrado)'):'')+'. Se borran también.\n\n';
   if(pagSinMonto) txt+='⚠️ Está marcada PAGADA (sin el monto anotado), con su comprobante. Se borra también.\n\n';
   if(regEnSistema(p)) txt+='⚠️ Ya está CARGADA en el sistema contable: allá hay que anularla aparte.\n\n';
   if(p.entregado) txt+='⚠️ Este pedido figura como YA ENTREGADO.\n\n';
@@ -12091,9 +12100,9 @@ function ctaEliminarVenta(id){
   if(!confirm(txt)) return;
   /* Segunda vuelta solo cuando hay plata o ya se entregó: es lo que no se recupera y
      lo que más duele si el clic fue por error. */
-  if((plata>0.01 || pagSinMonto || regEnSistema(p) || p.entregado) &&
+  if((plata>0.005 || pagSinMonto || regEnSistema(p) || p.entregado) &&
      !confirm('Última confirmación.\n\nSe van a borrar '+
-              (plata>0.01?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?')) return;
+              (plata>0.005?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?')) return;
   closeModal();
   realDelete(id);
 }
@@ -12201,7 +12210,7 @@ function ctaRegistrarPago(id){
   if(_rep && !confirm('⚠️ Ya hay un pago IGUAL registrado en esta venta:\n\n'+
       contaMetodoTxt(_rep)+' · '+fmtBs(Number(_rep.monto)||0)+' · '+(_rep.fecha?fmtFecha(_rep.fecha):'sin fecha')+' · recibo '+limpiaNota(_rep.nota)+'\n\n'+
       '¿Anotarlo IGUAL otra vez? (si es el mismo pago, tocá Cancelar: si no, el saldo baja dos veces)')) return;
-  if(!_env && falta<=0.01){
+  if(!_env && falta<=0.005){
     if(!confirm('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
                 '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
                 'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.')) return;
@@ -12217,7 +12226,9 @@ function ctaRegistrarPago(id){
     var ae=enviosDe(p).filter(envioYaCobrado);
     linea.envio=true; ae.push(linea);
     var resto=r2(pactado-monto);
-    if(resto>0.01) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
+    /* (25/10, §4ml, auditoría Codex FIN-06) Con `>0.01` un resto de UN centavo se perdía: 1,01 pactado cobrado 0,50 + 0,50 quedaba en
+       1,00 pactado y 0 por cobrar. `resto` ya viene redondeado a centavos (`r2`). */
+    if(resto>0.009) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
     CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
     /* ⚠️ Y el selector vuelve a «Pago de la venta». `CTA_TIPO` solo se reseteaba al CAMBIAR
        de venta, así que el camino natural —anotar el flete, «volver a la venta», registrar
@@ -12232,7 +12243,7 @@ function ctaRegistrarPago(id){
     return;
   }
   // Con saldo 0 ya se preguntó arriba (§4fk): no se pregunta dos veces lo mismo.
-  if(falta>0.01 && monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
+  if(falta>0.005 && monto>falta+0.005 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
   CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
@@ -12265,7 +12276,7 @@ function pagoTexto(p, c){
      historial. Antes toda la plata que la vendedora anotaba al cargar la venta salía como
      "PAGO A CUENTA (ANTICIPO)" aunque cubriera la venta entera, y abajo decía "PAGADA por
      completo": el mensaje se contradecía solo. */
-  var faltaTot=contaFaltaCobrar(p), completo=faltaTot<=0.01;
+  var faltaTot=contaFaltaCobrar(p), completo=faltaTot<=0.005;
   var L=[esEnvio(c)?'🚚 *RECARGO POR ENTREGA COBRADO*'
         :(completo?'💰 *PAGO COMPLETO DE LA VENTA*':'💰 *PAGO A CUENTA*'),''];
   L.push('👤 Cliente: '+(p.cliente||'—'));
@@ -12338,7 +12349,7 @@ function showPagoWhatsapp(id, i){
         '</div>'+
         '<div style="font-size:.85rem;margin-top:4px">'+
           (esEnvio(c) ? '🚚 Es el flete: va aparte, no le baja el saldo a la venta'
-            : (falta>0.01 ? ('⏳ A esta venta le queda por cobrar <b style="color:var(--red)">'+fmtBs(falta)+'</b>')
+            : (falta>0.005 ? ('⏳ A esta venta le queda por cobrar <b style="color:var(--red)">'+fmtBs(falta)+'</b>')
                           : '✅ La venta quedó <b>PAGADA por completo</b>'))+
         '</div>'+
         '<div style="font-size:.76rem;color:var(--muted);margin-top:6px">No tenés que hacer nada más. Si querés, pasá el aviso al grupo 👇</div>'+
@@ -12645,9 +12656,9 @@ function mixtoEn(a, cobros, p){
      que CIERRA el «A cuenta» con el anticipo, como lo escribe el formulario. En una venta «SÍ, pagado» (A cuenta 0, §4cb)
      no hay con qué elegir: vale solo si es uno. */
   var acu=Number(p.acuenta)||0, aM=Number(a.monto)||0;
-  var cierran=cs.filter(function(c){ return Math.abs(acu-(aM+(Number(c.monto)||0)))<0.01; });
+  var cierran=cs.filter(function(c){ return Math.abs(acu-(aM+(Number(c.monto)||0)))<0.005; });
   if(cierran.length) return cierran.length===1 ? cierran[0] : null;
-  return (cs.length===1 && p.pagado && acu<0.01) ? cs[0] : null;
+  return (cs.length===1 && p.pagado && acu<0.005) ? cs[0] : null;
 }
 /* ¿Hay que frenar el guardado por falta de imagen?
    ⚠️ Los pedidos VIEJOS en efectivo no tienen ninguna (antes no se pedía) y son casi todos.
@@ -13346,12 +13357,12 @@ function submitPedido(){
         lineas=cobrados.slice();
         /* Lo cobrado no se BAJA desde acá (no se sabe de cuál de los renglones): si alguien puso
            menos, se le dice en vez de ignorarlo callado, y puede no guardar. */
-        if(monto<envioCobrado(prev)-0.01 &&
+        if(monto<envioCobrado(prev)-0.005 &&
            !confirm('🚚 El recargo por entrega ya tiene '+fmtBs(envioCobrado(prev))+' COBRADOS y pusiste '+fmtBs(monto)+'.\n\n'+
                     'Lo cobrado no se baja desde el formulario: si un cobro está mal, corregilo en Contabilidad → ✏️ Corregir ese pago.\n\n'+
                     '¿Guardar igual el resto del pedido (el flete queda en '+fmtBs(envioCobrado(prev))+')?')){ _cancelarEnvio=true; return; }
         var pend=r2(monto-envioCobrado(prev));
-        if(pend>0.01){
+        if(pend>0.005){
           var pl=pactados[0] || { metodo:'', banco:'', fecha:'', nota:'', recibio:'', comps:[] };
           pl.monto=pend; pl.envio=true; pl.anticipo=false;
           if(yaCob) _cobrarAhora(pl);                       // «ya lo cobré»: lo que faltaba entró ahora
@@ -15629,6 +15640,16 @@ function fxPasosEstado(){
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
   var lite=esVendedorLite(val('f-vendedor')), tipo=docTipoSel(), tienda=VENTA_TIENDA;
   var prods=[].some.call(document.querySelectorAll('#f-productos .prod-desc'), function(d){ return !!d.value.trim(); });
+  /* (25/10, §4ml, auditoría Codex OPS-03) Productos «listo» también con lo que Guardar pide de cada renglón: una cantidad entera de 1 o
+     más (`cantidadesMal`) y ningún renglón con código o precio pero sin producto. Con cantidad 0 decía «4 de 4 ¡listo para guardar!». */
+  try{
+    if(prods && cantidadesMal().length) prods=false;
+    if(prods && [].some.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+      if(c.getAttribute('data-de-pedido')) return false;
+      var d=c.querySelector('.prod-desc'), co=c.querySelector('.prod-codigo'), pr=c.querySelector('.prod-precio');
+      return d && !String(d.value||'').trim() && ((co && String(co.value||'').trim()) || (pr && String(pr.value||'').trim()));
+    })) prods=false;
+  }catch(e){}
   var pag=segVal('f-pagado');
   /* ⚠️ (25/10, auditoría N-UI3) Lo mismo que exige `submitPedido`, ni más ni menos: sin la nota decía «4 de 4 ¡listo para guardar!»
      y Guardar la pedía. Celular: todo menos RPT (también la ATC); la zona, también en una RPT; ROHO, su N° de OC; la ATC, lo de `atcFaltan`. */
@@ -16510,8 +16531,10 @@ function precIdx(){
 function precioTipico(codigo){
   var a=precIdx()[String(codigo||'').trim().toUpperCase()];
   if(!a || a.length<3) return 0;               // con menos de 3 ventas no hay referencia
-  var b=a.slice().sort(function(x,y){return x-y;});
-  return b[Math.floor(b.length/2)];
+  var b=a.slice().sort(function(x,y){return x-y;}), m=Math.floor(b.length/2);
+  /* (25/10, §4ml, auditoría Codex OPS-22) La mediana de siempre: con un número par de ventas, el promedio de las dos del medio
+     (100, 200, 300, 400 → 250; antes daba 300). */
+  return b.length%2 ? b[m] : r2((b[m-1]+b[m])/2);
 }
 /* ⚠️ KOMMO ESCRIBE TODO JUNTO EN EL NOMBRE (§4cc).
    El panel guarda producto y medida por separado («TITANIO LATEX» + «180x190»), pero en
@@ -16663,7 +16686,7 @@ function revisarBorrador(b){
 
   // ── Lo que el panel ya sabe de ese cliente ───────────────────────────────
   var deuda=saldoPendienteCliente(b.celular);
-  if(deuda>0.01)
+  if(deuda>0.005)
     out.push({n:'alto', t:'💵 Este cliente debe <b>'+fmtBs(deuda)+'</b> de otra venta. Avisale al chofer que cobre.'});
   var atc=atcAbiertaCliente(b.celular);
   if(atc)
@@ -21853,12 +21876,12 @@ function renderChofer(){
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
   var recFabHtml=choRechazosHtml(c, todos)+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo (el de ESTE chofer)
   var ent=0, porCobrar=0, cobrado=0, fleteF=0;
-  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
+  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=saldoACobrar(p); });   // §4fs
   list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
     mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
-    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar'+(fleteF>0.01?(' · + '+fmtBs(fleteF)+' de flete'):''))+
+    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar'+(fleteF>0.005?(' · + '+fmtBs(fleteF)+' de flete'):''))+
     mc('var(--teal-dk)','Cobrado',fmtBs(cobrado),'ya cobrado');
   if(!list.length){
     cont.innerHTML=recFabHtml; empty.style.display='block';
@@ -21944,7 +21967,7 @@ function agruparPorCamion(list){
     g.list.push(p);
     (p.productos||[]).forEach(function(x){ g.unid+=Number(x.cant)||0; });
     g.fotos+=fotosEntregaDe(p).length;              // 📷 (§4lh) sin las fotos del producto de una ATC
-    var sal=Number(p.saldo)||0; if(sal>0.01) g.porCobrar+=sal;
+    var sal=saldoACobrar(p); if(sal>0.005) g.porCobrar+=sal;
     if(!noSeCobra(p)) g.flete=r2(g.flete+envioPorCobrar(p));   // (26/09) el flete pactado, aparte de la venta (§4ai)
     cobrosVisibles(p).forEach(function(cb){
       g.cobrado+=Number(cb.monto)||0;
@@ -21980,10 +22003,10 @@ function entregasDatos(fecha){
       tot.cobrado+=Number(cb.monto)||0;
       tot.porMetodo[cb.metodo]=(tot.porMetodo[cb.metodo]||0)+(Number(cb.monto)||0);
     });
-    var sal=Number(p.saldo)||0;
-    if(sal>0.01){ tot.porCobrarSalio+=sal; tot.nSinCobrar++; }
+    var sal=saldoACobrar(p);
+    if(sal>0.005){ tot.porCobrarSalio+=sal; tot.nSinCobrar++; }
   });
-  faltan.forEach(function(p){ var sal=Number(p.saldo)||0; if(sal>0.01) tot.porCobrarFalta+=sal; });
+  faltan.forEach(function(p){ var sal=saldoACobrar(p); if(sal>0.005) tot.porCobrarFalta+=sal; });
   tot.porCobrarTotal=r2(tot.porCobrarSalio+tot.porCobrarFalta);
   tot.porCobrarSalio=r2(tot.porCobrarSalio); tot.porCobrarFalta=r2(tot.porCobrarFalta);
   tot.cobrado=r2(tot.cobrado);
@@ -21998,11 +22021,11 @@ function entregaCardHtml(p, dn, pendiente){
     return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>';
   }).join('<br>');
   var cob=cobrosVisibles(p);
-  var saldo=Number(p.saldo)||0;
+  var saldo=saldoACobrar(p);
   var fleteTxt=cobroRutaTxt(p).f;   // (26/09) el flete pactado, con las palabras de la hoja de ruta y la tarjeta del chofer
   // Ojo: "SIN COBRAR" en rojo solo si YA SE ENTREGÓ. Si todavía no salió, es un saldo normal.
   var cobTxt = cob.length ? (cobrosResumen(p)+excesoBadge(p))
-    : (saldo>0.01 ? (pendiente ? ('<span class="badge b-amber">Por cobrar · '+fmtBs(saldo)+'</span>')
+    : (saldo>0.005 ? (pendiente ? ('<span class="badge b-amber">Por cobrar · '+fmtBs(saldo)+'</span>')
                                : ('<span class="badge b-red">SIN COBRAR · '+fmtBs(saldo)+'</span>'))
        : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT: no es «sin monto»
        : sinMontoAnotado(p) ? badgeSinMonto()
@@ -22034,13 +22057,13 @@ function renderEntregas(){
     mc('var(--green)','Entregados',t.n, t.total?('de '+t.total+' del día'):'no hay pedidos ese día')+
     mc('var(--teal-dk)','Unidades',t.unid,'productos entregados')+
     mc('var(--teal)','Cobrado',fmtBs(t.cobrado), metodosHtml(t.porMetodo)?'':'sin cobros anotados')+
-    mc((t.porCobrarTotal||t.flete>0.01)?'var(--red)':'var(--gray)','Por cobrar',fmtBs(t.porCobrarTotal),
+    mc((t.porCobrarTotal||t.flete>0.005)?'var(--red)':'var(--gray)','Por cobrar',fmtBs(t.porCobrarTotal),
        (t.porCobrarTotal
          ? ((t.porCobrarSalio?(fmtBs(t.porCobrarSalio)+' ya entregado'):'')+
             (t.porCobrarSalio&&t.porCobrarFalta?' · ':'')+
             (t.porCobrarFalta?(fmtBs(t.porCobrarFalta)+' sin entregar'):''))
-         : (t.flete>0.01?'nada de la venta':'no queda nada por cobrar'))+
-       (t.flete>0.01?(' · + '+fmtBs(t.flete)+' de flete'):''))+   // (26/09) el flete, aparte (como la hoja de ruta)
+         : (t.flete>0.005?'nada de la venta':'no queda nada por cobrar'))+
+       (t.flete>0.005?(' · + '+fmtBs(t.flete)+' de flete'):''))+   // (26/09) el flete, aparte (como la hoja de ruta)
   '</div>'+
   (t.total?admAvanceHtml(t.n, t.total, '🚚 Salieron <b>'+t.n+'</b> de <b>'+t.total+'</b> del día · ', '#22A06B'):'')+   // ✨ (§4kc)
   (metodosHtml(t.porMetodo)?('<div style="margin:0 0 12px">'+metodosHtml(t.porMetodo)+'</div>'):'')+
@@ -22075,7 +22098,7 @@ function renderEntregas(){
         return '<div class="ent-sub'+(sin?' sin':'')+'">'+
           '<div class="ent-sub-h'+(sin?' sin':'')+'">'+(sin?'⚠️ Sin camión asignado':('🚛 '+esc(k)))+
             '<span style="margin-left:auto;font-weight:700">'+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+' · '+g.unid+' u.'+
-            (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.01?(' · + '+fmtBs(g.flete)+' de flete'):'')+'</span></div>'+
+            (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.005?(' · + '+fmtBs(g.flete)+' de flete'):'')+'</span></div>'+
           g.list.map(function(p){ return entregaCardHtml(p, dn[p.id], true); }).join('')+
         '</div>';
       }).join('')+
@@ -22090,10 +22113,10 @@ function entregasTexto(){
   var L=['🚚 ENTREGAS '+fmtFecha(f), t.n+' de '+t.total+' entregados · '+t.unid+' unidades · cobrado '+fmtBs(t.cobrado)];
   Object.keys(t.porMetodo).forEach(function(m){ L.push('   '+m+': '+fmtBs(t.porMetodo[m])); });
   /* (26/09) El flete pactado sin cobrar, aparte y con las palabras de la hoja de ruta: «+ Bs X de flete». */
-  var fleteDe=function(p){ var f=noSeCobra(p)?0:envioPorCobrar(p); return f>0.01?('  🚚 + '+fmtBs(f)+' de flete'):''; };
-  if(t.porCobrarTotal || t.flete>0.01) L.push('Por cobrar: '+fmtBs(t.porCobrarTotal)+
+  var fleteDe=function(p){ var f=noSeCobra(p)?0:envioPorCobrar(p); return f>0.005?('  🚚 + '+fmtBs(f)+' de flete'):''; };
+  if(t.porCobrarTotal || t.flete>0.005) L.push('Por cobrar: '+fmtBs(t.porCobrarTotal)+
     (t.porCobrarSalio?('  (⚠️ '+fmtBs(t.porCobrarSalio)+' ya entregado sin cobrar)'):'')+
-    (t.flete>0.01?(' · + '+fmtBs(t.flete)+' de flete'):''));
+    (t.flete>0.005?(' · + '+fmtBs(t.flete)+' de flete'):''));
   d.orden.forEach(function(k){
     var g=d.grupos[k];
     L.push('', '🚛 '+k+'  ('+g.list.length+(g.list.length===1?' entrega':' entregas')+' · '+fmtBs(g.cobrado)+')');
@@ -22101,7 +22124,7 @@ function entregasTexto(){
       var cob=cobrosVisibles(p);
       L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.oc?(ocEtiq(p.oc)+' · '):'')+(p.cliente||'')+
         (cob.length?('  → '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')):
-          ((Number(p.saldo)||0)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+fleteDe(p)+
+          (saldoACobrar(p)>0.005?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+fleteDe(p)+
         (fotosEntregaDe(p).length?'  📷':''));
     });
   });
@@ -22110,9 +22133,9 @@ function entregasTexto(){
     d.pend.orden.forEach(function(k){
       var g=d.pend.grupos[k];
       L.push('  '+(k===SIN_CAMION?'⚠️ Sin camión asignado':('🚛 '+k))+'  ('+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+
-        (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.01?(' · + '+fmtBs(g.flete)+' de flete'):'')+')');
+        (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.005?(' · + '+fmtBs(g.flete)+' de flete'):'')+')');
       g.list.forEach(function(p){ L.push('     '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')+
-        (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')+fleteDe(p)); });
+        ((saldoACobrar(p)>0.005)?('  → cobrar '+fmtBs(p.saldo)):'')+fleteDe(p)); });
     });
   }
   return L.join('\n');
@@ -22407,12 +22430,12 @@ function cobroChoferHtml(p){
      pagada con flete salía «✅ Ya pagado — no tenés que cobrar». Va aparte de la venta (no le
      toca el saldo) y no se anota con estos botones: lo registra la vendedora con el comprobante. */
   var fleteF=noSeCobra(p) ? 0 : envioPorCobrar(p);
-  var flete=fleteF>0.01
+  var flete=fleteF>0.005
     ? '<div class="cho-row" style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:8px;padding:7px 10px;color:#8a1c24">🚚 <b>Cobrar también el flete: '+fmtBs(fleteF)+'</b> — aparte de la venta. No va con los botones de cobro: avisale a la vendedora, que lo registra con el comprobante.</div>'
     : '';
   // NADA QUE COBRAR: o el cliente ya pagó en la tienda, o el pedido no tiene saldo.
   // Igual se deja registrar un cobro a mano (pasa con el flete, o si el cliente suma algo).
-  if(objetivo<=0.01 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
+  if(objetivo<=0.005 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
     /* ⚠️ "Sin saldo" en gris se lee como "no cobres nada", y para la venta a la que
        NADIE le anotó el monto eso es plata que sale por la puerta y no vuelve. Si no
        está marcada pagada y no hay ningún monto, se lo dice en ámbar: que pregunte
@@ -22424,7 +22447,7 @@ function cobroChoferHtml(p){
       ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>'+flete;
   }
   var cab='<div class="cho-row"><span class="k">Cobrar</span> '+
-    (falta<=0.01
+    (falta<=0.005
       ? '<span class="badge b-green">COBRADO ✓ '+fmtBs(cobrado)+'</span>'
       : '<b style="color:var(--red);font-size:1.15rem">'+fmtBs(falta)+'</b>'+
         /* «ya entraron», no «ya cobraste» (§4fy): ahí también cuentan los pagos que registró
@@ -22438,7 +22461,7 @@ function cobroChoferHtml(p){
           ? '<button title="Quitar este cobro" onclick="choQuitarCobro(\''+p.id+'\','+i+')">✕</button>'
           : ' <span title="Lo registró Contabilidad o la tienda, con recibo" style="font-size:.72rem;color:var(--muted)">🧾 registrado</span>')+'</span>';
     }).join('')+'</div>'):'';
-  var btns=(!noSeCobra(p) && (falta>0.01 || CHO_COBRO_ABIERTO[p.id]))
+  var btns=(!noSeCobra(p) && (falta>0.005 || CHO_COBRO_ABIERTO[p.id]))
     ? ('<div class="cho-cobrar">'+METODOS.map(function(m){
         return '<button class="cho-pay '+m.toLowerCase()+'" onclick="choCobrarMetodo(\''+p.id+'\',\''+m+'\')">'+metodoIcono(m)+' '+m+'</button>';
       }).join('')+'</div>')
@@ -22458,7 +22481,7 @@ function choCobrarMetodo(id, metodo){
     'El pedido dice cobrar: '+fmtBs(objetivo)+'\n'+
     (cobrado>0?('Ya entraron: '+fmtBs(cobrado)+'\n'):'')+
     'Falta: '+fmtBs(falta)+'\n'+
-    (fleteF>0.01?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.\n'):'')+
+    (fleteF>0.005?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.\n'):'')+
     '\nEscribí el monto:', falta>0?String(r2(falta)):'');   // r2 (26/09): lo que propone el panel pasa por `montoError`
   if(txt==null) return;
   // (26/09, revisión de Codex) el texto ENTERO: «-1500» y «−1500» se anotaban como un cobro de 1.500, «1e3» de 13.
@@ -22466,11 +22489,11 @@ function choCobrarMetodo(id, metodo){
   if(_err){ toast(montoAviso('Cobro en '+metodo, txt, _err),'err',8000); return; }
   var monto=parseMonto(txt);
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
-  if(monto>falta+0.01){
+  if(monto>falta+0.005){
     if(!confirm('⚠️ Ojo, te estás pasando.\n\n'+
       'El pedido dice cobrar '+fmtBs(objetivo)+'.\n'+
       'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
-      (fleteF>0.01?('🚚 Si lo de más es el FLETE ('+fmtBs(fleteF)+'), no lo anotes acá: lo registra la vendedora con el comprobante. Tocá Cancelar y anotá solo lo de la venta.\n\n'):'')+
+      (fleteF>0.005?('🚚 Si lo de más es el FLETE ('+fmtBs(fleteF)+'), no lo anotes acá: lo registra la vendedora con el comprobante. Tocá Cancelar y anotá solo lo de la venta.\n\n'):'')+
       '¿Lo anoto igual?')) return;
   }
   /* ⚠️ `cobrosDe`, NO `cobrosVisibles` (§4fg): si la venta venía «PAGADA sin monto», el pago
@@ -22878,11 +22901,11 @@ function misCardHtml(p, n, todos, verNota){
      con los IDs de las imágenes («PAGADO · Efectivo %1AbC…», «~QR BISA 2000 @… #939 %…»), y la venta
      SIN MONTO ANOTADO y las ATC/RPT decían «Sin saldo», que se lee como «no hay nada que cobrar». */
   var cobro = cob.length
-    ? ((falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">falta · </span>')
+    ? ((falta>0.005 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">falta · </span>')
                    : '<span class="badge b-green">PAGADO</span> ')+cobrosResumen(p)+excesoBadge(p))
     : (p.pagado ? ('<span class="badge b-green">PAGADO'+(_res?(' · '+_res):'')+'</span>')
       : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'
-      : (falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
+      : (falta>0.005 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
                     : sinMontoAnotado(p) ? badgeSinMonto() : '<span class="badge b-gray">Sin saldo</span>'));
   var _est=misEstadoCard(p, falta);   // 🧾 (§4ip) el borde dice cómo está: va bien / debe plata / falta stock / entregado
   return '<div class="cho-card mis-c mis-est-'+_est+(p.entregado?' hecho':'')+' '+docCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
@@ -22924,7 +22947,7 @@ function misCardHtml(p, n, todos, verNota){
 function misEstadoCard(p, falta){
   if(p.entregado) return 'ok';
   if((p.productos||[]).some(function(x){ return x && x.chk==='no'; })) return 'mal';
-  if(!noSeCobra(p) && (falta==null?(Number(p.saldo)||0):falta)>0.01 && !p.pagado) return 'debe';
+  if(!noSeCobra(p) && (falta==null?(Number(p.saldo)||0):falta)>0.005 && !p.pagado) return 'debe';
   return 'va';
 }
 /* El chat de WhatsApp con el cliente: 8 dígitos que empiezan con 6 o 7 son un celular de Bolivia (+591). */
@@ -23244,7 +23267,7 @@ function renderParte(){
       '<div class="metrics pt-met" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">'+
         card('#0f766e','Entregados',d.ent+' / '+d.nHoy, d.nHoy?Math.round(d.ent/d.nHoy*100)+'% del día':'sin pedidos')+
         card('#16a34a','Cobrado hoy',fmtBs(d.cob),'de las entregas')+
-        card('#dc2626','Por cobrar',fmtBs(d.pend),d.pendN+' pedido'+(d.pendN===1?'':'s')+(d.flete>0.01?(' · + '+fmtBs(d.flete)+' de flete'):''))+   // (26/09) el flete, aparte
+        card('#dc2626','Por cobrar',fmtBs(d.pend),d.pendN+' pedido'+(d.pendN===1?'':'s')+(d.flete>0.005?(' · + '+fmtBs(d.flete)+' de flete'):''))+   // (26/09) el flete, aparte
         card('#b45309','Con faltante',d.faltHoy,'productos sin stock')+
       '</div>'+
       (d.sinChof?('<div style="margin-top:10px;color:#c47f00;font-weight:700;font-size:.88rem">⚠️ '+d.sinChof+' pedido'+(d.sinChof===1?'':'s')+' de hoy sin vehículo asignado</div>'):'')+
@@ -23264,7 +23287,7 @@ function parteText(){
   var L=['📋 *PARTE DEL DÍA* — '+fmtFecha(d.hoy)+' · '+hhmmBolivia()+(esCierre()?' (cierre)':''),'',
     '📦 Entregados: *'+d.ent+' de '+d.nHoy+'*',
     '💰 Cobrado hoy: *'+fmtBs(d.cob)+'*',
-    '⏳ Por cobrar: *'+fmtBs(d.pend)+'* ('+d.pendN+' pedido'+(d.pendN===1?'':'s')+')'+(d.flete>0.01?(' · + '+fmtBs(d.flete)+' de flete'):'')];   // (26/09) el flete, aparte
+    '⏳ Por cobrar: *'+fmtBs(d.pend)+'* ('+d.pendN+' pedido'+(d.pendN===1?'':'s')+')'+(d.flete>0.005?(' · + '+fmtBs(d.flete)+' de flete'):'')];   // (26/09) el flete, aparte
   if(d.faltHoy) L.push('⛔ Con faltante de stock: *'+d.faltHoy+'*');
   if(d.sinChof) L.push('⚠️ Sin vehículo asignado: *'+d.sinChof+'*');
   L.push('');
@@ -23328,15 +23351,15 @@ function envioPedido(p, n, modo){
   L.push('    📍 '+(String(p.direccion||'').trim()||'—')+(p.zona?('  ('+p.zona+')'):''));
   if(modo==='hoy'){
     var veh=vehiculoDe(p), ch=String(p.chofer||'').trim();
-    var cob=cobrosVisibles(p), falta=Number(p.saldo)||0;
-    if(cob.length) L.push('    💰 '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')+(falta>0.01?('  · falta '+fmtBs(falta)):''));
-    else if(falta>0.01) L.push('    💰 '+(p.entregado?'SIN COBRAR ':'A cobrar ')+fmtBs(falta));
+    var cob=cobrosVisibles(p), falta=saldoACobrar(p);
+    if(cob.length) L.push('    💰 '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')+(falta>0.005?('  · falta '+fmtBs(falta)):''));
+    else if(falta>0.005) L.push('    💰 '+(p.entregado?'SIN COBRAR ':'A cobrar ')+fmtBs(falta));
   }else{
     // El camión va acá porque en "mañana" el grupo es el turno, no el vehículo.
     var v2=vehiculoDe(p), c2=String(p.chofer||'').trim();
     if(v2||c2) L.push('    🚛 '+[v2,c2].filter(Boolean).join(' · '));
     if(!p.maps) L.push('    ⚠️ FALTA UBICACIÓN');
-    if((Number(p.saldo)||0)>0.01) L.push('    💰 Cobrar '+fmtBs(p.saldo));
+    if(saldoACobrar(p)>0.005) L.push('    💰 Cobrar '+fmtBs(p.saldo));
   }
   if(p.observaciones) L.push('    📝 '+String(p.observaciones).replace(/\s*\n\s*/g,' '));
   return L;
@@ -23395,8 +23418,8 @@ function envioDatos(modo){
     if(!p.maps) t.sinGps++;
     if(!p.verificado) t.noVerif++;
     if(!vehiculoDe(p) && !String(p.chofer||'').trim()) t.sinCamion++;
-    var sal=Number(p.saldo)||0;
-    if(sal>0.01){ t.porCobrar+=sal; if(p.entregado) t.salioSinCobrar+=sal; }
+    var sal=saldoACobrar(p);
+    if(sal>0.005){ t.porCobrar+=sal; if(p.entregado) t.salioSinCobrar+=sal; }
     cobrosVisibles(p).forEach(function(c){
       var m=Number(c.monto)||0; t.cobrado+=m; t.porMetodo[c.metodo]=(t.porMetodo[c.metodo]||0)+m;
     });
@@ -23413,9 +23436,9 @@ function envioTexto(modo){
     L.push('📦 Entregados: *'+t.ent+' de '+t.n+'*  ·  '+t.unid+' unidades');
     L.push('💰 Cobrado: *'+fmtBs(t.cobrado)+'*'+(Object.keys(t.porMetodo).length
       ? ('  ('+Object.keys(t.porMetodo).sort().map(function(m){ return m+' '+fmtBs(t.porMetodo[m]); }).join(' · ')+')') : ''));
-    if(t.porCobrar>0.01){
+    if(t.porCobrar>0.005){
       L.push('⏳ Quedó por cobrar: *'+fmtBs(t.porCobrar)+'*');
-      if(t.salioSinCobrar>0.01) L.push('⚠️ *'+fmtBs(t.salioSinCobrar)+' se entregó SIN COBRAR*');
+      if(t.salioSinCobrar>0.005) L.push('⚠️ *'+fmtBs(t.salioSinCobrar)+' se entregó SIN COBRAR*');
     }
   }else{
     L.push('📦 *PEDIDOS DE MAÑANA*'+(d.parte?(' · '+(d.parte==='AM'?'🌅 SOLO TURNO AM':'🌆 SOLO TURNO PM')):'')+' · '+dia);
@@ -23497,11 +23520,11 @@ function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(o
 function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
 function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
-  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=totalCobrado(p); if(!p.pagado) pend+=Number(p.saldo)||0; });   // §4fs
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=totalCobrado(p); if(!p.pagado) pend+=saldoACobrar(p); });   // §4fs
   document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
-  var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
+  var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=saldoACobrar(p); });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
-  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=totalCobrado(p); if(!p.pagado) byC[c].pend+=Number(p.saldo)||0; });   // §4fs
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=totalCobrado(p); if(!p.pagado) byC[c].pend+=saldoACobrar(p); });   // §4fs
   var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   document.getElementById('reporte-body').innerHTML=
     '<div class="metrics" style="margin-bottom:16px">'+
@@ -23937,10 +23960,23 @@ function buscarData(){
   var desde=String((document.getElementById('bus-desde')||{}).value||'');
   var hasta=String((document.getElementById('bus-hasta')||{}).value||'');
   if(!vend && !terms.length) return { pedir:true, filas:[], porVend:[] };
-  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={}, fuera={atc:0, rpt:0};
+  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={}, fuera={atc:0, rpt:0, int:0};
+  /* (25/10, §4ml, auditoría Codex FIN-19) Los pedidos INTERNOS (`CONTA_INTERNOS`: FABRICA, MORENO, ALBA…) mueven mercadería, no la venden:
+     sumaban 999 a «TITANIO» como una venta más. Quedan afuera y se dicen abajo, como las ATC y las RPT. Si se elige a propósito uno de
+     ellos en «Vendedor», se muestra (es lo que se pidió ver). */
+  var vendInterno=!!(vend && cliEsInterno(vend));
   STATE.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    if(!vendInterno && cliEsInterno(p.vendedor)){
+      var _n=0; (p.productos||[]).forEach(function(x){
+        var nom=String((x&&x.desc)||'')+' '+String((x&&x.medida)||'')+' '+String((x&&x.codigo)||'');
+        if(terms.length && !terms.some(function(t){ return busCoincide(nom, t); })) return;
+        _n+=Number(x.cant)||0;
+      });
+      if(_n){ var _fi=fechaSalida(p); if(!(desde && (!_fi || _fi<desde)) && !(hasta && (!_fi || _fi>hasta))) fuera.int+=_n; }
+      return;
+    }
     /* ⚠️ ESTA PANTALLA SE LLAMA «QUIÉN VENDIÓ QUÉ» (§4dl). Una 🎧 ATC es un servicio —el
        colchón vuelve, no se vende— y una 🏪 RPT es mercadería que cambió de almacén: las dos
        sumaban unidades como si fueran ventas, e inflaban el cuadro del vendedor. Se cuentan
@@ -24004,7 +24040,8 @@ function busFueraTxt(d){
   var f=(d&&d.fuera)||{}, t=[];
   if(f.rpt) t.push('<b>'+f.rpt+'</b> unidad'+(f.rpt===1?'':'es')+' en 🏪 reposiciones de tienda');
   if(f.atc) t.push('<b>'+f.atc+'</b> unidad'+(f.atc===1?'':'es')+' en 🎧 ATC');
-  return t.length ? (t.join(' y ')+' — no son ventas, no entran en el cuadro') : '';
+  if(f.int) t.push('<b>'+f.int+'</b> unidad'+(f.int===1?'':'es')+' en 🏭 pedidos internos (fábrica, Moreno…)');
+  return t.length ? (t.slice(0,-1).join(', ')+(t.length>1?' y ':'')+t[t.length-1]+' — no son ventas, no entran en el cuadro') : '';
 }
 function renderBuscar(){
   var d=buscarData(); BUSCA=d;
@@ -24358,7 +24395,7 @@ function envioCobrado(p){
 }
 /* Lo que falta cobrar de flete: se cobra en la puerta, al entregar. */
 function envioPorCobrar(p){ return r2(envioTotal(p)-envioCobrado(p)); }
-function envioPendiente(p){ return envioPorCobrar(p)>0.01; }
+function envioPendiente(p){ return envioPorCobrar(p)>0.005; }
 function cobrosDe(p){
   var todo=parseCobros(p.metodoPago);
   var a=todo.filter(function(c){ return !c.anticipo && !esEnvio(c); });
@@ -24452,7 +24489,11 @@ function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.
    Se calcula así para que siga siendo el mismo número a medida que entran los pagos. */
 function objetivoCobro(p){ return r2((Number(p.saldo)||0) + totalCobrado(p)); }
 /* Cuánto cobraron de más respecto de lo que puso el vendedor (0 si está bien). */
-function excesoCobro(p){ var e=r2(totalCobrado(p)-objetivoCobro(p)); return e>0.01?e:0; }
+/* 🪙 (25/10, §4mm, auditoría Codex FIN-03/22; dueño: «Sí, hacelo exacto») EL CENTAVO CUENTA. En todo el panel la plata se compara contra
+   medio centavo (0.005), no contra uno (0.01): los montos ya vienen redondeados a centavos (`r2`), así que 0,01 de saldo es una deuda y 0,01
+   cobrado de más es un exceso. Antes 100,01 pagado con 100 quedaba «pagada» con 0,01 de saldo escondido, y la alerta de lo entregado sin
+   cobrar sumaba 0,02 en vez de 0,01 + 0,02. Con la planilla del 24/10 no cambiaba ninguna venta (0 de 987 a un centavo). */
+function excesoCobro(p){ var e=r2(totalCobrado(p)-objetivoCobro(p)); return e>0.005?e:0; }
 function excesoBadge(p){ var e=excesoCobro(p); return e?(' <span class="badge b-red">⚠️ '+fmtBs(e)+' de más</span>'):''; }
 function cobrosResumen(p){
   var a=cobrosDe(p);
@@ -24528,7 +24569,7 @@ function aplicarCobros(p, arr, objetivoForzado, opts){
      decía «A CUENTA Bs 1.500» y el formulario ya no la dejaba guardar («poné el saldo por
      cobrar»). El «deshacer» del chofer no cambia: ahí el objetivo es lo que había que cobrar. */
   var antM=ant?(Number(ant.monto)||0):0;
-  p.pagado = total>=objetivo-0.01 && (total>0 || (antM>0 && objetivo<=0.01));
+  p.pagado = total>=objetivo-0.005 && (total>0 || (antM>0 && objetivo<=0.005));
   return persistPedido(p);          // §4fp: quien llama necesita saber si el guardado entró
 }
 /* 💰 MARCAR COBRADO **SUMA** UN PAGO, NO REEMPLAZA EL HISTORIAL (§4fd).
@@ -24643,7 +24684,7 @@ function plataLineaWa(p){
   var pagos=contaPagos(p).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0; });
   var met=pagos.map(function(c){ return contaMetodoTxt(c)+' '+fmtBs(c.monto); }).join('  +  ');
   var falta=contaFaltaCobrar(p);
-  if(falta<=0.01) return '💰 PAGADO'+(met?('  —  '+met):'');
+  if(falta<=0.005) return '💰 PAGADO'+(met?('  —  '+met):'');
   return '💰 POR COBRAR: '+fmtBs(falta)+(met?('  ·  ya pagó '+met):'');
 }
 /* 🏪 El mensaje de una reposición no habla de cliente, ni de cobro, ni de garantía: dice a
@@ -35704,6 +35745,9 @@ function bancosParaCobrar(p){
    ruta y su WhatsApp, «Entregado», la ficha) y «➕ Cobré algo igual» anotaba plata que
    Contabilidad no ve nunca. */
 function noSeCobra(p){ return !!p && (esATC(p.oc) || esRPT(p.oc)); }
+/* (25/10, §4ml, auditoría Codex) Lo que el camión tiene que cobrar de la VENTA: el saldo, salvo una ATC o una RPT (no se cobran, aunque
+   arrastren un saldo de cuando eran OC). Lo usan la tarjeta del chofer, Entregas, Envío, la Hoja de ruta y el Reporte; la ficha ya lo decía. */
+function saldoACobrar(p){ return noSeCobra(p) ? 0 : (Number(p&&p.saldo)||0); }
 function noSeCobraTxt(p){
   return (esATC(p.oc)?'Una ATC es una atención al cliente':'Una reposición de tienda mueve mercadería a una sucursal')+
          ': no es una venta y no se cobra. Contabilidad no la muestra, así que un cobro acá no aparecería en ningún lado.';
@@ -37287,14 +37331,14 @@ function renderRuta(){
     '<button type="button" class="nx-btn" style="background:'+(_cerca?'#fff':'#7c5ce6')+';color:'+(_cerca?'#5b3fc4':'#fff')+';box-shadow:inset 0 0 0 1.5px #cfc3f6" onclick="nxRutaSetCerca(false)">↺ Como estaba (turno y zona)</button>'+
     '<span style="font-size:.78rem;color:#666">'+(_cerca?'Cada camión sale de su depósito (PTF, Banzer o los dos: se dice al lado del chofer), la mañana primero y siempre la parada más cerca. Los km son en línea recta.':'Por turno y zona, como siempre.')+'</span></div>') : '';
   RUTA_ORDER.forEach(function(k, idx){
-    var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
-    var aCobrar=(cobrar>0 || fleteC>0.01);
+    var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=saldoACobrar(p); if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+    var aCobrar=(cobrar>0 || fleteC>0.005);
     var esSin=(k==='Sin chofer');
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
       '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
       '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+(_rk[k]?(' · '+rutaSalidaTxt(_rk[k].deps||[])+' · ~'+Math.round(_rk[k].km)+' km'+(_rk[k].sin?(' · '+_rk[k].sin+' sin ubicación, al final'):'')):'')+'</span>'+
-      (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
+      (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.005?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
       (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(aCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
       var cr=cobroRutaTxt(p);
@@ -37316,8 +37360,8 @@ function renderRuta(){
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
   var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(proximoDiaEntrega()):'';
-  var cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
-  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), ((cobrar>0 || fleteC>0.01)?('💰 Total a cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')):'✅ Todo pagado'), ''];
+  var cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=saldoACobrar(p); if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), ((cobrar>0 || fleteC>0.005)?('💰 Total a cobrar: '+fmtBs(cobrar)+(fleteC>0.005?(' · + '+fmtBs(fleteC)+' de flete'):'')):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
     L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
@@ -41786,9 +41830,9 @@ function nxLlamadaTxt(p){
 function nxSaldoCliente(p){
   if(noSeCobra(p)) return '';
   var falta=Number(p.saldo)||0, flete=envioPorCobrar(p);
-  if((p.pagado || falta<=0.01) && flete<=0.01) return '✅ Tu compra ya está pagada.';
+  if((p.pagado || falta<=0.005) && flete<=0.005) return '✅ Tu compra ya está pagada.';
   var t='💵 Saldo a pagar al recibir: '+fmtBs(p.pagado?0:falta);
-  if(flete>0.01) t+=(p.pagado||falta<=0.01) ? (' · recargo por entrega '+fmtBs(flete)) : (' + '+fmtBs(flete)+' del recargo por entrega');
+  if(flete>0.005) t+=(p.pagado||falta<=0.005) ? (' · recargo por entrega '+fmtBs(flete)) : (' + '+fmtBs(flete)+' del recargo por entrega');
   return t;
 }
 function nxMsgCliente(p, tipo){
@@ -42021,7 +42065,7 @@ function nxM1Desp(v, todos){
   var pct=D.n?Math.round(D.av/D.n*100):0, ult=NX_M1_ULT && findById(NX_M1_ULT);
   var filas=D.L.map(function(p, i){
     var av=nxM1Avisado(p), t=turnoDe(p), wa=nxWaClienteUrl(p.celular, nxMsgCliente(p, 'manana')), id=String(p.id).replace(/'/g,'');
-    var sl=noSeCobra(p) ? '' : ((p.pagado||(Number(p.saldo)||0)<=0.01) ? 'pagado' : ('saldo '+fmtBs(p.saldo)));
+    var sl=noSeCobra(p) ? '' : ((p.pagado||(Number(p.saldo)||0)<=0.005) ? 'pagado' : ('saldo '+fmtBs(p.saldo)));
     return '<div class="nx-m1-r'+(av?' ok':'')+'" style="animation-delay:'+(i*60)+'ms">'+
       '<span class="nx-turno '+(t==='PM'?'pm':'am')+'">'+(t==='PM'?'🌆 PM':(t?'🌅 AM':'—'))+'</span>'+
       '<div class="nx-m1-q"><b>'+esc(p.cliente||'—')+'</b><small>'+esc([p.zona, nxProdsTxt(p), sl].filter(Boolean).join(' · '))+'</small></div>'+
@@ -42121,9 +42165,9 @@ function nxCierreControl(mes){
   var add=function(arr, o){ arr.push(o); };
   var pst=nxPstLista(mes);
   var guardo=DUP_IDX, nd=0; try{ DUP_IDX=indiceDuplicados(L); cxDupMarcarDescartados(); nd=DUP_IDX.n||0; }catch(e){} finally{ DUP_IDX=guardo; }
-  var smon=L.filter(function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.01) && sinMontoAnotado(p); });
-  var deb=L.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.01; }), debBs=0; deb.forEach(function(p){ debBs=r2(debBs+contaFaltaCobrar(p)); });
-  var exc=L.filter(function(p){ return excesoCobro(p)>0.01; }), excBs=0; exc.forEach(function(p){ excBs=r2(excBs+excesoCobro(p)); });
+  var smon=L.filter(function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && sinMontoAnotado(p); });
+  var deb=L.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.005; }), debBs=0; deb.forEach(function(p){ debBs=r2(debBs+contaFaltaCobrar(p)); });
+  var exc=L.filter(function(p){ return excesoCobro(p)>0.005; }), excBs=0; exc.forEach(function(p){ excBs=r2(excBs+excesoCobro(p)); });
   var car=L.filter(function(p){ return !regEnSistema(p); });
   var ef=[], efBs=0; try{ ef=cuadreEfectivo().filas.filter(function(o){ return o.falta>0.5; }); ef.forEach(function(o){ efBs=r2(efBs+o.falta); }); }catch(e){}
   (pst.length ? r : ok).push({ n:pst.length, t:pst.length ? (pst.length+' pago'+(pst.length===1?'':'s')+' sin terminar') : 'Pagos completos', s:'sin recibo, sin foto o QR sin banco', b:'Completar', fn:'nxPstAbrir()' });
@@ -42833,7 +42877,7 @@ function asisAvisos(){
     }catch(e){}
     var deben=(STATE||[]).filter(function(p){
       if(!p || esFilaSistema(p) || esBorrador(p) || !mismoVendedor(p.vendedor, v) || fueraDeConta(p)) return false;
-      var f=fechaSalida(p); return !!f && diasEntre(f, hoy)>=7 && contaFaltaCobrar(p)>0.01;
+      var f=fechaSalida(p); return !!f && diasEntre(f, hoy)>=7 && contaFaltaCobrar(p)>0.005;
     });
     if(deben.length){ var bs=0; deben.forEach(function(p){ bs=r2(bs+contaFaltaCobrar(p)); });
       /* (12/10, dueño: «das clic y no hace nada… Eduardo debe ayudar») la lista entera: el que debe hace más tiempo, primero */
@@ -42924,7 +42968,7 @@ function asisResumenDia(){
   } else if(v){
     var mio=function(p){ return mismoVendedor(p.vendedor, v); };
     var hoyV=dia(hoy, mio), proxV=dia(prox, mio);
-    var deben=(STATE||[]).filter(function(p){ if(!p || esFilaSistema(p) || esBorrador(p) || !mio(p) || fueraDeConta(p)) return false; var f=fechaSalida(p); return !!f && f<=hoy && contaFaltaCobrar(p)>0.01; });
+    var deben=(STATE||[]).filter(function(p){ if(!p || esFilaSistema(p) || esBorrador(p) || !mio(p) || fueraDeConta(p)) return false; var f=fechaSalida(p); return !!f && f<=hoy && contaFaltaCobrar(p)>0.005; });
     var bs=0; deben.forEach(function(p){ bs=r2(bs+contaFaltaCobrar(p)); });
     var mis=function(L){ return L.map(function(p){ return { id:p.id, t:p.cliente||'—', s:(p.oc||'')+(p.zona?(' · '+p.zona):''), m:'' }; }); };
     R.push({ t:'🚚 Hoy se '+(hoyV.length===1?'entrega ':'entregan ')+cu(hoyV.length,'pedido')+' tuyo'+(hoyV.length===1?'':'s'), lista:mis(hoyV) });

@@ -8,7 +8,7 @@ function pmFecha(p,base){return base==='entrega'?(fechaSalida(p)||contaFecha(p))
 function pmMesTexto(m){return new Date(m+'-15T12:00:00').toLocaleDateString('es-BO',{month:'long',year:'numeric'});}
 function pmMonto(n){return n==null?'Sin dato':fmtBs(n);}
 /* Marcada PAGADA sin que nadie anotara cuánto: su monto vivía en `cobradoBs`, que no viaja en la planilla. */
-function pmPagadaSinMonto(p){return !!(p&&p.pagado)&&!(ventaTotal(p)>0.01);}
+function pmPagadaSinMonto(p){return !!(p&&p.pagado)&&!(ventaTotal(p)>0.005);}
 function pmCantidad(n){return n==null?'Sin dato':Number(n).toLocaleString('es-BO',{maximumFractionDigits:6});}
 function pmCalcular(lista,cfg,pendientes){
   var vistos=Object.create(null), repetidos=0;
@@ -47,7 +47,7 @@ function pmCalcular(lista,cfg,pendientes){
       if(importe==null)g.sinPrecio++;else g.conocido=r2(g.conocido+importe);
     });
     var diferencia=total==null?null:r2(total-suma);
-    if(incompleto||total==null||Math.abs(diferencia)>0.01)ajustes.push({nota:nota,vendedor:p.vendedor||'',total:total,detalle:suma,diferencia:diferencia,
+    if(incompleto||total==null||Math.abs(diferencia)>0.005)ajustes.push({nota:nota,vendedor:p.vendedor||'',total:total,detalle:suma,diferencia:diferencia,
       motivo:total==null?'Total de venta sin dato':incompleto?'Importe sin desglose: faltan productos o precios':'Ajuste sin distribuir (diferencia entre venta y productos)'});
   });
   var consolidado=Object.keys(grupos).map(function(k){var g=grupos[k];g.nPedidos=Object.keys(g.pedidos).length;g.importe=g.sinPrecio?null:g.conocido;return g;})
