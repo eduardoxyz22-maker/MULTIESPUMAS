@@ -411,7 +411,7 @@ function INIT_DOS(vend){
   page.__dialogos.length=0; page.__respuestas=[true];
   r = await ev(async () => { var n0=_saves.length; await _guardar(); await _esperar(300); var g=_saves.slice(n0).filter(function(s){ return s.cliente==='SIN SALDO'; });
     return { guardados:g.length, prod:g[0]&&g[0].productos&&g[0].productos[0]&&g[0].productos[0].desc }; });
-  chk('…«Aceptar» guarda igual: no se frena la venta', r.guardados===1 && r.prod==='ORO BI RELAX' && page.__dialogos.length===1, [r, page.__dialogos.length]);
+  chk('…«Aceptar» guarda igual: no se frena la venta', r.guardados===1 && r.prod==='COLCHON ORO BI RELAX' && page.__dialogos.length===1, [r, page.__dialogos.length]);
   page.__dialogos.length=0; page.__respuestas=[];
   r = await ev(async () => { var out={}; if(document.getElementById('modal').classList.contains('on')) closeModal(); _nuevo(); var n0=_saves.length;
     _llenarDatos('CON SALDO'); _renglon(0, { codigo:'CH1201', cant:1 }); await _esperar(500); await _guardar(); await _esperar(300);
@@ -470,7 +470,7 @@ function INIT_DOS(vend){
   chk('(partida) TITANIO ICE con el corte de la mañana: ✅ disponible', r.antes && /ps-verde/.test(r.antes.cls), r.antes && [r.antes.txt, r.__error]);
   chk('🔄 llega una lectura nueva (el Excel nuevo dice 0 acá y 0 en Banzer): el cuadrito se repinta SOLO y pasa a «no hay»',
       r.despues && /ps-rojo/.test(r.despues.cls) && /En almacén 0 · Pendientes de entrega 1 · Faltan 3/.test(r.despues.txt), r.despues && [r.despues.cls, r.despues.txt]);
-  chk('…sin tocar los campos ni sacar el foco de donde se está escribiendo', r.despues && !r.despues.hidden && r.foco===true && r.cant==='2' && r.desc==='TITANIO ICE', [r.foco, r.cant, r.desc]);
+  chk('…sin tocar los campos ni sacar el foco de donde se está escribiendo', r.despues && !r.despues.hidden && r.foco===true && r.cant==='2' && r.desc==='COLCHON TITANIO ICE', [r.foco, r.cant, r.desc]);
 
   r = await ev(async () => {
     var out={};

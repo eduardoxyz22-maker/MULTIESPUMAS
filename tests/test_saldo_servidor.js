@@ -190,7 +190,7 @@ function INIT_DOS(vend){
      el servidor no sabe para qué día vendió el otro, se dice «puede que ya no alcance (faltarían 1)». Antes, el «ya no hay saldo libre»
      firme, que con la reserva por fecha (decisión 3) le llegaba también al que por fecha SÍ tenía stock. */
   chk('⚠️ …y le sale la ventana: «Mientras guardabas, otro vendedor vendió lo mismo» · «otro vendedor vendió 1 de TITANIO ICE 160x190: para el … puede que ya no alcance (faltarían 1)»',
-      mB.on && /Mientras guardabas, otro vendedor vendió lo mismo/.test(mB.txt) && /otro vendedor vendió 1 de TITANIO ICE 160x190: para el \d\d\/\d\d puede que ya no alcance \(faltarían 1\)/.test(mB.txt), mB.txt.slice(0,300));
+      mB.on && /Mientras guardabas, otro vendedor vendió lo mismo/.test(mB.txt) && /otro vendedor vendió 1 de (COLCHON )?TITANIO ICE 160x190: para el \d\d\/\d\d puede que ya no alcance \(faltarían 1\)/.test(mB.txt), mB.txt.slice(0,300));
   chk('⚠️ …que dice que el pedido quedó guardado igual, qué hacer (avisar al cliente o reprogramar) y tiene «✏️ Abrir el pedido» y «Entendido»',
       /Tu pedido quedó guardado igual/.test(mB.txt) && /Avisale al cliente que puede demorar \(hay que mandar a producir\) o reprogramá la entrega/.test(mB.txt) &&
       mB.botones.indexOf('✏️ Abrir el pedido')>=0 && mB.botones.indexOf('Entendido')>=0, mB.botones);
