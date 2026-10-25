@@ -388,7 +388,7 @@ function PREPARAR(){
     return out;
   });
   chk('📐 guardado sin salir del campo (Enter): se guarda SIN el código del 160x190 («TITANIO ICE · 150x200 · sin código»)',
-      r.prod && r.prod.codigo==='' && r.prod.medida==='150x200' && r.prod.desc==='TITANIO ICE', [r.prod, r.__error]);
+      r.prod && r.prod.codigo==='' && r.prod.medida==='150x200' && r.prod.desc==='COLCHON TITANIO ICE', [r.prod, r.__error]);
   chk('…y la pregunta al guardar ya no dice «borralo» (ya se borró)',
       page.__dialogos.length===1 && /TITANIO ICE 150x200: medida especial: se fabrica a pedido/.test(page.__dialogos[0]) && !/borralo/.test(page.__dialogos[0]), page.__dialogos);
 

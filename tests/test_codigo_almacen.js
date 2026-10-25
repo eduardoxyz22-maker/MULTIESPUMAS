@@ -117,7 +117,7 @@ function PREPARAR(){
 
   /* ── Lo de siempre ── */
   const tit = await ev(async () => _probar('CH1201'));
-  chk('un código de la lista de precios (CH1201) completa como siempre, sin el aviso del almacén', tit.desc==='TITANIO ICE' && tit.medida==='160x190' && !/lista de precios/.test(tit.toast||'') && /PTF 5/.test(tit.caja||''), tit);
+  chk('un código de la lista de precios (CH1201) completa como siempre, sin el aviso del almacén', tit.desc==='COLCHON TITANIO ICE' && tit.medida==='160x190' && !/lista de precios/.test(tit.toast||'') && /PTF 5/.test(tit.caja||''), tit);
   const nada = await ev(async () => _probar('ZZ9999'));
   chk('un código que no está en ningún lado no completa nada ni muestra cuadrito', nada.desc==='' && nada.caja==='' && !/almacén/.test(nada.toast||''), nada);
 
