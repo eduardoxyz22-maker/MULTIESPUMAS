@@ -15963,3 +15963,27 @@ El dueño: «Dale» (paso 3 de la propuesta de §4mh). Todo con un Kommo de ment
 - **Visto y NO tocado** (lo dijo la auditoría y lo confirmé): `aggregate` y el corte «mismo día» del mes anterior usan
   `datetime.datetime.fromtimestamp(ts)` sin zona, o sea la hora del runner (UTC en Actions): un lead de las 20:00-23:59 de Bolivia cae en
   el día siguiente para la semana y para el corte «al mismo día». Es el mismo error de §4ew, en otro lado. Queda propuesto.
+
+### §4mj — 🪜 El formulario de 4 pasos ya no se esconde · ✅ «listo» solo con la nota · 📦 Stock en el celular · 🧾 los Excel con números (25/10, segunda auditoría Codex/Astra sobre `128bc86`; en la rama)
+El dueño pasó el informe nuevo de Codex (el del 25/10, `deb18d8e-INFORME_PARA_CLAUDE.md`). Cuatro regresiones de mi publicación `128bc86`
+(V3/V4/C2) + FIN-02, chico y sin riesgo. Lo demás del informe queda para proponer (abajo).
+- **N-UI1 · el formulario entero desaparecía** (`fpVisible`/`fpPintar`): `fpPintar` seguía con el formulario en OTRA pestaña una vez armado
+  (`FP_ARMADO`), y `fpVisible` mide `offsetHeight`: en una vista escondida todo da 0 → los cuatro `#fp-N` quedaban `hidden`. Y como un paso
+  escondido también tiene todo en 0 adentro, **no volvían nunca** (hasta F5): «0 de 0 ¡listo para guardar!». Tres caminos, la misma causa:
+  Nuevo → Mis pedidos → Administración (su lectura repinta el formulario) → Nuevo; editar → guardar → volver a editar; ATC → OC sin Cobro.
+  Ahora `fpVisible` mide con el paso a la vista (lo destapa, mide y lo deja como estaba, en el mismo instante: no se ve nada),
+  `fpPintar` no hace nada con el formulario en otra pestaña, y `showViewAhora('form')` llama a `fpPintarLuego()`.
+- **N-UI3 · «4 de 4 ¡listo para guardar!» sin la nota** (`fxPasosEstado`): el paso 1 ahora pide lo mismo que `submitPedido`: la nota en una
+  OC (salvo Eduardo/ROHO), el celular en todo menos RPT (también en la ATC, que antes lo daba por listo), la zona también en una RPT, el N° de
+  OC de ROHO, y en una ATC lo de `atcFaltan`. ⚠️ Si Guardar empieza a pedir algo nuevo, va también acá.
+- **N-UI2 · la barra de Stock en el celular medía 1.022 px**: `.s3` es hijo de una fila flex con `min-width:auto` y la fila «Más» sin salto la
+  estiraba; el «📋 Copiar pedido a fábrica» quedaba afuera. `.s3{min-width:0;max-width:100%}` y la fila se desplaza adentro; foco visible.
+- **N-FIN1 · MONTO de Comprobantes como texto**: `{ v:r2(monto), t:'n', s:2 }` (2 = «Bs #,##0.00»).
+- **FIN-02 · el Excel del Cuadre (y el del cierre, que lo reusa) con `s="[object Object]"`**: `fc` era `{numFmt:'#,##0.00'}` y `cellXml` lo
+  escribía tal cual: openpyxl no lo abría y Excel lo «reparaba». `fc=2`, y `cellXml` solo escribe `s` si es un número.
+- Prueba: `tests/test_regresiones_128.js` (26; 14 rojas contra `main` = `f1b5fe2`), con los botones de verdad, en 390 y 1440 (formulario) y
+  320/390/600 (Stock).
+- **Del mismo informe, sin tocar** (para proponerle al dueño): FIN-01 el efectivo de «☀️ Tu día» (un retiro parcial lo reinicia entero),
+  FLW-1 `mismoContenido` no mira el precio (un reintento viejo puede pisar una corrección de precios de otro), FLW-2/ORD-1 cinco botones y
+  las tildes de carga que se pierden si se recarga antes de 700 ms, ORD-2 la cola pierde `forzar`, S3 dos recepciones de 5 desde una foto de 6,
+  FIN-03 el mixto, FIN-2/3/4 la proyección (cero real, curva con datos del futuro, día de negocio en UTC), CRM-02/05/06/07/08, teclado/320 px.
