@@ -9349,8 +9349,9 @@ function enPeriodoCuadre(fecha, pe){
   return true;
 }
 /* Un renglón por PAGO (no por venta): es lo que se tilda contra el extracto. */
-function cuadrePagos(){
-  var pe=cuadrePeriodo(), vend=cuadreVendedor(), out=[];
+function cuadrePagos(pe, vend){
+  /* (25/10, FIN-01) `pe`/`vend` opcionales: sin ellos, los de la pantalla del Cuadre. «☀️ Tu día» pide el MES en curso y Todos. */
+  if(!pe) pe=cuadrePeriodo(); if(vend==null) vend=cuadreVendedor(); var out=[];
   STATE.forEach(function(p){
     if(fueraDeConta(p)) return;
     if(!cuadreEsDe(p, vend)) return;
@@ -22594,15 +22595,20 @@ function misHacerDatos(v, mine){
 /* 💵 (T2) Lo cobrado en efectivo DESDE SU ÚLTIMO RETIRO: no la resta de todo lo cobrado menos todo lo retirado, que con retiros viejos sin
    anotar da números que no cierran (24/10: a Carola le quedaban Bs 15.610 sin ningún cobro después de su último retiro). Lo que tiene un
    chofer es del chofer (`pagoRecibio`, §4eq). */
+/* 💵 (25/10, auditoría FIN-01; el dueño eligió «igual que el Cuadre del mes») Lo que tiene en la mano = el efectivo que RECIBIÓ en el mes en
+   curso − lo que se le RETIRÓ en el mes, parcial o total: el mismo número que «Le queda en la mano» del Cuadre del mes con Todos
+   (`cuadrePagos` + `retirosDe`, las mismas reglas). Antes contaba solo lo cobrado DESPUÉS del último retiro y cualquier retiro lo ponía en 0:
+   un retiro parcial de 500 sobre 700 decía «todo rendido» con 200 en la mano. ⚠️ El 1° de cada mes arranca de nuevo (decisión del
+   dueño): lo cobrado el 30 y rendido el 2 da negativo → se muestra 0 y se dice «N eran de lo cobrado el mes pasado». */
 function misEfectivoDatos(v){
-  var cob=[];
-  (STATE||[]).forEach(function(p){ if(!p || esFilaSistema(p) || fueraDeConta(p)) return;
-    contaPagos(p).forEach(function(c){ if(c.metodo!=='Efectivo' || !((Number(c.monto)||0)>0)) return; if(!mismoVendedor(pagoRecibio(c,p), v)) return; cob.push({ f:c.fecha||contaFecha(p)||'', m:Number(c.monto)||0, p:p }); }); });
-  var ret=retirosTodos().filter(function(r){ return mismoVendedor(r.entrega, v); }).sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
-  var ult=ret[ret.length-1]||null, nuevos=cob.filter(function(c){ return !ult || c.f>ult.fecha; }).sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
-  var tot=0; nuevos.forEach(function(c){ tot=r2(tot+c.m); });
-  var dias=nuevos.length ? Math.round((new Date(todayStr()+'T12:00:00')-new Date(nuevos[0].f+'T12:00:00'))/864e5) : 0;
-  return { tot:tot, nuevos:nuevos, ult:ult, dias:dias };
+  var pe={ modo:'mes', val:todayStr().slice(0,7) };
+  var cob=cuadrePagos(pe, '').filter(function(c){ return c.metodo==='Efectivo' && mismoVendedor(pagoRecibio(c, c.p), v); })
+    .map(function(c){ return { f:c.fecha||'', m:Number(c.monto)||0, p:c.p, envio:!!c.envio }; });
+  var ret=retirosDe(pe, '').filter(function(r){ return mismoVendedor(r.entrega, v); }).sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
+  var cobrado=0, retirado=0; cob.forEach(function(c){ cobrado=r2(cobrado+c.m); }); ret.forEach(function(r){ retirado=r2(retirado+r.monto); });
+  var dif=r2(cobrado-retirado);
+  return { tot:Math.max(0, dif), deMas:Math.max(0, -dif), cobrado:cobrado, retirado:retirado, mes:pe.val,
+           nuevos:cob.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); }), retiros:ret, ult:ret[ret.length-1]||null };
 }
 var MIS_EF_ABIERTO=false;
 function misTopPintar(v, mine){
@@ -22633,16 +22639,19 @@ function misTopPintar(v, mine){
       cel('🚚','Entregados del mes', R.ent+' de '+R.n)+
       cel('⏳','Falta cobrar del mes', fmtBs0(R.cobrar), R.cobrar>0?'td-mal':'td-cero')+
       '<div class="td-f td-cash" onclick="MIS_EF_ABIERTO=!MIS_EF_ABIERTO;renderMis()" title="Ver los cobros"><span class="td-i">💵</span><span class="td-t">Efectivo en tu mano<small>'+
-        (E.nuevos.length ? (E.nuevos.length+(E.nuevos.length===1?' cobro':' cobros')+' desde tu último retiro'+(E.ult?(' ('+fmtFechaCorta(E.ult.fecha)+')'):'')+(E.dias>=7?(' · <em>el más viejo, hace '+E.dias+' días</em>'):'')) : 'todo rendido')+
+        (!E.cobrado && !E.retirado ? ('sin efectivo en '+esc(mesN(E.mes)))
+          : ('de '+esc(mesN(E.mes))+': recibiste '+fmtBs0(E.cobrado)+', rendiste '+fmtBs0(E.retirado)+
+             (E.deMas ? (' · <em>'+fmtBs0(E.deMas)+' eran de lo cobrado el mes pasado</em>') : (E.tot ? '' : ' · todo rendido'))))+
       '</small></span><b>'+fmtBs0(E.tot)+'</b></div>'+
     '</div>'+
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
       '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button></div></div>';
-  var det=(MIS_EF_ABIERTO && E.nuevos.length) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
-      E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
-      '<div class="t2-pie">'+(E.ult?('Último retiro: '+esc(fmtFechaCorta(E.ult.fecha))+' · '+fmtBs0(E.ult.monto)):'Todavía no hay retiros anotados')+'</div></div>') : '';
+  var det=(MIS_EF_ABIERTO && (E.nuevos.length || E.retiros.length)) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo de '+esc(mesN(E.mes))+' · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
+      E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+(c.envio?' · 🚚 flete':'')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
+      E.retiros.slice().reverse().map(function(r){ return '<div class="t2-f"><span>'+esc(fmtFechaCorta(r.fecha))+'</span><b>↩ Rendiste'+(r.retira?(' a '+esc(r.retira)):'')+'</b><span class="t2-m">− '+fmtBs(r.monto)+'</span></div>'; }).join('')+
+      '<div class="t2-pie">Recibiste '+fmtBs0(E.cobrado)+' − rendiste '+fmtBs0(E.retirado)+' = '+fmtBs0(r2(E.cobrado-E.retirado))+'. Es lo mismo que «Le queda en la mano» del Cuadre de '+esc(mesN(E.mes))+'.</div></div>') : '';
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }

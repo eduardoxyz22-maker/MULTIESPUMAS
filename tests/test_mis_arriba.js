@@ -5,7 +5,8 @@
    2. «Para hacer» ordena rojo → ámbar → info, con los números de las cuentas de siempre (sin stock, atrasados, sin ubicación,
       Kommo, saldo del mes) y lo que no tiene pendiente va a «✅ Al día».
    3. «Tu día»: lo vendido del mes y el mes anterior entero (`misAnilloDatos`), hoy / próximo día, falta cobrar.
-   4. 💵 Efectivo en tu mano = lo cobrado en efectivo DESPUÉS de su último retiro (no la resta de todo); lo que cobró un chofer no.
+   4. 💵 Efectivo en tu mano = lo recibido en efectivo en el MES − lo retirado en el mes (25/10, FIN-01: el dueño eligió «igual que el Cuadre
+      del mes»; antes, lo cobrado después del último retiro); lo que cobró un chofer no.
    5. Kommo: filas cortas en dos grupos («parecen ya cargadas» con «Sí, es la misma» / «nuevas» con «Completar»), y los botones llaman
       a las funciones de siempre.
    6. El buscador sube a la barra del nombre y vuelve a su lugar con «Ver todos».
@@ -88,7 +89,7 @@ function PREPARAR(){
   chk('3b. …y falta cobrar del mes Bs 500', /Falta cobrar del mes\s*Bs 500/i.test(r3), r3);
 
   /* 4 */
-  chk('4. efectivo en tu mano = Bs 700 (lo cobrado después del retiro del 10; el de Bs 1.000 ya se rindió y el del chofer no es suyo)', /Efectivo en tu mano.*Bs 700/i.test(r3) && /1 cobro desde tu último retiro/.test(r3), r3.match(/Efectivo en tu mano[^]*?Bs [\d.]+/i));
+  chk('4. efectivo en tu mano = Bs 700 (recibió 1.000 + 700 en octubre y rindió 1.000; el del chofer no es suyo)', /Efectivo en tu mano.*Bs 700/i.test(r3) && /recibiste Bs 1\.700, rendiste Bs 1\.000/.test(r3), r3.match(/Efectivo en tu mano[^]*?Bs [\d.]+/i));
 
   /* 5 */
   const r5 = await ev(async () => { var b=document.getElementById('mis-borradores'); var fs=[].map.call(b.querySelectorAll('.kx-f'), function(f){ return f.innerText.replace(/\s+/g,' ')+' || '+[].map.call(f.querySelectorAll('button'), function(x){ return x.getAttribute('onclick'); }).join(' ; '); });
