@@ -124,6 +124,10 @@ function PREPARAR(){
   const r7 = await ev(() => { var t=_txt('cx-top'); return { excel:/⬇️ Excel/.test(t), prod:/Productos del mes/.test(t), cierre:/Cierre del mes/.test(t), ret:/Retiro de efectivo/.test(t), tienda:/Venta de tienda/.test(t) }; });
   chk('7. los botones de siempre siguen a mano en el libro', r7.excel && r7.prod && r7.cierre && r7.ret && r7.tienda, r7);
 
+  /* 8 (V5): el color del botón lo da el renglón */
+  const r8 = await ev(() => { CX_HACER_MAS=true; renderConta(); var out=[].map.call(document.querySelectorAll('#cx-top .ah-it'), function(x){ var b=x.querySelector('button');
+      return (x.classList.contains('ah-r')?'r':x.classList.contains('ah-a')?'a':'i')+':'+(b.classList.contains('ah-go-r')?'r':b.classList.contains('ah-go-a')?'a':'t'); }); CX_HACER_MAS=false; renderConta(); return out; });
+  chk('8. V5: rojo arreglar, ámbar revisar, turquesa lo demás', r8.length>0 && r8.every(x=>x==='r:r'||x==='a:a'||x==='i:t'), r8);
   chk('sin errores en la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

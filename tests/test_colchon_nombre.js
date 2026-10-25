@@ -137,7 +137,7 @@ function PREPARAR(){
   chk('5b. …y sigue contando como colchón (Proyección, unidades)', k5.tipo==='colchon', k5);
 
   chk('sin errores de la página', errores.length===0, errores);
-  console.log('\n'+PASS+' bien, '+FAIL+' mal');
+  console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
   process.exit(FAIL?1:0);
 })();
