@@ -102,7 +102,7 @@ function PREPARAR(){
   chk('6b. …y el buscador vuelve a su lugar', !r6.busca, r6);
 
   chk('sin errores de la página', errores.length===0, errores);
-  console.log('\n'+PASS+' bien, '+FAIL+' mal');
+  console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
   process.exit(FAIL?1:0);
 })();
