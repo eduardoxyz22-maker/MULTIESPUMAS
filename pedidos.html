@@ -7613,7 +7613,7 @@ function porCobrarDatos(origen){
   var mayor=(contaAmbito()==='mayor');
   var vv=mayor ? mayoristasTxt() : ((document.getElementById('cta-vendedor')||{}).value||'').trim();
   var q=((document.getElementById('cta-search')||{}).value||'').trim();
-  var items=contaLista().map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(contaFaltaCobrar(p)) }; })
+  var items=contaLista().map(function(p){ var f=contaFecha(p); return Object.assign(deudaEdad(f, hoy), { p:p, saldo:r2(contaFaltaCobrar(p)) }); })
     .filter(function(x){ return x.saldo>0.01; })
     .sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
   return { items:items, quien:(vv||(mayor?'mayoristas':'todo el equipo'))+(q?(' · solo lo que coincide con «'+q+'»'):''),
@@ -7629,7 +7629,7 @@ function abrirPorCobrar(origen){
     return '<tr class="pc-fila" data-id="'+esc(String(p.id))+'" onclick="porCobrarAbrirVenta(\''+origen+'\', this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta para registrar el pago">'+
       '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><span style="color:var(--muted);font-size:.86em">'+esc(ref)+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
-      '<td><span style="color:'+col+'">'+esc(x.desde?fmtFechaCorta(x.desde):'sin fecha')+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+      '<td><span style="color:'+col+'">'+esc(x.sinF ? 'sin fecha' : (fmtFechaCorta(x.desde)+' · '+deudaEdadTxt(x)))+'</span></td>'+
       '<td style="text-align:right;white-space:nowrap">'+fmtBs(ventaTotal(p))+'</td>'+
       '<td style="text-align:right;white-space:nowrap"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
   }).join('');
@@ -7658,7 +7658,7 @@ function copiarPorCobrar(origen){
   var txt='⏳ *Falta cobrar* · '+D.quien+' · '+D.periodo+': *'+fmtBs(cuadreSuma(it))+'* en '+it.length+' venta'+(it.length===1?'':'s')+'\n'+
     it.map(function(x){ var p=x.p;
       return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
-        ' · desde el '+(x.desde?fmtFechaCorta(x.desde):'—')+' ('+(x.dias?(x.dias+' días'):'hoy')+')'+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
+        (x.sinF ? ' · sin fecha' : (' · desde el '+fmtFechaCorta(x.desde)+' ('+deudaEdadTxt(x, true)+')'))+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
   copyText(txt);
 }
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
@@ -8757,7 +8757,8 @@ function pryPlataHtml(ym){
   var hay=function(campo){ return cols.some(function(c){ return Math.abs((G[c.k]||{})[campo]||0)>0.009; }); };
   var fila=function(lbl, campo, cls, signo, nCampo){
     return '<tr'+(cls?(' class="'+cls+'"'):'')+'><td>'+lbl+'</td>'+cols.map(function(c){ var g=G[c.k]||{}, v=g[campo]||0;
-      return '<td>'+(v>0.009 ? ((signo||'')+fmtBs0(v)+(nCampo && g[nCampo] ? (' <small>('+g[nCampo]+')</small>') : '')) : '—')+'</td>'; }).join('')+'</tr>';
+      /* (25/10, §4ml, auditoría Codex) con centavos: es una cuenta que tiene que cerrar (Sueña 0,30 salía «Bs 0» y 0 + 150 daba 151) */
+      return '<td>'+(v>0.009 ? ((signo||'')+fmtBs(v)+(nCampo && g[nCampo] ? (' <small>('+g[nCampo]+')</small>') : '')) : '—')+'</td>'; }).join('')+'</tr>';
   };
   var h='<div class="cua-box" id="pry-plata-box"><div class="cua-t">💵 De dónde sale lo vendido — '+esc(mes)+'</div>'+
     '<div class="pry-intro" style="margin:-4px 0 10px">Lo vendido para '+esc(mes)+' (entrega agendada, lo de las fichas de arriba) partido en lo que ya se cobró, '+
@@ -9160,7 +9161,7 @@ function renderProyeccion(){
            '<div class="pry-fila"><div class="pry-q"><b>ROHO</b><small>'+esc(det.join(' · '))+'</small></div>'+
            '<div class="pry-n"><b>'+esc(nU(T.u))+'</b>'+(conProy ? ('<small class="pry-p">📈 '+esc(nU(T.proyU))+'</small>') : '')+'</div></div>'+
            ((T.prods||[]).length ? ('<details class="pry-roho-prods"'+(PRY_ROHO_ABIERTO ? ' open' : '')+' ontoggle="PRY_ROHO_ABIERTO=this.open"><summary>📦 Ver sus productos ('+T.prods.length+')</summary>'+
-             '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>Producto</th><th>Medida</th>'+(R.estado==='curso' ? '<th class="r">Entregado</th><th class="r">Agendado</th>' : '')+'<th class="r">Unidades</th></tr></thead><tbody>'+
+             '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>Producto</th><th>Medida</th>'+(R.estado==='curso' ? '<th class="r" title="Con entrega agendada hasta hoy (no dice si ya se entregó)">Agendado hasta hoy</th><th class="r">Agendado después</th>' : '')+'<th class="r">Unidades</th></tr></thead><tbody>'+
              T.prods.map(function(o){ var p=o.k.split('|');
                return '<tr><td>'+esc(p[0]||o.k)+(o.cod ? ' <small>'+esc(o.cod)+'</small>' : '')+'</td><td>'+esc((p[1]||'').toLowerCase())+'</td>'+
                  (R.estado==='curso' ? ('<td class="r">'+(o.ua||'·')+'</td><td class="r">'+(o.ub||'·')+'</td>') : '')+'<td class="r"><b>'+o.u+'</b></td></tr>'; }).join('')+
@@ -9593,10 +9594,14 @@ function cuadrePendientes(sinPeriodo){
       if(p.pagado || !((Number(p.saldo)||0)>0.01)) return false;
       return sinPeriodo ? true : enPeriodoCuadre(contaFecha(p), pe);
     })
-    .map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(p.saldo) }; })
+    .map(function(p){ var f=contaFecha(p); return Object.assign(deudaEdad(f, hoy), { p:p, saldo:r2(p.saldo) }); })
     .sort(function(a,b){ return b.dias-a.dias; });
 }
 function cuadreSuma(list){ var t=0; (list||[]).forEach(function(x){ t=r2(t+x.saldo); }); return t; }
+/* ⏳ (25/10, §4ml, auditoría Codex FIN-09) La edad de una deuda: sin fecha o con una fecha que todavía no llegó NO es «de hoy». Antes una
+   venta sin ninguna fecha y una agendada para mañana salían «hoy» y en el tramo «0 a 15 días», como si fueran recientes. */
+function deudaEdad(f, hoy){ return { desde:f, dias:Math.max(0,diasEntre(f,hoy)), sinF:!f, fut:!!(f && hoy && f>hoy) }; }
+function deudaEdadTxt(x, largo){ if(x.sinF) return 'sin fecha'; if(x.fut) return 'fecha futura'; return x.dias ? (x.dias+(largo?' días':' d')) : 'hoy'; }
 function diasEntre(a,b){
   if(!a||!b) return 0;
   var x=new Date(a+'T00:00:00'), y=new Date(b+'T00:00:00');
@@ -9627,11 +9632,15 @@ function tramosDeudaHtml(pend){
          {lbl:'16 a 30',     max:30,       col:'#a67c00'},
          {lbl:'31 a 60',     max:60,       col:'var(--amber)'},
          {lbl:'más de 60',   max:1e9,      col:'var(--red)'}];
-  T.forEach(function(t){ t.n=0; t.bs=0; });
+  /* (§4ml) lo sin fecha y lo de fecha futura van en su propio tramo, no en «0 a 15 días» */
+  var SF={lbl:'sin fecha', col:'var(--muted)'}, FU={lbl:'fecha futura', col:'var(--muted)'};
+  T.forEach(function(t){ t.n=0; t.bs=0; }); SF.n=SF.bs=FU.n=FU.bs=0;
   (pend||[]).forEach(function(x){
-    var d=Number(x.dias)||0;
-    for(var i=0;i<T.length;i++) if(d<=T[i].max){ T[i].n++; T[i].bs=r2(T[i].bs+(Number(x.saldo)||0)); break; }
+    var d=Number(x.dias)||0, sal=Number(x.saldo)||0;
+    if(x.sinF || x.fut){ var e=x.sinF ? SF : FU; e.n++; e.bs=r2(e.bs+sal); return; }
+    for(var i=0;i<T.length;i++) if(d<=T[i].max){ T[i].n++; T[i].bs=r2(T[i].bs+sal); break; }
   });
+  T=T.concat([FU, SF]);
   var hay=T.filter(function(t){ return t.n>0; });
   if(hay.length<2) return '';                       // con un solo tramo no aporta nada
   return '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 10px">'+
@@ -9745,7 +9754,7 @@ function cuadreAlertas(pagos){
   if(_pcAl.length){
     A.push({k:'cobrar', sev:'plata', ico:'⏳', txt:'<b>'+_pcAl.length+'</b> venta'+(_pcAl.length===1?'':'s')+' con <b>saldo por cobrar</b> — '+
       fmtBs(cuadreSuma(_pcAl))+' que todavía no entró',
-      det:_pcAl.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.saldo)+(x.p.vendedor?(' · '+x.p.vendedor):'')+' · '+(x.dias?(x.dias+' d'):'hoy'), id:x.p.id}; })});
+      det:_pcAl.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.saldo)+(x.p.vendedor?(' · '+x.p.vendedor):'')+' · '+deudaEdadTxt(x), id:x.p.id}; })});
   }
   /* La venta cargada dos veces: infla el mes y hace facturar de más. Va arriba de todo
      lo demás en importancia, así que se lista con las dos ventas del par juntas para
@@ -10107,7 +10116,7 @@ function renderCuadre(){
           var col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
           return '<tr onclick="showContaModal(\''+x.p.id+'\')" style="cursor:pointer"><td><b>'+esc(x.p.cliente||'—')+'</b>'+
             (x.p.nota?('<br><span style="color:var(--muted);font-size:.9em">nota '+esc(x.p.nota)+'</span>'):'')+'</td>'+
-            '<td><span style="color:'+col+'">'+esc(fmtFechaCorta(x.desde))+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+            '<td><span style="color:'+col+'">'+esc(x.sinF ? 'sin fecha' : (fmtFechaCorta(x.desde)+' · '+deudaEdadTxt(x)))+'</span></td>'+
             '<td style="text-align:right"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
         }).join('')+'</tbody></table></div>'+
         (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'. '+
@@ -12234,7 +12243,9 @@ function ctaRegistrarPago(id){
     var ae=enviosDe(p).filter(envioYaCobrado);
     linea.envio=true; ae.push(linea);
     var resto=r2(pactado-monto);
-    if(resto>0.01) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
+    /* (25/10, §4ml, auditoría Codex FIN-06) Con `>0.01` un resto de UN centavo se perdía: 1,01 pactado cobrado 0,50 + 0,50 quedaba en
+       1,00 pactado y 0 por cobrar. `resto` ya viene redondeado a centavos (`r2`). */
+    if(resto>0.009) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
     CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
     /* ⚠️ Y el selector vuelve a «Pago de la venta». `CTA_TIPO` solo se reseteaba al CAMBIAR
        de venta, así que el camino natural —anotar el flete, «volver a la venta», registrar
@@ -15646,6 +15657,16 @@ function fxPasosEstado(){
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
   var lite=esVendedorLite(val('f-vendedor')), tipo=docTipoSel(), tienda=VENTA_TIENDA;
   var prods=[].some.call(document.querySelectorAll('#f-productos .prod-desc'), function(d){ return !!d.value.trim(); });
+  /* (25/10, §4ml, auditoría Codex OPS-03) Productos «listo» también con lo que Guardar pide de cada renglón: una cantidad entera de 1 o
+     más (`cantidadesMal`) y ningún renglón con código o precio pero sin producto. Con cantidad 0 decía «4 de 4 ¡listo para guardar!». */
+  try{
+    if(prods && cantidadesMal().length) prods=false;
+    if(prods && [].some.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+      if(c.getAttribute('data-de-pedido')) return false;
+      var d=c.querySelector('.prod-desc'), co=c.querySelector('.prod-codigo'), pr=c.querySelector('.prod-precio');
+      return d && !String(d.value||'').trim() && ((co && String(co.value||'').trim()) || (pr && String(pr.value||'').trim()));
+    })) prods=false;
+  }catch(e){}
   var pag=segVal('f-pagado');
   /* ⚠️ (25/10, auditoría N-UI3) Lo mismo que exige `submitPedido`, ni más ni menos: sin la nota decía «4 de 4 ¡listo para guardar!»
      y Guardar la pedía. Celular: todo menos RPT (también la ATC); la zona, también en una RPT; ROHO, su N° de OC; la ATC, lo de `atcFaltan`. */
@@ -16527,8 +16548,10 @@ function precIdx(){
 function precioTipico(codigo){
   var a=precIdx()[String(codigo||'').trim().toUpperCase()];
   if(!a || a.length<3) return 0;               // con menos de 3 ventas no hay referencia
-  var b=a.slice().sort(function(x,y){return x-y;});
-  return b[Math.floor(b.length/2)];
+  var b=a.slice().sort(function(x,y){return x-y;}), m=Math.floor(b.length/2);
+  /* (25/10, §4ml, auditoría Codex OPS-22) La mediana de siempre: con un número par de ventas, el promedio de las dos del medio
+     (100, 200, 300, 400 → 250; antes daba 300). */
+  return b.length%2 ? b[m] : r2((b[m-1]+b[m])/2);
 }
 /* ⚠️ KOMMO ESCRIBE TODO JUNTO EN EL NOMBRE (§4cc).
    El panel guarda producto y medida por separado («TITANIO LATEX» + «180x190»), pero en
@@ -21870,7 +21893,7 @@ function renderChofer(){
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
   var recFabHtml=choRechazosHtml(c, todos)+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo (el de ESTE chofer)
   var ent=0, porCobrar=0, cobrado=0, fleteF=0;
-  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
+  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=saldoACobrar(p); });   // §4fs
   list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
@@ -21961,7 +21984,7 @@ function agruparPorCamion(list){
     g.list.push(p);
     (p.productos||[]).forEach(function(x){ g.unid+=Number(x.cant)||0; });
     g.fotos+=fotosEntregaDe(p).length;              // 📷 (§4lh) sin las fotos del producto de una ATC
-    var sal=Number(p.saldo)||0; if(sal>0.01) g.porCobrar+=sal;
+    var sal=saldoACobrar(p); if(sal>0.01) g.porCobrar+=sal;
     if(!noSeCobra(p)) g.flete=r2(g.flete+envioPorCobrar(p));   // (26/09) el flete pactado, aparte de la venta (§4ai)
     cobrosVisibles(p).forEach(function(cb){
       g.cobrado+=Number(cb.monto)||0;
@@ -21997,10 +22020,10 @@ function entregasDatos(fecha){
       tot.cobrado+=Number(cb.monto)||0;
       tot.porMetodo[cb.metodo]=(tot.porMetodo[cb.metodo]||0)+(Number(cb.monto)||0);
     });
-    var sal=Number(p.saldo)||0;
+    var sal=saldoACobrar(p);
     if(sal>0.01){ tot.porCobrarSalio+=sal; tot.nSinCobrar++; }
   });
-  faltan.forEach(function(p){ var sal=Number(p.saldo)||0; if(sal>0.01) tot.porCobrarFalta+=sal; });
+  faltan.forEach(function(p){ var sal=saldoACobrar(p); if(sal>0.01) tot.porCobrarFalta+=sal; });
   tot.porCobrarTotal=r2(tot.porCobrarSalio+tot.porCobrarFalta);
   tot.porCobrarSalio=r2(tot.porCobrarSalio); tot.porCobrarFalta=r2(tot.porCobrarFalta);
   tot.cobrado=r2(tot.cobrado);
@@ -22015,7 +22038,7 @@ function entregaCardHtml(p, dn, pendiente){
     return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>';
   }).join('<br>');
   var cob=cobrosVisibles(p);
-  var saldo=Number(p.saldo)||0;
+  var saldo=saldoACobrar(p);
   var fleteTxt=cobroRutaTxt(p).f;   // (26/09) el flete pactado, con las palabras de la hoja de ruta y la tarjeta del chofer
   // Ojo: "SIN COBRAR" en rojo solo si YA SE ENTREGÓ. Si todavía no salió, es un saldo normal.
   var cobTxt = cob.length ? (cobrosResumen(p)+excesoBadge(p))
@@ -22118,7 +22141,7 @@ function entregasTexto(){
       var cob=cobrosVisibles(p);
       L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.oc?(ocEtiq(p.oc)+' · '):'')+(p.cliente||'')+
         (cob.length?('  → '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')):
-          ((Number(p.saldo)||0)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+fleteDe(p)+
+          (saldoACobrar(p)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+fleteDe(p)+
         (fotosEntregaDe(p).length?'  📷':''));
     });
   });
@@ -22129,7 +22152,7 @@ function entregasTexto(){
       L.push('  '+(k===SIN_CAMION?'⚠️ Sin camión asignado':('🚛 '+k))+'  ('+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+
         (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.01?(' · + '+fmtBs(g.flete)+' de flete'):'')+')');
       g.list.forEach(function(p){ L.push('     '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')+
-        (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')+fleteDe(p)); });
+        ((saldoACobrar(p)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')+fleteDe(p)); });
     });
   }
   return L.join('\n');
@@ -23345,7 +23368,7 @@ function envioPedido(p, n, modo){
   L.push('    📍 '+(String(p.direccion||'').trim()||'—')+(p.zona?('  ('+p.zona+')'):''));
   if(modo==='hoy'){
     var veh=vehiculoDe(p), ch=String(p.chofer||'').trim();
-    var cob=cobrosVisibles(p), falta=Number(p.saldo)||0;
+    var cob=cobrosVisibles(p), falta=saldoACobrar(p);
     if(cob.length) L.push('    💰 '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')+(falta>0.01?('  · falta '+fmtBs(falta)):''));
     else if(falta>0.01) L.push('    💰 '+(p.entregado?'SIN COBRAR ':'A cobrar ')+fmtBs(falta));
   }else{
@@ -23353,7 +23376,7 @@ function envioPedido(p, n, modo){
     var v2=vehiculoDe(p), c2=String(p.chofer||'').trim();
     if(v2||c2) L.push('    🚛 '+[v2,c2].filter(Boolean).join(' · '));
     if(!p.maps) L.push('    ⚠️ FALTA UBICACIÓN');
-    if((Number(p.saldo)||0)>0.01) L.push('    💰 Cobrar '+fmtBs(p.saldo));
+    if(saldoACobrar(p)>0.01) L.push('    💰 Cobrar '+fmtBs(p.saldo));
   }
   if(p.observaciones) L.push('    📝 '+String(p.observaciones).replace(/\s*\n\s*/g,' '));
   return L;
@@ -23412,7 +23435,7 @@ function envioDatos(modo){
     if(!p.maps) t.sinGps++;
     if(!p.verificado) t.noVerif++;
     if(!vehiculoDe(p) && !String(p.chofer||'').trim()) t.sinCamion++;
-    var sal=Number(p.saldo)||0;
+    var sal=saldoACobrar(p);
     if(sal>0.01){ t.porCobrar+=sal; if(p.entregado) t.salioSinCobrar+=sal; }
     cobrosVisibles(p).forEach(function(c){
       var m=Number(c.monto)||0; t.cobrado+=m; t.porMetodo[c.metodo]=(t.porMetodo[c.metodo]||0)+m;
@@ -23514,11 +23537,11 @@ function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(o
 function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
 function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
-  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=totalCobrado(p); if(!p.pagado) pend+=Number(p.saldo)||0; });   // §4fs
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=totalCobrado(p); if(!p.pagado) pend+=saldoACobrar(p); });   // §4fs
   document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
-  var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
+  var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=saldoACobrar(p); });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
-  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=totalCobrado(p); if(!p.pagado) byC[c].pend+=Number(p.saldo)||0; });   // §4fs
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=totalCobrado(p); if(!p.pagado) byC[c].pend+=saldoACobrar(p); });   // §4fs
   var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   document.getElementById('reporte-body').innerHTML=
     '<div class="metrics" style="margin-bottom:16px">'+
@@ -23954,10 +23977,23 @@ function buscarData(){
   var desde=String((document.getElementById('bus-desde')||{}).value||'');
   var hasta=String((document.getElementById('bus-hasta')||{}).value||'');
   if(!vend && !terms.length) return { pedir:true, filas:[], porVend:[] };
-  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={}, fuera={atc:0, rpt:0};
+  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={}, fuera={atc:0, rpt:0, int:0};
+  /* (25/10, §4ml, auditoría Codex FIN-19) Los pedidos INTERNOS (`CONTA_INTERNOS`: FABRICA, MORENO, ALBA…) mueven mercadería, no la venden:
+     sumaban 999 a «TITANIO» como una venta más. Quedan afuera y se dicen abajo, como las ATC y las RPT. Si se elige a propósito uno de
+     ellos en «Vendedor», se muestra (es lo que se pidió ver). */
+  var vendInterno=!!(vend && cliEsInterno(vend));
   STATE.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    if(!vendInterno && cliEsInterno(p.vendedor)){
+      var _n=0; (p.productos||[]).forEach(function(x){
+        var nom=String((x&&x.desc)||'')+' '+String((x&&x.medida)||'')+' '+String((x&&x.codigo)||'');
+        if(terms.length && !terms.some(function(t){ return busCoincide(nom, t); })) return;
+        _n+=Number(x.cant)||0;
+      });
+      if(_n){ var _fi=fechaSalida(p); if(!(desde && (!_fi || _fi<desde)) && !(hasta && (!_fi || _fi>hasta))) fuera.int+=_n; }
+      return;
+    }
     /* ⚠️ ESTA PANTALLA SE LLAMA «QUIÉN VENDIÓ QUÉ» (§4dl). Una 🎧 ATC es un servicio —el
        colchón vuelve, no se vende— y una 🏪 RPT es mercadería que cambió de almacén: las dos
        sumaban unidades como si fueran ventas, e inflaban el cuadro del vendedor. Se cuentan
@@ -24021,7 +24057,8 @@ function busFueraTxt(d){
   var f=(d&&d.fuera)||{}, t=[];
   if(f.rpt) t.push('<b>'+f.rpt+'</b> unidad'+(f.rpt===1?'':'es')+' en 🏪 reposiciones de tienda');
   if(f.atc) t.push('<b>'+f.atc+'</b> unidad'+(f.atc===1?'':'es')+' en 🎧 ATC');
-  return t.length ? (t.join(' y ')+' — no son ventas, no entran en el cuadro') : '';
+  if(f.int) t.push('<b>'+f.int+'</b> unidad'+(f.int===1?'':'es')+' en 🏭 pedidos internos (fábrica, Moreno…)');
+  return t.length ? (t.slice(0,-1).join(', ')+(t.length>1?' y ':'')+t[t.length-1]+' — no son ventas, no entran en el cuadro') : '';
 }
 function renderBuscar(){
   var d=buscarData(); BUSCA=d;
@@ -35851,6 +35888,9 @@ function bancosParaCobrar(p){
    ruta y su WhatsApp, «Entregado», la ficha) y «➕ Cobré algo igual» anotaba plata que
    Contabilidad no ve nunca. */
 function noSeCobra(p){ return !!p && (esATC(p.oc) || esRPT(p.oc)); }
+/* (25/10, §4ml, auditoría Codex) Lo que el camión tiene que cobrar de la VENTA: el saldo, salvo una ATC o una RPT (no se cobran, aunque
+   arrastren un saldo de cuando eran OC). Lo usan la tarjeta del chofer, Entregas, Envío, la Hoja de ruta y el Reporte; la ficha ya lo decía. */
+function saldoACobrar(p){ return noSeCobra(p) ? 0 : (Number(p&&p.saldo)||0); }
 function noSeCobraTxt(p){
   return (esATC(p.oc)?'Una ATC es una atención al cliente':'Una reposición de tienda mueve mercadería a una sucursal')+
          ': no es una venta y no se cobra. Contabilidad no la muestra, así que un cobro acá no aparecería en ningún lado.';
@@ -37434,7 +37474,7 @@ function renderRuta(){
     '<button type="button" class="nx-btn" style="background:'+(_cerca?'#fff':'#7c5ce6')+';color:'+(_cerca?'#5b3fc4':'#fff')+';box-shadow:inset 0 0 0 1.5px #cfc3f6" onclick="nxRutaSetCerca(false)">↺ Como estaba (turno y zona)</button>'+
     '<span style="font-size:.78rem;color:#666">'+(_cerca?'Cada camión sale de su depósito (PTF, Banzer o los dos: se dice al lado del chofer), la mañana primero y siempre la parada más cerca. Los km son en línea recta.':'Por turno y zona, como siempre.')+'</span></div>') : '';
   RUTA_ORDER.forEach(function(k, idx){
-    var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+    var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=saldoACobrar(p); if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
     var aCobrar=(cobrar>0 || fleteC>0.01);
     var esSin=(k==='Sin chofer');
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
@@ -37463,7 +37503,7 @@ function renderRuta(){
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
   var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(proximoDiaEntrega()):'';
-  var cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+  var cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=saldoACobrar(p); if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
   var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), ((cobrar>0 || fleteC>0.01)?('💰 Total a cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
