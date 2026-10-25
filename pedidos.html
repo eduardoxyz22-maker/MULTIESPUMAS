@@ -2708,6 +2708,16 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .fp-ok .fp-est{background:#dcfce7;color:#15803d}.fp-ya .fp-est{background:#ccf3f1;color:#00756f}
 .fp-cuerpo{padding:14px 16px 4px}
 @media (max-width:700px){ .fp-cuerpo{padding:12px 10px 2px} .fp-cab{padding:10px 12px} .fp-b{font-size:.78rem} .fp-av{display:none} }
+/* ✅ (§4mg, C3) la lista de control del cierre */
+.c3{margin:12px 0 10px}
+.c3-barra{display:flex;gap:2px;height:8px;border-radius:9px;overflow:hidden;background:#eef2f3}.c3-barra i{display:block}
+.c3-res{font-size:.82rem;color:#55706f;margin:6px 0 4px}
+.c3-sub{font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#6b8584;margin:12px 2px 6px}
+.c3-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid #edf3f3;margin-bottom:6px;background:#fff}
+.c3-mal{background:#fff7f8;border-color:#f8d7db}.c3-am{background:#fffaf2;border-color:#f6e3c2}.c3-ok{background:#f5fcf8;border-color:#d5f0df}
+.c3-ic{font-size:1.05rem;flex:none}.c3-tx{flex:1;min-width:0}.c3-tx b{display:block;font-size:.88rem;color:#17302f}.c3-tx small{font-size:.76rem;color:#5d7473}
+.c3-forzar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.nx-btn:disabled{opacity:.55;cursor:not-allowed}
 /* ⏳ (§4mg, V6) esqueletos */
 .sk{display:block;background:linear-gradient(90deg,#eaf1f0 0%,#f6faf9 40%,#eaf1f0 80%);background-size:300% 100%;animation:skm 1.4s ease-in-out infinite}
 @keyframes skm{0%{background-position:100% 0}100%{background-position:0 0}}
@@ -41887,7 +41897,7 @@ function nxMesesCierre(){
 function nxCierreHojas(mes){
   var g=function(id){ var e=document.getElementById(id); return e?e.value:''; }, s=function(id,v){ var e=document.getElementById(id); if(e) e.value=v; };
   var antes={ ctaMode:segVal('cta-mode'), ctaMes:g('cta-mes'), ctaQ:g('cta-search'), ctaTab:segVal('cta-tab'), cuaMode:segVal('cua-mode'), cuaMes:g('cua-mes'), cuaVend:g('cua-vendedor') };
-  var hojas={ ventas:[], cuadre:[] }, cuenta={ ventas:0, pagos:0, retiros:0 }, dest='ventas';
+  var hojas={ ventas:[], cuadre:[] }, cuenta={ ventas:0, pagos:0, retiros:0 }, dest='ventas', control=null;
   var bx=window.buildXlsx, dl=window.downloadBlob, ts=window.toast;
   try{
     segSet('cta-mode','mes'); s('cta-mes', mes); s('cta-search','');
@@ -41896,6 +41906,7 @@ function nxCierreHojas(mes){
     var vend=g('cta-vendedor'); s('cua-vendedor', vend); if(g('cua-vendedor')!==vend) s('cua-vendedor','');
     cuenta.ventas=contaLista().length; cuenta.pagos=cuadrePagos().length;
     try{ cuenta.retiros=retirosDe(cuadrePeriodo(), cuadreVendedor()).length; }catch(e){}
+    try{ control=nxCierreControl(mes); }catch(e){ control=null; }   // ✅ (§4mg, C3) con los controles ya puestos en ese mes
     window.buildXlsx=function(sh){ hojas[dest]=hojas[dest].concat(sh||[]); return null; };
     window.downloadBlob=function(){}; window.toast=function(){};
     dest='ventas'; exportConta();
@@ -41906,7 +41917,57 @@ function nxCierreHojas(mes){
     if(antes.ctaTab) segSet('cta-tab', antes.ctaTab);
     segSet('cua-mode', antes.cuaMode||'mes'); s('cua-mes', antes.cuaMes); s('cua-vendedor', antes.cuaVend);
   }
-  return { hojas:hojas, cuenta:cuenta };
+  return { hojas:hojas, cuenta:cuenta, control:control };
+}
+/* ✅ (25/10, §4mg, C3; dueño: «aprobado») La lista de control antes de bajar el cierre. Las MISMAS reglas de siempre: «Pagos sin terminar»
+   (`nxPstLista` del mes), «dos veces» (`indiceDuplicados` + los pares descartados en esta compu), sin monto / con saldo / cobradas de más /
+   por cargar (las del resumen de `renderConta`) y el efectivo sin rendir (`cuadreEfectivo`). Se llama con los controles de Ventas y del
+   Cuadre YA puestos en ese mes (`nxCierreHojas`). Rojo = tiene que estar en 0 para bajar el cierre (se puede igual con la contraseña). */
+function nxCierreControl(mes){
+  var L=contaLista(), r=[], am=[], ok=[];
+  var add=function(arr, o){ arr.push(o); };
+  var pst=nxPstLista(mes);
+  var guardo=DUP_IDX, nd=0; try{ DUP_IDX=indiceDuplicados(L); cxDupMarcarDescartados(); nd=DUP_IDX.n||0; }catch(e){} finally{ DUP_IDX=guardo; }
+  var smon=L.filter(function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.01) && sinMontoAnotado(p); });
+  var deb=L.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.01; }), debBs=0; deb.forEach(function(p){ debBs=r2(debBs+contaFaltaCobrar(p)); });
+  var exc=L.filter(function(p){ return excesoCobro(p)>0.01; }), excBs=0; exc.forEach(function(p){ excBs=r2(excBs+excesoCobro(p)); });
+  var car=L.filter(function(p){ return !regEnSistema(p); });
+  var ef=[], efBs=0; try{ ef=cuadreEfectivo().filas.filter(function(o){ return o.falta>0.5; }); ef.forEach(function(o){ efBs=r2(efBs+o.falta); }); }catch(e){}
+  (pst.length ? r : ok).push({ n:pst.length, t:pst.length ? (pst.length+' pago'+(pst.length===1?'':'s')+' sin terminar') : 'Pagos completos', s:'sin recibo, sin foto o QR sin banco', b:'Completar', fn:'nxPstAbrir()' });
+  (nd ? r : ok).push({ n:nd, t:nd ? (nd+' venta'+(nd===1?'':'s')+' que puede'+(nd===1?'':'n')+' estar cargada'+(nd===1?'':'s')+' dos veces') : 'Ninguna venta cargada dos veces', s:'confirmá que son distintas o borrá la repetida', b:'Revisar', fn:'cxDupAbrir()' });
+  (smon.length ? r : ok).push({ n:smon.length, t:smon.length ? (smon.length+' venta'+(smon.length===1?'':'s')+' sin monto anotado') : 'Todas con monto anotado', s:'anotá cuánto entró o cuánto falta', b:'Ver', fn:"closeModal();cxTopFiltro('smon')" });
+  (exc.length ? am : ok).push({ n:exc.length, t:exc.length ? ('Cobradas de más: '+fmtBs0(excBs)) : 'Ninguna cobrada de más', s:exc.length+' venta'+(exc.length===1?'':'s')+' · revisá si se tipeó de más', b:'Ver', fn:"closeModal();cxTopFiltro('exc')" });
+  (ef.length ? am : ok).push({ n:ef.length, t:ef.length ? ('Efectivo sin rendir: '+fmtBs0(efBs)) : 'Efectivo rendido', s:ef.slice(0,4).map(function(o){ return String(o.nombre).split(' ')[0]+' '+fmtBs0(o.falta); }).join(' · ')+(ef.length>4?(' y '+(ef.length-4)+' más'):''), b:'Ver el cuadre', fn:"closeModal();segSet('cta-tab','cuadre');setContaTab('cuadre')" });
+  (deb.length ? am : ok).push({ n:deb.length, t:deb.length ? (deb.length+' venta'+(deb.length===1?'':'s')+' con saldo: '+fmtBs0(debBs)) : 'Nada por cobrar', s:'pasan al mes que viene como «falta cobrar»', b:'Ver quiénes', fn:"closeModal();abrirPorCobrar('ventas')" });
+  (car.length ? am : ok).push({ n:car.length, t:car.length ? (car.length+' venta'+(car.length===1?'':'s')+' por cargar al sistema') : 'Todo cargado al sistema', s:'de '+L.length+' · contabilidad todavía no las registró', b:'Ver', fn:"closeModal();cxTopFiltro('carg')" });
+  return { rojo:r, ambar:am, ok:ok };
+}
+var NX_CIERRE_FORZADO=false;
+function nxCierreControlHtml(C){
+  if(!C) return '';
+  var it=function(o, est){ return '<div class="c3-it c3-'+est+'"><span class="c3-ic">'+(est==='ok'?'✅':est==='mal'?'❌':'⚠️')+'</span><div class="c3-tx"><b>'+esc(o.t)+'</b>'+((est!=='ok' && o.s)?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
+    (est!=='ok'?('<button type="button" class="ah-go'+(est==='mal'?' ah-go-r':' ah-go-a')+'" onclick="'+o.fn+'">'+esc(o.b)+'</button>'):'')+'</div>'; };
+  var nR=C.rojo.length, nA=C.ambar.length, nO=C.ok.length;
+  return '<div class="c3" id="nx-cierre-chk"><div class="c3-barra">'+(nO?'<i style="flex:'+nO+';background:#16a34a"></i>':'')+(nR?'<i style="flex:'+nR+';background:#CE2939"></i>':'')+(nA?'<i style="flex:'+nA+';background:#F59E0B"></i>':'')+'</div>'+
+    '<div class="c3-res"><b style="color:#15803d">'+nO+' listo'+(nO===1?'':'s')+'</b> · <b style="color:#CE2939">'+nR+' sin resolver</b> · <b style="color:#B45309">'+nA+' para revisar</b></div>'+
+    (nR?('<div class="c3-sub">Tiene que estar en 0 para cerrar</div>'+C.rojo.map(function(o){ return it(o,'mal'); }).join('')):'')+
+    (nA?('<div class="c3-sub">Para revisar (se puede cerrar igual)</div>'+C.ambar.map(function(o){ return it(o,'am'); }).join('')):'')+
+    (nO?('<div class="c3-sub">Listo</div>'+C.ok.map(function(o){ return it(o,'ok'); }).join('')):'')+'</div>';
+}
+function nxCierreBoton(C){
+  var btn=document.getElementById('nx-cierre-btn'), fz=document.getElementById('nx-cierre-forzar'); if(!btn) return;
+  var nR=C ? C.rojo.length : 0, bloq=nR>0 && !NX_CIERRE_FORZADO;
+  btn.disabled=bloq; btn.textContent=bloq ? ('⬇️ Bajar el cierre (falta'+(nR===1?'':'n')+' '+nR+' en rojo)') : '⬇️ Bajar el cierre';
+  if(fz) fz.innerHTML=bloq ? '<button type="button" class="ah-go" onclick="nxCierreForzar()">🔑 Cerrar igual, con la contraseña</button>' : '';
+}
+function nxCierreForzar(pass){
+  var fz=document.getElementById('nx-cierre-forzar');
+  if(UNLOCKED){ NX_CIERRE_FORZADO=true; nxCierreBoton({ rojo:[] }); return; }
+  if(pass==null){ if(fz) fz.innerHTML='<input type="password" id="nx-cierre-pass" class="msel" placeholder="Contraseña de Administración" style="max-width:240px" onkeydown="if(event.key===\'Enter\')nxCierreForzar(this.value)">'+
+      '<button type="button" class="ah-go ah-go-p" onclick="nxCierreForzar(document.getElementById(\'nx-cierre-pass\').value)">Usar</button>'; var i=document.getElementById('nx-cierre-pass'); if(i) i.focus(); return; }
+  var stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH;
+  if(sha256(String(pass))===stored){ NX_CIERRE_FORZADO=true; nxCierreBoton({ rojo:[] }); toast('Listo: podés bajar el cierre igual.','ok'); }
+  else toast('Esa no es la contraseña de Administración.','err');
 }
 function nxCierreProductos(mes, lista){
   var cfg={ mes:mes, base:contaBase(), vendedor:((document.getElementById('cta-vendedor')||{}).value||'').trim() };
@@ -41927,9 +41988,12 @@ function nxCierreAbrir(){
       '<label class="nx-sub" style="display:block;margin:10px 0 4px">Mes</label>'+
       '<select id="nx-cierre-mes" class="msel" onchange="nxCierreResumen()">'+ms.map(function(m){ return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(mesNombre(m).replace(/^./,function(c){ return c.toUpperCase(); }))+'</option>'; }).join('')+'</select>'+
       '<div id="nx-cierre-res" class="nx-hojas"></div>'+
+      '<div id="nx-cierre-ctrl"></div>'+   // ✅ (§4mg, C3)
       '<button type="button" class="nx-btn nx-btn-grande" id="nx-cierre-btn" onclick="nxCierreBajar()">⬇️ Bajar el cierre</button>'+
+      '<div id="nx-cierre-forzar" class="c3-forzar"></div>'+
       '<div id="nx-cierre-fin"></div>'+
     '</div></div>');
+  NX_CIERRE_FORZADO=false;
   nxCierreResumen();
 }
 function nxCierreResumen(){
@@ -41942,6 +42006,8 @@ function nxCierreResumen(){
     hoja(1,'🧮','Cuadre', c.pagos+' pago'+(c.pagos===1?'':'s')+(c.retiros?(' · '+c.retiros+' retiro'+(c.retiros===1?'':'s')):'')+' · cierre por forma de pago','#2d6fd6')+
     hoja(2,'📦','Productos del mes', P?(P.consolidado.length+' producto'+(P.consolidado.length===1?'':'s')+' · '+P.detalle.length+' renglones'):'—','#e9609a');
   var fin=document.getElementById('nx-cierre-fin'); if(fin) fin.innerHTML='';
+  var ctl=document.getElementById('nx-cierre-ctrl'); if(ctl) ctl.innerHTML=nxCierreControlHtml(H.control);
+  nxCierreBoton(H.control);
 }
 function nxCierreBajar(){
   var mes=(document.getElementById('nx-cierre-mes')||{}).value; if(!mes) return;
@@ -41970,13 +42036,13 @@ function nxCierreBajar(){
    el banco (QR) o el método; y las ventas marcadas PAGADA sin monto. «Completar» abre la ficha de la venta. El número sale en el
    botón y en la pestaña de Contabilidad. Con un vendedor elegido en Ventas, solo los suyos. Solo mira. */
 var NX_PST_DIAS=0;   /* (dueño, 10/10: «solo este mes») 0 = desde el día 1 del mes en curso */
-function nxPstLista(){
-  var desde=NX_PST_DIAS ? stockSumarDias(todayStr(), -NX_PST_DIAS) : (todayStr().slice(0,7)+'-01'), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
+function nxPstLista(mes){   // mes ('AAAA-MM', opcional): solo los pagos de ese mes (✅ el cierre del mes, §4mg C3)
+  var desde=mes ? (mes+'-01') : (NX_PST_DIAS ? stockSumarDias(todayStr(), -NX_PST_DIAS) : (todayStr().slice(0,7)+'-01')), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
   (STATE||[]).forEach(function(p){
     if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
     contaPagos(p).forEach(function(c){
-      var f=c.fecha||contaFecha(p); if(f<desde) return;
+      var f=c.fecha||contaFecha(p); if(f<desde || (mes && f.slice(0,7)!==mes)) return;
       /* La «PAGADA sin monto» (§4fg): su pago no dice cuánto. Es el mismo aviso «💸» de Revisar antes de cerrar. */
       if(!((Number(c.monto)||0)>0)){ if(c.sinMonto) out.push({ p:p, c:null, f:f, falta:['el monto (está PAGADA sin monto)'] }); return; }
       var falta=[], met=String(c.metodo||'');
