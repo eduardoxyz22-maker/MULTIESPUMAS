@@ -596,7 +596,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
   MISMA de 📅 Reprogramar de la ficha: `nroDia` nuevo, `atcSeguirViaje`, `forzar` con avisos + `asegurarClaveAdmin`) SIN cerrar el cierre.
   Abrirlo destilda; queda en «📅 Reprogramados en este cierre» (`CIERRE_ENT_RP_HECHOS`). El bot avisa el día nuevo como cualquier cambio.
   `tests/test_cierre_reprogramar.js` (17).
-- **🏭 Lo hecho a pedido que llega en dos veces y el Excel corregido** (§4mh, 25/10, auditoría Codex/Astra S1/S2; en la rama): una línea
+- **🏭 Lo hecho a pedido que llega en dos veces y el Excel corregido** (§4mh, 25/10, auditoría Codex/Astra S1/S2; PUBLICADO `f1b5fe2`): una línea
   🏭 tiene DOS partes y van por separado: `prodUnidDeCortes(x)` (lo que anotaron los Excel: `prodU`/`prodC`, en el conteo) y
   `prodUnidAMano(x)` (el resto, del ✔ a mano: en el conteo solo si `stockEntradaVale` con `prodR` + la HORA `prodRt`). ⚠️ No volver a
   dar toda la línea por adentro del Excel por tener un `prodC` (reservaba 10 de un depósito con 3 → «fabricar 7»). Cada corte deja

@@ -15903,7 +15903,7 @@ El dueño aprobó (24-25/10) las muestras V2, V3, V5, V6 y V7 y el orden: V1 →
   versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas). La 25-a: 4.407 líneas, termina en `}`
   con `return borrador;` antes. `test_servidor` §25 (8) y `test_comprobantes_mes` §6.
 
-### §4mh — 🔐 La clave de Trello fuera del repo · 🏭 lo hecho a pedido que llega en dos veces y el Excel corregido (25/10, auditoría de Codex/Astra; en la rama)
+### §4mh — 🔐 La clave de Trello fuera del repo · 🏭 lo hecho a pedido que llega en dos veces y el Excel corregido (25/10, auditoría de Codex/Astra; PUBLICADA `f1b5fe2`)
 El dueño pasó el informe de Codex/Astra (`INFORME_PARA_CLAUDE.md`, revisaron `de2c36b`) y dijo «Si arranca» al orden propuesto: 1 la clave,
 2 S1/S2 del stock; después CRM-01/03/04 (dashboard de ventas), ORD-1/ORD-2 (la cola), S3 y teclado/320 px.
 - **🔐 P0, la clave de Trello** (`5bd2b5f`, SUBIDO A `main`, solo `.claude/skills/atc-multiespumas.md`): la clave y el token estaban escritos
@@ -15927,4 +15927,8 @@ El dueño pasó el informe de Codex/Astra (`INFORME_PARA_CLAUDE.md`, revisaron `
   pierde `prodCu`/`prodRt` (su `heredarMarcas` no los conoce): vuelve a la regla de antes, nada se rompe.
 - Con la planilla real (copia del 24/10, solo lectura): ninguna línea tiene `prodU`/`prodC` todavía; `stockData` da IGUAL en los 323 productos
   antes y después. `tests/test_parcial_corregido.js` (16; 12 rojas contra `7e8ebb6`).
-  Batería entera en la rama: 236 suites, 7.919 bien, 1 mal (`test_ventas_marcas`, la letra del monto de siempre). NO publicado: espera «publica».
+  Batería entera en la rama: 236 suites, 7.919 bien, 1 mal (`test_ventas_marcas`, la letra del monto de siempre).
+- **Publicación (25/10, dueño: «Publica»)**: `main` = `f1b5fe2` (5bd2b5f + SOLO `pedidos.html` y `tests/test_parcial_corregido.js`; sin §4lt-d
+  ni el `.gs` 25-a, que siguen en la rama; `SCRIPT_VERSION_ESPERADA` sigue 15-a). Batería en la copia publicada: 235 suites, 7.880 bien, 2 mal
+  (`test_ventas_marcas` de siempre; `test_mispedidos` 32/1 con la máquina cargada y 33/0 sola). Pages OK (corrida 1807). Probada con la
+  planilla real: stock igual en los 323 productos que `5bd2b5f`, Administración/Mis pedidos/Contabilidad/Stock sin errores. Todos F5.
