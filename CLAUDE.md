@@ -20,7 +20,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - ⚠️ Los límites del mes (`m_start`/`m_end`/`p_start`/`p_end`) llevan `tzinfo=BOL_TZ` (UTC−4,
     §4ew): un datetime naive con `.timestamp()` se interpreta en la zona del runner (UTC en
     Actions) y el mes cortaba a las 20:00 de Bolivia. No volver a crearlos sin tzinfo.
-  - 🛡️ **Una lectura de Kommo que falla NO publica** (§4mi, 25/10, auditoría CRM-01; en la rama): `fetch_paginated` anota en `_FALLAS` y
+  - 🛡️ **Una lectura de Kommo que falla NO publica** (§4mi, 25/10, auditoría CRM-01; PUBLICADO `cd0c73d`): `fetch_paginated` anota en `_FALLAS` y
     `main` sale con `sys.exit(1)` antes de armar nada → no se escribe el panel, el workflow no hace commit y el publicado queda con su
     último dato bueno. Lo que puede faltar sin mentir va con `esencial=False` (contactos, razones de pérdida, catálogo). ⚠️ Una lectura
     NUEVA es esencial salvo que se diga lo contrario. 👥 La vendedora del mes anterior sin nada este mes entra al FINAL del equipo con 0,
@@ -970,6 +970,10 @@ nodos, «Listo» = `fxPasosEstado`). C3 `nxCierreControl` (lista de control del 
 la página solo la llama con `SERVER_VER` ≥ 25-a. ⚠️ Primero el dueño implementa el `.gs`, después se publica la página. Volver atrás:
 ✏️ a la versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas).
 Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_form_pasos`, `test_cierre_control`, `test_comprobantes_mes`.
+🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
+formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
+(si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la
+plata va `{v, t:'n', s:2}`. `tests/test_regresiones_128.js`.
 
 ## 🗂️ La ficha de Administración para logística (§4lz, 23/10, PUBLICADA `d96cd4d`; el dueño eligió la «B»)
 `showPedidoModal`: ancha (`fl-ficha`), arriba N° del día, cliente, 📥 Ingresó, 🚚 Entrega, camión; observaciones en amarillo grande; tres

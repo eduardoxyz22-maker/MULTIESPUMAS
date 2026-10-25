@@ -15933,7 +15933,7 @@ El dueño pasó el informe de Codex/Astra (`INFORME_PARA_CLAUDE.md`, revisaron `
   (`test_ventas_marcas` de siempre; `test_mispedidos` 32/1 con la máquina cargada y 33/0 sola). Pages OK (corrida 1807). Probada con la
   planilla real: stock igual en los 323 productos que `5bd2b5f`, Administración/Mis pedidos/Contabilidad/Stock sin errores. Todos F5.
 
-### §4mi — 🛡️ El dashboard de ventas no se publica roto · 👥 la vendedora sin leads sigue en el mes anterior · 🎯 cuánto cerrar por día (25/10, auditoría Codex/Astra CRM-01/03/04; en la rama)
+### §4mi — 🛡️ El dashboard de ventas no se publica roto · 👥 la vendedora sin leads sigue en el mes anterior · 🎯 cuánto cerrar por día (25/10, auditoría Codex/Astra CRM-01/03/04; PUBLICADA 25/10 11:36 de Bolivia, `cd0c73d`)
 El dueño: «Dale» (paso 3 de la propuesta de §4mh). Todo con un Kommo de mentira; el token real vive solo en GitHub.
 - **CRM-01 · una lectura que falla ya no publica ceros** (`generar.py`): `fetch_paginated` cortaba en la primera página que fallaba y
   devolvía lo que había traído COMO SI FUERA TODO; con el token vencido (401 en todo) el panel salía entero en cero y el bot lo
@@ -15964,7 +15964,7 @@ El dueño: «Dale» (paso 3 de la propuesta de §4mh). Todo con un Kommo de ment
   `datetime.datetime.fromtimestamp(ts)` sin zona, o sea la hora del runner (UTC en Actions): un lead de las 20:00-23:59 de Bolivia cae en
   el día siguiente para la semana y para el corte «al mismo día». Es el mismo error de §4ew, en otro lado. Queda propuesto.
 
-### §4mj — 🪜 El formulario de 4 pasos ya no se esconde · ✅ «listo» solo con la nota · 📦 Stock en el celular · 🧾 los Excel con números (25/10, segunda auditoría Codex/Astra sobre `128bc86`; en la rama)
+### §4mj — 🪜 El formulario de 4 pasos ya no se esconde · ✅ «listo» solo con la nota · 📦 Stock en el celular · 🧾 los Excel con números (25/10, segunda auditoría Codex/Astra sobre `128bc86`; PUBLICADA 25/10 11:36 de Bolivia, `cd0c73d`, Pages OK)
 El dueño pasó el informe nuevo de Codex (el del 25/10, `deb18d8e-INFORME_PARA_CLAUDE.md`). Cuatro regresiones de mi publicación `128bc86`
 (V3/V4/C2) + FIN-02, chico y sin riesgo. Lo demás del informe queda para proponer (abajo).
 - **N-UI1 · el formulario entero desaparecía** (`fpVisible`/`fpPintar`): `fpPintar` seguía con el formulario en OTRA pestaña una vez armado
@@ -15987,3 +15987,9 @@ El dueño pasó el informe nuevo de Codex (el del 25/10, `deb18d8e-INFORME_PARA_
   FLW-1 `mismoContenido` no mira el precio (un reintento viejo puede pisar una corrección de precios de otro), FLW-2/ORD-1 cinco botones y
   las tildes de carga que se pierden si se recarga antes de 700 ms, ORD-2 la cola pierde `forzar`, S3 dos recepciones de 5 desde una foto de 6,
   FIN-03 el mixto, FIN-2/3/4 la proyección (cero real, curva con datos del futuro, día de negocio en UTC), CRM-02/05/06/07/08, teclado/320 px.
+- **Publicación (25/10, dueño: «Publica todo lo que falta publicar» / «Ok publica todo»)**: `main` = `cd0c73d` = `f1b5fe2` + SOLO `generar.py`,
+  `panel_template.html`, `pedidos.html` y sus pruebas (`test_regresiones_128`, `test_generar_integridad`, `test_panel_meta`, `test_ayudas_form`, que
+  ahora llena la nota). **Sin §4lt-d** (el dueño: «está bien como está») ni el `.gs` 25-a (espera que lo implemente). Antes de subir, batería sobre
+  esa copia: 238 suites, 7.928 bien, 2 rojas conocidas (`test_ventas_marcas`; `test_asistente_rev`, 17/17 sola). La última corrida real del dashboard
+  (24/10 22:45) no tenía ninguna lectura fallada: la protección nueva no la habría frenado. Humo con la planilla real (1.430 filas, solo lectura):
+  los cuatro pasos a la vista tras Administración y al editar, barra de Stock 366 px en 390, sin errores.
