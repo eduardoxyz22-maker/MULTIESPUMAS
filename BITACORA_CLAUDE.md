@@ -16167,3 +16167,4 @@ sacarlas. Solo apariencia: ningún texto que lean las pruebas, cuenta ni botón 
 Pruebas: `tests/test_estetica_4mo.js` (35, compu e iPad, reloj clavado en octubre); `test_adm_arriba` §5 cambió a conciencia (esperaba ver el día
 pasado con todo entregado: ahora va plegado y con «Ver todo» dice «1 de 1 entregado», sin cupos). Antes/después para el dueño:
 `scratchpad/antes_despues_4mo.html` (capturas con datos reales: se le mandó como archivo, NO como página publicada).
+Batería sobre la rama con §4mo (25/10): 252 suites, 8.159 bien; roja solo `test_ventas_marcas` (la conocida). Espera el «publica».
