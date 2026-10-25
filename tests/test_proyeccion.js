@@ -306,10 +306,12 @@ function PREPARAR(){
       r.met && r.met.sin.m==='ritmo' && r.met.sin.porque==='sin' && r.pn && r.pn.proy===3015, [r.met && r.met.sin, r.pn]);
   chk('las marcas y el total suman: Sueña 53.600 + Heaven 60.240 + sin marca 3.015 = Bs 116.855 (vendido Bs 71.340)',
       r.sue && r.sue.proy===53600 && r.hea && r.hea.proy===60240 && r.sin.proy===3015 && r.E && r.E.proy===116855 && r.E.vendido===71340, [r.sue, r.hea, r.sin, r.E]);
-  chk('🏁 la prueba (agosto y septiembre, 14 fechas) elige la curva en las dos: Heaven 17 % contra 36 % del ritmo; Sueña 0 % contra 62 %',
-      r.met && r.met.heaven.err && r.met.heaven.err.n===14 && Math.round(r.met.heaven.err.c*100)===17 && Math.round(r.met.heaven.err.r*100)===36 &&
-      r.met.suena.err && r.met.suena.err.n===14 && Math.round(r.met.suena.err.c*100)===0 && Math.round(r.met.suena.err.r*100)===62 &&
-      JSON.stringify(r.met.heaven.err.meses)==='["2026-08","2026-09"]', [r.met && r.met.heaven.err, r.met && r.met.suena.err]);
+  /* (25/10, §4mk, FIN-3) La prueba solo con lo que se sabía: agosto (el primer mes entero) no tiene un mes antes para armar su curva, así
+     que la prueba es septiembre con la curva de agosto (7 fechas). Antes eran 14: agosto se probaba con la curva de septiembre. */
+  chk('🏁 la prueba (septiembre con la curva de agosto, 7 fechas) elige la curva en las dos: Heaven 10 % contra 30 % del ritmo; Sueña 0 % contra 81 %',
+      r.met && r.met.heaven.err && r.met.heaven.err.n===7 && Math.round(r.met.heaven.err.c*100)===10 && Math.round(r.met.heaven.err.r*100)===30 &&
+      r.met.suena.err && r.met.suena.err.n===7 && Math.round(r.met.suena.err.c*100)===0 && Math.round(r.met.suena.err.r*100)===81 &&
+      JSON.stringify(r.met.heaven.err.meses)==='["2026-09"]', [r.met && r.met.heaven.err, r.met && r.met.suena.err]);
   chk('🏭 los mayoristas siguen con el ritmo aunque tengan historia: 20.000 + 1.666,67 × 15 = Bs 45.000',
       r.met && r.met.mayor.m==='ritmo' && r.met.mayor.porque==='mayor' && r.ed && r.ed.proy===45000 && r.may.proy===45000, [r.met && r.met.mayor, r.ed]);
 
@@ -327,8 +329,8 @@ function PREPARAR(){
       /HEAVEN Bs 30\.000,00 10 ventas · 10 unidades · 42% del equipo · 📈 proyección Bs 60\.240 · en agosto y septiembre, a esta altura, ya estaba vendido el 60%/i.test(r.met), r.met);
   chk('debajo de Heaven, la cuenta entera: las dos cuentas, cuánto pesa cada una y el resultado',
       /📈 Faltando 15 días hábiles para el cierre, en agosto y septiembre ya estaba vendido el 60% del mes\. Dos cuentas: \(1\) si sigue en esa proporción, Bs 30\.000 ÷ 60% = Bs 50\.000; \(2\) lo vendido más lo que en esos meses entró desde esta altura hasta el cierre \(40% de Bs 90\.000, lo que vendieron en promedio\): Bs 30\.000 \+ Bs 36\.000 = Bs 66\.000\. La \(1\) pesa 36% —más cuanto más avanzado está el mes— y la \(2\), 64% → Bs 60\.240\./.test(r.vend), r.vend);
-  chk('…y cómo le fue en la prueba: «la curva se equivocó 17% en promedio y el ritmo 36%»',
-      /→ Bs 60\.240\. En la prueba con agosto y septiembre, la curva se equivocó 17% en promedio y el ritmo 36%\./.test(r.vend), r.vend);
+  chk('…y cómo le fue en la prueba: «En la prueba con septiembre, la curva se equivocó 10% en promedio y el ritmo 30%»',
+      /→ Bs 60\.240\. En la prueba con septiembre, la curva se equivocó 10% en promedio y el ritmo 30%\./.test(r.vend), r.vend);
   chk('…debajo del sin marca y de los mayoristas, por qué van con el ritmo',
       /📈 Con el ritmo: no están en ninguna marca, así que no tienen una curva propia\./.test(r.vend) && /📈 Con el ritmo: son pocas compras y grandes/.test(r.vend), r.vend);
   chk('con dos meses de historia no avisa «un solo mes»', !/sale de un solo mes/.test(r.nota), r.nota);
@@ -353,19 +355,20 @@ function PREPARAR(){
   });
   chk('se prueba los días 5, 10, 15, 20 y 25, faltando 3 días hábiles (jue 27/08) y la víspera del último (dom 30/08)',
       JSON.stringify(r.fechas)==='["2026-08-05","2026-08-10","2026-08-15","2026-08-20","2026-08-25","2026-08-27","2026-08-30"]', [r.fechas, r.__error]);
-  chk('la curva para agosto sale de septiembre, y la de septiembre de agosto (nunca del mismo mes)', JSON.stringify(r.curA)==='["2026-09"]' && JSON.stringify(r.curS)==='["2026-08"]', [r.curA, r.curS]);
-  chk('Heaven, 05/08 (faltaban 22): vendido 24.000; el ritmo decía 156.000 y la curva (septiembre: 40 % vendido, 120.000) 90.240 → (1) 60.000 × 16 % + (2) 96.000 × 84 %',
-      r.a05 && r.a05.dr===22 && r.a05.K===24000 && r.a05.r===156000 && r.a05.c===90240 && r.totA && r.totA.heaven===60000, [r.a05, r.totA]);
-  chk('Heaven, 15/08: septiembre esperaba más vendido a esa altura (70 %) → la curva 47.400; el ritmo, 48.000', r.a15 && r.a15.r===48000 && r.a15.c===47400, r.a15);
-  chk('Heaven, 20/08: con lo agendado para el 29, el ritmo decía 42.000 y la curva 69.180', r.a20 && r.a20.K===42000 && r.a20.r===42000 && r.a20.c===69180, r.a20);
-  chk('Heaven, dom 30/08 (faltaba 1): los dos dan 60.000', r.a30 && r.a30.dr===1 && r.a30.r===60000 && r.a30.c===60000, r.a30);
-  chk('Sueña, 10/08: el ritmo decía 260.000 (vende al principio) y la curva 100.000 = lo que terminó', r.su10 && r.su10.r===260000 && r.su10.c===100000 && r.totA.suena===100000, [r.su10, r.totA]);
+  /* (25/10, §4mk, FIN-3) Solo con lo que se sabía: la curva de un mes sale de los meses cerrados ANTES de él. Antes la de agosto salía de
+     septiembre (un mes que todavía no había pasado) y daba 90.240 el 05/08, 47.400 el 15/08… */
+  chk('la curva para septiembre sale de agosto, y agosto (el primer mes entero) no tiene con qué armarla: nunca con el mismo mes ni con uno posterior', JSON.stringify(r.curA)==='[]' && JSON.stringify(r.curS)==='["2026-08"]', [r.curA, r.curS]);
+  chk('Heaven, 05/08 (faltaban 22): vendido 24.000; el ritmo decía 156.000 y la curva no dice nada (—)',
+      r.a05 && r.a05.dr===22 && r.a05.K===24000 && r.a05.r===156000 && r.a05.c===null && r.totA && r.totA.heaven===60000, [r.a05, r.totA]);
+  chk('Heaven, 15/08 y 20/08: el ritmo decía 48.000 y 42.000, la curva nada', r.a15 && r.a15.r===48000 && r.a15.c===null && r.a20 && r.a20.K===42000 && r.a20.r===42000 && r.a20.c===null, [r.a15, r.a20]);
+  chk('Heaven, dom 30/08 (faltaba 1): el ritmo da 60.000', r.a30 && r.a30.dr===1 && r.a30.r===60000 && r.a30.c===null, r.a30);
+  chk('Sueña, 10/08: el ritmo decía 260.000 (vende al principio)', r.su10 && r.su10.r===260000 && r.su10.c===null && r.totA.suena===100000, [r.su10, r.totA]);
   chk('septiembre con la curva de agosto (40 % vendido, 60.000): el 10/09 decía 134.400 → (1) 210.000 × 16 % + (2) 120.000 × 84 %', r.s10 && r.s10.K===84000 && r.s10.c===134400 && r.totS && r.totS.heaven===120000, [r.s10, r.totS]);
-  chk('en pantalla, Heaven agosto: «terminó en Bs 60.000», cada fecha con lo que decía cada una y el error, y el promedio (ritmo 43 %, curva 24 %)',
-      /Heaven — agosto de 2026 terminó en Bs 60\.000/.test(r.bAgoH) && /mié 05\/08 faltaban 22 días hábiles Bs 24\.000 Bs 156\.000 \+160% Bs 90\.240 \+50%/.test(r.bAgoH) &&
-      /sáb 15\/08 faltaban 13 días hábiles Bs 24\.000 Bs 48\.000 −20% Bs 47\.400 −21%/.test(r.bAgoH) && /dom 30\/08 faltaba 1 día hábil Bs 60\.000 Bs 60\.000 0% Bs 60\.000 0%/.test(r.bAgoH) &&
-      /Se equivocó, en promedio 43% 24%/.test(r.bAgoH) && /La curva para agosto sale de septiembre \(y lo que vendió, Bs 120\.000\)\./.test(r.bAgoH), r.bAgoH);
-  chk('Sueña agosto: el ritmo se equivocó 43 % en promedio y la curva 0 %', /Se equivocó, en promedio 43% 0%/.test(r.bAgoS), r.bAgoS);
+  chk('en pantalla, Heaven agosto: «terminó en Bs 60.000», cada fecha con el ritmo y su error, la curva con «—», el promedio del ritmo (43 %) y por qué',
+      /Heaven — agosto de 2026 terminó en Bs 60\.000/.test(r.bAgoH) && /mié 05\/08 faltaban 22 días hábiles Bs 24\.000 Bs 156\.000 \+160% —/.test(r.bAgoH) &&
+      /sáb 15\/08 faltaban 13 días hábiles Bs 24\.000 Bs 48\.000 −20% —/.test(r.bAgoH) && /dom 30\/08 faltaba 1 día hábil Bs 60\.000 Bs 60\.000 0% —/.test(r.bAgoH) &&
+      /Se equivocó, en promedio 43% —/.test(r.bAgoH) && /La curva para agosto se arma con los meses cerrados antes de él, y es el primer mes entero en el panel: queda solo con el ritmo\./.test(r.bAgoH), r.bAgoH);
+  chk('Sueña agosto: el ritmo se equivocó 43 % en promedio y la curva no se prueba', /Se equivocó, en promedio 43% —/.test(r.bAgoS), r.bAgoS);
   chk('Heaven septiembre (con la de agosto): el ritmo se equivocó 30 % en promedio y la curva 10 %',
       /Heaven — septiembre de 2026 terminó en Bs 120\.000/.test(r.bSepH) && /Se equivocó, en promedio 30% 10%/.test(r.bSepH), r.bSepH);
   chk('octubre (no cerró): solo las fechas que ya pasaron (05 y 10), «va en Bs 30.000 · faltan 15 días hábiles», sin ningún error',
@@ -373,8 +376,8 @@ function PREPARAR(){
       /Heaven — octubre de 2026 va en Bs 30\.000 · faltan 15 días hábiles/.test(r.bOctH) && !/Se equivocó/.test(r.bOctH) && r.fOctH && !/%/.test(r.fOctH) &&
       /El error se ve cuando cierre el mes/.test(r.bOctH), [r.oct, r.o05, r.fOctH, r.bOctH]);
   chk('arriba de la prueba, quién ganó en cada marca y con qué va octubre',
-      /Sueña: en agosto y septiembre, el ritmo se equivocó 62% en promedio y la curva 0% → octubre de 2026 va con la curva\./.test(r.gana) &&
-      /Heaven: en agosto y septiembre, el ritmo se equivocó 36% en promedio y la curva 17% → octubre de 2026 va con la curva\./.test(r.gana), r.gana);
+      /Sueña: en septiembre, el ritmo se equivocó 81% en promedio y la curva 0% → octubre de 2026 va con la curva\./.test(r.gana) &&
+      /Heaven: en septiembre, el ritmo se equivocó 30% en promedio y la curva 10% → octubre de 2026 va con la curva\./.test(r.gana), r.gana);
   chk('orden: agosto, septiembre y octubre; en cada mes Sueña y después Heaven',
       JSON.stringify(r.orden)==='["2026-08|suena","2026-08|heaven","2026-09|suena","2026-09|heaven","2026-10|suena","2026-10|heaven"]', r.orden);
 
@@ -440,10 +443,10 @@ function PREPARAR(){
   chk('…y dice que cuando cierre septiembre la compara con el ritmo y elige la que menos se equivocó',
       /Cuando cierre septiembre, el panel la compara con el ritmo y usa, en cada marca, la que menos se equivocó/.test(r.nota), r.nota);
   chk('la prueba todavía no puede elegir (hacen falta dos meses cerrados) y la marca va con la curva, y lo dice debajo',
-      /Todavía no se pueden comparar: la curva de un mes se prueba con otro mes cerrado, así que hacen falta dos\. Hasta entonces va la curva, y la comparación aparece sola cuando cierre septiembre\./.test(r.gana) &&
+      /Todavía no se pueden comparar: la curva de un mes se prueba con un mes cerrado anterior, así que hacen falta dos\. Hasta entonces va la curva, y la comparación aparece sola cuando cierre septiembre\./.test(r.gana) &&
       /Todavía no se pudo comparar con el ritmo: hace falta otro mes cerrado\./.test(r.vend) && r.met.heaven.m==='curva', [r.gana, r.vend]);
-  chk('agosto todavía no se puede probar con la curva («—») y lo dice: se va a poder cuando cierre septiembre',
-      /Heaven — agosto de 2026 terminó en Bs 60\.000/.test(r.agoH) && /Bs 156\.000 \+160% —/.test(r.agoH) && /Se va a poder probar cuando cierre septiembre\./.test(r.agoH) && /Se equivocó, en promedio 43% —/.test(r.agoH), r.agoH);
+  chk('agosto no se puede probar con la curva («—») y lo dice: es el primer mes entero, no hay uno antes',
+      /Heaven — agosto de 2026 terminó en Bs 60\.000/.test(r.agoH) && /Bs 156\.000 \+160% —/.test(r.agoH) && /es el primer mes entero en el panel: queda solo con el ritmo\./.test(r.agoH) && /Se equivocó, en promedio 43% —/.test(r.agoH), r.agoH);
   chk('septiembre (en curso) con la curva de agosto: hasta el domingo 27 (lo de hoy no), el 10/09 decía 134.400, «va en Bs 120.000 · falta 1 día hábil», sin error',
       JSON.stringify(r.fechas)==='["2026-09-05","2026-09-10","2026-09-15","2026-09-20","2026-09-25","2026-09-27"]' && r.s10===134400 &&
       /Heaven — septiembre de 2026 va en Bs 120\.000 · falta 1 día hábil/.test(r.sepH) && !/Se equivocó/.test(r.sepH), [r.fechas, r.s10, r.sepH]);
@@ -478,18 +481,18 @@ function PREPARAR(){
     return { met:R.metodos, sue:m('suena'), hea:m('heaven'), E:R.equipo, mau:mau, metTxt:_txt('pry-metrics'), vend:_txt('pry-vendedores'),
              gana:((document.querySelector('#pry-prueba .pry-gana')||{}).innerText||'').replace(/\s+/g,' ') };
   });
-  chk('Sueña (pareja): en la prueba el ritmo se equivocó 0 % y la curva 22 % → va con el ritmo', r.met && r.met.suena.m==='ritmo' && r.met.suena.porque==='prueba' &&
-      r.met.suena.err.r<1e-9 && Math.round(r.met.suena.err.c*100)===22 && r.met.suena.err.n===14, [r.met && r.met.suena, r.__error]);
+  chk('Sueña (pareja): en la prueba (septiembre con la curva de agosto) el ritmo se equivocó 0 % y la curva 29 % → va con el ritmo', r.met && r.met.suena.m==='ritmo' && r.met.suena.porque==='prueba' &&
+      r.met.suena.err.r<1e-9 && Math.round(r.met.suena.err.c*100)===29 && r.met.suena.err.n===7, [r.met && r.met.suena, r.__error]);
   chk('…Mauricio y Sueña proyectan con el ritmo (Bs 90.000); Heaven sigue con la curva (Bs 60.240); el equipo, Bs 153.255',
       r.mau && r.mau.metodo==='ritmo' && r.mau.proy===90000 && r.sue.proy===90000 && r.met.heaven.m==='curva' && r.hea.proy===60240 && r.E.proy===153255, [r.mau, r.sue, r.hea, r.E]);
   chk('la ficha dice «Sueña con el ritmo, Heaven con la curva», y la de Sueña no dice «a esta altura»',
       /PROYECCIÓN AL CIERRE Bs 153\.255 Sueña con el ritmo, Heaven con la curva · faltan 15 días hábiles/i.test(r.metTxt) &&
       /SUEÑA Bs 40\.000,00 8 ventas · 8 unidades · \d+% del equipo · 📈 proyección Bs 90\.000 💚/i.test(r.metTxt), r.metTxt);
-  chk('debajo de Sueña: «Con el ritmo: en la prueba con agosto y septiembre se equivocó menos (0% en promedio, contra 22% de la curva)»',
-      /📈 Con el ritmo: en la prueba con agosto y septiembre se equivocó menos \(0% en promedio, contra 22% de la curva\)\./.test(r.vend), r.vend);
+  chk('debajo de Sueña: «Con el ritmo: en la prueba con septiembre se equivocó menos (0% en promedio, contra 29% de la curva)»',
+      /📈 Con el ritmo: en la prueba con septiembre se equivocó menos \(0% en promedio, contra 29% de la curva\)\./.test(r.vend), r.vend);
   chk('el resumen de la prueba: Sueña va con el ritmo y Heaven con la curva',
-      /Sueña: en agosto y septiembre, el ritmo se equivocó 0% en promedio y la curva 22% → octubre de 2026 va con el ritmo \(desde el 5° día hábil; antes, con la curva\)\./.test(r.gana) &&
-      /Heaven: en agosto y septiembre, el ritmo se equivocó 36% en promedio y la curva 17% → octubre de 2026 va con la curva\./.test(r.gana), r.gana);
+      /Sueña: en septiembre, el ritmo se equivocó 0% en promedio y la curva 29% → octubre de 2026 va con el ritmo \(desde el 5° día hábil; antes, con la curva\)\./.test(r.gana) &&
+      /Heaven: en septiembre, el ritmo se equivocó 30% en promedio y la curva 10% → octubre de 2026 va con la curva\./.test(r.gana), r.gana);
 
   /* El viernes 02/10 (2 días hábiles) la prueba sigue prefiriendo el ritmo para Sueña, pero con 2 días no hay ritmo: va la curva. */
   await reloj('2026-10-02T15:00:00-04:00');

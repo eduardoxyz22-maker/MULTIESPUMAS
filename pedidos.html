@@ -4721,6 +4721,11 @@ function isoLocal(d){ var m=(d.getMonth()+1),day=d.getDate(); return d.getFullYe
 function fmtFecha(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):String(iso||''); }
 function fmtFechaCorta(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]):String(iso||''); }
 function monthStr(){ return todayStr().slice(0,7); }
+/* 🗓️ (25/10, §4mk, auditoría FIN-4) El DÍA DEL NEGOCIO: la fecha de Bolivia (UTC−4, sin horario de verano), sea cual sea la zona del
+   aparato. Lo usan la plata y la proyección (Contabilidad, Cuadre, retiros, «Tu día», Proyección): un aparato con la hora en UTC a las
+   22:00 del 31/10 de Bolivia ya decía «1/11», daba octubre por cerrado y abría el Cuadre en noviembre. En un aparato bien
+   configurado da lo mismo que `todayStr()`, que sigue siendo el reloj de quien mira para todo lo demás (§4fu). */
+function diaNegocio(){ return isoDeTsBolivia(Date.now()); }
 function fmtBs(n){ n=Number(n)||0; return 'Bs '+n.toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 /* ============================================================================
    N° DE OC — CORRELATIVO MENSUAL AUTOMÁTICO (desde el 01/08/2026)
@@ -7169,8 +7174,8 @@ function contaLista(){
     if(fueraDeConta(p, amb)) return false;
     if(vend && !mismoVendedor(p.vendedor, vend)) return false;
     var f=contaFechaBase(p);
-    if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||todayStr());
-    if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
+    if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||diaNegocio());
+    if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
     return true;
   });
   if(q) list=list.filter(function(p){
@@ -7484,11 +7489,11 @@ function contaProdTxt(prods){
   });
 }
 function refreshConta(){
-  var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=todayStr().slice(0,7);
-  var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=todayStr();
-  var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=todayStr();
-  var cm=document.getElementById('cua-mes'); if(cm && !cm.value) cm.value=todayStr().slice(0,7);
-  var pm=document.getElementById('pry-mes'); if(pm && !pm.value) pm.value=todayStr().slice(0,7);
+  var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=diaNegocio().slice(0,7);
+  var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=diaNegocio();
+  var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=diaNegocio();
+  var cm=document.getElementById('cua-mes'); if(cm && !cm.value) cm.value=diaNegocio().slice(0,7);
+  var pm=document.getElementById('pry-mes'); if(pm && !pm.value) pm.value=diaNegocio().slice(0,7);
   llenarSelectContaVendedor();
   var pinta=function(){ llenarSelectContaVendedor(); contaRepintar(); };
   if(!CONNECTED){ pinta(); return; }
@@ -7573,8 +7578,8 @@ function mcToca(color, lbl, val, sub, onclick, ver){
 }
 function contaPeriodoTxt(){
   var modo=segVal('cta-mode')||'mes';
-  if(modo==='dia') return fmtFecha((document.getElementById('cta-dia')||{}).value||todayStr());
-  if(modo==='mes') return mesNombre(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
+  if(modo==='dia') return fmtFecha((document.getElementById('cta-dia')||{}).value||diaNegocio());
+  if(modo==='mes') return mesNombre(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
   return 'todo el historial';
 }
 function porCobrarDatos(origen){
@@ -7679,7 +7684,7 @@ function cxTopPeriodo(){
   var modo=segVal('cta-mode')||'mes', may=function(t){ return String(t).replace(/^./,function(c){ return c.toUpperCase(); }); };
   if(modo==='todo') return 'Todo';
   if(modo==='dia'){ var d=(document.getElementById('cta-dia')||{}).value||''; return d ? fmtFecha(d) : 'El día'; }
-  var m=(document.getElementById('cta-mes')||{}).value||todayStr().slice(0,7);
+  var m=(document.getElementById('cta-mes')||{}).value||diaNegocio().slice(0,7);
   var t=mesNombre(m);
   if(m.slice(0,4)===todayStr().slice(0,4)) t=t.replace(/ de \d{4}$/, '');   // el año, solo si no es este
   return may(t);
@@ -8652,15 +8657,20 @@ function pryHoraTxt(min){ var h=Math.floor(min/60), mm=min%60; return (h<10?'0':
 /* ¿La venta `x` ya estaba cargada el día `d` a los `min` minutos? Sin `min`, cuenta el día entero. */
 function pryCargadaAl(x, d, min){ return x.reg<d || (x.reg===d && (min==null || x.m<=min)); }
 /* La curva de la marca `g` ('heaven' | 'suena') con los meses dados, y lo que vendieron en promedio (`prom`). */
+/* (25/10, §4mk, auditoría FIN-2) Un mes cerrado en que la marca vendió 0 ES un mes (cero de verdad) y entra al promedio: antes se
+   salteaba y agosto 2.000 + septiembre 0 promediaba 2.000 en vez de 1.000. Lo que no entra es un mes SIN DATOS (el panel no tiene
+   ninguna venta del equipo ese mes: no se usaba, no es que no se vendió); va en `sinDatos` para decirlo. */
 function pryCurva(V, g, meses){
-  var por={}, T=0, n=0;
+  var por={}, T=0, n=0, hay={};
   (meses||[]).forEach(function(m){ por[m]=[]; });
   V.forEach(function(x){
-    if(!por[x.ym] || x.amb!=='tienda' || x.g!==g) return;
+    if(!por[x.ym] || x.amb!=='tienda') return;
+    hay[x.ym]=1;
+    if(x.g!==g) return;
     por[x.ym].push(x); T+=x.bs; n++;
   });
-  var ms=(meses||[]).filter(function(m){ return por[m].length; });
-  return { g:g, meses:ms, por:por, T:T, n:n, prom:(ms.length ? T/ms.length : 0), ok:(n>=PRY_MIN_VENTAS && T>0.009) };
+  var ms=(meses||[]).filter(function(m){ return hay[m]; }), sin=(meses||[]).filter(function(m){ return !hay[m]; });
+  return { g:g, meses:ms, sinDatos:sin, por:por, T:T, n:n, prom:(ms.length ? T/ms.length : 0), ok:(n>=PRY_MIN_VENTAS && T>0.009) };
 }
 /* Qué parte de lo que vendieron esos meses ya estaba vendida faltando `r` días hábiles para su cierre (suma sobre suma:
    el mes más grande pesa más). Con `min`, ese día cuenta hasta esa hora (la de ahora, en el mes en curso: §4gy); sin él,
@@ -8751,7 +8761,7 @@ function pryPlataHtml(ym){
   return h;
 }
 function proyeccionMes(ym){
-  var hoy=todayStr(), ini=ym+'-01', fin=pryFinDeMes(ym);
+  var hoy=diaNegocio(), ini=ym+'-01', fin=pryFinDeMes(ym);
   var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
   var dt = estado==='futuro' ? 0 : pryHabiles(ini, estado==='cerrado' ? fin : hoy);
   var dr = estado==='curso' ? pryHabiles(stockSumarDias(hoy,1), fin) : (estado==='futuro' ? pryHabiles(ini, fin) : 0);
@@ -8783,7 +8793,7 @@ function proyeccionMes(ym){
           /* (30/09, R3-1) La hora solo en un día hábil: un domingo o un feriado no se vende, y la curva «a esta hora» subía sola
              de la mañana a la noche (hasta 3,6 %) sin que entrara ninguna venta. */
           var f=pryCurvaF(c, dr, pryDiaHabil(hoy) ? pryMinBo(Date.now()) : null), z=pryMezcla(K, f, c.prom), e=errores[g];
-          o={ m:'curva', f:f, meses:c.meses, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
+          o={ m:'curva', f:f, meses:c.meses, sinDatos:c.sinDatos, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
           if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
         }
       }
@@ -8969,14 +8979,17 @@ function pryAlturaHtml(R){
   return '<div class="cua-box" id="pry-altura-box"><div class="cua-t">'+esc(tit)+'</div>'+h+'</div>';
 }
 /* 🧪 Qué habría dicho cada forma de proyectar en `ym`, en distintas fechas, con lo que estaba vendido ESE día: el ritmo
-   (por vendedor, como la pantalla) y la curva (con la mezcla de `pryMezcla`) armada con los OTROS meses cerrados, curva y
+   (por vendedor, como la pantalla) y la curva (con la mezcla de `pryMezcla`) armada con los meses cerrados ANTES de `ym`, curva y
    promedio. Días 5, 10, 15, 20 y 25, faltando 3 días hábiles y la víspera del último. Del mes en curso, solo las fechas
-   que ya pasaron. */
+   que ya pasaron.
+   (25/10, §4mk, auditoría FIN-3) Solo con lo que se sabía ese día: antes la curva de agosto se armaba con septiembre (un mes que
+   todavía no había pasado), y la prueba medía mejor de lo que la curva puede proyectar de verdad. El primer mes entero no tiene
+   con qué armarla: queda solo con el ritmo. */
 function pryPrueba(V, ym, hist, hoy){
   var ini=ym+'-01', fin=pryFinDeMes(ym), cerrado=(fin<hoy);
   var fechas=[5,10,15,20,25].map(function(d){ return ym+'-'+(d<10?'0':'')+d; }).concat([pryAlDia(ym,3), pryAlDia(ym,1)]);
   fechas=fechas.filter(function(d,i){ return d>=ini && d<=fin && d<hoy && fechas.indexOf(d)===i; }).sort();
-  var otros=hist.filter(function(m){ return m!==ym; });
+  var otros=hist.filter(function(m){ return m<ym; });
   var cur={ suena:pryCurva(V,'suena',otros), heaven:pryCurva(V,'heaven',otros) };
   var tot={ suena:0, heaven:0 };
   V.forEach(function(x){ if(x.ym===ym && cur[x.g]) tot[x.g]+=x.bs; });
@@ -9027,8 +9040,8 @@ function pryPatron(V, ym, g, hist, hoy){
 function renderProyeccion(){
   var box=document.getElementById('pry-metrics'); if(!box) return;
   if(!UNLOCKED){ segSet('cta-tab','ventas'); setContaTab('ventas'); return; }
-  var inp=document.getElementById('pry-mes'); if(inp && !inp.value) inp.value=todayStr().slice(0,7);
-  var R=proyeccionMes((inp && inp.value) || todayStr().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
+  var inp=document.getElementById('pry-mes'); if(inp && !inp.value) inp.value=diaNegocio().slice(0,7);
+  var R=proyeccionMes((inp && inp.value) || diaNegocio().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
   var pc=function(bs){ return E.vendido>0.009 ? Math.round(bs/E.vendido*100)+'%' : '—'; };
   var nV=function(n){ return n+' venta'+(n===1?'':'s'); };
   var nU=function(u){ return u+' unidad'+(u===1?'':'es'); };   // §4gv
@@ -9099,7 +9112,8 @@ function renderProyeccion(){
         ((mt.err && mt.err.n>=PRY_MIN_PARES)
           ? (' En la prueba con '+pryMesesTxt(mt.err.meses)+', la curva se equivocó '+Math.round(mt.err.c*100)+'% en promedio y el ritmo '+Math.round(mt.err.r*100)+'%'+
              (mt.err.r<mt.err.c ? ('; el ritmo va desde el '+PRY_DIAS_RITMO+'° día hábil del mes: antes, con tan pocos días, no hay ritmo.') : '.'))
-          : ' Todavía no se pudo comparar con el ritmo: hace falta otro mes cerrado.');
+          : ' Todavía no se pudo comparar con el ritmo: hace falta otro mes cerrado.')+
+        ((mt.sinDatos||[]).length ? (' Sin contar '+pryMesesTxt(mt.sinDatos)+': el panel no tiene ninguna venta del equipo de ese mes.') : '');
     }
     else if(mt.porque==='prueba') t='📈 Con el ritmo: en la prueba con '+pryMesesTxt(mt.err.meses)+' se equivocó menos ('+Math.round(mt.err.r*100)+'% en promedio, contra '+
       Math.round(mt.err.c*100)+'% de la curva).';
@@ -9194,8 +9208,8 @@ function pryPruebaHtml(R){
   });
   return '<div class="cua-box"><div class="cua-t">🧪 ¿Qué tan bien proyecta? — la prueba con los meses que ya pasaron</div>'+
     '<div class="pry-intro">Para cada mes, lo que habría dicho cada forma de proyectar en distintas fechas, con lo que estaba vendido <b>ese</b> día, '+
-    'contra cómo terminó. <b>El ritmo</b> es la forma de antes; <b>la curva</b>, la de ahora. La curva de un mes se arma con los <b>otros</b> meses cerrados, '+
-    'nunca con él mismo (con la suya acertaría siempre).</div>'+pryGanaHtml(R)+
+    'contra cómo terminó. <b>El ritmo</b> es la forma de antes; <b>la curva</b>, la de ahora. La curva de un mes se arma con los meses cerrados <b>antes</b> de él '+
+    '(lo que se sabía en ese momento), nunca con él mismo ni con uno que vino después.</div>'+pryGanaHtml(R)+
     (h || '<div class="empty" style="padding:12px 0">Todavía no hay fechas para probar.</div>')+'</div>';
 }
 /* Quién ganó, marca por marca, y con qué va el mes en curso (la elección de `proyeccionMes`). */
@@ -9208,7 +9222,7 @@ function pryGanaHtml(R){
              Math.round(e.c*100)+'% → '+esc(mesNombre(cur))+' va con <b>'+(e.r<e.c ? 'el ritmo' : 'la curva')+'</b>'+
              (e.r<e.c ? ' (desde el '+PRY_DIAS_RITMO+'° día hábil; antes, con la curva)' : '')+'.');
   });
-  if(!lin.length) lin.push('Todavía no se pueden comparar: la curva de un mes se prueba con <b>otro</b> mes cerrado, así que hacen falta dos. '+
+  if(!lin.length) lin.push('Todavía no se pueden comparar: la curva de un mes se prueba con un mes cerrado <b>anterior</b>, así que hacen falta dos. '+
                            'Hasta entonces va la curva, y la comparación aparece sola cuando cierre '+esc(pryMesCorto(cur))+'.');
   return '<div class="pry-gana">'+lin.map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>';
 }
@@ -9226,10 +9240,11 @@ function pryPruebaMarca(P, g){
   }).join('');
   var der = P.cerrado ? ('terminó en <b>'+fmtBs0(T)+'</b>') : ('va en <b>'+fmtBs0(T)+'</b> · '+pryFaltanTxt(P.falta));
   var pie=[];
-  if(!c.ok) pie.push('La curva para '+pryMesCorto(P.ym)+' se arma con otro mes cerrado, y todavía no hay uno con al menos '+PRY_MIN_VENTAS+' ventas de '+g.lbl+'.'+
-                     ((P.cerrado && P.hoyYm>P.ym) ? ' Se va a poder probar cuando cierre '+pryMesCorto(P.hoyYm)+'.' : ''));
+  if(!c.ok) pie.push(!(c.meses.length || (c.sinDatos||[]).length)
+                     ? ('La curva para '+pryMesCorto(P.ym)+' se arma con los meses cerrados antes de él, y es el primer mes entero en el panel: queda solo con el ritmo.')
+                     : ('La curva para '+pryMesCorto(P.ym)+' se arma con los meses cerrados antes de él, y no hay uno con al menos '+PRY_MIN_VENTAS+' ventas de '+g.lbl+'.'));
   else pie.push('La curva para '+pryMesCorto(P.ym)+' sale de '+pryMesesTxt(c.meses)+(c.meses.length>1 ? ' (y lo que vendieron en promedio, Bs ' : ' (y lo que vendió, Bs ')+
-                Math.round(c.prom).toLocaleString('es-BO')+').');
+                Math.round(c.prom).toLocaleString('es-BO')+').'+((c.sinDatos||[]).length ? (' Sin contar '+pryMesesTxt(c.sinDatos)+': sin ventas del equipo cargadas en el panel.') : ''));
   if(!P.cerrado) pie.push('El error se ve cuando cierre el mes: hoy cualquier comparación quedaría corta.');
   var foot = (P.cerrado && (nR || nC)) ? ('<tfoot><tr><td colspan="2">Se equivocó, en promedio</td><td>'+(nR ? Math.round(sR/nR*100)+'%' : '—')+'</td><td>'+(nC ? Math.round(sC/nC*100)+'%' : '—')+'</td></tr></tfoot>') : '';
   return '<div class="pry-grupo pry-prueba" data-ym="'+esc(P.ym)+'" data-g="'+esc(k)+'" style="border-left-color:'+g.col+'">'+
@@ -9356,8 +9371,8 @@ function setCuadreModo(m){
 }
 function cuadrePeriodo(){
   var modo=segVal('cua-mode')||'mes';   // el mismo arranque que marca el HTML (§4bp)
-  if(modo==='dia') return {modo:modo, val:((document.getElementById('cua-dia')||{}).value||todayStr())};
-  if(modo==='mes') return {modo:modo, val:(((document.getElementById('cua-mes')||{}).value)||todayStr().slice(0,7))};
+  if(modo==='dia') return {modo:modo, val:((document.getElementById('cua-dia')||{}).value||diaNegocio())};
+  if(modo==='mes') return {modo:modo, val:(((document.getElementById('cua-mes')||{}).value)||diaNegocio().slice(0,7))};
   return {modo:'todo', val:''};
 }
 var MESES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -10486,7 +10501,7 @@ function retFormVacio(){
 }
 function abrirRetiros(){
   RET_FORM=retFormVacio();
-  var m=document.getElementById('ret-mes'); if(m && !m.value) m.value=todayStr().slice(0,7);
+  var m=document.getElementById('ret-mes'); if(m && !m.value) m.value=diaNegocio().slice(0,7);
   document.getElementById('retiros-overlay').style.display='flex';
   llenarSelectRetVendedor();
   renderRetiros();
@@ -22645,7 +22660,7 @@ function misHacerDatos(v, mine){
    un retiro parcial de 500 sobre 700 decía «todo rendido» con 200 en la mano. ⚠️ El 1° de cada mes arranca de nuevo (decisión del
    dueño): lo cobrado el 30 y rendido el 2 da negativo → se muestra 0 y se dice «N eran de lo cobrado el mes pasado». */
 function misEfectivoDatos(v){
-  var pe={ modo:'mes', val:todayStr().slice(0,7) };
+  var pe={ modo:'mes', val:diaNegocio().slice(0,7) };
   var cob=cuadrePagos(pe, '').filter(function(c){ return c.metodo==='Efectivo' && mismoVendedor(pagoRecibio(c, c.p), v); })
     .map(function(c){ return { f:c.fecha||'', m:Number(c.monto)||0, p:c.p, envio:!!c.envio }; });
   var ret=retirosDe(pe, '').filter(function(r){ return mismoVendedor(r.entrega, v); }).sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
