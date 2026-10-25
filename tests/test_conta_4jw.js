@@ -137,7 +137,7 @@ function PREPARAR(){
     dup:document.getElementById('cx-dup-btn').innerText.replace(/\s+/g,' '), deben:document.getElementById('cx-deben-btn').innerText.replace(/\s+/g,' '),
     ids:['cta-productos-mes','nx-cierre-btn0','nx-pst-btn'].every(function(i){ return !!document.getElementById(i); })
   }));
-  chk('tres grupos: Bajar (3), Revisar (3), Cargar (2), con los botones de siempre', r.grupos.join('|')==='⬇️ Bajar|🔎 Revisar|➕ Cargar' && r.bajar===3 && r.revisar===3 && r.cargar===2 && r.ids, r);
+  chk('tres grupos: Bajar (4, con 📁 Comprobantes desde §4mg), Revisar (3), Cargar (2), con los botones de siempre', r.grupos.join('|')==='⬇️ Bajar|🔎 Revisar|➕ Cargar' && r.bajar===4 && r.revisar===3 && r.cargar===2 && r.ids, r);
   chk('«👯 Dos veces» con 2 y «⏳ Deben» con 3', /Dos veces 2/.test(r.dup) && /Deben 3/.test(r.deben), r);
 
   // ═══ D. Chips ══════════════════════════════════════════════════════════════════════════════════
