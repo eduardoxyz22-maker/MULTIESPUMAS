@@ -16048,3 +16048,6 @@ contra `main` (`cd0c73d`) y verde en la rama.
   su etiqueta (`for`) o les pone `aria-label` (también cada renglón de productos, desde `addProdRow`); `.af-cg` con `minmax(min(285px,100%),1fr)`
   (a 320 px Administración medía 336) y la lista de productos (`#fx-busca`) no pasa del ancho de la pantalla. `tests/test_teclado_320.js` (15;
   13 rojas). UI-03 (el formulario lleva al error) es el de `b1850ca`.
+- **Batería sobre la rama** (25/10): 247 suites, 8.062 bien, 2 rojas: `test_ventas_marcas` (la conocida) y `test_rev3_admin` d), que devolvía la
+  señal antes del intento de los 700 ms de la tilde de carga (ahora la tilde entra a la cola al tocarla): la prueba espera ese intento y suma
+  d2 (la señal vuelve dentro del medio segundo: el intento junta las dos tildes, la cola no la manda dos veces). Sola: 49/0 (`b2d8b4c`).
