@@ -32785,18 +32785,29 @@ function existLoteDe(filas, delNombre){
   var secs=existSecciones(filas), eS=existSeccionesError(secs);
   if(eS) return { error:eS };                   // 🧮 (16/10, §4lr U30)
   if(!secs.length) return null;
-  var pie=existHoraDePie(filas), lista=[], err='';
+  var pie=existHoraDePie(filas), lista=[], err='', saltados=[], usados=[];
   var par={};   // 🔁 (19/10, §4ls EX-8) lo que cada almacén del archivo dejó para juntar con el otro (`existParOtro`): el MISMO objeto para todos
-  secs.forEach(function(s, i){
+  /* ⏭ (25/10, auditoría; el dueño eligió «saltarlo con un aviso») Un almacén que viene VACÍO (su encabezado y «TOTAL : 0», sin ningún
+     producto) frenaba los tres. Se salta: ese almacén queda con su saldo anterior, los otros se cargan, y se dice. */
+  var vacio=function(s){
+    var h=filas[s.hdr]||{}, cC='', cN='';
+    for(var k in h){ var t=String(h[k]||'').toUpperCase().replace(/\s+/g,' ').trim(); if(/^C[ÓO]DIGO PRODUCTO$/.test(t)) cC=k; else if(/^NOMBRE PRODUCTO$/.test(t)) cN=k; }
+    if(!cC || !cN) return false;
+    for(var i=s.desde+1;i<s.hasta;i++){ var f=filas[i]||{}; if(String(f[cC]==null?'':f[cC]).trim() && String(f[cN]==null?'':f[cN]).trim()) return false; }
+    return true;   // ningún producto entre su encabezado y su «TOTAL :» (los renglones de grupo, «HEAVEN», no cuentan)
+  };
+  secs.forEach(function(s){
+    if(vacio(s)){ saltados.push(s.alm); return; }
     var r=existLeer(filas.slice(0, s.hdr+1).concat(filas.slice(s.desde, s.hasta+1)), s.alm);
     if(r.error){ if(!err) err=s.alm+': '+r.error; return; }
     r.totalReporte=s.total;
     existPonerHora(r, pie, delNombre);
     existAlinearHora(r);
-    if(secs.length>1) r.lote={ i:i+1, n:secs.length, alms:secs.map(function(x){ return x.alm; }), par:par };
-    lista.push(r);
+    lista.push(r); usados.push(s.alm);
   });
-  return err ? { error:err } : { lista:lista };
+  if(!err && !lista.length && saltados.length) err='los almacenes de este archivo vinieron vacíos ('+saltados.join(', ')+'): no hay nada que cargar.';
+  if(lista.length>1) lista.forEach(function(r, i){ r.lote={ i:i+1, n:lista.length, alms:usados.slice(), par:par }; });
+  return err ? { error:err } : { lista:lista, saltados:saltados };
 }
 /* ✏️ (19/10, §4ls verificación final, PA-7) En un archivo de varios almacenes, cancelar dice cuáles NO se usaron: quien cargó PTF y Banzer
    creía haber subido los tres. */
@@ -32905,6 +32916,7 @@ function onExistArchivo(ev){
     var L=existLoteDe(_filas, delNombre);
     if(L){
       if(L.error){ toast('❌ '+L.error,'err',9000); return; }
+      if((L.saltados||[]).length) toast('⏭ El Excel trae '+L.saltados.map(stockAlmCorto).join(', ')+' VACÍO (sin productos): no lo uso y queda con su saldo anterior. Si de verdad quedó sin nada, avisale al dueño.','err',12000);
       EXIST_IMP=L.lista.shift(); EXIST_COLA=L.lista; renderImportExist();
       return;
     }
@@ -33052,6 +33064,25 @@ function existLeer(filas, almForzado){
   if(!cCant) return {error:'No encontré la columna de cantidades.'};
 
   var items=[], repetidos=0, malos=0, total=0, vistos={}, cods={};
+  /* 🏷️ (25/10, auditoría Codex/Astra) DOS CÓDIGOS QUE LA LISTA NO CONOCE CON EL MISMO NOMBRE Y MEDIDA siguen siendo DOS productos
+     (§4cy): antes los dos caían en la misma clave cruda y se sumaban («ZZ001 = 2» y «ZZ002 = 4» → una fila con 6). Se mira el archivo
+     entero primero: si un nombre crudo lo tienen varios códigos desconocidos, se queda con la clave de siempre el que ya la tenía en el
+     corte anterior de este almacén (o, la primera vez, el código menor) y los otros llevan su código en el nombre. Se avisa. */
+  var _previo=(function(){ var esL=normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log'; var o=esL ? (STOCK.c||{}) : (((STOCK.g||{})[alm])||{}); return o.cod||{}; })();
+  var _porCruda={};
+  for(var q0=iHdr+1;q0<filas.length;q0++){
+    var f0=filas[q0], c0=String(f0[cCod]==null?'':f0[cCod]).trim().toUpperCase(), n0=String(f0[cNom]==null?'':f0[cNom]).replace(/\s+/g,' ').trim();
+    if(!c0 || !n0 || CODIGOS[c0]) continue;
+    var b0=stockClaveCruda({ desc:n0, medida:medidaDeTexto(n0) });
+    (_porCruda[b0]=_porCruda[b0]||{})[c0]=1;
+  }
+  var _claveDe={}, colisiones=[];
+  Object.keys(_porCruda).forEach(function(b){
+    var cs=Object.keys(_porCruda[b]).sort(); if(cs.length<2) return;
+    var dueno=cs.filter(function(c){ return _previo[c]===b; })[0] || cs[0];
+    cs.forEach(function(c){ if(c!==dueno){ var pa=b.split('|'); _claveDe[c]=(pa[0]+' '+c)+'|'+(pa[1]||''); } });
+    colisiones.push({ k:b, cods:cs, dueno:dueno });
+  });
   for(var q=iHdr+1;q<filas.length;q++){
     var fq=filas[q];
     var cod2=String(fq[cCod]==null?'':fq[cCod]).trim();
@@ -33071,7 +33102,7 @@ function existLeer(filas, almForzado){
        el código (como hizo en §4cw). Sumar en silencio era el error caro. */
     it.cat=!!CODIGOS[String(it.cod).toUpperCase()];
     it.k=it.cat ? stockClave({desc:it.desc, medida:it.medida, codigo:it.cod})
-                : stockClaveCruda({desc:it.desc, medida:it.medida});
+                : (_claveDe[String(it.cod).toUpperCase()] || stockClaveCruda({desc:it.desc, medida:it.medida}));
     if(it.cod) cods[it.cod.toUpperCase()]=it.k;   // ⚠️ el código es el identificador más fuerte (§4cv)
     if(vistos[it.k]!=null){ items[vistos[it.k]].cant+=cant; repetidos++; }  // mismo producto en dos renglones
     else { vistos[it.k]=items.length; items.push(it); }
@@ -33079,7 +33110,7 @@ function existLeer(filas, almForzado){
   }
   if(!items.length) return {error:'No encontré ningún producto con existencia en el archivo.'};
   return { fecha:fecha||todayStr(), sinFecha:!fecha, almacen:alm, items:items, total:total,
-           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0, cods:cods,
+           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0, cods:cods, colisiones:colisiones,
            esLog: normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log',
            conocido: normNombre(alm)===normNombre(STOCK_ALM_LOG) || !!(STOCK.al||{})[alm] };
 }
@@ -34133,6 +34164,8 @@ function renderImportExist(){
       lin('📅 Existencias al <b>'+fmtFecha(R.fecha)+'</b>'+(R.hora?(' <b>'+esc(R.hora)+'</b>'):'')+(R.fechaDeHora?' <span style="color:var(--amber);font-weight:700">· el archivo no traía «existencias al»: se usa el día en que se sacó</span>':''))+
       lin('📦 <b>'+R.items.length+'</b> productos · <b>'+stockUnid(R.total)+'</b> unidades'+(enCat<R.items.length?(' · <span style="color:var(--muted)">'+enCat+' se reconocen del catálogo, '+(R.items.length-enCat)+' quedan con su nombre</span>'):''))+
       (R.repetidos?lin('<span style="color:var(--muted)">'+R.repetidos+' renglones eran del mismo producto: se sumaron</span>'):'')+
+      ((R.colisiones||[]).length?lin('<span id="exist-colision" style="color:#9a4a07">🏷️ '+R.colisiones.map(function(c){ return esc(c.cods.join(' y '))+' ('+esc(stockNombreClave(c.k))+')'; }).join(' · ')+
+        ': códigos que la lista no conoce con el mismo nombre. Se cuentan <b>aparte</b> (dos códigos son dos productos); si son el mismo, mandale los códigos al dueño para unirlos.</span>'):'')+
       (R.malos?lin('<span style="color:var(--amber)">'+R.malos+' renglones sin cantidad legible: se saltean</span>'):'')+
       (totMal?lin('<span id="exist-total-mal" style="color:#b45309;font-weight:700">⚠️ El reporte dice '+stockUnid(R.totalReporte)+' unidades en este almacén y el panel leyó '+stockUnid(R.total)+': revisá antes de usarlo.</span>'):'')+
     '</div>'+
