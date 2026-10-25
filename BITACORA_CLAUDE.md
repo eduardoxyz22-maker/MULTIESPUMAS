@@ -16173,3 +16173,24 @@ Batería sobre la rama con §4mo (25/10): 252 suites, 8.159 bien; roja solo `tes
   reales NO se le abría al dueño en la app («sale puro código»): se le publicó una página con las capturas rehechas con clientes INVENTADOS
   (`real/lista_anon.json` en el scratchpad; nombres, celulares, NIT, direcciones, pines y observaciones cambiados, productos y números reales).
   Para mostrarle capturas: página publicada con datos inventados, nunca un .html suelto ni datos reales con enlace.
+
+### §4mp — 🎨 Segunda vuelta de lo que se veía mal (25/10, dueño: «¿No hay más mejoras visuales?»; en la rama, espera el «publica»)
+Capturas propias de lo que la primera vuelta no miró: la ficha de un pedido, el Cuadre, el Plan de stock, la Lista de carga, lo de abajo de
+Proyección y Mis pedidos, y el iPad PARADO (820) y el celular (390). Con la copia de la planilla con clientes INVENTADOS (`real/lista_anon.json`)
+y `scratchpad/est2/capturas2.js`. Solo apariencia. Lo que se arregló:
+1. **Celular (≤560)**: `.wrap` 8 px y `.card` 16/12 px (antes 22 + 28 por lado: un cuarto de la pantalla en márgenes; la fecha pasa de 266 a
+   326 px). En la agenda «25 libres» parte el renglón (`.fx-dia .q`).
+2. **iPad parado (701-1000)**: las seis pestañas en una fila (padding 12, `.8rem`, `nowrap`); «Bot» caía sola abajo. Y en la compu y el iPad
+   (≥701) el número de cada pestaña (`.nx-tb`) va en la ESQUINA (`top:-8px; right:-6px`): adentro pisaba la última letra. En la barra de
+   abajo del celular queda como estaba.
+3. **Plan de stock**: TODA la tabla iba sin partir renglones (`td{white-space:nowrap}` de siempre) y medía 1.929 px en 1.386: «Qué hacer hoy»
+   salía cortado y las columnas Tener / Pedir 7 / 15 días / el mes —las que importan para la fábrica— quedaban FUERA de la pantalla. Ahora
+   parten el renglón y la tabla entra entera (1.386). ⚠️ Los anchos mínimos por columna van SOLO con `min-width:821px`: debajo el Plan es en
+   tarjetas (`@media (max-width:820px)` de siempre) y esos anchos lo sacaban de la tarjeta (`test_stock_final_pantalla` FP1-celb/celc lo atajó).
+4. **Proyección, «De dónde sale lo vendido»**: son dos tablas (la de lo vendido y la del Cuadre); con `table-layout:fixed` y la primera
+   columna al 40 % cada número queda debajo del de su marca (antes corridos 15-30 px).
+5. **La ficha**: `.fl-pls` (lo que dice de dónde sale: «× No hay», «Banzer», «PTF») con ancho mínimo de 96 px: los botones de todos los
+   productos quedan en la misma columna.
+6. **La ficha en el celular (≤600)**: «Qué hacer» sin la flechita «›» suelta; cada parte en su renglón.
+Pruebas: `tests/test_estetica_4mp.js` (9 en compu, iPad parado y celular; 8 rojas contra `0b87635`). Antes/después para el dueño: la MISMA página
+del 25/10 (https://claude.ai/artifact/14zRKXRc2CWp2Wk2SHGax2, versión 2), con clientes inventados.

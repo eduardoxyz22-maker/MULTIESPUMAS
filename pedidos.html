@@ -4465,6 +4465,48 @@ html{ scroll-padding-top:calc(var(--hdr-h) + 8px); }   /* lo que se lleva a la v
 .ph-ok-l span{ border-radius:999px; padding:5px 11px; font-size:.76rem; max-width:100%; }
 /* 5 · «Conectado a Google Sheets» en Administración: una pastilla, no una franja entera (los avisos en rojo o ámbar siguen grandes). */
 #conn-admin.conn.on.conn-solo{ display:inline-flex; padding:5px 12px; border-radius:999px; font-size:.72rem; margin-bottom:14px; }
+/* ============================================================================
+   🎨 (25/10, §4mp; dueño: «¿No hay más mejoras visuales?») Segunda vuelta con capturas: la ficha, el Cuadre, el Plan de stock, la Lista de
+   carga, lo de abajo de Proyección y Mis pedidos, el iPad parado y el celular. Solo apariencia.
+   ========================================================================== */
+/* 1 · Celular: la página tenía dos márgenes (22 px del borde + 28 px adentro de la tarjeta) y se perdía un cuarto del ancho. */
+@media (max-width:560px){
+  .wrap{ padding:0 8px; }
+  .card{ padding:16px 12px; }
+  .fx-dia .q{ white-space:normal; line-height:1.15; }   /* «25 libres» en dos renglones, no «25 …» */
+}
+/* 2 · iPad parado (701-1000 px): las seis pestañas en una fila (la de «Bot» caía sola abajo). */
+@media (min-width:701px) and (max-width:1000px){
+  .nav{ gap:6px; flex-wrap:nowrap; }
+  .nav button{ padding:10px 12px; font-size:.8rem; flex:0 1 auto; min-width:0; }
+}
+/* …y el número de cada pestaña (🔴 7 en Administración, 🟠 2 en Contabilidad) va en la ESQUINA, como un aviso: adentro pisaba la última
+   letra («Contabilida·d», «Administració·n»). En el celular, la barra de abajo lo deja donde estaba. */
+@media (min-width:701px){ .nav .nx-tb{ top:-8px; right:-6px; } }
+/* 3 · Plan de stock: «✓ Ya pedí … se entrega desde ~27/10» no partía el renglón y estiraba la tabla: lo de «Qué hacer hoy» quedaba
+   cortado contra el borde. */
+.pl-tabla .pl-q .pl-ya-chk{ white-space:normal; margin:4px 6px 0 0; }
+/* …y toda la tabla iba sin partir renglones (1.929 px en una pantalla de 1.386): las columnas «Pedir 7 / 15 días / el mes», las que
+   importan para la fábrica, quedaban FUERA de la pantalla. Ahora los textos parten el renglón y la tabla entra entera en la compu. */
+.pl-tabla th, .pl-tabla td{ white-space:normal; }
+.pl-tabla td.pl-q .pl-que{ white-space:normal; }
+@media (min-width:821px){   /* en el iPad parado y el celular el Plan va en tarjetas (sus propias reglas): los anchos son solo para la tabla */
+  .pl-tabla td:first-child{ min-width:170px; }
+  .pl-tabla td.pl-corta{ min-width:110px; }
+  .pl-tabla td.pl-q{ min-width:260px; }
+  .pl-tabla td.pl-tener{ min-width:120px; }
+  .pl-tabla td.pl-p7, .pl-tabla td.pl-p15, .pl-tabla td.pl-pm, .pl-tabla td.pl-hay, .pl-tabla td.pl-comp{ white-space:nowrap; }
+}
+/* 4 · Proyección, «De dónde sale lo vendido»: la parte de arriba y la del Cuadre son dos tablas; con el mismo ancho por columna, cada
+   número queda debajo del de su marca. */
+#pry-plata-box .pry-tabla{ table-layout:fixed; width:100%; min-width:640px; }
+#pry-plata-box .pry-tabla td:first-child, #pry-plata-box .pry-tabla th:first-child{ width:40%; min-width:0; }
+#pry-plata-box .pry-tabla td:first-child{ white-space:normal; }
+/* 5 · La ficha: lo que dice dónde sale cada producto («× No hay», «Banzer», «PTF») tiene un ancho fijo, así los botones de todos los
+   productos quedan en la misma columna. */
+.modal.fl-ficha .fl-prod > .fl-pls{ min-width:96px; }
+/* 6 · La ficha en el celular: cada parte de «Qué hacer» en su renglón, sin la flechita sola. */
+@media (max-width:600px){ .fl-qh-s{ display:none; } .fl-qh > span:not(.fl-qh-k){ flex:1 1 100%; } }
 </style>
 <script src="productos-mes.js?v=20261025a"></script>
 <script>

@@ -986,6 +986,10 @@ salta 20 px). **`--hdr-h`** = lo que tapa el encabezado: todo lo pegajoso nuevo 
 mano; para llevar algo a la vista, `hdrAltoEn(dest)`. Administración en fichas: de un día pasado se ve SOLO lo sin ✅ y lo entregado va plegado
 en `.af-pas` («▾ Ver todo», `ADM_PASADOS_VER`; buscando no se pliega). Ventas de Contabilidad con productos a la vista; campos de `.filters` a
 44 px; «Herramientas» `.as-pes`; anillo PM con fondo en Halloween; «0 de 4 listos» se va si no entra (`@container`). `tests/test_estetica_4mo.js`.
+🎨 **Segunda vuelta (§4mp, 25/10, en la rama)**: celular sin el margen doble (`.wrap` 8 px, `.card` 16/12); iPad parado con las seis pestañas en una
+fila y el número de cada pestaña en la esquina (≥701); el **Plan de stock parte renglones y entra entero** (antes 1.929 px en 1.386: las columnas
+«Pedir» quedaban afuera) — ⚠️ sus anchos mínimos solo con `min-width:821px` (debajo es en tarjetas); «De dónde sale lo vendido» con las dos
+tablas alineadas (`table-layout:fixed`); la ficha con los botones de cada producto en la misma columna (`.fl-pls` 96 px). `tests/test_estetica_4mp.js`.
 
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
