@@ -16136,7 +16136,7 @@ vendedoras?
   planilla real sobre lo publicado: guarda `__pry_hist__` y lo muestra. Las metas siguen siendo solo la muestra (el dueño las revisa después).
   El `.gs` no cambió (sigue 15-a): basta F5.
 
-### §4mo — 🎨 Lo que se veía mal en la compu y el iPad, mirado con la planilla real (25/10, dueño: «Y sigo esperando mejoras visuales estéticas y no puede ser que códex te enseñe»; en la rama, espera el «publica»)
+### §4mo — 🎨 Lo que se veía mal en la compu y el iPad, mirado con la planilla real (25/10, dueño: «Y sigo esperando mejoras visuales estéticas y no puede ser que códex te enseñe»; PUBLICADO 25/10, `0b87635`; el dueño: «Me gusta publica»)
 Esta vez sin informe de nadie: capturas de las pantallas que más se usan (Nuevo pedido, Mis pedidos, Contabilidad, Proyección, Administración,
 Stock, ATC) en 1440 px (compu) y 1180 px (iPad acostado) con la planilla real (scratchpad, solo lectura), mirarlas una por una, arreglar y volver a
 sacarlas. Solo apariencia: ningún texto que lean las pruebas, cuenta ni botón cambió de lugar. Lo que se arregló:
@@ -16167,4 +16167,9 @@ sacarlas. Solo apariencia: ningún texto que lean las pruebas, cuenta ni botón 
 Pruebas: `tests/test_estetica_4mo.js` (35, compu e iPad, reloj clavado en octubre); `test_adm_arriba` §5 cambió a conciencia (esperaba ver el día
 pasado con todo entregado: ahora va plegado y con «Ver todo» dice «1 de 1 entregado», sin cupos). Antes/después para el dueño:
 `scratchpad/antes_despues_4mo.html` (capturas con datos reales: se le mandó como archivo, NO como página publicada).
-Batería sobre la rama con §4mo (25/10): 252 suites, 8.159 bien; roja solo `test_ventas_marcas` (la conocida). Espera el «publica».
+Batería sobre la rama con §4mo (25/10): 252 suites, 8.159 bien; roja solo `test_ventas_marcas` (la conocida).
+- **Publicado** (25/10): `0b87635` sobre `f3db549`, solo `pedidos.html`, `test_estetica_4mo` y `test_adm_arriba`. Batería sobre esa copia: 251
+  suites, 8.121 bien; roja solo `test_ventas_marcas`. El `.gs` no cambió (sigue 15-a): basta F5. ⚠️ El archivo del antes/después con datos
+  reales NO se le abría al dueño en la app («sale puro código»): se le publicó una página con las capturas rehechas con clientes INVENTADOS
+  (`real/lista_anon.json` en el scratchpad; nombres, celulares, NIT, direcciones, pines y observaciones cambiados, productos y números reales).
+  Para mostrarle capturas: página publicada con datos inventados, nunca un .html suelto ni datos reales con enlace.
