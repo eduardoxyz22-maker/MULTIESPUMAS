@@ -277,6 +277,9 @@ const BASE = `
       window._srv.saveFalla=true; window._srv.listFalla=true;
       setCargaChk(K('Y'), true);
       await _enCola(CARGA_ID);
+      /* (25/10, §4mk FLW-2) La tilde entra a la cola AL TOCARLA, y el intento de los 700 ms todavía está por correr: «sin señal» es
+         hasta que ese intento falle (si no, la señal vuelve antes y lo manda ese mismo intento, no la cola). */
+      for(var _i=0; _i<60 && typeof REESCRITA_ESPERA!=='undefined' && REESCRITA_ESPERA[CARGA_ID]; _i++) await new Promise(function(r){ setTimeout(r, 50); });
       var enCola=getPending().filter(function(p){ return p.id===CARGA_ID; }).length;
       window._srv.carga=K('X');                                 // el otro tildó X
       window._srv.saveFalla=false; window._srv.listFalla=false;
@@ -285,6 +288,20 @@ const BASE = `
     });
     chk('(sin señal la tilde quedó en la cola)', r.enCola===1, r.enCola);
     chk('🔴 al volver la señal, lo que tildó el otro cargador sigue tildado', r.srv==='2026-09-23|Foton nuevo|X ; 2026-09-23|Foton nuevo|Y' && r.cola===0, 'planilla: '+r.srv);
+    // d2) (25/10, §4mk) Si la señal vuelve DENTRO del respiro de 700 ms, la cola no la manda dos veces y el intento junta lo del otro.
+    r = await page.evaluate(async () => {
+      var K=function(p){ return '2026-09-23|Foton nuevo|'+p; };
+      window._srv.carga=''; CARGA_CHK={}; saveCargaMirror();
+      if(typeof CARGA_CAMBIOS!=='undefined') CARGA_CAMBIOS={};
+      window._srv.saveFalla=true; window._srv.listFalla=true;
+      setCargaChk(K('Y'), true);
+      window._srv.carga=K('X');
+      window._srv.saveFalla=false; window._srv.listFalla=false;
+      await flushPending();                                     // la señal vuelve antes de los 700 ms
+      for(var _i=0; _i<60 && (typeof REESCRITA_ESPERA==='undefined' || REESCRITA_ESPERA[CARGA_ID] || getPending().length); _i++) await new Promise(function(res){ setTimeout(res, 50); });
+      return { srv:_cargaSrv(), cola:getPending().length };
+    });
+    chk('🔴 …y si la señal vuelve dentro del medio segundo, el intento junta las dos tildes', r.srv==='2026-09-23|Foton nuevo|X ; 2026-09-23|Foton nuevo|Y' && r.cola===0, 'planilla: '+r.srv+' · cola: '+r.cola);
 
     // e) Control: las demás filas de la cola se mandan tal cual, en orden; y una fila de cierre
     //    encolada por un panel de antes (sin _cambios) se manda como siempre.
