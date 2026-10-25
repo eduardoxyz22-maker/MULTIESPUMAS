@@ -16129,3 +16129,5 @@ reales de octubre al 25/10 12:00 y metas de EJEMPLO (Heaven 800.000, Sueña 260.
 equipo» y, por marca, la barra (la barra entera = la meta; vendido + lo que falta para la proyección), «Así no llega / Cerca» y «para llegar: Bs X
 por día hábil, hoy va a Bs Y: hace falta N % más». Preguntas abiertas para el dueño: ¿también en unidades?, ¿por vendedor?, ¿la ven las
 vendedoras?
+- **Batería sobre la rama con §4mn** (25/10): 253 suites, 8.123 bien; rojas: `test_ventas_marcas` (la conocida) y `test_mispedidos` (inestable:
+  sola, 33/0). Espera el «publica».
