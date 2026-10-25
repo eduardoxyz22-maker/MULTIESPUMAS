@@ -31,6 +31,11 @@ WORKER_URL = (os.environ.get("PANEL_WORKER_URL", "") or "").strip() or "https://
 BASE_URL  = f"https://{SUBDOMAIN}.kommo.com/api/v4"
 TOKEN     = os.environ.get("KOMMO_TOKEN", "").strip()
 _DIAG     = []   # mensajes de diagnóstico que se incrustan en index.html
+# 🛡️ (25/10, auditoría Codex/Astra CRM-01) Lecturas ESENCIALES de Kommo que fallaron. Antes una página que fallaba cortaba
+# la lectura y devolvía lo que había alcanzado a traer como si fuera todo (y con el token vencido, un panel entero en cero que
+# el bot publicaba). Si hay algo acá, `main` NO escribe el panel y termina con error: el publicado se queda con el último dato
+# bueno (y su «Actualizado dd/mm HH:MM») y la corrida sale en rojo en Actions.
+_FALLAS   = []
 
 HERE          = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_FILE = os.path.join(HERE, "panel_template.html")
@@ -97,6 +102,9 @@ def api_get(path, params=None, _retry=0):
         if e.code == 429 and _retry < 4:           # rate limit → espera y reintenta
             time.sleep(2 ** _retry * 3)
             return api_get(path, params, _retry + 1)
+        if e.code >= 500 and _retry < 2:           # (25/10) Kommo caído un momento: dos intentos más antes de dar la lectura por fallada
+            time.sleep(5 * (_retry + 1))
+            return api_get(path, params, _retry + 1)
         if e.code == 204:
             return {}
         try:
@@ -111,7 +119,9 @@ def api_get(path, params=None, _retry=0):
             return api_get(path, params, _retry + 1)
         raise
 
-def fetch_paginated(path, base_params, key, max_pages=500, sleep=0.18):
+def fetch_paginated(path, base_params, key, max_pages=500, sleep=0.18, esencial=True):
+    """`esencial=False` = lo que el panel puede mostrar vacío sin mentir (teléfonos para duplicados, razones de pérdida,
+    nombres de productos): si falla, el diagnóstico lo dice y el panel sale igual. Todo lo demás va a `_FALLAS`."""
     out, page = [], 1
     while page <= max_pages:
         p = dict(base_params); p["page"] = page; p.setdefault("limit", 250)
@@ -119,6 +129,7 @@ def fetch_paginated(path, base_params, key, max_pages=500, sleep=0.18):
             data = api_get(path, p)
         except Exception as e:
             print(f"   ⚠ {path} pág {page}: {e}", file=sys.stderr)
+            (_FALLAS if esencial else _DIAG).append(f"{path} pág {page}: {type(e).__name__}: {str(e)[:160]}")
             break
         batch = (data.get("_embedded", {}) or {}).get(key, [])
         if not batch:
@@ -395,7 +406,7 @@ def build_products(won, user_map):
                 a["byV"][nm] += q
     names = {}
     for cid in cat_ids:
-        for el in fetch_paginated(f"/catalogs/{cid}/elements", {}, "elements", max_pages=20):
+        for el in fetch_paginated(f"/catalogs/{cid}/elements", {}, "elements", max_pages=20, esencial=False):
             names[el.get("id")] = el.get("name", "")
     items = sorted(
         [{"name": names.get(eid) or f"Producto #{eid}", "qty": a["qty"],
@@ -549,11 +560,21 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, pipe_prev_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
-    vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
+    vprev, suc_prev, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
 
     names = list(vcur.keys())
     # ordena: por cierres desc, así el color/índice es estable
     names.sort(key=lambda n: (-vcur[n]["cierres"], -vcur[n]["leads"]))
+    # 👥 (25/10, auditoría Codex/Astra CRM-03) La que trabajó el mes anterior y este mes no tiene NADA (ni leads ni cierres)
+    # también va en el equipo, con 0 y `soloPrev`, AL FINAL (no le cambia el color ni el orden a las de este mes). Sin esto
+    # desaparecía del «mes anterior»: Ana 1.000 + Beto 9.000 se veía como 1.000, y la caída del equipo no se veía.
+    _solo_prev = [n for n in vprev if n not in vcur and (vprev[n]["leads"] or vprev[n]["cierres"] or vprev[n]["value"])]
+    _solo_prev.sort(key=lambda n: (-vprev[n]["cierres"], -vprev[n]["leads"], n))
+    for _n in _solo_prev:
+        vcur[_n]                      # `aggregate` devuelve un defaultdict: la deja en cero
+        if _n not in suc_of and _n in suc_prev:
+            suc_of[_n] = suc_prev[_n]
+    names += _solo_prev
 
     # ── calidad de datos REAL (recorre los leads del mes una vez) ──
     _abiertos_sin_valor = 0
@@ -660,8 +681,10 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "respPct": resp_pct, "respN": resp_n,
             "tarde": d["tarde"], "nunca": d["nunca"], "backlog": d["backlog"],
             "unidades": d["unidades"],
-            "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),
-            "metaMonto": cfg.get("metaMonto", max(20000, d["value"])),
+            # (25/10, CRM-03) a la que solo trabajó el mes anterior no se le inventa una meta: si está en VENDOR_CFG (sigue en
+            # el equipo) lleva la suya; si no, 0 (no infla la meta del equipo).
+            "metaCierres": cfg.get("metaCierres", 0 if name in _solo_prev else max(8, d["cierres"] + 5)),
+            "metaMonto": cfg.get("metaMonto", 0 if name in _solo_prev else max(20000, d["value"])),
             "v": v_tone,
             "prev": {"leads": prev_leads_sd, "cierres": pv["cierres_sd"],
                      "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"],
@@ -672,6 +695,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         })
         if prev_leads_sd == 0 and d["leads"] > 0:
             team[-1]["nuevo"] = True
+        if name in _solo_prev:
+            team[-1]["soloPrev"] = True
 
     # ── globales ──
     G_leads   = sum(t["leads"] for t in team)
@@ -1551,7 +1576,7 @@ def main():
         # Razón de pérdida NATIVA de Kommo (loss_reason_id → nombre)
         try:
             loss_reasons_map = {r.get("id"): (r.get("name") or "").strip()
-                                for r in fetch_paginated("/leads/loss_reasons", {}, "loss_reasons", max_pages=10)}
+                                for r in fetch_paginated("/leads/loss_reasons", {}, "loss_reasons", max_pages=10, esencial=False)}
             _DIAG.append(f"loss_reasons_nativas={list(loss_reasons_map.values())}")
         except Exception as _lre:
             loss_reasons_map = {}
@@ -1733,7 +1758,7 @@ def main():
     try:
         raw_contacts = fetch_paginated("/contacts", {
             "filter[created_at][from]": int(m_start.timestamp()),
-            "filter[created_at][to]":   int(m_end.timestamp())}, "contacts")
+            "filter[created_at][to]":   int(m_end.timestamp())}, "contacts", esencial=False)
         for c in raw_contacts:
             cid = c.get("id")
             if not cid:
@@ -1754,6 +1779,16 @@ def main():
         print(f"     → {len(contact_phone)} con teléfono")
     except Exception as e:
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
+
+    # 🛡️ (25/10, CRM-01) Una lectura esencial falló: no se escribe nada. El panel publicado queda como estaba (su último dato
+    # bueno, con su fecha) y la corrida sale en rojo, así el bot no hace commit y en Actions se ve qué pasó.
+    if _FALLAS:
+        print("✗ Kommo no contestó entero: NO se publica este panel (el publicado queda como estaba, con su último dato bueno).", file=sys.stderr)
+        for f in _FALLAS[:20]:
+            print("   · " + f, file=sys.stderr)
+        if any(" 401" in f or "HTTP Error 401" in f for f in _FALLAS):
+            print("   → 401 = el token de Kommo no sirve (vencido o cambiado): renovar el secreto KOMMO_TOKEN.", file=sys.stderr)
+        sys.exit(1)
 
     print("  🧮 construyendo PANEL_DATA…")
     pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, pipe_prev_by_name=pipe_prev_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map)

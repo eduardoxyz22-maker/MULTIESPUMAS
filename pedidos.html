@@ -2653,7 +2653,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @media (max-width:700px){ .lb-tres{grid-template-columns:1fr}.lb-tres>div{border-left:0;padding:6px 4px;border-bottom:1px solid #edf3f2} }
 /* ✨ (§4mg, V3) Stock: cuatro fichas grandes en la barra y lo demás en «Más» */
 #stock-overlay.s3-on .stk-acc{display:none}
-.s3{flex-basis:100%;padding:4px 0 6px}
+.s3{flex-basis:100%;padding:4px 0 6px;min-width:0;max-width:100%;box-sizing:border-box}   /* min-width:0: si no, en el celular la fila «Más» la estiraba a 1.022 px (N-UI2) */
+.s3-t:focus-visible,.s3-ch:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .s3-grandes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .s3-t{display:flex;align-items:center;gap:11px;background:#fff;border:0;border-radius:14px;padding:11px 13px;text-align:left;font:inherit;cursor:pointer;box-shadow:0 8px 18px -12px rgba(0,0,0,.55);min-width:0;transition:transform .15s}
 .s3-t:hover{transform:translateY(-1px)}
@@ -2671,7 +2672,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .s3-ch{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;font:inherit;font-weight:700;font-size:.8rem;border-radius:999px;padding:5px 12px;cursor:pointer}
 .s3-ch:hover{background:rgba(255,255,255,.24)}
 @media (max-width:980px){ .s3-grandes{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media (max-width:600px){ #stock-overlay .s3{order:5} .s3-grandes{grid-template-columns:1fr} .s3-mas{flex-wrap:nowrap;overflow-x:auto} .s3-ch{flex:none;white-space:nowrap} }
+@media (max-width:600px){ #stock-overlay .s3{order:5} .s3-grandes{grid-template-columns:1fr} .s3-mas{flex-wrap:nowrap;overflow-x:auto;min-width:0;max-width:100%;-webkit-overflow-scrolling:touch;padding-bottom:4px} .s3-ch{flex:none;white-space:nowrap} }
 /* 🪜 (§4mg, V4) el formulario en cuatro pasos */
 .fp-oculta{display:none!important}
 .fp-paso[hidden]{display:none}
@@ -4501,7 +4502,7 @@ function colLetter(n){var s='';n++;while(n>0){var m=(n-1)%26;s=String.fromCharCo
 function cellXml(ref,cv){
   if(cv==null) return '';
   if(typeof cv!=='object') cv={v:cv};
-  var s=cv.s?(' s="'+cv.s+'"'):'';
+  var s=(cv.s && /^\d+$/.test(String(cv.s)))?(' s="'+cv.s+'"'):'';   // solo un índice de `cellXfs`: otra cosa rompía el archivo (FIN-02)
   if(cv.v==null||cv.v===''){ return cv.s?('<c r="'+ref+'"'+s+'/>'):''; } // vacía pero con estilo → colorea la fila
   if(cv.t==='n') return '<c r="'+ref+'"'+s+'><v>'+cv.v+'</v></c>';
   return '<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(cv.v)+'</t></is></c>';
@@ -6030,7 +6031,7 @@ function showViewAhora(v){
   /* El formulario de carga se queda angosto (es para celular); todo lo demás
      son tablas y listas: se estiran a lo ancho de la pantalla */
   document.body.classList.toggle('ancha', v!=='form');
-  if(v==='form'){ refrescarSiHaceRato(); saldoAvisosProgramar(); }   // por si administración cerró un día recién · 🧾 el saldo (§4gj)
+  if(v==='form'){ refrescarSiHaceRato(); saldoAvisosProgramar(); try{ fpPintarLuego(); }catch(e){} }   // por si administración cerró un día recién · 🧾 el saldo (§4gj) · 🪜 los pasos se miden al volver (N-UI1)
   if(v==='conta') refreshConta();
   if(v==='atc') refreshAtc();
   if(v==='bot'){ try{ waRespPintar(); waRespTraer(); }catch(e){} }
@@ -10216,7 +10217,7 @@ function exportCuadre(){
      la pantalla y el texto mostraban el retiro y el Excel decía «No hay pagos para exportar». */
   var _rets=retirosDe(cuadrePeriodo(), cuadreVendedor());
   if(!pagos.length && !CIE.huerfanos.length && !_rets.length){ toast('No hay pagos ni retiros para exportar en este período','err'); return; }
-  var H=1, fc={numFmt:'#,##0.00'};
+  var H=1, fc=2;   // 2 = «Bs #,##0.00» de STYLES_XML. ⚠️ (25/10, FIN-02) Era un objeto y el archivo salía con s="[object Object]": openpyxl no lo abría y Excel lo «reparaba».
   /* ⚠️ «RECARGO POR ENTREGA» (25/09): la pantalla marca cada pago de flete («🚚 RECARGO») y el texto
      dice cuánto es flete, pero en el Excel esa fila era igual a un pago de la venta y el contador no
      sabía qué no se factura. Va en una columna NUEVA al FINAL: las que ya se usan no se mueven. */
@@ -15494,10 +15495,15 @@ function fpArmar(){
 }
 var FP_T=null;
 function fpPintarLuego(){ if(FP_T) return; FP_T=setTimeout(function(){ FP_T=null; try{ fpPintar(); }catch(e){} }, 60); }
-function fpVisible(el){ if(!el) return false; var c=el.querySelector('.fp-cuerpo')||el; return [].some.call(c.children, function(x){ return getComputedStyle(x).display!=='none' && !x.hidden && x.offsetHeight>0; }); }
+/* ⚠️ (25/10, auditoría N-UI1) Se mide con el paso a la vista: un paso escondido tiene TODO adentro en alto 0, así que medirlo
+   escondido lo dejaba escondido para siempre (ATC → OC sin Cobro; editar → guardar → volver a editar sin pasos). Y con el
+   formulario en otra pestaña no se mide nada: todo da alto 0 y escondía los cuatro pasos. */
+function fpVisible(el){ if(!el) return false; var c=el.querySelector('.fp-cuerpo')||el, era=el.hidden; el.hidden=false;
+  var v=[].some.call(c.children, function(x){ return getComputedStyle(x).display!=='none' && !x.hidden && x.offsetHeight>0; });
+  el.hidden=era; return v; }
 function fpPintar(){
   if(!fpActivo()) return;
-  if(!document.getElementById('view-form').classList.contains('active') && !FP_ARMADO) return;
+  if(!document.getElementById('view-form').classList.contains('active')) return;
   if(!fpArmar()) return;
   var E=fxPasosEstado(), val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
   var ok=[E[0] && (VENTA_TIENDA || !!val('f-fecha')), E[1], E[2], E[3]];
@@ -15527,10 +15533,14 @@ function fxPasosEstado(){
   var lite=esVendedorLite(val('f-vendedor')), tipo=docTipoSel(), tienda=VENTA_TIENDA;
   var prods=[].some.call(document.querySelectorAll('#f-productos .prod-desc'), function(d){ return !!d.value.trim(); });
   var pag=segVal('f-pagado');
+  /* ⚠️ (25/10, auditoría N-UI3) Lo mismo que exige `submitPedido`, ni más ni menos: sin la nota decía «4 de 4 ¡listo para guardar!»
+     y Guardar la pedía. Celular: todo menos RPT (también la ATC); la zona, también en una RPT; ROHO, su N° de OC; la ATC, lo de `atcFaltan`. */
+  var atcMal=false; try{ atcMal = tipo==='ATC' && atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).length>0; }catch(e){}
   return [
-    !!val('f-vendedor') && !!val('f-cliente') && (lite || tipo!=='OC' || !!val('f-celular')),
+    !!val('f-vendedor') && !!val(tipo==='RPT'?'f-rpt-suc':'f-cliente') && (lite || tipo==='RPT' || !!val('f-celular')) &&
+      (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
     prods,
-    tienda || (!!val('f-fecha') && (tipo==='RPT' || !!val('f-zona'))),
+    tienda || (!!val('f-fecha') && !!val('f-zona')),
     tipo!=='OC' || lite || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && montoForm('f-saldo')>0))
   ];
 }
@@ -41991,7 +42001,7 @@ function compsExcel(){
   var L=compsMesDatos(mes); if(!L.length){ toast('No hay pagos con QR, tarjeta o transferencia en ese mes','err'); return; }
   var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO']];
   L.forEach(function(x){
-    var base=[x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', r2(x.monto), x.envio?'SÍ':''];
+    var base=[x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', { v:r2(x.monto), t:'n', s:2 }, x.envio?'SÍ':''];   // MONTO como NÚMERO en Bs (N-FIN1: sin `t:'n'` salía como texto)
     if(!x.comps.length) rows.push(base.concat(['FALTA LA FOTO','']));
     else x.comps.forEach(function(fid, i){ rows.push(base.concat([fotoVer(fid), compsArchivo(x, i)])); });
   });

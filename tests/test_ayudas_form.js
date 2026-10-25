@@ -170,10 +170,10 @@ const PREPARAR=eval('('+PREPARAR_TXT.trim().replace(/;\s*$/,'')+')');   // el mi
   await page.evaluate(()=>{ window.scrollTo(0,0); fxPasosPintar(); });
   r = await ev(()=>{ var e=document.getElementById('fx-pasos'); return { visible:!e.hidden, t:e.innerText.replace(/\s+/g,' '), ok:e.querySelectorAll('.fx-pb.ok').length, pad:document.body.classList.contains('con-pasos') }; });
   chk('en el celular aparece la barra de abajo: Cliente · Productos · Entrega · Cobro, sin ✓ todavía', r.visible && /Cliente/.test(r.t) && /Productos/.test(r.t) && /Entrega/.test(r.t) && /Cobro/.test(r.t) && r.ok===0 && r.pad, r);
-  await ev(()=>{ var s=function(id,v){ var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); }; s('f-vendedor','Maria Flores'); s('f-cliente','CLIENTE ROJAS'); s('f-celular','70011122'); _prod(0,'CH1761',1); });
+  await ev(()=>{ var s=function(id,v){ var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); }; s('f-vendedor','Maria Flores'); s('f-cliente','CLIENTE ROJAS'); s('f-celular','70011122'); s('f-nota','4321'); _prod(0,'CH1761',1); });   // la nota: Guardar la pide y el paso también (§4mj, N-UI3)
   await page.waitForTimeout(500);
   r = await ev(()=>[].map.call(document.querySelectorAll('#fx-pasos .fx-pb'), function(b){ return b.classList.contains('ok'); }));
-  chk('con cliente, celular y un producto: ✓ Cliente y ✓ Productos', r[0]===true && r[1]===true && r[2]===false && r[3]===false, r);
+  chk('con cliente, celular, nota y un producto: ✓ Cliente y ✓ Productos', r[0]===true && r[1]===true && r[2]===false && r[3]===false, r);
   await ev(()=>fxPasoIr(2)); await page.waitForTimeout(1200);
   r = await ev(()=>{ var s=fxSec('Entrega').getBoundingClientRect(); return { top:Math.round(s.top), act:(document.querySelector('#fx-pasos .fx-pb.act .nm')||{}).textContent }; });
   chk('tocar «Entrega» lleva a esa parte del formulario (debajo del encabezado) y la marca', r.top>0 && r.top<320 && r.act==='Entrega', r);
