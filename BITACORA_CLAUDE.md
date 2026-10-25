@@ -15927,3 +15927,4 @@ El dueño pasó el informe de Codex/Astra (`INFORME_PARA_CLAUDE.md`, revisaron `
   pierde `prodCu`/`prodRt` (su `heredarMarcas` no los conoce): vuelve a la regla de antes, nada se rompe.
 - Con la planilla real (copia del 24/10, solo lectura): ninguna línea tiene `prodU`/`prodC` todavía; `stockData` da IGUAL en los 323 productos
   antes y después. `tests/test_parcial_corregido.js` (16; 12 rojas contra `7e8ebb6`).
+  Batería entera en la rama: 236 suites, 7.919 bien, 1 mal (`test_ventas_marcas`, la letra del monto de siempre). NO publicado: espera «publica».
