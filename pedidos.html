@@ -4141,6 +4141,8 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .fx-dup{ background:var(--amber-lt); border:1.5px solid var(--amber-border); color:#7c3d00; border-radius:12px; padding:10px 12px; margin:-6px 0 14px; font-size:.84rem; }
 .fx-dup-r{ display:flex; align-items:center; gap:8px; justify-content:space-between; background:#fff; border-radius:9px; padding:6px 8px; margin-top:6px; font-size:.8rem; }
 .fx-dup-r i{ color:var(--muted); } .fx-dup-r .btn{ width:auto; flex:none; }
+.prod-reco{font-size:.78rem;font-weight:700;color:#15803d;background:#ecfdf3;border:1px solid #c9eedb;border-radius:8px;padding:5px 9px;margin:6px 0 2px}
+.prod-reco[hidden]{display:none}
 .fx-busca{ position:absolute; z-index:5000; background:#fff; border:1px solid var(--teal-border); border-radius:12px; box-shadow:0 14px 34px rgba(9,72,68,.22); padding:5px; max-height:360px; overflow:auto; }
 .fx-bo{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:9px; cursor:pointer; }
 .fx-bo:hover, .fx-bo.sel{ background:var(--teal-lt); }
@@ -6218,6 +6220,48 @@ var NOMBRES = {}, NOMBRES_LISTA = [];
   }
   NOMBRES_LISTA.sort();
 })();
+/* 🛏️ (25/10, dueño: «si escribo Colchon titanio no sale nada… si pongo titanio látex sale, pero no dice Colchon») La lista de
+   precios guarda los colchones SIN la palabra («TITANIO LATEX») y en el sistema de ventas dicen «COLCHON TITANIO LATEX». Lo que la
+   vendedora VE, busca y deja escrito en el pedido lleva «COLCHON» adelante; el nombre de `CODIGOS` no cambia (de él sale la clave
+   del stock, §4cn). Colchón = lo que `pryTipoProd` cuenta como colchón por el código (somier, almohada, respaldar, combo: no).
+   Se calcula al usarse, no al cargar: `pryTipoProd` lee constantes que se declaran más abajo. */
+var NOMBRE_VENTA_MEMO={};
+function nombreVenta(d, code){
+  d=String(d||''); var k=String(code||'')+'|'+d;
+  if(Object.prototype.hasOwnProperty.call(NOMBRE_VENTA_MEMO, k)) return NOMBRE_VENTA_MEMO[k];
+  var r=d;
+  try{ if(d && !/^\s*COLCHON/i.test(d) && pryTipoProd({ codigo:code, desc:d })==='colchon') r='COLCHON '+d; }catch(e){}
+  return (NOMBRE_VENTA_MEMO[k]=r);
+}
+/* 🏷️ (25/10, dueño: opción 1) Escrito a mano sin elegir de la lista: el código se completa solo al salir del campo, con la
+   MISMA identidad que usa el stock (`stockInfo`: código del catálogo por nombre y misma medida), y se dice abajo del renglón.
+   Nunca pisa un código que la vendedora escribió o eligió, ni toca un renglón que ya traía el pedido tal como estaba
+   (`data-orig`): su código es parte de `prodClave`, y cambiarlo perdería las marcas de logística (`heredarMarcas`). */
+function prodCodigoAuto(card){
+  if(!card) return;
+  var d=card.querySelector('.prod-desc'), c=card.querySelector('.prod-codigo'), ms=card.querySelector('.prod-medida'),
+      ot=card.querySelector('.prod-medida-otro'), nota=card.querySelector('.prod-reco');
+  if(!d || !c || !ms) return;
+  var auto=card.getAttribute('data-cod-auto')||'', cod=String(c.value||'').trim().toUpperCase();
+  var med=ms.value==='Otros' ? String((ot&&ot.value)||'').trim() : String(ms.value||'');
+  var desc=String(d.value||'').trim();
+  var poner=function(code, txt){
+    if(code){ c.value=code; card.setAttribute('data-cod-auto', code); } else { card.removeAttribute('data-cod-auto'); }
+    if(nota){ nota.textContent=txt||''; nota.hidden=!txt; }
+  };
+  if(cod && cod!==auto){ if(nota) nota.hidden=true; return; }               // lo escribió o lo eligió ella
+  if(card.getAttribute('data-orig') && card.getAttribute('data-orig')===(desc+'|'+med)){ if(nota) nota.hidden=true; return; }
+  var hit=null;
+  if(desc && med && !esCodigoCombo(desc)){
+    try{
+      var i=stockInfo({ desc:desc, medida:med, codigo:'' }), k=i && i.cat && i.cat.code;
+      if(k && CODIGOS[k] && String(CODIGOS[k].m||'').trim()) hit={ code:k, d:CODIGOS[k].d, m:CODIGOS[k].m };
+    }catch(e){}
+  }
+  if(hit) poner(hit.code, '✓ Lo reconocí: '+nombreVenta(hit.d, hit.code)+' '+hit.m+' · código '+hit.code+' (si no es ese, borrá el código)');
+  else { if(auto) c.value=''; poner('', ''); }
+  saldoAvisosProgramar();
+}
 /* ⚠️ En hora de BOLIVIA, no la del dispositivo (26/09): `ts` es un instante guardado, y el filtro del mes
    ya lo lee así (`isoDeTsBolivia`, §4fu). Con la zona mal puesta, la venta del 31/08 a las 21:30 salía
    en el listado de agosto diciendo «2026-09-01 01:30» (columna «Ingresado», la ficha y los Excel). */
@@ -6282,6 +6326,8 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   pIn.addEventListener('input',pintarSub); q.addEventListener('input',pintarSub);
   pintarSub();
   // medida "Otros" -> input manual (ancho completo, debajo)
+  // 🏷️ (25/10) «✓ Lo reconocí: …» cuando el panel completa el código de un nombre escrito a mano (`prodCodigoAuto`)
+  var reco=document.createElement('div'); reco.className='prod-reco'; reco.hidden=true;
   var otro=document.createElement('input'); otro.type='text'; otro.className='prod-medida-otro'; otro.placeholder='Escribí la medida'; otro.autocomplete='off';
   otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
   mSel.addEventListener('change',function(){ otro.style.display=(mSel.value==='Otros')?'block':'none'; if(mSel.value!=='Otros')otro.value=''; });
@@ -6291,7 +6337,8 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   otro.addEventListener('change',function(){ codigoEspecialBorrar([card], EDIT_ID ? findById(EDIT_ID) : null); });
   // Autollenado por codigo: al escribir/pegar un codigo conocido, completa producto y medida.
   cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase();
-    card.removeAttribute('data-de-pedido');   // (30/09) con otro código ya no es el producto que traía el pedido (ver `submitPedido`)
+    card.removeAttribute('data-de-pedido');
+    card.removeAttribute('data-cod-auto'); reco.hidden=true;   // (25/10) el código lo escribe ella: ya no es el que puso el panel   // (30/09) con otro código ya no es el producto que traía el pedido (ver `submitPedido`)
     var hit=CODIGOS[code];
     // Primero se resuelve el código: si ya se sabe qué combo es, el aviso lo nombra.
     // Recién si no resuelve (lo están escribiendo) alcanza con que empiece con CMB.
@@ -6312,7 +6359,8 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
         ? ('📦 '+code+' no está en la lista de precios ni en el Excel de hoy (se agotó): lo completé con el histórico del sistema, '+alm.d+(alm.m?(' '+alm.m):'')+'. Su saldo es 0.'+_prec)
         : ('📦 '+code+' no está en la lista de precios, pero sí en el almacén: '+alm.d+(alm.m?(' '+alm.m):'')+'.'+_prec),'ok');
     }
-    d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
+    d.value=CODIGOS[code] ? nombreVenta(hit.d, code) : hit.d;   // 🛏️ (25/10) «COLCHON TITANIO LATEX», como en el sistema de ventas
+    var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   /* (30/09, X-3) Al SALIR del campo (no letra por letra): un código que no está en la lista, ni en ningún almacén, ni en el
      histórico del sistema no completa nada. Se dice, en vez de dejar un renglón con solo el código que no se guarda. */
   cIn.addEventListener('change',function(){ var code=cIn.value.trim().toUpperCase();
@@ -6324,16 +6372,24 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   // Elegir por NOMBRE (lista emergente): al elegir un 'NOMBRE MEDIDA', llena codigo y medida.
   d.addEventListener('input',function(){ var etiqueta=d.value.trim();
     if(rechazarCombo(etiqueta, d, cIn)) return;   // salta ya con "comb", sin esperar a que termine
-    var hit=NOMBRES[etiqueta]; if(!hit) return;
-    cIn.value=hit.code; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
+    var hit=NOMBRES[etiqueta];
+    if(!hit){
+      /* (25/10) Si el código lo había puesto el panel (`prodCodigoAuto`) y ahora cambia el nombre, ya no vale: se vuelve a mirar al salir. */
+      var au=card.getAttribute('data-cod-auto'); if(au && cIn.value.trim().toUpperCase()===au){ cIn.value=''; card.removeAttribute('data-cod-auto'); reco.hidden=true; }
+      return;
+    }
+    card.removeAttribute('data-cod-auto'); reco.hidden=true;
+    cIn.value=hit.code; d.value=nombreVenta(hit.d, hit.code); var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Escrito a mano y sin elegir de la lista: se revisa al salir del campo.
   d.addEventListener('blur',function(){ rechazarCombo(d.value, d, cIn); });
   /* 🧾 (27/09) ¿Hay para vender? El cuadrito del saldo va AL FINAL del renglón (§4gj): aparece recién con el producto
      completo y se actualiza solo (con un respiro, `saldoAvisosProgramar`) — nunca toca los campos ni el foco. */
   var sal=document.createElement('div'); sal.className='prod-saldo'; sal.hidden=true;
+  d.addEventListener('change', function(){ prodCodigoAuto(card); }); mSel.addEventListener('change', function(){ prodCodigoAuto(card); });
+  otro.addEventListener('change', function(){ prodCodigoAuto(card); });
   [d, cIn, otro, q].forEach(function(e){ e.addEventListener('input', saldoAvisosProgramar); });
   d.addEventListener('change', saldoAvisosProgramar); mSel.addEventListener('change', saldoAvisosProgramar);
-  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(rW); card.appendChild(tot); card.appendChild(sal);
+  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(reco); card.appendChild(rW); card.appendChild(tot); card.appendChild(sal);
   box.appendChild(card); refreshDelButtons(); pintarTotalProds(); pintarProdRpt();
   saldoAvisosProgramar();                     // al abrir un pedido para editarlo, los renglones ya vienen completos
 }
@@ -14169,7 +14225,10 @@ function editPedido(id){
   if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio,pr.rtipo,pr.robs); } } else addProdRow();
   /* (30/09) Los renglones que YA traía el pedido: vaciarle el nombre a uno es sacarlo (como siempre); el freno de «código sin
      producto» de `submitPedido` es para un renglón nuevo al que nunca se le completó el nombre. */
-  Array.prototype.forEach.call(box.querySelectorAll('.prod-card'), function(c){ if(String((c.querySelector('.prod-desc')||{}).value||'').trim()) c.setAttribute('data-de-pedido','1'); });
+  Array.prototype.forEach.call(box.querySelectorAll('.prod-card'), function(c){ if(String((c.querySelector('.prod-desc')||{}).value||'').trim()){ c.setAttribute('data-de-pedido','1');
+    /* (25/10) Cómo venía el renglón: mientras siga igual, `prodCodigoAuto` no le pone código (cambiaría `prodClave`). */
+    var _ms=c.querySelector('.prod-medida'), _ot=c.querySelector('.prod-medida-otro');
+    c.setAttribute('data-orig', String((c.querySelector('.prod-desc')||{}).value||'').trim()+'|'+(_ms && _ms.value==='Otros' ? String((_ot&&_ot.value)||'').trim() : String((_ms&&_ms.value)||''))); } });
   document.getElementById('f-celular').value=rec.celular||'';
   /* (27/09, revisión en el celular) SIN TURNO sigue sin turno: `rec.turno||'AM'` dejaba marcado «AM» y guardar la dirección
      le ponía turno AM a un pedido que nadie eligió (la ficha pasaba de «🕗 Sin turno» a «🌅 AM» y el atraso se medía a las 13
@@ -15004,7 +15063,9 @@ function fxDupConfirmar(){
    completa medida y código como antes. El saldo sale de la MISMA cuenta del cuadrito (`saldoVeredicto`). */
 var FX_BUSCA={ el:null, inp:null, items:[], sel:-1 };
 var FX_NORM_LISTA=null;
-function fxBuscaNorm(){ if(!FX_NORM_LISTA) FX_NORM_LISTA=NOMBRES_LISTA.map(function(lb){ return { lb:lb, n:sinTildes(lb).toUpperCase() }; }); return FX_NORM_LISTA; }
+/* 🛏️ (25/10) Se busca también por el nombre de venta («COLCHON TITANIO LATEX», `nombreVenta`): «colchon titanio» no encontraba nada. */
+function fxBuscaNorm(){ if(!FX_NORM_LISTA) FX_NORM_LISTA=NOMBRES_LISTA.map(function(lb){ var x=NOMBRES[lb]||{}, v=x.d ? (nombreVenta(x.d, x.code)+(x.m?(' '+x.m):'')+' · '+x.code) : lb;
+  return { lb:lb, n:sinTildes(v).toUpperCase() }; }); return FX_NORM_LISTA; }
 function fxBuscaChip(x){
   try{
     if(!STOCK_CARGADO) return '';
@@ -15036,7 +15097,7 @@ function fxBuscaAbrir(inp){
   var el=FX_BUSCA.el; if(!el){ el=FX_BUSCA.el=document.createElement('div'); el.id='fx-busca'; el.className='fx-busca'; document.body.appendChild(el); }
   FX_BUSCA.inp=inp; FX_BUSCA.items=L; FX_BUSCA.sel=-1;
   el.innerHTML=L.map(function(o,i){ var x=NOMBRES[o.lb]||{};
-    return '<div class="fx-bo" data-i="'+i+'"><div class="t"><b>'+esc(x.d||o.lb)+'</b> '+esc(x.m||'')+'<div class="c">'+esc(x.code||'')+'</div></div>'+fxBuscaChip(x)+'</div>'; }).join('')+
+    return '<div class="fx-bo" data-i="'+i+'"><div class="t"><b>'+esc(x.d ? nombreVenta(x.d, x.code) : o.lb)+'</b> '+esc(x.m||'')+'<div class="c">'+esc(x.code||'')+'</div></div>'+fxBuscaChip(x)+'</div>'; }).join('')+
     (tot>L.length?('<div class="fx-bmas">… y '+(tot-L.length)+' más: escribí otra palabra para achicar</div>'):'');
   var r=inp.getBoundingClientRect();
   el.style.left=(r.left+window.scrollX)+'px'; el.style.top=(r.bottom+window.scrollY+4)+'px'; el.style.width=Math.max(r.width, 300)+'px';
