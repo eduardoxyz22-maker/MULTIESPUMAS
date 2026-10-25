@@ -2040,6 +2040,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
            Va ARRIBA de todo: es lo primero que la vendedora tiene que resolver. -->
       <div id="mis-estado"></div>
       <div id="mis-cola"></div>
+      <div id="mis-top" class="adm-top" hidden></div>   <!-- ✨ (25/10, §4mf) «📋 Para hacer» + «☀️ Tu día», con un vendedor elegido -->
       <div id="wa-resp-mis"></div>   <!-- 💬 (12/10, §4kk) lo que contestaron SUS clientes al bot -->
       <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
@@ -2627,6 +2628,61 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @keyframes ah-entra{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @keyframes ah-destello{0%{box-shadow:0 0 0 0 rgba(0,181,173,.55)}100%{box-shadow:0 0 0 14px rgba(0,181,173,0)}}
 .ah-destello{animation:ah-destello 1.1s ease-out 2;border-radius:14px}
+/* ✨ (25/10, §4mf) Mis pedidos arriba: «Para hacer» (lo mismo que Administración) + «☀️ Tu día». Las dos tarjetas miden lo mismo:
+   lo que sobra a la izquierda muestra lo que está AL DÍA; los datos de la derecha van de a dos. */
+#mis-top{margin:0 0 14px;align-items:stretch}
+#mis-top>.ah-card{display:flex;flex-direction:column}
+.mis-nuevo .filters{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;background:#f3f8f8;border:1px solid #e1ebea;border-radius:14px;padding:8px 10px;margin-bottom:12px}
+.mis-nuevo .filters .field{margin:0}
+.mis-nuevo .filters #mis-busca{flex:2 1 260px;margin:0!important;align-self:flex-end}
+.mis-nuevo .filters #mis-q{background:#fff}
+.mis-nuevo #mis-ubic-aviso,.mis-nuevo #mis-izq{display:none}
+.mis-nuevo #mis-arriba:not(.con-dep){display:none}
+@media (min-width:1000px){ .mis-nuevo #mis-arriba.con-dep{grid-template-columns:minmax(0,1fr)} }
+.ph-ok{margin-top:auto;padding-top:14px}
+.ph-ok-t{font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#15803d;margin:0 2px 7px}
+.ph-ok-l{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.ph-ok-l span{background:#f3fbf6;border:1px solid #d5f0df;color:#256b45;border-radius:10px;padding:7px 10px;font-size:.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td{background:#fff;border:1px solid #e1ebea;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:0 1px 2px rgba(0,60,60,.04),0 10px 26px -18px rgba(0,60,60,.35)}
+.td-top{color:#fff;padding:13px 18px 12px;background:radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(140deg,#00B5AD 0%,#0f766e 70%,#155e75 100%)}
+.td-cab{display:flex;align-items:baseline;justify-content:space-between;font-weight:800;font-size:1.02rem;gap:8px}
+.td-cab small{font-weight:700;opacity:.85;font-variant-numeric:tabular-nums}
+.td-lbl{margin-top:10px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.85}
+.td-big{font-size:1.9rem;font-weight:900;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.td-prog{height:8px;border-radius:9px;background:rgba(255,255,255,.22);overflow:hidden;margin:9px 0 7px}
+.td-prog i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#fde68a,#fff)}
+.td-meta{font-size:.8rem;opacity:.95}.td-meta b{font-variant-numeric:tabular-nums}
+.td-filas{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;padding:2px 18px;flex:1;align-content:space-evenly}
+.td-f{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #edf3f2}
+.td-f:nth-last-child(-n+2){border-bottom:0}
+.td-i{width:30px;height:30px;border-radius:9px;background:#f0f7f6;display:grid;place-items:center;font-size:.95rem;grid-row:1/3}
+.td-t{grid-column:2;font-size:.74rem;font-weight:800;color:#6b8584;text-transform:uppercase;letter-spacing:.04em;min-width:0}
+.td-f b{grid-column:2;font-weight:900;font-size:1.15rem;color:#13302e;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.2}
+.td-mal b{color:#dc2626}.td-cero b{color:#15803d}
+.td-cash{grid-column:1/-1;grid-template-columns:34px minmax(0,1fr) auto;background:linear-gradient(90deg,#fffaf2,#fff);border-radius:12px;padding:9px 12px;margin:4px 0 0;border-bottom:0!important;cursor:pointer}
+.td-cash .td-i{grid-row:1}.td-cash .td-t{grid-row:1}
+.td-cash b{grid-column:3;grid-row:1;color:#B45309;font-size:1.15rem}
+.td-cash .td-t small{display:block;font-size:.72rem;text-transform:none;letter-spacing:0;font-weight:600}
+.td-cash .td-t small em{font-style:normal;color:#CE2939;font-weight:800}
+.td-cupo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 18px 0;padding:9px 12px;background:#f3f8f8;border-radius:12px;font-size:.85rem;color:#355352}
+.td-cupo span{background:#fff;border:1px solid #e1ebea;border-radius:999px;padding:2px 10px;font-weight:700}
+.td-acc{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 14px}
+.t2-det{border:1px solid #fde3b8;background:#fffcf6;border-radius:16px;padding:12px 16px;margin:0 0 14px}
+.t2-cab{font-weight:900;color:#9a4a07;margin-bottom:6px}
+.t2-f{display:flex;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid #f8ecd6;font-size:.88rem;cursor:pointer}
+.t2-m{margin-left:auto;font-weight:900;font-variant-numeric:tabular-nums}
+.t2-pie{font-size:.78rem;color:#7c5a2e;margin-top:6px}
+.kx{background:#fff;border:1px solid #f6d7a8;border-left:5px solid #e08a00;border-radius:18px;padding:12px 14px;margin:0 0 14px;box-shadow:0 10px 26px -20px rgba(120,70,0,.5)}
+.kx-cab{display:flex;align-items:center;gap:9px;margin-bottom:4px;flex-wrap:wrap}.kx-cab h4{margin:0;font-size:1.02rem;font-weight:800}.kx-cab small{color:var(--muted);font-size:.76rem}
+.kx-gt{font-size:.78rem;font-weight:900;color:#9a4a07;text-transform:uppercase;letter-spacing:.04em;margin:10px 2px 6px}
+.kx-gt small{text-transform:none;letter-spacing:0;font-weight:600;color:#7c5a2e}
+.kx-f{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr) auto;gap:12px;align-items:center;padding:8px 10px;border-radius:12px;border:1px solid #f3ead9;background:#fffcf6;margin-bottom:6px}
+.kx-n b{display:block;font-size:.9rem}.kx-n small{color:#6b8584;font-size:.76rem}
+.kx-tags{display:flex;flex-wrap:wrap;gap:5px}
+.kx-t{border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:800}
+.kx-gem{background:#e6f7f6;color:#00756f}.kx-am{background:#fef3e2;color:#B45309}.kx-mal{background:#fdeaec;color:#CE2939}.kx-ok{background:#ecfdf3;color:#15803d}
+.kx-b{display:flex;gap:6px}.kx-x{padding:7px 10px!important;color:#6b8584!important}
+@media (max-width:900px){ .kx-f{grid-template-columns:minmax(0,1fr)} .td-filas{grid-template-columns:1fr} .td-f:nth-last-child(-n+2){border-bottom:1px solid #edf3f2} }
 /* las pestañas, de borde a borde */
 .adm-secs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px;background:#e9f1f0;border-radius:16px;margin:0 0 12px}
 .adm-secs[hidden]{display:none}
@@ -21084,6 +21140,7 @@ function renderBorradoresMis(){
   if(!lista.length){ box.innerHTML = (v||todos) ? borrPieHtml() : ''; return; }
   precIdxReset();                      // los precios de referencia se recalculan por dibujado
   var n=lista.length;
+  if(misTopActivo() && !todos && v){ box.innerHTML=borrBandejaCompacta(lista, false); return; }   // ✨ (§4mf) filas cortas, debajo de las dos tarjetas
   box.innerHTML=
     '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
       'border-radius:10px;padding:12px 15px;margin-bottom:12px">'+
@@ -22134,6 +22191,134 @@ function choDeshacerCobro(id){
   renderChofer();
   toast((fuera.length===1?'Cobro borrado: ':'Cobros borrados: ')+fmtBs(tot),'ok');
 }
+/* ✨ (25/10, §4mf; dueño, con las muestras: «los V me gustan… el espacio que queda en blanco no está simétrico» y «lo del kommo ¿dónde va?»)
+   ARRIBA DE MIS PEDIDOS, con un vendedor elegido: «📋 Para hacer» (lo que tiene que resolver, lo urgente primero, y lo que está al día) y
+   «☀️ Tu día» (lo vendido del mes en Bs contra el mes anterior entero, hoy y el próximo día, entregados, falta cobrar, el efectivo desde su
+   último retiro —T2— y los cupos). Reemplaza el cartel de avisos, la dona y las 4 fichas; la fábrica 3D de Eduardo queda debajo, igual.
+   La bandeja de Kommo va debajo de las dos tarjetas, en filas cortas (`borrFilaHtml`), con los MISMOS botones de siempre.
+   ⚠️ Todo sale de las cuentas que ya existían (`misPendientes`, `minutosAtraso`, `nxM1Datos`, `misAnilloDatos`, `contaPagos`, `retirosTodos`,
+   `borradoresDe`, `gemeloDe`, `revisarBorrador`, `waRespDeVend`): no se calcula nada aparte. En Playwright sigue lo de antes salvo
+   `window.MIS_TOP_PRUEBA` (las pruebas de siempre leen las fichas). «👑 Ver todos» tampoco cambia. */
+function misBuscaLugar(nuevo){
+  var b=document.getElementById('mis-busca'), mv=document.getElementById('mis-vendedor'); if(!b || !mv) return;
+  var fil=mv.closest('.filters'), info=document.getElementById('mis-q-info');
+  if(nuevo){ if(fil && b.parentNode!==fil) fil.insertBefore(b, fil.children[1]||null); }
+  else if(info && b.parentNode!==info.parentNode) info.parentNode.insertBefore(b, info);
+}
+function misTopActivo(){ return !navigator.webdriver || !!window.MIS_TOP_PRUEBA; }
+function misNom2(L, n){ n=n||3; return L.slice(0,n).map(function(p){ return String((p&&p.cliente)||'—').trim().split(/\s+/).slice(0,2).join(' '); }).join(', ')+(L.length>n?(' y '+(L.length-n)+' más'):''); }
+var MIS_LISTAS={};
+function misVerLista(k){
+  var o=MIS_LISTAS[k]; if(!o) return;
+  openModal('<div class="modal-h"><h3>'+esc(o.t)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
+    (o.s?('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+esc(o.s)+'</div>'):'')+
+    o.L.map(function(p){ return '<div class="t2-f" onclick="closeModal();showMisModal(\''+esc(String(p.id))+'\')"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+
+      esc([p.fecha?fmtFecha(p.fecha):'', ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+(o.m?('<span class="t2-m">'+o.m(p)+'</span>'):'')+'</div>'; }).join('')+'</div>');
+}
+function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} el.classList.remove('ah-destello'); void el.offsetWidth; el.classList.add('ah-destello'); }
+function misHacerDatos(v, mine){
+  var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
+  var q=misPendientes(mine);
+  add({ sev:'r', ic:'🔴', n:q.sinStock.length, t:'Productos que no hay', s:misNom2(q.sinStock.map(function(x){ return x.p; }))+' · avisales que hay que esperar', b:'Ver qué hacer', p:1, fn:'abrirMisAvisos()', ok:'Todos tus productos tienen stock' });
+  var atr=mine.filter(function(p){ return minutosAtraso(p)>0; });
+  add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  var M=nxM1Datos(v, false);
+  add({ sev:(M.tarde?'r':'a'), ic:'🔔', n:M.faltan, t:'Avisar a los clientes de '+(M.dia===tomorrowStr()?'mañana':nxDiaTxt(M.dia)), s:misNom2(M.L.filter(function(p){ return !nxM1Avisado(p); })), b:'🔔 Avisar', p:1, fn:"NX_M1_ABIERTA=true;renderMis();misIrA('nx-m1')", ok:'Clientes del próximo día avisados' });
+  var fl=q.sinFlete, fBs=0; fl.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
+  MIS_LISTAS.flete={ t:'🚚 Recargo por entrega sin reportar', s:'Cuando lo cobres, entrá al pedido y tocá «Cobré el flete» (hay que subir el comprobante).', L:fl, m:function(p){ return fmtBs(envioPorCobrar(p)); } };
+  add({ sev:'a', ic:'🚚', n:fl.length, t:'Recargo por entrega sin reportar', s:fmtBs(fBs)+' · '+misNom2(fl), b:'Ver', fn:"misVerLista('flete')", ok:'Recargos reportados' });
+  add({ sev:'a', ic:'📍', n:q.sinGps.length, t:'Sin ubicación de Google Maps', s:misNom2(q.sinGps)+' · pedísela al cliente', b:'Ver', fn:'abrirMisAvisos()', ok:'Ubicaciones completas' });
+  var br=borradoresDe(v);
+  add({ sev:'a', ic:'📥', n:br.length, t:'Ventas de Kommo para completar', s:misNom2(br)+' · falta la fecha de entrega', b:'Completar ↓', p:1, fn:"misIrA('mis-borradores')", ok:'Sin ventas de Kommo pendientes' });
+  /* el saldo del mes: lo MISMO que la ficha «Por cobrar» de siempre (fecha de entrega de este mes, sin pagar) */
+  var mes=todayStr().slice(0,7), deben=mine.filter(function(p){ return (p.fecha||'').slice(0,7)===mes && !p.pagado && (Number(p.saldo)||0)>0; });
+  var dBs=0; deben.forEach(function(p){ dBs=r2(dBs+(Number(p.saldo)||0)); });
+  MIS_LISTAS.saldo={ t:'💵 Saldo por cobrar de este mes · '+fmtBs(dBs), L:deben, m:function(p){ return fmtBs(Number(p.saldo)||0); } };
+  add({ sev:'a', ic:'💵', n:deben.length, t:'Saldo por cobrar de este mes', s:fmtBs(dBs)+' · '+misNom2(deben), b:'Ver', fn:"misVerLista('saldo')", ok:'Nada por cobrar este mes' });
+  try{ var w=waRespDeVend(v); add({ sev:'i', ic:'💬', n:w.length, t:'Clientes que contestaron al bot', s:'leelos y tocá «Ya lo atendí»', b:'Leer', fn:"misIrA('wa-resp-mis')", ok:'Sin respuestas del bot' }); }catch(e){}
+  var ord={ r:0, a:1, i:2 }; I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
+  I.ok=OK; return I;
+}
+/* 💵 (T2) Lo cobrado en efectivo DESDE SU ÚLTIMO RETIRO: no la resta de todo lo cobrado menos todo lo retirado, que con retiros viejos sin
+   anotar da números que no cierran (24/10: a Carola le quedaban Bs 15.610 sin ningún cobro después de su último retiro). Lo que tiene un
+   chofer es del chofer (`pagoRecibio`, §4eq). */
+function misEfectivoDatos(v){
+  var cob=[];
+  (STATE||[]).forEach(function(p){ if(!p || esFilaSistema(p) || fueraDeConta(p)) return;
+    contaPagos(p).forEach(function(c){ if(c.metodo!=='Efectivo' || !((Number(c.monto)||0)>0)) return; if(!mismoVendedor(pagoRecibio(c,p), v)) return; cob.push({ f:c.fecha||contaFecha(p)||'', m:Number(c.monto)||0, p:p }); }); });
+  var ret=retirosTodos().filter(function(r){ return mismoVendedor(r.entrega, v); }).sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
+  var ult=ret[ret.length-1]||null, nuevos=cob.filter(function(c){ return !ult || c.f>ult.fecha; }).sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
+  var tot=0; nuevos.forEach(function(c){ tot=r2(tot+c.m); });
+  var dias=nuevos.length ? Math.round((new Date(todayStr()+'T12:00:00')-new Date(nuevos[0].f+'T12:00:00'))/864e5) : 0;
+  return { tot:tot, nuevos:nuevos, ult:ult, dias:dias };
+}
+var MIS_EF_ABIERTO=false;
+function misTopPintar(v, mine){
+  var el=document.getElementById('mis-top'); if(!el) return;
+  var I=misHacerDatos(v, mine), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
+  var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
+    '<button type="button" class="ah-go'+(o.p?' ah-go-p':'')+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
+  var izq='<div class="ah-card"><div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small></div>'+
+    (I.length ? ('<div class="ah-lista">'+(MIS_HACER_MAS?I:V).map(fila).join('')+'</div>'+
+        (resto.length?('<button type="button" class="ah-mas" onclick="MIS_HACER_MAS=!MIS_HACER_MAS;renderMis()">'+(MIS_HACER_MAS?'▴ Ver menos':('▾ Ver '+resto.length+' más: '+esc(resto.map(function(o){ return o.t.toLowerCase()+' ('+o.n+')'; }).join(' · '))))+'</button>'):''))
+      : '<div class="ah-vacio"><span>✅</span><div><b>No tenés nada pendiente. ¡Bien ahí!</b><small>Ni productos que no hay, ni atrasados, ni ubicaciones, ni saldos, ni clientes por avisar.</small></div></div>')+
+    ((I.length && I.ok.length)?('<div class="ph-ok"><div class="ph-ok-t">✅ Al día</div><div class="ph-ok-l">'+I.ok.map(function(t){ return '<span>✓ '+esc(t)+'</span>'; }).join('')+'</div></div>'):'')+'</div>';
+  var R=misAnilloDatos(mine), prox=proximoDiaEntrega(), hoy=todayStr();
+  var nHoy=mine.filter(function(p){ return p.fecha===hoy && !esVentaTienda(p); }).length, nPx=mine.filter(function(p){ return p.fecha===prox && !esVentaTienda(p); }).length;
+  var mesN=function(ym){ return mesNombre(ym).replace(/ de \d{4}$/,''); }, may=function(t){ return String(t).replace(/^./,function(c){ return c.toUpperCase(); }); };
+  var pct=R.bsAnt>0 ? Math.min(1, R.bs/R.bsAnt) : (R.bs>0?1:0);
+  var hb=horaBolivia(), hora=('0'+hb.getHours()).slice(-2)+':'+('0'+hb.getMinutes()).slice(-2);
+  var E=misEfectivoDatos(v);
+  var cu=function(t){ var l=limTurno(prox,t); return l>0 ? (l-cuposUsadosTurno(prox,t)) : null; }, am=cu('AM'), pm=cu('PM');
+  var cel=function(ic,t,val,cls){ return '<div class="td-f'+(cls?(' '+cls):'')+'"><span class="td-i">'+ic+'</span><span class="td-t">'+t+'</span><b>'+val+'</b></div>'; };
+  var der='<div class="td"><div class="td-top"><div class="td-cab"><span>☀️ Tu día, '+esc(String(v).split(' ')[0])+'</span><small>'+hora+'</small></div>'+
+      '<div class="td-lbl">Vendido para '+esc(mesN(R.mes))+'</div><div class="td-big">'+fmtBs0(R.bs)+'</div>'+
+      '<div class="td-prog"><i style="width:'+Math.round(pct*100)+'%"></i></div>'+
+      '<div class="td-meta">'+(R.bsAnt>0 ? (esc(may(mesN(R.ant)))+' entero: <b>'+fmtBs0(R.bsAnt)+'</b>'+(R.bsAnt>R.bs?(' · te faltan <b>'+fmtBs0(r2(R.bsAnt-R.bs))+'</b> para igualarlo'):' · <b>¡ya lo pasaste!</b>')) : ('Sin ventas en '+esc(mesN(R.ant))))+'</div></div>'+
+    '<div class="td-filas">'+
+      cel('📅','Hoy', nHoy+(nHoy===1?' entrega':' entregas'))+
+      cel('🌅', esc(may(nxDiaTxt(prox))), nPx+(nPx===1?' entrega':' entregas'))+
+      cel('🚚','Entregados del mes', R.ent+' de '+R.n)+
+      cel('⏳','Falta cobrar del mes', fmtBs0(R.cobrar), R.cobrar>0?'td-mal':'td-cero')+
+      '<div class="td-f td-cash" onclick="MIS_EF_ABIERTO=!MIS_EF_ABIERTO;renderMis()" title="Ver los cobros"><span class="td-i">💵</span><span class="td-t">Efectivo en tu mano<small>'+
+        (E.nuevos.length ? (E.nuevos.length+(E.nuevos.length===1?' cobro':' cobros')+' desde tu último retiro'+(E.ult?(' ('+fmtFechaCorta(E.ult.fecha)+')'):'')+(E.dias>=7?(' · <em>el más viejo, hace '+E.dias+' días</em>'):'')) : 'todo rendido')+
+      '</small></span><b>'+fmtBs0(E.tot)+'</b></div>'+
+    '</div>'+
+    ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
+    '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
+      '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
+      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button></div></div>';
+  var det=(MIS_EF_ABIERTO && E.nuevos.length) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
+      E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
+      '<div class="t2-pie">'+(E.ult?('Último retiro: '+esc(fmtFechaCorta(E.ult.fecha))+' · '+fmtBs0(E.ult.monto)):'Todavía no hay retiros anotados')+'</div></div>') : '';
+  var h=izq+der+det;
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+var MIS_HACER_MAS=false;
+/* La bandeja de Kommo en filas cortas (§4mf): los mismos botones que la tarjeta grande (`borrCardHtml`). */
+function borrFilaHtml(p, conDuena){
+  var id=String(p.id), gem=null; try{ gem=gemeloDe(p); }catch(e){}
+  var d=diasDeBorrador(p), monto=Number(p.saldo)||Number(p.acuenta)||0, tags=[];
+  if(gem) tags.push('<span class="kx-t kx-gem">✋ parece la misma que '+esc(String(gem.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+(gem.nota?(' · nota '+esc(gem.nota)):'')+'</span>');
+  if(!(p.productos||[]).some(function(x){ return String(x.desc||x.codigo||'').trim(); })) tags.push('<span class="kx-t kx-am">sin productos</span>');
+  try{ revisarBorrador(p).forEach(function(r){ tags.push('<span class="kx-t '+(r.n==='alto'?'kx-mal':'kx-am')+'" title="'+esc(String(r.t).replace(/<[^>]+>/g,''))+'">'+esc(String(r.t).replace(/<[^>]+>/g,'').split(/[.:](?:\s|$)/)[0].slice(0,48))+'</span>'); }); }catch(e){}
+  return '<div class="kx-f"><div class="kx-n"><b>'+esc(p.cliente||'(sin nombre)')+'</b><small>'+[conDuena&&p.vendedor?('👤 '+esc(p.vendedor)):'', p.celular?('📱 '+esc(p.celular)):'', monto?fmtBs0(monto):'', d<=0?'llegó hoy':(d===1?'desde ayer':('hace '+d+' días'))].filter(Boolean).join(' · ')+'</small></div>'+
+    '<div class="kx-tags">'+tags.join('')+'</div><div class="kx-b">'+
+    (gem ? ('<button type="button" class="ah-go ah-go-p" onclick="'+esc("borrEsLaMisma('"+id+"','"+String(gem.id)+"')")+'">Sí, es la misma</button>'+
+            '<button type="button" class="ah-go" onclick="'+esc("verFichaGemela('"+String(gem.id)+"')")+'">Ver la mía</button>'+
+            '<button type="button" class="ah-go" onclick="'+esc("completarBorrador('"+id+"')")+'">Es otra</button>')
+         : ('<button type="button" class="ah-go ah-go-p" onclick="'+esc("completarBorrador('"+id+"')")+'">Completar</button>'))+
+    '<button type="button" class="ah-go kx-x" title="Descartar" onclick="'+esc("descartarBorrador('"+id+"')")+'">✕</button></div></div>';
+}
+var MIS_KX_MAS={ gem:false, nue:false };
+function borrBandejaCompacta(lista, todos){
+  var gem=[], nue=[]; lista.forEach(function(p){ var g=null; try{ g=gemeloDe(p); }catch(e){} (g?gem:nue).push(p); });
+  var grupo=function(k, ic, t, sub, A){ if(!A.length) return ''; var ver=MIS_KX_MAS[k]?A:A.slice(0,3);
+    return '<div class="kx-gt">'+ic+' '+t+' · <b>'+A.length+'</b> <small>'+sub+'</small></div>'+ver.map(function(p){ return borrFilaHtml(p, todos); }).join('')+
+      (A.length>3?('<button type="button" class="ah-mas" onclick="MIS_KX_MAS.'+k+'=!MIS_KX_MAS.'+k+';renderBorradoresMis()">'+(MIS_KX_MAS[k]?'▴ Ver menos':('▾ Ver las otras '+(A.length-3)))+'</button>'):''); };
+  return '<div class="kx"><div class="kx-cab"><span class="ah-ico">📥</span><h4>Ventas de Kommo para completar</h4><span class="ah-badge ah-badge-a">'+lista.length+'</span><span class="ah-sp"></span><small>todavía no ocupan lugar en ningún camión</small>'+misPlegarBtn('kommo')+'</div>'+
+    (misPlegado('kommo') ? '' : (grupo('gem','✋','Parecen ya cargadas','confirmá y se van de acá', gem)+grupo('nue','🆕','Nuevas','falta ponerles la fecha de entrega', nue)))+'</div>';
+}
 function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
   var v=misVendedorSel(mv);
@@ -22153,6 +22338,11 @@ function renderMis(){
   if(bw) bw.style.display=(v||todos)?'flex':'none';
   if(bx) bx.style.display=MIS_Q.trim()?'':'none';
   if(bi && !MIS_Q.trim()){ bi.style.display='none'; bi.textContent=''; }
+  /* ✨ (§4mf) arriba: «Para hacer» + «Tu día», con un vendedor elegido */
+  var _nuevo=misTopActivo() && !!v && !todos, _card=mv.closest('.card'), _top=document.getElementById('mis-top');
+  if(_card) _card.classList.toggle('mis-nuevo', _nuevo);
+  if(_top) _top.hidden=!_nuevo;
+  misBuscaLugar(_nuevo);
   if(!v && !todos){ box.innerHTML=''; nxM1Desp('', false); var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; misDepPintar([], '', false); tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
@@ -22174,6 +22364,7 @@ function renderMis(){
     mc('var(--green)','Total cargados',mine.length,'histórico');
   misFichasVivas(box, pend>0);                      // 🎨 (§4jj) color + dibujito en cada ficha
   nxM1Ficha(box, v, todos);                         // 🔔 (§4js, M1) la 5ª ficha: avisar a los clientes de mañana
+  if(_nuevo) try{ misTopPintar(v, mine); }catch(e){ console.error(e); }   // ✨ (§4mf)
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
   nxM3(mine, v, todos);                             // 🏅 (§4js, M3) pasó lo del mes anterior
   nxBadges();

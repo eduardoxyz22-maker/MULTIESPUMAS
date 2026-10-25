@@ -15819,3 +15819,35 @@ usá bien los espacios»*; después: *«Stock y reposición y ROHO los quiero ab
   «🧰 Herramientas» y de «🚚 Camiones y día» (`.adm-volver`, visible solo con las pestañas: `#admin-content.adm-tabs-on`), y **tocar la ficha
   de Herramientas otra vez vuelve a los pedidos** (dice «← tocá de nuevo para volver a los pedidos»). `test_adm_arriba` (26). Batería en la copia
   publicada: solo los rojos de siempre.
+
+### §4mf — 🛏️ «COLCHON» en la lista y el código que se pone solo (25/10, PUBLICADA `6f3b393`) · ✨ Mis pedidos arriba (25/10, en la rama)
+**El pedido del dueño** (25/10): María cargó para el 31/10 «COLCHON TITANIO LATEX» y «COLCHON ORO ANATOMICO» escritos a mano y quedaron SIN
+código; *«si escribo Colchon titanio no sale nada… si pongo titanio látex sí sale y se coloca el código, pero no dice Colchon»*. Eligió la 1
+(código solo) y la 2 (COLCHON en la lista).
+- **El stock no estaba partido**: `stockInfo` ya resolvía «COLCHON TITANIO LATEX» y «TITANIO LATEX» a la misma clave (CH1131). Lo que se
+  separaba era lo que agrupa por CÓDIGO (Productos del mes de Contabilidad). En la planilla: 236 renglones sin código, 113 reconocibles por
+  nombre (8 pedidos pendientes), 123 que no son stock o son medida especial.
+- **`nombreVenta(d, code)`**: «COLCHON » adelante si `pryTipoProd` lo cuenta como colchón (somier, almohada, respaldar, combo: no; ya
+  «COLCHON …»: igual). Lo usa la lista (`fxBuscaNorm`, se busca por ese nombre) y lo que queda escrito al elegir o al escribir el código.
+  ⚠️ `CODIGOS[k].d` NO cambia: de ahí sale la clave del stock.
+- **`prodCodigoAuto(card)`** (al salir del nombre, la medida u «Otros»): con la identidad del stock, si el catálogo tiene ese producto en esa
+  medida pone el código (`data-cod-auto`) y lo dice (`.prod-reco` «✓ Lo reconocí…»). No pisa un código escrito; si cambia el nombre, el que
+  puso el panel se borra; medida especial: nada. ⚠️ Un renglón que ya traía el pedido y sigue igual (`data-orig`, lo pone `editPedido`) no
+  recibe código: es parte de `prodClave` y se perderían las marcas de logística (`heredarMarcas`). Los 8 pendientes sin código siguen así.
+- `tests/test_colchon_nombre.js` (20); 5 pruebas viejas esperaban «TITANIO ICE» sin COLCHON (`test_codigo_almacen`, `test_rev8_saldo`,
+  `test_saldo_servidor`, `test_saldo_almacen` ×2). Batería al publicar: rojos de siempre (`test_banzer`, `test_ventas_marcas`, `test_circuito`
+  —mismos 2 FALLO en `ec07cf0`—; `test_mispedidos` solo 33/0).
+- **Skills** en `.claude/skills` (c8908f6, MIT): find-skills, month-end-close, ipados-design-guidelines, ui-ux-pro-max, web-design-guidelines
+  (+ `guidelines.md`), systematic-debugging, verification-before-completion. skills.sh está bloqueado desde el contenedor; `npx skills add` anda.
+
+**✨ Mis pedidos arriba (en la rama, todavía NO publicado)** — el dueño aprobó las muestras V1 + T2 + Kommo compacto («ok aprobado»; pidió
+que las dos tarjetas queden simétricas, sin blanco abajo):
+- Con un vendedor elegido (`misTopActivo`; en Playwright salvo `MIS_TOP_PRUEBA`), `#mis-top` = «📋 Para hacer» (`misHacerDatos`: sin stock,
+  atrasados, avisar mañana, recargo, sin ubicación, Kommo, saldo del mes, bot; lo que está en 0 va a «✅ Al día») + «☀️ Tu día»
+  (`misTopPintar`: `misAnilloDatos`, hoy/próximo día, entregados, falta cobrar, cupos). La card lleva `.mis-nuevo` y esconde la dona, las 4
+  fichas y el cartel de avisos; el buscador sube a la barra del nombre (`misBuscaLugar`). «👑 Ver todos» y la fábrica de Eduardo: igual.
+- 💵 **T2 `misEfectivoDatos`**: efectivo cobrado (`pagoRecibio` = ella) DESPUÉS de su último retiro; no la resta de todo (con retiros viejos
+  sin anotar no cierra: Carola daba Bs 15.610 sin cobros posteriores al 18/09). Tocar la línea abre la lista.
+- 📥 **Kommo compacto** (`borrBandejaCompacta`/`borrFilaHtml`): dos grupos («parecen ya cargadas» con `gemeloDe`, «nuevas»), 3 de cada uno, los
+  mismos botones (`borrEsLaMisma`, `verFichaGemela`, `completarBorrador`, `descartarBorrador`). Administración sigue con la tarjeta grande.
+- `tests/test_mis_arriba.js` (14).
