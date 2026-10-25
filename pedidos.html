@@ -5743,6 +5743,22 @@ function rechazoRecordar(rec, res){
    pero la respuesta se perdió: la cola reenvía con el rev viejo, el servidor dice
    «conflicto», el panel decía «lo modificó otra persona… volvé a hacer tu cambio» y la
    persona lo hacía de nuevo → duplicado (§4eo). */
+/* Un renglón como lista ordenada de [campo, valor] sin lo vacío ni lo que empieza con «_» (no viaja): `cant` «1» = 1, `precio` 0 = sin precio. */
+function prodHuellaComparar(x){
+  x=x||{}; var o=[];
+  Object.keys(x).sort().forEach(function(k){
+    if(k.charAt(0)==='_' || typeof x[k]==='function') return;
+    var v=x[k];
+    if(v==null || v==='' || v===false || (typeof v==='number' && !v)) return;
+    if(typeof v==='string' && /^-?\d+(\.\d+)?$/.test(v.trim())) v=Number(v);
+    if(typeof v==='number'){ if(!r2(v)) return; v=String(r2(v)); }
+    else if(typeof v==='string'){ v=v.trim(); if(!v) return; }
+    else if(typeof v==='boolean') v='S';
+    else { if(Array.isArray(v) && !v.length) return; v=JSON.stringify(v); }
+    o.push([k, v]);
+  });
+  return o;
+}
 function mismoContenido(a, b){
   if(!a||!b) return false;
   var salta={rev:1, nroDia:1, ts:1, ocCambiada:1, _deBorrador:1, _altaPendiente:1, cobradoBs:1, oc:1};
@@ -5750,7 +5766,11 @@ function mismoContenido(a, b){
   for(var k in a){
     if(salta[k] || !a.hasOwnProperty(k)) continue;
     if(typeof a[k]==='function') continue;
-    if(k==='productos'){ if(JSON.stringify((a[k]||[]).map(function(x){ return [x.desc,x.medida,x.codigo,Number(x.cant)||0]; }))!==JSON.stringify((b[k]||[]).map(function(x){ return [x.desc,x.medida,x.codigo,Number(x.cant)||0]; }))) return false; continue; }
+    /* ⚠️ (25/10, auditoría Codex/Astra FLW-1) El renglón ENTERO: precio, marcas de logística, lo de fábrica… La planilla guarda el JSON
+       tal cual se mandó, así que un «ok tardío» de verdad coincide en todo. Comparando solo nombre/medida/código/cantidad, el reintento
+       viejo de A (1.500 + 1.500) se tomaba por igual a la corrección de B (2.000 + 1.000): A se quedaba con el sello de B y SUS precios, y
+       su próximo guardado volvía a poner 1.500 + 1.500 sin que nadie lo viera. */
+    if(k==='productos'){ if(JSON.stringify((a[k]||[]).map(prodHuellaComparar))!==JSON.stringify((b[k]||[]).map(prodHuellaComparar))) return false; continue; }
     if(k==='fotos'){ if(compsArr(a[k]).join(',')!==compsArr(b[k]).join(',')) return false; continue; }
     if(norm(a[k])!==norm(b[k])) return false;
   }
