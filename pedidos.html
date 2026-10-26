@@ -786,7 +786,7 @@ th.sortable:hover{color:var(--teal-dk)}
   .pap-pz{min-height:42px}
 }
 @media (prefers-reduced-motion:reduce){ #pap-overlay *{transition:none!important;animation:none!important} }
-.vid-ped{display:block;width:100%;max-width:340px;aspect-ratio:9/16;height:auto;margin:0 auto 10px;border-radius:16px;background:#dfeeed;box-shadow:0 8px 22px rgba(15,70,68,.18)}
+.vid-ped{display:block;width:min(100%, calc((100vh - 230px) * 16 / 9));aspect-ratio:16/9;height:auto;margin:0 auto 10px;border-radius:12px;background:#dfeeed;box-shadow:0 8px 22px rgba(15,70,68,.18)}
 .vid-ped-t{font-size:.8rem;color:var(--muted);text-align:center;margin:0 0 10px}
 .vid-ped-b .modal-actions a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .asis-vid{margin-right:6px}
@@ -44329,7 +44329,7 @@ function asisEditarEn(id, sel){
 }
 /* ---------- la ayuda: preguntas escritas para este panel ---------- */
 var ASIS_AYUDA=[
-  { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar video ver mirar ensenar aprender', v:'form', f:'#f-cliente', vid:'pedido', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago con la foto del recibo (también en efectivo) y tocá «Guardar pedido».','🎬 Hay un video de 2 minutos con todo el recorrido: «▶️ Ver el video».'] },
+  { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar video ver mirar ensenar aprender', v:'form', f:'#f-cliente', vid:'pedido', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago con la foto del recibo (también en efectivo) y tocá «Guardar pedido».','🎬 Hay un video de 3 minutos con todo el recorrido: «▶️ Ver el video».'] },
   { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Adjuntá la foto del recibo que le diste (también en efectivo: sin foto no se guarda). Con QR o tarjeta, sumá la captura del pago.','Lo que paga después (el saldo) se registra en Contabilidad desde la ficha de la venta: «💵 Registrar un pago».','🎬 Hay un video de cómo cobrar el saldo: «▶️ Ver el video».'], vid:'pago' },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
   { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','📅 Los números son para el día que elegiste: lo vendido para después no se descuenta, y abajo dice cuánto hay pendiente en total.','Siempre podés guardar igual: es un aviso.'] },
@@ -44982,20 +44982,20 @@ function asisVideoOfrecer(){
   try{ nxLS(ASIS_VIDEO_LS, 'ofrecido'); }catch(e){}
   setTimeout(function(){
     var gl=document.getElementById('asis-globo'); if(!gl) return;
-    asisGlobo({ ico:'🎬', t:'¿Te muestro cómo se carga un pedido?', x:'Es un video de 2 minutos: tocá acá. Después lo encontrás en «¿Cómo hago…?».', ms:12000 }, false, true);
+    asisGlobo({ ico:'🎬', t:'¿Te muestro cómo se carga un pedido?', x:'Es un video de 3 minutos: hacé clic acá. Después lo encontrás en «¿Cómo hago…?».', ms:12000 }, false, true);
     gl.onclick=function(){ gl.hidden=true; verVideoPedido(); };
   }, 2500);
 }
-/* 🎬 (26/10, §4mv) LOS VIDEOS QUE ENSEÑA BLOKI: verticales y sin sonido, con los pasos escritos en la pantalla y clientes inventados.
+/* 🎬 (26/10, §4mv) LOS VIDEOS QUE ENSEÑA BLOKI: en pantalla de COMPUTADORA (los vendedores trabajan en la compu) y sin sonido, con los pasos escritos en la pantalla y clientes inventados.
    Viven al lado de la página (`videos/`): se miran acá, en una ventana, y se puede copiar el enlace para mandarlo por WhatsApp.
    Se rehacen con `herramientas/video_pedido/` (escena pedido | pago | tienda; cambiar un archivo = subir su `?v=`).
    · pedido: «Cómo cargar un pedido» (Bloki lo ofrece una vez por aparato, `asisVideoOfrecer`).
    · pago: «Cómo cobrar el saldo pendiente» (Contabilidad → la venta → «💵 Registrar un pago»).
    · tienda: «Cómo registrar una venta de tienda» (Contabilidad → «🏪 Venta de tienda»). */
 var VIDEOS={
-  pedido:{ src:'videos/como-cargar-un-pedido.mp4?v=20261026', poster:'videos/como-cargar-un-pedido.jpg?v=20261026', t:'Cómo cargar un pedido', dur:'2 min 35 s', corto:'2 min' },
-  pago:{ src:'videos/como-cobrar-el-saldo.mp4?v=20261026', poster:'videos/como-cobrar-el-saldo.jpg?v=20261026', t:'Cómo cobrar el saldo pendiente', dur:'1 min 20 s', corto:'1 min' },
-  tienda:{ src:'videos/como-registrar-venta-de-tienda.mp4?v=20261026', poster:'videos/como-registrar-venta-de-tienda.jpg?v=20261026', t:'Cómo registrar una venta de tienda', dur:'1 min 25 s', corto:'1 min' }
+  pedido:{ src:'videos/como-cargar-un-pedido.mp4?v=20261026b', poster:'videos/como-cargar-un-pedido.jpg?v=20261026b', t:'Cómo cargar un pedido', dur:'3 min', corto:'3 min' },
+  pago:{ src:'videos/como-cobrar-el-saldo.mp4?v=20261026b', poster:'videos/como-cobrar-el-saldo.jpg?v=20261026b', t:'Cómo cobrar el saldo pendiente', dur:'1 min 30 s', corto:'1 min 30 s' },
+  tienda:{ src:'videos/como-registrar-venta-de-tienda.mp4?v=20261026b', poster:'videos/como-registrar-venta-de-tienda.jpg?v=20261026b', t:'Cómo registrar una venta de tienda', dur:'1 min 40 s', corto:'1 min 40 s' }
 };
 var VIDEO_PEDIDO=VIDEOS.pedido.src, VIDEO_PEDIDO_POSTER=VIDEOS.pedido.poster;
 function videoUrl(k){ var v=VIDEOS[k]||VIDEOS.pedido; try{ return new URL(v.src.split('?')[0], location.href).href; }catch(e){ return v.src; } }
@@ -45011,7 +45011,7 @@ function verVideo(k){
         '<button type="button" class="btn btn-primary btn-sm" style="flex:1;min-width:140px" onclick="copyText(videoUrl(\''+k+'\'))">📋 Copiar el enlace</button>'+
         '<a class="btn btn-ghost btn-sm" href="'+v.src+'" target="_blank" rel="noopener">↗️ Abrir aparte</a>'+
         '<button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
-      '</div></div>');
+      '</div></div>', true);   // ancha: el video es de pantalla de compu (16:9)
 }
 function verVideoPedido(){ verVideo('pedido'); }
 /* ✍️ (12/10, H) En el celular, mientras se escribe, Eduardo se achica y se corre: no tapa el campo ni el teclado. */

@@ -57,7 +57,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var t3=gl.hidden ? '' : gl.innerText.replace(/\s+/g,' ');
     return { t1:t1, ls:ls, tour1:tour1, abre:abre, t2:t2, t3:t3 };
   });
-  chk('2a. la primera vez, Bloki ofrece el video de cómo se carga un pedido', /cómo se carga un pedido/.test(r2.t1) && /2 minutos/.test(r2.t1) && !!r2.ls && !r2.tour1, r2);
+  chk('2a. la primera vez, Bloki ofrece el video de cómo se carga un pedido', /cómo se carga un pedido/.test(r2.t1) && /3 minutos/.test(r2.t1) && !!r2.ls && !r2.tour1, r2);
   chk('2b. tocar el globo abre la ventana con el video', r2.abre, r2);
   chk('2c. la vez siguiente, el recorrido de siempre; y después ninguna de las dos', /Te muestro el panel/.test(r2.t2) && !/Te muestro el panel|cómo se carga/.test(r2.t3), r2);
 

@@ -1,11 +1,12 @@
-// 🎬 Video «Cómo cargar un pedido» (§4mv, 26/10) — pantalla de celular, datos INVENTADOS, nada sale a la red.
+// 🎬 Videos para enseñar el panel (§4mv, 26/10) — pantalla de COMPUTADORA (los vendedores trabajan en la compu; dueño, 26/10), datos INVENTADOS,
+//    nada sale a la red. Un puntero de mouse se mueve y hace clic; abajo, un cartel por paso.
 // Rehacerlo cuando cambie el formulario:
 //   node herramientas/video_pedido/recibo.js                      (la foto del recibo, inventada → recibo.jpg al lado)
 //   HTTPS_PROXY=http://127.0.0.1:9 node herramientas/video_pedido/grabar.js "$PWD/pedidos.html" /ruta/cuadros [pedido|pago|tienda]
 //   (pedido = cómo cargar un pedido · pago = cobrar el saldo pendiente · tienda = registrar una venta de tienda)
-//   python3 herramientas/video_pedido/armar.py /ruta/cuadros salida.mp4      (1080×1920; con 720 al final, el liviano para WhatsApp)
+//   python3 herramientas/video_pedido/armar.py /ruta/cuadros salida.mp4 [ancho]   (1920 por defecto; 1280 = el liviano para WhatsApp)
 // LEAFLET_DIR = carpeta con leaflet.js/.css (npm pack leaflet@1.9.4 → package/dist): sin ella el mapita sale vacío.
-// ⚠️ La captura a 1080 de ancho no pasa de ~12 cuadros/s en esta máquina: se graba a escala 2 (780×1386, ~20 cuadros/s) y se agranda.
+// Pantalla de 1280×720 dibujada a 1,5 (= 1920×1080): ~18 cuadros/s en esta máquina. armar.py respeta la forma de los cuadros.
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
 const PAG = process.argv[2], OUT = process.argv[3], ESC = process.argv[4] || 'pedido';
@@ -31,8 +32,8 @@ function tile(z, x, y){
 }
 
 (async()=>{
-  const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox','--lang=es','--force-device-scale-factor=2'], env:Object.assign({}, process.env, { LANG:'es_ES.UTF-8', LANGUAGE:'es', LC_ALL:'es_ES.UTF-8' }) });
-  const ctx = await b.newContext({ viewport:{ width:390, height:693 }, deviceScaleFactor:1, isMobile:false, hasTouch:true, timezoneId:'America/La_Paz', locale:'es-BO' });
+  const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox','--lang=es','--force-device-scale-factor=1.5'], env:Object.assign({}, process.env, { LANG:'es_ES.UTF-8', LANGUAGE:'es', LC_ALL:'es_ES.UTF-8' }) });
+  const ctx = await b.newContext({ viewport:{ width:1280, height:720 }, deviceScaleFactor:1, isMobile:false, hasTouch:false, timezoneId:'America/La_Paz', locale:'es-BO' });
   await ctx.route(/^https?:\/\//, r => {
     const u = r.request().url();
     if(LF && /leaflet(@[\d.]+)?\/dist\/leaflet\.js/.test(u)) return r.fulfill({ status:200, contentType:'application/javascript', body:fs.readFileSync(path.join(LF,'leaflet.js')) });
@@ -48,15 +49,17 @@ function tile(z, x, y){
     try{ localStorage.setItem('me_asis_tour', JSON.stringify('ofrecido')); localStorage.setItem('me_asis_video', JSON.stringify('ofrecido')); }catch(e){}
     document.addEventListener('DOMContentLoaded', () => {
       const st = document.createElement('style'); st.textContent = `
-        #vid-cap{position:fixed;left:10px;right:10px;bottom:12px;z-index:2147483000;background:#fff;border:2px solid #00B5AD;border-radius:18px;
-          box-shadow:0 12px 34px rgba(0,60,58,.28);padding:11px 14px 12px;font-family:Inter,system-ui,sans-serif;color:#13302e;pointer-events:none;
-          transition:opacity .35s ease, transform .35s ease;opacity:0;transform:translateY(14px)}
-        #vid-cap.on{opacity:1;transform:none}
-        #vid-cap.arriba{bottom:auto;top:12px}
-        #vid-cap .k{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#00857f;margin-bottom:3px}
-        #vid-cap .k i{font-style:normal;background:#00B5AD;color:#fff;border-radius:999px;padding:1px 8px;letter-spacing:.04em}
-        #vid-cap .t{font-size:17px;font-weight:800;line-height:1.28;text-wrap:balance}
-        #vid-cap .s{font-size:13.5px;line-height:1.38;color:#3d5b59;margin-top:4px}
+        #vid-cap{position:fixed;left:50%;bottom:16px;width:min(760px,calc(100% - 40px));z-index:2147483000;background:#fff;border:2px solid #00B5AD;border-radius:18px;
+          box-shadow:0 14px 40px rgba(0,60,58,.30);padding:13px 20px 14px;font-family:Inter,system-ui,sans-serif;color:#13302e;pointer-events:none;
+          transition:opacity .35s ease, transform .35s ease;opacity:0;transform:translate(-50%,14px)}
+        #vid-cap.on{opacity:1;transform:translate(-50%,0)}
+        #vid-cap.arriba{bottom:auto;top:14px}
+        #vid-cap .k{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#00857f;margin-bottom:3px}
+        #vid-cap .t{font-size:21px;font-weight:800;line-height:1.25;text-wrap:balance}
+        #vid-cap .s{font-size:15.5px;line-height:1.4;color:#3d5b59;margin-top:4px}
+        #vid-cursor{position:fixed;left:0;top:0;width:26px;height:30px;z-index:2147483003;pointer-events:none;transform:translate(640px,360px);
+          filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));opacity:0;transition:opacity .25s}
+        #vid-cursor.on{opacity:1}
         .vid-tap{position:fixed;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(0,181,173,.30);border:3px solid #00B5AD;
           z-index:2147483001;pointer-events:none;animation:vidtap .65s ease-out forwards}
         @keyframes vidtap{0%{transform:scale(.35);opacity:1}100%{transform:scale(1.55);opacity:0}}
@@ -66,19 +69,23 @@ function tile(z, x, y){
         #vid-card.fuera{opacity:0}
         #vid-card .band{position:absolute;left:0;right:0;top:0;height:10px;background:linear-gradient(90deg,#00B5AD,#0f766e,#1d4ed8)}
         #vid-card .marca{font-size:12px;font-weight:800;letter-spacing:.2em;color:#00857f}
-        #vid-card h1{margin:2px 0 0;font-size:31px;line-height:1.12;font-weight:900;letter-spacing:-.01em;text-wrap:balance}
-        #vid-card p{margin:0;font-size:15px;color:#3d5b59;max-width:30ch;line-height:1.45}
-        #vid-card .pasos{display:grid;gap:8px;margin-top:10px;width:100%;max-width:310px;text-align:left}
-        #vid-card .pasos div{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #cfe9e7;border-radius:14px;padding:9px 12px;font-size:14.5px;font-weight:700}
-        #vid-card .pasos b{flex:none;width:28px;height:28px;border-radius:9px;background:#00B5AD;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
-        #vid-card .pasos small{display:block;font-weight:500;color:#55706f;font-size:12.5px}
-        #vid-card img{width:120px;height:auto}
-        #vid-card .pie{font-size:12.5px;color:#55706f;margin-top:6px}
+        #vid-card h1{margin:2px 0 0;font-size:46px;line-height:1.1;font-weight:900;letter-spacing:-.01em;text-wrap:balance}
+        #vid-card p{margin:0;font-size:19px;color:#3d5b59;max-width:46ch;line-height:1.45}
+        #vid-card .pasos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;width:100%;max-width:820px;text-align:left}
+        #vid-card .pasos div{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #cfe9e7;border-radius:14px;padding:12px 14px;font-size:17px;font-weight:700}
+        #vid-card .pasos b{flex:none;width:34px;height:34px;border-radius:10px;background:#00B5AD;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px}
+        #vid-card .pasos small{display:block;font-weight:500;color:#55706f;font-size:14px}
+        #vid-card img{width:150px;height:auto}
+        #vid-card .pie{font-size:15px;color:#55706f;margin-top:8px}
         @media (prefers-reduced-motion:no-preference){ #vid-card img{animation:vidflota 2.4s ease-in-out infinite} }
         @keyframes vidflota{50%{transform:translateY(-6px)}}`;
       document.head.appendChild(st);
       const cap = document.createElement('div'); cap.id = 'vid-cap'; document.body.appendChild(cap);
       const card = document.createElement('div'); card.id = 'vid-card'; document.body.appendChild(card);
+      const cur = document.createElement('div'); cur.id = 'vid-cursor';
+      cur.innerHTML = '<svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18.5 L12.5 28 L16.5 26 L12 16.8 L20.5 16.8 Z" fill="#fff" stroke="#13302e" stroke-width="2" stroke-linejoin="round"/></svg>';
+      document.body.appendChild(cur);
+      document.addEventListener('mousemove', e => { cur.style.transform = 'translate('+e.clientX+'px,'+e.clientY+'px)'; if(!window.__sinCursor) cur.classList.add('on'); }, true);
       document.addEventListener('pointerdown', e => { const d = document.createElement('div'); d.className = 'vid-tap'; d.style.left = e.clientX+'px'; d.style.top = e.clientY+'px';
         document.body.appendChild(d); setTimeout(() => d.remove(), 800); }, true);
     });
@@ -106,7 +113,7 @@ function tile(z, x, y){
       '<h1>'+t+'</h1><p>'+s+'</p>'+
       '<div class="pie">Los clientes de este video son inventados.</div>';
   }, [E.titulo, E.sub]);
-  await cdp.send('Page.startScreencast', { format:'jpeg', quality:88, maxWidth:780, maxHeight:1386, everyNthFrame:1 });
+  await cdp.send('Page.startScreencast', { format:'jpeg', quality:88, maxWidth:1920, maxHeight:1080, everyNthFrame:1 });
   await page.waitForTimeout(1200);
 
   /* ── la planilla de mentira: pedidos y stock inventados ── */
@@ -180,15 +187,25 @@ function tile(z, x, y){
       window.scrollTo({ top: Math.max(0, r.top + window.scrollY - innerHeight*frac), behavior:'smooth' }); }, [sel, frac==null?0.28:frac]);
     await espera(900);
   }
-  async function toca(sel, frac){ if(frac !== false) await verEn(sel, frac); await page.locator(sel).first().tap(); await espera(650); }
-  /* Para lo que está adentro de una ventana (no se mueve con la página): lo centra en su caja y lo toca. */
+  async function toca(sel, frac){ if(frac !== false) await verEn(sel, frac); await clic(page.locator(sel).first()); await espera(650); }
+  /* 🖱️ El puntero va hasta el botón en ~0,4 s (se ve llegar) y hace clic ahí. */
+  let MX = 640, MY = 360;
+  async function mover(x, y){ const n = Math.max(6, Math.min(26, Math.round(Math.hypot(x-MX, y-MY)/28)));
+    for(let i=1;i<=n;i++){ const f = i/n, e = f<.5 ? 2*f*f : 1-Math.pow(-2*f+2, 2)/2; await page.mouse.move(MX+(x-MX)*e, MY+(y-MY)*e); await espera(16); }
+    MX = x; MY = y; }
+  async function clicXY(x, y){ await mover(x, y); await espera(140); await page.mouse.down(); await espera(70); await page.mouse.up(); }
+  async function clic(l){ let b = await l.boundingBox(); if(!b){ await l.click(); return; }
+    if(b.y < 0 || b.y + Math.min(b.height, 44) > 720){ await l.evaluate(e => e.scrollIntoView({ block:'center', behavior:'smooth' })); await espera(850); b = await l.boundingBox(); }   // fuera de la pantalla: primero se trae
+    await clicXY(b.x + b.width/2, b.y + Math.min(b.height/2, 22)); }
+  /* Para lo que está adentro de una ventana (no se mueve con la página): lo centra en su caja y le hace clic. */
   const loc = (sel, txt) => txt ? page.locator(sel, { hasText:txt }).first() : page.locator(sel).first();
   async function centra(sel, txt){ await loc(sel, txt).evaluate(e => e.scrollIntoView({ block:'center', behavior:'smooth' })); await espera(850); }
-  async function tocaT(sel, txt, sinCentrar){ if(!sinCentrar) await centra(sel, txt); await loc(sel, txt).tap(); await espera(650); }
-  async function escribeT(sel, txt, ms, borrar){ const l = loc(sel); await l.tap(); await espera(250); if(borrar) await l.fill(''); await l.pressSequentially(txt, { delay: ms||85 }); await espera(450); }
-  async function adjunta(boton, archivo){ const [fc] = await Promise.all([ page.waitForEvent('filechooser'), loc(boton).tap() ]); await fc.setFiles(path.join(__dirname, archivo)); await espera(2600); }
+  async function tocaT(sel, txt, sinCentrar){ if(!sinCentrar) await centra(sel, txt); await clic(loc(sel, txt)); await espera(650); }
+  async function escribeT(sel, txt, ms, borrar){ const l = loc(sel); await clic(l); await espera(250); if(borrar) await l.fill(''); await l.pressSequentially(txt, { delay: ms||85 }); await espera(450); }
+  async function adjunta(boton, archivo){ const [fc] = await Promise.all([ page.waitForEvent('filechooser'), clic(loc(boton)) ]); await fc.setFiles(path.join(__dirname, archivo)); await espera(2600); }
   async function cierre(titulo, pasos, pie){
     await sinCap();
+    await page.evaluate(() => { window.__sinCursor = true; document.getElementById('vid-cursor').classList.remove('on'); });   // en la tarjeta del final, sin puntero
     await page.evaluate(([titulo, pasos, pie]) => {
       const c = document.getElementById('vid-card'); c.style.display = ''; c.classList.add('fuera');
       c.innerHTML = '<div class="band"></div><img src="'+(typeof blokiSrc==='function'?blokiSrc('vendedor'):'')+'" alt=""><div class="marca">RESUMEN</div><h1>'+titulo+'</h1>'+
@@ -198,7 +215,7 @@ function tile(z, x, y){
     }, [titulo, pasos, pie]);
     await espera(6500);
   }
-  async function escribe(sel, txt, ms){ const l = page.locator(sel).first(); await l.tap(); await espera(250); await l.pressSequentially(txt, { delay: ms||85 }); await espera(450); }
+  async function escribe(sel, txt, ms){ const l = page.locator(sel).first(); await clic(l); await espera(250); await l.pressSequentially(txt, { delay: ms||85 }); await espera(450); }
 
   /* ── 0. entrada ── */
   await espera(2600);
@@ -207,15 +224,15 @@ function tile(z, x, y){
 
   if(ESC==='pedido'){
   /* ── 1. quién sos ── */
-  await cap('Antes de empezar', 'Al abrir el panel, tocá tu nombre', 'Así el panel te muestra tus pedidos y te avisa lo tuyo.', { arriba:false });
+  await cap('Antes de empezar', 'Al abrir el panel, hacé clic en tu nombre', 'Así el panel te muestra tus pedidos y te avisa lo tuyo.', { arriba:false });
   await toca('#quien .quien-b[data-v="Maria Flores"]', false);
   await espera(1500);
-  await cap('Nuevo pedido', 'Estás en «Nuevo pedido»', 'El pedido se carga en 4 pasos. Arriba ves cuáles ya están listos.');
+  await cap('Nuevo pedido', 'Estás en «Nuevo pedido»', 'El pedido se carga en 4 pasos (arriba ves cuáles están listos). A la izquierda, la agenda del camión; a la derecha, cómo va tu pedido.', { ms:5200 });
 
   /* ── 2. paso 1: cliente y venta ── */
   await verEn('#fp-1', 0.16);
-  await cap('Paso 1 de 4 · Cliente y venta', 'Elegí el día de entrega', 'Cada día dice cuántos lugares le quedan al camión. Tocá el que acordaste con el cliente.');
-  await toca('#fx-dias [data-f="2026-11-05"]', 0.32);
+  await cap('Paso 1 de 4 · Cliente y venta', 'Elegí el día de entrega', 'En la agenda de la izquierda, cada día dice cuántos lugares le quedan al camión. Hacé clic en el que acordaste con el cliente.');
+  await toca('#fx-izq [data-f="2026-11-05"]', false);
   await espera(600);
   await cap('Paso 1 de 4 · Cliente y venta', 'Escribí el N° de la nota de venta', null, { ms:1600 });
   await escribe('#f-nota', '3245');
@@ -231,7 +248,7 @@ function tile(z, x, y){
   await espera(1200);
   await cap('Paso 2 de 4 · Productos', 'Poné la cantidad y el precio de la nota', null, { ms:1800 });
   const cant = page.locator('#f-productos .prod-card .prod-cant').first();
-  await cant.tap(); await cant.fill(''); await cant.pressSequentially('1', { delay:120 }); await espera(300);
+  await clic(cant); await cant.fill(''); await cant.pressSequentially('1', { delay:120 }); await espera(300);
   await escribe('#f-productos .prod-card .prod-precio', '3400', 130);
   await page.evaluate(() => { try{ saldoAvisosProgramar(); }catch(e){} });
   await espera(1300);
@@ -246,7 +263,7 @@ function tile(z, x, y){
   await toca('#f-turno button[data-val="AM"]', false);
   await cap('Paso 3 de 4 · Entrega', 'La zona y la ubicación', 'Pegá el enlace de Google Maps que te manda el cliente: logística lo usa para llegar.', { ms:3400 });
   await escribe('#f-zona', 'Equipetrol', 90);
-  await page.locator('#f-maps').tap(); await espera(300);
+  await clic(page.locator('#f-maps')); await espera(300);
   await page.locator('#f-maps').fill('https://www.google.com/maps?q=-17.7712,-63.1964');
   await page.evaluate(() => { const e = document.getElementById('f-maps'); e.dispatchEvent(new Event('input', { bubbles:true })); e.dispatchEvent(new Event('change', { bubbles:true })); });
   await espera(1500);
@@ -258,17 +275,17 @@ function tile(z, x, y){
 
   /* ── 5. paso 4: cobro ── */
   await verEn('#fp-4', 0.14);
-  await cap('Paso 4 de 4 · Cobro', '¿Pagó todo? Tocá «SÍ, pagado»', 'Si dejó un adelanto, dejá «NO» y anotá el adelanto en «A cuenta» y lo que falta en «Saldo».', { ms:4600 });
-  await page.locator('#f-acuenta').tap(); await page.locator('#f-acuenta').fill(''); await page.locator('#f-acuenta').pressSequentially('1000', { delay:130 });
+  await cap('Paso 4 de 4 · Cobro', '¿Pagó todo? Hacé clic en «SÍ, pagado»', 'Si dejó un adelanto, dejá «NO» y anotá el adelanto en «A cuenta» y lo que falta en «Saldo».', { ms:4600 });
+  await clic(page.locator('#f-acuenta')); await page.locator('#f-acuenta').fill(''); await page.locator('#f-acuenta').pressSequentially('1000', { delay:130 });
   await espera(700);
-  await page.locator('#f-saldo').tap(); await page.locator('#f-saldo').fill(''); await page.locator('#f-saldo').pressSequentially('2400', { delay:130 });
+  await clic(page.locator('#f-saldo')); await page.locator('#f-saldo').fill(''); await page.locator('#f-saldo').pressSequentially('2400', { delay:130 });
   await espera(600);
   await cap('Paso 4 de 4 · Cobro', '¿Con qué pagó el adelanto?', 'Con QR o tarjeta, el panel te pide la foto del comprobante.', { ms:3000 });
   await toca('#f-metodo button[data-val="Efectivo"]', 0.32);
   await espera(500);
   await verEn('#wrap-comp', 0.30);
   await cap('Paso 4 de 4 · Cobro', 'Sacale una foto al recibo y adjuntala', 'Es obligatoria, también en efectivo: sin ella Contabilidad no puede confirmar el pago. Con QR o tarjeta, sumá la captura.', { ms:4200 });
-  const [fc] = await Promise.all([ page.waitForEvent('filechooser'), page.locator('#f-comp-box [onclick^="adjuntarCompForm"]').first().tap() ]);
+  const [fc] = await Promise.all([ page.waitForEvent('filechooser'), clic(page.locator('#f-comp-box [onclick^="adjuntarCompForm"]').first()) ]);
   await fc.setFiles(path.join(__dirname, 'recibo.jpg'));
   await espera(2600);
   await verEn('#f-obs', 0.30);
@@ -278,12 +295,12 @@ function tile(z, x, y){
 
   /* ── 6. guardar ── */
   await verEn('#f-submit', 0.55);
-  await cap('Listo para guardar', 'Tocá «Guardar pedido»', null, { ms:1700 });
+  await cap('Listo para guardar', 'Hacé clic en «Guardar pedido»', null, { ms:1700 });
   await sinCap();
-  await page.locator('#f-submit').tap();
+  await clic(page.locator('#f-submit'));
   await espera(5600);
-  const ov = await page.evaluate(() => { const e = [...document.querySelectorAll('body *')].find(x => /Tocá para seguir/.test(x.textContent||'') && x.children.length===0); if(!e) return null; const r = e.getBoundingClientRect(); return { x:r.left+r.width/2, y:r.top+r.height/2 }; });
-  if(ov){ await page.touchscreen.tap(ov.x, ov.y); }
+  const ov = await page.evaluate(() => { const e = [...document.querySelectorAll('body *')].find(x => /Tocá para seguir/.test(x.textContent||'') && x.children.length===0 && x.getBoundingClientRect().width>0); if(!e) return null; const r = e.getBoundingClientRect(); return { x:r.left+r.width/2, y:r.top+r.height/2 }; });
+  if(ov){ await clicXY(ov.x, ov.y); }
   await espera(1400);
   await cap('Pedido guardado ✅', 'Ya está en la planilla: logística lo ve', '🤖 El bot de WhatsApp le confirma la entrega al cliente solo, en unos 2 minutos.', { arriba:true, ms:3200 });
   await page.evaluate(() => { const b = document.querySelector('#modal .nx-cli-msg'); if(b) b.scrollIntoView({ block:'center', behavior:'smooth' }); });
@@ -292,16 +309,18 @@ function tile(z, x, y){
   const cerrar = page.locator('#modal .modal-actions button', { hasText:'Cerrar' }).first();
   await page.evaluate(() => { const c = document.querySelector('#modal .modal-actions'); if(c) c.scrollIntoView({ block:'center', behavior:'smooth' }); });
   await espera(900);
-  if(await cerrar.count()) await cerrar.tap(); else await page.evaluate(() => { try{ closeModal(); }catch(e){} });
+  if(await cerrar.count()) await clic(cerrar); else await page.evaluate(() => { try{ closeModal(); }catch(e){} });
   await espera(1000);
 
   /* ── 7. mis pedidos ── */
+  await page.evaluate(() => window.scrollTo({ top:0, behavior:'smooth' })); await espera(900);   // las pestañas están arriba
   await toca('#tab-mis', false);
   await espera(1400);
-  await cap('Mis pedidos', 'Tu pedido aparece en «Mis pedidos»', 'Ahí ves el día, si ya salió el camión y el saldo. Si te equivocaste, abrilo y tocá ✏️ Editar.', { arriba:true, ms:5600 });
+  await cap('Mis pedidos', 'Tu pedido aparece en «Mis pedidos»', 'Ahí ves el día, si ya salió el camión y el saldo. Si te equivocaste, abrilo y hacé clic en ✏️ Editar.', { arriba:true, ms:5600 });
 
   /* ── 8. cierre ── */
   await sinCap();
+  await page.evaluate(() => { window.__sinCursor = true; document.getElementById('vid-cursor').classList.remove('on'); });
   await page.evaluate(() => {
     const c = document.getElementById('vid-card'); c.style.display = ''; c.classList.add('fuera');
     c.innerHTML = '<div class="band"></div><img src="'+(typeof blokiSrc==='function'?blokiSrc('vendedor'):'')+'" alt=""><div class="marca">RESUMEN</div><h1>¡Así de fácil!</h1>'+
@@ -309,7 +328,7 @@ function tile(z, x, y){
       '<div><b>2</b><span>Productos<small>código, cantidad, precio y si hay en almacén</small></span></div>'+
       '<div><b>3</b><span>Entrega<small>turno, zona, ubicación y dirección</small></span></div>'+
       '<div><b>4</b><span>Cobro<small>pagado o adelanto, método y comprobante</small></span></div></div>'+
-      '<div class="pie">¿Dudas? Tocá a Bloki, abajo a la derecha → «¿Cómo hago…?»</div>';
+      '<div class="pie">¿Dudas? Hacé clic en Bloki, abajo a la derecha → «¿Cómo hago…?»</div>';
     requestAnimationFrame(() => requestAnimationFrame(() => c.classList.remove('fuera')));
   });
   await espera(6500);
@@ -323,10 +342,10 @@ function tile(z, x, y){
     await toca('#tab-conta', false);
     await espera(1600);
     await centra('#view-conta button', 'Ver quiénes');
-    await cap('Contabilidad', 'En «Para hacer» están las ventas con saldo', 'Tocá «Ver quiénes». También podés buscar al cliente por nombre o N° de nota.', { ms:4200 });
+    await cap('Contabilidad', 'En «Para hacer» están las ventas con saldo', 'Hacé clic en «Ver quiénes». También podés buscar al cliente por nombre o N° de nota.', { ms:4200 });
     await tocaT('#view-conta button', 'Ver quiénes', true);
     await espera(900);
-    await cap('Falta cobrar', 'Tocá al cliente', 'La lista va de la venta más vieja a la más nueva.', { ms:2600, arriba:true });
+    await cap('Falta cobrar', 'Hacé clic en el cliente', 'La lista va de la venta más vieja a la más nueva.', { ms:2600, arriba:true });
     await tocaT('#modal tr.pc-fila[data-id="luc"]');
     await espera(1100);
     await cap('La venta', 'Arriba, todo lo de la venta', 'Lo que compró, el total y los pagos que ya tiene: el adelanto de Bs 1.000.', { ms:3600, arriba:true });
@@ -343,7 +362,7 @@ function tile(z, x, y){
     await cap('Registrar un pago', 'Adjuntá la captura del pago', 'Y la foto del recibo que le diste. Al menos una es obligatoria.', { ms:3200, arriba:true });
     await adjunta('#modal [onclick^="ctaAdjuntar"]', 'qr_pago.jpg');
     await centra('#modal button', 'Registrar pago');
-    await cap('Registrar un pago', 'Tocá «➕ Registrar pago»', null, { ms:1800, arriba:true });
+    await cap('Registrar un pago', 'Hacé clic en «➕ Registrar pago»', null, { ms:1800, arriba:true });
     await tocaT('#modal button', 'Registrar pago', true);
     await espera(2200);
     await cap('Pago registrado ✅', 'Listo: el pago quedó guardado', 'La venta quedó PAGADA. Si querés, copiá el mensaje para el grupo.', { ms:4200, arriba:true });
@@ -359,10 +378,10 @@ function tile(z, x, y){
     await espera(700);
     await cierre('¡Saldo cobrado!', [
       ['Contabilidad → «Ver quiénes»', 'o buscá al cliente por nombre o N° de nota'],
-      ['Tocá la venta', 'abajo está «💵 Registrar un pago»'],
+      ['Abrí la venta', 'abajo está «💵 Registrar un pago»'],
       ['Monto, N° de nota y método', 'con QR, también el banco'],
       ['La foto del comprobante', 'y «➕ Registrar pago»']
-    ], '¿Dudas? Tocá a Bloki → «¿Cómo registro un pago en Contabilidad?»');
+    ], '¿Dudas? Hacé clic en Bloki → «¿Cómo registro un pago en Contabilidad?»');
   }
 
   /* ════════ REGISTRAR UNA VENTA DE TIENDA ════════ */
@@ -372,7 +391,7 @@ function tile(z, x, y){
     await toca('#tab-conta', false);
     await espera(1600);
     await centra('#view-conta .lb-acc button', 'Venta de tienda');
-    await cap('Contabilidad', 'Tocá «🏪 Venta de tienda»', null, { ms:2000 });
+    await cap('Contabilidad', 'Hacé clic en «🏪 Venta de tienda»', null, { ms:2000 });
     await tocaT('#view-conta .lb-acc button', 'Venta de tienda', true);
     await espera(1300);
     await verEn('.tienda-banner', 0.12);
@@ -393,7 +412,7 @@ function tile(z, x, y){
     await verEn('#fp-3', 0.20);
     await cap('Paso 3 · Entrega', 'No hace falta: ya dice «Listo»', 'Se lo llevó del local.', { ms:2600 });
     await verEn('#fp-4', 0.14);
-    await cap('Paso 4 · Cobro', 'Si pagó todo, tocá «SÍ, pagado»', null, { ms:2000 });
+    await cap('Paso 4 · Cobro', 'Si pagó todo, hacé clic en «SÍ, pagado»', null, { ms:2000 });
     await toca('#f-pagado button[data-val="SI"]', 0.30);
     await cap('Paso 4 · Cobro', '¿Con qué pagó? Y cuánto entró', 'Con QR, también a qué banco.', { ms:2600 });
     await toca('#f-metodo button[data-val="QR"]', 0.30);
@@ -404,22 +423,26 @@ function tile(z, x, y){
     await cap('Paso 4 · Cobro', 'Adjuntá la captura del pago', 'Y la foto del recibo que le diste. Al menos una es obligatoria.', { ms:3200 });
     await adjunta('#f-comp-box [onclick^="adjuntarCompForm"]', 'qr_tienda.jpg');
     await verEn('#f-submit', 0.55);
-    await cap('Listo', 'Tocá «Registrar venta de tienda»', null, { ms:1800 });
+    await cap('Listo', 'Hacé clic en «Registrar venta de tienda»', null, { ms:1800 });
     await sinCap();
-    await page.locator('#f-submit').tap();
-    await espera(5200);
-    const ov2 = await page.evaluate(() => { const e = [...document.querySelectorAll('body *')].find(x => /Tocá para seguir/.test(x.textContent||'') && x.children.length===0); if(!e) return null; const r = e.getBoundingClientRect(); return { x:r.left+r.width/2, y:r.top+r.height/2 }; });
-    if(ov2){ await page.touchscreen.tap(ov2.x, ov2.y); await espera(1400); }
+    await clic(page.locator('#f-submit'));
+    await espera(3000);
+    const ov2 = await page.evaluate(() => { const e = [...document.querySelectorAll('body *')].find(x => /Tocá para seguir/.test(x.textContent||'') && x.children.length===0 && x.getBoundingClientRect().width>0); if(!e) return null; const r = e.getBoundingClientRect(); return { x:r.left+r.width/2, y:r.top+r.height/2 }; });
+    if(ov2){ await clicXY(ov2.x, ov2.y); await espera(1400); }
+    await cap('Venta registrada ✅', 'Quedó guardada', 'Si querés, copiá el mensaje para el grupo, como con un pedido.', { ms:3200, arriba:true });
+    await sinCap();
+    const cerrar2 = page.locator('#modal .modal-actions button', { hasText:'Cerrar' }).first();
+    if(await cerrar2.count()) await clic(cerrar2); else await page.evaluate(() => { try{ closeModal(); }catch(e){} });
+    await espera(1200);
     await cap('Venta registrada ✅', 'Queda como 🏪 SALIÓ DE TIENDA', 'No ocupa lugar en el camión y aparece en Contabilidad con su pago.', { ms:4600, arriba:true });
     await sinCap();
-    await page.evaluate(() => { try{ closeModal(); }catch(e){} });
-    await espera(900);
+    await espera(500);
     await cierre('¡Venta registrada!', [
       ['Contabilidad → «🏪 Venta de tienda»', 'la tienda se pone sola'],
       ['Nota de venta y cliente', 'nombre y celular'],
       ['Productos', 'código, cantidad y precio'],
       ['Cobro', 'pagado, método, banco y la foto del comprobante']
-    ], '¿Dudas? Tocá a Bloki → «¿Cómo registro una venta de tienda?»');
+    ], '¿Dudas? Hacé clic en Bloki → «¿Cómo registro una venta de tienda?»');
   }
 
   grabando = false;
