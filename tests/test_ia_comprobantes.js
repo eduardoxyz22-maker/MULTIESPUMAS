@@ -12,6 +12,7 @@
    7. Lo que dice la foto se muestra escapado (es un dato, no HTML) y no se toca ningún pago.
    8. 📁 La carpeta: con la 26-a tandas de 120, con la 25-a de 8; cerrar la ventana no la corta, volver a abrir no arranca otra y avisa al terminar.
    10. 🔒 Leer las fotos gasta el crédito del dueño: solo con la contraseña de Administración.
+   11. 📤 Compartir con las vendedoras: el texto para el grupo, el PDF y el aviso en el panel (Mis pedidos → Para hacer).
 
    Reloj CLAVADO (martes 27/10/2026, 10:00 de Bolivia). Solo datos sintéticos.
    Se corre:  node tests/test_ia_comprobantes.js */
@@ -255,6 +256,52 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('10a. sin la contraseña el botón dice 🔒 y la ventana pide la contraseña de Administración (las marcas ✅ IA siguen)', /🔒/.test(r10.boton) && r10.pide && r10.tags, r10);
   chk('10b. sin la contraseña «Leer» y «Leer de nuevo» no gastan nada', r10.sinGastar, r10);
   chk('10c. una contraseña equivocada no entra; la buena sí, y ahí se puede leer', r10.mal && r10.entra && r10.lee, r10);
+
+  /* 11 · 📤 compartir con las vendedoras: texto para el grupo, PDF y el aviso en el panel (dueño: «¿cómo comparto el informe al grupo?») */
+  const r11 = await ev(async () => {
+    var out={}; UNLOCKED=true; IAC.shVend=''; IAC.filtro='';
+    iacAbrir('2026-10'); await new Promise(function(r){ setTimeout(r, 120); });
+    out.barra=!!document.querySelector('#iac-cuerpo .iac-share') && !!document.getElementById('iac-pdf-btn') && !!document.getElementById('iac-wa');
+    var copiado=null, c0=window.copyText; window.copyText=function(t){ copiado=t; };
+    try{ iacCopiarGrupo(); }finally{ window.copyText=c0; }
+    out.texto=copiado||'';
+    out.wa=decodeURIComponent((document.getElementById('iac-wa')||{}).href||'').indexOf('Pagos para revisar')>=0;
+    /* el PDF con librerías de mentira (sin internet en las pruebas) */
+    var paginas=0, nombre='', db=window.downloadBlob;
+    window.jspdf={ jsPDF:function(){ return { addPage:function(){}, addImage:function(){ paginas++; }, setProperties:function(){}, output:function(){ return new Blob(['%PDF']); } }; } };
+    window.html2canvas=function(){ return Promise.resolve({ toDataURL:function(){ return 'data:image/jpeg;base64,'; } }); };
+    window.downloadBlob=function(b, n){ nombre=n; };
+    try{ await iacPdf(); }finally{ window.downloadBlob=db; }
+    out.pdf={ paginas:paginas, nombre:nombre, hojas:iacPdfHojas('2026-10','').length, txt:(function(){ var d=document.createElement('div'); d.innerHTML=iacPdfHojas('2026-10','').join(''); return d.textContent; })() };
+    /* solo una vendedora */
+    var sel=document.getElementById('iac-sh-vend'); out.opciones=[].map.call(sel.options, function(o){ return o.textContent; });
+    /* el aviso en el panel */
+    var nSave=window.__saves;
+    await iacAvisarPanel(); await new Promise(function(r){ setTimeout(r, 80); });
+    out.guardoAviso=window.__saves===nSave+1;
+    out.avisos=ctaAvLeer().length;
+    out.estadoItem=[].some.call(document.querySelectorAll('.iac-av'), function(e){ return /Avisado a Carola/.test(e.textContent); });
+    await iacAvisarPanel(); out.noDuplica=ctaAvLeer().length===out.avisos;
+    /* la vendedora */
+    var I=misHacerDatos('Carola Chavez', []); out.paraHacer=I.filter(function(o){ return o.ic==='📣'; }).map(function(o){ return o.n+' '+o.t; })[0]||'';
+    ctaAvVer('Carola Chavez'); await new Promise(function(r){ setTimeout(r, 60); });
+    out.lista=[].map.call(document.querySelectorAll('.ctav-it'), function(e){ return e.textContent; });
+    var id=ctaAvAbiertos('Carola Chavez')[0].id;
+    await ctaAvOk(id, 'Carola Chavez'); await new Promise(function(r){ setTimeout(r, 60); });
+    out.quedan=ctaAvAbiertos('Carola Chavez').length;
+    out.cerrado=!!ctaAvLeer().filter(function(a){ return a.id===id && a.ok; })[0];
+    out.esSistema=esFilaSistema({ id:'__avisos_conta__' }) && fueraDeConta({ id:'__avisos_conta__', oc:'' });
+    closeModal(); return out;
+  });
+  chk('11a. la barra «📤 Compartir con las vendedoras» está (PDF, copiar, WhatsApp, aviso)', r11.barra, r11);
+  chk('11b. el texto para el grupo va por vendedora, con cada pago y lo que hay que revisar', /Pagos para revisar · octubre de 2026/.test(r11.texto) && /👤 \*Carola Chavez\*/.test(r11.texto) &&
+    /CARLA BANCO · nota 5003 · 21\/10 · Bs 1\.000,00 QR BISA/.test(r11.texto) && /→ la foto dice que entró a Banco Ganadero y está anotado en BISA/.test(r11.texto) && /Ya lo corregí/.test(r11.texto) && r11.wa, r11.texto.slice(0, 700));
+  chk('11c. el PDF baja «Pagos-para-revisar-octubre-2026.pdf» con una imagen por hoja, y dice cada pago', r11.pdf.nombre==='Pagos-para-revisar-octubre-2026.pdf' && r11.pdf.paginas===r11.pdf.hojas && r11.pdf.hojas>=1 &&
+    /CARLA BANCO/.test(r11.pdf.txt) && /Comprobante repetido/.test(r11.pdf.txt) && /Hoja 1 de/.test(r11.pdf.txt), r11.pdf);
+  chk('11d. se puede elegir una sola vendedora', r11.opciones.length>=2 && /^Todas \(\d+\)$/.test(r11.opciones[0]) && /Carola Chavez \(\d+\)/.test(r11.opciones[1]), r11.opciones);
+  chk('11e. «Dejar el aviso» guarda UNA fila del sistema con un aviso por pago, y en cada pago dice «Avisado a Carola»; tocarlo otra vez no duplica', r11.guardoAviso && r11.avisos>=8 && r11.estadoItem && r11.noDuplica, r11);
+  chk('11f. a la vendedora le sale en «Para hacer» y en su lista, con «Abrir la venta» y «✓ Ya lo corregí»', /📣|Contabilidad te pide revisar/.test(r11.paraHacer) && r11.lista.length===r11.avisos && /Ya lo corregí/.test(r11.lista[0]||''), { ph:r11.paraHacer, l:r11.lista.slice(0,2) });
+  chk('11g. «✓ Ya lo corregí» lo cierra (queda uno menos) y la fila de avisos no es una venta', r11.cerrado && r11.quedan===r11.avisos-1 && r11.esSistema, r11);
 
   chk('sin errores en la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
