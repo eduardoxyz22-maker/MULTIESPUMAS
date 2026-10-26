@@ -16415,3 +16415,18 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   debajo del trazo blanco. Ahora adentro van solo el número y «camiones» y «con carga completa» va ABAJO del anillo (`.ah-dona-w`,
   `.ah-dona-pie`). ⚠️ Lo que se ponga adentro de un anillo tiene que entrar en el hueco: `test_adm_arriba` §2 lo mide con «1/3 camiones»
   (27; roja contra la página de antes). PUBLICADO 26/10, `b3c3997`.
+
+### §4my — 🗓️ El botón «Semana» en Administración (26/10; captura de los filtros, dueño: *«acá debería haber un botón que muestre lo de la semana, lo que falta en la semana, y parpadee rojo si por ejemplo sabés que jueves hay entregas que aún dicen sin stock, así logística lo vería… siempre 5 días hábiles hacia adelante, desde el día en cuestión, no desde atrás»*)
+- Chip `semana` en `QUICK_DEFS` (al lado de Hoy/Mañana, `todo:true`: cuenta aunque el filtro esté en otro mes). Los días = `semanaDias()`:
+  HOY y los siguientes con camión hasta juntar 5 (`diaHabil`: ni domingo ni feriado; el sábado cuenta). Domingo o feriado arranca en el
+  siguiente día con camión. ⚠️ No es la semana del calendario: un jueves mira jue-vie-sáb-lun-mar.
+- Lo que falta (`semanaFalta`), con las MISMAS marcas que pintan la ficha (`admFichaColor`/`estadoStock`), sin lo de tienda (`esProdDeTienda`) y
+  sin stock para la ATC: 🔴 sin stock = «✗ no hay» sin mandar a producir o el «🔴 No hay» a mano; 🏭 `enProduccionPendiente`; 📥 `esRecoger`;
+  ⬜ sin marca; 🚛 `!vehiculoDe` (la regla de `nxSugSin`). Lo entregado no cuenta. La RPT sí (sale del depósito).
+- Parpadea en rojo (`qchip-alerta`, `QUICK_DEFS[].alerta`/`tit` en `renderChips`) mientras haya algo 🔴 en esos días; el título dice qué
+  día y quién. Al tocarlo, `#adm-semana` (`semanaPintar`): una ficha por día (pedidos, listos, lo que falta, cupos) que filtra por día
+  (`SEMANA_DIA`), y «Ver» por lo que falta (`SEMANA_VER`, `semanaSub` en `admFilter`). La lista va del más cercano al más lejos. «📋 Para
+  hacer» lleva el aviso rojo `semana` («Dicen SIN STOCK en los próximos 5 días» → `admVerSemana('sin')`). Solo mira.
+- `tests/test_semana.js` (31, reloj clavado el jueves 29/10/2026, con el feriado del 02/11; `SEM_CAP` deja capturas). Muestra al dueño con
+  datos inventados: https://claude.ai/artifact/M5CtFZ9oqZpoba2F5W1CL9. Preguntado: ¿hoy cuenta? (hoy sí) y ¿qué más parpadea? (hoy solo 🔴).
+  En la rama, `9b37682`; espera «publica».

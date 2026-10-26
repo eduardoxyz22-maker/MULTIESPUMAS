@@ -149,7 +149,15 @@ const chip=page=>page.evaluate(()=>{ var b=document.querySelector('#adm-chips .q
   await page.evaluate(()=>setQuick('semana')); await page.waitForTimeout(80);
   r=await page.evaluate(()=>{ var s=document.getElementById('adm-semana'), b=s.getBoundingClientRect(); return { ancho:document.documentElement.scrollWidth, vp:innerWidth, der:Math.round(b.right) }; });
   chk('8 · en el celular (390 px) el resumen entra sin correr la página de costado', r.ancho<=r.vp && r.der<=r.vp, r);
-  if(CAP) await (await page.$('#adm-semana')).screenshot({ path:path.join(CAP,'semana-cel.png') });
+  if(CAP){   // pantalla alta y la página corrida hasta los botones: así el encabezado y la barra de abajo no tapan nada
+    await page.setViewportSize({ width:390, height:2600 });
+    const bx=await page.evaluate(()=>{ var a=document.getElementById('adm-chips'), b=document.getElementById('adm-semana');
+      var hh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr-h'))||120;
+      window.scrollTo(0, a.getBoundingClientRect().top+scrollY-hh-4); var r1=a.getBoundingClientRect(), r2=b.getBoundingClientRect();
+      return { x:0, y:Math.max(0,r1.top-4), width:390, height:r2.bottom-r1.top+12 }; });
+    await page.waitForTimeout(120);
+    await page.screenshot({ path:path.join(CAP,'semana-cel.png'), clip:bx });
+  }
   chk('8 · sin errores en la página', A.errs.length===0, A.errs);
   await A.ctx.close();
 
