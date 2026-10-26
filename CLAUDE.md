@@ -985,8 +985,10 @@ en que se registraron; si no coincide, se dice SIN preguntas (§4mt). 💵 «Gua
 📁 **Comprobantes con el estilo nuevo y el Excel con enlaces** (§4mu, PUBLICADO 26/10, `cfc901b`): «Ver foto» es un hyperlink de verdad
 (`link` en la celda → `sheetLinks`, `XS_LINK`=28 al final de `STYLES_XML`, `textoOk` = sin triangulitos); la ventana: total + anillo, acciones en
 tarjetas, bancos que filtran (`COMPS_VER`), buscador, miniaturas. ⚠️ Las pruebas leen `.cps-r`, el cliente en el PRIMER `<b>` de cada fila y `.cps-ok`.
-🎬 **Video «Cómo cargar un pedido»** (§4mv, 26/10): página https://claude.ai/artifact/9aMrJXiWqu9R72ho6qjgmc; se rehace con `herramientas/video_pedido/`
-(datos inventados, nada sale a la red). ⚠️ La foto del recibo es obligatoria también en efectivo, y el cliente recibe la confirmación del bot.
+🎬 **Video «Cómo cargar un pedido»** (§4mv, 26/10; PUBLICADO `8e6382d`): vive en `videos/` y lo enseña **Bloki** (`verVideoPedido`; una vez por aparato al
+elegir el nombre, `me_asis_video`, antes que el recorrido; y «▶️ Ver el video» en «¿Cómo cargo un pedido nuevo?», `vid:1`). Se rehace con
+`herramientas/video_pedido/` (datos inventados, nada sale a la red) y se sube el `?v=` de `VIDEO_PEDIDO`. ⚠️ La foto del recibo es obligatoria
+también en efectivo, y el cliente recibe la confirmación del bot.
 🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la

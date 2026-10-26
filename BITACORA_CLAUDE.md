@@ -16367,3 +16367,16 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - **Rehacerlo cuando cambie el formulario**: `herramientas/video_pedido/` (`recibo.js` → `grabar.js` → `armar.py`; cómo, en la cabecera de
   `grabar.js`). Los mapas de verdad no se alcanzan desde acá: el mapita usa cuadraditos dibujados (calles y manzanas) y Leaflet local
   (`LEAFLET_DIR`). ⚠️ La captura a 1080 de ancho da ~12 cuadros/s (la máquina no da más): se graba a escala 2 (780×1386, ~20/s) y se agranda.
+- **🧽 Bloki lo enseña** (26/10, dueño: *«publica, que Bloki enseñe y lleve al enlace»*; PUBLICADO 26/10, `8e6382d`): la página privada no la
+  pueden abrir los vendedores, así que el video vive AL LADO del panel: `videos/como-cargar-un-pedido.mp4` (720×1280, 6 MB) + `.jpg` (portada),
+  `VIDEO_PEDIDO`/`VIDEO_PEDIDO_POSTER` con `?v=` (cambiar el archivo = subirlo). `verVideoPedido()` abre la ventana (video con `playsinline`,
+  «📋 Copiar el enlace» = `videoPedidoUrl()`, «↗️ Abrir aparte», «Cerrar»); `closeModal` pausa todo video de la ventana.
+  · **La oferta**: `asisTourOfrecer` (la llama `quienElegir` con un nombre de vendedor) ofrece PRIMERO el video (`asisVideoOfrecer`, una vez por
+    aparato, `me_asis_video`, globo de 12 s) y recién la vez siguiente el recorrido (`me_asis_tour`). Le sale también a quien ya vio el
+    recorrido; logística y Administración no (no pasan por ahí).
+  · **La ayuda**: «¿Cómo cargo un pedido nuevo?» lleva `vid:1` → «▶️ Ver el video (2 min)» arriba de «Mostrame dónde»; sus palabras suman
+    «video ver mirar ensenar aprender». No se agregó ninguna respuesta (siguen 21 / 17). El pago (respuesta y recorrido) dice la foto del
+    recibo también en efectivo.
+  · Enlace público para el grupo: https://eduardoxyz22-maker.github.io/MULTIESPUMAS/videos/como-cargar-un-pedido.mp4 · todos F5.
+  · `tests/test_video_pedido.js` (11); `test_asistente_ak` §I pone `me_asis_video` como ya ofrecido (cambio a conciencia). Batería sobre la
+    copia publicada: 256 suites, 8.228 bien; rojas test_ventas_marcas (conocida) y test_mispedidos (carga; sola 33/0).
