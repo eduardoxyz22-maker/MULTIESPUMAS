@@ -48,7 +48,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     try{ compsExcel(); }finally{ window.buildXlsx=bx; window.downloadBlob=dl; }
     try{ closeModal(); }catch(e){}
     var M=hojas[0].matrix, val=function(c){ return (c && typeof c==='object') ? c.v : c; };
-    return { cab:M[0], filas:M.slice(1).map(function(f){ return f.map(val); }), noms:[].concat.apply([], noms) };
+    return { cab:M[0].map(val), filas:M.slice(1).map(function(f){ return f.map(val); }), noms:[].concat.apply([], noms) };
   });
   const cab = r.cab, F = r.filas;
   const iM = cab.indexOf('MONTO (Bs)'), iN = cab.indexOf('N° DE PAGO'), iF = cab.lastIndexOf('FOTO');

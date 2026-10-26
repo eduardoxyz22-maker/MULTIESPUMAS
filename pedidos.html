@@ -2712,22 +2712,88 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .fp-barra{container-type:inline-size}
 @container (max-width:640px){ .fp-av{display:none} }
 /* 📁 (§4mg, C2) comprobantes del mes */
-.cps-sub{font-size:.82rem;color:#55706f;margin:10px 0 8px}
-.cps-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
-.cps-r{border:1px solid #e1ebea;border-left:5px solid var(--c);border-radius:12px;padding:8px 10px;background:#fff;min-width:0}
-.cps-r span{display:block;font-size:.74rem;font-weight:800;color:#55706f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cps-r b{display:block;font-size:1.3rem;font-weight:900;color:var(--c);font-variant-numeric:tabular-nums}.cps-r small{font-size:.72rem;color:#6b8584}
-.cps-tw{max-height:52vh;overflow:auto;border:1px solid #e1ebea;border-radius:12px}
-.cps-t{width:100%;border-collapse:collapse;font-size:.82rem}
-.cps-t th{position:sticky;top:0;background:#13302e;color:#fff;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;padding:7px 8px;text-align:left}
-.cps-t td{padding:6px 8px;border-bottom:1px solid #edf3f2;vertical-align:top}
-.cps-t td a{cursor:pointer;color:inherit}
-.cps-g td{background:#f3f8f8;font-weight:900;color:#00756f;font-size:.78rem}
-.cps-m{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cps-nom{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;color:#55706f;word-break:break-all}
-.cps-tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.72rem;font-weight:800;text-decoration:none}
-.cps-ok{background:#e6f7f6;color:#00756f!important}.cps-mal{background:#fdeaec;color:#CE2939}
-.cps-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:.78rem;color:#55706f}.cps-pie span{flex:1;min-width:200px}
+/* ✨ (26/10) «📁 Comprobantes del mes» con el estilo nuevo (`compsPintar`): total + anillo, acciones en tarjetas, bancos que filtran,
+   buscador y la lista en tarjetas con la miniatura de cada foto. Ojo: el `thead th` general es negro → acá lleva su fondo. */
+.cp2-mesrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.cp2-mesrow label{font-size:.72rem;font-weight:800;color:#55706f;text-transform:uppercase;letter-spacing:.07em}
+.cp2-mes{appearance:none;-webkit-appearance:none;border:1px solid #bfe3df;background:#f3fbfa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300756f' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center;border-radius:999px;padding:8px 38px 8px 16px;font:inherit;font-weight:800;color:#00756f;min-height:42px;cursor:pointer;width:auto;flex:none;max-width:100%}
+.cp2-mes:focus-visible{outline:3px solid #9be3dd;outline-offset:2px}
+.cp2-mesnota{flex:1;min-width:200px;font-size:.8rem;color:#6b8584}
+.cp2-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 18px;align-items:center;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#e6f7f5 0%,#f3f9ff 100%);border:1px solid #d3ece9;margin-bottom:12px}
+.cp2-tot{min-width:0}.cp2-tot small{display:block;font-size:.76rem;font-weight:700;color:#55706f}
+.cp2-tot b{display:block;font-size:2rem;line-height:1.15;font-weight:900;color:#13302e;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cp2-tot span{display:block;font-size:.82rem;color:#55706f;margin-top:2px}
+.cp2-ring{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e1ebea;border-radius:14px;padding:6px 14px 6px 8px}
+.cp2-ring b{display:block;font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}.cp2-ring span{display:block;font-size:.74rem;color:#6b8584}
+.cp2-ia{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px dashed #c9e2df;padding-top:10px}
+.cp2-ia-t{font-size:.78rem;font-weight:800;color:#13302e;margin-right:2px}
+.cp2-pill{display:inline-flex;align-items:center;border:0;border-radius:999px;padding:4px 11px;font:inherit;font-size:.76rem;font-weight:800;white-space:nowrap}
+.cp2-p-ok{background:#e3f6ec;color:#15803d}.cp2-p-mal{background:#fdeaec;color:#CE2939;cursor:pointer}.cp2-p-mal:hover{background:#fbd5da}.cp2-p-pe{background:#eef2f7;color:#475569}
+.cp2-acc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.cp2-a{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid #e1ebea;border-radius:16px;background:#fff;padding:12px 14px;cursor:pointer;font:inherit;color:#13302e;box-shadow:0 1px 2px rgba(19,48,46,.06);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;min-width:0;min-height:64px}
+.cp2-a:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(19,48,46,.10);border-color:var(--c)}
+.cp2-a:focus-visible{outline:3px solid #9be3dd;outline-offset:2px}
+.cp2-a:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+.cp2-ai{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:1.25rem;background:var(--c);box-shadow:inset 0 0 0 40px rgba(255,255,255,.82)}
+.cp2-at{min-width:0}.cp2-at b{display:block;font-size:.9rem;font-weight:800;color:#13302e}.cp2-at small{display:block;font-size:.74rem;color:#6b8584;margin-top:2px;line-height:1.3}
+.cp2-mix{margin:6px 0 10px;padding:14px 16px;border:1px solid #e1ebea;border-radius:16px;background:#fff}
+.cp2-mix-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:.72rem;font-weight:800;color:#6b8584;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.cp2-mix-t span:last-child{font-size:.84rem;color:#13302e;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.cp2-barra{display:flex;gap:3px;height:12px;border-radius:999px;overflow:hidden;background:#eef4f3}
+.cp2-barra button{border:0;padding:0;margin:0;background:var(--c);cursor:pointer;min-width:6px;transition:opacity .15s ease,filter .15s ease}
+.cp2-barra button:hover{filter:brightness(1.12)}.cp2-barra button.apag{opacity:.22}
+.cp2-fil{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:6px;margin-top:12px}
+.cps-r{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;row-gap:1px;align-items:baseline;border:1px solid transparent;border-radius:12px;padding:8px 12px;background:#f5f9f8;cursor:pointer;font:inherit;color:#13302e;text-align:left;min-width:0;transition:background .15s ease,box-shadow .15s ease,color .15s ease}
+.cps-r:hover{background:#ecf4f3}
+.cps-r:focus-visible{outline:3px solid #9be3dd;outline-offset:2px}
+.cps-r span{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cps-r span::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.cps-r b{font-size:1.15rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.3}
+.cps-r small{font-size:.76rem;color:#6b8584;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cps-r.cp2-alerta{background:#fff3f4}.cps-r.cp2-alerta span{color:#CE2939}.cps-r.cp2-alerta b{color:#CE2939}
+.cps-r.on{background:var(--c);color:#fff;box-shadow:0 4px 14px rgba(19,48,46,.18)}
+.cps-r.on span,.cps-r.on b{color:#fff}.cps-r.on span::before{background:#fff}.cps-r.on small{color:rgba(255,255,255,.88)}
+.cp2-busca{margin:4px 0 8px}.cp2-busca input{width:100%;box-sizing:border-box;border:1px solid #dbe7e6;border-radius:12px;padding:10px 14px;font:inherit;font-size:.88rem;background:#fff;color:#13302e;min-height:44px}
+.cp2-busca input:focus{outline:none;border-color:#00B5AD;box-shadow:0 0 0 3px rgba(0,181,173,.18)}
+.cp2-filtro{font-size:.82rem;color:#55706f;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cp2-filtro b{color:#13302e}
+.cp2-limpiar{border:1px solid #bfe3df;background:#fff;color:#00756f;border-radius:999px;padding:3px 12px;font:inherit;font-size:.76rem;font-weight:800;cursor:pointer}
+.cp2-nada{padding:22px;text-align:center;color:#6b8584;font-size:.86rem;background:#f4f8f8;border-radius:14px}
+.cps-tw{border-radius:16px;background:#f4f8f8;border:1px solid #e5eeed;padding:0 10px 6px;overflow-x:auto}
+.cps-t{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:.84rem}
+.cps-t thead th{background:#f4f8f8;color:#6b8584;font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;padding:12px 12px 4px;text-align:left;border:0}
+.cps-g td{padding:12px 4px 0;font-size:.8rem;font-weight:900;color:var(--c);background:transparent}
+.cps-g small{margin-left:8px;color:#6b8584;font-weight:700}
+.cp2-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:1px}
+.cp2-row td{background:#fff;padding:10px 12px;border-top:1px solid #e5eeed;border-bottom:1px solid #e5eeed;vertical-align:middle;transition:background .15s ease}
+.cp2-row td:first-child{border-left:4px solid var(--c);border-radius:12px 0 0 12px}
+.cp2-row td:last-child{border-right:1px solid #e5eeed;border-radius:0 12px 12px 0}
+.cp2-row:hover td{background:#fbfefe}
+.cp2-dia{width:46px;text-align:center}.cp2-d{display:block;font-size:1.2rem;font-weight:900;color:#13302e;line-height:1;font-variant-numeric:tabular-nums}
+.cp2-mm{display:block;font-size:.64rem;font-weight:800;color:#6b8584;text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+.cp2-cli{min-width:0}.cp2-cli a{cursor:pointer;color:#13302e;text-decoration:none}.cp2-cli a:hover b{color:#00756f;text-decoration:underline}
+.cp2-flete{font-size:.7rem;font-weight:800;color:#B45309;background:#fff4e5;border-radius:999px;padding:1px 8px;margin-left:4px;white-space:nowrap}
+.cp2-meta{font-size:.76rem;color:#55706f;margin-top:2px}
+.cps-nom{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.66rem;color:#8aa3a1;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:440px}
+.cp2-fotos{white-space:nowrap;width:1%}
+.cp2-th{position:relative;display:inline-flex;align-items:center;justify-content:center;width:42px;height:54px;border-radius:9px;border:1px solid #d9e6e5;overflow:hidden;background:#f3f8f8;vertical-align:middle;margin-right:5px;text-decoration:none;font-size:1rem;transition:transform .15s ease,box-shadow .15s ease}
+.cp2-th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cp2-th i{position:absolute;right:2px;bottom:2px;background:rgba(19,48,46,.82);color:#fff;font-style:normal;font-size:.58rem;font-weight:800;border-radius:6px;padding:0 4px;line-height:1.5}
+.cp2-th:hover{transform:scale(1.08);box-shadow:0 6px 14px rgba(19,48,46,.18)}
+.cps-tag{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.72rem;font-weight:800;text-decoration:none;vertical-align:middle}
+.cps-ok{background:#e3f6ec;color:#15803d!important}.cps-mal{background:#fdeaec;color:#CE2939}
+.cps-m{text-align:right;font-weight:900;font-size:.95rem;color:#13302e;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cps-pie{margin-top:10px;font-size:.76rem;color:#6b8584}
+@media (max-width:640px){ .cp2-acc{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px} .cp2-a{flex-direction:column;align-items:center;text-align:center;gap:6px;padding:10px 6px;min-height:0} .cp2-at small{display:none} .cp2-at b{font-size:.76rem;line-height:1.25} }
+@media (max-width:640px){
+  .cp2-hero{grid-template-columns:1fr;padding:14px}.cp2-tot b{font-size:1.7rem}.cp2-ring{justify-self:start}
+  .cp2-mix{padding:12px}.cp2-fil{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cps-tw{padding:0 6px 4px}.cps-t,.cps-t tbody{display:block}.cps-t thead{display:none}
+  .cps-g{display:block}.cps-g td{display:block;padding:12px 4px 2px}
+  .cp2-row{display:grid;grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"d c m" "d f f";gap:6px 10px;align-items:start;background:#fff;border:1px solid #e5eeed;border-left:4px solid var(--c);border-radius:12px;margin:6px 0;padding:10px}
+  .cp2-row td{display:block;padding:0;border:0!important;border-radius:0!important;background:transparent!important}
+  .cp2-row .cp2-dia{grid-area:d;width:auto}.cp2-row .cp2-cli{grid-area:c}.cp2-row .cps-m{grid-area:m;font-size:.9rem}.cp2-row .cp2-fotos{grid-area:f;white-space:normal;width:auto}
+  .cps-nom{max-width:100%}
+}
 .cps-carpeta{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f3fbf6;border:1px solid #d5f0df;font-size:.84rem;color:#13302e}
 .cps-carpeta-mal{background:#fffaf2;border-color:#f6e3c2}
 .cps-barra{height:7px;border-radius:9px;background:#e3ecec;overflow:hidden;margin-top:6px}.cps-barra i{display:block;height:100%;background:#00B5AD}
@@ -4674,8 +4740,8 @@ function cellXml(ref,cv){
 /* Estilos con nombre, para no escribir números sueltos en el generador del RPT (§4dk).
    Los índices son posiciones dentro de `cellXfs` de STYLES_XML: si se agrega uno nuevo,
    va AL FINAL y se suma acá — mover uno del medio repinta todos los Excel del panel. */
-var XS_TIT=18, XS_BAR=19, XS_LB=20, XS_VAL=21, XS_CEN=22, XS_TH=23, XS_NOTA=24, XS_PIE=25, XS_TOT=26, XS_MAIL=27;
-var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="9"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C6500"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF0F172A"/><name val="Calibri"/></font><font><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="14"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF176"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEB9C"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFECE8FD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00877F"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="28"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="4" fillId="10" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="11" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="11" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="5" fillId="12" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="8" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="6" fillId="13" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="6" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+var XS_TIT=18, XS_BAR=19, XS_LB=20, XS_VAL=21, XS_CEN=22, XS_TH=23, XS_NOTA=24, XS_PIE=25, XS_TOT=26, XS_MAIL=27, XS_LINK=28;
+var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="10"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C6500"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF0F172A"/><name val="Calibri"/></font><font><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><u/><sz val="11"/><color rgb="FF0563C1"/><name val="Calibri"/></font></fonts><fills count="14"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF176"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEB9C"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFECE8FD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00877F"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="29"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="4" fillId="10" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="11" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="11" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="5" fillId="12" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="8" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="6" fillId="13" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="6" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf><xf numFmtId="0" fontId="9" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 function buildSheetXml(sheet){
   var rowsXml='', alto=sheet.rowH||{};
   for(var r=0;r<sheet.matrix.length;r++){
@@ -4695,13 +4761,32 @@ function buildSheetXml(sheet){
     for(var d=0;d<sheet.dv.length;d++) dv+='<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="'+sheet.dv[d].sqref+'"><formula1>'+xmlEsc(sheet.dv[d].list)+'</formula1></dataValidation>';
     dv+='</dataValidations>';
   }
+  /* 🔗 (26/10) Enlaces de verdad: una celda `{v:'Ver foto', link:'https://…'}` se abre con un clic (antes la dirección iba
+     como texto y Excel no la volvía enlace hasta entrar a la celda). `textoOk` saca los triangulitos verdes de «número
+     guardado como texto» (las notas y los recibos van como texto a propósito). */
+  var L=sheetLinks(sheet), hl='';
+  if(L.length){ hl='<hyperlinks>'; for(var h=0;h<L.length;h++) hl+='<hyperlink ref="'+L[h].ref+'" r:id="rIdH'+(h+1)+'"/>'; hl+='</hyperlinks>'; }
+  var ign='';
+  if(sheet.textoOk && sheet.matrix.length){
+    var anc=0; for(var q=0;q<sheet.matrix.length;q++) anc=Math.max(anc, sheet.matrix[q].length);
+    if(anc) ign='<ignoredErrors><ignoredError sqref="A1:'+colLetter(anc-1)+sheet.matrix.length+'" numberStoredAsText="1"/></ignoredErrors>';
+  }
   /* ⚠️ EL ORDEN DE LOS BLOQUES NO ES LIBRE: el esquema de Excel exige
-     cols → sheetData → mergeCells → dataValidations → drawing. Fuera de orden, Excel
+     cols → sheetData → mergeCells → dataValidations → hyperlinks → ignoredErrors → drawing. Fuera de orden, Excel
      dice que el archivo está dañado y ofrece "repararlo" (que es tirar la mitad). */
   var draw=sheet.img?'<drawing r:id="rId1"/>':'';
   var ns='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'+
-         (sheet.img?' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"':'');
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet '+ns+'>'+cols+'<sheetData>'+rowsXml+'</sheetData>'+merges+dv+draw+'</worksheet>';
+         ((sheet.img||L.length)?' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"':'');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet '+ns+'>'+cols+'<sheetData>'+rowsXml+'</sheetData>'+merges+dv+hl+ign+draw+'</worksheet>';
+}
+/* Las celdas con `link` de una hoja, en orden: la hoja y su archivo de relaciones las numeran igual (rIdH1, rIdH2…). */
+function sheetLinks(sheet){
+  var L=[];
+  for(var r=0;r<(sheet.matrix||[]).length;r++){
+    var row=sheet.matrix[r]||[];
+    for(var c=0;c<row.length;c++){ var cv=row[c]; if(cv && typeof cv==='object' && /^https?:\/\//i.test(String(cv.link||''))) L.push({ ref:colLetter(c)+(r+1), url:String(cv.link) }); }
+  }
+  return L;
 }
 /* Una imagen anclada a una celda (el logo del formato de reposición). `cx`/`cy` van en
    EMU — 12700 por punto — y hay que respetar la proporción del PNG o sale estirado. */
@@ -4738,9 +4823,15 @@ function buildXlsx(sheets){
   add('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rels+'</Relationships>');
   add('xl/styles.xml',STYLES_XML);
   for(i=0;i<sheets.length;i++) add('xl/worksheets/sheet'+(i+1)+'.xml',buildSheetXml(sheets[i]));
+  /* Las relaciones de cada hoja: el dibujo (rId1) y los enlaces (rIdH1…, afuera del archivo: TargetMode="External"). */
+  for(i=0;i<sheets.length;i++){
+    var _rs='', _L=sheetLinks(sheets[i]);
+    if(sheets[i].img) _rs+='<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing'+(i+1)+'.xml"/>';
+    for(var _h=0;_h<_L.length;_h++) _rs+='<Relationship Id="rIdH'+(_h+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="'+xmlEsc(_L[_h].url)+'" TargetMode="External"/>';
+    if(_rs) add('xl/worksheets/_rels/sheet'+(i+1)+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+_rs+'</Relationships>');
+  }
   for(i=0;i<conImg.length;i++){
     var _n=conImg[i]+1, _img=sheets[conImg[i]].img;
-    add('xl/worksheets/_rels/sheet'+_n+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing'+_n+'.xml"/></Relationships>');
     add('xl/drawings/drawing'+_n+'.xml',drawingXml(_img));
     add('xl/drawings/_rels/drawing'+_n+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image'+_n+'.png"/></Relationships>');
     files.push({name:'xl/media/image'+_n+'.png', data:_img.data});
@@ -42578,37 +42669,124 @@ function compsSlug(t){ return sinTildes(String(t||'')).toUpperCase().replace(/[^
 /* El monto con centavos cuando los tiene («10,10» y «10,20»: redondeados, los dos eran «10» y daban el mismo nombre). */
 function compsMontoTxt(m){ m=r2(m); return (Math.round(m)===m) ? String(m) : m.toFixed(2).replace('.',','); }
 function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+compsMontoTxt(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.dup?('-'+x.dup):'')+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
+/* ✨ (26/10, el dueño: «qué cutre se ve eso, no se ve moderno como lo nuevo») La ventana con el estilo nuevo: arriba lo cobrado y un
+   anillo con cuántos pagos tienen foto (y lo que dijo la IA, si ya leyó), las tres acciones como tarjetas, los bancos como fichas que
+   FILTRAN, un buscador, y la lista en tarjetas con la MINIATURA de cada foto. Las cuentas son las de siempre (`compsMesDatos`): esto
+   solo dibuja. ⚠️ Lo que leen las pruebas sigue: `.cps-r` (las fichas), `.cps-t tbody tr` con el cliente en el primer `<b>`, `.cps-ok`
+   de la IA, `#comps-carpeta`, `#comps-carpeta-btn` y `#comps-ia-btn`. */
+var COMPS_VER={ k:'', q:'' }, COMPS_CACHE=null;   // la cuenta del mes, para que el buscador solo filtre (se rehace con cada `compsPintar` o si cambió la lista)
+var COMPS_COL={ 'QR BISA':'#00A09A', 'QR Económico':'#2457c5', 'QR Ganadero':'#7c3aed', 'QR Unión':'#0e7490', 'QR Mercantil':'#be185d', 'Tarjeta':'#0f766e', 'Transferencia':'#1d4ed8', 'Sin método':'#b45309' };
+var COMPS_MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function compsAbrir(mes){
   var ms=nxMesesCierre(), sel=mes || (segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
   if(ms.indexOf(sel)<0) ms.unshift(sel);
+  COMPS_VER={ k:'', q:'' };
   openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>📁 Comprobantes del mes · para el contador</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b"><label class="nx-sub" style="display:block;margin:0 0 4px">Mes</label>'+
-    '<select id="comps-mes" class="msel" onchange="compsPintar()">'+ms.map(function(m){ return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(mesNombre(m).replace(/^./,function(c){ return c.toUpperCase(); }))+'</option>'; }).join('')+'</select>'+
+    '<div class="modal-b cp2"><div class="cp2-mesrow"><label for="comps-mes">Mes</label>'+
+    '<select id="comps-mes" class="cp2-mes" onchange="COMPS_VER.k=\'\';compsPintar()">'+ms.map(function(m){ return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(mesNombre(m).replace(/^./,function(c){ return c.toUpperCase(); }))+'</option>'; }).join('')+'</select>'+
+    '<span class="cp2-mesnota">Los pagos con QR, tarjeta o transferencia, con la foto de su comprobante</span></div>'+
     '<div id="comps-cuerpo"></div></div>', true);
   compsPintar();
   if(iacServidorOk() && CONNECTED) iacCargar(sel);   // 🤖 lo que la IA ya leyó (sin gastar): la marca ✅/⚠️ en cada foto
 }
+function compsColor(met, i){ return COMPS_COL[met] || ['#00A09A','#2457c5','#7c3aed','#0f766e','#be185d','#64748b'][i%6]; }
+/* Lo que dijo la IA de un pago, para las cuentas de arriba y el filtro: ok · mal (incluye «no se lee») · pe (sin leer) · '' (sin foto). */
+function compsIaEst(x, refs){
+  if(!x.comps.length || !iacServidorOk()) return '';
+  if(x.comps.some(function(f){ return !IAC.res[f]; })) return 'pe';
+  var c=iacComparar(x, refs); return c.est==='ok' ? 'ok' : 'mal';
+}
+function compsAnillo(n, de, col){
+  var r=25, c=2*Math.PI*r, d=de ? c*n/de : 0;
+  return '<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><circle cx="32" cy="32" r="'+r+'" fill="none" stroke="#dcecea" stroke-width="7"/>'+
+    '<circle cx="32" cy="32" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+d.toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 32 32)"/></svg>';
+}
 function compsPintar(){
   var box=document.getElementById('comps-cuerpo'), mes=(document.getElementById('comps-mes')||{}).value; if(!box || !mes) return;
-  var L=compsMesDatos(mes), G={}, orden=[], sinFoto=0, tot=0, refs=iacRefs(L);
-  L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); if(!x.comps.length) sinFoto++; tot=r2(tot+x.monto); });
+  var L=compsMesDatos(mes), G={}, orden=[], sinFoto=0, tot=0, nFot=0, refs=iacRefs(L), ia={ ok:0, mal:0, pe:0 };
+  L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); if(!x.comps.length) sinFoto++; tot=r2(tot+x.monto); nFot+=x.comps.length;
+    var e=compsIaEst(x, refs); x._ia=e; if(e) ia[e]++; x._tag=x.comps.length ? iacTagComps(x, refs) : ''; });
+  COMPS_CACHE={ mes:mes, vend:((document.getElementById('cta-vendedor')||{}).value||'').trim(), gen:SALDO_GEN, L:L };
   orden.sort(function(a,b){ return G[b].length-G[a].length; });
-  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), cols=['#00A09A','#2457c5','#7c3aed','#0f766e','#b45309','#64748b'];
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
   if(!L.length){ box.innerHTML='<div class="empty u7" style="display:flex">'+VACIO_SVG.caja+'<b>No hay pagos con QR, tarjeta o transferencia en '+esc(mesNombre(mes))+(vend?(' de '+esc(vend)):'')+'.</b></div>'; return; }
-  box.innerHTML='<div class="cps-sub">'+L.length+' pago'+(L.length===1?'':'s')+' con QR, tarjeta o transferencia · '+fmtBs0(tot)+(vend?(' · solo '+esc(vend)):'')+'</div>'+
-    '<div class="cps-res">'+orden.map(function(k,i){ var a=G[k], s2=0; a.forEach(function(x){ s2=r2(s2+x.monto); }); return '<div class="cps-r" style="--c:'+cols[i%cols.length]+'"><span>'+esc(k)+'</span><b>'+a.length+'</b><small>'+fmtBs0(s2)+'</small></div>'; }).join('')+
-      '<div class="cps-r" style="--c:'+(sinFoto?'#CE2939':'#16a34a')+'"><span>📷 Sin foto</span><b>'+sinFoto+'</b><small>'+(sinFoto?'no van a tener comprobante':'todos tienen foto')+'</small></div></div>'+
-    '<div class="cps-tw"><table class="cps-t"><thead><tr><th>Día</th><th>Cliente</th><th>Nota</th><th>Vendedor</th><th style="text-align:right">Monto</th><th>Foto</th><th>Nombre del archivo</th></tr></thead><tbody>'+
-    orden.map(function(k){ return '<tr class="cps-g"><td colspan="7">'+esc(k)+' · '+G[k].length+' pago'+(G[k].length===1?'':'s')+'</td></tr>'+G[k].map(function(x){
-      var id=String(x.p.id).replace(/'/g,'');
-      return '<tr><td>'+esc(fmtFechaCorta(x.f))+'</td><td><a onclick="closeModal();showContaModal(\''+id+'\')"><b>'+esc(String(x.p.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+'</b></a>'+(x.envio?' <small>🚚 flete</small>':'')+'</td><td>'+esc(x.nota||'—')+'</td><td>'+esc(String(x.p.vendedor||'').split(' ')[0])+'</td>'+
-        '<td class="cps-m">'+fmtBs(x.monto)+'</td><td>'+(x.comps.length ? x.comps.map(function(fid, i){ return '<a class="cps-tag cps-ok" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener">📷 '+(x.comps.length>1?(i+1):'ver')+'</a>'; }).join(' ')+iacTagComps(x, refs) : '<span class="cps-tag cps-mal">falta</span>')+'</td>'+
-        '<td class="cps-nom">'+(x.comps.length ? x.comps.map(function(f,i){ return esc(compsArchivo(x,i)); }).join('<br>') : '—')+'</td></tr>'; }).join(''); }).join('')+
-    '</tbody></table></div>'+
-    '<div class="cps-pie"><span>Ordenados por banco y por día · cada foto con un nombre que dice día, banco, monto y cliente.</span><button type="button" class="ah-go" onclick="compsExcel()">⬇️ Excel con los enlaces</button>'+
-      '<button type="button" class="ah-go ah-go-p" id="comps-carpeta-btn" onclick="compsCarpeta()">📁 Armar la carpeta en Drive</button>'+
-      '<button type="button" class="ah-go ah-go-p" id="comps-ia-btn" onclick="iacAbrir()">🤖 Revisar las fotos con IA'+(iacPuede()?'':' 🔒')+'</button></div><div id="comps-carpeta"></div>';
+  if(COMPS_VER.k && COMPS_VER.k.indexOf('met:')===0 && !G[COMPS_VER.k.slice(4)]) COMPS_VER.k='';
+  var conFoto=L.length-sinFoto, colAn=sinFoto ? '#F59E0B' : '#16a34a', leidos=ia.ok+ia.mal;
+  var foco=document.activeElement && document.activeElement.id==='comps-q', car=foco ? document.activeElement.selectionStart : 0;
+  var ficha=function(k, nom, n, sub, col, extra){ return '<button type="button" class="cps-r'+(COMPS_VER.k===k?' on':'')+(extra||'')+'" style="--c:'+col+'" onclick="compsFiltrar(\''+esc(k.replace(/'/g,''))+'\')" aria-pressed="'+(COMPS_VER.k===k)+'"><span>'+nom+'</span><b>'+n+'</b>'+(sub?('<small>'+sub+'</small>'):'')+'</button>'; };
+  var tile=function(idAttr, fn, ic, bg, tit, sub){ return '<button type="button" class="cp2-a"'+idAttr+' onclick="'+fn+'" style="--c:'+bg+'"><span class="cp2-ai">'+ic+'</span><span class="cp2-at"><b>'+tit+'</b><small>'+sub+'</small></span></button>'; };
+  box.innerHTML=
+    '<div class="cp2-hero"><div class="cp2-tot"><small>Cobrado con QR, tarjeta o transferencia'+(vend?(' · solo '+esc(vend)):'')+'</small><b>'+fmtBs0(tot)+'</b>'+
+      '<span>'+L.length+' pago'+(L.length===1?'':'s')+' · '+nFot+' foto'+(nFot===1?'':'s')+' · '+orden.length+' forma'+(orden.length===1?'':'s')+' de pago</span></div>'+
+      '<div class="cp2-ring">'+compsAnillo(conFoto, L.length, colAn)+'<div><b style="color:'+(sinFoto?'#B45309':'#15803d')+'">'+conFoto+' de '+L.length+'</b><span>'+(sinFoto ? ('con foto · faltan '+sinFoto) : 'todos con foto ✓')+'</span></div></div>'+
+      (iacServidorOk() && (leidos || IAC.cargado[mes]==='ok') ? ('<div class="cp2-ia"><span class="cp2-ia-t">🤖 Revisión con IA</span>'+
+        '<span class="cp2-pill cp2-p-ok">✅ '+ia.ok+' coinciden</span>'+
+        (ia.mal ? '<button type="button" class="cp2-pill cp2-p-mal" onclick="compsFiltrar(\'iamal\')">⚠️ '+ia.mal+' para revisar</button>' : '<span class="cp2-pill cp2-p-ok">nada para revisar</span>')+
+        (ia.pe ? '<span class="cp2-pill cp2-p-pe">⏳ '+ia.pe+' sin leer</span>' : '')+'</div>') : '')+
+    '</div>'+
+    '<div class="cp2-acc">'+
+      tile('', 'compsExcel()', '⬇️', '#16a34a', 'Excel con los enlaces', 'Una fila por foto · «Ver foto» se abre con un clic')+
+      tile(' id="comps-carpeta-btn"', 'compsCarpeta()', '📁', '#2457c5', 'Armar la carpeta en Drive', 'Las fotos con su nombre, listas para el contador')+
+      tile(' id="comps-ia-btn"', 'iacAbrir()', '🤖', '#7c3aed', 'Revisar las fotos con IA'+(iacPuede()?'':' 🔒'), 'Compara cada foto con lo anotado')+
+    '</div><div id="comps-carpeta"></div>'+
+    /* (26/10, el dueño: «esas fichas no me gustan, podría ser mejor») Cómo se cobró: una barra con la parte de cada banco (en Bs) y
+       debajo píldoras que filtran; la elegida se pinta del color de su banco. */
+    '<div class="cp2-mix"><div class="cp2-mix-t"><span>Cómo se cobró · tocá para filtrar</span></div>'+
+      '<div class="cp2-barra" aria-hidden="true">'+orden.map(function(k, i){ var s2=0; G[k].forEach(function(x){ s2=r2(s2+x.monto); });
+        var pc=tot>0 ? Math.round(100*s2/tot) : 0, ap=COMPS_VER.k && COMPS_VER.k!=='met:'+k;
+        return '<button type="button" tabindex="-1" class="'+(ap?'apag':'')+'" style="--c:'+compsColor(k, i)+';flex:'+Math.max(s2, tot/200)+'" title="'+esc(k)+' · '+fmtBs0(s2)+' ('+pc+'%)" onclick="compsFiltrar(\''+esc(('met:'+k).replace(/'/g,''))+'\')"></button>'; }).join('')+'</div>'+
+      '<div class="cp2-fil" role="group" aria-label="Filtrar por forma de pago">'+
+        ficha('', 'Todos', L.length, fmtBs0(tot), '#13302e')+
+        orden.map(function(k, i){ var s2=0; G[k].forEach(function(x){ s2=r2(s2+x.monto); }); return ficha('met:'+k, esc(k), G[k].length, fmtBs0(s2), compsColor(k, i)); }).join('')+
+        ficha('sinfoto', '📷 Sin foto', sinFoto, sinFoto ? 'sin comprobante' : 'todos tienen foto', sinFoto ? '#CE2939' : '#16a34a', sinFoto ? ' cp2-alerta' : '')+
+      '</div></div>'+
+    '<div class="cp2-busca"><input type="search" id="comps-q" placeholder="🔎 Buscar cliente, nota, recibo o vendedor" value="'+esc(COMPS_VER.q)+'" oninput="COMPS_VER.q=this.value;compsListaPintar()" aria-label="Buscar en los comprobantes"></div>'+
+    '<div id="comps-lista"></div>'+
+    '<div class="cps-pie">Ordenados por banco y por día. Cada foto lleva un nombre que dice día, banco, monto y cliente: el mismo en el Excel y en la carpeta.</div>';
+  compsListaPintar();
   compsCarpetaPintar();
+  if(foco){ var q=document.getElementById('comps-q'); if(q){ try{ q.focus(); q.setSelectionRange(car, car); }catch(e){} } }
+}
+function compsFiltrar(k){ COMPS_VER.k = (COMPS_VER.k===k) ? '' : k; compsPintar(); }
+/* La lista, aparte: el buscador la repinta sin perder el foco. */
+function compsListaPintar(){
+  var box=document.getElementById('comps-lista'), mes=(document.getElementById('comps-mes')||{}).value; if(!box || !mes) return;
+  var C=COMPS_CACHE, vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  if(!C || C.mes!==mes || C.vend!==vend || C.gen!==SALDO_GEN){ compsPintar(); return; }
+  var L=C.L, G={}, orden=[], k=COMPS_VER.k, q=sinTildes(String(COMPS_VER.q||'')).toLowerCase().trim();
+  L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); });
+  orden.sort(function(a,b){ return G[b].length-G[a].length; });
+  var col={}; orden.forEach(function(m, i){ col[m]=compsColor(m, i); });
+  var pasa=function(x){
+    if(k==='sinfoto' && x.comps.length) return false;
+    if(k==='iamal' && x._ia!=='mal') return false;
+    if(k.indexOf('met:')===0 && x.met!==k.slice(4)) return false;
+    if(!q) return true;
+    var t=sinTildes([x.p.cliente, x.p.nota, x.nota, x.p.vendedor, x.met, fmtBs(x.monto)].join(' ')).toLowerCase();
+    return q.split(/\s+/).every(function(w){ return t.indexOf(w)>=0; });
+  };
+  var n=0, filas=orden.map(function(m){
+    var a=G[m].filter(pasa); if(!a.length) return ''; n+=a.length;
+    var s2=0; a.forEach(function(x){ s2=r2(s2+x.monto); });
+    return '<tr class="cps-g" style="--c:'+col[m]+'"><td colspan="4"><span class="cp2-dot"></span>'+esc(m)+'<small>'+a.length+' pago'+(a.length===1?'':'s')+' · '+fmtBs0(s2)+'</small></td></tr>'+
+      a.map(function(x){
+        var id=String(x.p.id).replace(/'/g,''), mm=Number(String(x.f).slice(5,7))||0;
+        var meta=[x.p.nota ? ('Nota '+esc(x.p.nota)) : '', x.nota ? ('Recibo '+esc(x.nota)) : '', esc(String(x.p.vendedor||'').split(' ')[0])].filter(Boolean).join(' · ');
+        var fotos=x.comps.length ? x.comps.map(function(fid, i){
+            return '<a class="cp2-th" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener" title="Ver la foto'+(x.comps.length>1?(' '+(i+1)):'')+'"><span aria-hidden="true">📷</span>'+
+              '<img loading="lazy" alt="" src="'+esc(fotoThumb(fid, 160))+'" onerror="this.remove()">'+(x.comps.length>1?('<i>'+(i+1)+'</i>'):'')+'</a>'; }).join('')+x._tag
+          : '<span class="cps-tag cps-mal">📷 falta la foto</span>';
+        return '<tr class="cp2-row" style="--c:'+col[m]+'"><td class="cp2-dia"><span class="cp2-d">'+esc(String(x.f).slice(8,10))+'</span><span class="cp2-mm">'+(COMPS_MESES[mm-1]||'')+'</span></td>'+
+          '<td class="cp2-cli"><a onclick="closeModal();showContaModal(\''+id+'\')"><b>'+esc(String(x.p.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+'</b></a>'+(x.envio?' <span class="cp2-flete">🚚 flete</span>':'')+
+            '<div class="cp2-meta">'+meta+'</div>'+(x.comps.length ? x.comps.map(function(f, i){ var nm=compsArchivo(x, i); return '<div class="cps-nom" title="'+esc(nm)+'">'+esc(nm)+'</div>'; }).join('') : '')+'</td>'+
+          '<td class="cp2-fotos">'+fotos+'</td><td class="cps-m">'+fmtBs(x.monto)+'</td></tr>';
+      }).join('');
+  }).join('');
+  var etq = k==='sinfoto' ? 'sin foto' : (k==='iamal' ? 'para revisar con la IA' : (k.indexOf('met:')===0 ? esc(k.slice(4)) : ''));
+  box.innerHTML=(etq||q ? ('<div class="cp2-filtro">Mostrando <b>'+n+'</b> de '+L.length+(etq?(' · '+etq):'')+(q?(' · «'+esc(COMPS_VER.q)+'»'):'')+
+      ' <button type="button" class="cp2-limpiar" onclick="COMPS_VER.k=\'\';COMPS_VER.q=\'\';compsPintar()">Ver todos</button></div>') : '')+
+    (n ? '<div class="cps-tw"><table class="cps-t"><thead><tr><th>Día</th><th>Cliente</th><th>Foto</th><th style="text-align:right">Monto</th></tr></thead><tbody>'+filas+'</tbody></table></div>'
+       : '<div class="cp2-nada">Nada con ese filtro.</div>');
 }
 /* 📁 (25/10, §4mg C2; dueño: «Prepáralo») «Armar la carpeta en Drive»: el servidor (`.gs` 2026-10-25-a, acción `compsCarpeta`) COPIA
    cada foto con su nombre a «Comprobantes para el contador / Comprobantes AAAA-MM» y devuelve el enlace. De a tandas de `COMPS_TANDA`
@@ -42685,14 +42863,16 @@ function compsExcel(){
   var L=compsMesDatos(mes); if(!L.length){ toast('No hay pagos con QR, tarjeta o transferencia en ese mes','err'); return; }
   /* (25/10, el dueño eligió) «N° DE PAGO» y «FOTO» («1 de 2») al FINAL, las columnas de siempre en su lugar; el MONTO va solo en la
      primera fila de cada pago: sumar la columna da lo cobrado, no lo cobrado por la cantidad de fotos. */
-  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO','N° DE PAGO','FOTO']];
+  /* 🔗 (26/10, dueño: «los enlaces no aparecen directos para entrar») La FOTO es un enlace de verdad: dice «Ver foto», en azul, y se
+     abre con un clic (`link`, ver `sheetLinks`); antes iba la dirección larga como texto. Encabezado con el color de los otros Excel. */
+  var rows=[['DÍA','MÉTODO Y BANCO','CLIENTE','N° NOTA DE VENTA','N° RECIBO','VENDEDOR','MONTO (Bs)','FLETE','FOTO (enlace)','NOMBRE DEL ARCHIVO','N° DE PAGO','FOTO'].map(function(h){ return { v:h, s:1 }; })];
   L.forEach(function(x){
     var base=function(conMonto){ return [x.f, x.met, x.p.cliente||'', x.p.nota||'', x.nota||'', x.p.vendedor||'', conMonto ? { v:r2(x.monto), t:'n', s:2 } : '', x.envio?'SÍ':'']; };   // MONTO como NÚMERO en Bs (N-FIN1)
     if(!x.comps.length) rows.push(base(true).concat(['FALTA LA FOTO', '', { v:x.n, t:'n' }, 'sin foto']));
-    else x.comps.forEach(function(fid, i){ rows.push(base(i===0).concat([fotoVer(fid), compsArchivo(x, i), { v:x.n, t:'n' }, (i+1)+' de '+x.comps.length])); });
+    else x.comps.forEach(function(fid, i){ rows.push(base(i===0).concat([{ v:'Ver foto'+(x.comps.length>1?(' '+(i+1)):''), s:XS_LINK, link:fotoVer(fid) }, compsArchivo(x, i), { v:x.n, t:'n' }, (i+1)+' de '+x.comps.length])); });
   });
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
-  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48},{w:11},{w:10}], matrix:rows }]);
+  var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:30},{w:16},{w:12},{w:18},{w:14},{w:8},{w:14},{w:52},{w:11},{w:10}], matrix:rows, textoOk:true }]);
   downloadBlob(bytes, 'comprobantes-'+mes+(vend?('-'+vend.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de comprobantes descargado — '+L.length+' pago'+(L.length===1?'':'s')+' ✓','ok');
 }
