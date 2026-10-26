@@ -16218,7 +16218,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - 💡 Idea para ofrecer (no hecha): que la página se dé cuenta sola de que hay una versión nueva publicada y lo diga con «🔄 Actualizar»
   (hoy no hay ningún sello de versión de la PÁGINA a la vista).
 
-### §4mr — 🤖 Claude lee las fotos de los comprobantes (C4) + 📁 la carpeta más rápida (26/10; servidor `2026-10-26-a`, en la rama)
+### §4mr — 🤖 Claude lee las fotos de los comprobantes (C4) + 📁 la carpeta más rápida (26/10; servidor `2026-10-26-a` IMPLEMENTADO 26/10 por el dueño, PÁGINA PUBLICADA `037b86a`)
 - **Pedido del dueño**: *«falta lo del bot de contabilidad»* (la C4 de las muestras, con la imagen de «Revisar las fotos de los comprobantes»),
   y con la carpeta de la 25-a: *«le di y no completan y descargan»* (0 de 367 un buen rato), *«ya empezó a avanzar»*, *«¿20 min dejar
   abierta esa pestaña sin poder usar el panel?»*.
@@ -16257,3 +16257,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - Batería en la rama (`f6272ef`): 254 suites, 8.221 bien; rojas solo las conocidas (`test_ventas_marcas` 21/1; `test_mispedidos` 32/1,
   sola 33/0). Al dueño se le dio el enlace raw fijo a `f6272efd31067b23287751295000fc34e449fc53` (4.698 líneas, termina en `}` con
   `return borrador;` antes); volver atrás = ✏️ a la versión anotada Y pegar la 25-a de `d4495c236dbd71ef5f1582bf3deb8c7139b65ce7` (4.407).
+- **Publicado** (dueño: *«Listo, ya lo implementé»*): verificado desde acá sin escribir nada — `{action:'geocode', links:[]}` →
+  `version:"2026-10-26-a"` y `{action:'iaComprobantes', fotos:[], leer:1}` → `estado:""` (la clave de Claude está). En `pub_mn` sobre
+  `ad16340` se aplicó SOLO el diff `63e7000..f6272ef` de `pedidos.html`, `.gs`, `test_servidor.js` y `test_ia_comprobantes.js` (§4lt-d sigue
+  en la rama). Batería ahí: 253 suites, 8.191 bien; rojas solo las conocidas. `main` = **`037b86a`**.
