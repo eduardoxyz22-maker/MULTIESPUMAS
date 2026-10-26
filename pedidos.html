@@ -42886,7 +42886,7 @@ function compsPintar(){
   var conFoto=L.length-sinFoto, colAn=sinFoto ? '#F59E0B' : '#16a34a', leidos=ia.ok+ia.mal;
   var foco=document.activeElement && document.activeElement.id==='comps-q', car=foco ? document.activeElement.selectionStart : 0;
   var ficha=function(k, nom, n, sub, col, extra){ return '<button type="button" class="cps-r'+(COMPS_VER.k===k?' on':'')+(extra||'')+'" style="--c:'+col+'" onclick="compsFiltrar(\''+esc(k.replace(/'/g,''))+'\')" aria-pressed="'+(COMPS_VER.k===k)+'"><span>'+nom+'</span><b>'+n+'</b>'+(sub?('<small>'+sub+'</small>'):'')+'</button>'; };
-  var tile=function(id, fn, ic, bg, tit, sub){ return '<button type="button" class="cp2-a"'+(id?(' id="'+id+'"'):'')+' onclick="'+fn+'" style="--c:'+bg+'"><span class="cp2-ai">'+ic+'</span><span class="cp2-at"><b>'+tit+'</b><small>'+sub+'</small></span></button>'; };
+  var tile=function(idAttr, fn, ic, bg, tit, sub){ return '<button type="button" class="cp2-a"'+idAttr+' onclick="'+fn+'" style="--c:'+bg+'"><span class="cp2-ai">'+ic+'</span><span class="cp2-at"><b>'+tit+'</b><small>'+sub+'</small></span></button>'; };
   box.innerHTML=
     '<div class="cp2-hero"><div class="cp2-tot"><small>Cobrado con QR, tarjeta o transferencia'+(vend?(' · solo '+esc(vend)):'')+'</small><b>'+fmtBs0(tot)+'</b>'+
       '<span>'+L.length+' pago'+(L.length===1?'':'s')+' · '+nFot+' foto'+(nFot===1?'':'s')+' · '+orden.length+' forma'+(orden.length===1?'':'s')+' de pago</span></div>'+
@@ -42898,8 +42898,8 @@ function compsPintar(){
     '</div>'+
     '<div class="cp2-acc">'+
       tile('', 'compsExcel()', '⬇️', '#16a34a', 'Excel con los enlaces', 'Una fila por foto · «Ver foto» se abre con un clic')+
-      tile('comps-carpeta-btn', 'compsCarpeta()', '📁', '#2457c5', 'Armar la carpeta en Drive', 'Las fotos con su nombre, listas para el contador')+
-      tile('comps-ia-btn', 'iacAbrir()', '🤖', '#7c3aed', 'Revisar las fotos con IA'+(iacPuede()?'':' 🔒'), 'Compara cada foto con lo anotado')+
+      tile(' id="comps-carpeta-btn"', 'compsCarpeta()', '📁', '#2457c5', 'Armar la carpeta en Drive', 'Las fotos con su nombre, listas para el contador')+
+      tile(' id="comps-ia-btn"', 'iacAbrir()', '🤖', '#7c3aed', 'Revisar las fotos con IA'+(iacPuede()?'':' 🔒'), 'Compara cada foto con lo anotado')+
     '</div><div id="comps-carpeta"></div>'+
     /* (26/10, el dueño: «esas fichas no me gustan, podría ser mejor») Cómo se cobró: una barra con la parte de cada banco (en Bs) y
        debajo píldoras que filtran; la elegida se pinta del color de su banco. */
