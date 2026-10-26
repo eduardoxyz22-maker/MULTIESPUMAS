@@ -12,6 +12,9 @@
    7. Lo que dice la foto se muestra escapado (es un dato, no HTML) y no se toca ningún pago.
    8. 📁 La carpeta: con la 26-a tandas de 120, con la 25-a de 8; cerrar la ventana no la corta, volver a abrir no arranca otra y avisa al terminar.
    10. 🔒 Leer las fotos gasta el crédito del dueño: solo con la contraseña de Administración.
+   11. 📤 Compartir con las vendedoras: el texto para el grupo, el PDF y el aviso en el panel (Mis pedidos → Para hacer).
+   12. 🧾 La foto dice menos: el efectivo de la nota de venta (servidor 26-b), y la fecha: la del primer pago = el día que se cargó la venta;
+       la de los demás = el día que se registraron (si no coincide, se dice).
 
    Reloj CLAVADO (martes 27/10/2026, 10:00 de Bolivia). Solo datos sintéticos.
    Se corre:  node tests/test_ia_comprobantes.js */
@@ -129,9 +132,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('2a. al abrir pide UNA vez lo ya leído (`leer:1`) con todas las fotos del mes (sin el efectivo)', L2.length===1 && L2[0].leer===1 && L2[0].fotos.length===45 && L2[0].fotos.indexOf('f7b')>=0, L2.map(b=>({ leer:b.leer, n:b.fotos.length })));
   const it = r2.it || {};
   chk('2b. monto igual, banco «Banco BISA S.A.» = BISA, mismo día → ✅ Coincide', /Coincide/.test(it['ANA BIEN']||'') && /4\.840,00/.test(it['ANA BIEN']||''), it['ANA BIEN']);
-  chk('2c. monto distinto → dice los dos montos', /No coincide el monto/.test(it['BETO MONTO']||'') && /7\.050,00/.test(it['BETO MONTO']||'') && /6\.760,00/.test(it['BETO MONTO']||''), it['BETO MONTO']);
+  chk('2c. la foto dice más que lo anotado → «La foto dice más», con los dos montos', /La foto dice más/.test(it['BETO MONTO']||'') && /7\.050,00/.test(it['BETO MONTO']||'') && /6\.760,00/.test(it['BETO MONTO']||''), it['BETO MONTO']);
   chk('2d. entró a otro banco → «Otro banco»', /Otro banco/.test(it['CARLA BANCO']||'') && /Ganadero/.test(it['CARLA BANCO']||''), it['CARLA BANCO']);
-  chk('2e. la foto es de 10 días antes → «Otro día»', /Otro día/.test(it['DANI DIA']||'') && /10\/10/.test(it['DANI DIA']||''), it['DANI DIA']);
+  chk('2e. la foto es de otro día que el pago registrado → «Otra fecha» y las dos fechas, sin preguntas', /Otra fecha/.test(it['DANI DIA']||'') && /La foto es del 10\/10 y el pago se registró el 20\/10/.test(it['DANI DIA']||'') && !/\?/.test((it['DANI DIA']||'').replace(/^[^]*Otra fecha/,'').replace(/Abrir la venta.*/,'')), it['DANI DIA']);
   chk('2f. el mismo N° de comprobante en dos pagos (con o sin guiones) → repetido, en los dos', /repetido/i.test(it['ELSA REPE']||'') && /FABI/.test(it['ELSA REPE']||'') && /repetido/i.test(it['FABI REPE']||''), [it['ELSA REPE'], it['FABI REPE']]);
   chk('2g. dos fotos que suman el pago → ✅', /Coincide/.test(it['GABI SUMA']||''), it['GABI SUMA']);
   chk('2h. borrosa → «No se lee bien» · no es comprobante → «No es un comprobante» con la nota de Claude', /No se lee bien/.test(it['HUGO BORROSA']||'') && /No es un comprobante/.test(it['IVAN COLCHON']||'') && /colchón/.test(it['IVAN COLCHON']||''), [it['HUGO BORROSA'], it['IVAN COLCHON']]);
@@ -255,6 +258,90 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('10a. sin la contraseña el botón dice 🔒 y la ventana pide la contraseña de Administración (las marcas ✅ IA siguen)', /🔒/.test(r10.boton) && r10.pide && r10.tags, r10);
   chk('10b. sin la contraseña «Leer» y «Leer de nuevo» no gastan nada', r10.sinGastar, r10);
   chk('10c. una contraseña equivocada no entra; la buena sí, y ahí se puede leer', r10.mal && r10.entra && r10.lee, r10);
+
+  /* 11 · 📤 compartir con las vendedoras: texto para el grupo, PDF y el aviso en el panel (dueño: «¿cómo comparto el informe al grupo?») */
+  const r11 = await ev(async () => {
+    var out={}; UNLOCKED=true; IAC.shVend=''; IAC.filtro='';
+    iacAbrir('2026-10'); await new Promise(function(r){ setTimeout(r, 120); });
+    out.barra=!!document.querySelector('#iac-cuerpo .iac-share') && !!document.getElementById('iac-pdf-btn') && !!document.getElementById('iac-wa');
+    var copiado=null, c0=window.copyText; window.copyText=function(t){ copiado=t; };
+    try{ iacCopiarGrupo(); }finally{ window.copyText=c0; }
+    out.texto=copiado||'';
+    out.wa=decodeURIComponent((document.getElementById('iac-wa')||{}).href||'').indexOf('Pagos para revisar')>=0;
+    /* el PDF con librerías de mentira (sin internet en las pruebas) */
+    var paginas=0, nombre='', db=window.downloadBlob;
+    window.jspdf={ jsPDF:function(){ return { addPage:function(){}, addImage:function(){ paginas++; }, setProperties:function(){}, output:function(){ return new Blob(['%PDF']); } }; } };
+    window.html2canvas=function(){ return Promise.resolve({ toDataURL:function(){ return 'data:image/jpeg;base64,'; } }); };
+    window.downloadBlob=function(b, n){ nombre=n; };
+    try{ await iacPdf(); }finally{ window.downloadBlob=db; }
+    out.pdf={ paginas:paginas, nombre:nombre, hojas:iacPdfHojas('2026-10','').length, txt:(function(){ var d=document.createElement('div'); d.innerHTML=iacPdfHojas('2026-10','').join(''); return d.textContent; })() };
+    /* solo una vendedora */
+    var sel=document.getElementById('iac-sh-vend'); out.opciones=[].map.call(sel.options, function(o){ return o.textContent; });
+    /* el aviso en el panel */
+    var nSave=window.__saves;
+    await iacAvisarPanel(); await new Promise(function(r){ setTimeout(r, 80); });
+    out.guardoAviso=window.__saves===nSave+1;
+    out.avisos=ctaAvLeer().length;
+    out.estadoItem=[].some.call(document.querySelectorAll('.iac-av'), function(e){ return /Avisado a Carola/.test(e.textContent); });
+    await iacAvisarPanel(); out.noDuplica=ctaAvLeer().length===out.avisos;
+    /* la vendedora */
+    var I=misHacerDatos('Carola Chavez', []); out.paraHacer=I.filter(function(o){ return o.ic==='📣'; }).map(function(o){ return o.n+' '+o.t; })[0]||'';
+    ctaAvVer('Carola Chavez'); await new Promise(function(r){ setTimeout(r, 60); });
+    out.lista=[].map.call(document.querySelectorAll('.ctav-it'), function(e){ return e.textContent; });
+    var id=ctaAvAbiertos('Carola Chavez')[0].id;
+    await ctaAvOk(id, 'Carola Chavez'); await new Promise(function(r){ setTimeout(r, 60); });
+    out.quedan=ctaAvAbiertos('Carola Chavez').length;
+    out.cerrado=!!ctaAvLeer().filter(function(a){ return a.id===id && a.ok; })[0];
+    out.esSistema=esFilaSistema({ id:'__avisos_conta__' }) && fueraDeConta({ id:'__avisos_conta__', oc:'' });
+    closeModal(); return out;
+  });
+  chk('11a. la barra «📤 Compartir con las vendedoras» está (PDF, copiar, WhatsApp, aviso)', r11.barra, r11);
+  chk('11b. el texto para el grupo va por vendedora, con cada pago y lo que hay que revisar', /Pagos para revisar · octubre de 2026/.test(r11.texto) && /👤 \*Carola Chavez\*/.test(r11.texto) &&
+    /CARLA BANCO · nota 5003 · 21\/10 · Bs 1\.000,00 QR BISA/.test(r11.texto) && /→ la foto dice que entró a Banco Ganadero y está anotado en BISA/.test(r11.texto) && /Ya lo corregí/.test(r11.texto) && r11.wa, r11.texto.slice(0, 700));
+  chk('11c. el PDF baja «Pagos-para-revisar-octubre-2026.pdf» con una imagen por hoja, y dice cada pago', r11.pdf.nombre==='Pagos-para-revisar-octubre-2026.pdf' && r11.pdf.paginas===r11.pdf.hojas && r11.pdf.hojas>=1 &&
+    /CARLA BANCO/.test(r11.pdf.txt) && /Comprobante repetido/.test(r11.pdf.txt) && /Hoja 1 de/.test(r11.pdf.txt), r11.pdf);
+  chk('11d. se puede elegir una sola vendedora', r11.opciones.length>=2 && /^Todas \(\d+\)$/.test(r11.opciones[0]) && /Carola Chavez \(\d+\)/.test(r11.opciones[1]), r11.opciones);
+  chk('11e. «Dejar el aviso» guarda UNA fila del sistema con un aviso por pago, y en cada pago dice «Avisado a Carola»; tocarlo otra vez no duplica', r11.guardoAviso && r11.avisos>=8 && r11.estadoItem && r11.noDuplica, r11);
+  chk('11f. a la vendedora le sale en «Para hacer» y en su lista, con «Abrir la venta» y «✓ Ya lo corregí»', /📣|Contabilidad te pide revisar/.test(r11.paraHacer) && r11.lista.length===r11.avisos && /Ya lo corregí/.test(r11.lista[0]||''), { ph:r11.paraHacer, l:r11.lista.slice(0,2) });
+  chk('11g. «✓ Ya lo corregí» lo cierra (queda uno menos) y la fila de avisos no es una venta', r11.cerrado && r11.quedan===r11.avisos-1 && r11.esSistema, r11);
+
+  /* 12 · 🧾 la foto dice menos: el efectivo (dueño: «390 en QR y 600 en efectivo, lo dice la segunda imagen») y las fechas */
+  const r12 = await ev(async () => {
+    var out={}, P={ id:'z1', cliente:'JEISON PRUEBA', nota:'1620', vendedor:'Mauricio Merida' };
+    var X=function(monto, f, comps, ant, fCarga){ return { p:P, f:f, monto:monto, comps:comps, metB:'QR', ban:'Económico', met:'QR Económico', n:1, ant:!!ant, fCarga:fCarga||'' }; };
+    var Q=function(m, f){ return { cp:true, le:true, m:m, mo:'BOB', f:f, bd:'Banco Económico', ref:'', t:1, pv:2 }; };
+    IAC.res.zq=Q(390, '2026-10-05'); IAC.res.zn={ cp:false, le:true, m:990, mo:'BOB', f:'2026-10-05', nv:1, nt:990, ne:600, nq:390, nj:0, nr:0, t:1, pv:2 };
+    IAC.res.zv={ cp:false, le:true, m:0, mo:'BOB', f:'', t:1, no:'nota de venta' };   // una nota leída con la pregunta de antes
+    var c1=iacComparar(X(990, '2026-10-05', ['zq']), {}); out.menos={ chip:c1.chip, txt:c1.txt, c:(c1.mot||[])[0] && c1.mot[0].c };
+    var c2=iacComparar(X(990, '2026-10-05', ['zn','zq']), {}); out.mixto={ est:c2.est, chip:c2.chip, txt:c2.txt, c:(c2.mot||[])[0] && c2.mot[0].c };
+    var dia=function(fFoto, fAnot, ant, fCarga){ IAC.res.zd=Q(990, fFoto); var c=iacComparar(X(990, fAnot, ['zd'], ant, fCarga), {}); return c.est==='ok' ? 'ok' : (c.mot||[]).map(function(m){ return m.k; }).join(','); };
+    out.dias={ igual:dia('2026-10-20','2026-10-20'), unDia:dia('2026-10-19','2026-10-20'), antP:dia('2026-10-15','2026-10-15', true, '2026-10-15'), antMal:dia('2026-10-12','2026-10-15', true, '2026-10-15'),
+               antAnotOtro:dia('2026-10-15','2026-10-16', true, '2026-10-15') };
+    IAC.res.zd=Q(990, '2026-10-12'); out.txtAnt=iacComparar(X(990, '2026-10-15', ['zd'], true, '2026-10-15'), {}).txt.replace(/<[^>]+>/g,'');
+    out.txtCob=iacComparar(X(990, '2026-10-15', ['zd']), {}).txt.replace(/<[^>]+>/g,'');
+    /* el botón para leer las notas de venta (servidor 26-b) */
+    var base=STATE.slice();
+    STATE.push({ id:'zz1', oc:'10-990', nota:'1620', cliente:'JEISON PRUEBA', celular:'7', fecha:'2026-10-26', turno:'AM', zona:'Norte', vendedor:'Mauricio Merida',
+      productos:[{ desc:'COLCHON', cant:1, precio:990 }], saldo:0, acuenta:0, pagado:true, ts:Date.now(),
+      metodoPago:textoCobros([{ metodo:'QR', banco:'Económico', monto:990, fecha:'2026-10-05', nota:'1620', comps:['zv','zq'] }]) });
+    SERVER_VER='2026-10-26-a'; out.sinBoton=iacNotasServidorOk()===false;
+    SERVER_VER='2026-10-26-b'; out.porLeer=iacNotasPorLeer('2026-10');
+    __S.llamadas=[]; __S.relee={ zv:{ cp:false, m:990, f:'2026-10-05' } }; __S.guardado.zv=IAC.res.zv; __S.guardado.zq=IAC.res.zq;
+    iacAbrir('2026-10'); await new Promise(function(r){ setTimeout(r, 120); });
+    out.boton=((document.getElementById('iac-notas-btn')||{}).textContent)||'';
+    var L0=__S.llamadas.length; await iacLeerNotas();
+    out.pidio=__S.llamadas.slice(L0).filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).map(function(b){ return { fotos:b.fotos, forzar:b.forzar }; });
+    closeModal(); STATE=base; SERVER_VER='2026-10-26-a'; return out;
+  });
+  chk('12a. la foto dice MENOS: «La foto dice menos», cuánto menos y que si fue en efectivo se anota como otro pago (no «falta plata»)',
+    /La foto dice menos/.test(r12.menos.chip) && /Bs 600,00/.test(r12.menos.txt) && /efectivo/.test(r12.menos.txt) && /otro pago/.test(r12.menos.txt) && !/Revisá cuál está bien/.test(r12.menos.txt), r12.menos);
+  chk('12b. con la nota de venta leída (QR 390 + efectivo 600 = 990): «Una parte fue en efectivo» y cómo corregir el pago', r12.mixto.est==='mal' && /efectivo/.test(r12.mixto.chip) &&
+    /QR Bs 390,00/.test(r12.mixto.txt) && /efectivo Bs 600,00/.test(r12.mixto.txt) && /La plata está/.test(r12.mixto.txt), r12.mixto);
+  chk('12c. la fecha (dueño): el primer pago = el día que se cargó la venta; los demás = el día que se registraron; si no coincide, se dice (sin preguntas)',
+    r12.dias.igual==='ok' && r12.dias.unDia==='dia' && r12.dias.antP==='ok' && r12.dias.antMal==='dia' && r12.dias.antAnotOtro==='ok' &&
+    r12.txtAnt==='La foto es del 12/10 y la venta se cargó el 15/10.' && r12.txtCob==='La foto es del 12/10 y el pago se registró el 15/10.', { d:r12.dias, a:r12.txtAnt, c:r12.txtCob });
+  chk('12d. 🧾 con la 26-b: el botón ofrece leer las notas de venta de los pagos con diferencia y las pide con `forzar`', r12.sinBoton && JSON.stringify(r12.porLeer)==='["zv"]' &&
+    /Leer las notas de venta \(1 foto/.test(r12.boton) && r12.pidio.length===1 && JSON.stringify(r12.pidio[0].forzar)==='["zv"]', r12);
 
   chk('sin errores en la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

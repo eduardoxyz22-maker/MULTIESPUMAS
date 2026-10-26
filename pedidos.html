@@ -2758,6 +2758,21 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .iac-bt{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .iac-foto{flex:none;text-decoration:none;font-size:.8rem;padding:2px 6px;border-radius:8px;background:#e6f7f6;color:#00756f}
 .iac-vacio{padding:14px;color:#55706f;font-size:.84rem;text-align:center}
+.iac-share{margin:4px 0 12px;padding:10px 12px;border:1px solid #cfe9e7;border-radius:14px;background:#f3fbfa}
+.iac-sh-t{font-size:.86rem;color:#13302e;margin-bottom:8px}.iac-sh-r{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.iac-sh-r select{max-width:220px}
+.iac-sh-s{display:block;margin-top:6px;font-size:.76rem;color:#55706f}#iac-sh-msg .cps-carpeta{margin-top:8px}
+.iac-av{margin-top:5px;font-size:.78rem;font-weight:700;color:#7c4b00;background:#fff4e5;border-radius:8px;padding:3px 8px;display:inline-block}.iac-av-ok{color:#15803d;background:#e9f9f1}
+.ctav-sub{font-size:.86rem;color:#13302e;margin:2px 0 10px}.ctav-it{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border:1px solid #f5c2c7;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.ctav-tx{flex:1;min-width:220px;font-size:.84rem;color:#55706f}.ctav-tx b{color:#13302e}.ctav-q{color:#CE2939;font-weight:700;margin:3px 0}.ctav-tx small{color:#6b8584}.ctav-bt{display:flex;gap:6px;flex-wrap:wrap}
+/* 📄 el PDF «Pagos para revisar» (A4 parado 794×1123; sin color-mix ni sombras: html2canvas) */
+.icp-pag{width:794px;height:1123px;box-sizing:border-box;padding:40px 44px 34px;background:#fff;color:#13302e;font-family:Inter,system-ui,sans-serif;position:relative;overflow:hidden;margin:0 0 12px}
+.icp-cab{display:flex;align-items:center;gap:10px;border-bottom:3px solid #00B5AD;padding-bottom:10px;margin-bottom:14px}.icp-cab b{display:block;font-size:22px;font-weight:900}.icp-cab span{font-size:13px;color:#55706f}
+.icp-res{display:flex;gap:10px;margin-bottom:12px}.icp-res div{flex:1;border:1px solid #e1ebea;border-left:5px solid #00B5AD;border-radius:10px;padding:8px 12px}.icp-res .r{border-left-color:#CE2939}.icp-res .a{border-left-color:#B45309}
+.icp-res b{display:block;font-size:24px;font-weight:900}.icp-res span{font-size:12px;color:#55706f}.icp-txt{font-size:12.5px;line-height:1.45;color:#13302e;margin:0 0 12px}
+.icp-t{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;margin-bottom:8px}.icp-t th{background:#13302e;color:#fff;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:6px 8px}
+.icp-t td{border-bottom:1px solid #e1ebea;padding:6px 8px;vertical-align:top;white-space:normal;overflow-wrap:anywhere;line-height:1.4}.icp-t td.r{color:#CE2939;font-weight:800}.icp-t td.a{color:#B45309;font-weight:800}
+.icp-t td span{color:#13302e;font-weight:500}.icp-vs{width:50%}.icp-v{font-size:15px;font-weight:900;color:#00756f;margin:12px 0 6px}.icp-v span{font-size:12px;color:#55706f;font-weight:600}
+.icp-pie{position:absolute;left:44px;right:44px;bottom:16px;font-size:10.5px;color:#6b8584;border-top:1px solid #e1ebea;padding-top:6px}
 .iac-clave-tx{font-size:.88rem;color:#13302e;margin:4px 0 10px}.iac-clave{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.iac-clave input{max-width:260px;flex:1;min-width:0}
 .iac-clave-err{margin-top:8px;color:#CE2939;font-size:.84rem;font-weight:700}
 @media (max-width:520px){ .iac-img{width:56px;height:72px} .iac-it.iac-chico{flex-wrap:wrap} }
@@ -16665,7 +16680,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
@@ -23013,6 +23028,9 @@ function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el
 function misHacerDatos(v, mine){
   var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
   var q=misPendientes(mine);
+  /* 📣 (26/10) lo que Contabilidad le pidió revisar de sus pagos (`ctaAvAbiertos`), primero */
+  try{ var av=ctaAvAbiertos(v); add({ sev:'r', ic:'📣', n:av.length, t:'Contabilidad te pide revisar '+(av.length===1?'un pago':'pagos'),
+    s:av.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(av.length>3?' y más':''), b:'Ver', p:1, fn:"ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')", ok:'Sin avisos de Contabilidad' }); }catch(e){}
   add({ sev:'r', ic:'🔴', n:q.sinStock.length, t:'Productos que no hay', s:misNom2(q.sinStock.map(function(x){ return x.p; }))+' · avisales que hay que esperar', b:'Ver qué hacer', p:1, fn:'abrirMisAvisos()', ok:'Todos tus productos tienen stock' });
   var atr=mine.filter(function(p){ return minutosAtraso(p)>0; });
   add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
@@ -42540,11 +42558,13 @@ function compsMesDatos(mes){
   (STATE||[]).forEach(function(p){
     if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
-    contaPagos(p).forEach(function(c){
+    var tieneAnt=!!anticipoDe(p);   // `contaPagos` pone el adelanto (el pago al cargar la venta) PRIMERO
+    contaPagos(p).forEach(function(c, i){
       var f=c.fecha||contaFecha(p), m=Number(c.monto)||0;
       if(String(f).slice(0,7)!==mes || !(m>0) || c.metodo==='Efectivo') return;
       out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c),
-                 metB:String(c.metodo||''), ban:String(c.banco||'') });   // 🤖 (§4mq C4) el método y el banco por separado, para comparar con la foto
+                 metB:String(c.metodo||''), ban:String(c.banco||''),   // 🤖 (§4mq C4) el método y el banco por separado, para comparar con la foto
+                 ant:tieneAnt && i===0, fCarga:contaFecha(p) });       // 📅 el primer pago va con la fecha en que se cargó la venta
     });
   });
   out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
@@ -42704,6 +42724,19 @@ var IAC_ESTADOS={
   clave:'La clave de Claude no sirve: revisá <b>ANTHROPIC_API_KEY</b> en las Propiedades del script.',
   credito:'Se acabó el crédito de Claude: hay que cargar saldo en la consola de Anthropic.' };
 function iacServidorOk(){ return String(SERVER_VER||'')>=IAC_SERVIDOR; }
+/* 🧾 (26/10, servidor 2026-10-26-b) Claude reconoce la nota de venta (`nv`, con lo pagado por medio). Las fotos que NO son comprobante de
+   los pagos donde la foto dice menos o más se leyeron con la pregunta de antes (`pv` < 2): «🧾 Leer las notas de venta» las vuelve a leer. */
+var IAC_NOTAS_SERVIDOR='2026-10-26-b';
+function iacNotasServidorOk(){ return String(SERVER_VER||'')>=IAC_NOTAS_SERVIDOR; }
+function iacNotasPorLeer(mes){
+  var L=iacPagos(mes), refs=iacRefs(L), v={}, out=[];
+  L.forEach(function(x){
+    var c=iacComparar(x, refs); if(!(c.mot||[]).some(function(m){ return m.k==='menos' || m.k==='mas'; })) return;
+    x.comps.forEach(function(f){ var o=IAC.res[f]; if(o && !o.err && o.cp===false && !(Number(o.pv)>=2) && !v[f]){ v[f]=1; out.push(f); } });
+  });
+  return out;
+}
+function iacLeerNotas(){ var L=iacNotasPorLeer(IAC.mes); if(!L.length) return Promise.resolve(); return iacLeer(L, true); }
 function iacPagos(mes){ return compsMesDatos(mes).filter(function(x){ return x.comps.length>0; }); }
 function iacIds(L){ var v={}, out=[]; L.forEach(function(x){ x.comps.forEach(function(f){ if(!v[f]){ v[f]=1; out.push(f); } }); }); return out; }
 function iacUsd(n){ n=Number(n)||0; return 'US$ '+(n>0 && n<0.01 ? '0,01' : n.toFixed(2).replace('.',',')); }
@@ -42745,26 +42778,55 @@ function iacComparar(x, refs){
     else if(o.err){ por='no la pudo leer Claude'+(o.no?(' ('+o.no+')'):''); hacer='Probá «Leer de nuevo» o revisala a mano.'; }
     else if(o.cp===false){ por='no es un comprobante de pago'+(o.no?(' ('+o.no+')'):''); hacer='Pedile el comprobante al cliente.'; }
     else { por='está borrosa o cortada: no se ve el monto'; hacer='Pedile otra al cliente.'; }
-    return { est:'nl', chip:(o.cp===false && !o.err) ? '❓ No es un comprobante' : '❓ No se lee bien', txt:'La foto '+esc(por)+'. '+hacer };
+    return { est:'nl', chip:(o.cp===false && !o.err) ? '❓ No es un comprobante' : '❓ No se lee bien', txt:'La foto '+esc(por)+'. '+hacer, c:'la foto '+por+' — '+hacer.replace(/\.$/,'').toLowerCase() };
   }
   var bs=buenas.filter(function(l){ return l.o.mo!=='USD'; }), usd=buenas.filter(function(l){ return l.o.mo==='USD'; });
   var suma=0; bs.forEach(function(l){ suma=r2(suma+Number(l.o.m)); });
   var monto=r2(x.monto), okM=bs.length>0 && (Math.abs(suma-monto)<0.005 || bs.some(function(l){ return Math.abs(Number(l.o.m)-monto)<0.005; }));
   var mot=[], b0=(bs[0]||buenas[0]).o, dice=bs.length>1 ? suma : Number(b0.m);
-  if(!okM && usd.length && !bs.length) mot.push({ k:'usd', chip:'⚠️ Está en dólares', t:'La foto dice <b>US$ '+esc(String(usd[0].o.m))+'</b> y anotaste <b>'+fmtBs(monto)+'</b>. Revisá el tipo de cambio.' });
-  else if(!okM) mot.push({ k:'monto', chip:'⚠️ No coincide el monto', t:'La foto dice <b>'+fmtBs(dice)+'</b>'+(bs.length>1?(' (sumando las '+bs.length+' fotos)'):'')+', anotaste <b>'+fmtBs(monto)+'</b>. Revisá cuál está bien.' });
+  if(!okM && usd.length && !bs.length) mot.push({ k:'usd', chip:'⚠️ Está en dólares', t:'La foto dice <b>US$ '+esc(String(usd[0].o.m))+'</b> y anotaste <b>'+fmtBs(monto)+'</b>. Revisá el tipo de cambio.',
+    c:'la foto está en dólares (US$ '+usd[0].o.m+')' });
+  else if(!okM){
+    /* (26/10, el dueño: «dice que falta dinero siendo que algunas compras hay efectivo pagado… 390 en QR y 600 en efectivo, lo dice la
+       segunda imagen») Que la foto diga MENOS no es «falta plata»: muchas veces el resto se pagó en efectivo y se anotó todo como QR. Si la
+       NOTA DE VENTA está leída (servidor 26-b: `nv`, con lo pagado por medio) y QR + efectivo cierran, se dice eso; si no, se explica la
+       diferencia sin acusar. */
+    var dif=r2(monto-dice), metNom=String(x.metB||'QR'), nvs=L.filter(function(l){ return l.o && !l.o.err && l.o.nv; }).map(function(l){ return l.o; }), nv=nvs[0]||null;
+    var nEf=nv ? r2(Number(nv.ne)||0) : 0, sumTxt=bs.length>1 ? (' (sumando las '+bs.length+' fotos)') : '';
+    if(nv && nEf>0.005 && Math.abs(dice+nEf-monto)<0.005) mot.push({ k:'mixto', chip:'🧾 Una parte fue en efectivo',
+      t:'La nota de venta dice <b>'+esc(metNom)+' '+fmtBs(dice)+'</b> + <b>efectivo '+fmtBs(nEf)+'</b> = '+fmtBs(monto)+'. La plata está, pero se anotó todo como '+esc(x.met)+
+        ': corregí el pago a '+esc(metNom)+' '+fmtBs(dice)+' y efectivo '+fmtBs(nEf)+'.',
+      c:'la nota de venta dice '+metNom+' '+fmtBs(dice)+' + efectivo '+fmtBs(nEf)+': la plata está, pero se anotó todo como '+x.met+' — corregí el pago a '+metNom+' '+fmtBs(dice)+' y efectivo '+fmtBs(nEf) });
+    else if(dif>0) mot.push({ k:'menos', chip:'⚠️ La foto dice menos',
+      t:'La foto dice <b>'+fmtBs(dice)+'</b>'+sumTxt+' y el pago está anotado <b>'+fmtBs(monto)+'</b> como '+esc(x.met)+': la foto cubre <b>'+fmtBs(dif)+'</b> menos. '+
+        'Si esa parte se pagó en efectivo u otro medio, anotala como otro pago ('+esc(metNom)+' '+fmtBs(dice)+' + efectivo '+fmtBs(dif)+'); si no, falta el comprobante de esa parte.',
+      c:'la foto dice '+fmtBs(dice)+' y está anotado '+fmtBs(monto)+' como '+x.met+' ('+fmtBs(dif)+' menos): si esa parte fue en efectivo, anotala como otro pago; si no, falta su comprobante' });
+    else mot.push({ k:'mas', chip:'⚠️ La foto dice más',
+      t:'La foto dice <b>'+fmtBs(dice)+'</b>'+sumTxt+' y el pago está anotado <b>'+fmtBs(monto)+'</b>: la foto dice <b>'+fmtBs(-dif)+'</b> más. ¿Se anotó de menos, o la foto es de otro pago?',
+      c:'la foto dice '+fmtBs(dice)+' y está anotado '+fmtBs(monto)+' ('+fmtBs(-dif)+' más): ¿se anotó de menos o la foto es de otro pago?' });
+  }
   var ban=iacBanco(x.ban);
   if(ban && !/^Tarjeta/i.test(String(x.metB||''))){
     var bds=buenas.map(function(l){ return String(l.o.bd||''); }).filter(Boolean);
-    if(bds.length && !bds.some(function(b){ return iacBanco(b)===ban; })) mot.push({ k:'banco', chip:'⚠️ Otro banco', t:'La foto dice que entró a <b>'+esc(bds[0])+'</b> y está anotado en <b>'+esc(x.ban)+'</b>.' });
+    if(bds.length && !bds.some(function(b){ return iacBanco(b)===ban; })) mot.push({ k:'banco', chip:'⚠️ Otro banco', t:'La foto dice que entró a <b>'+esc(bds[0])+'</b> y está anotado en <b>'+esc(x.ban)+'</b>.',
+      c:'la foto dice que entró a '+bds[0]+' y está anotado en '+x.ban });
   }
-  var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean);
-  if(fs.length && x.f && !fs.some(function(f){ return iacDias(f, x.f)<2; })) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(fs[0]))+'</b> y el pago está anotado el <b>'+esc(fmtFechaCorta(x.f))+'</b>.' });
+  /* 📅 (26/10, el dueño: «el primer pago se debe cargar con la fecha en que se creó la venta, y puede haber más pagos registrados, que
+     deben coincidir con la fecha de registro; si no, informarlo») La fecha de la foto tiene que ser la del PRIMER pago = el día en que se
+     cargó la venta (`x.ant` → `x.fCarga`), o la de cada pago registrado después (`x.f`). Si no coincide, se dice y nada más. */
+  var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean), fEsp=x.ant ? (x.fCarga||x.f) : x.f;
+  if(fs.length && fEsp && fs.indexOf(fEsp)<0){
+    var f0=fs.slice().sort(function(a,b){ return iacDias(a, fEsp)-iacDias(b, fEsp); })[0];
+    var queTxt=x.ant ? 'la venta se cargó el ' : 'el pago se registró el ';
+    mot.push({ k:'dia', chip:'⚠️ Otra fecha', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b> y '+queTxt+'<b>'+esc(fmtFechaCorta(fEsp))+'</b>.',
+      c:'la foto es del '+fmtFechaCorta(f0)+' y '+queTxt+fmtFechaCorta(fEsp) });
+  }
   var vistos={};
   buenas.forEach(function(l){
     var r=iacRefLimpia(l.o.ref); if(!r || vistos[r]) return;
     var otros=((refs||{})[r]||[]).filter(function(y){ return y.x!==x && y.f!==l.f; });
-    if(otros.length){ vistos[r]=1; mot.push({ k:'rep', chip:'🚨 Comprobante repetido', t:'El mismo comprobante (N° <b>'+esc(l.o.ref)+'</b>) está también en el pago de <b>'+esc(iacCliCorto(otros[0].x.p))+'</b> ('+fmtBs(otros[0].x.monto)+'). Puede ser la misma transferencia anotada dos veces.' }); }
+    if(otros.length){ vistos[r]=1; mot.push({ k:'rep', chip:'🚨 Comprobante repetido', t:'El mismo comprobante (N° <b>'+esc(l.o.ref)+'</b>) está también en el pago de <b>'+esc(iacCliCorto(otros[0].x.p))+'</b> ('+fmtBs(otros[0].x.monto)+'). Puede ser la misma transferencia anotada dos veces.',
+      c:'el mismo comprobante (N° '+l.o.ref+') está también en el pago de '+iacCliCorto(otros[0].x.p)+' ('+fmtBs(otros[0].x.monto)+')' }); }
   });
   var desc='La foto dice <b>'+(bs.length ? fmtBs(dice) : ('US$ '+esc(String(b0.m))))+'</b>'+(b0.bd?(' · '+esc(b0.bd)):'')+(b0.f?(' · '+esc(fmtFechaCorta(b0.f))):'')+(b0.ref?(' · N° '+esc(b0.ref)):'');
   if(!mot.length) return { est:'ok', chip:'✅ Coincide', txt:desc+'. Igual a lo anotado.' };
@@ -42841,14 +42903,20 @@ function iacPintar(){
   else if(faltan && !CONNECTED) h+='<div class="cps-carpeta cps-carpeta-mal">Sin conexión con la planilla: la lectura la hace el servidor de Google.</div>';
   else if(faltan && !IAC_ESTADOS[IAC.estado]) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-leer-btn" onclick="iacLeer()">🤖 Leer '+(faltan===1?'la foto que falta':('las '+faltan+' fotos que faltan'))+' (~'+iacUsd(faltan*porFoto)+')</button>'+
     '<small>Cada foto se lee una sola vez: la próxima vez sale de lo guardado, sin costo.</small></div>';
+  var notas=(!IAC.corre && iacNotasServidorOk() && !IAC_ESTADOS[IAC.estado]) ? iacNotasPorLeer(mes) : [];
+  if(notas.length) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-notas-btn" onclick="iacLeerNotas()">🧾 Leer las notas de venta ('+notas.length+' foto'+(notas.length===1?'':'s')+', ~'+iacUsd(notas.length*porFoto)+')</button>'+
+    '<small>En los pagos donde la foto dice menos o más: la nota de venta dice cuánto fue en efectivo. Si la plata está, el panel lo dice.</small></div>';
   if(IAC_ESTADOS[IAC.estado] && !IAC.corre) h+='<div class="cps-carpeta cps-carpeta-mal">⚠️ '+IAC_ESTADOS[IAC.estado]+'</div>';
   if(IAC.err && !IAC.corre) h+='<div class="cps-carpeta cps-carpeta-mal">⚠️ Se cortó: '+esc(IAC.err)+'. Tocá otra vez y sigue donde quedó (lo leído no se vuelve a pagar).</div>';
   h+='</div>';
+  if((n.mal || n.nl) && !IAC.corre) h+=iacCompartirHtml(mes, It);
   var orden={ mal:0, nl:1, pe:2, ok:3 }, ver=It.filter(function(i){ return !IAC.filtro || i.c.est===IAC.filtro; });
   ver.sort(function(a,b){ return (orden[a.c.est]-orden[b.c.est]) || (a.x.f<b.x.f?-1:(a.x.f>b.x.f?1:0)); });
   if(IAC.filtro) h+='<div class="iac-filtro">Mostrando solo: <b>'+({ ok:'los que coinciden', mal:'los que no coinciden', nl:'los que no se leen', pe:'los sin revisar' })[IAC.filtro]+'</b> <button type="button" class="ah-go" onclick="iacFiltro(\'\')">Ver todos</button></div>';
   h+='<div class="iac-lista">'+(ver.length ? ver.map(iacItemHtml).join('') : '<div class="iac-vacio">Nada en este grupo.</div>')+'</div>';
+  var _l0=box.querySelector('.iac-lista'), _st=_l0 ? _l0.scrollTop : 0;   // el repintado no te devuelve arriba de la lista
   box.innerHTML=h;
+  var _l1=box.querySelector('.iac-lista'); if(_l1 && _st) _l1.scrollTop=_st;
 }
 function iacItemHtml(i){
   var x=i.x, c=i.c, p=x.p, id=String(p.id).replace(/'/g,''), cab='<b>'+esc(iacCliCorto(p))+'</b>'+(p.nota?(' · nota '+esc(String(p.nota))):'')+' · '+esc(String(p.vendedor||'').split(' ')[0])+
@@ -42858,7 +42926,7 @@ function iacItemHtml(i){
   var leyendo=x.comps.some(function(f){ return IAC.releo[f]; }), chips=(c.mot||[{ chip:c.chip }]).map(function(m){ return '<span class="iac-chip iac-c-'+c.est+'">'+m.chip+'</span>'; }).join(' ');
   var nota=x.comps.map(function(f){ var o=IAC.res[f]; return (o && o.no && !o.err && o.cp!==false) ? o.no : ''; }).filter(Boolean)[0];
   return '<div class="iac-it iac-'+c.est+'">'+x.comps.slice(0,2).map(function(f){ return '<a class="iac-img" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener" title="Ver la foto"><span>📷</span><img loading="lazy" alt="" src="'+esc(fotoThumb(f, 240))+'" onerror="this.remove()"></a>'; }).join('')+
-    '<div class="iac-tx"><div class="iac-cab">'+cab+'</div><div>'+chips+'</div><div class="iac-dice">'+c.txt+'</div>'+(nota?('<div class="iac-nota">💬 Claude: '+esc(nota)+'</div>'):'')+
+    '<div class="iac-tx"><div class="iac-cab">'+cab+'</div><div>'+chips+'</div><div class="iac-dice">'+c.txt+'</div>'+(nota?('<div class="iac-nota">💬 Claude: '+esc(nota)+'</div>'):'')+ctaAvEstadoHtml(ctaAvDe(ctaAvClave(x)))+
     '<div class="iac-bt"><button type="button" class="ah-go ah-go-p" onclick="closeModal();showContaModal(\''+id+'\')">Abrir la venta</button>'+
     x.comps.map(function(f, k){ return '<a class="ah-go" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener">📷 Ver la foto'+(x.comps.length>1?(' '+(k+1)):'')+'</a>'; }).join('')+
     (IAC.corre ? '' : ('<button type="button" class="ah-go" '+(leyendo?'disabled':'')+' onclick="iacReleer(\''+x.comps.map(function(f){ return String(f).replace(/[^A-Za-z0-9_\-]/g,''); }).join(',')+'\')">'+(leyendo?'⏳ Leyendo…':'🔄 Leer de nuevo')+'</button>'))+
@@ -42877,10 +42945,11 @@ function iacReleer(lista){
     .then(function(){ fs.forEach(function(f){ delete IAC.releo[f]; }); iacRepintar(); });
 }
 /* Lee todas las fotos del mes que faltan, de a tandas. */
-function iacLeer(){
+/* `lista`+`forzar` (26/10, 🧾): volver a leer esas fotos aunque ya estén leídas (las notas de venta con la pregunta nueva). */
+function iacLeer(lista, forzar){
   if(IAC.corre) return IAC.prom;
   if(!iacPuede() || !iacServidorOk() || !CONNECTED) return;
-  var mes=IAC.mes, ids=iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
+  var mes=IAC.mes, ids=Array.isArray(lista) ? lista.slice() : iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
   if(!ids.length){ iacPintar(); return Promise.resolve(); }
   IAC.corre=true; IAC.estado=''; IAC.err=''; IAC.tot=ids.length; IAC.hechas=0; IAC.t0=Date.now(); IAC.leyendoMes=mes; IAC.reint={};
   var cola=ids.slice(), vueltas=0;
@@ -42902,11 +42971,11 @@ function iacLeer(){
     if(!cola.length || vueltas>300) return fin();
     vueltas++;
     var t=cola.slice(0, IAC_TANDA_PAG); cola=cola.slice(IAC_TANDA_PAG);
-    return apiPost({ action:'iaComprobantes', fotos:t }).then(function(r){
+    return apiPost(forzar ? { action:'iaComprobantes', fotos:t, forzar:t } : { action:'iaComprobantes', fotos:t }).then(function(r){
       if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
       iacTomar(r);
-      var nuevas=0; t.forEach(function(f){ if(IAC.res[f]) nuevas++; }); IAC.hechas+=nuevas;
-      var pend=(r.pendientes||[]).filter(function(f){ if(IAC.res[f]) return false; IAC.reint[f]=(IAC.reint[f]||0)+1; return IAC.reint[f]<=IAC_REINTENTOS; });
+      var R=r.res||{}, nuevas=0; t.forEach(function(f){ if(R[f]) nuevas++; }); IAC.hechas+=nuevas;
+      var pend=(r.pendientes||[]).filter(function(f){ if(R[f]) return false; IAC.reint[f]=(IAC.reint[f]||0)+1; return IAC.reint[f]<=IAC_REINTENTOS; });
       if(r.estado){ IAC.estado=r.estado; return fin(); }
       cola=cola.concat(pend);
       iacRepintar();
@@ -42916,6 +42985,224 @@ function iacLeer(){
   };
   IAC.prom=paso().catch(function(e){ fin(e); });
   return IAC.prom;
+}
+/* 📤 (26/10, el dueño: «ya terminó el bot, esos no coinciden, ¿y ahora qué hago con eso? ¿cómo comparto el informe al grupo? debería armar
+   un PDF o algo que se pueda compartir para notificar a los vendedores»; antes eligió «Las dos»: el aviso en el panel Y por WhatsApp)
+   COMPARTIR CON LAS VENDEDORAS lo que la revisión encontró (lo que «no coincide» y lo que «no se lee»), en la ventana de la revisión:
+   · «📄 Informe PDF» (`iacPdf`): A4 parado, por vendedora, cada pago con lo que hay que revisar. Mismas librerías que el informe de ATC.
+   · «📋 Copiar para el grupo» (`iacTextoGrupo`) y «📲 WhatsApp»: el mismo informe en texto, para pegar en el grupo.
+   · «📣 Dejar el aviso en el panel»: una fila del sistema `__avisos_conta__` (`CTA_AV_ID`, JSON `{v:1, a:[…]}`) con un aviso por pago; a
+     la vendedora le sale en Mis pedidos → «📋 Para hacer» y en Bloki, con «Abrir la venta» y «✓ Ya lo corregí». Antes de escribir se relee
+     la planilla y se junta por id (`ctaAvJuntar`: «corregido»/«quitado» no vuelven atrás). Contabilidad ve en cada pago si ya se avisó y
+     si la vendedora dijo que lo corrigió. Solo mira los pagos: no cambia nada de la venta. Todo sale de `iacComparar` (`c` = en corto). */
+var CTA_AV_ID='__avisos_conta__', CTA_AV_TOPE=40000, CTA_AV_DIAS=40, IAC_PDF_W=794, IAC_PDF_H=1123, IAC_PDF_OCUPADO=false;
+function iacProblemas(mes, vend){
+  var L=iacPagos(mes), refs=iacRefs(L);
+  return L.map(function(x){ return { x:x, c:iacComparar(x, refs) }; }).filter(function(i){
+    return (i.c.est==='mal' || i.c.est==='nl') && (!vend || mismoVendedor(i.x.p.vendedor, vend));
+  });
+}
+function iacVendNom(v){ return String(v||'').trim() || 'Sin vendedor'; }
+/* Por vendedora (la que más tiene primero), y dentro de cada una por día. */
+function iacPorVend(P){
+  var G={}, out=[];
+  P.forEach(function(i){ var k=nombreCanonico ? nombreCanonico(iacVendNom(i.x.p.vendedor)) : iacVendNom(i.x.p.vendedor); if(!G[k]){ G[k]={ v:k, L:[] }; out.push(G[k]); } G[k].L.push(i); });
+  out.forEach(function(g){ g.L.sort(function(a,b){ return a.x.f<b.x.f?-1:(a.x.f>b.x.f?1:0); }); });
+  return out.sort(function(a,b){ return b.L.length-a.L.length || (a.v<b.v?-1:1); });
+}
+function iacCorto(i){ return (i.c.mot ? i.c.mot.map(function(m){ return m.c||''; }) : [i.c.c||'']).filter(Boolean).join(' · '); }
+function iacPagoTxt(x){ return iacCliCorto(x.p)+(x.p.nota?(' · nota '+x.p.nota):'')+' · '+fmtFechaCorta(x.f)+' · '+fmtBs(x.monto)+' '+x.met; }
+function iacCompartirHtml(mes, It){
+  var P=It.filter(function(i){ return i.c.est==='mal' || i.c.est==='nl'; }), G=iacPorVend(P), sel=IAC.shVend||'';
+  if(sel && !G.some(function(g){ return g.v===sel; })) sel=IAC.shVend='';
+  var nAb=0, nOk=0; P.forEach(function(i){ var a=ctaAvDe(ctaAvClave(i.x)); if(a && a.ok) nOk++; else if(a && !a.qt) nAb++; });
+  var nSel=sel ? (G.filter(function(g){ return g.v===sel; })[0]||{ L:[] }).L.length : P.length;
+  var txt=iacTextoGrupo(mes, sel);
+  return '<div class="iac-share"><div class="iac-sh-t">📤 <b>Compartir con las vendedoras</b> · '+nSel+' pago'+(nSel===1?'':'s')+' para revisar</div>'+
+    '<div class="iac-sh-r"><select id="iac-sh-vend" class="msel" onchange="IAC.shVend=this.value;iacPintar()"><option value="">Todas ('+P.length+')</option>'+
+      G.map(function(g){ return '<option value="'+esc(g.v)+'"'+(g.v===sel?' selected':'')+'>'+esc(g.v)+' ('+g.L.length+')</option>'; }).join('')+'</select>'+
+    '<button type="button" class="ah-go ah-go-p" id="iac-pdf-btn" onclick="iacPdf()">📄 Informe PDF</button>'+
+    '<button type="button" class="ah-go" onclick="iacCopiarGrupo()">📋 Copiar para el grupo</button>'+
+    '<a class="ah-go" id="iac-wa" href="https://wa.me/?text='+encodeURIComponent(txt)+'" target="_blank" rel="noopener">📲 WhatsApp</a>'+
+    '<button type="button" class="ah-go" id="iac-av-btn" onclick="iacAvisarPanel()">📣 Dejar el aviso en el panel</button></div>'+
+    '<small class="iac-sh-s">El PDF y el texto van por vendedora con lo que tiene que revisar. «Dejar el aviso» se lo muestra en <b>Mis pedidos → Para hacer</b>, '+
+      'con «✓ Ya lo corregí»'+((nAb||nOk)?(' · <b>'+nAb+'</b> avisado'+(nAb===1?'':'s')+' sin corregir · <b>'+nOk+'</b> corregido'+(nOk===1?'':'s')):'')+'.</small>'+
+    '<div id="iac-sh-msg"></div></div>';
+}
+function iacTextoGrupo(mes, vend){
+  var G=iacPorVend(iacProblemas(mes, vend)), n=0; G.forEach(function(g){ n+=g.L.length; });
+  var t='📋 *Pagos para revisar · '+mesNombre(mes)+'*\nContabilidad revisó las fotos de los comprobantes. Revisen estos '+n+' pago'+(n===1?'':'s')+
+        ' y corrijan lo que corresponda (o pasen el comprobante que va):\n';
+  G.forEach(function(g){
+    t+='\n👤 *'+g.v+'* ('+g.L.length+')\n';
+    g.L.forEach(function(i){ t+='• '+iacPagoTxt(i.x)+'\n   → '+iacCorto(i)+'\n'; });
+  });
+  return t+'\nCuando lo corrijan, toquen «✓ Ya lo corregí» en Mis pedidos → Para hacer.';
+}
+function iacCopiarGrupo(){ var t=iacTextoGrupo(IAC.mes, IAC.shVend||''); copyText(t); return t; }
+/* ---- el PDF ---- */
+function iacPdfFilaAlto(i){ var t=iacCorto(i); return 34+17*Math.max(1, Math.ceil(t.length/88)); }
+function iacPdfHojas(mes, vend){
+  var P=iacProblemas(mes, vend), G=iacPorVend(P), hb=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+  var cuando=z(hb.getDate())+'/'+z(hb.getMonth()+1)+'/'+hb.getFullYear()+' '+z(hb.getHours())+':'+z(hb.getMinutes());
+  var nMal=P.filter(function(i){ return i.c.est==='mal'; }).length, nNl=P.length-nMal;
+  var cab='<div class="icp-cab">'+ATCI_LOGO+'<div><b>Pagos para revisar</b><span>'+esc(mesNombre(mes))+(vend?(' · '+esc(vend)):'')+' · Contabilidad</span></div></div>';
+  var resumen='<div class="icp-res"><div><b>'+P.length+'</b><span>pagos para revisar</span></div><div class="r"><b>'+nMal+'</b><span>no coinciden con lo anotado</span></div>'+
+    '<div class="a"><b>'+nNl+'</b><span>fotos que no se leen</span></div></div>'+
+    '<p class="icp-txt">Claude leyó las fotos de los comprobantes del mes y las comparó con lo anotado en el panel. Estos pagos tienen algo distinto: '+
+    'revisá cada uno y corregilo, o pasale a Contabilidad el comprobante que va. Cuando lo corrijas, tocá «✓ Ya lo corregí» en Mis pedidos.</p>'+
+    (G.length>1 ? ('<table class="icp-t icp-vs"><tr><th>Vendedora</th><th style="text-align:right">Pagos</th></tr>'+G.map(function(g){ return '<tr><td>'+esc(g.v)+'</td><td style="text-align:right">'+g.L.length+'</td></tr>'; }).join('')+'</table>') : '');
+  var hojas=[], cuerpo='', resto=0, primera=true;
+  var nueva=function(){ if(cuerpo) hojas.push(cuerpo); cuerpo=''; resto=primera ? (IAC_PDF_H-150-120-(G.length>1?(34+30*G.length):0)-130) : (IAC_PDF_H-150-120); primera=false; };   // con aire: un nombre largo parte en dos renglones
+  nueva(); cuerpo=resumen;
+  var thead='<tr><th style="width:76px">Día</th><th>Cliente · nota · lo anotado</th><th style="width:44%">Qué revisar</th></tr>';
+  G.forEach(function(g){
+    var abierta=false;
+    g.L.forEach(function(i, k){
+      var alto=iacPdfFilaAlto(i);
+      if(!abierta && resto < 40+30+alto) { nueva(); }
+      if(abierta && resto < alto){ cuerpo+='</table>'; nueva(); abierta=false; }
+      if(!abierta){ cuerpo+='<div class="icp-v">👤 '+esc(g.v)+' <span>'+g.L.length+' pago'+(g.L.length===1?'':'s')+(k?' · sigue':'')+'</span></div><table class="icp-t">'+thead; resto-=70; abierta=true; }
+      var x=i.x;
+      cuerpo+='<tr><td>'+esc(fmtFechaCorta(x.f))+'</td><td><b>'+esc(iacCliCorto(x.p))+'</b>'+(x.p.nota?(' · nota '+esc(String(x.p.nota))):'')+'<br>'+fmtBs(x.monto)+' '+esc(x.met)+'</td>'+
+        '<td class="'+(i.c.est==='mal'?'r':'a')+'">'+esc((i.c.mot ? i.c.mot.map(function(m){ return m.chip.replace(/^\S+\s/,''); }).join(' · ') : i.c.chip.replace(/^\S+\s/,'')))+'<br><span>'+esc(iacCorto(i))+'</span></td></tr>';
+      resto-=alto;
+    });
+    if(abierta) cuerpo+='</table>';
+    resto-=10;
+  });
+  if(cuerpo) hojas.push(cuerpo);
+  return hojas.map(function(c, k){ return '<div class="icp-pag">'+cab+'<div class="icp-cuerpo">'+c+'</div><div class="icp-pie">Revisión de las fotos de los comprobantes · '+cuando+' · Hoja '+(k+1)+' de '+hojas.length+'</div></div>'; });
+}
+function iacPdfMsg(t, mal){ var e=document.getElementById('iac-sh-msg'); if(e) e.innerHTML=t ? ('<div class="cps-carpeta'+(mal?' cps-carpeta-mal':'')+'">'+t+'</div>') : ''; }
+function iacPdf(){
+  if(IAC_PDF_OCUPADO) return;
+  var mes=IAC.mes, vend=IAC.shVend||'', H=iacPdfHojas(mes, vend), host=null, btn=document.getElementById('iac-pdf-btn');
+  if(!H.length || !iacProblemas(mes, vend).length){ toast('No hay pagos para revisar en '+mesNombre(mes),'err'); return Promise.resolve(); }
+  var m=String(mes).match(/^(\d{4})-(\d{2})/), nombre='Pagos-para-revisar-'+(m ? (MESES_ES[+m[2]-1]+'-'+m[1]) : mes)+(vend?('-'+sinTildes(vend).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'.pdf';
+  IAC_PDF_OCUPADO=true; if(btn) btn.disabled=true; iacPdfMsg('⏳ Armando el PDF…');
+  return atciCargarLibs().then(function(){
+    host=document.createElement('div'); host.id='iac-render';
+    host.style.cssText='position:absolute;left:0;top:0;width:'+IAC_PDF_W+'px;z-index:0;pointer-events:none;';
+    host.innerHTML=H.join('');
+    document.body.appendChild(host);
+    var hojas=[].slice.call(host.querySelectorAll('.icp-pag')), i=0;
+    var pdf=new window.jspdf.jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
+    var una=function(){
+      if(i>=hojas.length) return Promise.resolve();
+      iacPdfMsg('⏳ Armando el PDF… hoja '+(i+1)+' de '+hojas.length);
+      return window.html2canvas(hojas[i], { scale:2, backgroundColor:'#ffffff', logging:false, scrollX:0, scrollY:-(window.scrollY||0),
+          windowWidth:Math.max(1000, document.documentElement.clientWidth) }).then(function(cv){
+        if(i>0) pdf.addPage('a4', 'portrait');
+        pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        i++; return una();
+      });
+    };
+    return una().then(function(){
+      pdf.setProperties({ title:'Pagos para revisar · '+mesNombre(mes), author:'Multiespumas', creator:'Panel de pedidos' });
+      downloadBlob(pdf.output('blob'), nombre, 'application/pdf');
+      iacPdfMsg('✅ Se bajó <b>'+esc(nombre)+'</b> ('+hojas.length+' hoja'+(hojas.length===1?'':'s')+'). Mandalo al grupo desde WhatsApp → 📎 → Documento (en el iPad queda en Archivos → Descargas).');
+    });
+  }).catch(function(e){
+    var sinLibs=!!(e && (e.message==='no_cargo' || e.message==='tardo'));
+    iacPdfMsg(sinLibs ? '⚠️ No se pudo bajar lo que arma el PDF (¿sin internet?). Usá «📋 Copiar para el grupo» mientras tanto.'
+                      : '⚠️ No se pudo armar el PDF ('+esc(String((e && e.message) || e).slice(0, 120))+'). Usá «📋 Copiar para el grupo».', true);
+  }).then(function(){
+    if(host && host.parentNode) host.parentNode.removeChild(host);
+    IAC_PDF_OCUPADO=false; var b=document.getElementById('iac-pdf-btn'); if(b) b.disabled=false;
+  });
+}
+/* ---- 📣 los avisos en el panel ---- */
+function ctaAvClave(x){ return String(x.p.id)+'|'+x.f+'|'+r2(x.monto)+'|'+x.met; }
+function ctaAvLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===CTA_AV_ID; })[0], L=[];
+  try{ var o=JSON.parse((r && r.observaciones)||'{}'); if(o && Array.isArray(o.a)) L=o.a.filter(function(a){ return a && a.id && a.pid; }); }catch(e){}
+  return L;
+}
+/* Por id; lo nuevo entra entero; «corregido» (`ok`) y «quitado» (`qt`) no vuelven atrás. Lo cerrado hace más de CTA_AV_DIAS se va. */
+function ctaAvJuntar(base, cambios){
+  var M={}, orden=[];
+  (base||[]).forEach(function(a){ if(a && a.id && !M[a.id]){ M[a.id]=JSON.parse(JSON.stringify(a)); orden.push(a.id); } });
+  (cambios||[]).forEach(function(c){
+    if(!c || !c.id) return;
+    var y=M[c.id];
+    if(!y){ if(c.pid){ M[c.id]=JSON.parse(JSON.stringify(c)); orden.push(c.id); } return; }   // un «corregido» de un aviso que ya no está: nada
+    if(c.ok && !y.ok){ y.ok=c.ok; y.okPor=c.okPor||''; }
+    if(c.qt && !y.qt){ y.qt=c.qt; }
+  });
+  var lim=Date.now()-CTA_AV_DIAS*864e5, L=orden.map(function(k){ return M[k]; }).filter(function(a){ var c=Math.max(a.ok||0, a.qt||0); return !c || c>=lim; });
+  while(L.length>1 && JSON.stringify({ v:1, a:L }).length>CTA_AV_TOPE){
+    var k=-1; for(var i=0;i<L.length;i++){ if(L[i].ok || L[i].qt){ k=i; break; } }
+    L.splice(k<0 ? 0 : k, 1);
+  }
+  return L;
+}
+function ctaAvGuardar(cambios, intento){
+  if(!CONNECTED) return Promise.reject(new Error('sin_conexion'));
+  var escribir=function(srv){
+    var L=ctaAvJuntar(ctaAvLeer(srv), cambios);
+    var fila=filaSistema(CTA_AV_ID, '📣 AVISOS DE CONTABILIDAD A LOS VENDEDORES (no tocar: la lee el panel)', JSON.stringify({ v:1, a:L }));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[CTA_AV_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(r && r.ok){
+        var g=(r.pedido && String(r.pedido.id)===CTA_AV_ID) ? r.pedido : fila;
+        STATE=STATE.filter(function(p){ return String(p.id)!==CTA_AV_ID; }); STATE.push(g);
+        return L;
+      }
+      if(r && r.actual && String(r.actual.id)===CTA_AV_ID && !intento){ intento=1; return escribir(r.actual); }   // otro aparato la cambió: se junta de nuevo
+      throw new Error((r && (r.error||r.motivo)) || 'no_guardo');
+    });
+  };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('sin_lectura');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CTA_AV_ID) srv=p; });
+    return escribir(srv);
+  });
+}
+function ctaAvDe(k){ var L=ctaAvLeer().filter(function(a){ return a.k===k; }); return L[L.length-1]||null; }
+function ctaAvAbiertos(v){ return ctaAvLeer().filter(function(a){ return !a.ok && !a.qt && (!v || mismoVendedor(a.vend, v)); }); }
+function ctaAvEstadoHtml(a){
+  if(!a) return '';
+  if(a.ok) return '<div class="iac-av iac-av-ok">✅ '+esc(String(a.vend||'').split(' ')[0])+' dice que lo corrigió el '+esc(fmtFechaCorta(isoDeTsBolivia(a.ok)))+'</div>';
+  if(a.qt) return '';
+  return '<div class="iac-av">📣 Avisado a '+esc(String(a.vend||'').split(' ')[0])+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+' · todavía sin corregir</div>';
+}
+function iacAvisarPanel(){
+  if(!iacPuede()) return Promise.resolve();
+  var mes=IAC.mes, vend=IAC.shVend||'', P=iacProblemas(mes, vend), t=Date.now(), n=0, quien=quienRol()==='conta' ? 'Contabilidad' : (quienRol()==='admin' ? 'Administración' : 'Contabilidad');
+  var nuevos=P.filter(function(i){ var a=ctaAvDe(ctaAvClave(i.x)); return !(a && !a.qt); }).map(function(i){
+    var x=i.x; n++;
+    return { id:'av'+t.toString(36)+'-'+n, k:ctaAvClave(x), pid:String(x.p.id), vend:String(x.p.vendedor||''), cli:iacCliCorto(x.p), nota:String(x.p.nota||''),
+             f:x.f, m:r2(x.monto), met:x.met, txt:iacCorto(i), mes:mes, t:t, por:quien };
+  });
+  if(!nuevos.length){ toast('Ya están todos avisados en el panel.','ok'); return Promise.resolve(); }
+  var b=document.getElementById('iac-av-btn'); if(b){ b.disabled=true; b.textContent='⏳ Dejando el aviso…'; }
+  return ctaAvGuardar(nuevos).then(function(){
+    var vs={}; nuevos.forEach(function(a){ vs[String(a.vend).split(' ')[0]]=1; });
+    toast('📣 Aviso dejado en el panel: '+nuevos.length+' pago'+(nuevos.length===1?'':'s')+' de '+Object.keys(vs).join(', ')+'. Les aparece en Mis pedidos → Para hacer.','ok',9000);
+    iacPintar();
+  }).catch(function(e){
+    toast('No se pudo dejar el aviso en el panel ('+(typeof motivoDeError==='function' ? motivoDeError(e) : String(e))+'). Probá de nuevo.','err',9000);
+    iacPintar();
+  });
+}
+/* La vendedora: su lista, con «Abrir la venta» y «✓ Ya lo corregí». */
+function ctaAvVer(v){
+  var L=ctaAvAbiertos(v);
+  var fila=function(a){ return '<div class="ctav-it"><div class="ctav-tx"><b>'+esc(a.cli)+'</b>'+(a.nota?(' · nota '+esc(a.nota)):'')+' · '+esc(fmtFechaCorta(a.f))+' · '+fmtBs(a.m)+' '+esc(a.met)+
+      '<div class="ctav-q">→ '+esc(a.txt)+'</div><small>Avisó '+esc(a.por||'Contabilidad')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+'</small></div>'+
+      '<div class="ctav-bt"><button type="button" class="ah-go" onclick="closeModal();showMisModal(\''+esc(String(a.pid).replace(/'/g,''))+'\')">Abrir la venta</button>'+
+      '<button type="button" class="ah-go ah-go-p" onclick="ctaAvOk(\''+esc(a.id)+'\',\''+esc(String(v||'').replace(/'/g,''))+'\')">✓ Ya lo corregí</button></div></div>'; };
+  openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>📣 Contabilidad te pide revisar</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><p class="ctav-sub">Contabilidad revisó las fotos de los comprobantes y '+(L.length===1?'este pago tiene':'estos pagos tienen')+' algo distinto de lo anotado. '+
+    'Revisalo, corregilo (o pasale a Contabilidad el comprobante que va) y tocá <b>«✓ Ya lo corregí»</b>.</p>'+
+    (L.length ? L.map(fila).join('') : '<div class="iac-vacio">✅ No tenés nada pendiente de Contabilidad.</div>')+'</div>', true);
+}
+function ctaAvOk(id, v){
+  var quien=String(v||'') || (typeof getVendedorMem==='function' ? getVendedorMem() : '') || '';
+  return ctaAvGuardar([{ id:id, ok:Date.now(), okPor:quien }]).then(function(){
+    toast('✓ Listo: Contabilidad ve que lo corregiste.','ok'); ctaAvVer(v); try{ renderMis(); }catch(e){}
+  }).catch(function(e){ toast('No se pudo guardar ('+(typeof motivoDeError==='function' ? motivoDeError(e) : String(e))+'). Probá de nuevo.','err',8000); });
 }
 var NX_CIERRE_FORZADO=false;
 function nxCierreControlHtml(C){
@@ -43495,6 +43782,12 @@ function asisAvisos(){
   ASIS.alGuardar=ASIS.alGuardar.filter(function(a){ return Date.now()-a.tm < 10*60000; });
   ASIS.alGuardar.forEach(function(a){ A.push(a); });   // (12/10) tras guardar la pantalla pasa a Mis pedidos: se ven en todas
   if(vis==='mis' && v){
+    try{   // 📣 (26/10) Contabilidad le pidió revisar pagos
+      var avC=ctaAvAbiertos(v);
+      if(avC.length) A.push({ k:'ctaav|'+avC.map(function(a){ return a.id; }).join(','), sev:'ro', ico:'📣',
+        t:'Contabilidad te pide revisar '+(avC.length===1?'un pago':(avC.length+' pagos')),
+        x:'Las fotos de los comprobantes no coinciden con lo anotado. Revisalo y tocá «✓ Ya lo corregí».', b:['Ver cuáles', "ctaAvVer('"+esc(String(v).replace(/'/g,''))+"')"] });
+    }catch(e){}
     try{
       var D=nxM1Datos(v, false);
       if(D.n && D.faltan && D.tarde) A.push({ k:'m1|'+D.dia+'|'+D.faltan, sev:'am', ico:'🔔',
