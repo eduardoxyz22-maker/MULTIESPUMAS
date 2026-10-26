@@ -2748,6 +2748,34 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cps-carpeta{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f3fbf6;border:1px solid #d5f0df;font-size:.84rem;color:#13302e}
 .cps-carpeta-mal{background:#fffaf2;border-color:#f6e3c2}
 .cps-barra{height:7px;border-radius:9px;background:#e3ecec;overflow:hidden;margin-top:6px}.cps-barra i{display:block;height:100%;background:#00B5AD}
+/* 🤖 (§4mq, C4) revisar las fotos de los comprobantes con IA */
+.iac-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.84rem;color:#55706f}.iac-top span{flex:1;min-width:200px}
+.iac-fichas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:12px 0 10px}
+.iac-f{border:1px solid #e1ebea;border-left:5px solid var(--c);border-radius:12px;padding:8px 12px;background:#fff;text-align:left;cursor:pointer;font:inherit;color:#13302e;min-width:0}
+.iac-f:disabled{cursor:default;opacity:1}.iac-f.on{background:#f3f8f8;box-shadow:0 0 0 2px var(--c)}
+.iac-f span{display:block;font-size:.76rem;font-weight:800;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iac-f b{display:block;font-size:1.45rem;font-weight:900;font-variant-numeric:tabular-nums}.iac-f small{display:block;font-size:.72rem;color:#6b8584}
+.iac-leer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 10px}.iac-leer small{font-size:.76rem;color:#55706f;flex:1;min-width:200px}
+#iac-acc .cps-carpeta{margin:4px 0 10px}
+.iac-filtro{font-size:.82rem;color:#55706f;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.iac-lista{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;padding:2px}
+.iac-it{display:flex;gap:12px;align-items:flex-start;border:1px solid #e1ebea;border-radius:14px;padding:10px 12px;background:#fff}
+.iac-it.iac-mal{border-color:#f5c2c7}.iac-it.iac-nl{border-color:#f6e3c2}
+.iac-it.iac-chico{padding:6px 10px;align-items:center;gap:8px;border-radius:10px}
+.iac-img{position:relative;flex:none;width:76px;height:96px;border-radius:10px;border:1px solid #e1ebea;overflow:hidden;background:#f3f8f8;display:flex;align-items:center;justify-content:center;font-size:1.4rem;text-decoration:none}
+.iac-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.iac-tx{flex:1;min-width:0}
+.iac-cab{font-size:.82rem;color:#55706f;overflow-wrap:anywhere}.iac-cab b{color:#13302e}
+.iac-chip{display:inline-block;margin:5px 0 3px;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:800;white-space:nowrap}
+.iac-chico .iac-chip{margin:0;flex:none}
+.iac-c-ok{background:#e9f9f1;color:#15803d}.iac-c-mal{background:#fdeaec;color:#CE2939}.iac-c-nl{background:#fff4e5;color:#B45309}.iac-c-pe{background:#eef2f7;color:#475569}
+.iac-t-nl{background:#fff4e5;color:#B45309}
+.iac-dice{font-size:.84rem;color:#13302e;overflow-wrap:anywhere}.iac-chico .iac-dice{font-size:.78rem;color:#55706f}
+.iac-nota{font-size:.78rem;color:#55706f;margin-top:3px;overflow-wrap:anywhere}
+.iac-bt{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.iac-foto{flex:none;text-decoration:none;font-size:.8rem;padding:2px 6px;border-radius:8px;background:#e6f7f6;color:#00756f}
+.iac-vacio{padding:14px;color:#55706f;font-size:.84rem;text-align:center}
+@media (max-width:520px){ .iac-img{width:56px;height:72px} .iac-it.iac-chico{flex-wrap:wrap} }
 /* ✅ (§4mg, C3) la lista de control del cierre */
 .c3{margin:12px 0 10px}
 .c3-barra{display:flex;gap:2px;height:8px;border-radius:9px;overflow:hidden;background:#eef2f3}.c3-barra i{display:block}
@@ -5282,7 +5310,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-25-a';   // (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-26-a';   // (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -42660,7 +42688,8 @@ function compsMesDatos(mes){
     contaPagos(p).forEach(function(c){
       var f=c.fecha||contaFecha(p), m=Number(c.monto)||0;
       if(String(f).slice(0,7)!==mes || !(m>0) || c.metodo==='Efectivo') return;
-      out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c) });
+      out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c),
+                 metB:String(c.metodo||''), ban:String(c.banco||'') });   // 🤖 (§4mq C4) el método y el banco por separado, para comparar con la foto
     });
   });
   out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
@@ -42674,18 +42703,19 @@ function compsSlug(t){ return sinTildes(String(t||'')).toUpperCase().replace(/[^
 /* El monto con centavos cuando los tiene («10,10» y «10,20»: redondeados, los dos eran «10» y daban el mismo nombre). */
 function compsMontoTxt(m){ m=r2(m); return (Math.round(m)===m) ? String(m) : m.toFixed(2).replace('.',','); }
 function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+compsMontoTxt(x.monto)+'_'+compsSlug(String(x.p.cliente||'').trim().split(/\s+/).slice(0,3).join(' '))+(x.dup?('-'+x.dup):'')+(x.comps.length>1?('_'+(i+1)):'')+'.jpg'; }
-function compsAbrir(){
-  var ms=nxMesesCierre(), sel=(segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
+function compsAbrir(mes){
+  var ms=nxMesesCierre(), sel=mes || (segVal('cta-mode')==='mes' && (document.getElementById('cta-mes')||{}).value) || ms[0];
   if(ms.indexOf(sel)<0) ms.unshift(sel);
   openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>📁 Comprobantes del mes · para el contador</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b"><label class="nx-sub" style="display:block;margin:0 0 4px">Mes</label>'+
     '<select id="comps-mes" class="msel" onchange="compsPintar()">'+ms.map(function(m){ return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(mesNombre(m).replace(/^./,function(c){ return c.toUpperCase(); }))+'</option>'; }).join('')+'</select>'+
     '<div id="comps-cuerpo"></div></div>', true);
   compsPintar();
+  if(iacServidorOk() && CONNECTED) iacCargar(sel);   // 🤖 lo que la IA ya leyó (sin gastar): la marca ✅/⚠️ en cada foto
 }
 function compsPintar(){
   var box=document.getElementById('comps-cuerpo'), mes=(document.getElementById('comps-mes')||{}).value; if(!box || !mes) return;
-  var L=compsMesDatos(mes), G={}, orden=[], sinFoto=0, tot=0;
+  var L=compsMesDatos(mes), G={}, orden=[], sinFoto=0, tot=0, refs=iacRefs(L);
   L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); if(!x.comps.length) sinFoto++; tot=r2(tot+x.monto); });
   orden.sort(function(a,b){ return G[b].length-G[a].length; });
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), cols=['#00A09A','#2457c5','#7c3aed','#0f766e','#b45309','#64748b'];
@@ -42697,52 +42727,83 @@ function compsPintar(){
     orden.map(function(k){ return '<tr class="cps-g"><td colspan="7">'+esc(k)+' · '+G[k].length+' pago'+(G[k].length===1?'':'s')+'</td></tr>'+G[k].map(function(x){
       var id=String(x.p.id).replace(/'/g,'');
       return '<tr><td>'+esc(fmtFechaCorta(x.f))+'</td><td><a onclick="closeModal();showContaModal(\''+id+'\')"><b>'+esc(String(x.p.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+'</b></a>'+(x.envio?' <small>🚚 flete</small>':'')+'</td><td>'+esc(x.nota||'—')+'</td><td>'+esc(String(x.p.vendedor||'').split(' ')[0])+'</td>'+
-        '<td class="cps-m">'+fmtBs(x.monto)+'</td><td>'+(x.comps.length ? x.comps.map(function(fid, i){ return '<a class="cps-tag cps-ok" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener">📷 '+(x.comps.length>1?(i+1):'ver')+'</a>'; }).join(' ') : '<span class="cps-tag cps-mal">falta</span>')+'</td>'+
+        '<td class="cps-m">'+fmtBs(x.monto)+'</td><td>'+(x.comps.length ? x.comps.map(function(fid, i){ return '<a class="cps-tag cps-ok" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener">📷 '+(x.comps.length>1?(i+1):'ver')+'</a>'; }).join(' ')+iacTagComps(x, refs) : '<span class="cps-tag cps-mal">falta</span>')+'</td>'+
         '<td class="cps-nom">'+(x.comps.length ? x.comps.map(function(f,i){ return esc(compsArchivo(x,i)); }).join('<br>') : '—')+'</td></tr>'; }).join(''); }).join('')+
     '</tbody></table></div>'+
     '<div class="cps-pie"><span>Ordenados por banco y por día · cada foto con un nombre que dice día, banco, monto y cliente.</span><button type="button" class="ah-go" onclick="compsExcel()">⬇️ Excel con los enlaces</button>'+
-      '<button type="button" class="ah-go ah-go-p" id="comps-carpeta-btn" onclick="compsCarpeta()">📁 Armar la carpeta en Drive</button></div><div id="comps-carpeta"></div>';
+      '<button type="button" class="ah-go ah-go-p" id="comps-carpeta-btn" onclick="compsCarpeta()">📁 Armar la carpeta en Drive</button>'+
+      '<button type="button" class="ah-go ah-go-p" id="comps-ia-btn" onclick="iacAbrir()">🤖 Revisar las fotos con IA</button></div><div id="comps-carpeta"></div>';
+  compsCarpetaPintar();
 }
 /* 📁 (25/10, §4mg C2; dueño: «Prepáralo») «Armar la carpeta en Drive»: el servidor (`.gs` 2026-10-25-a, acción `compsCarpeta`) COPIA
    cada foto con su nombre a «Comprobantes para el contador / Comprobantes AAAA-MM» y devuelve el enlace. De a tandas de `COMPS_TANDA`
    (el servidor corta a los ~4 min y devuelve lo que falta); volver a tocar no duplica (lo que ya está, lo saltea). ⚠️ Con un servidor
    anterior NO se llama: una acción que no conoce la trataría como un guardado. */
-var COMPS_SERVIDOR='2026-10-25-a', COMPS_TANDA=40;
+/* ⚡ (26/10, §4mq; el dueño: «le di y no completan», «¿20 min dejar abierta esa pestaña sin poder usar el panel?») Con el servidor
+   2026-10-26-a la copia va de a 20 a la vez (`compsRapido_`) y la página manda tandas de `COMPS_TANDA_RAPIDA`; con la 25-a, tandas chicas
+   (`COMPS_TANDA`) para que el avance se mueva. La copia vive en `COMPS_CORRE`, no en la ventana: se puede cerrar y seguir usando el panel
+   (avisa al terminar), y volver a abrirla muestra el avance sin empezar otra. Se ve cuánto tiempo lleva. */
+var COMPS_SERVIDOR='2026-10-25-a', COMPS_RAPIDO='2026-10-26-a', COMPS_TANDA=8, COMPS_TANDA_RAPIDA=120, COMPS_CORRE=null, COMPS_TIC=null;
 function compsCarpetaServidorOk(){ return String(SERVER_VER||'')>=COMPS_SERVIDOR; }
+function compsTanda(){ return String(SERVER_VER||'')>=COMPS_RAPIDO ? COMPS_TANDA_RAPIDA : COMPS_TANDA; }
+/* ¿Esa parte de la ventana está a la vista? `closeModal` esconde la ventana pero deja su contenido. */
+function modalMuestra(id){ var e=document.getElementById(id), ov=document.getElementById('modal'); return !!(e && ov && ov.classList.contains('on') && ov.contains(e)); }
+function compsSegTxt(s){ s=Math.max(0, Math.round(s)); return s<60 ? (s+' s') : (Math.floor(s/60)+' min '+(s%60)+' s'); }
+function compsCarpetaPintar(){
+  var C=COMPS_CORRE, box=document.getElementById('comps-carpeta'), btn=document.getElementById('comps-carpeta-btn'), mes=(document.getElementById('comps-mes')||{}).value;
+  if(btn) btn.disabled=!!(C && C.corre);
+  if(!box || !C) return;
+  var av=function(t, mal){ box.innerHTML='<div class="cps-carpeta'+(mal?' cps-carpeta-mal':'')+'">'+t+'</div>'; };
+  if(C.mes!==mes){ box.innerHTML = C.corre ? '<div class="cps-carpeta">⏳ Se está armando la carpeta de '+esc(mesNombre(C.mes))+': cuando termine, podés armar la de este mes.</div>' : ''; return; }
+  var T=C.T, h=T.copiados+T.yaEstaban+T.ajenas+T.fallaron, seg=((C.t1||Date.now())-C.t0)/1000;
+  if(C.corre){
+    av('⏳ Copiando las fotos a Drive: <b>'+h+' de '+C.tot+'</b> · lleva '+compsSegTxt(seg)+'…<div class="cps-barra"><i style="width:'+Math.round(100*h/C.tot)+'%"></i></div>'+
+      '<small style="display:block;margin-top:6px;color:#55706f">Podés cerrar esta ventana y seguir usando el panel: la copia sigue sola y te aviso cuando termine. '+
+      'Si cerrás o recargás la página se corta: tocá otra vez y sigue donde quedó (lo copiado no se repite).</small>');
+    return;
+  }
+  var carpeta=C.carpeta, err=C.err, hh=T.copiados+T.yaEstaban;
+  if(err && !carpeta){ av('No se pudo armar la carpeta: '+esc(typeof motivoDeError==='function' ? motivoDeError(err) : String(err))+'. Probá de nuevo: lo que ya se copió no se repite.', true); return; }
+  av('✅ Carpeta lista: <b>'+esc(carpeta.nombre)+'</b> · '+hh+' de '+C.tot+' fotos'+(T.yaEstaban?(' ('+T.yaEstaban+' ya estaban)'):'')+' · tardó '+compsSegTxt(seg)+
+    ((T.ajenas||T.fallaron)?('<br><span style="color:#B45309">⚠️ '+(T.ajenas+T.fallaron)+' no se pudieron copiar'+(T.ajenas?' (no están en la carpeta de fotos del panel)':'')+'.</span>'):'')+
+    (err?'<br><span style="color:#B45309">⚠️ Se cortó antes de terminar: tocá otra vez y sigue donde quedó.</span>':'')+
+    '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><a class="ah-go ah-go-p" href="'+esc(carpeta.url)+'" target="_blank" rel="noopener">📂 Abrir la carpeta</a>'+
+    '<button type="button" class="ah-go" onclick="copyText(\''+esc(carpeta.url)+'\')">📋 Copiar el enlace</button></div>'+
+    '<small style="display:block;margin-top:6px;color:#55706f">⬇️ Para bajarla entera: abrí la carpeta y, arriba, tocá su nombre ▾ → <b>Descargar</b>: Drive arma un .zip con todas las fotos.<br>'+
+    'La carpeta es tuya: para que la vea el contador, compartila desde Drive.</small>');
+}
 function compsCarpeta(){
-  var mes=(document.getElementById('comps-mes')||{}).value, box=document.getElementById('comps-carpeta'), btn=document.getElementById('comps-carpeta-btn'); if(!mes || !box) return;
+  var mes=(document.getElementById('comps-mes')||{}).value, box=document.getElementById('comps-carpeta'); if(!mes || !box) return;
+  if(COMPS_CORRE && COMPS_CORRE.corre){ compsCarpetaPintar(); return COMPS_CORRE.prom; }   // ya está copiando: no se arranca otra
   var aviso=function(t, mal){ box.innerHTML='<div class="cps-carpeta'+(mal?' cps-carpeta-mal':'')+'">'+t+'</div>'; };
   if(!CONNECTED){ aviso('Sin conexión con la planilla: la carpeta la arma el servidor de Google.', true); return; }
   if(!compsCarpetaServidorOk()){ aviso('📁 Para armar la carpeta hace falta la versión <b>'+COMPS_SERVIDOR+'</b> del servidor de Google'+(SERVER_VER?(' (está la <b>'+esc(SERVER_VER)+'</b>)'):'')+'. Mientras tanto, el Excel con los enlaces.', true); return; }
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), arch=[];
   compsMesDatos(mes).forEach(function(x){ x.comps.forEach(function(fid, i){ arch.push({ id:fid, nombre:compsArchivo(x, i) }); }); });
   if(!arch.length){ aviso('No hay fotos para copiar en ese mes.', true); return; }
-  var tot=arch.length, T={ copiados:0, yaEstaban:0, ajenas:0, fallaron:0 }, carpeta=null, vueltas=0;
-  if(btn) btn.disabled=true;
-  var avance=function(){ var h=T.copiados+T.yaEstaban+T.ajenas+T.fallaron; aviso('⏳ Copiando las fotos a Drive: <b>'+h+' de '+tot+'</b>…<div class="cps-barra"><i style="width:'+Math.round(100*h/tot)+'%"></i></div>'); };
+  var C=COMPS_CORRE={ mes:mes, tot:arch.length, T:{ copiados:0, yaEstaban:0, ajenas:0, fallaron:0 }, carpeta:null, err:null, t0:Date.now(), t1:0, corre:true, vueltas:0, prom:null };
+  clearInterval(COMPS_TIC); COMPS_TIC=setInterval(function(){ if(document.getElementById('comps-carpeta')) compsCarpetaPintar(); }, 1000);
+  compsCarpetaPintar();
   var fin=function(err){
-    if(btn) btn.disabled=false;
-    var h=T.copiados+T.yaEstaban;
-    if(err && !carpeta){ aviso('No se pudo armar la carpeta: '+esc(motivoDeError ? motivoDeError(err) : String(err))+'. Probá de nuevo: lo que ya se copió no se repite.', true); return; }
-    aviso('✅ Carpeta lista: <b>'+esc(carpeta.nombre)+'</b> · '+h+' de '+tot+' fotos'+(T.yaEstaban?(' ('+T.yaEstaban+' ya estaban)'):'')+
-      ((T.ajenas||T.fallaron)?('<br><span style="color:#B45309">⚠️ '+(T.ajenas+T.fallaron)+' no se pudieron copiar'+(T.ajenas?' (no están en la carpeta de fotos del panel)':'')+'.</span>'):'')+
-      (err?'<br><span style="color:#B45309">⚠️ Se cortó antes de terminar: tocá otra vez y sigue donde quedó.</span>':'')+
-      '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><a class="ah-go ah-go-p" href="'+esc(carpeta.url)+'" target="_blank" rel="noopener">📂 Abrir la carpeta</a>'+
-      '<button type="button" class="ah-go" onclick="copyText(\''+esc(carpeta.url)+'\')">📋 Copiar el enlace</button></div>'+
-      '<small style="display:block;margin-top:6px;color:#55706f">La carpeta es tuya: para que la vea el contador, compartila desde Drive.</small>');
+    C.corre=false; C.err=err||null; C.t1=Date.now(); clearInterval(COMPS_TIC); COMPS_TIC=null;
+    var visible=modalMuestra('comps-carpeta') && (document.getElementById('comps-mes')||{}).value===C.mes;
+    compsCarpetaPintar();
+    if(!visible) toast(C.carpeta ? ('📁 Carpeta de comprobantes de '+mesNombre(C.mes)+' lista: '+(C.T.copiados+C.T.yaEstaban)+' de '+C.tot+' fotos. Está en Contabilidad → 📁 Comprobantes.'+(err?' Se cortó antes de terminar: tocá otra vez.':''))
+                                  : 'No se pudo armar la carpeta de comprobantes: probá de nuevo.', (C.carpeta && !err) ? 'ok' : 'err', 10000);
   };
   var lote=function(rest){
-    if(!rest.length || vueltas>60) return fin();
-    vueltas++; avance();
-    var t=rest.slice(0, COMPS_TANDA), resto=rest.slice(COMPS_TANDA);
+    if(!rest.length || C.vueltas>400) return fin();
+    C.vueltas++; compsCarpetaPintar();
+    var n=compsTanda(), t=rest.slice(0, n), resto=rest.slice(n);
     return apiPost({ action:'compsCarpeta', mes:mes, vendedor:vend, archivos:t }).then(function(res){
       if(!res || !res.ok) throw new Error((res && res.error) || 'sin_respuesta');
-      ['copiados','yaEstaban','ajenas','fallaron'].forEach(function(k){ T[k]+=Number(res[k])||0; });
-      if(res.carpeta) carpeta=res.carpeta;
+      ['copiados','yaEstaban','ajenas','fallaron'].forEach(function(k){ C.T[k]+=Number(res[k])||0; });
+      if(res.carpeta) C.carpeta=res.carpeta;
       return lote((res.pendientes||[]).concat(resto));
     });
   };
-  return lote(arch).catch(function(e){ fin(e); });
+  C.prom=lote(arch).catch(function(e){ fin(e); });
+  return C.prom;
 }
 function compsExcel(){
   var mes=(document.getElementById('comps-mes')||{}).value; if(!mes) return;
@@ -42759,6 +42820,225 @@ function compsExcel(){
   var bytes=buildXlsx([{ name:'Comprobantes', cols:[{w:12},{w:20},{w:28},{w:14},{w:12},{w:18},{w:14},{w:8},{w:60},{w:48},{w:11},{w:10}], matrix:rows }]);
   downloadBlob(bytes, 'comprobantes-'+mes+(vend?('-'+vend.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de comprobantes descargado — '+L.length+' pago'+(L.length===1?'':'s')+' ✓','ok');
+}
+/* 🤖 (26/10, §4mq C4; dueño: «falta lo del bot de contabilidad») REVISAR LAS FOTOS DE LOS COMPROBANTES CON IA. Contabilidad → 📁
+   Comprobantes → «🤖 Revisar las fotos con IA». El servidor (`.gs` 2026-10-26-a, acción `iaComprobantes`) le pasa cada foto a Claude
+   UNA vez y guarda lo leído (hoja «IA comprobantes»); acá se COMPARA con lo anotado: el monto (una foto o la suma de las fotos del pago),
+   el banco que recibió (si se ve; la tarjeta no), el día (2 o más de diferencia) y el mismo N° de comprobante en dos pagos. Solo mira:
+   no cambia ningún pago. ⚠️ Con un servidor anterior NO se llama (una acción que no conoce la trataría como un guardado). La lectura
+   vive en `IAC` (no en la ventana): se puede cerrar y sigue sola, como la carpeta. Lo que dice la foto se muestra con `esc`: es un dato. */
+var IAC_SERVIDOR='2026-10-26-a', IAC_TANDA_PAG=24, IAC_USD_FOTO=0.015, IAC_REINTENTOS=3, IAC_ESPERA_MS=4000;
+var IAC={ res:{}, corre:false, mes:'', leyendoMes:'', tot:0, hechas:0, dia:null, estado:'', err:'', t0:0, reint:{}, filtro:'', prom:null, cargado:{}, tic:null, releo:{} };
+var IAC_ESTADOS={
+  apagado:'La lectura de fotos está apagada en el servidor (<b>IA_COMP = 0</b> en las Propiedades del script).',
+  sin_clave:'Falta la clave de Claude en el servidor (<b>ANTHROPIC_API_KEY</b> en las Propiedades del script).',
+  pausa:'Claude está en pausa en el servidor por errores seguidos (la misma pausa del bot de WhatsApp). Probá más tarde.',
+  tope:'Se llegó al tope de fotos de hoy (<b>IA_COMP_TOPE_DIA</b>; 600 si no se puso otro). Mañana sigue donde quedó.',
+  clave:'La clave de Claude no sirve: revisá <b>ANTHROPIC_API_KEY</b> en las Propiedades del script.',
+  credito:'Se acabó el crédito de Claude: hay que cargar saldo en la consola de Anthropic.' };
+function iacServidorOk(){ return String(SERVER_VER||'')>=IAC_SERVIDOR; }
+function iacPagos(mes){ return compsMesDatos(mes).filter(function(x){ return x.comps.length>0; }); }
+function iacIds(L){ var v={}, out=[]; L.forEach(function(x){ x.comps.forEach(function(f){ if(!v[f]){ v[f]=1; out.push(f); } }); }); return out; }
+function iacUsd(n){ n=Number(n)||0; return 'US$ '+(n>0 && n<0.01 ? '0,01' : n.toFixed(2).replace('.',',')); }
+function iacTomar(r){
+  if(!r) return;
+  var R=r.res||{}; Object.keys(R).forEach(function(k){ if(R[k] && typeof R[k]==='object') IAC.res[k]=R[k]; });
+  if(r.dia) IAC.dia=r.dia;
+}
+/* El banco, para comparar «Banco BISA S.A.» con «BISA». Lo que no se reconoce queda con su primera palabra. */
+function iacBanco(t){
+  var s=sinTildes(String(t||'')).toUpperCase().trim(); if(!s) return '';
+  if(/BISA/.test(s)) return 'BISA'; if(/GANADERO/.test(s)) return 'GANADERO'; if(/ECONOMICO|\bBECO\b/.test(s)) return 'ECONOMICO';
+  if(/\bBNB\b|NACIONAL DE BOLIVIA/.test(s)) return 'BNB'; if(/MERCANTIL|\bBMSC\b/.test(s)) return 'MERCANTIL'; if(/\bUNION\b/.test(s)) return 'UNION';
+  if(/\bFIE\b/.test(s)) return 'FIE'; if(/BANCOSOL|BANCO SOL\b/.test(s)) return 'BANCOSOL'; if(/FORTALEZA/.test(s)) return 'FORTALEZA'; if(/PRODEM/.test(s)) return 'PRODEM';
+  if(/TIGO/.test(s)) return 'TIGO';
+  return s.replace(/\bBANCO\b|\bS\.?\s?A\.?$/g,' ').replace(/[^A-Z0-9 ]+/g,' ').trim().split(/\s+/)[0]||'';
+}
+function iacDias(a, b){ var x=Date.parse(a+'T12:00:00Z'), y=Date.parse(b+'T12:00:00Z'); return (isNaN(x)||isNaN(y)) ? 0 : Math.round(Math.abs(x-y)/864e5); }
+function iacRefLimpia(r){ r=String(r||'').replace(/[^0-9A-Za-z]/g,''); return r.length>=6 ? r.toUpperCase() : ''; }
+function iacBuena(o){ return !!o && !o.err && o.cp!==false && o.le!==false && Number(o.m)>0; }
+/* N° de comprobante → los pagos del mes que lo tienen (para «repetido»). */
+function iacRefs(L){
+  var R={}; (L||[]).forEach(function(x){ x.comps.forEach(function(f){ var o=IAC.res[f]; if(!iacBuena(o)) return; var r=iacRefLimpia(o.ref); if(r) (R[r]=R[r]||[]).push({ x:x, f:f }); }); });
+  return R;
+}
+function iacCliCorto(p){ return String((p&&p.cliente)||'—').trim().split(/\s+/).slice(0,3).join(' '); }
+/* Un pago contra lo que dicen sus fotos → { est:'ok'|'mal'|'nl'|'pe', chip, txt, mot:[{k, chip, t}] }. */
+function iacComparar(x, refs){
+  var L=x.comps.map(function(f){ return { f:f, o:IAC.res[f] }; });
+  if(!L.length || L.some(function(l){ return !l.o; })) return { est:'pe', chip:'⏳ Sin revisar', txt:'Todavía no se leyó'+(L.length>1?' alguna de sus fotos':' la foto')+'.' };
+  var buenas=L.filter(function(l){ return iacBuena(l.o); });
+  if(!buenas.length){
+    var o=L[0].o, por, hacer;
+    if(o.err==='ajena'){ por='no está en la carpeta de fotos del panel'; hacer='Revisala a mano.'; }
+    else if(o.err==='tipo'){ por='no es una imagen ni un PDF'; hacer='Revisala a mano.'; }
+    else if(o.err==='grande'){ por='es muy pesada para leerla (más de 3,5 MB)'; hacer='Revisala a mano.'; }
+    else if(o.err==='no_existe'){ por='ya no está en Drive'; hacer='Pedile otra al cliente.'; }
+    else if(o.err==='drive'){ por='no la entregó Drive'; hacer='Probá «Leer de nuevo».'; }
+    else if(o.err){ por='no la pudo leer Claude'+(o.no?(' ('+o.no+')'):''); hacer='Probá «Leer de nuevo» o revisala a mano.'; }
+    else if(o.cp===false){ por='no es un comprobante de pago'+(o.no?(' ('+o.no+')'):''); hacer='Pedile el comprobante al cliente.'; }
+    else { por='está borrosa o cortada: no se ve el monto'; hacer='Pedile otra al cliente.'; }
+    return { est:'nl', chip:(o.cp===false && !o.err) ? '❓ No es un comprobante' : '❓ No se lee bien', txt:'La foto '+esc(por)+'. '+hacer };
+  }
+  var bs=buenas.filter(function(l){ return l.o.mo!=='USD'; }), usd=buenas.filter(function(l){ return l.o.mo==='USD'; });
+  var suma=0; bs.forEach(function(l){ suma=r2(suma+Number(l.o.m)); });
+  var monto=r2(x.monto), okM=bs.length>0 && (Math.abs(suma-monto)<0.005 || bs.some(function(l){ return Math.abs(Number(l.o.m)-monto)<0.005; }));
+  var mot=[], b0=(bs[0]||buenas[0]).o, dice=bs.length>1 ? suma : Number(b0.m);
+  if(!okM && usd.length && !bs.length) mot.push({ k:'usd', chip:'⚠️ Está en dólares', t:'La foto dice <b>US$ '+esc(String(usd[0].o.m))+'</b> y anotaste <b>'+fmtBs(monto)+'</b>. Revisá el tipo de cambio.' });
+  else if(!okM) mot.push({ k:'monto', chip:'⚠️ No coincide el monto', t:'La foto dice <b>'+fmtBs(dice)+'</b>'+(bs.length>1?(' (sumando las '+bs.length+' fotos)'):'')+', anotaste <b>'+fmtBs(monto)+'</b>. Revisá cuál está bien.' });
+  var ban=iacBanco(x.ban);
+  if(ban && !/^Tarjeta/i.test(String(x.metB||''))){
+    var bds=buenas.map(function(l){ return String(l.o.bd||''); }).filter(Boolean);
+    if(bds.length && !bds.some(function(b){ return iacBanco(b)===ban; })) mot.push({ k:'banco', chip:'⚠️ Otro banco', t:'La foto dice que entró a <b>'+esc(bds[0])+'</b> y está anotado en <b>'+esc(x.ban)+'</b>.' });
+  }
+  var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean);
+  if(fs.length && x.f && !fs.some(function(f){ return iacDias(f, x.f)<2; })) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(fs[0]))+'</b> y el pago está anotado el <b>'+esc(fmtFechaCorta(x.f))+'</b>.' });
+  var vistos={};
+  buenas.forEach(function(l){
+    var r=iacRefLimpia(l.o.ref); if(!r || vistos[r]) return;
+    var otros=((refs||{})[r]||[]).filter(function(y){ return y.x!==x && y.f!==l.f; });
+    if(otros.length){ vistos[r]=1; mot.push({ k:'rep', chip:'🚨 Comprobante repetido', t:'El mismo comprobante (N° <b>'+esc(l.o.ref)+'</b>) está también en el pago de <b>'+esc(iacCliCorto(otros[0].x.p))+'</b> ('+fmtBs(otros[0].x.monto)+'). Puede ser la misma transferencia anotada dos veces.' }); }
+  });
+  var desc='La foto dice <b>'+(bs.length ? fmtBs(dice) : ('US$ '+esc(String(b0.m))))+'</b>'+(b0.bd?(' · '+esc(b0.bd)):'')+(b0.f?(' · '+esc(fmtFechaCorta(b0.f))):'')+(b0.ref?(' · N° '+esc(b0.ref)):'');
+  if(!mot.length) return { est:'ok', chip:'✅ Coincide', txt:desc+'. Igual a lo anotado.' };
+  if(mot.some(function(m){ return m.k==='rep'; })) mot.sort(function(a,b){ return (b.k==='rep')-(a.k==='rep'); });
+  return { est:'mal', chip:mot[0].chip, mot:mot, txt:mot.map(function(m){ return m.t; }).join(' ') };
+}
+/* La marquita en la tabla de Comprobantes (solo si ya se leyó). */
+function iacTagComps(x, refs){
+  if(!x.comps.length || x.comps.some(function(f){ return !IAC.res[f]; })) return '';
+  var c=iacComparar(x, refs);
+  return c.est==='ok' ? ' <span class="cps-tag cps-ok" title="La IA leyó la foto: coincide">✅ IA</span>'
+       : c.est==='mal' ? ' <span class="cps-tag cps-mal" title="'+esc(c.chip.replace(/^\W+/,''))+'">⚠️ IA</span>'
+       : ' <span class="cps-tag iac-t-nl" title="No se lee bien">❓ IA</span>';
+}
+function iacRepintar(){
+  if(document.getElementById('iac-cuerpo')) iacPintar();
+  else if(document.getElementById('comps-cuerpo')) compsPintar();
+}
+/* Lo ya leído de un mes (`leer:1`: sale de la hoja, no gasta nada). */
+function iacCargar(mes){
+  if(!iacServidorOk() || !CONNECTED) return Promise.resolve();
+  var ids=iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
+  if(!ids.length){ IAC.cargado[mes]='ok'; return Promise.resolve(); }
+  if(IAC.cargado[mes]==='cargando') return Promise.resolve();
+  IAC.cargado[mes]='cargando'; if(document.getElementById('iac-cuerpo')) iacPintar();
+  return apiPost({ action:'iaComprobantes', fotos:ids, leer:1 }).then(function(r){
+    if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
+    iacTomar(r); if(!IAC.corre) IAC.estado=r.estado||''; IAC.cargado[mes]='ok'; iacRepintar();
+  }).catch(function(e){ IAC.cargado[mes]='error'; IAC.err=(typeof motivoDeError==='function' ? motivoDeError(e) : String(e && e.message || e)); if(document.getElementById('iac-cuerpo')) iacPintar(); });
+}
+function iacAbrir(mes){
+  mes=mes || (document.getElementById('comps-mes')||{}).value || nxMesesCierre()[0];
+  if(IAC.mes!==mes) IAC.filtro='';
+  IAC.mes=mes;
+  openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>🤖 Revisar las fotos de los comprobantes</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><div class="iac-top"><button type="button" class="ah-go" onclick="compsAbrir(\''+esc(mes)+'\')">← Volver a los comprobantes</button>'+
+    '<span>Claude lee cada foto y la compara con lo anotado · <b>'+esc(mesNombre(mes))+'</b></span></div><div id="iac-cuerpo"></div></div>', true);
+  iacPintar();
+  iacCargar(mes);
+}
+function iacFiltro(k){ IAC.filtro=(IAC.filtro===k ? '' : k); iacPintar(); }
+function iacAvanceHtml(){
+  var seg=(Date.now()-IAC.t0)/1000, pc=IAC.tot ? Math.round(100*IAC.hechas/IAC.tot) : 0;
+  return '⏳ Leyendo las fotos: <b>'+IAC.hechas+' de '+IAC.tot+'</b> · lleva '+compsSegTxt(seg)+(IAC.leyendoMes!==IAC.mes?(' ('+esc(mesNombre(IAC.leyendoMes))+')'):'')+'…'+
+    '<div class="cps-barra"><i style="width:'+pc+'%"></i></div><small style="display:block;margin-top:6px;color:#55706f">Podés cerrar esta ventana y seguir usando el panel: sigue sola y te aviso cuando termine.</small>';
+}
+function iacPintar(){
+  var box=document.getElementById('iac-cuerpo'); if(!box) return;
+  var mes=IAC.mes;
+  if(!iacServidorOk()){ box.innerHTML='<div class="cps-carpeta cps-carpeta-mal">🤖 Para leer las fotos hace falta la versión <b>'+IAC_SERVIDOR+'</b> del servidor de Google'+(SERVER_VER?(' (está la <b>'+esc(SERVER_VER)+'</b>)'):'')+'. Cuando la implementes, aparece acá.</div>'; return; }
+  var L=iacPagos(mes);
+  if(!L.length){ box.innerHTML='<div class="empty u7" style="display:flex">'+VACIO_SVG.caja+'<b>No hay pagos con foto en '+esc(mesNombre(mes))+'.</b></div>'; return; }
+  var refs=iacRefs(L), It=L.map(function(x){ return { x:x, c:iacComparar(x, refs) }; }), n={ ok:0, mal:0, nl:0, pe:0 };
+  It.forEach(function(i){ n[i.c.est]++; });
+  var faltan=iacIds(L).filter(function(f){ return !IAC.res[f]; }).length, D=IAC.dia||{ n:0, usd:0 };
+  var porFoto=(D.n>0 && D.usd>0) ? D.usd/D.n : IAC_USD_FOTO;
+  var ficha=function(k, col, tit, num, sub){ return '<button type="button" class="iac-f'+(IAC.filtro===k?' on':'')+'" style="--c:'+col+'"'+(k?(' onclick="iacFiltro(\''+k+'\')"'):' disabled')+'><span>'+tit+'</span><b>'+num+'</b><small>'+sub+'</small></button>'; };
+  var h='<div class="iac-fichas">'+ficha('ok','#16a34a','✅ Coinciden', n.ok, 'no hay que hacer nada')+ficha('mal','#CE2939','⚠️ No coinciden', n.mal, 'monto, banco, día o repetido')+
+    ficha('nl','#B45309','❓ No se leen', n.nl, 'borrosa, cortada o no es comprobante')+(n.pe?ficha('pe','#64748b','⏳ Sin revisar', n.pe, 'pagos con fotos sin leer'):'')+
+    ficha('','#2457c5','💲 Costo', iacUsd(D.usd), (D.n||0)+' foto'+(D.n===1?'':'s')+' leída'+(D.n===1?'':'s')+' hoy')+'</div>';
+  h+='<div id="iac-acc">';
+  if(IAC.corre) h+='<div class="cps-carpeta" id="iac-av">'+iacAvanceHtml()+'</div>';
+  else if(IAC.cargado[mes]==='cargando') h+='<div class="cps-carpeta">⏳ Buscando lo que ya se leyó…</div>';
+  else if(faltan && !CONNECTED) h+='<div class="cps-carpeta cps-carpeta-mal">Sin conexión con la planilla: la lectura la hace el servidor de Google.</div>';
+  else if(faltan && !IAC_ESTADOS[IAC.estado]) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-leer-btn" onclick="iacLeer()">🤖 Leer '+(faltan===1?'la foto que falta':('las '+faltan+' fotos que faltan'))+' (~'+iacUsd(faltan*porFoto)+')</button>'+
+    '<small>Cada foto se lee una sola vez: la próxima vez sale de lo guardado, sin costo.</small></div>';
+  if(IAC_ESTADOS[IAC.estado] && !IAC.corre) h+='<div class="cps-carpeta cps-carpeta-mal">⚠️ '+IAC_ESTADOS[IAC.estado]+'</div>';
+  if(IAC.err && !IAC.corre) h+='<div class="cps-carpeta cps-carpeta-mal">⚠️ Se cortó: '+esc(IAC.err)+'. Tocá otra vez y sigue donde quedó (lo leído no se vuelve a pagar).</div>';
+  h+='</div>';
+  var orden={ mal:0, nl:1, pe:2, ok:3 }, ver=It.filter(function(i){ return !IAC.filtro || i.c.est===IAC.filtro; });
+  ver.sort(function(a,b){ return (orden[a.c.est]-orden[b.c.est]) || (a.x.f<b.x.f?-1:(a.x.f>b.x.f?1:0)); });
+  if(IAC.filtro) h+='<div class="iac-filtro">Mostrando solo: <b>'+({ ok:'los que coinciden', mal:'los que no coinciden', nl:'los que no se leen', pe:'los sin revisar' })[IAC.filtro]+'</b> <button type="button" class="ah-go" onclick="iacFiltro(\'\')">Ver todos</button></div>';
+  h+='<div class="iac-lista">'+(ver.length ? ver.map(iacItemHtml).join('') : '<div class="iac-vacio">Nada en este grupo.</div>')+'</div>';
+  box.innerHTML=h;
+}
+function iacItemHtml(i){
+  var x=i.x, c=i.c, p=x.p, id=String(p.id).replace(/'/g,''), cab='<b>'+esc(iacCliCorto(p))+'</b>'+(p.nota?(' · nota '+esc(String(p.nota))):'')+' · '+esc(String(p.vendedor||'').split(' ')[0])+
+    ' · anotado <b>'+fmtBs(x.monto)+'</b> '+esc(x.met)+' · '+esc(fmtFechaCorta(x.f))+(x.envio?' · 🚚 flete':'');
+  if(c.est==='ok' || c.est==='pe') return '<div class="iac-it iac-chico iac-'+c.est+'"><span class="iac-chip iac-c-'+c.est+'">'+c.chip+'</span><div class="iac-tx"><div class="iac-cab">'+cab+'</div>'+
+    (c.est==='ok'?('<div class="iac-dice">'+c.txt+'</div>'):'')+'</div>'+x.comps.map(function(f, k){ return '<a class="iac-foto" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener">📷'+(x.comps.length>1?(k+1):'')+'</a>'; }).join('')+'</div>';
+  var leyendo=x.comps.some(function(f){ return IAC.releo[f]; }), chips=(c.mot||[{ chip:c.chip }]).map(function(m){ return '<span class="iac-chip iac-c-'+c.est+'">'+m.chip+'</span>'; }).join(' ');
+  var nota=x.comps.map(function(f){ var o=IAC.res[f]; return (o && o.no && !o.err && o.cp!==false) ? o.no : ''; }).filter(Boolean)[0];
+  return '<div class="iac-it iac-'+c.est+'">'+x.comps.slice(0,2).map(function(f){ return '<a class="iac-img" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener" title="Ver la foto"><span>📷</span><img loading="lazy" alt="" src="'+esc(fotoThumb(f, 240))+'" onerror="this.remove()"></a>'; }).join('')+
+    '<div class="iac-tx"><div class="iac-cab">'+cab+'</div><div>'+chips+'</div><div class="iac-dice">'+c.txt+'</div>'+(nota?('<div class="iac-nota">💬 Claude: '+esc(nota)+'</div>'):'')+
+    '<div class="iac-bt"><button type="button" class="ah-go ah-go-p" onclick="closeModal();showContaModal(\''+id+'\')">Abrir la venta</button>'+
+    x.comps.map(function(f, k){ return '<a class="ah-go" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener">📷 Ver la foto'+(x.comps.length>1?(' '+(k+1)):'')+'</a>'; }).join('')+
+    (IAC.corre ? '' : ('<button type="button" class="ah-go" '+(leyendo?'disabled':'')+' onclick="iacReleer(\''+x.comps.map(function(f){ return String(f).replace(/[^A-Za-z0-9_\-]/g,''); }).join(',')+'\')">'+(leyendo?'⏳ Leyendo…':'🔄 Leer de nuevo')+'</button>'))+
+    '</div></div></div>';
+}
+/* «Leer de nuevo» (la persona lo pide): vuelve a gastar, solo esas fotos. */
+function iacReleer(lista){
+  var fs=String(lista||'').split(',').filter(Boolean); if(!fs.length || IAC.corre || !iacServidorOk() || !CONNECTED) return;
+  fs.forEach(function(f){ IAC.releo[f]=1; }); iacPintar();
+  return apiPost({ action:'iaComprobantes', fotos:fs, forzar:fs }).then(function(r){
+    if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
+    iacTomar(r); IAC.estado=r.estado||'';
+    if(r.estado && IAC_ESTADOS[r.estado]) toast('🤖 '+IAC_ESTADOS[r.estado].replace(/<[^>]+>/g,''),'err',9000);
+    else if((r.pendientes||[]).length) toast('Claude está ocupado: probá «Leer de nuevo» en un momento.','err');
+  }).catch(function(e){ toast('No se pudo leer: '+(typeof motivoDeError==='function' ? motivoDeError(e) : String(e)),'err'); })
+    .then(function(){ fs.forEach(function(f){ delete IAC.releo[f]; }); iacRepintar(); });
+}
+/* Lee todas las fotos del mes que faltan, de a tandas. */
+function iacLeer(){
+  if(IAC.corre) return IAC.prom;
+  if(!iacServidorOk() || !CONNECTED) return;
+  var mes=IAC.mes, ids=iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
+  if(!ids.length){ iacPintar(); return Promise.resolve(); }
+  IAC.corre=true; IAC.estado=''; IAC.err=''; IAC.tot=ids.length; IAC.hechas=0; IAC.t0=Date.now(); IAC.leyendoMes=mes; IAC.reint={};
+  var cola=ids.slice(), vueltas=0;
+  clearInterval(IAC.tic); IAC.tic=setInterval(function(){ var a=document.getElementById('iac-av'); if(a) a.innerHTML=iacAvanceHtml(); }, 1000);
+  iacPintar();
+  var fin=function(e){
+    IAC.corre=false; clearInterval(IAC.tic); IAC.tic=null;
+    if(e) IAC.err=(typeof motivoDeError==='function' ? motivoDeError(e) : String(e && e.message || e));
+    var visible=modalMuestra('iac-cuerpo') && IAC.mes===IAC.leyendoMes;
+    iacRepintar();
+    if(!visible){
+      var L=iacPagos(IAC.leyendoMes), refs=iacRefs(L), k={ ok:0, mal:0, nl:0 };
+      L.forEach(function(x){ var c=iacComparar(x, refs); if(k[c.est]!=null) k[c.est]++; });
+      toast('🤖 Fotos de los comprobantes de '+mesNombre(IAC.leyendoMes)+': '+k.ok+' coinciden, '+k.mal+' no coinciden, '+k.nl+' no se leen.'+
+        (IAC.err || IAC_ESTADOS[IAC.estado] ? ' Se cortó antes de terminar.' : '')+' Está en Contabilidad → 📁 Comprobantes → 🤖 Revisar.', (k.mal||k.nl||IAC.err) ? 'err' : 'ok', 12000);
+    }
+  };
+  var paso=function(){
+    if(!cola.length || vueltas>300) return fin();
+    vueltas++;
+    var t=cola.slice(0, IAC_TANDA_PAG); cola=cola.slice(IAC_TANDA_PAG);
+    return apiPost({ action:'iaComprobantes', fotos:t }).then(function(r){
+      if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
+      iacTomar(r);
+      var nuevas=0; t.forEach(function(f){ if(IAC.res[f]) nuevas++; }); IAC.hechas+=nuevas;
+      var pend=(r.pendientes||[]).filter(function(f){ if(IAC.res[f]) return false; IAC.reint[f]=(IAC.reint[f]||0)+1; return IAC.reint[f]<=IAC_REINTENTOS; });
+      if(r.estado){ IAC.estado=r.estado; return fin(); }
+      cola=cola.concat(pend);
+      iacRepintar();
+      if(!nuevas && pend.length) return new Promise(function(ok){ setTimeout(ok, IAC_ESPERA_MS); }).then(paso);   // Claude ocupado: un respiro
+      return paso();
+    });
+  };
+  IAC.prom=paso().catch(function(e){ fin(e); });
+  return IAC.prom;
 }
 var NX_CIERRE_FORZADO=false;
 function nxCierreControlHtml(C){

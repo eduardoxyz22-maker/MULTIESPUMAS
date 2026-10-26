@@ -973,6 +973,10 @@ nodos, «Listo» = `fxPasosEstado`). C3 `nxCierreControl` (lista de control del 
 la página solo la llama con `SERVER_VER` ≥ 25-a. ⚠️ Primero el dueño implementa el `.gs`, después se publica la página. Volver atrás:
 ✏️ a la versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas).
 Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_form_pasos`, `test_cierre_control`, `test_comprobantes_mes`.
+🤖 **C4 + carpeta rápida = servidor `2026-10-26-a`** (§4mr, en la rama, espera que el dueño lo implemente): «🤖 Revisar las fotos con IA» en
+Comprobantes (`iacAbrir`/`iacComparar`: monto, banco, día, N° repetido; el servidor `iaComprobantes_` lee cada foto UNA vez, hoja «IA
+comprobantes», `leer:1` sin gastar) y la carpeta de a 20 por la API de Drive (`compsRapido_`). Las dos siguen con la ventana cerrada
+(`IAC`/`COMPS_CORRE`, `modalMuestra`). Con un servidor anterior la página NO las llama. `tests/test_ia_comprobantes.js`, `test_servidor` §26-27.
 🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la

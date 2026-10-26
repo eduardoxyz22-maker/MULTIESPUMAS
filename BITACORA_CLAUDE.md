@@ -16217,3 +16217,40 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   arriba a la izquierda en Contabilidad.
 - 💡 Idea para ofrecer (no hecha): que la página se dé cuenta sola de que hay una versión nueva publicada y lo diga con «🔄 Actualizar»
   (hoy no hay ningún sello de versión de la PÁGINA a la vista).
+
+### §4mr — 🤖 Claude lee las fotos de los comprobantes (C4) + 📁 la carpeta más rápida (26/10; servidor `2026-10-26-a`, en la rama)
+- **Pedido del dueño**: *«falta lo del bot de contabilidad»* (la C4 de las muestras, con la imagen de «Revisar las fotos de los comprobantes»),
+  y con la carpeta de la 25-a: *«le di y no completan y descargan»* (0 de 367 un buen rato), *«ya empezó a avanzar»*, *«¿20 min dejar
+  abierta esa pestaña sin poder usar el panel?»*.
+- **Servidor `2026-10-26-a`** (`SCRIPT_VERSION`, `ESTA_VERSION`, `SCRIPT_VERSION_ESPERADA` juntos):
+  · `compsCarpeta_` → **`compsRapido_`**: con `ScriptApp.getOAuthToken()` y la API de Drive v3 por `UrlFetchApp.fetchAll`, de a
+    `COMPS_PARALELO`=20 (mira la carpeta del panel por `parents`, copia con `files/<id>/copy`; lo que ya está en la carpeta del mes se lee
+    UNA vez por nombre). Tandas de `COMPS_TANDA`=120 y tope `COMPS_TOPE_MS`=25 s. Si la API no contesta al principio (no habilitada,
+    sin token): el camino de antes, `compsDeAUna_` con DriveApp. La respuesta lleva `rapido`.
+  · **`iaComprobantes_`** (acción `iaComprobantes`, sin candado): `{fotos, leer, forzar}` → `{res:{id:lectura}, faltan, pendientes,
+    leidas, usd, dia, estado}`. Lectura corta (`iacNormal_`): `cp` comprobante, `le` legible, `m` monto, `mo` BOB/USD, `f` día, `h` hora,
+    `bo`/`bd` banco de origen/destino, `de`/`or` a nombre de quién/quién pagó, `ref` sin espacios, `ti` tipo, `no` nota; o `{err:'ajena'|
+    'tipo'|'grande'|'no_existe'|'drive'|'ia'}`. Una vez por foto: hoja **«IA comprobantes»** (gana la última fila); `leer:1` = solo lo
+    guardado, sin gastar. Solo fotos de la carpeta del panel, imagen o PDF ≤ 3,5 MB. De a `IAC_PARALELO`=8, `IAC_TANDA`=24 por pedido,
+    tope 45 s. 429/5xx → `pendientes`; 401/403 → `estado:'clave'`; sin crédito → `'credito'`; tope del día (`IA_COMP_TOPE_DIA`, 600) →
+    `'tope'`; `IA_COMP=0` → `'apagado'`; sin `ANTHROPIC_API_KEY` → `'sin_clave'`; la pausa del bot → `'pausa'`. Gasto del día en la
+    propiedad `IAC_DIA`. Misma clave y modelo que el bot (`IA_COMP_MODELO` o `IA_MODELO` lo cambian sin reimplementar), salida JSON fija
+    (`IAC_ESQUEMA`), esfuerzo bajo, `fallbacks:'default'`. No necesita `IA_ACTIVA`.
+  · `probarAntesDeImplementar` §14: si la API de Drive contesta y cómo está el lector (informativo).
+  · `tests/test_servidor.js` §26 (carpeta en paralelo, 9) y §27 (lector, 16): **407 bien · 0 mal**.
+- **Página** (`IAC_SERVIDOR`=`COMPS_RAPIDO`='2026-10-26-a'; con un servidor anterior NO llama, como la carpeta):
+  · Comprobantes → **«🤖 Revisar las fotos con IA»** (`iacAbrir`): pide lo ya leído (`iacCargar`, `leer:1`) y COMPARA en la página
+    (`iacComparar`): el monto (una foto o la suma de las del pago, contra 0,005), el banco que recibió (`iacBanco`, solo si la foto lo dice;
+    la tarjeta no), el día (2 o más de diferencia), el mismo N° de comprobante en dos pagos (`iacRefs`, 6+ letras, sin guiones), dólares;
+    borrosa / no es comprobante / foto ajena = «No se leen». Fichas Coinciden · No coinciden · No se leen · Sin revisar · Costo (lo de hoy),
+    tocar una filtra. «🤖 Leer las N fotos que faltan (~US$)» (`iacLeer`, tandas de 24, el ocupado se reintenta 3 veces) y «🔄 Leer de
+    nuevo» por pago (`forzar`). La tabla de Comprobantes marca ✅ IA / ⚠️ IA / ❓ IA (`iacTagComps`). Solo mira: no toca ningún pago.
+    Lo que dice la foto va con `esc` (es un dato).
+  · La lectura y la carpeta viven en `IAC` / `COMPS_CORRE`, no en la ventana: **se puede cerrar y seguir usando el panel**, avisan al
+    terminar (`modalMuestra`: `closeModal` esconde pero deja el contenido), volver a abrir muestra el avance y tocar otra vez no arranca
+    otra. La carpeta dice cuánto lleva/tardó y cómo bajarla entera (Drive → nombre de la carpeta ▾ → Descargar = .zip). Con la 25-a,
+    tandas de 8 (`COMPS_TANDA`) para que el avance se mueva; con la 26-a, de 120.
+  · `tests/test_ia_comprobantes.js` (29). `compsMesDatos` lleva además `metB`/`ban` (el método y el banco por separado).
+- **Costo**: ~US$ 0,015 por foto con el modelo de siempre (US$ 4/20 por millón de tokens): ~US$ 3-5 por mes con ~300 fotos, una sola
+  vez por foto. ⚠️ La estimación de «Bs 6/mes» que se le dijo antes era baja: corregírsela.
+- Publicar: primero el dueño implementa la 26-a (enlace raw fijo al commit), después la página a `main`.
