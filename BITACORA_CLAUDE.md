@@ -16284,7 +16284,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   publicar algo de la rama, aplicar solo los diffs de lo que se publica (el de `997f2d6` toca `fxPasosEstado`, `fxDerPintar`, `submitPedido` y
   agrega `cobroSinMonto`/`ventaGuardadaSinMonto`/`saldoObligActivo` + `tests/test_saldo_obligatorio.js`).
 
-### §4mt — 🧾 «La foto dice menos» no es «falta plata» + servidor `2026-10-26-b` lee la nota de venta (26/10; la PÁGINA PUBLICADA `fc1d028` con ESPERADA 26-a; el `.gs` 26-b espera que el dueño lo implemente)
+### §4mt — 🧾 «La foto dice menos» no es «falta plata» + servidor `2026-10-26-b` lee la nota de venta (26/10; la PÁGINA PUBLICADA `fc1d028`; el `.gs` 26-b IMPLEMENTADO por el dueño y `main` con ESPERADA 26-b desde `d8550a1`)
 - **Dueño** (con capturas: ROCIO VILCA QR 1.250 anotado y la foto 1.140; JEISON MONTAÑO QR 990 anotado y la foto 390): *«dice que falta dinero
   siendo que algunas compras hay efectivo pagado… da a entender que falta en el monto»*, *«ejemplo 390 en QR y 600 en efectivo, lo dice la
   segunda imagen»* (la 2ª foto es la NOTA DE VENTA). O sea: la plata está, pero se anotó todo como QR.
@@ -16314,3 +16314,9 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   (solas 24/0 y 65/0: la máquina cargada). Después, solas: `test_ia_comprobantes` 43, `test_comprobantes_mes` 11, `test_servidor` 407,
   `test_mis_arriba` 14, `test_asistente_rev` 17, `test_asistente_ak` 38, `test_bloki` 19, `test_asistente` 24, `test_mispedidos` 33.
   ⚠️ Cuando el dueño implemente la 26-b: a `main` el `.gs` 26-b + ESPERADA 26-b + `test_servidor` de la rama.
+- **🟢 26-b IMPLEMENTADA por el dueño (26/10, «ok, ya implementé el servidor 26-b»)**: comprobado con una consulta que no gasta
+  (`{action:'iaComprobantes', fotos:[], leer:1}` → `version:"2026-10-26-b"`). **Publicado `d8550a1`** (en `pub_mn` sobre `fc1d028`): el `.gs`
+  26-b (= `09d6af8`, el que pegó el dueño) + `SCRIPT_VERSION_ESPERADA` 26-b + `test_servidor` de la rama. Pruebas ahí: `test_servidor` 409,
+  `test_ia_comprobantes` 43, `test_comprobantes_mes` 11, `test_cerrardia` 21, `test_ubic` 28, `test_rev3_admin` 49, `test_getlog` 21,
+  `test_conflicto` 45, `test_carga` 41, `test_auditoria` 175, `test_rev2_admin` 22 (0 mal). Volver atrás: ✏️ a la versión anotada Y pegar
+  la 26-a de `f6272ef…` (4.698 líneas). Lo que sigue lo hace el dueño: Comprobantes → 🤖 Revisar → «🧾 Leer las notas de venta».
