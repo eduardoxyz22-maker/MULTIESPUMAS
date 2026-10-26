@@ -2775,6 +2775,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .iac-bt{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .iac-foto{flex:none;text-decoration:none;font-size:.8rem;padding:2px 6px;border-radius:8px;background:#e6f7f6;color:#00756f}
 .iac-vacio{padding:14px;color:#55706f;font-size:.84rem;text-align:center}
+.iac-clave-tx{font-size:.88rem;color:#13302e;margin:4px 0 10px}.iac-clave{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.iac-clave input{max-width:260px;flex:1;min-width:0}
+.iac-clave-err{margin-top:8px;color:#CE2939;font-size:.84rem;font-weight:700}
 @media (max-width:520px){ .iac-img{width:56px;height:72px} .iac-it.iac-chico{flex-wrap:wrap} }
 /* ✅ (§4mg, C3) la lista de control del cierre */
 .c3{margin:12px 0 10px}
@@ -42732,7 +42734,7 @@ function compsPintar(){
     '</tbody></table></div>'+
     '<div class="cps-pie"><span>Ordenados por banco y por día · cada foto con un nombre que dice día, banco, monto y cliente.</span><button type="button" class="ah-go" onclick="compsExcel()">⬇️ Excel con los enlaces</button>'+
       '<button type="button" class="ah-go ah-go-p" id="comps-carpeta-btn" onclick="compsCarpeta()">📁 Armar la carpeta en Drive</button>'+
-      '<button type="button" class="ah-go ah-go-p" id="comps-ia-btn" onclick="iacAbrir()">🤖 Revisar las fotos con IA</button></div><div id="comps-carpeta"></div>';
+      '<button type="button" class="ah-go ah-go-p" id="comps-ia-btn" onclick="iacAbrir()">🤖 Revisar las fotos con IA'+(iacPuede()?'':' 🔒')+'</button></div><div id="comps-carpeta"></div>';
   compsCarpetaPintar();
 }
 /* 📁 (25/10, §4mg C2; dueño: «Prepáralo») «Armar la carpeta en Drive»: el servidor (`.gs` 2026-10-25-a, acción `compsCarpeta`) COPIA
@@ -42828,7 +42830,19 @@ function compsExcel(){
    no cambia ningún pago. ⚠️ Con un servidor anterior NO se llama (una acción que no conoce la trataría como un guardado). La lectura
    vive en `IAC` (no en la ventana): se puede cerrar y sigue sola, como la carpeta. Lo que dice la foto se muestra con `esc`: es un dato. */
 var IAC_SERVIDOR='2026-10-26-a', IAC_TANDA_PAG=24, IAC_USD_FOTO=0.015, IAC_REINTENTOS=3, IAC_ESPERA_MS=4000;
-var IAC={ res:{}, corre:false, mes:'', leyendoMes:'', tot:0, hechas:0, dia:null, estado:'', err:'', t0:0, reint:{}, filtro:'', prom:null, cargado:{}, tic:null, releo:{} };
+var IAC={ res:{}, corre:false, mes:'', leyendoMes:'', tot:0, hechas:0, dia:null, estado:'', err:'', t0:0, reint:{}, filtro:'', prom:null, cargado:{}, tic:null, releo:{}, clave:false };
+/* 🔒 (26/10, el dueño: «deben ingresar con contraseña porque si no los vendedores se gastarán mis tokens») La ventana, «Leer» y «Leer de
+   nuevo» gastan el crédito de Claude del dueño: solo con la contraseña de Administración (la de siempre, `LS_ADMIN`), una vez por página
+   abierta (`IAC.clave`, en memoria; o `UNLOCKED`). Las marcas ✅/⚠️ IA de la tabla de Comprobantes salen de lo ya leído (`leer:1`, sin
+   gastar) y se siguen viendo. */
+function iacPuede(){ return !!(UNLOCKED || IAC.clave); }
+function iacClaveProbar(mes){
+  var e=document.getElementById('iac-pass'), v=e ? String(e.value||'') : '', stored='';
+  try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(x){ stored=DEFAULT_HASH; }
+  if(v && sha256(v)===stored){ IAC.clave=true; iacAbrir(mes); return; }
+  var m=document.getElementById('iac-pass-err'); if(m) m.hidden=false;
+  if(e){ e.value=''; try{ e.focus(); }catch(x){} }
+}
 var IAC_ESTADOS={
   apagado:'La lectura de fotos está apagada en el servidor (<b>IA_COMP = 0</b> en las Propiedades del script).',
   sin_clave:'Falta la clave de Claude en el servidor (<b>ANTHROPIC_API_KEY</b> en las Propiedades del script).',
@@ -42930,6 +42944,16 @@ function iacCargar(mes){
 }
 function iacAbrir(mes){
   mes=mes || (document.getElementById('comps-mes')||{}).value || nxMesesCierre()[0];
+  if(!iacPuede()){
+    openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>🔒 Revisar las fotos con IA</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b"><p class="iac-clave-tx">Leer las fotos usa el crédito de Claude del dueño: entra solo con la <b>contraseña de Administración</b>.</p>'+
+      '<div class="iac-clave"><input type="password" id="iac-pass" class="msel" placeholder="Contraseña de Administración" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')iacClaveProbar(\''+esc(mes)+'\')">'+
+      '<button type="button" class="ah-go ah-go-p" onclick="iacClaveProbar(\''+esc(mes)+'\')">Entrar</button></div>'+
+      '<div id="iac-pass-err" class="iac-clave-err" hidden>Esa no es la contraseña de Administración.</div>'+
+      '<div style="margin-top:12px"><button type="button" class="ah-go" onclick="compsAbrir(\''+esc(mes)+'\')">← Volver a los comprobantes</button></div></div>', true);
+    setTimeout(function(){ var i=document.getElementById('iac-pass'); if(i) try{ i.focus(); }catch(e){} }, 50);
+    return;
+  }
   if(IAC.mes!==mes) IAC.filtro='';
   IAC.mes=mes;
   openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>🤖 Revisar las fotos de los comprobantes</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -42989,7 +43013,7 @@ function iacItemHtml(i){
 }
 /* «Leer de nuevo» (la persona lo pide): vuelve a gastar, solo esas fotos. */
 function iacReleer(lista){
-  var fs=String(lista||'').split(',').filter(Boolean); if(!fs.length || IAC.corre || !iacServidorOk() || !CONNECTED) return;
+  var fs=String(lista||'').split(',').filter(Boolean); if(!fs.length || IAC.corre || !iacPuede() || !iacServidorOk() || !CONNECTED) return;
   fs.forEach(function(f){ IAC.releo[f]=1; }); iacPintar();
   return apiPost({ action:'iaComprobantes', fotos:fs, forzar:fs }).then(function(r){
     if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
@@ -43002,7 +43026,7 @@ function iacReleer(lista){
 /* Lee todas las fotos del mes que faltan, de a tandas. */
 function iacLeer(){
   if(IAC.corre) return IAC.prom;
-  if(!iacServidorOk() || !CONNECTED) return;
+  if(!iacPuede() || !iacServidorOk() || !CONNECTED) return;
   var mes=IAC.mes, ids=iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
   if(!ids.length){ iacPintar(); return Promise.resolve(); }
   IAC.corre=true; IAC.estado=''; IAC.err=''; IAC.tot=ids.length; IAC.hechas=0; IAC.t0=Date.now(); IAC.leyendoMes=mes; IAC.reint={};

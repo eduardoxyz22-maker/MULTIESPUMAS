@@ -11,6 +11,7 @@
    6. La tabla de Comprobantes marca ✅ IA / ⚠️ IA.
    7. Lo que dice la foto se muestra escapado (es un dato, no HTML) y no se toca ningún pago.
    8. 📁 La carpeta: con la 26-a tandas de 120, con la 25-a de 8; cerrar la ventana no la corta, volver a abrir no arranca otra y avisa al terminar.
+   10. 🔒 Leer las fotos gasta el crédito del dueño: solo con la contraseña de Administración.
 
    Reloj CLAVADO (martes 27/10/2026, 10:00 de Bolivia). Solo datos sintéticos.
    Se corre:  node tests/test_ia_comprobantes.js */
@@ -228,6 +229,32 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('9b. con la 25-a, tandas de 8 (6 tandas para 45), sin repetir aunque se toque otra vez', r9.lenta && r9.lenta.length===6 && r9.lenta[0]===8 && r9.lenta.reduce((a,b)=>a+b,0)===45, r9.lenta);
   chk('9c. al volver a abrir muestra el avance y cuánto lleva, con el botón apagado', /Copiando las fotos/.test(r9.avance||'') && /lleva/.test(r9.avance||'') && r9.btn===true, r9.avance);
   chk('9d. con la ventana cerrada, avisa cuando la carpeta está lista', !r9.corre && (r9.avisos||[]).some(a=>/Carpeta de comprobantes/.test(a) && /45 de 45/.test(a)), r9.avisos);
+
+  /* 10 · 🔒 solo con la contraseña de Administración (dueño: «si no los vendedores se gastarán mis tokens») */
+  const r10 = await ev(async () => {
+    var out={}; UNLOCKED=false; IAC.clave=false; SERVER_VER='2026-10-26-a'; __S.llamadas=[];
+    try{ localStorage.setItem(LS_ADMIN, sha256('clave-de-prueba')); }catch(e){}
+    delete IAC.res.f1; delete __S.guardado.f1;
+    compsAbrir('2026-10'); await new Promise(function(r){ setTimeout(r, 80); });
+    out.boton=(document.getElementById('comps-ia-btn')||{}).textContent||'';
+    out.tags=!!document.querySelector('.cps-t .cps-ok[title]');           // las marcas ✅ IA de lo ya leído se siguen viendo
+    iacAbrir('2026-10'); await new Promise(function(r){ setTimeout(r, 60); });
+    out.pide=!!document.getElementById('iac-pass') && !document.getElementById('iac-cuerpo');
+    var gasto=function(){ return __S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).length; };
+    iacLeer(); iacReleer('f2'); await new Promise(function(r){ setTimeout(r, 60); });
+    out.sinGastar=gasto()===0;
+    document.getElementById('iac-pass').value='otra'; iacClaveProbar('2026-10'); await new Promise(function(r){ setTimeout(r, 30); });
+    out.mal=!document.getElementById('iac-pass-err').hidden && !document.getElementById('iac-cuerpo');
+    document.getElementById('iac-pass').value='clave-de-prueba'; iacClaveProbar('2026-10'); await new Promise(function(r){ setTimeout(r, 100); });
+    out.entra=!!document.getElementById('iac-cuerpo') && !!document.getElementById('iac-leer-btn');
+    document.getElementById('iac-leer-btn').click();
+    for(var i=0; i<40 && IAC.corre; i++) await new Promise(function(r){ setTimeout(r, 50); });
+    out.lee=gasto()>=1 && !!IAC.res.f1;
+    closeModal(); UNLOCKED=true; return out;
+  });
+  chk('10a. sin la contraseña el botón dice 🔒 y la ventana pide la contraseña de Administración (las marcas ✅ IA siguen)', /🔒/.test(r10.boton) && r10.pide && r10.tags, r10);
+  chk('10b. sin la contraseña «Leer» y «Leer de nuevo» no gastan nada', r10.sinGastar, r10);
+  chk('10c. una contraseña equivocada no entra; la buena sí, y ahí se puede leer', r10.mal && r10.entra && r10.lee, r10);
 
   chk('sin errores en la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
