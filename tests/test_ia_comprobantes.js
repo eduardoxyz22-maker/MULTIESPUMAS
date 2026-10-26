@@ -373,8 +373,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     out.vendDespues=s.value; out.vendLinea=!!document.querySelector('.iac-vend');
     closeModal(); window.toast=t0; return out;
   });
-  chk('13a. con todo leído no está «Leer…» pero sí «🤖 Revisar los pagos nuevos», y dice que ya está todo leído', !r13.leer && /Revisar los pagos nuevos/.test(r13.buscar) && /Ya están leídas las \d+ fotos de octubre/.test(r13.txt), r13);
-  chk('13b. tocarlo sin pagos nuevos: relee, avisa «no entraron pagos nuevos» y no gasta nada', r13.sinNuevos.some(a=>/No entraron pagos nuevos/.test(a)) && !r13.gasto, r13.sinNuevos);
+  chk('13a. con todo leído no está «Leer…» pero sí «🔄 Revisar de nuevo», y dice que ya está todo leído', !r13.leer && /Revisar de nuevo/.test(r13.buscar) && /Ya están leídas las \d+ fotos de octubre/.test(r13.txt), r13);
+  chk('13b. tocarlo sin pagos nuevos: relee, avisa «no hay fotos nuevas» y no gasta nada', r13.sinNuevos.some(a=>/no hay fotos nuevas/.test(a)) && !r13.gasto, r13.sinNuevos);
   chk('13c. con un pago nuevo con foto: aparece «Leer la foto que falta» con su costo y NO lee solo', /Leer la foto que falta/.test(r13.leer2) && /US\$/.test(r13.leer2) && !r13.gasto2 && r13.conNuevo.some(a=>/sin leer/.test(a)), { leer2:r13.leer2, a:r13.conNuevo, g:r13.gasto2 });
   chk('13d. Contabilidad filtrada por una vendedora: «Solo los pagos de Carola» y «Ver todas las vendedoras» saca el filtro', /Solo los pagos de Carola Chavez/.test(r13.vend) && r13.vendDespues==='' && !r13.vendLinea, r13);
 

@@ -16405,7 +16405,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - El botón «🤖 Leer las N fotos que faltan» solo aparece con fotos sin leer: con todo leído la ventana quedaba SIN ningún botón y parecía que
   faltaba. Además la lista sigue el filtro de vendedora de Contabilidad (`compsMesDatos` lee `cta-vendedor`) y la ventana no lo decía (la
   captura: 19 pagos, todos de Carola; «378 fotos leídas hoy» es el total del día).
-- Ahora, con todo leído: «🤖 Revisar los pagos nuevos» (`iacBuscarNuevos`: `refrescarEstadoYa` + lo ya leído con `leer:1`, sin gastar; si entró
+- Ahora, con todo leído: «🔄 Revisar de nuevo» (`iacBuscarNuevos`: `refrescarEstadoYa` + lo ya leído con `leer:1`, sin gastar; si entró
   un pago con foto aparece «Leer la foto que falta (~US$)» y leer lo decide la persona) con «✅ Ya están leídas las N fotos de <mes> [de X]».
   Con filtro: «👤 Solo los pagos de X (el filtro de Contabilidad) · Ver todas las vendedoras» (`iacTodas`: vacía `cta-vendedor` y relee).
 - `test_ia_comprobantes` §13 (47). En la rama, espera «publica».
