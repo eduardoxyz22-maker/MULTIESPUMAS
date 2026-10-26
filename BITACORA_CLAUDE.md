@@ -16408,4 +16408,4 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - Ahora, con todo leído: «🔄 Revisar de nuevo» (`iacBuscarNuevos`: `refrescarEstadoYa` + lo ya leído con `leer:1`, sin gastar; si entró
   un pago con foto aparece «Leer la foto que falta (~US$)» y leer lo decide la persona) con «✅ Ya están leídas las N fotos de <mes> [de X]».
   Con filtro: «👤 Solo los pagos de X (el filtro de Contabilidad) · Ver todas las vendedoras» (`iacTodas`: vacía `cta-vendedor` y relee).
-- `test_ia_comprobantes` §13 (47). En la rama, espera «publica».
+- `test_ia_comprobantes` §13 (47). PUBLICADO 26/10 (dueño: «publica»), `0564f1f` (solo `pedidos.html` y la prueba, con `format-patch`).
