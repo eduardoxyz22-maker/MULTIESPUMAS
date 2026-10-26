@@ -16350,3 +16350,20 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   ventana está abierta: el buscador solo filtra (468 pagos: 172 → 89 ms por tecla; abrir 207 ms contra 156 de la ventana vieja).
   ⚠️ Con la batería cargando la máquina, `test_ia_comprobantes` 9b/9c dependen de que la ventana se dibuje rápido (la copia lenta de 6×40 ms
   tiene que seguir corriendo al reabrir): se puso rojo una vez antes de la caché.
+
+### §4mv — 🎬 Video «Cómo cargar un pedido» para los nuevos (26/10; dueño: *«creá un video de cómo cargar un pedido, para enseñar a los nuevos»*)
+- **El video**: 2 min 35 s, vertical (celular), sin sonido, con un cartel por paso abajo y un círculo turquesa en cada toque. Es el panel
+  PUBLICADO (`cfc901b`) tal cual lo ve una vendedora (con `navigator.webdriver` en falso: «¿Quién está usando el panel?», el formulario en 4
+  pasos, Bloki, las escenas), con una planilla de mentira y clientes INVENTADOS (Lucía Fernández Rojas, nota 3245, recibo N° 0458); nada sale a
+  la red y la planilla real no se toca. Recorrido: tocar el nombre → día de entrega con los lugares del camión → nota → cliente y celular →
+  código CH1201 (se completa solo) → cantidad y precio → el cuadrito «✅ DISPONIBLE» → turno, zona, enlace de Maps (mapita), dirección →
+  «NO» + A cuenta 1000 + Saldo 2400 + Efectivo → **la foto del recibo** → Observaciones → Guardar → la escena → «🤖 El bot de WhatsApp se lo
+  manda solo» → «Mis pedidos» → resumen. Fecha en día/mes (`LANG=es_ES` al lanzar Chromium).
+- ⚠️ **La foto del recibo es obligatoria también en EFECTIVO**: la primera grabación no guardó y salió el gato de «Falta el comprobante». Va
+  en el video y en la página como paso.
+- ⚠️ El final dice lo del bot (como en el panel real, `WA_BOT`): no enseñar a mandarle el mensaje al cliente a mano.
+- **Dónde está**: página con el video y los 4 pasos por escrito: https://claude.ai/artifact/9aMrJXiWqu9R72ho6qjgmc (privada: el dueño la
+  comparte). Al dueño se le mandaron dos MP4: 720×1280 (6 MB, para WhatsApp) y 1080×1920 (17 MB). El video NO está en el repo.
+- **Rehacerlo cuando cambie el formulario**: `herramientas/video_pedido/` (`recibo.js` → `grabar.js` → `armar.py`; cómo, en la cabecera de
+  `grabar.js`). Los mapas de verdad no se alcanzan desde acá: el mapita usa cuadraditos dibujados (calles y manzanas) y Leaflet local
+  (`LEAFLET_DIR`). ⚠️ La captura a 1080 de ancho da ~12 cuadros/s (la máquina no da más): se graba a escala 2 (780×1386, ~20/s) y se agranda.
