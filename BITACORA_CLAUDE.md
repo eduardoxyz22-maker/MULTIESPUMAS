@@ -16429,4 +16429,5 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   hacer» lleva el aviso rojo `semana` («Dicen SIN STOCK en los próximos 5 días» → `admVerSemana('sin')`). Solo mira.
 - `tests/test_semana.js` (31, reloj clavado el jueves 29/10/2026, con el feriado del 02/11; `SEM_CAP` deja capturas). Muestra al dueño con
   datos inventados: https://claude.ai/artifact/M5CtFZ9oqZpoba2F5W1CL9. Preguntado: ¿hoy cuenta? (hoy sí) y ¿qué más parpadea? (hoy solo 🔴).
+  Batería entera: 259 suites, 8.310 bien, 2 rojas de siempre (ventas_marcas 1180 px; mispedidos por carga, sola 33/0).
   En la rama, `9b37682`; espera «publica».
