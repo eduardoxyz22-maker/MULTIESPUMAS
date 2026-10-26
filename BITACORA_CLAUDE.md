@@ -16320,3 +16320,25 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `test_ia_comprobantes` 43, `test_comprobantes_mes` 11, `test_cerrardia` 21, `test_ubic` 28, `test_rev3_admin` 49, `test_getlog` 21,
   `test_conflicto` 45, `test_carga` 41, `test_auditoria` 175, `test_rev2_admin` 22 (0 mal). Volver atrás: ✏️ a la versión anotada Y pegar
   la 26-a de `f6272ef…` (4.698 líneas). Lo que sigue lo hace el dueño: Comprobantes → 🤖 Revisar → «🧾 Leer las notas de venta».
+
+### §4mu — 📁 Comprobantes: el Excel con enlaces de verdad y la ventana con el estilo nuevo (26/10; en la rama `6016bae`, espera «publica»)
+- **Dueño** (captura del Excel con las direcciones como texto): *«qué feo se arma, los enlaces no aparecen directos para entrar»*; y de la
+  ventana: *«qué cutre se ve eso, no se ve moderno como lo nuevo que estabas desarrollando»*. Antes preguntó si cualquiera con el Excel
+  puede abrir los enlaces: SÍ (las fotos están «cualquiera con el enlace puede ver», a propósito: es lo que deja que el panel las muestre
+  sin sesión de Google, §4cd); la carpeta «Comprobantes para el contador» es privada. Se le ofreció que el Excel apunte a las copias
+  privadas (hace falta que el `.gs` devuelva el id de cada copia): no contestó, no está hecho.
+- **Excel** (`compsExcel`): la FOTO es `{ v:'Ver foto 1', s:XS_LINK, link:url }` → hyperlink de verdad. `buildSheetXml` arma
+  `<hyperlinks>` (r:id `rIdH1…`, `sheetLinks(sheet)` los numera igual en la hoja y en sus relaciones) y, con `textoOk`, `<ignoredErrors
+  numberStoredAsText>` (sin triangulitos verdes); `buildXlsx` escribe las relaciones de cada hoja (dibujo `rId1` + enlaces `TargetMode=
+  "External"`). ⚠️ Orden de bloques: sheetData → mergeCells → dataValidations → hyperlinks → ignoredErrors → drawing. Estilo nuevo AL FINAL
+  de `STYLES_XML`: fuente 9 (azul `0563C1` subrayada) y `cellXfs` 28 = `XS_LINK`. Encabezado `s:1` (turquesa). Comprobado abriendo el
+  archivo con openpyxl (enlaces, colores) y LibreOffice; `test_comprobantes_mes` §4d-4f lo lee con el zip y el XML (sin librerías).
+- **Ventana** (`compsAbrir`/`compsPintar`/`compsListaPintar`, clases `cp2-*`): mes en una píldora; arriba lo cobrado + anillo «N de M con
+  foto» (`compsAnillo`) + lo que dijo la IA (`compsIaEst`: ok · mal · sin leer; «⚠️ N para revisar» filtra); las tres acciones como
+  tarjetas (mismos ids `comps-carpeta-btn`, `comps-ia-btn`); bancos y «Sin foto» como fichas `.cps-r` que FILTRAN (`COMPS_VER.k`, tocar
+  otra vez = todos); buscador `#comps-q` (repinta solo `#comps-lista`, no pierde el foco); cada pago en tarjeta: día, cliente, «Nota ·
+  Recibo · vendedor», nombre de archivo chico, miniatura de cada foto (`fotoThumb(fid,160)`, `loading=lazy`, sin red queda el 📷) y monto.
+  Un solo scroll (sin la caja de 52vh). ≤640 px: filas en grilla y acciones en una fila de tres. Solo dibuja: las cuentas son las de
+  `compsMesDatos`. ⚠️ Las pruebas leen `.cps-r`, `.cps-t tbody tr` con el cliente en el PRIMER `<b>` (el día va en `<span>`) y `.cps-ok`.
+  `test_comprobantes_mes` §7 (filtros, buscador, miniaturas, 390/320 px). Capturas con datos inventados:
+  https://claude.ai/artifact/AHorTewkaDw9DtoSanBVW7

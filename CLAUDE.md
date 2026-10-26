@@ -982,6 +982,9 @@ las vendedoras** (PUBLICADO `fc1d028`): PDF por vendedora (`iacPdf`), texto para
 `ctaAv*`; Mis pedidos → Para hacer + Bloki, «✓ Ya lo corregí»). «La foto dice menos/más» sin acusar; 🧾 la nota de venta con el servidor **26-b** (IMPLEMENTADO
 26/10 por el dueño; `main` con el `.gs` y ESPERADA 26-b desde `d8550a1`; volver atrás: ✏️ a la versión anotada Y pegar la 26-a de `f6272ef…`, 4.698 líneas). 📅 **La fecha (regla del dueño)**: el primer pago = el día en que se cargó la venta (`x.ant`/`x.fCarga`), los demás = el día
 en que se registraron; si no coincide, se dice SIN preguntas (§4mt). 💵 «Guardar pide el saldo» (`997f2d6`): el dueño dijo NO publicarlo.
+📁 **Comprobantes con el estilo nuevo y el Excel con enlaces** (§4mu, en la rama `6016bae`, espera «publica»): «Ver foto» es un hyperlink de verdad
+(`link` en la celda → `sheetLinks`, `XS_LINK`=28 al final de `STYLES_XML`, `textoOk` = sin triangulitos); la ventana: total + anillo, acciones en
+tarjetas, bancos que filtran (`COMPS_VER`), buscador, miniaturas. ⚠️ Las pruebas leen `.cps-r`, el cliente en el PRIMER `<b>` de cada fila y `.cps-ok`.
 🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la
