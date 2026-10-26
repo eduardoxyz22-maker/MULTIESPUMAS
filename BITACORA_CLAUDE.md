@@ -16200,3 +16200,20 @@ Batería sobre la rama con §4mp (25/10): 253 suites, 8.168 bien; roja solo `tes
 🏭 **«La fábrica de Eduardo» queda como está** (26/10): el dueño preguntó por qué «copacaba oruro» salía repetido en sus pedidos. Es la
 columna por cliente de `#mis-dep-cols` (lo que falta cargar, solo con Eduardo elegido) + la tarjeta del mismo pedido en `#mis-lista`. Se le
 ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo sin que lo pida.
+
+### §4mq — 📁 Servidor `2026-10-25-a` implementado y «no veo las mejoras» (26/10)
+- **El dueño implementó la 25-a** (pidió «Dame la versión gs para subirla»; se le dio el enlace raw fijo a `d4495c2…`, 4.407 líneas, termina
+  en `}` con `return borrador;` antes; volver atrás = ✏️ a la versión anotada Y pegar la 15-a de `6a55598…`, 4.358 líneas). Verificado desde
+  acá con una consulta que no escribe nada (`{action:'geocode', links:[]}` → `version:"2026-10-25-a"`). El workflow «Diagnóstico de la
+  lectura» no se puede disparar desde esta sesión (403 de la integración).
+- **Publicado `ad16340`** sobre `05852cd`: el `.gs` 25-a a `main`, `SCRIPT_VERSION_ESPERADA='2026-10-25-a'` (solo esa línea de la página) y
+  `tests/test_servidor.js` de la rama (§11 l con 25-a + §25 de `compsCarpeta_`; con el de `main` daba 373/1). Batería: 254 suites, 8.128
+  bien; rojas `test_ventas_marcas` (la conocida) y `test_mispedidos` 32/1 (sola, 33/0: la inestable de siempre).
+- **«No veo las nuevas mejoras de contabilidad… ni mejoras visuales»**: el iPad mostraba una copia vieja de la página (GitHub Pages manda
+  la página con caché y Safari la guarda). En los navegadores de verdad nada de §4mg-§4mp depende del rol ni de la clave (salvo Proyección).
+  Se le dio la dirección con `?v=2610` (otra dirección = la baja de nuevo) y una guía con capturas publicada como página:
+  https://claude.ai/artifact/BKPW8BtbYdnybbjiUqgJVz («Dónde están las mejoras»; iPad acostado, clientes inventados de
+  `real/lista_anon.json`, armada con `scratchpad/guia/capturas_guia.js` + `armar.py`). La señal de que está en la nueva: «📋 Para hacer»
+  arriba a la izquierda en Contabilidad.
+- 💡 Idea para ofrecer (no hecha): que la página se dé cuenta sola de que hay una versión nueva publicada y lo diga con «🔄 Actualizar»
+  (hoy no hay ningún sello de versión de la PÁGINA a la vista).

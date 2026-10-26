@@ -962,14 +962,14 @@ Con un vendedor elegido: «📋 Para hacer» (`misHacerDatos`, con «✅ Al día
 `misEfectivoDatos`) y la bandeja de Kommo en filas (`borrBandejaCompacta`). En Playwright apagado salvo `MIS_TOP_PRUEBA`. «Ver todos» y la
 fábrica de Eduardo, igual. `tests/test_mis_arriba.js` (14).
 
-## ✨ Contabilidad y Stock arriba, colores, cargando y vacíos, 4 pasos, cierre y comprobantes (§4mg, 25/10, PUBLICADO `128bc86`; servidor 25-a SIN implementar: en `main` el `.gs` y `SCRIPT_VERSION_ESPERADA` siguen en 15-a)
+## ✨ Contabilidad y Stock arriba, colores, cargando y vacíos, 4 pasos, cierre y comprobantes (§4mg, 25/10, PUBLICADO `128bc86`; servidor 25-a IMPLEMENTADO 26/10 por el dueño, contesta `2026-10-25-a`; `main` con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 25-a desde `ad16340`)
 V2 `cxTopPintar` (Para hacer + libro en Bs por marca; lee `CX_TOP_M`/`CX_TOP_MK`/`cxMarcasDatos`, no cuenta nada; `.cx-nuevo` esconde lo
 viejo; clase `cx-libro`, nunca `.lb`). V3 `stkTopPintar` (4 fichas + «Más» en la barra de Stock; `.s3-on`). V5 `ahBotonCls` (rojo arreglar,
 ámbar revisar, turquesa lo demás). V6 `esqCargando`/`esqMisHtml`/`esqContaHtml`. V7 `vacioPoner` (misma frase + dibujo). En Playwright
 apagados salvo `CX_TOP_PRUEBA`, `STK_TOP_PRUEBA`, `MIS_TOP_PRUEBA`, `FP_PRUEBA`. V4 `fpArmar`/`fpPintar` (el formulario en 4 pasos: mueve los MISMOS
 nodos, «Listo» = `fxPasosEstado`). C3 `nxCierreControl` (lista de control del cierre; rojo bloquea «Bajar», la contraseña lo abre). C2
 `compsAbrir` (comprobantes del mes por banco con nombre de archivo y Excel con enlaces). 📁 La carpeta en Drive = **servidor `2026-10-25-a`**
-(`compsCarpeta_`, sin candado, solo fotos de la carpeta del panel, no duplica, tope de tiempo con `pendientes`; SIN implementar todavía):
+(`compsCarpeta_`, sin candado, solo fotos de la carpeta del panel, no duplica, tope de tiempo con `pendientes`; IMPLEMENTADO 26/10, enlace fijo `d4495c2…`, 4.407 líneas):
 la página solo la llama con `SERVER_VER` ≥ 25-a. ⚠️ Primero el dueño implementa el `.gs`, después se publica la página. Volver atrás:
 ✏️ a la versión anotada Y pegar la 15-a de `6a5559844026edc3594b9a1b8d3724c348d3bd53` (4.358 líneas).
 Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_form_pasos`, `test_cierre_control`, `test_comprobantes_mes`.
