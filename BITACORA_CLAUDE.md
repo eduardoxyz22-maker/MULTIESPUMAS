@@ -16380,3 +16380,14 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   · Enlace público para el grupo: https://eduardoxyz22-maker.github.io/MULTIESPUMAS/videos/como-cargar-un-pedido.mp4 · todos F5.
   · `tests/test_video_pedido.js` (11); `test_asistente_ak` §I pone `me_asis_video` como ya ofrecido (cambio a conciencia). Batería sobre la
     copia publicada: 256 suites, 8.228 bien; rojas test_ventas_marcas (conocida) y test_mispedidos (carga; sola 33/0).
+- **💵🏪 Dos videos más** (26/10, dueño: *«¿también enseña cómo cargar un pago o saldo pendiente?»* → *«Ok. Y también registrar una venta de
+  tienda»*; en la rama `e23cf0b`, espera «publica»): `videos/como-cobrar-el-saldo.mp4` (1 min 20 s: Contabilidad → «Ver quiénes» → la venta →
+  «💵 Registrar un pago»: monto, N° de nota del recibo, QR + banco, captura → «➕ Registrar pago» → «✅ Listo» → los dos pagos y PAGADO) y
+  `videos/como-registrar-venta-de-tienda.mp4` (1 min 25 s: Contabilidad → «🏪 Venta de tienda» → la tienda sola → nota, cliente, producto →
+  «SÍ, pagado», QR, cuánto entró, banco, captura → «Registrar venta de tienda» → 🏪 SALIÓ DE TIENDA). Las capturas de QR son genéricas, con
+  «EJEMPLO» y sin la marca de ningún banco (`recibo.js`). `VIDEOS {pedido, pago, tienda}` + `verVideo(k)`/`videoUrl(k)`; `verVideoPedido`
+  queda. Bloki: `vid:'pago'` en «¿Cómo anoto el pago o un adelanto?» y «¿Cómo registro un pago en Contabilidad?»; respuesta NUEVA al final
+  «¿Cómo registro una venta de tienda?» (`vid:'tienda'`, señala el botón de Contabilidad) → 22 respuestas, 18 para un vendedor
+  (`test_asistente` NT/NV a conciencia). La oferta automática sigue siendo solo la del pedido. `grabar.js … [pedido|pago|tienda]`.
+  `test_video_pedido` (16). Página: https://claude.ai/artifact/9aMrJXiWqu9R72ho6qjgmc (v2, los tres videos).
+  ⚠️ El panel dice «el N° de nota de venta del recibo de este pago» (cada pago lleva el suyo): el video lo dice igual, sin inventar otra regla.
