@@ -16409,3 +16409,9 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   un pago con foto aparece «Leer la foto que falta (~US$)» y leer lo decide la persona) con «✅ Ya están leídas las N fotos de <mes> [de X]».
   Con filtro: «👤 Solo los pagos de X (el filtro de Contabilidad) · Ver todas las vendedoras» (`iacTodas`: vacía `cta-vendedor` y relee).
 - `test_ia_comprobantes` §13 (47). PUBLICADO 26/10 (dueño: «publica»), `0564f1f` (solo `pedidos.html` y la prueba, con `format-patch`).
+
+### §4mx — El anillo de «Hoy» en Administración (26/10; captura del dueño: *«¿no habías arreglado ese de mi círculo? se ve la letra en el fondo y el círculo delante»*)
+- En §4mo agrandé `.ah-dona-t small` (.56 → .6rem) sin mirar el anillo: «con carga completa» ya no entraba en el hueco (≈67 px) y quedaba
+  debajo del trazo blanco. Ahora adentro van solo el número y «camiones» y «con carga completa» va ABAJO del anillo (`.ah-dona-w`,
+  `.ah-dona-pie`). ⚠️ Lo que se ponga adentro de un anillo tiene que entrar en el hueco: `test_adm_arriba` §2 lo mide con «1/3 camiones»
+  (27; roja contra la página de antes). PUBLICADO 26/10, `b3c3997`.
