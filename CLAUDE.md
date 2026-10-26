@@ -977,6 +977,11 @@ Pruebas: `test_conta_arriba`, `test_stock_arriba`, `test_vacio_cargando`, `test_
 Comprobantes (`iacAbrir`/`iacComparar`: monto, banco, día, N° repetido; el servidor `iaComprobantes_` lee cada foto UNA vez, hoja «IA
 comprobantes», `leer:1` sin gastar) y la carpeta de a 20 por la API de Drive (`compsRapido_`). Las dos siguen con la ventana cerrada
 (`IAC`/`COMPS_CORRE`, `modalMuestra`). Con un servidor anterior la página NO las llama. `tests/test_ia_comprobantes.js`, `test_servidor` §26-27.
+🔒 **Solo con la contraseña de Administración** (`iacPuede`, dueño: «si no los vendedores se gastarán mis tokens»; PUBLICADO `881b14a`). 📤 **Compartir con
+las vendedoras** (PUBLICADO `fc1d028`): PDF por vendedora (`iacPdf`), texto para el grupo (`iacTextoGrupo`) y aviso en el panel (fila **`__avisos_conta__`**,
+`ctaAv*`; Mis pedidos → Para hacer + Bloki, «✓ Ya lo corregí»). «La foto dice menos/más» sin acusar; 🧾 la nota de venta con el servidor **26-b** (en la rama,
+espera que el dueño lo implemente). 📅 **La fecha (regla del dueño)**: el primer pago = el día en que se cargó la venta (`x.ant`/`x.fCarga`), los demás = el día
+en que se registraron; si no coincide, se dice SIN preguntas (§4mt). 💵 «Guardar pide el saldo» (`997f2d6`): el dueño dijo NO publicarlo.
 🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
 (si Guardar pide algo nuevo, va también ahí); `.s3{min-width:0}`; en un Excel, `s` es SIEMPRE un índice de `cellXfs` (`cellXml` ignora otra cosa) y la

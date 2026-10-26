@@ -16262,7 +16262,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `ad16340` se aplicó SOLO el diff `63e7000..f6272ef` de `pedidos.html`, `.gs`, `test_servidor.js` y `test_ia_comprobantes.js` (§4lt-d sigue
   en la rama). Batería ahí: 253 suites, 8.191 bien; rojas solo las conocidas. `main` = **`037b86a`**.
 
-### §4ms — 🔒 contraseña en la revisión con IA · 📤 compartir con las vendedoras · 💵 el saldo (en la rama, SIN publicar) (26/10)
+### §4ms — 🔒 contraseña en la revisión con IA · 📤 compartir con las vendedoras (PUBLICADO `fc1d028`) · 💵 el saldo (en la rama, SIN publicar) (26/10)
 - **🔒 PUBLICADO `881b14a`** (dueño: *«deben ingresar con contraseña porque si no los vendedores se gastarán mis tokens… lo de revisar las fotos
   con IA»*): la ventana, «Leer» y «Leer de nuevo» piden la contraseña de Administración (`iacPuede` = `UNLOCKED` o `IAC.clave`, una vez por
   página abierta; `iacClaveProbar` contra `LS_ADMIN`). Las marcas ✅/⚠️ IA de la tabla (de `leer:1`, gratis) se siguen viendo. El servidor no
@@ -16284,7 +16284,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   publicar algo de la rama, aplicar solo los diffs de lo que se publica (el de `997f2d6` toca `fxPasosEstado`, `fxDerPintar`, `submitPedido` y
   agrega `cobroSinMonto`/`ventaGuardadaSinMonto`/`saldoObligActivo` + `tests/test_saldo_obligatorio.js`).
 
-### §4mt — 🧾 «La foto dice menos» no es «falta plata» + servidor `2026-10-26-b` lee la nota de venta (26/10; en la rama, espera «publica» e implementar)
+### §4mt — 🧾 «La foto dice menos» no es «falta plata» + servidor `2026-10-26-b` lee la nota de venta (26/10; la PÁGINA PUBLICADA `fc1d028` con ESPERADA 26-a; el `.gs` 26-b espera que el dueño lo implemente)
 - **Dueño** (con capturas: ROCIO VILCA QR 1.250 anotado y la foto 1.140; JEISON MONTAÑO QR 990 anotado y la foto 390): *«dice que falta dinero
   siendo que algunas compras hay efectivo pagado… da a entender que falta en el monto»*, *«ejemplo 390 en QR y 600 en efectivo, lo dice la
   segunda imagen»* (la 2ª foto es la NOTA DE VENTA). O sea: la plata está, pero se anotó todo como QR.
@@ -16308,3 +16308,9 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - 📝 **Para después (dueño, 26/10, captura: «para el futuro tu letra queda detrás del círculo en Administración, anotado para verlo después»)**:
   el anillo «2/3 camiones con carga completa» de `#adm-hoy` (`.ah-dona` / `.ah-dona-t`, `pedidos.html` ~17983): el texto chico se monta
   sobre el aro del círculo. No tocado todavía.
+- **Publicado `fc1d028`** (dueño: «publica»): en `pub_mn` sobre `881b14a` = compartir (`dc132d6`) + la página y la prueba de `09d6af8`
+  (`SCRIPT_VERSION_ESPERADA` vuelta a **26-a**: el `.gs` de `main` sigue 26-a) + la fecha (`d9b733d`, `99d7016`). Sin el saldo (`997f2d6`).
+  Batería ahí: 253 suites, 8.204 bien; rojas `test_ventas_marcas` (la conocida) y `test_escenas_form` 23/1 y `test_producir_reparto` 64/1
+  (solas 24/0 y 65/0: la máquina cargada). Después, solas: `test_ia_comprobantes` 43, `test_comprobantes_mes` 11, `test_servidor` 407,
+  `test_mis_arriba` 14, `test_asistente_rev` 17, `test_asistente_ak` 38, `test_bloki` 19, `test_asistente` 24, `test_mispedidos` 33.
+  ⚠️ Cuando el dueño implemente la 26-b: a `main` el `.gs` 26-b + ESPERADA 26-b + `test_servidor` de la rama.
