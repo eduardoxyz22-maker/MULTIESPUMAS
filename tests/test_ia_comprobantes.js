@@ -343,6 +343,41 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('12d. 🧾 con la 26-b: el botón ofrece leer las notas de venta de los pagos con diferencia y las pide con `forzar`', r12.sinBoton && JSON.stringify(r12.porLeer)==='["zv"]' &&
     /Leer las notas de venta \(1 foto/.test(r12.boton) && r12.pidio.length===1 && JSON.stringify(r12.pidio[0].forzar)==='["zv"]', r12);
 
+  /* 13 · (26/10, el dueño con todo leído: «¿y el botón revisar con IA?») con todo leído igual hay un botón, y el filtro de vendedora se dice */
+  const r13 = await ev(async () => {
+    var out={}, avisos=[], t0=window.toast; window.toast=function(m){ avisos.push(String(m)); };
+    iacIds(iacPagos('2026-10')).forEach(function(f){ if(!IAC.res[f]){ IAC.res[f]={ cp:true, le:true, m:1, mo:'BOB', f:'2026-10-15', bd:'BISA', ti:'qr', t:1 }; __S.guardado[f]=IAC.res[f]; } });
+    IAC.estado=''; IAC.err='';
+    iacAbrir('2026-10'); await new Promise(function(r){ setTimeout(r, 120); });
+    out.leer=!!document.getElementById('iac-leer-btn');
+    out.buscar=(document.getElementById('iac-buscar-btn')||{}).textContent||'';
+    out.txt=(document.querySelector('.iac-listo')||{}).textContent||'';
+    __S.llamadas=[];
+    document.getElementById('iac-buscar-btn').click(); await new Promise(function(r){ setTimeout(r, 200); });
+    out.sinNuevos=avisos.slice(); out.gasto=__S.llamadas.some(function(b){ return b.action==='iaComprobantes' && !b.leer; });
+    /* entra un pago nuevo con foto: el botón lo trae y ofrece leerlo (sin leerlo solo) */
+    STATE.push({ id:'zz9', oc:'10-991', nota:'1700', cliente:'NUEVO PAGO', celular:'7', fecha:'2026-10-26', turno:'AM', zona:'Norte', vendedor:'Carola Chavez',
+      productos:[{ desc:'COLCHON', cant:1, precio:500 }], saldo:0, acuenta:0, pagado:true, ts:Date.now(),
+      metodoPago:textoCobros([{ metodo:'QR', banco:'BISA', monto:500, fecha:'2026-10-26', nota:'1700', comps:['nueva1'] }]) });
+    avisos.length=0; __S.llamadas=[];
+    document.getElementById('iac-buscar-btn').click(); await new Promise(function(r){ setTimeout(r, 200); });
+    out.conNuevo=avisos.slice(); out.leer2=(document.getElementById('iac-leer-btn')||{}).textContent||'';
+    out.gasto2=__S.llamadas.some(function(b){ return b.action==='iaComprobantes' && !b.leer; });
+    STATE=STATE.filter(function(p){ return p.id!=='zz9'; });
+    /* Contabilidad filtrada por una vendedora: se dice y se puede ver a todas */
+    var s=document.getElementById('cta-vendedor');
+    if(![].some.call(s.options, function(o){ return o.value==='Carola Chavez'; })){ var o=document.createElement('option'); o.value=o.textContent='Carola Chavez'; s.appendChild(o); }
+    s.value='Carola Chavez'; iacPintar();
+    out.vend=(document.querySelector('.iac-vend')||{}).textContent||'';
+    document.querySelector('.iac-vend button').click(); await new Promise(function(r){ setTimeout(r, 120); });
+    out.vendDespues=s.value; out.vendLinea=!!document.querySelector('.iac-vend');
+    closeModal(); window.toast=t0; return out;
+  });
+  chk('13a. con todo leído no está «Leer…» pero sí «🤖 Revisar los pagos nuevos», y dice que ya está todo leído', !r13.leer && /Revisar los pagos nuevos/.test(r13.buscar) && /Ya están leídas las \d+ fotos de octubre/.test(r13.txt), r13);
+  chk('13b. tocarlo sin pagos nuevos: relee, avisa «no entraron pagos nuevos» y no gasta nada', r13.sinNuevos.some(a=>/No entraron pagos nuevos/.test(a)) && !r13.gasto, r13.sinNuevos);
+  chk('13c. con un pago nuevo con foto: aparece «Leer la foto que falta» con su costo y NO lee solo', /Leer la foto que falta/.test(r13.leer2) && /US\$/.test(r13.leer2) && !r13.gasto2 && r13.conNuevo.some(a=>/sin leer/.test(a)), { leer2:r13.leer2, a:r13.conNuevo, g:r13.gasto2 });
+  chk('13d. Contabilidad filtrada por una vendedora: «Solo los pagos de Carola» y «Ver todas las vendedoras» saca el filtro', /Solo los pagos de Carola Chavez/.test(r13.vend) && r13.vendDespues==='' && !r13.vendLinea, r13);
+
   chk('sin errores en la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
