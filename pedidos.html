@@ -5327,7 +5327,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-26-a';   // (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-26-b';   // (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -42894,6 +42894,19 @@ var IAC_ESTADOS={
   clave:'La clave de Claude no sirve: revisá <b>ANTHROPIC_API_KEY</b> en las Propiedades del script.',
   credito:'Se acabó el crédito de Claude: hay que cargar saldo en la consola de Anthropic.' };
 function iacServidorOk(){ return String(SERVER_VER||'')>=IAC_SERVIDOR; }
+/* 🧾 (26/10, servidor 2026-10-26-b) Claude reconoce la nota de venta (`nv`, con lo pagado por medio). Las fotos que NO son comprobante de
+   los pagos donde la foto dice menos o más se leyeron con la pregunta de antes (`pv` < 2): «🧾 Leer las notas de venta» las vuelve a leer. */
+var IAC_NOTAS_SERVIDOR='2026-10-26-b';
+function iacNotasServidorOk(){ return String(SERVER_VER||'')>=IAC_NOTAS_SERVIDOR; }
+function iacNotasPorLeer(mes){
+  var L=iacPagos(mes), refs=iacRefs(L), v={}, out=[];
+  L.forEach(function(x){
+    var c=iacComparar(x, refs); if(!(c.mot||[]).some(function(m){ return m.k==='menos' || m.k==='mas'; })) return;
+    x.comps.forEach(function(f){ var o=IAC.res[f]; if(o && !o.err && o.cp===false && !(Number(o.pv)>=2) && !v[f]){ v[f]=1; out.push(f); } });
+  });
+  return out;
+}
+function iacLeerNotas(){ var L=iacNotasPorLeer(IAC.mes); if(!L.length) return Promise.resolve(); return iacLeer(L, true); }
 function iacPagos(mes){ return compsMesDatos(mes).filter(function(x){ return x.comps.length>0; }); }
 function iacIds(L){ var v={}, out=[]; L.forEach(function(x){ x.comps.forEach(function(f){ if(!v[f]){ v[f]=1; out.push(f); } }); }); return out; }
 function iacUsd(n){ n=Number(n)||0; return 'US$ '+(n>0 && n<0.01 ? '0,01' : n.toFixed(2).replace('.',',')); }
@@ -42911,6 +42924,8 @@ function iacBanco(t){
   if(/TIGO/.test(s)) return 'TIGO';
   return s.replace(/\bBANCO\b|\bS\.?\s?A\.?$/g,' ').replace(/[^A-Z0-9 ]+/g,' ').trim().split(/\s+/)[0]||'';
 }
+/* Días de `a` a `b` con signo (positivo = `b` es después). */
+function iacDiasDe(a, b){ var x=Date.parse(a+'T12:00:00Z'), y=Date.parse(b+'T12:00:00Z'); return (isNaN(x)||isNaN(y)) ? 0 : Math.round((y-x)/864e5); }
 function iacDias(a, b){ var x=Date.parse(a+'T12:00:00Z'), y=Date.parse(b+'T12:00:00Z'); return (isNaN(x)||isNaN(y)) ? 0 : Math.round(Math.abs(x-y)/864e5); }
 function iacRefLimpia(r){ r=String(r||'').replace(/[^0-9A-Za-z]/g,''); return r.length>=6 ? r.toUpperCase() : ''; }
 function iacBuena(o){ return !!o && !o.err && o.cp!==false && o.le!==false && Number(o.m)>0; }
@@ -42943,17 +42958,44 @@ function iacComparar(x, refs){
   var mot=[], b0=(bs[0]||buenas[0]).o, dice=bs.length>1 ? suma : Number(b0.m);
   if(!okM && usd.length && !bs.length) mot.push({ k:'usd', chip:'⚠️ Está en dólares', t:'La foto dice <b>US$ '+esc(String(usd[0].o.m))+'</b> y anotaste <b>'+fmtBs(monto)+'</b>. Revisá el tipo de cambio.',
     c:'la foto está en dólares (US$ '+usd[0].o.m+')' });
-  else if(!okM) mot.push({ k:'monto', chip:'⚠️ No coincide el monto', t:'La foto dice <b>'+fmtBs(dice)+'</b>'+(bs.length>1?(' (sumando las '+bs.length+' fotos)'):'')+', anotaste <b>'+fmtBs(monto)+'</b>. Revisá cuál está bien.',
-    c:'la foto dice '+fmtBs(dice)+' y está anotado '+fmtBs(monto) });
+  else if(!okM){
+    /* (26/10, el dueño: «dice que falta dinero siendo que algunas compras hay efectivo pagado… 390 en QR y 600 en efectivo, lo dice la
+       segunda imagen») Que la foto diga MENOS no es «falta plata»: muchas veces el resto se pagó en efectivo y se anotó todo como QR. Si la
+       NOTA DE VENTA está leída (servidor 26-b: `nv`, con lo pagado por medio) y QR + efectivo cierran, se dice eso; si no, se explica la
+       diferencia sin acusar. */
+    var dif=r2(monto-dice), metNom=String(x.metB||'QR'), nvs=L.filter(function(l){ return l.o && !l.o.err && l.o.nv; }).map(function(l){ return l.o; }), nv=nvs[0]||null;
+    var nEf=nv ? r2(Number(nv.ne)||0) : 0, sumTxt=bs.length>1 ? (' (sumando las '+bs.length+' fotos)') : '';
+    if(nv && nEf>0.005 && Math.abs(dice+nEf-monto)<0.005) mot.push({ k:'mixto', chip:'🧾 Una parte fue en efectivo',
+      t:'La nota de venta dice <b>'+esc(metNom)+' '+fmtBs(dice)+'</b> + <b>efectivo '+fmtBs(nEf)+'</b> = '+fmtBs(monto)+'. La plata está, pero se anotó todo como '+esc(x.met)+
+        ': corregí el pago a '+esc(metNom)+' '+fmtBs(dice)+' y efectivo '+fmtBs(nEf)+'.',
+      c:'la nota de venta dice '+metNom+' '+fmtBs(dice)+' + efectivo '+fmtBs(nEf)+': la plata está, pero se anotó todo como '+x.met+' — corregí el pago a '+metNom+' '+fmtBs(dice)+' y efectivo '+fmtBs(nEf) });
+    else if(dif>0) mot.push({ k:'menos', chip:'⚠️ La foto dice menos',
+      t:'La foto dice <b>'+fmtBs(dice)+'</b>'+sumTxt+' y el pago está anotado <b>'+fmtBs(monto)+'</b> como '+esc(x.met)+': la foto cubre <b>'+fmtBs(dif)+'</b> menos. '+
+        'Si esa parte se pagó en efectivo u otro medio, anotala como otro pago ('+esc(metNom)+' '+fmtBs(dice)+' + efectivo '+fmtBs(dif)+'); si no, falta el comprobante de esa parte.',
+      c:'la foto dice '+fmtBs(dice)+' y está anotado '+fmtBs(monto)+' como '+x.met+' ('+fmtBs(dif)+' menos): si esa parte fue en efectivo, anotala como otro pago; si no, falta su comprobante' });
+    else mot.push({ k:'mas', chip:'⚠️ La foto dice más',
+      t:'La foto dice <b>'+fmtBs(dice)+'</b>'+sumTxt+' y el pago está anotado <b>'+fmtBs(monto)+'</b>: la foto dice <b>'+fmtBs(-dif)+'</b> más. ¿Se anotó de menos, o la foto es de otro pago?',
+      c:'la foto dice '+fmtBs(dice)+' y está anotado '+fmtBs(monto)+' ('+fmtBs(-dif)+' más): ¿se anotó de menos o la foto es de otro pago?' });
+  }
   var ban=iacBanco(x.ban);
   if(ban && !/^Tarjeta/i.test(String(x.metB||''))){
     var bds=buenas.map(function(l){ return String(l.o.bd||''); }).filter(Boolean);
     if(bds.length && !bds.some(function(b){ return iacBanco(b)===ban; })) mot.push({ k:'banco', chip:'⚠️ Otro banco', t:'La foto dice que entró a <b>'+esc(bds[0])+'</b> y está anotado en <b>'+esc(x.ban)+'</b>.',
       c:'la foto dice que entró a '+bds[0]+' y está anotado en '+x.ban });
   }
+  /* 📅 (26/10) Que la clienta pague unos días antes de que se cargue la venta es normal (PATRICIA DAVALOS: foto del 06/10, anotado el 08/10):
+     se avisa la foto de DESPUÉS de lo anotado (¿se anotó antes de que llegara la plata?), la de 8 días antes o más (¿otra compra?) y la de
+     otro MES (para el contador, ese pago está en el extracto del otro mes). La foto más cerca de lo anotado es la que cuenta. */
   var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean);
-  if(fs.length && x.f && !fs.some(function(f){ return iacDias(f, x.f)<2; })) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(fs[0]))+'</b> y el pago está anotado el <b>'+esc(fmtFechaCorta(x.f))+'</b>.',
-    c:'la foto es del '+fmtFechaCorta(fs[0])+' y el pago está anotado el '+fmtFechaCorta(x.f) });
+  if(fs.length && x.f){
+    var f0=fs.slice().sort(function(a,b){ return iacDias(a, x.f)-iacDias(b, x.f); })[0], dd=iacDiasDe(x.f, f0);
+    if(dd>=2) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b>, <b>después</b> de cuando se anotó el pago (<b>'+esc(fmtFechaCorta(x.f))+'</b>): ¿se anotó antes de que llegara la plata?',
+      c:'la foto es del '+fmtFechaCorta(f0)+', después de cuando se anotó el pago ('+fmtFechaCorta(x.f)+')' });
+    else if(dd<=-8) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b>, '+(-dd)+' días antes de cuando se anotó el pago (<b>'+esc(fmtFechaCorta(x.f))+'</b>): ¿es de otra compra?',
+      c:'la foto es del '+fmtFechaCorta(f0)+', '+(-dd)+' días antes de cuando se anotó el pago ('+fmtFechaCorta(x.f)+'): ¿es de otra compra?' });
+    else if(f0.slice(0,7)!==String(x.f).slice(0,7)) mot.push({ k:'mes', chip:'⚠️ Otro mes', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b> ('+esc(mesNombre(f0.slice(0,7)))+') y el pago está anotado el <b>'+esc(fmtFechaCorta(x.f))+'</b> ('+esc(mesNombre(String(x.f).slice(0,7)))+'): para el contador va en el otro mes.',
+      c:'la foto es del '+fmtFechaCorta(f0)+' ('+mesNombre(f0.slice(0,7))+') y el pago está anotado el '+fmtFechaCorta(x.f)+' ('+mesNombre(String(x.f).slice(0,7))+')' });
+  }
   var vistos={};
   buenas.forEach(function(l){
     var r=iacRefLimpia(l.o.ref); if(!r || vistos[r]) return;
@@ -43036,6 +43078,9 @@ function iacPintar(){
   else if(faltan && !CONNECTED) h+='<div class="cps-carpeta cps-carpeta-mal">Sin conexión con la planilla: la lectura la hace el servidor de Google.</div>';
   else if(faltan && !IAC_ESTADOS[IAC.estado]) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-leer-btn" onclick="iacLeer()">🤖 Leer '+(faltan===1?'la foto que falta':('las '+faltan+' fotos que faltan'))+' (~'+iacUsd(faltan*porFoto)+')</button>'+
     '<small>Cada foto se lee una sola vez: la próxima vez sale de lo guardado, sin costo.</small></div>';
+  var notas=(!IAC.corre && iacNotasServidorOk() && !IAC_ESTADOS[IAC.estado]) ? iacNotasPorLeer(mes) : [];
+  if(notas.length) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-notas-btn" onclick="iacLeerNotas()">🧾 Leer las notas de venta ('+notas.length+' foto'+(notas.length===1?'':'s')+', ~'+iacUsd(notas.length*porFoto)+')</button>'+
+    '<small>En los pagos donde la foto dice menos o más: la nota de venta dice cuánto fue en efectivo. Si la plata está, el panel lo dice.</small></div>';
   if(IAC_ESTADOS[IAC.estado] && !IAC.corre) h+='<div class="cps-carpeta cps-carpeta-mal">⚠️ '+IAC_ESTADOS[IAC.estado]+'</div>';
   if(IAC.err && !IAC.corre) h+='<div class="cps-carpeta cps-carpeta-mal">⚠️ Se cortó: '+esc(IAC.err)+'. Tocá otra vez y sigue donde quedó (lo leído no se vuelve a pagar).</div>';
   h+='</div>';
@@ -43075,10 +43120,11 @@ function iacReleer(lista){
     .then(function(){ fs.forEach(function(f){ delete IAC.releo[f]; }); iacRepintar(); });
 }
 /* Lee todas las fotos del mes que faltan, de a tandas. */
-function iacLeer(){
+/* `lista`+`forzar` (26/10, 🧾): volver a leer esas fotos aunque ya estén leídas (las notas de venta con la pregunta nueva). */
+function iacLeer(lista, forzar){
   if(IAC.corre) return IAC.prom;
   if(!iacPuede() || !iacServidorOk() || !CONNECTED) return;
-  var mes=IAC.mes, ids=iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
+  var mes=IAC.mes, ids=Array.isArray(lista) ? lista.slice() : iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; });
   if(!ids.length){ iacPintar(); return Promise.resolve(); }
   IAC.corre=true; IAC.estado=''; IAC.err=''; IAC.tot=ids.length; IAC.hechas=0; IAC.t0=Date.now(); IAC.leyendoMes=mes; IAC.reint={};
   var cola=ids.slice(), vueltas=0;
@@ -43100,11 +43146,11 @@ function iacLeer(){
     if(!cola.length || vueltas>300) return fin();
     vueltas++;
     var t=cola.slice(0, IAC_TANDA_PAG); cola=cola.slice(IAC_TANDA_PAG);
-    return apiPost({ action:'iaComprobantes', fotos:t }).then(function(r){
+    return apiPost(forzar ? { action:'iaComprobantes', fotos:t, forzar:t } : { action:'iaComprobantes', fotos:t }).then(function(r){
       if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
       iacTomar(r);
-      var nuevas=0; t.forEach(function(f){ if(IAC.res[f]) nuevas++; }); IAC.hechas+=nuevas;
-      var pend=(r.pendientes||[]).filter(function(f){ if(IAC.res[f]) return false; IAC.reint[f]=(IAC.reint[f]||0)+1; return IAC.reint[f]<=IAC_REINTENTOS; });
+      var R=r.res||{}, nuevas=0; t.forEach(function(f){ if(R[f]) nuevas++; }); IAC.hechas+=nuevas;
+      var pend=(r.pendientes||[]).filter(function(f){ if(R[f]) return false; IAC.reint[f]=(IAC.reint[f]||0)+1; return IAC.reint[f]<=IAC_REINTENTOS; });
       if(r.estado){ IAC.estado=r.estado; return fin(); }
       cola=cola.concat(pend);
       iacRepintar();
