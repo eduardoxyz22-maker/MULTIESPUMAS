@@ -2624,6 +2624,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ah-dona-t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1}
 .ah-dona-t b{font-size:1.35rem;font-weight:900;font-variant-numeric:tabular-nums}.ah-dona-t b i{font-style:normal;font-size:.9rem;opacity:.75}
 .ah-dona-t small{font-size:.56rem;font-weight:700;opacity:.88;margin-top:3px;line-height:1.15}
+.ah-dona-w{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.ah-dona-pie{font-size:.66rem;font-weight:700;opacity:.9;line-height:1.2;text-align:center;max-width:96px}
 .ah-sts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .ah-st{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 9px;display:grid;grid-template-columns:auto 1fr;column-gap:7px;align-items:center;min-width:0}
 .ah-st-i{grid-row:span 2;font-size:1rem}
@@ -2999,7 +3001,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
   .adm-secs .as-ic{width:28px;height:28px;font-size:.95rem}.adm-secs .as-t small{display:none}.adm-secs .as-t b{font-size:.78rem}
   .ah-largo{display:none}
   .ah-st small{white-space:normal}
-  .ah-hoy-c{grid-template-columns:1fr}.ah-dona{margin:0 auto}
+  .ah-hoy-c{grid-template-columns:1fr}.ah-dona,.ah-dona-w{margin:0 auto}
   .ah-hoy-acc{grid-template-columns:repeat(3,minmax(0,1fr))}.ah-hoy-acc button{font-size:.7rem}
   .adm-secs .as-abre{display:none}
   .ah-cupos-2{margin-left:0;padding-left:0;border-left:0}
@@ -18075,7 +18077,10 @@ function admHoyPintar(H){
   var tile=function(ic, v, t, cls){ return '<div class="ah-st'+(cls?(' '+cls):'')+'"><span class="ah-st-i">'+ic+'</span><b>'+v+'</b><small>'+t+'</small></div>'; };
   var h='<div class="ah-hoy-cab"><h4>☀️ Hoy, '+esc(dn)+' '+esc(fmtFechaCorta(H.hoy))+cuando+'</h4><small>'+hora+'</small></div>'+
     '<div class="ah-hoy-c">'+
-      '<div class="ah-dona">'+anillo+'<div class="ah-dona-t"><b>'+H.ok+'<i>/'+H.cams+'</i></b><small>cami'+(H.cams===1?'ón':'ones')+'<br>con carga completa</small></div></div>'+
+      /* (26/10, el dueño: «se ve la letra en el fondo y el círculo delante») «con carga completa» no entraba en el hueco del anillo y quedaba
+         debajo del trazo: adentro van solo el número y «camiones», y lo demás va abajo del anillo. */
+      '<div class="ah-dona-w"><div class="ah-dona">'+anillo+'<div class="ah-dona-t"><b>'+H.ok+'<i>/'+H.cams+'</i></b><small>cami'+(H.cams===1?'ón':'ones')+'</small></div></div>'+
+        '<div class="ah-dona-pie">con carga completa</div></div>'+
       '<div class="ah-sts">'+
         tile('📦', H.faltan, H.faltan===1?'bulto por cargar':'bultos por cargar', H.faltan?'':'ah-st-ok')+
         tile('✅', H.listos+'<i> de '+H.pedidos+'</i>', 'pedidos listos'+(H.ent?(' · '+H.ent+' entregado'+(H.ent===1?'':'s')):''))+
