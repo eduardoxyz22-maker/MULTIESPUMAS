@@ -16254,3 +16254,6 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - **Costo**: ~US$ 0,015 por foto con el modelo de siempre (US$ 4/20 por millón de tokens): ~US$ 3-5 por mes con ~300 fotos, una sola
   vez por foto. ⚠️ La estimación de «Bs 6/mes» que se le dijo antes era baja: corregírsela.
 - Publicar: primero el dueño implementa la 26-a (enlace raw fijo al commit), después la página a `main`.
+- Batería en la rama (`f6272ef`): 254 suites, 8.221 bien; rojas solo las conocidas (`test_ventas_marcas` 21/1; `test_mispedidos` 32/1,
+  sola 33/0). Al dueño se le dio el enlace raw fijo a `f6272efd31067b23287751295000fc34e449fc53` (4.698 líneas, termina en `}` con
+  `return borrador;` antes); volver atrás = ✏️ a la versión anotada Y pegar la 25-a de `d4495c236dbd71ef5f1582bf3deb8c7139b65ce7` (4.407).
