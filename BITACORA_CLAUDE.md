@@ -16342,3 +16342,11 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `compsMesDatos`. ⚠️ Las pruebas leen `.cps-r`, `.cps-t tbody tr` con el cliente en el PRIMER `<b>` (el día va en `<span>`) y `.cps-ok`.
   `test_comprobantes_mes` §7 (filtros, buscador, miniaturas, 390/320 px). Capturas con datos inventados:
   https://claude.ai/artifact/AHorTewkaDw9DtoSanBVW7
+- **Segunda vuelta (`ba2b1d3`)**, dueño con captura de las fichas de los bancos: *«todo ok pero esas fichas no me gustan, podría ser mejor»*.
+  Pasaron a **«Cómo se cobró»**: una barra con la parte de cada banco en Bs (`.cp2-barra`, tocar un tramo filtra; con un filtro, las demás
+  se apagan) y debajo una GRILLA alineada (`.cp2-fil` auto-fill 168 px; en el celular, 2 columnas) de `.cps-r`: punto de color + nombre,
+  cantidad grande y Bs; la elegida se pinta del color de su banco (`.on`), «Sin foto» en rojo suave (`.cp2-alerta`). Se probaron píldoras
+  primero: en la compu la última quedaba sola en otra fila. `COMPS_CACHE` = la cuenta del mes (con `x._ia` y `x._tag`) mientras la
+  ventana está abierta: el buscador solo filtra (468 pagos: 172 → 89 ms por tecla; abrir 207 ms contra 156 de la ventana vieja).
+  ⚠️ Con la batería cargando la máquina, `test_ia_comprobantes` 9b/9c dependen de que la ventana se dibuje rápido (la copia lenta de 6×40 ms
+  tiene que seguir corriendo al reabrir): se puso rojo una vez antes de la caché.
