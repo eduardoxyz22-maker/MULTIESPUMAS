@@ -16283,3 +16283,21 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - **💵 Guardar pide el saldo** (`997f2d6`, en la rama): el dueño, al verlo explicado, eligió **«No, dejalo guardado»** → NO va a `main`. ⚠️ Al
   publicar algo de la rama, aplicar solo los diffs de lo que se publica (el de `997f2d6` toca `fxPasosEstado`, `fxDerPintar`, `submitPedido` y
   agrega `cobroSinMonto`/`ventaGuardadaSinMonto`/`saldoObligActivo` + `tests/test_saldo_obligatorio.js`).
+
+### §4mt — 🧾 «La foto dice menos» no es «falta plata» + servidor `2026-10-26-b` lee la nota de venta (26/10; en la rama, espera «publica» e implementar)
+- **Dueño** (con capturas: ROCIO VILCA QR 1.250 anotado y la foto 1.140; JEISON MONTAÑO QR 990 anotado y la foto 390): *«dice que falta dinero
+  siendo que algunas compras hay efectivo pagado… da a entender que falta en el monto»*, *«ejemplo 390 en QR y 600 en efectivo, lo dice la
+  segunda imagen»* (la 2ª foto es la NOTA DE VENTA). O sea: la plata está, pero se anotó todo como QR.
+- **Página** (`iacComparar`): el motivo `monto` se parte en `menos` («⚠️ La foto dice menos»: cuánto menos y que si fue en efectivo se anota
+  como otro pago; si no, falta ese comprobante), `mas` («⚠️ La foto dice más»: ¿se anotó de menos o es otro pago?) y `mixto` («🧾 Una parte
+  fue en efectivo»: con la nota leída —`nv`— y QR + efectivo = lo anotado: «la plata está, corregí el pago a QR X y efectivo Y»).
+  **Fechas** (`iacDiasDe`, con signo; la foto más cerca de lo anotado): avisa solo si la foto es de DESPUÉS de lo anotado (2+ días), de 8+
+  días antes («¿otra compra?») o de otro MES («⚠️ Otro mes», para el contador). Pagar un par de días antes (PATRICIA DAVALOS, 06 vs 08/10) ya
+  no avisa. `test_ia_comprobantes` §12 (43 en total).
+- **Servidor 26-b** (`IAC_PREGUNTA_V`=2): el esquema pide `es_nota_venta`, `nota_total`, `nota_efectivo`, `nota_qr`, `nota_tarjeta`,
+  `nota_transferencia`; `iacNormal_` deja `pv` en toda lectura y, en una nota, `nv:1, cp:false, nt, ne, nq, nj, nr`. La página
+  (`IAC_NOTAS_SERVIDOR`): «🧾 Leer las notas de venta» (`iacNotasPorLeer`/`iacLeerNotas` → `iacLeer(lista, forzar)`) vuelve a leer SOLO las
+  fotos que no son comprobante (`cp:false`, `pv` < 2) de los pagos donde la foto dice menos o más. `test_servidor` §27 o2/o3 (409).
+  Enlace dado al dueño: `09d6af87781ce532cdda12be8f5a93c9db41022f` (4.714 líneas); volver atrás = la 26-a de `f6272ef…` (4.698).
+- **Para publicar** (`pub_mn` sobre `881b14a`): compartir (`dc132d6`) + la página y la prueba de `09d6af8` con `SCRIPT_VERSION_ESPERADA`
+  en **26-a** (el `.gs` de `main` sigue 26-a hasta que el dueño implemente la 26-b); después, `.gs` 26-b + ESPERADA 26-b + `test_servidor`.
