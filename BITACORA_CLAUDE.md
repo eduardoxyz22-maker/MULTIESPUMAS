@@ -16399,4 +16399,4 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   carteles «Hacé clic en…»; `armar.py <cuadros> <salida> [ancho=1920]`. La ventana del video es ancha (`openModal(…, true)`, `.vid-ped` 16:9
   limitado por el alto) para que entren los botones en una laptop. Bloki: «▶️ Ver el video (3 min / 1 min 30 s / 1 min 40 s)».
   ⚠️ **Publicar = `git format-patch` de los commits del cambio**, nunca `git diff main HEAD` de la rama: ese diff arrastró código de la rama sin
-  publicar (se notó antes de subir, se rehízo). Batería sobre la copia publicada: ver abajo.
+  publicar (se notó antes de subir, se rehízo). Batería sobre la copia publicada: 256 suites, 8.233 bien, 2 rojas: test_ventas_marcas (la de siempre, 1.180 px) y test_mispedidos (carga de la máquina; sola 33/0). Página de la guía (artefacto) v3 con los tres en formato compu (el del pedido a 1280×720 por el tope de 15 MB).
