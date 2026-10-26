@@ -142,7 +142,7 @@ function PREPARAR(){
     if(typeof asisTourFin==='function') asisTourFin();   // (12/10, I) la última es el recorrido guiado
     return out;
   }, { un:un, nombre:nombre, rol:rol });
-  const NT=21, NV=17;   // (12/10, G) 6 respuestas más: 19 en total, 15 para un vendedor · (15/10, §4lk) +2 de ATC: 21 y 17
+  const NT=22, NV=18;   // (12/10, G) 6 respuestas más: 19 en total, 15 para un vendedor · (15/10, §4lk) +2 de ATC: 21 y 17 · (26/10, §4mv) +1 venta de tienda: 22 y 18
   const R13 = (x) => Array.isArray(x) ? x : Array.from({length:NT}, () => ({}));
   r = R13(await recorrer(false, '', 'logistica'));
   chk('logística sin clave y sin nombre: las '+NT+' iluminan algo que se ve', Array.isArray(r) && r.length===NT && r.every(function(x){ return x.ve; }), r.filter(function(x){ return !x.ve; }));

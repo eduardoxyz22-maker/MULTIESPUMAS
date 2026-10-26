@@ -1,4 +1,4 @@
-/* 🎬 EL VIDEO «CÓMO CARGAR UN PEDIDO» Y BLOKI (§4mv, 26/10; dueño: «que Bloki enseñe y lleve al enlace»).
+/* 🎬 LOS VIDEOS QUE ENSEÑA BLOKI (§4mv, 26/10; dueño: «que Bloki enseñe y lleve al enlace» y «también cargar un pago… y registrar una venta de tienda»).
 
    LO QUE CUIDA:
    1. El video y su portada están al lado de la página (`videos/`), y `VIDEO_PEDIDO` los nombra.
@@ -7,6 +7,7 @@
    3. «¿Cómo hago…?»: buscar «video» (o «cómo aprendo») da «¿Cómo cargo un pedido nuevo?», y esa respuesta tiene «▶️ Ver el video».
    4. La ventana: video con controles y `playsinline`, «📋 Copiar el enlace» (dirección completa) y «Cerrar» lo corta.
    5. Logística o Administración (sin nombre de vendedor) no reciben la oferta.
+   6. «Cobrar el saldo» (en las dos respuestas de pagos) y «Venta de tienda» (respuesta nueva al final): cada «▶️ Ver el video» abre SU video.
    Reloj clavado (martes 27/10/2026, 10:00 de Bolivia). Datos sintéticos.
    Se corre:  node tests/test_video_pedido.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -39,6 +40,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   const r1 = await page.evaluate(() => ({ v:VIDEO_PEDIDO, p:VIDEO_PEDIDO_POSTER }));
   const arch = (u) => path.join(path.dirname(PEDIDOS), u.split('?')[0]);
   chk('1. el video y la portada están al lado de la página', /^videos\/.+\.mp4\?v=/.test(r1.v) && fs.existsSync(arch(r1.v)) && fs.statSync(arch(r1.v)).size>1e6 && fs.existsSync(arch(r1.p)), r1);
+  const r1b = await page.evaluate(() => Object.keys(VIDEOS).map(function(k){ return { k:k, v:VIDEOS[k].src, p:VIDEOS[k].poster, t:VIDEOS[k].t }; }));
+  chk('1b. los tres videos (pedido, pago, tienda) y sus portadas existen', r1b.length===3 && r1b.every(x => fs.existsSync(arch(x.v)) && fs.statSync(arch(x.v)).size>1e6 && fs.existsSync(arch(x.p))), r1b);
 
   /* 2 */
   const r2 = await page.evaluate(async () => {
@@ -54,7 +57,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var t3=gl.hidden ? '' : gl.innerText.replace(/\s+/g,' ');
     return { t1:t1, ls:ls, tour1:tour1, abre:abre, t2:t2, t3:t3 };
   });
-  chk('2a. la primera vez, Bloki ofrece el video de cómo se carga un pedido', /cómo se carga un pedido/.test(r2.t1) && /2 minutos/.test(r2.t1) && !!r2.ls && !r2.tour1, r2);
+  chk('2a. la primera vez, Bloki ofrece el video de cómo se carga un pedido', /cómo se carga un pedido/.test(r2.t1) && /3 minutos/.test(r2.t1) && !!r2.ls && !r2.tour1, r2);
   chk('2b. tocar el globo abre la ventana con el video', r2.abre, r2);
   chk('2c. la vez siguiente, el recorrido de siempre; y después ninguna de las dos', /Te muestro el panel/.test(r2.t2) && !/Te muestro el panel|cómo se carga/.test(r2.t3), r2);
 
@@ -65,7 +68,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var busca={ video:q('video'), aprendo:q('cómo aprendo a cargar un pedido'), mirar:q('quiero ver el video del pedido') };
     asisAbrir('ayuda'); ASIS.q='video'; ASIS_ABIERTA=asisBuscar('video')[0]; asisAyudaLista(); await esp(100);
     var b=[].filter.call(document.querySelectorAll('#asis-lista button'), function(x){ return /Ver el video/.test(x.textContent); })[0];
-    var otras=ASIS_AYUDA.filter(function(a){ return a.vid; }).length, pasos=ASIS_AYUDA[asisBuscar('video')[0]].p.join(' ');
+    var otras=ASIS_AYUDA.filter(function(a){ return a.vid==='pedido'; }).length, pasos=ASIS_AYUDA[asisBuscar('video')[0]].p.join(' ');
     if(b) b.click(); await esp(200);
     var m=document.getElementById('modal'), v=m.querySelector('video.vid-ped'), src=v && v.querySelector('source').getAttribute('src');
     var cerro=!document.getElementById('asis-panel') || document.getElementById('asis-panel').hidden;
@@ -77,7 +80,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       poster:v && v.getAttribute('poster'), cerroBloki:cerro, copiado:window._copiado, abrir:abrir && abrir.getAttribute('href'), abrirTarget:abrir && abrir.target, pausada:pausada, abierta:m.classList.contains('on') };
   });
   chk('3a. buscar «video», «cómo aprendo…» o «ver el video» lleva a «¿Cómo cargo un pedido nuevo?»', /pedido nuevo/.test(r3.busca.video) && /pedido nuevo/.test(r3.busca.aprendo) && /pedido nuevo/.test(r3.busca.mirar), r3.busca);
-  chk('3b. esa respuesta tiene «▶️ Ver el video» (solo esa) y nombra la foto del recibo', r3.hayBoton && r3.otras===1 && /foto del recibo/.test(r3.pasos), r3);
+  chk('3b. esa respuesta tiene «▶️ Ver el video» (el del pedido está solo en esa) y nombra la foto del recibo', r3.hayBoton && r3.otras===1 && /foto del recibo/.test(r3.pasos), r3);
   chk('4a. la ventana: el video con controles y playsinline, desde videos/, con portada; Bloki se cierra', r3.video && r3.controles && r3.inline && /^videos\/como-cargar-un-pedido\.mp4/.test(r3.src||'') && /^videos\//.test(r3.poster||'') && r3.cerroBloki, r3);
   chk('4b. «📋 Copiar el enlace» copia la dirección completa del video y «Abrir aparte» va a otra pestaña', /^file:\/\/.+\/videos\/como-cargar-un-pedido\.mp4$/.test(r3.copiado) && /^videos\//.test(r3.abrir||'') && r3.abrirTarget==='_blank', r3);
   chk('4c. «Cerrar» cierra la ventana y corta el video', !r3.abierta && r3.pausada, r3);
@@ -92,6 +95,28 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     return { t:t, ls:localStorage.getItem('me_asis_video') };
   });
   chk('5. logística no recibe la oferta del video', !/cómo se carga un pedido/.test(r5.t) && !r5.ls, r5);
+
+  /* 6 */
+  const r6 = await page.evaluate(async () => {
+    var esp=function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+    quienRol(''); setVendedorMem('Mirian Salazar');
+    var abrir=async function(q){ var i=asisBuscar(q)[0], a=ASIS_AYUDA[i]; asisAbrir('ayuda'); ASIS.q=q; ASIS_ABIERTA=i; asisAyudaLista(); await esp(80);
+      var b=[].filter.call(document.querySelectorAll('#asis-lista button'), function(x){ return /Ver el video/.test(x.textContent); })[0], txt=b ? b.textContent : '';
+      if(b) b.click(); await esp(150);
+      var m=document.getElementById('modal'), v=m.querySelector('video.vid-ped'), out={ q:a.q, vid:a.vid, boton:txt, src:v && v.querySelector('source').getAttribute('src'), tit:(m.querySelector('.modal-h h3')||{}).textContent||'' };
+      closeModal(); await esp(50); return out; };
+    var pagoA=await abrir('cómo anoto un adelanto'), pagoC=await abrir('registro un pago en contabilidad'), saldo=await abrir('cobrar el saldo'), tienda=await abrir('venta de tienda');
+    var ult=ASIS_AYUDA[ASIS_AYUDA.length-1];
+    window._copiado=''; verVideo('tienda'); await esp(80);
+    var cop=[].filter.call(document.querySelectorAll('#modal button'), function(x){ return /Copiar el enlace/.test(x.textContent); })[0]; if(cop) cop.click(); closeModal();
+    return { pagoA:pagoA, pagoC:pagoC, saldo:saldo, tienda:tienda, ultimo:ult.q, ultF:[].concat(ult.f).some(function(s){ return !!document.querySelector(s); }), copiado:window._copiado };
+  });
+  chk('6a. «¿Cómo anoto el pago o un adelanto?» y «¿Cómo registro un pago en Contabilidad?» abren el video de cobrar el saldo',
+      r6.pagoA.vid==='pago' && /cobrar-el-saldo/.test(r6.pagoA.src||'') && r6.pagoC.vid==='pago' && /cobrar-el-saldo/.test(r6.pagoC.src||'') && /saldo pendiente/.test(r6.pagoC.tit), r6);
+  chk('6b. buscar «cobrar el saldo» lleva a una respuesta de pagos con su video', r6.saldo.vid==='pago', r6.saldo);
+  chk('6c. «¿Cómo registro una venta de tienda?» va AL FINAL, señala algo que existe y abre su video', r6.ultimo==='¿Cómo registro una venta de tienda?' && r6.ultF &&
+      r6.tienda.q===r6.ultimo && /venta-de-tienda/.test(r6.tienda.src||'') && /venta de tienda/.test(r6.tienda.tit) && /1 min/.test(r6.tienda.boton), r6.tienda);
+  chk('6d. «Copiar el enlace» copia el del video que se está mirando', /videos\/como-registrar-venta-de-tienda\.mp4$/.test(r6.copiado), r6.copiado);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

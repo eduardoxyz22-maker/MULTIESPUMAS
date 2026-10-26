@@ -2,8 +2,10 @@
 python3 armar.py <carpeta de cuadros> <salida.mp4> [ancho=1080]"""
 import json, os, subprocess, sys
 car, sal = sys.argv[1], sys.argv[2]
-ancho = int(sys.argv[3]) if len(sys.argv) > 3 else 1080
-alto = ancho * 16 // 9
+ancho = int(sys.argv[3]) if len(sys.argv) > 3 else 1920
+c0 = json.load(open(os.path.join(sys.argv[1], 'cuadros.json')))[5]['nom']   # la forma de los cuadros manda (compu 16:9; antes, celular 9:16)
+wh = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', os.path.join(sys.argv[1], c0)], capture_output=True, text=True).stdout.strip().split(',')
+alto = round(ancho * int(wh[1]) / int(wh[0]) / 2) * 2
 c = json.load(open(os.path.join(car, 'cuadros.json'))); t0 = c[0]['t']
 c = [f for f in c if f['t'] - t0 >= 0.45]          # el primer instante es la página en blanco
 L = ["file '%s'\nduration %.4f" % (os.path.join(car, a['nom']), b['t'] - a['t']) for a, b in zip(c, c[1:])]
@@ -11,5 +13,5 @@ L += ["file '%s'\nduration 1.5" % os.path.join(car, c[-1]['nom']), "file '%s'" %
 lista = os.path.join(car, 'lista.txt'); open(lista, 'w').write('\n'.join(L) + '\n')
 subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', lista,
                 '-vf', 'fps=30,scale=%d:%d:flags=lanczos,format=yuv420p' % (ancho, alto), '-c:v', 'libx264', '-preset', 'slow',
-                '-crf', '21' if ancho >= 1080 else '25', '-profile:v', 'high', '-movflags', '+faststart', '-an', sal], check=True)
+                '-crf', '21' if ancho >= 1600 else '24', '-profile:v', 'high', '-movflags', '+faststart', '-an', sal], check=True)
 print(sal, round(c[-1]['t'] - c[0]['t'], 1), 's')
