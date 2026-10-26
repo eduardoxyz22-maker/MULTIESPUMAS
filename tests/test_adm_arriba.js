@@ -73,6 +73,18 @@ async function abrir(browser, w, tabs){
   chk('2 · «Hoy»: 1 de 2 pedidos listos y 1 sin camión', /1 de 2\s*pedidos listos/.test(r.hoy) && /1\s*pedido sin camión/.test(r.hoy), r.hoy);
   const cupo=await page.evaluate(()=>({ libres:limTurno('2026-10-22','AM')-cuposUsadosTurno('2026-10-22','AM'), txt:document.querySelector('#adm-hoy .ah-cupos').textContent }));
   chk('2 · «Hoy» dice los cupos que quedan (los de `cuposUsadosTurno`)', cupo.txt.indexOf(cupo.libres+' libres')>=0, cupo);
+  /* (26/10, el dueño: «se ve la letra en el fondo y el círculo delante») lo de adentro del anillo entra en el hueco y «con carga completa» va abajo */
+  const dona=await page.evaluate(()=>{
+    admHoyPintar(Object.assign(admHoyDatos(), { ok:1, cams:3 }));   // como en la captura del dueño: «1/3 camiones» (la palabra más larga)
+    var sv=document.querySelector('#adm-hoy .ah-anillo'), b=sv.getBoundingClientRect(), cx=b.left+b.width/2, cy=b.top+b.height/2, hueco=b.width*(34-4.5)/84, fuera=[];
+    [].forEach.call(document.querySelectorAll('#adm-hoy .ah-dona-t > *'), function(x){ var r=x.getBoundingClientRect();
+      [[r.left,r.top],[r.right,r.top],[r.left,r.bottom],[r.right,r.bottom]].forEach(function(q){ var d=Math.hypot(q[0]-cx,q[1]-cy); if(d>hueco+1) fuera.push(x.tagName+':'+Math.round(d)+'>'+Math.round(hueco)); }); });
+    var pie=document.querySelector('#adm-hoy .ah-dona-pie'), pr=pie && pie.getBoundingClientRect();
+    return { fuera:fuera, pie:pie && pie.textContent, abajo:!!pr && pr.top>=b.bottom-1, adentro:(document.querySelector('#adm-hoy .ah-dona-t')||{}).textContent };
+  });
+  if(process.env.ADM_HOY_CAP) await (await page.$('#adm-hoy')).screenshot({ path:process.env.ADM_HOY_CAP });
+  chk('2 · el anillo de «Hoy»: el número y «camiones» entran en el hueco y «con carga completa» va abajo, sin pisarse con el trazo',
+    dona.fuera.length===0 && /cami(ón|ones)$/.test(dona.adentro||'') && dona.pie==='con carga completa' && dona.abajo, dona);
 
   /* 3 · «Ver N más» y «Avisos completos» */
   r=await page.evaluate(()=>{
