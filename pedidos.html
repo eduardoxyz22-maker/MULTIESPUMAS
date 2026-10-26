@@ -786,6 +786,10 @@ th.sortable:hover{color:var(--teal-dk)}
   .pap-pz{min-height:42px}
 }
 @media (prefers-reduced-motion:reduce){ #pap-overlay *{transition:none!important;animation:none!important} }
+.vid-ped{display:block;width:100%;max-width:340px;aspect-ratio:9/16;height:auto;margin:0 auto 10px;border-radius:16px;background:#dfeeed;box-shadow:0 8px 22px rgba(15,70,68,.18)}
+.vid-ped-t{font-size:.8rem;color:var(--muted);text-align:center;margin:0 0 10px}
+.vid-ped-b .modal-actions a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.asis-vid{margin-right:6px}
 .wa-text{width:100%;min-height:210px;font-family:inherit;font-size:.82rem;line-height:1.5;border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;white-space:pre-wrap;background:var(--gray-lt);color:var(--text);resize:vertical}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .wa-btn{background:#25D366;color:#fff}
@@ -35478,6 +35482,7 @@ function openModal(html, ancha){
 function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
   ov.classList.remove('on');
+  try{ [].forEach.call(ov.querySelectorAll('video'), function(x){ x.pause(); }); }catch(e){}   // 🎬 (§4mv) el video no sigue andando escondido
   /* Vuelve al que la abrió si sigue en la página y se ve; a un campo de texto no (en el celular abriría el teclado). */
   var v=MODAL_FOCO_ANTES; MODAL_FOCO_ANTES=null;
   if(estaba && v && document.contains(v) && v.getClientRects().length && !/^(INPUT|TEXTAREA|SELECT)$/.test(v.tagName)){ try{ v.focus({ preventScroll:true }); }catch(e){} }
@@ -44324,8 +44329,8 @@ function asisEditarEn(id, sel){
 }
 /* ---------- la ayuda: preguntas escritas para este panel ---------- */
 var ASIS_AYUDA=[
-  { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar', v:'form', f:'#f-cliente', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago y tocá «Guardar pedido».'] },
-  { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Si es QR o tarjeta, adjuntá la foto del comprobante.','Lo que paga después lo registra Contabilidad desde la ficha de la venta.'] },
+  { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar video ver mirar ensenar aprender', v:'form', f:'#f-cliente', vid:1, p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago con la foto del recibo (también en efectivo) y tocá «Guardar pedido».','🎬 Hay un video de 2 minutos con todo el recorrido: «▶️ Ver el video».'] },
+  { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Adjuntá la foto del recibo que le diste (también en efectivo: sin foto no se guarda). Con QR o tarjeta, sumá la captura del pago.','Lo que paga después lo registra Contabilidad desde la ficha de la venta.'] },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
   { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','📅 Los números son para el día que elegiste: lo vendido para después no se descuenta, y abajo dice cuánto hay pendiente en total.','Siempre podés guardar igual: es un aviso.'] },
   { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Obligatorio: si es 🛡️ garantía o 🔧 contra costo (STC), el motivo, el detalle de qué le pasa, la fecha de compra y qué se le recoge. Sin eso no se guarda.','Podés adjuntar hasta 2 fotos del producto. No se cobra: la parte del pago se esconde sola.'] },
@@ -44580,7 +44585,9 @@ function asisAyudaHtml(idx){
   return idx.map(function(i){
     var a=ASIS_AYUDA[i], on=(i===ASIS_ABIERTA);
     return '<div class="asis-pr'+(on?' on':'')+'"><button type="button" class="asis-pq" onclick="ASIS_ABIERTA=('+i+'===ASIS_ABIERTA?-1:'+i+');asisAyudaLista()">'+esc(a.q)+'</button>'+
-      (on ? ('<ol>'+a.p.map(function(s){ return '<li>'+esc(s)+'</li>'; }).join('')+'</ol><button type="button" class="asis-b si" onclick="asisMostrar('+i+')">👉 Mostrame dónde</button>') : '')+'</div>';
+      (on ? ('<ol>'+a.p.map(function(s){ return '<li>'+esc(s)+'</li>'; }).join('')+'</ol>'+
+        (a.vid ? '<button type="button" class="asis-b si asis-vid" onclick="verVideoPedido()">▶️ Ver el video (2 min)</button>' : '')+
+        '<button type="button" class="asis-b si" onclick="asisMostrar('+i+')">👉 Mostrame dónde</button>') : '')+'</div>';
   }).join('');
 }
 function asisAyudaLista(){ var l=document.getElementById('asis-lista'); if(l) l.innerHTML=asisAyudaHtml(asisBuscar(ASIS.q)); asisPreguntaQuizas(ASIS.q); }
@@ -44923,7 +44930,7 @@ var ASIS_TOUR_PASOS=[
   { v:'form', f:['#f-cliente'], t:'🧑 El cliente', x:'Nombre y celular: con el celular, logística le avisa cuándo llega el camión.' },
   { v:'form', f:['#f-productos'], t:'🛏️ Los productos', x:'Escribí el código y se completan el nombre y la medida. Debajo sale el cuadrito: si hay, si se trae de Moreno o si se fabrica.' },
   { v:'form', f:['#f-fecha'], t:'📅 El día', x:'Elegí el día y el turno. Domingos y feriados no sale camión, y cada turno tiene cupo.' },
-  { v:'form', f:['#wrap-metodo','#wrap-cobro-todo','#f-submit'], t:'💵 El pago', x:'Anotá cómo pagó y cuánto dejó a cuenta; si es QR o tarjeta, la foto del comprobante.' },
+  { v:'form', f:['#wrap-metodo','#wrap-cobro-todo','#f-submit'], t:'💵 El pago', x:'Anotá cómo pagó y cuánto dejó a cuenta, con la foto del recibo (también en efectivo); con QR o tarjeta, sumá la captura del pago.' },
   { v:'mis', f:['#mis-metrics','#mis-lista','#mis-vendedor'], t:'📋 Mis pedidos', x:'Acá ves tus pedidos, lo que te deben y a quién avisar mañana. Tocá uno para abrirlo.' },
   { v:'', f:['#asis-yo'], t:'🧑‍💼 Y yo', x:'Te aviso lo importante. Si tenés una duda, tocame y escribí tu pregunta.' }
 ];
@@ -44952,15 +44959,45 @@ function asisTourPaso(d){
     c.hidden=false;
   }, P.v && asisVista()!==P.v ? 450 : 200);
 }
-/* La oferta, una sola vez por aparato: la llama quienElegir cuando una vendedora elige su nombre. */
+/* La oferta, una sola vez por aparato: la llama quienElegir cuando una vendedora elige su nombre.
+   🎬 (26/10, §4mv; dueño: «que Bloki enseñe y lleve al enlace») Primero el VIDEO de cómo cargar un pedido (`me_asis_video`, una vez por
+   aparato, también a quien ya vio el recorrido); el recorrido, la próxima vez que elija su nombre. */
 function asisTourOfrecer(){
-  if(!asisActivo() || nxLS(ASIS_TOUR_LS)) return;
+  if(!asisActivo()) return;
+  if(!nxLS(ASIS_VIDEO_LS)){ asisVideoOfrecer(); return; }
+  if(nxLS(ASIS_TOUR_LS)) return;
   try{ nxLS(ASIS_TOUR_LS, 'ofrecido'); }catch(e){}
   setTimeout(function(){
     var gl=document.getElementById('asis-globo'); if(!gl) return;
     asisGlobo({ ico:'🧭', t:'¿Te muestro el panel en 1 minuto?', x:'Tocá acá y te llevo paso a paso. Si no, cuando quieras está en «¿Cómo hago…?».' }, false, true);
     gl.onclick=function(){ gl.hidden=true; asisTourEmpezar(); };
   }, 2500);
+}
+var ASIS_VIDEO_LS='me_asis_video';
+function asisVideoOfrecer(){
+  try{ nxLS(ASIS_VIDEO_LS, 'ofrecido'); }catch(e){}
+  setTimeout(function(){
+    var gl=document.getElementById('asis-globo'); if(!gl) return;
+    asisGlobo({ ico:'🎬', t:'¿Te muestro cómo se carga un pedido?', x:'Es un video de 2 minutos: tocá acá. Después lo encontrás en «¿Cómo hago…?».', ms:12000 }, false, true);
+    gl.onclick=function(){ gl.hidden=true; verVideoPedido(); };
+  }, 2500);
+}
+/* 🎬 (26/10, §4mv) EL VIDEO «CÓMO CARGAR UN PEDIDO»: 2 min 35 s, vertical y sin sonido, con los pasos escritos en la pantalla y clientes
+   inventados. Vive al lado de la página (`videos/`): se mira acá, en una ventana, y se puede copiar el enlace para mandarlo por WhatsApp.
+   Se rehace con `herramientas/video_pedido/` (cambiar el archivo = subir el `?v=`). */
+var VIDEO_PEDIDO='videos/como-cargar-un-pedido.mp4?v=20261026', VIDEO_PEDIDO_POSTER='videos/como-cargar-un-pedido.jpg?v=20261026';
+function videoPedidoUrl(){ try{ return new URL(VIDEO_PEDIDO.split('?')[0], location.href).href; }catch(e){ return VIDEO_PEDIDO; } }
+function verVideoPedido(){
+  try{ asisCerrar(); asisGloboOcultar(); }catch(e){}
+  openModal('<div class="modal-h"><h3>🎬 Cómo cargar un pedido</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b vid-ped-b">'+
+      '<video class="vid-ped" controls playsinline preload="metadata" poster="'+VIDEO_PEDIDO_POSTER+'"><source src="'+VIDEO_PEDIDO+'" type="video/mp4"></video>'+
+      '<p class="vid-ped-t">2 min 35 s, sin sonido: cada paso está escrito en la pantalla. Los clientes del video son inventados.</p>'+
+      '<div class="modal-actions">'+
+        '<button type="button" class="btn btn-primary btn-sm" style="flex:1;min-width:140px" onclick="copyText(videoPedidoUrl())">📋 Copiar el enlace</button>'+
+        '<a class="btn btn-ghost btn-sm" href="'+VIDEO_PEDIDO+'" target="_blank" rel="noopener">↗️ Abrir aparte</a>'+
+        '<button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+      '</div></div>');
 }
 /* ✍️ (12/10, H) En el celular, mientras se escribe, Eduardo se achica y se corre: no tapa el campo ni el teclado. */
 document.addEventListener('focusin', function(e){

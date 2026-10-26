@@ -173,7 +173,7 @@ function PREPARAR(){
   /* ---------------------------------------------------------------- I */
   console.log('\n── I. El recorrido guiado ──');
   r = await ev(page, async () => {
-    try{ localStorage.removeItem('me_asis_tour'); }catch(e){}
+    try{ localStorage.removeItem('me_asis_tour'); localStorage.setItem('me_asis_video', JSON.stringify('ofrecido')); }catch(e){}   // (26/10, §4mv) el video se ofrece antes: acá, ya ofrecido
     quienElegir('Mirian Salazar'); await new Promise(function(res){ setTimeout(res, 2800); });
     var gl=document.getElementById('asis-globo'), ofrece=!gl.hidden && /Te muestro el panel/.test(gl.innerText), ls=localStorage.getItem('me_asis_tour');
     gl.hidden=true; quienElegir('Mirian Salazar'); await new Promise(function(res){ setTimeout(res, 2800); });

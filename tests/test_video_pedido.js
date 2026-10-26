@@ -1,0 +1,100 @@
+/* 🎬 EL VIDEO «CÓMO CARGAR UN PEDIDO» Y BLOKI (§4mv, 26/10; dueño: «que Bloki enseñe y lleve al enlace»).
+
+   LO QUE CUIDA:
+   1. El video y su portada están al lado de la página (`videos/`), y `VIDEO_PEDIDO` los nombra.
+   2. La primera vez que una vendedora elige su nombre en el aparato, Bloki ofrece el VIDEO (una sola vez, `me_asis_video`); tocar el globo abre la
+      ventana con el video. La vez siguiente ofrece el recorrido de siempre.
+   3. «¿Cómo hago…?»: buscar «video» (o «cómo aprendo») da «¿Cómo cargo un pedido nuevo?», y esa respuesta tiene «▶️ Ver el video».
+   4. La ventana: video con controles y `playsinline`, «📋 Copiar el enlace» (dirección completa) y «Cerrar» lo corta.
+   5. Logística o Administración (sin nombre de vendedor) no reciben la oferta.
+   Reloj clavado (martes 27/10/2026, 10:00 de Bolivia). Datos sintéticos.
+   Se corre:  node tests/test_video_pedido.js */
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const path = require('path'), fs = require('fs');
+let PASS=0, FAIL=0;
+const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+(typeof e==='string'?e:JSON.stringify(e)).slice(0,500)):''); };
+const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
+
+(async()=>{
+  const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
+  const ctx = await browser.newContext({ viewport:{ width:390, height:844 }, timezoneId:'America/La_Paz' });
+  await ctx.route(/^https:\/\//, r => r.abort());
+  const page = await ctx.newPage(); const errores=[];
+  page.on('pageerror', e => errores.push(e.message)); page.on('dialog', d => d.accept());
+  await page.addInitScript(() => { window.ASIS_PRUEBA=1; window.QUIEN_PRUEBA=1; });
+  await page.clock.setFixedTime(new Date('2026-10-27T10:00:00-04:00'));
+  await page.goto('file://' + PEDIDOS, { waitUntil:'load' });
+  await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    var c=document.getElementById('conn-form'); if(c) c.style.display='none';
+    CONNECTED=false; CARGA_GEN++; CARGA_ESTADO='ok'; try{ clearTimeout(CARGA_TIMER); clearInterval(CARGA_TIC); }catch(e){}
+    if(typeof AUTO_TIMER!=='undefined' && AUTO_TIMER) clearInterval(AUTO_TIMER);
+    STATE=[]; apiList=function(){ return Promise.resolve({ ok:true, pedidos:[] }); };
+    try{ ['me_asis_tour','me_asis_video','me_quien_rol'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+    window._copiado=''; copyText=function(t){ window._copiado=t; };
+    var q=document.getElementById('quien'); if(q) q.hidden=true;
+  });
+
+  /* 1 */
+  const r1 = await page.evaluate(() => ({ v:VIDEO_PEDIDO, p:VIDEO_PEDIDO_POSTER }));
+  const arch = (u) => path.join(path.dirname(PEDIDOS), u.split('?')[0]);
+  chk('1. el video y la portada están al lado de la página', /^videos\/.+\.mp4\?v=/.test(r1.v) && fs.existsSync(arch(r1.v)) && fs.statSync(arch(r1.v)).size>1e6 && fs.existsSync(arch(r1.p)), r1);
+
+  /* 2 */
+  const r2 = await page.evaluate(async () => {
+    var esp=function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+    quienElegir('Mirian Salazar'); await esp(2900);
+    var gl=document.getElementById('asis-globo'), t1=gl.hidden ? '' : gl.innerText.replace(/\s+/g,' '), ls=localStorage.getItem('me_asis_video'), tour1=localStorage.getItem('me_asis_tour');
+    gl.click(); await esp(200);
+    var m=document.getElementById('modal'), abre=m.classList.contains('on') && !!m.querySelector('video.vid-ped');
+    closeModal(); await esp(100);
+    gl.hidden=true; quienElegir('Mirian Salazar'); await esp(2900);
+    var t2=gl.hidden ? '' : gl.innerText.replace(/\s+/g,' ');
+    gl.hidden=true; quienElegir('Mirian Salazar'); await esp(2900);
+    var t3=gl.hidden ? '' : gl.innerText.replace(/\s+/g,' ');
+    return { t1:t1, ls:ls, tour1:tour1, abre:abre, t2:t2, t3:t3 };
+  });
+  chk('2a. la primera vez, Bloki ofrece el video de cómo se carga un pedido', /cómo se carga un pedido/.test(r2.t1) && /2 minutos/.test(r2.t1) && !!r2.ls && !r2.tour1, r2);
+  chk('2b. tocar el globo abre la ventana con el video', r2.abre, r2);
+  chk('2c. la vez siguiente, el recorrido de siempre; y después ninguna de las dos', /Te muestro el panel/.test(r2.t2) && !/Te muestro el panel|cómo se carga/.test(r2.t3), r2);
+
+  /* 3 + 4 */
+  const r3 = await page.evaluate(async () => {
+    var esp=function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+    var q=function(t){ var i=asisBuscar(t)[0]; return i==null ? '' : ASIS_AYUDA[i].q; };
+    var busca={ video:q('video'), aprendo:q('cómo aprendo a cargar un pedido'), mirar:q('quiero ver el video del pedido') };
+    asisAbrir('ayuda'); ASIS.q='video'; ASIS_ABIERTA=asisBuscar('video')[0]; asisAyudaLista(); await esp(100);
+    var b=[].filter.call(document.querySelectorAll('#asis-lista button'), function(x){ return /Ver el video/.test(x.textContent); })[0];
+    var otras=ASIS_AYUDA.filter(function(a){ return a.vid; }).length, pasos=ASIS_AYUDA[asisBuscar('video')[0]].p.join(' ');
+    if(b) b.click(); await esp(200);
+    var m=document.getElementById('modal'), v=m.querySelector('video.vid-ped'), src=v && v.querySelector('source').getAttribute('src');
+    var cerro=!document.getElementById('asis-panel') || document.getElementById('asis-panel').hidden;
+    var cop=[].filter.call(m.querySelectorAll('button'), function(x){ return /Copiar el enlace/.test(x.textContent); })[0]; if(cop) cop.click();
+    var abrir=[].filter.call(m.querySelectorAll('a'), function(x){ return /Abrir aparte/.test(x.textContent); })[0];
+    var pausada=false; if(v){ v.pause=function(){ pausada=true; }; }
+    var cerrar=[].filter.call(m.querySelectorAll('button'), function(x){ return /^Cerrar$/.test(x.textContent.trim()); })[0]; if(cerrar) cerrar.click();
+    return { busca:busca, hayBoton:!!b, otras:otras, pasos:pasos, video:!!v, controles:!!(v && v.controls), inline:!!(v && v.hasAttribute('playsinline')), src:src,
+      poster:v && v.getAttribute('poster'), cerroBloki:cerro, copiado:window._copiado, abrir:abrir && abrir.getAttribute('href'), abrirTarget:abrir && abrir.target, pausada:pausada, abierta:m.classList.contains('on') };
+  });
+  chk('3a. buscar «video», «cómo aprendo…» o «ver el video» lleva a «¿Cómo cargo un pedido nuevo?»', /pedido nuevo/.test(r3.busca.video) && /pedido nuevo/.test(r3.busca.aprendo) && /pedido nuevo/.test(r3.busca.mirar), r3.busca);
+  chk('3b. esa respuesta tiene «▶️ Ver el video» (solo esa) y nombra la foto del recibo', r3.hayBoton && r3.otras===1 && /foto del recibo/.test(r3.pasos), r3);
+  chk('4a. la ventana: el video con controles y playsinline, desde videos/, con portada; Bloki se cierra', r3.video && r3.controles && r3.inline && /^videos\/como-cargar-un-pedido\.mp4/.test(r3.src||'') && /^videos\//.test(r3.poster||'') && r3.cerroBloki, r3);
+  chk('4b. «📋 Copiar el enlace» copia la dirección completa del video y «Abrir aparte» va a otra pestaña', /^file:\/\/.+\/videos\/como-cargar-un-pedido\.mp4$/.test(r3.copiado) && /^videos\//.test(r3.abrir||'') && r3.abrirTarget==='_blank', r3);
+  chk('4c. «Cerrar» cierra la ventana y corta el video', !r3.abierta && r3.pausada, r3);
+
+  /* 5 */
+  const r5 = await page.evaluate(async () => {
+    var esp=function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+    try{ localStorage.removeItem('me_asis_video'); localStorage.removeItem('me_asis_tour'); }catch(e){}
+    var gl=document.getElementById('asis-globo'); gl.hidden=true;
+    quienElegir('', 'logistica'); await esp(2900);
+    var t=gl.innerText.replace(/\s+/g,' ');
+    return { t:t, ls:localStorage.getItem('me_asis_video') };
+  });
+  chk('5. logística no recibe la oferta del video', !/cómo se carga un pedido/.test(r5.t) && !r5.ls, r5);
+
+  chk('sin errores de la página', errores.length===0, errores.slice(0,3));
+  console.log('\n'+PASS+' bien · '+FAIL+' mal');
+  await browser.close();
+  process.exit(FAIL?1:0);
+})();
