@@ -16391,3 +16391,12 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   (`test_asistente` NT/NV a conciencia). La oferta automática sigue siendo solo la del pedido. `grabar.js … [pedido|pago|tienda]`.
   `test_video_pedido` (16). Página: https://claude.ai/artifact/9aMrJXiWqu9R72ho6qjgmc (v2, los tres videos).
   ⚠️ El panel dice «el N° de nota de venta del recibo de este pago» (cada pago lleva el suyo): el video lo dice igual, sin inventar otra regla.
+- **🖥️ Los tres, en pantalla de COMPUTADORA** (26/10, dueño: *«¿por qué los videos se muestran en formato celular si por 100000 veces te dije
+  que los vendedores trabajan desde sus computadoras?»*; PUBLICADO 26/10 15:35 de Bolivia, `735c9f5`, Pages OK): 🚫 **los vendedores trabajan en
+  la COMPU: todo video o material para ellos va en formato de computadora (16:9), nunca de celular**. Rehechos a 1920×1080: pedido 2 min 54 s
+  (16 MB), cobrar el saldo 1 min 29 s (6 MB), venta de tienda 1 min 43 s (8 MB), `?v=20261026b`. `grabar.js`: ventana 1280×720 con
+  `--force-device-scale-factor=1.5` (contexto en escala 1), sin toque, con un PUNTERO dibujado (`#vid-cursor`) que va hasta cada botón y
+  carteles «Hacé clic en…»; `armar.py <cuadros> <salida> [ancho=1920]`. La ventana del video es ancha (`openModal(…, true)`, `.vid-ped` 16:9
+  limitado por el alto) para que entren los botones en una laptop. Bloki: «▶️ Ver el video (3 min / 1 min 30 s / 1 min 40 s)».
+  ⚠️ **Publicar = `git format-patch` de los commits del cambio**, nunca `git diff main HEAD` de la rama: ese diff arrastró código de la rama sin
+  publicar (se notó antes de subir, se rehízo). Batería sobre la copia publicada: ver abajo.
