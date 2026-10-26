@@ -2027,6 +2027,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <div class="field adm-vista-f"><div id="adm-vista"></div></div>
         </div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
+        <div id="adm-semana" class="sem" hidden></div>
         <div id="adm-fichas" class="af" hidden></div>
         <div class="tw tw-tall" id="tbl-pedidos-w"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
@@ -3842,6 +3843,59 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 /* los filtros de la tabla, como los chips nuevos */
 #adm-chips .qchip{ border-radius:999px; padding:7px 14px; box-shadow:0 1px 0 rgba(0,0,0,.03); }
 #adm-chips .qchip.active{ background:linear-gradient(135deg,#00B5AD,#0d8f88); box-shadow:0 6px 14px -8px #00B5AD; }
+/* 🗓️ (26/10) «Semana»: el botón parpadea en rojo con entregas que dicen sin stock, y abajo el resumen de cada día */
+#adm-chips .qchip.qchip-alerta{ border-color:#e5484d; color:#9f1c24; background-color:#fff1f1; animation:qchip-alerta 1.1s ease-in-out infinite; }
+#adm-chips .qchip.qchip-alerta .n{ background:#ffd6d8; color:#9f1c24; }
+#adm-chips .qchip .qa{ display:inline-block; background:#e5484d; color:#fff; border-radius:999px; padding:0 8px; margin-left:4px; font-size:.68rem; font-weight:800; }
+#adm-chips .qchip.qchip-alerta.active{ background:linear-gradient(135deg,#e5484d,#b4232c); color:#fff; border-color:#b4232c; box-shadow:0 6px 14px -8px #e5484d; }
+#adm-chips .qchip.qchip-alerta.active .n{ background:rgba(255,255,255,.25); color:#fff; }
+#adm-chips .qchip.qchip-alerta.active .qa{ background:#fff; color:#b4232c; }
+#adm-chips .qchip.qchip-alerta.active .late-dot{ background:#fff; }
+#adm-chips .qchip.qchip-alerta.active .late-dot::before, #adm-chips .qchip.qchip-alerta.active .late-dot::after{ border-color:#fff; }
+@keyframes qchip-alerta{ 0%,100%{ background-color:#fff1f1; box-shadow:0 0 0 0 rgba(229,72,77,.55); } 50%{ background-color:#ffc9cc; box-shadow:0 0 0 5px rgba(229,72,77,0); } }
+@media (prefers-reduced-motion:reduce){ #adm-chips .qchip.qchip-alerta{ animation:none; } }
+.sem{ background:#fff; border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
+.sem-cab{ display:flex; align-items:center; gap:10px; min-width:0; }
+.sem-cab > div{ min-width:0; }
+.sem-ic{ font-size:1.25rem; width:38px; height:38px; display:grid; place-items:center; background:var(--teal-lt); border-radius:12px; flex:none; }
+.sem-cab b{ display:block; font-size:.95rem; color:var(--text); }
+.sem-cab small{ color:var(--muted); font-size:.74rem; }
+.sem-alerta{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff1f1; border:1px solid #f5b5b8; border-left:4px solid #e5484d; border-radius:12px; padding:9px 12px; color:#7f1d1d; font-size:.82rem; }
+.sem-alerta > div{ flex:1 1 260px; min-width:0; }
+.sem-alerta small{ display:block; color:#9f4a4f; margin-top:2px; }
+.sem-alerta .ah-go{ flex:none; }
+.sem-dias{ display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:8px; }
+.sem-dia{ font:inherit; text-align:left; cursor:pointer; background:#fff; border:1px solid var(--gray-md); border-top:4px solid var(--teal); border-radius:12px; padding:9px 10px;
+  display:flex; flex-direction:column; gap:5px; min-width:0; color:var(--text); transition:box-shadow .15s, transform .15s; }
+.sem-dia:hover{ box-shadow:0 8px 18px -14px rgba(0,0,0,.45); transform:translateY(-1px); }
+.sem-dia-on{ outline:2px solid var(--teal); outline-offset:1px; background:var(--teal-lt); }
+.sem-dia-rojo{ border-top-color:#e5484d; background:#fff8f8; }
+.sem-dia-rojo.sem-dia-on{ outline-color:#e5484d; }
+.sem-d{ display:flex; align-items:center; gap:4px; font-size:.82rem; min-width:0; }
+.sem-d b{ display:inline-block; } .sem-d b::first-letter{ text-transform:uppercase; }
+.sem-d em{ margin-left:auto; font-style:normal; font-size:.6rem; font-weight:800; background:var(--teal); color:#fff; border-radius:999px; padding:1px 7px; letter-spacing:.04em; }
+.sem-dia-rojo .sem-d em{ background:#e5484d; }
+.sem-n{ font-size:.76rem; color:var(--muted); } .sem-n b{ color:var(--text); font-size:1rem; }
+.sem-bar{ height:6px; background:var(--gray-lt); border-radius:99px; overflow:hidden; }
+.sem-bar i{ display:block; height:100%; background:linear-gradient(90deg,#00B5AD,#22c55e); border-radius:99px; }
+.sem-li, .sem-cu{ font-size:.72rem; color:var(--muted); }
+.sem-ks{ display:flex; flex-wrap:wrap; gap:4px; }
+.sem-k{ font-size:.7rem; border-radius:999px; padding:2px 8px; background:var(--gray-lt); color:#4b5563; white-space:nowrap; }
+.sem-k-sin{ background:#ffe1e3; color:#9f1c24; border:1px solid #e5484d; font-weight:800; }
+.sem-k-prod{ background:#fff4d6; color:#7c4b00; }
+.sem-k-busca{ background:#efe7ff; color:#5b21b6; }
+.sem-k-rev{ background:#f6f7f8; color:#4b5563; border:1px dashed #c7cdd3; }
+.sem-k-cam{ background:#eef2f6; color:#334155; }
+.sem-k-ok{ background:#e7f8ef; color:#166534; }
+.sem-k-0{ background:transparent; color:var(--muted); padding-left:0; }
+.sem-ver{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.sem-vl{ font-size:.74rem; color:var(--muted); font-weight:700; margin-right:2px; }
+.sem-v{ font:inherit; font-size:.72rem; font-weight:700; border:1px solid var(--gray-md); background:#fff; color:var(--text); border-radius:999px; padding:5px 11px; cursor:pointer; min-height:32px; }
+.sem-v span{ background:var(--gray-lt); border-radius:999px; padding:0 6px; margin-left:2px; font-weight:800; }
+.sem-v.on{ background:var(--teal); border-color:var(--teal); color:#fff; } .sem-v.on span{ background:rgba(255,255,255,.25); }
+.sem-v-sin.on, .sem-v-falta.on{ background:#e5484d; border-color:#e5484d; }
+.sem-v:disabled{ opacity:.45; cursor:default; }
+.sem-v-x{ color:var(--teal-dk); border-style:dashed; }
 /* las ventanas que abren las herramientas: cabecera con brillo, botones en píldora y el cuerpo en tarjeta */
 .adm-ov > .no-print:first-child{ background-image:linear-gradient(120deg,rgba(255,255,255,.14),rgba(0,0,0,.14))!important; padding:12px 14px!important;
   box-shadow:0 10px 24px -16px rgba(0,0,0,.6); position:relative; z-index:2; }
@@ -17593,7 +17647,10 @@ var QUICK_DEFS=[
   {k:'hoy',         lbl:'📅 Hoy',           todo:true, test:function(p){return p.fecha===todayStr();}},
   {k:'manana',      lbl:'➡️ Mañana',        todo:true, lblF:function(){ var f=proximoDiaEntrega(); return f===tomorrowStr()?'➡️ Mañana':'➡️ '+['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][new Date(f+'T12:00:00').getDay()]+' '+f.slice(8,10)+'/'+f.slice(5,7); },
                                           test:function(p){return p.fecha===proximoDiaEntrega();}},
-  {k:'cobrar',      lbl:'💰 Por cobrar',    test:function(p){return !p.pagado && !noSeCobra(p);}},   // (25/09) ATC/RPT no se cobran (§4fy)
+  /* 🗓️ (26/10) Los próximos 5 días con camión, desde HOY (`semanaDias`). Parpadea en rojo si hay entregas que dicen «sin stock». */
+  {k:'semana',      lbl:'🗓️ Semana',        todo:true, test:function(p){ return semanaEntra(p); },
+                                          alerta:function(){ return semanaDatos().tot.sin; }, tit:semanaTitulo},
+  {k:'cobrar',     lbl:'💰 Por cobrar',    test:function(p){return !p.pagado && !noSeCobra(p);}},   // (25/09) ATC/RPT no se cobran (§4fy)
   {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
   {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
   {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
@@ -17606,6 +17663,130 @@ var QUICK_DEFS=[
      solo reposiciones?». Estaban mezcladas con todo, con su franja ámbar y nada más. */
   {k:'rpt',         lbl:'🏪 Reposiciones',  test:function(p){return esRPT(p&&p.oc);}}
 ];
+/* 🗓️ LA SEMANA (26/10, dueño: «acá debería haber un botón que muestre lo de la semana, lo que falta en la semana, y parpadee rojo si
+   por ejemplo sabés que jueves hay entregas que aún dicen sin stock, así logística lo vería… siempre 5 días hábiles hacia adelante,
+   desde el día en cuestión, no desde atrás»).
+   · Los días son HOY y los que siguen con camión hasta juntar 5 (`diaHabil`: ni domingo ni feriado). No es la semana del calendario:
+     un jueves mira jueves, viernes, sábado, lunes y martes. Un domingo o un feriado arranca en el día siguiente con camión.
+   · Lo que falta sale de las MISMAS marcas de cada producto que pintan la ficha de rojo (`admFichaColor`/`estadoStock`): lo de tienda
+     no cuenta (`esProdDeTienda`) y la ATC no lleva stock. «Sin stock» = una línea «✗ no hay» que todavía no se mandó a producir (la
+     etiqueta «🔴 Sin stock») o el «🔴 No hay» puesto a mano. «Sin camión» = la regla de «💡 Sugerir camión» (`nxSugSin`).
+   · El botón parpadea en rojo mientras haya algo «sin stock» sin entregar en esos días. Solo mira: no cambia nada. */
+var SEMANA_DIAS=5, SEMANA_DIA='', SEMANA_VER='', SEMANA_MEMO={ k:'', d:null };
+function semanaDias(){
+  var out=[], f=todayStr();
+  for(var i=0; i<40 && out.length<SEMANA_DIAS; i++){ if(diaHabil(f)) out.push(f); f=stockSumarDias(f, 1); }
+  return out;
+}
+function semanaSet(){
+  var k=todayStr();
+  if(SEMANA_MEMO.k!==k){ var s={}; semanaDias().forEach(function(f){ s[f]=1; }); SEMANA_MEMO={ k:k, d:s }; }
+  return SEMANA_MEMO.d;
+}
+function semanaEntra(p){ return !!p && !!semanaSet()[p.fecha] && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p); }
+function semanaFalta(p){
+  var r={ sin:false, prod:false, busca:false, rev:false, cam:false };
+  if(!p || p.entregado) return r;
+  r.cam=!vehiculoDe(p);
+  if(esATC(p.oc)) return r;
+  (p.productos||[]).forEach(function(x){
+    if(!x || esProdDeTienda(x)) return;
+    if(x.chk==='no' && !enProduccion(x)) r.sin=true;
+    else if(enProduccionPendiente(x)) r.prod=true;
+    else if(esRecoger(x)) r.busca=true;
+    else if(!prodHay(x)) r.rev=true;
+  });
+  if(p.estado==='No hay') r.sin=true;
+  return r;
+}
+var SEMANA_KS=['sin','prod','busca','rev','cam'];
+function semanaDatos(){
+  var dias=semanaDias(), hoy=todayStr(), man=tomorrowStr(), por={};
+  var T={ n:0, ent:0, falta:0 }; SEMANA_KS.forEach(function(k){ T[k]=0; });
+  var D=dias.map(function(f){
+    var o={ f:f, hoy:f===hoy, man:f===man, n:0, am:0, pm:0, ent:0, listos:0, falta:[] };
+    SEMANA_KS.forEach(function(k){ o[k]=[]; });
+    por[f]=o; return o;
+  });
+  (STATE||[]).forEach(function(p){
+    if(!semanaEntra(p)) return;
+    var o=por[p.fecha]; if(!o) return;
+    o.n++; T.n++;
+    if(normTurno(p.turno)==='PM') o.pm++; else o.am++;
+    if(p.entregado){ o.ent++; T.ent++; }
+    if(p.verificado || p.entregado) o.listos++;
+    var r=semanaFalta(p), alguno=false;
+    SEMANA_KS.forEach(function(k){ if(r[k]){ o[k].push(p); T[k]++; alguno=true; } });
+    if(alguno){ o.falta.push(p); T.falta++; }
+  });
+  D.forEach(function(o){ ['AM','PM'].forEach(function(t){ var lim=limTurno(o.f, t); o[t]={ lim:lim, libres:lim-cuposUsadosTurno(o.f, t) }; }); });
+  return { dias:D, por:por, tot:T, desde:dias[0]||'', hasta:dias[dias.length-1]||'' };
+}
+/* «jueves 29/10 (2: Pérez, Gómez) · viernes 30/10 (1: Rojas)»: dónde está lo que dice sin stock */
+function semanaSinTxt(S){
+  return S.dias.filter(function(o){ return o.sin.length; }).map(function(o){
+    return nxDiaTxt(o.f)+' ('+o.sin.length+': '+admNombres(o.sin, 2)+')';
+  }).join(' · ');
+}
+function semanaTitulo(n){
+  var S=semanaDatos();
+  return 'Los próximos '+S.dias.length+' días con camión: '+(S.desde?(nxDiaTxt(S.desde)+' al '+nxDiaTxt(S.hasta)):'')+
+    (n ? (' · 🔴 '+n+' pedido'+(n===1?' dice':'s dicen')+' sin stock: '+semanaSinTxt(S)) : '');
+}
+function semanaSub(p){
+  if(SEMANA_DIA && p.fecha!==SEMANA_DIA) return false;
+  if(!SEMANA_VER) return true;
+  var r=semanaFalta(p);
+  if(SEMANA_VER==='falta') return SEMANA_KS.some(function(k){ return r[k]; });
+  return !!r[SEMANA_VER];
+}
+function semanaDia(f){ SEMANA_DIA=(SEMANA_DIA===f?'':f); admTopeReset(); renderAdmin(); }
+function semanaVer(k){ SEMANA_VER=(SEMANA_VER===k?'':k); admTopeReset(); renderAdmin(); }
+function admVerSemana(v){
+  try{ admSecPoner('ped'); }catch(e){}
+  QUICK_FILTER='semana'; SEMANA_DIA=''; SEMANA_VER=v||'';
+  admTopeReset(); renderAdmin();
+  try{ admIrA('adm-chips'); }catch(e){}
+}
+var SEMANA_ETQ={ sin:['🔴','sin stock','sin stock'], prod:['🏭','en producción','en producción'], busca:['📥','ir a buscar','ir a buscar'],
+                 rev:['⬜','sin revisar','sin revisar'], cam:['🚛','sin camión','sin camión'] };
+function semanaPintar(){
+  var el=document.getElementById('adm-semana'); if(!el) return;
+  if(QUICK_FILTER!=='semana'){ if(!el.hidden || el.innerHTML){ el.hidden=true; el.innerHTML=''; el._h=''; } return; }
+  var S=semanaDatos(), T=S.tot, dSel=SEMANA_DIA && S.por[SEMANA_DIA] ? S.por[SEMANA_DIA] : null;
+  if(SEMANA_DIA && !dSel) SEMANA_DIA='';   // el día ya salió de la ventana (pasó la medianoche)
+  var h='<div class="sem-cab"><span class="sem-ic" aria-hidden="true">🗓️</span><div><b>Los próximos '+S.dias.length+' días con camión</b>'+
+      '<small>'+(S.desde?(esc(nxDiaTxt(S.desde))+' → '+esc(nxDiaTxt(S.hasta))):'')+' · desde hoy hacia adelante; domingos y feriados no cuentan</small></div></div>';
+  if(T.sin) h+='<div class="sem-alerta"><i class="late-dot"></i><div><b>🔴 '+T.sin+' pedido'+(T.sin===1?' dice':'s dicen')+' SIN STOCK</b> en estos días: '+esc(semanaSinTxt(S))+
+      '<small>Mandalos a producir o reprogramalos antes de que llegue el día.</small></div>'+
+      '<button type="button" class="ah-go ah-go-r" onclick="semanaVer(\'sin\')">'+(SEMANA_VER==='sin'?'Ver todos':'Ver solo esos')+'</button></div>';
+  h+='<div class="sem-dias">'+S.dias.map(function(o){
+    var tag=o.hoy?'HOY':(o.man?'MAÑANA':'');
+    var ks=SEMANA_KS.filter(function(k){ return o[k].length; }).map(function(k){
+      return '<span class="sem-k sem-k-'+k+'">'+SEMANA_ETQ[k][0]+' <b>'+o[k].length+'</b> '+SEMANA_ETQ[k][1]+'</span>'; }).join('');
+    var pend=o.n-o.ent, pct=o.n ? Math.round(o.listos*100/o.n) : 0;
+    var cu=['AM','PM'].filter(function(t){ return o[t].lim>0; }).map(function(t){ var l=o[t].libres;
+      return (t==='AM'?'🌅 ':'🌆 ')+'<b>'+(l<0?('+'+(-l)):l)+'</b>'; }).join(' · ');
+    return '<button type="button" class="sem-dia'+(o.sin.length?' sem-dia-rojo':'')+(SEMANA_DIA===o.f?' sem-dia-on':'')+'" onclick="semanaDia(\''+o.f+'\')" '+
+        'aria-pressed="'+(SEMANA_DIA===o.f?'true':'false')+'" title="'+(SEMANA_DIA===o.f?'Ver los 5 días':'Ver solo este día')+'">'+
+      '<span class="sem-d">'+(o.sin.length?'<i class="late-dot"></i>':'')+'<b>'+esc(nxDiaTxt(o.f))+'</b>'+(tag?('<em>'+tag+'</em>'):'')+'</span>'+
+      '<span class="sem-n"><b>'+o.n+'</b> pedido'+(o.n===1?'':'s')+(o.n?(' · 🌅 '+o.am+' · 🌆 '+o.pm):'')+'</span>'+
+      (o.n ? ('<span class="sem-bar" title="'+o.listos+' de '+o.n+' listos para cargar"><i style="width:'+pct+'%"></i></span>'+
+              '<span class="sem-li">✅ '+o.listos+' de '+o.n+' listo'+(o.n===1?'':'s')+(o.ent?(' · 🚚 '+o.ent+' entregado'+(o.ent===1?'':'s')):'')+'</span>') : '')+
+      '<span class="sem-ks">'+(ks || (o.n ? (pend?'<span class="sem-k sem-k-ok">✅ No le falta nada</span>':'<span class="sem-k sem-k-ok">🚚 Todo entregado</span>') : '<span class="sem-k sem-k-0">Sin entregas</span>'))+'</span>'+
+      (cu?('<span class="sem-cu" title="Cupos libres de ese día">🎟️ '+cu+' libres</span>'):'')+
+    '</button>';
+  }).join('')+'</div>';
+  var num=function(k){ return dSel ? dSel[k].length : T[k]; };
+  var nF=dSel ? dSel.falta.length : T.falta, nN=dSel ? dSel.n : T.n;
+  var b=function(k, txt, n, cl){ return '<button type="button" class="sem-v'+(cl?(' '+cl):'')+(SEMANA_VER===k?' on':'')+'"'+(n||k===''||SEMANA_VER===k?'':' disabled')+' onclick="semanaVer(\''+k+'\')">'+txt+' <span>'+n+'</span></button>'; };
+  h+='<div class="sem-ver"><span class="sem-vl">Ver'+(dSel?(' del '+esc(nxDiaTxt(dSel.f))):'')+':</span>'+
+    b('', 'Todo', nN)+b('falta', '⚠️ Lo que falta', nF, 'sem-v-falta')+
+    SEMANA_KS.map(function(k){ return b(k, SEMANA_ETQ[k][0]+' '+SEMANA_ETQ[k][2].charAt(0).toUpperCase()+SEMANA_ETQ[k][2].slice(1), num(k), 'sem-v-'+k); }).join('')+
+    (dSel?('<button type="button" class="sem-v sem-v-x" onclick="semanaDia(\''+dSel.f+'\')">✕ Ver los '+S.dias.length+' días</button>'):'')+'</div>';
+  el.hidden=false;
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
 function quickDef(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i]; return null; }
 function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
 /* Cuántas filas se dibujan de una. 150 entra de sobra en el uso diario (el mes en curso
@@ -17734,7 +17915,15 @@ function admSort(list){
   list.sort(function(a,b){ var x=val(a),y=val(b); if(x<y) return -SORT_DIR; if(x>y) return SORT_DIR; return (b.ts||0)-(a.ts||0); });
   return list;
 }
-function admFilter(){ var d=quickDef(QUICK_FILTER); return admSort(admBaseList(!!(d&&d.todo)).filter(quickTest(QUICK_FILTER))); }
+function admFilter(){
+  var d=quickDef(QUICK_FILTER), L=admBaseList(!!(d&&d.todo)).filter(quickTest(QUICK_FILTER));
+  if(QUICK_FILTER!=='semana') return admSort(L);
+  /* 🗓️ La semana va del día más cercano al más lejos (no de lo más nuevo a lo más viejo), y con el día y lo que falta elegidos arriba */
+  L=L.filter(semanaSub);
+  if(SORT_KEY) return admSort(L);
+  var dn=dayNumMap(), tO=function(p){ var t=normTurno(p.turno); return t==='PM'?1:0; };
+  return L.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?-1:1; return tO(a)-tO(b) || (Number(dn[a.id])||999)-(Number(dn[b.id])||999); });
+}
 /* 🃏 (24/10, dueño: «la tabla es la vista resumen de lo relevante… deben abrir la ficha para editar; los botones rápidos: entregó, editar,
    reprogramar, borrar, WhatsApp»; eligió la «G» con el estado arriba a la derecha, «más pequeño y parpadeando» lo que cambió)
    Administración muestra cada pedido como una FICHA para mirar, en grilla y agrupada por día y turno. Nada se cambia ahí: tocarla abre la
@@ -17976,6 +18165,8 @@ function admHacerDatos(){
     add({ k:'sincam-h', sev:'r', ic:'🚚', n:sH.length, t:'Sin camión para HOY', s:admNombres(sH), b:'💡 Sugerir camión', p:1, fn:"admSugIr('hoy')", tag:'sin camión hoy' });
     add({ k:'sincam', sev:(nxHoraAhora()>=NX_A3_HORA?'r':'a'), ic:'🚚', n:sM.length, t:'Sin camión para '+nxCuandoTxt(prox), s:admNombres(sM), b:'💡 Sugerir camión', p:1, fn:"admSugIr('manana')", tag:'sin camión' });
   }catch(e){}
+  // 🗓️ (26/10) en los próximos 5 días con camión hay entregas que dicen sin stock (la misma cuenta del botón «Semana»)
+  try{ var Sm=semanaDatos(); add({ k:'semana', sev:'r', ic:'🔴', n:Sm.tot.sin, t:'Dicen SIN STOCK en los próximos '+Sm.dias.length+' días', s:semanaSinTxt(Sm), b:'🗓️ Ver la semana', fn:"admVerSemana('sin')", tag:'sin stock en la semana' }); }catch(e){}
   // 🚫 en un día sin camión (feriado o domingo)
   var R=ADM_AV.rev||{};
   add({ k:'diasin', sev:'r', ic:'🚫', n:R.diaSin||0, t:'Quedaron en un día sin camión', s:'feriado o domingo: no aparecen en ningún «Mañana» · pasalos a otro día', b:'Ver cuáles', fn:"admIrA('adm-revisar')", tag:'día sin camión' });
@@ -18243,7 +18434,7 @@ function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ---- Filtros rápidos (chips) + orden de columnas ---- */
-function setQuick(k){ QUICK_FILTER=(QUICK_FILTER===k?'':k); renderAdmin(); }
+function setQuick(k){ QUICK_FILTER=(QUICK_FILTER===k?'':k); if(k==='semana'){ SEMANA_DIA=''; SEMANA_VER=''; } renderAdmin(); }
 function renderChips(){
   var el=document.getElementById('adm-chips'); if(!el) return;
   var base=admBaseList(), todo=null;
@@ -18251,8 +18442,12 @@ function renderChips(){
     var b=d.todo?(todo||(todo=admBaseList(true))):base;
     var n=d.k?b.filter(d.test).length:b.length;
     var active=(QUICK_FILTER===d.k);
-    return '<button class="qchip'+(active?' active':'')+'" onclick="setQuick(\''+d.k+'\')">'+(d.lblF?d.lblF():d.lbl)+' <span class="n">'+n+'</span></button>';
+    /* 🔴 (26/10) `alerta`: el botón parpadea en rojo y dice cuántos (la semana con entregas que dicen sin stock) */
+    var al=0; if(d.alerta){ try{ al=d.alerta()||0; }catch(e){} }
+    return '<button class="qchip'+(active?' active':'')+(al?' qchip-alerta':'')+'" data-k="'+d.k+'" onclick="setQuick(\''+d.k+'\')"'+(d.tit?(' title="'+esc(d.tit(al))+'"'):'')+'>'+
+      (al?'<i class="late-dot"></i>':'')+(d.lblF?d.lblF():d.lbl)+' <span class="n">'+n+'</span>'+(al?(' <span class="qa">🔴 '+al+' sin stock</span>'):'')+'</button>';
   }).join('');
+  semanaPintar();
 }
 function setSort(key){ if(SORT_KEY===key){ SORT_DIR=-SORT_DIR; } else { SORT_KEY=key; SORT_DIR=1; } renderAdmin(); }
 function sortArrow(key){ return SORT_KEY===key?('<span class="sort-arr">'+(SORT_DIR>0?'▲':'▼')+'</span>'):''; }
