@@ -16174,7 +16174,7 @@ Batería sobre la rama con §4mo (25/10): 252 suites, 8.159 bien; roja solo `tes
   (`real/lista_anon.json` en el scratchpad; nombres, celulares, NIT, direcciones, pines y observaciones cambiados, productos y números reales).
   Para mostrarle capturas: página publicada con datos inventados, nunca un .html suelto ni datos reales con enlace.
 
-### §4mp — 🎨 Segunda vuelta de lo que se veía mal (25/10, dueño: «¿No hay más mejoras visuales?»; en la rama, espera el «publica»)
+### §4mp — 🎨 Segunda vuelta de lo que se veía mal (25/10, dueño: «¿No hay más mejoras visuales?»; PUBLICADO 26/10, `05852cd`)
 Capturas propias de lo que la primera vuelta no miró: la ficha de un pedido, el Cuadre, el Plan de stock, la Lista de carga, lo de abajo de
 Proyección y Mis pedidos, y el iPad PARADO (820) y el celular (390). Con la copia de la planilla con clientes INVENTADOS (`real/lista_anon.json`)
 y `scratchpad/est2/capturas2.js`. Solo apariencia. Lo que se arregló:
@@ -16195,3 +16195,8 @@ y `scratchpad/est2/capturas2.js`. Solo apariencia. Lo que se arregló:
 Pruebas: `tests/test_estetica_4mp.js` (9 en compu, iPad parado y celular; 8 rojas contra `0b87635`). Antes/después para el dueño: la MISMA página
 del 25/10 (https://claude.ai/artifact/14zRKXRc2CWp2Wk2SHGax2, versión 2), con clientes inventados.
 Batería sobre la rama con §4mp (25/10): 253 suites, 8.168 bien; roja solo `test_ventas_marcas` (la conocida). Espera el «publica».
+**Publicado el 26/10** (dueño: *«Déjalo como está Eduardo y publica las mejoras»*): solo `pedidos.html` + `tests/test_estetica_4mp.js` sobre
+`main` (`3fae198`) → `05852cd`. Batería sobre lo publicado: 254 suites, 8.130 bien; roja solo `test_ventas_marcas`.
+🏭 **«La fábrica de Eduardo» queda como está** (26/10): el dueño preguntó por qué «copacaba oruro» salía repetido en sus pedidos. Es la
+columna por cliente de `#mis-dep-cols` (lo que falta cargar, solo con Eduardo elegido) + la tarjeta del mismo pedido en `#mis-lista`. Se le
+ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo sin que lo pida.
