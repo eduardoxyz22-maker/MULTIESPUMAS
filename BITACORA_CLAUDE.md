@@ -16261,3 +16261,25 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `version:"2026-10-26-a"` y `{action:'iaComprobantes', fotos:[], leer:1}` → `estado:""` (la clave de Claude está). En `pub_mn` sobre
   `ad16340` se aplicó SOLO el diff `63e7000..f6272ef` de `pedidos.html`, `.gs`, `test_servidor.js` y `test_ia_comprobantes.js` (§4lt-d sigue
   en la rama). Batería ahí: 253 suites, 8.191 bien; rojas solo las conocidas. `main` = **`037b86a`**.
+
+### §4ms — 🔒 contraseña en la revisión con IA · 📤 compartir con las vendedoras · 💵 el saldo (en la rama, SIN publicar) (26/10)
+- **🔒 PUBLICADO `881b14a`** (dueño: *«deben ingresar con contraseña porque si no los vendedores se gastarán mis tokens… lo de revisar las fotos
+  con IA»*): la ventana, «Leer» y «Leer de nuevo» piden la contraseña de Administración (`iacPuede` = `UNLOCKED` o `IAC.clave`, una vez por
+  página abierta; `iacClaveProbar` contra `LS_ADMIN`). Las marcas ✅/⚠️ IA de la tabla (de `leer:1`, gratis) se siguen viendo. El servidor no
+  cambió (la protección es de la página; el tope por día del servidor sigue: `IA_COMP_TOPE_DIA`). `test_ia_comprobantes` §10.
+- **Lo que leyó de verdad** (dueño, captura): 370 fotos, US$ 5,06; 175 coinciden, 30 no coinciden, 0 no se leen (octubre). Ej.: monto 1.250
+  anotado y la foto 1.140; dos pagos de 990 con el mismo N° de comprobante (02102026/295/398/030/7680) y banco Ganadero anotado Económico.
+- **📤 Compartir con las vendedoras** (dueño: *«¿cómo comparto el informe al grupo? debería armar un PDF»*; antes eligió «Las dos»: aviso en el
+  panel Y por WhatsApp). En la ventana de la revisión, barra `iacCompartirHtml` (con «Todas» o una vendedora, `IAC.shVend`):
+  · «📄 Informe PDF» (`iacPdf`/`iacPdfHojas`: A4 parado 794×1123, por vendedora, con resumen; las mismas librerías del informe de ATC,
+    `atciCargarLibs`; sin internet, avisa y queda el texto). Archivo `Pagos-para-revisar-<mes>-<año>[-vendedora].pdf`.
+  · «📋 Copiar para el grupo» / «📲 WhatsApp» (`iacTextoGrupo`): el mismo informe en texto (wa.me sin número: se elige el grupo).
+  · «📣 Dejar el aviso en el panel» (`iacAvisarPanel`): fila del sistema **`__avisos_conta__`** (`CTA_AV_ID`, en `esFilaSistema`) con un aviso
+    por pago (`k` = `ctaAvClave`: pedido|día|monto|método). Se relee la planilla y se junta por id (`ctaAvJuntar`: `ok`/`qt` no vuelven atrás;
+    40 días; tope 40.000). A la vendedora: «📋 Para hacer» (`misHacerDatos`) y Bloki (`asisAvisos`) → `ctaAvVer(v)` con «Abrir la venta» y
+    «✓ Ya lo corregí» (`ctaAvOk`). En cada pago de la revisión: «📣 Avisado a Juan… sin corregir» / «✅ Juan dice que lo corrigió»
+    (`ctaAvEstadoHtml`). `iacComparar` ahora deja `c` (en corto, sin HTML) en cada motivo.
+  · `test_ia_comprobantes` §11 (39 en total). Capturas con datos inventados: https://claude.ai/artifact/68D95SkhMyNoZtHt4SUayw
+- **💵 Guardar pide el saldo** (`997f2d6`, en la rama): el dueño, al verlo explicado, eligió **«No, dejalo guardado»** → NO va a `main`. ⚠️ Al
+  publicar algo de la rama, aplicar solo los diffs de lo que se publica (el de `997f2d6` toca `fxPasosEstado`, `fxDerPintar`, `submitPedido` y
+  agrega `cobroSinMonto`/`ventaGuardadaSinMonto`/`saldoObligActivo` + `tests/test_saldo_obligatorio.js`).
