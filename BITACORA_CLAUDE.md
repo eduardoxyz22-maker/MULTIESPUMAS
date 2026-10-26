@@ -16291,9 +16291,10 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - **Página** (`iacComparar`): el motivo `monto` se parte en `menos` («⚠️ La foto dice menos»: cuánto menos y que si fue en efectivo se anota
   como otro pago; si no, falta ese comprobante), `mas` («⚠️ La foto dice más»: ¿se anotó de menos o es otro pago?) y `mixto` («🧾 Una parte
   fue en efectivo»: con la nota leída —`nv`— y QR + efectivo = lo anotado: «la plata está, corregí el pago a QR X y efectivo Y»).
-  **Fechas** (`iacDiasDe`, con signo; la foto más cerca de lo anotado): avisa solo si la foto es de DESPUÉS de lo anotado (2+ días), de 8+
-  días antes («¿otra compra?») o de otro MES («⚠️ Otro mes», para el contador). Pagar un par de días antes (PATRICIA DAVALOS, 06 vs 08/10) ya
-  no avisa. `test_ia_comprobantes` §12 (43 en total).
+  **Fechas** (`iacDiasDe`, con signo; la foto más cerca de lo anotado): ⚠️ el dueño CORRIGIÓ mi primera idea de no avisar 2 días antes: *«si la
+  venta se cargó el 15 y el pago dice 12, está bien que avise: así sabemos que están ocultando dinero»*. Avisa con 2+ días para cualquier lado
+  («La plata entró el 12/10 (la foto) y el pago se anotó el 15/10: 3 días después»; con 8+ «¿o es de otra compra?»; después: «¿se anotó antes de
+  que llegara la plata?») y otro MES aunque sea 1 día («⚠️ Otro mes»). 1 día no avisa. No volver a aflojarlo. `test_ia_comprobantes` §12 (43).
 - **Servidor 26-b** (`IAC_PREGUNTA_V`=2): el esquema pide `es_nota_venta`, `nota_total`, `nota_efectivo`, `nota_qr`, `nota_tarjeta`,
   `nota_transferencia`; `iacNormal_` deja `pv` en toda lectura y, en una nota, `nv:1, cp:false, nt, ne, nq, nj, nr`. La página
   (`IAC_NOTAS_SERVIDOR`): «🧾 Leer las notas de venta» (`iacNotasPorLeer`/`iacLeerNotas` → `iacLeer(lista, forzar)`) vuelve a leer SOLO las

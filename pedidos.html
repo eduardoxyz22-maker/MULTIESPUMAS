@@ -42983,16 +42983,16 @@ function iacComparar(x, refs){
     if(bds.length && !bds.some(function(b){ return iacBanco(b)===ban; })) mot.push({ k:'banco', chip:'⚠️ Otro banco', t:'La foto dice que entró a <b>'+esc(bds[0])+'</b> y está anotado en <b>'+esc(x.ban)+'</b>.',
       c:'la foto dice que entró a '+bds[0]+' y está anotado en '+x.ban });
   }
-  /* 📅 (26/10) Que la clienta pague unos días antes de que se cargue la venta es normal (PATRICIA DAVALOS: foto del 06/10, anotado el 08/10):
-     se avisa la foto de DESPUÉS de lo anotado (¿se anotó antes de que llegara la plata?), la de 8 días antes o más (¿otra compra?) y la de
-     otro MES (para el contador, ese pago está en el extracto del otro mes). La foto más cerca de lo anotado es la que cuenta. */
+  /* 📅 (26/10, el dueño: «si la venta se cargó el 15 y el pago dice 12, está bien que avise: así sabemos que están ocultando dinero») Se
+     avisa la foto de 2 días o más ANTES de lo anotado (la plata entró antes de que se cargara: ¿quién la tuvo?), la de 2 días o más DESPUÉS
+     (¿se anotó antes de que llegara la plata?) y la de otro MES (para el contador va en el extracto del otro mes). Vale la foto más cerca. */
   var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean);
   if(fs.length && x.f){
     var f0=fs.slice().sort(function(a,b){ return iacDias(a, x.f)-iacDias(b, x.f); })[0], dd=iacDiasDe(x.f, f0);
-    if(dd>=2) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b>, <b>después</b> de cuando se anotó el pago (<b>'+esc(fmtFechaCorta(x.f))+'</b>): ¿se anotó antes de que llegara la plata?',
-      c:'la foto es del '+fmtFechaCorta(f0)+', después de cuando se anotó el pago ('+fmtFechaCorta(x.f)+')' });
-    else if(dd<=-8) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b>, '+(-dd)+' días antes de cuando se anotó el pago (<b>'+esc(fmtFechaCorta(x.f))+'</b>): ¿es de otra compra?',
-      c:'la foto es del '+fmtFechaCorta(f0)+', '+(-dd)+' días antes de cuando se anotó el pago ('+fmtFechaCorta(x.f)+'): ¿es de otra compra?' });
+    if(dd<=-2) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La plata entró el <b>'+esc(fmtFechaCorta(f0))+'</b> (la foto) y el pago se anotó el <b>'+esc(fmtFechaCorta(x.f))+'</b>: <b>'+(-dd)+' días después</b>'+(dd<=-8?' (¿o es de otra compra?)':'')+'.',
+      c:'la plata entró el '+fmtFechaCorta(f0)+' (la foto) y el pago se anotó el '+fmtFechaCorta(x.f)+': '+(-dd)+' días después'+(dd<=-8?' (¿o es de otra compra?)':'') });
+    else if(dd>=2) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b>, <b>después</b> de cuando se anotó el pago (<b>'+esc(fmtFechaCorta(x.f))+'</b>): ¿se anotó antes de que llegara la plata?',
+      c:'la foto es del '+fmtFechaCorta(f0)+', después de cuando se anotó el pago ('+fmtFechaCorta(x.f)+'): ¿se anotó antes de que llegara la plata?' });
     else if(f0.slice(0,7)!==String(x.f).slice(0,7)) mot.push({ k:'mes', chip:'⚠️ Otro mes', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b> ('+esc(mesNombre(f0.slice(0,7)))+') y el pago está anotado el <b>'+esc(fmtFechaCorta(x.f))+'</b> ('+esc(mesNombre(String(x.f).slice(0,7)))+'): para el contador va en el otro mes.',
       c:'la foto es del '+fmtFechaCorta(f0)+' ('+mesNombre(f0.slice(0,7))+') y el pago está anotado el '+fmtFechaCorta(x.f)+' ('+mesNombre(String(x.f).slice(0,7))+')' });
   }

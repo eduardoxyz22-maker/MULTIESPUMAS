@@ -13,7 +13,7 @@
    8. 📁 La carpeta: con la 26-a tandas de 120, con la 25-a de 8; cerrar la ventana no la corta, volver a abrir no arranca otra y avisa al terminar.
    10. 🔒 Leer las fotos gasta el crédito del dueño: solo con la contraseña de Administración.
    11. 📤 Compartir con las vendedoras: el texto para el grupo, el PDF y el aviso en el panel (Mis pedidos → Para hacer).
-   12. 🧾 La foto dice menos: el efectivo de la nota de venta (servidor 26-b) y las fechas que no son ruido.
+   12. 🧾 La foto dice menos: el efectivo de la nota de venta (servidor 26-b), y la fecha: 2 días o más para cualquier lado avisa.
 
    Reloj CLAVADO (martes 27/10/2026, 10:00 de Bolivia). Solo datos sintéticos.
    Se corre:  node tests/test_ia_comprobantes.js */
@@ -314,7 +314,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var c1=iacComparar(X(990, '2026-10-05', ['zq']), {}); out.menos={ chip:c1.chip, txt:c1.txt, c:(c1.mot||[])[0] && c1.mot[0].c };
     var c2=iacComparar(X(990, '2026-10-05', ['zn','zq']), {}); out.mixto={ est:c2.est, chip:c2.chip, txt:c2.txt, c:(c2.mot||[])[0] && c2.mot[0].c };
     var dia=function(fFoto, fAnot){ IAC.res.zd=Q(990, fFoto); var c=iacComparar(X(990, fAnot, ['zd']), {}); return c.est==='ok' ? 'ok' : (c.mot||[]).map(function(m){ return m.k; }).join(','); };
-    out.dias={ antes2:dia('2026-10-06','2026-10-08'), despues:dia('2026-10-10','2026-10-08'), antes10:dia('2026-10-10','2026-10-20'), mes:dia('2026-09-30','2026-10-02') };
+    out.dias={ antes1:dia('2026-10-07','2026-10-08'), antes3:dia('2026-10-12','2026-10-15'), despues:dia('2026-10-10','2026-10-08'), antes10:dia('2026-10-10','2026-10-20'), mes:dia('2026-09-30','2026-10-01') };
+    IAC.res.zd=Q(990, '2026-10-12'); out.txt3=iacComparar(X(990, '2026-10-15', ['zd']), {}).txt.replace(/<[^>]+>/g,'');
     /* el botón para leer las notas de venta (servidor 26-b) */
     var base=STATE.slice();
     STATE.push({ id:'zz1', oc:'10-990', nota:'1620', cliente:'JEISON PRUEBA', celular:'7', fecha:'2026-10-26', turno:'AM', zona:'Norte', vendedor:'Mauricio Merida',
@@ -333,7 +334,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     /La foto dice menos/.test(r12.menos.chip) && /Bs 600,00/.test(r12.menos.txt) && /efectivo/.test(r12.menos.txt) && /otro pago/.test(r12.menos.txt) && !/Revisá cuál está bien/.test(r12.menos.txt), r12.menos);
   chk('12b. con la nota de venta leída (QR 390 + efectivo 600 = 990): «Una parte fue en efectivo» y cómo corregir el pago', r12.mixto.est==='mal' && /efectivo/.test(r12.mixto.chip) &&
     /QR Bs 390,00/.test(r12.mixto.txt) && /efectivo Bs 600,00/.test(r12.mixto.txt) && /La plata está/.test(r12.mixto.txt), r12.mixto);
-  chk('12c. las fechas: 2 días antes no avisa; después, 10 días antes y otro mes sí', r12.dias.antes2==='ok' && r12.dias.despues==='dia' && r12.dias.antes10==='dia' && r12.dias.mes==='mes', r12.dias);
+  chk('12c. las fechas (dueño: «si la venta se cargó el 15 y el pago dice 12, está bien que avise»): 1 día no avisa; 3 días antes, después, 10 días antes y otro mes sí',
+    r12.dias.antes1==='ok' && r12.dias.antes3==='dia' && r12.dias.despues==='dia' && r12.dias.antes10==='dia' && r12.dias.mes==='mes' &&
+    /La plata entró el 12\/10/.test(r12.txt3) && /3 días después/.test(r12.txt3), { d:r12.dias, t:r12.txt3 });
   chk('12d. 🧾 con la 26-b: el botón ofrece leer las notas de venta de los pagos con diferencia y las pide con `forzar`', r12.sinBoton && JSON.stringify(r12.porLeer)==='["zv"]' &&
     /Leer las notas de venta \(1 foto/.test(r12.boton) && r12.pidio.length===1 && JSON.stringify(r12.pidio[0].forzar)==='["zv"]', r12);
 
