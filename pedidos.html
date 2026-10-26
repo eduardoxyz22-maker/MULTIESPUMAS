@@ -13265,6 +13265,17 @@ function submitPedido(){
        ya está todo cobrado, y la venta queda pagada como en Contabilidad. */
     var _cobAparte = EDIT_ID ? cobradoFueraDeAcuenta(findById(EDIT_ID)) : 0;
     if(segVal('f-pagado')!=='SI' && _acu>0 && montoForm('f-saldo')<=0 && !(_cobAparte>0.009)){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+    /* 💵 (26/10, el dueño) Una venta sin ningún monto no se guarda (`cobroSinMonto`); la que ya estaba guardada así, pregunta. */
+    if(saldoObligActivo() && cobroSinMonto(vendedor, _cobAparte)){
+      var _pSM=EDIT_ID ? findById(EDIT_ID) : null;
+      if(!(_pSM && ventaGuardadaSinMonto(_pSM) &&
+           confirm('💵 Esta venta ya estaba guardada SIN MONTO (ni saldo por cobrar ni pago).\n\nAceptar: guardarla igual así.\nCancelar: poner ahora el saldo por cobrar o marcar «SÍ, pagado».'))){
+        markErr('f-saldo');
+        toast('💵 Poné el SALDO POR COBRAR (lo que falta pagar) o marcá «SÍ, pagado» con lo que pagó: una venta no se guarda sin monto.','err',8000);
+        var _fsSM=document.getElementById('f-saldo'); if(_fsSM){ try{ _fsSM.focus(); _fsSM.scrollIntoView({block:'center'}); }catch(e){} }
+        return;
+      }
+    }
   }
 
   var isEdit=!!EDIT_ID;
@@ -15568,7 +15579,7 @@ function fxDerPintar(){
       (pagado ? '<span>Pago</span><b style="color:var(--green)">✅ pagado</b>' : ('<span>A cuenta</span><b>'+fmtBs(acu)+'</b><span>Saldo por cobrar</span><span class="gr">'+fmtBs(sal)+'</span>'))+'</div>';
   var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
-  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); }
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
     var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
     if(!lite) chk.push(['Celular',!!cel]);
@@ -15975,6 +15986,20 @@ function fpIr(n){
   var bar=document.getElementById('fp-barra'), dest=a.getBoundingClientRect().top+window.scrollY;
   window.scrollTo({ top:dest-hdrAltoEn(dest)-(bar?bar.offsetHeight:0)-16, behavior:'smooth' });
 }
+/* 💵 (26/10, el dueño: «Sí, hacé que Guardar pida el saldo a los demás vendedores») Una VENTA (OC) en «NO» con el saldo en 0 y sin
+   «A cuenta» se guardaba sin ningún monto y en Contabilidad quedaba «sin monto». Ahora Guardar pide el «Saldo por cobrar» o «SÍ, pagado»,
+   lo mismo que ya marcaba el paso «Cobro». No aplica a ATC ni RPT, a Eduardo y ROHO (`esVendedorLite`), a los pedidos internos
+   (`cliEsInterno`) ni a una venta con cobros ya registrados aparte (`cobradoFueraDeAcuenta`). Con «A cuenta» y sin saldo sigue el aviso
+   de siempre («Hay pago a cuenta: poné el saldo»). Una venta que YA estaba guardada sin monto pregunta (`ventaGuardadaSinMonto`). */
+function cobroFormCobAparte(){ try{ return EDIT_ID ? cobradoFueraDeAcuenta(findById(EDIT_ID)) : 0; }catch(e){ return 0; } }
+function cobroSinMonto(vend, cobAparte){
+  if(docTipoSel()!=='OC' || esVendedorLite(vend) || cliEsInterno(vend) || segVal('f-pagado')==='SI') return false;
+  if(montoForm('f-acuenta')>0 || montoForm('f-saldo')>0) return false;
+  return !((cobAparte==null ? cobroFormCobAparte() : Number(cobAparte)||0)>0.009);
+}
+/* En Playwright, solo con `window.SALDO_PRUEBA` (como `OBS_PRUEBA`): las pruebas de siempre guardan ventas de ejemplo sin monto. */
+function saldoObligActivo(){ return !(navigator.webdriver && !window.SALDO_PRUEBA); }
+function ventaGuardadaSinMonto(p){ return !!p && !p.pagado && !esATC(p.oc) && !esRPT(p.oc) && !(ventaTotal(p)>0.005); }
 function fxPasosEstado(){
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
   var lite=esVendedorLite(val('f-vendedor')), tipo=docTipoSel(), tienda=VENTA_TIENDA;
@@ -15998,7 +16023,7 @@ function fxPasosEstado(){
       (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
     prods,
     tienda || (!!val('f-fecha') && !!val('f-zona')),
-    tipo!=='OC' || lite || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && montoForm('f-saldo')>0))
+    tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))
   ];
 }
 function fxPasosPintar(){
