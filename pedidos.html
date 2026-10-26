@@ -2753,14 +2753,23 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .cp2-a:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
 .cp2-ai{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:1.25rem;background:var(--c);box-shadow:inset 0 0 0 40px rgba(255,255,255,.82)}
 .cp2-at{min-width:0}.cp2-at b{display:block;font-size:.9rem;font-weight:800;color:#13302e}.cp2-at small{display:block;font-size:.74rem;color:#6b8584;margin-top:2px;line-height:1.3}
-.cp2-fil{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin:6px 0 4px;scrollbar-width:thin}
-.cps-r{flex:none;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid #e1ebea;border-radius:14px;padding:9px 14px 9px 16px;background:#fff;cursor:pointer;font:inherit;color:#13302e;min-width:122px;text-align:left;transition:box-shadow .15s ease,background .15s ease}
-.cps-r::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
-.cps-r:hover{box-shadow:0 4px 14px rgba(19,48,46,.08)}.cps-r.on{background:#f3fbfa;box-shadow:0 0 0 2px var(--c)}
+.cp2-mix{margin:6px 0 10px;padding:14px 16px;border:1px solid #e1ebea;border-radius:16px;background:#fff}
+.cp2-mix-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:.72rem;font-weight:800;color:#6b8584;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.cp2-mix-t span:last-child{font-size:.84rem;color:#13302e;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.cp2-barra{display:flex;gap:3px;height:12px;border-radius:999px;overflow:hidden;background:#eef4f3}
+.cp2-barra button{border:0;padding:0;margin:0;background:var(--c);cursor:pointer;min-width:6px;transition:opacity .15s ease,filter .15s ease}
+.cp2-barra button:hover{filter:brightness(1.12)}.cp2-barra button.apag{opacity:.22}
+.cp2-fil{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:6px;margin-top:12px}
+.cps-r{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;row-gap:1px;align-items:baseline;border:1px solid transparent;border-radius:12px;padding:8px 12px;background:#f5f9f8;cursor:pointer;font:inherit;color:#13302e;text-align:left;min-width:0;transition:background .15s ease,box-shadow .15s ease,color .15s ease}
+.cps-r:hover{background:#ecf4f3}
 .cps-r:focus-visible{outline:3px solid #9be3dd;outline-offset:2px}
-.cps-r span{font-size:.74rem;font-weight:800;color:var(--c);white-space:nowrap}
-.cps-r b{font-size:1.3rem;font-weight:900;color:#13302e;font-variant-numeric:tabular-nums;line-height:1.15}
-.cps-r small{font-size:.72rem;color:#6b8584;white-space:nowrap}
+.cps-r span{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cps-r span::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.cps-r b{font-size:1.15rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.3}
+.cps-r small{font-size:.76rem;color:#6b8584;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cps-r.cp2-alerta{background:#fff3f4}.cps-r.cp2-alerta span{color:#CE2939}.cps-r.cp2-alerta b{color:#CE2939}
+.cps-r.on{background:var(--c);color:#fff;box-shadow:0 4px 14px rgba(19,48,46,.18)}
+.cps-r.on span,.cps-r.on b{color:#fff}.cps-r.on span::before{background:#fff}.cps-r.on small{color:rgba(255,255,255,.88)}
 .cp2-busca{margin:4px 0 8px}.cp2-busca input{width:100%;box-sizing:border-box;border:1px solid #dbe7e6;border-radius:12px;padding:10px 14px;font:inherit;font-size:.88rem;background:#fff;color:#13302e;min-height:44px}
 .cp2-busca input:focus{outline:none;border-color:#00B5AD;box-shadow:0 0 0 3px rgba(0,181,173,.18)}
 .cp2-filtro{font-size:.82rem;color:#55706f;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cp2-filtro b{color:#13302e}
@@ -2794,6 +2803,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 @media (max-width:640px){ .cp2-acc{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px} .cp2-a{flex-direction:column;align-items:center;text-align:center;gap:6px;padding:10px 6px;min-height:0} .cp2-at small{display:none} .cp2-at b{font-size:.76rem;line-height:1.25} }
 @media (max-width:640px){
   .cp2-hero{grid-template-columns:1fr;padding:14px}.cp2-tot b{font-size:1.7rem}.cp2-ring{justify-self:start}
+  .cp2-mix{padding:12px}.cp2-fil{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cps-tw{padding:0 6px 4px}.cps-t,.cps-t tbody{display:block}.cps-t thead{display:none}
   .cps-g{display:block}.cps-g td{display:block;padding:12px 4px 2px}
   .cp2-row{display:grid;grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"d c m" "d f f";gap:6px 10px;align-items:start;background:#fff;border:1px solid #e5eeed;border-left:4px solid var(--c);border-radius:12px;margin:6px 0;padding:10px}
@@ -42836,7 +42846,7 @@ function compsArchivo(x, i){ return x.f+'_'+compsSlug(x.met)+'_'+compsMontoTxt(x
    FILTRAN, un buscador, y la lista en tarjetas con la MINIATURA de cada foto. Las cuentas son las de siempre (`compsMesDatos`): esto
    solo dibuja. ⚠️ Lo que leen las pruebas sigue: `.cps-r` (las fichas), `.cps-t tbody tr` con el cliente en el primer `<b>`, `.cps-ok`
    de la IA, `#comps-carpeta`, `#comps-carpeta-btn` y `#comps-ia-btn`. */
-var COMPS_VER={ k:'', q:'' };
+var COMPS_VER={ k:'', q:'' }, COMPS_CACHE=null;   // la cuenta del mes, para que el buscador solo filtre (se rehace con cada `compsPintar` o si cambió la lista)
 var COMPS_COL={ 'QR BISA':'#00A09A', 'QR Económico':'#2457c5', 'QR Ganadero':'#7c3aed', 'QR Unión':'#0e7490', 'QR Mercantil':'#be185d', 'Tarjeta':'#0f766e', 'Transferencia':'#1d4ed8', 'Sin método':'#b45309' };
 var COMPS_MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function compsAbrir(mes){
@@ -42867,14 +42877,15 @@ function compsPintar(){
   var box=document.getElementById('comps-cuerpo'), mes=(document.getElementById('comps-mes')||{}).value; if(!box || !mes) return;
   var L=compsMesDatos(mes), G={}, orden=[], sinFoto=0, tot=0, nFot=0, refs=iacRefs(L), ia={ ok:0, mal:0, pe:0 };
   L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); if(!x.comps.length) sinFoto++; tot=r2(tot+x.monto); nFot+=x.comps.length;
-    var e=compsIaEst(x, refs); if(e) ia[e]++; });
+    var e=compsIaEst(x, refs); x._ia=e; if(e) ia[e]++; x._tag=x.comps.length ? iacTagComps(x, refs) : ''; });
+  COMPS_CACHE={ mes:mes, vend:((document.getElementById('cta-vendedor')||{}).value||'').trim(), gen:SALDO_GEN, L:L };
   orden.sort(function(a,b){ return G[b].length-G[a].length; });
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
   if(!L.length){ box.innerHTML='<div class="empty u7" style="display:flex">'+VACIO_SVG.caja+'<b>No hay pagos con QR, tarjeta o transferencia en '+esc(mesNombre(mes))+(vend?(' de '+esc(vend)):'')+'.</b></div>'; return; }
   if(COMPS_VER.k && COMPS_VER.k.indexOf('met:')===0 && !G[COMPS_VER.k.slice(4)]) COMPS_VER.k='';
   var conFoto=L.length-sinFoto, colAn=sinFoto ? '#F59E0B' : '#16a34a', leidos=ia.ok+ia.mal;
   var foco=document.activeElement && document.activeElement.id==='comps-q', car=foco ? document.activeElement.selectionStart : 0;
-  var ficha=function(k, nom, n, sub, col, extra){ return '<button type="button" class="cps-r'+(COMPS_VER.k===k?' on':'')+(extra||'')+'" style="--c:'+col+'" onclick="compsFiltrar(\''+esc(k.replace(/'/g,''))+'\')" aria-pressed="'+(COMPS_VER.k===k)+'"><span>'+nom+'</span><b>'+n+'</b><small>'+sub+'</small></button>'; };
+  var ficha=function(k, nom, n, sub, col, extra){ return '<button type="button" class="cps-r'+(COMPS_VER.k===k?' on':'')+(extra||'')+'" style="--c:'+col+'" onclick="compsFiltrar(\''+esc(k.replace(/'/g,''))+'\')" aria-pressed="'+(COMPS_VER.k===k)+'"><span>'+nom+'</span><b>'+n+'</b>'+(sub?('<small>'+sub+'</small>'):'')+'</button>'; };
   var tile=function(id, fn, ic, bg, tit, sub){ return '<button type="button" class="cp2-a"'+(id?(' id="'+id+'"'):'')+' onclick="'+fn+'" style="--c:'+bg+'"><span class="cp2-ai">'+ic+'</span><span class="cp2-at"><b>'+tit+'</b><small>'+sub+'</small></span></button>'; };
   box.innerHTML=
     '<div class="cp2-hero"><div class="cp2-tot"><small>Cobrado con QR, tarjeta o transferencia'+(vend?(' · solo '+esc(vend)):'')+'</small><b>'+fmtBs0(tot)+'</b>'+
@@ -42890,11 +42901,17 @@ function compsPintar(){
       tile('comps-carpeta-btn', 'compsCarpeta()', '📁', '#2457c5', 'Armar la carpeta en Drive', 'Las fotos con su nombre, listas para el contador')+
       tile('comps-ia-btn', 'iacAbrir()', '🤖', '#7c3aed', 'Revisar las fotos con IA'+(iacPuede()?'':' 🔒'), 'Compara cada foto con lo anotado')+
     '</div><div id="comps-carpeta"></div>'+
-    '<div class="cp2-fil" role="group" aria-label="Filtrar">'+
-      ficha('', 'Todos', L.length, fmtBs0(tot), '#475569')+
-      orden.map(function(k, i){ var s2=0; G[k].forEach(function(x){ s2=r2(s2+x.monto); }); return ficha('met:'+k, esc(k), G[k].length, fmtBs0(s2), compsColor(k, i)); }).join('')+
-      ficha('sinfoto', '📷 Sin foto', sinFoto, sinFoto ? 'no van a tener comprobante' : 'todos tienen foto', sinFoto ? '#CE2939' : '#16a34a')+
-    '</div>'+
+    /* (26/10, el dueño: «esas fichas no me gustan, podría ser mejor») Cómo se cobró: una barra con la parte de cada banco (en Bs) y
+       debajo píldoras que filtran; la elegida se pinta del color de su banco. */
+    '<div class="cp2-mix"><div class="cp2-mix-t"><span>Cómo se cobró · tocá para filtrar</span></div>'+
+      '<div class="cp2-barra" aria-hidden="true">'+orden.map(function(k, i){ var s2=0; G[k].forEach(function(x){ s2=r2(s2+x.monto); });
+        var pc=tot>0 ? Math.round(100*s2/tot) : 0, ap=COMPS_VER.k && COMPS_VER.k!=='met:'+k;
+        return '<button type="button" tabindex="-1" class="'+(ap?'apag':'')+'" style="--c:'+compsColor(k, i)+';flex:'+Math.max(s2, tot/200)+'" title="'+esc(k)+' · '+fmtBs0(s2)+' ('+pc+'%)" onclick="compsFiltrar(\''+esc(('met:'+k).replace(/'/g,''))+'\')"></button>'; }).join('')+'</div>'+
+      '<div class="cp2-fil" role="group" aria-label="Filtrar por forma de pago">'+
+        ficha('', 'Todos', L.length, fmtBs0(tot), '#13302e')+
+        orden.map(function(k, i){ var s2=0; G[k].forEach(function(x){ s2=r2(s2+x.monto); }); return ficha('met:'+k, esc(k), G[k].length, fmtBs0(s2), compsColor(k, i)); }).join('')+
+        ficha('sinfoto', '📷 Sin foto', sinFoto, sinFoto ? 'sin comprobante' : 'todos tienen foto', sinFoto ? '#CE2939' : '#16a34a', sinFoto ? ' cp2-alerta' : '')+
+      '</div></div>'+
     '<div class="cp2-busca"><input type="search" id="comps-q" placeholder="🔎 Buscar cliente, nota, recibo o vendedor" value="'+esc(COMPS_VER.q)+'" oninput="COMPS_VER.q=this.value;compsListaPintar()" aria-label="Buscar en los comprobantes"></div>'+
     '<div id="comps-lista"></div>'+
     '<div class="cps-pie">Ordenados por banco y por día. Cada foto lleva un nombre que dice día, banco, monto y cliente: el mismo en el Excel y en la carpeta.</div>';
@@ -42906,13 +42923,15 @@ function compsFiltrar(k){ COMPS_VER.k = (COMPS_VER.k===k) ? '' : k; compsPintar(
 /* La lista, aparte: el buscador la repinta sin perder el foco. */
 function compsListaPintar(){
   var box=document.getElementById('comps-lista'), mes=(document.getElementById('comps-mes')||{}).value; if(!box || !mes) return;
-  var L=compsMesDatos(mes), refs=iacRefs(L), G={}, orden=[], k=COMPS_VER.k, q=sinTildes(String(COMPS_VER.q||'')).toLowerCase().trim();
+  var C=COMPS_CACHE, vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  if(!C || C.mes!==mes || C.vend!==vend || C.gen!==SALDO_GEN){ compsPintar(); return; }
+  var L=C.L, G={}, orden=[], k=COMPS_VER.k, q=sinTildes(String(COMPS_VER.q||'')).toLowerCase().trim();
   L.forEach(function(x){ if(!G[x.met]){ G[x.met]=[]; orden.push(x.met); } G[x.met].push(x); });
   orden.sort(function(a,b){ return G[b].length-G[a].length; });
   var col={}; orden.forEach(function(m, i){ col[m]=compsColor(m, i); });
   var pasa=function(x){
     if(k==='sinfoto' && x.comps.length) return false;
-    if(k==='iamal' && compsIaEst(x, refs)!=='mal') return false;
+    if(k==='iamal' && x._ia!=='mal') return false;
     if(k.indexOf('met:')===0 && x.met!==k.slice(4)) return false;
     if(!q) return true;
     var t=sinTildes([x.p.cliente, x.p.nota, x.nota, x.p.vendedor, x.met, fmtBs(x.monto)].join(' ')).toLowerCase();
@@ -42927,7 +42946,7 @@ function compsListaPintar(){
         var meta=[x.p.nota ? ('Nota '+esc(x.p.nota)) : '', x.nota ? ('Recibo '+esc(x.nota)) : '', esc(String(x.p.vendedor||'').split(' ')[0])].filter(Boolean).join(' · ');
         var fotos=x.comps.length ? x.comps.map(function(fid, i){
             return '<a class="cp2-th" href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener" title="Ver la foto'+(x.comps.length>1?(' '+(i+1)):'')+'"><span aria-hidden="true">📷</span>'+
-              '<img loading="lazy" alt="" src="'+esc(fotoThumb(fid, 160))+'" onerror="this.remove()">'+(x.comps.length>1?('<i>'+(i+1)+'</i>'):'')+'</a>'; }).join('')+iacTagComps(x, refs)
+              '<img loading="lazy" alt="" src="'+esc(fotoThumb(fid, 160))+'" onerror="this.remove()">'+(x.comps.length>1?('<i>'+(i+1)+'</i>'):'')+'</a>'; }).join('')+x._tag
           : '<span class="cps-tag cps-mal">📷 falta la foto</span>';
         return '<tr class="cp2-row" style="--c:'+col[m]+'"><td class="cp2-dia"><span class="cp2-d">'+esc(String(x.f).slice(8,10))+'</span><span class="cp2-mm">'+(COMPS_MESES[mm-1]||'')+'</span></td>'+
           '<td class="cp2-cli"><a onclick="closeModal();showContaModal(\''+id+'\')"><b>'+esc(String(x.p.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+'</b></a>'+(x.envio?' <span class="cp2-flete">🚚 flete</span>':'')+
