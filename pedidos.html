@@ -43235,6 +43235,25 @@ function iacAbrir(mes){
   iacCargar(mes);
 }
 function iacFiltro(k){ IAC.filtro=(IAC.filtro===k ? '' : k); iacPintar(); }
+/* «🤖 Revisar los pagos nuevos»: relee la planilla y lo ya leído de esas fotos (sin gastar). Si entraron fotos sin leer, aparece «Leer…» con
+   su costo: leer lo decide la persona. */
+function iacBuscarNuevos(){
+  if(IAC.busca || IAC.corre) return;
+  var mes=IAC.mes;
+  IAC.busca=true; iacPintar();
+  return Promise.resolve(typeof refrescarEstadoYa==='function' ? refrescarEstadoYa() : true).catch(function(){ return false; }).then(function(){
+    IAC.cargado[mes]=''; return iacCargar(mes);
+  }).then(function(){
+    IAC.busca=false; iacRepintar();
+    var faltan=iacIds(iacPagos(mes)).filter(function(f){ return !IAC.res[f]; }).length;
+    toast(faltan ? ('🤖 Hay '+faltan+' foto'+(faltan===1?'':'s')+' sin leer: tocá «Leer…» para que Claude las revise.')
+                 : ('✅ No entraron pagos nuevos con foto: todo '+mesNombre(mes)+' está revisado.'), 'ok', 7000);
+  });
+}
+function iacTodas(){
+  var s=document.getElementById('cta-vendedor'); if(s){ s.value=''; try{ renderConta(); }catch(e){} }
+  IAC.filtro=''; IAC.cargado[IAC.mes]=''; iacPintar(); iacCargar(IAC.mes);
+}
 function iacAvanceHtml(){
   var seg=(Date.now()-IAC.t0)/1000, pc=IAC.tot ? Math.round(100*IAC.hechas/IAC.tot) : 0;
   return '⏳ Leyendo las fotos: <b>'+IAC.hechas+' de '+IAC.tot+'</b> · lleva '+compsSegTxt(seg)+(IAC.leyendoMes!==IAC.mes?(' ('+esc(mesNombre(IAC.leyendoMes))+')'):'')+'…'+
@@ -43254,12 +43273,20 @@ function iacPintar(){
   var h='<div class="iac-fichas">'+ficha('ok','#16a34a','✅ Coinciden', n.ok, 'no hay que hacer nada')+ficha('mal','#CE2939','⚠️ No coinciden', n.mal, 'monto, banco, día o repetido')+
     ficha('nl','#B45309','❓ No se leen', n.nl, 'borrosa, cortada o no es comprobante')+(n.pe?ficha('pe','#64748b','⏳ Sin revisar', n.pe, 'pagos con fotos sin leer'):'')+
     ficha('','#2457c5','💲 Costo', iacUsd(D.usd), (D.n||0)+' foto'+(D.n===1?'':'s')+' leída'+(D.n===1?'':'s')+' hoy')+'</div>';
+  /* (26/10, el dueño con la ventana abierta y todo leído: «¿y el botón revisar con IA?») El botón «Leer las que faltan» solo aparece con
+     fotos sin leer; con todo leído no quedaba NINGÚN botón y parecía que faltaba. Ahora: «🤖 Revisar los pagos nuevos» (relee la planilla y,
+     si entró un pago con foto, aparece «Leer…» con su costo; no gasta solo) y, si Contabilidad está filtrada por una vendedora, se dice. */
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim();
   h+='<div id="iac-acc">';
+  if(vend) h+='<div class="iac-filtro iac-vend">👤 Solo los pagos de <b>'+esc(vend)+'</b> (el filtro de Contabilidad) <button type="button" class="ah-go" onclick="iacTodas()">Ver todas las vendedoras</button></div>';
   if(IAC.corre) h+='<div class="cps-carpeta" id="iac-av">'+iacAvanceHtml()+'</div>';
   else if(IAC.cargado[mes]==='cargando') h+='<div class="cps-carpeta">⏳ Buscando lo que ya se leyó…</div>';
   else if(faltan && !CONNECTED) h+='<div class="cps-carpeta cps-carpeta-mal">Sin conexión con la planilla: la lectura la hace el servidor de Google.</div>';
   else if(faltan && !IAC_ESTADOS[IAC.estado]) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-leer-btn" onclick="iacLeer()">🤖 Leer '+(faltan===1?'la foto que falta':('las '+faltan+' fotos que faltan'))+' (~'+iacUsd(faltan*porFoto)+')</button>'+
     '<small>Cada foto se lee una sola vez: la próxima vez sale de lo guardado, sin costo.</small></div>';
+  else if(!faltan && CONNECTED && !IAC_ESTADOS[IAC.estado]) h+='<div class="iac-leer iac-listo"><button type="button" class="ah-go ah-go-p" id="iac-buscar-btn" onclick="iacBuscarNuevos()"'+(IAC.busca?' disabled':'')+'>'+
+    (IAC.busca?'⏳ Buscando pagos nuevos…':'🤖 Revisar los pagos nuevos')+'</button>'+
+    '<small>✅ Ya están leídas las '+iacIds(L).length+' fotos de '+esc(mesNombre(mes))+(vend?(' de '+esc(vend)):'')+'. Este botón trae los pagos con foto que entraron después y, si hay, te dice cuánto cuesta leerlos.</small></div>';
   var notas=(!IAC.corre && iacNotasServidorOk() && !IAC_ESTADOS[IAC.estado]) ? iacNotasPorLeer(mes) : [];
   if(notas.length) h+='<div class="iac-leer"><button type="button" class="ah-go ah-go-p" id="iac-notas-btn" onclick="iacLeerNotas()">🧾 Leer las notas de venta ('+notas.length+' foto'+(notas.length===1?'':'s')+', ~'+iacUsd(notas.length*porFoto)+')</button>'+
     '<small>En los pagos donde la foto dice menos o más: la nota de venta dice cuánto fue en efectivo. Si la plata está, el panel lo dice.</small></div>';

@@ -16400,3 +16400,12 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   limitado por el alto) para que entren los botones en una laptop. Bloki: «▶️ Ver el video (3 min / 1 min 30 s / 1 min 40 s)».
   ⚠️ **Publicar = `git format-patch` de los commits del cambio**, nunca `git diff main HEAD` de la rama: ese diff arrastró código de la rama sin
   publicar (se notó antes de subir, se rehízo). Batería sobre la copia publicada: 256 suites, 8.233 bien, 2 rojas: test_ventas_marcas (la de siempre, 1.180 px) y test_mispedidos (carga de la máquina; sola 33/0). Página de la guía (artefacto) v3 con los tres en formato compu (el del pedido a 1280×720 por el tope de 15 MB).
+
+### §4mw — 🤖 «¿Y el botón revisar con IA?» (26/10; captura del dueño con la ventana de la IA abierta, todo leído)
+- El botón «🤖 Leer las N fotos que faltan» solo aparece con fotos sin leer: con todo leído la ventana quedaba SIN ningún botón y parecía que
+  faltaba. Además la lista sigue el filtro de vendedora de Contabilidad (`compsMesDatos` lee `cta-vendedor`) y la ventana no lo decía (la
+  captura: 19 pagos, todos de Carola; «378 fotos leídas hoy» es el total del día).
+- Ahora, con todo leído: «🤖 Revisar los pagos nuevos» (`iacBuscarNuevos`: `refrescarEstadoYa` + lo ya leído con `leer:1`, sin gastar; si entró
+  un pago con foto aparece «Leer la foto que falta (~US$)» y leer lo decide la persona) con «✅ Ya están leídas las N fotos de <mes> [de X]».
+  Con filtro: «👤 Solo los pagos de X (el filtro de Contabilidad) · Ver todas las vendedoras» (`iacTodas`: vacía `cta-vendedor` y relee).
+- `test_ia_comprobantes` §13 (47). En la rama, espera «publica».
