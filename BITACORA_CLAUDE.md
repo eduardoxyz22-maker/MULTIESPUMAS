@@ -16291,10 +16291,13 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - **Página** (`iacComparar`): el motivo `monto` se parte en `menos` («⚠️ La foto dice menos»: cuánto menos y que si fue en efectivo se anota
   como otro pago; si no, falta ese comprobante), `mas` («⚠️ La foto dice más»: ¿se anotó de menos o es otro pago?) y `mixto` («🧾 Una parte
   fue en efectivo»: con la nota leída —`nv`— y QR + efectivo = lo anotado: «la plata está, corregí el pago a QR X y efectivo Y»).
-  **Fechas** (`iacDiasDe`, con signo; la foto más cerca de lo anotado): ⚠️ el dueño CORRIGIÓ mi primera idea de no avisar 2 días antes: *«si la
-  venta se cargó el 15 y el pago dice 12, está bien que avise: así sabemos que están ocultando dinero»*. Avisa con 2+ días para cualquier lado
-  («La plata entró el 12/10 (la foto) y el pago se anotó el 15/10: 3 días después»; con 8+ «¿o es de otra compra?»; después: «¿se anotó antes de
-  que llegara la plata?») y otro MES aunque sea 1 día («⚠️ Otro mes»). 1 día no avisa. No volver a aflojarlo. `test_ia_comprobantes` §12 (43).
+  **Fechas — LA REGLA DEL DUEÑO** (26/10, después de dos idas y vueltas mías que lo enojaron: *«dejá de hacer huevadas… el primer pago se
+  debe cargar con la fecha en que se creó la venta, y pueden existir más pagos registrados, que deben coincidir con la fecha de registro; si no,
+  informarlo. ¿Por qué preguntás si es otra compra? No entendí»*): la fecha de la foto tiene que ser IGUAL a la del PRIMER pago = el día que
+  se cargó la venta (`x.ant`, el adelanto que `contaPagos` pone primero → `x.fCarga` = `contaFecha(p)`), o a la de cada pago registrado
+  después (`x.f`). Si no coincide, «⚠️ Otra fecha · La foto es del 12/10 y la venta se cargó el 15/10» (o «…y el pago se registró el…»). Sin
+  umbral de días, sin «otro mes» aparte y **sin preguntas** («¿otra compra?», «¿se anotó antes…?»): no volver a ponerlas. Él lo usa para ver
+  quién tuvo plata sin cargarla. `test_ia_comprobantes` §12 (43).
 - **Servidor 26-b** (`IAC_PREGUNTA_V`=2): el esquema pide `es_nota_venta`, `nota_total`, `nota_efectivo`, `nota_qr`, `nota_tarjeta`,
   `nota_transferencia`; `iacNormal_` deja `pv` en toda lectura y, en una nota, `nv:1, cp:false, nt, ne, nq, nj, nr`. La página
   (`IAC_NOTAS_SERVIDOR`): «🧾 Leer las notas de venta» (`iacNotasPorLeer`/`iacLeerNotas` → `iacLeer(lista, forzar)`) vuelve a leer SOLO las
@@ -16302,3 +16305,6 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   Enlace dado al dueño: `09d6af87781ce532cdda12be8f5a93c9db41022f` (4.714 líneas); volver atrás = la 26-a de `f6272ef…` (4.698).
 - **Para publicar** (`pub_mn` sobre `881b14a`): compartir (`dc132d6`) + la página y la prueba de `09d6af8` con `SCRIPT_VERSION_ESPERADA`
   en **26-a** (el `.gs` de `main` sigue 26-a hasta que el dueño implemente la 26-b); después, `.gs` 26-b + ESPERADA 26-b + `test_servidor`.
+- 📝 **Para después (dueño, 26/10, captura: «para el futuro tu letra queda detrás del círculo en Administración, anotado para verlo después»)**:
+  el anillo «2/3 camiones con carga completa» de `#adm-hoy` (`.ah-dona` / `.ah-dona-t`, `pedidos.html` ~17983): el texto chico se monta
+  sobre el aro del círculo. No tocado todavía.

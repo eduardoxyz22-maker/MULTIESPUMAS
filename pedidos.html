@@ -42730,11 +42730,13 @@ function compsMesDatos(mes){
   (STATE||[]).forEach(function(p){
     if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
-    contaPagos(p).forEach(function(c){
+    var tieneAnt=!!anticipoDe(p);   // `contaPagos` pone el adelanto (el pago al cargar la venta) PRIMERO
+    contaPagos(p).forEach(function(c, i){
       var f=c.fecha||contaFecha(p), m=Number(c.monto)||0;
       if(String(f).slice(0,7)!==mes || !(m>0) || c.metodo==='Efectivo') return;
       out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c),
-                 metB:String(c.metodo||''), ban:String(c.banco||'') });   // 🤖 (§4mq C4) el método y el banco por separado, para comparar con la foto
+                 metB:String(c.metodo||''), ban:String(c.banco||''),   // 🤖 (§4mq C4) el método y el banco por separado, para comparar con la foto
+                 ant:tieneAnt && i===0, fCarga:contaFecha(p) });       // 📅 el primer pago va con la fecha en que se cargó la venta
     });
   });
   out.sort(function(a,b){ return a.met<b.met?-1:(a.met>b.met?1:(a.f<b.f?-1:(a.f>b.f?1:0))); });
@@ -42924,8 +42926,6 @@ function iacBanco(t){
   if(/TIGO/.test(s)) return 'TIGO';
   return s.replace(/\bBANCO\b|\bS\.?\s?A\.?$/g,' ').replace(/[^A-Z0-9 ]+/g,' ').trim().split(/\s+/)[0]||'';
 }
-/* Días de `a` a `b` con signo (positivo = `b` es después). */
-function iacDiasDe(a, b){ var x=Date.parse(a+'T12:00:00Z'), y=Date.parse(b+'T12:00:00Z'); return (isNaN(x)||isNaN(y)) ? 0 : Math.round((y-x)/864e5); }
 function iacDias(a, b){ var x=Date.parse(a+'T12:00:00Z'), y=Date.parse(b+'T12:00:00Z'); return (isNaN(x)||isNaN(y)) ? 0 : Math.round(Math.abs(x-y)/864e5); }
 function iacRefLimpia(r){ r=String(r||'').replace(/[^0-9A-Za-z]/g,''); return r.length>=6 ? r.toUpperCase() : ''; }
 function iacBuena(o){ return !!o && !o.err && o.cp!==false && o.le!==false && Number(o.m)>0; }
@@ -42983,18 +42983,15 @@ function iacComparar(x, refs){
     if(bds.length && !bds.some(function(b){ return iacBanco(b)===ban; })) mot.push({ k:'banco', chip:'⚠️ Otro banco', t:'La foto dice que entró a <b>'+esc(bds[0])+'</b> y está anotado en <b>'+esc(x.ban)+'</b>.',
       c:'la foto dice que entró a '+bds[0]+' y está anotado en '+x.ban });
   }
-  /* 📅 (26/10, el dueño: «si la venta se cargó el 15 y el pago dice 12, está bien que avise: así sabemos que están ocultando dinero») Se
-     avisa la foto de 2 días o más ANTES de lo anotado (la plata entró antes de que se cargara: ¿quién la tuvo?), la de 2 días o más DESPUÉS
-     (¿se anotó antes de que llegara la plata?) y la de otro MES (para el contador va en el extracto del otro mes). Vale la foto más cerca. */
-  var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean);
-  if(fs.length && x.f){
-    var f0=fs.slice().sort(function(a,b){ return iacDias(a, x.f)-iacDias(b, x.f); })[0], dd=iacDiasDe(x.f, f0);
-    if(dd<=-2) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La plata entró el <b>'+esc(fmtFechaCorta(f0))+'</b> (la foto) y el pago se anotó el <b>'+esc(fmtFechaCorta(x.f))+'</b>: <b>'+(-dd)+' días después</b>'+(dd<=-8?' (¿o es de otra compra?)':'')+'.',
-      c:'la plata entró el '+fmtFechaCorta(f0)+' (la foto) y el pago se anotó el '+fmtFechaCorta(x.f)+': '+(-dd)+' días después'+(dd<=-8?' (¿o es de otra compra?)':'') });
-    else if(dd>=2) mot.push({ k:'dia', chip:'⚠️ Otro día', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b>, <b>después</b> de cuando se anotó el pago (<b>'+esc(fmtFechaCorta(x.f))+'</b>): ¿se anotó antes de que llegara la plata?',
-      c:'la foto es del '+fmtFechaCorta(f0)+', después de cuando se anotó el pago ('+fmtFechaCorta(x.f)+'): ¿se anotó antes de que llegara la plata?' });
-    else if(f0.slice(0,7)!==String(x.f).slice(0,7)) mot.push({ k:'mes', chip:'⚠️ Otro mes', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b> ('+esc(mesNombre(f0.slice(0,7)))+') y el pago está anotado el <b>'+esc(fmtFechaCorta(x.f))+'</b> ('+esc(mesNombre(String(x.f).slice(0,7)))+'): para el contador va en el otro mes.',
-      c:'la foto es del '+fmtFechaCorta(f0)+' ('+mesNombre(f0.slice(0,7))+') y el pago está anotado el '+fmtFechaCorta(x.f)+' ('+mesNombre(String(x.f).slice(0,7))+')' });
+  /* 📅 (26/10, el dueño: «el primer pago se debe cargar con la fecha en que se creó la venta, y puede haber más pagos registrados, que
+     deben coincidir con la fecha de registro; si no, informarlo») La fecha de la foto tiene que ser la del PRIMER pago = el día en que se
+     cargó la venta (`x.ant` → `x.fCarga`), o la de cada pago registrado después (`x.f`). Si no coincide, se dice y nada más. */
+  var fs=buenas.map(function(l){ return l.o.f; }).filter(Boolean), fEsp=x.ant ? (x.fCarga||x.f) : x.f;
+  if(fs.length && fEsp && fs.indexOf(fEsp)<0){
+    var f0=fs.slice().sort(function(a,b){ return iacDias(a, fEsp)-iacDias(b, fEsp); })[0];
+    var queTxt=x.ant ? 'la venta se cargó el ' : 'el pago se registró el ';
+    mot.push({ k:'dia', chip:'⚠️ Otra fecha', t:'La foto es del <b>'+esc(fmtFechaCorta(f0))+'</b> y '+queTxt+'<b>'+esc(fmtFechaCorta(fEsp))+'</b>.',
+      c:'la foto es del '+fmtFechaCorta(f0)+' y '+queTxt+fmtFechaCorta(fEsp) });
   }
   var vistos={};
   buenas.forEach(function(l){
