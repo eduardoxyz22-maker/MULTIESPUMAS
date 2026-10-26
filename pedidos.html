@@ -44329,8 +44329,8 @@ function asisEditarEn(id, sel){
 }
 /* ---------- la ayuda: preguntas escritas para este panel ---------- */
 var ASIS_AYUDA=[
-  { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar video ver mirar ensenar aprender', v:'form', f:'#f-cliente', vid:1, p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago con la foto del recibo (también en efectivo) y tocá «Guardar pedido».','🎬 Hay un video de 2 minutos con todo el recorrido: «▶️ Ver el video».'] },
-  { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Adjuntá la foto del recibo que le diste (también en efectivo: sin foto no se guarda). Con QR o tarjeta, sumá la captura del pago.','Lo que paga después lo registra Contabilidad desde la ficha de la venta.'] },
+  { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar video ver mirar ensenar aprender', v:'form', f:'#f-cliente', vid:'pedido', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago con la foto del recibo (también en efectivo) y tocá «Guardar pedido».','🎬 Hay un video de 2 minutos con todo el recorrido: «▶️ Ver el video».'] },
+  { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Adjuntá la foto del recibo que le diste (también en efectivo: sin foto no se guarda). Con QR o tarjeta, sumá la captura del pago.','Lo que paga después (el saldo) se registra en Contabilidad desde la ficha de la venta: «💵 Registrar un pago».','🎬 Hay un video de cómo cobrar el saldo: «▶️ Ver el video».'], vid:'pago' },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
   { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','📅 Los números son para el día que elegiste: lo vendido para después no se descuenta, y abajo dice cuánto hay pendiente en total.','Siempre podés guardar igual: es un aviso.'] },
   { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Obligatorio: si es 🛡️ garantía o 🔧 contra costo (STC), el motivo, el detalle de qué le pasa, la fecha de compra y qué se le recoge. Sin eso no se guarda.','Podés adjuntar hasta 2 fotos del producto. No se cobra: la parte del pago se esconde sola.'] },
@@ -44340,7 +44340,7 @@ var ASIS_AYUDA=[
   { q:'¿Cómo corrijo un pedido que ya guardé?', k:'editar corregir cambiar pedido modificar', v:'mis', f:['#mis-q','#mis-lista','#mis-vendedor'], p:['En 📋 Mis pedidos tocá el pedido y después ✏️ Editar.','Cambiá lo que haga falta y guardá.','Si ya tiene pagos registrados, la plata se corrige en Contabilidad.'] },
   { q:'¿Cómo asigno un camión?', k:'camion vehiculo chofer asignar logistica carga', solo:'adm', v:'admin', f:['#carga-viva','#carga-viva-linea','#view-admin [onclick="abrirCarga()"]'], p:['En 🔒 Administración, mirá «Sin vehículo» en los camiones.','Tocá el pedido y elegí el vehículo: el chofer se pone solo.','Los tildes de la lista de carga dicen qué ya se cargó.'] },
   { q:'¿Cómo hago el cierre de entregas?', k:'cierre entregas entregado tildar 16:30', solo:'adm', v:'admin', f:['#view-admin [onclick="abrirCierreEntregas()"]'], p:['Desde las 16:30 tocá «✅ Cierre de entregas».','Tildá uno por uno lo que salió (nada viene tildado). Lo que no salió: «📅 No salió · reprogramar».','Confirmá: lo tildado queda marcado como entregado.'] },   // ✏️ (18/10, §4ls Cie-C6) desde el 12/10 nada viene tildado
-  { q:'¿Cómo registro un pago en Contabilidad?', k:'contabilidad registrar pago cobro ficha venta', v:'conta', f:'#cta-metrics', p:['En 🧾 Contabilidad tocá la venta.','En la ficha, «💵 Registrar un pago»: el monto, el método y la foto del comprobante.','Cuando ya lo cargaste en el sistema, tocá «✅ Pago registrado en sistema».'] },
+  { q:'¿Cómo registro un pago en Contabilidad?', k:'contabilidad registrar pago cobro ficha venta', v:'conta', f:'#cta-metrics', p:['En 🧾 Contabilidad tocá la venta (o «Ver quiénes» en las ventas con saldo).','En la ficha, «💵 Registrar un pago»: el monto, el N° de nota del recibo, el método y la foto del comprobante.','Cuando ya lo cargaste en el sistema, tocá «✅ Pago registrado en sistema».','🎬 Hay un video de cómo cobrar el saldo: «▶️ Ver el video».'], vid:'pago' },
   { q:'¿Cómo anoto un retiro de efectivo?', k:'retiro efectivo plata caja rendir', v:'conta', f:'#cx-grupos', p:['En 🧾 Contabilidad tocá «💵 Retiro de efectivo».','Elegí quién entrega y quién retira, el monto y las notas.','En el Cuadre, «👛 Quién tiene el efectivo» te lo arma solo con «Retiro».'] },
   /* ➕ (12/10, G) */
   { q:'¿Cómo cambio el día de entrega (reprogramar)?', k:'reprogramar cambiar dia fecha mover postergar adelantar entrega turno', v:'mis', f:['#mis-q','#mis-lista','#mis-vendedor'], p:['En 📋 Mis pedidos tocá el pedido y después ✏️ Editar.','Cambiá el día y el turno: el cupo de cada turno se ve al lado.','Guardá y mandale al cliente el mensaje del día nuevo (sale armado).','Logística también puede moverlo desde Administración con «📅 Reprogramar».'] },
@@ -44351,7 +44351,11 @@ var ASIS_AYUDA=[
   { q:'¿Me mostrás el panel? (recorrido guiado)', k:'recorrido guiado tutorial empezar nueva nuevo ayuda aprender mostrar panel', v:'form', f:'#asis-yo', tour:1, p:['Te llevo paso a paso por lo principal: el pedido nuevo, el saldo, el día y Mis pedidos.','Tarda un minuto. Lo podés cortar cuando quieras.'] },
   /* (15/10, dueño: «¿el pendejito ya enseña y sabe también?») lo de las ATC de hoy: el correo (§4li) y garantía / contra costo (§4lj) */
   { q:'¿Cómo mando el correo de una ATC?', k:'correo mail email gmail outlook mandar enviar atc reclamo', v:'atc', f:['#tbl-atc','#atv-cards','#view-atc'], p:['Al guardar una ATC sale «✅ ATC guardada» con el correo ya armado, arriba del mensaje de WhatsApp.','Revisalo y tocá «📧 Abrir en Gmail» (o «✉️ Otro correo»): el correo sale de TU cuenta. También podés «📋 Copiar el mensaje».','El «Para» queda guardado en tu compu: la próxima vez ya está.','Para mandarlo después: en 🎧 ATC abrí la ATC (🔍) y tocá «📧 Correo de la ATC».'] },
-  { q:'¿Cómo separo las de garantía y las de contra costo (STC)?', k:'garantia contra costo stc tipo filtrar separar marcar sin marcar reparacion', v:'atc', f:'#atc-tipo', p:['Al cargar la ATC marcás 🛡️ Garantía o 🔧 Contra costo (STC): sin eso no se guarda.','En 🎧 ATC, el filtro «Tipo» muestra solo una de las dos (o las «❓ Sin marcar»); arriba ves cuántas hay de cada una.','Las viejas sin marcar: abrí su ficha (🔍) y tocá «🛡️ Garantía» o «🔧 Contra costo».','Con la clave (o como Administración / Logística), el 📄 Informe PDF también se saca de un solo tipo. Las recogidas y las fechas no cambian.'] }
+  { q:'¿Cómo separo las de garantía y las de contra costo (STC)?', k:'garantia contra costo stc tipo filtrar separar marcar sin marcar reparacion', v:'atc', f:'#atc-tipo', p:['Al cargar la ATC marcás 🛡️ Garantía o 🔧 Contra costo (STC): sin eso no se guarda.','En 🎧 ATC, el filtro «Tipo» muestra solo una de las dos (o las «❓ Sin marcar»); arriba ves cuántas hay de cada una.','Las viejas sin marcar: abrí su ficha (🔍) y tocá «🛡️ Garantía» o «🔧 Contra costo».','Con la clave (o como Administración / Logística), el 📄 Informe PDF también se saca de un solo tipo. Las recogidas y las fechas no cambian.'] },
+  /* 🎬 (26/10, §4mv; dueño: «y también registrar una venta de tienda») */
+  { q:'¿Cómo registro una venta de tienda?', k:'venta tienda local mostrador se lo lleva salio de tienda registrar sin camion video', v:'conta', vid:'tienda',
+    f:['#view-conta .lb-acc [onclick="abrirVentaTienda()"]','#cx-grupos [onclick="abrirVentaTienda()"]'],
+    p:['En 🧾 Contabilidad tocá «🏪 Venta de tienda».','La tienda se pone sola con la tuya: si fue en otra, elegila arriba.','Nota de venta, cliente y celular, y los productos con su código, cantidad y precio. No lleva fecha de entrega, turno ni dirección.','En el cobro: «SÍ, pagado», cómo pagó, cuánto entró y la foto del comprobante (o del recibo).','Tocá «Registrar venta de tienda»: queda como 🏪 SALIÓ DE TIENDA y no ocupa lugar en el camión.','🎬 Hay un video: «▶️ Ver el video».'] }
 ];
 /* 🗣️ (12/10, F) Cómo habla la gente: cada palabra suma las del panel que quiere decir. */
 var ASIS_SINONIMOS={ plata:'pago cobro', cobrar:'pago cobro', cobre:'pago cobro', pagar:'pago', pagaron:'pago', deposito:'pago qr', deposite:'pago qr',
@@ -44586,7 +44590,7 @@ function asisAyudaHtml(idx){
     var a=ASIS_AYUDA[i], on=(i===ASIS_ABIERTA);
     return '<div class="asis-pr'+(on?' on':'')+'"><button type="button" class="asis-pq" onclick="ASIS_ABIERTA=('+i+'===ASIS_ABIERTA?-1:'+i+');asisAyudaLista()">'+esc(a.q)+'</button>'+
       (on ? ('<ol>'+a.p.map(function(s){ return '<li>'+esc(s)+'</li>'; }).join('')+'</ol>'+
-        (a.vid ? '<button type="button" class="asis-b si asis-vid" onclick="verVideoPedido()">▶️ Ver el video (2 min)</button>' : '')+
+        ((a.vid && VIDEOS[a.vid]) ? '<button type="button" class="asis-b si asis-vid" onclick="verVideo(\''+a.vid+'\')">▶️ Ver el video ('+VIDEOS[a.vid].corto+')</button>' : '')+
         '<button type="button" class="asis-b si" onclick="asisMostrar('+i+')">👉 Mostrame dónde</button>') : '')+'</div>';
   }).join('');
 }
@@ -44982,23 +44986,34 @@ function asisVideoOfrecer(){
     gl.onclick=function(){ gl.hidden=true; verVideoPedido(); };
   }, 2500);
 }
-/* 🎬 (26/10, §4mv) EL VIDEO «CÓMO CARGAR UN PEDIDO»: 2 min 35 s, vertical y sin sonido, con los pasos escritos en la pantalla y clientes
-   inventados. Vive al lado de la página (`videos/`): se mira acá, en una ventana, y se puede copiar el enlace para mandarlo por WhatsApp.
-   Se rehace con `herramientas/video_pedido/` (cambiar el archivo = subir el `?v=`). */
-var VIDEO_PEDIDO='videos/como-cargar-un-pedido.mp4?v=20261026', VIDEO_PEDIDO_POSTER='videos/como-cargar-un-pedido.jpg?v=20261026';
-function videoPedidoUrl(){ try{ return new URL(VIDEO_PEDIDO.split('?')[0], location.href).href; }catch(e){ return VIDEO_PEDIDO; } }
-function verVideoPedido(){
+/* 🎬 (26/10, §4mv) LOS VIDEOS QUE ENSEÑA BLOKI: verticales y sin sonido, con los pasos escritos en la pantalla y clientes inventados.
+   Viven al lado de la página (`videos/`): se miran acá, en una ventana, y se puede copiar el enlace para mandarlo por WhatsApp.
+   Se rehacen con `herramientas/video_pedido/` (escena pedido | pago | tienda; cambiar un archivo = subir su `?v=`).
+   · pedido: «Cómo cargar un pedido» (Bloki lo ofrece una vez por aparato, `asisVideoOfrecer`).
+   · pago: «Cómo cobrar el saldo pendiente» (Contabilidad → la venta → «💵 Registrar un pago»).
+   · tienda: «Cómo registrar una venta de tienda» (Contabilidad → «🏪 Venta de tienda»). */
+var VIDEOS={
+  pedido:{ src:'videos/como-cargar-un-pedido.mp4?v=20261026', poster:'videos/como-cargar-un-pedido.jpg?v=20261026', t:'Cómo cargar un pedido', dur:'2 min 35 s', corto:'2 min' },
+  pago:{ src:'videos/como-cobrar-el-saldo.mp4?v=20261026', poster:'videos/como-cobrar-el-saldo.jpg?v=20261026', t:'Cómo cobrar el saldo pendiente', dur:'1 min 20 s', corto:'1 min' },
+  tienda:{ src:'videos/como-registrar-venta-de-tienda.mp4?v=20261026', poster:'videos/como-registrar-venta-de-tienda.jpg?v=20261026', t:'Cómo registrar una venta de tienda', dur:'1 min 25 s', corto:'1 min' }
+};
+var VIDEO_PEDIDO=VIDEOS.pedido.src, VIDEO_PEDIDO_POSTER=VIDEOS.pedido.poster;
+function videoUrl(k){ var v=VIDEOS[k]||VIDEOS.pedido; try{ return new URL(v.src.split('?')[0], location.href).href; }catch(e){ return v.src; } }
+function videoPedidoUrl(){ return videoUrl('pedido'); }
+function verVideo(k){
+  var v=VIDEOS[k]; if(!v){ k='pedido'; v=VIDEOS.pedido; }
   try{ asisCerrar(); asisGloboOcultar(); }catch(e){}
-  openModal('<div class="modal-h"><h3>🎬 Cómo cargar un pedido</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+  openModal('<div class="modal-h"><h3>🎬 '+esc(v.t)+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
     '<div class="modal-b vid-ped-b">'+
-      '<video class="vid-ped" controls playsinline preload="metadata" poster="'+VIDEO_PEDIDO_POSTER+'"><source src="'+VIDEO_PEDIDO+'" type="video/mp4"></video>'+
-      '<p class="vid-ped-t">2 min 35 s, sin sonido: cada paso está escrito en la pantalla. Los clientes del video son inventados.</p>'+
+      '<video class="vid-ped" data-k="'+k+'" controls playsinline preload="metadata" poster="'+v.poster+'"><source src="'+v.src+'" type="video/mp4"></video>'+
+      '<p class="vid-ped-t">'+v.dur+', sin sonido: cada paso está escrito en la pantalla. Los clientes del video son inventados.</p>'+
       '<div class="modal-actions">'+
-        '<button type="button" class="btn btn-primary btn-sm" style="flex:1;min-width:140px" onclick="copyText(videoPedidoUrl())">📋 Copiar el enlace</button>'+
-        '<a class="btn btn-ghost btn-sm" href="'+VIDEO_PEDIDO+'" target="_blank" rel="noopener">↗️ Abrir aparte</a>'+
+        '<button type="button" class="btn btn-primary btn-sm" style="flex:1;min-width:140px" onclick="copyText(videoUrl(\''+k+'\'))">📋 Copiar el enlace</button>'+
+        '<a class="btn btn-ghost btn-sm" href="'+v.src+'" target="_blank" rel="noopener">↗️ Abrir aparte</a>'+
         '<button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
       '</div></div>');
 }
+function verVideoPedido(){ verVideo('pedido'); }
 /* ✍️ (12/10, H) En el celular, mientras se escribe, Eduardo se achica y se corre: no tapa el campo ni el teclado. */
 document.addEventListener('focusin', function(e){
   var t=e.target; if(!t || !t.closest || t.closest('#asis')) return;

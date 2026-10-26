@@ -1,13 +1,21 @@
 // 🎬 Video «Cómo cargar un pedido» (§4mv, 26/10) — pantalla de celular, datos INVENTADOS, nada sale a la red.
 // Rehacerlo cuando cambie el formulario:
 //   node herramientas/video_pedido/recibo.js                      (la foto del recibo, inventada → recibo.jpg al lado)
-//   HTTPS_PROXY=http://127.0.0.1:9 node herramientas/video_pedido/grabar.js "$PWD/pedidos.html" /ruta/cuadros
+//   HTTPS_PROXY=http://127.0.0.1:9 node herramientas/video_pedido/grabar.js "$PWD/pedidos.html" /ruta/cuadros [pedido|pago|tienda]
+//   (pedido = cómo cargar un pedido · pago = cobrar el saldo pendiente · tienda = registrar una venta de tienda)
 //   python3 herramientas/video_pedido/armar.py /ruta/cuadros salida.mp4      (1080×1920; con 720 al final, el liviano para WhatsApp)
 // LEAFLET_DIR = carpeta con leaflet.js/.css (npm pack leaflet@1.9.4 → package/dist): sin ella el mapita sale vacío.
 // ⚠️ La captura a 1080 de ancho no pasa de ~12 cuadros/s en esta máquina: se graba a escala 2 (780×1386, ~20 cuadros/s) y se agranda.
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
-const PAG = process.argv[2], OUT = process.argv[3];
+const PAG = process.argv[2], OUT = process.argv[3], ESC = process.argv[4] || 'pedido';
+const ESCENAS = {
+  pedido: { reloj:'2026-11-04T10:12:00-04:00', titulo:'Cómo cargar un pedido', sub:'Guía para vendedoras y vendedores nuevos: un pedido de principio a fin, en 4 pasos.' },
+  pago:   { reloj:'2026-11-05T16:20:00-04:00', titulo:'Cómo cobrar el saldo pendiente', sub:'Cuando el cliente paga lo que faltaba: se registra en Contabilidad, con la foto del comprobante.' },
+  tienda: { reloj:'2026-11-05T16:20:00-04:00', titulo:'Cómo registrar una venta de tienda', sub:'El cliente se lleva el producto del local: sin camión, sin fecha de entrega y sin dirección.' }
+};
+const E = ESCENAS[ESC]; if(!E) throw new Error('escena: pedido | pago | tienda');
+const FOTOS = { recibo:'recibo.jpg', qrpago:'qr_pago.jpg', qrtienda:'qr_tienda.jpg' };   // lo que «sube» cada escena (recibo.js las arma)
 const LF = process.env.LEAFLET_DIR || '';
 fs.rmSync(OUT, { recursive:true, force:true }); fs.mkdirSync(OUT, { recursive:true });
 
@@ -29,14 +37,15 @@ function tile(z, x, y){
     const u = r.request().url();
     if(LF && /leaflet(@[\d.]+)?\/dist\/leaflet\.js/.test(u)) return r.fulfill({ status:200, contentType:'application/javascript', body:fs.readFileSync(path.join(LF,'leaflet.js')) });
     if(LF && /leaflet(@[\d.]+)?\/dist\/leaflet\.css/.test(u)) return r.fulfill({ status:200, contentType:'text/css', body:fs.readFileSync(path.join(LF,'leaflet.css')) });
-    if(/googleusercontent\.com\/d\/vid/.test(u)) return r.fulfill({ status:200, contentType:'image/jpeg', body:fs.readFileSync(path.join(__dirname,'recibo.jpg')) });
+    const fo = u.match(/googleusercontent\.com\/d\/vid([a-z]+)/);
+    if(fo && FOTOS[fo[1]]) return r.fulfill({ status:200, contentType:'image/jpeg', body:fs.readFileSync(path.join(__dirname, FOTOS[fo[1]])) });
     const t = u.match(/tile\.openstreetmap\.org\/(\d+)\/(\d+)\/(\d+)\.png/);
     if(t) return r.fulfill({ status:200, contentType:'image/svg+xml', body:tile(+t[1], +t[2], +t[3]) });
     return r.abort();   // la planilla, Google y todo lo demás: cortado
   });
   await ctx.addInitScript(() => {
     Object.defineProperty(Navigator.prototype, 'webdriver', { get(){ return false; } });   // el panel se ve como en un celular de verdad
-    try{ localStorage.setItem('me_asis_tour', JSON.stringify('ofrecido')); }catch(e){}
+    try{ localStorage.setItem('me_asis_tour', JSON.stringify('ofrecido')); localStorage.setItem('me_asis_video', JSON.stringify('ofrecido')); }catch(e){}
     document.addEventListener('DOMContentLoaded', () => {
       const st = document.createElement('style'); st.textContent = `
         #vid-cap{position:fixed;left:10px;right:10px;bottom:12px;z-index:2147483000;background:#fff;border:2px solid #00B5AD;border-radius:18px;
@@ -75,9 +84,12 @@ function tile(z, x, y){
     });
   });
 
+  if(ESC!=='pedido') await ctx.addInitScript(() => {   // en «pago» y «tienda» ya eligió su nombre: no sale «¿Quién está usando el panel?»
+    try{ sessionStorage.setItem('me_quien_ok', 'Maria Flores'); localStorage.setItem('me_mis_vendedor', 'Maria Flores'); }catch(e){}
+  });
   const page = await ctx.newPage(); const errores = [];
   page.on('pageerror', e => errores.push(e.message)); page.on('dialog', d => { errores.push('dialogo: '+d.message().slice(0,160)); d.accept(); });
-  await page.clock.setFixedTime(new Date('2026-11-04T10:12:00-04:00'));   // miércoles 4 de noviembre (sin tema de Halloween)
+  await page.clock.setFixedTime(new Date(E.reloj));   // noviembre: sin el tema de Halloween
 
   /* ── los cuadros ── */
   const cdp = await ctx.newCDPSession(page); const cuadros = []; let n = 0, grabando = true;
@@ -88,17 +100,17 @@ function tile(z, x, y){
   });
 
   await page.goto('file://'+PAG, { waitUntil:'domcontentloaded' });
-  await page.evaluate(() => {   // la tarjeta de entrada tapa la carga
+  await page.evaluate(([t, s]) => {   // la tarjeta de entrada tapa la carga
     const c = document.getElementById('vid-card');
     c.innerHTML = '<div class="band"></div><img src="'+(typeof blokiSrc==='function'?blokiSrc('vendedor'):'')+'" alt=""><div class="marca">MULTIESPUMAS · PANEL DE PEDIDOS</div>'+
-      '<h1>Cómo cargar un pedido</h1><p>Guía para vendedoras y vendedores nuevos: un pedido de principio a fin, en 4 pasos.</p>'+
+      '<h1>'+t+'</h1><p>'+s+'</p>'+
       '<div class="pie">Los clientes de este video son inventados.</div>';
-  });
+  }, [E.titulo, E.sub]);
   await cdp.send('Page.startScreencast', { format:'jpeg', quality:88, maxWidth:780, maxHeight:1386, everyNthFrame:1 });
   await page.waitForTimeout(1200);
 
   /* ── la planilla de mentira: pedidos y stock inventados ── */
-  await page.evaluate(() => {
+  await page.evaluate((esc) => {
     var c = document.getElementById('conn-form'); if(c) c.style.display = 'none';
     CONNECTED = true; UNLOCKED = false;
     try{ localStorage.removeItem(LS_PEND); }catch(e){}
@@ -128,17 +140,29 @@ function tile(z, x, y){
     P.push({ id:'v-tit', fecha:d(2), turno:'AM', oc:'11-299', nota:'3199', vendedor:'Carola Chavez', cliente:'HUGO ROCA', celular:'71234560', zona:'Norte', direccion:'Av. Banzer 4to anillo',
       maps:'https://www.google.com/maps?q=-17.745,-63.170', productos:[ Object.assign({ cant:1, precio:3400 }, TIT) ], pagado:false, acuenta:1000, saldo:2400, metodoPago:'Efectivo 1000',
       estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'', facturarA:'', nit:'', observaciones:'', ts:ahora-86400000, nroDia:12, verificado:false, fotos:[] });
+    if(esc!=='pedido'){
+      /* Contabilidad con lo de todos los días: casi todo cobrado (con su recibo), y tres ventas con saldo. */
+      P.forEach(function(p, i){ if(i%9===3) return; var tot=p.productos.reduce(function(a, x){ return a+x.cant*x.precio; }, 0);
+        p.pagado=true; p.saldo=0; p.acuenta=0; p.metodoPago=textoCobros([{ metodo:'Efectivo', monto:tot, fecha:hoy, nota:p.nota, comps:['vidrecibo0'] }]); });
+    }
+    if(esc==='pago'){
+      P.push({ id:'luc', fecha:hoy, turno:'AM', oc:'11-300', nota:'3245', vendedor:'Maria Flores', cliente:'LUCIA FERNANDEZ ROJAS', celular:'76543210', zona:'Equipetrol',
+        direccion:'Calle Los Pinos 245, portón verde, frente a la plaza', maps:'https://www.google.com/maps?q=-17.7712,-63.1964', productos:[ Object.assign({ cant:1, precio:3400 }, TIT, { desc:'COLCHON TITANIO ICE' }) ],
+        pagado:false, acuenta:1000, saldo:2400, metodoPago:'Efectivo %vidrecibo1', estado:'', entregado:true, vehiculo:'', chofer:'', garantia:'', facturarA:'', nit:'',
+        observaciones:'Llamar antes de ir. Es un 3er piso, sin ascensor.', ts:ahora-86400000*2-3600000, nroDia:1, verificado:false, fotos:[] });
+    }
+    window._FOTO = esc==='pago' ? 'vidqrpago' : (esc==='tienda' ? 'vidqrtienda' : 'vidrecibo');
     window._SRV = { pedidos:P, stock:st };
     apiList = function(){ var l = JSON.parse(JSON.stringify(window._SRV.pedidos)); l.push({ id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:JSON.stringify(window._SRV.stock) });
       return Promise.resolve({ ok:true, pedidos:l }); };
     apiSave = function(rec){ var r = JSON.parse(JSON.stringify(rec)); if(!/^__/.test(String(r.id))){ var i = window._SRV.pedidos.findIndex(function(p){ return p.id===r.id; }); if(i>=0) window._SRV.pedidos[i]=r; else window._SRV.pedidos.push(r); } window._guardado = r; return Promise.resolve({ ok:true, pedido:r }); };
     downloadBlob = function(){};
     WA_BOT = true;   // como en el panel de verdad: el bot de WhatsApp está prendido
-    var _nf = 0; apiFoto = function(){ _nf++; return new Promise(function(r){ setTimeout(function(){ r({ ok:true, fotoId:'vidrecibo'+_nf }); }, 900); }); };
+    var _nf = 0; apiFoto = function(){ _nf++; return new Promise(function(r){ setTimeout(function(){ r({ ok:true, fotoId:window._FOTO+_nf }); }, 900); }); };
     window.open = function(){ return null; };
     STOCK_CARGADO = false;
     return refrescarEstado().then(function(){ ULTIMO_ERROR=''; CARGA_ESTADO='ok'; try{ showView('form'); resetForm(); }catch(e){} });
-  });
+  }, ESC);
   await page.waitForTimeout(1800);
 
   /* ── ayudas ── */
@@ -157,6 +181,23 @@ function tile(z, x, y){
     await espera(900);
   }
   async function toca(sel, frac){ if(frac !== false) await verEn(sel, frac); await page.locator(sel).first().tap(); await espera(650); }
+  /* Para lo que está adentro de una ventana (no se mueve con la página): lo centra en su caja y lo toca. */
+  const loc = (sel, txt) => txt ? page.locator(sel, { hasText:txt }).first() : page.locator(sel).first();
+  async function centra(sel, txt){ await loc(sel, txt).evaluate(e => e.scrollIntoView({ block:'center', behavior:'smooth' })); await espera(850); }
+  async function tocaT(sel, txt, sinCentrar){ if(!sinCentrar) await centra(sel, txt); await loc(sel, txt).tap(); await espera(650); }
+  async function escribeT(sel, txt, ms, borrar){ const l = loc(sel); await l.tap(); await espera(250); if(borrar) await l.fill(''); await l.pressSequentially(txt, { delay: ms||85 }); await espera(450); }
+  async function adjunta(boton, archivo){ const [fc] = await Promise.all([ page.waitForEvent('filechooser'), loc(boton).tap() ]); await fc.setFiles(path.join(__dirname, archivo)); await espera(2600); }
+  async function cierre(titulo, pasos, pie){
+    await sinCap();
+    await page.evaluate(([titulo, pasos, pie]) => {
+      const c = document.getElementById('vid-card'); c.style.display = ''; c.classList.add('fuera');
+      c.innerHTML = '<div class="band"></div><img src="'+(typeof blokiSrc==='function'?blokiSrc('vendedor'):'')+'" alt=""><div class="marca">RESUMEN</div><h1>'+titulo+'</h1>'+
+        '<div class="pasos">'+pasos.map(function(x, i){ return '<div><b>'+(i+1)+'</b><span>'+x[0]+'<small>'+x[1]+'</small></span></div>'; }).join('')+'</div>'+
+        '<div class="pie">'+pie+'</div>';
+      requestAnimationFrame(() => requestAnimationFrame(() => c.classList.remove('fuera')));
+    }, [titulo, pasos, pie]);
+    await espera(6500);
+  }
   async function escribe(sel, txt, ms){ const l = page.locator(sel).first(); await l.tap(); await espera(250); await l.pressSequentially(txt, { delay: ms||85 }); await espera(450); }
 
   /* ── 0. entrada ── */
@@ -164,6 +205,7 @@ function tile(z, x, y){
   await page.evaluate(() => { const c = document.getElementById('vid-card'); c.classList.add('fuera'); setTimeout(() => { c.style.display = 'none'; }, 520); });
   await espera(700);
 
+  if(ESC==='pedido'){
   /* ── 1. quién sos ── */
   await cap('Antes de empezar', 'Al abrir el panel, tocá tu nombre', 'Así el panel te muestra tus pedidos y te avisa lo tuyo.', { arriba:false });
   await toca('#quien .quien-b[data-v="Maria Flores"]', false);
@@ -271,12 +313,120 @@ function tile(z, x, y){
     requestAnimationFrame(() => requestAnimationFrame(() => c.classList.remove('fuera')));
   });
   await espera(6500);
+  }
+
+  /* ════════ COBRAR EL SALDO PENDIENTE ════════ */
+  if(ESC==='pago'){
+    await espera(400);
+    await cap('Cobrar el saldo', 'El cliente pagó lo que faltaba', 'Lucía dejó Bs 1.000 de adelanto y hoy pagó los Bs 2.400 que quedaban, por QR. Eso se registra en Contabilidad.', { ms:4600 });
+    await cap('Cobrar el saldo', 'Entrá a 🧾 Contabilidad', null, { ms:1800 });
+    await toca('#tab-conta', false);
+    await espera(1600);
+    await centra('#view-conta button', 'Ver quiénes');
+    await cap('Contabilidad', 'En «Para hacer» están las ventas con saldo', 'Tocá «Ver quiénes». También podés buscar al cliente por nombre o N° de nota.', { ms:4200 });
+    await tocaT('#view-conta button', 'Ver quiénes', true);
+    await espera(900);
+    await cap('Falta cobrar', 'Tocá al cliente', 'La lista va de la venta más vieja a la más nueva.', { ms:2600, arriba:true });
+    await tocaT('#modal tr.pc-fila[data-id="luc"]');
+    await espera(1100);
+    await cap('La venta', 'Arriba, todo lo de la venta', 'Lo que compró, el total y los pagos que ya tiene: el adelanto de Bs 1.000.', { ms:3600, arriba:true });
+    await centra('#cta-pago-monto');
+    await cap('Registrar un pago', 'El monto ya viene con lo que falta', 'Si pagó solo una parte, cambiá el número. La fecha es la de hoy: el día en que entró la plata.', { ms:4200, arriba:true });
+    await cap('Registrar un pago', 'El N° de nota de venta del recibo de este pago', null, { ms:2000, arriba:true });
+    await escribeT('#cta-pago-nota', '3291', 140);
+    await cap('Registrar un pago', '¿Cómo pagó? Elegí el método', 'Con QR, también a qué banco entró.', { ms:2400, arriba:true });
+    await tocaT('#modal button', 'QR');
+    await espera(500);
+    await tocaT('#modal button', 'BISA');
+    await espera(400);
+    await centra('#modal [onclick^="ctaAdjuntar"]');
+    await cap('Registrar un pago', 'Adjuntá la captura del pago', 'Y la foto del recibo que le diste. Al menos una es obligatoria.', { ms:3200, arriba:true });
+    await adjunta('#modal [onclick^="ctaAdjuntar"]', 'qr_pago.jpg');
+    await centra('#modal button', 'Registrar pago');
+    await cap('Registrar un pago', 'Tocá «➕ Registrar pago»', null, { ms:1800, arriba:true });
+    await tocaT('#modal button', 'Registrar pago', true);
+    await espera(2200);
+    await cap('Pago registrado ✅', 'Listo: el pago quedó guardado', 'La venta quedó PAGADA. Si querés, copiá el mensaje para el grupo.', { ms:4200, arriba:true });
+    await centra('#modal button', 'volver a la venta');
+    await tocaT('#modal button', 'volver a la venta', true);
+    await espera(1200);
+    await page.evaluate(() => { const r = [...document.querySelectorAll('#modal .dl-row')].find(x => (x.querySelector('.dl-k')||{}).textContent==='Pagos');
+      if(r){ r.style.scrollMarginTop = '135px'; r.scrollIntoView({ block:'start', behavior:'smooth' }); } });
+    await espera(900);
+    await cap('La venta', 'En «Pagos» están los dos', 'El adelanto y el saldo, cada uno con su foto. Contabilidad después lo marca «✅ Pago registrado en sistema».', { ms:5200, arriba:true });
+    await sinCap();
+    await page.evaluate(() => { try{ closeModal(); }catch(e){} });
+    await espera(700);
+    await cierre('¡Saldo cobrado!', [
+      ['Contabilidad → «Ver quiénes»', 'o buscá al cliente por nombre o N° de nota'],
+      ['Tocá la venta', 'abajo está «💵 Registrar un pago»'],
+      ['Monto, N° de nota y método', 'con QR, también el banco'],
+      ['La foto del comprobante', 'y «➕ Registrar pago»']
+    ], '¿Dudas? Tocá a Bloki → «¿Cómo registro un pago en Contabilidad?»');
+  }
+
+  /* ════════ REGISTRAR UNA VENTA DE TIENDA ════════ */
+  if(ESC==='tienda'){
+    await espera(400);
+    await cap('Venta de tienda', 'El cliente se lo lleva del local', 'No va en el camión: no lleva fecha de entrega, turno ni dirección. Se registra desde Contabilidad.', { ms:4400 });
+    await toca('#tab-conta', false);
+    await espera(1600);
+    await centra('#view-conta .lb-acc button', 'Venta de tienda');
+    await cap('Contabilidad', 'Tocá «🏪 Venta de tienda»', null, { ms:2000 });
+    await tocaT('#view-conta .lb-acc button', 'Venta de tienda', true);
+    await espera(1300);
+    await verEn('.tienda-banner', 0.12);
+    await cap('Venta de tienda', 'Arriba dice «Venta de tienda»', 'La tienda se pone sola con la tuya; si fue en otra, elegila ahí.', { ms:3800 });
+    await verEn('#f-nota', 0.30);
+    await cap('Paso 1 · Cliente y venta', 'El N° de la nota de venta y el cliente', 'Nombre y celular, como en un pedido.', { ms:2800 });
+    await escribe('#f-nota', '3260');
+    const vend = await page.evaluate(() => (document.getElementById('f-vendedor')||{}).value || '');
+    if(!vend) await escribe('#f-vendedor', 'Maria Flores', 70);
+    await escribe('#f-cliente', 'JORGE SUAREZ', 70);
+    await escribe('#f-celular', '71122334', 110);
+    await verEn('#fp-2', 0.14);
+    await cap('Paso 2 · Productos', 'El código, la cantidad y el precio', 'Igual que en un pedido: el nombre y la medida se completan solos.', { ms:3400 });
+    await escribe('#f-productos .prod-card .prod-codigo', 'CH1682', 140);
+    await espera(900);
+    await escribe('#f-productos .prod-card .prod-precio', '2900', 130);
+    await espera(700);
+    await verEn('#fp-3', 0.20);
+    await cap('Paso 3 · Entrega', 'No hace falta: ya dice «Listo»', 'Se lo llevó del local.', { ms:2600 });
+    await verEn('#fp-4', 0.14);
+    await cap('Paso 4 · Cobro', 'Si pagó todo, tocá «SÍ, pagado»', null, { ms:2000 });
+    await toca('#f-pagado button[data-val="SI"]', 0.30);
+    await cap('Paso 4 · Cobro', '¿Con qué pagó? Y cuánto entró', 'Con QR, también a qué banco.', { ms:2600 });
+    await toca('#f-metodo button[data-val="QR"]', 0.30);
+    await escribe('#f-cobrado', '2900', 130);
+    await toca('#f-banco button', 0.35);
+    await espera(300);
+    await verEn('#wrap-comp', 0.30);
+    await cap('Paso 4 · Cobro', 'Adjuntá la captura del pago', 'Y la foto del recibo que le diste. Al menos una es obligatoria.', { ms:3200 });
+    await adjunta('#f-comp-box [onclick^="adjuntarCompForm"]', 'qr_tienda.jpg');
+    await verEn('#f-submit', 0.55);
+    await cap('Listo', 'Tocá «Registrar venta de tienda»', null, { ms:1800 });
+    await sinCap();
+    await page.locator('#f-submit').tap();
+    await espera(5200);
+    const ov2 = await page.evaluate(() => { const e = [...document.querySelectorAll('body *')].find(x => /Tocá para seguir/.test(x.textContent||'') && x.children.length===0); if(!e) return null; const r = e.getBoundingClientRect(); return { x:r.left+r.width/2, y:r.top+r.height/2 }; });
+    if(ov2){ await page.touchscreen.tap(ov2.x, ov2.y); await espera(1400); }
+    await cap('Venta registrada ✅', 'Queda como 🏪 SALIÓ DE TIENDA', 'No ocupa lugar en el camión y aparece en Contabilidad con su pago.', { ms:4600, arriba:true });
+    await sinCap();
+    await page.evaluate(() => { try{ closeModal(); }catch(e){} });
+    await espera(900);
+    await cierre('¡Venta registrada!', [
+      ['Contabilidad → «🏪 Venta de tienda»', 'la tienda se pone sola'],
+      ['Nota de venta y cliente', 'nombre y celular'],
+      ['Productos', 'código, cantidad y precio'],
+      ['Cobro', 'pagado, método, banco y la foto del comprobante']
+    ], '¿Dudas? Tocá a Bloki → «¿Cómo registro una venta de tienda?»');
+  }
 
   grabando = false;
   await cdp.send('Page.stopScreencast');
   fs.writeFileSync(path.join(OUT, 'cuadros.json'), JSON.stringify(cuadros));
   console.log('cuadros', cuadros.length, 'duración', (cuadros.length ? (cuadros[cuadros.length-1].t - cuadros[0].t).toFixed(1) : 0)+'s');
   console.log('errores', errores.length, errores.slice(0,6));
-  console.log('guardado', await page.evaluate(() => window._guardado ? JSON.stringify({ cliente:_guardado.cliente, fecha:_guardado.fecha, turno:_guardado.turno, prods:_guardado.productos, acuenta:_guardado.acuenta, saldo:_guardado.saldo, metodo:_guardado.metodoPago }) : 'NADA'));
+  console.log('guardado', await page.evaluate(() => window._guardado ? JSON.stringify({ cliente:_guardado.cliente, fecha:_guardado.fecha, turno:_guardado.turno, prods:_guardado.productos, acuenta:_guardado.acuenta, saldo:_guardado.saldo, pagado:_guardado.pagado, metodo:_guardado.metodoPago }) : 'NADA'));
   await b.close();
 })();
