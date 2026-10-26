@@ -16321,7 +16321,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `test_conflicto` 45, `test_carga` 41, `test_auditoria` 175, `test_rev2_admin` 22 (0 mal). Volver atrás: ✏️ a la versión anotada Y pegar
   la 26-a de `f6272ef…` (4.698 líneas). Lo que sigue lo hace el dueño: Comprobantes → 🤖 Revisar → «🧾 Leer las notas de venta».
 
-### §4mu — 📁 Comprobantes: el Excel con enlaces de verdad y la ventana con el estilo nuevo (26/10; en la rama `6016bae`, espera «publica»)
+### §4mu — 📁 Comprobantes: el Excel con enlaces de verdad y la ventana con el estilo nuevo (26/10; PUBLICADO 26/10 13:35 de Bolivia, `cfc901b`, Pages OK; el `.gs` no cambió)
 - **Dueño** (captura del Excel con las direcciones como texto): *«qué feo se arma, los enlaces no aparecen directos para entrar»*; y de la
   ventana: *«qué cutre se ve eso, no se ve moderno como lo nuevo que estabas desarrollando»*. Antes preguntó si cualquiera con el Excel
   puede abrir los enlaces: SÍ (las fotos están «cualquiera con el enlace puede ver», a propósito: es lo que deja que el panel las muestre
