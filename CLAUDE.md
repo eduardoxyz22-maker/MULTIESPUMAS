@@ -2321,6 +2321,8 @@ Las frases que leen las pruebas siguen abajo. 🎨 **Botones de la ficha en gris
 cuadrito, dibujo gris y su `--c2` al pasar. PUBLICADO `e8feb61`. `test_cupos` §5, `test_mejoras_5_7_9`.
 🎨 **Las pestañas, la 4** (dueño: *«no me convencen los pinches botones»*; PUBLICADO `2130a6b`): pastillas blancas con dibujo gris y SOLO la elegida con el
 color de su sección (`--c1/--c2` por id de pestaña), también con los temas del mes (reglas `html .nav button.active[id]`). `navFoto` lleva el degradé.
+📅 **La fecha de la venta de tienda** (§4nm, en la rama): «Fecha de la venta» en el recuadro celeste mueve el `ts` (su día en Contabilidad/Proyección)
+a ese día con la misma hora; los pagos del día viejo van con ella, los de otro día no (y lo pregunta). Nunca después de hoy. `tests/test_venta_tienda_fecha.js`.
 
 ## 🧹 Seguimiento del dashboard sin tareas en Kommo (§4nf, 27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; PUBLICADO 27/10, `c0f4dc0`)
 En «Seguimiento», ✓ y 🕐 solo marcan la ficha en el panel (por aparato); ya no crean tareas en Kommo, y se fueron 📝 nota, «Acción masiva» y

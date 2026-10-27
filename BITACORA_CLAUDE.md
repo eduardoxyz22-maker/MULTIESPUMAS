@@ -16646,6 +16646,21 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   naranja. `.fh-murc`/`.fh-luna` van en el HTML de `fhPintar` pero no se ven los otros meses. `fhPintar` ya no rearma si el HTML es el
   mismo (`box._h`): si no, los murciélagos y el «En línea» volvían a empezar con cada repintado. Celular: tela más chica, sin luna. **PUBLICADO 27/10 (`133e332`, dueño: «mejor publica»).**
 
+### §4nm — 📅 LA FECHA DE LA VENTA DE TIENDA (27/10 a la noche; en la rama, espera «publica»)
+- El dueño, con captura del formulario editando una venta de tienda: *«¿cómo edito una venta que salió de tienda? no deja elegir fecha»*.
+  Le expliqué los tres casos (corregir datos / pasarla a entrega con «Cancelar» / cambiar el día) y eligió la 3, con el caso real: tres
+  ventas de Charcas (notas 2174, 2175 y 2176) cargadas el 1/10 que salieron de la tienda el 30/09.
+- La venta de tienda no tiene fecha de entrega: su día es el `ts` (`contaFecha`, `fechaSalida`), y con eso cuenta en Contabilidad
+  (los dos cortes), Proyección y metas. Ahora el recuadro celeste lleva **«Fecha de la venta»** (`#f-fecha-venta`): una venta nueva
+  arranca con hoy (`diaNegocio`), al editar muestra `isoDeTsBolivia(ts)`, nunca después de hoy (frena con aviso). Al guardar con otro
+  día, `submitPedido` mueve el `ts` a ese día con la MISMA hora de Bolivia (y nunca más tarde que ahora). Si cambia de mes, pregunta.
+- **Los pagos**: los que no tienen fecha propia la siguen solos (salen de `contaFecha`); los anotados con la fecha VIEJA (el día en que
+  se cargó, que es lo que el formulario escribe al guardar «SÍ, pagado») pasan al día nuevo (`@viejo` → `@nuevo` en `metodoPago`,
+  después del rescate general; `_diaSI` también usa la fecha nueva). Un pago de OTRO día queda en su día y la pregunta lo dice («se
+  corrige en Contabilidad → ✏️ Corregir este pago»). En la tienda se paga en el mostrador: el pago va con la venta.
+- No cambia: la OC (sigue su número), los cupos (sin fecha de entrega), el servidor (`ts` viaja como siempre; `ocRepetidaGs_` solo
+  mira el año y solo si cambia la OC). `tests/test_venta_tienda_fecha.js` (19).
+
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
 - **Temas (14, 15 y noviembre)**: el script del `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia: octubre
