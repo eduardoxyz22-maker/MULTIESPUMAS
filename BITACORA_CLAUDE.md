@@ -16416,18 +16416,23 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `.ah-dona-pie`). ⚠️ Lo que se ponga adentro de un anillo tiene que entrar en el hueco: `test_adm_arriba` §2 lo mide con «1/3 camiones»
   (27; roja contra la página de antes). PUBLICADO 26/10, `b3c3997`.
 
-### §4my — 🗓️ El botón «Semana» en Administración (26/10; captura de los filtros, dueño: *«acá debería haber un botón que muestre lo de la semana, lo que falta en la semana, y parpadee rojo si por ejemplo sabés que jueves hay entregas que aún dicen sin stock, así logística lo vería… siempre 5 días hábiles hacia adelante, desde el día en cuestión, no desde atrás»*)
-- Chip `semana` en `QUICK_DEFS` (al lado de Hoy/Mañana, `todo:true`: cuenta aunque el filtro esté en otro mes). Los días = `semanaDias()`:
-  HOY y los siguientes con camión hasta juntar 5 (`diaHabil`: ni domingo ni feriado; el sábado cuenta). Domingo o feriado arranca en el
-  siguiente día con camión. ⚠️ No es la semana del calendario: un jueves mira jue-vie-sáb-lun-mar.
-- Lo que falta (`semanaFalta`), con las MISMAS marcas que pintan la ficha (`admFichaColor`/`estadoStock`), sin lo de tienda (`esProdDeTienda`) y
-  sin stock para la ATC: 🔴 sin stock = «✗ no hay» sin mandar a producir o el «🔴 No hay» a mano; 🏭 `enProduccionPendiente`; 📥 `esRecoger`;
-  ⬜ sin marca; 🚛 `!vehiculoDe` (la regla de `nxSugSin`). Lo entregado no cuenta. La RPT sí (sale del depósito).
-- Parpadea en rojo (`qchip-alerta`, `QUICK_DEFS[].alerta`/`tit` en `renderChips`) mientras haya algo 🔴 en esos días; el título dice qué
-  día y quién. Al tocarlo, `#adm-semana` (`semanaPintar`): una ficha por día (pedidos, listos, lo que falta, cupos) que filtra por día
-  (`SEMANA_DIA`), y «Ver» por lo que falta (`SEMANA_VER`, `semanaSub` en `admFilter`). La lista va del más cercano al más lejos. «📋 Para
-  hacer» lleva el aviso rojo `semana` («Dicen SIN STOCK en los próximos 5 días» → `admVerSemana('sin')`). Solo mira.
-- `tests/test_semana.js` (31, reloj clavado el jueves 29/10/2026, con el feriado del 02/11; `SEM_CAP` deja capturas). Muestra al dueño con
-  datos inventados: https://claude.ai/artifact/M5CtFZ9oqZpoba2F5W1CL9. Preguntado: ¿hoy cuenta? (hoy sí) y ¿qué más parpadea? (hoy solo 🔴).
-  Batería entera: 259 suites, 8.310 bien, 2 rojas de siempre (ventas_marcas 1180 px; mispedidos por carga, sola 33/0).
-  En la rama, `9b37682`; espera «publica».
+### §4my — 🗓️ El botón «Semana» en Administración: el STOCK de los productos de los próximos 5 días hábiles (26-27/10)
+- Dueño (26/10, captura de los filtros): *«un botón que muestre lo de la semana, lo que falta en la semana, y parpadee rojo si por ejemplo
+  sabés que jueves hay entregas que aún dicen sin stock… siempre 5 días hábiles hacia adelante, desde el día en cuestión, no desde atrás»*.
+  La 1ª versión (`9b37682`) hablaba de camiones, cupos y «sin camión». Al verla (27/10): *«¿por qué decís camión? Lo que nos interesa es ver
+  a futuro si se pidió o llegó el producto… hacer recuerdo a logística: tenés este pedido el jueves y aún no marcás el stock. Entra un pedido
+  el 15 para el 30, se les pasa verificar ese ítem uno o dos días antes, y producción tarda hasta 4 días a veces»*. ⚠️ No volver a poner
+  camiones, carga ni cupos en este botón.
+- Chip `semana` en `QUICK_DEFS` (`todo:true`: cuenta aunque el filtro esté en otro mes). Días = `semanaDias()`: HOY y los hábiles que siguen
+  hasta juntar 5 (`diaHabil`; el sábado cuenta; domingo o feriado arranca en el siguiente). Entran los pedidos sin entregar, sin ATC, con
+  algún producto que no sea de tienda (`semanaEntra`); la RPT sí.
+- Cada PRODUCTO (`semanaLinea`, con las marcas de siempre): ⬜ `rev` sin revisar · 🔴 `nohay` «✗» sin pedir a producción (o el «🔴 No hay»
+  a mano) · 🏭 `prod` pedido y sin llegar · ⚠️ `tarde` pedido que con `SEMANA_PROD_DIAS`=4 días hábiles desde `prodF` (`semanaLlega` =
+  `diaHabilMas`) llega después de la entrega · ✔ `listo` (hay, Banzer, llegó de fábrica, o Moreno/tienda para ir a buscar).
+- Parpadea (`qchip-alerta`, `QUICK_DEFS[].alerta`/`alertaTxt`/`tit`) con ⬜ o 🔴 («🔴 N por revisar»). Al tocarlo arranca en «Lo que falta»
+  (`semanaArrancar`); `#adm-semana` (`semanaPintar`): cartel rojo por día con «Ver solo esos» y «🤖 Revisión automática»
+  (`abrirStock();abrirStockRevisar()`), aviso ámbar de `tarde`, una ficha por día (productos con stock, lo que falta), filtros por estado y
+  la lista de productos por día (tocar = `showPedidoModal`). La lista de pedidos de abajo sigue el día y el estado (`semanaSub`) y va del
+  más cercano al más lejos. «📋 Para hacer»: `semana` (rojo, ⬜+🔴) y `semana-t` (ámbar, `tarde`). Solo mira.
+- `tests/test_semana.js` (40, reloj clavado el jueves 29/10/2026, con el feriado del 02/11; `SEM_CAP` deja capturas). Muestra al dueño con
+  datos inventados: https://claude.ai/artifact/M5CtFZ9oqZpoba2F5W1CL9 (versión 3). En la rama, `0c2cd47`; espera «publica».
