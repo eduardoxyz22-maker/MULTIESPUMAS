@@ -71,7 +71,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     quienElegir('', 'conta'); showView('admin'); await espera(50); o.conta=[blokiTraje(), fig()];
     quienAbrir(false); o.sigoConta=/Sigo en Contabilidad/.test((document.getElementById('quien')||{}).textContent||''); quienCerrar();
     quienElegir('', 'logistica'); showView('form'); await espera(50); o.logistica=[blokiTraje(), fig()];
-    quienElegir('', 'admin'); showView('form'); await espera(50); o.admin=[blokiTraje(), fig()];
+    quienElegir('', 'admin'); o.admin={};
+    var vs=['form','mis','conta','admin','atc'];
+    for(var i=0;i<vs.length;i++){ showView(vs[i]); await espera(50); o.admin[vs[i]]=[blokiTraje(), fig()]+''; }
     quienElegir('Mirian Salazar'); showView('conta'); await espera(50); o.vendedora=[blokiTraje(), fig()];
     return o;
   });
@@ -80,7 +82,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('«¿Quién está usando el panel?» tiene a Bloki arriba y el botón «🧾 Contabilidad»', r && r.botonConta && r.quienBloki, r);
   chk('Contabilidad → anteojos y calculadora, aunque esté en otra pestaña; y «Sigo en Contabilidad» la próxima vez', r && r.conta+''==='conta,conta' && r.sigoConta, r);
   chk('Logística → casco, chaleco y camión (en cualquier pestaña)', r && r.logistica+''==='logistica,logistica', r);
-  chk('Administración → el Bloki de todos', r && r.admin+''==='bloki,bloki', r);
+  chk('Administración → según la pestaña: pedido y Mis pedidos de vendedor, Contabilidad de contador, Administración con casco, lo demás Bloki',
+    r && r.admin && r.admin.form==='vendedor,vendedor' && r.admin.mis==='vendedor,vendedor' && r.admin.conta==='conta,conta'
+      && r.admin.admin==='logistica,logistica' && r.admin.atc==='bloki,bloki', r && r.admin);
   chk('una vendedora → gorra y tablita, también en Contabilidad', r && r.vendedora+''==='vendedor,vendedor', r);
 
   console.log('\n── 3. La ventana ──');

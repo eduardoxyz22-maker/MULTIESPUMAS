@@ -45142,9 +45142,11 @@ function blokiTraje(){
   var rol=''; try{ rol=quienRol(); }catch(e){}
   if(rol==='logistica') return 'logistica';
   if(rol==='conta') return 'conta';
-  if(rol==='admin') return 'bloki';
-  if(asisVendedor()) return 'vendedor';
+  /* 🧽 (27/10, dueño: «Sí, según la pestaña») Administración se viste según la pestaña: el pedido y Mis pedidos de
+     vendedor, Contabilidad de contador y Administración de logística (casco). Lo demás, Bloki a secas. */
   var v=asisVista();
+  if(rol==='admin') return v==='conta' ? 'conta' : ((v==='form' || v==='mis') ? 'vendedor' : (v==='admin' ? 'logistica' : 'bloki'));
+  if(asisVendedor()) return 'vendedor';
   return v==='conta' ? 'conta' : ((v==='form' || v==='mis') ? 'vendedor' : 'bloki');
 }
 function blokiPoner(){
