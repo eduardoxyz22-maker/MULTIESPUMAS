@@ -1419,6 +1419,47 @@ body.desh-on .toast.show{ transform:translateX(-50%) translateY(-74px); }
 @media(max-width:700px){ .desh{ bottom:calc(84px + env(safe-area-inset-bottom)); } }
 @media(prefers-reduced-motion:reduce){ .desh{ transition:none; } }
 @media print{ .desh{ display:none!important; } }
+/* 🎨 (§4nj) Arriba del pedido, la C (ver `fhPintar`) */
+.form-card.fh-on #conn-form, .form-card.fh-on #cupo-form, .form-card.fh-on .fh-viejo{ display:none !important; }
+.fh{ background:var(--grad-header); background-size:300% 300%; color:#fff; border-radius:14px; padding:14px 16px 16px; margin:0 0 16px; box-shadow:0 8px 22px -12px rgba(15,118,110,.6); }
+.fh-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.fh-top h3{ margin:0; font-size:1.08rem; font-weight:800; letter-spacing:.01em; color:#fff; }
+.fh-vivo{ display:inline-flex; align-items:center; gap:6px; font-size:.72rem; font-weight:800; border-radius:999px; padding:3px 9px 3px 7px; background:rgba(255,255,255,.16); color:#eafffb; white-space:nowrap; }
+.fh-vivo i{ width:7px; height:7px; border-radius:50%; background:#6ee7b7; animation:fh-late 2s infinite; }
+.fh-vivo.off{ background:#fde68a; color:#7c4b00; } .fh-vivo.off i{ background:#d97706; animation:none; }
+@keyframes fh-late{ 0%{ box-shadow:0 0 0 0 rgba(110,231,183,.55); } 70%{ box-shadow:0 0 0 7px rgba(110,231,183,0); } 100%{ box-shadow:0 0 0 0 rgba(110,231,183,0); } }
+.fh-sp{ flex:1; }
+.fh-ic{ position:relative; display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 11px 0 5px; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.28); color:#fff; font-size:.78rem; font-weight:700; text-decoration:none; }
+.fh-ic:hover{ background:rgba(255,255,255,.24); }
+.fh-ic .q{ width:22px; height:22px; border-radius:50%; background:#fff; color:#008F88; display:grid; place-items:center; font-weight:900; font-size:.8rem; }
+.fh-ic .pt{ position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#f472b6; border:2px solid #0f766e; }
+.fh-dia{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; margin:12px 0 8px; font-size:.82rem; opacity:.96; }
+.fh-dia b{ font-weight:800; } .fh-dia .cupo-nota{ font-size:.74rem; opacity:.9; }
+.fh-turnos{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.fh-t{ min-width:0; border-radius:14px; padding:10px 12px 8px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.22); display:flex; flex-direction:column; gap:5px; }
+.fh-t.sel{ background:#fff; color:var(--text); border-color:#fff; box-shadow:0 8px 20px -8px rgba(0,0,0,.35); }
+.fh-t1{ display:flex; align-items:center; gap:6px; justify-content:space-between; flex-wrap:wrap; row-gap:3px; font-size:.8rem; font-weight:800; }
+.fh-t1 em{ font-style:normal; font-size:.64rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; border-radius:999px; padding:2px 7px; background:var(--teal-lt); color:var(--teal-dk); white-space:nowrap; }
+.fh-t:not(.sel) .fh-t1 em{ background:rgba(255,255,255,.2); color:#fff; }
+.fh-t.k-warn .fh-t1 em{ background:#fde68a; color:#7c4b00; } .fh-t.k-full .fh-t1 em{ background:#fecaca; color:#7f1d1d; }
+.fh-n{ font-size:.8rem; opacity:.92; } .fh-n b{ font-size:1.5rem; font-weight:900; line-height:1; margin-right:4px; font-variant-numeric:tabular-nums; }
+.fh-t.sel.k-warn .fh-n b{ color:var(--amber); } .fh-t.sel.k-full .fh-n b{ color:var(--red); } .fh-t.sel.k-ok .fh-n b{ color:var(--teal-dk); }
+.fh-bar{ height:5px; border-radius:99px; background:rgba(255,255,255,.25); overflow:hidden; } .fh-t.sel .fh-bar{ background:#edf1f1; }
+.fh-bar i{ display:block; height:100%; border-radius:99px; background:#6ee7b7; } .fh-t.sel .fh-bar i{ background:var(--green); }
+.fh-t.k-warn .fh-bar i{ background:#fbbf24; } .fh-t.sel.k-warn .fh-bar i{ background:var(--amber); }
+.fh-t.k-full .fh-bar i{ background:#fca5a5; } .fh-t.sel.k-full .fh-bar i{ background:var(--red); }
+.fh-ver{ font:inherit; align-self:flex-start; border:0; background:none; color:#fff; font-size:.76rem; font-weight:800; padding:4px 0 0; cursor:pointer; text-decoration:underline; text-underline-offset:3px; text-decoration-color:rgba(255,255,255,.5); min-height:28px; }
+.fh-t.sel .fh-ver{ color:var(--teal-dk); text-decoration-color:var(--teal-border); }
+.fh-t.k-off{ opacity:.6; } .fh-t.k-off .fh-n{ font-size:.78rem; }
+.fh-cerrado{ border-radius:14px; padding:12px; background:rgba(255,255,255,.95); color:#9b1c2a; font-weight:700; font-size:.86rem; }
+.fh-cerrado small{ font-weight:600; color:var(--muted); }
+.fh-alerta{ margin:10px 0 0; border-radius:10px; padding:9px 12px; font-size:.84rem; font-weight:600; line-height:1.4; }
+.fh-alerta.k-warn, .fh-alerta.k-off{ background:#FEF3E2; color:#7c4b00; } .fh-alerta.k-full{ background:#FDEAEC; color:#9b1c2a; }
+.venta-tienda #fh .fh-dia, .venta-tienda #fh .fh-turnos, .venta-tienda #fh .fh-cerrado, .venta-tienda #fh .fh-alerta{ display:none; }
+@media(max-width:560px){ .fh{ padding:12px 12px 14px; } .fh-top{ flex-wrap:nowrap; gap:6px; } .fh-top h3{ font-size:1rem; white-space:nowrap; }
+  .fh-ic{ padding:0 5px; } .fh-ic .tx{ display:none; } .fh-t{ padding:9px 10px 7px; } .fh-n b{ font-size:1.3rem; } .fh-t1 em.tu{ display:none; } }
+@media(prefers-reduced-motion:reduce){ .fh-vivo i{ animation:none; } }
+@media print{ .fh{ display:none !important; } }
 /* ===== 🚚 (§4iw, 09/10) Arriba del panel: el día, los cupos en anillos y el camión en la ruta (dueño: «A»). ===== */
 .htitle h1{font-size:1.02rem;font-weight:800;letter-spacing:.01em}
 .htitle p{font-size:.7rem}
@@ -1945,10 +1986,13 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
     <!-- 🖥️ (§4ig) En pantalla ancha: la agenda de los camiones a la izquierda y el pedido en vivo a la derecha. -->
     <aside id="fx-izq" class="fx-lado fx-izq solo-entrega no-print" aria-label="Agenda de entregas"></aside>
     <div class="card form-card">
+      <!-- 🎨 (§4nj) Arriba del pedido, la C: el encabezado que muestra la conexión, los cupos del camión y la ayuda (`fhPintar`). Lo de
+           abajo (`#conn-form`, `#cupo-form` y los dos enlaces) se sigue armando igual, escondido: lo leen otras partes y las pruebas. -->
+      <div id="fh" class="fh no-print" hidden></div>
       <div id="conn-form" class="conn off"><span class="dot"></span><span id="conn-form-txt"></span></div>
       <div id="cupo-form" class="cupo ok"></div>
-      <a href="tutorial.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--teal-dk);font-weight:700;text-decoration:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:20px;padding:7px 14px;margin-bottom:16px">❓ ¿Cómo llenar el pedido? — ver la guía</a>
-      <a href="guia-vendedor.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:#0a6b47;font-weight:700;text-decoration:none;background:var(--green-lt);border:1px solid var(--green-border);border-radius:20px;padding:7px 14px;margin:0 0 16px 8px">🆕 Novedades — guía rápida</a>
+      <a class="fh-viejo" href="tutorial.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--teal-dk);font-weight:700;text-decoration:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:20px;padding:7px 14px;margin-bottom:16px">❓ ¿Cómo llenar el pedido? — ver la guía</a>
+      <a class="fh-viejo" href="guia-vendedor.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:#0a6b47;font-weight:700;text-decoration:none;background:var(--green-lt);border:1px solid var(--green-border);border-radius:20px;padding:7px 14px;margin:0 0 16px 8px">🆕 Novedades — guía rápida</a>
 
       <div id="edit-banner" class="edit-banner">
         <span>✏️ Editando pedido <b id="edit-oc"></b></span>
@@ -7106,7 +7150,8 @@ function desdeCuandoLaCopia(){
   var h=Math.floor(m/60);
   return ' (leída hace <b>'+h+(h===1?' hora':' horas')+'</b> — puede estar vieja)';
 }
-function renderConnEstado(){
+function renderConnEstado(){ renderConnEstadoBase(); try{ fhPintar(); }catch(e){} }   // 🎨 (§4nj) el encabezado del pedido dice lo mismo
+function renderConnEstadoBase(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
   var ft=document.getElementById('conn-form-txt'), at=document.getElementById('conn-admin-txt');
   if(!f||!a||!ft||!at) return;
@@ -14697,7 +14742,7 @@ function submitPedido(){
     var lim=limTurno(fechaSel, turnoSel);
     toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+cuposUsadosTurno(fechaSel, turnoSel)+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');   // §4fh (25/09): lo que hay, no el límite dos veces
     renderCupoForm();
-    var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
+    var cf=document.getElementById(fhVa() ? 'fh' : 'cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
     return;
   }
@@ -15062,7 +15107,7 @@ function submitPedido(){
         var tmsg = res.turno ? ('Turno '+res.turno+' lleno') : 'Cupos llenos';
         toast('❌ '+tmsg+' para el '+fmtFecha(rec.fecha)+' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.','err');
         renderCupoForm();
-        var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
+        var cf=document.getElementById(fhVa() ? 'fh' : 'cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
         var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
         return;
       }
@@ -16706,7 +16751,7 @@ function ajustarTurnoSeg(fecha){
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
 }
 /* ✨ (§4if) Todo lo que repinta los cupos repinta también las escenas del formulario (días, camión y el mes). */
-function renderCupoForm(){ renderCupoFormBase(); fxFormPintar(); }
+function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} fxFormPintar(); }
 function renderCupoFormBase(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   var fecha=document.getElementById('f-fecha').value||todayStr();
@@ -16758,6 +16803,63 @@ function renderCupoFormBase(){
     el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'')+
       cupoVerBtn(fecha, turno);
   }
+}
+/* 🎨 ARRIBA DEL PEDIDO, LA C (§4nj, 27/10; dueño: «esta webada hay que modernizar» con la captura de la conexión, los cupos y los dos
+   botones de ayuda; de las muestras eligió la C, «no veo el botón ver pedidos… pulir un poco más», y con la C pulida: «C ok, publica»).
+   Un encabezado turquesa arriba del formulario: «Nuevo pedido» (o «Corregir pedido»), si está en línea, Guía y Novedades (con un punto rosa
+   hasta que se abre la de `NOVEDADES_V`); el camión del día con UNA TARJETA POR TURNO (libres en grande, barrita y «👀 Ver los N pedidos»
+   SIEMPRE, `verCuposTurno`), el turno del pedido en blanco («Tu turno» / «¡Quedan pocos!» / «Lleno»); y abajo un aviso de una línea solo
+   cuando hace falta (lleno, quedan pocos, sin conexión, la copia vieja). Día cerrado, domingo y feriado reemplazan las tarjetas; el sábado la
+   tarde va apagada. Las cuentas son las del cartel de siempre (`limTurno`, `cuposUsadosTurno`, `diaCerrado`, `feriadoDe`, `cupoFechaNota`),
+   que se sigue armando escondido. En Playwright, lo de antes salvo `FH_PRUEBA`. */
+var NOVEDADES_V='2026-10-27', LS_NOV='me_novedades_visto';
+function fhVa(){ return !(navigator.webdriver && !window.FH_PRUEBA); }
+function fhNovedadVista(){ try{ localStorage.setItem(LS_NOV, NOVEDADES_V); }catch(e){} setTimeout(function(){ try{ fhPintar(); }catch(e){} }, 60); }
+function fhPintar(){
+  var box=document.getElementById('fh'); if(!box) return;
+  var card=box.closest('.form-card'), va=fhVa();
+  box.hidden=!va; if(card) card.classList.toggle('fh-on', va);
+  if(!va) return;
+  var fecha=document.getElementById('f-fecha').value||todayStr(), turno=normTurno(segVal('f-turno'))||'';
+  var NOM={ AM:'mañana', PM:'tarde' }, otro={ AM:'PM', PM:'AM' };
+  var cf=document.getElementById('conn-form'), on=!!(cf && /\bon\b/.test(cf.className)), connTxt=(document.getElementById('conn-form-txt')||{}).innerHTML||'';
+  var pill=on ? ['', 'En línea'] : (!CONNECTED ? [' off', 'Solo en este equipo'] : ((CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO) ? [' off', 'Conectando…'] : [' off', 'Sin conexión']));
+  var nov=''; try{ nov=localStorage.getItem(LS_NOV)||''; }catch(e){}
+  var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha), ed=EDIT_ID ? ' ✏️ Estás corrigiendo: se puede guardar igual.' : '';
+  var h='<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : 'Nuevo pedido')+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+
+    '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
+    '<a class="fh-ic" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
+      (nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a></div>'+
+    '<div class="fh-dia">🚚 Camión del <b>'+esc(dia)+'</b>'+cupoFechaNota(fecha)+'</div>';
+  var cerr = diaCerrado(fecha) ? ('🔒 El '+esc(dia)+' está cerrado: administración ya armó el camión. Elegí otra fecha.')
+           : diaDomingo(fecha) ? '🚫 Los domingos no se agenda. Elegí otra fecha.'
+           : feriadoDe(fecha) ? ('🚫 Feriado: '+esc(feriadoDe(fecha))+'. El camión no sale; elegí otra fecha.') : '';
+  var avisos=[];
+  if(cerr) h+='<div class="fh-cerrado">'+cerr+(ed ? '<br><small>'+ed+'</small>' : '')+'</div>';
+  else{
+    var T={};
+    ['AM','PM'].forEach(function(t){ var l=limTurno(fecha, t), u=cuposUsadosTurno(fecha, t), r=Math.max(0, l-u);
+      T[t]={ l:l, u:u, r:r, k:(!l ? 'k-off' : (r<=0 ? 'k-full' : (r<=3 ? 'k-warn' : 'k-ok'))), sel:(t===turno && l>0) }; });
+    h+='<div class="fh-turnos">'+['AM','PM'].map(function(t){ var x=T[t];
+      var tag = !x.l ? '' : x.k==='k-full' ? 'Lleno' : x.k==='k-warn' ? '¡Quedan pocos!' : (x.sel ? 'Tu turno' : '');
+      var ver = x.u ? ('<button type="button" class="fh-ver" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+t+'\')">👀 Ver '+(x.u===1 ? 'el pedido' : ('los '+x.u+' pedidos'))+'</button>')
+                    : '<span class="fh-n">Todavía sin pedidos</span>';
+      return '<div class="fh-t '+x.k+(x.sel ? ' sel' : '')+'" data-t="'+t+'"><div class="fh-t1"><span>'+(t==='AM' ? '🌅 Mañana' : '🌆 Tarde')+'</span>'+
+        (tag ? '<em'+(tag==='Tu turno' ? ' class="tu"' : '')+'>'+tag+'</em>' : '')+'</div>'+
+        (x.l ? ('<div class="fh-n"><b>'+x.r+'</b>'+(x.r===1 ? 'libre' : 'libres')+' de '+x.l+'</div><div class="fh-bar"><i style="width:'+Math.min(100, Math.round(100*x.u/x.l))+'%"></i></div>'+ver)
+             : '<div class="fh-n">El camión no sale los sábados a la tarde</div>')+'</div>'; }).join('')+'</div>';
+    var s=T[turno];
+    if(s && s.l){
+      var alt=(T[otro[turno]] && T[otro[turno]].l) ? ('pasalo a la '+NOM[otro[turno]]+' u otro día') : 'elegí otro día';
+      if(s.k==='k-full') avisos.push(['k-full', '🚫 La '+NOM[turno]+' del '+esc(dia)+' está llena ('+s.u+' de '+s.l+'): '+alt+'.'+
+        (s.u>s.l ? (' Hay '+(s.u-s.l)+' más de los '+s.l+' que entran (administración forzó alguno): sacando uno sigue lleno.') : '')+ed]);
+      else if(s.k==='k-warn') avisos.push(['k-warn', '⚠️ '+(s.r===1 ? 'Queda 1 lugar' : ('Quedan '+s.r+' lugares'))+' a la '+NOM[turno]+'. Si se llena, '+alt+'.']);
+    }
+  }
+  if(!on && connTxt) avisos.unshift(['k-off', '📡 '+connTxt]);
+  var viejo=cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
+  h+=avisos.map(function(a){ return '<div class="fh-alerta '+a[0]+'">'+a[1]+'</div>'; }).join('');
+  box.innerHTML=h;
 }
 /* ============================================================================
    ✨ LAS ESCENAS DEL FORMULARIO DE PEDIDOS (§4if, 08/10/2026)
