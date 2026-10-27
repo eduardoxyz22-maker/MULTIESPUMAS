@@ -16497,7 +16497,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - El dueño no veía los trajes de Bloki (publicados el 15/10): con «Administración» elegido en «¿Quién está usando el panel?» siempre sale el
   Bloki de todos (`blokiTraje`: `admin` → `bloki`). Se le ofreció que con Administración el traje siga la pestaña.
 
-### §4ne — «Arrancamos con todo, pero pulamos» (27/10; en la rama, espera «publica»; el `.gs` 2026-10-27-a espera que el dueño lo implemente)
+### §4ne — «Arrancamos con todo, pero pulamos» (27/10; PUBLICADO 27/10 ~11:20 de Bolivia, `2aa4fde`, con §4na-§4nd; el `.gs` 2026-10-27-a IMPLEMENTADO por el dueño)
 El dueño, después de las muestras: *«ok arrancamos con todo pero pulamos, y resolvamos tus dudas»*. Respuestas: el conteo de las tiendas
 con el **Excel del sistema**; «¿qué se cuenta en las tiendas?» → «otra cosa» SIN texto (queda como fábrica: sin protectores ni sábanas;
 preguntarle de nuevo); el automático de producción **lo pregunta a logística**; Bloki con Administración **según la pestaña**.
@@ -16541,3 +16541,12 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   ⚠️ Desde esta sesión `run_workflow` da 403: para ver la versión sin el respaldo, esa consulta (no toca la planilla).
 - **Navidad en el dashboard de Sueña** (otro repo, `MULTIESPUMAS-VISCARRA`): el parche está listo en el scratchpad (`suena_navidad.patch`: el
   mismo bloque que Heaven + MULTI en blanco y el 🎄 a la derecha, como su Halloween), sin subir: va con el «publica».
+- **PUBLICADO 27/10 ~11:20** (dueño: «publica»): `format-patch` de `1e9beac 5493560 59c80c1 cb6ba81 73ba137 ef9593b 7812e99 7511d0e d2a684a` sin
+  los documentos, aplastados en `2aa4fde` (14 archivos; §4lt-d y `997f2d6` NO van). Batería sobre la copia: 261 suites, 8.491 bien; 3 rojas por
+  la carga (`test_getlog`, `test_mispedidos`, `test_producir_reparto`), las tres verdes solas. Pages verde. Sueña: `5013a40` (Navidad, su
+  test_navidad 10/10, sus dientes 6 rojas contra el viejo; test_halloween 9, test_paneldup 13, test_duplicados 21).
+- 🔑 El token de Kommo (vencía el 28/10): el dueño generó uno nuevo en la integración privada **«Panel de pedidos»** y lo pegó en GitHub
+  (`KOMMO_TOKEN`) y en el Apps Script (`KOMMO_TOKEN`). No sabía de cuál integración era el viejo: no hacía falta. Al entrar a «Crear integración»
+  le pedía el URL de redireccionamiento: era el formulario de crear, no el de la integración que ya existe. Cloudflare (`tight-limit-134e…/kommo-hook`
+  recibe los avisos de Kommo para el tiempo de primera respuesta; el «heaven-kommo» crea las tareas de ✓/🕐 de Seguimiento) no se tocó: no usan
+  las tareas. El push de `2aa4fde` (panel_template.html) disparó el workflow del panel con el token nuevo.

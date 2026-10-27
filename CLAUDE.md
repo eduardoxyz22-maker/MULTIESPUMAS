@@ -1087,6 +1087,29 @@ con ⬜/🔴; al tocarlo arranca en «Lo que falta» (`semanaArrancar`), `#adm-s
 tarde grita en el primer tic. El anuncio va primero (`anuncioTic` = `anuncioTicAnuncio` + `semanaGritoTic`). Con el panel cerrado no grita nada.
 `tests/test_semana_grito.js` (27).
 
+## 🏬🎯🎄📲 Tiendas, metas, Navidad, Bloki por pestaña, «pedir hoy» y la seguridad del automático (§4na-§4ne, 27/10, PUBLICADO `2aa4fde`; servidor `2026-10-27-a` IMPLEMENTADO 27/10 ~10:40 por el dueño)
+- **🏬 Stock de cada tienda** (§4na): Stock → «🏬 Stock de las tiendas» (`abrirTst`). Fila **`__tiendas_stock__`** (`TST_ID`, en `esFilaSistema`).
+  Se cuenta el **último día hábil del mes** (`tstUltimoHabilMes`) con el Excel del sistema («EXISTENCIAS ALMACEN» del almacén de la tienda) o a
+  mano; `tstCalcular` = contado + RPT que salieron − ventas de tienda − «🏬 Tienda» que salió ± pases (todo DESPUÉS del conteo); «🏬 Tienda» sin
+  salir = apartado. Un almacén con otro nombre se elige en la vista previa y queda en `al` (`tstAlias`). Bloki avisa a logística el último día
+  hábil desde las 15 y los 3 primeros días hábiles si falta el de cierre (`tstAviso`). ⚠️ SOLO MIRA: nada del stock de fábrica la lee. Sin
+  `esProdDeTienda` (dueño: «otra cosa», sin decir qué; preguntarle). `tests/test_tiendas_stock.js` (47).
+- **🎯 Metas por marca y mes** (§4nb): Proyección → «🎯 Metas» (con la contraseña). Fila **`__metas__`** (`META_ID`). Lo vendido = `pryVentas`
+  (la proyección da igual con o sin metas). `tests/test_metas.js` (24).
+- **🎄 Navidad** (§4nc): `tema-navidad` en diciembre (Bolivia), pedidos.html + panel_template.html; Bloki con gorro (`temaNavidad()`). También
+  en el dashboard de **Sueña** (repo `MULTIESPUMAS-VISCARRA`, `5013a40`, su `tests/test_navidad.js`). `tests/test_navidad.js` (20).
+- **🧽 Bloki con «Administración»** sigue la pestaña: pedido y Mis pedidos → vendedor, Contabilidad → conta, Administración → logística (casco).
+- **📲 «Pedir hoy» por WhatsApp** (`.gs` 27-a): media hora antes del corte (16:00; sábado 11:30), a la propiedad **`WA_PEDIR_HOY`** (Ernesto y
+  Alba), plantilla **`logistica_pedir_hoy`** (5 datos). La regla es `semanaUrgentes` pasada al `.gs` (`waPh*`); ⚠️ si cambia `semanaLinea`,
+  `semanaEntra`, `esProdDeTienda`, los `PROD_*` o los plazos, cambia el `.gs` también: **`tests/test_wa_pedir_hoy.js` (64) compara los dos**.
+  Volver atrás del servidor: ✏️ a la versión anotada Y pegar la 26-b de `d41ae21b7198a0b4014e144d07ab8f38f706574f` (4.714 líneas).
+- **🏭 «En producción» automático sigue APAGADO**, con la Prioridad 0 lista: para prenderlo, `STOCK_AUTO_ACTIVO=true` y
+  `STOCK_AUTO_DESDE='<ese día>'` (al lado de `STOCK_PV`, que pasa solo a 4); el `.gs` 27-a ya no deja que un formato de stock más viejo pise uno
+  más nuevo (`stockPvGuardado_`). Poda solo por fecha, «Ya pedí» en `STOCK.ap` (un solo reparto), lo del camión que nadie vio salir no es
+  producción (`existLoteSinCamion`). Lo decide el dueño con logística. `tests/test_auto_p0.js` (26).
+- 🔑 **Token de Kommo renovado el 27/10** (el viejo vencía el 28/10): generado en la integración privada «Panel de pedidos» y pegado en el
+  secreto `KOMMO_TOKEN` de GitHub y en la propiedad `KOMMO_TOKEN` del Apps Script. Cloudflare no se tocó (no usan las tareas de Seguimiento).
+
 ## ✨ Arriba de Administración: «Para hacer» + «Hoy» + fichas grandes (§4me, 24/10, PUBLICADA `07d522a`; dueño: *«parece noticiero de alertas… un mix de la B con la C»*)
 - `#adm-hacer` ordena los avisos de siempre (rojo → ámbar → info, tres a la vista) con los números que cada cartel deja en **`ADM_AV`** al dibujarse;
   ⚠️ nada se cuenta aparte. Los carteles enteros siguen con sus ids en `#adm-avisos` («📄 Avisos completos»). Un cartel nuevo de Administración
