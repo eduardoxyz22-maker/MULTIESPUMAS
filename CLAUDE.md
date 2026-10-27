@@ -1072,6 +1072,15 @@ en una línea. `tests/test_ficha_auto.js`.
   ESA visita o eligiendo Logística, Administración o Eduardo (`f555b4a`); ⚠️ NO con `me_adm_dev` (queda para siempre). `test_saldo_almacen`
   cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
 
+## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
+Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
+el jueves y aún no marcás el stock… producción tarda hasta 4 días»*. ⚠️ Nada de camiones, carga ni cupos en este botón.
+Chip `semana` (`todo:true`). Días = `semanaDias()`: HOY y los hábiles siguientes hasta 5 (`diaHabil`). Cada PRODUCTO (`semanaLinea`): ⬜ `rev` ·
+🔴 `nohay` (✗ sin pedir) · 🏭 `prod` · ⚠️ `tarde` (`semanaLlega` = `prodF` + `SEMANA_PROD_DIAS`=4 días hábiles después de la entrega) · ✔ `listo`
+(hay, Banzer, llegó, Moreno/tienda). Sin tienda, ATC ni entregados. Parpadea (`qchip-alerta`, «🔴 N por revisar») con ⬜/🔴; al tocarlo arranca
+en «Lo que falta» (`semanaArrancar`), `#adm-semana` (`semanaPintar`) con la lista de productos por día y «🤖 Revisión automática». «Para hacer»:
+`semana` (rojo) y `semana-t` (ámbar). Solo mira. `tests/test_semana.js` (40).
+
 ## ✨ Arriba de Administración: «Para hacer» + «Hoy» + fichas grandes (§4me, 24/10, PUBLICADA `07d522a`; dueño: *«parece noticiero de alertas… un mix de la B con la C»*)
 - `#adm-hacer` ordena los avisos de siempre (rojo → ámbar → info, tres a la vista) con los números que cada cartel deja en **`ADM_AV`** al dibujarse;
   ⚠️ nada se cuenta aparte. Los carteles enteros siguen con sus ids en `#adm-avisos` («📄 Avisos completos»). Un cartel nuevo de Administración
