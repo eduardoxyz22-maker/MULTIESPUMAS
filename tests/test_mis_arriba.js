@@ -1,7 +1,7 @@
 /* ✨ MIS PEDIDOS ARRIBA: «📋 Para hacer» + «☀️ Tu día» + la bandeja de Kommo en filas (§4mf, 25/10; dueño: «aprobado»).
 
    LO QUE CUIDA:
-   1. Con un vendedor elegido salen las dos tarjetas; «👑 Ver todos» y sin nombre siguen como antes.
+   1. Con un vendedor elegido salen las dos tarjetas; sin nombre sigue como antes; «👑 Ver todos» sale con el diseño del equipo (§4nn).
    2. «Para hacer» ordena rojo → ámbar → info, con los números de las cuentas de siempre (sin stock, atrasados, sin ubicación,
       Kommo, saldo del mes) y lo que no tiene pendiente va a «✅ Al día».
    3. «Tu día»: lo vendido del mes y el mes anterior entero (`misAnilloDatos`), hoy / próximo día, falta cobrar.
@@ -9,7 +9,7 @@
       del mes»; antes, lo cobrado después del último retiro); lo que cobró un chofer no.
    5. Kommo: filas cortas en dos grupos («parecen ya cargadas» con «Sí, es la misma» / «nuevas» con «Completar»), y los botones llaman
       a las funciones de siempre.
-   6. El buscador sube a la barra del nombre y vuelve a su lugar con «Ver todos».
+   6. El buscador sube a la barra del nombre (también con «Ver todos», desde §4nn).
 
    Reloj CLAVADO (martes 27/10/2026, 10:00 de Bolivia). Solo datos sintéticos: el repo es público.
    Se corre:  node tests/test_mis_arriba.js */
@@ -97,10 +97,10 @@ function PREPARAR(){
   chk('5a. la bandeja de Kommo va en filas cortas con dos grupos', /Ventas de Kommo para completar/.test(r5.txt) && /Parecen ya cargadas · 1/i.test(r5.txt) && /Nuevas · 1/i.test(r5.txt), r5.txt.slice(0,300));
   chk('5b. la que ya está cargada ofrece «Sí, es la misma» (borrEsLaMisma) y la nueva «Completar» (completarBorrador)', r5.fs.some(f=>/parece la misma que CLIENTE a3/.test(f) && /borrEsLaMisma\('kommo-111'/.test(f)) && r5.fs.some(f=>/NUEVO KOMMO/.test(f) && /completarBorrador\('kommo-222'\)/.test(f)), r5.fs);
 
-  /* 1c y 6b: «Ver todos» como antes */
-  const r6 = await ev(async () => { await _ver('Isabel Robledo', true); return { top:document.getElementById('mis-top').hidden, izq:getComputedStyle(document.getElementById('mis-izq')).display, busca:!!document.querySelector('.filters #mis-busca') }; });
-  chk('1c. con «👑 Ver todos» se ve como antes (sin las dos tarjetas)', r6.top && r6.izq!=='none', r6);
-  chk('6b. …y el buscador vuelve a su lugar', !r6.busca, r6);
+  /* 1c y 6b: «Ver todos» con el diseño del equipo (§4nn, 27/10: el dueño aprobó la muestra; antes quedaba como antes, a conciencia) */
+  const r6 = await ev(async () => { await _ver('Isabel Robledo', true); return { top:document.getElementById('mis-top').hidden, txt:_txt('mis-top'), izq:getComputedStyle(document.getElementById('mis-izq')).display, busca:!!document.querySelector('.filters #mis-busca') }; });
+  chk('1c. con «👑 Ver todos» sale el diseño del equipo (Para hacer · el equipo + El día del equipo), sin la dona', !r6.top && r6.izq==='none' && /Para hacer · el equipo/.test(r6.txt) && /El día del equipo/.test(r6.txt), r6);
+  chk('6b. …y el buscador queda en la barra de arriba, como con un nombre', r6.busca, r6);
 
   chk('sin errores de la página', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
