@@ -33667,7 +33667,8 @@ function renderTiendas(d, MS){
    trabajando… sería el último día laboral del mes, no voy a subir un domingo».
    · Las tiendas no están en el reporte de Moreno. Cada una se CUENTA el último día hábil del mes, al cierre, y se sube: el mismo reporte
      «EXISTENCIAS ALMACEN» sacado del almacén de la tienda (de una o de varias en un archivo), o escrito a mano (código y cantidad).
-   · Desde ese conteo el panel lleva la cuenta, con todo lo que tiene fecha DESPUÉS del día del conteo (lo de ese día ya está adentro):
+   · Desde ese conteo el panel lleva la cuenta, con todo lo que tiene fecha DESPUÉS del día del conteo (lo de ese día ya está adentro;
+     con la hora del Excel, lo de ese día posterior a la hora también cuenta, §4nl A04) y el día REAL de salida (`x.eF`, §4nl A03):
        tiene = contado + le llegó (las RPT que salieron) − vendió (sus ventas de tienda) − se recogió para pedidos («🏬 Tienda») ± pases
      Lo marcado «🏬 Tienda» de un pedido que todavía no salió está en la tienda pero APARTADO: libres = tiene − apartado.
    · Al subir un conteo nuevo, el panel dice cuánto esperaba y la diferencia con lo contado (ventas de tienda sin cargar, recogidas sin
@@ -33717,14 +33718,26 @@ function tstProdDeCodigo(cod){
   var a=productoDeAlmacen(c); if(a && a.k) return { k:stockAliasDe(a.k), cod:c };
   return null;
 }
-/* La cuenta de cada tienda hasta el día `hasta` (por defecto hoy). Devuelve {tienda:{n, base, filas, tot, P}}. */
-function tstCalcular(hasta, D){
+/* La cuenta de cada tienda hasta el día `hasta` (por defecto hoy) y, si se da, hasta la hora `hHasta` de ese día (la de un conteo nuevo).
+   Devuelve {tienda:{n, base, filas, tot, P}}. */
+function tstCalcular(hasta, D, hHasta){
   D=D||tstLeer(); var hoy=todayStr(); hasta=hasta||hoy;
   var T={};
   tstTiendas().forEach(function(n){ T[n]={ n:n, base:(D.s[n] && D.s[n].f) ? D.s[n] : null, P:{} }; });
   var fila=function(t,k){ k=stockAliasDe(k); return t.P[k]=t.P[k]||{ k:k, c:0, rpt:0, ven:0, rec:0, pas:0, apart:0, ped:[] }; };
   Object.keys(T).forEach(function(n){ var t=T[n]; if(!t.base) return; var u=t.base.u||{}; Object.keys(u).forEach(function(k){ fila(t,k).c+=Number(u[k])||0; }); });
-  var despues=function(t,f){ return !!(t && t.base) && !!f && f>t.base.f && f<=hasta; };
+  /* ⏱️ (§4nl, 27/10, Astra A04) Un conteo CON hora (el Excel la trae): lo del mismo día entra si su hora es posterior; con `hHasta`, el
+     día `hasta` solo hasta esa hora. Antes el día del conteo quedaba afuera entero: contado a las 07:00, la venta de las 08:00 no restaba.
+     Regla de lo que NO tiene hora (las RPT y las recogidas: el cierre no dice a qué hora llegó; un pase anotado otro día): queda ADENTRO
+     del conteo, como siempre (se cuenta al cierre). Un conteo sin hora (a mano), por día, como siempre. */
+  var hn=function(h){ var m=String(h||'').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/); return m ? ((m[1].length<2?'0':'')+m[1]+':'+m[2]+':'+(m[3]||'00')) : ''; };
+  var hH=hn(hHasta);
+  var despues=function(t,f,h){
+    if(!(t && t.base) || !f || f<t.base.f || f>hasta) return false;
+    h=hn(h); var hb=hn(t.base.hora);
+    if(f===t.base.f && !(hb && h && h>hb)) return false;
+    return !(f===hasta && hH && h && h>hH);
+  };
   (STATE||[]).forEach(function(p){
     if(!stockCuenta(p)) return;
     var rpt=esRPT(p.oc), vt=!rpt && esVentaTienda(p);
@@ -33732,27 +33745,30 @@ function tstCalcular(hasta, D){
       var c=Number(x&&x.cant)||0; if(!(c>0) || esProdDeTienda(x)) return;
       var k=stockClave(x); if(!k || k==='|') return;
       var t, f;
+      /* 📅 (§4nl, 27/10, Astra A03) El día REAL en que salió (`x.eF`: el cierre o el ✅ adelantado) manda sobre la fecha agendada, como en
+         el stock de fábrica (§4iz E2-7): la RPT para el 07/11 entregada el 04/11 ya llegó, y no se vuelve a sumar después del conteo del 05/11. */
       if(rpt){                                   // le llegó: la reposición que salió (ni la ✗ ni la que se va a buscar y no llegó)
-        t=T[sucursalDeRpt(p)]; f=fechaSalida(p);
+        t=T[sucursalDeRpt(p)]; f=x.eF||fechaSalida(p);
         if(!despues(t,f) || x.chk==='no' || !stockSalio(p,x)) return;
         fila(t,k).rpt+=c; return;
       }
-      if(vt){                                    // vendió en la tienda
+      if(vt){                                    // vendió en la tienda (la hora: cuándo se cargó la venta)
         t=T[sucursalDeVenta(p)]; f=contaFecha(p);
-        if(despues(t,f)) fila(t,k).ven+=c;
+        if(despues(t,f,stockMovHora(f,p.ts))) fila(t,k).ven+=c;
         return;
       }
       var S=recogeDeTienda(x); t=S ? T[S] : null; if(!t || !t.base) return;   // 🏬 se recoge de la tienda para un pedido
       f=fechaSalida(p);
       var salio=(!!p.entregado && !stockEntregadoFuturo(p,x)) || (!!f && f<hoy);   // como el stock de fábrica: fecha pasada = salió (§4co)
-      if(salio){ if(despues(t,f)) fila(t,k).rec+=c; return; }
+      if(salio){ if(despues(t,x.eF||f)) fila(t,k).rec+=c; return; }
       var r=fila(t,k); r.apart+=c; r.ped.push(p.id);
     });
   });
   (D.x||[]).forEach(function(q){                 // 🔁 pases entre tiendas
     if(!q || q.an) return; var u=Number(q.u)||0; if(!(u>0) || !q.k) return;
-    if(despues(T[q.de], q.f)) fila(T[q.de], q.k).pas-=u;
-    if(despues(T[q.a], q.f)) fila(T[q.a], q.k).pas+=u;
+    var h=stockMovHora(q.f, q.ts);               // la hora, solo si se anotó ese mismo día
+    if(despues(T[q.de], q.f, h)) fila(T[q.de], q.k).pas-=u;
+    if(despues(T[q.a], q.f, h)) fila(T[q.a], q.k).pas+=u;
   });
   Object.keys(T).forEach(function(n){
     var t=T[n], tot={ c:0, rpt:0, ven:0, rec:0, pas:0, tiene:0, apart:0, libre:0, neg:0 };
@@ -34000,8 +34016,8 @@ function tstPrevHtml(D){
     var leido='<details class="tst-leido"><summary>Ver lo que leí ('+ks.length+' producto'+(ks.length===1?'':'s')+')</summary><div class="tst-w" style="padding:6px 0 0"><table class="tst-tab"><thead><tr><th>Producto</th><th>Cantidad</th></tr></thead><tbody>'+
       ks.slice().sort(function(a,b){ return (e.u[b]-e.u[a]) || a.localeCompare(b); }).map(function(k){ return '<tr><td>'+esc(tstNombre(k))+'</td><td>'+e.u[k]+'</td></tr>'; }).join('')+'</tbody></table></div></details>';
     if(!base){ h+='<div class="tst-f" style="margin-top:4px">Primer conteo de '+esc(e.n)+': desde acá el panel lleva su cuenta.</div>'+leido+'</div>'; return; }
-    /* Lo que el panel esperaba ese día: el conteo anterior más lo que pasó hasta el día de este conteo. */
-    var E=tstCalcular(e.f, D)[e.n], esp={}, espTot=0;
+    /* Lo que el panel esperaba ese día: el conteo anterior más lo que pasó hasta el día (y la hora, si la trae: §4nl A04) de este conteo. */
+    var E=tstCalcular(e.f, D, e.hora)[e.n], esp={}, espTot=0;
     (E.filas||[]).forEach(function(r){ esp[r.k]=r.tiene; espTot+=r.tiene; });
     e.esp=espTot;
     var todas={}; ks.forEach(function(k){ todas[k]=1; }); Object.keys(esp).forEach(function(k){ todas[k]=1; });
