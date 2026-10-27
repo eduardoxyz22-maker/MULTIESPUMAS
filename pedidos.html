@@ -3606,6 +3606,7 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .ag-burbuja strong{ display:block; font-size:clamp(1.4rem,3.5vw,2.35rem); line-height:1.12; font-weight:900; color:#7c2d12; text-transform:uppercase; text-wrap:balance; overflow-wrap:anywhere; }
 .ag-burbuja small{ color:#57534e; font-size:.86rem; line-height:1.4; }
 .ag-acc{ display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+.ag-semana .ag-burbuja{ max-width:640px; } .ag-semana .ag-burbuja strong{ font-size:clamp(1.3rem,3vw,2rem); } .ag-semana .ag-burbuja small{ font-size:.9rem; white-space:pre-line; }   /* 🗓️ (27/10) el grito a logística lleva la lista de lo que falta */
 .ag-acc button{ flex:1 1 150px; min-height:46px; border-radius:14px; font:inherit; font-weight:900; font-size:.95rem; cursor:pointer; border:2px solid #ea580c; }
 .ag-ok{ background:#ea580c; color:#fff; } .ag-cambiar{ background:#fff7ed; color:#9a3412; }
 .ag-pie{ text-align:center; color:#a8a29e; font-size:.74rem; }
@@ -3899,6 +3900,7 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .sem-v.on{ background:var(--teal); border-color:var(--teal); color:#fff; } .sem-v.on span{ background:rgba(255,255,255,.25); }
 .sem-v-rev.on, .sem-v-nohay.on, .sem-v-falta.on{ background:#e5484d; border-color:#e5484d; }
 .sem-v-tarde.on{ background:#f0a020; border-color:#f0a020; }
+.sem-v-urge.on{ background:#b4232c; border-color:#b4232c; }
 .sem-v:disabled{ opacity:.45; cursor:default; }
 .sem-v-x{ color:var(--teal-dk); border-style:dashed; }
 /* las ventanas que abren las herramientas: cabecera con brillo, botones en píldora y el cuerpo en tarjeta */
@@ -17653,11 +17655,11 @@ var QUICK_DEFS=[
      arranca en el día hábil siguiente. No es la semana del calendario: un jueves mira jue, vie, sáb, lun y mar.
    · Cuenta PRODUCTOS (cada renglón) con las marcas de stock de siempre (`semanaLinea`): ⬜ sin revisar · 🔴 no hay y no se pidió a
      producción (o el «🔴 No hay» puesto a mano) · 🏭 pedido a producción y todavía no llegó · ⚠️ pedido a producción que puede no
-     llegar (con `SEMANA_PROD_DIAS` días hábiles desde que se pidió, pasa la fecha de entrega) · ✔ hay (acá, Banzer, lo que llegó de
+     llegar (con los plazos de siempre, `semanaLlega`: pasa la fecha de entrega o ya debía haber salido de fábrica) · ✔ hay (acá, Banzer, lo que llegó de
      fábrica o lo que hay que ir a buscar a Moreno o a una tienda). Lo de tienda (`esProdDeTienda`), la ATC y lo ya entregado no cuentan.
      ⚠️ Nada de camiones, carga ni cupos: el dueño lo quiere para el STOCK.
    · Parpadea en rojo mientras haya algo ⬜ o 🔴 en esos días. Solo mira: se marca en la ficha del pedido o con la revisión automática. */
-var SEMANA_DIAS=5, SEMANA_PROD_DIAS=4, SEMANA_DIA='', SEMANA_VER='', SEMANA_MEMO={ k:'', d:null };
+var SEMANA_DIAS=5, SEMANA_DIA='', SEMANA_VER='', SEMANA_MEMO={ k:'', d:null };
 var SEMANA_EST={
   rev:  { ic:'⬜', t:'sin revisar',          v:'Sin revisar' },
   nohay:{ ic:'🔴', t:'no hay, sin pedir',    v:'No hay, sin pedir' },
@@ -17681,19 +17683,34 @@ function semanaEntra(p){
   return !!p && !!semanaSet()[p.fecha] && !p.entregado && !esATC(p.oc) && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) &&
     (p.productos||[]).some(semanaCuenta);
 }
-/* 🏭 El día en que llega lo pedido a producción en el peor caso: `SEMANA_PROD_DIAS` días hábiles después de pedirlo */
-function semanaLlega(x){ var f=String((x&&x.prodF)||'').slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(f) ? diaHabilMas(f, SEMANA_PROD_DIAS) : ''; }
+/* 🏭 (27/10, dueño: «no exactamente 4, sino los plazos que ya tenemos definidos») Los plazos del cuadrito del formulario
+   (`saldoVeredictoFab`): lo pedido a producción sale de fábrica `DIAS_PRODUCCION` días hábiles después (48 h) y ese día se recoge;
+   se entrega desde el día hábil siguiente. Lo que se pide AHORA arranca hoy antes del corte (`diaArranque`: `HORA_CORTE` 16:30, el
+   sábado `HORA_CORTE_SABADO`) y si no, el día hábil siguiente. */
+function semanaLlega(x){ var f=String((x&&x.prodF)||'').slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(f) ? saldoSaleDeFabrica(f) : ''; }
+function semanaEntregaDesde(sale){ return sale ? sigDiaHabil(sale) : ''; }
+/* lo que se pide ahora (A) y lo que se pide en la próxima ocasión: hasta cuándo se puede esperar para pedir */
+function semanaPlazos(){
+  var A=diaArranque(), A2=sigDiaHabil(A), s1=saldoSaleDeFabrica(A), s2=saldoSaleDeFabrica(A2);
+  return { A:A, sale:s1, E1:semanaEntregaDesde(s1), A2:A2, E2:semanaEntregaDesde(s2) };
+}
+function semanaPlazoTxt(){
+  var P=semanaPlazos(), hoy=todayStr(), h=horaCorteTxt(diaSabado(hoy) ? HORA_CORTE_SABADO : HORA_CORTE);
+  return (P.A===hoy ? ('Lo que se pide hoy antes de las '+h) : ((diaHabil(hoy) ? ('Ya pasaron las '+h+': lo que se pide ahora') : 'Lo que se pide ahora')+' arranca el '+nxDiaTxt(P.A)+',') )+
+    ' sale de fábrica el '+nxDiaTxt(P.sale)+' ('+(DIAS_PRODUCCION*24)+' h, ese día se recoge) y se entrega desde el '+nxDiaTxt(P.E1)+'.';
+}
 function semanaLinea(p, x){
   if(!semanaCuenta(x)) return '';
-  if(enProduccionPendiente(x)){ var l=semanaLlega(x); return (l && l>String(p.fecha||'')) ? 'tarde' : 'prod'; }
+  if(enProduccionPendiente(x)){ var l=semanaLlega(x); return (l && (semanaEntregaDesde(l)>String(p.fecha||'') || l<todayStr())) ? 'tarde' : 'prod'; }
   if(x.chk==='no') return 'nohay';
   if(prodHay(x) || esRecoger(x)) return 'listo';
   return p.estado==='No hay' ? 'nohay' : 'rev';
 }
-function semanaVerLinea(e, v){
+function semanaVerLinea(e, v, f){
   if(!v) return true;
   if(v==='falta') return !!SEMANA_FALTA[e];
   if(v==='alerta') return !!SEMANA_ALERTA[e];
+  if(v==='urge') return !!SEMANA_ALERTA[e] && String(f||'')<semanaPlazos().E2;   // 🔥 lo que hay que pedir hoy (lo que grita Bloki)
   return e===v;
 }
 function semanaDatos(){
@@ -17737,7 +17754,7 @@ function semanaTitulo(n){
 function semanaSub(p){
   if(SEMANA_DIA && p.fecha!==SEMANA_DIA) return false;
   if(!SEMANA_VER) return true;
-  return (p.productos||[]).some(function(x){ var e=semanaLinea(p, x); return !!e && semanaVerLinea(e, SEMANA_VER); });
+  return (p.productos||[]).some(function(x){ var e=semanaLinea(p, x); return !!e && semanaVerLinea(e, SEMANA_VER, p.fecha); });
 }
 function semanaDia(f){ SEMANA_DIA=(SEMANA_DIA===f?'':f); admTopeReset(); renderAdmin(); }
 function semanaVer(k){ SEMANA_VER=(SEMANA_VER===k?'':k); admTopeReset(); renderAdmin(); }
@@ -17758,11 +17775,11 @@ function semanaPintar(){
   var h='<div class="sem-cab"><span class="sem-ic" aria-hidden="true">🗓️</span><div><b>El stock de los próximos '+S.dias.length+' días hábiles</b>'+
       '<small>'+(S.desde?(esc(nxDiaTxt(S.desde))+' → '+esc(nxDiaTxt(S.hasta))):'')+' · desde hoy hacia adelante · ¿se revisó el stock?, ¿se pidió a producción?, ¿llegó?</small></div></div>';
   if(T.alerta) h+='<div class="sem-alerta"><i class="late-dot"></i><div><b>🔴 '+esc(semanaAlertaFrase(T))+'</b><span class="sem-al-l">'+esc(semanaAlertaTxt(S, 3))+'</span>'+
-      '<small>Producción tarda hasta '+SEMANA_PROD_DIAS+' días hábiles: revisalos ahora, no el día antes de entregar.</small></div>'+
+      '<small>'+esc(semanaPlazoTxt())+' Revisalos ahora, no el día antes de entregar.</small></div>'+
       '<span class="sem-al-b"><button type="button" class="ah-go ah-go-r" onclick="semanaVer(\'alerta\')">'+(SEMANA_VER==='alerta'?'Ver todo':'Ver solo esos')+'</button>'+
       '<button type="button" class="ah-go" onclick="abrirStock();abrirStockRevisar()" title="La revisión automática propone la marca de cada producto según el Excel del día">🤖 Revisión automática</button></span></div>';
   if(T.tarde) h+='<div class="sem-tarde"><span aria-hidden="true">⚠️</span><div><b>'+T.tarde+' pedido'+(T.tarde===1?'':'s')+' a producción '+(T.tarde===1?'puede':'pueden')+' no llegar a tiempo</b>'+
-      '<small>Se pidi'+(T.tarde===1?'ó':'eron')+' hace poco: con hasta '+SEMANA_PROD_DIAS+' días hábiles de producción llega'+(T.tarde===1?'':'n')+' después de la entrega. Avisale a producción o al cliente.</small></div>'+
+      '<small>Con '+(DIAS_PRODUCCION*24)+' h de producción desde que se pidi'+(T.tarde===1?'ó':'eron')+' y el día de recogerlo, llega'+(T.tarde===1?'':'n')+' después de la entrega (o ya debía'+(T.tarde===1?'':'n')+' haber salido de fábrica). Avisale a producción o al cliente.</small></div>'+
       '<button type="button" class="ah-go ah-go-a" onclick="semanaVer(\'tarde\')">'+(SEMANA_VER==='tarde'?'Ver todo':'Ver cuáles')+'</button></div>';
   h+='<div class="sem-dias">'+S.dias.map(function(o){
     var tag=o.hoy?'HOY':(o.man?'MAÑANA':'');
@@ -17781,15 +17798,18 @@ function semanaPintar(){
   var b=function(k, txt, n, cl){ return '<button type="button" class="sem-v'+(cl?(' '+cl):'')+(SEMANA_VER===k?' on':'')+'"'+(n||k===''||SEMANA_VER===k?'':' disabled')+' onclick="semanaVer(\''+k+'\')">'+txt+' <span>'+n+'</span></button>'; };
   h+='<div class="sem-ver"><span class="sem-vl">Productos'+(dSel?(' del '+esc(nxDiaTxt(dSel.f))):'')+':</span>'+
     b('', 'Todos', A.L)+b('falta', '⚠️ Lo que falta', A.falta, 'sem-v-falta')+
+    b('urge', '🔥 Pedir hoy', A.lineas.filter(function(l){ return semanaVerLinea(l.e, 'urge', l.p.fecha); }).length, 'sem-v-urge')+
     SEMANA_KS.map(function(k){ return b(k, SEMANA_EST[k].ic+' '+SEMANA_EST[k].v, A[k], 'sem-v-'+k); }).join('')+
     (dSel?('<button type="button" class="sem-v sem-v-x" onclick="semanaDia(\''+dSel.f+'\')">✕ Ver los '+S.dias.length+' días</button>'):'')+'</div>';
   /* La lista de productos, por día: tocar uno abre el pedido (ahí se marca el stock) */
-  var dias=(dSel ? [dSel] : S.dias).map(function(o){ return { o:o, L:o.lineas.filter(function(l){ return semanaVerLinea(l.e, SEMANA_VER); }) }; }).filter(function(g){ return g.L.length; });
+  var dias=(dSel ? [dSel] : S.dias).map(function(o){ return { o:o, L:o.lineas.filter(function(l){ return semanaVerLinea(l.e, SEMANA_VER, l.p.fecha); }) }; }).filter(function(g){ return g.L.length; });
   h+='<div class="sem-lista">'+(dias.length ? dias.map(function(g){
     return '<div class="sem-lg"><b>'+esc(nxDiaTxt(g.o.f))+'</b>'+(g.o.hoy?' <em>HOY</em>':(g.o.man?' <em>MAÑANA</em>':''))+'<i>'+g.L.length+' producto'+(g.L.length===1?'':'s')+'</i></div>'+
       g.L.map(function(l){
         var E=SEMANA_EST[l.e], p=l.p, x=l.x, mas='';
-        if(l.e==='prod' || l.e==='tarde'){ var lle=semanaLlega(x); mas=(x.prodF?('pedido el '+fmtFechaCorta(x.prodF)):'pedido a producción')+(lle?(' · llega ~'+fmtFechaCorta(lle)):''); }
+        if(l.e==='prod' || l.e==='tarde'){ var lle=semanaLlega(x);
+          mas=(x.prodF?('pedido el '+fmtFechaCorta(x.prodF)):'pedido a producción')+
+            (!lle ? '' : (lle<todayStr() ? (' · debía salir de fábrica el '+fmtFechaCorta(lle)+': confirmalo') : (' · sale de fábrica el '+fmtFechaCorta(lle)+', se entrega desde el '+fmtFechaCorta(semanaEntregaDesde(lle))))); }
         else if(l.e==='listo') mas=String(prodLugarTag(x)||'').replace(/<[^>]+>/g,'').trim();
         else if(l.e==='nohay') mas='mandalo a producir o reprogramá';
         else mas='todavía nadie marcó si hay';
@@ -17800,6 +17820,72 @@ function semanaPintar(){
   }).join('') : '<div class="sem-vacio">Nada para mostrar con este filtro.</div>')+'</div>';
   el.hidden=false;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* 📣 BLOKI LE GRITA A LOGÍSTICA (27/10, dueño: «Bloki en logística/administración debería gritarle a Ernesto si son las 16:00 y aún no
+   ven esos pedidos que falten productos y estamos justo a 4 días, o los plazos que definimos»).
+   · Qué: lo ⬜ sin revisar y lo 🔴 que no hay y no se pidió a producción (los mismos del botón «Semana») que se entregan hasta
+     antes de lo que llegaría si se pidiera en la próxima ocasión (`semanaUrgentes`, con los plazos de `semanaPlazos`): si no se piden
+     hoy, producción no llega. Lo que se entrega antes de lo que llega aunque se pida ya, «ya no llega»: reprogramar o avisar.
+   · Cuándo: un día hábil, desde media hora antes del corte de producción (`HORA_CORTE` 16:30 → 16:00; el sábado `HORA_CORTE_SABADO`
+     12:00 → 11:30): lo que se pide antes del corte empieza hoy. Y otra vez cada `SEMANA_GRITO_CADA_MS` (15 min) mientras falte algo;
+     la hora del último grito queda en el aparato (`SEMANA_GRITO_LS`): recargar no lo hace gritar de nuevo.
+   · A quién: solo en los aparatos de logística o Administración (`asisVeAdm`), con el nombre de `SEMANA_GRITO_A`.
+   · Cómo: el MISMO grito del anuncio (`anuncioGrito` con `semana:1`: pantalla entera, Bloki con el megáfono, sirena y voz). Espera si
+     la persona está escribiendo o si el anuncio está en pantalla. 🔇 de Bloki le saca el sonido. Solo avisa: no cambia ningún pedido. */
+var SEMANA_GRITO_A='Ernesto', SEMANA_GRITO_CADA_MS=15*60000, SEMANA_GRITO_LS='me_sem_grito', SEMANA_GRITO_MEM={ d:'', t:0 };
+function semanaGritoHora(f){ return (dowDe(f)===6 ? HORA_CORTE_SABADO : HORA_CORTE)-0.5; }
+function semanaHoraTxt(h){ var m=Math.round((h%1)*60); return Math.floor(h)+':'+(m<10?'0':'')+m; }
+function semanaUrgentes(){
+  var hoy=todayStr(); if(!diaHabil(hoy)) return [];
+  var E2=semanaPlazos().E2;
+  return semanaDatos().tot.lineas.filter(function(l){ return SEMANA_ALERTA[l.e] && String(l.p.fecha||'')<E2; });
+}
+function semanaUrgTxt(L){
+  var rev=L.filter(function(l){ return l.e==='rev'; }).length;
+  return rev===L.length ? 'sin revisar el stock' : (rev ? 'sin revisar o sin pedir a producción' : 'que no hay y no se pidieron a producción');
+}
+function semanaGritoUlt(){
+  var hoy=todayStr(), t=(SEMANA_GRITO_MEM.d===hoy) ? SEMANA_GRITO_MEM.t : 0;
+  try{ var o=JSON.parse(localStorage.getItem(SEMANA_GRITO_LS)||'null'); if(o && o.d===hoy) t=Math.max(t, Number(o.t)||0); }catch(e){}
+  return t;
+}
+function semanaGritoTic(){
+  if(!ASIS.montado || !asisVeAdm()) return;
+  var hoy=todayStr(); if(!diaHabil(hoy) || nxHoraAhora() < semanaGritoHora(hoy)) return;
+  if(anuncioGritoAbierto() || anuncioEscribiendo()) return;
+  if(Date.now()-semanaGritoUlt() < SEMANA_GRITO_CADA_MS) return;
+  var L=semanaUrgentes(); if(!L.length) return;
+  SEMANA_GRITO_MEM={ d:hoy, t:Date.now() };
+  try{ localStorage.setItem(SEMANA_GRITO_LS, JSON.stringify(SEMANA_GRITO_MEM)); }catch(e){}
+  anuncioGrito(semanaGritoObj(L));
+}
+function semanaGritoObj(L){
+  var hoy=todayStr(), n=L.length, P=semanaPlazos();
+  var corte=semanaGritoHora(hoy)+0.5, hc=semanaHoraTxt(corte), antes=nxHoraAhora()<corte;
+  var por={}; L.forEach(function(l){ (por[l.p.fecha]=por[l.p.fecha]||[]).push(l); });
+  var tarde=Object.keys(por).filter(function(f){ return f<P.E1; }).sort();
+  var dias=Object.keys(por).sort().map(function(f){ var a=por[f];
+    return '• '+nxDiaTxt(f)+': '+a.slice(0, 2).map(function(l){ return semanaProdTxt(l.x)+' ('+semanaCliente(l.p)+')'; }).join(', ')+(a.length>2?(' y '+(a.length-2)+' más'):''); }).join('\n');
+  var cuenta=(n===1 ? 'Hay 1 producto ' : ('Hay '+n+' productos '))+semanaUrgTxt(L);
+  return { semana:1, tag:'🗓️ Bloki a logística · el stock que hay que pedir hoy',
+    t:'¡'+SEMANA_GRITO_A+'! '+cuenta,
+    x:'Si no se revisa'+(n===1?'':'n')+' y se pide'+(n===1?'':'n')+' hoy, no llega'+(n===1?'':'n')+' a tiempo:\n'+dias+'\n'+semanaPlazoTxt()+
+      (tarde.length ? ('\n⚠️ Lo del '+tarde.map(nxDiaTxt).join(' y del ')+', si hay que fabricarlo, ya no llega aunque se pida ahora: reprogramalo o avisale al cliente.') : '')+
+      '\nTe lo vuelvo a gritar cada '+Math.round(SEMANA_GRITO_CADA_MS/60000)+' minutos mientras falte.',
+    acc:'<button type="button" class="ag-ok" onclick="semanaIr(\'urge\')">🗓️ Ver cuáles</button>'+
+        '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar(); abrirStock(); abrirStockRevisar()">🤖 Revisión automática</button>'+
+        '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar()">👍 Entendido</button>',
+    voz:'¡'+SEMANA_GRITO_A+'! '+cuenta+'. '+(antes ? ('Si no se piden hoy antes de las '+hc+', no llegan a tiempo.') : 'Si no se piden hoy, no llegan a tiempo.')+' Revisalos ya.' };
+}
+/* «🗓️ Ver cuáles»: a Administración con el botón «Semana» puesto; sin la clave, a la tarjeta de la contraseña (como `asisIrAdm`) */
+function semanaIr(v){
+  try{ anuncioGritoCerrar(); }catch(e){} try{ asisCerrar(); }catch(e){}
+  try{ showView('admin'); }catch(e){}
+  setTimeout(function(){
+    var lk=document.getElementById('admin-lock');
+    if(!UNLOCKED && asisSeVe(lk)){ asisFoco(lk); asisGlobo({ ico:'', t:'🔒 Primero poné la contraseña de Administración', x:'Después tocá «🗓️ Semana», arriba de los pedidos.' }, true, true); return; }
+    admVerSemana(v||'urge');
+  }, 300);
 }
 function quickDef(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i]; return null; }
 function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
@@ -18182,7 +18268,7 @@ function admHacerDatos(){
   // 🗓️ (26-27/10) el stock de los próximos 5 días hábiles: lo sin revisar o sin pedir, y lo pedido que puede no llegar (la cuenta del botón «Semana»)
   try{ var Sm=semanaDatos();
     add({ k:'semana', sev:'r', ic:'🗓️', n:Sm.tot.alerta, t:'Falta revisar el stock de los próximos '+Sm.dias.length+' días hábiles', s:semanaAlertaFrase(Sm.tot)+' · '+semanaAlertaTxt(Sm), b:'🗓️ Ver la semana', fn:"admVerSemana('alerta')", tag:'stock de la semana' });
-    add({ k:'semana-t', sev:'a', ic:'⚠️', n:Sm.tot.tarde, t:'Pedido a producción que puede no llegar a tiempo', s:'con hasta '+SEMANA_PROD_DIAS+' días hábiles de producción llega después de la entrega', b:'Ver cuáles', fn:"admVerSemana('tarde')", tag:'puede no llegar' });
+    add({ k:'semana-t', sev:'a', ic:'⚠️', n:Sm.tot.tarde, t:'Pedido a producción que puede no llegar a tiempo', s:'con '+(DIAS_PRODUCCION*24)+' h de producción y el día de recogerlo llega después de la entrega, o ya debía haber salido de fábrica', b:'Ver cuáles', fn:"admVerSemana('tarde')", tag:'puede no llegar' });
   }catch(e){}
   // 🚫 en un día sin camión (feriado o domingo)
   var R=ADM_AV.rev||{};
@@ -44324,6 +44410,13 @@ function asisLogistica(){
   var rec=[]; [hoy, prox].forEach(function(f, i){ if(i && f===hoy) return; delDia(f).forEach(function(p){ if((p.productos||[]).some(esRecoger) && rec.indexOf(p)<0) rec.push(p); }); });
   if(rec.length) A.push({ k:'l-rec|'+hoy+'|'+rec.map(function(p){ return p.id; }).join(','), sev:'am', ico:'📥', ped:1,
     t:rec.length+' pedido'+(rec.length===1?'':'s')+' con algo para traer de Moreno', x:'De hoy y '+(prox===tomorrowStr()?'mañana':('el '+nxDiaTxt(prox)))+'. Mandá a buscarlo antes de cargar.', lista:asisPedLista(rec) });
+  /* 🗓️ (27/10) lo sin revisar o sin pedir que se entrega dentro del plazo de producción (`semanaUrgentes`, la cuenta del botón «Semana») */
+  try{ var U=semanaUrgentes();
+    if(U.length){ var ps=[]; U.forEach(function(l){ if(ps.indexOf(l.p)<0) ps.push(l.p); });
+      A.unshift({ k:'l-semana|'+hoy+'|'+U.map(function(l){ return l.p.id+'.'+l.i+'.'+l.e; }).join(','), sev:'ro', ico:'🗓️', ped:1,
+        t:U.length+' producto'+(U.length===1?'':'s')+' '+semanaUrgTxt(U)+': si no se pide'+(U.length===1?'':'n')+' hoy, no llega'+(U.length===1?'':'n')+' a tiempo',
+        x:semanaPlazoTxt()+' Desde las '+semanaHoraTxt(semanaGritoHora(hoy))+' te lo grito.',
+        lista:asisPedLista(ps), b:['🗓️ Ver la semana', "semanaIr('urge')"] }); } }catch(e){}
   var D=null, cd=CV_DIA; try{ CV_DIA='hoy'; D=cargaVivaDatos(); }catch(e){} finally{ CV_DIA=cd; }
   if(D){
     var cams=D.cams.filter(function(c){ return !c.sin && c.total>0 && c.dentro<c.total && !camionSalio(hoy, c.k); });
@@ -44806,11 +44899,16 @@ function anuncioAviso(){
                 : ('Desde '+(des||'hace un rato')+'. Te lo recuerdo cada 3 minutos hasta que Administración lo quite.'),
     b: UNLOCKED ? ['✏️ Cambiar o quitar', 'anuncioAbrir()'] : null };
 }
-/* el reloj (cada `ANUNCIO_TIC_MS` y en cada `asisRefrescar`): uno nuevo se grita en el acto; el mismo, cada 3 min, en todos los aparatos */
+/* el reloj (cada `ANUNCIO_TIC_MS` y en cada `asisRefrescar`): uno nuevo se grita en el acto; el mismo, cada 3 min, en todos los aparatos.
+   🗓️ (27/10) Después del anuncio, el grito de la semana a logística (`semanaGritoTic`), que espera si el anuncio está en pantalla. */
 function anuncioTic(){
   if(!ASIS.montado) return;
+  anuncioTicAnuncio();
+  try{ semanaGritoTic(); }catch(e){}
+}
+function anuncioTicAnuncio(){
   var a=anuncioLeer();
-  if(!a){ ANUNCIO.ts=0; anuncioGritoCerrar(); return; }
+  if(!a){ ANUNCIO.ts=0; if(!(ANUNCIO.cur && ANUNCIO.cur.semana)) anuncioGritoCerrar(); return; }
   var nuevo=(a.ts!==ANUNCIO.ts), ahora=Date.now();
   if(nuevo){   // 📣 el grito grande: UNA vez al entrar al panel (o cuando Administración pone uno nuevo)
     if(anuncioEscribiendo()) return;   // espera a que termine de escribir: el próximo tic lo grita
@@ -44843,8 +44941,9 @@ function anuncioPuedeSonar(){
   var C=asisAudio(); return !C || C.state!=='suspended';
 }
 /* ---------- 📣 el grito ---------- */
+/* 🗓️ (27/10) El mismo grito sirve para otro aviso con `a.semana`: trae su `tag`, su texto chico `x`, sus botones `acc` y lo que dice la voz `voz`. */
 function anuncioGrito(a){
-  var av=anuncioAviso() || {}, des=anuncioDesde(a);
+  var av=a.semana ? {} : (anuncioAviso() || {}), des=a.semana ? '' : anuncioDesde(a);
   var box=document.getElementById('anu-grito');
   if(!box){
     box=document.createElement('div'); box.id='anu-grito'; box.className='anu-grito no-print';
@@ -44856,17 +44955,18 @@ function anuncioGrito(a){
       '<div class="ag-yo" aria-hidden="true"><img src="'+blokiSrc('anuncio')+'" data-traje="anuncio" alt="" width="390" height="348">'+
         '<span class="ag-ondas"><i></i><i></i><i></i></span></div>'+
       '<div class="ag-burbuja">'+
-        '<em class="ag-tag">📢 Anuncio de Administración</em>'+
+        '<em class="ag-tag">'+esc(a.tag||'📢 Anuncio de Administración')+'</em>'+
         '<strong id="ag-t">'+esc(a.t)+'</strong>'+
-        '<small id="ag-x">'+esc(UNLOCKED ? (av.x||'') : ((des ? ('Desde '+des+' · ') : '')+'Te lo recuerdo cada 3 minutos hasta que Administración lo quite.'))+'</small>'+
-        '<div class="ag-acc"><button type="button" class="ag-ok" onclick="anuncioGritoCerrar()">👍 Entendido</button>'+
-          (UNLOCKED ? '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar(); anuncioAbrir()">✏️ Cambiar o quitar</button>' : '')+'</div>'+
+        '<small id="ag-x">'+esc(a.x!=null ? a.x : (UNLOCKED ? (av.x||'') : ((des ? ('Desde '+des+' · ') : '')+'Te lo recuerdo cada 3 minutos hasta que Administración lo quite.')))+'</small>'+
+        '<div class="ag-acc">'+(a.acc!=null ? a.acc : ('<button type="button" class="ag-ok" onclick="anuncioGritoCerrar()">👍 Entendido</button>'+
+          (UNLOCKED ? '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar(); anuncioAbrir()">✏️ Cambiar o quitar</button>' : '')))+'</div>'+
         '<span class="ag-pie">Tocá en cualquier lado para cerrar</span>'+
       '</div></div>';
   box.hidden=false;
+  box.classList.toggle('ag-semana', !!a.semana);
   box.classList.remove('ag-va'); void box.offsetWidth; box.classList.add('ag-va');
   document.body.classList.add('anu-grita');
-  ANUNCIO.t0=Date.now(); ANUNCIO.gen++;
+  ANUNCIO.t0=Date.now(); ANUNCIO.gen++; ANUNCIO.cur=a;
   anuncioTemblar();
   anuncioCierraEn(ANUNCIO_GRITO_MS);
   ANUNCIO.sinVoz=0;
@@ -44939,7 +45039,7 @@ function anuncioHablar(a, gen){
   if(asisMudo() || !S || !U) return;
   try{
     S.cancel();
-    var u=new U('¡Atención, atención! '+anuncioTextoVoz(a.t)), v=anuncioVoz();
+    var u=new U(a.voz ? anuncioTextoVoz(a.voz) : ('¡Atención, atención! '+anuncioTextoVoz(a.t))), v=anuncioVoz();
     if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-419';
     u.rate=1; u.pitch=0.85; u.volume=1;
     /* mientras habla, la pantalla no se cierra sola; al terminar, un ratito más */
@@ -44964,7 +45064,7 @@ function anuncioEscuchar(){
       var u=new SpeechSynthesisUtterance(' '); u.volume=0; window.speechSynthesis.speak(u); window.speechSynthesis.getVoices(); ANUNCIO.vozLista=1;
     }catch(e){}
     if(ANUNCIO.sinVoz && anuncioGritoAbierto()){   // salió callado al abrir: este toque lo hace gritar (y no lo cierra)
-      var a=anuncioLeer(); ANUNCIO.sinVoz=0;
+      var a=(ANUNCIO.cur && ANUNCIO.cur.semana) ? ANUNCIO.cur : anuncioLeer(); ANUNCIO.sinVoz=0;
       if(a){ ANUNCIO.t0=Date.now(); anuncioTemblar(); anuncioCierraEn(ANUNCIO_GRITO_MS); anuncioSonar(a); }
     }
   };
