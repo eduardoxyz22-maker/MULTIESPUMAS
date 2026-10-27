@@ -308,7 +308,8 @@ function PREPARAR(){
   });
   chk('una ficha por marca con ventas, con su línea llena y la punteada hasta el cierre', r.cs.length===r.ms.length && r.cs.length>=2 && r.lineas===r.cs.length && r.punt===r.cs.length, r);
   chk('lo vendido y «llegaría a» son los de proyeccionMes', r.cs.every(function(t, i){ var f=r.fmt[i].split('|'); return t.indexOf(f[0])>=0 && t.indexOf(f[1])>=0; }), r);
-  chk('la meta dice que todavía no hay dónde cargarla', r.cs.every(function(t){ return /Meta: todavía no hay dónde cargarla/.test(t); }), r.cs);
+  /* (27/10, §4nb) Las metas ya se cargan en «🎯 Metas»: sin cargar, el pie lo dice y dónde. */
+  chk('sin metas cargadas, la meta dice «sin cargar» y dónde se carga', r.cs.every(function(t){ return /Meta: sin cargar \(botón «🎯 Metas» arriba\)/.test(t); }), r.cs);
   await foto('K_proy');
 
   // ═══ A+. Las fichas de marca y las del Cuadre, con el mismo estilo (dueño, 11/10) ═══════════════════

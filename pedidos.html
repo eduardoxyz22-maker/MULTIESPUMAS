@@ -1130,6 +1130,37 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 /* 🎨 (§4mo) la telaraña pasaba por adentro del anillo «PM» y cruzaba la letra: cada anillo lleva su fondo de noche y la letra su sombra. */
 html.tema-halloween .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(18,5,31,.78) 62%,rgba(18,5,31,0) 74%); }
 html.tema-halloween .h-an i{ text-shadow:0 0 3px #12051f,0 0 6px #12051f,0 0 10px #12051f; }
+/* 🎄 Tema de Navidad (diciembre, §4nc; dueño, 27/10: «arranca»): ver el script de abajo. Como Halloween, solo dibujo: el encabezado
+   con su guirnalda de luces, la ruta con nieve, la estrella y el trineo, y Bloki con gorro. Los colores de aviso no cambian. */
+html.tema-navidad{ --grad-header:linear-gradient(135deg,#0b3b2c,#14532d,#0e4f3c,#7f1d1d,#14532d,#0b3b2c); }
+html.tema-navidad .header{ overflow:hidden; }
+html.tema-navidad .header::before, html.tema-navidad .header::after{ content:''; position:absolute; left:0; right:0; top:0; height:24px; pointer-events:none; z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%2224%22 viewBox=%220 0 240 24%22%3E%3Cdefs%3E%3Cfilter id=%22g%22 x=%22-1%22 y=%22-1%22 width=%223%22 height=%223%22%3E%3CfeGaussianBlur stdDeviation=%221.8%22/%3E%3C/filter%3E%3C/defs%3E%3Cpath d=%22M0 3 Q30 15 60 3 T120 3 T180 3 T240 3%22 fill=%22none%22 stroke=%22%230f2a1d%22 stroke-width=%221.6%22/%3E%3Cellipse cx=%2215%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23ef4444%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%2213%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%2215%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23ef4444%22/%3E%3Cellipse cx=%2213.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%2275%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23facc15%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%2273%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%2275%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23facc15%22/%3E%3Cellipse cx=%2273.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22135%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%2338bdf8%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22133%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22135%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%2338bdf8%22/%3E%3Cellipse cx=%22133.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22195%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%234ade80%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22193%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22195%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%234ade80%22/%3E%3Cellipse cx=%22193.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3C/svg%3E") repeat-x 0 0/240px 24px; animation:nv-luz 1.6s steps(1,end) infinite; }
+html.tema-navidad .header::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%2224%22 viewBox=%220 0 240 24%22%3E%3Cdefs%3E%3Cfilter id=%22g%22 x=%22-1%22 y=%22-1%22 width=%223%22 height=%223%22%3E%3CfeGaussianBlur stdDeviation=%221.8%22/%3E%3C/filter%3E%3C/defs%3E%3Cpath d=%22M0 3 Q30 15 60 3 T120 3 T180 3 T240 3%22 fill=%22none%22 stroke=%22%230f2a1d%22 stroke-width=%221.6%22/%3E%3Cellipse cx=%2245%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23f472b6%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%2243%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%2245%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23f472b6%22/%3E%3Cellipse cx=%2243.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22105%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%234ade80%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22103%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22105%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%234ade80%22/%3E%3Cellipse cx=%22103.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22165%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23fde047%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22163%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22165%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23fde047%22/%3E%3Cellipse cx=%22163.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22225%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%2360a5fa%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22223%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22225%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%2360a5fa%22/%3E%3Cellipse cx=%22223.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3C/svg%3E"); animation-delay:-.8s; }
+@keyframes nv-luz{ 50%{ opacity:.38; } }
+html.tema-navidad .logo-h::before{ content:'🎄 '; }
+html.tema-navidad .logo-s{ color:#bbf7d0; }
+html.tema-navidad .hstat-v{ color:#fde68a; text-shadow:0 0 12px rgba(253,230,138,.55); }
+html.tema-navidad .nav button.active{ background:#14532d; border-color:#14532d; }
+html.tema-navidad .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(11,59,44,.7) 62%,rgba(11,59,44,0) 74%); }
+html.tema-navidad .h-lejos{ filter:brightness(.8) saturate(.7); }
+html.tema-navidad .h-calle{ background:linear-gradient(#f8fafc,#e2e8f0) top/100% 3px no-repeat,
+  repeating-linear-gradient(90deg,rgba(255,255,255,.7) 0 28px,transparent 28px 64px) 0 9px/100% 2.5px no-repeat,linear-gradient(#334155,#1e293b); }
+html.tema-navidad .h-luna{ display:block; left:13%; top:2px; width:26px; height:26px; border-radius:0; box-shadow:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cdefs%3E%3Cfilter id=%22b%22 x=%22-1%22 y=%22-1%22 width=%223%22 height=%223%22%3E%3CfeGaussianBlur stdDeviation=%223%22/%3E%3C/filter%3E%3C/defs%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2211%22 fill=%22%23fde047%22 opacity=%22.45%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M20 4 L24.2 15 L36 15.6 L26.8 23 L30 34.4 L20 27.8 L10 34.4 L13.2 23 L4 15.6 L15.8 15 Z%22 fill=%22%23fde047%22 stroke=%22%23facc15%22 stroke-width=%221.2%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") center/contain no-repeat; animation:nv-estrella 2.6s ease-in-out infinite; }
+@keyframes nv-estrella{ 50%{ transform:scale(.82) rotate(10deg); opacity:.8; } }
+html.tema-navidad .h-murc{ display:block; inset:0; }
+html.tema-navidad .h-murc i:nth-child(1){ top:4px; width:96px; height:30px; left:-110px; background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2230%22 viewBox=%220 -3 96 33%22%3E%3Cpath d=%22M36 17 Q52 12 62 16 M36 19 Q60 18 80 15%22 fill=%22none%22 stroke=%22%23fde68a%22 stroke-width=%22.9%22/%3E%3Cpath d=%22M58 20 L57 25 M61 20 L61 25 M67 20 L68 25 M70 19 L72 24%22 stroke=%22%2378350f%22 stroke-width=%221.3%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2264%22 cy=%2217%22 rx=%227.5%22 ry=%223.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M69 16 L72 12%22 stroke=%22%23a16207%22 stroke-width=%222.6%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2273%22 cy=%2211%22 r=%222.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M72 9 L70 5 M71 7 L68 6 M74 9 L75 5 M74.5 7 L77 6%22 stroke=%22%2378350f%22 stroke-width=%221.1%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M76 17 L75 22 M79 17 L79 22 M85 17 L86 22 M88 16 L90 21%22 stroke=%22%2378350f%22 stroke-width=%221.3%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2282%22 cy=%2214%22 rx=%227.5%22 ry=%223.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M87 13 L90 9%22 stroke=%22%23a16207%22 stroke-width=%222.6%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2291%22 cy=%228%22 r=%222.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M90 6 L88 2 M89 4 L86 3 M92 6 L93 2 M92.5 4 L95 3%22 stroke=%22%2378350f%22 stroke-width=%221.1%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2293.6%22 cy=%228.4%22 r=%221.4%22 fill=%22%23ef4444%22/%3E%3Cpath d=%22M4 24 Q4 28 9 28 L38 28 Q42 28 43 25%22 fill=%22none%22 stroke=%22%23fbbf24%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 13 L34 13 Q39 13 38 18 L36 24 L10 24 Q6 24 6 20 Z%22 fill=%22%23dc2626%22/%3E%3Cpath d=%22M8 15 L35 15%22 stroke=%22%23fbbf24%22 stroke-width=%221.2%22/%3E%3Crect x=%229%22 y=%228%22 width=%228%22 height=%226%22 rx=%221%22 fill=%22%2316a34a%22/%3E%3Cpath d=%22M13 8 V14 M9 11 H17%22 stroke=%22%23fde047%22 stroke-width=%221%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%225%22 fill=%22%23dc2626%22/%3E%3Cpath d=%22M21 12 H29%22 stroke=%22%23fff%22 stroke-width=%221.6%22/%3E%3Ccircle cx=%2227%22 cy=%223.6%22 r=%222.7%22 fill=%22%23fde2c8%22/%3E%3Cpath d=%22M24.6 4.6 Q27 9 29.6 4.6 Z%22 fill=%22%23fff%22/%3E%3Cpath d=%22M24.4 2.6 L28.6 -1.4 L30 2.4 Z%22 fill=%22%23dc2626%22/%3E%3Ccircle cx=%2228.8%22 cy=%22-1.2%22 r=%221%22 fill=%22%23fff%22/%3E%3C/svg%3E") no-repeat center/contain; animation:nv-trineo 24s linear infinite; }
+html.tema-navidad .h-murc i:nth-child(n+2){ display:none; }
+@keyframes nv-trineo{ 0%{ left:-110px; transform:translateY(0); } 25%{ transform:translateY(-3px); } 50%{ transform:translateY(2px); } 75%{ transform:translateY(-2px); } 100%{ left:calc(100% + 110px); transform:translateY(0); } }
+html.tema-navidad .h-ruta::after{ content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(circle,#fff 1.3px,transparent 1.8px) 0 0/34px 34px, radial-gradient(circle,rgba(255,255,255,.75) 1px,transparent 1.5px) 17px 11px/46px 46px;
+  animation:nv-nieve 7s linear infinite; }
+@keyframes nv-nieve{ to{ background-position:6px 34px, 9px 57px; } }
+@media(max-width:700px){ html.tema-navidad .header::before, html.tema-navidad .header::after{ height:18px; background-size:180px 18px; }
+  html.tema-navidad .h-murc i:nth-child(1){ width:70px; height:22px; } }
+@media(prefers-reduced-motion:reduce){ html.tema-navidad .header::before, html.tema-navidad .header::after, html.tema-navidad .h-luna, html.tema-navidad .h-ruta::after{ animation:none!important; }
+  html.tema-navidad .h-murc{ display:none!important; } }
 /* ===== 🚚 (§4iw, 09/10) Arriba del panel: el día, los cupos en anillos y el camión en la ruta (dueño: «A»). ===== */
 .htitle h1{font-size:1.02rem;font-weight:800;letter-spacing:.01em}
 .htitle p{font-size:.7rem}
@@ -1210,6 +1241,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
   .nav button.active .t-ic{transform:translateY(-4px) scale(1.22)}
   .nav button.active::after{content:'';position:absolute;bottom:-3px;left:calc(50% - 11px);width:22px;height:3px;border-radius:2px;background:var(--teal)}
   html.tema-halloween .nav button.active::after{background:#c8541a}
+  .nav button.active,html.tema-navidad .nav button.active{background:none;border:0;color:var(--text)}
+  html.tema-navidad .nav button.active::after{background:#15803d}
   html body #fx-pasos{bottom:calc(58px + env(safe-area-inset-bottom));padding-bottom:6px}
   html body.con-pasos{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
   html:root{scroll-padding-bottom:calc(70px + env(safe-area-inset-bottom))}
@@ -1466,7 +1499,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
    ni el servidor. Se prende SOLO en octubre, con la fecha de Bolivia (UTC−4 fijo), y se apaga sola el 1/11, antes de Todos
    Santos. Los colores de aviso (verde, ámbar, rojo) no cambian. Para otro año no hay que tocar nada. */
-(function(){ try{ if(new Date(Date.now()-4*3600000).getUTCMonth()===9) document.documentElement.classList.add('tema-halloween'); }catch(e){} })();
+(function(){ try{ var m=new Date(Date.now()-4*3600000).getUTCMonth(); if(m===9) document.documentElement.classList.add('tema-halloween');
+  /* 🎄 (27/10, §4nc) Y en diciembre, Navidad: se prende el 1/12 y se apaga sola el 1/1. */
+  else if(m===11) document.documentElement.classList.add('tema-navidad'); }catch(e){} })();
 </script>
 <script>
 /* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»;
@@ -2162,9 +2197,14 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <div class="field">
             <button class="btn btn-ghost btn-sm" onclick="refreshConta()">🔄 Actualizar</button>
           </div>
+          <!-- 🎯 (27/10, §4nb) Las metas de cada marca para el mes. -->
+          <div class="field">
+            <button class="btn btn-sm mt-btn" id="pry-metas-btn" onclick="metasAbrir()">🎯 Metas</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
+        <div id="pry-metas"></div>
         <!-- ✨ (§4jw, K) Una ficha por marca con la curva del mes: lo vendido día a día, hasta dónde llegaría y la meta. -->
         <div id="cx-pry"></div>
         <!-- 📊 (29/09, §4gv) A esta altura: el mes contra otro mes al mismo día, en plata y en unidades. -->
@@ -3903,6 +3943,101 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .sem-v-urge.on{ background:#b4232c; border-color:#b4232c; }
 .sem-v:disabled{ opacity:.45; cursor:default; }
 .sem-v-x{ color:var(--teal-dk); border-style:dashed; }
+/* 🎯 (27/10, §4nb) Las metas por marca, en Proyección. */
+.mt-btn{ background:#e6f7f6; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
+.mt-box{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:14px 16px; margin:4px 0 14px; display:flex; flex-direction:column; gap:12px; }
+.mt-vacio{ flex-direction:row; align-items:center; flex-wrap:wrap; font-size:.86rem; color:var(--muted); }
+.mt-cab{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
+.mt-cab b{ font-size:.8rem; letter-spacing:.06em; text-transform:uppercase; color:#0f766e; }
+.mt-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr)); gap:14px; }
+.mt-card{ border:1px solid var(--gray-md); border-top:4px solid var(--c); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.mt-card.mt-sin{ opacity:.7; }
+.mt-h{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; justify-content:space-between; }
+.mt-n{ font-size:1.02rem; color:var(--t); }
+.mt-sub{ font-size:.78rem; color:var(--muted); }
+.mt-sub b{ color:var(--text); }
+.mt-pcts{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.mt-pv{ font-size:1.9rem; font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); }
+.mt-pp{ font-size:1.25rem; font-weight:800; color:#7c3aed; font-variant-numeric:tabular-nums; }
+.mt-barra{ position:relative; height:16px; background:#f1f5f9; border:1px solid var(--gray-md); border-radius:9px; overflow:hidden; }
+.mt-barra i{ position:absolute; left:0; top:0; bottom:0; }
+.mt-bp{ background:#ddd6fe; border-right:2px solid #7c3aed; }
+.mt-bv{ background:var(--c); }
+.mt-tres{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+.mt-tres b{ color:var(--text); } .mt-tres b.mt-ppx{ color:#7c3aed; }
+.mt-nota{ border-radius:10px; padding:9px 12px; font-size:.82rem; line-height:1.45; }
+.mt-ok{ background:#dcfce7; border:1px solid #86efac; color:#14532d; }
+.mt-cerca{ background:#e6f7f6; border:1px solid #99ddd9; color:#0b5a54; }
+.mt-mal{ background:#fef3e2; border:1px solid #fcd34d; color:#7c4b00; }
+.mt-dia{ font-size:.82rem; line-height:1.5; color:var(--text); }
+.mt-ley{ font-size:.74rem; color:var(--muted); }
+.mt-modal{ display:flex; flex-direction:column; gap:14px; }
+.mt-exp{ margin:0; font-size:.86rem; line-height:1.5; color:var(--muted); }
+.mt-mes{ display:flex; align-items:center; justify-content:center; gap:14px; }
+.mt-mes b{ font-size:1.1rem; min-width:200px; text-align:center; }
+.mt-mes .btn{ min-width:44px; min-height:44px; font-size:1.2rem; }
+.mt-campos{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:12px; }
+.mt-campo{ border:1px solid var(--gray-md); border-left:5px solid var(--c); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
+.mt-campo label{ font-weight:800; color:var(--t); }
+.mt-in{ display:flex; align-items:stretch; border:1px solid var(--gray-md); border-radius:10px; overflow:hidden; background:#fff; }
+.mt-in span{ padding:0 12px; display:flex; align-items:center; font-weight:700; color:var(--muted); border-right:1px solid var(--gray-md); }
+.mt-in input{ flex:1; min-width:0; border:0; padding:10px 12px; font:inherit; font-size:1.3rem; font-weight:800; font-variant-numeric:tabular-nums; }
+.mt-campo small{ font-size:.74rem; color:var(--muted); }
+.mt-eq{ display:flex; justify-content:space-between; align-items:baseline; background:#f1f5f9; border-radius:10px; padding:10px 14px; font-weight:700; color:var(--muted); }
+.mt-eq b{ font-size:1.15rem; color:var(--text); font-variant-numeric:tabular-nums; }
+.mt-acc{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.mt-acc .btn{ width:auto; flex:0 0 auto; }
+.mt-hist{ border-top:1px solid var(--gray-lt); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
+.mt-hist > b{ font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:#0f766e; }
+.mt-hist small{ font-size:.74rem; color:var(--muted); }
+.mt-scroll{ overflow-x:auto; }
+.mt-tab{ width:100%; border-collapse:collapse; font-size:.8rem; font-variant-numeric:tabular-nums; }
+.mt-tab th{ background:#f1f5f9; color:#334155; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; padding:7px 8px; text-align:right; white-space:nowrap; }
+.mt-tab th:first-child, .mt-tab td:first-child{ text-align:left; }
+.mt-tab td{ padding:7px 8px; border-top:1px solid var(--gray-lt); text-align:right; white-space:nowrap; }
+.mt-tab td small{ display:block; font-size:.7rem; color:var(--muted); }
+.mt-tab tr.mt-cur td{ background:#f8fafc; }
+/* 🏬 (27/10, §4na) El stock de cada tienda: su ventana (`#tst-overlay`). */
+#tst-body{ flex:1; overflow:auto; padding:14px; }
+.tst{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+.tst-caja{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
+.tst-exp{ font-size:.84rem; line-height:1.5; color:var(--text); }
+.tst-exp b{ color:#155e75; }
+.tst-cuando{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#ecfeff; border:1px solid #a5f3fc; border-radius:12px; padding:10px 12px; font-size:.85rem; color:#164e63; }
+.tst-cuando.hoy{ background:#fef3c7; border-color:#fcd34d; color:#78350f; }
+.tst-acc{ display:flex; gap:8px; flex-wrap:wrap; }
+.tst-acc .btn{ min-height:40px; width:auto; flex:0 0 auto; }
+.tst-card{ border:1px solid var(--gray-md); border-left:5px solid #155e75; border-radius:12px; background:#fff; overflow:hidden; }
+.tst-card.sin{ border-left-color:#cbd5e1; }
+.tst-cab{ width:100%; font:inherit; text-align:left; background:#fff; border:0; padding:11px 14px; cursor:pointer; display:flex; gap:10px; align-items:center; flex-wrap:wrap; min-height:48px; }
+.tst-cab:hover{ background:#f8fafc; }
+.tst-cab b.tst-n{ font-size:1rem; color:#155e75; min-width:120px; }
+.tst-num{ display:flex; gap:14px; flex-wrap:wrap; margin-left:auto; font-size:.8rem; color:var(--muted); }
+.tst-num span b{ font-size:1.05rem; color:var(--text); font-variant-numeric:tabular-nums; }
+.tst-f{ font-size:.78rem; color:var(--muted); }
+.tst-f.mal{ color:#b45309; font-weight:700; }
+.tst-tab{ width:100%; border-collapse:collapse; font-size:.8rem; font-variant-numeric:tabular-nums; }
+.tst-tab th{ background:#f1f5f9; color:#334155; font-size:.68rem; letter-spacing:.04em; text-transform:uppercase; text-align:right; padding:7px 8px; white-space:nowrap; }
+.tst-tab th:first-child, .tst-tab td:first-child{ text-align:left; }
+.tst-tab td{ text-align:right; padding:7px 8px; border-top:1px solid var(--gray-lt); }
+.tst-tab td.tst-t{ font-weight:800; color:#155e75; }
+.tst-tab tr.neg td.tst-t{ color:#b4232c; }
+.tst-tab tfoot td{ font-weight:800; background:#f8fafc; }
+.tst-cero{ color:var(--muted); }
+.tst-w{ overflow-x:auto; padding:0 10px 10px; }
+.tst-form{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; align-items:end; }
+.tst-form label{ display:flex; flex-direction:column; gap:4px; font-size:.75rem; font-weight:700; color:var(--muted); }
+.tst-form input, .tst-form select, .tst-form textarea{ font:inherit; font-size:.9rem; padding:8px 10px; border:1px solid var(--gray-md); border-radius:9px; color:var(--text); min-height:40px; }
+.tst-form textarea{ min-height:150px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+.tst-full{ grid-column:1/-1; }
+.tst-ok{ color:#166534; } .tst-mal{ color:#b4232c; font-weight:700; }
+.tst-elegir{ display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; font-size:.84rem; background:#ecfeff; border:1px solid #a5f3fc; border-radius:10px; padding:8px 10px; margin-bottom:6px; }
+.tst-elegir select{ min-height:36px; padding:4px 8px; border-radius:8px; border:1px solid var(--gray-md); font:inherit; }
+.tst-elegir small{ color:var(--muted); }
+.tst-leido{ font-size:.82rem; margin-top:6px; } .tst-leido summary{ cursor:pointer; color:#155e75; font-weight:700; }
+.tst-dif-m{ color:#b4232c; font-weight:800; } .tst-dif-p{ color:#1d4ed8; font-weight:800; }
+.tst-hist{ font-size:.76rem; color:var(--muted); padding:0 14px 10px; line-height:1.5; }
+@media (max-width:640px){ .tst-num{ margin-left:0; } .tst-cab b.tst-n{ min-width:0; } }
 /* las ventanas que abren las herramientas: cabecera con brillo, botones en píldora y el cuerpo en tarjeta */
 .adm-ov > .no-print:first-child{ background-image:linear-gradient(120deg,rgba(255,255,255,.14),rgba(0,0,0,.14))!important; padding:12px 14px!important;
   box-shadow:0 10px 24px -16px rgba(0,0,0,.6); position:relative; z-index:2; }
@@ -4596,9 +4731,10 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><span class="stk-acc"><button class="btn btn-sm" id="stk-pap-btn" style="background:#fff;color:#007C76;font-weight:800" onclick="abrirPap()" title="Qué pedir a cada fábrica y qué va a dónde (PTF, Banzer y cada tienda), para 7, 15 y 30 días y el mes que viene.">🏭 Pedido a producción</button><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></span><button class="btn btn-sm stk-cerrar" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button><div id="stk-top" class="s3" hidden></div></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><span class="stk-acc"><button class="btn btn-sm" id="stk-pap-btn" style="background:#fff;color:#007C76;font-weight:800" onclick="abrirPap()" title="Qué pedir a cada fábrica y qué va a dónde (PTF, Banzer y cada tienda), para 7, 15 y 30 días y el mes que viene.">🏭 Pedido a producción</button><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" id="stk-tst-btn" style="background:#cffafe;color:#155e75;font-weight:700" onclick="abrirTst()" title="Cuánto tiene cada tienda: el conteo del último día hábil del mes más lo que le llegó, menos lo que vendió y lo que se recogió para pedidos.">🏬 Stock de las tiendas</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></span><button class="btn btn-sm stk-cerrar" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button><div id="stk-top" class="s3" hidden></div></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <!-- 🏭 (20/10) «Pedido a producción»: qué pedir a cada fábrica y qué va a dónde (PTF, Banzer, cada tienda), para 7, 15 y 30 días y el mes que viene. Se abre desde Stock. -->
 <div id="pap-overlay" role="dialog" aria-modal="true" aria-labelledby="pap-tit"><div class="pap-cab no-print"><div class="pap-cab-tx"><b id="pap-tit">🏭 Pedido a producción</b><span id="pap-sub">Se abre desde Stock</span></div><button type="button" class="pap-cab-btn" data-pap="actualizar" aria-label="Actualizar" title="Vuelve a calcular con lo último de la planilla y del stock.">🔄<span class="pap-cab-txt"> Actualizar</span></button><button type="button" class="pap-cab-btn" data-pap="cerrar" aria-label="Cerrar">✕<span class="pap-cab-txt"> Cerrar</span></button></div><div id="pap-cuerpo" class="pap-cuerpo"><div class="pap-pag"><div class="pap-ctrl" id="pap-ctrl"><div class="pap-pestanas" role="tablist" aria-label="Qué querés ver"><button type="button" class="pap-pestana" role="tab" id="pap-tab-pedir" aria-controls="pap-pedir" aria-selected="true" data-pap-tab="pedir">📦 Qué pedir a producción</button><button type="button" class="pap-pestana" role="tab" id="pap-tab-donde" aria-controls="pap-donde" aria-selected="false" data-pap-tab="donde">🗺️ Qué va a dónde</button></div><div class="pap-plazos" id="pap-plazos" role="group" aria-label="¿Para cuánto tiempo?"></div></div><p class="pap-nota">Cada plazo ya trae al anterior (15 días incluye los 7): no se suman.</p><div id="pap-pedir" class="pap-panel" role="tabpanel" aria-labelledby="pap-tab-pedir"></div><div id="pap-donde" class="pap-panel" role="tabpanel" aria-labelledby="pap-tab-donde" hidden></div></div></div><div class="pap-hoja-fondo" id="pap-hoja" hidden><div class="pap-hoja" role="dialog" aria-modal="true" aria-labelledby="pap-hoja-tit"><b id="pap-hoja-tit">Copiá este texto</b><p>No se pudo copiar solo. Mantené apretado el texto y elegí «Copiar».</p><textarea id="pap-hoja-tx" readonly></textarea><button type="button" class="pap-btn" data-pap="hoja-ok">Listo</button></div></div></div>
+<div id="tst-overlay" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="tst-tit" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="tst-tit" style="font-size:.95rem">🏬 Stock de las tiendas</b><span id="tst-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarTst()">✕ Cerrar</button></div><div id="tst-body"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
@@ -5485,7 +5621,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-26-b';   // (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-27-a';   // (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -8813,9 +8949,161 @@ function cxPryPintar(R){
     return '<div class="cx-kf" style="--c:'+m.g.col+';--t:'+(m.g.txt||m.g.col)+'"><div class="cx-kf-h"><b>'+m.g.ico+' '+esc(m.g.lbl)+'</b><span>'+m.tot.n+' venta'+(m.tot.n===1?'':'s')+' · '+m.tot.u+' u.</span></div>'+
       '<div class="cx-kf-n"><div><small>Vendido</small><b>'+fmtBs0(vend)+'</b></div>'+(conProy?('<div><small>📈 Llegaría a</small><b class="cx-kf-p">'+fmtBs0(proy)+'</b></div>'):'')+'</div>'+
       svg+'<div class="cx-kf-x"><span>1</span><span>'+N+'</span></div>'+
-      '<div class="cx-kf-pie">🎯 Meta: todavía no hay dónde cargarla'+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
+      '<div class="cx-kf-pie">'+metaPieTxt(R.ym, m)+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
   }).join('');
   box.innerHTML='<div class="cx-kfs">'+cards+'</div>';
+}
+
+/* ============================================================================
+   🎯 LAS METAS POR MARCA Y MES (§4nb, 27/10). El dueño (29/09): «las metas son por marca y cambian cada mes»; (27/10): «eso justamente
+   iba a preguntar: ¿dónde están para colocar las metas?» (la muestra del 25/10 quedó sin hacer: «publica menos lo de metas»).
+   · Se cargan en Proyección → «🎯 Metas» (solo con la contraseña, como Proyección): la de cada marca para un mes, en Bs. Se miden igual
+     que la proyección: lo VENDIDO (el total de cada venta, en el mes de su entrega agendada), nunca lo cobrado.
+   · Viven en su propia fila del sistema (`__metas__`): `{v:1, m:{'2026-11':{heaven:850000, suena:270000, t}}}`. Guardar relee la
+     planilla y cambia SOLO ese mes (otro aparato pudo cargar otro).
+   · Solo mira: ninguna cuenta de la proyección cambia por tener una meta. `tests/test_metas.js`.
+   ========================================================================== */
+var META_ID='__metas__', META_ED=null, META_ENV=0;
+function metasLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===META_ID; })[0], o={};
+  try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  return { v:1, m:(o.m && typeof o.m==='object') ? o.m : {} };
+}
+function metaDe(ym, k){ var e=metasLeer().m[ym]; var v=e ? Number(e[k]) : 0; return v>0 ? v : 0; }
+function metaEquipo(ym){ return MARCAS.reduce(function(s,g){ return s+metaDe(ym, g.k); }, 0); }
+/* Lo vendido de cada marca en un mes, con la MISMA lista que la proyección (`pryVentas`, el equipo de tiendas). */
+function metaVendidoMes(ym){
+  var o={}; MARCAS.forEach(function(g){ o[g.k]=0; });
+  pryVentas().forEach(function(x){ if(x.amb==='tienda' && x.ym===ym && o[x.g]!=null) o[x.g]=r2(o[x.g]+x.bs); });
+  return o;
+}
+function metaPct(v, M){ return M>0 ? Math.round(v/M*100) : 0; }
+function metaPieTxt(ym, m){
+  var M=metaDe(ym, m.g.k);
+  return M ? ('🎯 Meta '+fmtBs0(M)+' · va el '+metaPct(m.tot.vendido, M)+'%') : '🎯 Meta: sin cargar (botón «🎯 Metas» arriba)';
+}
+/* Una marca contra su meta: cuánto va, cuánto se proyecta y cuánto falta por día hábil. */
+function metaMarcaDatos(R, m){
+  var M=metaDe(R.ym, m.g.k); if(!M) return null;
+  var v=m.tot.vendido, p=(R.estado==='cerrado') ? v : m.tot.proy, hoy=R.hoy;
+  var dq=(R.estado==='curso') ? (R.dr+(diaHabil(hoy)?1:0)) : (R.estado==='futuro' ? R.dr : 0);
+  var falta=r2(M-v), porDia=(falta>0.009 && dq>0) ? falta/dq : 0;
+  var est = v>=M-0.005 ? 'llego' : (R.estado==='cerrado' ? 'no' : (p>=M-0.005 ? 'va' : (p>=0.9*M ? 'cerca' : 'lejos')));
+  return { M:M, v:v, p:p, pv:metaPct(v,M), pp:metaPct(p,M), falta:falta, dq:dq, porDia:porDia, est:est, faltaP:r2(Math.max(0, M-p)) };
+}
+function metasHtml(R){
+  var ms=R.marcas.map(function(m){ return { m:m, d:metaMarcaDatos(R, m) }; }), con=ms.filter(function(x){ return x.d; });
+  var mes=mesNombre(R.ym);
+  if(!con.length) return '<div class="mt-box mt-vacio" id="pry-metas-box"><span>🎯 Todavía no hay metas para '+esc(mes)+'.</span><button type="button" class="btn btn-sm mt-btn" onclick="metasAbrir()">🎯 Cargar las metas</button></div>';
+  var h='<div class="mt-box" id="pry-metas-box"><div class="mt-cab"><b>🎯 Cómo van contra la meta — '+esc(mes)+'</b><button type="button" class="btn btn-ghost btn-sm" onclick="metasAbrir()">✏️ Cambiar las metas</button></div><div class="mt-grid">';
+  ms.forEach(function(x){
+    var g=x.m.g, d=x.d;
+    if(!d){ h+='<div class="mt-card mt-sin" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'"><b class="mt-n">'+g.ico+' '+esc(g.lbl)+'</b><span class="mt-sub">sin meta para '+esc(mes)+'</span></div>'; return; }
+    var conP=(R.estado!=='cerrado');
+    var w1=Math.min(100, d.pv), w2=Math.min(100, d.pp);
+    var nota = d.est==='llego' ? ('<div class="mt-nota mt-ok"><b>🎉 Llegó a la meta</b>'+(d.v>d.M?(': pasó por '+fmtBs0(d.v-d.M)+'.'):'.')+'</div>')
+             : d.est==='no' ? ('<div class="mt-nota mt-mal"><b>Cerró en el '+d.pv+'%:</b> le faltaron '+fmtBs0(d.falta)+'.</div>')
+             : d.est==='va' ? ('<div class="mt-nota mt-ok"><b>✅ Si sigue así, llega:</b> se proyecta el '+d.pp+'%.</div>')
+             : d.est==='cerca' ? ('<div class="mt-nota mt-cerca"><b>Cerca:</b> si sigue este ritmo cierra en el '+d.pp+'% y le faltarían '+fmtBs0(d.faltaP)+'.</div>')
+             : ('<div class="mt-nota mt-mal"><b>⚠️ Así no llega:</b> si sigue este ritmo cierra en el '+d.pp+'% y le faltarían '+fmtBs0(d.faltaP)+'.</div>');
+    var dia=(d.porDia>0) ? ('<div class="mt-dia">Para llegar faltan <b>'+fmtBs0(d.falta)+'</b> (lo ya agendado está contado): <b>'+fmtBs0(d.porDia)+' por día hábil</b> en los '+d.dq+' que quedan'+(R.estado==='curso' && diaHabil(R.hoy)?' contando hoy':'')+'.</div>') : '';
+    h+='<div class="mt-card" data-marca="'+esc(g.k)+'" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'">'+
+      '<div class="mt-h"><b class="mt-n">'+g.ico+' '+esc(g.lbl)+'</b><span class="mt-sub">meta <b>'+fmtBs0(d.M)+'</b></span></div>'+
+      '<div class="mt-pcts"><span class="mt-pv">'+d.pv+'%</span><span class="mt-sub">vendido</span>'+(conP?('<span class="mt-pp">📈 '+d.pp+'%</span><span class="mt-sub">si sigue así</span>'):'')+'</div>'+
+      '<div class="mt-barra" role="img" aria-label="'+esc(g.lbl)+': vendido '+d.pv+' por ciento de la meta'+(conP?(', proyección '+d.pp+' por ciento'):'')+'">'+
+        (conP?('<i class="mt-bp" style="width:'+w2+'%"></i>'):'')+'<i class="mt-bv" style="width:'+w1+'%"></i></div>'+
+      '<div class="mt-tres"><span>Vendido <b>'+fmtBs0(d.v)+'</b></span>'+(conP?('<span>📈 Proyección <b class="mt-ppx">'+fmtBs0(d.p)+'</b></span>'):'')+'<span>🎯 Meta <b>'+fmtBs0(d.M)+'</b></span></div>'+
+      nota+dia+'</div>';
+  });
+  return h+'</div><div class="mt-ley">La barra entera es la meta: lo pintado es lo vendido'+(R.estado!=='cerrado'?'; lo claro, hasta dónde llegaría con la proyección':'')+'. Se mide como la proyección: lo vendido con entrega agendada en el mes, no lo cobrado.</div></div>';
+}
+function metasPintar(R){ var el=document.getElementById('pry-metas'); if(el) el.innerHTML=metasHtml(R); }
+/* ---- cargar las metas ---- */
+function metasAbrir(ym){
+  var inp=document.getElementById('pry-mes');
+  ym=ym || (inp && inp.value) || diaNegocio().slice(0,7);
+  var e=metasLeer().m[ym]||{};
+  META_ED={ ym:ym, v:{} }; MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; });
+  metasModal();
+}
+function metasMesMas(ym, n){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-1+n; y+=Math.floor(m/12); m=((m%12)+12)%12; return y+'-'+(m+1<10?'0':'')+(m+1); }
+function metasMover(n){ metasRecordar(); var ym=metasMesMas(META_ED.ym, n), e=metasLeer().m[ym]||{}; META_ED={ ym:ym, v:{} }; MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; }); metasModal(); }
+function metasRecordar(){ if(!META_ED) return; MARCAS.forEach(function(g){ var el=document.getElementById('mt-in-'+g.k); if(el && !montoError(el.value)) META_ED.v[g.k]=parseMonto(el.value)||0; }); }
+/* (27/10, pulido) Al salir del campo, la meta con los puntos de los miles («250000» → «250.000»); lo que no se entiende queda como está. */
+function metasFormato(el){ if(!el) return; var t=String(el.value||'').trim(); if(!t || montoError(t)) return; var v=parseMonto(t)||0; if(v>0) el.value=Math.round(v).toLocaleString('es-BO'); }
+function metasSuma(){
+  var t=0; MARCAS.forEach(function(g){ var el=document.getElementById('mt-in-'+g.k); if(el && !montoError(el.value)) t+=parseMonto(el.value)||0; });
+  var s=document.getElementById('mt-suma'); if(s) s.textContent=fmtBs0(t);
+}
+function metasCopiarAnterior(){
+  var ant=metasMesMas(META_ED.ym, -1), e=metasLeer().m[ant];
+  if(!e){ toast('No hay metas cargadas para '+mesNombre(ant)+'.','err',5000); return; }
+  MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; }); metasModal();
+  toast('Copiadas las de '+mesNombre(ant)+': revisalas y guardá.','ok',5000);
+}
+function metasModal(){
+  var E=META_ED, ym=E.ym, hoyYm=diaNegocio().slice(0,7);
+  var meses=[metasMesMas(hoyYm,-2), metasMesMas(hoyYm,-1), hoyYm].filter(function(m){ return m>=PRY_PRIMER_MES; });
+  if(meses.indexOf(ym)<0 && ym>hoyYm) meses.push(ym);
+  var VM={}; meses.forEach(function(m){ VM[m]=metaVendidoMes(m); });
+  var ant=metasMesMas(ym,-1), eAnt=metasLeer().m[ant];
+  var campos=MARCAS.map(function(g){
+    var vAnt=metaVendidoMes(ant)[g.k], mAnt=eAnt ? Number(eAnt[g.k])||0 : 0;
+    return '<div class="mt-campo" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'"><label for="mt-in-'+g.k+'">'+g.ico+' '+esc(g.lbl)+'</label>'+
+      '<div class="mt-in"><span>Bs</span><input id="mt-in-'+g.k+'" type="text" inputmode="decimal" autocomplete="off" value="'+(E.v[g.k]?Math.round(E.v[g.k]).toLocaleString('es-BO'):'')+'" placeholder="0" oninput="metasSuma()" onblur="metasFormato(this)"></div>'+
+      '<small>'+esc(mesNombre(ant))+': '+(mAnt?('meta '+fmtBs0(mAnt)+' · '):'')+'vendió '+fmtBs0(vAnt)+(mAnt?(' ('+metaPct(vAnt,mAnt)+'%)'):'')+'</small></div>';
+  }).join('');
+  var hist='<table class="mt-tab"><thead><tr><th>Mes</th>'+MARCAS.map(function(g){ return '<th>'+g.ico+' Meta</th><th>Vendido</th><th>Llegó</th>'; }).join('')+'</tr></thead><tbody>'+
+    meses.map(function(m){
+      var e=metasLeer().m[m]||{};
+      return '<tr'+(m===hoyYm?' class="mt-cur"':'')+'><td><b>'+esc(mesNombre(m))+'</b>'+(m===hoyYm?'<small>en curso</small>':'')+'</td>'+MARCAS.map(function(g){
+        var M=Number(e[g.k])||0, v=VM[m][g.k];
+        return '<td>'+(M?fmtBs0(M):'<span class="mt-sub">sin meta</span>')+'</td><td>'+fmtBs0(v)+'</td><td>'+(M?('<b>'+metaPct(v,M)+'%</b>'):'<span class="mt-sub">—</span>')+'</td>';
+      }).join('')+'</tr>';
+    }).join('')+'</tbody></table>';
+  openModal('<div class="modal-h" style="background:var(--teal)"><h3>🎯 Metas por marca</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b mt-modal">'+
+      '<p class="mt-exp">Cuánto tiene que vender cada marca en el mes. Se mide igual que la proyección: lo <b>vendido</b> (el total de cada venta, en el mes de su entrega agendada), no lo cobrado.</p>'+
+      '<div class="mt-mes"><button type="button" class="btn btn-ghost" aria-label="Mes anterior" onclick="metasMover(-1)">‹</button><b id="mt-mes-n">'+esc(mesNombre(ym))+'</b><button type="button" class="btn btn-ghost" aria-label="Mes siguiente" onclick="metasMover(1)">›</button></div>'+
+      '<div class="mt-campos">'+campos+'</div>'+
+      '<div class="mt-eq"><span>Equipo (la suma de las marcas)</span><b id="mt-suma">'+fmtBs0(MARCAS.reduce(function(s,g){ return s+(E.v[g.k]||0); },0))+'</b></div>'+
+      '<div class="mt-acc"><button type="button" class="btn btn-ghost" onclick="metasCopiarAnterior()">📋 Copiar las de '+esc(mesNombre(ant))+'</button><span style="flex:1"></span>'+
+        '<button type="button" class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button type="button" class="btn btn-primary" id="mt-guardar" onclick="metasGuardar()"'+(META_ENV?' disabled':'')+'>'+(META_ENV?'⏳ Guardando…':'Guardar metas')+'</button></div>'+
+      '<div class="mt-hist"><b>Cómo les fue</b><div class="mt-scroll">'+hist+'</div><small>Solo con la contraseña de Administración. Se guarda en la planilla: la ven todas las compus con la contraseña y se puede corregir cuando quieras.</small></div>'+
+    '</div>', true);
+}
+function metasGuardar(){
+  if(!META_ED || META_ENV) return;
+  var nuevo={}, mal='';
+  MARCAS.forEach(function(g){
+    var el=document.getElementById('mt-in-'+g.k), t=el ? String(el.value||'').trim() : '';
+    if(!t){ nuevo[g.k]=0; return; }
+    var er=montoError(t); if(er && !mal){ mal=g.lbl+': '+er; return; }
+    nuevo[g.k]=r2(parseMonto(t)||0);
+  });
+  if(mal){ toast('❌ '+mal,'err',7000); return; }
+  MARCAS.forEach(function(g){ META_ED.v[g.k]=nuevo[g.k]; });   // lo escrito, para que la ventana no vuelva atrás mientras guarda
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: las metas no se guardaron.','err',7000); return; }
+  var ym=META_ED.ym; META_ENV=1; metasModal();
+  var fin=function(r){ META_ENV=0; return r; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===META_ID) srv=p; });
+    var D=metasLeer(srv), e={ t:Date.now() }, alguna=false;
+    MARCAS.forEach(function(g){ if(nuevo[g.k]>0){ e[g.k]=nuevo[g.k]; alguna=true; } });
+    if(alguna) D.m[ym]=e; else delete D.m[ym];
+    var fila=filaSistema(META_ID, '🎯 METAS POR MARCA (no tocar: las lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[META_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===META_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==META_ID; }); STATE.push(g);
+      META_ED=null; closeModal();
+      toast('🎯 Metas de '+mesNombre(ym)+' guardadas','ok',5000);
+      try{ renderProyeccion(); }catch(x){}
+      return r;
+    });
+  }).then(fin, function(er){ fin(null); toast('❌ No se guardaron: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); if(META_ED) metasModal(); return null; });
 }
 
 /* ============================================================================
@@ -9428,8 +9716,12 @@ function renderProyeccion(){
   if(RT && RT.n) h+=mc('#475569','🛏️ ROHO', nU(RT.u),
           nV(RT.n)+' · '+RT.c+' colchones y '+RT.s+' somieres · aparte del equipo'+(conProy ? (' · 📈 proyección '+nU(RT.proyU)) : '')+
           ' · sin plata: Ernesto no carga el precio');
+  /* 🎯 (27/10, §4nb) La meta del equipo, solo si hay metas cargadas para el mes. */
+  var MEq=metaEquipo(R.ym);
+  if(MEq) h+=mc('#0f766e','🎯 Meta del equipo', fmtBs0(MEq), 'va el '+metaPct(E.vendido, MEq)+'%'+(conProy ? (' · se proyecta el '+metaPct(E.proy, MEq)+'%') : '')+' ('+MARCAS.filter(function(g){ return metaDe(R.ym, g.k); }).map(function(g){ return g.lbl; }).join(' + ')+')');
   box.innerHTML=h;
   try{ cxFichasVivas(box, 'cxPryF'); }catch(e){}
+  try{ metasPintar(R); }catch(e){}   // 🎯 (§4nb) cómo va cada marca contra su meta
   try{ cxPryPintar(R); }catch(e){}   // ✨ (§4jw, K) la curva de cada marca
   acomodarFichas();
 
@@ -16855,7 +17147,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
@@ -17379,7 +17671,9 @@ function stockProtegerDePaginaVieja(nuevo){
   var atras = stockCompararCortes(M.c, nuevo.c)>0 ||
               Object.keys(M.g||{}).some(function(nm){ return !!(nuevo.g||{})[nm] && stockCompararCortes(M.g[nm], nuevo.g[nm])>0; });
   var borro = ((M.det||[]).length>0 && !(nuevo.det||[]).length) || ((M.sm||[]).length>0 && !(nuevo.sm||[]).length) ||
-              (Number(M.v2t)>0 && !(Number(nuevo.v2t)>0));
+              (Number(M.v2t)>0 && !(Number(nuevo.v2t)>0)) ||
+              /* 🏭 (27/10, §4ne P0-1) una página de antes del 19/10 no conoce lo anotado del automático y lo borraba al guardar */
+              (Object.keys(M.ap||{}).length>0 && !Object.keys(nuevo.ap||{}).length);
   if(!atras && !borro) return null;
   STOCK_FUS_AVISOS=[];
   var j=stockFusionar(leerStock({ observaciones:bm.obs }), M, nuevo);
@@ -25873,7 +26167,15 @@ var STOCK_HIST=24;            // (23/10: 15 → 24, dos Excel por día × 3 alma
    página vieja (sin F5): esa no tiene «solo el Excel del día», puede volver atrás un corte y (la de antes del 05/10) borra
    el control. La lectura la JUNTA en vez de adoptarla (`leerCierresDeLista`), y el servidor 2026-10-06-a ni la deja
    guardar (`sf` en `apiSaveAhora`). */
-var STOCK_PV=3;
+/* 🔌 «EN PRODUCCIÓN» AUTOMÁTICO (§4lr, §4ls; explicación entera más abajo, al lado de `stockAutoEsp`). Va ACÁ arriba porque el formato del
+   stock (`STOCK_PV`) depende de él. 🏭 (27/10, §4ne, la Prioridad 0 de la revisión 2) PARA PRENDERLO son estas DOS líneas, nada más:
+     · `STOCK_AUTO_ACTIVO=true`;
+     · `STOCK_AUTO_DESDE='AAAA-MM-DD'` = el día en que se prende: lo que haya quedado anotado de antes (el 17-18/10, cuando estuvo prendido
+       un día) no cuenta, no se muestra ni se cierra (`stockAutoLista`).
+   Y al prender, `STOCK_PV` pasa solo a 4: el servidor 2026-10-27-a ya no deja que una página de antes (formato 3, sin F5) guarde el stock
+   encima del de una página nueva (`sf` ≥ el `pv` guardado). Primero se publica la página, todos F5, y recién ahí se usa. */
+var STOCK_AUTO_ACTIVO=false, STOCK_AUTO_DESDE='';
+var STOCK_PV=STOCK_AUTO_ACTIVO ? 4 : 3;
 function stockTextoAlDia(obs){ try{ var o=JSON.parse(String(obs||'{}')); return !!o && Number(o.pv)>=STOCK_PV; }catch(e){ return false; } }
 /* 📚 VENTAS POR MES DEL SISTEMA (§4du). Sale del «CONSOLIDADO ROTACION PRODUCTOS
    MULTIESPUMAS.xlsx» (hojas MATRIZ, fuente VENTAS MULTIESPUMAS): unidades por producto y
@@ -31890,6 +32192,426 @@ function renderTiendas(d, MS){
   });
   return html+'</div>';
 }
+/* ============================================================================
+   🏬 EL STOCK DE CADA TIENDA (§4na, 27/10). El dueño (14/10, §4kx): «logística no repone lo que se recoge de una tienda… hace falta
+   llevar el saldo de cada tienda»; (27/10): «armarlo y veamos cómo queda, quiero ver que no altere fórmulas ni nada que ya tenemos
+   trabajando… sería el último día laboral del mes, no voy a subir un domingo».
+   · Las tiendas no están en el reporte de Moreno. Cada una se CUENTA el último día hábil del mes, al cierre, y se sube: el mismo reporte
+     «EXISTENCIAS ALMACEN» sacado del almacén de la tienda (de una o de varias en un archivo), o escrito a mano (código y cantidad).
+   · Desde ese conteo el panel lleva la cuenta, con todo lo que tiene fecha DESPUÉS del día del conteo (lo de ese día ya está adentro):
+       tiene = contado + le llegó (las RPT que salieron) − vendió (sus ventas de tienda) − se recogió para pedidos («🏬 Tienda») ± pases
+     Lo marcado «🏬 Tienda» de un pedido que todavía no salió está en la tienda pero APARTADO: libres = tiene − apartado.
+   · Al subir un conteo nuevo, el panel dice cuánto esperaba y la diferencia con lo contado (ventas de tienda sin cargar, recogidas sin
+     marcar…), como el control del Excel de fábrica.
+   ⚠️ SOLO MIRA: vive en su propia fila del sistema (`__tiendas_stock__`), aparte de `__stock__`. Ninguna cuenta de PTF, Banzer o Moreno,
+   la revisión automática, el cuadrito del formulario ni «Qué producir» la lee. Sin ningún conteo cargado, el panel queda igual que antes.
+   Lo de tienda (`esProdDeTienda`: protectores, sábanas…) queda afuera, como en el stock de fábrica. `tests/test_tiendas_stock.js`.
+   ========================================================================== */
+var TST_ID='__tiendas_stock__', TST_HIST=48, TST_PASES_DIAS=120, TST_ABIERTA={}, TST_VISTA='', TST_PREV=null, TST_ENV=0, TST_MSG='';
+function tstTiendas(){ return recogerTiendas(); }   // las seis propias: Tiendas Roho no es nuestra
+function tstLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===TST_ID; })[0], o={};
+  try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  return { v:1, s:(o.s && typeof o.s==='object') ? o.s : {}, x:Array.isArray(o.x) ? o.x : [], h:Array.isArray(o.h) ? o.h : [],
+           al:(o.al && typeof o.al==='object') ? o.al : {} };
+}
+/* 🏷️ (27/10, pulido) El almacén del sistema con OTRO nombre que la tienda («ALM. SUC. 3»): se elige una vez en la vista previa y queda
+   recordado en la fila (`al`: el nombre del almacén, normalizado → la tienda; '-' = «no es una tienda»). */
+function tstAlias(nm, D){ var a=((D||tstLeer()).al||{})[normNombre(nm||'')]; return a || ''; }
+function tstHayConteo(){ var s=tstLeer().s; return Object.keys(s).some(function(n){ return s[n] && s[n].f; }); }
+/* De qué tienda habla un texto: «Mia Plaza», «ALMACEN TIENDA MIA PLAZA», «01-07-002 TDA CHARCAS». */
+function tstTiendaDe(t){
+  var n=normNombre(t||''); if(!n) return '';
+  var L=tstTiendas();
+  for(var i=0;i<L.length;i++){ if(n.indexOf(normNombre(L[i]))>=0) return L[i]; }
+  return '';
+}
+/* Un almacén de fábrica (PTF, Banzer, Moreno) no es una tienda aunque el nombre se parezca: su Excel va en «📥 Subir existencias». */
+function tstEsDeFabrica(nm){
+  if(!nm) return false;
+  if(stockEsLog(nm) || almEsSalida(nm) || !recogerCanon(nm)) return true;
+  return Object.keys(STOCK.g||{}).some(function(g){ return normNombre(g)===normNombre(nm); });
+}
+/* El último día hábil del mes de una fecha: el del conteo (dueño: «el último día laboral del mes»). */
+function tstUltimoHabilMes(f){
+  var ym=String(f||todayStr()).slice(0,7), y=+ym.slice(0,4), m=+ym.slice(5,7);
+  var u=isoLocal(new Date(y, m, 0));
+  for(var i=0; i<10 && !diaHabil(u); i++) u=stockSumarDias(u,-1);
+  return u;
+}
+function tstMesAnterior(f){ var ym=String(f||todayStr()).slice(0,7), y=+ym.slice(0,4), m=+ym.slice(5,7)-1; if(m<1){ m=12; y--; } return y+'-'+(m<10?'0':'')+m+'-01'; }
+function tstNombre(k){ return stockNombreClave(k); }
+/* Un código escrito a mano → el producto, con la MISMA clave que el stock (la lista de precios, y si no el Excel o el histórico). */
+function tstProdDeCodigo(cod){
+  var c=String(cod||'').trim().toUpperCase(); if(!c) return null;
+  if(CODIGOS[c]){ var k=stockAliasDe(stockClave({ desc:CODIGOS[c].d, medida:CODIGOS[c].m, codigo:c })); return { k:k, cod:c }; }
+  var a=productoDeAlmacen(c); if(a && a.k) return { k:stockAliasDe(a.k), cod:c };
+  return null;
+}
+/* La cuenta de cada tienda hasta el día `hasta` (por defecto hoy). Devuelve {tienda:{n, base, filas, tot, P}}. */
+function tstCalcular(hasta, D){
+  D=D||tstLeer(); var hoy=todayStr(); hasta=hasta||hoy;
+  var T={};
+  tstTiendas().forEach(function(n){ T[n]={ n:n, base:(D.s[n] && D.s[n].f) ? D.s[n] : null, P:{} }; });
+  var fila=function(t,k){ k=stockAliasDe(k); return t.P[k]=t.P[k]||{ k:k, c:0, rpt:0, ven:0, rec:0, pas:0, apart:0, ped:[] }; };
+  Object.keys(T).forEach(function(n){ var t=T[n]; if(!t.base) return; var u=t.base.u||{}; Object.keys(u).forEach(function(k){ fila(t,k).c+=Number(u[k])||0; }); });
+  var despues=function(t,f){ return !!(t && t.base) && !!f && f>t.base.f && f<=hasta; };
+  (STATE||[]).forEach(function(p){
+    if(!stockCuenta(p)) return;
+    var rpt=esRPT(p.oc), vt=!rpt && esVentaTienda(p);
+    (p.productos||[]).forEach(function(x){
+      var c=Number(x&&x.cant)||0; if(!(c>0) || esProdDeTienda(x)) return;
+      var k=stockClave(x); if(!k || k==='|') return;
+      var t, f;
+      if(rpt){                                   // le llegó: la reposición que salió (ni la ✗ ni la que se va a buscar y no llegó)
+        t=T[sucursalDeRpt(p)]; f=fechaSalida(p);
+        if(!despues(t,f) || x.chk==='no' || !stockSalio(p,x)) return;
+        fila(t,k).rpt+=c; return;
+      }
+      if(vt){                                    // vendió en la tienda
+        t=T[sucursalDeVenta(p)]; f=contaFecha(p);
+        if(despues(t,f)) fila(t,k).ven+=c;
+        return;
+      }
+      var S=recogeDeTienda(x); t=S ? T[S] : null; if(!t || !t.base) return;   // 🏬 se recoge de la tienda para un pedido
+      f=fechaSalida(p);
+      var salio=(!!p.entregado && !stockEntregadoFuturo(p,x)) || (!!f && f<hoy);   // como el stock de fábrica: fecha pasada = salió (§4co)
+      if(salio){ if(despues(t,f)) fila(t,k).rec+=c; return; }
+      var r=fila(t,k); r.apart+=c; r.ped.push(p.id);
+    });
+  });
+  (D.x||[]).forEach(function(q){                 // 🔁 pases entre tiendas
+    if(!q || q.an) return; var u=Number(q.u)||0; if(!(u>0) || !q.k) return;
+    if(despues(T[q.de], q.f)) fila(T[q.de], q.k).pas-=u;
+    if(despues(T[q.a], q.f)) fila(T[q.a], q.k).pas+=u;
+  });
+  Object.keys(T).forEach(function(n){
+    var t=T[n], tot={ c:0, rpt:0, ven:0, rec:0, pas:0, tiene:0, apart:0, libre:0, neg:0 };
+    t.filas=Object.keys(t.P).map(function(k){
+      var r=t.P[k]; r.tiene=r.c+r.rpt-r.ven-r.rec+r.pas; r.libre=r.tiene-r.apart;
+      ['c','rpt','ven','rec','pas','tiene','apart'].forEach(function(z){ tot[z]+=r[z]; });
+      if(r.tiene<0) tot.neg++;
+      return r;
+    }).filter(function(r){ return r.c||r.rpt||r.ven||r.rec||r.pas||r.apart; })
+      .sort(function(a,b){ return (b.tiene-a.tiene)||a.k.localeCompare(b.k); });
+    tot.libre=tot.tiene-tot.apart; t.tot=tot;
+  });
+  return T;
+}
+/* Cuánto tiene cada tienda de UN producto (para la lista de «🏬 Tienda» de la ficha). Solo las tiendas con conteo. */
+function tstDeClave(k){
+  if(!tstHayConteo()) return {};
+  var T=tstCalcular(), o={}; k=stockAliasDe(k);
+  Object.keys(T).forEach(function(n){ var t=T[n]; if(!t.base) return; var r=t.P[k]; o[n]={ tiene:r?r.tiene:0, apart:r?r.apart:0, libre:r?r.libre:0, f:t.base.f }; });
+  return o;
+}
+/* Lo de la planilla y lo de este aparato: de cada tienda gana el conteo más nuevo (día, y después cuándo se subió); los pases se juntan
+   por id y uno anulado sigue anulado (como las lápidas del stock); los conteos anteriores, sin repetir. */
+function tstJuntar(a, b){
+  var D={ v:1, s:{}, x:[], h:[] };
+  [a,b].forEach(function(o){ Object.keys((o&&o.s)||{}).forEach(function(n){
+    var e=o.s[n], y=D.s[n]; if(!e || !e.f) return;
+    if(!y || e.f>y.f || (e.f===y.f && (Number(e.t)||0)>(Number(y.t)||0))) D.s[n]=e;
+  }); });
+  var px={};
+  [a,b].forEach(function(o){ ((o&&o.x)||[]).forEach(function(q){ if(!q || !q.id) return; var y=px[q.id]; if(!y){ px[q.id]=JSON.parse(JSON.stringify(q)); return; } if(q.an) y.an=q.an; }); });
+  var lim=stockSumarDias(todayStr(), -TST_PASES_DIAS);
+  D.x=Object.keys(px).map(function(i){ return px[i]; }).filter(function(q){ return String(q.f||'')>=lim; }).sort(function(p,q){ return String(p.f).localeCompare(String(q.f)) || (p.ts||0)-(q.ts||0); });
+  var ph={};
+  [a,b].forEach(function(o){ ((o&&o.h)||[]).forEach(function(e){ if(e) ph[e.n+'|'+e.f+'|'+(e.t||0)]=e; }); });
+  D.h=Object.keys(ph).map(function(i){ return ph[i]; }).sort(function(p,q){ return (p.t||0)-(q.t||0); }).slice(-TST_HIST);
+  D.al={}; [a,b].forEach(function(o){ Object.keys((o&&o.al)||{}).forEach(function(k){ if(o.al[k]) D.al[k]=o.al[k]; }); });   // lo de este aparato, último
+  return D;
+}
+/* Relee la planilla, junta, aplica `fn` y guarda la fila. Sin señal no guarda nada (y lo dice). */
+function tstGuardarCon(fn, okTxt){
+  if(TST_ENV) return Promise.resolve(null);
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: no se guardó. Probá de nuevo con señal.','err',8000); return Promise.resolve(null); }
+  TST_ENV=1; tstPintar();
+  var fin=function(r){ TST_ENV=0; tstPintar(); return r; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===TST_ID) srv=p; });
+    var D=tstJuntar(tstLeer(srv), tstLeer());
+    var err=fn(D); if(err) throw new Error(err);
+    var fila=filaSistema(TST_ID, '🏬 STOCK DE LAS TIENDAS (no tocar: lo lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[TST_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===TST_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==TST_ID; }); STATE.push(g);
+      if(okTxt) toast(okTxt,'ok',6000);
+      return r;
+    });
+  }).then(fin, function(e){ toast('❌ No se guardó: '+((e && e.message) || 'error')+'. Probá de nuevo.','err',9000); return fin(null); });
+}
+/* ---- la ventana ---- */
+function abrirTst(){
+  var ov=document.getElementById('tst-overlay'); if(!ov) return;
+  TST_VISTA=''; TST_PREV=null; TST_MSG='';
+  ov.style.display='flex'; tstPintar();
+  var b=document.getElementById('tst-body'); if(b) b.scrollTop=0;
+}
+function cerrarTst(){ var ov=document.getElementById('tst-overlay'); if(ov) ov.style.display='none'; TST_PREV=null; TST_VISTA=''; }
+function tstAbrir(n){ if(TST_ABIERTA[n]) delete TST_ABIERTA[n]; else TST_ABIERTA[n]=1; tstPintar(); }
+function tstVer(v){ TST_VISTA=(TST_VISTA===v) ? '' : v; TST_PREV=null; TST_MSG=''; tstPintar(); }
+function tstCuandoHtml(){
+  var hoy=todayStr(), U=tstUltimoHabilMes(hoy), mes=MESES_ES[+hoy.slice(5,7)-1];
+  if(hoy===U) return '<div class="tst-cuando hoy" id="tst-cuando">📅 <span><b>Hoy es el último día hábil de '+esc(mes)+'.</b> Al cerrar, contá cada tienda y subí el conteo: desde ahí el panel lleva la cuenta de '+esc(MESES_ES[(+hoy.slice(5,7))%12])+'.</span></div>';
+  return '<div class="tst-cuando" id="tst-cuando">📅 <span>El próximo conteo es el <b>'+esc(saldoDiaTxt(U))+'</b>, último día hábil de '+esc(mes)+', al cierre de la tienda.</span></div>';
+}
+function tstPintar(){
+  var el=document.getElementById('tst-body'); if(!el) return;
+  var D=tstLeer(), T=tstCalcular(null, D), hoy=todayStr(), Uant=tstUltimoHabilMes(tstMesAnterior(hoy));
+  var info=document.getElementById('tst-info');
+  var con=Object.keys(T).filter(function(n){ return T[n].base; });
+  if(info) info.textContent=con.length ? (con.length+' de '+Object.keys(T).length+' tiendas con conteo') : 'todavía sin conteos';
+  var h='<div class="tst">'+
+    '<div class="tst-caja"><div class="tst-exp">Cada tienda se cuenta el <b>último día hábil del mes</b>, al cierre. Desde ese conteo el panel suma lo que le <b>llegó</b> (las reposiciones que salieron) y resta lo que <b>vendió</b> (sus ventas de tienda) y lo que se <b>recogió</b> para pedidos («🏬 Tienda»). Lo marcado para un pedido que todavía no salió figura como <b>apartado</b>.<br><span style="color:var(--muted)">Solo mira: no cambia ninguna cuenta del stock de fábrica (PTF, Banzer, Moreno), ni la revisión automática, ni el pedido a producción. Protectores, sábanas y lo de tienda quedan afuera, como en el stock de fábrica.</span></div>'+
+      tstCuandoHtml()+
+      '<div class="tst-acc">'+
+        '<label class="btn btn-primary" style="cursor:pointer">📥 Subir el conteo (Excel)<input type="file" accept=".xlsx" hidden onchange="tstExcel(event)"></label>'+
+        '<button type="button" class="btn btn-ghost" onclick="tstVer(\'mano\')">✍️ Escribir el conteo a mano</button>'+
+        '<button type="button" class="btn btn-ghost" onclick="tstVer(\'pase\')">🔁 Pasé de una tienda a otra</button>'+
+      '</div>'+
+      (TST_MSG ? ('<div class="tst-mal" id="tst-msg">'+TST_MSG+'</div>') : '')+
+    '</div>';
+  if(TST_PREV) h+=tstPrevHtml(D);
+  else if(TST_VISTA==='mano') h+=tstManoHtml();
+  else if(TST_VISTA==='pase') h+=tstPaseHtml(D);
+  Object.keys(T).forEach(function(n){ h+=tstTiendaHtml(T[n], Uant, D); });
+  var pas=(D.x||[]).filter(function(q){ return q && !q.an; }).slice(-8).reverse();
+  if(pas.length) h+='<div class="tst-caja"><b style="color:#155e75">🔁 Últimos pases entre tiendas</b>'+pas.map(function(q){
+      return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.82rem"><span>'+esc(saldoDiaTxt(q.f))+': <b>'+q.u+'</b> × '+esc(tstNombre(q.k))+' · de <b>'+esc(q.de)+'</b> a <b>'+esc(q.a)+'</b></span>'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-id="'+esc(q.id)+'" onclick="tstPaseAnular(this.dataset.id)">↩️ Anular</button></div>';
+    }).join('')+'</div>';
+  el.innerHTML=h+'</div>';
+}
+function tstTiendaHtml(t, Uant, D){
+  var b=t.base, ab=!!TST_ABIERTA[t.n];
+  if(!b) return '<div class="tst-card sin" data-tienda="'+esc(t.n)+'"><div class="tst-cab" style="cursor:default"><b class="tst-n">'+esc(t.n)+'</b><span class="tst-f mal">sin conteo todavía</span></div></div>';
+  var vieja=b.f<Uant, T=t.tot;
+  var h='<div class="tst-card" data-tienda="'+esc(t.n)+'"><button type="button" class="tst-cab" data-n="'+esc(t.n)+'" onclick="tstAbrir(this.dataset.n)" aria-expanded="'+(ab?'true':'false')+'">'+
+    '<b class="tst-n">'+(ab?'▾':'▸')+' '+esc(t.n)+'</b>'+
+    '<span class="tst-f'+(vieja?' mal':'')+'">contado el '+esc(saldoDiaTxt(b.f))+(b.de==='mano'?' · a mano':' · Excel')+(vieja?(' · ⚠️ falta el del '+esc(fmtFechaCorta(Uant))):'')+'</span>'+
+    '<span class="tst-num"><span>tiene <b class="tst-tiene">'+T.tiene+'</b></span>'+(T.apart?('<span>apartado <b>'+T.apart+'</b></span><span>libres <b>'+T.libre+'</b></span>'):'')+(T.neg?('<span class="tst-mal">'+T.neg+' en negativo</span>'):'')+'</span></button>';
+  if(ab){
+    var cel=function(n, sg){ return n ? ('<td>'+(sg&&n>0?'+':'')+n+'</td>') : '<td class="tst-cero">—</td>'; };
+    h+='<div class="tst-w"><table class="tst-tab"><thead><tr><th>Producto</th><th>Contado '+esc(fmtFechaCorta(b.f))+'</th><th>Le llegó</th><th>Vendió</th><th>Se recogió</th><th>Pases</th><th>Tiene</th><th>Apartado</th><th>Libres</th></tr></thead><tbody>'+
+      t.filas.map(function(r){
+        return '<tr class="'+(r.tiene<0?'neg':'')+'" data-k="'+esc(r.k)+'"><td><b>'+esc(tstNombre(r.k))+'</b></td><td>'+r.c+'</td>'+cel(r.rpt)+cel(r.ven?-r.ven:0)+cel(r.rec?-r.rec:0)+cel(r.pas,true)+
+          '<td class="tst-t">'+r.tiene+'</td>'+cel(r.apart)+'<td>'+(r.apart?r.libre:'<span class="tst-cero">—</span>')+'</td></tr>';
+      }).join('')+
+      '</tbody><tfoot><tr><td>TOTAL '+esc(t.n)+'</td><td>'+T.c+'</td><td>'+(T.rpt||'—')+'</td><td>'+(T.ven?-T.ven:'—')+'</td><td>'+(T.rec?-T.rec:'—')+'</td><td>'+(T.pas?((T.pas>0?'+':'')+T.pas):'—')+'</td><td>'+T.tiene+'</td><td>'+(T.apart||'—')+'</td><td>'+(T.apart?T.libre:'—')+'</td></tr></tfoot></table></div>';
+    var hs=(D.h||[]).filter(function(e){ return e && e.n===t.n; }).slice(-4).reverse();
+    if(hs.length) h+='<div class="tst-hist">Conteos: '+hs.map(function(e){
+        return esc(fmtFechaCorta(e.f))+' contaron <b>'+e.tot+'</b>'+(e.esp!=null?(' · el panel esperaba '+e.esp+(e.tot!==e.esp?(' ('+(e.tot>e.esp?'+':'')+(e.tot-e.esp)+')'):' ✓')):' · primer conteo');
+      }).join(' · ')+'</div>';
+  }
+  return h+'</div>';
+}
+/* ---- subir el conteo ---- */
+function tstExcel(ev){
+  var f=ev && ev.target && ev.target.files && ev.target.files[0]; if(ev && ev.target) ev.target.value=''; if(!f) return;
+  TST_MSG=''; toast('Leyendo '+f.name+'…','ok');
+  return f.arrayBuffer().then(xlsxDescomprimir).then(function(arch){
+    var filas=xlsxHoja(arch), L=existLoteDe(filas, existHoraDeNombre(f.name)), lista=[];
+    if(L && L.error) throw new Error(L.error);
+    if(L) lista=L.lista; else { var r=existLeer(filas); if(r.error) throw new Error(r.error); lista=[r]; }
+    tstPrevDeExcel(lista, f.name);
+  }).catch(function(e){ TST_MSG='❌ '+esc((e && e.message) || 'No se pudo leer el archivo.'); TST_PREV=null; tstPintar(); });
+}
+function tstPrevDeExcel(lista, arch){
+  var prev=[], fuera=[], D=tstLeer();
+  lista.forEach(function(r){
+    if(tstEsDeFabrica(r.almacen)){ fuera.push(r.almacen); return; }
+    var al=tstAlias(r.almacen, D);
+    if(al==='-'){ fuera.push(r.almacen); return; }   // ya se dijo que no es una tienda
+    var S=tstTiendaDe(r.almacen) || (tstTiendas().indexOf(al)>=0 ? al : '');
+    var u={}, afuera=0;
+    (r.items||[]).forEach(function(it){
+      if(esProdDeTienda({ desc:it.desc, medida:it.medida, codigo:it.cod })){ afuera+=Number(it.cant)||0; return; }
+      var k=stockAliasDe(it.k); u[k]=(u[k]||0)+(Number(it.cant)||0);
+    });
+    /* 🏷️ Un almacén que no es de fábrica ni dice el nombre de una tienda: se pregunta de cuál es (`elegir`), no se tira. */
+    prev.push({ n:S, alm:r.almacen, elegir:!S, f:r.fecha, hora:r.hora||'', de:'excel', u:u, afuera:afuera, arch:arch||'' });
+  });
+  if(!prev.length){
+    TST_PREV=null;
+    TST_MSG='❌ '+(fuera.length ? ('Ese Excel es de '+esc(fuera.join(', '))+', no de una tienda. Los de PTF, Banzer y Moreno van en «📥 Subir existencias».') : 'No encontré ningún almacén en el archivo.');
+    tstPintar(); return;
+  }
+  TST_PREV={ lista:prev, fuera:fuera }; TST_VISTA=''; TST_MSG=''; tstPintar();
+}
+function tstManoHtml(){
+  var hoy=todayStr();
+  return '<div class="tst-caja" id="tst-mano"><b style="color:#155e75">✍️ El conteo de una tienda, a mano</b>'+
+    '<div class="tst-form">'+
+      '<label>Tienda<select id="tst-m-t">'+tstTiendas().map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('')+'</select></label>'+
+      '<label>Día del conteo<input id="tst-m-f" type="date" value="'+hoy+'" max="'+hoy+'"></label>'+
+      '<label class="tst-full">Un renglón por producto: el código y la cantidad (podés pegar dos columnas de Excel)<textarea id="tst-m-x" placeholder="CH1220 3&#10;CH1107 2&#10;CD1403 12" oninput="tstManoLeer()"></textarea></label>'+
+    '</div><div id="tst-m-ok" style="font-size:.82rem"></div>'+
+    '<div class="tst-acc"><button type="button" class="btn btn-primary" onclick="tstManoVer()">Ver cómo queda</button><button type="button" class="btn btn-ghost" onclick="tstVer(\'mano\')">Cancelar</button></div></div>';
+}
+/* «CH1220 3», «CH1220	TITANIO ICE 140x190	3», «CH1220;3»: el código es lo primero y la cantidad lo último. */
+function tstParseMano(txt){
+  var u={}, malos=[], n=0;
+  String(txt||'').split(/\r?\n/).forEach(function(l){
+    var s=String(l).replace(/[;,]/g,' ').replace(/\s+/g,' ').trim(); if(!s) return;
+    var m=s.match(/^(\S+)(?:\s.*)?\s(\d+)$/);
+    if(!m){ malos.push(s); return; }
+    var P=tstProdDeCodigo(m[1]); if(!P){ malos.push(s); return; }
+    u[P.k]=(u[P.k]||0)+(+m[2]); n++;
+  });
+  return { u:u, malos:malos, n:n };
+}
+function tstManoLeer(){
+  var o=document.getElementById('tst-m-ok'), x=document.getElementById('tst-m-x'); if(!o || !x) return;
+  var R=tstParseMano(x.value), ks=Object.keys(R.u), tot=ks.reduce(function(a,k){ return a+R.u[k]; },0);
+  o.innerHTML=(ks.length ? ('<span class="tst-ok">✓ '+ks.length+' producto'+(ks.length===1?'':'s')+', '+tot+' unidad'+(tot===1?'':'es')+'</span>') : '')+
+    (R.malos.length ? ('<div class="tst-mal">No entiendo '+R.malos.length+' renglón'+(R.malos.length===1?'':'es')+' (¿el código está bien?): '+esc(R.malos.slice(0,5).join(' · '))+(R.malos.length>5?' …':'')+'</div>') : '');
+}
+function tstManoVer(){
+  var t=(document.getElementById('tst-m-t')||{}).value, f=(document.getElementById('tst-m-f')||{}).value, x=(document.getElementById('tst-m-x')||{}).value;
+  var R=tstParseMano(x);
+  if(!t){ toast('Elegí la tienda.','err'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f||'') || f>todayStr()){ toast('El día del conteo tiene que ser hoy o antes.','err',6000); return; }
+  if(R.malos.length){ toast('Hay '+R.malos.length+' renglón(es) que no entiendo: corregilos o borralos antes de seguir.','err',8000); return; }
+  if(!R.n){ toast('Escribí al menos un producto con su cantidad.','err'); return; }
+  TST_PREV={ lista:[{ n:t, f:f, hora:'', de:'mano', u:R.u }], fuera:[] }; TST_VISTA=''; TST_MSG=''; tstPintar();
+}
+/* 🏷️ Elegir de qué tienda es un almacén que el panel no reconoce ('-' = no es una tienda: no se usa). */
+function tstElegir(i, v){
+  var e=TST_PREV && TST_PREV.lista[i]; if(!e) return;
+  e.n=(v && v!=='-') ? v : ''; e.no=(v==='-'); tstPintar();
+}
+/* La vista previa: lo contado contra lo que el panel esperaba ese día (si la tienda ya tenía un conteo anterior). */
+function tstPrevHtml(D){
+  var P=TST_PREV, hoy=todayStr();
+  var h='<div class="tst-caja" id="tst-prev" style="border:2px solid #155e75"><b style="color:#155e75;font-size:1rem">📋 Revisá antes de guardar</b>';
+  if(P.fuera.length) h+='<div class="tst-mal">⏭ No es de una tienda y no se usa: '+esc(P.fuera.join(', '))+'.</div>';
+  var bien=0, usadas={};
+  P.lista.forEach(function(e, i){
+    var tot=0, ks=Object.keys(e.u);
+    ks.forEach(function(k){ tot+=e.u[k]; });
+    e.tot=tot; e.esp=null; e.err='';
+    /* 🏷️ el almacén que no dice de qué tienda es: se elige acá */
+    var sel=e.elegir ? ('<label class="tst-elegir">¿De qué tienda es el almacén «<b>'+esc(e.alm||'')+'</b>»? <select data-i="'+i+'" onchange="tstElegir(+this.dataset.i, this.value)"><option value="">Elegí…</option>'+
+      tstTiendas().map(function(n){ return '<option'+(e.n===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+'<option value="-"'+(e.no?' selected':'')+'>No es de una tienda</option></select>'+
+      '<small> El panel lo recuerda para los próximos conteos.</small></label>') : '';
+    if(e.elegir && e.no){ h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px">'+sel+'<div class="tst-f">No se usa.</div></div>'; return; }
+    if(e.elegir && !e.n){ h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px">'+sel+'<div class="tst-f">'+tot+' unidades en '+ks.length+' productos.</div></div>'; return; }
+    var base=(D.s[e.n] && D.s[e.n].f) ? D.s[e.n] : null;
+    if(e.f>hoy) e.err='El conteo es de un día que todavía no pasó ('+fmtFechaCorta(e.f)+').';
+    else if(base && e.f<base.f) e.err='Ya hay un conteo más nuevo de '+e.n+' (del '+fmtFechaCorta(base.f)+'): este no se usa.';
+    else if(usadas[e.n]) e.err='El archivo trae dos almacenes para '+e.n+': se usa el primero.';
+    h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px">'+sel+'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><b style="font-size:.95rem">'+esc(e.n)+'</b><span class="tst-f">contado el '+esc(saldoDiaTxt(e.f))+(e.hora?(' · '+esc(String(e.hora).slice(0,5))):'')+' · '+(e.de==='mano'?'a mano':'Excel')+' · <b>'+tot+'</b> unidades en '+ks.length+' productos</span></div>';
+    if(e.err){ h+='<div class="tst-mal">'+esc(e.err)+'</div></div>'; return; }
+    usadas[e.n]=1; bien++;
+    /* 📅 el conteo de cierre es el último día hábil del mes: otro día sirve igual, pero se dice */
+    var U=tstUltimoHabilMes(e.f);
+    if(e.f!==U) h+='<div class="tst-f" style="margin-top:4px">ℹ️ El conteo de cierre de '+esc(MESES_ES[+e.f.slice(5,7)-1])+' es el '+esc(saldoDiaTxt(U))+' (último día hábil); este es del '+esc(fmtFechaCorta(e.f))+': sirve igual, desde ese día.</div>';
+    if(e.afuera) h+='<div class="tst-f">Quedaron afuera '+e.afuera+' unidad'+(e.afuera===1?'':'es')+' de protectores, sábanas y lo de tienda (no se cuentan, como en el stock de fábrica).</div>';
+    var leido='<details class="tst-leido"><summary>Ver lo que leí ('+ks.length+' producto'+(ks.length===1?'':'s')+')</summary><div class="tst-w" style="padding:6px 0 0"><table class="tst-tab"><thead><tr><th>Producto</th><th>Cantidad</th></tr></thead><tbody>'+
+      ks.slice().sort(function(a,b){ return (e.u[b]-e.u[a]) || a.localeCompare(b); }).map(function(k){ return '<tr><td>'+esc(tstNombre(k))+'</td><td>'+e.u[k]+'</td></tr>'; }).join('')+'</tbody></table></div></details>';
+    if(!base){ h+='<div class="tst-f" style="margin-top:4px">Primer conteo de '+esc(e.n)+': desde acá el panel lleva su cuenta.</div>'+leido+'</div>'; return; }
+    /* Lo que el panel esperaba ese día: el conteo anterior más lo que pasó hasta el día de este conteo. */
+    var E=tstCalcular(e.f, D)[e.n], esp={}, espTot=0;
+    (E.filas||[]).forEach(function(r){ esp[r.k]=r.tiene; espTot+=r.tiene; });
+    e.esp=espTot;
+    var todas={}; ks.forEach(function(k){ todas[k]=1; }); Object.keys(esp).forEach(function(k){ todas[k]=1; });
+    var difs=Object.keys(todas).map(function(k){ return { k:k, c:e.u[k]||0, e:esp[k]||0 }; }).filter(function(r){ return r.c!==r.e; })
+      .sort(function(a,b){ return Math.abs(b.c-b.e)-Math.abs(a.c-a.e) || a.k.localeCompare(b.k); });
+    e.dif=difs.length;
+    h+='<div style="margin-top:4px;font-size:.84rem">El panel esperaba <b>'+espTot+'</b> (el conteo del '+esc(fmtFechaCorta(base.f))+' y lo que pasó después) y contaron <b>'+tot+'</b>: '+
+      (tot===espTot && !difs.length ? '<span class="tst-ok">✓ coincide</span>' : ('<b class="'+(tot<espTot?'tst-dif-m':'tst-dif-p')+'">'+(tot>espTot?'+':'')+(tot-espTot)+'</b> en total, '+difs.length+' producto'+(difs.length===1?'':'s')+' con diferencia'))+'</div>';
+    if(difs.length) h+='<div class="tst-w" style="padding:6px 0 0"><table class="tst-tab"><thead><tr><th>Producto</th><th>El panel esperaba</th><th>Contaron</th><th>Diferencia</th></tr></thead><tbody>'+
+      difs.slice(0,40).map(function(r){ var d=r.c-r.e; return '<tr><td>'+esc(tstNombre(r.k))+'</td><td>'+r.e+'</td><td>'+r.c+'</td><td class="'+(d<0?'tst-dif-m':'tst-dif-p')+'">'+(d>0?'+':'')+d+'</td></tr>'; }).join('')+
+      '</tbody></table>'+(difs.length>40?('<div class="tst-f">y '+(difs.length-40)+' más</div>'):'')+'</div>'+
+      '<div class="tst-f" style="margin-top:4px">Menos de lo esperado suele ser una venta de tienda sin cargar o algo recogido sin marcar «🏬 Tienda»; más, una reposición o un pase sin anotar. Al guardar manda lo contado.</div>';
+    h+=leido+'</div>';
+  });
+  h+='<div class="tst-acc"><button type="button" class="btn btn-primary" id="tst-guardar"'+(bien&&!TST_ENV?'':' disabled')+' onclick="tstGuardarConteo()">'+(TST_ENV?'⏳ Guardando…':('✅ Guardar '+(bien===1?'el conteo':('los '+bien+' conteos'))))+'</button><button type="button" class="btn btn-ghost" onclick="TST_PREV=null;tstPintar()">Cancelar</button></div></div>';
+  return h;
+}
+function tstGuardarConteo(){
+  var P=TST_PREV; if(!P) return;
+  var lista=P.lista.filter(function(e){ return !e.err && e.n && !e.no; }); if(!lista.length) return;
+  var alias=P.lista.filter(function(e){ return e.elegir && e.alm && (e.n || e.no); });
+  var ahora=Date.now();
+  return tstGuardarCon(function(D){
+    var ok=0;
+    D.al=D.al||{}; alias.forEach(function(e){ D.al[normNombre(e.alm)]=e.no ? '-' : e.n; });   // 🏷️ para la próxima
+    lista.forEach(function(e){
+      var y=D.s[e.n]; if(y && y.f>e.f) return;   // otro aparato subió uno más nuevo mientras tanto
+      D.s[e.n]={ f:e.f, hora:e.hora||'', t:ahora, de:e.de, u:e.u, tot:e.tot };
+      D.h.push({ n:e.n, f:e.f, t:ahora, tot:e.tot, esp:e.esp, dif:e.dif||0 }); ok++;
+    });
+    D.h=D.h.slice(-TST_HIST);
+    if(!ok) return 'ya había un conteo más nuevo';
+  }, '✅ Conteo guardado: desde acá el panel lleva la cuenta').then(function(r){
+    if(r){ lista.forEach(function(e){ TST_ABIERTA[e.n]=1; }); TST_PREV=null; tstPintar(); }
+    return r;
+  });
+}
+/* ---- 🔁 pases entre tiendas ---- */
+function tstPaseHtml(){
+  var L=tstTiendas(), op=function(sel){ return L.map(function(n, i){ return '<option'+(i===sel?' selected':'')+'>'+esc(n)+'</option>'; }).join(''); };
+  return '<div class="tst-caja" id="tst-pase"><b style="color:#155e75">🔁 Pasé de una tienda a otra</b>'+
+    '<div class="tst-form">'+
+      '<label>De<select id="tst-p-de">'+op(0)+'</select></label>'+
+      '<label>A<select id="tst-p-a">'+op(1)+'</select></label>'+
+      '<label>Código del producto<input id="tst-p-c" type="text" autocomplete="off" placeholder="CH1220" oninput="tstPaseLeer()"></label>'+
+      '<label>Cantidad<input id="tst-p-u" type="text" inputmode="numeric" value="1"></label>'+
+      '<label>Día<input id="tst-p-f" type="date" value="'+todayStr()+'" max="'+todayStr()+'"></label>'+
+    '</div><div id="tst-p-ok" class="tst-f"></div>'+
+    '<div class="tst-acc"><button type="button" class="btn btn-primary" onclick="tstPaseGuardar()">Anotar el pase</button><button type="button" class="btn btn-ghost" onclick="tstVer(\'pase\')">Cancelar</button></div></div>';
+}
+function tstPaseLeer(){
+  var o=document.getElementById('tst-p-ok'), c=document.getElementById('tst-p-c'); if(!o || !c) return;
+  var P=tstProdDeCodigo(c.value);
+  o.innerHTML=!String(c.value||'').trim() ? '' : (P ? ('<span class="tst-ok">✓ '+esc(tstNombre(P.k))+'</span>') : '<span class="tst-mal">No conozco ese código</span>');
+}
+function tstPaseGuardar(){
+  var de=(document.getElementById('tst-p-de')||{}).value, a=(document.getElementById('tst-p-a')||{}).value;
+  var P=tstProdDeCodigo((document.getElementById('tst-p-c')||{}).value), u=Number(String((document.getElementById('tst-p-u')||{}).value||'').trim()), f=(document.getElementById('tst-p-f')||{}).value;
+  if(!de || !a || de===a){ toast('Elegí dos tiendas distintas.','err'); return; }
+  if(!P){ toast('No conozco ese código de producto.','err'); return; }
+  if(!(u>=1) || Math.floor(u)!==u){ toast('La cantidad tiene que ser un número entero, 1 o más.','err'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f||'') || f>todayStr()){ toast('El día tiene que ser hoy o antes.','err'); return; }
+  var q={ id:'tp'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36), f:f, de:de, a:a, k:P.k, u:u, ts:Date.now() };
+  return tstGuardarCon(function(D){ D.x.push(q); }, '🔁 Pase anotado: '+u+' de '+de+' a '+a).then(function(r){ if(r){ TST_VISTA=''; tstPintar(); } return r; });
+}
+function tstPaseAnular(id){
+  return tstGuardarCon(function(D){ var q=(D.x||[]).filter(function(x){ return x && x.id===id; })[0]; if(!q) return 'ese pase ya no está'; q.an=Date.now(); }, '↩️ Pase anulado');
+}
+/* 🏬 (27/10, pulido) Bloki se lo recuerda a logística y Administración: el último día hábil del mes desde las `TST_AVISO_HORA` (al cierre,
+   las tiendas que todavía no tienen el conteo de HOY) y los primeros `TST_AVISO_DIAS` días hábiles del mes siguiente (las que ya llevaban
+   cuenta y les falta el de cierre). Antes del primer conteo de todas, solo el del último día hábil: no insiste con algo que no empezó. */
+var TST_AVISO_HORA=15, TST_AVISO_DIAS=3;
+function tstAviso(){
+  var hoy=todayStr(), U=tstUltimoHabilMes(hoy), D=tstLeer(), L=tstTiendas();
+  var b=['🏬 Abrir las tiendas', 'abrirTst()'];
+  if(hoy===U && horaBolivia().getHours()>=TST_AVISO_HORA){
+    var faltan=L.filter(function(n){ return !(D.s[n] && D.s[n].f===hoy); });
+    if(!faltan.length) return null;
+    return { k:'l-tst|'+hoy+'|'+faltan.join(','), sev:'am', ico:'🏬', t:'Hoy es el último día hábil de '+MESES_ES[+hoy.slice(5,7)-1]+': al cierre, contá las tiendas',
+             x:'Falta el conteo de '+faltan.join(', ')+'. Subí el Excel del sistema de cada una (o escribilo a mano): desde ahí el panel lleva la cuenta del mes que viene.', b:b };
+  }
+  if(!tstHayConteo()) return null;
+  var Uant=tstUltimoHabilMes(tstMesAnterior(hoy)), n=0, f=Uant;
+  while(f<hoy && n<=TST_AVISO_DIAS){ f=sigDiaHabil(f); if(f<=hoy) n++; }
+  if(!diaHabil(hoy) || n<1 || n>TST_AVISO_DIAS) return null;
+  var viejas=L.filter(function(t){ return D.s[t] && D.s[t].f && D.s[t].f<Uant; });
+  if(!viejas.length) return null;
+  return { k:'l-tst|'+Uant+'|'+viejas.join(','), sev:'am', ico:'🏬', t:'Falta el conteo de cierre ('+fmtFechaCorta(Uant)+') de '+viejas.length+' tienda'+(viejas.length===1?'':'s'),
+           x:viejas.join(', ')+': sin el conteo del último día hábil, el panel sigue sumando desde el anterior.', b:b };
+}
+/* «Mia Plaza · tiene 2» en la lista de «🏬 ¿De qué tienda se recoge?» de la ficha. Nada si ninguna tienda tiene conteo. */
+function tstEnTiendaTxt(o, n){
+  var e=o && o[n]; if(!e) return '';
+  return ' <small class="tst-pick'+(e.libre>0?' tst-ok':'')+'">· '+(e.libre>0 ? ('hay '+e.libre) : (e.tiene>0 ? ('tiene '+e.tiene+', apartado') : 'no hay'))+'</small>';
+}
 /* «73 (34–90) · 0 · 73» con el detalle de cada estimación al pasar el mouse. */
 /* 📅 (19/10, §4ls CU-1) El nombre del mes en curso y lo que falta antes del 1° EN PALABRAS: «incluye 82 para terminar diciembre (del 17/12 al
    31/12)». Del 1 al ~15 de cada mes lo de 15 días no llega a fin de mes y esa falta va en «el mes que viene» (§4iz E1-6); la copia para la
@@ -33608,6 +34330,29 @@ function existLoteAnotar(R, rol, C){
   var L=EXIST_LOTE; L.roles[rol]=1; L.n++; L.hu.push(existHuella(R));
   if(!C || C.sinPrevio || C.corteViejo){ L.sinBase=(L.sinBase||0)+1; return; }
   (C.todas||[]).forEach(function(x){ L.dif[x.k]=(L.dif[x.k]||0)+(Number(x.dif)||0); if(rol==='log') L.ent[x.k]=(L.ent[x.k]||0)+(Number(x.ent)||0); });
+  if(rol==='log' || rol==='sale'){ L.sinCam=L.sinCam||{}; var sc=existLoteSinCamion(C.ventana, rol==='sale' ? R.almacen : ''); Object.keys(sc).forEach(function(k){ L.sinCam[k]=(L.sinCam[k]||0)+sc[k]; }); }
+}
+/* 🚚 (27/10, §4ne P0-5) EL CAMIÓN QUE NO SALIÓ NO ES PRODUCCIÓN. Lo de HOY que la ventana del Excel dio por salido (la casilla del turno, que
+   sin dato del camión se propone por la hora) y que NADIE confirmó —ni el GPS, ni «🚚 Ya salió», ni ✅, ni el cierre (`eF`)— puede seguir en
+   el depósito: si el camión no salió, el Excel lo muestra y la diferencia parecía una ENTRADA, que cerraba lo pedido a la fábrica sin que
+   hubiera llegado nada. Esas unidades no cuentan como producción (`existLoteProduccion`); si el camión sí salió y no se marcó, lo pedido
+   sigue «en producción» hasta el «Llegó» de la fila o hasta que vence (lo seguro: no deja de pedir). `alm` vacío = PTF; con nombre, Banzer. */
+function existLoteSinCamion(v, alm){
+  var out={}; if(!v || !v.hasta) return out;
+  (STATE||[]).forEach(function(p){
+    if(!p || p.entregado) return;
+    ((p.productos)||[]).forEach(function(x){
+      if(!x || x.eF || enProduccionPendiente(x) || esProdDeTienda(x) || recogeDeTienda(x)) return;
+      if((x.eF||fechaSalida(p))!==v.hasta || !stockSalioVentana(p, x, v)) return;
+      if(camionSalio(v.hasta, p.vehiculo)) return;
+      var u=0;
+      if(enProduccion(x)){ if(!alm) u=prodUnidEnConteo(x); }
+      else if(alm) prodPartesCarga(x).forEach(function(e){ if(e.tipo==='sale' && recogerMismo(e.de, alm)) u+=e.u; });
+      else u=stockUnidAca(x);
+      if(u>0){ var k=stockClave(x); out[k]=(out[k]||0)+u; }
+    });
+  });
+  return out;
 }
 /* La entrada de cada producto en el lote. Con PTF y Moreno en el mismo archivo: la suma de las diferencias de todos los almacenes
    + lo que el control de PTF ya esperaba como llegada (una recogida anotada): lo que pasó de un almacén a otro se anula. Con un solo
@@ -33622,6 +34367,7 @@ function existLoteProduccion(L){
     else if(L.roles.otro && !L.roles.log && fab[k]==='MORENO') n=L.dif[k]||0;
     else if(L.roles.log && !L.roles.otro && fab[k]==='MULTI') n=(L.dif[k]||0)+(L.ent[k]||0);
     else n=0;
+    n-=(L.sinCam && L.sinCam[k]) || 0;   // 🚚 (27/10, §4ne P0-5) lo de un camión que nadie vio salir
     if(n>0) prod[k]=Math.round(n);
   });
   return prod;
@@ -37809,12 +38555,13 @@ function tiendaBtnHtml(p, x, i){
 function tiendaElegirHtml(p, x, i){
   if(TDA_ELIGE!==p.id+'|'+i) return '';
   var t=esRecoger(x) ? recogeDeTienda(x) : '', suya=sucursalDeVendedor(p.vendedor), L=recogerTiendas();
+  var cuanto=tstDeClave(stockClave(x));   // 🏬 (27/10, §4na) cuánto tiene cada tienda, si se contó (si no, nada)
   if(suya && L.indexOf(suya)>0){ L.splice(L.indexOf(suya),1); L.unshift(suya); }
   var comillas=function(n){ return JSON.stringify(String(n)).replace(/"/g,'&quot;'); }, qt=comillas(t);   // el nombre, listo para ir dentro del onclick
   return '<div class="tda-elige"><span>🏬 ¿De qué tienda se recoge?</span>'+L.map(function(n){
       var qn=comillas(n);
       return '<button type="button" class="chkbtn wide'+(t===n?' tda':'')+'" onclick="tiendaElegir(\''+p.id+'\','+i+','+qn+')"'+(t===n?' title="Tocala de nuevo para sacar la marca"':'')+'>'+
-        esc(n)+(n===suya ? ' <small>· de '+esc(String(p.vendedor||'').split(' ')[0])+'</small>' : '')+'</button>';
+        esc(n)+(n===suya ? ' <small>· de '+esc(String(p.vendedor||'').split(' ')[0])+'</small>' : '')+tstEnTiendaTxt(cuanto, n)+'</button>';
     }).join('')+
     (t ? '<button type="button" class="chkbtn wide" onclick="tiendaElegir(\''+p.id+'\','+i+','+qt+')">✕ Quitar</button>' : '')+'</div>';
 }
@@ -41850,6 +42597,7 @@ function stkTopPintar(d){
       ch('abrirStockEntrada()', '📥 Llegó de fábrica')+
       ch('abrirStockSalida()', '📤 Salió sin pedido')+
       ch('abrirStockHistorial()', '📜 Historial de cortes')+
+      ch('abrirTst()', '🏬 Stock de las tiendas')+
       ch('copiarStock()', '📋 Copiar pedido a fábrica')+
     '</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
@@ -41983,13 +42731,14 @@ var STOCK_AUTO_GRACIA=2, STOCK_AUTO_DIAS=12;
    · Lo que ya esté guardado en `STOCK.ap`/`STOCK.apL` se sigue LEYENDO, JUNTANDO y PODANDO igual (`leerStock`, `stockFusionar`,
      `stockPodar`, `filaStock`): no se pierde para cuando se prenda.
    · PRENDIDO (true): todo como el 17/10. */
-var STOCK_AUTO_ACTIVO=false;
+/* (el interruptor `STOCK_AUTO_ACTIVO` y `STOCK_AUTO_DESDE` están declarados arriba, al lado de `STOCK_PV`) */
 /* Compacto: la celda del stock corta en 50.000 letras (§4hl). `STOCK.ap` = {clave: {día: [pedido, llegó, a mano, anulado, cuándo (s)]}}. */
 function stockAutoEsp(f){ return sigDiaHabil(saldoSaleDeFabrica(f)); }
 function stockAutoVence(f){ var e=stockAutoEsp(f); for(var i=0;i<STOCK_AUTO_GRACIA;i++) e=sigDiaHabil(e); return e; }
 function stockAutoLista(k){
   var m=((STOCK.ap||{})[k])||{};
-  return Object.keys(m).sort().map(function(f){ var a=m[f]||[]; return { k:k, f:f, u:Math.max(0,Math.round(Number(a[0])||0)), rec:Math.max(0,Math.round(Number(a[1])||0)), man:!!a[2], no:!!a[3], t:Number(a[4])||0 }; });
+  /* 🏭 (27/10, §4ne P0-4) Lo anotado ANTES de prender no existe para el panel (ni cuenta, ni se ve, ni se cierra): se sigue podando solo. */
+  return Object.keys(m).filter(function(f){ return !STOCK_AUTO_DESDE || f>=STOCK_AUTO_DESDE; }).sort().map(function(f){ var a=m[f]||[]; return { k:k, f:f, u:Math.max(0,Math.round(Number(a[0])||0)), rec:Math.max(0,Math.round(Number(a[1])||0)), man:!!a[2], no:!!a[3], t:Number(a[4])||0 }; });
 }
 function stockAutoPend(e){ return Math.max(0, (e.u||0)-(e.rec||0)); }
 function stockAutoCuenta(e, hoy){ hoy=hoy||todayStr(); return !!(e && !e.no && e.f<hoy && stockAutoPend(e)>0 && stockAutoVence(e.f)>=hoy); }
@@ -42018,13 +42767,16 @@ function fusAuto(b, m, s){
 function stockPodarAuto(S, hoy){
   if(!S || !S.ap || typeof S.ap!=='object') return S;
   hoy=hoy||todayStr();
-  var lim=stockSumarDias(hoy, -STOCK_AUTO_DIAS), ayer=stockSumarDias(hoy, -1);
+  var lim=stockSumarDias(hoy, -STOCK_AUTO_DIAS);
   Object.keys(S.ap).forEach(function(k){
     var m=S.ap[k]; if(!m || typeof m!=='object'){ delete S.ap[k]; return; }
     Object.keys(m).forEach(function(f){
       var a=m[f]; if(!Array.isArray(a)){ delete m[f]; return; }
-      var u=Number(a[0])||0, rec=Number(a[1])||0;
-      if(f<lim || (f<hoy && (a[3] || u<=0)) || (rec>=u && f<ayer)) delete m[f];
+      /* 🏭 (27/10, §4ne P0-2) SOLO POR FECHA. Antes también se borraba lo anulado, lo de 0 y lo que ya llegó: la junta de tres copias
+         (`fusAuto`) es una unión, así que la copia de OTRO equipo que todavía lo tenía abierto lo revivía («juntar copias revive lo que ya
+         llegó», revisión 2). Con una regla que depende solo del día, todas las copias podan lo mismo y lo cerrado queda cerrado hasta
+         `STOCK_AUTO_DIAS`. Lo cerrado no cuenta igual (`stockAutoCuenta`). */
+      if(f<lim) delete m[f];
     });
     if(!Object.keys(m).length) delete S.ap[k];
   });
@@ -42095,9 +42847,9 @@ function stockAutoHtml(o){
     if(e.f===hoy){
       if(!(e.u>0)) return;
       h+='<div class="pl-auto" onclick="event.stopPropagation()" style="font-size:.76rem;color:#0f766e;margin-top:3px">📌 Hoy se piden <input type="text" inputmode="numeric" value="'+e.u+'" data-k="'+esc(o.k)+'" data-f="'+esc(e.f)+'" onchange="stockAutoCambiar(this.dataset.k,this.dataset.f,this.value)" style="width:42px;padding:0 4px;font-size:.76rem"> a la fábrica'+
-        ' (lo anota el panel: desde mañana cuenta como en producción)'+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+        (e.man ? ' (anotado a mano: desde mañana cuenta como en producción)' : ' (lo anota el panel: desde mañana cuenta como en producción)')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
     } else if(vence>=hoy){
-      h+='<div class="pl-auto" style="font-size:.76rem;color:#075985;margin-top:3px">🏭 En producción: '+stockUnid(pend)+(pend<e.u?(' de '+stockUnid(e.u)):'')+' (lo pidió el panel el '+fmtFechaCorta(e.f)+') · llega ~'+fmtFechaCorta(llega)+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+      h+='<div class="pl-auto" style="font-size:.76rem;color:#075985;margin-top:3px">🏭 En producción: '+stockUnid(pend)+(pend<e.u?(' de '+stockUnid(e.u)):'')+' ('+(e.man?'pedido':'lo pidió el panel')+' el '+fmtFechaCorta(e.f)+') · llega ~'+fmtFechaCorta(llega)+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
     } else if(stockDias(vence, hoy)<=PLAN_YA_VENCIDO_DIAS){
       h+='<div class="pl-auto" style="font-size:.76rem;color:#92400e;margin-top:3px">⚠️ El panel pidió '+stockUnid(pend)+' el '+fmtFechaCorta(e.f)+' y no apareció en ningún Excel (tenía que llegar ~'+fmtFechaCorta(llega)+'): ¿se pidió? Ya no se cuenta.'+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
     }
@@ -42129,12 +42881,27 @@ function planYaHtml(o){
 var PLAN_YA_ULT=null, PLAN_YA_UNDO_MS=120000;
 function planYaUndoHtml(){
   var u=PLAN_YA_ULT; if(!u || Date.now()-u.t>PLAN_YA_UNDO_MS) return '';
-  if(!(STOCK.p||[]).some(function(q){ return q && q.id===u.id; })){ PLAN_YA_ULT=null; return ''; }
+  var sigue=u.auto ? (function(){ var e=stockAutoDe(u.k, todayStr()); return !!(e && !e.no && e.u>0); })()   // 🏭 (§4ne P0-3)
+                   : (STOCK.p||[]).some(function(q){ return q && q.id===u.id; });
+  if(!sigue){ PLAN_YA_ULT=null; return ''; }
   return '<div class="pl-ya-undo" id="pl-ya-undo">✓ Anotaste <b>Ya pedí '+stockUnid(u.u)+'</b> de <b>'+esc(u.nom)+'</b>: la fila pasó a «🚚 Ya pedido».'+
     '<button type="button" class="btn btn-sm" style="background:#fff;border:1px solid #0f766e;color:#0f766e;font-weight:700" onclick="planYaDeshacer()">↩️ Deshacer</button></div>';
 }
-function planYaDeshacer(){ var u=PLAN_YA_ULT; PLAN_YA_ULT=null; if(u) planYaPedi(u.k, false, u.id); }
+function planYaDeshacer(){ var u=PLAN_YA_ULT; PLAN_YA_ULT=null; if(!u) return; if(u.auto) stockAutoNoSePidio(u.k, todayStr()); else planYaPedi(u.k, false, u.id); }
 function planYaPedi(k, on, id){
+  /* 🏭 (27/10, §4ne P0-3) UN SOLO LUGAR PARA LO PEDIDO. Con el automático prendido, «Ya pedí» se anota como lo del panel (`STOCK.ap`, a mano):
+     así una llegada se reparte UNA vez (`stockAutoConsumir`, el más viejo primero). Con dos listas (`STOCK.p` y `STOCK.ap`) la misma llegada
+     cerraba lo del panel y además la detección del control del Excel le restaba al «Ya pedí»: se contaba dos veces. Los «Ya pedí» de antes
+     de prender siguen en `STOCK.p` hasta que vencen. */
+  if(on && STOCK_AUTO_ACTIVO){
+    var oA=stockData().lista.find(function(x){ return x.k===k; }); if(!oA || !(oA.fabricar>0)){ toast('Ya no hay nada para pedir de este producto: no se anotó nada.','ok',4000); renderStock(); return; }
+    var hoyA=todayStr(), eA=stockAutoDe(k, hoyA);
+    stockAutoPoner({ k:k, f:hoyA, u:oA.fabricar, rec:eA ? eA.rec : 0, man:true, no:false });
+    toast('✓ Anotado: pediste '+stockUnid(oA.fabricar)+' hoy. Desde mañana cuenta como en producción.','ok',5000);
+    PLAN_YA_ULT={ k:k, auto:1, u:oA.fabricar, nom:stockNombre(oA), t:Date.now() };
+    stockOlvidarIndice(); guardarStock(); renderStock(); planYaUndoVer();
+    return;
+  }
   if(on){
     var o=stockData().lista.find(function(x){ return x.k===k; }); if(!o || !(o.fabricar>0)){ toast('Ya no hay nada para pedir de este producto: no se anotó nada.','ok',4000); renderStock(); return; }   // (§4ls Man-VM7) que la casilla no quede tildada sin anotar
     /* (§4jd, A3-2) id DERIVADO del producto y el día: dos equipos que tildan «Ya pedí» a la vez antes de leerse anotan el MISMO pedido
@@ -44210,6 +44977,7 @@ var ASIS_LS_VISTOS='me_asis_vistos', ASIS_LS_MUDO='me_asis_mudo';
    vendedor, «La fábrica de Eduardo», «preguntale a Eduardo por WhatsApp») y el de la ciudad: solo el ASISTENTE pasó a llamarse Bloki. */
 /* 🧽 BLOKI: el bloque de espuma con la franja turquesa del colchón (dibujo del dueño, 15/10). Un SVG por traje. */
 var BLOKI_TRAJES={ bloki:'Bloki', vendedor:'Vendedor', logistica:'Logística', conta:'Contabilidad', anuncio:'Anuncio' };
+function temaNavidad(){ try{ return document.documentElement.classList.contains('tema-navidad'); }catch(e){ return false; } }
 function blokiSvg(traje){
   traje=BLOKI_TRAJES[traje] ? traje : 'bloki';
   var K='#1d1d1f', T='#1aafa4', TO='#0f8f86', SW=6;
@@ -44230,7 +44998,14 @@ function blokiSvg(traje){
   if(traje==='anuncio') brazoDer='<path d="M191 118 C202 112 204 102 200 96" fill="none" stroke="'+K+'" stroke-width="5" stroke-linecap="round"/>';
   else brazoDer='<path d="M191 136 C204 142 208 154 205 164" fill="none" stroke="'+K+'" stroke-width="5" stroke-linecap="round"/>';
   var manoDer=(traje==='anuncio') ? '<circle cx="200" cy="92" r="8.5" fill="#fff" stroke="'+K+'" stroke-width="4.5"/>' : '<circle cx="205" cy="168" r="8.5" fill="#fff" stroke="'+K+'" stroke-width="4.5"/>';
-  if(traje==='bloki') extraDelante+='<path class="bk-chispa" d="M182 6 Q185 20 199 23 Q185 26 182 40 Q179 26 165 23 Q179 20 182 6 Z" fill="'+T+'"/>';
+  /* 🎄 (27/10, §4nc) En diciembre, Bloki (y su traje de contabilidad y de anuncio) con gorro de Papá Noel; los que ya llevan gorra o
+     casco, no. */
+  var gorro=temaNavidad() && (traje==='bloki' || traje==='conta' || traje==='anuncio');
+  if(traje==='bloki' && !gorro) extraDelante+='<path class="bk-chispa" d="M182 6 Q185 20 199 23 Q185 26 182 40 Q179 26 165 23 Q179 20 182 6 Z" fill="'+T+'"/>';
+  if(gorro) extraDelante+='<g class="bk-gorro"><path d="M62 50 Q70 8 124 6 Q166 6 194 24 Q184 28 176 50 Z" fill="#d62839" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
+      '<path d="M96 18 Q122 10 150 14" fill="none" stroke="#f26b78" stroke-width="5" stroke-linecap="round"/>'+
+      '<rect x="50" y="40" width="140" height="17" rx="8.5" fill="#fff" stroke="'+K+'" stroke-width="4"/>'+
+      '<circle cx="197" cy="25" r="10" fill="#fff" stroke="'+K+'" stroke-width="4"/></g>';
   if(traje==='vendedor'){
     extraDelante+='<path d="M60 62 Q62 24 120 22 Q178 24 180 62 Q120 52 60 62 Z" fill="'+T+'" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
       '<path d="M168 52 Q198 46 212 60 Q192 60 176 63 Z" fill="'+TO+'" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
@@ -44305,9 +45080,11 @@ function blokiTraje(){
   var rol=''; try{ rol=quienRol(); }catch(e){}
   if(rol==='logistica') return 'logistica';
   if(rol==='conta') return 'conta';
-  if(rol==='admin') return 'bloki';
-  if(asisVendedor()) return 'vendedor';
+  /* 🧽 (27/10, dueño: «Sí, según la pestaña») Administración se viste según la pestaña: el pedido y Mis pedidos de
+     vendedor, Contabilidad de contador y Administración de logística (casco). Lo demás, Bloki a secas. */
   var v=asisVista();
+  if(rol==='admin') return v==='conta' ? 'conta' : ((v==='form' || v==='mis') ? 'vendedor' : (v==='admin' ? 'logistica' : 'bloki'));
+  if(asisVendedor()) return 'vendedor';
   return v==='conta' ? 'conta' : ((v==='form' || v==='mis') ? 'vendedor' : 'bloki');
 }
 function blokiPoner(){
@@ -44417,6 +45194,7 @@ function asisLogistica(){
         t:U.length+' producto'+(U.length===1?'':'s')+' '+semanaUrgTxt(U)+': si no se pide'+(U.length===1?'':'n')+' hoy, no llega'+(U.length===1?'':'n')+' a tiempo',
         x:semanaPlazoTxt()+' Desde las '+semanaHoraTxt(semanaGritoHora(hoy))+' te lo grito.',
         lista:asisPedLista(ps), b:['🗓️ Ver la semana', "semanaIr('urge')"] }); } }catch(e){}
+  try{ var tA=tstAviso(); if(tA) A.push(tA); }catch(e){}   // 🏬 (27/10) el conteo de las tiendas
   var D=null, cd=CV_DIA; try{ CV_DIA='hoy'; D=cargaVivaDatos(); }catch(e){} finally{ CV_DIA=cd; }
   if(D){
     var cams=D.cams.filter(function(c){ return !c.sin && c.total>0 && c.dentro<c.total && !camionSalio(hoy, c.k); });

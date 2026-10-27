@@ -1696,8 +1696,8 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-26-b',
-      vG==='2026-10-26-b' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-10-27-a',
+      vG==='2026-10-27-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
@@ -1736,6 +1736,21 @@ console.log('\n── 22. 🧓 El stock solo lo guarda una página al día: sin 
     const v = cargar([HDR30], {}); v.post({ action:'save', juntar:1, pedido: stk('{"c":{"f":"2026-10-03","u":{}}}') });
     chk('⚠️ h. …y si lo guardó una página VIEJA (sin pv), avisa que con esta versión ya no va a poder y que todos hagan F5', /⚠️ El stock lo guardó por última vez una página VIEJA/.test(lin(v.ctx)) && /F5/.test(lin(v.ctx)), lin(v.ctx));
   } else chk('h. está probarAntesDeImplementar', false);
+  /* 🏭 (2026-10-27-a) El formato no vuelve atrás: desde que una página de formato 4 guardó, una de formato 3 recibe `actualizar`. */
+  {
+    const b = cargar([HDR30], {});
+    let q = b.post({ action:'save', juntar:1, sf:3, pedido: stk('{"c":{"f":"2026-10-27","u":{}},"pv":3}') });
+    q = b.post({ action:'save', juntar:1, sf:3, pedido: stk('{"c":{"f":"2026-10-27","hora":"10:00:00","u":{}},"pv":3}', q.pedido.rev) });
+    chk('i. con lo guardado en formato 3, una página de formato 3 guarda (como hoy)', q.ok===true, JSON.stringify(q).slice(0,100));
+    q = b.post({ action:'save', juntar:1, sf:4, pedido: stk('{"c":{"f":"2026-10-27","hora":"11:00:00","u":{}},"pv":4,"ap":{"K":{"2026-10-27":[5,0,0,0,1]}}}', q.pedido.rev) });
+    chk('i. una de formato 4 (el automático prendido) guarda', q.ok===true, JSON.stringify(q).slice(0,100));
+    const obs4 = pedido(b.ctx, b.sh, '__stock__').observaciones;
+    const q3 = b.post({ action:'save', juntar:1, sf:3, pedido: stk('{"c":{"f":"2026-10-27","hora":"12:00:00","u":{}},"pv":3}', q.pedido.rev) });
+    chk('⚠️ i. …y desde ahí una de formato 3 (sin F5) recibe `actualizar` y NO borra lo anotado', q3.ok===false && q3.error==='actualizar' && pedido(b.ctx, b.sh, '__stock__').observaciones===obs4, JSON.stringify(q3).slice(0,100));
+    const q4 = b.post({ action:'save', juntar:1, sf:4, pedido: stk('{"c":{"f":"2026-10-27","hora":"12:00:00","u":{}},"pv":4}', q.pedido.rev) });
+    chk('i. la de formato 4 sigue guardando con su sello', q4.ok===true, JSON.stringify(q4).slice(0,100));
+    chk('i. una celda que no se entiende cuenta 0 (manda el mínimo de siempre)', b.ctx.stockPvGuardado_([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'no es json'])===0 && b.ctx.stockPvGuardado_(null)===0);
+  }
 }
 
 /* ── 📚 23. La hoja «Historial stock» (2026-10-09-a, §4in). El dueño: *«armá la hoja de historial»*. Una fila por día, aparte de
