@@ -16455,4 +16455,7 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   renglón por día, `acc`, `voz`; `ANUNCIO.cur`); `anuncioTic` = `anuncioTicAnuncio` + `semanaGritoTic`. Aviso rojo `l-semana` en
   `asisLogistica`. Solo avisa.
 - `tests/test_semana_grito.js` (27; reloj clavado el jueves 29/10 desde las 15:50, `hastaGrito`; §9 = abren tarde); `test_semana` 41
-  (el caso atrasado). `test_anuncio`, `test_asistente*`, `test_bloki`, `test_saldo_almacen`, `test_corte_horario` sin cambios. Espera «publica».
+  (el caso atrasado). `test_anuncio`, `test_asistente*`, `test_bloki`, `test_saldo_almacen`, `test_corte_horario` sin cambios.
+- **PUBLICADO 27/10, `d41ae21`** (dueño: «Publica»): `format-patch` de `3c4b205` + `394c38e` (solo `pedidos.html` y las dos pruebas),
+  aplastados en un commit. Sobre la copia de publicar: test_semana 41, test_semana_grito 27, test_anuncio 47, test_asistente_ak 38,
+  test_adm_arriba 27, test_asistente 24, test_bloki 19, todas sin rojas. Al dueño: F5 en los aparatos de logística y Administración.

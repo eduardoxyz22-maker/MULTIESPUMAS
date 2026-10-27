@@ -1076,10 +1076,16 @@ en una línea. `tests/test_ficha_auto.js`.
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
 el jueves y aún no marcás el stock… producción tarda hasta 4 días»*. ⚠️ Nada de camiones, carga ni cupos en este botón.
 Chip `semana` (`todo:true`). Días = `semanaDias()`: HOY y los hábiles siguientes hasta 5 (`diaHabil`). Cada PRODUCTO (`semanaLinea`): ⬜ `rev` ·
-🔴 `nohay` (✗ sin pedir) · 🏭 `prod` · ⚠️ `tarde` (`semanaLlega` = `prodF` + `SEMANA_PROD_DIAS`=4 días hábiles después de la entrega) · ✔ `listo`
-(hay, Banzer, llegó, Moreno/tienda). Sin tienda, ATC ni entregados. Parpadea (`qchip-alerta`, «🔴 N por revisar») con ⬜/🔴; al tocarlo arranca
-en «Lo que falta» (`semanaArrancar`), `#adm-semana` (`semanaPintar`) con la lista de productos por día y «🤖 Revisión automática». «Para hacer»:
-`semana` (rojo) y `semana-t` (ámbar). Solo mira. `tests/test_semana.js` (40).
+🔴 `nohay` (✗ sin pedir) · 🏭 `prod` · ⚠️ `tarde` (`semanaLlega` = `saldoSaleDeFabrica(prodF)`: se entrega desde después de la fecha o ya
+debía haber salido) · ✔ `listo` (hay, Banzer, llegó, Moreno/tienda). Sin tienda, ATC ni entregados. Parpadea (`qchip-alerta`, «🔴 N por revisar»)
+con ⬜/🔴; al tocarlo arranca en «Lo que falta» (`semanaArrancar`), `#adm-semana` (`semanaPintar`) con la lista de productos por día, el filtro
+«🔥 Pedir hoy» (`urge`) y «🤖 Revisión automática». «Para hacer»: `semana` (rojo) y `semana-t` (ámbar). Solo mira. `tests/test_semana.js` (41).
+⚠️ **Los plazos son los del cuadrito, nunca «4 días»** (dueño, 27/10: *«los plazos que ya tenemos definidos»*): `semanaPlazos()` = `diaArranque()`
+→ `saldoSaleDeFabrica` → se entrega desde `sigDiaHabil` (E1; pedido en la próxima ocasión, E2). `SEMANA_PROD_DIAS` ya no existe.
+📣 **Bloki le grita a Ernesto** (§4mz, PUBLICADO `d41ae21`): media hora antes del corte (16:00; sábado 11:30), SOLO en aparatos `asisVeAdm()`,
+`anuncioGrito` con `semana:1` y lo ⬜/🔴 que se entrega antes de E2 (`semanaUrgentes`); cada 15 min mientras falte (`me_sem_grito`); abrir el panel
+tarde grita en el primer tic. El anuncio va primero (`anuncioTic` = `anuncioTicAnuncio` + `semanaGritoTic`). Con el panel cerrado no grita nada.
+`tests/test_semana_grito.js` (27).
 
 ## ✨ Arriba de Administración: «Para hacer» + «Hoy» + fichas grandes (§4me, 24/10, PUBLICADA `07d522a`; dueño: *«parece noticiero de alertas… un mix de la B con la C»*)
 - `#adm-hacer` ordena los avisos de siempre (rojo → ámbar → info, tres a la vista) con los números que cada cartel deja en **`ADM_AV`** al dibujarse;
