@@ -16549,4 +16549,5 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   (`KOMMO_TOKEN`) y en el Apps Script (`KOMMO_TOKEN`). No sabía de cuál integración era el viejo: no hacía falta. Al entrar a «Crear integración»
   le pedía el URL de redireccionamiento: era el formulario de crear, no el de la integración que ya existe. Cloudflare (`tight-limit-134e…/kommo-hook`
   recibe los avisos de Kommo para el tiempo de primera respuesta; el «heaven-kommo» crea las tareas de ✓/🕐 de Seguimiento) no se tocó: no usan
-  las tareas. El push de `2aa4fde` (panel_template.html) disparó el workflow del panel con el token nuevo.
+  las tareas. El push de `2aa4fde` (panel_template.html) disparó el workflow del panel con el token nuevo. ✅ Corrida 546 verde: leyó Kommo y publicó `9ae432c` (15:25 UTC): el token
+  nuevo de GitHub anda. El del Apps Script se ve en el respaldo (el repaso sin error de Kommo).
