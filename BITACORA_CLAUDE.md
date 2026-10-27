@@ -16576,3 +16576,13 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - Webhooks: Cloudflare `/kommo-hook` (3 eventos) y el Apps Script `/exec` con 32 eventos (cada mensaje de chat le entra; decisión
   del dueño si se achica).
 - Instrucción para Codex: `RESPUESTA_CLAUDE.md` §34 (qué cambiar en `generar.py`, la prueba y lo que no hacer). Sin Cloudflare.
+
+### §4nh — ✨ «MÁS MEJORAS» (27/10; dueño: *«más mejoras… actualizaciones, modernizaciones, UX, animaciones, efectos, colores, TODO MÁS»*): MUESTRARIO, sin código en el panel
+- Capturas propias del panel de hoy (copia anonimizada, en el contenedor) para no repetir lo que ya está. Muestrario publicado:
+  https://claude.ai/artifact/PjSBne2cD633CuFrBC6aZT (claro, colores del panel, Inter, datos inventados; cada una se toca; «La quiero» + copiar la lista).
+- Las 16: 1 buscador de todo (Ctrl+K) · 2 atajos de teclado · 3 la ficha al costado con ◀ ▶ · 4 arrastrar para reprogramar (cupos, domingo/feriado,
+  deshacer) · 5 pestañas que se deslizan · 6 «Guardar» que se transforma (tilde con el sí de la planilla) · 7 «Deshacer» 5 s · 8 lo urgente con borde
+  de luz · 9 íconos propios animados en vez de emojis · 10 «En vivo» (lo último que pasó, de la planilla) · 11 «Tu mes» en una línea · 12 la carrera del
+  mes · 13 modo TV para el galpón · 14 encabezado de espuma (meses sin tema) · 15 más temas (Carnaval, Día de la Madre, 6 de Agosto, 24 de Septiembre,
+  Año Nuevo) · 16 sonidos suaves (apagables).
+- Espera que el dueño elija por número. Nada cambia cuentas, cupos ni la planilla; lo de 4 y 7 usa los caminos de siempre (`reproAplicar`, `guardarDurable`).
