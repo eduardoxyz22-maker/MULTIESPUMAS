@@ -1,5 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 27/10 — §34 / BITÁCORA §4ng. PARA CODEX:** la «primera respuesta» del dashboard puede medirse con los mensajes
+> de WhatsApp que mandan las vendedoras: Kommo SÍ los guarda en el historial (en junio dio 0 por un filtro). Qué se encontró y qué
+> cambiar en `generar.py`, en §34. Sin Cloudflare ni webhooks nuevos.
+
 > **ACTUALIZACIÓN 07/10 — §33 / BITÁCORA §4ht.** «📍 Banzer o PTF» en Stock: qué productos tener en cada depósito según dónde
 > se entrega y cuánto rota, con mapa de calor y texto para logística. Solo mira (no marca pedidos ni toca stock ni planilla). Sin
 > cambios al `.gs`. Batería: 137 suites, 5.175 bien · 0 mal. Publicada a pedido del dueño («publica») el 07/10.
@@ -2785,6 +2789,75 @@ tiene lo suyo». `test_banzer_ptf` → 105 (7 rojas contra `0d20d04`).
 2. ~~Si la revisión automática debe elegir el depósito MÁS CERCA de cada entrega.~~ **Respondido (07/10): «aún no porque debemos definir
    bien con logística las zonas que abarca cada almacén»**. Sigue PTF → Banzer → IM. Cuando logística defina zona → depósito, esa
    lista puede reemplazar la línea recta de la pantalla (y, si el dueño lo pide, alimentar la revisión automática).
+
+## 34 · Para Codex: la «primera respuesta» con los mensajes de WhatsApp de Kommo (27/10) — bitácora §4ng
+
+**El pedido** (dueño, 27/10): *«¿no usamos otro método para medir lo de cada vendedor?… ¿Kommo no envía los mensajes salientes?…
+sí, investigalo y dejá la instrucción para Codex»*. Hoy el dashboard llama «primera respuesta» a la primera ACCIÓN de la vendedora
+en el lead (mover de etapa, nota, etiqueta, tarea, mensaje interno). Una vendedora que contesta por WhatsApp y no mueve el lead
+sale tarde o «nunca tocado».
+
+### 34.1 · Lo que se midió (solo lectura, nada se cambió en Kommo)
+Inspector `herramientas/inspeccionar_respuestas.py` + workflow «Inspeccionar respuestas en Kommo (solo lectura)» (corre solo al
+cambiar sus archivos o a mano; el registro es público y no imprime datos de clientes). Corrida 40538261416, 27/10, últimos 7 días:
+
+| Filtro de `/api/v4/events` (mismas fechas) | Resultado |
+|---|---|
+| `filter[type]=outgoing_chat_message` (sin entidad) | **≥ 4.000** (llegó al tope del inspector: 40 páginas × 100) · 3.991 del lead, 9 del contacto · 1.965 de personas, 2.035 del bot |
+| `filter[type][]=outgoing_chat_message` | lo mismo |
+| … **+ `filter[entity][]=lead`** (lo que se probó en junio) | **0 (HTTP 204)** ← por eso junio dio 0 |
+| … + `filter[entity][]=contact` | lo mismo que sin filtro (Kommo ignora la entidad) |
+| `filter[type]=incoming_chat_message` | 1.911 · todos con `created_by` 0 (los manda el cliente) |
+
+- **Cuelgan del LEAD**: `entity_type:"lead"`, `entity_id` = el lead. `value_after[0].message` = `{id, origin, talk_id}`. Sin texto.
+- **`created_by` = el usuario que contestó** (0 = bot). Personas en 7 días: Mirian 967, Isabel 477, Jonathan 227, María 165,
+  Carola 126, la cuenta Principal 3.
+- ⚠️ **El fetch principal de `generar.py` (`filter[entity][]=lead`, sin tipo) NUNCA trae mensajes de chat**: tener
+  `incoming_chat_message`/`outgoing_chat_message` en `SEGUIMIENTO` no aporta nada hoy.
+- **Cuánto cambia** (leads con eventos en esos 7 días): 531 leads con un mensaje de una persona; 495 también tienen una acción;
+  **36 (7 %) solo tienen el mensaje** → hoy salen «nunca tocado» o tarde aunque se respondieron. En 246 de los 495 (50 %) el
+  mensaje fue ANTES que la acción, con una mediana de menos de 1 minuto: casi siempre contestan y mueven juntos. El número de hoy
+  no está muy lejos; lo que se arregla son los falsos «nunca tocado» y a la que contesta sin mover el lead.
+- Kommo también tiene `talk_created`, `talk_closed` y **`talk_missed_event` («Se superó el tiempo de respuesta»)**, y `/talks/{id}`
+  trae `is_read`, `is_in_work`, `status`, `updated_at`. No hace falta para esto (ver 34.4).
+- Webhooks de hoy: Cloudflare `…/kommo-hook` (`add_message`, `status_lead`, `update_talk`; nada del repo lo lee) y el Apps Script
+  `…/exec` con **32 eventos** (todos los de leads, contactos, empresas, tareas, notas, `add_message`, `add_talk`, `update_talk`,
+  catálogo…). **No hace falta ningún webhook nuevo ni Cloudflare**: todo sale del historial con el token de GitHub.
+
+### 34.2 · Qué cambiar en `generar.py`
+1. **Una lectura nueva** junto a la de eventos (≈ línea 1592):
+   `fetch_paginated("/events", {"filter[type]": "outgoing_chat_message", "filter[created_at][from]": int(m_start.timestamp()),
+   "filter[created_at][to]": int(m_end.timestamp()), "limit": 100}, "events", max_pages=400, sleep=0.15)`.
+   **Sin `filter[entity]`** (con `lead` da 204). Volumen: más de 4.000 por semana, ~200 páginas por mes; probar primero
+   `filter[created_by][]=<ids de las vendedoras>` para traer solo personas (si Kommo lo ignora, filtrar en código).
+   Es una lectura NUEVA → **esencial** (regla de §4mi): si falla no se publica; si no, la métrica cambiaría callada.
+2. Para cada evento con `created_by != 0` y `entity_type == "lead"`: `events[entity_id]["first"] = min(…, created_at)` y
+   `["last"] = max(…, created_at)`. Los del bot y los 9 del contacto, afuera. Se mantiene la regla de «lo del mismo minuto de la
+   creación es automático» (`first_seg - created < 60`).
+3. Sacar `incoming_chat_message`/`outgoing_chat_message` de `SEGUIMIENTO` o dejarlos con un comentario: el fetch con entidad no
+   los trae. El entrante (lo manda el cliente) NO es respuesta ni toque de la vendedora.
+4. La respuesta sigue siendo del **responsable del lead** (como hoy), aunque haya contestado otra persona; el horario hábil por
+   vendedora (`sched_for`) no cambia.
+5. `_DIAG`: `chat_out=N personas=M leads=L` (solo cantidades: el repo es público).
+6. El texto del dashboard: el tip de la línea 4638 de `panel_template.html` («Mediana del tiempo de 1ª respuesta…») y el contexto
+   de la IA (línea 5664) dicen «primer mensaje o acción de la vendedora en Kommo». CLAUDE.md (§«Etapas del pipeline») también.
+7. **Prueba**: `tests/test_generar_integridad.py` (Kommo de mentira). El doble de `/events` tiene que portarse como Kommo: con
+   `filter[entity][]=lead` + tipo de chat → 204; sin entidad → los mensajes. Casos: un lead con SOLO un mensaje de la vendedora
+   no es «nunca tocado» y su primera respuesta es la hora del mensaje; un mensaje del bot (`created_by` 0) no cuenta; un entrante
+   no cuenta; un mensaje anterior a la acción manda. Dientes contra el `generar.py` de hoy.
+8. **Publicar**: tocar `generar.py` dispara el workflow del panel. Reglas de oro: `ast.parse`, no pushear mientras corre el
+   workflow, mirar Pages. Comparar el mes antes/después y decírselo al dueño (se espera: «nunca tocado» baja, el % < 24 h sube un poco).
+
+### 34.3 · Lo que NO hacer
+- No usar Cloudflare (el dueño lo sacó del dashboard el 27/10, §4nf) ni crear webhooks para esto.
+- No imprimir textos de mensajes ni ids de clientes en ningún registro (repo público).
+- No tocar el webhook del Apps Script. **Para hablar con el dueño**: recibe 32 eventos (cada mensaje de chat es un `doPost` que
+  entra al panel) y el panel solo necesita los cambios de etapa; achicarlo bajaría la carga del Apps Script. Decisión suya.
+
+### 34.4 · Para más adelante (solo si el dueño lo pide)
+- Responder CADA mensaje del cliente, no solo el primero: emparejar `incoming_chat_message` → el próximo `outgoing_chat_message`
+  de una persona con el mismo `talk_id`, en horario hábil.
+- Contar `talk_missed_event` por vendedora («se le pasó el tiempo de respuesta» que Kommo ya mide).
 
 ## 27 · Revisión de lo que publicó Codex el 02/10 (§25 y §26) — bitácora §4hi
 

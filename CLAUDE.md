@@ -2312,6 +2312,9 @@ En «Seguimiento», ✓ y 🕐 solo marcan la ficha en el panel (por aparato); y
 «Copia para mí» (todo eso iba por el Worker de Cloudflare con su propia copia del token de Kommo). En Cloudflare queda solo el botón
 «Actualizar» (token de GitHub) y el webhook `/kommo-hook`, que nada del repo lee. La disciplina por vendedora sale de `/events` con el token de
 GitHub, no de Cloudflare. ⚠️ `cloudflare-worker.js` del repo es una copia vieja del Worker. `tests/test_seguimiento_sin_cloudflare.js`.
+🔎 **Kommo SÍ guarda las respuestas de WhatsApp de las vendedoras** (§4ng, 27/10): `outgoing_chat_message` en `/events` con `created_by` = la
+vendedora y `entity_type` lead, pero **solo SIN `filter[entity]`** (con `lead` da 204: por eso junio dio 0 y `generar.py` no los ve). Instrucción
+para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramientas/inspeccionar_respuestas.py`.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

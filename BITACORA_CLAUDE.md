@@ -16564,3 +16564,15 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   guardado en el Worker, no de Kommo) y el webhook `/kommo-hook` que Kommo le manda (nada del repo lo lee hoy; recibir no necesita token).
   ⚠️ El código del Worker que corre es más nuevo que `cloudflare-worker.js` del repo (tiene `note`, `bulk`, `refresh`): esa copia no es la fuente.
 - `tests/test_seguimiento_sin_cloudflare.js` (9; 5 rojas contra `main`). test_panel_meta 8, halloween 22, navidad 20, paneldup 13, integridad 18.
+
+### §4ng — 🔎 ¿Kommo dice cuándo contesta la vendedora? SÍ (27/10; dueño: *«sí, investigalo y dejá la instrucción para Codex»*)
+- Inspector de solo lectura `herramientas/inspeccionar_respuestas.py` + `.github/workflows/inspeccionar-respuestas.yml` (corre al cambiar
+  sus archivos o a mano; no imprime datos de clientes). Corrida 40538261416.
+- El historial trae `outgoing_chat_message` (≥4.000 en 7 días, 1.965 de personas con `created_by` = la vendedora, del LEAD) e
+  `incoming_chat_message` (1.911, todos `created_by` 0). **Junio dio 0 porque con `filter[entity][]=lead` + tipo de chat Kommo
+  contesta 204**; sin entidad (o con `contact`) los da todos. El fetch principal de `generar.py` (con entidad) nunca los ve.
+- 36 de 531 leads (7 %) con mensaje de la vendedora no tienen ninguna acción → hoy «nunca tocado». Donde hay las dos cosas, el
+  mensaje va antes en el 50 % con mediana < 1 min.
+- Webhooks: Cloudflare `/kommo-hook` (3 eventos) y el Apps Script `/exec` con 32 eventos (cada mensaje de chat le entra; decisión
+  del dueño si se achica).
+- Instrucción para Codex: `RESPUESTA_CLAUDE.md` §34 (qué cambiar en `generar.py`, la prueba y lo que no hacer). Sin Cloudflare.
