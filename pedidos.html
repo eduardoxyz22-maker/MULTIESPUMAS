@@ -14884,7 +14884,7 @@ function submitPedido(){
        siempre. Con un servidor de antes no vuelve nada y no cambia nada. */
     apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null)}).then(function(res){
       setSubmitting(false);
-      guardarBtnFin(res, rec);                     // ✨ (§4ni, 6 y 16) el botón dice cómo salió y suena
+      try{ guardarBtnFin(res, rec); }catch(eG){}   // ✨ (§4ni, 6 y 16) el botón dice cómo salió y suena (nunca frena el guardado)
       // Una respuesta definitiva conserva el comportamiento del formulario: el rechazo
       // se corrige acá; no dejarlo en cola como un pedido que se mandará a escondidas.
       if(res && (res.ok===true || res.ok===false)) sacarEnvioForm();
@@ -14982,7 +14982,7 @@ function submitPedido(){
       if(res && res.ok && Array.isArray(res.saldo) && res.saldo.length) saldoAvisoServidor(rec, res.saldo, _reserva);
     }).catch(function(e){
       setSubmitting(false);
-      guardarBtnFin(null, rec, true);             // ✨ (§4ni) «En cola», nunca ✓
+      try{ guardarBtnFin(null, rec, true); }catch(eG){}   // ✨ (§4ni) «En cola», nunca ✓
       // Ya estaba en cola antes de enviar. No reemplazar una corrección más nueva por esta foto.
       /* ⚠️ ANTES: «Sin internet: guardado» y acto seguido el modal verde «✓ Pedido guardado»
          con el botón para pasar la venta al grupo (§4eo). La venta se «pasaba» sin estar en

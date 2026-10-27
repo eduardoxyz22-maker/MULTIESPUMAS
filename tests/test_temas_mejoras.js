@@ -206,7 +206,7 @@ function armarDashboard(){
   r = await p.evaluate(async () => { var b=document.getElementById('f-submit'); var t0=b.textContent; guardarBtnFin({ ok:true, pedido:{ oc:'10-1' } }, {}); await new Promise(function(r){ setTimeout(r,60); }); return [t0, b.textContent, b.className]; });
   chk('6 · en las pruebas (sin FX_PRUEBA) el botón sigue diciendo «Guardar pedido» (muchas pruebas lo leen)', r[0]==='Guardar pedido' && r[1]==='Guardar pedido' && !/gz-/.test(r[2]), r);
   await cerrar(p);
-  chk('6 · el guardado del formulario avisa al botón con la respuesta y, sin red, como «en cola»', /setSubmitting\(false\);\n      guardarBtnFin\(res, rec\);/.test(src) && /setSubmitting\(false\);\n      guardarBtnFin\(null, rec, true\);/.test(src), '');
+  chk('6 · el guardado del formulario avisa al botón con la respuesta y, sin red, como «en cola»', /setSubmitting\(false\);\n      try\{ guardarBtnFin\(res, rec\); \}catch/.test(src) && /setSubmitting\(false\);\n      try\{ guardarBtnFin\(null, rec, true\); \}catch/.test(src), '');
 
   // ═══ 7. El borde de luz ═══
   console.log('\n── 7. El borde de luz en lo rojo de «Para hacer» ──');

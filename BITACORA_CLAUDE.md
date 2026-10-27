@@ -16632,5 +16632,12 @@ EN LA RAMA (`dda5111` + `cda8a25`), espera «publica». El `.gs` no cambia.
 - Muestrario v3 (mismo enlace): «Navidad está hecha, y así queda el año entero» con capturas reales (Navidad, noviembre, Halloween, Bloki con
   gorro), los íconos de la 9 con color (el dueño: *«les falta COLOR»*) y 3/10/11 como elegidas.
 - Pruebas: `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29); `test_navidad` cambió a conciencia (noviembre y el 31/12).
-- Anotado para después (dueño, 27/10, con captura de Ventas de Contabilidad): *«la estética de estas tablas debemos mejorar… o ver mejor en
-  fichas… queda para propuestas»*.
+- Batería entera con todo (`cda8a25`): 268 suites, 8.661 bien; en rojo solo `test_asistente_ak` (4, «Execution context was destroyed» con la
+  máquina cargada: también le pasa a `main`, 1 de 5 corridas en paralelo) y `test_guardado` (1; sola pasa 2 de 2). `guardarBtnFin` quedó envuelto
+  en `try` para que nunca frene un guardado.
+- Copia para publicar armada en `pub_mn` (rama `pub-ni`, `git am -3` de los dos commits de código sobre `main`: el primero choca en un renglón
+  con lo que nunca se publicó y la fusión de tres vías lo resuelve). Ahí: temas 92, 3/10/11 29, navidad 21, halloween 22, proyección 129, estética 35.
+- Propuestas para la tabla de Ventas de Contabilidad (dueño, 27/10, con captura: *«la estética de estas tablas debemos mejorar… o ver mejor en
+  fichas… queda para propuestas»*): https://claude.ai/artifact/5kKtxqCRAndqfYgR2yy1yX — A filas que se abren (total/cobrado/falta, detalle al
+  tocar), B fichas por venta, C la tabla de hoy ordenada (fecha y cliente fijos, elegir columnas, compacta), D libro del día con subtotales.
+  Datos inventados. Espera que elija.
