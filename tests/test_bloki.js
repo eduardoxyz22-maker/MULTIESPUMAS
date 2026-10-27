@@ -6,8 +6,9 @@
    ⚠️ LO QUE ESTA PRUEBA CUIDA (falla contra lo publicado, `15eb607`, que tiene la foto 3D de Eduardo):
    1. Los cinco trajes son SVG que se leen bien, cada uno con lo suyo (chispa, gorra y tablita, casco, chaleco y camión, anteojos y
       calculadora, megáfono y cejas de enojo).
-   2. El traje sale de QUIÉN eligió ser («¿Quién está usando el panel?»): vendedor/a, logística, contabilidad (botón nuevo) o
-      Administración; si nadie eligió, de la pestaña (Nuevo pedido y Mis pedidos → vendedor, Contabilidad → contabilidad, lo demás → Bloki).
+   2. El traje sale de la PESTAÑA, para todos (27/10 a la noche, dueño: «Según pestaña, todos»): Nuevo pedido y Mis pedidos → vendedor,
+      Contabilidad → contabilidad, Administración → logística; en ATC, Bot y Chofer, de QUIÉN eligió ser («¿Quién está usando el panel?»):
+      vendedor/a, logística, contabilidad (botón nuevo); Administración o nadie → Bloki.
    3. La figura de la esquina, la cabecera de la ventana y «¿Quién está usando…?» llevan a Bloki; la ventana dice «Soy Bloki».
    4. Con el globo del anuncio, Bloki se pone el megáfono; cuando el globo se va, vuelve a su traje.
    5. El grito del anuncio (pantalla entera) es Bloki con su megáfono.
@@ -68,32 +69,37 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     quienAbrir(true); var q=document.getElementById('quien');
     o.botonConta=!!(q && [].some.call(q.querySelectorAll('.quien-otros button'), function(b){ return /Contabilidad/.test(b.textContent); }));
     o.quienBloki=!!(q && q.querySelector('.quien-h img') && /^data:image\/svg/.test(q.querySelector('.quien-h img').getAttribute('src')));
-    quienElegir('', 'conta'); showView('admin'); await espera(50); o.conta=[blokiTraje(), fig()];
+    quienElegir('', 'conta'); showView('atc'); await espera(50); o.conta=[blokiTraje(), fig()];
+    showView('admin'); await espera(50); o.contaAdm=[blokiTraje(), fig()];
     quienAbrir(false); o.sigoConta=/Sigo en Contabilidad/.test((document.getElementById('quien')||{}).textContent||''); quienCerrar();
-    quienElegir('', 'logistica'); showView('form'); await espera(50); o.logistica=[blokiTraje(), fig()];
+    quienElegir('', 'logistica'); showView('atc'); await espera(50); o.logistica=[blokiTraje(), fig()];
+    showView('form'); await espera(50); o.logForm=[blokiTraje(), fig()];
     quienElegir('', 'admin'); o.admin={};
     var vs=['form','mis','conta','admin','atc'];
     for(var i=0;i<vs.length;i++){ showView(vs[i]); await espera(50); o.admin[vs[i]]=[blokiTraje(), fig()]+''; }
-    quienElegir('Mirian Salazar'); showView('conta'); await espera(50); o.vendedora=[blokiTraje(), fig()];
+    quienElegir('Mirian Salazar'); showView('atc'); await espera(50); o.vendedora=[blokiTraje(), fig()];
+    showView('conta'); await espera(50); o.vendConta=[blokiTraje(), fig()];
+    showView('admin'); await espera(50); o.vendAdm=[blokiTraje(), fig()];
     return o;
   });
   chk('sin elegir: Nuevo pedido y Mis pedidos → vendedor; Contabilidad → contabilidad; ATC → Bloki (la figura de la esquina cambia)',
       r && !r.no && r.nadieForm+''==='vendedor,vendedor' && r.nadieMis+''==='vendedor,vendedor' && r.nadieConta+''==='conta,conta' && r.nadieAtc+''==='bloki,bloki', r);
   chk('«¿Quién está usando el panel?» tiene a Bloki arriba y el botón «🧾 Contabilidad»', r && r.botonConta && r.quienBloki, r);
-  chk('Contabilidad → anteojos y calculadora, aunque esté en otra pestaña; y «Sigo en Contabilidad» la próxima vez', r && r.conta+''==='conta,conta' && r.sigoConta, r);
-  chk('Logística → casco, chaleco y camión (en cualquier pestaña)', r && r.logistica+''==='logistica,logistica', r);
+  /* (27/10 a la noche, dueño: «Según pestaña, todos») la pestaña manda para todos; quien eligió ser decide solo en ATC, Bot y Chofer. */
+  chk('Contabilidad → anteojos en ATC (una pestaña sin traje propio), casco en Administración; y «Sigo en Contabilidad» la próxima vez', r && r.conta+''==='conta,conta' && r.contaAdm+''==='logistica,logistica' && r.sigoConta, r);
+  chk('Logística → casco en ATC; en Nuevo pedido, la gorra de la pestaña', r && r.logistica+''==='logistica,logistica' && r.logForm+''==='vendedor,vendedor', r);
   chk('Administración → según la pestaña: pedido y Mis pedidos de vendedor, Contabilidad de contador, Administración con casco, lo demás Bloki',
     r && r.admin && r.admin.form==='vendedor,vendedor' && r.admin.mis==='vendedor,vendedor' && r.admin.conta==='conta,conta'
       && r.admin.admin==='logistica,logistica' && r.admin.atc==='bloki,bloki', r && r.admin);
-  chk('una vendedora → gorra y tablita, también en Contabilidad', r && r.vendedora+''==='vendedor,vendedor', r);
+  chk('una vendedora → gorra y tablita en ATC; en Contabilidad, anteojos; en Administración, casco (según la pestaña, para todos)', r && r.vendedora+''==='vendedor,vendedor' && r.vendConta+''==='conta,conta' && r.vendAdm+''==='logistica,logistica', r);
 
   console.log('\n── 3. La ventana ──');
-  r = await ev(() => { asisAbrir('ayuda'); var p=document.getElementById('asis-panel'), im=p && p.querySelector('.asis-h img');
+  r = await ev(() => { showView('mis'); asisAbrir('ayuda'); var p=document.getElementById('asis-panel'), im=p && p.querySelector('.asis-h img');
     var o={ txt:p ? p.querySelector('.asis-h').textContent : '', img:im ? im.getAttribute('src').slice(0,30) : '', traje:im && im.getAttribute('data-traje'),
       aria:p && p.getAttribute('aria-label'), yo:(document.getElementById('asis-yo')||{}).getAttribute && document.getElementById('asis-yo').getAttribute('aria-label') };
     asisCerrar(); return o; });
   chk('la ventana dice «Soy Bloki, tu asistente del panel» y no «Eduardo»', /Soy Bloki, tu asistente del panel/.test(r.txt||'') && !/Eduardo/.test(r.txt||''), r.txt);
-  chk('la cabecera lleva a Bloki con el traje de quien usa el panel (Mirian → vendedor)', /^data:image\/svg/.test(r.img||'') && r.traje==='vendedor', r);
+  chk('la cabecera lleva a Bloki con el traje de la pestaña (Mis pedidos → vendedor)', /^data:image\/svg/.test(r.img||'') && r.traje==='vendedor', r);
   chk('los nombres para lectores de pantalla dicen Bloki', /Bloki/.test(r.aria||'') && /Bloki/.test(r.yo||''), r);
 
   console.log('\n── 4-5. El anuncio ──');
