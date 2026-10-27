@@ -17707,7 +17707,9 @@ function stockProtegerDePaginaVieja(nuevo){
   var atras = stockCompararCortes(M.c, nuevo.c)>0 ||
               Object.keys(M.g||{}).some(function(nm){ return !!(nuevo.g||{})[nm] && stockCompararCortes(M.g[nm], nuevo.g[nm])>0; });
   var borro = ((M.det||[]).length>0 && !(nuevo.det||[]).length) || ((M.sm||[]).length>0 && !(nuevo.sm||[]).length) ||
-              (Number(M.v2t)>0 && !(Number(nuevo.v2t)>0));
+              (Number(M.v2t)>0 && !(Number(nuevo.v2t)>0)) ||
+              /* 🏭 (27/10, §4ne P0-1) una página de antes del 19/10 no conoce lo anotado del automático y lo borraba al guardar */
+              (Object.keys(M.ap||{}).length>0 && !Object.keys(nuevo.ap||{}).length);
   if(!atras && !borro) return null;
   STOCK_FUS_AVISOS=[];
   var j=stockFusionar(leerStock({ observaciones:bm.obs }), M, nuevo);
@@ -26201,7 +26203,15 @@ var STOCK_HIST=24;            // (23/10: 15 → 24, dos Excel por día × 3 alma
    página vieja (sin F5): esa no tiene «solo el Excel del día», puede volver atrás un corte y (la de antes del 05/10) borra
    el control. La lectura la JUNTA en vez de adoptarla (`leerCierresDeLista`), y el servidor 2026-10-06-a ni la deja
    guardar (`sf` en `apiSaveAhora`). */
-var STOCK_PV=3;
+/* 🔌 «EN PRODUCCIÓN» AUTOMÁTICO (§4lr, §4ls; explicación entera más abajo, al lado de `stockAutoEsp`). Va ACÁ arriba porque el formato del
+   stock (`STOCK_PV`) depende de él. 🏭 (27/10, §4ne, la Prioridad 0 de la revisión 2) PARA PRENDERLO son estas DOS líneas, nada más:
+     · `STOCK_AUTO_ACTIVO=true`;
+     · `STOCK_AUTO_DESDE='AAAA-MM-DD'` = el día en que se prende: lo que haya quedado anotado de antes (el 17-18/10, cuando estuvo prendido
+       un día) no cuenta, no se muestra ni se cierra (`stockAutoLista`).
+   Y al prender, `STOCK_PV` pasa solo a 4: el servidor 2026-10-27-a ya no deja que una página de antes (formato 3, sin F5) guarde el stock
+   encima del de una página nueva (`sf` ≥ el `pv` guardado). Primero se publica la página, todos F5, y recién ahí se usa. */
+var STOCK_AUTO_ACTIVO=false, STOCK_AUTO_DESDE='';
+var STOCK_PV=STOCK_AUTO_ACTIVO ? 4 : 3;
 function stockTextoAlDia(obs){ try{ var o=JSON.parse(String(obs||'{}')); return !!o && Number(o.pv)>=STOCK_PV; }catch(e){ return false; } }
 /* 📚 VENTAS POR MES DEL SISTEMA (§4du). Sale del «CONSOLIDADO ROTACION PRODUCTOS
    MULTIESPUMAS.xlsx» (hojas MATRIZ, fuente VENTAS MULTIESPUMAS): unidades por producto y
@@ -34435,6 +34445,29 @@ function existLoteAnotar(R, rol, C){
   var L=EXIST_LOTE; L.roles[rol]=1; L.n++; L.hu.push(existHuella(R));
   if(!C || C.sinPrevio || C.corteViejo){ L.sinBase=(L.sinBase||0)+1; return; }
   (C.todas||[]).forEach(function(x){ L.dif[x.k]=(L.dif[x.k]||0)+(Number(x.dif)||0); if(rol==='log') L.ent[x.k]=(L.ent[x.k]||0)+(Number(x.ent)||0); });
+  if(rol==='log' || rol==='sale'){ L.sinCam=L.sinCam||{}; var sc=existLoteSinCamion(C.ventana, rol==='sale' ? R.almacen : ''); Object.keys(sc).forEach(function(k){ L.sinCam[k]=(L.sinCam[k]||0)+sc[k]; }); }
+}
+/* 🚚 (27/10, §4ne P0-5) EL CAMIÓN QUE NO SALIÓ NO ES PRODUCCIÓN. Lo de HOY que la ventana del Excel dio por salido (la casilla del turno, que
+   sin dato del camión se propone por la hora) y que NADIE confirmó —ni el GPS, ni «🚚 Ya salió», ni ✅, ni el cierre (`eF`)— puede seguir en
+   el depósito: si el camión no salió, el Excel lo muestra y la diferencia parecía una ENTRADA, que cerraba lo pedido a la fábrica sin que
+   hubiera llegado nada. Esas unidades no cuentan como producción (`existLoteProduccion`); si el camión sí salió y no se marcó, lo pedido
+   sigue «en producción» hasta el «Llegó» de la fila o hasta que vence (lo seguro: no deja de pedir). `alm` vacío = PTF; con nombre, Banzer. */
+function existLoteSinCamion(v, alm){
+  var out={}; if(!v || !v.hasta) return out;
+  (STATE||[]).forEach(function(p){
+    if(!p || p.entregado) return;
+    ((p.productos)||[]).forEach(function(x){
+      if(!x || x.eF || enProduccionPendiente(x) || esProdDeTienda(x) || recogeDeTienda(x)) return;
+      if((x.eF||fechaSalida(p))!==v.hasta || !stockSalioVentana(p, x, v)) return;
+      if(camionSalio(v.hasta, p.vehiculo)) return;
+      var u=0;
+      if(enProduccion(x)){ if(!alm) u=prodUnidEnConteo(x); }
+      else if(alm) prodPartesCarga(x).forEach(function(e){ if(e.tipo==='sale' && recogerMismo(e.de, alm)) u+=e.u; });
+      else u=stockUnidAca(x);
+      if(u>0){ var k=stockClave(x); out[k]=(out[k]||0)+u; }
+    });
+  });
+  return out;
 }
 /* La entrada de cada producto en el lote. Con PTF y Moreno en el mismo archivo: la suma de las diferencias de todos los almacenes
    + lo que el control de PTF ya esperaba como llegada (una recogida anotada): lo que pasó de un almacén a otro se anula. Con un solo
@@ -34449,6 +34482,7 @@ function existLoteProduccion(L){
     else if(L.roles.otro && !L.roles.log && fab[k]==='MORENO') n=L.dif[k]||0;
     else if(L.roles.log && !L.roles.otro && fab[k]==='MULTI') n=(L.dif[k]||0)+(L.ent[k]||0);
     else n=0;
+    n-=(L.sinCam && L.sinCam[k]) || 0;   // 🚚 (27/10, §4ne P0-5) lo de un camión que nadie vio salir
     if(n>0) prod[k]=Math.round(n);
   });
   return prod;
@@ -42812,13 +42846,14 @@ var STOCK_AUTO_GRACIA=2, STOCK_AUTO_DIAS=12;
    · Lo que ya esté guardado en `STOCK.ap`/`STOCK.apL` se sigue LEYENDO, JUNTANDO y PODANDO igual (`leerStock`, `stockFusionar`,
      `stockPodar`, `filaStock`): no se pierde para cuando se prenda.
    · PRENDIDO (true): todo como el 17/10. */
-var STOCK_AUTO_ACTIVO=false;
+/* (el interruptor `STOCK_AUTO_ACTIVO` y `STOCK_AUTO_DESDE` están declarados arriba, al lado de `STOCK_PV`) */
 /* Compacto: la celda del stock corta en 50.000 letras (§4hl). `STOCK.ap` = {clave: {día: [pedido, llegó, a mano, anulado, cuándo (s)]}}. */
 function stockAutoEsp(f){ return sigDiaHabil(saldoSaleDeFabrica(f)); }
 function stockAutoVence(f){ var e=stockAutoEsp(f); for(var i=0;i<STOCK_AUTO_GRACIA;i++) e=sigDiaHabil(e); return e; }
 function stockAutoLista(k){
   var m=((STOCK.ap||{})[k])||{};
-  return Object.keys(m).sort().map(function(f){ var a=m[f]||[]; return { k:k, f:f, u:Math.max(0,Math.round(Number(a[0])||0)), rec:Math.max(0,Math.round(Number(a[1])||0)), man:!!a[2], no:!!a[3], t:Number(a[4])||0 }; });
+  /* 🏭 (27/10, §4ne P0-4) Lo anotado ANTES de prender no existe para el panel (ni cuenta, ni se ve, ni se cierra): se sigue podando solo. */
+  return Object.keys(m).filter(function(f){ return !STOCK_AUTO_DESDE || f>=STOCK_AUTO_DESDE; }).sort().map(function(f){ var a=m[f]||[]; return { k:k, f:f, u:Math.max(0,Math.round(Number(a[0])||0)), rec:Math.max(0,Math.round(Number(a[1])||0)), man:!!a[2], no:!!a[3], t:Number(a[4])||0 }; });
 }
 function stockAutoPend(e){ return Math.max(0, (e.u||0)-(e.rec||0)); }
 function stockAutoCuenta(e, hoy){ hoy=hoy||todayStr(); return !!(e && !e.no && e.f<hoy && stockAutoPend(e)>0 && stockAutoVence(e.f)>=hoy); }
@@ -42847,13 +42882,16 @@ function fusAuto(b, m, s){
 function stockPodarAuto(S, hoy){
   if(!S || !S.ap || typeof S.ap!=='object') return S;
   hoy=hoy||todayStr();
-  var lim=stockSumarDias(hoy, -STOCK_AUTO_DIAS), ayer=stockSumarDias(hoy, -1);
+  var lim=stockSumarDias(hoy, -STOCK_AUTO_DIAS);
   Object.keys(S.ap).forEach(function(k){
     var m=S.ap[k]; if(!m || typeof m!=='object'){ delete S.ap[k]; return; }
     Object.keys(m).forEach(function(f){
       var a=m[f]; if(!Array.isArray(a)){ delete m[f]; return; }
-      var u=Number(a[0])||0, rec=Number(a[1])||0;
-      if(f<lim || (f<hoy && (a[3] || u<=0)) || (rec>=u && f<ayer)) delete m[f];
+      /* 🏭 (27/10, §4ne P0-2) SOLO POR FECHA. Antes también se borraba lo anulado, lo de 0 y lo que ya llegó: la junta de tres copias
+         (`fusAuto`) es una unión, así que la copia de OTRO equipo que todavía lo tenía abierto lo revivía («juntar copias revive lo que ya
+         llegó», revisión 2). Con una regla que depende solo del día, todas las copias podan lo mismo y lo cerrado queda cerrado hasta
+         `STOCK_AUTO_DIAS`. Lo cerrado no cuenta igual (`stockAutoCuenta`). */
+      if(f<lim) delete m[f];
     });
     if(!Object.keys(m).length) delete S.ap[k];
   });
@@ -42924,9 +42962,9 @@ function stockAutoHtml(o){
     if(e.f===hoy){
       if(!(e.u>0)) return;
       h+='<div class="pl-auto" onclick="event.stopPropagation()" style="font-size:.76rem;color:#0f766e;margin-top:3px">📌 Hoy se piden <input type="text" inputmode="numeric" value="'+e.u+'" data-k="'+esc(o.k)+'" data-f="'+esc(e.f)+'" onchange="stockAutoCambiar(this.dataset.k,this.dataset.f,this.value)" style="width:42px;padding:0 4px;font-size:.76rem"> a la fábrica'+
-        ' (lo anota el panel: desde mañana cuenta como en producción)'+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+        (e.man ? ' (anotado a mano: desde mañana cuenta como en producción)' : ' (lo anota el panel: desde mañana cuenta como en producción)')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
     } else if(vence>=hoy){
-      h+='<div class="pl-auto" style="font-size:.76rem;color:#075985;margin-top:3px">🏭 En producción: '+stockUnid(pend)+(pend<e.u?(' de '+stockUnid(e.u)):'')+' (lo pidió el panel el '+fmtFechaCorta(e.f)+') · llega ~'+fmtFechaCorta(llega)+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
+      h+='<div class="pl-auto" style="font-size:.76rem;color:#075985;margin-top:3px">🏭 En producción: '+stockUnid(pend)+(pend<e.u?(' de '+stockUnid(e.u)):'')+' ('+(e.man?'pedido':'lo pidió el panel')+' el '+fmtFechaCorta(e.f)+') · llega ~'+fmtFechaCorta(llega)+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
     } else if(stockDias(vence, hoy)<=PLAN_YA_VENCIDO_DIAS){
       h+='<div class="pl-auto" style="font-size:.76rem;color:#92400e;margin-top:3px">⚠️ El panel pidió '+stockUnid(pend)+' el '+fmtFechaCorta(e.f)+' y no apareció en ningún Excel (tenía que llegar ~'+fmtFechaCorta(llega)+'): ¿se pidió? Ya no se cuenta.'+bot('Llegó','stockAutoLlego')+bot('No se pidió','stockAutoNoSePidio')+'</div>';
     }
@@ -42958,12 +42996,27 @@ function planYaHtml(o){
 var PLAN_YA_ULT=null, PLAN_YA_UNDO_MS=120000;
 function planYaUndoHtml(){
   var u=PLAN_YA_ULT; if(!u || Date.now()-u.t>PLAN_YA_UNDO_MS) return '';
-  if(!(STOCK.p||[]).some(function(q){ return q && q.id===u.id; })){ PLAN_YA_ULT=null; return ''; }
+  var sigue=u.auto ? (function(){ var e=stockAutoDe(u.k, todayStr()); return !!(e && !e.no && e.u>0); })()   // 🏭 (§4ne P0-3)
+                   : (STOCK.p||[]).some(function(q){ return q && q.id===u.id; });
+  if(!sigue){ PLAN_YA_ULT=null; return ''; }
   return '<div class="pl-ya-undo" id="pl-ya-undo">✓ Anotaste <b>Ya pedí '+stockUnid(u.u)+'</b> de <b>'+esc(u.nom)+'</b>: la fila pasó a «🚚 Ya pedido».'+
     '<button type="button" class="btn btn-sm" style="background:#fff;border:1px solid #0f766e;color:#0f766e;font-weight:700" onclick="planYaDeshacer()">↩️ Deshacer</button></div>';
 }
-function planYaDeshacer(){ var u=PLAN_YA_ULT; PLAN_YA_ULT=null; if(u) planYaPedi(u.k, false, u.id); }
+function planYaDeshacer(){ var u=PLAN_YA_ULT; PLAN_YA_ULT=null; if(!u) return; if(u.auto) stockAutoNoSePidio(u.k, todayStr()); else planYaPedi(u.k, false, u.id); }
 function planYaPedi(k, on, id){
+  /* 🏭 (27/10, §4ne P0-3) UN SOLO LUGAR PARA LO PEDIDO. Con el automático prendido, «Ya pedí» se anota como lo del panel (`STOCK.ap`, a mano):
+     así una llegada se reparte UNA vez (`stockAutoConsumir`, el más viejo primero). Con dos listas (`STOCK.p` y `STOCK.ap`) la misma llegada
+     cerraba lo del panel y además la detección del control del Excel le restaba al «Ya pedí»: se contaba dos veces. Los «Ya pedí» de antes
+     de prender siguen en `STOCK.p` hasta que vencen. */
+  if(on && STOCK_AUTO_ACTIVO){
+    var oA=stockData().lista.find(function(x){ return x.k===k; }); if(!oA || !(oA.fabricar>0)){ toast('Ya no hay nada para pedir de este producto: no se anotó nada.','ok',4000); renderStock(); return; }
+    var hoyA=todayStr(), eA=stockAutoDe(k, hoyA);
+    stockAutoPoner({ k:k, f:hoyA, u:oA.fabricar, rec:eA ? eA.rec : 0, man:true, no:false });
+    toast('✓ Anotado: pediste '+stockUnid(oA.fabricar)+' hoy. Desde mañana cuenta como en producción.','ok',5000);
+    PLAN_YA_ULT={ k:k, auto:1, u:oA.fabricar, nom:stockNombre(oA), t:Date.now() };
+    stockOlvidarIndice(); guardarStock(); renderStock(); planYaUndoVer();
+    return;
+  }
   if(on){
     var o=stockData().lista.find(function(x){ return x.k===k; }); if(!o || !(o.fabricar>0)){ toast('Ya no hay nada para pedir de este producto: no se anotó nada.','ok',4000); renderStock(); return; }   // (§4ls Man-VM7) que la casilla no quede tildada sin anotar
     /* (§4jd, A3-2) id DERIVADO del producto y el día: dos equipos que tildan «Ya pedí» a la vez antes de leerse anotan el MISMO pedido
