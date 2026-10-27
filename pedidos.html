@@ -33762,16 +33762,24 @@ function tstJuntar(a, b){
   }); });
   var px={};
   [a,b].forEach(function(o){ ((o&&o.x)||[]).forEach(function(q){ if(!q || !q.id) return; var y=px[q.id]; if(!y){ px[q.id]=JSON.parse(JSON.stringify(q)); return; } if(q.an) y.an=q.an; }); });
+  /* ✂️ (§4nl, 27/10, Astra A05) Un pase viejo se poda SOLO si ya no cuenta: anulado, o con las DOS tiendas contadas ese día o después
+     (`tstCalcular` suma lo de DESPUÉS del conteo). Uno de antes de un conteo que todavía cuenta (o de una tienda sin contar) se queda:
+     si no, guardar el conteo de OTRA tienda le cambiaba el saldo. */
   var lim=stockSumarDias(todayStr(), -TST_PASES_DIAS);
-  D.x=Object.keys(px).map(function(i){ return px[i]; }).filter(function(q){ return String(q.f||'')>=lim; }).sort(function(p,q){ return String(p.f).localeCompare(String(q.f)) || (p.ts||0)-(q.ts||0); });
+  var adentro=function(n, f){ var b=D.s[n]; return !!(b && b.f && String(b.f)>=String(f||'')); };
+  D.x=Object.keys(px).map(function(i){ return px[i]; }).filter(function(q){ return String(q.f||'')>=lim || !(q.an || (adentro(q.de, q.f) && adentro(q.a, q.f))); }).sort(function(p,q){ return String(p.f).localeCompare(String(q.f)) || (p.ts||0)-(q.ts||0); });
   var ph={};
   [a,b].forEach(function(o){ ((o&&o.h)||[]).forEach(function(e){ if(e) ph[e.n+'|'+e.f+'|'+(e.t||0)]=e; }); });
   D.h=Object.keys(ph).map(function(i){ return ph[i]; }).sort(function(p,q){ return (p.t||0)-(q.t||0); }).slice(-TST_HIST);
   D.al={}; [a,b].forEach(function(o){ Object.keys((o&&o.al)||{}).forEach(function(k){ if(o.al[k]) D.al[k]=o.al[k]; }); });   // lo de este aparato, último
   return D;
 }
-/* Relee la planilla, junta, aplica `fn` y guarda la fila. Sin señal no guarda nada (y lo dice). */
-function tstGuardarCon(fn, okTxt){
+/* Relee la planilla, junta, aplica `fn` y guarda la fila. Sin señal no guarda nada (y lo dice).
+   ⏳ (§4nl, 27/10, Astra A02) Si se mandó y Google no contestó, NO es «no se guardó»: pudo haber entrado. Queda `TST_DUDA` y se dice
+   «no sé si llegó» (`dudaTxt` lo cuenta mejor). */
+var TST_DUDA=0;
+function tstGuardarCon(fn, okTxt, dudaTxt){
+  TST_DUDA=0;
   if(TST_ENV) return Promise.resolve(null);
   if(!CONNECTED){ toast('❌ Sin conexión con la planilla: no se guardó. Probá de nuevo con señal.','err',8000); return Promise.resolve(null); }
   TST_ENV=1; tstPintar();
@@ -33789,8 +33797,14 @@ function tstGuardarCon(fn, okTxt){
       STATE=STATE.filter(function(p){ return String(p.id)!==TST_ID; }); STATE.push(g);
       if(okTxt) toast(okTxt,'ok',6000);
       return r;
-    });
-  }).then(fin, function(e){ toast('❌ No se guardó: '+((e && e.message) || 'error')+'. Probá de nuevo.','err',9000); return fin(null); });
+    }, function(e){ var x=(e instanceof Error) ? e : new Error(String(e)); if(x.message!=='clave') x._duda=1; throw x; });   // se mandó y no hubo respuesta
+  }).then(fin, function(e){
+    var m=(e && e.message) || 'error';
+    TST_DUDA=e && e._duda ? 1 : 0;
+    if(TST_DUDA) toast('⚠️ '+(dudaTxt || 'No sé si llegó a la planilla: mirá en un rato antes de volver a cargarlo.')+' (Google no contestó: '+m+')','err',12000);
+    else toast('❌ No se guardó: '+m+'. Probá de nuevo.','err',9000);
+    return fin(null);
+  });
 }
 /* ---- la ventana ---- */
 function abrirTst(){
@@ -33810,6 +33824,7 @@ function tstCuandoHtml(){
 function tstPintar(){
   var el=document.getElementById('tst-body'); if(!el) return;
   var D=tstLeer(), T=tstCalcular(null, D), hoy=todayStr(), Uant=tstUltimoHabilMes(tstMesAnterior(hoy));
+  if(!TST_ENV) tstPasesPendAlDia(D);   // ⏳ (§4nl, Astra A02) lo que quedó en duda y ya está en la planilla
   var info=document.getElementById('tst-info');
   var con=Object.keys(T).filter(function(n){ return T[n].base; });
   if(info) info.textContent=con.length ? (con.length+' de '+Object.keys(T).length+' tiendas con conteo') : 'todavía sin conteos';
@@ -33822,6 +33837,7 @@ function tstPintar(){
         '<button type="button" class="btn btn-ghost" onclick="tstVer(\'pase\')">🔁 Pasé de una tienda a otra</button>'+
       '</div>'+
       (TST_MSG ? ('<div class="tst-mal" id="tst-msg">'+TST_MSG+'</div>') : '')+
+      tstPasesDudaHtml()+   // ⏳ (§4nl, Astra A02)
     '</div>';
   if(TST_PREV) h+=tstPrevHtml(D);
   else if(TST_VISTA==='mano') h+=tstManoHtml();
@@ -34026,8 +34042,49 @@ function tstPaseGuardar(){
   if(!P){ toast('No conozco ese código de producto.','err'); return; }
   if(!(u>=1) || Math.floor(u)!==u){ toast('La cantidad tiene que ser un número entero, 1 o más.','err'); return; }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f||'') || f>todayStr()){ toast('El día tiene que ser hoy o antes.','err'); return; }
-  var q={ id:'tp'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36), f:f, de:de, a:a, k:P.k, u:u, ts:Date.now() };
-  return tstGuardarCon(function(D){ D.x.push(q); }, '🔁 Pase anotado: '+u+' de '+de+' a '+a).then(function(r){ if(r){ TST_VISTA=''; tstPintar(); } return r; });
+  /* ⏳ (§4nl, 27/10, Astra A02) El MISMO pase que quedó sin respuesta (mismas tiendas, producto, cantidad y día) va con su id de antes. */
+  var pe=tstPasesPend().filter(function(x){ return x.de===de && x.a===a && x.k===P.k && x.u===u && x.f===f; })[0];
+  var q=pe || { id:'tp'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36), f:f, de:de, a:a, k:P.k, u:u, ts:Date.now() };
+  return tstPaseMandar(q, !!pe);
+}
+/* ⏳ (§4nl, 27/10, Astra A02) Un pase lleva su id DESDE que se arma y queda en el aparato (`me_tst_pase_pend`) hasta que el servidor lo
+   confirma. Si Google no contesta, el reintento manda el MISMO id: la junta por id no lo duplica (antes estrenaba otro: 2 pases, 4 unidades).
+   Lo que está en el aparato y no se está mandando (`TST_PASE_MANDANDO`) está en duda: puede haber entrado. */
+var TST_PASE_LS='me_tst_pase_pend', TST_PASES_PEND=null, TST_PASE_MANDANDO='';
+function tstPasesPend(){   // se relee cada vez: otra pestaña de este aparato pudo dejar uno (sin almacenamiento, el de la memoria)
+  try{ var L=JSON.parse(localStorage.getItem(TST_PASE_LS)||'[]'); if(Array.isArray(L)) return L; }catch(e){}
+  return TST_PASES_PEND || [];
+}
+function tstPasesPendPoner(L){ TST_PASES_PEND=L; try{ if(L.length) localStorage.setItem(TST_PASE_LS, JSON.stringify(L)); else localStorage.removeItem(TST_PASE_LS); }catch(e){} }
+function tstPasesPendSacar(id){ tstPasesPendPoner(tstPasesPend().filter(function(x){ return x.id!==id; })); }
+function tstPaseMandar(q, yaEnDuda){
+  if(TST_ENV) return Promise.resolve(null);   // ya hay un guardado en curso (dos toques seguidos)
+  tstPasesPendPoner(tstPasesPend().filter(function(x){ return x.id!==q.id; }).concat([q]));
+  TST_PASE_MANDANDO=q.id;
+  return tstGuardarCon(function(D){ if(!D.x.some(function(x){ return x && x.id===q.id; })) D.x.push(q); }, '🔁 Pase anotado: '+q.u+' de '+q.de+' a '+q.a,
+    'No sé si el pase llegó a la planilla. Mirá «Últimos pases» antes de volver a cargarlo: si lo anotás igual o tocás «🔁 Mandarlo de nuevo», va con el MISMO número y no se duplica.').then(function(r){
+    TST_PASE_MANDANDO='';
+    if(r || !(TST_DUDA || yaEnDuda)) tstPasesPendSacar(q.id);   // confirmado, o un «no» seguro de uno recién armado: no entró
+    if(r) TST_VISTA='';
+    tstPintar(); return r;
+  });
+}
+function tstPaseReintentar(id){ var q=tstPasesPend().filter(function(x){ return x.id===id; })[0]; if(q) return tstPaseMandar(q, true); }
+function tstPaseOlvidar(id){ tstPasesPendSacar(id); tstPintar(); }
+/* Lo que quedó en duda y la planilla ya trae: llegó. Se dice una vez y sale del aparato. */
+function tstPasesPendAlDia(D){
+  var L=tstPasesPend(); if(!L.length) return;
+  var ids={}; (D.x||[]).forEach(function(x){ if(x && x.id) ids[x.id]=1; });
+  var ya=L.filter(function(x){ return ids[x.id]; }); if(!ya.length) return;
+  tstPasesPendPoner(L.filter(function(x){ return !ids[x.id]; }));
+  ya.forEach(function(x){ if(x.id!==TST_PASE_MANDANDO) toast('✅ El pase que quedó en duda ('+x.u+' × '+tstNombre(x.k)+' de '+x.de+' a '+x.a+') SÍ llegó a la planilla: no lo cargues de nuevo.','ok',9000); });
+}
+function tstPasesDudaHtml(){
+  var L=tstPasesPend().filter(function(x){ return x.id!==TST_PASE_MANDANDO; }); if(!L.length) return '';
+  return '<div class="tst-mal" id="tst-duda">⏳ <b>No sé si llegó a la planilla</b> (Google no contestó). Mirá «Últimos pases»: si no aparece, mandalo de nuevo — va con el MISMO número y no se duplica.'+
+    L.map(function(x){ return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px"><span>'+esc(saldoDiaTxt(x.f))+': <b>'+x.u+'</b> × '+esc(tstNombre(x.k))+' · de <b>'+esc(x.de)+'</b> a <b>'+esc(x.a)+'</b></span>'+
+      '<button type="button" class="btn btn-ghost btn-sm" data-id="'+esc(x.id)+'" onclick="tstPaseReintentar(this.dataset.id)"'+(TST_ENV?' disabled':'')+'>🔁 Mandarlo de nuevo</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" data-o="'+esc(x.id)+'" onclick="tstPaseOlvidar(this.dataset.o)">✕ Olvidarlo</button></div>'; }).join('')+'</div>';
 }
 function tstPaseAnular(id){
   return tstGuardarCon(function(D){ var q=(D.x||[]).filter(function(x){ return x && x.id===id; })[0]; if(!q) return 'ese pase ya no está'; q.an=Date.now(); }, '↩️ Pase anulado');
