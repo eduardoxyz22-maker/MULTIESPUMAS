@@ -3920,6 +3920,43 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .sem-v-urge.on{ background:#b4232c; border-color:#b4232c; }
 .sem-v:disabled{ opacity:.45; cursor:default; }
 .sem-v-x{ color:var(--teal-dk); border-style:dashed; }
+/* 🏬 (27/10, §4na) El stock de cada tienda: su ventana (`#tst-overlay`). */
+#tst-body{ flex:1; overflow:auto; padding:14px; }
+.tst{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+.tst-caja{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
+.tst-exp{ font-size:.84rem; line-height:1.5; color:var(--text); }
+.tst-exp b{ color:#155e75; }
+.tst-cuando{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#ecfeff; border:1px solid #a5f3fc; border-radius:12px; padding:10px 12px; font-size:.85rem; color:#164e63; }
+.tst-cuando.hoy{ background:#fef3c7; border-color:#fcd34d; color:#78350f; }
+.tst-acc{ display:flex; gap:8px; flex-wrap:wrap; }
+.tst-acc .btn{ min-height:40px; }
+.tst-card{ border:1px solid var(--gray-md); border-left:5px solid #155e75; border-radius:12px; background:#fff; overflow:hidden; }
+.tst-card.sin{ border-left-color:#cbd5e1; }
+.tst-cab{ width:100%; font:inherit; text-align:left; background:#fff; border:0; padding:11px 14px; cursor:pointer; display:flex; gap:10px; align-items:center; flex-wrap:wrap; min-height:48px; }
+.tst-cab:hover{ background:#f8fafc; }
+.tst-cab b.tst-n{ font-size:1rem; color:#155e75; min-width:120px; }
+.tst-num{ display:flex; gap:14px; flex-wrap:wrap; margin-left:auto; font-size:.8rem; color:var(--muted); }
+.tst-num span b{ font-size:1.05rem; color:var(--text); font-variant-numeric:tabular-nums; }
+.tst-f{ font-size:.78rem; color:var(--muted); }
+.tst-f.mal{ color:#b45309; font-weight:700; }
+.tst-tab{ width:100%; border-collapse:collapse; font-size:.8rem; font-variant-numeric:tabular-nums; }
+.tst-tab th{ background:#f1f5f9; color:#334155; font-size:.68rem; letter-spacing:.04em; text-transform:uppercase; text-align:right; padding:7px 8px; white-space:nowrap; }
+.tst-tab th:first-child, .tst-tab td:first-child{ text-align:left; }
+.tst-tab td{ text-align:right; padding:7px 8px; border-top:1px solid var(--gray-lt); }
+.tst-tab td.tst-t{ font-weight:800; color:#155e75; }
+.tst-tab tr.neg td.tst-t{ color:#b4232c; }
+.tst-tab tfoot td{ font-weight:800; background:#f8fafc; }
+.tst-cero{ color:var(--muted); }
+.tst-w{ overflow-x:auto; padding:0 10px 10px; }
+.tst-form{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; align-items:end; }
+.tst-form label{ display:flex; flex-direction:column; gap:4px; font-size:.75rem; font-weight:700; color:var(--muted); }
+.tst-form input, .tst-form select, .tst-form textarea{ font:inherit; font-size:.9rem; padding:8px 10px; border:1px solid var(--gray-md); border-radius:9px; color:var(--text); min-height:40px; }
+.tst-form textarea{ min-height:150px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+.tst-full{ grid-column:1/-1; }
+.tst-ok{ color:#166534; } .tst-mal{ color:#b4232c; font-weight:700; }
+.tst-dif-m{ color:#b4232c; font-weight:800; } .tst-dif-p{ color:#1d4ed8; font-weight:800; }
+.tst-hist{ font-size:.76rem; color:var(--muted); padding:0 14px 10px; line-height:1.5; }
+@media (max-width:640px){ .tst-num{ margin-left:0; } .tst-cab b.tst-n{ min-width:0; } }
 /* las ventanas que abren las herramientas: cabecera con brillo, botones en píldora y el cuerpo en tarjeta */
 .adm-ov > .no-print:first-child{ background-image:linear-gradient(120deg,rgba(255,255,255,.14),rgba(0,0,0,.14))!important; padding:12px 14px!important;
   box-shadow:0 10px 24px -16px rgba(0,0,0,.6); position:relative; z-index:2; }
@@ -4613,9 +4650,10 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><span class="stk-acc"><button class="btn btn-sm" id="stk-pap-btn" style="background:#fff;color:#007C76;font-weight:800" onclick="abrirPap()" title="Qué pedir a cada fábrica y qué va a dónde (PTF, Banzer y cada tienda), para 7, 15 y 30 días y el mes que viene.">🏭 Pedido a producción</button><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></span><button class="btn btn-sm stk-cerrar" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button><div id="stk-top" class="s3" hidden></div></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><input id="stk-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="stockBuscar(this.value)" title="Filtra la tabla por nombre o código (05/10: el dueño no lo encontraba abajo de los cuadros)" style="margin-left:auto;min-width:200px;max-width:300px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><span class="stk-acc"><button class="btn btn-sm" id="stk-pap-btn" style="background:#fff;color:#007C76;font-weight:800" onclick="abrirPap()" title="Qué pedir a cada fábrica y qué va a dónde (PTF, Banzer y cada tienda), para 7, 15 y 30 días y el mes que viene.">🏭 Pedido a producción</button><button class="btn btn-sm" style="background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno, de un almacén o de los tres juntos (se revisan uno detrás del otro). Reemplaza el conteo de cada almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:#fde68a;color:#78350f;font-weight:700" onclick="abrirStockSalida()" title="Algo salió del depósito sin un pedido cargado en el panel (un pedido grande de Multicenter, por ejemplo).">📤 Salió sin pedido</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:#e0e7ff;color:#1e3a5f;font-weight:700" onclick="abrirAlm()" title="Qué productos conviene tener en Banzer y cuáles en PTF, según dónde se entregan (los últimos 60 días) y cuánto rotan.">📍 Banzer o PTF</button><button class="btn btn-sm" id="stk-tst-btn" style="background:#cffafe;color:#155e75;font-weight:700" onclick="abrirTst()" title="Cuánto tiene cada tienda: el conteo del último día hábil del mes más lo que le llegó, menos lo que vendió y lo que se recogió para pedidos.">🏬 Stock de las tiendas</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></span><button class="btn btn-sm stk-cerrar" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button><div id="stk-top" class="s3" hidden></div></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <!-- 🏭 (20/10) «Pedido a producción»: qué pedir a cada fábrica y qué va a dónde (PTF, Banzer, cada tienda), para 7, 15 y 30 días y el mes que viene. Se abre desde Stock. -->
 <div id="pap-overlay" role="dialog" aria-modal="true" aria-labelledby="pap-tit"><div class="pap-cab no-print"><div class="pap-cab-tx"><b id="pap-tit">🏭 Pedido a producción</b><span id="pap-sub">Se abre desde Stock</span></div><button type="button" class="pap-cab-btn" data-pap="actualizar" aria-label="Actualizar" title="Vuelve a calcular con lo último de la planilla y del stock.">🔄<span class="pap-cab-txt"> Actualizar</span></button><button type="button" class="pap-cab-btn" data-pap="cerrar" aria-label="Cerrar">✕<span class="pap-cab-txt"> Cerrar</span></button></div><div id="pap-cuerpo" class="pap-cuerpo"><div class="pap-pag"><div class="pap-ctrl" id="pap-ctrl"><div class="pap-pestanas" role="tablist" aria-label="Qué querés ver"><button type="button" class="pap-pestana" role="tab" id="pap-tab-pedir" aria-controls="pap-pedir" aria-selected="true" data-pap-tab="pedir">📦 Qué pedir a producción</button><button type="button" class="pap-pestana" role="tab" id="pap-tab-donde" aria-controls="pap-donde" aria-selected="false" data-pap-tab="donde">🗺️ Qué va a dónde</button></div><div class="pap-plazos" id="pap-plazos" role="group" aria-label="¿Para cuánto tiempo?"></div></div><p class="pap-nota">Cada plazo ya trae al anterior (15 días incluye los 7): no se suman.</p><div id="pap-pedir" class="pap-panel" role="tabpanel" aria-labelledby="pap-tab-pedir"></div><div id="pap-donde" class="pap-panel" role="tabpanel" aria-labelledby="pap-tab-donde" hidden></div></div></div><div class="pap-hoja-fondo" id="pap-hoja" hidden><div class="pap-hoja" role="dialog" aria-modal="true" aria-labelledby="pap-hoja-tit"><b id="pap-hoja-tit">Copiá este texto</b><p>No se pudo copiar solo. Mantené apretado el texto y elegí «Copiar».</p><textarea id="pap-hoja-tx" readonly></textarea><button type="button" class="pap-btn" data-pap="hoja-ok">Listo</button></div></div></div>
+<div id="tst-overlay" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="tst-tit" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="tst-tit" style="font-size:.95rem">🏬 Stock de las tiendas</b><span id="tst-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarTst()">✕ Cerrar</button></div><div id="tst-body"></div></div>
 <div id="alm-overlay" style="display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1e3a5f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📍 Banzer o PTF · qué tener en cada depósito</b><span id="alm-info" style="font-size:.78rem;opacity:.92"></span><input id="alm-q" type="search" placeholder="🔎 buscar producto o código" autocomplete="off" oninput="almBuscar(this.value)" style="margin-left:auto;min-width:180px;max-width:280px;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;font:inherit;font-size:.82rem"><button class="btn btn-sm" style="background:#fff;color:#1e3a5f;font-weight:700" onclick="almCopiar()" title="Copia la lista de lo que hay que mover, para mandarla a logística por WhatsApp.">📋 Copiar para logística</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarAlm()">✕ Cerrar</button></div><div id="alm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
@@ -16897,7 +16935,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
@@ -32062,6 +32100,375 @@ function renderTiendas(d, MS){
   });
   return html+'</div>';
 }
+/* ============================================================================
+   🏬 EL STOCK DE CADA TIENDA (§4na, 27/10). El dueño (14/10, §4kx): «logística no repone lo que se recoge de una tienda… hace falta
+   llevar el saldo de cada tienda»; (27/10): «armarlo y veamos cómo queda, quiero ver que no altere fórmulas ni nada que ya tenemos
+   trabajando… sería el último día laboral del mes, no voy a subir un domingo».
+   · Las tiendas no están en el reporte de Moreno. Cada una se CUENTA el último día hábil del mes, al cierre, y se sube: el mismo reporte
+     «EXISTENCIAS ALMACEN» sacado del almacén de la tienda (de una o de varias en un archivo), o escrito a mano (código y cantidad).
+   · Desde ese conteo el panel lleva la cuenta, con todo lo que tiene fecha DESPUÉS del día del conteo (lo de ese día ya está adentro):
+       tiene = contado + le llegó (las RPT que salieron) − vendió (sus ventas de tienda) − se recogió para pedidos («🏬 Tienda») ± pases
+     Lo marcado «🏬 Tienda» de un pedido que todavía no salió está en la tienda pero APARTADO: libres = tiene − apartado.
+   · Al subir un conteo nuevo, el panel dice cuánto esperaba y la diferencia con lo contado (ventas de tienda sin cargar, recogidas sin
+     marcar…), como el control del Excel de fábrica.
+   ⚠️ SOLO MIRA: vive en su propia fila del sistema (`__tiendas_stock__`), aparte de `__stock__`. Ninguna cuenta de PTF, Banzer o Moreno,
+   la revisión automática, el cuadrito del formulario ni «Qué producir» la lee. Sin ningún conteo cargado, el panel queda igual que antes.
+   Lo de tienda (`esProdDeTienda`: protectores, sábanas…) queda afuera, como en el stock de fábrica. `tests/test_tiendas_stock.js`.
+   ========================================================================== */
+var TST_ID='__tiendas_stock__', TST_HIST=48, TST_PASES_DIAS=120, TST_ABIERTA={}, TST_VISTA='', TST_PREV=null, TST_ENV=0, TST_MSG='';
+function tstTiendas(){ return recogerTiendas(); }   // las seis propias: Tiendas Roho no es nuestra
+function tstLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===TST_ID; })[0], o={};
+  try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  return { v:1, s:(o.s && typeof o.s==='object') ? o.s : {}, x:Array.isArray(o.x) ? o.x : [], h:Array.isArray(o.h) ? o.h : [] };
+}
+function tstHayConteo(){ var s=tstLeer().s; return Object.keys(s).some(function(n){ return s[n] && s[n].f; }); }
+/* De qué tienda habla un texto: «Mia Plaza», «ALMACEN TIENDA MIA PLAZA», «01-07-002 TDA CHARCAS». */
+function tstTiendaDe(t){
+  var n=normNombre(t||''); if(!n) return '';
+  var L=tstTiendas();
+  for(var i=0;i<L.length;i++){ if(n.indexOf(normNombre(L[i]))>=0) return L[i]; }
+  return '';
+}
+/* Un almacén de fábrica (PTF, Banzer, Moreno) no es una tienda aunque el nombre se parezca: su Excel va en «📥 Subir existencias». */
+function tstEsDeFabrica(nm){
+  if(!nm) return false;
+  if(stockEsLog(nm) || almEsSalida(nm) || !recogerCanon(nm)) return true;
+  return Object.keys(STOCK.g||{}).some(function(g){ return normNombre(g)===normNombre(nm); });
+}
+/* El último día hábil del mes de una fecha: el del conteo (dueño: «el último día laboral del mes»). */
+function tstUltimoHabilMes(f){
+  var ym=String(f||todayStr()).slice(0,7), y=+ym.slice(0,4), m=+ym.slice(5,7);
+  var u=isoLocal(new Date(y, m, 0));
+  for(var i=0; i<10 && !diaHabil(u); i++) u=stockSumarDias(u,-1);
+  return u;
+}
+function tstMesAnterior(f){ var ym=String(f||todayStr()).slice(0,7), y=+ym.slice(0,4), m=+ym.slice(5,7)-1; if(m<1){ m=12; y--; } return y+'-'+(m<10?'0':'')+m+'-01'; }
+function tstNombre(k){ return stockNombreClave(k); }
+/* Un código escrito a mano → el producto, con la MISMA clave que el stock (la lista de precios, y si no el Excel o el histórico). */
+function tstProdDeCodigo(cod){
+  var c=String(cod||'').trim().toUpperCase(); if(!c) return null;
+  if(CODIGOS[c]){ var k=stockAliasDe(stockClave({ desc:CODIGOS[c].d, medida:CODIGOS[c].m, codigo:c })); return { k:k, cod:c }; }
+  var a=productoDeAlmacen(c); if(a && a.k) return { k:stockAliasDe(a.k), cod:c };
+  return null;
+}
+/* La cuenta de cada tienda hasta el día `hasta` (por defecto hoy). Devuelve {tienda:{n, base, filas, tot, P}}. */
+function tstCalcular(hasta, D){
+  D=D||tstLeer(); var hoy=todayStr(); hasta=hasta||hoy;
+  var T={};
+  tstTiendas().forEach(function(n){ T[n]={ n:n, base:(D.s[n] && D.s[n].f) ? D.s[n] : null, P:{} }; });
+  var fila=function(t,k){ k=stockAliasDe(k); return t.P[k]=t.P[k]||{ k:k, c:0, rpt:0, ven:0, rec:0, pas:0, apart:0, ped:[] }; };
+  Object.keys(T).forEach(function(n){ var t=T[n]; if(!t.base) return; var u=t.base.u||{}; Object.keys(u).forEach(function(k){ fila(t,k).c+=Number(u[k])||0; }); });
+  var despues=function(t,f){ return !!(t && t.base) && !!f && f>t.base.f && f<=hasta; };
+  (STATE||[]).forEach(function(p){
+    if(!stockCuenta(p)) return;
+    var rpt=esRPT(p.oc), vt=!rpt && esVentaTienda(p);
+    (p.productos||[]).forEach(function(x){
+      var c=Number(x&&x.cant)||0; if(!(c>0) || esProdDeTienda(x)) return;
+      var k=stockClave(x); if(!k || k==='|') return;
+      var t, f;
+      if(rpt){                                   // le llegó: la reposición que salió (ni la ✗ ni la que se va a buscar y no llegó)
+        t=T[sucursalDeRpt(p)]; f=fechaSalida(p);
+        if(!despues(t,f) || x.chk==='no' || !stockSalio(p,x)) return;
+        fila(t,k).rpt+=c; return;
+      }
+      if(vt){                                    // vendió en la tienda
+        t=T[sucursalDeVenta(p)]; f=contaFecha(p);
+        if(despues(t,f)) fila(t,k).ven+=c;
+        return;
+      }
+      var S=recogeDeTienda(x); t=S ? T[S] : null; if(!t || !t.base) return;   // 🏬 se recoge de la tienda para un pedido
+      f=fechaSalida(p);
+      var salio=(!!p.entregado && !stockEntregadoFuturo(p,x)) || (!!f && f<hoy);   // como el stock de fábrica: fecha pasada = salió (§4co)
+      if(salio){ if(despues(t,f)) fila(t,k).rec+=c; return; }
+      var r=fila(t,k); r.apart+=c; r.ped.push(p.id);
+    });
+  });
+  (D.x||[]).forEach(function(q){                 // 🔁 pases entre tiendas
+    if(!q || q.an) return; var u=Number(q.u)||0; if(!(u>0) || !q.k) return;
+    if(despues(T[q.de], q.f)) fila(T[q.de], q.k).pas-=u;
+    if(despues(T[q.a], q.f)) fila(T[q.a], q.k).pas+=u;
+  });
+  Object.keys(T).forEach(function(n){
+    var t=T[n], tot={ c:0, rpt:0, ven:0, rec:0, pas:0, tiene:0, apart:0, libre:0, neg:0 };
+    t.filas=Object.keys(t.P).map(function(k){
+      var r=t.P[k]; r.tiene=r.c+r.rpt-r.ven-r.rec+r.pas; r.libre=r.tiene-r.apart;
+      ['c','rpt','ven','rec','pas','tiene','apart'].forEach(function(z){ tot[z]+=r[z]; });
+      if(r.tiene<0) tot.neg++;
+      return r;
+    }).filter(function(r){ return r.c||r.rpt||r.ven||r.rec||r.pas||r.apart; })
+      .sort(function(a,b){ return (b.tiene-a.tiene)||a.k.localeCompare(b.k); });
+    tot.libre=tot.tiene-tot.apart; t.tot=tot;
+  });
+  return T;
+}
+/* Cuánto tiene cada tienda de UN producto (para la lista de «🏬 Tienda» de la ficha). Solo las tiendas con conteo. */
+function tstDeClave(k){
+  if(!tstHayConteo()) return {};
+  var T=tstCalcular(), o={}; k=stockAliasDe(k);
+  Object.keys(T).forEach(function(n){ var t=T[n]; if(!t.base) return; var r=t.P[k]; o[n]={ tiene:r?r.tiene:0, apart:r?r.apart:0, libre:r?r.libre:0, f:t.base.f }; });
+  return o;
+}
+/* Lo de la planilla y lo de este aparato: de cada tienda gana el conteo más nuevo (día, y después cuándo se subió); los pases se juntan
+   por id y uno anulado sigue anulado (como las lápidas del stock); los conteos anteriores, sin repetir. */
+function tstJuntar(a, b){
+  var D={ v:1, s:{}, x:[], h:[] };
+  [a,b].forEach(function(o){ Object.keys((o&&o.s)||{}).forEach(function(n){
+    var e=o.s[n], y=D.s[n]; if(!e || !e.f) return;
+    if(!y || e.f>y.f || (e.f===y.f && (Number(e.t)||0)>(Number(y.t)||0))) D.s[n]=e;
+  }); });
+  var px={};
+  [a,b].forEach(function(o){ ((o&&o.x)||[]).forEach(function(q){ if(!q || !q.id) return; var y=px[q.id]; if(!y){ px[q.id]=JSON.parse(JSON.stringify(q)); return; } if(q.an) y.an=q.an; }); });
+  var lim=stockSumarDias(todayStr(), -TST_PASES_DIAS);
+  D.x=Object.keys(px).map(function(i){ return px[i]; }).filter(function(q){ return String(q.f||'')>=lim; }).sort(function(p,q){ return String(p.f).localeCompare(String(q.f)) || (p.ts||0)-(q.ts||0); });
+  var ph={};
+  [a,b].forEach(function(o){ ((o&&o.h)||[]).forEach(function(e){ if(e) ph[e.n+'|'+e.f+'|'+(e.t||0)]=e; }); });
+  D.h=Object.keys(ph).map(function(i){ return ph[i]; }).sort(function(p,q){ return (p.t||0)-(q.t||0); }).slice(-TST_HIST);
+  return D;
+}
+/* Relee la planilla, junta, aplica `fn` y guarda la fila. Sin señal no guarda nada (y lo dice). */
+function tstGuardarCon(fn, okTxt){
+  if(TST_ENV) return Promise.resolve(null);
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: no se guardó. Probá de nuevo con señal.','err',8000); return Promise.resolve(null); }
+  TST_ENV=1; tstPintar();
+  var fin=function(r){ TST_ENV=0; tstPintar(); return r; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===TST_ID) srv=p; });
+    var D=tstJuntar(tstLeer(srv), tstLeer());
+    var err=fn(D); if(err) throw new Error(err);
+    var fila=filaSistema(TST_ID, '🏬 STOCK DE LAS TIENDAS (no tocar: lo lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[TST_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===TST_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==TST_ID; }); STATE.push(g);
+      if(okTxt) toast(okTxt,'ok',6000);
+      return r;
+    });
+  }).then(fin, function(e){ toast('❌ No se guardó: '+((e && e.message) || 'error')+'. Probá de nuevo.','err',9000); return fin(null); });
+}
+/* ---- la ventana ---- */
+function abrirTst(){
+  var ov=document.getElementById('tst-overlay'); if(!ov) return;
+  TST_VISTA=''; TST_PREV=null; TST_MSG='';
+  ov.style.display='flex'; tstPintar();
+  var b=document.getElementById('tst-body'); if(b) b.scrollTop=0;
+}
+function cerrarTst(){ var ov=document.getElementById('tst-overlay'); if(ov) ov.style.display='none'; TST_PREV=null; TST_VISTA=''; }
+function tstAbrir(n){ if(TST_ABIERTA[n]) delete TST_ABIERTA[n]; else TST_ABIERTA[n]=1; tstPintar(); }
+function tstVer(v){ TST_VISTA=(TST_VISTA===v) ? '' : v; TST_PREV=null; TST_MSG=''; tstPintar(); }
+function tstCuandoHtml(){
+  var hoy=todayStr(), U=tstUltimoHabilMes(hoy), mes=MESES_ES[+hoy.slice(5,7)-1];
+  if(hoy===U) return '<div class="tst-cuando hoy" id="tst-cuando">📅 <span><b>Hoy es el último día hábil de '+esc(mes)+'.</b> Al cerrar, contá cada tienda y subí el conteo: desde ahí el panel lleva la cuenta de '+esc(MESES_ES[(+hoy.slice(5,7))%12])+'.</span></div>';
+  return '<div class="tst-cuando" id="tst-cuando">📅 <span>El próximo conteo es el <b>'+esc(saldoDiaTxt(U))+'</b>, último día hábil de '+esc(mes)+', al cierre de la tienda.</span></div>';
+}
+function tstPintar(){
+  var el=document.getElementById('tst-body'); if(!el) return;
+  var D=tstLeer(), T=tstCalcular(null, D), hoy=todayStr(), Uant=tstUltimoHabilMes(tstMesAnterior(hoy));
+  var info=document.getElementById('tst-info');
+  var con=Object.keys(T).filter(function(n){ return T[n].base; });
+  if(info) info.textContent=con.length ? (con.length+' de '+Object.keys(T).length+' tiendas con conteo') : 'todavía sin conteos';
+  var h='<div class="tst">'+
+    '<div class="tst-caja"><div class="tst-exp">Cada tienda se cuenta el <b>último día hábil del mes</b>, al cierre. Desde ese conteo el panel suma lo que le <b>llegó</b> (las reposiciones que salieron) y resta lo que <b>vendió</b> (sus ventas de tienda) y lo que se <b>recogió</b> para pedidos («🏬 Tienda»). Lo marcado para un pedido que todavía no salió figura como <b>apartado</b>.<br><span style="color:var(--muted)">Solo mira: no cambia ninguna cuenta del stock de fábrica (PTF, Banzer, Moreno), ni la revisión automática, ni el pedido a producción. Protectores, sábanas y lo de tienda quedan afuera, como en el stock de fábrica.</span></div>'+
+      tstCuandoHtml()+
+      '<div class="tst-acc">'+
+        '<label class="btn btn-primary" style="cursor:pointer">📥 Subir el conteo (Excel)<input type="file" accept=".xlsx" hidden onchange="tstExcel(event)"></label>'+
+        '<button type="button" class="btn btn-ghost" onclick="tstVer(\'mano\')">✍️ Escribir el conteo a mano</button>'+
+        '<button type="button" class="btn btn-ghost" onclick="tstVer(\'pase\')">🔁 Pasé de una tienda a otra</button>'+
+      '</div>'+
+      (TST_MSG ? ('<div class="tst-mal" id="tst-msg">'+TST_MSG+'</div>') : '')+
+    '</div>';
+  if(TST_PREV) h+=tstPrevHtml(D);
+  else if(TST_VISTA==='mano') h+=tstManoHtml();
+  else if(TST_VISTA==='pase') h+=tstPaseHtml(D);
+  Object.keys(T).forEach(function(n){ h+=tstTiendaHtml(T[n], Uant, D); });
+  var pas=(D.x||[]).filter(function(q){ return q && !q.an; }).slice(-8).reverse();
+  if(pas.length) h+='<div class="tst-caja"><b style="color:#155e75">🔁 Últimos pases entre tiendas</b>'+pas.map(function(q){
+      return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.82rem"><span>'+esc(saldoDiaTxt(q.f))+': <b>'+q.u+'</b> × '+esc(tstNombre(q.k))+' · de <b>'+esc(q.de)+'</b> a <b>'+esc(q.a)+'</b></span>'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-id="'+esc(q.id)+'" onclick="tstPaseAnular(this.dataset.id)">↩️ Anular</button></div>';
+    }).join('')+'</div>';
+  el.innerHTML=h+'</div>';
+}
+function tstTiendaHtml(t, Uant, D){
+  var b=t.base, ab=!!TST_ABIERTA[t.n];
+  if(!b) return '<div class="tst-card sin" data-tienda="'+esc(t.n)+'"><div class="tst-cab" style="cursor:default"><b class="tst-n">'+esc(t.n)+'</b><span class="tst-f mal">sin conteo todavía</span></div></div>';
+  var vieja=b.f<Uant, T=t.tot;
+  var h='<div class="tst-card" data-tienda="'+esc(t.n)+'"><button type="button" class="tst-cab" data-n="'+esc(t.n)+'" onclick="tstAbrir(this.dataset.n)" aria-expanded="'+(ab?'true':'false')+'">'+
+    '<b class="tst-n">'+(ab?'▾':'▸')+' '+esc(t.n)+'</b>'+
+    '<span class="tst-f'+(vieja?' mal':'')+'">contado el '+esc(saldoDiaTxt(b.f))+(b.de==='mano'?' · a mano':' · Excel')+(vieja?(' · ⚠️ falta el del '+esc(fmtFechaCorta(Uant))):'')+'</span>'+
+    '<span class="tst-num"><span>tiene <b class="tst-tiene">'+T.tiene+'</b></span>'+(T.apart?('<span>apartado <b>'+T.apart+'</b></span><span>libres <b>'+T.libre+'</b></span>'):'')+(T.neg?('<span class="tst-mal">'+T.neg+' en negativo</span>'):'')+'</span></button>';
+  if(ab){
+    var cel=function(n, sg){ return n ? ('<td>'+(sg&&n>0?'+':'')+n+'</td>') : '<td class="tst-cero">—</td>'; };
+    h+='<div class="tst-w"><table class="tst-tab"><thead><tr><th>Producto</th><th>Contado '+esc(fmtFechaCorta(b.f))+'</th><th>Le llegó</th><th>Vendió</th><th>Se recogió</th><th>Pases</th><th>Tiene</th><th>Apartado</th><th>Libres</th></tr></thead><tbody>'+
+      t.filas.map(function(r){
+        return '<tr class="'+(r.tiene<0?'neg':'')+'" data-k="'+esc(r.k)+'"><td><b>'+esc(tstNombre(r.k))+'</b></td><td>'+r.c+'</td>'+cel(r.rpt)+cel(r.ven?-r.ven:0)+cel(r.rec?-r.rec:0)+cel(r.pas,true)+
+          '<td class="tst-t">'+r.tiene+'</td>'+cel(r.apart)+'<td>'+(r.apart?r.libre:'<span class="tst-cero">—</span>')+'</td></tr>';
+      }).join('')+
+      '</tbody><tfoot><tr><td>TOTAL '+esc(t.n)+'</td><td>'+T.c+'</td><td>'+(T.rpt||'—')+'</td><td>'+(T.ven?-T.ven:'—')+'</td><td>'+(T.rec?-T.rec:'—')+'</td><td>'+(T.pas?((T.pas>0?'+':'')+T.pas):'—')+'</td><td>'+T.tiene+'</td><td>'+(T.apart||'—')+'</td><td>'+(T.apart?T.libre:'—')+'</td></tr></tfoot></table></div>';
+    var hs=(D.h||[]).filter(function(e){ return e && e.n===t.n; }).slice(-4).reverse();
+    if(hs.length) h+='<div class="tst-hist">Conteos: '+hs.map(function(e){
+        return esc(fmtFechaCorta(e.f))+' contaron <b>'+e.tot+'</b>'+(e.esp!=null?(' · el panel esperaba '+e.esp+(e.tot!==e.esp?(' ('+(e.tot>e.esp?'+':'')+(e.tot-e.esp)+')'):' ✓')):' · primer conteo');
+      }).join(' · ')+'</div>';
+  }
+  return h+'</div>';
+}
+/* ---- subir el conteo ---- */
+function tstExcel(ev){
+  var f=ev && ev.target && ev.target.files && ev.target.files[0]; if(ev && ev.target) ev.target.value=''; if(!f) return;
+  TST_MSG=''; toast('Leyendo '+f.name+'…','ok');
+  return f.arrayBuffer().then(xlsxDescomprimir).then(function(arch){
+    var filas=xlsxHoja(arch), L=existLoteDe(filas, existHoraDeNombre(f.name)), lista=[];
+    if(L && L.error) throw new Error(L.error);
+    if(L) lista=L.lista; else { var r=existLeer(filas); if(r.error) throw new Error(r.error); lista=[r]; }
+    tstPrevDeExcel(lista, f.name);
+  }).catch(function(e){ TST_MSG='❌ '+esc((e && e.message) || 'No se pudo leer el archivo.'); TST_PREV=null; tstPintar(); });
+}
+function tstPrevDeExcel(lista, arch){
+  var prev=[], fuera=[];
+  lista.forEach(function(r){
+    var S=tstTiendaDe(r.almacen);
+    if(!S || tstEsDeFabrica(r.almacen)){ fuera.push(r.almacen); return; }
+    var u={};
+    (r.items||[]).forEach(function(it){
+      if(esProdDeTienda({ desc:it.desc, medida:it.medida, codigo:it.cod })) return;
+      var k=stockAliasDe(it.k); u[k]=(u[k]||0)+(Number(it.cant)||0);
+    });
+    prev.push({ n:S, f:r.fecha, hora:r.hora||'', de:'excel', u:u, arch:arch||'' });
+  });
+  if(!prev.length){
+    TST_PREV=null;
+    TST_MSG='❌ '+(fuera.length ? ('Ese Excel es de '+esc(fuera.join(', '))+', no de una tienda. Los de PTF, Banzer y Moreno van en «📥 Subir existencias».') : 'No encontré ninguna tienda en el archivo.');
+    tstPintar(); return;
+  }
+  TST_PREV={ lista:prev, fuera:fuera }; TST_VISTA=''; TST_MSG=''; tstPintar();
+}
+function tstManoHtml(){
+  var hoy=todayStr();
+  return '<div class="tst-caja" id="tst-mano"><b style="color:#155e75">✍️ El conteo de una tienda, a mano</b>'+
+    '<div class="tst-form">'+
+      '<label>Tienda<select id="tst-m-t">'+tstTiendas().map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('')+'</select></label>'+
+      '<label>Día del conteo<input id="tst-m-f" type="date" value="'+hoy+'" max="'+hoy+'"></label>'+
+      '<label class="tst-full">Un renglón por producto: el código y la cantidad (podés pegar dos columnas de Excel)<textarea id="tst-m-x" placeholder="CH1220 3&#10;CH1107 2&#10;CD1403 12" oninput="tstManoLeer()"></textarea></label>'+
+    '</div><div id="tst-m-ok" style="font-size:.82rem"></div>'+
+    '<div class="tst-acc"><button type="button" class="btn btn-primary" onclick="tstManoVer()">Ver cómo queda</button><button type="button" class="btn btn-ghost" onclick="tstVer(\'mano\')">Cancelar</button></div></div>';
+}
+/* «CH1220 3», «CH1220	TITANIO ICE 140x190	3», «CH1220;3»: el código es lo primero y la cantidad lo último. */
+function tstParseMano(txt){
+  var u={}, malos=[], n=0;
+  String(txt||'').split(/\r?\n/).forEach(function(l){
+    var s=String(l).replace(/[;,]/g,' ').replace(/\s+/g,' ').trim(); if(!s) return;
+    var m=s.match(/^(\S+)(?:\s.*)?\s(\d+)$/);
+    if(!m){ malos.push(s); return; }
+    var P=tstProdDeCodigo(m[1]); if(!P){ malos.push(s); return; }
+    u[P.k]=(u[P.k]||0)+(+m[2]); n++;
+  });
+  return { u:u, malos:malos, n:n };
+}
+function tstManoLeer(){
+  var o=document.getElementById('tst-m-ok'), x=document.getElementById('tst-m-x'); if(!o || !x) return;
+  var R=tstParseMano(x.value), ks=Object.keys(R.u), tot=ks.reduce(function(a,k){ return a+R.u[k]; },0);
+  o.innerHTML=(ks.length ? ('<span class="tst-ok">✓ '+ks.length+' producto'+(ks.length===1?'':'s')+', '+tot+' unidad'+(tot===1?'':'es')+'</span>') : '')+
+    (R.malos.length ? ('<div class="tst-mal">No entiendo '+R.malos.length+' renglón'+(R.malos.length===1?'':'es')+' (¿el código está bien?): '+esc(R.malos.slice(0,5).join(' · '))+(R.malos.length>5?' …':'')+'</div>') : '');
+}
+function tstManoVer(){
+  var t=(document.getElementById('tst-m-t')||{}).value, f=(document.getElementById('tst-m-f')||{}).value, x=(document.getElementById('tst-m-x')||{}).value;
+  var R=tstParseMano(x);
+  if(!t){ toast('Elegí la tienda.','err'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f||'') || f>todayStr()){ toast('El día del conteo tiene que ser hoy o antes.','err',6000); return; }
+  if(R.malos.length){ toast('Hay '+R.malos.length+' renglón(es) que no entiendo: corregilos o borralos antes de seguir.','err',8000); return; }
+  if(!R.n){ toast('Escribí al menos un producto con su cantidad.','err'); return; }
+  TST_PREV={ lista:[{ n:t, f:f, hora:'', de:'mano', u:R.u }], fuera:[] }; TST_VISTA=''; TST_MSG=''; tstPintar();
+}
+/* La vista previa: lo contado contra lo que el panel esperaba ese día (si la tienda ya tenía un conteo anterior). */
+function tstPrevHtml(D){
+  var P=TST_PREV, hoy=todayStr();
+  var h='<div class="tst-caja" id="tst-prev" style="border:2px solid #155e75"><b style="color:#155e75;font-size:1rem">📋 Revisá antes de guardar</b>';
+  if(P.fuera.length) h+='<div class="tst-mal">⏭ No es de una tienda y no se usa: '+esc(P.fuera.join(', '))+'.</div>';
+  var bien=0;
+  P.lista.forEach(function(e){
+    var base=(D.s[e.n] && D.s[e.n].f) ? D.s[e.n] : null, tot=0, ks=Object.keys(e.u);
+    ks.forEach(function(k){ tot+=e.u[k]; });
+    e.tot=tot; e.esp=null; e.err='';
+    if(e.f>hoy) e.err='El conteo es de un día que todavía no pasó ('+fmtFechaCorta(e.f)+').';
+    else if(base && e.f<base.f) e.err='Ya hay un conteo más nuevo de '+e.n+' (del '+fmtFechaCorta(base.f)+'): este no se usa.';
+    h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><b style="font-size:.95rem">'+esc(e.n)+'</b><span class="tst-f">contado el '+esc(saldoDiaTxt(e.f))+(e.hora?(' · '+esc(String(e.hora).slice(0,5))):'')+' · '+(e.de==='mano'?'a mano':'Excel')+' · <b>'+tot+'</b> unidades en '+ks.length+' productos</span></div>';
+    if(e.err){ h+='<div class="tst-mal">'+esc(e.err)+'</div></div>'; return; }
+    bien++;
+    if(!base){ h+='<div class="tst-f" style="margin-top:4px">Primer conteo de '+esc(e.n)+': desde acá el panel lleva su cuenta.</div></div>'; return; }
+    /* Lo que el panel esperaba ese día: el conteo anterior más lo que pasó hasta el día de este conteo. */
+    var E=tstCalcular(e.f, D)[e.n], esp={}, espTot=0;
+    (E.filas||[]).forEach(function(r){ esp[r.k]=r.tiene; espTot+=r.tiene; });
+    e.esp=espTot;
+    var todas={}; ks.forEach(function(k){ todas[k]=1; }); Object.keys(esp).forEach(function(k){ todas[k]=1; });
+    var difs=Object.keys(todas).map(function(k){ return { k:k, c:e.u[k]||0, e:esp[k]||0 }; }).filter(function(r){ return r.c!==r.e; })
+      .sort(function(a,b){ return Math.abs(b.c-b.e)-Math.abs(a.c-a.e) || a.k.localeCompare(b.k); });
+    e.dif=difs.length;
+    h+='<div style="margin-top:4px;font-size:.84rem">El panel esperaba <b>'+espTot+'</b> (el conteo del '+esc(fmtFechaCorta(base.f))+' y lo que pasó después) y contaron <b>'+tot+'</b>: '+
+      (tot===espTot && !difs.length ? '<span class="tst-ok">✓ coincide</span>' : ('<b class="'+(tot<espTot?'tst-dif-m':'tst-dif-p')+'">'+(tot>espTot?'+':'')+(tot-espTot)+'</b> en total, '+difs.length+' producto'+(difs.length===1?'':'s')+' con diferencia'))+'</div>';
+    if(difs.length) h+='<div class="tst-w" style="padding:6px 0 0"><table class="tst-tab"><thead><tr><th>Producto</th><th>El panel esperaba</th><th>Contaron</th><th>Diferencia</th></tr></thead><tbody>'+
+      difs.slice(0,40).map(function(r){ var d=r.c-r.e; return '<tr><td>'+esc(tstNombre(r.k))+'</td><td>'+r.e+'</td><td>'+r.c+'</td><td class="'+(d<0?'tst-dif-m':'tst-dif-p')+'">'+(d>0?'+':'')+d+'</td></tr>'; }).join('')+
+      '</tbody></table>'+(difs.length>40?('<div class="tst-f">y '+(difs.length-40)+' más</div>'):'')+'</div>'+
+      '<div class="tst-f" style="margin-top:4px">Menos de lo esperado suele ser una venta de tienda sin cargar o algo recogido sin marcar «🏬 Tienda»; más, una reposición o un pase sin anotar. Al guardar manda lo contado.</div>';
+    h+='</div>';
+  });
+  h+='<div class="tst-acc"><button type="button" class="btn btn-primary" id="tst-guardar"'+(bien&&!TST_ENV?'':' disabled')+' onclick="tstGuardarConteo()">'+(TST_ENV?'⏳ Guardando…':('✅ Guardar '+(bien===1?'el conteo':('los '+bien+' conteos'))))+'</button><button type="button" class="btn btn-ghost" onclick="TST_PREV=null;tstPintar()">Cancelar</button></div></div>';
+  return h;
+}
+function tstGuardarConteo(){
+  var P=TST_PREV; if(!P) return;
+  var lista=P.lista.filter(function(e){ return !e.err; }); if(!lista.length) return;
+  var ahora=Date.now();
+  return tstGuardarCon(function(D){
+    var ok=0;
+    lista.forEach(function(e){
+      var y=D.s[e.n]; if(y && y.f>e.f) return;   // otro aparato subió uno más nuevo mientras tanto
+      D.s[e.n]={ f:e.f, hora:e.hora||'', t:ahora, de:e.de, u:e.u, tot:e.tot };
+      D.h.push({ n:e.n, f:e.f, t:ahora, tot:e.tot, esp:e.esp, dif:e.dif||0 }); ok++;
+    });
+    D.h=D.h.slice(-TST_HIST);
+    if(!ok) return 'ya había un conteo más nuevo';
+  }, '✅ Conteo guardado: desde acá el panel lleva la cuenta').then(function(r){
+    if(r){ lista.forEach(function(e){ TST_ABIERTA[e.n]=1; }); TST_PREV=null; tstPintar(); }
+    return r;
+  });
+}
+/* ---- 🔁 pases entre tiendas ---- */
+function tstPaseHtml(){
+  var L=tstTiendas(), op=function(sel){ return L.map(function(n, i){ return '<option'+(i===sel?' selected':'')+'>'+esc(n)+'</option>'; }).join(''); };
+  return '<div class="tst-caja" id="tst-pase"><b style="color:#155e75">🔁 Pasé de una tienda a otra</b>'+
+    '<div class="tst-form">'+
+      '<label>De<select id="tst-p-de">'+op(0)+'</select></label>'+
+      '<label>A<select id="tst-p-a">'+op(1)+'</select></label>'+
+      '<label>Código del producto<input id="tst-p-c" type="text" autocomplete="off" placeholder="CH1220" oninput="tstPaseLeer()"></label>'+
+      '<label>Cantidad<input id="tst-p-u" type="text" inputmode="numeric" value="1"></label>'+
+      '<label>Día<input id="tst-p-f" type="date" value="'+todayStr()+'" max="'+todayStr()+'"></label>'+
+    '</div><div id="tst-p-ok" class="tst-f"></div>'+
+    '<div class="tst-acc"><button type="button" class="btn btn-primary" onclick="tstPaseGuardar()">Anotar el pase</button><button type="button" class="btn btn-ghost" onclick="tstVer(\'pase\')">Cancelar</button></div></div>';
+}
+function tstPaseLeer(){
+  var o=document.getElementById('tst-p-ok'), c=document.getElementById('tst-p-c'); if(!o || !c) return;
+  var P=tstProdDeCodigo(c.value);
+  o.innerHTML=!String(c.value||'').trim() ? '' : (P ? ('<span class="tst-ok">✓ '+esc(tstNombre(P.k))+'</span>') : '<span class="tst-mal">No conozco ese código</span>');
+}
+function tstPaseGuardar(){
+  var de=(document.getElementById('tst-p-de')||{}).value, a=(document.getElementById('tst-p-a')||{}).value;
+  var P=tstProdDeCodigo((document.getElementById('tst-p-c')||{}).value), u=Number(String((document.getElementById('tst-p-u')||{}).value||'').trim()), f=(document.getElementById('tst-p-f')||{}).value;
+  if(!de || !a || de===a){ toast('Elegí dos tiendas distintas.','err'); return; }
+  if(!P){ toast('No conozco ese código de producto.','err'); return; }
+  if(!(u>=1) || Math.floor(u)!==u){ toast('La cantidad tiene que ser un número entero, 1 o más.','err'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f||'') || f>todayStr()){ toast('El día tiene que ser hoy o antes.','err'); return; }
+  var q={ id:'tp'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36), f:f, de:de, a:a, k:P.k, u:u, ts:Date.now() };
+  return tstGuardarCon(function(D){ D.x.push(q); }, '🔁 Pase anotado: '+u+' de '+de+' a '+a).then(function(r){ if(r){ TST_VISTA=''; tstPintar(); } return r; });
+}
+function tstPaseAnular(id){
+  return tstGuardarCon(function(D){ var q=(D.x||[]).filter(function(x){ return x && x.id===id; })[0]; if(!q) return 'ese pase ya no está'; q.an=Date.now(); }, '↩️ Pase anulado');
+}
+/* «Mia Plaza · tiene 2» en la lista de «🏬 ¿De qué tienda se recoge?» de la ficha. Nada si ninguna tienda tiene conteo. */
+function tstEnTiendaTxt(o, n){
+  var e=o && o[n]; if(!e) return '';
+  return ' <small class="tst-pick'+(e.libre>0?' tst-ok':'')+'">· '+(e.libre>0 ? ('hay '+e.libre) : (e.tiene>0 ? ('tiene '+e.tiene+', apartado') : 'no hay'))+'</small>';
+}
 /* «73 (34–90) · 0 · 73» con el detalle de cada estimación al pasar el mouse. */
 /* 📅 (19/10, §4ls CU-1) El nombre del mes en curso y lo que falta antes del 1° EN PALABRAS: «incluye 82 para terminar diciembre (del 17/12 al
    31/12)». Del 1 al ~15 de cada mes lo de 15 días no llega a fin de mes y esa falta va en «el mes que viene» (§4iz E1-6); la copia para la
@@ -37981,12 +38388,13 @@ function tiendaBtnHtml(p, x, i){
 function tiendaElegirHtml(p, x, i){
   if(TDA_ELIGE!==p.id+'|'+i) return '';
   var t=esRecoger(x) ? recogeDeTienda(x) : '', suya=sucursalDeVendedor(p.vendedor), L=recogerTiendas();
+  var cuanto=tstDeClave(stockClave(x));   // 🏬 (27/10, §4na) cuánto tiene cada tienda, si se contó (si no, nada)
   if(suya && L.indexOf(suya)>0){ L.splice(L.indexOf(suya),1); L.unshift(suya); }
   var comillas=function(n){ return JSON.stringify(String(n)).replace(/"/g,'&quot;'); }, qt=comillas(t);   // el nombre, listo para ir dentro del onclick
   return '<div class="tda-elige"><span>🏬 ¿De qué tienda se recoge?</span>'+L.map(function(n){
       var qn=comillas(n);
       return '<button type="button" class="chkbtn wide'+(t===n?' tda':'')+'" onclick="tiendaElegir(\''+p.id+'\','+i+','+qn+')"'+(t===n?' title="Tocala de nuevo para sacar la marca"':'')+'>'+
-        esc(n)+(n===suya ? ' <small>· de '+esc(String(p.vendedor||'').split(' ')[0])+'</small>' : '')+'</button>';
+        esc(n)+(n===suya ? ' <small>· de '+esc(String(p.vendedor||'').split(' ')[0])+'</small>' : '')+tstEnTiendaTxt(cuanto, n)+'</button>';
     }).join('')+
     (t ? '<button type="button" class="chkbtn wide" onclick="tiendaElegir(\''+p.id+'\','+i+','+qt+')">✕ Quitar</button>' : '')+'</div>';
 }
@@ -42022,6 +42430,7 @@ function stkTopPintar(d){
       ch('abrirStockEntrada()', '📥 Llegó de fábrica')+
       ch('abrirStockSalida()', '📤 Salió sin pedido')+
       ch('abrirStockHistorial()', '📜 Historial de cortes')+
+      ch('abrirTst()', '🏬 Stock de las tiendas')+
       ch('copiarStock()', '📋 Copiar pedido a fábrica')+
     '</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
