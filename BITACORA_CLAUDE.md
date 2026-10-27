@@ -16644,7 +16644,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   misma del encabezado, 120 px, se mece), la araña colgando, la luna, tres murciélagos (`.fh-murc`, con brillo naranja para que se vean
   en el fondo oscuro), 🎃 delante del título (`::before`, no entra en el texto), niebla abajo y el turno elegido con borde y barra
   naranja. `.fh-murc`/`.fh-luna` van en el HTML de `fhPintar` pero no se ven los otros meses. `fhPintar` ya no rearma si el HTML es el
-  mismo (`box._h`): si no, los murciélagos y el «En línea» volvían a empezar con cada repintado. Celular: tela más chica, sin luna.
+  mismo (`box._h`): si no, los murciélagos y el «En línea» volvían a empezar con cada repintado. Celular: tela más chica, sin luna. **PUBLICADO 27/10 (`133e332`, dueño: «mejor publica»).**
 
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
