@@ -106,15 +106,17 @@ function PREPARAR(){
     return new Promise(function(res){ setTimeout(function(){ showView('mis');
       var g=document.querySelector('.nav-fant'), b=document.getElementById('tab-mis'), v=document.getElementById('view-mis');
       var o={ fant:document.querySelectorAll('.nav-fant').length, col:g?g.style.backgroundColor:'', llega:b.classList.contains('nav-llega'), bgNueva:getComputedStyle(b).backgroundColor, cl:v.className };
-      setTimeout(function(){ var g2=document.querySelector('.nav-fant'), rb=b.getBoundingClientRect(), rn=document.querySelector('.nav').getBoundingClientRect();
-        o.mitad=g2 ? { x:parseFloat(getComputedStyle(g2).left), w:parseFloat(getComputedStyle(g2).width), meta:rb.left-rn.left } : null;
+      /* adónde va: el último cuadro de su animación (no la posición a los N ms: con la máquina cargada la animación arranca tarde) */
+      var an=g && g.getAnimations ? g.getAnimations()[0] : null, kf=an ? an.effect.getKeyframes() : [], rb=b.getBoundingClientRect(), rn=document.querySelector('.nav').getBoundingClientRect();
+      o.mitad=kf.length===2 ? { desde:parseFloat(kf[0].left), hasta:parseFloat(kf[1].left), ancho:parseFloat(kf[1].width), meta:rb.left-rn.left, metaAncho:rb.width, ms:an.effect.getTiming().duration } : null;
+      setTimeout(function(){
         setTimeout(function(){ o.fin={ fant:document.querySelectorAll('.nav-fant').length, llega:document.querySelectorAll('.nav-llega').length, cl:v.className, bg:getComputedStyle(b).backgroundColor, color:getComputedStyle(b).color }; res(o); }, 1000);
       }, 200);
     }, 900); }); });
   chk('de «Nuevo pedido» a «Mis pedidos»: sale el fantasma con el color de la pestaña de antes', r.fant===1 && r.col!=='' && !/rgba\(0, 0, 0, 0\)/.test(r.col), r);
   chk('…la nueva queda transparente mientras llega', r.llega && /rgba\(0, 0, 0, 0\)|transparent/.test(r.bgNueva), r);
   chk('…y lo de abajo entra desde la DERECHA (la pestaña nueva está a la derecha)', /vista-der/.test(r.cl), r.cl);
-  chk('…a mitad de camino el fantasma va hacia la nueva', r.mitad && Math.abs(r.mitad.x - r.mitad.meta) < 60, r.mitad);
+  chk('…el fantasma sale de la de antes y termina justo en la nueva (mismo lugar y ancho), en 380 ms', r.mitad && r.mitad.desde<r.mitad.meta && Math.abs(r.mitad.hasta-r.mitad.meta)<1 && Math.abs(r.mitad.ancho-r.mitad.metaAncho)<1 && r.mitad.ms===380, r.mitad);
   chk('…al terminar no queda nada colgado y la pestaña tiene su color', r.fin.fant===0 && r.fin.llega===0 && !/vista-/.test(r.fin.cl) && !/rgba\(0, 0, 0, 0\)/.test(r.fin.bg), r.fin);
   r = await page.evaluate(() => new Promise(function(res){ showView('atc'); setTimeout(function(){ showView('mis');
     var o={ mis:document.getElementById('view-mis').className };
