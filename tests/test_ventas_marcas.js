@@ -179,7 +179,9 @@ function PREPARAR(){
         r.sw<=r.iw && r.debajo && r.hueco>=8 && r.hueco<=16 && Math.abs(r.anchoArriba-r.anchoMarca)<=1 && Math.abs(r.izqArriba-r.izqMarca)<=1, r);
     /* A 1180 las fichas miden 261 px y el monto no entra: se achica ese solo. A 820 (dos por fila) y en el celular entra. */
     chk('a '+w+' px: «Bs 1.255.567,89» entra entero'+(w===1180 ? ' (se achica solo ese; el «6» de «Por cargar» queda igual)' : ', sin achicarse'),
-        r.cortados && r.cortados.length===0 && r.vendido==='Bs 1.255.567,89' && (w===1180 ? r.letra<r.letraChica : r.letra===r.letraChica), r);
+        /* (27/10) Ya falla en `main` (d41ae21): desde el estilo nuevo de las fichas el monto entra a 1180 SIN achicarse. Lo que se cuida es
+           que entre entero y que, si hace falta, se achique solo ese: `<=` a 1180. */
+        r.cortados && r.cortados.length===0 && r.vendido==='Bs 1.255.567,89' && (w===1180 ? r.letra<=r.letraChica : r.letra===r.letraChica), r);
   }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
