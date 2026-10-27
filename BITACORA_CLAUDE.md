@@ -16605,7 +16605,14 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   pulida** en el mismo enlace (https://claude.ai/artifact/7prRs1T57do1whLrx6RKcx): encabezado turquesa con «Nuevo pedido», «En línea» que
   late, Guía y Novedades (punto rosa); cada turno una tarjeta con los libres en grande, barrita y «👀 Ver los N pedidos» SIEMPRE; el turno del
   pedido en blanco («Tu turno» / «¡Quedan pocos!» / «Lleno»); aviso de una línea solo cuando hace falta; feriado reemplaza las tarjetas; sábado
-  apaga la tarde. Espera su OK para pasarla al panel (`#conn-form`, `#cupo-form` y los dos enlaces de ayuda del formulario).
+  apaga la tarde. **El dueño: «C ok, publica las dos».**
+  · En el panel: `#fh` arriba del formulario, armado por `fhPintar()` desde `renderCupoForm` y `renderConnEstado` (este pasó a ser un
+    envoltorio de `renderConnEstadoBase`). `#conn-form`, `#cupo-form` y los dos enlaces (`.fh-viejo`) se siguen armando IGUAL y quedan
+    escondidos (`.form-card.fh-on`): los leen otras partes y muchas pruebas. Las cuentas son las del cartel (`limTurno`, `cuposUsadosTurno`,
+    `diaCerrado`, `diaDomingo`, `feriadoDe`, `cupoFechaNota`, `cupoViejoAviso`). «👀 Ver los N pedidos» = `verCuposTurno`. Novedades: punto
+    hasta abrir la de `NOVEDADES_V` (`me_novedades_visto`) — ⚠️ al cambiar `guia-vendedor.html`, subir `NOVEDADES_V`. Toma los colores del
+    tema del mes (`--grad-header`). Los dos «llevar a la vista» de turno lleno van a `#fh`. ⚠️ La pastilla es `.fh-vivo`, no `.fh-on` (esa
+    clase es del card). En Playwright, lo de antes salvo `FH_PRUEBA`. `tests/test_arriba_pedido.js` (24).
 
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
