@@ -2318,7 +2318,9 @@ siempre; aviso de una línea solo si hace falta. ⚠️ Al cambiar `guia-vendedo
 👀 **La ventana de los pedidos del turno** (§4nk, 27/10, en la rama; dueño: *«asquerosamente fea»*): `verCuposTurno` ya va con `.modal-b` (`.cupv-*`) y
 sin `ancha`: resumen con barra, quién ocupa por vendedora, filas de dos renglones que abren el pedido, «Ver la tarde/mañana» en la misma ventana.
 Las frases que leen las pruebas siguen abajo. 🎨 **Botones de la ficha en gris** (dueño eligió la 3, *«parecen un carnaval»*): `.af-tb .ico-b` sin
-cuadrito, dibujo gris y su `--c2` al pasar; las pestañas siguen con color. `test_cupos` §5, `test_mejoras_5_7_9`.
+cuadrito, dibujo gris y su `--c2` al pasar. PUBLICADO `e8feb61`. `test_cupos` §5, `test_mejoras_5_7_9`.
+🎨 **Las pestañas, la 4** (dueño: *«no me convencen los pinches botones»*; en la rama): pastillas blancas con dibujo gris y SOLO la elegida con el
+color de su sección (`--c1/--c2` por id de pestaña), también con los temas del mes (reglas `html .nav button.active[id]`). `navFoto` lleva el degradé.
 
 ## 🧹 Seguimiento del dashboard sin tareas en Kommo (§4nf, 27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; PUBLICADO 27/10, `c0f4dc0`)
 En «Seguimiento», ✓ y 🕐 solo marcan la ficha en el panel (por aparato); ya no crean tareas en Kommo, y se fueron 📝 nota, «Acción masiva» y

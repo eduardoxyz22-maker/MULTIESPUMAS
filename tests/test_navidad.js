@@ -68,7 +68,7 @@ function armarDashboard(){
   chk('1 · el encabezado de pino (verde oscuro)', /rgb\(11, 59, 44\)|rgb\(20, 83, 45\)/.test(r.fondo), r.fondo.slice(0,120));
   chk('1 · la guirnalda: dos tiras de luces que titilan alternadas', /^url\("data:image\/svg/.test(r.luzA) && /^url\("data:image\/svg/.test(r.luzB) && r.anA==='nv-luz' && r.anB==='nv-luz' && r.delB==='-0.8s', r);
   chk('1 · la estrella, el trineo y la nieve en la ruta', r.estrella==='block' && r.trineo==='nv-trineo' && r.nieve==='nv-nieve', r);
-  chk('1 · la pestaña elegida en verde', r.pestana==='rgb(20, 83, 45)', r.pestana);
+  chk('1 · la pestaña elegida con el color de SU sección, no el del tema (§4nk, dueño eligió la 4)', r.pestana==='rgb(15, 118, 110)', r.pestana);
   r = await pedidos('2026-12-01T00:00:30-04:00');
   chk('2 · se prende el 1/12 a las 00:00 de Bolivia', r.nav, r.nav);
   r = await pedidos('2026-12-01T03:59:00Z');   // 30/11 23:59 en Bolivia

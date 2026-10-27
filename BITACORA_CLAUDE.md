@@ -16630,6 +16630,15 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   en `.af-tb .ico-b`: sin cuadrito ni sombra, el dibujo en gris `#7b8b8a` (19 px) y su `--c2` al pasar, con el foco del teclado o mientras se
   mueve; «Borrar» con el dibujo rosado y la letra roja de siempre (`.af-tb .del small`); «Entregó» verde cuando está. **Las pestañas de
   arriba siguen con su cuadrito de color** (el dueño no las nombró). `test_mejoras_5_7_9` (+4).
+  **PUBLICADO 27/10 (`e8feb61`, dueño: «ok publica»).**
+- **Las pestañas de arriba** (dueño, con captura de la barra: *«no me convencen los pinches botones»*). Muestra con cuatro
+  (https://claude.ai/artifact/6ok32v5xTeJA9SYS7uoiMr: 1 gris y la elegida turquesa, 2 riel, 3 subrayado, 4 solo la elegida con su color) →
+  **eligió la 4**. Solo CSS (bloque después de `.af-tb`): cada pestaña tiene su `--c1/--c2` por id (`#tab-form`…`#tab-bot`); en la compu
+  son pastillas blancas con el dibujo gris en un círculo, y la elegida se pinta con el degradé de SU sección (`background-color:var(--c2)`
+  + `background-image`); en el celular, el dibujo gris y el de la elegida en un círculo de su color, con la rayita de su color. ⚠️ La
+  elegida lleva su color también con los temas del mes (las reglas van con `html … [id]` para ganarle a `html.tema-x .nav button.active`):
+  `test_halloween`, `test_navidad` y `test_temas_mejoras` cambiaron a conciencia (esperaban morado/verde/fucsia). El fantasma de §4ni
+  lleva el degradé de la de antes (`navFoto` → `img`). iPad parado: 701-1000 px con menos relleno, las seis entran en una fila.
 
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.

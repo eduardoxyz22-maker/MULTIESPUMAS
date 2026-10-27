@@ -1386,6 +1386,34 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 .af-tb button:hover small{ color:var(--text); }
 .af-tb .del .ico-b svg{ stroke:#c98a8a; }   /* la letra roja de «Borrar» ya la pone `.af-tb .del small` */
 .af-tb .on .ico-b svg{ stroke:#15803d; }
+/* (§4nk, 27/10, dueño: *«no me convencen los pinches botones»* → eligió la 4 de https://claude.ai/artifact/6ok32v5xTeJA9SYS7uoiMr) Las
+   pestañas: pastillas blancas con el dibujo gris, y SOLO la elegida con el color de su sección (un color por vez, no seis). La elegida
+   lleva su color también con los temas del mes. `[id]` y `html` adelante: le gana a las reglas de cada tema (`html.tema-x .nav button.active`). */
+#tab-form{ --c1:#2dd4bf; --c2:#0f766e; } #tab-mis{ --c1:#60a5fa; --c2:#1d4ed8; } #tab-chofer{ --c1:#4ade80; --c2:#15803d; }
+#tab-conta{ --c1:#fbbf24; --c2:#d97706; } #tab-atc{ --c1:#f472b6; --c2:#be185d; } #tab-admin{ --c1:#a78bfa; --c2:#6d28d9; } #tab-bot{ --c1:#94a3b8; --c2:#475569; }
+@media(min-width:701px){
+  .nav{ gap:8px; margin-bottom:14px; }
+  html .nav button[id]{ border:1px solid var(--gray-md); border-radius:999px; padding:7px 16px 7px 7px; background:#fff; color:var(--muted); }
+  html .nav button[id] .ico-b{ background:#eef3f3; box-shadow:none; border-radius:50%; }
+  html .nav button[id] .ico-b svg{ stroke:#7b8b8a; }
+  html .nav button[id]:hover:not(.active){ background:#fff; border-color:#bcd0d0; color:var(--text); }
+  html .nav button[id]:hover:not(.active) .ico-b svg{ stroke:var(--c2); }
+  html .nav button.active[id]{ background-color:var(--c2); background-image:linear-gradient(135deg,var(--c1),var(--c2)); border-color:transparent; color:#fff; box-shadow:0 6px 16px -8px var(--c2); }
+  html .nav button.active[id] .ico-b{ background:rgba(255,255,255,.22); box-shadow:none; }
+  html .nav button.active[id] .ico-b svg{ stroke:#fff; }
+  html .nav button.nav-llega[id]{ background-image:none !important; box-shadow:none !important; }
+  html .nav button.nav-llega[id] .ico-b{ background:#eef3f3; } html .nav button.nav-llega[id] .ico-b svg{ stroke:#7b8b8a; }
+  #tab-bot .t-ic{ display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#eef3f3; }
+  #tab-bot.active .t-ic{ background:rgba(255,255,255,.22); }
+}
+@media(min-width:701px) and (max-width:1000px){ .nav{ gap:5px; } html .nav button[id]{ padding:5px 10px 5px 5px; } }
+@media(max-width:700px){
+  html .nav button[id] .ico-b{ background:none; box-shadow:none; border-radius:50%; }
+  html .nav button[id] .ico-b svg{ stroke:#7b8b8a; }
+  html .nav button.active[id] .ico-b{ background:linear-gradient(135deg,var(--c1),var(--c2)); box-shadow:0 4px 10px -4px var(--c2); }
+  html .nav button.active[id] .ico-b svg{ stroke:#fff; }
+  html .nav button.active[id]::after{ background:var(--c2); }
+}
 .ico-b.ico-vivo .rueda{ animation:ico-gira .6s linear infinite; transform-box:fill-box; transform-origin:center; }
 .ico-b.ico-vivo .cuerpo{ animation:ico-anda .5s ease-in-out infinite alternate; }
 .ico-b.ico-vivo .chk{ stroke-dasharray:30; stroke-dashoffset:30; animation:ico-traza .5s forwards; }
@@ -16582,8 +16610,9 @@ function navFoto(){
      color FINAL y no el de la mitad (con transparente no había fantasma). */
   var movil=navMovil(); b.style.transition='none';
   var cs=getComputedStyle(b, movil ? '::after' : null), col=cs.backgroundColor, rad=movil ? '2px' : cs.borderRadius;
+  var img=(!movil && cs.backgroundImage && cs.backgroundImage!=='none') ? cs.backgroundImage : '';   // (§4nk) la pastilla elegida lleva su degradé
   b.style.transition='';
-  return { b:b, r:navRect(b, movil), col:col, rad:rad, movil:movil };
+  return { b:b, r:navRect(b, movil), col:col, img:img, rad:rad, movil:movil };
 }
 function navDeslizar(antes, v){
   if(!antes) return;
@@ -16592,7 +16621,7 @@ function navDeslizar(antes, v){
   var r1=navRect(b, antes.movil), col=antes.col;
   if(!r1.w || !col || col==='transparent' || /rgba\(\s*0,\s*0,\s*0,\s*0\s*\)/.test(col)) return;
   var g=document.createElement('span'); g.className='nav-fant'; g.setAttribute('aria-hidden','true');
-  g.style.cssText='left:'+antes.r.x+'px;top:'+antes.r.y+'px;width:'+antes.r.w+'px;height:'+antes.r.h+'px;background:'+col+';border-radius:'+antes.rad;
+  g.style.cssText='left:'+antes.r.x+'px;top:'+antes.r.y+'px;width:'+antes.r.w+'px;height:'+antes.r.h+'px;background:'+col+(antes.img ? (';background-image:'+antes.img) : '')+';border-radius:'+antes.rad;
   nav.appendChild(g); b.classList.add('nav-llega');
   var listo=false, fin=function(){
     if(listo) return; listo=true;

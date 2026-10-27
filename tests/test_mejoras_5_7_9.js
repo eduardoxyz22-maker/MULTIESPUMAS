@@ -76,10 +76,11 @@ function PREPARAR(){
   chk('las pestañas no crecen con el cuadradito (≤ 44 px de alto en la compu)', r.alto.every(h=>h<=44), r.alto);
   r = await page.evaluate(() => { var bs=document.querySelectorAll('#adm-fichas .af-f[data-pid="p1"] .af-tb button');
     var cs=function(b){ var ic=b.querySelector('.ico-b'), g=getComputedStyle(ic); return { bg:g.backgroundImage, sombra:g.boxShadow, trazo:getComputedStyle(ic.querySelector('svg')).stroke, letra:getComputedStyle(b.querySelector('small')).color }; };
-    return { ent:cs(bs[0]), borrar:cs(bs[5]), tab:getComputedStyle(document.querySelector('#tab-admin .ico-b')).backgroundImage }; });
+    var fi=document.querySelector('#tab-form .ico-b');
+    return { ent:cs(bs[0]), borrar:cs(bs[5]), tab:getComputedStyle(document.getElementById('tab-admin')).backgroundImage, otra:getComputedStyle(fi).backgroundImage, otraTrazo:getComputedStyle(fi.querySelector('svg')).stroke }; });
   chk('§4nk · en la ficha los íconos van SIN cuadradito y en gris (dueño: «parecen un carnaval», eligió la 3)', r.ent.bg==='none' && r.ent.sombra==='none' && r.ent.trazo==='rgb(123, 139, 138)', r.ent);
   chk('§4nk · «Borrar» con la letra roja', r.borrar.letra==='rgb(163, 36, 46)', r.borrar);
-  chk('§4nk · las pestañas de arriba siguen con su cuadradito de color', /gradient/.test(r.tab), r.tab);
+  chk('§4nk · pestañas (el dueño eligió la 4): SOLO la elegida con el color de su sección (Administración violeta); las otras, dibujo gris sin cuadradito de color', /gradient.*109, 40, 217/.test(r.tab) && r.otra==='none' && r.otraTrazo==='rgb(123, 139, 138)', JSON.stringify([r.tab, r.otra, r.otraTrazo]));
   // en las pruebas no se mueven…
   await page.hover('#adm-fichas .af-f[data-pid="p1"] .af-tb button'); await page.waitForTimeout(100);
   r = await page.evaluate(() => document.querySelectorAll('.ico-vivo').length);
