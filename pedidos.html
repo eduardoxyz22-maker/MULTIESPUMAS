@@ -3623,6 +3623,7 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .ag-burbuja strong{ display:block; font-size:clamp(1.4rem,3.5vw,2.35rem); line-height:1.12; font-weight:900; color:#7c2d12; text-transform:uppercase; text-wrap:balance; overflow-wrap:anywhere; }
 .ag-burbuja small{ color:#57534e; font-size:.86rem; line-height:1.4; }
 .ag-acc{ display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+.ag-semana .ag-burbuja{ max-width:640px; } .ag-semana .ag-burbuja strong{ font-size:clamp(1.3rem,3vw,2rem); } .ag-semana .ag-burbuja small{ font-size:.9rem; white-space:pre-line; }   /* 🗓️ (27/10) el grito a logística lleva la lista de lo que falta */
 .ag-acc button{ flex:1 1 150px; min-height:46px; border-radius:14px; font:inherit; font-weight:900; font-size:.95rem; cursor:pointer; border:2px solid #ea580c; }
 .ag-ok{ background:#ea580c; color:#fff; } .ag-cambiar{ background:#fff7ed; color:#9a3412; }
 .ag-pie{ text-align:center; color:#a8a29e; font-size:.74rem; }
@@ -17842,6 +17843,71 @@ function semanaPintar(){
   }).join('') : '<div class="sem-vacio">Nada para mostrar con este filtro.</div>')+'</div>';
   el.hidden=false;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* 📣 BLOKI LE GRITA A LOGÍSTICA (27/10, dueño: «Bloki en logística/administración debería gritarle a Ernesto si son las 16:00 y aún no
+   ven esos pedidos que falten productos y estamos justo a 4 días, o los plazos que definimos»).
+   · Qué: lo ⬜ sin revisar y lo 🔴 que no hay y no se pidió a producción (los mismos del botón «Semana») que se entregan hasta
+     `SEMANA_PROD_DIAS` días hábiles desde hoy (`semanaUrgentes`): si no se piden hoy, producción no llega.
+   · Cuándo: un día hábil, desde media hora antes del corte de producción (`HORA_CORTE` 16:30 → 16:00; el sábado `HORA_CORTE_SABADO`
+     12:00 → 11:30): lo que se pide antes del corte empieza hoy. Y otra vez cada `SEMANA_GRITO_CADA_MS` (15 min) mientras falte algo;
+     la hora del último grito queda en el aparato (`SEMANA_GRITO_LS`): recargar no lo hace gritar de nuevo.
+   · A quién: solo en los aparatos de logística o Administración (`asisVeAdm`), con el nombre de `SEMANA_GRITO_A`.
+   · Cómo: el MISMO grito del anuncio (`anuncioGrito` con `semana:1`: pantalla entera, Bloki con el megáfono, sirena y voz). Espera si
+     la persona está escribiendo o si el anuncio está en pantalla. 🔇 de Bloki le saca el sonido. Solo avisa: no cambia ningún pedido. */
+var SEMANA_GRITO_A='Ernesto', SEMANA_GRITO_CADA_MS=15*60000, SEMANA_GRITO_LS='me_sem_grito', SEMANA_GRITO_MEM={ d:'', t:0 };
+function semanaGritoHora(f){ return (dowDe(f)===6 ? HORA_CORTE_SABADO : HORA_CORTE)-0.5; }
+function semanaHoraTxt(h){ var m=Math.round((h%1)*60); return Math.floor(h)+':'+(m<10?'0':'')+m; }
+function semanaUrgentes(){
+  var hoy=todayStr(); if(!diaHabil(hoy)) return [];
+  var tope=diaHabilMas(hoy, SEMANA_PROD_DIAS);
+  return semanaDatos().tot.lineas.filter(function(l){ return SEMANA_ALERTA[l.e] && String(l.p.fecha||'')<=tope; });
+}
+function semanaUrgTxt(L){
+  var rev=L.filter(function(l){ return l.e==='rev'; }).length;
+  return rev===L.length ? 'sin revisar el stock' : (rev ? 'sin revisar o sin pedir a producción' : 'que no hay y no se pidieron a producción');
+}
+function semanaGritoUlt(){
+  var hoy=todayStr(), t=(SEMANA_GRITO_MEM.d===hoy) ? SEMANA_GRITO_MEM.t : 0;
+  try{ var o=JSON.parse(localStorage.getItem(SEMANA_GRITO_LS)||'null'); if(o && o.d===hoy) t=Math.max(t, Number(o.t)||0); }catch(e){}
+  return t;
+}
+function semanaGritoTic(){
+  if(!ASIS.montado || !asisVeAdm()) return;
+  var hoy=todayStr(); if(!diaHabil(hoy) || nxHoraAhora() < semanaGritoHora(hoy)) return;
+  if(anuncioGritoAbierto() || anuncioEscribiendo()) return;
+  if(Date.now()-semanaGritoUlt() < SEMANA_GRITO_CADA_MS) return;
+  var L=semanaUrgentes(); if(!L.length) return;
+  SEMANA_GRITO_MEM={ d:hoy, t:Date.now() };
+  try{ localStorage.setItem(SEMANA_GRITO_LS, JSON.stringify(SEMANA_GRITO_MEM)); }catch(e){}
+  anuncioGrito(semanaGritoObj(L));
+}
+function semanaGritoObj(L){
+  var hoy=todayStr(), tope=diaHabilMas(hoy, SEMANA_PROD_DIAS), n=L.length;
+  var corte=semanaGritoHora(hoy)+0.5, hc=semanaHoraTxt(corte), antes=nxHoraAhora()<corte;
+  var por={}; L.forEach(function(l){ (por[l.p.fecha]=por[l.p.fecha]||[]).push(l); });
+  var dias=Object.keys(por).sort().map(function(f){ var a=por[f];
+    return '• '+nxDiaTxt(f)+': '+a.slice(0, 2).map(function(l){ return semanaProdTxt(l.x)+' ('+semanaCliente(l.p)+')'; }).join(', ')+(a.length>2?(' y '+(a.length-2)+' más'):''); }).join('\n');
+  var cuenta=(n===1 ? 'Hay 1 producto ' : ('Hay '+n+' productos '))+semanaUrgTxt(L);
+  return { semana:1, tag:'🗓️ Bloki a logística · el stock de los próximos '+SEMANA_PROD_DIAS+' días hábiles',
+    t:'¡'+SEMANA_GRITO_A+'! '+cuenta,
+    x:'Se entrega'+(n===1?'':'n')+' hasta el '+nxDiaTxt(tope)+':\n'+dias+'\nProducción tarda hasta '+SEMANA_PROD_DIAS+' días hábiles: '+
+      (antes ? ('lo que se pide antes de las '+hc+' empieza hoy.') : ('ya pasaron las '+hc+': lo que se pide ahora empieza mañana.'))+
+      ' Te lo vuelvo a gritar cada '+Math.round(SEMANA_GRITO_CADA_MS/60000)+' minutos mientras falte.',
+    acc:'<button type="button" class="ag-ok" onclick="semanaIr(\'alerta\')">🗓️ Ver cuáles</button>'+
+        '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar(); abrirStock(); abrirStockRevisar()">🤖 Revisión automática</button>'+
+        '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar()">👍 Entendido</button>',
+    voz:'¡'+SEMANA_GRITO_A+'! '+cuenta+', para entregar en los próximos días. Producción tarda hasta '+SEMANA_PROD_DIAS+' días. '+
+      (antes ? ('Revisalos ya, antes de las '+hc+'.') : 'Revisalos ya.') };
+}
+/* «🗓️ Ver cuáles»: a Administración con el botón «Semana» puesto; sin la clave, a la tarjeta de la contraseña (como `asisIrAdm`) */
+function semanaIr(v){
+  try{ anuncioGritoCerrar(); }catch(e){} try{ asisCerrar(); }catch(e){}
+  try{ showView('admin'); }catch(e){}
+  setTimeout(function(){
+    var lk=document.getElementById('admin-lock');
+    if(!UNLOCKED && asisSeVe(lk)){ asisFoco(lk); asisGlobo({ ico:'', t:'🔒 Primero poné la contraseña de Administración', x:'Después tocá «🗓️ Semana», arriba de los pedidos.' }, true, true); return; }
+    admVerSemana(v||'alerta');
+  }, 300);
 }
 function quickDef(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i]; return null; }
 function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
@@ -44496,6 +44562,13 @@ function asisLogistica(){
   var rec=[]; [hoy, prox].forEach(function(f, i){ if(i && f===hoy) return; delDia(f).forEach(function(p){ if((p.productos||[]).some(esRecoger) && rec.indexOf(p)<0) rec.push(p); }); });
   if(rec.length) A.push({ k:'l-rec|'+hoy+'|'+rec.map(function(p){ return p.id; }).join(','), sev:'am', ico:'📥', ped:1,
     t:rec.length+' pedido'+(rec.length===1?'':'s')+' con algo para traer de Moreno', x:'De hoy y '+(prox===tomorrowStr()?'mañana':('el '+nxDiaTxt(prox)))+'. Mandá a buscarlo antes de cargar.', lista:asisPedLista(rec) });
+  /* 🗓️ (27/10) lo sin revisar o sin pedir que se entrega dentro del plazo de producción (`semanaUrgentes`, la cuenta del botón «Semana») */
+  try{ var U=semanaUrgentes();
+    if(U.length){ var ps=[]; U.forEach(function(l){ if(ps.indexOf(l.p)<0) ps.push(l.p); });
+      A.unshift({ k:'l-semana|'+hoy+'|'+U.map(function(l){ return l.p.id+'.'+l.i+'.'+l.e; }).join(','), sev:'ro', ico:'🗓️', ped:1,
+        t:U.length+' producto'+(U.length===1?'':'s')+' '+semanaUrgTxt(U)+' para entregar en los próximos '+SEMANA_PROD_DIAS+' días hábiles',
+        x:'Producción tarda hasta '+SEMANA_PROD_DIAS+' días hábiles: revisalos hoy. Desde las '+semanaHoraTxt(semanaGritoHora(hoy))+' te lo grito.',
+        lista:asisPedLista(ps), b:['🗓️ Ver la semana', "semanaIr('alerta')"] }); } }catch(e){}
   var D=null, cd=CV_DIA; try{ CV_DIA='hoy'; D=cargaVivaDatos(); }catch(e){} finally{ CV_DIA=cd; }
   if(D){
     var cams=D.cams.filter(function(c){ return !c.sin && c.total>0 && c.dentro<c.total && !camionSalio(hoy, c.k); });
@@ -44978,11 +45051,16 @@ function anuncioAviso(){
                 : ('Desde '+(des||'hace un rato')+'. Te lo recuerdo cada 3 minutos hasta que Administración lo quite.'),
     b: UNLOCKED ? ['✏️ Cambiar o quitar', 'anuncioAbrir()'] : null };
 }
-/* el reloj (cada `ANUNCIO_TIC_MS` y en cada `asisRefrescar`): uno nuevo se grita en el acto; el mismo, cada 3 min, en todos los aparatos */
+/* el reloj (cada `ANUNCIO_TIC_MS` y en cada `asisRefrescar`): uno nuevo se grita en el acto; el mismo, cada 3 min, en todos los aparatos.
+   🗓️ (27/10) Después del anuncio, el grito de la semana a logística (`semanaGritoTic`), que espera si el anuncio está en pantalla. */
 function anuncioTic(){
   if(!ASIS.montado) return;
+  anuncioTicAnuncio();
+  try{ semanaGritoTic(); }catch(e){}
+}
+function anuncioTicAnuncio(){
   var a=anuncioLeer();
-  if(!a){ ANUNCIO.ts=0; anuncioGritoCerrar(); return; }
+  if(!a){ ANUNCIO.ts=0; if(!(ANUNCIO.cur && ANUNCIO.cur.semana)) anuncioGritoCerrar(); return; }
   var nuevo=(a.ts!==ANUNCIO.ts), ahora=Date.now();
   if(nuevo){   // 📣 el grito grande: UNA vez al entrar al panel (o cuando Administración pone uno nuevo)
     if(anuncioEscribiendo()) return;   // espera a que termine de escribir: el próximo tic lo grita
@@ -45015,8 +45093,9 @@ function anuncioPuedeSonar(){
   var C=asisAudio(); return !C || C.state!=='suspended';
 }
 /* ---------- 📣 el grito ---------- */
+/* 🗓️ (27/10) El mismo grito sirve para otro aviso con `a.semana`: trae su `tag`, su texto chico `x`, sus botones `acc` y lo que dice la voz `voz`. */
 function anuncioGrito(a){
-  var av=anuncioAviso() || {}, des=anuncioDesde(a);
+  var av=a.semana ? {} : (anuncioAviso() || {}), des=a.semana ? '' : anuncioDesde(a);
   var box=document.getElementById('anu-grito');
   if(!box){
     box=document.createElement('div'); box.id='anu-grito'; box.className='anu-grito no-print';
@@ -45028,17 +45107,18 @@ function anuncioGrito(a){
       '<div class="ag-yo" aria-hidden="true"><img src="'+blokiSrc('anuncio')+'" data-traje="anuncio" alt="" width="390" height="348">'+
         '<span class="ag-ondas"><i></i><i></i><i></i></span></div>'+
       '<div class="ag-burbuja">'+
-        '<em class="ag-tag">📢 Anuncio de Administración</em>'+
+        '<em class="ag-tag">'+esc(a.tag||'📢 Anuncio de Administración')+'</em>'+
         '<strong id="ag-t">'+esc(a.t)+'</strong>'+
-        '<small id="ag-x">'+esc(UNLOCKED ? (av.x||'') : ((des ? ('Desde '+des+' · ') : '')+'Te lo recuerdo cada 3 minutos hasta que Administración lo quite.'))+'</small>'+
-        '<div class="ag-acc"><button type="button" class="ag-ok" onclick="anuncioGritoCerrar()">👍 Entendido</button>'+
-          (UNLOCKED ? '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar(); anuncioAbrir()">✏️ Cambiar o quitar</button>' : '')+'</div>'+
+        '<small id="ag-x">'+esc(a.x!=null ? a.x : (UNLOCKED ? (av.x||'') : ((des ? ('Desde '+des+' · ') : '')+'Te lo recuerdo cada 3 minutos hasta que Administración lo quite.')))+'</small>'+
+        '<div class="ag-acc">'+(a.acc!=null ? a.acc : ('<button type="button" class="ag-ok" onclick="anuncioGritoCerrar()">👍 Entendido</button>'+
+          (UNLOCKED ? '<button type="button" class="ag-cambiar" onclick="anuncioGritoCerrar(); anuncioAbrir()">✏️ Cambiar o quitar</button>' : '')))+'</div>'+
         '<span class="ag-pie">Tocá en cualquier lado para cerrar</span>'+
       '</div></div>';
   box.hidden=false;
+  box.classList.toggle('ag-semana', !!a.semana);
   box.classList.remove('ag-va'); void box.offsetWidth; box.classList.add('ag-va');
   document.body.classList.add('anu-grita');
-  ANUNCIO.t0=Date.now(); ANUNCIO.gen++;
+  ANUNCIO.t0=Date.now(); ANUNCIO.gen++; ANUNCIO.cur=a;
   anuncioTemblar();
   anuncioCierraEn(ANUNCIO_GRITO_MS);
   ANUNCIO.sinVoz=0;
@@ -45111,7 +45191,7 @@ function anuncioHablar(a, gen){
   if(asisMudo() || !S || !U) return;
   try{
     S.cancel();
-    var u=new U('¡Atención, atención! '+anuncioTextoVoz(a.t)), v=anuncioVoz();
+    var u=new U(a.voz ? anuncioTextoVoz(a.voz) : ('¡Atención, atención! '+anuncioTextoVoz(a.t))), v=anuncioVoz();
     if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-419';
     u.rate=1; u.pitch=0.85; u.volume=1;
     /* mientras habla, la pantalla no se cierra sola; al terminar, un ratito más */
@@ -45136,7 +45216,7 @@ function anuncioEscuchar(){
       var u=new SpeechSynthesisUtterance(' '); u.volume=0; window.speechSynthesis.speak(u); window.speechSynthesis.getVoices(); ANUNCIO.vozLista=1;
     }catch(e){}
     if(ANUNCIO.sinVoz && anuncioGritoAbierto()){   // salió callado al abrir: este toque lo hace gritar (y no lo cierra)
-      var a=anuncioLeer(); ANUNCIO.sinVoz=0;
+      var a=(ANUNCIO.cur && ANUNCIO.cur.semana) ? ANUNCIO.cur : anuncioLeer(); ANUNCIO.sinVoz=0;
       if(a){ ANUNCIO.t0=Date.now(); anuncioTemblar(); anuncioCierraEn(ANUNCIO_GRITO_MS); anuncioSonar(a); }
     }
   };
