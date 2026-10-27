@@ -1361,7 +1361,14 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 .ico-b svg{ width:17px; height:17px; fill:none; stroke:#fff; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; overflow:visible; display:block; }
 .nav .t-ic .ico-b{ margin:-5px 0 -4px; }                        /* la pestaña no crece */
 .nav button.active .ico-b{ box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 3px 8px -3px var(--c2); }
-.af-tb .ico-b{ margin-bottom:2px; }
+/* (§4nk, 27/10, dueño: *«parecen un carnaval»* → eligió la 3) En la ficha, sin cuadrito: el dibujo en gris y su color recién al pasar o
+   tocar; «Borrar» con la letra roja y «Entregó» en verde cuando ya está. Las pestañas de arriba siguen con su cuadrito de color. */
+.af-tb .ico-b{ margin-bottom:2px; background:none; box-shadow:none; border-radius:0; }
+.af-tb .ico-b svg{ width:19px; height:19px; stroke:#7b8b8a; transition:stroke .15s; }
+.af-tb button:hover .ico-b svg, .af-tb button:focus-visible .ico-b svg, .af-tb .ico-b.ico-vivo svg{ stroke:var(--c2); }
+.af-tb button:hover small{ color:var(--text); }
+.af-tb .del .ico-b svg{ stroke:#c98a8a; }   /* la letra roja de «Borrar» ya la pone `.af-tb .del small` */
+.af-tb .on .ico-b svg{ stroke:#15803d; }
 .ico-b.ico-vivo .rueda{ animation:ico-gira .6s linear infinite; transform-box:fill-box; transform-origin:center; }
 .ico-b.ico-vivo .cuerpo{ animation:ico-anda .5s ease-in-out infinite alternate; }
 .ico-b.ico-vivo .chk{ stroke-dasharray:30; stroke-dashoffset:30; animation:ico-traza .5s forwards; }
@@ -1458,6 +1465,40 @@ body.desh-on .toast.show{ transform:translateX(-50%) translateY(-74px); }
 .venta-tienda #fh .fh-dia, .venta-tienda #fh .fh-turnos, .venta-tienda #fh .fh-cerrado, .venta-tienda #fh .fh-alerta{ display:none; }
 @media(max-width:560px){ .fh{ padding:12px 12px 14px; } .fh-top{ flex-wrap:nowrap; gap:6px; } .fh-top h3{ font-size:1rem; white-space:nowrap; }
   .fh-ic{ padding:0 5px; } .fh-ic .tx{ display:none; } .fh-t{ padding:9px 10px 7px; } .fh-n b{ font-size:1.3rem; } .fh-t1 em.tu{ display:none; } }
+/* 👀 (§4nk) Los pedidos del turno (ver `verCuposTurno`) */
+.cupv{ display:flex; flex-direction:column; gap:12px; padding:16px 18px 18px; }
+.cupv-res{ border-radius:14px; padding:12px 14px; background:var(--teal-lt); border:1px solid var(--teal-border); display:flex; flex-direction:column; gap:8px; }
+.cupv-res.k-warn{ background:#FEF7EC; border-color:#f6d9a8; } .cupv-res.k-full{ background:#FDF0F1; border-color:#f3c3c9; } .cupv-res.k-off{ background:#f4f6f6; border-color:var(--line); }
+.cupv-r1{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.cupv-n{ font-size:.86rem; color:var(--text); } .cupv-n b{ font-size:1.7rem; font-weight:900; line-height:1; margin-right:3px; font-variant-numeric:tabular-nums; color:var(--teal-dk); }
+.cupv-res.k-warn .cupv-n b{ color:var(--amber); } .cupv-res.k-full .cupv-n b{ color:var(--red); }
+.cupv-pill{ margin-left:auto; font-size:.7rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; border-radius:999px; padding:3px 9px; background:#fff; color:var(--teal-dk); border:1px solid var(--teal-border); white-space:nowrap; }
+.cupv-res.k-warn .cupv-pill{ color:#7c4b00; border-color:#f6d9a8; } .cupv-res.k-full .cupv-pill{ color:#9b1c2a; border-color:#f3c3c9; }
+.cupv-bar{ height:7px; border-radius:99px; background:rgba(255,255,255,.9); overflow:hidden; }
+.cupv-bar i{ display:block; height:100%; border-radius:99px; background:var(--green); }
+.cupv-res.k-warn .cupv-bar i{ background:var(--amber); } .cupv-res.k-full .cupv-bar i{ background:var(--red); }
+.cupv-quien{ display:flex; flex-wrap:wrap; gap:5px; }
+.cupv-v{ font-size:.74rem; font-weight:600; color:var(--text); background:#fff; border:1px solid var(--line); border-radius:999px; padding:2px 9px 2px 3px; display:inline-flex; align-items:center; gap:5px; }
+.cupv-v b{ min-width:20px; height:20px; border-radius:999px; display:grid; place-items:center; background:var(--teal-lt); color:var(--teal-dk); font-size:.72rem; font-weight:800; padding:0 5px; }
+.cupv-l{ list-style:none; margin:0; padding:0; max-height:52vh; overflow:auto; border:1px solid var(--line); border-radius:12px; }
+.cupv-f{ display:flex; align-items:center; gap:10px; padding:9px 10px 9px 12px; cursor:pointer; }
+.cupv-f + .cupv-f{ border-top:1px solid var(--line); }
+.cupv-f:hover{ background:#f6fbfb; }
+.cupv-i{ flex:none; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:#eef3f3; color:var(--muted); font-size:.74rem; font-weight:800; font-variant-numeric:tabular-nums; }
+.cupv-t{ flex:1; min-width:0; }
+.cupv-1{ font-size:.88rem; line-height:1.4; }
+.cupv-oc{ display:inline-block; margin-right:7px; font-size:.72rem; font-weight:800; color:var(--teal-dk); background:var(--teal-lt); border-radius:6px; padding:0 6px; white-space:nowrap; vertical-align:1px; }
+.cupv-f.atc .cupv-oc{ color:#9d174d; background:#fce7f3; } .cupv-f.rpt .cupv-oc{ color:#7c4a1e; background:#f3e8dc; }
+.cupv-cli{ font-weight:700; color:var(--text); overflow-wrap:anywhere; }
+.cupv-2{ font-size:.76rem; color:var(--muted); margin-top:2px; overflow-wrap:anywhere; }
+.cupv-ok{ display:inline-block; margin-left:7px; font-size:.66rem; font-weight:800; color:#15803d; background:#dcfce7; border-radius:999px; padding:0 7px; white-space:nowrap; vertical-align:1px; }
+.cupv-f.ent .cupv-cli{ color:var(--muted); }
+.cupv-ver{ flex:none; }
+.cupv-vacio{ margin:0; padding:18px; text-align:center; color:var(--muted); font-size:.9rem; border:1px dashed var(--line); border-radius:12px; }
+.cupv-nota{ margin:0; font-size:.76rem; line-height:1.45; color:var(--muted); background:#f6f8f8; border-radius:10px; padding:8px 11px; }
+.cupv-nota.cupv-viejo{ background:#FEF3E2; color:#7c4b00; }
+.cupv-acc{ margin:0; align-items:center; } .cupv-acc .cupv-sp{ flex:1; }
+@media(max-width:560px){ .cupv{ padding:12px 12px 14px; } .cupv-ver .tx{ display:none; } .cupv-f{ gap:8px; padding:8px; } }
 @media(prefers-reduced-motion:reduce){ .fh-vivo i{ animation:none; } }
 @media print{ .fh{ display:none !important; } }
 /* ===== 🚚 (§4iw, 09/10) Arriba del panel: el día, los cupos en anillos y el camión en la ruta (dueño: «A»). ===== */
@@ -17533,26 +17574,46 @@ function cuposDelTurno(fecha, turno){
   return STATE.filter(function(p){ return p && p.fecha===fecha && normTurno(p.turno)===t; })
               .sort(function(a,b){ return (Number(a.nroDia)||0)-(Number(b.nroDia)||0); });
 }
+/* 👀 (§4nk, 27/10, dueño: *«se ve asquerosamente fea»*) Antes iba sin `.modal-b` (el texto pegado al borde) y a lo ancho de la
+   pantalla. Ahora: arriba cuántos entran y la barra (mismos colores que `fhPintar`), quién ocupó los lugares, la lista en dos
+   renglones (toda la fila abre el pedido) y el otro turno a un toque. La explicación del cupo queda abajo, chiquita. */
 function verCuposTurno(fecha, turno){
-  var l=cuposDelTurno(fecha, turno), lim=limTurno(fecha, turno);
-  openModal('<div class="modal-h"><h3>🎟️ Turno '+esc(turno)+' del '+esc(fmtFecha(fecha))+'</h3>'+
-    '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px">'+l.length+' de '+lim+' cupos ocupados. '+
-    'El cupo se cuenta <b>por fecha Y por turno</b>: mover un pedido de 🌅 AM no libera lugar en 🌆 PM. '+
-    'Si moviste uno y sigue en esta lista, todavía no llegó a la planilla — tocá 🔄 y mirá de nuevo.</p>'+
-    (l.length ? ('<div style="max-height:60vh;overflow:auto">'+l.map(function(p,i){
-        return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem">'+
-          '<b style="min-width:26px;color:var(--muted)">'+(i+1)+'.</b>'+
-          '<b>'+esc(ocEtiq(p.oc)||'—')+'</b>'+
-          '<span>'+esc(p.cliente||'(sin cliente)')+'</span>'+
-          '<span style="color:var(--muted)">'+esc(p.zona||'')+'</span>'+
-          '<span style="color:var(--muted)">'+esc(p.vendedor||'')+'</span>'+
-          (p.entregado?'<span class="badge b-green">entregado</span>':'')+
-          '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeModal();showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
-        '</div>';
-      }).join('')+'</div>')
-     : '<p style="font-size:.9rem">No hay ningún pedido en este turno.</p>')+
-    '<div class="modal-actions"><button class="btn btn-sm" style="width:100%" onclick="closeModal()">Cerrar</button></div>', true);
+  var t=normTurno(turno)||turno, l=cuposDelTurno(fecha, t), lim=limTurno(fecha, t), u=l.length, r=lim-u;
+  var k=!lim ? 'k-off' : (r<=0 ? 'k-full' : (r<=3 ? 'k-warn' : 'k-ok'));
+  var pill=!lim ? 'Sin camión' : (r<0 ? ((-r)+' de más') : (r===0 ? 'Lleno' : (r===1 ? '1 libre' : (r+' libres'))));
+  var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha);
+  var V={}; l.forEach(function(p){ var v=String(p.vendedor||'').trim()||'Sin vendedor'; V[v]=(V[v]||0)+1; });
+  var quien=Object.keys(V).sort(function(a,b){ return V[b]-V[a] || a.localeCompare(b); })
+    .map(function(v){ return '<span class="cupv-v"><b>'+V[v]+'</b>'+esc(v)+'</span>'; }).join('');
+  var ent=l.filter(function(p){ return p.entregado; }).length;
+  var otro=t==='AM' ? 'PM' : 'AM', lim2=limTurno(fecha, otro), u2=cuposUsadosTurno(fecha, otro), viejo=cupoViejoAviso();
+  var h='<div class="modal-h"><h3>'+(t==='PM' ? '🌆' : '🌅')+' Turno '+esc(t)+' · '+esc(dia)+'</h3>'+
+    '<button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b cupv">'+
+      '<div class="cupv-res '+k+'"><div class="cupv-r1"><div class="cupv-n"><b>'+u+'</b>de '+lim+' cupos ocupados'+
+        (ent ? (' · '+ent+' ya '+(ent===1 ? 'entregado' : 'entregados')) : '')+'</div><span class="cupv-pill">'+pill+'</span></div>'+
+        (lim ? '<div class="cupv-bar"><i style="width:'+Math.min(100, Math.round(100*u/lim))+'%"></i></div>' : '')+
+        (quien ? '<div class="cupv-quien" aria-label="Quién ocupa el turno">'+quien+'</div>' : '')+'</div>'+
+      (viejo ? '<p class="cupv-nota cupv-viejo">'+viejo.replace(/^<br>/, '')+'</p>' : '')+
+      (u ? ('<ol class="cupv-l">'+l.map(function(p, i){
+          var tipo=ocTipoDe(p.oc), id=esc(String(p.id));
+          var abajo=[p.zona ? ('📍 '+esc(p.zona)) : '', p.vendedor ? ('👤 '+esc(p.vendedor)) : ''].filter(Boolean).join(' · ');
+          return '<li class="cupv-f'+(tipo==='ATC' ? ' atc' : (tipo==='RPT' ? ' rpt' : ''))+(p.entregado ? ' ent' : '')+'" onclick="closeModal();showPedidoModal(\''+id+'\')">'+
+            '<span class="cupv-i">'+(i+1)+'</span>'+
+            '<div class="cupv-t"><div class="cupv-1"><span class="cupv-oc">'+esc(ocEtiq(p.oc)||'—')+'</span><span class="cupv-cli">'+esc(p.cliente||'(sin cliente)')+'</span>'+
+              (p.entregado ? '<span class="cupv-ok">✅ entregado</span>' : '')+'</div>'+
+              (abajo ? '<div class="cupv-2">'+abajo+'</div>' : '')+'</div>'+
+            '<button type="button" class="btn btn-ghost btn-sm cupv-ver">Ver<span class="tx"> pedido</span> ›</button></li>';
+        }).join('')+'</ol>')
+       : '<p class="cupv-vacio">No hay ningún pedido en este turno.</p>')+
+      '<p class="cupv-nota">ℹ️ El cupo se cuenta <b>por fecha y por turno</b>: mover un pedido de 🌅 AM no libera lugar en 🌆 PM. '+
+        'Si moviste uno y sigue en esta lista, todavía no llegó a la planilla — tocá 🔄 y mirá de nuevo.</p>'+
+      '<div class="modal-actions cupv-acc">'+
+        ((lim2 || u2) ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+otro+'\')">'+
+          (otro==='PM' ? '🌆 Ver la tarde' : '🌅 Ver la mañana')+' · '+u2+' de '+lim2+'</button>') : '')+
+        '<span class="cupv-sp"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div>'+
+    '</div>';
+  openModal(h);
 }
 /* Vuelve a bajar la planilla: así se entera de los DÍAS CERRADOS y de los cupos que
    cargó otra computadora. Devuelve una promesa que NUNCA rechaza — si falla la red se

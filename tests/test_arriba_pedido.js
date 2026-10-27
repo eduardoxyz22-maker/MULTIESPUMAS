@@ -77,7 +77,7 @@ function PREPARAR(){
   chk('Novedades con su punto rosa hasta abrirla', r.punto, r);
   r = await page.evaluate(() => { document.querySelector('#fh .fh-t[data-t="PM"] .fh-ver').click(); var m=document.getElementById('modal'), t=(document.querySelector('#modal-box h3')||{}).textContent||'';
     var o={ abre:m.classList.contains('on'), t:t }; closeModal(); return o; });
-  chk('«👀 Ver los 2 pedidos» abre la lista de ese turno (la de siempre)', r.abre && /Turno PM del 28\/10\/2026/.test(r.t), r);
+  chk('«👀 Ver los 2 pedidos» abre la lista de ese turno (la de siempre)', r.abre && /Turno PM · miércoles 28\/10/.test(r.t), r);
   r = await page.evaluate(() => DIA('2026-10-28', 11, 2));
   chk('quedan pocos: «¡Quedan pocos!» en la mañana y abajo «⚠️ Queda 1 lugar a la mañana. Si se llena, pasalo a la tarde u otro día.»',
       r.AM.tag==='¡Quedan pocos!' && r.AM.k==='k-warn' && r.alertas.join()==='k-warn|⚠️ Queda 1 lugar a la mañana. Si se llena, pasalo a la tarde u otro día.', r);

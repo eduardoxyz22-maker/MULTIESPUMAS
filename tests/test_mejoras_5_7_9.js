@@ -74,6 +74,12 @@ function PREPARAR(){
       r.bs.map(b=>b.t).join(',')==='Entregó,WhatsApp,Editar,Reprog.,A tarde,Borrar' && r.bs.every(b=>b.box && b.em===''), r.bs);
   chk('«A mañana» (un pedido de la tarde) lleva el sol amarillo; «A tarde», el naranja', r.man==='#facc15', r.man);
   chk('las pestañas no crecen con el cuadradito (≤ 44 px de alto en la compu)', r.alto.every(h=>h<=44), r.alto);
+  r = await page.evaluate(() => { var bs=document.querySelectorAll('#adm-fichas .af-f[data-pid="p1"] .af-tb button');
+    var cs=function(b){ var ic=b.querySelector('.ico-b'), g=getComputedStyle(ic); return { bg:g.backgroundImage, sombra:g.boxShadow, trazo:getComputedStyle(ic.querySelector('svg')).stroke, letra:getComputedStyle(b.querySelector('small')).color }; };
+    return { ent:cs(bs[0]), borrar:cs(bs[5]), tab:getComputedStyle(document.querySelector('#tab-admin .ico-b')).backgroundImage }; });
+  chk('§4nk · en la ficha los íconos van SIN cuadradito y en gris (dueño: «parecen un carnaval», eligió la 3)', r.ent.bg==='none' && r.ent.sombra==='none' && r.ent.trazo==='rgb(123, 139, 138)', r.ent);
+  chk('§4nk · «Borrar» con la letra roja', r.borrar.letra==='rgb(163, 36, 46)', r.borrar);
+  chk('§4nk · las pestañas de arriba siguen con su cuadradito de color', /gradient/.test(r.tab), r.tab);
   // en las pruebas no se mueven…
   await page.hover('#adm-fichas .af-f[data-pid="p1"] .af-tb button'); await page.waitForTimeout(100);
   r = await page.evaluate(() => document.querySelectorAll('.ico-vivo').length);
@@ -83,6 +89,9 @@ function PREPARAR(){
   await page.mouse.move(5,5); await page.hover('#adm-fichas .af-f[data-pid="p1"] .af-tb button:nth-child(2)'); await page.waitForTimeout(150);
   r = await page.evaluate(() => ({ n:document.querySelectorAll('.ico-vivo').length, wa:!!document.querySelector('#adm-fichas .af-f[data-pid="p1"] .af-tb button:nth-child(2) .ico-b.ico-vivo') }));
   chk('con `ICO_PRUEBA`, pasar el mouse por «WhatsApp» lo mueve (solo ese)', r.n===1 && r.wa, r);
+  await page.waitForTimeout(250);   // el color entra en .15 s
+  r = await page.evaluate(() => [].map.call(document.querySelectorAll('#adm-fichas .af-f[data-pid="p1"] .af-tb button svg'), function(s){ return getComputedStyle(s).stroke; }));
+  chk('§4nk · al pasar el mouse, SOLO «WhatsApp» toma su color (verde); los demás siguen grises', r[1]==='rgb(4, 120, 87)' && r[0]==='rgb(123, 139, 138)' && r[2]==='rgb(123, 139, 138)', r);
   await page.waitForTimeout(1500);
   r = await page.evaluate(() => document.querySelectorAll('.ico-vivo').length);
   chk('…y a los 1,4 s se queda quieto', r===0, r);
