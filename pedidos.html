@@ -3226,6 +3226,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 /* ✨ (§4mg) Contabilidad → Ventas arriba: «Para hacer» + el libro del período. Una sola caja por tarjeta: adentro, filas y separadores. */
 #cx-top{margin:2px 0 12px;align-items:stretch}
 .cx-nuevo #cx-grupos,.cx-nuevo #cta-metrics,.cx-nuevo #cta-marcas,.cx-nuevo #cx-vivo,.cx-nuevo #cx-dup{display:none}
+.cx-nuevo #cx-dup.cx-dup-vis{display:block;scroll-margin-top:calc(var(--hdr-h,0px) + 12px)}
 .cx-nuevo .filters{background:#f3f8f8;border:1px solid #e1ebea;border-radius:14px;padding:8px 10px;margin-bottom:12px;align-items:flex-end}
 .cx-nuevo .filters .lb{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .lb-tres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #edf3f2;padding-bottom:10px}
@@ -9273,10 +9274,16 @@ function cxDupDistintas(k){
   cxLS('me_cx_dup_ok', JSON.stringify(ok)); toast('✋ Anotado en esta compu: esas ventas son distintas','ok'); renderConta();
 }
 function cxDupVolver(){ cxLS('me_cx_dup_ok', null); renderConta(); }
+/* ⚠️ (27/10, dueño: *«el boton revisa no sirve.. doy clic no abre nada»*) Con lo de arriba nuevo (`.cx-nuevo`) la caja `#cx-dup` está
+   escondida: abierta se muestra igual (`.cx-dup-vis`). Desde la lista de control del cierre (una ventana, y puede ser otra pestaña de
+   Contabilidad) primero cierra la ventana y vuelve a Ventas, como los otros botones de esa lista. */
 function cxDupAbrir(){
+  var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) closeModal();
+  var pv=document.getElementById('cta-pane-ventas');
+  if(pv && pv.style.display==='none'){ segSet('cta-tab','ventas'); setContaTab('ventas'); }
   if(!(DUP_IDX.grupos||[]).length){ toast('✅ No hay ventas cargadas dos veces en este período','ok'); return; }
   CX_DUP_ABIERTO=true; renderConta();
-  var b=document.getElementById('cx-dup'); if(b && b.scrollIntoView) try{ b.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){}
+  setTimeout(function(){ misIrA('cx-dup'); }, 60);
 }
 function cxDupToggle(){ CX_DUP_ABIERTO=!CX_DUP_ABIERTO; renderConta(); }
 function cxDupMotivo(g){
@@ -9288,6 +9295,7 @@ function cxDupMotivo(g){
 function cxDupPintar(){
   var box=document.getElementById('cx-dup'); if(!box) return;
   var G=DUP_IDX.grupos||[], n=DUP_IDX.n||0, fuera=DUP_IDX.fuera||0;
+  box.classList.toggle('cx-dup-vis', !!(CX_DUP_ABIERTO && G.length));
   var volver=fuera ? ('<span class="cx-dup-fuera">'+fuera+' par'+(fuera===1?'':'es')+' marcado'+(fuera===1?'':'s')+' «son distintas» en esta compu · <a onclick="cxDupVolver()">↺ volver a mostrar'+(fuera===1?'lo':'los')+'</a></span>') : '';
   if(!G.length){ box.innerHTML=volver?('<div class="cx-dup-min">'+volver+'</div>'):''; return; }
   var pares=G.map(function(g){
