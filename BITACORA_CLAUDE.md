@@ -16496,3 +16496,40 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - Página de muestras para el dueño (las cinco, con capturas de datos inventados): https://claude.ai/artifact/ARqVqf6JJgaGYbBEW9cJMp
 - El dueño no veía los trajes de Bloki (publicados el 15/10): con «Administración» elegido en «¿Quién está usando el panel?» siempre sale el
   Bloki de todos (`blokiTraje`: `admin` → `bloki`). Se le ofreció que con Administración el traje siga la pestaña.
+
+### §4ne — «Arrancamos con todo, pero pulamos» (27/10; en la rama, espera «publica»; el `.gs` 2026-10-27-a espera que el dueño lo implemente)
+El dueño, después de las muestras: *«ok arrancamos con todo pero pulamos, y resolvamos tus dudas»*. Respuestas: el conteo de las tiendas
+con el **Excel del sistema**; «¿qué se cuenta en las tiendas?» → «otra cosa» SIN texto (queda como fábrica: sin protectores ni sábanas;
+preguntarle de nuevo); el automático de producción **lo pregunta a logística**; Bloki con Administración **según la pestaña**.
+- **🧽 Bloki con «Administración»** (`73ba137`): `blokiTraje` con rol `admin` sigue la pestaña: Nuevo pedido y Mis pedidos → vendedor (gorra),
+  Contabilidad → conta (anteojos), Administración → logística (casco), lo demás → Bloki. Vendedores, logística y contabilidad como antes.
+  `test_bloki` (19) cambió a conciencia.
+- **📲 «Pedir hoy» por WhatsApp** (`.gs` **2026-10-27-a**, `ef9593b`): media hora antes del corte de producción (lunes a viernes 16:00, sábado
+  11:30; ni domingo ni feriado), a los de la propiedad **`WA_PEDIR_HOY`** (= «Ernesto:591…, Alba:591…»; sin ella no sale nada), la plantilla
+  **`logistica_pedir_hoy`** con 5 datos: cuántos («9 productos»), hasta qué día, la hora del corte, la lista por día y en orden con producto,
+  medida y cliente ENTEROS y «y N más» (≤240), y los plazos con «Lo del …, si hay que fabricarlo, ya no llega». Una vez por día (`WA_HECHO.ph`);
+  un reintento que llega pasado el corte no sale y se anota por qué. La regla es `semanaUrgentes` de la página pasada al `.gs` (`waPh*`:
+  `waPhNoCuenta_` = `esProdDeTienda`, `waPhLinea_` = `semanaLinea`, `waPhEntra_` = `semanaEntra`, `waPhPlazos_` = `semanaPlazos`) y
+  **`tests/test_wa_pedir_hoy.js` (64) arma los mismos pedidos en la página y en el `.gs` y compara a 9 horas y días distintos**. Única
+  diferencia a sabiendas: un «VARIOS»/«RECOGER…» con un código del catálogo (la página mira `CODIGOS`, que el `.gs` no tiene; acá cuenta con
+  cualquier código). ⚠️ Si cambia `semanaLinea`, `semanaEntra`, `esProdDeTienda`, los `PROD_*` o los plazos de la página, cambia el `.gs`.
+  `probarAntesDeImplementar` §11 y `estadoBotWhatsApp` dicen a quién va. `test_wa_bot` (208) cuenta 8 plantillas.
+  **Para prenderlo (el dueño)**: pegar el `.gs` y probar ✅, implementar, ▶ `crearPlantillasWhatsApp` (crea solo la nueva), esperar que Meta la
+  apruebe (`verPlantillasWhatsApp`), y poner `WA_PEDIR_HOY` en las Propiedades del script con el número de Alba (nunca en el chat).
+- **🏭 «En producción» automático: la Prioridad 0** (`7812e99`; **sigue APAGADO**): para prenderlo son dos líneas al lado de `STOCK_PV`:
+  `STOCK_AUTO_ACTIVO=true` y `STOCK_AUTO_DESDE='<ese día>'`.
+  · P1 página vieja: el `.gs` 27-a no deja guardar el stock con un `sf` menor al `pv` guardado (`stockPvGuardado_`); prendido, `STOCK_PV`
+    pasa solo a 4. La página junta una copia que perdió `ap` (`stockProtegerDePaginaVieja`). Primero la página, todos F5, después se usa.
+  · P2 la poda de `STOCK.ap` es SOLO por fecha (`STOCK_AUTO_DIAS`): lo llegado o anulado ya no lo revive la copia de otro equipo.
+  · P3 un solo reparto: prendido, «Ya pedí» se anota en `STOCK.ap` a mano (`man`), no en `STOCK.p`; «Deshacer» = «No se pidió». Apagado, igual que siempre.
+  · P4 `STOCK_AUTO_DESDE`: lo anotado antes (`stockAutoLista`) no cuenta, no se ve ni se cierra.
+  · P5 el camión que nadie vio salir (`existLoteSinCamion`): lo de hoy que el Excel dio por salido sin GPS, «Ya salió», ✅ ni cierre no es
+    producción (`existLoteProduccion` lo resta).
+  `tests/test_auto_p0.js` (26; 18 rojas contra la página de antes), `test_servidor` §22 i (414).
+- **🏬 Tiendas, pulido** (`7511d0e`): un almacén del Excel que no dice de qué tienda es se PREGUNTA en la vista previa («¿De qué tienda es el
+  almacén «…»?», con «No es de una tienda») y queda recordado en la fila (`al`, `tstAlias`); «Ver lo que leí»; cuántas unidades de tienda
+  quedaron afuera; un conteo que no es del último día hábil «sirve igual» y se dice cuál es el de cierre; dos almacenes para la misma tienda
+  en un archivo: el primero. **Bloki avisa a logística/Administración** (`tstAviso` en `asisLogistica`): el último día hábil desde las 15
+  («al cierre, contá las tiendas», con las que faltan) y los 3 primeros días hábiles del mes siguiente si a una que ya llevaba cuenta le falta
+  el de cierre. `test_tiendas_stock` (47).
+- **🎯 Metas**: al salir del campo, los puntos de los miles (`metasFormato`). `test_metas` (24).
