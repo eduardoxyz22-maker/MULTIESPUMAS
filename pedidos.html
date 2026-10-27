@@ -16180,12 +16180,16 @@ function realDelete(id){
     renderContaSiActiva(); renderCuadreSiActivo();
   };
   repintar();
-  if(!CONNECTED){ toast('Pedido eliminado','ok'); return Promise.resolve({ ok:false, local:true }); }
+  if(!CONNECTED){ borrarPendPoner(id, null); toast('Pedido eliminado','ok'); return Promise.resolve({ ok:false, local:true }); }
+  /* 🗑 (§4nl, 27/10, Astra A09) Confirmado: si la página se cierra antes de que Google conteste, se retoma al volver
+     (`borrarPendRetomar`). Se limpia cuando termina, salga como salga: el resultado ya se le dijo a la persona. */
+  if(copia) borrarPendPoner(id, { c:copia, t:Date.now(), ya:1 });
+  var listo=function(){ borrarPendPoner(id, null); };
   toast('Eliminando… (primero se mira que nadie la haya cambiado)','ok');
   /* §4fz: se borra en el servidor SOLO si la fila sigue siendo la que se vio. Si no, vuelve
      a la pantalla con lo nuevo y se dice qué cambió: la persona decide de nuevo. */
   var volver=function(rec){ delete BORRADO_AQUI[String(id)]; if(!rec) return; rec.oc=cleanOC(rec.oc); upsert(rec); repintar(); };
-  return borrarEnServidor(copia||{id:id}).then(function(r){
+  var pr=borrarEnServidor(copia||{id:id}).then(function(r){
     if(r.ok){ toast('Pedido eliminado ✓','ok'); return r; }
     if(r.incierto) delete BORRADO_AQUI[String(id)];   // «si sigue en la planilla, vuelve sola»: que vuelva
     if(r.conflicto){
@@ -16206,6 +16210,8 @@ function realDelete(id){
     toast('No se borró de la planilla ('+motivoCorto(e)+'): la venta sigue ahí. Probá de nuevo con señal.','err',9000);
     return { ok:false, error:'red' };
   });
+  pr.then(listo, listo);
+  return pr;
 }
 
 /* ============================================================================
@@ -16714,6 +16720,9 @@ function navDeslizar(antes, v){
    · Borrar espera los 5 s ANTES de ir a la planilla (`borrarConDeshacer`): el pedido sale de la pantalla enseguida (una lectura no lo
      devuelve: `BORRADO_AQUI`) y recién después se borra con `realDelete`, que relee y compara como siempre (§4fz). Si la página se esconde
      o se cierra antes, se borra en ese momento. Las preguntas de siempre («¿Eliminar…?») siguen.
+   · (§4nl, 27/10, Astra) Si el guardado vuelve con un «no» del servidor, «Deshacer» se va (`deshSiRechaza`); deshacer una entrega
+     devuelve solo lo que la entrega cambió, sobre la versión de ahora (`deshDevolver`). El borrado deja su intención en el aparato
+     (`me_borrar_pend`): cerrar la página no lo pierde (`borrarPendRetomar`).
    · Uno nuevo cumple el anterior. En las pruebas, apagado salvo `DESH_PRUEBA`: todo como antes, sin espera. */
 var DESH_MS=5000, DESH=null;
 function deshVa(){ return !(navigator.webdriver && !window.DESH_PRUEBA); }
@@ -16742,19 +16751,49 @@ document.addEventListener('keydown', function(e){
 /* El aviso verde de la acción («Entregado ✓») dice lo mismo que la barra: se saca para que no queden dos. */
 function deshTaparAviso(){ var t=document.getElementById('toast'); if(t && /\bok\b/.test(t.className)){ clearTimeout(_toastT); t.className='toast'; } }
 function deshFotoEntrega(p){ return { entregado:!!p.entregado, productos:JSON.parse(JSON.stringify(p.productos||[])) }; }
-function deshEntregaOfrecer(id, foto, ficha){
+/* 🚫 (§4nl, 27/10, Astra A01) Si el guardado que se ofrece deshacer vuelve con un «no» firme del servidor (conflicto: otro equipo lo
+   cambió antes; día cerrado…), en pantalla ya está la versión de la planilla y no queda nada de acá que deshacer: «Deshacer» se va
+   sin hacer nada. Antes seguía y volvía a mandar la foto vieja con el sello nuevo: pisaba la corrección del otro. Sin respuesta (a la
+   cola) sigue: el guardado de acá todavía vale. */
+function deshSiRechaza(pr){
+  var d=DESH; if(!d || !pr || typeof pr.then!=='function') return;
+  pr.then(function(res){
+    if(DESH!==d || !(res && res.ok===false && RECHAZOS_FIRMES[res.error])) return;
+    DESH=null; clearTimeout(d.t); deshCerrar();
+  }, function(){});
+}
+/* ↩️ (§4nl, 27/10, Astra A01) Devuelve SOLO lo que la entrega cambió (de `despues` a `antes`), sobre la versión de AHORA (`cur`): clave
+   por clave (y adentro de la ATC), y solo si sigue como la dejó la entrega. Lo que otro cambió después (cantidad, marca de logística)
+   queda. Antes se reponía la lista entera de productos de la foto vieja. */
+function deshDevolver(cur, antes, despues){
+  var J=function(v){ return v===undefined ? '·' : JSON.stringify(v); }, claves={};
+  [antes, despues].forEach(function(o){ for(var k in (o||{})) claves[k]=1; });
+  Object.keys(claves).forEach(function(k){
+    var a=antes ? antes[k] : undefined, d=despues ? despues[k] : undefined;
+    if(J(a)===J(d)) return;
+    var obj=function(v){ return !!v && typeof v==='object' && !Array.isArray(v); };
+    if(obj(a) && obj(d) && obj(cur[k])){ deshDevolver(cur[k], a, d); return; }
+    if(J(cur[k])!==J(d)) return;                                  // otro lo cambió después: queda lo suyo
+    if(a===undefined) delete cur[k]; else cur[k]=JSON.parse(JSON.stringify(a));
+  });
+}
+function deshEntregaOfrecer(id, foto, ficha, pr){
   var p=findById(id); if(!p || !deshVa()) return;
+  var despues=deshFotoEntrega(p);                                 // (§4nl, A01) cómo la dejó la entrega
   deshTaparAviso();
   deshOfrecer((p.entregado ? '✅ ' : '↩️ ')+(p.cliente||'El pedido')+(p.entregado ? ': entregado' : ': ya no figura entregado'), function(){
     var q=findById(id);
     if(!q){ toast('No se pudo deshacer: el pedido ya no está en la lista.','err'); return; }
-    q.entregado=foto.entregado; q.productos=JSON.parse(JSON.stringify(foto.productos));   // la marca, su registro del cierre y la ATC, como estaban
+    // la marca, su registro del cierre y la ATC, como estaban — sobre la versión de ahora (§4nl, A01)
+    if(!!q.entregado===despues.entregado) q.entregado=foto.entregado;
+    (q.productos||[]).forEach(function(x, i){ var a=foto.productos[i], d=despues.productos[i]; if(x && a && d && prodClave(x)===prodClave(d)) deshDevolver(x, a, d); });
     persistPedido(q);
     if(ficha && document.getElementById('modal').classList.contains('on')) reabrirFicha(id);
     toast('↩️ Listo: '+(q.cliente||'el pedido')+' quedó como estaba','ok');
   });
+  deshSiRechaza(pr);
 }
-function deshTurnoOfrecer(id, antes, turno, quedan){
+function deshTurnoOfrecer(id, antes, turno, quedan, pr){
   var p=findById(id); if(!p || !deshVa() || normTurno(p.turno)!==turno || (antes!=='AM' && antes!=='PM')) return;
   deshTaparAviso();
   deshOfrecer((turno==='PM' ? '🌆 ' : '🌅 ')+(p.cliente||'El pedido')+' pasó a la '+(turno==='PM' ? 'tarde' : 'mañana')+' · quedan '+quedan+' cupo'+(quedan===1?'':'s'), function(){
@@ -16763,10 +16802,49 @@ function deshTurnoOfrecer(id, antes, turno, quedan){
     if(!abierta) closeModal();                                    // `cambiarTurno` reabre la ficha: desde la ficha chica no hace falta
     try{ renderAdmin(); }catch(e){}
   });
+  deshSiRechaza(pr);                                              // (§4nl, A01) el turno rechazado tampoco se «deshace» encima del de otro
 }
 function deshRepintar(){
   try{ saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
        renderContaSiActiva(); renderCuadreSiActivo(); }catch(e){}
+}
+/* 🗑 (§4nl, 27/10, Astra A09) EL BORRADO CONFIRMADO NO SE PIERDE AL CERRAR. Al cerrar o recargar dentro de los 5 s (o mientras
+   `realDelete` espera a Google), la lectura y el borrado son promesas que mueren con la página: el pedido volvía al abrir. Ahora la
+   intención queda en el aparato (`me_borrar_pend`: {id: {c: la copia que se vio, con su sello; t: cuándo; ya: pasaron los 5 s}})
+   ANTES de esperar nada; «Deshacer» la saca y `realDelete` la limpia cuando termina (salga como salga). Si queda, la próxima
+   lectura buena la retoma (`borrarPendRetomar`) por el camino de siempre: relee y compara con la copia (§4fz), así que si otro lo
+   cambió mientras tanto NO se borra y se ve lo nuevo. La de otra pestaña todavía en sus 5 s no se toca; una de más de
+   `BORRAR_PEND_DIAS` días no se ejecuta (se avisa). */
+var LS_BORRAR_PEND='me_borrar_pend', BORRAR_PEND_DIAS=3, BORRAR_PEND_MIO={};
+function borrarPendLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_BORRAR_PEND)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
+function borrarPendPoner(id, x){
+  id=String(id);
+  if(x) BORRAR_PEND_MIO[id]=1; else delete BORRAR_PEND_MIO[id];   // la de esta página la sigue esta página
+  try{ var m=borrarPendLeer(); if(x) m[id]=x; else delete m[id]; localStorage.setItem(LS_BORRAR_PEND, JSON.stringify(m)); }catch(e){}
+}
+/* ¿La retoma esta página? No si es suya (en sus 5 s o esperando a Google), ni la de otra pestaña en sus 5 s. */
+function borrarPendToca(id, x){ return !!(x && x.c && !BORRAR_PEND_MIO[String(id)] && (x.ya || Date.now()-(Number(x.t)||0) > DESH_MS+10000)); }
+function borrarPendVencida(x){ return Date.now()-(Number(x && x.t)||0) > BORRAR_PEND_DIAS*86400000; }
+/* Al abrir: lo que quedó por borrar no vuelve con la primera lectura (si no, aparecía un momento). */
+function borrarPendAlAbrir(){ var m=borrarPendLeer(); Object.keys(m).forEach(function(id){ if(borrarPendToca(id, m[id]) && !borrarPendVencida(m[id])) BORRADO_AQUI[id]=Date.now(); }); }
+var BORRAR_PEND_CORRE=null;
+function borrarPendRetomar(){
+  if(BORRAR_PEND_CORRE) return BORRAR_PEND_CORRE;                // de a una vuelta (cada lectura buena la llama)
+  var m=borrarPendLeer(), ids=Object.keys(m).filter(function(id){ return borrarPendToca(id, m[id]); });
+  if(!ids.length) return Promise.resolve();
+  var fin=function(){ BORRAR_PEND_CORRE=null; };
+  return (BORRAR_PEND_CORRE=ids.reduce(function(cadena, id){
+    return cadena.then(function(){
+      var x=borrarPendLeer()[id]; if(!borrarPendToca(id, x)) return;
+      if(borrarPendVencida(x)){
+        borrarPendPoner(id, null);
+        toast('⚠️ El borrado de '+(x.c.cliente||'un pedido')+' no se terminó (la página se cerró antes) y ya pasaron más de '+BORRAR_PEND_DIAS+' días: NO se borró. Si hay que borrarlo, hacelo de nuevo.','err',12000);
+        return;
+      }
+      upsert(x.c);                               // la copia que se vio: `realDelete` la compara con la planilla
+      return Promise.resolve(realDelete(id)).then(null, function(){});
+    });
+  }, Promise.resolve()).then(fin, fin));
 }
 function borrarConDeshacer(id){
   if(!deshVa()) return realDelete(id);
@@ -16775,8 +16853,10 @@ function borrarConDeshacer(id){
   STATE=STATE.filter(function(p){ return p.id!==id; });
   if(cola.length) setPending(getPending().filter(function(q){ return !(q && q.id===id); }));   // si no, la cola lo volvía a poner en pantalla
   BORRADO_AQUI[String(id)]=Date.now();
+  borrarPendPoner(id, { c:copia, t:Date.now() });                // (§4nl, A09) si la página se cierra, se retoma al volver
   deshRepintar();
   deshOfrecer('🗑 '+(copia.cliente||'El pedido')+(copia.oc ? (' · '+copia.oc) : '')+': se borra en 5 segundos', function(){
+    borrarPendPoner(id, null);                                   // (§4nl, A09) deshecho: no se retoma
     delete BORRADO_AQUI[String(id)];
     if(!findById(id)) upsert(copia);
     if(cola.length) setPending(getPending().concat(cola));
@@ -17850,6 +17930,7 @@ function refrescarEstadoYa(){
       cargaEstado('ok');
       saldoTrasLectura();                        // 🧾 (27/09) el saldo debajo de cada producto, con lo recién leído (§4gj)
       if(typeof cierreEntPendiente==='function' && cierreEntPendiente()) setTimeout(cierreEntSincronizar, 0);   // ⏳ (05/10) el cierre que esperaba señal
+      if(typeof borrarPendRetomar==='function') setTimeout(borrarPendRetomar, 0);   // 🗑 (§4nl, Astra A09) el borrado que quedó a medias al cerrar
       setTimeout(histStockAlDia, 0);             // 📚 (09/10, §4in) el Excel de hoy a la hoja «Historial stock», si falta
       setTimeout(function(){ try{ adelantoRevisarGps(); }catch(e){} }, 0);   // 🚀 (14/10) el GPS vio salir un camión con lo de la tarde cargado
       return true;
@@ -26644,7 +26725,7 @@ function copiarBusca(){
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ obsAntesDeListo(id, function(){ quickVerificadoYa(id); }); }   // 📝 (23/10) con observaciones, primero se leen
 function quickVerificadoYa(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; var foto=deshFotoEntrega(p); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto); }   // ↩️ (§4ni, 7)
+function quickEntregado(id){ var p=findById(id); if(!p) return; var foto=deshFotoEntrega(p); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto, false, pr); }   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
    QR + tarjeta), cada uno con su monto. Se guardan como texto en el campo
@@ -37978,10 +38059,10 @@ function cambiarTurno(id, turno, sinDeshacer){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la devolución de una ATC cambia de turno con el viaje — (26/09) también la YA entregada
   p.turno=turno;
   atcSeguirViaje(p, _enDev);
-  persistPedido(p, _forzar?{forzar:true}:undefined);
+  var _pr=persistPedido(p, _forzar?{forzar:true}:undefined);
   reabrirFicha(id);
   toast('Pasa al turno '+turno+' ✓ — quedan '+(lim-usados-1)+' cupos','ok');
-  if(!sinDeshacer) deshTurnoOfrecer(id, _antes, turno, lim-usados-1);
+  if(!sinDeshacer) deshTurnoOfrecer(id, _antes, turno, lim-usados-1, _pr);   // (§4nl, A01) con el guardado, por si vuelve con un «no»
 }
 /* Editar desde la lista de carga: hay que cerrar TAMBIÉN la lista, si no el formulario
    queda tapado por la pantalla de carga, que va por encima de todo. */
@@ -38747,11 +38828,11 @@ function toggleEntregado(id){
   if(!p.entregado) entregaRegistroBorrar(p);   // ✅ (16/10, §4lo) destildado: sin el registro del cierre (su `eF` manda en el stock)
   else entregaAdelantadaAnotar(p);              // ✅ (16/10, §4lr U12) entregado antes de su día: salió HOY
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
-  guardarDurable(p);
+  var pr=guardarDurable(p);
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
   if(p.entregado) fxSello('ENTREGADO','ent');
   reabrirFicha(id);
-  deshEntregaOfrecer(id, foto, true);
+  deshEntregaOfrecer(id, foto, true, pr);       // (§4nl, A01) con el guardado, por si vuelve con un «no»
 }
 
 /* ============================================================================
@@ -47527,6 +47608,7 @@ document.addEventListener('DOMContentLoaded',function(){
   refreshDatalists();
   resetForm();
   updateStats();
+  try{ borrarPendAlAbrir(); }catch(e){}   // 🗑 (§4nl, Astra A09) lo que quedó por borrar no reaparece con la primera lectura
   cargaInicial();      // la planilla, con reintentos y cartel de qué pasa (§4di)
   if(CONNECTED) flushPending();
   autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
