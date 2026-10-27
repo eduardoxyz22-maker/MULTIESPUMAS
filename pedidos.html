@@ -17409,8 +17409,11 @@ function fxGuardado(rec){
 /* (§4jd, dueño 10/10: *«cada vendedor [tiene su numeración]; Eduardo no usa número de nota, ahí anota el nro de pedido de sus
    proveedores»*) Se compara SOLO contra los pedidos de Eduardo (la 1024 de Jonathan no es la misma), y cada número del campo por
    separado («32525 / 32526» son dos números, no «3252532526»): avisa si alguno ya está en otro pedido suyo. */
+/* (§4nl, 27/10, Astra A10) El número va ENTERO: guiones, puntos y espacios no lo parten («08-230» = «08230» = «08 230», «32.525» =
+   «32525»). Antes cada pedazo era un número: «08-231» avisaba contra «08-230» por el «8» de los dos. Lo que separa dos números es
+   cualquier otra cosa: barra, coma, una palabra («32526 / 32525», «32525 y 32526», «PED 08-230» = «8230»). */
 function fxNotaClave(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
-function fxNotaNumeros(n){ return (String(n||'').match(/\d+/g)||[]).map(function(x){ return x.replace(/^0+/,''); }).filter(Boolean); }
+function fxNotaNumeros(n){ return String(n||'').split(/[^\d.\-\s]+/).map(fxNotaClave).filter(Boolean); }
 function fxDupNotaBuscar(){
   if(docTipoSel()!=='OC') return [];
   var nums=fxNotaNumeros((document.getElementById('f-nota')||{}).value);
@@ -39814,7 +39817,9 @@ function estadoStock(p){
   pr.forEach(function(x){
     // (26/09) «✔ hay» también es lo de Banzer (y la marca de antes «📥 Banzer»): se carga, no se va a buscar.
     if(prodHay(x)) nOk++; else if(x.chk==='no') nNo++; else if(esRecoger(x)) nIM++; else nSin++;
-    if(enProduccion(x)){
+    /* 🏭 (§4nl, 27/10, Astra A11) Lo que TODAVÍA no llegó: lo ya llegado (`prodR`) cuenta por su marca, como en «Semana». La 🏭 y
+       `prodF`/`prodR` quedan en el producto como historia (miden la fábrica); antes un ✔ hay sobre lo llegado seguía «En producción» y rojo. */
+    if(enProduccionPendiente(x)){
       nProd++;
       var l=prodDondeSePide(x);
       if(l && !vistos[l]){ vistos[l]=1; lugares.push(prodLugarCorto(l)); }
@@ -39860,7 +39865,7 @@ function syncVerificado(p, seQuito){
   // que se marcaba a mano abajo y ya no hace falta.
   var algunoProd=false, noSinPedir=false;
   for(var j=0;j<pr.length;j++){
-    if(enProduccion(pr[j])) algunoProd=true;
+    if(enProduccionPendiente(pr[j])) algunoProd=true;   // 🏭 (§4nl, Astra A11) lo que llegó ya no deja el pedido «En producción»
     else if(pr[j].chk==='no') noSinPedir=true;
   }
   if(noSinPedir) p.estado='No hay';
