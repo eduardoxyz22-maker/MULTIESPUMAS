@@ -2315,6 +2315,10 @@ inserta `pryMomDetHtml` sin repintar (`PRY_MOM_CTX`, `PRY_MOM_ABIERTO`). ⚠️ 
 🎨 **Arriba del pedido, la C** (dueño: «C ok»): `#fh` (`fhPintar`, desde `renderCupoForm` y `renderConnEstado`) reemplaza A LA VISTA a `#conn-form`,
 `#cupo-form` y los dos enlaces de ayuda, que se siguen armando escondidos (`.form-card.fh-on`). Una tarjeta por turno con «👀 Ver los N pedidos»
 siempre; aviso de una línea solo si hace falta. ⚠️ Al cambiar `guia-vendedor.html`, subir `NOVEDADES_V`. `FH_PRUEBA`. `tests/test_arriba_pedido.js` (24).
+👀 **La ventana de los pedidos del turno** (§4nk, 27/10, en la rama; dueño: *«asquerosamente fea»*): `verCuposTurno` ya va con `.modal-b` (`.cupv-*`) y
+sin `ancha`: resumen con barra, quién ocupa por vendedora, filas de dos renglones que abren el pedido, «Ver la tarde/mañana» en la misma ventana.
+Las frases que leen las pruebas siguen abajo. 🎨 **Botones de la ficha en gris** (dueño eligió la 3, *«parecen un carnaval»*): `.af-tb .ico-b` sin
+cuadrito, dibujo gris y su `--c2` al pasar; las pestañas siguen con color. `test_cupos` §5, `test_mejoras_5_7_9`.
 
 ## 🧹 Seguimiento del dashboard sin tareas en Kommo (§4nf, 27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; PUBLICADO 27/10, `c0f4dc0`)
 En «Seguimiento», ✓ y 🕐 solo marcan la ficha en el panel (por aparato); ya no crean tareas en Kommo, y se fueron 📝 nota, «Acción masiva» y

@@ -94,6 +94,14 @@ const J=x=>JSON.stringify(x);
     var modal=document.getElementById('modal-box');
     out.modalAbre=document.getElementById('modal').classList.contains('on');
     out.modalTxt=modal.textContent.replace(/\s+/g,' ').trim();
+    /* 👀 (§4nk) la ventana nueva: con su relleno, el resumen, quién ocupa y el otro turno a un toque */
+    var cv=modal.querySelector('.cupv'), q=function(s){ var e=modal.querySelector(s); return e ? e.textContent.replace(/\s+/g,' ').trim() : null; };
+    out.nueva={ pad:cv ? parseFloat(getComputedStyle(cv).paddingLeft) : 0, ancha:modal.classList.contains('ancha'), pill:q('.cupv-pill'), quien:q('.cupv-quien'),
+                filas:modal.querySelectorAll('.cupv-f').length, otro:q('.cupv-acc .btn-ghost') };
+    var bo=modal.querySelector('.cupv-acc .btn-ghost'); if(bo) bo.click();
+    out.nueva.pmTit=q('.modal-h h3'); out.nueva.pmFilas=modal.querySelectorAll('.cupv-f').length; out.nueva.pmPill=q('.cupv-pill');
+    var f1=modal.querySelector('.cupv-f'); if(f1) f1.click();
+    out.nueva.abre=q('.modal-h h3');
     out.lista=cuposDelTurno(MIE,'AM').map(function(p){ return p.cliente; });
     out.listaPM=cuposDelTurno(MIE,'PM').map(function(p){ return p.cliente; });
     closeModal();
@@ -108,6 +116,10 @@ const J=x=>JSON.stringify(x);
   chk('  …y el de la tarde está en la lista de PM, no en la de AM', J(r.listaPM)===J(['EL DE LA TARDE']), J(r.listaPM));
   chk('§4fh · la lista explica que el cupo va por fecha Y por turno', /por fecha .*y por turno/i.test(r.modalTxt), r.modalTxt.slice(0,160));
   chk('  …y qué hacer si el que se movió sigue apareciendo', /todavía no llegó a la planilla/.test(r.modalTxt), '');
+  chk('§4nk · la ventana tiene su relleno (antes el texto iba pegado al borde) y no va a lo ancho de la pantalla', r.nueva.pad>=12 && !r.nueva.ancha, J(r.nueva));
+  chk('§4nk · arriba dice «Lleno» y quién ocupa los lugares (12 de Carola Chavez)', r.nueva.pill==='Lleno' && r.nueva.quien==='12Carola Chavez' && r.nueva.filas===12, J(r.nueva));
+  chk('§4nk · «🌆 Ver la tarde · 1 de 13» cambia al otro turno en la misma ventana', /Ver la tarde · 1 de 13/.test(r.nueva.otro) && /Turno PM/.test(r.nueva.pmTit) && r.nueva.pmFilas===1 && r.nueva.pmPill==='12 libres', J(r.nueva));
+  chk('§4nk · tocar la fila abre el pedido', /Pedido/.test(r.nueva.abre||''), r.nueva.abre);
   chk('con lugar en PM el botón para ver quiénes lo ocupan sigue estando (y en singular)', /Ver el pedido del turno PM/.test(r.pmTexto), r.pmTexto.slice(0,120));
 
   // ---------- 6. el día FORZADO: 13 en un turno de 12 ----------

@@ -16615,6 +16615,22 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
     tema del mes (`--grad-header`). Los dos «llevar a la vista» de turno lleno van a `#fh`. ⚠️ La pastilla es `.fh-vivo`, no `.fh-on` (esa
     clase es del card). En Playwright, lo de antes salvo `FH_PRUEBA`. `tests/test_arriba_pedido.js` (24).
 
+### §4nk — 👀 LA VENTANA DE LOS PEDIDOS DEL TURNO + 🎨 BOTONES DE LA FICHA EN GRIS (27/10 a la noche; en la rama, espera «publica»)
+- **La ventana** (dueño, con dos capturas de «Turno AM/PM del 28/10/2026»: *«se ve asquerosamente fea»*). Era un bug: `verCuposTurno` armaba
+  el contenido SIN `.modal-b` (el texto iba pegado al borde de la ventana) y la abría `ancha` (1180 px para una lista). Ahora (`.cupv-*`):
+  ventana normal; arriba «11 de 12 cupos ocupados · 1 ya entregado», pastilla «1 libre / Lleno / N de más / Sin camión» y barra con los
+  colores de `fhPintar` (≤3 libres ámbar, lleno rojo); quién ocupa (una pastilla por vendedora con su número); la lista en dos renglones (N°,
+  la OC en su color —ATC rosa, RPT café—, el cliente, «📍 zona · 👤 vendedora», «✅ entregado») y TODA la fila abre el pedido; la
+  explicación del cupo abajo, chiquita (las pruebas leen «por fecha … y por turno» y «todavía no llegó a la planilla»); «🌆 Ver la tarde · 2
+  de 13» / «🌅 Ver la mañana» cambia de turno en la misma ventana. El aviso de copia vieja (`cupoViejoAviso`) va en ámbar. Las cuentas no
+  cambiaron (`cuposDelTurno`, `limTurno`, `cuposUsadosTurno`). Título: «🌅 Turno AM · miércoles 28/10» (`test_arriba_pedido` cambió a
+  conciencia). `test_cupos` §5 (+4).
+- **Los botones de la ficha de Administración** (dueño, con captura: *«parecen un carnaval jajajaja»*). Muestra con tres opciones
+  (https://claude.ai/artifact/N4nYfGvHFHgrQKJo5kXHmU: 1 un solo color, 2 cuadrito suave, 3 gris y su color al pasar) → **eligió la 3**. Solo CSS
+  en `.af-tb .ico-b`: sin cuadrito ni sombra, el dibujo en gris `#7b8b8a` (19 px) y su `--c2` al pasar, con el foco del teclado o mientras se
+  mueve; «Borrar» con el dibujo rosado y la letra roja de siempre (`.af-tb .del small`); «Entregó» verde cuando está. **Las pestañas de
+  arriba siguen con su cuadrito de color** (el dueño no las nombró). `test_mejoras_5_7_9` (+4).
+
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
 - **Temas (14, 15 y noviembre)**: el script del `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia: octubre
