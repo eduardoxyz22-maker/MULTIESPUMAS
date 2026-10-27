@@ -1332,6 +1332,72 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 @keyframes ah-late{ 0%{ box-shadow:0 0 0 0 rgba(210,54,69,.55); } 70%{ box-shadow:0 0 0 9px rgba(210,54,69,0); } 100%{ box-shadow:0 0 0 0 rgba(210,54,69,0); } }
 @media(prefers-reduced-motion:reduce){ .ah-it.ah-r::after, .ah-it.ah-r .ah-n::after, #f-submit.gz-ok, #f-submit.gz-mal, #f-submit.gz-cola{ animation:none; } .gz-tilde path{ animation:none; stroke-dashoffset:0; } }
 @media print{ .pal-btn, .pal-ov{ display:none!important; } }
+/* 🎨 9 · Íconos propios (§4ni, 27/10; dueño: «la 9 me gusta todo menos el icono nuevo del bot»): un cuadradito de color con el dibujo en
+   blanco, en las pestañas de arriba y en los botones de cada ficha de Administración (los emojis cambian de cara en cada celular). Al
+   pasar o tocar se mueven UNA vez (`icoAnimar`): el camión arranca, el tilde se dibuja, las monedas saltan. La del Bot sigue con 🤖. */
+.ico-b{ --c1:#2dd4bf; --c2:#0f766e; width:26px; height:26px; border-radius:8px; display:inline-grid; place-items:center; flex:none; vertical-align:middle;
+  background:linear-gradient(135deg,var(--c1),var(--c2)); box-shadow:0 3px 8px -3px var(--c2), inset 0 1px 0 rgba(255,255,255,.35); }
+.ico-b svg{ width:17px; height:17px; fill:none; stroke:#fff; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; overflow:visible; display:block; }
+.nav .t-ic .ico-b{ margin:-5px 0 -4px; }                        /* la pestaña no crece */
+.nav button.active .ico-b{ box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 3px 8px -3px var(--c2); }
+.af-tb .ico-b{ margin-bottom:2px; }
+.ico-b.ico-vivo .rueda{ animation:ico-gira .6s linear infinite; transform-box:fill-box; transform-origin:center; }
+.ico-b.ico-vivo .cuerpo{ animation:ico-anda .5s ease-in-out infinite alternate; }
+.ico-b.ico-vivo .chk{ stroke-dasharray:30; stroke-dashoffset:30; animation:ico-traza .5s forwards; }
+.ico-b.ico-vivo .moneda{ animation:ico-salta .6s cubic-bezier(.34,1.56,.64,1) infinite alternate; transform-box:fill-box; transform-origin:bottom; }
+.ico-b.ico-vivo .moneda:nth-child(2){ animation-delay:.1s; } .ico-b.ico-vivo .moneda:nth-child(3){ animation-delay:.2s; }
+.ico-b.ico-vivo .onda{ animation:ico-onda 1s ease-out infinite; }
+.ico-b.ico-vivo .arco{ animation:ico-abre .45s cubic-bezier(.4,0,.2,1) forwards; transform-box:fill-box; transform-origin:right bottom; }
+.ico-b.ico-vivo .lapiz{ animation:ico-escribe .5s ease-in-out infinite alternate; transform-box:fill-box; transform-origin:bottom left; }
+.ico-b.ico-vivo .hoja{ animation:ico-pasa .6s forwards; transform-box:fill-box; transform-origin:top; }
+.ico-b.ico-vivo .sol-r{ animation:ico-gira 2s linear infinite; transform-box:fill-box; transform-origin:center; }
+.ico-b.ico-vivo .tapa{ animation:ico-destapa .4s forwards; transform-box:fill-box; transform-origin:left bottom; }
+.ico-b.ico-vivo .burbuja{ animation:ico-salta .5s cubic-bezier(.34,1.56,.64,1) infinite alternate; transform-box:fill-box; transform-origin:bottom left; }
+.ico-b.ico-vivo .mas{ animation:ico-gira .5s cubic-bezier(.34,1.56,.64,1); transform-box:fill-box; transform-origin:center; }
+@keyframes ico-gira{ to{ transform:rotate(360deg); } }
+@keyframes ico-anda{ to{ transform:translateX(2px); } }
+@keyframes ico-traza{ to{ stroke-dashoffset:0; } }
+@keyframes ico-salta{ to{ transform:translateY(-3px); } }
+@keyframes ico-onda{ from{ opacity:1; } to{ opacity:0; } }
+@keyframes ico-abre{ to{ transform:rotate(-28deg) translateY(-1px); } }
+@keyframes ico-escribe{ to{ transform:translate(1.5px,-1px) rotate(-6deg); } }
+@keyframes ico-pasa{ 0%{ transform:scaleY(1); } 50%{ transform:scaleY(0); } 100%{ transform:scaleY(1); } }
+@keyframes ico-destapa{ to{ transform:rotate(-22deg); } }
+@media(max-width:700px){ .nav .t-ic .ico-b{ width:25px; height:25px; margin:-3px 0 -1px; } .nav .t-ic .ico-b svg{ width:16px; height:16px; } }   /* la barra de abajo queda del alto de antes */
+@media(prefers-reduced-motion:reduce){ .ico-b.ico-vivo *{ animation:none!important; } }
+/* 🧭 5 · Pestañas que se deslizan (§4ni): la marca de la pestaña elegida se corre con un resorte hasta la nueva (`navDeslizar`, un
+   «fantasma» con el color de la de antes: cada tema pinta la suya) y lo de abajo entra desde el lado que corresponde. Los textos y los
+   números de las pestañas van por encima del fantasma. Con «reducir movimiento», nada. */
+@media(min-width:701px){ .nav{ position:relative; } }
+.nav .t-ic, .nav .t-lb, .nav .t-cr{ position:relative; z-index:3; }
+.nav .nx-tb{ z-index:4; }
+.nav-fant{ position:absolute; z-index:2; pointer-events:none; margin:0; }
+.nav button.nav-llega{ background-color:transparent !important; border-color:transparent !important; color:var(--muted) !important; transition:none !important; }
+.nav button.nav-llega::after{ opacity:0; }
+.view.vista-der{ animation:vista-der .34s cubic-bezier(.4,0,.2,1); }
+.view.vista-izq{ animation:vista-izq .34s cubic-bezier(.4,0,.2,1); }
+.view.vista-fade{ animation:vista-fade .28s ease; }                /* el formulario: tiene la barra de pasos fija (un transform la movería) */
+@keyframes vista-der{ from{ opacity:0; transform:translateX(26px); } }
+@keyframes vista-izq{ from{ opacity:0; transform:translateX(-26px); } }
+@keyframes vista-fade{ from{ opacity:0; } }
+@media(prefers-reduced-motion:reduce){ .view.vista-der, .view.vista-izq, .view.vista-fade{ animation:none; } .nav-fant{ display:none; } }
+/* ↩️ 7 · «Deshacer» durante 5 segundos (§4ni): después de marcar entregado, cambiar de turno o borrar (`deshOfrecer`). Es otro aviso que
+   el de siempre (aquel no se toca: `pointer-events:none`); mientras está, el de siempre sube un poco para no taparlo. */
+.desh{ position:fixed; left:50%; bottom:24px; z-index:7001; display:flex; align-items:center; gap:12px; width:max-content; max-width:min(92vw,560px);
+  background:#17302e; color:#fff; padding:8px 8px 8px 18px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.3); font-size:.88rem; font-weight:600;
+  overflow:hidden; transform:translate(-50%,24px); opacity:0; visibility:hidden; pointer-events:none;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s, visibility 0s .3s; }
+.desh.ver{ transform:translate(-50%,0); opacity:1; visibility:visible; pointer-events:auto; transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s; }
+.desh-txt{ min-width:0; }
+.desh button{ flex:none; background:none; border:0; color:#7ff0e9; font:inherit; font-weight:800; font-size:.92rem; padding:8px 12px; min-height:42px; border-radius:10px; cursor:pointer; }
+.desh button:hover, .desh button:focus-visible{ background:rgba(127,240,233,.14); }
+.desh-barra{ position:absolute; left:0; right:0; bottom:0; height:3px; background:#7ff0e9; transform-origin:left; }
+.desh.ver .desh-barra{ animation:desh-barra 5s linear forwards; }
+@keyframes desh-barra{ to{ transform:scaleX(0); } }
+body.desh-on .toast.show{ transform:translateX(-50%) translateY(-74px); }
+@media(max-width:700px){ .desh{ bottom:calc(84px + env(safe-area-inset-bottom)); } }
+@media(prefers-reduced-motion:reduce){ .desh{ transition:none; } }
+@media print{ .desh{ display:none!important; } }
 /* ===== 🚚 (§4iw, 09/10) Arriba del panel: el día, los cupos en anillos y el camión en la ruta (dueño: «A»). ===== */
 .htitle h1{font-size:1.02rem;font-weight:800;letter-spacing:.01em}
 .htitle p{font-size:.7rem}
@@ -1834,15 +1900,16 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 })();
 </script>
 
+<!-- 🎨 (§4ni, 9) Cada pestaña con su ícono de color; la del Bot sigue con 🤖 (dueño: «me gusta el icono actual del robot de colores»). -->
 <div class="nav">
-  <button id="tab-form" class="active" onclick="tabNuevoPedido()"><span class="t-ic">＋</span><span class="t-lb">Nuevo pedido</span><span class="t-cr">Nuevo</span></button>
-  <button id="tab-mis" onclick="showView('mis')"><span class="t-ic">📋</span><span class="t-lb">Mis pedidos</span><span class="t-cr">Míos</span></button>
+  <button id="tab-form" class="active" onclick="tabNuevoPedido()"><span class="t-ic"><span class="ico-b" style="--c1:#2dd4bf;--c2:#0f766e" aria-hidden="true"><svg viewBox="0 0 24 24"><g class="mas"><path d="M12 5v14M5 12h14"/></g></svg></span></span><span class="t-lb">Nuevo pedido</span><span class="t-cr">Nuevo</span></button>
+  <button id="tab-mis" onclick="showView('mis')"><span class="t-ic"><span class="ico-b" style="--c1:#60a5fa;--c2:#1d4ed8" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path class="chk" d="M8.5 13l2.5 2.5 4.5-5"/></svg></span></span><span class="t-lb">Mis pedidos</span><span class="t-cr">Míos</span></button>
   <!-- 🙈 (12/10, dueño: «elimina la pestaña choferes, nadie la usa, o escóndela») Escondida, no borrada: la vista sigue (showView('chofer'))
        y el botón vuelve sacando `hidden`. -->
-  <button id="tab-chofer" hidden onclick="showView('chofer')"><span class="t-ic">🚚</span><span class="t-lb">Chofer</span><span class="t-cr">Chofer</span></button>
-  <button id="tab-conta" onclick="showView('conta')"><span class="t-ic">🧾</span><span class="t-lb">Contabilidad</span><span class="t-cr">Conta</span></button>
-  <button id="tab-atc" onclick="showView('atc')"><span class="t-ic">🎧</span><span class="t-lb">ATC</span><span class="t-cr">ATC</span></button>
-  <button id="tab-admin" onclick="showView('admin')"><span class="t-ic">🔒</span><span class="t-lb">Administración</span><span class="t-cr">Admin</span></button>
+  <button id="tab-chofer" hidden onclick="showView('chofer')"><span class="t-ic"><span class="ico-b" style="--c1:#4ade80;--c2:#15803d" aria-hidden="true"><svg viewBox="0 0 24 24"><g class="cuerpo"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7z"/></g><circle class="rueda" cx="6" cy="17.5" r="1.8"/><circle class="rueda" cx="16" cy="17.5" r="1.8"/></svg></span></span><span class="t-lb">Chofer</span><span class="t-cr">Chofer</span></button>
+  <button id="tab-conta" onclick="showView('conta')"><span class="t-ic"><span class="ico-b" style="--c1:#fbbf24;--c2:#d97706" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse class="moneda" cx="12" cy="18" rx="6.5" ry="2.3"/><ellipse class="moneda" cx="12" cy="13.5" rx="6.5" ry="2.3"/><ellipse class="moneda" cx="12" cy="9" rx="6.5" ry="2.3"/></svg></span></span><span class="t-lb">Contabilidad</span><span class="t-cr">Conta</span></button>
+  <button id="tab-atc" onclick="showView('atc')"><span class="t-ic"><span class="ico-b" style="--c1:#f472b6;--c2:#be185d" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 14v-2a6 6 0 0 1 12 0v2"/><rect x="4" y="13" width="4" height="6" rx="1.5"/><rect x="16" y="13" width="4" height="6" rx="1.5"/><path class="onda" d="M2 12a3 3 0 0 0 0 6"/><path class="onda" d="M22 12a3 3 0 0 1 0 6"/></svg></span></span><span class="t-lb">ATC</span><span class="t-cr">ATC</span></button>
+  <button id="tab-admin" onclick="showView('admin')"><span class="t-ic"><span class="ico-b" style="--c1:#a78bfa;--c2:#6d28d9" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="11" width="12" height="9" rx="2"/><path class="arco" d="M8.5 11V8.5a3.5 3.5 0 0 1 7 0V11"/><circle cx="12" cy="15.5" r="1.2"/></svg></span></span><span class="t-lb">Administración</span><span class="t-cr">Admin</span></button>
   <!-- 🤖 (24/10, dueño: «lo del bot… en una pestaña nueva de solo BOT, y solo se habilite con la clave de administración o como logística»)
        Escondida hasta entonces (`botTabPintar`). -->
   <button id="tab-bot" hidden onclick="showView('bot')"><span class="t-ic">🤖</span><span class="t-lb">Bot</span><span class="t-cr">Bot</span></button>
@@ -2660,6 +2727,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
+<div class="desh no-print" id="desh" role="status" aria-live="polite"><span class="desh-txt" id="desh-txt"></span><button type="button" id="desh-btn" onclick="deshDeshacer()">↩️ Deshacer</button><span class="desh-barra" id="desh-barra"></span></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)modalFondo()"><div class="modal" id="modal-box"></div></div>
 <div id="mapa-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-ruta-btn" class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="toggleMapaRuta()">☑ 🛣️ Recorrido</button><button id="mapa-solosin" class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button id="mapa-ubicar" class="btn btn-sm" style="display:none;background:#fff;color:#7c3aed;font-weight:700" onclick="ubicarSinLinkMapa()" title="Busca en el servidor la dirección escrita de los pedidos que no tienen link de Maps y los pone en el mapa, marcados como aproximados (la cuadra, no la puerta).">📍 Ubicar por dirección</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div class="mapa-cv" style="flex:1;min-height:0;position:relative"><div id="mapa-canvas" style="position:absolute;inset:0"></div><div id="mapa-flota" aria-live="polite"></div></div><div id="mapa-ruta-panel"></div></div>
 <div id="ruta-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -6815,6 +6883,7 @@ function showView(v){
 }
 function showViewAhora(v){
   if(v==='bot' && !botVe()) v='admin';
+  var _nav=null; try{ _nav=navFoto(); }catch(e){}   // 🧭 (§4ni, 5) dónde estaba la pestaña elegida, para deslizarla
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
   document.getElementById('view-mis').classList.toggle('active',v==='mis');
@@ -6840,6 +6909,7 @@ function showViewAhora(v){
   if(v==='mis'){ misVendedorSel(); refreshMis(); }
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
   try{ if(ASIS.montado){ asisCerrar(); blokiPoner(); setTimeout(function(){ asisRefrescar(); }, 400); } }catch(e){}   // 🧑‍💼 §4jx: los avisos de la pestaña nueva · 🧽 el traje de la pestaña
+  if(_nav){ try{ navDeslizar(_nav, v); icoAnimar(document.querySelector('.nav button.active')); }catch(e){} }   // 🧭🎨 (§4ni, 5 y 9)
 }
 function initConnUI(){
   renderConnEstado();
@@ -13188,7 +13258,7 @@ function ctaEliminarVenta(id){
   if(pagSinMonto) txt+='⚠️ Está marcada PAGADA (sin el monto anotado), con su comprobante. Se borra también.\n\n';
   if(regEnSistema(p)) txt+='⚠️ Ya está CARGADA en el sistema contable: allá hay que anularla aparte.\n\n';
   if(p.entregado) txt+='⚠️ Este pedido figura como YA ENTREGADO.\n\n';
-  txt+='Se borra de la planilla y NO se puede deshacer.\n\n¿Eliminarla?';
+  txt+=(deshVa() ? 'Se borra de la planilla: tenés 5 segundos para deshacerlo y después ya no se puede.' : 'Se borra de la planilla y NO se puede deshacer.')+'\n\n¿Eliminarla?';
   if(!confirm(txt)) return;
   /* Segunda vuelta solo cuando hay plata o ya se entregó: es lo que no se recupera y
      lo que más duele si el clic fue por error. */
@@ -13196,7 +13266,7 @@ function ctaEliminarVenta(id){
      !confirm('Última confirmación.\n\nSe van a borrar '+
               (plata>0.005?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?')) return;
   closeModal();
-  realDelete(id);
+  borrarConDeshacer(id);                         // ↩️ (§4ni, 7) 5 s para arrepentirse
 }
 function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(m!=='Efectivo') CTA_PAGO.recibio=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
 /* 🚚 ¿QUIÉN RECIBIÓ LA PLATA? (§4eq) Solo para efectivo: el QR y la tarjeta van al banco.
@@ -15818,7 +15888,7 @@ function confirmEdicionModal(rec, cambios){
 function deletePedido(id){
   var rec=findById(id); if(!rec) return;
   if(!confirm('¿Eliminar el pedido de '+(rec.cliente||'')+(rec.oc?(' (N° '+rec.oc+')'):'')+'?')) return;
-  realDelete(id);
+  borrarConDeshacer(id);                         // ↩️ (§4ni, 7) 5 s para arrepentirse antes de ir a la planilla
 }
 function realDelete(id){
   var loc=findById(id), copia=loc?JSON.parse(JSON.stringify(loc)):null;
@@ -16271,6 +16341,169 @@ function vivoElegir(i){
 document.addEventListener('click', function(e){ var d=document.getElementById('vivo-drop'); if(!d || d.hidden) return; if(!d.contains(e.target) && !e.target.closest('#vivo-btn')) vivoCerrar(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ var d=document.getElementById('vivo-drop'); if(d && !d.hidden) vivoCerrar(); } });
 setInterval(function(){ try{ if(!document.hidden) vivoPintar(); }catch(e){} }, 60000);   // «hace N min» y lo que llegó sin otra lectura
+
+/* 🎨 9 · ÍCONOS PROPIOS (§4ni, 27/10; dueño: «la 9 me gusta todo menos el icono nuevo del bot… Además quiero: 5, 7, 9»). Los de las
+   pestañas están escritos en la página (la del Bot sigue con 🤖); los de la fila de botones de cada ficha de Administración salen de acá
+   (`icoHtml`). Se mueven UNA vez al pasar el mouse, al tocar y al elegir la pestaña (`icoAnimar`). Solo mira; en las pruebas no se
+   mueven salvo `ICO_PRUEBA`. */
+var ICO_SOL='<g class="sol-r"><circle cx="12" cy="13" r="3.5"/><path d="M12 5v2M12 19v2M4 13h2M18 13h2M6.3 7.3l1.4 1.4M16.3 17.3l1.4 1.4M6.3 18.7l1.4-1.4M16.3 8.7l1.4-1.4"/></g>';
+var ICO_SVG={
+  ent:['#4ade80','#15803d','<g class="cuerpo"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7z"/></g><circle class="rueda" cx="6" cy="17.5" r="1.8"/><circle class="rueda" cx="16" cy="17.5" r="1.8"/>'],
+  wa:['#34d399','#047857','<path class="burbuja" d="M4 18l1.3-3.6A7 7 0 1 1 8 17.4z"/><path d="M9 10.5h6M9 13h4"/>'],
+  editar:['#fbbf24','#c2410c','<path d="M4 20h16"/><g class="lapiz"><path d="M6 16l1-4 8-8 3 3-8 8z"/><path d="M13 6l3 3"/></g>'],
+  repro:['#60a5fa','#1e40af','<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4M16 4v4"/><g class="hoja"><path d="M4 10h16"/><path d="M9 14h2M13 14h2M9 17h2"/></g>'],
+  tarde:['#fdba74','#ea580c',ICO_SOL],
+  manana:['#facc15','#ca8a04',ICO_SOL],
+  borrar:['#f87171','#b91c1c','<g class="tapa"><path d="M4 7h16"/><path d="M9 7V5h6v2"/></g><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>']
+};
+function icoHtml(k){ var o=ICO_SVG[k]; return o ? ('<span class="ico-b" style="--c1:'+o[0]+';--c2:'+o[1]+'" aria-hidden="true"><svg viewBox="0 0 24 24">'+o[2]+'</svg></span>') : ''; }
+function animarVa(bandera){
+  if(navigator.webdriver && !window[bandera]) return false;
+  try{ return !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return true; }
+}
+function icoAnimar(b){
+  if(!b || !animarVa('ICO_PRUEBA')) return;
+  var ic=(b.classList && b.classList.contains('ico-b')) ? b : (b.querySelector ? b.querySelector('.ico-b') : null);
+  if(!ic || ic.classList.contains('ico-vivo')) return;
+  ic.classList.add('ico-vivo'); clearTimeout(ic._icoT); ic._icoT=setTimeout(function(){ ic.classList.remove('ico-vivo'); }, 1400);
+}
+document.addEventListener('mouseover', function(e){
+  var b=e.target && e.target.closest ? e.target.closest('.nav button, .af-tb button') : null;
+  if(b && !(e.relatedTarget && b.contains(e.relatedTarget))) icoAnimar(b);
+});
+document.addEventListener('click', function(e){ var b=e.target && e.target.closest ? e.target.closest('.af-tb button') : null; if(b) icoAnimar(b); }, true);
+
+/* 🧭 5 · PESTAÑAS QUE SE DESLIZAN (§4ni). `showViewAhora` saca la foto de la pestaña elegida ANTES de cambiarla (`navFoto`: dónde está, su
+   color y su forma, que cada tema pinta distinto) y después `navDeslizar` corre un «fantasma» con eso hasta la nueva —que queda
+   transparente mientras tanto— con un resorte, y hace entrar lo de abajo desde el lado que corresponde. En el celular el fantasma es la
+   rayita de abajo de la pestaña. Solo mira; en las pruebas apagado salvo `NAV_PRUEBA`, y con «reducir movimiento», nada. */
+var NAV_MS=380;
+function navMovil(){ try{ return !!(window.matchMedia && matchMedia('(max-width:700px)').matches); }catch(e){ return false; } }
+function navRect(b, movil){
+  var nav=b.parentNode, rn=nav.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  var x=rb.left-rn.left-nav.clientLeft, y=rb.top-rn.top-nav.clientTop;
+  return movil ? { x:x+rb.width/2-11, y:y+rb.height, w:22, h:3 } : { x:x, y:y, w:rb.width, h:rb.height };   // la rayita = `.nav button.active::after`
+}
+function navFoto(){
+  if(!animarVa('NAV_PRUEBA')) return null;
+  [].forEach.call(document.querySelectorAll('.nav-fant'), function(g){ g.remove(); });   // un cambio a mitad de otro: el de antes termina ya
+  [].forEach.call(document.querySelectorAll('.nav button.nav-llega'), function(x){ x.style.transition='none'; x.classList.remove('nav-llega'); void x.offsetWidth; x.style.transition=''; });
+  var nav=document.querySelector('.nav'), b=nav && nav.querySelector('button.active');
+  if(!b || b.hidden || !b.getBoundingClientRect().width) return null;
+  var movil=navMovil(), cs=getComputedStyle(b, movil ? '::after' : null);
+  return { b:b, r:navRect(b, movil), col:cs.backgroundColor, rad:movil ? '2px' : cs.borderRadius, movil:movil };
+}
+function navDeslizar(antes, v){
+  if(!antes) return;
+  var nav=document.querySelector('.nav'), b=nav && nav.querySelector('button.active');
+  if(!b || b===antes.b || b.hidden || navMovil()!==antes.movil) return;
+  var r1=navRect(b, antes.movil), col=antes.col;
+  if(!r1.w || !col || col==='transparent' || /rgba\(\s*0,\s*0,\s*0,\s*0\s*\)/.test(col)) return;
+  var g=document.createElement('span'); g.className='nav-fant'; g.setAttribute('aria-hidden','true');
+  g.style.cssText='left:'+antes.r.x+'px;top:'+antes.r.y+'px;width:'+antes.r.w+'px;height:'+antes.r.h+'px;background:'+col+';border-radius:'+antes.rad;
+  nav.appendChild(g); b.classList.add('nav-llega');
+  var listo=false, fin=function(){
+    if(listo) return; listo=true; b.classList.remove('nav-llega');
+    try{ g.animate([{ opacity:1 }, { opacity:0 }], { duration:160, fill:'forwards' }).onfinish=function(){ g.remove(); }; }catch(e){ g.remove(); }
+    setTimeout(function(){ if(g.parentNode) g.remove(); }, 400);
+  };
+  try{
+    g.animate([{ left:antes.r.x+'px', top:antes.r.y+'px', width:antes.r.w+'px', height:antes.r.h+'px' },
+               { left:r1.x+'px', top:r1.y+'px', width:r1.w+'px', height:r1.h+'px' }],
+              { duration:NAV_MS, easing:'cubic-bezier(.3,1.25,.5,1)', fill:'forwards' }).onfinish=fin;   // resorte suave: se pasa apenas y vuelve
+  }catch(e){}
+  setTimeout(fin, NAV_MS+250);                                   // por si la animación no avisa
+  /* Lo de abajo entra desde el lado de la pestaña nueva; el formulario solo aparece (su barra de pasos es `fixed`). */
+  var vista=document.getElementById('view-'+v); if(!vista) return;
+  var L=[].filter.call(nav.querySelectorAll('button'), function(x){ return !x.hidden; }), i0=L.indexOf(antes.b), i1=L.indexOf(b);
+  var cl=v==='form' ? 'vista-fade' : (i1>=i0 ? 'vista-der' : 'vista-izq');
+  vista.classList.remove('vista-der','vista-izq','vista-fade'); vista.classList.add(cl);
+  var saca=function(){ vista.classList.remove(cl); };
+  vista.addEventListener('animationend', function h(e){ if(e.target!==vista) return; vista.removeEventListener('animationend', h); saca(); });
+  setTimeout(saca, 800);
+}
+
+/* ↩️ 7 · «DESHACER» DURANTE 5 SEGUNDOS (§4ni, 27/10). Después de marcar entregado (la ficha chica, la tabla o la ficha grande), de pasar un
+   pedido a la mañana o a la tarde, o de borrarlo, sale abajo «↩️ Deshacer» con una barrita de 5 s (también Ctrl+Z).
+   · Entregado y turno se guardan EN EL ACTO, como siempre; deshacer vuelve a como estaba por los MISMOS caminos (`persistPedido`,
+     `cambiarTurno`): es otro guardado, con su sello. Al cliente no le llega nada: el bot espera 2 min y saltea el cambio que «volvió al
+     día de antes».
+   · Borrar espera los 5 s ANTES de ir a la planilla (`borrarConDeshacer`): el pedido sale de la pantalla enseguida (una lectura no lo
+     devuelve: `BORRADO_AQUI`) y recién después se borra con `realDelete`, que relee y compara como siempre (§4fz). Si la página se esconde
+     o se cierra antes, se borra en ese momento. Las preguntas de siempre («¿Eliminar…?») siguen.
+   · Uno nuevo cumple el anterior. En las pruebas, apagado salvo `DESH_PRUEBA`: todo como antes, sin espera. */
+var DESH_MS=5000, DESH=null;
+function deshVa(){ return !(navigator.webdriver && !window.DESH_PRUEBA); }
+function deshOfrecer(txt, deshacer, cumplir){
+  deshCumplir();
+  var el=document.getElementById('desh');
+  if(!el){ if(cumplir) cumplir(); return; }
+  document.getElementById('desh-txt').textContent=txt;
+  var barra=document.getElementById('desh-barra'); if(barra) barra.style.animationDuration=DESH_MS+'ms';
+  el.classList.remove('ver'); void el.offsetWidth; el.classList.add('ver'); document.body.classList.add('desh-on');
+  DESH={ deshacer:deshacer, cumplir:cumplir||null, t:setTimeout(deshCumplir, DESH_MS) };
+}
+function deshCerrar(){ var el=document.getElementById('desh'); if(el) el.classList.remove('ver'); document.body.classList.remove('desh-on'); }
+function deshCumplir(){ var d=DESH; if(!d) return; DESH=null; clearTimeout(d.t); deshCerrar(); if(d.cumplir){ try{ d.cumplir(); }catch(e){} } }
+function deshDeshacer(){
+  var d=DESH; if(!d) return; DESH=null; clearTimeout(d.t); deshCerrar();
+  try{ d.deshacer(); }catch(e){ toast('No se pudo deshacer: '+(e&&e.message||e),'err'); }
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') deshCumplir(); });
+window.addEventListener('pagehide', function(){ deshCumplir(); });
+document.addEventListener('keydown', function(e){
+  if(!DESH || !(e.ctrlKey||e.metaKey) || e.shiftKey || String(e.key).toLowerCase()!=='z') return;
+  var t=e.target; if(t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;   // en un campo, el Ctrl+Z del campo
+  e.preventDefault(); deshDeshacer();
+});
+/* El aviso verde de la acción («Entregado ✓») dice lo mismo que la barra: se saca para que no queden dos. */
+function deshTaparAviso(){ var t=document.getElementById('toast'); if(t && /\bok\b/.test(t.className)){ clearTimeout(_toastT); t.className='toast'; } }
+function deshFotoEntrega(p){ return { entregado:!!p.entregado, productos:JSON.parse(JSON.stringify(p.productos||[])) }; }
+function deshEntregaOfrecer(id, foto, ficha){
+  var p=findById(id); if(!p || !deshVa()) return;
+  deshTaparAviso();
+  deshOfrecer((p.entregado ? '✅ ' : '↩️ ')+(p.cliente||'El pedido')+(p.entregado ? ': entregado' : ': ya no figura entregado'), function(){
+    var q=findById(id);
+    if(!q){ toast('No se pudo deshacer: el pedido ya no está en la lista.','err'); return; }
+    q.entregado=foto.entregado; q.productos=JSON.parse(JSON.stringify(foto.productos));   // la marca, su registro del cierre y la ATC, como estaban
+    persistPedido(q);
+    if(ficha && document.getElementById('modal').classList.contains('on')) reabrirFicha(id);
+    toast('↩️ Listo: '+(q.cliente||'el pedido')+' quedó como estaba','ok');
+  });
+}
+function deshTurnoOfrecer(id, antes, turno, quedan){
+  var p=findById(id); if(!p || !deshVa() || normTurno(p.turno)!==turno || (antes!=='AM' && antes!=='PM')) return;
+  deshTaparAviso();
+  deshOfrecer((turno==='PM' ? '🌆 ' : '🌅 ')+(p.cliente||'El pedido')+' pasó a la '+(turno==='PM' ? 'tarde' : 'mañana')+' · quedan '+quedan+' cupo'+(quedan===1?'':'s'), function(){
+    var abierta=document.getElementById('modal').classList.contains('on');
+    cambiarTurno(id, antes, true);
+    if(!abierta) closeModal();                                    // `cambiarTurno` reabre la ficha: desde la ficha chica no hace falta
+    try{ renderAdmin(); }catch(e){}
+  });
+}
+function deshRepintar(){
+  try{ saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
+       renderContaSiActiva(); renderCuadreSiActivo(); }catch(e){}
+}
+function borrarConDeshacer(id){
+  if(!deshVa()) return realDelete(id);
+  var loc=findById(id); if(!loc) return realDelete(id);
+  var copia=JSON.parse(JSON.stringify(loc)), cola=getPending().filter(function(q){ return q && q.id===id; });
+  STATE=STATE.filter(function(p){ return p.id!==id; });
+  if(cola.length) setPending(getPending().filter(function(q){ return !(q && q.id===id); }));   // si no, la cola lo volvía a poner en pantalla
+  BORRADO_AQUI[String(id)]=Date.now();
+  deshRepintar();
+  deshOfrecer('🗑 '+(copia.cliente||'El pedido')+(copia.oc ? (' · '+copia.oc) : '')+': se borra en 5 segundos', function(){
+    delete BORRADO_AQUI[String(id)];
+    if(!findById(id)) upsert(copia);
+    if(cola.length) setPending(getPending().concat(cola));
+    deshRepintar();
+    toast('↩️ No se borró: '+(copia.cliente||'el pedido')+' sigue en la lista','ok');
+  }, function(){
+    if(!findById(id)) upsert(copia);                             // `realDelete` lo vuelve a sacar, relee la planilla y recién ahí borra
+    return realDelete(id);
+  });
+}
 
 /* ✨ (§4iw) D2 · las fichas de números (`.mc`, `.sf-ficha`) se inclinan siguiendo el mouse o el dedo. Solo mira. */
 (function(){
@@ -18995,12 +19228,13 @@ function admFichaHtml(p, dn){
     '<div class="af-ps">'+(filas||('<div class="af-mas">'+(tienda.length?'Nada para cargar':'Sin productos')+'</div>'))+'</div>'+nt+
     '<div class="af-inf">'+dir+cam+'</div>'+
     '<div class="af-tb">'+
-      btn('🚚','Entregó',"quickEntregado('"+pid+"')", p.entregado?'on':'')+
-      btn('💬','WhatsApp',"copyPedido('"+pid+"')")+
-      btn('✏️','Editar',"EDIT_DESDE='admin';editPedido('"+pid+"')")+
-      btn('📅','Reprog.',"reprogramarPedido('"+pid+"')")+
-      (admTurnoPuede(p) ? btn(normTurno(p.turno)==='PM'?'🌅':'🌆', normTurno(p.turno)==='PM'?'A mañana':'A tarde', "admTurnoCambiar('"+pid+"')") : '')+
-      btn('🗑','Borrar',"deletePedido('"+pid+"')", 'del')+
+      /* 🎨 (§4ni, 9) los íconos propios, con color */
+      btn(icoHtml('ent'),'Entregó',"quickEntregado('"+pid+"')", p.entregado?'on':'')+
+      btn(icoHtml('wa'),'WhatsApp',"copyPedido('"+pid+"')")+
+      btn(icoHtml('editar'),'Editar',"EDIT_DESDE='admin';editPedido('"+pid+"')")+
+      btn(icoHtml('repro'),'Reprog.',"reprogramarPedido('"+pid+"')")+
+      (admTurnoPuede(p) ? btn(icoHtml(normTurno(p.turno)==='PM'?'manana':'tarde'), normTurno(p.turno)==='PM'?'A mañana':'A tarde', "admTurnoCambiar('"+pid+"')") : '')+
+      btn(icoHtml('borrar'),'Borrar',"deletePedido('"+pid+"')", 'del')+
     '</div></div>';
 }
 /* 🌅⇄🌆 (24/10, dueño: «a veces logística mueve un pedido de AM a PM y viceversa… fácil y sencillo») Un toque en la ficha chica: pregunta y
@@ -25887,7 +26121,7 @@ function copiarBusca(){
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ obsAntesDeListo(id, function(){ quickVerificadoYa(id); }); }   // 📝 (23/10) con observaciones, primero se leen
 function quickVerificadoYa(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+function quickEntregado(id){ var p=findById(id); if(!p) return; var foto=deshFotoEntrega(p); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto); }   // ↩️ (§4ni, 7)
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
    QR + tarjeta), cada uno con su monto. Se guardan como texto en el campo
@@ -37196,9 +37430,10 @@ function turnoBotonesHtml(p){
       (x==='AM'?'🌅 AM':'🌆 PM')+'</button>';
   }).join('')+'</span>';
 }
-function cambiarTurno(id, turno){
+function cambiarTurno(id, turno, sinDeshacer){
   var p=findById(id); if(!p) return;
   turno=normTurno(turno);
+  var _antes=normTurno(p.turno);                    // ↩️ (§4ni, 7) para «Deshacer»
   if(normTurno(p.turno)===turno) return;              // ya está en ese turno
   var lim=limTurno(p.fecha, turno);
   if(lim<=0){
@@ -37223,14 +37458,15 @@ function cambiarTurno(id, turno){
   persistPedido(p, _forzar?{forzar:true}:undefined);
   reabrirFicha(id);
   toast('Pasa al turno '+turno+' ✓ — quedan '+(lim-usados-1)+' cupos','ok');
+  if(!sinDeshacer) deshTurnoOfrecer(id, _antes, turno, lim-usados-1);
 }
 /* Editar desde la lista de carga: hay que cerrar TAMBIÉN la lista, si no el formulario
    queda tapado por la pantalla de carga, que va por encima de todo. */
 function editarDesdeCarga(id){ EDIT_DESDE='carga'; closeModal(); closeCarga(); editPedido(id); }
 function eliminarDesdeCarga(id){
   var p=findById(id); if(!p) return;
-  if(!confirm('¿Eliminar el pedido de '+(p.cliente||'')+(p.oc?(' · N° '+p.oc):'')+'?\n\nSe borra para todos y no se puede deshacer.')) return;
-  closeModal(); realDelete(id);
+  if(!confirm('¿Eliminar el pedido de '+(p.cliente||'')+(p.oc?(' · N° '+p.oc):'')+'?\n\nSe borra para todos'+(deshVa()?': tenés 5 segundos para deshacerlo.':' y no se puede deshacer.'))) return;
+  closeModal(); borrarConDeshacer(id);
 }
 
 /* 🗂️ (23/10, dueño: «hay demasiada información junta… logística sólo quiere el nombre, la ubicación, el lugar, el número… que no se olviden de
@@ -37874,7 +38110,7 @@ function showPedidoModal(id){
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
-        '<button class="btn btn-ghost btn-sm fl-borrar" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
+        '<button class="btn btn-ghost btn-sm fl-borrar" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();borrarConDeshacer(\''+p.id+'\');}">🗑 Eliminar</button>'+
         '<button class="btn btn-primary fl-listo" onclick="closeModal()">✓ Listo</button>'+
       '</div>'+
     '</div>';
@@ -37983,6 +38219,7 @@ function setEstado(id,val){
 }
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
+  var foto=deshFotoEntrega(p);                  // ↩️ (§4ni, 7) para «Deshacer»
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
   if(!p.entregado) entregaRegistroBorrar(p);   // ✅ (16/10, §4lo) destildado: sin el registro del cierre (su `eF` manda en el stock)
   else entregaAdelantadaAnotar(p);              // ✅ (16/10, §4lr U12) entregado antes de su día: salió HOY
@@ -37991,6 +38228,7 @@ function toggleEntregado(id){
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
   if(p.entregado) fxSello('ENTREGADO','ent');
   reabrirFicha(id);
+  deshEntregaOfrecer(id, foto, true);
 }
 
 /* ============================================================================
