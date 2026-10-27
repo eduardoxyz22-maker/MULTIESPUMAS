@@ -1161,6 +1161,138 @@ html.tema-navidad .h-ruta::after{ content:''; position:absolute; inset:0; pointe
   html.tema-navidad .h-murc i:nth-child(1){ width:70px; height:22px; } }
 @media(prefers-reduced-motion:reduce){ html.tema-navidad .header::before, html.tema-navidad .header::after, html.tema-navidad .h-luna, html.tema-navidad .h-ruta::after{ animation:none!important; }
   html.tema-navidad .h-murc{ display:none!important; } }
+/* 🌼🎭💐🇧🇴💚🎆🫧 LOS TEMAS DEL AÑO (§4ni, 27/10; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo
+   la película Coco»). Como Halloween y Navidad: solo dibujo, cada uno se prende y se apaga solo con la fecha de Bolivia (el script del
+   <head> elige UNO). Los colores de aviso (verde, ámbar, rojo) no cambian. Lo que se mueve (pétalos, confeti, burbujas, fuegos) va en
+   el lienzo `#hdr-fx`, debajo de las letras (ver `hdrFx` más abajo). Para ver uno cualquier día: `pedidos.html?tema=todos-santos`. */
+.hdr-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+/* 🌼 Todos Santos (todo noviembre): cielo de la tarde, papel picado que se mueve con el viento, calaverita, velas y flores en la vereda. */
+html.tema-todos-santos{ --grad-header:linear-gradient(135deg,#1e0a35,#4a1060,#7a1858,#c2410c,#4a1060,#1e0a35); }
+html.tema-todos-santos .header{ overflow:hidden; }
+html.tema-todos-santos .header::before{ content:''; position:absolute; left:0; right:0; top:0; height:28px; pointer-events:none; z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22192%22 height=%2228%22 viewBox=%220 0 192 28%22%3E%3Cpath d=%22M0 2.2Q96.0 5.4 192 2.2%22 fill=%22none%22 stroke=%22%23fde68a%22 stroke-width=%221%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%23ec4899%22 fill-opacity=%22.95%22 d=%22M3 3.8H45V22.8L39.0 25.8L33.0 22.8L27.0 25.8L21.0 22.8L15.0 25.8L9.0 22.8L3.0 25.8ZM21.8 12.8a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM27.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM25.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM20.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM17.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM20.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM25.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM9 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM39 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM7 19.8h34v1h-34Z%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%23f97316%22 fill-opacity=%22.95%22 d=%22M51 4.7H93V23.7L87.0 26.7L81.0 23.7L75.0 26.7L69.0 23.7L63.0 26.7L57.0 23.7L51.0 26.7ZM69.8 13.7a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM75.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM73.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM68.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM65.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM68.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM73.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM57 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM87 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM55 20.7h34v1h-34Z%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%2322c55e%22 fill-opacity=%22.95%22 d=%22M99 4.7H141V23.7L135.0 26.7L129.0 23.7L123.0 26.7L117.0 23.7L111.0 26.7L105.0 23.7L99.0 26.7ZM117.8 13.7a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM123.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM121.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM116.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM113.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM116.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM121.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM105 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM135 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM103 20.7h34v1h-34Z%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%23a855f7%22 fill-opacity=%22.95%22 d=%22M147 3.8H189V22.8L183.0 25.8L177.0 22.8L171.0 25.8L165.0 22.8L159.0 25.8L153.0 22.8L147.0 25.8ZM165.8 12.8a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM171.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM169.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM164.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM161.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM164.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM169.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM153 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM183 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM151 19.8h34v1h-34Z%22/%3E%3C/svg%3E") repeat-x 0 0/192px 28px; transform-origin:top center; animation:ts-ondea 3.8s ease-in-out infinite; }
+@keyframes ts-ondea{ 0%,100%{ transform:skewX(-2deg) translateY(-1px); } 50%{ transform:skewX(2deg) translateY(0); } }
+html.tema-todos-santos .header-in{ padding-top:24px; }
+html.tema-todos-santos .logo-h::before{ content:''; display:inline-block; width:1.2em; height:1.2em; margin-right:.38em; vertical-align:-.22em;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3C9 3 4.5 7.6 4.5 14c0 4 1.8 6.6 4.5 8v4.2c0 1.2 1 2.1 2.2 2.1h9.6c1.2 0 2.2-.9 2.2-2.1V22c2.7-1.4 4.5-4 4.5-8C27.5 7.6 23 3 16 3z%22 fill=%22%23fff7ed%22/%3E%3Ccircle cx=%2211.2%22 cy=%2214.2%22 r=%223.6%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2220.8%22 cy=%2214.2%22 r=%223.6%22 fill=%22%23ec4899%22/%3E%3Ccircle cx=%2211.2%22 cy=%2214.2%22 r=%221.4%22 fill=%22%233b0764%22/%3E%3Ccircle cx=%2220.8%22 cy=%2214.2%22 r=%221.4%22 fill=%22%233b0764%22/%3E%3Cpath d=%22M16 17.6l-1.6 2.6h3.2z%22 fill=%22%237c3aed%22/%3E%3Cpath d=%22M12 24.5v2.6M14.7 24.5v2.6M17.3 24.5v2.6M20 24.5v2.6%22 stroke=%22%233b0764%22 stroke-width=%221.1%22/%3E%3Cpath d=%22M13 5.4c1-.9 2-1.2 3-1.2s2 .3 3 1.2%22 stroke=%22%2316a34a%22 stroke-width=%221.4%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%229.2%22 r=%221.3%22 fill=%22%2322c55e%22/%3E%3C/svg%3E") center/contain no-repeat; }
+html.tema-todos-santos .logo-s{ color:#fdba74; }
+html.tema-todos-santos .hstat-v{ color:#fdba74; text-shadow:0 0 12px rgba(251,146,60,.55); }
+html.tema-todos-santos .nav button.active{ background:#4a1060; border-color:#4a1060; }
+html.tema-todos-santos .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(30,10,53,.62) 62%,rgba(30,10,53,0) 74%); }
+html.tema-todos-santos .h-lejos{ filter:hue-rotate(250deg) brightness(.9); }
+html.tema-todos-santos .h-calle{ background:linear-gradient(rgba(251,146,60,.45),rgba(251,146,60,.45)) top/100% 1.5px no-repeat,
+  repeating-linear-gradient(90deg,rgba(255,237,213,.6) 0 28px,transparent 28px 64px) 0 8px/100% 2.5px no-repeat,linear-gradient(#2a1838,#170e22); }
+html.tema-todos-santos .h-ruta::after{ content:''; position:absolute; left:0; right:0; bottom:15px; height:22px; pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%2222%22 viewBox=%220 0 180 22%22%3E%3Ccircle cx=%2219.7%22 cy=%2213.0%22 r=%223.0%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2219.0%22 cy=%2215.2%22 r=%223.0%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2217.1%22 cy=%2216.5%22 r=%223.0%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2214.9%22 cy=%2216.5%22 r=%223.0%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2213.0%22 cy=%2215.2%22 r=%223.0%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2212.3%22 cy=%2213.0%22 r=%223.0%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2213.0%22 cy=%2210.8%22 r=%223.0%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2214.9%22 cy=%229.5%22 r=%223.0%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2217.1%22 cy=%229.5%22 r=%223.0%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2219.0%22 cy=%2210.8%22 r=%223.0%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2216%22 cy=%2213%22 r=%222.5%22 fill=%22%23ea580c%22/%3E%3Cpath d=%22M16 19 v3%22 stroke=%22%2315803d%22 stroke-width=%221.2%22/%3E%3Ccircle cx=%2244%22 cy=%229%22 r=%225.5%22 fill=%22%23fde68a%22 fill-opacity=%22.28%22/%3E%3Crect x=%2241.4%22 y=%2213%22 width=%225.2%22 height=%229%22 rx=%221.2%22 fill=%22%23fff7ed%22/%3E%3Cpath d=%22M44 5.5c2 2.6 2.1 4.4 0 5.6c-2.1-1.2-2-3 0-5.6z%22 fill=%22%23fbbf24%22/%3E%3Cpath d=%22M44 8c.9 1.3.9 2 0 2.8c-.9-.8-.9-1.5 0-2.8z%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2277.1%22 cy=%2215.0%22 r=%222.5%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2276.5%22 cy=%2216.8%22 r=%222.5%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2275.0%22 cy=%2217.9%22 r=%222.5%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2273.0%22 cy=%2217.9%22 r=%222.5%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2271.5%22 cy=%2216.8%22 r=%222.5%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2270.9%22 cy=%2215.0%22 r=%222.5%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2271.5%22 cy=%2213.2%22 r=%222.5%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2273.0%22 cy=%2212.1%22 r=%222.5%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2275.0%22 cy=%2212.1%22 r=%222.5%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2276.5%22 cy=%2213.2%22 r=%222.5%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%2274%22 cy=%2215%22 r=%222.1%22 fill=%22%23ea580c%22/%3E%3Cpath d=%22M74 20 v2%22 stroke=%22%2315803d%22 stroke-width=%221.2%22/%3E%3Ccircle cx=%22104%22 cy=%226%22 r=%225.5%22 fill=%22%23fde68a%22 fill-opacity=%22.28%22/%3E%3Crect x=%22101.4%22 y=%2210%22 width=%225.2%22 height=%2212%22 rx=%221.2%22 fill=%22%23fff7ed%22/%3E%3Cpath d=%22M104 2.5c2 2.6 2.1 4.4 0 5.6c-2.1-1.2-2-3 0-5.6z%22 fill=%22%23fbbf24%22/%3E%3Cpath d=%22M104 5c.9 1.3.9 2 0 2.8c-.9-.8-.9-1.5 0-2.8z%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22138.0%22 cy=%2212.0%22 r=%223.2%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%22137.3%22 cy=%2214.4%22 r=%223.2%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%22135.2%22 cy=%2215.8%22 r=%223.2%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%22132.8%22 cy=%2215.8%22 r=%223.2%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%22130.7%22 cy=%2214.4%22 r=%223.2%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%22130.0%22 cy=%2212.0%22 r=%223.2%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%22130.7%22 cy=%229.6%22 r=%223.2%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%22132.8%22 cy=%228.2%22 r=%223.2%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%22135.2%22 cy=%228.2%22 r=%223.2%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%22137.3%22 cy=%229.6%22 r=%223.2%22 fill=%22%23fbbf24%22/%3E%3Ccircle cx=%22134%22 cy=%2212%22 r=%222.7%22 fill=%22%23ea580c%22/%3E%3Cpath d=%22M134 18.5 v3.5%22 stroke=%22%2315803d%22 stroke-width=%221.2%22/%3E%3Ccircle cx=%22162%22 cy=%2210%22 r=%225.5%22 fill=%22%23fde68a%22 fill-opacity=%22.28%22/%3E%3Crect x=%22159.4%22 y=%2214%22 width=%225.2%22 height=%228%22 rx=%221.2%22 fill=%22%23fff7ed%22/%3E%3Cpath d=%22M162 6.5c2 2.6 2.1 4.4 0 5.6c-2.1-1.2-2-3 0-5.6z%22 fill=%22%23fbbf24%22/%3E%3Cpath d=%22M162 9c.9 1.3.9 2 0 2.8c-.9-.8-.9-1.5 0-2.8z%22 fill=%22%23fff%22/%3E%3C/svg%3E") repeat-x 0 0/180px 22px; animation:ts-velas 1.3s ease-in-out infinite alternate; }
+@keyframes ts-velas{ to{ filter:brightness(1.3) saturate(1.15); } }
+html.tema-todos-santos .h-camion{ z-index:1; }
+/* 🎭 Carnaval (de jueves de comadres al martes de Carnaval: depende de la Pascua de cada año): colores y confeti. */
+html.tema-carnaval{ --grad-header:linear-gradient(135deg,#6d28d9,#db2777,#ea580c,#0d9488,#2563eb,#6d28d9); }
+html.tema-carnaval .header{ overflow:hidden; }
+html.tema-carnaval .logo-h::before{ content:'🎭 '; }
+html.tema-carnaval .logo-s{ color:#fde68a; }
+html.tema-carnaval .nav button.active{ background:#be185d; border-color:#be185d; }
+/* 💐 Día de la Madre (20 al 27 de mayo): rosado, pétalos y corazones. */
+html.tema-madre{ --grad-header:linear-gradient(135deg,#9d174d,#db2777,#ec4899,#be185d,#831843,#9d174d); }
+html.tema-madre .header{ overflow:hidden; }
+html.tema-madre .logo-h::before{ content:'💐 '; }
+html.tema-madre .logo-s{ color:#fce7f3; }
+html.tema-madre .nav button.active{ background:#be185d; border-color:#be185d; }
+/* 🇧🇴 6 de Agosto (1 al 7 de agosto) y 💚 24 de Septiembre (18 al 24): la bandera al lado del nombre, banderines arriba y confeti con
+   sus colores. La bandera va dibujada: en las compus con Windows el emoji 🇧🇴 sale como «BO». */
+html.tema-patria{ --grad-header:linear-gradient(135deg,#7f1d1d,#b91c1c,#b45309,#15803d,#14532d,#7f1d1d); }
+html.tema-santa-cruz{ --grad-header:linear-gradient(135deg,#064e3b,#047857,#0f766e,#15803d,#065f46,#064e3b); }
+html.tema-patria .header, html.tema-santa-cruz .header{ overflow:hidden; }
+html.tema-patria .header::before, html.tema-santa-cruz .header::before{ content:''; position:absolute; left:0; right:0; top:0; height:20px; pointer-events:none; z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2220%22 viewBox=%220 0 72 20%22%3E%3Cpath d=%22M0 2Q36.0 4.5 72 2%22 fill=%22none%22 stroke=%22rgba(255,255,255,.75)%22 stroke-width=%221%22/%3E%3Cpath d=%22M2 3.2H22L12.0 17.2Z%22 fill=%22%23D52B1E%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M26 3.8H46L36.0 17.8Z%22 fill=%22%23F9E300%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M50 3.2H70L60.0 17.2Z%22 fill=%22%23007934%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3C/svg%3E") repeat-x 0 0/72px 20px; transform-origin:top center; animation:ts-ondea 3.4s ease-in-out infinite; }
+html.tema-santa-cruz .header::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2220%22 viewBox=%220 0 48 20%22%3E%3Cpath d=%22M0 2Q24.0 4.5 48 2%22 fill=%22none%22 stroke=%22rgba(255,255,255,.75)%22 stroke-width=%221%22/%3E%3Cpath d=%22M2 3.4H22L12.0 17.4Z%22 fill=%22%23009A3E%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M26 3.4H46L36.0 17.4Z%22 fill=%22%23ffffff%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3C/svg%3E"); background-size:48px 20px; }
+html.tema-patria .header-in, html.tema-santa-cruz .header-in{ padding-top:20px; }
+html.tema-patria .logo-h::before, html.tema-santa-cruz .logo-h::before{ content:''; display:inline-block; width:1.35em; height:.9em; margin-right:.4em; vertical-align:-.04em;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 30 20%22%3E%3Crect width=%2230%22 height=%2220%22 rx=%222.5%22 fill=%22%23fff%22/%3E%3Crect y=%220.00%22 width=%2230%22 height=%226.72%22 fill=%22%23D52B1E%22/%3E%3Crect y=%226.67%22 width=%2230%22 height=%226.72%22 fill=%22%23F9E300%22/%3E%3Crect y=%2213.33%22 width=%2230%22 height=%226.72%22 fill=%22%23007934%22/%3E%3Crect x=%22.5%22 y=%22.5%22 width=%2229%22 height=%2219%22 rx=%222.2%22 fill=%22none%22 stroke=%22rgba(0,0,0,.25)%22/%3E%3C/svg%3E") center/contain no-repeat; border-radius:2px; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+html.tema-santa-cruz .logo-h::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 30 20%22%3E%3Crect width=%2230%22 height=%2220%22 rx=%222.5%22 fill=%22%23fff%22/%3E%3Crect y=%220.00%22 width=%2230%22 height=%226.72%22 fill=%22%23009A3E%22/%3E%3Crect y=%226.67%22 width=%2230%22 height=%226.72%22 fill=%22%23ffffff%22/%3E%3Crect y=%2213.33%22 width=%2230%22 height=%226.72%22 fill=%22%23009A3E%22/%3E%3Crect x=%22.5%22 y=%22.5%22 width=%2229%22 height=%2219%22 rx=%222.2%22 fill=%22none%22 stroke=%22rgba(0,0,0,.25)%22/%3E%3C/svg%3E"); }
+html.tema-patria .logo-s{ color:#fde68a; }
+html.tema-santa-cruz .logo-s{ color:#d1fae5; }
+html.tema-patria .nav button.active{ background:#b91c1c; border-color:#b91c1c; }
+html.tema-santa-cruz .nav button.active{ background:#047857; border-color:#047857; }
+/* 🎆 Año Nuevo (31/12 al 2/1): de noche, con fuegos artificiales. */
+html.tema-anio-nuevo{ --grad-header:linear-gradient(135deg,#0b1d3a,#1e3a8a,#312e81,#172554,#1e1b4b,#0b1d3a); }
+html.tema-anio-nuevo .header{ overflow:hidden; }
+html.tema-anio-nuevo .logo-h::before{ content:'🎆 '; }
+html.tema-anio-nuevo .logo-s{ color:#fde68a; }
+html.tema-anio-nuevo .hstat-v{ color:#fde68a; }
+html.tema-anio-nuevo .nav button.active{ background:#1e3a8a; border-color:#1e3a8a; }
+/* 🫧 Espuma (14, los días sin tema): burbujas que suben despacio y un brillo que pasa por el nombre. Es la marca: Multi-ESPUMAS. */
+html.tema-espuma .header{ overflow:hidden; }
+html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 47%,#fff 50%,#e0fffc 53%,#fff 60% 100%) 0 0/320% 100%;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:esp-brillo 7s ease-in-out infinite; }
+@keyframes esp-brillo{ 0%,55%{ background-position:100% 0; } 85%,100%{ background-position:0% 0; } }
+@media(max-width:700px){
+  html.tema-todos-santos .nav button.active::after{ background:#c2410c; }
+  html.tema-carnaval .nav button.active::after, html.tema-madre .nav button.active::after{ background:#db2777; }
+  html.tema-patria .nav button.active::after{ background:#b91c1c; }
+  html.tema-santa-cruz .nav button.active::after{ background:#047857; }
+  html.tema-anio-nuevo .nav button.active::after{ background:#1e3a8a; }
+  html.tema-todos-santos .header::before{ height:22px; background-size:152px 22px; }
+  html.tema-todos-santos .header-in{ padding-top:20px; }
+  html.tema-todos-santos .nav button.active, html.tema-carnaval .nav button.active, html.tema-madre .nav button.active,
+  html.tema-patria .nav button.active, html.tema-santa-cruz .nav button.active, html.tema-anio-nuevo .nav button.active{ background:none; border:0; color:var(--text); }
+}
+@media(prefers-reduced-motion:reduce){ html.tema-todos-santos .header::before, html.tema-todos-santos .h-ruta::after, html.tema-patria .header::before,
+  html.tema-santa-cruz .header::before, html.tema-espuma .logo-h{ animation:none!important; } }
+@media print{ .hdr-fx{ display:none!important; } }
+/* 🔎 1 · El buscador de todo (Ctrl + K): el botón de arriba y la ventana. Ver `palAbrir`. */
+.pal-btn{ margin-left:auto; flex:none; display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff;
+  border-radius:12px; padding:8px 12px; font:inherit; font-weight:700; font-size:.82rem; cursor:pointer; transition:background .15s, transform .15s; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+.pal-btn:hover{ background:rgba(255,255,255,.26); }
+.pal-btn:active{ transform:scale(.97); }
+.pal-btn + .hstat{ margin-left:0; }
+.pal-kbd{ font-size:.66rem; font-weight:800; border:1px solid rgba(255,255,255,.5); border-bottom-width:2px; border-radius:6px; padding:1px 6px; opacity:.9; white-space:nowrap; }
+@media(max-width:900px){ .pal-kbd{ display:none; } }
+@media(max-width:700px){ .pal-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; font-size:1rem; } .pal-btn-t{ display:none; } }
+.pal-ov{ position:fixed; inset:0; z-index:4500; background:rgba(15,40,44,.38); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:flex; justify-content:center; align-items:flex-start;
+  padding:max(9vh, env(safe-area-inset-top,0px)) 14px 14px; opacity:0; transition:opacity .16s; }
+.pal-ov.abierta{ opacity:1; }
+.pal{ width:min(660px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 80px rgba(10,40,44,.35); overflow:hidden; transform:translateY(-10px) scale(.98); transition:transform .22s cubic-bezier(.34,1.56,.64,1); display:flex; flex-direction:column; max-height:78vh; }
+.pal-ov.abierta .pal{ transform:none; }
+.pal-cab{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--gray-md); font-size:1.1rem; }
+.pal-cab input{ flex:1; min-width:0; border:0; outline:0; font:inherit; font-size:1rem; color:var(--text); background:transparent; padding:6px 2px; }
+.pal-x{ border:1px solid var(--gray-md); background:#fff; color:var(--muted); border-radius:8px; font:inherit; font-size:.72rem; font-weight:800; padding:4px 8px; cursor:pointer; }
+.pal-res{ overflow:auto; padding:6px; }
+.pal-g{ font-size:.68rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:8px 10px 4px; }
+.pal-it{ display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:10px; cursor:pointer; }
+.pal-it.on, .pal-it:hover{ background:var(--teal-lt); }
+.pal-ic{ width:34px; height:34px; border-radius:10px; background:#f3f8f8; display:grid; place-items:center; font-size:1.05rem; flex:none; }
+.pal-it.on .pal-ic{ background:#fff; }
+.pal-tx{ min-width:0; flex:1; }
+.pal-tx b{ display:block; font-size:.9rem; color:#17302f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pal-tx small{ display:block; font-size:.76rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pal-ent{ color:var(--teal-dk); font-weight:800; opacity:0; }
+.pal-it.on .pal-ent{ opacity:1; }
+.pal-vacio{ padding:22px 14px; text-align:center; color:var(--muted); font-size:.9rem; }
+.pal-pie{ display:flex; gap:16px; flex-wrap:wrap; padding:8px 14px; border-top:1px solid var(--gray-md); background:#f7fafa; font-size:.72rem; color:var(--muted); }
+.pal-pie b{ color:#17302f; }
+@media(max-width:700px){ .pal-pie{ display:none; } .pal{ max-height:70vh; } }
+/* 💾 6 · «Guardar» que se transforma (ver `guardarBtnFin`). */
+#f-submit{ transition:background .25s, border-color .25s, transform .15s; }
+#f-submit.gz-ok{ background:#1E8E5E !important; border-color:#1E8E5E !important; color:#fff !important; animation:gz-pop .45s cubic-bezier(.34,1.56,.64,1); }
+#f-submit.gz-mal, #f-submit.gz-cola{ background:#C2620A !important; border-color:#C2620A !important; color:#fff !important; animation:gz-tiembla .4s; }
+.gz-tilde{ display:inline-block; width:1.15em; height:1.15em; vertical-align:-.22em; margin-right:.35em; }
+.gz-tilde path{ fill:none; stroke:#fff; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:24; stroke-dashoffset:24; animation:gz-traza .45s .1s forwards; }
+@keyframes gz-pop{ 0%{ transform:scale(.94); } 60%{ transform:scale(1.04); } 100%{ transform:none; } }
+@keyframes gz-tiembla{ 20%,60%{ transform:translateX(-4px); } 40%,80%{ transform:translateX(4px); } }
+@keyframes gz-traza{ to{ stroke-dashoffset:0; } }
+/* 🔦 8 · Lo rojo de «Para hacer» con un borde de luz que gira y un punto que late; lo ámbar y lo azul quedan quietos («si todo late,
+   nada importa»). Solo CSS: los avisos son los mismos. */
+@property --ah-ang{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
+.ah-it.ah-r::after{ content:""; position:absolute; inset:0; border-radius:inherit; padding:1.6px; pointer-events:none;
+  background:conic-gradient(from var(--ah-ang), transparent 0 58%, #ffb3bb 70%, #d23645 80%, #ff8a95 88%, transparent 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; animation:ah-luz 2.8s linear infinite; }
+@keyframes ah-luz{ to{ --ah-ang:360deg; } }
+.ah-it.ah-r .ah-n{ position:relative; }
+.ah-it.ah-r .ah-n::after{ content:""; position:absolute; top:-5px; right:2px; width:8px; height:8px; border-radius:50%; background:#d23645; box-shadow:0 0 0 0 rgba(210,54,69,.55); animation:ah-late 1.6s infinite; }
+@keyframes ah-late{ 0%{ box-shadow:0 0 0 0 rgba(210,54,69,.55); } 70%{ box-shadow:0 0 0 9px rgba(210,54,69,0); } 100%{ box-shadow:0 0 0 0 rgba(210,54,69,0); } }
+@media(prefers-reduced-motion:reduce){ .ah-it.ah-r::after, .ah-it.ah-r .ah-n::after, #f-submit.gz-ok, #f-submit.gz-mal, #f-submit.gz-cola{ animation:none; } .gz-tilde path{ animation:none; stroke-dashoffset:0; } }
+@media print{ .pal-btn, .pal-ov{ display:none!important; } }
 /* ===== 🚚 (§4iw, 09/10) Arriba del panel: el día, los cupos en anillos y el camión en la ruta (dueño: «A»). ===== */
 .htitle h1{font-size:1.02rem;font-weight:800;letter-spacing:.01em}
 .htitle p{font-size:.7rem}
@@ -1499,9 +1631,25 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
    ni el servidor. Se prende SOLO en octubre, con la fecha de Bolivia (UTC−4 fijo), y se apaga sola el 1/11, antes de Todos
    Santos. Los colores de aviso (verde, ámbar, rojo) no cambian. Para otro año no hay que tocar nada. */
-(function(){ try{ var m=new Date(Date.now()-4*3600000).getUTCMonth(); if(m===9) document.documentElement.classList.add('tema-halloween');
-  /* 🎄 (27/10, §4nc) Y en diciembre, Navidad: se prende el 1/12 y se apaga sola el 1/1. */
-  else if(m===11) document.documentElement.classList.add('tema-navidad'); }catch(e){} })();
+(function(){ try{
+  /* 🌼🎭💐🇧🇴💚🎆🫧 (27/10, §4ni) Y el resto del año, UN tema según la fecha de Bolivia (dueño: «Quiero las mejoras: … 14, 15»):
+     · octubre → Halloween · noviembre → Todos Santos (estilo Coco) · 1 al 30 de diciembre → Navidad (§4nc)
+     · 31/12 al 2/1 → Año Nuevo · de jueves de comadres al martes de Carnaval (52 a 47 días antes de la Pascua de cada año) → Carnaval
+     · 20 al 27 de mayo → Día de la Madre · 1 al 7 de agosto → 6 de Agosto · 18 al 24 de septiembre → 24 de Septiembre
+     · los demás días → Espuma. Para ver uno cualquier día: `?tema=todos-santos` (o carnaval, madre, patria, santa-cruz, anio-nuevo,
+       halloween, navidad, espuma) al final de la dirección. Para otro año no hay que tocar nada. */
+  var d=new Date(Date.now()-4*3600000), y=d.getUTCFullYear(), m=d.getUTCMonth(), dd=d.getUTCDate();
+  var pascua=function(a){ var b=a%19,c=Math.floor(a/100),e=a%100,f=Math.floor(c/4),g=c%4,h=Math.floor((c+8)/25),i=Math.floor((c-h+1)/3),
+    k=(19*b+c-f-i+15)%30,l=Math.floor(e/4),n=e%4,o=(32+2*g+2*l-k-n)%7,p=Math.floor((b+11*k+2*o)/451),r=k+o-7*p+114; return Date.UTC(a,Math.floor(r/31)-1,r%31+1); };
+  var antesPascua=Math.round((pascua(y)-Date.UTC(y,m,dd))/864e5);
+  var t = m===9 ? 'halloween' : m===10 ? 'todos-santos' : ((m===11&&dd===31)||(m===0&&dd<=2)) ? 'anio-nuevo' : m===11 ? 'navidad'
+        : (antesPascua>=47&&antesPascua<=52) ? 'carnaval' : (m===4&&dd>=20&&dd<=27) ? 'madre' : (m===7&&dd<=7) ? 'patria'
+        : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
+  var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
+  document.documentElement.classList.add('tema-'+t);
+  /* 🎸 En noviembre, la melodía (archivo aparte: lo usan el panel y el dashboard). */
+  if(t==='todos-santos'){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
+}catch(e){} })();
 </script>
 <script>
 /* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»;
@@ -1540,14 +1688,111 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 </head>
 <body>
 <div class="header">
+  <canvas id="hdr-fx" class="hdr-fx no-print" aria-hidden="true"></canvas>
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1 id="hdr-dia">Registro de Pedidos</h1><p id="stat-hoy-l">Cupos mañana</p></div>
+    <button type="button" id="pal-btn" class="pal-btn no-print" onclick="palAbrir()" title="Buscar un cliente, una OC, una nota, un celular o un producto, o ir a algo (Ctrl + K)" aria-label="Buscar (Ctrl + K)"><span aria-hidden="true">🔎</span><span class="pal-btn-t">Buscar</span><span class="pal-kbd" aria-hidden="true">Ctrl K</span></button>
     <div class="hstat"><div class="hstat-v" id="stat-hoy" hidden>0</div><div class="h-anillos" id="h-anillos" role="img" aria-label="Cupos libres del próximo camión"></div></div>
   </div>
   <!-- 🚚 (§4iw, 09/10, dueño: «A») La ruta del camión: el camión mira a la izquierda y va de derecha a izquierda (de frente). -->
   <div class="h-ruta no-print" aria-hidden="true"><span class="h-lejos"></span><span class="h-luna"></span><span class="h-murc"><i></i><i></i><i></i></span><span class="h-cerca"></span><span class="h-calle"></span><span class="h-camion"><svg viewBox="0 0 86 40"><g class="hc-humo"><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/></g><g class="hc-cuerpo"><rect x='26' y='3' width='57' height='25' rx='3' fill='#fff' stroke='#d5dde6'/><g transform='translate(29 8) scale(0.78)' opacity='1'><path d='M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z' fill='#e9609a'/><path d='M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z' fill='#f08a24'/><path d='M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z' fill='#f6c437'/></g><text x='46.5' y='15.2' textLength='34.5' lengthAdjust='spacingAndGlyphs' font-size='7' font-weight='800' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Multi<tspan font-weight='900'>ESPUMAS</tspan></text><text x='46.7' y='20.6' textLength='20' lengthAdjust='spacingAndGlyphs' font-size='3.6' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Viscarra S.R.L.</text><rect x='26' y='24' width='57' height='1.6' fill='#e9609a'/><rect x='26' y='25.6' width='57' height='1.2' fill='#f08a24'/><rect x='26' y='26.8' width='57' height='1.2' fill='#f6c437'/><path d='M25 9 h-11 q-6 0 -9 6 l-4 8 v6 q0 2 2 2 h22 z' fill='#1f3b73'/><path d='M22 11.5 h-8 q-4 0 -6 4 l-2.5 5.5 h16.5 z' fill='#bfe9ff'/><rect class='hc-faro' x='1' y='24' width='3.4' height='2.6' rx='1' fill='#fde68a'/><rect x='2' y='28' width='80' height='3' rx='1.2' fill='#1f2937'/><rect x='82' y='26' width='4' height='1.6' fill='#6b7280'/></g><g><circle cx='14' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='14' cy='31' r='3.2' fill='#9ca3af'/><rect x='13.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='10.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='60' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='60' cy='31' r='3.2' fill='#9ca3af'/><rect x='59.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='56.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='72' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='72' cy='31' r='3.2' fill='#9ca3af'/><rect x='71.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='68.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g></svg></span></div>
 </div>
+<script>
+/* ✨ LO QUE SE MUEVE EN EL ENCABEZADO (§4ni, 27/10; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre»).
+   Un lienzo detrás de las letras (`#hdr-fx`) con lo de cada tema: burbujas de espuma los días sin tema (14), pétalos de flor de muerto y
+   chispas de vela en noviembre, confeti en Carnaval, corazones el Día de la Madre, confeti con los colores de la bandera el 6 de Agosto y
+   el 24 de Septiembre, y fuegos artificiales en Año Nuevo. Halloween y Navidad siguen con lo suyo (solo CSS).
+   · Solo dibujo: no lee ni toca datos. Va a 30 cuadros por segundo, se para con la pestaña escondida y con «reducir movimiento» queda
+     quieto. En las pruebas automáticas dibuja un solo cuadro (salvo `window.HDR_FX_PRUEBA`). `window.hdrFx` dice qué está dibujando. */
+(function(){
+  var H=document.querySelector('.header'), cv=document.getElementById('hdr-fx');
+  if(!H || !cv || !cv.getContext) return;
+  var m=/\btema-([a-z-]+)/.exec(document.documentElement.className||''), tema=m?m[1]:'';
+  var EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos' }[tema];
+  if(!EF){ cv.style.display='none'; return; }
+  var cx=cv.getContext('2d'), dpr=Math.min(2, window.devicePixelRatio||1), W=0, Hh=0, P=[], R=[], cuadros=0, t=0, armado=false;
+  var quieto=false; try{ quieto=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  var prueba=!!navigator.webdriver && !window.HDR_FX_PRUEBA;
+  var azar=function(a,b){ return a+Math.random()*(b-a); }, uno=function(l){ return l[Math.floor(Math.random()*l.length)]; };
+  var PAL={ petalos:['#f59e0b','#f97316','#fb923c','#fbbf24','#ea580c'], confeti:['#fde047','#22d3ee','#f472b6','#a3e635','#fb923c','#ffffff','#c084fc'],
+    patria:['#D52B1E','#F9E300','#22a24a'], 'confeti-scz':['#ffffff','#34d399','#ffffff','#10b981'], fuegos:['#fde047','#f472b6','#67e8f9','#ffffff','#a78bfa','#fb923c'] };
+  function medir(){
+    var w=H.clientWidth, h=H.clientHeight; if(!w || !h) return;
+    if(Math.abs(w*dpr-W)<1 && Math.abs(h*dpr-Hh)<1) return;
+    W=cv.width=Math.round(w*dpr); Hh=cv.height=Math.round(h*dpr);
+  }
+  function cuantos(base){ return Math.max(8, Math.round(base*Math.max(.6, Math.min(1.5, (W/dpr)/1200)))); }
+  function nuevo(arriba){
+    var s=dpr, p={ x:azar(0,W), a:azar(0,6.28), ph:azar(0,6.28) };
+    if(EF==='burbujas'){ p.r=azar(3,9)*s; p.y=arriba?azar(0,Hh):Hh+p.r+azar(0,Hh*.5); p.v=-azar(.15,.45)*s; }
+    else if(EF==='corazones'){ p.r=azar(4.5,8)*s; p.y=arriba?azar(0,Hh):-p.r*2; p.v=azar(.25,.6)*s; p.c=uno(['#fff','#fbcfe8','#f9a8d4','#fecdd3']); p.co=Math.random()<.55; p.va=azar(-.02,.02); }
+    else { p.r=azar(EF==='petalos'?3.2:3, EF==='petalos'?6:5.5)*s; p.y=arriba?azar(0,Hh):-10*s; p.v=azar(EF==='petalos'?.25:.55, EF==='petalos'?.7:1.3)*s; p.va=azar(-.06,.06);
+      p.c=uno(PAL[EF==='patria'?'patria':(EF==='petalos'?'petalos':(EF==='confeti-scz'?'confeti-scz':'confeti'))]); p.w=azar(.5,1.3); }
+    return p;
+  }
+  function armar(){
+    P=[]; R=[];
+    var n=cuantos({ burbujas:22, petalos:40, confeti:46, corazones:26, patria:32, 'confeti-scz':34, fuegos:0 }[EF]);
+    for(var i=0;i<n;i++) P.push(nuevo(true));
+    if(EF==='petalos') for(var j=0;j<cuantos(8);j++) R.push({ x:azar(0,W), y:azar(Hh*.5,Hh), v:azar(.2,.5)*dpr, ph:azar(0,6.28) });   // chispas de vela que suben
+    if(EF==='patria' || EF==='fuegos') for(var k=0;k<cuantos(EF==='fuegos'?26:10);k++) R.push({ x:azar(0,W), y:azar(0,Hh*.75), r:azar(.8,1.8)*dpr, ph:azar(0,6.28), est:EF==='patria' });
+  }
+  function corazon(x,y,r){ cx.beginPath(); cx.moveTo(x,y+r*.35); cx.bezierCurveTo(x,y-r*.3,x-r,y-r*.3,x-r,y+r*.2); cx.bezierCurveTo(x-r,y+r*.75,x,y+r*1.05,x,y+r*1.35);
+    cx.bezierCurveTo(x,y+r*1.05,x+r,y+r*.75,x+r,y+r*.2); cx.bezierCurveTo(x+r,y-r*.3,x,y-r*.3,x,y+r*.35); cx.fill(); }
+  function estrella(x,y,r){ cx.beginPath(); for(var i=0;i<10;i++){ var a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; cx.lineTo(x+Math.cos(a)*rr, y+Math.sin(a)*rr); } cx.closePath(); cx.fill(); }
+  var cohetes=[], chispas=[], prox=20;
+  function fuegos(mover){
+    if(mover && --prox<=0){ prox=Math.round(azar(38,80)); cohetes.push({ x:azar(W*.12,W*.88), y:Hh, v:-azar(Hh/30,Hh/22), alto:azar(Hh*.14,Hh*.42), c:uno(PAL.fuegos) }); }
+    cohetes.forEach(function(c){ if(mover){ c.y+=c.v; c.v*=.985; } cx.fillStyle=c.c; cx.globalAlpha=.9; cx.fillRect(c.x-dpr*.8, c.y, dpr*1.6, dpr*5);
+      if(c.y<=c.alto){ c.fin=1; var n=34; for(var i=0;i<n;i++){ var a=i/n*6.283, sp=azar(1.2,3.4)*dpr; chispas.push({ x:c.x, y:c.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, v:1, c:Math.random()<.25?'#ffffff':c.c }); } } });
+    cohetes=cohetes.filter(function(c){ return !c.fin; });
+    chispas.forEach(function(s){ if(mover){ s.x+=s.vx; s.y+=s.vy; s.vx*=.975; s.vy=s.vy*.975+.035*dpr; s.v-=.016; } cx.globalAlpha=Math.max(0,s.v); cx.fillStyle=s.c; cx.beginPath(); cx.arc(s.x,s.y,1.7*dpr,0,6.283); cx.fill(); });
+    chispas=chispas.filter(function(s){ return s.v>0; });
+    if(!mover && !chispas.length){ var c={ x:W*.7, y:Hh*.3, c:'#fde047' }; for(var i=0;i<30;i++){ var a=i/30*6.283; cx.globalAlpha=.85; cx.fillStyle=i%3?c.c:'#fff'; cx.beginPath(); cx.arc(c.x+Math.cos(a)*14*dpr, c.y+Math.sin(a)*14*dpr, 1.4*dpr, 0, 6.283); cx.fill(); } }
+  }
+  function cuadro(mover){
+    medir(); if(!W) return;
+    if(!armado){ armado=true; armar(); }
+    cx.clearRect(0,0,W,Hh); t++;
+    R.forEach(function(r){
+      if(r.v!=null){ if(mover){ r.y-=r.v; r.x+=Math.sin(t*.05+r.ph)*.3*dpr; } if(r.y<Hh*.2){ r.y=Hh; r.x=azar(0,W); }
+        cx.globalAlpha=.5+.4*Math.sin(t*.2+r.ph); cx.fillStyle='#fde68a'; cx.beginPath(); cx.arc(r.x,r.y,1.2*dpr,0,6.283); cx.fill(); }
+      else { cx.globalAlpha=.35+.45*(.5+.5*Math.sin(t*.07+r.ph)); cx.fillStyle=r.est?'#fde047':'#fff';
+        if(r.est) estrella(r.x,r.y,r.r*2.6); else { cx.beginPath(); cx.arc(r.x,r.y,r.r*.7,0,6.283); cx.fill(); } }
+    });
+    if(EF==='fuegos'){ fuegos(mover); cx.globalAlpha=1; return; }
+    P.forEach(function(p,i){
+      if(mover){ p.y+=p.v; p.ph+=.03; p.a+=(p.va||0); p.x+=Math.sin(p.ph)*(EF==='burbujas'?.25:.45)*dpr; }
+      if(EF==='burbujas'){
+        if(p.y<-p.r*2) P[i]=p=nuevo(false);
+        var al=Math.min(1, p.y/(Hh*.35));   // se desvanecen al llegar arriba, como espuma que revienta
+        cx.globalAlpha=Math.max(0,al)*.9; cx.fillStyle='rgba(255,255,255,.08)'; cx.strokeStyle='rgba(255,255,255,.5)'; cx.lineWidth=dpr;
+        cx.beginPath(); cx.arc(p.x,p.y,p.r,0,6.283); cx.fill(); cx.stroke();
+        cx.fillStyle='rgba(255,255,255,.7)'; cx.beginPath(); cx.arc(p.x-p.r*.35,p.y-p.r*.35,Math.max(.6*dpr,p.r*.22),0,6.283); cx.fill();
+        return;
+      }
+      if(p.y>Hh+12*dpr) P[i]=p=nuevo(false);
+      cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.globalAlpha=.88; cx.fillStyle=p.c;
+      if(EF==='corazones'){ if(p.co) corazon(0,-p.r*.6,p.r); else { cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); } }
+      else if(EF==='petalos'){ cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); }
+      else { cx.scale(1, Math.cos(p.ph*3)); cx.fillRect(-p.r*.6*p.w, -p.r, p.r*1.2*p.w, p.r*2); }
+      cx.restore();
+    });
+    cx.globalAlpha=1;
+  }
+  var ultimo=0;
+  function bucle(ts){
+    if(!document.hidden && ts-ultimo>=32){ ultimo=ts; cuadro(true); cuadros++; }
+    requestAnimationFrame(bucle);
+  }
+  window.hdrFx={ tema:tema, efecto:EF, n:function(){ return P.length+R.length+cohetes.length+chispas.length; }, cuadros:function(){ return cuadros; } };
+  if(window.ResizeObserver){ try{ new ResizeObserver(function(){ medir(); if(quieto||prueba) cuadro(false); }).observe(H); }catch(e){} }
+  else window.addEventListener('resize', function(){ medir(); });
+  if(quieto || prueba){ cuadro(false); cuadros=1; return; }
+  requestAnimationFrame(bucle);
+})();
+</script>
 
 <div class="nav">
   <button id="tab-form" class="active" onclick="tabNuevoPedido()"><span class="t-ic">＋</span><span class="t-lb">Nuevo pedido</span><span class="t-cr">Nuevo</span></button>
@@ -7404,7 +7649,7 @@ function formIrAlPrimerError(){
   try{ e.scrollIntoView({ block:'center' }); }catch(x){ e.scrollIntoView(); }
   try{ e.focus({ preventScroll:true }); }catch(x){ try{ e.focus(); }catch(y){} }
 }
-function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
+function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; b.classList.remove('gz-ok','gz-mal','gz-cola'); if(typeof GZ_T!=='undefined') clearTimeout(GZ_T); if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
 /* 💵 LOS MONTOS DEL FORMULARIO SE LEEN COMO LOS ESCRIBE LA GENTE (26/09). En Bolivia 1.500 se escribe
    con punto y el campo numérico lo deja tal cual («1.500»): `parseFloat` lo leía 1,5, y una venta con
    «A cuenta 1.500» llegaba a la planilla con Bs 1,50 (el pago mixto, el flete y el precio c/u, igual).
@@ -13003,7 +13248,7 @@ function ctaRegistrarPago(id){
     CTA_TIPO='pago';
     var _prE=aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
-    toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok'); fxSello('COBRADO','plata');
+    toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok'); fxSello('COBRADO','plata'); sonidoPanel('caja');
     showPagoWhatsapp(id, contaPagos(p).length-1);
     pagoWaEstado(_prE);                    // §4fp: si el guardado no entra, la ventana lo dice
     return;
@@ -13015,6 +13260,7 @@ function ctaRegistrarPago(id){
   CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   fxSello('COBRADO','plata');
   var _prP=aplicarCobros(p, arr);
+  sonidoPanel('caja');                          // 🔔 (§4ni, 16) la caja registradora
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
         (linea.recibio?(' · lo tiene el chofer '+linea.recibio):''),'ok');
   /* Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
@@ -14529,6 +14775,7 @@ function submitPedido(){
        siempre. Con un servidor de antes no vuelve nada y no cambia nada. */
     apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null)}).then(function(res){
       setSubmitting(false);
+      guardarBtnFin(res, rec);                     // ✨ (§4ni, 6 y 16) el botón dice cómo salió y suena
       // Una respuesta definitiva conserva el comportamiento del formulario: el rechazo
       // se corrige acá; no dejarlo en cola como un pedido que se mandará a escondidas.
       if(res && (res.ok===true || res.ok===false)) sacarEnvioForm();
@@ -14626,6 +14873,7 @@ function submitPedido(){
       if(res && res.ok && Array.isArray(res.saldo) && res.saldo.length) saldoAvisoServidor(rec, res.saldo, _reserva);
     }).catch(function(e){
       setSubmitting(false);
+      guardarBtnFin(null, rec, true);             // ✨ (§4ni) «En cola», nunca ✓
       // Ya estaba en cola antes de enviar. No reemplazar una corrección más nueva por esta foto.
       /* ⚠️ ANTES: «Sin internet: guardado» y acto seguido el modal verde «✓ Pedido guardado»
          con el botón para pasar la venta al grupo (§4eo). La venta se «pasaba» sin estar en
@@ -15667,6 +15915,197 @@ function fxSello(txt, tipo){
     document.body.appendChild(d); setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 1900);
   }catch(e){}
 }
+
+/* ══ ✨ LAS MEJORAS ELEGIDAS DEL MUESTRARIO (§4ni, 27/10; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16») ══════════════════════
+   1 · el buscador Ctrl + K (`palAbrir`) · 6 · «Guardar» que se transforma (`guardarBtnFin`) · 8 · el borde de luz en lo rojo de «Para
+   hacer» (solo CSS: `.ah-it.ah-r::after`) · 14 y 15 · los temas del año (script del <head>, CSS y el lienzo `#hdr-fx`) · 16 · los sonidos
+   suaves (`sonidoPanel`). Nada de esto cambia cuentas, cupos ni la planilla: es cómo se ve, cómo se oye y cómo se llega a las cosas. */
+
+/* 🔔 16 · SONIDOS SUAVES. Un sonido corto que confirma sin mirar: «pop» al guardar un pedido, caja registradora al registrar un pago,
+   campanita al marcar entregado, dos notas que bajan cuando algo no se guardó. Hechos con el navegador (sin archivos), bajitos.
+   · Los calla el 🔇 de Bloki, el MISMO de todos los sonidos del panel (`me_asis_mudo`): uno solo por aparato, no uno por cosa.
+   · El mismo sonido dos veces seguidas en menos de 0,6 s suena una (el cierre de entregas tilda muchos de golpe).
+   · En las pruebas automáticas no suena, salvo `window.SON_PRUEBA`; `SON_LOG` anota lo que sonó (para las pruebas). */
+var SON_LOG=[], SON_ULT={};
+function sonidoPanel(k){
+  try{
+    if(typeof asisMudo==='function' && asisMudo()) return false;
+    if(navigator.webdriver && !window.SON_PRUEBA) return false;
+    var ahora=Date.now(); if(SON_ULT[k] && ahora-SON_ULT[k]<600) return false; SON_ULT[k]=ahora;
+    var C=(typeof asisAudio==='function') ? asisAudio() : null; if(!C) return false;
+    if(C.state==='suspended' && C.resume) C.resume();
+    var tono=function(f, ini, dur, tipo, vol, f2){
+      var o=C.createOscillator(), g=C.createGain(), t=C.currentTime+ini;
+      o.type=tipo||'sine'; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||0.15,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(C.destination); o.start(t); o.stop(t+dur+0.05);
+    };
+    var S={
+      pop:function(){ tono(520,0,0.12,'sine',0.18,1100); },
+      caja:function(){ tono(1318,0,0.09,'square',0.05); tono(1568,0.08,0.09,'square',0.05); tono(2093,0.16,0.5,'triangle',0.12); tono(4186,0.18,0.25,'sine',0.03); },
+      ding:function(){ tono(880,0,0.9,'sine',0.15); tono(1320,0,0.6,'sine',0.05); },
+      aviso:function(){ tono(660,0,0.18,'triangle',0.14); tono(495,0.2,0.28,'triangle',0.14); }
+    };
+    if(!S[k]) return false;
+    S[k](); SON_LOG.push(k); return true;
+  }catch(e){ return false; }
+}
+
+/* 💾 6 · «GUARDAR» QUE SE TRANSFORMA. Mientras viaja a la planilla el botón ya dice «Enviando…» con la ruedita (`setSubmitting`). Cuando
+   el servidor contesta: con el «sí» se pone verde con el tilde que se dibuja y el número de OC; con un «no» se pone ámbar y dice el
+   motivo corto (el aviso largo sigue saliendo como siempre). A los pocos segundos vuelve a ser «Guardar pedido». El tilde sale SOLO con
+   el «sí» de la planilla: lo que queda en la cola dice «En cola», nunca ✓.
+   · En las pruebas automáticas el botón no cambia de texto (muchas leen «Guardar pedido»), salvo `window.FX_PRUEBA`; el sonido igual
+     se anota. */
+var GZ_T=null;
+var GZ_MOTIVO={ conflicto:'Otro lo cambió: revisalo', borrado:'Lo borraron', oc_repetida:'OC repetida', dia_cerrado:'Día cerrado',
+  feriado:'Es feriado', cupos_llenos:'Turno lleno', admin:'Sin permiso', busy:'Servidor ocupado' };
+function guardarBtnFin(res, rec, enCola){
+  var ok=!!(res && res.ok===true && !res.error), k, txt;
+  if(ok){ k='ok'; var oc=(res.pedido && res.pedido.oc) || (rec && rec.oc) || ''; txt='Guardado'+(oc?(' · '+oc):''); sonidoPanel('pop'); }
+  else if(enCola || !res || (res.ok!==false && !res.error)){ k='cola'; txt='En cola: todavía no llegó'; sonidoPanel('aviso'); }
+  else { k='mal'; txt=GZ_MOTIVO[String(res.error||'')] || 'No se guardó'; sonidoPanel('aviso'); }
+  if(navigator.webdriver && !window.FX_PRUEBA) return k;
+  /* Un tic después: con el «sí», `after()` vacía el formulario (y `resetForm` le vuelve a escribir «Guardar pedido») en este mismo paso. */
+  clearTimeout(GZ_T);
+  GZ_T=setTimeout(function(){
+    var b=document.getElementById('f-submit'); if(!b || b.disabled) return;
+    b.classList.remove('gz-ok','gz-mal','gz-cola'); void b.offsetWidth; b.classList.add('gz-'+k);
+    b.innerHTML=(k==='ok' ? '<svg class="gz-tilde" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : (k==='cola'?'⏳ ':'⚠️ '))+esc(txt);
+    GZ_T=setTimeout(function(){ b.classList.remove('gz-ok','gz-mal','gz-cola'); if(!b.disabled) b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }, k==='ok'?2400:4800);
+  }, 0);
+  return k;
+}
+
+/* 🔎 1 · EL BUSCADOR DE TODO (Ctrl + K, o el 🔎 de arriba). Desde cualquier pestaña: un cliente, una OC, una nota, un celular o un
+   producto, y también «ir a…» (nuevo pedido, Mis pedidos, Stock, cierre de entregas…). Flechas para moverse, Enter para abrir, Esc
+   para cerrar.
+   · Lee lo que el panel ya tiene (`STATE`, el catálogo `CODIGOS` y el saldo de siempre: `saldoVeredicto`); no pide nada a la planilla.
+   · Un pedido se abre con la ficha de Administración si la clave está puesta y, si no, con la de Mis pedidos. Un producto dice cuánto
+     hay (PTF + Banzer), lo de Moreno y lo vendido sin entregar; Enter copia su código.
+   · Lo de Administración (Stock, cierre, la ciudad, «Quién vendió qué», «Decir anuncio»…) aparece SOLO con la clave puesta: sin ella,
+     «Administración» lleva a la pantalla que la pide, como siempre. */
+var PAL={ abierta:false, sel:0, res:[], previo:null };
+function palNorm(t){ return (typeof sinTildes==='function' ? sinTildes(String(t||'')) : String(t||'')).toLowerCase().replace(/\s+/g,' ').trim(); }
+function palAcciones(){
+  var adm=!!UNLOCKED, A=[
+    { ic:'➕', t:'Nuevo pedido', s:'el formulario vacío', q:'nuevo pedido cargar venta formulario', fn:function(){ tabNuevoPedido(); } },
+    { ic:'📋', t:'Mis pedidos', s:'tus ventas, tu día y lo que tenés para hacer', q:'mis pedidos ventas tu dia', fn:function(){ showView('mis'); } },
+    { ic:'🧾', t:'Contabilidad', s:'ventas, pagos y el cuadre', q:'contabilidad pagos cobros cuadre ventas', fn:function(){ showView('conta'); } },
+    { ic:'🎧', t:'ATC', s:'las de garantía y las de contra costo', q:'atc garantia reclamo stc', fn:function(){ showView('atc'); } },
+    { ic:'🔒', t:'Administración', s:adm?'los pedidos del día':'pide la contraseña', q:'administracion logistica pedidos camion', fn:function(){ showView('admin'); } }
+  ];
+  if(adm){
+    A=A.concat([
+      { ic:'📦', t:'Stock y reposición', s:'el plan de stock y el Excel del día', q:'stock reposicion inventario plan', fn:function(){ abrirStock(); } },
+      { ic:'📥', t:'Subir el Excel del día', s:'Stock → 📥 Subir existencias', q:'subir excel existencias almacen', fn:function(){ abrirStock(); abrirImportExist(); } },   // sin esperar: elegir el archivo tiene que salir del mismo toque
+      { ic:'✅', t:'Cierre de entregas', s:'tildar lo que se entregó hoy', q:'cierre entregas entregado tildar', fn:function(){ abrirCierreEntregas(); } },
+      { ic:'🛣️', t:'Hoja de ruta', s:'el orden de las paradas', q:'hoja de ruta paradas recorrido', fn:function(){ abrirRuta(); } },
+      { ic:'🏙️', t:'Ver la ciudad', s:'el patio de carga en 3D', q:'ciudad patio 3d camiones', fn:function(){ patioAbrirCiudad(); } },
+      { ic:'🔎', t:'Quién vendió qué', s:'por producto o por vendedor', q:'quien vendio que buscar producto vendedor', fn:function(){ abrirBuscar(); } },
+      { ic:'📇', t:'Clientes (Excel)', s:'nombre, celular y valor de la compra', q:'clientes excel exportar', fn:function(){ abrirClientes(); } },
+      { ic:'📢', t:'Decir un anuncio', s:'Bloki se lo grita a todos', q:'anuncio decir bloki gritar', fn:function(){ anuncioAbrir(); } },
+      { ic:'🏬', t:'Stock de las tiendas', s:'lo contado el último día hábil del mes', q:'stock tiendas sucursales', fn:function(){ abrirTst(); } },
+      { ic:'🏭', t:'Pedido a producción', s:'qué pedir y qué va a dónde', q:'pedido produccion fabrica moreno', fn:function(){ abrirPap(); } }
+    ]);
+  }
+  return A;
+}
+function palBuscar(q){
+  var n=palNorm(q), out=[], dig=n.replace(/\D/g,'');
+  /* «Ir a…» por el COMIENZO de las palabras: «ros» no tiene que traer Contabilidad por «cob-ros». */
+  var acc=palAcciones().filter(function(a){ var ws=palNorm(a.t+' '+a.q).split(' '); return !n || n.split(' ').every(function(w){ return ws.some(function(x){ return x.indexOf(w)===0; }); }); });
+  if(!n){ return acc.map(function(a){ return { g:'Ir a', ic:a.ic, t:a.t, s:a.s, fn:a.fn }; }); }
+  // Pedidos: todas las palabras tienen que estar (cliente, OC, nota, celular, zona, vendedor, productos); los números sin guiones.
+  var palabras=n.split(' ').filter(Boolean), peds=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || (typeof esFilaSistema==='function' && esFilaSistema(p))) return;
+    var prods=(p.productos||[]).map(function(x){ return (x.desc||'')+' '+(x.codigo||'')+' '+(x.medida||''); }).join(' ');
+    var hay=palNorm([p.cliente,p.oc,p.nota,p.celular,p.zona,p.vendedor,p.facturarA,prods].join(' '));
+    var ok=palabras.every(function(w){ return hay.indexOf(w)>=0 || (/\d/.test(w) && hay.replace(/[-\s]/g,'').indexOf(w.replace(/[-\s]/g,''))>=0); });
+    if(!ok && dig.length>=4) ok=String(p.celular||'').replace(/\D/g,'').indexOf(dig)>=0 || String(p.nota||'').replace(/\D/g,'').indexOf(dig)>=0;
+    if(!ok) return;
+    var cli=palNorm(p.cliente), punt=(cli.indexOf(n)===0?3:0)+(palNorm(p.oc)===n||palNorm(p.nota)===n?5:0);
+    peds.push({ p:p, punt:punt, f:String(p.fecha||'') });
+  });
+  peds.sort(function(a,b){ return (b.punt-a.punt) || (a.f<b.f?1:(a.f>b.f?-1:0)); });
+  peds.slice(0,8).forEach(function(o){
+    var p=o.p, x=(p.productos||[])[0], tipo=(typeof ocTipoDe==='function') ? ocTipoDe(p.oc) : '';
+    out.push({ g:'Pedidos', ic:tipo==='ATC'?'🎧':(tipo==='RPT'?'🏪':'📄'), t:(p.cliente||'(sin nombre)')+(p.oc?(' · '+p.oc):''),
+      s:[p.fecha?fmtFecha(p.fecha):'sin fecha', p.turno?(p.turno==='PM'?'🌆':'🌅'):'', p.entregado?'✅':'', x?(((x.cant||1)>1?(x.cant+'× '):'')+(x.desc||'')+(x.medida?(' '+x.medida):'')):'', p.vendedor||''].filter(Boolean).join(' · '),
+      fn:(function(id){ return function(){ if(UNLOCKED && typeof showPedidoModal==='function') showPedidoModal(id); else showMisModal(id); }; })(p.id) });
+  });
+  // Productos del catálogo, con el saldo de siempre.
+  var prods=[];
+  Object.keys(CODIGOS).forEach(function(c){
+    var it=CODIGOS[c], hay=palNorm(c+' '+it.d+' '+it.m);
+    if(palabras.every(function(w){ return hay.indexOf(w)>=0; })) prods.push(c);
+  });
+  prods.slice(0,6).forEach(function(c){
+    var it=CODIGOS[c], s=c+(it.x?' · ya no se fabrica':'');
+    try{
+      if(typeof STOCK_CARGADO!=='undefined' && STOCK_CARGADO){
+        var k=stockInfo({ codigo:c, desc:it.d, medida:it.m }).k, v=saldoVeredicto(k, 1, '', '', true, c);
+        if(v && v.mano!=null) s+=' · hay '+v.mano+(v.moreno?(' + '+v.moreno+' en Moreno'):'')+' · '+(v.pend||0)+' vendidos sin entregar';
+      }
+    }catch(e){}
+    out.push({ g:'Productos', ic:'🛏️', t:it.d+(it.m?(' '+it.m):''), s:s, fn:function(){ palCopiar(c); } });
+  });
+  acc.slice(0,5).forEach(function(a){ out.push({ g:'Ir a', ic:a.ic, t:a.t, s:a.s, fn:a.fn }); });
+  return out;
+}
+function palCopiar(c){
+  var listo=function(){ toast('📋 Código '+c+' copiado','ok'); };
+  try{ navigator.clipboard.writeText(c).then(listo, function(){ toast('Código: '+c,'ok'); }); }catch(e){ toast('Código: '+c,'ok'); }
+}
+function palPintar(){
+  var box=document.getElementById('pal-res'); if(!box) return;
+  var q=(document.getElementById('pal-in')||{}).value||'';
+  PAL.res=palBuscar(q); if(PAL.sel>=PAL.res.length) PAL.sel=Math.max(0, PAL.res.length-1);
+  if(!PAL.res.length){ box.innerHTML='<div class="pal-vacio">No encontré nada con «'+esc(q)+'». Probá con el celular, el N° de nota o una parte del nombre.</div>'; return; }
+  var g='', h='';
+  PAL.res.forEach(function(r,i){
+    if(r.g!==g){ g=r.g; h+='<div class="pal-g">'+esc(g)+'</div>'; }
+    h+='<div class="pal-it'+(i===PAL.sel?' on':'')+'" role="option" aria-selected="'+(i===PAL.sel)+'" data-i="'+i+'"><span class="pal-ic">'+r.ic+'</span><span class="pal-tx"><b>'+esc(r.t)+'</b><small>'+esc(r.s||'')+'</small></span><span class="pal-ent">↵</span></div>';
+  });
+  box.innerHTML=h;
+  var on=box.querySelector('.pal-it.on'); if(on && on.scrollIntoView) try{ on.scrollIntoView({block:'nearest'}); }catch(e){}
+}
+function palAbrir(){
+  if(PAL.abierta){ var i0=document.getElementById('pal-in'); if(i0) i0.focus(); return; }
+  PAL.abierta=true; PAL.sel=0; PAL.previo=document.activeElement;
+  var ov=document.createElement('div'); ov.id='pal-ov'; ov.className='pal-ov';
+  ov.innerHTML='<div class="pal" role="dialog" aria-modal="true" aria-label="Buscar o ir a algo">'+
+    '<div class="pal-cab"><span aria-hidden="true">🔎</span><input id="pal-in" type="text" autocomplete="off" spellcheck="false" placeholder="Cliente, OC, nota, celular, producto o algo para hacer…" aria-label="Buscar"><button type="button" class="pal-x" onclick="palCerrar()" aria-label="Cerrar">Esc</button></div>'+
+    '<div class="pal-res" id="pal-res" role="listbox"></div>'+
+    '<div class="pal-pie"><span><b>↑ ↓</b> moverse</span><span><b>Enter</b> abrir</span><span><b>Esc</b> cerrar</span></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('abierta'); });
+  ov.addEventListener('mousedown', function(e){ if(e.target===ov) palCerrar(); });
+  var inp=document.getElementById('pal-in');
+  inp.addEventListener('input', function(){ PAL.sel=0; palPintar(); });
+  inp.addEventListener('keydown', function(e){
+    if(e.key==='ArrowDown'){ e.preventDefault(); PAL.sel=Math.min(PAL.res.length-1, PAL.sel+1); palPintar(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); PAL.sel=Math.max(0, PAL.sel-1); palPintar(); }
+    else if(e.key==='Enter'){ e.preventDefault(); palElegir(PAL.sel); }
+    else if(e.key==='Escape'){ e.preventDefault(); palCerrar(); }
+  });
+  document.getElementById('pal-res').addEventListener('click', function(e){ var it=e.target.closest('.pal-it'); if(it) palElegir(+it.getAttribute('data-i')); });
+  palPintar(); inp.focus();
+}
+function palCerrar(volver){
+  var ov=document.getElementById('pal-ov'); PAL.abierta=false;
+  if(ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  if(volver!==false && PAL.previo && PAL.previo.focus) try{ PAL.previo.focus(); }catch(e){}
+}
+function palElegir(i){
+  var r=PAL.res[i]; if(!r) return;
+  palCerrar(false);
+  try{ r.fn(); }catch(e){ toast('No se pudo abrir: '+(e&&e.message||e),'err'); }
+}
+document.addEventListener('keydown', function(e){
+  if((e.ctrlKey || e.metaKey) && !e.altKey && (e.key==='k' || e.key==='K')){ e.preventDefault(); if(PAL.abierta) palCerrar(); else palAbrir(); }
+});
 
 /* ✨ (§4iw) D2 · las fichas de números (`.mc`, `.sf-ficha`) se inclinan siguiendo el mouse o el dedo. Solo mira. */
 (function(){
@@ -27714,6 +28153,7 @@ function stockEntregadoFuturo(p,x){
   return !(p.productos||[]).some(function(y){ return y && y.eF; });
 }
 function entregaAdelantadaAnotar(p){
+  if(p && p.entregado && typeof sonidoPanel==='function') sonidoPanel('ding');   // 🔔 (§4ni, 16) todo ✅ a mano pasa por acá
   if(!p || !p.entregado || !p.fecha || p.fecha<=todayStr()) return;
   var hoy=todayStr();
   (p.productos||[]).forEach(function(x){ if(x && !x.eF) x.eF=hoy; });
@@ -37696,7 +38136,7 @@ function cierreEntDia(id, v){
 /* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
    que no entregan lo reprograman». La marca «no salió» (`eX`) que pedía Codex (R2) se hizo y se sacó el mismo día. */
 function cierreEntMarcar(p, quien, dia, ts){
-  p.entregado=true; atcAlMarcarEntregado(p);
+  p.entregado=true; atcAlMarcarEntregado(p); if(typeof sonidoPanel==='function') sonidoPanel('ding');   // 🔔 (§4ni) una vez aunque sean muchos
   (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); } });
 }
 var CIERRE_ENT_EN_CURSO=false, CIERRE_ENT_ULT=null, LS_CIERRE_PEND='me_cierre_pend';
