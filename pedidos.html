@@ -45868,7 +45868,7 @@ var ASIS_LS_VISTOS='me_asis_vistos', ASIS_LS_MUDO='me_asis_mudo';
    de traje según quién usa el panel») Bloki reemplaza la figura 3D de Eduardo (`asistente/eduardo-*.webp` quedan en el repo, sin usar).
    Es un SVG armado acá (`blokiSvg`), sin archivos: cinco trajes —Bloki (el de todos y Administración), Vendedor (gorra y tablita),
    Logística (casco, chaleco y camión), Contabilidad (anteojos, lápiz y calculadora) y Anuncio (megáfono, gritando)—. El traje lo decide
-   `blokiTraje()`: quién eligió ser en «¿Quién está usando el panel?» y, si nadie eligió, la pestaña; mientras el globo del anuncio está a
+   `blokiTraje()`: la pestaña, para todos (27/10), y en ATC/Bot/Chofer quién eligió ser en «¿Quién está usando el panel?»; mientras el globo del anuncio está a
    la vista, el del megáfono. `blokiPoner()` cambia la figura sin rearmar nada. ⚠️ El nombre «Eduardo» sigue siendo el del dueño (el
    vendedor, «La fábrica de Eduardo», «preguntale a Eduardo por WhatsApp») y el de la ciudad: solo el ASISTENTE pasó a llamarse Bloki. */
 /* 🧽 BLOKI: el bloque de espuma con la franja turquesa del colchón (dibujo del dueño, 15/10). Un SVG por traje. */
@@ -45973,15 +45973,19 @@ var BLOKI_SRC={};
 function blokiSrc(traje){ traje=BLOKI_TRAJES[traje] ? traje : 'bloki'; return BLOKI_SRC[traje] || (BLOKI_SRC[traje]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(blokiSvg(traje))); }
 function blokiTraje(){
   if(ASIS.anuncioFig) return 'anuncio';
+  /* 🧽 SEGÚN LA PESTAÑA, PARA TODOS (27/10 a la noche; el dueño cambió de pestaña con su nombre elegido y Bloki seguía igual, y eligió
+     «Según pestaña, todos»): Nuevo pedido y Mis pedidos → vendedor, Contabilidad → contador, Administración → logística (casco). Antes
+     solo cambiaba con «Administración» elegida (o nadie); con un nombre, Logística o Contabilidad quedaba fijo. */
+  var v=asisVista();
+  if(v==='form' || v==='mis') return 'vendedor';
+  if(v==='conta') return 'conta';
+  if(v==='admin') return 'logistica';
+  /* En las pestañas sin traje propio (ATC, Bot, Chofer), el de quien eligió ser («¿Quién está usando el panel?»). */
   var rol=''; try{ rol=quienRol(); }catch(e){}
   if(rol==='logistica') return 'logistica';
   if(rol==='conta') return 'conta';
-  /* 🧽 (27/10, dueño: «Sí, según la pestaña») Administración se viste según la pestaña: el pedido y Mis pedidos de
-     vendedor, Contabilidad de contador y Administración de logística (casco). Lo demás, Bloki a secas. */
-  var v=asisVista();
-  if(rol==='admin') return v==='conta' ? 'conta' : ((v==='form' || v==='mis') ? 'vendedor' : (v==='admin' ? 'logistica' : 'bloki'));
-  if(asisVendedor()) return 'vendedor';
-  return v==='conta' ? 'conta' : ((v==='form' || v==='mis') ? 'vendedor' : 'bloki');
+  if(rol!=='admin' && asisVendedor()) return 'vendedor';
+  return 'bloki';
 }
 function blokiPoner(){
   var t=blokiTraje(), img=document.querySelector('#asis-yo img');
