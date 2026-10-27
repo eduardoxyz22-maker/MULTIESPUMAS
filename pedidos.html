@@ -1056,6 +1056,27 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-n{text-align:right;white-space:nowrap;order:2}
 .pry-mom{order:1;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:1px;flex:none}
 .pry-mom-l{width:110px;height:30px;display:block}
+/* 📊 MoM B (§4nj): la fila se toca y abre su tablita */
+.pry-fila.pry-toca{cursor:pointer;flex-wrap:wrap;border-radius:8px;transition:background .15s}
+.pry-fila.pry-toca:hover{background:#f7fbfb}
+.pry-fila.pry-toca:focus-visible{outline:3px solid var(--teal);outline-offset:-3px}
+.pry-mom-ab{font-size:.66rem;font-weight:800;color:var(--teal-dk);white-space:nowrap;margin-top:1px}
+.pry-mom-det{order:3;flex-basis:100%;min-width:0;display:grid;grid-template-columns:minmax(0,640px) auto;justify-content:space-between;gap:14px;align-items:center;cursor:default;
+  background:#fbfdfd;border:1px solid #e3eeee;border-radius:12px;padding:10px 12px;margin:2px 0 4px}
+.pmd-tw{min-width:0;overflow-x:auto}
+.pmd-t{width:100%;border-collapse:collapse;font-size:.82rem;font-variant-numeric:tabular-nums}
+.pmd-t th{background:transparent;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800;text-align:right;padding:4px 8px;border-bottom:1px solid var(--gray-md);white-space:nowrap}   /* fondo propio: el thead general es negro */
+.pmd-co{display:none}
+.pmd-t td{padding:6px 8px;text-align:right;border-bottom:1px solid #f0f2f2;white-space:nowrap}
+.pmd-t th:first-child,.pmd-t td:first-child{text-align:left}
+.pmd-t tr:last-child td{border-bottom:0}
+.pmd-t td.pmd-dif,.pmd-t td.pmd-p{font-weight:800}
+.pmd-t .up{color:#15803d} .pmd-t .down{color:#b91c1c}
+.pmd-ent{font-size:.74rem;color:var(--muted);margin:6px 8px 0}
+.pmd-g{display:flex;flex-direction:column;align-items:center;gap:2px}
+.pmd-l{width:180px;height:56px;display:block}
+.pmd-g small{font-size:.68rem;color:var(--muted)}
+@media(max-width:600px){ .pry-mom-det{grid-template-columns:minmax(0,1fr)} .pmd-l{width:100%} .pmd-t .pmd-dif{display:none} .pmd-t td,.pmd-t th{padding:5px 3px} .pmd-t th{white-space:normal;vertical-align:bottom} .pmd-t{font-size:.74rem} .pry-mom-det{padding:8px} .pmd-lg{display:none} .pmd-co{display:inline} }
 .pry-mom small{margin:0 !important;font-size:.7rem !important;font-weight:800 !important;white-space:nowrap}
 @media(max-width:600px){ .pry-mom-l{width:64px;height:22px} }
 .pry-p{color:#6d28d9 !important;font-weight:700 !important}
@@ -10065,21 +10086,25 @@ function pryPatron(V, ym, g, hist, hoy){
    y "Tu mes" en cada línea»). Al lado de cada vendedor: una línea con lo vendido del mes, día por día de carga, contra el mes con el que
    se compara («Comparar con» de «A esta altura», por defecto el anterior), y el % arriba o abajo A LA MISMA ALTURA (mismo día y hora,
    la cuenta de siempre: `pryCargadaAl`). Las mismas ventas que la fila (`pryVentas`: el mes por la entrega agendada). Solo mira. */
-function pryMomSerie(xs, ym, hasta){
+function pryMomSerie(xs, ym, hasta, k){
   var fin=+pryFinDeMes(ym).slice(8,10), n=Math.min(fin, hasta||fin), out=[];
-  for(var d=1; d<=n; d++){ var lim=ym+'-'+(d<10?'0':'')+d, t=0; xs.forEach(function(x){ if(x.ym===ym && x.reg<=lim) t+=x.bs; }); out.push(t); }
+  for(var d=1; d<=n; d++){ var lim=ym+'-'+(d<10?'0':'')+d, t=0; xs.forEach(function(x){ if(x.ym===ym && x.reg<=lim) t+=(k ? (Number(x[k])||0) : x.bs); }); out.push(t); }
   return { v:out, fin:fin };
 }
 function pryMomDe(R, A, r){
   if(!A || !A.cmp || !R.V) return null;
   var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), xs=R.V.filter(function(x){ return x.vk===vk; });
   var dia=A.curso ? A.dia : 0, lim=dia ? (A.cmp+'-'+(Math.min(dia, +pryFinDeMes(A.cmp).slice(8,10))<10?'0':'')+Math.min(dia, +pryFinDeMes(A.cmp).slice(8,10))) : '';
-  var act=0, ant=0;
+  var act=0, ant=0, T=function(){ return { n:0, u:0, bs:0 }; }, ac=T(), an=T(), en=T();
+  var suma=function(o, x){ o.n++; o.u+=Number(x.u)||0; o.bs+=x.bs; };
   xs.forEach(function(x){
-    if(x.ym===R.ym) act+=x.bs;
-    if(x.ym===A.cmp && (!lim || A.enteroAntes || pryCargadaAl(x, lim, A.min))) ant+=x.bs;
+    if(x.ym===R.ym){ act+=x.bs; suma(ac, x); }
+    if(x.ym===A.cmp){ suma(en, x); if(!lim || A.enteroAntes || pryCargadaAl(x, lim, A.min)){ ant+=x.bs; suma(an, x); } }
   });
-  return { act:act, ant:ant, cur:pryMomSerie(xs, R.ym, dia||0), prev:pryMomSerie(xs, A.cmp, 0) };
+  /* 📊 (§4nj, MoM B) además de los Bs: ventas (cuántas) y unidades (`pryVentas` → `x.u`, la misma cuenta de la fila), de los dos meses y del
+     mes de comparación ENTERO; y la línea de unidades día por día. */
+  return { act:act, ant:ant, cur:pryMomSerie(xs, R.ym, dia||0), prev:pryMomSerie(xs, A.cmp, 0),
+           tres:{ act:ac, ant:an, ent:en }, curU:pryMomSerie(xs, R.ym, dia||0, 'u'), prevU:pryMomSerie(xs, A.cmp, 0, 'u') };
 }
 function pryMomHtml(R, A, r){
   var M=pryMomDe(R, A, r); if(!M || !(M.act>0.009 || M.ant>0.009)) return '';
@@ -10096,6 +10121,48 @@ function pryMomHtml(R, A, r){
   return '<div class="pry-mom" title="'+esc((A.curso?'A esta altura (día '+A.dia+(A.hora?(', '+A.hora):'')+')':'El mes entero')+': '+fmtBs0(M.act)+' contra '+fmtBs0(M.ant)+' de '+mesNombre(A.cmp))+'">'+svg+
          '<small style="color:'+(p==null?'var(--muted)':col)+'">'+esc(txt)+'</small></div>';
 }
+/* 📊 MoM B (§4nj, 27/10; dueño: «falta el mom en unidades y monto… cómo sé cuánto vendió el mes pasado vs lo de ahora… en ventas, unidades
+   y Bs», y de las muestras eligió la B: «tocar y se abre»). Tocar un vendedor en Proyección abre, debajo de su fila, una tablita: el mes de
+   comparación A ESTA ALTURA (o entero, si el mes ya cerró o era más corto), este mes, la diferencia y el % en ventas, unidades y Bs, con
+   el mes de comparación entero abajo y la línea de unidades día por día. Las cuentas son las de `pryMomDe` (las del % de la fila). Lo
+   abierto se recuerda mientras dura la visita (`PRY_MOM_ABIERTO`). Solo mira. */
+var PRY_MOM_ABIERTO={}, PRY_MOM_CTX=null;
+function pryMomPct(a, b){ if(!(b>0.009)) return a>0.009 ? null : 0; return Math.round((a/b-1)*100); }
+function pryMomDetHtml(R, A, r){
+  var M=pryMomDe(R, A, r); if(!M || !M.tres) return '';
+  var t=M.tres, cm=pryMesCorto(A.cmp), alt=!!(A.curso && !A.enteroAntes);
+  var colAnt=alt ? (cm+' al '+A.dia+(A.hora ? (', '+A.hora) : '')) : (cm+' entero'), colAct=pryMesCorto(R.ym)+(A.curso ? (' al '+A.dia) : '');
+  var corto=function(m, resto){ return m.slice(0,3)+'.'+resto; };   // en el celular: «sep. al 23», «oct. al 23»
+  var thAnt='<span class="pmd-lg">'+esc(colAnt)+'</span><span class="pmd-co">'+esc(corto(cm, alt ? (' al '+A.dia) : ' entero'))+'</span>';
+  var thAct='<span class="pmd-lg">'+esc(colAct)+'</span><span class="pmd-co">'+esc(corto(pryMesCorto(R.ym), A.curso ? (' al '+A.dia) : ''))+'</span>';
+  var cel=function(k, v){ return k==='bs' ? fmtBs0(v) : String(v); };
+  var fila=function(k, nom){ var a=t.act[k], b=t.ant[k], p=pryMomPct(a, b), cl=(p==null || p>0) ? 'up' : (p<0 ? 'down' : '');
+    var d=a-b, dt=(d>0 ? '+' : (d<0 ? '−' : ''))+(k==='bs' ? Math.abs(Math.round(d)).toLocaleString('es-BO') : Math.abs(d));
+    return '<tr><td>'+nom+'</td><td>'+cel(k, b)+'</td><td><b>'+cel(k, a)+'</b></td><td class="pmd-dif '+cl+'">'+dt+'</td><td class="pmd-p '+cl+'">'+
+           (p==null ? 'nuevo' : ((p>0 ? '▲ ' : (p<0 ? '▼ ' : '= '))+Math.abs(p)+'%'))+'</td></tr>'; };
+  var W=180, H=56, cu=M.curU.v, pu=M.prevU.v, dias=Math.max(M.curU.fin, M.prevU.fin), max=Math.max(1, cu[cu.length-1]||0, pu[pu.length-1]||0)*1.08;
+  var pts=function(a){ return a.map(function(v,i){ return ((dias>1 ? i/(dias-1) : 0)*W).toFixed(1)+','+(H-2-v/max*(H-6)).toFixed(1); }).join(' '); };
+  var pU=pryMomPct(t.act.u, t.ant.u), col=(pU==null || pU>=0) ? '#15803d' : '#b91c1c';
+  var svg='<svg class="pmd-l" viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><polyline points="'+pts(pu)+'" fill="none" stroke="#b4c2c1" stroke-width="1.5" stroke-dasharray="3 2"/>'+
+          (cu.length ? '<polyline points="'+pts(cu)+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' : '')+'</svg>';
+  var e=t.ent, ent=alt ? ('<div class="pmd-ent">'+esc(cm.charAt(0).toUpperCase()+cm.slice(1))+' entero: '+e.n+' venta'+(e.n===1?'':'s')+' · '+e.u+' unidad'+(e.u===1?'':'es')+' · '+fmtBs0(e.bs)+'</div>') : '';
+  return '<div class="pry-mom-det" onclick="event.stopPropagation()"><div class="pmd-tw"><table class="pmd-t"><thead><tr><th></th><th>'+thAnt+'</th><th>'+thAct+'</th><th class="pmd-dif">Diferencia</th><th>%</th></tr></thead>'+
+         '<tbody>'+fila('n','Ventas')+fila('u','Unidades')+fila('bs','Bs')+'</tbody></table>'+ent+'</div>'+
+         '<div class="pmd-g">'+svg+'<small>unidades, día por día (punteado: '+esc(cm)+')</small></div></div>';
+}
+function pryMomTocar(el){
+  if(!el || !PRY_MOM_CTX) return;
+  var vk=el.getAttribute('data-vk'), r=PRY_MOM_CTX.filas[vk]; if(!r) return;
+  var ab=!PRY_MOM_ABIERTO[vk]; PRY_MOM_ABIERTO[vk]=ab;
+  var viejo=el.querySelector('.pry-mom-det'); if(viejo) viejo.remove();
+  if(ab){ var h=''; try{ h=pryMomDetHtml(PRY_MOM_CTX.R, PRY_MOM_CTX.A, r); }catch(e){} if(h) el.insertAdjacentHTML('beforeend', h); }
+  el.classList.toggle('pry-abre', ab); el.setAttribute('aria-expanded', ab ? 'true' : 'false');
+  var ch=el.querySelector('.pry-mom-ab'); if(ch) ch.textContent=ab ? '▾ cerrar' : 'ventas · unidades ▸';
+}
+document.addEventListener('click', function(e){
+  var f=e.target && e.target.closest ? e.target.closest('#pry-vendedores .pry-fila.pry-toca') : null;
+  if(f && !(e.target.closest('a, button, select, input'))) pryMomTocar(f);
+});
 function renderProyeccion(){
   var box=document.getElementById('pry-metrics'); if(!box) return;
   if(!UNLOCKED){ segSet('cta-tab','ventas'); setContaTab('ventas'); return; }
@@ -10154,14 +10221,20 @@ function renderProyeccion(){
 
   /* Una lista y no una tabla: en el celular una tabla de cuatro columnas escondía la proyección detrás del scroll. */
   var _A=null; try{ _A=pryAltura(R); }catch(e){}
+  PRY_MOM_CTX={ R:R, A:_A, filas:{} };                // 📊 (§4nj) para abrir la tablita de un vendedor sin rearmar todo
   var filaHtml=function(r){
     var det=[nV(r.n), nU(r.u)];
     if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
     if(R.estado==='curso' && r.b>0.009) det.push('agendado '+fmtBs(r.b));
     if(r.sinMonto) det.push(r.sinMonto+' sin monto');
-    return '<div class="pry-fila"><div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
+    var mom=''; try{ mom=pryMomHtml(R, _A, r); }catch(e){}
+    /* 📊 (§4nj) con MoM, la fila se toca y abre la tablita de ventas, unidades y Bs */
+    var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), ab=!!(mom && PRY_MOM_ABIERTO[vk]), det2='';
+    if(mom){ PRY_MOM_CTX.filas[vk]=r; if(ab){ try{ det2=pryMomDetHtml(R, _A, r); }catch(e){} } }
+    return '<div class="pry-fila'+(mom ? ' pry-toca' : '')+(ab ? ' pry-abre' : '')+'"'+(mom ? (' data-vk="'+esc(vk)+'" role="button" tabindex="0" aria-expanded="'+ab+'" title="Tocá para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs"') : '')+'>'+
+           '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
-           (function(){ try{ return pryMomHtml(R, _A, r); }catch(e){ return ''; } })()+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
+           (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+(ab ? '▾ cerrar' : 'ventas · unidades ▸')+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
   };
   /* Abajo de cada grupo, con qué se proyectó y la cuenta entera (§4gu), para que se pueda seguir con la calculadora. */
   var metodoPie=function(k, nombre, g){
@@ -10214,7 +10287,8 @@ function renderProyeccion(){
   var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n)+' · '+nU(E.u))+'</small></div>'+
             '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
   document.getElementById('pry-vendedores').innerHTML='<div class="cua-box"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
-    (conProy ? '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).</div>' : '')+
+    (conProy ? '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).'+
+      ((_A && _A.cmp) ? (' Tocá un vendedor para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs.') : '')+'</div>' : '')+
     (E.n || R.mayor.filas.length
       ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m, m.g.k); }).join('')+
         grupo('⚠️','Sin marca','var(--amber)', R.sinMarca, 'sin')+total+

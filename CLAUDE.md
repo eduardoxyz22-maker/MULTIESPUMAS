@@ -2307,6 +2307,12 @@ correo + el mensaje de **WhatsApp**.
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
 
+## 📊 MoM B en Proyección (§4nj, 27/10; EN LA RAMA, espera «publica»; dueño: «falta el mom en unidades y monto», eligió la B)
+Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades
+y Bs, el mes de comparación entero y la línea de unidades. `pryMomDe` → `tres:{act,ant,ent}` con `{n,u,bs}` + `curU/prevU`; `pryMomTocar`
+inserta `pryMomDetHtml` sin repintar (`PRY_MOM_CTX`, `PRY_MOM_ABIERTO`). ⚠️ El texto de la fila no cambia salvo «ventas · unidades ▸» al final
+(lo leen `test_proyeccion` y `test_mejoras_3_10_11`). `tests/test_mom_b.js` (14). La C pulida de «arriba del pedido» espera el OK del dueño.
+
 ## 🧹 Seguimiento del dashboard sin tareas en Kommo (§4nf, 27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; PUBLICADO 27/10, `c0f4dc0`)
 En «Seguimiento», ✓ y 🕐 solo marcan la ficha en el panel (por aparato); ya no crean tareas en Kommo, y se fueron 📝 nota, «Acción masiva» y
 «Copia para mí» (todo eso iba por el Worker de Cloudflare con su propia copia del token de Kommo). En Cloudflare queda solo el botón

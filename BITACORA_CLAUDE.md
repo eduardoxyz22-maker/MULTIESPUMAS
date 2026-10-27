@@ -16587,6 +16587,26 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   Año Nuevo) · 16 sonidos suaves (apagables).
 - Espera que el dueño elija por número. Nada cambia cuentas, cupos ni la planilla; lo de 4 y 7 usa los caminos de siempre (`reproAplicar`, `guardarDurable`).
 
+### §4nj — 📊 MoM B EN PROYECCIÓN + 🎨 «ARRIBA DEL PEDIDO» (27/10 a la noche)
+- El dueño, con captura de «Por vendedor»: *«falta el mom en unidades y monto… cómo sé cuánto vendió el mes pasado vs lo de ahora para comparar en
+  ventas, unidades y Bs? arma tb opciones»*. Muestras (https://claude.ai/artifact/T12SxuaooyJFdnU7uf7Wew, números de ejemplo): A tres flechas en
+  la fila, B tocar y se abre, C elegir qué comparar, D tabla del equipo. **Eligió la B.** EN LA RAMA, espera «publica».
+  · `pryMomDe` ahora también devuelve `tres` = `{act, ant, ent}` con `{n, u, bs}` (ventas = cuántas, unidades = `x.u` de `pryVentas`, la misma
+    cuenta de la fila; `ent` = el mes de comparación ENTERO) y `curU`/`prevU` (`pryMomSerie(…, 'u')`). `act`/`ant`/`cur`/`prev` siguen igual.
+  · La fila con MoM es `.pry-toca` (role=button, `data-vk`, `aria-expanded`); tocarla (o Enter) llama a `pryMomTocar`: inserta/saca
+    `pryMomDetHtml` debajo SIN repintar Proyección (`PRY_MOM_CTX` = R, A y las filas del último dibujo). Lo abierto se recuerda en la visita
+    (`PRY_MOM_ABIERTO`) y sobrevive a `renderProyeccion`. La tablita: el mes de comparación a esta altura (o entero si cerró o era más corto,
+    `A.enteroAntes`), este mes, la diferencia y el %, en ventas, unidades y Bs; abajo «Septiembre entero: …» y la línea de unidades.
+  · ⚠️ El texto de la fila sigue igual (lo leen `test_proyeccion` y la 11): «ventas · unidades ▸» va al final, dentro de `.pry-mom`.
+    ⚠️ El `thead th` general es negro: `.pmd-t th` lleva su fondo. En ≤600 px: sin «Diferencia» y «sep. al 23» (`.pmd-co`).
+  · `tests/test_mom_b.js` (14).
+- **«Arriba del pedido»** (dueño, con captura de la conexión + cupos + los dos botones de ayuda: *«esta webada hay que modernizar»*): muestras A
+  (barra con dos fichas), B (anillos), C (encabezado del formulario) → eligió la **C**, *«no veo el botón ver pedidos… pulir un poco más»*. **C
+  pulida** en el mismo enlace (https://claude.ai/artifact/7prRs1T57do1whLrx6RKcx): encabezado turquesa con «Nuevo pedido», «En línea» que
+  late, Guía y Novedades (punto rosa); cada turno una tarjeta con los libres en grande, barrita y «👀 Ver los N pedidos» SIEMPRE; el turno del
+  pedido en blanco («Tu turno» / «¡Quedan pocos!» / «Lleno»); aviso de una línea solo cuando hace falta; feriado reemplaza las tarjetas; sábado
+  apaga la tarde. Espera su OK para pasarla al panel (`#conn-form`, `#cupo-form` y los dos enlaces de ayuda del formulario).
+
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
 - **Temas (14, 15 y noviembre)**: el script del `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia: octubre
