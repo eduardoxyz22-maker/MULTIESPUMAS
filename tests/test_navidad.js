@@ -3,7 +3,7 @@
    Lo que cuida esta prueba:
    1. El panel de pedidos: el encabezado de pino, la guirnalda de luces (dos tiras que titilan alternadas), el 🎄 al lado de MULTIESPUMAS,
       la estrella, el trineo, la nieve en la ruta y la pestaña elegida en verde; solo en diciembre.
-   2. Los bordes del mes en hora de Bolivia; octubre sigue con Halloween y noviembre sin nada.
+   2. Los bordes del mes en hora de Bolivia; octubre sigue con Halloween, noviembre es Todos Santos y el 31/12 Año Nuevo (§4ni).
    3. Bloki con gorro de Papá Noel en diciembre (y sin gorro el resto del año); el de logística y el de vendedor siguen con su gorra.
    4. El dashboard de ventas: la caja de la marca de pino con el 🎄 y el ítem elegido en verde.
    5. La guirnalda no tapa el nombre del panel; sin errores.
@@ -43,6 +43,7 @@ function armarDashboard(){
     const r = await page.evaluate(() => {
       var h=document.querySelector('.header'), b=getComputedStyle(h,'::before'), a=getComputedStyle(h,'::after');
       return { nav: document.documentElement.classList.contains('tema-navidad'), hw: document.documentElement.classList.contains('tema-halloween'),
+        ts: document.documentElement.classList.contains('tema-todos-santos'), anio: document.documentElement.classList.contains('tema-anio-nuevo'),
         arbol: getComputedStyle(document.querySelector('.logo-h'), '::before').content,
         fondo: getComputedStyle(h).backgroundImage,
         luzA: b.backgroundImage.slice(0,26), luzB: a.backgroundImage.slice(0,26), anA: b.animationName, anB: a.animationName, delB: a.animationDelay,
@@ -72,14 +73,17 @@ function armarDashboard(){
   chk('2 · se prende el 1/12 a las 00:00 de Bolivia', r.nav, r.nav);
   r = await pedidos('2026-12-01T03:59:00Z');   // 30/11 23:59 en Bolivia
   chk('2 · el 30/11 a las 23:59 de Bolivia (03:59 UTC del 1/12) todavía no', !r.nav && !r.hw, r);
+  r = await pedidos('2026-12-31T03:59:00Z');   // 30/12 23:59 en Bolivia
+  chk('2 · el 30/12 a las 23:59 de Bolivia sigue', r.nav, r.nav);
+  /* 🎆 (27/10, §4ni) Desde el 31/12 es Año Nuevo (el dueño eligió los temas del año: «Año Nuevo, del 31/12 al 2/1»). */
   r = await pedidos('2027-01-01T03:59:00Z');   // 31/12 23:59 en Bolivia
-  chk('2 · el 31/12 a las 23:59 de Bolivia sigue', r.nav, r.nav);
+  chk('2 · el 31/12 ya es Año Nuevo (§4ni), sin Navidad', !r.nav && r.anio, r);
   r = await pedidos('2027-01-01T04:00:30Z');   // 1/1 00:00 en Bolivia
   chk('2 · el 1/1 a las 00:00 de Bolivia se apaga solo', !r.nav, r.nav);
   r = await pedidos('2026-10-20T10:00:00-04:00');
   chk('2 · en octubre sigue Halloween, sin Navidad', r.hw && !r.nav && !/🎄/.test(r.arbol), r);
   r = await pedidos('2026-11-15T10:00:00-04:00');
-  chk('2 · en noviembre, ninguno de los dos', !r.hw && !r.nav && r.estrella==='none', r);
+  chk('2 · en noviembre, ninguno de los dos: es Todos Santos (§4ni), sin la estrella', !r.hw && !r.nav && r.ts && r.estrella==='none', r);
 
   console.log('\n── 3. Bloki con gorro de Papá Noel ──');
   let page = await abrir(PEDIDOS, '2026-12-10T10:00:00-04:00');

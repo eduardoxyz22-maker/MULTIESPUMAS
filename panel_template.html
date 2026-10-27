@@ -1351,15 +1351,66 @@ html.tema-navidad .rail .brand::after{ content:''; position:absolute; left:0; ri
 html.tema-navidad .rail .ni.active{ background:linear-gradient(180deg,#15803d,#14532d); color:#fff; box-shadow:0 8px 22px rgba(20,83,45,.34), inset 0 1px 0 rgba(255,255,255,.25); }
 html.tema-navidad .rail .ni.active::before{ background:#facc15; box-shadow:0 0 10px rgba(250,204,21,.65); }
 @media(prefers-reduced-motion:reduce){ html.tema-navidad .rail .brand::after{ animation:none; } }
+/* 🌼🎭💐🇧🇴💚🎆 Los temas del año (§4ni): como Halloween y Navidad, solo la caja de la marca y el ítem elegido del menú. */
+html.tema-todos-santos .rail .brand, html.tema-carnaval .rail .brand, html.tema-madre .rail .brand, html.tema-patria .rail .brand,
+html.tema-santa-cruz .rail .brand, html.tema-anio-nuevo .rail .brand{ position:relative; overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.2); }
+html.tema-todos-santos .rail .brand{ background:linear-gradient(135deg,#1e0a35,#4a1060 45%,#7a1858 72%,#c2410c); }
+html.tema-carnaval .rail .brand{ background:linear-gradient(135deg,#6d28d9,#db2777 45%,#ea580c 72%,#0d9488); }
+html.tema-madre .rail .brand{ background:linear-gradient(135deg,#9d174d,#db2777 50%,#ec4899); }
+html.tema-patria .rail .brand{ background:linear-gradient(135deg,#7f1d1d,#b91c1c 40%,#b45309 65%,#15803d); }
+html.tema-santa-cruz .rail .brand{ background:linear-gradient(135deg,#064e3b,#047857 50%,#15803d); }
+html.tema-anio-nuevo .rail .brand{ background:linear-gradient(135deg,#0b1d3a,#1e3a8a 50%,#312e81); }
+html.tema-todos-santos .rail .brand img.logo-img, html.tema-carnaval .rail .brand img.logo-img, html.tema-madre .rail .brand img.logo-img,
+html.tema-patria .rail .brand img.logo-img, html.tema-santa-cruz .rail .brand img.logo-img, html.tema-anio-nuevo .rail .brand img.logo-img{ filter:brightness(0) invert(1) drop-shadow(0 1px 4px rgba(0,0,0,.55)); opacity:1; }
+html.tema-todos-santos .rail .brand .s, html.tema-carnaval .rail .brand .s, html.tema-madre .rail .brand .s, html.tema-patria .rail .brand .s,
+html.tema-santa-cruz .rail .brand .s, html.tema-anio-nuevo .rail .brand .s{ color:#fde68a; padding-left:26px; }
+html.tema-todos-santos .rail .brand::before, html.tema-carnaval .rail .brand::before, html.tema-madre .rail .brand::before, html.tema-patria .rail .brand::before,
+html.tema-santa-cruz .rail .brand::before, html.tema-anio-nuevo .rail .brand::before{ content:''; position:absolute; left:14px; bottom:10px; width:1.15rem; height:1.15rem; font-size:1.1rem; line-height:1; pointer-events:none; background:center/contain no-repeat; }
+html.tema-todos-santos .rail .brand::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3C9 3 4.5 7.6 4.5 14c0 4 1.8 6.6 4.5 8v4.2c0 1.2 1 2.1 2.2 2.1h9.6c1.2 0 2.2-.9 2.2-2.1V22c2.7-1.4 4.5-4 4.5-8C27.5 7.6 23 3 16 3z%22 fill=%22%23fff7ed%22/%3E%3Ccircle cx=%2211.2%22 cy=%2214.2%22 r=%223.6%22 fill=%22%23f97316%22/%3E%3Ccircle cx=%2220.8%22 cy=%2214.2%22 r=%223.6%22 fill=%22%23ec4899%22/%3E%3Ccircle cx=%2211.2%22 cy=%2214.2%22 r=%221.4%22 fill=%22%233b0764%22/%3E%3Ccircle cx=%2220.8%22 cy=%2214.2%22 r=%221.4%22 fill=%22%233b0764%22/%3E%3Cpath d=%22M16 17.6l-1.6 2.6h3.2z%22 fill=%22%237c3aed%22/%3E%3Cpath d=%22M12 24.5v2.6M14.7 24.5v2.6M17.3 24.5v2.6M20 24.5v2.6%22 stroke=%22%233b0764%22 stroke-width=%221.1%22/%3E%3Cpath d=%22M13 5.4c1-.9 2-1.2 3-1.2s2 .3 3 1.2%22 stroke=%22%2316a34a%22 stroke-width=%221.4%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%229.2%22 r=%221.3%22 fill=%22%2322c55e%22/%3E%3C/svg%3E"); }
+html.tema-carnaval .rail .brand::before{ content:'🎭'; }
+html.tema-madre .rail .brand::before{ content:'💐'; }
+html.tema-patria .rail .brand::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 30 20%22%3E%3Crect width=%2230%22 height=%2220%22 rx=%222.5%22 fill=%22%23fff%22/%3E%3Crect y=%220.00%22 width=%2230%22 height=%226.72%22 fill=%22%23D52B1E%22/%3E%3Crect y=%226.67%22 width=%2230%22 height=%226.72%22 fill=%22%23F9E300%22/%3E%3Crect y=%2213.33%22 width=%2230%22 height=%226.72%22 fill=%22%23007934%22/%3E%3Crect x=%22.5%22 y=%22.5%22 width=%2229%22 height=%2219%22 rx=%222.2%22 fill=%22none%22 stroke=%22rgba(0,0,0,.25)%22/%3E%3C/svg%3E"); height:.8rem; bottom:12px; }
+html.tema-santa-cruz .rail .brand::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 30 20%22%3E%3Crect width=%2230%22 height=%2220%22 rx=%222.5%22 fill=%22%23fff%22/%3E%3Crect y=%220.00%22 width=%2230%22 height=%226.72%22 fill=%22%23009A3E%22/%3E%3Crect y=%226.67%22 width=%2230%22 height=%226.72%22 fill=%22%23ffffff%22/%3E%3Crect y=%2213.33%22 width=%2230%22 height=%226.72%22 fill=%22%23009A3E%22/%3E%3Crect x=%22.5%22 y=%22.5%22 width=%2229%22 height=%2219%22 rx=%222.2%22 fill=%22none%22 stroke=%22rgba(0,0,0,.25)%22/%3E%3C/svg%3E"); height:.8rem; bottom:12px; }
+html.tema-anio-nuevo .rail .brand::before{ content:'🎆'; }
+html.tema-todos-santos .rail .brand::after, html.tema-patria .rail .brand::after, html.tema-santa-cruz .rail .brand::after{ content:''; position:absolute; left:0; right:0; top:0; height:20px; pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22192%22 height=%2228%22 viewBox=%220 0 192 28%22%3E%3Cpath d=%22M0 2.2Q96.0 5.4 192 2.2%22 fill=%22none%22 stroke=%22%23fde68a%22 stroke-width=%221%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%23ec4899%22 fill-opacity=%22.95%22 d=%22M3 3.8H45V22.8L39.0 25.8L33.0 22.8L27.0 25.8L21.0 22.8L15.0 25.8L9.0 22.8L3.0 25.8ZM21.8 12.8a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM27.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM25.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM20.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM17.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM20.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM25.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM9 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM39 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM7 19.8h34v1h-34Z%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%23f97316%22 fill-opacity=%22.95%22 d=%22M51 4.7H93V23.7L87.0 26.7L81.0 23.7L75.0 26.7L69.0 23.7L63.0 26.7L57.0 23.7L51.0 26.7ZM69.8 13.7a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM75.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM73.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM68.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM65.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM68.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM73.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM57 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM87 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM55 20.7h34v1h-34Z%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%2322c55e%22 fill-opacity=%22.95%22 d=%22M99 4.7H141V23.7L135.0 26.7L129.0 23.7L123.0 26.7L117.0 23.7L111.0 26.7L105.0 23.7L99.0 26.7ZM117.8 13.7a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM123.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM121.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM116.0 18.0a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM113.5 13.7a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM116.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM121.0 9.3a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM105 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM135 8.2l2.2 2.2-2.2 2.2-2.2-2.2ZM103 20.7h34v1h-34Z%22/%3E%3Cpath fill-rule=%22evenodd%22 fill=%22%23a855f7%22 fill-opacity=%22.95%22 d=%22M147 3.8H189V22.8L183.0 25.8L177.0 22.8L171.0 25.8L165.0 22.8L159.0 25.8L153.0 22.8L147.0 25.8ZM165.8 12.8a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0ZM171.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM169.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM164.0 17.1a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM161.5 12.8a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM164.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM169.0 8.5a1.5 1.5 0 1 0 3.0 0a1.5 1.5 0 1 0 -3.0 0ZM153 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM183 7.3l2.2 2.2-2.2 2.2-2.2-2.2ZM151 19.8h34v1h-34Z%22/%3E%3C/svg%3E") repeat-x 0 0/137px 20px; }
+html.tema-patria .rail .brand::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2220%22 viewBox=%220 0 72 20%22%3E%3Cpath d=%22M0 2Q36.0 4.5 72 2%22 fill=%22none%22 stroke=%22rgba(255,255,255,.75)%22 stroke-width=%221%22/%3E%3Cpath d=%22M2 3.2H22L12.0 17.2Z%22 fill=%22%23D52B1E%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M26 3.8H46L36.0 17.8Z%22 fill=%22%23F9E300%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M50 3.2H70L60.0 17.2Z%22 fill=%22%23007934%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3C/svg%3E"); background-size:72px 20px; }
+html.tema-santa-cruz .rail .brand::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2220%22 viewBox=%220 0 48 20%22%3E%3Cpath d=%22M0 2Q24.0 4.5 48 2%22 fill=%22none%22 stroke=%22rgba(255,255,255,.75)%22 stroke-width=%221%22/%3E%3Cpath d=%22M2 3.4H22L12.0 17.4Z%22 fill=%22%23009A3E%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M26 3.4H46L36.0 17.4Z%22 fill=%22%23ffffff%22 stroke=%22rgba(0,0,0,.18)%22 stroke-width=%22.6%22/%3E%3C/svg%3E"); background-size:48px 20px; }
+html.tema-todos-santos .rail .ni.active{ background:linear-gradient(180deg,#6b1d7a,#4a1060); color:#fff; box-shadow:0 8px 22px rgba(74,16,96,.34), inset 0 1px 0 rgba(255,255,255,.25); }
+html.tema-todos-santos .rail .ni.active::before{ background:#f97316; box-shadow:0 0 10px rgba(249,115,22,.65); }
+html.tema-carnaval .rail .ni.active, html.tema-madre .rail .ni.active{ background:linear-gradient(180deg,#db2777,#be185d); color:#fff; box-shadow:0 8px 22px rgba(190,24,93,.3), inset 0 1px 0 rgba(255,255,255,.25); }
+html.tema-carnaval .rail .ni.active::before, html.tema-madre .rail .ni.active::before{ background:#fde68a; }
+html.tema-patria .rail .ni.active{ background:linear-gradient(180deg,#dc2626,#b91c1c); color:#fff; box-shadow:0 8px 22px rgba(185,28,28,.3), inset 0 1px 0 rgba(255,255,255,.25); }
+html.tema-patria .rail .ni.active::before{ background:#F9E300; }
+html.tema-santa-cruz .rail .ni.active{ background:linear-gradient(180deg,#059669,#047857); color:#fff; box-shadow:0 8px 22px rgba(4,120,87,.3), inset 0 1px 0 rgba(255,255,255,.25); }
+html.tema-santa-cruz .rail .ni.active::before{ background:#fff; }
+html.tema-anio-nuevo .rail .ni.active{ background:linear-gradient(180deg,#1e40af,#1e3a8a); color:#fff; box-shadow:0 8px 22px rgba(30,58,138,.34), inset 0 1px 0 rgba(255,255,255,.25); }
+html.tema-anio-nuevo .rail .ni.active::before{ background:#fde68a; }
 
 </style>
 <script>
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
    ni el servidor. Se prende SOLO en octubre, con la fecha de Bolivia (UTC−4 fijo), y se apaga sola el 1/11, antes de Todos
    Santos. Los colores de aviso (verde, ámbar, rojo) no cambian. Para otro año no hay que tocar nada. */
-(function(){ try{ var m=new Date(Date.now()-4*3600000).getUTCMonth(); if(m===9) document.documentElement.classList.add('tema-halloween');
-  /* 🎄 (27/10, §4nc) Y en diciembre, Navidad: se prende el 1/12 y se apaga sola el 1/1. */
-  else if(m===11) document.documentElement.classList.add('tema-navidad'); }catch(e){} })();
+(function(){ try{
+  /* 🌼🎭💐🇧🇴💚🎆🫧 (27/10, §4ni) Y el resto del año, UN tema según la fecha de Bolivia (dueño: «Quiero las mejoras: … 14, 15»):
+     · octubre → Halloween · noviembre → Todos Santos (estilo Coco) · 1 al 30 de diciembre → Navidad (§4nc)
+     · 31/12 al 2/1 → Año Nuevo · de jueves de comadres al martes de Carnaval (52 a 47 días antes de la Pascua de cada año) → Carnaval
+     · 20 al 27 de mayo → Día de la Madre · 1 al 7 de agosto → 6 de Agosto · 18 al 24 de septiembre → 24 de Septiembre
+     · los demás días → Espuma. Para ver uno cualquier día: `?tema=todos-santos` (o carnaval, madre, patria, santa-cruz, anio-nuevo,
+       halloween, navidad, espuma) al final de la dirección. Para otro año no hay que tocar nada. */
+  var d=new Date(Date.now()-4*3600000), y=d.getUTCFullYear(), m=d.getUTCMonth(), dd=d.getUTCDate();
+  var pascua=function(a){ var b=a%19,c=Math.floor(a/100),e=a%100,f=Math.floor(c/4),g=c%4,h=Math.floor((c+8)/25),i=Math.floor((c-h+1)/3),
+    k=(19*b+c-f-i+15)%30,l=Math.floor(e/4),n=e%4,o=(32+2*g+2*l-k-n)%7,p=Math.floor((b+11*k+2*o)/451),r=k+o-7*p+114; return Date.UTC(a,Math.floor(r/31)-1,r%31+1); };
+  var antesPascua=Math.round((pascua(y)-Date.UTC(y,m,dd))/864e5);
+  var t = m===9 ? 'halloween' : m===10 ? 'todos-santos' : ((m===11&&dd===31)||(m===0&&dd<=2)) ? 'anio-nuevo' : m===11 ? 'navidad'
+        : (antesPascua>=47&&antesPascua<=52) ? 'carnaval' : (m===4&&dd>=20&&dd<=27) ? 'madre' : (m===7&&dd<=7) ? 'patria'
+        : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
+  var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
+  document.documentElement.classList.add('tema-'+t);
+  /* 🎸 En noviembre, la melodía (archivo aparte: lo usan el panel y el dashboard). */
+  if(t==='todos-santos'){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
+}catch(e){} })();
 </script>
 <script>
 /* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»;
