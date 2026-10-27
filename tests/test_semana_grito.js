@@ -1,8 +1,11 @@
 /* 📣 (27/10) Bloki le grita a logística lo que falta del stock de la semana. El dueño: *«Bloki en logística/administración debería
    gritarle a Ernesto si son las 16:00 y aún no ven esos pedidos que falten productos y estamos justo a 4 días, o los plazos que
-   definimos»*.
-   Reloj clavado: JUEVES 29/10/2026, desde las 15:50 de Bolivia. Producción tarda hasta 4 días hábiles: lo que se entrega hasta el
-   miércoles 04/11 (vie 30, sáb 31, mar 03, mié 04; el lunes 02/11 es feriado) y sigue ⬜ sin revisar o 🔴 sin pedir, hay que pedirlo hoy.
+   definimos»*; y (27/10): *«no exactamente 4, sino los plazos que ya tenemos definidos… ¿y si lo abren a las 4:30 o a las 5?»*.
+   Reloj clavado: JUEVES 29/10/2026, desde las 15:50 de Bolivia. Los plazos del cuadrito: lo pedido hoy antes de las 16:30 sale de
+   fábrica el sábado 31/10 (48 h; ese día se recoge) y se entrega desde el martes 03/11 (el lunes 02/11 es feriado); lo pedido mañana,
+   desde el miércoles 04/11. Lo ⬜ sin revisar o 🔴 sin pedir que se entrega ANTES del 04/11 hay que pedirlo hoy (lo del viernes 30, si
+   hay que fabricarlo, ya no llega). Pasado el corte, lo pedido arranca el viernes y se entrega desde el 04/11: entra también el 04/11.
+   9. Si logística abre el panel tarde (16:31, 17:00), Bloki grita apenas abre; a un vendedor, nunca.
    Lo que cuida:
    1. Antes de las 16:00 no grita; Bloki ya lo tiene en sus avisos de logística (con la lista y «🗓️ Ver la semana»).
    2. A las 16:00 GRITA (el mismo grito del anuncio: pantalla, Bloki con el megáfono, sirena y voz) con «¡Ernesto!», cuántos son, de qué
@@ -99,11 +102,12 @@ function PREPARAR(){
     var a=asisAvisos().filter(function(a){ return /^l-semana/.test(a.k); })[0]||null;
     return { U:U, grito:GRITO(), montado:!!ASIS.montado, a:a && { t:a.t, x:a.x, n:(a.lista||[]).length, b:a.b && a.b[0], sev:a.sev } };
   });
-  chk('1 · lo urgente: el ⬜ del viernes, el 🔴 del martes y el ⬜ del miércoles 04/11 (justo a 4 días hábiles); no el del 05/11, ni lo pedido a producción, ni lo que tiene stock',
-    JSON.stringify(r.U)===JSON.stringify(['u1:rev','u2:nohay','u3:rev']), r.U);
+  chk('1 · lo que hay que pedir hoy (se entrega antes del miércoles 04/11): el ⬜ del viernes y el 🔴 del martes; el ⬜ del 04/11 puede esperar a mañana; no el del 05/11, ni lo pedido a producción, ni lo que tiene stock',
+    JSON.stringify(r.U)===JSON.stringify(['u1:rev','u2:nohay']), r.U);
   chk('1 · a las 15:50 Bloki todavía no grita', r.montado && !r.grito.ve, r.grito);
-  chk('1 · pero ya lo tiene en sus avisos de logística: rojo, con los 3 pedidos y «🗓️ Ver la semana»',
-    r.a && r.a.sev==='ro' && /3 productos sin revisar o sin pedir a producción para entregar en los próximos 4 días hábiles/.test(r.a.t) && r.a.n===3 && /Ver la semana/.test(r.a.b) && /Desde las 16:00 te lo grito/.test(r.a.x), r.a);
+  chk('1 · pero ya lo tiene en sus avisos de logística: rojo, con los 2 pedidos, los plazos y «🗓️ Ver la semana»',
+    r.a && r.a.sev==='ro' && /2 productos sin revisar o sin pedir a producción: si no se piden hoy, no llegan a tiempo/.test(r.a.t) && r.a.n===2 && /Ver la semana/.test(r.a.b) &&
+    /Lo que se pide hoy antes de las 16:30 sale de fábrica el sábado 31\/10/.test(r.a.x) && /Desde las 16:00 te lo grito/.test(r.a.x), r.a);
 
   /* ── 2. A las 16:00 grita ── */
   console.log('\n── 2. A las 16:00 ──');
@@ -111,11 +115,13 @@ function PREPARAR(){
   if(process.env.SEM_CAP) await page.screenshot({ path:path.join(process.env.SEM_CAP, 'semana-grito.png'), animations:'disabled' });
   r = await ev(page, () => ({ g:GRITO(), voz:ERNESTO().map(function(h){ return h.t; }), sir:_sirenas }));
   chk('2 · a las 16:00 GRITA (no antes): pantalla entera con Bloki y el megáfono', /^16:00:(0|1)\d$/.test(hg) && r.g.ve && r.g.sem && r.g.mega, { hora:hg, ve:r.g.ve, sem:r.g.sem, mega:r.g.mega });
-  chk('2 · «¡Ernesto! Hay 3 productos sin revisar o sin pedir a producción»', /¡Ernesto! Hay 3 productos sin revisar o sin pedir a producción/.test(r.g.t), r.g.t);
-  chk('2 · dice hasta cuándo, qué días y de quién, y que lo pedido antes de las 16:30 empieza hoy',
-    /hasta el miércoles 04\/11/.test(r.g.x) && /viernes 30\/10: 1× COLCHON TITANIO 140×190 \(PEREZ VIERNES\)/.test(r.g.x) && /martes 03\/11/.test(r.g.x) && /antes de las 16:30 empieza hoy/.test(r.g.x) && !/LOPEZ|VACA|SOSA/.test(r.g.x), r.g.x);
+  chk('2 · «¡Ernesto! Hay 2 productos sin revisar o sin pedir a producción»', /¡Ernesto! Hay 2 productos sin revisar o sin pedir a producción/.test(r.g.t), r.g.t);
+  chk('2 · dice qué días y de quién, y los plazos de siempre: pedido hoy antes de las 16:30 sale de fábrica el sábado 31/10 y se entrega desde el martes 03/11',
+    /Si no se revisan y se piden hoy, no llegan a tiempo/.test(r.g.x) && /• viernes 30\/10: 1× COLCHON TITANIO 140×190 \(PEREZ VIERNES\)/.test(r.g.x) && /• martes 03\/11: .*GOMEZ MARTES/.test(r.g.x) &&
+    /Lo que se pide hoy antes de las 16:30 sale de fábrica el sábado 31\/10 \(48 h, ese día se recoge\) y se entrega desde el martes 03\/11/.test(r.g.x) && !/ROJAS|LOPEZ|VACA|SOSA/.test(r.g.x), r.g.x);
+  chk('2 · lo del viernes 30/10, si hay que fabricarlo, ya no llega aunque se pida ahora: lo dice', /Lo del viernes 30\/10, si hay que fabricarlo, ya no llega aunque se pida ahora: reprogramalo o avisale al cliente/.test(r.g.x), r.g.x);
   chk('2 · los botones: «🗓️ Ver cuáles», «🤖 Revisión automática» y «👍 Entendido»', JSON.stringify(r.g.bot)===JSON.stringify(['🗓️ Ver cuáles','🤖 Revisión automática','👍 Entendido']), r.g.bot);
-  chk('2 · suena la sirena y la voz le habla a Ernesto (sin emojis)', r.sir>=1 && r.voz.length===1 && /^¡Ernesto! Hay 3 productos/.test(r.voz[0]) && /Producción tarda hasta 4 días/.test(r.voz[0]) && !/[\uD800-\uDFFF]/.test(r.voz[0]), r);
+  chk('2 · suena la sirena y la voz le habla a Ernesto (sin emojis)', r.sir>=1 && r.voz.length===1 && /^¡Ernesto! Hay 2 productos/.test(r.voz[0]) && /Si no se piden hoy antes de las 16:30, no llegan a tiempo/.test(r.voz[0]) && !/[\uD800-\uDFFF]/.test(r.voz[0]), r);
   r = await ev(page, () => { anuncioTic(); return GRITO().ve; });
   chk('2 · sin anuncio de Administración, el reloj no cierra este grito', r===true);
 
@@ -133,7 +139,9 @@ function PREPARAR(){
   await ev(page, () => anuncioGritoCerrar());
   hg=await hastaGrito(page, 17);
   r = await ev(page, () => ({ g:GRITO(), voz:ERNESTO().slice(-1)[0] }));
-  chk('3 · a las 16:30 grita otra vez y, pasado el corte, dice que lo que se pide ahora empieza mañana', /^16:30:/.test(hg) && r.g.ve && /ya pasaron las 16:30: lo que se pide ahora empieza mañana/.test(r.g.x) && !/antes de las 16:30/.test((r.voz||{}).t||''), { hora:hg, ve:r.g.ve, x:r.g.x.slice(-150), voz:(r.voz||{}).t });
+  chk('3 · a las 16:30 grita otra vez; pasado el corte lo pedido arranca el viernes y se entrega desde el 04/11, así que entra también lo del 04/11 (3 productos)',
+    /^16:30:/.test(hg) && r.g.ve && /Hay 3 productos/.test(r.g.t) && /Ya pasaron las 16:30: lo que se pide ahora arranca el viernes 30\/10, sale de fábrica el martes 03\/11 .* y se entrega desde el miércoles 04\/11/.test(r.g.x) && !/antes de las 16:30/.test((r.voz||{}).t||''),
+    { hora:hg, ve:r.g.ve, t:r.g.t, x:r.g.x.slice(-260), voz:(r.voz||{}).t });
 
   /* ── 4. Recargar no lo hace gritar de nuevo ── */
   r = await ev(page, () => { anuncioGritoCerrar(); SEMANA_GRITO_MEM={ d:'', t:0 }; anuncioTic(); return GRITO().ve; });
@@ -186,7 +194,24 @@ function PREPARAR(){
   await page.clock.runFor(500);
   r = await ev(page, () => ({ ve:GRITO().ve, vista:asisVista(), q:QUICK_FILTER, v:SEMANA_VER, vis:!document.getElementById('adm-semana').hidden,
     lista:[].map.call(document.querySelectorAll('#adm-semana .sem-li-r'), function(b){ return (b.getAttribute('onclick').match(/'([^']+)'/)||[])[1]; }) }));
-  chk('7 · «Ver cuáles» cierra el grito y lleva a Administración con «Semana» y solo lo que falta', !r.ve && r.vista==='admin' && r.q==='semana' && r.v==='alerta' && r.vis && JSON.stringify(r.lista)===JSON.stringify(['u1','u2','u3']), r);
+  chk('7 · «Ver cuáles» cierra el grito y lleva a Administración con «Semana» en «🔥 Pedir hoy»: los mismos del grito', !r.ve && r.vista==='admin' && r.q==='semana' && r.v==='urge' && r.vis && JSON.stringify(r.lista)===JSON.stringify(['u1','u2']), r);
+  await page.close();
+
+  /* ── 9. Lo abren tarde ── */
+  console.log('\n── 9. Lo abren tarde ──');
+  for(const hora of ['16:31:00','17:00:00']){
+    page = await abrir(hora);
+    await ev(page, () => { STATE=FIX(); UNLOCKED=false; quienRol('logistica'); });
+    hg=await hastaGrito(page, 1);
+    r = await ev(page, () => ({ g:GRITO(), voz:ERNESTO().length }));
+    chk('9 · logística abre el panel a las '+hora.slice(0,5)+' (cerrado hasta ahí): Bloki grita apenas abre (antes de 20 s), con los plazos de después del corte',
+      hg && hg.slice(0,5)===hora.slice(0,5) && Number(hg.slice(6))<=20 && r.g.ve && r.voz===1 && /Ya pasaron las 16:30/.test(r.g.x), { abre:hora, grita:hg, ve:r.g.ve });
+    await page.close();
+  }
+  page = await abrir('17:00:00');
+  await ev(page, () => { STATE=FIX(); UNLOCKED=false; quienRol(''); setVendedorMem('Maria Flores'); });
+  hg=await hastaGrito(page, 1);
+  chk('9 · un vendedor que abre a las 17:00 no lo escucha', hg==='', hg);
   await page.close();
 
   /* ── 8. Sábado, domingo y feriado ── */

@@ -38,7 +38,7 @@ async function abrir(browser, w, extra){
       _ped('s12','2026-10-31','AM',[no()],Object.assign({ cliente:'Mia Plaza', oc:'RPT 10-001' }, cam)),                  // 🔴 la RPT sale del stock
       _ped('s06','2026-11-02','AM',[_lin(_T,1)],{ cliente:'FERIADO' }),                                                 // en un feriado: no es día hábil
       _ped('s07','2026-11-03','AM',[_lin(_T,1,{ chk:'im' })],Object.assign({ cliente:'MARTES MORENO' }, cam)),            // ✔ (hay en Moreno)
-      _ped('s13','2026-11-03','PM',[no({ enProd:true, prodF:'2026-10-26' })],Object.assign({ cliente:'MARTES FABRICA' }, cam)),   // 🏭 pedido el 26: llega ~30/10, a tiempo
+      _ped('s13','2026-11-03','PM',[no({ enProd:true, prodF:'2026-10-28' })],Object.assign({ cliente:'MARTES FABRICA' }, cam)),   // 🏭 pedido el 28: sale el 30/10, a tiempo
       _ped('s08','2026-11-04','AM',[ok(), _lin('|PROTECTOR DE COLCHON|160x190',1)],Object.assign({ cliente:'MIERCOLES PROTECTOR' }, cam)),   // el protector no cuenta
       _ped('s14','2026-11-04','AM',[ok({ enProd:true, prodF:'2026-10-23', prodR:'2026-10-28' })],Object.assign({ cliente:'MIERCOLES LLEGO' }, cam)),   // ✔ llegó de fábrica
       _ped('s09','2026-11-05','AM',[_lin(_T,1)],{ cliente:'JUEVES QUE VIENE' }),                                         // el 6° día: no entra
@@ -79,9 +79,12 @@ const enOrden=a=>a.every((x,i)=>!i || x>=a[i-1]);
     o[id]=(p.productos||[]).map(function(x){ return semanaLinea(p, x)||'·'; }).join('+'); }); return o; });
   chk('2 · ✔ con stock, ⬜ sin revisar, 🔴 no hay sin pedir, ⚠️ pedido que puede no llegar, 🏭 pedido que llega a tiempo, ✔ llegó, Moreno = con stock, el protector no cuenta',
     JSON.stringify(r)===JSON.stringify({ s02:'listo', s15:'listo+rev', s03:'nohay', s04:'tarde', s05:'rev', s12:'nohay', s07:'listo', s13:'prod', s08:'listo+·', s14:'listo' }), r);
-  r=await page.evaluate(()=>({ tarde:semanaLlega(findById('s04').productos[0]), aTiempo:semanaLlega(findById('s13').productos[0]) }));
-  chk('2 · lo pedido a producción llega en hasta 4 días hábiles: el del 28/10 llega ~03/11 (después del viernes 30) y el del 26/10 ~30/10 (antes del martes 03)',
-    r.tarde==='2026-11-03' && r.aTiempo==='2026-10-30', r);
+  r=await page.evaluate(()=>{ var a=findById('s04').productos[0], b=findById('s13').productos[0];
+    var z={ fecha:'2026-11-04', productos:[{ desc:'X', cant:1, chk:'no', enProd:true, prodF:'2026-10-26' }] };
+    return { tarde:semanaLlega(a), tardeEnt:semanaEntregaDesde(semanaLlega(a)), aTiempo:semanaLinea(findById('s13'), b), atrasado:semanaLinea(z, z.productos[0]), atrasadoSale:semanaLlega(z.productos[0]) }; });
+  chk('2 · con los plazos del cuadrito (48 h y ese día se recoge): lo pedido el 28/10 sale de fábrica el 30/10 y se entrega desde el 31/10: tarde para el viernes 30, a tiempo para el martes 03',
+    r.tarde==='2026-10-30' && r.tardeEnt==='2026-10-31' && r.aTiempo==='prod', r);
+  chk('2 · lo pedido el 26/10 debía salir de fábrica el 28/10: el jueves 29 sin llegar está atrasado («puede no llegar»)', r.atrasadoSale==='2026-10-28' && r.atrasado==='tarde', r);
 
   /* 3 · El botón: cuenta, parpadea y dice cuántos productos hay por revisar */
   let c=await chip(page);
@@ -112,7 +115,8 @@ const enOrden=a=>a.every((x,i)=>!i || x>=a[i-1]);
       ta:T(document.querySelector('#adm-semana .sem-tarde')), auto:!!document.querySelector('#adm-semana .sem-alerta button[onclick*="abrirStockRevisar"]'), d:d }; });
   chk('4 · el título: «El stock de los próximos 5 días hábiles», jueves 29/10 → miércoles 04/11', /El stock de los próximos 5 días hábiles/.test(r.cab) && /jueves 29\/10 → miércoles 04\/11/.test(r.cab), r.cab);
   chk('4 · no habla de camiones, carga ni cupos', !/cami[oó]n|cupo|cargar|carga/i.test(r.todo), r.todo.match(/.{0,30}(cami[oó]n|cupo|carga).{0,30}/i));
-  chk('4 · el cartel rojo dice qué falta revisar, por día, y que producción tarda hasta 4 días', /2 productos sin revisar el stock y 2 que no hay/.test(r.al) && /jueves 29\/10: 1× SOMIER TITANIO ICE 140×190 \(HOY DOS\)/.test(r.al) && /hasta 4 días hábiles/.test(r.al), r.al);
+  chk('4 · el cartel rojo dice qué falta revisar, por día, y los plazos de siempre (pedido hoy antes de las 16:30: sale de fábrica el sábado 31/10, se entrega desde el martes 03/11)',
+    /2 productos sin revisar el stock y 2 que no hay/.test(r.al) && /jueves 29\/10: 1× SOMIER TITANIO ICE 140×190 \(HOY DOS\)/.test(r.al) && /Lo que se pide hoy antes de las 16:30 sale de fábrica el sábado 31\/10 \(48 h, ese día se recoge\) y se entrega desde el martes 03\/11/.test(r.al), r.al);
   chk('4 · el cartel rojo tiene «🤖 Revisión automática» (propone las marcas con el Excel del día)', r.auto);
   chk('4 · el aviso ámbar: 1 pedido a producción puede no llegar a tiempo', /1 pedido a producción puede no llegar a tiempo/.test(r.ta), r.ta);
   chk('4 · cinco fichas de día; hoy dice HOY y mañana MAÑANA', r.d.length===5 && /HOY/.test(r.d[0].t) && /MAÑANA/.test(r.d[1].t), r.d.map(x=>x.t.slice(0,30)));
@@ -126,7 +130,7 @@ const enOrden=a=>a.every((x,i)=>!i || x>=a[i-1]);
   const ps=await ids(page);
   chk('4 · abajo, los pedidos con algo que falta, del más cercano al más lejos', JSON.stringify(ps.slice().sort())===JSON.stringify(['s03','s04','s05','s12','s13','s15']) && enOrden(ps.map(id=>({s15:1,s03:2,s04:2,s05:3,s12:3,s13:4})[id])), ps);
   r=await page.evaluate(()=>{ var b=document.querySelector('#adm-semana .sem-li-r.sem-r-tarde'); return b ? b.textContent.replace(/\s+/g,' ').trim() : ''; });
-  chk('4 · el producto que puede no llegar dice cuándo se pidió y cuándo llega', /pedido el 28\/10 · llega ~03\/11/.test(r), r);
+  chk('4 · el producto que puede no llegar dice cuándo se pidió, cuándo sale de fábrica y desde cuándo se entrega', /pedido el 28\/10 · sale de fábrica el 30\/10, se entrega desde el 31\/10/.test(r), r);
   await page.evaluate(()=>{ var b=document.querySelector('#adm-semana .sem-li-r.sem-r-rev'); b.click(); });
   r=await page.evaluate(()=>({ on:document.getElementById('modal').classList.contains('on'), txt:(document.getElementById('modal').textContent||'').indexOf('HOY DOS PRODUCTOS')>=0 }));
   chk('4 · tocar un producto abre su pedido (ahí se marca el stock)', r.on && r.txt, r);

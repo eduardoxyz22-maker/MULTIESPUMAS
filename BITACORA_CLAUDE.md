@@ -16439,17 +16439,20 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   `pedidos.html` y la prueba, con `format-patch`, en un commit). Batería: 259 suites, 8.315 bien; rojas solo por carga o
   conocidas: `test_asistente_ak` 34/4 (sola 38/0), `test_mispedidos` 32/1 (sola 33/0), `test_ventas_marcas` (1180 px). Pages OK.
 
-### §4mz — 📣 Bloki le grita a logística lo que falta del stock de la semana (27/10; dueño: *«Bloki en logística/administración debería gritarle a Ernesto si son las 16:00 y aún no ven esos pedidos que falten productos y estamos justo a 4 días, o los plazos que definimos»*)
-- Qué (`semanaUrgentes`): lo ⬜ sin revisar y lo 🔴 que no hay y no se pidió (`SEMANA_ALERTA`, la cuenta del botón «Semana», §4my) que se
-  entrega hasta `diaHabilMas(hoy, SEMANA_PROD_DIAS)` (4 días hábiles): si no se pide hoy, producción no llega. Domingo y feriado, nada.
-- Cuándo (`semanaGritoHora`): media hora antes del corte de producción (`HORA_CORTE` 16:30 → 16:00; sábado `HORA_CORTE_SABADO` → 11:30) y
-  otra vez cada `SEMANA_GRITO_CADA_MS` (15 min) mientras falte; la hora del último queda en `me_sem_grito` (recargar no lo repite) y en
-  memoria. Pasado el corte el texto dice que lo pedido empieza mañana.
-- A quién: `asisVeAdm()` (logística, Administración, clave o `me_adm_dev`), con el nombre `SEMANA_GRITO_A`='Ernesto'. Un vendedor, nunca.
-- Cómo: el MISMO grito del anuncio (`anuncioGrito` con `semana:1`, `tag`, `x`, `acc`, `voz`; `ANUNCIO.cur` = lo que está en pantalla).
-  `anuncioTic` = `anuncioTicAnuncio` (el anuncio, primero) + `semanaGritoTic` (espera si el anuncio está en pantalla o si escriben). Sin
-  anuncio, el reloj ya no cierra un grito de la semana. 🔇 lo deja sin sirena ni voz. Botones: «🗓️ Ver cuáles» (`semanaIr`: Administración
-  con «Semana» en «alerta»; sin la clave, la contraseña), «🤖 Revisión automática», «👍 Entendido». Además, aviso rojo `l-semana` en
-  `asisLogistica` (con la lista y «🗓️ Ver la semana»). Solo avisa.
-- `tests/test_semana_grito.js` (23; reloj clavado el jueves 29/10 desde las 15:50, `hastaGrito` avanza de a 5 s; `SEM_CAP` deja la captura).
-  `test_anuncio` 47, `test_asistente*`, `test_bloki` y `test_semana` sin cambios. En la rama; espera «publica».
+### §4mz — 📣 Bloki le grita a logística lo que hay que pedir hoy (27/10; dueño: *«Bloki en logística/administración debería gritarle a Ernesto si son las 16:00 y aún no ven esos pedidos que falten productos y estamos justo a 4 días, o los plazos que definimos»*; y al ver la 1ª versión: *«no exactamente 4, sino los plazos que ya tenemos definidos… ¿y si Ernesto tiene cerrado el panel y lo abre a las 4:30 o a las 5?»*)
+- ⚠️ **Sin «4 días»**: los plazos son los del cuadrito del formulario (`saldoVeredictoFab`, §4gq/§4gs). `semanaPlazos()`: lo que se pide
+  ahora arranca `diaArranque()` (hoy antes de `HORA_CORTE` 16:30, sábado `HORA_CORTE_SABADO`; si no, el día hábil siguiente), sale de
+  fábrica `saldoSaleDeFabrica` (`DIAS_PRODUCCION`=2, 48 h; ese día se recoge) y se entrega desde `sigDiaHabil` (E1); lo que se pide en
+  la próxima ocasión, desde E2. `SEMANA_PROD_DIAS` ya no existe. También en el botón «Semana»: lo 🏭 pedido es ⚠️ «puede no llegar» si
+  se entrega desde después de la fecha o ya debía haber salido de fábrica (`semanaLlega` = `saldoSaleDeFabrica(prodF)`, `semanaEntregaDesde`).
+- Qué grita (`semanaUrgentes`): lo ⬜/🔴 (`SEMANA_ALERTA`) que se entrega ANTES de E2 (si no se pide hoy, no llega); lo que se entrega antes
+  de E1 «ya no llega aunque se pida ahora» (reprogramar o avisar). Domingo y feriado, nada. Filtro nuevo **«🔥 Pedir hoy»** (`urge`,
+  `semanaVerLinea(e, v, fecha)`) en el botón «Semana»: es lo que abre «Ver cuáles».
+- Cuándo (`semanaGritoHora`): media hora antes del corte (16:00; sábado 11:30) y cada `SEMANA_GRITO_CADA_MS` (15 min) mientras falte;
+  la hora del último en `me_sem_grito` + memoria. **Si logística abre el panel tarde (16:31, 17:00), grita apenas abre** (primer tic del
+  reloj de Bloki, ≤ 15 s). Con el panel cerrado no hay nada que grite: para eso haría falta el bot de WhatsApp (ofrecido al dueño).
+- A quién: `asisVeAdm()`, con `SEMANA_GRITO_A`='Ernesto'. Un vendedor, nunca. Cómo: `anuncioGrito` con `semana:1` (`tag`, `x` con un
+  renglón por día, `acc`, `voz`; `ANUNCIO.cur`); `anuncioTic` = `anuncioTicAnuncio` + `semanaGritoTic`. Aviso rojo `l-semana` en
+  `asisLogistica`. Solo avisa.
+- `tests/test_semana_grito.js` (27; reloj clavado el jueves 29/10 desde las 15:50, `hastaGrito`; §9 = abren tarde); `test_semana` 41
+  (el caso atrasado). `test_anuncio`, `test_asistente*`, `test_bloki`, `test_saldo_almacen`, `test_corte_horario` sin cambios. Espera «publica».
