@@ -16418,8 +16418,12 @@ function navFoto(){
   [].forEach.call(document.querySelectorAll('.nav button.nav-llega'), function(x){ x.style.transition='none'; x.classList.remove('nav-llega'); void x.offsetWidth; x.style.transition=''; });
   var nav=document.querySelector('.nav'), b=nav && nav.querySelector('button.active');
   if(!b || b.hidden || !b.getBoundingClientRect().width) return null;
-  var movil=navMovil(), cs=getComputedStyle(b, movil ? '::after' : null);
-  return { b:b, r:navRect(b, movil), col:cs.backgroundColor, rad:movil ? '2px' : cs.borderRadius, movil:movil };
+  /* Sin `transition` un momento: si la pestaña todavía está tomando su color (un cambio de hace un instante, la máquina cargada), se lee el
+     color FINAL y no el de la mitad (con transparente no había fantasma). */
+  var movil=navMovil(); b.style.transition='none';
+  var cs=getComputedStyle(b, movil ? '::after' : null), col=cs.backgroundColor, rad=movil ? '2px' : cs.borderRadius;
+  b.style.transition='';
+  return { b:b, r:navRect(b, movil), col:col, rad:rad, movil:movil };
 }
 function navDeslizar(antes, v){
   if(!antes) return;
@@ -16431,7 +16435,8 @@ function navDeslizar(antes, v){
   g.style.cssText='left:'+antes.r.x+'px;top:'+antes.r.y+'px;width:'+antes.r.w+'px;height:'+antes.r.h+'px;background:'+col+';border-radius:'+antes.rad;
   nav.appendChild(g); b.classList.add('nav-llega');
   var listo=false, fin=function(){
-    if(listo) return; listo=true; b.classList.remove('nav-llega');
+    if(listo) return; listo=true;
+    b.style.transition='none'; b.classList.remove('nav-llega'); void b.offsetWidth; b.style.transition='';   // su color de una vez: el fantasma la tapa y se desvanece encima
     try{ g.animate([{ opacity:1 }, { opacity:0 }], { duration:160, fill:'forwards' }).onfinish=function(){ g.remove(); }; }catch(e){ g.remove(); }
     setTimeout(function(){ if(g.parentNode) g.remove(); }, 400);
   };
