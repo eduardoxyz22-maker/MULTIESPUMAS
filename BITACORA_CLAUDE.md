@@ -16638,7 +16638,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   + `background-image`); en el celular, el dibujo gris y el de la elegida en un círculo de su color, con la rayita de su color. ⚠️ La
   elegida lleva su color también con los temas del mes (las reglas van con `html … [id]` para ganarle a `html.tema-x .nav button.active`):
   `test_halloween`, `test_navidad` y `test_temas_mejoras` cambiaron a conciencia (esperaban morado/verde/fucsia). El fantasma de §4ni
-  lleva el degradé de la de antes (`navFoto` → `img`). iPad parado: 701-1000 px con menos relleno, las seis entran en una fila.
+  lleva el degradé de la de antes (`navFoto` → `img`). iPad parado: 701-1000 px con menos relleno, las seis entran en una fila. **PUBLICADO 27/10 (`2130a6b`, dueño: «ok publicaaaaaaa»).**
 
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
