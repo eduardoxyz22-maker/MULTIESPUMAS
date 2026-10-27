@@ -2316,6 +2316,20 @@ GitHub, no de Cloudflare. ⚠️ `cloudflare-worker.js` del repo es una copia vi
 vendedora y `entity_type` lead, pero **solo SIN `filter[entity]`** (con `lead` da 204: por eso junio dio 0 y `generar.py` no los ve). Instrucción
 para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramientas/inspeccionar_respuestas.py`.
 
+## ✨ Lo elegido del muestrario + 🌼 noviembre (§4ni, 27/10; EN LA RAMA, espera «publica»; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16… el tema de noviembre, estilo Coco» y «Además quiero: 3, 10, 11»)
+- **Temas**: el `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia (octubre Halloween, noviembre Todos Santos,
+  1-30/12 Navidad, 31/12-2/1 Año Nuevo, Carnaval = 52 a 47 días antes de la Pascua, Madre 20-27/5, 6 de Agosto 1-7/8, 24 de Septiembre 18-24/9,
+  el resto Espuma); `?tema=<nombre>` para verlo. Lo que se mueve va en el lienzo `#hdr-fx` (un cuadro en las pruebas, `HDR_FX_PRUEBA`). Las
+  banderas van DIBUJADAS (el emoji 🇧🇴 en Windows sale «BO»). 🎸 `tema-melodia.js`: melodía PROPIA estilo Coco («Recuérdame» tiene derechos), solo
+  en noviembre, primer toque, una vez por apertura; ⚠️ cambiarla = subir el `?v=` del `<head>` en los DOS archivos.
+- **🔇 Un solo silencio**: el de Bloki (`me_asis_mudo`) calla Bloki, el anuncio, `sonidoPanel` (16) y la melodía.
+- **6** `guardarBtnFin` (tilde SOLO con el «sí»; «En cola» nunca ✓) · **8** `.ah-it.ah-r::after` · **1** `palAbrir` (Ctrl+K; lo de Administración solo
+  con `UNLOCKED`) · **3** `fichaCostadoAplicar` (≥1200 px en Administración; `openModal`/`closeModal` lo sacan) · **10** `vivoPintar` (solo
+  `asisVeAdm`; ⚠️ `.vivo-btn[hidden]` lleva su regla) · **11** `pryMomHtml` (al FINAL de la fila en el DOM: `test_proyeccion` lee el texto) y
+  `misMesLineaHtml`.
+- En Playwright apagados salvo `HDR_FX_PRUEBA`, `TS_MUSICA_PRUEBA`, `SON_PRUEBA`, `FX_PRUEBA` (Guardar), `FICHA_COSTADO_PRUEBA`, `VIVO_PRUEBA`.
+- `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29). Bitácora §4ni.
+
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").
 

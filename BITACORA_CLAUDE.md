@@ -16586,3 +16586,51 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   mes · 13 modo TV para el galpón · 14 encabezado de espuma (meses sin tema) · 15 más temas (Carnaval, Día de la Madre, 6 de Agosto, 24 de Septiembre,
   Año Nuevo) · 16 sonidos suaves (apagables).
 - Espera que el dueño elija por número. Nada cambia cuentas, cupos ni la planilla; lo de 4 y 7 usa los caminos de siempre (`reproAplicar`, `guardarDurable`).
+
+### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
+EN LA RAMA (`dda5111` + `cda8a25`), espera «publica». El `.gs` no cambia.
+- **Temas (14, 15 y noviembre)**: el script del `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia: octubre
+  Halloween · noviembre **Todos Santos** · 1 al 30/12 Navidad · **31/12 al 2/1 Año Nuevo** (antes el 31 era Navidad: cambió a conciencia en
+  `test_navidad`) · **Carnaval** de 52 a 47 días antes de la Pascua (jueves de comadres al martes; la Pascua se calcula, 2027 = 4 al 9/2) · **Día de
+  la Madre** 20-27/5 · **6 de Agosto** 1-7/8 · **24 de Septiembre** 18-24/9 · los demás días **Espuma**. `?tema=<nombre>` lo muestra cualquier día.
+  · CSS por tema (degradé, emoji o dibujo al lado del nombre, pestaña elegida, banderines/papel picado, velas). La bandera de Bolivia y la cruceña
+    van DIBUJADAS (en Windows el emoji 🇧🇴 sale «BO»). Dibujos generados con un script (papel picado con recortes de verdad, `fill-rule:evenodd`).
+  · Lienzo `#hdr-fx` en el encabezado (debajo de las letras): burbujas, pétalos de flor de muerto + chispas de vela, confeti, corazones,
+    confeti con estrellas, fuegos artificiales. 30 cuadros/s, se para con la pestaña escondida, quieto con «reducir movimiento», UN cuadro en
+    las pruebas (`HDR_FX_PRUEBA` lo mueve). Halloween y Navidad siguen con lo suyo. `window.hdrFx`.
+  · Dashboard: solo la caja de la marca y el ítem elegido, como Halloween/Navidad.
+  · 🎸 `tema-melodia.js` (archivo aparte, lo carga el `<head>` SOLO en noviembre, en los dos paneles): melodía PROPIA en estilo Coco (vals en la
+    menor, guitarra Karplus-Strong + dos trompetas en terceras); «Recuérdame» tiene derechos y no se copia. 8 compases + rasgueo, ~12 s, con el
+    primer toque, una vez por apertura; la calla el 🔇 de Bloki (`me_asis_mudo`). En las pruebas no suena salvo `TS_MUSICA_PRUEBA`.
+- **16 · Sonidos** (`sonidoPanel`): pop al guardar, caja al registrar un pago o un recargo, campanita al marcar ✅ (todo ✅ a mano pasa por
+  `entregaAdelantadaAnotar`; el cierre por `cierreEntMarcar`), dos notas cuando no se guardó. Un solo 🔇 para todo: el de Bloki. El mismo sonido
+  dos veces en 0,6 s suena una. En las pruebas, nada salvo `SON_PRUEBA` (`SON_LOG`).
+- **6 · Guardar que se transforma** (`guardarBtnFin(res, rec, enCola)`, llamado en el `.then` y el `.catch` del guardado del formulario): verde con
+  el tilde y la OC SOLO con el «sí»; ámbar con el motivo corto con un «no»; «En cola» sin ✓. Un tic después (`after()`/`resetForm` reescriben el
+  botón en el mismo paso). En las pruebas el texto no cambia salvo `FX_PRUEBA`. `setSubmitting` limpia el estado.
+- **8 · Borde de luz**: `.ah-it.ah-r::after` (conic-gradient con `@property --ah-ang`, máscara para dejar solo el borde) + el punto que late en
+  `.ah-n`. Lo ámbar y lo azul quietos.
+- **1 · Buscador Ctrl + K** (`palAbrir`; botón 🔎 arriba, `#pal-btn`): pedidos (todas las palabras en cliente, OC, nota, celular, zona, vendedor y
+  productos; números sin guiones; sin acentos), productos del catálogo con el saldo de siempre (`saldoVeredicto`; Enter copia el código) e «Ir
+  a…» por el comienzo de las palabras. Lo de Administración (Stock, subir Excel —el selector sale del mismo toque—, cierre, ruta, ciudad, Quién
+  vendió qué, clientes, anuncio, tiendas, pedido a producción) solo con `UNLOCKED`. Enter abre la ficha de Administración con la clave y la de
+  Mis pedidos sin ella.
+- **3 · La ficha al costado** (`fichaCostadoAplicar`): ≥1200 px, Administración activa → `body.ficha-costado`: el `#modal` ocupa la derecha
+  debajo del encabezado sin oscurecer, `.wrap` deja lugar a la izquierda, `.af-sel` marca el pedido (la ficha rápida lleva `data-pid`). Las
+  flechas ◀ ▶ de siempre (`fichaIr`). `openModal` y `closeModal` lo sacan: cualquier otra ventana va al medio. `me_ficha_costado`='0' lo apaga;
+  en las pruebas al medio salvo `FICHA_COSTADO_PRUEBA`.
+- **10 · «En vivo»** (`vivoPintar` desde `updateStats` y cada minuto; `#vivo-btn` al lado del 🔎): solo `asisVeAdm()`. Lo de HOY, de la planilla:
+  pedido cargado (`p.ts`), entregado del cierre (`x.eT`/`x.eQ`), pago con fecha de hoy de una venta de otro día (hora = `p.rev`), Excel
+  (`STOCK.h`), camión que salió (`camionSalio`). El número = lo no visto en el aparato (`me_vivo_visto`, del día); abrir lo marca visto.
+  ⚠️ `.vivo-btn[hidden]` necesita su regla (`display:grid` le ganaba al atributo y se veía para todos).
+- **11 · MoM** (`pryMomDe`/`pryMomHtml`): cada fila de Proyección con la línea del mes (por día de CARGA, `x.reg`) contra el «Comparar con» de «A
+  esta altura» y el % a la MISMA altura (`pryCargadaAl` con la hora). Va DESPUÉS en el DOM (`order` lo pone en el medio): el texto de la fila
+  sigue igual para `test_proyeccion`. Sin ventas del equipo en el mes de comparación, nada (no «nuevo»). **«Tu mes»** (`misMesLineaHtml`): la
+  barrita de Tu día pasa a ser la línea, con «▲ N% más que <mes> a esta altura».
+- Arreglo de paso: el `transitionend` de la ciudad que llegaba tarde (con la máquina cargada) medía la ciudad en 0 y dejaba `--hdr-h` en 84
+  (`test_estetica_4mo` 1·1440 fallaba a veces). Ahora mide solo con la ciudad quieta (`getAnimations`) y su propio evento.
+- Muestrario v3 (mismo enlace): «Navidad está hecha, y así queda el año entero» con capturas reales (Navidad, noviembre, Halloween, Bloki con
+  gorro), los íconos de la 9 con color (el dueño: *«les falta COLOR»*) y 3/10/11 como elegidas.
+- Pruebas: `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29); `test_navidad` cambió a conciencia (noviembre y el 31/12).
+- Anotado para después (dueño, 27/10, con captura de Ventas de Contabilidad): *«la estética de estas tablas debemos mejorar… o ver mejor en
+  fichas… queda para propuestas»*.
