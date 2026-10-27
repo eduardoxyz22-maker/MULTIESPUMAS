@@ -2328,7 +2328,13 @@ para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramienta
   `asisVeAdm`; ⚠️ `.vivo-btn[hidden]` lleva su regla) · **11** `pryMomHtml` (al FINAL de la fila en el DOM: `test_proyeccion` lee el texto) y
   `misMesLineaHtml`.
 - En Playwright apagados salvo `HDR_FX_PRUEBA`, `TS_MUSICA_PRUEBA`, `SON_PRUEBA`, `FX_PRUEBA` (Guardar), `FICHA_COSTADO_PRUEBA`, `VIVO_PRUEBA`.
-- `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29). Bitácora §4ni.
+- **5, 7 y 9** (dueño: «Además quiero: 5, 7, 9»; la del Bot sigue con 🤖): **9** `.ico-b` en las pestañas (escritos en la página) y en la ficha de
+  Administración (`icoHtml`), se mueven con `icoAnimar` (`ICO_PRUEBA`); las pestañas quedan del mismo alto. **5** `navFoto`/`navDeslizar` (fantasma con
+  el color de la pestaña de antes; la vista entra de costado, el formulario solo aparece: su barra de pasos es `fixed`; `NAV_PRUEBA`). **7** `#desh`
+  «↩️ Deshacer» 5 s después de Entregó, cambio de turno y Borrar; ⚠️ borrar espera los 5 s ANTES de ir a la planilla (`borrarConDeshacer` →
+  `realDelete`); deshacer = otro guardado por el mismo camino (foto `entregado`+`productos`, `cambiarTurno(id, antes, true)`); `DESH_PRUEBA`. Un
+  borrado NUEVO que la persona hace a mano va con `borrarConDeshacer`.
+- `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29), `tests/test_mejoras_5_7_9.js` (52). Bitácora §4ni.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

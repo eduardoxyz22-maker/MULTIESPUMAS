@@ -16641,3 +16641,29 @@ EN LA RAMA (`dda5111` + `cda8a25`), espera «publica». El `.gs` no cambia.
   fichas… queda para propuestas»*): https://claude.ai/artifact/5kKtxqCRAndqfYgR2yy1yX — A filas que se abren (total/cobrado/falta, detalle al
   tocar), B fichas por venta, C la tabla de hoy ordenada (fecha y cliente fijos, elegir columnas, compacta), D libro del día con subtotales.
   Datos inventados. Espera que elija.
+- **5, 7 y 9** (dueño, 27/10: *«la 9 me gusta todo menos el icono nuevo del bot, me gusta el icono actual del robot de colores… Además quiero:
+  5, 7, 9»*), EN LA RAMA (`ccf9c9c`), espera «publica». El `.gs` no cambia.
+  · **9 · Íconos propios**: cuadradito de color (`.ico-b`, degradé `--c1/--c2`) con el dibujo en blanco. En las pestañas van ESCRITOS en la
+    página (Nuevo, Mis, Chofer escondida, Contabilidad, ATC, Administración); **la del Bot sigue con 🤖** (dueño). En la fila de botones de cada
+    ficha de Administración salen de `icoHtml(k)` (`ICO_SVG`: ent, wa, editar, repro, tarde naranja, manana amarillo, borrar). Se mueven UNA vez al
+    pasar el mouse, al tocar o al elegir la pestaña (`icoAnimar`, 1,4 s; en las pruebas solo con `ICO_PRUEBA`). Las pestañas quedan del MISMO alto
+    (compu 41 px, celular 59: márgenes negativos y 25 px en la barra de abajo) y los seis botones entran en 320 px.
+  · **5 · Pestañas que se deslizan**: `showViewAhora` saca la foto de la pestaña elegida ANTES de cambiarla (`navFoto`: lugar, color y forma, que
+    cada tema pinta distinto) y `navDeslizar` corre un «fantasma» (`.nav-fant`) con un resorte suave (`cubic-bezier(.3,1.25,.5,1)`, 380 ms) hasta
+    la nueva, que queda transparente mientras tanto (`.nav-llega`); los textos y números van por encima (z-index). En el celular el fantasma es la
+    rayita de abajo (22 × 3, el `::after`). Lo de abajo entra desde el lado de la pestaña (`vista-der`/`vista-izq`, un `transform` corto); el
+    **formulario solo aparece** (`vista-fade`): su barra de pasos es `fixed` y un `transform` la movería. Un cambio a mitad de otro termina el de
+    antes (sin `transition` para leer el color final). En las pruebas apagado salvo `NAV_PRUEBA`; con «reducir movimiento», nada.
+  · **7 · «Deshacer» 5 s** (`#desh`, otro aviso que el de siempre, que sigue con `pointer-events:none`; mientras está, el de siempre sube):
+    después de **Entregó** (ficha chica, tabla y ficha grande: `quickEntregado`/`toggleEntregado`), del **cambio de turno** («A tarde»/«A mañana»
+    y los botones de turno: `cambiarTurno`) y de **Borrar** (`deletePedido`, «🗑 Eliminar» de la ficha grande, `eliminarDesdeCarga`,
+    `ctaEliminarVenta`). Entregado y turno se guardan EN EL ACTO; deshacer es otro guardado por el MISMO camino: la entrega vuelve con la foto
+    `entregado` + `productos` (así vuelven el registro del cierre `eF/eT/eQ` y la ATC; tocar dos veces los perdía) y el turno con
+    `cambiarTurno(id, antes, true)` (el `true` = sin otro «Deshacer»). El bot no manda nada: espera 2 min y saltea el cambio que «volvió al día de
+    antes». **Borrar espera los 5 s ANTES de ir a la planilla** (`borrarConDeshacer`): sale de la pantalla, `BORRADO_AQUI` para que una lectura no
+    lo devuelva, su guardado en cola se aparta; a los 5 s, `realDelete` como siempre (relee y compara). Uno nuevo cumple el anterior; esconder la
+    página (`visibilitychange`/`pagehide`) lo cumple en el acto (si el navegador corta la página de golpe, el borrado puede no llegar: el pedido
+    sigue en la planilla y vuelve, nunca se pierde nada); Ctrl+Z deshace fuera de un campo. Las preguntas siguen y dicen «tenés 5 segundos para
+    deshacerlo». En las pruebas apagado salvo `DESH_PRUEBA` (todo como antes, `realDelete` en el acto). Los borrados en tanda (ATC de Trello)
+    siguen con `realDelete` directo.
+  · Prueba: `tests/test_mejoras_5_7_9.js` (52).
