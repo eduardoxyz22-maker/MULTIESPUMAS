@@ -3477,6 +3477,31 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .td-cash b{grid-column:3;grid-row:1;color:#B45309;font-size:1.15rem}
 .td-cash .td-t small{display:block;font-size:.72rem;text-transform:none;letter-spacing:0;font-weight:600}
 .td-cash .td-t small em{font-style:normal;color:#CE2939;font-weight:800}
+/* 🏪 (§4nn) el renglón de las ventas de tienda, debajo del efectivo */
+.td-tie{grid-column:1/-1;grid-template-columns:34px minmax(0,1fr) auto auto;background:linear-gradient(90deg,#e6f2f7,#fff);border:1px solid #cfe6ef;border-radius:12px;padding:9px 12px;margin:6px 0 0;border-bottom:1px solid #cfe6ef!important;cursor:pointer}
+.td-tie .td-i{grid-row:1;background:#d7ecf4}.td-tie .td-t{grid-row:1}
+.td-tie b{grid-column:3;grid-row:1;color:#155e75;font-size:1.15rem}
+.td-tie .td-t small{display:block;font-size:.72rem;text-transform:none;letter-spacing:0;font-weight:600}
+.td-ver{grid-column:4;grid-row:1;font-size:.72rem;font-weight:800;color:#155e75;background:#fff;border:1px solid #a9cfdf;border-radius:8px;padding:4px 9px;margin-left:8px}
+.td-tie:hover{border-color:#9ccbdc}.td-tie:focus-visible{outline:2px solid #155e75;outline-offset:2px}
+@media (max-width:480px){ .td-tie{grid-template-columns:34px minmax(0,1fr) auto} .td-ver{grid-column:2/-1;grid-row:2;justify-self:start;margin:6px 0 0} }
+/* 👑 (§4nn) «Ver todos»: la fila por vendedora, a lo ancho debajo de las dos tarjetas */
+#mis-top>.mis-eq-vend{grid-column:1/-1}
+.mis-eq-vend .vt-wrap{overflow-x:auto;margin:0 -4px}
+.mis-eq-vend .vt{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:.84rem}
+.mis-eq-vend .vt th{background:transparent;color:#6b8584;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;text-align:left;font-weight:800;padding:0 10px;white-space:nowrap;position:static}
+.mis-eq-vend .vt td{background:#fff;padding:9px 10px;border-top:1px solid #e1ebea;border-bottom:1px solid #e1ebea;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mis-eq-vend .vt td:first-child{border-left:1px solid #e1ebea;border-radius:12px 0 0 12px;font-weight:800;color:#13302e}
+.mis-eq-vend .vt td:last-child{border-right:1px solid #e1ebea;border-radius:0 12px 12px 0}
+.mis-eq-vend .vt tbody tr{cursor:pointer}
+.mis-eq-vend .vt tbody tr:hover td{background:#f6fbfb}
+.mis-eq-vend .vt tbody tr:focus-visible td{background:#eef8f7;outline:none}
+.vt-bar{display:flex;align-items:center;gap:8px;min-width:190px}
+.vt-bar i{flex:1;height:8px;border-radius:9px;background:#edf3f2;position:relative;overflow:hidden;min-width:60px}
+.vt-bar i em{position:absolute;inset:0 auto 0 0;border-radius:9px;background:linear-gradient(90deg,#00B5AD,#0f766e)}
+.vt-bar small{color:#7b8b8a;font-weight:700;min-width:34px;text-align:right}
+.vt-mal{color:#dc2626;font-weight:800}.vt-ok{color:#15803d;font-weight:800}.vt-tie{color:#155e75;font-weight:800}.vt-cash{color:#B45309;font-weight:800}
+.mis-eq-pie{font-size:.76rem;color:#6b8584;margin:4px 2px 0}
 .td-cupo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 18px 0;padding:9px 12px;background:#f3f8f8;border-radius:12px;font-size:.85rem;color:#355352}
 .td-cupo span{background:#fff;border:1px solid #e1ebea;border-radius:999px;padding:2px 10px;font-weight:700}
 .td-acc{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 14px}
@@ -23753,6 +23778,7 @@ var MIS_DEFS=[
   {k:'pend',   lbl:'⏳ No entregados', test:function(p){ return !p.entregado; }},
   {k:'atras',  lbl:'⏰ Atrasados', test:function(p){ return minutosAtraso(p)>0; }},
   {k:'ent',    lbl:'🚚 Entregados',    test:function(p){ return !!p.entregado; }},
+  {k:'tienda', lbl:'🏪 Ventas de tienda', soloSiHay:true, test:function(p){ return esVentaTienda(p); }},   // (§4nn) el «Ver» del renglón de tienda de «Tu día»
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
@@ -23795,6 +23821,7 @@ function renderMisChips(mine){
   var el=document.getElementById('mis-chips'); if(!el) return;
   el.innerHTML=MIS_DEFS.map(function(d){
     var n=mine.filter(d.test).length;
+    if(d.soloSiHay && !n && MIS_FILTER!==d.k) return '';
     return '<button class="qchip'+(MIS_FILTER===d.k?' active':'')+'" onclick="setMisFiltro(\''+d.k+'\')">'+d.lbl+' <span class="n">'+n+'</span></button>';
   }).join('');
 }
@@ -25189,6 +25216,7 @@ function misTopPintar(v, mine){
           : ('de '+esc(mesN(E.mes))+': recibiste '+fmtBs0(E.cobrado)+', rendiste '+fmtBs0(E.retirado)+
              (E.deMas ? (' · <em>'+fmtBs0(E.deMas)+' eran de lo cobrado el mes pasado</em>') : (E.tot ? '' : ' · todo rendido'))))+
       '</small></span><b>'+fmtBs0(E.tot)+'</b></div>'+
+      (esVendedorLite(v) ? '' : misTiendaFila(misTiendaDatos(mine), false))+   // 🏪 (§4nn) sus ventas de tienda del mes
     '</div>'+
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
@@ -25202,6 +25230,162 @@ function misTopPintar(v, mine){
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 var MIS_HACER_MAS=false;
+/* 🏪 (27/10, §4nn; dueño: *«podríamos poner una dona de sus ventas de tienda para que lleven su control»* y, al ver la muestra, *«ok y
+   publica el diseño que me propusiste»*) Un renglón más en «Tu día», debajo del efectivo: SOLO la venta de tienda, por el día de la VENTA
+   (`contaFecha` = `ts`, que se corrige con «Fecha de la venta», §4nm) y el mes de Bolivia (`diaNegocio`). «Vendido para <mes>» de arriba
+   sigue siendo solo lo que se entrega (§4nl, Astra A06). Sin ventas de tienda en el mes no aparece; Eduardo y ROHO no lo ven. «Ver» = el
+   chip 🏪 de la lista (aparece solo cuando hay alguna). Nada de dona: el diseño nuevo no las usa. */
+function misTiendaDatos(mine){
+  var mes=diaNegocio().slice(0,7);
+  var R={ mes:mes, bs:0, n:0, art:0, cobrar:0 };
+  mine.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc) || !esVentaTienda(p)) return;
+    if(contaFecha(p).slice(0,7)!==mes) return;
+    R.n++; R.bs=r2(R.bs+(ventaTotal(p)||0));
+    (p.productos||[]).forEach(function(x){ R.art+=Number(x.cant)||0; });
+    if(!p.pagado) R.cobrar=r2(R.cobrar+(Number(p.saldo)||0));
+  });
+  R.cobrar=Math.max(0, Math.min(R.cobrar, R.bs));
+  return R;
+}
+function misTiendaFila(T, todos){
+  if(!T || !T.n) return '';
+  return '<div class="td-f td-tie" role="button" tabindex="0" onclick="setMisFiltro(\'tienda\');misIrA(\'mis-chips\')" title="Ver '+(todos?'las':'tus')+' ventas de tienda">'+
+    '<span class="td-i">🏪</span><span class="td-t">Ventas de tienda de '+esc(mesNombre(T.mes).replace(/ de \d{4}$/,''))+'<small>'+
+      T.n+(T.n===1?' venta':' ventas')+' · '+T.art+(T.art===1?' artículo':' artículos')+' · '+(T.cobrar>0.005?('falta cobrar '+fmtBs0(T.cobrar)):'todo cobrado')+'</small></span>'+
+    '<b>'+fmtBs0(T.bs)+'</b><span class="td-ver">Ver</span></div>';
+}
+/* 👑 (27/10, §4nn) «VER TODOS» CON EL DISEÑO NUEVO (dueño, con la muestra: *«VER TODOS DEBERIA ESTAR MODERNIZADO TB»*). Lo mismo que ve cada
+   vendedora, pero del equipo: «📋 Para hacer · el equipo» (con el nombre de quién), «👑 El día del equipo» y una fila por vendedora con su
+   mes (tocarla abre sus pedidos). Reemplaza a la dona y a las cuatro fichas; la lista de abajo sigue con TODOS los pedidos.
+   El EQUIPO = sin Eduardo, ROHO ni los pedidos internos (`contaExcluido`, como Contabilidad): la suma de las filas da lo de arriba.
+   ⚠️ No se cuenta nada aparte: cada fila sale de las MISMAS cuentas que «Tu día» de esa vendedora (`misAnilloDatos`, `misEfectivoDatos`,
+   `misTiendaDatos`); «Para hacer» de las de siempre (`misPendientes`, `minutosAtraso`, `ctaAvAbiertos`, `BORRADORES`). */
+function misEqPedidos(mine){ return mine.filter(function(p){ return p && !esFilaSistema(p) && !contaExcluido(p.vendedor); }); }
+function misEqQuienes(L, vend){
+  var C={}, O=[];
+  L.forEach(function(x){ var v=nombreCanonico(vend(x)||'')||'Sin vendedor', k=normNombre(v); if(!C[k]){ C[k]={ v:v, n:0 }; O.push(C[k]); } C[k].n++; });
+  O.sort(function(a,b){ return b.n-a.n; });
+  var top=O.slice(0,3).map(function(o){ return o.v+' '+o.n; }), resto=0; O.slice(3).forEach(function(o){ resto+=o.n; });
+  return top.join(' · ')+(resto?(' · otras '+resto):'');
+}
+function misEqHacerDatos(T){
+  var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
+  var pv=function(p){ return p.vendedor; }, q=misPendientes(T);
+  try{ var av=ctaAvAbiertos('').filter(function(a){ return !contaExcluido(a.vend); });
+    add({ sev:'r', ic:'📣', n:av.length, t:'Contabilidad pide revisar pagos', s:misEqQuienes(av, function(a){ return a.vend; }), b:'Ver', p:1, fn:"ctaAvVer('')", ok:'Sin avisos de Contabilidad' }); }catch(e){}
+  var sin=q.sinStock.map(function(x){ return x.p; });
+  MIS_LISTAS.eqSin={ t:'🔴 Productos que no hay', s:'Las vendedoras tienen que avisarle al cliente que hay que esperar.', L:sin, m:function(p){ return esc(nombreCanonico(p.vendedor||'')); } };
+  add({ sev:'r', ic:'🔴', n:sin.length, t:'Productos que no hay', s:misEqQuienes(sin, pv), b:'Ver', p:1, fn:"misVerLista('eqSin')", ok:'Todos los productos tienen stock' });
+  var atr=T.filter(function(p){ return minutosAtraso(p)>0; });
+  add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misEqQuienes(atr, pv), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  var fl=q.sinFlete, fBs=0; fl.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
+  MIS_LISTAS.eqFlete={ t:'🚚 Recargo por entrega sin reportar', s:'Lo reporta la vendedora desde el pedido: «Cobré el flete».', L:fl, m:function(p){ return fmtBs(envioPorCobrar(p)); } };
+  add({ sev:'a', ic:'🚚', n:fl.length, t:'Recargo por entrega sin reportar', s:fmtBs(fBs)+' · '+misEqQuienes(fl, pv), b:'Ver', fn:"misVerLista('eqFlete')", ok:'Recargos reportados' });
+  MIS_LISTAS.eqGps={ t:'📍 Pedidos sin ubicación de Google Maps', s:'La vendedora se la pide al cliente.', L:q.sinGps, m:function(p){ return esc(nombreCanonico(p.vendedor||'')); } };
+  add({ sev:'a', ic:'📍', n:q.sinGps.length, t:'Pedidos sin ubicación', s:misEqQuienes(q.sinGps, pv), b:'Ver', fn:"misVerLista('eqGps')", ok:'Ubicaciones completas' });
+  var br=(BORRADORES||[]).filter(function(p){ return !contaExcluido(vendedorDeBorrador(p)); });
+  add({ sev:'a', ic:'📥', n:br.length, t:'Ventas de Kommo sin fecha de entrega', s:misEqQuienes(br, vendedorDeBorrador), b:'Ver ↓', fn:"misIrA('mis-borradores')", ok:'Sin ventas de Kommo pendientes' });
+  var mes=diaNegocio().slice(0,7), deben=T.filter(function(p){ return (p.fecha||'').slice(0,7)===mes && !p.pagado && (Number(p.saldo)||0)>0 && !esATC(p.oc) && !esRPT(p.oc) && !esBorrador(p); });
+  var dBs=0; deben.forEach(function(p){ dBs=r2(dBs+(Number(p.saldo)||0)); });
+  MIS_LISTAS.eqSaldo={ t:'💵 Saldo por cobrar de este mes · '+fmtBs(dBs), L:deben, m:function(p){ return fmtBs(Number(p.saldo)||0); } };
+  add({ sev:'a', ic:'💵', n:deben.length, t:'Saldo por cobrar de este mes', s:fmtBs(dBs)+' · '+misEqQuienes(deben, pv), b:'Ver', fn:"misVerLista('eqSaldo')", ok:'Nada por cobrar este mes' });
+  var ord={ r:0, a:1, i:2 }; I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
+  I.ok=OK; return I;
+}
+/* El efectivo en la mano de cada uno, con la regla de «Tu día» (lo recibido en efectivo en el mes − lo rendido en el mes, `misEfectivoDatos`):
+   las vendedoras del equipo y los choferes (lo que cobró el chofer es del chofer, §4eq). */
+function misEqEfectivo(vends){
+  var pe={ modo:'mes', val:diaNegocio().slice(0,7) }, M={}, toma=function(nm){ var k=normNombre(nm); if(!k) return null; return M[k]||(M[k]={ v:nombreCanonico(nm), c:0, r:0 }); };
+  cuadrePagos(pe, '').forEach(function(c){ if(c.metodo!=='Efectivo') return; var o=toma(pagoRecibio(c, c.p)); if(o) o.c=r2(o.c+(Number(c.monto)||0)); });
+  retirosDe(pe, '').forEach(function(r){ var o=toma(r.entrega); if(o) o.r=r2(o.r+(Number(r.monto)||0)); });
+  var cho=[]; try{ cho=choferesConocidos(); }catch(e){}
+  var esCho=function(v){ return cho.some(function(c){ return mismoVendedor(c, v); }); }, esVend=function(v){ return vends.some(function(x){ return mismoVendedor(x, v); }); };
+  var F=[]; Object.keys(M).forEach(function(k){ var o=M[k], t=Math.max(0, r2(o.c-o.r)); if(t<0.005) return;
+    if(esVend(o.v)) F.push({ v:o.v, t:t, cho:false }); else if(esCho(o.v)) F.push({ v:o.v, t:t, cho:true }); });
+  F.sort(function(a,b){ return b.t-a.t; });
+  var tot=0; F.forEach(function(f){ tot=r2(tot+f.t); });
+  return { tot:tot, F:F, nV:F.filter(function(f){ return !f.cho; }).length, nC:F.filter(function(f){ return f.cho; }).length, mes:pe.val };
+}
+var MIS_EQ_EF=null;
+function misEqEfectivoVer(){
+  var E=MIS_EQ_EF; if(!E) return;
+  var mn=esc(mesNombre(E.mes).replace(/ de \d{4}$/,''));
+  openModal('<div class="modal-h"><h3>💵 Efectivo sin rendir · '+fmtBs0(E.tot)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
+    '<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">Lo recibido en efectivo en '+mn+' menos lo rendido en '+mn+', de cada uno: lo mismo que «Efectivo en tu mano» de su «Tu día».</div>'+
+    (E.F.length ? E.F.map(function(f){ return '<div class="t2-f"><b>'+(f.cho?'🚚 ':'🧑‍💼 ')+esc(f.v)+'</b><span style="color:var(--muted)">'+(f.cho?'chofer':'vendedora')+'</span><span class="t2-m">'+fmtBs(f.t)+'</span></div>'; }).join('')
+      : '<div class="iac-vacio">✅ Nadie tiene efectivo sin rendir.</div>')+'</div>');
+}
+function misEqElegir(v){
+  var mv=document.getElementById('mis-vendedor'); if(!mv || !v) return;
+  MIS_TODOS=false; try{ pintarBotonTodos('mis-todos-btn', false); }catch(e){}
+  mv.value=v; MIS_FILTER='todos'; MIS_TOPE=120; renderMis();
+  try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
+}
+function misEqPintar(mine){
+  var el=document.getElementById('mis-top'); if(!el) return;
+  var T=misEqPedidos(mine), vis={}, vends=[];
+  T.forEach(function(p){ var v=nombreCanonico(p.vendedor||''), k=normNombre(v); if(k && !vis[k]){ vis[k]=1; vends.push(v); } });
+  var mes=diaNegocio().slice(0,7), mesN=function(ym){ return mesNombre(ym).replace(/ de \d{4}$/,''); }, may=function(t){ return String(t).replace(/^./,function(c){ return c.toUpperCase(); }); };
+  var EF=misEqEfectivo(vends); MIS_EQ_EF=EF;
+  var tot={ mes:mes, ant:'', bs:0, bsAnt:0, n:0, ent:0, cobrar:0 }, tie={ mes:mes, bs:0, n:0, art:0, cobrar:0 };
+  var filas=vends.map(function(v){
+    var P=T.filter(function(p){ return mismoVendedor(p.vendedor, v); }), R=misAnilloDatos(P), Ti=misTiendaDatos(P), ef=0;
+    EF.F.forEach(function(f){ if(!f.cho && mismoVendedor(f.v, v)) ef=f.t; });
+    tot.ant=R.ant; tot.bs=r2(tot.bs+R.bs); tot.bsAnt=r2(tot.bsAnt+R.bsAnt); tot.n+=R.n; tot.ent+=R.ent; tot.cobrar=r2(tot.cobrar+R.cobrar);
+    tie.bs=r2(tie.bs+Ti.bs); tie.n+=Ti.n; tie.art+=Ti.art; tie.cobrar=r2(tie.cobrar+Ti.cobrar);
+    return { v:v, R:R, Ti:Ti, ef:ef };
+  }).filter(function(f){ return f.R.n || f.R.bsAnt>0.005 || f.Ti.n || f.ef>0.005; });
+  if(!tot.ant){ var d=new Date(mes+'-01T12:00:00'); d.setMonth(d.getMonth()-1); tot.ant=isoLocal(d).slice(0,7); }
+  filas.sort(function(a,b){ return b.R.bs-a.R.bs || b.Ti.bs-a.Ti.bs; });
+  /* izquierda: lo que hay que resolver, con el nombre de quién */
+  var I=misEqHacerDatos(T), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
+  var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
+    '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
+  var izq='<div class="ah-card"><div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer · el equipo</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small></div>'+
+    (I.length ? ('<div class="ah-lista">'+(MIS_HACER_MAS?I:V).map(fila).join('')+'</div>'+
+        (resto.length?('<button type="button" class="ah-mas" onclick="MIS_HACER_MAS=!MIS_HACER_MAS;renderMis()">'+(MIS_HACER_MAS?'▴ Ver menos':('▾ Ver '+resto.length+' más: '+esc(resto.map(function(o){ return o.t.toLowerCase()+' ('+o.n+')'; }).join(' · '))))+'</button>'):''))
+      : '<div class="ah-vacio"><span>✅</span><div><b>El equipo no tiene nada pendiente</b><small>Ni productos que no hay, ni atrasados, ni ubicaciones, ni saldos, ni ventas de Kommo por completar.</small></div></div>')+
+    ((I.length && I.ok.length)?('<div class="ph-ok"><div class="ph-ok-t">✅ Al día</div><div class="ph-ok-l">'+I.ok.map(function(t){ return '<span>✓ '+esc(t)+'</span>'; }).join('')+'</div></div>'):'')+'</div>';
+  /* derecha: el día del equipo, con las cuentas de «Tu día» sumadas */
+  var prox=proximoDiaEntrega(), hoy=todayStr();
+  var nHoy=T.filter(function(p){ return p.fecha===hoy && !esVentaTienda(p) && !esBorrador(p); }).length, nPx=T.filter(function(p){ return p.fecha===prox && !esVentaTienda(p) && !esBorrador(p); }).length;
+  var pct=tot.bsAnt>0 ? Math.min(1, tot.bs/tot.bsAnt) : (tot.bs>0?1:0);
+  var hb=horaBolivia(), hora=('0'+hb.getHours()).slice(-2)+':'+('0'+hb.getMinutes()).slice(-2);
+  var cu=function(t){ var l=limTurno(prox,t); return l>0 ? (l-cuposUsadosTurno(prox,t)) : null; }, am=cu('AM'), pm=cu('PM');
+  var cel=function(ic,t,val,cls){ return '<div class="td-f'+(cls?(' '+cls):'')+'"><span class="td-i">'+ic+'</span><span class="td-t">'+t+'</span><b>'+val+'</b></div>'; };
+  var der='<div class="td"><div class="td-top"><div class="td-cab"><span>👑 El día del equipo</span><small>'+hora+'</small></div>'+
+      '<div class="td-lbl" title="'+esc('Los pedidos del equipo que se entregan en '+mesN(tot.mes)+' (por la fecha de entrega), sin ventas de tienda, ATC ni reposiciones, y sin Eduardo, ROHO ni pedidos internos: la suma de las filas de abajo.')+'">Vendido para '+esc(mesN(tot.mes))+' · todo el equipo</div><div class="td-big">'+fmtBs0(tot.bs)+'</div>'+
+      '<div class="td-mes">'+misMesLineaHtml(T, tot, pct)+'</div>'+
+      '<div class="td-meta">'+(tot.bsAnt>0 ? (esc(may(mesN(tot.ant)))+' entero: <b>'+fmtBs0(tot.bsAnt)+'</b>'+(tot.bsAnt>tot.bs?(' · faltan <b>'+fmtBs0(r2(tot.bsAnt-tot.bs))+'</b> para igualarlo'):' · <b>¡ya lo pasaron!</b>')) : ('Sin ventas en '+esc(mesN(tot.ant))))+'</div></div>'+
+    '<div class="td-filas">'+
+      cel('📅','Hoy', nHoy+(nHoy===1?' entrega':' entregas'))+
+      cel('🌅', esc(may(nxDiaTxt(prox))), nPx+(nPx===1?' entrega':' entregas'))+
+      cel('🚚','Entregados del mes', tot.ent+' de '+tot.n)+
+      cel('⏳','Falta cobrar del mes', fmtBs0(tot.cobrar), tot.cobrar>0?'td-mal':'td-cero')+
+      '<div class="td-f td-cash" role="button" tabindex="0" onclick="misEqEfectivoVer()" title="Ver quién lo tiene"><span class="td-i">💵</span><span class="td-t">Efectivo sin rendir<small>'+
+        (EF.F.length ? ('en manos de '+[EF.nV?(EF.nV+(EF.nV===1?' vendedora':' vendedoras')):'', EF.nC?(EF.nC+(EF.nC===1?' chofer':' choferes')):''].filter(Boolean).join(' y ')+' · de '+esc(mesN(EF.mes))) : ('todo rendido en '+esc(mesN(EF.mes))))+
+      '</small></span><b>'+fmtBs0(EF.tot)+'</b></div>'+
+      misTiendaFila(tie, true)+
+    '</div>'+
+    ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
+    '<div class="td-acc"><button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Pendientes del equipo</button>'+
+      (UNLOCKED?'<button type="button" class="ah-go" onclick="showView(\'conta\');segSet(\'cta-tab\',\'proy\');setContaTab(\'proy\')">📊 Proyección</button>':'')+'</div></div>';
+  /* abajo: una fila por vendedora */
+  var max=1; filas.forEach(function(f){ max=Math.max(max, f.R.bs, f.R.bsAnt); });
+  var tabla='<div class="ah-card mis-eq-vend"><div class="ah-cab"><span class="ah-ico">👥</span><h4>Por vendedora · '+esc(mesN(tot.mes))+'</h4><span class="ah-sp"></span><small>tocá una para ver sus pedidos</small></div>'+
+    (filas.length ? ('<div class="vt-wrap"><table class="vt"><thead><tr><th>Vendedora</th><th>Vendido para '+esc(mesN(tot.mes))+' (vs '+esc(mesN(tot.ant))+' entero)</th><th>Entregados</th><th>Falta cobrar</th><th>🏪 Tienda</th><th>💵 Efectivo</th></tr></thead><tbody>'+
+      filas.map(function(f){ var R=f.R, pc=R.bsAnt>0 ? Math.round(R.bs/R.bsAnt*100) : null;
+        return '<tr role="button" tabindex="0" data-v="'+esc(f.v)+'" onclick="misEqElegir(this.getAttribute(\'data-v\'))" title="Ver los pedidos de '+esc(f.v)+'"><td>'+esc(f.v)+'</td>'+
+          '<td><div class="vt-bar"><b>'+fmtBs0(R.bs)+'</b><i><em style="width:'+Math.round(R.bs/max*100)+'%"></em></i><small>'+(pc!=null?(pc+'%'):'—')+'</small></div></td>'+
+          '<td>'+R.ent+' de '+R.n+'</td>'+
+          '<td class="'+(R.cobrar>0.005?'vt-mal':'vt-ok')+'">'+(R.cobrar>0.005?fmtBs0(R.cobrar):'✓ al día')+'</td>'+
+          '<td class="vt-tie">'+(f.Ti.n?fmtBs0(f.Ti.bs):'—')+'</td><td class="vt-cash">'+(f.ef>0.005?fmtBs0(f.ef):'—')+'</td></tr>'; }).join('')+
+      '</tbody></table></div>') : '<div class="ah-vacio"><span>📭</span><div><b>Ninguna vendedora tiene ventas este mes ni el anterior</b></div></div>')+
+    '<div class="mis-eq-pie">Sin Eduardo, ROHO ni los pedidos internos: esos se ven eligiendo su nombre. La lista de abajo tiene los pedidos de todos.</div></div>';
+  var h=izq+der+tabla;
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
 /* La bandeja de Kommo en filas cortas (§4mf): los mismos botones que la tarjeta grande (`borrCardHtml`). */
 function borrFilaHtml(p, conDuena){
   var id=String(p.id), gem=null; try{ gem=gemeloDe(p); }catch(e){}
@@ -25247,11 +25431,12 @@ function renderMis(){
   if(bi && !MIS_Q.trim()){ bi.style.display='none'; bi.textContent=''; }
   /* ✨ (§4mf) arriba: «Para hacer» + «Tu día», con un vendedor elegido */
   var _nuevo=misTopActivo() && !!v && !todos, _card=mv.closest('.card'), _top=document.getElementById('mis-top');
-  if(_card) _card.classList.toggle('mis-nuevo', _nuevo);
-  if(_top) _top.hidden=!_nuevo;
-  misBuscaLugar(_nuevo);
+  var _eq=misTopActivo() && todos;                  // 👑 (§4nn) «Ver todos» con el diseño nuevo
+  if(_card){ _card.classList.toggle('mis-nuevo', _nuevo || _eq); _card.classList.toggle('mis-eq', _eq); }
+  if(_top) _top.hidden=!(_nuevo || _eq);
+  misBuscaLugar(_nuevo || _eq);
   /* ⏳ (§4mg, V6) En una compu nueva, mientras llega la planilla: la forma de lo que viene, no «todo en 0». */
-  if(_nuevo && esqCargando()){ if(_top){ _top.innerHTML=esqMisHtml(); _top._h=''; } if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='none'; return; }
+  if((_nuevo || _eq) && esqCargando()){ if(_top){ _top.innerHTML=esqMisHtml(); _top._h=''; } if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='none'; return; }
   if(!v && !todos){ box.innerHTML=''; nxM1Desp('', false); var _a0=document.getElementById('mis-anillo'); if(_a0) _a0.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; misDepPintar([], '', false); tbl.style.display='none'; empty.style.display='block'; empty.className='empty'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
@@ -25276,6 +25461,7 @@ function renderMis(){
   misFichasVivas(box, pend>0);                      // 🎨 (§4jj) color + dibujito en cada ficha
   nxM1Ficha(box, v, todos);                         // 🔔 (§4js, M1) la 5ª ficha: avisar a los clientes de mañana
   if(_nuevo) try{ misTopPintar(v, mine); }catch(e){ console.error(e); }   // ✨ (§4mf)
+  if(_eq) try{ misEqPintar(mine); }catch(e){ console.error(e); }          // 👑 (§4nn)
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
   nxM3(mine, v, todos);                             // 🏅 (§4js, M3) pasó lo del mes anterior
   nxBadges();
