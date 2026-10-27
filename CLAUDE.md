@@ -1098,7 +1098,7 @@ tarde grita en el primer tic. El anuncio va primero (`anuncioTic` = `anuncioTicA
   (la proyección da igual con o sin metas). `tests/test_metas.js` (24).
 - **🎄 Navidad** (§4nc): `tema-navidad` en diciembre (Bolivia), pedidos.html + panel_template.html; Bloki con gorro (`temaNavidad()`). También
   en el dashboard de **Sueña** (repo `MULTIESPUMAS-VISCARRA`, `5013a40`, su `tests/test_navidad.js`). `tests/test_navidad.js` (20).
-- **🧽 Bloki con «Administración»** sigue la pestaña: pedido y Mis pedidos → vendedor, Contabilidad → conta, Administración → logística (casco).
+- **🧽 Bloki** sigue la pestaña (desde §4ni, para TODOS, no solo con «Administración»): pedido y Mis pedidos → vendedor, Contabilidad → conta, Administración → logística (casco).
 - **📲 «Pedir hoy» por WhatsApp** (`.gs` 27-a): media hora antes del corte (16:00; sábado 11:30), a la propiedad **`WA_PEDIR_HOY`** (Ernesto y
   Alba), plantilla **`logistica_pedir_hoy`** (5 datos). La regla es `semanaUrgentes` pasada al `.gs` (`waPh*`); ⚠️ si cambia `semanaLinea`,
   `semanaEntra`, `esProdDeTienda`, los `PROD_*` o los plazos, cambia el `.gs` también: **`tests/test_wa_pedir_hoy.js` (64) compara los dos**.
@@ -2316,7 +2316,7 @@ GitHub, no de Cloudflare. ⚠️ `cloudflare-worker.js` del repo es una copia vi
 vendedora y `entity_type` lead, pero **solo SIN `filter[entity]`** (con `lead` da 204: por eso junio dio 0 y `generar.py` no los ve). Instrucción
 para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramientas/inspeccionar_respuestas.py`.
 
-## ✨ Lo elegido del muestrario + 🌼 noviembre (§4ni, 27/10; EN LA RAMA, espera «publica»; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16… el tema de noviembre, estilo Coco» y «Además quiero: 3, 10, 11»)
+## ✨ Lo elegido del muestrario + 🌼 noviembre (§4ni, 27/10; PUBLICADO `a8dbe8c` + Bloki `3536736`; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16… el tema de noviembre, estilo Coco» y «Además quiero: 3, 10, 11»)
 - **Temas**: el `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia (octubre Halloween, noviembre Todos Santos,
   1-30/12 Navidad, 31/12-2/1 Año Nuevo, Carnaval = 52 a 47 días antes de la Pascua, Madre 20-27/5, 6 de Agosto 1-7/8, 24 de Septiembre 18-24/9,
   el resto Espuma); `?tema=<nombre>` para verlo. Lo que se mueve va en el lienzo `#hdr-fx` (un cuadro en las pruebas, `HDR_FX_PRUEBA`). Las
@@ -2334,6 +2334,8 @@ para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramienta
   «↩️ Deshacer» 5 s después de Entregó, cambio de turno y Borrar; ⚠️ borrar espera los 5 s ANTES de ir a la planilla (`borrarConDeshacer` →
   `realDelete`); deshacer = otro guardado por el mismo camino (foto `entregado`+`productos`, `cambiarTurno(id, antes, true)`); `DESH_PRUEBA`. Un
   borrado NUEVO que la persona hace a mano va con `borrarConDeshacer`.
+- 🧽 **Bloki según la pestaña, para todos** (dueño: «Según pestaña, todos»): Nuevo pedido/Mis pedidos → vendedor, Contabilidad → contador,
+  Administración → casco; en ATC/Bot/Chofer, el de quien eligió ser. `test_bloki` §2.
 - `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29), `tests/test_mejoras_5_7_9.js` (52). Bitácora §4ni.
 
 ## Campo "Canal" en Kommo

@@ -16588,7 +16588,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - Espera que el dueño elija por número. Nada cambia cuentas, cupos ni la planilla; lo de 4 y 7 usa los caminos de siempre (`reproAplicar`, `guardarDurable`).
 
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
-EN LA RAMA (`dda5111` + `cda8a25`), espera «publica». El `.gs` no cambia.
+**PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
 - **Temas (14, 15 y noviembre)**: el script del `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia: octubre
   Halloween · noviembre **Todos Santos** · 1 al 30/12 Navidad · **31/12 al 2/1 Año Nuevo** (antes el 31 era Navidad: cambió a conciencia en
   `test_navidad`) · **Carnaval** de 52 a 47 días antes de la Pascua (jueves de comadres al martes; la Pascua se calcula, 2027 = 4 al 9/2) · **Día de
@@ -16666,6 +16666,10 @@ EN LA RAMA (`dda5111` + `cda8a25`), espera «publica». El `.gs` no cambia.
     sigue en la planilla y vuelve, nunca se pierde nada); Ctrl+Z deshace fuera de un campo. Las preguntas siguen y dicen «tenés 5 segundos para
     deshacerlo». En las pruebas apagado salvo `DESH_PRUEBA` (todo como antes, `realDelete` en el acto). Los borrados en tanda (ATC de Trello)
     siguen con `realDelete` directo.
+  · 🧽 **Bloki según la pestaña, para todos** (PUBLICADO `3536736`; el dueño, con su nombre elegido: *«cambié pestaña y bloki seguía igual»*, y
+    eligió «Según pestaña, todos»): `blokiTraje` = Nuevo pedido y Mis pedidos → vendedor, Contabilidad → contador, Administración → casco; en ATC,
+    Bot y Chofer, el de quien eligió ser (logística/contabilidad/vendedor; Administración o nadie → Bloki). Antes solo seguía la pestaña con
+    «Administración» elegida. `test_bloki` §2 cambió a conciencia (19).
   · Prueba: `tests/test_mejoras_5_7_9.js` (52). Dos arreglos de tiempo (`51a82c0`): `navFoto` lee el color de la pestaña SIN `transition`
     (a mitad del cambio anterior daba transparente y no había fantasma) y al llegar la pestaña toma su color de una vez (el fantasma la tapa).
   · Batería entera (`ccf9c9c`): 269 suites, 8.716 bien; en rojo la nueva (el caso de arriba, ya arreglado: 52/52 cuatro veces con la máquina
