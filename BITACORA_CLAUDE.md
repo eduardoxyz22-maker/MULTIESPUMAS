@@ -16436,4 +16436,5 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
   más cercano al más lejos. «📋 Para hacer»: `semana` (rojo, ⬜+🔴) y `semana-t` (ámbar, `tarde`). Solo mira.
 - `tests/test_semana.js` (40, reloj clavado el jueves 29/10/2026, con el feriado del 02/11; `SEM_CAP` deja capturas). Muestra al dueño con
   datos inventados: https://claude.ai/artifact/M5CtFZ9oqZpoba2F5W1CL9 (versión 3). PUBLICADO 27/10 (dueño: «Publica»), `dce5fcc` (solo
-  `pedidos.html` y la prueba, con `format-patch`, en un commit). Batería con la máquina cargada: `test_asistente_ak` 34/4, sola 38/0.
+  `pedidos.html` y la prueba, con `format-patch`, en un commit). Batería: 259 suites, 8.315 bien; rojas solo por carga o
+  conocidas: `test_asistente_ak` 34/4 (sola 38/0), `test_mispedidos` 32/1 (sola 33/0), `test_ventas_marcas` (1180 px). Pages OK.
