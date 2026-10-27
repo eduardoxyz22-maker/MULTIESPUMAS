@@ -800,6 +800,15 @@ th.sortable:hover{color:var(--teal-dk)}
 .dl-v{flex:1;color:var(--text);word-break:break-word}
 /* 🗂️ (23/10) La ficha de Administración para logística (`showPedidoModal`): ancha, observaciones arriba y tres columnas */
 .modal.fl-ficha{max-width:min(1180px,96vw)}
+/* 🗂️ (§4ni, 3) La ficha al costado (ver `fichaCostadoAplicar`): la ventana ocupa la derecha debajo del encabezado y la página corre su
+   contenido a la izquierda. El fondo no se oscurece: la lista sigue a mano. */
+body.ficha-costado #modal{ left:auto; right:0; top:var(--hdr-h,0px); bottom:0; width:min(900px,60vw); background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none;
+  padding:0; align-items:stretch; overflow:hidden; }
+body.ficha-costado #modal-box.fl-ficha{ max-width:none; width:100%; margin:0; border-radius:16px 0 0 0; box-shadow:-16px 0 40px rgba(16,40,44,.22); overflow-y:auto; max-height:100%; animation:fc-entra .22s ease; }
+@keyframes fc-entra{ from{ transform:translateX(28px); opacity:.6; } }
+body.ficha-costado .wrap{ max-width:none; margin-left:0; margin-right:min(900px,60vw); }
+.af-f.af-sel{ outline:3px solid var(--teal); outline-offset:2px; }
+@media(prefers-reduced-motion:reduce){ body.ficha-costado #modal-box.fl-ficha{ animation:none; } }
 .modal.fl-ficha .fl-h{background:linear-gradient(135deg,#00B5AD,#00A09A)}
 .fl-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .fl-num{background:#00A09A;color:#fff;border-radius:14px;padding:8px 14px;text-align:center;line-height:1;flex:none}
@@ -1044,7 +1053,11 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-fila{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 12px;border-top:1px solid var(--gray-md);font-size:.84rem}
 .pry-fila small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px;font-weight:400}
 .pry-q{min-width:0}
-.pry-n{text-align:right;white-space:nowrap}
+.pry-n{text-align:right;white-space:nowrap;order:2}
+.pry-mom{order:1;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:1px;flex:none}
+.pry-mom-l{width:110px;height:30px;display:block}
+.pry-mom small{margin:0 !important;font-size:.7rem !important;font-weight:800 !important;white-space:nowrap}
+@media(max-width:600px){ .pry-mom-l{width:64px;height:22px} }
 .pry-p{color:#6d28d9 !important;font-weight:700 !important}
 .pry-total{border:1px solid var(--teal);border-left-width:4px;border-radius:10px;background:#f0fdfa;margin-bottom:12px}
 /* 📈 (29/09, §4gu) Cómo se proyectó cada grupo, la prueba con los meses cerrados y el patrón del mes. */
@@ -1289,6 +1302,32 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 .pal-pie{ display:flex; gap:16px; flex-wrap:wrap; padding:8px 14px; border-top:1px solid var(--gray-md); background:#f7fafa; font-size:.72rem; color:var(--muted); }
 .pal-pie b{ color:#17302f; }
 @media(max-width:700px){ .pal-pie{ display:none; } .pal{ max-height:70vh; } }
+/* 🔔 10 · «En vivo» (ver `vivoPintar`). */
+.vivo-btn{ position:relative; flex:none; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff; font-size:1.05rem; cursor:pointer; display:grid; place-items:center; }
+.vivo-btn:hover{ background:rgba(255,255,255,.26); }
+.pal-btn + .vivo-btn{ margin-left:-8px; }
+.vivo-btn + .hstat, .vivo-btn[hidden] + .hstat{ margin-left:0; }
+.vivo-n{ position:absolute; top:-5px; right:-5px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; background:#d23645; color:#fff; font-size:.68rem; font-weight:900; display:grid; place-items:center; border:2px solid rgba(255,255,255,.9); }
+.vivo-btn.suena{ animation:vivo-campanea .9s ease-in-out; }
+@keyframes vivo-campanea{ 10%,50%{ transform:rotate(14deg); } 30%,70%{ transform:rotate(-14deg); } 90%{ transform:rotate(4deg); } }
+.vivo-drop{ position:fixed; z-index:4400; width:min(400px, calc(100vw - 16px)); max-height:min(70vh, 560px); overflow:auto; background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(16,40,44,.3); padding:10px; animation:vivo-abre .18s cubic-bezier(.34,1.56,.64,1); transform-origin:top right; }
+@keyframes vivo-abre{ from{ transform:scale(.92); opacity:0; } }
+.vivo-cab{ display:flex; align-items:center; gap:8px; font-weight:800; color:#17302f; padding:2px 4px 8px; }
+.vivo-punto{ width:9px; height:9px; border-radius:50%; background:#d23645; animation:ah-late 1.6s infinite; }
+.vivo-x{ margin-left:auto; border:0; background:#f3f8f8; border-radius:8px; width:28px; height:28px; cursor:pointer; color:var(--muted); font-weight:800; }
+.vivo-lista{ display:grid; gap:6px; }
+.vivo-it{ display:flex; gap:10px; align-items:center; border:1px solid var(--gray-md); border-radius:11px; padding:8px 10px; cursor:pointer; font-size:.82rem; color:var(--text); }
+.vivo-it:hover{ background:var(--teal-lt); }
+.vivo-it.nuevo{ border-color:#99DDD9; background:#f2fbfa; }
+.vivo-ic{ width:30px; height:30px; border-radius:50%; display:grid; place-items:center; flex:none; font-size:.9rem; color:#fff; }
+.vivo-tx{ min-width:0; flex:1; line-height:1.35; }
+.vivo-tx b{ color:#17302f; }
+.vivo-it time{ font-size:.7rem; color:var(--muted); white-space:nowrap; }
+.vivo-vacio{ padding:16px 8px; text-align:center; color:var(--muted); font-size:.85rem; }
+@media(max-width:560px){ .vivo-btn{ width:36px; height:36px; } }
+@media(prefers-reduced-motion:reduce){ .vivo-btn.suena, .vivo-drop{ animation:none; } }
+@media print{ .vivo-btn, .vivo-drop{ display:none!important; } }
+.vivo-btn[hidden], .vivo-n[hidden], .vivo-drop[hidden]{ display:none !important; }
 /* 💾 6 · «Guardar» que se transforma (ver `guardarBtnFin`). */
 #f-submit{ transition:background .25s, border-color .25s, transform .15s; }
 #f-submit.gz-ok{ background:#1E8E5E !important; border-color:#1E8E5E !important; color:#fff !important; animation:gz-pop .45s cubic-bezier(.34,1.56,.64,1); }
@@ -1710,6 +1749,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1 id="hdr-dia">Registro de Pedidos</h1><p id="stat-hoy-l">Cupos mañana</p></div>
     <button type="button" id="pal-btn" class="pal-btn no-print" onclick="palAbrir()" title="Buscar un cliente, una OC, una nota, un celular o un producto, o ir a algo (Ctrl + K)" aria-label="Buscar (Ctrl + K)"><span aria-hidden="true">🔎</span><span class="pal-btn-t">Buscar</span><span class="pal-kbd" aria-hidden="true">Ctrl K</span></button>
+    <button type="button" id="vivo-btn" class="vivo-btn no-print" hidden onclick="vivoAbrir()" aria-expanded="false" title="En vivo: lo último que pasó hoy" aria-label="Lo último que pasó">🔔<span class="vivo-n" id="vivo-n" hidden>0</span></button>
     <div class="hstat"><div class="hstat-v" id="stat-hoy" hidden>0</div><div class="h-anillos" id="h-anillos" role="img" aria-label="Cupos libres del próximo camión"></div></div>
   </div>
   <!-- 🚚 (§4iw, 09/10, dueño: «A») La ruta del camión: el camión mira a la izquierda y va de derecha a izquierda (de frente). -->
@@ -3187,6 +3227,10 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .td-prog{height:8px;border-radius:9px;background:rgba(255,255,255,.22);overflow:hidden;margin:9px 0 7px}
 .td-prog i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#fde68a,#fff)}
 .td-meta{font-size:.8rem;opacity:.95}.td-meta b{font-variant-numeric:tabular-nums}
+.td-mes{position:relative;margin:8px 0 6px}
+.td-linea{display:block;width:100%;height:64px}
+.td-punto{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fde047;border:2px solid #fff;box-shadow:0 0 0 3px rgba(253,224,71,.35)}
+.td-alt{font-size:.76rem;font-weight:800;margin-top:3px}
 .td-filas{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;padding:2px 18px;flex:1;align-content:space-evenly}
 .td-f{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #edf3f2}
 .td-f:nth-last-child(-n+2){border-bottom:0}
@@ -9947,6 +9991,41 @@ function pryPatron(V, ym, g, hist, hoy){
   return { ym:ym, g:g, cerrado:cerrado, T:T, dias:dias, ult:ult, fin3:fin3, llen:llen,
            sem:sem.map(function(s,k){ return cnt[k] ? s/cnt[k] : 0; }), semMeses:hist.slice() };
 }
+/* 📈 11 · EL MoM DE CADA VENDEDOR (§4ni, 27/10; dueño: «me gusta el MoM pero sería para Proyección donde yo veo el MoM de cada vendedor,
+   y "Tu mes" en cada línea»). Al lado de cada vendedor: una línea con lo vendido del mes, día por día de carga, contra el mes con el que
+   se compara («Comparar con» de «A esta altura», por defecto el anterior), y el % arriba o abajo A LA MISMA ALTURA (mismo día y hora,
+   la cuenta de siempre: `pryCargadaAl`). Las mismas ventas que la fila (`pryVentas`: el mes por la entrega agendada). Solo mira. */
+function pryMomSerie(xs, ym, hasta){
+  var fin=+pryFinDeMes(ym).slice(8,10), n=Math.min(fin, hasta||fin), out=[];
+  for(var d=1; d<=n; d++){ var lim=ym+'-'+(d<10?'0':'')+d, t=0; xs.forEach(function(x){ if(x.ym===ym && x.reg<=lim) t+=x.bs; }); out.push(t); }
+  return { v:out, fin:fin };
+}
+function pryMomDe(R, A, r){
+  if(!A || !A.cmp || !R.V) return null;
+  var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), xs=R.V.filter(function(x){ return x.vk===vk; });
+  var dia=A.curso ? A.dia : 0, lim=dia ? (A.cmp+'-'+(Math.min(dia, +pryFinDeMes(A.cmp).slice(8,10))<10?'0':'')+Math.min(dia, +pryFinDeMes(A.cmp).slice(8,10))) : '';
+  var act=0, ant=0;
+  xs.forEach(function(x){
+    if(x.ym===R.ym) act+=x.bs;
+    if(x.ym===A.cmp && (!lim || A.enteroAntes || pryCargadaAl(x, lim, A.min))) ant+=x.bs;
+  });
+  return { act:act, ant:ant, cur:pryMomSerie(xs, R.ym, dia||0), prev:pryMomSerie(xs, A.cmp, 0) };
+}
+function pryMomHtml(R, A, r){
+  var M=pryMomDe(R, A, r); if(!M || !(M.act>0.009 || M.ant>0.009)) return '';
+  /* Si el mes con el que se compara no tiene NINGUNA venta del equipo en el panel (agosto, antes de empezar a cargarse), no hay con qué
+     comparar: no se dice «nuevo» de alguien que ya vendía. */
+  if(!(M.ant>0.009) && !R.V.some(function(x){ return x.ym===A.cmp && x.amb===r.amb; })) return '';
+  var p=M.ant>0.009 ? Math.round((M.act/M.ant-1)*100) : null, up=(p==null || p>=0), col=up ? '#15803d' : '#b91c1c';
+  var W=110, H=30, max=Math.max(1, M.cur.v[M.cur.v.length-1]||0, M.prev.v[M.prev.v.length-1]||0)*1.05, dias=Math.max(M.cur.fin, M.prev.fin);
+  var pts=function(a){ return a.map(function(v,i){ return ((dias>1?i/(dias-1):0)*W).toFixed(1)+','+(H-2-v/max*(H-5)).toFixed(1); }).join(' '); };
+  var c=M.cur.v, ult=c.length ? ((dias>1?(c.length-1)/(dias-1):0)*W).toFixed(1)+','+(H-2-c[c.length-1]/max*(H-5)).toFixed(1) : '';
+  var svg='<svg class="pry-mom-l" viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><polyline points="'+pts(M.prev.v)+'" fill="none" stroke="#b4c2c1" stroke-width="1.5" stroke-dasharray="3 2"/>'+
+          (c.length ? ('<polyline points="'+pts(c)+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+ult.split(',')[0]+'" cy="'+ult.split(',')[1]+'" r="2.6" fill="'+col+'"/>') : '')+'</svg>';
+  var txt=(p==null) ? ('nuevo vs '+pryMesCorto(A.cmp)) : ((p>0?'▲ ':(p<0?'▼ ':''))+Math.abs(p)+'% vs '+pryMesCorto(A.cmp));
+  return '<div class="pry-mom" title="'+esc((A.curso?'A esta altura (día '+A.dia+(A.hora?(', '+A.hora):'')+')':'El mes entero')+': '+fmtBs0(M.act)+' contra '+fmtBs0(M.ant)+' de '+mesNombre(A.cmp))+'">'+svg+
+         '<small style="color:'+(p==null?'var(--muted)':col)+'">'+esc(txt)+'</small></div>';
+}
 function renderProyeccion(){
   var box=document.getElementById('pry-metrics'); if(!box) return;
   if(!UNLOCKED){ segSet('cta-tab','ventas'); setContaTab('ventas'); return; }
@@ -10004,13 +10083,15 @@ function renderProyeccion(){
   }).join('');
 
   /* Una lista y no una tabla: en el celular una tabla de cuatro columnas escondía la proyección detrás del scroll. */
+  var _A=null; try{ _A=pryAltura(R); }catch(e){}
   var filaHtml=function(r){
     var det=[nV(r.n), nU(r.u)];
     if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
     if(R.estado==='curso' && r.b>0.009) det.push('agendado '+fmtBs(r.b));
     if(r.sinMonto) det.push(r.sinMonto+' sin monto');
     return '<div class="pry-fila"><div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
-           '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div></div>';
+           '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
+           (function(){ try{ return pryMomHtml(R, _A, r); }catch(e){ return ''; } })()+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
   };
   /* Abajo de cada grupo, con qué se proyectó y la cuenta entera (§4gu), para que se pueda seguir con la calculadora. */
   var metodoPie=function(k, nombre, g){
@@ -15866,6 +15947,7 @@ function updateStats(){
   hdrPintar(man, rAM, rPM);
   updateFooter();
   if(typeof nxBadges==='function') nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
+  try{ vivoPintar(); }catch(e){}                  // 🔔 (§4ni, 10) la campanita «En vivo»
 }
 
 /* 🚚 (§4iw, 09/10, dueño: «A») Arriba: el día de hoy y dos anillos con los cupos LIBRES del próximo camión (AM y PM).
@@ -15905,7 +15987,9 @@ function hdrArrancar(){
   hdrMedir();
   window.addEventListener('scroll', hdrScroll, { passive:true });
   window.addEventListener('resize', function(){ hdrMedir(); });
-  var r=document.querySelector('.header .h-ruta'); if(r) r.addEventListener('transitionend', function(e){ if(e.propertyName==='height' && !HDR.chico) hdrMedir(); });
+  /* (27/10, §4ni) Si el «terminó de esconderse» llega cuando ya se volvió a subir (con la máquina cargada pasa), la ciudad está volviendo a
+     crecer desde 0: medir ahí dejaba el encabezado entero en 84 px. Se mide solo con la ciudad quieta (su propio fin de transición). */
+  var r=document.querySelector('.header .h-ruta'); if(r) r.addEventListener('transitionend', function(e){ if(e.target!==r || e.propertyName!=='height' || HDR.chico) return; try{ if(r.getAnimations && r.getAnimations().length) return; }catch(x){} hdrMedir(); });
 }
 document.addEventListener('DOMContentLoaded', function(){ try{ hdrArrancar(); }catch(e){} });
 var HDR_MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -16134,6 +16218,87 @@ function palElegir(i){
 document.addEventListener('keydown', function(e){
   if((e.ctrlKey || e.metaKey) && !e.altKey && (e.key==='k' || e.key==='K')){ e.preventDefault(); if(PAL.abierta) palCerrar(); else palAbrir(); }
 });
+
+/* 🔔 10 · «EN VIVO»: LA CAMPANITA DE ARRIBA (§4ni, 27/10; dueño: «Además quiero: 3, 10, 11»). Al lado del día, en todas las pestañas, para
+   Administración, logística y el dueño (`asisVeAdm`; los vendedores no la ven). El número = lo nuevo desde la última vez que se abrió en
+   ESTE aparato; al tocarla se despliega lo que pasó HOY, lo más nuevo arriba:
+   · 🟢 un pedido cargado hoy (`p.ts`) · ✅ un entregado marcado hoy (el registro del cierre, `x.eT`) · 💵 un pago con fecha de hoy de una
+     venta de otro día · 📥 un Excel subido hoy (`STOCK.h`) · 🚚 un camión que salió hoy (`camionSalio`: «Ya salió» o el GPS).
+   · Sale de la planilla: nadie carga nada más. Cada renglón abre lo que nombra. Lo visto se anota por aparato (`me_vivo_visto`, del día).
+   · En las pruebas no aparece, salvo `window.VIVO_PRUEBA`. */
+var VIVO={ n:-1, L:[] }, LS_VIVO='me_vivo_visto';
+function vivoActivo(){ return !(navigator.webdriver && !window.VIVO_PRUEBA) && asisVeAdm(); }
+function vivoHoy(){ return isoDeTsBolivia(Date.now()); }
+function vivoDatos(){
+  var hoy=vivoHoy(), L=[], deHoy=function(t){ return t>0 && isoDeTsBolivia(t)===hoy; };
+  var corto=function(v){ return String(v||'').trim().split(/\s+/)[0]||'Alguien'; };
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p)) return;
+    var cli=String(p.cliente||'(sin nombre)'), oc=p.oc?(' · '+p.oc):'', ts=Number(p.ts)||0, rev=Number(p.rev)||0, nuevo=deHoy(ts);
+    if(nuevo){ var m=0; try{ m=ventaTotal(p)||0; }catch(e){}
+      L.push({ k:'n|'+p.id, t:ts, ic:esATC(p.oc)?'🎧':(esRPT(p.oc)?'🏪':'📝'), c:'#00A09A', h:'<b>'+esc(corto(p.vendedor))+'</b> cargó '+esc(cli)+esc(oc)+(m>0.009?(' · '+fmtBs0(m)):''), id:p.id }); }
+    if(p.entregado){ var eT=0, q=''; (p.productos||[]).forEach(function(x){ if(x && Number(x.eT)>eT){ eT=Number(x.eT); q=x.eQ||''; } });
+      if(deHoy(eT)) L.push({ k:'e|'+p.id, t:eT, ic:'✅', c:'#1E8E5E', h:'Entregado: '+esc(cli)+esc(oc)+(q?(' · lo marcó <b>'+esc(corto(q))+'</b>'):''), id:p.id }); }
+    if(!nuevo){ var cp=[]; try{ cp=contaPagos(p); }catch(e){}
+      cp.forEach(function(c,i){ if(c && c.fecha===hoy && Number(c.monto)>0.009)
+        L.push({ k:'p|'+p.id+'|'+i+'|'+c.monto, t:deHoy(rev)?rev:0, ic:'💵', c:'#7c3aed', h:'Pago de '+fmtBs(c.monto)+' · '+esc(cli)+(c.metodo?(' · '+esc(c.metodo)):''), id:p.id }); }); }
+  });
+  try{ ((typeof STOCK!=='undefined' && STOCK && STOCK.h) || []).forEach(function(h){ if(h && deHoy(Number(h.ts)))
+    L.push({ k:'x|'+(h.id||h.ts), t:Number(h.ts), ic:'📥', c:'#C2620A', h:'Se subió el Excel de <b>'+esc(h.alm ? stockAlmCorto(h.alm) : 'PTF')+'</b>'+(h.hora?(' (corte '+esc(String(h.hora).slice(0,5))+')'):''), x:1 }); }); }catch(e){}
+  Object.keys(VEHICULOS).forEach(function(v){ var hs=''; try{ hs=camionSalio(hoy, v); }catch(e){}
+    if(hs && /^\d{1,2}:\d{2}/.test(hs)) L.push({ k:'s|'+v+'|'+hs, t:Date.parse(hoy+'T'+(hs.length===4?'0':'')+hs.slice(0,5)+':00-04:00')||0, ic:'🚚', c:'#0f766e', h:'Salió el <b>'+esc(v)+'</b> a las '+esc(hs.slice(0,5)) }); });
+  L.sort(function(a,b){ return (b.t||0)-(a.t||0); });
+  return L.slice(0,40);
+}
+function vivoVistos(){ try{ var o=JSON.parse(localStorage.getItem(LS_VIVO)||'null'); return (o && o.d===vivoHoy() && o.k) ? o.k : []; }catch(e){ return []; } }
+function vivoPintar(){
+  var b=document.getElementById('vivo-btn'); if(!b) return;
+  if(!vivoActivo()){ b.hidden=true; return; }
+  b.hidden=false;
+  VIVO.L=vivoDatos();
+  var vis=vivoVistos(), n=VIVO.L.filter(function(x){ return vis.indexOf(x.k)<0; }).length, nb=document.getElementById('vivo-n');
+  if(nb){ nb.textContent=n>99?'99+':String(n); nb.hidden=!n; }
+  b.setAttribute('aria-label', n ? ('Lo último que pasó: '+n+' nuevo'+(n===1?'':'s')) : 'Lo último que pasó');
+  if(VIVO.n>=0 && n>VIVO.n){ b.classList.remove('suena'); void b.offsetWidth; b.classList.add('suena'); }
+  VIVO.n=n;
+  var d=document.getElementById('vivo-drop'); if(d && !d.hidden) vivoLista();
+}
+function vivoCuando(t){
+  if(!t) return 'hoy';
+  var m=Math.round((Date.now()-t)/60000);
+  return m<1 ? 'recién' : (m<60 ? ('hace '+m+' min') : horaDeTs(t).slice(0,5));
+}
+function vivoLista(){
+  var d=document.getElementById('vivo-drop'); if(!d) return;
+  var vis=vivoVistos();
+  d.innerHTML='<div class="vivo-cab"><span class="vivo-punto"></span>En vivo · hoy<button type="button" class="vivo-x" onclick="vivoCerrar()" aria-label="Cerrar">✕</button></div>'+
+    (VIVO.L.length ? ('<div class="vivo-lista">'+VIVO.L.map(function(x,i){
+      return '<div class="vivo-it'+(vis.indexOf(x.k)<0?' nuevo':'')+'" role="button" tabindex="0" data-i="'+i+'"><span class="vivo-ic" style="background:'+x.c+'">'+x.ic+'</span><span class="vivo-tx">'+x.h+'</span><time>'+esc(vivoCuando(x.t))+'</time></div>'; }).join('')+'</div>')
+     : '<div class="vivo-vacio">Todavía no pasó nada hoy. Acá van a ir apareciendo los pedidos nuevos, las entregas, los pagos, el Excel del día y los camiones que salen.</div>');
+}
+function vivoAbrir(){
+  var d=document.getElementById('vivo-drop');
+  if(d && !d.hidden){ vivoCerrar(); return; }
+  if(!d){ d=document.createElement('div'); d.id='vivo-drop'; d.className='vivo-drop'; d.setAttribute('role','region'); d.setAttribute('aria-label','En vivo'); document.body.appendChild(d);
+    d.addEventListener('click', function(e){ var it=e.target.closest('.vivo-it'); if(it) vivoElegir(+it.getAttribute('data-i')); });
+    d.addEventListener('keydown', function(e){ if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('vivo-it')){ e.preventDefault(); vivoElegir(+e.target.getAttribute('data-i')); } }); }
+  VIVO.L=vivoDatos(); vivoLista();
+  var b=document.getElementById('vivo-btn'), r=b.getBoundingClientRect();
+  d.style.top=Math.round(r.bottom+8)+'px'; d.style.right=Math.max(8, Math.round(window.innerWidth-r.right))+'px';
+  d.hidden=false; b.setAttribute('aria-expanded','true');
+  /* Al abrirla, todo lo de la lista queda visto (en este aparato). */
+  try{ localStorage.setItem(LS_VIVO, JSON.stringify({ d:vivoHoy(), k:VIVO.L.map(function(x){ return x.k; }) })); }catch(e){}
+  VIVO.n=0; var nb=document.getElementById('vivo-n'); if(nb) nb.hidden=true;
+}
+function vivoCerrar(){ var d=document.getElementById('vivo-drop'); if(d) d.hidden=true; var b=document.getElementById('vivo-btn'); if(b) b.setAttribute('aria-expanded','false'); }
+function vivoElegir(i){
+  var x=VIVO.L[i]; if(!x) return; vivoCerrar();
+  if(x.id){ if(UNLOCKED && typeof showPedidoModal==='function') showPedidoModal(x.id); else showMisModal(x.id); }
+  else if(x.x && UNLOCKED) abrirStock();
+}
+document.addEventListener('click', function(e){ var d=document.getElementById('vivo-drop'); if(!d || d.hidden) return; if(!d.contains(e.target) && !e.target.closest('#vivo-btn')) vivoCerrar(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ var d=document.getElementById('vivo-drop'); if(d && !d.hidden) vivoCerrar(); } });
+setInterval(function(){ try{ if(!document.hidden) vivoPintar(); }catch(e){} }, 60000);   // «hace N min» y lo que llegó sin otra lectura
 
 /* ✨ (§4iw) D2 · las fichas de números (`.mc`, `.sf-ficha`) se inclinan siguiendo el mouse o el dedo. Solo mira. */
 (function(){
@@ -18861,7 +19026,7 @@ function admFichaHtml(p, dn){
   var cam=ret ? '' : (p.vehiculo ? ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>') : '<div class="rojo">🚛 Sin camión</div>');
   var btn=function(ic, t, fn, cl){ return '<button type="button" class="'+(cl||'')+'" onclick="event.stopPropagation();'+fn+'" title="'+esc(t)+'">'+ic+'<small>'+esc(t)+'</small></button>'; };
   var rk=admFichaColor(p);   // 🎨 (24/10, dueño) la ficha entera: ATC, RPT, verde = todo OK, rojo = falta algo; lo demás va en el producto
-  return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
+  return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" data-pid="'+esc(String(p.id))+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
     '<div class="af-hd">'+(function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «el número es una cosa y el sticker otra»: el turno solo, a la izquierda)
         return '<span class="af-tu"><b>'+(N||'—')+'</b></span>'; })()+   // (24/10, dueño) el N° del día solo, con su fondo
       '<div class="af-who"><b>'+esc(p.cliente||'—')+'</b><span class="af-sub"><em>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+'</em>'+
@@ -24285,6 +24450,32 @@ function misEfectivoDatos(v){
            nuevos:cob.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); }), retiros:ret, ult:ret[ret.length-1]||null };
 }
 var MIS_EF_ABIERTO=false;
+/* 📈 11 · «TU MES» EN TU DÍA (§4ni): la barrita de «Vendido para <mes>» pasa a ser la línea del mes, día por día de carga, contra el mes
+   pasado (punteado). Las mismas ventas que el número grande (`misAnilloDatos`: las del vendedor, por el mes de la entrega). Abajo, cómo
+   va contra el mes pasado A ESTA ALTURA (mismo día). Sin nada del mes pasado ni de este, la barrita de siempre. */
+function misMesLineaHtml(mine, R, pct){
+  var hoy=todayStr(), dia=+hoy.slice(8,10), dias=function(ym){ return +pryFinDeMes(ym).slice(8,10); };
+  var xs=[];
+  mine.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
+    var m=String(p.fecha||'').slice(0,7); if(m!==R.mes && m!==R.ant) return;
+    xs.push({ ym:m, reg:(contaFecha(p)||p.fecha), bs:ventaTotal(p)||0 });
+  });
+  if(!(R.bs>0.009 || R.bsAnt>0.009)) return '<div class="td-prog"><i style="width:'+Math.round(pct*100)+'%"></i></div>';
+  var cur=pryMomSerie(xs, R.mes, dia), prev=pryMomSerie(xs, R.ant, 0), D=Math.max(cur.fin, prev.fin);
+  var limAnt=R.ant+'-'+(Math.min(dia, prev.fin)<10?'0':'')+Math.min(dia, prev.fin), alt=0;
+  xs.forEach(function(x){ if(x.ym===R.ant && x.reg<=limAnt) alt+=x.bs; });
+  var W=300, H=64, max=Math.max(1, R.bs, R.bsAnt)*1.06;
+  var pts=function(a){ return a.map(function(v,i){ return ((D>1?i/(D-1):0)*W).toFixed(1)+','+(H-3-v/max*(H-8)).toFixed(1); }).join(' '); };
+  var c=cur.v, ux=c.length ? ((D>1?(c.length-1)/(D-1):0)*W).toFixed(1) : '0', uy=c.length ? (H-3-c[c.length-1]/max*(H-8)).toFixed(1) : String(H-3);
+  var p=alt>0.009 ? Math.round((R.bs/alt-1)*100) : null;
+  return '<svg class="td-linea" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Lo vendido día por día contra el mes pasado">'+
+      '<polyline points="'+pts(prev.v)+'" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.6" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>'+
+      (c.length ? ('<polygon points="0,'+(H-3)+' '+pts(c)+' '+ux+','+(H-3)+'" fill="rgba(255,255,255,.14)"/>'+
+                   '<polyline points="'+pts(c)+'" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>') : '')+
+    '</svg><i class="td-punto" style="left:'+(ux/W*100).toFixed(1)+'%;top:'+uy+'px"></i>'+
+    (p!=null ? ('<div class="td-alt">'+(p>=0?'▲ ':'▼ ')+Math.abs(p)+'% '+(p>=0?'más':'menos')+' que '+esc(mesNombre(R.ant).replace(/ de \d{4}$/,''))+' a esta altura</div>') : '');
+}
 function misTopPintar(v, mine){
   var el=document.getElementById('mis-top'); if(!el) return;
   var I=misHacerDatos(v, mine), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
@@ -24305,7 +24496,7 @@ function misTopPintar(v, mine){
   var cel=function(ic,t,val,cls){ return '<div class="td-f'+(cls?(' '+cls):'')+'"><span class="td-i">'+ic+'</span><span class="td-t">'+t+'</span><b>'+val+'</b></div>'; };
   var der='<div class="td"><div class="td-top"><div class="td-cab"><span>☀️ Tu día, '+esc(String(v).split(' ')[0])+'</span><small>'+hora+'</small></div>'+
       '<div class="td-lbl">Vendido para '+esc(mesN(R.mes))+'</div><div class="td-big">'+fmtBs0(R.bs)+'</div>'+
-      '<div class="td-prog"><i style="width:'+Math.round(pct*100)+'%"></i></div>'+
+      '<div class="td-mes">'+misMesLineaHtml(mine, R, pct)+'</div>'+   // 📈 (§4ni, 11) la línea de «Tu mes» en vez de la barrita
       '<div class="td-meta">'+(R.bsAnt>0 ? (esc(may(mesN(R.ant)))+' entero: <b>'+fmtBs0(R.bsAnt)+'</b>'+(R.bsAnt>R.bs?(' · te faltan <b>'+fmtBs0(r2(R.bsAnt-R.bs))+'</b> para igualarlo'):' · <b>¡ya lo pasaste!</b>')) : ('Sin ventas en '+esc(mesN(R.ant))))+'</div></div>'+
     '<div class="td-filas">'+
       cel('📅','Hoy', nHoy+(nHoy===1?' entrega':' entregas'))+
@@ -37002,6 +37193,7 @@ function openModal(html, ancha){
   box.innerHTML=html;
   box.classList.toggle('ancha', !!ancha);
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
+  document.body.classList.remove('ficha-costado');   // (§4ni, 3) …y lo mismo el costado: cualquier otra ventana va al medio
   ov.classList.add('on');
   box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('tabindex','-1');
   var h=box.querySelector('.modal-h h3, h3, h2');
@@ -37013,6 +37205,7 @@ function openModal(html, ancha){
 function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
   ov.classList.remove('on');
+  if(document.body.classList.contains('ficha-costado')){ document.body.classList.remove('ficha-costado'); [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); }); }
   try{ [].forEach.call(ov.querySelectorAll('video'), function(x){ x.pause(); }); }catch(e){}   // 🎬 (§4mv) el video no sigue andando escondido
   /* Vuelve al que la abrió si sigue en la página y se ve; a un campo de texto no (en el celular abriría el teclado). */
   var v=MODAL_FOCO_ANTES; MODAL_FOCO_ANTES=null;
@@ -37457,6 +37650,25 @@ function fichaSugUsar(id, v){
 }
 /* E · ◀ ▶ el pedido anterior y el siguiente del MISMO día (por el N° del día), sin cerrar. También con las flechas del teclado. */
 var FICHA_VEC=null;
+/* 🗂️ 3 · LA FICHA AL COSTADO (§4ni, 27/10; dueño: «Además quiero: 3, 10, 11», después de preguntar «¿achicaste toda la ficha?»: NO, es
+   la MISMA ficha). En la compu (≥ 1200 px), abierta desde Administración, la ficha se pone a la derecha y los pedidos quedan a la
+   izquierda, a la vista: el elegido se marca y con ◀ ▶ (o tocando otro) se pasa al siguiente sin cerrar. En el celular y el iPad parado,
+   en el medio como siempre. `me_ficha_costado`='0' la vuelve al medio en ese aparato. En las pruebas, al medio salvo `FICHA_COSTADO_PRUEBA`. */
+var LS_FICHA_COSTADO='me_ficha_costado';
+function fichaCostadoVa(){
+  if(navigator.webdriver && !window.FICHA_COSTADO_PRUEBA) return false;
+  try{ if(localStorage.getItem(LS_FICHA_COSTADO)==='0') return false; }catch(e){}
+  var va=document.getElementById('view-admin'); if(!va || !va.classList.contains('active')) return false;
+  return (window.innerWidth||0)>=1200;
+}
+function fichaCostadoAplicar(id){
+  var on=fichaCostadoVa();
+  document.body.classList.toggle('ficha-costado', on);
+  [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); });
+  if(!on) return;
+  var el=null; try{ el=document.querySelector('.af-f[data-pid="'+CSS.escape(String(id))+'"]'); }catch(e){}
+  if(el){ el.classList.add('af-sel'); try{ el.scrollIntoView({ block:'nearest' }); }catch(e){} }
+}
 function fichaVecinos(p){
   if(!p || !p.fecha) return null;
   var m=dayNumMap(), l=(STATE||[]).filter(function(q){ return q && q.fecha===p.fecha && !esFilaSistema(q) && m[q.id]; });
@@ -37840,6 +38052,7 @@ function showPedidoModal(id){
     '</div>';
   openModal(html, true);
   var box=document.getElementById('modal-box'); if(box) box.classList.add('fl-ficha');
+  fichaCostadoAplicar(p.id);   // 🗂️ (§4ni, 3) en la compu, desde Administración: a la derecha, con la lista a la vista
   if(mapaPt) fichaMapaPintar(mapaPt);
   fichaAcomodar();
   /* (24/10) …y otra vez cuando la ventana terminó de abrir y cargó la letra: medida antes, el alto de las columnas podía salir en 0 */
