@@ -16646,7 +16646,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   naranja. `.fh-murc`/`.fh-luna` van en el HTML de `fhPintar` pero no se ven los otros meses. `fhPintar` ya no rearma si el HTML es el
   mismo (`box._h`): si no, los murciélagos y el «En línea» volvían a empezar con cada repintado. Celular: tela más chica, sin luna. **PUBLICADO 27/10 (`133e332`, dueño: «mejor publica»).**
 
-### §4nm — 📅 LA FECHA DE LA VENTA DE TIENDA (27/10 a la noche; en la rama, espera «publica»)
+### §4nm — 📅 LA FECHA DE LA VENTA DE TIENDA (27/10 a la noche; PUBLICADO `0c6c09c`, dueño: «sí, está bien, lo pruebo»)
 - El dueño, con captura del formulario editando una venta de tienda: *«¿cómo edito una venta que salió de tienda? no deja elegir fecha»*.
   Le expliqué los tres casos (corregir datos / pasarla a entrega con «Cancelar» / cambiar el día) y eligió la 3, con el caso real: tres
   ventas de Charcas (notas 2174, 2175 y 2176) cargadas el 1/10 que salieron de la tienda el 30/09.
