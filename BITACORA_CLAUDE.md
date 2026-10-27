@@ -16684,7 +16684,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   ⚠️ **El equipo = sin Eduardo, ROHO ni los pedidos internos** (`contaExcluido`, como Contabilidad): así la suma de las filas da lo de arriba;
   la lista de abajo sigue con TODOS los pedidos. Todo sale de las cuentas de «Tu día» (`misAnilloDatos`, `misEfectivoDatos`, `misTiendaDatos`,
   `misPendientes`): no calcular nada aparte. En Playwright apagado salvo `MIS_TOP_PRUEBA`; `test_mis_arriba` 1c/6b cambiaron a conciencia
-  (esperaban «Ver todos» como antes). `tests/test_mis_tienda_equipo.js` (16).
+  (esperaban «Ver todos» como antes). `tests/test_mis_tienda_equipo.js` (16). **PUBLICADO 27/10 (`ebc2c4d`, dueño: «ok y publica el diseño que me propusiste»), con la batería entera en verde (272 suites).**
 - **🧾 Fernando no cuadraba** (dueño, con el «RESUMEN DE VENTAS POR CLIENTE» del sistema del 01 al 27/10, 69 clientes, Bs 88.800): leí la
   planilla (solo lectura) y la crucé con Contabilidad → Ventas por «Entrega agendada» de octubre (70 ventas, Bs 86.800). La diferencia entera
   es la **nota 2239** (OC 10-296): panel Bs 4.260 (efectivo 2.260 + QR 2.000, los dos el 27/10), sistema Bs 6.260, mismos 10 productos sin

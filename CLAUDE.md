@@ -961,7 +961,7 @@ del stock y lo dice («✓ Lo reconocí…»); no pisa uno escrito, no toca un r
 Con un vendedor elegido: «📋 Para hacer» (`misHacerDatos`, con «✅ Al día») + «☀️ Tu día» (`misTopPintar`; 💵 efectivo desde el último retiro,
 `misEfectivoDatos`) y la bandeja de Kommo en filas (`borrBandejaCompacta`). En Playwright apagado salvo `MIS_TOP_PRUEBA`. La fábrica de
 Eduardo, igual. `tests/test_mis_arriba.js` (14).
-🏪👑 **§4nn (27/10)**: «Tu día» suma el renglón de las **ventas de tienda** del mes por el día de la venta (`misTiendaDatos`/`misTiendaFila`;
+🏪👑 **§4nn (27/10, PUBLICADO `ebc2c4d`)**: «Tu día» suma el renglón de las **ventas de tienda** del mes por el día de la venta (`misTiendaDatos`/`misTiendaFila`;
 «Ver» = chip «🏪 Ventas de tienda», que aparece solo si hay; Eduardo y ROHO no lo ven). **«👑 Ver todos» con el diseño nuevo** (`misEqPintar`):
 «Para hacer · el equipo» con los nombres, «El día del equipo» (efectivo sin rendir = vendedoras + choferes, `misEqEfectivo`) y una fila por
 vendedora que abre sus pedidos (`misEqElegir`). ⚠️ El equipo = sin Eduardo, ROHO ni internos (`contaExcluido`): la suma de las filas da lo de
