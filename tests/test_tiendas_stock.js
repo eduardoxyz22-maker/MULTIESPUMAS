@@ -181,6 +181,32 @@ const fotoFabrica = page => page.evaluate(()=>{
   chk('6 · el de PTF en el mismo archivo no se usa y se dice', JSON.stringify(r.fuera)===JSON.stringify(['PRODUCTOS TERMINADOS FAB.']) && /No es de una tienda/.test(r.txt||''), r.fuera);
   chk('6 · un Excel solo de PTF: «va en 📥 Subir existencias»', !r.solo && /Subir existencias/.test(r.msg), r.msg);
 
+  /* 6b · (27/10, pulido) Un almacén con otro nombre: se elige la tienda, el panel lo recuerda; «no es una tienda» también */
+  r=await page.evaluate(async()=>{
+    var it=function(cod, d, m, c){ return { cod:cod, desc:d+' '+m, medida:m, cant:c, k:stockClave({ desc:d, medida:m, codigo:cod }) }; };
+    var R=function(){ return [{ almacen:'01-09-001 ALM. SUC. NORTE', fecha:'2026-11-05', items:[it('CH1201','TITANIO ICE','160x190',4), { cod:'SB1', desc:'SABANA 2P', medida:'', cant:3, k:'SABANA 2P|' }] },
+                              { almacen:'01-09-002 DEPOSITO VARIOS', fecha:'2026-11-05', items:[it('CH1201','TITANIO ICE','160x190',1)] }]; };
+    tstPrevDeExcel(R(), 'suc.xlsx');
+    var P=TST_PREV, txt0=(document.getElementById('tst-prev')||{}).innerText||'', dis0=document.getElementById('tst-guardar').disabled;
+    var sels=document.querySelectorAll('.tst-elegir select').length;
+    tstElegir(0, 'Carmelo'); tstElegir(1, '-');
+    var txt1=document.getElementById('tst-prev').innerText.replace(/\s+/g,' '), dis1=document.getElementById('tst-guardar').disabled;
+    var leido=document.querySelector('#tst-prev .tst-leido'); var leidoTxt=leido ? leido.textContent.replace(/\s+/g,' ') : '';
+    await tstGuardarConteo();
+    var D=tstLeer();
+    tstPrevDeExcel(R(), 'suc2.xlsx');
+    var P2=TST_PREV; var out={ n:P.lista.length, elegir:P.lista.map(function(e){ return e.elegir; }), txt0:/¿De qué tienda es el almacén/.test(txt0), dis0:dis0, sels:sels,
+      txt1:txt1, dis1:dis1, leido:leidoTxt, car:D.s['Carmelo'] && D.s['Carmelo'].f, carU:D.s['Carmelo'] && JSON.stringify(D.s['Carmelo'].u), al:D.al,
+      vuelta:P2 && P2.lista.map(function(e){ return e.n+':'+(e.elegir?'elegir':'ok'); }), fuera2:P2 && P2.fuera };
+    TST_PREV=null; tstPintar(); return out; });
+  chk('6b · «ALM. SUC. NORTE» no dice de qué tienda es: se pregunta (no se tira) y Guardar espera la respuesta', r.n===2 && r.elegir.join()==='true,true' && r.txt0 && r.sels===2 && r.dis0, r);
+  chk('6b · elegida «Carmelo» y el otro «No es de una tienda»: se puede guardar, y dice lo que quedó afuera (3 sábanas)', !r.dis1 && /Carmelo/.test(r.txt1) && /No se usa/.test(r.txt1) && /Quedaron afuera 3 unidades/.test(r.txt1), r.txt1);
+  chk('6b · «Ver lo que leí» lista los productos del conteo', /Ver lo que leí \(1 producto\)/.test(r.leido) && /TITANIO ICE/.test(r.leido) && /4/.test(r.leido), r.leido);
+  chk('6b · se guarda el conteo de Carmelo y los dos nombres quedan recordados', r.car==='2026-11-05' && /:4/.test(r.carU) && Object.keys(r.al).length===2 && Object.values(r.al).sort().join()==='-,Carmelo', r);
+  chk('6b · el próximo Excel con esos nombres: Carmelo directo y el otro ni se ofrece', JSON.stringify(r.vuelta)===JSON.stringify(['Carmelo:ok']) && JSON.stringify(r.fuera2)===JSON.stringify(['01-09-002 DEPOSITO VARIOS']), r);
+  r=await page.evaluate(()=>{ TST_PREV={ lista:[{ n:'Central', f:'2026-11-03', de:'mano', u:{} }], fuera:[] }; tstPintar(); var t=document.getElementById('tst-prev').innerText.replace(/\s+/g,' '); TST_PREV=null; tstPintar(); return t; });
+  chk('6b · un conteo que no es del último día hábil sirve igual, y se dice cuál es el de cierre', /El conteo de cierre de noviembre es el lunes 30\/11/.test(r) && /sirve igual/.test(r), r);
+
   /* 7 · El pase, con su control; anular */
   await page.evaluate(()=>{ tstVer('pase'); document.getElementById('tst-p-de').value='Charcas'; document.getElementById('tst-p-a').value='Mutualista';
     var c=document.getElementById('tst-p-c'); c.value='CH1201'; tstPaseLeer(); document.getElementById('tst-p-u').value='1'; });
@@ -219,6 +245,24 @@ const fotoFabrica = page => page.evaluate(()=>{
   r=await page.evaluate(async()=>{ CONNECTED=false; var n=window._tstGuardado; var res=await tstGuardarCon(function(D){ D.x.push({ id:'zz', f:'2026-11-05', de:'Charcas', a:'Central', k:'X|1', u:1 }); }, 'ok');
     CONNECTED=true; return { res:res, n:window._tstGuardado===n, x:tstLeer().x.length }; });
   chk('10 · sin conexión no se guarda nada', r.res===null && r.n && r.x===2, r);
+
+  /* 12 · (27/10, pulido) Bloki se lo recuerda a logística: el último día hábil desde las 15 y los primeros días del mes si falta */
+  r=await page.evaluate(()=>{
+    var _hoy=todayStr, _h=horaBolivia, out={};
+    var en=function(f, h){ todayStr=function(){ return f; }; horaBolivia=function(){ return new Date(+f.slice(0,4), +f.slice(5,7)-1, +f.slice(8,10), h, 0); }; var a=tstAviso(); todayStr=_hoy; horaBolivia=_h; return a; };
+    out.antes=en('2026-11-30', 14); out.ult=en('2026-11-30', 16); out.prox=en('2026-11-05', 10);
+    var D=tstLeer(), guard=JSON.stringify(D.s['Charcas']);
+    var fila=STATE.filter(function(p){ return String(p.id)===TST_ID; })[0], obs=fila.observaciones;
+    var D2=JSON.parse(obs); D2.s['Charcas'].f='2026-10-20'; fila.observaciones=JSON.stringify(D2);
+    out.falta=en('2026-11-05', 10); out.tarde=en('2026-11-09', 10);
+    fila.observaciones=obs;
+    var lg=asisLogistica().map(function(a){ return a.k.split('|')[0]; });
+    return { antes:out.antes, ult:out.ult && { t:out.ult.t, x:out.ult.x, b:out.ult.b }, prox:out.prox, falta:out.falta && out.falta.t, tarde:out.tarde, lg:lg };
+  });
+  chk('12 · el último día hábil (lunes 30/11) antes de las 15: nada todavía', r.antes===null, r.antes);
+  chk('12 · desde las 15: «al cierre, contá las tiendas», con las que faltan y el botón para abrirlas', !!r.ult && /último día hábil de noviembre/.test(r.ult.t) && /Falta el conteo de/.test(r.ult.x) && r.ult.b[1]==='abrirTst()', r.ult);
+  chk('12 · los primeros días de noviembre: si todas tienen el de cierre de octubre, nada; si a una le falta, lo dice', r.prox===null && /Falta el conteo de cierre \(31\/10\) de 1 tienda/.test(r.falta||''), r);
+  chk('12 · pasados 3 días hábiles ya no insiste', r.tarde===null, r.tarde);
 
   /* 11 · Celular: la ventana entra en la pantalla */
   const C=await abrir(browser, 390, true);

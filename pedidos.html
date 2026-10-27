@@ -4048,6 +4048,10 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .tst-form textarea{ min-height:150px; font-family:ui-monospace,Menlo,Consolas,monospace; }
 .tst-full{ grid-column:1/-1; }
 .tst-ok{ color:#166534; } .tst-mal{ color:#b4232c; font-weight:700; }
+.tst-elegir{ display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; font-size:.84rem; background:#ecfeff; border:1px solid #a5f3fc; border-radius:10px; padding:8px 10px; margin-bottom:6px; }
+.tst-elegir select{ min-height:36px; padding:4px 8px; border-radius:8px; border:1px solid var(--gray-md); font:inherit; }
+.tst-elegir small{ color:var(--muted); }
+.tst-leido{ font-size:.82rem; margin-top:6px; } .tst-leido summary{ cursor:pointer; color:#155e75; font-weight:700; }
 .tst-dif-m{ color:#b4232c; font-weight:800; } .tst-dif-p{ color:#1d4ed8; font-weight:800; }
 .tst-hist{ font-size:.76rem; color:var(--muted); padding:0 14px 10px; line-height:1.5; }
 @media (max-width:640px){ .tst-num{ margin-left:0; } .tst-cab b.tst-n{ min-width:0; } }
@@ -9042,6 +9046,8 @@ function metasAbrir(ym){
 function metasMesMas(ym, n){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-1+n; y+=Math.floor(m/12); m=((m%12)+12)%12; return y+'-'+(m+1<10?'0':'')+(m+1); }
 function metasMover(n){ metasRecordar(); var ym=metasMesMas(META_ED.ym, n), e=metasLeer().m[ym]||{}; META_ED={ ym:ym, v:{} }; MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; }); metasModal(); }
 function metasRecordar(){ if(!META_ED) return; MARCAS.forEach(function(g){ var el=document.getElementById('mt-in-'+g.k); if(el && !montoError(el.value)) META_ED.v[g.k]=parseMonto(el.value)||0; }); }
+/* (27/10, pulido) Al salir del campo, la meta con los puntos de los miles («250000» → «250.000»); lo que no se entiende queda como está. */
+function metasFormato(el){ if(!el) return; var t=String(el.value||'').trim(); if(!t || montoError(t)) return; var v=parseMonto(t)||0; if(v>0) el.value=Math.round(v).toLocaleString('es-BO'); }
 function metasSuma(){
   var t=0; MARCAS.forEach(function(g){ var el=document.getElementById('mt-in-'+g.k); if(el && !montoError(el.value)) t+=parseMonto(el.value)||0; });
   var s=document.getElementById('mt-suma'); if(s) s.textContent=fmtBs0(t);
@@ -9061,7 +9067,7 @@ function metasModal(){
   var campos=MARCAS.map(function(g){
     var vAnt=metaVendidoMes(ant)[g.k], mAnt=eAnt ? Number(eAnt[g.k])||0 : 0;
     return '<div class="mt-campo" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'"><label for="mt-in-'+g.k+'">'+g.ico+' '+esc(g.lbl)+'</label>'+
-      '<div class="mt-in"><span>Bs</span><input id="mt-in-'+g.k+'" type="text" inputmode="decimal" autocomplete="off" value="'+(E.v[g.k]?Math.round(E.v[g.k]).toLocaleString('es-BO'):'')+'" placeholder="0" oninput="metasSuma()"></div>'+
+      '<div class="mt-in"><span>Bs</span><input id="mt-in-'+g.k+'" type="text" inputmode="decimal" autocomplete="off" value="'+(E.v[g.k]?Math.round(E.v[g.k]).toLocaleString('es-BO'):'')+'" placeholder="0" oninput="metasSuma()" onblur="metasFormato(this)"></div>'+
       '<small>'+esc(mesNombre(ant))+': '+(mAnt?('meta '+fmtBs0(mAnt)+' · '):'')+'vendió '+fmtBs0(vAnt)+(mAnt?(' ('+metaPct(vAnt,mAnt)+'%)'):'')+'</small></div>';
   }).join('');
   var hist='<table class="mt-tab"><thead><tr><th>Mes</th>'+MARCAS.map(function(g){ return '<th>'+g.ico+' Meta</th><th>Vendido</th><th>Llegó</th>'; }).join('')+'</tr></thead><tbody>'+
@@ -32378,8 +32384,12 @@ function tstTiendas(){ return recogerTiendas(); }   // las seis propias: Tiendas
 function tstLeer(fila){
   var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===TST_ID; })[0], o={};
   try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
-  return { v:1, s:(o.s && typeof o.s==='object') ? o.s : {}, x:Array.isArray(o.x) ? o.x : [], h:Array.isArray(o.h) ? o.h : [] };
+  return { v:1, s:(o.s && typeof o.s==='object') ? o.s : {}, x:Array.isArray(o.x) ? o.x : [], h:Array.isArray(o.h) ? o.h : [],
+           al:(o.al && typeof o.al==='object') ? o.al : {} };
 }
+/* 🏷️ (27/10, pulido) El almacén del sistema con OTRO nombre que la tienda («ALM. SUC. 3»): se elige una vez en la vista previa y queda
+   recordado en la fila (`al`: el nombre del almacén, normalizado → la tienda; '-' = «no es una tienda»). */
+function tstAlias(nm, D){ var a=((D||tstLeer()).al||{})[normNombre(nm||'')]; return a || ''; }
 function tstHayConteo(){ var s=tstLeer().s; return Object.keys(s).some(function(n){ return s[n] && s[n].f; }); }
 /* De qué tienda habla un texto: «Mia Plaza», «ALMACEN TIENDA MIA PLAZA», «01-07-002 TDA CHARCAS». */
 function tstTiendaDe(t){
@@ -32482,6 +32492,7 @@ function tstJuntar(a, b){
   var ph={};
   [a,b].forEach(function(o){ ((o&&o.h)||[]).forEach(function(e){ if(e) ph[e.n+'|'+e.f+'|'+(e.t||0)]=e; }); });
   D.h=Object.keys(ph).map(function(i){ return ph[i]; }).sort(function(p,q){ return (p.t||0)-(q.t||0); }).slice(-TST_HIST);
+  D.al={}; [a,b].forEach(function(o){ Object.keys((o&&o.al)||{}).forEach(function(k){ if(o.al[k]) D.al[k]=o.al[k]; }); });   // lo de este aparato, último
   return D;
 }
 /* Relee la planilla, junta, aplica `fn` y guarda la fila. Sin señal no guarda nada (y lo dice). */
@@ -32583,20 +32594,23 @@ function tstExcel(ev){
   }).catch(function(e){ TST_MSG='❌ '+esc((e && e.message) || 'No se pudo leer el archivo.'); TST_PREV=null; tstPintar(); });
 }
 function tstPrevDeExcel(lista, arch){
-  var prev=[], fuera=[];
+  var prev=[], fuera=[], D=tstLeer();
   lista.forEach(function(r){
-    var S=tstTiendaDe(r.almacen);
-    if(!S || tstEsDeFabrica(r.almacen)){ fuera.push(r.almacen); return; }
-    var u={};
+    if(tstEsDeFabrica(r.almacen)){ fuera.push(r.almacen); return; }
+    var al=tstAlias(r.almacen, D);
+    if(al==='-'){ fuera.push(r.almacen); return; }   // ya se dijo que no es una tienda
+    var S=tstTiendaDe(r.almacen) || (tstTiendas().indexOf(al)>=0 ? al : '');
+    var u={}, afuera=0;
     (r.items||[]).forEach(function(it){
-      if(esProdDeTienda({ desc:it.desc, medida:it.medida, codigo:it.cod })) return;
+      if(esProdDeTienda({ desc:it.desc, medida:it.medida, codigo:it.cod })){ afuera+=Number(it.cant)||0; return; }
       var k=stockAliasDe(it.k); u[k]=(u[k]||0)+(Number(it.cant)||0);
     });
-    prev.push({ n:S, f:r.fecha, hora:r.hora||'', de:'excel', u:u, arch:arch||'' });
+    /* 🏷️ Un almacén que no es de fábrica ni dice el nombre de una tienda: se pregunta de cuál es (`elegir`), no se tira. */
+    prev.push({ n:S, alm:r.almacen, elegir:!S, f:r.fecha, hora:r.hora||'', de:'excel', u:u, afuera:afuera, arch:arch||'' });
   });
   if(!prev.length){
     TST_PREV=null;
-    TST_MSG='❌ '+(fuera.length ? ('Ese Excel es de '+esc(fuera.join(', '))+', no de una tienda. Los de PTF, Banzer y Moreno van en «📥 Subir existencias».') : 'No encontré ninguna tienda en el archivo.');
+    TST_MSG='❌ '+(fuera.length ? ('Ese Excel es de '+esc(fuera.join(', '))+', no de una tienda. Los de PTF, Banzer y Moreno van en «📥 Subir existencias».') : 'No encontré ningún almacén en el archivo.');
     tstPintar(); return;
   }
   TST_PREV={ lista:prev, fuera:fuera }; TST_VISTA=''; TST_MSG=''; tstPintar();
@@ -32638,22 +32652,41 @@ function tstManoVer(){
   if(!R.n){ toast('Escribí al menos un producto con su cantidad.','err'); return; }
   TST_PREV={ lista:[{ n:t, f:f, hora:'', de:'mano', u:R.u }], fuera:[] }; TST_VISTA=''; TST_MSG=''; tstPintar();
 }
+/* 🏷️ Elegir de qué tienda es un almacén que el panel no reconoce ('-' = no es una tienda: no se usa). */
+function tstElegir(i, v){
+  var e=TST_PREV && TST_PREV.lista[i]; if(!e) return;
+  e.n=(v && v!=='-') ? v : ''; e.no=(v==='-'); tstPintar();
+}
 /* La vista previa: lo contado contra lo que el panel esperaba ese día (si la tienda ya tenía un conteo anterior). */
 function tstPrevHtml(D){
   var P=TST_PREV, hoy=todayStr();
   var h='<div class="tst-caja" id="tst-prev" style="border:2px solid #155e75"><b style="color:#155e75;font-size:1rem">📋 Revisá antes de guardar</b>';
   if(P.fuera.length) h+='<div class="tst-mal">⏭ No es de una tienda y no se usa: '+esc(P.fuera.join(', '))+'.</div>';
-  var bien=0;
-  P.lista.forEach(function(e){
-    var base=(D.s[e.n] && D.s[e.n].f) ? D.s[e.n] : null, tot=0, ks=Object.keys(e.u);
+  var bien=0, usadas={};
+  P.lista.forEach(function(e, i){
+    var tot=0, ks=Object.keys(e.u);
     ks.forEach(function(k){ tot+=e.u[k]; });
     e.tot=tot; e.esp=null; e.err='';
+    /* 🏷️ el almacén que no dice de qué tienda es: se elige acá */
+    var sel=e.elegir ? ('<label class="tst-elegir">¿De qué tienda es el almacén «<b>'+esc(e.alm||'')+'</b>»? <select data-i="'+i+'" onchange="tstElegir(+this.dataset.i, this.value)"><option value="">Elegí…</option>'+
+      tstTiendas().map(function(n){ return '<option'+(e.n===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+'<option value="-"'+(e.no?' selected':'')+'>No es de una tienda</option></select>'+
+      '<small> El panel lo recuerda para los próximos conteos.</small></label>') : '';
+    if(e.elegir && e.no){ h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px">'+sel+'<div class="tst-f">No se usa.</div></div>'; return; }
+    if(e.elegir && !e.n){ h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px">'+sel+'<div class="tst-f">'+tot+' unidades en '+ks.length+' productos.</div></div>'; return; }
+    var base=(D.s[e.n] && D.s[e.n].f) ? D.s[e.n] : null;
     if(e.f>hoy) e.err='El conteo es de un día que todavía no pasó ('+fmtFechaCorta(e.f)+').';
     else if(base && e.f<base.f) e.err='Ya hay un conteo más nuevo de '+e.n+' (del '+fmtFechaCorta(base.f)+'): este no se usa.';
-    h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><b style="font-size:.95rem">'+esc(e.n)+'</b><span class="tst-f">contado el '+esc(saldoDiaTxt(e.f))+(e.hora?(' · '+esc(String(e.hora).slice(0,5))):'')+' · '+(e.de==='mano'?'a mano':'Excel')+' · <b>'+tot+'</b> unidades en '+ks.length+' productos</span></div>';
+    else if(usadas[e.n]) e.err='El archivo trae dos almacenes para '+e.n+': se usa el primero.';
+    h+='<div style="border-top:1px solid var(--gray-lt);padding-top:8px">'+sel+'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><b style="font-size:.95rem">'+esc(e.n)+'</b><span class="tst-f">contado el '+esc(saldoDiaTxt(e.f))+(e.hora?(' · '+esc(String(e.hora).slice(0,5))):'')+' · '+(e.de==='mano'?'a mano':'Excel')+' · <b>'+tot+'</b> unidades en '+ks.length+' productos</span></div>';
     if(e.err){ h+='<div class="tst-mal">'+esc(e.err)+'</div></div>'; return; }
-    bien++;
-    if(!base){ h+='<div class="tst-f" style="margin-top:4px">Primer conteo de '+esc(e.n)+': desde acá el panel lleva su cuenta.</div></div>'; return; }
+    usadas[e.n]=1; bien++;
+    /* 📅 el conteo de cierre es el último día hábil del mes: otro día sirve igual, pero se dice */
+    var U=tstUltimoHabilMes(e.f);
+    if(e.f!==U) h+='<div class="tst-f" style="margin-top:4px">ℹ️ El conteo de cierre de '+esc(MESES_ES[+e.f.slice(5,7)-1])+' es el '+esc(saldoDiaTxt(U))+' (último día hábil); este es del '+esc(fmtFechaCorta(e.f))+': sirve igual, desde ese día.</div>';
+    if(e.afuera) h+='<div class="tst-f">Quedaron afuera '+e.afuera+' unidad'+(e.afuera===1?'':'es')+' de protectores, sábanas y lo de tienda (no se cuentan, como en el stock de fábrica).</div>';
+    var leido='<details class="tst-leido"><summary>Ver lo que leí ('+ks.length+' producto'+(ks.length===1?'':'s')+')</summary><div class="tst-w" style="padding:6px 0 0"><table class="tst-tab"><thead><tr><th>Producto</th><th>Cantidad</th></tr></thead><tbody>'+
+      ks.slice().sort(function(a,b){ return (e.u[b]-e.u[a]) || a.localeCompare(b); }).map(function(k){ return '<tr><td>'+esc(tstNombre(k))+'</td><td>'+e.u[k]+'</td></tr>'; }).join('')+'</tbody></table></div></details>';
+    if(!base){ h+='<div class="tst-f" style="margin-top:4px">Primer conteo de '+esc(e.n)+': desde acá el panel lleva su cuenta.</div>'+leido+'</div>'; return; }
     /* Lo que el panel esperaba ese día: el conteo anterior más lo que pasó hasta el día de este conteo. */
     var E=tstCalcular(e.f, D)[e.n], esp={}, espTot=0;
     (E.filas||[]).forEach(function(r){ esp[r.k]=r.tiene; espTot+=r.tiene; });
@@ -32668,17 +32701,19 @@ function tstPrevHtml(D){
       difs.slice(0,40).map(function(r){ var d=r.c-r.e; return '<tr><td>'+esc(tstNombre(r.k))+'</td><td>'+r.e+'</td><td>'+r.c+'</td><td class="'+(d<0?'tst-dif-m':'tst-dif-p')+'">'+(d>0?'+':'')+d+'</td></tr>'; }).join('')+
       '</tbody></table>'+(difs.length>40?('<div class="tst-f">y '+(difs.length-40)+' más</div>'):'')+'</div>'+
       '<div class="tst-f" style="margin-top:4px">Menos de lo esperado suele ser una venta de tienda sin cargar o algo recogido sin marcar «🏬 Tienda»; más, una reposición o un pase sin anotar. Al guardar manda lo contado.</div>';
-    h+='</div>';
+    h+=leido+'</div>';
   });
   h+='<div class="tst-acc"><button type="button" class="btn btn-primary" id="tst-guardar"'+(bien&&!TST_ENV?'':' disabled')+' onclick="tstGuardarConteo()">'+(TST_ENV?'⏳ Guardando…':('✅ Guardar '+(bien===1?'el conteo':('los '+bien+' conteos'))))+'</button><button type="button" class="btn btn-ghost" onclick="TST_PREV=null;tstPintar()">Cancelar</button></div></div>';
   return h;
 }
 function tstGuardarConteo(){
   var P=TST_PREV; if(!P) return;
-  var lista=P.lista.filter(function(e){ return !e.err; }); if(!lista.length) return;
+  var lista=P.lista.filter(function(e){ return !e.err && e.n && !e.no; }); if(!lista.length) return;
+  var alias=P.lista.filter(function(e){ return e.elegir && e.alm && (e.n || e.no); });
   var ahora=Date.now();
   return tstGuardarCon(function(D){
     var ok=0;
+    D.al=D.al||{}; alias.forEach(function(e){ D.al[normNombre(e.alm)]=e.no ? '-' : e.n; });   // 🏷️ para la próxima
     lista.forEach(function(e){
       var y=D.s[e.n]; if(y && y.f>e.f) return;   // otro aparato subió uno más nuevo mientras tanto
       D.s[e.n]={ f:e.f, hora:e.hora||'', t:ahora, de:e.de, u:e.u, tot:e.tot };
@@ -32721,6 +32756,28 @@ function tstPaseGuardar(){
 }
 function tstPaseAnular(id){
   return tstGuardarCon(function(D){ var q=(D.x||[]).filter(function(x){ return x && x.id===id; })[0]; if(!q) return 'ese pase ya no está'; q.an=Date.now(); }, '↩️ Pase anulado');
+}
+/* 🏬 (27/10, pulido) Bloki se lo recuerda a logística y Administración: el último día hábil del mes desde las `TST_AVISO_HORA` (al cierre,
+   las tiendas que todavía no tienen el conteo de HOY) y los primeros `TST_AVISO_DIAS` días hábiles del mes siguiente (las que ya llevaban
+   cuenta y les falta el de cierre). Antes del primer conteo de todas, solo el del último día hábil: no insiste con algo que no empezó. */
+var TST_AVISO_HORA=15, TST_AVISO_DIAS=3;
+function tstAviso(){
+  var hoy=todayStr(), U=tstUltimoHabilMes(hoy), D=tstLeer(), L=tstTiendas();
+  var b=['🏬 Abrir las tiendas', 'abrirTst()'];
+  if(hoy===U && horaBolivia().getHours()>=TST_AVISO_HORA){
+    var faltan=L.filter(function(n){ return !(D.s[n] && D.s[n].f===hoy); });
+    if(!faltan.length) return null;
+    return { k:'l-tst|'+hoy+'|'+faltan.join(','), sev:'am', ico:'🏬', t:'Hoy es el último día hábil de '+MESES_ES[+hoy.slice(5,7)-1]+': al cierre, contá las tiendas',
+             x:'Falta el conteo de '+faltan.join(', ')+'. Subí el Excel del sistema de cada una (o escribilo a mano): desde ahí el panel lleva la cuenta del mes que viene.', b:b };
+  }
+  if(!tstHayConteo()) return null;
+  var Uant=tstUltimoHabilMes(tstMesAnterior(hoy)), n=0, f=Uant;
+  while(f<hoy && n<=TST_AVISO_DIAS){ f=sigDiaHabil(f); if(f<=hoy) n++; }
+  if(!diaHabil(hoy) || n<1 || n>TST_AVISO_DIAS) return null;
+  var viejas=L.filter(function(t){ return D.s[t] && D.s[t].f && D.s[t].f<Uant; });
+  if(!viejas.length) return null;
+  return { k:'l-tst|'+Uant+'|'+viejas.join(','), sev:'am', ico:'🏬', t:'Falta el conteo de cierre ('+fmtFechaCorta(Uant)+') de '+viejas.length+' tienda'+(viejas.length===1?'':'s'),
+           x:viejas.join(', ')+': sin el conteo del último día hábil, el panel sigue sumando desde el anterior.', b:b };
 }
 /* «Mia Plaza · tiene 2» en la lista de «🏬 ¿De qué tienda se recoge?» de la ficha. Nada si ninguna tienda tiene conteo. */
 function tstEnTiendaTxt(o, n){
@@ -45309,6 +45366,7 @@ function asisLogistica(){
         t:U.length+' producto'+(U.length===1?'':'s')+' '+semanaUrgTxt(U)+': si no se pide'+(U.length===1?'':'n')+' hoy, no llega'+(U.length===1?'':'n')+' a tiempo',
         x:semanaPlazoTxt()+' Desde las '+semanaHoraTxt(semanaGritoHora(hoy))+' te lo grito.',
         lista:asisPedLista(ps), b:['🗓️ Ver la semana', "semanaIr('urge')"] }); } }catch(e){}
+  try{ var tA=tstAviso(); if(tA) A.push(tA); }catch(e){}   // 🏬 (27/10) el conteo de las tiendas
   var D=null, cd=CV_DIA; try{ CV_DIA='hoy'; D=cargaVivaDatos(); }catch(e){} finally{ CV_DIA=cd; }
   if(D){
     var cams=D.cams.filter(function(c){ return !c.sin && c.total>0 && c.dentro<c.total && !camionSalio(hoy, c.k); });

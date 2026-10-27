@@ -84,6 +84,8 @@ const fotoPry = page => page.evaluate(()=>{ var R=proyeccionMes('2026-10'); retu
   await espera();
   r=await page.evaluate(()=>window.SAVES.length);
   chk('5 · «12abc» no se guarda', r===0, r);
+  r=await page.evaluate(()=>{ var el=document.getElementById('mt-in-heaven'); el.value='150000'; metasFormato(el); var a=el.value; el.value='12abc'; metasFormato(el); return [a, el.value]; });
+  chk('2 · (pulido) al salir del campo, «150000» queda «150.000»; lo que no se entiende queda como está', r[0]==='150.000' && r[1]==='12abc', r);
   await page.evaluate(()=>{ document.getElementById('mt-in-heaven').value='150.000'; metasSuma(); });
   r=await page.evaluate(()=>document.getElementById('mt-suma').innerText);
   if(CAP){ await page.evaluate(()=>{ var t=document.getElementById('toast'); if(t) t.className='toast'; }); await page.screenshot({ path:path.join(CAP,'metas-ventana.png'), animations:'disabled' }); }
