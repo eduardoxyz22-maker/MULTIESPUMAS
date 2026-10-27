@@ -16551,3 +16551,16 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   recibe los avisos de Kommo para el tiempo de primera respuesta; el «heaven-kommo» crea las tareas de ✓/🕐 de Seguimiento) no se tocó: no usan
   las tareas. El push de `2aa4fde` (panel_template.html) disparó el workflow del panel con el token nuevo. ✅ Corrida 546 verde: leyó Kommo y publicó `9ae432c` (15:25 UTC): el token
   nuevo de GitHub anda. El del Apps Script se ve en el respaldo (el repaso sin error de Kommo).
+
+### §4nf — 🧹 Seguimiento sin tareas en Kommo: Cloudflare deja de hacerlas (27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; en la rama, espera «publica»)
+- Pregunta del dueño: *«¿no usamos otro método para medir lo de cada vendedor?»* y *«¿lo de mover el lead?»*. Respuesta: la disciplina de
+  cada vendedora (1ª respuesta, +72 h) la saca `generar.py` de `/events` de Kommo con el token de GitHub (mover de etapa = `lead_status_changed`
+  cuenta como seguimiento); mover a «Compradores» → borrador del pedido es el webhook al Apps Script + el repaso. Ninguno pasa por Cloudflare.
+- Lo que SÍ pasaba por el Worker con SU copia del token de Kommo (la vieja, vence el 28/10): en Seguimiento, ✓/🕐 creaban una tarea en Kommo,
+  📝 una nota y «Acción masiva» tareas para todas las fichas (+ «Copia para mí»). El dueño: no se usan → afuera.
+- `panel_template.html`: fuera `__kommoTask`/`__kommoNote`/`__kommoBulk`/`__ccJefe`, el botón 📝, «Acción masiva», «Copia para mí» y su CSS
+  `.cc-toggle`. ✓ y 🕐 siguen marcando la ficha en el panel (`useRowState`, por aparato), sin llamar a nadie.
+- **Queda en Cloudflare**: el botón «Actualizar» del dashboard (`refresh`/`refresh_status`: lanza la corrida en GitHub con un token de GitHub
+  guardado en el Worker, no de Kommo) y el webhook `/kommo-hook` que Kommo le manda (nada del repo lo lee hoy; recibir no necesita token).
+  ⚠️ El código del Worker que corre es más nuevo que `cloudflare-worker.js` del repo (tiene `note`, `bulk`, `refresh`): esa copia no es la fuente.
+- `tests/test_seguimiento_sin_cloudflare.js` (9; 5 rojas contra `main`). test_panel_meta 8, halloween 22, navidad 20, paneldup 13, integridad 18.
