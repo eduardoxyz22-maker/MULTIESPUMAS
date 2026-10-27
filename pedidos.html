@@ -25066,8 +25066,9 @@ function misHacerDatos(v, mine){
   add({ sev:'a', ic:'📍', n:q.sinGps.length, t:'Sin ubicación de Google Maps', s:misNom2(q.sinGps)+' · pedísela al cliente', b:'Ver', fn:'abrirMisAvisos()', ok:'Ubicaciones completas' });
   var br=borradoresDe(v);
   add({ sev:'a', ic:'📥', n:br.length, t:'Ventas de Kommo para completar', s:misNom2(br)+' · falta la fecha de entrega', b:'Completar ↓', p:1, fn:"misIrA('mis-borradores')", ok:'Sin ventas de Kommo pendientes' });
-  /* el saldo del mes: lo MISMO que la ficha «Por cobrar» de siempre (fecha de entrega de este mes, sin pagar) */
-  var mes=todayStr().slice(0,7), deben=mine.filter(function(p){ return (p.fecha||'').slice(0,7)===mes && !p.pagado && (Number(p.saldo)||0)>0; });
+  /* el saldo del mes: lo MISMO que la ficha «Por cobrar» de siempre (fecha de entrega de este mes, sin pagar); (§4nl, Astra A08) con el
+     mes de Bolivia, como Tu día */
+  var mes=diaNegocio().slice(0,7), deben=mine.filter(function(p){ return (p.fecha||'').slice(0,7)===mes && !p.pagado && (Number(p.saldo)||0)>0; });
   var dBs=0; deben.forEach(function(p){ dBs=r2(dBs+(Number(p.saldo)||0)); });
   MIS_LISTAS.saldo={ t:'💵 Saldo por cobrar de este mes · '+fmtBs(dBs), L:deben, m:function(p){ return fmtBs(Number(p.saldo)||0); } };
   add({ sev:'a', ic:'💵', n:deben.length, t:'Saldo por cobrar de este mes', s:fmtBs(dBs)+' · '+misNom2(deben), b:'Ver', fn:"misVerLista('saldo')", ok:'Nada por cobrar este mes' });
@@ -25096,19 +25097,23 @@ function misEfectivoDatos(v){
 var MIS_EF_ABIERTO=false;
 /* 📈 11 · «TU MES» EN TU DÍA (§4ni): la barrita de «Vendido para <mes>» pasa a ser la línea del mes, día por día de carga, contra el mes
    pasado (punteado). Las mismas ventas que el número grande (`misAnilloDatos`: las del vendedor, por el mes de la entrega). Abajo, cómo
-   va contra el mes pasado A ESTA ALTURA (mismo día). Sin nada del mes pasado ni de este, la barrita de siempre. */
+   va contra el mes pasado A ESTA ALTURA (mismo día y hora, como Proyección: §4nl). Sin nada del mes pasado ni de este, la barrita de siempre. */
 function misMesLineaHtml(mine, R, pct){
-  var hoy=todayStr(), dia=+hoy.slice(8,10), dias=function(ym){ return +pryFinDeMes(ym).slice(8,10); };
+  var hoy=diaNegocio(), dia=+hoy.slice(8,10), dias=function(ym){ return +pryFinDeMes(ym).slice(8,10); };   // (§4nl, 27/10, Astra A08) el día de Bolivia, como `misAnilloDatos`
   var xs=[];
   mine.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
     var m=String(p.fecha||'').slice(0,7); if(m!==R.mes && m!==R.ant) return;
-    xs.push({ ym:m, reg:(contaFecha(p)||p.fecha), bs:ventaTotal(p)||0 });
+    var ts=Number(p.ts)||0;
+    xs.push({ ym:m, reg:(contaFecha(p)||p.fecha), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p)||0 });   // `m` = la hora de carga, como `pryVentas`
   });
   if(!(R.bs>0.009 || R.bsAnt>0.009)) return '<div class="td-prog"><i style="width:'+Math.round(pct*100)+'%"></i></div>';
   var cur=pryMomSerie(xs, R.mes, dia), prev=pryMomSerie(xs, R.ant, 0), D=Math.max(cur.fin, prev.fin);
-  var limAnt=R.ant+'-'+(Math.min(dia, prev.fin)<10?'0':'')+Math.min(dia, prev.fin), alt=0;
-  xs.forEach(function(x){ if(x.ym===R.ant && x.reg<=limAnt) alt+=x.bs; });
+  /* (§4nl, 27/10, Astra A07) El mes pasado «a esta altura» con el MISMO corte que el MoM de Proyección (`pryMomDe`): el mismo día Y la
+     misma hora de Bolivia (`pryCargadaAl`); si el mes pasado era más corto, entero. Antes entraba el día entero: a las 15:00 contaba lo
+     cargado ese día a las 19:00, y con los mismos pedidos Proyección decía «▲ 100%» y acá «▼ 33%». */
+  var limAnt=R.ant+'-'+(Math.min(dia, prev.fin)<10?'0':'')+Math.min(dia, prev.fin), entero=(dia>prev.fin), min=pryMinBo(Date.now()), alt=0;
+  xs.forEach(function(x){ if(x.ym===R.ant && (entero || pryCargadaAl(x, limAnt, min))) alt+=x.bs; });
   var W=300, H=64, max=Math.max(1, R.bs, R.bsAnt)*1.06;
   var pts=function(a){ return a.map(function(v,i){ return ((D>1?i/(D-1):0)*W).toFixed(1)+','+(H-3-v/max*(H-8)).toFixed(1); }).join(' '); };
   var c=cur.v, ux=c.length ? ((D>1?(c.length-1)/(D-1):0)*W).toFixed(1) : '0', uy=c.length ? (H-3-c[c.length-1]/max*(H-8)).toFixed(1) : String(H-3);
@@ -25139,7 +25144,8 @@ function misTopPintar(v, mine){
   var cu=function(t){ var l=limTurno(prox,t); return l>0 ? (l-cuposUsadosTurno(prox,t)) : null; }, am=cu('AM'), pm=cu('PM');
   var cel=function(ic,t,val,cls){ return '<div class="td-f'+(cls?(' '+cls):'')+'"><span class="td-i">'+ic+'</span><span class="td-t">'+t+'</span><b>'+val+'</b></div>'; };
   var der='<div class="td"><div class="td-top"><div class="td-cab"><span>☀️ Tu día, '+esc(String(v).split(' ')[0])+'</span><small>'+hora+'</small></div>'+
-      '<div class="td-lbl">Vendido para '+esc(mesN(R.mes))+'</div><div class="td-big">'+fmtBs0(R.bs)+'</div>'+
+      /* (§4nl, Astra A06) sin la venta de tienda, como los números de Mis pedidos (dueño, 26/09): se explica al pasar el ratón */
+      '<div class="td-lbl" title="'+esc('Los pedidos que se entregan en '+mesN(R.mes)+' (por la fecha de entrega), sin ventas de tienda, ATC ni reposiciones: por eso puede dar menos que Contabilidad y Proyección, que cuentan también la venta de tienda.')+'">Vendido para '+esc(mesN(R.mes))+'</div><div class="td-big">'+fmtBs0(R.bs)+'</div>'+
       '<div class="td-mes">'+misMesLineaHtml(mine, R, pct)+'</div>'+   // 📈 (§4ni, 11) la línea de «Tu mes» en vez de la barrita
       '<div class="td-meta">'+(R.bsAnt>0 ? (esc(may(mesN(R.ant)))+' entero: <b>'+fmtBs0(R.bsAnt)+'</b>'+(R.bsAnt>R.bs?(' · te faltan <b>'+fmtBs0(r2(R.bsAnt-R.bs))+'</b> para igualarlo'):' · <b>¡ya lo pasaste!</b>')) : ('Sin ventas en '+esc(mesN(R.ant))))+'</div></div>'+
     '<div class="td-filas">'+
@@ -25227,7 +25233,9 @@ function renderMis(){
      «pedidos cargados» y «Hoy» daba 0 con cinco pedidos cargados hoy para mañana. La revisión en el celular los había pasado
      al día de carga; el dueño eligió la entrega y cambiar el nombre. Las ventas de tienda (sin fecha de entrega) no entran en
      «Hoy», «Este mes» ni «Por cobrar», como siempre. Los chips (📅 Hoy, 🌅 Mañana…) también filtran por la entrega. */
-  var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
+  /* (§4nl, 27/10, Astra A08) «Este mes» y «Por cobrar» con el mes de Bolivia (`diaNegocio`), como Tu día; «Hoy» sigue con el día de
+     quien mira, como los chips (son entregas, §4fu). */
+  var hoy=todayStr(), mes=diaNegocio().slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
   mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
   box.innerHTML=
     mc('var(--teal)','Hoy',nHoy, todos?'se entregan hoy (todo el equipo)':'pedidos que se entregan hoy')+
@@ -42532,7 +42540,9 @@ function almTendFlechas(A){
 
 /* ---------------------------------------------------------------- ⭕ LOS ANILLOS DE MIS PEDIDOS */
 function misAnilloDatos(mine){
-  var hoy=todayStr(), mes=hoy.slice(0,7), d=new Date(hoy.slice(0,8)+'01T12:00:00'); d.setMonth(d.getMonth()-1);
+  /* (§4nl, 27/10, Astra A08) El mes de la plata es el de Bolivia (`diaNegocio`, como el efectivo de Tu día y Proyección): con el aparato
+     en otra zona, el 31/10 a las 22:00 de acá ya decía «Vendido para noviembre» al lado del efectivo de octubre. */
+  var hoy=diaNegocio(), mes=hoy.slice(0,7), d=new Date(hoy.slice(0,8)+'01T12:00:00'); d.setMonth(d.getMonth()-1);
   var ant=isoLocal(d).slice(0,7);
   var R={ mes:mes, ant:ant, bs:0, bsAnt:0, n:0, ent:0, cobrar:0 };
   mine.forEach(function(p){
@@ -42566,7 +42576,7 @@ function misAnilloHtml(mine, todos){
     if(c.f>1) svg+='<text x="95" y="'+(95-c.r+5)+'" text-anchor="middle" font-size="11" font-weight="900" fill="#fff">+'+Math.round((c.f-1)*100)+'%</text>';
   });
   svg+='</svg>';
-  return '<div class="mis-anillo"><div style="flex:none">'+svg+'</div><div class="mis-ani-ley"><div class="vis-sub" style="margin-bottom:6px">'+(todos?'Todo el equipo':'Tu mes')+' · por fecha de entrega, sin ATC ni reposiciones</div>'+
+  return '<div class="mis-anillo"><div style="flex:none">'+svg+'</div><div class="mis-ani-ley"><div class="vis-sub" style="margin-bottom:6px">'+(todos?'Todo el equipo':'Tu mes')+' · por fecha de entrega, sin ventas de tienda, ATC ni reposiciones</div>'+   // (§4nl, Astra A06) la tienda también queda afuera (dueño, 26/09): se dice
     C.map(function(c){ return '<div class="mis-ani-it"><i style="background:'+c.col+'"></i><div><small>'+esc(c.lbl)+'</small><b>'+c.val+'</b><small>'+c.sub+'</small>'+
       '<span class="mis-ani-bar" aria-hidden="true"><i style="width:'+Math.round(Math.max(0,Math.min(1,c.f))*100)+'%;background:'+c.col+'"></i></span></div></div>'; }).join('')+'</div></div>';   // (§4jj) con su barra
 }
