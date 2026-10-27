@@ -108,14 +108,14 @@ function armarDashboard(){
   chk('2 · Todos Santos: el papel picado arriba, que se mueve con el viento', /^url\("data:image\/svg/.test(r.papel) && r.anPapel==='ts-ondea', r);
   chk('2 · …la calaverita al lado de MULTIESPUMAS (dibujada)', /^url\("data:image\/svg/.test(r.logoImg), r.logoImg);
   chk('2 · …velas y flores de muerto en la vereda, que titilan', /^url\("data:image\/svg/.test(r.velas) && r.anVelas==='ts-velas', r);
-  chk('2 · …el cielo de la tarde (violeta) y la pestaña elegida en violeta', /rgb\(30, 10, 53\)/.test(r.fondo) && r.pestana==='rgb(74, 16, 96)', [r.fondo, r.pestana]);
+  chk('2 · …el cielo de la tarde (violeta); la pestaña elegida con el color de SU sección (§4nk)', /rgb\(30, 10, 53\)/.test(r.fondo) && r.pestana==='rgb(15, 118, 110)', [r.fondo, r.pestana]);
   chk('2 · …sin la estrella de Navidad (la prueba de Navidad la mira)', r.luna==='none', r.luna);
   chk('2 · …el papel picado no tapa el nombre (MULTIESPUMAS más abajo que los 28 px de banderitas)', r.logoAlto>=26, r.logoAlto);
   r = await mira('?tema=patria');
   chk('2 · 6 de Agosto: la bandera DIBUJADA al lado del nombre (no el emoji: en Windows sale «BO») y los banderines', /^url\("data:image\/svg/.test(r.logoImg) && !/🇧🇴/.test(r.logoTxt) && /^url\("data:image\/svg/.test(r.papel), r);
   r = await mira('?tema=santa-cruz');
-  chk('2 · 24 de Septiembre: la bandera cruceña dibujada y los banderines verdes y blancos', /^url\("data:image\/svg/.test(r.logoImg) && /^url\("data:image\/svg/.test(r.papel) && r.pestana==='rgb(4, 120, 87)', r);
-  r = await mira('?tema=carnaval'); chk('2 · Carnaval: 🎭 y la pestaña en fucsia', /🎭/.test(r.logoTxt) && r.pestana==='rgb(190, 24, 93)', [r.logoTxt, r.pestana]);
+  chk('2 · 24 de Septiembre: la bandera cruceña dibujada y los banderines verdes y blancos', /^url\("data:image\/svg/.test(r.logoImg) && /^url\("data:image\/svg/.test(r.papel) && r.pestana==='rgb(15, 118, 110)', r);
+  r = await mira('?tema=carnaval'); chk('2 · Carnaval: 🎭 (la pestaña elegida con el color de SU sección, §4nk)', /🎭/.test(r.logoTxt) && r.pestana==='rgb(15, 118, 110)', [r.logoTxt, r.pestana]);
   r = await mira('?tema=madre'); chk('2 · Día de la Madre: 💐', /💐/.test(r.logoTxt), r.logoTxt);
   r = await mira('?tema=anio-nuevo'); chk('2 · Año Nuevo: 🎆 y la noche azul', /🎆/.test(r.logoTxt) && /rgb\(11, 29, 58\)/.test(r.fondo), [r.logoTxt, r.fondo]);
   r = await mira('?tema=espuma');

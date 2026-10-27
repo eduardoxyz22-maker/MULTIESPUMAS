@@ -61,7 +61,7 @@ function armarDashboard(){
   chk('3/10: el tema está prendido', r.on, r);
   chk('…la 🎃 al lado de MULTIESPUMAS', /🎃/.test(r.calabaza), r.calabaza);
   chk('…el encabezado de noche (morado #1a0b2e) y la telaraña', /26, 11, 46/.test(r.fondo) && /url\("data:image\/svg/.test(r.tela), r.fondo.slice(0,80));
-  chk('…el número de cupos en naranja y la pestaña elegida en morado', r.numero==='rgb(251, 146, 60)' && r.pestana==='rgb(59, 13, 92)', [r.numero, r.pestana]);
+  chk('…el número de cupos en naranja; la pestaña elegida con el color de SU sección, no el del tema (§4nk, dueño eligió la 4)', r.numero==='rgb(251, 146, 60)' && r.pestana==='rgb(15, 118, 110)', [r.numero, r.pestana]);
   r = await pedidos('2026-09-30T23:59:00-04:00');
   chk('30/09 23:59 de Bolivia (ya 1/10 en UTC): apagado, el panel como siempre', !r.on && !/🎃/.test(r.calabaza) && !/26, 11, 46/.test(r.fondo) && r.numero==='rgb(255, 255, 255)', r);
   r = await pedidos('2026-10-01T00:01:00-04:00');
