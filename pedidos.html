@@ -1305,6 +1305,7 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 .pal-ov.abierta{ opacity:1; }
 .pal{ width:min(660px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 80px rgba(10,40,44,.35); overflow:hidden; transform:translateY(-10px) scale(.98); transition:transform .22s cubic-bezier(.34,1.56,.64,1); display:flex; flex-direction:column; max-height:78vh; }
 .pal-ov.abierta .pal{ transform:none; }
+.pal:focus{ outline:none; }   /* (§4nl, Astra A13) la caja recibe el foco al tocar un lugar sin botón: sin el marco alrededor */
 .pal-cab{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--gray-md); font-size:1.1rem; }
 .pal-cab input{ flex:1; min-width:0; border:0; outline:0; font:inherit; font-size:1rem; color:var(--text); background:transparent; padding:6px 2px; }
 .pal-x{ border:1px solid var(--gray-md); background:#fff; color:var(--muted); border-radius:8px; font:inherit; font-size:.72rem; font-weight:800; padding:4px 8px; cursor:pointer; }
@@ -7064,6 +7065,9 @@ function showView(v){
 }
 function showViewAhora(v){
   if(v==='bot' && !botVe()) v='admin';
+  /* (§4nl, 27/10, Astra A12) La ficha al costado es de la lista de Administración: yendo a otra pestaña se cierra (antes quedaba encima
+     de Mis pedidos, con la página apretada a la izquierda). En el medio no pasa: su fondo tapa las pestañas. */
+  if(v!=='admin' && document.body.classList.contains('ficha-costado')) closeModal();
   var _nav=null; try{ _nav=navFoto(); }catch(e){}   // 🧭 (§4ni, 5) dónde estaba la pestaña elegida, para deslizarla
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
@@ -16494,33 +16498,49 @@ function palPintar(){
   var box=document.getElementById('pal-res'); if(!box) return;
   var q=(document.getElementById('pal-in')||{}).value||'';
   PAL.res=palBuscar(q); if(PAL.sel>=PAL.res.length) PAL.sel=Math.max(0, PAL.res.length-1);
-  if(!PAL.res.length){ box.innerHTML='<div class="pal-vacio">No encontré nada con «'+esc(q)+'». Probá con el celular, el N° de nota o una parte del nombre.</div>'; return; }
+  var inp=document.getElementById('pal-in');   // (§4nl, 27/10, Astra A13) el campo dice cuál es la opción elegida (aria-activedescendant)
+  if(!PAL.res.length){ box.innerHTML='<div class="pal-vacio">No encontré nada con «'+esc(q)+'». Probá con el celular, el N° de nota o una parte del nombre.</div>'; if(inp) inp.removeAttribute('aria-activedescendant'); return; }
   var g='', h='';
   PAL.res.forEach(function(r,i){
     if(r.g!==g){ g=r.g; h+='<div class="pal-g">'+esc(g)+'</div>'; }
-    h+='<div class="pal-it'+(i===PAL.sel?' on':'')+'" role="option" aria-selected="'+(i===PAL.sel)+'" data-i="'+i+'"><span class="pal-ic">'+r.ic+'</span><span class="pal-tx"><b>'+esc(r.t)+'</b><small>'+esc(r.s||'')+'</small></span><span class="pal-ent">↵</span></div>';
+    h+='<div class="pal-it'+(i===PAL.sel?' on':'')+'" id="pal-op-'+i+'" role="option" aria-selected="'+(i===PAL.sel)+'" data-i="'+i+'"><span class="pal-ic">'+r.ic+'</span><span class="pal-tx"><b>'+esc(r.t)+'</b><small>'+esc(r.s||'')+'</small></span><span class="pal-ent">↵</span></div>';
   });
   box.innerHTML=h;
+  if(inp) inp.setAttribute('aria-activedescendant', 'pal-op-'+PAL.sel);
   var on=box.querySelector('.pal-it.on'); if(on && on.scrollIntoView) try{ on.scrollIntoView({block:'nearest'}); }catch(e){}
 }
 function palAbrir(){
   if(PAL.abierta){ var i0=document.getElementById('pal-in'); if(i0) i0.focus(); return; }
   PAL.abierta=true; PAL.sel=0; PAL.previo=document.activeElement;
   var ov=document.createElement('div'); ov.id='pal-ov'; ov.className='pal-ov';
-  ov.innerHTML='<div class="pal" role="dialog" aria-modal="true" aria-label="Buscar o ir a algo">'+
-    '<div class="pal-cab"><span aria-hidden="true">🔎</span><input id="pal-in" type="text" autocomplete="off" spellcheck="false" placeholder="Cliente, OC, nota, celular, producto o algo para hacer…" aria-label="Buscar"><button type="button" class="pal-x" onclick="palCerrar()" aria-label="Cerrar">Esc</button></div>'+
-    '<div class="pal-res" id="pal-res" role="listbox"></div>'+
+  /* (§4nl, 27/10, Astra A13) El campo es un combobox unido a su lista (aria-controls) y a la opción elegida (aria-activedescendant, en
+     `palPintar`); la caja lleva tabindex="-1" para que tocar un lugar sin botón deje el foco ADENTRO (si no, se iba a la página). */
+  ov.innerHTML='<div class="pal" role="dialog" aria-modal="true" aria-label="Buscar o ir a algo" tabindex="-1">'+
+    '<div class="pal-cab"><span aria-hidden="true">🔎</span><input id="pal-in" type="text" autocomplete="off" spellcheck="false" placeholder="Cliente, OC, nota, celular, producto o algo para hacer…" aria-label="Buscar" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="pal-res"><button type="button" class="pal-x" onclick="palCerrar()" aria-label="Cerrar">Esc</button></div>'+
+    '<div class="pal-res" id="pal-res" role="listbox" aria-label="Resultados"></div>'+
     '<div class="pal-pie"><span><b>↑ ↓</b> moverse</span><span><b>Enter</b> abrir</span><span><b>Esc</b> cerrar</span></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('abierta'); });
   ov.addEventListener('mousedown', function(e){ if(e.target===ov) palCerrar(); });
-  var inp=document.getElementById('pal-in');
+  var inp=document.getElementById('pal-in'), caja=ov.querySelector('.pal');
   inp.addEventListener('input', function(){ PAL.sel=0; palPintar(); });
   inp.addEventListener('keydown', function(e){
     if(e.key==='ArrowDown'){ e.preventDefault(); PAL.sel=Math.min(PAL.res.length-1, PAL.sel+1); palPintar(); }
     else if(e.key==='ArrowUp'){ e.preventDefault(); PAL.sel=Math.max(0, PAL.sel-1); palPintar(); }
     else if(e.key==='Enter'){ e.preventDefault(); palElegir(PAL.sel); }
-    else if(e.key==='Escape'){ e.preventDefault(); palCerrar(); }
+  });
+  /* (§4nl, Astra A13) El teclado de TODO el buscador, no solo del campo: Escape lo cierra desde cualquier parte (también desde «Esc») y
+     SOLO a él (sin el `stopPropagation` seguía hasta el Escape de las ventanas y cerraba también la de atrás); Tab y Mayús+Tab dan la
+     vuelta adentro (antes se iban al encabezado y las pestañas); ← → no pasan la ficha de atrás. */
+  caja.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); palCerrar(); return; }
+    if(e.key==='Tab'){
+      e.stopPropagation();
+      var L=[inp, caja.querySelector('.pal-x')], i=L.indexOf(document.activeElement);
+      if(e.shiftKey ? i<=0 : (i<0 || i===L.length-1)){ e.preventDefault(); (e.shiftKey ? L[L.length-1] : L[0]).focus(); }
+      return;
+    }
+    if(e.key==='ArrowLeft' || e.key==='ArrowRight') e.stopPropagation();
   });
   document.getElementById('pal-res').addEventListener('click', function(e){ var it=e.target.closest('.pal-it'); if(it) palElegir(+it.getAttribute('data-i')); });
   palPintar(); inp.focus();
@@ -38399,6 +38419,14 @@ function fichaCostadoAplicar(id){
   var el=null; try{ el=document.querySelector('.af-f[data-pid="'+CSS.escape(String(id))+'"]'); }catch(e){}
   if(el){ el.classList.add('af-sel'); try{ el.scrollIntoView({ block:'nearest' }); }catch(e){} }
 }
+/* (§4nl, 27/10, Astra A12) Con la ficha abierta, cruzar los 1200 px (achicar la ventana, girar el iPad) se vuelve a decidir: más angosta
+   pasa al medio como la ventana de siempre (antes seguía al costado apretando todo); más ancha vuelve al costado con el pedido marcado. */
+window.addEventListener('resize', function(){
+  var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
+  if(!ov || !box || !ov.classList.contains('on') || !box.classList.contains('fl-ficha')) return;
+  if(fichaCostadoVa()===document.body.classList.contains('ficha-costado')) return;
+  fichaCostadoAplicar(FICHA_ABIERTA_ID); fichaAcomodar();
+});
 function fichaVecinos(p){
   if(!p || !p.fecha) return null;
   var m=dayNumMap(), l=(STATE||[]).filter(function(q){ return q && q.fecha===p.fecha && !esFilaSistema(q) && m[q.id]; });
