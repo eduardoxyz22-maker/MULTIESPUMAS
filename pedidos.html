@@ -2100,6 +2100,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
       <div class="tienda-banner">
         <span>🏪 <b>Venta de tienda</b> — el cliente se lo lleva del local. No lleva fecha de entrega, turno ni dirección: queda como <b>SALIÓ DE TIENDA</b> y <b>no ocupa cupo del camión</b>.</span>
         <label style="display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap">Tienda <select id="f-tienda-suc" style="padding:5px 8px;border:1px solid #a9cfdf;border-radius:7px;font:inherit;font-size:.82rem"></select></label>
+        <label class="tv-fv" style="display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap" title="El día que el cliente se lo llevó: con ese día cuenta en Contabilidad y Proyección">Fecha de la venta <input type="date" id="f-fecha-venta" style="padding:4px 7px;border:1px solid #a9cfdf;border-radius:7px;font:inherit;font-size:.82rem"></label>
         <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="cancelarVentaTienda()">Cancelar</button>
       </div>
 
@@ -14442,7 +14443,28 @@ function submitPedido(){
   /* ⚠️ La venta ya era «PAGADA sin monto» (§4fg, 25/09): el formulario no la deja guardar sin el
      monto total, y ese monto se fechaba HOY — plata cobrada en agosto caía en la caja del día en
      que alguien le corrigió la dirección. Entró el día de la venta, como anota «💵 Anotar el monto». */
-  var _diaSI = (prev && prev.pagado && cobrosDe(prev).some(function(c){ return c.sinMonto; })) ? (contaFecha(prev)||todayStr()) : todayStr();
+  /* 📅 (§4nm, 27/10, dueño: tres ventas de Charcas se cargaron el 1/10 y salieron de la tienda el 30/09) LA FECHA DE LA VENTA DE
+     TIENDA. No tiene fecha de entrega, así que su día es el `ts` (`contaFecha`): con eso cuenta en Contabilidad, Proyección y las
+     metas, y lo siguen los pagos de ese día (en la tienda se paga en el mostrador). «Fecha de la venta» lo mueve a ese día, con la misma hora; nunca a mañana. */
+  var _tsVenta=null, _fvAntes='', _fvNueva='';   // los pagos del día viejo pasan al nuevo (abajo, después de armar `rec`)
+  if(VENTA_TIENDA){
+    var _fvEl=document.getElementById('f-fecha-venta'), _fv=_fvEl ? String(_fvEl.value||'') : '', _hoyB=diaNegocio();
+    var _base=(isEdit && prev && Number(prev.ts)) ? Number(prev.ts) : Date.now();
+    if(_fv && _fv>_hoyB){ markErr('f-fecha-venta'); toast('🚫 La fecha de la venta no puede ser después de hoy.','err'); if(_fvEl) _fvEl.focus(); return; }
+    if(_fv && _fv!==isoDeTsBolivia(_base)){
+      var _antes=isoDeTsBolivia(_base);
+      if(isEdit && prev && _fv.slice(0,7)!==_antes.slice(0,7)){
+        var _conFecha=parseCobros(prev.metodoPago).filter(function(c){ return c.fecha && c.fecha!==_antes && !esEnvio(c); });
+        if(!confirm('📅 Esta venta va a contar en '+mesNombre(_fv)+' en Contabilidad y Proyección (antes: '+mesNombre(_antes)+').'+
+          (_conFecha.length ? ('\n\n'+(_conFecha.length===1 ? 'Un pago tiene' : (_conFecha.length+' pagos tienen'))+' otra fecha y '+(_conFecha.length===1 ? 'queda' : 'quedan')+
+            ' en su día. Si también fue el '+fmtFecha(_fv)+', corregilo en Contabilidad → ✏️ Corregir este pago.') : '')+'\n\n¿Seguro?')) return;
+      }
+      var _msDia=((_base-4*3600000)%86400000+86400000)%86400000;   // la misma hora de Bolivia
+      _tsVenta=Math.min(Date.parse(_fv+'T00:00:00-04:00')+_msDia, Date.now());
+      _fvAntes=_antes; _fvNueva=isoDeTsBolivia(_tsVenta);
+    }
+  }
+  var _diaSI = (prev && prev.pagado && cobrosDe(prev).some(function(c){ return c.sinMonto; })) ? (_fvNueva||contaFecha(prev)||todayStr()) : todayStr();
   var _metForm = _mixOn
         ? (function(){
             var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), dia=_pagSI?_diaSI:todayStr(), nota=document.getElementById('f-nota').value;
@@ -14942,7 +14964,7 @@ function submitPedido(){
        pedido que nace ahora y necesita su número del día y su hora, no ceros — con nroDia 0
        quedaba fuera del orden de carga del camión y con ts 0 aparecía como el más viejo. */
     nroDia: (_tienda || (isEdit && prev)) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
-    ts: (isEdit && prev) ? prev.ts : Date.now(),
+    ts: (_tsVenta!=null) ? _tsVenta : ((isEdit && prev) ? prev.ts : Date.now()),
     /* 📎 LAS FOTOS DE LA ENTREGA (§4cb).
        Las sube el chofer con `pedirFoto()`, viven en la columna 29 y son el respaldo de
        que el pedido llegó. `rec` se arma de CERO desde el formulario, así que sin esta
@@ -14960,6 +14982,7 @@ function submitPedido(){
      esto copia del pedido anterior cualquier campo que el formulario no maneje. Lo que el
      formulario SÍ maneja ya está en `rec` y no se pisa. */
   if(prev){ for(var _kr in prev){ if(!(_kr in rec)) rec[_kr]=prev[_kr]; } }
+  if(_fvNueva && rec.metodoPago) rec.metodoPago=String(rec.metodoPago).replace(new RegExp('@(\\s*)'+_fvAntes+'(?!\\d)','g'), '@$1'+_fvNueva);   // 📅 (§4nm) lo cobrado el día de la venta va con ella
   /* 📥 La marca del lead de Kommo va adentro de los productos, y `productos` se rearma de cero:
      si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
      Se rescata del pedido anterior para que el robot no vuelva a traer el borrador (§4es). */
@@ -15508,6 +15531,8 @@ function pintarModoTienda(){
   var view=document.getElementById('view-form');
   if(view) view.classList.toggle('venta-tienda', !!VENTA_TIENDA);
   if(VENTA_TIENDA) llenarTiendaSuc();
+  var _fv=document.getElementById('f-fecha-venta');   // 📅 (§4nm) una venta nueva arranca con hoy; nunca después de hoy
+  if(_fv && VENTA_TIENDA){ _fv.max=diaNegocio(); if(!_fv.value) _fv.value=diaNegocio(); }
   var b=document.getElementById('f-submit');
   if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
@@ -15879,6 +15904,7 @@ function resetForm(){
   /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
      proponía el feriado y el formulario lo frenaba al guardar. El mínimo sigue siendo mañana. */
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=proximoDiaEntrega();
+  var _fvR=document.getElementById('f-fecha-venta'); if(_fvR) _fvR.value='';   // 📅 (§4nm)
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
   segSet('f-doc-tipo','OC');
@@ -15937,6 +15963,7 @@ function editPedido(id){
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
   EDIT_TIENDA_SUC0=VENTA_TIENDA ? String((document.getElementById('f-tienda-suc')||{}).value||'') : null;   // (§4jd, A2-4)
+  if(VENTA_TIENDA){ var _fvE=document.getElementById('f-fecha-venta'); if(_fvE){ _fvE.value=Number(rec.ts) ? isoDeTsBolivia(rec.ts) : ''; _fvE.max=diaNegocio(); } }   // 📅 (§4nm)
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
