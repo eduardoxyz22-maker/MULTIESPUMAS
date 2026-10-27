@@ -16459,3 +16459,40 @@ ofreció plegarla o sacar las columnas; eligió dejarla. No volver a proponerlo 
 - **PUBLICADO 27/10, `d41ae21`** (dueño: «Publica»): `format-patch` de `3c4b205` + `394c38e` (solo `pedidos.html` y las dos pruebas),
   aplastados en un commit. Sobre la copia de publicar: test_semana 41, test_semana_grito 27, test_anuncio 47, test_asistente_ak 38,
   test_adm_arriba 27, test_asistente 24, test_bloki 19, todas sin rojas. Al dueño: F5 en los aparatos de logística y Administración.
+
+### §4na — 🏬 El stock de cada tienda (27/10; dueño: *«armarlo y veamos cómo queda, quiero ver que no altere fórmulas ni nada… sería el último día laboral del mes, no voy a subir un domingo»*; en la rama `1e9beac`, espera «publica»)
+- Stock → «🏬 Stock de las tiendas» (`abrirTst`, `#tst-overlay`; también en «Más» de la barra nueva). Fila propia **`__tiendas_stock__`**
+  (`TST_ID`, en `esFilaSistema`): `{v:1, s:{tienda:{f, hora, t, de:'excel'|'mano', u:{clave:n}, tot}}, x:[pases {id,f,de,a,k,u,ts,an}], h:[conteos]}`.
+- Se cuenta el último día hábil del mes (`tstUltimoHabilMes`; el 31/10 es sábado, hábil) al cierre; el aviso lo dice ese día. Subir: el
+  «EXISTENCIAS ALMACEN» del almacén de la tienda (`existLoteDe`/`existLeer`, la tienda sale del nombre con `tstTiendaDe`; PTF/Banzer/Moreno no
+  entran, `tstEsDeFabrica`) o a mano («código cantidad», también dos columnas pegadas; `tstParseMano`, `tstProdDeCodigo`).
+- `tstCalcular(hasta)`: contado + RPT que salieron (`stockSalio`, sin ✗) − ventas de tienda (`contaFecha`) − «🏬 Tienda» que salió (✅ o fecha
+  pasada, §4co) ± pases, todo con fecha DESPUÉS del conteo; «🏬 Tienda» sin salir = apartado. Sin conteo, la tienda no muestra nada. Sin
+  `esProdDeTienda` (como el stock de fábrica). Vista previa con el control (lo que el panel esperaba ese día contra lo contado); un conteo
+  más viejo que el guardado no entra. Guardar relee y junta (`tstJuntar`: por tienda gana el más nuevo; pases por id con lápida `an`).
+- La lista «🏬 ¿De qué tienda se recoge?» dice cuánto hay (`tstDeClave`, `tstEnTiendaTxt`).
+- ⚠️ SOLO MIRA: nada del stock de fábrica la lee. `tests/test_tiendas_stock.js` (37) compara con y sin el conteo: stockData, Qué producir,
+  stockAsignar (sin su `firma`, que es la planilla copiada), semanaDatos, saldoVeredicto y stockTiendas dan igual. test_stock_arriba: 7 en «Más».
+- Para decidir con el dueño: ¿hay Excel de cada tienda o a mano?, ¿publicar antes del sábado 31/10?, ¿contar protectores y sábanas?
+
+### §4nb — 🎯 Las metas por marca (27/10; dueño: *«¿dónde están para colocar las metas?»*; en la rama `5493560`, espera «publica»)
+- Proyección → «🎯 Metas» (`metasAbrir`; con la contraseña, como Proyección). Fila **`__metas__`** (`META_ID`): `{v:1, m:{'2026-11':{heaven, suena, t}}}`;
+  guardar relee y cambia solo ese mes. Ficha «🎯 Meta del equipo», caja `#pry-metas` (`metasHtml`, `metaMarcaDatos`: % vendido y proyectado,
+  si llega, cuánto falta por día hábil contando hoy) y el pie de la curva (`metaPieTxt`). Lo vendido sale de `pryVentas` (la misma cuenta).
+- `tests/test_metas.js` (23): la proyección da exactamente lo mismo con o sin metas. test_conta_4jw: el pie dice «Meta: sin cargar».
+
+### §4nc — 🎄 Navidad en diciembre (27/10; dueño: *«arranca»*; en la rama `59c80c1`, espera «publica»)
+- `tema-navidad` en `<html>` en diciembre con la fecha de Bolivia (el mismo script de Halloween), en pedidos.html y panel_template.html. Solo CSS:
+  pino en el encabezado, guirnalda con dos tiras que titilan alternadas (`.header::before/::after`, `nv-luz`), 🎄, estrella (`.h-luna`),
+  trineo (`.h-murc i:nth-child(1)`, `nv-trineo`), nieve (`.h-ruta::after`), pestaña verde. Bloki (bloki/conta/anuncio) con gorro (`temaNavidad()`
+  en `blokiSvg`; ⚠️ `.bk-chispa` está también en el `<style>` del SVG: una prueba busca `class="bk-chispa"`). Dashboard: la caja de la marca.
+- `tests/test_navidad.js` (20). El dashboard de Sueña (otro repo) no está en esta sesión.
+
+### §4nd — 📲 El WhatsApp de las 16:00 a Ernesto y Alba (27/10; dueño: *«a Alba también»*; MUESTRA, sin código)
+- Plantilla propuesta `logistica_pedir_hoy`: {{1}} cuántos, {{2}} la lista en UNA línea («jue 29/10: PRODUCTO (CLIENTE) · …», Meta no deja
+  saltos de línea en un dato), {{3}} los plazos y lo que ya no llega. Destinatarios en una propiedad nueva (p. ej. `WA_PEDIR_HOY` = «Ernesto:591…,
+  Alba:591…»), nunca en el código. Necesita: la plantilla aprobada por Meta, una versión nueva del `.gs` con la MISMA regla de `semanaUrgentes`
+  (y una prueba que compare la página con el servidor) y el número de Alba.
+- Página de muestras para el dueño (las cinco, con capturas de datos inventados): https://claude.ai/artifact/ARqVqf6JJgaGYbBEW9cJMp
+- El dueño no veía los trajes de Bloki (publicados el 15/10): con «Administración» elegido en «¿Quién está usando el panel?» siempre sale el
+  Bloki de todos (`blokiTraje`: `admin` → `bloki`). Se le ofreció que con Administración el traje siga la pestaña.
