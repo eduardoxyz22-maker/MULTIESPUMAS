@@ -2307,7 +2307,7 @@ correo + el mensaje de **WhatsApp**.
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
 
-## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
+## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; PUBLICADO `4c7af2b`; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
 Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades
 y Bs, el mes de comparación entero y la línea de unidades. `pryMomDe` → `tres:{act,ant,ent}` con `{n,u,bs}` + `curU/prevU`; `pryMomTocar`
 inserta `pryMomDetHtml` sin repintar (`PRY_MOM_CTX`, `PRY_MOM_ABIERTO`). ⚠️ El texto de la fila no cambia salvo «ventas · unidades ▸» al final

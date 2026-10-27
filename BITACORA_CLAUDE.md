@@ -16590,7 +16590,8 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 ### §4nj — 📊 MoM B EN PROYECCIÓN + 🎨 «ARRIBA DEL PEDIDO» (27/10 a la noche)
 - El dueño, con captura de «Por vendedor»: *«falta el mom en unidades y monto… cómo sé cuánto vendió el mes pasado vs lo de ahora para comparar en
   ventas, unidades y Bs? arma tb opciones»*. Muestras (https://claude.ai/artifact/T12SxuaooyJFdnU7uf7Wew, números de ejemplo): A tres flechas en
-  la fila, B tocar y se abre, C elegir qué comparar, D tabla del equipo. **Eligió la B.** EN LA RAMA, espera «publica».
+  la fila, B tocar y se abre, C elegir qué comparar, D tabla del equipo. **Eligió la B.** **PUBLICADO 27/10 ~16:26 de Bolivia con la C (`4c7af2b`; el
+  dueño: «publicá ya», sin esperar la batería entera: las suites de formulario, cupos y Proyección dieron todas bien).**
   · `pryMomDe` ahora también devuelve `tres` = `{act, ant, ent}` con `{n, u, bs}` (ventas = cuántas, unidades = `x.u` de `pryVentas`, la misma
     cuenta de la fila; `ent` = el mes de comparación ENTERO) y `curU`/`prevU` (`pryMomSerie(…, 'u')`). `act`/`ant`/`cur`/`prev` siguen igual.
   · La fila con MoM es `.pry-toca` (role=button, `data-vk`, `aria-expanded`); tocarla (o Enter) llama a `pryMomTocar`: inserta/saca
