@@ -1,0 +1,34 @@
+name: Inspeccionar respuestas en Kommo (solo lectura)
+
+# 🔎 ¿Kommo dice cuándo contesta la vendedora? (27/10, bitácora §4ng). Pregunta, sin cambiar nada, si el historial trae
+# los mensajes salientes, de qué entidad cuelgan, quién los mandó y cómo están los webhooks de hoy.
+#
+# ⚠️ El repositorio es PÚBLICO y este registro también: el script no imprime textos de mensajes, nombres ni teléfonos de
+#    clientes (solo cantidades, nombres de campos y la forma de los valores; de los webhooks, solo el host).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'herramientas/inspeccionar_respuestas.py'
+      - '.github/workflows/inspeccionar-respuestas.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inspeccionar-respuestas
+  cancel-in-progress: false
+
+jobs:
+  inspeccionar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preguntarle a Kommo
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+        run: python herramientas/inspeccionar_respuestas.py
