@@ -79,13 +79,14 @@ const fotoPry = page => page.evaluate(()=>{ var R=proyeccionMes('2026-10'); retu
   chk('2 · la ventana: «🎯 Metas por marca», octubre, un campo por marca', /Metas por marca/.test(r.tit) && /octubre/i.test(r.mes) && r.ins.length===2 && r.ins.some(t=>/Heaven/.test(t)) && r.ins.some(t=>/Sueña/.test(t)), r);
   chk('2 · al lado de cada campo, la meta y lo vendido de septiembre (Heaven: meta Bs 140.000)', r.sub.some(t=>/septiembre de 2026: meta Bs 140\.000 · vendió Bs [\d.]+ \(\d+%\)/.test(t)), r.sub);
   chk('2 · «Cómo les fue»: agosto sin meta, septiembre con meta y %, octubre en curso', /agosto/i.test(r.hist) && /sin meta/.test(r.hist) && /septiembre.*Bs 140\.000/i.test(r.hist) && /en curso/.test(r.hist), r.hist);
-  if(CAP){ fs.mkdirSync(CAP,{recursive:true}); await page.screenshot({ path:path.join(CAP,'metas-ventana.png'), animations:'disabled' }); }
+  if(CAP) fs.mkdirSync(CAP,{recursive:true});
   await page.evaluate(()=>{ document.getElementById('mt-in-heaven').value='12abc'; document.getElementById('mt-in-suena').value='40.000'; metasSuma(); return metasGuardar(); });
   await espera();
   r=await page.evaluate(()=>window.SAVES.length);
   chk('5 · «12abc» no se guarda', r===0, r);
   await page.evaluate(()=>{ document.getElementById('mt-in-heaven').value='150.000'; metasSuma(); });
   r=await page.evaluate(()=>document.getElementById('mt-suma').innerText);
+  if(CAP){ await page.evaluate(()=>{ var t=document.getElementById('toast'); if(t) t.className='toast'; }); await page.screenshot({ path:path.join(CAP,'metas-ventana.png'), animations:'disabled' }); }
   chk('2 · el equipo suma mientras se escribe: Bs 190.000', /190\.000/.test(r), r);
   await page.evaluate(()=>metasGuardar());
   await espera(150);
@@ -107,7 +108,8 @@ const fotoPry = page => page.evaluate(()=>{ var R=proyeccionMes('2026-10'); retu
   chk('3 · dice si llega o no con la proyección', /(Si sigue así, llega|Cerca:|Así no llega:)/.test(r.txt), r.txt);
   chk('4 · la ficha «🎯 Meta del equipo» Bs 190.000 con el % y el proyectado', /Meta del equipo Bs 190\.000 va el \d+% · se proyecta el \d+%/i.test(r.met), r.met);
   chk('4 · el pie de la curva de Heaven: «🎯 Meta Bs 150.000 · va el N%»', r.pie.some(t=>/Meta Bs 150\.000 · va el \d+%/.test(t)), r.pie);
-  if(CAP) await page.evaluate(()=>document.getElementById('pry-metas').scrollIntoView()), await page.screenshot({ path:path.join(CAP,'metas-proyeccion.png'), animations:'disabled' });
+  if(CAP){ await page.evaluate(()=>{ var t=document.getElementById('toast'); if(t) t.className='toast'; var e=document.getElementById('pry-metrics'); window.scrollTo(0, e.getBoundingClientRect().top+window.scrollY-110); });
+    await espera(200); await page.screenshot({ path:path.join(CAP,'metas-proyeccion.png'), animations:'disabled' }); }
 
   /* 5 · Copiar las de septiembre, sin señal */
   await page.evaluate(()=>{ metasAbrir('2026-11'); metasCopiarAnterior(); });

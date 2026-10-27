@@ -151,7 +151,7 @@ const fotoFabrica = page => page.evaluate(()=>{
   await page.waitForTimeout(80);
   r=await page.evaluate(()=>{ var p=document.getElementById('tst-prev'); return p ? p.innerText.replace(/\s+/g,' ') : ''; });
   chk('4 · la vista previa: el panel esperaba 4 y contaron 3: −1 en el TITANIO', /esperaba 4/.test(r) && /contaron 3/.test(r) && /-1 en total/.test(r) && /TITANIO ICE · 160x190 3 2 -1/i.test(r), r);
-  if(CAP) await page.screenshot({ path:path.join(CAP,'tiendas-control.png'), animations:'disabled' });
+  if(CAP){ await page.evaluate(()=>{ var t=document.getElementById('toast'); if(t) t.className='toast'; }); await page.screenshot({ path:path.join(CAP,'tiendas-control.png'), animations:'disabled' }); }
   await page.evaluate(()=>tstGuardarConteo());
   await page.waitForTimeout(80);
   r=await page.evaluate(()=>{ var D=tstLeer(), T=tstCalcular(); return { n:window._tstGuardado||0, f:D.s['Mia Plaza'].f, tiene:T['Mia Plaza'].tot.tiene, apart:T['Mia Plaza'].tot.apart,
