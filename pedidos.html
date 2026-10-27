@@ -1493,6 +1493,35 @@ body.desh-on .toast.show{ transform:translateX(-50%) translateY(-74px); }
 .venta-tienda #fh .fh-dia, .venta-tienda #fh .fh-turnos, .venta-tienda #fh .fh-cerrado, .venta-tienda #fh .fh-alerta{ display:none; }
 @media(max-width:560px){ .fh{ padding:12px 12px 14px; } .fh-top{ flex-wrap:nowrap; gap:6px; } .fh-top h3{ font-size:1rem; white-space:nowrap; }
   .fh-ic{ padding:0 5px; } .fh-ic .tx{ display:none; } .fh-t{ padding:9px 10px 7px; } .fh-n b{ font-size:1.3rem; } .fh-t1 em.tu{ display:none; } }
+/* 🎃 (§4nk, 27/10, dueño: *«me gusta pero no se ve halloweenesco»*) En octubre el recuadro de arriba del pedido se viste como el
+   encabezado: tela de araña con su araña, la luna, tres murciélagos, 🎃 en el título, niebla abajo y brillo naranja. Los otros meses
+   (`.fh-murc`, `.fh-luna`) no se ven. Nada de esto se lee: va detrás del contenido y sin texto. */
+.fh-murc, .fh-luna{ display:none; }
+html.tema-halloween .fh{ position:relative; overflow:hidden; box-shadow:0 10px 26px -12px rgba(124,45,18,.75), inset 0 0 0 1px rgba(251,146,60,.18); }
+html.tema-halloween .fh > :not(.fh-murc):not(.fh-luna){ position:relative; z-index:1; }
+html.tema-halloween .fh::after{ content:''; position:absolute; right:0; top:0; width:120px; height:124px; pointer-events:none; opacity:.85;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27165%27%20viewBox%3D%270%200%20160%20165%27%3E%3Cpath%20d%3D%27M160%2C0L160%2C165M160%2C0L98%2C153M160%2C0L43%2C117M160%2C0L8%2C64M160%2C0L-5%2C0M160%2C28Q155%2C25%20150%2C26M150%2C26Q146%2C21%20140%2C20M140%2C20Q139%2C14%20134%2C11M134%2C11Q135%2C5%20132%2C0M160%2C56Q150%2C49%20139%2C52M139%2C52Q132%2C42%20120%2C40M120%2C40Q118%2C28%20108%2C22M108%2C22Q111%2C10%20104%2C0M160%2C86Q145%2C76%20128%2C80M128%2C80Q117%2C65%2099%2C61M99%2C61Q96%2C43%2081%2C34M81%2C34Q84%2C15%2074%2C0M160%2C118Q140%2C104%20116%2C109M116%2C109Q101%2C89%2077%2C83M77%2C83Q72%2C59%2051%2C46M51%2C46Q56%2C21%2042%2C0M160%2C152Q134%2C134%20103%2C141M103%2C141Q84%2C114%2053%2C107M53%2C107Q47%2C76%2020%2C59M20%2C59Q26%2C27%208%2C0%27%20fill%3D%27none%27%20stroke%3D%27%23ffffff%27%20stroke-opacity%3D%270.38%27%20stroke-width%3D%271.1%27%2F%3E%3Cline%20x1%3D%27118%27%20y1%3D%270%27%20x2%3D%27118%27%20y2%3D%2758%27%20stroke%3D%27%23ffffff%27%20stroke-opacity%3D%270.38%27%2F%3E%3Ccircle%20cx%3D%27118%27%20cy%3D%2762%27%20r%3D%274.5%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.5800000000000001%27%2F%3E%3C%2Fsvg%3E") no-repeat right top/120px 124px;
+  transform-origin:88px 0; animation:fh-arana 4s ease-in-out infinite alternate; }
+@keyframes fh-arana{ to{ transform:rotate(-2.5deg); } }
+html.tema-halloween .fh::before{ content:''; position:absolute; left:-50%; width:200%; bottom:0; height:46px; pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(210,190,240,.16),transparent 70%) repeat-x 0 100%/300px 46px; animation:h-niebla 40s linear infinite; }
+html.tema-halloween .fh-luna{ display:block; position:absolute; top:12px; right:44%; width:26px; height:26px; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle at 38% 38%,#fffbeb,#fde68a 62%,#f59e0b); box-shadow:0 0 18px 6px rgba(253,230,138,.3),inset -4px -3px 0 rgba(180,120,20,.25); }
+html.tema-halloween .fh-murc{ display:block; position:absolute; inset:0 0 auto 0; height:70px; pointer-events:none; }
+.fh-murc i{ position:absolute; left:-30px; width:20px; height:10px; filter:drop-shadow(0 0 2px rgba(251,146,60,.85));
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M12 5 C10 1 6 1 1 4 C4 4 5 6 5 8 C7 6 9 7 12 10 C15 7 17 6 19 8 C19 6 20 4 23 4 C18 1 14 1 12 5Z' fill='%230b0314'/%3E%3C/svg%3E") no-repeat center/contain;
+  animation:h-murc 13s linear infinite, h-aleteo .28s ease-in-out infinite alternate; }
+.fh-murc i:nth-child(1){ top:10px; animation-delay:-3s,0s; }
+.fh-murc i:nth-child(2){ top:30px; width:15px; height:8px; animation-delay:-8s,-.1s; animation-duration:16s,.25s; }
+.fh-murc i:nth-child(3){ top:4px; width:12px; height:6px; animation-delay:-11.5s,-.2s; animation-duration:19s,.22s; }
+html.tema-halloween .fh-top h3::before{ content:'🎃 '; }
+html.tema-halloween .fh-t.sel{ box-shadow:0 0 0 2px #fb923c, 0 10px 24px -8px rgba(251,146,60,.65); }
+html.tema-halloween .fh-t.sel.k-ok .fh-n b{ color:#ea580c; }
+html.tema-halloween .fh-t.sel.k-ok .fh-bar i{ background:linear-gradient(90deg,#f97316,#fb923c); }
+html.tema-halloween .fh-t:not(.sel) .fh-bar i{ background:#fdba74; }
+html.tema-halloween .fh-t:not(.sel){ background:rgba(255,255,255,.08); border-color:rgba(251,146,60,.28); }
+@media(max-width:560px){ html.tema-halloween .fh::after{ width:84px; height:87px; background-size:84px 87px; opacity:.7; } html.tema-halloween .fh-luna{ display:none; } }
+@media(prefers-reduced-motion:reduce){ html.tema-halloween .fh::after, html.tema-halloween .fh::before, .fh-murc i{ animation:none; } html.tema-halloween .fh-murc{ display:none; } }
 /* 👀 (§4nk) Los pedidos del turno (ver `verCuposTurno`) */
 .cupv{ display:flex; flex-direction:column; gap:12px; padding:16px 18px 18px; }
 .cupv-res{ border-radius:14px; padding:12px 14px; background:var(--teal-lt); border:1px solid var(--teal-border); display:flex; flex-direction:column; gap:8px; }
@@ -16896,7 +16925,8 @@ function fhPintar(){
   var pill=on ? ['', 'En línea'] : (!CONNECTED ? [' off', 'Solo en este equipo'] : ((CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO) ? [' off', 'Conectando…'] : [' off', 'Sin conexión']));
   var nov=''; try{ nov=localStorage.getItem(LS_NOV)||''; }catch(e){}
   var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha), ed=EDIT_ID ? ' ✏️ Estás corrigiendo: se puede guardar igual.' : '';
-  var h='<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : 'Nuevo pedido')+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+
+  var h='<span class="fh-murc" aria-hidden="true"><i></i><i></i><i></i></span><span class="fh-luna" aria-hidden="true"></span>'+   // 🎃 (§4nk) solo se ven en octubre
+    '<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : 'Nuevo pedido')+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+
     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
     '<a class="fh-ic" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
       (nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a></div>'+
@@ -16929,7 +16959,8 @@ function fhPintar(){
   if(!on && connTxt) avisos.unshift(['k-off', '📡 '+connTxt]);
   var viejo=cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
   h+=avisos.map(function(a){ return '<div class="fh-alerta '+a[0]+'">'+a[1]+'</div>'; }).join('');
-  box.innerHTML=h;
+  if(box._h===h) return;   // lo mismo de antes: no rearmar (los murciélagos y el «En línea» no vuelven a empezar)
+  box._h=h; box.innerHTML=h;
 }
 /* ============================================================================
    ✨ LAS ESCENAS DEL FORMULARIO DE PEDIDOS (§4if, 08/10/2026)
