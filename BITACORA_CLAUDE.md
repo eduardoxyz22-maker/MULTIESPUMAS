@@ -16661,6 +16661,36 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - No cambia: la OC (sigue su número), los cupos (sin fecha de entrega), el servidor (`ts` viaja como siempre; `ocRepetidaGs_` solo
   mira el año y solo si cambia la OC). `tests/test_venta_tienda_fecha.js` (19).
 
+### §4nn — 🏪 VENTAS DE TIENDA EN «TU DÍA» + 👑 «VER TODOS» NUEVO + 👯 «REVISAR» QUE NO ABRÍA (27/10 a la noche)
+- **👯 «Revisar» de «Pueden estar cargadas dos veces»** (dueño, con captura de Contabilidad: *«el boton revisa no sirve.. doy clic no abre
+  nada»*). `cxDupAbrir` abría `#cx-dup`, que la vista nueva de arriba (`.cx-nuevo`, §4mg) esconde con `display:none`. Ahora, abierta, la
+  caja lleva `.cx-dup-vis` y se ve; desde la lista de control del cierre (una ventana) primero la cierra y desde el Cuadre vuelve a
+  Ventas. `tests/test_dup_revisar.js` (8; 3 rojas contra `0c6c09c`). **PUBLICADO 27/10 (`db5c860`, dueño: «arreglalo y publica»).**
+- **🏪 «Tu día» con las ventas de tienda** (dueño: *«podríamos poner una dona de sus ventas de tienda para que lleven su control»*; le propuse
+  una dona y se enojó con razón: el diseño nuevo ya no usa donas. Muestra en https://claude.ai/artifact/22hZaz3ktXqekHJy2jzpPW; dueño: *«ok y
+  publica el diseño que me propusiste»*). Un renglón debajo del efectivo (`misTiendaFila(misTiendaDatos(mine))`): lo vendido EN LA TIENDA en el
+  mes por el día de la VENTA (`contaFecha`, que se corrige con «Fecha de la venta» de §4nm) y el mes de Bolivia, cuántas ventas, artículos y
+  lo que falta cobrar. «Vendido para <mes>» sigue siendo solo lo que se entrega (§4nl, A06). «Ver» = chip nuevo **«🏪 Ventas de tienda»**
+  (`MIS_DEFS`, `soloSiHay`: solo aparece cuando hay alguna, para no cambiar los chips de quien no vende en tienda). Sin ventas de tienda en el
+  mes no hay renglón; Eduardo y ROHO no lo ven (`esVendedorLite`).
+- **👑 «Ver todos» con el diseño nuevo** (dueño, con captura de la dona vieja: *«VER TODOS DEBERIA ESTAR MODERNIZADO TB»*). Con `MIS_TODOS`
+  (la contraseña) y `misTopActivo()`, `#mis-top` lleva `misEqPintar`: **«📋 Para hacer · el equipo»** (`misEqHacerDatos`: avisos de
+  Contabilidad, productos que no hay, atrasados, recargos sin reportar, sin ubicación, Kommo sin fecha, saldo del mes; cada uno con «Nombre N
+  · Nombre N · otras N», `misEqQuienes`; las listas abren con `misVerLista('eq…')`), **«👑 El día del equipo»** (la suma de las filas, la
+  línea del mes, hoy y el próximo día, entregados, falta cobrar, **efectivo sin rendir** = lo de «Tu día» de cada vendedora + lo de los
+  choferes, `misEqEfectivo`, tocar abre quién lo tiene; tienda del equipo; Pendientes del equipo; Proyección) y **«👥 Por vendedora»** (una
+  fila por vendedora: vendido para el mes vs el mes anterior entero con barra, entregados, falta cobrar, tienda, efectivo; tocar una fila =
+  `misEqElegir`: sale de «Ver todos» y abre sus pedidos). La dona y las cuatro fichas se esconden (`.mis-nuevo`), el buscador sube a la barra.
+  ⚠️ **El equipo = sin Eduardo, ROHO ni los pedidos internos** (`contaExcluido`, como Contabilidad): así la suma de las filas da lo de arriba;
+  la lista de abajo sigue con TODOS los pedidos. Todo sale de las cuentas de «Tu día» (`misAnilloDatos`, `misEfectivoDatos`, `misTiendaDatos`,
+  `misPendientes`): no calcular nada aparte. En Playwright apagado salvo `MIS_TOP_PRUEBA`; `test_mis_arriba` 1c/6b cambiaron a conciencia
+  (esperaban «Ver todos» como antes). `tests/test_mis_tienda_equipo.js` (16).
+- **🧾 Fernando no cuadraba** (dueño, con el «RESUMEN DE VENTAS POR CLIENTE» del sistema del 01 al 27/10, 69 clientes, Bs 88.800): leí la
+  planilla (solo lectura) y la crucé con Contabilidad → Ventas por «Entrega agendada» de octubre (70 ventas, Bs 86.800). La diferencia entera
+  es la **nota 2239** (OC 10-296): panel Bs 4.260 (efectivo 2.260 + QR 2.000, los dos el 27/10), sistema Bs 6.260, mismos 10 productos sin
+  precio en el panel. Las otras 68: mismo monto (algunos nombres escritos distinto, uno con otro apellido en la nota 2242; tres con distinta
+  cantidad y la misma plata). La corrección la hacen ellos. (Sin nombres de clientes acá: el repo es público.)
+
 ### §4ni — ✨ LO ELEGIDO DEL MUESTRARIO + 🌼 NOVIEMBRE (27/10; dueño: *«Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre, algo estilo la película Coco y su canción»*, después *«Además quiero: 3, 10, 11»*)
 **PUBLICADO 27/10 ~15:41 de Bolivia (`a8dbe8c`, dueño: «publica»), todo junto con la 5, la 7 y la 9.** El `.gs` no cambia.
 - **Temas (14, 15 y noviembre)**: el script del `<head>` de `pedidos.html` y `panel_template.html` elige UNO por la fecha de Bolivia: octubre
