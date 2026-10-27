@@ -16666,4 +16666,9 @@ EN LA RAMA (`dda5111` + `cda8a25`), espera «publica». El `.gs` no cambia.
     sigue en la planilla y vuelve, nunca se pierde nada); Ctrl+Z deshace fuera de un campo. Las preguntas siguen y dicen «tenés 5 segundos para
     deshacerlo». En las pruebas apagado salvo `DESH_PRUEBA` (todo como antes, `realDelete` en el acto). Los borrados en tanda (ATC de Trello)
     siguen con `realDelete` directo.
-  · Prueba: `tests/test_mejoras_5_7_9.js` (52).
+  · Prueba: `tests/test_mejoras_5_7_9.js` (52). Dos arreglos de tiempo (`51a82c0`): `navFoto` lee el color de la pestaña SIN `transition`
+    (a mitad del cambio anterior daba transparente y no había fantasma) y al llegar la pestaña toma su color de una vez (el fantasma la tapa).
+  · Batería entera (`ccf9c9c`): 269 suites, 8.716 bien; en rojo la nueva (el caso de arriba, ya arreglado: 52/52 cuatro veces con la máquina
+    cargada) y `test_mispedidos` (1; sola y 6 a la vez, 33/33). `test_estetica_4mo` con 15 a la vez a veces falla 1·1440 (`--hdr-h` 84): lo
+    publicado (`main`) falla igual o más (7 de 8 corridas en paralelo; la copia nueva 1 de 6). En `pub_mn` (rama `pub-ni`, `5ae4c4b`): la nueva
+    52, temas 92, 3/10/11 29, fichas 13, visual 20, arriba 24, celular 35, estética 4mp 9, cupos 23, reprogramar 26, cierre 26, Halloween 22, Navidad 21.
