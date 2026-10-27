@@ -16535,5 +16535,9 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - **🎯 Metas**: al salir del campo, los puntos de los miles (`metasFormato`). `test_metas` (24).
 - **Batería** (27/10, con todo lo de arriba): 263 suites, 8.533 bien. Dos rojas: `test_mispedidos` (1, por la carga de la máquina: sola 33/33
   dos veces) y `test_ventas_marcas` (1, YA fallaba en `main` d41ae21: el monto entra a 1180 px sin achicarse; la prueba pasó a `<=`, 22/22).
+- **Servidor 2026-10-27-a IMPLEMENTADO 27/10 ~10:40 por el dueño** (*«listo ya está el gs y las plantillas»*). Verificado 10:43 con una consulta
+  que no lee datos (`geocode` con `links:[]` al `/exec`): `version 2026-10-27-a`, `wa:1`. El primer «pedir hoy» sale hoy 16:00 si Meta ya aprobó
+  `logistica_pedir_hoy` y está `WA_PEDIR_HOY`. Volver atrás: ✏️ a la versión anotada Y pegar la 26-b de `d41ae21…` (4.714 líneas).
+  ⚠️ Desde esta sesión `run_workflow` da 403: para ver la versión sin el respaldo, esa consulta (no toca la planilla).
 - **Navidad en el dashboard de Sueña** (otro repo, `MULTIESPUMAS-VISCARRA`): el parche está listo en el scratchpad (`suena_navidad.patch`: el
   mismo bloque que Heaven + MULTI en blanco y el 🎄 a la derecha, como su Halloween), sin subir: va con el «publica».
