@@ -1147,6 +1147,37 @@ html.tema-halloween .nav button.active{ background:#3b0d5c; border-color:#3b0d5c
 /* 🎨 (§4mo) la telaraña pasaba por adentro del anillo «PM» y cruzaba la letra: cada anillo lleva su fondo de noche y la letra su sombra. */
 html.tema-halloween .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(18,5,31,.78) 62%,rgba(18,5,31,0) 74%); }
 html.tema-halloween .h-an i{ text-shadow:0 0 3px #12051f,0 0 6px #12051f,0 0 10px #12051f; }
+/* 🎄 Tema de Navidad (diciembre, §4nc; dueño, 27/10: «arranca»): ver el script de abajo. Como Halloween, solo dibujo: el encabezado
+   con su guirnalda de luces, la ruta con nieve, la estrella y el trineo, y Bloki con gorro. Los colores de aviso no cambian. */
+html.tema-navidad{ --grad-header:linear-gradient(135deg,#0b3b2c,#14532d,#0e4f3c,#7f1d1d,#14532d,#0b3b2c); }
+html.tema-navidad .header{ overflow:hidden; }
+html.tema-navidad .header::before, html.tema-navidad .header::after{ content:''; position:absolute; left:0; right:0; top:0; height:24px; pointer-events:none; z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%2224%22 viewBox=%220 0 240 24%22%3E%3Cdefs%3E%3Cfilter id=%22g%22 x=%22-1%22 y=%22-1%22 width=%223%22 height=%223%22%3E%3CfeGaussianBlur stdDeviation=%221.8%22/%3E%3C/filter%3E%3C/defs%3E%3Cpath d=%22M0 3 Q30 15 60 3 T120 3 T180 3 T240 3%22 fill=%22none%22 stroke=%22%230f2a1d%22 stroke-width=%221.6%22/%3E%3Cellipse cx=%2215%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23ef4444%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%2213%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%2215%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23ef4444%22/%3E%3Cellipse cx=%2213.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%2275%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23facc15%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%2273%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%2275%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23facc15%22/%3E%3Cellipse cx=%2273.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22135%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%2338bdf8%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22133%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22135%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%2338bdf8%22/%3E%3Cellipse cx=%22133.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22195%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%234ade80%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22193%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22195%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%234ade80%22/%3E%3Cellipse cx=%22193.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3C/svg%3E") repeat-x 0 0/240px 24px; animation:nv-luz 1.6s steps(1,end) infinite; }
+html.tema-navidad .header::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%2224%22 viewBox=%220 0 240 24%22%3E%3Cdefs%3E%3Cfilter id=%22g%22 x=%22-1%22 y=%22-1%22 width=%223%22 height=%223%22%3E%3CfeGaussianBlur stdDeviation=%221.8%22/%3E%3C/filter%3E%3C/defs%3E%3Cpath d=%22M0 3 Q30 15 60 3 T120 3 T180 3 T240 3%22 fill=%22none%22 stroke=%22%230f2a1d%22 stroke-width=%221.6%22/%3E%3Cellipse cx=%2245%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23f472b6%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%2243%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%2245%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23f472b6%22/%3E%3Cellipse cx=%2243.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22105%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%234ade80%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22103%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22105%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%234ade80%22/%3E%3Cellipse cx=%22103.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22165%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%23fde047%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22163%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22165%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%23fde047%22/%3E%3Cellipse cx=%22163.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3Cellipse cx=%22225%22 cy=%2214.5%22 rx=%226%22 ry=%227%22 fill=%22%2360a5fa%22 opacity=%22.45%22 filter=%22url%28%23g%29%22/%3E%3Crect x=%22223%22 y=%227%22 width=%224%22 height=%223.4%22 rx=%221%22 fill=%22%23cbd5e1%22/%3E%3Cellipse cx=%22225%22 cy=%2214.5%22 rx=%223.4%22 ry=%225%22 fill=%22%2360a5fa%22/%3E%3Cellipse cx=%22223.9%22 cy=%2212.6%22 rx=%221%22 ry=%221.7%22 fill=%22%23fff%22 opacity=%22.7%22/%3E%3C/svg%3E"); animation-delay:-.8s; }
+@keyframes nv-luz{ 50%{ opacity:.38; } }
+html.tema-navidad .logo-h::before{ content:'🎄 '; }
+html.tema-navidad .logo-s{ color:#bbf7d0; }
+html.tema-navidad .hstat-v{ color:#fde68a; text-shadow:0 0 12px rgba(253,230,138,.55); }
+html.tema-navidad .nav button.active{ background:#14532d; border-color:#14532d; }
+html.tema-navidad .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(11,59,44,.7) 62%,rgba(11,59,44,0) 74%); }
+html.tema-navidad .h-lejos{ filter:brightness(.8) saturate(.7); }
+html.tema-navidad .h-calle{ background:linear-gradient(#f8fafc,#e2e8f0) top/100% 3px no-repeat,
+  repeating-linear-gradient(90deg,rgba(255,255,255,.7) 0 28px,transparent 28px 64px) 0 9px/100% 2.5px no-repeat,linear-gradient(#334155,#1e293b); }
+html.tema-navidad .h-luna{ display:block; left:13%; top:2px; width:26px; height:26px; border-radius:0; box-shadow:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cdefs%3E%3Cfilter id=%22b%22 x=%22-1%22 y=%22-1%22 width=%223%22 height=%223%22%3E%3CfeGaussianBlur stdDeviation=%223%22/%3E%3C/filter%3E%3C/defs%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2211%22 fill=%22%23fde047%22 opacity=%22.45%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M20 4 L24.2 15 L36 15.6 L26.8 23 L30 34.4 L20 27.8 L10 34.4 L13.2 23 L4 15.6 L15.8 15 Z%22 fill=%22%23fde047%22 stroke=%22%23facc15%22 stroke-width=%221.2%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") center/contain no-repeat; animation:nv-estrella 2.6s ease-in-out infinite; }
+@keyframes nv-estrella{ 50%{ transform:scale(.82) rotate(10deg); opacity:.8; } }
+html.tema-navidad .h-murc{ display:block; inset:0; }
+html.tema-navidad .h-murc i:nth-child(1){ top:4px; width:96px; height:30px; left:-110px; background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2230%22 viewBox=%220 -3 96 33%22%3E%3Cpath d=%22M36 17 Q52 12 62 16 M36 19 Q60 18 80 15%22 fill=%22none%22 stroke=%22%23fde68a%22 stroke-width=%22.9%22/%3E%3Cpath d=%22M58 20 L57 25 M61 20 L61 25 M67 20 L68 25 M70 19 L72 24%22 stroke=%22%2378350f%22 stroke-width=%221.3%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2264%22 cy=%2217%22 rx=%227.5%22 ry=%223.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M69 16 L72 12%22 stroke=%22%23a16207%22 stroke-width=%222.6%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2273%22 cy=%2211%22 r=%222.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M72 9 L70 5 M71 7 L68 6 M74 9 L75 5 M74.5 7 L77 6%22 stroke=%22%2378350f%22 stroke-width=%221.1%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M76 17 L75 22 M79 17 L79 22 M85 17 L86 22 M88 16 L90 21%22 stroke=%22%2378350f%22 stroke-width=%221.3%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2282%22 cy=%2214%22 rx=%227.5%22 ry=%223.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M87 13 L90 9%22 stroke=%22%23a16207%22 stroke-width=%222.6%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2291%22 cy=%228%22 r=%222.6%22 fill=%22%23a16207%22/%3E%3Cpath d=%22M90 6 L88 2 M89 4 L86 3 M92 6 L93 2 M92.5 4 L95 3%22 stroke=%22%2378350f%22 stroke-width=%221.1%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2293.6%22 cy=%228.4%22 r=%221.4%22 fill=%22%23ef4444%22/%3E%3Cpath d=%22M4 24 Q4 28 9 28 L38 28 Q42 28 43 25%22 fill=%22none%22 stroke=%22%23fbbf24%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 13 L34 13 Q39 13 38 18 L36 24 L10 24 Q6 24 6 20 Z%22 fill=%22%23dc2626%22/%3E%3Cpath d=%22M8 15 L35 15%22 stroke=%22%23fbbf24%22 stroke-width=%221.2%22/%3E%3Crect x=%229%22 y=%228%22 width=%228%22 height=%226%22 rx=%221%22 fill=%22%2316a34a%22/%3E%3Cpath d=%22M13 8 V14 M9 11 H17%22 stroke=%22%23fde047%22 stroke-width=%221%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%225%22 fill=%22%23dc2626%22/%3E%3Cpath d=%22M21 12 H29%22 stroke=%22%23fff%22 stroke-width=%221.6%22/%3E%3Ccircle cx=%2227%22 cy=%223.6%22 r=%222.7%22 fill=%22%23fde2c8%22/%3E%3Cpath d=%22M24.6 4.6 Q27 9 29.6 4.6 Z%22 fill=%22%23fff%22/%3E%3Cpath d=%22M24.4 2.6 L28.6 -1.4 L30 2.4 Z%22 fill=%22%23dc2626%22/%3E%3Ccircle cx=%2228.8%22 cy=%22-1.2%22 r=%221%22 fill=%22%23fff%22/%3E%3C/svg%3E") no-repeat center/contain; animation:nv-trineo 24s linear infinite; }
+html.tema-navidad .h-murc i:nth-child(n+2){ display:none; }
+@keyframes nv-trineo{ 0%{ left:-110px; transform:translateY(0); } 25%{ transform:translateY(-3px); } 50%{ transform:translateY(2px); } 75%{ transform:translateY(-2px); } 100%{ left:calc(100% + 110px); transform:translateY(0); } }
+html.tema-navidad .h-ruta::after{ content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(circle,#fff 1.3px,transparent 1.8px) 0 0/34px 34px, radial-gradient(circle,rgba(255,255,255,.75) 1px,transparent 1.5px) 17px 11px/46px 46px;
+  animation:nv-nieve 7s linear infinite; }
+@keyframes nv-nieve{ to{ background-position:6px 34px, 9px 57px; } }
+@media(max-width:700px){ html.tema-navidad .header::before, html.tema-navidad .header::after{ height:18px; background-size:180px 18px; }
+  html.tema-navidad .h-murc i:nth-child(1){ width:70px; height:22px; } }
+@media(prefers-reduced-motion:reduce){ html.tema-navidad .header::before, html.tema-navidad .header::after, html.tema-navidad .h-luna, html.tema-navidad .h-ruta::after{ animation:none!important; }
+  html.tema-navidad .h-murc{ display:none!important; } }
 /* ===== 🚚 (§4iw, 09/10) Arriba del panel: el día, los cupos en anillos y el camión en la ruta (dueño: «A»). ===== */
 .htitle h1{font-size:1.02rem;font-weight:800;letter-spacing:.01em}
 .htitle p{font-size:.7rem}
@@ -1227,6 +1258,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
   .nav button.active .t-ic{transform:translateY(-4px) scale(1.22)}
   .nav button.active::after{content:'';position:absolute;bottom:-3px;left:calc(50% - 11px);width:22px;height:3px;border-radius:2px;background:var(--teal)}
   html.tema-halloween .nav button.active::after{background:#c8541a}
+  .nav button.active,html.tema-navidad .nav button.active{background:none;border:0;color:var(--text)}
+  html.tema-navidad .nav button.active::after{background:#15803d}
   html body #fx-pasos{bottom:calc(58px + env(safe-area-inset-bottom));padding-bottom:6px}
   html body.con-pasos{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
   html:root{scroll-padding-bottom:calc(70px + env(safe-area-inset-bottom))}
@@ -1483,7 +1516,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
    ni el servidor. Se prende SOLO en octubre, con la fecha de Bolivia (UTC−4 fijo), y se apaga sola el 1/11, antes de Todos
    Santos. Los colores de aviso (verde, ámbar, rojo) no cambian. Para otro año no hay que tocar nada. */
-(function(){ try{ if(new Date(Date.now()-4*3600000).getUTCMonth()===9) document.documentElement.classList.add('tema-halloween'); }catch(e){} })();
+(function(){ try{ var m=new Date(Date.now()-4*3600000).getUTCMonth(); if(m===9) document.documentElement.classList.add('tema-halloween');
+  /* 🎄 (27/10, §4nc) Y en diciembre, Navidad: se prende el 1/12 y se apaga sola el 1/1. */
+  else if(m===11) document.documentElement.classList.add('tema-navidad'); }catch(e){} })();
 </script>
 <script>
 /* 🧙‍♀️ LA RISA DE BRUJA (dueño, 03/10/2026: «¿no se puede añadir un sonido de una bruja riendo al entrar a la página?»;
@@ -45003,6 +45038,7 @@ var ASIS_LS_VISTOS='me_asis_vistos', ASIS_LS_MUDO='me_asis_mudo';
    vendedor, «La fábrica de Eduardo», «preguntale a Eduardo por WhatsApp») y el de la ciudad: solo el ASISTENTE pasó a llamarse Bloki. */
 /* 🧽 BLOKI: el bloque de espuma con la franja turquesa del colchón (dibujo del dueño, 15/10). Un SVG por traje. */
 var BLOKI_TRAJES={ bloki:'Bloki', vendedor:'Vendedor', logistica:'Logística', conta:'Contabilidad', anuncio:'Anuncio' };
+function temaNavidad(){ try{ return document.documentElement.classList.contains('tema-navidad'); }catch(e){ return false; } }
 function blokiSvg(traje){
   traje=BLOKI_TRAJES[traje] ? traje : 'bloki';
   var K='#1d1d1f', T='#1aafa4', TO='#0f8f86', SW=6;
@@ -45023,7 +45059,14 @@ function blokiSvg(traje){
   if(traje==='anuncio') brazoDer='<path d="M191 118 C202 112 204 102 200 96" fill="none" stroke="'+K+'" stroke-width="5" stroke-linecap="round"/>';
   else brazoDer='<path d="M191 136 C204 142 208 154 205 164" fill="none" stroke="'+K+'" stroke-width="5" stroke-linecap="round"/>';
   var manoDer=(traje==='anuncio') ? '<circle cx="200" cy="92" r="8.5" fill="#fff" stroke="'+K+'" stroke-width="4.5"/>' : '<circle cx="205" cy="168" r="8.5" fill="#fff" stroke="'+K+'" stroke-width="4.5"/>';
-  if(traje==='bloki') extraDelante+='<path class="bk-chispa" d="M182 6 Q185 20 199 23 Q185 26 182 40 Q179 26 165 23 Q179 20 182 6 Z" fill="'+T+'"/>';
+  /* 🎄 (27/10, §4nc) En diciembre, Bloki (y su traje de contabilidad y de anuncio) con gorro de Papá Noel; los que ya llevan gorra o
+     casco, no. */
+  var gorro=temaNavidad() && (traje==='bloki' || traje==='conta' || traje==='anuncio');
+  if(traje==='bloki' && !gorro) extraDelante+='<path class="bk-chispa" d="M182 6 Q185 20 199 23 Q185 26 182 40 Q179 26 165 23 Q179 20 182 6 Z" fill="'+T+'"/>';
+  if(gorro) extraDelante+='<g class="bk-gorro"><path d="M62 50 Q70 8 124 6 Q166 6 194 24 Q184 28 176 50 Z" fill="#d62839" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
+      '<path d="M96 18 Q122 10 150 14" fill="none" stroke="#f26b78" stroke-width="5" stroke-linecap="round"/>'+
+      '<rect x="50" y="40" width="140" height="17" rx="8.5" fill="#fff" stroke="'+K+'" stroke-width="4"/>'+
+      '<circle cx="197" cy="25" r="10" fill="#fff" stroke="'+K+'" stroke-width="4"/></g>';
   if(traje==='vendedor'){
     extraDelante+='<path d="M60 62 Q62 24 120 22 Q178 24 180 62 Q120 52 60 62 Z" fill="'+T+'" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
       '<path d="M168 52 Q198 46 212 60 Q192 60 176 63 Z" fill="'+TO+'" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
