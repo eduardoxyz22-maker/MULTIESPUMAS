@@ -2307,7 +2307,7 @@ correo + el mensaje de **WhatsApp**.
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
 
-## 🧹 Seguimiento del dashboard sin tareas en Kommo (§4nf, 27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; en la rama, espera «publica»)
+## 🧹 Seguimiento del dashboard sin tareas en Kommo (§4nf, 27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; PUBLICADO 27/10, `c0f4dc0`)
 En «Seguimiento», ✓ y 🕐 solo marcan la ficha en el panel (por aparato); ya no crean tareas en Kommo, y se fueron 📝 nota, «Acción masiva» y
 «Copia para mí» (todo eso iba por el Worker de Cloudflare con su propia copia del token de Kommo). En Cloudflare queda solo el botón
 «Actualizar» (token de GitHub) y el webhook `/kommo-hook`, que nada del repo lee. La disciplina por vendedora sale de `/events` con el token de

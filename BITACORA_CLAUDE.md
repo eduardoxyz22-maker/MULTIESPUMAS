@@ -16552,7 +16552,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   las tareas. El push de `2aa4fde` (panel_template.html) disparó el workflow del panel con el token nuevo. ✅ Corrida 546 verde: leyó Kommo y publicó `9ae432c` (15:25 UTC): el token
   nuevo de GitHub anda. El del Apps Script se ve en el respaldo (el repaso sin error de Kommo).
 
-### §4nf — 🧹 Seguimiento sin tareas en Kommo: Cloudflare deja de hacerlas (27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; en la rama, espera «publica»)
+### §4nf — 🧹 Seguimiento sin tareas en Kommo: Cloudflare deja de hacerlas (27/10; dueño: *«no quiero que Cloudflare haga eso ya, si no se usa»*; PUBLICADO 27/10 con el «ok» del dueño, `c0f4dc0`)
 - Pregunta del dueño: *«¿no usamos otro método para medir lo de cada vendedor?»* y *«¿lo de mover el lead?»*. Respuesta: la disciplina de
   cada vendedora (1ª respuesta, +72 h) la saca `generar.py` de `/events` de Kommo con el token de GitHub (mover de etapa = `lead_status_changed`
   cuenta como seguimiento); mover a «Compradores» → borrador del pedido es el webhook al Apps Script + el repaso. Ninguno pasa por Cloudflare.
