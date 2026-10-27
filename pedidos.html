@@ -2179,9 +2179,14 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <div class="field">
             <button class="btn btn-ghost btn-sm" onclick="refreshConta()">🔄 Actualizar</button>
           </div>
+          <!-- 🎯 (27/10, §4nb) Las metas de cada marca para el mes. -->
+          <div class="field">
+            <button class="btn btn-sm mt-btn" id="pry-metas-btn" onclick="metasAbrir()">🎯 Metas</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
+        <div id="pry-metas"></div>
         <!-- ✨ (§4jw, K) Una ficha por marca con la curva del mes: lo vendido día a día, hasta dónde llegaría y la meta. -->
         <div id="cx-pry"></div>
         <!-- 📊 (29/09, §4gv) A esta altura: el mes contra otro mes al mismo día, en plata y en unidades. -->
@@ -3920,6 +3925,59 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .sem-v-urge.on{ background:#b4232c; border-color:#b4232c; }
 .sem-v:disabled{ opacity:.45; cursor:default; }
 .sem-v-x{ color:var(--teal-dk); border-style:dashed; }
+/* 🎯 (27/10, §4nb) Las metas por marca, en Proyección. */
+.mt-btn{ background:#e6f7f6; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
+.mt-box{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:14px 16px; margin:4px 0 14px; display:flex; flex-direction:column; gap:12px; }
+.mt-vacio{ flex-direction:row; align-items:center; flex-wrap:wrap; font-size:.86rem; color:var(--muted); }
+.mt-cab{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
+.mt-cab b{ font-size:.8rem; letter-spacing:.06em; text-transform:uppercase; color:#0f766e; }
+.mt-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr)); gap:14px; }
+.mt-card{ border:1px solid var(--gray-md); border-top:4px solid var(--c); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.mt-card.mt-sin{ opacity:.7; }
+.mt-h{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; justify-content:space-between; }
+.mt-n{ font-size:1.02rem; color:var(--t); }
+.mt-sub{ font-size:.78rem; color:var(--muted); }
+.mt-sub b{ color:var(--text); }
+.mt-pcts{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.mt-pv{ font-size:1.9rem; font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); }
+.mt-pp{ font-size:1.25rem; font-weight:800; color:#7c3aed; font-variant-numeric:tabular-nums; }
+.mt-barra{ position:relative; height:16px; background:#f1f5f9; border:1px solid var(--gray-md); border-radius:9px; overflow:hidden; }
+.mt-barra i{ position:absolute; left:0; top:0; bottom:0; }
+.mt-bp{ background:#ddd6fe; border-right:2px solid #7c3aed; }
+.mt-bv{ background:var(--c); }
+.mt-tres{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+.mt-tres b{ color:var(--text); } .mt-tres b.mt-ppx{ color:#7c3aed; }
+.mt-nota{ border-radius:10px; padding:9px 12px; font-size:.82rem; line-height:1.45; }
+.mt-ok{ background:#dcfce7; border:1px solid #86efac; color:#14532d; }
+.mt-cerca{ background:#e6f7f6; border:1px solid #99ddd9; color:#0b5a54; }
+.mt-mal{ background:#fef3e2; border:1px solid #fcd34d; color:#7c4b00; }
+.mt-dia{ font-size:.82rem; line-height:1.5; color:var(--text); }
+.mt-ley{ font-size:.74rem; color:var(--muted); }
+.mt-modal{ display:flex; flex-direction:column; gap:14px; }
+.mt-exp{ margin:0; font-size:.86rem; line-height:1.5; color:var(--muted); }
+.mt-mes{ display:flex; align-items:center; justify-content:center; gap:14px; }
+.mt-mes b{ font-size:1.1rem; min-width:200px; text-align:center; }
+.mt-mes .btn{ min-width:44px; min-height:44px; font-size:1.2rem; }
+.mt-campos{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:12px; }
+.mt-campo{ border:1px solid var(--gray-md); border-left:5px solid var(--c); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
+.mt-campo label{ font-weight:800; color:var(--t); }
+.mt-in{ display:flex; align-items:stretch; border:1px solid var(--gray-md); border-radius:10px; overflow:hidden; background:#fff; }
+.mt-in span{ padding:0 12px; display:flex; align-items:center; font-weight:700; color:var(--muted); border-right:1px solid var(--gray-md); }
+.mt-in input{ flex:1; min-width:0; border:0; padding:10px 12px; font:inherit; font-size:1.3rem; font-weight:800; font-variant-numeric:tabular-nums; }
+.mt-campo small{ font-size:.74rem; color:var(--muted); }
+.mt-eq{ display:flex; justify-content:space-between; align-items:baseline; background:#f1f5f9; border-radius:10px; padding:10px 14px; font-weight:700; color:var(--muted); }
+.mt-eq b{ font-size:1.15rem; color:var(--text); font-variant-numeric:tabular-nums; }
+.mt-acc{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.mt-hist{ border-top:1px solid var(--gray-lt); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
+.mt-hist > b{ font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:#0f766e; }
+.mt-hist small{ font-size:.74rem; color:var(--muted); }
+.mt-scroll{ overflow-x:auto; }
+.mt-tab{ width:100%; border-collapse:collapse; font-size:.8rem; font-variant-numeric:tabular-nums; }
+.mt-tab th{ background:#f1f5f9; color:#334155; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; padding:7px 8px; text-align:right; white-space:nowrap; }
+.mt-tab th:first-child, .mt-tab td:first-child{ text-align:left; }
+.mt-tab td{ padding:7px 8px; border-top:1px solid var(--gray-lt); text-align:right; white-space:nowrap; }
+.mt-tab td small{ display:block; font-size:.7rem; color:var(--muted); }
+.mt-tab tr.mt-cur td{ background:#f8fafc; }
 /* 🏬 (27/10, §4na) El stock de cada tienda: su ventana (`#tst-overlay`). */
 #tst-body{ flex:1; overflow:auto; padding:14px; }
 .tst{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
@@ -8868,9 +8926,159 @@ function cxPryPintar(R){
     return '<div class="cx-kf" style="--c:'+m.g.col+';--t:'+(m.g.txt||m.g.col)+'"><div class="cx-kf-h"><b>'+m.g.ico+' '+esc(m.g.lbl)+'</b><span>'+m.tot.n+' venta'+(m.tot.n===1?'':'s')+' · '+m.tot.u+' u.</span></div>'+
       '<div class="cx-kf-n"><div><small>Vendido</small><b>'+fmtBs0(vend)+'</b></div>'+(conProy?('<div><small>📈 Llegaría a</small><b class="cx-kf-p">'+fmtBs0(proy)+'</b></div>'):'')+'</div>'+
       svg+'<div class="cx-kf-x"><span>1</span><span>'+N+'</span></div>'+
-      '<div class="cx-kf-pie">🎯 Meta: todavía no hay dónde cargarla'+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
+      '<div class="cx-kf-pie">'+metaPieTxt(R.ym, m)+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
   }).join('');
   box.innerHTML='<div class="cx-kfs">'+cards+'</div>';
+}
+
+/* ============================================================================
+   🎯 LAS METAS POR MARCA Y MES (§4nb, 27/10). El dueño (29/09): «las metas son por marca y cambian cada mes»; (27/10): «eso justamente
+   iba a preguntar: ¿dónde están para colocar las metas?» (la muestra del 25/10 quedó sin hacer: «publica menos lo de metas»).
+   · Se cargan en Proyección → «🎯 Metas» (solo con la contraseña, como Proyección): la de cada marca para un mes, en Bs. Se miden igual
+     que la proyección: lo VENDIDO (el total de cada venta, en el mes de su entrega agendada), nunca lo cobrado.
+   · Viven en su propia fila del sistema (`__metas__`): `{v:1, m:{'2026-11':{heaven:850000, suena:270000, t}}}`. Guardar relee la
+     planilla y cambia SOLO ese mes (otro aparato pudo cargar otro).
+   · Solo mira: ninguna cuenta de la proyección cambia por tener una meta. `tests/test_metas.js`.
+   ========================================================================== */
+var META_ID='__metas__', META_ED=null, META_ENV=0;
+function metasLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===META_ID; })[0], o={};
+  try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  return { v:1, m:(o.m && typeof o.m==='object') ? o.m : {} };
+}
+function metaDe(ym, k){ var e=metasLeer().m[ym]; var v=e ? Number(e[k]) : 0; return v>0 ? v : 0; }
+function metaEquipo(ym){ return MARCAS.reduce(function(s,g){ return s+metaDe(ym, g.k); }, 0); }
+/* Lo vendido de cada marca en un mes, con la MISMA lista que la proyección (`pryVentas`, el equipo de tiendas). */
+function metaVendidoMes(ym){
+  var o={}; MARCAS.forEach(function(g){ o[g.k]=0; });
+  pryVentas().forEach(function(x){ if(x.amb==='tienda' && x.ym===ym && o[x.g]!=null) o[x.g]=r2(o[x.g]+x.bs); });
+  return o;
+}
+function metaPct(v, M){ return M>0 ? Math.round(v/M*100) : 0; }
+function metaPieTxt(ym, m){
+  var M=metaDe(ym, m.g.k);
+  return M ? ('🎯 Meta '+fmtBs0(M)+' · va el '+metaPct(m.tot.vendido, M)+'%') : '🎯 Meta: sin cargar (botón «🎯 Metas» arriba)';
+}
+/* Una marca contra su meta: cuánto va, cuánto se proyecta y cuánto falta por día hábil. */
+function metaMarcaDatos(R, m){
+  var M=metaDe(R.ym, m.g.k); if(!M) return null;
+  var v=m.tot.vendido, p=(R.estado==='cerrado') ? v : m.tot.proy, hoy=R.hoy;
+  var dq=(R.estado==='curso') ? (R.dr+(diaHabil(hoy)?1:0)) : (R.estado==='futuro' ? R.dr : 0);
+  var falta=r2(M-v), porDia=(falta>0.009 && dq>0) ? falta/dq : 0;
+  var est = v>=M-0.005 ? 'llego' : (R.estado==='cerrado' ? 'no' : (p>=M-0.005 ? 'va' : (p>=0.9*M ? 'cerca' : 'lejos')));
+  return { M:M, v:v, p:p, pv:metaPct(v,M), pp:metaPct(p,M), falta:falta, dq:dq, porDia:porDia, est:est, faltaP:r2(Math.max(0, M-p)) };
+}
+function metasHtml(R){
+  var ms=R.marcas.map(function(m){ return { m:m, d:metaMarcaDatos(R, m) }; }), con=ms.filter(function(x){ return x.d; });
+  var mes=mesNombre(R.ym);
+  if(!con.length) return '<div class="mt-box mt-vacio" id="pry-metas-box"><span>🎯 Todavía no hay metas para '+esc(mes)+'.</span><button type="button" class="btn btn-sm mt-btn" onclick="metasAbrir()">🎯 Cargar las metas</button></div>';
+  var h='<div class="mt-box" id="pry-metas-box"><div class="mt-cab"><b>🎯 Cómo van contra la meta — '+esc(mes)+'</b><button type="button" class="btn btn-ghost btn-sm" onclick="metasAbrir()">✏️ Cambiar las metas</button></div><div class="mt-grid">';
+  ms.forEach(function(x){
+    var g=x.m.g, d=x.d;
+    if(!d){ h+='<div class="mt-card mt-sin" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'"><b class="mt-n">'+g.ico+' '+esc(g.lbl)+'</b><span class="mt-sub">sin meta para '+esc(mes)+'</span></div>'; return; }
+    var conP=(R.estado!=='cerrado');
+    var w1=Math.min(100, d.pv), w2=Math.min(100, d.pp);
+    var nota = d.est==='llego' ? ('<div class="mt-nota mt-ok"><b>🎉 Llegó a la meta</b>'+(d.v>d.M?(': pasó por '+fmtBs0(d.v-d.M)+'.'):'.')+'</div>')
+             : d.est==='no' ? ('<div class="mt-nota mt-mal"><b>Cerró en el '+d.pv+'%:</b> le faltaron '+fmtBs0(d.falta)+'.</div>')
+             : d.est==='va' ? ('<div class="mt-nota mt-ok"><b>✅ Si sigue así, llega:</b> se proyecta el '+d.pp+'%.</div>')
+             : d.est==='cerca' ? ('<div class="mt-nota mt-cerca"><b>Cerca:</b> si sigue este ritmo cierra en el '+d.pp+'% y le faltarían '+fmtBs0(d.faltaP)+'.</div>')
+             : ('<div class="mt-nota mt-mal"><b>⚠️ Así no llega:</b> si sigue este ritmo cierra en el '+d.pp+'% y le faltarían '+fmtBs0(d.faltaP)+'.</div>');
+    var dia=(d.porDia>0) ? ('<div class="mt-dia">Para llegar faltan <b>'+fmtBs0(d.falta)+'</b> (lo ya agendado está contado): <b>'+fmtBs0(d.porDia)+' por día hábil</b> en los '+d.dq+' que quedan'+(R.estado==='curso' && diaHabil(R.hoy)?' contando hoy':'')+'.</div>') : '';
+    h+='<div class="mt-card" data-marca="'+esc(g.k)+'" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'">'+
+      '<div class="mt-h"><b class="mt-n">'+g.ico+' '+esc(g.lbl)+'</b><span class="mt-sub">meta <b>'+fmtBs0(d.M)+'</b></span></div>'+
+      '<div class="mt-pcts"><span class="mt-pv">'+d.pv+'%</span><span class="mt-sub">vendido</span>'+(conP?('<span class="mt-pp">📈 '+d.pp+'%</span><span class="mt-sub">si sigue así</span>'):'')+'</div>'+
+      '<div class="mt-barra" role="img" aria-label="'+esc(g.lbl)+': vendido '+d.pv+' por ciento de la meta'+(conP?(', proyección '+d.pp+' por ciento'):'')+'">'+
+        (conP?('<i class="mt-bp" style="width:'+w2+'%"></i>'):'')+'<i class="mt-bv" style="width:'+w1+'%"></i></div>'+
+      '<div class="mt-tres"><span>Vendido <b>'+fmtBs0(d.v)+'</b></span>'+(conP?('<span>📈 Proyección <b class="mt-ppx">'+fmtBs0(d.p)+'</b></span>'):'')+'<span>🎯 Meta <b>'+fmtBs0(d.M)+'</b></span></div>'+
+      nota+dia+'</div>';
+  });
+  return h+'</div><div class="mt-ley">La barra entera es la meta: lo pintado es lo vendido'+(R.estado!=='cerrado'?'; lo claro, hasta dónde llegaría con la proyección':'')+'. Se mide como la proyección: lo vendido con entrega agendada en el mes, no lo cobrado.</div></div>';
+}
+function metasPintar(R){ var el=document.getElementById('pry-metas'); if(el) el.innerHTML=metasHtml(R); }
+/* ---- cargar las metas ---- */
+function metasAbrir(ym){
+  var inp=document.getElementById('pry-mes');
+  ym=ym || (inp && inp.value) || diaNegocio().slice(0,7);
+  var e=metasLeer().m[ym]||{};
+  META_ED={ ym:ym, v:{} }; MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; });
+  metasModal();
+}
+function metasMesMas(ym, n){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-1+n; y+=Math.floor(m/12); m=((m%12)+12)%12; return y+'-'+(m+1<10?'0':'')+(m+1); }
+function metasMover(n){ metasRecordar(); var ym=metasMesMas(META_ED.ym, n), e=metasLeer().m[ym]||{}; META_ED={ ym:ym, v:{} }; MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; }); metasModal(); }
+function metasRecordar(){ if(!META_ED) return; MARCAS.forEach(function(g){ var el=document.getElementById('mt-in-'+g.k); if(el && !montoError(el.value)) META_ED.v[g.k]=parseMonto(el.value)||0; }); }
+function metasSuma(){
+  var t=0; MARCAS.forEach(function(g){ var el=document.getElementById('mt-in-'+g.k); if(el && !montoError(el.value)) t+=parseMonto(el.value)||0; });
+  var s=document.getElementById('mt-suma'); if(s) s.textContent=fmtBs0(t);
+}
+function metasCopiarAnterior(){
+  var ant=metasMesMas(META_ED.ym, -1), e=metasLeer().m[ant];
+  if(!e){ toast('No hay metas cargadas para '+mesNombre(ant)+'.','err',5000); return; }
+  MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; }); metasModal();
+  toast('Copiadas las de '+mesNombre(ant)+': revisalas y guardá.','ok',5000);
+}
+function metasModal(){
+  var E=META_ED, ym=E.ym, hoyYm=diaNegocio().slice(0,7);
+  var meses=[metasMesMas(hoyYm,-2), metasMesMas(hoyYm,-1), hoyYm].filter(function(m){ return m>=PRY_PRIMER_MES; });
+  if(meses.indexOf(ym)<0 && ym>hoyYm) meses.push(ym);
+  var VM={}; meses.forEach(function(m){ VM[m]=metaVendidoMes(m); });
+  var ant=metasMesMas(ym,-1), eAnt=metasLeer().m[ant];
+  var campos=MARCAS.map(function(g){
+    var vAnt=metaVendidoMes(ant)[g.k], mAnt=eAnt ? Number(eAnt[g.k])||0 : 0;
+    return '<div class="mt-campo" style="--c:'+g.col+';--t:'+(g.txt||g.col)+'"><label for="mt-in-'+g.k+'">'+g.ico+' '+esc(g.lbl)+'</label>'+
+      '<div class="mt-in"><span>Bs</span><input id="mt-in-'+g.k+'" type="text" inputmode="decimal" autocomplete="off" value="'+(E.v[g.k]?Math.round(E.v[g.k]).toLocaleString('es-BO'):'')+'" placeholder="0" oninput="metasSuma()"></div>'+
+      '<small>'+esc(mesNombre(ant))+': '+(mAnt?('meta '+fmtBs0(mAnt)+' · '):'')+'vendió '+fmtBs0(vAnt)+(mAnt?(' ('+metaPct(vAnt,mAnt)+'%)'):'')+'</small></div>';
+  }).join('');
+  var hist='<table class="mt-tab"><thead><tr><th>Mes</th>'+MARCAS.map(function(g){ return '<th>'+g.ico+' Meta</th><th>Vendido</th><th>Llegó</th>'; }).join('')+'</tr></thead><tbody>'+
+    meses.map(function(m){
+      var e=metasLeer().m[m]||{};
+      return '<tr'+(m===hoyYm?' class="mt-cur"':'')+'><td><b>'+esc(mesNombre(m))+'</b>'+(m===hoyYm?'<small>en curso</small>':'')+'</td>'+MARCAS.map(function(g){
+        var M=Number(e[g.k])||0, v=VM[m][g.k];
+        return '<td>'+(M?fmtBs0(M):'<span class="mt-sub">sin meta</span>')+'</td><td>'+fmtBs0(v)+'</td><td>'+(M?('<b>'+metaPct(v,M)+'%</b>'):'<span class="mt-sub">—</span>')+'</td>';
+      }).join('')+'</tr>';
+    }).join('')+'</tbody></table>';
+  openModal('<div class="modal-h" style="background:var(--teal)"><h3>🎯 Metas por marca</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b mt-modal">'+
+      '<p class="mt-exp">Cuánto tiene que vender cada marca en el mes. Se mide igual que la proyección: lo <b>vendido</b> (el total de cada venta, en el mes de su entrega agendada), no lo cobrado.</p>'+
+      '<div class="mt-mes"><button type="button" class="btn btn-ghost" aria-label="Mes anterior" onclick="metasMover(-1)">‹</button><b id="mt-mes-n">'+esc(mesNombre(ym))+'</b><button type="button" class="btn btn-ghost" aria-label="Mes siguiente" onclick="metasMover(1)">›</button></div>'+
+      '<div class="mt-campos">'+campos+'</div>'+
+      '<div class="mt-eq"><span>Equipo (la suma de las marcas)</span><b id="mt-suma">'+fmtBs0(MARCAS.reduce(function(s,g){ return s+(E.v[g.k]||0); },0))+'</b></div>'+
+      '<div class="mt-acc"><button type="button" class="btn btn-ghost" onclick="metasCopiarAnterior()">📋 Copiar las de '+esc(mesNombre(ant))+'</button><span style="flex:1"></span>'+
+        '<button type="button" class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button type="button" class="btn btn-primary" id="mt-guardar" onclick="metasGuardar()"'+(META_ENV?' disabled':'')+'>'+(META_ENV?'⏳ Guardando…':'Guardar metas')+'</button></div>'+
+      '<div class="mt-hist"><b>Cómo les fue</b><div class="mt-scroll">'+hist+'</div><small>Solo con la contraseña de Administración. Se guarda en la planilla: la ven todas las compus con la contraseña y se puede corregir cuando quieras.</small></div>'+
+    '</div>', true);
+}
+function metasGuardar(){
+  if(!META_ED || META_ENV) return;
+  var nuevo={}, mal='';
+  MARCAS.forEach(function(g){
+    var el=document.getElementById('mt-in-'+g.k), t=el ? String(el.value||'').trim() : '';
+    if(!t){ nuevo[g.k]=0; return; }
+    var er=montoError(t); if(er && !mal){ mal=g.lbl+': '+er; return; }
+    nuevo[g.k]=r2(parseMonto(t)||0);
+  });
+  if(mal){ toast('❌ '+mal,'err',7000); return; }
+  MARCAS.forEach(function(g){ META_ED.v[g.k]=nuevo[g.k]; });   // lo escrito, para que la ventana no vuelva atrás mientras guarda
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: las metas no se guardaron.','err',7000); return; }
+  var ym=META_ED.ym; META_ENV=1; metasModal();
+  var fin=function(r){ META_ENV=0; return r; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===META_ID) srv=p; });
+    var D=metasLeer(srv), e={ t:Date.now() }, alguna=false;
+    MARCAS.forEach(function(g){ if(nuevo[g.k]>0){ e[g.k]=nuevo[g.k]; alguna=true; } });
+    if(alguna) D.m[ym]=e; else delete D.m[ym];
+    var fila=filaSistema(META_ID, '🎯 METAS POR MARCA (no tocar: las lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[META_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===META_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==META_ID; }); STATE.push(g);
+      META_ED=null; closeModal();
+      toast('🎯 Metas de '+mesNombre(ym)+' guardadas','ok',5000);
+      try{ renderProyeccion(); }catch(x){}
+      return r;
+    });
+  }).then(fin, function(er){ fin(null); toast('❌ No se guardaron: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); if(META_ED) metasModal(); return null; });
 }
 
 /* ============================================================================
@@ -9483,8 +9691,12 @@ function renderProyeccion(){
   if(RT && RT.n) h+=mc('#475569','🛏️ ROHO', nU(RT.u),
           nV(RT.n)+' · '+RT.c+' colchones y '+RT.s+' somieres · aparte del equipo'+(conProy ? (' · 📈 proyección '+nU(RT.proyU)) : '')+
           ' · sin plata: Ernesto no carga el precio');
+  /* 🎯 (27/10, §4nb) La meta del equipo, solo si hay metas cargadas para el mes. */
+  var MEq=metaEquipo(R.ym);
+  if(MEq) h+=mc('#0f766e','🎯 Meta del equipo', fmtBs0(MEq), 'va el '+metaPct(E.vendido, MEq)+'%'+(conProy ? (' · se proyecta el '+metaPct(E.proy, MEq)+'%') : '')+' ('+MARCAS.filter(function(g){ return metaDe(R.ym, g.k); }).map(function(g){ return g.lbl; }).join(' + ')+')');
   box.innerHTML=h;
   try{ cxFichasVivas(box, 'cxPryF'); }catch(e){}
+  try{ metasPintar(R); }catch(e){}   // 🎯 (§4nb) cómo va cada marca contra su meta
   try{ cxPryPintar(R); }catch(e){}   // ✨ (§4jw, K) la curva de cada marca
   acomodarFichas();
 
@@ -16935,7 +17147,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
