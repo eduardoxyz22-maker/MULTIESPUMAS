@@ -16689,6 +16689,8 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   · **A09** con el almacenamiento lleno «se borra en 5 segundos» era mentira: cerrar la página lo perdía callado. `borrarPendPoner` devuelve si quedó
     escrito; si no, se borra YA (sin «Deshacer») y se dice.
   `test_astra_pases` (29; 6 rojas contra `94322e4`), `test_astra_deshacer` (31; 2 rojas).
+- **PUBLICADO 28/10 (`bb9fa20`)**: lo de Astra (seis arreglos) + la revalidación, juntos por `format-patch` sobre `a9ee638`, con la batería entera en
+  verde (279 suites, 8.945 comprobaciones, 0 mal). El dueño: *«lógico que lo de Astra luego de que revisese»*: la revisión fue la de Codex.
 
 ### §4nn — 🏪 VENTAS DE TIENDA EN «TU DÍA» + 👑 «VER TODOS» NUEVO + 👯 «REVISAR» QUE NO ABRÍA (27/10 a la noche)
 - **👯 «Revisar» de «Pueden estar cargadas dos veces»** (dueño, con captura de Contabilidad: *«el boton revisa no sirve.. doy clic no abre

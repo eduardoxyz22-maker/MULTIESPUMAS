@@ -1078,7 +1078,7 @@ en una línea. `tests/test_ficha_auto.js`.
   ESA visita o eligiendo Logística, Administración o Eduardo (`f555b4a`); ⚠️ NO con `me_adm_dev` (queda para siempre). `test_saldo_almacen`
   cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
 
-## 🔎 La auditoría de Astra (27/10) y la revalidación de Codex (28/10) (§4nl, 28/10; en la rama, se publica con la batería en verde)
+## 🔎 La auditoría de Astra (27/10) y la revalidación de Codex (28/10) (§4nl, 28/10, PUBLICADO `bb9fa20`; batería 279 suites · 8.945 · 0 mal)
 - **El `ts` de una venta de tienda es su DÍA** (§4nm): `mismoContenido` lo compara como número (R-01; si no, un `conflicto` de fecha pasaba por «ok
   tardío» y decía «Cambios guardados ✓»). ⚠️ Un campo que la persona pueda cambiar NO va en `salta`.
 - **Deshacer**: después de un `conflicto` no hay «Deshacer» (`deshSiRechaza`); sobre una versión más nueva devuelve solo lo que cambió la entrega.
