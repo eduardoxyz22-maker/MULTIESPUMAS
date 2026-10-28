@@ -16661,6 +16661,35 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - No cambia: la OC (sigue su número), los cupos (sin fecha de entrega), el servidor (`ts` viaja como siempre; `ocRepetidaGs_` solo
   mira el año y solo si cambia la OC). `tests/test_venta_tienda_fecha.js` (19).
 
+### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
+- El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
+  uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
+  · **A01** Deshacer tras un `conflicto` no pisa a B (`deshSiRechaza` invalida «Deshacer»; deshacer sobre una versión más nueva devuelve SOLO lo que la
+    entrega cambió). **A09** borrar y cerrar la página: la intención queda en `me_borrar_pend` y se retoma (`borrarPendRetomar`) relee y compara.
+    `test_astra_deshacer`.
+  · **A02** un pase entre tiendas lleva su id desde que se arma (`me_tst_pase_pend`): el reintento va con el MISMO id. **A05** la poda de pases no
+    saca lo que todavía cuenta. `test_astra_pases`.
+  · **A03/A04** stock de las tiendas con el día real de salida (`x.eF`) y la hora del conteo. `test_astra_tstfecha`.
+  · **A06-A08** «Tu mes» con el corte de Proyección (`pryCargadaAl`) y el mes de Bolivia (`diaNegocio`); la tienda se dice. `test_astra_mis`.
+  · **A10/A11** la nota de Eduardo se compara entera (`fxNotaNumeros`); lo recibido de fábrica deja de estar «En producción». `test_astra_nota`,
+    `test_astra_produccion`. **A12/A13** la ficha al costado se cierra al salir y se decide de nuevo al cruzar 1200 px; Ctrl+K maneja el teclado.
+    `test_astra_ficha_costado`, `test_astra_buscador`.
+- **Revalidación de Codex (28/10, `Revalidacion-Multiespumas-27-octubre-2026-para-Claude.md`)**: 10 corregidos, 3 parciales, A14 sin comprobar (la
+  barra de 60,72 px es de Chrome/Windows; acá mide 59,25 en las tres versiones) y un P1 nuevo. Arreglado el 28/10 (`cd42f84`):
+  · **R-01** `mismoContenido` saltaba el `ts`, que desde §4nm es el DÍA de una venta de tienda: A movía la venta al 30/09 y el «conflicto» con la de B
+    (29/09, todo lo demás igual) pasaba por «ok tardío» («Cambios guardados ✓»), A se quedaba con el sello de B y su guardado siguiente volvía a poner
+    el 30/09. Ahora el `ts` se compara como número (el servidor lo guarda `Number(p.ts)||0`). `tests/test_r01_fecha_conflicto.js` (11, la página
+    contra el `.gs` real; 4 rojas contra `94322e4`): conflicto real, guardado siguiente, respuesta perdida sin otro escritor (sigue idempotente) y
+    respuesta perdida + B cambia solo la fecha.
+  · **A02** con el almacenamiento lleno el pase se mandaba igual y repetirlo sin recargar estrenaba otro id (2 pases, 4 unidades). Ahora
+    `tstPasesPendPoner` relee lo escrito (`TST_PASE_LS_OK`; si no quedó, la lista es la de la memoria) y un pase cuyo número no quedó guardado NO se
+    manda («No pude anotar el pase en este aparato… NO lo mandé»), como `guardarDurable` (§4hh). Un reintento cuyo número YA estaba guardado sale igual.
+  · **A05** la poda comparaba solo el día: un pase de las 08:00 sobre un conteo de las 07:00 del mismo día se daba por contado (2/1 → 3/0). Una regla
+    para los dos, **`tstAdentroDelConteo(base, f, h)`** (y `tstHn`), en `tstCalcular` y en `tstJuntar`, en las DOS tiendas.
+  · **A09** con el almacenamiento lleno «se borra en 5 segundos» era mentira: cerrar la página lo perdía callado. `borrarPendPoner` devuelve si quedó
+    escrito; si no, se borra YA (sin «Deshacer») y se dice.
+  `test_astra_pases` (29; 6 rojas contra `94322e4`), `test_astra_deshacer` (31; 2 rojas).
+
 ### §4nn — 🏪 VENTAS DE TIENDA EN «TU DÍA» + 👑 «VER TODOS» NUEVO + 👯 «REVISAR» QUE NO ABRÍA (27/10 a la noche)
 - **👯 «Revisar» de «Pueden estar cargadas dos veces»** (dueño, con captura de Contabilidad: *«el boton revisa no sirve.. doy clic no abre
   nada»*). `cxDupAbrir` abría `#cx-dup`, que la vista nueva de arriba (`.cx-nuevo`, §4mg) esconde con `display:none`. Ahora, abierta, la

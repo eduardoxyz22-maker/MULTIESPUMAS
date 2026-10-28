@@ -1078,6 +1078,17 @@ en una línea. `tests/test_ficha_auto.js`.
   ESA visita o eligiendo Logística, Administración o Eduardo (`f555b4a`); ⚠️ NO con `me_adm_dev` (queda para siempre). `test_saldo_almacen`
   cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
 
+## 🔎 La auditoría de Astra (27/10) y la revalidación de Codex (28/10) (§4nl, 28/10; en la rama, se publica con la batería en verde)
+- **El `ts` de una venta de tienda es su DÍA** (§4nm): `mismoContenido` lo compara como número (R-01; si no, un `conflicto` de fecha pasaba por «ok
+  tardío» y decía «Cambios guardados ✓»). ⚠️ Un campo que la persona pueda cambiar NO va en `salta`.
+- **Deshacer**: después de un `conflicto` no hay «Deshacer» (`deshSiRechaza`); sobre una versión más nueva devuelve solo lo que cambió la entrega.
+  **Borrar** deja la intención en `me_borrar_pend` (`borrarPendRetomar` relee y compara); si el aparato no puede guardarla, se borra YA y se dice (A09).
+- **Pases entre tiendas**: el id nace al armarlo (`me_tst_pase_pend`) y sin poder guardarlo NO se manda (A02, la regla de §4hh). «Ya está en el
+  conteo» = **`tstAdentroDelConteo(base, f, h)`** (día Y hora), la misma en `tstCalcular` y `tstJuntar` (A05).
+- A03/A04 (salida por `x.eF`, hora del conteo), A06-A08 («Tu mes» con `pryCargadaAl` y `diaNegocio`), A10/A11 (nota de Eduardo entera; lo recibido
+  deja «En producción»), A12/A13 (ficha al costado, Ctrl+K). A14 (barra de 60,72 px en Chrome/Windows) no se puede medir acá.
+- Pruebas: `test_r01_fecha_conflicto` (la página contra el `.gs` real), `test_astra_{deshacer,pases,tstfecha,mis,nota,produccion,ficha_costado,buscador}`.
+
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
 el jueves y aún no marcás el stock… producción tarda hasta 4 días»*. ⚠️ Nada de camiones, carga ni cupos en este botón.
