@@ -6800,11 +6800,16 @@ function prodHuellaComparar(x){
 }
 function mismoContenido(a, b){
   if(!a||!b) return false;
-  var salta={rev:1, nroDia:1, ts:1, ocCambiada:1, _deBorrador:1, _altaPendiente:1, cobradoBs:1, oc:1};
+  var salta={rev:1, nroDia:1, ocCambiada:1, _deBorrador:1, _altaPendiente:1, cobradoBs:1, oc:1};
   var norm=function(v){ if(v==null) return ''; if(typeof v==='boolean') return v?'S':''; if(typeof v==='number') return String(r2(v)); if(typeof v==='string') return v.trim(); return JSON.stringify(v); };
   for(var k in a){
     if(salta[k] || !a.hasOwnProperty(k)) continue;
     if(typeof a[k]==='function') continue;
+    /* ⚠️ (28/10, revalidación de Codex R-01) El `ts` cuenta: desde «Fecha de la venta» (§4nm) es el DÍA de una venta de tienda. Saltado,
+       A movía la venta al 30/09, el «conflicto» con la de B (29/09, todo lo demás igual) pasaba por «ok tardío»: A veía «guardado», se
+       quedaba con el sello de B y su guardado siguiente volvía a poner el 30/09. El servidor lo guarda como número (`Number(p.ts)||0`):
+       se compara igual. */
+    if(k==='ts'){ if((Number(a[k])||0)!==(Number(b[k])||0)) return false; continue; }
     /* ⚠️ (25/10, auditoría Codex/Astra FLW-1) El renglón ENTERO: precio, marcas de logística, lo de fábrica… La planilla guarda el JSON
        tal cual se mandó, así que un «ok tardío» de verdad coincide en todo. Comparando solo nombre/medida/código/cantidad, el reintento
        viejo de A (1.500 + 1.500) se tomaba por igual a la corrección de B (2.000 + 1.000): A se quedaba con el sello de B y SUS precios, y
@@ -16865,10 +16870,14 @@ function deshRepintar(){
    `BORRAR_PEND_DIAS` días no se ejecuta (se avisa). */
 var LS_BORRAR_PEND='me_borrar_pend', BORRAR_PEND_DIAS=3, BORRAR_PEND_MIO={};
 function borrarPendLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_BORRAR_PEND)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
+/* Devuelve si quedó escrito de verdad (se relee): con el almacenamiento lleno `setItem` falla y la intención NO sobrevive al cierre. */
 function borrarPendPoner(id, x){
   id=String(id);
   if(x) BORRAR_PEND_MIO[id]=1; else delete BORRAR_PEND_MIO[id];   // la de esta página la sigue esta página
-  try{ var m=borrarPendLeer(); if(x) m[id]=x; else delete m[id]; localStorage.setItem(LS_BORRAR_PEND, JSON.stringify(m)); }catch(e){}
+  try{
+    var m=borrarPendLeer(); if(x) m[id]=x; else delete m[id]; localStorage.setItem(LS_BORRAR_PEND, JSON.stringify(m));
+    var y=borrarPendLeer()[id]; return x ? !!(y && y.t===x.t) : !y;
+  }catch(e){ return false; }
 }
 /* ¿La retoma esta página? No si es suya (en sus 5 s o esperando a Google), ni la de otra pestaña en sus 5 s. */
 function borrarPendToca(id, x){ return !!(x && x.c && !BORRAR_PEND_MIO[String(id)] && (x.ya || Date.now()-(Number(x.t)||0) > DESH_MS+10000)); }
@@ -16897,11 +16906,18 @@ function borrarPendRetomar(){
 function borrarConDeshacer(id){
   if(!deshVa()) return realDelete(id);
   var loc=findById(id); if(!loc) return realDelete(id);
-  var copia=JSON.parse(JSON.stringify(loc)), cola=getPending().filter(function(q){ return q && q.id===id; });
+  var copia=JSON.parse(JSON.stringify(loc));
+  /* ⚠️ (28/10, revalidación de Codex A09) Sin poder dejar la intención en el aparato (almacenamiento lleno o bloqueado) no se promete
+     «se borra en 5 segundos»: cerrar la página la perdía callada y el pedido volvía. Se borra YA, por el camino de siempre, y se dice. */
+  if(!borrarPendPoner(id, { c:copia, t:Date.now() })){          // (§4nl, A09) si la página se cierra, se retoma al volver
+    borrarPendPoner(id, null);
+    toast('⚠️ Este aparato no puede guardar el borrado para después (el almacenamiento del navegador está lleno o bloqueado): se borra AHORA, sin «Deshacer».','err',10000);
+    return realDelete(id);
+  }
+  var cola=getPending().filter(function(q){ return q && q.id===id; });
   STATE=STATE.filter(function(p){ return p.id!==id; });
   if(cola.length) setPending(getPending().filter(function(q){ return !(q && q.id===id); }));   // si no, la cola lo volvía a poner en pantalla
   BORRADO_AQUI[String(id)]=Date.now();
-  borrarPendPoner(id, { c:copia, t:Date.now() });                // (§4nl, A09) si la página se cierra, se retoma al volver
   deshRepintar();
   deshOfrecer('🗑 '+(copia.cliente||'El pedido')+(copia.oc ? (' · '+copia.oc) : '')+': se borra en 5 segundos', function(){
     borrarPendPoner(id, null);                                   // (§4nl, A09) deshecho: no se retoma
@@ -33921,6 +33937,19 @@ function tstProdDeCodigo(cod){
   var a=productoDeAlmacen(c); if(a && a.k) return { k:stockAliasDe(a.k), cod:c };
   return null;
 }
+/* ⏱️ (§4nl, Astra A04 → 28/10, revalidación de Codex A05) ¿Un movimiento del día `f` a la hora `h` ya está ADENTRO del conteo `base`?
+   Antes del día del conteo, sí; el mismo día, sí salvo que los dos tengan hora y la del movimiento sea posterior. UNA regla para la cuenta
+   (`tstCalcular`) y para la poda (`tstJuntar`): con la poda por día solo, un pase de las 08:00 sobre un conteo de las 07:00 del mismo día
+   se podaba como «ya contado» y el saldo pasaba de 2/1 a 3/0. */
+function tstHn(h){ var m=String(h||'').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/); return m ? ((m[1].length<2?'0':'')+m[1]+':'+m[2]+':'+(m[3]||'00')) : ''; }
+function tstAdentroDelConteo(base, f, h){
+  if(!(base && base.f) || !f) return false;
+  f=String(f); var bf=String(base.f);
+  if(f<bf) return true;
+  if(f>bf) return false;
+  var hb=tstHn(base.hora), hm=tstHn(h);
+  return !(hb && hm && hm>hb);
+}
 /* La cuenta de cada tienda hasta el día `hasta` (por defecto hoy) y, si se da, hasta la hora `hHasta` de ese día (la de un conteo nuevo).
    Devuelve {tienda:{n, base, filas, tot, P}}. */
 function tstCalcular(hasta, D, hHasta){
@@ -33933,12 +33962,10 @@ function tstCalcular(hasta, D, hHasta){
      día `hasta` solo hasta esa hora. Antes el día del conteo quedaba afuera entero: contado a las 07:00, la venta de las 08:00 no restaba.
      Regla de lo que NO tiene hora (las RPT y las recogidas: el cierre no dice a qué hora llegó; un pase anotado otro día): queda ADENTRO
      del conteo, como siempre (se cuenta al cierre). Un conteo sin hora (a mano), por día, como siempre. */
-  var hn=function(h){ var m=String(h||'').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/); return m ? ((m[1].length<2?'0':'')+m[1]+':'+m[2]+':'+(m[3]||'00')) : ''; };
-  var hH=hn(hHasta);
+  var hn=tstHn, hH=hn(hHasta);
   var despues=function(t,f,h){
-    if(!(t && t.base) || !f || f<t.base.f || f>hasta) return false;
-    h=hn(h); var hb=hn(t.base.hora);
-    if(f===t.base.f && !(hb && h && h>hb)) return false;
+    if(!(t && t.base) || !f || f>hasta || tstAdentroDelConteo(t.base, f, h)) return false;
+    h=hn(h);
     return !(f===hasta && hH && h && h>hH);
   };
   (STATE||[]).forEach(function(p){
@@ -34007,8 +34034,9 @@ function tstJuntar(a, b){
      (`tstCalcular` suma lo de DESPUÉS del conteo). Uno de antes de un conteo que todavía cuenta (o de una tienda sin contar) se queda:
      si no, guardar el conteo de OTRA tienda le cambiaba el saldo. */
   var lim=stockSumarDias(todayStr(), -TST_PASES_DIAS);
-  var adentro=function(n, f){ var b=D.s[n]; return !!(b && b.f && String(b.f)>=String(f||'')); };
-  D.x=Object.keys(px).map(function(i){ return px[i]; }).filter(function(q){ return String(q.f||'')>=lim || !(q.an || (adentro(q.de, q.f) && adentro(q.a, q.f))); }).sort(function(p,q){ return String(p.f).localeCompare(String(q.f)) || (p.ts||0)-(q.ts||0); });
+  /* (28/10, revalidación de Codex A05) «Ya contado» con la MISMA regla que la cuenta, con la hora (`tstAdentroDelConteo`), en las DOS tiendas. */
+  var adentro=function(n, q){ return tstAdentroDelConteo(D.s[n], q.f, stockMovHora(q.f, q.ts)); };
+  D.x=Object.keys(px).map(function(i){ return px[i]; }).filter(function(q){ return String(q.f||'')>=lim || !(q.an || (adentro(q.de, q) && adentro(q.a, q))); }).sort(function(p,q){ return String(p.f).localeCompare(String(q.f)) || (p.ts||0)-(q.ts||0); });
   var ph={};
   [a,b].forEach(function(o){ ((o&&o.h)||[]).forEach(function(e){ if(e) ph[e.n+'|'+e.f+'|'+(e.t||0)]=e; }); });
   D.h=Object.keys(ph).map(function(i){ return ph[i]; }).sort(function(p,q){ return (p.t||0)-(q.t||0); }).slice(-TST_HIST);
@@ -34291,16 +34319,32 @@ function tstPaseGuardar(){
 /* ⏳ (§4nl, 27/10, Astra A02) Un pase lleva su id DESDE que se arma y queda en el aparato (`me_tst_pase_pend`) hasta que el servidor lo
    confirma. Si Google no contesta, el reintento manda el MISMO id: la junta por id no lo duplica (antes estrenaba otro: 2 pases, 4 unidades).
    Lo que está en el aparato y no se está mandando (`TST_PASE_MANDANDO`) está en duda: puede haber entrado. */
-var TST_PASE_LS='me_tst_pase_pend', TST_PASES_PEND=null, TST_PASE_MANDANDO='';
-function tstPasesPend(){   // se relee cada vez: otra pestaña de este aparato pudo dejar uno (sin almacenamiento, el de la memoria)
+/* ⚠️ (28/10, revalidación de Codex A02) Con el almacenamiento lleno (o bloqueado) la copia del aparato NO queda: la lectura de abajo veía «[]»
+   y el mismo pase repetido sin recargar estrenaba otro id (2 pases, 4 unidades). Ahora: (1) `tstPasesPendPoner` comprueba lo que quedó
+   escrito y, si no quedó, la lista del aparato es la de la memoria (`TST_PASE_LS_OK`); (2) un pase cuyo número no quedó guardado en el
+   aparato NO se manda (como `guardarDurable`, §4hh: sin almacenamiento no envía y avisa). Un reintento cuyo número YA estaba guardado sí. */
+var TST_PASE_LS='me_tst_pase_pend', TST_PASES_PEND=null, TST_PASE_MANDANDO='', TST_PASE_LS_OK=true;
+function tstPasesPend(){   // se relee cada vez: otra pestaña de este aparato pudo dejar uno (si la última escritura falló, el de la memoria)
+  if(!TST_PASE_LS_OK && TST_PASES_PEND) return TST_PASES_PEND;
   try{ var L=JSON.parse(localStorage.getItem(TST_PASE_LS)||'[]'); if(Array.isArray(L)) return L; }catch(e){}
   return TST_PASES_PEND || [];
 }
-function tstPasesPendPoner(L){ TST_PASES_PEND=L; try{ if(L.length) localStorage.setItem(TST_PASE_LS, JSON.stringify(L)); else localStorage.removeItem(TST_PASE_LS); }catch(e){} }
+function tstPasesPendPoner(L){
+  TST_PASES_PEND=L; var txt=L.length ? JSON.stringify(L) : '', ok=false;
+  try{ if(L.length) localStorage.setItem(TST_PASE_LS, txt); else localStorage.removeItem(TST_PASE_LS); ok=((localStorage.getItem(TST_PASE_LS)||'')===txt); }catch(e){}
+  TST_PASE_LS_OK=ok; return ok;
+}
+function tstPaseIdGuardado(id){ try{ return (JSON.parse(localStorage.getItem(TST_PASE_LS)||'[]')||[]).some(function(x){ return x && x.id===id; }); }catch(e){ return false; } }
 function tstPasesPendSacar(id){ tstPasesPendPoner(tstPasesPend().filter(function(x){ return x.id!==id; })); }
 function tstPaseMandar(q, yaEnDuda){
   if(TST_ENV) return Promise.resolve(null);   // ya hay un guardado en curso (dos toques seguidos)
-  tstPasesPendPoner(tstPasesPend().filter(function(x){ return x.id!==q.id; }).concat([q]));
+  var antes=tstPasesPend().filter(function(x){ return x.id!==q.id; });
+  if(!tstPasesPendPoner(antes.concat([q])) && !tstPaseIdGuardado(q.id)){
+    tstPasesPendPoner(antes);
+    toast('⚠️ No pude anotar el pase en este aparato (el almacenamiento del navegador está lleno o bloqueado), así que NO lo mandé: '+
+          'si Google no contestara, al repetirlo se anotaría dos veces. Liberá espacio (o usá otro navegador o aparato) y volvé a tocar «Anotar el pase».','err',14000);
+    return Promise.resolve(null);
+  }
   TST_PASE_MANDANDO=q.id;
   return tstGuardarCon(function(D){ if(!D.x.some(function(x){ return x && x.id===q.id; })) D.x.push(q); }, '🔁 Pase anotado: '+q.u+' de '+q.de+' a '+q.a,
     'No sé si el pase llegó a la planilla. Mirá «Últimos pases» antes de volver a cargarlo: si lo anotás igual o tocás «🔁 Mandarlo de nuevo», va con el MISMO número y no se duplica.').then(function(r){

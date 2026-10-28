@@ -10,6 +10,7 @@
    A09. Borrar y cerrar (o recargar) la página dentro de los 5 s: la intención quedaba solo en memoria y el pedido volvía al abrir.
         · se retoma al volver, contra la copia que se vio (si otro lo cambió, NO se borra y se ve lo nuevo);
         · «Deshacer» la cancela; la de otra pestaña en sus 5 s no se toca; una de hace más de 3 días no se ejecuta.
+        · (28/10, revalidación de Codex) con el almacenamiento lleno no se promete «se borra en 5 s»: se borra ya y se dice.
    Solo datos inventados. Se corre:  node tests/test_astra_deshacer.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), vm = require('vm'), path = require('path');
@@ -99,7 +100,7 @@ function INIT(){
   const errores=[];
   const S = servidor();
   const nombres = { a1:'ROSA FICTICIA', a2:'JUAN FICTICIO', a3:'ANA FICTICIA', a4:'LUIS FICTICIO', a5:'MARTA FICTICIA', a6:'PEDRO FICTICIO',
-                    a7:'ELENA FICTICIA', a8:'RAUL FICTICIO', a9:'SARA FICTICIA', a10:'TITO FICTICIO' };
+                    a7:'ELENA FICTICIA', a8:'RAUL FICTICIO', a9:'SARA FICTICIA', a10:'TITO FICTICIO', a11:'NORA FICTICIA' };
   Object.keys(nombres).forEach((id, i) => {
     const r = S.guardar(pedido({ id:id, cliente:nombres[id], celular:'7000'+(1000+i), nota:String(2000+i), oc:'10-'+(300+i), turno: i<7 ? 'AM' : 'PM' }));
     if (!r.ok) console.log('no se pudo sembrar', id, r);
@@ -214,6 +215,15 @@ function INIT(){
     for(var i=0;i<40 && JSON.parse(localStorage.getItem('me_borrar_pend')||'{}').a10;i++) await esperar(100);
     return { esta:!!findById('a10'), pend:!!JSON.parse(localStorage.getItem('me_borrar_pend')||'{}').a10, ok:window._toasts.some(function(t){ return /eliminado ✓/i.test(t); }) }; });
   chk('sin cerrar nada: a los 5 s se borra de verdad y la intención guardada se limpia', !S.fila('a10') && !r.esta && !r.pend && r.ok, r);
+
+  /* (28/10, revalidación de Codex) Con el almacenamiento LLENO la intención no queda en el aparato: no se promete «se borra en 5 s». */
+  console.log('');
+  r = await page.evaluate(async () => { localStorage.removeItem('me_borrar_pend'); setPending([]); DESH_MS=60000; window._toasts=[];
+    var o=Storage.prototype.setItem; Storage.prototype.setItem=function(k,v){ if(k==='me_borrar_pend'){ var e=new Error('lleno'); e.name='QuotaExceededError'; throw e; } return o.call(this,k,v); };
+    try{ deletePedido('a11'); var x={ DESH:!!DESH, cinco:(document.getElementById('desh')||{}).innerText||'' }; await esperar(300); await quieto();
+      x.esta=!!findById('a11'); x.toasts=window._toasts.slice(); return x; } finally { Storage.prototype.setItem=o; } });
+  chk('almacenamiento lleno: no ofrece «se borra en 5 segundos» ni «Deshacer»', !r.DESH && !/5 segundos/.test(r.cinco), r);
+  chk('…lo dice («se borra AHORA, sin Deshacer») y lo borra ya: NORA no está ni en la planilla ni en la pantalla', r.toasts.some(t => /se borra AHORA/.test(t)) && !S.fila('a11') && !r.esta, r);
 
   chk('sin errores de la página', errores.length === 0, errores.slice(0,3));
   await browser.close();

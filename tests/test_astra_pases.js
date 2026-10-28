@@ -231,6 +231,56 @@ function INIT(){
     chk('tstJuntar sola da lo mismo (la misma regla en cualquier junta)', JSON.stringify(pura) === JSON.stringify(['nuevo1','viejo1','viejo4']), pura);
     await context.close(); }
 
+  console.log('\n── A02 · 3. (revalidación de Codex, 28/10) Con el almacenamiento LLENO el pase no se manda sin su número guardado ──');
+  { const S = montar(BASE()), { page, context } = await abrir(S);
+    /* `setItem` de la lista de pases pendientes tira «QuotaExceededError», como en la prueba de Codex. */
+    await page.evaluate(() => { var o=Storage.prototype.setItem; window.__lleno=true;
+      Storage.prototype.setItem=function(k,v){ if(window.__lleno && k==='me_tst_pase_pend'){ var e=new Error('lleno'); e.name='QuotaExceededError'; throw e; } return o.call(this,k,v); };
+      __regla({ act:'save', id:'__tiendas_stock__', mode:'perder', n:4 }); });
+    const g0 = await page.evaluate(() => window.__ctl.log.filter(function(x){ return x.act==='save'; }).length);
+    const r1 = await anotar(page, 'Mia Plaza', 'Buenos Aires', 'CH1201', 2);
+    const r2 = await anotar(page, 'Mia Plaza', 'Buenos Aires', 'CH1201', 2);
+    const g1 = await page.evaluate(() => window.__ctl.log.filter(function(x){ return x.act==='save'; }).length);
+    chk('no lo manda: ningún guardado salió y la planilla no tiene pases (antes: dos pases, 4 unidades)', g1 === g0 && pases(S).length === 0, { g0, g1, pases:pases(S) });
+    chk('lo dice claro: no se pudo anotar en el aparato y NO se mandó', r1.toasts.some(t => /No pude anotar el pase en este aparato/.test(t) && /NO lo mand[eé]/.test(t)) && r2.toasts.some(t => /NO lo mand[eé]/.test(t)), r1.toasts);
+    chk('no queda ningún «no sé si llegó» (no salió nada)', !/No s[eé] si lleg[oó]/.test(r2.txt), r2.txt.slice(0, 300));
+    /* Con el número YA guardado (quedó en duda antes de llenarse), «Mandarlo de nuevo» sí sale, con ese número. */
+    await page.evaluate(() => { window.__lleno=false; window.__ctl.rules=[]; __regla({ act:'save', id:'__tiendas_stock__', mode:'perder', n:2 }); });
+    await anotar(page, 'Charcas', 'Carmelo', 'CH1201', 1);
+    const id1 = await page.evaluate(() => { try{ return JSON.parse(localStorage.getItem('me_tst_pase_pend')||'[]').map(function(q){ return q.id; }); }catch(e){ return []; } });
+    await page.evaluate(async () => { window.__lleno=true; var b=document.querySelector('#tst-duda button[data-id]'); if(b) b.click(); for(var i=0;i<40 && TST_ENV;i++) await esperar(50); await esperar(100); });
+    const pc = pases(S).filter(q => q.de === 'Charcas');
+    chk('un pase en duda cuyo número YA estaba guardado se reintenta igual, con ese número, una vez', id1.length === 1 && pc.length === 1 && pc[0].id === id1[0], { id1, pc });
+    await context.close(); }
+
+  console.log('\n── A05 · 2. (revalidación de Codex, 28/10) La poda usa la HORA del conteo, como la cuenta ──');
+  { const S0 = servidor(); const ctx0 = await browser.newContext({ timezoneId:'America/La_Paz' }); await ctx0.route(/^https?:/, r => r.abort());
+    const pg0 = await ctx0.newPage(); await pg0.clock.setFixedTime(new Date(RELOJ)); await pg0.goto('file://' + PEDIDOS, { waitUntil:'load' });
+    const K = await pg0.evaluate(() => tstProdDeCodigo('CH1201').k); await ctx0.close();
+    const ts8 = Date.parse('2026-07-01T08:00:00-04:00');
+    const D = { v:1, s:{
+        'Mia Plaza':{ f:'2026-07-01', hora:'07:00', t:1, de:'excel', u:{ [K]:3 }, tot:3 },
+        'Charcas':{ f:'2026-07-01', hora:'07:00', t:2, de:'excel', u:{}, tot:0 },
+        'Carmelo':{ f:'2026-07-01', hora:'07:00', t:3, de:'excel', u:{ [K]:2 }, tot:2 },
+        'Mutualista':{ f:'2026-07-01', hora:'09:00', t:4, de:'excel', u:{}, tot:0 } },
+      x:[ { id:'intra', f:'2026-07-01', de:'Mia Plaza', a:'Charcas', k:K, u:1, ts:ts8 },          // 08:00, después de los dos conteos de las 07:00
+          { id:'unlado', f:'2026-07-01', de:'Carmelo', a:'Mutualista', k:K, u:1, ts:ts8 } ],     // adentro del de Mutualista (09:00), no del de Carmelo (07:00)
+      h:[] };
+    const S = montar(D), { page, context } = await abrir(S);
+    const cuenta = () => page.evaluate((K) => { var T=tstCalcular(); var v=function(n){ var r=T[n].P[K]; return r ? r.tiene : 0; };
+      return { mp:v('Mia Plaza'), ch:v('Charcas'), ca:v('Carmelo'), mu:v('Mutualista') }; }, K);
+    const antes = await cuenta();
+    chk('antes: Mia Plaza 3 − 1 = 2 y Charcas 0 + 1 = 1 (el pase de las 08:00 va después del conteo de las 07:00)', antes.mp === 2 && antes.ch === 1, antes);
+    await page.evaluate(async () => { TST_PREV={ lista:[{ n:'Buenos Aires', f:'2026-11-05', de:'mano', u:{} }], fuera:[] }; tstPintar(); await tstGuardarConteo(); await esperar(100); });
+    const despues = await cuenta();
+    chk('después de guardar el conteo de OTRA tienda sigue 2/1 (antes la poda por día lo daba por contado: 3/0)', despues.mp === 2 && despues.ch === 1, despues);
+    chk('…y Carmelo sigue con 2 − 1 = 1 (para Mutualista ya estaba adentro: el pase sigue porque Carmelo lo necesita)', despues.ca === 1 && despues.mu === 0, despues);
+    const ids = (S.tiendas().x || []).map(q => q.id).sort();
+    chk('en la planilla quedan los dos pases', JSON.stringify(ids) === JSON.stringify(['intra','unlado']), ids);
+    const pura = await page.evaluate((D) => tstJuntar(D, D).x.map(function(q){ return q.id; }).sort(), D);
+    chk('tstJuntar sola da lo mismo', JSON.stringify(pura) === JSON.stringify(['intra','unlado']), pura);
+    await context.close(); }
+
   chk('sin errores de la página', errores.length === 0, errores.slice(0,3));
   await browser.close();
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
