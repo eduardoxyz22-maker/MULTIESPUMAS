@@ -1119,6 +1119,14 @@ https://claude.ai/artifact/Vzr6KUyYnn3LGjQ7w99uFd). La 24, 25 y 26 se le explica
 - **🧽 Prolijidad** (CSS al final del último `<style>`): `--r-lg` 16, `--sh-card` una sola sombra, filtros y pestañas internas como `.adm-filtros`,
   chips 32 px/.76rem, botones chicos .76rem. El formulario de un pedido no cambió. Los nombres en minúscula NO (se le preguntó).
 
+## 🖥️🔔 El panel como programa y los avisos de Windows (§4ns, 29/10; dueño: «ok todas menos la 24»; en la rama, espera «publica»)
+Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --check`) + `sw.js` (subir `VERSION`) + `manifest.webmanifest` + `iconos/`.
+- 📲 Instalar: el service worker es SOLO de `pedidos.html` y NO guarda el panel (va siempre a internet; sin internet, un cartel). ⚠️ No hacerle
+  guardar páginas: una copia vieja del panel es justo lo que §4fz-b/§4hs cuidan («la página vieja»).
+- 🔔 Avisos (`Notification`): respuesta al bot, aviso de Contabilidad, venta de Kommo, Excel de hoy (logística), anuncio; por compu
+  (`me_esc_tipos`), lo visto en `me_esc_vistos`; lo que ya había al abrir/prender/cambiar de vendedora no avisa. Escondido, lee cada 3 min solo
+  con avisos prendidos. ⚠️ Un aviso NUEVO va en `TIPOS` y en `pendientes()` con una clave estable por cosa. `ESC_PRUEBA`. `tests/test_escritorio.js`.
+
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
 el jueves y aún no marcás el stock… producción tarda hasta 4 días»*. ⚠️ Nada de camiones, carga ni cupos en este botón.

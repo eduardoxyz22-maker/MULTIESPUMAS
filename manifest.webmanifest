@@ -1,0 +1,17 @@
+{
+  "name": "Panel MultiEspumas",
+  "short_name": "MultiEspumas",
+  "description": "Pedidos, entregas, stock y contabilidad de MultiEspumas",
+  "id": "pedidos.html",
+  "start_url": "pedidos.html",
+  "scope": "pedidos.html",
+  "display": "standalone",
+  "background_color": "#F2F7F7",
+  "theme_color": "#00A09A",
+  "lang": "es-BO",
+  "icons": [
+    { "src": "iconos/panel-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/panel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/panel-512-mask.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

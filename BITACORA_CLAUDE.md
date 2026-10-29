@@ -16792,6 +16792,26 @@ del 25/10 y clientes INVENTADOS (`scratchpad/nr/lista_nr.json` = `real/lista_ano
   preguntó.
 - Batería entera (29/10, rama, `e0a5e4a`): **287 suites, 9.146 bien, 0 mal** («TODO EN VERDE»).
 
+### §4ns — 🖥️🔔 EL PANEL COMO PROGRAMA (25) Y LOS AVISOS DE WINDOWS (26) (29/10; dueño: «ok todas menos la 24, ármalo y pasame el js para que lo revise en la api local»)
+La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. Archivo APARTE **`escritorio.js`** (`<script … defer>` después de
+`productos-mes.js`; subir su `?v=` al cambiarlo) + **`sw.js`** + **`manifest.webmanifest`** + **`iconos/`** (192, 512, 512 maskable, 180 para iPhone).
+- **25 · 📲 Instalar**: el manifest (`display:standalone`, `start_url`/`scope` = `pedidos.html`) y el service worker registrado SOLO para
+  `pedidos.html` (`register('sw.js', {scope:'pedidos.html'})`: el dashboard de ventas, la guía y lo demás no quedan adentro; probado en localhost).
+  `sw.js` NO guarda el panel: la página va siempre a internet (`fetch`); sin internet, un cartel propio; todo lo que no es una página (la planilla,
+  fotos, .js) ni pasa por ahí. `beforeinstallprompt` → «📲 Instalar» en el cartel de arriba (`#esc-banner`, creado al lado de `#carga-banner`) y en
+  la ventana «🖥️ El panel en esta compu» (`escAjustesAbrir`); sin el evento, la ventana explica el ⊕ de Chrome/Edge. ⚠️ Al cambiar `sw.js`, subir
+  su `VERSION`.
+- **26 · 🔔 Avisos**: `Notification` (o `showNotification` del service worker, que al tocar trae la ventana y le manda qué abrir). Solo al tocar
+  «Prender los avisos» se pide permiso. Tipos por compu (`me_esc_tipos`): 💬 respuesta al bot sin atender de SU pedido (`WA_RESP`; logística y
+  Administración, todas), 🧾 aviso de Contabilidad (`ctaAvAbiertos`), 📥 venta de Kommo (`borradoresDe`), 📦 falta el Excel del depósito de hoy desde
+  las 10:00 (solo `asisVeAdm`), 📢 anuncio nuevo. Lo visto en `me_esc_vistos` (10 días, se anota ANTES de mostrar: otra pestaña no lo repite; la
+  `tag` de cada aviso es su clave). **No llueven avisos viejos**: lo que hay al abrir (90 s de gracia: la planilla y el bot llegan en dos lecturas),
+  al prender, al prender un tipo y al cambiar de vendedora o de rol se da por visto. Más de 3 juntos = uno que los cuenta. Con el panel en foco,
+  `toast` en vez de Windows. **Escondido el panel no lee** (`autoRefrescar` sale con `document.hidden`): con avisos prendidos, `escTic` lee la
+  planilla (`refrescarEstado`, la de lo cambiado) y el bot cada `ESC_OCULTO_MS` (3 min), nunca antes, y no con una ficha abierta (`autoOcupado`).
+  Buscador Ctrl+K: «Instalar el panel» y «Avisos de Windows» (envolviendo `palAcciones`). Solo mira: no escribe en la planilla.
+- En Playwright nada salvo `ESC_PRUEBA`. `tests/test_escritorio.js` (33: un `Notification` de mentira + `sw.js` en una caja de Node).
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
