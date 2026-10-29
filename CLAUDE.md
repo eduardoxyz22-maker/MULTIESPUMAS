@@ -82,7 +82,7 @@ Propiedades del script.
   venta, y el **webhook** de Kommo entra a cada rato — el cron del repaso dice 10 min pero
   GitHub lo demora a ~3,5 h): `kommoProcesar_` arma los borradores afuera y
   toma el candado solo para escribir. ⚠️ `leadYaCargado_` se **revalida dentro** del candado:
-  ahí vive la garantía de no duplicar. Si no hay nada que escribir, ni lo toma.
+  ahí vive la garantía de no duplicar (desde 29-b, con UNA lectura `kSnapshot_` para todos los leads). Si no hay nada que escribir, ni lo toma.
   · Fotos y geocode ya estaban afuera. La carpeta de fotos se busca **una vez**
   (`FOTOS_FOLDER_ID` en propiedades). ⚠️ El `setSharing` **por archivo** se mantiene: es lo
   que sostiene que `lh3.googleusercontent.com/d/<id>` muestre la foto sin sesión (§4cd).
@@ -1089,7 +1089,7 @@ en una línea. `tests/test_ficha_auto.js`.
   deja «En producción»), A12/A13 (ficha al costado, Ctrl+K). A14 (barra de 60,72 px en Chrome/Windows) no se puede medir acá.
 - Pruebas: `test_r01_fecha_conflicto` (la página contra el `.gs` real), `test_astra_{deshacer,pases,tstfecha,mis,nota,produccion,ficha_costado,buscador}`.
 
-## 📥✅💾 Servidor `2026-10-29-a`: avisos a logística y respaldo diario (§4no, 29/10; el dueño eligió la «2» y la «4»; en la rama, espera que el dueño lo implemente)
+## 📥✅💾 Servidor `2026-10-29-a` → `2026-10-29-b`: avisos a logística, respaldo diario y lecturas más livianas (§4no + §4nq, 29/10; el dueño eligió la «2» y la «4» y pegó el pedido de la 29-b; en la rama, espera que el dueño lo implemente)
 - Por WhatsApp a **`WA_AVISOS`** (opcional) o, si no, a `WA_PEDIR_HOY`; solo días hábiles, una vez por día: **10:00 `logistica_excel_falta`** si falta el
   Excel de HOY de algún almacén (`waExcelFaltan_`: PTF de `STOCK.c` + los de `STOCK.g` con Excel en los últimos 7 días, nombre corto `waAlmCorto_`) y
   **19:00 (sábado 13:30) `logistica_cierre_falta`** si quedan entregas de hoy sin ✅ (`waCierreFaltan_` = `waEsEntrega_` de hoy). Se arma con la planilla
@@ -1097,6 +1097,11 @@ en una línea. `tests/test_ficha_auto.js`.
 - `instalarDisparadores` prende **`backupDiario`** (2 a 3 am, 30 copias en «Backups Pedidos MultiEspumas»); `probarAntesDeImplementar` §15 lo mira.
 - ⚠️ Un aviso nuevo de logística va en `WA_TIPOS` + `WA_PLANTILLAS` (mismos datos) + `waArmar_` (recalcular con la planilla de ahora). `tests/test_wa_avisos_log.js` (50).
   Volver atrás: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas).
+- **📸 29-b (§4nq)**: el repaso de Kommo lee la planilla UNA vez (`kSnapshot_`: `cargados` = fila `kommo-<lead>` o marca `klead`; `borr` = la primera
+  fila del borrador) y adentro del candado relee con `kSnapshot_(sh,false)` (ahí sigue la garantía de no duplicar); ids repetidos se sacan; KOMMO_DESCARTADOS
+  una vez. `leadYaCargado_` = `kSnapshot_`. El aviso de Meta lee solo las últimas **`WA_HOOK_FILAS`=1500** filas de «Bot WhatsApp» (`waHookPedidoDe_` con
+  `desde`). `probarSnapshotKommo()` (solo lee, antes de `borradorDeLead_`) compara la regla nueva con la de antes sobre la planilla real.
+  ⚠️ Un lugar NUEVO que pregunte «¿este lead ya está?» usa `kSnapshot_`, no otra lectura propia. `test_hook` §10, `test_wa_bot` §16.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido

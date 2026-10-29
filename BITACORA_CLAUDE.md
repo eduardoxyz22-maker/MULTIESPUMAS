@@ -16712,6 +16712,31 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   entrega?»): siguen 22 respuestas. La de la RPT dice «la zona y la ubicación» (decía «la dirección»). `test_video_pedido` (20; 4 rojas
   contra la publicada). En la rama, espera «publica».
 
+### §4nq — 📸 SERVIDOR `2026-10-29-b`: KOMMO LEE LA PLANILLA UNA VEZ POR REPASO Y EL AVISO DE META LEE SOLO EL FINAL DE «BOT WHATSAPP» (29/10)
+- El dueño pegó un pedido armado afuera («Cambios para kommoProcesarObj_ y waHookAnotar_», A-E, con la versión «2026-10-28-a»). Se comparó
+  función por función con el código: coincide con lo de hoy salvo el número (28-a sería MÁS VIEJA que la 29-a que ya tenía). Va como **29-b**,
+  junto con lo de la 29-a (que él todavía no había implementado).
+- **A (Kommo)**: **`kSnapshot_(sh, conBorradores)`** = UNA lectura de la planilla con lo que el repaso necesita: `cargados` (fila `kommo-<lead>`
+  o la marca `klead` en el JSON de productos, sin espacios, igual que antes) y `borr` (la PRIMERA fila `kommo-<lead>` con cliente y estado).
+  `kommoProcesarObj_`: saca los ids repetidos (antes, el mismo lead dos veces = dos consultas a Kommo), lee la planilla y KOMMO_DESCARTADOS una vez,
+  y ADENTRO del candado relee con `kSnapshot_(sh, false)` y suma cada fila recién escrita (la garantía de «no duplicar» sigue ahí).
+  `repararNombrePrep_(sh, lead, snap)`: con `snap`, la misma regla de `borradorGenerico_` (estado «Borrador Kommo» + `nombreGenerico_`, que da true con
+  el cliente vacío); sin `snap` (`repararNombreBorrador_`), como antes. **C** del pedido: se sacó la condición `!!x.cliente === !!x.cliente`.
+  `leadYaCargado_` = `kSnapshot_(…, false)` (una regla, un lugar). `repararNombreAplicar_` sigue revalidando adentro con `borradorGenerico_`.
+  Medido en la prueba: un repaso de 40 leads leía **87** columnas enteras y 5 veces KOMMO_DESCARTADOS; ahora **6** y **1**.
+- **B (Meta)**: **`WA_HOOK_FILAS`=1500** (el margen de `waRespuestasLeer_`): `waHookAnotar_` lee las filas `desde` = máx(2, última − 1499) y
+  `waHookPedidoDe_(datos, fila, m, de, desde)` cuenta la fila con `desde` (sin él, 2). Fuera de la ventana: un «entregado/leído» no se anota (como
+  lo que la hoja ya recortaba), un «falló» sí (fila «Aviso de Meta»), y un cliente que contesta sin «Responder» a un mensaje de hace más de 1500 filas
+  queda anotado sin pedido. 1500 filas ≈ 10 días con el volumen de hoy (el dueño puede subirlo si la hoja crece más de ~400 filas por día).
+- **D**: `probarSnapshotKommo()` (solo lee) quedó EN el archivo, antes de `borradorDeLead_` (que sigue última): compara la regla nueva con la de antes
+  sobre la planilla real; tiene que decir «✅ Iguales». No hace falta borrarla; se saca en una versión que venga. `probarAntesDeImplementar` §1 la cuenta.
+- Pruebas: `test_hook` §10 (13; **5 rojas contra la 29-a**: 87 lecturas, 5 de los descartados, 3 consultas por un repetido, y que no existen
+  `kSnapshot_`/`probarSnapshotKommo`) con **300 planillas al azar** donde la regla nueva y la de antes dan lo mismo (2.400 comparaciones, 0
+  distintas); `test_wa_bot` §16 (11; **5 rojas contra la 29-a**: lee 2.000 filas en vez de 1.500, anota fuera de la ventana…). Versión en
+  `test_servidor` §11 l; `test_wa_avisos_log` y `test_wa_pedir_hoy` ahora piden «29-a o más nueva».
+- **Volver atrás**: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas) si nunca se implementó
+  la 29-a; si se implementó, la 29-a de `7de6ea65a37c3396486d0116a873d0a65eec1502` (5.005 líneas).
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
