@@ -16691,6 +16691,26 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   doble con `getFiles`; versión 29-a), `test_wa_pedir_hoy` (versión).
 - **Volver atrás**: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas). La página solo sube
   `SCRIPT_VERSION_ESPERADA`: se publica DESPUÉS de que el dueño implemente.
+- Batería entera con el 29-a (29/10): 282 suites, 9.035 bien; la única roja, `test_borradores` («día CERRADO» caía el 02/11, feriado: daba
+  «es FERIADO»), arreglada (`dc420e6`: el candidato salta los feriados con `feriadoDe` de la página). El `.gs` para pegar: enlace fijo a
+  `7de6ea65a37c3396486d0116a873d0a65eec1502` (5.005 líneas, termina en `}` con `return borrador;` antes).
+
+### §4np — 🎬 TRES VIDEOS MÁS: ATC, RPT Y CAMBIAR EL DÍA (29/10; el dueño eligió la «21»: *«La 21 me gusta»*)
+- `grabar.js … atc | rpt | repro`, como los de §4mv: formato compu 1920×1080, puntero, carteles, clientes inventados, nada sale a la red.
+  ⚠️ Ahora abre `pedidos.html?tema=espuma`: el tema del mes (Todos Santos en noviembre) no aparece y el video sirve todo el año.
+  · **ATC** (2 min 8 s, 13 MB): «🎧 ATC» → garantía/contra costo → motivo y detalle → fecha de compra → qué se le recoge → foto del colchón
+    (`colchon_atc.jpg`, dibujada en `recibo.js`, con «EJEMPLO») → cliente → producto → día del recojo → dónde → Guardar → el correo armado →
+    la pestaña ATC con «1 por recoger».
+  · **RPT** (1 min 31 s, 9 MB): «🏪 RPT» → sucursal (Mia Plaza: zona y ubicación solas; las sucursales NO tienen dirección en `SUCURSALES`)
+    → 2 renglones (Reposición y Adicional) → día → turno → Guardar → «Bajar el Excel del formato» y el WhatsApp.
+  · **Cambiar el día** (1 min 8 s, 7 MB): Mis pedidos → buscar «lucia» → «✏️ Editar» en la tarjeta → día nuevo en la agenda → turno →
+    «Guardar cambios» → «Cambios guardados» (qué cambió) + «el bot le avisa solo».
+  ⚠️ En el armado: un producto sin saldo hace saltar un `confirm` que el video no muestra (se usan los que tienen stock), y un pedido con
+  `chk:'ok'` pide confirmar al editar («el almacén ya lo revisó»): el pedido del video va sin marca. El adelanto va como lo guarda el panel
+  (`Efectivo %IMG` con `acuenta`), si no, al editar pide «¿con qué pagó?».
+- `VIDEOS {atc, rpt, repro}` (`?v=20261029a`) y `vid:` en las respuestas de Bloki que ya existían (la ATC, la RPT y «¿Cómo cambio el día de
+  entrega?»): siguen 22 respuestas. La de la RPT dice «la zona y la ubicación» (decía «la dirección»). `test_video_pedido` (20; 4 rojas
+  contra la publicada). En la rama, espera «publica».
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada

@@ -995,7 +995,7 @@ tarjetas, bancos que filtran (`COMPS_VER`), buscador, miniaturas. ⚠️ Las pru
 `videos/`, 1920×1080. 🖥️ **Los vendedores trabajan en la COMPUTADORA: video o material para ellos = formato compu (16:9), NUNCA de celular** (el
 dueño lo reclamó fuerte). Los enseña **Bloki** (`VIDEOS {pedido,pago,tienda}` + `verVideo(k)`; `vid:'…'` en la ayuda, 22 respuestas / 18 para un
 vendedor; la oferta de una vez por aparato es solo la del pedido, `me_asis_video`, antes que el recorrido). Se rehacen con `herramientas/video_pedido/`
-(`grabar.js … [pedido|pago|tienda]`, datos inventados, nada sale a la red) y se sube el `?v=` de `VIDEOS`. ⚠️ La foto del recibo es obligatoria
+(`grabar.js … [pedido|pago|tienda|atc|rpt|repro]`, datos inventados, nada sale a la red, `?tema=espuma`) y se sube el `?v=` de `VIDEOS`. 🎬 **§4np (29/10, en la rama)**: ATC, RPT y cambiar el día, con su «▶️ Ver el video» en Bloki. ⚠️ La foto del recibo es obligatoria
 también en efectivo, y el cliente recibe la confirmación del bot. ⚠️ Publicar con `format-patch` de los commits del cambio, nunca un diff contra `main`.
 🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
