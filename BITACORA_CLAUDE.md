@@ -16790,7 +16790,7 @@ del 25/10 y clientes INVENTADOS (`scratchpad/nr/lista_nr.json` = `real/lista_ano
   (`btn-sm`, `ah-go`, `cx-av-btn`, `cx-mano-btn`) .76rem/10 px; `.rowbtn` 8 px; `.cua-t` y `.sec` .7rem/.09em. El formulario (AM/PM, OC/ATC/RPT,
   ¿pagado?) queda con sus bloques de color. ⚠️ No se hizo: los nombres de clientes en minúscula (el ejemplo del muestrario los mostraba así): se le
   preguntó.
-- Batería entera (29/10, rama): ver abajo.
+- Batería entera (29/10, rama, `e0a5e4a`): **287 suites, 9.146 bien, 0 mal** («TODO EN VERDE»).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
