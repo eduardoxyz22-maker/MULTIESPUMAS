@@ -16746,7 +16746,10 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   del `.gs`, `crearPlantillasWhatsApp` tiene que leer ese error como «ya existía · Meta la tiene como MARKETING», no como ❌.
   `instalarDisparadores` 12:59 ✅ (con backupDiario). **IMPLEMENTADA por el dueño el 29/10 ~13:00** (Nueva versión; lo confirmó). Volver atrás:
   ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde…` (la 29-a nunca se implementó sola). **PÁGINA PUBLICADA 29/10 ~13:20 de Bolivia, `eb9114a`** (dueño: «Publicá»; format-patch de `7de6ea6`, `38864f6`, `f97d44f`, `dc420e6` sobre `f3bc41f`;
-  sin §4lt-d ni `997f2d6`): ESPERADA 29-b y los videos de §4np. Volver atrás: `f3bc41f`.
+  sin §4lt-d ni `997f2d6`): ESPERADA 29-b y los videos de §4np. Volver atrás: `f3bc41f`. Pages OK (run 40918340263).
+- **Muestrario de las mejoras 24-33** (dueño, 29/10: *«esas mejoras no me mostraste como quedarían»*): https://claude.ai/artifact/VN1RL9zYUXnWH1j2RXTV6K
+  (cada una se toca: menú al costado que se achica, ventana propia, avisos de Windows, inicio por rol, antes/después, ficha del cliente, zona
+  sola, gráfico del mes, arrastrar entre días con cupos, columnas y orden guardados). Datos inventados. Espera que el dueño elija.
 - Batería entera con la 29-b (29/10): **282 suites, 9.064 bien, 0 mal**. El `.gs` para pegar: enlace fijo a
   `38864f6057a876e3275dd5d1605e7fe67d75f512` (5.085 líneas, termina en `}` con `return borrador;` antes).
 
