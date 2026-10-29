@@ -287,7 +287,7 @@ console.log('\n── 4. Las plantillas y probarAntesDeImplementar ──');
   chk('probarAntesDeImplementar dice a quién van los avisos', /Excel del día \(10:00\) y del cierre de entregas \(19:00\) van a: Ernesto, Alba \(los de WA_PEDIR_HOY\)/.test(txt), (txt.match(/avisos del Excel[^"]{0,140}/) || [''])[0]);
   const S2 = servidor(Object.assign({}, ON, { WA_AVISOS: 'Alba:123' }));
   chk('…y avisa un número de WA_AVISOS que no entiende', /WA_AVISOS hay número/.test(JSON.stringify(S2.ctx.probarAntesDeImplementar())));
-  chk('la versión es la 2026-10-29-a en el .gs', S.ctx.SCRIPT_VERSION === '2026-10-29-a');
+  chk('la versión es la 2026-10-29-a o más nueva en el .gs', S.ctx.SCRIPT_VERSION >= '2026-10-29-a', S.ctx.SCRIPT_VERSION);
 }
 {
   poner('2026-10-29 11:00');

@@ -982,5 +982,46 @@ console.log('\n── 15c. Al vuelo: contesta en el mismo aviso (5 s de espera),
   chk('un número que no es de Claude (IA_SOLO): la automática al instante, sin esperar 5 s ni preguntarle a Claude', iaLl(S).length === 0 && /Este número solo envía/.test((textos(S)[0] || {}).t));
 }
 
+// ══ 16. (2026-10-29-b) Cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» ══════════════
+console.log('\n── 16. El aviso de Meta lee el final de la hoja, no la hoja entera ──');
+{
+  poner('2026-10-29 10:00');
+  const S = servidor(Object.assign({ WA_HOOK_KEY: 'k', WA_AUTORESP: '0' }, ON));
+  const N = S.ctx.WA_HOOK_FILAS;
+  chk('WA_HOOK_FILAS existe y es 1500 (el margen de waRespuestasLeer_)', N === 1500, N);
+  const H = S.ctx.waHoja_();
+  // 2.000 mensajes del bot (filas 2 a 2001): cada uno a un número distinto, del pedido `pN`.
+  for (let i = 1; i <= 2000; i++) H._datos.push(['29/10 09:00', 'p' + i, '10-' + i, 'Confirmación', 'CLIENTE ' + i, '5917' + String(1000000 + i), 'confirmacion_pedido', '✅ enviado', 'wamid.v' + i]);
+  const lect = [], orig = H.getRange;
+  H.getRange = function (f, c, nf, nc) { const r = orig(f, c, nf, nc), gv = r.getValues; r.getValues = () => { lect.push([f, c, nf, nc]); return gv(); }; return r; };
+  const aviso = (value) => S.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: Object.assign({ metadata: { phone_number_id: '1234567890' } }, value) }] }] }) } });
+  const ts = String(Math.floor(RELOJ.ms / 1000)), fila = (n) => H._datos[n - 1];
+  const last0 = H._datos.length;   // 2001
+  aviso({ statuses: [{ id: 'wamid.v1990', status: 'read', timestamp: ts }, { id: 'wamid.v10', status: 'read', timestamp: ts }] });
+  const l9 = lect.filter(x => x[3] === 9);
+  chk('⚠️ lee UNA vez, solo las últimas 1500 filas (de la ' + (last0 - N + 1) + ' a la ' + last0 + '), no las 2000', l9.length === 1 && l9[0][0] === last0 - N + 1 && l9[0][2] === N, l9);
+  chk('un «leído» de un mensaje dentro de la ventana se anota en SU fila', /^👁️ leído/.test(fila(1991)[9] || ''), fila(1991));
+  chk('…uno de un mensaje de antes de la ventana no se anota ni agrega filas (como lo que la hoja ya recortó)', !fila(11)[9] && H._datos.length === last0, [fila(11)[9], H._datos.length]);
+  aviso({ statuses: [{ id: 'wamid.v10', status: 'failed', timestamp: ts, errors: [{ code: 131026, title: 'Message undeliverable' }] }] });
+  const ult = H._datos[H._datos.length - 1];
+  chk('un «falló» de antes de la ventana no se pierde: fila nueva «Aviso de Meta» con el motivo', H._datos.length === last0 + 1 && ult[3] === 'Aviso de Meta' && ult[8] === 'wamid.v10' && /131026/.test(ult[9]), ult);
+  aviso({ contacts: [{ wa_id: '5917' + String(1001995), profile: { name: 'Cli' } }], messages: [{ id: 'wamid.r1', from: '5917' + String(1001995), timestamp: ts, type: 'text', text: { body: 'ok' }, context: { id: 'wamid.v1995' } }] });
+  const r1 = H._datos.find(f => f[8] === 'wamid.r1');
+  chk('⚠️ «Responder» sobre un mensaje de la ventana: su pedido sale de ESA fila (la cuenta con `desde`, no con la fila 2)', r1 && r1[1] === 'p1995' && r1[2] === '10-1995', r1);
+  aviso({ messages: [{ id: 'wamid.r2', from: '5917' + String(1001999), timestamp: ts, type: 'text', text: { body: 'hola' } }] });
+  const r2 = H._datos.find(f => f[8] === 'wamid.r2');
+  chk('sin «Responder»: el último mensaje que el bot le mandó a ese número dentro de la ventana', r2 && r2[1] === 'p1999', r2);
+  aviso({ messages: [{ id: 'wamid.r3', from: '5917' + String(1000005), timestamp: ts, type: 'text', text: { body: 'hola' } }] });
+  const r3 = H._datos.find(f => f[8] === 'wamid.r3');
+  chk('…si lo último que le mandó es de antes de la ventana, la respuesta se anota igual, sin pedido', r3 && r3[1] === '' && r3[3] === '💬 Respondió', r3);
+  aviso({ messages: [{ id: 'wamid.r1', from: '5917' + String(1001995), timestamp: ts, type: 'text', text: { body: 'ok' } }] });
+  chk('Meta repite un mensaje que ya se anotó (dentro de la ventana): no se duplica', H._datos.filter(f => f[8] === 'wamid.r1').length === 1);
+  chk('waHookPedidoDe_ con 4 datos (como antes) sigue contando desde la fila 2', (() => { const d = [['', 'pa', 'oa', 'Confirmación', '', '591', '', '✅ enviado', 'wamid.a'], ['', 'pb', 'ob', 'Confirmación', '', '592', '', '✅ enviado', 'wamid.b']];
+      const x = S.ctx.waHookPedidoDe_(d, { 'wamid.b': 3 }, { context: { id: 'wamid.b' } }, '999'); return x.id === 'pb' && x.oc === 'ob'; })());
+  const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'k', WA_AUTORESP: '0' }, ON)), H2 = S2.ctx.waHoja_();
+  S2.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: '1234567890' }, statuses: [{ id: 'wamid.nada', status: 'read', timestamp: ts }] } }] }] }) } });
+  chk('con la hoja vacía (solo el encabezado) no revienta ni agrega nada', H2._datos.length === 1, H2._datos.length);
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

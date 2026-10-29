@@ -271,7 +271,7 @@ async function pagina(browser, cuando, errores) {
     const S2 = servidor(Object.assign({}, ON, { WA_PEDIR_HOY: 'Alba:123' }));
     chk('…y avisa un número que no entiende', /WA_PEDIR_HOY hay número/.test(JSON.stringify(S2.ctx.probarAntesDeImplementar())));
     chk('estadoBotWhatsApp lo cuenta', JSON.stringify(S.ctx.estadoBotWhatsApp().pedirHoy) === '["Ernesto","Alba"]');
-    chk('la versión es la 2026-10-29-a en el .gs y en la página', S.ctx.SCRIPT_VERSION === '2026-10-29-a' && /var SCRIPT_VERSION_ESPERADA='2026-10-29-a'/.test(fs.readFileSync(PEDIDOS, 'utf8')));
+    chk('la versión es la 2026-10-29-a o más nueva, la misma en el .gs y en la página', S.ctx.SCRIPT_VERSION >= '2026-10-29-a' && fs.readFileSync(PEDIDOS, 'utf8').indexOf("var SCRIPT_VERSION_ESPERADA='" + S.ctx.SCRIPT_VERSION + "'") >= 0, S.ctx.SCRIPT_VERSION);
   }
 
   chk('sin errores de la página', errores.length === 0, errores);
