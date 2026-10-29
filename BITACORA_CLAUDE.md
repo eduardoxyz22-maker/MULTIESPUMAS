@@ -16842,6 +16842,12 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   {cache:'no-cache'})` y, si el navegador no deja armarla así, la de siempre: probado en Chromium de verdad en `localhost` (la página
   bajo el service worker, la recarga va con 304, el `#esc=` llega); (8) `sembrar` escribe solo si hubo algo nuevo.
   · `sw.js` `VERSION='2026-10-29c'`, `escritorio.js?v=20261029c`. `test_escritorio` → 52 (6l, 6m y 6n rojas contra `90b885b`).
+- **PUBLICADO 29/10 ~19:00 de Bolivia (`80f7e73`)**, dueño: «ok publica», y después «avisas que esté para revisar antes de publicar» →
+  «ok cuando esté publicado lo vemos y le damos». §4nr (28, 29, 30, 33) + §4ns/-b/-c (25, 26) con `format-patch --binary` (los íconos son PNG:
+  sin `--binary` el parche no lleva el archivo) de `e0a5e4a`, `204cf86`, `90b885b`, `b269d7e` sin BITACORA/CLAUDE.md, `git am -3` sobre
+  `367715c`. Lo que sigue distinto de la rama: SOLO §4lt-d (pap-ceros) y lo del saldo de `997f2d6` (no se publican). Batería sobre la copia:
+  286 suites, todo verde salvo `test_mispedidos` 32/1 una vez; corrida 36 veces más (12 a la vez) dio 33/0 siempre: la de tiempo de siempre.
+  El servidor no cambió (29-b). Al dueño: los pasos para instalarlo en la compu (Chrome/Edge), prender los avisos y el iPad/Android.
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada

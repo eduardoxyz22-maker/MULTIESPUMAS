@@ -1105,7 +1105,7 @@ en una línea. `tests/test_ficha_auto.js`.
   `desde`). `probarSnapshotKommo()` (solo lee, antes de `borradorDeLead_`) compara la regla nueva con la de antes sobre la planilla real.
   ⚠️ Un lugar NUEVO que pregunte «¿este lead ya está?» usa `kSnapshot_`, no otra lectura propia. `test_hook` §10, `test_wa_bot` §16.
 
-## 👤📍🗂️🧽 Del muestrario 24-33: ficha del cliente, zona sola, tablas a tu gusto y prolijidad (§4nr, 29/10; en la rama, espera «publica»)
+## 👤📍🗂️🧽 Del muestrario 24-33: ficha del cliente, zona sola, tablas a tu gusto y prolijidad (§4nr, 29/10; PUBLICADO 29/10 ~19:00 de Bolivia, `80f7e73`)
 Dueño: *«28 me gusta 29 tb 30 tb 33 tb. Ármalo y mostrame cómo quedaría con los datos reales»* (página con capturas y clientes inventados:
 https://claude.ai/artifact/Vzr6KUyYnn3LGjQ7w99uFd). La 24, 25 y 26 se le explicaron de nuevo: espera que diga si las quiere.
 - **👤 Ficha del cliente** (`clf*`): el nombre se toca (`clfNombre`, `.clf-lk`) en Administración, Contabilidad y Mis pedidos; mismo cliente =
@@ -1119,7 +1119,7 @@ https://claude.ai/artifact/Vzr6KUyYnn3LGjQ7w99uFd). La 24, 25 y 26 se le explica
 - **🧽 Prolijidad** (CSS al final del último `<style>`): `--r-lg` 16, `--sh-card` una sola sombra, filtros y pestañas internas como `.adm-filtros`,
   chips 32 px/.76rem, botones chicos .76rem. El formulario de un pedido no cambió. Los nombres en minúscula NO (se le preguntó).
 
-## 🖥️🔔 El panel como programa y los avisos de Windows (§4ns, 29/10; dueño: «ok todas menos la 24»; en la rama, espera «publica»)
+## 🖥️🔔 El panel como programa y los avisos de Windows (§4ns, 29/10; dueño: «ok todas menos la 24»; PUBLICADO 29/10 ~19:00 de Bolivia, `80f7e73`, con §4nr)
 Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --check`) + `sw.js` (subir `VERSION`) + `manifest.webmanifest` + `iconos/`.
 - 📲 Instalar: el service worker es SOLO de `pedidos.html` y NO guarda el panel (va siempre a internet; sin internet, un cartel). ⚠️ No hacerle
   guardar páginas: una copia vieja del panel es justo lo que §4fz-b/§4hs cuidan («la página vieja»).
