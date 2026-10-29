@@ -41,5 +41,20 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
   };
   await qr('2.400,00', 'LUCIA FERNANDEZ R.', '15:42', '000000481', 'qr_pago.jpg');
   await qr('2.900,00', 'JORGE SUAREZ', '16:05', '000000517', 'qr_tienda.jpg');
+  /* (29/10) La «foto del colchón hundido» que el cliente le manda a la vendedora, para el video de la ATC: dibujada, con «EJEMPLO». */
+  await p.setViewportSize({ width:960, height:720 });
+  await p.setContent(`<body style="margin:0;height:720px;background:linear-gradient(180deg,#d9cbb7 0,#cdbb9f 58%,#a88b67 58%,#9a7d5b 100%);font-family:Inter,sans-serif;position:relative;overflow:hidden">
+    <div style="position:absolute;left:0;right:0;top:46px;height:300px;background:linear-gradient(180deg,#efe7da,#e3d7c4);"></div>
+    <svg width="960" height="720" style="position:absolute;inset:0">
+      <defs><radialGradient id="h" cx="58%" cy="52%" r="30%"><stop offset="0" stop-color="#8c8173" stop-opacity=".75"/><stop offset=".55" stop-color="#b8ad9c" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <pattern id="q" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M0 30 Q15 20 30 30 T60 30" fill="none" stroke="#d9d4ca" stroke-width="2"/><circle cx="30" cy="30" r="2.4" fill="#cfc8bb"/></pattern></defs>
+      <path d="M90 300 L870 300 L905 520 L55 520 Z" fill="#f7f4ee"/><path d="M90 300 L870 300 L905 520 L55 520 Z" fill="url(#q)"/>
+      <path d="M55 520 L905 520 L905 585 L55 585 Z" fill="#e7e1d6"/><path d="M55 548 L905 548" stroke="#00B5AD" stroke-width="10"/>
+      <ellipse cx="560" cy="410" rx="220" ry="78" fill="url(#h)"/>
+      <path d="M380 420 Q560 470 740 418" fill="none" stroke="#9f9584" stroke-width="3" stroke-dasharray="6 7" opacity=".7"/>
+    </svg>
+    <div style="position:absolute;top:250px;left:-40px;right:-40px;text-align:center;transform:rotate(-14deg);font:900 92px Inter,sans-serif;color:rgba(220,38,38,.14);letter-spacing:.08em">EJEMPLO</div>
+    <div style="position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#fff;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.5)">Foto de ejemplo para la guía · colchón hundido en el medio</div></body>`);
+  await p.screenshot({ path:__dirname+'/colchon_atc.jpg', type:'jpeg', quality:86 });
   await b.close();
 })();
