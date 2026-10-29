@@ -16814,6 +16814,24 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
 - Batería entera con §4ns (29/10, `204cf86`): 286 suites, 9.131 bien; en rojo con la máquina cargada `test_carga` (4), `test_mispedidos` (1) y
   `test_sinmonto` (se cortó): solas y las tres ×3 a la vez (9 juntas), todas verdes (41/33/43). La batería anterior, sin `escritorio.js`, salió
   entera en verde: son las de tiempo que ya fallaban a veces con la máquina cargada (§4ni).
+- **§4ns-b — la revisión de Fable (29/10)**. El dueño corrió `escritorio.js` y `sw.js` por Fable en su API y pegó el análisis (17 puntos +
+  «lo que está bien resuelto»). Verificados uno por uno contra el código:
+  · **No eran problema**: (2) `refrescarEstado` NO mira `document.hidden` (solo `autoRefrescar`), así que la lectura escondida lee de verdad;
+    (5) `r.w` es el id de CADA mensaje (columna 8 de «Bot WhatsApp»): cada mensaje nuevo avisa, a propósito; (8) `asisVeAdm` ya incluye
+    logística (`quienRol`).
+  · **Arreglados**: (1) con el panel CERRADO, `sw.js` lo abre con `pedidos.html#esc=<tipo>&id=<id>`; `destinoDeHash` lo lee, lo borra de la
+    dirección (`history.replaceState`) y `irPendiente` lo abre recién con la planilla leída (`listo()`; sin planilla en 2 min, igual);
+    (3) la lectura escondida tiene tope (`Promise.race` 60 s, y `tic` suelta `ESC.leyendo` pasados 65 s); (4) lo que sigue pendiente se
+    renueva en `me_esc_vistos` una vez por día (si no, a los 10 días una respuesta sin atender volvía a avisar); (6) decir que no a instalar
+    deja un aviso con dónde está (el navegador da UN pedido por carga); (7) `hoy()` = `diaNegocio()` (Bolivia), como el Excel del día;
+    (9) `permMirar` (en cada `tic`, al volver a la pestaña y con `permissions.query(...).onchange`): el cartel se pone al día y, permitido
+    desde el candado, lo que ya había se da por visto; (10) el cartel sin «Y» suelto cuando solo ofrece los avisos; (11) el aviso de
+    Contabilidad abre el pedido (`showMisModal`); (12) el aviso adentro del panel con color: urgente rojo, Contabilidad y Excel ámbar
+    (`.toast.warn`, va en el CSS de `escritorio.js`); (13) tildar un tipo cambia solo su renglón (`escTipo(k, si, el)`; redibujar la ventana
+    sacaba el foco); (14) los Safari viejos (`requestPermission` con función); (15) sin `badge`; (16) sin `ESC.ultimoMostrado`; (17) el
+    escucha de mensajes del service worker, solo con `activo()` (+ `startMessages`). Además: en la esquina queda el último mensaje de CADA
+    cliente (`tag` por cliente `bot|<num>`, `renotify`), la clave de «visto» sigue por mensaje.
+  · `sw.js` `VERSION='2026-10-29b'`, `escritorio.js?v=20261029b`. `test_escritorio` → 46 (§6 nueva: 13 rojas contra `e95204e`).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada

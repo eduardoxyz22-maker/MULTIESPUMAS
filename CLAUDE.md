@@ -1126,6 +1126,10 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
 - 🔔 Avisos (`Notification`): respuesta al bot, aviso de Contabilidad, venta de Kommo, Excel de hoy (logística), anuncio; por compu
   (`me_esc_tipos`), lo visto en `me_esc_vistos`; lo que ya había al abrir/prender/cambiar de vendedora no avisa. Escondido, lee cada 3 min solo
   con avisos prendidos. ⚠️ Un aviso NUEVO va en `TIPOS` y en `pendientes()` con una clave estable por cosa. `ESC_PRUEBA`. `tests/test_escritorio.js`.
+- **§4ns-b (revisión de Fable)**: con el panel cerrado el aviso lo abre en lo que nombra (`pedidos.html#esc=<tipo>&id=<id>`, `destinoDeHash` lo
+  borra de la dirección); lo pendiente se renueva en `me_esc_vistos` (no vuelve a avisar a los 10 días); `permMirar` (permiso cambiado desde el
+  candado); tope de 60 s a la lectura escondida; el día es `diaNegocio()`; en la esquina, el último mensaje de cada cliente (`tag` por cliente).
+  ⚠️ `refrescarEstado` NO mira `document.hidden` (solo `autoRefrescar`): si eso cambia, la lectura escondida de los avisos deja de leer.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
