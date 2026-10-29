@@ -16661,6 +16661,37 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - No cambia: la OC (sigue su número), los cupos (sin fecha de entrega), el servidor (`ts` viaja como siempre; `ocRepetidaGs_` solo
   mira el año y solo si cambia la OC). `tests/test_venta_tienda_fecha.js` (19).
 
+### §4no — 📥✅💾 SERVIDOR `2026-10-29-a`: DOS AVISOS A LOGÍSTICA Y EL RESPALDO DIARIO (29/10; el dueño eligió la «2» y la «4»)
+- **La lista de mejoras del 28-29/10** (le pregunté «¿qué más podemos meter?»): 1 alarma al dueño si algo se rompe · **2 avisos a logística** ·
+  3 las pruebas corriendo solas en GitHub · **4 el respaldo diario** · 5 aviso antes de que venza el token de Kommo · 6 después de la entrega ·
+  7 clientes para volver a llamar · 8 el tiempo real de respuesta de cada vendedora · 9 prender «En producción» automático · 10 comprobantes
+  con IA cada noche · 11 la clave del equipo; y 12-23 (venta cruzada, cotización en imagen, venta por debajo del precio, cotizaciones que se
+  enfrían, resumen del día al dueño, puntualidad por GPS, cierre del mes solo, alarma de calidad de fábrica, Bloki con IA, más videos, modo TV,
+  fotos de productos). El dueño: **«2.»**, **«4. Ok»**, «No entendí la 3», **6 → «una encuesta de satisfacción o algo de medición de
+  calidad»**, «8 cómo funcionaría», «9 cómo funciona», «10 cuánto gastaría». Contestado en el chat: la 6 = una pregunta con tres botones
+  al día siguiente de la entrega (😀/🙂/😞; «Mal» pregunta qué pasó y avisa; «Excelente» manda el enlace de reseñas) + puntualidad del GPS +
+  ATC por producto; la 8 = `outgoing_chat_message` de Kommo (§4ng, `RESPUESTA` §34) en el dashboard; la 9 = §4lr/§4ls (simulado 1.330 → 498
+  de más); la 10 = ~US$ 0,015 por foto (`IAC_USD_FOTO`), 400-600 fotos por mes = **US$ 6-9 por mes**, con tope de US$ 1 por día.
+- **La 2** (`WA_TIPOS.ex`/`ci`, `waRepasoBot_`, `waArmar_`): a los de **`WA_AVISOS`** (propiedad nueva, opcional) o, si no está, a los de
+  `WA_PEDIR_HOY` (Ernesto y Alba). Solo días hábiles (`waPhHabil_`), una vez por día (`WA_HECHO.ex`/`ci`), ventana `WA_VENTANA_H`.
+  · **10:00 `logistica_excel_falta`** (`WA_HORA_EXCEL`): `waExcelFaltan_(fila __stock__, hoy)` = PTF (`STOCK.c.f`) y cada almacén de `STOCK.g`
+    con un Excel de los últimos `WA_EXCEL_RECIENTE_DIAS`=7 (un nombre viejo no se reclama), con nombre corto (`waAlmCorto_`: Banzer / IM / PTF)
+    y en el orden del archivo; datos: el día, «PTF, Banzer e IM» (`waListaY_`), el saldo «de ayer» / «del martes 27/10» / «de hace días».
+  · **19:00 `logistica_cierre_falta`** (`WA_HORA_CIERRE`; sábado `WA_HORA_CIERRE_SAB`=13:30): `waCierreFaltan_` = `waEsEntrega_` con la fecha
+    de hoy (la regla de `cierreEntEntra`: ATC y RPT sí), la mañana primero; datos: el día, «3 pedidos», «OC 10-301 (JUAN PEREZ) · …» hasta
+    `WA_LISTA_MAX` con «y N más».
+  · Cada mensaje se arma con la planilla de ESE momento: si mientras esperaba (o en el reintento) ya subieron el Excel o hicieron el cierre, no
+    sale; un reintento de otro día se anota y no sale.
+  · Las dos plantillas están en `WA_PLANTILLAS` (las crea `crearPlantillasWhatsApp` desde el editor, como las otras; o a mano en Meta).
+- **La 4**: `instalarDisparadores` instala **`backupDiario`** una vez por día de 2 a 3 (la función ya existía desde agosto y había que prenderla
+  a mano en Activadores; no se sabía si estaba). `probarAntesDeImplementar` §15 cuenta las copias de «Backups Pedidos MultiEspumas» y dice la
+  última (✅ recién instalado sin copias; ⚠️ sin disparador o con la última de más de 30 h). Solo mira: no crea la carpeta.
+- `probarAntesDeImplementar` §11 dice a quién van los dos avisos y avisa un número de `WA_AVISOS` que no entiende.
+- Pruebas: **`tests/test_wa_avisos_log.js` (50; 22 rojas contra la 27-a)**; `test_wa_bot` (10 plantillas), `test_servidor` (la carpeta del
+  doble con `getFiles`; versión 29-a), `test_wa_pedir_hoy` (versión).
+- **Volver atrás**: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas). La página solo sube
+  `SCRIPT_VERSION_ESPERADA`: se publica DESPUÉS de que el dueño implemente.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.

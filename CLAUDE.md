@@ -1089,6 +1089,15 @@ en una línea. `tests/test_ficha_auto.js`.
   deja «En producción»), A12/A13 (ficha al costado, Ctrl+K). A14 (barra de 60,72 px en Chrome/Windows) no se puede medir acá.
 - Pruebas: `test_r01_fecha_conflicto` (la página contra el `.gs` real), `test_astra_{deshacer,pases,tstfecha,mis,nota,produccion,ficha_costado,buscador}`.
 
+## 📥✅💾 Servidor `2026-10-29-a`: avisos a logística y respaldo diario (§4no, 29/10; el dueño eligió la «2» y la «4»; en la rama, espera que el dueño lo implemente)
+- Por WhatsApp a **`WA_AVISOS`** (opcional) o, si no, a `WA_PEDIR_HOY`; solo días hábiles, una vez por día: **10:00 `logistica_excel_falta`** si falta el
+  Excel de HOY de algún almacén (`waExcelFaltan_`: PTF de `STOCK.c` + los de `STOCK.g` con Excel en los últimos 7 días, nombre corto `waAlmCorto_`) y
+  **19:00 (sábado 13:30) `logistica_cierre_falta`** si quedan entregas de hoy sin ✅ (`waCierreFaltan_` = `waEsEntrega_` de hoy). Se arma con la planilla
+  de ese momento: lo ya hecho no sale. Plantillas en `WA_PLANTILLAS` (`crearPlantillasWhatsApp`). Solo avisa.
+- `instalarDisparadores` prende **`backupDiario`** (2 a 3 am, 30 copias en «Backups Pedidos MultiEspumas»); `probarAntesDeImplementar` §15 lo mira.
+- ⚠️ Un aviso nuevo de logística va en `WA_TIPOS` + `WA_PLANTILLAS` (mismos datos) + `waArmar_` (recalcular con la planilla de ahora). `tests/test_wa_avisos_log.js` (50).
+  Volver atrás: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas).
+
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
 el jueves y aún no marcás el stock… producción tarda hasta 4 días»*. ⚠️ Nada de camiones, carga ni cupos en este botón.
