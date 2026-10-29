@@ -30,7 +30,8 @@
    ============================================================================================================================ */
 (function(){
 'use strict';
-var ESC_OCULTO_MS=180000, ESC_TIC_MS=30000, ESC_VISTOS_DIAS=10, ESC_NO_DIAS=21, ESC_EXCEL_HORA=10, ESC_GRACIA_MS=90000;
+var ESC_OCULTO_MS=180000, ESC_TIC_MS=30000, ESC_VISTOS_DIAS=10, ESC_NO_DIAS=21, ESC_EXCEL_HORA=10, ESC_GRACIA_MS=90000,
+    ESC_LECTURA_TOPE_MS=60000, ESC_RENUEVA_MS=864e5, ESC_DESTINO_MS=120000;
 var LS_TIPOS='me_esc_tipos', LS_VISTOS='me_esc_vistos', LS_NO='me_esc_no';
 var TIPOS=[
   { k:'bot',     ic:'💬', t:'Un cliente le contestó al bot',             s:'lo que escribe el cliente al WhatsApp del bot y necesita una persona' },
@@ -39,7 +40,7 @@ var TIPOS=[
   { k:'excel',   ic:'📦', t:'Falta el Excel de hoy (logística)',         s:'desde las 10:00, si todavía no se subió el Excel del depósito de hoy' },
   { k:'anuncio', ic:'📢', t:'Un anuncio nuevo de Administración',        s:'lo que Administración le dice a todo el equipo' }
 ];
-var ESC={ instalar:null, reg:null, sembrado:false, ultLectura:0, leyendo:false, timer:null, t0:Date.now(), qk:null };
+var ESC={ instalar:null, reg:null, sembrado:false, ultLectura:0, leyendo:false, timer:null, t0:Date.now(), qk:null, perm:null, pend:null, pendT:0, pendTimer:null };
 window.ESC=ESC; window.ESC_TIPOS=TIPOS;
 
 function activo(){ try{ return !(navigator.webdriver && !window.ESC_PRUEBA); }catch(e){ return true; } }
@@ -47,7 +48,8 @@ function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; 
 function lsSet(k, v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){} }
 function lsJson(k, def){ try{ var o=JSON.parse(lsGet(k)||'null'); return (o && typeof o==='object') ? o : def; }catch(e){ return def; } }
 function e_(s){ return (typeof esc==='function') ? esc(s) : String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function hoy(){ try{ return todayStr(); }catch(e){ return new Date().toISOString().slice(0,10); } }
+/* el día de Bolivia (como el Excel del día, `existNoEsDeHoy`), no el reloj de la compu */
+function hoy(){ try{ if(typeof diaNegocio==='function') return diaNegocio(); return todayStr(); }catch(e){ return new Date().toISOString().slice(0,10); } }
 
 /* ---------- 25 · instalar ---------- */
 function instalado(){
@@ -78,7 +80,9 @@ function escInstalar(){
   try{ ev.prompt(); }catch(err){ ajustesAbrir(); return; }
   (ev.userChoice||Promise.resolve({})).then(function(r){
     if(r && r.outcome==='accepted') return;
+    /* el navegador da UN solo pedido por carga de la página: dicho que no, el botón se va hasta recargar. Que sepa dónde está igual. */
     bannerPintar(); ajustesRepintar();
+    aviso('Cuando quieras instalarlo: el ícono ⊕ a la derecha de la barra de direcciones, o el menú ⋮ → Instalar Panel MultiEspumas.', 'ok');
   });
 }
 
@@ -86,7 +90,13 @@ function escInstalar(){
 function permiso(){ try{ return ('Notification' in window) ? Notification.permission : 'nohay'; }catch(e){ return 'nohay'; } }
 function tipos(){ var o=lsJson(LS_TIPOS, null); if(!o){ o={}; TIPOS.forEach(function(t){ o[t.k]=1; }); } return o; }
 function tipoOn(k){ return !!tipos()[k]; }
-function escTipo(k, si){ var o=tipos(); o[k]=si?1:0; lsSet(LS_TIPOS, JSON.stringify(o)); if(si) sembrar(true); ajustesRepintar(); }   // prender uno: lo que ya había no llueve
+function escTipo(k, si, el){
+  var o=tipos(); o[k]=si?1:0; lsSet(LS_TIPOS, JSON.stringify(o));
+  if(si) sembrar(true);   // prender uno: lo que ya había no llueve
+  /* desde la ventana: solo el renglón (redibujar la ventana entera le sacaba el foco a la casilla) */
+  var lb=el && el.closest ? el.closest('label') : null;
+  if(lb) lb.classList.toggle('on', !!si); else ajustesRepintar();
+}
 function prendidos(){ return activo() && permiso()==='granted' && TIPOS.some(function(t){ return tipoOn(t.k); }); }
 function vistos(){ var o=lsJson(LS_VISTOS, {}), lim=Date.now()-ESC_VISTOS_DIAS*864e5, out={};
   Object.keys(o).forEach(function(k){ if(Number(o[k])>lim) out[k]=o[k]; }); return out; }
@@ -94,9 +104,14 @@ function vistosPoner(o){ lsSet(LS_VISTOS, JSON.stringify(o)); }
 function escPrender(){
   if(permiso()==='nohay'){ aviso('Este navegador no tiene avisos de Windows. Probá con Chrome o Edge.', 'err'); return Promise.resolve(false); }
   if(permiso()==='denied'){ ajustesAbrir(); return Promise.resolve(false); }
-  var p; try{ p=Notification.requestPermission(); }catch(e){ p=null; }
-  return Promise.resolve(p).then(function(r){
-    r=r||permiso();
+  /* los Safari viejos contestan por la función que se les pasa y no devuelven nada; los de ahora, una promesa: las dos */
+  var p=new Promise(function(res){
+    var hecho=false, fin=function(r){ if(!hecho){ hecho=true; res(r); } };
+    try{ var q=Notification.requestPermission(fin); if(q && typeof q.then==='function') q.then(fin, function(){ fin(permiso()); }); }
+    catch(e){ fin(permiso()); }
+  });
+  return p.then(function(r){
+    r=r||permiso(); ESC.perm=permiso();
     if(r==='granted'){
       sembrar(true);
       aviso('🔔 Avisos prendidos en esta compu. Te llegan aunque estés en otra cosa.', 'ok');
@@ -123,7 +138,8 @@ function pendientes(){
       if(!r || r.at || !r.w) return;
       var p=(typeof waRespPed==='function') ? waRespPed(r) : null;
       if(!Q.adm && !(Q.v && p && mismoVendedor(p.vendedor, Q.v))) return;
-      L.push({ k:'bot|'+r.w, tipo:'bot', id:p ? String(p.id) : '',
+      /* la clave es por MENSAJE (cada mensaje nuevo avisa); el `tag`, por cliente: en la esquina queda el último de cada uno, no una pila */
+      L.push({ k:'bot|'+r.w, tag:'bot|'+(r.num || r.id || r.w), tipo:'bot', id:p ? String(p.id) : '', kd:r.urg ? 'err' : 'ok',
         t:'💬 '+(nombre(r.nom || (p && p.cliente)) || 'Un cliente')+' le contestó al bot'+(r.urg?' · 🚨 urgente':''),
         b:'«'+corto(r.txt, 120)+'»'+(p && p.oc ? (' · OC '+p.oc) : '') });
     });
@@ -131,7 +147,7 @@ function pendientes(){
   // 🧾 avisos de Contabilidad a la vendedora
   try{
     if(Q.v && typeof ctaAvAbiertos==='function') ctaAvAbiertos(Q.v).forEach(function(a){
-      L.push({ k:'conta|'+(a.id||(a.k+'|'+a.t)), tipo:'conta', id:String(a.pid||''),
+      L.push({ k:'conta|'+(a.id||(a.k+'|'+a.t)), tipo:'conta', id:String(a.pid||''), kd:'warn',
         t:'🧾 Contabilidad te pide revisar un pago', b:corto((a.cli?(a.cli+' · '):'')+(a.txt||''), 140) });
     });
   }catch(e){}
@@ -146,7 +162,7 @@ function pendientes(){
     var h=hoy(), hb=(typeof horaBolivia==='function') ? horaBolivia() : new Date();
     if(Q.adm && (typeof diaHabil!=='function' || diaHabil(h)) && hb.getHours()>=ESC_EXCEL_HORA && typeof STOCK!=='undefined' && STOCK){
       var cf=(STOCK.c && STOCK.c.f) || '';
-      if(cf!==h) L.push({ k:'excel|'+h, tipo:'excel', t:'📦 Falta el Excel de hoy', b:cf ? ('El último del depósito es del '+fmtFechaCorta(cf)+'. Subilo en Stock → 📥 Subir existencias.') : 'Subí el Excel del depósito en Stock → 📥 Subir existencias.' });
+      if(cf!==h) L.push({ k:'excel|'+h, tipo:'excel', kd:'warn', t:'📦 Falta el Excel de hoy', b:cf ? ('El último del depósito es del '+fmtFechaCorta(cf)+'. Subilo en Stock → 📥 Subir existencias.') : 'Subí el Excel del depósito en Stock → 📥 Subir existencias.' });
     }
   }catch(e){}
   // 📢 un anuncio
@@ -171,20 +187,24 @@ function revisar(){
      vendedora en Mis pedidos, lo que hay se da por visto: si no, abrir el panel o elegir otro nombre era una lluvia de avisos viejos. */
   var q=quienSoy(), qk=q.v+'|'+(q.adm?1:0);
   if(!ESC.sembrado || qk!==ESC.qk || Date.now()-ESC.t0<ESC_GRACIA_MS){ sembrar(true); ESC.qk=qk; return []; }
-  var V=vistos(), nuevos=pendientes().filter(function(x){ return !V[x.k]; });
-  if(!nuevos.length) return [];
-  var n=Date.now(); nuevos.forEach(function(x){ V[x.k]=n; }); vistosPoner(V);   // ANTES de mostrar: otra pestaña no lo repite
+  var V=vistos(), n=Date.now(), P=pendientes(), renovo=false;
+  /* lo que sigue pendiente no se olvida a los 10 días (una respuesta al bot sin atender volvería a avisar): se renueva una vez por día */
+  P.forEach(function(x){ if(V[x.k] && n-Number(V[x.k])>ESC_RENUEVA_MS){ V[x.k]=n; renovo=true; } });
+  var nuevos=P.filter(function(x){ return !V[x.k]; });
+  if(!nuevos.length){ if(renovo) vistosPoner(V); return []; }
+  nuevos.forEach(function(x){ V[x.k]=n; }); vistosPoner(V);   // ANTES de mostrar: otra pestaña no lo repite
   /* varios a la vez (volvió la señal, la compu despertó): un aviso por cosa hasta 3; más, uno solo que los cuenta */
-  if(nuevos.length>3) mostrar({ k:'varios|'+n, tipo:nuevos[0].tipo, t:'🔔 '+nuevos.length+' cosas nuevas en el panel',
+  if(nuevos.length>3) mostrar({ k:'varios|'+n, tipo:nuevos[0].tipo, kd:nuevos.some(function(x){ return x.kd==='err'; }) ? 'err' : 'ok', t:'🔔 '+nuevos.length+' cosas nuevas en el panel',
     b:nuevos.slice(0,4).map(function(x){ return x.t.replace(/^\S+\s/,''); }).join(' · ') });
   else nuevos.forEach(function(x){ mostrar(x); });
   return nuevos;
 }
 function enFoco(){ try{ return document.visibilityState==='visible' && document.hasFocus(); }catch(e){ return false; } }
 function mostrar(x, siempre){
-  if(!siempre && enFoco()){ aviso(x.t+' — '+x.b, 'ok'); return; }   // mirando el panel: el aviso de siempre
-  var op={ body:x.b, tag:x.k, icon:'iconos/panel-192.png', badge:'iconos/panel-192.png', data:{ tipo:x.tipo, id:x.id||'', k:x.k }, renotify:false };
-  ESC.ultimoMostrado=x;
+  if(!siempre && enFoco()){ aviso(x.t+' — '+x.b, x.kd||'ok'); return; }   // mirando el panel: el aviso de siempre, en rojo si es urgente
+  /* sin `badge`: es el dibujito de la barra de Android y tiene que ser de un solo color; en Windows no se usa */
+  var tag=x.tag||x.k;
+  var op={ body:x.b, tag:tag, icon:'iconos/panel-192.png', data:{ tipo:x.tipo, id:x.id||'', k:x.k }, renotify:tag!==x.k };
   if(ESC.reg && ESC.reg.showNotification){ ESC.reg.showNotification(x.t, op).catch(function(){ mostrarDirecto(x, op); }); return; }
   mostrarDirecto(x, op);
 }
@@ -196,21 +216,53 @@ function ir(d){
   d=d||{};
   try{
     if(d.tipo==='bot'){ if(typeof botVe==='function' && botVe()) showView('bot'); else { showView('mis'); if(d.id && findById(d.id)) showMisModal(d.id); } }
-    else if(d.tipo==='conta' || d.tipo==='kommo'){ showView('mis'); }
+    else if(d.tipo==='conta'){ showView('mis'); if(d.id && findById(d.id)) showMisModal(d.id); }
+    else if(d.tipo==='kommo'){ showView('mis'); }
     else if(d.tipo==='excel'){ showView('admin'); if(typeof abrirStock==='function') abrirStock(); }
   }catch(e){}
 }
 window.escIr=ir;
-if('serviceWorker' in navigator) try{ navigator.serviceWorker.addEventListener('message', function(ev){ var m=ev.data||{}; if(m.tipo==='aviso') ir(m.d); }); }catch(e){}
+/* Con el panel CERRADO, `sw.js` lo abre con `pedidos.html#esc=<tipo>&id=<id>`: se lee una vez, se borra de la dirección y se abre
+   recién cuando llegó la planilla (si no, `findById` no encuentra el pedido nuevo). */
+function destinoDeHash(){
+  var m=/^#esc=([^&]*)(?:&id=(.*))?$/.exec(location.hash||'');
+  if(!m) return null;
+  try{ history.replaceState(null, '', location.pathname+location.search); }catch(e){}
+  try{ return { tipo:decodeURIComponent(m[1]||''), id:decodeURIComponent(m[2]||'') }; }catch(e){ return null; }
+}
+function irPendiente(){
+  if(!ESC.pend) return true;
+  if(!listo() && Date.now()-ESC.pendT<ESC_DESTINO_MS) return false;   // sin planilla en 2 min: se abre igual lo que se pueda
+  var d=ESC.pend; ESC.pend=null; ir(d); return true;
+}
+function esperarDestino(d){
+  if(!d || !d.tipo) return;
+  ESC.pend=d; ESC.pendT=Date.now();
+  if(ESC.pendTimer) clearInterval(ESC.pendTimer);
+  ESC.pendTimer=setInterval(function(){ if(irPendiente()){ clearInterval(ESC.pendTimer); ESC.pendTimer=null; } }, 1000);
+}
+window.escDestinoDeHash=destinoDeHash; window.escIrPendiente=irPendiente; window.escEsperarDestino=esperarDestino;
 
+/* El permiso cambiado desde afuera (el candado 🔒 de la barra, la configuración de Windows): el cartel y la ventana se ponen al día, y
+   al quedar permitido lo que ya había se da por visto (si no, llovían los avisos de lo que pasó mientras estaba apagado). */
+function permMirar(){
+  var pm=permiso();
+  if(ESC.perm!==null && pm!==ESC.perm){ if(pm==='granted') sembrar(true); ESC.perm=pm; ajustesRepintar(); }
+  ESC.perm=pm; bannerPintar();
+}
 /* Con el panel escondido no se lee solo: con los avisos prendidos, cada `ESC_OCULTO_MS` */
 function tic(){
+  permMirar();
+  irPendiente();
+  if(ESC.leyendo && Date.now()-ESC.ultLectura>ESC_LECTURA_TOPE_MS+5000) ESC.leyendo=false;   // una lectura que nunca contestó no traba las siguientes
   if(!prendidos()) return;
   var oculto=document.hidden, ult=Math.max(ESC.ultLectura, (typeof ULTIMO_REFRESCO==='number') ? ULTIMO_REFRESCO : 0);
   if(oculto && !ESC.leyendo && typeof CONNECTED!=='undefined' && CONNECTED && Date.now()-ult>=ESC_OCULTO_MS && !(typeof autoOcupado==='function' && autoOcupado())){
     ESC.leyendo=true; ESC.ultLectura=Date.now();
     try{ if(typeof waRespTraer==='function') waRespTraer(true); }catch(e){}
-    Promise.resolve().then(function(){ return refrescarEstado(); }).catch(function(){}).then(function(){ ESC.leyendo=false; revisar(); });
+    var lect=Promise.resolve().then(function(){ return refrescarEstado(); }).catch(function(){});
+    var tope=new Promise(function(res){ setTimeout(res, ESC_LECTURA_TOPE_MS); });   // `refrescarEstado` ya corta a los 45 s; esto, por las dudas
+    Promise.race([lect, tope]).then(function(){ ESC.leyendo=false; revisar(); });
     return;
   }
   revisar();
@@ -226,8 +278,11 @@ function bannerPintar(){
   var inst=!!ESC.instalar && !instalado(), notif=permiso()==='default';
   var ver=activo() && (inst || notif) && Date.now()>noHasta();
   b.hidden=!ver; if(!ver){ b.innerHTML=''; return; }
-  var h='<span class="esc-b-ic" aria-hidden="true">🖥️</span><div class="esc-b-tx"><b>'+(inst ? 'Tené el panel como programa en esta compu' : 'Que el panel te avise aunque estés en otra cosa')+'</b>'+
-    '<small>'+(inst ? 'Un ícono en el escritorio y su propia ventana. ' : '')+(notif ? 'Y los avisos en la esquina de la pantalla: un cliente que contesta, un pago para revisar, una venta de Kommo.' : '')+'</small></div>'+
+  var queAvisa='un cliente que contesta, un pago para revisar, una venta de Kommo.';
+  var tit=inst ? 'Tené el panel como programa en esta compu' : 'Que el panel te avise aunque estés en otra cosa';
+  var sub=inst ? ('Un ícono en el escritorio y su propia ventana.'+(notif ? (' Y los avisos en la esquina de la pantalla: '+queAvisa) : ''))
+               : ('Un aviso en la esquina de la pantalla: '+queAvisa);
+  var h='<span class="esc-b-ic" aria-hidden="true">🖥️</span><div class="esc-b-tx"><b>'+tit+'</b><small>'+sub+'</small></div>'+
     '<div class="esc-b-acc">'+(inst ? '<button type="button" class="esc-b-p" onclick="escInstalar()">📲 Instalar</button>' : '')+
       (notif ? '<button type="button" class="'+(inst?'esc-b-s':'esc-b-p')+'" onclick="escPrender()">🔔 Prender los avisos</button>' : '')+
       '<button type="button" class="esc-b-s" onclick="escAjustesAbrir()">Ver más</button>'+
@@ -254,7 +309,7 @@ function ajustesHtml(){
         (p==='default' ? '<button type="button" class="btn btn-primary btn-sm" onclick="escPrender()">🔔 Prender los avisos</button>' : '')+
         (p==='granted' ? '<button type="button" class="btn btn-ghost btn-sm" onclick="escProbar()">Mandar un aviso de prueba</button>' : '')+
         '<div class="esc-tipos">'+TIPOS.map(function(t){
-          return '<label class="'+(T[t.k]?'on':'')+'"><input type="checkbox"'+(T[t.k]?' checked':'')+' onchange="escTipo(\''+t.k+'\', this.checked)"><span><b>'+t.ic+' '+e_(t.t)+'</b><small>'+e_(t.s)+'</small></span></label>';
+          return '<label class="'+(T[t.k]?'on':'')+'"><input type="checkbox"'+(T[t.k]?' checked':'')+' onchange="escTipo(\''+t.k+'\', this.checked, this)"><span><b>'+t.ic+' '+e_(t.t)+'</b><small>'+e_(t.s)+'</small></span></label>';
         }).join('')+'</div>'+
         '<p class="esc-chico">Lo que elegís queda en esta compu. Te avisa de lo tuyo: elegí tu nombre en «Mis pedidos» (logística y Administración ven las respuestas al bot de todos y el Excel del día). El panel tiene que estar abierto en alguna pestaña o instalado; con el panel a la vista, el aviso sale adentro del panel.</p></div>'+
       '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Listo</button></div>'+
@@ -300,10 +355,18 @@ css.textContent=
   '.esc-tipos{display:flex;flex-direction:column;gap:4px;margin:10px 0 6px}'+
   '.esc-tipos label{display:flex;gap:10px;align-items:flex-start;padding:7px 9px;border-radius:10px;cursor:pointer;border:1px solid transparent}'+
   '.esc-tipos label.on{background:#fff;border-color:#e1ebea}.esc-tipos input{margin-top:3px;width:16px;height:16px;accent-color:#00A09A}'+
-  '.esc-tipos b{display:block;font-size:.84rem}.esc-tipos small{display:block;font-size:.74rem;color:#5d7473}';
+  '.esc-tipos b{display:block;font-size:.84rem}.esc-tipos small{display:block;font-size:.74rem;color:#5d7473}'+
+  '.toast.warn{background:#b45309}';
 document.head.appendChild(css);
 registrarSw();
-function empezar(){ ESC.t0=Date.now(); bannerPintar(); arrancar(); }
+/* tocar un aviso con el panel abierto: `sw.js` le manda qué abrir */
+if('serviceWorker' in navigator) try{
+  navigator.serviceWorker.addEventListener('message', function(ev){ var m=ev.data||{}; if(m.tipo==='aviso') ir(m.d); });
+  if(navigator.serviceWorker.startMessages) navigator.serviceWorker.startMessages();
+}catch(e){}
+try{ if(navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name:'notifications' }).then(function(st){ st.onchange=permMirar; }, function(){}); }catch(e){}
+esperarDestino(destinoDeHash());
+function empezar(){ ESC.t0=Date.now(); ESC.perm=permiso(); bannerPintar(); arrancar(); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', empezar); else empezar();
-document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(revisar, 1500); });
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(function(){ permMirar(); revisar(); }, 1500); });
 })();

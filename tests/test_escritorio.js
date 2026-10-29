@@ -9,6 +9,10 @@
    · tocar el aviso abre lo que nombra; con el panel escondido se lee la planilla cada 3 min (y no antes);
    · `sw.js`: no toca la planilla ni los .js, va siempre a internet a buscar la página y sin internet da el cartel; tocar el aviso trae la
      ventana del panel.
+   · lo de la revisión de Fable (§4ns-b): con el panel CERRADO el aviso lo abre en lo que nombra (`#esc=…`, se borra de la dirección);
+     lo que sigue pendiente no vuelve a avisar a los 10 días; una lectura que no contesta no traba las siguientes; el permiso cambiado
+     desde afuera no trae una lluvia; la casilla de un tipo no redibuja la ventana; el aviso de Contabilidad abre el pedido; los Safari
+     viejos; el urgente en rojo; sin `badge`; en la esquina, el último mensaje de cada cliente (no una pila).
    Reloj clavado: jueves 29/10/2026 11:00 de Bolivia.   Se corre:  node tests/test_escritorio.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path'), fs = require('fs'), vm = require('vm');
@@ -19,7 +23,7 @@ const HOY = '2026-10-29T11:00:00-04:00';
 
 function NOTIF(){
   window.__notifs=[]; window.__foco=false; window.__pidio=0;
-  var N=function(t, o){ window.__notifs.push({ t:t, b:(o||{}).body, tag:(o||{}).tag, d:(o||{}).data }); this.close=function(){}; var self=this; window.__ultimaN=self; };
+  var N=function(t, o){ window.__notifs.push({ t:t, b:(o||{}).body, tag:(o||{}).tag, d:(o||{}).data, badge:(o||{}).badge, re:(o||{}).renotify }); this.close=function(){}; var self=this; window.__ultimaN=self; };
   N.permission='default';
   N.requestPermission=function(){ window.__pidio++; N.permission='granted'; return Promise.resolve('granted'); };
   window.Notification=N;
@@ -41,14 +45,14 @@ function PREPARAR(){
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
   const errores=[];
-  async function abrir(con){
+  async function abrir(con, hash){
     const ctx = await browser.newContext({ viewport:{ width:1440, height:900 }, timezoneId:'America/La_Paz' });
     await ctx.route(/^https?:\/\//, r=>r.abort());
     const page = await ctx.newPage(); page.on('pageerror', e=>errores.push(e.message)); page.on('dialog', d=>d.dismiss());
     await page.addInitScript(NOTIF);
     if(con) await page.addInitScript(()=>{ window.ESC_PRUEBA=1; });
     await page.clock.setFixedTime(new Date(HOY));
-    await page.goto('file://' + PEDIDOS, { waitUntil:'load' }); await page.waitForTimeout(400);
+    await page.goto('file://' + PEDIDOS + (hash||''), { waitUntil:'load' }); await page.waitForTimeout(400);
     await page.evaluate(PREPARAR);
     return page;
   }
@@ -66,7 +70,7 @@ function PREPARAR(){
   // ---------- 2. El cartel, instalar y prender ----------
   page = await abrir(true);
   r = await page.evaluate(() => { escBannerPintar(); var b=document.getElementById('esc-banner'); return { ver:b && !b.hidden, txt:b && b.innerText.replace(/\s+/g,' ') }; });
-  chk('2a el cartel ofrece prender los avisos', r.ver && /Prender los avisos/.test(r.txt) && !/Instalar/.test(r.txt), r);
+  chk('2a el cartel ofrece prender los avisos (sin un «Y» suelto adelante)', r.ver && /Prender los avisos/.test(r.txt) && !/Instalar/.test(r.txt) && !/ Y los avisos/.test(r.txt) && /Un aviso en la esquina/.test(r.txt), r);
   r = await page.evaluate(async () => {
     var pedido=0, ev=new Event('beforeinstallprompt'); ev.prompt=function(){ pedido++; }; ev.userChoice=Promise.resolve({ outcome:'accepted' });
     window.dispatchEvent(ev); var t=document.getElementById('esc-banner').innerText.replace(/\s+/g,' ');
@@ -87,11 +91,12 @@ function PREPARAR(){
   // ---------- 3. Lo nuevo avisa, una sola vez ----------
   r = await page.evaluate(() => { WA_RESP.push({ w:'wamid.nuevo', id:'a1', nom:'Ana Rojas', txt:'¿A qué hora llega mañana?', t:'', urg:false });
     WA_RESP.push({ w:'wamid.otra', id:'a2', nom:'Jorge', txt:'hola', t:'' });   // pedido de Carola: no es de María
-    var a=escRevisar(); var b=escRevisar(); return { a:a.map(function(x){ return x.k; }), b:b.length, n:__notifs.map(function(x){ return x.t+' | '+x.b; }), tag:__notifs[0] && __notifs[0].tag }; });
+    var a=escRevisar(); var b=escRevisar(); return { a:a.map(function(x){ return x.k; }), b:b.length, n:__notifs.map(function(x){ return x.t+' | '+x.b; }), tag:__notifs[0] && __notifs[0].tag, k:__notifs[0] && __notifs[0].d && __notifs[0].d.k, badge:__notifs[0] && __notifs[0].badge, re:__notifs[0] && __notifs[0].re }; });
   chk('3a la respuesta al bot de su pedido avisa', r.a.length===1 && r.a[0]==='bot|wamid.nuevo', r);
   chk('3b la de otra vendedora no', r.n.length===1 && !/Jorge/.test(r.n.join()), r.n);
   chk('3c con el nombre del cliente y lo que escribió', /Ana Rojas le contestó al bot/.test(r.n[0]) && /A qué hora llega/.test(r.n[0]) && /OC 10-a1/.test(r.n[0]), r.n[0]);
-  chk('3d la segunda vuelta no la repite (y lleva su etiqueta)', r.b===0 && r.tag==='bot|wamid.nuevo', r);
+  chk('3d la segunda vuelta no la repite', r.b===0 && r.k==='bot|wamid.nuevo', r);
+  chk('3d2 en la esquina, uno por cliente (el mensaje nuevo reemplaza al anterior y suena) y sin `badge`', r.tag==='bot|a1' && r.re===true && r.badge===undefined, r);
   r = await page.evaluate(() => { __notifs=[];
     STATE.push({ id:CTA_AV_ID, cliente:'avisos', observaciones:JSON.stringify({ a:[{ id:'av1', k:'k1', pid:'a3', vend:'Maria Flores', cli:'LUIS VACA', txt:'La foto dice Bs 500 y anotaste Bs 5.000', t:Date.now() }] }), productos:[] });
     BORRADORES=[{ id:'kommo-77', cliente:'PEDRO ÁÑEZ', vendedor:'Maria Flores', estado:BORRADOR_EST, ts:Date.now(), productos:[] }];
@@ -164,9 +169,66 @@ function PREPARAR(){
   chk('5e tocar el aviso trae la ventana del panel y le dice qué abrir', foco===1 && msg && msg.tipo==='aviso' && msg.d.id==='a1', msg);
   self.clients._L=[]; e=espera(); e.notification={ close:function(){}, data:{} }; H.notificationclick(e); await e.p;
   chk('5f con el panel cerrado, lo abre', self.clients._abrio==='pedidos.html', self.clients._abrio);
+  e=espera(); e.notification={ close:function(){}, data:{ tipo:'bot', id:'a1' } }; H.notificationclick(e); await e.p;
+  chk('5f2 cerrado y con algo que abrir: lo dice en la dirección', self.clients._abrio==='pedidos.html#esc=bot&id=a1', self.clients._abrio);
   const man=JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'manifest.webmanifest'), 'utf8'));
   chk('5g el manifest: ventana propia, empieza en pedidos.html y trae los íconos', man.display==='standalone' && man.start_url==='pedidos.html' && man.icons.length===3 &&
     man.icons.every(function(i){ return fs.existsSync(path.resolve(__dirname, '..', i.src)); }), man);
+
+
+  // ---------- 6. Lo de la revisión de Fable ----------
+  page = await abrir(true, '#esc=bot&id=a1');
+  r = await page.evaluate(() => ({ hash:location.hash, pend:ESC.pend && ESC.pend.tipo+'|'+ESC.pend.id }));
+  chk('6a abierto desde un aviso: lee la dirección y la borra', r.hash==='' && r.pend==='bot|a1', r);
+  await page.waitForTimeout(1600);
+  r = await page.evaluate(() => { var o={ mis:document.getElementById('view-mis').classList.contains('active'), modal:document.getElementById('modal').classList.contains('on'), pend:ESC.pend }; closeModal(); return o; });
+  chk('6b …y con la planilla leída abre el pedido', r.mis && r.modal && r.pend===null, r);
+  r = await page.evaluate(() => { showView('form'); escIr({ tipo:'conta', id:'a3' }); var o={ mis:document.getElementById('view-mis').classList.contains('active'), modal:document.getElementById('modal').classList.contains('on'), t:document.getElementById('modal-box').innerText }; closeModal(); return o; });
+  chk('6c el aviso de Contabilidad abre el pedido del pago', r.mis && r.modal && /LUIS VACA/.test(r.t), { mis:r.mis, modal:r.modal });
+  // los Safari viejos: el permiso llega por la función, no por una promesa
+  r = await page.evaluate(async () => { Notification.requestPermission=function(cb){ setTimeout(function(){ Notification.permission='granted'; cb('granted'); }, 5); };
+    var ok=await escPrender(); return { ok:ok, n:__notifs.length }; });
+  chk('6d Safari viejo (sin promesa): igual se prenden', r.ok===true && r.n===1, r);
+  // lo que sigue pendiente no se olvida a los 10 días
+  r = await page.evaluate(() => { __notifs=[]; ESC.t0=Date.now()-3600e3; escRevisar();
+    WA_RESP=[{ w:'wamid.largo', id:'a1', nom:'Ana', txt:'¿y?', t:'' }]; escRevisar(); __notifs=[];
+    var V=JSON.parse(localStorage.getItem('me_esc_vistos')); V['bot|wamid.largo']=Date.now()-9.6*864e5; V['bot|wamid.ya-atendido']=Date.now()-9.6*864e5; localStorage.setItem('me_esc_vistos', JSON.stringify(V));
+    var a=escRevisar(); var V2=JSON.parse(localStorage.getItem('me_esc_vistos'));
+    return { a:a.length, n:__notifs.length, renovado:V2['bot|wamid.largo']===Date.now(), otro:V2['bot|wamid.ya-atendido']===Date.now()-9.6*864e5 }; });
+  chk('6e lo que sigue sin atender se renueva (a los 10 días no vuelve a avisar) y lo atendido no', r.a===0 && r.n===0 && r.renovado && r.otro, r);
+  // una lectura que nunca contestó no traba las siguientes
+  r = await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable:true, get:function(){ return true; } });
+    ESC.leyendo=true; ESC.ultLectura=Date.now()-70000; ULTIMO_REFRESCO=Date.now()-70000; escTic(); var a=ESC.leyendo;
+    ESC.leyendo=true; ESC.ultLectura=Date.now()-20000; escTic(); var b=ESC.leyendo; ESC.leyendo=false;
+    Object.defineProperty(document, 'hidden', { configurable:true, get:function(){ return false; } }); return { a:a, b:b }; });
+  chk('6f la lectura colgada se suelta pasado el tope (y no antes)', r.a===false && r.b===true, r);
+  // urgente en rojo, Contabilidad en ámbar (con el panel a la vista)
+  r = await page.evaluate(() => { __foco=true; WA_RESP.push({ w:'wamid.urg', id:'a1', nom:'Ana', txt:'¡no llegó!', t:'', urg:true }); escRevisar();
+    var c1=document.getElementById('toast').className;
+    STATE.push({ id:CTA_AV_ID, cliente:'avisos', observaciones:JSON.stringify({ a:[{ id:'av9', k:'k9', pid:'a1', vend:'Maria Flores', cli:'ANA ROJAS', txt:'Falta la foto', t:Date.now() }] }), productos:[] });
+    escRevisar(); var c2=document.getElementById('toast').className; __foco=false; return { c1:c1, c2:c2,
+      warn:getComputedStyle(document.getElementById('toast')).backgroundColor }; });
+  chk('6g el urgente sale en rojo y el de Contabilidad en ámbar', /\berr\b/.test(r.c1) && /\bwarn\b/.test(r.c2) && r.warn==='rgb(180, 83, 9)', r);
+  // la casilla de un tipo no redibuja la ventana
+  r = await page.evaluate(() => { escAjustesAbrir(); var box=document.getElementById('modal-box'), inp=box.querySelector('.esc-tipos input'); inp.focus(); inp.click();
+    var o={ mismo:box.querySelector('.esc-tipos input')===inp, foco:document.activeElement===inp, on:inp.closest('label').classList.contains('on'), guardado:JSON.parse(localStorage.getItem('me_esc_tipos')).bot };
+    inp.click(); o.on2=inp.closest('label').classList.contains('on'); closeModal(); return o; });
+  chk('6h tildar un tipo cambia solo ese renglón (el foco se queda)', r.mismo && r.foco && r.on===false && r.guardado===0 && r.on2===true, r);
+  await page.context().close();
+  // el permiso cambiado desde afuera (el candado de la barra): lo que pasó mientras tanto no llueve
+  page = await abrir(true);
+  r = await page.evaluate(() => { escTipo('bot', true); ESC.qk='Maria Flores|0'; ESC.t0=Date.now()-3600e3; escBannerPintar(); var antes=!document.getElementById('esc-banner').hidden;
+    WA_RESP=[{ w:'wamid.mientras', id:'a1', nom:'Ana', txt:'hola', t:'' }, { w:'wamid.mientras2', id:'a3', nom:'Luis', txt:'hola', t:'' }];
+    Notification.permission='granted'; __notifs=[]; escTic();
+    return { antes:antes, despues:!document.getElementById('esc-banner').hidden, n:__notifs.length, perm:ESC.perm }; });
+  chk('6i permitido desde el candado: el cartel se va y lo que había no avisa', r.antes===true && r.despues===false && r.n===0 && r.perm==='granted', r);
+  r = await page.evaluate(() => { WA_RESP.push({ w:'wamid.despues', id:'a1', nom:'Ana', txt:'¿llega hoy?', t:'' }); var a=escRevisar(); return { a:a.length, n:__notifs.length }; });
+  chk('6j …y lo que llega después sí', r.a===1 && r.n===1, r);
+  r = await page.evaluate(async () => { var ev=new Event('beforeinstallprompt'); ev.prompt=function(){}; ev.userChoice=Promise.resolve({ outcome:'dismissed' });
+    window.dispatchEvent(ev); escInstalar(); await new Promise(function(r){ setTimeout(r, 30); });
+    return { t:document.getElementById('toast').textContent, inst:ESC.instalar }; });
+  chk('6k dijo que no a instalar: se le dice dónde está para después', r.inst===null && /⊕/.test(r.t), r);
+  await page.context().close();
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

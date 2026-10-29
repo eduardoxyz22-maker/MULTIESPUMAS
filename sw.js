@@ -4,9 +4,10 @@
    1. Que Chrome/Edge dejen INSTALAR el panel (piden un service worker que atienda las páginas).
    2. NO guarda copias del panel: cada vez va a internet a buscar la página (la última publicada). Solo si no hay internet muestra un cartel
       «sin internet» en vez del dinosaurio. Lo demás (la planilla, las fotos, Google, los .js) ni lo toca: el navegador lo pide como siempre.
-   3. Tocar un aviso de Windows trae el panel adelante (o lo abre) y le dice qué abrir.
+   3. Tocar un aviso de Windows trae el panel adelante (o lo abre) y le dice qué abrir: abierto, por un mensaje; cerrado, en la dirección
+      (`pedidos.html#esc=<tipo>&id=<id>`, que `escritorio.js` lee y borra).
    ⚠️ Al cambiarlo, subir `VERSION` (el navegador compara el archivo y se actualiza solo). */
-var VERSION='2026-10-29a';
+var VERSION='2026-10-29b';
 var CAJA='me-sin-internet-'+VERSION;
 var SIN_INTERNET='<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<title>Panel MultiEspumas · sin internet</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f2f7f7;'+
@@ -40,6 +41,7 @@ self.addEventListener('notificationclick', function(e){
     var w=null;
     for(var i=0;i<L.length;i++){ if(/pedidos\.html/.test(L[i].url)){ w=L[i]; break; } }
     if(w){ w.postMessage({ tipo:'aviso', d:d }); return w.focus(); }
-    return self.clients.openWindow('pedidos.html');
+    var dest=(d.tipo && d.tipo!=='prueba') ? ('#esc='+encodeURIComponent(d.tipo)+'&id='+encodeURIComponent(d.id||'')) : '';
+    return self.clients.openWindow('pedidos.html'+dest);
   }));
 });
