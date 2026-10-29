@@ -995,7 +995,7 @@ tarjetas, bancos que filtran (`COMPS_VER`), buscador, miniaturas. ⚠️ Las pru
 `videos/`, 1920×1080. 🖥️ **Los vendedores trabajan en la COMPUTADORA: video o material para ellos = formato compu (16:9), NUNCA de celular** (el
 dueño lo reclamó fuerte). Los enseña **Bloki** (`VIDEOS {pedido,pago,tienda}` + `verVideo(k)`; `vid:'…'` en la ayuda, 22 respuestas / 18 para un
 vendedor; la oferta de una vez por aparato es solo la del pedido, `me_asis_video`, antes que el recorrido). Se rehacen con `herramientas/video_pedido/`
-(`grabar.js … [pedido|pago|tienda|atc|rpt|repro]`, datos inventados, nada sale a la red, `?tema=espuma`) y se sube el `?v=` de `VIDEOS`. 🎬 **§4np (29/10, en la rama)**: ATC, RPT y cambiar el día, con su «▶️ Ver el video» en Bloki. ⚠️ La foto del recibo es obligatoria
+(`grabar.js … [pedido|pago|tienda|atc|rpt|repro]`, datos inventados, nada sale a la red, `?tema=espuma`) y se sube el `?v=` de `VIDEOS`. 🎬 **§4np (29/10, PUBLICADO `eb9114a`)**: ATC, RPT y cambiar el día, con su «▶️ Ver el video» en Bloki. ⚠️ La foto del recibo es obligatoria
 también en efectivo, y el cliente recibe la confirmación del bot. ⚠️ Publicar con `format-patch` de los commits del cambio, nunca un diff contra `main`.
 🔧 **Arreglado en §4mj (PUBLICADO `cd0c73d`, auditoría Codex/Astra)**: ⚠️ `fpVisible` mide con el paso DESTAPADO y `fpPintar` no hace nada con el
 formulario en otra pestaña (medir escondido daba alto 0 y escondía los cuatro pasos para siempre); `fxPasosEstado` pide lo MISMO que `submitPedido`
@@ -1089,7 +1089,7 @@ en una línea. `tests/test_ficha_auto.js`.
   deja «En producción»), A12/A13 (ficha al costado, Ctrl+K). A14 (barra de 60,72 px en Chrome/Windows) no se puede medir acá.
 - Pruebas: `test_r01_fecha_conflicto` (la página contra el `.gs` real), `test_astra_{deshacer,pases,tstfecha,mis,nota,produccion,ficha_costado,buscador}`.
 
-## 📥✅💾 Servidor `2026-10-29-a` → `2026-10-29-b`: avisos a logística, respaldo diario y lecturas más livianas (§4no + §4nq, 29/10; el dueño eligió la «2» y la «4» y pegó el pedido de la 29-b; **29-b IMPLEMENTADA 29/10 ~13:00 por el dueño**, enlace fijo `38864f6…`, 5.085 líneas; la página espera «publica»)
+## 📥✅💾 Servidor `2026-10-29-a` → `2026-10-29-b`: avisos a logística, respaldo diario y lecturas más livianas (§4no + §4nq, 29/10; el dueño eligió la «2» y la «4» y pegó el pedido de la 29-b; **29-b IMPLEMENTADA 29/10 ~13:00 por el dueño**, enlace fijo `38864f6…`, 5.085 líneas; **página PUBLICADA 29/10, `eb9114a`**)
 - Por WhatsApp a **`WA_AVISOS`** (opcional) o, si no, a `WA_PEDIR_HOY`; solo días hábiles, una vez por día: **10:00 `logistica_excel_falta`** si falta el
   Excel de HOY de algún almacén (`waExcelFaltan_`: PTF de `STOCK.c` + los de `STOCK.g` con Excel en los últimos 7 días, nombre corto `waAlmCorto_`) y
   **19:00 (sábado 13:30) `logistica_cierre_falta`** si quedan entregas de hoy sin ✅ (`waCierreFaltan_` = `waEsEntrega_` de hoy). Se arma con la planilla

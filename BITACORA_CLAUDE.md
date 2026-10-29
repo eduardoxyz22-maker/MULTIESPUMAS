@@ -16710,7 +16710,7 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   (`Efectivo %IMG` con `acuenta`), si no, al editar pide «¿con qué pagó?».
 - `VIDEOS {atc, rpt, repro}` (`?v=20261029a`) y `vid:` en las respuestas de Bloki que ya existían (la ATC, la RPT y «¿Cómo cambio el día de
   entrega?»): siguen 22 respuestas. La de la RPT dice «la zona y la ubicación» (decía «la dirección»). `test_video_pedido` (20; 4 rojas
-  contra la publicada). En la rama, espera «publica».
+  contra la publicada). **PUBLICADO 29/10 con la página de la 29-b, `eb9114a`.**
 
 ### §4nq — 📸 SERVIDOR `2026-10-29-b`: KOMMO LEE LA PLANILLA UNA VEZ POR REPASO Y EL AVISO DE META LEE SOLO EL FINAL DE «BOT WHATSAPP» (29/10)
 - El dueño pegó un pedido armado afuera («Cambios para kommoProcesarObj_ y waHookAnotar_», A-E, con la versión «2026-10-28-a»). Se comparó
@@ -16745,7 +16745,8 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   saliendo (sin fallos de Meta desde el 18/10), pero cuesta más y Meta puede retener mensajes de marketing (#131049). ⚠️ En la próxima versión
   del `.gs`, `crearPlantillasWhatsApp` tiene que leer ese error como «ya existía · Meta la tiene como MARKETING», no como ❌.
   `instalarDisparadores` 12:59 ✅ (con backupDiario). **IMPLEMENTADA por el dueño el 29/10 ~13:00** (Nueva versión; lo confirmó). Volver atrás:
-  ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde…` (la 29-a nunca se implementó sola). La página (ESPERADA 29-b + los videos de §4np) espera «publica».
+  ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde…` (la 29-a nunca se implementó sola). **PÁGINA PUBLICADA 29/10 ~13:20 de Bolivia, `eb9114a`** (dueño: «Publicá»; format-patch de `7de6ea6`, `38864f6`, `f97d44f`, `dc420e6` sobre `f3bc41f`;
+  sin §4lt-d ni `997f2d6`): ESPERADA 29-b y los videos de §4np. Volver atrás: `f3bc41f`.
 - Batería entera con la 29-b (29/10): **282 suites, 9.064 bien, 0 mal**. El `.gs` para pegar: enlace fijo a
   `38864f6057a876e3275dd5d1605e7fe67d75f512` (5.085 líneas, termina en `}` con `return borrador;` antes).
 
