@@ -255,9 +255,11 @@ const DIA = 86400000;
   const isoLoc = (d) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const enDias = (n) => { const d=new Date(HOY); d.setDate(d.getDate()+n); return d; };
   const domingo = (() => { for(let n=1;n<=7;n++){ if(enDias(n).getDay()===0) return isoLoc(enDias(n)); } })();
-  const cerrado = (() => { for(let n=2;n<=8;n++){ const d=enDias(n); if(d.getDay()!==0 && d.getDay()!==6) return isoLoc(d); } })();
+  /* (29/10) Candidatos de lunes a viernes; adentro de la página se saltea el FERIADO (`feriadoDe`): el 02/11 (Todos Santos) daba
+     «es FERIADO» antes que «está CERRADO». */
+  const cerrado = (() => { const L = []; for(let n=2;n<=12;n++){ const d=enDias(n); if(d.getDay()!==0 && d.getDay()!==6) L.push(isoLoc(d)); } return L; })();
   const r7c = await page.evaluate(async (a) => {
-    const [dom, cer] = a;
+    const dom = a[0], cer = a[1].filter(f => !(typeof feriadoDe === 'function' && feriadoDe(f)))[0];
     const fila = () => window._pl.filter(x => x.id === 'kommo-44003')[0] || {};
     const orig = toast; window._t = []; toast = function(m){ window._t.push(String(m)); return orig.apply(this, arguments); };
     completarBorrador('kommo-44003');
