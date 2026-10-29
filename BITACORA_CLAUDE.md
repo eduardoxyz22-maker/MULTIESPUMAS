@@ -16848,6 +16848,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   `367715c`. Lo que sigue distinto de la rama: SOLO §4lt-d (pap-ceros) y lo del saldo de `997f2d6` (no se publican). Batería sobre la copia:
   286 suites, todo verde salvo `test_mispedidos` 32/1 una vez; corrida 36 veces más (12 a la vez) dio 33/0 siempre: la de tiempo de siempre.
   El servidor no cambió (29-b). Al dueño: los pasos para instalarlo en la compu (Chrome/Edge), prender los avisos y el iPad/Android.
+  · Pages OK (corrida 1860, 18:57 de Bolivia). Desde esta sesión no se llega a github.io (el proxy lo rechaza): lo publicado se ve en la compu del dueño.
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
