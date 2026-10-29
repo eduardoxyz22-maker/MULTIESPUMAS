@@ -16811,6 +16811,9 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   planilla (`refrescarEstado`, la de lo cambiado) y el bot cada `ESC_OCULTO_MS` (3 min), nunca antes, y no con una ficha abierta (`autoOcupado`).
   Buscador Ctrl+K: «Instalar el panel» y «Avisos de Windows» (envolviendo `palAcciones`). Solo mira: no escribe en la planilla.
 - En Playwright nada salvo `ESC_PRUEBA`. `tests/test_escritorio.js` (33: un `Notification` de mentira + `sw.js` en una caja de Node).
+- Batería entera con §4ns (29/10, `204cf86`): 286 suites, 9.131 bien; en rojo con la máquina cargada `test_carga` (4), `test_mispedidos` (1) y
+  `test_sinmonto` (se cortó): solas y las tres ×3 a la vez (9 juntas), todas verdes (41/33/43). La batería anterior, sin `escritorio.js`, salió
+  entera en verde: son las de tiempo que ya fallaban a veces con la máquina cargada (§4ni).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
