@@ -16832,6 +16832,16 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     escucha de mensajes del service worker, solo con `activo()` (+ `startMessages`). Además: en la esquina queda el último mensaje de CADA
     cliente (`tag` por cliente `bot|<num>`, `renotify`), la clave de «visto» sigue por mensaje.
   · `sw.js` `VERSION='2026-10-29b'`, `escritorio.js?v=20261029b`. `test_escritorio` → 46 (§6 nueva: 13 rojas contra `e95204e`).
+- **§4ns-c — la segunda revisión (29/10 noche)**. El dueño pasó los archivos arreglados otra vez por Fable: «no encontré errores que rompan
+  nada», con 8 puntos. (1) y (2) estaban bien: son dos archivos separados, y el manifest tiene `start_url`, `scope` e `id` = `pedidos.html`.
+  Hechos: (3) `mismaVend`/`fechaCorta` con `typeof` (si faltara una función del panel, el `try` se tragaba el bloque entero); (4)
+  `waRespTraer` DEVUELVE su promesa (cambio en `pedidos.html`, nadie más usaba lo que devolvía) y la lectura escondida espera la planilla
+  Y las respuestas al bot con `Promise.all`: lo que llegaba con esa lectura avisaba 30 s después; (5) el aviso del anuncio muestra el globo
+  de Bloki (`anuncioRecordar`; el grito grande sigue siendo UNA vez al entrar, §4kw); (6) `ajustesRepintar` conserva el scroll (con
+  `openModal` ya quedaba igual: la prueba 6o pasa también con lo de antes); (7) `sw.js` pide la página con `new Request(e.request,
+  {cache:'no-cache'})` y, si el navegador no deja armarla así, la de siempre: probado en Chromium de verdad en `localhost` (la página
+  bajo el service worker, la recarga va con 304, el `#esc=` llega); (8) `sembrar` escribe solo si hubo algo nuevo.
+  · `sw.js` `VERSION='2026-10-29c'`, `escritorio.js?v=20261029c`. `test_escritorio` → 52 (6l, 6m y 6n rojas contra `90b885b`).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
