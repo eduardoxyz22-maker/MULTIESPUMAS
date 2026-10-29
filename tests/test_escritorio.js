@@ -13,6 +13,8 @@
      lo que sigue pendiente no vuelve a avisar a los 10 días; una lectura que no contesta no traba las siguientes; el permiso cambiado
      desde afuera no trae una lluvia; la casilla de un tipo no redibuja la ventana; el aviso de Contabilidad abre el pedido; los Safari
      viejos; el urgente en rojo; sin `badge`; en la esquina, el último mensaje de cada cliente (no una pila).
+   · la segunda revisión (§4ns-c): escondido, espera la planilla Y las respuestas al bot antes de revisar; el aviso del anuncio muestra el
+     globo; al sembrar sin nada nuevo no se escribe; la ventana redibujada no pierde dónde estaba; `sw.js` pide la página con `no-cache`.
    Reloj clavado: jueves 29/10/2026 11:00 de Bolivia.   Se corre:  node tests/test_escritorio.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path'), fs = require('fs'), vm = require('vm');
@@ -152,7 +154,9 @@ function PREPARAR(){
   const caches={ open:function(k){ cajas[k]=cajas[k]||{}; return Promise.resolve({ put:function(q, r){ cajas[k][q]=r; return Promise.resolve(); }, match:function(q){ return Promise.resolve(cajas[k][q]); } }); },
     keys:function(){ return Promise.resolve(Object.keys(cajas)); }, delete:function(k){ delete cajas[k]; return Promise.resolve(true); } };
   class Resp{ constructor(b, o){ this.b=b; this.o=o; } text(){ return Promise.resolve(this.b); } static error(){ return new Resp('error'); } }
-  const ctx={ self, caches, Response:Resp, fetch:function(){ red.n++; return red.ok ? Promise.resolve(new Resp('pagina nueva')) : Promise.reject(new Error('sin red')); }, Promise, console };
+  let pedidoA=null, reqRompe=false;
+  class Req{ constructor(r, o){ if(reqRompe) throw new TypeError('navigate + init'); this.url=r.url; this.mode=r.mode; this.cache=(o||{}).cache; this.orig=r; } }
+  const ctx={ self, caches, Response:Resp, Request:Req, fetch:function(q){ pedidoA=q; red.n++; return red.ok ? Promise.resolve(new Resp('pagina nueva')) : Promise.reject(new Error('sin red')); }, Promise, console };
   vm.createContext(ctx); vm.runInContext(SW, ctx);
   const espera=()=>{ let p=null; return { waitUntil:function(x){ p=x; }, respondWith:function(x){ p=x; }, get p(){ return p; } }; };
   cajas['me-sin-internet-viejo']={};
@@ -162,6 +166,9 @@ function PREPARAR(){
   chk('5b la planilla, las fotos y los .js ni pasan por el service worker', usado===false);
   e=espera(); e.request={ mode:'navigate', url:'https://x/pedidos.html' }; H.fetch(e); let rr=await e.p; let tx=await rr.text();
   chk('5c la página va SIEMPRE a internet (la última publicada)', tx==='pagina nueva' && red.n===1, tx);
+  chk('5c2 …y con `no-cache`: no usa la copia de 10 minutos del navegador', pedidoA && pedidoA.cache==='no-cache' && pedidoA.url==='https://x/pedidos.html', pedidoA && { cache:pedidoA.cache, url:pedidoA.url });
+  reqRompe=true; e=espera(); e.request={ mode:'navigate', url:'https://x/pedidos.html' }; H.fetch(e); rr=await e.p; tx=await rr.text(); reqRompe=false;
+  chk('5c3 un navegador que no deja armar el pedido así: va el de siempre', tx==='pagina nueva' && pedidoA===e.request, pedidoA===e.request);
   red.ok=false; e=espera(); e.request={ mode:'navigate', url:'https://x/pedidos.html' }; H.fetch(e); rr=await e.p; tx=await rr.text();
   chk('5d sin internet: el cartel', /Sin internet/.test(tx), tx.slice(0,80));
   let msg=null, foco=0; self.clients._L=[{ url:'https://x/index.html', postMessage:function(){}, focus:function(){} }, { url:'https://x/pedidos.html', postMessage:function(m){ msg=m; }, focus:function(){ foco++; } }];
@@ -214,6 +221,32 @@ function PREPARAR(){
     var o={ mismo:box.querySelector('.esc-tipos input')===inp, foco:document.activeElement===inp, on:inp.closest('label').classList.contains('on'), guardado:JSON.parse(localStorage.getItem('me_esc_tipos')).bot };
     inp.click(); o.on2=inp.closest('label').classList.contains('on'); closeModal(); return o; });
   chk('6h tildar un tipo cambia solo ese renglón (el foco se queda)', r.mismo && r.foco && r.on===false && r.guardado===0 && r.on2===true, r);
+  // escondido: espera la planilla Y las respuestas al bot antes de revisar
+  r = await page.evaluate(async () => { __notifs=[]; ESC.t0=Date.now()-3600e3; ESC.qk='Maria Flores|0';
+    Object.defineProperty(document, 'hidden', { configurable:true, get:function(){ return true; } });
+    var rf=refrescarEstado, wr=waRespTraer;
+    refrescarEstado=function(){ return Promise.resolve(true); };
+    waRespTraer=function(){ return new Promise(function(res){ setTimeout(function(){ WA_RESP.push({ w:'wamid.tarde', id:'a1', nom:'Ana', txt:'llegó tarde', t:'' }); res(); }, 60); }); };
+    CONNECTED=true; ULTIMO_REFRESCO=Date.now()-200000; ESC.ultLectura=0; ESC.leyendo=false; escTic();
+    await new Promise(function(res){ setTimeout(res, 200); });
+    CONNECTED=false; refrescarEstado=rf; waRespTraer=wr;
+    Object.defineProperty(document, 'hidden', { configurable:true, get:function(){ return false; } });
+    return { n:__notifs.map(function(x){ return x.t; }), leyendo:ESC.leyendo }; });
+  chk('6l escondido: la respuesta al bot que llega con la lectura avisa en ESA vuelta (no 30 s después)', r.n.length===1 && /Ana le contestó/.test(r.n[0]) && r.leyendo===false, r);
+  // el aviso del anuncio: el globo de Bloki
+  r = await page.evaluate(() => { var vio=null, ar=anuncioRecordar; anuncioRecordar=function(a){ vio=a && a.t; };
+    STATE.push({ id:ANUNCIO_ID, cliente:'anuncio', observaciones:JSON.stringify({ v:1, t:'Hoy cerramos a las 18', d:'2026-10-29 10:50', ts:Date.now(), por:'Eduardo' }), productos:[] });
+    escIr({ tipo:'anuncio' }); anuncioRecordar=ar; return vio; });
+  chk('6m tocar el aviso del anuncio lo muestra en el globo de Bloki', r==='Hoy cerramos a las 18', r);
+  // sembrar sin nada nuevo no escribe
+  r = await page.evaluate(() => { escSembrar(true); var n=0, si=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(k, v){ if(k==='me_esc_vistos') n++; return si.call(this, k, v); };
+    escSembrar(true); escSembrar(true); Storage.prototype.setItem=si; return n; });
+  chk('6n en la gracia de 90 s, sembrar sin nada nuevo no reescribe lo visto', r===0, r);
+  // la ventana redibujada (el permiso cambió) no pierde dónde estaba
+  r = await page.evaluate(() => { escAjustesAbrir(); var ov=document.getElementById('modal'); ov.style.height='160px'; ov.style.overflow='auto';
+    ov.scrollTop=90; var antes=ov.scrollTop; escTipo('kommo', true); var o={ antes:antes, despues:ov.scrollTop }; ov.style.height=''; ov.style.overflow=''; closeModal(); return o; });
+  chk('6o la ventana «El panel en esta compu» redibujada queda donde estaba', r.antes>0 && r.despues===r.antes, r);
   await page.context().close();
   // el permiso cambiado desde afuera (el candado de la barra): lo que pasó mientras tanto no llueve
   page = await abrir(true);

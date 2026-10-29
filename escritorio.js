@@ -130,6 +130,9 @@ function escProbar(){
 function quienSoy(){ var v=''; try{ v=asisVendedor(); }catch(e){} var adm=false; try{ adm=asisVeAdm(); }catch(e){} return { v:v, adm:adm }; }
 function corto(s, n){ s=String(s||'').replace(/\s+/g,' ').trim(); return s.length>n ? (s.slice(0, n-1)+'…') : s; }
 function nombre(s){ return String(s||'').trim().split(/\s+/).slice(0,2).join(' '); }
+/* las funciones del panel que se usan adentro de un bloque: si una faltara, el `try` se tragaría el bloque entero (no un aviso) */
+function mismaVend(a, b){ if(typeof mismoVendedor==='function') return mismoVendedor(a, b); return String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase(); }
+function fechaCorta(f){ return (typeof fmtFechaCorta==='function') ? fmtFechaCorta(f) : String(f||''); }
 function pendientes(){
   var Q=quienSoy(), L=[];
   // 💬 respuestas al bot sin atender
@@ -137,7 +140,7 @@ function pendientes(){
     if(typeof WA_RESP!=='undefined' && Array.isArray(WA_RESP)) WA_RESP.forEach(function(r){
       if(!r || r.at || !r.w) return;
       var p=(typeof waRespPed==='function') ? waRespPed(r) : null;
-      if(!Q.adm && !(Q.v && p && mismoVendedor(p.vendedor, Q.v))) return;
+      if(!Q.adm && !(Q.v && p && mismaVend(p.vendedor, Q.v))) return;
       /* la clave es por MENSAJE (cada mensaje nuevo avisa); el `tag`, por cliente: en la esquina queda el último de cada uno, no una pila */
       L.push({ k:'bot|'+r.w, tag:'bot|'+(r.num || r.id || r.w), tipo:'bot', id:p ? String(p.id) : '', kd:r.urg ? 'err' : 'ok',
         t:'💬 '+(nombre(r.nom || (p && p.cliente)) || 'Un cliente')+' le contestó al bot'+(r.urg?' · 🚨 urgente':''),
@@ -162,7 +165,7 @@ function pendientes(){
     var h=hoy(), hb=(typeof horaBolivia==='function') ? horaBolivia() : new Date();
     if(Q.adm && (typeof diaHabil!=='function' || diaHabil(h)) && hb.getHours()>=ESC_EXCEL_HORA && typeof STOCK!=='undefined' && STOCK){
       var cf=(STOCK.c && STOCK.c.f) || '';
-      if(cf!==h) L.push({ k:'excel|'+h, tipo:'excel', kd:'warn', t:'📦 Falta el Excel de hoy', b:cf ? ('El último del depósito es del '+fmtFechaCorta(cf)+'. Subilo en Stock → 📥 Subir existencias.') : 'Subí el Excel del depósito en Stock → 📥 Subir existencias.' });
+      if(cf!==h) L.push({ k:'excel|'+h, tipo:'excel', kd:'warn', t:'📦 Falta el Excel de hoy', b:cf ? ('El último del depósito es del '+fechaCorta(cf)+'. Subilo en Stock → 📥 Subir existencias.') : 'Subí el Excel del depósito en Stock → 📥 Subir existencias.' });
     }
   }catch(e){}
   // 📢 un anuncio
@@ -177,9 +180,10 @@ function listo(){ try{ return typeof STATE!=='undefined' && Array.isArray(STATE)
 function sembrar(forzar){
   if(ESC.sembrado && !forzar) return;
   if(!listo()) return;
-  var V=vistos(), n=Date.now();
-  pendientes().forEach(function(x){ if(!V[x.k]) V[x.k]=n; });
-  vistosPoner(V); ESC.sembrado=true;
+  var V=vistos(), n=Date.now(), cambio=false;
+  pendientes().forEach(function(x){ if(!V[x.k]){ V[x.k]=n; cambio=true; } });
+  if(cambio) vistosPoner(V);   // en los 90 s de gracia corre en cada vuelta: sin nada nuevo, no se escribe
+  ESC.sembrado=true;
 }
 function revisar(){
   if(!prendidos() || !listo()) return [];
@@ -219,6 +223,10 @@ function ir(d){
     else if(d.tipo==='conta'){ showView('mis'); if(d.id && findById(d.id)) showMisModal(d.id); }
     else if(d.tipo==='kommo'){ showView('mis'); }
     else if(d.tipo==='excel'){ showView('admin'); if(typeof abrirStock==='function') abrirStock(); }
+    else if(d.tipo==='anuncio'){   // el globo de Bloki con el anuncio (el grito grande es UNA vez al entrar, §4kw)
+      var an=(typeof anuncioLeer==='function') ? anuncioLeer() : null;
+      if(an && typeof anuncioRecordar==='function') anuncioRecordar(an);
+    }
   }catch(e){}
 }
 window.escIr=ir;
@@ -259,8 +267,11 @@ function tic(){
   var oculto=document.hidden, ult=Math.max(ESC.ultLectura, (typeof ULTIMO_REFRESCO==='number') ? ULTIMO_REFRESCO : 0);
   if(oculto && !ESC.leyendo && typeof CONNECTED!=='undefined' && CONNECTED && Date.now()-ult>=ESC_OCULTO_MS && !(typeof autoOcupado==='function' && autoOcupado())){
     ESC.leyendo=true; ESC.ultLectura=Date.now();
-    try{ if(typeof waRespTraer==='function') waRespTraer(true); }catch(e){}
-    var lect=Promise.resolve().then(function(){ return refrescarEstado(); }).catch(function(){});
+    /* la planilla y las respuestas al bot a la vez, y se revisa cuando llegaron las DOS (si no, lo del bot avisaba en la vuelta siguiente) */
+    var lect=Promise.all([
+      Promise.resolve().then(function(){ return refrescarEstado(); }).catch(function(){}),
+      Promise.resolve().then(function(){ return (typeof waRespTraer==='function') ? waRespTraer(true) : null; }).catch(function(){})
+    ]);
     var tope=new Promise(function(res){ setTimeout(res, ESC_LECTURA_TOPE_MS); });   // `refrescarEstado` ya corta a los 45 s; esto, por las dudas
     Promise.race([lect, tope]).then(function(){ ESC.leyendo=false; revisar(); });
     return;
@@ -319,7 +330,9 @@ function ajustesAbrir(){ AJ_ABIERTA=true; try{ openModal(ajustesHtml()); }catch(
 function ajustesRepintar(){
   var box=document.getElementById('modal-box'), ov=document.getElementById('modal');
   if(!AJ_ABIERTA || !box || !ov || !ov.classList.contains('on') || !box.querySelector('.esc-aj')){ AJ_ABIERTA=false; return; }
+  var y1=ov.scrollTop, y2=box.scrollTop;   // redibujada, la ventana queda donde estaba
   openModal(ajustesHtml());
+  ov.scrollTop=y1; box.scrollTop=y2;
 }
 window.escInstalar=escInstalar; window.escPrender=escPrender; window.escProbar=escProbar; window.escTipo=escTipo;
 window.escAjustesAbrir=ajustesAbrir; window.escBannerNo=escBannerNo;
