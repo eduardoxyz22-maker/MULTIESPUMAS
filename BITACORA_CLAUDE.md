@@ -16744,7 +16744,8 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   no coincide con la que ya está asociada a esta plantilla: MARKETING»** (HTTP 400): ya existía y Meta la RECATEGORIZÓ como marketing; sigue
   saliendo (sin fallos de Meta desde el 18/10), pero cuesta más y Meta puede retener mensajes de marketing (#131049). ⚠️ En la próxima versión
   del `.gs`, `crearPlantillasWhatsApp` tiene que leer ese error como «ya existía · Meta la tiene como MARKETING», no como ❌.
-  `instalarDisparadores` 12:59 ✅ (con backupDiario). Falta que confirme «Nueva versión».
+  `instalarDisparadores` 12:59 ✅ (con backupDiario). **IMPLEMENTADA por el dueño el 29/10 ~13:00** (Nueva versión; lo confirmó). Volver atrás:
+  ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde…` (la 29-a nunca se implementó sola). La página (ESPERADA 29-b + los videos de §4np) espera «publica».
 - Batería entera con la 29-b (29/10): **282 suites, 9.064 bien, 0 mal**. El `.gs` para pegar: enlace fijo a
   `38864f6057a876e3275dd5d1605e7fe67d75f512` (5.085 líneas, termina en `}` con `return borrador;` antes).
 
