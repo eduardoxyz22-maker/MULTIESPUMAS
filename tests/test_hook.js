@@ -34,8 +34,10 @@ function hacerPlanilla(filas){
      caso siguiente arrancaba con el valor del anterior. Me dio un falso ✗ (el borrador ya
      completado parecía haber sido tocado, cuando lo tocado había sido el fixture). */
   const datos = filas.map(f => f.slice());        // [0] son los encabezados
-  return {
-    _datos: datos,
+  /* 📸 (2026-10-29-b) `_col` cuenta las lecturas de columnas enteras (las que arrancan en la fila 2): con eso se mide que el
+     repaso lea la planilla una vez y no una vez por lead. */
+  const sh = {
+    _datos: datos, _col: 0,
     getLastRow: () => datos.length,
     getLastColumn: () => (datos[0]||[]).length,
     getDataRange: () => ({ getValues: () => datos.map(f => f.slice()) }),
@@ -45,6 +47,7 @@ function hacerPlanilla(filas){
       getValue: () => (datos[fila-1]||[])[col-1],
       setValue: (v) => { if(!datos[fila-1]) datos[fila-1]=[]; datos[fila-1][col-1]=v; },
       getValues: () => {
+        if(fila===2) sh._col++;
         const out=[];
         for(let i=0;i<(nFilas||1);i++){
           const f=datos[fila-1+i]||[], r=[];
@@ -57,6 +60,7 @@ function hacerPlanilla(filas){
       setFontWeight: () => {}
     })
   };
+  return sh;
 }
 
 /* ── Kommo de mentira ─────────────────────────────────────────────────────── */
@@ -117,13 +121,13 @@ const KOMMO = {
 /* ── Carga el .gs con Google simulado ─────────────────────────────────────── */
 function cargar(filas, props){
   const sh = hacerPlanilla(filas);
-  const llamadas = [];
+  const llamadas = [], propLeidas = {};
   const ctx = {
     console,
     SpreadsheetApp: { getActiveSpreadsheet: () => ({
       getSheetByName: () => sh, insertSheet: () => sh }) },
     PropertiesService: { getScriptProperties: () => ({
-      getProperty: (k) => (props && props[k] != null) ? props[k] : null,
+      getProperty: (k) => { propLeidas[k] = (propLeidas[k] || 0) + 1; return (props && props[k] != null) ? props[k] : null; },
       setProperty: (k, v) => { props[k] = v; } }) },
     UrlFetchApp: { fetch: (url) => {
       llamadas.push(url);
@@ -143,7 +147,7 @@ function cargar(filas, props){
   vm.createContext(ctx);
   /* GS=/ruta/viejo.gs para probarle los dientes al test contra una versión anterior. */
   vm.runInContext(fs.readFileSync(process.env.GS || path.resolve('google-apps-script.gs'),'utf8'), ctx);
-  return { ctx, sh, llamadas, leer: (r) => JSON.parse(r._t) };
+  return { ctx, sh, llamadas, propLeidas, leer: (r) => JSON.parse(r._t) };
 }
 
 const HDR = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona',
@@ -418,6 +422,120 @@ console.log('\n── 9. Lo que ya funcionaba sigue funcionando ──');
   const malJson = f.leer(f.ctx.doPost({ parameter:{}, postData:{contents:'esto no es json'} }));
   chk('un cuerpo roto sigue dando el error de siempre', malJson.ok===false && malJson.error==='bad json');
   chk('la versión del script subió', f.ctx.SCRIPT_VERSION>='2026-09-04-a', f.ctx.SCRIPT_VERSION);
+}
+
+// ══ 10. 📸 (2026-10-29-b) La planilla se lee UNA vez por repaso, no una vez por lead ══════════
+console.log('\n── 10. Una lectura por repaso (kSnapshot_) ──');
+const BORR_DE = (lead, cliente) => ['kommo-' + lead,'','','Carola Chavez',cliente,'','70000000','','','','','NO',100,
+  1700000000000,'[]','','','Borrador Kommo','NO','','','','',0,'','',0,'NO',''];
+const A_MANO = (id, json) => { const f = PEDIDO_REAL.slice(); f[0] = id; f[HDR.indexOf('_productos_json')] = json; return f; };
+{
+  /* Un repaso de 40 leads: 30 borradores ya cargados (con nombre), 5 cargados a mano con la marca `klead`, 1 nuevo, 1 descartado y
+     3 que Kommo no encuentra. Antes eran ~90 lecturas de columnas enteras y 5 de KOMMO_DESCARTADOS. */
+  const filas = [HDR, PEDIDO_REAL];
+  for (let i = 1; i <= 30; i++) filas.push(BORR_DE(50000 + i, 'CLIENTE NUMERO ' + i));
+  for (let i = 1; i <= 5; i++) filas.push(A_MANO('p-mano-' + i, i === 3 ? '[{"desc":"COLCHON","cant":1, "klead" : "6000' + i + '"}]' : '[{"desc":"COLCHON","cant":1,"klead":"6000' + i + '"}]'));
+  const hoyD = Math.floor(Date.now() / 86400000);
+  const a = cargar(filas, {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok', KOMMO_DESCARTADOS: JSON.stringify({ '44002': hoyD })});
+  const ids = [];
+  for (let i = 1; i <= 30; i++) ids.push(String(50000 + i));
+  for (let i = 1; i <= 5; i++) ids.push('6000' + i);
+  ids.push('44001', '44002', '70001', '70002', '70003');
+  a.sh._col = 0; Object.keys(a.propLeidas).forEach(k => delete a.propLeidas[k]);
+  const r = a.ctx.kommoProcesarObj_(ids, 'repaso-script');
+  const sal = r.saltados || [];
+  chk('el resultado es el de siempre: crea el nuevo, 35 «ya estaba», el descartado y 3 que Kommo no encuentra',
+      r.ok===true && r.creados===1 && r.ids.join()==='44001' && sal.filter(x => /:ya estaba$/.test(x)).length===35 && sal.indexOf('44002:descartado')>=0 && sal.filter(x => /no se pudo leer/.test(x)).length===3,
+      JSON.stringify({ creados:r.creados, ids:r.ids, n:sal.length }));
+  chk('⚠️ la marca `klead` con espacios («"klead" : "60003"») se sigue reconociendo', sal.indexOf('60003:ya estaba')>=0);
+  chk('⚠️ lecturas de columnas enteras de «Pedidos»: 4 afuera + 2 adentro del candado = 6 para 40 leads (antes, una o dos por lead)', a.sh._col<=6, a.sh._col);
+  chk('KOMMO_DESCARTADOS se lee UNA vez por repaso (antes, una por lead que no estaba)', a.propLeidas.KOMMO_DESCARTADOS===1, a.propLeidas.KOMMO_DESCARTADOS);
+  chk('…y la planilla tiene una sola fila nueva', a.sh._datos.length===filas.length+1 && a.sh._datos[a.sh._datos.length-1][0]==='kommo-44001', a.sh._datos.length);
+}
+{
+  // El mismo lead tres veces en la lista: se le pregunta a Kommo UNA vez.
+  const a = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  const r = a.ctx.kommoProcesarObj_(['44001', '44001', 44001], 'repaso-script');
+  const n = a.llamadas.filter(u => decodeURIComponent(u).indexOf('/leads/44001?with=contacts,catalog_elements')>=0).length;
+  chk('⚠️ un lead repetido en la lista: una sola consulta a Kommo y una sola fila', n===1 && r.creados===1 && a.sh._datos.filter(f => f[0]==='kommo-44001').length===1, JSON.stringify({ consultas:n, creados:r.creados }));
+}
+{
+  /* La garantía de «no duplicar» se vuelve a mirar ADENTRO del candado, con la hoja releída: otro aviso con el mismo lead pudo
+     escribir la fila mientras este armaba el borrador (acá: justo cuando se toma el candado). */
+  const a = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ a.sh._datos.push(BORR_DE(44001, 'LO ESCRIBIO OTRO AVISO')); }, releaseLock(){} }) };
+  const r = a.ctx.kommoProcesarObj_(['44001'], 'webhook');
+  chk('⚠️ otro aviso escribió el mismo lead mientras tanto: NO lo duplica y dice «ya estaba»',
+      r.creados===0 && (r.saltados||[]).indexOf('44001:ya estaba')>=0 && a.sh._datos.filter(f => f[0]==='kommo-44001').length===1, JSON.stringify(r).slice(0,140));
+  const b = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  b.ctx.LockService = { getScriptLock: () => ({ waitLock(){ b.sh._datos.push(A_MANO('p-recien', '[{"desc":"X","cant":1,"klead":"44001"}]')); }, releaseLock(){} }) };
+  const r2 = b.ctx.kommoProcesarObj_(['44001'], 'webhook');
+  chk('…ni si la vendedora lo marcó «ya la tenía» (`klead`) en ese momento', r2.creados===0 && !b.sh._datos.some(f => f[0]==='kommo-44001'), JSON.stringify(r2).slice(0,140));
+}
+{
+  // Un borrador con el cliente VACÍO se sigue reparando (nombreGenerico_('') es true, como en borradorGenerico_).
+  const a = cargar([HDR, PEDIDO_REAL, BORR_DE(39357288, '')], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  const r = a.ctx.kommoProcesarObj_(['39357288'], 'repaso-script');
+  chk('un borrador con el cliente vacío recibe el nombre del contacto', r.reparados===1 && a.sh._datos[2][HDR.indexOf('Cliente')]===SECRETOS.nombreErwin, a.sh._datos[2][HDR.indexOf('Cliente')]);
+}
+{
+  /* La regla nueva da LO MISMO que la de antes, en 300 planillas armadas al azar (ids parecidos, marcas con espacios, dos marcas
+     en un pedido, «klead» como texto, un número sin comillas, estados y nombres de todo tipo). La regla de antes, copiada acá. */
+  const CLI = HDR.indexOf('Cliente'), JS = HDR.indexOf('_productos_json'), EST = HDR.indexOf('Estado stock');
+  const gen = (t) => cargar([HDR], {}).ctx.nombreGenerico_(t);
+  const viejoCargado = (D, l) => {
+    for (let i = 1; i < D.length; i++) if (String(D[i][0]) === 'kommo-' + l) return true;
+    const marca = '"klead":"' + l + '"';
+    for (let i = 1; i < D.length; i++) { const t = String(D[i][JS] || ''); if (t && t.replace(/\s/g, '').indexOf(marca) >= 0) return true; }
+    return false;
+  };
+  const viejoBorr = (D, l) => {
+    let f = -1; for (let i = 1; i < D.length; i++) if (String(D[i][0]) === 'kommo-' + l) { f = i; break; }
+    if (f < 0 || String(D[f][EST] || '') !== 'Borrador Kommo') return null;
+    return gen(String(D[f][CLI] || '').trim()) ? f + 1 : null;
+  };
+  let semilla = 7; const azar = (n) => { semilla = (semilla * 1103515245 + 12345) % 2147483648; return semilla % n; };
+  const LEADS = ['100', '1000', '10000', '4400', '44009', '440091', '7', '77'];
+  const JSONS = (l) => ['', '[]', '[{"desc":"A","klead":"' + l + '"}]', '[{"desc":"A", "klead": "' + l + '" }]', '[{"klead":"' + l + '"},{"klead":"' + LEADS[azar(8)] + '"}]',
+                        '[{"desc":"klead ' + l + '"}]', '[{"klead":' + l + '}]', '[{"klead":""}]', '[{"desc":"\\"klead\\":\\"' + l + '\\""}]'];
+  const CLIS = ['Lead #12345', '', '  ', 'JUAN PEREZ', '12345', 'Negocio #99', 'ROHO SRL 2'];
+  const ESTS = ['Borrador Kommo', '', 'Borrador Kommo ', 'Revisar'];
+  let malas = 0, vistos = 0, cargadosN = 0, borrN = 0, primera = '';
+  for (let k = 0; k < 300; k++) {
+    const filas = [HDR], n = 1 + azar(12);
+    for (let i = 0; i < n; i++) {
+      const l = LEADS[azar(8)], f = PEDIDO_REAL.slice();
+      f[0] = azar(3) === 0 ? 'p-' + i : (azar(5) === 0 ? '' : 'kommo-' + l);
+      f[JS] = JSONS(LEADS[azar(8)])[azar(9)]; f[CLI] = CLIS[azar(7)]; f[EST] = ESTS[azar(4)];
+      filas.push(f);
+    }
+    const a = cargar(filas, {});
+    if (typeof a.ctx.kSnapshot_ !== 'function') { malas = -1; break; }
+    const snap = a.ctx.kSnapshot_(a.sh, true);
+    LEADS.forEach(l => {
+      vistos++;
+      const v = viejoCargado(a.sh._datos, l), nu = !!snap.cargados[l], nu2 = a.ctx.leadYaCargado_(a.sh, l);
+      const x = snap.borr[l], bN = (x && x.estado === 'Borrador Kommo' && gen(x.cliente)) ? x.fila : null, bV = viejoBorr(a.sh._datos, l);
+      const bG = a.ctx.borradorGenerico_(a.sh, l);
+      if (v) cargadosN++; if (bV) borrN++;
+      if (v !== nu || v !== nu2 || bN !== bV || (bG ? bG.fila : null) !== bV) { malas++; if (!primera) primera = JSON.stringify({ l, v, nu, nu2, bN, bV, filas: filas.slice(1).map(f => [f[0], f[JS], f[CLI], f[EST]]) }); }
+    });
+  }
+  chk('⚠️ kSnapshot_ y leadYaCargado_ dan lo mismo que la regla de antes en 300 planillas al azar (cargado y borrador a reparar)',
+      malas === 0 && cargadosN > 100 && borrN > 20, malas < 0 ? 'no existe kSnapshot_ en este .gs' : (malas + ' distintos de ' + vistos + ' · cargados ' + cargadosN + ' · borradores ' + borrN + ' ' + primera.slice(0, 300)));
+}
+{
+  // ▶️ probarSnapshotKommo (para el dueño, desde el editor): ✅ con la planilla bien, ❌ si la regla nueva dijera otra cosa.
+  const a = cargar([HDR, PEDIDO_REAL, BORR_DE(44001, 'Lead #44001'), BORR_DE(44002, 'JUANA'), A_MANO('p-m', '[{"desc":"C", "klead": "60009"}]')], {});
+  const ok = typeof a.ctx.probarSnapshotKommo === 'function' ? a.ctx.probarSnapshotKommo() : 'no existe';
+  chk('probarSnapshotKommo: ✅ con 3 leads cargados y 2 borradores', /^✅ Iguales: 3 leads cargados y 2 borradores/.test(ok), ok);
+  if (typeof a.ctx.kSnapshot_ === 'function') {
+    const real = a.ctx.kSnapshot_;
+    a.ctx.kSnapshot_ = (sh, c) => { const o = real(sh, c); o.cargados['99999'] = 1; return o; };
+    const mal = a.ctx.probarSnapshotKommo();
+    chk('…y ❌ con el lead que la regla de antes no da por cargado', /^❌/.test(mal) && /lead 99999/.test(mal), mal);
+  }
+  chk('probarSnapshotKommo no escribió nada', a.sh._datos.length===5 && a.sh._datos[2][HDR.indexOf('Cliente')]==='Lead #44001');
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

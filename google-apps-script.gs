@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-29-a';   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-29-b';   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -230,7 +230,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-29-a';
+  var ESTA_VERSION = '2026-10-29-b';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -257,6 +257,7 @@ function probarAntesDeImplementar() {
     gpsRepaso: typeof gpsRepaso, gpsParaLista_: typeof gpsParaLista_, probarGps: typeof probarGps,   // (2026-10-13-a)
     gpsSalidas_: typeof gpsSalidas_, gpsPedidosHoy_: typeof gpsPedidosHoy_, gpsRutaAnotar_: typeof gpsRutaAnotar_, gpsRutaLeer_: typeof gpsRutaLeer_, gpsDiaParaLista_: typeof gpsDiaParaLista_,   // (2026-10-13-b)
     iaRepaso: typeof iaRepaso, iaDespierta: typeof iaDespierta, iaLlamar_: typeof iaLlamar_, probarAsistente: typeof probarAsistente,   // (2026-10-14-b)
+    kSnapshot_: typeof kSnapshot_, probarSnapshotKommo: typeof probarSnapshotKommo,   // (2026-10-29-b)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -3639,6 +3640,11 @@ function estadoBotWhatsApp() {
    · Solo los avisos del número del bot (WA_PHONE_ID): el de Kommo no se suscribe, pero si llegara, se ignora.
    · No toma el candado del panel (no toca «Pedidos»): Meta manda 3 avisos por mensaje y no puede esperar a un guardado. */
 var WA_HOOK_PARAM = 'wa';
+/* 📸 (2026-10-29-b) Las filas del FINAL de «Bot WhatsApp» que mira cada aviso de Meta (antes, la hoja entera: hasta 3.000 filas × 9
+   columnas por aviso, y Meta manda unos 3 por mensaje). Es el mismo margen que ya usa `waRespuestasLeer_`. Lo que queda afuera es de
+   hace días: un «entregado/leído» suyo no se anota (como ya pasaba con lo que la hoja recorta), un «falló» se anota igual como fila
+   nueva «Aviso de Meta», y el cliente que contesta sin «Responder» se busca entre lo que el bot le mandó dentro de la ventana. */
+var WA_HOOK_FILAS = 1500;
 var WA_META_COL = 10;                   // columna «Meta dice» de la hoja (después de las 9 de WA_HOJA_ENC)
 var WA_META_RANGO = { sent:1, delivered:2, read:3, failed:4 };
 var WA_META_TXT = { sent:'📤 enviado', delivered:'✓✓ entregado', read:'👁️ leído', failed:'❌ falló' };
@@ -3698,8 +3704,10 @@ function waHookTxtMsg_(m) {
 function waHookAnotar_(est, resp) {
   var sh = waHoja_(), last = sh.getLastRow();
   try { if (String(sh.getRange(1, WA_META_COL).getValue() || '') === '') sh.getRange(1, WA_META_COL).setValue('Meta dice').setFontWeight('bold'); } catch (er) {}
-  var datos = last > 1 ? sh.getRange(2, 1, last - 1, 9).getValues() : [], fila = {};
-  for (var i = 0; i < datos.length; i++) { var w = String(datos[i][8] || ''); if (w.indexOf('wamid.') === 0) fila[w] = i + 2; }
+  /* 📸 (2026-10-29-b) Solo las últimas WA_HOOK_FILAS filas; `desde` = la fila de la hoja donde empieza `datos`. */
+  var desde = Math.max(2, last - WA_HOOK_FILAS + 1);
+  var datos = last >= desde ? sh.getRange(desde, 1, last - desde + 1, 9).getValues() : [], fila = {};
+  for (var i = 0; i < datos.length; i++) { var w = String(datos[i][8] || ''); if (w.indexOf('wamid.') === 0) fila[w] = desde + i; }
   var meta = waJsonProp_('WA_META', {}) || {};
   meta.n = (Number(meta.n) || 0) + est.length + resp.length; meta.ts = new Date().toISOString(); meta.fallos = meta.fallos || [];
   est.forEach(function (s) {
@@ -3711,7 +3719,7 @@ function waHookAnotar_(est, resp) {
     }
     var f = fila[String(s.id || '')];
     if (!f) {
-      if (st !== 'failed') return;   // de un mensaje que la hoja ya no tiene: solo importa si falló
+      if (st !== 'failed') return;   // de un mensaje que la hoja ya no tiene (o de antes de la ventana): solo importa si falló
       sh.appendRow([waHookHora_(s.timestamp), '', '', 'Aviso de Meta', '', String(s.recipient_id || ''), '', '❌ falló', String(s.id || ''), txt]);
       fila[String(s.id || '')] = sh.getLastRow(); return;
     }
@@ -3723,7 +3731,7 @@ function waHookAnotar_(est, resp) {
   var cfgIa = null, hayIa = false, numsIa = [];
   resp.forEach(function (m) {
     var w = String(m.id || ''); if (!w || fila[w]) return;   // Meta lo mandó dos veces
-    var de = String(m.from || ''), ped = waHookPedidoDe_(datos, fila, m, de), ms = (Number(m.timestamp) * 1000) || Date.now();
+    var de = String(m.from || ''), ped = waHookPedidoDe_(datos, fila, m, de, desde), ms = (Number(m.timestamp) * 1000) || Date.now();
     /* 🧠 (2026-10-14-b) Si a este número le contesta Claude: «⏳» en la columna M y NADA en el momento (el cliente suele mandar dos o
        tres mensajes seguidos y Meta no puede esperar a Claude); `iaRepaso` lo contesta a los ~30 s. Una reacción (👍) no se contesta. */
     var conIa = false;
@@ -3760,9 +3768,11 @@ function waHookEncabezados_(sh) {
     for (var i = 0; i < nom.length; i++) if (String(enc[i] || '') === '') sh.getRange(1, 11 + i).setValue(nom[i]).setFontWeight('bold');
   } catch (er) {}
 }
-function waHookPedidoDe_(datos, fila, m, de) {
-  var ctx = String((m.context || {}).id || ''), f = ctx ? fila[ctx] : 0;
-  if (f && datos[f - 2] && datos[f - 2][1]) return { id:String(datos[f - 2][1]), oc:String(datos[f - 2][2] || '') };
+/* (2026-10-29-b) `desde` = la fila de la hoja donde empieza `datos` (antes siempre la 2; sin decirlo, sigue siendo la 2). */
+function waHookPedidoDe_(datos, fila, m, de, desde) {
+  desde = desde || 2;
+  var ctx = String((m.context || {}).id || ''), f = ctx ? fila[ctx] : 0, r0 = f ? datos[f - desde] : null;
+  if (r0 && r0[1]) return { id:String(r0[1]), oc:String(r0[2] || '') };
   for (var i = datos.length - 1; i >= 0; i--) {
     var r = datos[i];
     if (String(r[5] || '') === de && r[1] && String(r[3] || '').indexOf('💬') < 0 && String(r[7] || '').indexOf('enviado') >= 0) return { id:String(r[1]), oc:String(r[2] || '') };
@@ -4761,26 +4771,69 @@ function kommoLeads(body) {
    esperaba a que Kommo contestara para entrar o para guardar. Con 5 leads eran ~20 llamadas
    seguidas: minutos con la planilla cerrada.
    Ahora se arma todo afuera y el candado se toma SOLO para escribir las filas.
-   ⚠️ La garantía de «no duplicar» NO se afloja: `leadYaCargado_` se vuelve a comprobar
-   DENTRO del candado, porque entre que se armó el borrador y el momento de escribirlo pudo
-   entrar otro aviso de Kommo con el mismo lead. */
+   ⚠️ La garantía de «no duplicar» NO se afloja: que el lead ya esté cargado se vuelve a
+   comprobar DENTRO del candado, con la hoja releída en ese momento (kSnapshot_), porque entre
+   que se armó el borrador y el momento de escribirlo pudo entrar otro aviso de Kommo con el
+   mismo lead. */
+/* 📸 (2026-10-29-b) Lo que el repaso de Kommo necesita saber de la planilla, en UNA lectura:
+   · cargados: { <lead>: 1 } — los que tienen fila `kommo-<lead>` o la marca `klead` en el JSON de productos (lo mismo que
+     miraba leadYaCargado_ lead por lead: es la regla de siempre, en un solo lugar);
+   · borr: { <lead>: {fila, cliente, estado} } — la PRIMERA fila `kommo-<lead>` de cada lead (la que miraba borradorGenerico_),
+     solo si se pide `conBorradores`.
+   Antes eran una o dos columnas enteras leídas POR CADA LEAD: hasta 100 leads por repaso, cada 5 minutos. */
+function kSnapshot_(sh, conBorradores) {
+  var out = { cargados: {}, borr: {} }, last = sh.getLastRow();
+  if (last < 2) return out;
+  var n = last - 1;
+  var ids = sh.getRange(2, 1, n, 1).getValues();                                       // id
+  var js = sh.getRange(2, HEADERS.indexOf('_productos_json') + 1, n, 1).getValues();   // el JSON de productos (col 15)
+  var clis = null, ests = null;
+  if (conBorradores) {
+    clis = sh.getRange(2, HEADERS.indexOf('Cliente') + 1, n, 1).getValues();
+    ests = sh.getRange(2, HEADERS.indexOf('Estado stock') + 1, n, 1).getValues();
+  }
+  var re = /"klead":"([^"]*)"/g, m;
+  for (var i = 0; i < n; i++) {
+    var id = String(ids[i][0] || '');
+    if (id.indexOf(BORRADOR_PREF) === 0) {
+      var lead = id.slice(BORRADOR_PREF.length);
+      out.cargados[lead] = 1;
+      if (conBorradores && !out.borr[lead]) out.borr[lead] = { fila: i + 2, cliente: String(clis[i][0] || '').trim(), estado: String(ests[i][0] || '') };
+    }
+    /* La marca `klead`, igual que antes: sin espacios y con el id entre comillas. El indexOf de antes evita pasar la expresión
+       por las miles de filas que no la tienen. */
+    var t = String(js[i][0] || '');
+    if (t.indexOf('klead') >= 0) {
+      t = t.replace(/\s/g, '');
+      re.lastIndex = 0;
+      while ((m = re.exec(t))) if (m[1]) out.cargados[m[1]] = 1;
+    }
+  }
+  return out;
+}
 function kommoProcesar_(ids, origen) { return jsonOut(kommoProcesarObj_(ids, origen)); }
 function kommoProcesarObj_(ids, origen) {
   var hook = kUltimoHook_();
+  /* 📸 (2026-10-29-b) Sin repetidos: el mismo lead dos veces en la lista era preguntarle dos veces a Kommo. */
+  var vistos = {};
+  ids = (ids || []).map(String).filter(function (id) { if (!id || vistos[id]) return false; vistos[id] = 1; return true; });
   if (!ids.length) return ({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
-  var shPre = getSheet(), listos = [], saltados = [], reparar = [];
+  /* 📸 (2026-10-29-b) La planilla y los descartados se leen UNA vez para todos los leads (antes, por cada uno). */
+  var shPre = getSheet(), snap = kSnapshot_(shPre, true), listos = [], saltados = [], reparar = [];
+  var desc = kDescartadosLeer_(), hoyD = kDiaHoy_();
   for (var j = 0; j < ids.length; j++) {
-    if (leadYaCargado_(shPre, ids[j])) {
+    if (snap.cargados[ids[j]]) {
       saltados.push(ids[j] + ':ya estaba');
       /* Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
          Lo que hay que preguntarle a Kommo se pregunta ACÁ, afuera (§4et): antes iba adentro
          del candado y cada repaso trababa la planilla dos llamadas de red por borrador
          mientras el contacto siguiera sin nombre. */
-      var rep = repararNombrePrep_(shPre, ids[j]);
+      var rep = repararNombrePrep_(shPre, ids[j], snap);
       if (rep) reparar.push(rep);
       continue;
     }
-    if (kDescartado_(ids[j])) { saltados.push(ids[j] + ':descartado'); continue; }   // lo descartó una vendedora (§4et)
+    // Lo mismo que kDescartado_, con la propiedad ya leída: lo descartó una vendedora (§4et)
+    if (desc[ids[j]] != null && (hoyD - Number(desc[ids[j]])) <= KOMMO_DESCARTE_DIAS) { saltados.push(ids[j] + ':descartado'); continue; }
     var arm = borradorDeLead_(ids[j]);              // ← sin candado: acá se habla con Kommo
     if (typeof arm === 'string') { saltados.push(ids[j] + ':' + arm); continue; }
     listos.push({ id: ids[j], rec: arm });
@@ -4797,10 +4850,14 @@ function kommoProcesarObj_(ids, origen) {
   try { lock.waitLock(30000); } catch (err) { return ({ ok:false, error:'busy', version:SCRIPT_VERSION, origen:origen }); }
   try {
     var sh = getSheet(), hechos = [], reparados = [];
+    /* ⚠️ La garantía de «no duplicar», ADENTRO y con la hoja releída AHORA (pudo entrar otro aviso con el mismo lead mientras
+       se armaba el borrador). 📸 (2026-10-29-b) Una lectura para todos, y cada fila recién escrita se suma al conjunto. */
+    var ya = listos.length ? kSnapshot_(sh, false).cargados : {};
     for (var i = 0; i < listos.length; i++) {
-      if (leadYaCargado_(sh, listos[i].id)) { saltados.push(listos[i].id + ':ya estaba'); continue; }
+      if (ya[listos[i].id]) { saltados.push(listos[i].id + ':ya estaba'); continue; }
       listos[i].rec.rev = Date.now();          // (2026-09-30-a) nace sellado: si no, la lectura de lo cambiado no lo ve (§4he)
       sh.appendRow(recToRow(listos[i].rec));
+      ya[listos[i].id] = 1;
       hechos.push(listos[i].id);
     }
     if (hechos.length) getCacheOlvidar_();
@@ -4876,9 +4933,15 @@ function borradorGenerico_(sh, leadId) {
   return { fila: fila, actual: actual };
 }
 /** AFUERA del candado (§4et): mira la hoja y le pregunta a Kommo. Devuelve {id, nombre} si
-    hay un nombre mejor para escribir, o null (y entonces no hace falta ni tomar el candado). */
-function repararNombrePrep_(sh, leadId) {
-  var b = borradorGenerico_(sh, leadId);
+    hay un nombre mejor para escribir, o null (y entonces no hace falta ni tomar el candado).
+    📸 (2026-10-29-b) `snap` = kSnapshot_(sh, true): la misma regla que borradorGenerico_ sin releer la columna de ids por
+    cada lead. Sin `snap` (repararNombreBorrador_) sigue como antes. nombreGenerico_('') es true: un cliente vacío se repara. */
+function repararNombrePrep_(sh, leadId, snap) {
+  var b;
+  if (snap) {
+    var x = snap.borr[String(leadId)];
+    b = (x && x.estado === BORRADOR_EST && nombreGenerico_(x.cliente)) ? { fila: x.fila, actual: x.cliente } : null;
+  } else b = borradorGenerico_(sh, leadId);
   if (!b) return null;
   var lead = kGet_('/leads/' + leadId + '?with=contacts');
   if (!lead || !lead.id) return null;
@@ -4900,21 +4963,11 @@ function repararNombreAplicar_(sh, rep) {
 }
 
 /** ¿Ese lead ya está cargado? Por id `kommo-<lead>` o por la marca `klead` que deja
- *  el panel cuando la vendedora dice "esta venta ya la tenía cargada a mano". */
+ *  el panel cuando la vendedora dice "esta venta ya la tenía cargada a mano" (la marca viaja
+ *  adentro del JSON de productos, col 15, igual que el precio y las ATC).
+ *  📸 (2026-10-29-b) La misma regla que kSnapshot_, en un solo lugar. */
 function leadYaCargado_(sh, leadId) {
-  var last = sh.getLastRow();
-  if (last < 2) return false;
-  var idCol = sh.getRange(2, 1, last - 1, 1).getValues();
-  var buscado = BORRADOR_PREF + leadId;
-  for (var i = 0; i < idCol.length; i++) if (String(idCol[i][0]) === buscado) return true;
-  // La marca viaja adentro del JSON de productos (col 15), igual que el precio y las ATC.
-  var jsonCol = sh.getRange(2, 15, last - 1, 1).getValues();
-  var marca = '"klead":"' + leadId + '"';
-  for (var j = 0; j < jsonCol.length; j++) {
-    var t = String(jsonCol[j][0] || '');
-    if (t && t.replace(/\s/g, '').indexOf(marca) >= 0) return true;
-  }
-  return false;
+  return !!kSnapshot_(sh, false).cargados[String(leadId)];
 }
 
 /** Devuelve true si creó el borrador, o un texto con el motivo por el que no. */
@@ -4930,6 +4983,33 @@ function crearBorradorDeLead_(leadId) {
   rec.rev = Date.now();                        // (2026-09-30-a) nace sellado, como en kommoProcesarObj_
   getSheet().appendRow(recToRow(rec));
   return true;
+}
+/** ▶️ (2026-10-29-b) Desde el editor, una vez, antes de implementar (SOLO LEE): compara la regla nueva (kSnapshot_) con la de
+    antes, lead por lead, sobre la planilla de verdad: lo que da por cargado y los borradores sin nombre que se reparan. Tiene
+    que decir ✅. No hace falta borrarla: no escribe nada y se saca en una versión que venga. */
+function probarSnapshotKommo() {
+  var sh = getSheet(), last = sh.getLastRow(), snap = kSnapshot_(sh, true), malas = [];
+  var ids = last > 1 ? sh.getRange(2, 1, last - 1, 1).getValues() : [];
+  var js = last > 1 ? sh.getRange(2, HEADERS.indexOf('_productos_json') + 1, last - 1, 1).getValues() : [];
+  var porId = {}; ids.forEach(function (r) { porId[String(r[0])] = 1; });
+  var limpios = js.map(function (r) { var t = String(r[0] || ''); return t ? t.replace(/\s/g, '') : ''; });   // una vez, no por lead
+  var viejo = function (leadId) {                    // la regla de antes de leadYaCargado_, tal cual
+    if (porId[BORRADOR_PREF + leadId]) return true;
+    var marca = '"klead":"' + leadId + '"';
+    for (var j = 0; j < limpios.length; j++) if (limpios[j] && limpios[j].indexOf(marca) >= 0) return true;
+    return false;
+  };
+  var cargados = Object.keys(snap.cargados), borrs = Object.keys(snap.borr);
+  cargados.forEach(function (l) { if (!viejo(l)) malas.push('kSnapshot_ dice cargado y la regla de antes no: lead ' + l); });
+  borrs.forEach(function (l) {
+    var b = borradorGenerico_(sh, l), x = snap.borr[l];
+    var nuevo = (x.estado === BORRADOR_EST && nombreGenerico_(x.cliente)) ? x.fila : null;
+    if ((b ? b.fila : null) !== nuevo) malas.push('el borrador del lead ' + l + ' da distinto');
+  });
+  var msg = malas.length ? ('❌ ' + malas.length + ' diferencia(s):\n' + malas.slice(0, 30).join('\n'))
+                         : ('✅ Iguales: ' + cargados.length + ' leads cargados y ' + borrs.length + ' borradores de Kommo, con la regla de antes y la nueva.');
+  if (typeof Logger !== 'undefined') Logger.log(msg);
+  return msg;
 }
 /* Todo lo que hay que preguntarle a Kommo para armar un borrador. NO toca la planilla para
    escribir: devuelve el pedido listo, o el motivo por el que no se puede. */
