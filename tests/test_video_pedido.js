@@ -41,7 +41,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   const arch = (u) => path.join(path.dirname(PEDIDOS), u.split('?')[0]);
   chk('1. el video y la portada están al lado de la página', /^videos\/.+\.mp4\?v=/.test(r1.v) && fs.existsSync(arch(r1.v)) && fs.statSync(arch(r1.v)).size>1e6 && fs.existsSync(arch(r1.p)), r1);
   const r1b = await page.evaluate(() => Object.keys(VIDEOS).map(function(k){ return { k:k, v:VIDEOS[k].src, p:VIDEOS[k].poster, t:VIDEOS[k].t }; }));
-  chk('1b. los tres videos (pedido, pago, tienda) y sus portadas existen', r1b.length===3 && r1b.every(x => fs.existsSync(arch(x.v)) && fs.statSync(arch(x.v)).size>1e6 && fs.existsSync(arch(x.p))), r1b);
+  chk('1b. los seis videos (pedido, pago, tienda; 29/10: atc, rpt, repro) y sus portadas existen', r1b.length===6 && r1b.every(x => fs.existsSync(arch(x.v)) && fs.statSync(arch(x.v)).size>1e6 && fs.existsSync(arch(x.p))), r1b);
 
   /* 2 */
   const r2 = await page.evaluate(async () => {
@@ -117,6 +117,21 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('6c. «¿Cómo registro una venta de tienda?» va AL FINAL, señala algo que existe y abre su video', r6.ultimo==='¿Cómo registro una venta de tienda?' && r6.ultF &&
       r6.tienda.q===r6.ultimo && /venta-de-tienda/.test(r6.tienda.src||'') && /venta de tienda/.test(r6.tienda.tit) && /1 min/.test(r6.tienda.boton), r6.tienda);
   chk('6d. «Copiar el enlace» copia el del video que se está mirando', /videos\/como-registrar-venta-de-tienda\.mp4$/.test(r6.copiado), r6.copiado);
+
+  /* 7. 🎬 (29/10, §4np; el dueño eligió la «21») ATC, RPT y cambiar el día: cada respuesta de Bloki abre SU video, y no se agregó ninguna respuesta. */
+  const r7 = await page.evaluate(async () => {
+    var esp=function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+    var abrir=async function(q){ var i=asisBuscar(q)[0], a=ASIS_AYUDA[i]; asisAbrir('ayuda'); ASIS.q=q; ASIS_ABIERTA=i; asisAyudaLista(); await esp(80);
+      var b=[].filter.call(document.querySelectorAll('#asis-lista button'), function(x){ return /Ver el video/.test(x.textContent); })[0], txt=b ? b.textContent : '';
+      if(b) b.click(); await esp(120);
+      var m=document.getElementById('modal'), v=m.querySelector('video.vid-ped'), out={ q:a.q, vid:a.vid, boton:txt, src:v && v.querySelector('source').getAttribute('src'), tit:(m.querySelector('.modal-h h3')||{}).textContent||'' };
+      try{ closeModal(); }catch(e){} await esp(60); return out; };
+    return { atc:await abrir('cómo cargo una atc'), rpt:await abrir('reposición para mi tienda'), repro:await abrir('cambiar el día de entrega'), n:ASIS_AYUDA.length };
+  });
+  chk('7a. «¿Cómo cargo una ATC?» abre el video de la ATC (2 min)', r7.atc.vid==='atc' && /como-cargar-una-atc\.mp4/.test(r7.atc.src||'') && /ATC/.test(r7.atc.tit) && /2 min/.test(r7.atc.boton), r7.atc);
+  chk('7b. «¿Cómo pido reposición para mi tienda (RPT)?» abre el de la RPT', r7.rpt.vid==='rpt' && /como-pedir-una-reposicion\.mp4/.test(r7.rpt.src||'') && /RPT/.test(r7.rpt.tit), r7.rpt);
+  chk('7c. «¿Cómo cambio el día de entrega?» abre el de cambiar el día', r7.repro.vid==='repro' && /como-cambiar-el-dia\.mp4/.test(r7.repro.src||'') && /cambiar el día/.test(r7.repro.tit), r7.repro);
+  chk('7d. no se agregó ninguna respuesta (siguen 22)', r7.n===22, r7.n);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

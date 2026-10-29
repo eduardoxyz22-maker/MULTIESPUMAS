@@ -13,10 +13,14 @@ const PAG = process.argv[2], OUT = process.argv[3], ESC = process.argv[4] || 'pe
 const ESCENAS = {
   pedido: { reloj:'2026-11-04T10:12:00-04:00', titulo:'Cómo cargar un pedido', sub:'Guía para vendedoras y vendedores nuevos: un pedido de principio a fin, en 4 pasos.' },
   pago:   { reloj:'2026-11-05T16:20:00-04:00', titulo:'Cómo cobrar el saldo pendiente', sub:'Cuando el cliente paga lo que faltaba: se registra en Contabilidad, con la foto del comprobante.' },
-  tienda: { reloj:'2026-11-05T16:20:00-04:00', titulo:'Cómo registrar una venta de tienda', sub:'El cliente se lleva el producto del local: sin camión, sin fecha de entrega y sin dirección.' }
+  tienda: { reloj:'2026-11-05T16:20:00-04:00', titulo:'Cómo registrar una venta de tienda', sub:'El cliente se lleva el producto del local: sin camión, sin fecha de entrega y sin dirección.' },
+  /* (29/10, §4np; el dueño eligió la «21») */
+  atc:    { reloj:'2026-11-05T10:20:00-04:00', titulo:'Cómo cargar una ATC', sub:'Un cliente reclama por un producto: se carga la atención con el motivo, la fecha de compra y el día en que se le recoge.' },
+  rpt:    { reloj:'2026-11-05T10:20:00-04:00', titulo:'Cómo pedir una reposición de tienda (RPT)', sub:'Lo que necesita tu tienda: logística lo agenda como una entrega y sale el Excel del formato.' },
+  repro:  { reloj:'2026-11-05T10:20:00-04:00', titulo:'Cómo cambiar el día de una entrega', sub:'El cliente pide otro día: se cambia desde «Mis pedidos» y el bot le avisa solo.' }
 };
-const E = ESCENAS[ESC]; if(!E) throw new Error('escena: pedido | pago | tienda');
-const FOTOS = { recibo:'recibo.jpg', qrpago:'qr_pago.jpg', qrtienda:'qr_tienda.jpg' };   // lo que «sube» cada escena (recibo.js las arma)
+const E = ESCENAS[ESC]; if(!E) throw new Error('escena: pedido | pago | tienda | atc | rpt | repro');
+const FOTOS = { recibo:'recibo.jpg', qrpago:'qr_pago.jpg', qrtienda:'qr_tienda.jpg', atc:'colchon_atc.jpg' };   // lo que «sube» cada escena (recibo.js las arma)
 const LF = process.env.LEAFLET_DIR || '';
 fs.rmSync(OUT, { recursive:true, force:true }); fs.mkdirSync(OUT, { recursive:true });
 
@@ -106,7 +110,7 @@ function tile(z, x, y){
     if(grabando){ cuadros.push({ nom, t:f.metadata.timestamp }); fs.writeFile(path.join(OUT, nom), Buffer.from(f.data, 'base64'), () => {}); }
   });
 
-  await page.goto('file://'+PAG, { waitUntil:'domcontentloaded' });
+  await page.goto('file://'+PAG+'?tema=espuma', { waitUntil:'domcontentloaded' });   // (29/10) el tema de todos los días: el video sirve todo el año
   await page.evaluate(([t, s]) => {   // la tarjeta de entrada tapa la carga
     const c = document.getElementById('vid-card');
     c.innerHTML = '<div class="band"></div><img src="'+(typeof blokiSrc==='function'?blokiSrc('vendedor'):'')+'" alt=""><div class="marca">MULTIESPUMAS · PANEL DE PEDIDOS</div>'+
@@ -158,7 +162,14 @@ function tile(z, x, y){
         pagado:false, acuenta:1000, saldo:2400, metodoPago:'Efectivo %vidrecibo1', estado:'', entregado:true, vehiculo:'', chofer:'', garantia:'', facturarA:'', nit:'',
         observaciones:'Llamar antes de ir. Es un 3er piso, sin ascensor.', ts:ahora-86400000*2-3600000, nroDia:1, verificado:false, fotos:[] });
     }
-    window._FOTO = esc==='pago' ? 'vidqrpago' : (esc==='tienda' ? 'vidqrtienda' : 'vidrecibo');
+    if(esc==='repro'){
+      /* El pedido que el cliente pide cambiar: de Maria Flores, para mañana a la mañana. */
+      P.push({ id:'luc', fecha:d(1), turno:'AM', oc:'11-300', nota:'3245', vendedor:'Maria Flores', cliente:'LUCIA FERNANDEZ ROJAS', celular:'76543210', zona:'Equipetrol',
+        direccion:'Calle Los Pinos 245, portón verde, frente a la plaza', maps:'https://www.google.com/maps?q=-17.7712,-63.1964', productos:[ Object.assign({ cant:1, precio:3400 }, TIT, { desc:'COLCHON TITANIO ICE' }) ],
+        pagado:false, acuenta:1000, saldo:2400, metodoPago:'Efectivo %vidrecibo1', estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'', facturarA:'', nit:'',
+        observaciones:'Llamar antes de ir. Es un 3er piso, sin ascensor.', ts:ahora-86400000*2-3600000, nroDia:1, verificado:false, fotos:[] });
+    }
+    window._FOTO = esc==='pago' ? 'vidqrpago' : (esc==='tienda' ? 'vidqrtienda' : (esc==='atc' ? 'vidatc' : 'vidrecibo'));
     window._SRV = { pedidos:P, stock:st };
     apiList = function(){ var l = JSON.parse(JSON.stringify(window._SRV.pedidos)); l.push({ id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:JSON.stringify(window._SRV.stock) });
       return Promise.resolve({ ok:true, pedidos:l }); };
@@ -445,11 +456,197 @@ function tile(z, x, y){
     ], '¿Dudas? Hacé clic en Bloki → «¿Cómo registro una venta de tienda?»');
   }
 
+  /* El «¿Quién está usando el panel?» del arranque: la vendedora hace clic en su nombre. */
+  async function soyMaria(){
+    if(await page.locator('#quien .quien-b[data-v="Maria Flores"]').count()){
+      await cap('Antes de empezar', 'Hacé clic en tu nombre', null, { ms:1800 });
+      await toca('#quien .quien-b[data-v="Maria Flores"]', false);
+      await espera(1300);
+    }
+  }
+  const tocaSiHay = async (sel) => { if(await page.locator(sel).count()){ await clic(page.locator(sel).first()); await espera(700); return true; } return false; };
+  async function cerrarVentanaGuardado(){
+    const ov = await page.evaluate(() => { const e = [...document.querySelectorAll('body *')].find(x => /Tocá para seguir/.test(x.textContent||'') && x.children.length===0 && x.getBoundingClientRect().width>0); if(!e) return null; const r = e.getBoundingClientRect(); return { x:r.left+r.width/2, y:r.top+r.height/2 }; });
+    if(ov){ await clicXY(ov.x, ov.y); await espera(1400); }
+  }
+  async function cerrarModal(){
+    const c = page.locator('#modal .modal-actions button', { hasText:'Cerrar' }).first();
+    await page.evaluate(() => { const a = document.querySelector('#modal .modal-actions'); if(a) a.scrollIntoView({ block:'center', behavior:'smooth' }); });
+    await espera(800);
+    if(await c.count() && await c.isVisible()) await clic(c); else await page.evaluate(() => { try{ closeModal(); }catch(e){} });
+    await espera(1000);
+  }
+
+  /* ════════ CARGAR UNA ATC ════════ */
+  if(ESC==='atc'){
+    await soyMaria();
+    await cap('ATC · Atención al cliente', 'El cliente reclama por un producto', 'Roberto compró un colchón y se le hundió. Se carga como un pedido, pero eligiendo «🎧 ATC».', { ms:4400 });
+    await verEn('#f-doc-tipo', 0.30);
+    await cap('Paso 1 · Cliente', 'Arriba, donde dice OC, hacé clic en «🎧 ATC»', 'No lleva nota de venta ni cobro: no se está vendiendo nada.', { ms:3400 });
+    await toca('#f-doc-tipo button[data-val="ATC"]', false);
+    await espera(900);
+    await verEn('#wrap-atc-motivo', 0.18);
+    await cap('Los datos de la ATC', '¿Es por garantía o contra costo?', 'Garantía: lo cubre la fábrica. Contra costo (STC): la reparación la paga el cliente. Las fechas y el recojo son iguales.', { ms:5000 });
+    await toca('#f-atc-tipo button[data-val="gar"]', false);
+    await cap('Los datos de la ATC', 'El motivo y el detalle, con tus palabras', 'Mientras más claro, más fácil para fábrica.', { ms:2800 });
+    await clic(page.locator('#f-atc-motivo')); await espera(300);
+    await page.locator('#f-atc-motivo').selectOption({ label:'Hundimiento' }); await espera(600);
+    await escribe('#f-atc-detalle', 'Hundido en el medio del lado derecho, no retoma su forma', 45);
+    await cap('Los datos de la ATC', 'La fecha de compra', 'Está en la factura, la nota de venta o el certificado de garantía.', { ms:3000 });
+    await clic(page.locator('#f-atc-compra')); await espera(300);
+    await page.locator('#f-atc-compra').fill('2025-03-15');
+    await page.evaluate(() => { const e = document.getElementById('f-atc-compra'); e.dispatchEvent(new Event('change', { bubbles:true })); });
+    await espera(900);
+    await verEn('#f-atc-piezas', 0.30);
+    await cap('Los datos de la ATC', '¿Qué se le recoge al cliente?', 'Marcá lo que se lleva el camión: así a la vuelta se devuelve todo.', { ms:3400 });
+    await clic(page.locator('#f-atc-piezas label', { hasText:'Colchón' }).first()); await espera(700);
+    await verEn('#f-atc-fotos-box', 0.32);
+    await cap('Los datos de la ATC', 'Si el cliente te mandó fotos, adjuntalas', 'Hasta 2. No son obligatorias, pero ayudan a fábrica a ver el problema antes de recogerlo.', { ms:4200 });
+    await adjunta('#atc-foto-add', 'colchon_atc.jpg');
+    await verEn('#f-cliente', 0.30);
+    await cap('Paso 1 · Cliente', 'El cliente y su celular', null, { ms:1800 });
+    await escribe('#f-cliente', 'ROBERTO SALAZAR VACA', 70);
+    await escribe('#f-celular', '71588442', 110);
+    await verEn('#fp-2', 0.14);
+    await cap('Paso 2 · Producto', 'El producto con el problema', 'El código y la cantidad: el nombre y la medida se completan solos.', { ms:3200 });
+    await escribe('#f-productos .prod-card .prod-codigo', 'CH1201', 140);
+    await espera(1200);
+    await verEn('#fx-izq', 0.10);
+    await cap('El día del recojo', 'Elegí el día en que el camión lo recoge', 'Va en la agenda del camión como cualquier entrega.', { ms:3400 });
+    await toca('#fx-izq [data-f="2026-11-09"]', false);
+    await espera(700);
+    await verEn('#fp-3', 0.14);
+    await cap('Paso 3 · Dónde', 'El turno, la zona, la ubicación y la dirección', 'Igual que en un pedido.', { ms:2800 });
+    await toca('#f-turno button[data-val="AM"]', 0.30);
+    await escribe('#f-zona', 'Norte', 90);
+    await clic(page.locator('#f-maps')); await espera(300);
+    await page.locator('#f-maps').fill('https://www.google.com/maps?q=-17.7480,-63.1720');
+    await page.evaluate(() => { const e = document.getElementById('f-maps'); e.dispatchEvent(new Event('input', { bubbles:true })); e.dispatchEvent(new Event('change', { bubbles:true })); });
+    await espera(1100);
+    await escribe('#f-direccion', 'Av. Banzer 4to anillo, casa celeste', 55);
+    await verEn('#f-submit', 0.55);
+    await cap('Listo', 'Hacé clic en «Guardar»', 'Si falta un dato obligatorio, el panel te dice cuál y no deja guardar.', { ms:2800 });
+    await sinCap();
+    await clic(page.locator('#f-submit'));
+    await espera(4200);
+    await cerrarVentanaGuardado();
+    await page.evaluate(() => { const c = document.getElementById('atc-correo'); if(c) c.scrollIntoView({ block:'center', behavior:'smooth' }); });
+    await espera(900);
+    await cap('ATC guardada ✅', 'Te arma el correo de la ATC', 'Para, asunto y mensaje con todo lo que cargaste y las fotos. Copialo o abrilo en Gmail y mandalo vos.', { arriba:true, ms:5600 });
+    await sinCap();
+    await cerrarModal();
+    await page.evaluate(() => window.scrollTo({ top:0, behavior:'smooth' })); await espera(900);
+    await toca('#tab-atc', false);
+    await espera(1500);
+    await cap('La pestaña 🎧 ATC', 'Ahí la seguís hasta que vuelve al cliente', 'Por recoger → en fábrica → lista → devuelta.', { arriba:true, ms:4600 });
+    await cierre('¡ATC cargada!', [
+      ['«🎧 ATC» arriba del formulario', 'sin nota de venta ni cobro'],
+      ['Garantía o contra costo, motivo y detalle', 'y la fecha de compra'],
+      ['Qué se le recoge y las fotos', 'las fotos, si el cliente las mandó'],
+      ['Cliente, producto y el día del recojo', 'y «Guardar»: sale el correo para mandar']
+    ], '¿Dudas? Hacé clic en Bloki → «¿Cómo cargo una ATC?»');
+  }
+
+  /* ════════ PEDIR UNA REPOSICIÓN DE TIENDA (RPT) ════════ */
+  if(ESC==='rpt'){
+    await soyMaria();
+    await cap('RPT · Reposición de tienda', 'A tu tienda le faltan productos', 'Se piden desde el formulario de siempre, eligiendo «🏪 RPT». Logística lo agenda como una entrega.', { ms:4400 });
+    await verEn('#f-doc-tipo', 0.30);
+    await cap('Paso 1', 'Arriba, donde dice OC, hacé clic en «🏪 RPT»', 'No lleva nota de venta ni cobro: la mercadería cambia de lugar, no se vende.', { ms:3600 });
+    await toca('#f-doc-tipo button[data-val="RPT"]', false);
+    await espera(900);
+    await verEn('#wrap-rpt', 0.20);
+    await cap('La sucursal', 'Escribí a qué tienda va', 'Al elegirla, la zona y la ubicación se ponen solas.', { ms:3400 });
+    await escribe('#f-rpt-suc', 'Mia Plaza', 110);
+    await page.evaluate(() => { try{ sucursalElegida(); }catch(e){} });
+    await espera(1200);
+    await verEn('#fp-2', 0.14);
+    await cap('Paso 2 · Productos', 'Lo que necesita la tienda', 'Código y cantidad, uno por renglón. En cada uno elegí si es «Reposición» o «Adicional».', { ms:4200 });
+    await escribe('#f-productos .prod-card .prod-codigo', 'CH1201', 140);
+    await espera(900);
+    const cR = page.locator('#f-productos .prod-card .prod-cant').first();
+    await clic(cR); await cR.fill(''); await cR.pressSequentially('2', { delay:120 }); await espera(400);
+    await cap('Paso 2 · Productos', '¿Algo más? «+ Agregar otro producto»', null, { ms:1800 });
+    await clic(page.locator('#f-add-prod')); await espera(800);
+    const cards = page.locator('#f-productos .prod-card');
+    if(await cards.count() > 1){
+      const c2 = cards.nth(1);
+      await clic(c2.locator('.prod-codigo')); await c2.locator('.prod-codigo').pressSequentially('CD1403', { delay:140 }); await espera(900);
+      await clic(c2.locator('.prod-cant')); await c2.locator('.prod-cant').fill(''); await c2.locator('.prod-cant').pressSequentially('6', { delay:120 }); await espera(400);
+      await clic(c2.locator('.prod-rtipo')); await espera(300);
+      await c2.locator('.prod-rtipo').selectOption({ label:'Adicional' }); await espera(700);
+    }
+    await verEn('#fx-izq', 0.10);
+    await cap('El día', 'Elegí para qué día', 'Va en la agenda del camión, con los lugares que le quedan.', { ms:3000 });
+    await toca('#fx-izq [data-f="2026-11-09"]', false);
+    await espera(700);
+    await verEn('#fp-3', 0.14);
+    await cap('Paso 3', 'El turno', 'La zona y la ubicación ya las puso la sucursal.', { ms:2600 });
+    await toca('#f-turno button[data-val="PM"]', 0.30);
+    await verEn('#f-submit', 0.55);
+    await cap('Listo', 'Hacé clic en «Guardar»', null, { ms:1700 });
+    await sinCap();
+    await clic(page.locator('#f-submit'));
+    await espera(4200);
+    await cerrarVentanaGuardado();
+    await cap('RPT guardada ✅', 'Bajá el Excel del formato', 'Es el formato de siempre, lleno: mandalo por correo a logística. Abajo está el mensaje para WhatsApp.', { arriba:true, ms:3600 });
+    const xl = page.locator('#modal button', { hasText:'Bajar el Excel' }).first();
+    if(await xl.count()){ await clic(xl); await espera(1600); }
+    await espera(1400);
+    await sinCap();
+    await cerrarModal();
+    await cierre('¡Reposición pedida!', [
+      ['«🏪 RPT» arriba del formulario', 'sin nota de venta ni cobro'],
+      ['La sucursal', 'zona y dirección se ponen solas'],
+      ['Los productos', 'Reposición o Adicional en cada uno'],
+      ['El día y «Guardar»', 'y el Excel del formato para el correo']
+    ], '¿Dudas? Hacé clic en Bloki → «¿Cómo pido una reposición para mi tienda?»');
+  }
+
+  /* ════════ CAMBIAR EL DÍA DE UNA ENTREGA ════════ */
+  if(ESC==='repro'){
+    await soyMaria();
+    await cap('Cambiar el día', 'El cliente pide que se lo lleven otro día', 'Lucía tenía la entrega mañana a la mañana y ahora la quiere el lunes. Se cambia desde «Mis pedidos».', { ms:4800 });
+    await page.evaluate(() => window.scrollTo({ top:0, behavior:'smooth' })); await espera(700);
+    await toca('#tab-mis', false);
+    await espera(1500);
+    await verEn('#mis-q', 0.25);
+    await cap('Mis pedidos', 'Buscalo por el nombre o el N° de nota', null, { ms:2000 });
+    await escribe('#mis-q', 'lucia', 110);
+    await espera(1200);
+    await centra('#mis-lista button', 'Editar');
+    await cap('Mis pedidos', 'En el pedido, hacé clic en «✏️ Editar»', 'También podés abrirlo y editarlo desde adentro.', { ms:3000 });
+    await tocaT('#mis-lista button', 'Editar', true);
+    await espera(1600);
+    await verEn('#fx-izq', 0.10);
+    await cap('Editar', 'Elegí el día nuevo en la agenda', 'Cada día dice cuántos lugares le quedan al camión en la mañana y en la tarde.', { ms:3800 });
+    await toca('#fx-izq [data-f="2026-11-09"]', false);
+    await espera(900);
+    await verEn('#fp-3', 0.14);
+    await cap('Editar', 'Si cambia el turno, cambialo también', 'Lucía lo quiere a la tarde.', { ms:2600 });
+    await toca('#f-turno button[data-val="PM"]', 0.30);
+    await verEn('#f-submit', 0.55);
+    await cap('Editar', 'Hacé clic en «Guardar»', 'Lo demás queda como estaba: productos, pagos y dirección.', { ms:2800 });
+    await sinCap();
+    await clic(page.locator('#f-submit'));
+    await espera(3800);
+    await cerrarVentanaGuardado();
+    await cap('Cambio guardado ✅', 'Logística ya lo ve en el día nuevo', '🤖 El bot de WhatsApp le avisa a Lucía el día y el turno nuevos, solo. Vos no tenés que mandar nada.', { arriba:true, ms:5600 });
+    await sinCap();
+    await cerrarModal();
+    await cierre('¡Día cambiado!', [
+      ['«Mis pedidos»', 'buscalo por nombre o N° de nota'],
+      ['En el pedido, «✏️ Editar»', 'o abrilo y editalo desde adentro'],
+      ['El día nuevo en la agenda', 'y el turno, si cambia'],
+      ['«Guardar»', 'el bot le avisa al cliente solo']
+    ], '¿Dudas? Hacé clic en Bloki → «¿Cómo cambio el día de una entrega?»');
+  }
+
   grabando = false;
   await cdp.send('Page.stopScreencast');
   fs.writeFileSync(path.join(OUT, 'cuadros.json'), JSON.stringify(cuadros));
   console.log('cuadros', cuadros.length, 'duración', (cuadros.length ? (cuadros[cuadros.length-1].t - cuadros[0].t).toFixed(1) : 0)+'s');
-  console.log('errores', errores.length, errores.slice(0,6));
+  console.log('errores', errores.length, JSON.stringify(errores.slice(0,6)));
   console.log('guardado', await page.evaluate(() => window._guardado ? JSON.stringify({ cliente:_guardado.cliente, fecha:_guardado.fecha, turno:_guardado.turno, prods:_guardado.productos, acuenta:_guardado.acuenta, saldo:_guardado.saldo, pagado:_guardado.pagado, metodo:_guardado.metodoPago }) : 'NADA'));
   await b.close();
 })();
