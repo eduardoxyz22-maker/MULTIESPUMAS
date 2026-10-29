@@ -1105,6 +1105,20 @@ en una línea. `tests/test_ficha_auto.js`.
   `desde`). `probarSnapshotKommo()` (solo lee, antes de `borradorDeLead_`) compara la regla nueva con la de antes sobre la planilla real.
   ⚠️ Un lugar NUEVO que pregunte «¿este lead ya está?» usa `kSnapshot_`, no otra lectura propia. `test_hook` §10, `test_wa_bot` §16.
 
+## 👤📍🗂️🧽 Del muestrario 24-33: ficha del cliente, zona sola, tablas a tu gusto y prolijidad (§4nr, 29/10; en la rama, espera «publica»)
+Dueño: *«28 me gusta 29 tb 30 tb 33 tb. Ármalo y mostrame cómo quedaría con los datos reales»* (página con capturas y clientes inventados:
+https://claude.ai/artifact/Vzr6KUyYnn3LGjQ7w99uFd). La 24, 25 y 26 se le explicaron de nuevo: espera que diga si las quiere.
+- **👤 Ficha del cliente** (`clf*`): el nombre se toca (`clfNombre`, `.clf-lk`) en Administración, Contabilidad y Mis pedidos; mismo cliente =
+  `cliCelClave` + el mismo nombre sin celular (sin RPT ni `cliEsInterno`); cuentas de siempre; cada compra abre su pedido con «← Volver a la ficha»
+  (`CLF_VOLVER`). ⚠️ Un lugar nuevo que muestre el nombre del cliente en una lista usa `clfNombre(p, txt, origen)`. `CLF_PRUEBA`. `tests/test_ficha_cliente.js`.
+- **📍 Zona sola** (`zonaCercaDe`, `zonaDePlaza`): al pegar el enlace con «Zona» vacía, la de ≥2 pedidos a ≤400 m, o hacia dónde queda de la plaza
+  (la plaza la agregué yo: con la planilla real acierta 294 de 507 contra 191; dicho al dueño). Nunca pisa lo escrito. `ZONA_PRUEBA`. `tests/test_zona_sola.js`.
+- **🗂️ Tablas a tu gusto** (`tbl*`): «☰ Columnas» y ordenar por título en Contabilidad → Ventas (`CTA_SORT`) y la tabla de Administración (`SORT_KEY`),
+  guardado en `me_tbl_conta`/`me_tbl_admin`; esconder es un `<style>` con `nth-child`. ⚠️ Una columna NUEVA en esas tablas va en `TBL_DEF[...].cols`.
+  `TBL_PRUEBA`. `tests/test_tablas_gusto.js`.
+- **🧽 Prolijidad** (CSS al final del último `<style>`): `--r-lg` 16, `--sh-card` una sola sombra, filtros y pestañas internas como `.adm-filtros`,
+  chips 32 px/.76rem, botones chicos .76rem. El formulario de un pedido no cambió. Los nombres en minúscula NO (se le preguntó).
+
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
 el jueves y aún no marcás el stock… producción tarda hasta 4 días»*. ⚠️ Nada de camiones, carga ni cupos en este botón.

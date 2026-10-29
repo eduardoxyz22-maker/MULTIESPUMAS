@@ -16753,6 +16753,45 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
 - Batería entera con la 29-b (29/10): **282 suites, 9.064 bien, 0 mal**. El `.gs` para pegar: enlace fijo a
   `38864f6057a876e3275dd5d1605e7fe67d75f512` (5.085 líneas, termina en `}` con `return borrador;` antes).
 
+### §4nr — 👤📍🗂️🧽 DEL MUESTRARIO 24-33: FICHA DEL CLIENTE (29), ZONA SOLA (30), TABLAS A TU GUSTO (33) Y PROLIJIDAD (28) (29/10)
+El dueño, con el muestrario delante: *«24,25,26 me parece pero no le entendí bien. 28 me gusta 29 tb 30 tb 33 tb. Ármalo y mostrame cómo quedaría
+con los datos reales»*. Hecho en la rama; **sin publicar** (espera «publica»). Página para él con capturas del panel con la copia de la planilla
+del 25/10 y clientes INVENTADOS (`scratchpad/nr/lista_nr.json` = `real/lista_anon.json` con nombres legibles inventados): https://claude.ai/artifact/Vzr6KUyYnn3LGjQ7w99uFd
+(también explica la 24, 25 y 26 más simple y pregunta si las quiere).
+- **29 · 👤 Ficha del cliente** (`clf*`, al lado de «📇 Clientes (Excel)»): el nombre del cliente se toca (`clfNombre`, `.clf-lk`, subrayado de
+  puntitos, con `stopPropagation`: el resto del renglón/ficha sigue abriendo el pedido) en la tabla y las fichas de Administración, la tabla y las
+  tarjetas de Contabilidad, Mis pedidos y la cabecera de la ficha de Administración; la venta de Contabilidad y la ficha de Mis pedidos traen
+  «👤 Ficha del cliente · N pedidos más» (`clfBotonHtml`). Mismo cliente = `cliCelClave` (últimos 8 del celular) + los del mismo nombre SIN celular;
+  sin celular, el nombre (genérico —`CLF_GENERICO`: «cliente», «consumidor final», «sin nombre»…— no junta). Afuera: sistema, borradores, RPT y
+  `cliEsInterno`. Cuentas de siempre: `cliValor`, `contaCobrado`, `contaFaltaCobrar`, `contaPagos`, `atcEstado`. Pestañas Compras/Pagos/ATC/Notas;
+  cada fila abre su pedido en la ficha de donde vino (`clfAbrirPedido`: conta → `showContaModal`, mis → `showMisModal`, si no `showPedidoModal`) con
+  «← Volver a la ficha de…» (`CLF_VOLVER`, `clfVolverHtml`, se olvida si se abre otra cosa, como `POR_COBRAR_VOLVER`). Ancho propio `.modal.clf-box`
+  (820 px; `openModal` saca la clase). ⚠️ En Playwright los nombres son el texto de siempre salvo `CLF_PRUEBA`. `tests/test_ficha_cliente.js` (38).
+- **30 · 📍 Zona sola** (`zona*`, al lado de `fxMapaProgramar`): al PEGAR/ESCRIBIR el enlace (`ZONA_AUTO.tocado`; editar no cambia nada) con «Zona»
+  vacía: si ≥2 pedidos a ≤400 m dicen la misma zona, esa (`zonaCercaDe`, la forma más escrita con `zonaCanonica`); si no, **hacia dónde queda de
+  la plaza 24 de Septiembre** (`zonaDePlaza`: Centro < 1,2 km, Norte/Sur/Este/Oeste por cuartos de vuelta); a más de 12 km, solo los vecinos (y si
+  no hay, vacía). Nota debajo (`#f-zona-auto`) con el porqué y «Quitar»; lo escrito a mano no se toca; cambiar el enlace cambia solo la que puso el
+  panel. No cuentan pines `aprox` (`esUbicAprox`), tienda, RPT, sistema ni borradores. ⚠️ **La regla de la plaza la agregué yo** (el muestrario
+  decía «la que más se repite cerca; sin pedidos cerca, vacía»): medido con la planilla real (507 pedidos con pin y zona) solo con vecinos acertaba
+  191 (38 %), con la plaza 294 (58 %; 8 de cada 10 en Norte/Sur/Este/Oeste/Centro). Lo que falla es la zona escrita de otra forma («Bimodal» /
+  «Terminal Bimodal», «Equipetrol» / «Norte»). Se le dijo al dueño; si no la quiere, sacar la rama `pl` de `zonaCercaDe`. En Playwright apagado
+  salvo `ZONA_PRUEBA`. `tests/test_zona_sola.js` (15).
+- **33 · 🗂️ Tablas a tu gusto** (`tbl*`, al lado de `setSort`): barra `.tcol-bar` (`#cx-tcol`, `#adm-tcol`) con «☰ Columnas N de M» (menú de
+  casillas), «Ordenado por X ▲ ✕» y «Volver a como estaba»; `me_tbl_conta` / `me_tbl_admin` = `{ocultas:[títulos], k, dir}`. Esconder = un
+  `<style id="tbl-cols-st">` con `nth-child` (`tblEstilo`): las celdas siguen en la tabla, nada más se arma distinto. Contabilidad ordena con
+  `CTA_SORT`/`ctaOrdenar` (sobre la lista ya filtrada por los chips; las tarjetas también), títulos con `ctaTh`; Administración sigue con
+  `SORT_KEY` (`setSort` ahora guarda) y suma `oc`, `turno`, `vehiculo` (`shX`). Con las fichas de Administración o las tarjetas de Contabilidad la
+  barra no está. ⚠️ Una columna NUEVA en esas tablas va también en `TBL_DEF[...].cols` en su lugar (si no, el `nth-child` esconde la de al lado).
+  En Playwright todo como antes (títulos `<th>X</th>`, sin barra, nada guardado) salvo `TBL_PRUEBA`. `tests/test_tablas_gusto.js` (29).
+- **28 · 🧽 Prolijidad** (bloque al final del último `<style>`, solo CSS): medido en 8 pantallas (`scratchpad/nr/medir.js`): botones con nueve
+  tamaños de letra, filtros de Contabilidad/Cuadre/Proyección/ATC con el estilo viejo y los de Administración con el nuevo, cajas con curvas 14/16/18
+  y tres sombras. Queda: `--r-lg` 16 y `--sh-card` la sombra de las fichas de Administración; `.view .filters` con recuadro claro; `.filters .field >
+  .seg` y `.seg.subtabs` en píldoras como `.adm-filtros`; chips (`qchip`, `cx-chip`, `pl-chip`, `.atc-tipos button`) 32 px/.76rem; botones chicos
+  (`btn-sm`, `ah-go`, `cx-av-btn`, `cx-mano-btn`) .76rem/10 px; `.rowbtn` 8 px; `.cua-t` y `.sec` .7rem/.09em. El formulario (AM/PM, OC/ATC/RPT,
+  ¿pagado?) queda con sus bloques de color. ⚠️ No se hizo: los nombres de clientes en minúscula (el ejemplo del muestrario los mostraba así): se le
+  preguntó.
+- Batería entera (29/10, rama): ver abajo.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
