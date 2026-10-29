@@ -16736,6 +16736,8 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   `test_servidor` §11 l; `test_wa_avisos_log` y `test_wa_pedir_hoy` ahora piden «29-a o más nueva».
 - **Volver atrás**: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas) si nunca se implementó
   la 29-a; si se implementó, la 29-a de `7de6ea65a37c3396486d0116a873d0a65eec1502` (5.005 líneas).
+- Batería entera con la 29-b (29/10): **282 suites, 9.064 bien, 0 mal**. El `.gs` para pegar: enlace fijo a
+  `38864f6057a876e3275dd5d1605e7fe67d75f512` (5.085 líneas, termina en `}` con `return borrador;` antes).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
