@@ -16736,6 +16736,15 @@ preguntarle de nuevo); el automático de producción **lo pregunta a logística*
   `test_servidor` §11 l; `test_wa_avisos_log` y `test_wa_pedir_hoy` ahora piden «29-a o más nueva».
 - **Volver atrás**: ✏️ a la versión anotada Y pegar la 27-a de `2aa4fde7edb8fd8d12345b0a9ea67c6eb001557e` (4.861 líneas) si nunca se implementó
   la 29-a; si se implementó, la 29-a de `7de6ea65a37c3396486d0116a873d0a65eec1502` (5.005 líneas).
+- **En el editor del dueño (29/10, 12:55-13:00 de Bolivia)**: el pegado termina en la línea 5.085 con `return borrador;` y `}`. probar ✅
+  con tres ⚠️ ajenos al cambio: Meta 2 «undeliverable» viejos (18/10); «el GPS contestó 30400» a las 12:54, de un momento (`probarGps` 12:57:
+  token vigente, 4 de 4 camiones, reportes de 0-10 min); respaldo: 26 copias, la última del 23/10 15:19 (se cortó; `instalarDisparadores` lo
+  vuelve a prender). `kommoRepaso` de las 12:57 corrió con `kSnapshot_` sin error (1 visto, 1 saltado). `crearPlantillasWhatsApp` 12:58:
+  `logistica_excel_falta` y `logistica_cierre_falta` creadas (PENDING); las demás «ya existía»; **`logistica_pedir_hoy` ❌ «La categoría UTILITY
+  no coincide con la que ya está asociada a esta plantilla: MARKETING»** (HTTP 400): ya existía y Meta la RECATEGORIZÓ como marketing; sigue
+  saliendo (sin fallos de Meta desde el 18/10), pero cuesta más y Meta puede retener mensajes de marketing (#131049). ⚠️ En la próxima versión
+  del `.gs`, `crearPlantillasWhatsApp` tiene que leer ese error como «ya existía · Meta la tiene como MARKETING», no como ❌.
+  `instalarDisparadores` 12:59 ✅ (con backupDiario). Falta que confirme «Nueva versión».
 - Batería entera con la 29-b (29/10): **282 suites, 9.064 bien, 0 mal**. El `.gs` para pegar: enlace fijo a
   `38864f6057a876e3275dd5d1605e7fe67d75f512` (5.085 líneas, termina en `}` con `return borrador;` antes).
 
