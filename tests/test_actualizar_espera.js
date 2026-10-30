@@ -8,6 +8,9 @@
    2. Si la corrida termina a los 6 minutos, dice «Datos listos» y recarga la página sola.
    3. Si la corrida termina mal, lo dice y el aviso queda a la vista (no 4 s).
    4. Pasados 12 minutos sin terminar, dice que siga en GitHub y que recargue en unos minutos, a la vista.
+   5. (30/10, §4oa) Al terminar la corrida NO recarga hasta que la página publicada trae otra hora de «updated» (con Pages en «GitHub
+      Actions» publicar es otro paso: antes recargaba a los 40 s fijos con los datos viejos); si la página no cambia, recarga igual a
+      los 5 minutos. La página se sirve por https (desde un archivo local no se puede mirar la publicada).
 
    Se corre:  node tests/test_actualizar_espera.js   (TPL=<otro panel_template.html> para medirlo contra uno viejo) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -18,21 +21,31 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
 const RAIZ = path.join(__dirname, '..');
 const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
 const W = 'https://prueba-worker.example.workers.dev/';
+const PAG = 'https://prueba.example.github.io/MULTIESPUMAS/';
 
 (async () => {
   const D = JSON.parse(execFileSync('python3', [path.join(__dirname, 'test_generar_integridad.py'), '--solo-datos'], { encoding: 'utf8', maxBuffer: 20e6 }));
   D.workerUrl = W;
   const tpl = fs.readFileSync(TPL, 'utf8');
   const tmp = path.join(os.tmpdir(), 'panel_actualizar_test.html');
-  fs.writeFileSync(tmp, tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(D) + ';'));
+  const html = tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(D) + ';');
+  const htmlNuevo = tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(Object.assign({}, D, { updated: '31/12 23:59' })) + ';');
+  fs.writeFileSync(tmp, html);
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
 
   // Una vuelta: la corrida «empieza» al segundo pedido de estado y termina (con `fin`) a los `terminaMs` de la página.
-  const vuelta = async ({ terminaMs, fin }) => {
+  /* `publicaMs`: a cuántos ms del clic la página publicada ya trae la hora nueva (null = nunca cambia). */
+  const vuelta = async ({ terminaMs, fin, publicaMs }) => {
     const ctx = await browser.newContext({ viewport: { width: 1500, height: 1000 } });
-    const est = { t0: null, cargas: 0 };
+    const est = { t0: null, cargas: 0, miradas: 0 };
     await ctx.route(/^https?:\/\//, async r => {
       const rq = r.request();
+      if (rq.url().startsWith(PAG)) {
+        const mira = /\?_=/.test(rq.url());
+        if (mira) est.miradas++;
+        const nueva = mira && publicaMs != null && est.t0 != null && est.ahora - est.t0 >= publicaMs;
+        return r.fulfill({ status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' }, body: nueva ? htmlNuevo : html });
+      }
       if (!rq.url().startsWith(W)) return r.abort();
       const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
       if (rq.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
@@ -51,7 +64,7 @@ const W = 'https://prueba-worker.example.workers.dev/';
     page.on('pageerror', e => errores.push(e.message));
     page.on('load', () => { est.cargas++; });
     await page.clock.install({ time: new Date('2026-10-30T13:17:00Z') });
-    await page.goto('file://' + tmp);
+    await page.goto(PAG);
     await page.waitForTimeout(700);
     const btn = () => page.evaluate(() => {
       const b = [...document.querySelectorAll('button')].find(x => /Actualiz|Conectando|Iniciando|Generando|Datos listos|Recargando|tardando|GitHub/.test(x.innerText));
@@ -72,9 +85,9 @@ const W = 'https://prueba-worker.example.workers.dev/';
     return { ctx, page, est, btn, avanzar, errores };
   };
 
-  // 1 y 2: termina bien a los 6 minutos.
+  // 1 y 2: termina bien a los 6 minutos y la página publicada cambia 1 minuto después.
   {
-    const v = await vuelta({ terminaMs: 360000, fin: 'success' });
+    const v = await vuelta({ terminaMs: 360000, fin: 'success', publicaMs: 420000 });
     await v.avanzar(240000);
     const a4 = await v.btn();
     chk('1a. a los 4 minutos el botón sigue esperando (no volvió a «Actualizar»)', a4 !== 'Actualizar' && /Generando/.test(a4), a4);
@@ -84,9 +97,26 @@ const W = 'https://prueba-worker.example.workers.dev/';
     chk('2a. al terminar la corrida dice «Datos listos»', /Datos listos/.test(a6), a6);
     const cargas0 = v.est.cargas;
     await v.avanzar(45000);
+    await v.page.waitForTimeout(300);
+    const a7 = await v.btn();
+    chk('5a. a los 45 s, con la página publicada todavía vieja, NO recargó (antes recargaba a los 40 s con los datos viejos)', v.est.cargas === cargas0 && /publicando/.test(a7) && v.est.miradas > 0, 'cargas ' + v.est.cargas + ' · ' + a7 + ' · miradas ' + v.est.miradas);
+    await v.avanzar(30000);
     await v.page.waitForTimeout(500);
-    chk('2b. y recarga la página sola', v.est.cargas > cargas0, 'cargas ' + cargas0 + ' → ' + v.est.cargas);
+    chk('2b. y recarga la página sola cuando la publicada trae la hora nueva', v.est.cargas > cargas0, 'cargas ' + cargas0 + ' → ' + v.est.cargas);
     chk('2c. sin errores en la página', v.errores.length === 0, v.errores.join(' | '));
+    await v.ctx.close();
+  }
+
+  // 5b: termina bien pero la página publicada nunca cambia: recarga igual a los 5 minutos.
+  {
+    const v = await vuelta({ terminaMs: 300000, fin: 'success', publicaMs: null });
+    await v.avanzar(312000);
+    const cargas0 = v.est.cargas;
+    await v.avanzar(240000);
+    chk('5b. si la publicada no cambia, a los 4 minutos sigue esperando', v.est.cargas === cargas0, 'cargas ' + v.est.cargas);
+    await v.avanzar(90000);
+    await v.page.waitForTimeout(500);
+    chk('5c. y a los 5 minutos recarga igual', v.est.cargas > cargas0, 'cargas ' + cargas0 + ' → ' + v.est.cargas);
     await v.ctx.close();
   }
 

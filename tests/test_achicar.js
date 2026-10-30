@@ -137,7 +137,7 @@ if (!esb) { console.log('SALTADA: no hay esbuild (ESBUILD_PATH=<carpeta del paqu
   chk('5a solo publica si Pages está en «GitHub Actions» (con la rama, no hace nada)', /build_type/.test(wf) && /if: needs\.ver\.outputs\.modo == 'workflow'/.test(wf));
   chk('5b usa el script y lo achicado va al sitio, no al repo', /node herramientas\/achicar_panel\.js pedidos\.html "\$SITIO\/pedidos\.html"/.test(wf) && /upload-pages-artifact/.test(wf));
   const pushers = fs.readdirSync(path.join(RAIZ, '.github', 'workflows')).filter(f => /\.ya?ml$/.test(f) && f !== 'publicar-pages.yml').map(f => fs.readFileSync(path.join(RAIZ, '.github', 'workflows', f), 'utf8'))
-    .filter(t => /git push/.test(t) && !/rama de trabajo \(nunca en main\)/.test(t)).map(t => (t.match(/^name:\s*(.+)$/m) || [])[1].trim());   // el diagnóstico sube a una rama de trabajo, nunca a main
+    .filter(t => /git push|publish_comercial\.py/.test(t) && !/rama de trabajo \(nunca en main\)/.test(t)).map(t => (t.replace(/^\uFEFF/, '').match(/^name:\s*(.+)$/m) || [])[1].trim());   // el diagnóstico sube a una rama de trabajo, nunca a main
   const faltan = pushers.filter(n => wf.indexOf("'" + n + "'") < 0);
   chk('5c escucha a todos los workflows que suben algo a main (' + pushers.length + ')', faltan.length === 0, faltan);
   chk('5d no corta una publicación en curso y no se pisa con la de la rama', /group: pages/.test(wf) && /cancel-in-progress: false/.test(wf));

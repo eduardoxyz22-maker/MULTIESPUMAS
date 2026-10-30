@@ -21,6 +21,8 @@ on:
       - 'Leer adjuntos de Trello (ATC)'
       - 'Historial de las tarjetas de Trello (ATC)'
       - 'Regenerar Panel Mayo 2026 (Kommo)'
+      - 'Actualizar Junio 2026'                   # suben con la API de contenidos (publish_comercial.py): tampoco disparan un push
+      - 'Actualizar Mayo 2026 (cerrado)'
     types: [completed]
     branches: [main]
   workflow_dispatch:          # a mano: Actions → «Publicar el panel (GitHub Pages, achicado)» → Run workflow
@@ -45,6 +47,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           m=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type 2>/dev/null || echo desconocido)
+          [ "$m" = "desconocido" ] && echo "::warning::No pude preguntar a GitHub cómo publica Pages: esta vez no se publica (si Pages está en «GitHub Actions», correr de nuevo)"
           echo "Pages publica desde: $m («workflow» = este workflow; «legacy» = la rama, como siempre)"
           echo "modo=$m" >> "$GITHUB_OUTPUT"
 
@@ -71,7 +74,7 @@ jobs:
           mkdir -p "$SITIO"
           rsync -a --exclude .git --exclude .github ./ "$SITIO/"
           ESBUILD_PATH="$RUNNER_TEMP/esb/node_modules/esbuild" node herramientas/achicar_panel.js pedidos.html "$SITIO/pedidos.html"
-          grep -qE "PANEL_V=['\"]" "$SITIO/pedidos.html" || { echo "::error::al pedidos.html publicado le falta PANEL_V"; exit 1; }   # achicado lleva comillas dobles
+          grep -qE "PANEL_V[[:space:]]*=[[:space:]]*['\"]" "$SITIO/pedidos.html" || { echo "::error::al pedidos.html publicado le falta PANEL_V"; exit 1; }   # achicado lleva comillas dobles
           du -sh "$SITIO"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
