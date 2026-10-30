@@ -180,7 +180,9 @@ async function abrir(browser, reloj){
   });
   chk('FE6 la recogida cerrada que nadie nombra ya no queda como muestra', r && r.ids && r.ids.indexOf('rc1')<0, r);
   chk('control: la recogida que Moreno todavía nombra y el pedido a fábrica cerrado se quedan', r && r.ids && r.ids.indexOf('rc2')>=0 && r.ids.indexOf('fq')>=0, r);
-  chk('FE6 el «Ya pedí» que venció hace más de 7 días se va (antes, a los 15 de tildado)', r && r.ids && r.ids.indexOf('y1')<0, r);
+  /* 🏭 (30/10, propuesta 75, a conciencia) El dueño eligió «lo que no llega no desaparece»: un «Ya pedí» vencido sin llegar queda hasta que lo
+     cierra un Excel, «✓ Llegó» o «✕ No se pidió» (la celda tiene su tope: 60 días y 40 abiertos, `fdPodarAbiertos`, test_fabrica_debe FD12). */
+  chk('FE6 el «Ya pedí» que venció hace más de 7 días ya NO se va (propuesta 75): el Plan lo sigue mostrando para reclamar', r && r.ids && r.ids.indexOf('y1')>=0 && r.venc && r.venc.indexOf('y1')>=0, r);
   chk('control: el que venció hace 7 días se queda y el Plan lo sigue mostrando para reclamar', r && r.ids && r.ids.indexOf('y2')>=0 && r.venc && r.venc.indexOf('y2')>=0, r);
   await page._ctx.close();
 

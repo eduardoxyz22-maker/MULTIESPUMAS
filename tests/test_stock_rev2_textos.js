@@ -371,7 +371,9 @@ async function abrir(browser, file, reloj, vp){
   });
   chk('TX18 (Man-VM7) el segundo «Ya pedí N más» del día después de destildar el primero SE ANOTA (antes salía sin hacer nada)', r && r.vm7 && r.vm7.despues===r.vm7.antes+1 && r.vm7.u.indexOf(r.vm7.fab)>=0, r && r.vm7);
   chk('TX18 (Man-VM9) sin ninguna línea 🏭 ni ✗, el pedido deja de decir «En producción»', r && r.vm9==='', r && r.vm9);
-  chk('TX18 (Man-VM10) con solo un «Ya pedí» vencido, la casilla no dice «más»; y el vencido parcial dice «llegaron 3 y faltan 2»', r && /Ya pedí \d+(?! más)/.test(r.vm10||'') && !/ más/.test((r.vm10||'').split('Ya no se cuenta')[1]||'') && /llegaron 3 y faltan 2/.test(r.vm10||''), r && r.vm10);
+  /* 🏭 (30/10, propuesta 75, a conciencia) Desde la propuesta 75 al lado de la casilla va «⚠️ Hay 2 pedidas el 07/10 que no llegaron: reclamá
+     antes de pedir más»: se mira que la CASILLA no diga «Ya pedí N más» (antes, cualquier « más» después del vencido). */
+  chk('TX18 (Man-VM10) con solo un «Ya pedí» vencido, la casilla no dice «más»; y el vencido parcial dice «llegaron 3 y faltan 2»', r && /Ya pedí \d+(?! más)/.test(r.vm10||'') && !/Ya pedí \d+ más/.test(r.vm10||'') && /llegaron 3 y faltan 2/.test(r.vm10||''), r && r.vm10);
   chk('TX18 (Man-VM10) una recogida programada dice «🚚 Recogida programada»; un pedido a fábrica sigue «🚚 Ya pedido»', r && /^🚚 Recogida programada/.test(r.rec||'') && /^🚚 Ya pedido/.test(r.fab||''), r);
 
   // ═══ TX19. BP3, BP4, BP6 ═══

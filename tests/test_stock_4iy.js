@@ -8,7 +8,7 @@
    4. (8) «SOMIER 2P HEAVEN» y «SOMIER 3 PLAZAS KING HEAVEN» son el SOMIER ORO; la almohada de fibra siliconada 50x70 sin código es
       la CD1403 (la de 50x90 es otra).
    5. (7) «✓ Ya pedí»: tildar anota lo pedido, deja de pedirse hasta el día en que tendría que llegar y vuelve después;
-      destildar lo saca; la poda lo tira a los 15 días si nunca llegó.
+      destildar lo saca; (desde la propuesta 75, 30/10) si nunca llegó queda hasta 60 días desde que se pidió.
    6. (2 «sí») Lo apartado para un pedido lejano se sugiere soltar para uno más cercano que quedó sin stock. Solo sugiere.
    7. Sin errores de la página.
 
@@ -132,12 +132,15 @@ const PREP = `
     __seed(STATE, 4); STOCK.p=[];
     planYaPedi(__k, true); out.con=(STOCK.p||[]).length;
     planYaPedi(__k, false); out.sin=(STOCK.p||[]).length;
-    var S={ p:[ { id:'v', k:__k, u:3, fab:'', f:diasAtras(20), esp:'', r:'', ya:1 }, { id:'n', k:__k, u:3, fab:'', f:diasAtras(20), esp:'', r:'' } ] };
+    /* 🏭 (30/10, propuesta 75, a conciencia) Lo que no llega ya no se borra a los 15 días: queda hasta que lo cierra un Excel, «✓ Llegó» o
+       «✕ No se pidió»; la celda tiene su tope (60 días desde que se pidió y 40 abiertos, `fdPodarAbiertos`). */
+    var S={ p:[ { id:'v', k:__k, u:3, fab:'', f:diasAtras(20), esp:'', r:'', ya:1 }, { id:'n', k:__k, u:3, fab:'', f:diasAtras(20), esp:'', r:'' },
+                { id:'w', k:__k, u:3, fab:'', f:diasAtras(61), esp:'', r:'', ya:1 } ] };
     out.poda=(stockPodar(S, todayStr()).p||[]).map(function(q){ return q.id; });
     return out;
   });
   chk('5f. destildar el mismo día lo saca', r5c.con===1 && r5c.sin===0, r5c);
-  chk('5g. un «Ya pedí» de hace 20 días que nunca llegó se poda (un pedido a fábrica normal no)', r5c.poda.join()==='n', r5c);
+  chk('5g. un «Ya pedí» de hace 20 días que nunca llegó se queda (propuesta 75); el de hace 61 días se poda (un pedido a fábrica normal no)', r5c.poda.join()==='v,n', r5c);
 
   // 6. soltar lo apartado para más adelante
   const r6 = await page.evaluate(()=>{
