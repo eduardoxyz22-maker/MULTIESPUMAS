@@ -2086,6 +2086,20 @@ html.wco .dep-modal,html.wco .anu-grito,html.wco .anu,html.wco .quien,html.wco .
 :root{--sa-t:env(safe-area-inset-top,0px)}
 .header{padding-top:var(--sa-t,0px)}
 body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}   /* el iPhone acostado: nada bajo la cámara */
+/* 🔑 (30/10, §4oa, 88) La contraseña de Administración: era el único campo con la cajita gris del navegador (el estilo general de los
+   campos no incluye type=password y este no tiene clase propia; los otros tres de contraseña usan `.msel`). */
+.lock-box .field input{width:100%;height:48px;padding:0 14px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:1rem;text-align:center;letter-spacing:.06em;color:var(--text);background:#fff;transition:border .15s,box-shadow .15s}
+.lock-box .field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-lt)}
+/* 🧹 (§4oa, 89) La lista de «Semana» escondida se dibujaba igual: `.sem` pone display:flex y le ganaba a [hidden] (una barra blanca vacía
+   debajo de los filtros de Administración). Y «A mañana» ya no se parte en dos renglones en la ficha. */
+.sem[hidden]{display:none!important}
+.af-tb small{white-space:nowrap;letter-spacing:-.01em}
+/* ⚡ (§4oa, 86/87) El botón del trozo que sigue, en la tabla de Contabilidad y en las grillas de tarjetas. */
+.trz{grid-column:1/-1;text-align:center;padding:10px 0}
+tr.trz td{text-align:center;padding:12px 8px;background:#fafcfc}
+tr.trz>td{display:table-cell!important}   /* «☰ Columnas» esconde con `tr>*:nth-child(n)`: escondida la 1ª, el botón (una sola celda) se iba con ella */
+.trz-btn{font:inherit;font-size:.85rem;font-weight:700;color:var(--teal-dk);background:#fff;border:1px solid var(--teal-border);border-radius:999px;padding:8px 18px;cursor:pointer;min-height:40px}
+.trz-btn:hover{background:var(--teal-lt)}
 html.sa-top .adm-ov,html.sa-top #stock-overlay,html.sa-top #alm-overlay,html.sa-top #visor,
 html.sa-top [style*="position:fixed"][style*="inset:0"],html.sa-top [style*="position: fixed"][style*="inset: 0"],html.sa-top .modal-overlay,html.sa-top #obs-conf,html.sa-top .pal-ov,html.sa-top #salud-overlay,
 html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quien,html.sa-top .pm-overlay,html.sa-top #pt-ov{border-top:var(--sa-t,0px) solid var(--wco-bg,#0f4c5c)!important}
@@ -5975,12 +5989,48 @@ function loadMirror(){
 }
 /* 🧾 (27/09) Cada vez que cambia la lista (o el stock) el saldo del formulario se vuelve a calcular (`saldoDatos`, §4gj). */
 var SALDO_GEN=0;
-function saveMirror(){ SALDO_GEN++; try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
+/* 🛟 (30/10, §4oa, propuesta 84; dueño: «ok todo») LA COPIA DEL APARATO TIENE TOPE. Era la planilla ENTERA (1,3 millones de letras el
+   30/10, ~400.000 más por mes) en el mismo lugar del navegador donde se guarda cada pedido ANTES de mandarlo (`LS_PEND`, §4hh). Chrome
+   da 5,2 millones (medido); Safari, menos. Lleno, `prepararDurable` no puede conservar el pedido y el panel dice «El pedido NO se
+   envió». Ahora la copia (solo sirve para abrir rápido y para trabajar sin señal) guarda lo de los últimos `MIRROR_DIAS` días, lo que
+   viene, lo no entregado de los últimos `MIRROR_PEND_DIAS` y lo que tiene saldo: unas 780.000 letras, y no crece con los meses.
+   ⚠️ Lo que falte se lee de la planilla con la primera lectura, como siempre. Y si igual falta lugar, `lsPoner` borra primero esta
+   copia y vuelve a intentar: nunca se pierde un pedido sin enviar por la copia. */
+var MIRROR_DIAS=45, MIRROR_PEND_DIAS=180;
+function mirrorRecortar(lista){
+  var ahora=Date.now(), lim=ahora-MIRROR_DIAS*864e5, limP=ahora-MIRROR_PEND_DIAS*864e5;
+  return (lista||[]).filter(function(p){
+    if(!p) return false;
+    var ts=Number(p.ts)||0, fe=p.fecha ? Date.parse(String(p.fecha).slice(0,10)+'T12:00:00-04:00') : 0;
+    if(!(fe>0)) fe=0;
+    if(ts>=lim || fe>=lim || (!ts && !fe)) return true;          // reciente, lo que viene, o sin fecha
+    if(!p.entregado && fe>=limP) return true;                       // sin entregar
+    if(!p.pagado && (Number(p.saldo)||0)>0.005) return true;        // con saldo
+    return false;
+  });
+}
+/* Guarda en el aparato y, si el navegador dice que no hay lugar, borra la copia de la planilla (se vuelve a bajar sola) y prueba otra
+   vez. `esCopia`: es la copia misma; si no entra, se borra la vieja para dejarle el lugar a lo que no se puede perder. */
+function lsPoner(k, v, esCopia){
+  try{ localStorage.setItem(k, v); return true; }catch(e){}
+  try{ localStorage.removeItem(LS_KEY); MIRROR_SUCIO=true; }catch(e){}
+  if(esCopia) return false;
+  try{ localStorage.setItem(k, v); return true; }catch(e){ return false; }
+}
+/* ⚡ (§4oa, propuesta 85) `o.igual`: la lectura de cada minuto vino sin ningún cambio (`apiList` → `_igual`). Si la copia ya estaba al
+   día no se vuelve a escribir (eran 1,3 MB cada minuto). Todo lo que cambia algo acá llama sin `o` y la escribe siempre. */
+var MIRROR_SUCIO=true;
+function saveMirror(o){
+  if(o && o.igual && !MIRROR_SUCIO) return;
+  SALDO_GEN++;
+  var txt; try{ txt=JSON.stringify(mirrorRecortar(STATE)); }catch(e){ return; }
+  MIRROR_SUCIO=!lsPoner(LS_KEY, txt, true);
+}
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
 function upsert(rec){ for(var i=0;i<STATE.length;i++){ if(STATE[i].id===rec.id){ STATE[i]=rec; return; } } STATE.unshift(rec); }
 
 function getPending(){ try{ return JSON.parse(localStorage.getItem(LS_PEND))||[]; }catch(e){ return []; } }
-function setPending(a){ try{ localStorage.setItem(LS_PEND, JSON.stringify(a)); }catch(e){} }
+function setPending(a){ try{ lsPoner(LS_PEND, JSON.stringify(a)); }catch(e){} }   // 🛟 (§4oa) sin lugar, primero se va la copia de la planilla
 /* ⚠️ Un «no» FIRME del servidor (conflicto, día cerrado, cupos, OC repetida) no se encola:
    reintentarlo es exactamente pisar lo que el servidor protegió, y además quedaría de
    zombi para siempre. `apiSave` lo anota en NO_ENCOLAR y acá se respeta (§4ce). */
@@ -6770,8 +6820,10 @@ function apiList(opts){
   }).then(function(j){
     if(j && j._otraVez) return apiList(opts);
     if(!(j && j.ok && Array.isArray(j.pedidos))) return j;
-    var lista;
+    var lista, igual=false;
     if(j.delta){
+      /* ⚡ (§4oa, 85) Lo cambiado vino vacío: la planilla está igual que en la lectura anterior. */
+      igual=!((j.pedidos||[]).length) && !((j.borrados||[]).length) && !!LISTA_BASE && Number(j.ahora)>=LISTA_BASE.ahora;
       lista=listaAplicarDelta(j);
       if(!lista){
         /* La cuenta de control no dio: se lee entera. Dos veces seguidas = algo de esta planilla que la de lo cambiado no
@@ -6787,6 +6839,7 @@ function apiList(opts){
       /* De cuándo es lo que trae (reloj de Google): el de la copia, que puede ser más nueva que esta respuesta. */
       var ahS=LISTA_BASE ? LISTA_BASE.ahora : (Number(j.ahora)||null);
       if(ahS) Object.defineProperty(lista, '_ahora', { value:ahS, enumerable:false, configurable:true, writable:true });
+      if(igual) Object.defineProperty(lista, '_igual', { value:true, enumerable:false, configurable:true, writable:true });
     }catch(e){}
     try{ localStorage.setItem(LS_LECTURA_T, String(Date.now())); }catch(e){}
     try{ if(j.gps) gpsTomar(j.gps, j.ahora); }catch(e){}   // 🛰️ (§4ko) las posiciones de los camiones vienen con la lectura
@@ -9257,6 +9310,44 @@ function lbMontoEntero(root){
     if(v.scrollWidth>v.clientWidth+1) v.style.whiteSpace='normal';
   });
 }
+/* ⚡ (30/10, §4oa, propuestas 86 y 87; dueño: «ok todo») LAS LISTAS LARGAS, DE A PARTES. Contabilidad dibujaba las ~311 ventas del mes
+   juntas (unos 10.000 elementos: 0,5 s en una compu normal, 2,4 s en una lenta, casi todo acomodándolas en la pantalla) y Mis pedidos
+   120 tarjetas. Ahora va el primer trozo y el resto llega solo al acercarse al final (o con «Ver más»). Las cuentas, la búsqueda, los
+   totales y el Excel no cambian: salen de la lista, no de lo dibujado.
+   ⚠️ En Playwright se dibuja todo de una (las pruebas leen las filas), salvo `window.TROZOS_PRUEBA`. */
+var TROZO_PRIMERO=50, TROZO_SIGUE=100, TROZOS={}, TROZOS_OBS=null;
+function trozosActivo(){ return !(navigator.webdriver && !window.TROZOS_PRUEBA); }
+/* El primer trozo (+ el marcador del resto). `fila(item, índice)`; `o.tabla`/`o.cols` para filas de tabla; `o.primero`. */
+function trozosHtml(clave, items, fila, o){
+  o=o||{}; items=items||[];
+  var n=trozosActivo() ? Math.min(items.length, o.primero||TROZO_PRIMERO) : items.length;
+  var html=items.slice(0, n).map(function(x, k){ return fila(x, k); }).join('');
+  if(n>=items.length){ delete TROZOS[clave]; return html; }
+  TROZOS[clave]={ items:items, fila:fila, i:n, o:o };
+  setTimeout(trozosMirar, 0);
+  return html+trozoMarcador(clave, items.length-n, o);
+}
+function trozoMarcador(clave, quedan, o){
+  var b='<button type="button" class="trz-btn" onclick="trozosMas(\''+clave+'\')">⬇️ Ver '+(quedan>TROZO_SIGUE ? (TROZO_SIGUE+' más · quedan '+quedan) : (quedan===1 ? 'la que queda' : ('las '+quedan+' que quedan')))+'</button>';
+  return o.tabla ? ('<tr class="trz" data-trz="'+clave+'"><td colspan="'+(o.cols||1)+'">'+b+'</td></tr>') : ('<div class="trz" data-trz="'+clave+'">'+b+'</div>');
+}
+function trozosMas(clave){
+  var T=TROZOS[clave], m=document.querySelector('[data-trz="'+clave+'"]'); if(!T || !m) return;
+  var desde=T.i, fin=Math.min(T.items.length, desde+TROZO_SIGUE);
+  var html=T.items.slice(desde, fin).map(function(x, k){ return T.fila(x, desde+k); }).join('');
+  T.i=fin;
+  if(TROZOS_OBS) TROZOS_OBS.unobserve(m);   // el marcador viejo se reemplaza: que el observador no lo siga mirando
+  m.insertAdjacentHTML('beforebegin', html);
+  if(fin<T.items.length) m.outerHTML=trozoMarcador(clave, T.items.length-fin, T.o);
+  else { m.remove(); delete TROZOS[clave]; }
+  setTimeout(trozosMirar, 0);
+}
+/* Al acercarse al final, el trozo siguiente llega solo. */
+function trozosMirar(){
+  if(!('IntersectionObserver' in window)) return;
+  if(!TROZOS_OBS) TROZOS_OBS=new IntersectionObserver(function(es){ es.forEach(function(e){ if(!e.isIntersecting) return; TROZOS_OBS.unobserve(e.target); var k=e.target.getAttribute('data-trz'); setTimeout(function(){ trozosMas(k); }, 0); }); }, { rootMargin:'700px 0px' });
+  document.querySelectorAll('[data-trz]').forEach(function(m){ TROZOS_OBS.observe(m); });
+}
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   try{ nxPstBoton(); }catch(e){}   // 🧾 (§4js, C2) cuántos pagos sin terminar
@@ -9332,7 +9423,7 @@ function renderConta(){
   try{ cxCardsPintar(list, _todas); }catch(e){}
   var head='<thead><tr>'+ctaTh('ing','Ingresado')+ctaTh('ent','Entrega agendada')+ctaTh('nota','N° Nota')+ctaTh('vend','Vendedor')+ctaTh('cli','Cliente')+ctaTh('tipo','Entrega')+ctaTh('cel','Celular')+
            '<th>Productos</th>'+ctaTh('fact','Facturar a')+ctaTh('nit','NIT')+ctaTh('pago','Pago')+'<th>Pagos recibidos</th>'+ctaTh('env','Recargo entrega')+'<th>Observaciones</th></tr></thead>';
-  tbl.innerHTML=head+'<tbody>'+list.map(function(p){
+  tbl.innerHTML=head+'<tbody>'+trozosHtml('conta', list, function(p){
     var reg=regEnSistema(p);
     return '<tr onclick="showContaModal(\''+p.id+'\')" style="cursor:pointer'+(reg?';background:var(--green-lt)':'')+'" title="'+(reg?'Ya registrado en el sistema contable':'Abrir para ver todo y registrar pagos')+'">'+
       '<td style="white-space:nowrap">'+esc(tsFmt(p.ts)||fmtFecha(p.fecha))+'</td>'+
@@ -9350,7 +9441,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+envioCelda(p)+'</td>'+
       '<td class="prod-cell">'+esc(p.observaciones||'')+'</td>'+
     '</tr>';
-  }).join('')+'</tbody>';
+  }, { tabla:true, cols:14 })+'</tbody>';
   try{ tblEstilo(); tblBarPintar('conta'); }catch(e){ console.error(e); }   // 🗂️ (§4nr, 33)
 }
 /* La fecha de entrega, y el aviso cuando cae en OTRO MES que el ingreso: es el caso de
@@ -9702,7 +9793,7 @@ function cxCardsPintar(list, todas){
   if(!box) return;
   if(!tarj || !(todas||[]).length){ box.innerHTML=''; return; }
   if(!list.length){ box.innerHTML='<div class="empty" style="padding:18px 0">Ninguna venta con ese filtro. <a style="cursor:pointer;color:var(--teal-dk);font-weight:700" onclick="cxFiltro(null)">Ver todas</a></div>'; return; }
-  box.innerHTML=list.map(function(p, i){
+  box.innerHTML=trozosHtml('cx-cards', list, function(p, i){
     var st=cxEstadoVenta(p), reg=regEnSistema(p), prods=contaProdTxt(p.productos), env=envioTotal(p);
     var pagos=contaPagos(p).filter(function(c){ return (Number(c.monto)||0)>0; });
     var ing=contaFecha(p);
@@ -9719,7 +9810,7 @@ function cxCardsPintar(list, todas){
         (env>0 && envioPorCobrar(p)>0.005?('<span class="cx-pg cx-pg-env">🚚 flete por cobrar '+fmtBs0(envioPorCobrar(p))+'</span>'):'')+
       '</div>'+dupChip(p)+
     '</div>';
-  }).join('');
+  }, { primero:30 });
 }
 /* F · cargadas dos veces. «Son distintas» se recuerda en ESTE aparato: el par deja de marcarse acá (en la tabla, el resumen y los
    chips), no en la planilla ni en otras computadoras. */
@@ -17562,7 +17653,8 @@ function zonaCanonica(z, lista){
 /* 🔒 (§4jd, revisión del 10/10: A2-2/A3-1) El próximo camión que de verdad sale: un día que Administración CERRÓ no tiene cupos para
    ofrecer (el formulario ya lo frena y el cuadrito promete desde el siguiente). Antes los anillos decían «AM 7 libres» del sábado cerrado. */
 function hdrProximoAbierto(){ var d=proximoDiaEntrega(), cerr=[]; for(var n=0; n<14 && diaCerrado(d); n++){ cerr.push(d); d=sigDiaHabil(d); } return { d:d, cerrados:cerr }; }
-function updateStats(){
+var LECTURA_IGUAL=false, NX_BADGES_T=0;
+function updateStats(o){
   // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
   var PA=hdrProximoAbierto(), man=PA.d;   // un sábado es el LUNES (§4ex): los cupos que importan son los del próximo camión; un día cerrado se saltea (§4jd)
   var rAM=Math.max(0,limTurno(man,'AM')-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,limTurno(man,'PM')-cuposUsadosTurno(man,'PM'));
@@ -17572,7 +17664,8 @@ function updateStats(){
   var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos '+_cuando+' · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM)+_cerr);
   hdrPintar(man, rAM, rPM);
   updateFooter();
-  if(typeof nxBadges==='function') nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
+  /* ⚡ (§4oa, 85) Con una lectura sin cambios no se recalculan si se calcularon hace menos de un minuto (su reloj propio los repasa igual). */
+  if(typeof nxBadges==='function' && !(o && o.igual && Date.now()-NX_BADGES_T<55000)) nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
   try{ vivoPintar(); }catch(e){}                  // 🔔 (§4ni, 10) la campanita «En vivo»
 }
 
@@ -18139,7 +18232,7 @@ function borrarPendPoner(id, x){
   id=String(id);
   if(x) BORRAR_PEND_MIO[id]=1; else delete BORRAR_PEND_MIO[id];   // la de esta página la sigue esta página
   try{
-    var m=borrarPendLeer(); if(x) m[id]=x; else delete m[id]; localStorage.setItem(LS_BORRAR_PEND, JSON.stringify(m));
+    var m=borrarPendLeer(); if(x) m[id]=x; else delete m[id]; lsPoner(LS_BORRAR_PEND, JSON.stringify(m));   // 🛟 (§4oa)
     var y=borrarPendLeer()[id]; return x ? !!(y && y.t===x.t) : !y;
   }catch(e){ return false; }
 }
@@ -19345,7 +19438,13 @@ function refrescarEstado(){
 function refrescarEstadoYa(){
   return conTopeDuro(apiList(), CARGA_TOPE, 'tardo_datos').then(function(res){
     if(res&&res.ok&&Array.isArray(res.pedidos)){
-      STATE=mergePending(res.pedidos); saveMirror(); updateStats();
+      /* ⚡ (§4oa, 85) Sin cambios: ni copia, ni números de pestañas, ni repintar. Si la junta con lo de acá sacó o agregó algo (un
+         pedido que otro equipo borró y recién ahora se confirma, §4go), sí cambió. */
+      var _igual=!!res.pedidos._igual, _n0=STATE.length;
+      STATE=mergePending(res.pedidos);
+      if(STATE.length!==_n0) _igual=false;
+      LECTURA_IGUAL=_igual;
+      saveMirror(_igual?{igual:true}:null); updateStats(_igual?{igual:true}:null);
       ULTIMO_REFRESCO=Date.now(); ULTIMO_ERROR='';
       cargaEstado('ok');
       saldoTrasLectura();                        // 🧾 (27/09) el saldo debajo de cada producto, con lo recién leído (§4gj)
@@ -19586,7 +19685,16 @@ function autoOcupado(){
 }
 /* Repinta SOLO la vista que se está mirando, y le devuelve el scroll donde estaba: que
    la lista salte sola mientras uno la lee es peor que tenerla desactualizada. */
+/* ⚡ (§4oa, 85) Con la lectura sin cambios, Nuevo pedido, Mis pedidos y Contabilidad no se vuelven a dibujar (en el formulario trababa
+   lo que se estaba escribiendo); igual se repintan cada `AUTO_REPINTAR_MS` y al cambiar el día, por lo que depende de la hora.
+   Administración y la vista del chofer se repintan siempre: las posiciones del GPS llegan con cada lectura aunque la planilla no cambie. */
+var AUTO_PINTADO_T=0, AUTO_PINTADO_DIA='', AUTO_REPINTAR_MS=5*60000;
+function autoRepintarPuedeEsperar(){
+  if(!LECTURA_IGUAL || Date.now()-AUTO_PINTADO_T>=AUTO_REPINTAR_MS || AUTO_PINTADO_DIA!==todayStr()) return false;
+  return ['view-form','view-mis','view-conta'].some(function(id){ var v=document.getElementById(id); return v && v.classList.contains('active'); });
+}
 function autoRepintar(){
+  AUTO_PINTADO_T=Date.now(); AUTO_PINTADO_DIA=todayStr();
   var y=window.scrollY;
   if(document.getElementById('view-form').classList.contains('active')){ renderCupoForm(); pintarBotonCierre(); }
   else if(document.getElementById('view-admin').classList.contains('active')){ if(UNLOCKED) renderAdmin(); }
@@ -19608,7 +19716,7 @@ function autoRefrescar(motivo){
   return flushPending().then(function(){
     if(autoOcupado()) { updateFooter(); return false; }
     return refrescarEstado().then(function(ok){
-      if(ok){ autoRepintar(); updateFooter(); }
+      if(ok){ if(!autoRepintarPuedeEsperar()) autoRepintar(); updateFooter(); }
       return ok;
     });
   });
@@ -27293,7 +27401,7 @@ function renderMis(){
   /* (26/09) El corte en 120 era callado: el chip decía «📋 Todos 300» y abajo no había nada que
      dijera que faltaban 180. Ahora lo dice y deja ver más. */
   var verNota=misVeNota(v);                         // (07/10) la nota de venta, solo a Eduardo
-  tbl.innerHTML=lista.slice(0,MIS_TOPE).map(function(p,i){ return misCardHtml(p, i+1, todos, verNota); }).join('')+
+  tbl.innerHTML=trozosHtml('mis', lista.slice(0,MIS_TOPE), function(p,i){ return misCardHtml(p, i+1, todos, verNota); }, { primero:30 })+   // ⚡ (§4oa, 87)
     (lista.length>MIS_TOPE ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
       'Se ven los '+MIS_TOPE+' más nuevos de '+lista.length+'. '+
       '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="MIS_TOPE+=120;renderMis()">Ver '+Math.min(120, lista.length-MIS_TOPE)+' más</button></div>') : '');
@@ -36353,7 +36461,7 @@ function tstPasesPend(){   // se relee cada vez: otra pestaña de este aparato p
 }
 function tstPasesPendPoner(L){
   TST_PASES_PEND=L; var txt=L.length ? JSON.stringify(L) : '', ok=false;
-  try{ if(L.length) localStorage.setItem(TST_PASE_LS, txt); else localStorage.removeItem(TST_PASE_LS); ok=((localStorage.getItem(TST_PASE_LS)||'')===txt); }catch(e){}
+  try{ if(L.length) lsPoner(TST_PASE_LS, txt); else localStorage.removeItem(TST_PASE_LS); ok=((localStorage.getItem(TST_PASE_LS)||'')===txt); }catch(e){}
   TST_PASE_LS_OK=ok; return ok;
 }
 function tstPaseIdGuardado(id){ try{ return (JSON.parse(localStorage.getItem(TST_PASE_LS)||'[]')||[]).some(function(x){ return x && x.id===id; }); }catch(e){ return false; } }
@@ -41568,7 +41676,7 @@ var CIERRE_ENT_EN_CURSO=false, CIERRE_ENT_ULT=null, LS_CIERRE_PEND='me_cierre_pe
 /* ⏳ (05/10, Codex H6) Un cierre que no pudo releer la planilla NO confirma nada: queda PENDIENTE DE SINCRONIZAR en este
    aparato (`localStorage`) y se aplica solo, revalidado, con la próxima lectura buena (`cierreEntSincronizar`). */
 function cierreEntPendiente(){ try{ var j=JSON.parse(localStorage.getItem(LS_CIERRE_PEND)||'null'); return (j && j.ids && j.ids.length) ? j : null; }catch(e){ return null; } }
-function cierreEntPendienteGuardar(x){ try{ if(x) localStorage.setItem(LS_CIERRE_PEND, JSON.stringify(x)); else localStorage.removeItem(LS_CIERRE_PEND); }catch(e){} }
+function cierreEntPendienteGuardar(x){ try{ if(x) lsPoner(LS_CIERRE_PEND, JSON.stringify(x)); else localStorage.removeItem(LS_CIERRE_PEND); }catch(e){} }
 /* El plan de un cierre: qué se tilda (con el día declarado) y cómo estaba cada pedido al abrir. Lo destildado no entra: no se
    le escribe nada (dueño, 05/10). */
 function cierreEntPlan(quien){
@@ -49708,6 +49816,7 @@ function nxBadge(idTab, n, cls, tit){
   b.title=tit||'';
 }
 function nxBadges(){
+  NX_BADGES_T=Date.now();
   try{
     var v=getVendedorMem(), D=v?nxM1Datos(v, false):null;
     nxBadge('tab-mis', (D && D.tarde) ? D.faltan : 0, 'nx-tb-nar', 'Clientes de mañana sin avisar');
