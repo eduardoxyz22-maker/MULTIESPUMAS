@@ -123,6 +123,6 @@ const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, 
 
   chk('sin errores de la página', errores.length === 0, errores.slice(0, 3));
   await browser.close();
-  console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');
+  console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
   process.exit(FAIL ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
