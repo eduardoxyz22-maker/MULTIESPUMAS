@@ -41,7 +41,9 @@ const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, 
       img: b.backgroundImage, bodyBg: body.backgroundColor, bodyImg: body.backgroundImage, ancho: parseFloat(b.width), alto: parseFloat(b.height) };
   });
 
-  for (const [mes, fecha, tema, marca] of [['octubre', '2026-10-30T10:00:00-04:00', 'tema-halloween', /%3Cpath id='m'/], ['noviembre', '2026-11-03T10:00:00-04:00', 'tema-todos-santos', /%3Cg id='f'/]]) {
+  /* El de noviembre espera al dueño (está en la rama): cuando diga que sí, va otra vez en esta lista:
+     ['noviembre', '2026-11-03T10:00:00-04:00', 'tema-todos-santos', /%3Cg id='f'/] */
+  for (const [mes, fecha, tema, marca] of [['octubre', '2026-10-30T10:00:00-04:00', 'tema-halloween', /%3Cpath id='m'/]]) {
     const { ctx, page } = await abrir(fecha);
     // ---------- 1 ----------
     const c = await capa(page);
