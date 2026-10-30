@@ -16880,6 +16880,26 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   Visita tienda con Facebook (lo real: 59 % contra 0,4 %, ~140×) y la alerta de fichas nombra a tres de cinco. La 66 son errores, no ideas.
 - Probadas y descartadas por las cuentas: pronóstico de cobros (el 88 % se paga al vender), aviso de «el turno se va a llenar» (1 de 3 acierta),
   pesos por día de la semana o quincena (empeora), topar las ventas grandes en μ/σ (sirve menos). Espera que el dueño elija por número.
+- **El dueño (30/10): «Ni una. Recordá que desde este mes empezaron a usar mejor el panel… dame propuestas reales».** Las alarmas eran de
+  agosto-septiembre (antes de usar bien el panel). ⚠️ **Para medir el panel, solo vale desde el 01/10/2026**; lo anterior es contexto.
+
+### §4nv — ✅ PROPUESTAS REALES CON SOLO OCTUBRE (74-83, 30/10): sin código en el panel
+- Planilla leída el 30/10 01:59 (1.649 filas, solo lectura, `scratchpad/real/lista_3010.json`, nunca al repo) + `scratchpad/reales/harness.js`
+  (abre `pedidos.html` con esa lista y sin red). Cuatro agentes por puesto (vendedoras, logística, contabilidad, dueño) con `reales/CONTEXTO.md`:
+  solo octubre, casos contados, que el panel no lo haga ya, fuera de las rechazadas. Resúmenes en `reales/r_*.md`. Página:
+  https://claude.ai/artifact/LoxsRxgFShCHXp5NcygYB5
+- **Con solo octubre**: entregadas que deben = 1 (Bs 6.650); efectivo sin retiro anotado ~Bs 59.000 de vendedoras (Jonathan 18.559 sin ningún
+  retiro, Juan Pablo 18.880) y ~Bs 28.000 de choferes; se carga bien: fotos 100 %, camión 94 % desde el 12/10, ✅ 376/379, Excel diario (dos por día
+  desde el 28/10). Casi no usan: cierre de entregas, tildes de carga desde el 27/10, control del Excel (0 de 63), «llegó» del 🏭 (5/140).
+- 74 Cierre comercial del mes desde el panel (metas por vendedor, comisión, bono Titanio, congelar el mes; el de septiembre se armó a mano el 05/10
+  con 5 correcciones, `dashboard-septiembre-2026.html`; la 09-033 de Jonathan Bs 4.990 cuenta en septiembre y en octubre) · 75 «Lo que nos debe la
+  fábrica» (28 avisos «reclamá», 14 ya llegaron; lo atrasado se borra a los 7 días; dos agentes lo encontraron por separado) · 76 «El cliente avisa
+  cuándo» (12 ventas Bs 84.226 con fecha inventada, el bot avisa días falsos; toca el `.gs`) · 77 retiro tildando los cobros (7 de 13 no cuadraban) ·
+  78 leer el comprobante al subirlo (48 diferencias vistas 1-25 días tarde) · 79 «lo que no salió ayer» por WhatsApp cada mañana (10-257 seis días
+  trabada; `.gs` + plantilla) · 80 extracto del banco (241 QR sin confirmar) · 81 Kommo ya cargadas fuera de «Para hacer» (14 de 18) · 82 control del
+  cierre sin ruido (pregunta: ¿Buenos Aires, Mutualista y Charcas se cargan al sistema en otro lado? 166 ventas, Bs 300.629) · 83 RPT con faltantes.
+- Para el sábado 31/10: 09-005, 09-237, 09-318, 09-364 (cargadas en septiembre, sin camión); con la escala de septiembre, Juan Pablo a Bs 560,
+  Isabel a Bs 1.539 y Fernando a Bs 4.670 de su mínima. Espera que el dueño elija.
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
