@@ -79,7 +79,7 @@ var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
    y el sello con el que leyó: si otra guardó en el medio, `conflicto` con la fila actual, y el panel le
    aplica encima SOLO lo que tocó y vuelve a guardar. Un panel que no manda `juntar` (el de antes del 26/09)
    sigue como siempre: a estas filas NO se le contesta `actualizar`, para no trabar a nadie. */
-var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1 };
+var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1, '__talonario__':1 };   // (2026-10-30-a) el talonario de Contabilidad (propuesta 82) también
 /* 🧓 (2026-10-06-a) EL STOCK LO GUARDA SOLO UNA PÁGINA AL DÍA. El 06/10 una computadora con la página de antes (sin F5)
    volvió a subir los tres Excel del sábado y el panel de todos trabajó el lunes con el stock de dos días antes; esa página
    además borraba el control del corte (detecciones, salidas sin pedido) al guardar. La página del 06/10 manda `sf` (el
