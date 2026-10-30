@@ -342,7 +342,8 @@ const DIA = 86400000;
   }, {man: dd(1), viejo: Date.now()-200*DIA});
 
   chk('⚠️ reconoce la venta que YA estaba cargada a mano', r9b.gemelo1==='aMano', r9b.gemelo1);
-  chk('…aunque Kommo mande el celular con el +591', /Esto parece que ya lo cargaste/.test(r9b.html));
+  // (30/10, §81) mismo celular y misma vendedora = «Ya está cargada como …» (antes «Esto parece que ya lo cargaste»): cambiado a conciencia
+  chk('…aunque Kommo mande el celular con el +591', /Ya está cargada como/.test(r9b.html));
   chk('…y le muestra cuál es (su nota)', /Nota 700/.test(r9b.html), r9b.html.slice(0,60));
   chk('…con el botón para dejar una sola', /Sí, es la misma/.test(r9b.html));
   chk('…y la salida por si de verdad es otra venta', /No, es otra venta/.test(r9b.html));

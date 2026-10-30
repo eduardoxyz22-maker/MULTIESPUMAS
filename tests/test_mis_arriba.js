@@ -79,7 +79,8 @@ function PREPARAR(){
     var ok=[].map.call(document.querySelectorAll('#mis-top .ph-ok-l span'), function(x){ return x.textContent; }); return { it:it, ok:ok }; });
   const sev = r2.it.map(s=>s.split('|')[0]);
   chk('2a. lo rojo va primero (sin stock y atrasados)', /Productos que no hay/.test(r2.it[0]) && sev.indexOf('ah-r')===0 && sev.lastIndexOf('ah-r') < sev.indexOf('ah-a'), r2.it);
-  chk('2b. los números: 1 sin stock, 1 atrasado, 1 sin ubicación, 2 de Kommo, 1 con saldo', ['Productos que no hay','Pasaron su turno','Sin ubicación','Ventas de Kommo','Saldo por cobrar'].every(function(t, i){ var f=r2.it.filter(function(s){ return s.indexOf(t)>=0; })[0]; return f && f.split('|')[1]===['1','1','1','2','1'][i]; }), r2.it);
+  // (30/10, §81, a conciencia) la de Kommo con el mismo celular y vendedora que a3 ya está cargada: no cuenta → 1 de Kommo (antes 2)
+  chk('2b. los números: 1 sin stock, 1 atrasado, 1 sin ubicación, 1 de Kommo (la otra ya está cargada), 1 con saldo', ['Productos que no hay','Pasaron su turno','Sin ubicación','Ventas de Kommo','Saldo por cobrar'].every(function(t, i){ var f=r2.it.filter(function(s){ return s.indexOf(t)>=0; })[0]; return f && f.split('|')[1]===['1','1','1','1','1'][i]; }), r2.it);
   chk('2c. lo que no tiene pendiente va a «Al día» (recargos, bot)', r2.ok.some(t=>/Recargos reportados/.test(t)) && r2.ok.some(t=>/respuestas del bot/.test(t)), r2.ok);
 
   /* 3 */
@@ -94,8 +95,9 @@ function PREPARAR(){
   /* 5 */
   const r5 = await ev(async () => { var b=document.getElementById('mis-borradores'); var fs=[].map.call(b.querySelectorAll('.kx-f'), function(f){ return f.innerText.replace(/\s+/g,' ')+' || '+[].map.call(f.querySelectorAll('button'), function(x){ return x.getAttribute('onclick'); }).join(' ; '); });
     return { txt:b.innerText.replace(/\s+/g,' '), fs:fs }; });
-  chk('5a. la bandeja de Kommo va en filas cortas con dos grupos', /Ventas de Kommo para completar/.test(r5.txt) && /Parecen ya cargadas · 1/i.test(r5.txt) && /Nuevas · 1/i.test(r5.txt), r5.txt.slice(0,300));
-  chk('5b. la que ya está cargada ofrece «Sí, es la misma» (borrEsLaMisma) y la nueva «Completar» (completarBorrador)', r5.fs.some(f=>/parece la misma que CLIENTE a3/.test(f) && /borrEsLaMisma\('kommo-111'/.test(f)) && r5.fs.some(f=>/NUEVO KOMMO/.test(f) && /completarBorrador\('kommo-222'\)/.test(f)), r5.fs);
+  // (30/10, §81, a conciencia) mismo celular y vendedora = grupo «Ya están cargadas» (antes «Parecen ya cargadas») y la etiqueta lo dice seguro
+  chk('5a. la bandeja de Kommo va en filas cortas con dos grupos', /Ventas de Kommo para completar/.test(r5.txt) && /Ya están cargadas · 1/i.test(r5.txt) && /Nuevas · 1/i.test(r5.txt), r5.txt.slice(0,300));
+  chk('5b. la que ya está cargada ofrece «Sí, es la misma» (borrEsLaMisma) y la nueva «Completar» (completarBorrador)', r5.fs.some(f=>/ya está cargada como 10-a3/.test(f) && /borrEsLaMisma\('kommo-111'/.test(f)) && r5.fs.some(f=>/NUEVO KOMMO/.test(f) && /completarBorrador\('kommo-222'\)/.test(f)), r5.fs);
 
   /* 1c y 6b: «Ver todos» con el diseño del equipo (§4nn, 27/10: el dueño aprobó la muestra; antes quedaba como antes, a conciencia) */
   const r6 = await ev(async () => { await _ver('Isabel Robledo', true); return { top:document.getElementById('mis-top').hidden, txt:_txt('mis-top'), izq:getComputedStyle(document.getElementById('mis-izq')).display, busca:!!document.querySelector('.filters #mis-busca') }; });
