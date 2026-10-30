@@ -2807,6 +2807,10 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
           <div class="field">
             <button class="btn btn-sm mt-btn" id="pry-metas-btn" onclick="metasAbrir()">🎯 Metas</button>
           </div>
+          <!-- 🏁 (30/10, propuesta 74) El cierre comercial del mes: metas por vendedor, comisión, bono Titanio y «Cerrar el mes». -->
+          <div class="field">
+            <button class="btn btn-sm ccm-btn" id="pry-cierre-btn" onclick="ccmAbrir()">🏁 Cierre comercial del mes</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
@@ -5385,6 +5389,63 @@ html.con-pasos{ scroll-padding-bottom:84px; }
   <div class="cli-g cli-g-v"><span class="lb">Vendedores <button type="button" class="cli-mini" onclick="cliTodos(true)">Todos</button><button type="button" class="cli-mini" onclick="cliTodos(false)">Ninguno</button></span><div id="cli-vends" class="cli-vends"></div></div>
 </div>
 <div id="cli-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<!-- 🏁 (30/10, propuesta 74) El cierre comercial del mes: vendido por vendedor (la cuenta de Proyección), metas, escala, comisión, bono
+     Titanio, lo que hay que revisar y «🔒 Cerrar el mes». Se abre desde Proyección (solo con la contraseña). `ccmAbrir`. -->
+<div id="ccm-ov" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="ccm-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="ccm-tit" style="font-size:.95rem">🏁 Cierre comercial</b><input type="month" id="ccm-mes" onchange="ccmElegirMes(this.value)" aria-label="Mes del cierre" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#0f766e"><span id="ccm-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="ccm-bajar" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="ccmBajar()">⬇️ Excel</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="ccmCerrarVentana()">✕ Cerrar</button></div>
+<div id="ccm-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<style>
+/* 🏁 El cierre comercial (propuesta 74): clases propias `ccm-*`, tema claro con los colores del panel. */
+.ccm-btn{ background:#ecfdf5; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
+#ccm-body{ color:var(--text,#17324d); }
+.ccm-wrap{ max-width:1340px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+.ccm-estado{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline; background:#fff; border:1px solid var(--gray-md,#dce3e6); border-left:5px solid #00B5AD; border-radius:12px; padding:12px 16px; }
+.ccm-estado b{ font-size:1.05rem; color:#0f766e; }
+.ccm-estado span{ font-size:.84rem; color:var(--muted,#64748b); }
+.ccm-estado.ccm-cerr{ border-left-color:#7c3aed; }
+.ccm-estado.ccm-cerr b{ color:#5b21b6; }
+.ccm-av{ background:#fffbeb; border:1px solid #fcd34d; border-left:4px solid #d97706; border-radius:10px; padding:10px 14px; font-size:.84rem; color:#7c4b00; line-height:1.5; }
+.ccm-av.ccm-av-r{ background:#fef2f2; border-color:#fca5a5; border-left-color:#dc2626; color:#7f1d1d; }
+.ccm-av.ccm-av-ok{ background:#f5f3ff; border-color:#c4b5fd; border-left-color:#7c3aed; color:#4c1d95; }
+.ccm-av .btn{ margin:6px 6px 0 0; }
+.ccm-box{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:14px; padding:14px 16px; min-width:0; }
+.ccm-t{ font-size:.72rem; font-weight:800; color:#0f766e; text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.ccm-t .ccm-g{ text-transform:none; letter-spacing:0; font-size:.95rem; color:var(--t,#0f766e); }
+.ccm-marca{ border-top:4px solid var(--c,#00B5AD); }
+.ccm-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.ccm-tab{ width:100%; border-collapse:collapse; font-size:.8rem; min-width:860px; }
+.ccm-tab th{ background:#f1f5f9; color:#334155; font-size:.66rem; letter-spacing:.04em; text-transform:uppercase; text-align:right; padding:7px 6px; white-space:nowrap; position:static; }
+.ccm-tab td{ padding:7px 6px; border-top:1px solid #eef2f4; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; vertical-align:top; }
+.ccm-tab th:first-child, .ccm-tab td:first-child{ text-align:left; white-space:normal; min-width:130px; }
+.ccm-tab td small{ display:block; color:var(--muted,#64748b); font-size:.7rem; font-weight:600; white-space:normal; }
+.ccm-tab tfoot td{ font-weight:800; background:#f8fafc; border-top:2px solid var(--gray-md,#dce3e6); }
+.ccm-tab td.ccm-tot{ font-weight:800; color:#0f766e; }
+.ccm-tab tr.ccm-sinm td{ color:var(--muted,#64748b); }
+.ccm-pc{ display:inline-block; border-radius:999px; padding:1px 8px; font-weight:800; font-size:.78rem; background:#ecfdf5; color:#0f766e; }
+.ccm-pc.ccm-0{ background:#f1f5f9; color:#64748b; }
+.ccm-rev ul{ margin:4px 0 10px 18px; padding:0; font-size:.83rem; line-height:1.55; }
+.ccm-rev h4{ margin:10px 0 2px; font-size:.86rem; color:#7c4b00; }
+.ccm-rev h4:first-of-type{ margin-top:0; }
+.ccm-rev .ccm-nota, .ccm-nota{ font-size:.76rem; color:var(--muted,#64748b); margin:2px 0 8px; }
+.ccm-mini{ border:1px solid var(--gray-md,#dce3e6); background:#fff; color:#0f766e; border-radius:999px; padding:3px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; margin-left:6px; min-height:28px; }
+.ccm-mini.on{ background:#0f766e; border-color:#0f766e; color:#fff; }
+.ccm-tachada{ text-decoration:line-through; color:var(--muted,#64748b); }
+.ccm-acc{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.ccm-acc .btn{ width:auto; }
+.ccm-cerrar-mes{ background:#7c3aed !important; border-color:#7c3aed !important; color:#fff !important; font-weight:800; }
+.ccm-ed-g{ margin:10px 0 14px; }
+.ccm-ed-g > b{ display:block; color:var(--t,#0f766e); margin-bottom:6px; }
+.ccm-ed-tab{ border-collapse:collapse; font-size:.84rem; min-width:520px; }
+.ccm-ed-tab th{ background:#f1f5f9; color:#334155; font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; padding:6px 8px; text-align:left; position:static; }
+.ccm-ed-tab td{ padding:5px 8px; border-top:1px solid #eef2f4; }
+.ccm-ed-tab input{ width:130px; text-align:right; }
+.ccm-tr{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:.84rem; margin:4px 0; }
+.ccm-tr input{ width:72px; text-align:right; }
+.ccm-tr select{ width:auto; }
+.ccm-exp{ font-size:.82rem; color:var(--muted,#64748b); margin:0 0 8px; line-height:1.5; }
+.ccm-ok{ color:#15803d; font-weight:800; } .ccm-mal{ color:#b91c1c; font-weight:800; }
+.ccm-como{ font-size:.8rem; line-height:1.6; }
+@media (max-width:700px){ #ccm-body{ padding:10px !important; } .ccm-box{ padding:12px; } .ccm-ed-tab input{ width:100px; } }
+</style>
 <!-- 📄 (15/10, §4le) Informe de ATC del mes: hojas A4 apaisadas que se ven achicadas y se bajan como PDF. -->
 <div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><select id="atci-alc" onchange="atciPintar()" aria-label="Qué ATC entran en el informe"><option value="mes">📅 Un mes</option><option value="todas">🗂️ Todas, desde el inicio</option></select><select id="atci-tipo" onchange="atciPintar()" aria-label="Garantía o contra costo"><option value="">🎧 Garantía y contra costo</option><option value="gar">🛡️ Solo garantía</option><option value="stc">🔧 Solo contra costo (STC)</option><option value="sin">❓ Solo sin marcar</option></select><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
 <div class="no-print atci-ayuda" id="atci-estado">Las ATC que <b>entraron</b> en el mes elegido. Lo de «dónde están» es como están <b>hoy</b>.</div>
@@ -9772,9 +9833,11 @@ function metasGuardar(){
   return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
     if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
     var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===META_ID) srv=p; });
-    var D=metasLeer(srv), e={ t:Date.now() }, alguna=false;
+    var D=metasLeer(srv), e={ t:Date.now() }, alguna=false, prev=D.m[ym]||{};
+    /* 🏁 (30/10, propuesta 74) Las metas por vendedor (`vd`) y la escala (`esc`) del cierre comercial viven en el MISMO mes: se conservan. */
+    Object.keys(prev).forEach(function(k){ if(k!=='t' && !MARCAS.some(function(g){ return g.k===k; })) e[k]=prev[k]; });
     MARCAS.forEach(function(g){ if(nuevo[g.k]>0){ e[g.k]=nuevo[g.k]; alguna=true; } });
-    if(alguna) D.m[ym]=e; else delete D.m[ym];
+    if(alguna || Object.keys(e).length>1) D.m[ym]=e; else delete D.m[ym];
     var fila=filaSistema(META_ID, '🎯 METAS POR MARCA (no tocar: las lee el panel)', JSON.stringify(D));
     var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[META_ID])||0); if(rv) fila.rev=rv;
     return apiSave(fila).then(function(r){
@@ -9787,6 +9850,684 @@ function metasGuardar(){
       return r;
     });
   }).then(fin, function(er){ fin(null); toast('❌ No se guardaron: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); if(META_ED) metasModal(); return null; });
+}
+
+/* ============================================================================
+   🏁 EL CIERRE COMERCIAL DEL MES (30/10, propuesta 74; el dueño la eligió). El cierre de septiembre (comisiones Bs 27.320) se armó el
+   05/10 desde un Excel copiado a mano y llevó 5 correcciones; la 09-033 (Bs 4.990) entró en ese cierre y hoy cuenta para octubre porque
+   su entrega cayó el 05/10. Ahora sale del panel: Proyección → «🏁 Cierre comercial del mes» (solo con la contraseña, como Proyección).
+   · VENDIDO = la MISMA cuenta de Proyección (`pryVentas`: el equipo de tiendas, `ventaTotal`, el mes de la entrega AGENDADA, el nombre
+     con `nombreCanonico`); las ventas y las unidades (`pryUnidadesDe`) también salen de ahí. Nada se cuenta aparte.
+   · METAS por vendedor y mes (mínima y presupuesto) y la ESCALA de comisión por marca viven en la fila `__metas__` que ya existía (§4nb),
+     adentro del mes: `m['2026-10'] = { heaven, suena, t, vd:{'Maria Flores':[mínima, presupuesto]}, esc:{heaven:{t:[['min'|'pres', desde %,
+     comisión %]…], bono:%}, suena:{…}} }`. Las metas por marca no cambian (`metasGuardar` conserva `vd` y `esc`).
+   · ESCALA: se aplica el tramo más alto que alcanzó (cada tramo en Bs = desde % × la mínima o el presupuesto); debajo de todos, 0 %. La
+     comisión es sobre TODO lo vendido (Isabel en septiembre: 161.295 × 2,75 % = 4.435,61). Arranca con la que reproduce lo pagado en
+     septiembre (`CCM_ESCALA_SEP`) y dice «⚠️ Confirmá la escala» hasta que el dueño la guarde. Un mes sin escala propia usa la última guardada.
+   · BONO TITANIO = el % de la marca (Heaven 1 %, Sueña 0) sobre los colchones con TITANIO en el nombre, sin los somieres (así da lo
+     publicado de Mirian en septiembre: 32.025 → 320,25): precio × cantidad del renglón; una venta de un solo renglón sin precio vale su
+     total; con varios renglones y sin precio no se sabe: va a «Para revisar» y no suma.
+   · 🔒 CERRAR guarda en `__cierre_comercial__` (`CCM_ID`, JSON `{v:1, m:{'2026-10':{c, por, vt, s, aj, esc, ex}}}`): los totales por
+     vendedor (`vt`), qué ventas entraron y por cuánto (`s`: id → [vendedor, Bs, Bs Titanio]), la escala y los ajustes que pagó (`aj`). Una
+     venta que ya entró en un cierre no vuelve a contar en otro («ya pagada en <mes>»). Lo que cambia después (otro monto, una venta con
+     entrega en ese mes cargada después, una borrada) es AJUSTE y se paga con el mes siguiente abierto, con el % que tuvo en su mes (el
+     escalón no se recalcula). Reabrir pide la contraseña y es de a uno, desde el último cerrado. Pocos meses: `CCM_TOPE` letras (Google
+     corta la celda en 50.000).
+   · Una venta CARGADA antes del mes con entrega en el mes, si el mes de carga no se cerró en el panel (septiembre), pregunta «¿ya la
+     pagaste en septiembre?» y se puede sacar (`ex` del mes, se guarda al tocar).
+   · Solo escribe al guardar las metas, sacar una venta, cerrar o reabrir. `tests/test_cierre_comercial.js`.
+   ========================================================================== */
+var CCM_ID='__cierre_comercial__', CCM_TOPE=40000;
+var CCM={ ym:'', ed:null, env:0, verVentas:false, verAntes:false, antes:[] };
+/* La escala que reproduce lo que se pagó en septiembre (dashboard-septiembre-2026.html): Heaven entre la mínima y el presupuesto 2 %,
+   Isabel al 100,8 % del presupuesto 2,75 %, Carola (121 %) y Maria (133 %) 3 %; Sueña: Juan Pablo (66 % del presupuesto) 2 % y Mauricio
+   (84 %) 2,5 %; debajo de la mínima, 0 (Fernando). ⚠️ Los cortes del 120 % y del 80 % son supuestos: cualquiera entre 101 y 120 %, y
+   entre 67 y 84 %, da lo mismo con esos casos. Por eso «⚠️ Confirmá la escala». */
+var CCM_ESCALA_SEP={ heaven:{ t:[['min',100,2],['pres',100,2.75],['pres',120,3]], bono:1 }, suena:{ t:[['min',100,2],['pres',80,2.5]], bono:0 } };
+/* Lo que se pagó en septiembre: vendedor, marca, vendido (el dashboard, que contaba con Kommo), mínima, presupuesto y comisión %.
+   Sirve para probar la escala y como metas sugeridas de octubre (no se guardan solas). */
+var CCM_SEP_PAGADO=[
+  ['Maria Flores','heaven',172385,100000,130000,3], ['Mirian Salazar','heaven',125952,125000,160000,2],
+  ['Carola Chavez','heaven',193530,125000,160000,3], ['Isabel Robledo','heaven',161295,125000,160000,2.75],
+  ['Jonathan Monje','heaven',133461,125000,160000,2], ['Juan Pablo Paredes','suena',76330,70000,115000,2],
+  ['Fernando Peinado','suena',77025,95000,140000,0], ['Mauricio Merida','suena',100405,75000,120000,2.5]
+];
+var CCM_TITANIO=/\bTITANIO\b/, CCM_NO_TITANIO=/\b(SOM+IER(ES|S)?|BOX\s*SPRING|BASES?)\b/;
+function ccmMes(ym){ return MESES_ES[+String(ym||'').slice(5,7)-1]||String(ym||''); }
+function ccmCap(s){ s=String(s||''); return s.charAt(0).toUpperCase()+s.slice(1); }
+function ccmPcTxt(n){ return (Math.round((Number(n)||0)*100)/100).toLocaleString('es-BO',{ maximumFractionDigits:2 })+' %'; }
+/* El % alcanzado con un decimal y para ABAJO: 99,96 % no puede decir «100 %» si no llegó. */
+function ccmAlcTxt(n){ return n==null ? '—' : ((Math.floor((Number(n)||0)*10+1e-9)/10).toLocaleString('es-BO',{ minimumFractionDigits:1, maximumFractionDigits:1 })+' %'); }
+function ccmHoraTs(t){ return pryHoraTxt(pryMinBo(t)); }
+
+/* ---- la fila del cierre ---- */
+function ccmLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===CCM_ID; })[0], o={};
+  try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  return { v:1, m:(o.m && typeof o.m==='object') ? o.m : {} };
+}
+function ccmCerrado(D, ym){ var C=D && D.m && D.m[ym]; return !!(C && C.c); }
+
+/* ---- metas por vendedor y escala (en `__metas__`) ---- */
+function ccmVdDe(ym){ var e=metasLeer().m[ym]; return (e && e.vd && typeof e.vd==='object' && Object.keys(e.vd).length) ? e.vd : null; }
+function ccmMetasSep(){ var o={}; CCM_SEP_PAGADO.forEach(function(c){ o[c[0]]=[c[3], c[4]]; }); return o; }
+/* Las metas del mes: las guardadas (ok); si no, las del último mes guardado o las de septiembre del dashboard, como SUGERENCIA. */
+function ccmMetas(ym){
+  var vd=ccmVdDe(ym); if(vd) return { vd:vd, de:'', ok:true };
+  for(var i=1;i<=12;i++){ var m=metasMesMas(ym,-i); if(m<PRY_PRIMER_MES) break; var a=ccmVdDe(m); if(a) return { vd:a, de:m, ok:false }; }
+  return { vd:ccmMetasSep(), de:'sep', ok:false };
+}
+function ccmMetaDe(vd, v){ var k=normNombre(v); for(var n in (vd||{})) if(normNombre(n)===k){ var a=vd[n]||[]; return [Number(a[0])||0, Number(a[1])||0]; } return [0,0]; }
+function ccmEscalaCopia(e){
+  var o={};
+  MARCAS.forEach(function(g){ var x=(e && e[g.k])||{ t:[], bono:0 };
+    o[g.k]={ t:(x.t||[]).map(function(t){ return [t[0]==='pres' ? 'pres' : 'min', Number(t[1])||0, Number(t[2])||0]; }), bono:Number(x.bono)||0 }; });
+  return o;
+}
+function ccmEscalaValida(e){ return !!(e && typeof e==='object' && MARCAS.every(function(g){ return e[g.k] && Array.isArray(e[g.k].t); })); }
+function ccmEscalaDe(ym){ var e=metasLeer().m[ym]; return (e && ccmEscalaValida(e.esc)) ? e.esc : null; }
+/* La escala del mes: la guardada para el mes; si no, la última guardada antes (ya confirmada); si nunca se guardó, la de septiembre con ⚠️. */
+function ccmEscala(ym){
+  var e=ccmEscalaDe(ym); if(e) return { esc:ccmEscalaCopia(e), de:'', ok:true };
+  for(var i=1;i<=24;i++){ var m=metasMesMas(ym,-i); if(m<PRY_PRIMER_MES) break; var a=ccmEscalaDe(m); if(a) return { esc:ccmEscalaCopia(a), de:m, ok:true }; }
+  return { esc:ccmEscalaCopia(CCM_ESCALA_SEP), de:'sep', ok:false };
+}
+/* El % de comisión: el tramo más alto que alcanzó (en Bs: desde % × la mínima o el presupuesto); debajo de todos, 0. Y debajo de la
+   mínima, 0 SIEMPRE (lo único que se vio en septiembre sin excepción): un tramo «desde el 80 % del presupuesto» no paga sin la mínima. */
+function ccmPctDe(em, bs, min, pres){
+  var best=null;
+  if(min>0 && bs<min-0.005) return { pct:0, desde:0, t:null };
+  ((em && em.t)||[]).forEach(function(t){
+    var base = t[0]==='pres' ? pres : min; if(!(base>0)) return;
+    var monto=r2(base*(Number(t[1])||0)/100), pc=Number(t[2])||0;
+    if(bs < monto-0.005) return;
+    if(!best || monto>best.monto+0.005 || (Math.abs(monto-best.monto)<0.005 && pc>best.pct)) best={ monto:monto, pct:pc, t:t };
+  });
+  return best ? { pct:best.pct, desde:best.monto, t:best.t } : { pct:0, desde:0, t:null };
+}
+function ccmTramoTxt(t){ return t ? ('desde el '+String(Number(t[1])||0).replace('.', ',')+'% '+(t[0]==='pres' ? 'del presupuesto' : 'de la mínima')) : 'no llegó a la mínima'; }
+
+/* ---- Titanio ---- */
+function ccmEsTitanio(x){
+  if(!x) return false;
+  var cod=String(x.codigo||'').trim().toUpperCase(), cat=(cod && typeof CODIGOS!=='undefined' && CODIGOS[cod]) ? CODIGOS[cod].d : '';
+  var s=sinTildes(String(x.desc||'')+' '+cat).toUpperCase();
+  return CCM_TITANIO.test(s) && !CCM_NO_TITANIO.test(s);
+}
+function ccmTitanio(p){
+  var pr=(p && p.productos)||[], o={ bs:0, u:0, falta:[], total:false };
+  pr.forEach(function(x){
+    if(!ccmEsTitanio(x)) return;
+    var n=Number(x.cant)||0; if(!(n>0)) return;
+    var pu=Number(x.precio)||0;
+    if(pu>0.005){ o.bs=r2(o.bs+pu*n); o.u+=n; }
+    else if(pr.length===1){ o.bs=r2(o.bs+ventaTotal(p)); o.u+=n; o.total=true; }   // la venta ES ese colchón
+    else o.falta.push(String(x.desc||'TITANIO')+(x.medida ? (' '+x.medida) : '')+(n>1 ? (' × '+n) : ''));
+  });
+  return o;
+}
+
+/* ---- las ventas (las de Proyección, con su id y su Titanio) ---- */
+function ccmVentasTodas(){
+  var P={}, lista=[], porId={};
+  (STATE||[]).forEach(function(p){ if(p && p.id!=null) P[p.id]=p; });
+  pryVentas().forEach(function(x){
+    if(x.amb!=='tienda' || x.id==null) return;
+    var p=P[x.id], t=ccmTitanio(p);
+    var y={ id:String(x.id), v:x.v, g:x.g, ym:x.ym, f:x.f, reg:x.reg, bs:x.bs, u:x.u, ti:t.bs, tiU:t.u, tiFalta:t.falta, tiTotal:t.total,
+            oc:String((p && p.oc)||''), nota:String((p && p.nota)||''), cliente:String((p && p.cliente)||'') };
+    lista.push(y); porId[y.id]=y;
+  });
+  return { lista:lista, porId:porId, P:P };
+}
+/* Lo ya pagado de cada venta en los cierres guardados: el mes en que se pagó por primera vez (`ym`), de qué mes es (`o`) y cuánto. */
+function ccmPagos(D){
+  var o={};
+  Object.keys(D.m).sort().forEach(function(K){
+    var C=D.m[K]; if(!C || !C.c) return;
+    var vs=C.vt||[];
+    var poner=function(id, a, de){ var e=o[id]||(o[id]={ ym:K, o:de, bs:0, ti:0, v:(vs[a[0]]||{}).v||'', g:(vs[a[0]]||{}).g||'' });
+      e.bs=r2(e.bs+(Number(a[1])||0)); e.ti=r2(e.ti+(Number(a[2])||0)); };
+    Object.keys(C.s||{}).forEach(function(id){ poner(id, C.s[id], K); });
+    Object.keys(C.aj||{}).forEach(function(id){ var a=C.aj[id]; poner(id, a, String(a[3]||K)); });
+  });
+  return o;
+}
+/* Los ajustes de un mes cerrado se pagan con el primer mes siguiente que siga abierto. */
+function ccmDestino(D, O){ var m=O; for(var i=0;i<36;i++){ m=metasMesMas(m, 1); if(!ccmCerrado(D, m)) return m; } return ''; }
+/* Lo que cambió en el mes cerrado O desde que se cerró (y no se pagó todavía): ventas que entraron con otro monto o que ya no están, y
+   ventas con entrega en O que no entraron en ningún cierre. La comisión del ajuste va con el % que el vendedor tuvo en O. */
+function ccmAjustes(D, O, T, pg){
+  var C=D.m[O]; if(!C || !C.c) return [];
+  var vt=C.vt||[], esc=C.esc||{}, out=[], visto={};
+  var pcDe=function(v){ var k=normNombre(v); for(var i=0;i<vt.length;i++) if(normNombre(vt[i].v)===k) return Number(vt[i].pc)||0; return 0; };
+  var meter=function(o){ var g=o.g || marcaDe(o.v) || 'sin', bp=(esc[g] && Number(esc[g].bono))||0, pc=pcDe(o.v);
+    o.g=g; o.pc=pc; o.bp=bp; o.com=r2(o.dbs*pc/100); o.bono=r2(o.dti*bp/100); o.O=O; out.push(o); };
+  Object.keys(pg).forEach(function(id){
+    var e=pg[id]; if(e.o!==O) return; visto[id]=1;
+    var x=T.porId[id], bs=x ? x.bs : 0, ti=x ? x.ti : 0, d=r2(bs-e.bs), dt=r2(ti-e.ti);
+    if(Math.abs(d)<0.005 && Math.abs(dt)<0.005) return;
+    meter({ id:id, v:e.v || (x && x.v) || '', g:e.g, oc:x ? x.oc : '', f:x ? x.f : '', dbs:d, dti:dt, antes:e.bs, ahora:bs, motivo:x ? 'monto' : 'fuera' });
+  });
+  T.lista.forEach(function(x){
+    if(x.ym!==O || pg[x.id] || visto[x.id] || (C.ex && C.ex[x.id])) return;
+    if(Math.abs(x.bs)<0.005 && Math.abs(x.ti)<0.005) return;
+    meter({ id:x.id, v:x.v, g:x.g, oc:x.oc, f:x.f, dbs:x.bs, dti:x.ti, antes:0, ahora:x.bs, motivo:'nueva' });
+  });
+  return out;
+}
+/* Una fila por vendedor: ventas, unidades, vendido, Titanio, metas, % alcanzado, comisión, bono y ajustes. */
+function ccmFilas(ventas, ajustes, mt, es){
+  var F={}, orden=[];
+  var fila=function(v, g){ var k=normNombre(v)||String(v); if(!F[k]){ F[k]={ v:nombreCanonico(v), g:g||'sin', n:0, u:0, bs:0, ti:0, tiFalta:0, aj:0, ajTi:0, ajCom:0, ajBono:0, ajN:0 }; orden.push(k); } return F[k]; };
+  MARCAS.forEach(function(g){ g.vendedores.forEach(function(v){ fila(v, g.k); }); });
+  ventas.forEach(function(x){ if(x.est!=='cuenta') return; var r=fila(x.v, x.g); r.n++; r.u+=x.u; r.bs=r2(r.bs+x.bs); r.ti=r2(r.ti+x.ti); r.tiFalta+=(x.tiFalta||[]).length; });
+  ajustes.forEach(function(a){ var r=fila(a.v, a.g); r.aj=r2(r.aj+a.dbs); r.ajTi=r2(r.ajTi+a.dti); r.ajCom=r2(r.ajCom+a.com); r.ajBono=r2(r.ajBono+a.bono); r.ajN++; });
+  return orden.map(function(k){
+    var r=F[k], mm=ccmMetaDe(mt.vd, r.v), em=es.esc[r.g];
+    r.mi=mm[0]; r.pr=mm[1]; r.sinMetas=!(r.mi>0 || r.pr>0);
+    var q=(em && !r.sinMetas) ? ccmPctDe(em, r.bs, r.mi, r.pr) : { pct:0, t:null };
+    r.pc=q.pct; r.tramo=q.t; r.co=r2(r.bs*r.pc/100);
+    r.bp=em ? (Number(em.bono)||0) : 0; r.bo=r2(r.ti*r.bp/100);
+    r.to=r2(r.co+r.bo+r.ajCom+r.ajBono);
+    return r;
+  });
+}
+function ccmFilaVe(r){ return !!(r.n || r.ajN || !r.sinMetas); }
+function ccmSuma(rs){
+  var t={ n:0, u:0, bs:0, ti:0, co:0, bo:0, aj:0, ajCom:0, ajBono:0, to:0 };
+  rs.forEach(function(r){ t.n+=r.n; t.u+=r.u; ['bs','ti','co','bo','aj','ajCom','ajBono','to'].forEach(function(k){ t[k]=r2(t[k]+(Number(r[k])||0)); }); });
+  return t;
+}
+/* ---- lo que hay que revisar antes de cerrar ---- */
+function ccmKommo(ym){
+  var ini=ym+'-01', fin=pryFinDeMes(ym), o={};
+  (typeof BORRADORES!=='undefined' ? BORRADORES : []).forEach(function(b){
+    var d=b && b.ts ? isoDeTsBolivia(b.ts) : ''; if(d && d>fin) return;
+    var v=vendedorDeBorrador(b)||'(sin vendedora)', e=o[v]||(o[v]={ v:v, n:0, bs:0, mes:0 });
+    e.n++; e.bs=r2(e.bs+(Number(b.saldo)||0)); if(d>=ini) e.mes++;
+  });
+  return Object.keys(o).map(function(k){ return o[k]; }).sort(function(a,b){ return b.n-a.n; });
+}
+/* Las que cambiaron de mes, por la marca «📅 cambió la fecha de entrega: del dd/mm al dd/mm» del pedido (`marcarModificado`). Solo
+   queda la ÚLTIMA modificación, y «Ya lo revisé» la borra: lo que no tenga la marca no se puede saber. */
+function ccmMovidas(ym, T){
+  var out=[];
+  T.lista.forEach(function(x){
+    var m=modDe(T.P[x.id]); if(!m || !x.f) return;
+    (m.d||[]).forEach(function(t){
+      var r=/del (\d\d)\/(\d\d) al (\d\d)\/(\d\d)/.exec(String(t)); if(!r) return;
+      var y=+x.f.slice(0,4), mDel=+r[2], mAl=+r[4], yDel=y+(mDel-mAl>6 ? -1 : (mAl-mDel>6 ? 1 : 0));
+      var del=yDel+'-'+r[2]+'-'+r[1], dYm=del.slice(0,7);
+      if(dYm===x.ym) return;
+      if(dYm===ym || x.ym===ym) out.push({ x:x, del:del, al:x.f, sale:(dYm===ym), cuando:String(m.f||''), h:String(m.h||''), por:String(m.por||'') });
+    });
+  });
+  return out;
+}
+function ccmRevisar(ym, ventas, D, T, filas){
+  var R={ ti:[], kommo:ccmKommo(ym), antes:[], movidas:ccmMovidas(ym, T), sinMonto:[], sinMetas:[], sinMarca:[] };
+  ventas.forEach(function(x){
+    if(x.est==='cuenta' && (x.tiFalta||[]).length) R.ti.push(x);
+    if(x.est==='cuenta' && !(x.bs>0.005)) R.sinMonto.push(x);
+    var mc=String(x.reg||'').slice(0,7);
+    if(x.est!=='pagada' && mc && mc<ym && !ccmCerrado(D, mc)) R.antes.push(x);
+  });
+  filas.forEach(function(r){ if(!r.n) return; if(r.g==='sin') R.sinMarca.push(r); else if(r.sinMetas) R.sinMetas.push(r); });
+  R.n=R.ti.length+R.kommo.length+R.antes.length+R.movidas.length+R.sinMonto.length+R.sinMetas.length+R.sinMarca.length;
+  return R;
+}
+/* ---- TODO el mes en una cuenta ---- */
+function ccmDatos(ym){
+  var hoy=diaNegocio(), ini=ym+'-01', fin=pryFinDeMes(ym);
+  var cal = hoy<ini ? 'futuro' : (hoy>fin ? 'paso' : 'curso');
+  var D=ccmLeer(), C=D.m[ym]||{}, cerrado=!!C.c;
+  var T=ccmVentasTodas(), pg=ccmPagos(D), ex=C.ex||{};
+  var mt=ccmMetas(ym), es=(cerrado && ccmEscalaValida(C.esc)) ? { esc:ccmEscalaCopia(C.esc), de:'', ok:true } : ccmEscala(ym);
+  var ventas=T.lista.filter(function(x){ return x.ym===ym; }).map(function(x){
+    var y={}, k; for(k in x) y[k]=x[k];
+    var pa=pg[x.id];
+    if(pa && pa.ym!==ym){ y.est='pagada'; y.en=pa.ym; }
+    else if(ex[x.id]){ y.est='excluida'; y.en=String(ex[x.id]); }
+    else y.est='cuenta';
+    return y;
+  }).sort(function(a,b){ return a.f<b.f ? -1 : (a.f>b.f ? 1 : (a.reg<b.reg ? -1 : (a.reg>b.reg ? 1 : 0))); });
+  var ajustes=[], filas, despues=[];
+  if(!cerrado){
+    Object.keys(D.m).sort().forEach(function(O){ if(O<ym && ccmCerrado(D, O) && ccmDestino(D, O)===ym) ajustes=ajustes.concat(ccmAjustes(D, O, T, pg)); });
+    filas=ccmFilas(ventas, ajustes, mt, es);
+  }else{
+    /* 🔒 cerrado: lo congelado (los totales y las ventas que entraron), y aparte lo que cambió después */
+    var vt=C.vt||[];
+    filas=vt.map(function(r){ return { v:r.v, g:r.g||'sin', n:Number(r.n)||0, u:Number(r.u)||0, bs:Number(r.bs)||0, ti:Number(r.ti)||0, tiFalta:0,
+      mi:Number(r.mi)||0, pr:Number(r.pr)||0, sinMetas:!(Number(r.mi)>0 || Number(r.pr)>0), pc:Number(r.pc)||0, tramo:null, co:Number(r.co)||0,
+      bp:Number(r.bp)||0, bo:Number(r.bo)||0, aj:Number(r.aj)||0, ajTi:Number(r.at)||0, ajCom:Number(r.ac)||0, ajBono:Number(r.ab)||0, ajN:(Number(r.aj)||Number(r.ac)||Number(r.ab)) ? 1 : 0, to:Number(r.to)||0 }; });
+    filas.forEach(function(r){ var em=es.esc[r.g]; if(em && !r.sinMetas) r.tramo=ccmPctDe(em, r.bs, r.mi, r.pr).t; });
+    ventas=Object.keys(C.s||{}).map(function(id){ var a=C.s[id], x=T.porId[id], r=vt[a[0]]||{};
+      return { id:id, v:r.v||(x && x.v)||'', g:r.g||'sin', oc:x ? x.oc : '', nota:x ? x.nota : '', cliente:x ? x.cliente : '', f:x ? x.f : '', reg:x ? x.reg : '',
+               bs:Number(a[1])||0, ti:Number(a[2])||0, u:x ? x.u : 0, est:'cuenta', ahora:x ? x.bs : null }; })
+      .concat(Object.keys(C.aj||{}).map(function(id){ var a=C.aj[id], x=T.porId[id], r=vt[a[0]]||{};
+      return { id:id, v:r.v||(x && x.v)||'', g:r.g||'sin', oc:x ? x.oc : '', nota:x ? x.nota : '', cliente:x ? x.cliente : '', f:x ? x.f : '', reg:x ? x.reg : '',
+               bs:Number(a[1])||0, ti:Number(a[2])||0, u:0, est:'ajuste', en:String(a[3]||''), ahora:x ? x.bs : null }; }))
+      .sort(function(a,b){ return String(a.f)<String(b.f) ? -1 : (String(a.f)>String(b.f) ? 1 : 0); });
+    ajustes=Object.keys(C.aj||{}).map(function(id){ var a=C.aj[id], r=vt[a[0]]||{}; return { id:id, v:r.v||'', dbs:Number(a[1])||0, dti:Number(a[2])||0, O:String(a[3]||'') }; });
+    despues=ccmAjustes(D, ym, T, pg);
+  }
+  var marcas=MARCAS.map(function(g){ var rs=filas.filter(function(r){ return r.g===g.k && ccmFilaVe(r); }); return { g:g, filas:rs, tot:ccmSuma(rs) }; });
+  var sin=filas.filter(function(r){ return r.g==='sin' && ccmFilaVe(r); });
+  var tot=ccmSuma(filas.filter(ccmFilaVe));
+  var rev=cerrado ? { n:0, ti:[], kommo:[], antes:[], movidas:[], sinMonto:[], sinMetas:[], sinMarca:[] } : ccmRevisar(ym, ventas, D, T, filas);
+  return { ym:ym, hoy:hoy, cal:cal, D:D, C:C, cerrado:cerrado, mt:mt, es:es, ventas:ventas, ajustes:ajustes, despues:despues,
+           destino:ccmDestino(D, ym), filas:filas, marcas:marcas, sin:sin, tot:tot, rev:rev,
+           fuera:ventas.filter(function(x){ return x.est!=='cuenta' && x.est!=='ajuste'; }) };
+}
+
+/* ---- la ventana ---- */
+function ccmAbrir(ym){
+  if(!UNLOCKED){ toast('🔒 El cierre comercial es solo con la contraseña de Administración.','err',6000); return; }
+  if(!ym){
+    var inp=document.getElementById('pry-mes'), hoy=diaNegocio(), ant=metasMesMas(hoy.slice(0,7), -1);
+    ym=(inp && inp.value) || hoy.slice(0,7);
+    /* los primeros días del mes se cierra el ANTERIOR: arranca ahí si todavía está abierto */
+    if(ym===hoy.slice(0,7) && +hoy.slice(8,10)<=10 && ant>=PRY_PRIMER_MES && !ccmCerrado(ccmLeer(), ant)) ym=ant;
+  }
+  CCM.ym=ym; CCM.ed=null; CCM.verVentas=false; CCM.verAntes=false;
+  var m=document.getElementById('ccm-mes'); if(m) m.value=ym;
+  var ov=document.getElementById('ccm-ov'); if(ov) ov.style.display='flex';
+  ccmPintar();
+}
+function ccmCerrarVentana(){ var ov=document.getElementById('ccm-ov'); if(ov) ov.style.display='none'; CCM.ed=null; }
+function ccmElegirMes(v){
+  if(!/^\d{4}-\d{2}$/.test(String(v||''))) return;
+  if(CCM.ed && !confirm('Lo que escribiste en las metas y la escala de '+ccmMes(CCM.ym)+' no se guardó. ¿Cambiar de mes igual?')){ var m=document.getElementById('ccm-mes'); if(m) m.value=CCM.ym; return; }
+  CCM.ym=v; CCM.ed=null; CCM.verVentas=false; CCM.verAntes=false; ccmPintar();
+}
+function ccmPintar(){
+  var ov=document.getElementById('ccm-ov'), body=document.getElementById('ccm-body'); if(!ov || !body || ov.style.display==='none') return;
+  var R=null, info=document.getElementById('ccm-info');
+  try{ R=ccmDatos(CCM.ym); }catch(e){ body.innerHTML='<div class="ccm-av ccm-av-r">No se pudo calcular el cierre: '+esc((e && e.message)||e)+'</div>'; return; }
+  if(info) info.textContent=mesNombre(CCM.ym)+(R.cerrado ? ' · 🔒 cerrado' : ' · abierto')+(CCM.env ? ' · ⏳ guardando…' : '');
+  var baj=document.getElementById('ccm-bajar'); if(baj) baj.disabled=!R.tot.n && !R.ventas.length;
+  body.innerHTML = CCM.ed ? ccmEdHtml(R) : ccmHtml(R);
+  if(CCM.ed) ccmEdProbar();
+}
+function ccmOc(x){ return x && x.oc ? (ocEtiq(x.oc)||x.oc) : 'sin OC'; }
+function ccmHtml(R){
+  var mes=mesNombre(R.ym), mc=ccmMes(R.ym), h='<div class="ccm-wrap">', C=R.C, ant=metasMesMas(R.ym, -1);
+  if(R.cerrado) h+='<div class="ccm-estado ccm-cerr"><b>🔒 '+esc(ccmCap(mes))+' — cerrado</b><span>el '+fmtFecha(isoDeTsBolivia(C.c))+' a las '+ccmHoraTs(C.c)+(C.por ? (' · por '+esc(C.por)) : '')+
+    ' · '+R.ventas.filter(function(x){ return x.est==='cuenta'; }).length+' ventas congeladas</span></div>';
+  else h+='<div class="ccm-estado"><b>🏁 '+esc(ccmCap(mes))+'</b><span>'+(R.cal==='curso' ? 'en curso: los números se mueven hasta fin de mes' : (R.cal==='futuro' ? 'todavía no empezó' : 'terminó: revisá y cerralo'))+
+    ' · vendido = lo de Proyección (el total de cada venta, en el mes de su entrega agendada)</span></div>';
+  /* avisos de arriba */
+  if(!R.es.ok) h+='<div class="ccm-av ccm-av-r">⚠️ <b>Confirmá la escala.</b> La armé con lo que se pagó en septiembre (dashboard): Heaven 2 % desde la mínima, 2,75 % desde el presupuesto y 3 % desde el 120 %; Sueña 2 % desde la mínima y 2,5 % desde el 80 % del presupuesto; debajo de la mínima, 0. Los cortes del 120 % y del 80 % son supuestos (con los casos de septiembre da lo mismo cualquiera entre 101 y 120 %, y entre 67 y 84 %). Hasta que la guardes, el mes no se puede cerrar.<br><button type="button" class="btn btn-sm" onclick="ccmEdAbrir()">📐 Ver y confirmar la escala</button></div>';
+  if(!R.cerrado && !R.mt.ok) h+='<div class="ccm-av">🎯 <b>Las metas de '+esc(mc)+' por vendedor no están guardadas.</b> Se ven, como sugerencia, '+
+    (R.mt.de==='sep' ? 'las de septiembre (las del dashboard de septiembre)' : ('las de '+esc(mesNombre(R.mt.de))))+'. Revisalas y guardalas para poder cerrar.<br><button type="button" class="btn btn-sm" onclick="ccmEdAbrir()">✏️ Revisar y guardar las metas</button></div>';
+  if(R.cerrado) h+='<div class="ccm-av ccm-av-ok">🔒 Estos números quedaron congelados. Lo que cambie después en las ventas de '+esc(mc)+' va como <b>ajuste a '+esc(R.destino ? mesNombre(R.destino) : 'el mes siguiente')+'</b>, con el % que cada uno tuvo acá.</div>';
+  /* primero los números; lo que hay que revisar va abajo, justo antes de «Cerrar» */
+  if(!R.cerrado && R.rev.n) h+='<div class="ccm-av">⚠️ Antes de cerrar hay <b>'+R.rev.n+' cosa'+(R.rev.n===1 ? '' : 's')+' para revisar</b> (abajo, en «Para revisar»).</div>';
+  /* por marca */
+  var conAj=R.tot.ajCom || R.tot.ajBono || R.ajustes.length;
+  R.marcas.forEach(function(m){ if(m.filas.length) h+=ccmMarcaHtml(R, m.g, m.filas, m.tot, conAj); });
+  if(R.sin.length) h+=ccmMarcaHtml(R, { k:'sin', lbl:'Sin marca', ico:'⚠️', col:'#d97706', txt:'#92400e' }, R.sin, ccmSuma(R.sin), conAj);
+  if(R.tot.n || R.tot.to) h+='<div class="ccm-box" style="border-left:5px solid #0f766e"><div class="ccm-t">💵 Total a pagar — '+esc(mes)+'</div>'+
+    '<div style="font-size:1.15rem;font-weight:800;color:#0f766e">'+fmtBs(R.tot.to)+'</div><div class="ccm-nota">comisiones '+fmtBs(R.tot.co)+' · bono Titanio '+fmtBs(R.tot.bo)+
+    (conAj ? (' · ajustes '+fmtBs(r2(R.tot.ajCom+R.tot.ajBono))) : '')+' · vendido '+fmtBs(R.tot.bs)+' en '+R.tot.n+' ventas · '+R.tot.u+' unidades</div></div>';
+  /* ⚠️ para revisar */
+  if(!R.cerrado) h+=ccmRevisarHtml(R);
+  /* ajustes */
+  if(!R.cerrado && R.ajustes.length) h+=ccmAjustesHtml(R.ajustes, '🔁 Ajustes de meses cerrados que se pagan con '+mc, 'Ya cerrado, después cambió. La comisión del ajuste va con el % que cada uno tuvo en su mes (el escalón no se recalcula).');
+  if(R.cerrado && R.despues.length) h+=ccmAjustesHtml(R.despues, '🔁 Cambió después del cierre — va como ajuste a '+(R.destino ? ccmMes(R.destino) : 'el mes siguiente'), 'No cambia lo de arriba: se paga con el mes siguiente que siga abierto.');
+  if(R.cerrado && R.ajustes.length) h+='<div class="ccm-nota">Este cierre pagó además '+R.ajustes.length+' ajuste'+(R.ajustes.length===1 ? '' : 's')+' de meses anteriores (columna «Ajuste»).</div>';
+  /* las ventas */
+  h+=ccmVentasHtml(R);
+  /* acciones */
+  h+='<div class="ccm-acc">'+(R.cerrado ? '' : '<button type="button" class="btn btn-ghost" onclick="ccmEdAbrir()">✏️ Metas y escala de '+esc(mc)+'</button>')+
+    '<button type="button" class="btn btn-ghost" onclick="ccmBajar()">⬇️ Bajar el Excel</button><span style="flex:1"></span>'+
+    (R.cerrado ? '<button type="button" class="btn btn-ghost" id="ccm-reabrir" onclick="ccmReabrir()"'+(CCM.env ? ' disabled' : '')+'>🔓 Reabrir '+esc(mc)+'</button>'
+               : '<button type="button" class="btn ccm-cerrar-mes" id="ccm-cerrar" onclick="ccmCerrarMes()"'+((CCM.env || R.cal==='futuro') ? ' disabled' : '')+'>'+(CCM.env ? '⏳ Guardando…' : ('🔒 Cerrar '+esc(mc)))+'</button>')+'</div>';
+  h+='<div class="ccm-box ccm-como"><div class="ccm-t">❓ Cómo se cuenta</div>'+
+    '• <b>Vendido</b>: lo mismo que Proyección — el total de cada venta del equipo de tiendas, en el mes de su <b>entrega agendada</b> (sin ATC, reposiciones, ROHO ni mayoristas). Si logística la reprograma a otro mes, se muda.<br>'+
+    '• <b>Comisión</b>: el % del tramo más alto que alcanzó, sobre TODO lo vendido. Debajo de la mínima, 0.<br>'+
+    '• <b>Bono Titanio</b>: el % de la marca sobre lo vendido en colchones Titanio (sin somieres), con el precio de cada renglón.<br>'+
+    '• <b>🔒 Cerrar</b> congela qué ventas entraron y por cuánto: una venta que ya entró en un cierre no vuelve a contar en otro mes («ya pagada»). Lo que cambie después (otro monto, una venta con entrega en el mes cargada después, una borrada) va como <b>ajuste</b> al mes siguiente.<br>'+
+    '• Las metas y la escala se guardan por mes; la escala de un mes sin escala propia es la última guardada.'+
+    '</div>';
+  return h+'</div>';
+}
+function ccmMarcaHtml(R, g, filas, t, conAj){
+  var col=g.col||'#00B5AD', tx=g.txt||col;
+  var head='<tr><th>Vendedor</th><th>Ventas</th><th>Unid.</th><th>Vendido</th><th>Mínima</th><th>Presupuesto</th><th>% mín.</th><th>% pres.</th><th>Comisión</th><th>Comisión Bs</th><th>Titanio Bs</th><th>Bono</th>'+(conAj ? '<th>Ajuste</th>' : '')+'<th>Total</th></tr>';
+  var rows=filas.map(function(r){
+    var pMin=r.mi>0 ? r.bs/r.mi*100 : null, pPres=r.pr>0 ? r.bs/r.pr*100 : null;
+    var sub = g.k==='sin' ? 'no está en ninguna marca: sin escala' : (r.sinMetas ? 'sin metas: sin comisión' : ccmTramoTxt(r.tramo));
+    return '<tr class="'+(r.sinMetas ? 'ccm-sinm' : '')+'" data-v="'+esc(r.v)+'"><td><b>'+esc(r.v)+'</b><small>'+esc(sub)+'</small></td><td>'+r.n+'</td><td>'+r.u+'</td><td><b>'+fmtBs(r.bs)+'</b></td>'+
+      '<td>'+(r.mi ? fmtBs0(r.mi) : '—')+'</td><td>'+(r.pr ? fmtBs0(r.pr) : '—')+'</td><td>'+ccmAlcTxt(pMin)+'</td><td>'+ccmAlcTxt(pPres)+'</td>'+
+      '<td><span class="ccm-pc'+(r.pc ? '' : ' ccm-0')+'">'+ccmPcTxt(r.pc)+'</span></td><td>'+fmtBs(r.co)+'</td>'+
+      '<td>'+fmtBs(r.ti)+(r.tiFalta ? ('<small class="ccm-mal">'+r.tiFalta+' sin precio</small>') : '')+'</td><td>'+fmtBs(r.bo)+(r.bp ? ('<small>'+ccmPcTxt(r.bp)+'</small>') : '')+'</td>'+
+      (conAj ? ('<td>'+((r.ajCom || r.ajBono) ? fmtBs(r2(r.ajCom+r.ajBono)) : '—')+(r.aj ? ('<small>por '+fmtBs(r.aj)+' vendido</small>') : '')+'</td>') : '')+
+      '<td class="ccm-tot">'+fmtBs(r.to)+'</td></tr>';
+  }).join('');
+  var foot='<tr><td>Total '+esc(g.lbl)+'</td><td>'+t.n+'</td><td>'+t.u+'</td><td>'+fmtBs(t.bs)+'</td><td></td><td></td><td></td><td></td><td></td><td>'+fmtBs(t.co)+'</td><td>'+fmtBs(t.ti)+'</td><td>'+fmtBs(t.bo)+'</td>'+
+    (conAj ? ('<td>'+fmtBs(r2(t.ajCom+t.ajBono))+'</td>') : '')+'<td class="ccm-tot">'+fmtBs(t.to)+'</td></tr>';
+  var escTx='';
+  if(g.k!=='sin'){ var em=R.es.esc[g.k]; escTx='Escala'+(R.es.de && R.es.de!=='sep' ? (' (la guardada para '+esc(mesNombre(R.es.de))+')') : (R.es.ok ? '' : ' ⚠️ sin confirmar'))+': '+
+    ((em && em.t.length) ? em.t.map(function(t){ return ccmPcTxt(t[2])+' '+ccmTramoTxt(t); }).join(' · ') : 'sin tramos')+' · bono Titanio '+ccmPcTxt(em ? em.bono : 0)+'.'; }
+  return '<div class="ccm-box ccm-marca" data-marca="'+esc(g.k)+'" style="--c:'+col+';--t:'+tx+'"><div class="ccm-t"><span class="ccm-g">'+(g.ico||'')+' '+esc(g.lbl)+'</span></div>'+
+    '<div class="ccm-scroll"><table class="ccm-tab"><thead>'+head+'</thead><tbody>'+rows+'</tbody><tfoot>'+foot+'</tfoot></table></div>'+(escTx ? ('<div class="ccm-nota">'+escTx+'</div>') : '')+'</div>';
+}
+function ccmRevisarHtml(R){
+  var V=R.rev, mc=ccmMes(R.ym), h='';
+  CCM.antes=V.antes.slice();
+  if(!V.n) return '<div class="ccm-box ccm-rev"><div class="ccm-t">✅ Para revisar</div><div class="ccm-nota">Nada pendiente para '+esc(mc)+'.</div></div>';
+  h+='<div class="ccm-box ccm-rev" id="ccm-rev"><div class="ccm-t">⚠️ Para revisar antes de cerrar ('+V.n+')</div>';
+  if(V.antes.length){
+    var meses={}; V.antes.forEach(function(x){ meses[String(x.reg).slice(0,7)]=1; });
+    var ms=Object.keys(meses).sort(), noCuentan=V.antes.filter(function(x){ return x.est==='excluida'; }).length;
+    var lim=CCM.verAntes ? V.antes.length : Math.min(8, V.antes.length);
+    h+='<h4>🗓️ Cargadas antes de '+esc(mc)+' con entrega en '+esc(mc)+' ('+V.antes.length+')</h4>'+
+      '<div class="ccm-nota">¿Ya las pagaste en '+esc(ms.map(ccmMes).join(' o '))+'? Ese cierre no se hizo en el panel: si ya las pagaste, sacalas de acá para no pagarlas dos veces.'+
+      (noCuentan ? (' <b>'+noCuentan+' ya no cuentan.</b>') : '')+'</div><ul>'+
+      V.antes.slice(0, lim).map(function(x, i){
+        var fuera=(x.est==='excluida'), mm=String(x.reg).slice(0,7);
+        return '<li'+(fuera ? ' class="ccm-tachada"' : '')+'>'+esc(ccmOc(x))+' · '+esc(x.v)+' · cargada el '+fmtFechaCorta(x.reg)+', entrega '+fmtFechaCorta(x.f)+' · <b>'+fmtBs(x.bs)+'</b>'+
+          (fuera ? (' — no cuenta (ya pagada en '+esc(ccmMes(x.en||mm))+')<button type="button" class="ccm-mini" onclick="ccmExcluirI('+i+', false)">↩️ Contarla</button>')
+                 : (': ¿ya la pagaste en '+esc(ccmMes(mm))+'?<button type="button" class="ccm-mini" onclick="ccmExcluirI('+i+', true)">Ya la pagué en '+esc(ccmMes(mm))+': no contar</button>'))+'</li>';
+      }).join('')+'</ul>'+
+      (V.antes.length>lim ? ('<button type="button" class="ccm-mini" onclick="CCM.verAntes=true;ccmPintar()">Ver las '+V.antes.length+'</button>') : '')+
+      (V.antes.length-noCuentan>1 ? ('<button type="button" class="ccm-mini" onclick="ccmExcluirTodas(true)">Ya pagué todas las de '+esc(ms.map(ccmMes).join(' y '))+' ('+(V.antes.length-noCuentan)+'): no contar</button>') : '')+
+      (noCuentan>1 ? '<button type="button" class="ccm-mini" onclick="ccmExcluirTodas(false)">↩️ Volver a contarlas todas</button>' : '');
+  }
+  if(V.ti.length) h+='<h4>📝 Titanio sin precio ('+V.ti.length+'): el bono no incluye estos colchones</h4><ul>'+V.ti.map(function(x){
+      return '<li>'+esc(ccmOc(x))+' · '+esc(x.v)+' · '+esc(x.tiFalta.join(', '))+' — cargá el precio del renglón en el pedido</li>'; }).join('')+'</ul>';
+  if(V.kommo.length) h+='<h4>📥 Ventas de Kommo sin cargar</h4><ul>'+V.kommo.map(function(k){
+      return '<li>'+esc(k.v)+': <b>'+k.n+'</b> sin cargar ('+fmtBs(k.bs)+' según Kommo'+(k.mes ? ('; '+k.mes+' llegaron en '+esc(mc)) : '')+')</li>'; }).join('')+
+      '</ul><div class="ccm-nota">Si son de '+esc(mc)+' y no se cargan, no entran en el vendido. Si ya están cargadas, descartalas en Mis pedidos.</div>';
+  if(V.movidas.length) h+='<h4>↔️ Cambiaron de mes ('+V.movidas.length+')</h4><ul>'+V.movidas.map(function(o){
+      return '<li>'+esc(ccmOc(o.x))+' · '+esc(o.x.v)+' · estaba para el '+fmtFechaCorta(o.del)+(o.cuando ? (' y el '+fmtFechaCorta(o.cuando)) : '')+' la pasaron al '+fmtFechaCorta(o.al)+' · <b>'+fmtBs(o.x.bs)+'</b>: '+
+        (o.sale ? ('ya no cuenta en '+esc(mc)) : ('cuenta en '+esc(mc)+' (antes era de '+esc(ccmMes(o.del.slice(0,7)))+')'))+'</li>'; }).join('')+
+      '</ul><div class="ccm-nota">Se ve por la marca «⚠️ Cambió la fecha» del pedido: solo queda el último cambio, y si logística tocó «Ya lo revisé» la marca se borra. Lo que no tenga la marca no se puede saber.</div>';
+  if(V.sinMonto.length) h+='<h4>💸 Sin monto anotado ('+V.sinMonto.length+'): no suman</h4><ul>'+V.sinMonto.map(function(x){ return '<li>'+esc(ccmOc(x))+' · '+esc(x.v)+' · entrega '+fmtFechaCorta(x.f)+'</li>'; }).join('')+'</ul>';
+  if(V.sinMetas.length) h+='<h4>🎯 Sin metas: no se les puede calcular la comisión</h4><ul>'+V.sinMetas.map(function(r){ return '<li>'+esc(r.v)+' · vendió '+fmtBs(r.bs)+'</li>'; }).join('')+'</ul>';
+  if(V.sinMarca.length) h+='<h4>⚠️ Vendedores que no están en ninguna marca</h4><ul>'+V.sinMarca.map(function(r){ return '<li>'+esc(r.v)+' · vendió '+fmtBs(r.bs)+': no tiene escala (agregalo a su marca)</li>'; }).join('')+'</ul>';
+  return h+'</div>';
+}
+function ccmAjustesHtml(L, tit, nota){
+  var mot={ monto:'cambió el monto', fuera:'la borraron o ya no es una venta del equipo', nueva:'entró después del cierre' };
+  return '<div class="ccm-box"><div class="ccm-t">'+esc(tit)+'</div><div class="ccm-nota">'+esc(nota)+'</div><div class="ccm-scroll"><table class="ccm-tab" style="min-width:640px"><thead><tr><th>Venta</th><th>Vendedor</th><th>Qué pasó</th><th>Diferencia</th><th>Comisión</th><th>Bono</th></tr></thead><tbody>'+
+    L.map(function(a){ return '<tr><td>'+esc(ccmOc(a))+'<small>de '+esc(mesNombre(a.O))+'</small></td><td>'+esc(a.v)+'</td><td style="text-align:left">'+esc(mot[a.motivo]||'')+
+      (a.motivo==='monto' ? (': de '+fmtBs(a.antes)+' a '+fmtBs(a.ahora)) : '')+'</td><td>'+fmtBs(a.dbs)+'</td><td>'+fmtBs(a.com)+'<small>al '+ccmPcTxt(a.pc)+'</small></td><td>'+fmtBs(a.bono)+'</td></tr>'; }).join('')+
+    '</tbody></table></div></div>';
+}
+function ccmVentasHtml(R){
+  var L=R.ventas; if(!L.length) return '<div class="ccm-box"><div class="ccm-t">🧾 Ventas</div><div class="ccm-nota">No hay ventas del equipo con entrega en '+esc(mesNombre(R.ym))+'.</div></div>';
+  var est=function(x){ return x.est==='cuenta' ? (R.cerrado ? 'entró en el cierre'+((x.ahora!=null && Math.abs(x.ahora-x.bs)>=0.005) ? (' (hoy vale '+fmtBs(x.ahora)+')') : ((x.ahora==null) ? ' (ya no está)' : '')) : 'cuenta')
+    : (x.est==='pagada' ? ('ya pagada en '+ccmMes(x.en)) : (x.est==='excluida' ? ('no cuenta: ya pagada en '+ccmMes(x.en)) : ('ajuste de '+ccmMes(x.en)))); };
+  var n=L.filter(function(x){ return x.est==='cuenta'; }).length;
+  return '<details class="ccm-box"'+(CCM.verVentas ? ' open' : '')+' ontoggle="CCM.verVentas=this.open"><summary style="cursor:pointer;font-weight:800;color:#0f766e">🧾 Las ventas de '+esc(mesNombre(R.ym))+' ('+n+' cuentan'+(L.length>n ? (', '+(L.length-n)+' no') : '')+')</summary>'+
+    '<div class="ccm-scroll" style="margin-top:10px"><table class="ccm-tab" style="min-width:720px"><thead><tr><th>Venta</th><th>Vendedor</th><th>Entrega</th><th>Cargada</th><th>Bs</th><th>Titanio Bs</th><th>Estado</th></tr></thead><tbody>'+
+    L.map(function(x){ return '<tr'+(x.est==='cuenta' || x.est==='ajuste' ? '' : ' class="ccm-sinm"')+'><td>'+esc(ccmOc(x))+(x.nota ? ('<small>nota '+esc(x.nota)+'</small>') : '')+'</td><td>'+esc(x.v)+'</td><td>'+(x.f ? fmtFechaCorta(x.f) : '—')+'</td><td>'+(x.reg ? fmtFechaCorta(x.reg) : '—')+'</td>'+
+      '<td>'+fmtBs(x.bs)+'</td><td>'+(x.ti ? fmtBs(x.ti) : '—')+'</td><td style="text-align:left">'+esc(est(x))+'</td></tr>'; }).join('')+'</tbody></table></div></details>';
+}
+
+/* ---- guardar en `__cierre_comercial__`: relee la planilla y cambia SOLO lo de ese mes (como las metas) ---- */
+function ccmPodar(D){
+  Object.keys(D.m).forEach(function(k){ var C=D.m[k]; if(!C || typeof C!=='object' || !Object.keys(C).length) delete D.m[k]; });
+  var ks=Object.keys(D.m).sort();
+  while(ks.length>1 && JSON.stringify(D).length>CCM_TOPE) delete D.m[ks.shift()];
+  return D;
+}
+function ccmGuardar(mut, okMsg, deState){
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: no se guardó.','err',7000); return Promise.resolve(null); }
+  CCM.env=1; ccmPintar();
+  var fin=function(r){ CCM.env=0; ccmPintar(); try{ if(r) renderProyeccion(); }catch(e){} return r; };
+  var leer = deState ? Promise.resolve({ ok:true, pedidos:STATE }) : conTopeDuro(apiList(), 15000, 'tardo_datos');
+  return leer.then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CCM_ID) srv=p; });
+    var D=ccmLeer(srv), no=mut(D);
+    if(typeof no==='string') throw new Error(no);
+    ccmPodar(D);
+    var fila=filaSistema(CCM_ID, '🏁 CIERRE COMERCIAL DEL MES (no tocar: lo lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[CCM_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===CCM_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==CCM_ID; }); STATE.push(g);
+      if(okMsg) toast(okMsg,'ok',6000);
+      return r;
+    });
+  }).then(fin, function(er){ fin(null); toast('❌ No se guardó: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); return null; });
+}
+/* «Ya la pagué en septiembre: no contar» (y al revés), para las cargadas antes del mes. */
+function ccmExcluirI(i, si){ var x=CCM.antes[i]; if(x) return ccmExcluir([x], si); }
+function ccmExcluirTodas(si){ return ccmExcluir(CCM.antes.filter(function(x){ return si ? x.est!=='excluida' : x.est==='excluida'; }), si); }
+function ccmExcluir(L, si){
+  var ym=CCM.ym; if(!L.length || CCM.env) return Promise.resolve(null);
+  var tot=r2(L.reduce(function(s,x){ return s+x.bs; }, 0));
+  return ccmGuardar(function(D){
+    if(ccmCerrado(D, ym)) return mesNombre(ym)+' ya está cerrado';
+    var C=D.m[ym]||(D.m[ym]={}); C.ex=C.ex||{};
+    L.forEach(function(x){ if(si) C.ex[x.id]=String(x.reg||'').slice(0,7); else delete C.ex[x.id]; });
+    if(!Object.keys(C.ex).length) delete C.ex;
+  }, si ? ('✓ '+(L.length===1 ? '1 venta' : (L.length+' ventas'))+' ('+fmtBs(tot)+') ya no '+(L.length===1 ? 'cuenta' : 'cuentan')+' en '+ccmMes(ym)) : ('↩️ '+(L.length===1 ? 'Vuelve' : 'Vuelven')+' a contar en '+ccmMes(ym)));
+}
+/* Lo que guarda un cierre: los totales por vendedor (`vt`), las ventas que entraron (`s`), los ajustes que pagó (`aj`) y la escala. */
+function ccmFoto(R, prev){
+  var vt=[], idx={};
+  var poner=function(r){ idx[normNombre(r.v)]=vt.length;
+    vt.push({ v:r.v, g:r.g, n:r.n, u:r.u, bs:r.bs, ti:r.ti, mi:r.mi, pr:r.pr, pc:r.pc, co:r.co, bp:r.bp, bo:r.bo, aj:r.aj, at:r.ajTi, ac:r.ajCom, ab:r.ajBono, to:r.to }); };
+  R.filas.forEach(function(r){ if(ccmFilaVe(r)) poner(r); });
+  var vi=function(v){ var k=normNombre(v); if(!(k in idx)) poner({ v:nombreCanonico(v), g:marcaDe(v)||'sin', n:0, u:0, bs:0, ti:0, mi:0, pr:0, pc:0, co:0, bp:0, bo:0, aj:0, ajTi:0, ajCom:0, ajBono:0, to:0 }); return idx[k]; };
+  var s={}, aj={};
+  R.ventas.forEach(function(x){ if(x.est!=='cuenta') return; s[x.id]=(Math.abs(x.ti)>=0.005) ? [vi(x.v), x.bs, x.ti] : [vi(x.v), x.bs]; });
+  R.ajustes.forEach(function(a){ aj[a.id]=[vi(a.v), a.dbs, a.dti, a.O]; });
+  var o={ c:Date.now(), por:(quienEdita()||'Administración'), vt:vt, s:s, esc:ccmEscalaCopia(R.es.esc) };
+  if(Object.keys(aj).length) o.aj=aj;
+  if(prev && prev.ex && Object.keys(prev.ex).length) o.ex=prev.ex;
+  return o;
+}
+function ccmCerrarMes(){
+  var ym=CCM.ym; if(!UNLOCKED || CCM.env) return Promise.resolve(null);
+  var R=ccmDatos(ym), mc=ccmMes(ym);
+  if(R.cerrado){ toast(ccmCap(mesNombre(ym))+' ya está cerrado.','err'); return Promise.resolve(null); }
+  if(R.cal==='futuro'){ toast(ccmCap(mesNombre(ym))+' todavía no empezó: no se puede cerrar.','err',6000); return Promise.resolve(null); }
+  if(!R.es.ok){ toast('⚠️ Primero confirmá la escala: «✏️ Metas y escala» → Guardar.','err',8000); return Promise.resolve(null); }
+  if(!R.mt.ok){ toast('🎯 Primero guardá las metas de '+mc+': «✏️ Metas y escala» → Guardar.','err',8000); return Promise.resolve(null); }
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: no se cerró.','err',7000); return Promise.resolve(null); }
+  var av=[];
+  if(R.cal==='curso') av.push('El mes todavía no terminó: lo que se cargue después va como ajuste al mes siguiente.');
+  if(R.rev.n) av.push('Quedan '+R.rev.n+' cosa'+(R.rev.n===1 ? '' : 's')+' en «Para revisar».');
+  if(!confirm('🔒 ¿Cerrar '+mesNombre(ym)+'?\n\nSe congelan las '+R.tot.n+' ventas ('+fmtBs(R.tot.bs)+') y lo que se paga: '+fmtBs(R.tot.to)+'. Una venta que ya entró no vuelve a contar en otro mes; lo que cambie después va como ajuste al mes siguiente. Se puede reabrir con la contraseña.'+
+    (av.length ? ('\n\n⚠️ '+av.join('\n⚠️ ')) : ''))) return Promise.resolve(null);
+  CCM.env=1; ccmPintar();
+  return refrescarEstadoYa().then(function(ok){
+    if(!ok){ CCM.env=0; ccmPintar(); toast('❌ No se pudo leer la planilla: no se cerró. Probá de nuevo.','err',8000); return null; }
+    var R2=ccmDatos(ym);   // con lo recién leído: lo que se congela es lo de la planilla de AHORA
+    return ccmGuardar(function(D){
+      if(ccmCerrado(D, ym)) return 'otro aparato ya lo cerró';
+      if(!R2.es.ok || !R2.mt.ok) return 'faltan las metas o la escala guardadas';
+      D.m[ym]=ccmFoto(R2, D.m[ym]);
+    }, '🔒 '+ccmCap(mesNombre(ym))+' cerrado: '+R2.tot.n+' ventas, '+fmtBs(R2.tot.to)+' a pagar', true);
+  });
+}
+function ccmClaveOk(txt){
+  var c=prompt(txt,''); if(c==null) return null;
+  var guardada=null; try{ guardada=localStorage.getItem(LS_ADMIN); }catch(e){}
+  return sha256(String(c))===(guardada||DEFAULT_HASH);
+}
+function ccmReabrir(){
+  var ym=CCM.ym, D=ccmLeer(); if(CCM.env || !ccmCerrado(D, ym)) return Promise.resolve(null);
+  var desp=Object.keys(D.m).filter(function(k){ return k>ym && ccmCerrado(D, k); }).sort();
+  if(desp.length){ toast('Primero reabrí '+mesNombre(desp[desp.length-1])+': se cerró después y ya cuenta con este.','err',8000); return Promise.resolve(null); }
+  var ok=ccmClaveOk('🔓 Para reabrir '+mesNombre(ym)+' escribí la contraseña de Administración.\nLos números vuelven a calcularse con la planilla de hoy.');
+  if(ok==null) return Promise.resolve(null);
+  if(!ok){ toast('❌ Contraseña equivocada: '+mesNombre(ym)+' sigue cerrado.','err',6000); return Promise.resolve(null); }
+  return ccmGuardar(function(D){
+    var C=D.m[ym]; if(!C || !C.c) return 'ya estaba abierto';
+    if(Object.keys(D.m).some(function(k){ return k>ym && ccmCerrado(D, k); })) return 'hay un mes cerrado después';
+    var n={ re:Date.now() }; if(C.ex) n.ex=C.ex; D.m[ym]=n;
+  }, '🔓 '+ccmCap(mesNombre(ym))+' reabierto: los números vuelven a calcularse');
+}
+
+/* ---- ✏️ metas por vendedor y escala ---- */
+function ccmNumIn(n){ n=Number(n)||0; return n ? n.toLocaleString('es-BO',{ maximumFractionDigits:2 }) : ''; }
+function ccmPctLeer(t){ t=String(t==null ? '' : t).trim().replace(/\s*%$/, '').replace(',', '.'); if(!t) return { v:0, vacio:true }; var n=Number(t); return (isFinite(n) && n>=0 && n<=1000) ? { v:r2(n) } : { mal:true }; }
+function ccmEdAbrir(){
+  var ym=CCM.ym, mt=ccmMetas(ym), es=ccmEscala(ym), vs=[];
+  MARCAS.forEach(function(g){ g.vendedores.forEach(function(v){ vs.push({ v:v, g:g.k }); }); });
+  var E={ ym:ym, vs:vs, mi:[], pr:[], de:mt.de, ok:mt.ok, escDe:es.de, escOk:es.ok, esc:{} };
+  vs.forEach(function(o, i){ var a=ccmMetaDe(mt.vd, o.v); E.mi[i]=a[0] ? Math.round(a[0]).toLocaleString('es-BO') : ''; E.pr[i]=a[1] ? Math.round(a[1]).toLocaleString('es-BO') : ''; });
+  MARCAS.forEach(function(g){ var x=es.esc[g.k]||{ t:[], bono:0 }; E.esc[g.k]={ t:x.t.map(function(t){ return [t[0], ccmNumIn(t[1]), ccmNumIn(t[2])||'0']; }), bono:ccmNumIn(x.bono)||'0' }; });
+  CCM.ed=E; ccmPintar();
+  var b=document.getElementById('ccm-body'); if(b) b.scrollTop=0;
+}
+function ccmEdCancelar(){ CCM.ed=null; ccmPintar(); }
+function ccmEdRecordar(){
+  var E=CCM.ed; if(!E) return;
+  E.vs.forEach(function(o, i){ var a=document.getElementById('ccm-mi-'+i), b=document.getElementById('ccm-pr-'+i); if(a) E.mi[i]=a.value; if(b) E.pr[i]=b.value; });
+  MARCAS.forEach(function(g){ var x=E.esc[g.k];
+    x.t.forEach(function(t, j){ var b=document.getElementById('ccm-t-'+g.k+'-'+j+'-b'), d=document.getElementById('ccm-t-'+g.k+'-'+j+'-d'), p=document.getElementById('ccm-t-'+g.k+'-'+j+'-p');
+      if(b) t[0]=b.value==='pres' ? 'pres' : 'min'; if(d) t[1]=d.value; if(p) t[2]=p.value; });
+    var bo=document.getElementById('ccm-b-'+g.k); if(bo) x.bono=bo.value; });
+}
+/* La escala escrita, en números (y qué está mal escrito). */
+function ccmEdEscala(){
+  var E=CCM.ed, o={}, mal='';
+  MARCAS.forEach(function(g){ var x=E.esc[g.k], t=[];
+    x.t.forEach(function(r, j){ var d=ccmPctLeer(r[1]), p=ccmPctLeer(r[2]);
+      if((d.mal || p.mal) && !mal){ mal=g.lbl+', tramo '+(j+1)+': escribí solo el número (100 o 2,75)'; return; }
+      if(d.vacio && p.vacio) return;
+      if(!(d.v>0) && !mal){ mal=g.lbl+', tramo '+(j+1)+': falta desde qué %'; return; }
+      t.push([r[0]==='pres' ? 'pres' : 'min', d.v, p.v||0]); });
+    var b=ccmPctLeer(x.bono); if(b.mal && !mal) mal=g.lbl+': el bono Titanio no se entiende';
+    o[g.k]={ t:t, bono:b.v||0 }; });
+  return { esc:o, mal:mal };
+}
+function ccmEdTramo(k){ ccmEdRecordar(); CCM.ed.esc[k].t.push(['pres','','']); ccmPintar(); }
+function ccmEdTramoQuitar(k, j){ ccmEdRecordar(); CCM.ed.esc[k].t.splice(j, 1); ccmPintar(); }
+function ccmEdCopiar(de){
+  ccmEdRecordar();
+  var E=CCM.ed, vd = de==='sep' ? ccmMetasSep() : ccmVdDe(de);
+  if(!vd){ toast('No hay metas guardadas de '+mesNombre(de)+'.','err',5000); return; }
+  E.vs.forEach(function(o, i){ var a=ccmMetaDe(vd, o.v); E.mi[i]=a[0] ? Math.round(a[0]).toLocaleString('es-BO') : ''; E.pr[i]=a[1] ? Math.round(a[1]).toLocaleString('es-BO') : ''; });
+  E.de=de; ccmPintar();
+  toast('Copiadas las de '+(de==='sep' ? 'septiembre (dashboard)' : mesNombre(de))+': revisalas y guardá.','ok',5000);
+}
+/* La prueba: con la escala escrita, ¿da lo mismo que se pagó en septiembre? */
+function ccmEdProbar(){
+  var box=document.getElementById('ccm-prueba'); if(!box || !CCM.ed) return;
+  ccmEdRecordar();
+  var es=ccmEdEscala().esc, bien=0;
+  var filas=CCM_SEP_PAGADO.map(function(c){
+    var q=ccmPctDe(es[c[1]], c[2], c[3], c[4]), ok=Math.abs(q.pct-c[5])<0.0001; if(ok) bien++;
+    return '<tr><td>'+esc(c[0])+'</td><td>'+fmtBs0(c[2])+'</td><td>'+ccmAlcTxt(c[2]/c[4]*100)+'</td><td>'+ccmPcTxt(c[5])+'</td><td>'+ccmPcTxt(q.pct)+'</td><td class="'+(ok ? 'ccm-ok' : 'ccm-mal')+'">'+(ok ? '✓' : '✗')+'</td></tr>';
+  }).join('');
+  box.innerHTML='<div class="ccm-scroll"><table class="ccm-ed-tab"><thead><tr><th>Septiembre</th><th>Vendió</th><th>% pres.</th><th>Se pagó</th><th>Con esta escala</th><th></th></tr></thead><tbody>'+filas+'</tbody></table></div>'+
+    '<div class="ccm-nota" id="ccm-prueba-res">'+(bien===CCM_SEP_PAGADO.length ? ('✅ Con esta escala da lo mismo que se pagó en los '+bien+' casos de septiembre.')
+      : ('⚠️ Da distinto en '+(CCM_SEP_PAGADO.length-bien)+' de '+CCM_SEP_PAGADO.length+' casos de septiembre: si la escala cambió, está bien; si no, revisala.'))+
+    ' (Septiembre se midió con el dashboard de Kommo: lo vendido no es el del panel.)</div>';
+}
+function ccmEdHtml(R){
+  var E=CCM.ed, ym=E.ym, mc=ccmMes(ym), ant=metasMesMas(ym, -1), hayAnt=!!ccmVdDe(ant);
+  var V={}; R.filas.forEach(function(r){ V[normNombre(r.v)]=r; });
+  var h='<div class="ccm-wrap"><div class="ccm-box ccm-ed"><div class="ccm-t">✏️ Metas de '+esc(mc)+' por vendedor</div>'+
+    '<p class="ccm-exp">La mínima y el presupuesto de cada vendedor, en Bs. Se miden con lo vendido como en Proyección: el total de cada venta, en el mes de su entrega agendada.</p>';
+  if(!E.ok) h+='<div class="ccm-av">'+(E.de==='sep' ? '🧾 <b>Sugeridas: las de septiembre</b> (del dashboard de septiembre).' : ('📋 <b>Sugeridas: las de '+esc(mesNombre(E.de))+'</b>.'))+' No están guardadas: revisalas y tocá «Guardar».</div>';
+  MARCAS.forEach(function(g){
+    h+='<div class="ccm-ed-g" style="--t:'+(g.txt||g.col)+'"><b>'+g.ico+' '+esc(g.lbl)+'</b><div class="ccm-scroll"><table class="ccm-ed-tab"><thead><tr><th>Vendedor</th><th>Mínima (Bs)</th><th>Presupuesto (Bs)</th><th>En '+esc(mc)+' lleva</th></tr></thead><tbody>'+
+      E.vs.map(function(o, i){ if(o.g!==g.k) return ''; var r=V[normNombre(o.v)];
+        return '<tr><td>'+esc(o.v)+'</td><td><input id="ccm-mi-'+i+'" type="text" inputmode="decimal" autocomplete="off" aria-label="Mínima de '+esc(o.v)+'" value="'+esc(E.mi[i]||'')+'" placeholder="0" onblur="metasFormato(this)"></td>'+
+          '<td><input id="ccm-pr-'+i+'" type="text" inputmode="decimal" autocomplete="off" aria-label="Presupuesto de '+esc(o.v)+'" value="'+esc(E.pr[i]||'')+'" placeholder="0" onblur="metasFormato(this)"></td>'+
+          '<td>'+(r ? fmtBs(r.bs) : fmtBs(0))+'</td></tr>'; }).join('')+'</tbody></table></div></div>';
+  });
+  h+='<div class="ccm-acc">'+(hayAnt ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="ccmEdCopiar(\''+ant+'\')">📋 Copiar las de '+esc(ccmMes(ant))+'</button>') : '')+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="ccmEdCopiar(\'sep\')">🧾 Las de septiembre (dashboard)</button></div></div>';
+  h+='<div class="ccm-box ccm-ed"><div class="ccm-t">📐 Escala de comisión por marca'+(E.escOk ? '' : ' — ⚠️ sin confirmar')+'</div>'+
+    '<p class="ccm-exp">Cada tramo: desde qué % de la mínima o del presupuesto, y qué comisión cobra sobre TODO lo vendido. Vale el tramo más alto que alcanzó; debajo de la mínima, siempre 0 %. '+
+    (E.escOk ? (E.escDe ? ('Ahora es la guardada para '+esc(mesNombre(E.escDe))+'.') : 'Es la guardada para este mes.') : 'Es la que reproduce lo que se pagó en septiembre: confirmala o cambiala, y guardá.')+'</p>';
+  MARCAS.forEach(function(g){ var x=E.esc[g.k];
+    h+='<div class="ccm-ed-g" style="--t:'+(g.txt||g.col)+'"><b>'+g.ico+' '+esc(g.lbl)+'</b>'+
+      x.t.map(function(t, j){ var id='ccm-t-'+g.k+'-'+j;
+        return '<div class="ccm-tr">Desde el <input id="'+id+'-d" type="text" inputmode="decimal" aria-label="'+esc(g.lbl)+' tramo '+(j+1)+': desde qué %" value="'+esc(t[1])+'" oninput="ccmEdProbar()"> % de '+
+          '<select id="'+id+'-b" aria-label="'+esc(g.lbl)+' tramo '+(j+1)+': de qué meta" onchange="ccmEdProbar()"><option value="min"'+(t[0]==='min' ? ' selected' : '')+'>la mínima</option><option value="pres"'+(t[0]==='pres' ? ' selected' : '')+'>el presupuesto</option></select>'+
+          ' → comisión <input id="'+id+'-p" type="text" inputmode="decimal" aria-label="'+esc(g.lbl)+' tramo '+(j+1)+': comisión %" value="'+esc(t[2])+'" oninput="ccmEdProbar()"> %'+
+          '<button type="button" class="ccm-mini" aria-label="Quitar el tramo '+(j+1)+'" onclick="ccmEdTramoQuitar(\''+g.k+'\','+j+')">🗑</button></div>'; }).join('')+
+      '<button type="button" class="ccm-mini" onclick="ccmEdTramo(\''+g.k+'\')">＋ Agregar un tramo</button>'+
+      '<div class="ccm-tr" style="margin-top:8px">🏆 Bono Titanio: <input id="ccm-b-'+g.k+'" type="text" inputmode="decimal" aria-label="'+esc(g.lbl)+': bono Titanio %" value="'+esc(x.bono)+'"> % de lo vendido en colchones Titanio (sin somieres)</div></div>';
+  });
+  h+='<div class="ccm-t" style="margin-top:6px">🧪 Prueba con lo que se pagó en septiembre</div><div id="ccm-prueba"></div></div>';
+  h+='<div class="ccm-acc"><button type="button" class="btn btn-ghost" onclick="ccmEdCancelar()">Cancelar</button><span style="flex:1"></span>'+
+    '<button type="button" class="btn btn-primary" id="ccm-ed-guardar" onclick="ccmEdGuardar()"'+(CCM.env ? ' disabled' : '')+'>'+(CCM.env ? '⏳ Guardando…' : ('💾 Guardar metas y escala de '+esc(mc)))+'</button></div></div>';
+  return h;
+}
+function ccmEdGuardar(){
+  if(!CCM.ed || CCM.env) return Promise.resolve(null);
+  ccmEdRecordar();
+  var E=CCM.ed, vd={}, mal='';
+  E.vs.forEach(function(o, i){
+    var a=String(E.mi[i]||'').trim(), b=String(E.pr[i]||'').trim(), er=(a && montoError(a)) || (b && montoError(b));
+    if(er){ if(!mal) mal=o.v+': '+er; return; }
+    var mi=a ? r2(parseMonto(a)) : 0, pr=b ? r2(parseMonto(b)) : 0;
+    if(mi>0 && pr>0 && mi>pr+0.005 && !mal) mal=o.v+': la mínima ('+fmtBs0(mi)+') es más que el presupuesto ('+fmtBs0(pr)+')';
+    if(mi>0 || pr>0) vd[o.v]=[mi, pr];
+  });
+  var es=ccmEdEscala(); if(es.mal && !mal) mal=es.mal;
+  if(mal){ toast('❌ '+mal,'err',8000); return Promise.resolve(null); }
+  if(!Object.keys(vd).length){ toast('❌ Cargá la meta de al menos un vendedor.','err',6000); return Promise.resolve(null); }
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: no se guardó.','err',7000); return Promise.resolve(null); }
+  var ym=E.ym; CCM.env=1; ccmPintar();
+  var fin=function(r){ CCM.env=0; ccmPintar(); return r; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===META_ID) srv=p; });
+    var D=metasLeer(srv), e=D.m[ym]||{};
+    e.vd=vd; e.esc=es.esc; D.m[ym]=e;          // las metas por marca (heaven, suena) del mes quedan como estaban
+    var fila=filaSistema(META_ID, '🎯 METAS POR MARCA (no tocar: las lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[META_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===META_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==META_ID; }); STATE.push(g);
+      CCM.ed=null;
+      toast('🎯 Metas y escala de '+mesNombre(ym)+' guardadas','ok',5000);
+      try{ renderProyeccion(); }catch(x){}
+      return r;
+    });
+  }).then(fin, function(er){ fin(null); toast('❌ No se guardaron: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); return null; });
+}
+
+/* ---- ⬇️ el Excel: una hoja por marca, y las ventas ---- */
+function ccmBajar(){
+  var R=ccmDatos(CCM.ym), sheets=[], ym=R.ym;
+  var conAj=!!(R.tot.ajCom || R.tot.ajBono || R.ajustes.length);
+  var B=function(n){ return { v:r2(n), t:'n', s:2 }; }, N=function(n){ return { v:Number(n)||0, t:'n' }; };
+  var P=function(n){ return n==null ? '' : { v:Math.floor(n*10+1e-9)/10, t:'n' }; };
+  var hoja=function(nombre, filas, t){
+    var cab=['VENDEDOR','VENDIDO (Bs)','MÍNIMA (Bs)','PRESUPUESTO (Bs)','% DEL PRESUPUESTO','COMISIÓN %','COMISIÓN (Bs)','BONO TITANIO (Bs)'].concat(conAj ? ['AJUSTE MES ANTERIOR (Bs)'] : []).concat(['TOTAL (Bs)','VENTAS','UNIDADES','TITANIO (Bs)','% DE LA MÍNIMA']);
+    var rows=[cab.map(function(x){ return { v:x, s:1 }; })];
+    filas.forEach(function(r){ rows.push([r.v, B(r.bs), B(r.mi), B(r.pr), P(r.pr>0 ? r.bs/r.pr*100 : null), N(r.pc), B(r.co), B(r.bo)].concat(conAj ? [B(r2(r.ajCom+r.ajBono))] : [])
+      .concat([B(r.to), N(r.n), N(r.u), B(r.ti), P(r.mi>0 ? r.bs/r.mi*100 : null)])); });
+    rows.push(['TOTAL '+nombre.toUpperCase(), B(t.bs), '', '', '', '', B(t.co), B(t.bo)].concat(conAj ? [B(r2(t.ajCom+t.ajBono))] : []).concat([B(t.to), N(t.n), N(t.u), B(t.ti), '']));
+    sheets.push({ name:nombre, cols:[{w:24},{w:15},{w:14},{w:16},{w:13},{w:12},{w:15},{w:15}].concat(conAj ? [{w:17}] : []).concat([{w:15},{w:9},{w:10},{w:14},{w:13}]), matrix:rows });
+  };
+  R.marcas.forEach(function(m){ if(m.filas.length) hoja(m.g.lbl, m.filas, m.tot); });
+  if(R.sin.length) hoja('Sin marca', R.sin, ccmSuma(R.sin));
+  var est=function(x){ return x.est==='cuenta' ? (R.cerrado ? 'entró en el cierre' : 'cuenta') : (x.est==='pagada' ? ('ya pagada en '+ccmMes(x.en)) : (x.est==='excluida' ? ('no cuenta: ya pagada en '+ccmMes(x.en)) : ('ajuste de '+ccmMes(x.en)))); };
+  var vr=[['N° OC','NOTA','VENDEDOR','MARCA','ENTREGA','CARGADA','VENTA (Bs)','TITANIO (Bs)','ESTADO'].map(function(x){ return { v:x, s:1 }; })];
+  R.ventas.forEach(function(x){ var g=MARCAS.filter(function(m){ return m.k===x.g; })[0];
+    vr.push([x.oc||'', x.nota||'', x.v, g ? g.lbl : 'Sin marca', x.f ? fmtFecha(x.f) : '', x.reg ? fmtFecha(x.reg) : '', B(x.bs), B(x.ti||0), est(x)]); });
+  sheets.push({ name:'Ventas', cols:[{w:12},{w:12},{w:22},{w:10},{w:12},{w:12},{w:14},{w:14},{w:30}], matrix:vr, textoOk:true });
+  var A=R.cerrado ? R.despues : R.ajustes;
+  if(A.length){
+    var mot={ monto:'cambió el monto', fuera:'la borraron o ya no es venta del equipo', nueva:'entró después del cierre' };
+    var ar=[['N° OC','VENDEDOR','DE QUÉ MES','QUÉ PASÓ','DIFERENCIA (Bs)','COMISIÓN %','COMISIÓN (Bs)','BONO (Bs)'].map(function(x){ return { v:x, s:1 }; })];
+    A.forEach(function(a){ ar.push([a.oc||'', a.v, mesNombre(a.O), mot[a.motivo]||'', B(a.dbs), N(a.pc), B(a.com), B(a.bono)]); });
+    sheets.push({ name:R.cerrado ? 'Cambió después' : 'Ajustes', cols:[{w:12},{w:22},{w:16},{w:34},{w:15},{w:12},{w:15},{w:12}], matrix:ar, textoOk:true });
+  }
+  var bytes=buildXlsx(sheets);
+  downloadBlob(bytes, 'cierre-comercial-'+ym+(R.cerrado ? '' : '-borrador')+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('⬇️ Excel del cierre de '+mesNombre(ym)+(R.cerrado ? '' : ' (todavía abierto)')+' — '+fmtBs(R.tot.to)+' a pagar','ok',5000);
+  return sheets;
 }
 
 /* ============================================================================
@@ -9973,8 +10714,8 @@ function pryVentas(){
     if(!amb) return;
     var f=fechaSalida(p); if(!f) return;
     var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p), ts=Number(p.ts)||0;
-    /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). */
-    out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (amb==='roho' ? 'roho' : (marcaDe(v)||'sin'))), v:v, vk:amb+'|'+(normNombre(v)||v),
+    /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). `id`: el cierre comercial (74) anota qué ventas entraron. */
+    out.push({ id:p.id, amb:amb, g:(amb==='mayor' ? 'mayor' : (amb==='roho' ? 'roho' : (marcaDe(v)||'sin'))), v:v, vk:amb+'|'+(normNombre(v)||v),
                f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
   });
   return out;
@@ -18650,7 +19391,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || esFilaRetiro(p)); }
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
