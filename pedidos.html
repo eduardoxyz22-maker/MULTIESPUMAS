@@ -46718,7 +46718,7 @@ function planYaHtml(o){
   /* 🏭 (30/10, propuesta 75) ANTES DE VOLVER A PEDIR: si hay lo mismo pedido y atrasado (ningún Excel lo mostró), se dice al lado de la
      casilla. En octubre 6 productos se volvieron a marcar «Ya pedí» justo cuando vencía el anterior, sin saber si Moreno ya lo tenía. */
   var _atr=fdAtrasadosYa(o.k);
-  if(_atr.n>0) h+='<div class="pl-ya-reclamar">⚠️ Hay '+stockUnid(_atr.n)+' pedid'+(_atr.n===1?'a':'as')+' el '+esc(fdFechasTxt(_atr.fechas))+' que no llegaron: reclamá antes de pedir más.</div>';
+  if(_atr.n>0) h+='<div class="pl-ya-reclamar">⚠️ Hay '+stockUnid(_atr.n)+' pedid'+(_atr.n===1?'a':'as')+' el '+esc(fdFechasTxt(_atr.fechas))+' que no '+(_atr.n===1?'llegó':'llegaron')+': reclamá antes de pedir más.</div>';
   /* ✏️ (18/10, §4ls textos, Man-VM10) «más» solo si hay un «Ya pedí» que sigue contando: con uno vencido arriba se leía «23 + 21». */
   return h+'<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> Ya pedí '+stockUnid(o.fabricar)+(planYaVigentes(o).length?' más':'')+'</label>';
 }
