@@ -1144,7 +1144,7 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   el encabezado se arrastra y se corre (≥1100 px) o baja (más angosto), y **cada ventana a pantalla completa lleva la franja de arriba**.
   ⚠️ Una ventana NUEVA a pantalla completa va con `class="adm-ov"` o en esa lista del CSS (`tests/test_sin_barra.js` §5c falla si falta).
   Los atajos y el título «Pedidos» viven en `escritorio.js` (subir su `?v=`).
-- **📱 El iPad instalado: la franja de la hora** (§4nz, 30/10, captura del dueño: *«se ve raro arriba y transparente»*): `viewport-fit=cover` +
+- **📱 El iPad instalado: la franja de la hora** (§4nz, 30/10, captura del dueño: *«se ve raro arriba y transparente»*; PUBLICADO `ccba5ca`): `viewport-fit=cover` +
   `black-translucent`; `--sa-t` = `env(safe-area-inset-top)` y el encabezado lleva `padding-top:var(--sa-t)` (su color tapa la franja; `--hdr-h`
   la cuenta). Con franja, `wcoMedir` pone `html.sa-top` y cada ventana a pantalla completa lleva la franja del tema: la MISMA lista de `html.wco`
   menos `#pap-overlay` (su `.pap-cab` ya la suma). ⚠️ Una ventana NUEVA a pantalla completa va en las DOS listas. Toast, Deshacer y Bloki suben
