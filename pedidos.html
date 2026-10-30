@@ -1293,7 +1293,11 @@ html.tema-todos-santos .h-camion{ z-index:1; }
    de colores de izquierda a derecha, un poco más oscura) y baja a la noche, con lo de cada mes muy tenue (murciélagos, calabacitas y una
    telaraña / cempasúchil, pétalos, velitas y una guirnalda). Las pestañas (compu y iPad) pasan a oscuras con el borde del mes, como el
    «Buscar» del encabezado; la elegida sigue con su color. Las tarjetas no cambian (son de vidrio: dejan pasar un poco del color).
-   Va en una capa FIJA detrás de todo (`body::before`, z −1, sin animación): no se repinta al bajar la página. Lo único que iba directo
+   Va en una capa FIJA detrás de todo (`body::before`, z −1, sin animación): no se repinta al bajar la página.
+   🪞 (30/10, captura del dueño: el encabezado violeta y abajo naranja) El degradé del encabezado SE MUEVE (`grad-move`, 14 s): una franja
+   fija de colores no lo sigue. Debajo va su REFLEJO (`body::after`): el mismo degradé, del mismo alto (`--hdr-h`), con la misma animación,
+   dado vuelta (`scaleY(-1)`) y más oscuro, que se desvanece hacia la noche: el borde de abajo del encabezado y el de arriba del reflejo
+   son siempre el mismo color. ⚠️ Si cambia la animación o el tamaño del degradé del encabezado, el reflejo va igual. Lo único que iba directo
    sobre el fondo era el pie (medido en Nuevo pedido, Mis pedidos, Contabilidad, Administración y ATC): pasa a letra clara.
    ⚠️ Las ventanas grandes (Stock, Pedido a producción, `.adm-ov`) tienen su propio fondo: no se tocan. Un elemento NUEVO que vaya directo
    sobre el fondo de la página necesita su color claro con estos dos temas. */
@@ -1303,9 +1307,12 @@ html.tema-halloween body::before{ content:''; position:fixed; inset:0; z-index:-
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg opacity='0.15' fill='none' stroke='%23f5d0fe'%3E%3Cpath d='M0 260L260 260'/%3E%3Cpath d='M0 260L251 193'/%3E%3Cpath d='M0 260L225 130'/%3E%3Cpath d='M0 260L184 76'/%3E%3Cpath d='M0 260L130 35'/%3E%3Cpath d='M0 260L67 9'/%3E%3Cpath d='M0 260L0 0'/%3E%3Cpath d='M38 260 Q36 257 37 250 Q33 248 33 241 Q29 239 27 233 Q22 232 19 227 Q14 227 10 223 Q5 225 0 222'/%3E%3Cpath d='M76 260 Q72 252 73 240 Q67 233 66 222 Q57 216 54 206 Q44 202 38 194 Q28 192 20 187 Q9 187 0 184'/%3E%3Cpath d='M114 260 Q108 247 110 230 Q100 219 99 203 Q86 193 81 179 Q66 172 57 161 Q42 158 30 150 Q14 150 0 146'/%3E%3Cpath d='M152 260 Q143 242 147 221 Q134 204 132 184 Q115 170 107 153 Q88 142 76 128 Q55 123 39 113 Q19 113 0 108'/%3E%3Cpath d='M190 260 Q179 237 184 211 Q167 190 165 165 Q143 147 134 126 Q110 113 95 95 Q69 88 49 76 Q24 75 0 70'/%3E%3Cpath d='M228 260 Q215 232 220 201 Q200 175 197 146 Q172 124 161 99 Q132 83 114 63 Q83 53 59 40 Q28 38 0 32'/%3E%3C/g%3E%3C/svg%3E") left bottom/280px 280px no-repeat,
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='420' height='420' viewBox='0 0 420 420'%3E%3Cdefs%3E%3Cpath id='m' d='M0 4c3-4 6-4 8-1c1-2 2-3 4-3c2 0 3 1 4 3c2-3 5-3 8 1c-3-1-5 0-6 2c-1-1-3-1-4 1c-1-2-3-2-4-1c-1-2-3-3-6-2z' fill='%230d0418'/%3E%3Cg id='c'%3E%3Cellipse rx='9' ry='7.5' fill='%23f97316'/%3E%3Cellipse cx='-3.5' rx='4' ry='7' fill='%23ea580c'/%3E%3Cellipse cx='3.5' rx='4' ry='7' fill='%23ea580c'/%3E%3Crect x='-1' y='-10' width='2' height='4' rx='1' fill='%234d7c0f'/%3E%3Cpath d='M-4-1l2-2l1 2zM4-1l-2-2l-1 2zM-4 3q4 3 8 0' fill='%231c0a30'/%3E%3C/g%3E%3C/defs%3E%3Ccircle cx='30' cy='40' r='1.3' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='140' cy='22' r='1' fill='%23fde68a' opacity='0.44'/%3E%3Ccircle cx='260' cy='70' r='1.6' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='380' cy='30' r='1.1' fill='%23fde68a' opacity='0.47'/%3E%3Ccircle cx='90' cy='170' r='1' fill='%23fde68a' opacity='0.39'/%3E%3Ccircle cx='330' cy='190' r='1.3' fill='%23fde68a' opacity='0.5'/%3E%3Ccircle cx='200' cy='250' r='1' fill='%23fde68a' opacity='0.39'/%3E%3Ccircle cx='40' cy='330' r='1.4' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='170' cy='390' r='1.1' fill='%23fde68a' opacity='0.44'/%3E%3Ccircle cx='300' cy='350' r='1' fill='%23fde68a' opacity='0.39'/%3E%3Ccircle cx='400' cy='260' r='1.2' fill='%23fde68a' opacity='0.47'/%3E%3Cuse xlink:href='%23m' transform='translate%28190 120%29 scale%281.6%29' opacity='0.6'/%3E%3Cuse xlink:href='%23m' transform='translate%2860 250%29 scale%281.1%29' opacity='0.51'/%3E%3Cuse xlink:href='%23m' transform='translate%28320 300%29 scale%281.3%29' opacity='0.57'/%3E%3Cuse xlink:href='%23m' transform='translate%28360 110%29 scale%280.9%29' opacity='0.45'/%3E%3Cuse xlink:href='%23c' transform='translate%28110 95%29 scale%281.35%29' opacity='0.5'/%3E%3Cuse xlink:href='%23c' transform='translate%28275 215%29 scale%281.15%29' opacity='0.45'/%3E%3Cuse xlink:href='%23c' transform='translate%28370 395%29 scale%281.25%29' opacity='0.5'/%3E%3Cuse xlink:href='%23c' transform='translate%2825 200%29 scale%281.05%29' opacity='0.4'/%3E%3C/svg%3E") 0 0/420px 420px repeat,
   radial-gradient(1300px 540px at 50% 110%, rgba(124,58,237,.32), rgba(0,0,0,0) 70%),
-  linear-gradient(180deg, rgba(28,10,46,0) 0, rgba(28,10,46,.18) 95px, rgba(28,10,46,.8) 325px, rgb(28,10,46) 565px),
-  linear-gradient(90deg,#2a0d22 0%,#4f1b18 30%,#6e2614 62%,#8a3011 100%); }
+  linear-gradient(180deg,#1c0a2e 0%,#22103a 60%,#2a1145 100%); }
 html.tema-halloween{ --sh-card:0 10px 28px -14px rgba(0,0,0,.6); --sh-soft:0 18px 44px -20px rgba(0,0,0,.7); }
+html.tema-halloween body::after{ content:''; position:fixed; left:0; right:0; top:var(--hdr-h,0px); height:var(--hdr-h,0px); z-index:-1; pointer-events:none;
+  background:var(--grad-header); background-size:300% 300%; animation:grad-move 14s ease infinite; transform:scaleY(-1); filter:brightness(.62) saturate(1.05);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); }
+@media(prefers-reduced-motion:reduce){ html.tema-halloween body::after{ animation:none; } }
 html.tema-halloween .header{ box-shadow:0 8px 26px rgba(10,3,20,.5); }
 html.tema-halloween .footer{ color:#d9c6f0; }
 html.tema-halloween .footer a{ color:#fdba74; }
@@ -1321,9 +1328,12 @@ html.tema-todos-santos body::before{ content:''; position:fixed; inset:0; z-inde
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='280' height='280' viewBox='0 0 280 280'%3E%3Cdefs%3E%3Cg id='f'%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%280%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%2830%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%2860%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%2890%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28120%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28150%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28180%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28210%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28240%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28270%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28300%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28330%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%2815%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%2845%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%2875%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28105%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28135%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28165%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28195%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28225%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28255%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28285%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28315%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28345%29'/%3E%3Ccircle r='2.4' fill='%23fbbf24'/%3E%3C/g%3E%3C/defs%3E%3Cuse xlink:href='%23f' transform='translate%2820 250%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%2846 243%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%2872 236%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%2898 233%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28124 233%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28150 237%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28176 243%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28202 250%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28228 258%29 scale%280.9%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28254 264%29 scale%280.9%29' opacity='0.55'/%3E%3C/svg%3E") left bottom/280px 280px no-repeat,
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='440' height='440' viewBox='0 0 440 440'%3E%3Cdefs%3E%3Cg id='f'%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%280%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%2830%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%2860%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%2890%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28120%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28150%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28180%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28210%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28240%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28270%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28300%29'/%3E%3Cellipse cy='-6' rx='2.6' ry='5' fill='%23ea580c' transform='rotate%28330%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%2815%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%2845%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%2875%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28105%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28135%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28165%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28195%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28225%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28255%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28285%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28315%29'/%3E%3Cellipse cy='-3.6' rx='2' ry='3.6' fill='%23f59e0b' transform='rotate%28345%29'/%3E%3Ccircle r='2.4' fill='%23fbbf24'/%3E%3C/g%3E%3Cg id='v'%3E%3Ccircle cy='-11' r='7' fill='%23fbbf24' opacity='.25'/%3E%3Crect x='-2.6' y='-6' width='5.2' height='11' rx='1.2' fill='%23fde7c7'/%3E%3Cpath d='M0-13c2 3 2.4 5 0 7c-2.4-2-2-4 0-7z' fill='%23fbbf24'/%3E%3C/g%3E%3C/defs%3E%3Ccircle cx='30' cy='40' r='1.2' fill='%23fde68a' opacity='0.6'/%3E%3Ccircle cx='150' cy='25' r='1' fill='%23fde68a' opacity='0.5'/%3E%3Ccircle cx='270' cy='60' r='1.5' fill='%23fde68a' opacity='0.7'/%3E%3Ccircle cx='400' cy='30' r='1.1' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='95' cy='180' r='1' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='345' cy='200' r='1.2' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='210' cy='265' r='1' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='45' cy='345' r='1.3' fill='%23fde68a' opacity='0.6'/%3E%3Ccircle cx='185' cy='410' r='1' fill='%23fde68a' opacity='0.5'/%3E%3Ccircle cx='320' cy='370' r='1' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='425' cy='275' r='1.1' fill='%23fde68a' opacity='0.5'/%3E%3Cuse xlink:href='%23f' transform='translate%28115 100%29 scale%281.25%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%28300 230%29 scale%281.05%29' opacity='0.5'/%3E%3Cuse xlink:href='%23f' transform='translate%28390 410%29 scale%281.15%29' opacity='0.55'/%3E%3Cuse xlink:href='%23f' transform='translate%2830 215%29 scale%280.95%29' opacity='0.45'/%3E%3Cellipse cx='200' cy='140' rx='2.2' ry='4.2' fill='%23f59e0b' opacity='0.5' transform='rotate%2830 200 140%29'/%3E%3Cellipse cx='212' cy='150' rx='2.2' ry='4.2' fill='%23ea580c' opacity='0.45' transform='rotate%28-20 212 150%29'/%3E%3Cellipse cx='60' cy='300' rx='2.2' ry='4.2' fill='%23f59e0b' opacity='0.45' transform='rotate%2860 60 300%29'/%3E%3Cellipse cx='355' cy='120' rx='2.2' ry='4.2' fill='%23ea580c' opacity='0.45' transform='rotate%28-40 355 120%29'/%3E%3Cellipse cx='250' cy='360' rx='2.2' ry='4.2' fill='%23f59e0b' opacity='0.45' transform='rotate%2815 250 360%29'/%3E%3Cellipse cx='140' cy='330' rx='2.2' ry='4.2' fill='%23ea580c' opacity='0.4' transform='rotate%28-60 140 330%29'/%3E%3Cellipse cx='410' cy='150' rx='2.2' ry='4.2' fill='%23f59e0b' opacity='0.4' transform='rotate%2880 410 150%29'/%3E%3Cuse xlink:href='%23v' transform='translate%28250 180%29 scale%281%29' opacity='0.7'/%3E%3Cuse xlink:href='%23v' transform='translate%2870 420%29 scale%280.9%29' opacity='0.6'/%3E%3Cuse xlink:href='%23v' transform='translate%28380 310%29 scale%280.95%29' opacity='0.65'/%3E%3C/svg%3E") 0 0/440px 440px repeat,
   radial-gradient(1300px 540px at 50% 110%, rgba(234,88,12,.30), rgba(0,0,0,0) 70%),
-  linear-gradient(180deg, rgba(29,10,51,0) 0, rgba(29,10,51,.18) 95px, rgba(29,10,51,.8) 325px, rgb(29,10,51) 565px),
-  linear-gradient(90deg,#2a0d3a 0%,#4a1452 33%,#6a1a4c 62%,#8a2f22 100%); }
+  linear-gradient(180deg,#1d0a33 0%,#24103c 60%,#2c1248 100%); }
 html.tema-todos-santos{ --sh-card:0 10px 28px -14px rgba(0,0,0,.6); --sh-soft:0 18px 44px -20px rgba(0,0,0,.7); }
+html.tema-todos-santos body::after{ content:''; position:fixed; left:0; right:0; top:var(--hdr-h,0px); height:var(--hdr-h,0px); z-index:-1; pointer-events:none;
+  background:var(--grad-header); background-size:300% 300%; animation:grad-move 14s ease infinite; transform:scaleY(-1); filter:brightness(.62) saturate(1.05);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); }
+@media(prefers-reduced-motion:reduce){ html.tema-todos-santos body::after{ animation:none; } }
 html.tema-todos-santos .header{ box-shadow:0 8px 26px rgba(14,4,26,.5); }
 html.tema-todos-santos .footer{ color:#ecd5f5; }
 html.tema-todos-santos .footer a{ color:#fcd34d; }
@@ -6025,8 +6035,10 @@ function bytesDeB64(b64){
    Estado + espejo local + cola offline
    ========================================================================== */
 var STATE=[];
+var STATE_RECORTADO=false;   // (30/10, D11) `STATE` es la copia del aparato (recortada) y todavía no llegó ninguna lectura de la planilla
 function loadMirror(){
   try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; }
+  STATE_RECORTADO=Array.isArray(STATE) && STATE.length>0;
   if(!Array.isArray(STATE))STATE=[];
   STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae filas del sistema
   loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror(); loadBorrMirror();
@@ -6038,7 +6050,8 @@ var SALDO_GEN=0;
    30/10, ~400.000 más por mes) en el mismo lugar del navegador donde se guarda cada pedido ANTES de mandarlo (`LS_PEND`, §4hh). Chrome
    da 5,2 millones (medido); Safari, menos. Lleno, `prepararDurable` no puede conservar el pedido y el panel dice «El pedido NO se
    envió». Ahora la copia (solo sirve para abrir rápido y para trabajar sin señal) guarda lo de los últimos `MIRROR_DIAS` días, lo que
-   viene, lo no entregado de los últimos `MIRROR_PEND_DIAS` y lo que tiene saldo: unas 780.000 letras, y no crece con los meses.
+   viene, lo no entregado de los últimos `MIRROR_PEND_DIAS` y lo que Contabilidad y ATC tienen pendiente: unas 850.000 letras, y no
+   crece con los meses. Sin conexión, `STATE_RECORTADO` dice que lo que se ve es esta copia (aviso en Contabilidad, D11).
    ⚠️ Lo que falte se lee de la planilla con la primera lectura, como siempre. Y si igual falta lugar, `lsPoner` borra primero esta
    copia y vuelve a intentar: nunca se pierde un pedido sin enviar por la copia. */
 var MIRROR_DIAS=45, MIRROR_PEND_DIAS=180;
@@ -6049,8 +6062,18 @@ function mirrorRecortar(lista){
     var ts=Number(p.ts)||0, fe=p.fecha ? Date.parse(String(p.fecha).slice(0,10)+'T12:00:00-04:00') : 0;
     if(!(fe>0)) fe=0;
     if(ts>=lim || fe>=lim || (!ts && !fe)) return true;          // reciente, lo que viene, o sin fecha
-    if(!p.entregado && fe>=limP) return true;                       // sin entregar
-    if(!p.pagado && (Number(p.saldo)||0)>0.005) return true;        // con saldo
+    if(!p.entregado && (fe>=limP || !fe)) return true;              // sin entregar (también «el cliente avisa cuándo», que va sin fecha)
+    /* (30/10, revisión de la otra IA, medido con la planilla real) Lo que Contabilidad y ATC muestran como pendiente, con SUS reglas: con
+       la regla «!pagado && saldo» sola se iban 25 de 36 ATC abiertas, 19 de 22 ventas sin monto y las cobradas de más. Las preguntas
+       que leen los pagos van al final (cada llamada cuesta ~0,7 ms con 1.500 filas). */
+    try{
+      if(contaFaltaCobrar(p)>0.005) return true;                    // con saldo: la MISMA regla de «Falta cobrar» / «Por cobrar»
+      if(esFilaSistema(p)) return true;
+      if((Number(p.saldo)||0)<-0.005) return true;                  // cobrada de más
+      if(esATC(p.oc) && !atcEntregada(p)) return true;              // ATC abierta (en fábrica, lista, programada)
+      if(!p.pagado && sinMontoAnotado(p) && !fueraDeConta(p)) return true;   // venta sin monto anotado (aviso del Cuadre)
+      if(String(p.metodoPago||'').indexOf('^')>=0 && envioPendiente(p) && !fueraDeConta(p)) return true;   // flete pactado sin cobrar
+    }catch(e){ return true; }                                       // ante la duda, se guarda
     return false;
   });
 }
@@ -7766,7 +7789,7 @@ function renderConnEstadoBase(){
     var _re=(CARGA_ESTADO==='reintento' && CARGA_PROXIMO)
       ? (' Reintenta solo en <b>'+Math.max(0,Math.ceil((CARGA_PROXIMO-Date.now())/1000))+' s</b>.') : '';
     ft.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' Lo que guardes queda en este dispositivo y se manda solo cuando vuelva.'+desdeCuandoLaCopia();
-    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' '+(STATE.length?('Estás viendo la copia guardada en este dispositivo'+desdeCuandoLaCopia()+'.'):'Por eso no se ve ningún pedido.');
+    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' '+(STATE.length?('Estás viendo la copia guardada en este dispositivo'+desdeCuandoLaCopia()+(STATE_RECORTADO?(', que guarda solo los últimos '+MIRROR_DIAS+' días y lo pendiente'):'')+'.'):'Por eso no se ve ningún pedido.');
     return;
   }
   if(CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO){
@@ -9625,7 +9648,19 @@ function renderContaSiActiva(){
   contaRepintar();
 }
 /* La pestaña de Contabilidad que está a la vista, repintada. */
+/* 📴 (30/10, revisión de la otra IA, D11) Sin conexión, Contabilidad sale de la copia del aparato, que guarda los últimos `MIRROR_DIAS` días
+   (más lo pendiente): un mes viejo se veía «completo» con una parte de las ventas (agosto: 24 de 272) y sin ningún aviso. */
+function contaCopiaAviso(){
+  var v=document.getElementById('view-conta'); if(!v) return;
+  var el=document.getElementById('cta-copia');
+  if(!STATE_RECORTADO){ if(el) el.hidden=true; return; }
+  if(!el){ el=document.createElement('div'); el.id='cta-copia'; el.setAttribute('role','status'); v.insertBefore(el, v.firstChild); }
+  el.style.cssText='margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fff7e6;border:1px solid #f5c26b;color:#7a4a00;font-size:.86rem;font-weight:600';
+  el.innerHTML='📴 Todavía sin conexión con la planilla: ves la copia de este aparato, que guarda los últimos '+MIRROR_DIAS+' días (más lo que se debe, lo sin entregar y las ATC abiertas). Lo anterior sale <b>incompleto</b> (los totales, el Cuadre y los Excel) hasta que conecte.';
+  el.hidden=false;
+}
 function contaRepintar(){
+  try{ contaCopiaAviso(); }catch(e){}
   var t=contaTab();
   if(t==='cuadre') renderCuadre(); else if(t==='proy') renderProyeccion(); else renderConta();
 }
@@ -19921,6 +19956,7 @@ function borradoFuera(loc){
   try{ toast('🗑 El pedido de '+(loc.cliente||'sin nombre')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja).','err',9000); }catch(e){}
 }
 function mergePending(serverList){
+  STATE_RECORTADO=false;   // (D11) todas las lecturas de la planilla pasan por acá
   /* (28/09) En qué momento se pidió esta lectura (`apiList`). Sin la marca —una prueba que llama directo— cuenta como
      pedida ahora: después de todo lo ya confirmado. */
   var t0=(serverList && serverList._pedidaN!=null) ? Number(serverList._pedidaN) : Infinity;

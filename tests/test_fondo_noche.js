@@ -4,7 +4,7 @@
    pétalos, velitas, guirnalda). Las pestañas de la compu van de noche; las tarjetas no cambian.
    Lo que cuida:
    1. Octubre y noviembre: la capa del fondo existe, es FIJA, va detrás de todo (z −1) y no se puede tocar; el `body` queda transparente.
-   2. Debajo del encabezado, el color sigue al del encabezado (franja de izquierda a derecha, igual que la de arriba) y abajo es noche.
+   2. Debajo del encabezado va su REFLEJO, que se mueve con él (su degradé cambia de color cada 14 s), y abajo es noche.
    3. El pie, lo único directo sobre el fondo, se lee (contraste ≥ 4,5) y nada más queda suelto sobre el fondo en las pestañas principales.
    4. Las pestañas de la compu: oscuras, la elegida con su color; en el celular, las de abajo como siempre.
    5. Las ventanas grandes (Stock, Pedido a producción) siguen con su fondo claro.
@@ -47,20 +47,27 @@ const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, 
     const c = await capa(page);
     chk('1 ' + mes + ': tema del mes (' + tema + ')', c.tema === tema, c.tema);
     chk('1 ' + mes + ': la capa del fondo es fija, detrás de todo y no se toca', c.content !== 'none' && c.pos === 'fixed' && c.z === '-1' && c.pe === 'none' && c.ancho >= 1400 && c.alto >= 880, c);
-    chk('1 ' + mes + ': lleva lo del mes (dibujos) y la noche (degradés)', /data:image\/svg\+xml/.test(c.img) && marca.test(c.img) && (c.img.match(/gradient/g) || []).length >= 3, c.img.slice(0, 120));
+    chk('1 ' + mes + ': lleva lo del mes (dibujos) y la noche (degradés)', /data:image\/svg\+xml/.test(c.img) && marca.test(c.img) && (c.img.match(/gradient/g) || []).length >= 2, c.img.slice(0, 120));
     chk('1 ' + mes + ': el body queda transparente (si no, taparía la capa)', c.bodyBg === 'rgba(0, 0, 0, 0)' && c.bodyImg === 'none', [c.bodyBg, c.bodyImg]);
     // ---------- 2 ----------
+    /* (30/10, captura del dueño: el encabezado violeta y abajo naranja) El degradé del encabezado SE MUEVE: debajo va su reflejo
+       (`body::after`), el mismo degradé con la misma animación, dado vuelta, del alto del encabezado, y al mismo tiempo que él. */
+    await page.waitForTimeout(400);
     const r2 = await page.evaluate(() => {
-      /* La franja de la capa (90deg, la misma idea que el encabezado) y la noche de abajo (el último color del degradé vertical). */
-      const img = getComputedStyle(document.body, '::before').backgroundImage;
-      const lin = img.match(/linear-gradient\([^()]*(\([^()]*\)[^()]*)*\)/g) || [];
-      const franja = lin.find(g => /90deg/.test(g)) || '', vert = lin.find(g => !/90deg/.test(g) && /565px/.test(g)) || '';   // Chrome escribe el de 180deg sin el ángulo (es el que va por defecto)
-      const h = document.querySelector('.header').getBoundingClientRect();
-      return { franja, vert, hAlto: Math.round(h.height), grad: getComputedStyle(document.documentElement).getPropertyValue('--grad-header') };
+      const h = document.querySelector('.header'), hs = getComputedStyle(h), a = getComputedStyle(document.body, '::after');
+      const anis = document.getAnimations().filter(x => x.animationName === 'grad-move');
+      const deH = anis.find(x => x.effect && x.effect.target === h && !x.effect.pseudoElement), deR = anis.find(x => x.effect && x.effect.pseudoElement === '::after');
+      const b = getComputedStyle(document.body, '::before').backgroundImage, lin = b.match(/linear-gradient\([^()]*(\([^()]*\)[^()]*)*\)/g) || [];
+      return { content: a.content, pos: a.position, z: a.zIndex, pe: a.pointerEvents, tr: a.transform, img: a.backgroundImage === hs.backgroundImage, tam: a.backgroundSize + ' / ' + hs.backgroundSize,
+        ani: a.animationName + ' ' + a.animationDuration + ' / ' + hs.animationName + ' ' + hs.animationDuration,
+        top: Math.round(parseFloat(a.top)), alto: Math.round(parseFloat(a.height)), hAlto: Math.round(h.getBoundingClientRect().height),
+        juntos: deH && deR ? Math.abs(Number(deH.currentTime) - Number(deR.currentTime)) : -1, noche: lin.slice(-1)[0] || '' };
     });
-    const izq = (r2.franja.match(/rgb\([^)]*\)/g) || [])[0], der = (r2.franja.match(/rgb\([^)]*\)/g) || []).slice(-1)[0];
-    chk('2 ' + mes + ': debajo del encabezado sigue su atardecer: oscuro a la izquierda, naranja a la derecha (como arriba)', izq && der && lum(der) > lum(izq) && /rgb\((1[0-9]{2}|[89][0-9]), /.test(der), [izq, der]);
-    chk('2 ' + mes + ': y baja a la noche (el degradé vertical termina en un color lleno)', /rgb\(\d+, \d+, \d+\) 565px/.test(r2.vert), r2.vert.slice(0, 160));
+    chk('2 ' + mes + ': debajo del encabezado va su reflejo: el mismo degradé y tamaño, dado vuelta, fijo, detrás y sin clics',
+      r2.content !== 'none' && r2.pos === 'fixed' && r2.z === '-1' && r2.pe === 'none' && /matrix\(1, 0, 0, -1, 0, 0\)/.test(r2.tr) && r2.img && /300% 300% \/ 300% 300%/.test(r2.tam), r2);
+    chk('2 ' + mes + ': pegado abajo del encabezado y de su alto', r2.hAlto > 40 && Math.abs(r2.top - r2.hAlto) <= 1 && Math.abs(r2.alto - r2.hAlto) <= 1, [r2.top, r2.alto, r2.hAlto]);
+    chk('2 ' + mes + ': se mueve con el encabezado (la misma animación, al mismo tiempo)', /^grad-move 14s \/ grad-move 14s$/.test(r2.ani) && r2.juntos >= 0 && r2.juntos < 100, [r2.ani, r2.juntos]);
+    chk('2 ' + mes + ': y abajo es noche (un degradé de colores llenos)', /linear-gradient\(rgb\(\d+, \d+, \d+\) 0%/.test(r2.noche), r2.noche.slice(0, 120));
     // ---------- 3 ----------
     const r3 = await page.evaluate(() => {
       const pie = document.getElementById('footer'), cs = getComputedStyle(pie);
