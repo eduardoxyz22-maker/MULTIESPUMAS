@@ -2371,7 +2371,7 @@ correo + el mensaje de **WhatsApp**.
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
 
-## 🏁🏭📦🤖🔢🏪 Las 7 elegidas de octubre: 74, 75, 76, 78, 81, 82, 83 (§4nv, 30/10; PUBLICADO `7a0f32f`; dueño: *«la escala está bien, publica todo»*; servidor `2026-10-30-a` lo implementa el dueño: enlace fijo `89ca847…`, 5.133 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 29-b de `38864f6…`, 5.085 líneas)
+## 🏁🏭📦🤖🔢🏪 Las 7 elegidas de octubre: 74, 75, 76, 78, 81, 82, 83 (§4nv, 30/10; PUBLICADO `7a0f32f`; dueño: *«la escala está bien, publica todo»*; servidor `2026-10-30-a` IMPLEMENTADO 30/10 por el dueño (contesta `2026-10-30-a`): enlace fijo `89ca847…`, 5.133 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 29-b de `38864f6…`, 5.085 líneas)
 Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 por usar agosto-septiembre). Página para el dueño: https://claude.ai/artifact/J4sAph88pxQH61tnBnwSxE.
 - **74 🏁 Cierre comercial** (Proyección → `#pry-cierre-btn`, `#ccm-ov`, solo con la contraseña): por vendedora y marca lo vendido (= `pryVentas`, que ahora
   devuelve `id`), mínima, presupuesto, comisión, Titanio, bono y total a pagar. Metas por vendedor y escala en `__metas__` (`m[ym].vd`, `m[ym].esc`;
@@ -2397,6 +2397,8 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   **pregunta abierta al dueño: Buenos Aires, Mutualista y Charcas**, 166 ventas). `porCargarSistema` = UNA cuenta. `test_talonario_sin_ruido` (22).
 - **83 🏪 La reposición que no fue entera**: al poner ✅ pregunta (✗ entero menos lo llegado; 🏭 solo si no pudo llegar a tiempo); «Sí» arma la RPT con lo
   que faltó (`persistPedido`) y la original queda con `rpf` (`heredarMarcas`). Chip y aviso en Administración. `RPT_FALTA_PRUEBA`. `test_rpt_faltante` (20).
+- **Decidido por el dueño (30/10, «dejalo así»)**: una venta ya confirmada por el bot que después pasa a «avisa cuándo» NO manda ningún aviso (ni al
+  cliente ni a logística). Para la próxima versión del `.gs` quedan 4 detalles menores anotados en la bitácora §4nv.
 
 ## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; PUBLICADO `4c7af2b`; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
 Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades

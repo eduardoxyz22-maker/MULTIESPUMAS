@@ -16920,7 +16920,9 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   (4) `iaComprobantes_` con `x.fatal` (clave/crédito) no llama a `iaPausar_` y cada clic reintenta; (5) el comentario «🚀 (2026-10-14-a)» de
   `WA_PLANTILLAS` quedó encima de `logistica_pedir_hoy` y no de `pedido_en_camino`. (3) es una línea muerta documentada en `waEsEntrega_`.
   **(6) Para decidir con el dueño**: a una venta YA confirmada por el bot que después pasa a «avisa cuándo» no le sale ningún mensaje (`waAlGuardar_`
-  sale por `!rec.fecha`; lo que estaba en la cola lo saltea `waNoCliente_`→`waEsEntrega_`), ni al cliente ni a logística.
+  sale por `!rec.fecha`; lo que estaba en la cola lo saltea `waNoCliente_`→`waEsEntrega_`), ni al cliente ni a logística. **Dueño: «dejalo así».**
+- **Servidor 30-a IMPLEMENTADO 30/10 por el dueño**: `getlog` (solo lee) contesta `version: 2026-10-30-a`. `main` ya tenía la página con
+  `SCRIPT_VERSION_ESPERADA` en 30-a (`7a0f32f`). Volver atrás: ✏️ a la versión anotada Y pegar la 29-b de `38864f6…` (5.085 líneas).
 
 ### §4nw — 🔄 «ACTUALIZAR» DEL DASHBOARD ESPERA LO QUE TARDA GITHUB (30/10; dueño: *«le di actualizar… no se modificó la hora… el botón no dio error ni nada»*; PUBLICADO con su «ok»: Heaven `fafafdb`, Sueña `5b510f6`)
 - No era el token: Sueña corrió 09:10-09:16 (3.741 leads, antes 3.680) y Heaven 09:17-09:22 («updated» 30/10 09:17), las dos en verde. El dueño miró a
