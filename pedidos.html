@@ -6136,7 +6136,7 @@ function queuePending(rec){
    corrección posterior del mismo pedido ya no coincide y va normal. */
 var LS_FORZAR_COLA='me_forzar_cola';
 function forzarColaLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_FORZAR_COLA)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
-function forzarColaAnotar(id, txt){ try{ var m=forzarColaLeer(); m[String(id)]=txt; localStorage.setItem(LS_FORZAR_COLA, JSON.stringify(m)); }catch(e){} }
+function forzarColaAnotar(id, txt){ try{ var m=forzarColaLeer(); m[String(id)]=txt; lsPoner(LS_FORZAR_COLA, JSON.stringify(m)); /* 🛟 (§4oa, D6) sin esto, el pedido forzado salía sin forzar y el servidor lo rechazaba */ }catch(e){} }
 function forzarColaEs(rec){ var m=forzarColaLeer(), t=m[String(rec&&rec.id)]; return !!t && t===JSON.stringify(rec); }
 function forzarColaOlvidar(id){ try{ var m=forzarColaLeer(); if(m[String(id)]==null) return; delete m[String(id)]; localStorage.setItem(LS_FORZAR_COLA, JSON.stringify(m)); }catch(e){} }
 function colaQuitarExacta(txt){
@@ -6797,6 +6797,7 @@ var LISTA_COMPLETA_MS=15*60000;  // cada cuánto se lee entera aunque ande la de
 var LISTA_Z_FALLO=false;         // la comprimida falló una vez en esta pestaña: de acá en más, sin comprimir
 var LISTA_DELTA_FALLAS=0;        // cuentas de control que no dieron, seguidas
 var LISTA_DELTA_PAUSA=0;         // (relojMs) hasta cuándo no se pide lo cambiado, después de dos cuentas que no dieron
+var LISTA_CAMBIO_N=0, LISTA_CAMBIO_VISTO=0;   // ⚡ (§4oa) lecturas CON cambios (de cualquiera que llame a `apiList`) y hasta cuál juntó `refrescarEstadoYa`
 var MARGEN_RELOJ_MS=2000;        // relojes de dos máquinas de Google: lo que puede haber entre una y otra
 var Z_CHECK='\u00f1\uD83D\uDD12\u20ac';   // «ñ🔒€»: la misma marca que manda el servidor adentro de la comprimida
 var LS_LECTURA_T='ME_LECTURA_T_V1';       // cuándo fue la última lectura buena en este dispositivo (para el cartel)
@@ -6908,6 +6909,7 @@ function apiList(opts){
       }
     } else lista=listaTomarEntera(j);
     j.pedidos=lista;
+    if(!igual) LISTA_CAMBIO_N++;   // ⚡ (§4oa) otra lectura (el Excel del cierre, la cola de reescritas…) pudo traer lo cambiado sin pasarlo a STATE
     try{
       Object.defineProperty(lista, '_pedidaN', { value:n0, enumerable:false, configurable:true, writable:true });
       Object.defineProperty(lista, '_pedidaT', { value:t0, enumerable:false, configurable:true, writable:true });
@@ -7233,7 +7235,7 @@ function rechazoRecordar(rec, res){
        aparte hasta «Ya lo revisé» (con su propio tope, para no llenar el celular). */
     var _q=a.slice(0,20), _extra=0;
     a.slice(20).forEach(function(x){ if(x && x.perdio && !x.visto && _extra<30){ _q.push(x); _extra++; } });
-    localStorage.setItem(LS_RECHAZOS, JSON.stringify(_q));
+    lsPoner(LS_RECHAZOS, JSON.stringify(_q));   // 🛟 (§4oa, D6) lo que se perdió, que ve el chofer
   }catch(e){}
   renderColaAviso();
 }
@@ -9427,6 +9429,7 @@ function trozosMas(clave){
 function trozosMirar(){
   if(!('IntersectionObserver' in window)) return;
   if(!TROZOS_OBS) TROZOS_OBS=new IntersectionObserver(function(es){ es.forEach(function(e){ if(!e.isIntersecting) return; TROZOS_OBS.unobserve(e.target); var k=e.target.getAttribute('data-trz'); setTimeout(function(){ trozosMas(k); }, 0); }); }, { rootMargin:'700px 0px' });
+  TROZOS_OBS.disconnect();   // los marcadores que se fueron con un redibujo no quedan anotados
   document.querySelectorAll('[data-trz]').forEach(function(m){ TROZOS_OBS.observe(m); });
 }
 function renderConta(){
@@ -19533,9 +19536,10 @@ function refrescarEstadoYa(){
     if(res&&res.ok&&Array.isArray(res.pedidos)){
       /* ⚡ (§4oa, 85) Sin cambios: ni copia, ni números de pestañas, ni repintar. Si la junta con lo de acá sacó o agregó algo (un
          pedido que otro equipo borró y recién ahora se confirma, §4go), sí cambió. */
-      var _igual=!!res.pedidos._igual, _n0=STATE.length;
+      var _igual=!!res.pedidos._igual && LISTA_CAMBIO_N===LISTA_CAMBIO_VISTO, _n0=STATE.length, _ma=MERGE_DE_ACA;
+      LISTA_CAMBIO_VISTO=LISTA_CAMBIO_N;
       STATE=mergePending(res.pedidos);
-      if(STATE.length!==_n0) _igual=false;
+      if(STATE.length!==_n0 || MERGE_DE_ACA!==_ma) _igual=false;
       LECTURA_IGUAL=_igual;
       saveMirror(_igual?{igual:true}:null); updateStats(_igual?{igual:true}:null);
       ULTIMO_REFRESCO=Date.now(); ULTIMO_ERROR='';
@@ -19830,7 +19834,7 @@ function autoArrancar(){
   if(AUTO_TIMER) clearInterval(AUTO_TIMER);
   AUTO_TIMER=setInterval(function(){ autoRefrescar('tic'); updateFooter(); try{ pryHistAuto(); }catch(e){} }, AUTO_MS);   // 📒 (§4mn) la foto de la tarde de la proyección
   if(MIS_TIMER) clearInterval(MIS_TIMER);
-  MIS_TIMER=setInterval(function(){ if(misAlAire()) refreshMis(); }, MIS_MS);
+  MIS_TIMER=setInterval(function(){ if(misAlAire()) refreshMis({ tic:true }); }, MIS_MS);
   document.addEventListener('visibilitychange', function(){
     if(document.hidden) return;
     // Al volver a la pestaña: al toque, salvo que se haya mirado recién.
@@ -19974,10 +19978,11 @@ function mergePending(serverList){
      copia LOCAL. Cuando el servidor conteste, `aplicarSello` la actualiza. */
   var pendTodos=getPending();
   var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
+  var deAca=[];   // ⚡ (§4oa, N3) las filas que puso la copia de acá en vez de la planilla
   serverList=serverList.map(function(s){
     var id=s&&s.id; if(!id) return s;
-    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola, tPed, ahS)) return local; }   // (28/09) una más nueva de la planilla gana
-    for(var i=0;i<pendTodos.length;i++) if(pendTodos[i].id===id) return pendTodos[i];
+    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola, tPed, ahS)){ deAca.push(id); return local; } }   // (28/09) una más nueva de la planilla gana
+    for(var i=0;i<pendTodos.length;i++) if(pendTodos[i].id===id){ deAca.push(id); return pendTodos[i]; }
     return s;
   });
   var ids={}; serverList.forEach(function(p){ids[p.id]=1;});
@@ -20026,8 +20031,10 @@ function mergePending(serverList){
      «📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR» como un pedido y las fichas
      contaban un pedido de más. Los retiros ya se sumaron a RETIROS arriba; el stock en
      memoria manda mientras esté en cola (`filaSistemaEnVuelo`). */
+  MERGE_DE_ACA=deAca.sort().join('|');   // ⚡ (§4oa, N3) si cambia (venció la ventana de 90 s, salió de la cola), `refrescarEstadoYa` no la da por «sin cambios»
   return serverList.concat(pend.filter(function(p){ return !esFilaSistema(p); }));
 }
+var MERGE_DE_ACA='';
 
 /* ============================================================================
    🔒 DÍAS DE ENTREGA CERRADOS
@@ -25715,15 +25722,19 @@ function copiarAtcUna(id){
       único lugar que mueve `ULTIMO_REFRESCO` (y que respeta la cola de lo no enviado).
    3. Un fallo de red se veía igual que un éxito. Ahora se avisa arriba de la lista. */
 var MIS_CARGANDO=false;
-function refreshMis(){
-  renderMis();                                   // 1. lo que ya hay, sin esperar a nadie
+/* ⚡ (30/10, §4oa, revisión: el agente de la página) `o.tic` = el reloj de 30 s (`MIS_TIMER`): antes dibujaba Mis pedidos DOS veces
+   en cada vuelta aunque la planilla no cambiara (el ahorro de la 85 no llegaba acá). Ahora no dibuja antes de leer y, después,
+   repinta solo si hay algo nuevo que mostrar (la misma regla de `autoRefrescar`), con `autoRepintar`, que cuida el scroll. */
+function refreshMis(o){
+  var tic=!!(o && o.tic);
+  if(!tic) renderMis();                          // 1. lo que ya hay, sin esperar a nadie
   if(!CONNECTED) return Promise.resolve(false);
   if(MIS_CARGANDO) return Promise.resolve(false);   // no dos consultas encimadas
   MIS_CARGANDO=true; misEstado('cargando');
   return refrescarEstado().then(function(ok){
     MIS_CARGANDO=false;
     misEstado(ok?'':'error');
-    if(ok) renderMis();
+    if(ok){ if(!tic) renderMis(); else if(!autoRepintarPuedeEsperar()) autoRepintar(); }
     updateFooter();                              // el sello del pie, siempre
     return ok;
   }, function(){ MIS_CARGANDO=false; misEstado('error'); updateFooter(); return false; });
@@ -27495,8 +27506,9 @@ function renderMis(){
   /* (26/09) El corte en 120 era callado: el chip decía «📋 Todos 300» y abajo no había nada que
      dijera que faltaban 180. Ahora lo dice y deja ver más. */
   var verNota=misVeNota(v);                         // (07/10) la nota de venta, solo a Eduardo
-  tbl.innerHTML=trozosHtml('mis', lista.slice(0,MIS_TOPE), function(p,i){ return misCardHtml(p, i+1, todos, verNota); }, { primero:30 })+   // ⚡ (§4oa, 87)
-    (lista.length>MIS_TOPE ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
+  var _tope=trozosActivo() ? lista.length : MIS_TOPE;   // ⚡ (§4oa, H4) de a partes, el «Ver más» del trozo es el único; sin trozos (las pruebas), el corte de 120
+  tbl.innerHTML=trozosHtml('mis', lista.slice(0,_tope), function(p,i){ return misCardHtml(p, i+1, todos, verNota); }, { primero:30 })+   // ⚡ (§4oa, 87)
+    (lista.length>_tope ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
       'Se ven los '+MIS_TOPE+' más nuevos de '+lista.length+'. '+
       '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="MIS_TOPE+=120;renderMis()">Ver '+Math.min(120, lista.length-MIS_TOPE)+' más</button></div>') : '');
 }
