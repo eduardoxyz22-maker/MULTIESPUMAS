@@ -16913,7 +16913,14 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   versión exacta: cierre_comercial 52, comprobante_al_subir 26, kommo_ya_cargadas 21, avisa_cuando 52, talonario 22, rpt_faltante 20, fabrica_debe 46,
   servidor 414, metas 24, proyeccion 129, ia_comprobantes 47, cierre_control 7, todo bien. La página anda con el servidor 29-b y con el 30-a (sin el
   30-a, el talonario se guarda sin comparar el sello y una página sin F5 puede ponerle día a una «avisa cuándo»). Enlace del `.gs` 30-a para el dueño:
-  `89ca847…` (5.133 líneas). Falta: que lo implemente, que guarde la escala en el editor y la respuesta de las tiendas (82).
+  `89ca847…` (5.133 líneas). Falta: que lo implementen, que guarde la escala en el editor y la respuesta de las tiendas (82).
+- **Revisión del `.gs` 30-a que trajo el dueño (otra herramienta, 30/10)**: nada que impida implementar; coincide con lo verificado acá. Para la
+  PRÓXIMA versión del `.gs` (no se tocó la 30-a para no cambiarle el enlace mientras la pega): (1) `getSheet` en una hoja nueva de 26 columnas →
+  `insertColumnsAfter` antes de escribir los 30 encabezados; (2) `prodText` con `x.cant` vacío escribe «× undefined» → `(Number(x.cant)||1)`;
+  (4) `iaComprobantes_` con `x.fatal` (clave/crédito) no llama a `iaPausar_` y cada clic reintenta; (5) el comentario «🚀 (2026-10-14-a)» de
+  `WA_PLANTILLAS` quedó encima de `logistica_pedir_hoy` y no de `pedido_en_camino`. (3) es una línea muerta documentada en `waEsEntrega_`.
+  **(6) Para decidir con el dueño**: a una venta YA confirmada por el bot que después pasa a «avisa cuándo» no le sale ningún mensaje (`waAlGuardar_`
+  sale por `!rec.fecha`; lo que estaba en la cola lo saltea `waNoCliente_`→`waEsEntrega_`), ni al cliente ni a logística.
 
 ### §4nw — 🔄 «ACTUALIZAR» DEL DASHBOARD ESPERA LO QUE TARDA GITHUB (30/10; dueño: *«le di actualizar… no se modificó la hora… el botón no dio error ni nada»*; PUBLICADO con su «ok»: Heaven `fafafdb`, Sueña `5b510f6`)
 - No era el token: Sueña corrió 09:10-09:16 (3.741 leads, antes 3.680) y Heaven 09:17-09:22 («updated» 30/10 09:17), las dos en verde. El dueño miró a
