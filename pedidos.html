@@ -1277,7 +1277,11 @@ html.tema-todos-santos .h-camion{ z-index:1; }
    de colores de izquierda a derecha, un poco más oscura) y baja a la noche, con lo de cada mes muy tenue (murciélagos, calabacitas y una
    telaraña / cempasúchil, pétalos, velitas y una guirnalda). Las pestañas (compu y iPad) pasan a oscuras con el borde del mes, como el
    «Buscar» del encabezado; la elegida sigue con su color. Las tarjetas no cambian (son de vidrio: dejan pasar un poco del color).
-   Va en una capa FIJA detrás de todo (`body::before`, z −1, sin animación): no se repinta al bajar la página. Lo único que iba directo
+   Va en una capa FIJA detrás de todo (`body::before`, z −1, sin animación): no se repinta al bajar la página.
+   🪞 (30/10, captura del dueño: el encabezado violeta y abajo naranja) El degradé del encabezado SE MUEVE (`grad-move`, 14 s): una franja
+   fija de colores no lo sigue. Debajo va su REFLEJO (`body::after`): el mismo degradé, del mismo alto (`--hdr-h`), con la misma animación,
+   dado vuelta (`scaleY(-1)`) y más oscuro, que se desvanece hacia la noche: el borde de abajo del encabezado y el de arriba del reflejo
+   son siempre el mismo color. ⚠️ Si cambia la animación o el tamaño del degradé del encabezado, el reflejo va igual. Lo único que iba directo
    sobre el fondo era el pie (medido en Nuevo pedido, Mis pedidos, Contabilidad, Administración y ATC): pasa a letra clara.
    ⚠️ Las ventanas grandes (Stock, Pedido a producción, `.adm-ov`) tienen su propio fondo: no se tocan. Un elemento NUEVO que vaya directo
    sobre el fondo de la página necesita su color claro con estos dos temas. */
@@ -1287,9 +1291,12 @@ html.tema-halloween body::before{ content:''; position:fixed; inset:0; z-index:-
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg opacity='0.15' fill='none' stroke='%23f5d0fe'%3E%3Cpath d='M0 260L260 260'/%3E%3Cpath d='M0 260L251 193'/%3E%3Cpath d='M0 260L225 130'/%3E%3Cpath d='M0 260L184 76'/%3E%3Cpath d='M0 260L130 35'/%3E%3Cpath d='M0 260L67 9'/%3E%3Cpath d='M0 260L0 0'/%3E%3Cpath d='M38 260 Q36 257 37 250 Q33 248 33 241 Q29 239 27 233 Q22 232 19 227 Q14 227 10 223 Q5 225 0 222'/%3E%3Cpath d='M76 260 Q72 252 73 240 Q67 233 66 222 Q57 216 54 206 Q44 202 38 194 Q28 192 20 187 Q9 187 0 184'/%3E%3Cpath d='M114 260 Q108 247 110 230 Q100 219 99 203 Q86 193 81 179 Q66 172 57 161 Q42 158 30 150 Q14 150 0 146'/%3E%3Cpath d='M152 260 Q143 242 147 221 Q134 204 132 184 Q115 170 107 153 Q88 142 76 128 Q55 123 39 113 Q19 113 0 108'/%3E%3Cpath d='M190 260 Q179 237 184 211 Q167 190 165 165 Q143 147 134 126 Q110 113 95 95 Q69 88 49 76 Q24 75 0 70'/%3E%3Cpath d='M228 260 Q215 232 220 201 Q200 175 197 146 Q172 124 161 99 Q132 83 114 63 Q83 53 59 40 Q28 38 0 32'/%3E%3C/g%3E%3C/svg%3E") left bottom/280px 280px no-repeat,
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='420' height='420' viewBox='0 0 420 420'%3E%3Cdefs%3E%3Cpath id='m' d='M0 4c3-4 6-4 8-1c1-2 2-3 4-3c2 0 3 1 4 3c2-3 5-3 8 1c-3-1-5 0-6 2c-1-1-3-1-4 1c-1-2-3-2-4-1c-1-2-3-3-6-2z' fill='%230d0418'/%3E%3Cg id='c'%3E%3Cellipse rx='9' ry='7.5' fill='%23f97316'/%3E%3Cellipse cx='-3.5' rx='4' ry='7' fill='%23ea580c'/%3E%3Cellipse cx='3.5' rx='4' ry='7' fill='%23ea580c'/%3E%3Crect x='-1' y='-10' width='2' height='4' rx='1' fill='%234d7c0f'/%3E%3Cpath d='M-4-1l2-2l1 2zM4-1l-2-2l-1 2zM-4 3q4 3 8 0' fill='%231c0a30'/%3E%3C/g%3E%3C/defs%3E%3Ccircle cx='30' cy='40' r='1.3' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='140' cy='22' r='1' fill='%23fde68a' opacity='0.44'/%3E%3Ccircle cx='260' cy='70' r='1.6' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='380' cy='30' r='1.1' fill='%23fde68a' opacity='0.47'/%3E%3Ccircle cx='90' cy='170' r='1' fill='%23fde68a' opacity='0.39'/%3E%3Ccircle cx='330' cy='190' r='1.3' fill='%23fde68a' opacity='0.5'/%3E%3Ccircle cx='200' cy='250' r='1' fill='%23fde68a' opacity='0.39'/%3E%3Ccircle cx='40' cy='330' r='1.4' fill='%23fde68a' opacity='0.55'/%3E%3Ccircle cx='170' cy='390' r='1.1' fill='%23fde68a' opacity='0.44'/%3E%3Ccircle cx='300' cy='350' r='1' fill='%23fde68a' opacity='0.39'/%3E%3Ccircle cx='400' cy='260' r='1.2' fill='%23fde68a' opacity='0.47'/%3E%3Cuse xlink:href='%23m' transform='translate%28190 120%29 scale%281.6%29' opacity='0.6'/%3E%3Cuse xlink:href='%23m' transform='translate%2860 250%29 scale%281.1%29' opacity='0.51'/%3E%3Cuse xlink:href='%23m' transform='translate%28320 300%29 scale%281.3%29' opacity='0.57'/%3E%3Cuse xlink:href='%23m' transform='translate%28360 110%29 scale%280.9%29' opacity='0.45'/%3E%3Cuse xlink:href='%23c' transform='translate%28110 95%29 scale%281.35%29' opacity='0.5'/%3E%3Cuse xlink:href='%23c' transform='translate%28275 215%29 scale%281.15%29' opacity='0.45'/%3E%3Cuse xlink:href='%23c' transform='translate%28370 395%29 scale%281.25%29' opacity='0.5'/%3E%3Cuse xlink:href='%23c' transform='translate%2825 200%29 scale%281.05%29' opacity='0.4'/%3E%3C/svg%3E") 0 0/420px 420px repeat,
   radial-gradient(1300px 540px at 50% 110%, rgba(124,58,237,.32), rgba(0,0,0,0) 70%),
-  linear-gradient(180deg, rgba(28,10,46,0) 0, rgba(28,10,46,.18) 95px, rgba(28,10,46,.8) 325px, rgb(28,10,46) 565px),
-  linear-gradient(90deg,#2a0d22 0%,#4f1b18 30%,#6e2614 62%,#8a3011 100%); }
+  linear-gradient(180deg,#1c0a2e 0%,#22103a 60%,#2a1145 100%); }
 html.tema-halloween{ --sh-card:0 10px 28px -14px rgba(0,0,0,.6); --sh-soft:0 18px 44px -20px rgba(0,0,0,.7); }
+html.tema-halloween body::after{ content:''; position:fixed; left:0; right:0; top:var(--hdr-h,0px); height:var(--hdr-h,0px); z-index:-1; pointer-events:none;
+  background:var(--grad-header); background-size:300% 300%; animation:grad-move 14s ease infinite; transform:scaleY(-1); filter:brightness(.62) saturate(1.05);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); }
+@media(prefers-reduced-motion:reduce){ html.tema-halloween body::after{ animation:none; } }
 html.tema-halloween .header{ box-shadow:0 8px 26px rgba(10,3,20,.5); }
 html.tema-halloween .footer{ color:#d9c6f0; }
 html.tema-halloween .footer a{ color:#fdba74; }
@@ -47306,7 +47313,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-10-30-c';
+var PANEL_V='2026-10-30-d';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
