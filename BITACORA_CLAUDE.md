@@ -16901,6 +16901,16 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
 - Para el sábado 31/10: 09-005, 09-237, 09-318, 09-364 (cargadas en septiembre, sin camión); con la escala de septiembre, Juan Pablo a Bs 560,
   Isabel a Bs 1.539 y Fernando a Bs 4.670 de su mínima. Espera que el dueño elija.
 
+### §4nw — 🔄 «ACTUALIZAR» DEL DASHBOARD ESPERA LO QUE TARDA GITHUB (30/10; dueño: *«le di actualizar… no se modificó la hora… el botón no dio error ni nada»*; PUBLICADO con su «ok»: Heaven `fafafdb`, Sueña `5b510f6`)
+- No era el token: Sueña corrió 09:10-09:16 (3.741 leads, antes 3.680) y Heaven 09:17-09:22 («updated» 30/10 09:17), las dos en verde. El dueño miró a
+  las 09:15, antes de que terminara.
+- El botón (`refresh` en `panel_template.html`, mismo código en los dos repos) esperaba 3,5 min (`210000`), decía «Está tardando» 4 s y volvía a
+  «Actualizar»; la corrida tarda 5-6 min (+ ~40 s de Pages). Ahora `TOPE` = 12 min, «Generando desde Kommo… m:ss de ~6 min» (pasados 6,5 min «· tarda
+  más que otras veces»), recarga sola al terminar, y `conclusion` ≠ success («falló en GitHub») o el tope dejan el aviso 30 s. Título «~6 min».
+- `tests/test_actualizar_espera.js` (11; 9 rojas contra `54139b2`): Worker de mentira con `ctx.route` + `page.clock`; `TPL=` mide el de Sueña (11 bien).
+  ⚠️ No se sabe si el Worker devuelve `conclusion` en `refresh_status`: sin él, una corrida fallida se ve como terminada y recarga (como antes).
+  CLAUDE.md decía «el botón SOLO recarga la página»: eso es de antes del Worker; corregido.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.

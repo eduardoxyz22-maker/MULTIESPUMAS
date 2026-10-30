@@ -2424,7 +2424,8 @@ Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, T
 
 ## Para actualizar manualmente
 GitHub → Actions → **Generar Panel Heaven (Kommo → GitHub Pages)** → **Run workflow** (dejar month/year vacíos para el mes en curso).
-El botón "Actualizar" del dashboard SOLO recarga la página, no regenera datos.
+El botón "Actualizar" del dashboard dispara esa misma corrida por el Worker de Cloudflare (token de GitHub) y espera hasta 12 min mostrando el
+tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía a los 3,5 min sin avisar). `tests/test_actualizar_espera.js`.
 
 ## Reglas de oro
 - NO pushear a `main` mientras el workflow del panel corre (el push del bot falla en silencio).
