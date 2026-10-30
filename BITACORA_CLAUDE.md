@@ -16901,6 +16901,14 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
 - Para el sábado 31/10: 09-005, 09-237, 09-318, 09-364 (cargadas en septiembre, sin camión); con la escala de septiembre, Juan Pablo a Bs 560,
   Isabel a Bs 1.539 y Fernando a Bs 4.670 de su mínima. Espera que el dueño elija.
 
+- **Programadas (30/10, cinco agentes en worktrees, juntas en la rama sin publicar)**: 74 `48bb391`, 78+81 `9c0cf0a`, 76 `50566ed` (+ servidor
+  `2026-10-30-a`), 82+83 `128cde6` (+ `__talonario__` en `SISTEMA_JUNTA_OPCIONAL`, `32063ff`), 75 `95b7936`; arreglos vistos en las capturas: el
+  singular de «Hay 1 pedida… que no llegó» (`c54ba6c`) y el camión de la columna izquierda con «avisa cuándo» (`77188ac`, `test_avisa_cuando` 2b2).
+  Capturas con clientes inventados (`scratchpad/cap30/anon.js`: ⚠️ vendedores y choferes NO se inventan, y la garantía sí; la primera versión
+  cambiaba a Carola/Juan Pablo/Fernando y dejaba dos nombres reales en `garantia`). Página: https://claude.ai/artifact/J4sAph88pxQH61tnBnwSxE.
+  Esperan al dueño: la escala de comisiones (74, deducida de los 8 casos de septiembre), si Buenos Aires/Mutualista/Charcas se cargan al sistema
+  en otro lado (82), y el «publica» (primero él implementa el `.gs` 30-a, después la página).
+
 ### §4nw — 🔄 «ACTUALIZAR» DEL DASHBOARD ESPERA LO QUE TARDA GITHUB (30/10; dueño: *«le di actualizar… no se modificó la hora… el botón no dio error ni nada»*; PUBLICADO con su «ok»: Heaven `fafafdb`, Sueña `5b510f6`)
 - No era el token: Sueña corrió 09:10-09:16 (3.741 leads, antes 3.680) y Heaven 09:17-09:22 («updated» 30/10 09:17), las dos en verde. El dueño miró a
   las 09:15, antes de que terminara.
