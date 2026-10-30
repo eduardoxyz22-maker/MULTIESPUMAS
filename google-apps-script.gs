@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-10-29-b';   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-10-30-a';   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -230,7 +230,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-10-29-b';
+  var ESTA_VERSION = '2026-10-30-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -258,6 +258,7 @@ function probarAntesDeImplementar() {
     gpsSalidas_: typeof gpsSalidas_, gpsPedidosHoy_: typeof gpsPedidosHoy_, gpsRutaAnotar_: typeof gpsRutaAnotar_, gpsRutaLeer_: typeof gpsRutaLeer_, gpsDiaParaLista_: typeof gpsDiaParaLista_,   // (2026-10-13-b)
     iaRepaso: typeof iaRepaso, iaDespierta: typeof iaDespierta, iaLlamar_: typeof iaLlamar_, probarAsistente: typeof probarAsistente,   // (2026-10-14-b)
     kSnapshot_: typeof kSnapshot_, probarSnapshotKommo: typeof probarSnapshotKommo,   // (2026-10-29-b)
+    entregaAConfirmar_: typeof entregaAConfirmar_, avisaDeFila_: typeof avisaDeFila_,   // (2026-10-30-a)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -279,8 +280,11 @@ function probarAntesDeImplementar() {
         if (!primera && vals.length <= 1) ojo('La hoja «' + SHEET_NAME + '» está vacía: se arma sola con el primer guardado.');
         else if (primera !== 'id') mal('La hoja «' + SHEET_NAME + '» no empieza con la columna «id»: ¿es la planilla de pedidos?');
         else {
-          for (var i = 1; i < vals.length; i++) if (vals[i][0]) { rowToRec_(vals[i]); filas++; }
+          var nAv = 0, hayAv = (typeof entregaAConfirmar_ === 'function');
+          for (var i = 1; i < vals.length; i++) if (vals[i][0]) { var rr = rowToRec_(vals[i]); filas++; if (hayAv && entregaAConfirmar_(rr)) nAv++; }
           bien('La planilla se lee como la lee el panel: ' + filas + (filas === 1 ? ' fila.' : ' filas.'));
+          /* 📦 (2026-10-30-a) Solo informa: cuántas ventas esperan que el cliente diga el día (sin cupo ni mensajes del bot). */
+          if (hayAv) bien('Ventas «el cliente avisa cuándo» (sin día de entrega: no ocupan cupo y el bot no les escribe): ' + (nAv ? nAv : 'ninguna todavía') + '.');
         }
       }
     } catch (e) { mal('Leer la planilla falló: ' + motivo(e)); }
@@ -1424,7 +1428,7 @@ function doPostCuerpo_(e) {
   try {
     if (action === 'delete') return doDelete(body.id, body.rev, body);
     if (action === 'histStock') return histGuardar_(body);   // 📚 (2026-10-09-a)
-    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto);   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
+    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto, !!body.av);   // (2026-10-30-a) `av`: la página sabe de «el cliente avisa cuándo» (ver entregaAConfirmar_)   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
   } finally {
     lock.releaseLock();
   }
@@ -2110,6 +2114,35 @@ function ocSiguienteGs_(sh, last, oc, ts) {
   return pre + mes + '-' + s;
 }
 
+/* 📦 (2026-10-30-a) «EL CLIENTE AVISA CUÁNDO» (propuesta 76 del 30/10; el dueño la eligió con los casos de octubre). En octubre hubo 12
+   ventas pagadas con una fecha INVENTADA a 32-82 días de cargarlas (el cliente todavía no eligió el día y el formulario obliga a poner
+   una): el bot le mandó al cliente confirmación, cambio y recordatorio con días que nadie eligió, ocupaban cupo y salían en «sin camión» y
+   «pedir hoy». La página ahora tiene la casilla «📦 El cliente avisa cuándo» y la guarda así:
+     · `fecha` VACÍA (y sin turno): sin fecha el portero no corre (doSave lo llama solo con fecha) y no cuenta en ningún cupo (cuenta las
+       filas con ESA fecha), y el bot no la ve (`waAlGuardar_` y `waEsEntrega_` piden fecha). Eso ya pasaba con el servidor de antes.
+     · el día en que la vendedora vuelve a llamar va ADENTRO de los productos (`"avisa":"AAAA-MM-DD"`, columna 15), como `mod` o `klead`:
+       no hay columna nueva.
+   ⚠️ Es la MISMA regla que `entregaAConfirmar` de pedidos.html (tests/test_avisa_cuando.js las compara). Una fecha puesta MANDA sobre la
+   marca: con fecha y `avisa` a la vez es una entrega como cualquier otra (nunca una entrega escondida de logística).
+   Cuando la vendedora le pone el día, la fila pasa de sin fecha a con fecha: `waAlGuardar_` lo toma como NUEVO → confirmación al cliente
+   con el día verdadero (no un «cambio de día») y «pedido nuevo» a logística, como la venta de Kommo completada. */
+function avisaDe_(p) {
+  var a = (p && p.productos) || [];
+  for (var i = 0; i < a.length; i++) { var v = a[i] && a[i].avisa; if (v && /^\d{4}-\d{2}-\d{2}$/.test(String(v))) return String(v); }
+  return '';
+}
+function entregaAConfirmar_(p) {
+  if (!p || p.fecha || p.entregado || !avisaDe_(p)) return false;
+  var id = String(p.id || ''), oc = String(p.oc || '').trim();
+  if (!id || id.indexOf('__') === 0 || String(p.estado || '') === BORRADOR_EST || /^(ATC|RPT)\b/i.test(oc)) return false;
+  return waNorm_(p.direccion).indexOf('salio de tienda') !== 0 && waNorm_(p.zona) !== 'tienda';
+}
+/* Lo mismo con una fila de la hoja tal cual (la de antes de guardar, en doSave): el día de volver a llamar, o ''. */
+function avisaDeFila_(fila) {
+  if (!fila || fmtDate(fila[1]) || String(fila[14] || '').indexOf('avisa') < 0) return '';
+  try { var r = rowToRec_(fila); return entregaAConfirmar_(r) ? avisaDe_(r) : ''; } catch (e) { return ''; }
+}
+
 /* 🚪 EL PORTERO DE LA FECHA: día cerrado y cupos por turno (§4ce).
    Corre para un pedido NUEVO con entrega y también cuando uno existente se MUEVE de
    fecha o de turno — antes solo para los nuevos, y mover a domingo, a un día cerrado o
@@ -2120,6 +2153,8 @@ function ocSiguienteGs_(sh, last, oc, ts) {
    el cambio de día: antes el portero cortaba en «día cerrado» o «turno lleno» ANTES de asignar el número, y el pedido
    quedaba con el N° del día viejo. */
 function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
+  /* 📦 (2026-10-30-a) Una venta «el cliente avisa cuándo» (`entregaAConfirmar_`) no llega acá (no tiene fecha) y no cuenta abajo: se
+     cuentan solo las filas con ESTA fecha. */
   /* 🚫 (2026-09-30-a) El camión no sale en feriados (ver FERIADOS_GS). Como el domingo, pero con su propio «no»: el panel
      dice cuál feriado es, en vez de «turno lleno (0/0)». */
   var fer = sinFreno ? '' : feriadoGs_(p.fecha);
@@ -2156,7 +2191,7 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
    más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
 /* (2026-10-02-a) `reserva`: lo que este pedido saca del saldo del almacén, según el panel (ver RESERVAS). Se mira al FINAL,
    con la fila ya escrita: nunca frena ni cambia nada de lo de arriba. */
-function doSave(p, forzar, juntar, reserva, formato, adelanto) {
+function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -2226,6 +2261,14 @@ function doSave(p, forzar, juntar, reserva, formato, adelanto) {
      · Las filas fijas del sistema (`filaFijaSistema_`) pueden volver a nacer. Los retiros no: son plata. */
   if (foundRow < 0 && (Number(p.rev) || 0) > 0 && !filaFijaSistema_(p.id)) {
     return jsonOut({ ok:false, error:'borrado', version:SCRIPT_VERSION, id:String(p.id), ahora: Date.now() });
+  }
+  /* 📦 (2026-10-30-a) UNA PÁGINA SIN F5 NO LE PONE DÍA A UNA VENTA QUE «AVISA CUÁNDO». La página de antes no conoce la casilla: abre esa
+     venta con la fecha de HOY, no deja guardar sin elegir un día (desde mañana) y la vendedora pondría uno cualquiera para corregir otra
+     cosa — y el bot le confirmaría al cliente un día que nadie eligió, que es lo que esto vino a sacar. La página nueva manda `av` en cada
+     guardado; sin `av`, ponerle fecha a una fila «avisa cuándo» recibe `actualizar` (recargar) sin tocar la hoja. Todo lo demás de una
+     página vieja sobre esa venta (registrar un pago, corregir la dirección sin tocar la fecha) pasa como siempre. */
+  if (viejo && p.fecha && !conoceAvisa && avisaDeFila_(viejo)) {
+    return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION, motivo:'avisa' });
   }
   // PORTERO DE DÍAS CERRADOS Y CUPOS. Administración cierra una fecha cuando ese camión ya
   // está armado (fila __dias_cerrados__ de esta hoja). Se revisa ACÁ y no solo en el panel
@@ -3053,6 +3096,7 @@ function waEsEntrega_(p) {
      `kommo-<lead>` y es una entrega como cualquier otra. */
   if (!p || !id || id.indexOf('__') === 0 || !p.fecha || p.entregado) return false;
   if (String(p.estado || '') === BORRADOR_EST) return false;
+  if (entregaAConfirmar_(p)) return false;   // 📦 (2026-10-30-a) sin día: ni cliente, ni «sin camión», ni «pedir hoy», ni cierre (ya cae arriba por la fecha vacía; queda escrito)
   return waNorm_(p.direccion).indexOf('salio de tienda') !== 0 && waNorm_(p.zona) !== 'tienda';
 }
 /** Por qué NO se le manda al cliente: {m:'motivo', anotar:bool}, o null si se le manda. */
@@ -3099,7 +3143,10 @@ function waAlGuardar_(viejo, rec, adelanto) {
   if (!waActivo_() || !rec) return;
   var id = String(rec.id || '');
   if (!id || id.indexOf('__') === 0 || String(rec.estado || '') === BORRADOR_EST || !rec.fecha) return;   // (12/10) por el estado, no por `kommo-`
+  if (entregaAConfirmar_(rec)) return;   // 📦 (2026-10-30-a) «el cliente avisa cuándo»: nada al cliente ni a logística (sin fecha ya salía arriba)
   var ev = null, fV = viejo ? fmtDate(viejo[1]) : '', tV = viejo ? turnoNorm_(viejo[7]) : '';
+  /* 📦 (2026-10-30-a) …y cuando a una venta «avisa cuándo» le ponen el día, `fV` está vacío: es NUEVA (confirmación con el día verdadero),
+     no un «cambio de día». */
   if (!viejo || !fV) ev = { id:id, t:'n' };                       // nuevo, o recién le pusieron fecha (venta de tienda → entrega)
   else if (adelanto && fV === String(rec.fecha) && fV === waBo_(Date.now()).hoy && tV === 'PM' && turnoNorm_(rec.turno) === 'AM') ev = { id:id, t:'e', de:fV + '|PM' };   // solo HOY: otro día es un cambio común
   else if (fV !== String(rec.fecha) || tV !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + tV };
@@ -4111,7 +4158,8 @@ function iaPedidoTxt_(p, B) {
   L.push('- Cliente: ' + String(p.cliente || '').trim());
   L.push('- Productos: ' + waProds_(p));
   L.push('- Dirección: ' + (String(p.direccion || '').trim() || '(no anotada)') + (p.zona ? ' · zona ' + String(p.zona).trim() : ''));
-  if (!p.fecha) L.push('- Entrega: todavía sin día de entrega agendado');
+  if (entregaAConfirmar_(p)) L.push('- Entrega: todavía sin día: el cliente nos avisa cuándo la quiere (su vendedor/a lo va a llamar). Si ya eligió el día, que se lo diga a su vendedor/a: dale el contacto.');   // 📦 (2026-10-30-a)
+  else if (!p.fecha) L.push('- Entrega: todavía sin día de entrega agendado');
   else {
     L.push('- Entrega: ' + waCuandoTxt_(p) + (p.fecha === B.hoy ? ' (HOY)' : p.fecha === waMasDias_(B.hoy, 1) ? ' (mañana)' : '') +
            '; el camión pasa entre las ' + waHorasTxt_(p) + ' y logística llama una hora antes');

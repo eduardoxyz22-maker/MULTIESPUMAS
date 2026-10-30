@@ -100,6 +100,16 @@ label.lb .hint{font-weight:500;color:var(--muted);font-size:.68rem}
 /* Venta de TIENDA: el cliente se lo lleva del local, no hay entrega que programar.
    Se esconde todo lo del camión (fecha, turno, zona, maps, dirección). */
 .venta-tienda .solo-entrega{display:none !important}
+/* 📦 (30/10, propuesta 76) «El cliente avisa cuándo»: sin turno ni lo del camión de ese día (la fecha es la de volver a llamar). */
+.avc-chk{display:flex !important;align-items:center;gap:8px;margin-top:8px;font-size:.84rem;font-weight:700;color:var(--teal-dk);cursor:pointer;width:max-content;max-width:100%;text-transform:none;letter-spacing:0}
+.avc-chk[hidden]{display:none !important}
+.field .avc-chk input[type=checkbox]{width:18px;height:18px;min-height:0;padding:0;margin:0;flex:none;accent-color:var(--teal);box-shadow:none}
+.avc-info{margin-top:7px;font-size:.78rem;line-height:1.4;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:8px;padding:7px 10px}
+.avc-info[hidden]{display:none}
+#view-form.avisa-cuando .solo-turno,#view-form.avisa-cuando #fx-dias,#view-form.avisa-cuando #fx-camion{display:none !important}
+.badge.avc-tag{background:#e6f7f6;color:#065f5b;border:1px solid #99ddd9;white-space:nowrap}
+.badge.avc-tag.avc-ya{background:#fff4d6;color:#7c4b00;border-color:#f0d264}
+.avc-l{color:#065f5b;font-weight:700}
 .tienda-only{display:none}
 .venta-tienda .tienda-only{display:block}
 .tienda-banner{display:none;align-items:center;gap:12px;background:#e6f2f7;border:1px solid #a9cfdf;border-left:4px solid #155e75;border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#0d4a5e}
@@ -1511,6 +1521,7 @@ body.desh-on .toast.show{ transform:translateX(-50%) translateY(-74px); }
 .fh-cerrado small{ font-weight:600; color:var(--muted); }
 .fh-alerta{ margin:10px 0 0; border-radius:10px; padding:9px 12px; font-size:.84rem; font-weight:600; line-height:1.4; }
 .fh-alerta.k-warn, .fh-alerta.k-off{ background:#FEF3E2; color:#7c4b00; } .fh-alerta.k-full{ background:#FDEAEC; color:#9b1c2a; }
+.fh-alerta.k-avc{ background:#E6F7F6; color:#065f5b; }   /* 📦 (propuesta 76) */
 .venta-tienda #fh .fh-dia, .venta-tienda #fh .fh-turnos, .venta-tienda #fh .fh-cerrado, .venta-tienda #fh .fh-alerta{ display:none; }
 @media(max-width:560px){ .fh{ padding:12px 12px 14px; } .fh-top{ flex-wrap:nowrap; gap:6px; } .fh-top h3{ font-size:1rem; white-space:nowrap; }
   .fh-ic{ padding:0 5px; } .fh-ic .tx{ display:none; } .fh-t{ padding:9px 10px 7px; } .fh-n b{ font-size:1.3rem; } .fh-t1 em.tu{ display:none; } }
@@ -2213,8 +2224,11 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 
       <div class="grid2">
         <div class="field solo-entrega">
-          <label class="lb">Fecha de entrega <span class="req">*</span></label>
+          <label class="lb" for="f-fecha"><span id="f-fecha-lbt">Fecha de entrega</span> <span class="req">*</span></label>
           <input type="date" id="f-fecha">
+          <!-- 📦 (30/10, propuesta 76) Venta pagada cuyo cliente todavía no eligió el día: la fecha pasa a ser «Volver a llamar el…». -->
+          <label class="avc-chk" id="f-avisa-wrap"><input type="checkbox" id="f-avisa" onchange="avisaFormCambio()"> 📦 El cliente avisa cuándo</label>
+          <div id="f-avisa-info" class="avc-info" hidden>No ocupa cupo · el bot no le escribe · no sale en la carga. El stock queda apartado. Cuando el cliente elija, sacá la casilla y poné el día: recién ahí el bot le manda la confirmación.</div>
         </div>
         <!-- 🎧 En una ATC no hay nota de venta: no se está vendiendo nada (§4bt). -->
         <div class="field" id="wrap-nota">
@@ -2350,7 +2364,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
       </div>
 
       <div class="grid2">
-        <div class="field solo-entrega">
+        <div class="field solo-entrega solo-turno">
           <label class="lb">Turno de entrega <span class="hint" id="f-turno-hint"></span></label>
           <div class="seg" id="f-turno">
             <button type="button" data-val="AM" class="active">🌅 AM</button>
@@ -6376,7 +6390,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-29-b';   // (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-10-30-a';   // (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -6744,6 +6758,10 @@ function apiSaveAhora(rec, opts){
   /* 🚀 (14/10) Un pedido de la tarde que salió cargado a la mañana (`adelantoAlSalir`): el servidor 2026-10-14-a le manda al cliente
      «cargado y en camino» en vez del cambio de día. Como `reserva`, viaja solo en este envío: si cae a la cola, sale el cambio de día. */
   if(opts && opts.adelanto) payload.adelanto=1;
+  /* 📦 (30/10, propuesta 76) Esta página sabe de «el cliente avisa cuándo» (`entregaAConfirmar`): el servidor 2026-10-30-a no deja que una
+     página sin F5 —que no la conoce— le ponga un día inventado a una venta sin día (le contesta `actualizar`). Va en TODO guardado (también
+     el de la cola): es de la página, no de este envío. Un servidor de antes lo ignora. */
+  payload.av=1;
   /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
      redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
      petición. Si el guardado tarda —el servidor puede esperar hasta 30 s el candado cuando
@@ -8036,9 +8054,13 @@ function difPedido(antes, ahora){
   if(zA!==zB) out.push('🗺️ cambió de zona: '+(zA||'—')+' → '+(zB||'—'));
   /* 📅 (23/10, dueño: «¿para qué fecha entró originalmente?») el día y el turno de ANTES quedan escritos: el pedido no guarda otro rastro */
   var fA=String((antes&&antes.fecha)||''), fB=String((ahora&&ahora.fecha)||'');
-  if(fA!==fB) out.push('📅 cambió la fecha de entrega: del '+(fA?fmtFechaCorta(fA):'—')+' al '+(fB?fmtFechaCorta(fB):'—'));
+  /* 📦 (propuesta 76) Pasar a «el cliente avisa cuándo» o salir de ahí se dice con esas palabras, no «del 30/10 al —». */
+  var avA=entregaAConfirmar(antes), avB=entregaAConfirmar(ahora);
+  if(!avA && avB) out.push('📅 ya no tiene día: el cliente avisa cuándo'+(fA?(' (estaba para el '+fmtFechaCorta(fA)+')'):''));
+  else if(avA && !avB && fB) out.push('📅 el cliente eligió el día: '+fmtFechaCorta(fB)+(turnoDe(ahora)?(' · '+turnoDe(ahora)):''));
+  else if(fA!==fB) out.push('📅 cambió la fecha de entrega: del '+(fA?fmtFechaCorta(fA):'—')+' al '+(fB?fmtFechaCorta(fB):'—'));
   var tA=normTurno(antes&&antes.turno), tB=normTurno(ahora&&ahora.turno);
-  if(tA!==tB) out.push('🕐 cambió de turno: '+(tA||'sin turno')+' → '+(tB||'sin turno'));
+  if(tA!==tB && !avA && !avB) out.push('🕐 cambió de turno: '+(tA||'sin turno')+' → '+(tB||'sin turno'));
   return out;
 }
 /* ⚠️ se llama prodCorto y no prodResumen porque MÁS ABAJO ya hay un prodResumen(pedido)
@@ -15744,10 +15766,23 @@ function submitPedido(){
   if(prev && regEnSistema(prev) && !_regFin) _avisoPlata=(_avisoPlata?(_avisoPlata+' · '):'')+'por el pago nuevo, la venta vuelve a «📥 sin cargar al sistema contable»';
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
   var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
+  /* 📦 (30/10, propuesta 76) «El cliente avisa cuándo»: la fecha del formulario es la de VOLVER A LLAMAR (obligatoria, desde mañana) y
+     la venta se guarda sin fecha de entrega ni turno: no hay día, domingo, cupo ni camión que validar. Se saltea el bloque de abajo. */
+  var _avisa=avisaFormOn(), _avisaF=_avisa ? String(document.getElementById('f-fecha').value||'') : '';
+  if(_avisa){
+    var _avErr=avisaFechaError(_avisaF);
+    if(_avErr){ toast('📦 '+_avErr,'err'); var feA=document.getElementById('f-fecha'); feA.classList.add('err'); feA.focus(); feA.scrollIntoView({block:'center'}); return; }
+  }
+  /* …y al SACAR la casilla, el día que eligió el cliente tiene que estar escrito: vacía no puede pasar a «hoy» sola (`todayStr()` de
+     abajo), que para Eduardo y ROHO es un día válido y el bot le confirmaría al cliente un día que nadie eligió. */
+  if(!_avisa && !VENTA_TIENDA && isEdit && prev && entregaAConfirmar(prev) && !document.getElementById('f-fecha').value){
+    toast('📅 Poné el día de entrega que eligió el cliente (o volvé a tildar «📦 El cliente avisa cuándo»).','err');
+    var feV=document.getElementById('f-fecha'); feV.classList.add('err'); feV.focus(); feV.scrollIntoView({block:'center'}); return;
+  }
   /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
      ni día cerrado, ni cupo del camión que ocupar. Se saltea todo ese bloque. */
   var _forzar=false;   // ¿esta edición le pide al servidor que deje pasar algo que su portero rechazaría? (§4cg)
-  if(!VENTA_TIENDA){
+  if(!VENTA_TIENDA && !_avisa){
   /* ✏️ LA EDICIÓN NO ES UNA PUERTA TRASERA (§4be). Desde que las vendedoras editan sus
      pedidos (§4bc), CAMBIAR la fecha o el turno equivale a cargar la entrega de nuevo:
      sin la clave de administración, el DESTINO pasa por los mismos porteros que un pedido
@@ -15877,13 +15912,13 @@ function submitPedido(){
   var _tienda=!!VENTA_TIENDA;
   var rec={
     id: EDIT_ID||uid(),
-    // Sin fecha la venta de tienda no ocupa cupo del camión (ver §VENTA DE TIENDA).
-    fecha: _tienda ? '' : (document.getElementById('f-fecha').value||todayStr()),
+    // Sin fecha la venta de tienda no ocupa cupo del camión (ver §VENTA DE TIENDA). 📦 La que «avisa cuándo» tampoco (propuesta 76).
+    fecha: (_tienda || _avisa) ? '' : (document.getElementById('f-fecha').value||todayStr()),
     nota: document.getElementById('f-nota').value.trim(),
     oc: ocSel,
     vendedor: vendedor, cliente: cliente, productos: productos,
     celular: document.getElementById('f-celular').value.trim(),
-    turno: _tienda ? '' : segVal('f-turno'),
+    turno: (_tienda || _avisa) ? '' : segVal('f-turno'),
     zona: _tienda ? ZONA_TIENDA : document.getElementById('f-zona').value.trim(),
     /* (§4jd, A2-4) una venta de tienda vieja («SALIÓ DE TIENDA» a secas) que se guarda sin tocar la tienda conserva su dirección: antes
        se le escribía la sucursal deducida por la vendedora y cada producto quedaba «✏️ cambió la dirección» sin que nadie lo cambiara. */
@@ -15911,7 +15946,7 @@ function submitPedido(){
        borradores no viven en STATE, así que no hay pedido anterior del cual heredar. Es un
        pedido que nace ahora y necesita su número del día y su hora, no ceros — con nroDia 0
        quedaba fuera del orden de carga del camión y con ts 0 aparecía como el más viejo. */
-    nroDia: (_tienda || (isEdit && prev)) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
+    nroDia: _avisa ? 0 : (_tienda || (isEdit && prev)) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),   // 📦 sin día, sin N° del día
     ts: (_tsVenta!=null) ? _tsVenta : ((isEdit && prev) ? prev.ts : Date.now()),
     /* 📎 LAS FOTOS DE LA ENTREGA (§4cb).
        Las sube el chofer con `pedirFoto()`, viven en la columna 29 y son el respaldo de
@@ -15935,6 +15970,10 @@ function submitPedido(){
      si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
      Se rescata del pedido anterior para que el robot no vuelva a traer el borrador (§4es). */
   if(prev && typeof kleadDe==='function' && kleadDe(prev) && !kleadDe(rec)) setKlead(rec, kleadDe(prev));
+  /* 📦 (30/10, propuesta 76) El día de volver a llamar viaja adentro de los productos (`avisa`, ver `entregaAConfirmar`). Sin día de
+     entrega tampoco hay camión: el que logística le había puesto para la fecha inventada se saca. Sin la casilla, la marca se va. */
+  if(_avisa){ setAvisa(rec, _avisaF); rec.vehiculo=''; rec.chofer=''; }
+  else setAvisa(rec, '');
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
      ⚠️ Va DESPUÉS de armar `rec` y rescatando lo anterior a propósito: los productos que
      salen del formulario son objetos NUEVOS, así que sin este rescate la vendedora
@@ -16019,12 +16058,12 @@ function submitPedido(){
      OC se asigna solo — aunque sea una venta de tienda, que no tiene día que se cierre. */
   /* También corre cuando una vendedora MUEVE la entrega: su copia del panel puede ser
      de hace horas y el día de destino haberse cerrado (o llenado) en el medio. */
-  var _mirarCierre = !_tienda && (!isEdit || _mueveVend) && !diaCerrado(rec.fecha);
+  var _mirarCierre = !_tienda && !_avisa && (!isEdit || _mueveVend) && !diaCerrado(rec.fecha);   // 📦 sin día no hay día que se cierre
   /* 🧾 (27/09) ¿HAY SALDO? SE PREGUNTA CON LO ÚLTIMO (§4gj). Si algún producto quedó sin saldo libre (o la fecha es
      antes de lo posible), la pregunta sale DESPUÉS de esta misma bajada de la planilla: el dueño, *«logística carga el
      corte a las 9 y hasta las 3 ya ingresaron 9 pedidos»* — el cuadrito puede ser de hace un rato, la pregunta no.
      Editando solo si cambió un producto o su cantidad (o la fecha), para eso también se baja la planilla. */
-  var _mirarSaldo = saldoHayQueMirar(prev, isEdit, _deBorrador);
+  var _mirarSaldo = !_avisa && saldoHayQueMirar(prev, isEdit, _deBorrador);
   if(CONNECTED && (_ocAuto || _mirarCierre || _mirarSaldo)){
     setSubmitting(true);
     conTope(refrescarEstado(), 4000).then(function(){
@@ -16067,21 +16106,21 @@ function submitPedido(){
          provisorio: mejor una OC a corregir que una vendedora que no puede trabajar —
          y para eso está el aviso de repetidas en Administración. */
       if(!fxDupConfirmar()) return;                                      // 🧰 (§4ih) ¿el mismo pedido dos veces?
-      if(!saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;   // 🧾 con la planilla recién bajada (ver arriba)
+      if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;   // 🧾 con la planilla recién bajada (ver arriba) · 📦 sin día no se pregunta: el cuadrito ya lo dice
       if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
       guardarYa();
     });
     return;
   }
   if(!fxDupConfirmar()) return;                                          // 🧰 (§4ih) ¿el mismo pedido dos veces?
-  if(!saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
+  if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
   guardarYa();
 
   function guardarYa(){
   /* 📦 (02/10, §4hj) Lo que este pedido saca del saldo del almacén, para el libro de reservas del servidor 2026-10-02-a.
      ⚠️ Se arma ACÁ, antes del `upsert(rec)` optimista de abajo: con el pedido nuevo ya en STATE, `libres` lo descontaba a él
      mismo (1 libre decía 0) y `conocidos` traía su propio id. Es la misma foto con la que preguntó `saldoConfirmarAlGuardar`. */
-  var _reserva=saldoReservaArmar();
+  var _reserva=_avisa ? null : saldoReservaArmar();   // 📦 (propuesta 76) sin día aparta DESPUÉS de las que tienen fecha: no compite en el libro del servidor
   /* (02/10, §4hg) Un envío sin respuesta se perdía al recargar: todavía no había llegado al
      catch que lo encola. Guardar la MISMA fila/id/revisión antes de tocar la red. No avanzar
      si el navegador no pudo conservarla. El reenvío usa el «ok tardío» de apiSave, no otro id. */
@@ -16475,6 +16514,105 @@ function tipoVentaHtml(p){
 }
 /* La fecha con la que cuenta una venta: la de entrega, y si salió de tienda la de carga. */
 function fechaSalida(p){ return (p&&p.fecha) ? p.fecha : contaFecha(p); }
+/* ============================================================================
+   📦 «EL CLIENTE AVISA CUÁNDO» (30/10, propuesta 76; el dueño la eligió con los casos de octubre)
+   En octubre hubo 12 ventas pagadas (Bs 84.226) con una fecha inventada 32 a 82 días después de cargarlas: el cliente todavía no
+   eligió el día y el formulario obliga a poner uno. La vendedora la corría a mano (el 29/10, cinco entre las 11:21 y las 16:55),
+   el bot le mandaba al cliente días que nadie eligió, ocupaban cupo, daban «no hay» en rojo, salían en «sin camión» y «pedir hoy»,
+   y una se mandó a fabricar apurada.
+   Ahora, al lado de la fecha, la casilla «📦 El cliente avisa cuándo»: la fecha pasa a ser «Volver a llamar el…» y el turno no se pide.
+   · DÓNDE SE GUARDA (sin columnas nuevas): la venta queda SIN fecha de entrega (`fecha` vacía, como la venta de tienda) y el día de
+     volver a llamar viaja adentro de los productos, `x.avisa`, con la misma convención que `mod`, `atc` y `klead` (en todos los
+     productos, se lee del primero que lo tenga). Con la fecha vacía ya no ocupa cupo (ni acá ni en el portero del servidor), el bot
+     no la ve (sin fecha no anota nada) y no entra en ningún día: carga, mapa, «Semana», cierre, «Mañana», «sin camión», «pedir hoy».
+   · ⚠️ UNA FECHA PUESTA MANDA SOBRE LA MARCA: con fecha y `avisa` a la vez (alguien la reprogramó con una página sin F5) es una entrega
+     como cualquier otra. Así nunca queda una entrega escondida de logística. La gemela del servidor es `entregaAConfirmar_`.
+   · El stock la APARTA (está vendida) pero DESPUÉS de las que tienen día: en `compPor` va con la fecha `AVISA_STOCK_F`, que ningún
+     horizonte alcanza (ni «Pedir 7 días», ni «se corta», ni el cuadrito a una fecha), y la revisión automática no le propone marcas.
+   · Cuando el cliente elige, la vendedora saca la casilla y pone el día: se guarda como cualquier pedido y el servidor, que la ve pasar
+     de «sin fecha» a una fecha, manda la CONFIRMACIÓN (no un «cambio»), como con la venta de Kommo completada.
+   · Contabilidad y Proyección la cuentan el día que se cargó (`fechaSalida`, como la venta de tienda) hasta que tenga día.
+   ========================================================================== */
+var AVISA_STOCK_F='9999-12-31', AVISA_MAX_DIAS=180;
+function avisaDe(p){
+  var a=(p&&p.productos)||[];
+  for(var i=0;i<a.length;i++){ var v=a[i]&&a[i].avisa; if(v && /^\d{4}-\d{2}-\d{2}$/.test(String(v))) return String(v); }
+  return '';
+}
+function setAvisa(p, f){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(f) x.avisa=f; else delete x.avisa; }); }
+function entregaAConfirmar(p){
+  return !!p && !p.fecha && !p.entregado && !!avisaDe(p) && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && !esATC(p.oc) && !esRPT(p.oc);
+}
+/* El día de volver a llamar ya llegó (o pasó): entra en «📞 Llamá a…» de Para hacer. */
+function avisaLlamarYa(p, hoy){ return entregaAConfirmar(p) && avisaDe(p)<=(hoy||todayStr()); }
+function avisaTxt(p){
+  var f=avisaDe(p), hoy=todayStr(); if(!f) return '';
+  return f<hoy ? ('llamar (era el '+fmtFechaCorta(f)+')') : (f===hoy ? 'llamar hoy' : ('llamar el '+fmtFechaCorta(f)));
+}
+function avisaBadge(p){
+  if(!entregaAConfirmar(p)) return '';
+  return '<span class="badge avc-tag'+(avisaLlamarYa(p)?' avc-ya':'')+'" title="Venta sin día de entrega: el cliente avisa cuándo la quiere. No ocupa cupo, el bot no le escribe y no sale en la carga; el stock queda apartado.">📦 Avisa cuándo · '+esc(avisaTxt(p))+'</span>';
+}
+/* «📋 Para hacer» (Mis pedidos y «👑 Ver todos»): desde el día de volver a llamar, «📞 Llamá a N clientes con entrega a confirmar» con la
+   lista (la más atrasada primero). Antes de ese día no molesta: queda en «✅ Al día» cuántas esperan. `quien(L)` = el texto chico. */
+function avisaHacerItem(mine, key, quien){
+  var hoy=todayStr(), todos=(mine||[]).filter(entregaAConfirmar);
+  var ya=todos.filter(function(p){ return avisaDe(p)<=hoy; }).sort(function(a,b){ var x=avisaDe(a), y=avisaDe(b); return x<y?-1:(x>y?1:0); });
+  var prox=todos.map(avisaDe).filter(function(f){ return f>hoy; }).sort()[0]||'';
+  MIS_LISTAS[key]={ t:'📞 Entregas a confirmar: llamá al cliente',
+    s:'Preguntale qué día lo quiere. Cuando elija: abrí el pedido (✏️ Editar), sacá «📦 El cliente avisa cuándo» y poné el día. Recién ahí el bot le manda la confirmación con ese día.',
+    L:ya, m:function(p){ return esc(avisaTxt(p)); } };
+  return { sev:'a', ic:'📞', n:ya.length, t:'Llamá a '+(ya.length===1?'1 cliente':(ya.length+' clientes'))+' con entrega a confirmar',
+    s:(quien ? quien(ya) : '')+' · preguntales qué día lo quieren', b:'Ver', fn:"misVerLista('"+key+"')",
+    ok:todos.length ? (todos.length+(todos.length===1?' venta espera':' ventas esperan')+' que el cliente avise'+(prox?(' · la próxima llamada, el '+fmtFechaCorta(prox)):'')) : '' };
+}
+/* Administración por mes (el filtro corta por la fecha de entrega): una venta sin día se ve en el mes de su día de volver a llamar, y en
+   el mes de HOY si ese día ya pasó (hay que llamar). Por día, no: no tiene día. */
+function admAvisaEnMes(p, m){
+  if(!entregaAConfirmar(p)) return false;
+  var f=avisaDe(p).slice(0,7), hoyM=todayStr().slice(0,7);
+  return f===m || (m===hoyM && f<hoyM);
+}
+/* ── El formulario ── */
+/* La casilla solo va en una venta a domicilio (📄 OC): ni en ATC, ni en RPT, ni en la venta de tienda, ni en un pedido ya entregado. */
+function avisaFormPuede(){
+  if(VENTA_TIENDA || docTipoSel()!=='OC') return false;
+  var p=EDIT_ID ? findById(EDIT_ID) : null;
+  return !(p && p.entregado);
+}
+function avisaFormOn(){ var c=document.getElementById('f-avisa'); return !!(c && c.checked) && avisaFormPuede(); }
+function avisaFormPintar(){
+  var w=document.getElementById('f-avisa-wrap'), c=document.getElementById('f-avisa'), puede=avisaFormPuede();
+  if(w) w.hidden=!puede;
+  if(c && !puede) c.checked=false;
+  var on=avisaFormOn(), view=document.getElementById('view-form');
+  if(view) view.classList.toggle('avisa-cuando', on);
+  var lt=document.getElementById('f-fecha-lbt'); if(lt) lt.textContent = on ? 'Volver a llamar el…' : 'Fecha de entrega';
+  var inf=document.getElementById('f-avisa-info'); if(inf) inf.hidden=!on;
+  var ff=document.getElementById('f-fecha');
+  if(ff && on){ ff.min=tomorrowStr(); ff.max=stockSumarDias(todayStr(), AVISA_MAX_DIAS); }
+  else if(ff) ff.removeAttribute('max');
+}
+/* La vendedora tocó la casilla. Prendida: la fecha queda vacía para que elija el día de volver a llamar (no se arrastra la inventada).
+   Apagada: también vacía, para que ponga el día que eligió el cliente (no el de volver a llamar). */
+function avisaFormCambio(){
+  var ff=document.getElementById('f-fecha'), on=avisaFormOn();
+  if(ff){ ff.value=''; ff.classList.remove('err'); }
+  avisaFormPintar();
+  if(!on && ff){ if(EDIT_ID) ff.removeAttribute('min'); else ff.min=tomorrowStr(); }   // como `editPedido` / `resetForm`
+  if(!on && !segVal('f-turno')){ segSet('f-turno','AM'); var _th=document.getElementById('f-turno-hint'); if(_th) _th.textContent=''; }   // una entrega lleva turno, como un pedido nuevo
+  try{ renderCupoForm(); }catch(e){}
+  try{ saldoAvisosProgramar(); }catch(e){}
+  if(ff){ try{ ff.focus(); }catch(e){} }
+  toast(on ? '📦 Poné el día en que vas a volver a llamar al cliente.' : '📅 Poné el día de entrega que eligió el cliente.', 'ok', 4000);
+}
+/* El aviso al guardar: obligatorio, desde mañana, y no más lejos que AVISA_MAX_DIAS (un año mal tipeado). '' = está bien. */
+function avisaFechaError(f){
+  if(!f) return 'Poné el día en que vas a volver a llamar al cliente.';
+  if(f<=todayStr()) return 'El día de volver a llamar tiene que ser desde mañana.';
+  if(f>stockSumarDias(todayStr(), AVISA_MAX_DIAS)) return 'El día de volver a llamar está a más de '+AVISA_MAX_DIAS+' días: revisá el año.';
+  return '';
+}
 function pintarModoTienda(){
   var view=document.getElementById('view-form');
   if(view) view.classList.toggle('venta-tienda', !!VENTA_TIENDA);
@@ -16483,6 +16621,7 @@ function pintarModoTienda(){
   if(_fv && VENTA_TIENDA){ _fv.max=diaNegocio(); if(!_fv.value) _fv.value=diaNegocio(); }
   var b=document.getElementById('f-submit');
   if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
+  try{ avisaFormPintar(); }catch(e){}         // 📦 (propuesta 76) la venta de tienda no lleva la casilla
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
 }
 function abrirVentaTienda(){
@@ -16557,6 +16696,11 @@ function pintarDocTipo(limpiar){
   }
   pintarMotivoAtc(limpiar);
   pintarRpt(limpiar);
+  /* 📦 (propuesta 76) Una ATC o una RPT no llevan «El cliente avisa cuándo»: si estaba tildada, se saca y la fecha (que era la de volver
+     a llamar) queda vacía para poner la de entrega. */
+  var _avOn=!!((document.getElementById('f-avisa')||{}).checked);
+  try{ avisaFormPintar(); }catch(e){}
+  if(_avOn && !avisaFormOn()){ var _ffa=document.getElementById('f-fecha'); if(_ffa) _ffa.value=''; }
   saldoAvisosProgramar();                     // 🧾 una ATC no lleva el cuadrito del saldo (§4gj)
 }
 /* 🏪 El bloque de la reposición: sucursal de destino en vez de cliente, y afuera todo lo
@@ -16852,6 +16996,7 @@ function resetForm(){
   /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
      proponía el feriado y el formulario lo frenaba al guardar. El mínimo sigue siendo mañana. */
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=proximoDiaEntrega();
+  var _fav=document.getElementById('f-avisa'); if(_fav) _fav.checked=false;   // 📦 (propuesta 76)
   var _fvR=document.getElementById('f-fecha-venta'); if(_fvR) _fvR.value='';   // 📅 (§4nm)
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
@@ -16898,6 +17043,7 @@ function resetForm(){
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
   VENTA_TIENDA=false; pintarModoTienda();
+  avisaFormPintar();                           // 📦 (propuesta 76) sin la casilla: «Fecha de entrega» y el turno de siempre
   clearErr();
   renderCupoForm();
   FORM_NUEVO_BASE=formNuevoHuella();
@@ -16914,6 +17060,10 @@ function editPedido(id){
   EDIT_TIENDA_SUC0=VENTA_TIENDA ? String((document.getElementById('f-tienda-suc')||{}).value||'') : null;   // (§4jd, A2-4)
   if(VENTA_TIENDA){ var _fvE=document.getElementById('f-fecha-venta'); if(_fvE){ _fvE.value=Number(rec.ts) ? isoDeTsBolivia(rec.ts) : ''; _fvE.max=diaNegocio(); } }   // 📅 (§4nm)
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
+  /* 📦 (propuesta 76) Una venta sin día: la casilla tildada y la fecha es la de volver a llamar. Para ponerle el día real, se saca. */
+  var _avR=entregaAConfirmar(rec), _favE=document.getElementById('f-avisa');
+  if(_favE) _favE.checked=_avR;
+  if(_avR) _fe.value=avisaDe(rec);
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
   segSet('f-doc-tipo', ocTipoDe(rec.oc));
@@ -17891,7 +18041,8 @@ function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(
   var e=cupoFechaDe(fecha); if(e && e[turno]!=null) return Math.max(0, Number(e[turno])||0);
   if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
-function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
+/* 📦 (propuesta 76) La venta que «avisa cuándo» no tiene día: no ocupa cupo (igual que en el portero del servidor, `porteroFecha_`). */
+function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t && !entregaAConfirmar(STATE[i])) n++; } return n; }
 /* ---- Turno y atraso ----
    normTurno() da 'AM' cuando el campo viene vacío, y para AVISAR DE UN ATRASO eso miente:
    marcaría atrasado a la 1 de la tarde un pedido al que nadie le puso turno. turnoDe()
@@ -17937,6 +18088,12 @@ function ajustarTurnoSeg(fecha){
 function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} fxFormPintar(); }
 function renderCupoFormBase(){
   var el=document.getElementById('cupo-form'); if(!el) return;
+  /* 📦 (propuesta 76) Sin día de entrega no hay camión ni cupo que mirar: la fecha es la de volver a llamar. */
+  if(avisaFormOn()){
+    el.className='cupo ok';
+    el.innerHTML='📦 <b>El cliente avisa cuándo.</b> Este pedido no ocupa cupo del camión, el bot no le escribe y no sale en la carga. El stock queda apartado.';
+    return;
+  }
   var fecha=document.getElementById('f-fecha').value||todayStr();
   ajustarTurnoSeg(fecha);
   /* Editando, los carteles de "lleno" y "no se agenda" son AVISOS, no muros: el guardado
@@ -18004,7 +18161,7 @@ function fhPintar(){
   box.hidden=!va; if(card) card.classList.toggle('fh-on', va);
   if(!va) return;
   var fecha=document.getElementById('f-fecha').value||todayStr(), turno=normTurno(segVal('f-turno'))||'';
-  var NOM={ AM:'mañana', PM:'tarde' }, otro={ AM:'PM', PM:'AM' };
+  var NOM={ AM:'mañana', PM:'tarde' }, otro={ AM:'PM', PM:'AM' }, avisa=avisaFormOn();   // 📦 (propuesta 76)
   var cf=document.getElementById('conn-form'), on=!!(cf && /\bon\b/.test(cf.className)), connTxt=(document.getElementById('conn-form-txt')||{}).innerHTML||'';
   var pill=on ? ['', 'En línea'] : (!CONNECTED ? [' off', 'Solo en este equipo'] : ((CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO) ? [' off', 'Conectando…'] : [' off', 'Sin conexión']));
   var nov=''; try{ nov=localStorage.getItem(LS_NOV)||''; }catch(e){}
@@ -18014,12 +18171,14 @@ function fhPintar(){
     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
     '<a class="fh-ic" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
       (nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a></div>'+
-    '<div class="fh-dia">🚚 Camión del <b>'+esc(dia)+'</b>'+cupoFechaNota(fecha)+'</div>';
-  var cerr = diaCerrado(fecha) ? ('🔒 El '+esc(dia)+' está cerrado: administración ya armó el camión. Elegí otra fecha.')
+    (avisa ? ('<div class="fh-dia">📦 <b>El cliente avisa cuándo</b> · '+(document.getElementById('f-fecha').value ? ('volver a llamar el <b>'+esc(dia)+'</b>') : 'elegí el día de volver a llamar')+'</div>')
+           : ('<div class="fh-dia">🚚 Camión del <b>'+esc(dia)+'</b>'+cupoFechaNota(fecha)+'</div>'));
+  var cerr = avisa ? '' : diaCerrado(fecha) ? ('🔒 El '+esc(dia)+' está cerrado: administración ya armó el camión. Elegí otra fecha.')
            : diaDomingo(fecha) ? '🚫 Los domingos no se agenda. Elegí otra fecha.'
            : feriadoDe(fecha) ? ('🚫 Feriado: '+esc(feriadoDe(fecha))+'. El camión no sale; elegí otra fecha.') : '';
   var avisos=[];
-  if(cerr) h+='<div class="fh-cerrado">'+cerr+(ed ? '<br><small>'+ed+'</small>' : '')+'</div>';
+  if(avisa) h+='<div class="fh-alerta k-avc">No ocupa cupo del camión · el bot no le escribe · no sale en la carga. El stock queda apartado.</div>';
+  else if(cerr) h+='<div class="fh-cerrado">'+cerr+(ed ? '<br><small>'+ed+'</small>' : '')+'</div>';
   else{
     var T={};
     ['AM','PM'].forEach(function(t){ var l=limTurno(fecha, t), u=cuposUsadosTurno(fecha, t), r=Math.max(0, l-u);
@@ -18225,7 +18384,8 @@ function fxDerPintar(){
   var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':'🧾 Tu pedido')+'</div><div class="fx-dp">'+
     '<div class="fx-cab"><div class="av">'+esc(ini)+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
       '<div class="sb">'+esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':'🏪 Reposición'))+(v?(' · '+esc(v)):'')+'</div></div></div>';
-  if(!tienda) h+='<div class="fx-fila"><span class="i">🚚</span><span>'+(f?('<b>'+esc(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(f)]+' '+f.slice(8,10)+'/'+f.slice(5,7))+'</b>'+(t?(' · turno '+esc(t)):'')):'<span class="vacio">sin fecha</span>')+'</span></div>'+
+  var avOn=avisaFormOn();   // 📦 (propuesta 76) la fecha es la de volver a llamar
+  if(!tienda) h+='<div class="fx-fila"><span class="i">'+(avOn?'📦':'🚚')+'</span><span>'+(avOn?'Avisa cuándo · llamar ':'')+(f?('<b>'+esc(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(f)]+' '+f.slice(8,10)+'/'+f.slice(5,7))+'</b>'+((t && !avOn)?(' · turno '+esc(t)):'')):'<span class="vacio">sin fecha</span>')+'</span></div>'+
       '<div class="fx-fila"><span class="i">📍</span><span>'+(zona?esc(zona):'<span class="vacio">sin zona</span>')+'</span></div>';
   if(cel) h+='<div class="fx-fila"><span class="i">📞</span><span>'+esc(cel)+'</span></div>';
   h+='<div class="fx-prs">'+(prods.length ? prods.map(function(p){
@@ -20352,7 +20512,7 @@ var QUICK_DEFS=[
   {k:'semana',      lbl:'🗓️ Semana',        todo:true, test:function(p){ return semanaEntra(p); },
                                           alerta:function(){ return semanaDatos().tot.alerta; }, alertaTxt:'por revisar', tit:semanaTitulo},
   {k:'cobrar',     lbl:'💰 Por cobrar',    test:function(p){return !p.pagado && !noSeCobra(p);}},   // (25/09) ATC/RPT no se cobran (§4fy)
-  {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
+  {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo) && !entregaAConfirmar(p);}},   // 📦 (propuesta 76) sin día no espera camión
   {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
   {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
   /* (26/09) Como el cupo (`cuposUsadosTurno`, §4fh): sin turno cuenta como AM, y sin fecha (venta de tienda) no
@@ -20710,7 +20870,7 @@ function admBaseList(sinPeriodo){
   var q=sinTildes(document.getElementById('adm-search').value);
   var list=STATE.slice();
   if(mode==='dia'){ var d=document.getElementById('adm-dia').value; if(d) list=list.filter(function(p){return p.fecha===d;}); }
-  else if(mode==='mes'){ var m=document.getElementById('adm-mes').value; if(m) list=list.filter(function(p){return (p.fecha||'').slice(0,7)===m;}); }
+  else if(mode==='mes'){ var m=document.getElementById('adm-mes').value; if(m) list=list.filter(function(p){ return (p.fecha||'').slice(0,7)===m || admAvisaEnMes(p, m); }); }
   // Sin acentos ni mayúsculas (§4ew): «perez» encuentra a PÉREZ y «colchon» al COLCHÓN, como en «Quién vendió qué».
   if(q) list=list.filter(function(p){ return sinTildes([p.oc,p.nota,p.vendedor,p.cliente,p.celular,p.zona,p.direccion,prodText(p.productos)].join(' ')).indexOf(q)>=0; });
   return list;
@@ -20777,6 +20937,7 @@ function admFichaColor(p){
   if(esATC(p.oc)) return 'atc';
   if(esRPT(p.oc)) return 'rpt';
   if(p.entregado) return '';
+  if(entregaAConfirmar(p)) return '';   // 📦 (propuesta 76) sin día: ni verde ni rojo, la etiqueta dice cuándo se llama
   /* (24/10, dueño: «protectores y adicionales NO se recogen de tienda… los entregan ellos en tienda al momento de la compra,
      por más que el vendedor lo diga») Lo de tienda (`esProdDeTienda`) no cuenta para el color, esté marcado como esté. */
   var carga=(p.productos||[]).filter(function(x){ return !esProdDeTienda(x); });
@@ -20805,7 +20966,8 @@ function admFichaHtml(p, dn){
               : ('<div>'+(p.maps ? ('<a class="af-pin" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir la ubicación en el mapa">📍</a>')
                                  : '<span class="af-pin off" title="Sin enlace de ubicación">📍</span>')+' '+   // 📍 (24/10, dueño) el pin abre el mapa directo
                   (p.zona?('<b>'+esc(p.zona)+'</b>'+(p.direccion?' · ':'')):'')+esc(p.direccion||(p.zona?'':'sin dirección'))+'</div>');
-  var cam=ret ? '' : (p.vehiculo ? ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>') : '<div class="rojo">🚛 Sin camión</div>');
+  var cam=ret ? '' : entregaAConfirmar(p) ? ('<div class="avc-l">📦 Avisa cuándo · '+esc(avisaTxt(p))+'</div>')   // 📦 (propuesta 76) sin día no espera camión
+    : (p.vehiculo ? ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>') : '<div class="rojo">🚛 Sin camión</div>');
   var btn=function(ic, t, fn, cl){ return '<button type="button" class="'+(cl||'')+'" onclick="event.stopPropagation();'+fn+'" title="'+esc(t)+'">'+ic+'<small>'+esc(t)+'</small></button>'; };
   var rk=admFichaColor(p);   // 🎨 (24/10, dueño) la ficha entera: ATC, RPT, verde = todo OK, rojo = falta algo; lo demás va en el producto
   return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" data-pid="'+esc(String(p.id))+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
@@ -20857,14 +21019,16 @@ function admFichasPintar(list, dn){
   if(v!=='fichas'){ box.innerHTML=''; return; }
   /* Por día y turno, en el orden del día (N° 1, 2, 3…). Sin fecha (ventas de tienda) al final. */
   var tOrd=function(p){ var t=normTurno(p.turno); return t==='AM'?0:t==='PM'?1:2; };
+  /* 📦 (propuesta 76) Las que «avisan cuándo» van al final, en su propio grupo (por el día de volver a llamar). */
+  var fOrd=function(p){ return entregaAConfirmar(p) ? ('9999~'+avisaDe(p)) : (p.fecha||'9999'); };
   var L=list.slice().sort(function(a,b){
-    var fa=a.fecha||'9999', fb=b.fecha||'9999'; if(fa!==fb) return fa<fb?-1:1;
+    var fa=fOrd(a), fb=fOrd(b); if(fa!==fb) return fa<fb?-1:1;
     return tOrd(a)-tOrd(b) || (Number(dn[a.id])||999)-(Number(dn[b.id])||999);
   });
   var grupos=[], g=null;
   L.forEach(function(p){
-    var k=(p.fecha||'')+'|'+tOrd(p);
-    if(!g || g.k!==k){ g={ k:k, f:p.fecha||'', t:tOrd(p), ps:[] }; grupos.push(g); }
+    var av=entregaAConfirmar(p), k=av ? 'avisa' : ((p.fecha||'')+'|'+tOrd(p));
+    if(!g || g.k!==k){ g={ k:k, f:av ? '' : (p.fecha||''), t:tOrd(p), av:av, ps:[] }; grupos.push(g); }
     g.ps.push(p);
   });
   /* 🎨 Qué quiere decir cada color (los de la tabla): solo los que hay en la lista */
@@ -20899,6 +21063,9 @@ function admFichasPintar(list, dn){
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
     var sal=g.ps.filter(function(p){ return p.entregado || (p.vehiculo && p.fecha===todayStr() && camionSalio(p.fecha, p.vehiculo)); }).length;
     var tt=g.t===0?'🌅 Mañana':g.t===1?'🌆 Tarde':'sin turno';
+    if(g.av) return '<div class="af-g"><span class="af-gt">📦 El cliente avisa cuándo</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+
+      '<span class="af-gc af-gc-gris">sin día · no ocupan cupo · el stock queda apartado</span></div>'+
+      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';   // 📦 (propuesta 76)
     /* ✨ (§4me, dueño: «¿y qué onda esas barras?») En vez de la barrita: cuántos están listos y cuántos cupos quedan en ese turno
        (los de `cuposUsadosTurno`/`limTurno`, los mismos del formulario); un día que ya pasó dice cuántos se entregaron. */
     var pasado=g.f && g.f<todayStr(), ent=g.ps.filter(function(p){ return p.entregado; }).length, gc=[];
@@ -21197,7 +21364,7 @@ function renderAdmin(){
         '<button class="rowbtn" onclick="EDIT_DESDE=\'admin\';editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
       '</td>'+
-      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td class="sale-de">'+pedidoLugaresHtml(p)+'</td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esRPT(p.oc)?('<span class="badge b-rpt" title="Reposición de tienda — va a una sucursal, no a un cliente">🏪 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td class="sale-de">'+pedidoLugaresHtml(p)+'</td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):entregaAConfirmar(p)?avisaBadge(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esRPT(p.oc)?('<span class="badge b-rpt" title="Reposición de tienda — va a una sucursal, no a un cliente">🏪 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+clfNombre(p, p.cliente||'', 'admin')+'</b></td><td class="prod-cell">'+(p.productos||[]).map(function(x){ return esc(prodText([x]))+prodLugarTag(x); }).join('   |   ')+'</td>'+
       '<td style="white-space:nowrap">'+estadoCell+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
@@ -21695,7 +21862,7 @@ function reproAplicar(p, f, t, forzar, extra){
    ========================================================================== */
 var CARGA_DIA='hoy';   // arranca en HOY: es la carga/salida que se controla en el día
 /* (26/09) La venta de tienda no sube al camión: en «Todos» salía en un bloque «(sin fecha)». */
-function cargaLista(){ return STATE.filter(function(p){ if(esVentaTienda(p)) return false; if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
+function cargaLista(){ return STATE.filter(function(p){ if(esVentaTienda(p) || entregaAConfirmar(p)) return false; if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
 /* Si la lista de carga está abierta, refrescarla al cambiar algo desde la ficha del pedido */
 function cargaAbierta(){ var ov=document.getElementById('carga-overlay'); return !!(ov && ov.style.display==='flex'); }
@@ -24973,6 +25140,7 @@ var MIS_DEFS=[
   {k:'atras',  lbl:'⏰ Atrasados', test:function(p){ return minutosAtraso(p)>0; }},
   {k:'ent',    lbl:'🚚 Entregados',    test:function(p){ return !!p.entregado; }},
   {k:'tienda', lbl:'🏪 Ventas de tienda', soloSiHay:true, test:function(p){ return esVentaTienda(p); }},   // (§4nn) el «Ver» del renglón de tienda de «Tu día»
+  {k:'avisa',  lbl:'📦 Avisa cuándo', soloSiHay:true, test:function(p){ return entregaAConfirmar(p); }},     // 📦 (propuesta 76) las ventas sin día
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
@@ -25030,6 +25198,7 @@ function misPendientes(mine){
   mine.forEach(function(p){ if(envioPendiente(p)) sinFlete.push(p); });
   mine.forEach(function(p){
     if(p.entregado) return;
+    if(entregaAConfirmar(p)) return;   // 📦 (propuesta 76) sin día: ni «no hay» ni «sin ubicación» todavía; va en «📞 Llamá a…»
     // Solo avisamos por lo que NO HAY. "📥 Recoger IM" no cuenta: el producto existe,
     // solo hay que traerlo del otro almacén — eso lo resuelve logística, no el cliente.
     var falta=(p.productos||[]).filter(function(x){ return x.chk==='no'; });
@@ -26331,6 +26500,7 @@ function misHacerDatos(v, mine){
   var br=borrPendientes(borradoresDe(v)), brP=br.filter(function(b){ try{ return !!borrGemelo(b); }catch(e){ return false; } }).length;
   add({ sev:'a', ic:'📥', n:br.length, t:'Ventas de Kommo para completar', s:misNom2(br)+' · '+(!brP ? 'falta la fecha de entrega' : brP===br.length ? 'parecen ya cargadas: confirmalas' : (brP+(brP===1?' parece ya cargada':' parecen ya cargadas')+'; a las otras les falta la fecha')),
     b:'Completar ↓', p:1, fn:"misIrA('mis-borradores')", ok:'Sin ventas de Kommo pendientes' });
+  try{ add(avisaHacerItem(mine, 'avisa', function(L){ return misNom2(L); })); }catch(e){}   // 📦 (propuesta 76) «📞 Llamá a N clientes con entrega a confirmar»
   /* el saldo del mes: lo MISMO que la ficha «Por cobrar» de siempre (fecha de entrega de este mes, sin pagar); (§4nl, Astra A08) con el
      mes de Bolivia, como Tu día */
   var mes=diaNegocio().slice(0,7), deben=mine.filter(function(p){ return (p.fecha||'').slice(0,7)===mes && !p.pagado && (Number(p.saldo)||0)>0; });
@@ -26487,6 +26657,7 @@ function misEqHacerDatos(T){
   add({ sev:'r', ic:'🔴', n:sin.length, t:'Productos que no hay', s:misEqQuienes(sin, pv), b:'Ver', p:1, fn:"misVerLista('eqSin')", ok:'Todos los productos tienen stock' });
   var atr=T.filter(function(p){ return minutosAtraso(p)>0; });
   add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misEqQuienes(atr, pv), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  try{ add(avisaHacerItem(T, 'eqAvisa', function(L){ return misEqQuienes(L, pv); })); }catch(e){}   // 📦 (propuesta 76)
   var fl=q.sinFlete, fBs=0; fl.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
   MIS_LISTAS.eqFlete={ t:'🚚 Recargo por entrega sin reportar', s:'Lo reporta la vendedora desde el pedido: «Cobré el flete».', L:fl, m:function(p){ return fmtBs(envioPorCobrar(p)); } };
   add({ sev:'a', ic:'🚚', n:fl.length, t:'Recargo por entrega sin reportar', s:fmtBs(fBs)+' · '+misEqQuienes(fl, pv), b:'Ver', fn:"misVerLista('eqFlete')", ok:'Recargos reportados' });
@@ -26748,7 +26919,8 @@ function misCardHtml(p, n, todos, verNota){
   if(verNota===undefined) verNota=misVeNota();
   var prod=(p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
-    if(x.chk==='no')       t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
+    if(x.chk==='no' && entregaAConfirmar(p)) t=t+' <span style="color:var(--muted)">— sin stock por ahora</span>';   // 📦 (propuesta 76) sin día no es una alarma
+    else if(x.chk==='no')  t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
     else if(esRecoger(x))  t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de '+esc(recogerCorto(x))+'</span>';
     if(x.chk!=='no' && prodSaleTxt(x)) t=t+' <span style="color:#0369a1;font-weight:700">'+esc(prodSaleTxt(x).trim())+'</span>';   // (26/09) Banzer
     // (26/09) `if` y no `else if`, como la ficha: un «NO HAY» ya pedido a fábrica no decía el 🏭
@@ -26771,12 +26943,12 @@ function misCardHtml(p, n, todos, verNota){
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+clfNombre(p, p.cliente||'—', 'mis')+'</div>'+
-        '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(fechaSalida(p)))+   // (26/09) la de tienda, el día que se vendió
+        '<div style="font-size:.78rem;color:var(--muted)">'+(entregaAConfirmar(p) ? '📦 sin día de entrega' : esc(fmtFecha(fechaSalida(p))))+   // (26/09) la de tienda, el día que se vendió · 📦 (propuesta 76)
           (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+(verNota?misNotaTxt(p):'')+'</div></div>'+
       docChip(p)+
       (enColaLocal(p.id)?'<span class="badge b-amber" title="Todavía no llegó a la planilla: está en la cola de este dispositivo y se manda solo">⏳ sin enviar</span>':'')+   // (26/09)
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
-      turnoBadge(p)+
+      (entregaAConfirmar(p) ? avisaBadge(p) : turnoBadge(p))+   // 📦 (propuesta 76) «📦 Avisa cuándo · llamar el 16/11»
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
       atrasoBadge(p)+
       avisoModifHtml(p, true)+
@@ -26805,7 +26977,7 @@ function misCardHtml(p, n, todos, verNota){
    entregado (✅ marcado) · falta stock (una línea «✗ no hay») · debe plata (saldo y no es ATC/RPT) · va bien. Solo mira. */
 function misEstadoCard(p, falta){
   if(p.entregado) return 'ok';
-  if((p.productos||[]).some(function(x){ return x && x.chk==='no'; })) return 'mal';
+  if(!entregaAConfirmar(p) && (p.productos||[]).some(function(x){ return x && x.chk==='no'; })) return 'mal';   // 📦 (propuesta 76) sin día no da rojo
   if(!noSeCobra(p) && (falta==null?(Number(p.saldo)||0):falta)>0.005 && !p.pagado) return 'debe';
   return 'va';
 }
@@ -26925,6 +27097,7 @@ function showMisModal(id){
     ? '<span class="badge b-gray">👤 '+esc(nombreCanonico(p.vendedor)||p.vendedor)+'</span>'
     : '<span class="badge b-red">⚠️ sin vendedor</span>';
   var body=(esVentaTienda(p) ? row('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))   // (26/09) decía «Fecha de entrega» vacía
+           : entregaAConfirmar(p) ? row('Fecha de entrega', avisaBadge(p)+'<br><span style="font-size:.8rem;color:var(--muted)">Cuando el cliente elija: ✏️ Editar, sacá «📦 El cliente avisa cuándo» y poné el día.</span>')   // 📦 (propuesta 76)
                              : row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
     row('Vendedor', vendCell)+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
@@ -27886,6 +28059,7 @@ function clfIniciales(n){ var w=String(n||'').replace(/[^A-Za-zÁÉÍÓÚÑáé�
 function clfEntregaTxt(p, hoy){
   if(esVentaTienda(p)) return '<span class="clf-e t">🏪 venta en tienda</span>';
   if(p.entregado) return '<span class="clf-e ok">✅ entregado'+(p.fecha?(' · '+esc(fmtFechaCorta(p.fecha))):'')+'</span>';
+  if(entregaAConfirmar(p)) return '<span class="clf-e">📦 avisa cuándo · '+esc(avisaTxt(p))+'</span>';   // (propuesta 76)
   if(!p.fecha) return '<span class="clf-e">sin fecha de entrega</span>';
   return '<span class="clf-e'+(p.fecha<hoy?' tarde':'')+'">🚚 '+(p.fecha<hoy?'era el ':'se entrega el ')+esc(fmtFechaCorta(p.fecha))+(p.fecha<hoy?' · sin ✅':'')+'</span>';
 }
@@ -28865,6 +29039,7 @@ function pedidoText(p){
   var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · '+ocEtiq(p.oc)):'')+'*',
     /* La venta de tienda no tiene fecha de entrega: antes salía "📅 Entrega:" vacío. */
     esVentaTienda(p) ? '🏪 Salió de tienda — se la llevó el cliente'
+      : entregaAConfirmar(p) ? ('📦 Entrega: el cliente avisa cuándo (volver a llamar el '+fmtFecha(avisaDe(p))+')')   // (propuesta 76)
                      : ('📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):'')),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
@@ -30787,6 +30962,7 @@ function stockCorteDeParte(e, cAca){
    `soloAca`: solo lo que sale de acá (para «Conté a mano»). */
 function stockFueraHoy(p, x, cAca, soloAca){
   if(!p || !x || p.entregado || esVentaTienda(p) || esProdDeTienda(x) || recogeDeTienda(x)) return 0;
+  if(entregaAConfirmar(p)) return 0;   // 📦 (propuesta 76) sin día no salió con ningún camión: su `fechaSalida` es el día en que se cargó
   var hoy=todayStr(); if(fechaSalida(p)!==hoy) return 0;
   if(esRecoger(x) || x.chk==='no' || enProduccionPendiente(x)) return 0;
   var ca=cAca||STOCK.c;
@@ -30924,7 +31100,7 @@ function stockComprometido(k, hasta){
   var n=0;
   STATE.forEach(function(p){
     if(!stockCuenta(p) || p.entregado || esVentaTienda(p)) return;
-    var f=p.fecha||''; if(!f || (hasta && f>hasta)) return;
+    var f=p.fecha||(entregaAConfirmar(p) ? AVISA_STOCK_F : ''); if(!f || (hasta && f>hasta)) return;   // 📦 (propuesta 76) sin día: en el total, nunca «hasta» una fecha
     (p.productos||[]).forEach(function(x){
       if(stockSalio(p,x) || esProdDeTienda(x) || recogeDeTienda(x) || stockClave(x)!==k) return;   // 🏬 (13/10) lo de una tienda no espera stock de acá
       var fu=stockFueraHoy(p,x);                              // 🚚 (18/10, §4ls U2) lo de hoy que ya salió con su turno no se reserva
@@ -31283,7 +31459,7 @@ function stockData(extra){
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
       // haya pasado — es la contradicción con el conteo, y sin reprogramar se avisa aparte.
-      if(!p.entregado && !hecho && x.chk==='no'){ o.noHay+=c; if(fs>o.noHayF) o.noHayF=fs; if(salio) o.noHayViejo+=c; }
+      if(!p.entregado && !hecho && x.chk==='no' && !entregaAConfirmar(p)){ o.noHay+=c; if(fs>o.noHayF) o.noHayF=fs; if(salio) o.noHayViejo+=c; }   // 📦 (propuesta 76) sin día no es una alarma: se ve cuando el cliente elija
       /* 🏪 (§4iy, dueño 09/10: lo que sale de la tienda se carga como «salió de tienda»; lo de fábrica sale de PTF). La venta de tienda
          ya contó para la rotación (arriba) pero NO baja PTF ni Banzer: el colchón llegó a la tienda antes, con su RPT. Antes se descontaba
          dos veces y el control del Excel lo marcaba como «entrada sin explicar». */
@@ -31323,7 +31499,7 @@ function stockData(extra){
       if(hecho){
         /* (05/10, Codex R5) Lo llegado y contado se RESERVA para ese cliente (`comp`, como un «✔ hay»); lo que falta llegar
            sigue siendo «lo trae la fábrica» (`aFab`): no sale del depósito. */
-        var ue2=prodUnidEnConteo(x), ur2=Math.max(0, ue2-fu), fd2=p.fecha && p.fecha>hoy?p.fecha:hoy;
+        var ue2=prodUnidEnConteo(x), ur2=Math.max(0, ue2-fu), fd2=entregaAConfirmar(p) ? AVISA_STOCK_F : (p.fecha && p.fecha>hoy?p.fecha:hoy);   // 📦 (propuesta 76) sin día: al final
         if(ur2>0){ o.comp+=ur2; o.compPor[fd2]=(o.compPor[fd2]||0)+ur2; o.compIds.push({ id:p.id, c:ur2, f:fd2 }); }
         /* 🏭 (19/10, §4ls verificación final, CD-1) …y lo que sin sello ya tendría que estar en el Excel de PTF o Banzer va APARTE
            (`fabVencPor`): solo lo usan el cuadrito del vendedor (`saldoVeredicto`) y la revisión automática (`stockAsignar`), para no
@@ -31341,6 +31517,10 @@ function stockData(extra){
         else if(e.tipo==='sale'){ var nm=almEnStock(e.de); if(nm) o.confSale[nm]=(o.confSale[nm]||0)+e.u; }
       });
       var fd=p.fecha && p.fecha>hoy?p.fecha:hoy; // lo vencido sigue consumiendo hoy
+      /* 📦 (30/10, propuesta 76) «El cliente avisa cuándo»: está VENDIDA y se aparta (cuenta en «vendido sin entregar»), pero DESPUÉS de
+         todo lo que tiene día: con `AVISA_STOCK_F` ningún horizonte la alcanza (ni «Pedir 7 días», ni «se corta», ni el cuadrito a una
+         fecha). Antes, con la fecha inventada, una se mandó a fabricar apurada. */
+      if(entregaAConfirmar(p)) fd=AVISA_STOCK_F;
       /* `compIds` (07/10): lo mismo que `compPor`, pedido por pedido, para saber de qué ZONA es cada entrega pendiente (el
          plan de 7/15/30 días de «Banzer o PTF», `almPlanDe`). No cambia ninguna cuenta. */
       var cr=c-fu;
@@ -31964,7 +32144,7 @@ function saldoDatos(sinId){
   return SALDO_CACHE;
 }
 function saldoSinId(){ return (EDIT_ID && findById(EDIT_ID)) ? EDIT_ID : ''; }
-function saldoFechaForm(){ if(VENTA_TIENDA) return ''; var e=document.getElementById('f-fecha'); return e ? String(e.value||'') : ''; }
+function saldoFechaForm(){ if(VENTA_TIENDA || avisaFormOn()) return ''; var e=document.getElementById('f-fecha'); return e ? String(e.value||'') : ''; }   // 📦 la de volver a llamar no es un día de entrega
 function saldoAvisoActivo(){
   if(VENTA_TIENDA || docTipoSel()==='ATC') return false;
   var p=EDIT_ID ? findById(EDIT_ID) : null;
@@ -32367,6 +32547,7 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo, co
   }
   v.fechaRes=D; v.porFecha=porFecha;
   v.pendFecha=pendA(D); v.pendDespues=Math.max(0, v.pend-v.pendFecha);
+  v.pendAvisa=porFecha ? (Number(((oC&&oC.compPor)||{})[AVISA_STOCK_F])||0) : 0;   // 📦 (propuesta 76) de lo de «después», cuánto no tiene día
   if(fv.u>0){ v.fabVencFecha=0; Object.keys(fv.por).forEach(function(f){ if(!porFecha || f<=D) v.fabVencFecha+=fv.por[f]; }); }   // 🏭 (§4ls CD-1) cuánto de eso entra a la fecha
   v.libres=v.alm-v.pendFecha;                 // A LA FECHA: puede dar negativo
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
@@ -32406,7 +32587,7 @@ function saldoFabVencidos(o, mano){
    primera fecha que queda corta (antes de esa hay que reponer) y, si lo que se puede traer o fabricar no llega a tiempo, la fecha
    del pedido que se atrasaría. El orden es el de la revisión automática: por fecha de entrega. */
 function saldoDespues(o, D, queda, lotes, P){
-  var fechas=Object.keys((o&&o.compPor)||{}).filter(function(f){ return f>D; }).sort();
+  var fechas=Object.keys((o&&o.compPor)||{}).filter(function(f){ return f>D && f!==AVISA_STOCK_F; }).sort();   // 📦 (propuesta 76) lo que no tiene día no se atrasa
   var tot=0; fechas.forEach(function(f){ tot+=o.compPor[f]; });
   queda=Math.max(0, Number(queda)||0);
   if(!(tot>queda+1e-9)) return null;
@@ -32617,7 +32798,8 @@ function saldoNumerosHtml(v){
 /* 📅 (§4ls) La segunda línea: «Pendiente en total: 34 (30 para después del 20/10)». Solo cuando hay algo para después. */
 function saldoTotalHtml(v){
   if(!v || !(v.pendDespues>0) || !v.fechaRes) return '';
-  return 'Pendiente en total: <b>'+stockUnid(v.pend)+'</b> ('+stockUnid(v.pendDespues)+' para después del '+esc(fmtFechaCorta(v.fechaRes))+')';
+  return 'Pendiente en total: <b>'+stockUnid(v.pend)+'</b> ('+stockUnid(v.pendDespues)+' para después del '+esc(fmtFechaCorta(v.fechaRes))+
+    (v.pendAvisa>0 ? (', '+(v.pendAvisa>=v.pendDespues ? (v.pendAvisa===1?'sin día: el cliente avisa cuándo':'sin día: los clientes avisan cuándo') : ('de '+(v.pendAvisa===1?'ellas 1':'ellas '+stockUnid(v.pendAvisa))+' sin día'))) : '')+')';   // 📦 (propuesta 76)
 }
 /* 📅 (§4ls) El aviso ámbar: con este pedido, lo vendido para después del día ya no alcanza y hay que reponer antes de una fecha.
    Si lo que se puede traer o fabricar no llega a tiempo, lo dice más fuerte: ese pedido se atrasaría. */
@@ -33710,7 +33892,7 @@ function revSoltarHtml(L){
     'Si soltás la marca del pedido lejano, alcanza (y para ese se pide a fábrica con tiempo).'+
     '<ul style="margin:5px 0 0 16px;padding:0">'+L.slice(0,8).map(function(s){
       return '<li>'+ver(s.para.id, s.para.oc)+' ('+fmtFechaCorta(s.para.fecha)+') · '+esc(s.nom)+' — faltan '+s.falta+': '+
-        s.de.map(function(d){ return 'soltar '+d.u+' de '+ver(d.id, d.oc)+' ('+fmtFechaCorta(d.fecha)+')'; }).join(' y ')+(s.cubre<s.falta?(' · igual faltan '+(s.falta-s.cubre)):'')+'</li>';
+        s.de.map(function(d){ return 'soltar '+d.u+' de '+ver(d.id, d.oc)+' ('+(d.fecha===AVISA_STOCK_F ? 'el cliente avisa cuándo' : fmtFechaCorta(d.fecha))+')'; }).join(' y ')+(s.cubre<s.falta?(' · igual faltan '+(s.falta-s.cubre)):'')+'</li>';
     }).join('')+'</ul>'+(L.length>8?('<div style="color:var(--muted)">y '+(L.length-8)+' más</div>'):'')+'</div>';   // ✏️ (§4ls V-REV-9)
 }
 /* 🎯 (18/10, §4ls) La regla en una frase, para lo que se copia (la fábrica, logística). */
@@ -36518,6 +36700,9 @@ function revStkPedidos(todos){
        nunca entra a la revisión (como en el cierre, `cierreEntEntra`). Si no, le proponía «✗ no hay» o le apartaba una unidad de PTF. */
     if(esVentaTienda(p)) return false;
     if(!(p.productos||[]).length) return false;
+    /* 📦 (30/10, propuesta 76) Sin día de entrega: en la lista entera (lo marcado a mano reserva, y va ÚLTIMA: «9999») pero nunca en el
+       reparto que propone marcas — ni «✔» ni «✗ no hay» para algo que nadie sabe cuándo sale. */
+    if(entregaAConfirmar(p)) return !!todos;
     var f=p.fecha||'';
     /* Lo de días pasados ya se dio por entregado (§4co) — salvo lo que quedó tildado
        ✗ no hay, que es una venta viva esperando stock. Esa sí entra, y primero. */
@@ -36718,7 +36903,7 @@ function stockAsignar(){
       });
       if(_otros.length) realoja.push({ id:p.id, oc:p.oc||'', cliente:p.cliente||'', fecha:p.fecha||'', k:k, nom:(info[k]&&info[k].desc?stockNombre(info[k]):(x.desc||'')), u:c, dice:_dice, en:_otros });
       /* (§4iy) Lo que esta línea marcada se llevó de verdad: si después un pedido de ANTES se queda sin stock, se sugiere soltarlo. */
-      if(c>_falta && x.chk!=='no') (apartadoPor[k]=apartadoPor[k]||[]).push({ id:p.id, oc:p.oc||'', fecha:p.fecha||'', u:c-_falta, usado:0 });
+      if(c>_falta && x.chk!=='no') (apartadoPor[k]=apartadoPor[k]||[]).push({ id:p.id, oc:p.oc||'', fecha:(entregaAConfirmar(p) ? AVISA_STOCK_F : (p.fecha||'')), u:c-_falta, usado:0 });   // 📦 (propuesta 76) lo apartado para una venta sin día es lo primero que se puede soltar
       if(_falta>0){
         sinResp[p.id+'|'+xi]=_falta;
         sinRespaldo.push({ id:p.id, oc:p.oc||'', cliente:p.cliente||'', fecha:p.fecha||'', k:k, nom:(info[k]&&info[k].desc?stockNombre(info[k]):(x.desc||'')), u:c, faltan:_falta });
@@ -37945,6 +38130,7 @@ function stockMovEnVentana(f, ts, v){
    solo si el Excel lo incluye. Lo que hay que ir a buscar y lo ✗ no salió (misma regla que `stockSalio`). */
 function stockSalioVentana(p, x, v){
   if(!p || !x || !v || !stockCuenta(p)) return false;
+  if(entregaAConfirmar(p)) return false;   // 📦 (propuesta 76) sin día no salió: su `fechaSalida` es el día en que se CARGÓ (el control del Excel la daba por salida)
   var f=x.eF||fechaSalida(p); if(!f || f>v.hasta) return false;   // (§4iz, E2-7) el día real que anotó el cierre
   /* 🌙 (23/10, rutina de dos Excel por día) El día del Excel del FINAL DEL DÍA (los dos turnos) también entra, pero solo lo que ese Excel
      no podía tener: lo cargado después de su hora (`stockAntesDelCorte` → `stockCargadoDespuesDelCorte`, abajo). Antes la ventana
@@ -39982,7 +40168,7 @@ function fichaAvisos(p, ret, chips){
   var a=[]; if(!p || p.entregado || esVentaTienda(p)) return a;
   var hoy=todayStr(), f=p.fecha||'', veh=vehiculoDe(p), pr=p.productos||[], nNo=0, nSin=0;
   pr.forEach(function(x){ if(enProduccion(x)) return; if(x.chk==='no') nNo++; else if(!prodHay(x) && !esRecoger(x) && !recogeDeTienda(x)) nSin++; });
-  if(!f) a.push('📅 No tiene fecha de entrega.');
+  if(!f){ if(!entregaAConfirmar(p)) a.push('📅 No tiene fecha de entrega.'); }   // 📦 (propuesta 76) la que «avisa cuándo» no tiene día a propósito
   else if(f<hoy) a.push('📅 Era para el '+fmtFechaCorta(f)+' y no figura «🚚 Entregado»: si salió, marcalo; si no, reprogramalo.');
   if(f && f>=hoy && feriadoDe(f)) a.push('🚫 El '+fmtFechaCorta(f)+' es feriado ('+feriadoDe(f)+'): el camión no sale.');
   if(ret){
@@ -40328,8 +40514,9 @@ function showPedidoModal(id){
       '<div class="fl-cli"><div class="n">'+clfNombre(p, p.cliente||'—', 'admin')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+
         ' · 📥 Ingresó '+esc(fichaIngresoTxt(p))+(hace?(' ('+esc(hace)+')'):'')+'</div></div>'+
       '<div class="fl-pills">'+
-        '<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">🚚 Entrega '+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
-          (dias.t&&!p.entregado?(' <i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'+
+        (entregaAConfirmar(p) ? ('<span class="fl-pill" title="Sin día de entrega: no ocupa cupo, el bot no le escribe y no sale en la carga">📦 Avisa cuándo · '+esc(avisaTxt(p))+'</span>')   // 📦 (propuesta 76)
+        : ('<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">🚚 Entrega '+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
+          (dias.t&&!p.entregado?(' <i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'))+
         (ret ? ('<span class="fl-pill fl-ret">🏪 Retira en '+esc(ret.donde)+'</span>') : ('<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'))+
         (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
       '</div></div>';
@@ -41390,7 +41577,7 @@ function prodTrasCorte(x, R, alm){
    no (fecha pasada sin ✅ = salió, §4co), ni lo de hoy cuyo turno el Excel ya no trae (decisión 2: salió con el camión). */
 function stockFabVencidoU(p, x){
   if(!p || !x || !enProduccionPendiente(x) || p.entregado || esVentaTienda(p) || esProdDeTienda(x) || recogeDeTienda(x)) return 0;
-  var hoy=todayStr(), fs=fechaSalida(p), pf=String(x.prodF||'');
+  var hoy=todayStr(), fs=entregaAConfirmar(p) ? AVISA_STOCK_F : fechaSalida(p), pf=String(x.prodF||'');   // 📦 (propuesta 76) sin día: «más adelante», no el día en que se cargó
   if(!fs || fs<hoy || !pf) return 0;
   var ex=stockFabVencCorte(); if(!ex || saldoSaleDeFabrica(pf)>ex) return 0;
   if(fs===hoy && stockFueraDelCorte(p, x, hoy, STOCK.c)) return 0;
@@ -41538,7 +41725,7 @@ function rowKind(p){
   // El rojo se mira en los PRODUCTOS, no en p.estado: desde que un ✗ ya pedido a fábrica
   // pone el pedido "En producción", si mirara solo p.estado la fila dejaría de ser roja y un
   // faltante pasaría desapercibido. Falta stock = rojo, aunque ya se haya pedido a fábrica.
-  if(p.estado==='No hay' || (p.productos||[]).some(function(x){ return x.chk==='no'; })) return 'nohay';
+  if(!entregaAConfirmar(p) && (p.estado==='No hay' || (p.productos||[]).some(function(x){ return x.chk==='no'; }))) return 'nohay';   // 📦 (propuesta 76) sin día no da rojo
   if(tieneRecogerIM(p))   return 'im';
   if(has50x70(p))         return '5070';
   if(hasEspecial(p))      return 'especial';
@@ -43034,7 +43221,7 @@ function ensureLeaflet(cb){
 /* Período y marca del mapa, SIN mirar si el pedido tiene link: lo usan la lista que se dibuja
    (con link) y la de «sin ubicación» (sin link, §4dh). */
 function mapaEntra(p){
-  if(!p) return false;
+  if(!p || entregaAConfirmar(p)) return false;   // 📦 (propuesta 76) sin día no va a ningún recorrido
   /* La marca sale del VENDEDOR (§4bl). ROHO y quien no esté en ninguna lista quedan
      fuera solos en cuanto se elige una. */
   if(MAPA_MARCA && marcaDe(p.vendedor)!==MAPA_MARCA) return false;
@@ -46650,7 +46837,7 @@ function nxClienteVale(p){ return !!p && !!p.fecha && !esATC(p.oc) && !esRPT(p.o
    (dueño, 11/10), ni ROHO, ni sin celular de WhatsApp, ni con la fecha pasada. */
 var WA_BOT=false;
 function nxBotManda(p){
-  if(!WA_BOT || !nxClienteVale(p) || p.entregado || borradorDe(p.id)) return false;
+  if(!WA_BOT || !nxClienteVale(p) || p.entregado || borradorDe(p.id) || entregaAConfirmar(p)) return false;   // 📦 (propuesta 76) sin día el bot no le escribe
   var v=normNombre(p.vendedor);
   if(v.indexOf('eduardo')>=0 || v.indexOf('roho')>=0) return false;
   return !!misWaCliente(p.celular) && String(p.fecha)>=todayStr();
@@ -48598,7 +48785,7 @@ function asisAvisos(){
         x:'Te falta avisar a '+D.faltan+' cliente'+(D.faltan===1?'':'s')+' a qué hora pasa el camión.', b:['Ver cuáles', "asisIr('#nx-m1', nxM1Toggle)"] });
     }catch(e){}
     var deben=(STATE||[]).filter(function(p){
-      if(!p || esFilaSistema(p) || esBorrador(p) || !mismoVendedor(p.vendedor, v) || fueraDeConta(p)) return false;
+      if(!p || esFilaSistema(p) || esBorrador(p) || !mismoVendedor(p.vendedor, v) || fueraDeConta(p) || entregaAConfirmar(p)) return false;   // 📦 (propuesta 76) sin día no «se entregó»
       var f=fechaSalida(p); return !!f && diasEntre(f, hoy)>=7 && contaFaltaCobrar(p)>0.005;
     });
     if(deben.length){ var bs=0; deben.forEach(function(p){ bs=r2(bs+contaFaltaCobrar(p)); });
@@ -48698,7 +48885,7 @@ function asisResumenDia(){
   } else if(v){
     var mio=function(p){ return mismoVendedor(p.vendedor, v); };
     var hoyV=dia(hoy, mio), proxV=dia(prox, mio);
-    var deben=(STATE||[]).filter(function(p){ if(!p || esFilaSistema(p) || esBorrador(p) || !mio(p) || fueraDeConta(p)) return false; var f=fechaSalida(p); return !!f && f<=hoy && contaFaltaCobrar(p)>0.005; });
+    var deben=(STATE||[]).filter(function(p){ if(!p || esFilaSistema(p) || esBorrador(p) || !mio(p) || fueraDeConta(p) || entregaAConfirmar(p)) return false; var f=fechaSalida(p); return !!f && f<=hoy && contaFaltaCobrar(p)>0.005; });
     var bs=0; deben.forEach(function(p){ bs=r2(bs+contaFaltaCobrar(p)); });
     var mis=function(L){ return L.map(function(p){ return { id:p.id, t:p.cliente||'—', s:(p.oc||'')+(p.zona?(' · '+p.zona):''), m:'' }; }); };
     R.push({ t:'🚚 Hoy se '+(hoyV.length===1?'entrega ':'entregan ')+cu(hoyV.length,'pedido')+' tuyo'+(hoyV.length===1?'':'s'), lista:mis(hoyV) });
