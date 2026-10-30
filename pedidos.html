@@ -7,7 +7,12 @@
 <meta name="generator" content="pedidos.html — formulario de pedidos + Google Sheets + panel administración">
 <!-- 📲 (§4ns, 25) el panel se puede instalar como programa: el manifest, el ícono del iPhone/iPad y `escritorio.js` (al final, con `defer`) -->
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="iconos/panel-180.png">
+<link rel="apple-touch-icon" href="iconos/hojas-180.png">
+<!-- 🪟 (30/10, §4ny; el dueño eligió el ícono «2», las hojas de la marca) el ícono de la pestaña y el color de la barra de la ventana: el
+     script del tema (abajo) lo cambia según el mes, así la barra (o la caja de los botones de Windows) va con el encabezado. -->
+<link rel="icon" type="image/svg+xml" href="iconos/hojas.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="iconos/hojas-32.png">
+<meta name="theme-color" content="#0f4c5c">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -2050,6 +2055,22 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 @media(max-width:520px){.ver-nueva{gap:6px;padding:6px 4px 6px 10px}.ver-nueva .vn-tx small,.ver-nueva .vn-l{display:none}.ver-nueva .vn-ic{font-size:1.05rem}
   .ver-nueva .vn-tx b{font-size:.86rem;white-space:nowrap}.ver-nueva .vn-ok{padding:8px 12px;min-height:38px}.ver-nueva .vn-x{width:34px;height:34px}}
 @keyframes vn-entra{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+/* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
+   (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
+   · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
+   · cada ventana a pantalla completa lleva arriba una franja del color del tema (`border-top`) del alto de la barra, así su ✕ queda abajo.
+   ⚠️ Una ventana NUEVA a pantalla completa va en esta lista: con `class="adm-ov"` ya entra; si no, por su id o su clase. No sirve buscar
+   `position:fixed` dentro del `style`: al abrirla con `el.style.display=…` el navegador reescribe el atributo («position: fixed; inset: 0px»).
+   Las dos formas quedan igual como red, pero `tests/test_sin_barra.js` revisa todas. */
+html.wco .header{-webkit-app-region:drag;app-region:drag}
+html.wco .header button,html.wco .header a,html.wco .header input,html.wco .header select,html.wco .header [onclick],html.wco .header [role="button"],html.wco .header .hstat{-webkit-app-region:no-drag;app-region:no-drag}
+html.wco .header-in{padding-left:calc(22px + max(0px, var(--wco-l,0px) - max(0px, (100vw - var(--wrap))/2)));padding-right:calc(22px + max(0px, var(--wco-r,0px) + 12px - max(0px, (100vw - var(--wrap))/2)))}
+/* En una ventana angosta correr lo de la derecha lo manda a otra fila: ahí el encabezado baja lo que mide la barra y queda una franja libre arriba. */
+@media(max-width:1099px){html.wco .header-in{padding-left:22px;padding-right:22px;padding-top:calc(var(--wco-h,0px) + 4px)}}
+@media(max-width:560px){html.wco .header-in{padding-left:14px;padding-right:14px}}
+html.wco .adm-ov,html.wco #stock-overlay,html.wco #alm-overlay,html.wco #visor,
+html.wco [style*="position:fixed"][style*="inset:0"],html.wco [style*="position: fixed"][style*="inset: 0"],html.wco .modal-overlay,html.wco #pap-overlay,html.wco #obs-conf,html.wco .pal-ov,html.wco #salud-overlay,
+html.wco .dep-modal,html.wco .anu-grito,html.wco .anu,html.wco .quien,html.wco .pm-overlay,html.wco #pt-ov{border-top:var(--wco-h,0px) solid var(--wco-bg,#0f4c5c)!important}
 @media(prefers-reduced-motion:reduce){.ver-nueva{animation:none}}
 </style>
 <script>
@@ -2072,6 +2093,11 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
         : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);
+  /* 🪟 (30/10, §4ny) La barra de la ventana del panel instalado (y la caja de los botones de Windows sin barra) toma el color oscuro del
+     encabezado del tema. Un tema nuevo va acá también (si no, queda el de Espuma). */
+  var BARRA={ halloween:'#1a0b2e', 'todos-santos':'#1e0a35', navidad:'#0b3b2c', 'anio-nuevo':'#0b1d3a', carnaval:'#5b21b6', madre:'#831843',
+    patria:'#7f1d1d', 'santa-cruz':'#064e3b', espuma:'#0f4c5c' };
+  var mtc=document.querySelector('meta[name="theme-color"]'); if(mtc) mtc.setAttribute('content', BARRA[t]||BARRA.espuma);
   /* 🎸 En noviembre, la melodía (archivo aparte: lo usan el panel y el dashboard). */
   if(t==='todos-santos'){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
 }catch(e){} })();
@@ -5670,7 +5696,7 @@ html{ scroll-padding-top:calc(var(--hdr-h) + 8px); }   /* lo que se lleva a la v
 </style>
 <script src="productos-mes.js?v=20261025a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
-<script src="escritorio.js?v=20261030a" defer></script>
+<script src="escritorio.js?v=20261030b" defer></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -47462,6 +47488,37 @@ function verRecargar(){
   location.href=location.pathname+'?'+q.join('&')+location.hash;
   return true;
 }
+/* 🪟 SIN BARRA DE TÍTULO (30/10, §4ny; el dueño eligió la «B»). El manifest pide `display_override: window-controls-overlay`: en la compu,
+   con el panel instalado, Chrome saca la barra y deja los botones de Windows encima de la página (con la flechita ︿ se vuelve a la barra).
+   `navigator.windowControlsOverlay` dice si está así y dónde queda la franja libre; acá se pasa a `html.wco` y a `--wco-h` (alto de la
+   barra), `--wco-l`/`--wco-r` (lo que ocupan los botones a cada lado) y `--wco-bg` (el color del tema), que usa el CSS de arriba.
+   En el navegador y en el celular no existe: no cambia nada. */
+var WCO={ on:false, h:0, l:0, r:0 };
+function wcoMedir(){
+  var o=navigator.windowControlsOverlay, de=document.documentElement, on=false;
+  try{
+    if(o && o.visible){
+      var rc=o.getTitlebarAreaRect();
+      WCO.h=Math.round(rc.height)||0; WCO.l=Math.max(0, Math.round(rc.x)||0); WCO.r=Math.max(0, Math.round(window.innerWidth-(rc.x+rc.width)));
+      on=WCO.h>0;
+    }
+  }catch(e){ on=false; }
+  WCO.on=on;
+  de.classList.toggle('wco', on);
+  if(on){
+    var mtc=document.querySelector('meta[name="theme-color"]');
+    de.style.setProperty('--wco-h', WCO.h+'px'); de.style.setProperty('--wco-l', WCO.l+'px'); de.style.setProperty('--wco-r', WCO.r+'px');
+    de.style.setProperty('--wco-bg', (mtc && mtc.getAttribute('content')) || '#0f4c5c');
+  } else ['--wco-h','--wco-l','--wco-r','--wco-bg'].forEach(function(k){ de.style.removeProperty(k); });
+  try{ if(typeof hdrMedir==='function') hdrMedir(); }catch(e){}
+  return on;
+}
+(function(){
+  var o=navigator.windowControlsOverlay; if(!o) return;
+  wcoMedir();
+  try{ o.addEventListener('geometrychange', function(){ wcoMedir(); }); }catch(e){}
+  window.addEventListener('resize', function(){ wcoMedir(); });
+})();
 (function(){
   if(!verActivo()) return;
   setTimeout(function(){ verMirar(true); }, window.VER_PRUEBA?50:20000);   // no compite con la primera lectura de la planilla

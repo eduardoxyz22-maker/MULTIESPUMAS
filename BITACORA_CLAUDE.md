@@ -16952,6 +16952,32 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   No se pudo leer la documentación de Chrome desde la sesión (developer.chrome.com bloqueado): si la overlay arranca prendida o con la flechita, verlo
   en la compu del dueño. Cambiar ícono o nombre hace que Chrome pregunte una vez por compu.
 
+### §4ny — 🪟 SIN BARRA, 🍃 EL ÍCONO DE LAS HOJAS Y 🖱️ LOS ATAJOS (30/10; dueño: *«B, 2 y atajos sí»*; EN LA RAMA, espera «publica»)
+- **Manifest**: `name`/`short_name` «MultiEspumas» (la barra de tareas dice «MultiEspumas - Pedidos»: Chrome antepone el nombre al título, y
+  `escritorio.js` pone `document.title='Pedidos'` cuando está instalado), `display_override:["window-controls-overlay"]` con `standalone` de
+  reserva, `theme_color` #0f4c5c, íconos `iconos/hojas-*.png` (192, 512, 512 maskable; 180 para el iPhone; 32 + `hojas.svg` para la pestaña; 96
+  para los atajos). Los `panel-*.png` se borraron (nombres nuevos para que Chrome vea el cambio). `shortcuts`: Nuevo pedido / Mis pedidos /
+  Contabilidad / Administración → `pedidos.html#ir=<form|mis|conta|admin>`; `launch_handler: focus-existing`.
+- **Color de la barra por tema**: `<meta name="theme-color">` que el script del tema pone según el mes (`BARRA`: Halloween #1a0b2e, Todos
+  Santos #1e0a35, Navidad #0b3b2c, Año Nuevo #0b1d3a, Carnaval #5b21b6, Madre #831843, 6 de Agosto #7f1d1d, 24 de Sept. #064e3b, Espuma #0f4c5c).
+- **Sin barra** (`wcoMedir`, pedidos.html): con `navigator.windowControlsOverlay.visible` → `html.wco` + `--wco-h/l/r/bg` (de
+  `getTitlebarAreaRect`, al abrir, con `geometrychange` y al cambiar el tamaño). El encabezado `app-region: drag` (sus botones, la campanita y
+  los anillos `no-drag`); desde 1100 px lo de la derecha se corre lo que pisan los botones de Windows (`max(0, wco-r + 12 − espacio libre)`:
+  ⚠️ `--wrap` puede ser más ancho que la ventana, por eso el `max(0, …)` adentro); más angosto, el encabezado baja el alto de la barra (si no,
+  Buscar y los anillos pasaban a otra fila). **Cada ventana a pantalla completa lleva `border-top` del alto de la barra con el color del tema**:
+  lista por clase/id (`.adm-ov`, `#stock-overlay`, `#alm-overlay`, `#visor`, `.modal-overlay`, `#pap-overlay`, `#obs-conf`, `.pal-ov`,
+  `#salud-overlay`, `.dep-modal`, `.anu-grito`, `.anu`, `.quien`, `.pm-overlay`, `#pt-ov`) + `[style*=…]` de red. ⚠️ El selector por `style`
+  solo NO sirve: al abrir con `el.style.display=…` el navegador reescribe el atributo («position: fixed; inset: 0px»). La escena al guardar y el
+  papel picado quedan afuera a propósito.
+- **Atajos** (`escritorio.js`): `#ir=` al abrir (se borra de la dirección y abre la pestaña cuando arranca) y `launchQueue.setConsumer` con el
+  panel abierto (sin recargar; el mismo atajo en 4 s, una vez: `IR_HECHO`). ⚠️ Corren después del `if(!activo()) return;`: en Playwright solo con
+  `ESC_PRUEBA`. `escritorio.js?v=20261030b`.
+- `tests/test_sin_barra.js` (37): manifest/íconos, color por tema, nada cambia sin la ventana sin barra, encabezado en 1440/1280/1000/800/500,
+  las 20 ventanas del HTML + las que arma la página (§5c falla si aparece una regla de pantalla completa nueva sin cubrir), volver a la barra,
+  atajos (Chrome trae su propio `launchQueue`: la prueba lo pisa con `defineProperty`) y el título. ⚠️ No se pudo leer la documentación de Chrome
+  desde la sesión: si la ventana arranca sin barra o hay que tocar la flechita ︿ una vez, y de qué color pinta Chrome la caja de los botones, se
+  ve en la compu del dueño. Al cambiar ícono y nombre Chrome pregunta una vez por compu; en el iPhone, el ícono nuevo al volver a agregarlo.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.

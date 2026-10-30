@@ -1138,7 +1138,12 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
 - **🔄 «Hay una versión nueva del panel»** (§4nx, 30/10, EN LA RAMA): una ventana abierta mira `panel-version.json` (a los 20 s, cada 5 min y al volver);
   si `v` > `PANEL_V` sale `#ver-nueva` con «Recargar» (`verRecargar`: pregunta con un pedido a medio escribir; va a `?nv=` y lo saca al abrir). Nunca
   recarga sola. ⚠️ **Al publicar pedidos.html, subir `PANEL_V` y `panel-version.json` JUNTOS** (`tests/test_version_nueva.js` §1). `VER_PRUEBA`.
-  Barra de la ventana y ícono nuevos: muestrario esperando la elección del dueño (bitácora §4nx).
+- **🪟🍃🖱️ Sin barra, el ícono de las hojas y los atajos** (§4ny, 30/10, dueño: «B, 2 y atajos sí»; EN LA RAMA): manifest con `display_override`
+  window-controls-overlay, nombre «MultiEspumas», íconos `iconos/hojas-*`, `shortcuts` (`#ir=form|mis|conta|admin`) y `focus-existing`; el color
+  de la barra sale del tema (`BARRA` en el script del `<head>` → `meta theme-color`). Sin barra, `wcoMedir` pone `html.wco` + `--wco-h/l/r/bg`:
+  el encabezado se arrastra y se corre (≥1100 px) o baja (más angosto), y **cada ventana a pantalla completa lleva la franja de arriba**.
+  ⚠️ Una ventana NUEVA a pantalla completa va con `class="adm-ov"` o en esa lista del CSS (`tests/test_sin_barra.js` §5c falla si falta).
+  Los atajos y el título «Pedidos» viven en `escritorio.js` (subir su `?v=`).
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
