@@ -6065,7 +6065,14 @@ function lsPoner(k, v, esCopia){
 /* ⚡ (§4oa, propuesta 85) `o.igual`: la lectura de cada minuto vino sin ningún cambio (`apiList` → `_igual`). Si la copia ya estaba al
    día no se vuelve a escribir (eran 1,3 MB cada minuto). Todo lo que cambia algo acá llama sin `o` y la escribe siempre. */
 var MIRROR_SUCIO=true;
+/* (30/10, revisión de la otra IA, H2) Cada cambio de `STATE` sube `STATE_GEN`: todo camino que lo cambia (cada lectura con cambios, lo
+   que se guarda acá, Administración, ATC, el chofer…) termina en `saveMirror()` sin `o`. `autoRepintar` anota hasta qué cambio dibujó
+   (`AUTO_PINTADO_GEN`): una lectura «sin cambios» deja de repintar SOLO si la pantalla ya muestra el último cambio. Antes miraba solo
+   si la lectura era igual a la ANTERIOR, y una lectura con cambios que no repintó (con algo abierto, o la relectura de un borrado de
+   `borradoConfirmarLuego`, que no pasa por `autoRepintar`) dejaba la pantalla vieja hasta 5 minutos. */
+var STATE_GEN=0;
 function saveMirror(o){
+  if(!(o && o.igual)) STATE_GEN++;
   if(o && o.igual && !MIRROR_SUCIO) return;
   SALDO_GEN++;
   var txt; try{ txt=JSON.stringify(mirrorRecortar(STATE)); }catch(e){ return; }
@@ -7528,6 +7535,7 @@ function showViewAhora(v){
   /* (§4nl, 27/10, Astra A12) La ficha al costado es de la lista de Administración: yendo a otra pestaña se cierra (antes quedaba encima
      de Mis pedidos, con la página apretada a la izquierda). En el medio no pasa: su fondo tapa las pestañas. */
   if(v!=='admin' && document.body.classList.contains('ficha-costado')) closeModal();
+  if(!document.getElementById('view-'+v) || !document.getElementById('view-'+v).classList.contains('active')) TROZOS_N={};   // ⚡ (§4oa, H1) otra pestaña: las listas largas vuelven a arrancar por el primer trozo
   var _nav=null; try{ _nav=navFoto(); }catch(e){}   // 🧭 (§4ni, 5) dónde estaba la pestaña elegida, para deslizarla
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
@@ -9361,11 +9369,16 @@ function lbMontoEntero(root){
    totales y el Excel no cambian: salen de la lista, no de lo dibujado.
    ⚠️ En Playwright se dibuja todo de una (las pruebas leen las filas), salvo `window.TROZOS_PRUEBA`. */
 var TROZO_PRIMERO=50, TROZO_SIGUE=100, TROZOS={}, TROZOS_OBS=null;
+/* (30/10, revisión de la otra IA, H1) Cuántas filas de cada lista ya se dibujaron. Un redibujo (la lectura de cada minuto, «Ver 120
+   más» de Mis pedidos, un filtro) dibuja por lo menos esas: si volviera al primer trozo, la página se achica y `autoRepintar` no puede
+   devolver el scroll (la lista saltaba para arriba mientras se leía). Se vacía al cambiar de pestaña (`showViewAhora`). */
+var TROZOS_N={};
 function trozosActivo(){ return !(navigator.webdriver && !window.TROZOS_PRUEBA); }
 /* El primer trozo (+ el marcador del resto). `fila(item, índice)`; `o.tabla`/`o.cols` para filas de tabla; `o.primero`. */
 function trozosHtml(clave, items, fila, o){
   o=o||{}; items=items||[];
-  var n=trozosActivo() ? Math.min(items.length, o.primero||TROZO_PRIMERO) : items.length;
+  var n=trozosActivo() ? Math.min(items.length, Math.max(o.primero||TROZO_PRIMERO, TROZOS_N[clave]||0)) : items.length;
+  TROZOS_N[clave]=n;
   var html=items.slice(0, n).map(function(x, k){ return fila(x, k); }).join('');
   if(n>=items.length){ delete TROZOS[clave]; return html; }
   TROZOS[clave]={ items:items, fila:fila, i:n, o:o };
@@ -9380,7 +9393,7 @@ function trozosMas(clave){
   var T=TROZOS[clave], m=document.querySelector('[data-trz="'+clave+'"]'); if(!T || !m) return;
   var desde=T.i, fin=Math.min(T.items.length, desde+TROZO_SIGUE);
   var html=T.items.slice(desde, fin).map(function(x, k){ return T.fila(x, desde+k); }).join('');
-  T.i=fin;
+  T.i=fin; TROZOS_N[clave]=fin;
   if(TROZOS_OBS) TROZOS_OBS.unobserve(m);   // el marcador viejo se reemplaza: que el observador no lo siga mirando
   m.insertAdjacentHTML('beforebegin', html);
   if(fin<T.items.length) m.outerHTML=trozoMarcador(clave, T.items.length-fin, T.o);
@@ -19733,13 +19746,13 @@ function autoOcupado(){
 /* ⚡ (§4oa, 85) Con la lectura sin cambios, Nuevo pedido, Mis pedidos y Contabilidad no se vuelven a dibujar (en el formulario trababa
    lo que se estaba escribiendo); igual se repintan cada `AUTO_REPINTAR_MS` y al cambiar el día, por lo que depende de la hora.
    Administración y la vista del chofer se repintan siempre: las posiciones del GPS llegan con cada lectura aunque la planilla no cambie. */
-var AUTO_PINTADO_T=0, AUTO_PINTADO_DIA='', AUTO_REPINTAR_MS=5*60000;
+var AUTO_PINTADO_T=0, AUTO_PINTADO_DIA='', AUTO_PINTADO_GEN=-1, AUTO_REPINTAR_MS=5*60000;
 function autoRepintarPuedeEsperar(){
-  if(!LECTURA_IGUAL || Date.now()-AUTO_PINTADO_T>=AUTO_REPINTAR_MS || AUTO_PINTADO_DIA!==todayStr()) return false;
+  if(!LECTURA_IGUAL || AUTO_PINTADO_GEN!==STATE_GEN || Date.now()-AUTO_PINTADO_T>=AUTO_REPINTAR_MS || AUTO_PINTADO_DIA!==todayStr()) return false;
   return ['view-form','view-mis','view-conta'].some(function(id){ var v=document.getElementById(id); return v && v.classList.contains('active'); });
 }
 function autoRepintar(){
-  AUTO_PINTADO_T=Date.now(); AUTO_PINTADO_DIA=todayStr();
+  AUTO_PINTADO_T=Date.now(); AUTO_PINTADO_DIA=todayStr(); AUTO_PINTADO_GEN=STATE_GEN;
   var y=window.scrollY;
   if(document.getElementById('view-form').classList.contains('active')){ renderCupoForm(); pintarBotonCierre(); }
   else if(document.getElementById('view-admin').classList.contains('active')){ if(UNLOCKED) renderAdmin(); }
