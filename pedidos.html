@@ -2,8 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pedidos — MultiEspumas</title>
+<!-- 📱 (30/10, captura del dueño en el iPad instalado) la página llega hasta arriba y la franja de la hora queda transparente con letra
+     blanca: el encabezado la cubre con su color (`--sa-t`, abajo). Sin esto se veía pasar la página por debajo de la hora, desenfocada. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MultiEspumas">
 <meta name="generator" content="pedidos.html — formulario de pedidos + Google Sheets + panel administración">
 <!-- 📲 (§4ns, 25) el panel se puede instalar como programa: el manifest, el ícono del iPhone/iPad y `escritorio.js` (al final, con `defer`) -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -242,7 +248,7 @@ input.err,textarea.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px v
 .edit-banner.on{display:flex}
 .edit-banner b{color:var(--amber)}
 
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--black);color:#fff;padding:14px 26px;border-radius:var(--r-pill);font-size:.86rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:7000;transition:transform .35s var(--ease);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center;
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(120px);background:var(--black);color:#fff;padding:14px 26px;border-radius:var(--r-pill);font-size:.86rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:7000;transition:transform .35s var(--ease);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center;
   /* (27/09, revisión en el celular) Con `left:50%` y sin ancho, el aviso NUNCA pasaba de media pantalla: en un celular de
      390 px era una columna de 195 (143 de texto) y el aviso largo, 18 renglones y 358 px de alto encima del formulario,
      tapando el botón Guardar. `max-content` lo deja crecer hasta el 90 % y `pointer-events:none` no tapa lo de abajo (solo
@@ -570,7 +576,7 @@ th.sortable:hover{color:var(--teal-dk)}
 /* Con :where la regla pesa como «button» a secas: si no, le ganaba a las clases .pap-* y los botones perdían la negrita (revisión 20/10). */
 :where(#pap-overlay) button{font:inherit;color:inherit;cursor:pointer}
 #pap-overlay button:focus-visible,#pap-overlay summary:focus-visible{outline:3px solid var(--pap-foco);outline-offset:2px;border-radius:8px}
-.pap-cab{flex:none;background:var(--grad-header);color:#fff;display:flex;align-items:center;gap:8px 12px;padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px))}
+.pap-cab{flex:none;background:var(--grad-header);color:#fff;display:flex;align-items:center;gap:8px 12px;padding:calc(10px + var(--sa-t,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px))}
 .pap-cab-tx{flex:1 1 auto;min-width:0}
 .pap-cab-tx b{display:block;font-size:1.15rem;font-weight:800;line-height:1.2}
 .pap-cab-tx>span{display:block;font-size:.8rem;opacity:.92;font-weight:500}
@@ -779,7 +785,7 @@ th.sortable:hover{color:var(--teal-dk)}
 }
 /* Celular acostado: lo que queda fijo arriba (cabecera, pestañas y plazos) no puede comerse la mitad de la pantalla. */
 @media (max-height:520px){
-  .pap-cab{padding-top:calc(4px + env(safe-area-inset-top,0px));padding-bottom:4px}
+  .pap-cab{padding-top:calc(4px + var(--sa-t,0px));padding-bottom:4px}
   .pap-cab-tx>span{display:none}
   .pap-cab-btn{min-height:40px}
   .pap-ctrl{padding-top:6px;padding-bottom:6px;gap:5px}
@@ -1329,7 +1335,7 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 @media(max-width:900px){ .pal-kbd{ display:none; } }
 @media(max-width:700px){ .pal-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; font-size:1rem; } .pal-btn-t{ display:none; } }
 .pal-ov{ position:fixed; inset:0; z-index:4500; background:rgba(15,40,44,.38); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:flex; justify-content:center; align-items:flex-start;
-  padding:max(9vh, env(safe-area-inset-top,0px)) 14px 14px; opacity:0; transition:opacity .16s; }
+  padding:max(9vh, var(--sa-t,0px)) 14px 14px; opacity:0; transition:opacity .16s; }
 .pal-ov.abierta{ opacity:1; }
 .pal{ width:min(660px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 80px rgba(10,40,44,.35); overflow:hidden; transform:translateY(-10px) scale(.98); transition:transform .22s cubic-bezier(.34,1.56,.64,1); display:flex; flex-direction:column; max-height:78vh; }
 .pal-ov.abierta .pal{ transform:none; }
@@ -1485,7 +1491,7 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 @media(prefers-reduced-motion:reduce){ .view.vista-der, .view.vista-izq, .view.vista-fade{ animation:none; } .nav-fant{ display:none; } }
 /* ↩️ 7 · «Deshacer» durante 5 segundos (§4ni): después de marcar entregado, cambiar de turno o borrar (`deshOfrecer`). Es otro aviso que
    el de siempre (aquel no se toca: `pointer-events:none`); mientras está, el de siempre sube un poco para no taparlo. */
-.desh{ position:fixed; left:50%; bottom:24px; z-index:7001; display:flex; align-items:center; gap:12px; width:max-content; max-width:min(92vw,560px);
+.desh{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom,0px)); z-index:7001; display:flex; align-items:center; gap:12px; width:max-content; max-width:min(92vw,560px);
   background:#17302e; color:#fff; padding:8px 8px 8px 18px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.3); font-size:.88rem; font-weight:600;
   overflow:hidden; transform:translate(-50%,24px); opacity:0; visibility:hidden; pointer-events:none;
   transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s, visibility 0s .3s; }
@@ -2042,7 +2048,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
    · cada ventana a pantalla completa lleva arriba una franja del color del tema (`border-top`) del alto de la barra, así su ✕ queda abajo.
-   ⚠️ Una ventana NUEVA a pantalla completa va en esta lista: con `class="adm-ov"` ya entra; si no, por su id o su clase. No sirve buscar
+   ⚠️ Una ventana NUEVA a pantalla completa va en esta lista Y en la de `html.sa-top` (el iPad, abajo; `test_ipad_franja` §4c las compara):
+   con `class="adm-ov"` ya entra; si no, por su id o su clase. No sirve buscar
    `position:fixed` dentro del `style`: al abrirla con `el.style.display=…` el navegador reescribe el atributo («position: fixed; inset: 0px»).
    Las dos formas quedan igual como red, pero `tests/test_sin_barra.js` revisa todas. */
 html.wco .header{-webkit-app-region:drag;app-region:drag}
@@ -2054,6 +2061,17 @@ html.wco .header-in{padding-left:calc(22px + max(0px, var(--wco-l,0px) - max(0px
 html.wco .adm-ov,html.wco #stock-overlay,html.wco #alm-overlay,html.wco #visor,
 html.wco [style*="position:fixed"][style*="inset:0"],html.wco [style*="position: fixed"][style*="inset: 0"],html.wco .modal-overlay,html.wco #pap-overlay,html.wco #obs-conf,html.wco .pal-ov,html.wco #salud-overlay,
 html.wco .dep-modal,html.wco .anu-grito,html.wco .anu,html.wco .quien,html.wco .pm-overlay,html.wco #pt-ov{border-top:var(--wco-h,0px) solid var(--wco-bg,#0f4c5c)!important}
+/* 📱 (30/10, captura del dueño en el iPad instalado: «se ve raro arriba y transparente») EL IPAD Y EL IPHONE INSTALADOS. La página llega
+   hasta arriba de la pantalla (`viewport-fit=cover` + `black-translucent`) y la franja de la hora y la batería mide `--sa-t`
+   (= `env(safe-area-inset-top)`; 0 en la compu y en el navegador). El encabezado la cubre con su color: antes quedaba transparente y se
+   veía pasar la página por debajo, desenfocada. Con algo ahí, `wcoMedir` pone `html.sa-top` y cada ventana a pantalla completa lleva esa
+   franja del color del tema, como sin barra en Windows (la MISMA lista de arriba). «Pedido a producción» ya la suma en su cabecera. */
+:root{--sa-t:env(safe-area-inset-top,0px)}
+.header{padding-top:var(--sa-t,0px)}
+body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}   /* el iPhone acostado: nada bajo la cámara */
+html.sa-top .adm-ov,html.sa-top #stock-overlay,html.sa-top #alm-overlay,html.sa-top #visor,
+html.sa-top [style*="position:fixed"][style*="inset:0"],html.sa-top [style*="position: fixed"][style*="inset: 0"],html.sa-top .modal-overlay,html.sa-top #obs-conf,html.sa-top .pal-ov,html.sa-top #salud-overlay,
+html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quien,html.sa-top .pm-overlay,html.sa-top #pt-ov{border-top:var(--sa-t,0px) solid var(--wco-bg,#0f4c5c)!important}
 @media(prefers-reduced-motion:reduce){.ver-nueva{animation:none}}
 </style>
 <script>
@@ -4301,7 +4319,7 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .cx-humo{ animation:cx-humo 2s ease-out infinite; }
 @keyframes cx-humo{ from{ transform:translateY(0); opacity:.9; } to{ transform:translateY(-6px); opacity:0; } }
 /* 🧑‍💼 (§4jx) Eduardo, el asistente: la burbuja abajo a la derecha (en el celular, arriba de las pestañas del pie). */
-.asis{ position:fixed; right:10px; bottom:6px; z-index:2600; display:flex; flex-direction:column; align-items:flex-end; gap:10px; pointer-events:none; }
+.asis{ position:fixed; right:10px; bottom:calc(6px + env(safe-area-inset-bottom,0px)); z-index:2600; display:flex; flex-direction:column; align-items:flex-end; gap:10px; pointer-events:none; }
 .asis > *{ pointer-events:auto; }
 .asis [hidden]{ display:none!important; }
 .asis-yo{ position:relative; width:112px; height:104px; padding:0; border:0; background:none; cursor:pointer; display:block; -webkit-tap-highlight-color:transparent; }
@@ -4475,7 +4493,7 @@ body.anu-tiembla > .nav, body.anu-tiembla > .wrap{ animation:ag-sacude .45s cubi
 .asis-tour{ position:fixed; z-index:10002; right:16px; bottom:190px; width:min(340px, calc(100vw - 32px)); background:#fff; border:2px solid var(--teal);
   border-radius:16px; box-shadow:0 14px 40px rgba(0,0,0,.22); padding:12px 14px; display:flex; flex-direction:column; gap:4px; animation:mi-entra .3s ease-out both; }
 .asis-tour small{ color:var(--muted); font-weight:700; } .asis-tour b{ font-size:1rem; } .asis-tour span{ font-size:.86rem; line-height:1.4; }
-@media (max-width:700px){ .asis-tour{ bottom:auto; top:calc(env(safe-area-inset-top, 0px) + 70px); }
+@media (max-width:700px){ .asis-tour{ bottom:auto; top:calc(var(--sa-t,0px) + 70px); }
   body.asis-escribe .asis-yo{ transform:scale(.55) translate(40px, 60px); opacity:.7; transition:transform .2s, opacity .2s; }
   body.asis-escribe .asis-globo{ display:none; } }
 .asis-vacio{ color:var(--muted); font-size:.85rem; padding:10px 4px; }
@@ -47260,7 +47278,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-10-30-a';
+var PANEL_V='2026-10-30-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -47332,20 +47350,28 @@ function wcoMedir(){
     }
   }catch(e){ on=false; }
   WCO.on=on;
+  /* 📱 (30/10) El iPad o el iPhone instalados: la franja de la hora (`--sa-t`) la tapa el encabezado, que la lleva de relleno arriba; con
+     algo ahí, `html.sa-top` y las ventanas a pantalla completa llevan esa franja del color del tema (CSS de arriba). */
+  var sa=0;
+  if(!on){ try{ var hd=document.querySelector('.header'); sa=hd ? Math.round(parseFloat(getComputedStyle(hd).paddingTop)||0) : 0; }catch(e){ sa=0; } }
+  WCO.sa=sa;
   de.classList.toggle('wco', on);
+  de.classList.toggle('sa-top', sa>0);
+  var mtc=document.querySelector('meta[name="theme-color"]');
   if(on){
-    var mtc=document.querySelector('meta[name="theme-color"]');
     de.style.setProperty('--wco-h', WCO.h+'px'); de.style.setProperty('--wco-l', WCO.l+'px'); de.style.setProperty('--wco-r', WCO.r+'px');
-    de.style.setProperty('--wco-bg', (mtc && mtc.getAttribute('content')) || '#0f4c5c');
-  } else ['--wco-h','--wco-l','--wco-r','--wco-bg'].forEach(function(k){ de.style.removeProperty(k); });
+  } else ['--wco-h','--wco-l','--wco-r'].forEach(function(k){ de.style.removeProperty(k); });
+  if(on || sa>0) de.style.setProperty('--wco-bg', (mtc && mtc.getAttribute('content')) || '#0f4c5c');
+  else de.style.removeProperty('--wco-bg');
   try{ if(typeof hdrMedir==='function') hdrMedir(); }catch(e){}
   return on;
 }
 (function(){
-  var o=navigator.windowControlsOverlay; if(!o) return;
+  var o=navigator.windowControlsOverlay;
   wcoMedir();
-  try{ o.addEventListener('geometrychange', function(){ wcoMedir(); }); }catch(e){}
+  if(o){ try{ o.addEventListener('geometrychange', function(){ wcoMedir(); }); }catch(e){} }
   window.addEventListener('resize', function(){ wcoMedir(); });
+  window.addEventListener('orientationchange', function(){ setTimeout(wcoMedir, 350); });   // el iPad girado cambia la franja
 })();
 (function(){
   if(!verActivo()) return;
