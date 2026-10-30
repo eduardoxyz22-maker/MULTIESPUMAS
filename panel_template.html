@@ -5202,12 +5202,19 @@ function Panel() {
       },
       body: JSON.stringify(b)
     }).then(r => r.json());
-    const fail = m => {
+    // La corrida en GitHub tarda ~5-6 min (Kommo + publicar): antes se esperaban 3,5 min y el aviso de
+    // «está tardando» duraba 4 s, así que parecía que el botón no había hecho nada (30/10).
+    const TOPE = 720000;
+    const reloj = ms => {
+      const s = Math.floor(ms / 1000);
+      return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    };
+    const fail = (m, ms) => {
       setRefreshMsg(m);
       setTimeout(() => {
         setLoading(false);
         setRefreshMsg("");
-      }, 3800);
+      }, ms || 3800);
     };
     try {
       const j = await post({
@@ -5229,6 +5236,10 @@ function Panel() {
         } catch (e) {}
         const started = st && st.created_at && st.created_at !== since;
         if (started && st.status === "completed") {
+          if (st.conclusion && st.conclusion !== "success") {
+            fail("No se pudo actualizar (falló en GitHub)", 30000);
+            return;
+          }
           setRefreshMsg("Datos listos · publicando…");
           setTimeout(() => {
             setRefreshMsg("Recargando…");
@@ -5236,11 +5247,12 @@ function Panel() {
           }, 40000);
           return;
         }
-        if (Date.now() - t0 > 210000) {
-          fail("Está tardando; recargá en un momento");
+        const va = Date.now() - t0;
+        if (va > TOPE) {
+          fail("Sigue en GitHub: recargá la página en unos minutos", 30000);
           return;
         }
-        setRefreshMsg(started ? "Generando desde Kommo…" : "Iniciando…");
+        setRefreshMsg(started ? "Generando desde Kommo… " + reloj(va) + (va < 390000 ? " de ~6 min" : " · tarda más que otras veces") : "Iniciando… " + reloj(va));
         tick();
       };
       tick();
@@ -5384,7 +5396,7 @@ function Panel() {
     className: "btn",
     onClick: refresh,
     disabled: loading,
-    title: "Trae datos frescos de Kommo: dispara la regeneraci\xF3n y recarga (~2 min)"
+    title: "Trae datos frescos de Kommo: dispara la regeneraci\xF3n y recarga sola (~6 min)"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "refresh",
     size: 14,
