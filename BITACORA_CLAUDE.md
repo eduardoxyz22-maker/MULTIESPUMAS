@@ -16868,6 +16868,19 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
 - **PUBLICADO 30/10 (`d874624`, dueño: «Publica»)**: `format-patch --binary` de `e2f7068` sobre `acdcebe`, `test_escritorio` 62/62 en la copia de
   publicar. Todos F5 (el cartel nuevo sale arriba mientras el panel no esté instalado).
 
+### §4nu — 💡 MUESTRARIO 34-73 (30/10; dueño: *«dame más mejoras… visuales, estéticas, matemáticas, de ventas y más y más»*): sin código en el panel
+- Cinco agentes en paralelo (lo visual, vender más, logística y cobranza, las cuentas, el dashboard de Kommo), cada uno con la copia de la planilla
+  del 24/10 (el dashboard, con los `PANEL_DATA` publicados al 29/10), solo agregados. 40 ideas con su medición y un dibujo con datos inventados:
+  https://claude.ai/artifact/691s7SuGKXuJhoxWWifZFB («La quiero» + «Copiar mi lista»). Resúmenes y scripts en el scratchpad (`muestrario34/`,
+  `ideas_*`), nunca en el repo.
+- 34-43 visual · 44-50 vender · 51-58 logística/cobranza · 59-65 cuentas · 66-73 dashboard. Recomendadas: 51, 53, 52, 66, 34, 45, 54, 59, 50.
+- **Lo que apareció al medir (para mirar ya)**: ~Bs 170.000 cobrados en efectivo desde agosto sin retiro anotado (octubre ~73.500; los choferes
+  cobraron 20.820 y rindieron 300 en octubre); 45 ventas entregadas deben Bs 99.310 (32 > 60 días, 23 sin ningún pago); 34 de 52 ATC «en fábrica»
+  (mediana 54 días) y ninguna «volvió»; precios con un número de más/menos (Bs 8.401 y Bs 1); en el dashboard, «la carga manual rinde 30×» compara
+  Visita tienda con Facebook (lo real: 59 % contra 0,4 %, ~140×) y la alerta de fichas nombra a tres de cinco. La 66 son errores, no ideas.
+- Probadas y descartadas por las cuentas: pronóstico de cobros (el 88 % se paga al vender), aviso de «el turno se va a llenar» (1 de 3 acierta),
+  pesos por día de la semana o quincena (empeora), topar las ventas grandes en μ/σ (sirve menos). Espera que el dueño elija por número.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
