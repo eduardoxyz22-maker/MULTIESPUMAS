@@ -1135,6 +1135,10 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
 - **§4nt (30/10, captura del dueño desde el iPhone; PUBLICADO `d874624`)**: «📲 Instalar» SIEMPRE mientras no esté instalado (`yaInstalado`, `me_esc_inst`): con
   `beforeinstallprompt`, un clic; sin él (iPhone/iPad nunca lo tienen), la guía `guiaHtml` (`escGuia`, tres pasos con dibujo según `aparato()`).
   ⚠️ `.esc-banner[hidden]{display:none!important}`: sin eso el cartel escondido era un recuadro vacío (en el iPhone y con los avisos prendidos).
+- **🔄 «Hay una versión nueva del panel»** (§4nx, 30/10, EN LA RAMA): una ventana abierta mira `panel-version.json` (a los 20 s, cada 5 min y al volver);
+  si `v` > `PANEL_V` sale `#ver-nueva` con «Recargar» (`verRecargar`: pregunta con un pedido a medio escribir; va a `?nv=` y lo saca al abrir). Nunca
+  recarga sola. ⚠️ **Al publicar pedidos.html, subir `PANEL_V` y `panel-version.json` JUNTOS** (`tests/test_version_nueva.js` §1). `VER_PRUEBA`.
+  Barra de la ventana y ícono nuevos: muestrario esperando la elección del dueño (bitácora §4nx).
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido

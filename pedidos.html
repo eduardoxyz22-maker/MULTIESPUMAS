@@ -2034,6 +2034,23 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .wa-resp-bot{font-size:.82rem;color:#334155;background:#f1f5f9;border-radius:8px;padding:5px 8px;white-space:pre-wrap;overflow-wrap:anywhere}
 .wa-resp-hechas{margin-top:8px;font-size:.8rem;color:#166534;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .wa-resp-hechas .btn{width:auto;min-height:32px}
+/* 🔄 (30/10, §4nx) «Hay una versión nueva del panel»: debajo del encabezado, centrado y a la vista aunque se baje la página. */
+.ver-nueva{position:fixed;z-index:2950;top:calc(var(--hdr-h,0px) + 10px);left:50%;transform:translateX(-50%);width:max-content;max-width:min(560px,calc(100vw - 24px));
+  display:flex;align-items:center;gap:10px;background:#fff;color:var(--text);border:1px solid var(--teal-border);border-radius:16px;padding:9px 9px 9px 14px;
+  box-shadow:0 14px 34px -14px rgba(9,72,68,.55),0 2px 6px rgba(0,60,60,.08);animation:vn-entra .35s var(--ease)}
+.ver-nueva[hidden]{display:none!important}
+.ver-nueva .vn-ic{font-size:1.25rem;flex:none}
+.ver-nueva .vn-tx{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.ver-nueva .vn-tx b{font-size:.92rem;color:#0f3d3a}
+.ver-nueva .vn-tx small{font-size:.76rem;color:var(--muted)}
+.ver-nueva .vn-ok{flex:none;border:0;border-radius:10px;background:var(--teal-mid);color:#fff;font:700 .85rem var(--font-sans);padding:9px 14px;min-height:40px;cursor:pointer}
+.ver-nueva .vn-ok:hover{background:var(--teal-dk)}
+.ver-nueva .vn-x{flex:none;border:0;background:transparent;color:var(--muted);font-size:1rem;width:36px;height:36px;border-radius:10px;cursor:pointer}
+.ver-nueva .vn-x:hover{background:var(--gray-lt);color:var(--text)}
+@media(max-width:520px){.ver-nueva{gap:6px;padding:6px 4px 6px 10px}.ver-nueva .vn-tx small,.ver-nueva .vn-l{display:none}.ver-nueva .vn-ic{font-size:1.05rem}
+  .ver-nueva .vn-tx b{font-size:.86rem;white-space:nowrap}.ver-nueva .vn-ok{padding:8px 12px;min-height:38px}.ver-nueva .vn-x{width:34px;height:34px}}
+@keyframes vn-entra{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){.ver-nueva{animation:none}}
 </style>
 <script>
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
@@ -47379,6 +47396,79 @@ window.addEventListener('beforeunload', function(e){
     if(n){ e.preventDefault(); e.returnValue=''; }
   }catch(err){}
 });
+/* ============================================================================
+   🔄 «HAY UNA VERSIÓN NUEVA DEL PANEL» (30/10, §4nx; dueño: «la app del panel se actualiza sola o que onda?» → «si hazlo»).
+   La página nunca se guarda en el aparato (sw.js va siempre a internet), pero una ventana que quedó ABIERTA sigue con la
+   versión con la que se abrió hasta que alguien aprieta F5. Esto mira cada `VER_CADA_MS` (y al volver a la ventana) el
+   archivo chico `panel-version.json`; si dice una versión más nueva que `PANEL_V`, sale un cartel con «Recargar». Nunca
+   recarga solo: puede haber un pedido a medio escribir.
+   ⚠️ AL PUBLICAR pedidos.html, subir `PANEL_V` y `panel-version.json` JUNTOS (fecha-letra; comparar como texto ordena).
+      `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
+   No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
+   ========================================================================== */
+var PANEL_V='2026-10-30-a';
+var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
+var VER={ nueva:'', ult:0, despues:{}, corre:false };
+/* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
+   apenas abre (los demás `?` de la dirección, como `?tema=`, quedan). */
+(function(){ try{
+  if(/[?&]nv=/.test(location.search)){
+    var q=location.search.replace(/^\?/,'').split('&').filter(function(x){ return x && !/^nv=/.test(x); }).join('&');
+    history.replaceState(null, '', location.pathname+(q?'?'+q:'')+location.hash);
+  }
+}catch(e){} })();
+function verActivo(){
+  if(window.VER_PRUEBA) return true;
+  try{ if(navigator.webdriver) return false; }catch(e){}
+  return location.protocol==='http:' || location.protocol==='https:';
+}
+function verUrl(){ return (window.VER_URL||'panel-version.json')+'?_='+Date.now(); }
+function verMirar(forzar){
+  if(!verActivo() || VER.corre) return Promise.resolve(null);
+  if(document.hidden && !forzar) return Promise.resolve(null);
+  var ahora=Date.now(); if(!forzar && ahora-VER.ult<VER_MIN_MS) return Promise.resolve(null);
+  VER.ult=ahora; VER.corre=true;
+  var ctl=(typeof AbortController==='function')?new AbortController():null, tope=setTimeout(function(){ try{ ctl&&ctl.abort(); }catch(e){} }, 10000);
+  return fetch(verUrl(), { cache:'no-store', credentials:'omit', signal:ctl?ctl.signal:undefined })
+    .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+    .then(function(j){
+      var v=String((j&&j.v)||'');
+      if(/^\d{4}-\d{2}-\d{2}-[a-z]$/.test(v) && v>PANEL_V){ VER.nueva=v; } else VER.nueva='';
+      verPintar(); return VER.nueva||null;
+    })
+    .catch(function(){ return null; })
+    .then(function(x){ clearTimeout(tope); VER.corre=false; return x; });
+}
+function verPintar(){
+  var b=document.getElementById('ver-nueva');
+  var mostrar=!!VER.nueva && !((VER.despues[VER.nueva]||0)>Date.now());
+  if(!mostrar){ if(b) b.hidden=true; return; }
+  if(!b){ b=document.createElement('div'); b.id='ver-nueva'; b.className='ver-nueva no-print'; b.setAttribute('role','status'); document.body.appendChild(b); }
+  b.innerHTML='<span class="vn-ic" aria-hidden="true">🔄</span><span class="vn-tx"><b>Hay una versión nueva<span class="vn-l"> del panel</span></b>'+
+    '<small>Recargá para tenerla. Lo que ya guardaste no se pierde.</small></span>'+
+    '<button type="button" class="vn-ok" onclick="verRecargar()">Recargar</button>'+
+    '<button type="button" class="vn-x" onclick="verDespues()" title="Después (te vuelvo a avisar en media hora)" aria-label="Después">✕</button>';
+  b.hidden=false;
+}
+function verDespues(){ if(VER.nueva) VER.despues[VER.nueva]=Date.now()+VER_DESPUES_MS; verPintar(); }
+function verRecargar(){
+  var b=document.getElementById('f-submit');
+  if(b && b.disabled){ toast('Hay un pedido enviándose: esperá a que termine y después recargá.','err',7000); return false; }
+  var medio=(!EDIT_ID && FORM_NUEVO_BASE && formNuevoHuella()!==FORM_NUEVO_BASE);
+  if(medio && !confirm('Tenés un pedido NUEVO a medio llenar y SIN GUARDAR.\n\nAceptar: recargar igual (se pierde lo escrito).\nCancelar: seguir con el pedido; recargá después de guardarlo.')) return false;
+  if(EDIT_ID && !confirm('Estás corrigiendo un pedido y todavía no lo guardaste.\n\nAceptar: recargar igual (se pierden los cambios sin guardar).\nCancelar: seguir; recargá después de guardar.')) return false;
+  var q=location.search.replace(/^\?/,'').split('&').filter(function(x){ return x && !/^nv=/.test(x); });
+  q.push('nv='+encodeURIComponent(VER.nueva||PANEL_V));
+  location.href=location.pathname+'?'+q.join('&')+location.hash;
+  return true;
+}
+(function(){
+  if(!verActivo()) return;
+  setTimeout(function(){ verMirar(true); }, window.VER_PRUEBA?50:20000);   // no compite con la primera lectura de la planilla
+  setInterval(function(){ verMirar(false); }, VER_CADA_MS);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) verMirar(false); });
+  window.addEventListener('focus', function(){ verMirar(false); });
+})();
 /* ============================================================================
    ✨ LAS NUEVE MEJORAS (§4js, 11/10/2026). El dueño eligió de una lista «P1, P3, M1, M3, C1, C2, A1, A2, A3», vio las muestras
    y dijo *«en todo, la idea está buena, todo está bueno, solo falta pulir el diseño, los colores, animaciones»*.

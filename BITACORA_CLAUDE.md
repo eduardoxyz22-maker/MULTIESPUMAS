@@ -16934,6 +16934,24 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   ⚠️ No se sabe si el Worker devuelve `conclusion` en `refresh_status`: sin él, una corrida fallida se ve como terminada y recarga (como antes).
   CLAUDE.md decía «el botón SOLO recarga la página»: eso es de antes del Worker; corregido.
 
+### §4nx — 🔄 «HAY UNA VERSIÓN NUEVA DEL PANEL» + muestrario de la barra y el ícono de la app (30/10; dueño: *«la app del panel se actualiza sola o que onda?»* → *«si hazlo y dame ideas de diseño no me gusta como se ve mi app y el icono… se ve feooo»*; EN LA RAMA, sin publicar)
+- La app instalada no guarda el panel (sw.js va siempre a internet): al abrirla o con F5 trae lo último. Lo que se quedaba atrás era una ventana que
+  quedó ABIERTA. Ahora `verMirar` pide `panel-version.json?_=<ms>` (`cache:'no-store'`) a los 20 s de abrir, cada 5 min con la ventana a la vista y
+  al volver a ella (como mucho 1/min); si `v` > `PANEL_V` sale `#ver-nueva` (fijo, debajo del encabezado con `--hdr-h`). «Recargar» (`verRecargar`)
+  no recarga con un pedido enviándose, pregunta con un pedido nuevo a medio llenar (`formNuevoHuella`) o una corrección abierta (`EDIT_ID`), y va a
+  `?nv=<v>` (que GitHub no conteste la copia vieja); al abrir se saca `nv` de la dirección y queda `?tema=`. «✕» = media hora. Nunca recarga sola.
+  ⚠️ **Al publicar pedidos.html, subir `PANEL_V` y `panel-version.json` juntos** (`test_version_nueva` §1 los compara). Olvidarlo = no avisa (no rompe).
+  No usa la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y cambiarían solos.
+  En Playwright y desde file:// no mira nada salvo `VER_PRUEBA` (+ `VER_URL`). `tests/test_version_nueva.js` (27).
+- 🎨 Muestrario para elegir (https://claude.ai/artifact/QLuPSjYzox1yNXcMH5ds2U, capturas del panel sin datos de clientes): **barra** A = del color
+  del encabezado (`<meta name="theme-color">` que el script del tema cambia; nombre «MultiEspumas · Pedidos») o B = sin barra (Window Controls
+  Overlay: `display_override`, `app-region: drag` en el encabezado, lo de la derecha corrido con `env(titlebar-area-*)`; hay que revisar que ninguna
+  ventana a pantalla completa deje su ✕ debajo de los botones de Windows; recomendada). **Ícono**: 1 Bloki, 2 las hojas de la marca sobre azul marino
+  (recomendado), 3 la M con las franjas del camión, 4 el camión. **Atajos** de clic derecho (`shortcuts` del manifest) sí/no. Hoy la barra es
+  `theme_color` #00A09A fijo y Chrome escribe «Panel MultiEspumas - Pedidos — MultiEspumas» (antepone el `name` del manifest al `<title>`).
+  No se pudo leer la documentación de Chrome desde la sesión (developer.chrome.com bloqueado): si la overlay arranca prendida o con la flechita, verlo
+  en la compu del dueño. Cambiar ícono o nombre hace que Chrome pregunte una vez por compu.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
