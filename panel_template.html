@@ -5241,10 +5241,28 @@ function Panel() {
             return;
           }
           setRefreshMsg("Datos listos · publicando…");
-          setTimeout(() => {
-            setRefreshMsg("Recargando…");
-            setTimeout(() => location.reload(), 1500);
-          }, 40000);
+          // (30/10, §4oa) Antes: 40 s fijos y recargar. Si Pages publica con «GitHub Actions» (propuesta 90) se suma otro paso
+          // y recargaba con los datos viejos. Ahora mira la página publicada hasta que trae otra hora de «updated» (la de
+          // generar.py); tope 5 min, y si no se puede mirar (sin internet, archivo local) recarga igual al tope.
+          const t1 = Date.now();
+          const mirar = async () => {
+            let nueva = false;
+            try {
+              const r = await fetch(location.pathname + "?_=" + Date.now(), {
+                cache: "no-store"
+              });
+              const m = (await r.text()).match(/"updated":\s*"([^"]+)"/);
+              nueva = !!(m && m[1] !== D.updated);
+            } catch (e) {}
+            if (nueva || Date.now() - t1 > 300000) {
+              setRefreshMsg("Recargando…");
+              setTimeout(() => location.reload(), 1500);
+              return;
+            }
+            setRefreshMsg("Datos listos · publicando… " + reloj(Date.now() - t1));
+            setTimeout(mirar, 10000);
+          };
+          setTimeout(mirar, 15000);
           return;
         }
         const va = Date.now() - t0;

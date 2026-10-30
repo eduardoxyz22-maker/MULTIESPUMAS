@@ -21,16 +21,17 @@ function esJs(attrs) {
   return !t || /^(text|application)\/(java|ecma)script$/i.test(t);
 }
 function cuantos(html) {
-  const n = { script: 0, style: 0 }; let m; RE.lastIndex = 0;
-  while ((m = RE.exec(html))) if (m[1]) n[m[1].toLowerCase()]++;
+  const n = { script: 0, style: 0 }, re = new RegExp(RE.source, RE.flags); let m;
+  while ((m = re.exec(html))) if (m[1]) n[m[1].toLowerCase()]++;
   return n;
 }
 
 async function achicar(html, esb) {
   const partes = [], info = { js: 0, css: 0, js0: 0, js1: 0, css0: 0, css1: 0 };
-  let ult = 0, m; RE.lastIndex = 0;
-  while ((m = RE.exec(html))) {
-    partes.push(html.slice(ult, m.index)); ult = RE.lastIndex;
+  const re = new RegExp(RE.source, RE.flags);   // una por llamada: con la global, dos llamadas a la vez se pisaban el lastIndex
+  let ult = 0, m;
+  while ((m = re.exec(html))) {
+    partes.push(html.slice(ult, m.index)); ult = re.lastIndex;
     if (!m[1]) { partes.push(m[0]); continue; }             // los comentarios del HTML quedan: son pocos y no vale el riesgo
     const tag = m[1].toLowerCase(), attrs = m[2], cuerpo = m[3];
     if (tag === 'script' && esJs(attrs) && cuerpo.trim()) {
@@ -38,6 +39,7 @@ async function achicar(html, esb) {
       const code = r.code.replace(/\n$/, '');
       if (/<\/script/i.test(code)) throw new Error('el JavaScript achicado tiene «</script»');
       if (/<!--/.test(code) && !/<!--/.test(cuerpo)) throw new Error('el JavaScript achicado tiene «<!--» y el original no');
+      if (/(^|[\n\r\u2028\u2029])[ \t]*-->/.test(code)) throw new Error('el JavaScript achicado tiene «-->» al principio de una línea');   // comentario de HTML adentro del JS (esbuild no lo produce: por las dudas)
       try { new vm.Script(code, { filename: 'script-' + (info.js + 1) }); } catch (e) { throw new Error('el bloque ' + (info.js + 1) + ' achicado no compila: ' + e.message); }
       info.js++; info.js0 += cuerpo.length; info.js1 += code.length;
       partes.push('<script' + attrs + '>' + code + '</script>');
