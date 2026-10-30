@@ -276,6 +276,13 @@ const gem = (Srv, p) => (typeof Srv.ctx.entregaAConfirmar_ === 'function') ? Srv
     cupo: document.getElementById('cupo-form').textContent }));
   chk('⚠️ 2b. tildada: la fecha se llama «Volver a llamar el…» y queda vacía, el turno no se pide, y el cartel de cupos dice que no ocupa cupo',
       f.lb === 'Volver a llamar el…' && f.fecha === '' && !f.turnoVis && f.info && /no ocupa cupo/.test(f.cupo), f);
+  f = await V.evaluate(() => {   // el camión «tuyo» de la columna izquierda (pantalla ancha): `.fx-izq .fx-camion{display:block!important}` le ganaba
+    var c = document.getElementById('fx-izq-cam'), puesto = false;
+    if (!c) { var w = document.createElement('div'); w.className = 'fx-izq'; c = document.createElement('div'); c.id = 'fx-izq-cam'; c.className = 'fx-camion';
+      w.appendChild(c); document.getElementById('view-form').appendChild(w); puesto = true; }
+    var d = getComputedStyle(c).display; if (puesto) c.parentNode.remove(); return d;
+  });
+  chk('2b2. tildada, el camión de la columna izquierda tampoco se ve (no hay camión para un día que no existe)', f === 'none', f);
   await guardar(V);
   f = await V.evaluate(() => ({ t: _toast(), n: STATE.filter(function (p) { return p.cliente === 'CLIENTE AVISA FORM'; }).length }));
   chk('2c. sin el día de volver a llamar no guarda («Poné el día en que vas a volver a llamar al cliente»)', /volver a llamar/.test(f.t) && f.n === 0, f);
