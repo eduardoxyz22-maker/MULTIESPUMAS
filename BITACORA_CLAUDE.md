@@ -17009,6 +17009,43 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   `format-patch` de `7e99132` sobre `818db82`; en la copia de `main`: ipad_franja 23, sin_barra 37, version_nueva 27, escritorio 62.
   `main` = `ccba5ca`, Pages OK 12:31. Falta que el dueño lo vea en su iPad (Recargar; si sigue, cerrar la app del todo y abrirla).
 
+### §4oa — ⚡ VELOCIDAD: COPIA DEL APARATO CON TOPE, LECTURA SIN CAMBIOS LIVIANA, LISTAS DE A PARTES Y PUBLICAR ACHICADO (30/10; dueño: *«Ya quedó bien en el iPad ahora que otras mejoras visuales y estéticas y perfomance usamos»* → propuestas 84-90 en https://claude.ai/artifact/C64qefVT1q8s3f7g5z2or3 → *«ok todo. dame el js para revisar con api»*; EN LA RAMA, en revisión de otra IA; NO publicado)
+- Medido con la planilla real del 30/10 (1.649 filas; compu normal / compu 4× más lenta): Contabilidad 602 ms / 2,7 s → 295 ms / 1,15 s;
+  Mis pedidos 241 / 1.076 → 173 / 639 ms; la lectura de cada minuto sin cambios en Nuevo pedido 126 / 553 → 46 / 212 ms; la copia del aparato
+  1.330.627 → 804.266 letras. ⚠️ Contabilidad mejoró ~2,3 veces, no las 4 que estimé (lo que queda es `renderContaMetrics`, `cxTopPintar`,
+  `acomodarFichas` y acomodar la pantalla). Y en el informe dije que había 4 campos de contraseña, 6 de búsqueda y 1 de correo sin estilo:
+  solo `#admin-pass` lo estaba.
+- **84** `mirrorRecortar` (45 días por `ts` o `fecha`, lo que viene, lo sin fecha, lo sin entregar de 180 días, lo que tiene saldo) y `lsPoner`
+  (sin lugar, primero se va la copia: `setPending`, borrar pendiente, pases, cierre pendiente). **85** `_igual` (delta vacío, con copia, el
+  reloj no va para atrás): sin cambios no reescribe la copia, no recalcula los números de las pestañas (<55 s) y no repinta Nuevo pedido, Mis
+  pedidos ni Contabilidad (5 min, cambio de día). **86/87** `trozosHtml`/`trozosMas`/`trozosMirar` (primer trozo 50 en la tabla y 30 en
+  tarjetas, de a 100 al acercarse al final o con «Ver más»; en Playwright todo de una salvo `TROZOS_PRUEBA`). **88** `#admin-pass` con estilo.
+  **89** `.sem[hidden]` y «A mañana» en un renglón. **90** `herramientas/achicar_panel.js` (esbuild SOLO `minifyWhitespace`; si algo falla, el
+  original) + `.github/workflows/publicar-pages.yml` (publica solo con Pages en «GitHub Actions»; con la rama no hace nada): 4,28 → 2,90 MB,
+  comprimido 1,34 → 0,84 MB. ⚠️ esbuild cambia `PANEL_V='…'` por `PANEL_V="…"`.
+- **Revisión de otra IA** (dueño la pasó en dos tandas, `REVISION_VELOCIDAD_84-89.md` y `REVISION_VELOCIDAD_2.md` en la rama): **H1** al repintar,
+  la lista volvía al primer trozo y la página saltaba → `TROZOS_N` (se vacía al cambiar de pestaña). **H2** «sin cambios» comparaba con la
+  lectura anterior, no con lo dibujado → `STATE_GEN` (sube en cada `saveMirror()` sin `{igual}`) y `AUTO_PINTADO_GEN`. Antes de mandarlo
+  encontré uno más: con «Ingresado» escondida, el renglón de «Ver más» (una celda) se escondía con ella → `tr.trz>td{display:table-cell!important}`.
+  La segunda tanda (H3-H5, N1-N9, D1-D12) se verifica con tres agentes.
+- Pruebas: `test_velocidad_4oa` (30), `test_achicar` (25, necesita `ESBUILD_PATH`; sin esbuild se salta y lo dice).
+
+### §4ob — 🌙 EL FONDO DE LA NOCHE (30/10; dueño: *«creo que podemos usar fondo halloweenesco.... se ve muy " blanco el panel»*, *«armame la muestra visual primero»*, *«no me hagas algo que no se integre con lo de arriba»*, *«y con la temática de noviembre cómo se vería?»* → muestra https://claude.ai/artifact/KzsHQFYnP48MP9bLT1aqEg → *«LA B»*; PUBLICADO 30/10 ~17:33 de Bolivia, `05d1cc1`, SOLO octubre)
+- Capa fija detrás de todo (`body::before`, z −1, `pointer-events:none`, sin animación; el `body` transparente): debajo del encabezado la MISMA
+  franja de colores (90deg, oscuro a la izquierda, naranja a la derecha), más oscura, que baja a la noche (565 px). Halloween: murciélagos,
+  calabacitas, estrellitas y una telaraña abajo a la izquierda. Pestañas de la compu (≥701) de noche: `rgba(…,.5)`, borde naranja, dibujo
+  naranja; la elegida sigue con su color. El pie en letra clara (lo ÚNICO directo sobre el fondo, medido en Nuevo pedido, Mis pedidos,
+  Contabilidad, Administración y ATC). Stock y Pedido a producción tienen su fondo: no cambian. Celular: casi no se nota.
+- **Noviembre (Todos Santos) armado en la rama y NO publicado**: violeta, fucsia y naranja, cempasúchil, pétalos, velitas, guirnalda abajo,
+  pestañas con borde dorado. El dueño dijo «la B» sin decir de noviembre: se le preguntó. Para publicarlo: volver a poner el bloque
+  `html.tema-todos-santos` (está en la rama, commit `6724124`) y la entrada de noviembre en `test_fondo_noche`.
+- Las pruebas que miraban la regla vieja: `test_sin_barra` §5c (una capa sin clics no es una ventana) y `test_mejoras_5_7_9` §4nk (mide sin
+  tema del mes y la noche aparte; la pestaña que se acaba de dejar está a mitad de su transición: se mide con `transition:none`).
+  `tests/test_fondo_noche.js` (31 con noviembre; 17 publicado, solo octubre).
+- **Publicación**: la batería entera se cortó en 246 de ~300 por un reinicio del contenedor (hasta ahí solo `test_asistente_ak`, la de siempre
+  con la máquina cargada). En la copia de `main`: fondo_noche 17, halloween 22, temas 92, ipad_franja 23, sin_barra 37, 5_7_9 57, navidad 21,
+  version_nueva 27, arriba_4iw 24. `PANEL_V` = `panel-version.json` = 2026-10-30-c.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.

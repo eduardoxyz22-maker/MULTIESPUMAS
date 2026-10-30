@@ -1149,6 +1149,16 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   la cuenta). Con franja, `wcoMedir` pone `html.sa-top` y cada ventana a pantalla completa lleva la franja del tema: la MISMA lista de `html.wco`
   menos `#pap-overlay` (su `.pap-cab` ya la suma). ⚠️ Una ventana NUEVA a pantalla completa va en las DOS listas. Toast, Deshacer y Bloki suben
   `env(safe-area-inset-bottom)`. `tests/test_ipad_franja.js` (simula la franja con `--sa-t`).
+- **🌙 El fondo de la noche** (§4ob, 30/10; dueño: *«se ve muy blanco el panel»* y *«que se integre con lo de arriba»* → eligió la «B»; PUBLICADO
+  `05d1cc1`, SOLO octubre): `body::before` fijo detrás de todo (z −1, sin clics, sin animación; el `body` transparente) con la franja de colores del
+  encabezado que baja a la noche + murciélagos/calabacitas/telaraña; pestañas de la compu oscuras con borde del mes; pie en letra clara (lo único
+  directo sobre el fondo). ⚠️ Un elemento NUEVO directo sobre el fondo de la página necesita su color claro con este tema. **Noviembre (Todos Santos:
+  cempasúchil, velitas, borde dorado) está en la rama (`6724124`) y espera el sí del dueño.** `tests/test_fondo_noche.js`.
+- **⚡ Velocidad 84-90** (§4oa, 30/10; EN LA RAMA, en revisión de otra IA, NO publicado): copia del aparato con tope (`mirrorRecortar`, `lsPoner`:
+  sin lugar, primero se va la copia, nunca la cola), lectura sin cambios liviana (`_igual`, `STATE_GEN`/`AUTO_PINTADO_GEN`), Contabilidad y Mis
+  pedidos de a partes (`trozosHtml`, `TROZOS_N`; en Playwright todo de una salvo `TROZOS_PRUEBA`) y publicar `pedidos.html` achicado
+  (`herramientas/achicar_panel.js` + `publicar-pages.yml`: solo con Pages en «GitHub Actions»; esbuild pasa `PANEL_V='…'` a `"…"`).
+  ⚠️ Todo camino que cambie `STATE` termina en `saveMirror()` sin argumento (si no, «sin cambios» puede no repintar). `test_velocidad_4oa`, `test_achicar`.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
