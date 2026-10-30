@@ -1135,10 +1135,10 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
 - **§4nt (30/10, captura del dueño desde el iPhone; PUBLICADO `d874624`)**: «📲 Instalar» SIEMPRE mientras no esté instalado (`yaInstalado`, `me_esc_inst`): con
   `beforeinstallprompt`, un clic; sin él (iPhone/iPad nunca lo tienen), la guía `guiaHtml` (`escGuia`, tres pasos con dibujo según `aparato()`).
   ⚠️ `.esc-banner[hidden]{display:none!important}`: sin eso el cartel escondido era un recuadro vacío (en el iPhone y con los avisos prendidos).
-- **🔄 «Hay una versión nueva del panel»** (§4nx, 30/10, EN LA RAMA): una ventana abierta mira `panel-version.json` (a los 20 s, cada 5 min y al volver);
+- **🔄 «Hay una versión nueva del panel»** (§4nx, 30/10, PUBLICADO `f62e8d7`): una ventana abierta mira `panel-version.json` (a los 20 s, cada 5 min y al volver);
   si `v` > `PANEL_V` sale `#ver-nueva` con «Recargar» (`verRecargar`: pregunta con un pedido a medio escribir; va a `?nv=` y lo saca al abrir). Nunca
   recarga sola. ⚠️ **Al publicar pedidos.html, subir `PANEL_V` y `panel-version.json` JUNTOS** (`tests/test_version_nueva.js` §1). `VER_PRUEBA`.
-- **🪟🍃🖱️ Sin barra, el ícono de las hojas y los atajos** (§4ny, 30/10, dueño: «B, 2 y atajos sí»; EN LA RAMA): manifest con `display_override`
+- **🪟🍃🖱️ Sin barra, el ícono de las hojas y los atajos** (§4ny, 30/10, dueño: «B, 2 y atajos sí»; PUBLICADO 30/10 ~11:44 de Bolivia, `818db82`): manifest con `display_override`
   window-controls-overlay, nombre «MultiEspumas», íconos `iconos/hojas-*`, `shortcuts` (`#ir=form|mis|conta|admin`) y `focus-existing`; el color
   de la barra sale del tema (`BARRA` en el script del `<head>` → `meta theme-color`). Sin barra, `wcoMedir` pone `html.wco` + `--wco-h/l/r/bg`:
   el encabezado se arrastra y se corre (≥1100 px) o baja (más angosto), y **cada ventana a pantalla completa lleva la franja de arriba**.

@@ -16934,7 +16934,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   ⚠️ No se sabe si el Worker devuelve `conclusion` en `refresh_status`: sin él, una corrida fallida se ve como terminada y recarga (como antes).
   CLAUDE.md decía «el botón SOLO recarga la página»: eso es de antes del Worker; corregido.
 
-### §4nx — 🔄 «HAY UNA VERSIÓN NUEVA DEL PANEL» + muestrario de la barra y el ícono de la app (30/10; dueño: *«la app del panel se actualiza sola o que onda?»* → *«si hazlo y dame ideas de diseño no me gusta como se ve mi app y el icono… se ve feooo»*; EN LA RAMA, sin publicar)
+### §4nx — 🔄 «HAY UNA VERSIÓN NUEVA DEL PANEL» + muestrario de la barra y el ícono de la app (30/10; dueño: *«la app del panel se actualiza sola o que onda?»* → *«si hazlo y dame ideas de diseño no me gusta como se ve mi app y el icono… se ve feooo»*; PUBLICADO 30/10 con §4ny, `f62e8d7`)
 - La app instalada no guarda el panel (sw.js va siempre a internet): al abrirla o con F5 trae lo último. Lo que se quedaba atrás era una ventana que
   quedó ABIERTA. Ahora `verMirar` pide `panel-version.json?_=<ms>` (`cache:'no-store'`) a los 20 s de abrir, cada 5 min con la ventana a la vista y
   al volver a ella (como mucho 1/min); si `v` > `PANEL_V` sale `#ver-nueva` (fijo, debajo del encabezado con `--hdr-h`). «Recargar» (`verRecargar`)
@@ -16952,7 +16952,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   No se pudo leer la documentación de Chrome desde la sesión (developer.chrome.com bloqueado): si la overlay arranca prendida o con la flechita, verlo
   en la compu del dueño. Cambiar ícono o nombre hace que Chrome pregunte una vez por compu.
 
-### §4ny — 🪟 SIN BARRA, 🍃 EL ÍCONO DE LAS HOJAS Y 🖱️ LOS ATAJOS (30/10; dueño: *«B, 2 y atajos sí»*; EN LA RAMA, espera «publica»)
+### §4ny — 🪟 SIN BARRA, 🍃 EL ÍCONO DE LAS HOJAS Y 🖱️ LOS ATAJOS (30/10; dueño: *«B, 2 y atajos sí»* y *«Publicas cuando esté»*; PUBLICADO 30/10 ~11:44 de Bolivia, `818db82`)
 - **Manifest**: `name`/`short_name` «MultiEspumas» (la barra de tareas dice «MultiEspumas - Pedidos»: Chrome antepone el nombre al título, y
   `escritorio.js` pone `document.title='Pedidos'` cuando está instalado), `display_override:["window-controls-overlay"]` con `standalone` de
   reserva, `theme_color` #0f4c5c, íconos `iconos/hojas-*.png` (192, 512, 512 maskable; 180 para el iPhone; 32 + `hojas.svg` para la pestaña; 96
@@ -16977,6 +16977,11 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   atajos (Chrome trae su propio `launchQueue`: la prueba lo pisa con `defineProperty`) y el título. ⚠️ No se pudo leer la documentación de Chrome
   desde la sesión: si la ventana arranca sin barra o hay que tocar la flechita ︿ una vez, y de qué color pinta Chrome la caja de los botones, se
   ve en la compu del dueño. Al cambiar ícono y nombre Chrome pregunta una vez por compu; en el iPhone, el ícono nuevo al volver a agregarlo.
+- **Publicación (30/10)**: batería entera 296 suites · 9.520 bien · 2 mal (`test_actualizar_espera`, del dashboard: con la máquina cargada se
+  atrasa; sola 11/11 dos veces). `format-patch` de `b40b1cf` + `3fcb3cb` sobre `7a0f32f`; las notas (bitácora y CLAUDE.md) quedaron como las tiene
+  `main` (no se publican desde el 20/10). En la copia de `main`: sin_barra 37, version_nueva 27, escritorio 62, temas 92, halloween 22, arriba 24,
+  estética 35, avisa_cuando 52, cierre_comercial 52. `main` = `818db82` (`f62e8d7` el aviso). `PANEL_V` = `panel-version.json` = 2026-10-30-a.
+  ⚠️ La próxima vez que se publique pedidos.html, subir los DOS (si no, las ventanas abiertas no se enteran).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
