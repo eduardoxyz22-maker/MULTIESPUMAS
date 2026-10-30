@@ -1,0 +1,81 @@
+# ⚡ (30/10, §4oa, propuesta 90; dueño: «ok todo») Publica GitHub Pages con pedidos.html ACHICADO: sin comentarios ni espacios de más en
+# su JavaScript y su CSS (4,2 MB → 2,8 MB; comprimido 1,34 → 0,84 MB). El repo sigue con el original. Todo lo demás se publica igual
+# que hasta hoy (la rama main entera). El script es herramientas/achicar_panel.js: si algo le sale mal, publica el original tal cual.
+#
+# ⚠️ SOLO PUBLICA si en Settings → Pages → «Build and deployment» → Source dice «GitHub Actions». Con «Deploy from a branch» (como hasta
+#    hoy) este workflow mira, ve que no le toca y no hace nada: Pages sigue publicando la rama como siempre.
+#    Volver atrás = Source → «Deploy from a branch» → main / (root) → Save. Nada más.
+# ⚠️ Lo que los workflows del repo suben a main (el bot del dashboard, el reporte de ATC…) NO dispara un `push` (GitHub no encadena
+#    los push hechos con su propio token): por eso este escucha a esos workflows cuando terminan. Un workflow NUEVO que suba algo a
+#    main va en la lista de `workflow_run`, o lo que suba no se publica hasta el próximo push.
+name: Publicar el panel (GitHub Pages, achicado)
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows:
+      - 'Generar Panel Heaven (Kommo → GitHub Pages)'
+      - 'Reporte Semanal ATC'
+      - 'Traer imágenes del asistente'
+      - 'Leer adjuntos de Trello (ATC)'
+      - 'Historial de las tarjetas de Trello (ATC)'
+      - 'Regenerar Panel Mayo 2026 (Kommo)'
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:          # a mano: Actions → «Publicar el panel (GitHub Pages, achicado)» → Run workflow
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false   # una publicación en curso no se corta: la siguiente espera
+
+jobs:
+  ver:
+    runs-on: ubuntu-latest
+    outputs:
+      modo: ${{ steps.p.outputs.modo }}
+    steps:
+      - id: p
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          m=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type 2>/dev/null || echo desconocido)
+          echo "Pages publica desde: $m («workflow» = este workflow; «legacy» = la rama, como siempre)"
+          echo "modo=$m" >> "$GITHUB_OUTPUT"
+
+  publicar:
+    needs: ver
+    if: needs.ver.outputs.modo == 'workflow'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main           # siempre lo último de main (un workflow_run o un push viejo no publica una versión atrasada)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Armar el sitio con pedidos.html achicado
+        run: |
+          set -e
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/esb" esbuild@0.23.1 >/dev/null 2>&1 \
+            || echo "::warning::No se pudo instalar esbuild: se publica pedidos.html sin achicar"
+          SITIO="$RUNNER_TEMP/sitio"
+          mkdir -p "$SITIO"
+          rsync -a --exclude .git --exclude .github ./ "$SITIO/"
+          ESBUILD_PATH="$RUNNER_TEMP/esb/node_modules/esbuild" node herramientas/achicar_panel.js pedidos.html "$SITIO/pedidos.html"
+          grep -qE "PANEL_V=['\"]" "$SITIO/pedidos.html" || { echo "::error::al pedidos.html publicado le falta PANEL_V"; exit 1; }   # achicado lleva comillas dobles
+          du -sh "$SITIO"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/sitio
+      - id: deploy
+        uses: actions/deploy-pages@v4
