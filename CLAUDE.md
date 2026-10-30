@@ -2371,6 +2371,33 @@ correo + el mensaje de **WhatsApp**.
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
 
+## 🏁🏭📦🤖🔢🏪 Las 7 elegidas de octubre: 74, 75, 76, 78, 81, 82, 83 (§4nv, 30/10; PUBLICADO `7a0f32f`; dueño: *«la escala está bien, publica todo»*; servidor `2026-10-30-a` lo implementa el dueño: enlace fijo `89ca847…`, 5.133 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 29-b de `38864f6…`, 5.085 líneas)
+Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 por usar agosto-septiembre). Página para el dueño: https://claude.ai/artifact/J4sAph88pxQH61tnBnwSxE.
+- **74 🏁 Cierre comercial** (Proyección → `#pry-cierre-btn`, `#ccm-ov`, solo con la contraseña): por vendedora y marca lo vendido (= `pryVentas`, que ahora
+  devuelve `id`), mínima, presupuesto, comisión, Titanio, bono y total a pagar. Metas por vendedor y escala en `__metas__` (`m[ym].vd`, `m[ym].esc`;
+  `metasGuardar` los conserva). La escala sale de lo pagado en septiembre (`CCM_ESCALA_SEP`, 8 casos exactos; el dueño: «la escala está bien») y
+  queda confirmada al guardarla en el editor. «🔒 Cerrar» relee y escribe **`__cierre_comercial__`** (en `esFilaSistema`): una venta ya pagada no vuelve
+  a contar en otro mes; lo cambiado después es un ajuste del mes siguiente. Reabrir: contraseña y solo el último. Excel `{v,t:'n',s:2}`. `test_cierre_comercial` (52).
+- **75 🏭 Lo que nos debe la fábrica** (`fd*`, arriba del Plan y en «Pedido a producción»): lo pedido se cierra con la entrada NETA del lote de Excel de
+  los tres almacenes (`fdLoteCerrar`, no `stockAutoAnotar`: el automático sigue apagado); lo que no llega no se poda a los 7 días (60 días, 40 a la vez);
+  **`STOCK.fd`** (lo del Excel para un 🏭 de cliente) va en `leerStock`/`stockFusionar`/`filaStock`/`stockPodar`. Apagar un 🏭 de otro día guarda la llegada
+  (`prodR`/`prodRt`). «Reclamá antes de pedir más» al lado de «Ya pedí». `test_fabrica_debe` (46).
+- **76 📦 El cliente avisa cuándo** (casilla en un 📄 OC): la venta queda SIN fecha y con `avisa:'AAAA-MM-DD'` (día de volver a llamar) en los productos;
+  **`entregaAConfirmar(p)`** (página) = **`entregaAConfirmar_`** (`.gs`). Con fecha, la fecha manda. Fuera de cupos, carga, mapa, bot, «no hay» y el control
+  del Excel; el stock la aparta al final (`AVISA_STOCK_F='9999-12-31'`). «📞 Llamá a N clientes» en «Para hacer». Cada guardado lleva `av:1` y el `.gs` 30-a
+  contesta `actualizar` a una página sin `av` que le pone un día. ⚠️ Lo que va por día ya la deja afuera (fecha vacía); un camino NUEVO que no mire la
+  fecha tiene que preguntar `entregaAConfirmar`. `test_avisa_cuando` (52).
+- **78 🤖 El comprobante se lee al subirlo** (`ias*`, formulario y «Registrar pago»): la misma lectura y comparación de «Revisar las fotos con IA»
+  (`iacComparar`, `compsPagosDe`), aviso con arreglo de un toque, nunca frena; nada con servidor < 26-a, sin crédito o con la IA pausada. Los avisos de
+  Contabilidad que son SOLO de fecha van en ámbar (`ctaAvSoloFecha`, `ks`). `IAC_SUBIR_PRUEBA`. `test_comprobante_al_subir` (26).
+- **81 📥 Kommo ya cargadas**: mismo lead, o mismo celular y vendedora con una venta viva (45 días) → no cuentan como pendientes («ya está cargada como
+  10-294»); mismo monto ±1 = «parece». «🔗 Unir las N». `test_kommo_ya_cargadas` (21).
+- **82 🔢 Talonario sin ruido** (`talAbrir`): los recibos de pagos del mes tapan su número; «Anulado / ya lo vi» en la fila **`__talonario__`** (por
+  `REESCRITAS` con sello y `juntar`; en `SISTEMA_JUNTA_OPCIONAL` del `.gs` 30-a). Tiendas que se cargan al sistema en otro lado (con contraseña, lista vacía;
+  **pregunta abierta al dueño: Buenos Aires, Mutualista y Charcas**, 166 ventas). `porCargarSistema` = UNA cuenta. `test_talonario_sin_ruido` (22).
+- **83 🏪 La reposición que no fue entera**: al poner ✅ pregunta (✗ entero menos lo llegado; 🏭 solo si no pudo llegar a tiempo); «Sí» arma la RPT con lo
+  que faltó (`persistPedido`) y la original queda con `rpf` (`heredarMarcas`). Chip y aviso en Administración. `RPT_FALTA_PRUEBA`. `test_rpt_faltante` (20).
+
 ## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; PUBLICADO `4c7af2b`; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
 Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades
 y Bs, el mes de comparación entero y la línea de unidades. `pryMomDe` → `tres:{act,ant,ent}` con `{n,u,bs}` + `curU/prevU`; `pryMomTocar`

@@ -16908,6 +16908,12 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   cambiaba a Carola/Juan Pablo/Fernando y dejaba dos nombres reales en `garantia`). Página: https://claude.ai/artifact/J4sAph88pxQH61tnBnwSxE.
   Esperan al dueño: la escala de comisiones (74, deducida de los 8 casos de septiembre), si Buenos Aires/Mutualista/Charcas se cargan al sistema
   en otro lado (82), y el «publica» (primero él implementa el `.gs` 30-a, después la página).
+- **PUBLICADO 30/10 ~09:55 de Bolivia, `main` = `7a0f32f`** (dueño: *«la escala está bien, publica todooooo»*): los 8 commits de código por
+  `format-patch` sobre `bb186b7` (el diff de `pedidos.html` es el mismo que el de la rama; §4lt-d y «Guardar pide el saldo» siguen sin publicar). Sobre esa
+  versión exacta: cierre_comercial 52, comprobante_al_subir 26, kommo_ya_cargadas 21, avisa_cuando 52, talonario 22, rpt_faltante 20, fabrica_debe 46,
+  servidor 414, metas 24, proyeccion 129, ia_comprobantes 47, cierre_control 7, todo bien. La página anda con el servidor 29-b y con el 30-a (sin el
+  30-a, el talonario se guarda sin comparar el sello y una página sin F5 puede ponerle día a una «avisa cuándo»). Enlace del `.gs` 30-a para el dueño:
+  `89ca847…` (5.133 líneas). Falta: que lo implemente, que guarde la escala en el editor y la respuesta de las tiendas (82).
 
 ### §4nw — 🔄 «ACTUALIZAR» DEL DASHBOARD ESPERA LO QUE TARDA GITHUB (30/10; dueño: *«le di actualizar… no se modificó la hora… el botón no dio error ni nada»*; PUBLICADO con su «ok»: Heaven `fafafdb`, Sueña `5b510f6`)
 - No era el token: Sueña corrió 09:10-09:16 (3.741 leads, antes 3.680) y Heaven 09:17-09:22 («updated» 30/10 09:17), las dos en verde. El dueño miró a
