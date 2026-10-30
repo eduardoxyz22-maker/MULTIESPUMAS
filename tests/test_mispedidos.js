@@ -106,7 +106,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ cuando llega, ve SUS pedidos sin tocar Actualizar', r.visible && /ERWIN MARCELO/.test(r.txt), r.txt.slice(0,110));
   chk('…y no los de otra vendedora', !/OTRA CLIENTA/.test(r.txt), r.txt.slice(0,110));
   chk('el cartel de «buscando» se va', r.estado==='', r.estado);
-  chk('⚠️ y el borrador de Kommo aparece sin volver a escribir el nombre', /vino de Kommo/.test(r.borr), r.borr.slice(0,120));
+  /* (30/10, §81, a conciencia) el borrador del fixture tiene el mismo celular, vendedora y nombre que v1: ahora la bandeja lo muestra
+     como «ya está cargada» (no cuenta como pendiente). Lo que se cuida acá sigue igual: la bandeja aparece sin volver a escribir el nombre. */
+  chk('⚠️ y el borrador de Kommo aparece sin volver a escribir el nombre', /vino de Kommo|ya está cargada/.test(r.borr), r.borr.slice(0,120));
 
   // ══ 3. El sello del pie dice la verdad ═════════════════════════════════════
   console.log('\n── 3. El sello del pie ──');
