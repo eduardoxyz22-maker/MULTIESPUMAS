@@ -77,7 +77,18 @@ function PREPARAR(){
   r = await page.evaluate(() => { var bs=document.querySelectorAll('#adm-fichas .af-f[data-pid="p1"] .af-tb button');
     var cs=function(b){ var ic=b.querySelector('.ico-b'), g=getComputedStyle(ic); return { bg:g.backgroundImage, sombra:g.boxShadow, trazo:getComputedStyle(ic.querySelector('svg')).stroke, letra:getComputedStyle(b.querySelector('small')).color }; };
     var fi=document.querySelector('#tab-form .ico-b');
-    return { ent:cs(bs[0]), borrar:cs(bs[5]), tab:getComputedStyle(document.getElementById('tab-admin')).backgroundImage, otra:getComputedStyle(fi).backgroundImage, otraTrazo:getComputedStyle(fi.querySelector('svg')).stroke }; });
+    /* (30/10, §4ob) Con el reloj de octubre le toca Halloween, y en octubre y noviembre las otras pestañas van de noche (oscuras, dibujo
+       naranja/dorado). La regla de §4nk es la de los demás meses: se mide sin tema del mes, y la de la noche aparte. */
+    var H=document.documentElement, temas=[].filter.call(H.classList, function(c){ return /^tema-/.test(c); });
+    var tf=document.getElementById('tab-form'); tf.style.transition='none';   // recién se cambió de pestaña: su color todavía viene de turquesa a oscuro (transición de .15 s)
+    var noche={ tab:getComputedStyle(document.getElementById('tab-admin')).backgroundImage, otraFondo:getComputedStyle(document.getElementById('tab-form')).backgroundColor, otraTrazo:getComputedStyle(fi.querySelector('svg')).stroke, temas:temas.join(' ') };
+    temas.forEach(function(c){ H.classList.remove(c); });
+    var o={ ent:cs(bs[0]), borrar:cs(bs[5]), tab:getComputedStyle(document.getElementById('tab-admin')).backgroundImage, otra:getComputedStyle(fi).backgroundImage, otraTrazo:getComputedStyle(fi.querySelector('svg')).stroke, noche:noche };
+    temas.forEach(function(c){ H.classList.add(c); }); tf.style.transition='';
+    return o; });
+  if (/tema-halloween|tema-todos-santos/.test(r.noche.temas))
+    chk('§4ob · en octubre y noviembre: la elegida sigue con su color; las otras de noche (oscuras, dibujo del color del mes)',
+        /gradient.*109, 40, 217/.test(r.noche.tab) && /^rgba\(\d+, \d+, \d+, 0\.5\)$/.test(r.noche.otraFondo) && r.noche.otraTrazo!=='rgb(123, 139, 138)', r.noche);
   chk('§4nk · en la ficha los íconos van SIN cuadradito y en gris (dueño: «parecen un carnaval», eligió la 3)', r.ent.bg==='none' && r.ent.sombra==='none' && r.ent.trazo==='rgb(123, 139, 138)', r.ent);
   chk('§4nk · «Borrar» con la letra roja', r.borrar.letra==='rgb(163, 36, 46)', r.borrar);
   chk('§4nk · pestañas (el dueño eligió la 4): SOLO la elegida con el color de su sección (Administración violeta); las otras, dibujo gris sin cuadradito de color', /gradient.*109, 40, 217/.test(r.tab) && r.otra==='none' && r.otraTrazo==='rgb(123, 139, 138)', JSON.stringify([r.tab, r.otra, r.otraTrazo]));
