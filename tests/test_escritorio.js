@@ -15,6 +15,9 @@
      viejos; el urgente en rojo; sin `badge`; en la esquina, el último mensaje de cada cliente (no una pila).
    · la segunda revisión (§4ns-c): escondido, espera la planilla Y las respuestas al bot antes de revisar; el aviso del anuncio muestra el
      globo; al sembrar sin nada nuevo no se escribe; la ventana redibujada no pierde dónde estaba; `sw.js` pide la página con `no-cache`.
+   · §4nt (30/10, captura del dueño desde el iPhone): el botón «📲 Instalar» está siempre mientras no esté instalado; sin el pedido del
+     navegador abre la guía de su aparato (iPhone/iPad, Android, compu; Firefox = «abrilo en Chrome»); «Ya lo instalé»; y el cartel
+     escondido no se ve (antes quedaba un recuadro vacío).
    Reloj clavado: jueves 29/10/2026 11:00 de Bolivia.   Se corre:  node tests/test_escritorio.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path'), fs = require('fs'), vm = require('vm');
@@ -47,11 +50,13 @@ function PREPARAR(){
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
   const errores=[];
-  async function abrir(con, hash){
-    const ctx = await browser.newContext({ viewport:{ width:1440, height:900 }, timezoneId:'America/La_Paz' });
+  async function abrir(con, hash, op){
+    op=op||{};
+    const ctx = await browser.newContext(Object.assign({ viewport:{ width:1440, height:900 }, timezoneId:'America/La_Paz' }, op.ua ? { userAgent:op.ua } : {}));
     await ctx.route(/^https?:\/\//, r=>r.abort());
     const page = await ctx.newPage(); page.on('pageerror', e=>errores.push(e.message)); page.on('dialog', d=>d.dismiss());
     await page.addInitScript(NOTIF);
+    if(op.sinAvisos) await page.addInitScript(()=>{ try{ delete window.Notification; }catch(e){} window.Notification=undefined; });
     if(con) await page.addInitScript(()=>{ window.ESC_PRUEBA=1; });
     await page.clock.setFixedTime(new Date(HOY));
     await page.goto('file://' + PEDIDOS + (hash||''), { waitUntil:'load' }); await page.waitForTimeout(400);
@@ -72,7 +77,7 @@ function PREPARAR(){
   // ---------- 2. El cartel, instalar y prender ----------
   page = await abrir(true);
   r = await page.evaluate(() => { escBannerPintar(); var b=document.getElementById('esc-banner'); return { ver:b && !b.hidden, txt:b && b.innerText.replace(/\s+/g,' ') }; });
-  chk('2a el cartel ofrece prender los avisos (sin un «Y» suelto adelante)', r.ver && /Prender los avisos/.test(r.txt) && !/Instalar/.test(r.txt) && !/ Y los avisos/.test(r.txt) && /Un aviso en la esquina/.test(r.txt), r);
+  chk('2a el cartel ofrece instalar SIEMPRE (aunque el navegador no lo haya ofrecido) y los avisos', r.ver && /Poné el panel en tu escritorio/.test(r.txt) && /📲 Instalar/.test(r.txt) && /Avisos/.test(r.txt) && /Ahora no/.test(r.txt), r);
   r = await page.evaluate(async () => {
     var pedido=0, ev=new Event('beforeinstallprompt'); ev.prompt=function(){ pedido++; }; ev.userChoice=Promise.resolve({ outcome:'accepted' });
     window.dispatchEvent(ev); var t=document.getElementById('esc-banner').innerText.replace(/\s+/g,' ');
@@ -253,14 +258,58 @@ function PREPARAR(){
   r = await page.evaluate(() => { escTipo('bot', true); ESC.qk='Maria Flores|0'; ESC.t0=Date.now()-3600e3; escBannerPintar(); var antes=!document.getElementById('esc-banner').hidden;
     WA_RESP=[{ w:'wamid.mientras', id:'a1', nom:'Ana', txt:'hola', t:'' }, { w:'wamid.mientras2', id:'a3', nom:'Luis', txt:'hola', t:'' }];
     Notification.permission='granted'; __notifs=[]; escTic();
-    return { antes:antes, despues:!document.getElementById('esc-banner').hidden, n:__notifs.length, perm:ESC.perm }; });
-  chk('6i permitido desde el candado: el cartel se va y lo que había no avisa', r.antes===true && r.despues===false && r.n===0 && r.perm==='granted', r);
+    var bt=document.getElementById('esc-banner').innerText;
+    return { antes:antes, avisos:/Avisos/.test(bt), instalar:/Instalar/.test(bt), n:__notifs.length, perm:ESC.perm }; });
+  chk('6i permitido desde el candado: el cartel deja de ofrecer los avisos (queda «Instalar») y lo que había no avisa', r.antes===true && r.avisos===false && r.instalar===true && r.n===0 && r.perm==='granted', r);
   r = await page.evaluate(() => { WA_RESP.push({ w:'wamid.despues', id:'a1', nom:'Ana', txt:'¿llega hoy?', t:'' }); var a=escRevisar(); return { a:a.length, n:__notifs.length }; });
   chk('6j …y lo que llega después sí', r.a===1 && r.n===1, r);
   r = await page.evaluate(async () => { var ev=new Event('beforeinstallprompt'); ev.prompt=function(){}; ev.userChoice=Promise.resolve({ outcome:'dismissed' });
     window.dispatchEvent(ev); escInstalar(); await new Promise(function(r){ setTimeout(r, 30); });
     return { t:document.getElementById('toast').textContent, inst:ESC.instalar }; });
-  chk('6k dijo que no a instalar: se le dice dónde está para después', r.inst===null && /⊕/.test(r.t), r);
+  chk('6k dijo que no a instalar: el mismo botón sigue y abre la guía', r.inst===null && /otra vez «📲 Instalar»/.test(r.t), r);
+  r = await page.evaluate(() => { escInstalar(); var t=document.getElementById('modal-box').innerText.replace(/\s+/g,' '); closeModal(); return t; });
+  chk('6k2 …y tocarlo de nuevo abre la guía paso a paso', /Poné el panel en tu pantalla/.test(r) && /Instalar página como aplicación/.test(r), r.slice(0,200));
+  await page.context().close();
+
+
+  // ---------- 7. §4nt: el botón de instalar en cada aparato ----------
+  const UA={
+    iphone:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.0.0 Mobile/15E148 Safari/604.1',
+    safari:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    android:'Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
+    edge:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+    firefox:'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0'
+  };
+  page = await abrir(true, '', { ua:UA.iphone, sinAvisos:true });
+  r = await page.evaluate(() => { escBannerPintar(); var b=document.getElementById('esc-banner'); return { ver:b && !b.hidden && getComputedStyle(b).display!=='none', txt:b.innerText.replace(/\s+/g,' ') }; });
+  chk('7a iPhone (Chrome): el cartel con «📲 Instalar» aunque Apple no deje instalar solo, y sin avisos (el navegador no los tiene)', r.ver && /Poné el panel en tu pantalla/.test(r.txt) && /📲 Instalar/.test(r.txt) && !/Avisos/.test(r.txt), r);
+  r = await page.evaluate(() => { escInstalar(); var box=document.getElementById('modal-box'); var o={ t:box.innerText.replace(/\s+/g,' '), tab:(box.querySelector('.esc-g-tabs [aria-pressed="true"]')||{}).textContent, pasos:box.querySelectorAll('.esc-g-paso').length, dib:box.querySelectorAll('.esc-g-paso svg').length }; return o; });
+  chk('7b …tocarlo abre la guía del iPhone: tres pasos con su dibujo (Compartir, «Agregar a inicio», «Agregar»)', /iPhone/.test(r.tab) && r.pasos===3 && r.dib===3 && /Compartir/.test(r.t) && /Agregar a inicio/.test(r.t) && /al lado de la dirección/.test(r.t) && /no dejan que una página se instale sola/.test(r.t), r);
+  r = await page.evaluate(() => { escGuia('android'); var t=document.getElementById('modal-box').innerText.replace(/\s+/g,' '); escGuia('compu'); var c=document.getElementById('modal-box').innerText.replace(/\s+/g,' '); return { a:t, c:c }; });
+  chk('7c las pestañas muestran los pasos de los otros aparatos', /Instalar app/.test(r.a) && /tres puntitos ⋮/.test(r.a) && /Instalar página como aplicación/.test(r.c), r);
+  r = await page.evaluate(() => { escYaInstale(); var b=document.getElementById('esc-banner'); return { oculto:b.hidden && getComputedStyle(b).display==='none', alto:b.getBoundingClientRect().height, guardado:localStorage.getItem('me_esc_inst'), modal:document.getElementById('modal').classList.contains('on') }; });
+  chk('7d «Ya lo instalé»: el cartel se va de verdad (sin el recuadro vacío) y queda anotado', r.oculto && r.alto===0 && r.guardado==='1' && !r.modal, r);
+  await page.context().close();
+  page = await abrir(true, '', { ua:UA.safari, sinAvisos:true });
+  r = await page.evaluate(() => { escInstalar(); return document.getElementById('modal-box').innerText.replace(/\s+/g,' '); });
+  chk('7e iPhone con Safari: «abajo» y los tres puntitos si no lo ve', /En el iPhone está abajo/.test(r) && /•••/.test(r), r.slice(0,300));
+  await page.context().close();
+  page = await abrir(true, '', { ua:UA.android });
+  r = await page.evaluate(async () => { escBannerPintar(); var t=document.getElementById('esc-banner').innerText.replace(/\s+/g,' ');
+    escInstalar(); var g=document.getElementById('modal-box').innerText.replace(/\s+/g,' '); closeModal();
+    var pedido=0, ev=new Event('beforeinstallprompt'); ev.prompt=function(){ pedido++; }; ev.userChoice=Promise.resolve({ outcome:'accepted' }); window.dispatchEvent(ev);
+    escInstalar(); await new Promise(function(res){ setTimeout(res, 20); }); return { t:t, g:g, pedido:pedido, modal:document.getElementById('modal').classList.contains('on') }; });
+  chk('7f Android: sin el pedido del navegador, la guía de Android; con él, un toque instala (sin guía)', /Poné el panel en tu pantalla/.test(r.t) && /Avisos/.test(r.t) && /Instalar app/.test(r.g) && r.pedido===1 && !r.modal, r);
+  await page.context().close();
+  page = await abrir(true, '', { ua:UA.edge });
+  r = await page.evaluate(() => { escInstalar(); return document.getElementById('modal-box').innerText.replace(/\s+/g,' '); });
+  chk('7g Edge en la compu: ⋯ → «Aplicaciones» → «Instalar este sitio como una aplicación»', /Aplicaciones/.test(r) && /Instalar este sitio como una aplicación/.test(r), r.slice(0,300));
+  await page.context().close();
+  page = await abrir(true, '', { ua:UA.firefox });
+  r = await page.evaluate(() => { escInstalar(); return document.getElementById('modal-box').innerText.replace(/\s+/g,' '); });
+  chk('7h Firefox: no instala, «abrilo en Google Chrome»', /no instala el panel/.test(r) && /Google Chrome/.test(r), r.slice(0,200));
+  r = await page.evaluate(() => { closeModal(); Notification.permission='granted'; localStorage.setItem('me_esc_inst','1'); escBannerPintar(); var b=document.getElementById('esc-banner'); return { hidden:b.hidden, display:getComputedStyle(b).display, alto:b.getBoundingClientRect().height }; });
+  chk('7i nada que ofrecer: el cartel no ocupa lugar (el recuadro vacío de la captura)', r.hidden && r.display==='none' && r.alto===0, r);
   await page.context().close();
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));

@@ -1132,6 +1132,9 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   ⚠️ `refrescarEstado` NO mira `document.hidden` (solo `autoRefrescar`): si eso cambia, la lectura escondida de los avisos deja de leer.
 - **§4ns-c (segunda revisión)**: `waRespTraer` devuelve su promesa y la lectura escondida espera las dos (`Promise.all`); el aviso del anuncio
   abre el globo de Bloki; `sw.js` pide la página con `cache:'no-cache'` (si `new Request` falla, la de siempre; probado en Chromium).
+- **§4nt (30/10, captura del dueño desde el iPhone)**: «📲 Instalar» SIEMPRE mientras no esté instalado (`yaInstalado`, `me_esc_inst`): con
+  `beforeinstallprompt`, un clic; sin él (iPhone/iPad nunca lo tienen), la guía `guiaHtml` (`escGuia`, tres pasos con dibujo según `aparato()`).
+  ⚠️ `.esc-banner[hidden]{display:none!important}`: sin eso el cartel escondido era un recuadro vacío (en el iPhone y con los avisos prendidos).
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido

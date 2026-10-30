@@ -16850,6 +16850,22 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   El servidor no cambió (29-b). Al dueño: los pasos para instalarlo en la compu (Chrome/Edge), prender los avisos y el iPad/Android.
   · Pages OK (corrida 1860, 18:57 de Bolivia). Desde esta sesión no se llega a github.io (el proxy lo rechaza): lo publicado se ve en la compu del dueño.
 
+### §4nt — 📲 EL BOTÓN DE INSTALAR SIEMPRE, CON LA GUÍA DE CADA APARATO, Y EL RECUADRO VACÍO (30/10)
+- El dueño, con una captura desde su iPhone (Chrome): *«¿dónde está mi botón instalar app? … mis vendedores… tengo que ponerles todo como si
+  fueran niños de 5 años»*. Dos cosas:
+  · **El recuadro vacío** debajo del encabezado = `#esc-banner` escondido (`hidden`) pero dibujado: `.esc-banner{display:flex}` pisaba el
+    `display:none` del atributo. Pasaba en el iPhone (nada que ofrecer: Apple no da el pedido de instalar y el navegador no tiene avisos) y
+    en la compu de quien ya prendió los avisos. Arreglo: `.esc-banner[hidden]{display:none!important}`. ⚠️ Toda caja nueva con `display` propio
+    que se esconda con `hidden` lleva su regla `[hidden]` (como `.vivo-btn[hidden]`, §4ni).
+  · **El botón**: `beforeinstallprompt` solo existe en Chrome/Edge (compu y Android) y cuando el navegador quiere; en el iPhone y el iPad NINGÚN
+    navegador lo tiene. Ahora «📲 Instalar» está SIEMPRE mientras no esté instalado (`yaInstalado` = ventana propia o `me_esc_inst`, que anotan
+    `appinstalled` y «✅ Ya lo instalé»): con el pedido, un clic; sin él, **la guía** (`guiaHtml`/`escGuia`): tres pasos grandes con número, el
+    dibujo de lo que hay que tocar (`ICO`: Compartir, ⊞, ⋮, ⋯, ☰, compu, ✓) y el botón final pintado como en el aparato («Agregar», «Instalar»),
+    según `aparato()` (iPhone/iPad con Safari, Chrome u otro; Android con Chrome o Samsung; compu con Chrome, Edge o Safari; Firefox = «abrilo
+    en Google Chrome») y pestañas para ver los otros. Título «📲 Poné el panel en tu pantalla/escritorio», «Así lo abrís con un toque, como
+    WhatsApp», «Ahora no» = 7 días (antes 21). En el iPhone los avisos solo con el panel instalado (la ventana de ajustes lo dice).
+  · `escritorio.js?v=20261030a` (`sw.js` no cambió). `test_escritorio` → 62 (§7 nueva; contra lo publicado, 6 rojas y se corta en 7c).
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.

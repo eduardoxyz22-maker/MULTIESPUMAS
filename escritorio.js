@@ -5,6 +5,10 @@
    de todo lo demás, así que acá se pueden usar las funciones del panel. ⚠️ Al cambiarlo, subir el `?v=` de esa línea (si no, la compu
    sigue con el viejo en caché) y validarlo aparte con `node --check escritorio.js`.
 
+   ⚠️ (30/10, §4nt, captura del dueño desde el iPhone: «¿dónde está mi botón instalar app?») El botón «📲 Instalar» está SIEMPRE mientras no
+   esté instalado (`yaInstalado`): con el pedido del navegador, un clic; si no (iPhone/iPad, o Chrome que todavía no lo ofreció), la guía
+   `guiaHtml` con tres pasos grandes y el dibujo de lo que hay que tocar, según el aparato (`aparato`). «Ya lo instalé» / `appinstalled` lo
+   anotan en `me_esc_inst`. Y `.esc-banner[hidden]` lleva su regla: sin ella, el cartel escondido se veía como un recuadro vacío.
    25 · 📲 INSTALAR EL PANEL EN LA COMPU (una «aplicación web»): con `manifest.webmanifest` + `sw.js` + los íconos de `iconos/`, Chrome y
         Edge ofrecen «Instalar Panel MultiEspumas»: queda un ícono en el escritorio y el panel se abre en su propia ventana, sin la barra
         del navegador. Es la MISMA página: `sw.js` NO guarda copias del panel (siempre va a internet; sin internet muestra un cartel), así
@@ -30,9 +34,9 @@
    ============================================================================================================================ */
 (function(){
 'use strict';
-var ESC_OCULTO_MS=180000, ESC_TIC_MS=30000, ESC_VISTOS_DIAS=10, ESC_NO_DIAS=21, ESC_EXCEL_HORA=10, ESC_GRACIA_MS=90000,
+var ESC_OCULTO_MS=180000, ESC_TIC_MS=30000, ESC_VISTOS_DIAS=10, ESC_NO_DIAS=7, ESC_EXCEL_HORA=10, ESC_GRACIA_MS=90000,
     ESC_LECTURA_TOPE_MS=60000, ESC_RENUEVA_MS=864e5, ESC_DESTINO_MS=120000;
-var LS_TIPOS='me_esc_tipos', LS_VISTOS='me_esc_vistos', LS_NO='me_esc_no';
+var LS_TIPOS='me_esc_tipos', LS_VISTOS='me_esc_vistos', LS_NO='me_esc_no', LS_INST='me_esc_inst';
 var TIPOS=[
   { k:'bot',     ic:'💬', t:'Un cliente le contestó al bot',             s:'lo que escribe el cliente al WhatsApp del bot y necesita una persona' },
   { k:'conta',   ic:'🧾', t:'Contabilidad me avisa de un pago',          s:'un pago que Contabilidad te pide revisar o corregir' },
@@ -56,6 +60,17 @@ function instalado(){
   try{ if(window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches)) return true; }catch(e){}
   return !!navigator.standalone;
 }
+/* ya lo instaló desde esta pestaña (Chrome lo dice con `appinstalled`) o tocó «Ya lo instalé» en la guía: la pestaña del navegador sigue
+   siendo una pestaña, pero no se le vuelve a ofrecer */
+function yaInstalado(){ return instalado() || lsGet(LS_INST)==='1'; }
+/* ¿Qué aparato y qué navegador? Para la guía: en el iPhone y el iPad NINGÚN navegador deja que una página se instale sola (Apple no lo
+   permite), así que ahí son tres toques que hay que enseñar; en Chrome y Edge, cuando el navegador lo ofrece, se instala con un clic. */
+function aparato(){
+  var ua=navigator.userAgent||'', ios=/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints||0)>1), and=/Android/i.test(ua);
+  var nav=/EdgiOS|EdgA\/|Edg\//.test(ua) ? 'edge' : /CriOS/.test(ua) ? 'chrome' : /FxiOS|Firefox\//.test(ua) ? 'firefox' : /SamsungBrowser/.test(ua) ? 'samsung'
+        : ios ? 'safari' : /Chrome\/|Chromium/.test(ua) ? 'chrome' : /Safari\//.test(ua) ? 'safari' : 'otro';
+  return { tipo:ios ? 'ios' : (and ? 'android' : 'compu'), nav:nav };
+}
 function puedeSw(){ return ('serviceWorker' in navigator) && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1'); }
 function registrarSw(){
   if(!puedeSw()) return Promise.resolve(null);
@@ -67,24 +82,100 @@ window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault(); ESC.instalar=e; bannerPintar(); ajustesRepintar();
 });
 window.addEventListener('appinstalled', function(){
-  ESC.instalar=null; bannerPintar(); ajustesRepintar();
+  ESC.instalar=null; lsSet(LS_INST, '1'); bannerPintar(); ajustesRepintar();
   aviso('✅ Listo: el panel quedó instalado. Lo abrís con su ícono, en su propia ventana.', 'ok');
 });
+/* 📲 El botón: con el pedido del navegador (Chrome/Edge en la compu y en Android), un clic y listo; sin él (iPhone, iPad, o un navegador
+   que todavía no lo ofreció), la guía paso a paso con dibujos. El botón está SIEMPRE mientras no esté instalado. */
 function escInstalar(){
   var ev=ESC.instalar;
-  if(!ev){
-    ajustesAbrir();   // sin el evento: la ventana explica cómo (Chrome/Edge: el ícono ⊕ de la barra de direcciones)
-    return;
-  }
+  if(!ev){ guiaAbrir(); return; }
   ESC.instalar=null;
-  try{ ev.prompt(); }catch(err){ ajustesAbrir(); return; }
+  try{ ev.prompt(); }catch(err){ guiaAbrir(); return; }
   (ev.userChoice||Promise.resolve({})).then(function(r){
     if(r && r.outcome==='accepted') return;
-    /* el navegador da UN solo pedido por carga de la página: dicho que no, el botón se va hasta recargar. Que sepa dónde está igual. */
+    /* el navegador da UN solo pedido por carga de la página: dicho que no, el mismo botón abre la guía */
     bannerPintar(); ajustesRepintar();
-    aviso('Cuando quieras instalarlo: el ícono ⊕ a la derecha de la barra de direcciones, o el menú ⋮ → Instalar Panel MultiEspumas.', 'ok');
+    aviso('Cuando quieras, tocá otra vez «📲 Instalar»: te muestro cómo, paso a paso.', 'ok');
   });
 }
+
+/* ---------- la guía para instalar: tres pasos grandes, con el dibujo de lo que hay que tocar ---------- */
+var ICO={
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M7.5 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5"/></svg>',
+  mas:'<svg viewBox="0 0 24 24" fill="none" stroke="#1f2d2d" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M12 8v8M8 12h8"/></svg>',
+  pv:'<svg viewBox="0 0 24 24" fill="#1f2d2d"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>',
+  ph:'<svg viewBox="0 0 24 24" fill="#1f2d2d"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="#1f2d2d" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+  compu:'<svg viewBox="0 0 24 24" fill="none" stroke="#1f2d2d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M12 7v5M9.5 9.5 12 12l2.5-2.5"/></svg>',
+  ok:'<svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>'
+};
+function boton(t){ return '<span class="esc-g-btn">'+t+'</span>'; }
+function guiaPasos(tipo, nav){
+  var finCel='Aparece el ícono del panel en tu pantalla, como el de WhatsApp. <b>Desde ahora abrí el panel con ese ícono.</b>';
+  if(tipo==='ios'){
+    var donde=nav==='chrome' ? 'Está al lado de la dirección de la página, arriba o abajo de la pantalla.'
+      : nav==='safari' ? 'En el iPhone está abajo; en el iPad, arriba a la derecha. Si no lo ves, tocá primero los tres puntitos <b>•••</b>.'
+      : 'Está en el menú del navegador (los tres puntitos o las tres rayitas).';
+    return { pasos:[
+      { ic:'share', t:'Tocá el botón <b>Compartir</b>', s:'Es un cuadradito con una flecha para arriba. '+donde },
+      { ic:'mas', t:'Tocá <b>«Agregar a inicio»</b>', s:'Si no lo ves, deslizá la lista para arriba. También puede decir «Agregar a la pantalla de inicio».' },
+      { ic:'ok', t:'Tocá '+boton('Agregar'), s:'Arriba a la derecha.' }
+    ], fin:finCel+'<br>Abrilo desde el ícono y ahí te deja prender los avisos.', nota:'El iPhone y el iPad no dejan que una página se instale sola: por eso son estos tres toques.' };
+  }
+  if(tipo==='android'){
+    if(nav==='samsung') return { pasos:[
+      { ic:'menu', t:'Tocá el menú <b>☰</b>', s:'Abajo a la derecha.' },
+      { ic:'mas', t:'Tocá <b>«Agregar página a»</b> y después <b>«Pantalla de inicio»</b>' },
+      { ic:'ok', t:'Tocá '+boton('Agregar') }
+    ], fin:finCel };
+    return { pasos:[
+      { ic:'pv', t:'Tocá los <b>tres puntitos ⋮</b>', s:'Arriba a la derecha.' },
+      { ic:'mas', t:'Tocá <b>«Instalar app»</b>', s:'Si no está, tocá «Agregar a la pantalla principal».' },
+      { ic:'ok', t:'Tocá '+boton('Instalar') }
+    ], fin:finCel };
+  }
+  var finCompu='Queda un ícono en el escritorio y en el menú Inicio. <b>Desde ahora abrí el panel con ese ícono:</b> se abre en su propia ventana.';
+  if(nav==='edge') return { pasos:[
+    { ic:'ph', t:'Arriba a la derecha, hacé clic en los <b>tres puntitos ⋯</b>' },
+    { ic:'compu', t:'Elegí <b>«Aplicaciones»</b> y después <b>«Instalar este sitio como una aplicación»</b>' },
+    { ic:'ok', t:'Hacé clic en '+boton('Instalar') }
+  ], fin:finCompu };
+  if(nav==='safari') return { pasos:[
+    { ic:'compu', t:'Arriba, en el menú, hacé clic en <b>«Archivo»</b>' },
+    { ic:'mas', t:'Elegí <b>«Agregar al Dock»</b>' },
+    { ic:'ok', t:'Hacé clic en '+boton('Agregar') }
+  ], fin:'Queda un ícono en el Dock. <b>Desde ahora abrí el panel con ese ícono.</b>' };
+  if(nav==='firefox' || nav==='otro') return { no:true };
+  return { pasos:[
+    { ic:'pv', t:'Arriba a la derecha, hacé clic en los <b>tres puntitos ⋮</b>' },
+    { ic:'compu', t:'Elegí <b>«Transmitir, guardar y compartir»</b> y después <b>«Instalar página como aplicación»</b>', s:'En algunas compus dice «Instalar Panel MultiEspumas». También sirve el ícono de la compu con la flechita, a la derecha de la dirección.' },
+    { ic:'ok', t:'Hacé clic en '+boton('Instalar') }
+  ], fin:finCompu };
+}
+var GUIA={ tipo:null };
+function guiaHtml(){
+  var A=aparato(), t=GUIA.tipo||A.tipo, nav=(t===A.tipo) ? A.nav : (t==='ios' ? 'safari' : 'chrome'), G=guiaPasos(t, nav);
+  var tabs=[['ios','📱 iPhone o iPad'],['android','🤖 Android'],['compu','💻 Compu']].map(function(x){
+    return '<button type="button" aria-pressed="'+(x[0]===t)+'" onclick="escGuia(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('');
+  var cuerpo=G.no
+    ? '<div class="esc-g-fin esc-g-no"><span style="font-size:2rem">🌐</span><div>Este navegador no instala el panel.<br><b>Abrí el panel en Google Chrome</b> y tocá otra vez «📲 Instalar».</div></div>'
+    : '<ol class="esc-g-pasos">'+G.pasos.map(function(p, i){
+        return '<li class="esc-g-paso"><span class="esc-g-n">'+(i+1)+'</span><span class="esc-g-ic" aria-hidden="true">'+ICO[p.ic]+'</span>'+
+          '<span class="esc-g-t">'+p.t+(p.s ? '<small class="esc-g-s">'+p.s+'</small>' : '')+'</span></li>'; }).join('')+'</ol>'+
+      '<div class="esc-g-fin"><img src="iconos/panel-192.png" alt=""><div>✅ '+G.fin+'</div></div>'+
+      (G.nota ? '<p class="esc-chico" style="margin:0">'+G.nota+'</p>' : '');
+  return '<div class="modal-h"><h3>📲 Poné el panel en tu pantalla</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b esc-g">'+
+      '<p class="esc-g-intro">Son <b>3 toques</b>. Después lo abrís con su ícono, como WhatsApp.</p>'+
+      '<div class="esc-g-tabs" role="group" aria-label="Tu aparato">'+tabs+'</div>'+cuerpo+
+      '<div class="modal-actions"><button type="button" class="btn btn-ghost btn-sm" onclick="escYaInstale()">✅ Ya lo instalé</button><span style="flex:1"></span>'+
+        '<button type="button" class="btn btn-primary btn-sm" onclick="closeModal()">Entendido</button></div>'+
+    '</div>';
+}
+function guiaAbrir(tipo){ GUIA.tipo=tipo||null; try{ openModal(guiaHtml()); }catch(e){} }
+function escYaInstale(){ lsSet(LS_INST, '1'); try{ closeModal(); }catch(e){} bannerPintar(); aviso('✅ Listo. Desde ahora abrí el panel con su ícono.', 'ok'); }
+window.escGuia=guiaAbrir; window.escYaInstale=escYaInstale; window.escAparato=aparato;
 
 /* ---------- 26 · avisos ---------- */
 function permiso(){ try{ return ('Notification' in window) ? Notification.permission : 'nohay'; }catch(e){ return 'nohay'; } }
@@ -286,18 +377,19 @@ function noHasta(){ return Number(lsGet(LS_NO))||0; }
 function bannerPintar(){
   var b=document.getElementById('esc-banner');
   if(!b){ var c=document.getElementById('carga-banner'); if(!c || !c.parentNode) return; b=document.createElement('div'); b.id='esc-banner'; b.className='esc-banner'; b.hidden=true; c.parentNode.insertBefore(b, c.nextSibling); }
-  var inst=!!ESC.instalar && !instalado(), notif=permiso()==='default';
+  /* 📲 mientras no esté instalado, el botón está SIEMPRE (con el navegador que lo ofrece, un clic; si no, la guía); 🔔 si los avisos
+     todavía no se prendieron (en el iPhone, solo con el panel instalado: el navegador no tiene avisos) */
+  var inst=!yaInstalado(), notif=permiso()==='default';
   var ver=activo() && (inst || notif) && Date.now()>noHasta();
-  b.hidden=!ver; if(!ver){ b.innerHTML=''; return; }
-  var queAvisa='un cliente que contesta, un pago para revisar, una venta de Kommo.';
-  var tit=inst ? 'Tené el panel como programa en esta compu' : 'Que el panel te avise aunque estés en otra cosa';
-  var sub=inst ? ('Un ícono en el escritorio y su propia ventana.'+(notif ? (' Y los avisos en la esquina de la pantalla: '+queAvisa) : ''))
-               : ('Un aviso en la esquina de la pantalla: '+queAvisa);
-  var h='<span class="esc-b-ic" aria-hidden="true">🖥️</span><div class="esc-b-tx"><b>'+tit+'</b><small>'+sub+'</small></div>'+
-    '<div class="esc-b-acc">'+(inst ? '<button type="button" class="esc-b-p" onclick="escInstalar()">📲 Instalar</button>' : '')+
-      (notif ? '<button type="button" class="'+(inst?'esc-b-s':'esc-b-p')+'" onclick="escPrender()">🔔 Prender los avisos</button>' : '')+
-      '<button type="button" class="esc-b-s" onclick="escAjustesAbrir()">Ver más</button>'+
-      '<button type="button" class="esc-b-x" onclick="escBannerNo()" title="Ahora no (vuelve en '+ESC_NO_DIAS+' días)" aria-label="Ahora no">✕</button></div>';
+  b.hidden=!ver; if(!ver){ b.innerHTML=''; b._h=''; return; }
+  var A=aparato();
+  var tit=inst ? ('📲 Poné el panel en tu '+(A.tipo==='compu' ? 'escritorio' : 'pantalla')) : '🔔 Que el panel te avise';
+  var sub=inst ? ('Así lo abrís con un toque, como WhatsApp.'+(notif ? ' Y te avisa cuando un cliente contesta.' : ''))
+               : 'Un aviso en la esquina de la pantalla cuando un cliente contesta, hay un pago para revisar o te entra una venta de Kommo.';
+  var h='<img class="esc-b-logo" src="iconos/panel-192.png" alt=""><div class="esc-b-tx"><b>'+tit+'</b><small>'+sub+'</small></div>'+
+    '<div class="esc-b-acc">'+(inst ? '<button type="button" class="esc-b-p esc-b-gr" onclick="escInstalar()">📲 Instalar</button>' : '')+
+      (notif ? '<button type="button" class="'+(inst ? 'esc-b-s' : 'esc-b-p esc-b-gr')+'" onclick="escPrender()">🔔 '+(inst ? 'Avisos' : 'Prender los avisos')+'</button>' : '')+
+      '<button type="button" class="esc-b-x" onclick="escBannerNo()" title="Vuelve en '+ESC_NO_DIAS+' días">Ahora no</button></div>';
   if(b._h!==h){ b.innerHTML=h; b._h=h; }
 }
 function escBannerNo(){ lsSet(LS_NO, String(Date.now()+ESC_NO_DIAS*864e5)); bannerPintar(); }
@@ -307,14 +399,14 @@ function ajustesHtml(){
   var est=function(ok, si, no){ return '<span class="esc-est '+(ok?'ok':'no')+'">'+(ok?si:no)+'</span>'; };
   var nav=/Edg\//.test(navigator.userAgent) ? 'Edge' : 'Chrome';
   var instTxt=inst ? 'Estás usando el panel instalado: se abre con su ícono, en su propia ventana.'
-    : ESC.instalar ? 'Tocá «📲 Instalar» y aceptá: queda un ícono en el escritorio y en el menú Inicio.'
-    : ('Si no aparece el botón: en '+nav+' tocá el ícono <b>⊕</b> (o la compu con la flechita) a la derecha de la barra de direcciones, o el menú <b>⋮</b> → <b>Instalar Panel MultiEspumas</b>. Desde el celular: el menú <b>⋮</b> → <b>Agregar a la pantalla principal</b>.');
+    : 'Tocá «📲 Instalar el panel»: si el navegador lo deja, se instala con un clic; si no, te muestro cómo, paso a paso.';
   var pTxt=p==='granted' ? 'Prendidos en esta compu.' : p==='denied' ? ('Están <b>bloqueados</b> para el panel. Para permitirlos: tocá el candado 🔒 a la izquierda de la dirección → <b>Notificaciones</b> → <b>Permitir</b>, y recargá. En Windows, además: Configuración → Sistema → Notificaciones → '+nav+' prendido.')
-    : p==='nohay' ? 'Este navegador no tiene avisos. Usá Chrome o Edge.' : 'Todavía apagados: tocá «🔔 Prender los avisos» y Windows te pregunta si dejás.';
+    : p==='nohay' ? (aparato().tipo==='ios' ? 'En el iPhone y el iPad los avisos andan solo con el panel instalado: tocá «📲 Instalar el panel» y después abrilo desde su ícono.' : 'Este navegador no tiene avisos. Usá Chrome o Edge.')
+    : 'Todavía apagados: tocá «🔔 Prender los avisos» y Windows te pregunta si dejás.';
   return '<div class="modal-h"><h3>🖥️ El panel en esta compu</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
     '<div class="modal-b esc-aj">'+
       '<div class="esc-sec"><div class="esc-st"><b>📲 Como programa</b>'+est(inst, 'Instalado', 'No instalado')+'</div><p>'+instTxt+'</p>'+
-        (!inst && ESC.instalar ? '<button type="button" class="btn btn-primary btn-sm" onclick="escInstalar()">📲 Instalar el panel</button>' : '')+
+        (!inst ? '<button type="button" class="btn btn-primary btn-sm" onclick="escInstalar()">📲 Instalar el panel</button>' : '')+
         '<p class="esc-chico">Es la misma página de siempre: cada vez que se publica algo, se ve igual. No guarda copias viejas.</p></div>'+
       '<div class="esc-sec"><div class="esc-st"><b>🔔 Avisos de Windows</b>'+est(p==='granted', 'Prendidos', p==='denied' ? 'Bloqueados' : 'Apagados')+'</div><p>'+pTxt+'</p>'+
         (p==='default' ? '<button type="button" class="btn btn-primary btn-sm" onclick="escPrender()">🔔 Prender los avisos</button>' : '')+
@@ -345,7 +437,7 @@ if(typeof window.palAcciones==='function'){
     var A=_pa.apply(this, arguments);
     if(!activo()) return A;
     return A.concat([
-      { ic:'📲', t:'Instalar el panel', s:'un ícono en el escritorio y su propia ventana', q:'instalar programa icono escritorio aplicacion app ventana', fn:function(){ if(ESC.instalar) escInstalar(); else ajustesAbrir(); } },
+      { ic:'📲', t:'Instalar el panel', s:'un ícono en el escritorio y su propia ventana', q:'instalar programa icono escritorio aplicacion app ventana', fn:function(){ escInstalar(); } },
       { ic:'🔔', t:'Avisos de Windows', s:'que el panel te avise aunque estés en otra cosa', q:'avisos notificaciones windows alertas campana', fn:function(){ ajustesAbrir(); } }
     ]);
   };
@@ -355,6 +447,7 @@ if(typeof window.palAcciones==='function'){
 if(!activo()) return;
 var css=document.createElement('style');
 css.textContent=
+  '.esc-banner[hidden]{display:none!important}'+   /* sin esto el cartel escondido se veía como un recuadro vacío (29/10, captura del dueño) */
   '.esc-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid #99DDD9;border-radius:16px;padding:10px 12px 10px 14px;margin:0 0 14px;box-shadow:0 1px 2px rgba(0,60,60,.05),0 4px 14px rgba(0,60,60,.045)}'+
   '.esc-b-ic{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#E6F7F6;font-size:1.2rem}'+
   '.esc-b-tx{flex:1;min-width:200px;display:flex;flex-direction:column;gap:1px}.esc-b-tx b{font-size:.9rem;color:#1f2d2d}.esc-b-tx small{font-size:.76rem;color:#5d7473;line-height:1.4}'+
@@ -369,7 +462,23 @@ css.textContent=
   '.esc-tipos label{display:flex;gap:10px;align-items:flex-start;padding:7px 9px;border-radius:10px;cursor:pointer;border:1px solid transparent}'+
   '.esc-tipos label.on{background:#fff;border-color:#e1ebea}.esc-tipos input{margin-top:3px;width:16px;height:16px;accent-color:#00A09A}'+
   '.esc-tipos b{display:block;font-size:.84rem}.esc-tipos small{display:block;font-size:.74rem;color:#5d7473}'+
-  '.toast.warn{background:#b45309}';
+  '.toast.warn{background:#b45309}'+
+  '.esc-b-logo{flex:none;width:46px;height:46px;border-radius:12px}.esc-banner .esc-b-tx b{font-size:1rem}.esc-banner .esc-b-tx small{font-size:.82rem}'+
+  '.esc-b-acc .esc-b-gr{font-size:.92rem;padding:10px 18px;min-height:44px}'+
+  '.esc-b-acc .esc-b-x{text-decoration:underline;font-weight:700}'+
+  '.esc-g{display:flex;flex-direction:column;gap:12px}.esc-g-intro{margin:0;font-size:1rem;color:#1f2d2d}'+
+  '.esc-g-tabs{display:flex;gap:6px;flex-wrap:wrap}'+
+  '.esc-g-tabs button{flex:1 1 0;min-width:96px;width:auto;font:inherit;font-weight:800;font-size:.84rem;padding:10px 8px;border-radius:12px;border:1px solid #cfe3e1;background:#fff;color:#1f2d2d;cursor:pointer;min-height:44px}'+
+  '.esc-g-tabs button[aria-pressed="true"]{background:#00A09A;border-color:#00A09A;color:#fff}'+
+  '.esc-g-pasos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}'+
+  '.esc-g-paso{display:grid;grid-template-columns:44px 54px minmax(0,1fr);gap:12px;align-items:center;background:#fbfdfd;border:1px solid #e1ebea;border-radius:16px;padding:12px}'+
+  '.esc-g-n{width:44px;height:44px;border-radius:50%;background:#00A09A;color:#fff;font-weight:900;font-size:1.35rem;display:grid;place-items:center}'+
+  '.esc-g-ic{width:54px;height:54px;border-radius:14px;background:#fff;border:1px solid #e1ebea;display:grid;place-items:center}.esc-g-ic svg{width:32px;height:32px}'+
+  '.esc-g-t{font-size:1.04rem;line-height:1.35;color:#1f2d2d}.esc-g-s{display:block;font-size:.84rem;color:#5d7473;margin-top:4px;line-height:1.45}'+
+  '.esc-g-btn{display:inline-block;background:#007AFF;color:#fff;font-weight:800;border-radius:9px;padding:2px 11px;font-size:.95rem}'+
+  '.esc-g-fin{display:flex;gap:12px;align-items:center;background:#E6F7F6;border:1px solid #99DDD9;border-radius:16px;padding:12px 14px;font-size:.95rem;line-height:1.45;color:#1f2d2d}'+
+  '.esc-g-fin img{width:50px;height:50px;border-radius:12px;flex:none}.esc-g-no{background:#FFF7E6;border-color:#F5D08A}'+
+  '@media (max-width:420px){.esc-g-paso{grid-template-columns:36px 44px minmax(0,1fr);gap:9px;padding:10px}.esc-g-n{width:36px;height:36px;font-size:1.1rem}.esc-g-ic{width:44px;height:44px}.esc-g-ic svg{width:26px;height:26px}.esc-g-t{font-size:.98rem}}';
 document.head.appendChild(css);
 registrarSw();
 /* tocar un aviso con el panel abierto: `sw.js` le manda qué abrir */
