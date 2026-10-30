@@ -1,17 +1,25 @@
 {
-  "name": "Panel MultiEspumas",
+  "name": "MultiEspumas",
   "short_name": "MultiEspumas",
   "description": "Pedidos, entregas, stock y contabilidad de MultiEspumas",
   "id": "pedidos.html",
   "start_url": "pedidos.html",
   "scope": "pedidos.html",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
   "background_color": "#F2F7F7",
-  "theme_color": "#00A09A",
+  "theme_color": "#0f4c5c",
   "lang": "es-BO",
+  "launch_handler": { "client_mode": ["focus-existing", "auto"] },
   "icons": [
-    { "src": "iconos/panel-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "iconos/panel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "iconos/panel-512-mask.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "iconos/hojas-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/hojas-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/hojas-512-mask.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Nuevo pedido", "url": "pedidos.html#ir=form", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Mis pedidos", "url": "pedidos.html#ir=mis", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Contabilidad", "url": "pedidos.html#ir=conta", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Administración", "url": "pedidos.html#ir=admin", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] }
   ]
 }

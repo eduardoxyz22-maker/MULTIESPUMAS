@@ -163,7 +163,7 @@ function guiaHtml(){
     : '<ol class="esc-g-pasos">'+G.pasos.map(function(p, i){
         return '<li class="esc-g-paso"><span class="esc-g-n">'+(i+1)+'</span><span class="esc-g-ic" aria-hidden="true">'+ICO[p.ic]+'</span>'+
           '<span class="esc-g-t">'+p.t+(p.s ? '<small class="esc-g-s">'+p.s+'</small>' : '')+'</span></li>'; }).join('')+'</ol>'+
-      '<div class="esc-g-fin"><img src="iconos/panel-192.png" alt=""><div>✅ '+G.fin+'</div></div>'+
+      '<div class="esc-g-fin"><img src="iconos/hojas-192.png" alt=""><div>✅ '+G.fin+'</div></div>'+
       (G.nota ? '<p class="esc-chico" style="margin:0">'+G.nota+'</p>' : '');
   return '<div class="modal-h"><h3>📲 Poné el panel en tu pantalla</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
     '<div class="modal-b esc-g">'+
@@ -299,7 +299,7 @@ function mostrar(x, siempre){
   if(!siempre && enFoco()){ aviso(x.t+' — '+x.b, x.kd||'ok'); return; }   // mirando el panel: el aviso de siempre, en rojo si es urgente
   /* sin `badge`: es el dibujito de la barra de Android y tiene que ser de un solo color; en Windows no se usa */
   var tag=x.tag||x.k;
-  var op={ body:x.b, tag:tag, icon:'iconos/panel-192.png', data:{ tipo:x.tipo, id:x.id||'', k:x.k }, renotify:tag!==x.k };
+  var op={ body:x.b, tag:tag, icon:'iconos/hojas-192.png', data:{ tipo:x.tipo, id:x.id||'', k:x.k }, renotify:tag!==x.k };
   if(ESC.reg && ESC.reg.showNotification){ ESC.reg.showNotification(x.t, op).catch(function(){ mostrarDirecto(x, op); }); return; }
   mostrarDirecto(x, op);
 }
@@ -341,6 +341,30 @@ function esperarDestino(d){
   ESC.pendTimer=setInterval(function(){ if(irPendiente()){ clearInterval(ESC.pendTimer); ESC.pendTimer=null; } }, 1000);
 }
 window.escDestinoDeHash=destinoDeHash; window.escIrPendiente=irPendiente; window.escEsperarDestino=esperarDestino;
+
+/* 🖱️ LOS ATAJOS DEL CLIC DERECHO (30/10, §4ny; el dueño: «atajos sí»). El manifest trae `shortcuts` (Nuevo pedido, Mis pedidos,
+   Contabilidad, Administración) con `pedidos.html#ir=<pestaña>`. Con el panel cerrado abre en esa pestaña (se lee y se borra de la
+   dirección); con el panel ya abierto, `launch_handler: focus-existing` trae esa ventana adelante y avisa por `launchQueue`, sin recargar
+   (un pedido a medio escribir no se pierde: cambiar de pestaña no borra nada). Administración pide la contraseña como siempre. */
+var IR_VISTAS={ form:1, mis:1, conta:1, admin:1, atc:1 }, IR_HECHO={ v:'', t:0 };
+function irDeUrl(u){ var m=/#ir=([a-z]+)/.exec(String(u||'')); return (m && IR_VISTAS[m[1]]) ? m[1] : ''; }
+function irVista(v){
+  if(!v) return false;
+  if(IR_HECHO.v===v && Date.now()-IR_HECHO.t<4000) return false;   // al abrir llegan los dos avisos (la dirección y launchQueue): uno solo
+  IR_HECHO={ v:v, t:Date.now() };
+  try{
+    if(v==='form'){ if(typeof tabNuevoPedido==='function') tabNuevoPedido(); else showView('form'); }
+    else if(typeof showView==='function') showView(v);
+    try{ window.focus(); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
+function irDesdeHash(){
+  var v=irDeUrl(location.hash); if(!v) return '';
+  try{ history.replaceState(null, '', location.pathname+location.search); }catch(e){}
+  return v;
+}
+window.escIrDeUrl=irDeUrl; window.escIrVista=irVista; window.escIrDesdeHash=irDesdeHash;
 
 /* El permiso cambiado desde afuera (el candado 🔒 de la barra, la configuración de Windows): el cartel y la ventana se ponen al día, y
    al quedar permitido lo que ya había se da por visto (si no, llovían los avisos de lo que pasó mientras estaba apagado). */
@@ -386,7 +410,7 @@ function bannerPintar(){
   var tit=inst ? ('📲 Poné el panel en tu '+(A.tipo==='compu' ? 'escritorio' : 'pantalla')) : '🔔 Que el panel te avise';
   var sub=inst ? ('Así lo abrís con un toque, como WhatsApp.'+(notif ? ' Y te avisa cuando un cliente contesta.' : ''))
                : 'Un aviso en la esquina de la pantalla cuando un cliente contesta, hay un pago para revisar o te entra una venta de Kommo.';
-  var h='<img class="esc-b-logo" src="iconos/panel-192.png" alt=""><div class="esc-b-tx"><b>'+tit+'</b><small>'+sub+'</small></div>'+
+  var h='<img class="esc-b-logo" src="iconos/hojas-192.png" alt=""><div class="esc-b-tx"><b>'+tit+'</b><small>'+sub+'</small></div>'+
     '<div class="esc-b-acc">'+(inst ? '<button type="button" class="esc-b-p esc-b-gr" onclick="escInstalar()">📲 Instalar</button>' : '')+
       (notif ? '<button type="button" class="'+(inst ? 'esc-b-s' : 'esc-b-p esc-b-gr')+'" onclick="escPrender()">🔔 '+(inst ? 'Avisos' : 'Prender los avisos')+'</button>' : '')+
       '<button type="button" class="esc-b-x" onclick="escBannerNo()" title="Vuelve en '+ESC_NO_DIAS+' días">Ahora no</button></div>';
@@ -488,7 +512,11 @@ if('serviceWorker' in navigator) try{
 }catch(e){}
 try{ if(navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name:'notifications' }).then(function(st){ st.onchange=permMirar; }, function(){}); }catch(e){}
 esperarDestino(destinoDeHash());
-function empezar(){ ESC.t0=Date.now(); ESC.perm=permiso(); bannerPintar(); arrancar(); }
+var irAlAbrir=irDesdeHash();
+try{ if('launchQueue' in window && window.launchQueue.setConsumer) window.launchQueue.setConsumer(function(p){ irVista(irDeUrl(p && p.targetURL)); }); }catch(e){}
+/* 🪟 (§4ny) Instalado, la barra de tareas dice «MultiEspumas - Pedidos» (Chrome pone el nombre de la app adelante del título). */
+try{ if(instalado()) document.title='Pedidos'; }catch(e){}
+function empezar(){ ESC.t0=Date.now(); ESC.perm=permiso(); bannerPintar(); arrancar(); if(irAlAbrir) setTimeout(function(){ irVista(irAlAbrir); }, 0); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', empezar); else empezar();
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(function(){ permMirar(); revisar(); }, 1500); });
 })();
