@@ -16865,6 +16865,8 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     en Google Chrome») y pestañas para ver los otros. Título «📲 Poné el panel en tu pantalla/escritorio», «Así lo abrís con un toque, como
     WhatsApp», «Ahora no» = 7 días (antes 21). En el iPhone los avisos solo con el panel instalado (la ventana de ajustes lo dice).
   · `escritorio.js?v=20261030a` (`sw.js` no cambió). `test_escritorio` → 62 (§7 nueva; contra lo publicado, 6 rojas y se corta en 7c).
+- **PUBLICADO 30/10 (`d874624`, dueño: «Publica»)**: `format-patch --binary` de `e2f7068` sobre `acdcebe`, `test_escritorio` 62/62 en la copia de
+  publicar. Todos F5 (el cartel nuevo sale arriba mientras el panel no esté instalado).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
