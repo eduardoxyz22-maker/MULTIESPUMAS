@@ -16983,6 +16983,28 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   estética 35, avisa_cuando 52, cierre_comercial 52. `main` = `818db82` (`f62e8d7` el aviso). `PANEL_V` = `panel-version.json` = 2026-10-30-a.
   ⚠️ La próxima vez que se publique pedidos.html, subir los DOS (si no, las ventanas abiertas no se enteran).
 
+### §4nz — 📱 EL IPAD INSTALADO: LA FRANJA DE LA HORA TRANSPARENTE (30/10; dueño, con dos capturas del iPad: *«En iPad se ve raro arriba y transparente arriba mira…»*)
+- **Qué pasaba**: en el iPad con el panel instalado, la franja de la hora y la batería quedaba transparente y por debajo se veía pasar la
+  página desenfocada (los títulos de la tabla, las pestañas) al bajar. El encabezado (`position:sticky; top:0`) se pegaba DEBAJO de esa franja:
+  sin `viewport-fit=cover` la página «empieza» abajo de la hora, pero el iPad la dibuja igual por detrás de la franja.
+- **Arreglo**: la página llega hasta arriba (`viewport-fit=cover`) y pide la letra de la hora en blanco (`apple-mobile-web-app-status-bar-style:
+  black-translucent`, con `apple-mobile-web-app-capable`/`mobile-web-app-capable` y el título «MultiEspumas»). `--sa-t` = `env(safe-area-inset-top)`
+  (0 en la compu y en el navegador de la compu) y **el encabezado lleva `padding-top: var(--sa-t)`**: su color cubre la franja y el logo, el título
+  y los anillos quedan debajo de la hora. `--hdr-h` ya la cuenta (`hdrMedir` mide el alto entero), así que lo que se pega debajo del encabezado no
+  queda tapado. `wcoMedir` (corre siempre ahora, también sin `windowControlsOverlay`, con `resize` y `orientationchange`) lee ese relleno y, si hay
+  franja y no hay ventana sin barra, pone **`html.sa-top`** + `--wco-bg` (el color del tema): **cada ventana a pantalla completa lleva la franja
+  del tema (`border-top: var(--sa-t)`), la MISMA lista de `html.wco` menos `#pap-overlay`**, cuya cabecera ya la suma (`.pap-cab`). `.pal-ov`,
+  `.pap-cab` y `.asis-tour` usan `--sa-t` en vez de `env()` directo (así se prueba). El iPhone acostado: `body` con `padding-left/right` de
+  `env(safe-area-inset-left/right)` (nada bajo la cámara). Abajo: el aviso (`.toast`), «Deshacer» (`.desh`) y Bloki (`.asis`) suben
+  `env(safe-area-inset-bottom)` (la rayita del iPad); las del celular ya lo tenían (antes daban 0: sin `cover` el `env()` no mide).
+  ⚠️ Una ventana NUEVA a pantalla completa va en las dos listas (`html.wco` y `html.sa-top`): `test_ipad_franja` §4c compara las dos.
+- `tests/test_ipad_franja.js` (23; 16 rojas contra `818db82`): Playwright no tiene la franja (el `env()` da 0), se simula con `--sa-t` + `resize`.
+  Mide el iPad parado y acostado: el encabezado en 0 con 24 px de relleno, el logo debajo, bajando 300/900/2000 px lo que está debajo de la hora es
+  siempre el encabezado, `--hdr-h` = alto del encabezado, las 20 ventanas con la franja y ningún botón debajo de la hora, Halloween con su color, y
+  que todo se va si la franja se va. ⚠️ Lo que hace iOS por detrás de la franja no se puede ver acá: se confirma en el iPad del dueño (después del
+  F5/«Recargar», cerrar y abrir la app).
+- `PANEL_V` = `panel-version.json` = 2026-10-30-b (las ventanas abiertas ven «Hay una versión nueva del panel»).
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
