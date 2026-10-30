@@ -148,7 +148,8 @@ function pngTam(f) { const d = fs.readFileSync(f); return [d.readUInt32BE(16), d
         const reglas = [];
         const mirar = rs => { for (const ru of rs) { if (ru.cssRules && !ru.style) { mirar(ru.cssRules); continue; } if (!ru.style) continue;
           if (/html\.wco \.modal-overlay/.test(ru.selectorText || '')) lista = ru.selectorText.split(',').map(s => s.trim().replace(/^html\.wco /, ''));
-          if (ru.style.position === 'fixed' && (ru.style.top === '0px') && (ru.style.bottom === '0px')) reglas.push(ru.selectorText); } };
+          // (30/10, §4ob) una capa que no se puede tocar (`pointer-events:none`: el fondo de la noche de octubre/noviembre) no es una ventana
+          if (ru.style.position === 'fixed' && (ru.style.top === '0px') && (ru.style.bottom === '0px') && ru.style.pointerEvents !== 'none') reglas.push(ru.selectorText); } };
         for (const ss of document.styleSheets) { try { mirar(ss.cssRules); } catch (e) {} }
         const faltan = reglas.filter(s => lista.indexOf(s) < 0 && EXTRA.indexOf(s) < 0);
         // las que arma la página al abrirse: se crea una de cada una y se mira la franja
