@@ -15,7 +15,7 @@
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
 let PASS = 0, FAIL = 0;
-const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 600)) : ''); };
+const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, process.env.TODO ? 1e6 : 600)) : ''); };
 const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.html');
 const SCR = '/tmp/claude-0/-home-user-MULTIESPUMAS/dab3dfa4-9445-5474-b412-a4265b40568c/scratchpad';
 const LEAFLET_DIR = process.env.LEAFLET_DIR || path.join(SCR, 'lf/package');
@@ -112,16 +112,37 @@ function lista() {
       const base = cb.a >= .99 ? cb : mezcla(cb, NOCHE);
       const tw = document.createTreeWalker(card, NodeFilter.SHOW_TEXT); let n;
       while ((n = tw.nextNode())) {
-        if (!n.nodeValue.trim()) continue; const el = n.parentElement, rr = el.getBoundingClientRect(); if (!rr.width || !rr.height) continue;
+        if (!n.nodeValue.trim() || n.nodeValue.trim() === '—') continue;   // el «—» de «sin dato» va gris claro a propósito, desde siempre
+        const el = n.parentElement, rr = el.getBoundingClientRect(); if (!rr.width || !rr.height) continue;
         const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || +cs.opacity === 0) continue;
-        const capas = []; let a = el, img = false, opaco = false;
-        while (a && a !== card) { const s = getComputedStyle(a), c = parse(s.backgroundColor); if (s.backgroundImage !== 'none') { img = true; break; } if (c && c.a > 0) { capas.push(c); if (c.a >= .99) { opaco = true; break; } } a = a.parentElement; }
-        if (img || opaco) continue;
-        let bg = base; for (let i = capas.length - 1; i >= 0; i--) bg = mezcla(capas[i], bg);
+        // Lo que hay detrás de la letra: las capas hasta la tarjeta, o hasta un fondo propio que tapa (color entero, o un degradé
+        // de colores enteros: ahí se mide contra CADA color del degradé y vale el peor). Una imagen de verdad (url) no se mide.
+        const capas = []; let a = el, img = false, fondos = null;
+        while (a && a !== card) {
+          const s = getComputedStyle(a), c = parse(s.backgroundColor);
+          if (s.backgroundImage !== 'none') {
+            const st = /url\(/.test(s.backgroundImage) ? [] : (s.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(parse);
+            if (st.length && st.every(x => x && x.a >= .9)) { fondos = st.map(x => c && c.a > 0 ? x : x); break; }
+            img = true; break;
+          }
+          if (c && c.a > 0) { if (c.a >= .99) { fondos = [c]; break; } capas.push(c); }
+          a = a.parentElement;
+        }
+        if (img) continue;
         const col = parse(cs.color); if (!col) continue;
-        const cr = ratio(mezcla(col, bg), bg), fs = parseFloat(cs.fontSize), grande = fs >= 18.66 || (fs >= 14 && +cs.fontWeight >= 700);
+        // Sobre un fondo propio solo cuenta la letra CLARA sobre un fondo CLARO (la que el vidrio aclaró de más, como el título de
+        // «El viaje de las ATC» en su recuadro blanco): la gris sobre blanco y la blanca sobre un botón de color son de siempre.
+        let cr = 99;
+        for (const f0 of (fondos || [base])) {
+          let bg = f0; for (let i = capas.length - 1; i >= 0; i--) bg = mezcla(capas[i], bg);
+          const lc = mezcla(col, bg);
+          if (fondos && (lum(lc) < .45 || lum(bg) < .6)) continue;   // gris sobre blanco o blanca sobre un botón de color: diseño de siempre
+          cr = Math.min(cr, ratio(lc, bg));
+        }
+        const fs = parseFloat(cs.fontSize), grande = fs >= 18.66 || (fs >= 14 && +cs.fontWeight >= 700);
         if (cr >= (grande ? 3 : 4.5)) continue;
-        const k = el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/)[0] : '') + ' «' + n.nodeValue.trim().slice(0, 30) + '» ' + cr.toFixed(1);
+        const nom = x => x.tagName.toLowerCase() + (x.id ? '#' + x.id : '') + (typeof x.className === 'string' && x.className.trim() ? '.' + x.className.trim().split(/\s+/)[0] : '');
+        const k = nom(el) + ' «' + n.nodeValue.trim().slice(0, 30) + '» ' + cr.toFixed(1) + (fondos && a ? ' (sobre ' + nom(a) + ')' : '');
         malos[k] = 1;
       }
     }
@@ -152,7 +173,7 @@ function lista() {
       const r = await auditar(page); if (!r.vidrio) sinVidrio.push(nom); r.malos.forEach(m => malos.push(nom + ': ' + m));
     }
     chk('2a ' + vp.width + ' px: todas las pestañas con la tarjeta grande de vidrio', sinVidrio.length === 0, sinVidrio);
-    chk('2b ' + vp.width + ' px: nada con poco contraste sobre el vidrio (con pedidos)', malos.length === 0, malos.slice(0, 10));
+    chk('2b ' + vp.width + ' px: nada con poco contraste sobre el vidrio (con pedidos)', malos.length === 0, process.env.TODO ? malos : malos.slice(0, 10));
     // vacías
     await page.evaluate(async () => { window.__L = { ok: true, version: '2026-10-29-b', ahora: Date.now(), pedidos: [] }; await refrescarEstado(); });
     const malos2 = [];
