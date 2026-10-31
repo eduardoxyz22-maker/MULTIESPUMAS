@@ -17141,7 +17141,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   403: la primera publicación achicada sale con la del dashboard de las 17:00 (`workflow_run`) o con Run workflow a mano. Antes, `test_achicar` con
   el `pedidos.html` de `main` (2026-10-31-c): 25/25, 4.289.004 → 2.902.559 (68 %).
 
-### §4og — 🧽🎃🌼 BLOKI SE VISTE SEGÚN EL TEMA DEL MES (31/10; dueño, con la captura de Bloki vendedor: *«y el hdp este no debería vestirse acorde a la temática del mes?»*; EN LA RAMA, `8a19547`; muestra https://claude.ai/artifact/GJ2VwiF5Kf22H89YXC4vjH; espera «publica»)
+### §4og — 🧽🎃🌼 BLOKI SE VISTE SEGÚN EL TEMA DEL MES (31/10; dueño, con la captura de Bloki vendedor: *«y el hdp este no debería vestirse acorde a la temática del mes?»*; muestra https://claude.ai/artifact/GJ2VwiF5Kf22H89YXC4vjH → *«me gustan todos menos el de todos santos»* → *«B… aplica»*; PUBLICADO 31/10 ~14:02 de Bolivia, `d48e7df`, versión 2026-10-31-f = `8a19547`+`2b3e3c6`+`e6420eb` solo `pedidos.html` y pruebas)
 - Antes solo había el gorro de Papá Noel en diciembre, y solo para Bloki, Contabilidad y Anuncio (§4nc). Ahora **`blokiTemaPartes(tema, traje)`**
   arma lo de cada tema en cinco lugares: atrás del cuerpo (`atras`), en la mano que saluda (`mano`, adentro de `.bk-mano`: se mueve con ella), la
   cara (`cara`, después de ojos y boca), adelante (`delante`) y la cabeza (`cabeza`). **La cabeza solo con la cabeza libre** (Bloki, Contabilidad,
@@ -17159,6 +17159,15 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
 - `test_bloki` §7 (28; 5 rojas contra `main`); §1 mira los trajes con el tema Espuma (el reloj de la prueba cae en octubre). `test_navidad` §3 cambió a
   conciencia: en noviembre ya no hay chispa, hay corona. Corridas: asistente 24, anuncio 47, temas_mejoras 92, semana_grito 28, halloween 22,
   quien 13, asistente_ak 38 (4 rojas una vez con la máquina cargada; sola y contra `main`, 38/0), mejoras_5_7_9 57.
+- **Publicación (31/10 ~14:02)**: en la copia, bloki 29, navidad 21, versión nueva 27, asistente 24, anuncio 47, semana_grito 28, achicar 25
+  (`ESBUILD_PATH`), halloween 22, quien 13; corrida 7 de `publicar-pages.yml` bien (18:02 UTC).
+- **🎨 «No me termina de gustar Bloki»** (dueño, 31/10: *«qué otro diseño podemos usar… no necesariamente un colchón pero algo acorde a la marca»*):
+  seis opciones dibujadas en SVG, con los colores del panel y de las tres hojas del logo, cada una normal / vendedor / logística y a tamaño de la
+  esquina (de día y con el fondo de noviembre): **1 Bloki 2.0** (pillow-top con botones y las tres franjas del logo), **2 Espumi** (burbuja de
+  espuma turquesa), **3 Nubi** (nube, «dormir en las nubes»), **4 Hoji** (brotecito con las tres hojas del logo en la cabeza), **5 Almo**
+  (almohada con ribete turquesa y antifaz de dormir), **6 Lanita** (ovejita). Página: https://claude.ai/artifact/2REx91aQpgtyJd9jDv6rtu.
+  Fuente de los dibujos en el scratchpad (`masc/masc.js`): si elige una, se pasa a `blokiSvg` con sus anclas (cabeza, manos, pies) para que
+  los cinco trajes y `blokiTemaPartes` sigan andando. Nada cambió en el panel todavía.
 
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
