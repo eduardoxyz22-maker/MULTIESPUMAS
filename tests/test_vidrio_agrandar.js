@@ -3,7 +3,8 @@
    directo sobre ella se lee. Z: en pantallas de 1.800 px o más el panel se agranda 1,25 (como el zoom de 125 % del navegador).
    Lo que cuida:
    1. Toda medida de la pantalla (`vh`/`vw`) va dividida por `--vz`: con `zoom` una ventana de 90vh quedaba más alta que la pantalla.
-   2. Vidrio: en cada pestaña y sub-vista (con pedidos y vacías), ningún texto queda con poco contraste sobre el vidrio (a 1.920 y a 1.180).
+   2. Vidrio: en cada pestaña y sub-vista (con pedidos y vacías), ningún texto queda con poco contraste sobre el vidrio (a 1.920 y a 1.180;
+      y en noviembre, con el dorado de Todos Santos).
       Nuevo pedido y el candado de Administración siguen blancos; los demás meses no hay vidrio.
    3. Agrandado: 1,25 desde 1.800 px, nada debajo; ventanas (ficha, Ctrl+K, En vivo, Bloki, Stock, Pedido a producción) dentro de la pantalla;
       el desplegable de productos debajo de su campo; el fantasma de las pestañas sobre su pestaña; la página no se corre de costado.
@@ -142,7 +143,7 @@ function lista() {
     ['Chofer', () => { showView('chofer'); }],
   ];
   const NOV = Date.parse('2026-11-10T10:00:00-04:00');
-  for (const [vp, fecha] of [[{ width: 1920, height: 1000 }, T0], [{ width: 1180, height: 820 }, T0]]) {
+  for (const [vp, fecha] of [[{ width: 1920, height: 1000 }, T0], [{ width: 1180, height: 820 }, T0], [{ width: 1920, height: 1000 }, NOV]]) {
     let { ctx, page } = await abrir(vp, fecha);
     if (fecha === NOV) vp.width += ' (noviembre)';
     const malos = [], sinVidrio = [];

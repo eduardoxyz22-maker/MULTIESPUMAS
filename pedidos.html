@@ -1360,6 +1360,19 @@ html.tema-todos-santos .footer a{ color:#fcd34d; }
   html.tema-todos-santos .nav button[id]:not(.active) .ico-b svg{ stroke:#fcd34d; }
   html.tema-todos-santos .nav button[id]:hover:not(.active){ background:rgba(58,16,72,.72); border-color:#f59e0b; color:#fff; }
 }
+/* 🪟 (31/10, §4oc) El vidrio oscuro también en noviembre, con el dorado de las velitas (las mismas reglas que octubre; ver arriba). Va con
+   el fondo de noviembre: sin él, una tarjeta oscura sobre el fondo claro. */
+html.tema-todos-santos :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-chofer) > .card, html.tema-todos-santos #admin-content > .card{
+  background:rgba(24,8,40,.45); border-color:rgba(251,191,36,.26); box-shadow:0 18px 44px -24px rgba(0,0,0,.7); }
+html.tema-todos-santos .af-g .af-gt{ color:#fde7c7; }
+html.tema-todos-santos .af-g > i, html.tema-todos-santos #adm-mas > div > span{ color:#e6d3f2 !important; }
+html.tema-todos-santos .af-ley span{ color:#efe0fa; }
+html.tema-todos-santos #mis-borradores > div, html.tema-todos-santos #view-mis > .card > div > b{ color:#ecdcf7 !important; }
+html.tema-todos-santos .tcol-tip{ color:#e6d3f2; }
+html.tema-todos-santos #view-atc .atv-t{ color:#fbefff; } html.tema-todos-santos #view-atc .atv-t small{ color:#e6d3f2; }
+html.tema-todos-santos .adm-cam-tit b, html.tema-todos-santos .bot-cab b{ color:#fde7c7; }
+html.tema-todos-santos .adm-cam-tit small, html.tema-todos-santos .adm-volver span, html.tema-todos-santos .bot-cab span{ color:#e6d3f2; }
+html.tema-todos-santos :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#ecdcf7; }
 /* 🎭 Carnaval (de jueves de comadres al martes de Carnaval: depende de la Pascua de cada año): colores y confeti. */
 html.tema-carnaval{ --grad-header:linear-gradient(135deg,#6d28d9,#db2777,#ea580c,#0d9488,#2563eb,#6d28d9); }
 html.tema-carnaval .header{ overflow:hidden; }
