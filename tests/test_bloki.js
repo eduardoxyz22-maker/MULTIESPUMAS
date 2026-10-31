@@ -151,8 +151,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       Object.keys(visto).every(t => visto[t].vendedor.gorra && visto[t].logistica.casco && visto[t].conta.anteojos && visto[t].anuncio.mega && trajes.every(tr => visto[t][tr].franja)), '');
   chk('el vendedor y logística no se ponen nada ENCIMA de su gorra o su casco (sombrero de bruja, corona, gorro, gorrito)',
       Object.keys(visto).every(t => !visto[t].vendedor.cabeza && !visto[t].logistica.cabeza), '');
-  chk('Bloki con algo en la cabeza no lleva la chispa (Halloween, Todos Santos, Navidad, Año Nuevo); con la mano ocupada (Madre, banderas) sí',
-      ['halloween','todos-santos','navidad','anio-nuevo'].every(t => visto[t].bloki.cabeza && !visto[t].bloki.chispa) && ['madre','patria','santa-cruz','carnaval'].every(t => visto[t].bloki.chispa), '');
+  chk('Bloki con algo en la cabeza no lleva la chispa (Halloween, Navidad, Año Nuevo); sin nada en la cabeza sí (Todos Santos, solo la calaverita: «B»)',
+      ['halloween','navidad','anio-nuevo'].every(t => visto[t].bloki.cabeza && !visto[t].bloki.chispa) && ['todos-santos','madre','patria','santa-cruz','carnaval'].every(t => !visto[t].bloki.cabeza && visto[t].bloki.chispa), '');
+  r = await ev(() => { var h=document.documentElement; h.className=h.className.replace(/(^|\s)tema-[a-z-]+/g,' ')+' tema-todos-santos'; BLOKI_SRC={};
+    var o={}; Object.keys(BLOKI_TRAJES).forEach(function(t){ var s=blokiSvg(t); o[t]={ cal:/bk-calaverita/.test(s), flores:/bk-corona|bk-flores-gorra|bk-calavera"/.test(s), mej:/#f6a5ab/.test(s) }; }); return o; });
+  chk('Todos Santos (dueño: «B»): la calaverita a sus pies, la cara de siempre (con sus cachetes) y sin flores ni cara pintada',
+      trajes.every(t => r[t] && r[t].cal && !r[t].flores && r[t].mej), r);
   chk('la bandera del 6 de Agosto es la de Bolivia y la del 24 de Septiembre la de Santa Cruz',
       /#d52b1e/.test(decodeURIComponent(visto.patria.bloki.src)) && /#f9e300/.test(decodeURIComponent(visto.patria.bloki.src)) && !/#f9e300/.test(decodeURIComponent(visto['santa-cruz'].bloki.src)) && /#00843d/.test(decodeURIComponent(visto['santa-cruz'].bloki.src)), '');
   chk('la memoria de dibujos va por traje Y tema: el mismo traje en otro mes es otro dibujo', visto.halloween.vendedor.src!==visto['todos-santos'].vendedor.src && visto.navidad.bloki.src!==visto.madre.bloki.src, '');
