@@ -15763,7 +15763,10 @@ function submitPedido(){
   }
   /* 💵 (31/10) Sin el precio de venta de cada producto, una venta no se guarda (`preciosFaltan`). */
   var _sinPre=preciosFaltan(vendedor);
-  if(_sinPre.length && UNLOCKED && _sinPre.every(function(x){ return x.her; }) &&
+  /* (31/10, revisión de Fable 2.2) Con la clave, lo NUEVO sin precio se marca primero y solo eso (antes se pintaban también los renglones
+     que ya venían sin precio, y la cuenta los sumaba); lo heredado se pregunta después, con el `confirm`. */
+  if(UNLOCKED && _sinPre.some(function(x){ return !x.her; })) _sinPre=_sinPre.filter(function(x){ return !x.her; });
+  else if(_sinPre.length && UNLOCKED && _sinPre.every(function(x){ return x.her; }) &&
      confirm('💵 Este pedido ya estaba guardado SIN el precio de: '+_sinPre.map(function(x){ return x.n; }).join(', ')+'.\n\n'+
              'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, sin precio.\nCancelar: ponerle el precio.')) _sinPre=[];
   if(_sinPre.length){
@@ -21581,9 +21584,10 @@ function renderFueraDelMes(){
 }
 function admIrAlMes(mm){
   var el=document.getElementById('adm-mes'); if(el) el.value=mm;
-  admTopeReset(); renderAdmin();
+  admHoySoltar(); admTopeReset(); renderAdmin();
 }
 function admVerTodoElHistorial(){
+  admHoySoltar();
   segSet('adm-mode','todo');
   document.getElementById('wrap-dia').style.display='none';
   document.getElementById('wrap-mes').style.display='none';
@@ -21869,7 +21873,7 @@ function admMesMover(d){
   var m=String(el.value||monthStr()).match(/^(\d{4})-(\d{2})/); if(!m) return;
   var t=new Date(+m[1], +m[2]-1+d, 1);
   el.value=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2);
-  admTopeReset(); renderAdmin();
+  admHoySoltar(); admTopeReset(); renderAdmin();
 }
 /* ---------- 📋 Para hacer ---------- */
 function admNombres(L, n){ n=n||3; var t=L.slice(0,n).map(function(p){ return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' '); });
@@ -22164,13 +22168,23 @@ function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 function admVacioPintar(n){
   var el=document.getElementById('pedidos-empty'); if(!el) return;
   el.style.display=n?'none':'block'; if(n) return;
-  if(QUICK_FILTER==='hoy' && !(document.getElementById('adm-search')||{}).value){
+  var q=((document.getElementById('adm-search')||{}).value||'').trim();
+  if(QUICK_FILTER==='hoy' && !q){
     var d=quickDef('manana'), lbl=d && d.lblF ? d.lblF() : '➡️ Mañana';
     el.innerHTML='Hoy no hay entregas agendadas. '+
       '<span class="adm-vacio-b"><button type="button" class="btn btn-sm" onclick="setQuick(\'manana\')">'+esc(lbl)+'</button> '+
       '<button type="button" class="btn btn-ghost btn-sm" onclick="setQuick(\'\')">Ver todos</button></span>';
+  }else if(q && !QUICK_FILTER && segVal('adm-mode')!=='todo'){
+    /* (3.2) La búsqueda mira el período elegido (un mes, un día): lo de otro mes no aparece. Se dice y se ofrece buscar en todo. */
+    var md=segVal('adm-mode'), per=md==='dia' ? ('el '+fmtFechaCorta((document.getElementById('adm-dia')||{}).value||''))
+          : ('en '+mesNombre((document.getElementById('adm-mes')||{}).value||'').split(' ')[0]);
+    el.innerHTML='No encontré «'+esc(q)+'» '+esc(per)+'. '+
+      '<span class="adm-vacio-b"><button type="button" class="btn btn-sm" onclick="admVerTodoElHistorial()">🔎 Buscar en todos los meses</button></span>';
   }else el.textContent='No hay pedidos para este filtro todavía.';
 }
+/* (31/10, revisión de Fable 3.1) Mientras «Hoy» es solo lo de entrada (nadie eligió un chip), cambiar el día, el mes o el período, ir
+   a un mes o al historial, el calendario o «ver los de ROHO» lo sueltan: si no, la lista seguía en Hoy y el día elegido salía vacío. */
+function admHoySoltar(){ if(ADM_HOY_DEF && QUICK_FILTER==='hoy') QUICK_FILTER=''; ADM_HOY_DEF=false; }
 function setQuick(k){ ADM_HOY_DEF=false; QUICK_FILTER=(QUICK_FILTER===k?'':k); if(k==='semana' && QUICK_FILTER==='semana') semanaArrancar(); renderAdmin();
   if(k==='rpt' && QUICK_FILTER==='rpt' && rptFaltaPendientes().length) setTimeout(function(){ admIrA('adm-rpt'); }, 60); }   // 🏪 (propuesta 83) a la lista de las que faltó algo
 function renderChips(){
@@ -40520,6 +40534,7 @@ function renderImportRohoFin(creados, pendientes, fallos){
    es el lugar donde se les asigna chofer y se los tilda, o sea donde hay que verlos. */
 function irAImportadosRoho(mes){
   closeModal();
+  admHoySoltar();
   var sb=document.getElementById('adm-search'); if(sb) sb.value='ROHO';
   if(mes){
     segSet('adm-mode','mes');
@@ -48494,7 +48509,8 @@ function compsPagosDe(p){
     if(!(m>0) || c.metodo==='Efectivo') return;
     out.push({ p:p, f:f, met:cobroMetodoTxt(c)||'Sin método', monto:m, nota:limpiaNota(c.nota), comps:compsArr(c.comps!=null?c.comps:c.comp), envio:esEnvio(c),
                metB:String(c.metodo||''), ban:String(c.banco||''),   // 🤖 (§4mq C4) el método y el banco por separado, para comparar con la foto
-               ant:tieneAnt && i===0, fCarga:contaFecha(p) });       // 📅 el primer pago va con la fecha en que se cargó la venta
+               ant:tieneAnt && i===0, fCarga:contaFecha(p),          // 📅 el primer pago va con la fecha en que se cargó la venta
+               ix:i });                                              // 📎 (31/10) su renglón en `contaPagos` (la caja de debajo del pago)
   });
   return out;
 }
@@ -49470,32 +49486,54 @@ function iasPegada(pid, fid){
   IAS.peg[fid]=String(pid);
   x.comps.forEach(function(f){ iasPedir(f); });
 }
+/* (31/10, revisión de Fable) Se compara SOLO con todas las fotos del pago leídas: con una sin leer, una comparación a medias decía
+   «✅ coincide» por la foto vieja aunque la recién pegada no se hubiera leído (1.1). Lo que quedó sin pedir (la pausa de 15 min después de
+   un tope) se pide al repintar, como al subir (1.2); lo que falló no se repite y se dice. */
 function iasPegEvaluar(x){
-  if(!x || !x.comps.some(function(f){ return IAS.peg[f]; })) return null;
-  var cs=x.comps.filter(function(f){ return IAC.res[f] || IAS.lee[f]; });
-  if(!cs.length) return null;                     // no se pudo leer (tope, sin crédito, red): no se dice nada, como al subir
-  if(cs.some(function(f){ return !IAC.res[f]; })) return { est:'pe' };
-  var y=Object.assign({}, x, { comps:cs });
-  var refs=iacRefs(iasPagosRecientes().filter(function(z){ return !z.comps.some(function(f){ return cs.indexOf(f)>=0; }); }));
-  return iacComparar(y, refs);
+  if(!x) return null;
+  var pegs=x.comps.filter(function(f){ return IAS.peg[f]; }); if(!pegs.length) return null;
+  x.comps.forEach(function(f){ iasPedir(f); });   // iasPedir no repite lo leído, lo que se está leyendo ni lo que falló
+  if(x.comps.some(function(f){ return !IAC.res[f] && IAS.err[f]; })) return { est:'peg-err' };
+  if(x.comps.some(function(f){ return !IAC.res[f] && !IAS.lee[f]; })) return null;   // todavía no se pudo pedir (pausa): nada
+  if(x.comps.some(function(f){ return !IAC.res[f]; })) return { est:'pe' };
+  var refs=iacRefs(iasPagosRecientes().filter(function(z){ return !z.comps.some(function(f){ return x.comps.indexOf(f)>=0; }); }));
+  var c=iacComparar(x, refs);
+  /* (1.6) Una sola transferencia por el pago y el recargo por entrega del mismo día: la foto dice la suma. Como al subir (`x.flete` en
+     `iasEvaluar`), si con la suma deja de haber diferencia de plata, vale esa. */
+  var plata=function(r){ return (r.mot||[]).some(function(m){ return m.k==='menos' || m.k==='mas' || m.k==='mixto'; }); };
+  if(plata(c)){
+    var otro=0;
+    contaPagos(x.p).forEach(function(z){
+      if(!!esEnvio(z)===!!x.envio || (z.fecha||'')!==(x.f||'') || (esEnvio(z) && !envioYaCobrado(z))) return;
+      otro=r2(otro+(Number(z.monto)||0));
+    });
+    if(otro>0.005){ var c2=iacComparar(Object.assign({}, x, { monto:r2(x.monto+otro) }), refs); if(!plata(c2)) c=c2; }
+  }
+  return c;
 }
-function iasPegHtml(p, i){
-  var c=contaPagos(p)[i]; if(!c) return '';
-  var cs=compsArr(c.comps!=null?c.comps:c.comp), fid=''; cs.forEach(function(f){ if(!fid && IAS.peg[f]) fid=f; });
-  if(!fid) return '';
-  var x=iasPegX(p, fid), r=iasPegEvaluar(x); if(!r) return '';
+/* El pago de ESTE renglón (1.4: la caja va por la foto, no solo por el número de renglón, que cambia si la venta cambió mientras leía; y
+   si la misma foto está en dos pagos —el cobro y su recargo—, cada caja muestra el suyo). */
+function iasPegXDe(p, i, fid){
+  var L=compsPagosDe(p).filter(function(x){ return fid ? x.comps.indexOf(fid)>=0 : x.comps.some(function(f){ return IAS.peg[f]; }); });
+  return L.filter(function(x){ return x.ix===i; })[0] || (fid && L.length===1 ? L[0] : null);
+}
+function iasPegHtml(p, i, fid){
+  var x=iasPegXDe(p, i, fid); if(!x) return '';
+  var r=iasPegEvaluar(x); if(!r) return '';
+  if(r.est==='peg-err') return iasLinea('ias-gris', '🔎 No pude leer la foto ahora. <small>Queda para «🤖 Revisar las fotos con IA» del mes.</small>');
   return iasHtml(r, { donde:'peg', ef:false, cor:false, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+
     (r.est==='mal' ? iasLinea('ias-gris', '<small>Si hay que arreglarlo: <b>✏️ Corregir</b> en este pago.</small>') : '');
 }
 function iasPegBox(p, c, i){
-  var cs=compsArr(c && (c.comps!=null?c.comps:c.comp));
-  if(!cs.some(function(f){ return IAS.peg[f]; })) return '';
-  var h=''; try{ h=iasPegHtml(p, i); }catch(e){ h=''; }
-  return '<div class="ias-box ias-peg" aria-live="polite" data-id="'+esc(String(p.id))+'" data-i="'+i+'">'+h+'</div>';
+  var cs=compsArr(c && (c.comps!=null?c.comps:c.comp)), fid='';
+  cs.forEach(function(f){ if(!fid && IAS.peg[f]) fid=f; });
+  if(!fid) return '';
+  var h=''; try{ h=iasPegHtml(p, i, fid); }catch(e){ h=''; }
+  return '<div class="ias-box ias-peg" aria-live="polite" data-id="'+esc(String(p.id))+'" data-i="'+i+'" data-fid="'+esc(fid)+'">'+h+'</div>';
 }
 function iasPintarPeg(){
   [].slice.call(document.querySelectorAll('.ias-peg')).forEach(function(box){
-    var h=''; try{ var p=findById(box.getAttribute('data-id')); if(p) h=iasPegHtml(p, +box.getAttribute('data-i')); }catch(e){ h=''; }
+    var h=''; try{ var p=findById(box.getAttribute('data-id')); if(p) h=iasPegHtml(p, +box.getAttribute('data-i'), box.getAttribute('data-fid')||''); }catch(e){ h=''; }
     if(box._h!==h){ box.innerHTML=h; box._h=h; }
   });
 }
@@ -51242,6 +51280,7 @@ document.addEventListener('DOMContentLoaded',function(){
   initSeg('f-atc-comodin');
   initSeg('f-atc-tipo', atcTipoElegido);                         // 🛡️🔧 (§4lj)
   initSeg('adm-mode',function(val){
+    admHoySoltar();
     document.getElementById('wrap-dia').style.display=(val==='dia')?'block':'none';
     document.getElementById('wrap-mes').style.display=(val==='mes')?'block':'none';
     admTopeReset(); renderAdmin();
@@ -51254,8 +51293,10 @@ document.addEventListener('DOMContentLoaded',function(){
   var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){
     if(ADM_HOY_DEF && (QUICK_FILTER==='hoy' || QUICK_FILTER==='')) QUICK_FILTER=sb.value.trim() ? '' : 'hoy';   // 📅 (31/10) buscar mira todo; borrar vuelve a Hoy
     if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
-  document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
-  document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
+  /* (3.3) Un navegador que repone lo escrito al recargar (F5) dejaba «Hoy» + la búsqueda vieja = lista vacía sin explicación. */
+  if(sb){ sb.setAttribute('autocomplete','off'); if(ADM_HOY_DEF && sb.value.trim() && QUICK_FILTER==='hoy') QUICK_FILTER=''; }
+  document.getElementById('adm-dia').addEventListener('change',function(){ admHoySoltar(); if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
+  document.getElementById('adm-mes').addEventListener('change',function(){ admHoySoltar(); if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
   try{ tblCargarOrden(); tblEstilo(); }catch(e){}   // 🗂️ (§4nr, 33) las columnas y el orden de esta compu
   document.getElementById('f-maps').addEventListener('input',fxMapaProgramar);   // 🧰 (§4ih) el mapita
