@@ -17140,6 +17140,10 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   de `71ee8af` (corrida 4 de `publicar-pages.yml`, 12:35 de Bolivia): «Achicado pedidos.html: 4188 KB → 2835 KB · comprimido 1341 KB → 840 KB». `actions_run_trigger` de `publicar-pages.yml` desde acá da
   403: la primera publicación achicada sale con la del dashboard de las 17:00 (`workflow_run`) o con Run workflow a mano. Antes, `test_achicar` con
   el `pedidos.html` de `main` (2026-10-31-c): 25/25, 4.289.004 → 2.902.559 (68 %).
+  · **Revisado por la tarea programada (31/10, 17:25 de Bolivia)**: la cadena `workflow_run` anda. El «Generar Panel Heaven» del cron (corrida
+    560, 14:04-14:08 de Bolivia: GitHub demoró el cron de las 10:00) disparó la corrida 8 de `publicar-pages.yml` (14:08), con «ver» y «publicar»
+    en success (deploy-pages incluido). Las corridas 7 (`d48e7df`) y 9 (`63745b8`, push) también en success. El cron de las 17:00 todavía no había
+    arrancado a las 17:25 (GitHub lo demora). CLAUDE.md ya dice que el deploy es `402814225` y no `273388817`.
 
 ### §4og — 🧽🎃🌼 BLOKI SE VISTE SEGÚN EL TEMA DEL MES (31/10; dueño, con la captura de Bloki vendedor: *«y el hdp este no debería vestirse acorde a la temática del mes?»*; muestra https://claude.ai/artifact/GJ2VwiF5Kf22H89YXC4vjH → *«me gustan todos menos el de todos santos»* → *«B… aplica»*; PUBLICADO 31/10 ~14:02 de Bolivia, `d48e7df`, versión 2026-10-31-f = `8a19547`+`2b3e3c6`+`e6420eb` solo `pedidos.html` y pruebas)
 - Antes solo había el gorro de Papá Noel en diciembre, y solo para Bloki, Contabilidad y Anuncio (§4nc). Ahora **`blokiTemaPartes(tema, traje)`**
