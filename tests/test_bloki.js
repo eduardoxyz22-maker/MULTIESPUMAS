@@ -37,6 +37,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     try{ quienCerrar(); }catch(e){} });
 
   console.log('\n── 1. Los cinco trajes ──');
+  /* el reloj de la prueba cae en octubre (Halloween, §7): los trajes de siempre se miran con el tema de todo el año */
+  const ponerTema = (t) => ev((t) => { var h=document.documentElement; h.className=h.className.replace(/(^|\s)tema-[a-z-]+/g,' ')+' tema-'+t; BLOKI_SRC={}; }, t);
+  await ponerTema('espuma');
   let r = await ev(() => {
     if(typeof blokiSvg!=='function') return { no:1 };
     var o={};
@@ -122,6 +125,46 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('cuando el globo se va (o se abre la ventana), vuelve a su traje', r.despues==='vendedor' && !r.globoVisto && r.alAbrir==='vendedor', r);
   chk('el grito en pantalla entera es Bloki con su megáfono (sin el megáfono suelto de antes)', r.grito.ve && r.grito.traje==='anuncio' && r.grito.svg && !r.grito.viejo, r.grito);
   chk('el botón «📢 Decir anuncio» dice que lo grita Bloki', /Bloki lo grita/.test(r.boton||'') && !/Eduardo/.test(r.boton||''), r.boton);
+
+  console.log('\n── 7. Se viste según el tema del mes, con TODOS los trajes (31/10, dueño: «¿no debería vestirse acorde a la temática del mes?») ──');
+  const TEMAS={ halloween:'bk-capa', 'todos-santos':'bk-calavera', navidad:'bk-bufanda', 'anio-nuevo':'bk-mono', carnaval:'bk-serpentinas', madre:'#e11d48', patria:'bk-bandera', 'santa-cruz':'bk-bandera' };
+  const visto={};
+  for(const t of Object.keys(TEMAS)){
+    await ponerTema(t);
+    visto[t] = await ev((marca) => {
+      var o={};
+      Object.keys(BLOKI_TRAJES).forEach(function(tr){
+        var svg=blokiSvg(tr), d=new DOMParser().parseFromString(svg, 'image/svg+xml');
+        o[tr]={ ok:!d.querySelector('parsererror') && d.documentElement.nodeName==='svg', tema:svg.indexOf(marca)>=0,
+          gorra:/#9aa5ad/.test(svg) && /M60 62 Q62 24 120 22/.test(svg), casco:/M62 60 Q64 18 120 16 Q176 18 178 60 Z/.test(svg), anteojos:/r="14"/.test(svg),
+          mega:/class="bk-mega"/.test(svg), franja:svg.indexOf('#1aafa4')>=0, chispa:/class="bk-chispa"/.test(svg),
+          cabeza:/class="bk-(bruja|corona|gorro|fiesta|plumas)"/.test(svg), src:blokiSrc(tr) };
+      });
+      return o;
+    }, TEMAS[t]);
+  }
+  const trajes=['bloki','vendedor','logistica','conta','anuncio'];
+  chk('en cada tema los cinco trajes son SVG que se leen bien', Object.keys(visto).every(t => trajes.every(tr => visto[t][tr] && visto[t][tr].ok)), '');
+  chk('en cada tema TODOS los trajes llevan algo del tema (también el vendedor y logística, que era el reclamo)',
+      Object.keys(visto).every(t => trajes.every(tr => visto[t][tr].tema)), Object.keys(visto).map(t => t+':'+trajes.filter(tr => !visto[t][tr].tema)).join(' '));
+  chk('y cada traje sigue siendo él: gorra y tablita, casco, anteojos, megáfono, la franja turquesa',
+      Object.keys(visto).every(t => visto[t].vendedor.gorra && visto[t].logistica.casco && visto[t].conta.anteojos && visto[t].anuncio.mega && trajes.every(tr => visto[t][tr].franja)), '');
+  chk('el vendedor y logística no se ponen nada ENCIMA de su gorra o su casco (sombrero de bruja, corona, gorro, gorrito)',
+      Object.keys(visto).every(t => !visto[t].vendedor.cabeza && !visto[t].logistica.cabeza), '');
+  chk('Bloki con algo en la cabeza no lleva la chispa (Halloween, Todos Santos, Navidad, Año Nuevo); con la mano ocupada (Madre, banderas) sí',
+      ['halloween','todos-santos','navidad','anio-nuevo'].every(t => visto[t].bloki.cabeza && !visto[t].bloki.chispa) && ['madre','patria','santa-cruz','carnaval'].every(t => visto[t].bloki.chispa), '');
+  chk('la bandera del 6 de Agosto es la de Bolivia y la del 24 de Septiembre la de Santa Cruz',
+      /#d52b1e/.test(decodeURIComponent(visto.patria.bloki.src)) && /#f9e300/.test(decodeURIComponent(visto.patria.bloki.src)) && !/#f9e300/.test(decodeURIComponent(visto['santa-cruz'].bloki.src)) && /#00843d/.test(decodeURIComponent(visto['santa-cruz'].bloki.src)), '');
+  chk('la memoria de dibujos va por traje Y tema: el mismo traje en otro mes es otro dibujo', visto.halloween.vendedor.src!==visto['todos-santos'].vendedor.src && visto.navidad.bloki.src!==visto.madre.bloki.src, '');
+  await ponerTema('espuma');
+  r = await ev(() => { var s=blokiSvg('vendedor'); return { capa:/bk-capa/.test(s), cal:/bk-calavera/.test(s), buf:/bk-bufanda/.test(s), band:/bk-bandera/.test(s) }; });
+  chk('el resto del año (Espuma), sin nada de temporada', !r.capa && !r.cal && !r.buf && !r.band, r);
+  /* la figura de la esquina toma el tema de la página (la clase del <head> por la fecha: la prueba corre el 15/10 → Halloween) */
+  await ponerTema('halloween');
+  r = await ev(async () => { var espera=function(ms){ return new Promise(function(ok){ setTimeout(ok, ms); }); };
+    showView('mis'); await espera(60); var i=document.querySelector('#asis-yo img'); i.removeAttribute('data-traje'); blokiPoner();
+    return { traje:i.getAttribute('data-traje'), capa:/bk-capa/.test(decodeURIComponent(i.getAttribute('src'))) }; });
+  chk('la figura de la esquina sale vestida con el tema (Mis pedidos en octubre: vendedor con capa)', r.traje==='vendedor' && r.capa, r);
 
   console.log('\n── 6. El Eduardo de verdad sigue siendo Eduardo ──');
   const fuente=require('fs').readFileSync(PEDIDOS, 'utf8');

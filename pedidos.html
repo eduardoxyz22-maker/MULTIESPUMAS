@@ -50170,10 +50170,107 @@ var ASIS_LS_VISTOS='me_asis_vistos', ASIS_LS_MUDO='me_asis_mudo';
 /* 🧽 BLOKI: el bloque de espuma con la franja turquesa del colchón (dibujo del dueño, 15/10). Un SVG por traje. */
 var BLOKI_TRAJES={ bloki:'Bloki', vendedor:'Vendedor', logistica:'Logística', conta:'Contabilidad', anuncio:'Anuncio' };
 function temaNavidad(){ try{ return document.documentElement.classList.contains('tema-navidad'); }catch(e){ return false; } }
+/* 🎃🌼🎄🎆🎭💐🇧🇴💚 (31/10, dueño: «¿no debería vestirse acorde a la temática del mes?») El tema de la página (la clase `tema-…` que
+   pone el script del <head> según la fecha de Bolivia, o `?tema=`). */
+function blokiTema(){
+  try{ var c=document.documentElement.className.match(/(?:^|\s)tema-([a-z-]+)/); return c ? c[1] : 'espuma'; }catch(e){ return 'espuma'; }
+}
+/* Una flor de cempasúchil (Todos Santos): pétalos en anillo, el centro naranja y el botón amarillo. */
+function blokiFlor(cx, cy, r){
+  var h='<g class="bk-flor">', n=10;
+  for(var i=0;i<n;i++){ var a=i*2*Math.PI/n; h+='<circle cx="'+(cx+Math.cos(a)*r*.62).toFixed(1)+'" cy="'+(cy+Math.sin(a)*r*.62).toFixed(1)+'" r="'+(r*.42).toFixed(1)+'" fill="#f59e0b" stroke="#c2410c" stroke-width="1.4"/>'; }
+  return h+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*.52).toFixed(1)+'" fill="#fb923c" stroke="#c2410c" stroke-width="1.2"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(r*.22).toFixed(1)+'" fill="#fde047"/></g>';
+}
+/* Lo que Bloki se pone según el tema, en cinco lugares: atrás del cuerpo, en la mano que saluda, en la cara, adelante y en la cabeza.
+   La cabeza SOLO cuando el traje no trae nada ahí (el vendedor tiene gorra y logística casco: esos no se tocan, siguen siendo ellos). */
+function blokiTemaPartes(tema, traje){
+  var K='#1d1d1f', P={ atras:'', mano:'', cara:'', delante:'', cabeza:'', sinMejillas:false };
+  var cabezaLibre=(traje==='bloki' || traje==='conta' || traje==='anuncio');
+  var grita=(traje==='anuncio');
+  if(tema==='halloween'){
+    /* 🎃 capa de vampiro, colmillos y una calabaza en el piso; sombrero de bruja si la cabeza está libre */
+    P.atras='<g class="bk-capa"><path d="M58 64 C34 92 24 150 20 212 L44 202 L66 214 L92 204 L120 214 L148 204 L174 214 L196 202 L220 212 C216 150 206 92 182 64 Z" fill="#2b1446" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
+      '<path d="M62 82 L30 40 L70 60 Z M178 82 L210 40 L170 60 Z" fill="#ea580c" stroke="'+K+'" stroke-width="4" stroke-linejoin="round"/></g>';
+    P.cara = grita ? '<path d="M113 123 L119 123 L116 130 Z M121 123 L127 123 L124 130 Z" fill="#fff" stroke="'+K+'" stroke-width="2"/>'
+                   : '<path d="M109 124.5 L115 126 L112.5 133 Z M125 126 L131 124.5 L127.5 133 Z" fill="#fff" stroke="'+K+'" stroke-width="2" stroke-linejoin="round"/>';
+    P.delante='<g class="bk-calabaza"><path d="M39 196 Q38 188 44 185" fill="none" stroke="#3f6212" stroke-width="5" stroke-linecap="round"/>'+
+      '<ellipse cx="40" cy="209" rx="19" ry="15" fill="#f97316" stroke="'+K+'" stroke-width="4"/>'+
+      '<path d="M40 195 Q32 209 40 223 M40 195 Q48 209 40 223" fill="none" stroke="#c2410c" stroke-width="2.5"/>'+
+      '<path d="M29 205 L34 200 L37 207 Z M51 205 L46 200 L43 207 Z" fill="#fde047" stroke="'+K+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M29 213 L33 217 L37 213 L40 217 L43 213 L47 217 L51 213" fill="none" stroke="'+K+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></g>';
+    if(cabezaLibre) P.cabeza='<g class="bk-bruja"><ellipse cx="120" cy="54" rx="76" ry="12" fill="#2b1446" stroke="'+K+'" stroke-width="4.5"/>'+
+      '<path d="M84 52 C96 37 104 26 112 16 C118 8 132 10 148 20 C136 19 128 24 128 31 C130 39 142 46 156 52 Z" fill="#2b1446" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
+      '<path d="M88 45 Q120 38 152 45" fill="none" stroke="#f97316" stroke-width="8"/>'+
+      '<rect x="113" y="36" width="14" height="11" rx="2" fill="#fde047" stroke="'+K+'" stroke-width="3"/></g>';
+  }else if(tema==='todos-santos'){
+    /* 🌼 calavera pintada como en «Coco» (anillos y pétalos alrededor de los ojos, nariz de corazón, la sonrisa cosida) y cempasúchil:
+       corona si la cabeza está libre, dos flores en la gorra o el casco si no */
+    P.sinMejillas=true;
+    var pet=function(cx, cy, angs){ var h=''; angs.forEach(function(g, i){ var a=g*Math.PI/180, x=(cx+Math.cos(a)*19).toFixed(1), y=(cy+Math.sin(a)*19).toFixed(1);
+      h+='<ellipse cx="'+x+'" cy="'+y+'" rx="5.2" ry="3.2" transform="rotate('+g+' '+x+' '+y+')" fill="'+(i%2?'#ec4899':'#f97316')+'" stroke="#7c2d12" stroke-width="1"/>'; }); return h; };
+    P.cara='<g class="bk-calavera">'+(traje==='conta' ? '' : '<g fill="none" stroke="#7c3aed" stroke-width="3"><circle cx="103" cy="108" r="13"/><circle cx="137" cy="108" r="13"/></g>')+
+      pet(103,108,[130,165,200,235,270])+pet(137,108,[50,15,-20,-55,-90])+
+      '<path d="M120 121 C113 116 114 110 117.5 111 Q120 112 120 114.5 Q120 112 122.5 111 C126 110 127 116 120 121 Z" fill="'+K+'"/>'+
+      '<g fill="#1aafa4"><circle cx="113" cy="92" r="2.4"/><circle cx="120" cy="89" r="2.8"/><circle cx="127" cy="92" r="2.4"/></g>'+
+      blokiFlor(84,128,7)+blokiFlor(156,128,7)+
+      (grita ? '' : '<path d="M111 121 V128 M116 123.5 V130.5 M120 124.5 V131.5 M124 123.5 V130.5 M129 121 V128" stroke="'+K+'" stroke-width="2.2" stroke-linecap="round"/>')+'</g>';
+    P.cabeza = cabezaLibre
+      ? '<g class="bk-corona"><g fill="#16a34a" stroke="#14532d" stroke-width="1.5"><ellipse cx="82" cy="52" rx="9" ry="4" transform="rotate(-20 82 52)"/><ellipse cx="108" cy="45" rx="9" ry="4" transform="rotate(-8 108 45)"/>'+
+          '<ellipse cx="132" cy="45" rx="9" ry="4" transform="rotate(8 132 45)"/><ellipse cx="158" cy="52" rx="9" ry="4" transform="rotate(20 158 52)"/></g>'+
+          blokiFlor(68,56,13)+blokiFlor(94,46,13)+blokiFlor(120,42,14)+blokiFlor(146,46,13)+blokiFlor(172,56,13)+'</g>'
+      : '<g class="bk-flores-gorra">'+blokiFlor(70,52,12)+blokiFlor(90,40,10)+'</g>';
+  }else if(tema==='navidad'){
+    /* 🎄 bufanda para todos; el gorro de Papá Noel lo dibuja blokiSvg (§4nc); en la gorra o el casco, una ramita de acebo */
+    P.delante='<g class="bk-bufanda"><g clip-path="url(#bk-cuerpo)"><rect x="44" y="141" width="152" height="15" fill="#d62839"/>'+
+      '<path d="M44 148.5 H196" stroke="#fff" stroke-width="3.5" stroke-dasharray="9 9"/></g>'+
+      '<path d="M48 141 H192 M48 156 H192" stroke="'+K+'" stroke-width="3.5"/>'+
+      '<path d="M72 150 L64 192 L82 195 L88 152 Z" fill="#d62839" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+      '<path d="M69 166 L86 168 M67 178 L84 181" stroke="#fff" stroke-width="3.5"/>'+
+      '<path d="M66 193 V200 M71 194 V201 M76 194.5 V201.5 M81 195 V202" stroke="#d62839" stroke-width="2.6" stroke-linecap="round"/></g>';
+    if(!cabezaLibre) P.cabeza='<g class="bk-acebo"><g fill="#15803d" stroke="#14532d" stroke-width="1.6"><path d="M64 52 Q72 40 84 44 Q76 54 64 52 Z"/><path d="M86 46 Q96 36 106 42 Q96 52 86 46 Z"/></g>'+
+      '<g fill="#dc2626" stroke="'+K+'" stroke-width="1.6"><circle cx="82" cy="50" r="4.2"/><circle cx="89" cy="53" r="4.2"/><circle cx="85" cy="44" r="4"/></g></g>';
+  }else if(tema==='anio-nuevo'){
+    /* 🎆 papel picado de colores, moño dorado y gorrito de fiesta si la cabeza está libre */
+    var cf=[[22,30,'#f43f5e',20],[42,12,'#fbbf24',-30],[206,10,'#22d3ee',40],[236,72,'#a78bfa',-15],[22,140,'#34d399',25],[224,128,'#f43f5e',-40],[252,104,'#fbbf24',10],[18,96,'#a78bfa',-20],[238,178,'#22d3ee',30],[226,34,'#34d399',-10]];
+    P.atras='<g class="bk-confeti">'+cf.map(function(c){ return '<rect x="'+(c[0]-3)+'" y="'+(c[1]-5)+'" width="6" height="10" rx="1.5" fill="'+c[2]+'" transform="rotate('+c[3]+' '+c[0]+' '+c[1]+')"/>'; }).join('')+'</g>';
+    P.delante='<g class="bk-mono"><path d="M120 149 L101 139 L101 159 Z M120 149 L139 139 L139 159 Z" fill="#fbbf24" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+      '<rect x="114" y="143" width="12" height="12" rx="3" fill="#f59e0b" stroke="'+K+'" stroke-width="3"/></g>';
+    if(cabezaLibre) P.cabeza='<g class="bk-fiesta"><path d="M98 56 L128 10 L152 54 Z" fill="#fbbf24" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
+      '<path d="M108 40 L140 32 M114 28 L135 22 M102 50 L146 42" stroke="#7c3aed" stroke-width="4" stroke-linecap="round"/>'+
+      '<circle cx="128" cy="9" r="7" fill="#f43f5e" stroke="'+K+'" stroke-width="3.5"/></g>';
+  }else if(tema==='carnaval'){
+    /* 🎭 serpentinas, papel picado y antifaz con pluma (el contador, con sus anteojos, sin antifaz) */
+    P.atras='<g class="bk-serpentinas" fill="none" stroke-width="4" stroke-linecap="round"><path d="M22 34 q9 8 0 16 q-9 8 0 16 q9 8 0 16" stroke="#ec4899"/>'+
+      '<path d="M228 112 q9 8 0 16 q-9 8 0 16 q9 8 0 16" stroke="#fbbf24"/><path d="M212 14 q9 8 0 16 q-9 8 0 16" stroke="#22d3ee"/><path d="M24 132 q9 8 0 16 q-9 8 0 16" stroke="#a78bfa"/></g>'+
+      '<g fill="#fbbf24"><circle cx="40" cy="16" r="3.5"/><circle cx="250" cy="90" r="3.5"/><circle cx="34" cy="112" r="3"/></g><g fill="#22d3ee"><circle cx="244" cy="160" r="3.5"/><circle cx="16" cy="70" r="3"/></g>';
+    if(traje!=='conta') P.cara='<g class="bk-antifaz"><path fill-rule="evenodd" d="M82 104 C82 92 98 90 110 96 Q120 101 130 96 C142 90 158 92 158 104 C158 118 144 122 132 116 Q120 110 108 116 C96 122 82 118 82 104 Z M95 108 a8 9 0 1 0 16 0 a8 9 0 1 0 -16 0 Z M129 108 a8 9 0 1 0 16 0 a8 9 0 1 0 -16 0 Z" fill="#7c3aed" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+      '<g fill="#fbbf24"><circle cx="90" cy="99" r="2"/><circle cx="150" cy="99" r="2"/><circle cx="120" cy="104" r="2"/></g>'+
+      '<path d="M156 100 C168 92 172 74 186 62 C188 78 178 94 160 104 Z" fill="#ec4899" stroke="'+K+'" stroke-width="3" stroke-linejoin="round"/>'+
+      '<path d="M160 100 C170 90 176 80 184 66" fill="none" stroke="'+K+'" stroke-width="1.6"/></g>';
+    else P.cabeza='<g class="bk-plumas" stroke="'+K+'" stroke-width="3" stroke-linejoin="round"><path d="M74 58 C62 44 60 26 66 10 C76 24 80 42 80 56 Z" fill="#ec4899"/>'+
+      '<path d="M82 54 C78 38 82 20 92 8 C96 24 94 40 88 54 Z" fill="#fbbf24"/><path d="M90 56 C94 42 104 30 118 24 C112 38 104 48 94 58 Z" fill="#22d3ee"/></g>';
+  }else if(tema==='madre'){
+    /* 💐 una flor en la mano que saluda y un corazón */
+    P.mano='<path d="M31 66 Q29 50 34 34" fill="none" stroke="#15803d" stroke-width="4" stroke-linecap="round"/>'+
+      '<ellipse cx="26" cy="50" rx="7" ry="3.5" transform="rotate(-35 26 50)" fill="#16a34a" stroke="#14532d" stroke-width="1.5"/>'+
+      '<g fill="#e11d48" stroke="#9f1239" stroke-width="1.5"><circle cx="34" cy="20" r="6.5"/><circle cx="41.6" cy="25.5" r="6.5"/><circle cx="38.7" cy="34.5" r="6.5"/><circle cx="29.3" cy="34.5" r="6.5"/><circle cx="26.4" cy="25.5" r="6.5"/></g>'+
+      '<circle cx="34" cy="28" r="4.5" fill="#fde047" stroke="#ca8a04" stroke-width="1.2"/>';
+    P.atras='<path class="bk-corazon" d="M60 26 C54 18 44 22 46 30 C48 36 60 42 60 42 C60 42 72 36 74 30 C76 22 66 18 60 26 Z" fill="#f472b6" stroke="'+K+'" stroke-width="3" stroke-linejoin="round"/>';
+  }else if(tema==='patria' || tema==='santa-cruz'){
+    /* 🇧🇴 💚 la bandera en la mano que saluda: la de Bolivia el 6 de Agosto, la de Santa Cruz el 24 de Septiembre (dibujadas: el emoji
+       de la bandera en Windows sale «BO») */
+    var cs=(tema==='patria') ? ['#d52b1e','#f9e300','#007934'] : ['#00843d','#fff','#00843d'];
+    P.mano='<path d="M31 72 V6" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/><circle cx="31" cy="5" r="3.2" fill="#fbbf24" stroke="'+K+'" stroke-width="1.5"/>'+
+      '<g class="bk-bandera"><rect x="32" y="7" width="52" height="11" fill="'+cs[0]+'"/><rect x="32" y="18" width="52" height="11" fill="'+cs[1]+'"/><rect x="32" y="29" width="52" height="11" fill="'+cs[2]+'"/>'+
+      '<rect x="32" y="7" width="52" height="33" fill="none" stroke="'+K+'" stroke-width="3"/></g>';
+  }
+  return P;
+}
 function blokiSvg(traje){
   traje=BLOKI_TRAJES[traje] ? traje : 'bloki';
   var K='#1d1d1f', T='#1aafa4', TO='#0f8f86', SW=6;
-  var ojos, boca, cejas='', extraAtras='', extraDelante='', brazoDer, mejillas=
+  var tema=blokiTema(), TP=blokiTemaPartes(tema, traje);
+  var ojos, boca, cejas='', extraAtras=TP.atras, extraDelante='', brazoDer, mejillas= TP.sinMejillas ? '' :
     '<ellipse cx="85" cy="126" rx="9.5" ry="5.5" fill="#f6a5ab" opacity=".9"/><ellipse cx="155" cy="126" rx="9.5" ry="5.5" fill="#f6a5ab" opacity=".9"/>';
   if(traje==='anuncio'){
     ojos='<g class="bk-ojos"><ellipse cx="103" cy="110" rx="5.5" ry="6.5" fill="'+K+'"/><ellipse cx="137" cy="110" rx="5.5" ry="6.5" fill="'+K+'"/></g>';
@@ -50193,7 +50290,7 @@ function blokiSvg(traje){
   /* 🎄 (27/10, §4nc) En diciembre, Bloki (y su traje de contabilidad y de anuncio) con gorro de Papá Noel; los que ya llevan gorra o
      casco, no. */
   var gorro=temaNavidad() && (traje==='bloki' || traje==='conta' || traje==='anuncio');
-  if(traje==='bloki' && !gorro) extraDelante+='<path class="bk-chispa" d="M182 6 Q185 20 199 23 Q185 26 182 40 Q179 26 165 23 Q179 20 182 6 Z" fill="'+T+'"/>';
+  if(traje==='bloki' && !gorro && !TP.cabeza) extraDelante+='<path class="bk-chispa" d="M182 6 Q185 20 199 23 Q185 26 182 40 Q179 26 165 23 Q179 20 182 6 Z" fill="'+T+'"/>';
   if(gorro) extraDelante+='<g class="bk-gorro"><path d="M62 50 Q70 8 124 6 Q166 6 194 24 Q184 28 176 50 Z" fill="#d62839" stroke="'+K+'" stroke-width="4.5" stroke-linejoin="round"/>'+
       '<path d="M96 18 Q122 10 150 14" fill="none" stroke="#f26b78" stroke-width="5" stroke-linecap="round"/>'+
       '<rect x="50" y="40" width="140" height="17" rx="8.5" fill="#fff" stroke="'+K+'" stroke-width="4"/>'+
@@ -50250,7 +50347,7 @@ function blokiSvg(traje){
     '<ellipse cx="95" cy="220" rx="14" ry="7.5" fill="'+TO+'" stroke="'+K+'" stroke-width="4"/><ellipse cx="145" cy="220" rx="14" ry="7.5" fill="'+TO+'" stroke="'+K+'" stroke-width="4"/>'+
     /* el brazo que saluda */
     '<g class="bk-mano"><path d="M49 116 C34 110 28 94 31 74" fill="none" stroke="'+K+'" stroke-width="5" stroke-linecap="round"/>'+
-      '<circle cx="31" cy="68" r="8.5" fill="#fff" stroke="'+K+'" stroke-width="4.5"/></g>'+
+      TP.mano+'<circle cx="31" cy="68" r="8.5" fill="#fff" stroke="'+K+'" stroke-width="4.5"/></g>'+
     brazoDer+
     /* el cuerpo: blanco arriba, la franja turquesa con su costura abajo */
     '<rect x="48" y="50" width="144" height="148" rx="30" fill="#fff"/>'+
@@ -50261,12 +50358,14 @@ function blokiSvg(traje){
     '<path d="M62 179 H178" stroke="#fff" stroke-width="3.2" stroke-dasharray="7 6" stroke-linecap="round"/>'+
     '<g stroke="#a7ddd8" stroke-width="3" stroke-linecap="round"><path d="M84 70 l6 6 M90 70 l-6 6 M117 65 l6 6 M123 65 l-6 6 M150 70 l6 6 M156 70 l-6 6"/></g>'+
     '<rect x="48" y="50" width="144" height="148" rx="30" fill="none" stroke="'+K+'" stroke-width="'+SW+'"/>'+
-    mejillas+ojos+cejas+boca+
-    manoDer+extraDelante+
+    mejillas+ojos+cejas+boca+TP.cara+
+    manoDer+TP.delante+extraDelante+TP.cabeza+
   '</svg>';
 }
 var BLOKI_SRC={};
-function blokiSrc(traje){ traje=BLOKI_TRAJES[traje] ? traje : 'bloki'; return BLOKI_SRC[traje] || (BLOKI_SRC[traje]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(blokiSvg(traje))); }
+/* la memoria va por traje Y tema: el mismo traje en otro mes es otro dibujo */
+function blokiSrc(traje){ traje=BLOKI_TRAJES[traje] ? traje : 'bloki'; var k=traje+'|'+blokiTema();
+  return BLOKI_SRC[k] || (BLOKI_SRC[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(blokiSvg(traje))); }
 function blokiTraje(){
   if(ASIS.anuncioFig) return 'anuncio';
   /* 🧽 SEGÚN LA PESTAÑA, PARA TODOS (27/10 a la noche; el dueño cambió de pestaña con su nombre elegido y Bloki seguía igual, y eligió

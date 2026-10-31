@@ -100,7 +100,8 @@ function armarDashboard(){
   await page.close();
   page = await abrir(PEDIDOS, '2026-11-15T10:00:00-04:00');
   b = await page.evaluate(() => { BLOKI_SRC={}; return blokiSvg('bloki'); });
-  chk('3 · en noviembre, sin gorro y con su chispa', !/bk-gorro/.test(b) && /class="bk-chispa"/.test(b), '');
+  /* (31/10) desde que Bloki se viste según el tema del mes, en noviembre lleva la corona de cempasúchil (y por eso no la chispa) */
+  chk('3 · en noviembre, sin gorro de Papá Noel: con su corona de cempasúchil', !/bk-gorro/.test(b) && /class="bk-corona"/.test(b), '');
   await page.close();
 
   console.log('\n── 4. El dashboard de ventas ──');
