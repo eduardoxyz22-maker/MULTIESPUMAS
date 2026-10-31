@@ -17082,6 +17082,21 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   relacionadas en verde (vidrio 27, fondo 19, sin_barra 37, iPad 23, 5_7_9 57, temas 92, 3_10_11 29, ayudas 30, fichas 14+14, escenas 24, versión 27,
   Halloween 22, estética 35+9, patio 48, camiones 3D 28, nueve 62, teclado 15, informe ATC 62, arriba 24, Bloki 19).
 
+### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; EN LA RAMA, espera «publica»)
+- **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
+  mes: Fernando 76 de 76, Jonathan 25 de 29, Maria 15 de 35, Juan 9 de 53, Isabel 4 de 28, Mauricio 2 de 60, Carola 2 de 50, Mirian 0 de 41;
+  ROHO 129 de 129 (llegan del Excel sin precio), ALBA 24 de 25 (interno), Eduardo 4 de 40. Ninguno dice «regalo»/«obsequio».
+- **Qué hace** (`precioObligatorio`, `preciosFaltan`): en una VENTA (📄 OC, también la venta de tienda) cada producto lleva su «Precio c/u» > 0, al crear y
+  al editar; si no, Guardar frena, pinta en rojo el precio que falta y dice de qué producto. No en ATC ni RPT (no se vende), ni para Eduardo y ROHO
+  (`esVendedorLite`), ni en los pedidos internos (`cliEsInterno`). Un 0 no vale.
+- **Pedido viejo sin precio**: `editPedido` marca `data-sin-precio` en el renglón que ya venía sin precio; mientras siga igual (`data-orig`) es heredado:
+  la vendedora tiene que ponerlo; con la clave de Administración se guarda igual tras un `confirm` (como la ATC vieja, §4lh). Un producto NUEVO sin
+  precio no pasa ni con la clave.
+- `fxPasosEstado` (paso «Productos») y «Para guardar» (`Precios`) piden lo mismo (§4mj). Asterisco en «Precio c/u» con `#view-form.precio-oblig`
+  (`precioObligPintar` desde `applyVendedorLite` y `pintarDocTipo`).
+- ⚠️ En Playwright apagado salvo `window.PRECIO_PRUEBA` (54 pruebas guardan ventas de ejemplo sin precio). `tests/test_precio_obligatorio.js` (21;
+  12 rojas contra lo publicado, `7b2cfce`).
+
 ### §4od — 📅 ADMINISTRACIÓN ABRE EN «HOY», Y SALEN NOVIEMBRE Y LA VELOCIDAD (31/10; dueño: *«A ver lo de noviembre»* → muestra https://claude.ai/artifact/C8yJhgCgQb3ZB7H7gzKV3B → *«Ok publica digo que si. Lo que había pendiente y si a lo de noviembre. Otro detalle veo que administración entra por defecto en "todas" en vez de hoy día y eso ralentiza un poco y satura todo»* → *«Publica con Hoy»*; PUBLICADO 31/10 ~10:52 de Bolivia, `7b2cfce`, versión 2026-10-31-b)
 - **Lo que salió junto**: el fondo de Todos Santos (`6724124`, que en `main` estaba sacado por `05d1cc1`), su vidrio dorado (`8ec441b`), el arreglo
   de la letra clara (`2a18f23`), la velocidad 84-90 (§4oa: `330560c`, `8c4193e`, `ff2a3ca`, la parte de revisión de `087951c`, `a05f523`,
