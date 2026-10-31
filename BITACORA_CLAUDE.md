@@ -17082,6 +17082,24 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   relacionadas en verde (vidrio 27, fondo 19, sin_barra 37, iPad 23, 5_7_9 57, temas 92, 3_10_11 29, ayudas 30, fichas 14+14, escenas 24, versión 27,
   Halloween 22, estética 35+9, patio 48, camiones 3D 28, nueve 62, teclado 15, informe ATC 62, arriba 24, Bloki 19).
 
+### §4of — 🤖 «¿NO SE LEÍAN AL SUBIRLAS?» LAS 76 FOTOS DEL 31/10 · 🚀 PAGES PASA A «GITHUB ACTIONS» (31/10)
+- **El dueño** (captura de «Revisar las fotos de los comprobantes»: US$ 1,26 · 75 fotos leídas hoy): *«el bot no revisaba al subir cada comprobante?
+  porque hoy me pidió revisar 76 notas y me cobró?»*. Medido con la planilla real (lista + `iaComprobantes` con `leer:1`, que no gasta) sobre las
+  467 fotos de octubre que no son efectivo:
+  · Lecturas por día: **26/10 368** (la primera vez que usó la ventana), **30/10 24**, **31/10 75** (74 a las 11:17-11:18, su «Leer»).
+  · Las 24 del 30/10 se leyeron **al subirlas** (la hora de la lectura es la misma que la carga de la venta: Carola 11:25, María 12:03, Juan
+    Pablo 18:44…): la lectura al subir (78, `7a0f32f`, publicada 30/10 09:54 de Bolivia) anda.
+  · Las 75 de hoy: **68 son pagos del 26 al 29/10** (subidos después de su lectura del 26 y ANTES de que existiera la 78), 1 de Isabel del 30/10
+    09:51 (3 minutos antes de publicar), 4 de Mauricio del 30/10 a la tarde y 1 de María (12:07, segunda foto de un adelanto: o la compu sin
+    recargar o el 📎 de Contabilidad sobre un pago ya registrado, que NO lee al subir). La 76.ª se leyó sola a las 11:07 (un cobro de hoy).
+  · **Nada se cobró dos veces**: el servidor guarda cada lectura (`iacCache_`) y la ventana la reusa. US$ 1,26 / 75 = ~US$ 0,017 por foto, igual si
+    se lee al subir o en la ventana. El efectivo no se lee en ningún lado.
+  · Lo que todavía no se lee al subir: el 📎 sobre un pago/adelanto/recargo YA registrado (`destino` en el `comp-input` de Contabilidad) y las compus
+    que no tocaron «Recargar». Se le ofreció leer también el 📎; no se hizo.
+- **Pages en «GitHub Actions»**: el dueño lo cambió el 31/10 ~11:30 de Bolivia (captura). `actions_run_trigger` de `publicar-pages.yml` desde acá da
+  403: la primera publicación achicada sale con la del dashboard de las 17:00 (`workflow_run`) o con Run workflow a mano. Antes, `test_achicar` con
+  el `pedidos.html` de `main` (2026-10-31-c): 25/25, 4.289.004 → 2.902.559 (68 %).
+
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
   mes: Fernando 76 de 76, Jonathan 25 de 29, Maria 15 de 35, Juan 9 de 53, Isabel 4 de 28, Mauricio 2 de 60, Carola 2 de 50, Mirian 0 de 41;
