@@ -17168,6 +17168,12 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   (almohada con ribete turquesa y antifaz de dormir), **6 Lanita** (ovejita). Página: https://claude.ai/artifact/2REx91aQpgtyJd9jDv6rtu.
   Fuente de los dibujos en el scratchpad (`masc/masc.js`): si elige una, se pasa a `blokiSvg` con sus anclas (cabeza, manos, pies) para que
   los cinco trajes y `blokiTemaPartes` sigan andando. Nada cambió en el panel todavía.
+- **😎 «Ni uno»** (dueño, 31/10: *«quizás modernizar a Bloki, ponerle lentes de sol oscuros, más actitud como en akme»*): se quedan Bloki y sus
+  trajes, con estilo de dibujo animado de ACME. Tres versiones con los cinco trajes, de día y con el fondo de noviembre:
+  https://claude.ai/artifact/7TzCRvXSfmiJ95nomVBxV9 — **A Canchero** (lentes de sol espejados con un brillo que pasa, sonrisa de costado, pulgar
+  arriba, guantes blancos y zapatillas), **B Rudo** (inclinado, ceja levantada, sonrisa con dientes, manos en la cintura), **C Clásico** (ojos de
+  caricatura, lentes subidos a la frente; el contador conserva sus anteojos). Prototipo en el scratchpad (`masc/bloki_cool.js`, `blokiSvg2(traje,
+  estilo)`, usa `blokiTemaPartes`): al elegir, pasa a `blokiSvg`; ojo con la cara del tema (los colmillos de Halloween van debajo de los lentes).
 
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
