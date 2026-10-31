@@ -17075,6 +17075,12 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
 - `tests/test_vidrio_agrandar.js` (30: vh/vw, contraste en 13 vistas a 1.920 y 1.180 y en noviembre, con pedidos y vacías, ventanas dentro de la
   pantalla, desplegable, fantasma, encabezado, y con las copias locales de Leaflet, three.js, jsPDF y html2canvas: mapa, 3D y PDF). Contra la página
   de antes falla 7; con el agrandado pero `zoomPag()` en 1, falla 9; sin el `onclone`, el PDF.
+- **Batería entera** (rama `359b122`, con 84-90): 306 suites, 9.668 bien. En rojo: `test_patio` (2, con la máquina cargada; sola 48/48) y
+  `test_actualizar_espera` 4c (el aviso de «recargá en unos minutos» se va antes de 9 s): falla IGUAL con el `panel_template.html` de `main` (3 de 3
+  corridas), no es de esto; queda para mirar. Copia para publicar armada en `pub_fondo` (`main` + el commit de octubre con `git am -3`: chocaba con el
+  bloque de noviembre que `main` no tiene, se dejó solo octubre; `PANEL_V` y `panel-version.json` = 2026-10-31-a, sin commitear): las 22 pruebas
+  relacionadas en verde (vidrio 27, fondo 19, sin_barra 37, iPad 23, 5_7_9 57, temas 92, 3_10_11 29, ayudas 30, fichas 14+14, escenas 24, versión 27,
+  Halloween 22, estética 35+9, patio 48, camiones 3D 28, nueve 62, teclado 15, informe ATC 62, arriba 24, Bloki 19).
 
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
