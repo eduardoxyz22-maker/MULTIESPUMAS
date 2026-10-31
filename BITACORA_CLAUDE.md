@@ -17046,7 +17046,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   con la máquina cargada). En la copia de `main`: fondo_noche 17, halloween 22, temas 92, ipad_franja 23, sin_barra 37, 5_7_9 57, navidad 21,
   version_nueva 27, arriba_4iw 24. `PANEL_V` = `panel-version.json` = 2026-10-30-c.
 
-### §4oc — 🪟🔍 EL VIDRIO OSCURO Y EL PANEL AGRANDADO (31/10; dueño: *«en mis pedidos y contabilidad seguimos con mucho blanco… armame propuestas»* y *«se ve así cuando coloco zoom x 125%… hay mucho espacio sin usar»* → muestra https://claude.ai/artifact/T52gSHUmXC29C82mM4gfVi → *«Vidrio oscuro y el agrandado»*; EN LA RAMA, `0b85849` + `8ec441b` (noviembre); espera «publica»; así queda: https://claude.ai/artifact/ChLoZ1hQg53D1dumhxqeLQ)
+### §4oc — 🪟🔍 EL VIDRIO OSCURO Y EL PANEL AGRANDADO (31/10; dueño: *«en mis pedidos y contabilidad seguimos con mucho blanco… armame propuestas»* y *«se ve así cuando coloco zoom x 125%… hay mucho espacio sin usar»* → muestra https://claude.ai/artifact/T52gSHUmXC29C82mM4gfVi → *«Vidrio oscuro y el agrandado»*; PUBLICADO 30/10 23:20 de Bolivia, `4c6c5b2` (= `0b85849` sobre `main` + versión 2026-10-31-a), SOLO octubre; noviembre (`8ec441b`) en la rama, espera el sí al fondo de Todos Santos; así queda: https://claude.ai/artifact/ChLoZ1hQg53D1dumhxqeLQ)
 - **C1 · vidrio oscuro** (solo con el fondo de la noche): la tarjeta grande de Mis pedidos, Contabilidad, Administración (`#admin-content > .card`),
   ATC, Bot y Chofer pasa a `rgba(22,8,38,.45)` con borde naranja suave; los recuadros de adentro siguen blancos. Lo que va DIRECTO sobre ella pasa a
   letra clara: títulos de cada día de Administración (`.af-gt`), su cuenta, la leyenda de colores, la nota de Kommo (lleva el color escrito en el

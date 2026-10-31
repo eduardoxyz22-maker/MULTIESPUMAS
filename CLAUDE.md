@@ -1154,8 +1154,8 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   encabezado que baja a la noche + murciélagos/calabacitas/telaraña; pestañas de la compu oscuras con borde del mes; pie en letra clara (lo único
   directo sobre el fondo). ⚠️ Un elemento NUEVO directo sobre el fondo de la página necesita su color claro con este tema. **Noviembre (Todos Santos:
   cempasúchil, velitas, borde dorado) está en la rama (`6724124`) y espera el sí del dueño.** `tests/test_fondo_noche.js`.
-- **🪟🔍 Vidrio oscuro y el panel agrandado** (§4oc, 31/10; dueño: «Vidrio oscuro y el agrandado»; EN LA RAMA `0b85849` + `8ec441b` noviembre, espera
-  «publica»): con el fondo de la noche, la tarjeta grande de Mis pedidos, Contabilidad, Administración, ATC, Bot y Chofer es de vidrio oscuro y lo
+- **🪟🔍 Vidrio oscuro y el panel agrandado** (§4oc, 31/10; dueño: «Vidrio oscuro y el agrandado» → «Publica»; PUBLICADO 30/10 23:20 de Bolivia, `4c6c5b2`,
+  versión 2026-10-31-a; el vidrio de noviembre, `8ec441b`, en la rama con el fondo de Todos Santos): con el fondo de la noche, la tarjeta grande de Mis pedidos, Contabilidad, Administración, ATC, Bot y Chofer es de vidrio oscuro y lo
   directo sobre ella va en letra clara (⚠️ un texto NUEVO directo sobre la tarjeta grande, igual). Desde 1.800 px de ancho `body{zoom:1.25}` (`--vz`).
   ⚠️ **Toda medida `vh`/`vw` va `calc(N / var(--vz,1))`** (también en los `style="…"` del JS): con `zoom` se agrandan y las ventanas salían de la
   pantalla. ⚠️ **`getBoundingClientRect()`/`clientX`/`innerWidth` son px de PANTALLA; `style.left/top/width` adentro del `body`, `offsetHeight` y
