@@ -50175,12 +50175,6 @@ function temaNavidad(){ try{ return document.documentElement.classList.contains(
 function blokiTema(){
   try{ var c=document.documentElement.className.match(/(?:^|\s)tema-([a-z-]+)/); return c ? c[1] : 'espuma'; }catch(e){ return 'espuma'; }
 }
-/* Una flor de cempasúchil (Todos Santos): pétalos en anillo, el centro naranja y el botón amarillo. */
-function blokiFlor(cx, cy, r){
-  var h='<g class="bk-flor">', n=10;
-  for(var i=0;i<n;i++){ var a=i*2*Math.PI/n; h+='<circle cx="'+(cx+Math.cos(a)*r*.62).toFixed(1)+'" cy="'+(cy+Math.sin(a)*r*.62).toFixed(1)+'" r="'+(r*.42).toFixed(1)+'" fill="#f59e0b" stroke="#c2410c" stroke-width="1.4"/>'; }
-  return h+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*.52).toFixed(1)+'" fill="#fb923c" stroke="#c2410c" stroke-width="1.2"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(r*.22).toFixed(1)+'" fill="#fde047"/></g>';
-}
 /* Lo que Bloki se pone según el tema, en cinco lugares: atrás del cuerpo, en la mano que saluda, en la cara, adelante y en la cabeza.
    La cabeza SOLO cuando el traje no trae nada ahí (el vendedor tiene gorra y logística casco: esos no se tocan, siguen siendo ellos). */
 function blokiTemaPartes(tema, traje){
@@ -50203,19 +50197,14 @@ function blokiTemaPartes(tema, traje){
       '<path d="M88 45 Q120 38 152 45" fill="none" stroke="#f97316" stroke-width="8"/>'+
       '<rect x="113" y="36" width="14" height="11" rx="2" fill="#fde047" stroke="'+K+'" stroke-width="3"/></g>';
   }else if(tema==='todos-santos'){
-    /* 🌼 una calaverita de azúcar a sus pies (dueño, 31/10: la cara pintada «se ve raro… mejor solo ponerle su calaquita abajo») y
-       cempasúchil: corona si la cabeza está libre, dos flores en la gorra o el casco si no */
+    /* 🌼 una calaverita de azúcar a sus pies, nada más (dueño, 31/10: la cara pintada «se ve raro… mejor solo ponerle su calaquita
+       abajo»; de las dos que vio —con flores de cempasúchil o sin— eligió la «B», sin flores) */
     P.delante='<g class="bk-calaverita" transform="translate(46 225) rotate(-8) scale(1.3) translate(-40 -224)"><path d="M22 205 C22 190 31 185 40 185 C49 185 58 190 58 205 C58 211 54 214 51 215 L51 221 Q51 224 48 224 L32 224 Q29 224 29 221 L29 215 C26 214 22 211 22 205 Z" fill="#fff" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
       '<circle cx="32.5" cy="203" r="6" fill="#ec4899" stroke="'+K+'" stroke-width="1.6"/><circle cx="47.5" cy="203" r="6" fill="#f97316" stroke="'+K+'" stroke-width="1.6"/>'+
       '<circle cx="32.5" cy="203" r="2.6" fill="'+K+'"/><circle cx="47.5" cy="203" r="2.6" fill="'+K+'"/>'+
       '<path d="M40 213 C37 210.5 37.5 208 39 208.5 Q40 209 40 210 Q40 209 41 208.5 C42.5 208 43 210.5 40 213 Z" fill="'+K+'"/>'+
       '<path d="M32 218.5 H48 M35 216 V221 M38.5 216 V221 M41.5 216 V221 M45 216 V221" stroke="'+K+'" stroke-width="1.6" stroke-linecap="round"/>'+
       '<g fill="#1aafa4"><circle cx="35" cy="192" r="1.8"/><circle cx="40" cy="190" r="2.2"/><circle cx="45" cy="192" r="1.8"/></g></g>';
-    P.cabeza = cabezaLibre
-      ? '<g class="bk-corona"><g fill="#16a34a" stroke="#14532d" stroke-width="1.5"><ellipse cx="82" cy="52" rx="9" ry="4" transform="rotate(-20 82 52)"/><ellipse cx="108" cy="45" rx="9" ry="4" transform="rotate(-8 108 45)"/>'+
-          '<ellipse cx="132" cy="45" rx="9" ry="4" transform="rotate(8 132 45)"/><ellipse cx="158" cy="52" rx="9" ry="4" transform="rotate(20 158 52)"/></g>'+
-          blokiFlor(68,56,13)+blokiFlor(94,46,13)+blokiFlor(120,42,14)+blokiFlor(146,46,13)+blokiFlor(172,56,13)+'</g>'
-      : '<g class="bk-flores-gorra">'+blokiFlor(70,52,12)+blokiFlor(90,40,10)+'</g>';
   }else if(tema==='navidad'){
     /* 🎄 bufanda para todos; el gorro de Papá Noel lo dibuja blokiSvg (§4nc); en la gorra o el casco, una ramita de acebo */
     P.delante='<g class="bk-bufanda"><g clip-path="url(#bk-cuerpo)"><rect x="44" y="141" width="152" height="15" fill="#d62839"/>'+
