@@ -1333,9 +1333,9 @@ html.tema-halloween :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-chof
 html.tema-halloween .af-g .af-gt{ color:#fde7c7; }
 html.tema-halloween .af-g > i, html.tema-halloween #adm-mas > div > span{ color:#d9c6f0 !important; }
 html.tema-halloween .af-ley span{ color:#e9dcf7; }
-html.tema-halloween #mis-borradores > div, html.tema-halloween #view-mis > .card > div > b{ color:#e2d3f3 !important; }   /* la nota de Kommo trae su color escrito */
+html.tema-halloween #mis-borradores > div:not(.kx), html.tema-halloween #view-mis > .card > div:not(.u7) > b{ color:#e2d3f3 !important; }   /* la nota de Kommo trae su color escrito; la bandeja (.kx) y el vacío (.u7) son blancos */
 html.tema-halloween .tcol-tip{ color:#d9c6f0; }
-html.tema-halloween #view-atc .atv-t{ color:#f5ebff; } html.tema-halloween #view-atc .atv-t small{ color:#d9c6f0; }
+html.tema-halloween #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#f5ebff; } html.tema-halloween #view-atc :is(.atv-mot, .atc-tipos) .atv-t small{ color:#d9c6f0; }   /* «El viaje» va en su recuadro blanco */
 html.tema-halloween .adm-cam-tit b, html.tema-halloween .bot-cab b{ color:#fde7c7; }
 html.tema-halloween .adm-cam-tit small, html.tema-halloween .adm-volver span, html.tema-halloween .bot-cab span{ color:#d9c6f0; }
 html.tema-halloween :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#e2d3f3; }
@@ -1367,9 +1367,9 @@ html.tema-todos-santos :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-c
 html.tema-todos-santos .af-g .af-gt{ color:#fde7c7; }
 html.tema-todos-santos .af-g > i, html.tema-todos-santos #adm-mas > div > span{ color:#e6d3f2 !important; }
 html.tema-todos-santos .af-ley span{ color:#efe0fa; }
-html.tema-todos-santos #mis-borradores > div, html.tema-todos-santos #view-mis > .card > div > b{ color:#ecdcf7 !important; }
+html.tema-todos-santos #mis-borradores > div:not(.kx), html.tema-todos-santos #view-mis > .card > div:not(.u7) > b{ color:#ecdcf7 !important; }
 html.tema-todos-santos .tcol-tip{ color:#e6d3f2; }
-html.tema-todos-santos #view-atc .atv-t{ color:#fbefff; } html.tema-todos-santos #view-atc .atv-t small{ color:#e6d3f2; }
+html.tema-todos-santos #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#fbefff; } html.tema-todos-santos #view-atc :is(.atv-mot, .atc-tipos) .atv-t small{ color:#e6d3f2; }
 html.tema-todos-santos .adm-cam-tit b, html.tema-todos-santos .bot-cab b{ color:#fde7c7; }
 html.tema-todos-santos .adm-cam-tit small, html.tema-todos-santos .adm-volver span, html.tema-todos-santos .bot-cab span{ color:#e6d3f2; }
 html.tema-todos-santos :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#ecdcf7; }
