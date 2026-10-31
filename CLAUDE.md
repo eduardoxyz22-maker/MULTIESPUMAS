@@ -1169,6 +1169,11 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   (`ADM_HOY_DEF`); el período sigue en «Mes» (§4cj). Sin chip elegido, buscar mira todo y al borrar vuelve a Hoy; Hoy vacío ofrece el próximo día y
   «Ver todos» (`admVacioPintar`). ⚠️ Un camino NUEVO que ponga `QUICK_FILTER` a mano lleva `ADM_HOY_DEF=false`. En Playwright «Todos» salvo
   `ADM_HOY_PRUEBA`. `tests/test_adm_hoy.js`.
+- **💵 El precio de venta es obligatorio** (§4oe, 31/10; dueño: *«que al cargar una venta los vendedores coloquen sí o sí precio de venta del producto»*;
+  PUBLICADO 31/10, `404215d`, versión 2026-10-31-c): en una venta (OC, también de tienda) cada producto con «Precio c/u» > 0 para guardar
+  (`precioObligatorio`/`preciosFaltan`); no en ATC/RPT, Eduardo, ROHO ni internos. Pedido viejo sin precio (`data-sin-precio` + `data-orig`): la
+  vendedora lo pone; con la clave, `confirm`. ⚠️ `fxPasosEstado` y «Para guardar» piden lo mismo. En Playwright solo con `PRECIO_PRUEBA`.
+  `tests/test_precio_obligatorio.js`.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
