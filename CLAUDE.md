@@ -2431,7 +2431,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   del Excel; el stock la aparta al final (`AVISA_STOCK_F='9999-12-31'`). «📞 Llamá a N clientes» en «Para hacer». Cada guardado lleva `av:1` y el `.gs` 30-a
   contesta `actualizar` a una página sin `av` que le pone un día. ⚠️ Lo que va por día ya la deja afuera (fecha vacía); un camino NUEVO que no mire la
   fecha tiene que preguntar `entregaAConfirmar`. `test_avisa_cuando` (52).
-- **78 🤖 El comprobante se lee al subirlo** (desde §4of también el 📎 sobre un pago ya registrado: `iasPegada`/`iasPegBox`, compara solo con
+- **78 🤖 El comprobante se lee al subirlo** (desde §4of, PUBLICADO `d24ed73` versión 2026-10-31-e, también el 📎 sobre un pago ya registrado: `iasPegada`/`iasPegBox`, compara solo con
   TODAS las fotos del pago leídas; `compsPagosDe` lleva `ix`) (`ias*`, formulario y «Registrar pago»): la misma lectura y comparación de «Revisar las fotos con IA»
   (`iacComparar`, `compsPagosDe`), aviso con arreglo de un toque, nunca frena; nada con servidor < 26-a, sin crédito o con la IA pausada. Los avisos de
   Contabilidad que son SOLO de fecha van en ámbar (`ctaAvSoloFecha`, `ks`). `IAC_SUBIR_PRUEBA`. `test_comprobante_al_subir` (26).

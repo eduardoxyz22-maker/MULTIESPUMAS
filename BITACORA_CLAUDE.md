@@ -17127,7 +17127,10 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   esos usuarios solo para ellos no para eduardo, entro como eduardo y pongo la clave y me sale esa mierda»*): `semanaGritoVe()` =
   `quienRol()==='logistica'` (Ernesto entra con «🚚 Soy de logística»); la clave, Administración y la compu de administración ya no alcanzan.
   El aviso chico de Bloki (`l-semana`) sigue con `asisVeAdm`. `test_semana_grito` §6 cambió a conciencia. **PUBLICADO 31/10 ~12:46 de Bolivia,
-  `fdc777d`, versión 2026-10-31-d**, sola (el 📎 y lo de Fable esperan «publica»; van como 2026-10-31-e).
+  `fdc777d`, versión 2026-10-31-d**, sola.
+- **📎 + la revisión de Fable: PUBLICADO 31/10 ~12:48 de Bolivia, `d24ed73`, versión 2026-10-31-e** (dueño: *«publica todo hasta los arreglos
+  de fable»*) = `af0776e` (📎) + `2bb65d7` (Fable) + la versión. Antes, en la copia: ia_clip 18, adm_hoy 18, precio 23, grito 28, versión nueva
+  27, al subir 26, achicar 25. Queda la 2.1 para el dueño.
 - **🛑 «Reporte Semanal ATC» apagado** (dueño: *«apagá el reporte semanal atc»*, `71ee8af`): sin `schedule`, queda a mano. El panel sigue
   leyendo `atc-semanal.csv` como foto final.
 - **Pages en «GitHub Actions»**: el dueño lo cambió el 31/10 ~11:30 de Bolivia (captura). La primera publicación achicada salió con el push
