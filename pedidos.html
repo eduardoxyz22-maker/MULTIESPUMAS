@@ -21289,8 +21289,12 @@ function semanaGritoUlt(){
   try{ var o=JSON.parse(localStorage.getItem(SEMANA_GRITO_LS)||'null'); if(o && o.d===hoy) t=Math.max(t, Number(o.t)||0); }catch(e){}
   return t;
 }
+/* (31/10, el dueño: «ese anuncio es solo para logística y Ernesto, cuando ingresan con esos usuarios… no para Eduardo; entro como Eduardo y
+   pongo la clave y me sale») El grito SOLO en un aparato donde eligieron «🚚 Soy de logística» (Ernesto entra así). La clave, Administración
+   o la compu de administración (`asisVeAdm`) ya no alcanzan. El aviso chico de Bloki sigue como estaba. */
+function semanaGritoVe(){ try{ return quienRol()==='logistica'; }catch(e){ return false; } }
 function semanaGritoTic(){
-  if(!ASIS.montado || !asisVeAdm()) return;
+  if(!ASIS.montado || !semanaGritoVe()) return;
   var hoy=todayStr(); if(!diaHabil(hoy) || nxHoraAhora() < semanaGritoHora(hoy)) return;
   if(anuncioGritoAbierto() || anuncioEscribiendo()) return;
   if(Date.now()-semanaGritoUlt() < SEMANA_GRITO_CADA_MS) return;

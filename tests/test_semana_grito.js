@@ -168,13 +168,22 @@ function PREPARAR(){
     return { ve:GRITO().ve, av:asisAvisos().some(function(a){ return /^l-semana/.test(a.k); }) };
   });
   chk('6 · en el aparato de un vendedor no grita ni lo pone en sus avisos', !r.ve && !r.av, r);
+  /* (31/10, el dueño: «solo para logística y Ernesto… entro como Eduardo y pongo la clave y me sale») */
+  r = await ev(page, () => {
+    var o={};
+    quienRol('admin'); UNLOCKED=false; anuncioTic(); o.admin=GRITO().ve;
+    quienRol(''); setVendedorMem('Eduardo Añez'); UNLOCKED=true; anuncioTic(); o.eduardo=GRITO().ve;
+    quienRol(''); UNLOCKED=false; localStorage.setItem('me_adm_dev','1'); anuncioTic(); o.compu=GRITO().ve; localStorage.removeItem('me_adm_dev');
+    return o;
+  });
+  chk('6 · ni Administración, ni Eduardo con la clave, ni la compu de administración: el grito es solo de logística', !r.admin && !r.eduardo && !r.compu, r);
   r = await ev(page, async () => {
-    quienRol('admin'); localStorage.setItem('me_asis_mudo','1'); var s0=_sirenas;
+    quienRol('logistica'); UNLOCKED=false; localStorage.setItem('me_asis_mudo','1'); var s0=_sirenas;
     anuncioTic(); await new Promise(function(z){ setTimeout(z, 1800); });
     return { ve:GRITO().ve, sir:_sirenas-s0, n:ERNESTO().length };
   });
   await page.clock.runFor(2000);
-  chk('6 · en Administración sí; con 🔇 sale la pantalla sin sirena ni voz', r.ve && r.sir===0 && r.n===0, r);
+  chk('6 · en logística sí; con 🔇 sale la pantalla sin sirena ni voz', r.ve && r.sir===0 && r.n===0, r);
   await page.close();
 
   /* ── 7. El anuncio primero; «Ver cuáles» ── */
