@@ -17103,7 +17103,35 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   (sin «si guardás antes»), «✅ coincide» o el aviso SIN botones + «✏️ Corregir en este pago». `iasRepintar` → `iasPintarPeg` (solo esas cajas,
   sin repintar la ficha). Apagado en Playwright salvo `IAC_SUBIR_PRUEBA`. `tests/test_ia_clip.js` (14). Vecinas en verde: al subir 26, revisión
   47, comprobantes 21, conta_alta 53, botones 50, sinmonto 43, borrar 39, envío a pago 28, varias 5, rev3 18, 4jw 40, repetido 7.
-- **Pages en «GitHub Actions»**: el dueño lo cambió el 31/10 ~11:30 de Bolivia (captura). `actions_run_trigger` de `publicar-pages.yml` desde acá da
+- **🔎 Revisión de Fable de los tres cambios del 31/10** (`REVISION_FABLE_31-10.md` → el dueño pegó la respuesta: *«para tu agente acá están
+  tus fallos o mejoras»*). Verificado contra el código, uno por uno (`270ac66`):
+  · 📎 **1.1 real** (con la foto vieja leída y la nueva sin leer —tope, pausa, red— decía «✅ coincide»): `iasPegEvaluar` compara SOLO con
+    todas las fotos del pago leídas; con una que falló dice «🔎 No pude leer la foto ahora… queda para la revisión del mes» (`peg-err`).
+    **1.2 real**: lo que quedó sin pedir por la pausa se pide al repintar (`iasPedir` dentro de la evaluación, como `iasEvaluar`). **1.4
+    real**: la caja va por su foto (`data-fid`) y `compsPagosDe` lleva `ix` (su renglón en `contaPagos`): `iasPegXDe` = el pago de ese
+    renglón con esa foto, y si el renglón se corrió, el único pago con la foto (también resuelve la caja repetida si cobro y recargo
+    comparten foto). **1.6 real**: cobro + recargo del mismo día en UNA transferencia → se compara también con la suma (como `x.flete`).
+    **1.3 no se hizo**: leer las otras fotos del pago cuesta a lo sumo 3 × ~US$ 0,017 y sin ellas la comparación es a medias. **1.5 no se
+    hizo**: leer antes de saber si se guardó es lo mismo que la lectura al subir (§78), a propósito.
+  · 💵 **2.2 real**: con la clave se marca y nombra SOLO lo nuevo sin precio; lo heredado se pregunta después. **2.1 = decisión del dueño**
+    (una vendedora que abre una venta vieja sin precio, para cambiar la fecha, tiene que poner el precio): en la planilla real hay 4 ventas
+    abiertas así (3 de María, 1 de Fernando). Las dudas del precio, cerradas: `montoForm` acepta el elemento, la × saca el renglón, `clearErr`
+    limpia todo `.err`, `.prod-precio-w .mini-lb` existe.
+  · 📅 **3.1 real, y PUBLICADO desde §4od**: el calendario «ver ese día» con «Hoy» de entrada seguía mostrando HOY (el chip «Hoy» es
+    `todo:true`); igual ‹ › del mes, el período, el día/mes, «ver todo el historial» y «ver los de ROHO» (que escribe la búsqueda sin
+    `input`). `admHoySoltar()` en todos. **3.2**: buscando sin chip y sin resultados en el período, «No encontré «x» en octubre» + «🔎 Buscar
+    en todos los meses». **3.3**: `adm-search` con `autocomplete=off` y, si igual vino escrito, arranca sin Hoy. Las cifras de arriba no salen
+    de la lista filtrada (el resumen se sacó en §4io): esa duda no aplica.
+  · Pruebas: `test_ia_clip` §9 (4 rojas contra `7cad6fe`), `test_adm_hoy` §6 (rojas contra `main`), `test_precio_obligatorio` 6d2/6d3.
+- **🗓️ El grito de Bloki a Ernesto, SOLO en logística** (dueño, con captura: *«ese anuncio es solo para logística y ernesto, cuando ingresan con
+  esos usuarios solo para ellos no para eduardo, entro como eduardo y pongo la clave y me sale esa mierda»*): `semanaGritoVe()` =
+  `quienRol()==='logistica'` (Ernesto entra con «🚚 Soy de logística»); la clave, Administración y la compu de administración ya no alcanzan.
+  El aviso chico de Bloki (`l-semana`) sigue con `asisVeAdm`. `test_semana_grito` §6 cambió a conciencia. **PUBLICADO 31/10 ~12:46 de Bolivia,
+  `fdc777d`, versión 2026-10-31-d**, sola (el 📎 y lo de Fable esperan «publica»; van como 2026-10-31-e).
+- **🛑 «Reporte Semanal ATC» apagado** (dueño: *«apagá el reporte semanal atc»*, `71ee8af`): sin `schedule`, queda a mano. El panel sigue
+  leyendo `atc-semanal.csv` como foto final.
+- **Pages en «GitHub Actions»**: el dueño lo cambió el 31/10 ~11:30 de Bolivia (captura). La primera publicación achicada salió con el push
+  de `71ee8af` (corrida 4 de `publicar-pages.yml`, 12:35 de Bolivia): «Achicado pedidos.html: 4188 KB → 2835 KB · comprimido 1341 KB → 840 KB». `actions_run_trigger` de `publicar-pages.yml` desde acá da
   403: la primera publicación achicada sale con la del dashboard de las 17:00 (`workflow_run`) o con Run workflow a mano. Antes, `test_achicar` con
   el `pedidos.html` de `main` (2026-10-31-c): 25/25, 4.289.004 → 2.902.559 (68 %).
 
