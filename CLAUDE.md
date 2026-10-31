@@ -1153,18 +1153,22 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   `05d1cc1`, SOLO octubre): `body::before` fijo detrás de todo (z −1, sin clics, sin animación; el `body` transparente) con la franja de colores del
   encabezado que baja a la noche + murciélagos/calabacitas/telaraña; pestañas de la compu oscuras con borde del mes; pie en letra clara (lo único
   directo sobre el fondo). ⚠️ Un elemento NUEVO directo sobre el fondo de la página necesita su color claro con este tema. **Noviembre (Todos Santos:
-  cempasúchil, velitas, borde dorado) está en la rama (`6724124`) y espera el sí del dueño.** `tests/test_fondo_noche.js`.
+  cempasúchil, velitas, borde dorado) PUBLICADO el 31/10 (§4od, 31/10, en curso).** `tests/test_fondo_noche.js`.
 - **🪟🔍 Vidrio oscuro y el panel agrandado** (§4oc, 31/10; dueño: «Vidrio oscuro y el agrandado» → «Publica»; PUBLICADO 30/10 23:20 de Bolivia, `4c6c5b2`,
-  versión 2026-10-31-a; el vidrio de noviembre, `8ec441b`, en la rama con el fondo de Todos Santos): con el fondo de la noche, la tarjeta grande de Mis pedidos, Contabilidad, Administración, ATC, Bot y Chofer es de vidrio oscuro y lo
+  versión 2026-10-31-a; el vidrio de noviembre, `8ec441b`, PUBLICADO con el fondo de Todos Santos el 31/10, §4od): con el fondo de la noche, la tarjeta grande de Mis pedidos, Contabilidad, Administración, ATC, Bot y Chofer es de vidrio oscuro y lo
   directo sobre ella va en letra clara (⚠️ un texto NUEVO directo sobre la tarjeta grande, igual). Desde 1.800 px de ancho `body{zoom:1.25}` (`--vz`).
   ⚠️ **Toda medida `vh`/`vw` va `calc(N / var(--vz,1))`** (también en los `style="…"` del JS): con `zoom` se agrandan y las ventanas salían de la
   pantalla. ⚠️ **`getBoundingClientRect()`/`clientX`/`innerWidth` son px de PANTALLA; `style.left/top/width` adentro del `body`, `offsetHeight` y
   `clientWidth`, px del PANEL: se pasa con `zoomPag()`.** Un PDF con html2canvas lleva `onclone:sinAgrandarCopia`. `tests/test_vidrio_agrandar.js`.
-- **⚡ Velocidad 84-90** (§4oa, 30/10; EN LA RAMA, en revisión de otra IA, NO publicado): copia del aparato con tope (`mirrorRecortar`, `lsPoner`:
+- **⚡ Velocidad 84-90** (§4oa, 30/10; revisada dos veces por otra IA; PUBLICADA el 31/10, §4od, 31/10, en curso; la 90 publica achicado recién cuando el dueño ponga Pages en «GitHub Actions»): copia del aparato con tope (`mirrorRecortar`, `lsPoner`:
   sin lugar, primero se va la copia, nunca la cola), lectura sin cambios liviana (`_igual`, `STATE_GEN`/`AUTO_PINTADO_GEN`), Contabilidad y Mis
   pedidos de a partes (`trozosHtml`, `TROZOS_N`; en Playwright todo de una salvo `TROZOS_PRUEBA`) y publicar `pedidos.html` achicado
   (`herramientas/achicar_panel.js` + `publicar-pages.yml`: solo con Pages en «GitHub Actions»; esbuild pasa `PANEL_V='…'` a `"…"`).
   ⚠️ Todo camino que cambie `STATE` termina en `saveMirror()` sin argumento (si no, «sin cambios» puede no repintar). `test_velocidad_4oa`, `test_achicar`.
+- **📅 Administración abre en «Hoy»** (§4od, 31/10; dueño: *«entra por defecto en "todas"… ralentiza y satura»*; PUBLICADO 31/10, en curso): `QUICK_FILTER='hoy'`
+  (`ADM_HOY_DEF`); el período sigue en «Mes» (§4cj). Sin chip elegido, buscar mira todo y al borrar vuelve a Hoy; Hoy vacío ofrece el próximo día y
+  «Ver todos» (`admVacioPintar`). ⚠️ Un camino NUEVO que ponga `QUICK_FILTER` a mano lleva `ADM_HOY_DEF=false`. En Playwright «Todos» salvo
+  `ADM_HOY_PRUEBA`. `tests/test_adm_hoy.js`.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
 Dueño: *«¿por qué decís camión? Lo que nos interesa es ver a futuro si se pidió o llegó el producto… recordarle a logística: tenés este pedido
