@@ -17141,6 +17141,22 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   403: la primera publicación achicada sale con la del dashboard de las 17:00 (`workflow_run`) o con Run workflow a mano. Antes, `test_achicar` con
   el `pedidos.html` de `main` (2026-10-31-c): 25/25, 4.289.004 → 2.902.559 (68 %).
 
+### §4og — 🧽🎃🌼 BLOKI SE VISTE SEGÚN EL TEMA DEL MES (31/10; dueño, con la captura de Bloki vendedor: *«y el hdp este no debería vestirse acorde a la temática del mes?»*; EN LA RAMA, `8a19547`; muestra https://claude.ai/artifact/GJ2VwiF5Kf22H89YXC4vjH; espera «publica»)
+- Antes solo había el gorro de Papá Noel en diciembre, y solo para Bloki, Contabilidad y Anuncio (§4nc). Ahora **`blokiTemaPartes(tema, traje)`**
+  arma lo de cada tema en cinco lugares: atrás del cuerpo (`atras`), en la mano que saluda (`mano`, adentro de `.bk-mano`: se mueve con ella), la
+  cara (`cara`, después de ojos y boca), adelante (`delante`) y la cabeza (`cabeza`). **La cabeza solo con la cabeza libre** (Bloki, Contabilidad,
+  Anuncio): la gorra del vendedor y el casco de logística no se tapan; ellos llevan lo del tema en otro lado (flores o acebo en la gorra/casco).
+- 🎃 capa de vampiro + colmillos + calabaza en el piso; sombrero de bruja. 🌼 calavera estilo «Coco» (anillos y pétalos alrededor de los ojos —el
+  contador sin anillos: ya tiene anteojos—, nariz de corazón, sonrisa cosida, florcitas en vez de los cachetes) + corona de cempasúchil (`blokiFlor`) o
+  dos flores en la gorra/casco. 🎄 bufanda para todos; el gorro de siempre; acebo en gorra/casco. 🎆 moño dorado + papel picado; gorrito de fiesta.
+  🎭 antifaz con pluma + serpentinas (el contador: plumas en la cabeza en vez de antifaz). 💐 flor en la mano + corazón. 🇧🇴/💚 la bandera de Bolivia
+  o la de Santa Cruz en la mano (dibujadas). Espuma: nada.
+- El tema sale de la clase `tema-…` del `<html>` (**`blokiTema()`**, la misma del encabezado y el fondo). La chispa de Bloki solo sin nada en la cabeza.
+- ⚠️ **`BLOKI_SRC` va por `traje|tema`**: con la clave solo por traje, un dibujo de otro tema quedaba en la memoria.
+- `test_bloki` §7 (28; 5 rojas contra `main`); §1 mira los trajes con el tema Espuma (el reloj de la prueba cae en octubre). `test_navidad` §3 cambió a
+  conciencia: en noviembre ya no hay chispa, hay corona. Corridas: asistente 24, anuncio 47, temas_mejoras 92, semana_grito 28, halloween 22,
+  quien 13, asistente_ak 38 (4 rojas una vez con la máquina cargada; sola y contra `main`, 38/0), mejoras_5_7_9 57.
+
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
   mes: Fernando 76 de 76, Jonathan 25 de 29, Maria 15 de 35, Juan 9 de 53, Isabel 4 de 28, Mauricio 2 de 60, Carola 2 de 50, Mirian 0 de 41;
