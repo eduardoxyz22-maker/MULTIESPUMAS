@@ -1154,6 +1154,12 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   encabezado que baja a la noche + murciélagos/calabacitas/telaraña; pestañas de la compu oscuras con borde del mes; pie en letra clara (lo único
   directo sobre el fondo). ⚠️ Un elemento NUEVO directo sobre el fondo de la página necesita su color claro con este tema. **Noviembre (Todos Santos:
   cempasúchil, velitas, borde dorado) está en la rama (`6724124`) y espera el sí del dueño.** `tests/test_fondo_noche.js`.
+- **🪟🔍 Vidrio oscuro y el panel agrandado** (§4oc, 31/10; dueño: «Vidrio oscuro y el agrandado»; EN LA RAMA `0b85849` + `8ec441b` noviembre, espera
+  «publica»): con el fondo de la noche, la tarjeta grande de Mis pedidos, Contabilidad, Administración, ATC, Bot y Chofer es de vidrio oscuro y lo
+  directo sobre ella va en letra clara (⚠️ un texto NUEVO directo sobre la tarjeta grande, igual). Desde 1.800 px de ancho `body{zoom:1.25}` (`--vz`).
+  ⚠️ **Toda medida `vh`/`vw` va `calc(N / var(--vz,1))`** (también en los `style="…"` del JS): con `zoom` se agrandan y las ventanas salían de la
+  pantalla. ⚠️ **`getBoundingClientRect()`/`clientX`/`innerWidth` son px de PANTALLA; `style.left/top/width` adentro del `body`, `offsetHeight` y
+  `clientWidth`, px del PANEL: se pasa con `zoomPag()`.** Un PDF con html2canvas lleva `onclone:sinAgrandarCopia`. `tests/test_vidrio_agrandar.js`.
 - **⚡ Velocidad 84-90** (§4oa, 30/10; EN LA RAMA, en revisión de otra IA, NO publicado): copia del aparato con tope (`mirrorRecortar`, `lsPoner`:
   sin lugar, primero se va la copia, nunca la cola), lectura sin cambios liviana (`_igual`, `STATE_GEN`/`AUTO_PINTADO_GEN`), Contabilidad y Mis
   pedidos de a partes (`trozosHtml`, `TROZOS_N`; en Playwright todo de una salvo `TROZOS_PRUEBA`) y publicar `pedidos.html` achicado

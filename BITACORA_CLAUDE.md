@@ -17046,6 +17046,36 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   con la máquina cargada). En la copia de `main`: fondo_noche 17, halloween 22, temas 92, ipad_franja 23, sin_barra 37, 5_7_9 57, navidad 21,
   version_nueva 27, arriba_4iw 24. `PANEL_V` = `panel-version.json` = 2026-10-30-c.
 
+### §4oc — 🪟🔍 EL VIDRIO OSCURO Y EL PANEL AGRANDADO (31/10; dueño: *«en mis pedidos y contabilidad seguimos con mucho blanco… armame propuestas»* y *«se ve así cuando coloco zoom x 125%… hay mucho espacio sin usar»* → muestra https://claude.ai/artifact/T52gSHUmXC29C82mM4gfVi → *«Vidrio oscuro y el agrandado»*; EN LA RAMA, `0b85849` + `8ec441b` (noviembre); espera «publica»; así queda: https://claude.ai/artifact/ChLoZ1hQg53D1dumhxqeLQ)
+- **C1 · vidrio oscuro** (solo con el fondo de la noche): la tarjeta grande de Mis pedidos, Contabilidad, Administración (`#admin-content > .card`),
+  ATC, Bot y Chofer pasa a `rgba(22,8,38,.45)` con borde naranja suave; los recuadros de adentro siguen blancos. Lo que va DIRECTO sobre ella pasa a
+  letra clara: títulos de cada día de Administración (`.af-gt`), su cuenta, la leyenda de colores, la nota de Kommo (lleva el color escrito en el
+  elemento: `!important`), el título de «Camiones y día», «← Volver», la cabecera del Bot y los «no hay nada» (`#mis-empty`…, no los `.u7` que traen su
+  fondo). Nuevo pedido y el candado de Administración siguen blancos. Noviembre (`8ec441b`) con el dorado de las velitas: va JUNTO con el fondo de
+  noviembre (sin él sería oscuro sobre claro).
+  ⚠️ Medido con un barrido (`test_vidrio_agrandar` §2): cada texto cuyo fondo, subiendo, llega a la tarjeta sin pasar por un fondo opaco, contra
+  el vidrio mezclado con la noche; 4,5 (3 en letra grande). Un texto NUEVO directo sobre la tarjeta grande necesita su color claro con estos temas.
+- **Z · agrandado** (todo el año): `@media screen and (min-width:1800px){ html:not(.sin-agrandar) body{ zoom:1.25 } }` + `--vz:1.25`. Desde 1.536 px
+  (lo que da el 125 % del navegador en un monitor de 1.920) no se agranda: no se suma al zoom del navegador. Lo que `zoom` rompe y cómo se arregló:
+  · **`vh`/`vw` se agrandan también** (Chrome 141, zoom estandarizado): una ventana `max-height:90vh` quedaba en 112 % de la pantalla. Las 71
+    medidas de pantalla (CSS y `style="…"` del JS) van `calc(N / var(--vz,1))`; `test_vidrio_agrandar` §1 falla si aparece una suelta. La
+    `scroll-padding-top` del `html` (que NO está agrandado) va `var(--hdr-h) * var(--vz,1)`.
+  · **px de pantalla vs px del panel**: `getBoundingClientRect()`, `clientX`, `innerWidth` y lo que da Windows (`getTitlebarAreaRect`) son de la
+    pantalla; `style.left/top/width` de algo adentro del `body`, `offsetHeight` y `clientWidth`, del panel. **`zoomPag()`** (`currentCSSZoom`)
+    pasa de uno a otro. Arreglados: «En vivo» (`vivoAbrir`), el fantasma de las pestañas (`navRect`), los bultos y chispas del guardado
+    (`fxGuardado`/`fxChispas`), el desplegable de productos (`fxBuscaAbrir`), `fpIr`, el desplazamiento de `cvIrALista`, `fichaAcomodar`, la barra de
+    la ventana instalada (`wcoMedir`: `--wco-h/l/r` ÷ zoom), el papel picado (`nxConfeti`) y `hdrAltoEn` (`HDR.*` son px del panel).
+  · **3D**: `renderer.setPixelRatio(dpr × zoom)` en `tam()` (si no, el lienzo se estira y queda borroso). Leaflet 1.9.4 ya trae el arreglo
+    (`getScale`): el clic cae donde se tocó (§4a con la librería de verdad).
+  · **PDF**: html2canvas 1.4.1 no entiende `zoom`: separaba las letras («Inform e de ATC»). La copia que fotografía va sin agrandar
+    (`onclone:sinAgrandarCopia` → `html.sin-agrandar`), la pantalla no se mueve. Informe de ATC y «Pagos para revisar».
+  · Imprimir no cambia (`screen`). Las ventanas a pantalla completa (`inset:0`) no necesitan nada.
+  · Lo que se vio en la prueba y NO es de esto: al cambiar de pestaña la vista entra de costado (§4ni 5) y durante esos 0,4 s la página es 4-5 px
+    más ancha (también sin agrandar, en `main`).
+- `tests/test_vidrio_agrandar.js` (30: vh/vw, contraste en 13 vistas a 1.920 y 1.180 y en noviembre, con pedidos y vacías, ventanas dentro de la
+  pantalla, desplegable, fantasma, encabezado, y con las copias locales de Leaflet, three.js, jsPDF y html2canvas: mapa, 3D y PDF). Contra la página
+  de antes falla 7; con el agrandado pero `zoomPag()` en 1, falla 9; sin el `onclone`, el PDF.
+
 ### §4nl — 🔎 LA AUDITORÍA DE ASTRA DEL 27/10 (14 hallazgos) Y LA REVALIDACIÓN DE CODEX DEL 28/10
 - El dueño subió `Auditoria-Multiespumas-27-octubre-2026-para-Claude.md` (Astra) y pidió revisarlo con agentes: seis arreglos (uno por área), cada
   uno con su prueba contra el `.gs` real cuando hay planilla de por medio. *«Lógico que lo de Astra luego de que [Codex] revise»*.
