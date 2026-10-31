@@ -20996,7 +20996,12 @@ function loadFromServer(showToastOk){
 /* ============================================================================
    Admin: filtros / render
    ========================================================================== */
-var QUICK_FILTER='';                 // '', 'cobrar','sinchofer','noentregado','am','pm','especial'
+/* 📅 (31/10, dueño: «administración entra por defecto en "todas" en vez de hoy día y eso ralentiza un poco y satura todo») Administración
+   ABRE EN «📅 Hoy». Mientras nadie elija otro chip (`ADM_HOY_DEF`), escribir en el buscador mira TODO (una venta de la semana pasada no
+   está en Hoy) y al borrarlo vuelve a Hoy. Hoy sin pedidos lo dice con «➡️ Ver el próximo día» y «Ver todos» (`admVacioPintar`).
+   En Playwright sigue «Todos» (las pruebas de siempre leen la lista entera) salvo `window.ADM_HOY_PRUEBA`. */
+var ADM_HOY_DEF=!(typeof navigator!=='undefined' && navigator.webdriver) || !!window.ADM_HOY_PRUEBA;
+var QUICK_FILTER=ADM_HOY_DEF?'hoy':'';   // '', 'hoy', 'manana', 'semana', 'cobrar','sinchofer','noentregado','am','pm','especial'…
 var SORT_KEY='', SORT_DIR=1;         // orden de columnas (1 asc, -1 desc)
 var QUICK_DEFS=[
   {k:'',            lbl:'Todos',           test:function(p){return true;}},
@@ -21142,7 +21147,7 @@ function semanaVer(k){ SEMANA_VER=(SEMANA_VER===k?'':k); admTopeReset(); renderA
 function semanaArrancar(){ SEMANA_DIA=''; var T=semanaDatos().tot; SEMANA_VER=T.falta ? 'falta' : ''; }
 function admVerSemana(v){
   try{ admSecPoner('ped'); }catch(e){}
-  QUICK_FILTER='semana'; SEMANA_DIA=''; SEMANA_VER=v||'';
+  QUICK_FILTER='semana'; ADM_HOY_DEF=false; SEMANA_DIA=''; SEMANA_VER=v||'';
   admTopeReset(); renderAdmin();
   try{ admIrA('adm-chips'); }catch(e){}
 }
@@ -21342,7 +21347,7 @@ function renderRptAtrasadas(){
 /* El aviso recorre TODO el historial; el chip y la tabla van por el filtro Mes/Día. Con una
    RPT de agosto sin entregar en septiembre el botón dejaba la tabla vacía y el chip en 0
    (§4ew): se pasa a «Todo» y se deja el filtro puesto (sin el toggle de `setQuick`). */
-function admVerRptAtrasadas(){ QUICK_FILTER='rpt'; admVerTodoElHistorial(); }
+function admVerRptAtrasadas(){ QUICK_FILTER='rpt'; ADM_HOY_DEF=false; admVerTodoElHistorial(); }
 /* ============================================================================
    🏪 LA REPOSICIÓN QUE NO FUE ENTERA PIDE MANDAR LO QUE FALTÓ (30/10, propuesta 83; dueño: «83»)
    En octubre la RPT 09-020 de Central y la 10-016 de Carmelo se tildaron ✅ con 11 unidades marcadas ✗ (no hay) o mandadas a
@@ -22002,7 +22007,7 @@ function renderAdmin(){
   if(admVista()==='fichas'){   // 🃏 (24/10) con las fichas, la tabla ni se arma (se arma al volver a «Ver como tabla»)
     if(deMas) list=list.slice(0, ADM_TOPE);
     admFichasPintar(list, dn); admMasPintar(deMas);
-    document.getElementById('pedidos-empty').style.display=list.length?'none':'block';
+    admVacioPintar(list.length);
     try{ tblBarPintar('admin'); }catch(e){}   // 🗂️ (§4nr, 33) con las fichas, la barra de columnas no va
     return;
   }
@@ -22049,7 +22054,7 @@ function renderAdmin(){
   }).join('');
   document.getElementById('tbl-pedidos').innerHTML=head+'<tbody>'+body+'</tbody>';
   admFichasPintar(list, dn);
-  document.getElementById('pedidos-empty').style.display=list.length?'none':'block';
+  admVacioPintar(list.length);
   document.getElementById('tbl-pedidos').style.display=list.length?'table':'none';
   admMasPintar(deMas);
   try{ tblEstilo(); tblBarPintar('admin'); }catch(e){ console.error(e); }   // 🗂️ (§4nr, 33)
@@ -22103,7 +22108,18 @@ function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ---- Filtros rápidos (chips) + orden de columnas ---- */
-function setQuick(k){ QUICK_FILTER=(QUICK_FILTER===k?'':k); if(k==='semana' && QUICK_FILTER==='semana') semanaArrancar(); renderAdmin();
+/* 📅 (31/10) El cartel de «no hay pedidos»: con «Hoy» elegido dice que hoy no hay entregas y ofrece el próximo día y todos. */
+function admVacioPintar(n){
+  var el=document.getElementById('pedidos-empty'); if(!el) return;
+  el.style.display=n?'none':'block'; if(n) return;
+  if(QUICK_FILTER==='hoy' && !(document.getElementById('adm-search')||{}).value){
+    var d=quickDef('manana'), lbl=d && d.lblF ? d.lblF() : '➡️ Mañana';
+    el.innerHTML='Hoy no hay entregas agendadas. '+
+      '<span class="adm-vacio-b"><button type="button" class="btn btn-sm" onclick="setQuick(\'manana\')">'+esc(lbl)+'</button> '+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="setQuick(\'\')">Ver todos</button></span>';
+  }else el.textContent='No hay pedidos para este filtro todavía.';
+}
+function setQuick(k){ ADM_HOY_DEF=false; QUICK_FILTER=(QUICK_FILTER===k?'':k); if(k==='semana' && QUICK_FILTER==='semana') semanaArrancar(); renderAdmin();
   if(k==='rpt' && QUICK_FILTER==='rpt' && rptFaltaPendientes().length) setTimeout(function(){ admIrA('adm-rpt'); }, 60); }   // 🏪 (propuesta 83) a la lista de las que faltó algo
 function renderChips(){
   var el=document.getElementById('adm-chips'); if(!el) return;
@@ -51139,7 +51155,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('f-submit').addEventListener('click',submitPedido);
   document.getElementById('adm-dia').value=todayStr();
   document.getElementById('adm-mes').value=monthStr();
-  var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
+  var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){
+    if(ADM_HOY_DEF && (QUICK_FILTER==='hoy' || QUICK_FILTER==='')) QUICK_FILTER=sb.value.trim() ? '' : 'hoy';   // 📅 (31/10) buscar mira todo; borrar vuelve a Hoy
+    if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);

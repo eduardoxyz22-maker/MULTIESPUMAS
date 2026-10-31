@@ -1,57 +1,94 @@
-/* 📅 HOY / MAÑANA EN LA TABLA DE ADMINISTRACIÓN (12/10). El dueño: «ahí falta el hoy / mañana para filtrar la tabla».
-   Lo que cuida: dos chips después de «Todos»; «Hoy» = entrega de hoy; «Mañana» = el próximo día con camión (el sábado dice
-   «Lunes dd/mm»); cuentan y filtran aunque el período elegido sea otro mes (el 31, mañana es del mes siguiente); tocar dos
-   veces vuelve a «Todos». Reloj clavado. Datos sintéticos.
-   Se corre:  node tests/test_adm_hoy.js   (desde la raíz) */
+/* 📅 (31/10, dueño: «administración entra por defecto en "todas" en vez de hoy día y eso ralentiza un poco y satura todo… ¿no habíamos
+   acordado que ingresa en "hoy"? las fichas?») Administración abre en «📅 Hoy». Buscar mira todo mientras nadie eligió otro chip, y al
+   borrar vuelve a Hoy. Hoy sin pedidos lo dice y ofrece el próximo día y todos.
+   Se corre:  node tests/test_adm_hoy.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const path = require('path');
-let PASS=0, FAIL=0;
-const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+(typeof e==='string'?e:JSON.stringify(e)).slice(0,400)):''); };
-const ARCH='file://'+(process.env.PEDIDOS||path.resolve('pedidos.html'));
-async function abrir(browser, ahora){
-  const page = await browser.newPage({ viewport:{ width:1280, height:900 }, timezoneId:'America/La_Paz' });
-  page.on('dialog', d => d.accept());
-  await page.clock.setFixedTime(new Date(ahora));
-  await page.route(/^https?:/, r => r.abort());
-  await page.goto(ARCH, { waitUntil:'load' }); await page.waitForTimeout(700);
-  return page;
-}
-const preparar = (fechas) => {
-  var c=document.getElementById('conn-form'); if(c) c.style.display='none'; UNLOCKED=true;
-  document.getElementById('admin-lock').style.display='none'; document.getElementById('admin-content').style.display='block';
-  CARGA_GEN++; CARGA_ESTADO='ok'; apiList=function(){ return Promise.resolve(STATE.slice()); };
-  STATE=fechas.map(function(f,i){ return { id:'h'+i, fecha:f, oc:'10-'+(100+i), vendedor:'Carola Chavez', cliente:'CLIENTE '+i, productos:[{desc:'TITANIO LATEX',medida:'140x190',cant:1}], turno:'AM', pagado:false, saldo:100, ts:1 }; });
-  window.leer=function(){
-    var chips=[].map.call(document.querySelectorAll('#adm-chips .qchip'), function(b){ return b.textContent.replace(/\s+/g,' ').trim(); });
-    return { chips:chips, filas:admFilter().map(function(p){ return p.fecha; }) };
-  };
-  showView('admin'); renderAdmin();
-};
-const leer = () => {
-  var chips=[].map.call(document.querySelectorAll('#adm-chips .qchip'), function(b){ return b.textContent.replace(/\s+/g,' ').trim(); });
-  return { chips:chips, filas:admFilter().map(function(p){ return p.fecha; }) };
-};
-(async () => {
-  const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
-  let page = await abrir(browser, '2026-10-14T10:00:00-04:00');   // miércoles
-  await page.evaluate(preparar, ['2026-10-14','2026-10-14','2026-10-15','2026-10-16','2026-10-13']);
-  let r = await page.evaluate(() => leer());
-  chk('los chips «📅 Hoy 2» y «➡️ Mañana 1» van después de «Todos»', /^Todos/.test(r.chips[0]) && r.chips[1]==='📅 Hoy 2' && r.chips[2]==='➡️ Mañana 1', r.chips);
-  r = await page.evaluate(() => { setQuick('hoy'); return leer(); });
-  chk('«Hoy» deja solo las entregas de hoy', r.filas.length===2 && r.filas.every(f => f==='2026-10-14'), r.filas);
-  r = await page.evaluate(() => { setQuick('manana'); return leer(); });
-  chk('«Mañana» deja solo las del próximo día con camión', JSON.stringify(r.filas)==='["2026-10-15"]', r.filas);
-  r = await page.evaluate(() => { setQuick('manana'); return { q:QUICK_FILTER, n:admFilter().length }; });
-  chk('tocar otra vez vuelve a «Todos»', r.q==='' && r.n===5, r);
-  await page.close();
+const path = require('path'), fs = require('fs');
+let PASS = 0, FAIL = 0;
+const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 300)) : ''); };
+const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.html');
+const _src = fs.readFileSync(path.join(__dirname, 'test_stock_rev2_u2_turno.js'), 'utf8');
+const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('\nconst corre'));
 
-  page = await abrir(browser, '2026-10-31T10:00:00-04:00');   // sábado 31: mañana es domingo → el lunes 02/11 (feriado) → martes 03/11
-  await page.evaluate(preparar, ['2026-10-31','2026-11-03','2026-11-02','2026-10-20']);
-  r = await page.evaluate(() => { var s=document.querySelector('[data-val="mes"]'); if(s) s.click(); document.getElementById('adm-mes').value='2026-10'; renderAdmin(); setQuick('manana'); return Object.assign(leer(), { esp:proximoDiaEntrega() }); });
-  chk('el sábado 31 dice el día con nombre («Martes 03/11», saltando domingo y el feriado)', r.chips.some(c => /^➡️ Martes 03\/11 1$/.test(c)), { chips:r.chips, esp:r.esp });
-  chk('con el filtro en octubre, «Mañana» igual muestra la entrega de noviembre', JSON.stringify(r.filas)==='["2026-11-03"]', r.filas);
-  await page.close();
+(async () => {
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const errs = [];
+  async function abrir(fecha, hoyPrueba) {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: 'America/La_Paz' });
+    await ctx.route(/^https?:\/\//, r => r.abort());
+    if (hoyPrueba) await ctx.addInitScript(() => { window.ADM_HOY_PRUEBA = 1; });
+    const page = await ctx.newPage(); page.on('pageerror', e => errs.push(e.message)); page.on('dialog', d => d.accept());
+    await page.clock.setFixedTime(new Date(fecha));
+    await page.goto('file://' + PEDIDOS, { waitUntil: 'load' }); await page.waitForTimeout(400);
+    await page.evaluate('(' + PREPARAR + ')()');
+    await page.evaluate(async () => {
+      window.ADM_FICHAS_PRUEBA = 1; UNLOCKED = true;
+      var L = function () { return [_lin('CH1201|TITANIO ICE|160x190', 1, { chk: 'ok' })]; };
+      await _cargar([
+        _ped('h1', '2026-10-22', 'AM', L(), { cliente: 'CLIENTE HOY UNO', ts: _ts('2026-10-20', '09:00:00') }),
+        _ped('h2', '2026-10-22', 'PM', L(), { cliente: 'CLIENTE HOY DOS', ts: _ts('2026-10-20', '10:00:00') }),
+        _ped('m1', '2026-10-23', 'AM', L(), { cliente: 'CLIENTE VIERNES', ts: _ts('2026-10-20', '11:00:00') }),
+        _ped('l1', '2026-10-26', 'AM', L(), { cliente: 'CLIENTE LUNES', ts: _ts('2026-10-20', '11:30:00') }),
+        _ped('v1', '2026-10-15', 'AM', L(), { cliente: 'CLIENTE VIEJO', entregado: true, ts: _ts('2026-10-13', '12:00:00') })
+      ], _stock(function (s) { s.c.u[_K] = 10; }));
+      document.getElementById('admin-lock').style.display = 'none'; document.getElementById('admin-content').style.display = 'block';
+      showView('admin'); renderAdmin();
+    });
+    await page.waitForTimeout(150);
+    return { ctx, page };
+  }
+  const estado = page => page.evaluate(() => {
+    var T = function (e) { return e.textContent.replace(/\s+/g, ' ').trim(); };
+    var F = [].slice.call(document.querySelectorAll('#adm-fichas .af-f')).map(T).filter(function (t) { return /CLIENTE /.test(t); });
+    var on = document.querySelector('#adm-chips .qchip.active');
+    var vac = document.getElementById('pedidos-empty');
+    return { q: QUICK_FILTER, def: ADM_HOY_DEF, n: F.length, hoy1: F.some(function (t) { return t.indexOf('HOY UNO') >= 0; }), viejo: F.some(function (t) { return t.indexOf('VIEJO') >= 0; }),
+      lunes: F.some(function (t) { return t.indexOf('LUNES') >= 0; }), chip: on ? T(on) : '', vacio: vac && vac.style.display !== 'none' ? T(vac) : '' };
+  });
+  const buscar = (page, t) => page.evaluate(t => { var b = document.getElementById('adm-search'); b.value = t; b.dispatchEvent(new Event('input', { bubbles: true })); }, t);
+
+  // ---------- 1. abre en Hoy ----------
+  let { ctx, page } = await abrir('2026-10-22T09:10:00-04:00', true);   // jueves
+  let r = await estado(page);
+  chk('1a · Administración abre en «📅 Hoy»: solo los dos de hoy', r.q === 'hoy' && r.n === 2 && r.hoy1 && !r.viejo, r);
+  chk('1b · el chip encendido es «Hoy»', /Hoy/.test(r.chip), r.chip);
+
+  // ---------- 2. buscar mira todo y al borrar vuelve a Hoy ----------
+  await buscar(page, 'viejo'); r = await estado(page);
+  chk('2a · buscar «viejo» encuentra el pedido del 15/10 (busca en todos, no solo hoy)', r.q === '' && r.viejo && r.n === 1, r);
+  await buscar(page, ''); r = await estado(page);
+  chk('2b · al borrar la búsqueda vuelve a «Hoy»', r.q === 'hoy' && r.n === 2, r);
+
+  // ---------- 3. si se elige otro chip, buscar ya no lo cambia ----------
+  await page.evaluate(() => setQuick('manana')); r = await estado(page);
+  chk('3a · elegir «Mañana» muestra el viernes y deja de ser lo de entrada', r.q === 'manana' && !r.def && r.n === 1, r);
+  await buscar(page, 'cliente'); r = await estado(page);
+  chk('3b · con un chip elegido, buscar filtra dentro de ese chip (no salta a Todos)', r.q === 'manana', r);
+  await buscar(page, '');
+  await page.evaluate(() => setQuick('manana')); r = await estado(page);
+  chk('3c · tocar el chip encendido otra vez va a «Todos» (como siempre; lo entregado de días pasados va plegado)', r.q === '' && /Todos 5/.test(r.chip) && r.n === 4, r);
+  await ctx.close();
+
+  // ---------- 4. hoy sin pedidos ----------
+  ({ ctx, page } = await abrir('2026-10-25T10:00:00-04:00', true));   // domingo
+  r = await estado(page);
+  chk('4a · el domingo «Hoy» está vacío y lo dice, con el próximo día y «Ver todos»', r.q === 'hoy' && r.n === 0 && /Hoy no hay entregas/.test(r.vacio) && /Mañana|Lunes/.test(r.vacio) && /Ver todos/.test(r.vacio), r);
+  await page.evaluate(() => { var b = [].slice.call(document.querySelectorAll('#pedidos-empty button'))[0]; b.click(); });
+  r = await estado(page);
+  chk('4b · «Ver el próximo día» lleva al lunes', r.q === 'manana' && r.lunes && r.n === 1, r);
+  await page.evaluate(() => { setQuick(''); setQuick('cobrar'); QUICK_FILTER = 'especial'; renderAdmin(); });
+  r = await estado(page);
+  chk('4c · con otro filtro vacío el cartel sigue siendo el de siempre', r.n === 0 && /No hay pedidos para este filtro/.test(r.vacio) && !/Hoy no hay/.test(r.vacio), r);
+  await ctx.close();
+
+  // ---------- 5. en Playwright, sin pedirlo, sigue «Todos» ----------
+  ({ ctx, page } = await abrir('2026-10-22T09:10:00-04:00', false));
+  r = await estado(page);
+  chk('5 · sin ADM_HOY_PRUEBA (las pruebas de siempre) arranca en «Todos»', r.q === '' && /Todos 5/.test(r.chip) && r.n === 4, r);
+  await ctx.close();
+
+  chk('sin errores de la página', errs.length === 0, errs.slice(0, 3));
   await browser.close();
-  console.log('\n'+PASS+' bien · '+FAIL+' mal');
-  process.exit(FAIL?1:0);
+  console.log(`\n${PASS} bien · ${FAIL} mal`);
+  process.exit(FAIL ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
