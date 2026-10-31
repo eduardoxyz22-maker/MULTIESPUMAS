@@ -522,7 +522,8 @@ Propiedades del script.
 - ⚠️ **Si publicaste algo y «no se ve», mirá el deploy de Pages ANTES de tocar el código**
   (§4dp): el 09/09 falló con `Failed to get ID Token. Request timeout` — infraestructura de
   GitHub dentro de `actions/deploy-pages@v5`, nada del repo. Se arregla con cualquier push
-  nuevo. Workflow `273388817` en `mcp__github__actions_list`.
+  nuevo. ⚠️ **Desde el 31/10 Pages publica por «GitHub Actions»**: el deploy es `publicar-pages.yml` (workflow `402814225`, jobs «ver» y
+  «publicar»; el log dice «Achicado pedidos.html: … KB → … KB»), ya no `273388817`.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
@@ -1161,14 +1162,15 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   ⚠️ **Toda medida `vh`/`vw` va `calc(N / var(--vz,1))`** (también en los `style="…"` del JS): con `zoom` se agrandan y las ventanas salían de la
   pantalla. ⚠️ **`getBoundingClientRect()`/`clientX`/`innerWidth` son px de PANTALLA; `style.left/top/width` adentro del `body`, `offsetHeight` y
   `clientWidth`, px del PANEL: se pasa con `zoomPag()`.** Un PDF con html2canvas lleva `onclone:sinAgrandarCopia`. `tests/test_vidrio_agrandar.js`.
-- **⚡ Velocidad 84-90** (§4oa, 30/10; revisada dos veces por otra IA; PUBLICADA el 31/10, §4od, 31/10 ~10:52 de Bolivia, `7b2cfce`, versión 2026-10-31-b; la 90 publica achicado recién cuando el dueño ponga Pages en «GitHub Actions»): copia del aparato con tope (`mirrorRecortar`, `lsPoner`:
+- **⚡ Velocidad 84-90** (§4oa, 30/10; revisada dos veces por otra IA; PUBLICADA el 31/10, §4od, 31/10 ~10:52 de Bolivia, `7b2cfce`, versión 2026-10-31-b; la 90 publica achicado desde el 31/10 12:35 de Bolivia: el dueño puso Pages en «GitHub Actions», §4of): copia del aparato con tope (`mirrorRecortar`, `lsPoner`:
   sin lugar, primero se va la copia, nunca la cola), lectura sin cambios liviana (`_igual`, `STATE_GEN`/`AUTO_PINTADO_GEN`), Contabilidad y Mis
   pedidos de a partes (`trozosHtml`, `TROZOS_N`; en Playwright todo de una salvo `TROZOS_PRUEBA`) y publicar `pedidos.html` achicado
   (`herramientas/achicar_panel.js` + `publicar-pages.yml`: solo con Pages en «GitHub Actions»; esbuild pasa `PANEL_V='…'` a `"…"`).
   ⚠️ Todo camino que cambie `STATE` termina en `saveMirror()` sin argumento (si no, «sin cambios» puede no repintar). `test_velocidad_4oa`, `test_achicar`.
 - **📅 Administración abre en «Hoy»** (§4od, 31/10; dueño: *«entra por defecto en "todas"… ralentiza y satura»*; PUBLICADO 31/10 ~10:52 de Bolivia, `7b2cfce`, versión 2026-10-31-b): `QUICK_FILTER='hoy'`
   (`ADM_HOY_DEF`); el período sigue en «Mes» (§4cj). Sin chip elegido, buscar mira todo y al borrar vuelve a Hoy; Hoy vacío ofrece el próximo día y
-  «Ver todos» (`admVacioPintar`). ⚠️ Un camino NUEVO que ponga `QUICK_FILTER` a mano lleva `ADM_HOY_DEF=false`. En Playwright «Todos» salvo
+  «Ver todos» (`admVacioPintar`). ⚠️ Un camino NUEVO que ponga `QUICK_FILTER` a mano lleva `ADM_HOY_DEF=false`, y uno que cambie el período, el día, el mes o escriba la
+  búsqueda llama a `admHoySoltar()` (revisión de Fable, §4of: con «Hoy» de entrada, el calendario «ver ese día» mostraba hoy). En Playwright «Todos» salvo
   `ADM_HOY_PRUEBA`. `tests/test_adm_hoy.js`.
 - **💵 El precio de venta es obligatorio** (§4oe, 31/10; dueño: *«que al cargar una venta los vendedores coloquen sí o sí precio de venta del producto»*;
   PUBLICADO 31/10, `404215d`, versión 2026-10-31-c): en una venta (OC, también de tienda) cada producto con «Precio c/u» > 0 para guardar
@@ -1187,7 +1189,8 @@ con ⬜/🔴; al tocarlo arranca en «Lo que falta» (`semanaArrancar`), `#adm-s
 «🔥 Pedir hoy» (`urge`) y «🤖 Revisión automática». «Para hacer»: `semana` (rojo) y `semana-t` (ámbar). Solo mira. `tests/test_semana.js` (41).
 ⚠️ **Los plazos son los del cuadrito, nunca «4 días»** (dueño, 27/10: *«los plazos que ya tenemos definidos»*): `semanaPlazos()` = `diaArranque()`
 → `saldoSaleDeFabrica` → se entrega desde `sigDiaHabil` (E1; pedido en la próxima ocasión, E2). `SEMANA_PROD_DIAS` ya no existe.
-📣 **Bloki le grita a Ernesto** (§4mz, PUBLICADO `d41ae21`): media hora antes del corte (16:00; sábado 11:30), SOLO en aparatos `asisVeAdm()`,
+📣 **Bloki le grita a Ernesto** (§4mz, PUBLICADO `d41ae21`): media hora antes del corte (16:00; sábado 11:30), SOLO en el aparato de LOGÍSTICA (`semanaGritoVe` = `quienRol()==='logistica'`; dueño, 31/10:
+*«solo para logística y Ernesto… no para Eduardo»*: la clave, Administración y la compu de administración ya no; PUBLICADO `fdc777d`),
 `anuncioGrito` con `semana:1` y lo ⬜/🔴 que se entrega antes de E2 (`semanaUrgentes`); cada 15 min mientras falte (`me_sem_grito`); abrir el panel
 tarde grita en el primer tic. El anuncio va primero (`anuncioTic` = `anuncioTicAnuncio` + `semanaGritoTic`). Con el panel cerrado no grita nada.
 `tests/test_semana_grito.js` (27).
@@ -2428,7 +2431,8 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   del Excel; el stock la aparta al final (`AVISA_STOCK_F='9999-12-31'`). «📞 Llamá a N clientes» en «Para hacer». Cada guardado lleva `av:1` y el `.gs` 30-a
   contesta `actualizar` a una página sin `av` que le pone un día. ⚠️ Lo que va por día ya la deja afuera (fecha vacía); un camino NUEVO que no mire la
   fecha tiene que preguntar `entregaAConfirmar`. `test_avisa_cuando` (52).
-- **78 🤖 El comprobante se lee al subirlo** (`ias*`, formulario y «Registrar pago»): la misma lectura y comparación de «Revisar las fotos con IA»
+- **78 🤖 El comprobante se lee al subirlo** (desde §4of también el 📎 sobre un pago ya registrado: `iasPegada`/`iasPegBox`, compara solo con
+  TODAS las fotos del pago leídas; `compsPagosDe` lleva `ix`) (`ias*`, formulario y «Registrar pago»): la misma lectura y comparación de «Revisar las fotos con IA»
   (`iacComparar`, `compsPagosDe`), aviso con arreglo de un toque, nunca frena; nada con servidor < 26-a, sin crédito o con la IA pausada. Los avisos de
   Contabilidad que son SOLO de fecha van en ámbar (`ctaAvSoloFecha`, `ks`). `IAC_SUBIR_PRUEBA`. `test_comprobante_al_subir` (26).
 - **81 📥 Kommo ya cargadas**: mismo lead, o mismo celular y vendedora con una venta viva (45 días) → no cuentan como pendientes («ya está cargada como
@@ -2500,4 +2504,5 @@ tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía 
 ## Reglas de oro
 - NO pushear a `main` mientras el workflow del panel corre (el push del bot falla en silencio).
 - Validar `generar.py` con `ast.parse` y el template con `node --check` antes de pushear.
-- Si Pages se atasca (deploys fallan en `deployment_queued`): Settings → Pages → Branch None → Save → Branch main → Save.
+- Si Pages se atasca: desde el 31/10 publica `publicar-pages.yml` (Pages en «GitHub Actions»): mirar sus corridas y volver a correrla (Run
+  workflow, a mano). Volver a publicar la rama tal cual = Settings → Pages → Source «Deploy from a branch» → main / (root).
