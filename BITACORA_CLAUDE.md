@@ -17174,6 +17174,10 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   arriba, guantes blancos y zapatillas), **B Rudo** (inclinado, ceja levantada, sonrisa con dientes, manos en la cintura), **C Clásico** (ojos de
   caricatura, lentes subidos a la frente; el contador conserva sus anteojos). Prototipo en el scratchpad (`masc/bloki_cool.js`, `blokiSvg2(traje,
   estilo)`, usa `blokiTemaPartes`): al elegir, pasa a `blokiSvg`; ojo con la cara del tema (los colmillos de Halloween van debajo de los lentes).
+- **🙅 «Nah olvídalo»** (dueño, 31/10): preguntó si la A tenía las manos levantadas (sí, y el de hoy también: saluda con la izquierda) y dudó de
+  los colores de la ropa. Se le mostraron tres manos (arriba / pulgar en el pecho / en la cintura) y cuatro colores (turquesa, azul de la marca,
+  las tres hojas del logo, negro y turquesa): https://claude.ai/artifact/KE5sK2MJYfdMGGddRR5m4p. Respuesta: *«Nah olvídalo»*. **Bloki queda como
+  está** (con su ropa de cada mes, §4og). No volver a proponer otro diseño de Bloki sin que lo pida. El panel no cambió.
 
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del

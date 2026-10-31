@@ -1469,8 +1469,8 @@ filtro de estado; tocar un paso filtra), motivos en barras que filtran y tarjeta
   cada tema a los CINCO trajes; lo de la cabeza solo con la cabeza libre (la gorra del vendedor y el casco de logística no se tapan). `BLOKI_SRC` va
   por `traje|tema`. Todos Santos = SOLO una calaverita a sus pies (dueño eligió la «B»; la cara pintada «se ve raro», no volver a ponerla).
   ⚠️ Un tema NUEVO del `<head>` va también en `blokiTemaPartes` (si no, Bloki sale sin nada). `test_bloki` §7.
-  🎨 El dueño quiere OTRO diseño (*«no me termina de gustar bloki… algo acorde a la marca»*): seis opciones en https://claude.ai/artifact/2REx91aQpgtyJd9jDv6rtu
-  (Bloki 2.0, Espumi, Nubi, Hoji, Almo, Lanita), esperando que elija. Bitácora §4og.
+  🎨 Rediseño DESCARTADO (31/10): se le mostraron seis mascotas («Ni uno»), Bloki con lentes estilo ACME y la A con manos y colores; el dueño:
+  *«Nah olvídalo»*. Bloki queda como está: no volver a proponer otro diseño sin que lo pida. Bitácora §4og.
 
 ## 🧑‍💼 Eduardo, el asistente (§4jx, 11/10; PUBLICADO 22:45, `7f54c33`; dueño: *«no me gusta… una cara en un círculo cuando podemos usar un avatar 3D»*) — desde §4lg la figura es BLOKI (arriba); lo demás sigue
 Su imagen 3D de cuerpo entero en la esquina (`asistente/eduardo-3d.webp`, cabecera `eduardo-busto.webp`; `?v=` en `ASIS_IMG`/`ASIS_BUSTO`).
