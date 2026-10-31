@@ -17148,7 +17148,9 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   Anuncio): la gorra del vendedor y el casco de logística no se tapan; ellos llevan lo del tema en otro lado (flores o acebo en la gorra/casco).
 - 🎃 capa de vampiro + colmillos + calabaza en el piso; sombrero de bruja. 🌼 calavera estilo «Coco» (anillos y pétalos alrededor de los ojos —el
   contador sin anillos: ya tiene anteojos—, nariz de corazón, sonrisa cosida, florcitas en vez de los cachetes) + corona de cempasúchil (`blokiFlor`) o
-  dos flores en la gorra/casco. 🎄 bufanda para todos; el gorro de siempre; acebo en gorra/casco. 🎆 moño dorado + papel picado; gorrito de fiesta.
+  dos flores en la gorra/casco. ⚠️ **La cara pintada se SACÓ** (dueño, 31/10: *«me gustan todos menos el de todos santos se ve raro… mejor solo
+  ponerle su calaquita abajo»*): cara de siempre + una calaverita de azúcar a sus pies (`bk-calaverita`, como la calabaza de octubre); se le
+  mostraron A (con las flores) y B (solo la calaverita): en la rama queda la A hasta que elija. 🎄 bufanda para todos; el gorro de siempre; acebo en gorra/casco. 🎆 moño dorado + papel picado; gorrito de fiesta.
   🎭 antifaz con pluma + serpentinas (el contador: plumas en la cabeza en vez de antifaz). 💐 flor en la mano + corazón. 🇧🇴/💚 la bandera de Bolivia
   o la de Santa Cruz en la mano (dibujadas). Espuma: nada.
 - El tema sale de la clase `tema-…` del `<html>` (**`blokiTema()`**, la misma del encabezado y el fondo). La chispa de Bloki solo sin nada en la cabeza.
