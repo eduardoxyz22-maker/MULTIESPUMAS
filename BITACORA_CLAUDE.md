@@ -17094,6 +17094,8 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   precio no pasa ni con la clave.
 - `fxPasosEstado` (paso «Productos») y «Para guardar» (`Precios`) piden lo mismo (§4mj). Asterisco en «Precio c/u» con `#view-form.precio-oblig`
   (`precioObligPintar` desde `applyVendedorLite` y `pintarDocTipo`).
+- **Decidido por el dueño (31/10, después de publicar)**: *«el regalo no, y a mí no me lo pidas, ellos cuadran los montos de los productos»*: un regalo
+  NO va en 0 (lleva su precio) y a Eduardo no se le pide. Las dos ya eran así: no cambió nada.
 - ⚠️ En Playwright apagado salvo `window.PRECIO_PRUEBA` (54 pruebas guardan ventas de ejemplo sin precio). `tests/test_precio_obligatorio.js` (21;
   12 rojas contra lo publicado, `7b2cfce`).
 

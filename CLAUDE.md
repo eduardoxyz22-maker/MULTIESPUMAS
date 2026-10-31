@@ -1173,6 +1173,7 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   PUBLICADO 31/10, `404215d`, versión 2026-10-31-c): en una venta (OC, también de tienda) cada producto con «Precio c/u» > 0 para guardar
   (`precioObligatorio`/`preciosFaltan`); no en ATC/RPT, Eduardo, ROHO ni internos. Pedido viejo sin precio (`data-sin-precio` + `data-orig`): la
   vendedora lo pone; con la clave, `confirm`. ⚠️ `fxPasosEstado` y «Para guardar» piden lo mismo. En Playwright solo con `PRECIO_PRUEBA`.
+  Dueño (31/10): un regalo NO va en 0 y a Eduardo no se le pide («ellos cuadran los montos de los productos»): no cambiarlo sin que lo pida.
   `tests/test_precio_obligatorio.js`.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
