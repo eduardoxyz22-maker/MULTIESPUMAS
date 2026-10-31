@@ -1,0 +1,138 @@
+/* 🧔☕ LA FÁBRICA DE EDUARDO CON VIDA (31/10).
+
+   El dueño, con la captura de su fábrica vacía: «Mi fábrica se ve pobreeeee, falta un Eduardo por ahí y una Isabel diciéndole
+   "¿le llevo un café?" y no sé, muchas más cosas».
+
+   Lo que se mira:
+     1. Sin three.js (la red cortada): la fábrica sigue como siempre, sin errores, y los números de la pizarra salen de los pedidos
+        de Eduardo (hoy, mañana, por cargar, atrasados, entregados) y de lo que falta cargar.
+     2. Lo que dice Eduardo usa esos números (falta cargar, hoy, mañana, entregados).
+   Con three.js (copia local: PATIO_THREE=<carpeta del paquete three 0.128>, la misma que usa test_patio):
+     3. Arma a Eduardo, Isabel, el perro, un chofer por camión (el primero de VEHICULOS), la pizarra, el reloj y los banderines del tema.
+     4. Una burbuja dice quién habla y se va sola.
+     5. El café: Isabel pregunta, va a la cafetera, se lo lleva y Eduardo queda con la taza.
+     6. Con el piso vacío hay un montacargas estacionado; con montacargas cargando, no.
+     7. Los camiones de Administración (cv3d) NO llevan nada de esto.
+     8. Con «reducir movimiento» nadie habla.
+   Datos inventados (el repo es público). Se corre:  node tests/test_fabrica_vida.js   (las partes 3-8 solo con PATIO_THREE) */
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const fs = require('fs'), path = require('path');
+let PASS = 0, FAIL = 0;
+const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 300)) : ''); };
+const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
+const TH = process.env.PATIO_THREE || '';
+
+const armar = (PEND) => {
+  try { CARGA_GEN++; CARGA_ESTADO = 'ok'; clearTimeout(CARGA_TIMER); clearInterval(CARGA_TIC); } catch (e) {}
+  CONNECTED = false; window.autoAbrirAvisos = function () {};
+  var hoy = todayStr(), man = proximoDiaEntrega(), P = function (o) { return Object.assign({ vendedor: 'Eduardo Añez', turno: 'AM', zona: 'NORTE', direccion: 'Av. Ejemplo', maps: '', pagado: false, saldo: 0,
+    ts: Date.now() - 86400000 * 3, metodoPago: '', entregado: false, acuenta: 0 }, o); };
+  var L = [];
+  for (var i = 0; i < 5; i++) L.push(P({ id: 'e' + i, oc: '10-1' + (10 + i), nota: '40' + i, cliente: 'CLIENTE ' + i, fecha: '2026-10-2' + i, entregado: true, productos: [{ desc: 'ESPECIAL SEMIORTOPEDICO', medida: '140x190', cant: 2 }] }));
+  L.push(P({ id: 'h1', oc: '10-301', nota: '501', cliente: 'TIENDA DE HOY', fecha: hoy, entregado: true, productos: [{ desc: 'TITANIO', medida: '160x200', cant: 1 }] }));
+  if (PEND) {
+    L.push(P({ id: 'p1', oc: '11-001', nota: '601', cliente: 'DISTRIBUIDORA EL SOL', fecha: man, vehiculo: 'Foton nuevo', productos: [{ desc: 'ESPECIAL SEMIORTOPEDICO', medida: '140x190', cant: 6, chk: 'ok' }, { desc: 'TITANIO', medida: '160x200', cant: 3, chk: 'im' }] }));
+    L.push(P({ id: 'p2', oc: '11-002', nota: '602', cliente: 'COMERCIAL NORTE', fecha: man, productos: [{ desc: 'SOMIER ORO', medida: '140x190', cant: 4, chk: 'no' }] }));
+  }
+  L.push(P({ id: 'x', oc: '10-900', nota: '9', cliente: 'DE OTRA VENDEDORA', vendedor: 'Maria Flores', fecha: hoy, productos: [{ desc: 'DREAM', medida: '140x190', cant: 7 }] }));
+  STATE = L; showView('mis'); MIS_TODOS = false; MIS_FILTER = 'todos'; DEP.per = 'sem'; DEP.perTocado = false; DEP.firma = '';
+  document.getElementById('mis-vendedor').value = 'Eduardo Añez'; renderMis();
+};
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
+  const nueva = async (opt) => {
+    const page = await browser.newPage(Object.assign({ viewport: { width: 1366, height: 1000 }, timezoneId: 'America/La_Paz' }, opt || {}));
+    const errores = []; page.on('pageerror', e => errores.push(e.message)); page.on('dialog', d => d.accept());
+    if (TH) {
+      await page.route('**/three.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(TH, 'build/three.min.js')), contentType: 'text/javascript' }));
+      await page.route('**/OrbitControls.js', r => r.fulfill({ body: fs.readFileSync(path.join(TH, 'examples/js/controls/OrbitControls.js')), contentType: 'text/javascript' }));
+    }
+    await page.route(/^https?:/, r => { const u = r.request().url(); if (TH && /three\.min\.js|OrbitControls/.test(u)) return r.fallback(); return r.abort(); });
+    await page.goto('file://' + PEDIDOS + '?tema=todos-santos', { waitUntil: 'load' }); await page.waitForTimeout(400);
+    return { page, errores };
+  };
+
+  /* ---- 1 y 2: sin 3D ---- */
+  {
+    const { page, errores } = await nueva();
+    await page.route('**/three.min.js', r => r.abort());
+    await page.evaluate(armar, true);
+    await page.waitForTimeout(300);
+    const r = await page.evaluate(() => { var D = depVidaDatos(); return { D: D, frases: depVidaFrases(), mine: (DEP.mine || []).length, vida: typeof VIDA === 'undefined' ? 'x' : VIDA, man: proximoDiaEntrega() }; });
+    chk('1. la pizarra cuenta SOLO los pedidos de Eduardo (no los de otra vendedora)', r.mine === 8, r.mine);
+    chk('…hoy pendientes 0 (el de hoy ya se entregó), mañana 2, entregados 6, por cargar 13', r.D.hoy === 0 && r.D.man === 2 && r.D.ent === 6 && r.D.falta === 13, r.D);
+    chk('…el cliente con más por cargar', r.D.cli === 'DISTRIBUIDORA EL SOL' && r.D.nf === 6, r.D.cli + ' ' + r.D.nf);
+    chk('2. Eduardo dice lo que falta cargar con el número', r.frases.some(f => /Faltan 13 por cargar/.test(f)), r.frases);
+    chk('…y lo de mañana y lo entregado', r.frases.some(f => /Mañana van 2 pedidos/.test(f)) && r.frases.some(f => /6 entregados/.test(f)), r.frases);
+    chk('…sin 3D no se arma nada de la vida', r.vida === null, r.vida);
+    chk('…ningún error de JavaScript', errores.length === 0, errores);
+    await page.close();
+  }
+
+  if (!TH) {
+    console.log('(sin PATIO_THREE: las partes 3-8 necesitan three.js local)');
+  } else {
+    /* ---- 3 a 6: con 3D, el piso vacío ---- */
+    {
+      const { page, errores } = await nueva();
+      await page.evaluate(armar, false);
+      let ok = false; for (let i = 0; i < 80 && !ok; i++) { ok = await page.evaluate(() => !!(window.VIDA && VIDA.q && VIDA.q.edu)); if (!ok) await page.waitForTimeout(250); }
+      chk('3. con three.js arma la vida', ok);
+      let r = await page.evaluate(() => ({ q: Object.keys(VIDA.q), chof: VIDA.chof.map(k => VIDA.q[k].n), flags: VIDA.flags.length, piz: !!VIDA.piz, reloj: !!VIDA.reloj, mcE: !!VIDA.mcE,
+        colores: VIDA.flags.slice(0, 6).map(m => '#' + m.material.color.clone().convertLinearToSRGB().getHexString()), velas: VIDA.velas.length, toca: DEP.w3.toca.length }));
+      chk('…Eduardo, Isabel, el perro y un chofer por camión (el primero de cada uno)', r.q.indexOf('edu') >= 0 && r.q.indexOf('isa') >= 0 && r.q.indexOf('perro') >= 0 && r.chof.join(',') === 'Luis:,Luis:,Cristhian:,Fernando:', r);
+      chk('…la pizarra, el reloj y los banderines', r.piz && r.reloj && r.flags > 40, r.flags);
+      chk('…los banderines con los colores de Todos Santos, y las velitas', r.colores.join(',') === '#ec4899,#f97316,#facc15,#14b8a6,#8b5cf6,#ef4444' && r.velas >= 4, r.colores.join(',') + ' velas ' + r.velas);
+      chk('6. con el piso vacío, un montacargas estacionado', r.mcE === true);
+      r = await page.evaluate(() => { VIDA.q.edu.espera = 999; depDecir('edu', 'Hola, equipo', .6); var e = document.querySelector('.dep-etq-habla'); return e ? e.innerText : ''; });
+      chk('4. la burbuja dice quién habla', /^Eduardo:\s*Hola, equipo/.test(r), r);
+      let sigue = true; for (let i = 0; i < 30 && sigue; i++) { await page.waitForTimeout(200); sigue = await page.evaluate(() => [].some.call(document.querySelectorAll('.dep-etq-habla'), e => /Hola, equipo/.test(e.innerText))); }
+      chk('…y se va sola', !sigue);
+      await page.evaluate(() => { var E = VIDA.q.edu; E.path = null; E.P.g.position.set(VIDA.home.x, 0, VIDA.home.z); E.st = 'casa'; E.espera = 999; VIDA.q.isa.vel = 12; depVidaCafe(); });
+      let dijo = '', t0 = Date.now(), visto = {};
+      while (Date.now() - t0 < 45000 && !visto.listo) {
+        dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | '));
+        if (/cafecito/.test(dijo)) visto.pide = 1; if (/Aquí tiene/.test(dijo)) visto.da = 1;
+        if (await page.evaluate(() => !!VIDA.q.edu.P.taza && VIDA.q.isa.st === 'escritorio')) visto.listo = 1;
+        await page.waitForTimeout(200);
+      }
+      chk('5. el café: Isabel pregunta «¿Le llevo un cafecito?»', !!visto.pide);
+      chk('…se lo lleva («Aquí tiene»)', !!visto.da);
+      chk('…Eduardo queda con la taza e Isabel vuelve a su escritorio', !!visto.listo);
+      chk('…ningún error de JavaScript', errores.length === 0, errores);
+      /* 7: los camiones de Administración (cv3d) usan el MISMO lienzo: al mudarlo o al armar su escena, la vida se va */
+      r = await page.evaluate(() => { var src = String(cv3dConstruir) + String(depMudar); var tieneGuarda = /VIDA=null/.test(String(cv3dConstruir)) && /VIDA=null/.test(String(depMudar));
+        var caja = document.createElement('div'); caja.style.cssText = 'width:300px;height:200px'; document.body.appendChild(caja); depMudar(caja); DEP.w3.modo = 'adm';
+        try { depDecir('edu', 'no tendría que salir', 5); } catch (e) {}
+        return { guarda: tieneGuarda, vida: VIDA === null ? null : 'armada', burb: document.querySelectorAll('.dep-etq-habla').length }; });
+      chk('7. los camiones de Administración no llevan la vida (mudar el lienzo o armar su escena la saca)', r.guarda && r.vida === null, r);
+      chk('…y desde ahí nadie habla', r.burb === 0, r.burb);
+      await page.close();
+    }
+    /* ---- 6 bis: con montacargas cargando, sin el estacionado ---- */
+    {
+      const { page, errores } = await nueva();
+      await page.evaluate(armar, true);
+      let ok = false; for (let i = 0; i < 80 && !ok; i++) { ok = await page.evaluate(() => !!(window.VIDA && VIDA.q && VIDA.q.edu)); if (!ok) await page.waitForTimeout(250); }
+      const r = await page.evaluate(() => ({ mcE: !!VIDA.mcE, zonas: VIDA.zonas.map(z => z.c + ':' + z.falta) }));
+      chk('6. con montacargas cargando no hay estacionado, y Eduardo conoce cada cliente con lo que falta', r.mcE === false && r.zonas.join(',') === 'DISTRIBUIDORA EL SOL:9,COMERCIAL NORTE:4', r);
+      chk('…ningún error de JavaScript', errores.length === 0, errores);
+      await page.close();
+    }
+    /* ---- 8: reducir movimiento ---- */
+    {
+      const { page, errores } = await nueva({ reducedMotion: 'reduce' });
+      await page.evaluate(armar, false);
+      let ok = false; for (let i = 0; i < 80 && !ok; i++) { ok = await page.evaluate(() => !!(window.VIDA && VIDA.q && VIDA.q.edu)); if (!ok) await page.waitForTimeout(250); }
+      await page.waitForTimeout(4000);
+      const r = await page.evaluate(() => { depDecir('edu', 'hola', 5); return { burb: document.querySelectorAll('.dep-etq-habla').length, pos: VIDA.q.edu.P.g.position.x.toFixed(2) + ',' + VIDA.q.edu.P.g.position.z.toFixed(2), home: VIDA.home.x + ',' + VIDA.home.z }; });
+      chk('8. con «reducir movimiento» nadie habla y Eduardo se queda en su lugar', r.burb === 0 && r.pos === (+r.home.split(',')[0]).toFixed(2) + ',' + (+r.home.split(',')[1]).toFixed(2), r);
+      chk('…ningún error de JavaScript', errores.length === 0, errores);
+      await page.close();
+    }
+  }
+  await browser.close();
+  console.log(PASS + ' bien · ' + FAIL + ' mal');
+  process.exit(FAIL ? 1 : 0);
+})();
