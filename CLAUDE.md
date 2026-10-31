@@ -33,7 +33,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 
 ## 🔐 Ninguna clave en el repo (es PÚBLICO)
 El 25/10 (§4mh) la auditoría de Codex/Astra encontró la clave y el token de Trello escritos en `.claude/skills/atc-multiespumas.md` desde
-mayo: se sacaron (`5bd2b5f`), pero siguen en el historial y en 16 ramas viejas; el dueño tiene que cambiarlos en Trello. Antes de commitear
+mayo: se sacaron (`5bd2b5f`), pero siguen en el historial y en 16 ramas viejas. El 31/10 el dueño dijo *«olvidate de trello ya no lo usamos»*:
+no volver a pedirle que los cambie. Antes de commitear
 un `.md`, una skill o un ejemplo de consola, que no lleve ninguna clave, token ni contraseña: van en los secretos de GitHub o en las
 Propiedades del script.
 
