@@ -17179,6 +17179,31 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   las tres hojas del logo, negro y turquesa): https://claude.ai/artifact/KE5sK2MJYfdMGGddRR5m4p. Respuesta: *«Nah olvídalo»*. **Bloki queda como
   está** (con su ropa de cada mes, §4og). No volver a proponer otro diseño de Bloki sin que lo pida. El panel no cambió.
 
+### §4oh — 💵 «GUARDAR PIDE EL SALDO» PUBLICADO + 🤖 ESTRUCTURA DE LA ENCUESTA POST VENTA (31/10)
+- **Guardar pide el saldo** (`997f2d6`, §4ms): el dueño, al ver la lista de pendientes: *«Guardar pide saldo eso sí dijimos»* → *«Si publica lo de
+  guardar»*. El 26/10 había dicho que sí a hacerlo (*«Sí, hacé que Guardar pida el saldo a los demás vendedores»*) y después «No, dejalo guardado»
+  a publicarlo; ahora sí. **PUBLICADO 31/10 ~16:20 de Bolivia, `main` = `63745b8`** (`9e6d89f` = `format-patch` de `997f2d6` solo `pedidos.html`
+  y la prueba, `git am -3` sobre `3af1d8f`, + versión **2026-10-31-g**). Convive con el precio obligatorio (§4oe): para guardar una venta hacen
+  falta los precios Y el saldo o «SÍ, pagado». Batería sobre la copia (`pub_fondo`, rama `pub-saldo`): 306 suites; 6 rojas, ninguna del cambio:
+  `test_actualizar_espera`, `test_banzer`, `test_revstock` y `test_circuito` fallan IGUAL contra `3af1d8f` (se pudren con la fecha: sábado 31/10,
+  fin de mes — arreglarlas aparte) y `test_asistente`/`test_escenas_form` pasan solas (máquina cargada). Lo que sigue distinto de la rama: SOLO §4lt-d.
+- **🤖 Encuesta post venta por WhatsApp** (dueño, 31/10: *«arma la estructura del bot de encuestas para medir el servicio post venta: atención de la
+  asesora, logística y entrega (tiempos de entrega, si lo atendieron bien, no le cobraron algo extra), producto (calidad, si está conforme)»*).
+  Página con la estructura: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Nada programado todavía; espera 6 decisiones (cuándo, estrellas o
+  caritas, ventas de tienda, a quién el aviso de cobro extra, si cada vendedora ve su nota, pregunta a los 30 días).
+  · Propuesta: 2 días después del ✅ (`eF`), 10:30, lunes a sábado sin feriados; plantilla nueva `encuesta_postventa` (Utilidad: nombra el pedido y
+    la entrega, sin promoción; Meta puede pasarla a Marketing) con «Sí, responder / Ahora no / No más encuestas»; las 7 preguntas van como
+    mensajes interactivos (botones ≤3 de 20 letras, lista ≤10 filas de 24) DENTRO de la ventana de 24 h (gratis) y son FIJAS (sin Claude):
+    1 asesora ⭐1-5 · 2 a tiempo (Sí/Tarde/Cambiaron el día → ¿te avisaron?) · 3 trato del equipo ⭐ · 4 cobro extra (Sí → texto + aviso al dueño
+    al instante) · 5 buen estado (detalle → texto/foto) · 6 producto ⭐ (≤3 → motivo: duro, blando, dolor, olor, costuras, medida) · 7 recomendaría
+    (Sí, seguro / Tal vez / No) · comentario libre. Repreguntas solo si sale mal.
+  · Reglas: las de `waNoCliente_` (sin Eduardo, ROHO, internos, ATC, RPT, sin celular), una cada 60 días por cliente, no con una ATC abierta, «No
+    más encuestas» para siempre (la confirmación y el recordatorio siguen), sin insistir, se cierra a las 24 h y lo parcial cuenta.
+  · ⚠️ Al programarla: el webhook (`waHook_`, hoy convierte `button`/`interactive` en texto para Claude, l. ~3742) tiene que mandar las respuestas
+    con id `enc|…` al motor de la encuesta ANTES de `iaAlVuelo_`/`iaRepaso`; el estado por número NO va en Propiedades (9 KB): hoja «Encuestas»
+    + caché. Alertas: cobro extra → `WA_AVISOS`/dueño; detalle o producto ≤2 → vendedora + logística con «Abrir ATC» (nunca sola); tarde/trato ≤2
+    → logística; asesora ≤2 → solo el dueño; resumen los lunes 9:00. Tablero «⭐ Encuestas» en Administración (con la contraseña).
+
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
   mes: Fernando 76 de 76, Jonathan 25 de 29, Maria 15 de 35, Juan 9 de 53, Isabel 4 de 28, Mauricio 2 de 60, Carola 2 de 50, Mirian 0 de 41;

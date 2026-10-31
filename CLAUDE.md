@@ -747,6 +747,10 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   que llamar a `renderStock` de nuevo. `stockSalidas(k)` lee de `stockSalidasMapa` (una pasada). La hoja «Historial stock» guarda `it`
   (qué turnos traía cada Excel). Lo 🏭 de otro ya salido de fábrica lo apartan el cuadrito y la revisión (`stockFabVencidoU`), el Plan NO.
 
+## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
+Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
+las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
+
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:
@@ -989,7 +993,7 @@ comprobantes», `leer:1` sin gastar) y la carpeta de a 20 por la API de Drive (`
 las vendedoras** (PUBLICADO `fc1d028`): PDF por vendedora (`iacPdf`), texto para el grupo (`iacTextoGrupo`) y aviso en el panel (fila **`__avisos_conta__`**,
 `ctaAv*`; Mis pedidos → Para hacer + Bloki, «✓ Ya lo corregí»). «La foto dice menos/más» sin acusar; 🧾 la nota de venta con el servidor **26-b** (IMPLEMENTADO
 26/10 por el dueño; `main` con el `.gs` y ESPERADA 26-b desde `d8550a1`; volver atrás: ✏️ a la versión anotada Y pegar la 26-a de `f6272ef…`, 4.698 líneas). 📅 **La fecha (regla del dueño)**: el primer pago = el día en que se cargó la venta (`x.ant`/`x.fCarga`), los demás = el día
-en que se registraron; si no coincide, se dice SIN preguntas (§4mt). 💵 «Guardar pide el saldo» (`997f2d6`): el dueño dijo NO publicarlo.
+en que se registraron; si no coincide, se dice SIN preguntas (§4mt). 💵 «Guardar pide el saldo» (`997f2d6`): PUBLICADO 31/10 (`63745b8`, versión 2026-10-31-g; dueño: «Si publica lo de guardar»), §4oh.
 📁 **Comprobantes con el estilo nuevo y el Excel con enlaces** (§4mu, PUBLICADO 26/10, `cfc901b`): «Ver foto» es un hyperlink de verdad
 (`link` en la celda → `sheetLinks`, `XS_LINK`=28 al final de `STYLES_XML`, `textoOk` = sin triangulitos); la ventana: total + anillo, acciones en
 tarjetas, bancos que filtran (`COMPS_VER`), buscador, miniaturas. ⚠️ Las pruebas leen `.cps-r`, el cliente en el PRIMER `<b>` de cada fila y `.cps-ok`.
