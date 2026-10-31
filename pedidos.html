@@ -45743,9 +45743,9 @@ function depVidaPizarraPintar(){
   x.fillStyle='#0b6f69'; x.font='900 46px system-ui,Arial,sans-serif'; x.textAlign='left'; x.fillText('Pedidos de Eduardo', 34, 66);
   x.fillStyle='#64748b'; x.font='700 28px system-ui,Arial,sans-serif'; x.fillText(D.diaTxt, 34, 104);
   var filas=[['Hoy', D.hoy, '#1d4ed8'], ['Mañana', D.man, '#7c3aed'], ['Por cargar', D.falta, D.falta?'#c2410c':'#15803d'], ['Atrasados', D.atr, D.atr?'#dc2626':'#15803d'], ['Entregados', D.ent, '#15803d']];
-  filas.forEach(function(f, i){ var y=160+i*58; x.fillStyle='#1f2937'; x.font='800 36px system-ui,Arial,sans-serif'; x.textAlign='left'; x.fillText(f[0], 40, y);
+  filas.forEach(function(f, i){ var y=150+i*53; x.fillStyle='#1f2937'; x.font='800 36px system-ui,Arial,sans-serif'; x.textAlign='left'; x.fillText(f[0], 40, y);
     x.fillStyle=f[2]; x.font='900 44px system-ui,Arial,sans-serif'; x.textAlign='right'; x.fillText(String(f[1]), W-48, y); });
-  x.fillStyle='#ef4444'; x.fillRect(W-150, H-34, 26, 10); x.fillStyle='#2563eb'; x.fillRect(W-116, H-34, 26, 10); x.fillStyle='#16a34a'; x.fillRect(W-82, H-34, 26, 10);
+  x.fillStyle='#ef4444'; x.fillRect(W-150, H-26, 26, 9); x.fillStyle='#2563eb'; x.fillRect(W-116, H-26, 26, 9); x.fillStyle='#16a34a'; x.fillRect(W-82, H-26, 26, 9);
   P.t.needsUpdate=true;
 }
 function depVidaRelojPintar(){
@@ -45831,7 +45831,7 @@ function depVida(g, ancho, fz, cams, zonas){
   [-1.2,1.2].forEach(function(x){ pz.add(depCaja(.07,2.4,.07,'#94a3b8',x,1.2,-.04)); pz.add(depCaja(.5,.05,.07,'#64748b',x,.03,-.04)); });
   pz.add(depCaja(2.5,1.62,.06,'#cbd5e1',0,1.55,0));
   var P=depVidaTex(640,420); VIDA.piz=P; var pm=new THREE.Mesh(new THREE.PlaneGeometry(2.38,1.5), new THREE.MeshBasicMaterial({ map:P.t })); pm.position.set(0,1.55,.035); pz.add(pm);
-  pz.userData.dep={ fn:function(){ depAcercar(-.5, 6.4); depDecir('edu', depVidaUno(depVidaFrases()), 4.5); } }; W.toca.push(pz);   // la pizarra acerca la cámara al rincón de Eduardo
+  pz.userData.dep={ fn:function(){ depAcercar(-3.2, 6.6); depDecir('edu', depVidaUno(depVidaFrases()), 4.5); } }; W.toca.push(pz);   // la pizarra acerca la cámara al rincón de Eduardo
   var R=depVidaTex(256,256); VIDA.reloj=R; var rm=new THREE.Mesh(new THREE.CircleGeometry(.42,32), new THREE.MeshBasicMaterial({ map:R.t, transparent:true })); rm.position.set(0,2.72,.04); pz.add(rm);
   pz.add(depCil(.025,.3,'#64748b',0,2.36,0,6));
   depVidaPizarraPintar(); depVidaRelojPintar();
