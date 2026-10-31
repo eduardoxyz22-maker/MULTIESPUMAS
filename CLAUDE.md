@@ -1176,7 +1176,8 @@ Archivo APARTE `escritorio.js` (`defer`, subir su `?v=` al cambiarlo, `node --ch
   PUBLICADO 31/10, `404215d`, versión 2026-10-31-c): en una venta (OC, también de tienda) cada producto con «Precio c/u» > 0 para guardar
   (`precioObligatorio`/`preciosFaltan`); no en ATC/RPT, Eduardo, ROHO ni internos. Pedido viejo sin precio (`data-sin-precio` + `data-orig`): la
   vendedora lo pone; con la clave, `confirm`. ⚠️ `fxPasosEstado` y «Para guardar» piden lo mismo. En Playwright solo con `PRECIO_PRUEBA`.
-  Dueño (31/10): un regalo NO va en 0 y a Eduardo no se le pide («ellos cuadran los montos de los productos»): no cambiarlo sin que lo pida.
+  Dueño (31/10): un regalo NO va en 0 y a Eduardo no se le pide («ellos cuadran los montos de los productos»), y una venta VIEJA sin precio
+  también lo pide al guardarla (*«que ponga el precio, déjalo así»*, tras la revisión de Fable): no cambiarlo sin que lo pida.
   `tests/test_precio_obligatorio.js`.
 
 ## 🗓️ El botón «Semana» de Administración: el stock de los productos de los próximos 5 días hábiles (§4my, 27/10, PUBLICADO `dce5fcc`)
@@ -2432,7 +2433,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   contesta `actualizar` a una página sin `av` que le pone un día. ⚠️ Lo que va por día ya la deja afuera (fecha vacía); un camino NUEVO que no mire la
   fecha tiene que preguntar `entregaAConfirmar`. `test_avisa_cuando` (52).
 - **78 🤖 El comprobante se lee al subirlo** (desde §4of, PUBLICADO `d24ed73` versión 2026-10-31-e, también el 📎 sobre un pago ya registrado: `iasPegada`/`iasPegBox`, compara solo con
-  TODAS las fotos del pago leídas; `compsPagosDe` lleva `ix`) (`ias*`, formulario y «Registrar pago»): la misma lectura y comparación de «Revisar las fotos con IA»
+  TODAS las fotos del pago leídas y pide las que falten aunque el pago sea de otro mes —dueño: «lee las fotos viejas»—; `compsPagosDe` lleva `ix`) (`ias*`, formulario y «Registrar pago»): la misma lectura y comparación de «Revisar las fotos con IA»
   (`iacComparar`, `compsPagosDe`), aviso con arreglo de un toque, nunca frena; nada con servidor < 26-a, sin crédito o con la IA pausada. Los avisos de
   Contabilidad que son SOLO de fecha van en ámbar (`ctaAvSoloFecha`, `ks`). `IAC_SUBIR_PRUEBA`. `test_comprobante_al_subir` (26).
 - **81 📥 Kommo ya cargadas**: mismo lead, o mismo celular y vendedora con una venta viva (45 días) → no cuentan como pendientes («ya está cargada como

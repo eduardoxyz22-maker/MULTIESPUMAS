@@ -17130,7 +17130,10 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   `fdc777d`, versión 2026-10-31-d**, sola.
 - **📎 + la revisión de Fable: PUBLICADO 31/10 ~12:48 de Bolivia, `d24ed73`, versión 2026-10-31-e** (dueño: *«publica todo hasta los arreglos
   de fable»*) = `af0776e` (📎) + `2bb65d7` (Fable) + la versión. Antes, en la copia: ia_clip 18, adm_hoy 18, precio 23, grito 28, versión nueva
-  27, al subir 26, achicar 25. Queda la 2.1 para el dueño.
+  27, al subir 26, achicar 25; la corrida 6 de `publicar-pages.yml` terminó bien a las 12:49 de Bolivia.
+- **Decidido por el dueño (31/10, *«que ponga el precio, déjalo así y lee las fotos viejas»*)**: (2.1) la vendedora que abre una venta vieja
+  sin precio TIENE que ponerlo para guardar (no se la deja pasar con aviso); (1.3) el 📎 lee también las otras fotos del pago que falten,
+  aunque el pago sea de otro mes (es lo que ya hace `iasPegada`). No volver a proponer lo contrario sin que lo pida.
 - **🛑 «Reporte Semanal ATC» apagado** (dueño: *«apagá el reporte semanal atc»*, `71ee8af`): sin `schedule`, queda a mano. El panel sigue
   leyendo `atc-semanal.csv` como foto final.
 - **Pages en «GitHub Actions»**: el dueño lo cambió el 31/10 ~11:30 de Bolivia (captura). La primera publicación achicada salió con el push
