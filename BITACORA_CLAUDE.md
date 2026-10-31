@@ -17082,7 +17082,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   relacionadas en verde (vidrio 27, fondo 19, sin_barra 37, iPad 23, 5_7_9 57, temas 92, 3_10_11 29, ayudas 30, fichas 14+14, escenas 24, versión 27,
   Halloween 22, estética 35+9, patio 48, camiones 3D 28, nueve 62, teclado 15, informe ATC 62, arriba 24, Bloki 19).
 
-### §4od — 📅 ADMINISTRACIÓN ABRE EN «HOY», Y SALEN NOVIEMBRE Y LA VELOCIDAD (31/10; dueño: *«A ver lo de noviembre»* → muestra https://claude.ai/artifact/C8yJhgCgQb3ZB7H7gzKV3B → *«Ok publica digo que si. Lo que había pendiente y si a lo de noviembre. Otro detalle veo que administración entra por defecto en "todas" en vez de hoy día y eso ralentiza un poco y satura todo»* → *«Publica con Hoy»*; PUBLICADO 31/10, en curso)
+### §4od — 📅 ADMINISTRACIÓN ABRE EN «HOY», Y SALEN NOVIEMBRE Y LA VELOCIDAD (31/10; dueño: *«A ver lo de noviembre»* → muestra https://claude.ai/artifact/C8yJhgCgQb3ZB7H7gzKV3B → *«Ok publica digo que si. Lo que había pendiente y si a lo de noviembre. Otro detalle veo que administración entra por defecto en "todas" en vez de hoy día y eso ralentiza un poco y satura todo»* → *«Publica con Hoy»*; PUBLICADO 31/10 ~10:52 de Bolivia, `7b2cfce`, versión 2026-10-31-b)
 - **Lo que salió junto**: el fondo de Todos Santos (`6724124`, que en `main` estaba sacado por `05d1cc1`), su vidrio dorado (`8ec441b`), el arreglo
   de la letra clara (`2a18f23`), la velocidad 84-90 (§4oa: `330560c`, `8c4193e`, `ff2a3ca`, la parte de revisión de `087951c`, `a05f523`,
   `81d6db8`) y Administración en «Hoy» (`5ce6d30`). Por `format-patch` sobre `main`; un solo choque (el bloque del vidrio de octubre y el fondo de
@@ -17099,6 +17099,10 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
   otro chip, escribir en el buscador mira TODO (una venta de la semana pasada no está en Hoy) y al borrarlo vuelve a Hoy; elegir un chip (`setQuick`,
   la Semana, las RPT atrasadas) lo apaga. Hoy sin pedidos (domingo, feriado): «Hoy no hay entregas agendadas» con el próximo día y «Ver todos»
   (`admVacioPintar`). En Playwright sigue «Todos» salvo `ADM_HOY_PRUEBA`. `tests/test_adm_hoy.js` (12).
+- **Batería entera sobre la copia publicada** (`pub_fondo`, rama `pub-nov`): 302 suites, 9.612 bien, 6 mal. `test_banzer` (1), `test_revstock` (2) y
+  `test_circuito` (2) fallan IGUAL sobre lo que estaba publicado (`4c6c5b2`): dependen del calendario de estos días (sábado 31/10, domingo, lunes
+  feriado de Todos Santos: «mañana» de entrega es el martes 03/11). `test_actualizar_espera` (1, el aviso «9 s después») sola da 14/14: la máquina
+  cargada. Relacionadas en verde: vidrio 30, fondo de la noche, Hoy 12, versión nueva, velocidad, achicar.
 - **La 90 necesita al dueño**: Settings → Pages → Source → «GitHub Actions». Hasta que lo cambie, Pages publica la rama como siempre y
   `publicar-pages.yml` no hace nada. Volver atrás: Source → «Deploy from a branch» → main / (root).
 
