@@ -13873,6 +13873,7 @@ function contaPagosHtml(p){
       faltaMonto+
       cajaEdit+
       comp+
+      iasPegBox(p, c, i)+                          // 🔎 (31/10) lo que dice la foto que se pegó acá con 📎
       envBtns+
     '</div>';
   }).join('');
@@ -13965,12 +13966,14 @@ function onCompElegido(ev){
       ae[_e].comps=compsArr(compsArr(ae[_e].comps!=null?ae[_e].comps:ae[_e].comp).concat([res.fotoId]));
       ae[_e].comp=ae[_e].comps[0]||'';
       aplicarEnvios(p, ae);
+      iasPegada(p.id, res.fotoId);                  // 🔎 (31/10) también la del 📎 se lee ya
       toast('Comprobante del recargo adjuntado ✓','ok');
       showContaModal(p.id);
     }else if(destino && destino.anticipo){
       // Al ADELANTO: su renglón se reescribe aparte (no está en la lista de cobros).
       var a0=anticipoDe(p);
       if(a0) aplicarCompsAnticipo(p, compsArr(a0.comps!=null?a0.comps:a0.comp).concat([res.fotoId]));
+      if(a0) iasPegada(p.id, res.fotoId);           // 🔎 (31/10) también la del 📎 se lee ya
       toast('Comprobante del adelanto adjuntado ✓','ok');
       showContaModal(p.id);
     }else if(destino){
@@ -13981,6 +13984,7 @@ function onCompElegido(ev){
         c0.comps=compsArr(compsArr(c0.comps!=null?c0.comps:c0.comp).concat([res.fotoId]));
         c0.comp=c0.comps[0]||'';
         aplicarCobros(p, arr);
+        iasPegada(p.id, res.fotoId);                // 🔎 (31/10) también la del 📎 se lee ya
       }
       toast('Comprobante adjuntado ✓','ok');
       showContaModal(p.id);
@@ -49121,7 +49125,7 @@ function ctaAvOk(id, v){
    · `iacPuede` (la contraseña) sigue para la ventana de Contabilidad, que lee el mes entero; esto es foto por foto y solo lo que se sube.
    · En Playwright apagado salvo `window.IAC_SUBIR_PRUEBA`.
    ========================================================================== */
-var IAS={ mias:{}, lee:{}, err:{}, intentos:{}, cola:[], tic:null, enVuelo:false, parado:0, refsT:0, refsCorre:false, rec:null, recK:'' };
+var IAS={ mias:{}, peg:{}, lee:{}, err:{}, intentos:{}, cola:[], tic:null, enVuelo:false, parado:0, refsT:0, refsCorre:false, rec:null, recK:'' };
 var IAS_REFS_DIAS=45, IAS_PAUSA_MS=15*60000, IAS_REINTENTOS=2, IAS_ESPERA_MS=4000, IAS_JUNTA_MS=600, IAS_TOPE_MS=75000, IAS_REFS_CADA_MS=30*60000;
 function iasActivo(){ return !navigator.webdriver || !!window.IAC_SUBIR_PRUEBA; }
 function iasPuedeLeer(){ return iasActivo() && iacServidorOk() && !!CONNECTED && !(IAS.parado && Date.now()-IAS.parado<IAS_PAUSA_MS); }
@@ -49227,7 +49231,7 @@ function iasLinea(cls, txt, btns){ return '<div class="ias '+cls+'"><span class=
 /* ctx: { donde:'f1'|'f2'|'cta', ef (se puede agregar efectivo), cor (se puede corregir el monto), tienda, sinFecha } */
 function iasHtml(c, ctx){
   if(!c) return '';
-  if(c.est==='pe') return iasLinea('ias-lee', '🔎 Leyendo el comprobante… <small>puede tardar unos segundos; si guardás antes, no pasa nada</small>');
+  if(c.est==='pe') return iasLinea('ias-lee', '🔎 Leyendo el comprobante… <small>puede tardar unos segundos'+(ctx && ctx.donde==='peg' ? '' : '; si guardás antes, no pasa nada')+'</small>');
   if(c.est==='ok') return iasLinea('ias-ok', '✅ La foto coincide con lo anotado.');
   if(c.est==='nl') return iasLinea('ias-gris', '❓ '+esc(String(c.c||c.chip||'').replace(/^./, function(s){ return s.toUpperCase(); }))+'.');
   var out=[], hoy=diaNegocio(), d=ctx.donde;
@@ -49282,7 +49286,51 @@ function iasPintarConta(){
     if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban }); }catch(e){ h=''; }
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
 }
-function iasRepintar(){ iasPintarForm(); iasPintarConta(); }
+function iasRepintar(){ iasPintarForm(); iasPintarConta(); iasPintarPeg(); }
+/* 📎 (31/10, el dueño: «sí, que se lea también el 📎») La foto que Contabilidad le pega a un pago YA registrado (cobro, adelanto o
+   recargo) también se lee en ese momento, con la MISMA cuenta de la revisión del mes (`compsPagosDe` + `iacComparar`), y lo que dice va
+   debajo de ese pago en la ficha. Se piden todas las fotos del pago que falten (las ya leídas el servidor las devuelve sin gastar). El
+   efectivo no se lee (`compsPagosDe` no lo trae). Sin botones de arreglo: el pago ya está anotado, se corrige con ✏️ Corregir. */
+function iasPegX(p, fid){
+  var L=p ? compsPagosDe(p) : [];
+  for(var i=0;i<L.length;i++) if(L[i].comps.indexOf(fid)>=0) return L[i];
+  return null;
+}
+function iasPegada(pid, fid){
+  fid=String(fid||''); if(!fid || !iasActivo()) return;
+  var x=iasPegX(findById(pid), fid); if(!x) return;
+  IAS.peg[fid]=String(pid);
+  x.comps.forEach(function(f){ iasPedir(f); });
+}
+function iasPegEvaluar(x){
+  if(!x || !x.comps.some(function(f){ return IAS.peg[f]; })) return null;
+  var cs=x.comps.filter(function(f){ return IAC.res[f] || IAS.lee[f]; });
+  if(!cs.length) return null;                     // no se pudo leer (tope, sin crédito, red): no se dice nada, como al subir
+  if(cs.some(function(f){ return !IAC.res[f]; })) return { est:'pe' };
+  var y=Object.assign({}, x, { comps:cs });
+  var refs=iacRefs(iasPagosRecientes().filter(function(z){ return !z.comps.some(function(f){ return cs.indexOf(f)>=0; }); }));
+  return iacComparar(y, refs);
+}
+function iasPegHtml(p, i){
+  var c=contaPagos(p)[i]; if(!c) return '';
+  var cs=compsArr(c.comps!=null?c.comps:c.comp), fid=''; cs.forEach(function(f){ if(!fid && IAS.peg[f]) fid=f; });
+  if(!fid) return '';
+  var x=iasPegX(p, fid), r=iasPegEvaluar(x); if(!r) return '';
+  return iasHtml(r, { donde:'peg', ef:false, cor:false, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+
+    (r.est==='mal' ? iasLinea('ias-gris', '<small>Si hay que arreglarlo: <b>✏️ Corregir</b> en este pago.</small>') : '');
+}
+function iasPegBox(p, c, i){
+  var cs=compsArr(c && (c.comps!=null?c.comps:c.comp));
+  if(!cs.some(function(f){ return IAS.peg[f]; })) return '';
+  var h=''; try{ h=iasPegHtml(p, i); }catch(e){ h=''; }
+  return '<div class="ias-box ias-peg" aria-live="polite" data-id="'+esc(String(p.id))+'" data-i="'+i+'">'+h+'</div>';
+}
+function iasPintarPeg(){
+  [].slice.call(document.querySelectorAll('.ias-peg')).forEach(function(box){
+    var h=''; try{ var p=findById(box.getAttribute('data-id')); if(p) h=iasPegHtml(p, +box.getAttribute('data-i')); }catch(e){ h=''; }
+    if(box._h!==h){ box.innerHTML=h; box._h=h; }
+  });
+}
 /* 💵 «Agregar efectivo»: el segundo método del pago mixto (§4ej), en efectivo, con lo que la foto no cubre. Si entre las fotos está el
    recibo / la nota de venta (Claude dijo que NO es un comprobante de pago), pasa a ese pago: es el respaldo del efectivo. */
 function iasAgregarEfectivo(m){
