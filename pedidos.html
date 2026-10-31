@@ -50031,17 +50031,14 @@ function blokiTemaPartes(tema, traje){
       '<path d="M88 45 Q120 38 152 45" fill="none" stroke="#f97316" stroke-width="8"/>'+
       '<rect x="113" y="36" width="14" height="11" rx="2" fill="#fde047" stroke="'+K+'" stroke-width="3"/></g>';
   }else if(tema==='todos-santos'){
-    /* 🌼 calavera pintada como en «Coco» (anillos y pétalos alrededor de los ojos, nariz de corazón, la sonrisa cosida) y cempasúchil:
-       corona si la cabeza está libre, dos flores en la gorra o el casco si no */
-    P.sinMejillas=true;
-    var pet=function(cx, cy, angs){ var h=''; angs.forEach(function(g, i){ var a=g*Math.PI/180, x=(cx+Math.cos(a)*19).toFixed(1), y=(cy+Math.sin(a)*19).toFixed(1);
-      h+='<ellipse cx="'+x+'" cy="'+y+'" rx="5.2" ry="3.2" transform="rotate('+g+' '+x+' '+y+')" fill="'+(i%2?'#ec4899':'#f97316')+'" stroke="#7c2d12" stroke-width="1"/>'; }); return h; };
-    P.cara='<g class="bk-calavera">'+(traje==='conta' ? '' : '<g fill="none" stroke="#7c3aed" stroke-width="3"><circle cx="103" cy="108" r="13"/><circle cx="137" cy="108" r="13"/></g>')+
-      pet(103,108,[130,165,200,235,270])+pet(137,108,[50,15,-20,-55,-90])+
-      '<path d="M120 121 C113 116 114 110 117.5 111 Q120 112 120 114.5 Q120 112 122.5 111 C126 110 127 116 120 121 Z" fill="'+K+'"/>'+
-      '<g fill="#1aafa4"><circle cx="113" cy="92" r="2.4"/><circle cx="120" cy="89" r="2.8"/><circle cx="127" cy="92" r="2.4"/></g>'+
-      blokiFlor(84,128,7)+blokiFlor(156,128,7)+
-      (grita ? '' : '<path d="M111 121 V128 M116 123.5 V130.5 M120 124.5 V131.5 M124 123.5 V130.5 M129 121 V128" stroke="'+K+'" stroke-width="2.2" stroke-linecap="round"/>')+'</g>';
+    /* 🌼 una calaverita de azúcar a sus pies (dueño, 31/10: la cara pintada «se ve raro… mejor solo ponerle su calaquita abajo») y
+       cempasúchil: corona si la cabeza está libre, dos flores en la gorra o el casco si no */
+    P.delante='<g class="bk-calaverita" transform="translate(46 225) rotate(-8) scale(1.3) translate(-40 -224)"><path d="M22 205 C22 190 31 185 40 185 C49 185 58 190 58 205 C58 211 54 214 51 215 L51 221 Q51 224 48 224 L32 224 Q29 224 29 221 L29 215 C26 214 22 211 22 205 Z" fill="#fff" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+      '<circle cx="32.5" cy="203" r="6" fill="#ec4899" stroke="'+K+'" stroke-width="1.6"/><circle cx="47.5" cy="203" r="6" fill="#f97316" stroke="'+K+'" stroke-width="1.6"/>'+
+      '<circle cx="32.5" cy="203" r="2.6" fill="'+K+'"/><circle cx="47.5" cy="203" r="2.6" fill="'+K+'"/>'+
+      '<path d="M40 213 C37 210.5 37.5 208 39 208.5 Q40 209 40 210 Q40 209 41 208.5 C42.5 208 43 210.5 40 213 Z" fill="'+K+'"/>'+
+      '<path d="M32 218.5 H48 M35 216 V221 M38.5 216 V221 M41.5 216 V221 M45 216 V221" stroke="'+K+'" stroke-width="1.6" stroke-linecap="round"/>'+
+      '<g fill="#1aafa4"><circle cx="35" cy="192" r="1.8"/><circle cx="40" cy="190" r="2.2"/><circle cx="45" cy="192" r="1.8"/></g></g>';
     P.cabeza = cabezaLibre
       ? '<g class="bk-corona"><g fill="#16a34a" stroke="#14532d" stroke-width="1.5"><ellipse cx="82" cy="52" rx="9" ry="4" transform="rotate(-20 82 52)"/><ellipse cx="108" cy="45" rx="9" ry="4" transform="rotate(-8 108 45)"/>'+
           '<ellipse cx="132" cy="45" rx="9" ry="4" transform="rotate(8 132 45)"/><ellipse cx="158" cy="52" rx="9" ry="4" transform="rotate(20 158 52)"/></g>'+

@@ -127,7 +127,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('el botón «📢 Decir anuncio» dice que lo grita Bloki', /Bloki lo grita/.test(r.boton||'') && !/Eduardo/.test(r.boton||''), r.boton);
 
   console.log('\n── 7. Se viste según el tema del mes, con TODOS los trajes (31/10, dueño: «¿no debería vestirse acorde a la temática del mes?») ──');
-  const TEMAS={ halloween:'bk-capa', 'todos-santos':'bk-calavera', navidad:'bk-bufanda', 'anio-nuevo':'bk-mono', carnaval:'bk-serpentinas', madre:'#e11d48', patria:'bk-bandera', 'santa-cruz':'bk-bandera' };
+  const TEMAS={ halloween:'bk-capa', 'todos-santos':'bk-calaverita', navidad:'bk-bufanda', 'anio-nuevo':'bk-mono', carnaval:'bk-serpentinas', madre:'#e11d48', patria:'bk-bandera', 'santa-cruz':'bk-bandera' };
   const visto={};
   for(const t of Object.keys(TEMAS)){
     await ponerTema(t);
@@ -157,7 +157,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       /#d52b1e/.test(decodeURIComponent(visto.patria.bloki.src)) && /#f9e300/.test(decodeURIComponent(visto.patria.bloki.src)) && !/#f9e300/.test(decodeURIComponent(visto['santa-cruz'].bloki.src)) && /#00843d/.test(decodeURIComponent(visto['santa-cruz'].bloki.src)), '');
   chk('la memoria de dibujos va por traje Y tema: el mismo traje en otro mes es otro dibujo', visto.halloween.vendedor.src!==visto['todos-santos'].vendedor.src && visto.navidad.bloki.src!==visto.madre.bloki.src, '');
   await ponerTema('espuma');
-  r = await ev(() => { var s=blokiSvg('vendedor'); return { capa:/bk-capa/.test(s), cal:/bk-calavera/.test(s), buf:/bk-bufanda/.test(s), band:/bk-bandera/.test(s) }; });
+  r = await ev(() => { var s=blokiSvg('vendedor'); return { capa:/bk-capa/.test(s), cal:/bk-calaverita/.test(s), buf:/bk-bufanda/.test(s), band:/bk-bandera/.test(s) }; });
   chk('el resto del año (Espuma), sin nada de temporada', !r.capa && !r.cal && !r.buf && !r.band, r);
   /* la figura de la esquina toma el tema de la página (la clase del <head> por la fecha: la prueba corre el 15/10 → Halloween) */
   await ponerTema('halloween');
