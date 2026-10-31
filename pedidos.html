@@ -181,6 +181,8 @@ input.err,textarea.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px v
 .prod-sub{display:grid;grid-template-columns:1.15fr 1fr 58px 88px;gap:8px;align-items:end}
 @media(max-width:520px){ .prod-sub{grid-template-columns:1fr 1fr;} }
 .prod-card .prod-precio{text-align:right}
+/* 💵 (31/10) En una venta el precio c/u es obligatorio (`precioObligatorio`): el asterisco como el de los campos de arriba. */
+#view-form.precio-oblig .prod-precio-w .mini-lb::after{content:' *';color:var(--red,#dc2626);font-weight:800}
 /* Subtotal de la línea: se actualiza solo al escribir el precio o la cantidad. */
 .prod-rpt{display:grid;grid-template-columns:150px 1fr;gap:2px 8px;align-items:end;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rpt-border)}
 .prod-rpt .mini-lb{margin-bottom:0}
@@ -8206,6 +8208,35 @@ function cantidadesMal(){
   }
   return mal;
 }
+/* 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10, dueño: «que al cargar una venta los vendedores coloquen sí o sí precio de venta del
+   producto. no pueden generar un pedido ni nada si no cargan el precio»). En una VENTA (📄 OC, también la venta de tienda) cada
+   producto lleva su «Precio c/u» mayor a 0, al crearla y al editarla. No en una ATC ni en una RPT (no se vende nada: no tienen
+   precio), ni para Eduardo y ROHO (`esVendedorLite`: los pedidos de ROHO llegan sin precio) ni en los pedidos internos
+   (`cliEsInterno`: ALBA, FÁBRICA…). Un renglón que el pedido YA traía sin precio (`data-sin-precio`, lo pone `editPedido`) y
+   sigue igual (`data-orig`) es «heredado»: con la clave de Administración se puede guardar igual tras preguntar (como la ATC
+   vieja, §4lh); un vendedor no. Lo mismo piden `fxPasosEstado` y «Para guardar» (§4mj: lo mismo que Guardar). */
+function precioObligatorio(vend){
+  if(navigator.webdriver && !window.PRECIO_PRUEBA) return false;   // en Playwright solo con `PRECIO_PRUEBA`: las pruebas de siempre guardan ventas de ejemplo sin precio
+  return docTipoSel()==='OC' && !esVendedorLite(vend) && !cliEsInterno(vend);
+}
+function preciosFaltan(vend){
+  if(!precioObligatorio(vend)) return [];
+  var out=[];
+  Array.prototype.forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var d=c.querySelector('.prod-desc'), e=c.querySelector('.prod-precio'), dn=d ? String(d.value||'').trim() : '';
+    if(!dn || !e) return;
+    if(montoForm(e)>0.005) return;
+    var ms=c.querySelector('.prod-medida'), ot=c.querySelector('.prod-medida-otro');
+    var ahora=dn+'|'+(ms && ms.value==='Otros' ? String((ot&&ot.value)||'').trim() : String((ms&&ms.value)||''));
+    out.push({ c:c, e:e, n:dn, her: !!(c.getAttribute('data-sin-precio') && c.getAttribute('data-de-pedido') && c.getAttribute('data-orig')===ahora) });
+  });
+  return out;
+}
+/* El asterisco de «Precio c/u» (y el aviso de abajo) según quién vende y qué documento es: lo pintan `applyVendedorLite` y `pintarDocTipo`. */
+function precioObligPintar(){
+  var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form');
+  if(view) view.classList.toggle('precio-oblig', precioObligatorio(v ? v.value : ''));
+}
 function getProductos(){
   var cards=document.querySelectorAll('#f-productos .prod-card'),out=[],rptForm=(docTipoSel()==='RPT');
   for(var i=0;i<cards.length;i++){
@@ -15709,6 +15740,18 @@ function submitPedido(){
     try{ _mal[0].e.focus(); _mal[0].e.scrollIntoView({block:'center'}); }catch(e){}
     return;
   }
+  /* 💵 (31/10) Sin el precio de venta de cada producto, una venta no se guarda (`preciosFaltan`). */
+  var _sinPre=preciosFaltan(vendedor);
+  if(_sinPre.length && UNLOCKED && _sinPre.every(function(x){ return x.her; }) &&
+     confirm('💵 Este pedido ya estaba guardado SIN el precio de: '+_sinPre.map(function(x){ return x.n; }).join(', ')+'.\n\n'+
+             'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, sin precio.\nCancelar: ponerle el precio.')) _sinPre=[];
+  if(_sinPre.length){
+    _sinPre.forEach(function(x){ x.e.classList.add('err'); });
+    toast('💵 Poné el PRECIO de venta (c/u) de '+(_sinPre.length===1 ? ('«'+_sinPre[0].n+'»') : ('los '+_sinPre.length+' productos marcados en rojo'))+
+          ': una venta no se guarda sin el precio de cada producto.','err',9000);
+    try{ _sinPre[0].e.focus(); _sinPre[0].e.scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
   var _acu=montoForm('f-acuenta');
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
@@ -16856,6 +16899,7 @@ function applyVendedorLite(){
   var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form');
   var lite=v?esVendedorLite(v.value):false, roho=v?esRoho(v.value):false;
   if(view){ view.classList.toggle('lite-vendedor', lite); view.classList.toggle('roho-vendedor', roho); }
+  precioObligPintar();   // 💵 (31/10)
   /* El tope de fecha es SOLO para pedidos nuevos. Editando (desde Administración) no se
      pone ninguno: hay que poder pasar una entrega a HOY o corregir una fecha que ya pasó,
      y con el `min` puesto el calendario del navegador ni siquiera deja elegirlas.
@@ -17106,6 +17150,7 @@ function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor'
    tipo a mano; al abrir un pedido viejo va en falso para no borrarle nada. */
 function pintarDocTipo(limpiar){
   var tipo=docTipoSel(), sinVenta=(tipo!=='OC');
+  try{ precioObligPintar(); }catch(e){}   // 💵 (31/10)
   /* 🎧 Una ATC no es una venta (§4bt) y una RPT tampoco (§4dk): no tienen N° de nota ni
      cobro. `fueraDeConta` ya las deja a las dos fuera de Contabilidad y del Cuadre, así
      que lo que se anotara ahí no aparecería en ningún total. */
@@ -17524,6 +17569,7 @@ function editPedido(id){
   /* (30/09) Los renglones que YA traía el pedido: vaciarle el nombre a uno es sacarlo (como siempre); el freno de «código sin
      producto» de `submitPedido` es para un renglón nuevo al que nunca se le completó el nombre. */
   Array.prototype.forEach.call(box.querySelectorAll('.prod-card'), function(c){ if(String((c.querySelector('.prod-desc')||{}).value||'').trim()){ c.setAttribute('data-de-pedido','1');
+    if(!(montoForm(c.querySelector('.prod-precio'))>0.005)) c.setAttribute('data-sin-precio','1');   // 💵 (31/10) ya venía sin precio: `preciosFaltan` lo llama heredado
     /* (25/10) Cómo venía el renglón: mientras siga igual, `prodCodigoAuto` no le pone código (cambiaría `prodClave`). */
     var _ms=c.querySelector('.prod-medida'), _ot=c.querySelector('.prod-medida-otro');
     c.setAttribute('data-orig', String((c.querySelector('.prod-desc')||{}).value||'').trim()+'|'+(_ms && _ms.value==='Otros' ? String((_ot&&_ot.value)||'').trim() : String((_ms&&_ms.value)||''))); } });
@@ -18843,6 +18889,7 @@ function fxDerPintar(){
   if(tipo==='OC' && (tot>0 || acu>0 || sal>0)) h+='<div class="fx-tot">'+(tot>0?('<span>Los ítems suman</span><b>'+fmtBs(r2(tot))+'</b>'):'')+
       (pagado ? '<span>Pago</span><b style="color:var(--green)">✅ pagado</b>' : ('<span>A cuenta</span><b>'+fmtBs(acu)+'</b><span>Saldo por cobrar</span><span class="gr">'+fmtBs(sal)+'</span>'))+'</div>';
   var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
+  if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
   if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); }
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
@@ -19328,6 +19375,7 @@ function fxPasosEstado(){
      más (`cantidadesMal`) y ningún renglón con código o precio pero sin producto. Con cantidad 0 decía «4 de 4 ¡listo para guardar!». */
   try{
     if(prods && cantidadesMal().length) prods=false;
+    if(prods && preciosFaltan(val('f-vendedor')).some(function(x){ return !(x.her && UNLOCKED); })) prods=false;   // 💵 (31/10) lo mismo que Guardar
     if(prods && [].some.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
       if(c.getAttribute('data-de-pedido')) return false;
       var d=c.querySelector('.prod-desc'), co=c.querySelector('.prod-codigo'), pr=c.querySelector('.prod-precio');
