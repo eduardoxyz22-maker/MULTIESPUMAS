@@ -151,6 +151,11 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   preguntas = []; DIALOGO = 'aceptar';
   r = await guardar();
   chk('6d · un producto NUEVO sin precio no pasa ni con la clave', !r.guardo && r.rojos.indexOf('ALMOHADA') >= 0 && !preguntas.some(q => /SIN el precio/.test(q)), { rojos: r.rojos, preguntas });
+  chk('6d2 (Fable 2.2) · con la clave se marca SOLO lo nuevo (no el renglón que ya venía sin precio) y el aviso lo nombra a él', r.rojos.join() === 'ALMOHADA' && /ALMOHADA/.test(r.toast), { rojos: r.rojos, toast: r.toast });
+  await ev(() => { var ps = document.querySelectorAll('#f-productos .prod-precio'); ps[ps.length - 1].value = '90'; });
+  preguntas = []; DIALOGO = 'aceptar';
+  r = await guardar();
+  chk('6d3 (Fable 2.2) · con el precio de lo nuevo puesto, recién ahí pregunta por lo que ya venía sin precio y guarda', r.guardo && preguntas.some(q => /SIN el precio/.test(q)), { guardo: r.guardo, preguntas });
 
   await editar(); await ev(() => { document.querySelector('#f-productos .prod-precio').value = '3100'; });
   r = await guardar();

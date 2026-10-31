@@ -177,6 +177,54 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
   });
   chk('7. en la revisión de octubre, las fotos leídas con el 📎 ya no están «sin leer»', r7.qn && r7.q0 && r7.sin.indexOf('qn')<0 && r7.sin.indexOf('q0')<0 && r7.sin.indexOf('qm')<0, r7);
 
+  /* 9 · la revisión de Fable (31/10) */
+  const r9 = await ev(async () => {
+    var out={};
+    var V=function(id, mp){ var p=JSON.parse(JSON.stringify(findById('a1'))); p.id=id; p.oc='10-0'+id.slice(-2); p.cliente='CLIENTE '+id.toUpperCase(); p.metodoPago=textoCobros(mp); STATE.push(p); return p; };
+    /* 1.1: la foto vieja (leída) dice 1.000 y la recién pegada NO se puede leer (tope) → nunca «✅ coincide» */
+    __S.guardado.qold=__S.guardado.qold || { cp:true, le:true, m:1000, mo:'BOB', f:'2026-10-27', bd:'BISA', ref:'OLD0001', t:1, pv:2 };
+    V('b1', [{ anticipo:true, metodo:'Efectivo', monto:1000, fecha:'2026-10-20', nota:'5081', comps:['rb1'] },
+             { metodo:'QR', banco:'BISA', monto:1000, fecha:'2026-10-27', nota:'5081', comps:['qold'] }]);
+    await new Promise(function(ok){ apiPost({ action:'iaComprobantes', fotos:['qold'], leer:1 }).then(function(r){ iacTomar(r); ok(); }); });
+    __S.modo='tope'; IAS.parado=0;
+    await _clip('b1', 'qnew', { idx:0 }); await _esp(250);
+    out.tope=_cajas(); __S.modo='ok';
+    /* 1.2: con la pausa puesta no se pide; al vencer, el repintado la pide */
+    IAS.parado=Date.now(); __S.llamadas=[];
+    V('b2', [{ anticipo:true, metodo:'Efectivo', monto:1000, fecha:'2026-10-20', nota:'5082', comps:['rb2'] },
+             { metodo:'QR', banco:'BISA', monto:1000, fecha:'2026-10-28', nota:'5082' }]);
+    __S.lee.qp={ m:1000, bd:'BISA', f:'2026-10-28', ref:'QP000001' };
+    await _clip('b2', 'qp', { idx:0 }); await _esp(150);
+    out.pausa={ n:_lect().length, cajas:_cajas() };
+    IAS.parado=0; iasRepintar(); await _esp(300);
+    out.despues={ n:_lect().length, cajas:_cajas() };
+    /* 1.4: la caja sigue a SU foto aunque el renglón se corra (otro cobro, de fecha anterior, entra mientras lee) */
+    V('b3', [{ anticipo:true, metodo:'Efectivo', monto:1000, fecha:'2026-10-20', nota:'5083', comps:['rb3'] },
+             { metodo:'QR', banco:'BISA', monto:700, fecha:'2026-10-29', nota:'5083' }]);
+    __S.lee.qs={ m:700, bd:'BISA', f:'2026-10-29', ref:'QS000001' }; __S.demora=200;
+    await _clip('b3', 'qs', { idx:0 }); await _esp(40);
+    var p3=findById('b3'); p3.metodoPago=textoCobros([{ anticipo:true, metodo:'Efectivo', monto:1000, fecha:'2026-10-20', nota:'5083', comps:['rb3'] },
+      { metodo:'Efectivo', monto:50, fecha:'2026-10-21', nota:'5083' }, { metodo:'QR', banco:'BISA', monto:700, fecha:'2026-10-29', nota:'5083', comps:['qs'] }]);
+    await _esp(400); __S.demora=30;
+    out.corrido=_cajas();
+    /* 1.6: cobro QR 1.000 + recargo 50 del mismo día en UNA transferencia de 1.050 */
+    V('b4', [{ anticipo:true, metodo:'Efectivo', monto:1000, fecha:'2026-10-20', nota:'5084', comps:['rb4'] },
+             { metodo:'QR', banco:'BISA', monto:1000, fecha:'2026-10-30', nota:'5084' },
+             { envio:true, metodo:'QR', banco:'BISA', monto:50, fecha:'2026-10-30', nota:'5084' }]);
+    __S.lee.qf={ m:1050, bd:'BISA', f:'2026-10-30', ref:'QF000001' };
+    await _clip('b4', 'qf', { idx:0 }); await _esp(300);
+    out.flete=_cajas();
+    return out;
+  });
+  chk('9a (1.1). la foto pegada no se pudo leer (tope): NO dice «coincide» por la vieja; dice que no se pudo leer',
+    r9.tope.length===1 && !/coincide/.test(r9.tope[0].t) && /No pude leer/.test(r9.tope[0].t), r9.tope);
+  chk('9b (1.2). con la pausa puesta no pide nada; al vencer, el repintado la pide y compara',
+    r9.pausa.n===0 && r9.despues.n===1 && r9.despues.cajas.some(function(c){ return /coincide/.test(c.t); }), r9);
+  chk('9c (1.4). el renglón se corrió mientras leía: la caja muestra lo de SU foto (700 = 700), no se vacía ni toma otro pago',
+    r9.corrido.length===1 && /coincide/.test(r9.corrido[0].t), r9.corrido);
+  chk('9d (1.6). cobro 1.000 + recargo 50 del mismo día en una transferencia de 1.050: «coincide», no «dice más»',
+    r9.flete.length===1 && /coincide/.test(r9.flete[0].t), r9.flete);
+
   chk('8. sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
   console.log(`\n${PASS} bien · ${FAIL} mal`);

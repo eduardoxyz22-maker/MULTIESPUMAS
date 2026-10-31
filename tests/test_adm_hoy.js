@@ -13,7 +13,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const errs = [];
-  async function abrir(fecha, hoyPrueba) {
+  async function abrir(fecha, hoyPrueba, conSept) {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: 'America/La_Paz' });
     await ctx.route(/^https?:\/\//, r => r.abort());
     if (hoyPrueba) await ctx.addInitScript(() => { window.ADM_HOY_PRUEBA = 1; });
@@ -21,7 +21,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     await page.clock.setFixedTime(new Date(fecha));
     await page.goto('file://' + PEDIDOS, { waitUntil: 'load' }); await page.waitForTimeout(400);
     await page.evaluate('(' + PREPARAR + ')()');
-    await page.evaluate(async () => {
+    await page.evaluate(async (conSept) => {
       window.ADM_FICHAS_PRUEBA = 1; UNLOCKED = true;
       var L = function () { return [_lin('CH1201|TITANIO ICE|160x190', 1, { chk: 'ok' })]; };
       await _cargar([
@@ -30,10 +30,11 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
         _ped('m1', '2026-10-23', 'AM', L(), { cliente: 'CLIENTE VIERNES', ts: _ts('2026-10-20', '11:00:00') }),
         _ped('l1', '2026-10-26', 'AM', L(), { cliente: 'CLIENTE LUNES', ts: _ts('2026-10-20', '11:30:00') }),
         _ped('v1', '2026-10-15', 'AM', L(), { cliente: 'CLIENTE VIEJO', entregado: true, ts: _ts('2026-10-13', '12:00:00') })
-      ], _stock(function (s) { s.c.u[_K] = 10; }));
+      ].concat(conSept ? [_ped('s1', '2026-09-20', 'AM', L(), { cliente: 'CLIENTE SEPTIEMBRE', ts: _ts('2026-09-18', '12:00:00') })] : []),
+      _stock(function (s) { s.c.u[_K] = 10; }));
       document.getElementById('admin-lock').style.display = 'none'; document.getElementById('admin-content').style.display = 'block';
       showView('admin'); renderAdmin();
-    });
+    }, !!conSept);
     await page.waitForTimeout(150);
     return { ctx, page };
   }
@@ -85,6 +86,28 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   ({ ctx, page } = await abrir('2026-10-22T09:10:00-04:00', false));
   r = await estado(page);
   chk('5 · sin ADM_HOY_PRUEBA (las pruebas de siempre) arranca en «Todos»', r.q === '' && /Todos 5/.test(r.chip) && r.n === 4, r);
+  await ctx.close();
+
+  // ---------- 6. la revisión de Fable (31/10): lo que cambia el período suelta «Hoy» ----------
+  ({ ctx, page } = await abrir('2026-10-22T09:10:00-04:00', true, true));
+  r = await page.evaluate(() => { ADM_CAL_DIA = '2026-10-23'; admCalAbrirDia(); return null; }).then(() => estado(page));
+  chk('6a (3.1) · el calendario «ver ese día» (viernes) muestra el viernes, no la lista vacía de Hoy', r.q === '' && r.n === 1 && !r.def, r);
+  await ctx.close();
+  ({ ctx, page } = await abrir('2026-10-22T09:10:00-04:00', true, true));
+  await page.evaluate(() => admMesMover(-1)); r = await estado(page);
+  chk('6b (3.1) · ‹ mes anterior desde «Hoy» de entrada: suelta Hoy (muestra septiembre)', r.q === '' && !r.def && r.n === 1, r);
+  await ctx.close();
+  ({ ctx, page } = await abrir('2026-10-22T09:10:00-04:00', true, true));
+  await buscar(page, 'septiembre'); r = await estado(page);
+  const bot = await page.evaluate(() => { var b = document.querySelector('#pedidos-empty button'); return b ? b.textContent : ''; });
+  chk('6c (3.2) · buscar algo de otro mes: dice «No encontré … en octubre» y ofrece buscar en todos los meses', r.n === 0 && /No encontr.*septiembre.*octubre/i.test(r.vacio) && /todos los meses/.test(bot), [r.vacio, bot]);
+  await page.evaluate(() => document.querySelector('#pedidos-empty button').click()); r = await estado(page);
+  chk('6d (3.2) · «Buscar en todos los meses» la encuentra', r.n === 1, r);
+  await ctx.close();
+  ({ ctx, page } = await abrir('2026-10-22T09:10:00-04:00', true));
+  r = await page.evaluate(() => { irAImportadosRoho('2026-10'); return { q: QUICK_FILTER, def: ADM_HOY_DEF, s: document.getElementById('adm-search').value, ac: document.getElementById('adm-search').getAttribute('autocomplete') }; });
+  chk('6e (3.1) · «ver los de ROHO» escribe la búsqueda y suelta Hoy', r.q === '' && !r.def && r.s === 'ROHO', r);
+  chk('6f (3.3) · el buscador no lo repone el navegador al recargar (autocomplete off)', r.ac === 'off', r.ac);
   await ctx.close();
 
   chk('sin errores de la página', errs.length === 0, errs.slice(0, 3));
