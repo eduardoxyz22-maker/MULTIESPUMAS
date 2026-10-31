@@ -17094,8 +17094,15 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     recargar o el 📎 de Contabilidad sobre un pago ya registrado, que NO lee al subir). La 76.ª se leyó sola a las 11:07 (un cobro de hoy).
   · **Nada se cobró dos veces**: el servidor guarda cada lectura (`iacCache_`) y la ventana la reusa. US$ 1,26 / 75 = ~US$ 0,017 por foto, igual si
     se lee al subir o en la ventana. El efectivo no se lee en ningún lado.
-  · Lo que todavía no se lee al subir: el 📎 sobre un pago/adelanto/recargo YA registrado (`destino` en el `comp-input` de Contabilidad) y las compus
-    que no tocaron «Recargar». Se le ofreció leer también el 📎; no se hizo.
+  · Lo que todavía no se leía al subir: el 📎 sobre un pago/adelanto/recargo YA registrado (`destino` en el `comp-input` de Contabilidad) y las
+    compus que no tocaron «Recargar».
+- **📎 también se lee** (dueño: *«sí, que se lea también el 📎»*; `7cad6fe` en la rama, copia `pub-clip` = `373d25c`, espera «publica»):
+  `onCompElegido` llama a `iasPegada(pid, fid)` en las tres ramas con `destino`. `iasPegX` busca el pago con `compsPagosDe` (la MISMA lista de la
+  revisión del mes: sin efectivo, monto > 0) y pide TODAS sus fotos sin leer (`iasPedir`; lo ya leído en el aparato ni se pide, lo leído en el
+  servidor sale sin gastar). Debajo del renglón, `iasPegBox` (`.ias-peg`, `data-id`/`data-i`) con `iasHtml(…, {donde:'peg', cor:false})`: «Leyendo…»
+  (sin «si guardás antes»), «✅ coincide» o el aviso SIN botones + «✏️ Corregir en este pago». `iasRepintar` → `iasPintarPeg` (solo esas cajas,
+  sin repintar la ficha). Apagado en Playwright salvo `IAC_SUBIR_PRUEBA`. `tests/test_ia_clip.js` (14). Vecinas en verde: al subir 26, revisión
+  47, comprobantes 21, conta_alta 53, botones 50, sinmonto 43, borrar 39, envío a pago 28, varias 5, rev3 18, 4jw 40, repetido 7.
 - **Pages en «GitHub Actions»**: el dueño lo cambió el 31/10 ~11:30 de Bolivia (captura). `actions_run_trigger` de `publicar-pages.yml` desde acá da
   403: la primera publicación achicada sale con la del dashboard de las 17:00 (`workflow_run`) o con Run workflow a mano. Antes, `test_achicar` con
   el `pedidos.html` de `main` (2026-10-31-c): 25/25, 4.289.004 → 2.902.559 (68 %).
