@@ -18,8 +18,9 @@
      9. La línea de colchones: la cinta avanza, el colchón sale envuelto después del embolsado, tres operarios; con el piso libre, la
         acolchadora, el inspector y la limpieza. Cuando el pallet del final se llena, Ernesto lo lleva a «Producto terminado» y vuelve.
         Eduardo va a ver la costura y la operaria le contesta. Con montacargas cargando, el centro queda libre (sin acolchadora).
-    10. Tercera vuelta («Se sigue viendo pobre y vacía» + «a uno de costura ponle de nombre Yerson y un cachete inflado como de
-        paperas»): Yerson con su cachete y el pañuelo; el producto terminado en el centro con un segundo montacargas dando vueltas;
+    10. Tercera vuelta («Se sigue viendo pobre y vacía» + «a uno de costura ponle de nombre Yerson y un cachete inflado»; después:
+        «no es por enfermedad, es porque acullica hoja de coca… diálogos de "qué buena coca, es despalada"» y «ojos no le vi»):
+        Yerson con el bolo de coca en el cachete, ojos grandes que se ven y su coca en la mesa; habla de coquear/bolear; el producto terminado en el centro con un segundo montacargas dando vueltas;
         el edificio (ventanales, paredes, estanterías llenas) junto en pocas piezas: menos dibujos por cuadro que antes de todo esto.
    Datos inventados (el repo es público). Se corre:  node tests/test_fabrica_vida.js   (las partes 3-8 solo con PATIO_THREE) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -136,9 +137,12 @@ const armar = (PEND) => {
       chk('…y al volver puede elegir otra cosa (antes, al terminar el primer camino Eduardo y Ernesto se quedaban quietos para siempre)', elige && otra, { elige: elige, otra: otra });
       /* 10: Yerson, el producto terminado, el segundo montacargas y el edificio */
       r = await page.evaluate(() => { var Y = VIDA.q.yer, n = 0, fund = 0; DEP.w3.grupo.traverse(function (o) { if (o.isMesh) { n++; if (o.userData.fundido) fund++; } });
-        return { yer: Y && Y.n, cachete: !!(Y && Y.P.cachete && Y.P.cachete.parent === Y.P.cabeza), panuelo: !!(Y && Y.P.cabeza.children.some(function (c) { return c.geometry && c.geometry.type === 'TorusGeometry'; })),
+        var blancos = Y ? Y.P.cabeza.children.filter(function (c) { return c.geometry && c.geometry.type === 'SphereGeometry' && c.geometry.parameters.radius >= .06 && c.material.color.getHexString() === 'ffffff'; }).length : 0;
+        return { yer: Y && Y.n, cachete: !!(Y && Y.P.cachete && Y.P.cachete.parent === Y.P.cabeza), ojos: blancos, panuelo: !!(Y && Y.P.cabeza.children.some(function (c) { return c.geometry && c.geometry.type === 'TorusGeometry'; })),
+          dice: FAB_DICE.yer.join(' | '), modo: Y && Y.modo,
           stock: VIDA.fab.stock, mc2: !!VIDA.q.mc2, x0: VIDA.q.mc2 && VIDA.q.mc2.P.g.position.x + ',' + VIDA.q.mc2.P.g.position.z, mallas: n, fund: fund, calls: DEP.w3.r.info.render.calls }; });
-      chk('10. Yerson en costura, con el cachete inflado y el pañuelo de las paperas', r.yer === 'Yerson:' && r.cachete && r.panuelo, r);
+      chk('10. Yerson en costura, con el bolo de coca en el cachete, los ojos grandes y sin pañuelo (no es enfermedad)', r.yer === 'Yerson:' && r.cachete && r.ojos === 2 && !r.panuelo, r);
+      chk('…cose con la cabeza levantada y habla de la coca (despalada, bolo, bico)', r.modo === 'bolea' && /despalada/.test(r.dice) && /bolo/i.test(r.dice) && /biquito|bico/.test(r.dice) && !/paperas/i.test(r.dice), { modo: r.modo, dice: r.dice });
       chk('…el producto terminado en el centro (12 pilas) y un segundo montacargas', r.stock === 12 && r.mc2, r);
       chk('…lo fijo va junto: menos de 900 dibujos por cuadro (antes de todo esto eran ~930)', r.fund > 30 && r.calls < 900, r);
       await page.waitForTimeout(1200);
@@ -146,8 +150,8 @@ const armar = (PEND) => {
       chk('…el segundo montacargas da la vuelta', x1 !== r.x0, { antes: r.x0, despues: x1 });
       await page.evaluate(() => { var E = VIDA.q.edu; E.path = null; E.P.g.position.set(VIDA.home.x, 0, VIDA.home.z); E.st = 'casa'; E.espera = 999; ['yer','edu'].forEach(depCallar); depFabVisita(true); });
       visto = {}; t0 = Date.now();
-      while (Date.now() - t0 < 30000 && !visto.y) { dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | ')); if (/Yerson:/.test(dijo)) visto.y = 1; if (/Eduardo:.*(Yerson|cachete)/.test(dijo)) visto.e = 1; await page.waitForTimeout(200); }
-      chk('…Eduardo le pregunta a Yerson por el cachete y Yerson le contesta', visto.y && visto.e, visto);
+      while (Date.now() - t0 < 30000 && !visto.y) { dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | ')); if (/Yerson:/.test(dijo)) visto.y = 1; if (/Eduardo:.*(Yerson|boleando|bolo|coca)/.test(dijo)) visto.e = 1; if (/paperas|barbijo|farmacia/i.test(dijo)) visto.malo = 1; await page.waitForTimeout(200); }
+      chk('…Eduardo le habla a Yerson de la coca y Yerson le contesta (nada de paperas)', visto.y && visto.e && !visto.malo, visto);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
       /* 7: los camiones de Administración (cv3d) usan el MISMO lienzo: al mudarlo o al armar su escena, la vida se va */
       r = await page.evaluate(() => { var src = String(cv3dConstruir) + String(depMudar); var tieneGuarda = /VIDA=null/.test(String(cv3dConstruir)) && /VIDA=null/.test(String(depMudar));

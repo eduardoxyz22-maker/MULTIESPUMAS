@@ -45944,6 +45944,7 @@ function depVidaAnimar(P, modo, t){
   if(modo==='anda'){ w=Math.sin(t*9); P.pi.rotation.x=w*.6; P.pd.rotation.x=-w*.6; P.bi.rotation.x=-w*.45; P.bd.rotation.x=P.taza?-.9:w*.45; P.cabeza.rotation.x=0; P.cabeza.rotation.y=0; return; }
   P.pi.rotation.x=P.pd.rotation.x=0; P.bi.rotation.z=P.bd.rotation.z=0;
   if(modo==='barre'){ var b=Math.sin(t*3.2); P.pi.rotation.x=Math.sin(t*4.5)*.25; P.pd.rotation.x=-Math.sin(t*4.5)*.25; P.bi.rotation.x=P.bd.rotation.x=-.7; P.bi.rotation.z=P.bd.rotation.z=b*.35; P.cabeza.rotation.x=.3; P.cabeza.rotation.y=b*.15; return; }   // 🧹 la limpieza
+  if(modo==='bolea'){ P.bi.rotation.x=-1.05+Math.sin(t*3.2)*.28; P.bd.rotation.x=-1.05+Math.sin(t*3.2+1.7)*.28; P.cabeza.rotation.x=.04; P.cabeza.rotation.y=Math.sin(t*.6)*.22; return; }   // 🌿 Yerson: cose con la cabeza levantada (se le ven los ojos y el bolo)
   if(modo==='trabaja'){ P.bi.rotation.x=-1.05+Math.sin(t*3.2)*.28; P.bd.rotation.x=-1.05+Math.sin(t*3.2+1.7)*.28; P.cabeza.rotation.x=.3; P.cabeza.rotation.y=Math.sin(t*.8)*.12; return; }   // 🏭 los operarios de la línea
   if(modo==='habla'){ P.bi.rotation.x=0; P.bd.rotation.x=P.taza?-.9:(-1.1+Math.sin(t*6)*.35); P.cabeza.rotation.y=Math.sin(t*2.5)*.18; P.cabeza.rotation.x=0; return; }
   if(modo==='senala'){ P.bi.rotation.x=-2.3; P.bi.rotation.z=-.35; P.bd.rotation.x=P.taza?-.9:0; P.cabeza.rotation.y=-.35; P.cabeza.rotation.x=0; return; }
@@ -46179,13 +46180,13 @@ function depFabPlanta(x, z, g){ var p=new THREE.Group(); p.position.set(x,0,z); 
   [[0,.85,0,.3],[.18,.7,.1,.22],[-.17,.72,-.06,.22],[.04,.68,-.2,.2],[-.06,1.05,.08,.18]].forEach(function(h){ p.add(depMesh(new THREE.SphereGeometry(h[3],10,8), depMat('#2f9e44'), h[0],h[1],h[2])); }); }
 function depFabPersona(camisa, mujer){ return depPersona({ camisa:camisa, pant:'#1e3a8a', gorra:mujer?null:'#facc15', refl:true, pelo:mujer?'#3b2416':null, melena:!!mujer }); }
 var FAB_DICE={ op1:['¡Bloque cortado, parejito! 🪚','¡Cuidado con la sierra!','Esta espuma está de primera.'],
-  op2:['¡Cosidito y bien hecho! 🧵','¡Ya sale otro colchón! 🛏️','Este va para un cliente de Eduardo.'],
+  op2:['¡Cosidito y bien hecho! 🧵','¡Ya sale otro colchón! 🛏️','Este va para un cliente de Eduardo.','Yerson, ¿me convidás un poquito de coca? 🌿'],
   op3:['¡Embolsado y listo! ✅','¡Ernesto, llevate el pallet!','Uno más para el stock.'],
   ern:['¡Paso, paso! 🚜','¡Uno más al stock!','¿Quién dejó esto en el pasillo?'],
   op4:['¡Acolchado parejito! 🧵','Esta tela es la de los Heaven.','¡Otro panel listo!'],
   cal:['Control de calidad ✅','Este colchón pasó la prueba.','¡Todo en orden por acá!','Costuras derechas, ¡así me gusta!'],
   lim:['¡Cuidado, piso mojado! 🧹','¡No pisen, que recién trapeé!','¡Eduardo, ese café no se derrama, eh!'],
-  yer:['¡Me duele el cachete! 😖','No son paperas, es un chicle 🤭','¿Alguien tiene hielo? 🧊','Cosiendo con un cachete nomás 💪'],
+  yer:['¡Qué buena coca, despalada nomás! 🌿','Con su biquito, así sí rinde 😌','Sin bolo no hay costura 💪','Esta coquita es de los Yungas, de la buena 🌿','Bolear quita el sueño y el hambre','¿Quién me invita una bolsita de coca?','No hablo mucho que se me cae el bolo 🤭','Un bolito más y termino el turno 💪'],
   mc2:['¡Paso, paso! 🚜','¡Ordenando el stock!','¡Cuidado, que acá no hay frenos! 😅'] };
 function depFabrica(g, ancho, fz, zonas){
   var W=DEP.w3, A=ancho/2, quieto=visQuieto();
@@ -46262,12 +46263,18 @@ function depFabrica(g, ancho, fz, zonas){
   ops.forEach(function(o, i){ var P=depFabPersona(o[3], o[4]); P.g.position.set(o[2],0,Lz-1.3); g.add(P.g);
     VIDA.q[o[0]]={ P:P, n:o[1], col:'#1d4ed8', dy:2.1, modo:'trabaja', desfase:i*1.3 };
     P.g.userData.dep={ fn:function(){ depDecir(o[0], depVidaUno(FAB_DICE[o[0]]), 3.2); } }; W.toca.push(P.g); });
-  /* YERSON (dueño: «a uno de los de costura ponle de nombre Yerson y ponle un cachete inflado como de paperas»), en la máquina de coser */
+  /* YERSON, en la máquina de coser (dueño: «ponle de nombre Yerson y un cachete inflado»; y después: «el cachete no es por enfermedad,
+     es porque acullica hoja de coca… diálogos de "qué buena coca, es despalada", la costumbre boliviana de coquear o bolear» y «ojos no
+     le vi»). El cachete es el BOLO de coca (del color de la piel, al costado, sin tapar el ojo), una hojita asoma en la boca, ojos
+     grandes con su blanco y cejas, y en la mesa su bolsita de coca. Mastica: el cachete se mueve. */
   var ye=depPersona({ camisa:'#1e40af', pant:'#1e3a8a', refl:true, pelo:'#2b2018' }); ye.g.position.set(F.xc+1.3,0,Lz-2.15); g.add(ye.g);
-  var cach=depMesh(new THREE.SphereGeometry(.22,14,10), depMat('#f4977a'), .21,-.08,.1); cach.scale.set(.85,1,1); ye.cabeza.add(cach); ye.cachete=cach;
-  var pan=depMesh(new THREE.TorusGeometry(.3,.045,8,24), depMat('#f8fafc'), 0,0,.02); ye.cabeza.add(pan);   // el pañuelo de las paperas, de la pera a la coronilla
-  [-1,1].forEach(function(sg){ var nu=depCaja(.14,.08,.05,'#f8fafc',sg*.08,.36,.02); nu.rotation.z=sg*.6; ye.cabeza.add(nu); });
-  VIDA.q.yer={ P:ye, n:'Yerson:', col:'#1d4ed8', dy:2.1, modo:'trabaja', desfase:.7 };
+  var cach=depMesh(new THREE.SphereGeometry(.17,14,10), depMat('#dba377'), .2,-.12,.07); cach.scale.set(.8,1,1); ye.cabeza.add(cach); ye.cachete=cach;
+  [-.095,.095].forEach(function(x){ ye.cabeza.add(depMesh(new THREE.SphereGeometry(.062,12,10), depMat('#ffffff'), x,.05,.235, false)); ye.cabeza.add(depMesh(new THREE.SphereGeometry(.034,10,8), depMat('#111827'), x,.05,.29, false));
+    var ceja=depCaja(.11,.025,.03,'#2b2018',x,.14,.255); ceja.rotation.z=x<0?.18:-.18; ye.cabeza.add(ceja); });
+  var hoja=depCaja(.06,.012,.05,'#4d7c0f',-.06,-.14,.27); hoja.rotation.z=.4; ye.cabeza.add(hoja);   // la hojita que asoma
+  [[-.36,.12,'#4d7c0f'],[-.3,.19,'#65a30d'],[-.4,.05,'#3f6212'],[-.33,.24,'#65a30d']].forEach(function(h){ var lf=depMesh(new THREE.SphereGeometry(.07,8,6), depMat(h[2]), h[0],.8,h[1]); lf.scale.set(1.3,.25,.8); mq.add(lf); });   // la bolsita de coca, en la mesa
+  mq.add(depCaja(.14,.06,.1,'#f8fafc',-.4,.81,-.12));   // y su bico
+  VIDA.q.yer={ P:ye, n:'Yerson:', col:'#1d4ed8', dy:2.1, modo:'bolea', desfase:.7 };
   ye.g.userData.dep={ fn:function(){ depDecir('yer', depVidaUno(FAB_DICE.yer), 3.2); } }; W.toca.push(ye.g);
   var mc=depMontacargas(); mc.g.position.set(F.homeX,0,Lz); mc.g.rotation.y=-Math.PI/2; g.add(mc.g);
   VIDA.q.ern={ P:{ g:mc.g }, n:'Ernesto:', col:'#b45309', dy:2.6, vel:2.0, mc:mc, st:'casa', fijo:true };
@@ -46280,7 +46287,7 @@ function depFabrica(g, ancho, fz, zonas){
   var pg=new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos,3));
   F.polvo=new THREE.Points(pg, new THREE.PointsMaterial({ color:0xffffff, size:.07, transparent:true, opacity:.6, depthWrite:false })); g.add(F.polvo);
   if(centro) depFabCentro(g, A, F);
-  if(quieto){ ops.forEach(function(o){ depVidaAnimar(VIDA.q[o[0]].P, 'trabaja', 0); }); depVidaAnimar(VIDA.q.yer.P, 'trabaja', 0); if(VIDA.q.op4) depVidaAnimar(VIDA.q.op4.P, 'trabaja', 0); if(VIDA.q.cal) depVidaAnimar(VIDA.q.cal.P, 'revisa', 0); if(VIDA.q.lim) depVidaAnimar(VIDA.q.lim.P, 'barre', 0); }
+  if(quieto){ ops.forEach(function(o){ depVidaAnimar(VIDA.q[o[0]].P, 'trabaja', 0); }); depVidaAnimar(VIDA.q.yer.P, 'bolea', 0); if(VIDA.q.op4) depVidaAnimar(VIDA.q.op4.P, 'trabaja', 0); if(VIDA.q.cal) depVidaAnimar(VIDA.q.cal.P, 'revisa', 0); if(VIDA.q.lim) depVidaAnimar(VIDA.q.lim.P, 'barre', 0); }
 }
 /* juntar lo que no se mueve: una sola pieza por material (cientos de cajas = un puñado de dibujos por cuadro). `sombra` false = no
    proyecta sombra (las paredes de arriba y el techo dejaban rayas en el piso). */
@@ -46424,10 +46431,10 @@ function depFabVisita(aYerson){
   if(aYerson){ var Y=VIDA.q.yer;
     depVidaIr(E, [{ x:home.x, z:6.15 }, { x:F.vx, z:6.15 }, { x:F.vx, z:9.45 }], function(){
       var yp=Y.P.g.position; depMirarA(E, yp.x, yp.z); E.modo='habla';
-      depDecir('edu', depVidaUno(['¡Yerson! ¿Qué te pasó en el cachete? 😳','Yerson, ¿eso es paperas o te tragaste un colchón?','¡Yerson, andá a la farmacia con ese cachete!']), 3.4);
-      depVidaLuego(function(){ Y.modo='habla'; depMirarA(Y, E.P.g.position.x, E.P.g.position.z); depDecir('yer', depVidaUno(['¡Son paperas, jefe! Pero sigo cosiendo 💪','No es nada, jefe… es un chicle 🤭','¿Me da permiso para ir a la farmacia? 🥺']), 3);
-        depVidaLuego(function(){ depDecir('edu', depVidaUno(['¡Ponete barbijo, que contagias! 😷','¡Y no te acerques a Isabel! 😷','Bueno, pero ese colchón que quede perfecto.']), 3);
-          depVidaLuego(function(){ Y.modo='trabaja'; Y.P.g.rotation.y=0; }, 1500); }, 3200); }, 3000);
+      depDecir('edu', depVidaUno(['¡Yerson! ¿Otra vez boleando? 😂','Yerson, ese bolo está más grande que el colchón','¡Yerson, convidá coca, pues!','¿Despalada o con palito, Yerson?']), 3.4);
+      depVidaLuego(function(){ Y.modo='habla'; depMirarA(Y, E.P.g.position.x, E.P.g.position.z); depDecir('yer', depVidaUno(['¡Despaladita, jefe! Pruebe 🌿','Con bico, jefe, así se aguanta el turno 💪','Sin coca no hay costura, jefe','Es de los Yungas, jefe, de la buena 🌿']), 3);
+        depVidaLuego(function(){ depDecir('edu', depVidaUno(['¡Pasame un poquito para la tarde! 🌿','Bueno, pero que el colchón salga perfecto.','¡No escupas en la espuma, eh! 😅','Ya, ya… ¡pero a coser!']), 3);
+          depVidaLuego(function(){ Y.modo='bolea'; Y.P.g.rotation.y=0; }, 1500); }, 3200); }, 3000);
       depVidaLuego(function(){ E.modo='anda'; depVidaIr(E, [{ x:F.vx, z:6.15 }, { x:home.x, z:6.15 }, home], function(){ E.st='casa'; E.espera=4+Math.random()*4; E.P.g.rotation.y=-.25; }); }, 9800);
     });
     return;
@@ -46462,7 +46469,7 @@ function depFabPaso(t, dt){
   F.gato.cuerpo.scale.y=.62+Math.sin(t*1.6)*.025; F.gato.cola.rotation.y=Math.sin(t*.9)*.5;
   /* los operarios */
   ['op1','op2','op3','op4','yer'].forEach(function(k){ var Q=VIDA.q[k]; if(Q) depVidaAnimar(Q.P, Q.modo, t+Q.desfase); });
-  if(VIDA.q.yer) VIDA.q.yer.P.cachete.scale.set(.85+Math.sin(t*2.2)*.05, 1+Math.sin(t*2.2)*.05, 1);   // el cachete late
+  if(VIDA.q.yer){ var mz=Math.sin(t*5.5); VIDA.q.yer.P.cachete.scale.set(.8+mz*.06, 1+mz*.05, 1+mz*.04); }   // mastica el bolo
   var M2=VIDA.q.mc2; if(M2){ var m2=M2.P.g.position, ax0=m2.x, az0=m2.z; depVidaMover(M2, dt); if(!M2.path || !M2.path.length){ M2.i=(M2.i+1)%M2.ronda.length; depVidaIr(M2, [M2.ronda[M2.i]]); }
     var d2=Math.hypot(m2.x-ax0, m2.z-az0); if(d2) M2.mc.ruedas.forEach(function(r){ r.rotation.x+=d2*3; }); }
   if(F.acol){ F.acol.cab.position.x=Math.sin(t*.9)*1.55; F.acol.aguja.position.y=-.45+Math.sin(t*20)*.05; }
