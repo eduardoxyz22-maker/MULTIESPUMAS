@@ -18,6 +18,9 @@
      9. La línea de colchones: la cinta avanza, el colchón sale envuelto después del embolsado, tres operarios; con el piso libre, la
         acolchadora, el inspector y la limpieza. Cuando el pallet del final se llena, Ernesto lo lleva a «Producto terminado» y vuelve.
         Eduardo va a ver la costura y la operaria le contesta. Con montacargas cargando, el centro queda libre (sin acolchadora).
+    10. Tercera vuelta («Se sigue viendo pobre y vacía» + «a uno de costura ponle de nombre Yerson y un cachete inflado como de
+        paperas»): Yerson con su cachete y el pañuelo; el producto terminado en el centro con un segundo montacargas dando vueltas;
+        el edificio (ventanales, paredes, estanterías llenas) junto en pocas piezas: menos dibujos por cuadro que antes de todo esto.
    Datos inventados (el repo es público). Se corre:  node tests/test_fabrica_vida.js   (las partes 3-8 solo con PATIO_THREE) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
@@ -122,7 +125,7 @@ const armar = (PEND) => {
         st: Q.st, n: F.fin.userData.n, pos: Q.P.g.position.x.toFixed(2) + ',' + Q.P.g.position.z.toFixed(2), tw: DEP.tw.length, carro: Q.mc.carro.position.y }; });
       chk('…el pallet lleno: Ernesto lo levanta, lo deja en «Producto terminado» y vuelve', lev && vuelve && r.slots !== r.slots0 && r.nuevo, r);
       chk('…los pallets usan geometrías compartidas (no se acumulan en la memoria) y Ernesto vuelve mirando a la línea', r.geo && Math.abs(Math.sin(r.rot) + 1) < .02, r);
-      await page.evaluate(() => { var E = VIDA.q.edu; VIDA.q.edu.vel = 8; E.path = null; E.P.g.position.set(VIDA.home.x, 0, VIDA.home.z); E.st = 'casa'; E.espera = 999; VIDA.fab.charla = 999; ['op2','edu'].forEach(depCallar); depFabVisita(); });
+      await page.evaluate(() => { var E = VIDA.q.edu; VIDA.q.edu.vel = 8; E.path = null; E.P.g.position.set(VIDA.home.x, 0, VIDA.home.z); E.st = 'casa'; E.espera = 999; VIDA.fab.charla = 999; ['op2','edu'].forEach(depCallar); depFabVisita(false); });
       visto = {}; t0 = Date.now();
       while (Date.now() - t0 < 30000 && !visto.op) { dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | ')); if (/Costura:/.test(dijo)) visto.op = 1; await page.waitForTimeout(200); }
       r = await page.evaluate(() => ({ z: VIDA.q.edu.P.g.position.z, st: VIDA.q.edu.st }));
@@ -131,6 +134,20 @@ const armar = (PEND) => {
       while (Date.now() - t0 < 40000 && !elige) { elige = await page.evaluate(() => { var E = VIDA.q.edu; if (E.st === 'casa' && E.path === null) { E.espera = 0; return true; } return false; }); await page.waitForTimeout(200); }
       let otra = false; t0 = Date.now(); while (elige && Date.now() - t0 < 8000 && !otra) { otra = await page.evaluate(() => VIDA.q.edu.espera > 1); await page.waitForTimeout(150); }
       chk('…y al volver puede elegir otra cosa (antes, al terminar el primer camino Eduardo y Ernesto se quedaban quietos para siempre)', elige && otra, { elige: elige, otra: otra });
+      /* 10: Yerson, el producto terminado, el segundo montacargas y el edificio */
+      r = await page.evaluate(() => { var Y = VIDA.q.yer, n = 0, fund = 0; DEP.w3.grupo.traverse(function (o) { if (o.isMesh) { n++; if (o.userData.fundido) fund++; } });
+        return { yer: Y && Y.n, cachete: !!(Y && Y.P.cachete && Y.P.cachete.parent === Y.P.cabeza), panuelo: !!(Y && Y.P.cabeza.children.some(function (c) { return c.geometry && c.geometry.type === 'TorusGeometry'; })),
+          stock: VIDA.fab.stock, mc2: !!VIDA.q.mc2, x0: VIDA.q.mc2 && VIDA.q.mc2.P.g.position.x + ',' + VIDA.q.mc2.P.g.position.z, mallas: n, fund: fund, calls: DEP.w3.r.info.render.calls }; });
+      chk('10. Yerson en costura, con el cachete inflado y el pañuelo de las paperas', r.yer === 'Yerson:' && r.cachete && r.panuelo, r);
+      chk('…el producto terminado en el centro (12 pilas) y un segundo montacargas', r.stock === 12 && r.mc2, r);
+      chk('…lo fijo va junto: menos de 900 dibujos por cuadro (antes de todo esto eran ~930)', r.fund > 30 && r.calls < 900, r);
+      await page.waitForTimeout(1200);
+      const x1 = await page.evaluate(() => VIDA.q.mc2.P.g.position.x + ',' + VIDA.q.mc2.P.g.position.z);
+      chk('…el segundo montacargas da la vuelta', x1 !== r.x0, { antes: r.x0, despues: x1 });
+      await page.evaluate(() => { var E = VIDA.q.edu; E.path = null; E.P.g.position.set(VIDA.home.x, 0, VIDA.home.z); E.st = 'casa'; E.espera = 999; ['yer','edu'].forEach(depCallar); depFabVisita(true); });
+      visto = {}; t0 = Date.now();
+      while (Date.now() - t0 < 30000 && !visto.y) { dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | ')); if (/Yerson:/.test(dijo)) visto.y = 1; if (/Eduardo:.*(Yerson|cachete)/.test(dijo)) visto.e = 1; await page.waitForTimeout(200); }
+      chk('…Eduardo le pregunta a Yerson por el cachete y Yerson le contesta', visto.y && visto.e, visto);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
       /* 7: los camiones de Administración (cv3d) usan el MISMO lienzo: al mudarlo o al armar su escena, la vida se va */
       r = await page.evaluate(() => { var src = String(cv3dConstruir) + String(depMudar); var tieneGuarda = /VIDA=null/.test(String(cv3dConstruir)) && /VIDA=null/.test(String(depMudar));
@@ -146,9 +163,9 @@ const armar = (PEND) => {
       const { page, errores } = await nueva();
       await page.evaluate(armar, true);
       let ok = false; for (let i = 0; i < 80 && !ok; i++) { ok = await page.evaluate(() => !!(window.VIDA && VIDA.q && VIDA.q.edu)); if (!ok) await page.waitForTimeout(250); }
-      const r = await page.evaluate(() => ({ mcE: !!VIDA.mcE, zonas: VIDA.zonas.map(z => z.c + ':' + z.falta), linea: !!VIDA.fab, centro: ['op4','cal','lim'].filter(k => VIDA.q[k]).length }));
+      const r = await page.evaluate(() => ({ mcE: !!VIDA.mcE, zonas: VIDA.zonas.map(z => z.c + ':' + z.falta), linea: !!VIDA.fab, centro: ['op4','cal','lim','mc2'].filter(k => VIDA.q[k]).length + (VIDA.fab.stock ? 1 : 0), yer: !!VIDA.q.yer }));
       chk('6. con montacargas cargando no hay estacionado, y Eduardo conoce cada cliente con lo que falta', r.mcE === false && r.zonas.join(',') === 'DISTRIBUIDORA EL SOL:9,COMERCIAL NORTE:4', r);
-      chk('9. …la línea de colchones sigue, y el centro queda libre para los montacargas (sin acolchadora ni limpieza)', r.linea && r.centro === 0, r);
+      chk('9. …la línea de colchones sigue (con Yerson), y el centro queda libre para los montacargas (sin acolchadora, limpieza, producto terminado ni segundo montacargas)', r.linea && r.yer && r.centro === 0, r);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
       await page.close();
     }
