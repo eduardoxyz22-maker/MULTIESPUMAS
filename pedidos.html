@@ -45583,7 +45583,7 @@ function depPanel(q){
 }
 function depClaveX(x){ return (String(x.desc||'').trim().toUpperCase()||'(sin nombre)')+'|'+String(x.medida||'').trim().toLowerCase().replace(/\s+/g,''); }
 function depConstruir(C){
-  var W=DEP.w3; if(!W) return; W.modo='mis'; W.esc.fog.near=34; W.esc.fog.far=80; VIDA=null;
+  var W=DEP.w3; if(!W) return; W.modo='mis'; W.esc.fog.near=46; W.esc.fog.far=110; VIDA=null;   // 🏭 (31/10) menos niebla: con 34/80 todo se veía lavado
   var vc=[], vz=[];   // 🧔 (31/10) para la vida de la fábrica: dónde quedó cada camión (y su chofer) y cada cliente
   if(W.grupo) W.esc.remove(W.grupo);
   W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[]; depPanel(null);
@@ -45609,7 +45609,7 @@ function depConstruir(C){
     cv.slice(0,3).forEach(function(d, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg); depPila(pg, d.k, d.q.d, d.q.m, d.u, 6, 1.3, 1.6);
       pg.position.y=3; depTween(pg.position, { y:0 }, .9, 1.2+i*.3+j*.25, depSale); });
     var cho=(VEHICULOS[v]||[])[0]||''; vc.push({ x:cx, v:v, cho:cho, tot:tot });
-    depEtq(t.g, '🚚 '+esc(v)+'<small>'+(cho?(esc(cho)+' · '):'')+(flota?'esperando carga':(tot+' ya cargado'+(tot===1?'':'s')+(np?(' · '+np+' pedido'+(np===1?'':'s')):'')))+'</small>', 'dep-etq-cam', '#14232a', 3.6+(i%2)*.9);   // alternados: dos carteles vecinos no se pisan
+    depEtq(t.g, '🚚 '+esc(v)+'<small>'+(cho?(esc(cho)+' · '):'')+(flota?'esperando carga':(tot+' ya cargado'+(tot===1?'':'s')+(np?(' · '+np+' pedido'+(np===1?'':'s')):'')))+'</small>', 'dep-etq-cam', '#14232a', 3.3+(i%2)*.7);   // alternados: dos carteles vecinos no se pisan (🏭 31/10: más bajos, con la cámara más cerca entran)
   });
   var mov=[];
   grupos.forEach(function(gr, gi){
@@ -45671,7 +45671,7 @@ function depVerTodo(tocado){
   var k=Math.max(1, 1.25/(W.cam.aspect||1)), d=((W.ancho||14)*.66+9)*k;
   /* 🧔 (31/10) con la vida de la fábrica, el rincón de Eduardo (pizarra, café, Isabel) está adelante, en z 6-8: la cámara se aleja
      un poco y mira más adelante para que entre junto con los camiones. */
-  var vz=0; if(W.modo==='mis' && VIDA){ d=Math.max(d*1.1, 27*k); vz=2.2; }
+  var vz=0; if(W.modo==='mis' && VIDA){ d=Math.max(d, 28.5*k); vz=4; }   // 🏭 (31/10) y la línea de colchones, más adelante
   depTween(W.cam.position, { x:d*.18, y:d*.62, z:d*.95+vz }, 1.4, 0); depTween(W.ctl.target, { x:0, y:.6, z:-3.5+vz }, 1.4, 0);
 }
 function depAcercar(x, z, ancho){
@@ -45795,6 +45795,8 @@ function depVidaAnimar(P, modo, t){
   var w;
   if(modo==='anda'){ w=Math.sin(t*9); P.pi.rotation.x=w*.6; P.pd.rotation.x=-w*.6; P.bi.rotation.x=-w*.45; P.bd.rotation.x=P.taza?-.9:w*.45; P.cabeza.rotation.x=0; P.cabeza.rotation.y=0; return; }
   P.pi.rotation.x=P.pd.rotation.x=0; P.bi.rotation.z=P.bd.rotation.z=0;
+  if(modo==='barre'){ var b=Math.sin(t*3.2); P.pi.rotation.x=Math.sin(t*4.5)*.25; P.pd.rotation.x=-Math.sin(t*4.5)*.25; P.bi.rotation.x=P.bd.rotation.x=-.7; P.bi.rotation.z=P.bd.rotation.z=b*.35; P.cabeza.rotation.x=.3; P.cabeza.rotation.y=b*.15; return; }   // 🧹 la limpieza
+  if(modo==='trabaja'){ P.bi.rotation.x=-1.05+Math.sin(t*3.2)*.28; P.bd.rotation.x=-1.05+Math.sin(t*3.2+1.7)*.28; P.cabeza.rotation.x=.3; P.cabeza.rotation.y=Math.sin(t*.8)*.12; return; }   // 🏭 los operarios de la línea
   if(modo==='habla'){ P.bi.rotation.x=0; P.bd.rotation.x=P.taza?-.9:(-1.1+Math.sin(t*6)*.35); P.cabeza.rotation.y=Math.sin(t*2.5)*.18; P.cabeza.rotation.x=0; return; }
   if(modo==='senala'){ P.bi.rotation.x=-2.3; P.bi.rotation.z=-.35; P.bd.rotation.x=P.taza?-.9:0; P.cabeza.rotation.y=-.35; P.cabeza.rotation.x=0; return; }
   if(modo==='toma'){ P.bi.rotation.x=0; P.bd.rotation.x=-2.15; P.bd.rotation.z=.35; P.cabeza.rotation.x=-.18; P.cabeza.rotation.y=0; return; }
@@ -45808,9 +45810,9 @@ function depVidaIr(Q, pts, fin, mira){ Q.path=pts.slice(); Q.fin=fin||null; Q.mi
 function depVidaMover(Q, dt){
   if(!Q.path || !Q.path.length) return false;
   var p=Q.P.g.position, d=Q.path[0], dx=d.x-p.x, dz=d.z-p.z, L=Math.hypot(dx,dz), v=(Q.vel||1.5)*dt;
-  if(L<=v){ p.x=d.x; p.z=d.z; Q.path.shift(); if(!Q.path.length){ Q.modo=Q.trasLlegar||'quieto'; Q.trasLlegar=null; if(Q.mira!=null) Q.P.g.rotation.y=Q.mira; var fn=Q.fin; Q.fin=null; if(fn) fn(); } return true; }
+  if(L<=v){ p.x=d.x; p.z=d.z; Q.path.shift(); if(!Q.path.length){ Q.path=null; Q.modo=Q.trasLlegar||'quieto';   /* null, no []: «llegó» (si no, Eduardo y Ernesto no volvían a elegir qué hacer) */ Q.trasLlegar=null; if(Q.mira!=null) Q.P.g.rotation.y=Q.mira; var fn=Q.fin; Q.fin=null; if(fn) fn(); } return true; }
   p.x+=dx/L*v; p.z+=dz/L*v;
-  var a=Math.atan2(dx,dz), r=Q.P.g.rotation.y, da=Math.atan2(Math.sin(a-r), Math.cos(a-r)); Q.P.g.rotation.y=r+da*Math.min(1, dt*8);
+  if(!Q.fijo){ var a=Math.atan2(dx,dz), r=Q.P.g.rotation.y, da=Math.atan2(Math.sin(a-r), Math.cos(a-r)); Q.P.g.rotation.y=r+da*Math.min(1, dt*8); }   // `fijo`: el montacargas de Ernesto gira aparte (depGirar)
   return true;
 }
 function depMirarA(Q, x, z){ var p=Q.P.g.position; Q.P.g.rotation.y=Math.atan2(x-p.x, z-p.z); }
@@ -45879,6 +45881,7 @@ function depVida(g, ancho, fz, cams, zonas){
     var p=depPersona({ camisa:'#0f766e', pant:'#334155', gorra:'#00a39b', cel:true }); p.g.position.set(cm.x+4.05, 0, fz+1.1); p.g.rotation.y=.25; g.add(p.g);
     var k='cho'+i; VIDA.q[k]={ P:p, n:cho+':', col:'#0f766e', dy:2.1, modo:'cel', v:cm.v, tot:cm.tot, desfase:i*1.7 }; VIDA.chof.push(k);
     p.g.userData.dep={ fn:function(){ depDecir(k, depVidaUno(cm.tot?['¡Listo para salir, jefe!','Cargado y esperando la ruta.']:['Esperando que carguen, jefe 📱','¡Ya voy, ya voy!','¿Hay algo para el '+cm.v+' hoy?']), 3.5); } }; W.toca.push(p.g); });
+  depFabrica(g, ancho, fz, zonas);   // 🏭 (31/10) la línea de colchones, Ernesto, los operarios y la marca
   if(quieto){ depVidaAnimar(edu, 'senala', 0); depVidaAnimar(isa, 'cel', 0); VIDA.chof.forEach(function(k){ depVidaAnimar(VIDA.q[k].P,'cel',0); }); }
 }
 /* ☕ el café: Isabel pregunta, va a la cafetera, se lo lleva y vuelve a su escritorio */
@@ -45910,9 +45913,9 @@ function depVidaCafe(){
 /* Eduardo elige qué hacer cuando está en su lugar */
 function depVidaEduElegir(){
   var E=VIDA.q.edu, home=VIDA.home, r=Math.random();
-  if(!VIDA.cafe && !E.P.taza && (VIDA.cafeProx||0)<=0 && VIDA.q.isa.st==='escritorio' && r<.45){ depVidaCafe(); return; }
+  if(!VIDA.cafe && !E.P.taza && (VIDA.cafeProx||0)<=0 && VIDA.q.isa.st==='escritorio' && r<.3){ depVidaCafe(); return; }
   var cams=VIDA.cams, zonas=VIDA.zonas;
-  if(cams.length && r<.5){   // a ver un camión: por el costado más cercano, nunca por la zona de los montacargas
+  if(cams.length && r<.52){   // a ver un camión: por el costado más cercano, nunca por la zona de los montacargas
     var cm=cams[Math.floor(Math.random()*cams.length)], lx=(cm.x<0?-1:1)*VIDA.lx, dest={ x:cm.x+3.2, z:VIDA.lane };
     E.st='camion';
     /* con montacargas en el piso va por el costado; con el piso vacío, derecho */
@@ -45929,6 +45932,7 @@ function depVidaEduElegir(){
     });
     return;
   }
+  if(VIDA.fab && r<.7){ depFabVisita(); return; }   // 🏭 a ver la línea de colchones
   if(zonas.length && r<.82){   // a ver a un cliente: por el pasillo de adelante
     var zn=zonas[Math.floor(Math.random()*zonas.length)]; E.st='cliente';
     depVidaIr(E, [{ x:home.x, z:VIDA.zF }, { x:zn.x, z:4.5 }], function(){ E.P.g.rotation.y=Math.PI; E.modo='revisa';
@@ -45936,6 +45940,7 @@ function depVidaEduElegir(){
       depVidaLuego(function(){ depVidaIr(E, [{ x:zn.x, z:VIDA.zF }, { x:home.x, z:VIDA.zF }, home], function(){ E.st='casa'; E.espera=4+Math.random()*4; E.P.g.rotation.y=-.25; }); }, 4600); });
     return;
   }
+  if(VIDA.fab && r<.9){ depFabGritoErnesto(); return; }   // 🏭 le grita a Ernesto
   /* se queda en la pizarra y dice algo con sus números */
   E.modo='senala'; depDecir('edu', depVidaUno(depVidaFrases()), 4.5); E.espera=6+Math.random()*4;
 }
@@ -45964,7 +45969,270 @@ function depVidaPaso(t){
   VIDA.flags.forEach(function(m, i){ m.rotation.x=Math.sin(t*1.6+i*.5)*.22; });
   VIDA.velas.forEach(function(v, i){ var s=.85+Math.sin(t*(9+i)+i)*.15; v.scale.set(s, s*(1+Math.sin(t*13+i)*.12), s); });
   VIDA.vapor.forEach(function(m, i){ if(!VIDA.vaporOn){ m.visible=false; return; } m.visible=true; var f=((t*.8+i/3)%1); m.position.y=1.55+f*.55; m.position.x=-.25+Math.sin(t*3+i)*.05; m.material.opacity=.6*(1-f); m.scale.setScalar(.6+f*1.2); });
+  depFabPaso(t, dt);
   var hb=horaBolivia(); if(VIDA.reloj && VIDA.reloj.min!==hb.getHours()*60+hb.getMinutes()) depVidaRelojPintar();
+}
+
+/* ============================================================================
+   🏭 LA FÁBRICA LLENA (31/10, dueño, después de ver la primera vuelta: «Se sigue viendo pobre y vacía»).
+   · Adelante de todo, una LÍNEA DE COLCHONES que trabaja sola: los bloques de espuma (con el gato durmiendo arriba), la sierra que
+     corta, la cinta con los colchones que avanzan, la costura, el embolsado (salen envueltos) y el pallet del final. Cuando el pallet
+     se llena, ERNESTO lo levanta con el montacargas y lo deja en «Producto terminado» (dos lugares, de a dos pallets).
+   · Tres operarios trabajando (Corte, Costura, Embalaje); de vez en cuando dicen algo, y Eduardo va a ver la línea o le grita a Ernesto.
+   · La marca en la pared (cartel y franja turquesa) y, con el piso libre, en el piso; «ZONA DE CARGA» pintado; la alfombra del café,
+     el bidón de agua, plantas y polvo en el aire.
+   · Solo dibujo: los colchones de la línea NO son pedidos ni stock (los pedidos siguen siendo los montacargas y los camiones). Con
+     «reducir movimiento» queda la foto quieta.
+   ========================================================================== */
+var FAB_HOJAS=[['M150 0 C140 60 175 100 230 140 C280 176 300 230 296 282 C280 230 240 205 190 180 C130 150 115 90 150 0 Z','#F7E7A0'],
+  ['M62 78 C70 140 120 165 180 190 C240 215 280 255 296 318 C262 275 220 262 160 252 C90 240 52 180 62 78 Z','#DA8B62'],
+  ['M0 168 C22 230 80 248 140 256 C200 264 262 290 296 352 C250 318 200 318 140 322 C70 326 18 270 0 168 Z','#E7B5D5']];   // las hojas de la marca (iconos/hojas.svg)
+function depFabHojas(x, cx, cy, alto){ var s=alto/352; x.save(); x.translate(cx, cy); x.scale(s, s); FAB_HOJAS.forEach(function(h){ try{ x.fillStyle=h[1]; x.fill(new Path2D(h[0])); }catch(e){} }); x.restore(); }
+function depFabRect(x, a, b, w, h, r){ x.beginPath(); x.moveTo(a+r,b); x.lineTo(a+w-r,b); x.quadraticCurveTo(a+w,b,a+w,b+r); x.lineTo(a+w,b+h-r); x.quadraticCurveTo(a+w,b+h,a+w-r,b+h); x.lineTo(a+r,b+h); x.quadraticCurveTo(a,b+h,a,b+h-r); x.lineTo(a,b+r); x.quadraticCurveTo(a,b,a+r,b); x.closePath(); }
+/* «MultiESPUMAS» con la letra que entre en `ancho` */
+function depFabMarca(x, a, base, ancho, tam, col){
+  var t=tam; for(var i=0;i<12;i++){ x.font='300 '+t+'px system-ui,Arial,sans-serif'; var w1=x.measureText('Multi').width; x.font='900 '+t+'px system-ui,Arial,sans-serif'; if(w1+x.measureText('ESPUMAS').width<=ancho) break; t*=.92; }
+  x.fillStyle=col; x.textAlign='left'; x.font='300 '+t+'px system-ui,Arial,sans-serif'; x.fillText('Multi', a, base); var w=x.measureText('Multi').width; x.font='900 '+t+'px system-ui,Arial,sans-serif'; x.fillText('ESPUMAS', a+w, base);
+}
+function depFabCartelTex(){
+  var T=depVidaTex(1024,256), x=T.x; x.clearRect(0,0,1024,256);
+  x.fillStyle='#2B3566'; depFabRect(x, 4, 4, 1016, 248, 34); x.fill(); x.fillStyle='#00B5AD'; x.fillRect(4, 222, 1016, 14);
+  depFabHojas(x, 46, 30, 186); depFabMarca(x, 290, 138, 700, 112, '#ffffff');
+  x.fillStyle='#9fe3dd'; x.font='700 38px system-ui,Arial,sans-serif'; x.fillText('Fábrica de colchones · Santa Cruz', 294, 196);
+  T.t.needsUpdate=true; return T.t;
+}
+function depFabPisoTex(){ var T=depVidaTex(1200,400), x=T.x; x.clearRect(0,0,1200,400); depFabHojas(x, 30, 40, 320); depFabMarca(x, 300, 262, 870, 150, '#2B3566'); T.t.needsUpdate=true; return T.t; }
+function depFabTextoTex(txt, col){ var T=depVidaTex(1024,160), x=T.x; x.clearRect(0,0,1024,160); x.fillStyle=col; x.font='900 118px system-ui,Arial,sans-serif'; x.textAlign='center'; x.fillText(txt, 512, 124); T.t.needsUpdate=true; return T.t; }
+/* pintura en el piso: recibe la luz y las sombras como el piso */
+function depFabPintura(tex, w, h, x, z, op, g){ var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshStandardMaterial({ map:tex, transparent:true, opacity:op, roughness:.9, depthWrite:false }));
+  m.rotation.x=-Math.PI/2; m.position.set(x,.014,z); m.receiveShadow=true; g.add(m); return m; }
+function depFabColorPiso(col, w, h, x, z, op, g){ var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshStandardMaterial({ color:new THREE.Color(col).convertSRGBToLinear(), transparent:true, opacity:op, roughness:.9, depthWrite:false }));
+  m.rotation.x=-Math.PI/2; m.position.set(x,.011,z); m.receiveShadow=true; g.add(m); return m; }
+/* la espuma, con sus poros */
+function depFabEspuma(col){
+  var M=DEP.w3.mat, k='espuma'+col; if(M[k]) return M[k];
+  if(!DEP.texPoros){ var c=document.createElement('canvas'); c.width=c.height=128; var x=c.getContext('2d'), rnd=depAzar(5); x.fillStyle='#ffffff'; x.fillRect(0,0,128,128);
+    for(var i=0;i<900;i++){ x.fillStyle='rgba(60,40,0,'+(rnd()*.09)+')'; x.beginPath(); x.arc(rnd()*128, rnd()*128, .6+rnd()*1.5, 0, 6.3); x.fill(); }
+    var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,1); t.encoding=THREE.sRGBEncoding; DEP.texPoros=t; }
+  return M[k]=new THREE.MeshStandardMaterial({ color:new THREE.Color(col).convertSRGBToLinear(), map:DEP.texPoros, roughness:1 });
+}
+/* un colchón de la línea (largo en x); `envuelto` = ya pasó por el embolsado */
+function depFabColchon(F, envuelto){
+  var m=new THREE.Group(); m.add(depMesh(F.geo.c, depMat('#f8fafc'), 0,0,0)); m.add(depMesh(F.geo.b, depMat('#00a39b'), 0,.13,0));
+  var w=depMesh(F.geo.w, F.matW, 0,.155,0,false); var lb=depMesh(F.geo.l, depMat('#2B3566'), .5,.325,0,false); w.visible=lb.visible=!!envuelto; m.add(w); m.add(lb);
+  m.userData.w=w; m.userData.lb=lb; return m;
+}
+function depFabPallet(F){ var p=new THREE.Group(); p.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0)); [-.6,0,.6].forEach(function(z){ p.add(depMesh(F.geo.tab, depMat('#8b6a3e'), 0,.005,z)); }); p.userData.n=0; return p; }
+/* girar en el lugar (el montacargas de Ernesto no gira solo al andar: avanza y retrocede derecho) */
+function depGirar(o, a, dur, fin){ var r=o.rotation.y, d=Math.atan2(Math.sin(a-r), Math.cos(a-r)); depTween(o.rotation, { y:r+d }, dur||.6, 0, null, fin); }
+function depFabApilar(F, pal){ if(pal.userData.n>=6) return; var m=depFabColchon(F, true); m.position.set(0,.12+pal.userData.n*.33,0); pal.add(m); pal.userData.n++; }
+function depFabPlanta(x, z, g){ var p=new THREE.Group(); p.position.set(x,0,z); g.add(p); p.add(depCil(.24,.42,'#c2410c',0,.21,0,12)); p.add(depCil(.26,.05,'#9a3412',0,.42,0,12));
+  [[0,.85,0,.3],[.18,.7,.1,.22],[-.17,.72,-.06,.22],[.04,.68,-.2,.2],[-.06,1.05,.08,.18]].forEach(function(h){ p.add(depMesh(new THREE.SphereGeometry(h[3],10,8), depMat('#2f9e44'), h[0],h[1],h[2])); }); }
+function depFabPersona(camisa, mujer){ return depPersona({ camisa:camisa, pant:'#1e3a8a', gorra:mujer?null:'#facc15', refl:true, pelo:mujer?'#3b2416':null, melena:!!mujer }); }
+var FAB_DICE={ op1:['¡Bloque cortado, parejito! 🪚','¡Cuidado con la sierra!','Esta espuma está de primera.'],
+  op2:['¡Cosidito y bien hecho! 🧵','¡Ya sale otro colchón! 🛏️','Este va para un cliente de Eduardo.'],
+  op3:['¡Embolsado y listo! ✅','¡Ernesto, llevate el pallet!','Uno más para el stock.'],
+  ern:['¡Paso, paso! 🚜','¡Uno más al stock!','¿Quién dejó esto en el pasillo?'],
+  op4:['¡Acolchado parejito! 🧵','Esta tela es la de los Heaven.','¡Otro panel listo!'],
+  cal:['Control de calidad ✅','Este colchón pasó la prueba.','¡Todo en orden por acá!','Costuras derechas, ¡así me gusta!'],
+  lim:['¡Cuidado, piso mojado! 🧹','¡No pisen, que recién trapeé!','¡Eduardo, ese café no se derrama, eh!'] };
+function depFabrica(g, ancho, fz, zonas){
+  var W=DEP.w3, A=ancho/2, quieto=visQuieto();
+  var Lz=12.4, xe=Math.min(A+.5, 11), L=Math.max(18, Math.min(24, ancho+10)), xs=xe-L, c0=xs+6, c1=xe-1.3;
+  var F={ g:g, Lz:Lz, xe:xe, xs:xs, c0:c0, c1:c1, v:.7, col:[], slots:[[],[]], slotI:0, charla:9, polvo:null, cortinas:[] };
+  F.xc=c0+.35*(c1-c0); F.xemb=c0+.75*(c1-c0); F.xp=c1+1.05; F.homeX=F.xp+2.6;
+  /* Eduardo va a ver la costura por donde no hay nada (entre la pizarra y el adorno, o entre el adorno y el bidón) */
+  F.vx=F.xc<=-1.95 ? Math.max(-3, F.xc) : Math.max(-.25, Math.min(3, F.xc));
+  VIDA.fab=F;
+  F.geo={ c:depPaquete(1.8,.26,1.25,.06), b:new THREE.BoxGeometry(1.82,.07,1.27), w:new THREE.BoxGeometry(1.9,.33,1.34), l:new THREE.BoxGeometry(.42,.012,.26), pal:new THREE.BoxGeometry(1.9,.12,1.4), tab:new THREE.BoxGeometry(1.9,.04,.16) };   // compartidas: los pallets que van y vienen no dejan geometrías sueltas
+  F.matW=new THREE.MeshStandardMaterial({ color:new THREE.Color('#dff3ff').convertSRGBToLinear(), transparent:true, opacity:.38, roughness:.12, metalness:.1, depthWrite:false });
+  /* — la marca en la pared: franja turquesa abajo y el cartel arriba de los portones — */
+  g.add(depCaja(ancho+34, 1.0, .04, '#00a39b', 0, .5, fz-2.36));
+  var ctex=depFabCartelTex();
+  [[0,6.4],[-A-7.5,5.2],[A+7.5,5.2]].forEach(function(c){ var car=new THREE.Mesh(new THREE.PlaneGeometry(c[1],c[1]/4), new THREE.MeshBasicMaterial({ map:ctex, transparent:true })); car.position.set(c[0],5.75,fz-2.33); g.add(car); });
+  /* — el piso: la zona de la línea, el pasillo peatonal, la alfombra del café y, con el piso libre, la marca y «ZONA DE CARGA» — */
+  depFabColorPiso('#7f9599', ancho+34, 64, 0, 0, .26, g).position.y=.005;   // el piso un tono más oscuro: lo blanco resalta
+  depFabColorPiso('#9fd8d2', L+4.5, 4.4, (xs+F.homeX+1.5)/2, Lz, .5, g);
+  depLinea(xs-.8, Lz-2.2, F.homeX+1.6, Lz-2.2, g); depLinea(xs-.8, Lz+2.2, F.homeX+1.6, Lz+2.2, g);
+  depFabColorPiso('#22c55e', ancho+3.2, .9, 0, 5.2, .22, g);
+  depFabColorPiso('#f5d9a8', 3.1, 2.0, 4.75, 7.05, .85, g);
+  var centro=!zonas.length && A>=11;   // con el piso libre y ancho: la acolchadora, los rollos, los somieres y el inspector
+  if(!zonas.length){ var lw=centro?Math.min(16, 2*(A-5.2)):Math.min(14, ancho+2); depFabPintura(depFabPisoTex(), lw, lw/3, 0, -1.4, .9, g); depFabPintura(depFabTextoTex('ZONA DE CARGA','#f5b014'), 7, 1.1, 0, -5.1, .85, g); }
+  /* — rincón: bidón de agua y plantas — */
+  var bid=new THREE.Group(); bid.position.set(3.7,0,7.5); g.add(bid); bid.add(depCaja(.42,.95,.42,'#f1f5f9',0,.475,0)); bid.add(depCil(.17,.5,'#60a5fa',0,1.2,0,14));
+  bid.children[1].material=new THREE.MeshStandardMaterial({ color:new THREE.Color('#7cc4ff').convertSRGBToLinear(), transparent:true, opacity:.75, roughness:.1 });
+  depFabPlanta(6.0, 8.15, g); depFabPlanta(-A-1.9, 8.55, g); depFabPlanta(A+.9, 4.0, g);
+  /* — los bloques de espuma, con el gato durmiendo arriba — */
+  var xb=xs+1.3;
+  [['#f6e7a8',2.4,1.0,1.0,.5,Lz-.5],['#bfe8df',2.4,1.0,1.0,.5,Lz+.55],['#f5c2d0',2.2,.95,1.0,1.475,Lz-.5]].forEach(function(b){ g.add(depMesh(new THREE.BoxGeometry(b[1],b[2],b[3]), depFabEspuma(b[0]), xb, b[4], b[5])); });
+  var gato=new THREE.Group(); gato.position.set(xb+.4,1.95,Lz-.45); gato.rotation.y=.6; g.add(gato);
+  var gc=depMesh(new THREE.SphereGeometry(.2,12,10), depMat('#f59e0b'), 0,.12,0); gc.scale.set(1.2,.62,1.55); gato.add(gc);
+  var gcab=depMesh(new THREE.SphereGeometry(.12,12,10), depMat('#f59e0b'), .05,.13,.3); gato.add(gcab);
+  [-.06,.06].forEach(function(x){ gcab.add(depMesh(new THREE.ConeGeometry(.04,.08,4), depMat('#d97706'), x,.11,0)); });
+  var gcola=new THREE.Group(); gcola.position.set(0,.08,-.28); gcola.add(depCaja(.05,.05,.32,'#d97706',.06,0,-.12)); gato.add(gcola);
+  F.gato={ g:gato, cuerpo:gc, cola:gcola };
+  /* — la sierra — */
+  var xsi=xs+4.4, si=new THREE.Group(); si.position.set(xsi,0,Lz); g.add(si);
+  si.add(depCaja(2.6,.75,2.0,'#64748b',0,.375,0)); si.add(depCaja(2.62,.06,2.02,'#facc15',0,.73,0));
+  for(var h=0;h<4;h++) si.add(depMesh(new THREE.BoxGeometry(2.2,.2,1.6), depFabEspuma('#f6e7a8'), 0,.86+h*.22,0));
+  [-1.1,1.1].forEach(function(z){ si.add(depCaja(.16,2.3,.16,'#1d4ed8',0,1.15,z)); }); si.add(depCaja(.3,.3,2.4,'#1d4ed8',0,2.35,0));
+  si.add(depCaja(.5,.4,.5,'#f5b014',0,2.7,.5));
+  var luz=depMesh(new THREE.SphereGeometry(.09,10,8), new THREE.MeshBasicMaterial({ color:0xef4444 }), 0,2.97,.5,false); si.add(luz);
+  var hoja=depCaja(.08,.04,2.2,'#e5e7eb',0,1.6,0,{ metalness:.8, roughness:.25 }); si.add(hoja);
+  F.sierra={ hoja:hoja, luz:luz };
+  /* — la cinta — */
+  var lc=c1-c0, cx=(c0+c1)/2, ct=document.createElement('canvas'); ct.width=ct.height=64; var cg=ct.getContext('2d'); cg.fillStyle='#1f2937'; cg.fillRect(0,0,64,64); cg.fillStyle='#3b4656'; cg.fillRect(0,0,9,64);
+  var tex=new THREE.CanvasTexture(ct); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(lc/.55,1); tex.encoding=THREE.sRGBEncoding; F.cinta=tex;
+  var banda=depMesh(new THREE.BoxGeometry(lc,.05,1.5), new THREE.MeshStandardMaterial({ map:tex, roughness:.8 }), cx,.83,Lz); g.add(banda);
+  [-.8,.8].forEach(function(z){ g.add(depCaja(lc+.2,.14,.1,'#475569',cx,.8,Lz+z)); });
+  for(var lx=c0+.3; lx<c1; lx+=2.4) [-.75,.75].forEach(function(z){ g.add(depCaja(.1,.78,.1,'#64748b',lx,.39,Lz+z)); });
+  /* — la costura: el operario y su máquina — */
+  var mq=new THREE.Group(); mq.position.set(F.xc+1.3,0,Lz-1.45); g.add(mq); mq.add(depCaja(.9,.78,.6,'#94a3b8',0,.39,0)); mq.add(depCaja(.4,.22,.22,'#f8fafc',0,.89,0));
+  mq.add(depCaja(.08,.26,.18,'#f8fafc',-.16,1.12,0)); mq.add(depCaja(.36,.1,.18,'#f8fafc',0,1.23,0)); mq.add(depCil(.04,.06,'#ef4444',.1,1.31,0,8));
+  /* — el embolsado: un arco con cortinas de plástico — */
+  var em=new THREE.Group(); em.position.set(F.xemb,0,Lz); g.add(em);
+  [-1.0,1.0].forEach(function(z){ em.add(depCaja(.2,2.2,.2,'#94a3b8',0,1.1,z)); }); em.add(depCaja(1.5,.55,2.4,'#00a39b',0,2.45,0));
+  var et=depMesh(new THREE.PlaneGeometry(1.4,.42), new THREE.MeshBasicMaterial({ map:depFabTextoTex('EMBOLSADO','#ffffff'), transparent:true }), 0,2.45,1.205,false); em.add(et);
+  em.add(depMesh(new THREE.SphereGeometry(.08,10,8), new THREE.MeshBasicMaterial({ color:0x22c55e }), .5,2.78,.9,false));
+  for(var cz=-.6; cz<=.61; cz+=.4){ var cor=new THREE.Group(); cor.position.set(0,2.17,cz); em.add(cor);
+    cor.add(depMesh(new THREE.BoxGeometry(.02,1.0,.36), F.matW, 0,-.5,0,false)); F.cortinas.push(cor); }
+  /* — el pallet del final y lo terminado — */
+  F.fin=depFabPallet(F); F.fin.position.set(F.xp,0,Lz); g.add(F.fin); depFabApilar(F, F.fin); depFabApilar(F, F.fin);
+  F.slotX=[F.homeX, F.homeX+1.6]; F.slotZ=9.08;
+  [1,0].forEach(function(i){ var p=depFabPallet(F); for(var k=0;k<4;k++) depFabApilar(F, p); p.position.set(F.slotX[i],0,F.slotZ); p.rotation.y=Math.PI/2; g.add(p); F.slots[i].push(p); });
+  F.slotI=0;
+  /* — los colchones en la cinta — */
+  var n=Math.max(2, Math.floor(lc/2.8));
+  for(var i=0;i<n;i++){ var cm=depFabColchon(F, false), x0=c0+.9+i*lc/n; cm.position.set(x0,.86,Lz); cm.userData.w.visible=cm.userData.lb.visible=x0>F.xemb; g.add(cm); F.col.push(cm); }
+  /* — los operarios y ERNESTO — */
+  var ops=[['op1','Corte:',xsi+1.0,'#1e40af',false],['op2','Costura:',F.xc,'#1e40af',true],['op3','Embalaje:',F.xemb-1.4,'#1e40af',false]];
+  ops.forEach(function(o, i){ var P=depFabPersona(o[3], o[4]); P.g.position.set(o[2],0,Lz-1.3); g.add(P.g);
+    VIDA.q[o[0]]={ P:P, n:o[1], col:'#1d4ed8', dy:2.1, modo:'trabaja', desfase:i*1.3 };
+    P.g.userData.dep={ fn:function(){ depDecir(o[0], depVidaUno(FAB_DICE[o[0]]), 3.2); } }; W.toca.push(P.g); });
+  var mc=depMontacargas(); mc.g.position.set(F.homeX,0,Lz); mc.g.rotation.y=-Math.PI/2; g.add(mc.g);
+  VIDA.q.ern={ P:{ g:mc.g }, n:'Ernesto:', col:'#b45309', dy:2.6, vel:2.0, mc:mc, st:'casa', fijo:true };
+  mc.g.userData.dep={ fn:function(){ depDecir('ern', depVidaUno(FAB_DICE.ern), 3); } }; W.toca.push(mc.g);
+  VIDA.q.gato={ P:{ g:gato }, n:'Michi:', col:'#b45309', dy:.55 };
+  gato.userData.dep={ fn:function(){ depDecir('gato', depVidaUno(['Miau… 😴','Prrr… (sigue durmiendo)','¡Miau! Esta espuma es mía 😼']), 2.8); } }; W.toca.push(gato);
+  /* — polvo en el aire, con la luz — */
+  var NP=70, pos=new Float32Array(NP*3), rnd=depAzar(23); F.polvoBase=[];
+  for(var j=0;j<NP;j++){ var px=(rnd()-.5)*(ancho+4), py=.6+rnd()*5, pz=-7+rnd()*20; pos[j*3]=px; pos[j*3+1]=py; pos[j*3+2]=pz; F.polvoBase.push([px,py,pz,rnd()*6.3]); }
+  var pg=new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  F.polvo=new THREE.Points(pg, new THREE.PointsMaterial({ color:0xffffff, size:.07, transparent:true, opacity:.6, depthWrite:false })); g.add(F.polvo);
+  if(centro) depFabCentro(g, A, F);
+  if(quieto){ ops.forEach(function(o){ depVidaAnimar(VIDA.q[o[0]].P, 'trabaja', 0); }); if(VIDA.q.op4) depVidaAnimar(VIDA.q.op4.P, 'trabaja', 0); if(VIDA.q.cal) depVidaAnimar(VIDA.q.cal.P, 'revisa', 0); if(VIDA.q.lim) depVidaAnimar(VIDA.q.lim.P, 'barre', 0); }
+}
+/* el centro de la fábrica, con el piso libre: la ACOLCHADORA (el cabezal va y viene) con sus rollos de tela y su operaria, los
+   SOMIERES y las ALMOHADAS apilados, y el inspector de CALIDAD que hace la ronda con su planilla */
+function depFabCentro(g, A, F){
+  var W=DEP.w3, ax=-(A-2.6), az=-1.6, ac=new THREE.Group(); ac.position.set(ax,0,az); g.add(ac);
+  var T=depVidaTex(256,256), x=T.x; x.fillStyle='#f8fafc'; x.fillRect(0,0,256,256); x.strokeStyle='#5ccfc6'; x.lineWidth=5;
+  for(var k=-256;k<=512;k+=48){ x.beginPath(); x.moveTo(k,0); x.lineTo(k+256,256); x.stroke(); x.beginPath(); x.moveTo(k+256,0); x.lineTo(k,256); x.stroke(); }
+  T.t.wrapS=T.t.wrapT=THREE.RepeatWrapping; T.t.repeat.set(3,1.5); T.t.needsUpdate=true;
+  ac.add(depCaja(4.2,.85,2.2,'#64748b',0,.425,0)); ac.add(depMesh(new THREE.BoxGeometry(4.0,.04,2.0), new THREE.MeshStandardMaterial({ map:T.t, roughness:.9 }), 0,.87,0));
+  [-2.15,2.15].forEach(function(xx){ ac.add(depCaja(.3,2.1,2.4,'#1d4ed8',xx,1.05,0)); }); ac.add(depCaja(4.6,.36,.42,'#1d4ed8',0,2.0,0));
+  var cab=new THREE.Group(); cab.position.set(0,1.62,0); ac.add(cab); cab.add(depCaja(.55,.55,.55,'#f5b014',0,0,0)); var ag=depCil(.025,.4,'#cbd5e1',0,-.45,0,6); cab.add(ag);
+  cab.add(depMesh(new THREE.SphereGeometry(.06,8,6), new THREE.MeshBasicMaterial({ color:0x22c55e }), .2,.3,.2,false));
+  F.acol={ cab:cab, aguja:ag };
+  var rx=ax-3.5, ro=new THREE.Group(); ro.position.set(rx,0,az); g.add(ro); ro.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
+  [['#f1f5f9',-.42,.4],['#5ccfc6',0,.4],['#93c5fd',.42,.4],['#f9a8d4',-.21,.88],['#f1f5f9',.21,.88]].forEach(function(r){ var c=depCil(.24,1.8,r[0],0,r[2],r[1],16); c.rotation.z=Math.PI/2; ro.add(c); });
+  var op=depFabPersona('#1e40af', true); op.g.position.set(ax+.6,0,az-1.55); g.add(op.g);
+  VIDA.q.op4={ P:op, n:'Acolchado:', col:'#1d4ed8', dy:2.1, modo:'trabaja', desfase:2.2 };
+  op.g.userData.dep={ fn:function(){ depDecir('op4', depVidaUno(FAB_DICE.op4), 3.2); } }; W.toca.push(op.g);
+  /* somieres y almohadas, a la derecha */
+  var sxp=A-2.6, so=new THREE.Group(); so.position.set(sxp,0,-2.5); so.rotation.y=Math.PI/2; g.add(so); so.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
+  for(var i=0;i<4;i++){ so.add(depMesh(depPaquete(1.85,.3,1.35,.04), depMat('#2b3566'), 0,.12+i*.32,0)); so.add(depCaja(1.87,.05,1.37,'#5ccfc6',0,.27+i*.32,0)); }
+  var al=new THREE.Group(); al.position.set(sxp,0,-.15); g.add(al); al.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
+  for(var j=0;j<9;j++){ var c3=j%3, f3=Math.floor(j/3); al.add(depMesh(depPaquete(.55,.17,.4,.07), depMat(j%2?'#ffffff':'#f8fafc'), -.6+c3*.6,.12+f3*.19,.2)); al.add(depMesh(depPaquete(.55,.17,.4,.07), depMat('#e7b5d5'), -.6+c3*.6,.12+f3*.19,-.25)); }
+  /* el inspector de calidad */
+  var ins=depPersona({ camisa:'#f8fafc', pant:'#334155', pelo:'#1f2937' }); ins.bi.add(depCaja(.24,.32,.03,'#a16207',0,-.82,.14)); ins.bi.add(depCaja(.2,.24,.01,'#ffffff',0,-.8,.16));
+  ins.g.position.set(-(A-6),0,2.5); g.add(ins.g);
+  VIDA.q.cal={ P:ins, n:'Calidad:', col:'#0f766e', dy:2.1, vel:1.1, modo:'revisa', espera:3, ronda:[{ x:-(A-6), z:2.5 }, { x:ax+1, z:.1 }, { x:0, z:2.5 }, { x:sxp-1.4, z:-1.2 }, { x:A-6, z:2.5 }], i:0 };
+  ins.g.userData.dep={ fn:function(){ depDecir('cal', depVidaUno(FAB_DICE.cal), 3.2); } }; W.toca.push(ins.g);
+  /* doña de la limpieza, barriendo el centro en zigzag, con su cartel de «piso mojado» */
+  var li=depPersona({ camisa:'#16a34a', pant:'#14532d', pelo:'#6b7280', melena:true }), es=new THREE.Group(); es.position.set(0,-.78,.12); es.rotation.x=.55; li.bd.add(es);
+  es.add(depCil(.025,1.3,'#a16207',0,-.25,.2,6)); es.add(depCaja(.42,.1,.12,'#f59e0b',0,-.9,.2)); es.add(depCaja(.42,.08,.04,'#78350f',0,-.97,.2));
+  var zx=Math.min(6.5, A-6); li.g.position.set(-zx,0,-3.3); g.add(li.g);
+  VIDA.q.lim={ P:li, n:'Limpieza:', col:'#15803d', dy:2.1, vel:.55, modo:'barre', espera:1, ronda:[{ x:zx, z:-3.3 }, { x:zx, z:-2.2 }, { x:-zx, z:-2.2 }, { x:-zx, z:-1.1 }, { x:zx, z:-1.1 }, { x:zx, z:.1 }, { x:-zx, z:.1 }, { x:-zx, z:-3.3 }], i:-1 };
+  li.g.userData.dep={ fn:function(){ depDecir('lim', depVidaUno(FAB_DICE.lim), 3); } }; W.toca.push(li.g);
+  var pm=new THREE.Group(); pm.position.set(-zx-1.4,0,-1.7); pm.rotation.y=.5; g.add(pm);
+  [-.2,.2].forEach(function(a){ var h=depCaja(.46,.68,.03,'#facc15',0,.32,0); h.rotation.x=a; h.position.z=a>0?-.06:.06; pm.add(h); });
+  var pmt=depMesh(new THREE.PlaneGeometry(.4,.2), new THREE.MeshBasicMaterial({ map:depFabTextoTex('PISO MOJADO','#1f2937'), transparent:true }), 0,.4,.135,false); pmt.rotation.x=-.2; pm.add(pmt);
+}
+/* un pallet lleno: Ernesto lo levanta, lo deja en «Producto terminado» (al lado, o encima del que ya está) y vuelve. Siempre en
+   línea recta y girando en el lugar, como un montacargas de verdad. */
+function depFabErnesto(){
+  var F=VIDA.fab, Q=VIDA.q.ern, mc=Q.mc, Lz=F.Lz, i=F.slotI, sx=F.slotX[i], alto=F.slots[i].length===1, gen=VIDA.gen;
+  Q.st='va';
+  var pasos=[
+    function(sig){ depVidaIr(Q, [{ x:F.xp+1.62, z:Lz }], sig); },
+    function(sig){ depTween(mc.carro.position, { y:.7 }, .6, 0, null, sig); },
+    function(sig){ var pal=F.fin; F.g.remove(pal); pal.position.set(0,0,0); pal.rotation.y=Math.PI/2; mc.carga.add(pal); Q.pal=pal;
+      F.fin=depFabPallet(F); F.fin.position.set(F.xp,0,Lz); F.g.add(F.fin);
+      if(Math.random()<.35) depDecir('ern', depVidaUno(['¡Uno más al stock! 🚜','¡Paso, paso!','¡Este pallet está pesado!']), 2.6);
+      depVidaIr(Q, [{ x:F.homeX, z:Lz }], sig); },
+    function(sig){ if(F.slots[i].length>=2){ F.slots[i].forEach(function(p){ depTween(p.scale, { x:.01, y:.01, z:.01 }, .5, 0, null, function(){ F.g.remove(p); }); }); F.slots[i]=[]; alto=false; }
+      if(sx!==F.homeX) depGirar(mc.g, Math.PI/2, .5, function(){ depVidaIr(Q, [{ x:sx, z:Lz }], sig); }); else sig(); },
+    function(sig){ depGirar(mc.g, Math.PI, .6, sig); },
+    function(sig){ if(alto) depTween(mc.carro.position, { y:1.6 }, .7, 0); depVidaIr(Q, [{ x:sx, z:F.slotZ+1.62 }], sig); },
+    function(sig){ depVidaLuego(sig, alto?800:300); },
+    function(sig){ var v=new THREE.Vector3(); Q.pal.getWorldPosition(v); mc.carga.remove(Q.pal); Q.pal.position.set(v.x, alto?1.46:0, v.z); Q.pal.rotation.y=mc.g.rotation.y+Math.PI/2;
+      F.g.add(Q.pal); F.slots[i].push(Q.pal); Q.pal=null; F.slotI=(i+1)%2;
+      depTween(mc.carro.position, { y:.12 }, .7, 0); depVidaIr(Q, [{ x:sx, z:Lz }], sig); },
+    function(sig){ depGirar(mc.g, -Math.PI/2, .6, sig); },
+    function(sig){ if(sx!==F.homeX) depVidaIr(Q, [{ x:F.homeX, z:Lz }], sig); else sig(); },
+    function(){ Q.st='casa'; }
+  ];
+  var k=0; (function sig(){ if(!VIDA || VIDA.gen!==gen) return; var f=pasos[k++]; if(f) f(sig); })();
+}
+/* Eduardo va a ver la costura */
+function depFabVisita(){
+  var E=VIDA.q.edu, F=VIDA.fab, home=VIDA.home, op=VIDA.q.op2; E.st='linea';
+  depVidaIr(E, [{ x:home.x, z:6.15 }, { x:F.vx, z:6.15 }, { x:F.vx, z:9.45 }], function(){
+    var op2=op.P.g.position; depMirarA(E, op2.x, op2.z); E.modo='habla';
+    depDecir('edu', depVidaUno(['¡Así me gusta! Colchones de calidad 💪','¿Cómo va la producción?','¡Ese colchón va para un cliente mío!','¡Bien cosido, eh! Que no vuelva por ATC.']), 3.4);
+    depVidaLuego(function(){ op.modo='habla'; depMirarA(op, E.P.g.position.x, E.P.g.position.z); depDecir('op2', depVidaUno(['¡A full, jefe!','¡Ya sale otro, jefe!','¡Cosidito y embolsado, jefe!','¡Tranquilo, jefe, salen perfectos!']), 3);
+      depVidaLuego(function(){ op.modo='trabaja'; op.P.g.rotation.y=0; }, 3300); }, 3000);
+    depVidaLuego(function(){ E.modo='anda'; depVidaIr(E, [{ x:F.vx, z:6.15 }, { x:home.x, z:6.15 }, home], function(){ E.st='casa'; E.espera=4+Math.random()*4; E.P.g.rotation.y=-.25; }); }, 7000);
+  });
+}
+/* Eduardo le grita a Ernesto desde la pizarra */
+function depFabGritoErnesto(){
+  var E=VIDA.q.edu, D=depVidaDatos(); E.modo='senala';
+  depDecir('edu', D.falta?('¡Ernesto! Faltan '+D.falta+' por cargar, ¿qué onda? 🚜'):depVidaUno(['¡Ernesto, más rápido con ese montacargas! 🚜','¡Ernesto! ¿Y ese pallet?']), 3.4);
+  depVidaLuego(function(){ depDecir('ern', depVidaUno(['¡Ya voy, jefe! 🚜','¡En eso estoy, jefe!','¡Dame un ratito, jefe!']), 3); }, 2600);
+  E.espera=7+Math.random()*3;
+}
+function depFabPaso(t, dt){
+  var F=VIDA && VIDA.fab; if(!F) return;
+  /* la cinta y los colchones */
+  F.cinta.offset.x-=F.v*dt/.55;
+  F.col.forEach(function(cm){ cm.position.x+=F.v*dt;
+    if(!cm.userData.w.visible && cm.position.x>F.xemb){ cm.userData.w.visible=cm.userData.lb.visible=true; F.sopla=1; }
+    if(cm.position.x>F.c1-.15){ depFabApilar(F, F.fin); cm.position.x-=(F.c1-F.c0); cm.userData.w.visible=cm.userData.lb.visible=false; } });
+  if(F.sopla>0) F.sopla=Math.max(0, F.sopla-dt*.8);
+  F.cortinas.forEach(function(c, i){ c.rotation.z=Math.sin(t*7+i)*.3*F.sopla; });
+  /* la sierra sube y baja; la luz titila */
+  F.sierra.hoja.position.y=1.25+Math.sin(t*1.3)*.42; F.sierra.luz.visible=(Math.floor(t*2)%2)===0;
+  /* el gato respira y mueve la cola */
+  F.gato.cuerpo.scale.y=.62+Math.sin(t*1.6)*.025; F.gato.cola.rotation.y=Math.sin(t*.9)*.5;
+  /* los operarios */
+  ['op1','op2','op3','op4'].forEach(function(k){ var Q=VIDA.q[k]; if(Q) depVidaAnimar(Q.P, Q.modo, t+Q.desfase); });
+  if(F.acol){ F.acol.cab.position.x=Math.sin(t*.9)*1.55; F.acol.aguja.position.y=-.45+Math.sin(t*20)*.05; }
+  var Lm=VIDA.q.lim; if(Lm){ depVidaMover(Lm, dt); if(!Lm.path || !Lm.path.length){ Lm.i=(Lm.i+1)%Lm.ronda.length; depVidaIr(Lm, [Lm.ronda[Lm.i]]); } depVidaAnimar(Lm.P, 'barre', t); }
+  var C=VIDA.q.cal; if(C){ depVidaMover(C, dt);
+    if(!C.path || !C.path.length){ C.espera-=dt; if(C.espera<=0){ C.i=(C.i+1)%C.ronda.length; depVidaIr(C, [C.ronda[C.i]], function(){ C.modo='revisa'; C.espera=3+Math.random()*3; }); } }
+    depVidaAnimar(C.P, C.path&&C.path.length?'anda':C.modo, t); }
+  /* Ernesto: el montacargas, sus ruedas y su chofer */
+  var Q=VIDA.q.ern, p=Q.P.g.position, px=p.x, pz=p.z; depVidaMover(Q, dt);
+  var d=Math.hypot(p.x-px, p.z-pz), ry=Q.P.g.rotation.y, ad=((p.x-px)*Math.sin(ry)+(p.z-pz)*Math.cos(ry))>=0; if(d) Q.mc.ruedas.forEach(function(r){ r.rotation.x+=(ad?d:-d)*3; });
+  Q.mc.chofer.rotation.y=Q.path&&Q.path.length?0:Math.sin(t*.7)*.4;
+  if(Q.st==='casa' && !(Q.path && Q.path.length) && F.fin.userData.n>=4) depFabErnesto();
+  /* el polvo */
+  var a=F.polvo.geometry.attributes.position; F.polvoBase.forEach(function(b, i){ a.array[i*3]=b[0]+Math.sin(t*.13+b[3])*.6; a.array[i*3+1]=b[1]+Math.sin(t*.21+b[3]*1.7)*.35; a.array[i*3+2]=b[2]+Math.cos(t*.11+b[3])*.5; }); a.needsUpdate=true;
+  /* charla de la línea */
+  F.charla-=dt; if(F.charla<=0){ F.charla=10+Math.random()*8; var ks=['op1','op2','op3','ern','op4','cal','lim'].filter(function(k){ return VIDA.q[k] && !VIDA.q[k].habla && VIDA.q[k].modo!=='habla'; });
+    if(ks.length){ var k=ks[Math.floor(Math.random()*ks.length)]; depDecir(k, depVidaUno(FAB_DICE[k]), 3); } }
 }
 
 /* ============================================================================

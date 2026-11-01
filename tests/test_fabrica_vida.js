@@ -14,6 +14,10 @@
      6. Con el piso vacío hay un montacargas estacionado; con montacargas cargando, no.
      7. Los camiones de Administración (cv3d) NO llevan nada de esto.
      8. Con «reducir movimiento» nadie habla.
+   🏭 La fábrica llena (31/10, dueño: «Se sigue viendo pobre y vacía»):
+     9. La línea de colchones: la cinta avanza, el colchón sale envuelto después del embolsado, tres operarios; con el piso libre, la
+        acolchadora, el inspector y la limpieza. Cuando el pallet del final se llena, Ernesto lo lleva a «Producto terminado» y vuelve.
+        Eduardo va a ver la costura y la operaria le contesta. Con montacargas cargando, el centro queda libre (sin acolchadora).
    Datos inventados (el repo es público). Se corre:  node tests/test_fabrica_vida.js   (las partes 3-8 solo con PATIO_THREE) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
@@ -101,6 +105,33 @@ const armar = (PEND) => {
       chk('…se lo lleva («Aquí tiene»)', !!visto.da);
       chk('…Eduardo queda con la taza e Isabel vuelve a su escritorio', !!visto.listo);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
+      /* 9: la línea de colchones */
+      r = await page.evaluate(() => { var F = VIDA.fab; return { hay: !!F, col: F.col.length, ops: ['op1','op2','op3'].map(k => VIDA.q[k] && VIDA.q[k].n).join(','), centro: ['op4','cal','lim'].filter(k => VIDA.q[k]).length,
+        x0: F.col.map(c => c.position.x), of0: F.cinta.offset.x, env: F.col.every(c => c.userData.w.visible === (c.position.x > F.xemb)), ern: VIDA.q.ern && VIDA.q.ern.n, acol: !!F.acol }; });
+      chk('9. la línea de colchones con sus tres operarios', r.hay && r.col >= 3 && r.ops === 'Corte:,Costura:,Embalaje:', r);
+      chk('…solo los que pasaron el embolsado salen envueltos', r.env, r);
+      chk('…con el piso libre: la acolchadora, la operaria, el inspector y la limpieza; y Ernesto con su montacargas', r.centro === 3 && r.acol && r.ern === 'Ernesto:', r);
+      await page.waitForTimeout(1500);
+      const r2 = await page.evaluate(() => ({ x: VIDA.fab.col.map(c => c.position.x), of: VIDA.fab.cinta.offset.x }));
+      chk('…la cinta avanza (los colchones se mueven)', r2.x.some((x, i) => Math.abs(x - r.x0[i]) > .05) && r2.of !== r.of0, { antes: r.x0, despues: r2.x });
+      for (let i = 0; i < 200 && !(await page.evaluate(() => VIDA.q.ern.st === 'casa' && !VIDA.q.ern.pal)); i++) await page.waitForTimeout(150);   // si ya estaba en un viaje, que termine
+      await page.evaluate(() => { var F = VIDA.fab; VIDA.q.ern.vel = 9; while (F.fin.userData.n < 4) depFabApilar(F, F.fin); window.__slots0 = F.slots.map(s => s.length).join(','); window.__fin0 = F.fin; });
+      let lev = false, vuelve = false; t0 = Date.now();
+      while (Date.now() - t0 < 60000 && !vuelve) { const e = await page.evaluate(() => ({ pal: !!VIDA.q.ern.pal, st: VIDA.q.ern.st })); if (e.pal) lev = true; if (lev && e.st === 'casa') vuelve = true; await page.waitForTimeout(150); }
+      r = await page.evaluate(() => { var F = VIDA.fab, Q = VIDA.q.ern; return { slots0: window.__slots0, slots: F.slots.map(s => s.length).join(','), nuevo: F.fin !== window.__fin0, geo: F.fin.children[0].geometry === F.geo.pal, rot: Q.P.g.rotation.y,
+        st: Q.st, n: F.fin.userData.n, pos: Q.P.g.position.x.toFixed(2) + ',' + Q.P.g.position.z.toFixed(2), tw: DEP.tw.length, carro: Q.mc.carro.position.y }; });
+      chk('…el pallet lleno: Ernesto lo levanta, lo deja en «Producto terminado» y vuelve', lev && vuelve && r.slots !== r.slots0 && r.nuevo, r);
+      chk('…los pallets usan geometrías compartidas (no se acumulan en la memoria) y Ernesto vuelve mirando a la línea', r.geo && Math.abs(Math.sin(r.rot) + 1) < .02, r);
+      await page.evaluate(() => { var E = VIDA.q.edu; VIDA.q.edu.vel = 8; E.path = null; E.P.g.position.set(VIDA.home.x, 0, VIDA.home.z); E.st = 'casa'; E.espera = 999; VIDA.fab.charla = 999; ['op2','edu'].forEach(depCallar); depFabVisita(); });
+      visto = {}; t0 = Date.now();
+      while (Date.now() - t0 < 30000 && !visto.op) { dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | ')); if (/Costura:/.test(dijo)) visto.op = 1; await page.waitForTimeout(200); }
+      r = await page.evaluate(() => ({ z: VIDA.q.edu.P.g.position.z, st: VIDA.q.edu.st }));
+      chk('…Eduardo va a ver la costura y la operaria le contesta', visto.op && r.st === 'linea' && r.z > 9, { visto: visto, r: r });
+      let elige = false; t0 = Date.now();
+      while (Date.now() - t0 < 40000 && !elige) { elige = await page.evaluate(() => { var E = VIDA.q.edu; if (E.st === 'casa' && E.path === null) { E.espera = 0; return true; } return false; }); await page.waitForTimeout(200); }
+      let otra = false; t0 = Date.now(); while (elige && Date.now() - t0 < 8000 && !otra) { otra = await page.evaluate(() => VIDA.q.edu.espera > 1); await page.waitForTimeout(150); }
+      chk('…y al volver puede elegir otra cosa (antes, al terminar el primer camino Eduardo y Ernesto se quedaban quietos para siempre)', elige && otra, { elige: elige, otra: otra });
+      chk('…ningún error de JavaScript', errores.length === 0, errores);
       /* 7: los camiones de Administración (cv3d) usan el MISMO lienzo: al mudarlo o al armar su escena, la vida se va */
       r = await page.evaluate(() => { var src = String(cv3dConstruir) + String(depMudar); var tieneGuarda = /VIDA=null/.test(String(cv3dConstruir)) && /VIDA=null/.test(String(depMudar));
         var caja = document.createElement('div'); caja.style.cssText = 'width:300px;height:200px'; document.body.appendChild(caja); depMudar(caja); DEP.w3.modo = 'adm';
@@ -115,8 +146,9 @@ const armar = (PEND) => {
       const { page, errores } = await nueva();
       await page.evaluate(armar, true);
       let ok = false; for (let i = 0; i < 80 && !ok; i++) { ok = await page.evaluate(() => !!(window.VIDA && VIDA.q && VIDA.q.edu)); if (!ok) await page.waitForTimeout(250); }
-      const r = await page.evaluate(() => ({ mcE: !!VIDA.mcE, zonas: VIDA.zonas.map(z => z.c + ':' + z.falta) }));
+      const r = await page.evaluate(() => ({ mcE: !!VIDA.mcE, zonas: VIDA.zonas.map(z => z.c + ':' + z.falta), linea: !!VIDA.fab, centro: ['op4','cal','lim'].filter(k => VIDA.q[k]).length }));
       chk('6. con montacargas cargando no hay estacionado, y Eduardo conoce cada cliente con lo que falta', r.mcE === false && r.zonas.join(',') === 'DISTRIBUIDORA EL SOL:9,COMERCIAL NORTE:4', r);
+      chk('9. …la línea de colchones sigue, y el centro queda libre para los montacargas (sin acolchadora ni limpieza)', r.linea && r.centro === 0, r);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
       await page.close();
     }
@@ -125,7 +157,10 @@ const armar = (PEND) => {
       const { page, errores } = await nueva({ reducedMotion: 'reduce' });
       await page.evaluate(armar, false);
       let ok = false; for (let i = 0; i < 80 && !ok; i++) { ok = await page.evaluate(() => !!(window.VIDA && VIDA.q && VIDA.q.edu)); if (!ok) await page.waitForTimeout(250); }
+      const x0 = await page.evaluate(() => VIDA.fab.col.map(c => c.position.x.toFixed(3)).join(','));
       await page.waitForTimeout(4000);
+      const quieta = await page.evaluate((x0) => VIDA.fab.col.map(c => c.position.x.toFixed(3)).join(',') === x0 && VIDA.q.ern.st === 'casa', x0);
+      chk('8. …y la línea de colchones queda quieta', quieta);
       const r = await page.evaluate(() => { depDecir('edu', 'hola', 5); return { burb: document.querySelectorAll('.dep-etq-habla').length, pos: VIDA.q.edu.P.g.position.x.toFixed(2) + ',' + VIDA.q.edu.P.g.position.z.toFixed(2), home: VIDA.home.x + ',' + VIDA.home.z }; });
       chk('8. con «reducir movimiento» nadie habla y Eduardo se queda en su lugar', r.burb === 0 && r.pos === (+r.home.split(',')[0]).toFixed(2) + ',' + (+r.home.split(',')[1]).toFixed(2), r);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
