@@ -141,8 +141,9 @@ const armar = (PEND) => {
         return { yer: Y && Y.n, cachete: !!(Y && Y.P.cachete && Y.P.cachete.parent === Y.P.cabeza), ojos: blancos, panuelo: !!(Y && Y.P.cabeza.children.some(function (c) { return c.geometry && c.geometry.type === 'TorusGeometry'; })),
           dice: FAB_DICE.yer.join(' | '), modo: Y && Y.modo,
           stock: VIDA.fab.stock, mc2: !!VIDA.q.mc2, x0: VIDA.q.mc2 && VIDA.q.mc2.P.g.position.x + ',' + VIDA.q.mc2.P.g.position.z, mallas: n, fund: fund, calls: DEP.w3.r.info.render.calls }; });
-      const panza = await page.evaluate(() => VIDA.q.edu.P.g.children.some(function (c) { return c.geometry && c.geometry.type === 'SphereGeometry' && c.geometry.parameters.radius >= .29; }));
-      chk('10. Eduardo sin barriga (dueño: «¿por qué el jefe tiene barriga?»)', !panza);
+      const eduCara = await page.evaluate(() => ({ panza: VIDA.q.edu.P.g.children.some(function (c) { return c.geometry && c.geometry.type === 'SphereGeometry' && c.geometry.parameters.radius >= .29; }),
+        bigote: VIDA.q.edu.P.cabeza.children.some(function (c) { return c.material && c.material.color && c.material.color.getHexString() === new THREE.Color('#3b2a1e').convertSRGBToLinear().getHexString(); }) }));
+      chk('10. Eduardo sin panza ni bigote (dueño: «Eduardo no tiene panza ni bigote»)', !eduCara.panza && !eduCara.bigote, eduCara);
       chk('10. Yerson en costura, con el bolo de coca en el cachete, los ojos grandes y sin pañuelo (no es enfermedad)', r.yer === 'Yerson:' && r.cachete && r.ojos === 2 && !r.panuelo, r);
       chk('…cose con la cabeza levantada y habla de la coca (despalada, bolo, bico)', r.modo === 'bolea' && /despalada/.test(r.dice) && /bolo/i.test(r.dice) && /biquito|bico/.test(r.dice) && !/paperas/i.test(r.dice), { modo: r.modo, dice: r.dice });
       chk('…el producto terminado en el centro (12 pilas) y un segundo montacargas', r.stock === 12 && r.mc2, r);
