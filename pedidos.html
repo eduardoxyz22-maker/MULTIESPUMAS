@@ -45686,7 +45686,7 @@ function depAcercar(x, z, ancho){
    por ahí y una Isabel diciéndole "¿le llevo un café?" y no sé, muchas más cosas»).
    SOLO en la fábrica de Mis pedidos (`depConstruir`, modo 'mis'): los camiones de Administración (cv3d) no la llevan. Solo mira y
    habla: nada cambia pedidos, cupos ni la planilla.
-   · EDUARDO (la misma figura de la ciudad: chaleco naranja, panza, bigote y gorra) camina por el pasillo de adelante, va a ver los
+   · EDUARDO (chaleco naranja, bigote y gorra; SIN barriga: dueño, 01/11, «¿por qué el jefe tiene barriga?») camina por el pasillo de adelante, va a ver los
      camiones por los costados (nunca cruza la zona de los montacargas) y a los clientes, y dice cosas con SUS números de verdad:
      lo que falta cargar, lo de hoy y mañana, lo entregado, los atrasados (`depVidaFrases`, de `DEP.mine` y `DEP.C`).
    · ISABEL (la de la ciudad: fucsia, melena y celular) cada tanto le pregunta «¿Le llevo un cafecito?», va a la cafetera, se lo
@@ -45868,7 +45868,7 @@ function depVida(g, ancho, fz, cams, zonas){
   /* — sin nada que cargar, un montacargas estacionado al costado, con su chofer — */
   if(!zonas.length){ var mcE=depMontacargas(); mcE.g.position.set(ancho/2-3.2,0,1.6); mcE.g.rotation.y=-1.1; g.add(mcE.g); VIDA.mcE=mcE; }
   /* — EDUARDO, ISABEL, el perro y un chofer por camión — */
-  var edu=depPersona({ camisa:'#ff7a00', refl:true, panza:true, bigote:true, gorra:'#14243a' }), isa=depPersona({ camisa:'#d6336c', pant:'#1f2937', pelo:'#3b2416', melena:true, cel:true });
+  var edu=depPersona({ camisa:'#ff7a00', refl:true, bigote:true, gorra:'#14243a' }), isa=depPersona({ camisa:'#d6336c', pant:'#1f2937', pelo:'#3b2416', melena:true, cel:true });
   var home={ x:-2.8, z:6.2 }; VIDA.home=home; edu.g.position.set(home.x,0,home.z); edu.g.rotation.y=-.25; g.add(edu.g);
   var isaHome={ x:8.35, z:6.9 }; VIDA.isaHome=isaHome; isa.g.position.set(isaHome.x,0,isaHome.z); isa.g.rotation.y=0; g.add(isa.g);
   var perro=depPerro(); perro.g.position.set(home.x+.85,0,home.z+.6); g.add(perro.g);
