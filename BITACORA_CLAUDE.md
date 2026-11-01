@@ -17208,7 +17208,7 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     + caché. Alertas: cobro extra → `WA_AVISOS`/dueño; detalle o producto ≤2 → vendedora + logística con «Abrir ATC» (nunca sola); tarde/trato ≤2
     → logística; asesora ≤2 → solo el dueño; resumen los lunes 9:00. Tablero «⭐ Encuestas» en Administración (con la contraseña).
 
-### §4oi — 🏭 LA FÁBRICA DE EDUARDO CON VIDA (31/10 → 01/11; cuatro vueltas con el dueño; PUBLICADO 01/11, `main` = `PUB_SHA`, versión 2026-11-01-a)
+### §4oi — 🏭 LA FÁBRICA DE EDUARDO CON VIDA (31/10 → 01/11; cuatro vueltas con el dueño; PUBLICADO 01/11 ~21:32 de Bolivia, `main` = `2fae574`, versión 2026-11-01-a)
 La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedidos del dueño, en orden:
 1. Con la captura de la fábrica vacía: *«Mi fábrica se ve pobreeeee falta un Eduardo por ahí y una Isabel diciéndole le llevo un café ? Y no sé
    muchas más cosas»* → `depVida`: Eduardo (la figura de la ciudad) camina y habla con SUS números (`depVidaDatos`/`depVidaFrases`: hoy,
@@ -17235,7 +17235,11 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - Solo dibujo: las pilas y los colchones de la línea NO son stock ni pedidos (los pedidos siguen siendo los montacargas, los camiones y la
   pizarra). Con zonas (pedidos por cargar) no hay acolchadora, limpieza, producto terminado ni segundo montacargas. «Reducir movimiento» = quieto.
 - Páginas para el dueño (clientes inventados): https://claude.ai/artifact/HNNA3mvxcaE2zyerXBn1it (cuatro versiones).
-- `tests/test_fabrica_vida.js` (41 con `PATIO_THREE`; 7 sin three.js).
+- **Después de «publica»** (01/11): *«¿Por qué el jefe, o sea Eduardo, tiene barriga?»* y *«Eduardo no tiene panza ni bigote»* → la figura venía de
+  la ciudad 3D (patio.js); en la fábrica va SIN panza ni bigote (chaleco naranja y gorra). ⚠️ No volver a ponérselos. El EDUARDO de la ciudad
+  no se tocó (no lo pidió). Publicado junto (`a888831`, `6c87198`). Batería sobre la copia (`pub-fabrica`): 304 suites; en rojo las 4 de
+  siempre por la fecha (actualizar_espera, banzer, revstock, circuito) y 4 que pasan solas (asistente, mispedidos, patio, fabrica_vida: carga).
+- `tests/test_fabrica_vida.js` (42 con `PATIO_THREE`; 7 sin three.js).
 
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
