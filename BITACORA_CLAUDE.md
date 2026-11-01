@@ -17208,6 +17208,35 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     + caché. Alertas: cobro extra → `WA_AVISOS`/dueño; detalle o producto ≤2 → vendedora + logística con «Abrir ATC» (nunca sola); tarde/trato ≤2
     → logística; asesora ≤2 → solo el dueño; resumen los lunes 9:00. Tablero «⭐ Encuestas» en Administración (con la contraseña).
 
+### §4oi — 🏭 LA FÁBRICA DE EDUARDO CON VIDA (31/10 → 01/11; cuatro vueltas con el dueño; PUBLICADO 01/11, `main` = `PUB_SHA`, versión 2026-11-01-a)
+La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedidos del dueño, en orden:
+1. Con la captura de la fábrica vacía: *«Mi fábrica se ve pobreeeee falta un Eduardo por ahí y una Isabel diciéndole le llevo un café ? Y no sé
+   muchas más cosas»* → `depVida`: Eduardo (la figura de la ciudad) camina y habla con SUS números (`depVidaDatos`/`depVidaFrases`: hoy,
+   mañana, por cargar, atrasados, entregados, el cliente que más espera); Isabel y el café (`depVidaCafe`); un chofer por camión (el primero de
+   `VEHICULOS`); el perro Firulais; pizarra (`depVidaPizarraPintar`) y reloj de Bolivia; banderines y adornos del tema (`VIDA_TEMA_COL`).
+2. *«Se sigue viendo pobre y vacía»* → `depFabrica`: la LÍNEA DE COLCHONES adelante (Lz=12,4: bloques de espuma con el gato, sierra, cinta con
+   colchones que avanzan, costura, embolsado —salen envueltos—, el pallet del final), ERNESTO con el montacargas (`depFabErnesto`: al llenarse
+   el pallet lo lleva a «Producto terminado», de a dos por lugar; avanza derecho y gira en el lugar, `fijo` + `depGirar`), tres operarios, la
+   marca en la pared y en el piso, el piso un tono más oscuro y menos niebla (46/110). Con el piso libre (`centro`: sin zonas y A≥11) la
+   acolchadora, el inspector de calidad y la limpieza (`depFabCentro`).
+3. Otra vez *«Se sigue viendo pobre y vacía»* + *«a uno de los pendejos de costura ponle de nombre Yerson y ponle un cachete inflado»* →
+   `depFabEdificio` (pared de atrás hasta 13 con ventanales, paredes a los costados, vigas a 12-13 —fuera de la vista de siempre—, la luz de
+   las lámparas en el piso, otra fila de estanterías llenas `depFabRackLleno`) y `depFabStock` (12 pilas Heaven/Sueña/somieres con el nombre
+   pintado, bloques de espuma, un segundo montacargas `mc2` dando la vuelta). Eduardo va por los costados también con el producto terminado.
+4. *«El cachete no es por enfermedad es porque acullica hoja de coca… diálogos de que buena coca, es despalada… la costumbre boliviana de
+   coquear o bolear»* y *«ojos no le vi»* → YERSON: el bolo del color de la piel que mastica, ojos grandes con blanco y cejas, una hojita en la
+   boca, la coca y el bico en la mesa, modo `bolea` (cose con la cabeza levantada); `FAB_DICE.yer` y la visita de Eduardo (`depFabVisita(true)`)
+   hablan de coca despalada, bolo, bico, Yungas, boleando. ⚠️ Nada de paperas (la prueba lo mira). Dueño: *«Jajajaa publica»*.
+- **⚡ `depFundir(src, dst, sombra)`**: junta lo que no se mueve en una pieza por material. Se usa en el edificio, las estanterías, el stock y
+  ⚠️ **en `depAmbiente`, que comparten los camiones 3D de Administración**. Medido con flota (4 camiones): 844 dibujos por cuadro con todo esto
+  contra ~930 de antes de empezar. ⚠️ Algo NUEVO que se mueva o se toque NO va adentro de lo que se funde.
+- **🐛 Arreglado de la primera vuelta**: `depVidaMover` dejaba el camino terminado como `[]` y `!E.path` era falso: Eduardo (y Ernesto) no
+  volvían a elegir qué hacer. Ahora queda `null`. ⚠️ Mirar «llegó» con `!(Q.path && Q.path.length)` o `Q.path===null`.
+- Solo dibujo: las pilas y los colchones de la línea NO son stock ni pedidos (los pedidos siguen siendo los montacargas, los camiones y la
+  pizarra). Con zonas (pedidos por cargar) no hay acolchadora, limpieza, producto terminado ni segundo montacargas. «Reducir movimiento» = quieto.
+- Páginas para el dueño (clientes inventados): https://claude.ai/artifact/HNNA3mvxcaE2zyerXBn1it (cuatro versiones).
+- `tests/test_fabrica_vida.js` (41 con `PATIO_THREE`; 7 sin three.js).
+
 ### §4oe — 💵 EL PRECIO DE VENTA ES OBLIGATORIO (31/10; dueño: *«coloca un filtro, que al cargar una venta los vendedores coloquen si o si precio de venta del producto. no pueden generar un pedido ni nada, si no cargar el pedido»*; → *«publica»*; PUBLICADO 31/10, `404215d` = `7fbdff6` (solo `pedidos.html` y la prueba) + versión 2026-10-31-c)
 - **Medido antes, con la copia de la planilla de octubre** (clientes inventados, `scratchpad/real/lista_anon.json`): productos sin precio en las ventas del
   mes: Fernando 76 de 76, Jonathan 25 de 29, Maria 15 de 35, Juan 9 de 53, Isabel 4 de 28, Mauricio 2 de 60, Carola 2 de 50, Mirian 0 de 41;
