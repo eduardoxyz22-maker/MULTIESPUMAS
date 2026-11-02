@@ -129,7 +129,7 @@ const fotoFabrica = page => page.evaluate(()=>{
   chk('3 · la tabla de Mia Plaza: TITANIO contado 3, le llegó 2, vendió −1, se recogió −1, tiene 3, apartado 1, libres 2',
     r.filas.some(function(t){ return /TITANIO ICE · 160x190 3 2 -1 -1 — 3 1 2/i.test(t); }), r.filas);
   chk('3 · el próximo conteo: «el lun 30/11, último día hábil de noviembre» (30/11 es lunes)', /último día hábil de noviembre/.test(r.cuando) && /30\/11/.test(r.cuando), r.cuando);
-  chk('3 · arriba: cuántas tiendas tienen conteo', /2 de 6 tiendas/.test(r.info), r.info);
+  chk('3 · arriba: cuántas tiendas tienen conteo', /2 de 8 tiendas/.test(r.info)   /* (02/11) + Tienda Banzer y Ventura Mall */, r.info);
   chk('3 · dice que solo mira y no cambia el stock de fábrica', /no cambia ninguna cuenta del stock de f[aá]brica/.test(r.txt), '');
   const ultimo=await page.evaluate(()=>{ var f0=todayStr, o={}; try{
       todayStr=function(){ return '2026-10-31'; }; o.oct=tstUltimoHabilMes('2026-10-31'); o.txt=tstCuandoHtml();

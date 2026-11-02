@@ -160,9 +160,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('el Tipo ofrece exactamente Reposición y Adicional, como el formato en papel',
       form.despues.tipos.join(',')==='Reposición,Adicional', form.despues.tipos.join(','));
   /* §4dn — el dueño las nombró una por una: «falta mutualista, charcas, carmelo». */
-  chk('el desplegable trae las SIETE tiendas',
-      ['Tiendas Roho','Mia Plaza','Buenos Aires','Central','Mutualista','Charcas','Carmelo']
-        .every(function(x){ return form.despues.sucs.indexOf(x)>=0; }) && form.despues.sucs.length===7,
+  /* (02/11) + la Tienda Banzer y Ventura Mall (dueño): nueve. */
+  chk('el desplegable trae las NUEVE tiendas',
+      ['Tiendas Roho','Mia Plaza','Buenos Aires','Central','Mutualista','Charcas','Carmelo','Tienda Banzer','Ventura Mall']
+        .every(function(x){ return form.despues.sucs.indexOf(x)>=0; }) && form.despues.sucs.length===9,
       form.despues.sucs.join(' · '));
   /* ⚠️ §4dn: las zonas de las tiendas van VACÍAS hasta que el dueño dé las de verdad. Una
      zona inventada se autocompleta sola, nadie la corrige y le desvía la ruta al chofer. */
