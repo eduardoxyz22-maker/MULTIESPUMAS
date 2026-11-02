@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4od. 01-02/11: 🧑‍💼 Eduardo adentro, mayoristas e internos afuera, +5 días para lo que rota y no cae — PUBLICADO 02/11 (`@@SHA@@`)
+## 4od. 01-02/11: 🧑‍💼 Eduardo adentro, mayoristas e internos afuera, +5 días para lo que rota y no cae — PUBLICADO 02/11 (`cea26bd`)
 
 **De dónde salió.** El dueño pidió revisar si la proyección de stock de octubre se cumplió (solo colchones y somieres; sin almohadas,
 protectores ni accesorios). Octubre, sin mayoristas: proyectado 761 contra vendido 688 (+11 %; colchones +3,5 %, somieres +50 %); error por

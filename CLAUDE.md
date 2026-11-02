@@ -278,7 +278,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     `max`. `tests/test_proyeccion_suma.js` (9).
   - **🧑‍💼 Eduardo adentro; mayoristas e internos afuera** (§4od, 01-02/11/2026; dueño: *«los pedidos de Eduardo cuentan como demanda,
     menos los que van a Tienda Amiga, José Carlos Copacaba y Luis Franco»* y, el 02/11, *«los internos, todos afuera»*; PUBLICADO
-    02/11/2026, `@@SHA@@`). **Reemplaza la mitad (2) de §4dj** («los pedidos de Eduardo nunca cuentan»). `stockPedidoUnico` sigue
+    02/11/2026, `cea26bd`). **Reemplaza la mitad (2) de §4dj** («los pedidos de Eduardo nunca cuentan»). `stockPedidoUnico` sigue
     siendo LA regla del pedido, en este orden: 1. RPT → nunca es venta (en almohadas sí, `stockEsDemanda`); 2. **`stockEsInterno(p)`**
     → afuera: vendedor en `CONTA_INTERNOS` (ALBA, FABRICA, MULTIESPUMA/S, MORENO, ALZER, REPOSICION DE ALMACEN), con la MISMA identidad
     que Contabilidad (`cliEsInterno`, §4jd) — una sola lista; ALBA entra aunque a veces cargue ventas B2B (dueño: todos afuera);
