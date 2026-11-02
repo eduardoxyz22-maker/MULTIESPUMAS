@@ -8,6 +8,8 @@
    4. ⚠️ «Tienda Banzer» NO es el almacén Banzer: recoger de la tienda no reserva ni descuenta del almacén, la marca se guarda
       «Tienda Banzer» (sin «Tienda Tienda»), y una página sin F5 que la lea igual la toma como tienda.
    5. El bot (.gs): el mismo reparto de marcas que la página y «tu vendedor» para Fabián.
+   6. Con ventas: Contabilidad (filtro, fichas de marca, caja de Heaven), Proyección, Cierre comercial, Retiros, «Quién vendió qué»,
+      Clientes (Excel), Mis pedidos (los suyos y «👑 Ver todos») y «¿Quién está usando el panel?». Heaven suma lo de los dos.
    Datos SINTÉTICOS. Reloj clavado el martes 03/11/2026, 10:00 de Bolivia.
    Se corre:  node tests/test_vendedores_nuevos.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -135,6 +137,79 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       ctx.waTuVend_('Fabián Godoy') === 'tu vendedor' && ctx.waTuVend_('FABIAN GODOY') === 'tu vendedor' && ctx.waTuVend_('Andrea Orias') === 'tu vendedora',
       [ctx.waTuVend_('Fabián Godoy'), ctx.waTuVend_('Andrea Orias')]);
   }
+
+  console.log('\n── 6. Con ventas de verdad: salen en cada pantalla y suman para Heaven ──');
+  /* Ventas SINTÉTICAS de noviembre: Andrea Bs 3.000 (entrega el 04/11) + una venta de tienda de Bs 1.500 en la Tienda Banzer (cargada el 02/11),
+     Fabián Bs 2.000 (05/11), Isabel Bs 1.000 (Heaven, para comparar) y Mauricio Bs 800 (Sueña). Heaven = 7.500, Sueña = 800, total 8.300. */
+  await ev(() => { showView('conta'); });
+  await page.waitForTimeout(200);             // showView relee con la foto de STATE de ese momento: después, el fixture
+  r = await ev(() => {
+    loadFromServer=function(){}; if(typeof MIS_TIMER!=='undefined' && MIS_TIMER) clearInterval(MIS_TIMER);
+    var n=0;
+    var V=function(vend, reg, fecha, bs, o){ o=o||{}; n++;
+      return Object.assign({ id:'n'+n, oc:'11-'+(100+n), nota:String(900+n), vendedor:vend, cliente:'CLIENTE N'+n, celular:'7000000'+n, fecha:fecha, turno:fecha?'AM':'',
+        productos:[{ desc:'COLCHON TITANIO', medida:'140x190', cant:1, precio:bs }], saldo:bs, acuenta:0, pagado:false, metodoPago:'', entregado:false,
+        zona:'Norte', direccion:'Calle '+n, ts:new Date(reg+'T10:00:00-04:00').getTime(), fotos:[] }, o); };
+    STATE=[ V('Andrea Orias','2026-11-02','2026-11-04',3000),
+            V('Andrea Orias','2026-11-02','',1500,{ direccion:DIR_TIENDA+' · Tienda Banzer', zona:ZONA_TIENDA, cliente:'CLIENTE TIENDA BANZER' }),
+            V('Fabián Godoy','2026-11-02','2026-11-05',2000),
+            V('Isabel Robledo','2026-11-02','2026-11-04',1000),
+            V('Mauricio Merida','2026-11-02','2026-11-04',800) ];
+    var out={};
+    var fichas=function(id){ return [].slice.call(document.querySelectorAll('#'+id+' .mc')).map(function(e){ return e.innerText.replace(/\s+/g,' ').trim(); }); };
+    var ver=function(vend){
+      segSet('cta-tab','ventas'); setContaTab('ventas');
+      llenarSelectContaVendedor(); var s=document.getElementById('cta-vendedor'); s.value=vend||'';
+      document.getElementById('cta-search').value=''; document.getElementById('cta-mes').value='2026-11';
+      segSet('cta-mode','mes'); setContaModo('mes'); segSet('cta-base','entrega'); setContaBase();
+      return { top:fichas('cta-metrics'), marcas:fichas('cta-marcas'), tabla:(document.getElementById('cta-tbody')||document.body).innerText };
+    };
+    var ops=function(id){ var e=document.getElementById(id); return e ? [].map.call(e.options, function(o){ return o.value||o.textContent; }) : []; };
+    out.todos=ver(''); out.ctaOps=ops('cta-vendedor'); out.cuaOps=ops('cua-vendedor');
+    out.andrea=ver('Andrea Orias'); out.fabian=ver('Fabián Godoy');
+    out.marca=totalPorMarca([{ p:STATE[0], monto:100 }, { p:STATE[2], monto:50 }, { p:STATE[4], monto:10 }]);
+    // 📈 Proyección (con la contraseña)
+    UNLOCKED=true; try{ mostrarBotonesTodos(); }catch(e){}
+    segSet('cta-tab','proy'); setContaTab('proy'); try{ renderProyeccion(); }catch(e){ out.pryErr=String(e); }
+    out.pry=(document.getElementById('pry-vendedores')||{}).innerText||'';
+    out.pryV=pryVentas().filter(function(x){ return /Andrea|Fabi/.test(x.v); }).map(function(x){ return x.v+'|'+x.g+'|'+x.bs; });
+    // 🏁 Cierre comercial: cada uno en su fila de Heaven
+    try{ out.ccm=ccmDatos('2026-11').filas.filter(function(f){ return /Andrea|Fabi/.test(f.v); }).map(function(f){ return f.v+'|'+f.g+'|'+f.bs; }); }catch(e){ out.ccmErr=String(e); }
+    // Las listas para elegir vendedor: Retiros, «Quién vendió qué», Clientes (Excel)
+    try{ abrirRetiros(); }catch(e){ out.retErr=String(e); } out.ret=ops('ret-filtro-vend').concat(ops('ret-entrega')); try{ closeRetiros(); }catch(e){}
+    try{ busLlenarVendedores(); }catch(e){} out.bus=ops('bus-vend');
+    try{ out.cli=cliVendedores().map(function(x){ return typeof x==='string' ? x : (x.v||x.n||JSON.stringify(x)); }); }catch(e){ out.cliErr=String(e); }
+    return out;
+  });
+  await page.waitForTimeout(50);
+  const num = t => { const m = /Bs ([\d.]+,\d\d)/.exec(t || ''); return m ? Number(m[1].replace(/\./g, '').replace(',', '.')) : NaN; };
+  const heav = (r.todos && r.todos.marcas || []).filter(t => /HEAVEN/i.test(t))[0] || '', suen = (r.todos && r.todos.marcas || []).filter(t => /SUEÑA/i.test(t))[0] || '';
+  chk('Contabilidad: los dos en el filtro de vendedor de Ventas y del Cuadre', ['Andrea Orias','Fabián Godoy'].every(v => (r.ctaOps||[]).indexOf(v)>=0 && (r.cuaOps||[]).indexOf(v)>=0), [r.ctaOps, r.__error]);
+  chk('«Vendido en el período» Bs 8.300 y 💚 Heaven Bs 7.500 (Andrea 3.000 + su venta de tienda 1.500 + Fabián 2.000 + Isabel 1.000)', num(r.todos && r.todos.top[0])===8300 && num(heav)===7500, r.todos && [r.todos.top[0], r.todos.marcas]);
+  chk('…🛏️ Sueña Bs 800 y ninguna venta en «⚠️ Sin marca»', num(suen)===800 && !(r.todos.marcas||[]).some(t => /SIN MARCA/i.test(t)), r.todos && r.todos.marcas);
+  chk('con Andrea elegida: solo Heaven, Bs 4.500; con Fabián: Bs 2.000', num((r.andrea.marcas||[])[0])===4500 && num((r.fabian.marcas||[])[0])===2000 && /HEAVEN/i.test((r.andrea.marcas||[])[0]||''), [r.andrea.marcas, r.fabian.marcas]);
+  chk('la plata que entra de sus ventas cuenta para la caja de Heaven', r.marca && r.marca.heaven.bs===150 && r.marca.suena.bs===10 && r.marca.otros.bs===0, r.marca);
+  chk('📈 Proyección: los dos en «Por vendedor» y sus ventas son de Heaven', /Andrea Orias/.test(r.pry) && /Fabián Godoy/.test(r.pry) && !r.pryErr &&
+      (r.pryV||[]).indexOf('Andrea Orias|heaven|3000')>=0 && (r.pryV||[]).indexOf('Fabián Godoy|heaven|2000')>=0, { err:r.pryErr, v:r.pryV, txt:(r.pry||'').slice(0,300) });
+  chk('🏁 Cierre comercial: cada uno con su fila de Heaven y lo vendido', !r.ccmErr && (r.ccm||[]).some(x => /^Andrea Orias\|heaven\|4500/.test(x)) && (r.ccm||[]).some(x => /^Fabián Godoy\|heaven\|2000/.test(x)), [r.ccm, r.ccmErr]);
+  chk('Retiros, «Quién vendió qué» y Clientes (Excel) los ofrecen', ['Andrea Orias','Fabián Godoy'].every(v => (r.ret||[]).indexOf(v)>=0 && (r.bus||[]).indexOf(v)>=0 && (r.cli||[]).some(x => x.indexOf(v)>=0)), { ret:r.ret, bus:r.bus, cli:r.cli, err:r.cliErr });
+
+  // 📋 Mis pedidos: Andrea ve los suyos; «👑 Ver todos» la cuenta en el equipo. 👋 «¿Quién está usando el panel?» los ofrece.
+  r = await ev(async () => {
+    showView('mis'); await new Promise(res => setTimeout(res, 150));
+    var inp=document.getElementById('mis-vendedor'); inp.value='Andrea Orias'; renderMis();
+    var lista=(document.getElementById('mis-lista')||{}).innerText||'';
+    MIS_TODOS=true; UNLOCKED=true; renderMis();
+    var todos=document.body.innerText;
+    MIS_TODOS=false;
+    window.QUIEN_PRUEBA=true; try{ quienAbrir(true); }catch(e){}
+    var quien=[].map.call(document.querySelectorAll('#quien .quien-b'), function(b){ return b.getAttribute('data-v')||''; }).filter(function(t){ return /Andrea|Fabi/.test(t); });
+    try{ quienCerrar(); }catch(e){} window.QUIEN_PRUEBA=false;
+    return { lista:lista, todos:/Andrea Orias/.test(todos) && /Fabián Godoy/.test(todos), quien:quien };
+  });
+  chk('📋 Mis pedidos de Andrea: sus dos ventas (y no las de Fabián)', /CLIENTE N1/.test(r.lista) && /CLIENTE TIENDA BANZER|N2/.test(r.lista) && !/CLIENTE N3/.test(r.lista), (r.lista||'').slice(0,300));
+  chk('…«👑 Ver todos» los muestra a los dos', r.todos === true, r);
+  chk('👋 «¿Quién está usando el panel?» tiene un botón para cada uno', r.quien && r.quien.some(t => /Andrea/.test(t)) && r.quien.some(t => /Fabi/.test(t)), r.quien);
 
   chk('sin errores de la página', !errores.length, errores.slice(0, 3));
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
