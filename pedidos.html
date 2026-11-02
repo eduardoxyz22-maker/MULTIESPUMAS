@@ -4052,6 +4052,12 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .pl-p7 b,.pl-p15 b,.pl-pm b,.pl-comp b,.pl-hay b,.pl-tener b{ font-size:1rem; font-variant-numeric:tabular-nums; }
 .pl-obj{ font-size:.8rem; color:#0f3d3a; margin-top:6px; } .pl-ley{ font-size:.74rem; color:var(--muted); line-height:1.4; }
 .pl-cero{ color:var(--muted); }
+/* 📈 (01/11, §4od) La clase del objetivo al lado de «Tener»: «rota +5» en el turquesa del panel, «cayendo +1» en gris. Chiquita y
+   del mismo tono que el resto de la tabla; nada de ámbar (es de los avisos) ni de rojo. */
+.pl-clase{ display:inline-block; vertical-align:middle; margin-left:4px; border-radius:6px; padding:1px 6px; font-size:.68rem; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+.pl-cl-rota{ background:#e3f3f1; color:#0f766e; border:1px solid #8fd0c6; }
+.pl-cl-cayendo{ background:#eef2f3; color:#4b5563; border:1px solid #d1d5db; }
+.pl-cl-falto{ background:#fff; color:#4b5563; border:1px dashed #9ca3af; font-weight:700; }   /* (02/11) «¿cayó o faltó?»: solo aviso */
 .pl-hoy{ color:#b4182b; font-weight:700; }
 .pl-que{ display:inline-block; border-radius:8px; padding:3px 8px; font-weight:800; font-size:.78rem; }
 .pl-ya-chk{ display:inline-flex; align-items:center; gap:5px; margin-left:8px; font-size:.74rem; font-weight:700; color:#0f766e; cursor:pointer; white-space:nowrap; } .pl-ya-chk input{ width:16px; height:16px; }
@@ -30011,6 +30017,10 @@ var PRODUCIR_1RA=0.7;         // qué parte del mes tiene que estar hecha para l
      conservando las demás reglas"*; *"Eduardo → otros clientes: mantener la exclusión"* y
      *"mantén los umbrales actuales de rotación"* → UNA excepción, `stockEduardoMulticenter`
      (§4gm): esas ventas cuentan como las del equipo, con este mismo mínimo de entregas.
+   · 01/11 (§4od) — el dueño dio vuelta la mitad (2): LOS PEDIDOS DE EDUARDO SÍ CUENTAN como demanda,
+     salvo los que van a los MAYORISTAS (`STOCK_CLIENTES_FUERA`: Tienda Amiga, Copacaba, Luis Franco,
+     con cualquier vendedor). Sus entregas cuentan también para estas 3 entregas (aceptado por el dueño).
+     La mitad (1) —3 entregas distintas— no cambió.
    Con menos de 3 entregas distintas no se estima ningún ritmo: se cubre lo que está VENDIDO
    Y SIN ENTREGAR (eso es real y hay que tenerlo) y nada más. */
 var STOCK_VENTAS_MIN=3;
@@ -30021,8 +30031,9 @@ var STOCK_VENTAS_MIN=3;
      · la venta se mide con los últimos STOCK_OBJ_VENTANA días hábiles (≈ 1 mes), por fecha de venta: μ por día hábil y su desvío σ;
      · punto de pedido = μ × (fábrica + revisión) + z·σ·√(fábrica + revisión): la venta de 5 días hábiles más un margen por los días en
        que se vende más (z = STOCK_OBJ_Z_ALTO si en esos 5 días se esperan ≥ STOCK_OBJ_ALTO unidades: lo que vende mucho, más margen);
-     · objetivo = punto de pedido + STOCK_OBJ_EXTRA día de venta (las almohadas, STOCK_OBJ_EXTRA_ALMOHADA: valen poco), y nunca menos
-       que el pedido típico (el 75 % de las entregas de las últimas 8 semanas es de ese tamaño o menos);
+     · objetivo = punto de pedido + días de venta: STOCK_OBJ_EXTRA_ROTA (5) si rota y no viene cayendo, STOCK_OBJ_EXTRA (1) si viene
+       cayendo (01/11, §4od; las almohadas, STOCK_OBJ_EXTRA_ALMOHADA: valen poco), y nunca menos que el pedido típico (el 75 % de las
+       entregas de las últimas 8 semanas es de ese tamaño o menos);
      · cuando LO LIBRE (PTF + Banzer + lo que viene seguro − lo vendido para los próximos 15 días) baja al punto de pedido, se pide
        hasta el objetivo: primero se trae de Moreno y lo que falta se fabrica.
    Lo que no rota sigue igual: solo lo ya vendido. ⚠️ El plazo es el de la regla validada (4 días hábiles, lo medido el 16/10 en las
@@ -30032,8 +30043,19 @@ var STOCK_OBJ_VENTANA=26;        // días hábiles con que se mide la venta de l
 var STOCK_OBJ_TIPICO=48;         // días hábiles (8 semanas) para el pedido típico
 var STOCK_OBJ_FABRICA=4;         // días hábiles de fábrica
 var STOCK_OBJ_REVISION=1;        // se revisa todos los días
-var STOCK_OBJ_EXTRA=1;           // objetivo = punto de pedido + 1 día de venta
+var STOCK_OBJ_EXTRA=1;           // objetivo = punto de pedido + 1 día de venta (colchones y somieres que vienen CAYENDO, §4od)
 var STOCK_OBJ_EXTRA_ALMOHADA=5;  // las almohadas: 5 días de venta
+/* 📈 (01/11, §4od, dueño) LO QUE ROTA Y NO CAE TIENE 5 DÍAS DE VENTA SOBRE EL PUNTO DE PEDIDO, no 1: con +1 el objetivo se
+   quedaba corto y octubre terminó sin stock de lo que más rota. «Cae» = la venta por día hábil de los últimos
+   STOCK_OBJ_CAIDA_VENTANA días hábiles es MENOR que STOCK_OBJ_CAIDA_UMBRAL × la de los STOCK_OBJ_VENTANA (la misma serie: por fecha de
+   venta, el mismo calendario de días hábiles, `o.objDia`). Lo que cae se queda con STOCK_OBJ_EXTRA (+1): no se acumula stock de lo
+   que se está enfriando. ⚠️ (02/11, revisión) Las dos medias de la PRUEBA van sobre días hábiles COMPLETOS: si hoy es hábil, el día en
+   curso queda afuera (a la mañana está a medias y la clase saltaba entre la mañana y la tarde: 3 de 31 productos el 31/10). La μ del
+   objetivo (punto de pedido) sigue incluyendo hoy, como la regla validada de §4ls. Las almohadas siguen con STOCK_OBJ_EXTRA_ALMOHADA; lo que no rota y lo discontinuado no tienen objetivo
+   (no cambió). La clase (`o.objClase`: rota / cayendo / almohada) se muestra en el Plan para que se vea por qué un producto tiene más. */
+var STOCK_OBJ_EXTRA_ROTA=5;      // colchones y somieres que rotan y no caen: 5 días de venta
+var STOCK_OBJ_CAIDA_VENTANA=15;  // días hábiles COMPLETOS de la ventana corta con que se mide si viene cayendo (02/11, dueño: 15, no 10; sin histéresis)
+var STOCK_OBJ_CAIDA_UMBRAL=0.75; // cae si el ritmo corto es menor que el 75 % del ritmo de STOCK_OBJ_VENTANA
 var STOCK_OBJ_Z=1.28, STOCK_OBJ_Z_ALTO=1.645, STOCK_OBJ_ALTO=4;
 var STOCK_HIST=24;            // (23/10: 15 → 24, dos Excel por día × 3 almacenes × 3 días = 18) cuántos cortes se recuerdan como mucho (solo el resumen: fecha, hora, cuántos); (06/10) y solo de los últimos STOCK_CONTROL_DIAS días, más el último de cada almacén
 /* 🧓 (06/10) QUÉ PÁGINA ESCRIBIÓ EL STOCK. `filaStock` pone `pv` en cada guardado; una página de antes no lo conoce y al
@@ -31332,9 +31354,16 @@ function stockClaveDeCatalogo(k){
    marcado en el catálogo con `x:1`. El panel lo reparte y lo cuenta como a cualquier otro,
    pero nunca lo pone en «hay que fabricar»: dice «se acaba y no se fabrica más». */
 var STOCK_DESC_KEYS=null;
+/* 🛑 Lo discontinuado POR NOMBRE (§4dc): un código nuevo de estas líneas queda cubierto solo, sin tocar `CODIGOS` (y sin cambiar la
+   identidad del producto, que en estas claves crudas es el nombre del Excel). Se mira el nombre de la clave con `stockNorm`.
+   · Carioca Río / Premier / Bahía, y la clave cruda «BAHIA» (CD1948) o «COLCHON/SOMIER BAHIA» (17/10, §4lr U51).
+   · (01/11, §4od, dueño) SOMIER BAHIA BEIGE y SOMIER BAHIA NEGRO, en todas sus medidas y también «T.A» (CD1941/42/44/45, CD2051/52/54/55):
+     cero ventas en 3 meses y ~45 u entre PTF, Banzer y Moreno. Se vende lo que queda y no entra en «hay que fabricar». */
+var STOCK_DESC_NOMBRES=[ /\bCARIOCA\s+(RIO|PREMIER|BAHIA)\b/, /^((COLCHON|SOMIER)\s+)?BAHIA$/, /^SOMIER\s+BAHIA\s+(BEIGE|NEGRO)\b/ ];
 function stockCariocaDescontinuado(k){
   var nombre=stockNorm(String(k||'').split('|')[0]);
-  return /\bCARIOCA\s+(RIO|PREMIER|BAHIA)\b/.test(nombre) || /^((COLCHON|SOMIER)\s+)?BAHIA$/.test(nombre);   // (17/10, §4lr U51) también la clave cruda «BAHIA» (CD1948)
+  for(var i=0;i<STOCK_DESC_NOMBRES.length;i++) if(STOCK_DESC_NOMBRES[i].test(nombre)) return true;
+  return false;
 }
 function stockDescontinuadoK(k){
   if(stockCariocaDescontinuado(k)) return true;
@@ -32078,8 +32107,9 @@ function stockRecogidaVencida(q, hoy){
 }
 
 /* ---- La foto completa, un renglón por producto ---- */
-/* Los pedidos de Eduardo (el dueño) no son rotación: son pedidos puntuales suyos (§4de).
-   Se cubren si están vendidos y sin entregar, pero no arman ni ritmo ni reserva.
+/* (01/11, §4od) Los pedidos de Eduardo (el dueño) SÍ son demanda desde el 01/11; lo que no es rotación son los pedidos a los
+   MAYORISTAS (`STOCK_CLIENTES_FUERA`), de cualquier vendedor: se cubren si están vendidos y sin entregar, pero no arman ni
+   ritmo ni reserva. (Hasta el 01/11 el excluido era Eduardo entero, §4de/§4dj.)
    🏪 Las REPOSICIONES DE TIENDA van por el mismo camino (§4dk), y por una razón distinta:
    el colchón que va a una sucursal NO se vendió, solo cambió de lugar — sigue siendo de la
    empresa. Si contara como venta, se contaría DOS VECES: ahora y cuando la tienda lo venda
@@ -32107,11 +32137,30 @@ function stockEsMulticenter(p){ return !!p && STOCK_MULTICENTER.test(normNombre(
 function stockEsConsignacion(p){ return !!p && STOCK_CONSIGNACION.test(normNombre(p.cliente||'')); }
 function stockPareceConsignacion(p){ return !!p && STOCK_CONSIG_AMPLIA.test(normNombre(p.cliente||'')); }
 function stockEsEduardo(p){ return !!p && /(^|\s)EDUARDO(\s|$)/i.test(normNombre(p.vendedor||'')); }
+/* 🏪 (01/11, §4od, dueño) LOS MAYORISTAS NO SON DEMANDA, con cualquier vendedor: Tienda Amiga, José Carlos Copacaba (y toda
+   variante «Copacaba», incluida la mal escrita «COAPCABA») y Luis Franco. Se miran por el NOMBRE DEL CLIENTE con `normNombre`
+   (sin tildes ni mayúsculas) y, además, por el VENDEDOR «TIENDA AMIGA» (`STOCK_VENDEDORES_FUERA`). Un «JOSE CARLOS» suelto NO
+   entra: son clientes de tienda (José Carlos Herrera, Gómez…); solo con COPACABA. Lo que se les vendió y falta entregar SÍ se
+   cubre (está vendido): lo que no arman es ritmo, reserva ni las 3 entregas de la rotación. La misma regla que
+   `/home/claude/octubre/out_c/v2/scripts/mayoristas.py`. El dueño agrega un mayorista acá y nada más.
+   ⚠️ (02/11, decisión del dueño) El patrón de Copacaba va SIN `\b` al final a propósito: también casa con «COPACABANA» y otras grafías
+   pegadas («JOSE CARLOSCOPACABA POTOSI»); contra los 1.413 clientes de la planilla del 01/11 no hay ningún falso positivo. */
+var STOCK_CLIENTES_FUERA=[/\bTIENDA AMIGA\b/i, /CO(?:PA|AP)CABA/i, /\bLUIS FRANCO\b/i];
+var STOCK_VENDEDORES_FUERA=['TIENDA AMIGA'];
+function stockClienteFuera(p){
+  if(!p) return false;
+  var c=normNombre(p.cliente||'');
+  for(var i=0;i<STOCK_CLIENTES_FUERA.length;i++) if(STOCK_CLIENTES_FUERA[i].test(c)) return true;
+  for(var j=0;j<STOCK_VENDEDORES_FUERA.length;j++) if(mismoVendedor(p.vendedor, STOCK_VENDEDORES_FUERA[j])) return true;
+  return false;
+}
 /* 🏬 (dueño, 28/09) LAS VENTAS DE EDUARDO A MULTICENTER SÍ SON DEMANDA: entran al ritmo de 15 y 30 días y al índice
-   mensual, como las del equipo. Excepción EXPLÍCITA para esa combinación y nada más: Eduardo a otros clientes sigue
-   afuera, Multicenter vendido por otro vendedor sigue siendo un pedido puntual, la consignación sigue afuera y una RPT
-   nunca es venta (se mira primero, en `stockPedidoUnico`). Los umbrales de rotación NO cambian: una compra grande sola
-   es UNA entrega y no arma ritmo (hacen falta `STOCK_VENTAS_MIN` entregas distintas). */
+   mensual, como las del equipo. Excepción EXPLÍCITA para esa combinación y nada más: Multicenter vendido por otro vendedor
+   sigue siendo un pedido puntual, la consignación sigue afuera y una RPT nunca es venta (se mira primero, en
+   `stockPedidoUnico`). Los umbrales de rotación NO cambian: una compra grande sola es UNA entrega y no arma ritmo (hacen
+   falta `STOCK_VENTAS_MIN` entregas distintas). (01/11, §4od) Desde que TODO Eduardo cuenta, lo único que esta excepción sigue
+   decidiendo es que Eduardo → Multicenter pasa por delante de `stockPuntual` (Multicenter de OTRO vendedor sigue puntual);
+   además `stockEntregaClave` junta sus pedidos del mismo día en UNA entrega (§4gy) y los textos dicen cuánto es suyo. */
 function stockEduardoMulticenter(p){ return !!p && !esRPT(p.oc) && stockEsEduardo(p) && stockEsMulticenter(p) && !stockPareceConsignacion(p); }
 function stockPuntual(p){
   if(!p) return false;
@@ -32132,12 +32181,30 @@ function stockEsDemanda(p, k){
   }
   return !stockPedidoUnico(p);
 }
+/* 🧑‍💼 (01/11, §4od, dueño) LOS PEDIDOS DE EDUARDO CUENTAN COMO DEMANDA (ritmo, reserva, las 3 entregas de la rotación, el objetivo,
+   el mes, el índice, las zonas de Banzer o PTF: todo lo que pasa por acá), SALVO los que van a los mayoristas de
+   `STOCK_CLIENTES_FUERA` (Tienda Amiga, Copacaba, Luis Franco), que quedan afuera con cualquier vendedor. Lo demás no cambió: la
+   RPT no es venta (en almohadas sí, `stockEsDemanda`), la venta de tienda cuenta, Eduardo → Multicenter cuenta, lo de ROHO que carga
+   Ernesto cuenta y `stockPuntual` sigue entero (Multicenter de otro vendedor, consignación y ROHO a «TIENDA n»: decisiones del dueño
+   del 11/09 y 28/09 que no pidió cambiar).
+   🏭 (02/11, §4od, dueño: *«todos afuera»*) LOS PEDIDOS INTERNOS NO SON DEMANDA: vendedor en `CONTA_INTERNOS` (ALBA, FABRICA,
+   MULTIESPUMA/S, MORENO, ALZER, REPOSICION DE ALMACEN), reconocido EXACTAMENTE como Contabilidad (`cliEsInterno`, §4jd): mueven
+   mercadería, no la venden. ALBA entra aunque a veces cargue ventas B2B reales (el dueño eligió todos afuera). Lo que se les vendió y
+   falta entregar sí se cubre (`comp`). Hasta el 02/11 contaban en el stock («en el stock siguen», §4jd): ya no.
+   🏪 (02/11, dueño) EDUARDO → «ROHO TIENDA 1» / «roho T1» y parecidos SÍ CUENTAN como demanda: son la única señal de lo que venden
+   las Tiendas Roho (no cargan venta de tienda y su RPT no es almohada). Es a propósito que `stockPuntual` saque «TIENDA n» SOLO
+   cuando el VENDEDOR es ROHO (la reposición de Ernesto a su tienda, §4dt): la misma reposición cargada por Eduardo entra, y la cargada
+   por FABRICA sale por interno. No «arreglar» esta asimetría sin el dueño.
+   ⚠️ Es LA regla del pedido, en un solo lugar: no volver a preguntar por `stockEsEduardo` ni por `CONTA_INTERNOS` en ninguna cuenta. */
 function stockPedidoUnico(p){
   if(esRPT(p&&p.oc)) return true;               // 1. una reposición de tienda nunca es venta
-  if(stockEduardoMulticenter(p)) return false;  // 2. Eduardo → Multicenter: demanda (dueño, 28/09)
-  if(stockPuntual(p)) return true;              // 3. Multicenter de otro vendedor, consignación, ROHO a tienda
-  return stockEsEduardo(p);                     // 4. las otras ventas de Eduardo
+  if(stockEsInterno(p)) return true;            // 2. un pedido interno (FABRICA, ALBA, MORENO…) mueve mercadería, no la vende (dueño, 02/11)
+  if(stockClienteFuera(p)) return true;         // 3. un mayorista (Tienda Amiga, Copacaba, Luis Franco) nunca es demanda, lo venda quien lo venda (01/11)
+  if(stockEduardoMulticenter(p)) return false;  // 4. Eduardo → Multicenter: demanda (dueño, 28/09), por delante de `stockPuntual`
+  return stockPuntual(p);                       // 5. Multicenter de otro vendedor, consignación, ROHO a tienda; todo lo demás —Eduardo incluido— es demanda
 }
+/* 🏭 (02/11, §4od) La MISMA identidad que Contabilidad (`cliEsInterno` sobre `CONTA_INTERNOS`, §4jd): una sola lista. */
+function stockEsInterno(p){ return !!p && cliEsInterno(p.vendedor||''); }
 /* 🏬 (dueño, 29/09) QUÉ ES UNA ENTREGA para contar la rotación. *«Multicenter hace pedidos y todos son a su bodega, pero
    hace pedidos por unidades: a veces hasta 4 pedidos en el mismo día para su bodega.»* Esos pedidos del MISMO día son UNA
    entrega, no cuatro: si no, una sola compra partida en 4 pedidos pasaba el umbral de `STOCK_VENTAS_MIN` (3 entregas
@@ -32145,24 +32212,27 @@ function stockPedidoUnico(p){
    `f` es la fecha de la ventana que se cuenta (la de salida para los 15 días, la de venta para los 30). Los demás
    pedidos siguen contando uno por uno, como siempre. */
 function stockEntregaClave(p, f){ return stockEduardoMulticenter(p) ? ('mc|'+(f||'')) : String(p.id); }
-/* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
-   «pedido único» de Eduardo o «pedido único» del equipo (menos de 3 entregas) — §4dj. */
+/* ¿Lo vendido en la ventana fue TODO pedido único (sin nada de demanda)? Solo para que el cartel diga de quién es:
+   «pedido único» de un mayorista / reposición / puntual, o «pedido único» del equipo (menos de 3 entregas) — §4dj.
+   (01/11, §4od) El nombre quedó de cuando Eduardo era el único excluido; hoy lo excluido son los mayoristas. */
 function stockSoloEduardo(o){ return !!o && !(o.vendidosRotacion>0) && o.vendidosUnicos>0; }
-/* …y de QUIÉN es ese pedido único: de Eduardo, de una reposición de tienda, o de los dos
-   (§4dk). `vendidosUnicos` junta a ambos porque para la reserva dan lo mismo —ninguno arma
+/* …y de QUIÉN es ese pedido único: de un mayorista (`STOCK_CLIENTES_FUERA`, 01/11), de una reposición de tienda, de un pedido
+   puntual, o de varios (§4dk). `vendidosUnicos` junta a todos porque para la reserva dan lo mismo —ninguno arma
    ritmo—, pero el cartel tiene que decir la verdad de dónde salieron esas unidades. */
 function stockUnicoEtq(o){
-  var rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=((o&&o.vendidosUnicos)||0)-rpt-pun;
-  var l=[]; if(edu>0) l.push('Eduardo'); if(rpt>0) l.push('reposición de tienda'); if(pun>0) l.push('pedido puntual');
-  return l.length ? l.join(' y ') : 'Eduardo';
+  var rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, may=(o&&o.vendidosFuera)||0, int_=(o&&o.vendidosInt)||0;
+  var l=[]; if(may>0) l.push('mayorista'); if(int_>0) l.push('pedido interno'); if(rpt>0) l.push('reposición de tienda'); if(pun>0) l.push('pedido puntual');
+  return l.length ? l.join(' y ') : 'pedido único';
 }
 /* …y lo mismo en una frase, para el cartel del aviso `unico` (28/09, 2ª revisión): decía «Lo vendió Eduardo:» también
-   cuando lo único vendido era un Multicenter de otra vendedora, una consignación o ROHO a tienda. */
+   cuando lo único vendido era un Multicenter de otra vendedora, una consignación o ROHO a tienda.
+   (01/11, §4od) «Eduardo» → «un mayorista»: lo que queda afuera es Tienda Amiga, Copacaba o Luis Franco, lo venda quien lo venda. */
 function stockUnicoQuien(o){
-  var u=(o&&o.vendidosUnicos)||0, rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=u-rpt-pun;
+  var u=(o&&o.vendidosUnicos)||0, rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, may=(o&&o.vendidosFuera)||0, int_=(o&&o.vendidosInt)||0;
   if(rpt>=u) return 'Fue reposición de tienda: la mercadería cambió de lugar, no se vendió.';
-  if(edu>0 && !pun && !rpt) return 'Lo vendió Eduardo:';
-  if(pun>0 && !(edu>0) && !rpt) return 'Fue un pedido puntual (Multicenter de otro vendedor, consignación o ROHO a tienda):';
+  if(int_>=u) return 'Fue un pedido interno (FABRICA, ALBA, MORENO…): mueve mercadería, no la vende.';   // (02/11, §4od)
+  if(may>0 && !pun && !rpt && !int_) return 'Fue a un mayorista (Tienda Amiga, Copacaba o Luis Franco), que no arma rotación:';
+  if(pun>0 && !(may>0) && !rpt && !int_) return 'Fue un pedido puntual (Multicenter de otro vendedor, consignación o ROHO a tienda):';
   return 'Lo vendido fue pedido único ('+stockUnicoEtq(o)+'):';
 }
 function stockLibreOrigen(k,alm){
@@ -32191,7 +32261,7 @@ function stockData(extra){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, vendidosRptDem:0, vendidosTiendaAlm:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compIds:[], compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosFuera:0, vendidosInt:0, vendidosEduMc:0, v30EduMc:0, vendidosRptDem:0, vendidosTiendaAlm:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compIds:[], compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       fabVenc:0, fabVencPor:{}, fabVencIds:[],                // 🏭 (19/10, §4ls CD-1) lo hecho a pedido para otro que ya salió de fábrica (`stockFabVencidoU`)
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
@@ -32227,7 +32297,7 @@ function stockData(extra){
         var ek=stockEntregaClave(p, fs);          // 🏬 (29/09) los pedidos de Multicenter del mismo día son UNA entrega
         var dem=stockEsDemanda(p, o.k);           // 🛏️ (16/10, §4lr U7) renglón por renglón: las almohadas de la RPT son demanda
         if(!dem && stockEsAlmohadaK(o.k) && esVentaTienda(p)) o.vendidosTiendaAlm+=c;   // ya contada en su RPT
-        else if(!dem){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
+        else if(!dem){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockEsInterno(p)) o.vendidosInt+=c; else if(stockClienteFuera(p)) o.vendidosFuera+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }   // 🏪 (01/11, §4od) `vendidosFuera`: los mayoristas; (02/11) `vendidosInt`: los internos
         else {o.vendidosRotacion+=c; if(esRPT(p.oc)) o.vendidosRptDem+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
           if(stockEduardoMulticenter(p)) o.vendidosEduMc+=c;   // 🏬 (28/09) cuánto de eso es Eduardo → Multicenter
           if(!o.ventasRotacion[ek]){o.ventasRotacion[ek]=1;o.nVentasRotacion++;}}
@@ -32255,7 +32325,17 @@ function stockData(extra){
       if(fv>=OV.ini && fv<=hoy){
         var gi=OV.pos[fv];
         if(gi!=null && gi>=0 && stockEsDemanda(p, o.k)){
-          if(gi<OV.nMu){ o.objDia=o.objDia||{}; o.objDia[gi]=(o.objDia[gi]||0)+c; if(stockEduardoMulticenter(p)) o.objEduMc=(o.objEduMc||0)+c; }
+          if(gi<OV.nSerie){ o.objDia=o.objDia||{}; o.objDia[gi]=(o.objDia[gi]||0)+c; }   // (02/11) un día más que el ritmo: la prueba de «cayendo» mira días completos
+          /* (02/11, revisión con Opus) Un domingo o feriado, lo vendido HOY cae en `objDia[0]` (el último día hábil, que ya estaba completo):
+             se anota aparte para que la prueba de «cayendo» lo saque y siga mirando días completos. La μ del objetivo lo sigue incluyendo. */
+          if(fv===hoy && gi===0 && !OV.hoyHabil) o.objHoyNoHabil=(o.objHoyNoHabil||0)+c;
+          if(gi<OV.nMu && stockEduardoMulticenter(p)) o.objEduMc=(o.objEduMc||0)+c;
+          /* 📈 (02/11, §4od) Señales de FALTANTE en la ventana de «cayendo» (solo para la pista «¿cayó o faltó?», no cambian ningún número):
+             renglones marcados «✗ no hay» y hechos a pedido 🏭 dentro de los días hábiles completos que mira la prueba. */
+          if(gi>=(OV.hoyHabil?1:0) && gi<(OV.hoyHabil?1:0)+STOCK_OBJ_CAIDA_VENTANA){
+            if(x.chk==='no') o.objNoHay=(o.objNoHay||0)+c;
+            if(enProduccion(x)) o.objAPedido=(o.objAPedido||0)+c;
+          }
           var eko=stockEntregaClave(p, fs); o.objOrd=o.objOrd||{}; o.objOrd[eko]=(o.objOrd[eko]||0)+c;
         }
       }
@@ -32389,15 +32469,16 @@ function stockData(extra){
             *"Una única entrega o 2 en 1 mes no es tener rotación, eso es pedido único"* —
             el dueño, 07/09, y lo volvió a reclamar el 09/09 viendo el MORFEO (15 unidades
             en UNA entrega) marcado «🚨 PEDIR YA · pedí 8».
-         2. LOS PEDIDOS DE EDUARDO NO CUENTAN (`stockPedidoUnico` → `vendidosUnicos`): son
-            puntuales suyos. Se cubre lo que él vendió y sin entregar, nada más.
-            🏬 SALVO LOS DE EDUARDO A MULTICENTER (dueño, 28/09): esos sí son demanda y entran acá como una
-            entrega más (`stockEduardoMulticenter`; `vendidosEduMc` dice cuántas unidades son). Con los MISMOS
-            umbrales: una compra grande sola de Multicenter es una entrega y no arma ritmo.
-       `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo. `porDiaReal` es la
-       cuenta cruda del equipo (se muestra); `porDia` es la que usan la proyección y el
+         2. LOS PEDIDOS A LOS MAYORISTAS NO CUENTAN (`stockPedidoUnico` → `vendidosUnicos`, `vendidosFuera`):
+            Tienda Amiga, Copacaba y Luis Franco (`STOCK_CLIENTES_FUERA`), con cualquier vendedor. Se cubre
+            lo que se les vendió y falta entregar, nada más.
+            🧑‍💼 (01/11, §4od) Hasta el 01/11 acá decía «los pedidos de Eduardo no cuentan» (§4dj) con la excepción de
+            Eduardo a Multicenter (§4gm). El dueño dio vuelta esa mitad: TODO Eduardo cuenta —también para estas 3
+            entregas— salvo los mayoristas. `vendidosEduMc` sigue diciendo cuánto es Eduardo a Multicenter (solo texto).
+       `vendidosRotacion`/`nVentasRotacion`/`sem` son la demanda (equipo + Eduardo). `porDiaReal` es la
+       cuenta cruda de la demanda (se muestra); `porDia` es la que usan la proyección y el
        «cuánto pedir», y vale CERO con rotación `baja`. `porDiaTodo` cuenta todo lo que salió
-       (Eduardo incluido) y sirve solo para «plata parada», que mira para atrás (§4de).
+       (mayoristas incluidos) y sirve solo para «plata parada», que mira para atrás (§4de).
          · `baja`  — <3 entregas del equipo: porDia=0, margen=0, cubrir=0. Aviso 📦 `unico`.
          · `media` — ≥3 entregas, sin volumen sostenido: margen fijo, cubrir=3.
          · `alta`  — ≥15 unidades del equipo en ≥2 de los 3 tramos: el margen escala con el
@@ -32603,7 +32684,8 @@ function stockAvisoDe(o){
      decía «✓ alcanza» teniendo cero. Dos casos con dos nombres (regla de la otra herramienta,
      confirmada por el dueño el 09/09, §4dg): `unico` si lo vendido fue TODO de Eduardo (sus
      pedidos son puntuales), `lenta` si el equipo vendió 1 o 2 unidades en la ventana. */
-  /* 📦 Se vendió, pero sin rotación: menos de 3 entregas del equipo, o lo vendió Eduardo.
+  /* 📦 Se vendió, pero sin rotación: menos de 3 entregas que cuentan, o fue todo pedido único (desde el 02/11, §4od: mayorista,
+     interno, puntual o RPT; Eduardo ya cuenta).
      No es una alarma, es una aclaración — si no, el renglón decía «✓ alcanza» teniendo cero.
      UN solo aviso para las dos cosas: el dueño llama «pedido único» a las dos, y el texto de
      la fila dice cuál es (`stockSoloEduardo`). */
@@ -32724,6 +32806,11 @@ function stockObjVentana(hoy){
   var V={ dias:dias, pos:{}, ini:dias[dias.length-1]||hoy, nMu:Math.min(STOCK_OBJ_VENTANA, dias.length) };
   for(var d=V.ini, i=dias.length-1, j=-1, g=0; d<=hoy && g<800; d=stockSumarDias(d,1), g++){ if(i>=0 && dias[i]===d){ j=i; i--; } V.pos[d]=j; }
   V.iniMu=dias[V.nMu-1]||hoy;
+  /* 📈 (02/11, §4od) ¿Hoy es día hábil? Entonces `dias[0]` es el día EN CURSO, a medias (las ventas se cargan durante el día): la prueba
+     de «cayendo» lo saltea y mira días completos (`stockObjetivo`). `nSerie` = cuántos días de venta se juntan en `objDia`: uno más que
+     los del ritmo, para que la ventana larga de la prueba siga teniendo STOCK_OBJ_VENTANA días completos. */
+  V.hoyHabil=(dias[0]===hoy);
+  V.nSerie=Math.min(V.nMu+1, dias.length);
   return V;
 }
 /* Días hábiles en (a, b]: sin `a`, con `b`. */
@@ -32741,7 +32828,7 @@ function stockHabilesEntre(a, b){ var n=0, f=stockSumarDias(a,1); for(var g=0; f
    de 15 días sigue siendo el de la proyección («Se corta»), del plan de «Banzer o PTF» y de las vistas (cambiar cómo se mide el ritmo es
    otra decisión del dueño, «ritmo 15+30», que no se tomó); esta ventana es solo la de la regla del cuánto. */
 function stockObjetivo(o, V){
-  o.objS=null; o.objPP=null; o.objetivo=null; o.puntoPedido=null;
+  o.objS=null; o.objPP=null; o.objetivo=null; o.puntoPedido=null; o.objClase=''; o.objCaida=false;   // (§4od) `objClase`: rota / cayendo / almohada, solo con objetivo
   if(!o.rota || !V || !V.nMu) return null;
   var dia=o.objDia||{}, n=V.nMu, tot=0, sq=0, i, x;
   for(i=0;i<n;i++) tot+=Number(dia[i])||0;
@@ -32756,9 +32843,26 @@ function stockObjetivo(o, V){
   var LR=STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION;
   var z=(mu*LR>=STOCK_OBJ_ALTO) ? STOCK_OBJ_Z_ALTO : STOCK_OBJ_Z;
   var prot=mu*LR + z*sd*Math.sqrt(LR);
-  var extra=stockEsAlmohadaK(o.k) ? STOCK_OBJ_EXTRA_ALMOHADA : STOCK_OBJ_EXTRA;
+  /* 📈 (01/11, §4od) Cuántos días de venta van sobre el punto de pedido: las almohadas, los suyos; un colchón o somier que ROTA Y NO
+     CAE, STOCK_OBJ_EXTRA_ROTA (5); uno que viene CAYENDO, STOCK_OBJ_EXTRA (1). «Cae» se mide con la MISMA serie de la regla
+     (`o.objDia`, por fecha de venta, días hábiles del mismo calendario): el ritmo de los últimos STOCK_OBJ_CAIDA_VENTANA días hábiles
+     COMPLETOS contra el de los STOCK_OBJ_VENTANA completos (`o.objMuLarga`; sin el día en curso, 02/11), por debajo de
+     STOCK_OBJ_CAIDA_UMBRAL. Justo en el umbral no cae. Sin venta (μ = 0) no cae. */
+  var extra, clase;
+  if(stockEsAlmohadaK(o.k)){ extra=STOCK_OBJ_EXTRA_ALMOHADA; clase='almohada'; }
+  else {
+    /* (02/11) Días hábiles COMPLETOS: si hoy es hábil, `dia[0]` (el día en curso) se saltea; la serie trae un día de más (`V.nSerie`)
+       para que la ventana larga siga teniendo STOCK_OBJ_VENTANA días. Las dos medias de la prueba salen de la misma serie recortada. */
+    var d0=V.hoyHabil ? 1 : 0, nDisp=Math.max(0, (V.nSerie||n)-d0);
+    var nC=Math.min(STOCK_OBJ_CAIDA_VENTANA, nDisp), nL=Math.min(STOCK_OBJ_VENTANA, nDisp), totC=0, totL=0;
+    for(i=0;i<nL;i++){ x=Number(dia[d0+i])||0; if(d0+i===0 && !V.hoyHabil) x=Math.max(0, x-(o.objHoyNoHabil||0)); totL+=x; if(i<nC) totC+=x; }   // (02/11) sin lo de hoy si hoy es domingo o feriado
+    var muC=nC ? totC/nC : 0, muL=nL ? totL/nL : 0;
+    o.objMuCorta=muC; o.objVendidosCorta=totC; o.objNCorta=nC; o.objMuLarga=muL; o.objNLarga=nL; o.objSinHoy=true;   // (02/11) siempre días completos: hoy hábil se saltea, hoy domingo/feriado se descuenta
+    o.objCaida=(muC < STOCK_OBJ_CAIDA_UMBRAL*muL - 1e-9);
+    if(o.objCaida){ extra=STOCK_OBJ_EXTRA; clase='cayendo'; } else { extra=STOCK_OBJ_EXTRA_ROTA; clase='rota'; }
+  }
   var S=Math.max(prot + mu*extra, tipico);
-  o.objTipico=tipico; o.objZ=z; o.objMargen=z*sd*Math.sqrt(LR); o.objExtra=extra;
+  o.objTipico=tipico; o.objZ=z; o.objMargen=z*sd*Math.sqrt(LR); o.objExtra=extra; o.objClase=clase;
   o.objS=S; o.objPP=Math.min(S-1, prot);
   o.objetivo=Math.ceil(S-1e-9); o.puntoPedido=Math.floor(o.objPP+1e-9);
   o.margen=0; o.cubrir=0;
@@ -32796,6 +32900,40 @@ function stockObjCorto(o){   // «tener 14 · pedí al bajar a 11 · libre 9»
   var l=stockLibreObj(o);
   return 'tener '+stockUnid(o.objetivo)+' · pedí al bajar a '+stockUnid(o.puntoPedido)+(l!=null?(' · libre '+stockUnid(l)):'');
 }
+/* 📈 (01/11, §4od) LA CLASE del objetivo, para que se vea por qué un producto tiene más: «rota» (+STOCK_OBJ_EXTRA_ROTA días), «cayendo»
+   (+STOCK_OBJ_EXTRA) o nada (las almohadas siguen con lo suyo). La etiqueta del Plan (`.pl-clase`) y la frase de «Cómo se calcula» salen de
+   `o.objClase`/`o.objMuCorta`, que deja `stockObjetivo`: ninguna cuenta aparte. */
+/* 📈 (02/11, §4od, revisión) «¿CAYÓ O FALTÓ?»: un producto sin stock vende menos y sale «cayendo» por eso (DYNAMIC PEDIC 160, ORO ANATÓMICO
+   180 el 01/11). La página no tiene las fotos de stock de la ventana (`STOCK.h` guarda 3 días), así que la pista es barata: hoy quedan ≤ 1
+   para cargar (PTF + Banzer), o en la ventana de la prueba hubo renglones «✗ no hay» o hechos a pedido 🏭 (`o.objNoHay`, `o.objAPedido`).
+   SOLO AVISA: no cambia ningún número. */
+function stockObjFalto(o){
+  if(!stockObjActivo(o) || o.objClase!=='cayendo') return false;
+  var hay=stockHaySalir(o);
+  return (hay!=null && hay<=1) || (o.objNoHay||0)>0 || (o.objAPedido||0)>0;
+}
+function stockObjFaltoTxt(o){
+  var hay=stockHaySalir(o), l=[];
+  if(hay!=null && hay<=1) l.push('hoy queda'+(hay===1?'':'n')+' '+stockUnid(hay)+' para cargar');
+  if((o.objNoHay||0)>0) l.push(stockUnid(o.objNoHay)+' marcado'+(o.objNoHay===1?'':'s')+' «✗ no hay» en la ventana');
+  if((o.objAPedido||0)>0) l.push(stockUnid(o.objAPedido)+' hecho'+(o.objAPedido===1?'':'s')+' a pedido 🏭 en la ventana');
+  return 'Puede que no cayera la venta sino el stock: '+l.join(', ')+'. Solo aviso: el objetivo sigue con + '+STOCK_OBJ_EXTRA+' día.';
+}
+function stockObjClaseHtml(o){
+  if(!stockObjActivo(o) || !o.objClase || o.objClase==='almohada') return '';
+  var cae=(o.objClase==='cayendo'), comp=o.objSinHoy ? ' completos' : '';
+  return ' <span class="pl-clase pl-cl-'+o.objClase+'" title="'+esc(cae
+    ? ('Viene cayendo: en los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles'+comp+' vende '+stockNum(o.objMuCorta||0,2)+' por día hábil, menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % de los '+stockNum(o.objMuLarga||0,2)+' de '+STOCK_OBJ_VENTANA+' días. Objetivo = punto de pedido + '+o.objExtra+' día de venta.')
+    : ('Rota y no viene cayendo: en los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles'+comp+' vende '+stockNum(o.objMuCorta||0,2)+' por día hábil contra '+stockNum(o.objMuLarga||0,2)+' en '+STOCK_OBJ_VENTANA+'. Objetivo = punto de pedido + '+o.objExtra+' días de venta.'))+'">'+
+    (cae ? 'cayendo' : 'rota')+' +'+o.objExtra+'</span>'+
+    (stockObjFalto(o) ? (' <span class="pl-clase pl-cl-falto" title="'+esc(stockObjFaltoTxt(o))+'">¿cayó o faltó?</span>') : '');
+}
+function stockObjClasePorque(o){   // el paréntesis de «Cómo se calcula»
+  if(!o || !o.objClase) return '';
+  if(o.objClase==='almohada') return ' (almohada: valen poco)';
+  var r=' (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles'+(o.objSinHoy?' completos':'')+' venden '+stockNum(o.objMuCorta||0,2)+' por día hábil contra '+stockNum(o.objMuLarga||0,2)+' en '+STOCK_OBJ_VENTANA+': ';
+  return r+(o.objClase==='cayendo' ? ('viene cayendo, menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' %, así que '+STOCK_OBJ_EXTRA+' día'+(stockObjFalto(o)?('; ¿cayó o faltó? '+stockObjFaltoTxt(o)):'')+')') : ('rota y no cae, así que '+STOCK_OBJ_EXTRA_ROTA+' días)'));
+}
 function stockObjPorque(o){   // la razón del número de hoy, en una línea
   if(!stockObjActivo(o)) return '';
   var l=stockLibreObj(o); if(l==null) return '';
@@ -32811,7 +32949,7 @@ function stockObjCuentaHtml(o){   // la cuenta entera, para «Cómo se calcula»
       (o.objDesde?(' (desde el '+esc(fmtFechaCorta(o.objDesde))+', por fecha de venta)'):'')+': <b>'+stockNum(o.objMu,2)+' por día hábil</b>, con un desvío de '+stockNum(o.objSd,2)+'.</p>'+
     '<p>Punto de pedido = la venta de '+LR+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión): '+stockNum(o.objMu*LR,2)+
       ' + un margen por los días en que se vende más ('+stockNum(o.objZ,3).replace(/0+$/,'')+' × '+stockNum(o.objSd,2)+' × √'+LR+' = '+stockNum(o.objMargen,2)+') = <b>'+stockNum(o.objPP,2)+'</b> → <b>'+stockUnid(o.puntoPedido)+'</b>.</p>'+
-    '<p>Objetivo = punto de pedido + '+o.objExtra+' día'+(o.objExtra===1?'':'s')+' de venta'+(o.objExtra!==STOCK_OBJ_EXTRA?' (almohada: valen poco)':'')+
+    '<p>Objetivo = punto de pedido + '+o.objExtra+' día'+(o.objExtra===1?'':'s')+' de venta'+stockObjClasePorque(o)+
       ', y nunca menos que el pedido típico ('+stockUnid(o.objTipico)+') = <b>'+stockNum(o.objS,2)+'</b> → <b>'+stockUnid(o.objetivo)+'</b>.</p>'+
     (l!=null ? ('<p>Lo libre = '+stockUnid(stockHaySalir(o))+' para cargar (PTF + Banzer) + '+stockUnid(stockEnCaminoSeguro(o))+' que viene − '+stockUnid(stockCompHorizonte(o))+
       ' unidades ya vendidas que se entregan hasta el '+esc(fmtFechaCorta(stockCompHorizonteLim(o)))+' = <b>'+stockUnid(l)+'</b>. '+
@@ -32902,7 +33040,9 @@ var FERIADOS={
 /* (29/09, §4gy) Los feriados de 2026 que YA PASARON, solo para la proyección (los días hábiles de cada mes cerrado): el dueño
    confirmó el 6 y el 7/08 (el 7, puente del DS 5521), y el 25/09 no trabajó nadie (Santa Cruz). Van aparte y no en `FERIADOS`
    porque nada de entregas mira atrás, y las pruebas del cuadrito clavan el reloj en esos días de septiembre. */
-var FERIADOS_PASADOS={ '2026-08-06':'Día de la Independencia', '2026-08-07':'Feriado puente', '2026-09-25':'Día de Santa Cruz' };
+/* (01/11, §4od, dueño) El 24/09 tampoco se trabajó (Día de Santa Cruz: el 24 es el feriado y el 25 fue el puente): entra al calendario
+   de días hábiles de la proyección y de la regla del objetivo (`pryDiaHabil` → `stockObjVentana`), que es el único que mira atrás. */
+var FERIADOS_PASADOS={ '2026-08-06':'Día de la Independencia', '2026-08-07':'Feriado puente', '2026-09-24':'Día de Santa Cruz', '2026-09-25':'Feriado puente (Santa Cruz)' };
 function diaHabil(f){ return !!f && !diaDomingo(f) && !FERIADOS[f]; }
 function pryDiaHabil(f){ return diaHabil(f) && !FERIADOS_PASADOS[f]; }
 function sigDiaHabil(f){ var d=stockSumarDias(f,1); for(var n=0; n<30 && !diaHabil(d); n++) d=stockSumarDias(d,1); return d; }
@@ -34214,7 +34354,7 @@ function abrirStockPedidos(k){
   if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?((o.fabricar>0||o.recoger>0)?('reposición provisional: '+stockRepoTxt(o)+'; '):'por ahora nada que pedir; ')+'confirmar la diferencia entre marcas e inventario.':   // ✏️ (§4ls VV9)
     stockObjActivo(o)?('rotación '+(o.rotacion==='alta'?'alta':'media')+': '+stockObjCorto(o)+'. Cuando lo libre baja al punto de pedido se pide hasta el objetivo (primero de Moreno, el resto se fabrica).'):   // 🎯 (§4ls)
     o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
-  if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
+  if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades que cuentan (el equipo y Eduardo)'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
     /* (28/09, 2ª revisión) Sin pedidos únicos no se dice nada: decía «0 de eduardo, excluidas» al lado de «incluye 6 de
        Eduardo a Multicenter». Y «Eduardo» va con mayúscula. */
@@ -34454,7 +34594,7 @@ function renderStockAhora(){
        rotación» contradecía la regla (3 ya es rotación; una era de Eduardo). Y si el plan pide para el mes, no «no se repone». */
     if(o.aviso==='sobra'){ var ms=stockMesesSobra(o), pide=stockPlanPideTxt(o), nR=o.nVentasRotacion||0, nO=Math.max(0,(o.nVentas||0)-nR);
       return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(stockHaySalir(o)||0)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+
-        ((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+nR+' entrega'+(nR===1?'':'s')+' del equipo'+(nO?(' (+'+nO+' de '+stockUnicoEtq(o)+', que no cuenta'+(nO===1?'':'n')+')'):'')+': no es rotación'+(pide?'':', no se repone')):'')+pide,'#5b21b6'); }
+        ((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+nR+' entrega'+(nR===1?'':'s')+' que cuenta'+(nR===1?'':'n')+(nO?(' (+'+nO+' de '+stockUnicoEtq(o)+', que no cuenta'+(nO===1?'':'n')+')'):'')+': no es rotación'+(pide?'':', no se repone')):'')+pide,'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
     if(o.descont) return chico('ya no se fabrica: se vende lo que queda');
     return '';
@@ -34485,7 +34625,7 @@ function renderStockAhora(){
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
           (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
-          ((o.vendidosUnicos||o.vendidosEduMc)?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+
+          ((o.vendidosUnicos||o.vendidosEduMc)?('<br>Cuentan: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+
             (o.vendidosEduMc?(' (incluye '+o.vendidosEduMc+' de Eduardo a Multicenter)'):'')+   // 🏬 (28/09)
             (o.vendidosUnicos?(' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
@@ -34574,7 +34714,7 @@ function renderStockAhora(){
     '🚨 <b>PEDIR YA</b> = se corta antes de que la fábrica pueda llegar. &nbsp; 🏭 <b>Pedir esta semana</b> = se corta dentro de lo que tarda la fábrica más el margen (2 días si la venta es pareja, hasta 5 si es a los saltos).<br>'+
     '🚚 <b>Traer de fábrica</b> = falta acá pero ya está fabricado en el otro almacén: mandá la camioneta en vez de pedir. &nbsp; '+
     '🚚 <b>Ya pedido</b> = quedó anotado de antes un pedido a fábrica que alcanza (el botón para anotarlos se sacó el 08/10: lo que llega se ve en el Excel del día). &nbsp; 💤 <b>Sobra</b> = hay para más de '+STOCK_DIAS_SOBRA+' días.<br>'+
-    '«Vende por día» = lo que el EQUIPO entregó (o tenía que entregar) en los últimos '+STOCK_VENTANA+' días ÷ '+STOCK_VENTANA+', con Eduardo a Multicenter y las almohadas que van a las tiendas; sin los otros pedidos de Eduardo, los puntuales ni las otras reposiciones de tienda. Con menos de '+STOCK_VENTAS_MIN+' entregas es 0 (pedido único). «Se corta» mira día por día lo que hay, lo que llega y lo que se va.<br>'+
+    '«Vende por día» = lo que se entregó (o tenía que entregarse) en los últimos '+STOCK_VENTANA+' días ÷ '+STOCK_VENTANA+': el equipo, Eduardo y las almohadas que van a las tiendas; sin los mayoristas (Tienda Amiga, Copacaba, Luis Franco), los pedidos internos (FABRICA, ALBA, MORENO…), los puntuales ni las otras reposiciones de tienda. Con menos de '+STOCK_VENTAS_MIN+' entregas es 0 (pedido único). «Se corta» mira día por día lo que hay, lo que llega y lo que se va.<br>'+
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
   body.innerHTML=html;
@@ -34702,7 +34842,7 @@ function revSoltarHtml(L){
 /* 🎯 (18/10, §4ls) La regla en una frase, para lo que se copia (la fábrica, logística). */
 function stockObjReglaTxt(){
   return 'Lo que rota: cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido '+
-    '(la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles + un margen), se pide hasta el objetivo (+'+STOCK_OBJ_EXTRA+' día de venta; las almohadas, +'+STOCK_OBJ_EXTRA_ALMOHADA+'): '+
+    '(la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles + un margen), se pide hasta el objetivo (+'+STOCK_OBJ_EXTRA_ROTA+' días de venta si rota y no viene cayendo; +'+STOCK_OBJ_EXTRA+' si viene cayendo; las almohadas, +'+STOCK_OBJ_EXTRA_ALMOHADA+'): '+
     'primero se trae de Moreno y lo que falta se fabrica. Lo que no rota: solo lo vendido.';
 }
 /* El mensaje para mandarle a la fábrica, con lo que hay que pedir y por qué. */
@@ -34760,6 +34900,8 @@ function copiarStock(){
        productos terminados"* → un bloque por fábrica. Y *"descartando las ventas puntuales,
        como las mías"* → la MISMA regla de rotación de siempre (§4dj): equipo, sin Eduardo
        ni reposiciones, 3+ entregas. (28/09, §4gm: + las ventas de Eduardo A MULTICENTER.)
+       (01/11, §4od: el dueño cambió de idea — TODO Eduardo cuenta, salvo los mayoristas de
+       `STOCK_CLIENTES_FUERA`; la regla sigue viviendo en `stockPedidoUnico`.)
    Y la cuenta del mes con sus palabras: *"si en septiembre se vendieron 70 soft, en
    octubre necesitaríamos el 70% por lo menos para la primera quincena"*: el mes que viene
    entero al ritmo de los últimos 30 días, menos lo que va a quedar el día 1, y de eso el
@@ -34875,11 +35017,10 @@ function ventasPanelIndex(){ return stockMemo('PI', ventasPanelIndexCalc); }   /
 function ventasPanelIndexCalc(){
   var idx={}, desde='2026-08';
   STATE.forEach(function(p){
-    /* ⚠️ Sin los pedidos únicos (§4ev): Eduardo, MULTICENTER/consignación, ROHO a tienda y
-       las reposiciones — 🏬 salvo Eduardo a Multicenter, que desde el 28/09 SÍ entra (`stockEduardoMulticenter`,
-       la misma excepción que el ritmo de 15 y 30 días). Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
-       con una venta única de 40 de Eduardo en agosto, «producir en octubre» subía de 9 a 24
-       por las estimaciones de 60 d / 90 d / tendencia, con el mismo ritmo de 30 días. */
+    /* ⚠️ Sin los pedidos únicos (§4ev): los mayoristas (`STOCK_CLIENTES_FUERA`, 01/11, §4od), MULTICENTER de otro vendedor /
+       consignación, ROHO a tienda y las reposiciones — Eduardo SÍ entra desde el 01/11 (antes solo a Multicenter, §4gm).
+       Es la regla de `stockPedidoUnico` y lo que dice el cartel del cuadro; con una venta única de 40 a un mayorista en agosto,
+       «producir en octubre» subiría de 9 a 24 por las estimaciones de 60 d / 90 d / tendencia, con el mismo ritmo de 30 días. */
     if(!stockCuenta(p)) return;
     var m=String(contaFecha(p)||fechaSalida(p)||'').slice(0,7); if(!m || m<desde) return;   // por fecha de venta (§4dv)
     (p.productos||[]).forEach(function(x){
@@ -34922,7 +35063,7 @@ function stockRangoMes(o, MS, PI){
   Object.keys(P).concat(Object.keys(H)).forEach(function(m){ if(((P[m]||0)>0 || (H[m]||0)>0) && (!primero || m<primero)) primero=m; });
   var cuenta=function(ym){ return P[ym]!=null || H[ym]!=null || (!!primero && ym>=primero && ym<actual); };
   var est=[];
-  if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo + Eduardo a Multicenter, últimos 30 días'});
+  if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo + Eduardo (sin mayoristas ni internos), últimos 30 días'});
   var m1=mesRestar(actual,1), m2=mesRestar(actual,2), m3=mesRestar(actual,3);
   var hay1=cuenta(m1), hay2=cuenta(m2), hay3=cuenta(m3);
   var f=MS.dias/30.4;
@@ -35956,7 +36097,7 @@ function renderProducir(d){
     '</div>'+
     producirPapLineaHtml(R)+   // 🏭 (20/10) el total de todas las fábricas y «qué va a dónde» van en su ventana
     '<details class="prod-como"><summary>ℹ️ Cómo sale cada número</summary>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin:6px 0 4px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT), <b>salvo las almohadas</b>: lo que se manda a las tiendas cuenta como venta y su venta de tienda no (dueño, 16/10). Productos que rotan ('+STOCK_VENTAS_MIN+'+ entregas en '+STOCK_VENTANA+' o '+STOCK_VENTANA_MES+' días) o con algo vendido sin entregar. '+
+    '<div style="font-size:.8rem;color:var(--muted);margin:6px 0 4px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo</b>; sin los mayoristas (Tienda Amiga, Copacaba, Luis Franco) ni los pedidos internos (FABRICA, ALBA, MORENO…), sin otras ventas puntuales (Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT), <b>salvo las almohadas</b>: lo que se manda a las tiendas cuenta como venta y su venta de tienda no (dueño, 16/10). Productos que rotan ('+STOCK_VENTAS_MIN+'+ entregas en '+STOCK_VENTANA+' o '+STOCK_VENTANA_MES+' días) o con algo vendido sin entregar. '+
       'Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni cliente: ahí están <b>todas</b> las ventas. '+
       '<b>Hay</b> suma lo de acá, lo de los otros almacenes y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
       /* 🎯 (18/10, §4ls, decisión 4) Lo que rota tiene objetivo: las tres columnas con la regla del punto de pedido. */
@@ -36725,7 +36866,7 @@ function copiarProducirTexto(B, h, MS, hoy){
      PROBABLE entre cinco estimaciones (§4du), y desde §4gm cuenta a Eduardo a Multicenter. */
   if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Va además de lo de '+PRODUCIR_QUINCENA+' días.'+
     /* 📅 (19/10, §4ls CU-1) Del 1 al ~15 de cada mes: lo que falta para terminar el mes en curso también va acá, y se dice. */
-    (filas.some(function(f){ return f.antes>0; }) ? (' Si lo que hay más lo de '+PRODUCIR_QUINCENA+' días no llega al '+fmtFechaCorta(MS.ini)+', lo que falta para terminar '+producirMesActualNombre(MS)+' también va acá («incluye N para terminar…», además de la 1ª y la 2ª quincena): hay que hacerlo antes.') : '')+' Se descuenta lo que hay en PTF, Banzer, Moreno y en camino. Lo que rota: la venta del último mes ('+STOCK_OBJ_VENTANA+' días hábiles) por los días hábiles de '+MS.nombre+', más lo ya vendido para ese mes, menos lo que el 1° quede por encima del objetivo (el objetivo se mantiene). Lo que rota solo en '+STOCK_VENTANA_MES+' días: lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados (un mes sin ventas cuenta 0), el mismo mes del año pasado y la tendencia. Lo que no rota, solo lo ya vendido. Ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda (salvo las almohadas: lo que va a las tiendas cuenta como venta).';
+    (filas.some(function(f){ return f.antes>0; }) ? (' Si lo que hay más lo de '+PRODUCIR_QUINCENA+' días no llega al '+fmtFechaCorta(MS.ini)+', lo que falta para terminar '+producirMesActualNombre(MS)+' también va acá («incluye N para terminar…», además de la 1ª y la 2ª quincena): hay que hacerlo antes.') : '')+' Se descuenta lo que hay en PTF, Banzer, Moreno y en camino. Lo que rota: la venta del último mes ('+STOCK_OBJ_VENTANA+' días hábiles) por los días hábiles de '+MS.nombre+', más lo ya vendido para ese mes, menos lo que el 1° quede por encima del objetivo (el objetivo se mantiene). Lo que rota solo en '+STOCK_VENTANA_MES+' días: lo probable entre los últimos '+STOCK_VENTANA_MES+' días, el promedio de los 2 y de los 3 últimos meses cerrados (un mes sin ventas cuenta 0), el mismo mes del año pasado y la tendencia. Lo que no rota, solo lo ya vendido. Ventas del equipo y de Eduardo, sin los mayoristas (Tienda Amiga, Copacaba, Luis Franco) ni los pedidos internos, sin otras ventas puntuales ni reposiciones de tienda (salvo las almohadas: lo que va a las tiendas cuenta como venta).';
   else if(col==='sem') t+='\n'+stockObjReglaTxt()+' Menos lo que hay en PTF, Banzer, Moreno y en camino.';
   else t+='\nLo que rota: lo vendido sin entregar + la venta de los días hábiles de los próximos '+PRODUCIR_QUINCENA+' días + el objetivo puesto al final; lo que no rota, lo vendido. Menos lo que hay en PTF, Banzer, Moreno y en camino.';
   copyText(t);
@@ -43660,7 +43801,7 @@ function almResumenHtml(A){
     '<div style="font-size:.8rem;color:var(--muted);margin-top:6px;line-height:1.5">Se ubicaron <b>'+T.mapa+'</b> por el mapa'+(T.aprox?(' ('+T.aprox+' por la dirección escrita, aproximadas)'):'')+
       ', <b>'+T.zona+'</b> por la zona escrita'+(T.sin?(' y <b style="color:#7c4b00">'+T.sin+' no se pudieron ubicar</b> (sin mapa ni zona conocida: no cuentan)'):'')+'. '+
       almReglaTxt()+' '+
-      'Cuentan las entregas que miden la rotación: las del equipo y las de Eduardo a Multicenter.</div>';
+      'Cuentan las entregas que miden la rotación: las del equipo y las de Eduardo; sin los mayoristas (Tienda Amiga, Copacaba, Luis Franco) ni los pedidos internos.</div>';
   if(B && B.aprox) h+='<div style="font-size:.78rem;color:#7c4b00;margin-top:6px">≈ El punto de Banzer salió de su dirección escrita (Google no da el pin exacto). Si en el mapa no está en su lugar, avisá: se corrige con las coordenadas.</div>';
   if(!A.hayB) h+='<div style="font-size:.8rem;color:#8a1c24;margin-top:6px">⚠️ No hay Excel de Banzer cargado: «hoy en Banzer» sale 0. Subí sus existencias en Stock.</div>';
   if(!A.hayP) h+='<div style="font-size:.8rem;color:#8a1c24;margin-top:6px">⚠️ No hay Excel de PTF cargado: «hoy en PTF» no se sabe.</div>';
@@ -43765,7 +43906,7 @@ function almZonasHtml(A){
 }
 function almPieHtml(A){
   return '<div style="font-size:.78rem;color:var(--muted);line-height:1.55;padding:2px 4px 18px">'+
-    '<b>Cómo se cuenta.</b> El lado sale de las entregas del '+fmtFecha(A.desde)+' al '+fmtFecha(A.hoy)+' por fecha de entrega. Para el lado no cuentan las ventas de tienda (no tienen dirección), las reposiciones (RPT), las ATC ni los pedidos puntuales (los de Eduardo, salvo Multicenter). «Conviene tener» sale de la pantalla de Stock, con sus reglas de siempre. '+
+    '<b>Cómo se cuenta.</b> El lado sale de las entregas del '+fmtFecha(A.desde)+' al '+fmtFecha(A.hoy)+' por fecha de entrega. Para el lado no cuentan las ventas de tienda (no tienen dirección), las reposiciones (RPT), las ATC ni los pedidos que no son demanda (mayoristas, pedidos internos y puntuales; los de Eduardo sí cuentan desde el 02/11). «Conviene tener» sale de la pantalla de Stock, con sus reglas de siempre. '+
     (almHayLinea() ? 'La línea es la que dibujó logística el 08/10; cuando logística defina qué zonas atiende cada depósito, esas zonas van a mandar sobre la línea. ' : 'La distancia es en línea recta. ')+
     '«Hoy» es lo del último Excel de cada depósito menos lo que salió después. '+
     'Nunca se propone traer de Banzer a fábrica: si Banzer tiene de más, se deja de mandar y sale con las entregas. '+
@@ -47445,7 +47586,7 @@ function stockPlanHtml(d, lista){
       '<td data-l="Qué hacer hoy" class="pl-q"><span class="pl-que pl-'+(x.g||'gris')+'">'+(x.g==='ya'?'<i class="late-dot"></i>':'')+sfAccion(o)+'</span>'+planYaHtml(o)+'</td>'+
       /* 🎯 (18/10, §4ls, decisión 4) El objetivo y el punto de pedido de cada producto (`stockObjetivo`): lo que rota se pide hasta el
          objetivo cuando lo libre baja al punto de pedido; lo demás, «a pedido» (solo lo vendido). */
-      '<td data-l="Tener" class="pl-tener">'+(stockObjActivo(o) ? ('<b>'+stockUnid(o.objetivo)+'</b><small>pedí al bajar a '+stockUnid(o.puntoPedido)+(h!=null?(' · libre '+stockUnid(stockLibreObj(o))):'')+'</small>')
+      '<td data-l="Tener" class="pl-tener">'+(stockObjActivo(o) ? ('<b>'+stockUnid(o.objetivo)+'</b>'+stockObjClaseHtml(o)+'<small>pedí al bajar a '+stockUnid(o.puntoPedido)+(h!=null?(' · libre '+stockUnid(stockLibreObj(o))):'')+'</small>')
         : '<span class="pl-cero">a pedido</span>')+'</td>'+
       '<td data-l="Pedir · 7 días" class="pl-p7">'+num(x.p7)+'</td>'+
       '<td data-l="Pedir · 15 días (incluye los 7)" class="pl-p15">'+num(x.p15)+'</td>'+
@@ -47473,7 +47614,7 @@ function stockPlanHtml(d, lista){
       '<th>Tener<small>objetivo · punto de pedido</small></th>'+
       '<th>Pedir<small>7 días</small></th><th>Pedir<small>15 días · incluye los 7</small></th><th>Pedir<small>'+esc(MS.nombre)+' · además de 15 días</small></th></tr></thead><tbody>'+
       (filas || '<tr><td colspan="9" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
-    '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, '+STOCK_OBJ_EXTRA+' día más (las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'). Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>'+
+    '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>'+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;planRepintar()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
 }

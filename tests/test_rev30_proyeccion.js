@@ -105,8 +105,11 @@ function PREPARAR(){
     var eq={}; R.hist.forEach(function(H){ var a=pryAlDia(H, R.dr); eq[H]=a+(HABA(a)?'':'*'); });
     return { eq:eq, f:+pryCurvaF(c, R.dr, min).toFixed(6), bien:+FBIEN(c, R.dr, min).toFixed(6), pantalla:+(R.metodos.heaven.f||0).toFixed(6), m:R.metodos.heaven.m };
   }));
-  const j08 = await curva('2026-10-08T09:30:00-04:00'), m13 = await curva('2026-10-13T09:30:00-04:00');
-  chk('2. el jueves 08/10 el día equivalente de agosto (07/08, feriado puente) y el de septiembre (06/09, domingo) no son hábiles',
+  /* (01/11, §4od, a conciencia) Con el 24/09 en `FERIADOS_PASADOS` septiembre tiene 24 días hábiles y el día equivalente se corre uno:
+     el jueves 08/10 daba agosto 07/08 (feriado puente) y septiembre 06/09 (domingo); ahora septiembre da 04/09 (viernes, hábil). El caso
+     que cuida esta sección —los DOS equivalentes caen en no hábil— es ahora el viernes 09/10 (09/08 y 06/09, los dos domingo). */
+  const j08 = await curva('2026-10-09T09:30:00-04:00'), m13 = await curva('2026-10-13T09:30:00-04:00');
+  chk('2. el viernes 09/10 el día equivalente de agosto (09/08, domingo) y el de septiembre (06/09, domingo) no son hábiles',
       j08 && j08.eq && /\*$/.test(j08.eq['2026-08']||'') && /\*$/.test(j08.eq['2026-09']||''), j08 && j08.eq);
   chk('2. (diente) …y la curva de las 09:30 corta en el último día hábil a esa hora (la de la pantalla también)',
       j08 && Math.abs(j08.f-j08.bien)<1e-6 && Math.abs(j08.pantalla-j08.bien)<1e-6, j08);

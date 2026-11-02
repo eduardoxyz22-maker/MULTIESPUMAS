@@ -459,7 +459,7 @@ function PREPARAR(){
     r.u50={ ch2441:(CODIGOS.CH2441||{}).m, ch2453:CODIGOS.CH2453||null };
     r.u51={ bahia:stockCariocaDescontinuado('BAHIA|105X190'), colchon:stockCariocaDescontinuado('COLCHON BAHIA|140X190'), otro:stockCariocaDescontinuado('BAHIA BLANCA|105X190') };
     // U37: la leyenda de «Vende por día»
-    r.u37=/lo que el EQUIPO entregó/.test(document.getElementById('stock-body') ? document.getElementById('stock-body').innerHTML : '');
+    r.u37=/lo que se entregó \(o tenía que entregarse\) en los últimos \d+ días ÷ \d+: el equipo, Eduardo y las almohadas que van a las tiendas; sin los mayoristas/.test(document.getElementById('stock-body') ? document.getElementById('stock-body').innerHTML : '');   // (01/11, §4od) antes «lo que el EQUIPO entregó»
     return r;
   });
   chk('RN-U39a. lo vendido para diciembre no dice «⛔ Ya falta» con «Pedir» en 0', ch.u39a && ch.u39a.comp===1 && !/Ya falta/.test(ch.u39a.reloj||'') && /más adelante/.test(ch.u39a.reloj||''), ch.u39a);
@@ -474,7 +474,7 @@ function PREPARAR(){
   chk('RN-U43b. el Plan tiene los tres botones (7 días, 15 días, el mes)', ch.u43 && ch.u43.bots.length===3 && /7 días/.test(ch.u43.bots[0]) && /15 días/.test(ch.u43.bots[1]), ch.u43 && ch.u43.bots);
   chk('RN-U50. CH2441 es el 105x190 (como el Excel) y CH2453 (160 negro) está en la lista', ch.u50 && ch.u50.ch2441==='105x190' && ch.u50.ch2453 && ch.u50.ch2453.m==='160x190', ch.u50);
   chk('RN-U51. el colchón Bahía con la clave cruda «BAHIA» también es descontinuado (y «BAHIA BLANCA» no)', ch.u51 && ch.u51.bahia===true && ch.u51.colchon===true && ch.u51.otro===false, ch.u51);
-  chk('RN-U37. la leyenda de «Vende por día» dice lo que cuenta (el EQUIPO, con las reglas)', ch.u37===true, ch.u37);
+  chk('RN-U37. la leyenda de «Vende por día» dice lo que cuenta (el equipo y Eduardo, sin los mayoristas; con las reglas)', ch.u37===true, ch.u37);
 
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();

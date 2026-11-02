@@ -10,7 +10,11 @@
        lo cubre todo, «🚚 Traé N de Moreno».
    O4  Las almohadas: objetivo = punto de pedido + 5 días de venta.  O5  El pedido típico es el piso del objetivo.  O6  z alto.
    O7  QUÉ rota no cambia: 2 entregas en 15 días no tienen objetivo (se pide solo lo vendido, «a pedido» en el Plan); 3 entregas de 1
-       unidad sí. Eduardo (salvo a Multicenter) no cuenta en la venta; Eduardo a Multicenter sí. Lo discontinuado no tiene objetivo.
+       unidad sí. (01/11, §4od, a conciencia) Eduardo SÍ cuenta en la venta —antes no, salvo a Multicenter—; lo que no cuenta es un
+       mayorista (Tienda Amiga). Eduardo a Multicenter sigue contando. Lo discontinuado no tiene objetivo.
+   ⚠️ (01/11, §4od, a conciencia) El objetivo de un colchón que rota y NO viene cayendo es punto de pedido + 5 días de venta (antes 1);
+       con la venta cayendo (15 días hábiles completos < 75 % de los 26 completos, sin el día en curso; 02/11) sigue + 1. `regla()` de
+       acá lo calcula igual, aparte. El detalle fino de rota/cayendo está en `test_demanda_objetivo_od.js`.
    O8  UNA SOLA VERDAD: «Pedir 7 días» del Plan = «Qué producir» 7 días = la acción («Pedí N») = la copia para la fábrica = «Cómo se
        calcula»; el Plan muestra el objetivo y el punto de pedido («Tener»); la tabla dice el porqué; «Banzer o PTF» tiene lo mismo.
    O9  «15 días» y «el mes» con la misma regla: 15 días = lo vendido hasta 15 días + la fábrica + el objetivo + la venta de los días
@@ -33,14 +37,18 @@ const habil=(f,fer)=> new Date(f+'T12:00:00Z').getUTCDay()!==0 && !fer.has(f);
 function regla(ventas, hoy, fer, almohada){
   const dias=[]; let f=hoy; while(dias.length<48){ if(habil(f,fer)) dias.push(f); f=sumar(f,-1); }
   const pos={}; dias.forEach((d,i)=>pos[d]=i);
-  const serie=new Array(26).fill(0), ord={};
+  const serie=new Array(27).fill(0), ord={};   // (02/11) un día más: la prueba de «cayendo» mira días completos
   for(const v of ventas){ let g=v.f; while(!(g in pos) && g>=dias[47]) g=sumar(g,-1); if(!(g in pos)) continue;
-    const i=pos[g]; if(i<26) serie[i]+=v.u; ord[v.ek]=(ord[v.ek]||0)+v.u; }
-  const tot=serie.reduce((a,b)=>a+b,0), mu=tot/26, sd=Math.sqrt(serie.reduce((a,x)=>a+(x-mu)*(x-mu),0)/25);
+    const i=pos[g]; if(i<27) serie[i]+=v.u; ord[v.ek]=(ord[v.ek]||0)+v.u; }
+  const s26=serie.slice(0,26), tot=s26.reduce((a,b)=>a+b,0), mu=tot/26, sd=Math.sqrt(s26.reduce((a,x)=>a+(x-mu)*(x-mu),0)/25);
   let tam=Object.values(ord).sort((a,b)=>a-b); if(!tam.length) tam=[1];
   const q75=tam[Math.floor(0.75*(tam.length-1))];
-  const z=(mu*5>=4)?1.645:1.28, prot=mu*5+z*sd*Math.sqrt(5), S=Math.max(prot+mu*(almohada?5:1), q75), s=Math.min(S-1, prot);
-  return { mu, sd, q75, z, S, s, obj:Math.ceil(S-1e-9), pp:Math.floor(s+1e-9), tot, ini:dias[25] };
+  /* (01/11, §4od) +5 días si rota y no cae; +1 si cae; almohadas +5. (02/11, revisión + dueño) «Cae» = los últimos 15 días hábiles
+     COMPLETOS venden menos del 75 % del ritmo de los 26 completos: si hoy es hábil, serie[0] (el día en curso) queda afuera. */
+  const d0=(dias[0]===hoy)?1:0, mu15=serie.slice(d0,d0+15).reduce((a,b)=>a+b,0)/15, muL=serie.slice(d0,d0+26).reduce((a,b)=>a+b,0)/26;
+  const cae=mu15 < 0.75*muL-1e-9, extra=almohada?5:(cae?1:5);
+  const z=(mu*5>=4)?1.645:1.28, prot=mu*5+z*sd*Math.sqrt(5), S=Math.max(prot+mu*extra, q75), s=Math.min(S-1, prot);
+  return { mu, sd, q75, z, S, s, obj:Math.ceil(S-1e-9), pp:Math.floor(s+1e-9), tot, ini:dias[25], extra, cae };
 }
 const pedirRegla=(R, libre)=> (libre<=R.s || libre<0) ? Math.max(0, Math.ceil(R.S-libre-1e-9)) : 0;
 const habilesEntre=(a,b,fer)=>{ let n=0; for(let f=sumar(a,1); f<=b; f=sumar(f,1)) if(habil(f,fer)) n++; return n; };
@@ -187,7 +195,9 @@ const PATRON=['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','
     await _cargar(ped, _stock(function(st){ st.c.u[KA]=0; st.c.u[KB]=0; st.c.u[KZ]=0; }));
     return { A:_o(_fila(KA)), B:_o(_fila(KB)), Z:_o(_fila(KZ)) };
   }, { pat:PATRON, big:big.map(v=>({ f:v.f, u:v.u })) });
-  chk('O4. almohadas: objetivo = punto de pedido + 5 días de venta ('+RA.obj+'; un colchón con la misma venta, '+R.obj+')', o4.A && o4.A.obj===RA.obj && Math.abs(o4.A.objS-(RA.s+5*RA.mu))<1e-9 && RA.obj>R.obj, { A:o4.A, regla:RA });
+  /* (01/11, §4od, a conciencia) Antes decía «un colchón con la misma venta tiene menos»: ahora un colchón que rota y no cae también lleva
+     +5, así que con esta venta pareja la almohada y el colchón dan el mismo objetivo. Lo que se cuida acá es que la almohada siga con sus 5. */
+  chk('O4. almohadas: objetivo = punto de pedido + 5 días de venta ('+RA.obj+'; el colchón con la misma venta, que rota y no cae, '+R.obj+')', o4.A && o4.A.obj===RA.obj && Math.abs(o4.A.objS-(RA.s+5*RA.mu))<1e-9 && RA.obj>=R.obj && RA.extra===5, { A:o4.A, regla:RA });
   chk('O5. el pedido típico (6) es el piso del objetivo', o4.B && o4.B.tip===6 && o4.B.obj===RB.obj && RB.obj>=6 && o4.B.rot!=='baja', { B:o4.B, regla:RB });
   chk('O6. lo que vende mucho (≥ 4 u en 5 días) lleva el margen grande (z 1,645)', o4.Z && Math.abs(o4.Z.objS-RZ.S)<1e-9 && RZ.z===1.645, { Z:o4.Z && [o4.Z.objS, o4.Z.obj], regla:[RZ.S, RZ.obj, RZ.z] });
 
@@ -215,17 +225,22 @@ const PATRON=['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','
   chk('O7c. 3 entregas de 1 unidad en 15 días SÍ rotan: tienen objetivo', o7.tres && o7.tres.rot==='media' && o7.tres.objS!=null && o7.tres.obj>=1, o7.tres);
   chk('O7d. lo discontinuado no tiene objetivo ni se fabrica', o7.jun && o7.jun.objS==null && o7.jun.fab===0, o7.jun);
 
+  /* (01/11, §4od, a conciencia) Hasta el 01/11 «las ventas de Eduardo (a otro cliente) no cuentan». El dueño lo dio vuelta: Eduardo cuenta;
+     lo que no cuenta es un MAYORISTA (`STOCK_CLIENTES_FUERA`: Tienda Amiga, Copacaba, Luis Franco), lo venda quien lo venda. */
   const o7e = await E(async (a) => {
     var K=_k('CH1129','TITANIO LATEX','140x190'), out={};
     var base=_ventas('CH1129','TITANIO LATEX','140x190', a.pat.map(function(f){ return { f:f, u:2 }; }));
-    var edu=_ventas('CH1129','TITANIO LATEX','140x190', [{f:'2026-10-02',u:5},{f:'2026-10-09',u:5}], { vendedor:'Eduardo' });
+    var edu=_ventas('CH1129','TITANIO LATEX','140x190', [{f:'2026-10-02',u:5},{f:'2026-10-09',u:5}], { vendedor:'Eduardo', cliente:'CLIENTE DE EDUARDO' });
+    var may=_ventas('CH1129','TITANIO LATEX','140x190', [{f:'2026-10-02',u:5},{f:'2026-10-09',u:5}], { vendedor:'Eduardo', cliente:'Tienda Amiga E.R. S.A.' });
     var mc=_ventas('CH1129','TITANIO LATEX','140x190', [{f:'2026-10-02',u:5},{f:'2026-10-09',u:5}], { vendedor:'Eduardo', cliente:'MULTICENTER' });
     await _cargar(base, _stock(function(st){ st.c.u[K]=30; })); out.base=_o(_fila(K));
     await _cargar(base.concat(edu), _stock(function(st){ st.c.u[K]=30; })); out.edu=_o(_fila(K));
+    await _cargar(base.concat(may), _stock(function(st){ st.c.u[K]=30; })); out.may=_o(_fila(K));
     await _cargar(base.concat(mc), _stock(function(st){ st.c.u[K]=30; })); out.mc=_o(_fila(K));
     return out;
   }, { pat:PATRON });
-  chk('O7e. las ventas de Eduardo (a otro cliente) no cuentan en la venta del objetivo', o7e.base && o7e.edu && Math.abs(o7e.edu.mu-o7e.base.mu)<1e-9 && o7e.edu.obj===o7e.base.obj, { base:o7e.base&&o7e.base.mu, edu:o7e.edu&&o7e.edu.mu });
+  chk('O7e. las ventas de Eduardo a un mayorista (Tienda Amiga) no cuentan en la venta del objetivo', o7e.base && o7e.may && Math.abs(o7e.may.mu-o7e.base.mu)<1e-9 && o7e.may.obj===o7e.base.obj, { base:o7e.base&&o7e.base.mu, may:o7e.may&&o7e.may.mu });
+  chk('O7e2. las de Eduardo a otro cliente SÍ cuentan desde el 01/11 (10 u más en la ventana)', o7e.edu && Math.abs(o7e.edu.mu-(o7e.base.mu+10/26))<1e-9 && o7e.edu.obj>o7e.base.obj, { base:o7e.base&&o7e.base.mu, edu:o7e.edu&&o7e.edu.mu });
   chk('O7f. las de Eduardo a Multicenter sí (10 u más en la ventana)', o7e.mc && Math.abs(o7e.mc.mu-(o7e.base.mu+10/26))<1e-9 && o7e.mc.obj>o7e.base.obj, { base:o7e.base&&o7e.base.mu, mc:o7e.mc&&o7e.mc.mu });
 
   /* ── O8. Una sola verdad ── */
@@ -251,7 +266,8 @@ const PATRON=['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','
   const p8 = pedirRegla(R, 1);
   chk('O8a. con 1 a mano: «Pedir 7 días» del Plan = la regla = «Qué producir» 7 días = o.fabricar', o8.o && o8.o.fab===p8 && o8.plan7===p8 && o8.prod7===p8 && o8.p7===String(p8), { o:o8.o&&o8.o.fab, plan:o8.plan7, prod:o8.prod7, celda:o8.p7, regla:p8 });
   chk('O8b. la acción dice «Pedí '+p8+'»', new RegExp('Pedí '+p8+' ').test(o8.o&&o8.o.acc||''), o8.o&&o8.o.acc);
-  chk('O8c. el Plan tiene la columna «Tener» con el objetivo y el punto de pedido', o8.th.some(t=>/^TENER/i.test(t)) && new RegExp('^'+R.obj+'\\s*pedí al bajar a '+R.pp+' · libre 1$').test(o8.tener||''), { th:o8.th, tener:o8.tener });
+  /* (01/11, §4od) La celda «Tener» dice la clase al lado del objetivo («rota +5» / «cayendo +1»): por eso el regex la admite en el medio. */
+  chk('O8c. el Plan tiene la columna «Tener» con el objetivo, la clase y el punto de pedido', o8.th.some(t=>/^TENER/i.test(t)) && new RegExp('^'+R.obj+'\\s*(rota \\+5|cayendo \\+1)?\\s*pedí al bajar a '+R.pp+' · libre 1$').test(o8.tener||''), { th:o8.th, tener:o8.tener });
   chk('O8d. el detalle de la fila explica: libre 1 ≤ punto de pedido '+R.pp+' → hasta '+R.obj, /lo libre .* es 1; llegó al punto de pedido \(\d+\) → pedí hasta tener \d+: \d+/.test(o8.det) && o8.det.indexOf('pedí hasta tener '+R.obj+': '+p8)>=0, o8.det.slice(0,300));
   chk('O8e. la copia para la fábrica pide '+p8+' y dice el objetivo', new RegExp('pedir '+p8+' ').test(o8.copia||'') && new RegExp('tener '+R.obj+' \\(se pide al bajar a '+R.pp+'\\)').test(o8.copia||'') && /punto de pedido/.test(o8.copia||''), (o8.copia||'').slice(0,400));
   chk('O8f. «📋 7 días» de Qué producir copia el mismo número', new RegExp('TITANIO LATEX · 140x190 \\(cód [^)]*\\): '+p8+' ').test(o8.copia7||''), (o8.copia7||'').slice(0,300));
