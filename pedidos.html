@@ -5841,7 +5841,7 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw3IUxaRvdpvFJOzbuZ78CZIlZNWzMnKbdb91hD27vZfemnWs64fIOYs1-0SV0b8aYkQQ/exec';
 var CONNECTED = /^https:\/\/script\.google\.com\/.*\/exec/.test(SHEETS_URL);
 
-var VENDEDORES = ['Juan Pablo Paredes','Fernando Peinado','Mauricio Merida','Carola Chavez','Isabel Robledo','Mirian Salazar','Maria Flores','Jonathan Monje','Eduardo Añez','ROHO'];
+var VENDEDORES = ['Juan Pablo Paredes','Fernando Peinado','Mauricio Merida','Carola Chavez','Isabel Robledo','Mirian Salazar','Maria Flores','Jonathan Monje','Andrea Orias','Fabián Godoy','Eduardo Añez','ROHO'];   // (02/11) Andrea Orias y Fabián Godoy: Heaven, en la Tienda Banzer y en Ventura Mall
 /* ⚠️ El mismo nombre llega escrito de varias formas ("Carola Chavez" / "Carola Chávez" /
    "carola  chavez") y aparecía DOS VECES en los desplegables, con los pedidos repartidos
    entre las dos. Todas las comparaciones de vendedor pasan por acá: sin tildes, sin
@@ -6349,7 +6349,12 @@ var SUCURSALES=[
   {n:'Central',       z:'Central',    d:'', m:'https://www.google.com/maps?q=-17.772220746893716,-63.16718045701694'},
   {n:'Mutualista',    z:'Mutualista', d:'', m:'https://www.google.com/maps?q=-17.765770114394787,-63.16208746136678'},
   {n:'Charcas',       z:'Centro',     d:'', m:'https://www.google.com/maps?q=-17.78004506388288,-63.17633322858442'},
-  {n:'Carmelo',       z:'Feria',      d:'', m:'https://www.google.com/maps?q=-17.79174000668275,-63.153902622899'}
+  {n:'Carmelo',       z:'Feria',      d:'', m:'https://www.google.com/maps?q=-17.79174000668275,-63.153902622899'},
+  /* (02/11) Dos tiendas nuevas (dueño: «Nueva tienda banzer», «Ventura mall»). Sin zona ni pin hasta que el dueño los dé: una zona
+     inventada se autocompleta sola y desvía la ruta del chofer (§4dn). ⚠️ «Tienda Banzer» lleva «Tienda» en el nombre A PROPÓSITO:
+     «Banzer» a secas es el ALMACÉN de distribución (de ahí salen camiones) y saldrían dos «Banzer» en «Qué va a dónde» y en la carga. */
+  {n:'Tienda Banzer', z:'',           d:'', m:''},
+  {n:'Ventura Mall',  z:'',           d:'', m:''}
 ];
 function sucursalDe(nombre){
   var k=normNombre(nombre||''); if(!k) return null;
@@ -6680,7 +6685,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-10-30-a';   // (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-11-02-a';   // (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -8652,7 +8657,7 @@ var MARCAS=[
   {k:'suena',  lbl:'Sueña',  ico:'🛏️', col:'#FFD400', txt:'#a16207',
    vendedores:['Mauricio Merida','Juan Pablo Paredes','Fernando Peinado']},
   {k:'heaven', lbl:'Heaven', ico:'💚', col:'#00B5AD', txt:'#0f766e',
-   vendedores:['Jonathan Monje','Maria Flores','Isabel Robledo','Carola Chavez','Mirian Salazar']}
+   vendedores:['Jonathan Monje','Maria Flores','Isabel Robledo','Carola Chavez','Mirian Salazar','Andrea Orias','Fabián Godoy']}
 ];
 function marcaDe(v){
   for(var i=0;i<MARCAS.length;i++){
@@ -15264,7 +15269,7 @@ function exportConta(){
    ========================================================================== */
 var BANCOS_POR_VENDEDOR=[
   {bancos:['Ganadero','Económico'], vendedores:['Fernando Peinado','Mauricio Merida','Juan Pablo Paredes']},
-  {bancos:['BISA','Económico'],     vendedores:['Carola Chavez','Jonathan Monje','Maria Flores','Isabel Robledo','Mirian Salazar']}
+  {bancos:['BISA','Económico'],     vendedores:['Carola Chavez','Jonathan Monje','Maria Flores','Isabel Robledo','Mirian Salazar','Andrea Orias','Fabián Godoy']}
 ];
 var BANCOS_TODOS=['Ganadero','BISA','Económico'];
 /* Los que no están en ninguna lista (Eduardo Añez, ROHO) ven todos: mejor eso que
@@ -16974,11 +16979,13 @@ function esVentaTienda(p){
    por la vendedora — el mapa lo dio el dueño, una por una:
      Mauricio Mérida → Mutualista · Fernando Peinado → Charcas · Juan Pablo Paredes → Carmelo
      Carola Chávez y Jonathan Monje → Central · María Flores → Buenos Aires
-     Mirian Salazar e Isabel Robledo → Mia Plaza */
+     Mirian Salazar e Isabel Robledo → Mia Plaza
+   (02/11, dueño) Andrea Orias → la Tienda Banzer (nueva) · Fabián Godoy → Ventura Mall (nueva) */
 var VENDEDOR_SUCURSAL=[
   [/MAURICIO/i, 'Mutualista'], [/PEINADO/i, 'Charcas'], [/JUAN PABLO/i, 'Carmelo'],
   [/CAROLA/i, 'Central'], [/JONATHAN/i, 'Central'], [/MARIA FLORES|FLORES/i, 'Buenos Aires'],
-  [/MIRIAN|MIRIAM/i, 'Mia Plaza'], [/ISABEL/i, 'Mia Plaza']
+  [/MIRIAN|MIRIAM/i, 'Mia Plaza'], [/ISABEL/i, 'Mia Plaza'],
+  [/ANDREA|ORIAS/i, 'Tienda Banzer'], [/FABIAN|GODOY/i, 'Ventura Mall']
 ];
 function sucursalDeVendedor(v){
   var n=normNombre(v||''); if(!n) return '';
@@ -35763,7 +35770,7 @@ function papLugares(p){
     var enT=false;
     Object.keys(r.T||{}).forEach(function(t){
       if(!(r.T[t]>0)) return; enT=true;
-      if(!T[t]) T[t]={ id:'T:'+t, nom:t, largo:'Tienda '+t, ico:'🏬', n:0, c:0, tienda:t, col:PAP_COL.T };
+      if(!T[t]) T[t]={ id:'T:'+t, nom:t, largo:tiendaConPref(t), ico:'🏬', n:0, c:0, tienda:t, col:PAP_COL.T };
       T[t].n+=r.T[t]; T[t].c++; L.T.n+=r.T[t];
     });
     if(enT) L.T.c++;
@@ -36274,7 +36281,7 @@ function renderTiendas(d, MS){
    Lo de tienda (`esProdDeTienda`: protectores, sábanas…) queda afuera, como en el stock de fábrica. `tests/test_tiendas_stock.js`.
    ========================================================================== */
 var TST_ID='__tiendas_stock__', TST_HIST=48, TST_PASES_DIAS=120, TST_ABIERTA={}, TST_VISTA='', TST_PREV=null, TST_ENV=0, TST_MSG='';
-function tstTiendas(){ return recogerTiendas(); }   // las seis propias: Tiendas Roho no es nuestra
+function tstTiendas(){ return recogerTiendas(); }   // las propias (ocho desde el 02/11): Tiendas Roho no es nuestra
 function tstLeer(fila){
   var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===TST_ID; })[0], o={};
   try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
@@ -40973,7 +40980,8 @@ function fichaRetira(p){
     /[^A-Z](RECOGERA|RETIRARA|PASARA A (RECOGER|BUSCAR|RETIRAR)|VENDRA A (RECOGER|BUSCAR|RETIRAR)) (DE|EN|DEL|POR) (EL |LA )?(ALMACEN|FABRICA|TIENDA|BANZER|PTF|DEPOSITO|PLANTA)/.test(obs);
   if(!enDir && !enObs) return null;
   var t=enDir ? dir : obs, donde='el depósito';
-  if(/BANZER/.test(t)) donde='Banzer';
+  if(/TIENDA (DE )?BANZER/.test(t)) donde='la Tienda Banzer';   // (02/11) la tienda nueva, no el almacén
+  else if(/BANZER/.test(t)) donde='Banzer';
   else if(/PTF|FABRICA|PRODUCTOS TERMINADOS|PARQUE INDUSTRIAL|PLANTA/.test(t)) donde='PTF (fábrica)';
   else if(/MORENO/.test(t)) donde='Moreno';
   else {
@@ -42227,12 +42235,15 @@ function recogerTiendas(){ return SUCURSALES.filter(function(s){ return !/ROHO/i
 /* «Tienda Mia Plaza» → «Mia Plaza» (como está en SUCURSALES); cualquier otro lugar → ''. */
 function recogeTiendaDe(nm){
   var m=/^\s*tienda\s+(.+?)\s*$/i.exec(String(nm==null?'':nm)); if(!m) return '';
-  var su=sucursalDe(m[1]); return su ? su.n : m[1];
+  /* (02/11) «Tienda Banzer» es el nombre ENTERO de la sucursal: se busca primero así (si no, quedaba «Banzer», el almacén). */
+  var su=sucursalDe(nm)||sucursalDe(m[1]); return su ? su.n : m[1];
 }
+/* «Tienda X» para guardar o mostrar, sin repetir la palabra cuando la sucursal ya la trae («Tienda Banzer»). */
+function tiendaConPref(n){ n=String(n==null?'':n); return /^\s*tienda\b/i.test(n) ? n : TIENDA_PREF+n; }
 /* ¿Esta línea se va a buscar a una tienda? La marca a mano deja UN lugar (sin desglose): devuelve la sucursal o ''. */
 function recogeDeTienda(x){ return (x && x.chk==='im' && !(x.chkDes && x.chkDes.length)) ? recogeTiendaDe(x.chkDe) : ''; }
 function recogerIco(nm){ return recogeTiendaDe(nm) ? '🏬' : '📥'; }
-function recogerAlmCorto(nm){ var t=recogeTiendaDe(nm); if(t) return TIENDA_PREF+t; return recogerCanon(nm) ? stockAlmCorto(nm) : 'IM'; }
+function recogerAlmCorto(nm){ var t=recogeTiendaDe(nm); if(t) return tiendaConPref(t); return recogerCanon(nm) ? stockAlmCorto(nm) : 'IM'; }
 /* ⚠️ La identidad va por el nombre ENTERO, no por el corto: el corto puede venir recortado
    («Almacen Distribucion …») y dos almacenes distintos con nombre largo parecido quedarían
    con la misma clave — o, peor, el mismo almacén escrito de dos maneras con claves
@@ -42801,7 +42812,7 @@ function prodBtnsHtml(p, x, i, ptf){
    la elegida otra vez —o «Quitar»— saca la marca. Guarda con `setProdChk(…, 'im', 'Tienda <sucursal>')`, como cualquier 📥. */
 var TDA_ELIGE='';   // 'id|renglón' con la lista de tiendas abierta
 function tiendaElegirAbrir(id, i){ var k=id+'|'+i; TDA_ELIGE=(TDA_ELIGE===k) ? '' : k; reabrirFicha(id); }
-function tiendaElegir(id, i, n){ TDA_ELIGE=''; setProdChk(id, i, 'im', TIENDA_PREF+n); }
+function tiendaElegir(id, i, n){ TDA_ELIGE=''; setProdChk(id, i, 'im', tiendaConPref(n)); }
 function tiendaBtnHtml(p, x, i){
   var t=esRecoger(x) ? recogeDeTienda(x) : '';
   var etq=t ? ('🏬 '+(t.length>12 ? (t.slice(0,11)+'…') : t)) : '🏬 Tienda';

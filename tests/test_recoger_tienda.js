@@ -67,7 +67,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { hay:hay, ops:ops };
   });
   chk('la ficha tiene «🏬 Tienda» al lado de «📥 IM»', r.hay, r);
-  chk('…abre las tiendas propias, sin Tiendas Roho (es de ROHO)', r.ops && r.ops.length===6 && !r.ops.some(function(t){ return /Roho/i.test(t); }), r.ops);
+  chk('…abre las tiendas propias, sin Tiendas Roho (es de ROHO)', r.ops && r.ops.length===8 &&   /* (02/11) + Tienda Banzer y Ventura Mall */ !r.ops.some(function(t){ return /Roho/i.test(t); }), r.ops);
   chk('…con la de la vendedora primero (María Flores → Buenos Aires)', r.ops && /^Buenos Aires · de Maria/.test(r.ops[0]||''), r.ops && r.ops[0]);
 
   console.log('\n── 2. Elegir una tienda marca la línea; tocarla otra vez la saca ──');
