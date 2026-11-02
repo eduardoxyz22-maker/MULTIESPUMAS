@@ -1,6 +1,6 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-11-02** (§4od del stock, arriba de §4oi).
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-11-02** (§4oj, arriba de §4od del stock).
 ⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
 mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz-b`, `## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
@@ -17207,6 +17207,32 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     con id `enc|…` al motor de la encuesta ANTES de `iaAlVuelo_`/`iaRepaso`; el estado por número NO va en Propiedades (9 KB): hoja «Encuestas»
     + caché. Alertas: cobro extra → `WA_AVISOS`/dueño; detalle o producto ≤2 → vendedora + logística con «Abrir ATC» (nunca sola); tarde/trato ≤2
     → logística; asesora ≤2 → solo el dueño; resumen los lunes 9:00. Tablero «⭐ Encuestas» en Administración (con la contraseña).
+
+### §4oj — 👥 ANDREA ORIAS Y FABIÁN GODOY, Y LAS TIENDAS «TIENDA BANZER» Y «VENTURA MALL» (02/11; dueño: *«añades dos nuevos vendedores Andrea orias y Fabián godoy»* → los dos Heaven, Andrea en la *«Nueva tienda banzer»*, Fabián en *«Ventura mall»*; PUBLICADO 02/11, `main` = `39cc0ec`, versión 2026-11-02-b; servidor `2026-11-02-a` espera que el dueño lo implemente)
+
+**Antes, el mismo día:** el dueño subió desde otra pestaña el stock de §4od (`cea26bd`, arriba). Se verificó: Pages OK, batería de `main`
+307 suites con las rojas de siempre (`test_concurrencia`, `test_panel_meta`; el resto dio verde corrido solo, la máquina estaba cargada) y
+una prueba vieja (`test_eduardo_multicenter`: la leyenda ganó «ni los pedidos internos» y la prueba no). Esa sesión NO subió `PANEL_V`:
+se subió aparte (`fbae8c1`, 2026-11-02-a, «Ok» del dueño) para que las ventanas abiertas vieran «Hay una versión nueva».
+
+**Qué se hizo:** `VENDEDORES`, `MARCAS` (Heaven), `BANCOS_POR_VENDEDOR` (BISA/Económico), `VENDEDOR_SUCURSAL` (Andrea → Tienda Banzer,
+Fabián → Ventura Mall) y dos filas en `SUCURSALES` **sin zona ni pin** (§4dn: una zona inventada desvía la ruta; pedírselos al dueño).
+El `.gs` **2026-11-02-a**: `WA_MARCAS` (el bot los firma «Heaven Colchones») y `WA_VENDEDOR_HOMBRE` + `fabian` («tu vendedor»). Nada más.
+Con el servidor 30-a la página anda igual (la línea gris «hay una versión más nueva del script sin publicar»).
+
+**⚠️ «Tienda Banzer», no «Banzer»:** «Banzer» es el almacén de distribución (de ahí salen camiones). Con el nombre a secas habría dos
+«Banzer» en «Qué va a dónde», en la carga y en las marcas. `recogeTiendaDe` busca primero el nombre ENTERO (si no, «Tienda Banzer» →
+«Banzer»); `tiendaConPref` no repite «Tienda» (la marca guarda `chkDe='Tienda Banzer'`; una página sin F5 la lee como tienda «Banzer»,
+clave `tienda:banzer`: sigue siendo tienda, nunca el almacén); `fichaRetira` distingue «TIENDA BANZER» del almacén; el Excel
+«TIENDA BANZER» entra en «🏬 Stock de las tiendas» y el «Almacen Distribucion Banzer» sigue siendo de fábrica (`tstEsDeFabrica`).
+
+**Pruebas:** nueva `tests/test_vendedores_nuevos.js` (23). Cambiadas A CONCIENCIA: `test_rpt` (9 tiendas), `test_recoger_tienda` (8),
+`test_tiendas_stock` («2 de 8»), `test_servidor` §11 y `test_avisa_cuando` 1a (versión 11-02-a), `test_eduardo_multicenter` (la leyenda).
+
+**Falta (del dueño):** implementar el `.gs` 11-02-a (enlace fijo a `39cc0ecf4530b61d85d579ef21424aca6b22bbbe`, 5.133 líneas, termina en `}`
+con `return borrador;` antes; volver atrás: ✏️ a la versión anotada Y pegar la 30-a de `89ca847…`); poner el WhatsApp de cada uno en
+`WA_VENDEDORAS`; la zona y el pin de las dos tiendas; si están en Kommo, su sucursal y metas en `VENDOR_CFG` del dashboard.
+
 
 ### §4od (STOCK, la otra sesión) — 01-02/11: 🧑‍💼 Eduardo adentro, mayoristas e internos afuera, +5 días para lo que rota y no cae — PUBLICADO 02/11 (`cea26bd`)
 

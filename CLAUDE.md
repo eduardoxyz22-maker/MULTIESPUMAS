@@ -2487,6 +2487,14 @@ correo + el mensaje de **WhatsApp**.
 
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
+**👥 Desde el 02/11/2026 (dueño): Andrea Orias y Fabián Godoy, los dos de Heaven** — Andrea en la **Tienda Banzer** y Fabián en **Ventura Mall**,
+tiendas nuevas. Un vendedor nuevo va en: `VENDEDORES`, `MARCAS`, `BANCOS_POR_VENDEDOR`, `VENDEDOR_SUCURSAL` (pedidos.html) y en el `.gs`
+`WA_MARCAS` + `WA_VENDEDOR_HOMBRE` (servidor **`2026-11-02-a`**, solo eso: el dueño lo implementa; con el de antes el bot los firma
+«Multiespumas» y a Fabián le dice «tu vendedora»). Su WhatsApp para el bot: la propiedad `WA_VENDEDORAS` (la pone el dueño).
+⚠️ **«Tienda Banzer» lleva «Tienda» en el nombre A PROPÓSITO**: «Banzer» a secas es el ALMACÉN de distribución. `recogeTiendaDe` busca
+primero el nombre entero y `tiendaConPref` no repite «Tienda»; el Excel «TIENDA BANZER» es de la tienda y el «Almacen Distribucion Banzer»
+sigue siendo de fábrica. Las dos tiendas nuevas van SIN zona ni pin hasta que el dueño los dé (§4dn). El dashboard de Kommo
+(`VENDOR_CFG` de generar.py) no se tocó: si aparecen en Kommo salen con «Sin sucursal» y sin meta. `tests/test_vendedores_nuevos.js` (23).
 
 ## 🏁🏭📦🤖🔢🏪 Las 7 elegidas de octubre: 74, 75, 76, 78, 81, 82, 83 (§4nv, 30/10; PUBLICADO `7a0f32f`; dueño: *«la escala está bien, publica todo»*; servidor `2026-10-30-a` IMPLEMENTADO 30/10 por el dueño (contesta `2026-10-30-a`): enlace fijo `89ca847…`, 5.133 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 29-b de `38864f6…`, 5.085 líneas)
 Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 por usar agosto-septiembre). Página para el dueño: https://claude.ai/artifact/J4sAph88pxQH61tnBnwSxE.
