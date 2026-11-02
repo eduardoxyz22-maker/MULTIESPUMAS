@@ -3,6 +3,11 @@
    El pedido del dueño, textual en lo que importa:
      · Eduardo → Multicenter: entra al histórico y a la demanda con que se proyecta el stock.
      · Eduardo → otros clientes: sigue afuera.
+       ⚠️ (01/11, §4od, cambiado A CONCIENCIA) El dueño dio vuelta esto: Eduardo cuenta a cualquier cliente, y lo que queda afuera
+       son los MAYORISTAS (`STOCK_CLIENTES_FUERA`: Tienda Amiga, Copacaba, Luis Franco). Para que la comparación con la página
+       publicada (`2040720`) siga valiendo, los fixtures que «no cuentan» pasaron de Eduardo → cliente común a Eduardo → Tienda
+       Amiga / Copacaba (afuera en las DOS páginas, por motivos distintos). La regla nueva en sí se prueba en
+       `test_demanda_objetivo_od.js`; acá queda una comprobación de que Eduardo → cliente común cambió de bando.
      · Multicenter vendido por otro vendedor: sin cambios (pedido puntual).
      · Consignación y los otros pedidos puntuales: siguen afuera.
      · Las RPT no son ventas; siguen en «Qué va a pedir cada tienda», y eso no se suma a «Qué producir».
@@ -50,11 +55,11 @@ function ESCENARIO(esc){
   // ── El equipo, COLCHON SOFT (otro producto, sin Multicenter): 3 entregas de 2 hace 18-24 días y 2 en los últimos 15.
   [18,21,24,2,6].forEach(function(d){ STATE.push(P({ fecha:atras(d), productos:SOFT(2) })); });
   // ── Lo que NO es demanda y tiene que seguir afuera:
-  STATE.push(P({ id:'edu-otro', fecha:atras(3), vendedor:'Eduardo Añez', cliente:'CLIENTE MAYORISTA', productos:TIT(20) }));          // Eduardo a otro cliente
+  STATE.push(P({ id:'edu-otro', fecha:atras(3), vendedor:'Eduardo Añez', cliente:'TIENDA AMIGA E.R. S.A.', productos:TIT(20) }));     // (01/11) Eduardo a un MAYORISTA (antes: a otro cliente)
   STATE.push(P({ id:'mc-carola', fecha:atras(2), vendedor:'Carola Chavez', cliente:'MULTICENTER', productos:TIT(7) }));              // Multicenter de otro vendedor
   STATE.push(P({ id:'edu-consig', fecha:atras(4), vendedor:'Eduardo Añez', cliente:'MULTICENTER CONSIGNACIÓN', productos:TIT(9) })); // consignación: manda
   STATE.push(P({ id:'roho-t1', fecha:atras(3), vendedor:'ROHO', cliente:'TIENDA 1', productos:TIT(4) }));                           // ROHO a tienda
-  STATE.push(P({ id:'edu-multi', fecha:atras(5), vendedor:'Eduardo Añez', cliente:'MULTIESPUMAS', productos:TIT(5) }));             // «multi…» NO es Multicenter
+  STATE.push(P({ id:'edu-multi', fecha:atras(5), vendedor:'Eduardo Añez', cliente:'José Carlos Copacaba', productos:TIT(5) }));    // (01/11) otro mayorista (antes: MULTIESPUMAS, que hoy contaría; «multi…» ≠ Multicenter se prueba en §0)
   if(esc.rpt!==false) STATE.push(P({ id:'rpt-charcas', fecha:atras(2), oc:'RPT 09-001', vendedor:'Fernando Peinado', cliente:'Charcas', productos:TIT(6) }));
   // ── Eduardo → Multicenter (el pedido del dueño):
   if(esc.mc){
@@ -133,11 +138,15 @@ function NUMEROS(k){
   /* «Pedido puntual» y «pedido único» dan IGUAL que antes para todo lo que no es la excepción: la consignación de los
      otros vendedores sigue siendo «CONSIGNACI…» (la forma amplia es solo para no meter una consignación de Eduardo). */
   const casosIg = [['Carola Chavez','MULTICENTER'],['Carola Chavez','CLIENTE CONSIGNADO'],['Carola Chavez','CONSIGNACION X'],['ROHO','TIENDA 1'],
-                   ['ROHO','Juan Perez'],['Carola Chavez','MULTIESPUMAS'],['Eduardo Añez','MULTICENTER CONSIGNADO'],['Eduardo Añez','CLIENTE MAYORISTA']];
+                   ['ROHO','Juan Perez'],['Carola Chavez','MULTIESPUMAS'],['Eduardo Añez','MULTICENTER CONSIGNADO'],['Eduardo Añez','TIENDA AMIGA'],['Eduardo Añez','Luis Franco Tarija']];   // (01/11) los mayoristas: afuera en las dos páginas
   const igual = (P) => P.evaluate((c) => c.map(function(x){ var p={ vendedor:x[0], cliente:x[1], oc:'' }; return [stockPuntual(p), stockPedidoUnico(p)]; }), casosIg);
   const igN = await igual(NUEVA), igV = await igual(VIEJA);
-  chk('«pedido puntual» y «pedido único» dan igual que en la página publicada fuera de la excepción (también «CLIENTE CONSIGNADO» de Carola)',
+  chk('«pedido puntual» y «pedido único» dan igual que en la página publicada fuera de la excepción (también «CLIENTE CONSIGNADO» de Carola, y los mayoristas)',
       JSON.stringify(igN)===JSON.stringify(igV), { nueva:igN, antes:igV });
+  /* (01/11, §4od) Lo ÚNICO que cambia de bando: Eduardo a un cliente común era pedido único y ahora es demanda. */
+  const flipDe = (P) => P.evaluate(() => { var p={ vendedor:'Eduardo Añez', cliente:'CLIENTE PARTICULAR', oc:'' }; return [stockPuntual(p), stockPedidoUnico(p)]; });
+  const flipN = [await flipDe(NUEVA)], flipV = [await flipDe(VIEJA)];
+  chk('(01/11) Eduardo → un cliente común: en la publicada era «pedido único»; ahora es demanda (no puntual, no único)', flipV[0][1]===true && flipN[0][0]===false && flipN[0][1]===false, { antes:flipV, nueva:flipN });
 
   // ═══ Los escenarios ═══════════════════════════════════════════════════════════════════════════════════════
   const base = { rpt:true };
@@ -169,7 +178,10 @@ function NUMEROS(k){
       { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem, nBase.T.objS], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem, nMc.T.objS] });
   /* 🔢 (18/10, §4ls, corrector) Los números EXACTOS de la regla nueva con este ejemplo (reloj clavado): las comprobaciones de arriba son
      relativas («sube», «= objetivo − 3 − 2») y cualquier objetivo que subiera con Multicenter las pasaba. Si cambian, cambió una regla. */
-  const EXACTO = { base:{ obj:8, pp:6, sem:3, quin:11, mesNec:19, mes:22 }, mc:{ obj:17, pp:15, sem:12, quin:27, mesNec:34, mes:38 } };
+  /* 📈 (01/11, §4od, a conciencia) El TITANIO ICE rota y no viene cayendo: objetivo = punto de pedido + 5 días de venta (antes + 1).
+     Sin Multicenter: objetivo 8 → 11, «7 días» 3 → 6, «15 días» 11 → 13; con Multicenter: 17 → 22, 12 → 17, 27 → 31. El punto de
+     pedido (6 / 15) y el mes (19 · 22 / 34 · 38) no cambian: el mes se mantiene al objetivo del último día y la diferencia ya está en 15 días. */
+  const EXACTO = { base:{ obj:11, pp:6, sem:6, quin:13, mesNec:19, mes:22 }, mc:{ obj:22, pp:15, sem:17, quin:31, mesNec:34, mes:38 } };
   const exN = (T) => ({ obj:T.obj, pp:T.pp, sem:T.sem, quin:T.quin, mesNec:T.mesNec, mes:T.mes });
   chk('números exactos de la regla nueva (punto de pedido y objetivo), sin y con Eduardo a Multicenter',
       JSON.stringify({ base:exN(nBase.T), mc:exN(nMc.T) })===JSON.stringify(EXACTO), { base:exN(nBase.T), mc:exN(nMc.T) });
@@ -186,8 +198,8 @@ function NUMEROS(k){
       vMc.T.vendidosUnicos===vBase.T.vendidosUnicos+8 && vMc.T.vendidosPunt===vBase.T.vendidosPunt+8, { base:[vBase.T.vendidosUnicos, vBase.T.vendidosPunt], con:[vMc.T.vendidosUnicos, vMc.T.vendidosPunt] });
 
   // ═══ 2 y 3. Lo que sigue afuera ═══════════════════════════════════════════════════════════════════════════
-  console.log('\n── 2 y 3. Eduardo a otro cliente, Multicenter de otro vendedor, consignación y «multi…» siguen afuera ──');
-  chk('Eduardo a otros clientes (20 + la consignación 9 + MULTIESPUMAS 5) sigue en «únicos», fuera del ritmo',
+  console.log('\n── 2 y 3. Los mayoristas (antes: Eduardo a otro cliente), Multicenter de otro vendedor y la consignación siguen afuera ──');
+  chk('los mayoristas (Tienda Amiga 20 + Copacaba 5) siguen en «únicos», fuera del ritmo; la consignación de Eduardo (9) en puntuales',
       nBase.T.vendidosUnicos-nBase.T.vendidosRpt-nBase.T.vendidosPunt===25 && nMc.T.vendidosUnicos===nBase.T.vendidosUnicos, [nBase.T.vendidosUnicos, nBase.T.vendidosRpt, nBase.T.vendidosPunt]);
   chk('Multicenter de Carola (7), la consignación (9) y ROHO a tienda (4) siguen como pedido puntual (20), igual que antes',
       nBase.T.vendidosPunt===20 && vBase.T.vendidosPunt===20, [nBase.T.vendidosPunt, vBase.T.vendidosPunt]);
@@ -292,7 +304,7 @@ function NUMEROS(k){
     out.ini=foto(); out.saldoIni=saldoRot();
     mc.productos[0].cant=3; saveMirror();                              // como después de guardar una corrección
     out.cant=foto(); out.saldoCant=saldoRot();
-    mc.cliente='CLIENTE PARTICULAR'; saveMirror(); out.cliente=foto();
+    mc.cliente='TIENDA AMIGA'; saveMirror(); out.cliente=foto();      // (01/11, §4od) a un mayorista: antes acá iba «CLIENTE PARTICULAR», que hoy seguiría contando
     mc.cliente='MULTICENTER'; mc.vendedor='Carola Chavez'; saveMirror(); out.vendedor=foto();
     mc.vendedor='Eduardo Añez'; saveMirror(); out.vuelta=foto();
     return out;
@@ -314,7 +326,7 @@ function NUMEROS(k){
   });
   const cuN = await cuadrito(NUEVA), cuV = await cuadrito(VIEJA);
   chk('el cuadrito del formulario da lo mismo que en la página publicada (lo pendiente de Eduardo ya contaba)', JSON.stringify(cuN)===JSON.stringify(cuV), { nueva:cuN, antes:cuV });
-  chk('cliente → otro: sale de la demanda y pasa a «únicos» de Eduardo', c.cliente.rot===c.ini.rot-8 && c.cliente.eduMc===0 && c.cliente.sep===c.ini.sep-8 && c.cliente.unicos===c.ini.unicos+3, c.cliente);
+  chk('cliente → un mayorista (Tienda Amiga): sale de la demanda y pasa a «únicos»', c.cliente.rot===c.ini.rot-8 && c.cliente.eduMc===0 && c.cliente.sep===c.ini.sep-8 && c.cliente.unicos===c.ini.unicos+3, c.cliente);
   chk('vendedor → Carola (Multicenter de otro vendedor): pedido puntual, como siempre', c.vendedor.rot===c.ini.rot-8 && c.vendedor.punt===c.ini.punt+3 && c.vendedor.sep===c.ini.sep-8, c.vendedor);
   chk('de vuelta a Eduardo → Multicenter (3): vuelve a entrar', c.vuelta.rot===c.ini.rot-5 && c.vuelta.eduMc===3 && c.vuelta.sep===c.ini.sep-5, c.vuelta);
 
@@ -326,10 +338,11 @@ function NUMEROS(k){
     var stk=document.getElementById('stock-body'), st=stk?stk.textContent.replace(/\s+/g,' '):'';
     closeStock(); return { cab:(function(){ var c=p&&p.querySelector('.prod-como'); return (c?c.textContent.replace(/\s+/g,' '):t).slice(0,1500); })(),   // (20/10) la explicación quedó en «ℹ️ Cómo sale cada número», debajo del total y la planilla
                           fila:ft, tabla:/incluye 8 de Eduardo a Multicenter/.test(st) }; });
-  chk('la cabecera de «Qué producir»: «ventas del equipo + ventas de Eduardo a Multicenter; sin otras ventas puntuales … ni reposiciones de tienda (RPT)»',
-      /ventas del equipo \+ ventas de Eduardo a Multicenter; sin otras ventas puntuales \(las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda\) ni reposiciones de tienda \(RPT\)/.test(txt.cab) && /no dice vendedor ni cliente/.test(txt.cab), txt.cab);
+  /* (01/11, §4od) El cartel dice la regla nueva: Eduardo adentro, los mayoristas afuera; (02/11) y los internos también. */
+  chk('la cabecera de «Qué producir»: «ventas del equipo + ventas de Eduardo; sin los mayoristas … sin otras ventas puntuales … ni reposiciones de tienda (RPT)»',
+      /ventas del equipo \+ ventas de Eduardo; sin los mayoristas \(Tienda Amiga, Copacaba, Luis Franco\) ni los pedidos internos \(FABRICA, ALBA, MORENO…\), sin otras ventas puntuales \(Multicenter de otros vendedores, consignación, ROHO a tienda\) ni reposiciones de tienda \(RPT\)/.test(txt.cab) && /no dice vendedor ni cliente/.test(txt.cab), txt.cab);
   chk('la fila del TITANIO ICE dice cuánto es de Multicenter (15 d: 8 · 30 d: 14)', /8 de Eduardo a Multicenter/.test(txt.fila) && /14 de Eduardo a Multicenter/.test(txt.fila), txt.fila.slice(0,300));
-  chk('la tabla de stock: «Equipo: … (incluye 8 de Eduardo a Multicenter)»', txt.tabla===true, txt.tabla);
+  chk('la tabla de stock: «Cuentan: … (incluye 8 de Eduardo a Multicenter)»', txt.tabla===true, txt.tabla);   // (01/11) la etiqueta pasó de «Equipo:» a «Cuentan:»
   /* (28/09, 2ª revisión) Tres textos que se contradecían o decían de más. */
   const txt2 = await NUEVA.evaluate(() => {
     var hoy=todayStr(), K=null, out={};
@@ -358,7 +371,7 @@ function NUMEROS(k){
   chk('una venta de Carola a Multicenter no dice «Lo vendió Eduardo» (es un pedido puntual)',
       !/Lo vendió Eduardo/.test(txt2.fila) && /pedido puntual/i.test(txt2.fila), (txt2.fila.match(/[^.]*pedido puntual[^.]*/i)||[txt2.fila.slice(0,200)])[0]);
   chk('lo que se copia para la fábrica dice cuánto es de Eduardo a Multicenter y que el mes es lo probable de cinco estimaciones',
-      /14 de Eduardo a Multicenter/.test(txt2.copia) && /lo probable entre los últimos 30 días, el promedio de los 2 y de los 3 últimos meses cerrados/.test(txt2.copia)   /* (16/10, §4lr U8) el texto dice lo que hace: 60/90 son meses CERRADOS */ && /Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda/.test(txt2.copia),
+      /14 de Eduardo a Multicenter/.test(txt2.copia) && /lo probable entre los últimos 30 días, el promedio de los 2 y de los 3 últimos meses cerrados/.test(txt2.copia)   /* (16/10, §4lr U8) el texto dice lo que hace: 60/90 son meses CERRADOS */ && /de Eduardo, sin los mayoristas \(Tienda Amiga, Copacaba, Luis Franco\), sin otras ventas puntuales ni reposiciones de tienda/.test(txt2.copia),   // (01/11, §4od)
       txt2.copia.slice(0,500));
 
   // ═══ El ejemplo de antes y después ════════════════════════════════════════════════════════════════════════

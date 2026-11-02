@@ -74,16 +74,20 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('el escenario es el de la captura: 9 sin entregar, 0,93 por día (rotación media), 4 en Banzer y 2 en Moreno',
     r && r.comp===9 && r.porDia===0.933 && r.rot==='media' && r.hay===4 && r.enOtros===2, r && { comp:r.comp, porDia:r.porDia, rot:r.rot, hay:r.hay, enOtros:r.enOtros });
   /* 🎯 (§4ls) La regla, calculada acá aparte (la de la revisión 2): venta por día hábil de los últimos 26 días hábiles, punto de pedido
-     μ×5 + z·σ·√5, objetivo + 1 día. Lo libre = 4 − 9 vendidas = −5: se pide hasta el objetivo, o sea objetivo + 5 (§4ii: SE SUMAN). */
+     μ×5 + z·σ·√5, objetivo + 1 día. Lo libre = 4 − 9 vendidas = −5: se pide hasta el objetivo, o sea objetivo + 5 (§4ii: SE SUMAN).
+     📈 (01/11, §4od, a conciencia) …y desde el 01/11 el objetivo de lo que rota y no cae lleva + 5 días de venta (+ 1 si los últimos
+     15 días hábiles COMPLETOS venden menos del 75 % de los 26 completos, sin el día en curso; 02/11): `extra` se calcula acá igual. */
   {
     const sumar=(f,k)=>{ const d=new Date(f+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+k); return d.toISOString().slice(0,10); };
     const fer=new Set(r?r.fer:[]), habil=f=>new Date(f+'T12:00:00Z').getUTCDay()!==0 && !fer.has(f), HOY='2026-10-08';
     const dias=[]; for(let f=HOY; dias.length<48; f=sumar(f,-1)) if(habil(f)) dias.push(f);
-    const pos={}; dias.forEach((x,i)=>pos[x]=i); const serie=new Array(26).fill(0), ord={};
-    for(const v of (r?r.ventas:[])){ let g=v.f; while(!(g in pos) && g>=dias[47]) g=sumar(g,-1); if(!(g in pos)) continue; if(pos[g]<26) serie[pos[g]]+=v.u; ord[v.ek]=(ord[v.ek]||0)+v.u; }
-    const mu=serie.reduce((a,b)=>a+b,0)/26, sd=Math.sqrt(serie.reduce((a,x)=>a+(x-mu)*(x-mu),0)/25);
+    const pos={}; dias.forEach((x,i)=>pos[x]=i); const serie=new Array(27).fill(0), ord={};   // (02/11) un día más: la prueba de «cayendo» mira días completos
+    for(const v of (r?r.ventas:[])){ let g=v.f; while(!(g in pos) && g>=dias[47]) g=sumar(g,-1); if(!(g in pos)) continue; if(pos[g]<27) serie[pos[g]]+=v.u; ord[v.ek]=(ord[v.ek]||0)+v.u; }
+    const s26=serie.slice(0,26), mu=s26.reduce((a,b)=>a+b,0)/26, sd=Math.sqrt(s26.reduce((a,x)=>a+(x-mu)*(x-mu),0)/25);
     const tam=Object.values(ord).sort((a,b)=>a-b), q75=tam[Math.floor(0.75*(tam.length-1))];
-    const z=mu*5>=4?1.645:1.28, prot=mu*5+z*sd*Math.sqrt(5), S=Math.max(prot+mu, q75), s=Math.min(S-1, prot);
+    const d0=(dias[0]===HOY)?1:0, mu15=serie.slice(d0,d0+15).reduce((a,b)=>a+b,0)/15, muL=serie.slice(d0,d0+26).reduce((a,b)=>a+b,0)/26;
+    const extra=(mu15 < 0.75*muL-1e-9) ? 1 : 5;   // (§4od) rota y no cae → 5; cayendo → 1; (02/11) 15 días hábiles COMPLETOS contra los 26 completos
+    const z=mu*5>=4?1.645:1.28, prot=mu*5+z*sd*Math.sqrt(5), S=Math.max(prot+mu*extra, q75), s=Math.min(S-1, prot);
     const libre=4-9, pedir=(libre<=s||libre<0)?Math.ceil(S-libre-1e-9):0;
     let h15=0; for(let f=sumar(HOY,1); f<=sumar(HOY,15); f=sumar(f,1)) if(habil(f)) h15++;
     const quin=Math.max(pedir-2, Math.ceil((r?r.c19:0)+S+mu*h15-6-1e-9), 0);

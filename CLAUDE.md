@@ -248,6 +248,9 @@ Propiedades del script.
     Río/Premier/Bahía, así que un código nuevo de esas líneas queda cubierto solo. Se
     reparte y se vende lo que queda, pero nunca entra en «hay que fabricar» (aviso `agotado`).
   - **Rotación: 3 entregas del EQUIPO, y Eduardo afuera** (§4da → §4dg → **§4dj, la definitiva**):
+    🔁 **(02/11/2026) LA MITAD (2) QUEDÓ SUPERADA por el dueño (§4od, más abajo): los pedidos de Eduardo SÍ cuentan,
+    los mayoristas (Tienda Amiga, Copacaba, Luis Franco) y los internos (`CONTA_INTERNOS`) quedan afuera.** La mitad (1)
+    —3 entregas distintas— sigue igual. Lo que sigue en este bloque es la historia de cómo era hasta el 01/11.
     `STOCK_VENTANA`=15 días, en 3 tramos de 5. **DOS condiciones, las dos del dueño, y las dos
     tienen que cumplirse**: (1) al menos `STOCK_VENTAS_MIN`=**3 entregas distintas** —no
     unidades— en la ventana (*«una única entrega o 2 en 1 mes no es tener rotación, eso es
@@ -285,6 +288,53 @@ Propiedades del script.
     `stockProyectar` igual. Con `max` el ESPECIAL SEMIORTOPEDICO (9 vendidos, 0,9/día, 4 en Banzer, 2 en Moreno) pedía producir 3;
     ahora 11 (+ 2 de Moreno); desde §4iy (piso de 4 días de fábrica) 12 (+ 2). El mes que viene (`mesNec`) sigue con el mayor: lo probable ya incluye lo vendido. ⚠️ No volver al
     `max`. `tests/test_proyeccion_suma.js` (9).
+  - ⚠️ **Hay DOS §4od**: la del stock (esta, de otra sesión, `cea26bd`; la que nombran el código y las pruebas) y «📅 Administración
+    abre en «Hoy»» (31/10). En la bitácora, «§4od (STOCK, la otra sesión)» va arriba de §4oi.
+  - **🧑‍💼 Eduardo adentro; mayoristas e internos afuera** (§4od, 01-02/11/2026; dueño: *«los pedidos de Eduardo cuentan como demanda,
+    menos los que van a Tienda Amiga, José Carlos Copacaba y Luis Franco»* y, el 02/11, *«los internos, todos afuera»*; PUBLICADO
+    02/11/2026, `cea26bd`). **Reemplaza la mitad (2) de §4dj** («los pedidos de Eduardo nunca cuentan»). `stockPedidoUnico` sigue
+    siendo LA regla del pedido, en este orden: 1. RPT → nunca es venta (en almohadas sí, `stockEsDemanda`); 2. **`stockEsInterno(p)`**
+    → afuera: vendedor en `CONTA_INTERNOS` (ALBA, FABRICA, MULTIESPUMA/S, MORENO, ALZER, REPOSICION DE ALMACEN), con la MISMA identidad
+    que Contabilidad (`cliEsInterno`, §4jd) — una sola lista; ALBA entra aunque a veces cargue ventas B2B (dueño: todos afuera);
+    3. **`stockClienteFuera(p)`** → afuera: el CLIENTE con `normNombre` contra **`STOCK_CLIENTES_FUERA`** (`/\bTIENDA AMIGA\b/i`,
+    `/CO(?:PA|AP)CABA/i`, `/\bLUIS FRANCO\b/i`) o el VENDEDOR en **`STOCK_VENDEDORES_FUERA`** (`['TIENDA AMIGA']`), lo venda quien lo
+    venda; un «JOSE CARLOS» suelto NO es Copacaba; ⚠️ el patrón de Copacaba va SIN `\b` final a propósito (casa «COPACABANA» y «JOSE
+    CARLOSCOPACABA»; 0 falsos positivos en los 1.413 clientes del 01/11); 4. Eduardo → Multicenter → demanda (§4gm, por delante de
+    `stockPuntual`); 5. `stockPuntual` (Multicenter de otro vendedor, consignación, ROHO → «TIENDA n») → afuera; **todo lo demás
+    —Eduardo incluido— es demanda**. Un mayorista nuevo se agrega en `STOCK_CLIENTES_FUERA` y nada más.
+    · 🏪 **Eduardo → «ROHO TIENDA 1» / «roho T1» CUENTA** (dueño, 02/11): es la única señal de lo que venden las Tiendas Roho (no
+    cargan venta de tienda y su RPT no es almohada). `stockPuntual` saca «TIENDA n» SOLO con vendedor ROHO (la reposición de
+    Ernesto); la misma reposición cargada por Eduardo entra y la de FABRICA sale por interno. Es a propósito: no «arreglar» la
+    asimetría sin el dueño.
+    · Entra en TODO lo que pasa por `stockPedidoUnico`/`stockEsDemanda`: ritmo de 15 días (→ rotación, «Se corta», reserva), 30 días,
+    `stockObjetivo` (μ/σ), `ventasPanelIndex`, ranking, tiendas y las zonas de «📍 Banzer o PTF». ⚠️ **Las entregas de Eduardo
+    cuentan también para `STOCK_VENTAS_MIN`** (3 entregas distintas; el dueño lo aceptó); las de los internos ya no (el 01/11: ORO
+    ANATÓMICO 140, PILLOW FLEX 140 y TITANIO LATEX 140 perdieron el candado). Sus pedidos a Multicenter del mismo día siguen siendo
+    UNA entrega (§4gy). Lo vendido a un mayorista o por un interno y sin entregar se cubre igual (`comp`); lo que no arman es ritmo.
+    `o.vendidosFuera` / `o.vendidosInt` lo cuentan; `stockUnicoEtq` / `stockUnicoQuien` dicen «mayorista» / «pedido interno».
+  - **📈 Lo que rota y no cae tiene 5 días sobre el punto de pedido** (§4od, 01-02/11/2026; dueño: *«+5 días de venta en el objetivo
+    de lo que rota y no está cayendo»*): en `stockObjetivo`, para colchones y somieres con objetivo, `extra` = **`STOCK_OBJ_EXTRA_ROTA`**=5
+    si NO viene cayendo y `STOCK_OBJ_EXTRA`=1 si viene cayendo. **Cayendo** = la venta por día hábil de los últimos
+    **`STOCK_OBJ_CAIDA_VENTANA`**=15 días hábiles COMPLETOS (`o.objMuCorta`; dueño 02/11: 15, no 10; sin histéresis) es menor que
+    **`STOCK_OBJ_CAIDA_UMBRAL`**=0,75 × la de los 26 completos (`o.objMuLarga`), con la MISMA serie (`o.objDia`: fecha de venta,
+    `pryDiaHabil`). ⚠️ **El día en curso queda afuera de la prueba** (`V.hoyHabil`; `objDia` junta un día de más, `V.nSerie`; un domingo o feriado, lo
+    vendido hoy se descuenta del último día hábil, `o.objHoyNoHabil`): con hoy a medias la clase saltaba entre la mañana y la tarde. La μ del objetivo (punto de pedido) sigue incluyendo hoy, como la regla
+    validada de §4ls. Justo en el 75 % no cae; con μ = 0 no cae. Deja `o.objClase` (`rota` / `cayendo` / `almohada`), `o.objCaida`,
+    `o.objSinHoy`. Almohadas siguen con `STOCK_OBJ_EXTRA_ALMOHADA`=5; lo que no rota y lo discontinuado siguen sin objetivo.
+    ⚠️ Nada se calcula aparte: 7 / 15 / 30 días, el mes, «Pedido a producción» y «Qué va a dónde» salen de `o.objS` como antes (bajar
+    `STOCK_OBJ_EXTRA_ROTA` a 1 los baja a todos); «Se corta» no se mueve (sigue con `o.porDia`).
+    · En el Plan, la celda «Tener» lleva la etiqueta `.pl-clase` («rota +5» turquesa / «cayendo +1» gris, `stockObjClaseHtml`) y, al
+    lado de «cayendo +1», **«¿cayó o faltó?»** (`stockObjFalto`: hoy quedan ≤ 1 para cargar, o en la ventana hubo «✗ no hay»
+    (`o.objNoHay`) o hechos a pedido 🏭 (`o.objAPedido`)) — SOLO AVISO, no cambia ningún número. La leyenda, «Cómo se calcula»
+    (`stockObjClasePorque`) y la copia para la fábrica (`stockObjReglaTxt`) lo dicen.
+    · Con la planilla del 01/11 (c+s, «7 / 15 / 30 d / dic / 15 d + dic»): 42/145/387/674/819 → **64/187/430/685/872**; 28 con
+    objetivo, 25 rota y 3 cayendo (ORTOPÉDICO SUEÑA 140, SEMIORTOP. 140, ESPECIAL SEMIORTOP. 140, con stock: caída real).
+  - **📅 El 24/09/2026 no se trabajó** (§4od): entra a `FERIADOS_PASADOS` → `pryDiaHabil` (proyección y `stockObjVentana`;
+    septiembre = 24 días hábiles). `FERIADOS` (entregas, cupos, `.gs`) no cambia. **🛑 SOMIER BAHIA BEIGE y NEGRO (también «T.A»)
+    discontinuados** por NOMBRE en **`STOCK_DESC_NOMBRES`** (la lista de `stockCariocaDescontinuado`), no en `CODIGOS`.
+    · `tests/test_demanda_objetivo_od.js` (53). Cambiadas A CONCIENCIA: `test_rotacion` §6, `test_eduardo_multicenter`, `test_banzer_ptf`
+    §2, `test_adm_alta` §3, `test_stock_final_cuenta` FC4, `test_circuito.cjs`, `test_stock_reunion` RN-U37, `test_stock_rev2_cuanto`,
+    `test_producir`, `test_proyeccion_suma`, `test_stock_rev2_calculo`, `test_stock`, `test_proyeccion` §18, `test_rev30_proyeccion` §2.
   - **⚠️ Si volvés a tocar `STOCK_VENTANA` o los umbrales de rotación**: revisá que ningún
     texto quede con un número hardcodeado (pasó dos veces, §4dc — «4 semanas» sobrevivió un
     cambio de ventana entero) y que los fixtures de `test_stock.js`/`test_rotacion.js`, que
@@ -730,7 +780,7 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   `v.pend` es el TOTAL; aviso ámbar `saldoDespues` (a lo vendido para después le falta / se atrasaría). La reserva del servidor manda
   el libre a la fecha. Lo descontinuado descuenta todo.
 - **Cuánto tener de lo que rota** (decisión 4): UNA cuenta, `stockObjetivo` (`STOCK_OBJ_*`): μ/σ de 26 días hábiles por FECHA DE VENTA,
-  punto de pedido μ·5+z·σ·√5, objetivo = punto + 1 día (almohadas +5), libre = PTF+Banzer+seguro en camino − vendido 15 días desde hoy;
+  punto de pedido μ·5+z·σ·√5, objetivo = punto + 1 día (almohadas +5; desde §4od, 02/11: +5 lo que rota y no cae), libre = PTF+Banzer+seguro en camino − vendido 15 días desde hoy;
   se pide hasta el objetivo al llegar al punto (Moreno primero). Qué rota NO cambió (§4dj). Lo que no rota: solo lo vendido. ⚠️ El
   margen/reserva de §4dj ya no deciden CUÁNTO pedir de lo que rota; `o.porDia` (15 días) sigue en «Se corta» y en Banzer o PTF (dos
   ritmos en pantalla, a propósito hasta que el dueño decida). **El mes** (decisión 5): deja el objetivo puesto el último día, redondeo
@@ -1517,7 +1567,7 @@ Bloque `nx*` (CSS `.nx`, el estilo de las fichas de §4jj con su color, franja d
   siguiente día»*). El «✓ Ya pedí» guarda `arr` y `esp` con esa regla (la MISMA del cuadrito: `q.arr||q.f`); id derivado `fy:`+huella
   (producto|día|n) para que dos equipos no lo dupliquen. Las cantidades de Stock siguen con el tiempo medido (dueño, 10/10: *«no, dejá los 5 días»*).
 - **Pedidos internos fuera de Contabilidad** (`CONTA_INTERNOS`: ALBA, FABRICA, MULTIESPUMA, MORENO, ALZER, REPOSICION DE ALMACEN);
-  en el stock siguen.
+  en el stock siguieron hasta el 02/11/2026: desde §4od tampoco son demanda del stock (`stockEsInterno` en `stockPedidoUnico`).
 - **Número de Eduardo**: solo contra SUS pedidos y número por número (es el N° de pedido del proveedor; cada vendedor tiene su
   numeración).
 - Arriba saltea días cerrados (`hdrProximoAbierto`); `dias<=lead` = urgente; camiones sin líneas ✗; la copia a fábrica suma lo marcado
@@ -2308,13 +2358,17 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   agendar para hoy, `esVendedorLite`). Las dos ventanas (15 y 30 días) juntan por `fs` (fecha de salida) desde §4hd (R4-3,
   publicada 30/09). La ventana de 30 días se sigue MIDIENDO por fecha de venta (§4dv); lo que cambió es solo cómo se
   juntan los pedidos de Multicenter.
-- **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
+- **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden** (🔁 desde el 02/11/2026, §4od; el orden de antes era
+  RPT → Eduardo a Multicenter → `stockPuntual` → las otras ventas de Eduardo afuera):
   1. RPT → nunca es venta;
-  2. **`stockEduardoMulticenter(p)` → es demanda**;
-  3. `stockPuntual` (Multicenter de OTRO vendedor, consignación, ROHO a «TIENDA n») → afuera;
-  4. las otras ventas de Eduardo → afuera.
+  2. `stockEsInterno(p)` (vendedor en `CONTA_INTERNOS`) → afuera;
+  3. `stockClienteFuera(p)` (mayoristas: Tienda Amiga, Copacaba, Luis Franco) → afuera;
+  4. **`stockEduardoMulticenter(p)` → es demanda** (por delante de `stockPuntual`);
+  5. `stockPuntual` (Multicenter de OTRO vendedor, consignación, ROHO a «TIENDA n») → afuera; **todo lo demás, Eduardo
+     incluido, es demanda**.
 
-  No sacar ninguna de las dos exclusiones: la excepción es SOLO la combinación.
+  Desde que todo Eduardo cuenta, esta excepción solo decide que Eduardo → Multicenter pasa por delante de `stockPuntual`
+  (Multicenter de otro vendedor sigue puntual) y que sus pedidos del mismo día son UNA entrega (`stockEntregaClave`).
 - **Identidades, definidas una vez y usadas por la exclusión y por la excepción**:
   - `stockEsMulticenter`: la palabra entera «MULTICENTER» en `normNombre(cliente)`. No hay id de cliente. Nunca «multi»
     a secas: traería a MULTIESPUMAS. «MULTI CENTER» y «MULTICENTRO» quedan afuera a propósito (no están verificadas).

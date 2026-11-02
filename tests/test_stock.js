@@ -254,7 +254,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var d=stockData();
     var eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0], pill=d.lista.filter(o=>/PILLOW/.test(o.desc))[0], mem=d.lista.filter(o=>/MEMORY/.test(o.desc))[0];
     renderAdmin();
-    return { eco:eco, pill:pill, mem:mem, corte2:window._adel(2), primero:d.lista[0].desc,
+    return { eco:eco, pill:pill, mem:mem, hoyHabil:pryDiaHabil(todayStr()), corte2:window._adel(2), primero:d.lista[0].desc,
              banner:(document.getElementById('adm-stock')||{}).textContent||'', fabrica:STOCK_DIAS_FABRICA, colchon:STOCK_COLCHON };
   });
   chk('la fábrica tarda 3 días mientras no se mida (lo dijo el dueño)', r.fabrica===3 && r.eco.lead===3 && r.eco.leadMedido===false, r.eco.lead+' · medido '+r.eco.leadMedido);
@@ -277,8 +277,12 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var o=r.eco, dia=o.objDia||{}, n=26, mu=0, sq=0, i;
     for(i=0;i<n;i++) mu+=(dia[i]||0); mu/=n;
     for(i=0;i<n;i++) sq+=Math.pow((dia[i]||0)-mu,2);
-    var sd=Math.sqrt(sq/(n-1)), z=(mu*5>=4)?1.645:1.28, pp=mu*5+z*sd*Math.sqrt(5), S=Math.max(pp+mu, o.objTipico);
-    chk('🎯 el objetivo sale de la regla: max(μ·5 + z·σ·√5 + μ, pedido típico), z 1,645 porque μ·5 ≥ 4',
+    /* 📈 (01/11, §4od, a conciencia) + 5 días de venta si rota y no cae; + 1 si cae. (02/11) «Cae» = los últimos 15 días hábiles COMPLETOS
+       (sin hoy, que la prueba corre en día hábil: `r.hoyHabil`) venden menos del 75 % de los 26 completos: la serie trae 27 días. */
+    var d0=r.hoyHabil?1:0, mu15=0, muL=0; for(i=0;i<26;i++){ var v=(dia[d0+i]||0); muL+=v; if(i<15) mu15+=v; } mu15/=15; muL/=26;
+    var extra=(mu15 < 0.75*muL-1e-9) ? 1 : 5;
+    var sd=Math.sqrt(sq/(n-1)), z=(mu*5>=4)?1.645:1.28, pp=mu*5+z*sd*Math.sqrt(5), S=Math.max(pp+mu*extra, o.objTipico);
+    chk('🎯 el objetivo sale de la regla: max(μ·5 + z·σ·√5 + '+extra+'·μ ('+(extra===5?'rota y no cae':'cayendo')+'), pedido típico), z 1,645 porque μ·5 ≥ 4',
         o.objZ===1.645 && Math.abs(o.objSd-sd)<1e-9 && Math.abs(o.objS-S)<1e-9 && o.objetivo===Math.ceil(S-1e-9) && Math.abs(o.objPP-Math.min(S-1,pp))<1e-9,
         'z '+o.objZ+' · σ '+o.objSd+' · objetivo '+o.objetivo+' · punto de pedido '+o.puntoPedido);
   })();
@@ -588,8 +592,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     chk('⚠️ vende a los saltos (cv '+(Math.round(r.cv*100)/100)+', «'+r.txt+'»): el margen z·σ·√5 ('+(Math.round(m.objMargen*10)/10)+') es casi el DOBLE de lo que vende en 5 días ('+(Math.round(m.objMu*5*10)/10)+'), sin días de margen',
         r.txt==='venta a los saltos' && m.margen===0 && m.objZ===1.28 && Math.abs(m.objSd-sd)<1e-9 && Math.abs(m.objMargen-1.28*sd*Math.sqrt(5))<1e-9 && m.objMargen>1.9*m.objMu*5,
         'σ '+m.objSd+' · margen '+m.objMargen);
-    chk('🎯 …el pedido típico (q75 de las entregas de 8 semanas) es 5 y el objetivo sale de la cuenta, no del típico',
-        m.objTipico===5 && Math.abs(m.objS-(m.objMu*5+m.objMargen+m.objMu))<1e-9, 'típico '+m.objTipico+' · objetivo '+m.objetivo);
+    /* (01/11, §4od, a conciencia; 02/11: asertado, no leído de la página) El MEMORY vendió sus 15 u (lunes 5, sábado 9, miércoles 1) DENTRO
+       de los últimos 15 días hábiles completos: μ15 = 1 > 75 % de μ26 = 0,58 → ROTA y no cae → + 5 días de venta. */
+    chk('🎯 …el pedido típico (q75 de las entregas de 8 semanas) es 5; el MEMORY «rota» (sus 15 u caen en los últimos 15 días hábiles completos) y el objetivo sale de la cuenta con + 5 días, no del típico',
+        m.objTipico===5 && m.objClase==='rota' && m.objCaida===false && Math.abs(m.objS-(m.objMu*5+m.objMargen+m.objMu*5))<1e-9, 'típico '+m.objTipico+' · objetivo '+m.objetivo+' · clase '+m.objClase);
   })();
   chk('⚠️ …con lo libre justo en el punto de pedido ('+r.pp+') se pide hasta el objetivo; con una más, todavía no',
       r.enPP.aviso==='pedir' && r.enPP.pedir===Math.ceil(r.enPP.objS-r.pp-1e-9) && r.arriba.aviso==='' && r.arriba.pedir===0,

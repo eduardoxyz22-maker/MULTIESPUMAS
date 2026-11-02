@@ -13,7 +13,10 @@
    ⚠️ LO QUE ESTE TEST CUIDA, por orden de importancia:
    1. Con menos de 3 ENTREGAS del equipo no se estima ritmo: `porDia` = 0, el producto no
       entra en la lista de fábrica ni en el mensaje, aunque sean 45 unidades en una venta.
-   2. Los pedidos de EDUARDO no cuentan para nada de la reserva, aunque sean cinco entregas.
+   2. (hasta el 01/11) Los pedidos de EDUARDO no cuentan para nada de la reserva, aunque sean cinco entregas.
+      ⚠️ (01/11, §4od, cambiado A CONCIENCIA) El dueño dio vuelta esta mitad: Eduardo SÍ cuenta. Lo que queda afuera son los
+      MAYORISTAS (`STOCK_CLIENTES_FUERA`: Tienda Amiga, Copacaba, Luis Franco), lo venda quien lo venda. La sección 6 prueba
+      la MISMA mecánica con un mayorista en vez de Eduardo, y además que Eduardo a un cliente común ya rota.
    3. Pero lo VENDIDO Y SIN ENTREGAR se cubre igual, en los tres niveles: eso no es una
       estimación, está vendido, y si no hay stock hay que conseguirlo.
    4. Con 3 entregas o más del equipo, todo sigue como siempre: el ritmo vale y avisa.
@@ -148,9 +151,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y la explicación dice qué se hace, no repite el dato', /no se repone por las dudas/.test(F.MORFEO||''), (F.MORFEO||'').slice(-140));
   chk('el ARES, que rota, muestra sus 15 entregas y «Rotación alta»', /15 entregas/.test(F.ARES||'') && /Rotación alta/.test(F.ARES||''), (F.ARES||'').slice(0,120));
 
-  // ══ 6. Los pedidos de Eduardo no cuentan «ni para rotación ni nada» ═══════
-  /* HADES: Eduardo, 45 en 5 entregas · POSEIDON: Eduardo 80 + Carola 8 en UNA · ATENEA: Carola 1+1+1 */
-  console.log('\n── 6. Eduardo: sus pedidos son puntuales, aunque sean cinco ──');
+  // ══ 6. Los pedidos a los MAYORISTAS no cuentan «ni para rotación ni nada» (01/11, §4od: antes acá estaba Eduardo) ═══════
+  /* HADES: Eduardo a TIENDA AMIGA, 45 en 5 entregas · POSEIDON: María a COPACABA 80 + Carola 8 en UNA · ATENEA: Carola 1+1+1
+     · APOLO: Eduardo a un cliente común, 1+1+1 (desde el 01/11 SÍ rota) */
+  console.log('\n── 6. Mayoristas: sus pedidos son puntuales, aunque sean cinco (y Eduardo a un cliente común ya cuenta) ──');
   await page.evaluate(() => {
     var atras=function(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); };
     var P=function(o){ return Object.assign({id:'p'+Math.random().toString(36).slice(2),fecha:todayStr(),oc:'',
@@ -158,25 +162,27 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       saldo:0,ts:Date.now(),metodoPago:'',observaciones:'',estado:'',entregado:true,vehiculo:'',chofer:'',garantia:'',
       nota:'',acuenta:0,facturarA:'',nit:'',nroDia:1,verificado:false,fotos:[]},o); };
     var pr=function(d,n){ return [{desc:d,medida:'140x190',codigo:'',cant:n}]; };
-    for(var i=1;i<=5;i++) STATE.push(P({id:'hd'+i, fecha:atras(i), vendedor:'Eduardo Añez', productos:pr('HADES',9)}));
-    STATE.push(P({id:'ps1', fecha:atras(2), vendedor:'Eduardo Añez', productos:pr('POSEIDON',80)}));
+    for(var i=1;i<=5;i++) STATE.push(P({id:'hd'+i, fecha:atras(i), vendedor:'Eduardo Añez', cliente:'TIENDA AMIGA ER S.A.', productos:pr('HADES',9)}));
+    STATE.push(P({id:'ps1', fecha:atras(2), vendedor:'Maria Flores', cliente:'José Carlos Copacaba', productos:pr('POSEIDON',80)}));   // (02/11) vendido por una vendedora: FABRICA ahora saldría por «interno»
     STATE.push(P({id:'ps2', fecha:atras(3), productos:pr('POSEIDON',8)}));
     for(var j=1;j<=3;j++) STATE.push(P({id:'at'+j, fecha:atras(j*2), productos:pr('ATENEA',1)}));
+    for(var e=1;e<=3;e++) STATE.push(P({id:'ap'+e, fecha:atras(e*2), vendedor:'Eduardo Añez', cliente:'DON JOSE CARLOS', productos:pr('APOLO',1)}));   // (01/11) Eduardo a un cliente común: «JOSE CARLOS» suelto NO es Copacaba
     saveMirror();
   });
   r = await foto();
-  const HD=r.o.HADES||{}, PS=r.o.POSEIDON||{}, AT=r.o.ATENEA||{};
-  chk('⚠️ HADES: Eduardo vendió 45 en 5 entregas — se ve, pero NO es rotación',
-      HD.vend===45 && HD.n===5 && HD.vu===45 && HD.vr===0 && HD.nEq===0 && HD.rota===false && HD.porDia===0, 'vend='+HD.vend+' entregas suyas='+HD.n+' del equipo='+HD.nEq+' porDia='+HD.porDia);
+  const HD=r.o.HADES||{}, PS=r.o.POSEIDON||{}, AT=r.o.ATENEA||{}, AP=r.o.APOLO||{};
+  chk('⚠️ HADES: a Tienda Amiga se vendieron 45 en 5 entregas — se ve, pero NO es rotación (mayorista)',
+      HD.vend===45 && HD.n===5 && HD.vu===45 && HD.vr===0 && HD.nEq===0 && HD.rota===false && HD.porDia===0, 'vend='+HD.vend+' entregas suyas='+HD.n+' que cuentan='+HD.nEq+' porDia='+HD.porDia);
   chk('⚠️ …aviso «pedido único», sin pedir ni entrar al mensaje', HD.aviso==='unico' && HD.pedir===0 && !/HADES/.test(r.msg), HD.aviso+' · pedir '+HD.pedir);
-  chk('⚠️ POSEIDON: los 80 de Eduardo no cuentan, y los 8 de Carola son UNA entrega → tampoco rota',
-      PS.vend===88 && PS.vu===80 && PS.vr===8 && PS.nEq===1 && PS.rota===false && PS.aviso==='unico' && PS.pedir===0, 'vend='+PS.vend+' equipo='+PS.vr+' en '+PS.nEq+' entrega · '+PS.aviso);
+  chk('⚠️ POSEIDON: los 80 a Copacaba (cargados por una vendedora) no cuentan, y los 8 de Carola son UNA entrega → tampoco rota',
+      PS.vend===88 && PS.vu===80 && PS.vr===8 && PS.nEq===1 && PS.rota===false && PS.aviso==='unico' && PS.pedir===0, 'vend='+PS.vend+' cuentan='+PS.vr+' en '+PS.nEq+' entrega · '+PS.aviso);
   chk('ATENEA: 3 entregas del equipo, de 1 unidad cada una, SÍ rotan', AT.nEq===3 && AT.rota===true && AT.porDia>0, 'entregas='+AT.nEq+' rota='+AT.rota+' porDia='+AT.porDia);
+  chk('APOLO (01/11, §4od): 3 entregas de Eduardo a un cliente común SÍ rotan, y «JOSE CARLOS» suelto no es Copacaba', AP.nEq===3 && AP.rota===true && AP.porDia>0 && AP.vu===0, 'entregas='+AP.nEq+' rota='+AP.rota+' porDia='+AP.porDia+' unicos='+AP.vu);
   F = await filas();
-  chk('en la tabla, el HADES dice de quién es: «📦 Pedido único · Eduardo»', /📦 Pedido único · Eduardo/.test(F.HADES||'') && /Eduardo: pedido único/.test(F.HADES||''), (F.HADES||'').slice(0,160));
-  chk('…y el POSEIDON separa las cuentas: «Equipo: 8 en 1 entrega · Eduardo: 80»',
-      /Equipo: 8 en 1 entrega · Eduardo: 80 \(no cuentan para la reserva\)/.test(F.POSEIDON||''), (F.POSEIDON||'').slice(0,200));
-  chk('…pero como parte fue del equipo, su cartel NO dice «· Eduardo»', /📦 Pedido único/.test(F.POSEIDON||'') && !/Pedido único · Eduardo/.test(F.POSEIDON||''), (F.POSEIDON||'').slice(0,150));
+  chk('en la tabla, el HADES dice de quién es: «📦 Pedido único · mayorista»', /📦 Pedido único · mayorista/.test(F.HADES||'') && /mayorista: pedido único/.test(F.HADES||''), (F.HADES||'').slice(0,160));
+  chk('…y el POSEIDON separa las cuentas: «Cuentan: 8 en 1 entrega · mayorista: 80»',
+      /Cuentan: 8 en 1 entrega · mayorista: 80 \(no cuentan para la reserva\)/.test(F.POSEIDON||''), (F.POSEIDON||'').slice(0,200));
+  chk('…pero como parte fue del equipo, su cartel NO dice «· mayorista»', /📦 Pedido único/.test(F.POSEIDON||'') && !/Pedido único · mayorista/.test(F.POSEIDON||''), (F.POSEIDON||'').slice(0,150));
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

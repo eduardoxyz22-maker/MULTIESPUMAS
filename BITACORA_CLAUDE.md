@@ -1,6 +1,6 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-10-02** (§4hi).
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-11-02** (§4od del stock, arriba de §4oi).
 ⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
 mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz-b`, `## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
@@ -17207,6 +17207,60 @@ La 24 (menú al costado) NO. «ok todas» no es «publica»: queda en la rama. A
     con id `enc|…` al motor de la encuesta ANTES de `iaAlVuelo_`/`iaRepaso`; el estado por número NO va en Propiedades (9 KB): hoja «Encuestas»
     + caché. Alertas: cobro extra → `WA_AVISOS`/dueño; detalle o producto ≤2 → vendedora + logística con «Abrir ATC» (nunca sola); tarde/trato ≤2
     → logística; asesora ≤2 → solo el dueño; resumen los lunes 9:00. Tablero «⭐ Encuestas» en Administración (con la contraseña).
+
+### §4od (STOCK, la otra sesión) — 01-02/11: 🧑‍💼 Eduardo adentro, mayoristas e internos afuera, +5 días para lo que rota y no cae — PUBLICADO 02/11 (`cea26bd`)
+
+⚠️ **Hay DOS §4od.** Esta la escribió otra sesión directo en `main` (`cea26bd`, sesión `01To7Sz…`) sin ver que acá §4od ya era «📅 Administración abre en «Hoy»» (31/10, más abajo). En el código (`pedidos.html`, 27 comentarios) y en las pruebas (`test_demanda_objetivo_od.js` y 13 más), «§4od» es SIEMPRE esta, la del stock. Pasada a esta rama el 02/11 con su código y sus pruebas (`git apply` del diff `2fae574..cea26bd`, limpio).
+
+**De dónde salió.** El dueño pidió revisar si la proyección de stock de octubre se cumplió (solo colchones y somieres; sin almohadas,
+protectores ni accesorios). Octubre, sin mayoristas: proyectado 761 contra vendido 688 (+11 %; colchones +3,5 %, somieres +50 %); error por
+marca 16 %, por medida 26 %, por línea 83 %, por producto 98 %. Se probaron políticas de cobertura por clase y un modelo de ML: no ganaron.
+El dueño eligió **mantener la fórmula diaria del sistema** (`stockObjetivo`, §4ls) con ajustes, y que lo revisaran agentes antes de publicar.
+
+**Qué pidió el dueño:** (01/11) que los pedidos de Eduardo cuenten como demanda, salvo los que van a los mayoristas Tienda Amiga, José
+Carlos Copacaba (toda variante, incluida «COAPCABA») y Luis Franco, con cualquier vendedor; que lo que rota y no viene cayendo tenga +5 días
+de venta sobre el punto de pedido, lo que cae +1 y las almohadas con sus +5; el 24/09 como no laborable y SOMIER BAHIA BEIGE/NEGRO
+discontinuados. (02/11, tras la revisión independiente) ventana «cayendo» 15 días, umbral 0,75 sin histéresis; internos TODOS afuera con
+la identidad de Contabilidad; Eduardo → ROHO tienda adentro, explícito; la pista «¿cayó o faltó?»; Copacaba sin `\b`. «Ok publica».
+
+**Dónde:** `pedidos.html` solamente (el `.gs` no cambia). `STOCK_CLIENTES_FUERA`, `STOCK_VENDEDORES_FUERA`, `stockClienteFuera`,
+`stockEsInterno` (sobre `cliEsInterno`), `stockPedidoUnico` (orden nuevo), `stockData` (`vendidosFuera`, `vendidosInt`, `objNoHay`,
+`objAPedido`, un día más de `objDia`), `stockObjVentana` (`hoyHabil`, `nSerie`), `stockUnicoEtq`/`stockUnicoQuien`,
+`STOCK_OBJ_EXTRA_ROTA`/`STOCK_OBJ_CAIDA_VENTANA`/`STOCK_OBJ_CAIDA_UMBRAL`, `stockObjetivo` (`objClase`, `objCaida`, `objMuCorta`,
+`objMuLarga`, `objSinHoy`), `stockObjFalto`/`stockObjFaltoTxt`/`stockObjClaseHtml`/`stockObjClasePorque` (nuevas), `stockObjCuentaHtml`,
+`stockObjReglaTxt`, `stockPlanHtml` (celda «Tener» y leyenda), CSS `.pl-clase`/`.pl-cl-*`, `FERIADOS_PASADOS`,
+`STOCK_DESC_NOMBRES`/`stockCariocaDescontinuado`, y los textos que decían «del equipo»/«Eduardo». `node --check` de los 4 bloques: bien.
+
+**Revisión con Opus antes de publicar (02/11):** sin errores en los índices ni en la regla. Arreglado: (1) un domingo o feriado lo
+vendido HOY caía en el último día hábil (`pos[hoy]=0`) y la prueba de «cayendo» lo tomaba como día completo (un «cayendo» podía pasar a
+«rota» durante el día): ahora se anota aparte (`o.objHoyNoHabil`) y se descuenta en la prueba; la μ del objetivo lo sigue incluyendo.
+Con la planilla del 01/11 no cambia ningún número. (2) Textos de pantalla que quedaron viejos: «Banzer o PTF» («las del equipo y las de
+Eduardo a Multicenter»), la estimación «30 d» de Qué producir, «§4od» a la vista en la base de rotación, y las leyendas que no nombraban
+a los pedidos internos.
+
+**Lo que sigue abierto:** Multicenter vendido por FABRICA (hoy sale por interno: impacto 0); la RPT de Tiendas Roho (no es almohada, no
+cuenta; pendiente desde §4lt); la histéresis y «no cae si el stock estuvo en 0» (necesitan las fotos de la hoja «Historial stock»); medir
+cada semana lo que el plan dijo contra lo que pasó (hace falta guardar la foto diaria del plan: hoy no queda en ningún lado).
+
+**Números del 01/11 (planilla real, reloj 01/11 12:00):** colchones + somieres, «7 / 15 / 30 días / diciembre / 15 días + diciembre»:
+antes 42 / 145 / 387 / 674 / 819 → **64 / 187 / 430 / 685 / 872**. Por fábrica (c+s, 15 d + dic): Industrias Moreno 478 → 517,
+Multiespumas 341 → 355. Almohadas 425 → 429. Solo la demanda nueva (Eduardo adentro +44, internos afuera −41) deja el total c+s en 819
+pero lo mueve entre fábricas; los +5 ponen casi todo el aumento. Σ objetivo de los que rotan 196 → 246. Pierden el candado ORO ANATÓMICO
+140, PILLOW FLEX 140 y TITANIO LATEX 140 (una de sus 3 entregas era de FABRICA/ALBA); «Se corta» cambia en 8 productos. Rota 25, cayendo 3
+(ORTOPÉDICO SUEÑA 140, SEMIORTOP. 140, ESPECIAL SEMIORTOP. 140: con stock y sin «✗ no hay», caída real). El 24/09 y Bahía: 0 u hoy.
+
+**Pruebas:** nueva `tests/test_demanda_objetivo_od.js` (53, sin corte temprano; M1c = el domingo). Cambiadas A CONCIENCIA con su comentario: regla «Eduardo
+afuera» → fixture mayorista + «Eduardo a un cliente común cuenta» (`test_rotacion` §6, `test_eduardo_multicenter`, `test_banzer_ptf` §2,
+`test_adm_alta` §3, `test_stock_final_cuenta` FC4, `test_circuito.cjs`, `test_stock_reunion` RN-U37); números exactos +1 → +5 y la caída
+sobre 15 días completos (`test_stock_rev2_cuanto`, `test_producir`, `test_proyeccion_suma`, `test_stock_rev2_calculo` A, `test_stock`); el
+24/09 (`test_proyeccion` §18, `test_rev30_proyeccion` §2). Batería entera con `-P 2`, la misma historia de git en las dos copias: antes 306
+suites, después 307, mismas rojas de antes (`test_avisa_cuando`, `test_concurrencia`, `test_panel_meta`, y `test_kommo`/`test_traer` por
+falta de módulos); las que salieron rojas solo en alguna corrida con la máquina cargada dan verde corridas solas (`test_astra_ficha_costado` 16/0,
+`test_eduardo_multicenter` 43/0, `test_sinmonto` 43/0; `test_velocidad_4oa` 30/0 en la corrida final). Corrida final: 307 suites, 9.592 bien.
+
+**Riesgos:** «Pedir 7 días» sube ~22 u de golpe el primer día (c+s 42 → 64); todos F5 al publicar (nada del `.gs` cambia); un mayorista
+nuevo va en `STOCK_CLIENTES_FUERA`; una venta grande suelta de Eduardo a un cliente común sí infla el mes de lo que no rota (la protección
+de §4gm era «Eduardo afuera»).
 
 ### §4oi — 🏭 LA FÁBRICA DE EDUARDO CON VIDA (31/10 → 01/11; cuatro vueltas con el dueño; PUBLICADO 01/11 ~21:32 de Bolivia, `main` = `2fae574`, versión 2026-11-01-a)
 La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedidos del dueño, en orden:

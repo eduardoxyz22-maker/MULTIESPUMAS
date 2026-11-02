@@ -99,7 +99,10 @@ function PREPARAR(){
     /* 🎯 (18/10, §4ls, decisión 4, a conciencia) Con el punto de pedido y el objetivo (la venta de los últimos 26 días hábiles), las 12
        de antes en 6 entregas pedían solo 2 (las traía Moreno) y el caso dejaba de tener algo para fabricar. Ahora son 24 en 12 entregas
        (6 en los últimos 15 días: rotación media, 0,8 por día): objetivo 10, punto de pedido 8; con 6 en PTF y 2 en Moreno se pide
-       10 − 6 = 4: traé 2 de Moreno y pedí 2, como antes. */
+       10 − 6 = 4: traé 2 de Moreno y pedí 2, como antes.
+       📈 (01/11, §4od, a conciencia) Rota y no viene cayendo → objetivo = punto de pedido + 5 días de venta: 13 (antes 10), punto de
+       pedido 8; 13 − 6 = 7: traé 2 de Moreno y pedí 5. Lo que esta sección cuida (programar la recogida NO esconde lo que falta
+       fabricar) es lo mismo con 5 que con 2. */
     var ventas=_ventas('CH1129','COLCHON TITANIO LATEX','140x190', ['2026-09-17','2026-09-19','2026-09-22','2026-09-24','2026-09-29','2026-10-01','2026-10-05','2026-10-07','2026-10-09','2026-10-12','2026-10-13','2026-10-15'], 2);
     await _cargar(ventas, _stock(function(st){ st.c.u[K]=6; st.g[_IM].u[K]=2; }));
     var o=_fila(K), antes={ aviso:o.aviso, fab:o.fabricar, rec:o.recoger, acc:sfAccion(o), grupo:planGrupoDe(o) };
@@ -115,13 +118,13 @@ function PREPARAR(){
     return { antes:antes, sug:sug, aviso:o2.aviso, fab:o2.fabricar, rec:o2.recoger, cam:o2.enCamino, acc:sfAccion(o2), grupo:planGrupoDe(o2),
              enCinta:/TITANIO LATEX/.test(cinta), plan:plan, casilla:casilla, copia:window._copiado, hoy:/TITANIO LATEX/.test(hoyTxt) };
   });
-  chk('A0. (control) antes de tocar nada: «🏭 Pedí 2 esta semana · traé 2 de Moreno», aviso pedir',
-      a.antes && a.antes.aviso==='pedir' && a.antes.fab===2 && a.antes.rec===2 && /Pedí 2 esta semana · traé 2 de Moreno/.test(a.antes.acc), a.antes||a);
-  chk('A1. programar la recogida propuesta (2) deja el aviso en «pedir» (no «🚚 Ya pedido»): falta fabricar 2', a.sug===2 && a.cam===2 && a.aviso==='pedir' && a.fab===2 && a.rec===0, a);
-  chk('A2. …y la acción dice «🏭 Pedí 2 esta semana · ya viene la recogida de 2»', /🏭 Pedí 2 esta semana · ya viene la recogida de 2/.test(a.acc||''), a.acc);
+  chk('A0. (control) antes de tocar nada: «🏭 Pedí 5 esta semana · traé 2 de Moreno», aviso pedir',
+      a.antes && a.antes.aviso==='pedir' && a.antes.fab===5 && a.antes.rec===2 && /Pedí 5 esta semana · traé 2 de Moreno/.test(a.antes.acc), a.antes||a);
+  chk('A1. programar la recogida propuesta (2) deja el aviso en «pedir» (no «🚚 Ya pedido»): falta fabricar 5', a.sug===2 && a.cam===2 && a.aviso==='pedir' && a.fab===5 && a.rec===0, a);
+  chk('A2. …y la acción dice «🏭 Pedí 5 esta semana · ya viene la recogida de 2»', /🏭 Pedí 5 esta semana · ya viene la recogida de 2/.test(a.acc||''), a.acc);
   chk('A3. …el producto sigue en el grupo «🏭 esta semana» del Plan (no en el chip «✅ Alcanza») y en la cinta', a.grupo==='sem' && a.enCinta===true, { grupo:a.grupo, cinta:a.enCinta });
-  chk('A4. …con la casilla «Ya pedí 2»', a.casilla===true && /Ya pedí 2/.test(a.plan||''), a.plan);
-  chk('A5. …y «📋 Copiar pedido a fábrica» lo pide («pedir 2», con los 2 en camino)', /PEDIDO A FÁBRICA[\s\S]*TITANIO LATEX[\s\S]*pedir 2[\s\S]*2 en camino/.test(a.copia||''), (a.copia||'').slice(0,300));
+  chk('A4. …con la casilla «Ya pedí 5»', a.casilla===true && /Ya pedí 5/.test(a.plan||''), a.plan);
+  chk('A5. …y «📋 Copiar pedido a fábrica» lo pide («pedir 5», con los 2 en camino)', /PEDIDO A FÁBRICA[\s\S]*TITANIO LATEX[\s\S]*pedir 5[\s\S]*2 en camino/.test(a.copia||''), (a.copia||'').slice(0,300));
 
   const a6 = await E(async () => {
     var K=_k('CH1129','COLCHON TITANIO LATEX','140x190');

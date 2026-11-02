@@ -4,8 +4,10 @@
    terminados fábrica, según los focos de calor de entrega y rotación, para ser más eficientes y tener el stock a la mano
    según la zona de entrega.» Lo que este test cuida (con ubicaciones INVENTADAS: el repo es público):
    1. El botón está en la barra de Stock y abre la pantalla, sin errores.
-   2. Qué entregas cuentan: las que miden la rotación de los últimos 60 días (equipo + Eduardo a Multicenter). Afuera:
-      RPT, las otras de Eduardo, ATC, ventas de tienda, lo de hace más de 60 días y lo que todavía no se entregó.
+   2. Qué entregas cuentan: las que miden la rotación de los últimos 60 días (equipo + Eduardo). Afuera:
+      RPT, los mayoristas (Tienda Amiga, Copacaba, Luis Franco), ATC, ventas de tienda, lo de hace más de 60 días y lo que todavía no se entregó.
+      (01/11, §4od, a conciencia: hasta el 01/11 «las otras de Eduardo» quedaban afuera; el dueño dio vuelta esa regla en `stockPedidoUnico`,
+      que es la MISMA que usa esta pantalla. El fixture que «no cuenta» pasó de Eduardo a un cliente común → Eduardo a TIENDA AMIGA.)
    3. De qué lado: el depósito más cerca en línea recta; «en el medio» = mitad y mitad; sin pin, por la zona escrita
       (aprendida de los pedidos de esa zona que SÍ tienen pin, sin mayúsculas); sin pin ni zona conocida, no cuenta.
    4. Qué hacer: «pasar N a Banzer» solo con lo que a PTF le sobra; si no sobra, «lo próximo que llegue»; Banzer de más =
@@ -114,7 +116,7 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
       _P({ fecha:_d(5),  zona:'Zona Rara', productos:[A(1)] }),
       // …y lo que NO cuenta (todo cerca de Banzer, 5 unidades: si contara, cambiaba el reparto)
       _P({ fecha:_d(4),  oc:'RPT 10-001', cliente:'Mia Plaza', zona:'Norte', maps:_q(cb[3][0],cb[3][1]), productos:[A(5)] }),
-      _P({ fecha:_d(4),  vendedor:'Eduardo Añez', cliente:'JUAN PEREZ', zona:'Norte', maps:_q(cb[3][0],cb[3][1]), productos:[A(5)] }),
+      _P({ fecha:_d(4),  vendedor:'Eduardo Añez', cliente:'TIENDA AMIGA E.R. S.A.', zona:'Norte', maps:_q(cb[3][0],cb[3][1]), productos:[A(5)] }),   // (01/11, §4od) un mayorista; Eduardo a un cliente común ya cuenta
       _P({ fecha:_d(4),  oc:'ATC 10-001', zona:'Norte', maps:_q(cb[3][0],cb[3][1]), productos:[A(5)] }),
       _P({ fecha:'', direccion:'SALIÓ DE TIENDA · Central', zona:'TIENDA', ts:new Date('2026-10-05T12:00:00-04:00').getTime(), productos:[A(5)] }),
       _P({ fecha:_d(70), zona:'Norte', maps:_q(cb[4][0],cb[4][1]), productos:[A(5)] }),
@@ -187,7 +189,7 @@ const PAGINA = path.resolve(process.env.PEDIDOS || 'pedidos.html');
              a:{ u:fa.u, n:fa.n, ub:fa.ub, sB:fa.sB, uSin:fa.uSin } };
   });
   chk('…ya con el servidor: TEST1 entra por el mapa y MALO queda sin ubicar (18 · 1 · 2)', r.T.n===21 && r.T.mapa===18 && r.T.zona===1 && r.T.sin===2 && r.T.pend===0 && r.T.fallo===1, J(r.T));
-  chk('⚠️ TITANIO ICE: 9 unidades en 5 entregas — sin la RPT, Eduardo a otro cliente, la ATC, la venta de tienda, la de hace 70 días ni la de mañana',
+  chk('⚠️ TITANIO ICE: 9 unidades en 5 entregas — sin la RPT, Eduardo a Tienda Amiga (mayorista), la ATC, la venta de tienda, la de hace 70 días ni la de mañana',
     r.a.u===9 && r.a.n===5, J(r.a));
   chk('…6 de sus 8 unidades ubicadas cerca de Banzer (75 %) y 1 sin ubicar', Math.abs(r.a.sB-0.75)<1e-9 && Math.abs(r.a.ub-8)<1e-9 && r.a.uSin===1, J(r.a));
   chk('una entrega justo en el medio cuenta mitad y mitad', r.T.medio===1, J(r.T));

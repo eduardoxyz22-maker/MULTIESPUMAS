@@ -201,7 +201,10 @@ const BASE = `
   // ═══ 3. El plan del mes sin Eduardo ni pedidos puntuales ═══════════════════════
   /* (28/09, §4gm) El dueño pidió que las ventas de Eduardo A MULTICENTER sí entren: `conEdu` pasó a Eduardo → otro
      cliente (sigue afuera) y `conEduMc` es la excepción, que ahora SÍ suma al índice del mes. Lo demás, igual. */
-  console.log('\n── 3. «Qué producir» no cuenta a Eduardo (salvo a Multicenter) ni a los pedidos puntuales ──');
+  /* (01/11, §4od, a conciencia) El dueño dio vuelta la regla: Eduardo SÍ cuenta, y lo que queda afuera son los MAYORISTAS
+     (`STOCK_CLIENTES_FUERA`). `conEdu` pasa a ser Eduardo → TIENDA AMIGA (afuera, como antes lo era Eduardo entero) y `conEduOtro`
+     es Eduardo → un cliente común, que desde hoy ENTRA al índice del mes (es la consecuencia aceptada de la regla nueva). */
+  console.log('\n── 3. «Qué producir» no cuenta a los mayoristas ni a los pedidos puntuales; Eduardo sí (01/11) ──');
   {
     const page = await nueva();
     const r = await page.evaluate((base) => {
@@ -219,17 +222,19 @@ const BASE = `
         return { mes:f&&f.mes, mesNec:f&&f.mesNec, est:f&&f.rango?f.rango.est.map(function(e){ return e.n+'='+Math.round(e.v*10)/10; }):null, v30:o.v30, porDiaMes:o.porDiaMes, idx:(ventasPanelIndex()[K]||{})['2026-08']||0 };
       };
       var sin=armar([]);
-      var conEdu=armar([ window._P({id:'edu', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'CLIENTE MAYORISTA', productos:H(40)}) ]);
+      var conEdu=armar([ window._P({id:'edu', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'TIENDA AMIGA', productos:H(40)}) ]);
+      var conEduOtro=armar([ window._P({id:'eduo', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'HOTEL LOS TAJIBOS', productos:H(40)}) ]);
       var conEduMc=armar([ window._P({id:'edumc', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'MULTICENTER', productos:H(40)}) ]);
       var conPunt=armar([ window._P({id:'mc', fecha:'2026-08-20', ts:ago, vendedor:'Carola Chavez', cliente:'MULTICENTER', productos:H(40)}) ]);
       var conRpt=armar([ window._P({id:'rpt', fecha:'2026-08-20', ts:ago, oc:'RPT 08-001', cliente:'Charcas', productos:H(40)}) ]);
       abrirStock(); var el=document.getElementById('producir'), como=el&&el.querySelector('.prod-como');   // (20/10) la explicación quedó en «ℹ️ Cómo sale cada número»
       var cabecera=(como||el)?(como||el).textContent.replace(/\s+/g,' '):''; closeStock();
-      return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,900) };   // (17/10, §4lr U7) el cartel dice además la excepción de las almohadas: el texto creció
+      return { sin:sin, conEdu:conEdu, conEduOtro:conEduOtro, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,900) };   // (17/10, §4lr U7) el cartel dice además la excepción de las almohadas: el texto creció
     }, BASE);
     /* (§4iz, E1-6) «mes>0» se fue: el 20/09 lo que «15 días» manda a producir ya llega en octubre y el mes no lo vuelve a pedir. */
     chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6, J(r.sin));
-    chk('⚠️ una venta única de 40 de EDUARDO a otro cliente en agosto no cambia «producir el mes que viene» (antes subía de 9 a 24)', r.conEdu.idx===6 && r.conEdu.mes===r.sin.mes && r.conEdu.mesNec===r.sin.mesNec && r.conEdu.v30===r.sin.v30, 'sin: '+J(r.sin)+' · con Eduardo: '+J(r.conEdu));
+    chk('⚠️ una venta única de 40 de EDUARDO a TIENDA AMIGA (mayorista) en agosto no cambia «producir el mes que viene» (antes subía de 9 a 24)', r.conEdu.idx===6 && r.conEdu.mes===r.sin.mes && r.conEdu.mesNec===r.sin.mesNec && r.conEdu.v30===r.sin.v30, 'sin: '+J(r.sin)+' · con Eduardo a Tienda Amiga: '+J(r.conEdu));
+    chk('🧑‍💼 (01/11, §4od) la misma venta de EDUARDO a un cliente común SÍ entra al índice de agosto (6 + 40); el mes de lo que ROTA sale del objetivo y no se mueve', r.conEduOtro.idx===46 && r.conEduOtro.mesNec===r.sin.mesNec, 'con Eduardo a otro cliente: '+J(r.conEduOtro));
     /* Números exactos: una compra única de 40 en agosto lleva octubre de 9 a 24 (60 d 8,7 → 29,1 · 90 d 12,2 → 25,8, y la
        mediana salta a la tendencia). Por eso el dueño NO carga al panel las compras grandes y sueltas (§4gm).
        ⚠️ (30/09, §4hd, a conciencia) 9 → 18: el histórico ya no suma al TITANIO ICE 160x190 la medida especial 160X200
@@ -243,8 +248,8 @@ const BASE = `
         r.conEduMc.idx===46 && r.sin.est===null && r.conEduMc.mesNec===r.sin.mesNec && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
     chk('…ni un pedido PUNTUAL (MULTICENTER de otro vendedor) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
     chk('…ni una reposición de tienda', r.conRpt.idx===6 && r.conRpt.mes===r.sin.mes, 'con RPT: '+J(r.conRpt));
-    chk('la cabecera del cuadro dice la verdad: equipo + Eduardo a Multicenter, sin otras puntuales ni RPT, y qué productos entran',
-        /ventas del equipo \+ ventas de Eduardo a Multicenter/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /Productos que rotan/.test(r.cabecera), r.cabecera.slice(0,320));   // 🔁 (18/10, §4ls Mes-VM9, a conciencia) ya no entra lo que no rota por «el mismo mes del año pasado»
+    chk('la cabecera del cuadro dice la verdad: equipo + Eduardo, sin los mayoristas, sin otras puntuales ni RPT, y qué productos entran',
+        /ventas del equipo \+ ventas de Eduardo/.test(r.cabecera) && /sin los mayoristas \(Tienda Amiga, Copacaba, Luis Franco\)/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /Productos que rotan/.test(r.cabecera), r.cabecera.slice(0,320));   // 🔁 (18/10, §4ls Mes-VM9, a conciencia) ya no entra lo que no rota por «el mismo mes del año pasado»
     await page.close();
   }
 

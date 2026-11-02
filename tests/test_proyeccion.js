@@ -654,7 +654,7 @@ function PREPARAR(){
   }
 
   // ═══ 18. 📅 Los feriados que ya pasaron (29/09, §4gy) ══════════════════════════════════════════
-  console.log('\n── 18. Los feriados que ya pasaron: 6 y 7/08 y 25/09 cuentan para la proyección, no para las entregas ──');
+  console.log('\n── 18. Los feriados que ya pasaron: 6 y 7/08, 24 y 25/09 cuentan para la proyección, no para las entregas ──');
   r = await ev(() => {
     var real=window._FPR, antes=FERIADOS_PASADOS; if(real) FERIADOS_PASADOS=real;
     var out={ hay:!!real, ago:pryHabiles('2026-08-01','2026-08-31'), sep:pryHabiles('2026-09-01','2026-09-30'), oct:pryHabiles('2026-10-01','2026-10-31'),
@@ -662,7 +662,8 @@ function PREPARAR(){
     FERIADOS_PASADOS=antes;
     return out;
   });
-  chk('agosto de 2026 tuvo 24 días hábiles (sin el 6 y el 7), septiembre 25 (sin el 25) y octubre 27', r.hay && r.ago===24 && r.sep===25 && r.oct===27, r);
+  /* (01/11, §4od) El dueño sumó el 24/09 a `FERIADOS_PASADOS` (Día de Santa Cruz; el 25 fue el puente): septiembre pasa de 25 a 24 días hábiles. */
+  chk('agosto de 2026 tuvo 24 días hábiles (sin el 6 y el 7), septiembre 24 (sin el 24 ni el 25) y octubre 27', r.hay && r.ago===24 && r.sep===24 && r.oct===27, r);
   chk('…y las entregas no miran atrás: el cupo del 25/09 no cambia (el cuadrito y los cupos usan `FERIADOS`, que es para adelante)', r.cupo25===12, r);
 
   r = await page.evaluate(() => {

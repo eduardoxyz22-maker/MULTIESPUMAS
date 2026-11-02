@@ -11,7 +11,8 @@
    FC3  VI-8/VI-10  La tabla grande dice lo mismo que el Plan: con el plan pidiendo o con rotación en 30 días, «📦 Sin rotación en 15 días»
                (nunca «📦 Pedido único … no se repone»); sin plan y con rotación en 30 días, «por ahora alcanza para el mes».
    FC4  VI-9   «💤 Sobra» medido con el ritmo de 15 días: sin el reloj «al ritmo del mes» (sin nada entregado en 15 días el reloj sigue, VV6)
-               y «salió en N entregas DEL EQUIPO (+M de Eduardo, que no cuentan)».
+               y «salió en N entregas que cuentan (+M de un mayorista, que no cuentan)». (01/11, §4od, a conciencia: antes decía
+               «del equipo (+M de Eduardo)»: desde el 01/11 Eduardo cuenta y lo excluido son los mayoristas, `vendidosFuera`.)
    FC5  VI-2   El termómetro: traer de Moreno = el día que lo recoge logística (`saldoDiaRecoge`, el del cuadrito); pedir a fábrica =
                `stockEntregaDesde` (la de la barra). Nunca un domingo.
    FC6  VI-3   «📋 Copiar el pedido para fábrica» y «Cómo se calcula» dicen el MISMO «se corta» que el Plan (`stockCorteVer`).
@@ -125,8 +126,8 @@ async function abrir(browser, reloj){
     // Rota en 30 días y el plan NO pide nada (lo mismo con 20 en PTF): ni «Pedido único» ni «no se repone».
     out.sinPlan=sfAccion(Object.assign({}, o, { aviso:'unico', rotaMes:true, _pQuin:0, _pMes:0 }));
     out.unicoDeVerdad=sfAccion(Object.assign({}, o, { aviso:'unico', rotaMes:false, _pQuin:0, _pMes:0 }));
-    // 💤 Sobra con 2 entregas del equipo y 1 de Eduardo, y el ritmo del mes que daría 39 días.
-    var sob={ aviso:'sobra', rota:false, vendidos:3, nVentas:3, nVentasRotacion:2, vendidosUnicos:1, vendidosRpt:0, vendidosPunt:0, dias:null, corte:null, porDiaMes:1/3, porDiaTodo:0.2, paraSalir:13, enOtros:0, enCamino:0, comp:0, compPor:{}, _pQuin:0, _pMes:0, pedidos:[] };
+    // 💤 Sobra con 2 entregas del equipo y 1 a un mayorista (01/11, §4od: antes «de Eduardo»), y el ritmo del mes que daría 39 días.
+    var sob={ aviso:'sobra', rota:false, vendidos:3, nVentas:3, nVentasRotacion:2, vendidosUnicos:1, vendidosRpt:0, vendidosPunt:0, vendidosFuera:1, dias:null, corte:null, porDiaMes:1/3, porDiaTodo:0.2, paraSalir:13, enOtros:0, enCamino:0, comp:0, compPor:{}, _pQuin:0, _pMes:0, pedidos:[] };
     out.relojSobra=sfReloj(Object.assign({}, o, sob)).txt;
     // Sin nada entregado en 15 días el ritmo del mes es el único que hay: sigue (VV6).
     out.relojSinEntregas=sfReloj(Object.assign({}, o, sob, { porDiaTodo:0 })).txt;
@@ -140,8 +141,8 @@ async function abrir(browser, reloj){
   chk('control: lo que no rota ni en 15 ni en 30 días sigue «📦 Pedido único: no se repone»', r && r.unicoDeVerdad==='📦 Pedido único: no se repone', r && r.unicoDeVerdad);
   chk('FC4 (VI-9) «💤 Sobra» medido con el ritmo de 15 días no muestra además el reloj «al ritmo del mes»', r && !/al ritmo del mes/.test(r.relojSobra||''), r && r.relojSobra);
   chk('control (VV6): sin nada entregado en 15 días el reloj «al ritmo del mes» sigue', r && /Se corta en ~\d+ días, al ritmo del mes/.test(r.relojSinEntregas||''), r && r.relojSinEntregas);
-  chk('FC4 (VI-9) «salió en 2 entregas del equipo (+1 de Eduardo, que no cuenta)», nunca «en 3 entregas: no es rotación»',
-    r && /salió en 2 entregas del equipo \(\+1 de Eduardo, que no cuenta\)/.test(r.filaSobra||'') && !/en 3 entregas/.test(r.filaSobra||''), r && r.filaSobra);
+  chk('FC4 (VI-9) «salió en 2 entregas que cuentan (+1 de mayorista, que no cuenta)», nunca «en 3 entregas: no es rotación»',
+    r && /salió en 2 entregas que cuentan \(\+1 de mayorista, que no cuenta\)/.test(r.filaSobra||'') && !/en 3 entregas/.test(r.filaSobra||''), r && r.filaSobra);
   await page._ctx.close();
 
   // ═══ FC5/FC6/FC7. VI-2, VI-3, VI-4 — sábado 17/10 12:00 ═══
