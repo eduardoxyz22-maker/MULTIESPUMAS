@@ -2489,8 +2489,8 @@ correo + el mensaje de **WhatsApp**.
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
 **👥 Desde el 02/11/2026 (dueño): Andrea Orias y Fabián Godoy, los dos de Heaven** — Andrea en la **Tienda Banzer** y Fabián en **Ventura Mall**,
 tiendas nuevas. Un vendedor nuevo va en: `VENDEDORES`, `MARCAS`, `BANCOS_POR_VENDEDOR`, `VENDEDOR_SUCURSAL` (pedidos.html) y en el `.gs`
-`WA_MARCAS` + `WA_VENDEDOR_HOMBRE` (servidor **`2026-11-02-a`**, solo eso: el dueño lo implementa; con el de antes el bot los firma
-«Multiespumas» y a Fabián le dice «tu vendedora»). Su WhatsApp para el bot: la propiedad `WA_VENDEDORAS` (la pone el dueño).
+`WA_MARCAS` + `WA_VENDEDOR_HOMBRE` (servidor **`2026-11-02-a`**, solo eso; IMPLEMENTADO por el dueño, el 04/11 ya contesta `2026-11-02-a`; volver atrás: ✏️ a la
+versión anotada Y pegar la 30-a de `89ca847…`). Su WhatsApp para el bot: la propiedad `WA_VENDEDORAS` (la pone el dueño).
 ⚠️ **«Tienda Banzer» lleva «Tienda» en el nombre A PROPÓSITO**: «Banzer» a secas es el ALMACÉN de distribución. `recogeTiendaDe` busca
 primero el nombre entero y `tiendaConPref` no repite «Tienda»; el Excel «TIENDA BANZER» es de la tienda y el «Almacen Distribucion Banzer»
 sigue siendo de fábrica. Las dos tiendas nuevas van SIN zona ni pin hasta que el dueño los dé (§4dn). El dashboard de Kommo
