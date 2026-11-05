@@ -51471,7 +51471,18 @@ var ASIS_SINONIMOS={ plata:'pago cobro', cobrar:'pago cobro', cobre:'pago cobro'
   ubicacion:'maps', direccion:'maps', ruta:'recorrido', mapa:'recorrido', stock:'saldo', queda:'saldo', fabrica:'produccion', delivery:'flete',
   envio:'flete', sucursal:'rpt', tienda:'rpt', borrar:'editar', error:'editar corregir', equivoque:'editar corregir', aprender:'recorrido guiado',
   mail:'correo', email:'correo', gmail:'correo', outlook:'correo', stc:'costo', costo:'stc' };   // ⚠️ no «contra»: está adentro de «encontrar»
-var ASIS_COMUNES=['como','hago','que','el','la','los','las','un','una','de','del','mi','mis','por','para','en','se','me','lo','al','yo','con'];
+var ASIS_COMUNES=['como','hago','que','el','la','los','las','un','una','de','del','mi','mis','por','para','en','se','me','lo','al','yo','con',
+  /* §4ok-E2 (05/11) más palabras vacías: las de preguntar y los verbos que no dicen QUÉ se quiere hacer (si no, con el puntaje mínimo
+     «¿dónde pongo la plata?» dejaba de encontrar el pago) */
+  'donde','cual','cuales','cuanto','cuanta','quiero','puedo','tengo','debo','necesito','hacer','hace','pongo','poner','es','son','y','o','a','su','sus',
+  'tu','tus','le','les','esta','este','esto','eso','hay','ya','no','si','porfa','favor'];
+/* §4ok-E2 (05/11) EL PUNTAJE MÍNIMO. Bloki encontraba SIEMPRE algo, aunque no tuviera que ver («cómo anulo una venta» → «¿Cómo cargo un
+   pedido nuevo?», por «venta»), así que nunca anotaba lo que no supo (`__asis_preguntas__`, §4kh K) y el dueño no se enteraba de qué falta
+   explicar. Ahora una respuesta sale solo si coinciden MÁS DE LA MITAD de las palabras de la pregunta (sin las vacías de `ASIS_COMUNES`):
+   «anulo» no está en ninguna, «venta» sí → 1 de 2 → «no sé» y se anota. Para no perder lo que sí sabe, una palabra también vale por su raíz
+   («edito» → «editar», «registro» → «registrar», `asisRaiz`), como el error de tipeo. */
+var ASIS_MIN_PARTE=0.5;
+function asisRaiz(w){ return w.length>=5 ? w.slice(0, Math.max(4, w.length-2)) : ''; }
 /* (12/10, dueño: «eso no es para los vendedores, solo para logística y administración») Las preguntas con `solo:'adm'` (asignar camión,
    cierre de entregas) las ve solo quien entró como logística o Administración (§4ka), o tiene la clave puesta o el aparato marcado de
    administración (`me_adm_dev`). Un vendedor no las ve ni en la lista ni con «Mostrame dónde». */
@@ -51487,13 +51498,14 @@ function asisBuscar(q){
     if(h.indexOf(w)>=0) return 1;
     var sin=ASIS_SINONIMOS[w]; if(sin && sin.split(' ').some(function(x){ return h.indexOf(x)>=0; })) return 1;
     if(w.length<4) return 0;
-    var max=w.length>=7 ? 2 : 1;
-    return hw.some(function(x){ return x.length>=4 && nxDist(w, x, max)<=max; }) ? .8 : 0;
+    var max=w.length>=7 ? 2 : 1, rz=asisRaiz(w);
+    return hw.some(function(x){ return x.length>=4 && (nxDist(w, x, max)<=max || (rz && x.indexOf(rz)===0)); }) ? .8 : 0;
   };
+  var min=t.length*ASIS_MIN_PARTE;   // §4ok-E2: más de la mitad de las palabras
   return ASIS_AYUDA.map(function(a, i){ if(a.solo==='adm' && !veAdm) return { i:i, s:0 };
       var h=sinTildes((a.q+' '+a.k).toLowerCase()), hw=h.replace(/[¿?¡!.,()«»]/g,' ').split(/\s+/);
       return { i:i, s:t.length ? t.reduce(function(s2, w){ return s2+vale(w, h, hw); }, 0) : 1, aca:a.v===vis ? 1 : 0 }; })
-    .filter(function(x){ return x.s>0; }).sort(function(a, b){ return b.s-a.s || b.aca-a.aca || a.i-b.i; }).map(function(x){ return x.i; });
+    .filter(function(x){ return x.s>0 && x.s>min; }).sort(function(a, b){ return b.s-a.s || b.aca-a.aca || a.i-b.i; }).map(function(x){ return x.i; });
 }
 /* ---------- señalar algo en la pantalla ---------- */
 var ASIS_FOCO=null;
