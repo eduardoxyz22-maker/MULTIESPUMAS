@@ -10598,14 +10598,22 @@ function ccmSuma(rs){
   return t;
 }
 /* ---- lo que hay que revisar antes de cerrar ---- */
+/* §4ok-E1 (05/11) La venta de Kommo que YA está cargada en el panel no es «sin cargar»: la misma regla de la 81 (`borrYaCargada`:
+   el mismo lead, o el mismo celular y la misma vendedora con una venta viva). Con la planilla del 02/11, Maria tenía 22 «sin cargar» y 13
+   ya estaban cargadas. Las cargadas se cuentan aparte (`car`) solo para decirlo; no suman en `n` ni en «Para revisar». */
 function ccmKommo(ym){
-  var ini=ym+'-01', fin=pryFinDeMes(ym), o={};
+  var ini=ym+'-01', fin=pryFinDeMes(ym), o={}, car={};
   (typeof BORRADORES!=='undefined' ? BORRADORES : []).forEach(function(b){
     var d=b && b.ts ? isoDeTsBolivia(b.ts) : ''; if(d && d>fin) return;
-    var v=vendedorDeBorrador(b)||'(sin vendedora)', e=o[v]||(o[v]={ v:v, n:0, bs:0, mes:0 });
+    var v=vendedorDeBorrador(b)||'(sin vendedora)';
+    if(borrYaCargada(b)){ car[v]=(car[v]||0)+1; return; }
+    var e=o[v]||(o[v]={ v:v, n:0, bs:0, mes:0, car:0 });
     e.n++; e.bs=r2(e.bs+(Number(b.saldo)||0)); if(d>=ini) e.mes++;
   });
-  return Object.keys(o).map(function(k){ return o[k]; }).sort(function(a,b){ return b.n-a.n; });
+  Object.keys(car).forEach(function(v){ if(o[v]) o[v].car=car[v]; });
+  var L=Object.keys(o).map(function(k){ return o[k]; }).sort(function(a,b){ return b.n-a.n; });
+  L.cargadas=Object.keys(car).reduce(function(s, v){ return s+car[v]; }, 0);
+  return L;
 }
 /* Las que cambiaron de mes, por la marca «📅 cambió la fecha de entrega: del dd/mm al dd/mm» del pedido (`marcarModificado`). Solo
    queda la ÚLTIMA modificación, y «Ya lo revisé» la borra: lo que no tenga la marca no se puede saber. */
@@ -10798,8 +10806,10 @@ function ccmRevisarHtml(R){
   if(V.ti.length) h+='<h4>📝 Titanio sin precio ('+V.ti.length+'): el bono no incluye estos colchones</h4><ul>'+V.ti.map(function(x){
       return '<li>'+esc(ccmOc(x))+' · '+esc(x.v)+' · '+esc(x.tiFalta.join(', '))+' — cargá el precio del renglón en el pedido</li>'; }).join('')+'</ul>';
   if(V.kommo.length) h+='<h4>📥 Ventas de Kommo sin cargar</h4><ul>'+V.kommo.map(function(k){
-      return '<li>'+esc(k.v)+': <b>'+k.n+'</b> sin cargar ('+fmtBs(k.bs)+' según Kommo'+(k.mes ? ('; '+k.mes+' llegaron en '+esc(mc)) : '')+')</li>'; }).join('')+
-      '</ul><div class="ccm-nota">Si son de '+esc(mc)+' y no se cargan, no entran en el vendido. Si ya están cargadas, descartalas en Mis pedidos.</div>';
+      return '<li>'+esc(k.v)+': <b>'+k.n+'</b> sin cargar ('+fmtBs(k.bs)+' según Kommo'+(k.mes ? ('; '+k.mes+' llegaron en '+esc(mc)) : '')+')'+
+        (k.car ? (' · '+k.car+(k.car===1 ? ' ya está cargada' : ' ya están cargadas')+' en el panel y no cuentan') : '')+'</li>'; }).join('')+
+      '</ul><div class="ccm-nota">Si son de '+esc(mc)+' y no se cargan, no entran en el vendido. Las que ya están cargadas (mismo celular y vendedora) no se cuentan acá: '+
+        'se unen en Mis pedidos con «🔗 Unir». Si alguna otra ya está cargada, tocá «Sí, es la misma» en Mis pedidos.</div>';
   if(V.movidas.length) h+='<h4>↔️ Cambiaron de mes ('+V.movidas.length+')</h4><ul>'+V.movidas.map(function(o){
       return '<li>'+esc(ccmOc(o.x))+' · '+esc(o.x.v)+' · estaba para el '+fmtFechaCorta(o.del)+(o.cuando ? (' y el '+fmtFechaCorta(o.cuando)) : '')+' la pasaron al '+fmtFechaCorta(o.al)+' · <b>'+fmtBs(o.x.bs)+'</b>: '+
         (o.sale ? ('ya no cuenta en '+esc(mc)) : ('cuenta en '+esc(mc)+' (antes era de '+esc(ccmMes(o.del.slice(0,7)))+')'))+'</li>'; }).join('')+
