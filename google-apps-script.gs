@@ -3016,13 +3016,34 @@ function waNorm_(t) {
 }
 /** El celular de WhatsApp de Bolivia (591 + 6/7 + 7 números), como `misWaCliente` de la página; '' si no hay uno. */
 function waCel_(cel) {
-  var d = String(cel || '').replace(/[^0-9]/g, '');
-  if (/^[67]\d{7}$/.test(d)) return '591' + d;
-  if (/^591[67]\d{7}$/.test(d)) return d;
-  /* Dos celulares en el campo («70012345 / 76543210»): el primero. (12/10, revisión) Con borde a la IZQUIERDA también: si no,
-     de «775123456» o de un número de otro país salía un celular de Bolivia de OTRA persona. */
+  var uno = waCelUno_(cel); if (uno) return uno;
+  /* §4ok-E4 (05/11) Dos celulares en el campo: «70111222-76543210», «70111222 - 76543210», «70111222 / 76543210», «…, …», «… y …».
+     Con el guion pegado los números se juntaban en 16 cifras y el bot no le escribía a nadie (36 de 39 clientes con dos números).
+     Se corta por los separadores y se toma el PRIMER pedazo que sea entero un celular (8 cifras con 6 o 7, o con el 591): un pedazo
+     entero tiene borde de los dos lados, así que nunca sale un pedazo del número de otra persona (§4kf). Un guion SIN espacios
+     también parte un número solo («7011-1222»): ese ya salió entero arriba. */
+  var p = waCelBuscar_(String(cel || ''), 0); if (p) return p;
+  /* Con otras palabras alrededor («Cel: 70111222 casa»). (12/10, revisión) Con borde a la IZQUIERDA también: si no, de «775123456» o
+     de un número de otro país salía un celular de Bolivia de OTRA persona. */
   var m = String(cel || '').replace(/[\s.\-()]/g, '').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
   return m ? '591' + m[1] : '';
+}
+/* §4ok-E4 Un pedazo que es UN celular entero (sin mirar lo que lo rodea): '591…' o ''. `misWaCliente` de la página hace lo mismo. */
+function waCelUno_(t) {
+  var d = String(t == null ? '' : t).replace(/[^0-9]/g, '');
+  if (/^[67]\d{7}$/.test(d)) return '591' + d;
+  if (/^591[67]\d{7}$/.test(d)) return d;
+  return '';
+}
+/* §4ok-E4 Los separadores, del más claro al menos claro: «/», «,», «;» y « y »; un guion con espacio de algún lado; un guion pegado. */
+var WA_CEL_CORTES = [/\s*[\/,;]+\s*|\s+y\s+/i, /\s+-+\s*|\s*-+\s+/, /-+/];
+function waCelBuscar_(t, k) {
+  var u = waCelUno_(t); if (u) return u;
+  if (k >= WA_CEL_CORTES.length) return '';
+  var ps = t.split(WA_CEL_CORTES[k]);
+  if (ps.length < 2) return waCelBuscar_(t, k + 1);
+  for (var i = 0; i < ps.length; i++) { var x = waCelBuscar_(ps[i], k + 1); if (x) return x; }
+  return '';
 }
 function waMarca_(vend) {
   var v = waNorm_(vend);

@@ -128,6 +128,32 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('…Pedro (sin celular) sigue «sin celular»', r.filas.some(t => /PEDRO/.test(t) && /sin celular/.test(t)), r.filas);
   chk('…y el pie lo explica', /El bot de WhatsApp les manda el recordatorio.*17:00 los de la mañana y a las 19:00 los de la tarde/.test(r.pie), r.pie);
 
+  /* §4ok-E4 (05/11) Dos celulares separados con «-», «/», «,» o « y »: el botón 💬 (misWaCliente) y el bot (waCel_) toman el MISMO. */
+  console.log('\n── §4ok-E4 · dos celulares: la página y el bot toman el mismo ──');
+  {
+    const fs = require('fs'), vm = require('vm');
+    const src = fs.readFileSync(process.env.GS || path.resolve('google-apps-script.gs'), 'utf8');
+    const gctx = {}; vm.createContext(gctx);
+    vm.runInContext(src.slice(src.indexOf('function waCel_('), src.indexOf('function waMarca_(')), gctx);
+    const casos = ['70111222-76543210', '70111222 - 76543210', '70111222 -- 76543210', '70111222 -76543210', '70111222- 76543210', '70111222--76543210',
+      '70111222 / 76543210', '70111222, 76543210', '70111222 y 76543210', '775123456-76543210', '3345566-76543210', '7011-1222', '+591 7-655-4433',
+      '+591 7011-1222 - 76543210', '70111222', '+591 70111222', 'Cel: 70111222', '775123456', '12367123456', '+54 9 11 6712 3456', '3345566', '#ERROR!', '',
+      '7011122276543210', '33445566 y 3456789'];
+    const pag = await page.evaluate((c) => c.map(function(x){ return misWaCliente(x); }), casos);
+    const gs = casos.map(c => { const n = gctx.waCel_(c); return n ? 'https://wa.me/' + n : ''; });
+    const dif = casos.filter((c, i) => pag[i] !== gs[i]).map((c, i) => c);
+    chk('los ' + casos.length + ' casos dan lo mismo en la página y en el .gs', dif.length === 0, dif.map(c => c + ' → pág ' + pag[casos.indexOf(c)] + ' / gs ' + gs[casos.indexOf(c)]));
+    const W = (i) => pag[casos.indexOf(i)];
+    chk('«70111222-76543210», «70111222 - 76543210», «… -- …», «… y …», «…, …» → el primero (59170111222)',
+      ['70111222-76543210', '70111222 - 76543210', '70111222 -- 76543210', '70111222 y 76543210', '70111222, 76543210', '70111222- 76543210'].every(c => W(c) === 'https://wa.me/59170111222'));
+    chk('«775123456-76543210» y «3345566-76543210»: el primero no es un celular → el segundo (59176543210)',
+      W('775123456-76543210') === 'https://wa.me/59176543210' && W('3345566-76543210') === 'https://wa.me/59176543210');
+    chk('un número solo con guiones («7011-1222», «+591 7-655-4433») sigue entero', W('7011-1222') === 'https://wa.me/59170111222' && W('+591 7-655-4433') === 'https://wa.me/59176554433');
+    chk('«+591 7011-1222 - 76543210»: el guion con espacio separa, el pegado no → el primero', W('+591 7011-1222 - 76543210') === 'https://wa.me/59170111222');
+    chk('borde a la izquierda (§4kf): «775123456», «12367123456», «+54 9 11 6712 3456», «7011122276543210» → nada',
+      ['775123456', '12367123456', '+54 9 11 6712 3456', '7011122276543210', '#ERROR!', '33445566 y 3456789'].every(c => W(c) === ''));
+  }
+
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log(`\n${PASS} bien · ${FAIL} mal`);
   await browser.close();

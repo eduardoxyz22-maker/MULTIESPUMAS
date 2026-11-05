@@ -1023,5 +1023,22 @@ console.log('\n── 16. El aviso de Meta lee el final de la hoja, no la hoja e
   chk('con la hoja vacía (solo el encabezado) no revienta ni agrega nada', H2._datos.length === 1, H2._datos.length);
 }
 
+// ══ §4ok-E4 (05/11) Dos celulares separados con guion: el bot le escribe al primero ══════════════
+console.log('\n── §4ok-E4 · dos celulares en el campo: «-», «/», «,» o « y » ──');
+{
+  const S = servidor(ON), W = S.ctx.waCel_;
+  chk('«70111222-76543210» (pegado), «70111222 - 76543210», «70111222 -- 76543210» → 59170111222',
+      W('70111222-76543210') === '59170111222' && W('70111222 - 76543210') === '59170111222' && W('70111222 -- 76543210') === '59170111222');
+  chk('«70111222, 76543210» y «70111222 y 76543210» → el primero', W('70111222, 76543210') === '59170111222' && W('70111222 y 76543210') === '59170111222');
+  chk('si el primero no es celular («3345566-76543210», «775123456-76543210») → el segundo', W('3345566-76543210') === '59176543210' && W('775123456-76543210') === '59176543210');
+  chk('un número solo con guiones sigue entero («7011-1222», «+591 7-655-4433»)', W('7011-1222') === '59170111222' && W('+591 7-655-4433') === '59176554433');
+  chk('el borde a la izquierda sigue (§4kf): «775123456», «12367123456», «7011122276543210», «+54 9 11 6712 3456» → nada',
+      W('775123456') === '' && W('12367123456') === '' && W('7011122276543210') === '' && W('+54 9 11 6712 3456') === '');
+  poner('2026-10-14 10:00');
+  S.guardar(ped({ id: 'e4', celular: '70111222-76543210' })); pasar(3); S.repaso();
+  const c = S.salen().find(x => x.pl === 'confirmacion_pedido');
+  chk('un pedido con «70111222-76543210» recibe la confirmación en el primero', !!c && c.to === '59170111222', S.salen().map(x => x.pl + '→' + x.to));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

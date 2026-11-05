@@ -27769,9 +27769,11 @@ function misEstadoCard(p, falta){
 }
 /* El chat de WhatsApp con el cliente: 8 dígitos que empiezan con 6 o 7 son un celular de Bolivia (+591). */
 function misWaCliente(cel){
-  var d=String(cel||'').replace(/[^0-9]/g,'');
-  if(/^[67]\d{7}$/.test(d)) d='591'+d;
-  else if(!/^591[67]\d{7}$/.test(d)){
+  var d=misWaCelUno(cel);
+  /* §4ok-E4 (05/11) dos celulares separados con «-», «/», «,» o « y »: el primer pedazo que sea ENTERO un celular (la MISMA regla
+     que `waCel_` del bot: test_wa_pagina las compara). Con el guion pegado se juntaban en 16 cifras y no salía ninguno. */
+  if(!d) d=misWaCelBuscar(String(cel||''),0);
+  if(!d){
     /* (§4jd, A2-6) dos celulares en el campo («70012345 / 76543210»): el primero que sea un celular */
     /* (12/10, revisión) con borde a la izquierda: de «775123456» o de un número de otro país salía el celular de OTRA persona */
     var m=String(cel||'').replace(/[\s.\-()]/g,'').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
@@ -27779,6 +27781,22 @@ function misWaCliente(cel){
     d='591'+m[1];
   }
   return 'https://wa.me/'+d;
+}
+// §4ok-E4 — un pedazo que es UN celular entero ('591…' o ''), y la búsqueda por separadores (= waCelUno_/WA_CEL_CORTES/waCelBuscar_ del .gs)
+function misWaCelUno(t){
+  var d=String(t==null?'':t).replace(/[^0-9]/g,'');
+  if(/^[67]\d{7}$/.test(d)) return '591'+d;
+  if(/^591[67]\d{7}$/.test(d)) return d;
+  return '';
+}
+var MIS_WA_CORTES=[/\s*[\/,;]+\s*|\s+y\s+/i, /\s+-+\s*|\s*-+\s+/, /-+/];
+function misWaCelBuscar(t,k){
+  var u=misWaCelUno(t); if(u) return u;
+  if(k>=MIS_WA_CORTES.length) return '';
+  var ps=t.split(MIS_WA_CORTES[k]);
+  if(ps.length<2) return misWaCelBuscar(t,k+1);
+  for(var i=0;i<ps.length;i++){ var x=misWaCelBuscar(ps[i],k+1); if(x) return x; }
+  return '';
 }
 /* El sello «ENTREGADO» cae con un golpe la PRIMERA vez que se ve en esta apertura de la página, no en cada repintado. */
 var MIS_SELLO_VISTO={};
