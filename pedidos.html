@@ -2873,6 +2873,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         </div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div id="adm-semana" class="sem" hidden></div>
+        <div id="adm-gps-ent" hidden></div>
         <div id="adm-fichas" class="af" hidden></div>
         <div id="adm-tcol" class="tcol-bar" hidden></div>
         <div class="tw tw-tall" id="tbl-pedidos-w"><table id="tbl-pedidos"></table></div>
@@ -3980,6 +3981,15 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .af-tb button:last-child{border-right:0}.af-tb button:hover{background:#f4f8f8}.af-tb small{font-size:.72rem;font-weight:700;color:#4b5f5e;line-height:1.15}   /* (25/10, §4mn) 11,5 px y más oscuro en compu e iPad (con .6rem = 9,6 px costaba leer Entregó, WhatsApp, Editar…) */
 @media (max-width:420px){ .af-tb small{font-size:clamp(.6rem,calc(2.55vw / var(--vz,1)),.68rem)} }   /* en un celular angosto se achica para que los seis botones entren en la ficha */
 .af-tb .on{background:#e7f6ee}.af-tb .on small{color:#0f6b3a}.af-tb .del small{color:#a3242e}
+/* §4ok-106 📍 lo que vio el GPS, al lado de «Entregó» (ficha y tabla) y el cartel de arriba del día de hoy */
+.af-inf .af-gps{color:#0a6b47;font-weight:700}.af-tb button.gps:not(.on){background:#eefaf3;box-shadow:inset 0 -3px 0 #22A06B}
+.row-gps{display:inline-block;margin-right:3px;padding:3px 7px;border-radius:6px;background:#e7f6ee;color:#0a6b47;font-size:.7rem;font-weight:800;vertical-align:middle;cursor:help}
+.adm-gps-ent{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#eefaf3;border:1px solid #bfe6cf;border-left:5px solid #22A06B;color:#14412a;font-size:.86rem}
+.adm-gps-ent .btn{background:#0a6b47;color:#fff;border-color:#0a6b47}
+.adm-gps-ent small{flex-basis:100%;color:#3d6b54;font-size:.76rem}
+.agp-fila{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #eef3f3;cursor:pointer}
+.agp-fila input{width:18px;height:18px;margin-top:2px;flex:none}.agp-fila .agp-t{display:grid;gap:3px;font-size:.86rem;color:var(--text)}
+.agp-fila .agp-t small{color:var(--muted);font-size:.78rem}
 .lug{ display:inline-block; font-size:.72rem; font-weight:800; border-radius:6px; padding:0 6px; margin-left:2px; white-space:nowrap; line-height:1.55; }
 .lug-aca{ background:#e6f7f6; color:#00736d; } .lug-sale{ background:#e0f2fe; color:#075985; } .lug-trae{ background:#f3e8ff; color:#6b21a8; }
 .lug-no{ background:#fdeaec; color:#a3172a; } .lug-fab{ background:#fff4d6; color:#7c4b00; } .lug-tda{ background:#fce7f3; color:#9d174d; }
@@ -21726,6 +21736,7 @@ function admFichaHtml(p, dn){
     : (p.vehiculo ? ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>') : '<div class="rojo">🚛 Sin camión</div>');
   var btn=function(ic, t, fn, cl){ return '<button type="button" class="'+(cl||'')+'" onclick="event.stopPropagation();'+fn+'" title="'+esc(t)+'">'+ic+'<small>'+esc(t)+'</small></button>'; };
   var rk=admFichaColor(p);   // 🎨 (24/10, dueño) la ficha entera: ATC, RPT, verde = todo OK, rojo = falta algo; lo demás va en el producto
+  var gpsL=admGpsLlegoHtml(p, 'ficha');   // §4ok-106 📍 «Llegó HH:MM (GPS)» al lado de «Entregó» (solo mira: el ✅ lo pone una persona)
   return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" data-pid="'+esc(String(p.id))+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
     '<div class="af-hd">'+(function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «el número es una cosa y el sticker otra»: el turno solo, a la izquierda)
         return '<span class="af-tu"><b>'+(N||'—')+'</b></span>'; })()+   // (24/10, dueño) el N° del día solo, con su fondo
@@ -21735,10 +21746,10 @@ function admFichaHtml(p, dn){
       /* (24/10, dueño: «¿esto no es redundante?») arriba solo lo que los productos NO dicen; el stock lo dice cada producto y el color */
       (/^(ent|mod|sal|ok)\b/.test(E.c) ? ('<span class="af-e '+E.c+'"'+(E.title?(' title="'+esc(E.title)+'"'):'')+'>'+esc(E.t)+'</span>') : '')+'</div>'+
     '<div class="af-ps">'+(filas||('<div class="af-mas">'+(tienda.length?'Nada para cargar':'Sin productos')+'</div>'))+'</div>'+nt+
-    '<div class="af-inf">'+dir+cam+'</div>'+
+    '<div class="af-inf">'+dir+cam+gpsL+'</div>'+
     '<div class="af-tb">'+
       /* 🎨 (§4ni, 9) los íconos propios, con color */
-      btn(icoHtml('ent'),'Entregó',"quickEntregado('"+pid+"')", p.entregado?'on':'')+
+      btn(icoHtml('ent'),'Entregó',"quickEntregado('"+pid+"')", p.entregado?'on':(gpsL?'gps':''))+
       btn(icoHtml('wa'),'WhatsApp',"copyPedido('"+pid+"')")+
       btn(icoHtml('editar'),'Editar',"EDIT_DESDE='admin';editPedido('"+pid+"')")+
       btn(icoHtml('repro'),'Reprog.',"reprogramarPedido('"+pid+"')")+
@@ -21815,7 +21826,9 @@ function admFichasPintar(list, dn){
       '<button type="button" onclick="admPasadosVer('+(ADM_PASADOS_VER?'false':'true')+')">'+(ADM_PASADOS_VER?'▴ Plegarlos':'▾ Ver todo')+'</button></div>';
   }
   var vis=grupos.filter(function(g){ return g.ver.length; });
+  var gpsBar=admGpsEntHtml(list), gpsPuesto=false;   // §4ok-106 arriba del día de hoy (el primer turno de hoy que se ve)
   box.innerHTML=(ley.length?('<div class="af-ley">'+ley.map(function(l){ return '<span class="af-k-'+l[0]+'"><i></i>'+l[1]+'</span>'; }).join('')+'</div>'):'')+pasHtml+vis.map(function(g){
+    var antesGps=''; if(gpsBar && !gpsPuesto && g.f===hoyF){ antesGps=gpsBar; gpsPuesto=true; }
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
     var sal=g.ps.filter(function(p){ return p.entregado || (p.vehiculo && p.fecha===todayStr() && camionSalio(p.fecha, p.vehiculo)); }).length;
     var tt=g.t===0?'🌅 Mañana':g.t===1?'🌆 Tarde':'sin turno';
@@ -21836,7 +21849,7 @@ function admFichasPintar(list, dn){
         if(lim>0) gc.push('<span class="af-gc '+(lib<0?'af-gc-mal':lib===0?'af-gc-lleno':lib<=3?'af-gc-poco':'af-gc-cupo')+'" title="'+us+' de '+lim+' lugares ocupados en este turno">🎟️ '+
           (lib<0?((-lib)+' de más (forzado'+(-lib===1?'':'s')+')'):lib===0?'turno lleno':('queda'+(lib===1?'':'n')+' '+lib+' cupo'+(lib===1?'':'s')))+'</span>'); }
     }
-    return '<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+'</div>'+
+    return antesGps+'<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+'</div>'+
       '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';
   }).join('');
 }
@@ -22084,6 +22097,7 @@ function renderAdmin(){
      que no se esconde nada que se esté buscando. */
   var dn=dayNumMap();
   var deMas=Math.max(0, list.length-ADM_TOPE);
+  try{ admGpsEntPintar(list, admVista()==='fichas'); }catch(e){ console.error(e); }   // §4ok-106 (con las fichas va adentro, arriba del día de hoy)
   if(admVista()==='fichas'){   // 🃏 (24/10) con las fichas, la tabla ni se arma (se arma al volver a «Ver como tabla»)
     if(deMas) list=list.slice(0, ADM_TOPE);
     admFichasPintar(list, dn); admMasPintar(deMas);
@@ -22116,6 +22130,7 @@ function renderAdmin(){
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
         '<button class="rowbtn'+(p.verificado?' on':'')+'" onclick="quickVerificado(\''+p.id+'\')" title="'+(p.verificado?'Verificado · listo para cargar (clic para deshacer)':'Marcar verificado / listo para cargar')+'">📦'+(p.verificado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
+        admGpsLlegoHtml(p, 'tabla')+   // §4ok-106 📍 lo que vio el GPS, al lado de 🚚
         ((!p.pagado && (esATC(p.oc)||esRPT(p.oc)))
           ? '<span class="rowbtn" style="visibility:hidden" aria-hidden="true">💰</span>'     // §4fy: una ATC o una RPT no se cobran (el hueco mantiene la fila alineada)
           : '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>')+
@@ -42045,6 +42060,105 @@ function cierreEntTildarGps(){
   renderCierreEntregas();
   if(n) toast('📍 Tildados '+n+' que vio el GPS. Revisalos y tocá Confirmar.', 'ok', 4000);
 }
+/* ============================================================================
+   §4ok-106 «✅ LOS QUE VIO EL GPS» DONDE LOGÍSTICA MARCA (05/11, plan del jueves, item 106).
+   Logística marca ~15 ✅ por día en Administración (170 de 175 del 19 al 31/10); lo del GPS solo estaba en el Cierre de entregas, que
+   nadie abre desde el 09/10. Ahora, en Administración:
+   · cada pedido de HOY que el GPS vio en la puerta dice «📍 Llegó HH:MM (GPS)» al lado de «Entregó» (ficha y tabla) — `gpsLlegadaDe`;
+   · arriba del día de hoy, «✅ Marcar entregados los N que vio el GPS» abre la lista (todos tildados, se destilda lo que no se
+     entregó) y una PERSONA confirma (con su nombre, como el cierre). Nada se marca solo (dueño, 12/10).
+   · Confirmar es EL MISMO camino del Cierre de entregas (`cierreEntAplicar`): relee la planilla, saltea lo borrado, reprogramado o ya
+     marcado, guarda con `guardarDurable` y deja `eF/eT/eQ`. Sin lectura queda pendiente (`me_cierre_pend`) y se aplica sola después.
+   `cierreEntGps` decide qué vio el GPS (una sola regla para el cierre y para acá).
+   ========================================================================== */
+var ADM_GPS_SEL={};
+/* Los pedidos de hoy sin ✅ que el GPS vio en la puerta (la lista del cierre de hoy, `cierreEntHoy`, con `cierreEntGps` = 'vio'). */
+function admGpsVio(){
+  if(!gpsDiaHay()) return [];
+  return cierreEntHoy(todayStr()).filter(function(p){ var g=cierreEntGps(p); return !!g && g.k==='vio'; });
+}
+/* «📍 Llegó HH:MM (GPS)»: en la ficha va como una línea de `.af-inf`; en la tabla, al lado del 🚚. */
+function admGpsLlegoHtml(p, donde){
+  if(!p || p.fecha!==todayStr()) return '';
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  if(!ll) return '';
+  var h=gpsHoraTxt(ll.t0), tit='Lo dice el GPS: '+gpsLlegadaTxt(ll)+'. No es un ✅: tocá «Entregó» si se entregó.';
+  if(donde==='tabla') return '<span class="row-gps" title="'+esc(tit)+'">📍 Llegó '+esc(h)+' (GPS)</span>';
+  return '<div class="af-gps" title="'+esc(tit)+'">📍 Llegó '+esc(h)+' (GPS)</div>';
+}
+/* El cartel de arriba del día de hoy. `list` = lo que se ve: solo sale si alguno de esos pedidos está en la lista. */
+function admGpsEntHtml(list){
+  var V=admGpsVio(); if(!V.length) return '';
+  var ids={}; (list||[]).forEach(function(p){ if(p) ids[String(p.id)]=1; });
+  var n=V.filter(function(p){ return ids[String(p.id)]; }).length; if(!n) return '';
+  return '<div class="adm-gps-ent" id="adm-gps-bar"><span>🛰️ El GPS vio el camión en la puerta de <b>'+n+'</b> pedido'+(n===1?'':'s')+' de hoy que todavía no tiene'+(n===1?'':'n')+' ✅.</span>'+
+    '<button type="button" class="btn btn-sm" id="adm-gps-btn" onclick="admGpsEntAbrir()">'+(n===1 ? '✅ Marcar entregado el 1 que vio el GPS' : ('✅ Marcar entregados los '+n+' que vio el GPS'))+'</button>'+
+    '<small>Se abre la lista para revisar: destildá lo que no se entregó y confirmá. El GPS ve dónde se paró el camión, no si el cliente recibió.</small></div>';
+}
+function admGpsEntPintar(list, enFichas){
+  var el=document.getElementById('adm-gps-ent'); if(!el) return;
+  var h=enFichas ? '' : admGpsEntHtml(list);
+  el.hidden=!h; if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function admGpsEntAbrir(){
+  var V=admGpsVio(); ADM_GPS_SEL={};
+  if(!V.length){ toast('El GPS no vio ningún pedido de hoy sin ✅.','ok'); renderAdmin(); return; }
+  V.forEach(function(p){ ADM_GPS_SEL[String(p.id)]=true; });
+  admGpsEntRender(V);
+}
+function admGpsEntRender(V){
+  V=V||admGpsVio(); var dn=dayNumMap();
+  var filas=V.map(function(p){
+    var id=String(p.id), N=dn[p.id];
+    return '<label class="agp-fila"><input type="checkbox" class="agp-chk" data-id="'+esc(id)+'"'+(ADM_GPS_SEL[id]?' checked':'')+' onchange="admGpsEntToggle(this.dataset.id, this.checked)">'+
+      '<span class="agp-t"><span><b>'+(N?('N° '+N+' · '):'')+esc(p.cliente||'—')+'</b> · '+esc(ocEtiq(p.oc)||p.oc||'—')+(p.vehiculo?(' · 🚛 '+esc(p.vehiculo)):'')+'</span>'+
+      '<span>'+cierreEntGpsHtml(p)+'</span>'+(p.direccion||p.zona?('<small>'+esc([p.zona, p.direccion].filter(Boolean).join(' · '))+'</small>'):'')+'</span></label>';
+  }).join('');
+  var html='<div class="modal-h" style="background:#0a6b47"><h3>✅ Marcar entregados los que vio el GPS</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">El GPS vio el camión parado en la puerta de estos pedidos de hoy. <b>Destildá lo que no se entregó</b> (el cliente no estaba, no recibió…) y confirmá. Se guarda el ✅ de siempre.</div>'+
+      '<div class="agp-lista">'+filas+'</div>'+
+      '<div class="field" style="margin-top:12px"><label class="lb" for="adm-gps-quien">¿Quién confirma?</label><input type="text" id="adm-gps-quien" value="'+esc(cierreEntQuien())+'" placeholder="Tu nombre"></div>'+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="closeModal()">Cancelar</button>'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;background:#0a6b47" id="adm-gps-confirmar" onclick="admGpsEntConfirmar()">'+admGpsEntBotonTxt()+'</button>'+
+      '</div></div>';
+  openModal(html, true);
+}
+function admGpsEntTildados(){ return Object.keys(ADM_GPS_SEL).filter(function(id){ return ADM_GPS_SEL[id]; }); }
+function admGpsEntBotonTxt(){ var n=admGpsEntTildados().length; return n ? ('✅ Confirmar '+n+' entrega'+(n===1?'':'s')) : 'Nada tildado'; }
+function admGpsEntToggle(id, on){ ADM_GPS_SEL[String(id)]=!!on; var b=document.getElementById('adm-gps-confirmar'); if(b) b.textContent=admGpsEntBotonTxt(); }
+/* El mismo plan del cierre (`cierreEntPlan`), con lo tildado acá: el día declarado es hoy. Con un cierre pendiente de antes, se suma. */
+function admGpsEntConfirmar(){
+  if(CIERRE_ENT_EN_CURSO) return Promise.resolve(null);
+  var inp=document.getElementById('adm-gps-quien'), quien=String((inp&&inp.value)||'').trim();
+  if(!quien){ toast('Poné quién está confirmando.','err'); if(inp) inp.focus(); return Promise.resolve(null); }
+  var ids=admGpsEntTildados();
+  if(!ids.length){ toast('No hay ninguna entrega tildada.','err'); return Promise.resolve(null); }
+  cierreEntSetQuien(quien);
+  var hoy=todayStr(), antes={}, dias={};
+  ids.forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; dias[id]=hoy; });
+  var plan={ ids:ids, antes:antes, dias:dias, quien:quien, hoy:hoy, ts:Date.now() };
+  var btn=document.getElementById('adm-gps-confirmar'); if(btn){ btn.disabled=true; btn.textContent='⏳ Releyendo la planilla…'; }
+  CIERRE_ENT_EN_CURSO=true;
+  var relectura = CONNECTED ? refrescarEstadoYa().catch(function(){ return false; }) : Promise.resolve(false);
+  return relectura.then(function(leyo){
+    if(!leyo){
+      var prev=cierreEntPendiente();
+      if(prev){ prev.ids.forEach(function(id){ if(plan.ids.indexOf(id)<0){ plan.ids.push(id); plan.antes[id]=(prev.antes||{})[id]; plan.dias[id]=(prev.dias||{})[id]; } }); }
+      cierreEntPendienteGuardar(plan); CIERRE_ENT_EN_CURSO=false;
+      renderCierreEntPendiente(plan); renderCierreEntAviso();
+      return { pendiente:true, leyo:false, hechos:0, saltados:0 };
+    }
+    if(btn) btn.textContent='⏳ Guardando…';
+    return cierreEntAplicar(plan).then(function(r){
+      CIERRE_ENT_EN_CURSO=false; ADM_GPS_SEL={};
+      renderCierreEntResultado(r);
+      return Object.assign({ pendiente:false, leyo:true }, r, { hechos:r.hechos.length, saltados:r.saltados.length });
+    });
+  }, function(){ CIERRE_ENT_EN_CURSO=false; if(btn){ btn.disabled=false; btn.textContent=admGpsEntBotonTxt(); } return null; });
+}
+/* fin §4ok-106 */
 /* ✨ (§4kc) La barra «N de M tildados»: se repinta al tildar (`cierreEntToggle`). */
 function cierreEntAvanceHtml(){
   var tot=cierreEntHoy().length+cierreEntAtrasados().length, n=cierreEntTildados().length;
