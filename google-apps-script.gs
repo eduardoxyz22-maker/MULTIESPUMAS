@@ -1552,6 +1552,12 @@ function resolveOne(url) {
   var finalUrl = followRedirects(url);
   var c = extractCoords(finalUrl);
   if (c) return c;
+  /* 📍 §4ok-E6 Un «cómo llegar» cuyo destino no trae coordenadas: se busca el NOMBRE del destino, aproximado. La página de Maps no se
+     lee: trae el origen y el centro del recorrido, que es justo lo que no hay que tomar. */
+  if (dirDestino_(finalUrl) !== undefined || dirDestino_(url) !== undefined) {
+    var dn = dirNombreDestino_(finalUrl) || dirNombreDestino_(url);
+    return dn ? geocodeTexto(dn) : null;
+  }
   // Pedimos la pagina haciendonos pasar por un navegador: a un "robot" Google le contesta distinto.
   for (var intento = 0; intento < 2; intento++) {
     try {
@@ -1656,12 +1662,83 @@ function plusCodeDeTexto(txt) {
   return (m[2] + '+' + m[3]).toUpperCase();
 }
 
+/* 📍 §4ok-E6 «CÓMO LLEGAR»: EL DESTINO, NUNCA EL ORIGEN NI EL CENTRO.
+   Un enlace de «cómo llegar» que la vendedora copia de la barra de Maps es …/maps/dir/<origen>/<destino>/@<centro>/data=…: el primer
+   par de coordenadas que se encontraba era el ORIGEN (la tienda) y, si el destino tenía nombre, el «@» era el CENTRO del recorrido. La
+   10-278 y su ATC quedaron corridas 3 km. Ahora, en un enlace con /maps/dir/:
+   · el ÚLTIMO tramo de la ruta es el destino: si son coordenadas o un Plus Code, esas;
+   · si es un nombre, el último punto del recorrido en `data=` (cada punto es «!1m<n>…», con «!1d<lng>!2d<lat>» —o «!3d<lat>!4d<lng>»—
+     adentro; un punto «!4e1» es «mi ubicación» y no trae coordenadas);
+   · si el destino no trae coordenadas, null (y resolveOne busca su NOMBRE, aproximado): nunca el origen ni el centro.
+   `?api=1&destination=…` (sin tramos) sigue por el camino de siempre (`destination=`).
+   ⚠️ La página tiene que leerlo igual (coordsDeLink, §4ln): la regla es esta, la misma en los dos lados. */
+function dirPartes_(u) {
+  var m = String(u || '').match(/\/maps\/dir\/([^?#]*)/i);
+  if (!m) return null;
+  var tramos = [], ps = m[1].split('/');
+  for (var i = 0; i < ps.length; i++) {
+    if (!ps[i]) continue;
+    if (ps[i].charAt(0) === '@' || ps[i].indexOf('data=') === 0) break;
+    tramos.push(ps[i]);
+  }
+  var dm = m[1].match(/(?:^|\/)data=([^\/]*)/);
+  return { tramos: tramos, data: dm ? dm[1] : '' };
+}
+/** El último punto del recorrido de `data=`: coordenadas, null (el último punto no las trae) o undefined (no hay recorrido). */
+function dirUltimoPunto_(data) {
+  var tk = String(data || '').split('!').filter(function (t) { return !!t; }), i;
+  for (i = 0; i + 1 < tk.length; i++) if (/^4m\d+$/.test(tk[i]) && /^4m\d+$/.test(tk[i + 1])) break;
+  if (i + 1 >= tk.length) return undefined;
+  var fin = i + 2 + Number(tk[i + 1].slice(2)), j = i + 2, ult;
+  while (j < fin && j < tk.length) {
+    var t = tk[j], mm = t.match(/^\d+m(\d+)$/), n = mm ? Number(mm[1]) : 0;
+    if (/^1m\d+$/.test(t)) {
+      var lat = null, lng = null;
+      for (var k = j + 1; k <= j + n && k < tk.length; k++) {
+        var v = tk[k].slice(2);
+        if (/^1d/.test(tk[k]) || /^4d/.test(tk[k])) lng = v;
+        else if (/^2d/.test(tk[k]) || /^3d/.test(tk[k])) lat = v;
+      }
+      ult = (lat != null && lng != null) ? okCoord(lat, lng) : null;
+    }
+    j += 1 + n;
+  }
+  return ult;
+}
+function dirTexto_(t) {
+  var s = String(t || ''); try { s = decodeURIComponent(s.replace(/\+/g, ' ')); } catch (e) { s = s.replace(/\+/g, ' '); }
+  return s.replace(/\s+/g, ' ').trim();
+}
+/** undefined = no es un «cómo llegar» con tramos; null = lo es, pero el destino no trae coordenadas; si no, las del destino. */
+function dirDestino_(u) {
+  var x = dirPartes_(u);
+  if (!x || (!x.tramos.length && dirUltimoPunto_(x.data) === undefined)) return undefined;
+  var crudo = x.tramos.length ? x.tramos[x.tramos.length - 1] : '', t = dirTexto_(crudo), m;
+  if (t && (m = t.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/))) return okCoord(m[1], m[2]);
+  var pc = t ? (plusCodeDeTexto(t) || plusCodeDeTexto(crudo)) : null;
+  if (pc) { var gp = olcCoords(pc); if (gp) return gp; }
+  var ult = dirUltimoPunto_(x.data);
+  return ult || null;
+}
+/** El NOMBRE del destino de un «cómo llegar» (para buscarlo, aproximado), si no son coordenadas ni un Plus Code. */
+function dirNombreDestino_(u) {
+  var x = dirPartes_(u);
+  if (!x || !x.tramos.length) return '';
+  var crudo = x.tramos[x.tramos.length - 1], t = dirTexto_(crudo);
+  if (!t || /^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(t) || plusCodeDeTexto(t) || plusCodeDeTexto(crudo)) return '';
+  return t;
+}
+
 // OJO con el orden: "@lat,lng" es el CENTRO del mapa, no el pin (puede errarle cientos de
 // metros). Primero se busca el pin real: !3d!4d, las coordenadas en grados, o el Plus Code.
 function extractCoords(u) {
   u = String(u || '');
   var d = u; try { d = decodeURIComponent(u.replace(/\+/g, ' ')); } catch (e) {}
   var m;
+  /* 📍 §4ok-E6 «cómo llegar» (/maps/dir/…): el destino (ver dirDestino_). null = el destino no trae coordenadas: ni el origen ni el
+     centro del recorrido, que es lo que salía de las reglas de abajo. */
+  var dir = dirDestino_(u);
+  if (dir !== undefined) return dir;
   if ((m = u.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/))) return okCoord(m[1], m[2]);
   if ((m = d.match(/(\d+)\s*°\s*(\d+)\s*['′]\s*([\d.]+)\s*["″]?\s*([NSns])[\s,+]+(\d+)\s*°\s*(\d+)\s*['′]\s*([\d.]+)\s*["″]?\s*([EWOewo])/))) {
     var la = (+m[1]) + (+m[2]) / 60 + (+m[3]) / 3600; if (/[Ss]/.test(m[4])) la = -la;
@@ -1672,6 +1749,8 @@ function extractCoords(u) {
      decodificar se volvía espacio) y la coma codificada de Waze («ll=-17.867825%2C-63.155401»). Lo mismo que `coordsDeLink` de la página. */
   var pc = plusCodeDeTexto(d) || plusCodeDeTexto(u);
   if (pc) { var gp = olcCoords(pc); if (gp) return gp; }
+  // 📍 §4ok-E6 el destino antes que el origen: con «saddr=A&daddr=B» la regla de abajo tomaba el primero que apareciera (el origen).
+  if ((m = u.match(/[?&](?:daddr|destination)=(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)/i))) return okCoord(m[1], m[2]);
   if ((m = u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
   if ((m = u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)/i))) return okCoord(m[1], m[2]);
   if ((m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
