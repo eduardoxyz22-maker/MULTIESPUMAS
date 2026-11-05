@@ -118,6 +118,10 @@ label.lb .hint{font-weight:500;color:var(--muted);font-size:.68rem}
 .avc-info{margin-top:7px;font-size:.78rem;line-height:1.4;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:8px;padding:7px 10px}
 .avc-info[hidden]{display:none}
 #view-form.avisa-cuando .solo-turno,#view-form.avisa-cuando #fx-dias,#view-form.avisa-cuando #fx-camion,#view-form.avisa-cuando #fx-izq-cam{display:none !important}
+/* 📱 (§4ok-95) El celular de una venta a domicilio: cómo se va a guardar, o por qué no sirve para WhatsApp. */
+.cel-aviso{margin-top:7px;font-size:.78rem;line-height:1.4;border-radius:8px;padding:7px 10px;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border)}
+.cel-aviso.mal{color:#7c4b00;background:#fff4d6;border-color:#f0d264}
+.cel-aviso[hidden]{display:none}
 .badge.avc-tag{background:#e6f7f6;color:#065f5b;border:1px solid #99ddd9;white-space:nowrap}
 .badge.avc-tag.avc-ya{background:#fff4d6;color:#7c4b00;border-color:#f0d264}
 .avc-l{color:#065f5b;font-weight:700}
@@ -2539,6 +2543,9 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         <div class="field">
           <label class="lb"># Celular <span class="req req-lite">*</span></label>
           <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
+          <!-- 📱 (§4ok-95, 05/11) En una venta a domicilio el celular se guarda en 8 números para que el bot le escriba al cliente. -->
+          <div id="f-cel-aviso" class="cel-aviso" hidden></div>
+          <label class="avc-chk" id="f-sinwa-wrap" hidden><input type="checkbox" id="f-sinwa" onchange="celFormPintar()"> 📵 El cliente no tiene WhatsApp</label>
         </div>
       </div>
       <div id="nx-cli" class="no-print" hidden></div>   <!-- 👋 (§4js, P1) el cliente que ya compró -->
@@ -15794,6 +15801,16 @@ function submitPedido(){
     try{ _sinPre[0].e.focus(); _sinPre[0].e.scrollIntoView({block:'center'}); }catch(e){}
     return;
   }
+  /* 📱 (§4ok-95) Una venta a domicilio sin un celular de WhatsApp no se guarda, salvo con «📵 El cliente no tiene WhatsApp». */
+  var _celE=celFormEstado(vendedor);
+  if(_celE.falta && !(_celE.her && UNLOCKED &&
+     confirm('📱 Este pedido ya estaba guardado con el celular «'+_celE.t+'», que no es un celular de WhatsApp (8 números que empiezan con 6 o 7).\n\n'+
+             'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, con ese número.\nCancelar: corregirlo.'))){
+    markErr('f-celular'); celFormPintar();
+    toast('📱 El celular «'+_celE.t+'» no es de WhatsApp: tienen que ser 8 números que empiezan con 6 o 7 (sin +591). Corregilo, o tildá «📵 El cliente no tiene WhatsApp».','err',9000);
+    var _fcE=document.getElementById('f-celular'); if(_fcE){ try{ _fcE.focus(); _fcE.scrollIntoView({block:'center'}); }catch(e){} }
+    return;
+  }
   var _acu=montoForm('f-acuenta');
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
@@ -16507,6 +16524,11 @@ function submitPedido(){
      entrega tampoco hay camión: el que logística le había puesto para la fecha inventada se saca. Sin la casilla, la marca se va. */
   if(_avisa){ setAvisa(rec, _avisaF); rec.vehiculo=''; rec.chofer=''; }
   else setAvisa(rec, '');
+  /* 📱 (§4ok-95) El celular en 8 números y los otros a Observaciones; sin ninguno que sirva, la marca «no tiene WhatsApp». */
+  if(_celE.aplica){
+    if(_celE.n.cel){ rec.celular=_celE.n.cel; rec.observaciones=celObsCon(rec.observaciones, _celE.n.otros); }
+    setSinWa(rec, _celE.sinWa);
+  }
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
      ⚠️ Va DESPUÉS de armar `rec` y rescatando lo anterior a propósito: los productos que
      salen del formulario son objetos NUEVOS, así que sin este rescate la vendedora
@@ -17553,6 +17575,7 @@ function resetForm(){
   document.getElementById('f-productos').innerHTML='';
   addProdRow();
   document.getElementById('f-celular').value='';
+  var _fswR=document.getElementById('f-sinwa'); if(_fswR) _fswR.checked=false;   // 📱 (§4ok-95)
   nxCliLimpiar();                              // 👋 (§4js, P1)
   segSet('f-turno','AM');
   var _tHint0=document.getElementById('f-turno-hint'); if(_tHint0) _tHint0.textContent='';
@@ -17582,6 +17605,7 @@ function resetForm(){
   VENTA_TIENDA=false; pintarModoTienda();
   avisaFormPintar();                           // 📦 (propuesta 76) sin la casilla: «Fecha de entrega» y el turno de siempre
   clearErr();
+  try{ celFormPintar(); }catch(e){}            // 📱 (§4ok-95)
   renderCupoForm();
   FORM_NUEVO_BASE=formNuevoHuella();
 }
@@ -17629,6 +17653,8 @@ function editPedido(id){
     var _ms=c.querySelector('.prod-medida'), _ot=c.querySelector('.prod-medida-otro');
     c.setAttribute('data-orig', String((c.querySelector('.prod-desc')||{}).value||'').trim()+'|'+(_ms && _ms.value==='Otros' ? String((_ot&&_ot.value)||'').trim() : String((_ms&&_ms.value)||''))); } });
   document.getElementById('f-celular').value=rec.celular||'';
+  var _fsw=document.getElementById('f-sinwa'); if(_fsw) _fsw.checked=sinWaDe(rec) && !celPartes(rec.celular).cel;   // 📱 (§4ok-95)
+  try{ celFormPintar(); }catch(e){}
   /* (27/09, revisión en el celular) SIN TURNO sigue sin turno: `rec.turno||'AM'` dejaba marcado «AM» y guardar la dirección
      le ponía turno AM a un pedido que nadie eligió (la ficha pasaba de «🕗 Sin turno» a «🌅 AM» y el atraso se medía a las 13
      en vez de al final del día). Sin botón marcado se guarda vacío, como estaba; el cupo lo cuenta igual que antes (`normTurno`). */
@@ -18946,7 +18972,7 @@ function fxDerPintar(){
   var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
   if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
-  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
     var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
     if(!lite) chk.push(['Celular',!!cel]);
@@ -19456,7 +19482,7 @@ function fxPasosEstado(){
      y Guardar la pedía. Celular: todo menos RPT (también la ATC); la zona, también en una RPT; ROHO, su N° de OC; la ATC, lo de `atcFaltan`. */
   var atcMal=false; try{ atcMal = tipo==='ATC' && atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).length>0; }catch(e){}
   return [
-    !!val('f-vendedor') && !!val(tipo==='RPT'?'f-rpt-suc':'f-cliente') && (lite || tipo==='RPT' || !!val('f-celular')) &&
+    !!val('f-vendedor') && !!val(tipo==='RPT'?'f-rpt-suc':'f-cliente') && (lite || tipo==='RPT' || (!!val('f-celular') && !celFormFalta(val('f-vendedor')))) &&   // 📱 (§4ok-95) lo mismo que Guardar
       (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
     prods,
     tienda || (!!val('f-fecha') && !!val('f-zona')),
@@ -20448,6 +20474,89 @@ function celularUsable(t){
   if(d.length>8) d=d.slice(-8);
   return d.length===8 && /^[67]/.test(d);
 }
+/* ============================================================================
+   §4ok-95 📱 EL CELULAR DE UNA VENTA A DOMICILIO QUEDA EN 8 NÚMEROS (05/11, mejoras 95 y 107; dueño 02/11: «Me encanta todo»)
+   Desde el 01/10, 15 de 226 clientes a domicilio quedaron sin un celular al que el bot pueda escribirle: dos números con guion
+   («77012345-76543210»), «#ERROR!» (la planilla lo tomó como fórmula) o con 4, 7, 9 u 11 números.
+   · Al GUARDAR una venta a domicilio (📄 OC; no venta de tienda, ATC, RPT, Eduardo, ROHO ni internos: `celObligatorio`) el celular
+     queda en 8 números (sin +591, espacios, guiones): `celPartes`. Si había dos, el primero que sirve queda de celular y los demás van
+     a Observaciones como «Otro cel: …» (la 107).
+   · Sin un celular de 8 números que empiece con 6 o 7 NO se guarda, salvo que la vendedora tilde «📵 El cliente no tiene WhatsApp»
+     (decidido en la 95: la 107 decía solo avisar, manda la 95). Esa marca viaja adentro de los productos (`sinwa:1`, la convención de
+     `avisa`/`klead`): al volver a editar el pedido la casilla ya viene tildada. Con la marca, el número se guarda tal cual.
+   · Un pedido VIEJO que se edita sin tocar el celular (como el precio obligatorio, §4oe): la vendedora lo corrige o tilda la casilla;
+     con la clave de Administración se guarda igual tras preguntar.
+   · Lo mismo piden «Para guardar» y los pasos (`fxPasosEstado`, §4mj): `celFormFalta`.
+   · En Playwright todo apagado salvo `window.CEL_PRUEBA` (como `PRECIO_PRUEBA`): las pruebas de siempre guardan celulares de ejemplo.
+   ========================================================================== */
+var CEL_SEP=/(?:\s*[\-‐-―−\/,;|\r\n]+\s*|\s+(?:y|o)\s+)/i;
+function celSin591(d){ return String(d||'').replace(/^(?:00)?591(?=[67]\d{7}$)/,''); }
+function celVale(d){ return /^[67]\d{7}$/.test(celSin591(d)); }
+/* «77012345 - 76543210» → { cel:'77012345', otros:['76543210'] }. Un celular escrito con un guion en el medio («700-12345») es UNO.
+   Lo que no sirve y tiene pinta de número (6 o más) queda en `otros` tal como se escribió (un número de otro país, un fijo). */
+function celPartes(t){
+  var s=String(t==null?'':t).replace(/[​-‏‪-‮⁦-⁩]/g,'').trim();
+  var tr=s.split(CEL_SEP).map(function(x){ x=String(x||'').trim(); return { t:x, d:x.replace(/\D/g,'') }; }).filter(function(x){ return x.t; });
+  var buenos=[], otros=[];
+  for(var i=0;i<tr.length;i++){
+    var a=tr[i], b=tr[i+1];
+    if(/^(?:00)?591$/.test(a.d) && b && celVale(b.d)) continue;                       // «+591 - 70012345»: el prefijo solo
+    if(celVale(a.d)){ buenos.push(celSin591(a.d)); continue; }
+    if(b && !celVale(b.d) && celVale(a.d+b.d)){ buenos.push(celSin591(a.d+b.d)); i++; continue; }   // «700-12345»
+    if(a.d.length>=6) otros.push(a.t);
+  }
+  var vistos={}, bu=buenos.filter(function(d){ if(vistos[d]) return false; vistos[d]=1; return true; });
+  return { cel:bu[0]||'', otros:bu.slice(1).concat(otros), t:s };
+}
+function celObligatorio(vend){
+  if(navigator.webdriver && !window.CEL_PRUEBA) return false;   // en Playwright solo con `CEL_PRUEBA`
+  return docTipoSel()==='OC' && !VENTA_TIENDA && !esVendedorLite(vend) && !cliEsInterno(vend);
+}
+function sinWaDe(p){ return ((p&&p.productos)||[]).some(function(x){ return !!(x && x.sinwa); }); }
+function setSinWa(p, on){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(on) x.sinwa=1; else delete x.sinwa; }); }
+/* Cómo está el celular del formulario. `her` = el pedido que se edita ya traía ESE celular (sin tocar) y no sirve. */
+function celFormEstado(vend){
+  var el=document.getElementById('f-celular'), t=String((el&&el.value)||'').trim();
+  var v=(vend==null) ? String((document.getElementById('f-vendedor')||{}).value||'').trim() : vend;
+  var o={ aplica:false, t:t, n:celPartes(t), sinWa:false, her:false, falta:false };
+  try{ o.aplica=celObligatorio(v); }catch(e){ o.aplica=false; }
+  if(!o.aplica) return o;
+  var sw=document.getElementById('f-sinwa'); o.sinWa=!!(sw && sw.checked) && !o.n.cel;
+  var p=EDIT_ID ? findById(EDIT_ID) : null;
+  o.her=!!(p && t && !o.n.cel && t===String(p.celular||'').trim());
+  o.falta=!!t && !o.n.cel && !o.sinWa;    // vacío ya lo frena la regla de siempre («Falta: celular»)
+  return o;
+}
+/* Para «Para guardar» y los pasos: lo mismo que frena `submitPedido` (con la clave, lo heredado se pregunta al guardar). */
+function celFormFalta(vend){ var o=celFormEstado(vend); return o.falta && !(o.her && UNLOCKED); }
+/* El texto de Observaciones con los otros números («Otro cel: …»), sin repetir uno que ya esté escrito. */
+function celObsCon(obs, otros){
+  var o=String(obs||'').trim(), dg=o.replace(/\D/g,'');
+  var nuevos=(otros||[]).filter(function(x){ var d=String(x).replace(/\D/g,''); return d && dg.indexOf(celSin591(d))<0; });
+  if(!nuevos.length) return o;
+  return o+(o?' · ':'')+'Otro cel: '+nuevos.join(', ');
+}
+function celFormPintar(){
+  var o=celFormEstado(), av=document.getElementById('f-cel-aviso'), w=document.getElementById('f-sinwa-wrap'), sw=document.getElementById('f-sinwa');
+  var mal=o.aplica && !!o.t && !o.n.cel;
+  if(w) w.hidden=!mal;
+  if(!av) return;
+  var h='', cls='cel-aviso';
+  if(mal){
+    cls+=' mal';
+    h = o.sinWa ? '📵 Se guarda «'+esc(o.t)+'» tal cual: el bot no le va a escribir a este cliente.'
+                : '📱 «'+esc(o.t)+'» no es un celular de WhatsApp (8 números que empiezan con 6 o 7). Corregilo; si el cliente no tiene WhatsApp, tildá la casilla de abajo.';
+  } else if(o.aplica && o.n.cel && (o.n.cel!==o.t || o.n.otros.length)){
+    h='✓ Se guarda como <b>'+esc(o.n.cel)+'</b>'+(o.n.otros.length ? (' · el otro número va a Observaciones: «Otro cel: '+esc(o.n.otros.join(', '))+'»') : '')+'.';
+  }
+  av.className=cls; av.hidden=!h; if(av._h!==h){ av.innerHTML=h; av._h=h; }
+  if(sw && !mal && sw.checked && o.n.cel) sw.checked=false;   // con un celular que sirve, la marca no va
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var fc=document.getElementById('f-celular'); if(fc) fc.addEventListener('input', celFormPintar);
+  var fv=document.getElementById('f-vendedor'); if(fv){ fv.addEventListener('change', celFormPintar); fv.addEventListener('input', celFormPintar); }
+  var fd=document.getElementById('f-doc-tipo'); if(fd) fd.addEventListener('click', function(){ setTimeout(celFormPintar, 0); });
+});
 /* Lo que ese cliente dejó en el panel de compras anteriores. */
 function historialCliente(tel){
   var k=telClave(tel); if(!k) return [];
@@ -26199,6 +26308,7 @@ function completarBorrador(id){
   document.getElementById('f-vendedor').value=vendedorDeBorrador(rec)||rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
   document.getElementById('f-celular').value=rec.celular||'';
+  try{ celFormPintar(); }catch(e){}            // 📱 (§4ok-95) lo que trajo Kommo, cómo se va a guardar
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-obs').value=rec.observaciones||'';
   /* 📍 Lo que Kommo NO tiene, sacado de una entrega anterior al mismo cliente.
