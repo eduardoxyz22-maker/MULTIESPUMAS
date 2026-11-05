@@ -44228,7 +44228,9 @@ var LS_GEO='me_geo_cache';
 function geoCacheLoad(){
   try{
     var j=JSON.parse(localStorage.getItem(LS_GEO)||'{}');
-    if(j && typeof j==='object') for(var k in j){ if(j[k] && j[k].lat!=null) MAPA_COORDS[k]=j[k]; }
+    /* §4ok-E6: un «cómo llegar» (maps/dir/…) no se toma de la copia: ahí quedó guardado el ORIGEN o el centro que se leía antes; se vuelve
+       a leer (el destino) cada vez que se abre la página. */
+    if(j && typeof j==='object') for(var k in j){ if(j[k] && j[k].lat!=null && coordsDestinoDir(k)===undefined) MAPA_COORDS[k]=j[k]; }
   }catch(e){}
 }
 function geoCacheSave(){
@@ -44413,9 +44415,35 @@ function normalizaUbicacion(txt){
   if(/°/.test(t)){ var gms=coordsDeLink(t); if(gms) return 'https://www.google.com/maps?q='+gms.lat.toFixed(6)+','+gms.lng.toFixed(6); }
   return null;
 }
+/* §4ok-E6 (05/11) EL ENLACE DE «CÓMO LLEGAR»: el destino es el ÚLTIMO punto. La 10-278 y su ATC tenían
+   «maps/dir/<desde dónde salió la vendedora>/<la casa del cliente>/data=…» y el panel tomaba el PRIMER par (el origen): el pin quedó a 3 km.
+   Y con «maps/dir/<origen>/<un lugar con nombre>/@<centro>/data=…» tomaba el centro del mapa (a mitad de camino).
+   · El último tramo de la ruta (antes de «@…» y «data=») con coordenadas → ese.
+   · Con nombre: sus coordenadas vienen en data= como «!1d<lng>!2d<lat>», una por cada punto CON nombre y en el mismo orden → la última,
+     solo si hay tantas como puntos con nombre (si no, no se sabe cuál es cuál). Sin ninguna, el último «!3d<lat>!4d<lng>».
+   · No se encuentra el destino → null («sin ubicar»): nunca el origen ni el centro.
+   Devuelve `undefined` si no es un enlace de «cómo llegar» con puntos en la ruta (sigue la lectura de siempre: `?api=1&destination=`). */
+function coordsDestinoDir(u){
+  var m=/\/maps\/dir\/([^?#]*)/i.exec(String(u||'')); if(!m) return undefined;
+  var segs=m[1].split('/'), pts=[];
+  for(var i=0;i<segs.length;i++){ var s=segs[i]; if(!s) continue; if(s.charAt(0)==='@' || /^data=/i.test(s)) break; pts.push(s); }
+  if(!pts.length) return undefined;
+  var dec=function(s){ try{ return decodeURIComponent(s.replace(/\+/g,' ')); }catch(e){ return s; } };
+  var ult=dec(pts[pts.length-1]), c=coordsSueltas(ult); if(c) return c;
+  var pc=plusCodeDeTexto(ult); if(pc){ var g=olcCoords(pc); if(g) return g; }
+  var dm=/\/data=([^?#]*)/i.exec(String(u)), dat=dm ? dm[1] : '', x, L=[], L3=[];
+  var re=/!1d(-?\d+(?:\.\d+)?)!2d(-?\d+(?:\.\d+)?)/g; while((x=re.exec(dat))) L.push(x);
+  var conNombre=pts.filter(function(s){ return !coordsSueltas(dec(s)); }).length;
+  if(L.length && L.length===conNombre){ var p=L[L.length-1]; return validaCoord(p[2], p[1]); }
+  if(L.length) return null;
+  var re3=/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/g; while((x=re3.exec(dat))) L3.push(x);
+  if(L3.length){ var q=L3[L3.length-1]; return validaCoord(q[1], q[2]); }
+  return null;
+}
 function coordsDeLink(u){
   u=String(u||''); if(!u) return null;
   var sueltas=coordsSueltas(u); if(sueltas) return sueltas;
+  var dir=coordsDestinoDir(u); if(dir!==undefined) return dir;   // §4ok-E6
   var d=u; try{ d=decodeURIComponent(u.replace(/\+/g,' ')); }catch(e){}
   var m;
   // 1) el pin exacto: !3d<lat>!4d<lng>
@@ -44432,6 +44460,8 @@ function coordsDeLink(u){
   var pc=plusCodeDeTexto(d)||plusCodeDeTexto(u);
   if(pc){ var gp=olcCoords(pc); if(gp) return gp; }
   // 3) parámetros explícitos (📍 §4ln: también con la coma codificada, «ll=-17.867825%2C-63.155401» de Waze)
+  //    §4ok-E6: en un «cómo llegar» con parámetros («saddr=…&daddr=…», «origin=…&destination=…») manda el DESTINO, aunque venga después
+  if((m=u.match(/[?&](?:daddr|destination)=(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)/i))) return validaCoord(m[1],m[2]);
   if((m=u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return validaCoord(m[1],m[2]);
   if((m=u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+)(?:%2C|,)(?:\s|%20|\+)*(-?\d+\.\d+)/i))) return validaCoord(m[1],m[2]);
   // 4) centro del mapa (menos preciso, pero mejor que nada)
