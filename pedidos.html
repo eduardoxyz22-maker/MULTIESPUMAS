@@ -2703,6 +2703,8 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
       <div id="fx-mes" class="fx-mes no-print" hidden></div>
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
+        <!-- 🏪 §4ok-93 (05/11) En una venta de tienda NUEVA: guarda y vuelve al formulario de tienda con la misma tienda (las tandas de Charcas). -->
+        <button class="btn btn-ghost" id="f-submit-prox" type="button" hidden onclick="tvGuardarProxima()" style="width:100%;margin-top:8px">💾 Guardar y cargar la próxima</button>
       </div>
     </div>
     <aside id="fx-der" class="fx-lado fx-der no-print" aria-label="Tu pedido"></aside>
@@ -8541,7 +8543,8 @@ function formIrAlPrimerError(){
   try{ e.scrollIntoView({ block:'center' }); }catch(x){ e.scrollIntoView(); }
   try{ e.focus({ preventScroll:true }); }catch(x){ try{ e.focus(); }catch(y){} }
 }
-function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; b.classList.remove('gz-ok','gz-mal','gz-cola'); if(typeof GZ_T!=='undefined') clearTimeout(GZ_T); if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
+function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; var _b2=document.getElementById('f-submit-prox'); if(_b2) _b2.disabled=on;   // §4ok-93
+b.classList.remove('gz-ok','gz-mal','gz-cola'); if(typeof GZ_T!=='undefined') clearTimeout(GZ_T); if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
 /* 💵 LOS MONTOS DEL FORMULARIO SE LEEN COMO LOS ESCRIBE LA GENTE (26/09). En Bolivia 1.500 se escribe
    con punto y el campo numérico lo deja tal cual («1.500»): `parseFloat` lo leía 1,5, y una venta con
    «A cuenta 1.500» llegaba a la planilla con Bs 1,50 (el pago mixto, el flete y el precio c/u, igual).
@@ -15670,6 +15673,7 @@ function onCompFormElegido(ev){
 
 function submitPedido(){
   clearErr();
+  var _prox=(TV_PROXIMA && VENTA_TIENDA && !EDIT_ID) ? TV_PROXIMA : null; TV_PROXIMA=null;   // 🏪 §4ok-93 «Guardar y cargar la próxima»
   /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
      guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
   try{ codigoEspecialBorrar(null, EDIT_ID ? findById(EDIT_ID) : null); }catch(e){}
@@ -16835,7 +16839,10 @@ function submitPedido(){
     /* (27/09, revisión en el celular) …pero solo la venta de tienda NUEVA. CORREGIR una (desde Mis pedidos) también caía
        acá: terminaba en Contabilidad, con «✅ Pedido guardado» y el mensaje de una venta nueva para pasar al grupo — como
        si hubiera cargado otra. Una edición vuelve a donde estaba y dice qué cambió, como cualquier pedido. */
-    if(_tienda && !(wasEdit && !_deBorrador)){ irAContaDe(rec); showWhatsappModal(rec); return; }
+    if(_tienda && !(wasEdit && !_deBorrador)){
+      if(_prox && !wasEdit){ tvProximaSeguir(_prox, rec); return; }   // 🏪 §4ok-93 vuelve al formulario de tienda, con la misma tienda
+      irAContaDe(rec); showWhatsappModal(rec); return;
+    }
     /* ⚠️ Volver a DONDE ESTABA, no a Administración. Antes iba siempre a `showView('admin')`
        —porque editar era cosa de administración— y desde §4bc una vendedora que corregía su
        pedido terminaba en la pantalla del candado pidiéndole la contraseña, sin ninguna
@@ -17157,6 +17164,7 @@ function pintarModoTienda(){
   if(_fv && VENTA_TIENDA){ _fv.max=diaNegocio(); if(!_fv.value) _fv.value=diaNegocio(); }
   var b=document.getElementById('f-submit');
   if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
+  var _bp=document.getElementById('f-submit-prox'); if(_bp) _bp.hidden=!(VENTA_TIENDA && !EDIT_ID);   // 🏪 §4ok-93 solo en una venta de tienda NUEVA
   try{ avisaFormPintar(); }catch(e){}         // 📦 (propuesta 76) la venta de tienda no lleva la casilla
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
 }
@@ -17535,6 +17543,7 @@ function resetForm(){
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=proximoDiaEntrega();
   var _fav=document.getElementById('f-avisa'); if(_fav) _fav.checked=false;   // 📦 (propuesta 76)
   var _fvR=document.getElementById('f-fecha-venta'); if(_fvR) _fvR.value='';   // 📅 (§4nm)
+  tvFvLimpiar();                               // 📅 §4ok-93 la fecha de la foto se propone de nuevo en la venta siguiente
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
   segSet('f-doc-tipo','OC');
@@ -18025,7 +18034,7 @@ function guardarBtnFin(res, rec, enCola){
     var b=document.getElementById('f-submit'); if(!b || b.disabled) return;
     b.classList.remove('gz-ok','gz-mal','gz-cola'); void b.offsetWidth; b.classList.add('gz-'+k);
     b.innerHTML=(k==='ok' ? '<svg class="gz-tilde" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : (k==='cola'?'⏳ ':'⚠️ '))+esc(txt);
-    GZ_T=setTimeout(function(){ b.classList.remove('gz-ok','gz-mal','gz-cola'); if(!b.disabled) b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }, k==='ok'?2400:4800);
+    GZ_T=setTimeout(function(){ b.classList.remove('gz-ok','gz-mal','gz-cola'); if(!b.disabled) b.textContent=VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido'); }, k==='ok'?2400:4800);   // §4ok-93: con «cargar la próxima» el formulario de tienda sigue a la vista
   }, 0);
   return k;
 }
@@ -50290,7 +50299,9 @@ function iasPintarForm(){
   ['1','2'].forEach(function(k){
     var box=document.getElementById('ias-f'+k); if(!box) return;
     var h='';
-    try{ var c=iasEvaluar(iasFormX(+k)); if(c) h=iasHtml(c, iasCtxForm(+k)); }catch(e){ h=''; }
+    try{ var c=iasEvaluar(iasFormX(+k));
+      if(c && tvFotoFechaProponer(c)) c=iasEvaluar(iasFormX(+k));   // 📅 §4ok-93 la venta de tienda toma el día de la foto
+      if(c) h=iasHtml(c, iasCtxForm(+k))+(k==='1' ? tvFotoFechaNotaHtml() : ''); }catch(e){ h=''; }
     if(box._h!==h){ box.innerHTML=h; box._h=h; }
   });
 }
@@ -50410,6 +50421,63 @@ function iasFechaVenta(f){
   try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){}
   iasRepintar(); toast('📅 Fecha de la venta: '+fmtFecha(f)+'.','ok');
 }
+// §4ok-93 ============================================================================
+/* 🏪 (05/11, plan del jueves, 93; dueño: «Me encanta todo») LAS VENTAS DE TIENDA EN TANDA. Charcas carga en tandas semanales (42 ventas
+   en 128 min en octubre): después de cada una el panel saltaba a Contabilidad y había que volver y elegir la tienda otra vez; y 20 de las 26
+   con foto se cargaron 1 a 7 días después y quedaron con el día de la carga.
+   · «💾 Guardar y cargar la próxima» (solo en una venta de tienda NUEVA): guarda por el MISMO camino que «Registrar venta de tienda»
+     (`submitPedido`) y, con el «sí» de la planilla, vuelve al formulario de tienda vacío con la misma tienda y la misma vendedora. La
+     ventana para pasar la venta al grupo sale igual (encima del formulario). Si el guardado no entra (rechazo, cola) es lo de siempre.
+   · 📅 La fecha de la foto: si la IA ya leyó el comprobante del pago (la lectura al subir, §78) y la foto es de un día ANTERIOR a hoy,
+     ese día se pone solo en «Fecha de la venta» (§4nm) y se dice, con un botón para volver a la de antes. Nunca después de hoy, solo en
+     una venta NUEVA (corregir una vieja sigue preguntando) y nunca encima de una fecha que la persona escribió a mano. */
+var TV_PROXIMA=null, TV_FV={ mano:false, auto:'', antes:'' };
+function tvFvLimpiar(){ TV_FV={ mano:false, auto:'', antes:'' }; }
+function tvGuardarProxima(){
+  var b=document.getElementById('f-submit'); if(b && b.disabled) return;
+  if(!VENTA_TIENDA || EDIT_ID){ submitPedido(); return; }
+  TV_PROXIMA={ suc:String((document.getElementById('f-tienda-suc')||{}).value||''), vend:String((document.getElementById('f-vendedor')||{}).value||'').trim() };
+  submitPedido();
+  TV_PROXIMA=null;   // si `submitPedido` no lo tomó (otra cosa abierta), que no quede para el próximo guardado
+}
+function tvProximaSeguir(prox, rec){
+  abrirVentaTienda();
+  var s=document.getElementById('f-tienda-suc'); if(s && prox.suc) s.value=prox.suc;
+  var v=document.getElementById('f-vendedor'); if(v && prox.vend){ v.value=prox.vend; try{ applyVendedorLite(); }catch(e){} }
+  try{ FORM_NUEVO_BASE=formNuevoHuella(); }catch(e){}   // la tienda y la vendedora las puso el panel: no es «un pedido a medio llenar»
+  showWhatsappModal(rec);
+  toast('✓ Venta guardada. Seguís en la venta de tienda'+(prox.suc?(' de '+prox.suc):'')+': cargá la próxima.','ok',6000);
+}
+/* La lectura de la foto dijo otro día: se pone ese día (una vez por venta). Devuelve true si cambió la fecha. */
+function tvFotoFechaProponer(c){
+  if(!VENTA_TIENDA || EDIT_ID || !TV_FV || TV_FV.mano || TV_FV.auto || !c || c.est!=='mal') return false;
+  var m=(c.mot||[]).filter(function(x){ return x.k==='dia'; })[0]; if(!m) return false;
+  var ff=String(m.fFoto||''), hoy=diaNegocio();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(ff) || ff>=hoy) return false;
+  var e=document.getElementById('f-fecha-venta'); if(!e) return false;
+  TV_FV.antes=String(e.value||hoy); TV_FV.auto=ff; e.value=ff; e.classList.remove('err');
+  TV_FV.yo=true; try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){} TV_FV.yo=false;
+  toast('📅 Puse el '+fmtFechaCorta(ff)+' como «Fecha de la venta»: es el día de la foto del pago.','ok',6000);
+  return true;
+}
+function tvFotoFechaNotaHtml(){
+  if(!VENTA_TIENDA || EDIT_ID || !TV_FV || !TV_FV.auto || iasVal('f-fecha-venta')!==TV_FV.auto) return '';
+  return iasLinea('ias-gris', '📅 Puse el <b>'+esc(fmtFechaCorta(TV_FV.auto))+'</b> como «Fecha de la venta»: es el día de la foto del pago.',
+    iasBtn('No, fue el '+esc(fmtFechaCorta(TV_FV.antes||diaNegocio())), 'tvFotoFechaDeshacer()'));
+}
+function tvFotoFechaDeshacer(){
+  var e=document.getElementById('f-fecha-venta'); if(!e) return;
+  var f=String(TV_FV.antes||diaNegocio()); if(f>diaNegocio()) f=diaNegocio();
+  e.value=f; TV_FV.mano=true; TV_FV.auto='';
+  TV_FV.yo=true; try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){} TV_FV.yo=false;
+  iasRepintar(); toast('📅 Fecha de la venta: '+fmtFecha(f)+'.','ok');
+}
+/* La persona cambió la fecha (a mano o con el «Sí» de la pregunta): no se la vuelve a tocar. Lo que pone este bloque no cuenta (`yo`). */
+(function(){
+  var mano=function(e){ if(e && e.target && e.target.id==='f-fecha-venta' && TV_FV && !TV_FV.yo){ TV_FV.mano=true; TV_FV.auto=''; } };
+  document.addEventListener('input', mano, true); document.addEventListener('change', mano, true);
+})();
+// §4ok-93 fin =========================================================================
 /* Cambia un monto, el método, el banco, la fecha…: el aviso se rehace (solo si hay alguna foto subida acá). */
 (function(){
   var t=null, ids={ 'f-acuenta':1, 'f-saldo':1, 'f-cobrado':1, 'f-monto2':1, 'f-envio':1, 'f-fecha-venta':1, 'cta-pago-monto':1, 'cta-pago-fecha':1 };
