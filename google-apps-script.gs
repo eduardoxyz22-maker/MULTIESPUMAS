@@ -79,7 +79,7 @@ var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
    y el sello con el que leyó: si otra guardó en el medio, `conflicto` con la fila actual, y el panel le
    aplica encima SOLO lo que tocó y vuelve a guardar. Un panel que no manda `juntar` (el de antes del 26/09)
    sigue como siempre: a estas filas NO se le contesta `actualizar`, para no trabar a nadie. */
-var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1, '__talonario__':1 };   // (2026-10-30-a) el talonario de Contabilidad (propuesta 82) también
+var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1, '__talonario__':1, '__destinos__':1 };   // (2026-11-05-a, §4ok-110) el lugar de entrega de los clientes fijos también   // (2026-10-30-a) el talonario de Contabilidad (propuesta 82) también
 /* 🧓 (2026-10-06-a) EL STOCK LO GUARDA SOLO UNA PÁGINA AL DÍA. El 06/10 una computadora con la página de antes (sin F5)
    volvió a subir los tres Excel del sábado y el panel de todos trabajó el lunes con el stock de dos días antes; esa página
    además borraba el control del corte (detecciones, salidas sin pedido) al guardar. La página del 06/10 manda `sf` (el
@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-11-02-a';   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-11-05-a';   // ⬅️ 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), «recibimos tu pago» (100), recojo y devolución de la ATC (109), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -230,7 +230,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-11-02-a';
+  var ESTA_VERSION = '2026-11-05-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -531,6 +531,10 @@ function probarAntesDeImplementar() {
     if (kcActivo_()) bien('El cierre de las ventas en Kommo está PRENDIDO (KOMMO_CIERRE = 1): cada venta del panel pasa su lead a «Compradores».');
     else bien('El cierre de las ventas en Kommo está apagado. Para prenderlo: ejecutá «probarKommoEscribe»; si dice ✅, poné la propiedad KOMMO_CIERRE = 1.');
   } catch (e) { ojo('No pude mirar el cierre de Kommo: ' + motivo(e)); }
+
+  /* 16. §4ok-E (2026-11-05-a) Lo nuevo del bot del jueves: a quién va lo del dueño, el vigía de leads, el reclamo a la fábrica y los
+         celulares que ya quedaron «#ERROR!» (eso no se arregla solo). Solo lee; informa, no frena. */
+  try { probarBotE_(bien, ojo, horaBolivia); } catch (e) { ojo('No pude mirar lo nuevo del bot (§4ok-E): ' + motivo(e)); }
 
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
@@ -2108,7 +2112,7 @@ function rowToRec_(r) {
       vendedor: String(r[3] || ''),
       cliente: String(r[4] || ''),
       productos: parseProd(r[14], r[5]),
-      celular: String(r[6] == null ? '' : r[6]),
+      celular: String(r[6] == null ? '' : r[6]).replace(/^'/, ''),   // §4ok-95: el «'» que pone `celTexto_` (Google no lo devuelve; una planilla de prueba sí)
       turno: String(r[7] || ''),
       zona: String(r[8] || ''),
       direccion: String(r[9] || ''),
@@ -2407,6 +2411,7 @@ function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa) {
     }
   }
   getCacheOlvidar_();
+  celColumnaTexto_(sh);   // §4ok-95 la columna «Celular» como texto (una vez)
   /* 🔍 EL ECO ES LA FILA RELEÍDA (§4eo). Antes se devolvía `p` —el objeto recibido— y el
      panel comparaba lo enviado con lo enviado: una escritura mala en la hoja no se veía.
      Ahora se vuelve a leer la fila recién escrita y se devuelve ESO. */
@@ -2474,7 +2479,7 @@ function doDelete(id, rev, body) {
 function recToRow(p) {
   return [
     p.id, p.fecha || '', p.oc || '', p.vendedor || '', p.cliente || '',
-    prodText(p.productos), p.celular || '', p.turno || '', p.zona || '',
+    prodText(p.productos), celTexto_(p.celular), p.turno || '', p.zona || '',
     p.direccion || '', p.maps || '', p.pagado ? 'SÍ' : 'NO',
     Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || []),
     p.metodoPago || '', p.observaciones || '',
@@ -2485,6 +2490,26 @@ function recToRow(p) {
     (p.fotos && p.fotos.length) ? p.fotos.join(' | ') : '',
     Number(p.rev) || 0
   ];
+}
+
+/* §4ok-95 (05/11) EL CELULAR VA SIEMPRE COMO TEXTO. Google toma lo que se escribe en una celda y lo convierte: «+591 7011 1222» o
+   «=…» lo lee como una FÓRMULA y la celda queda «#ERROR!» (3 clientes del 01/10 al 02/11: el número se perdió y el bot no les
+   escribió), un 0 adelante se va y algo con guiones puede volverse una fecha. Dos cosas, las dos:
+   · la columna «Celular» con formato de TEXTO (`celColumnaTexto_`, una vez: queda anotado en CEL_TEXTO), así lo que se escribe
+     de ahí en adelante queda tal cual;
+   · y lo que empieza con «=», «+», «-» o «@» (lo que Google toma como fórmula) va con un «'» adelante: es la marca de «esto es
+     texto» y Google, al leer, devuelve el número SIN el «'». La lectura (`rowToRec_`) lo saca igual, por si alguna vez quedara. */
+function celTexto_(v) {
+  var s = String(v == null ? '' : v);
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+function celColumnaTexto_(sh) {
+  if (prop_('CEL_TEXTO') === '1') return;
+  try {
+    var col = HEADERS.indexOf('Celular') + 1, L = String.fromCharCode(64 + col);
+    sh.getRange(L + ':' + L).setNumberFormat('@');
+    PropertiesService.getScriptProperties().setProperty('CEL_TEXTO', '1');
+  } catch (e) {}
 }
 
 function prodText(prods) {
@@ -3047,8 +3072,9 @@ function purgeBackups_(folder, keep) {
  * con las 6 plantillas de «Utilidad» que el dueño cargó en Meta:
  *   · al CLIENTE: `confirmacion_pedido` (pedido nuevo), `cambio_entrega` (cambió el día o el turno) y, desde las 17:00,
  *     `recordatorio_entrega` (los del próximo día con camión);
- *   · a LOGÍSTICA, a cada uno por separado: `logistica_pedido_nuevo`, `logistica_cambio` y, desde las 16:00,
- *     `logistica_sin_camion` (los del próximo día que siguen sin camión);
+ *   · a LOGÍSTICA, a cada uno por separado: `logistica_pedido_nuevo`, `logistica_cambio` y, a las 08:45 (§4ok-97, 2026-11-05-a),
+ *     `logistica_hoy_falta` (lo de HOY sin camión y lo de hoy con productos sin revisar o «✗ no hay»; antes, a las 16:00, la lista
+ *     de los del próximo día sin camión: `logistica_sin_camion`);
  *   · (2026-10-27-a) a los de WA_PEDIR_HOY (Ernesto y Alba), media hora antes del corte de producción: `logistica_pedir_hoy`
  *     (lo que hay que revisar o pedir a producción hoy, la lista del botón «Semana» del panel).
  * La marca va DENTRO del mensaje, por el vendedor (Heaven Colchones, Sueña o Multiespumas, como `MARCAS` de la página).
@@ -3072,6 +3098,11 @@ function purgeBackups_(folder, keep) {
  *      WA_PRUEBA    = (opcional) un número: TODO lo manda ahí en vez de al cliente o a logística. Para probar.
  *      WA_ACTIVO    = 1   (0 o vacío = apagado: no anota ni manda nada)
  *      WA_IDIOMA    = (opcional) el idioma de las plantillas en Meta; por defecto «es»
+ *      WA_DUENO     = (opcional, §4ok-102/105, 2026-11-05-a) Eduardo:591XXXXXXXX — al dueño: el vigía de leads (alerta_leads) y, junto
+ *                     con los de WA_AVISOS/WA_PEDIR_HOY, el reclamo a la fábrica de las 10:00 (reclamo_fabrica). Sin ella, el vigía no
+ *                     corre y el reclamo va solo a logística.
+ *   Las maneja el script solo (no se tocan): WA_PAGO_COLA y WA_PAGOS (§4ok-100, los pagos nuevos y los ya avisados), WA_LEADS (§4ok-102,
+ *   lo último que contó el vigía, sin nombres), CEL_TEXTO (§4ok-95, la columna «Celular» ya quedó con formato de texto).
  * y después ▶ Ejecutar «instalarDisparadores» una vez (deja `waRepaso` cada 5 minutos). `estadoBotWhatsApp` dice cómo anda.
  * ========================================================================== */
 var WA_ESPERA_MS = 2 * 60000;           // cuánto espera un pedido recién guardado antes de salir
@@ -3080,7 +3111,9 @@ var WA_SALIDA_TOPE_LETRAS = 8000;       // los reintentos pendientes, como mucho
 var WA_LISTA_MAX = 240;                // (2026-10-12-b) «sin camión»: hasta acá entran nombres enteros (Meta corta en 250)
 var WA_REINT_MAX = 3;                   // intentos por mensaje ante un problema pasajero de Meta
 var WA_REINT_MS = 5 * 60000;            // cada cuánto se reintenta
-var WA_HORA_LOGISTICA = 16;             // (dueño, 10/10: «16:00») pedidos sin camión
+/* 🌅 §4ok-97 (2026-11-05-a) El aviso a logística sale a las 08:45 con lo de HOY. A las 16:00 traía casi todo el día siguiente (10 de 11,
+   14 de 15…): el camión se asigna a la mañana. Lo que de verdad faltaba se veía recién al otro día (5 el 19/10, 5 el 23/10, 5 el 30/10). */
+var WA_HORA_SC = 8.75;                  // 08:45 de Bolivia, días hábiles: sin camión + sin revisar o «no hay», solo lo de HOY
 var WA_HORA_RECORDATORIO = 17;          // (dueño, 10/10: «17:00») recordatorio al cliente: desde el 12/10, los de la MAÑANA (y sin turno)
 var WA_HORA_REC_PM = 19;                // (dueño, 12/10: «a las 17 los de la mañana y a las 19 los del turno PM de mañana»)
 var WA_VENTANA_H = 2;                   // si el bot estuvo parado, después de 2 horas ya no se manda el de ese día (dice «Son las 16:00»)
@@ -3098,12 +3131,16 @@ var WA_RANGO = { AM:['por la mañana', '9:00 y las 12:00'], PM:['por la tarde', 
 var WA_TIPOS = {
   /* (2026-10-12-d) `plantilla` = la «_v2» (con emojis y el contacto de la vendedora); `vieja` = la de antes, con sus `nv` datos (los
      primeros `nv` de los de ahora: el contacto va AL FINAL). Mientras Meta no apruebe la v2, se manda la vieja (waRepaso). */
-  conf:{ plantilla:'confirmacion_pedido_v2', vieja:'confirmacion_pedido', nv:8, txt:'Confirmación', cli:true },
+  /* 📍 §4ok-108 (2026-11-05-a) `ubic` = la misma, pidiendo la ubicación: para un pedido sin pin exacto (vacío o aproximado). Respaldo: la
+     v2 (mismos 9 datos) y después la vieja. */
+  conf:{ plantilla:'confirmacion_pedido_v2', vieja:'confirmacion_pedido', nv:8, txt:'Confirmación', cli:true, ubic:'confirmacion_pedido_ubic' },
   camb:{ plantilla:'cambio_entrega_v2', vieja:'cambio_entrega', nv:5, txt:'Cambio de día', cli:true },
-  rec: { plantilla:'recordatorio_entrega_v2', vieja:'recordatorio_entrega', nv:8, txt:'Recordatorio', cli:true },
+  rec: { plantilla:'recordatorio_entrega_v2', vieja:'recordatorio_entrega', nv:8, txt:'Recordatorio', cli:true, ubic:'recordatorio_entrega_ubic' },
   ln:  { plantilla:'logistica_pedido_nuevo_v2', vieja:'logistica_pedido_nuevo', nv:6, txt:'Logística: nuevo' },
   lc:  { plantilla:'logistica_cambio_v2', vieja:'logistica_cambio', nv:3, txt:'Logística: cambio' },
-  sc:  { plantilla:'logistica_sin_camion_v2', vieja:'logistica_sin_camion', nv:3, txt:'Logística: sin camión' },
+  /* 🌅 §4ok-97 (2026-11-05-a) 08:45, lo de HOY: sin camión + productos sin revisar o «✗ no hay». Mientras Meta no apruebe la nueva sale la
+     «sin camión» de antes (3 datos: cuántos, el día y la lista) SOLO si hay algo sin camión (`a.viejos`); esa dice «Son las 16:00». */
+  sc:  { plantilla:'logistica_hoy_falta', vieja:'logistica_sin_camion_v2', nv:3, vieja2:'logistica_sin_camion', nv2:3, txt:'Logística: lo de hoy (sin camión o sin revisar)' },
   /* 🚀 (2026-10-14-a, dueño: «un pedido agendado para la tarde que Ernesto carga en la mañana y despacha: que avise al cliente que está
      cargado y en camino»). Mismos datos que `camb`. Mientras Meta no apruebe la nueva, sale el cambio de día de siempre (v2 y después la
      primera): «Ahora te lo llevamos el martes 14/10 por la mañana». */
@@ -3112,7 +3149,20 @@ var WA_TIPOS = {
   ph:  { plantilla:'logistica_pedir_hoy', txt:'Logística: pedir hoy' },
   /* 📥✅ (2026-10-29-a) A las 10:00 si falta el Excel de existencias de hoy; a las 19:00 (sábado 13:30) si falta el cierre de entregas. */
   ex:  { plantilla:'logistica_excel_falta', txt:'Logística: falta el Excel' },
-  ci:  { plantilla:'logistica_cierre_falta', txt:'Logística: falta el cierre' }
+  ci:  { plantilla:'logistica_cierre_falta', txt:'Logística: falta el cierre' },
+  /* 💵 §4ok-100 (2026-11-05-a) Al cliente, cada pago NUEVO que se registra: cuánto, cómo y cuánto le queda. `no` = qué regla dice a quién
+     no (`waNoClientePago_`: sin la de la fecha ni la de «entregado», justo los pagos que llegan después son los que interesan). */
+  pago:{ plantilla:'pago_recibido', txt:'Pago recibido', cli:true, no:'pago' },
+  /* 🛠️ §4ok-109 (2026-11-05-a) La ATC: al cliente, el día del RECOJO (al guardarla con fecha o cambiársela, y la víspera) y el de la
+     DEVOLUCIÓN (al programarla). Sin productos ni saldo. `no:'atc'` = `waNoClienteAtc_`. */
+  atc: { plantilla:'atc_recojo', txt:'ATC: recojo', cli:true, no:'atc' },
+  atcv:{ plantilla:'atc_recojo', txt:'ATC: recojo (víspera)', cli:true, no:'atc' },
+  atd: { plantilla:'atc_devolucion', txt:'ATC: devolución', cli:true, no:'atc' },
+  /* 📉 §4ok-102 (2026-11-05-a) Al dueño (WA_DUENO): casi no entran leads a Kommo, y cuando vuelven a entrar. */
+  al:  { plantilla:'alerta_leads', txt:'Dueño: casi no entran leads' },
+  alv: { plantilla:'alerta_leads_volvieron', txt:'Dueño: volvieron a entrar leads' },
+  /* 🏭 §4ok-105 (2026-11-05-a) A las 10:00 (días hábiles), al dueño y a logística: lo que la fábrica nos debe. */
+  rf:  { plantilla:'reclamo_fabrica', txt:'Reclamo a la fábrica' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -3125,13 +3175,34 @@ function waNorm_(t) {
 }
 /** El celular de WhatsApp de Bolivia (591 + 6/7 + 7 números), como `misWaCliente` de la página; '' si no hay uno. */
 function waCel_(cel) {
-  var d = String(cel || '').replace(/[^0-9]/g, '');
-  if (/^[67]\d{7}$/.test(d)) return '591' + d;
-  if (/^591[67]\d{7}$/.test(d)) return d;
-  /* Dos celulares en el campo («70012345 / 76543210»): el primero. (12/10, revisión) Con borde a la IZQUIERDA también: si no,
-     de «775123456» o de un número de otro país salía un celular de Bolivia de OTRA persona. */
+  var uno = waCelUno_(cel); if (uno) return uno;
+  /* §4ok-E4 (05/11) Dos celulares en el campo: «70111222-76543210», «70111222 - 76543210», «70111222 / 76543210», «…, …», «… y …».
+     Con el guion pegado los números se juntaban en 16 cifras y el bot no le escribía a nadie (36 de 39 clientes con dos números).
+     Se corta por los separadores y se toma el PRIMER pedazo que sea entero un celular (8 cifras con 6 o 7, o con el 591): un pedazo
+     entero tiene borde de los dos lados, así que nunca sale un pedazo del número de otra persona (§4kf). Un guion SIN espacios
+     también parte un número solo («7011-1222»): ese ya salió entero arriba. */
+  var p = waCelBuscar_(String(cel || ''), 0); if (p) return p;
+  /* Con otras palabras alrededor («Cel: 70111222 casa»). (12/10, revisión) Con borde a la IZQUIERDA también: si no, de «775123456» o
+     de un número de otro país salía un celular de Bolivia de OTRA persona. */
   var m = String(cel || '').replace(/[\s.\-()]/g, '').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
   return m ? '591' + m[1] : '';
+}
+/* §4ok-E4 Un pedazo que es UN celular entero (sin mirar lo que lo rodea): '591…' o ''. `misWaCliente` de la página hace lo mismo. */
+function waCelUno_(t) {
+  var d = String(t == null ? '' : t).replace(/[^0-9]/g, '');
+  if (/^[67]\d{7}$/.test(d)) return '591' + d;
+  if (/^591[67]\d{7}$/.test(d)) return d;
+  return '';
+}
+/* §4ok-E4 Los separadores, del más claro al menos claro: «/», «,», «;» y « y »; un guion con espacio de algún lado; un guion pegado. */
+var WA_CEL_CORTES = [/\s*[\/,;]+\s*|\s+y\s+/i, /\s+-+\s*|\s*-+\s+/, /-+/];
+function waCelBuscar_(t, k) {
+  var u = waCelUno_(t); if (u) return u;
+  if (k >= WA_CEL_CORTES.length) return '';
+  var ps = t.split(WA_CEL_CORTES[k]);
+  if (ps.length < 2) return waCelBuscar_(t, k + 1);
+  for (var i = 0; i < ps.length; i++) { var x = waCelBuscar_(ps[i], k + 1); if (x) return x; }
+  return '';
 }
 function waMarca_(vend) {
   var v = waNorm_(vend);
@@ -3234,6 +3305,11 @@ function waConfig_() {
   c.avisos = []; c.malAv = [];
   leer('WA_AVISOS', c.avisos, c.malAv);        // 📥✅ (2026-10-29-a) opcional: si no está, el Excel y el cierre van a los de WA_PEDIR_HOY
   c.avisosLog = c.avisos.length ? c.avisos : c.pedirHoy;
+  c.dueno = []; c.malDu = [];
+  leer('WA_DUENO', c.dueno, c.malDu);          // 📉🏭 §4ok-102/105 (2026-11-05-a) opcional: el vigía de leads y el reclamo a la fábrica
+  /* 🏭 §4ok-105 El reclamo a la fábrica: al dueño y a los de los avisos de logística (WA_AVISOS, o WA_PEDIR_HOY), sin repetir un número. */
+  c.reclamo = [];
+  c.dueno.concat(c.avisosLog).forEach(function (L) { if (!c.reclamo.some(function (x) { return x.cel === L.cel; })) c.reclamo.push(L); });
   c.ok = !!(c.token && c.phone);
   return c;
 }
@@ -3250,6 +3326,7 @@ function waColaGuardar_(c) {
     cliente le sale «cargado y en camino» (`e`) en vez del cambio de día, y a logística nada (ellos lo cargaron). */
 function waAlGuardar_(viejo, rec, adelanto) {
   if (!waActivo_() || !rec) return;
+  try { waPagoAlGuardar_(viejo, rec); } catch (eP) {}   // 💵 §4ok-100
   var id = String(rec.id || '');
   if (!id || id.indexOf('__') === 0 || String(rec.estado || '') === BORRADOR_EST || !rec.fecha) return;   // (12/10) por el estado, no por `kommo-`
   if (entregaAConfirmar_(rec)) return;   // 📦 (2026-10-30-a) «el cliente avisa cuándo»: nada al cliente ni a logística (sin fecha ya salía arriba)
@@ -3260,6 +3337,7 @@ function waAlGuardar_(viejo, rec, adelanto) {
   else if (adelanto && fV === String(rec.fecha) && fV === waBo_(Date.now()).hoy && tV === 'PM' && turnoNorm_(rec.turno) === 'AM') ev = { id:id, t:'e', de:fV + '|PM' };   // solo HOY: otro día es un cambio común
   else if (fV !== String(rec.fecha) || tV !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + tV };
   if (!ev) return;
+  if (/^ATC\b/i.test(String(rec.oc || '').trim())) ev.atc = waAtcEsDev_(rec) ? 'd' : 'r';   // 🛠️ §4ok-109
   var cola = waColaLeer_(), ya = null, ms = Date.now();
   for (var i = 0; i < cola.length; i++) if (cola[i].id === id) { ya = cola[i]; break; }
   if (ya) {
@@ -3267,6 +3345,7 @@ function waAlGuardar_(viejo, rec, adelanto) {
        (2026-10-14-a) Un cambio que termina adelantado sale «en camino»; uno adelantado que después se mueve, como cambio de día. */
     if (ev.t === 'n') { ya.t = 'n'; delete ya.de; }
     else if (ya.t !== 'n') { if (ev.t === 'e') ya.t = 'e'; else if (ya.t === 'e') ya.t = 'c'; }
+    if (ev.atc) ya.atc = ev.atc; else delete ya.atc;   // 🛠️ §4ok-109 recojo o devolución: lo último
     ya.ms = ms;
   } else { ev.ms = ms; cola.push(ev); }
   waColaGuardar_(cola);
@@ -3286,6 +3365,332 @@ function waDespierta() {
   kTriggersDe_('waDespierta').forEach(function (t) { try { ScriptApp.deleteTrigger(t); } catch (e) {} });
   try { PropertiesService.getScriptProperties().deleteProperty('WA_DESP_HASTA'); } catch (e) {}
   return waRepaso();
+}
+
+/* ============================================================================
+ * 💵 §4ok-100 (2026-11-05-a) EL BOT LE CONFIRMA AL CLIENTE CADA PAGO. Desde el 01/10, 372 pagos; 65 llegaron después del día de la
+ * venta y el cliente no recibía nada. Ahora, al guardar un pedido con un cobro MÁS que antes (`aplicarCobros` de la página agrega el
+ * renglón al final), sale `pago_recibido`: «Recibimos tu pago de Bs X por <método>… Tu saldo es Bs Y» o «Tu pedido quedó pagado».
+ *   · Solo los cobros nuevos: corregir uno (mismo número de renglones) o borrarlo no manda nada. El anticipo («~») y los recargos por
+ *     entrega («^») no son cobros de la venta (como `cobrosDe` de la página). Un pedido nuevo tampoco: ya lo dice la confirmación.
+ *   · Una vez por pago (WA_PAGOS: pedido|renglón|monto, 60 días). Espera WA_ESPERA_MS como todo: lo corregido enseguida sale corregido.
+ *   · Un cobro con fecha de hace más de WA_PAGO_DIAS días (lo anotaron tarde) no se avisa: «recibimos tu pago» de hace dos semanas
+ *     confunde más de lo que ayuda (decisión segura: el plan no lo decía).
+ *   · A quién no (`waNoClientePago_`): Eduardo, ROHO, internos, ATC, RPT, ventas de tienda, filas del sistema, borradores de Kommo, sin
+ *     celular. Sí con la entrega ya hecha o sin fecha: el pago que llega después es justo el que interesa.
+ * ========================================================================== */
+var WA_PAGO_DIAS = 3, WA_PAGOS_DIAS = 60, WA_PAGOS_TOPE = 300, WA_PAGO_COLA_TOPE = 60;
+/* = CONTA_INTERNOS de la página (test_wa_jueves los compara): los pedidos «internos» no son de un cliente. */
+var WA_INTERNOS = ['ALBA', 'FABRICA', 'MULTIESPUMA', 'MULTIESPUMAS', 'MORENO', 'ALZER', 'REPOSICION DE ALMACEN'];
+function waEsInterno_(v) { v = waNorm_(v); for (var i = 0; i < WA_INTERNOS.length; i++) if (waNorm_(WA_INTERNOS[i]) === v) return true; return false; }
+/* Lo común de los avisos nuevos al cliente (§4ok-100, §4ok-109): ni filas del sistema ni borradores, nada a Eduardo, ROHO ni internos. */
+function waNoClienteBase_(p) {
+  var id = String((p && p.id) || '');
+  if (!p || !id || id.indexOf('__') === 0 || String(p.estado || '') === BORRADOR_EST) return { m:'no es una venta', anotar:false };
+  var v = waNorm_(p.vendedor);
+  if (v.indexOf('eduardo') >= 0) return { m:'cliente de Eduardo', anotar:false };
+  if (v.indexOf('roho') >= 0) return { m:'pedido de ROHO', anotar:false };
+  if (waEsInterno_(p.vendedor)) return { m:'pedido interno', anotar:false };
+  if (!waCel_(p.celular)) return { m:'no tiene un celular de WhatsApp anotado («' + String(p.celular || '').slice(0, 30) + '»)', anotar:true };
+  return null;
+}
+function waNoClientePago_(p) {
+  if (p && /^(ATC|RPT)\b/i.test(String(p.oc || '').trim())) return { m:'ATC o RPT', anotar:false };
+  if (p && (waNorm_(p.direccion).indexOf('salio de tienda') === 0 || waNorm_(p.zona) === 'tienda')) return { m:'venta de tienda', anotar:false };
+  return waNoClienteBase_(p);
+}
+function waMetodo_(m) { m = waNorm_(m); if (m.indexOf('efec') === 0) return 'Efectivo'; if (m === 'qr') return 'QR'; if (m.indexOf('tarj') === 0) return 'Tarjeta'; return ''; }
+function waMonto_(t) {
+  t = String(t || '').trim();
+  t = /^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t) ? t.replace(/\./g, '').replace(',', '.') : t.replace(',', '.');
+  var n = Number(t); return isFinite(n) ? Math.round(n * 100) / 100 : 0;
+}
+/** Los cobros de la venta (`parseCobros` de la página, sin el anticipo «~» ni los recargos «^»), en orden: [{met, banco, monto, fecha}]. */
+function waCobros_(mp) {
+  var out = [];
+  String(mp || '').replace(/\s*·\s*REGISTRADO\s*$/i, '').split('+').forEach(function (s) {
+    var t = s.trim(); if (!t || t.charAt(0) === '~' || t.charAt(0) === '^') return;
+    var m = t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#%]*))?((?:\s*%\s*[A-Za-z0-9_-]+)*)\s*$/);
+    if (!m) return;
+    var met = waMetodo_(m[1]); if (!met) return;
+    var n = waMonto_(m[3]); if (!(n > 0)) return;
+    out.push({ met:met, banco:met === 'Efectivo' ? '' : String(m[2] || '').trim(), monto:n, fecha:m[4] || '' });
+  });
+  return out;
+}
+function waMetodoTxt_(c) { return c.met === 'Efectivo' ? 'en efectivo' : (c.met === 'Tarjeta' ? 'con tarjeta' : 'por QR') + (c.banco ? ' ' + c.banco : ''); }
+function waSaldoPago_(p) {
+  var falta = p.pagado ? 0 : (Number(p.saldo) || 0), flete = waFletePendiente_(p.metodoPago);
+  if (falta <= 0.005) return 'Tu pedido quedó pagado 🎉' + (flete > 0.005 ? ' Solo falta el recargo por entrega (' + waBs_(flete) + '), al recibir.' : '');
+  return 'Tu saldo es ' + waBs_(falta) + (flete > 0.005 ? ' + ' + waBs_(flete) + ' del recargo por entrega' : '') + '.';
+}
+function waPagosLeer_() {
+  var o = waJsonProp_('WA_PAGOS', {}); if (!o || typeof o !== 'object') o = {};
+  var lim = Date.now() - WA_PAGOS_DIAS * 86400000; for (var k in o) if (!(Number(o[k]) > lim)) delete o[k];
+  return o;
+}
+function waPagosAnotar_(k) {
+  var o = waPagosLeer_(); o[k] = Date.now();
+  var ks = Object.keys(o); if (ks.length > WA_PAGOS_TOPE) ks.sort(function (a, b) { return o[a] - o[b]; }).slice(0, ks.length - WA_PAGOS_TOPE).forEach(function (x) { delete o[x]; });
+  try { PropertiesService.getScriptProperties().setProperty('WA_PAGOS', JSON.stringify(o)); } catch (e) {}
+}
+function waPagoColaLeer_() { var c = waJsonProp_('WA_PAGO_COLA', []); return Array.isArray(c) ? c : []; }
+function waPagoColaGuardar_(c) {
+  if (c.length > WA_PAGO_COLA_TOPE) c = c.slice(c.length - WA_PAGO_COLA_TOPE);
+  try { PropertiesService.getScriptProperties().setProperty('WA_PAGO_COLA', JSON.stringify(c)); } catch (e) {}
+}
+/** Lo llama `waAlGuardar_` (adentro del candado, sin red): anota los cobros nuevos de este guardado. Nunca frena un guardado. */
+function waPagoAlGuardar_(viejo, rec) {
+  if (!viejo) return;                                        // un pedido nuevo: la confirmación ya dice el saldo
+  var no = waNoClientePago_(rec); if (no && !no.anotar) return;   // a Eduardo, ROHO, internos, ATC…: ni se anota (sin celular sí: queda en la hoja)
+  var antes = waCobros_(viejo[HEADERS.indexOf('Método pago')]), ahora = waCobros_(rec.metodoPago);
+  if (ahora.length <= antes.length) return;                  // una corrección o un borrado: no es un pago nuevo
+  /* Una venta que ya estaba «PAGADA» sin monto anotado («Efectivo %IMG»): anotarle el monto no es plata nueva (`aplicarCobros`, §4fg). */
+  if (!antes.length && String(viejo[HEADERS.indexOf('Pagado')]).toUpperCase().charAt(0) === 'S') return;
+  var id = String(rec.id), lim = waMasDias_(waBo_(Date.now()).hoy, -WA_PAGO_DIAS), ya = waPagosLeer_(), cola = waPagoColaLeer_(), cambio = false;
+  for (var i = antes.length; i < ahora.length; i++) {
+    var c = ahora[i];
+    if (c.fecha && c.fecha < lim) continue;                  // anotado tarde: no se avisa
+    if (ya[id + '|' + i + '|' + c.monto] || cola.some(function (e) { return e.id === id && e.i === i; })) continue;
+    cola.push({ id:id, i:i, ms:Date.now() }); cambio = true;
+  }
+  if (!cambio) return;
+  waPagoColaGuardar_(cola);
+  waDespertar_();
+}
+
+/* ============================================================================
+ * 🛠️ §4ok-109 (2026-11-05-a) EL BOT AVISA EL RECOJO Y LA DEVOLUCIÓN DE LA ATC. Desde el 01/10, 19 viajes de ATC (11 recojos, 8
+ * devoluciones) sin ningún aviso: `waNoCliente_` deja afuera las ATC (no son una venta: ni productos ni saldo). Ahora:
+ *   · `atc_recojo` al guardar la ATC con fecha (o cambiarle el día del recojo) y la víspera, con el recordatorio de siempre (17:00 la
+ *     mañana, 19:00 la tarde; una vez, WA_REC; no si ya se le avisó hoy);
+ *   · `atc_devolucion` cuando se programa la devolución (`pdev`: la ATC pasa a vivir en el día de la vuelta, §4dz) o se le cambia el día.
+ * Lo que es cada viaje sale de la página: adentro de los productos va `atc` (§4bq); es la devolución si `atc.pdev` es la fecha del pedido
+ * (`atcViajeDevolucion`). A quién no: `waNoClienteAtc_` = las de `waNoClienteBase_` (Eduardo, ROHO, internos, sin celular) + entregada,
+ * fecha pasada. A logística, lo de siempre (pedido nuevo y cambio).
+ * ========================================================================== */
+function waAtcDe_(p) { var pr = (p && p.productos) || []; for (var i = 0; i < pr.length; i++) if (pr[i] && pr[i].atc) return pr[i].atc; return null; }
+function waAtcEsDev_(p) { var a = waAtcDe_(p); return !!(a && a.pdev && p && String(p.fecha) === String(a.pdev)); }
+function waNoClienteAtc_(p, hoy) {
+  if (!p || !/^ATC\b/i.test(String(p.oc || '').trim())) return { m:'no es una ATC', anotar:false };
+  if (!waEsEntrega_(p)) return { m:'no es un viaje pendiente', anotar:false };
+  var b = waNoClienteBase_(p); if (b) return b;
+  if (String(p.fecha) < hoy) return { m:'la fecha ya pasó', anotar:true };
+  return null;
+}
+/* «hoy, jueves 05/11 por la mañana» · «mañana, …» · «el lunes 09/11 por la tarde». */
+function waAtcCuando_(p, B) {
+  var f = String(p.fecha), cu = waCuandoTxt_(p);
+  return f === B.hoy ? 'hoy, ' + cu : (f === waMasDias_(B.hoy, 1) ? 'mañana, ' + cu : 'el ' + cu);
+}
+
+/* ============================================================================
+ * 📉 §4ok-102 (2026-11-05-a) EL VIGÍA DE LEADS. Desde la tarde del 31/10 casi no entraban leads a Kommo (antes 71-123 por día; el
+ * 01/11, 3; el 02/11, 1 hasta las 18:30). El dashboard lo pintaba en ámbar y nadie se enteró.
+ *   · Una vez por hora (`waRepaso` corre cada 5 minutos y el vigía mira si pasó la hora: no hace falta otro disparador), de las 8:00 a
+ *     las 22:59 de Bolivia, cualquier día: cuenta en Kommo (`kGet_`, solo lee) los leads creados en las últimas WA_LEADS_VENTANA_H
+ *     horas y en las MISMAS horas de 7 días antes.
+ *   · Si ahora entró menos del WA_LEADS_UMBRAL (25 %) de lo de la semana pasada, y la semana pasada fueron al menos WA_LEADS_MIN (8):
+ *     `alerta_leads` a WA_DUENO, UNA vez (WA_LEADS.alerta), hasta que vuelvan.
+ *   · Vuelven cuando ya no se cumple lo de arriba y entraron al menos WA_LEADS_VUELVEN (2): `alerta_leads_volvieron`, una vez.
+ *   · Sin WA_DUENO (o sin KOMMO_TOKEN, o si Kommo no contesta) no hace nada; lo último que contó queda en WA_LEADS (sin nombres).
+ * ========================================================================== */
+var WA_LEADS_DESDE = 8, WA_LEADS_HASTA = 23;       // de las 8:00 a las 22:59 de Bolivia
+var WA_LEADS_VENTANA_H = 3, WA_LEADS_UMBRAL = 0.25, WA_LEADS_MIN = 8, WA_LEADS_VUELVEN = 2;
+var WA_LEADS_CADA_MS = 55 * 60000;                 // «cada hora» (con el repaso de 5 minutos, sale entre los 55 y los 60)
+var WA_LEADS_PAGINAS = 8;                          // de a 250: hasta 2.000 leads en 3 horas
+/** Cuántos leads se crearon en Kommo entre dos momentos (ms). null si Kommo no contesta. */
+function waLeadsContar_(desde, hasta) {
+  var n = 0, de = Math.floor(desde / 1000), a = Math.floor(hasta / 1000);
+  for (var pg = 1; pg <= WA_LEADS_PAGINAS; pg++) {
+    var o = kGet_('/leads?limit=250&page=' + pg + '&filter[created_at][from]=' + de + '&filter[created_at][to]=' + a);
+    if (o == null) return null;
+    var L = kEmb_(o, 'leads'); n += L.length;
+    if (L.length < 250) break;
+  }
+  return n;
+}
+function waLeadsGuardar_(st) { try { PropertiesService.getScriptProperties().setProperty('WA_LEADS', JSON.stringify(st)); } catch (e) {} }
+/** Lo llama el repaso (afuera del candado): [] o los mensajes al dueño. */
+function waLeadsVigia_(cfg, B, t0) {
+  if (!cfg.dueno || !cfg.dueno.length) return [];
+  if (B.hora < WA_LEADS_DESDE || B.hora >= WA_LEADS_HASTA) return [];
+  var st = waJsonProp_('WA_LEADS', {}) || {};
+  if (t0 - (Number(st.ts) || 0) < WA_LEADS_CADA_MS) return [];
+  st.ts = t0; waLeadsGuardar_(st);                 // primero: otra vuelta que arranque mientras tanto no cuenta de nuevo
+  var V = WA_LEADS_VENTANA_H * 3600000, S7 = 7 * 86400000;
+  var ahora = waLeadsContar_(t0 - V, t0), antes = ahora == null ? null : waLeadsContar_(t0 - S7 - V, t0 - S7);
+  if (ahora == null || antes == null) { st.err = 'Kommo no contestó (o falta KOMMO_TOKEN)'; waLeadsGuardar_(st); return []; }
+  st.n = ahora; st.n7 = antes; delete st.err;
+  var cae = antes >= WA_LEADS_MIN && ahora < WA_LEADS_UMBRAL * antes, k = '';
+  if (cae && !st.alerta) { st.alerta = t0; k = 'al'; }
+  else if (st.alerta && !cae && ahora >= WA_LEADS_VUELVEN) { delete st.alerta; st.volvio = t0; k = 'alv'; }
+  waLeadsGuardar_(st);
+  if (!k) return [];
+  return cfg.dueno.map(function (L) { return { k:k, a:L.nombre, dia:B.hoy, n:0, ld:{ t:t0, n:ahora, n7:antes } }; });
+}
+/** Los datos de `alerta_leads` / `alerta_leads_volvieron`: las horas, cuántos ahora, el día de hace una semana, cuántos entonces. */
+function waLeadsParams_(ld) {
+  var V = WA_LEADS_VENTANA_H * 3600000, h = function (ms) { return waBo_(ms).txt.slice(6); };
+  var cu = function (n) { n = Number(n) || 0; return n === 1 ? '1 lead' : n + ' leads'; };
+  return ['de ' + h(ld.t - V) + ' a ' + h(ld.t), cu(ld.n), waDiaTxt_(waBo_(ld.t - 7 * 86400000).hoy), cu(ld.n7)];
+}
+/** ▶ Desde el editor: cuenta lo de las últimas 3 horas y lo de hace una semana, SIN mandar nada ni tocar WA_LEADS. */
+function probarVigiaLeads() {
+  var t0 = Date.now(), V = WA_LEADS_VENTANA_H * 3600000, S7 = 7 * 86400000;
+  var r = { ahora:waLeadsContar_(t0 - V, t0), semanaPasada:waLeadsContar_(t0 - S7 - V, t0 - S7), dueno:waConfig_().dueno.map(function (L) { return L.nombre; }), estado:waJsonProp_('WA_LEADS', null) };
+  if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(r, null, 2));
+  return r;
+}
+
+/* ============================================================================
+ * 🏭 §4ok-105 (2026-11-05-a) EL RECLAMO A LA FÁBRICA SALE SOLO CADA MAÑANA. Desde el 19/10, 32 de 177 unidades de lo que rota no
+ * salieron de PTF/Banzer; el reclamo («Lo que nos debe la fábrica», `fdHtml`) se copiaba a mano y nadie lo abría.
+ *   · La PÁGINA arma el reclamo al terminar los Excel del día (con su cuenta de siempre: `fdLista`, `stockData`) y lo deja en la fila
+ *     del sistema `__reclamo_fab__` (JSON en «Observaciones»: {v, f, h, atr:[…], cero:[…]}, textos ya armados, sin plata ni clientes).
+ *     El servidor no recalcula el stock: lee la fila de ESE momento.
+ *   · A las 10:00 (días hábiles; hasta WA_VENTANA_H después) `reclamo_fabrica` al dueño (WA_DUENO) y a los de WA_AVISOS (o
+ *     WA_PEDIR_HOY), sin repetir un número. Si la fila de hoy todavía no está, prueba cada 5 minutos hasta que esté. Sin nada atrasado,
+ *     no sale. Solo avisa: no toca el stock ni los pedidos.
+ * ========================================================================== */
+var WA_RECLAMO_ID = '__reclamo_fab__';      // = RECLAMO_FAB_ID de la página
+var WA_HORA_RECLAMO = 10;
+var WA_RECLAMO_REINT_MS = 4.5 * 60000;      // mientras la fila de hoy no está, cada vuelta de 5 minutos
+function waReclamoLeer_(r) {
+  if (!r) return null;
+  var o = null; try { o = JSON.parse(String(r.observaciones || '')); } catch (e) { o = null; }
+  if (!o || typeof o !== 'object') return null;
+  var lim = function (L) { return (Array.isArray(L) ? L : []).map(function (t) { return String(t || '').trim(); }).filter(function (t) { return !!t; }).slice(0, 40); };
+  return { f:String(o.f || ''), h:String(o.h || ''), atr:lim(o.atr), cero:lim(o.cero) };
+}
+/** Los datos de `reclamo_fabrica`: el día, cuántos atrasados, cuáles, cuántos en 0 con ventas esperando, cuáles. */
+function waReclamoParams_(R, B) {
+  var cu = function (k) { return k ? k + ' producto' + (k === 1 ? '' : 's') : 'ninguno ✅'; };
+  return [waDiaTxt_(B.hoy), cu(R.atr.length), R.atr.length ? waListaCabe_(R.atr.map(waParam_), ' · ') : '—',
+          cu(R.cero.length), R.cero.length ? waListaCabe_(R.cero.map(waParam_), ' · ') : '—'];
+}
+
+/* ============================================================================
+ * 📍 §4ok-108 (2026-11-05-a) EL CLIENTE MANDA SU UBICACIÓN POR WHATSAPP Y QUEDA EN EL PEDIDO. 23 entregas a clientes del bot iban sin
+ * pin exacto (19 sin enlace, 4 con la cuadra): sin pin, el GPS no ve la entrega y el chofer da vueltas. Si el cliente mandaba la
+ * ubicación, quedaba como texto en la hoja y nada la pasaba al pedido.
+ *   · El mensaje: de tipo «ubicación» (📎 → Ubicación), o un enlace de Google Maps con el punto (`resolveOne`: uno corto lo abre; uno
+ *     que solo da la zona, aproximado, no sirve). Fuera de Bolivia, no se toma.
+ *   · El pedido: el pendiente MÁS PRÓXIMO de ese número (entrega sin ✅, de hoy en adelante, no RPT ni venta de tienda); si el número
+ *     no coincide con ninguno, el del mensaje que el bot le mandó.
+ *   · Con el candado del panel (`tryLock`: si está ocupado, no espera y queda para «Usar esta ubicación»), relee la fila y:
+ *       – sin ubicación o con una aproximada (`&aprox=1`, §4dh) → guarda `https://www.google.com/maps?q=LAT,LNG&wa=1` («la mandó el
+ *         cliente por WhatsApp»), sella la fila (`rev`, como un guardado: una copia vieja abierta choca y se junta) y la anota en
+ *         BORRADOS_RECIENTES (`recientesAnotar_`: la lectura de lo cambiado la manda);
+ *       – con un pin exacto a ≤ WA_UBIC_MISMA_M (300 m) → nada (ya está);
+ *       – con OTRO pin (más lejos, o un enlace que no se puede medir) → NO lo pisa: queda en las respuestas al bot con «📍 Usar esta
+ *         ubicación» (la página guarda con `guardarUbicacion`, el camino de siempre).
+ *   · La fila «💬 Respondió» dice qué pasó (en el texto y en la columna Q) y el bot le contesta al cliente él mismo (texto libre: el
+ *     cliente acaba de escribir), no Claude.
+ *   · La confirmación y el recordatorio de un pedido sin pin exacto piden la ubicación (`confirmacion_pedido_ubic`,
+ *     `recordatorio_entrega_ubic`; mientras Meta no las apruebe, las de siempre).
+ * ========================================================================== */
+var WA_UBIC_MISMA_M = 300;
+function waSinPin_(maps) { var u = String(maps || '').trim(); return !u || /[?&]aprox=1/.test(u); }
+function waUbicDeMsg_(m) {
+  var c = null, t = String((m && m.type) || '');
+  if (t === 'location') { var L = m.location || {}; c = okCoord(L.latitude, L.longitude); }
+  else if (t === 'text') {
+    var u = String((m.text || {}).body || '').match(/https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]{2,6}\/maps|maps\.google\.[a-z.]{2,6})\S*/i);
+    if (u) { try { var r = resolveOne(u[0].replace(/[)\].,;:!?»"']+$/, '')); if (r && !r.aprox) c = { lat:Number(r.lat), lng:Number(r.lng) }; } catch (e) { c = null; } }
+  }
+  if (!c || !isFinite(c.lat) || !isFinite(c.lng) || c.lat < -23.5 || c.lat > -9.5 || c.lng < -70 || c.lng > -57.4) return null;   // fuera de Bolivia
+  return c;
+}
+function waUbicLink_(c) { return 'https://www.google.com/maps?q=' + Number(c.lat).toFixed(6) + ',' + Number(c.lng).toFixed(6) + '&wa=1'; }
+function waUbicCandidato_(p, hoy) {
+  return !!p && waEsEntrega_(p) && String(p.fecha) >= hoy && !/^RPT\b/i.test(String(p.oc || '').trim());
+}
+/** Guarda la ubicación en el pedido: {r:'guardada'|'igual'|'distinta'|'ocupado'|'sin_pedido', id, oc, link, m (metros a la de antes)}. */
+function waUbicGuardar_(de, loc, ped) {
+  var hoy = waBo_(Date.now()).hoy, recs = readAll(), cand = [];
+  recs.forEach(function (p) { if (waUbicCandidato_(p, hoy) && waCel_(p.celular) === de) cand.push(p); });
+  if (!cand.length && ped && ped.id) recs.forEach(function (p) { if (String(p.id) === String(ped.id) && waUbicCandidato_(p, hoy)) cand.push(p); });
+  if (!cand.length) return { r:'sin_pedido', link:waUbicLink_(loc) };
+  var tu = function (p) { return waTurno_(p) === 'PM' ? 1 : 0; };
+  cand.sort(function (a, b) { return (String(a.fecha) < String(b.fecha) ? -1 : (String(a.fecha) > String(b.fecha) ? 1 : 0)) || (tu(a) - tu(b)) || ((Number(a.nroDia) || 0) - (Number(b.nroDia) || 0)); });
+  var p0 = cand[0], link = waUbicLink_(loc), out = { id:String(p0.id), oc:String(p0.oc || ''), link:link };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) { out.r = 'ocupado'; return out; }
+  try {
+    var sh = getSheet(), last = sh.getLastRow(), fila = -1;
+    var ids = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues() : [];
+    for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === out.id) { fila = i + 2; break; }
+    if (fila < 0) { out.r = 'sin_pedido'; return out; }
+    var row = sh.getRange(fila, 1, 1, HEADERS.length).getValues()[0], q = rowToRec_(row);
+    if (!waUbicCandidato_(q, hoy)) { out.r = 'sin_pedido'; return out; }
+    var maps = String(q.maps || '').trim();
+    if (!waSinPin_(maps)) {
+      var c = extractCoords(maps), d = c ? gpsDistM_(c.lat, c.lng, loc.lat, loc.lng) : null;
+      if (d != null) out.m = Math.round(d);
+      out.r = (d != null && d <= WA_UBIC_MISMA_M) ? 'igual' : 'distinta';
+      return out;
+    }
+    sh.getRange(fila, HEADERS.indexOf('Link Maps') + 1).setValue(link);
+    var ahora = Date.now();
+    sh.getRange(fila, REV_COL).setValue(Math.max((Number(row[REV_COL - 1]) || 0) + 1, ahora));
+    try { getCacheOlvidar_(); recientesAnotar_('r', out.id, ahora); } catch (e) {}
+    out.r = 'guardada'; if (maps) out.antes = 'aprox';
+    return out;
+  } finally { lock.releaseLock(); }
+}
+/* La columna Q de la hoja: «guardada|<id>|<link>|<metros>» (el panel la lee en `waRespuestasLeer_`). */
+function waUbicCol_(ub) { return [ub.r, ub.id || '', ub.link || '', ub.m == null ? '' : ub.m].join('|'); }
+function waUbicDeCol_(v) {
+  var a = String(v || '').split('|'); if (!a[0] || ['guardada', 'igual', 'distinta', 'ocupado', 'sin_pedido'].indexOf(a[0]) < 0) return null;
+  var o = { r:a[0], id:a[1] || '', link:a[2] || '' }; if (a[3] !== '' && a[3] != null) o.m = Number(a[3]);
+  return o;
+}
+function waUbicTxt_(ub) {
+  var oc = ub.oc ? waOc_(ub.oc) : 'su pedido';
+  if (ub.r === 'guardada') return '📍 guardada en ' + oc + (ub.antes ? ' (tenía una aproximada)' : '');
+  if (ub.r === 'igual') return '📍 ' + oc + ' ya tenía esa ubicación';
+  if (ub.r === 'distinta') return '📍 ' + oc + ' ya tenía OTRA ubicación' + (ub.m != null ? ' (a ' + (ub.m >= 1000 ? (Math.round(ub.m / 100) / 10).toString().replace('.', ',') + ' km' : ub.m + ' m') + ')' : '') + ': no se cambió';
+  if (ub.r === 'ocupado') return '📍 la planilla estaba ocupada: no se guardó';
+  return '📍 no tiene ningún pedido pendiente';
+}
+/** Lo que el bot le contesta al cliente que mandó su ubicación (texto libre: lo acaba de escribir). */
+function waUbicResponder_(sh, de, ub, nom) {
+  if (!waActivo_() || !de) return;
+  var cfg = waConfig_(); if (!cfg.ok) return;
+  var oc = ub.oc ? ' *' + waOc_(ub.oc) + '*' : '';
+  var txt = '🤖 _Mensaje automático_\n\n¡Gracias' + (nom ? ' ' + waNombre_(nom) : '') + '! 📍 ' +
+    (ub.r === 'guardada' || ub.r === 'igual' ? 'Ya tenemos tu ubicación para tu pedido' + oc + ': el camión va a ir directo.'
+     : ub.r === 'sin_pedido' ? 'Recibimos tu ubicación, pero no encontramos un pedido tuyo por entregar. Si es para una compra nueva, pasásela a tu vendedora.'
+     : 'Recibimos tu ubicación para tu pedido' + oc + '. Como ya tenía otra anotada, se la pasamos a tu vendedora para que la confirme.');
+  if (cfg.prueba) de = cfg.prueba;
+  var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:txt, preview_url:false } });
+  sh.appendRow([waBo_(Date.now()).txt, ub.id || '', ub.oc || '', 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now()]);
+}
+
+/* §4ok-E (2026-11-05-a) La parte del bot del jueves en `probarAntesDeImplementar` (al final). Solo lee. */
+function probarBotE_(bien, ojo, horaBolivia) {
+  if (typeof waLeadsVigia_ !== 'function' || typeof waReclamoLeer_ !== 'function') { ojo('Este código no tiene lo del bot del 05/11 (§4ok-E): ¿es un pegado viejo?'); return; }
+  var c = waConfig_();
+  if (c.malDu.length) ojo('En WA_DUENO hay número(s) que no entiendo: ' + c.malDu.join(', ') + '. Va así: Eduardo:59170000000');
+  if (!c.dueno.length) bien('El vigía de leads no corre: falta la propiedad WA_DUENO (Eduardo:591…). El reclamo a la fábrica de las 10:00 va' + (c.avisosLog.length ? ' solo a logística (' + c.avisosLog.map(function (L) { return L.nombre; }).join(', ') + ').' : ' a nadie (faltan WA_DUENO y WA_PEDIR_HOY).'));
+  else {
+    var st = waJsonProp_('WA_LEADS', null);
+    bien('Al dueño (' + c.dueno.map(function (L) { return L.nombre; }).join(', ') + '): el vigía de leads cada hora de 8 a 22 y el reclamo a la fábrica de las 10:00.' +
+         (st && st.ts ? ' Último conteo: ' + horaBolivia(Number(st.ts)) + ' · ' + (st.err ? st.err : (st.n + ' lead(s) en 3 h contra ' + st.n7 + ' hace una semana' + (st.alerta ? ' · ⚠️ en alerta' : ''))) : ''));
+    if (!kProp_('KOMMO_TOKEN')) ojo('WA_DUENO está puesta pero falta KOMMO_TOKEN: el vigía de leads no puede contar.');
+  }
+  /* Sin `readAll` (pasa por getSheet, que puede escribir los encabezados): probar no escribe nada. */
+  var shP = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME), vals = shP ? shP.getDataRange().getValues() : [], rf = null, mal = 0;
+  for (var i = 1; i < vals.length; i++) {
+    if (!vals[i][0]) continue;
+    if (String(vals[i][0]) === WA_RECLAMO_ID) rf = rowToRec_(vals[i]);
+    if (String(vals[i][HEADERS.indexOf('Celular')] == null ? '' : vals[i][HEADERS.indexOf('Celular')]).trim() === '#ERROR!') mal++;
+  }
+  var R = waReclamoLeer_(rf);
+  bien(R && R.f ? ('El reclamo a la fábrica que dejó el panel es del ' + waDiaTxt_(R.f) + ' (' + R.atr.length + ' atrasado(s), ' + R.cero.length + ' en 0 con ventas esperando).')
+                : 'Todavía no hay reclamo a la fábrica en la planilla: lo deja el panel (publicado) la próxima vez que se suban los Excel.');
+  if (mal) ojo(mal + ' pedido(s) tienen el celular «#ERROR!» (Google lo tomó como fórmula antes de esta versión): el número se perdió, hay que escribirlo de nuevo en el pedido. Desde esta versión no vuelve a pasar.');
 }
 
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
@@ -3511,31 +3916,87 @@ function waCierreParams_(L, hoy) {
   return [waDiaTxt_(hoy), L.length + ' pedido' + (L.length === 1 ? '' : 's'), lista];
 }
 
+/* ============================================================================
+ * 🌅 §4ok-97 (2026-11-05-a) LO DE HOY QUE FALTA, A LAS 08:45. Dos listas con la planilla de ese momento:
+ *   · los pedidos de HOY sin camión (ni vehículo ni chofer): la misma regla de la lista de las 16:00 (`waEsEntrega_`);
+ *   · los productos de los pedidos de HOY sin revisar el stock (⬜) o con «✗ no hay»: la regla de «Semana» (`waPhEntra_` +
+ *     `waPhLinea_`, la misma de «pedir hoy», que test_wa_pedir_hoy compara con la página).
+ * Sin nada en ninguna de las dos, no sale. Solo avisa.
+ * ========================================================================== */
+function waHoyFalta_(recs, B) {
+  var dias = {}; dias[B.hoy] = 1;
+  var sin = [], rev = [];
+  for (var id in recs) {
+    var q = recs[id];
+    if (!q || String(q.fecha) !== B.hoy || !waEsEntrega_(q)) continue;
+    if (!String(q.vehiculo || '').trim() && !String(q.chofer || '').trim()) sin.push(q);
+    if (waPhEntra_(q, dias)) (q.productos || []).forEach(function (x) { var e = waPhLinea_(q, x, B); if (e === 'rev' || e === 'nohay') rev.push({ p:q, x:x, e:e }); });
+  }
+  var nro = function (a, b) { return (Number(a.nroDia) || 0) - (Number(b.nroDia) || 0); };
+  sin.sort(nro); rev.sort(function (a, b) { return nro(a.p, b.p); });
+  return { sin:sin, rev:rev };
+}
+/* Una lista que entra en un dato (Meta corta en 250): las cosas ENTERAS que caben y «y N más» (como la de «sin camión» de antes). */
+function waListaCabe_(items, sep) {
+  var lista = '', k = 0;
+  for (; k < items.length; k++) {
+    var resto = items.length - k - 1, cola = resto ? ' y ' + resto + ' más' : '';
+    var prueba = (lista ? lista + sep : '') + items[k];
+    if ((prueba + cola).length > WA_LISTA_MAX && lista) break;
+    lista = prueba;
+  }
+  if (k < items.length) lista += ' y ' + (items.length - k) + ' más';
+  return lista;
+}
+/** Los datos de `logistica_hoy_falta`, en orden: el día, cuántos sin camión, cuáles, cuántos productos sin revisar, cuáles. */
+function waHoyFaltaParams_(H, B) {
+  var noms = H.sin.map(function (q) { return waParam_(String(q.cliente || '').trim() + (q.zona ? ' (' + String(q.zona).trim() + ')' : '')); });
+  var prods = H.rev.map(function (l) { return waPhProdTxt_(l.x) + ' (' + waPhCliente_(l.p) + (l.e === 'nohay' ? ' · ✗ no hay' : '') + ')'; });
+  var cuantos = function (k, uno, varios) { return k ? k + ' ' + (k === 1 ? uno : varios) : 'ninguno ✅'; };
+  return [waDiaTxt_(B.hoy), cuantos(H.sin.length, 'pedido', 'pedidos'), noms.length ? waListaCabe_(noms, ', ') : '—',
+          cuantos(H.rev.length, 'producto', 'productos'), prods.length ? waListaCabe_(prods, ', ') : '—'];
+}
+
 function waArmar_(m, recs, cfg, B) {
   var T = WA_TIPOS[m.k], p = null;
   if (!T) return { saltar:'tipo desconocido', anotar:true };
   if (m.id) { p = recs[m.id] || null; if (!p) return { saltar:'el pedido ya no está (lo borraron)', anotar:true }; }
   var out = { plantilla:T.plantilla, p:p };
   if (T.cli) {
-    var no = waNoCliente_(p, B.hoy); if (no) return { saltar:no.m, anotar:no.anotar, p:p };
+    var no = (T.no === 'pago' ? waNoClientePago_ : T.no === 'atc' ? waNoClienteAtc_ : waNoCliente_)(p, B.hoy); if (no) return { saltar:no.m, anotar:no.anotar, p:p };
     out.para = String(p.cliente || 'cliente'); out.numero = waCel_(p.celular);
   } else {
     /* 🏭 (2026-10-27-a) «pedir hoy» va a los de WA_PEDIR_HOY; 📥✅ (2026-10-29-a) el Excel y el cierre, a los de WA_AVISOS (o WA_PEDIR_HOY). */
-    var av = m.k === 'ex' || m.k === 'ci';
-    var aQuien = m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : cfg.logistica);
+    var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv';   // 📉 §4ok-102 al dueño
+    var aQuien = m.k === 'rf' ? cfg.reclamo : (m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : (du ? cfg.dueno : cfg.logistica)));   // 🏭 §4ok-105
     var L = null; for (var i = 0; i < aQuien.length; i++) if (aQuien[i].nombre === m.a) L = aQuien[i];
-    if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : 'WA_LOGISTICA')), anotar:true };
+    if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : (du || m.k === 'rf' ? 'WA_DUENO' : 'WA_LOGISTICA'))), anotar:true };
     out.para = L.nombre; out.numero = L.cel;
     if (p && !waEsEntrega_(p)) return { saltar:'ya no es una entrega pendiente', anotar:false, p:p };
     if (p && String(p.fecha) < B.hoy) return { saltar:'la fecha de entrega ya pasó', anotar:false, p:p };   // una venta cargada de atrás
-    /* ROHO entra de a muchos desde su Excel: logística no recibe uno por uno (sí aparece a las 16:00 si no tiene camión). */
+    /* ROHO entra de a muchos desde su Excel: logística no recibe uno por uno (sí aparece a las 08:45 si ese día no tiene camión). */
     if (p && waNorm_(p.vendedor).indexOf('roho') >= 0) return { saltar:'pedido de ROHO', anotar:false, p:p };
   }
   if ((m.k === 'camb' || m.k === 'lc') && (String(p.fecha) + '|' + turnoNorm_(p.turno)) === m.de) return { saltar:'volvió al día de antes', anotar:false, p:p };
   if (m.k === 'rec' && String(p.fecha) !== m.dia) return { saltar:'cambió de día', anotar:false, p:p };
   if (m.k === 'enc' && (String(p.fecha) !== B.hoy || waTurno_(p) !== 'AM')) return { saltar:'ya no va hoy por la mañana', anotar:false, p:p };   // (2026-10-14-a)
   var N = waParam_, marca = p ? waMarca_(p.vendedor) : '';
-  if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
+  if (m.k === 'pago') {
+    /* 💵 §4ok-100 El cobro de AHORA en ese lugar: si lo corrigieron en los 2 minutos de espera, sale con lo corregido; si lo borraron, no sale. */
+    var cP = waCobros_(p.metodoPago)[m.i];
+    if (!cP) return { saltar:'ese pago ya no está (lo borraron o lo corrigieron)', anotar:true, p:p };
+    var kP = String(m.id) + '|' + m.i + '|' + cP.monto;
+    if (waPagosLeer_()[kP]) return { saltar:'ese pago ya se le avisó', anotar:false, p:p };
+    out.pagoK = kP;
+    out.params = [waNombre_(p.cliente), marca, waBs_(cP.monto), waMetodoTxt_(cP), waOc_(p.oc), waSaldoPago_(p), waContactoVend_(p.vendedor)];
+  } else if (m.k === 'atc' || m.k === 'atcv' || m.k === 'atd') {
+    /* 🛠️ §4ok-109 Con la planilla de AHORA: si mientras esperaba pasó de recojo a devolución (o al revés), sale el que corresponde a su evento. */
+    var dev = waAtcEsDev_(p);
+    if (m.k === 'atd' && !dev) return { saltar:'ya no es la devolución (le sacaron el día de la vuelta)', anotar:false, p:p };
+    if (m.k !== 'atd' && dev) return { saltar:'ya es la devolución: el recojo pasó', anotar:false, p:p };
+    if (m.k === 'atcv' && String(p.fecha) !== m.dia) return { saltar:'cambió de día', anotar:false, p:p };
+    out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waAtcCuando_(p, B), waHorasTxt_(p), waContactoVend_(p.vendedor)];
+  } else if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'camb' || m.k === 'enc') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'rec') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), p.fecha === waMasDias_(B.hoy, 1) ? 'Mañana' : 'El ' + waDiaTxt_(p.fecha).split(' ')[0],
                                         waProds_(p), waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
@@ -3544,22 +4005,13 @@ function waArmar_(m, recs, cfg, B) {
     var de = String(m.de || '').split('|'), antes = { fecha:de[0], turno:de[1] || '' };
     out.params = [waOc_(p.oc), String(p.cliente || '').trim(), 'pasó del ' + waCuandoTxt_(antes) + ' al ' + waCuandoTxt_(p)];
   } else if (m.k === 'sc') {
-    var sin = [];
-    for (var id in recs) { var q = recs[id]; if (q.fecha === m.dia && waEsEntrega_(q) && !String(q.vehiculo || '').trim() && !String(q.chofer || '').trim()) sin.push(q); }
-    if (!sin.length) return { saltar:'ya no queda ninguno sin camión', anotar:false };
-    sin.sort(function (a, b) { return (Number(a.nroDia) || 0) - (Number(b.nroDia) || 0); });
-    /* (2026-10-12-b) Meta corta cada dato en 250 letras (`waParam_`): entran los nombres ENTEROS que caben y el resto va como
-       «y N más». Antes se partía el último a la mitad («ROXANA CONTRERA L…»). */
-    var noms = sin.map(function (q) { return waParam_(String(q.cliente || '').trim() + (q.zona ? ' (' + String(q.zona).trim() + ')' : '')); });
-    var lista = '', k = 0;
-    for (; k < noms.length; k++) {
-      var resto = noms.length - k - 1, cola = resto ? ' y ' + resto + ' más' : '';
-      var prueba = (lista ? lista + ', ' : '') + noms[k];
-      if ((prueba + cola).length > WA_LISTA_MAX && lista) break;
-      lista = prueba;
-    }
-    if (k < noms.length) lista += ' y ' + (noms.length - k) + ' más';
-    out.params = [String(sin.length), waDiaTxt_(m.dia), lista];
+    /* 🌅 §4ok-97 Con la planilla de AHORA y solo lo de HOY: un reintento de otro día ya no dice la verdad. */
+    if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
+    var H = waHoyFalta_(recs, B);
+    if (!H.sin.length && !H.rev.length) return { saltar:'hoy no queda nada sin camión ni sin revisar', anotar:false };
+    out.params = waHoyFaltaParams_(H, B);
+    /* El respaldo (la «sin camión» de antes) solo con algo sin camión: con 0 diría «quedan 0 pedidos sin camión». */
+    out.viejos = H.sin.length ? [String(H.sin.length), waDiaTxt_(B.hoy), out.params[2]] : null;
   } else if (m.k === 'ph') {
     /* 🏭 (2026-10-27-a) Con la planilla de AHORA: un reintento que llega pasado el corte (u otro día) ya no dice la verdad. */
     if (m.dia !== B.hoy || B.hora >= waPhCorte_(B.hoy)) return { saltar:'ya pasó la hora del corte de producción', anotar:true };
@@ -3567,6 +4019,18 @@ function waArmar_(m, recs, cfg, B) {
     var urg = waPhUrgentes_(lis, B);
     if (!urg.length) return { saltar:'no queda nada sin revisar ni sin pedir para estos días', anotar:false };
     out.params = waPhParams_(urg, B);
+  } else if (m.k === 'rf') {
+    /* 🏭 §4ok-105 Con la fila de AHORA. Si la página todavía no dejó la de hoy (los Excel no se subieron), se espera: el repaso vuelve a
+       probar cada 5 minutos hasta el final de la ventana (`rfEspera`: no cuenta como hecho). */
+    if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
+    var RF = waReclamoLeer_(recs[WA_RECLAMO_ID]);
+    if (!RF || RF.f !== B.hoy) return { saltar:'todavía no está el reclamo de hoy (lo arma el panel al terminar los Excel)', anotar:false, rfEspera:true };
+    if (!RF.atr.length && !RF.cero.length) return { saltar:'hoy no hay nada atrasado para reclamar', anotar:false };
+    out.params = waReclamoParams_(RF, B);
+  } else if (m.k === 'al' || m.k === 'alv') {
+    /* 📉 §4ok-102 Lo que contó el vigía en ESE momento (un reintento de minutos después dice lo mismo). */
+    var ld = m.ld || {}; if (!ld.t) return { saltar:'sin datos del vigía', anotar:true };
+    out.params = waLeadsParams_(ld);
   } else if (m.k === 'ex' || m.k === 'ci') {
     /* 📥✅ (2026-10-29-a) Con la planilla de AHORA: un reintento de otro día no dice la verdad, y si ya está hecho, no sale. */
     if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
@@ -3582,6 +4046,8 @@ function waArmar_(m, recs, cfg, B) {
     }
   }
   out.params = out.params.map(N);
+  /* 📍 §4ok-108 Sin pin exacto, la confirmación y el recordatorio le piden la ubicación (si Meta no aprobó esa, la de siempre). */
+  if (T.ubic && p && waSinPin_(p.maps)) { out.plantilla = T.ubic; out.alts = [[T.plantilla, out.params.length], [T.vieja, T.nv]]; }
   if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
   return out;
 }
@@ -3631,7 +4097,7 @@ function waAnotar_(filas) {
 }
 
 /** ⏱ Cada 5 minutos (y a los ~2 minutos de guardar un pedido): manda lo de la cola, los reintentos y, una vez por día, el
-    aviso de las 16:00 a logística y el recordatorio de las 17:00. Deja un resumen en WA_ULTIMO (sin nombres ni números).
+    aviso de las 08:45 a logística (§4ok-97) y el recordatorio de las 17:00. Deja un resumen en WA_ULTIMO (sin nombres ni números).
     🧠 (2026-10-14-b) Y después, lo que espera a Claude (por si su disparador de una vez no salió), si queda tiempo en esta vuelta. */
 function waRepaso() {
   var t0 = Date.now(), res = waRepasoBot_();
@@ -3655,6 +4121,8 @@ function waRepasoBot_() {
     var cola = waColaLeer_(), quedan = [];
     cola.forEach(function (ev) {
       if (t0 - (Number(ev.ms) || 0) < WA_ESPERA_MS) { quedan.push(ev); if (ev.t === 'n') colaN[ev.id] = 1; return; }
+      /* 🛠️ §4ok-109 Una ATC nueva o que cambió de día: el recojo o la devolución al cliente (la confirmación de siempre no le va). */
+      if (ev.atc && (ev.t === 'n' || ev.t === 'c')) msgs.push({ id:ev.id, k:ev.atc === 'd' ? 'atd' : 'atc', a:'cliente', n:0 });
       if (ev.t === 'n') {
         msgs.push({ id:ev.id, k:'conf', a:'cliente', n:0 });
         cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'ln', a:L.nombre, n:0 }); });
@@ -3666,14 +4134,19 @@ function waRepasoBot_() {
       }
     });
     waColaGuardar_(quedan);
+    /* 💵 §4ok-100 Los pagos nuevos, también después de WA_ESPERA_MS (una corrección enseguida sale con lo corregido). */
+    var pc = waPagoColaLeer_(), pcQueda = [];
+    pc.forEach(function (e) { if (t0 - (Number(e.ms) || 0) < WA_ESPERA_MS) pcQueda.push(e); else msgs.push({ id:e.id, k:'pago', a:'cliente', i:e.i, n:0 }); });
+    if (pc.length !== pcQueda.length) waPagoColaGuardar_(pcQueda);
     var sal = waSalidaLeer_(), salQueda = [];
     sal.forEach(function (m) { if (t0 >= (Number(m.prox) || 0)) msgs.push(m); else salQueda.push(m); });
     waSalidaGuardar_(salQueda);
     var hecho = waJsonProp_('WA_HECHO', {}), cambio = false, prox = waProximoDia_(B.hoy);
-    /* 16:00 a logística: los días que se trabaja (no el domingo ni un feriado). */
-    if (B.hora >= WA_HORA_LOGISTICA && B.hora < WA_HORA_LOGISTICA + WA_VENTANA_H && hecho.log !== B.hoy && waDow_(B.hoy) !== 0 && !feriadoGs_(B.hoy)) {
-      cfg.logistica.forEach(function (L) { msgs.push({ k:'sc', a:L.nombre, dia:prox, n:0 }); });
-      hecho.log = B.hoy; cambio = true;
+    /* 🌅 §4ok-97 08:45 a logística, los días que se trabaja (no el domingo ni un feriado): lo de HOY sin camión y sin revisar. La lista de
+       las 16:00 (los del próximo día sin camión) ya no sale. */
+    if (B.hora >= WA_HORA_SC && B.hora < WA_HORA_SC + WA_VENTANA_H && hecho.sc !== B.hoy && waPhHabil_(B.hoy)) {
+      cfg.logistica.forEach(function (L) { msgs.push({ k:'sc', a:L.nombre, dia:B.hoy, n:0 }); });
+      hecho.sc = B.hoy; cambio = true;
     }
     /* 🏭 (2026-10-27-a) Media hora antes del corte de producción, a los de WA_PEDIR_HOY: lo que hay que revisar o pedir hoy. Solo
        hasta el corte: después, lo que se pide ya arranca mañana y la lista sería otra. */
@@ -3681,6 +4154,13 @@ function waRepasoBot_() {
     if (cfg.pedirHoy.length && B.hora >= phH && B.hora < phH + WA_PH_ANTES && hecho.ph !== B.hoy && waPhHabil_(B.hoy)) {
       cfg.pedirHoy.forEach(function (L) { msgs.push({ k:'ph', a:L.nombre, dia:B.hoy, n:0 }); });
       hecho.ph = B.hoy; cambio = true;
+    }
+    /* 🏭 §4ok-105 10:00 (días hábiles): el reclamo a la fábrica. Se prueba cada 5 minutos hasta que esté la fila de hoy (`hecho.rfT`
+       evita que dos vueltas a la vez lo armen las dos) y se da por hecho recién cuando salió o no había nada (después del envío). */
+    if (cfg.reclamo.length && B.hora >= WA_HORA_RECLAMO && B.hora < WA_HORA_RECLAMO + WA_VENTANA_H && hecho.rf !== B.hoy && waPhHabil_(B.hoy) &&
+        t0 - (Number(hecho.rfT) || 0) >= WA_RECLAMO_REINT_MS) {
+      cfg.reclamo.forEach(function (L) { msgs.push({ k:'rf', a:L.nombre, dia:B.hoy, n:0 }); });
+      hecho.rfT = t0; cambio = true;
     }
     /* 📥✅ (2026-10-29-a) A las 10:00 el Excel del día; a las 19:00 (sábado 13:30) el cierre de entregas. Si ya está, `waArmar_` no lo manda. */
     var ciH = waCierreHora_(B.hoy);
@@ -3704,6 +4184,8 @@ function waRepasoBot_() {
     if (recs) return recs;
     recs = {}; readAll().forEach(function (p) { recs[p.id] = p; }); return recs;
   };
+  /* 📉 §4ok-102 El vigía de leads: una vez por hora de 8 a 22, AFUERA del candado (le pregunta a Kommo). */
+  try { waLeadsVigia_(cfg, B, t0).forEach(function (m) { msgs.push(m); }); } catch (eV) {}
   confHoy = waJsonProp_('WA_CONF_HOY', {}); if (confHoy.d !== B.hoy) confHoy = { d:B.hoy, ids:[] };
   if (recDia) {
     var ya = waJsonProp_('WA_REC', {}); if (ya.f === recDia) (ya.ids || []).forEach(function (id) { recYa[id] = 1; });
@@ -3713,34 +4195,43 @@ function waRepasoBot_() {
       if (p.fecha !== recDia || recYa[id] || confHoy.ids.indexOf(id) >= 0) continue;   // confirmado hoy: no se repite
       if (colaN[id]) continue;   // (12/10) su confirmación todavía espera en la cola: sale en unos minutos y ya dice el día
       if (recSoloAM && waTurno_(p) === 'PM') continue;   // (12/10) el de la tarde sale a las 19:00
+      /* 🛠️ §4ok-109 La víspera del RECOJO de una ATC (la devolución se avisa al programarla). Lo demás de una ATC, como siempre: nada. */
+      if (/^ATC\b/i.test(String(p.oc || '').trim())) {
+        var noA = waNoClienteAtc_(p, B.hoy);
+        if (!waAtcEsDev_(p) && (!noA || noA.anotar)) msgs.push({ id:id, k:'atcv', a:'cliente', dia:recDia, n:0 });
+        continue;
+      }
       var no = waNoCliente_(p, B.hoy); if (no && !no.anotar) continue;                    // los que no van, ni se anotan
       msgs.push({ id:id, k:'rec', a:'cliente', dia:recDia, n:0 });
     }
   }
   if (!msgs.length) { guardarRes(); return res; }
-  var R2 = planilla(), filas = [], reint = [], recHechos = [], parar = '';
+  var R2 = planilla(), filas = [], reint = [], recHechos = [], parar = '', rfListo = false;
   for (var i = 0; i < msgs.length; i++) {
     var m = msgs[i], T = WA_TIPOS[m.k] || { txt:m.k, plantilla:'' };
     if (parar || Date.now() - t0 > WA_CORRIDA_MS) { reint.push(m); continue; }   // lo que no llegó a salir, a la próxima
     var a = waArmar_(m, R2, cfg, B), p = a.p || (m.id ? R2[m.id] : null);
+    if (m.k === 'rf' && !a.rfEspera) rfListo = true;   // 🏭 §4ok-105 salió, o no había nada: hoy ya está
     var base = [B.txt, m.id || '', p ? String(p.oc || '') : '', T.txt];
     if (a.saltar) {
       res.saltados++;
-      if (m.k === 'rec') recHechos.push(m.id);
+      if (m.k === 'rec' || m.k === 'atcv') recHechos.push(m.id);
       if (a.anotar) filas.push(base.concat([p ? String(p.cliente || '') : (m.a || ''), '', T.plantilla, '⏭️ no se manda', a.saltar]));
       continue;
     }
     var r = waEnviar_(cfg, a.numero, a.plantilla, a.params);
     /* (2026-10-12-d) La v2 todavía no está aprobada (o la pausaron): sale la de antes, con sus datos. */
     /* (2026-10-14-a) Y si la de antes tampoco está, la siguiente (`vieja2`): «en camino» → cambio de día v2 → cambio de día. */
-    var alts = [[T.vieja, T.nv], [T.vieja2, T.nv2]];
+    /* §4ok-E `a.alts` = otro orden de respaldo (la «_ubic», §4ok-108); `a.viejos` = otros datos para el respaldo (§4ok-97), o null = sin respaldo. */
+    var alts = a.viejos === null ? [] : (a.alts || [[T.vieja, T.nv], [T.vieja2, T.nv2]]);
     for (var ai = 0; ai < alts.length && !r.ok && alts[ai][0] && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0; ai++) {
-      r = waEnviar_(cfg, a.numero, alts[ai][0], a.params.slice(0, alts[ai][1])); a.plantilla = alts[ai][0];
+      r = waEnviar_(cfg, a.numero, alts[ai][0], (a.viejos || a.params).slice(0, alts[ai][1]).map(waParam_)); a.plantilla = alts[ai][0];
     }
     if (r.ok) {
       res.enviados++;
-      if (m.k === 'rec') recHechos.push(m.id);
-      if (m.k === 'conf') confHoy.ids.push(m.id);
+      if (m.k === 'rec' || m.k === 'atcv') recHechos.push(m.id);
+      if (m.k === 'conf' || m.k === 'atc' || m.k === 'atd') confHoy.ids.push(m.id);   // 🛠️ §4ok-109 avisada hoy: la víspera no se repite
+      if (a.pagoK) waPagosAnotar_(a.pagoK);   // 💵 §4ok-100 una vez por pago
       filas.push(base.concat([a.para, a.numero, a.plantilla, '✅ enviado', r.id || '']));
     } else if (r.fatal) {
       parar = r.detalle; res.errores++; reint.push(m);
@@ -3750,7 +4241,7 @@ function waRepasoBot_() {
       filas.push(base.concat([a.para, a.numero, a.plantilla, '🔁 se reintenta (' + m.n + ')', r.detalle]));
     } else {
       res.errores++;
-      if (m.k === 'rec') recHechos.push(m.id);
+      if (m.k === 'rec' || m.k === 'atcv') recHechos.push(m.id);
       filas.push(base.concat([a.para, a.numero, a.plantilla, '❌ error', r.detalle]));
     }
   }
@@ -3759,6 +4250,10 @@ function waRepasoBot_() {
     if (y.f !== f) y = { f:f, ids:[] };
     recHechos.forEach(function (id) { if (y.ids.indexOf(id) < 0) y.ids.push(id); });
     try { PropertiesService.getScriptProperties().setProperty('WA_REC', JSON.stringify(y)); } catch (e) {}
+  }
+  if (rfListo) {   // 🏭 §4ok-105
+    var l3 = LockService.getScriptLock();
+    try { l3.waitLock(20000); var hRf = waJsonProp_('WA_HECHO', {}); hRf.rf = B.hoy; PropertiesService.getScriptProperties().setProperty('WA_HECHO', JSON.stringify(hRf)); } catch (e) {} finally { try { l3.releaseLock(); } catch (e3) {} }
   }
   if (confHoy.ids.length > 300) confHoy.ids = confHoy.ids.slice(-300);
   try { PropertiesService.getScriptProperties().setProperty('WA_CONF_HOY', JSON.stringify(confHoy)); } catch (e) {}
@@ -3779,7 +4274,8 @@ function estadoBotWhatsApp() {
             logisticaMal:c.mal, pedirHoy:c.pedirHoy.map(function (L) { return L.nombre; }), pedirHoyMal:c.malPh, prueba:!!c.prueba, enCola:waColaLeer_().length, reintentos:waSalidaLeer_().length,
             ultimo:waJsonProp_('WA_ULTIMO', null), hecho:waJsonProp_('WA_HECHO', {}), repasoInstalado:kTriggersDe_('waRepaso').length > 0,
             metaAvisa:!!prop_('WA_HOOK_KEY'), metaVerifico:waJsonProp_('WA_HOOK_VERIF', null), meta:waJsonProp_('WA_META', null),
-            metaRechazados:waJsonProp_('WA_HOOK_MAL', null) };   // (2026-10-12-b) avisos con otra clave en la dirección   // (2026-10-12-a)
+            metaRechazados:waJsonProp_('WA_HOOK_MAL', null),
+            dueno:c.dueno.map(function (L) { return L.nombre; }), duenoMal:c.malDu, leads:waJsonProp_('WA_LEADS', null), pagosEnCola:waPagoColaLeer_().length };   // §4ok-E   // (2026-10-12-b) avisos con otra clave en la dirección   // (2026-10-12-a)
   try { s.claude = iaEstado_(); } catch (e) {}   // 🧠 (2026-10-14-b)
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
   return s;
@@ -3893,10 +4389,17 @@ function waHookAnotar_(est, resp) {
     var conIa = false;
     try { cfgIa = cfgIa || waConfig_(); conIa = iaParaNumero_(de, cfgIa); } catch (er) {}
     var reac = String(m.type || '') === 'reaction';
-    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, iaCorte_(waHookTxtMsg_(m), 500),
-                  conIa && reac ? '🤖 reacción · ' + waBo_(Date.now()).txt : '', ms,
-                  conIa ? (reac ? '— reacción: no se contesta' : '⏳') : '']);
+    /* 📍 §4ok-108 Una ubicación (o un enlace de Maps): a su pedido pendiente más próximo; la fila dice qué pasó (columna Q) y el bot le
+       contesta él (no Claude): «la guardamos» o «se la pasamos a tu vendedora». */
+    var ub = null, loc = null;
+    try { loc = waUbicDeMsg_(m); if (loc) { ub = waUbicGuardar_(de, loc, ped); if (ub.id) ped = { id:String(ub.id), oc:String(ub.oc || '') }; } } catch (er) { ub = null; }
+    var txtM = ub ? iaCorte_(waHookTxtMsg_(m), 400) + ' · ' + waUbicTxt_(ub) : iaCorte_(waHookTxtMsg_(m), 500);
+    var colM = conIa ? (reac ? '— reacción: no se contesta' : (ub ? '— ubicación: le contestó el bot' : '⏳')) : '';
+    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, txtM,
+                  conIa && (reac || ub) ? '🤖 ' + (ub ? 'ubicación' : 'reacción') + ' · ' + waBo_(Date.now()).txt : '', ms, colM, '', '', '',
+                  ub ? waUbicCol_(ub) : '']);
     fila[w] = sh.getLastRow();
+    if (ub) { try { waUbicResponder_(sh, de, ub, m._nom); } catch (er) {} return; }
     if (conIa) { if (!reac) { hayIa = true; if (numsIa.indexOf(de) < 0) numsIa.push(de); } return; }
     try { waAutoResponder_(sh, de, ped, m._nom); } catch (er) {}
   });
@@ -3917,10 +4420,10 @@ function waHookAnotar_(est, resp) {
    · Respuesta automática (texto libre: Meta lo deja sin plantilla dentro de las 24 h en que el cliente escribió), UNA vez cada
      `WA_AUTO_HORAS` por número: «este número solo manda avisos… escribile a tu vendedora». `WA_AUTORESP`=0 la apaga.
    · El panel las pide con `waRespuestas` (sin candado: es otra hoja) y marca «✓ Ya lo atendí» con `waRespAtendida`. */
-var WA_RESP_COLS = 16, WA_AUTO_HORAS = 12, WA_RESP_DIAS = 7, WA_RESP_MAX = 150;   // 🧠 (2026-10-14-b) 12 → 16: M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
+var WA_RESP_COLS = 17, WA_AUTO_HORAS = 12, WA_RESP_DIAS = 7, WA_RESP_MAX = 150;   // 📍 §4ok-108 (2026-11-05-a) 16 → 17: Q «Ubicación»   // 🧠 (2026-10-14-b) 12 → 16: M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
 function waHookEncabezados_(sh) {
   try {
-    var nom = ['Atendida', 'ms', 'IA', 'Qué quiere', 'Resumen', 'Le contestó'], enc = sh.getRange(1, 11, 1, nom.length).getValues()[0];
+    var nom = ['Atendida', 'ms', 'IA', 'Qué quiere', 'Resumen', 'Le contestó', 'Ubicación'], enc = sh.getRange(1, 11, 1, nom.length).getValues()[0];
     for (var i = 0; i < nom.length; i++) if (String(enc[i] || '') === '') sh.getRange(1, 11 + i).setValue(nom[i]).setFontWeight('bold');
   } catch (er) {}
 }
@@ -3971,6 +4474,7 @@ function waRespuestasLeer_() {
     if (ia.indexOf('🤖 ↓') === 0) { if (junta[num]) junta[num].antes.unshift(String(r[9] || '')); continue; }
     var x = { w:String(r[8] || ''), ms:ms, t:String(r[0] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || ''), num:num,
               txt:String(r[9] || ''), at:String(r[10] || '') };
+    var ubR = waUbicDeCol_(r[16]); if (ubR) x.ubi = ubR;   // 📍 §4ok-108
     if (ia) {
       x.ia = ia; x.cat = String(r[13] || ''); x.res = String(r[14] || ''); x.resp = String(r[15] || ''); x.urg = ia.indexOf('urgente') >= 0; x.antes = [];
       if (ia.charAt(0) !== '—') junta[num] = x;   // una reacción no es el mensaje principal de nadie
@@ -4540,6 +5044,13 @@ var WA_PLANTILLAS = [
   { n:'cambio_entrega_v2',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n📅 Cambió el día de entrega de tu pedido *{{3}}*:\n🚚 Ahora te lo llevamos el *{{4}}*\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No te queda bien? Escribile a {{6}} y lo coordinamos 😉',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'viernes 16/10 por la tarde', '14:30 y las 18:30', 'Carola 👉 https://wa.me/59170000000'] },
+  /* 📍 §4ok-108 (2026-11-05-a) Las mismas dos, pidiendo la ubicación (pedido sin pin exacto). Mismos 9 datos y orden que las v2. */
+  { n:'confirmacion_pedido_ubic',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋\nTe confirmamos tu pedido *{{2}}* de *{{3}}* ✅\n\n🛏️ *Productos:* {{4}}\n📍 *Dirección:* {{5}}\n💵 {{6}}\n\n🚚 *Entrega:* {{7}}\n⏰ El camión pasa entre las {{8}}. Logística te llama una hora antes 📞\n\n📍 *Mandanos tu ubicación por acá* (📎 → Ubicación): así el camión llega directo a tu puerta.\n\n💬 ¿Alguna consulta? Escribile a {{9}}\n\n¡Gracias por tu compra! 🙌',
+    e:['Juan', 'OC 10-412', 'Heaven Colchones', '1 × TITANIO ICE 160x190', 'Calle 1 #23, Barrio Norte', 'Saldo a pagar al recibir: Bs 1.500', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
+  { n:'recordatorio_entrega_ubic',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu pedido *{{3}}*.\n\n🚚 *{{4}} te llevamos:*\n🛏️ {{5}}\n💵 {{6}}\n\n📅 *Entrega:* {{7}}\n⏰ Entre las {{8}}. Logística te llama una hora antes 📞\n\n📍 *Mandanos tu ubicación por acá* (📎 → Ubicación): así el camión llega directo a tu puerta.\n\n💬 ¿No vas a estar? Escribile a {{9}} para cambiar el día.',
+    e:['Juan', 'Heaven Colchones', 'OC 10-412', 'Mañana', '1 × TITANIO ICE 160x190', 'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
   { n:'recordatorio_entrega_v2',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu pedido *{{3}}*.\n\n🚚 *{{4}} te llevamos:*\n🛏️ {{5}}\n💵 {{6}}\n\n📅 *Entrega:* {{7}}\n⏰ Entre las {{8}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{9}} para cambiar el día.',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'Mañana', '1 × TITANIO ICE 160x190', 'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
@@ -4549,9 +5060,11 @@ var WA_PLANTILLAS = [
   { n:'logistica_cambio_v2',
     t:'🤖 🔄 *Cambio de entrega* del pedido {{1}} ({{2}}):\n{{3}}.\n\n👉 Revisá el camión asignado en el panel.',
     e:['OC 10-412', 'JUAN PEREZ', 'pasó del jueves 15/10 por la mañana al viernes 16/10 por la tarde'] },
-  { n:'logistica_sin_camion_v2',
-    t:'🤖 ⏰ Son las 16:00 y quedan *{{1}} pedidos* del {{2}} sin camión 🚚\n\n📋 {{3}}\n\n👉 Asignalos en el panel así la carga se arma a tiempo.',
-    e:['3', 'jueves 15/10', 'JUAN PEREZ (Norte), ANA ROJAS (Centro), MULTICENTER (Equipetrol)'] },
+  /* 🌅 §4ok-97 (2026-11-05-a) Reemplaza a `logistica_sin_camion_v2` (la de las 16:00, que queda en Meta como respaldo). Mismos datos y
+     orden que `waHoyFaltaParams_`. */
+  { n:'logistica_hoy_falta',
+    t:'🤖 🌅 *Buen día. De lo de hoy ({{1}}) todavía falta:*\n\n🚚 Sin camión: *{{2}}*\n📋 {{3}}\n\n📦 Sin revisar el stock o con «✗ no hay»: *{{4}}*\n📋 {{5}}\n\n👉 Asignalos y revisalos en el panel antes de cargar.',
+    e:['jueves 05/11', '2 pedidos', 'JUAN PEREZ (Norte), ANA ROJAS (Centro)', '3 productos', '1× TITANIO ICE 160×190 (JUAN PEREZ), 1× SOMIER ORO 140×190 (ANA ROJAS · ✗ no hay), 1× SOFT 100×190 (LUIS VACA)'] },
   /* 🚀 (2026-10-14-a) Un pedido de la tarde que salió cargado a la mañana. Mismos datos y orden que `cambio_entrega_v2` (es su respaldo). */
   /* 🏭 (2026-10-27-a) Lo que hay que revisar o pedir a producción hoy. Mismos datos y orden que `waPhParams_`. */
   { n:'logistica_pedir_hoy',
@@ -4565,6 +5078,29 @@ var WA_PLANTILLAS = [
   { n:'logistica_cierre_falta',
     t:'🤖 ✅ *Falta el cierre de entregas de hoy* ({{1}})\n\nQuedan *{{2}}* sin marcar: {{3}}\n\n👉 En el panel: Administración → ✅ Cierre de entregas. Tildá lo entregado y reprogramá lo que no salió.',
     e:['jueves 29/10', '3 pedidos', 'OC 10-301 (JUAN PEREZ) · OC 10-305 (ANA ROJAS) · ATC 10-012 (LUIS VACA)'] },
+  /* 💵 §4ok-100 (2026-11-05-a) Mismos datos y orden que la rama `pago` de `waArmar_`. Sin respaldo: no hay una de antes. */
+  { n:'pago_recibido',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n💵 Recibimos tu pago de *{{3}}* {{4}} para tu pedido *{{5}}* ✅\n{{6}}\n\n💬 ¿Alguna consulta? Escribile a {{7}}\n\n¡Gracias! 🙌',
+    e:['Juan', 'Heaven Colchones', 'Bs 500', 'por QR BNB', 'OC 10-412', 'Tu saldo es Bs 1.200.', 'Carola 👉 https://wa.me/59170000000'] },
+  /* 🛠️ §4ok-109 (2026-11-05-a) Mismos datos y orden que la rama `atc` de `waArmar_` (las dos). Sin respaldo: no hay una de antes. */
+  { n:'atc_recojo',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu servicio técnico *{{3}}* 🛠️\n\n🚚 Pasamos a recoger el producto *{{4}}*.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
+    e:['Juan', 'Heaven Colchones', 'ATC 11-012', 'mañana, viernes 06/11 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
+  { n:'atc_devolucion',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu servicio técnico *{{3}}* 🛠️\n\n✅ Tu producto ya está listo: te lo llevamos *{{4}}*.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
+    e:['Juan', 'Heaven Colchones', 'ATC 11-012', 'el martes 17/11 por la tarde', '14:30 y las 18:30', 'Carola 👉 https://wa.me/59170000000'] },
+  /* 📉 §4ok-102 (2026-11-05-a) Al dueño. Mismos datos y orden que `waLeadsParams_` (las dos). */
+  { n:'alerta_leads',
+    t:'🤖 📉 *Casi no están entrando leads a Kommo*\n\nEn las últimas 3 horas ({{1}}) entraron *{{2}}*. El {{3}}, a la misma hora, habían entrado *{{4}}*.\n\n👉 Mirá si las campañas de Meta siguen andando y si el WhatsApp sigue conectado a Kommo. Te aviso cuando vuelvan a entrar.',
+    e:['de 11:00 a 14:00', '1 lead', 'jueves 29/10', '23 leads'] },
+  { n:'alerta_leads_volvieron',
+    t:'🤖 📈 *Volvieron a entrar leads a Kommo*\n\nEn las últimas 3 horas ({{1}}) entraron *{{2}}*. El {{3}}, a la misma hora, habían entrado *{{4}}*.\n\n✅ No hace falta hacer nada.',
+    e:['de 15:00 a 18:00', '19 leads', 'jueves 29/10', '23 leads'] },
+  /* 🏭 §4ok-105 (2026-11-05-a) Mismos datos y orden que `waReclamoParams_`. */
+  { n:'reclamo_fabrica',
+    t:'🤖 🏭 *Lo que la fábrica todavía nos debe* ({{1}})\n\n⏰ Pedido y con más de 2 días hábiles de atraso: *{{2}}*\n📋 {{3}}\n\n🛏️ Lo que rota, en 0, con ventas esperando: *{{4}}*\n📋 {{5}}\n\n👉 Reclamalo a la fábrica. El detalle para copiar está en el panel: Stock → 🏭 Lo que nos debe la fábrica.',
+    e:['jueves 05/11', '2 productos', 'TITANIO ICE 200x200: faltan 7 de 8, tenía que llegar el 03/10 (33 días) · SOFT 140x190: faltan 4, tenía que llegar el 30/10 (6 días)',
+       '1 producto', 'NUEVO ECO FLEX 140x190: 3 vendidos esperando; el más viejo, OC 10-301 para el 28/10'] },
   { n:'pedido_en_camino',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'martes 14/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] }
