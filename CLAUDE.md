@@ -2526,6 +2526,40 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **Decidido por el dueño (30/10, «dejalo así»)**: una venta ya confirmada por el bot que después pasa a «avisa cuándo» NO manda ningún aviso (ni al
   cliente ni a logística). Para la próxima versión del `.gs` quedan 4 detalles menores anotados en la bitácora §4nv.
 
+## 🗓️ El plan del jueves (§4ok, 05-06/11; `PLAN_JUEVES_05-11.json`; EN LA RAMA, espera «publica»; servidor `2026-11-05-a` lo implementa el dueño)
+18 de la revisión del 02/11 (bitácora §4ok). Esperan al dueño: 94, 98, 103, 111, 113, E8, E9. Lo que hay que respetar:
+- **E1** «Kommo sin cargar» del cierre comercial = `borrYaCargada` (la regla de la 81); no contar borradores a mano en otro lado.
+- **E2** Bloki dice «no sé» bajo `ASIS_MIN_PARTE`: una respuesta nueva de `ASIS_AYUDA` comparte más de la mitad de las palabras (sin
+  `ASIS_COMUNES`) con su pregunta típica, o no la encuentra.
+- **E3** subir `IAC_PREGUNTA_V` relee SOLO las `cp:false` (`iacReleer_`); un campo nuevo del esquema va también en `required`.
+- **E4** `waCel_` (.gs) y `misWaCliente` (página) son la MISMA regla (`test_wa_pagina` las compara). **95** el celular se escribe con
+  `celTexto_` en `recToRow` (nunca crudo); en la página `celPartes` + `celFormFalta` (submitPedido, `fxPasosEstado`, «Para guardar»);
+  «no tiene WhatsApp» = `sinwa` en los productos. Playwright solo `CEL_PRUEBA`.
+- **E5** «fuera de Santa Cruz» = `ubicFueraDeSantaCruz`; frena solo lo escrito o cambiado. **E6** un enlace «cómo llegar» se lee por su
+  DESTINO (`coordsDestinoDir` / `.gs` `dirDestino_`); nunca el primer par ni el `@`.
+- **E7** saldos de meses anteriores = `saldosAnteriores`, APARTE, nunca sumados al mes; traer julio-septiembre = cambiar `SALDO_ANT_DESDE`.
+  Un filtro nuevo de Ventas va en `contaFiltro()`.
+- **92** un aviso nuevo de Contabilidad guarda `fs` y `fx`; un arreglo pasa por `ctaGuardarPago` (con `CTA_AV_SILENCIO`) o `aplicarCobros`,
+  nunca reescribe `metodoPago` a mano (salvo `pagosAlDia`, §4nm); qué NO es error lo decide solo `ctaAvFiltrar` (avisos, PDF, texto, cierre solo).
+- **93** «Guardar y cargar la próxima» depende de `_prox` (al empezar `submitPedido`); la fecha de la foto solo en ventas NUEVAS (`TV_FV`).
+- **96** el contador de cambios de fecha es `fmov` en los productos: un camino nuevo que mueva la fecha suma con `setFmov` o pasa por
+  `reproAplicar`, y `heredarMarcas` lo pasa. Playwright solo `FMOV_PRUEBA`. **99** el aviso de la nota es solo aviso (Eduardo/ROHO: §4ja).
+- **101** `repetirPedido` arma los productos de cero (sin marcas ni ids); `REPETIR_DE` frena guardar sin fecha.
+- **104** `STOCK.fdH` va en leerStock/stockFusionar/stockPodar; todo lo que cierre lo pedido con los Excel pasa por `fdLoteAsignar` y marca
+  su día (`fdHMarcar`); no relajar `fdRepasoTramoSeguro` (cerraría dos veces).
+- **106** el ✅ en lote de «los que vio el GPS» usa `cierreEntAplicar`, nunca `toggleEntregado` en serie. Nada se marca solo.
+- **110** `__destinos__` (`DEST_ID`) en `esFilaSistema`, `REESCRITAS` y `SISTEMA_JUNTA_OPCIONAL`; solo un pedido NUEVO toma el lugar y
+  un enlace pegado manda.
+- **112** un camino nuevo que registre efectivo recalcula el chofer con la fecha del pago (`ctaChoferSugerido`) salvo `rEleg`, y pregunta con
+  `ctaChoferCruce`; un efectivo ya registrado nunca cambia de mano solo.
+- **91** escrituras a Kommo por `kPedir_` FUERA del candado; etapa y campos con `kcMeta_`, nunca a mano; un camino nuevo que cree borradores
+  respeta `kcPropios_()`; la página llama a `kommoCierre` solo con servidor ≥ `KC_SERVIDOR`; `KC_INTERNOS` = `WA_INTERNOS` = `CONTA_INTERNOS`.
+  APAGADO salvo la propiedad `KOMMO_CIERRE=1` (antes, `probarKommoEscribe` desde el editor).
+- **Bot**: 97 `logistica_hoy_falta` 08:45 (la de las 16:00 ya no sale) · 100 `pago_recibido` · 102 vigía de leads en `waRepaso` → `WA_DUENO`
+  (propiedad nueva) · 105 `__reclamo_fab__` (en `esFilaSistema`; Playwright solo `RECLAMO_FAB_PRUEBA`) → `reclamo_fabrica` 10:00 · 108 la
+  ubicación del cliente = `&wa=1` (`esUbicWa`), «Bot WhatsApp» tiene 17 columnas (Q = ubicación) · 109 `atc_recojo`/`atc_devolucion`.
+  Una plantilla puede llevar `a.viejos`/`a.alts` para el respaldo. 9 plantillas nuevas (bitácora §4ok).
+
 ## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; PUBLICADO `4c7af2b`; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
 Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades
 y Bs, el mes de comparación entero y la línea de unidades. `pryMomDe` → `tres:{act,ant,ent}` con `{n,u,bs}` + `curU/prevU`; `pryMomTocar`
