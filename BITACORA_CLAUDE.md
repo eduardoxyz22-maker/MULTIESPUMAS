@@ -17280,7 +17280,11 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   descargar Excel y se juntaba eso directamente al correo… te subí el formato»*; en la bitácora NO estaba: el 02/09 (§4bs) el formato se usó solo
   para decidir los campos y el 15/10 (§4li) se hizo el mensaje del correo; lo de «Excel con los correos adentro» era la RPT). Mandó `ATC_MODELO.xlsx`
   (su «FORMULARIO DE ATENCION AL CLIENTE») y los correos: logistica@, ernesto.flores@, daniel.garnica@, jose.rivero@, e.anez@ y eliana.vargas@
-  (todos @colchonesheaven.com). EN LA RAMA, espera «publica».
+  (todos @colchonesheaven.com). **PUBLICADO 06/11 (dueño: «publica»), `main` = `4138911`, versión 2026-11-06-b**, junto con 104b (los «+N CM»
+  y el SOMIER ESPECIAL TROPICAL son productos), 104c (armazones fuera) y las zonas/pines de las dos tiendas nuevas. Antes de publicar, en la copia
+  de `main`: test_atc_excel 36, test_atc_correo 32, test_rpt 110, test_fabrica_repaso 36, test_vendedores_nuevos 36, test_wa_pedir_hoy 64,
+  test_version_nueva 27, test_fabrica_debe 46, test_atc_obligatorio 57, test_asistente 24, test_servidor 414, test_avisa_cuando 52, todas 0 mal.
+  El servidor 2026-11-06-a (armazones en el aviso de las 08:45) sigue opcional: hasta que lo implemente, «Cerrar día» muestra la línea gris.
   · `atcHoja(p)` = la plantilla tal cual (4 columnas, el turquesa `1D9DB4`, recuadros, el logo de Heaven y los dibujos del colchón y el somier del
     «esquema», `ATC_IMG_*` sacados del archivo del dueño) llena con la ATC: cliente, fecha (entró), N° ATC al lado de «NRO DE FACTURA» (vacío,
     §4bs), teléfono, fecha de compra con antigüedad, dirección, vendedora, ● COLCHÓN/○ SOMIER/○ CAMABOX (`atcQueEs`, con `pryTipoProd`: una

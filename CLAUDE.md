@@ -909,7 +909,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   una ATC sale «✅ ATC guardada» con `#atc-correo` ARRIBA del WhatsApp: Para (por compu, `me_atc_correo`; si no, `ATC_CORREO_PARA`, hoy vacío),
   Asunto (`atcCorreoAsunto`) y Mensaje (`atcCorreoTexto`: todo lo de la ATC + enlaces de Drive de las fotos). Copiar / «📧 Abrir en Gmail» /
   «✉️ Otro correo» (`atcCorreoUrl`). El panel NO manda nada. También desde la ficha («📧 Correo de la ATC», `atcCorreoVer`). `tests/test_atc_correo.js` (32).
-- **📄 El formulario de la ATC en Excel** (06/11; dueño mandó `ATC_MODELO.xlsx` y los seis correos; en la rama): `atcHoja` = su «FORMULARIO DE ATENCION
+- **📄 El formulario de la ATC en Excel** (06/11; dueño mandó `ATC_MODELO.xlsx` y los seis correos; PUBLICADO 06/11, `4138911`, versión 2026-11-06-b): `atcHoja` = su «FORMULARIO DE ATENCION
   AL CLIENTE» lleno (logo y dibujos `ATC_IMG_*`, sin grilla, una hoja), «⬇️ Bajar el Excel de la ATC» en el correo y «⬇️ Excel de la ATC» en la ficha;
   `ATC_CORREOS` en el «Para» y escritos en el Excel. `buildXlsx` acepta `imgs`, `sinGrilla`, `unaHoja`; un estilo nuevo de Excel = `xsExtra(o)`
   (se suma al final, los 0-28 no se mueven). El navegador no adjunta: la vendedora baja y adjunta. `tests/test_atc_excel.js` (36).
@@ -2557,7 +2557,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   de la lista en otra medida y `FD_SON_PRODUCTO` (dueño, 06/11). Un nombre nuevo que el dueño confirme va en `FD_SON_PRODUCTO`. La Tienda Banzer
   tiene el pin del almacén Banzer (dueño: «mismo lugar») y zona Norte; Ventura Mall, zona Sur y el pin de su enlace (06/11).
 - **104c** Los ARMAZONES no cuentan en ningún lado (dueño, 06/11): `^ARMAZON` en `PROD_NO_ES_STOCK` y en `WA_PH_NO_ES_STOCK` del `.gs` (las dos
-  iguales, `test_wa_pedir_hoy`); servidor `2026-11-06-a` solo por eso. Lo pedido a fábrica con una clave que el stock no usa no arma fila.
+  iguales, `test_wa_pedir_hoy`); servidor `2026-11-06-a` solo por eso (opcional, el dueño lo implementa cuando quiera; enlace fijo `faf46c3…`). PUBLICADO con la 06-b (`4138911`). Lo pedido a fábrica con una clave que el stock no usa no arma fila.
 - **106** el ✅ en lote de «los que vio el GPS» usa `cierreEntAplicar`, nunca `toggleEntregado` en serie. Nada se marca solo.
 - **110** `__destinos__` (`DEST_ID`) en `esFilaSistema`, `REESCRITAS` y `SISTEMA_JUNTA_OPCIONAL`; solo un pedido NUEVO toma el lugar y
   un enlace pegado manda.
