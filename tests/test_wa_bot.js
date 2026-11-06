@@ -445,6 +445,10 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
   const r2 = S.ctx.crearPlantillasWhatsApp();
   chk('con el token vencido lo dice («generá otro»)', !r2.ok && r2.plantillas.every(x => /token no sirve/.test(x.txt)), r2.plantillas[0]);
+  /* (2026-11-06-c) Meta pasó a MARKETING una que ya existía (logistica_pedir_hoy, alerta_leads): existe y sale igual, no es un error. */
+  S.limpiar(); S.meta.responder = () => ({ code: 400, body: { error: { code: 100, message: 'Invalid parameter', error_user_msg: 'La categoría UTILITY no coincide con la que ya está asociada a esta plantilla: MARKETING.' } } });
+  const r3 = S.ctx.crearPlantillasWhatsApp();
+  chk('la que Meta tiene como MARKETING se lee como «ya existía» (sale igual), no como ❌', r3.ok && r3.plantillas.every(x => x.ya && /MARKETING: sale igual/.test(x.txt)), r3.plantillas[0]);
   S.limpiar(); S.meta.responder = () => ({ code: 200, body: { data: [
     { name: 'confirmacion_pedido_v2', language: 'es', status: 'APPROVED', category: 'UTILITY' },
     { name: 'cambio_entrega_v2', language: 'es', status: 'REJECTED', rejected_reason: 'INVALID_FORMAT' },

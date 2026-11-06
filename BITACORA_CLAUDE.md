@@ -17405,6 +17405,22 @@ a quién, «sin preferencia» → quedó lo propuesto.
   formulario manda el sello con que se abrió (`EDIT_REV`), el servidor contesta `conflicto` y el formulario se reabre con la versión nueva.
   `tests/test_factura_conflicto.js` (10, página + `.gs` reales: la vendedora anota desde su «Para hacer» sin contraseña, y la carrera);
   `test_wa_efectivo` → 44, `test_factura_remision` → 19.
+- 🚚 **Servidor `2026-11-06-c` (06/11 noche; el dueño implementó la 06-b, creó `efectivo_sin_retirar` —PENDING en Meta— y pidió: *«el dinero
+  que reciben los choferes el mensaje debería llegar a contabilidad. para que sepa. no a eduardo»*)**. Cada persona del aviso lleva `ch` (lo recibió un
+  chofer: `>Nombre` en el cobro, §4eq); `ef` (al dueño) va solo con los vendedores y `efc` (nuevo, a la propiedad **`WA_CONTABILIDAD`** =
+  «Contabilidad:591…») solo con los choferes, la misma plantilla («1 chofer» / «N vendedores» en el dato 3), marcas del día `efc9`/`efc18`. Sin
+  `WA_CONTABILIDAD` lo de los choferes no va a nadie (dueño: «no a Eduardo») y `probarEfectivo()`/`probarAntesDeImplementar` lo dicen. Con la
+  planilla real del 06/11 (Juan Pablo y Mauricio son vendedores de Sueña, Luis Pierre el único chofer): el sábado 07/11 a las 9:05 al dueño Bs 14.960
+  de 4 vendedores y a Contabilidad Bs 1.860 de Luis Pierre. También: `crearPlantillasWhatsApp` lee «la categoría UTILITY no coincide… MARKETING» como
+  «ya existía» (logistica_pedir_hoy, alerta_leads y alerta_leads_volvieron: Meta las pasó a MARKETING; salen igual). La propiedad nueva se crea con
+  una función en un archivo aparte (tope de 50 en la pantalla de Propiedades). `test_wa_efectivo` → 49, `test_wa_bot` → 239.
+- 🔎 **Tercera vuelta de Fable (06/11, otra vez sobre el diff de la 06-b)**: ya hechos o verificados — el servidor guarda `fdoc`/`fdocn` (prueba con el
+  `.gs` real: `test_factura_conflicto`), la vendedora sin contraseña anota y guarda, `recs` trae las filas `__ret_` (3g), `contaFechaBase` existe, el
+  `L` del cierre es la lista del mes (`test_cierre_control`). NO aplica: «la obligación depende del selector Ingreso/Entrega» — `docVentaRequerida` usa
+  `contaFecha` = el `ts` en hora de Bolivia, siempre el ingreso (el selector cambia `contaFechaBase`). «`>Luis` vs Luis Pierre»: el chofer se elige de
+  una lista (`choferesParaSelect`), como el que entrega en un retiro; juntar por nombre de pila confundiría a Luis Pierre con Luis Eyzaguirre. Copiar
+  un pedido (`repetirPedido`) arma los productos de cero (no lleva la factura) y Contabilidad copia cada producto entero. Hecho: los recargos por
+  vendedor sacan ATC, RPT y filas del sistema aunque lleguen en la lista (sin `fueraDeConta` a secas: sacaría la vista «Mayoristas»).
 
 ### §4oj — 👥 ANDREA ORIAS Y FABIÁN GODOY, Y LAS TIENDAS «TIENDA BANZER» Y «VENTURA MALL» (02/11; dueño: *«añades dos nuevos vendedores Andrea orias y Fabián godoy»* → los dos Heaven, Andrea en la *«Nueva tienda banzer»*, Fabián en *«Ventura mall»*; PUBLICADO 02/11, `main` = `39cc0ec`, versión 2026-11-02-b; servidor `2026-11-02-a` espera que el dueño lo implemente)
 
