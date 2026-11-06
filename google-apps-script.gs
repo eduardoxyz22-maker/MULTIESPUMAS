@@ -3029,7 +3029,10 @@ var WA_TIPOS = {
   ph:  { plantilla:'logistica_pedir_hoy', txt:'Logística: pedir hoy' },
   /* 📥✅ (2026-10-29-a) A las 10:00 si falta el Excel de existencias de hoy; a las 19:00 (sábado 13:30) si falta el cierre de entregas. */
   ex:  { plantilla:'logistica_excel_falta', txt:'Logística: falta el Excel' },
-  ci:  { plantilla:'logistica_cierre_falta', txt:'Logística: falta el cierre' }
+  ci:  { plantilla:'logistica_cierre_falta', txt:'Logística: falta el cierre' },
+  /* 💵 §4ok-100 (2026-11-05-a) Al cliente, cada pago NUEVO que se registra: cuánto, cómo y cuánto le queda. `no` = qué regla dice a quién
+     no (`waNoClientePago_`: sin la de la fecha ni la de «entregado», justo los pagos que llegan después son los que interesan). */
+  pago:{ plantilla:'pago_recibido', txt:'Pago recibido', cli:true, no:'pago' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -3188,6 +3191,7 @@ function waColaGuardar_(c) {
     cliente le sale «cargado y en camino» (`e`) en vez del cambio de día, y a logística nada (ellos lo cargaron). */
 function waAlGuardar_(viejo, rec, adelanto) {
   if (!waActivo_() || !rec) return;
+  try { waPagoAlGuardar_(viejo, rec); } catch (eP) {}   // 💵 §4ok-100
   var id = String(rec.id || '');
   if (!id || id.indexOf('__') === 0 || String(rec.estado || '') === BORRADOR_EST || !rec.fecha) return;   // (12/10) por el estado, no por `kommo-`
   if (entregaAConfirmar_(rec)) return;   // 📦 (2026-10-30-a) «el cliente avisa cuándo»: nada al cliente ni a logística (sin fecha ya salía arriba)
@@ -3224,6 +3228,98 @@ function waDespierta() {
   kTriggersDe_('waDespierta').forEach(function (t) { try { ScriptApp.deleteTrigger(t); } catch (e) {} });
   try { PropertiesService.getScriptProperties().deleteProperty('WA_DESP_HASTA'); } catch (e) {}
   return waRepaso();
+}
+
+/* ============================================================================
+ * 💵 §4ok-100 (2026-11-05-a) EL BOT LE CONFIRMA AL CLIENTE CADA PAGO. Desde el 01/10, 372 pagos; 65 llegaron después del día de la
+ * venta y el cliente no recibía nada. Ahora, al guardar un pedido con un cobro MÁS que antes (`aplicarCobros` de la página agrega el
+ * renglón al final), sale `pago_recibido`: «Recibimos tu pago de Bs X por <método>… Tu saldo es Bs Y» o «Tu pedido quedó pagado».
+ *   · Solo los cobros nuevos: corregir uno (mismo número de renglones) o borrarlo no manda nada. El anticipo («~») y los recargos por
+ *     entrega («^») no son cobros de la venta (como `cobrosDe` de la página). Un pedido nuevo tampoco: ya lo dice la confirmación.
+ *   · Una vez por pago (WA_PAGOS: pedido|renglón|monto, 60 días). Espera WA_ESPERA_MS como todo: lo corregido enseguida sale corregido.
+ *   · Un cobro con fecha de hace más de WA_PAGO_DIAS días (lo anotaron tarde) no se avisa: «recibimos tu pago» de hace dos semanas
+ *     confunde más de lo que ayuda (decisión segura: el plan no lo decía).
+ *   · A quién no (`waNoClientePago_`): Eduardo, ROHO, internos, ATC, RPT, ventas de tienda, filas del sistema, borradores de Kommo, sin
+ *     celular. Sí con la entrega ya hecha o sin fecha: el pago que llega después es justo el que interesa.
+ * ========================================================================== */
+var WA_PAGO_DIAS = 3, WA_PAGOS_DIAS = 60, WA_PAGOS_TOPE = 300, WA_PAGO_COLA_TOPE = 60;
+/* = CONTA_INTERNOS de la página (test_wa_jueves los compara): los pedidos «internos» no son de un cliente. */
+var WA_INTERNOS = ['ALBA', 'FABRICA', 'MULTIESPUMA', 'MULTIESPUMAS', 'MORENO', 'ALZER', 'REPOSICION DE ALMACEN'];
+function waEsInterno_(v) { v = waNorm_(v); for (var i = 0; i < WA_INTERNOS.length; i++) if (waNorm_(WA_INTERNOS[i]) === v) return true; return false; }
+/* Lo común de los avisos nuevos al cliente (§4ok-100, §4ok-109): ni filas del sistema ni borradores, nada a Eduardo, ROHO ni internos. */
+function waNoClienteBase_(p) {
+  var id = String((p && p.id) || '');
+  if (!p || !id || id.indexOf('__') === 0 || String(p.estado || '') === BORRADOR_EST) return { m:'no es una venta', anotar:false };
+  var v = waNorm_(p.vendedor);
+  if (v.indexOf('eduardo') >= 0) return { m:'cliente de Eduardo', anotar:false };
+  if (v.indexOf('roho') >= 0) return { m:'pedido de ROHO', anotar:false };
+  if (waEsInterno_(p.vendedor)) return { m:'pedido interno', anotar:false };
+  if (!waCel_(p.celular)) return { m:'no tiene un celular de WhatsApp anotado («' + String(p.celular || '').slice(0, 30) + '»)', anotar:true };
+  return null;
+}
+function waNoClientePago_(p) {
+  if (p && /^(ATC|RPT)\b/i.test(String(p.oc || '').trim())) return { m:'ATC o RPT', anotar:false };
+  if (p && (waNorm_(p.direccion).indexOf('salio de tienda') === 0 || waNorm_(p.zona) === 'tienda')) return { m:'venta de tienda', anotar:false };
+  return waNoClienteBase_(p);
+}
+function waMetodo_(m) { m = waNorm_(m); if (m.indexOf('efec') === 0) return 'Efectivo'; if (m === 'qr') return 'QR'; if (m.indexOf('tarj') === 0) return 'Tarjeta'; return ''; }
+function waMonto_(t) {
+  t = String(t || '').trim();
+  t = /^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t) ? t.replace(/\./g, '').replace(',', '.') : t.replace(',', '.');
+  var n = Number(t); return isFinite(n) ? Math.round(n * 100) / 100 : 0;
+}
+/** Los cobros de la venta (`parseCobros` de la página, sin el anticipo «~» ni los recargos «^»), en orden: [{met, banco, monto, fecha}]. */
+function waCobros_(mp) {
+  var out = [];
+  String(mp || '').replace(/\s*·\s*REGISTRADO\s*$/i, '').split('+').forEach(function (s) {
+    var t = s.trim(); if (!t || t.charAt(0) === '~' || t.charAt(0) === '^') return;
+    var m = t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#%]*))?((?:\s*%\s*[A-Za-z0-9_-]+)*)\s*$/);
+    if (!m) return;
+    var met = waMetodo_(m[1]); if (!met) return;
+    var n = waMonto_(m[3]); if (!(n > 0)) return;
+    out.push({ met:met, banco:met === 'Efectivo' ? '' : String(m[2] || '').trim(), monto:n, fecha:m[4] || '' });
+  });
+  return out;
+}
+function waMetodoTxt_(c) { return c.met === 'Efectivo' ? 'en efectivo' : (c.met === 'Tarjeta' ? 'con tarjeta' : 'por QR') + (c.banco ? ' ' + c.banco : ''); }
+function waSaldoPago_(p) {
+  var falta = p.pagado ? 0 : (Number(p.saldo) || 0), flete = waFletePendiente_(p.metodoPago);
+  if (falta <= 0.005) return 'Tu pedido quedó pagado 🎉' + (flete > 0.005 ? ' Solo falta el recargo por entrega (' + waBs_(flete) + '), al recibir.' : '');
+  return 'Tu saldo es ' + waBs_(falta) + (flete > 0.005 ? ' + ' + waBs_(flete) + ' del recargo por entrega' : '') + '.';
+}
+function waPagosLeer_() {
+  var o = waJsonProp_('WA_PAGOS', {}); if (!o || typeof o !== 'object') o = {};
+  var lim = Date.now() - WA_PAGOS_DIAS * 86400000; for (var k in o) if (!(Number(o[k]) > lim)) delete o[k];
+  return o;
+}
+function waPagosAnotar_(k) {
+  var o = waPagosLeer_(); o[k] = Date.now();
+  var ks = Object.keys(o); if (ks.length > WA_PAGOS_TOPE) ks.sort(function (a, b) { return o[a] - o[b]; }).slice(0, ks.length - WA_PAGOS_TOPE).forEach(function (x) { delete o[x]; });
+  try { PropertiesService.getScriptProperties().setProperty('WA_PAGOS', JSON.stringify(o)); } catch (e) {}
+}
+function waPagoColaLeer_() { var c = waJsonProp_('WA_PAGO_COLA', []); return Array.isArray(c) ? c : []; }
+function waPagoColaGuardar_(c) {
+  if (c.length > WA_PAGO_COLA_TOPE) c = c.slice(c.length - WA_PAGO_COLA_TOPE);
+  try { PropertiesService.getScriptProperties().setProperty('WA_PAGO_COLA', JSON.stringify(c)); } catch (e) {}
+}
+/** Lo llama `waAlGuardar_` (adentro del candado, sin red): anota los cobros nuevos de este guardado. Nunca frena un guardado. */
+function waPagoAlGuardar_(viejo, rec) {
+  if (!viejo) return;                                        // un pedido nuevo: la confirmación ya dice el saldo
+  var no = waNoClientePago_(rec); if (no && !no.anotar) return;   // a Eduardo, ROHO, internos, ATC…: ni se anota (sin celular sí: queda en la hoja)
+  var antes = waCobros_(viejo[HEADERS.indexOf('Método pago')]), ahora = waCobros_(rec.metodoPago);
+  if (ahora.length <= antes.length) return;                  // una corrección o un borrado: no es un pago nuevo
+  /* Una venta que ya estaba «PAGADA» sin monto anotado («Efectivo %IMG»): anotarle el monto no es plata nueva (`aplicarCobros`, §4fg). */
+  if (!antes.length && String(viejo[HEADERS.indexOf('Pagado')]).toUpperCase().charAt(0) === 'S') return;
+  var id = String(rec.id), lim = waMasDias_(waBo_(Date.now()).hoy, -WA_PAGO_DIAS), ya = waPagosLeer_(), cola = waPagoColaLeer_(), cambio = false;
+  for (var i = antes.length; i < ahora.length; i++) {
+    var c = ahora[i];
+    if (c.fecha && c.fecha < lim) continue;                  // anotado tarde: no se avisa
+    if (ya[id + '|' + i + '|' + c.monto] || cola.some(function (e) { return e.id === id && e.i === i; })) continue;
+    cola.push({ id:id, i:i, ms:Date.now() }); cambio = true;
+  }
+  if (!cambio) return;
+  waPagoColaGuardar_(cola);
+  waDespertar_();
 }
 
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
@@ -3496,7 +3592,7 @@ function waArmar_(m, recs, cfg, B) {
   if (m.id) { p = recs[m.id] || null; if (!p) return { saltar:'el pedido ya no está (lo borraron)', anotar:true }; }
   var out = { plantilla:T.plantilla, p:p };
   if (T.cli) {
-    var no = waNoCliente_(p, B.hoy); if (no) return { saltar:no.m, anotar:no.anotar, p:p };
+    var no = (T.no === 'pago' ? waNoClientePago_ : T.no === 'atc' ? waNoClienteAtc_ : waNoCliente_)(p, B.hoy); if (no) return { saltar:no.m, anotar:no.anotar, p:p };
     out.para = String(p.cliente || 'cliente'); out.numero = waCel_(p.celular);
   } else {
     /* 🏭 (2026-10-27-a) «pedir hoy» va a los de WA_PEDIR_HOY; 📥✅ (2026-10-29-a) el Excel y el cierre, a los de WA_AVISOS (o WA_PEDIR_HOY). */
@@ -3514,7 +3610,15 @@ function waArmar_(m, recs, cfg, B) {
   if (m.k === 'rec' && String(p.fecha) !== m.dia) return { saltar:'cambió de día', anotar:false, p:p };
   if (m.k === 'enc' && (String(p.fecha) !== B.hoy || waTurno_(p) !== 'AM')) return { saltar:'ya no va hoy por la mañana', anotar:false, p:p };   // (2026-10-14-a)
   var N = waParam_, marca = p ? waMarca_(p.vendedor) : '';
-  if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
+  if (m.k === 'pago') {
+    /* 💵 §4ok-100 El cobro de AHORA en ese lugar: si lo corrigieron en los 2 minutos de espera, sale con lo corregido; si lo borraron, no sale. */
+    var cP = waCobros_(p.metodoPago)[m.i];
+    if (!cP) return { saltar:'ese pago ya no está (lo borraron o lo corrigieron)', anotar:true, p:p };
+    var kP = String(m.id) + '|' + m.i + '|' + cP.monto;
+    if (waPagosLeer_()[kP]) return { saltar:'ese pago ya se le avisó', anotar:false, p:p };
+    out.pagoK = kP;
+    out.params = [waNombre_(p.cliente), marca, waBs_(cP.monto), waMetodoTxt_(cP), waOc_(p.oc), waSaldoPago_(p), waContactoVend_(p.vendedor)];
+  } else if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'camb' || m.k === 'enc') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'rec') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), p.fecha === waMasDias_(B.hoy, 1) ? 'Mañana' : 'El ' + waDiaTxt_(p.fecha).split(' ')[0],
                                         waProds_(p), waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
@@ -3636,6 +3740,10 @@ function waRepasoBot_() {
       }
     });
     waColaGuardar_(quedan);
+    /* 💵 §4ok-100 Los pagos nuevos, también después de WA_ESPERA_MS (una corrección enseguida sale con lo corregido). */
+    var pc = waPagoColaLeer_(), pcQueda = [];
+    pc.forEach(function (e) { if (t0 - (Number(e.ms) || 0) < WA_ESPERA_MS) pcQueda.push(e); else msgs.push({ id:e.id, k:'pago', a:'cliente', i:e.i, n:0 }); });
+    if (pc.length !== pcQueda.length) waPagoColaGuardar_(pcQueda);
     var sal = waSalidaLeer_(), salQueda = [];
     sal.forEach(function (m) { if (t0 >= (Number(m.prox) || 0)) msgs.push(m); else salQueda.push(m); });
     waSalidaGuardar_(salQueda);
@@ -3713,6 +3821,7 @@ function waRepasoBot_() {
       res.enviados++;
       if (m.k === 'rec') recHechos.push(m.id);
       if (m.k === 'conf') confHoy.ids.push(m.id);
+      if (a.pagoK) waPagosAnotar_(a.pagoK);   // 💵 §4ok-100 una vez por pago
       filas.push(base.concat([a.para, a.numero, a.plantilla, '✅ enviado', r.id || '']));
     } else if (r.fatal) {
       parar = r.detalle; res.errores++; reint.push(m);
@@ -4539,6 +4648,10 @@ var WA_PLANTILLAS = [
   { n:'logistica_cierre_falta',
     t:'🤖 ✅ *Falta el cierre de entregas de hoy* ({{1}})\n\nQuedan *{{2}}* sin marcar: {{3}}\n\n👉 En el panel: Administración → ✅ Cierre de entregas. Tildá lo entregado y reprogramá lo que no salió.',
     e:['jueves 29/10', '3 pedidos', 'OC 10-301 (JUAN PEREZ) · OC 10-305 (ANA ROJAS) · ATC 10-012 (LUIS VACA)'] },
+  /* 💵 §4ok-100 (2026-11-05-a) Mismos datos y orden que la rama `pago` de `waArmar_`. Sin respaldo: no hay una de antes. */
+  { n:'pago_recibido',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n💵 Recibimos tu pago de *{{3}}* {{4}} para tu pedido *{{5}}* ✅\n{{6}}\n\n💬 ¿Alguna consulta? Escribile a {{7}}\n\n¡Gracias! 🙌',
+    e:['Juan', 'Heaven Colchones', 'Bs 500', 'por QR BNB', 'OC 10-412', 'Tu saldo es Bs 1.200.', 'Carola 👉 https://wa.me/59170000000'] },
   { n:'pedido_en_camino',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'martes 14/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] }

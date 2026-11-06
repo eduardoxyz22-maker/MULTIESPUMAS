@@ -185,5 +185,83 @@ console.log('\n── 97. 08:45: lo de HOY sin camión + productos sin revisar o
   chk('un reintento del día anterior no sale («era del miércoles 04/11»)', !!a.saltar && /miércoles 04\/11/.test(a.saltar), a);
 }
 
+// ══ 100. pago_recibido ══════════════════════════════════════════════════════════════════════
+console.log('\n── 100. Un cobro NUEVO le avisa al cliente cuánto recibimos y cuánto le queda; una vez por pago ──');
+{
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  /* Una venta de ayer, entregada hoy: 3.200, a cuenta 2.000 → saldo 1.200 (la confirmación ya salió ayer: se carga directo). */
+  const v = ped({ id: 'pg1', oc: '11-050', fecha: '2026-11-05', entregado: true, saldo: 1200, metodoPago: '~Efectivo 2000 @2026-11-04 #640' });
+  S.cargar([v]);
+  /* Contabilidad registra un QR de 700 (aplicarCobros: el renglón va al final, sin tocar el anticipo). */
+  let p = S.leer('pg1'); p.metodoPago = '~Efectivo 2000 @2026-11-04 #640 + QR BNB 700 @2026-11-05 #1001 %IMG1'; p.saldo = 500;
+  S.guardar(p);
+  const cola = JSON.parse(S.P.WA_PAGO_COLA || '[]');
+  chk('guardar el cobro nuevo lo anota (renglón 0 de los cobros) y deja el disparador de una vez', cola.length === 1 && cola[0].id === 'pg1' && cola[0].i === 0 && S.triggers.some(t => t.fn === 'waDespierta'), cola);
+  chk('…el anticipo («~») no es un cobro nuevo, y la venta ya entregada igual cuenta', S.ctx.waCobros_(p.metodoPago).length === 1);
+  pasar(1); S.repaso();
+  chk('antes de los 2 minutos no sale', S.salen('pago_recibido').length === 0);
+  pasar(2); S.repaso();
+  let s = S.salen('pago_recibido');
+  chk('a los 3 minutos: pago_recibido al cliente', s.length === 1 && s[0].to === '59170111222', S.salen());
+  chk('…«Juan · Heaven Colchones · Bs 700 · por QR BNB · OC 11-050 · Tu saldo es Bs 500. · el contacto»', s[0] && JSON.stringify(s[0].p) ===
+      JSON.stringify(['Juan', 'Heaven Colchones', 'Bs 700', 'por QR BNB', 'OC 11-050', 'Tu saldo es Bs 500.', 'tu vendedora por el WhatsApp de siempre']), s[0] && s[0].p);
+  chk('la hoja lo anota como «Pago recibido» y WA_PAGOS guarda pedido|renglón|monto', S.hoja().some(f => f[3] === 'Pago recibido' && f[7] === '✅ enviado') && !!JSON.parse(S.P.WA_PAGOS)['pg1|0|700'], S.P.WA_PAGOS);
+  S.limpiar();
+  /* Corregir ese pago (mismo número de renglones: el monto) no manda nada. */
+  p = S.leer('pg1'); p.metodoPago = '~Efectivo 2000 @2026-11-04 #640 + QR BNB 750 @2026-11-05 #1001 %IMG1'; p.saldo = 450; S.guardar(p);
+  pasar(3); S.repaso();
+  chk('corregir el monto de un pago ya avisado: nada', S.salen('pago_recibido').length === 0 && !JSON.parse(S.P.WA_PAGO_COLA).length);
+  /* El segundo pago, en efectivo, cierra la venta. */
+  p = S.leer('pg1'); p.metodoPago += ' + Efectivo 450 @2026-11-05 #1002'; p.saldo = 0; p.pagado = true; S.guardar(p);
+  pasar(3); S.repaso();
+  s = S.salen('pago_recibido');
+  chk('otro pago: «Bs 450 · en efectivo · Tu pedido quedó pagado 🎉»', s.length === 1 && s[0].p[2] === 'Bs 450' && s[0].p[3] === 'en efectivo' && s[0].p[5] === 'Tu pedido quedó pagado 🎉', s.map(x => x.p));
+  S.limpiar();
+  /* Un pago que se guarda dos veces (la cola del celular lo reenvía) no se avisa dos veces. */
+  p = S.leer('pg1'); S.guardar(p); pasar(3); S.repaso();
+  chk('volver a guardar lo mismo: nada', S.salen('pago_recibido').length === 0);
+}
+{
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  const base = (o) => ped(Object.assign({ fecha: '2026-11-06', saldo: 1200, metodoPago: '~Efectivo 2000 @2026-11-04' }, o));
+  S.cargar([
+    base({ id: 'x1', vendedor: 'Eduardo Añez' }), base({ id: 'x2', vendedor: 'ROHO' }), base({ id: 'x3', vendedor: 'ALBA' }),
+    base({ id: 'x4', oc: 'ATC 11-002' }), base({ id: 'x5', oc: 'RPT 11-003' }), base({ id: 'x6', direccion: 'SALIÓ DE TIENDA · Central', fecha: '' }),
+    base({ id: 'x7', celular: '3345566' }), base({ id: 'x8' }), base({ id: 'x9', metodoPago: 'Efectivo %IMGX', pagado: true, saldo: 0 }),
+    base({ id: 'x10', fecha: '' })
+  ]);
+  const cobra = (id, txt) => { const q = S.leer(id); q.metodoPago = q.metodoPago + ' + ' + txt; q.saldo = 500; S.guardar(q); };
+  ['x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x10'].forEach(id => cobra(id, 'Efectivo 700 @2026-11-05'));
+  cobra('x8', 'QR 700 @2026-10-20');   // anotado tarde: el pago es de hace más de 3 días
+  { const q = S.leer('x9'); q.metodoPago = 'Efectivo 3200 @2026-11-05 %IMGX'; S.guardar(q); }   // le anotaron el monto a la «PAGADA sin monto»
+  pasar(3); S.repaso();
+  const s = S.salen('pago_recibido');
+  chk('a quién no: Eduardo, ROHO, internos (ALBA), ATC, RPT, venta de tienda; solo la de sin fecha («avisa cuándo») sí',
+      s.length === 1 && s[0].to === '59170111222' && JSON.parse(S.P.WA_PAGOS || '{}')['x10|0|700'], s.map(x => x.to));
+  chk('…sin celular de WhatsApp queda anotado en la hoja', S.hoja().some(f => f[1] === 'x7' && f[3] === 'Pago recibido' && /celular/.test(f[8])), S.hoja().map(f => f[1] + ':' + f[8]));
+  chk('…un pago anotado tarde (fecha de hace más de 3 días) y el monto anotado a una «PAGADA sin monto» no se avisan',
+      !S.hoja().some(f => f[1] === 'x8' || f[1] === 'x9'));
+  chk('WA_INTERNOS = CONTA_INTERNOS de la página', (() => {
+    const html = fs.readFileSync(path.resolve('pedidos.html'), 'utf8'), m = html.match(/var CONTA_INTERNOS=(\[[^\]]*\]);/);
+    return !!m && JSON.stringify(vm.runInNewContext(m[1]).slice().sort()) === JSON.stringify(S.ctx.WA_INTERNOS.slice().sort()); })());
+}
+{
+  /* Un pago corregido en los 2 minutos de espera sale con lo corregido; uno borrado, no sale. */
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  S.cargar([ped({ id: 'c1', saldo: 1200, metodoPago: '~Efectivo 2000 @2026-11-04' }), ped({ id: 'c2', saldo: 1200, metodoPago: '~Efectivo 2000 @2026-11-04' })]);
+  let q = S.leer('c1'); q.metodoPago += ' + Tarjeta 600 @2026-11-05'; q.saldo = 600; S.guardar(q);
+  pasar(1); q = S.leer('c1'); q.metodoPago = q.metodoPago.replace('Tarjeta 600', 'Tarjeta 1200'); q.saldo = 0; q.pagado = true; S.guardar(q);
+  let r = S.leer('c2'); r.metodoPago += ' + Efectivo 300 @2026-11-05'; r.saldo = 900; S.guardar(r);
+  pasar(1); r = S.leer('c2'); r.metodoPago = '~Efectivo 2000 @2026-11-04'; r.saldo = 1200; S.guardar(r);
+  pasar(2); S.repaso();
+  const s = S.salen('pago_recibido');
+  chk('corregido en la espera: sale UNO, con «Bs 1.200 · con tarjeta · quedó pagado»', s.length === 1 && s[0].p[2] === 'Bs 1.200' && s[0].p[3] === 'con tarjeta' && /pagado/.test(s[0].p[5]), s.map(x => x.p));
+  chk('borrado en la espera: no sale y la hoja dice por qué', S.hoja().some(f => f[1] === 'c2' && /ya no está/.test(f[8])), S.hoja().map(f => f[1] + ':' + f[8]));
+  chk('el recargo por entrega pactado se dice aparte', S.ctx.waSaldoPago_({ pagado: true, saldo: 0, metodoPago: '~Efectivo 100 + ^150' }) === 'Tu pedido quedó pagado 🎉 Solo falta el recargo por entrega (Bs 150), al recibir.');
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;
