@@ -128,8 +128,8 @@ const ERRS=[];
   chk('PC3a Mia Plaza (sin venta de tienda) aparece entre las que no reciben nada para su local', !!mia, r);
   chk('PC3b dice el porqué (su local no vendió nada que se fabrique) y lo de sus clientes («sus clientes: N, salen de PTF o Banzer»)',
     mia && /no vendió nada que se fabrique/.test(mia.porque) && /sus clientes: \d+, salen de PTF o Banzer/.test(mia.clientes) && mia.cli>0, mia);
-  chk('PC3c están las siete tiendas: las que reciben algo + las de 0 (Charcas recibe; Tiendas Roho, Central… en 0)',
-    r.ceros && r.ceros.length+r.tiendas.length===7 && r.tiendas.some(function(t){ return /^Charcas /.test(t); }), r);
+  chk('PC3c están las nueve tiendas (desde el 02/11 con la Tienda Banzer y Ventura Mall): las que reciben algo + las de 0 (Charcas recibe; Tiendas Roho, Central… en 0)',
+    r.ceros && r.ceros.length+r.tiendas.length===9 && r.tiendas.some(function(t){ return /^Charcas /.test(t); }), r);
   chk('PC3d la que más clientes tiene, primero (Mia Plaza antes que las que no tienen)', r.ceros && r.ceros[0] && r.ceros[0].nom==='Mia Plaza', r.ceros && r.ceros.map(function(z){ return z.nom+':'+z.cli; }));
 
   // ═══ PC4. La pantalla ═══
