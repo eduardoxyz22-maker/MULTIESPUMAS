@@ -15893,6 +15893,15 @@ function submitPedido(){
     var _fmp=document.getElementById('f-maps'); if(_fmp){ _fmp.focus(); _fmp.scrollIntoView({block:'center'}); }
     return;
   }
+  /* §4ok-E5: un pin fuera de Santa Cruz (Kansas o a más de KM_SOSPECHOSO de PTF) frena; solo si la ubicación se escribió o cambió */
+  if(!VENTA_TIENDA && _maps && !(prev && _mapsTxt===String(prev.maps||'').trim())){
+    var _fuera=ubicFueraDeSantaCruz(fxMapaCoords(_maps));   // (un enlace corto que el mapita ya abrió también se mira)
+    if(_fuera){
+      markErr('f-maps'); toast(ubicFueraTxt(_fuera),'err',9000);
+      var _fmp2=document.getElementById('f-maps'); if(_fmp2){ _fmp2.focus(); _fmp2.scrollIntoView({block:'center'}); }
+      return;
+    }
+  }
 
   /* ⚠️ EDITAR NO LE PUEDE BORRAR EL TRABAJO A LOGÍSTICA.
      `getProductos()` arma la lista DE CERO con lo que hay en el formulario, así que hasta
@@ -18956,6 +18965,7 @@ function fxDerPintar(){
   var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
   if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
+  if(!tienda && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
   if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
     var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
@@ -19317,6 +19327,9 @@ function fxMapaPintar(){
                                             : '<div class="fx-mt">⚠️ No reconozco esta ubicación: revisá el link (tiene que ser de Google Maps, coordenadas o un código como 5P2Q+PFX).</div>';
     return;
   }
+  /* §4ok-E5: fuera de Santa Cruz se dice acá mismo, antes de Guardar (que lo frena) */
+  var _fuera=ubicFueraDeSantaCruz(c);
+  if(_fuera){ el.hidden=false; el.className='fx-mapa mal'; el._u=u; el.innerHTML='<div class="fx-mt">⚠️ '+esc(ubicFueraTxt(_fuera).replace(/^📍 /,''))+'</div>'; return; }
   if(el._u===u && el.querySelector('.fx-mm')) return;
   el._u=u; el.hidden=false; el.className='fx-mapa';
   var ptf=ALM_UBIC[0], km=fxMapaKm(ptf, c), lado=null; try{ lado=almLadoDeLinea(c); }catch(e){}
@@ -19469,7 +19482,7 @@ function fxPasosEstado(){
     !!val('f-vendedor') && !!val(tipo==='RPT'?'f-rpt-suc':'f-cliente') && (lite || tipo==='RPT' || !!val('f-celular')) &&
       (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
     prods,
-    tienda || (!!val('f-fecha') && !!val('f-zona')),
+    tienda || (!!val('f-fecha') && !!val('f-zona') && !fxUbicMal()),   // §4ok-E5: la ubicación que Guardar frena (no se entiende o fuera de Santa Cruz)
     tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))
   ];
 }
@@ -27800,6 +27813,8 @@ function editarUbicacion(id, reopen, deVendedora){
   if(nuevo==null) return;
   var norm=normalizaUbicacion(nuevo);
   if(norm===null){ toast('No se entiende: pegá el enlace, las coordenadas (-17.749444, -63.104556) o el código (5P2Q+PFX)','err'); return; }
+  var _fuera=norm ? ubicFueraDeSantaCruz(coordsDeLink(norm)) : '';   // §4ok-E5
+  if(_fuera){ toast(ubicFueraTxt(_fuera),'err',9000); return; }
   guardarUbicacion(p, norm, reopen, deVendedora);
 }
 function esLinkCorto(u){ return /goo\.gl|maps\.app|bit\.ly|tinyurl/i.test(String(u||'')); }
@@ -27828,6 +27843,8 @@ function guardarUbicacion(p, norm, reopen, deVendedora){
     toast('Es un enlace corto: averiguando a dónde apunta…','ok');
     apiGeocode([norm]).then(function(res){
       var g=(res && res.ok && Array.isArray(res.geo)) ? res.geo[0] : null;
+      var _fu=(g && g.lat!=null && g.lng!=null) ? ubicFueraDeSantaCruz(g) : '';   // §4ok-E5: el enlace corto apunta fuera (Kansas = vacío)
+      if(_fu){ toast(ubicFueraTxt(_fu)+' No la guardé.','err',9000); return; }
       if(g && g.lat!=null && g.lng!=null){
         p.maps='https://www.google.com/maps?q='+g.lat+','+g.lng;
         MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:!!g.aprox}; geoCacheSave();
@@ -44484,6 +44501,32 @@ function kmDeSantaCruz(lat,lng){
   return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
 }
 var KM_SOSPECHOSO=60;   // toda la mancha urbana + Cotoca, Porongo, La Guardia, Warnes entran holgados
+/* §4ok-E5 (05/11) UN PIN FUERA DE SANTA CRUZ NO SE GUARDA. Hasta el 13/10 hubo 8 pedidos con el pin en Kansas, EE.UU.
+   (37.0625,-95.677068: la «ubicación vacía» que da Google cuando el enlace no tiene ningún lugar) y el formulario no decía nada:
+   `KM_SOSPECHOSO` solo se miraba en 📍 Revisar ubicaciones, cuando el camión ya iba a salir. Ahora el formulario (y 📍 Editar ubicación)
+   frena el pin a más de `KM_SOSPECHOSO` de PTF (`ALM_UBIC`) o el de Kansas, con «pegá otra o dejala vacía».
+   ⚠️ Solo lo que se escribe o se cambia: un pedido que se edita sin tocar la ubicación se guarda como estaba (aunque esté lejos), y uno
+   que no se toca no se mira. Un enlace corto (maps.app.goo.gl) no se puede leer acá: ese lo sigue avisando Revisar ubicaciones.
+   Devuelve '' si está bien, o el porqué (para el aviso). */
+function ubicFueraDeSantaCruz(c){
+  if(!c || c.lat==null || c.lng==null || !isFinite(+c.lat) || !isFinite(+c.lng)) return '';
+  var la=+c.lat, ln=+c.lng;
+  if(Math.abs(la-37.0625)<0.01 && Math.abs(ln+95.677068)<0.01) return 'es la «ubicación vacía» de Google, en Estados Unidos';
+  var P=almUbic('ptf'), km=(P && almNumOk(P.lat) && almNumOk(P.lng)) ? fxMapaKm(P, { lat:la, lng:ln }) : kmDeSantaCruz(la, ln);
+  return km>KM_SOSPECHOSO ? ('queda a '+Math.round(km).toLocaleString('es-BO')+' km de PTF') : '';
+}
+function ubicFueraTxt(porque){ return '📍 Esa ubicación no es de Santa Cruz ('+porque+'): pegá otra o dejala vacía.'; }
+/* Lo mismo que mira Guardar, para «Para guardar» y la barra de pasos: '' si la ubicación del formulario está bien (o no se tocó), si no
+   'nose' (no se entiende) o el porqué de que está fuera. Un enlace corto ya abierto por el mapita (`MAPA_COORDS`) también se mira. */
+function fxUbicMal(){
+  if(VENTA_TIENDA) return '';
+  var el=document.getElementById('f-maps'), t=String((el||{}).value||'').trim(); if(!t) return '';
+  var prev=EDIT_ID ? findById(EDIT_ID) : null;
+  if(prev && t===String(prev.maps||'').trim()) return '';
+  var n=normalizaUbicacion(t); if(n===null) return 'nose';
+  var c=null; try{ c=fxMapaCoords(n)||fxMapaCoords(t); }catch(e){}
+  return ubicFueraDeSantaCruz(c);
+}
 
 /* ============================================================================
    📍 UBICAR POR LA DIRECCIÓN ESCRITA (§4dh)
