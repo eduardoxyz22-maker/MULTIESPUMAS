@@ -17357,6 +17357,20 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4om — 🚚 LOS CHOFERES DEL 06/11 Y QUE ROTAN (06/11 a la noche; PUBLICADO, versión 2026-11-06-d)
+El dueño mandó: *«Carry Omar-Ysrael · Fotón nuevo Fernando- Luis Pierre · Fotón encarpado Cristhian-Diego · Fotón insumo Miguel Melgar — Es rotativo
+sí, por si falta actualizar la lista de choferes»*. Antes: Carry Luis Pierre/Ysrael, Foton nuevo Luis Eyzaguirre, Foton encarpado Cristhian/Miguel,
+Foton insumo Fernando. En la planilla (06/11): Luis Pierre 160 pedidos, Luis Eyzaguirre 105 (último el 07/11), Cristhian 80, Ysrael 2, Fernando 2;
+desde el 15/10 casi todo va con el primero de cada camión (el que se pone solo). Cobros con «>Miguel»: 1.
+- `VEHICULOS` nuevo; el primero de cada camión es el que se pone solo (Carry → Omar, Foton nuevo → Fernando, encarpado → Cristhian, insumo → Miguel
+  Melgar). Luis Eyzaguirre sale de la lista (se le dijo al dueño); sus pedidos lo conservan.
+- «Es rotativo» → `setChofer` y `asignarChoferMapa` ya no cambian el camión de un pedido que lo tiene (`choferCamionSiFalta`). Antes, elegir a
+  Fernando en un pedido del Carry lo pasaba al Foton nuevo.
+- La fábrica de Eduardo nombra al chofer de los pedidos de cada camión (`choferDeCamion`), no al primero de la lista.
+- «Miguel Melgar» con apellido, como lo escribió el dueño: el único cobro viejo con «>Miguel» queda con ese nombre (dos nombres en el Cuadre si
+  vuelve a aparecer).
+- Pruebas: `test_choferes_rotan` (12; 9 rojas contra `b2ef22b`) y nueve suites que nombraban la lista vieja, cambiadas a conciencia.
+
 ### §4ol — 🧾💵🚚 FACTURA O REMISIÓN, EL EFECTIVO SIN RETIRAR Y LOS RECARGOS POR VENDEDOR (06/11; dueño: *«vamos con lo demás · factura/nota remisión. obligatorio · avisar retiros de efectivo pendientes o sin cargar luego de 48 horas (aplica desde noviembre) y que llegue a mi telf · una planilla aparte de "cobro por entrega" pero por cada vendedor»*; PÁGINA PUBLICADA 06/11, `51b4896`, versión 2026-11-06-c; servidor `2026-11-06-e` lo implementa el dueño)
 Se le preguntó qué era cada cosa. Contestó: el efectivo «dos veces, 9:00 y 18:00»; el cobro por entrega = «el recargo por entrega»; la factura y
 a quién, «sin preferencia» → quedó lo propuesto.

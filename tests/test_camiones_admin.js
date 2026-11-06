@@ -235,7 +235,7 @@ const ARCH = 'file://' + (process.env.PEDIDOS||require('path').resolve('pedidos.
   chk('§4ie: en «Sin vehículo» cada pedido trae su selector de camión (los cuatro de VEHICULOS)',
     /ASIGNAR CAMIÓN/.test(r.txt) && /CLIENTE D/.test(r.txt) && ['Carry','Foton nuevo','Foton encarpado','Foton insumo'].every(function(v){ return r.opciones.indexOf(v)>=0; }), J({txt:r.txt.slice(0,200), op:r.opciones}));
   chk('§4ie: elegir el camión lo guarda en el pedido (vehículo y chofer, como la columna de la tabla) y pasa a ese camión',
-    r.veh==='Carry' && r.chofer==='Luis Pierre' && r.guardado && !r.sinQueda && r.carry===1, J(r));
+    r.veh==='Carry' && r.chofer==='Omar' && r.guardado && !r.sinQueda && r.carry===1, J(r));
 
   // ══ 8. Plegar, celular, errores ══
   console.log('\n── 8. Dos botones separados (§4ib); celular; errores ──');

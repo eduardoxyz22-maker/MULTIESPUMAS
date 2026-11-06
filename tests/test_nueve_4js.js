@@ -313,7 +313,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var quedan=nxSugSin(proximoDiaEntrega()).length;
     return { v:p.vehiculo, ch:p.chofer, srv:srv.vehiculo, quedan:quedan, txt:document.getElementById('nx-sug').innerText };
   });
-  chk('«Aceptar» pone el camión y su primer chofer, y se guarda', r.v==='Carry' && r.ch==='Luis Pierre' && r.srv==='Carry', r);
+  chk('«Aceptar» pone el camión y su primer chofer, y se guarda', r.v==='Carry' && r.ch==='Omar' && r.srv==='Carry', r);
   chk('«Aceptar todas» deja a todos con camión', r.quedan===0, r.quedan);
 
   console.log('\n── A3 · aviso de las 15:00 ──');

@@ -262,7 +262,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     todos:allChoferes(), sel:choferSelect(findById('v6')), sel2:choferSelect({id:'nuevo', vehiculo:'Foton nuevo', chofer:''}),
     conocidos:choferesConocidos(), esCh:[esChoferNombre('Giordano'), esChoferNombre('Carola Chavez'), esChoferNombre('luis pierre')]
   }));
-  chk('⚠️ Giordano ya no está en los camiones (Foton nuevo queda con Luis Eyzaguirre)', r.todos.indexOf('Giordano')<0 && r.todos.indexOf('Luis Eyzaguirre')>=0 && r.todos.length===6, r.todos.join(', '));
+  chk('⚠️ Giordano ya no está en los camiones (06/11, lista nueva: Foton nuevo con Fernando y Luis Pierre; 7 choferes)', r.todos.indexOf('Giordano')<0 && r.todos.indexOf('Luis Eyzaguirre')<0 && r.todos.indexOf('Luis Pierre')>=0 && r.todos.length===7, r.todos.join(', '));
   chk('…pero el pedido viejo que lo tiene lo sigue mostrando, y uno nuevo no lo ofrece', /<option selected>Giordano<\/option>/.test(r.sel) && !/Giordano/.test(r.sel2), '');
   chk('el panel lo sigue conociendo como chofer (por el pedido viejo), y a Carola no', r.conocidos.indexOf('Giordano')>=0 && r.esCh[0]===true && r.esCh[1]===false && r.esCh[2]===true, r.conocidos.join(', '));
 

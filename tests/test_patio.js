@@ -88,7 +88,7 @@ async function preparar(page){
   chk('Foton nuevo: lo ✔ hay espera en PTF, lo de Moreno se trae, la RPT también', J(r.fnL)===J(['ESPECIAL:moreno:3','PILLOW:espera:1','TITANIO:espera:2']), r.fnL);
   chk('Foton encarpado: lo ✔ Banzer espera en Banzer, lo ✗ no hay queda sin stock', J(r.feL)===J(['MEMORY:falta:fab','ORO:espera:otro']), r.feL);
   chk('el camión que solo carga en Banzer espera en Banzer; el otro en PTF', r.caAlm==='bz' && r.fnAlm==='ptf', [r.caAlm, r.fnAlm]);
-  chk('la placa y el chofer del camión', r.placa==='6663-CCP' && r.chofer==='Luis Eyzaguirre', [r.placa, r.chofer]);
+  chk('la placa y el chofer del camión', r.placa==='6663-CCP' && r.chofer==='Fernando', [r.placa, r.chofer]);
   chk('la RPT va a SU tienda (Heaven Mia Plaza, en su lugar)', /RPT 10-001 · Heaven Mia Plaza/.test(r.rptN) && J(r.rptPt)===J(r.mpPt), [r.rptN, r.rptPt, r.mpPt]);
   chk('el pin del cliente cae en una calle de la ciudad', !!r.aPt && r.aPt.z%70===0 && r.aPt.x>-280 && r.aPt.x<420, r.aPt);
   chk('un pedido sin camión', r.sin===1, r.sin);

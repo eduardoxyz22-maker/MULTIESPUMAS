@@ -44591,12 +44591,22 @@ function toggleVerificado(id){
 }
 
 /* ---- Vehículo + chofer (despacho) ---- */
+/* (06/11/2026, dueño, con la lista: «Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado Cristhian-Diego · Fotón
+   insumo Miguel Melgar… es rotativo») El PRIMERO de cada camión es el que se pone solo al elegir el camión. Como rotan, elegir otro chofer
+   ya NO cambia el camión de un pedido que tiene camión (`setChofer`). Luis Eyzaguirre no está en la lista nueva y Giordano salió el
+   18/09 (§4eq): sus pedidos y su efectivo los conservan (`choferesParaSelect`, `choferesConocidos`). */
 var VEHICULOS = {
-  'Carry':           ['Luis Pierre','Ysrael'],
-  'Foton nuevo':     ['Luis Eyzaguirre'],            // Giordano ya no está en el equipo (sacado el 18/09/2026 a pedido del dueño, §4eq)
-  'Foton encarpado': ['Cristhian','Miguel'],
-  'Foton insumo':    ['Fernando']
+  'Carry':           ['Omar','Ysrael'],
+  'Foton nuevo':     ['Fernando','Luis Pierre'],
+  'Foton encarpado': ['Cristhian','Diego'],
+  'Foton insumo':    ['Miguel Melgar']
 };
+/* (06/11, «es rotativo») El chofer que va en un camión: el que más aparece en esos pedidos; si ninguno lo dice, el primero de la lista. */
+function choferDeCamion(v, peds){
+  var C={}, best='', bn=0;
+  (peds||[]).forEach(function(p){ if(!p || vehiculoDe(p)!==v) return; var c=String(p.chofer||'').trim(); if(!c) return; C[c]=(C[c]||0)+1; if(C[c]>bn){ bn=C[c]; best=c; } });
+  return best || ((VEHICULOS[v]||[])[0]||'');
+}
 /* 🛰️ (12/10, dueño) La placa de cada camión en el GPS de Monnet (i-monnet 5.0). Todavía no se usa: es para cuando el panel sepa
    solo cuándo sale y vuelve cada camión (API de Monnet o alertas de geocerca por correo). PTF = donde paran KSC y CCP. */
 var VEHICULO_PLACA = { 'Foton nuevo':'6663-CCP', 'Carry':'6409-TIG', 'Foton insumo':'6021-URL', 'Foton encarpado':'5655-KSC' };
@@ -44641,7 +44651,10 @@ function choferSelect(p){
   return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
 }
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); reabrirFicha(id); }
-function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); reabrirFicha(id); }
+/* (06/11, dueño: «es rotativo») Un chofer puede manejar cualquier camión: elegirlo NO cambia el camión ya elegido (antes lo pasaba al
+   camión «suyo» de la lista). Solo si el pedido no tenía camión se pone el de la lista. */
+function choferCamionSiFalta(p, c){ if(String((p&&p.vehiculo)||'').trim()) return; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; }
+function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; choferCamionSiFalta(p, c); persistPedido(p); reabrirFicha(id); }
 /* El «✓» de la pantalla es optimista en muchos lugares (chofer, contabilidad…). Lo que NO
    puede pasar es que un guardado se quede en el camino sin que nadie se entere: si el
    servidor no lo aceptó o no contestó, cartel rojo con el cliente y qué pasó (§4eo). */
@@ -46533,7 +46546,7 @@ function toggleSoloSin(){
 }
 function asignarChoferMapa(id, c){
   var p=findById(id); if(!p) return;
-  p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p);
+  p.chofer=c; choferCamionSiFalta(p, c); persistPedido(p);   // (06/11, «es rotativo») no le cambia el camión que ya tenía
   var m=MAPA_MARKERS[id];
   if(MAPA_SOLO_SIN && mapaKey(p)!=='Sin chofer'){ if(m){ MAPA.removeLayer(m); delete MAPA_MARKERS[id]; } }
   else if(m&&m.setStyle){ m.setStyle({fillColor: mapaColorFor(mapaKey(p))}); }
@@ -47482,7 +47495,7 @@ function depPanel(q){
   var peds=[], tit='', sub='', marca=null, esFn=null, abrir=q.abrir||'showMisModal';
   if(q.peds){ peds=q.peds.slice(); tit=q.tit||''; sub=q.sub||''; esFn=q.es||null; }   // (§4jq) los camiones de Administración arman su lista
   else if(q.v){ DEP.C.forEach(function(c){ c.peds.forEach(function(p){ if(vehiculoDe(p)===q.v) peds.push(p); }); });
-    var cho=(VEHICULOS[q.v]||[])[0]||'', car=0; DEP.C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ car+=c.prod[k].cam[q.v]||0; }); });
+    var cho=choferDeCamion(q.v, peds), car=0; DEP.C.forEach(function(c){ Object.keys(c.prod).forEach(function(k){ car+=c.prod[k].cam[q.v]||0; }); });
     tit='🚚 '+esc(q.v); sub=(cho?esc(cho)+' · ':'')+car+' ya cargado'+(car===1?'':'s')+' · ';
   } else {
     var c=DEP.C[q.i]; if(!c) return;
@@ -47532,7 +47545,7 @@ function depConstruir(C){
     t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ x:cx, z:fz, v:v }; g.add(t.g); W.toca.push(t.g);
     cv.slice(0,3).forEach(function(d, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg); depPila(pg, d.k, d.q.d, d.q.m, d.u, 6, 1.3, 1.6);
       pg.position.y=3; depTween(pg.position, { y:0 }, .9, 1.2+i*.3+j*.25, depSale); });
-    var cho=(VEHICULOS[v]||[])[0]||''; vc.push({ x:cx, v:v, cho:cho, tot:tot });
+    var cho=choferDeCamion(v, [].concat.apply([], C.map(function(c){ return c.peds||[]; }))); vc.push({ x:cx, v:v, cho:cho, tot:tot });   // (06/11) el de sus pedidos: rotan
     depEtq(t.g, '🚚 '+esc(v)+'<small>'+(cho?(esc(cho)+' · '):'')+(flota?'esperando carga':(tot+' ya cargado'+(tot===1?'':'s')+(np?(' · '+np+' pedido'+(np===1?'':'s')):'')))+'</small>', 'dep-etq-cam', '#14232a', 3.3+(i%2)*.7);   // alternados: dos carteles vecinos no se pisan (🏭 31/10: más bajos, con la cámara más cerca entran)
   });
   var mov=[];
@@ -50509,7 +50522,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-06-c';
+var PANEL_V='2026-11-06-d';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

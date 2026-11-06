@@ -1608,6 +1608,16 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
 
+## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
+Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)
+- `VEHICULOS` con la lista del dueño; el PRIMERO de cada camión es el que se pone solo al elegir el camión (Carry → Omar). Luis Eyzaguirre no está en
+  la lista nueva: sus pedidos lo conservan (`choferesParaSelect`, `choferesConocidos`).
+- **Rotan**: elegir un chofer ya NO pasa el pedido al camión «suyo» de la lista (`choferCamionSiFalta`: solo pone camión si el pedido no tenía),
+  en la ficha (`setChofer`) y en el mapa (`asignarChoferMapa`). El chofer que se muestra de un camión en la fábrica de Eduardo es el de sus pedidos
+  (`choferDeCamion`), si no el primero. Los camiones de Administración ya usaban el de los pedidos. `ctaChoferCruce` sigue preguntando con la lista.
+- ⚠️ Cambiar la lista = cambiar `VEHICULOS` y las pruebas que nombran choferes (`test_choferes_rotan`, `test_camiones_admin`, `test_chofer_efectivo`,
+  `test_chofer_cobro_auto`, `test_ficha_mejoras`, `test_nueve_4js`, `test_patio`, `test_plata_borrar`, `test_fabrica_vida`). `tests/test_choferes_rotan.js` (12).
+
 ## 🎟️ Cupos del camión (§4fh)
 - Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM; domingo y feriados cerrados, §4gy).
   `cuposUsadosTurno(fecha,turno)` y el portero del `.gs` (`porteroFecha_`) cuentan **igual**:
