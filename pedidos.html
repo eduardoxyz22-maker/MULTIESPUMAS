@@ -1788,6 +1788,7 @@ html.tema-halloween .fh-t:not(.sel){ background:rgba(255,255,255,.08); border-co
 .clf-met{ font-weight:700; font-size:.84rem; color:var(--text); }
 .clf-2{ font-size:.8rem; color:var(--text); line-height:1.4; overflow-wrap:anywhere; }
 .clf-3{ font-size:.74rem; color:var(--muted); }
+.clf-3 .clf-rep{ margin-left:8px; padding:2px 9px; min-height:0; font-size:.72rem; vertical-align:middle; }   /* 🔁 (§4ok-101) */
 .clf-q{ font-size:.82rem; line-height:1.45; color:var(--text); background:#FFFBEA; border-left:3px solid #F5C451; border-radius:6px; padding:5px 9px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .clf-e.ok{ color:#15803d; } .clf-e.tarde{ color:var(--amber); font-weight:700; } .clf-e.t{ color:#155e75; }
 .clf-m{ flex:none; display:flex; flex-direction:column; align-items:flex-end; gap:3px; text-align:right; }
@@ -16340,6 +16341,11 @@ function submitPedido(){
     toast('📅 Poné el día de entrega que eligió el cliente (o volvé a tildar «📦 El cliente avisa cuándo»).','err');
     var feV=document.getElementById('f-fecha'); feV.classList.add('err'); feV.focus(); feV.scrollIntoView({block:'center'}); return;
   }
+  /* 🔁 (§4ok-101) El pedido repetido abre SIN fecha: vacía no puede pasar a «hoy» sola (para Eduardo y ROHO es un día válido). */
+  if(REPETIR_DE && !isEdit && !VENTA_TIENDA && !_avisa && !document.getElementById('f-fecha').value){
+    toast('📅 Elegí la fecha de entrega de este pedido (el repetido arranca sin fecha).','err');
+    var feR=document.getElementById('f-fecha'); feR.classList.add('err'); try{ feR.focus(); feR.scrollIntoView({block:'center'}); }catch(e){} return;
+  }
   /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
      ni día cerrado, ni cupo del camión que ocupar. Se saltea todo ese bloque. */
   var _forzar=false;   // ¿esta edición le pide al servidor que deje pasar algo que su portero rechazaría? (§4cg)
@@ -17625,6 +17631,7 @@ function confirmarReemplazoForm(){
 }
 function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
+  REPETIR_DE='';                               // 🔁 (§4ok-101)
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
@@ -17689,7 +17696,7 @@ function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
   if(!confirmarReemplazoForm()) return;
-  EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null;
+  EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null; REPETIR_DE='';   // 🔁 (§4ok-101)
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
@@ -27949,6 +27956,7 @@ function misCardHtml(p, n, todos, verNota){
              :(p.entregado?'':'<button class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')">⚠️ Falta ubicación — cargar</button>'))+
       (p.celular?('<a class="cho-link ico" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>'):'')+
       (misWaCliente(p.celular)?('<a class="cho-link ico" href="'+esc(misWaCliente(p.celular))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir el chat de WhatsApp con el cliente">💬 WhatsApp</a>'):'')+
+      (misVeRepetir() ? repetirBtnHtml(p, 'cho-link ico') : '')+   // 🔁 (§4ok-101) solo con Eduardo elegido
     '</div>'+
   '</div>';
 }
@@ -28107,6 +28115,7 @@ function showMisModal(id){
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
+        (misVeRepetir() ? repetirBtnHtml(p, 'btn btn-sm btn-ghost') : '')+   // 🔁 (§4ok-101) solo con Eduardo elegido
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
     '</div>';
@@ -29073,7 +29082,7 @@ function clfPintar(nuevo){
         '<div class="clf-t"><div class="clf-1"><span class="cupv-oc">'+esc(ocEtiq(p.oc)||'—')+'</span>'+(clfNota(p.nota)?('<span class="clf-nt">Nota '+esc(clfNota(p.nota))+'</span>'):'')+
           '<span class="clf-vd">vendió '+esc(nombreCanonico(p.vendedor||'')||'—')+'</span></div>'+
           '<div class="clf-2">'+(prods.length ? prods.slice(0,4).join(' · ')+(prods.length>4?(' · +'+(prods.length-4)+' más'):'') : 'sin productos')+'</div>'+
-          '<div class="clf-3">'+clfEntregaTxt(p, hoy)+'</div></div>'+
+          '<div class="clf-3">'+clfEntregaTxt(p, hoy)+repetirBtnHtml(p, 'btn btn-ghost btn-sm clf-rep')+'</div></div>'+   // 🔁 (§4ok-101)
         '<div class="clf-m"><b>'+esc(fmtBs(v))+'</b>'+plata+'</div></li>';
     }).join('')+'</ol>');
   } else if(ver==='pagos'){
@@ -29118,6 +29127,62 @@ function clfPintar(nuevo){
   openModal(h);
   document.getElementById('modal-box').classList.add('clf-box');
   if(sc){ var c2=document.getElementById('modal-box').querySelector('.clf-cuerpo'); if(c2) c2.scrollTop=sc; }
+}
+/* ============================================================================
+   §4ok-101 🔁 «REPETIR PEDIDO» (05/11, mejora 101; dueño 02/11: «prográmalo»)
+   Desde el 01/10 Eduardo cargó 16 pedidos con exactamente los mismos productos que uno anterior del mismo cliente (los demás: 4).
+   · «🔁 Repetir» en cada compra de la ficha del cliente (`clfPintar`, para todos) y en Mis pedidos con Eduardo elegido (`misVeRepetir`:
+     la tarjeta y su ficha). Abre un pedido NUEVO (sin `EDIT_ID`: id, OC y N° del día nuevos al guardar) con los mismos productos —desc,
+     medida, código, cantidad y precio; NINGUNA marca de logística (chk, chkDe, prodF, prodR, eF…), ni `avisa`, `klead`, `fmov` ni
+     `sinwa`: se arman de cero con `addProdRow`— y el cliente, celular, dirección, zona, ubicación, «Facturar a» y su NIT. Sin fecha
+     (la elige la vendedora: guardar sin fecha lo frena, `REPETIR_DE`; si no, para Eduardo pasaba a «hoy» sola), sin nota, sin pagos,
+     sin observaciones ni garantía. El vendedor es el de esta compu (como un pedido nuevo), no el del pedido de antes.
+   · Si hay un pedido NUEVO a medio escribir, pregunta antes (`confirmarReemplazoForm`); si hay una EDICIÓN abierta sin guardar, pregunta
+     como «＋ Nuevo pedido» (`tabNuevoPedido`, §4gi): esa venta queda como estaba.
+   · No se repite una ATC, una RPT, una venta de tienda, un borrador de Kommo ni una fila del sistema (`repetirPuede`).
+   ========================================================================== */
+var REPETIR_VEN=['Eduardo Añez'], REPETIR_DE='';
+function misVeRepetir(v){ if(v===undefined) v=misVendedorSel(); return REPETIR_VEN.some(function(n){ return mismoVendedor(v, n); }); }
+function repetirPuede(p){
+  return !!p && !esFilaSistema(p) && !esBorrador(p) && String(p.id||'').indexOf('__')!==0 && !esATC(p.oc) && !esRPT(p.oc) && !esVentaTienda(p) &&
+    (p.productos||[]).some(function(x){ return x && String(x.desc||'').trim(); });
+}
+function repetirBtnHtml(p, cls){
+  if(!repetirPuede(p)) return '';
+  return '<button type="button" class="'+(cls||'btn btn-ghost btn-sm')+' rep-btn" title="Abrir un pedido NUEVO con los mismos productos y los datos de este cliente (sin fecha, nota ni pagos)" '+
+    'onclick="'+esc("event.stopPropagation();repetirPedido('"+String(p.id).replace(/'/g,"\\'")+"')")+'">🔁 Repetir</button>';
+}
+function repetirPedido(id){
+  var p=findById(id);
+  if(!repetirPuede(p)){ toast('Este pedido no se puede repetir (ya no está en la lista, o es una ATC, una RPT o una venta de tienda).','err'); return; }
+  var b=document.getElementById('f-submit');
+  if(b && b.disabled){ toast('Hay un pedido enviándose. Esperá el resultado antes de repetir otro.','err',7000); return; }
+  if(EDIT_ID){
+    /* Una edición abierta sin guardar (como «＋ Nuevo pedido», §4gi): sin preguntar, el pedido nuevo PISARÍA esa venta. */
+    var q=findById(EDIT_ID) || ((typeof borradorDe==='function') ? borradorDe(EDIT_ID) : null);
+    var quien=q ? ((q.cliente||'sin nombre')+(q.oc?(' ('+ocEtiq(q.oc)+')'):'')) : 'otro pedido';
+    if(!confirm('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n'+
+                '• Aceptar: ese pedido queda como estaba y se abre el pedido NUEVO repetido.\n'+
+                '• Cancelar: volvés a esa edición.')){ closeModal(); showView('form'); return; }
+  } else if(!confirmarReemplazoForm()) return;
+  closeModal(); showView('form'); resetForm();
+  REPETIR_DE=String(p.id);
+  var pon=function(id, v){ var e=document.getElementById(id); if(e) e.value=String(v==null?'':v).trim(); };
+  pon('f-cliente', p.cliente); pon('f-celular', p.celular);
+  pon('f-zona', p.zona); pon('f-direccion', p.direccion); pon('f-maps', p.maps);
+  pon('f-facturar', p.facturarA); pon('f-nit', p.nit);
+  var ff=document.getElementById('f-fecha'); if(ff){ ff.value=''; ff.min=tomorrowStr(); }
+  var box=document.getElementById('f-productos'); box.innerHTML='';
+  (p.productos||[]).forEach(function(x){ if(x && String(x.desc||'').trim()) addProdRow(x.desc, x.medida, x.codigo, x.cant, x.precio); });
+  if(!box.children.length) addProdRow();
+  try{ refreshDelButtons(); }catch(e){}
+  try{ zonaAutoLimpiar(); }catch(e){}
+  try{ celFormPintar(); }catch(e){}
+  try{ renderCupoForm(); }catch(e){}
+  try{ fxFormPintar(); }catch(e){}
+  window.scrollTo(0,0);
+  if(ff){ try{ ff.focus(); ff.scrollIntoView({block:'center'}); }catch(e){} }
+  toast('🔁 Pedido NUEVO con lo mismo que '+(ocEtiq(p.oc)||'el pedido')+' de '+(p.cliente||'ese cliente')+'. Elegí la fecha de entrega, poné la nota y el cobro, y revisá los productos.','ok',8000);
 }
 /* Cada renglón del detalle abre el pedido (la misma ficha que Administración) POR ENCIMA de
    esta pantalla: el modal está en z-index 4000 y el overlay en 3000, así que al cerrar la
