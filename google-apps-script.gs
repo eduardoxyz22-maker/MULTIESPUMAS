@@ -3538,18 +3538,22 @@ function waEfePagos_(p) {
   return res.filter(function (c) { return c.metodo === 'Efectivo' && c.monto > 0; });
 }
 function waEfeFuera_(v) { var k = waEfeNorm_(v); for (var i = 0; i < WA_EFE_FUERA.length; i++) if (waEfeNorm_(WA_EFE_FUERA[i]) === k) return true; return false; }
-/** Lo que está sin retirar: [{nombre, bs, n, desde, ocs:[…]}], el que más tiene primero. `hoy` = día de Bolivia. */
+/** Lo que está sin retirar: [{nombre, bs, n, desde, ocs:[…]}], el que más tiene primero. `hoy` = día de Bolivia. Además `.sinFecha`
+    ({n, bs}: cobros sin día, no entran), `.sobra` (retiros que no taparon nada) y `.retiros` ({n, sinMonto}): los dice `probarEfectivo`. */
 /* ⚠️ `acuenta` ya viene NÚMERO de `rowToRec_` (`Number(r[23])`, la planilla lo guarda número): igual que `retiroDe`/`anticipoDe` de la
    página. Un cobro SIN @fecha (la página siempre la escribe; el 06/11 no había ninguno desde octubre) no es de ningún día, como en el Cuadre
    (§4fn): no entra, y `probarEfectivo` dice cuántos son (`out.sinFecha`). Los nombres van normalizados (minúsculas, sin acentos ni ñ), como
    `nombreCanonico`/`mismoVendedor`: «Fernando» (chofer del Foton insumo) y «Fernando Peinado» son dos personas. */
 function waEfePendiente_(lista, hoy) {
-  var cob = {}, ret = [], nombres = {}, sinF = { n:0, bs:0 }, sobra = [];
+  var cob = {}, ret = [], nombres = {}, sinF = { n:0, bs:0 }, sobra = [], leidos = { n:0, sinMonto:0 };
   (lista || []).forEach(function (p) {
     var id = String((p && p.id) || '');
     if (!id) return;
     if (id.indexOf('__ret_') === 0) {
       var f = waEfeDia_(p.ts), q = waEfeNorm_(p.vendedor);
+      /* Cuántos se leyeron (desde WA_EFE_EMPAREJA) y cuántos sin monto que se pueda leer: `probarEfectivo` los dice, así un retiro que
+         la planilla trae sin número (escrito a mano como texto) no se pierde callado. */
+      if (f && f >= WA_EFE_EMPAREJA) { leidos.n++; if (!((Number(p.acuenta) || 0) > 0)) leidos.sinMonto++; }
       if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, m:Math.round((Number(p.acuenta) || 0) * 100) / 100, nombre:String(p.vendedor || '').replace(/\s+/g, ' ').trim() });
       return;
     }
@@ -3591,7 +3595,7 @@ function waEfePendiente_(lista, hoy) {
     if (o.n) out.push(o);
   }
   out.sort(function (a, b) { return b.bs - a.bs || (a.nombre < b.nombre ? -1 : 1); });
-  out.sinFecha = sinF; out.sobra = sobra;
+  out.sinFecha = sinF; out.sobra = sobra; out.retiros = leidos;
   return out;
 }
 /** Los datos de `efectivo_sin_retirar`: el día y la hora, el total, de cuántas personas, quiénes. */
@@ -3610,6 +3614,8 @@ function probarEfectivo() {
   var lista = []; for (var i = 1; i < vals.length; i++) { try { lista.push(rowToRec_(vals[i])); } catch (e) {} }
   var E = waEfePendiente_(lista, B.hoy), c = waConfig_();
   L.push(E.length ? ('💵 Ahora el aviso diría: ' + waEfeParams_(E, B).join(' | ')) : '💵 Ahora no hay efectivo cobrado desde el ' + WA_EFE_DESDE + ' sin retiro de hace ' + WA_EFE_DIAS + ' días o más: el aviso no sale.');
+  E.forEach(function (o) { L.push('   · ' + o.nombre + ' ' + waBs_(o.bs) + ': ' + (o.ocs.length ? o.ocs.join(', ') : 'sin N° de OC')); });
+  if (E.retiros) L.push('📒 Retiros leídos desde el ' + WA_EFE_EMPAREJA + ': ' + E.retiros.n + (E.retiros.sinMonto ? (' · ⚠️ ' + E.retiros.sinMonto + ' sin un monto que se pueda leer (la columna «A cuenta» no es un número): esos no tapan nada.') : '.'));
   if (E.sinFecha && E.sinFecha.n) L.push('⚠️ ' + E.sinFecha.n + ' cobro(s) en efectivo sin fecha (' + waBs_(E.sinFecha.bs) + '): no entran en el aviso. Corregilos en Contabilidad → ✏️ Corregir este pago.');
   if (E.sobra && E.sobra.length) L.push('ℹ️ Retiros que no tienen efectivo cobrado antes de su día (un cobro anotado con otra fecha o un retiro a nombre de otra persona): ' +
     E.sobra.map(function (x) { return (x.nombre || x.q) + ' ' + waBs_(x.bs) + ' (' + x.f.slice(8, 10) + '/' + x.f.slice(5, 7) + ')'; }).join(' · '));
@@ -5127,7 +5133,7 @@ var WA_PLANTILLAS = [
        '1 producto', 'NUEVO ECO FLEX 140x190: 3 vendidos esperando; el más viejo, OC 10-301 para el 28/10'] },
   /* 💵 (2026-11-06-b) Al dueño. Mismos datos y orden que `waEfeParams_`. */
   { n:'efectivo_sin_retirar',
-    t:'🤖 💵 *Efectivo cobrado hace más de 48 h y sin retiro* ({{1}})\n\nEn total: *{{2}}*, de {{3}}.\n📋 {{4}}\n\n👉 Si ya lo retiraron, cargá el retiro en el panel (Contabilidad → 💵 Retiro de efectivo). Si no, pedíselo.',
+    t:'🤖 💵 *Efectivo cobrado hace 48 h o más y sin retiro* ({{1}})\n\nEn total: *{{2}}*, de {{3}}.\n📋 {{4}}\n\n👉 Si ya lo retiraron, cargá el retiro en el panel (Contabilidad → 💵 Retiro de efectivo). Si no, pedíselo.',
     e:['viernes 06/11, 09:00', 'Bs 10.950', '4 personas', 'Maria Flores Bs 3.410 desde 03/11 · Mauricio Merida Bs 3.290 desde 03/11 (2 cobros) · Luis Pierre Bs 1.860 desde 04/11 · Juan Pablo Paredes Bs 2.390 desde 03/11 (2 cobros)'] },
   { n:'pedido_en_camino',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',

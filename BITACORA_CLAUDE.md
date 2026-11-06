@@ -17395,6 +17395,16 @@ a quién, «sin preferencia» → quedó lo propuesto.
   `probarEfectivo()`. NO se hizo, con datos: usar el `ts` como fecha de un cobro sin día (inventaría fechas; el Cuadre tampoco lo hace; 0 casos
   desde octubre); juntar nombres parecidos («Fernando» es el chofer de insumos, no Fernando Peinado; la página normaliza igual); `Number(acuenta)`
   (ya es número desde `rowToRec_`, como en la página); la prueba de `WA_EFE_FUERA` contra `CONTA_EXCLUIR` ya existía (2b).
+- 🔎 **Segunda vuelta de Fable (06/11, sobre el diff de antes de los arreglos: varios ya estaban)**. Nuevo: el Excel pone «FALTA» también en
+  el N° cuando hay tipo sin número; la cabecera del bloque dice que NO se elige en el formulario y que la anota la vendedora desde su «Para
+  hacer» (o Contabilidad), y que todavía NO se conecta con FACTURADO / NO FACTURADO de los retiros; la plantilla dice «hace 48 h o más»;
+  `probarEfectivo()` lista las OC de cada persona y cuántos retiros leyó (y cuántos con «A cuenta» que no es número: no tapan nada).
+  Verificado y probado: el sábado SÍ sale (`waPhHabil_` saca solo domingo y feriado), un feriado no, y si Google no corre el repaso entre las 9
+  y las 11 el de la mañana no sale tarde (sale el de las 18); el servidor junta los nombres igual que `pagoRecibio`/`normNombre` de la página
+  («Fernando» ≠ Fernando Peinado); los cobros sin @fecha quedan sin día en los dos lados. La carrera del N° con el formulario abierto: el
+  formulario manda el sello con que se abrió (`EDIT_REV`), el servidor contesta `conflicto` y el formulario se reabre con la versión nueva.
+  `tests/test_factura_conflicto.js` (10, página + `.gs` reales: la vendedora anota desde su «Para hacer» sin contraseña, y la carrera);
+  `test_wa_efectivo` → 44, `test_factura_remision` → 19.
 
 ### §4oj — 👥 ANDREA ORIAS Y FABIÁN GODOY, Y LAS TIENDAS «TIENDA BANZER» Y «VENTURA MALL» (02/11; dueño: *«añades dos nuevos vendedores Andrea orias y Fabián godoy»* → los dos Heaven, Andrea en la *«Nueva tienda banzer»*, Fabián en *«Ventura mall»*; PUBLICADO 02/11, `main` = `39cc0ec`, versión 2026-11-02-b; servidor `2026-11-02-a` espera que el dueño lo implemente)
 

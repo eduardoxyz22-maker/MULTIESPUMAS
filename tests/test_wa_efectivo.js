@@ -128,7 +128,11 @@ const FIX = [
   V('x7', 'Maria Flores', '~Efectivo 9000 @2026-11-02 #6', { estado: 'Borrador Kommo', id: 'kommo-77' }),
   V('x8', 'Fabián Godoy', '~Efectivo 9000 @2026-10-25 #7', { ts: TS('2026-10-25') }),   // de octubre: no se avisa
   // Mauricio: un cobro de octubre SIN retiro y un retiro de noviembre del mismo monto: se lo lleva ese (no lo de noviembre)
-  V('k1', 'Mauricio Merida', '~Efectivo 400 @2026-10-28 #2330', { ts: TS('2026-10-28') }), R('k1', 'Mauricio Merida', 400, '2026-11-04', '3')
+  V('k1', 'Mauricio Merida', '~Efectivo 400 @2026-10-28 #2330', { ts: TS('2026-10-28') }), R('k1', 'Mauricio Merida', 400, '2026-11-04', '3'),
+  // (revisión de Fable) Cobros SIN @fecha: el adelanto escrito y un cobro suelto. No son de ningún día, ni en la página ni acá (2a los compara)
+  V('q1', 'Maria Flores', '~Efectivo 500 #1'), V('q2', 'Maria Flores', '~QR BISA 100 @2026-11-02 #1 + Efectivo 300 #2'),
+  // (revisión de Fable) El mismo vendedor escrito distinto (de octubre: no cambian lo que se avisa; 2c mira que se junten igual que en la página)
+  V('q3', 'JONATHAN  MONJE', '~Efectivo 100 @2026-10-15 #3', { ts: TS('2026-10-15') }), V('q4', 'Fabian Godoy', '~Efectivo 50 @2026-10-16 #4', { ts: TS('2026-10-16') })
 ];
 
 (async () => {
@@ -173,11 +177,23 @@ const FIX = [
     fix.forEach(function (p) { if (String(p.id).indexOf('__') === 0) return;
       out[p.id] = contaPagos(p).filter(function (c) { return c.metodo === 'Efectivo' && (Number(c.monto) || 0) > 0; })
         .map(function (c) { return [c.fecha, r2(c.monto), limpiaRecibio(c.recibio)]; }); });
-    return { pagos: out, fuera: CONTA_EXCLUIR.slice() };
+    var quien = {};
+    fix.forEach(function (p) { if (String(p.id).indexOf('__') === 0) return;
+      quien[p.id] = contaPagos(p).filter(function (c) { return c.metodo === 'Efectivo' && (Number(c.monto) || 0) > 0; }).map(function (c) { return normNombre(pagoRecibio(c, p)); }); });
+    var pares = [['Carola Chávez', 'Carola Chavez'], ['  maria   flores ', 'Maria Flores'], ['Fabián Godoy', 'FABIAN GODOY'], ['Fernando', 'Fernando Peinado'], ['Peña', 'Pena'], ['ÁLVARO ÑÚÑEZ', 'alvaro nunez']];
+    var igualesPag = pares.map(function (x) { return normNombre(x[0]) === normNombre(x[1]); });
+    return { pagos: out, fuera: CONTA_EXCLUIR.slice(), quien: quien, pares: pares, igualesPag: igualesPag };
   }, FIX);
   const srv = {}; FIX.forEach(p => { if (String(p.id).indexOf('__') === 0) return; srv[p.id] = S.ctx.waEfePagos_(S.lista().find(q => q.id === p.id)).map(c => [c.fecha, c.monto, c.recibio]); });
   const dif = Object.keys(srv).filter(k => JSON.stringify(srv[k]) !== JSON.stringify(pag.pagos[k]));
   chk('2a los pagos en efectivo que lee el servidor son los que lee la página (contaPagos)', dif.length === 0, dif.map(k => k + ': gs ' + JSON.stringify(srv[k]) + ' · página ' + JSON.stringify(pag.pagos[k])));
+  const qSrv = {}; FIX.forEach(p => { if (String(p.id).indexOf('__') === 0) return; const q = S.lista().find(x => x.id === p.id);
+    qSrv[p.id] = S.ctx.waEfePagos_(q).map(c => S.ctx.waEfeNorm_(c.recibio || String(q.vendedor || '').replace(/\s+/g, ' ').trim() || '(sin vendedor)')); });
+  const difQ = Object.keys(qSrv).filter(k => JSON.stringify(qSrv[k]) !== JSON.stringify(pag.quien[k]));
+  chk('2c de quién es cada cobro: el servidor lo junta igual que la página (pagoRecibio, con el vendedor escrito distinto)', difQ.length === 0, difQ.map(k => k + ': gs ' + JSON.stringify(qSrv[k]) + ' · página ' + JSON.stringify(pag.quien[k])));
+  const igualesSrv = pag.pares.map(x => S.ctx.waEfeNorm_(x[0]) === S.ctx.waEfeNorm_(x[1]));
+  chk('2d dos nombres que la página toma por la misma persona, el servidor también (y al revés: «Fernando» no es Fernando Peinado)', JSON.stringify(igualesSrv) === JSON.stringify(pag.igualesPag) && pag.igualesPag[3] === false, { gs: igualesSrv, pagina: pag.igualesPag });
+  chk('2e los cobros sin @fecha: sin día en los dos lados (no se inventa)', JSON.stringify(pag.pagos.q1) === '[["",500,""]]' && JSON.stringify(pag.pagos.q2) === '[["",300,""]]', [pag.pagos.q1, pag.pagos.q2]);
   chk('2b WA_EFE_FUERA = CONTA_EXCLUIR de la página', JSON.stringify(Array.from(S.ctx.WA_EFE_FUERA)) === JSON.stringify(pag.fuera), [S.ctx.WA_EFE_FUERA, pag.fuera]);
   await browser.close();
 
@@ -200,8 +216,16 @@ const FIX = [
   S.cargar([R('f1', 'Maria Flores', 3410, '2026-11-06')]);
   S.limpiar(); poner('2026-11-06 18:05'); S.repaso(); e = efe();
   chk('3g a las 18:05 sale el segundo, con la planilla de ahora (el retiro de Maria ya no la nombra)', e.length === 1 && !/Maria Flores/.test(e[0].p[3]) && e[0].p[2] === '6 personas', e[0] && e[0].p);
+  S.limpiar(); poner('2026-11-07 09:05'); S.repaso();
+  chk('3h2 el sábado 07/11 sí sale', efe().length === 1, S.salen());
   S.limpiar(); poner('2026-11-08 09:05'); S.repaso();
   chk('3h el domingo no sale', efe().length === 0, S.salen());
+  S.limpiar(); poner('2026-11-09 11:05'); S.repaso();
+  chk('3h4 si el primer repaso del lunes es a las 11:05 (Google parado de 9 a 11), el de la mañana NO sale tarde…', efe().length === 0, S.salen());
+  S.limpiar(); poner('2026-11-09 18:05'); S.repaso();
+  chk('3h5 …y a las 18:05 sale el de la tarde, como siempre', efe().length === 1, S.salen());
+  S.limpiar(); poner('2026-12-25 09:05'); S.repaso();
+  chk('3h3 en un feriado (25/12) no sale', efe().length === 0, S.salen());
   const S2 = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1', WA_LOGISTICA: 'Ernesto:59171000001' }); S2.cargar(FIX);
   poner('2026-11-06 09:05'); S2.repaso();
   chk('3i sin WA_DUENO no sale', S2.salen().filter(x => x.pl === 'efectivo_sin_retirar').length === 0, S2.salen());
@@ -218,6 +242,11 @@ const FIX = [
   chk('4a está en WA_PLANTILLAS con {{1}}…{{4}} y un ejemplo de 4', pl && /\{\{4\}\}/.test(pl.t) && !/\{\{5\}\}/.test(pl.t) && pl.e.length === 4, pl);
   chk('4b está en WA_TIPOS', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_sin_retirar', S.ctx.WA_TIPOS.ef);
   const pr = S.ctx.probarEfectivo();
+  chk('4d probarEfectivo() dice las OC de cada persona y cuántos retiros leyó', pr.lineas.some(l => /· Mauricio Merida Bs 3\.290: 11-u1, 11-u2$/.test(l)) && pr.lineas.some(l => /Retiros leídos desde el 2026-10-01: 7\./.test(l)), pr.lineas);
+  const S5 = servidor(ON); S5.cargar([V('z1', 'Maria Flores', '~Efectivo 600 @2026-11-02 #1'), R('z1', 'Maria Flores', 0, '2026-11-03', '1')]);
+  S5.sh._datos[S5.sh._datos.length - 1][23] = '6OO';   // la columna «A cuenta» con texto (escrita a mano)
+  const pr5 = S5.ctx.probarEfectivo();
+  chk('4e un retiro con «A cuenta» que no es un número no tapa nada, pero probarEfectivo lo dice', pr5.lineas.some(l => /1 sin un monto que se pueda leer/.test(l)) && /Maria Flores/.test(pr5.lineas[0]), pr5.lineas);
   chk('4c probarEfectivo() dice lo que diría y a quién, sin mandar nada', /Ahora el aviso diría/.test(pr.lineas[0]) && pr.lineas.some(l => /Le llega a: Eduardo/.test(l)) && pr.lineas.some(l => /Retiros que no tienen efectivo cobrado antes/.test(l)), pr.lineas);
 
   chk('sin errores en la página', errores.length === 0, errores);

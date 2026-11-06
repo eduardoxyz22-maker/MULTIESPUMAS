@@ -2670,7 +2670,8 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   remisión les tocará… que lo puedan colocar en contabilidad»*): el formulario del pedido NO la pide (no volver a ponerla ahí). Fila de la ficha de
   Contabilidad (`ctaDocHtml`/`ctaDocGuardar`): tipo + N° en los productos (`fdoc`/`fdocn`; `submitPedido` los rescata de `prev`). Obligatoria desde
   `DOCV_DESDE` (`docVentaFalta`): «Para hacer» de la vendedora (abre la ficha de Contabilidad) y de Contabilidad (filtro `sdoc`), el cierre en rojo,
-  `docVentaChip` y dos columnas al FINAL del Excel. `tests/test_factura_remision.js`.
+  `docVentaChip` y dos columnas al FINAL del Excel («FALTA» en el tipo o el N° que falta). Todavía NO decide FACTURADO / NO FACTURADO de los retiros.
+  `tests/test_factura_remision.js`, `tests/test_factura_conflicto.js` (página + `.gs`: la vendedora sin contraseña, y la carrera con el formulario abierto).
 - 🚚 **Recargos por vendedor** (dueño eligió «el recargo por entrega»): `exportRecargos` (Contabilidad → ⬇️ Bajar): «Resumen» + una hoja por
   vendedor, las ventas de `contaLista` con recargo; cuentas de `enviosDe`. `tests/test_recargos_vendedor.js`.
 - 💵 **Efectivo sin retirar al dueño** (servidor 06-b, 9:00 y 18:00, `efectivo_sin_retirar` a WA_DUENO): `waEfePendiente_` — el efectivo es de

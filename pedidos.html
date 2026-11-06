@@ -15640,7 +15640,7 @@ function exportConta(){
         i===0?{v:ventaTotal(p),t:'n'}:'', i===0?(tienePrecios(p)?{v:prodTotal(p),t:'n'}:''):'',
         i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
         i===0?talEnSistemaTxt(p):'', i===0?(p.observaciones||''):'',
-        i===0?({F:'FACTURA',R:'NOTA DE REMISIÓN'}[docVentaDe(p)]||(docVentaFalta(p)?'FALTA':'')):'', i===0?docNumDe(p):''
+        i===0?({F:'FACTURA',R:'NOTA DE REMISIÓN'}[docVentaDe(p)]||(docVentaFalta(p)?'FALTA':'')):'', i===0?(docNumDe(p)||(docVentaFalta(p)?'FALTA':'')):''
       ]);
     });
   });
@@ -21259,15 +21259,17 @@ function celObligatorio(vend){
 function sinWaDe(p){ return ((p&&p.productos)||[]).some(function(x){ return !!(x && x.sinwa); }); }
 function setSinWa(p, on){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(on) x.sinwa=1; else delete x.sinwa; }); }
 /* ============================================================================
-   🧾 LA FACTURA O LA NOTA DE REMISIÓN DE CADA VENTA LA ANOTA CONTABILIDAD (06/11, dueño: «factura/nota remisión. obligatorio» y después:
+   🧾 LA FACTURA O LA NOTA DE REMISIÓN DE CADA VENTA SE ANOTA EN CONTABILIDAD (06/11, dueño: «factura/nota remisión. obligatorio» y después:
    «los vendedores generan pedido… aún no saben qué nro de factura o nota remisión les tocará… que lo puedan colocar en contabilidad»).
-   · La vendedora NO lo ve ni lo elige: en la ficha de la venta de Contabilidad, «🧾 Factura» o «📄 Nota de remisión» + su N° (`ctaDocGuardar`).
+   · NO se elige en el formulario del pedido. La anota la vendedora DESPUÉS (su «Para hacer» le abre la ficha de Contabilidad de esa venta) o
+     Contabilidad: en esa ficha, «🧾 Factura» o «📄 Nota de remisión» + su N° (`ctaDocGuardar`).
    · Viaja adentro de los productos (`fdoc:'F'|'R'` y `fdocn:'<N°>'`, la convención de `sinwa`/`avisa`): la planilla tiene columnas fijas.
      Corregir el pedido desde el formulario lo conserva (`submitPedido` lo rescata del pedido anterior).
    · Obligatorio para las ventas del equipo cargadas desde `DOCV_DESDE` (01/11): `docVentaFalta` (las de Contabilidad: `fueraDeConta` deja
      afuera ATC, RPT, Eduardo, ROHO e internos). Lo dicen «Para hacer» (🔴, «Ver» filtra la tabla: `sdoc`), la tabla (chip «❓ falta») y el
      control del cierre del mes (🔴: «Bajar» pide la contraseña, como lo demás en rojo).
-   · Contabilidad: chip en «Facturar a» (`docVentaChip`) y dos columnas AL FINAL del Excel. Es lo que separa los retiros FACTURADO / NO FACTURADO.
+   · Contabilidad: chip en «Facturar a» (`docVentaChip`) y dos columnas AL FINAL del Excel («FALTA» donde falta el tipo o el número).
+     Todavía NO se conecta con la etiqueta FACTURADO / NO FACTURADO de los retiros (esa la elige quien carga el retiro).
    `tests/test_factura_remision.js`.
    ========================================================================== */
 var DOCV_TXT={ F:'🧾 Factura', R:'📄 Nota de remisión' };

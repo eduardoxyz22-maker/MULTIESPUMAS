@@ -131,12 +131,18 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('5c · el «Para hacer» de la vendedora: Maria tiene una, Carola ninguna (ya la anotó) y la lista abre la ficha de Contabilidad', r.vm === 1 && !r.vc && r.abrir === 'showContaModal', r);
   chk('5d · el chip de la tabla dice «Fact. 7788», el que falta «❓ falta fact./rem.» y uno de octubre nada', /Fact\. 7788/.test(r.chipF) && /falta fact\.\/rem\./.test(r.chipFalta) && r.chipOct === '', r);
   chk('5e · el Excel lleva al FINAL «FACTURA / REMISIÓN» y su N° (FALTA cuando falta)', r.cab[0] === 'OBSERVACIONES' && r.cab[1] === 'FACTURA / REMISIÓN' && r.cab[2] === 'N° FACTURA / REMISIÓN' &&
-      r.f1.join() === 'NOTA DE REMISIÓN,00451' && r.f2.join() === 'FACTURA,7788' && r.fm.join() === 'FALTA,', r);
+      r.f1.join() === 'NOTA DE REMISIÓN,00451' && r.f2.join() === 'FACTURA,7788' && r.fm.join() === 'FALTA,FALTA', r);
 
   // 6. Revisión de Fable: tipo sin N°, lo no guardado se olvida al cerrar, el N° tipeado sobrevive a un repintado
   r = await ev(() => {
     var o = {};
-    var p = findById('m1'); setDocVenta(p, 'F', ''); o.chipSinN = docVentaChip(p); o.falta = docVentaFalta(p); setDocVenta(p, '', '');
+    var p = findById('m1'); setDocVenta(p, 'F', ''); o.chipSinN = docVentaChip(p); o.falta = docVentaFalta(p);
+    var hojas = null, _b = buildXlsx, _d = downloadBlob;
+    buildXlsx = function (sh) { hojas = JSON.parse(JSON.stringify(sh)); return new Uint8Array([1]); }; downloadBlob = function () {};
+    try { exportConta(); } finally { buildXlsx = _b; downloadBlob = _d; }
+    var mx = hojas ? hojas[0].matrix : [], n = (mx[0] || []).length, fm = mx.find(f => f && f[3] === '11-104') || [];
+    o.excelSinN = [fm[n - 2], fm[n - 1]];
+    setDocVenta(p, '', '');
     showContaModal('n2'); ctaDocTipo('n2', 'R'); ctaDocNum('n2', '9999');
     showContaModal('n2');   // repinta la ficha (como al registrar un pago)
     o.trasRepintar = { t: document.querySelector('#cta-doc button.btn-primary[data-v]') && document.querySelector('#cta-doc button.btn-primary[data-v]').getAttribute('data-v'), n: document.getElementById('cta-doc-num').value };
@@ -147,6 +153,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     return o;
   });
   chk('6a · con el tipo y SIN número el chip es ámbar («❓ Fact. sin N°»), no azul', /b-amber/.test(r.chipSinN) && /Fact\. sin N°/.test(r.chipSinN) && r.falta === true, r.chipSinN);
+  chk('6a2 · y el Excel lo dice igual: «FACTURA» y en el N° «FALTA» (no vacío)', r.excelSinN.join() === 'FACTURA,FALTA', r.excelSinN);
   chk('6b · lo elegido y tipeado sin guardar sobrevive a un repintado de la ficha', r.trasRepintar.t === 'R' && r.trasRepintar.n === '9999', r.trasRepintar);
   chk('6c · al cerrar la ficha se olvida: al abrirla de nuevo vuelve lo guardado (Factura 7788)', r.trasCerrar.t === 'F' && r.trasCerrar.n === '7788', r.trasCerrar);
   chk('6d · el N° tiene tope de 40 letras en el campo', r.max === '40', r.max);
