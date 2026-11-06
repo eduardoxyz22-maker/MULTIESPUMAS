@@ -225,6 +225,32 @@ if pd:
 else:
     chk("9. (el panel con la vendedora con tilde no se escribió)", False, txt[-300:])
 
+# ── 10 · (06/11, dueño) el horario para medir la respuesta va por la SUCURSAL que dice Kommo ─────────
+# «isabel ahora esta en central · el horario de central es de 8 a 20:00 · banzer de 8:30 a 20:30 · jonathan en mia plaza · fabian
+# esta en central pero se ira al ventura… de momento usa el horario de central».
+import datetime as _dt
+salio, pd, txt, archivos = correr()
+chk("10a. al leer los usuarios de Kommo se anota la sucursal de cada uno (Ana Prueba - Central)",
+    getattr(G, "SUC_DE_USUARIO", {}).get("ana prueba") == "Central", getattr(G, "SUC_DE_USUARIO", None))
+_BO = _dt.timezone(_dt.timedelta(hours=-4))
+def _ts(h, m=0, dia=9):   # el lunes 09/11/2026 (sábado = 14), en hora de Bolivia
+    return int(_dt.datetime(2026, 11, dia, h, m, tzinfo=_BO).timestamp())
+if hasattr(G, "SUC_DE_USUARIO"):
+    _antes = dict(G.SUC_DE_USUARIO)
+    G.SUC_DE_USUARIO.clear()
+    G.SUC_DE_USUARIO.update({"isabel robledo": "Central", "carola chavez": "Tienda Banzer", "jonathan monje": "Mia Plaza",
+                             "fabian godoy": "Ventura Mall", "maria flores": "Buenos Aires"})
+    fuera = lambda nombre, h, m=0, dia=9: G.off_hours(_ts(h, m, dia), G.sched_for(nombre))
+    chk("10b. Isabel (Central): un lead del lunes a las 8:15 está EN horario (antes la medían con Mia Plaza, que abre a las 9)",
+        fuera("Isabel Robledo", 8, 15) is False and fuera("Isabel Robledo", 19, 59) is False and fuera("Isabel Robledo", 20, 5) is True)
+    chk("10c. Carola Chávez (Tienda Banzer): 8:30 a 20:30 — 8:20 fuera, 8:40 y 20:20 adentro, 20:40 fuera",
+        fuera("Carola Chávez", 8, 20) is True and fuera("Carola Chávez", 8, 40) is False and fuera("Carola Chávez", 20, 20) is False and fuera("Carola Chávez", 20, 40) is True)
+    chk("10d. Jonathan (Mia Plaza): 9 a 21 — 8:30 fuera, 20:30 adentro", fuera("Jonathan Monje", 8, 30) is True and fuera("Jonathan Monje", 20, 30) is False)
+    chk("10e. Fabián en Ventura Mall usa el horario de Central (8 a 20)", fuera("Fabián Godoy", 8, 15) is False and fuera("Fabián Godoy", 20, 5) is True)
+    chk("10f. Maria (Buenos Aires) sigue con el de siempre: lun-vie 9 a 19, sábado 9 a 16", fuera("Maria Flores", 8, 30) is True and fuera("Maria Flores", 18, 30) is False and fuera("Maria Flores", 17, 0, 14) is True)
+    chk("10g. el domingo está cerrado en todas", all(fuera(n, 12, 0, 15) is True for n in ("Isabel Robledo", "Carola Chávez", "Jonathan Monje", "Maria Flores")))
+    G.SUC_DE_USUARIO.clear(); G.SUC_DE_USUARIO.update(_antes)
+
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())
 

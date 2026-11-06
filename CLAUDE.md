@@ -2634,8 +2634,13 @@ Desde noviembre Kommo nombra a cada usuario «Nombre - Sucursal» (Isabel Robled
 Banzer, Fabián Godoy - Central, Andrea Orias - Tienda Banzer): la sucursal del dashboard sale de ese sufijo, no de `VENDOR_CFG`. Carola quedó con
 tilde y `VENDOR_CFG.get` no la encontraba → meta de vendedora nueva (8 / Bs 20.000 en vez de 35 / 135.000; meta del equipo 152 en vez de 179).
 ⚠️ Toda búsqueda en `VENDOR_CFG` va por **`vendor_cfg(name)`** (sin tildes ni mayúsculas). El resumen de WhatsApp no da medalla con 0 cierres.
-`sched_for` (horario para medir la respuesta) sigue por NOMBRE (Mirian e Isabel = Mia Plaza 9-21): con Isabel en Central según Kommo, preguntar
-al dueño. `test_generar_integridad` §9.
+🕘 **El horario para medir la respuesta va por SUCURSAL** (dueño, 06/11: Isabel en Central, Jonathan en Mia Plaza, *«el horario de central es de 8
+a 20:00, banzer de 8:30 a 20:30»*, Fabián en Central y *«cuando abramos [Ventura] de momento usa el horario de central»*): `sched_for` lee la sucursal
+de Kommo (`SUC_DE_USUARIO`, lo llena `main` con /users) o la de `VENDOR_CFG`, y `SCHED_POR_SUC` (Mia Plaza 9-21, Central 8-20, Tienda Banzer
+8:30-20:30, Buenos Aires el de siempre, Ventura Mall = Central), lun-sáb (el sábado no lo dijo), domingo cerrado. El texto «Ventana por sucursal»
+del template lo dice. `test_generar_integridad` §9-10 (29).
+⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
+suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

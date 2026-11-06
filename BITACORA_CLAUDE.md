@@ -17294,6 +17294,16 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   `test_generar_integridad` §9 (22; 3 rojas contra el de antes). EN LA RAMA, espera «publica» (publicarlo dispara el workflow del panel).
   Para preguntar al dueño: Kommo dice Fabián = Central (el panel dice Ventura Mall), Isabel = Central y Jonathan = Mia Plaza (en octubre era al
   revés); el horario con que se mide la respuesta (`sched_for`) va por nombre: Isabel sigue con el de Mia Plaza (9 a 21).
+  **El dueño contestó**: *«isabel ahora esta en central · el horario de central es de 8 a 20:00 · banzer de 8:30 a 20:30 · jonathan en mia plaza ·
+  fabian esta en central pero se ira al ventura cuando abramos, de momento usa el horario de central»*. `sched_for` ahora va por la sucursal
+  (Kommo después del guion → `SUC_DE_USUARIO`; si no, `VENDOR_CFG`) con `SCHED_POR_SUC`; VENDOR_CFG: Isabel → Central, Jonathan → Mia Plaza. Lun-sáb
+  (no dijo el sábado; preguntar si en Central/Banzer cierran antes). `test_generar_integridad` §10 (29 en total).
+- 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
+  planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta
+  en el panel en noviembre tampoco → 0 de verdad. Maria: pasó 6 leads a Compradores el 03/11 entre 17:46 y 19:07, pero los 6 ya estaban cargados en
+  el panel como ventas de octubre (10-331, 10-368 dos veces, 10-382, 10-393) y una de septiembre (09-318): cuentan en octubre. En noviembre tiene 11-037 y
+  11-041 (tienda), sin lead en Compradores. Jonathan: 11-003, 11-043 (tienda) y 11-045, ninguna en Kommo. Lo cargado desde el 06/11 lo cierra la 91.
+  Maria tiene 28 borradores de Kommo en la bandeja, casi todos ya cargados (la 81 los marca «ya cargada»).
   · `atcHoja(p)` = la plantilla tal cual (4 columnas, el turquesa `1D9DB4`, recuadros, el logo de Heaven y los dibujos del colchón y el somier del
     «esquema», `ATC_IMG_*` sacados del archivo del dueño) llena con la ATC: cliente, fecha (entró), N° ATC al lado de «NRO DE FACTURA» (vacío,
     §4bs), teléfono, fecha de compra con antigüedad, dirección, vendedora, ● COLCHÓN/○ SOMIER/○ CAMABOX (`atcQueEs`, con `pryTipoProd`: una
