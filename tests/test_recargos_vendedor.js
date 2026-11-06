@@ -99,6 +99,14 @@ function PREPARAR(){
   chk('3b el TOTAL suma todo (225 = 165 + 60)', tot[1]===5 && tot[2]===225 && tot[3]===165 && tot[4]===60, tot);
   var cu=r.cuentas||[], sumT=0, sumC=0, sumF=0; cu.forEach(x=>{ sumT+=x[1]; sumC+=x[2]; sumF+=x[3]; });
   chk('5c el total es el de envioTotal / envioCobrado / envioPorCobrar', Math.abs(sumT-225)<0.005 && Math.abs(sumC-165)<0.005 && Math.abs(sumF-60)<0.005, cu);
+  const porV = await ev(() => {
+    var L = contaLista(), M = {};
+    L.forEach(function (p) { if (!(envioTotal(p) > 0.005)) return; var k = nombreCanonico(p.vendedor); M[k] = M[k] || [0, 0, 0];
+      M[k][0] = r2(M[k][0] + envioTotal(p)); M[k][1] = r2(M[k][1] + envioCobrado(p)); M[k][2] = r2(M[k][2] + envioPorCobrar(p)); });
+    return M;
+  });
+  const malV = Object.keys(porV).filter(k => { const f = fil(k); return !(f[2] === porV[k][0] && f[3] === porV[k][1] && f[4] === porV[k][2]); });
+  chk('5d cada vendedor del Resumen = Σ envioTotal / envioCobrado / envioPorCobrar de sus ventas', malV.length === 0 && Object.keys(porV).length === 3, { malV, porV });
   chk('3c una hoja por vendedor', r.hojas && r.hojas.length===3, (r.hojas||[]).map(h=>h.n));
   var hm=(r.hojas||[]).find(h=>h.n==='Mirian Salazar')||{m:[]};
   var filaOC=(h,oc)=>(h.m||[]).find(f=>f[2]===oc)||[];

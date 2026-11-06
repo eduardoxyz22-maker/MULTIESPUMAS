@@ -150,6 +150,12 @@ const FIX = [
   chk('1i lo cobrado ayer todavía no (48 h)', !de('Andrea Orias'), de('Andrea Orias'));
   chk('1j afuera: Eduardo, ROHO, internos, ATC, RPT, borradores', !de('Eduardo Añez') && !de('ROHO') && !de('ALBA') && E.every(o => o.bs < 9000), E.map(o => o.nombre + ' ' + o.bs));
   chk('1k el que más tiene primero', E.length === 7 && E[0].nombre === 'Maria Flores', E.map(o => o.nombre));
+  chk('1m un retiro de noviembre sin nada cobrado antes (Carola, 01/11) queda en «sobra» para probarEfectivo', E.sobra && E.sobra.some(x => x.nombre === 'Carola Chavez' && x.bs === 900 && x.f === '2026-11-01'), E.sobra);
+  const S1 = servidor(ON); S1.cargar([V('sf1', 'Maria Flores', 'Efectivo 700 #123', { ts: TS('2026-11-02') })]);
+  const E1 = S1.ctx.waEfePendiente_(S1.lista(), '2026-11-06');
+  chk('1n un cobro en efectivo SIN fecha no entra (como en el Cuadre) pero se cuenta en sinFecha', E1.length === 0 && E1.sinFecha.n === 1 && E1.sinFecha.bs === 700, { E1, sf: E1.sinFecha });
+  const pr1 = S1.ctx.probarEfectivo();
+  chk('1o probarEfectivo dice cuántos cobros sin fecha hay', pr1.lineas.some(l => /1 cobro\(s\) en efectivo sin fecha/.test(l)), pr1.lineas);
   const E2 = S.ctx.waEfePendiente_(S.lista(), '2026-11-08');
   chk('1l el domingo 08/11 lo de Andrea (05/11) ya entra', !!E2.find(o => o.nombre === 'Andrea Orias'), E2.map(o => o.nombre));
 
@@ -184,6 +190,7 @@ const FIX = [
   let e = efe();
   chk('3b a las 09:05 sale UNO al dueño', e.length === 1 && e[0].to === '59177000007', S.salen());
   chk('3c con 4 datos: el día y la hora, el total, de cuántas personas y la lista', e[0] && e[0].p.length === 4 && /viernes 06\/11, 09:0/.test(e[0].p[0]) && e[0].p[1] === 'Bs 11.510' && e[0].p[2] === '7 personas' && /^Maria Flores Bs 3\.410 desde 03\/11 · Mauricio Merida Bs 3\.290 desde 03\/11 \(2 cobros\)/.test(e[0].p[3]), e[0] && e[0].p);
+  chk('3c2 la hora va como HH:MM después de la coma', e[0] && /, \d\d:\d\d$/.test(e[0].p[0]), e[0] && e[0].p[0]);
   chk('3d ningún dato pasa de 250 letras ni lleva saltos de línea', e[0] && e[0].p.every(t => t.length <= 250 && !/[\r\n]/.test(t)), e[0] && e[0].p.map(t => t.length));
   S.limpiar(); poner('2026-11-06 09:40'); S.repaso();
   chk('3e una vez por turno (a las 09:40 no se repite)', efe().length === 0, S.salen());
@@ -211,7 +218,7 @@ const FIX = [
   chk('4a está en WA_PLANTILLAS con {{1}}…{{4}} y un ejemplo de 4', pl && /\{\{4\}\}/.test(pl.t) && !/\{\{5\}\}/.test(pl.t) && pl.e.length === 4, pl);
   chk('4b está en WA_TIPOS', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_sin_retirar', S.ctx.WA_TIPOS.ef);
   const pr = S.ctx.probarEfectivo();
-  chk('4c probarEfectivo() dice lo que diría y a quién, sin mandar nada', /Ahora el aviso diría/.test(pr.lineas[0]) && /Eduardo/.test(pr.lineas[1]), pr.lineas);
+  chk('4c probarEfectivo() dice lo que diría y a quién, sin mandar nada', /Ahora el aviso diría/.test(pr.lineas[0]) && pr.lineas.some(l => /Le llega a: Eduardo/.test(l)) && pr.lineas.some(l => /Retiros que no tienen efectivo cobrado antes/.test(l)), pr.lineas);
 
   chk('sin errores en la página', errores.length === 0, errores);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');

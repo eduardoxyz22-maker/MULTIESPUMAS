@@ -17387,6 +17387,14 @@ a quién, «sin preferencia» → quedó lo propuesto.
   `probarEfectivo()` desde el editor dice lo que diría. ⚠️ La lectura copia `parseCobros`/`anticipoDe`/`cobrosDe` de la página: `test_wa_efectivo`
   (31) compara las dos y `WA_EFE_FUERA` = `CONTA_EXCLUIR`. `test_servidor` §11 y `test_wa_bot` (la plantilla, 4 datos) cambiaron a conciencia.
   Para que llegue: implementar la 06-b y correr `crearPlantillasWhatsApp` (crea `efectivo_sin_retirar`; Meta la aprueba en minutos u horas).
+- 🔎 **La revisión de Fable (06/11, la pidió el dueño por la API y pegó el informe)**. Arreglado: el chip de la tabla con el tipo y SIN número va
+  en ámbar «❓ Fact. sin N°» (`docVentaChip` pregunta `docVentaFalta` primero); `CTA_DOC` se olvida al cerrar la ventana (`closeModal`) y el
+  número tipeado sobrevive al repintado (`ctaDocNum`); `maxlength` 40 y Enter guarda sin enviar nada; las cuentas de los recargos por vendedor
+  salen de `envioTotal`/`envioCobrado`/`envioPorCobrar` (las mismas de la venta); hojas «History» y con comillas; el servidor saca la hora con
+  `split(' ')[1]`, cuenta los cobros sin fecha (`sinFecha`, no los avisa) y anota los retiros que no tapan nada (`sobra`): los dos los dice
+  `probarEfectivo()`. NO se hizo, con datos: usar el `ts` como fecha de un cobro sin día (inventaría fechas; el Cuadre tampoco lo hace; 0 casos
+  desde octubre); juntar nombres parecidos («Fernando» es el chofer de insumos, no Fernando Peinado; la página normaliza igual); `Number(acuenta)`
+  (ya es número desde `rowToRec_`, como en la página); la prueba de `WA_EFE_FUERA` contra `CONTA_EXCLUIR` ya existía (2b).
 
 ### §4oj — 👥 ANDREA ORIAS Y FABIÁN GODOY, Y LAS TIENDAS «TIENDA BANZER» Y «VENTURA MALL» (02/11; dueño: *«añades dos nuevos vendedores Andrea orias y Fabián godoy»* → los dos Heaven, Andrea en la *«Nueva tienda banzer»*, Fabián en *«Ventura mall»*; PUBLICADO 02/11, `main` = `39cc0ec`, versión 2026-11-02-b; servidor `2026-11-02-a` espera que el dueño lo implemente)
 

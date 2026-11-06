@@ -3539,20 +3539,25 @@ function waEfePagos_(p) {
 }
 function waEfeFuera_(v) { var k = waEfeNorm_(v); for (var i = 0; i < WA_EFE_FUERA.length; i++) if (waEfeNorm_(WA_EFE_FUERA[i]) === k) return true; return false; }
 /** Lo que está sin retirar: [{nombre, bs, n, desde, ocs:[…]}], el que más tiene primero. `hoy` = día de Bolivia. */
+/* ⚠️ `acuenta` ya viene NÚMERO de `rowToRec_` (`Number(r[23])`, la planilla lo guarda número): igual que `retiroDe`/`anticipoDe` de la
+   página. Un cobro SIN @fecha (la página siempre la escribe; el 06/11 no había ninguno desde octubre) no es de ningún día, como en el Cuadre
+   (§4fn): no entra, y `probarEfectivo` dice cuántos son (`out.sinFecha`). Los nombres van normalizados (minúsculas, sin acentos ni ñ), como
+   `nombreCanonico`/`mismoVendedor`: «Fernando» (chofer del Foton insumo) y «Fernando Peinado» son dos personas. */
 function waEfePendiente_(lista, hoy) {
-  var cob = {}, ret = [], nombres = {};
+  var cob = {}, ret = [], nombres = {}, sinF = { n:0, bs:0 }, sobra = [];
   (lista || []).forEach(function (p) {
     var id = String((p && p.id) || '');
     if (!id) return;
     if (id.indexOf('__ret_') === 0) {
       var f = waEfeDia_(p.ts), q = waEfeNorm_(p.vendedor);
-      if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, m:Math.round((Number(p.acuenta) || 0) * 100) / 100 });
+      if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, m:Math.round((Number(p.acuenta) || 0) * 100) / 100, nombre:String(p.vendedor || '').replace(/\s+/g, ' ').trim() });
       return;
     }
     if (id.indexOf('__') === 0 || String(p.estado || '') === BORRADOR_EST) return;
     if (/^(ATC|RPT)\b/i.test(String(p.oc || '').trim()) || waEfeFuera_(p.vendedor)) return;
     waEfePagos_(p).forEach(function (c) {
-      if (!c.fecha || c.fecha < WA_EFE_EMPAREJA) return;
+      if (!c.fecha) { if (waEfeDia_(p.ts) >= WA_EFE_DESDE) { sinF.n++; sinF.bs = Math.round((sinF.bs + c.monto) * 100) / 100; } return; }
+      if (c.fecha < WA_EFE_EMPAREJA) return;
       var quien = c.recibio || String(p.vendedor || '').replace(/\s+/g, ' ').trim() || '(sin vendedor)', k = waEfeNorm_(quien);
       if (!nombres[k]) nombres[k] = quien;
       (cob[k] = cob[k] || []).push({ f:c.fecha, m:c.monto, cub:0, oc:String(p.oc || '').trim() });
@@ -3569,6 +3574,9 @@ function waEfePendiente_(lista, hoy) {
       var u = Math.min(resto, L[j].m - L[j].cub); if (u <= 0) continue;
       L[j].cub = Math.round((L[j].cub + u) * 100) / 100; resto = Math.round((resto - u) * 100) / 100;
     }
+    /* Lo que sobró de un retiro de noviembre (no había nada cobrado antes de ese día): se dice en `probarEfectivo` (un cobro anotado con
+       una fecha de más adelante, o un retiro a nombre de otra persona). */
+    if (resto > 0.005 && r.f >= WA_EFE_DESDE) sobra.push({ q:r.q, nombre:r.nombre, f:r.f, bs:resto });
   });
   var lim = waMasDias_(hoy, -WA_EFE_DIAS), out = [];
   for (var k in cob) {
@@ -3582,7 +3590,9 @@ function waEfePendiente_(lista, hoy) {
     });
     if (o.n) out.push(o);
   }
-  return out.sort(function (a, b) { return b.bs - a.bs || (a.nombre < b.nombre ? -1 : 1); });
+  out.sort(function (a, b) { return b.bs - a.bs || (a.nombre < b.nombre ? -1 : 1); });
+  out.sinFecha = sinF; out.sobra = sobra;
+  return out;
 }
 /** Los datos de `efectivo_sin_retirar`: el día y la hora, el total, de cuántas personas, quiénes. */
 function waEfeParams_(E, B) {
@@ -3591,7 +3601,8 @@ function waEfeParams_(E, B) {
     /* Corto, para que entren más nombres en los 250 de Meta: la OC de cada cobro está en el panel (Contabilidad → Cuadre). */
     return o.nombre + ' ' + waBs_(o.bs) + ' desde ' + String(o.desde).slice(8, 10) + '/' + String(o.desde).slice(5, 7) + (o.n > 1 ? ' (' + o.n + ' cobros)' : '');
   });
-  return [waDiaTxt_(B.hoy) + ', ' + String(B.txt).slice(6), waBs_(tot), E.length + ' persona' + (E.length === 1 ? '' : 's'), waListaCabe_(items.map(waParam_), ' · ')];
+  /* `B.txt` de `waBo_` = «dd/mm hh:mm»: la hora es lo que va después del espacio. */
+  return [waDiaTxt_(B.hoy) + ', ' + (String(B.txt).split(' ')[1] || ''), waBs_(tot), E.length + ' persona' + (E.length === 1 ? '' : 's'), waListaCabe_(items.map(waParam_), ' · ')];
 }
 /** ▶ Desde el editor: lo que diría AHORA el aviso del efectivo (no manda nada ni escribe). */
 function probarEfectivo() {
@@ -3599,6 +3610,9 @@ function probarEfectivo() {
   var lista = []; for (var i = 1; i < vals.length; i++) { try { lista.push(rowToRec_(vals[i])); } catch (e) {} }
   var E = waEfePendiente_(lista, B.hoy), c = waConfig_();
   L.push(E.length ? ('💵 Ahora el aviso diría: ' + waEfeParams_(E, B).join(' | ')) : '💵 Ahora no hay efectivo cobrado desde el ' + WA_EFE_DESDE + ' sin retiro de hace ' + WA_EFE_DIAS + ' días o más: el aviso no sale.');
+  if (E.sinFecha && E.sinFecha.n) L.push('⚠️ ' + E.sinFecha.n + ' cobro(s) en efectivo sin fecha (' + waBs_(E.sinFecha.bs) + '): no entran en el aviso. Corregilos en Contabilidad → ✏️ Corregir este pago.');
+  if (E.sobra && E.sobra.length) L.push('ℹ️ Retiros que no tienen efectivo cobrado antes de su día (un cobro anotado con otra fecha o un retiro a nombre de otra persona): ' +
+    E.sobra.map(function (x) { return (x.nombre || x.q) + ' ' + waBs_(x.bs) + ' (' + x.f.slice(8, 10) + '/' + x.f.slice(5, 7) + ')'; }).join(' · '));
   L.push(c.dueno.length ? ('Le llega a: ' + c.dueno.map(function (x) { return x.nombre; }).join(', ') + ', a las 9:00 y a las 18:00 (lunes a sábado).') : '⚠️ Falta la propiedad WA_DUENO (Eduardo:591…): el aviso no le llega a nadie.');
   if (typeof Logger !== 'undefined') Logger.log(L.join('\n'));
   return { lineas:L, pendiente:E };

@@ -133,6 +133,24 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('5e · el Excel lleva al FINAL «FACTURA / REMISIÓN» y su N° (FALTA cuando falta)', r.cab[0] === 'OBSERVACIONES' && r.cab[1] === 'FACTURA / REMISIÓN' && r.cab[2] === 'N° FACTURA / REMISIÓN' &&
       r.f1.join() === 'NOTA DE REMISIÓN,00451' && r.f2.join() === 'FACTURA,7788' && r.fm.join() === 'FALTA,', r);
 
+  // 6. Revisión de Fable: tipo sin N°, lo no guardado se olvida al cerrar, el N° tipeado sobrevive a un repintado
+  r = await ev(() => {
+    var o = {};
+    var p = findById('m1'); setDocVenta(p, 'F', ''); o.chipSinN = docVentaChip(p); o.falta = docVentaFalta(p); setDocVenta(p, '', '');
+    showContaModal('n2'); ctaDocTipo('n2', 'R'); ctaDocNum('n2', '9999');
+    showContaModal('n2');   // repinta la ficha (como al registrar un pago)
+    o.trasRepintar = { t: document.querySelector('#cta-doc button.btn-primary[data-v]') && document.querySelector('#cta-doc button.btn-primary[data-v]').getAttribute('data-v'), n: document.getElementById('cta-doc-num').value };
+    closeModal(); showContaModal('n2');
+    o.trasCerrar = { t: document.querySelector('#cta-doc button.btn-primary[data-v]') && document.querySelector('#cta-doc button.btn-primary[data-v]').getAttribute('data-v'), n: document.getElementById('cta-doc-num').value };
+    o.max = document.getElementById('cta-doc-num').getAttribute('maxlength');
+    closeModal();
+    return o;
+  });
+  chk('6a · con el tipo y SIN número el chip es ámbar («❓ Fact. sin N°»), no azul', /b-amber/.test(r.chipSinN) && /Fact\. sin N°/.test(r.chipSinN) && r.falta === true, r.chipSinN);
+  chk('6b · lo elegido y tipeado sin guardar sobrevive a un repintado de la ficha', r.trasRepintar.t === 'R' && r.trasRepintar.n === '9999', r.trasRepintar);
+  chk('6c · al cerrar la ficha se olvida: al abrirla de nuevo vuelve lo guardado (Factura 7788)', r.trasCerrar.t === 'F' && r.trasCerrar.n === '7788', r.trasCerrar);
+  chk('6d · el N° tiene tope de 40 letras en el campo', r.max === '40', r.max);
+
   chk('sin errores de JavaScript', errors.length === 0, errors);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');
   await browser.close();

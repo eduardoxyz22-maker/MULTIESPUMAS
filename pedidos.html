@@ -15669,7 +15669,9 @@ function exportConta(){
    · Un Excel: «Resumen» (una fila por vendedor: ventas, pactado, cobrado, por cobrar y el total) y UNA HOJA POR VENDEDOR con un
      renglón por recargo (una venta con dos fletes da dos renglones): ingreso, entrega, OC, nota, cliente, zona, monto, cobrado o por
      cobrar, día del cobro, método, banco, nota del pago, quién tiene el efectivo y si ya se entregó.
-   · Las cuentas son las de siempre (`enviosDe`, `envioYaCobrado`, `envioTotal`/`envioCobrado`/`envioPorCobrar`): nada aparte.
+   · Las cuentas son las de siempre: los totales de cada vendedor suman `envioTotal`/`envioCobrado`/`envioPorCobrar` de cada venta, y los
+     renglones salen de `enviosDe` + `envioYaCobrado` (la misma lectura). Ordenado por la fecha del corte de la tabla (`contaFechaBase`:
+     ingreso o entrega agendada), aunque la primera columna diga siempre el día del ingreso.
    Solo arma el archivo. `tests/test_recargos_vendedor.js`.
    ========================================================================== */
 function recargosDatos(list){
@@ -15679,12 +15681,8 @@ function recargosDatos(list){
     var nom=nombreCanonico(p.vendedor)||'(sin vendedor)', k=normNombre(nom)||'(sin vendedor)';
     if(!M[k]){ M[k]={ nombre:nom, ventas:0, pactado:0, cobrado:0, falta:0, filas:[] }; orden.push(k); }
     var o=M[k]; o.ventas++;
-    env.forEach(function(c){
-      var monto=r2(Number(c.monto)||0), ya=envioYaCobrado(c);
-      o.pactado=r2(o.pactado+monto);
-      if(ya) o.cobrado=r2(o.cobrado+monto); else o.falta=r2(o.falta+monto);
-      o.filas.push({ p:p, c:c, monto:monto, ya:ya });
-    });
+    o.pactado=r2(o.pactado+envioTotal(p)); o.cobrado=r2(o.cobrado+envioCobrado(p)); o.falta=r2(o.falta+envioPorCobrar(p));   // (06/11, Fable) las cuentas de siempre
+    env.forEach(function(c){ o.filas.push({ p:p, c:c, monto:r2(Number(c.monto)||0), ya:envioYaCobrado(c) }); });
   });
   orden.sort(function(a,b){ return M[b].pactado-M[a].pactado || M[a].nombre.localeCompare(M[b].nombre,'es'); });
   return orden.map(function(k){
@@ -15695,7 +15693,8 @@ function recargosDatos(list){
 }
 /* El nombre de una hoja de Excel: hasta 31 letras, sin []:*?/\ y sin repetir otra (Excel no abre un archivo con dos iguales). */
 function recargosHojaNombre(nom, usados){
-  var b=String(nom||'Vendedor').replace(/[\[\]:*?\/\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,31).trim()||'Vendedor', n=b, i=2;
+  var b=String(nom||'Vendedor').replace(/[\[\]:*?\/\\]/g,' ').replace(/^'+|'+$/g,'').replace(/\s+/g,' ').trim().slice(0,31).trim()||'Vendedor', n=b, i=2;
+  if(/^history$/i.test(b)) b=n='History (vendedor)';   // Excel tiene «History» reservado
   while(usados[n.toLowerCase()]){ var suf=' ('+(i++)+')'; n=b.slice(0,31-suf.length).trim()+suf; }
   usados[n.toLowerCase()]=1; return n;
 }
@@ -15729,7 +15728,7 @@ function exportRecargos(){
   });
   var bytes=buildXlsx(hojas);
   var modo=segVal('cta-mode')||'mes';
-  var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia') : modo==='mes' ? (document.getElementById('cta-mes').value||'mes') : 'todos';
+  var tag = modo==='dia' ? ((document.getElementById('cta-dia')||{}).value||'dia') : modo==='mes' ? ((document.getElementById('cta-mes')||{}).value||'mes') : 'todos';
   var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
   if(vSel) tag+='-'+sinTildes(vSel.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   var _qx=sinTildes(((document.getElementById('cta-search')||{}).value||'').trim().toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -21286,21 +21285,29 @@ function docVentaRequerida(p){ return !!p && !fueraDeConta(p) && !borradorDe(p.i
 function docVentaFalta(p){ return docVentaRequerida(p) && !(docVentaDe(p) && docNumDe(p)); }
 function docVentaChip(p){
   var d=docVentaDe(p), n=docNumDe(p);
+  /* (06/11, revisión de Fable) Lo que falta va SIEMPRE en ámbar, también con el tipo y sin el número (`setDocVenta` lo permite y una fila
+     tocada a mano en la planilla también): «Para hacer» la cuenta y la tabla no la puede pintar de azul. */
+  if(docVentaFalta(p)) return '<span class="badge b-amber" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Falta anotar la factura o la nota de remisión (en la ficha de la venta)">❓ '+(d ? ((d==='F'?'Fact.':'Rem.')+' sin N°') : 'falta fact./rem.')+'</span>';
   if(d) return '<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="'+(d==='F'?'Factura':'Nota de remisión')+(n?(' N° '+esc(n)):' sin número')+'">'+(d==='F'?'🧾 Fact. ':'📄 Rem. ')+(n?esc(n):'s/n°')+'</span>';
-  return docVentaFalta(p) ? '<span class="badge b-amber" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Falta anotar la factura o la nota de remisión (en la ficha de la venta)">❓ falta fact./rem.</span>' : '';
+  return '';
 }
 /* La fila de la ficha de Contabilidad: elegir y anotar el N°. */
-var CTA_DOC={ id:'', t:'' };
+/* Lo elegido o tipeado y todavía sin guardar (sobrevive a un repintado de la ficha, como un pago a medio cargar, §4fy). `closeModal` lo
+   olvida: si no, al volver a abrir la venta otro día aparecía preseleccionado lo que no se guardó. */
+var CTA_DOC={ id:'', t:'', n:null };
+function ctaDocOlvidar(){ CTA_DOC={ id:'', t:'', n:null }; }
 function ctaDocHtml(p){
-  var d=(CTA_DOC.id===p.id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), n=docNumDe(p), falta=docVentaFalta(p);
+  var mio=(CTA_DOC.id===p.id), d=(mio && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), n=(mio && CTA_DOC.n!=null) ? CTA_DOC.n : docNumDe(p), falta=docVentaFalta(p);
   var b=function(v){ return '<button type="button" class="btn btn-sm'+(d===v?' btn-primary':'')+'" style="width:auto;'+(d===v?'':'background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" data-v="'+v+'" onclick="ctaDocTipo(\''+esc(p.id)+'\',\''+v+'\')">'+DOCV_TXT[v]+'</button>'; };
   return '<div id="cta-doc" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+b('F')+b('R')+
-    '<input type="text" id="cta-doc-num" value="'+esc(n)+'" placeholder="N°" autocomplete="off" style="width:110px" onkeydown="if(event.key===\'Enter\'){ctaDocGuardar(\''+esc(p.id)+'\');}">'+
+    '<input type="text" id="cta-doc-num" value="'+esc(n)+'" placeholder="N°" maxlength="40" autocomplete="off" style="width:110px" oninput="ctaDocNum(\''+esc(p.id)+'\', this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ctaDocGuardar(\''+esc(p.id)+'\');}">'+
     '<button type="button" class="btn btn-primary btn-sm" style="width:auto" onclick="ctaDocGuardar(\''+esc(p.id)+'\')">💾 Guardar</button></div>'+
     (falta ? '<div style="font-size:.74rem;color:var(--amber-dk,#92400e);margin-top:4px">❗ Obligatorio: anotá si va con factura o con nota de remisión y su número.</div>' : '');
 }
+function ctaDocNum(id, v){ if(CTA_DOC.id!==id) CTA_DOC={ id:id, t:'', n:null }; CTA_DOC.n=String(v==null?'':v); }
 function ctaDocTipo(id, v){
-  CTA_DOC={ id:id, t:v };
+  if(CTA_DOC.id!==id) CTA_DOC={ id:id, t:'', n:null };
+  CTA_DOC.t=v;
   var w=document.getElementById('cta-doc'); if(!w) return;
   [].forEach.call(w.querySelectorAll('button[data-v]'), function(x){ var on=x.getAttribute('data-v')===v; x.classList.toggle('btn-primary', on);
     x.style.background=on?'':'#fff'; x.style.border=on?'':'1px solid var(--gray-md)'; x.style.color=on?'':'var(--text)'; });
@@ -21308,13 +21315,13 @@ function ctaDocTipo(id, v){
 }
 function ctaDocGuardar(id){
   var p=findById(id); if(!p) return;
-  var t=(CTA_DOC.id===id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), e=document.getElementById('cta-doc-num'), num=String((e&&e.value)||'').replace(/\s+/g,' ').trim();
+  var t=(CTA_DOC.id===id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), e=document.getElementById('cta-doc-num'), num=String((e&&e.value)||'').replace(/\s+/g,' ').trim().slice(0,40);
   if(t!=='F' && t!=='R'){ toast('🧾 Elegí si la venta va con FACTURA o con NOTA DE REMISIÓN.','err'); return; }
   if(!num){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° de la '+(t==='F'?'factura':'nota de remisión')+'.','err'); return; }
   if(!(p.productos||[]).length){ toast('Esta venta no tiene productos donde guardarlo.','err'); return; }
-  if(docVentaDe(p)===t && docNumDe(p)===num){ toast('Ya estaba así ✓','ok'); return; }
+  if(docVentaDe(p)===t && docNumDe(p)===num){ ctaDocOlvidar(); toast('Ya estaba así ✓','ok'); return; }
   try{ ctaPagoRecordar(); }catch(x){}   // §4fy: guardar esto con un pago a medio cargar no se lo borra
-  setDocVenta(p, t, num); CTA_DOC={ id:'', t:'' };
+  setDocVenta(p, t, num); ctaDocOlvidar();
   persistPedido(p);
   toast('🧾 '+(t==='F'?'Factura':'Nota de remisión')+' N° '+num+' anotada ✓','ok');
   showContaModal(id);
@@ -42193,6 +42200,7 @@ function openModal(html, ancha){
 }
 function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
+  try{ ctaDocOlvidar(); }catch(e){}   // 🧾 (06/11) la factura o remisión elegida y sin guardar no queda para la próxima vez
   ov.classList.remove('on');
   if(document.body.classList.contains('ficha-costado')){ document.body.classList.remove('ficha-costado'); [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); }); }
   try{ [].forEach.call(ov.querySelectorAll('video'), function(x){ x.pause(); }); }catch(e){}   // 🎬 (§4mv) el video no sigue andando escondido
