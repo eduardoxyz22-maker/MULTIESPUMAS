@@ -2629,7 +2629,7 @@ para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramienta
   Administración → casco; en ATC/Bot/Chofer, el de quien eligió ser. `test_bloki` §2.
 - `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29), `tests/test_mejoras_5_7_9.js` (52). Bitácora §4ni.
 
-## 👥 Los usuarios de Kommo con sucursal y tilde (06/11; en la rama, espera «publica»)
+## 👥 Los usuarios de Kommo con sucursal y tilde (06/11; PUBLICADO 06/11, `d401718`: Carola meta 35, equipo 179)
 Desde noviembre Kommo nombra a cada usuario «Nombre - Sucursal» (Isabel Robledo - Central, Jonathan Monje - Mia Plaza, Carola Chávez - Tienda
 Banzer, Fabián Godoy - Central, Andrea Orias - Tienda Banzer): la sucursal del dashboard sale de ese sufijo, no de `VENDOR_CFG`. Carola quedó con
 tilde y `VENDOR_CFG.get` no la encontraba → meta de vendedora nueva (8 / Bs 20.000 en vez de 35 / 135.000; meta del equipo 152 en vez de 179).
@@ -2642,6 +2642,16 @@ atienden domingos»*, *«los domingos es de 10 a 16:00 banzer y mia plaza»*): M
 del template lo dice. `test_generar_integridad` §9-10 (31).
 ⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
 suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
+
+## 📧 Pedidos de Multicenter y de Copacaba que llegan por correo (06/11; dueño: *«cuando entren pedidos de multi center, juan carlos arce los
+cargues en el panel»* y *«SOLO CARGA los actuales de esta semana»*)
+El Gmail conectado es **mithoseg@gmail.com**. Multicenter manda desde `vvargas@multicenter.com` («PEDIDO MULTICENTER - MULTIESPUMAS», PDF «OC <n> …»;
+si es a domicilio, quién recibe, celular, dirección y fecha van en el correo); Copacaba, Juan Carlos Arce desde `jcarlosarce78@gmail.com` («PEDIDO
+ARCE-JOSE CARLOS COPACABA», PDF con código, cantidad y precio). El PDF se abre con `get_message` RAW (el resultado grande queda en un archivo) + el
+módulo `email` + `pdftotext`. Se cargan como **Eduardo Añez**, igual que los suyos: Multicenter con cliente «MULTICENTER» (así cuenta como demanda,
+§4gm), la OC en «nota» y el precio de la OC; Copacaba a «TRANSPORTADORA ZONA BIMODAL», sin nota. OC y N° del día como `nextOcMes`/`nextNroDia`.
+Antes de cargar: que no esté la misma OC en «nota». El 06/11 se cargaron 11-048 (OC 33278) y 11-049 (Copacaba Potosí); la OC 33170 del 29/10 NO
+(«solo los de esta semana»). Nada automático todavía: espera que el dueño decida cómo.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

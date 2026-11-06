@@ -17302,6 +17302,17 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   (`SCHED_A` era lun-sáb: el domingo contaba como cerrado): ahora lun-dom 9-21, y Banzer el domingo 9-21 (lun-sáb sigue 8:30-20:30). Central,
   Buenos Aires y Ventura cierran el domingo. Textos del template al día. `test_generar_integridad` 10g-10i (31).
   Y enseguida: *«los domingos es de 10 a 16:00 banzer y mia plaza»* → las dos el domingo 10:00-16:00 (no 9-21). 10h-10i al día.
+  **PUBLICADO 06/11 (dueño: «publica»), `main` = `d401718`** (rebasado sobre el commit del bot `fc1b78a`). La corrida del generador salió verde
+  (16:13): Carola meta 35 / Bs 135.000, «Meta del mes: 179 cierres», sin 🥉 con 0. Los tiempos de respuesta cambiaron con los horarios nuevos
+  (Carola 1.2 h → 1.8 h, Fabián 54 min → 1.9 h, Andrea 18 → 37 min: Central y Banzer abren más temprano y cuentan más minutos).
+- 📧 **06/11 — los pedidos que llegan por correo** (dueño: *«acabo de conectar mi gmail… cuando entren pedidos de multi center, juan carlos arce
+  los cargues en el panel»* y *«SOLO CARGA los actuales de esta semana»*). Gmail = mithoseg@gmail.com. En 30 días: Multicenter OC 33170 (29/10),
+  33203 (03/11, ya cargada por Eduardo como 11-009) y 33278 (04/11); Copacaba Oruro (23/10, ya 10-289) y Copacaba Potosí OP-01-11-26 (06/11).
+  Cargados por mí (POST `save` con `av:1`, como el panel; vendedor Eduardo Añez; OC y N° del día con la regla de `nextOcMes`/`nextNroDia`):
+  **11-048** = OC 33278, 1 × CH1220 Titanio Ice 140x190 Bs 4.275, a domicilio (Ana María Pereda, Las Palmas, zona SUR), lunes 09/11 PM, N° 10;
+  **11-049** = Copacaba Potosí, 5 × CH1301 (el PDF dice «CH301») Bs 960 + 5 × CH1311 Bs 1.230 = Bs 10.950, transportadora Bimodal, martes 10/11
+  AM (la fecha la puse con el plazo de fábrica: guardado a las 16:18, antes del corte), N° 2. Releídos: uno de cada uno. La OC 33170 no
+  (semana pasada). El PDF: `get_message` RAW → el resultado grande queda en un archivo → `email` + `pdftotext`.
 - 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
   planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta
   en el panel en noviembre tampoco → 0 de verdad. Maria: pasó 6 leads a Compradores el 03/11 entre 17:46 y 19:07, pero los 6 ya estaban cargados en
