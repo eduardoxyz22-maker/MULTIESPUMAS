@@ -512,5 +512,28 @@ console.log('\n── 108. La ubicación del cliente por WhatsApp: a su pedido m
   chk('…y sin la v2 tampoco: la vieja con 8', c4.map(x => x.pl + ':' + x.p.length).join() === 'confirmacion_pedido_ubic:9,confirmacion_pedido_v2:9,confirmacion_pedido:8', c4.map(x => x.pl + ':' + x.p.length));
 }
 
+// ══ §4ok-E. probarAntesDeImplementar y estadoBotWhatsApp ═══════════════════════════════════════
+console.log('\n── §4ok-E · probarAntesDeImplementar (al final) y estadoBotWhatsApp ──');
+{
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  S.cargar([ped({ id: 'e1', celular: '#ERROR!' }), ped({ id: 'e2', celular: '#ERROR!' })]);
+  let L = S.ctx.probarAntesDeImplementar().lineas;
+  chk('sin WA_DUENO: «el vigía de leads no corre» y el reclamo va solo a logística', L.some(l => /^✅ El vigía de leads no corre: falta la propiedad WA_DUENO.*solo a logística \(Ernesto, Alba\)/.test(l)), L.filter(l => /WA_DUENO|vigía/.test(l)));
+  chk('cuenta los celulares «#ERROR!» que ya quedaron (hay que escribirlos de nuevo)', L.some(l => /^⚠️ 2 pedido\(s\) tienen el celular «#ERROR!»/.test(l)));
+  chk('…todavía no hay reclamo a la fábrica', L.some(l => /Todavía no hay reclamo a la fábrica/.test(l)));
+  chk('lo del jueves no frena', !L.some(l => /^❌/.test(l) && /vigía|reclamo|#ERROR|WA_DUENO|§4ok-E/.test(l)));
+  const S2 = servidor(Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007, Malo:123', KOMMO_TOKEN: 'k', WA_LEADS: JSON.stringify({ ts: RELOJ.ms - 600000, n: 1, n7: 20, alerta: RELOJ.ms }) }));
+  S2.cargar([{ id: '__reclamo_fab__', fecha: '', cliente: 'x', productos: [], observaciones: JSON.stringify({ v: 1, f: '2026-11-05', atr: ['A', 'B'], cero: ['C'] }), rev: 1, ts: 1 }]);
+  L = S2.ctx.probarAntesDeImplementar().lineas;
+  chk('con WA_DUENO: a quién, y el último conteo del vigía (en alerta)', L.some(l => /^✅ Al dueño \(Eduardo\).*1 lead\(s\) en 3 h contra 20.*en alerta/.test(l)), L.filter(l => /dueño/.test(l)));
+  chk('…un número de WA_DUENO que no entiende: ⚠️', L.some(l => /^⚠️ En WA_DUENO hay número\(s\) que no entiendo: Malo/.test(l)));
+  chk('…y el reclamo de hoy que dejó el panel', L.some(l => /reclamo a la fábrica que dejó el panel es del jueves 05\/11 \(2 atrasado\(s\), 1 en 0/.test(l)));
+  const e = S2.ctx.estadoBotWhatsApp();
+  chk('estadoBotWhatsApp: dueño, vigía y pagos en cola', JSON.stringify(e.dueno) === '["Eduardo"]' && e.leads && e.leads.n7 === 20 && e.pagosEnCola === 0, e);
+  const src = fs.readFileSync(GS, 'utf8');
+  chk('la cabecera del bot documenta WA_DUENO (y las que maneja el script solo)', /WA_DUENO\s+= \(opcional, §4ok-102\/105/.test(src) && /WA_PAGO_COLA y WA_PAGOS/.test(src) && /CEL_TEXTO/.test(src));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

@@ -525,6 +525,10 @@ function probarAntesDeImplementar() {
     }
   } catch (e) { ojo('No pude mirar el respaldo de la planilla: ' + motivo(e)); }
 
+  /* 16. §4ok-E (2026-11-05-a) Lo nuevo del bot del jueves: a quién va lo del dueño, el vigía de leads, el reclamo a la fábrica y los
+         celulares que ya quedaron «#ERROR!» (eso no se arregla solo). Solo lee; informa, no frena. */
+  try { probarBotE_(bien, ojo, horaBolivia); } catch (e) { ojo('No pude mirar lo nuevo del bot (§4ok-E): ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
@@ -2985,6 +2989,11 @@ function purgeBackups_(folder, keep) {
  *      WA_PRUEBA    = (opcional) un número: TODO lo manda ahí en vez de al cliente o a logística. Para probar.
  *      WA_ACTIVO    = 1   (0 o vacío = apagado: no anota ni manda nada)
  *      WA_IDIOMA    = (opcional) el idioma de las plantillas en Meta; por defecto «es»
+ *      WA_DUENO     = (opcional, §4ok-102/105, 2026-11-05-a) Eduardo:591XXXXXXXX — al dueño: el vigía de leads (alerta_leads) y, junto
+ *                     con los de WA_AVISOS/WA_PEDIR_HOY, el reclamo a la fábrica de las 10:00 (reclamo_fabrica). Sin ella, el vigía no
+ *                     corre y el reclamo va solo a logística.
+ *   Las maneja el script solo (no se tocan): WA_PAGO_COLA y WA_PAGOS (§4ok-100, los pagos nuevos y los ya avisados), WA_LEADS (§4ok-102,
+ *   lo último que contó el vigía, sin nombres), CEL_TEXTO (§4ok-95, la columna «Celular» ya quedó con formato de texto).
  * y después ▶ Ejecutar «instalarDisparadores» una vez (deja `waRepaso` cada 5 minutos). `estadoBotWhatsApp` dice cómo anda.
  * ========================================================================== */
 var WA_ESPERA_MS = 2 * 60000;           // cuánto espera un pedido recién guardado antes de salir
@@ -3548,6 +3557,31 @@ function waUbicResponder_(sh, de, ub, nom) {
   if (cfg.prueba) de = cfg.prueba;
   var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:txt, preview_url:false } });
   sh.appendRow([waBo_(Date.now()).txt, ub.id || '', ub.oc || '', 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now()]);
+}
+
+/* §4ok-E (2026-11-05-a) La parte del bot del jueves en `probarAntesDeImplementar` (al final). Solo lee. */
+function probarBotE_(bien, ojo, horaBolivia) {
+  if (typeof waLeadsVigia_ !== 'function' || typeof waReclamoLeer_ !== 'function') { ojo('Este código no tiene lo del bot del 05/11 (§4ok-E): ¿es un pegado viejo?'); return; }
+  var c = waConfig_();
+  if (c.malDu.length) ojo('En WA_DUENO hay número(s) que no entiendo: ' + c.malDu.join(', ') + '. Va así: Eduardo:59170000000');
+  if (!c.dueno.length) bien('El vigía de leads no corre: falta la propiedad WA_DUENO (Eduardo:591…). El reclamo a la fábrica de las 10:00 va' + (c.avisosLog.length ? ' solo a logística (' + c.avisosLog.map(function (L) { return L.nombre; }).join(', ') + ').' : ' a nadie (faltan WA_DUENO y WA_PEDIR_HOY).'));
+  else {
+    var st = waJsonProp_('WA_LEADS', null);
+    bien('Al dueño (' + c.dueno.map(function (L) { return L.nombre; }).join(', ') + '): el vigía de leads cada hora de 8 a 22 y el reclamo a la fábrica de las 10:00.' +
+         (st && st.ts ? ' Último conteo: ' + horaBolivia(Number(st.ts)) + ' · ' + (st.err ? st.err : (st.n + ' lead(s) en 3 h contra ' + st.n7 + ' hace una semana' + (st.alerta ? ' · ⚠️ en alerta' : ''))) : ''));
+    if (!kProp_('KOMMO_TOKEN')) ojo('WA_DUENO está puesta pero falta KOMMO_TOKEN: el vigía de leads no puede contar.');
+  }
+  /* Sin `readAll` (pasa por getSheet, que puede escribir los encabezados): probar no escribe nada. */
+  var shP = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME), vals = shP ? shP.getDataRange().getValues() : [], rf = null, mal = 0;
+  for (var i = 1; i < vals.length; i++) {
+    if (!vals[i][0]) continue;
+    if (String(vals[i][0]) === WA_RECLAMO_ID) rf = rowToRec_(vals[i]);
+    if (String(vals[i][HEADERS.indexOf('Celular')] == null ? '' : vals[i][HEADERS.indexOf('Celular')]).trim() === '#ERROR!') mal++;
+  }
+  var R = waReclamoLeer_(rf);
+  bien(R && R.f ? ('El reclamo a la fábrica que dejó el panel es del ' + waDiaTxt_(R.f) + ' (' + R.atr.length + ' atrasado(s), ' + R.cero.length + ' en 0 con ventas esperando).')
+                : 'Todavía no hay reclamo a la fábrica en la planilla: lo deja el panel (publicado) la próxima vez que se suban los Excel.');
+  if (mal) ojo(mal + ' pedido(s) tienen el celular «#ERROR!» (Google lo tomó como fórmula antes de esta versión): el número se perdió, hay que escribirlo de nuevo en el pedido. Desde esta versión no vuelve a pasar.');
 }
 
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
@@ -4131,7 +4165,8 @@ function estadoBotWhatsApp() {
             logisticaMal:c.mal, pedirHoy:c.pedirHoy.map(function (L) { return L.nombre; }), pedirHoyMal:c.malPh, prueba:!!c.prueba, enCola:waColaLeer_().length, reintentos:waSalidaLeer_().length,
             ultimo:waJsonProp_('WA_ULTIMO', null), hecho:waJsonProp_('WA_HECHO', {}), repasoInstalado:kTriggersDe_('waRepaso').length > 0,
             metaAvisa:!!prop_('WA_HOOK_KEY'), metaVerifico:waJsonProp_('WA_HOOK_VERIF', null), meta:waJsonProp_('WA_META', null),
-            metaRechazados:waJsonProp_('WA_HOOK_MAL', null) };   // (2026-10-12-b) avisos con otra clave en la dirección   // (2026-10-12-a)
+            metaRechazados:waJsonProp_('WA_HOOK_MAL', null),
+            dueno:c.dueno.map(function (L) { return L.nombre; }), duenoMal:c.malDu, leads:waJsonProp_('WA_LEADS', null), pagosEnCola:waPagoColaLeer_().length };   // §4ok-E   // (2026-10-12-b) avisos con otra clave en la dirección   // (2026-10-12-a)
   try { s.claude = iaEstado_(); } catch (e) {}   // 🧠 (2026-10-14-b)
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
   return s;
