@@ -284,9 +284,9 @@ p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 
 BOLIVIA_OFFSET = -4 * 3600
 # Ventanas por día de semana (0=Lun … 6=Dom). Día ausente = cerrado (domingo).
 # Formato de ventana: (h_ini, m_ini, h_fin, m_fin).
-SCHED_A = {  # Mia Plaza (Mirian y Jonathan): Lun–Dom 9–21 corrido (06/11, dueño: «solo banzer y mia plaza atienden domingos»)
+SCHED_A = {  # Mia Plaza (Mirian y Jonathan): Lun–Sáb 9–21 corrido; Dom 10–16 (06/11, dueño: «los domingos es de 10 a 16:00 banzer y mia plaza»)
     0: [(9, 0, 21, 0)], 1: [(9, 0, 21, 0)], 2: [(9, 0, 21, 0)],
-    3: [(9, 0, 21, 0)], 4: [(9, 0, 21, 0)], 5: [(9, 0, 21, 0)], 6: [(9, 0, 21, 0)],
+    3: [(9, 0, 21, 0)], 4: [(9, 0, 21, 0)], 5: [(9, 0, 21, 0)], 6: [(10, 0, 16, 0)],
 }
 SCHED_B = {  # Buenos Aires: Lun–Vie 9–13 y 15–19 (pausa mediodía); Sáb 9–16 corrido (era también el de Central hasta el 06/11)
     0: [(9, 0, 13, 0), (15, 0, 19, 0)], 1: [(9, 0, 13, 0), (15, 0, 19, 0)],
@@ -295,10 +295,10 @@ SCHED_B = {  # Buenos Aires: Lun–Vie 9–13 y 15–19 (pausa mediodía); Sáb 
 }
 
 # (06/11, dueño) «el horario de central es de 8 a 20:00, banzer de 8:30 a 20:30». No dijo nada del sábado: va igual, lun–sáb
-# corrido. «Solo banzer y mia plaza atienden domingos… deja banzer los domingos como está en mia plaza»: Banzer el domingo 9–21.
+# corrido. «Solo banzer y mia plaza atienden domingos» y «los domingos es de 10 a 16:00 banzer y mia plaza».
 # Central (y Ventura Mall, que todavía no abrió: «de momento usa el horario de central») cierran el domingo.
 SCHED_CENTRAL = {d: [(8, 0, 20, 0)] for d in range(6)}
-SCHED_BANZER  = {d: ([(8, 30, 20, 30)] if d < 6 else [(9, 0, 21, 0)]) for d in range(7)}
+SCHED_BANZER  = {d: ([(8, 30, 20, 30)] if d < 6 else [(10, 0, 16, 0)]) for d in range(7)}
 SCHED_POR_SUC = {"Mia Plaza": SCHED_A, "Central": SCHED_CENTRAL, "Tienda Banzer": SCHED_BANZER,
                  "Buenos Aires": SCHED_B, "Ventura Mall": SCHED_CENTRAL}
 # nombre (sin tildes) → la sucursal que dice Kommo después del guion («Isabel Robledo - Central»); lo llena main() con /users.

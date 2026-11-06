@@ -2638,7 +2638,7 @@ tilde y `VENDOR_CFG.get` no la encontraba → meta de vendedora nueva (8 / Bs 20
 a 20:00, banzer de 8:30 a 20:30»*, Fabián en Central y *«cuando abramos [Ventura] de momento usa el horario de central»*): `sched_for` lee la sucursal
 de Kommo (`SUC_DE_USUARIO`, lo llena `main` con /users) o la de `VENDOR_CFG`, y `SCHED_POR_SUC` (Mia Plaza 9-21, Central 8-20, Tienda Banzer
 8:30-20:30, Buenos Aires el de siempre, Ventura Mall = Central), lun-sáb (el sábado no lo dijo). **Domingo** (dueño: *«solo banzer y mia plaza
-atienden domingos… deja banzer los domingos como está en mia plaza»*): Mia Plaza y Banzer 9-21; Central, Buenos Aires y Ventura cerrados. El texto «Ventana por sucursal»
+atienden domingos»*, *«los domingos es de 10 a 16:00 banzer y mia plaza»*): Mia Plaza y Banzer 10-16; Central, Buenos Aires y Ventura cerrados. El texto «Ventana por sucursal»
 del template lo dice. `test_generar_integridad` §9-10 (31).
 ⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
 suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
