@@ -70,6 +70,8 @@ class Falla(Exception):
     pass
 SIN_CONTRATO = False
 
+NOMBRE_ANA = "Ana Prueba - Central"   # el caso 9 la cambia por «Ána Prúeba» (con tildes), como pasó con Carola en Kommo
+
 def fabricar_urlopen(fallar=None):
     """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None."""
     def urlopen(req, timeout=None):
@@ -90,7 +92,7 @@ def fabricar_urlopen(fallar=None):
             body = emb("pipelines", [{"id": 9911, "name": "Ventas", "is_main": True, "_embedded": {"statuses": [
                 {"id": ST_NUEVA, "name": "Nueva consulta"}, {"id": ST_COMPRA, "name": "Compradores"}]}}])
         elif path == "/users":
-            body = emb("users", [{"id": ANA, "name": "Ana Prueba - Central"}, {"id": BETO, "name": "Beto Prueba - Central"}])
+            body = emb("users", [{"id": ANA, "name": NOMBRE_ANA}, {"id": BETO, "name": "Beto Prueba - Central"}])
         elif path == "/leads/custom_fields":
             cfs = [{"id": CANAL, "name": "Canal", "type": "select", "enums": [{"id": 1, "value": "Facebook"}]}]
             if not SIN_CONTRATO: cfs.append({"id": CONTRATO, "name": "Fecha contrato", "type": "date"})
@@ -203,6 +205,55 @@ if pd:
     chk("8b. CRM-07: la venta de las 23:59:59 del último día es de este mes (3 cierres: 1.000 + 500 + 700)", pd["global"]["cierres"] == 3 and pd["global"]["cerrado"] == 2200, pd["global"])
 else:
     chk("8. (el panel con las ventas de borde no se escribió)", False, txt[-300:])
+
+# ── 9 · (06/11) la vendedora con tilde en Kommo sigue siendo la de VENDOR_CFG ─────────────────────────
+# En noviembre Kommo pasó a «Carola Chávez - Tienda Banzer» y VENDOR_CFG dice «Carola Chavez»: no se la encontraba y salía con
+# la meta de una vendedora nueva (8 cierres / Bs 20.000 en vez de 35 / Bs 135.000).
+G.VENDOR_CFG["Ana Prueba"] = dict(ini="AP", color="#123456", suc="Mia Plaza", metaCierres=35, metaMonto=135000)
+NOMBRE_ANA = "Ána Prúeba - Central"
+salio, pd, txt, archivos = correr()
+NOMBRE_ANA = "Ana Prueba - Central"
+del G.VENDOR_CFG["Ana Prueba"]
+if pd:
+    ana = {t["name"]: t for t in pd["team"]}.get("Ána Prúeba", {})
+    chk("9a. «Ána Prúeba» (con tildes en Kommo) lleva la meta de «Ana Prueba» de VENDOR_CFG: 35 cierres / Bs 135.000 (antes 8 / 20.000)",
+        ana.get("metaCierres") == 35 and ana.get("metaMonto") == 135000, {k: ana.get(k) for k in ("metaCierres", "metaMonto", "color")})
+    chk("9b. …y su color y sus iniciales", ana.get("color") == "#123456" and ana.get("ini") == "AP", (ana.get("color"), ana.get("ini")))
+    chk("9c. la sucursal sigue siendo la que dice Kommo después del guion (Central), no la de VENDOR_CFG", ana.get("suc") == "Central", ana.get("suc"))
+    lin = [l for l in (pd.get("wsp") or "").split("\n") if "Beto" in l]
+    chk("9d. en el resumen de WhatsApp, Beto (0 cierres) no lleva medalla", lin and lin[0].startswith("•"), lin)
+else:
+    chk("9. (el panel con la vendedora con tilde no se escribió)", False, txt[-300:])
+
+# ── 10 · (06/11, dueño) el horario para medir la respuesta va por la SUCURSAL que dice Kommo ─────────
+# «isabel ahora esta en central · el horario de central es de 8 a 20:00 · banzer de 8:30 a 20:30 · jonathan en mia plaza · fabian
+# esta en central pero se ira al ventura… de momento usa el horario de central».
+import datetime as _dt
+salio, pd, txt, archivos = correr()
+chk("10a. al leer los usuarios de Kommo se anota la sucursal de cada uno (Ana Prueba - Central)",
+    getattr(G, "SUC_DE_USUARIO", {}).get("ana prueba") == "Central", getattr(G, "SUC_DE_USUARIO", None))
+_BO = _dt.timezone(_dt.timedelta(hours=-4))
+def _ts(h, m=0, dia=9):   # el lunes 09/11/2026 (sábado = 14), en hora de Bolivia
+    return int(_dt.datetime(2026, 11, dia, h, m, tzinfo=_BO).timestamp())
+if hasattr(G, "SUC_DE_USUARIO"):
+    _antes = dict(G.SUC_DE_USUARIO)
+    G.SUC_DE_USUARIO.clear()
+    G.SUC_DE_USUARIO.update({"isabel robledo": "Central", "carola chavez": "Tienda Banzer", "jonathan monje": "Mia Plaza",
+                             "fabian godoy": "Ventura Mall", "maria flores": "Buenos Aires"})
+    fuera = lambda nombre, h, m=0, dia=9: G.off_hours(_ts(h, m, dia), G.sched_for(nombre))
+    chk("10b. Isabel (Central): un lead del lunes a las 8:15 está EN horario (antes la medían con Mia Plaza, que abre a las 9)",
+        fuera("Isabel Robledo", 8, 15) is False and fuera("Isabel Robledo", 19, 59) is False and fuera("Isabel Robledo", 20, 5) is True)
+    chk("10c. Carola Chávez (Tienda Banzer): 8:30 a 20:30 — 8:20 fuera, 8:40 y 20:20 adentro, 20:40 fuera",
+        fuera("Carola Chávez", 8, 20) is True and fuera("Carola Chávez", 8, 40) is False and fuera("Carola Chávez", 20, 20) is False and fuera("Carola Chávez", 20, 40) is True)
+    chk("10d. Jonathan (Mia Plaza): 9 a 21 — 8:30 fuera, 20:30 adentro", fuera("Jonathan Monje", 8, 30) is True and fuera("Jonathan Monje", 20, 30) is False)
+    chk("10e. Fabián en Ventura Mall usa el horario de Central (8 a 20)", fuera("Fabián Godoy", 8, 15) is False and fuera("Fabián Godoy", 20, 5) is True)
+    chk("10f. Maria (Buenos Aires) sigue con el de siempre: lun-vie 9 a 19, sábado 9 a 16", fuera("Maria Flores", 8, 30) is True and fuera("Maria Flores", 18, 30) is False and fuera("Maria Flores", 17, 0, 14) is True)
+    chk("10g. el domingo cierran Central, Buenos Aires y Ventura Mall", all(fuera(n, 12, 0, 15) is True for n in ("Isabel Robledo", "Maria Flores", "Fabián Godoy")))
+    chk("10h. «los domingos es de 10 a 16:00 banzer y mia plaza»: Mia Plaza el domingo 10 a 16 (9:45 y 16:10 fuera, 12:00 y 15:50 adentro)",
+        fuera("Jonathan Monje", 9, 45, 15) is True and fuera("Jonathan Monje", 12, 0, 15) is False and fuera("Jonathan Monje", 15, 50, 15) is False and fuera("Jonathan Monje", 16, 10, 15) is True)
+    chk("10i. …y Banzer igual (10:30 adentro, 16:30 fuera); el lunes sigue 8:30 a 20:30 y Mia Plaza el lunes 9 a 21",
+        fuera("Carola Chávez", 10, 30, 15) is False and fuera("Carola Chávez", 16, 30, 15) is True and fuera("Carola Chávez", 20, 20) is False and fuera("Jonathan Monje", 20, 30) is False)
+    G.SUC_DE_USUARIO.clear(); G.SUC_DE_USUARIO.update(_antes)
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())

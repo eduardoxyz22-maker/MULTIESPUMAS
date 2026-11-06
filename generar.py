@@ -19,7 +19,7 @@ Requisitos: solo librería estándar de Python 3. El token de Kommo se lee de la
 variable de entorno KOMMO_TOKEN (NUNCA se escribe en el código ni en el HTML).
 """
 
-import os, sys, json, time, re, argparse, calendar, datetime, shutil
+import os, sys, json, time, re, argparse, calendar, datetime, shutil, unicodedata
 from collections import defaultdict
 from urllib import request as _rq, parse as _ps, error as _er
 
@@ -53,12 +53,30 @@ MESES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
 # Identidad por vendedora (color, iniciales, sucursal, metas). Si entra una
 # vendedora nueva no listada aquí, se le asignan valores por defecto seguros.
 VENDOR_CFG = {
-    "Isabel Robledo": dict(ini="IR", color="#00B5AD", suc="Mia Plaza",    metaCierres=45, metaMonto=120000),
+    "Isabel Robledo": dict(ini="IR", color="#00B5AD", suc="Central",      metaCierres=45, metaMonto=120000),   # (06/11) ahora en Central
     "Maria Flores":   dict(ini="MF", color="#2E6FE0", suc="Buenos Aires", metaCierres=40, metaMonto=105000),
     "Mirian Salazar": dict(ini="MS", color="#7A5AF0", suc="Mia Plaza",    metaCierres=35, metaMonto=120000),
     "Carola Chavez":  dict(ini="CC", color="#D98300", suc="Central",      metaCierres=35, metaMonto=135000),
-    "Jonathan Monje": dict(ini="JM", color="#159A57", suc="Central",      metaCierres=8,  metaMonto=105000),
+    "Jonathan Monje": dict(ini="JM", color="#159A57", suc="Mia Plaza",    metaCierres=8,  metaMonto=105000),   # (06/11) ahora en Mia Plaza
 }
+def _norm_vend(s):
+    """El nombre sin tildes, en minúscula y con un solo espacio: «Carola Chávez» = «Carola Chavez»."""
+    s = unicodedata.normalize("NFD", s or "")
+    return " ".join("".join(c for c in s if unicodedata.category(c) != "Mn").lower().split())
+
+def vendor_cfg(name):
+    """La fila de VENDOR_CFG de una vendedora aunque Kommo escriba su nombre con otra tilde o mayúscula.
+    (06/11) En noviembre los usuarios de Kommo pasaron a «Nombre - Sucursal» y Carola quedó «Carola Chávez»: con
+    `VENDOR_CFG.get` a secas no se la encontraba y salía con la meta de una vendedora nueva (8 cierres / Bs 20.000)
+    en vez de la suya (35 / Bs 135.000), y la meta del equipo decía 152 en vez de 179."""
+    if name in VENDOR_CFG:
+        return VENDOR_CFG[name]
+    n = _norm_vend(name)
+    for k, v in VENDOR_CFG.items():
+        if _norm_vend(k) == n:
+            return v
+    return None
+
 DEFAULT_COLORS = ["#00B5AD", "#2E6FE0", "#7A5AF0", "#D98300", "#159A57", "#DC4046", "#22A7C9"]
 
 SUC_COLORS = {"Mia Plaza": "#00B5AD", "Buenos Aires": "#2E6FE0", "Central": "#D98300"}
@@ -228,7 +246,7 @@ def detect_suc(vname, lead):
         if "mia" in n or "plaza" in n:   return "Mia Plaza"
         if "buenos" in n or "aires" in n: return "Buenos Aires"
         if "central" in n:                return "Central"
-    cfg = VENDOR_CFG.get(vname)
+    cfg = vendor_cfg(vname)
     return cfg["suc"] if cfg else "Sin sucursal"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -266,21 +284,34 @@ p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 
 BOLIVIA_OFFSET = -4 * 3600
 # Ventanas por día de semana (0=Lun … 6=Dom). Día ausente = cerrado (domingo).
 # Formato de ventana: (h_ini, m_ini, h_fin, m_fin).
-SCHED_A = {  # Mia Plaza (Mirian + Isabel rotan turnos): Lun–Sáb 9–21 corrido
+SCHED_A = {  # Mia Plaza (Mirian y Jonathan): Lun–Sáb 9–21 corrido; Dom 10–16 (06/11, dueño: «los domingos es de 10 a 16:00 banzer y mia plaza»)
     0: [(9, 0, 21, 0)], 1: [(9, 0, 21, 0)], 2: [(9, 0, 21, 0)],
-    3: [(9, 0, 21, 0)], 4: [(9, 0, 21, 0)], 5: [(9, 0, 21, 0)],
+    3: [(9, 0, 21, 0)], 4: [(9, 0, 21, 0)], 5: [(9, 0, 21, 0)], 6: [(10, 0, 16, 0)],
 }
-SCHED_B = {  # Central / Bs Aires: Lun–Vie 9–13 y 15–19 (pausa mediodía); Sáb 9–16 corrido
+SCHED_B = {  # Buenos Aires: Lun–Vie 9–13 y 15–19 (pausa mediodía); Sáb 9–16 corrido (era también el de Central hasta el 06/11)
     0: [(9, 0, 13, 0), (15, 0, 19, 0)], 1: [(9, 0, 13, 0), (15, 0, 19, 0)],
     2: [(9, 0, 13, 0), (15, 0, 19, 0)], 3: [(9, 0, 13, 0), (15, 0, 19, 0)],
     4: [(9, 0, 13, 0), (15, 0, 19, 0)], 5: [(9, 0, 16, 0)],
 }
 
+# (06/11, dueño) «el horario de central es de 8 a 20:00, banzer de 8:30 a 20:30». No dijo nada del sábado: va igual, lun–sáb
+# corrido. «Solo banzer y mia plaza atienden domingos» y «los domingos es de 10 a 16:00 banzer y mia plaza».
+# Central (y Ventura Mall, que todavía no abrió: «de momento usa el horario de central») cierran el domingo.
+SCHED_CENTRAL = {d: [(8, 0, 20, 0)] for d in range(6)}
+SCHED_BANZER  = {d: ([(8, 30, 20, 30)] if d < 6 else [(10, 0, 16, 0)]) for d in range(7)}
+SCHED_POR_SUC = {"Mia Plaza": SCHED_A, "Central": SCHED_CENTRAL, "Tienda Banzer": SCHED_BANZER,
+                 "Buenos Aires": SCHED_B, "Ventura Mall": SCHED_CENTRAL}
+# nombre (sin tildes) → la sucursal que dice Kommo después del guion («Isabel Robledo - Central»); lo llena main() con /users.
+SUC_DE_USUARIO = {}
+
 def sched_for(name):
-    n = (name or "").lower()
-    if "mirian" in n or "isabel" in n:
-        return SCHED_A          # Mia Plaza
-    return SCHED_B              # Carola, Jonathan, Maria (y default)
+    """El horario de la SUCURSAL de la vendedora (06/11): la de Kommo después del guion; si no, la de VENDOR_CFG.
+    Antes iba por el nombre (Mirian e Isabel = Mia Plaza): con Isabel en Central desde noviembre se le medía la respuesta
+    con las horas de Mia Plaza."""
+    suc = SUC_DE_USUARIO.get(_norm_vend(name)) or (vendor_cfg(name) or {}).get("suc")
+    if suc in SCHED_POR_SUC:
+        return SCHED_POR_SUC[suc]
+    return SCHED_A if "mirian" in (name or "").lower() else SCHED_B
 
 def business_minutes(start_ts, end_ts, sched):
     """Minutos de horario laboral entre dos timestamps UTC (hora Bolivia)."""
@@ -645,7 +676,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     team = []
     for i, name in enumerate(names):
         d = vcur[name]; pv = vprev.get(name, blank_vendor())
-        cfg = VENDOR_CFG.get(name, {})
+        cfg = vendor_cfg(name) or {}
         u24pct = round(d["u24"] / d["leads"] * 100) if d["leads"] else 0
         v_tone = "green" if u24pct >= 70 else "amber" if u24pct >= 40 else "red"
         conv = round(d["cierres"] / d["leads"] * 100, 1) if d["leads"] else 0
@@ -1253,7 +1284,7 @@ def build_wsp(pd):
         rank = sorted(team, key=lambda t: (t["cierres"], t["value"]), reverse=True)
         medals = ["🥇", "🥈", "🥉"] + ["•"] * 10
         rank_lines = "\n".join(
-            f"{medals[i]} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}"
+            f"{medals[i] if t['cierres'] > 0 else '•'} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}"   # (06/11) sin medalla con 0 cierres
             for i, t in enumerate(rank))
         peores_bk = sorted(team, key=lambda t: t["backlog"], reverse=True)[:2]
         bk_txt = " y ".join(f"{t['name'].split()[0]} ({t['backlog']})" for t in peores_bk if t["backlog"] > 0)
@@ -1520,6 +1551,11 @@ def main():
     print("  👥 usuarios…")
     users = fetch_paginated("/users", {}, "users", max_pages=10)
     user_map = {u["id"]: u.get("name", "") for u in users}
+    SUC_DE_USUARIO.clear()
+    for _nm in user_map.values():
+        if " - " in (_nm or ""):
+            _n, _s = [x.strip() for x in _nm.split(" - ", 1)]
+            SUC_DE_USUARIO[_norm_vend(_n)] = _s
 
     print("  🔎 campo de origen…")
     try:
