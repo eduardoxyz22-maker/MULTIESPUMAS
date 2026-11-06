@@ -2704,6 +2704,8 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
       <div id="fx-mes" class="fx-mes no-print" hidden></div>
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
+        <!-- 🏪 §4ok-93 (05/11) En una venta de tienda NUEVA: guarda y vuelve al formulario de tienda con la misma tienda (las tandas de Charcas). -->
+        <button class="btn btn-ghost" id="f-submit-prox" type="button" hidden onclick="tvGuardarProxima()" style="width:100%;margin-top:8px">💾 Guardar y cargar la próxima</button>
       </div>
     </div>
     <aside id="fx-der" class="fx-lado fx-der no-print" aria-label="Tu pedido"></aside>
@@ -3715,6 +3717,13 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ctav-tx{flex:1;min-width:220px;font-size:.84rem;color:#55706f}.ctav-tx b{color:#13302e}.ctav-q{color:#CE2939;font-weight:700;margin:3px 0}.ctav-tx small{color:#6b8584}.ctav-bt{display:flex;gap:6px;flex-wrap:wrap}
 /* 📅 (§78) los avisos que son SOLO de la fecha de la foto: aparte y en ámbar, no en rojo */
 .ctav-sub-f{margin-top:14px;color:#7c4b00}.ctav-it.ctav-fecha{border-color:#f6d7a8;background:#fffdf8}.ctav-fecha .ctav-q{color:#B45309}
+/* 📣 §4ok-92 el arreglo de un toque, «ya coincide» y la razón cuando el pago queda igual */
+.ctav-arr{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.ctav-fix{font-size:.78rem}
+.ctav-ok{margin-top:6px;font-size:.8rem;font-weight:700;color:#15803d;background:#e9f9f1;border-radius:8px;padding:4px 9px;display:inline-block}
+.ctav-raz{margin-top:8px;border:1px dashed #f6d7a8;background:#fffaf0;border-radius:10px;padding:8px 10px;font-size:.8rem;color:#7c4b00}
+.ctav-raz-b,.ctav-raz-o{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.ctav-raz-o input{flex:1;min-width:160px;padding:6px 8px;border:1px solid #f6d7a8;border-radius:8px;font:inherit;font-size:.8rem}
+.ctav-todas{margin:0 0 10px;padding:9px 11px;border:1px solid #f6d7a8;background:#fffdf8;border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:#7c4b00}
+.iac-av-raz{color:#7c4b00;background:#fff4e5}
 /* 🔎 (§78) lo que dice la foto del comprobante, debajo del pago */
 .ias-box:empty{display:none}
 .ias{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:7px;padding:7px 10px;border:1px solid;border-radius:10px;font-size:.82rem;line-height:1.4}
@@ -8545,7 +8554,8 @@ function formIrAlPrimerError(){
   try{ e.scrollIntoView({ block:'center' }); }catch(x){ e.scrollIntoView(); }
   try{ e.focus({ preventScroll:true }); }catch(x){ try{ e.focus(); }catch(y){} }
 }
-function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; b.classList.remove('gz-ok','gz-mal','gz-cola'); if(typeof GZ_T!=='undefined') clearTimeout(GZ_T); if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
+function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; var _b2=document.getElementById('f-submit-prox'); if(_b2) _b2.disabled=on;   // §4ok-93
+b.classList.remove('gz-ok','gz-mal','gz-cola'); if(typeof GZ_T!=='undefined') clearTimeout(GZ_T); if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
 /* 💵 LOS MONTOS DEL FORMULARIO SE LEEN COMO LOS ESCRIBE LA GENTE (26/09). En Bolivia 1.500 se escribe
    con punto y el campo numérico lo deja tal cual («1.500»): `parseFloat` lo leía 1,5, y una venta con
    «A cuenta 1.500» llegaba a la planilla con Bs 1,50 (el pago mixto, el flete y el precio c/u, igual).
@@ -13943,7 +13953,7 @@ function contaPagosHtml(p){
         '</div>'+
         '<div style="margin-top:8px"><label class="lb">Método</label>'+
           '<div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb2).join('')+'</div></div>'+
-        (CTA_EDIT_M==='Efectivo' ? ctaRecibioHtml(p, {edit:true}) : '')+
+        (CTA_EDIT_M==='Efectivo' ? ctaRecibioHtml(p, {edit:true, fecha:(_ev.fecha!=null?_ev.fecha:(c.fecha||contaFecha(p)||todayStr())), c:c}) : '')+   // §4ok-112 con el día y el pago, para el chofer
         (CTA_EDIT_M==='QR' ? ('<div style="margin-top:8px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancosV.map(bb2).join('')+'</div></div>') : '')+
         /* 📎 El comprobante, acá adentro. Antes había que buscar el botón afuera —y para
            el ANTICIPO no existía— así que un pago al que se le olvidaron la captura se
@@ -14208,7 +14218,7 @@ function ctaEditarPago(id, i){
   ctaPagoRecordar();                 // §4fy: abrir o cerrar el editor de OTRO pago no borra el que se está cargando
   if(CTA_EDIT_I===i || i<0){ CTA_EDIT_I=-1; CTA_EDIT_V=null; showContaModal(id); return; }
   var c=contaPagos(p)[i]; if(!c) return;
-  CTA_EDIT_I=i; CTA_EDIT_V=null;
+  CTA_EDIT_I=i; CTA_EDIT_V=null; CTA_EDIT_RAUTO=null;   // §4ok-112
   CTA_EDIT_M=metodoBase(c.metodo)||String(c.metodo||'')||'Efectivo';
   CTA_EDIT_B=c.banco||'';
   CTA_EDIT_R=limpiaRecibio(c.recibio);
@@ -14218,7 +14228,9 @@ function ctaEditarPago(id, i){
    método, así que se llenan primero; tocar «QR» o el banco repintaba la ficha y los volvía a lo
    viejo, y «💾 Guardar» corregía solo el método — el pago del sábado seguía con la fecha de antes.
    Lo mismo que §4fy arregló en el bloque de «Registrar pago» y ctaEditRecibio ya hacía. */
-function ctaEditMetodo(id,m){ ctaEditRecordar(); CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
+function ctaEditMetodo(id,m){ ctaEditRecordar(); var _era=CTA_EDIT_M; CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo'){ CTA_EDIT_R=''; CTA_EDIT_RAUTO=null; }
+  if(m==='Efectivo' && _era!=='Efectivo') ctaEditRecibioAuto(id);   // 🚚 §4ok-112 pasa a efectivo el día de la entrega: con el chofer puesto
+  showContaModal(id); }
 function ctaEditBanco(id,b){ ctaEditRecordar(); CTA_EDIT_B=b; showContaModal(id); }
 /* Los campos del editor. Cuando el gato del comprobante tapa la ficha los inputs ya no
    existen, así que se cae a lo que quedó recordado en CTA_EDIT_V. */
@@ -14229,6 +14241,7 @@ function ctaEdVal(id, k){
 }
 function ctaGuardarPago(id, i, igual){
   var p=findById(id); if(!p) return;
+  var _prG=null;   // §4ok-92 el guardado (para el arreglo de un toque de los avisos)
   var _vf=ctaEdVal('cta-ed-fecha','fecha'), _vm=ctaEdVal('cta-ed-monto','monto'),
       _vn=ctaEdVal('cta-ed-nota','nota');
   if(_vf==null||_vm==null||_vn==null) return;
@@ -14257,6 +14270,8 @@ function ctaGuardarPago(id, i, igual){
     memeCompConta(CTA_EDIT_M, {corregir:true, id:id, i:i});
     return;
   }
+  /* 🚚 §4ok-112 un chofer de OTRO camión ese día: se pregunta (solo si cambió quién la tiene) */
+  if(recibio && recibio!==limpiaRecibio(c.recibio)){ var _cxG=ctaChoferCruce(p, f, recibio); if(_cxG && !confirm(_cxG)) return; }
 
   /* 🔢 LA NOTA DE LA VENTA ES EL RECIBO DEL PRIMER PAGO (§4ei). Isabel corrigió el N° del
      pago (17478 → 1748) y la ficha siguió titulada «Nota 17478»: la venta tiene su propio
@@ -14275,7 +14290,7 @@ function ctaGuardarPago(id, i, igual){
     var ae=enviosDe(p), ie=ctaIdxEnvio(p, i);
     if(ae.length && ie>=0 && ie<ae.length){
       ae[ie].fecha=f; ae[ie].monto=monto; ae[ie].nota=nota; ae[ie].metodo=CTA_EDIT_M; ae[ie].banco=banco; ae[ie].recibio=recibio;
-      aplicarEnvios(p, ae);
+      _prG=aplicarEnvios(p, ae);
     }
   }else if(c.anticipo){
     /* ⚠️ Cambiar el ADELANTO no mueve el total de la venta: lo que cambia es cuánto
@@ -14311,7 +14326,7 @@ function ctaGuardarPago(id, i, igual){
        corregirle la fecha al anticipo de una venta pagada le inventaba un «A cuenta» (§4eu). */
     if(!(p.pagado && !((Number(p.acuenta)||0)>0.005))) p.acuenta=r2(monto+mxM);
     // aplicarCobros relee el anticipo del ledger, que ya quedó actualizado arriba.
-    aplicarCobros(p, cobros, r2(ventaAntes-monto));
+    _prG=aplicarCobros(p, cobros, r2(ventaAntes-monto));
   }else{
     var idx=ctaIdxCobro(p, i, c);
     var arr=ctaCobrosConFecha(p);
@@ -14346,12 +14361,13 @@ function ctaGuardarPago(id, i, igual){
     var _rX=arr[idx], _sigue=!!(_antX && _rX && !esEnvio(_rX) && _rX.fecha===_antX.fecha && limpiaNota(_rX.nota)===limpiaNota(_antX.nota) &&
                                 (Number(_rX.monto)||0)>0 && !mixtoMismoMetodo(_rX, _antX));
     if(_eraMixto && !_acuFija) p.acuenta=r2((Number(_antX.monto)||0) + (_sigue?monto:0));
-    aplicarCobros(p, arr, objetivo);
+    _prG=aplicarCobros(p, arr, objetivo);
   }
   CTA_EDIT_I=-1; CTA_EDIT_V=null;
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Pago corregido: '+fmtFecha(f)+' · '+CTA_EDIT_M+(banco?(' '+banco):'')+' · '+fmtBs(monto)+' · recibo '+nota+(recibio?(' · lo tiene el chofer '+recibio):'')+(notaVentaTocada?(' · y el N° de nota de la venta también pasó a '+nota):''),'ok', notaVentaTocada?6000:undefined);
-  reabrirFicha(id);
+  if(!CTA_AV_SILENCIO) reabrirFicha(id);   // §4ok-92: el arreglo de un aviso se queda en la lista de avisos
+  return _prG || Promise.resolve({ ok:true });   // §4ok-92: quien llama sabe si el guardado entró (undefined = no se corrigió)
 }
 /* ⚠️ Los cobros del formato viejo vienen sin fecha. Si se los reescribe así, nacen como
    un renglón del ledger SIN fecha: plata que después no aparece en ningún filtro por día
@@ -15057,30 +15073,131 @@ function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') 
    anotado (`CTA_EDIT_R`). */
 function ctaRecibioHtml(p, opts){
   opts=opts||{};
+  /* 🚚 §4ok-112 el pago en efectivo del día de la entrega viene con el chofer puesto (el que el GPS vio en la casa, si no el del pedido) */
+  var _sug=ctaRecibioAutoPoner(p, opts);
   var actual=String((opts.edit?CTA_EDIT_R:CTA_PAGO.recibio)||'').trim(), esCh=!!actual;
   var fn=opts.edit?'ctaEditRecibio':'ctaSetRecibio';
   var vend=nombreCanonico(p.vendedor)||'la vendedora';
   // Los choferes de HOY (más el de este pedido y el ya anotado): uno que ya no está no se ofrece.
   var lista=choferesParaSelect(p); if(esCh && lista.indexOf(actual)<0) lista=lista.concat([actual]);
-  var primero=String(p.chofer||'').trim(); if(!primero || lista.indexOf(primero)<0) primero=lista[0]||'';
+  if(_sug && lista.indexOf(_sug.ch)<0) lista=lista.concat([_sug.ch]);
+  var primero=(_sug && _sug.ch) || String(p.chofer||'').trim(); if(!primero || lista.indexOf(primero)<0) primero=lista[0]||'';
   var b=function(on,txt,quien){
     return '<button type="button" class="btn btn-sm" style="width:auto;padding:5px 11px;font-size:.76rem;'+
       (on?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+
       '" onclick="'+esc(fn+'('+JSON.stringify(String(p.id))+','+JSON.stringify(quien)+')')+'">'+txt+'</button>';
   };
-  return '<div style="margin-top:8px" id="cta-recibio"><label class="lb">¿Quién recibió la plata?</label>'+
+  return '<div style="margin-top:8px" id="cta-recibio" data-modo="'+(opts.edit?'ed':'pa')+'" data-sug="'+esc(ctaRecibioFirma(p, opts))+'"><label class="lb">¿Quién recibió la plata?</label>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
       b(!esCh,'🧑‍💼 '+esc(vend),'')+
       (primero ? b(esCh,'🚚 El chofer',primero) : '')+
       (esCh ? ('<select id="cta-recibio-sel" onchange="'+esc(fn+'('+JSON.stringify(String(p.id))+',this.value)')+'" style="width:auto;padding:5px 8px;font-size:.8rem">'+
                  lista.map(function(c){ return '<option'+(c===actual?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>') : '')+
     '</div>'+
+    ctaRecibioNotaHtml(p, opts, _sug, actual)+   // §4ok-112 por qué está puesto (o la pista, al corregir)
     (esCh ? ('<div style="font-size:.72rem;color:var(--muted);margin-top:3px">🚚 El efectivo queda <b>en la mano de '+esc(actual)+'</b> hasta que lo rinda a Contabilidad. '+
              'Ese retiro se anota en Cuadre → 💵 Retiro de efectivo (entrega: el chofer · retira: Contabilidad).</div>') : '')+
   '</div>';
 }
-function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); showContaModal(id); }
-function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(quien); showContaModal(id); }
+function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); CTA_PAGO.rEleg=true; showContaModal(id); }   // §4ok-112 lo eligió la persona
+function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(quien); CTA_EDIT_RAUTO=null; showContaModal(id); }
+// §4ok-112 ============================================================================
+/* 🚚 (05/11, plan del jueves, 112) EL CHOFER QUE COBRÓ, PUESTO SOLO Y SIN CRUCES. Octubre: 13 cobros en efectivo de choferes (Bs 39.146);
+   de 8 con chofer asignado, 3 nombran a uno de OTRO camión (Bs 9.866), y 4 cobros del día de la entrega quedaron a nombre de la vendedora
+   (Bs 4.910).
+   · «Registrar pago»: un pago en EFECTIVO con la fecha de la ENTREGA de una venta a domicilio viene con «🚚 El chofer» elegido: el del
+     camión que el GPS vio en la casa del cliente ese día (`gpsLlegadaDe`, solo hoy) y, si no, el del pedido (`p.chofer`, o el de su camión).
+     Dice por qué está puesto; tocar a la vendedora lo saca (`CTA_PAGO.rEleg`: lo eligió la persona, no se vuelve a poner). Cambiar la
+     fecha lo vuelve a mirar. Sin entrega ese día, ni venta de tienda, ATC, RPT o «lo retira el cliente»: la vendedora, como siempre.
+   · «✏️ Corregir este pago»: un pago ya anotado NO cambia de mano solo. Si pasa a efectivo, viene con el chofer (como uno nuevo); si ya era
+     efectivo de la vendedora del día de la entrega, sale la pista «¿lo cobró el chofer? [🚚 Nombre]».
+   · Elegir a mano un chofer de OTRO camión ese día (el del GPS o el del pedido) pregunta antes de guardar. El `>Nombre` va donde siempre
+     (§4eq, `limpiaRecibio`); rinde a Contabilidad (`RETIRA_CHOFER`). */
+var CTA_EDIT_RAUTO=null;   // el chofer que se puso solo al pasar el pago a efectivo en «Corregir» (para decir por qué)
+/* El chofer de un camión un día: el del pedido si va en ese camión; si no, el que más pedidos de ese camión tiene ese día; si no, el primero. */
+function ctaChoferDia(veh, f, p){
+  if(!veh) return '';
+  if(p && vehiculoDe(p)===veh && String(p.chofer||'').trim()) return String(p.chofer).trim();
+  var C={}, best='', bn=0;
+  (STATE||[]).forEach(function(q){
+    if(!q || esFilaSistema(q) || String(q.fecha||'')!==String(f) || vehiculoDe(q)!==veh) return;
+    var c=String(q.chofer||'').trim(); if(!c) return;
+    C[c]=(C[c]||0)+1; if(C[c]>bn){ bn=C[c]; best=c; }
+  });
+  return best || ((VEHICULOS[veh]||[])[0]||'');
+}
+/* El chofer que cobró un pago en efectivo de ESE día, o null: { ch, veh, por:'gps'|'pedido', ll } */
+function ctaChoferSugerido(p, fecha){
+  if(!p || esFilaSistema(p) || noSeCobra(p) || esVentaTienda(p) || !p.fecha || String(fecha||'')!==String(p.fecha)) return null;
+  try{ if(typeof fichaRetira==='function' && fichaRetira(p)) return null; }catch(e){}
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  if(ll && ll.veh){ var cg=ctaChoferDia(ll.veh, p.fecha, p); if(cg) return { ch:cg, veh:ll.veh, por:'gps', ll:ll }; }
+  var ch=String(p.chofer||'').trim(), veh=vehiculoDe(p);
+  if(ch) return { ch:ch, veh:veh, por:'pedido' };
+  if(veh){ var c2=ctaChoferDia(veh, p.fecha, p); if(c2) return { ch:c2, veh:veh, por:'pedido' }; }
+  return null;
+}
+/* ¿El chofer elegido es de OTRO camión que el que fue ese día? Devuelve la pregunta, o '' si no hay nada que preguntar. */
+function ctaChoferCruce(p, fecha, ch){
+  ch=limpiaRecibio(ch); if(!p || !ch || !p.fecha || String(fecha||'')!==String(p.fecha) || noSeCobra(p) || esVentaTienda(p)) return '';
+  var vc=vehiculoDeChofer(ch); if(!vc) return '';          // un chofer sin camión conocido: no se puede saber
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  var ref=(ll && ll.veh) || vehiculoDe(p); if(!ref || ref===vc) return '';
+  if(!(ll && ll.veh) && ch===String(p.chofer||'').trim()) return '';   // el pedido dice ese chofer
+  var deRef=(ref===vehiculoDe(p) && String(p.chofer||'').trim()) || (VEHICULOS[ref]||[]).join(' o ');
+  return '⚠️ ¿'+ch+' recibió esta plata?\n\nEse día el pedido lo llevó el '+ref+(deRef?(' ('+deRef+')'):'')+(ll && ll.veh ? ' — el GPS lo vio en la casa del cliente' : '')+
+    ', y '+ch+' es del '+vc+'.\n\nSi la recibió '+ch+', tocá Aceptar. Si no, Cancelar y elegí al chofer que la cobró.';
+}
+/* Lo pone en el pago nuevo mientras nadie eligió; en «Corregir» no cambia nada (solo devuelve la sugerencia, para la pista). */
+function ctaRecibioAutoPoner(p, opts){
+  opts=opts||{};
+  if(opts.edit) return ctaChoferSugerido(p, opts.fecha);
+  if(CTA_PAGO.metodo!=='Efectivo') return null;
+  var s=ctaChoferSugerido(p, (CTA_PAGO_V && CTA_PAGO_V.fecha!=null) ? CTA_PAGO_V.fecha : todayStr());
+  if(!CTA_PAGO.rEleg) CTA_PAGO.recibio=s ? s.ch : '';
+  return s;
+}
+function ctaRecibioFirma(p, opts){
+  opts=opts||{};
+  var s=opts.edit ? ctaChoferSugerido(p, opts.fecha) : ctaChoferSugerido(p, (CTA_PAGO_V && CTA_PAGO_V.fecha!=null) ? CTA_PAGO_V.fecha : todayStr());
+  return s ? s.ch : '';
+}
+function ctaRecibioPorque(s){
+  return 'es el día de la entrega y '+(s.por==='gps' ? ('el GPS vio el <b>'+esc(s.veh)+'</b> en la casa del cliente') : ('es el chofer del pedido'+(s.veh?(' ('+esc(s.veh)+')'):'')));
+}
+function ctaRecibioNotaHtml(p, opts, s, actual){
+  opts=opts||{};
+  var vend=nombreCanonico(p.vendedor)||'la vendedora', st='font-size:.74rem;color:#7c4b00;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:7px;padding:5px 9px;margin-top:5px';
+  var auto=opts.edit ? CTA_EDIT_RAUTO : ((s && !CTA_PAGO.rEleg) ? s : null);
+  if(auto && actual===auto.ch) return '<div class="ctr-auto" style="'+st+'">🚚 <b>Puesto solo:</b> '+ctaRecibioPorque(auto)+'. Si la recibió '+esc(vend)+', tocá su nombre.</div>';
+  var c=opts.c;
+  if(opts.edit && s && !actual && c && metodoBase(c.metodo)==='Efectivo' && !limpiaRecibio(c.recibio))
+    return '<div class="ctr-pista" style="'+st+';display:flex;gap:8px;align-items:center;flex-wrap:wrap">💡 Este pago es del día de la entrega'+
+      (s.por==='gps' ? (' y el GPS vio el <b>'+esc(s.veh)+'</b> en la casa del cliente') : (s.veh ? (' y el pedido iba en el <b>'+esc(s.veh)+'</b>') : ''))+': ¿lo cobró el chofer?'+
+      '<button type="button" class="btn btn-sm" style="width:auto;padding:4px 10px;font-size:.74rem;background:#fff;border:1px solid var(--amber-border);color:#7c4b00;font-weight:700" onclick="'+
+      esc('ctaEditRecibio('+JSON.stringify(String(p.id))+','+JSON.stringify(s.ch)+')')+'">🚚 '+esc(s.ch)+'</button></div>';
+  return '';
+}
+/* «Corregir» pasó el pago a efectivo: con la fecha del pago, el chofer de ese día (si es el de la entrega). */
+function ctaEditRecibioAuto(id){
+  var p=findById(id); if(!p) return;
+  var c=contaPagos(p)[CTA_EDIT_I]||{}, f=ctaEdVal('cta-ed-fecha','fecha');
+  var s=ctaChoferSugerido(p, f || c.fecha || contaFecha(p));
+  if(s){ CTA_EDIT_R=s.ch; CTA_EDIT_RAUTO=s; }
+}
+/* Cambió la fecha del pago: si la sugerencia de ese día es otra, se repinta (con lo tipeado recordado). */
+document.addEventListener('change', function(e){
+  var t=e && e.target; if(!t || (t.id!=='cta-pago-fecha' && t.id!=='cta-ed-fecha')) return;
+  var edit=(t.id==='cta-ed-fecha'), p=findById(CTA_ULTIMA);
+  var box=document.querySelector('#cta-recibio[data-modo="'+(edit?'ed':'pa')+'"]'); if(!box || !p) return;   // con «Corregir» abierto hay dos (el pago nuevo y el que se corrige)
+  if(!edit && CTA_PAGO.rEleg) return;
+  var s=ctaChoferSugerido(p, t.value);
+  if(String(box.getAttribute('data-sug')||'')===(s ? s.ch : '')) return;
+  if(edit){ ctaEditRecordar(); if(CTA_EDIT_RAUTO && CTA_EDIT_R===CTA_EDIT_RAUTO.ch){ CTA_EDIT_R=s ? s.ch : ''; CTA_EDIT_RAUTO=s; } }
+  else ctaPagoRecordar();
+  showContaModal(p.id);
+}, true);
+// §4ok-112 fin =========================================================================
 /* compTiraHtml llama con un solo argumento (el índice), así que va este puente. */
 function ctaSacarCompIdx(id, i){ ctaSacarComp(id, i); }
 /* i = cuál de las imágenes se quita; sin i, todas. */
@@ -15126,6 +15243,10 @@ function ctaRegistrarPago(id){
     memeCompConta(CTA_PAGO.metodo, {id:id});
     return;
   }
+  /* 🚚 §4ok-112 Quién tiene el efectivo, con la fecha que quedó: puesto solo (nadie eligió) = el chofer de ese día, si es el día de la
+     entrega; elegido a mano = se pregunta si es el chofer de OTRO camión ese día. */
+  if(CTA_PAGO.metodo==='Efectivo' && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
+  else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !confirm(_cxR)) return; }
   var falta=Number(p.saldo)||0;
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
              recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
@@ -15171,7 +15292,7 @@ function ctaRegistrarPago(id){
     /* (25/10, §4ml, auditoría Codex FIN-06) Con `>0.01` un resto de UN centavo se perdía: 1,01 pactado cobrado 0,50 + 0,50 quedaba en
        1,00 pactado y 0 por cobrar. `resto` ya viene redondeado a centavos (`r2`). */
     if(resto>0.009) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
-    CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
+    CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
     /* ⚠️ Y el selector vuelve a «Pago de la venta». `CTA_TIPO` solo se reseteaba al CAMBIAR
        de venta, así que el camino natural —anotar el flete, «volver a la venta», registrar
        el pago— metía el pago de Bs 1.000 como si fuera flete: la venta quedaba «por cobrar»
@@ -15188,7 +15309,7 @@ function ctaRegistrarPago(id){
   if(falta>0.005 && monto>falta+0.005 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
-  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
+  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   fxSello('COBRADO','plata');
   var _prP=aplicarCobros(p, arr);
   sonidoPanel('caja');                          // 🔔 (§4ni, 16) la caja registradora
@@ -15759,6 +15880,7 @@ function onCompFormElegido(ev){
 
 function submitPedido(){
   clearErr();
+  var _prox=(TV_PROXIMA && VENTA_TIENDA && !EDIT_ID) ? TV_PROXIMA : null; TV_PROXIMA=null;   // 🏪 §4ok-93 «Guardar y cargar la próxima»
   /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
      guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
   try{ codigoEspecialBorrar(null, EDIT_ID ? findById(EDIT_ID) : null); }catch(e){}
@@ -16060,8 +16182,7 @@ function submitPedido(){
           (_conFecha.length ? ('\n\n'+(_conFecha.length===1 ? 'Un pago tiene' : (_conFecha.length+' pagos tienen'))+' otra fecha y '+(_conFecha.length===1 ? 'queda' : 'quedan')+
             ' en su día. Si también fue el '+fmtFecha(_fv)+', corregilo en Contabilidad → ✏️ Corregir este pago.') : '')+'\n\n¿Seguro?')) return;
       }
-      var _msDia=((_base-4*3600000)%86400000+86400000)%86400000;   // la misma hora de Bolivia
-      _tsVenta=Math.min(Date.parse(_fv+'T00:00:00-04:00')+_msDia, Date.now());
+      _tsVenta=tsVentaEnDia(_base, _fv);   // la misma hora de Bolivia (§4ok-92: la MISMA cuenta que el arreglo de los avisos)
       _fvAntes=_antes; _fvNueva=isoDeTsBolivia(_tsVenta);
     }
   }
@@ -16596,7 +16717,7 @@ function submitPedido(){
      esto copia del pedido anterior cualquier campo que el formulario no maneje. Lo que el
      formulario SÍ maneja ya está en `rec` y no se pisa. */
   if(prev){ for(var _kr in prev){ if(!(_kr in rec)) rec[_kr]=prev[_kr]; } }
-  if(_fvNueva && rec.metodoPago) rec.metodoPago=String(rec.metodoPago).replace(new RegExp('@(\\s*)'+_fvAntes+'(?!\\d)','g'), '@$1'+_fvNueva);   // 📅 (§4nm) lo cobrado el día de la venta va con ella
+  if(_fvNueva && rec.metodoPago) rec.metodoPago=pagosAlDia(rec.metodoPago, _fvAntes, _fvNueva);   // 📅 (§4nm) lo cobrado el día de la venta va con ella
   /* 📥 La marca del lead de Kommo va adentro de los productos, y `productos` se rearma de cero:
      si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
      Se rescata del pedido anterior para que el robot no vuelva a traer el borrador (§4es). */
@@ -16933,7 +17054,10 @@ function submitPedido(){
     /* (27/09, revisión en el celular) …pero solo la venta de tienda NUEVA. CORREGIR una (desde Mis pedidos) también caía
        acá: terminaba en Contabilidad, con «✅ Pedido guardado» y el mensaje de una venta nueva para pasar al grupo — como
        si hubiera cargado otra. Una edición vuelve a donde estaba y dice qué cambió, como cualquier pedido. */
-    if(_tienda && !(wasEdit && !_deBorrador)){ irAContaDe(rec); showWhatsappModal(rec); return; }
+    if(_tienda && !(wasEdit && !_deBorrador)){
+      if(_prox && !wasEdit){ tvProximaSeguir(_prox, rec); return; }   // 🏪 §4ok-93 vuelve al formulario de tienda, con la misma tienda
+      irAContaDe(rec); showWhatsappModal(rec); return;
+    }
     /* ⚠️ Volver a DONDE ESTABA, no a Administración. Antes iba siempre a `showView('admin')`
        —porque editar era cosa de administración— y desde §4bc una vendedora que corregía su
        pedido terminaba en la pantalla del candado pidiéndole la contraseña, sin ninguna
@@ -17255,6 +17379,7 @@ function pintarModoTienda(){
   if(_fv && VENTA_TIENDA){ _fv.max=diaNegocio(); if(!_fv.value) _fv.value=diaNegocio(); }
   var b=document.getElementById('f-submit');
   if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
+  var _bp=document.getElementById('f-submit-prox'); if(_bp) _bp.hidden=!(VENTA_TIENDA && !EDIT_ID);   // 🏪 §4ok-93 solo en una venta de tienda NUEVA
   try{ avisaFormPintar(); }catch(e){}         // 📦 (propuesta 76) la venta de tienda no lleva la casilla
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
 }
@@ -17633,6 +17758,7 @@ function resetForm(){
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=proximoDiaEntrega();
   var _fav=document.getElementById('f-avisa'); if(_fav) _fav.checked=false;   // 📦 (propuesta 76)
   var _fvR=document.getElementById('f-fecha-venta'); if(_fvR) _fvR.value='';   // 📅 (§4nm)
+  tvFvLimpiar();                               // 📅 §4ok-93 la fecha de la foto se propone de nuevo en la venta siguiente
   document.getElementById('f-nota').value='';  try{ notaRevisarOcultar(); }catch(e){}   // §4ok-99
   document.getElementById('f-oc').value='';
   segSet('f-doc-tipo','OC');
@@ -18123,7 +18249,7 @@ function guardarBtnFin(res, rec, enCola){
     var b=document.getElementById('f-submit'); if(!b || b.disabled) return;
     b.classList.remove('gz-ok','gz-mal','gz-cola'); void b.offsetWidth; b.classList.add('gz-'+k);
     b.innerHTML=(k==='ok' ? '<svg class="gz-tilde" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : (k==='cola'?'⏳ ':'⚠️ '))+esc(txt);
-    GZ_T=setTimeout(function(){ b.classList.remove('gz-ok','gz-mal','gz-cola'); if(!b.disabled) b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }, k==='ok'?2400:4800);
+    GZ_T=setTimeout(function(){ b.classList.remove('gz-ok','gz-mal','gz-cola'); if(!b.disabled) b.textContent=VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido'); }, k==='ok'?2400:4800);   // §4ok-93: con «cargar la próxima» el formulario de tienda sigue a la vista
   }, 0);
   return k;
 }
@@ -19828,6 +19954,7 @@ function refrescarEstadoYa(){
       if(typeof borrarPendRetomar==='function') setTimeout(borrarPendRetomar, 0);   // 🗑 (§4nl, Astra A09) el borrado que quedó a medias al cerrar
       setTimeout(histStockAlDia, 0);             // 📚 (09/10, §4in) el Excel de hoy a la hoja «Historial stock», si falta
       setTimeout(function(){ try{ adelantoRevisarGps(); }catch(e){} }, 0);   // 🚀 (14/10) el GPS vio salir un camión con lo de la tarde cargado
+      setTimeout(function(){ try{ ctaAvAutoRevisar(); }catch(e){} }, 0);     // 📣 §4ok-92 los avisos de Contabilidad que ya coinciden se cierran solos
       return true;
     }
     ULTIMO_ERROR=(res&&res.error)?motivoDelServidor(res.error):'respuesta inesperada del servidor';
@@ -50049,6 +50176,7 @@ function iacItemHtml(i){
   var nota=x.comps.map(function(f){ var o=IAC.res[f]; return (o && o.no && !o.err && o.cp!==false) ? o.no : ''; }).filter(Boolean)[0];
   return '<div class="iac-it iac-'+c.est+'">'+x.comps.slice(0,2).map(function(f){ return '<a class="iac-img" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener" title="Ver la foto"><span>📷</span><img loading="lazy" alt="" src="'+esc(fotoThumb(f, 240))+'" onerror="this.remove()"></a>'; }).join('')+
     '<div class="iac-tx"><div class="iac-cab">'+cab+'</div><div>'+chips+'</div><div class="iac-dice">'+c.txt+'</div>'+(nota?('<div class="iac-nota">💬 Claude: '+esc(nota)+'</div>'):'')+ctaAvEstadoHtml(ctaAvDe(ctaAvClave(x)))+
+    (c.est==='mal' ? ctaAvBotonesHtml(x, ctaAvArreglos(x, c), '', 'iac') : '')+   // §4ok-92 el arreglo de un toque, también para Contabilidad
     '<div class="iac-bt"><button type="button" class="ah-go ah-go-p" onclick="closeModal();showContaModal(\''+id+'\')">Abrir la venta</button>'+
     x.comps.map(function(f, k){ return '<a class="ah-go" href="'+esc(fotoVer(f))+'" target="_blank" rel="noopener">📷 Ver la foto'+(x.comps.length>1?(' '+(k+1)):'')+'</a>'; }).join('')+
     (IAC.corre ? '' : ('<button type="button" class="ah-go" '+(leyendo?'disabled':'')+' onclick="iacReleer(\''+x.comps.map(function(f){ return String(f).replace(/[^A-Za-z0-9_\-]/g,''); }).join(',')+'\')">'+(leyendo?'⏳ Leyendo…':'🔄 Leer de nuevo')+'</button>'))+
@@ -50120,8 +50248,9 @@ function iacLeer(lista, forzar){
 var CTA_AV_ID='__avisos_conta__', CTA_AV_TOPE=40000, CTA_AV_DIAS=40, IAC_PDF_W=794, IAC_PDF_H=1123, IAC_PDF_OCUPADO=false;
 function iacProblemas(mes, vend){
   var L=iacPagos(mes), refs=iacRefs(L);
-  return L.map(function(x){ return { x:x, c:iacComparar(x, refs) }; }).filter(function(i){
-    return (i.c.est==='mal' || i.c.est==='nl') && (!vend || mismoVendedor(i.x.p.vendedor, vend));
+  /* §4ok-92 sin lo que no es un error (el pago de antes de cargar la venta, el voucher de tarjeta en la nota): `ctaAvFiltrar` */
+  return L.map(function(x){ return ctaAvFiltrar({ x:x, c:iacComparar(x, refs) }); }).filter(function(i){
+    return i && (i.c.est==='mal' || i.c.est==='nl') && (!vend || mismoVendedor(i.x.p.vendedor, vend));
   });
 }
 function iacVendNom(v){ return String(v||'').trim() || 'Sin vendedor'; }
@@ -50135,7 +50264,7 @@ function iacPorVend(P){
 function iacCorto(i){ return (i.c.mot ? i.c.mot.map(function(m){ return m.c||''; }) : [i.c.c||'']).filter(Boolean).join(' · '); }
 function iacPagoTxt(x){ return iacCliCorto(x.p)+(x.p.nota?(' · nota '+x.p.nota):'')+' · '+fmtFechaCorta(x.f)+' · '+fmtBs(x.monto)+' '+x.met; }
 function iacCompartirHtml(mes, It){
-  var P=It.filter(function(i){ return i.c.est==='mal' || i.c.est==='nl'; }), G=iacPorVend(P), sel=IAC.shVend||'';
+  var P=It.map(ctaAvFiltrar).filter(function(i){ return i && (i.c.est==='mal' || i.c.est==='nl'); }), G=iacPorVend(P), sel=IAC.shVend||'';   // §4ok-92
   if(sel && !G.some(function(g){ return g.v===sel; })) sel=IAC.shVend='';
   var nAb=0, nOk=0; P.forEach(function(i){ var a=ctaAvDe(ctaAvClave(i.x)); if(a && a.ok) nOk++; else if(a && !a.qt) nAb++; });
   var nSel=sel ? (G.filter(function(g){ return g.v===sel; })[0]||{ L:[] }).L.length : P.length;
@@ -50249,7 +50378,7 @@ function ctaAvJuntar(base, cambios){
     if(!c || !c.id) return;
     var y=M[c.id];
     if(!y){ if(c.pid){ M[c.id]=JSON.parse(JSON.stringify(c)); orden.push(c.id); } return; }   // un «corregido» de un aviso que ya no está: nada
-    if(c.ok && !y.ok){ y.ok=c.ok; y.okPor=c.okPor||''; }
+    if(c.ok && !y.ok){ y.ok=c.ok; y.okPor=c.okPor||''; if(c.okRaz) y.okRaz=c.okRaz; if(c.okArr) y.okArr=c.okArr; if(c.au) y.au=c.au; }   // §4ok-92 la razón, el arreglo, el cierre solo
     if(c.qt && !y.qt){ y.qt=c.qt; }
   });
   var lim=Date.now()-CTA_AV_DIAS*864e5, L=orden.map(function(k){ return M[k]; }).filter(function(a){ var c=Math.max(a.ok||0, a.qt||0); return !c || c>=lim; });
@@ -50294,7 +50423,7 @@ function ctaAvSoloFecha(a){
 }
 function ctaAvEstadoHtml(a){
   if(!a) return '';
-  if(a.ok) return '<div class="iac-av iac-av-ok">✅ '+esc(String(a.vend||'').split(' ')[0])+' dice que lo corrigió el '+esc(fmtFechaCorta(isoDeTsBolivia(a.ok)))+'</div>';
+  if(a.ok) return ctaAvCerradoHtml(a);   // §4ok-92 quién, cómo y por qué se cerró
   if(a.qt) return '';
   return '<div class="iac-av">📣 Avisado a '+esc(String(a.vend||'').split(' ')[0])+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+' · todavía sin corregir</div>';
 }
@@ -50305,7 +50434,8 @@ function iacAvisarPanel(){
     var x=i.x; n++;
     return { id:'av'+t.toString(36)+'-'+n, k:ctaAvClave(x), pid:String(x.p.id), vend:String(x.p.vendedor||''), cli:iacCliCorto(x.p), nota:String(x.p.nota||''),
              f:x.f, m:r2(x.monto), met:x.met, txt:iacCorto(i), mes:mes, t:t, por:quien,
-             ks:(i.c.mot ? i.c.mot.map(function(m){ return m.k; }) : [i.c.est]) };   // (30/10, §78) qué encontró: «solo la fecha» no va en rojo
+             ks:(i.c.mot ? i.c.mot.map(function(m){ return m.k; }) : [i.c.est]),   // (30/10, §78) qué encontró: «solo la fecha» no va en rojo
+             fs:x.comps.slice(0, 6), fx:ctaAvArreglos(x, i.c) };                    // §4ok-92 las fotos del pago y su arreglo de un toque
   });
   if(!nuevos.length){ toast('Ya están todos avisados en el panel.','ok'); return Promise.resolve(); }
   var b=document.getElementById('iac-av-btn'); if(b){ b.disabled=true; b.textContent='⏳ Dejando el aviso…'; }
@@ -50322,23 +50452,336 @@ function iacAvisarPanel(){
 function ctaAvVer(v){
   /* 📅 (30/10, §78) primero lo de plata; lo que es SOLO la fecha va abajo, aparte y sin rojo */
   var L0=ctaAvAbiertos(v), LP=L0.filter(function(a){ return !ctaAvSoloFecha(a); }), LF=L0.filter(ctaAvSoloFecha), L=LP.concat(LF);
-  var fila=function(a){ return '<div class="ctav-it'+(ctaAvSoloFecha(a)?' ctav-fecha':'')+'"><div class="ctav-tx"><b>'+esc(a.cli)+'</b>'+(a.nota?(' · nota '+esc(a.nota)):'')+' · '+esc(fmtFechaCorta(a.f))+' · '+fmtBs(a.m)+' '+esc(a.met)+
-      '<div class="ctav-q">→ '+esc(a.txt)+'</div><small>Avisó '+esc(a.por||'Contabilidad')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+'</small></div>'+
+  CTA_AV_VER={ v:String(v||'') };   // §4ok-92 para repintar la lista después de un arreglo
+  var fila=function(a){ return '<div class="ctav-it'+(ctaAvSoloFecha(a)?' ctav-fecha':'')+'" data-av="'+esc(a.id)+'"><div class="ctav-tx"><b>'+esc(a.cli)+'</b>'+(a.nota?(' · nota '+esc(a.nota)):'')+' · '+esc(fmtFechaCorta(a.f))+' · '+fmtBs(a.m)+' '+esc(a.met)+
+      '<div class="ctav-q">→ '+esc(a.txt)+'</div><small>Avisó '+esc(a.por||'Contabilidad')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+'</small>'+ctaAvFilaExtraHtml(a, v)+'</div>'+
       '<div class="ctav-bt"><button type="button" class="ah-go" onclick="closeModal();showMisModal(\''+esc(String(a.pid).replace(/'/g,''))+'\')">Abrir la venta</button>'+
-      '<button type="button" class="ah-go ah-go-p" onclick="ctaAvOk(\''+esc(a.id)+'\',\''+esc(String(v||'').replace(/'/g,''))+'\')">✓ Ya lo corregí</button></div></div>'; };
+      '<button type="button" class="ah-go ah-go-p" onclick="ctaAvCorregi(\''+esc(a.id)+'\',\''+esc(String(v||'').replace(/'/g,''))+'\')">✓ Ya lo corregí</button></div></div>'; };
   openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>📣 Contabilidad te pide revisar</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b"><p class="ctav-sub">Contabilidad revisó las fotos de los comprobantes y '+(L.length===1?'este pago tiene':'estos pagos tienen')+' algo distinto de lo anotado. '+
     'Revisalo, corregilo (o pasale a Contabilidad el comprobante que va) y tocá <b>«✓ Ya lo corregí»</b>.</p>'+
+    ctaAvTiendaTodasHtml(L, v)+   // §4ok-92 las ventas de tienda con el día equivocado, de una vez
     (L.length ? (LP.map(fila).join('')+
       (LF.length ? ('<div class="ctav-sub ctav-sub-f">📅 <b>Solo la fecha</b> — no falta plata: la foto es de otro día que el pago. Mirala y tocá «✓ Ya lo corregí».</div>'+LF.map(fila).join('')) : ''))
       : '<div class="iac-vacio">✅ No tenés nada pendiente de Contabilidad.</div>')+'</div>', true);
+  ctaAvLeerFotos(L);   // §4ok-92 lo que la IA ya leyó de esas fotos (sin gastar), para el arreglo de un toque
 }
-function ctaAvOk(id, v){
+function ctaAvOk(id, v, extra){
   var quien=String(v||'') || (typeof getVendedorMem==='function' ? getVendedorMem() : '') || '';
-  return ctaAvGuardar([{ id:id, ok:Date.now(), okPor:quien }]).then(function(){
-    toast('✓ Listo: Contabilidad ve que lo corregiste.','ok'); ctaAvVer(v); try{ renderMis(); }catch(e){}
+  var ch={ id:id, ok:Date.now(), okPor:quien }; if(extra) Object.keys(extra).forEach(function(k){ ch[k]=extra[k]; });   // §4ok-92 la razón
+  delete CTA_AV_RAZON[id];
+  return ctaAvGuardar([ch]).then(function(){
+    toast(ch.okRaz ? '✓ Listo: Contabilidad ve por qué quedó así.' : '✓ Listo: Contabilidad ve que lo corregiste.','ok'); ctaAvVer(v); try{ renderMis(); }catch(e){}
   }).catch(function(e){ toast('No se pudo guardar ('+(typeof motivoDeError==='function' ? motivoDeError(e) : String(e))+'). Probá de nuevo.','err',8000); });
 }
+// §4ok-92 ============================================================================
+/* 📣 (05/11, plan del jueves, 92; dueño: «Me encanta todo») CADA AVISO DE CONTABILIDAD TRAE SU ARREGLO DE UN TOQUE. La IA dejó 66 avisos
+   (26 y 31/10) y quedaban 52 abiertos (35 solo de fecha, 17 de plata); «Ya lo corregí» se tocó 14 veces y en 13 el pago quedó igual.
+   · Cada aviso con su botón según lo que dijo la foto (`iacComparar`, la MISMA cuenta de la revisión): «✂️ Partir en QR X + efectivo Y»
+     (la nota de venta dice efectivo, o la foto dice menos), «✏️ Corregir a N», «🏦 Cambiar a QR <banco>», «📅 Poner la fecha de la foto»
+     y, en una venta de tienda, «📅 Pasar la venta al <día de la foto>» (§4nm; «📅 Pasar las N…» de una vez). Pregunta, se guarda y cierra
+     el aviso con quién lo hizo. Monto, banco y fecha van por «✏️ Corregir este pago» (`ctaGuardarPago`: adelanto, mixto §4ej, flete y el
+     pago de mentira §4fg, todos con `aplicarCobros`); partir arma el pago mixto de siempre (adelanto + 2° método del mismo día y recibo)
+     con `aplicarCobros` y el total de la venta no cambia; mover la venta de tienda es la regla de §4nm (`tsVentaEnDia`, `pagosAlDia`).
+   · «✓ Ya lo corregí» mira el pago antes de cerrar: si ya coincide (o cambió y no se puede leer), cierra; si quedó igual, pide la razón
+     (es de otra venta / el resto fue en efectivo / otra) y se la deja a Contabilidad.
+   · Con cada lectura buena de la planilla, los avisos abiertos cuyas fotos ya coinciden se cierran solos (lo leído sale de la hoja con
+     `leer:1`: no gasta). En Playwright solo con `window.CTA_AV_AUTO_PRUEBA`.
+   · No son errores y ya no se avisan (ni van al PDF ni al texto del grupo): el PRIMER pago de una venta a domicilio con la foto de ANTES
+     de cargar la venta (la regla de fecha del dueño, §4mt: el primer pago va con el día de la carga) y la foto de un pago con TARJETA que
+     Claude no tomó por comprobante (el voucher del POS pegado en la nota, E3). Los abiertos así se cierran solos.
+   · ⚠️ El aviso nuevo guarda `fs` (las fotos del pago) y `fx` (su arreglo): sirve para encontrar el pago aunque cambie y para mostrar el
+     arreglo sin la lectura. `ok`/`okPor` siguen siendo el cierre (una página vieja lo lee igual); `okArr`, `okRaz` y `au` lo explican. */
+var CTA_AV_VER=null, CTA_AV_RAZON={}, CTA_AV_SILENCIO=false, CTA_AV_AUTO={ t:0, corre:false }, CTA_AV_AUTO_MS=10*60000, CTA_AV_LEE={ pedidas:{}, corre:false };
+var CTA_AV_RAZONES=[ { k:'venta', t:'Es de otra venta' }, { k:'efectivo', t:'El resto fue en efectivo' } ];
+function ctaAvAutoActivo(){ return !navigator.webdriver || !!window.CTA_AV_AUTO_PRUEBA; }
+/* El primer pago con la foto de ANTES de cargar la venta (a domicilio) no es un error: §4mt manda anotarlo con el día de la carga. */
+function ctaAvNoEsError(x, m){
+  return !!(m && m.k==='dia' && x && x.ant && !esVentaTienda(x.p) && m.fFoto && m.fEsp && String(m.fFoto)<String(m.fEsp));
+}
+/* La tarjeta con el voucher del POS pegado en la nota: Claude dice «no es un comprobante» (E3). */
+function ctaAvVoucherTarjeta(x){
+  if(!x || !/^Tarjeta/i.test(String(x.metB||''))) return false;
+  return x.comps.some(function(f){ var o=IAC.res[f]; return o && !o.err && o.cp===false; });
+}
+/* {x, c} → lo mismo con los motivos que SÍ son errores, o null si no queda ninguno. */
+function ctaAvFiltrar(i){
+  if(!i || !i.c) return null;
+  if(i.c.est==='nl') return ctaAvVoucherTarjeta(i.x) ? null : i;
+  if(i.c.est!=='mal') return null;
+  var mot=(i.c.mot||[]).filter(function(m){ return !ctaAvNoEsError(i.x, m); });
+  if(!mot.length) return null;
+  if(mot.length===(i.c.mot||[]).length) return i;
+  return { x:i.x, c:Object.assign({}, i.c, { mot:mot, chip:mot[0].chip, txt:mot.map(function(m){ return m.t; }).join(' ') }) };
+}
+function ctaAvBancoDe(bd){ var k=iacBanco(bd); if(!k) return ''; for(var i=0;i<BANCOS_TODOS.length;i++) if(iacBanco(BANCOS_TODOS[i])===k) return BANCOS_TODOS[i]; return ''; }
+/* Los arreglos de un toque de un pago, sacados de lo que dijo la foto (los números de cada motivo). */
+function ctaAvArreglos(x, c){
+  var out=[], vistos={}, hoy=diaNegocio(), p=x && x.p;
+  if(!x || !c || c.est!=='mal') return out;
+  var add=function(f){ var k=JSON.stringify(f); if(!vistos[k]){ vistos[k]=1; out.push(f); } };
+  (c.mot||[]).forEach(function(m){
+    if(ctaAvNoEsError(x, m)) return;
+    if((m.k==='mixto' || m.k==='menos') && !x.envio){
+      var a=r2(m.dice), e=r2(m.k==='mixto' ? m.ne : m.dif);
+      if(a>0.005 && e>0.005 && Math.abs(a+e-r2(x.monto))<0.005) add({ k:'partir', a:a, e:e });
+    }
+    if((m.k==='menos' || m.k==='mas') && r2(m.dice)>0.005) add({ k:'monto', v:r2(m.dice) });
+    if(m.k==='banco' && String(x.metB||'')==='QR'){ var b=ctaAvBancoDe(m.bd); if(b && b!==String(x.ban||'')) add({ k:'banco', b:b }); }
+    if(m.k==='dia'){
+      var ff=String(m.fFoto||'');
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(ff) || ff>hoy) return;
+      if(esVentaTienda(p) && (x.ant || x.f===contaFecha(p))) add({ k:'tienda', f:ff });
+      else if(!x.ant) add({ k:'dia', f:ff });
+    }
+  });
+  return out;
+}
+function ctaAvArrTxt(x, f){
+  if(f.k==='partir') return '✂️ Partir en '+x.met+' '+iasNum(f.a)+' + efectivo '+iasNum(f.e);
+  if(f.k==='monto') return '✏️ Corregir a '+iasNum(f.v);
+  if(f.k==='banco') return '🏦 Cambiar a QR '+f.b;
+  if(f.k==='dia') return '📅 Poner la fecha de la foto ('+fmtFechaCorta(f.f)+')';
+  if(f.k==='tienda') return '📅 Pasar la venta al '+fmtFechaCorta(f.f);
+  return '';
+}
+/* El pago del aviso: por su clave; si cambió, por sus fotos (avisos nuevos) o por dos de sus tres datos (día, método, monto). */
+function ctaAvPagoDe(a){
+  var p=a && findById(a.pid); if(!p) return null;
+  var L=compsPagosDe(p); if(!L.length) return null;
+  var x=L.filter(function(y){ return ctaAvClave(y)===a.k; })[0]; if(x) return x;
+  var fs=Array.isArray(a.fs) ? a.fs : [];
+  if(fs.length){ var M=L.filter(function(y){ return y.comps.some(function(f){ return fs.indexOf(f)>=0; }); }); if(M.length) return M[0]; }
+  var N=L.filter(function(y){ var n=0; if(y.f===a.f) n++; if(y.met===a.met) n++; if(Math.abs(r2(y.monto)-(Number(a.m)||0))<0.005) n++; return n>=2; });
+  return N.length===1 ? N[0] : null;
+}
+function ctaAvRefs(){ try{ return iacRefs(iasPagosRecientes()); }catch(e){ return {}; } }
+/* ¿Cómo está HOY el pago del aviso? { est:'ok'|'mal'|'nl'|'pe'|'?', x, c, igual (sigue con la misma clave), noErr (no es un error) } */
+function ctaAvEvaluar(a, refs){
+  var x=ctaAvPagoDe(a);
+  if(!x) return { est:'?', x:null, igual:false };
+  /* «igual» = la misma clave (día, monto, método) y, si el aviso guardó sus fotos, las mismas fotos: subirle otra foto también es corregirlo */
+  var fs=Array.isArray(a.fs) ? a.fs.slice().sort().join('|') : null;
+  var igual=(ctaAvClave(x)===a.k) && (fs==null || x.comps.slice(0, 6).sort().join('|')===fs);
+  if(!x.comps.length || x.comps.some(function(f){ return !IAC.res[f]; })) return { est:'pe', x:x, igual:igual };
+  var c=iacComparar(x, refs || ctaAvRefs()), i=ctaAvFiltrar({ x:x, c:c });
+  if(!i) return { est:'ok', x:x, c:c, igual:igual, noErr:c.est!=='ok' };
+  return { est:i.c.est, x:x, c:i.c, igual:igual };
+}
+/* Lo que la IA ya leyó de las fotos de esos avisos (sin gastar: `leer:1`). Cada foto se pide una vez por página abierta. */
+function ctaAvTraerLecturas(A){
+  if(!iacServidorOk() || !CONNECTED) return Promise.resolve(0);
+  var ids=[], v={};
+  (A||[]).forEach(function(a){ var x=ctaAvPagoDe(a); (x ? x.comps : (Array.isArray(a.fs) ? a.fs : [])).forEach(function(f){ if(f && !IAC.res[f] && !v[f] && !CTA_AV_LEE.pedidas[f]){ v[f]=1; ids.push(f); } }); });
+  if(!ids.length) return Promise.resolve(0);
+  ids.forEach(function(f){ CTA_AV_LEE.pedidas[f]=1; });
+  return conTopeDuro(apiPost({ action:'iaComprobantes', fotos:ids.slice(0, 1900), leer:1 }), 30000, 'tardo_ia').then(function(r){
+    if(!r || !r.ok) return 0;
+    var n=0; Object.keys(r.res||{}).forEach(function(k){ if(!IAC.res[k]) n++; });
+    iacTomar(r); return n;
+  }, function(){ return 0; });
+}
+function ctaAvLeerFotos(L){
+  if(CTA_AV_LEE.corre) return;
+  CTA_AV_LEE.corre=true;
+  ctaAvTraerLecturas(L).then(function(n){ CTA_AV_LEE.corre=false; if(n) ctaAvRepintar(); }, function(){ CTA_AV_LEE.corre=false; });
+}
+function ctaAvRepintar(){
+  try{ if(CTA_AV_VER && document.querySelector('#modal.on .ctav-sub')) ctaAvVer(CTA_AV_VER.v); else if(document.getElementById('iac-cuerpo')) iacPintar(); }catch(e){}
+}
+function ctaAvBotonesHtml(x, fx, avId, origen, v){
+  if(!x || !fx || !fx.length) return '';
+  return '<div class="ctav-arr">'+fx.map(function(f){
+    return '<button type="button" class="ah-go ah-go-a ctav-fix" onclick="'+esc('ctaAvArreglar('+JSON.stringify(String(avId||''))+','+JSON.stringify(String(x.p.id))+','+JSON.stringify(ctaAvClave(x))+','+
+      JSON.stringify(f)+','+JSON.stringify(String(origen||'av'))+','+JSON.stringify(String(v||''))+')')+'">'+esc(ctaAvArrTxt(x, f))+'</button>'; }).join('')+'</div>';
+}
+/* Debajo de cada aviso: ya coincide · el arreglo de un toque · la razón (si tocó «Ya lo corregí» y quedó igual). */
+function ctaAvFilaExtraHtml(a, v){
+  var e=ctaAvEvaluar(a), h='';
+  if(e.est==='ok') h+='<div class="ctav-ok">✅ '+(e.noErr ? 'Esto no es un error de la venta' : 'Ya coincide con la foto')+': tocá «✓ Ya lo corregí».</div>';
+  else if(e.est==='mal') h+=ctaAvBotonesHtml(e.x, ctaAvArreglos(e.x, e.c), a.id, 'av', v);
+  else if(e.x && e.igual && Array.isArray(a.fx) && a.fx.length) h+=ctaAvBotonesHtml(e.x, a.fx, a.id, 'av', v);   // sin la lectura: el arreglo que se guardó con el aviso
+  if(CTA_AV_RAZON[a.id]) h+=ctaAvRazonHtml(a, v, e);
+  return h;
+}
+function ctaAvRazonHtml(a, v, e){
+  var id=String(a.id), jv=JSON.stringify(String(v||'')), ji=JSON.stringify(id);
+  return '<div class="ctav-raz"><b>El pago quedó igual'+((e && (e.est==='mal' || e.est==='nl')) ? ' y la foto todavía no coincide' : '')+'.</b> ¿Por qué queda así? Se lo pasamos a Contabilidad.'+
+    '<div class="ctav-raz-b">'+CTA_AV_RAZONES.map(function(r){ return '<button type="button" class="ah-go" onclick="'+esc('ctaAvRazon('+ji+','+jv+','+JSON.stringify(r.k)+')')+'">'+esc(r.t)+'</button>'; }).join('')+'</div>'+
+    '<div class="ctav-raz-o"><input type="text" id="ctav-raz-'+esc(id.replace(/[^A-Za-z0-9_-]/g,''))+'" maxlength="140" placeholder="Otra razón…" autocomplete="off">'+
+    '<button type="button" class="ah-go ah-go-p" onclick="'+esc('ctaAvRazon('+ji+','+jv+',"otra")')+'">Guardar</button></div></div>';
+}
+function ctaAvRazon(id, v, k){
+  var t='';
+  if(k==='otra'){ var e=document.getElementById('ctav-raz-'+String(id).replace(/[^A-Za-z0-9_-]/g,'')); t=e ? String(e.value||'').replace(/\s+/g,' ').trim() : '';
+    if(t.length<3){ toast('Escribí la razón (o elegí una de arriba).','err'); if(e) try{ e.focus(); }catch(x){} return Promise.resolve(false); } }
+  else { var r=CTA_AV_RAZONES.filter(function(o){ return o.k===k; })[0]; t=r ? r.t : ''; }
+  if(!t) return Promise.resolve(false);
+  return ctaAvOk(id, v, { okRaz:t.slice(0, 140) });
+}
+/* «✓ Ya lo corregí»: se mira el pago. Coincide, o cambió y no hay con qué compararlo → se cierra. Quedó igual → la razón. */
+function ctaAvCorregi(id, v){
+  var a=ctaAvLeer().filter(function(o){ return o.id===id; })[0]; if(!a) return Promise.resolve(false);
+  var e=ctaAvEvaluar(a);
+  var cierra = e.est==='ok' || e.est==='?' || (e.est==='pe' && !e.igual);
+  if(cierra) return ctaAvOk(id, v, e.est==='ok' ? { okArr:e.noErr ? 'no era un error' : 'ya coincide con la foto' } : null);
+  CTA_AV_RAZON[id]=1; ctaAvVer(v);
+  setTimeout(function(){ var b=document.querySelector('.ctav-it[data-av="'+String(id).replace(/["\\]/g,'')+'"] .ctav-raz'); if(b) try{ b.scrollIntoView({ block:'center' }); }catch(x){} }, 30);
+  return Promise.resolve(false);
+}
+/* Cómo se cerró, para Contabilidad (la revisión de las fotos). */
+function ctaAvCerradoHtml(a){
+  var quien=esc(String(a.okPor||a.vend||'').split(' ')[0]), dia=esc(fmtFechaCorta(isoDeTsBolivia(a.ok)));
+  if(a.au) return '<div class="iac-av iac-av-ok">🤖 Se cerró solo el '+dia+': '+(a.au==='no_error' ? 'no es un error (pago de antes de cargar la venta o voucher de tarjeta)' : 'ya coincide con la foto')+'</div>';
+  if(a.okRaz) return '<div class="iac-av iac-av-raz">💬 '+quien+' dice que quedó igual el '+dia+': «'+esc(a.okRaz)+'»</div>';
+  if(a.okArr) return '<div class="iac-av iac-av-ok">✅ '+quien+' lo arregló el '+dia+': '+esc(a.okArr)+'</div>';
+  return '<div class="iac-av iac-av-ok">✅ '+esc(String(a.vend||'').split(' ')[0])+' dice que lo corrigió el '+dia+'</div>';
+}
+function ctaAvQuien(v, origen){
+  if(v) return String(v);
+  if(origen==='iac' || quienRol()==='conta') return 'Contabilidad';
+  return (typeof getVendedorMem==='function' && getVendedorMem()) || 'Administración';
+}
+/* 📅 §4nm, la MISMA regla del formulario: la venta de tienda pasa a otro día con la misma hora (nunca después de ahora) y lo cobrado el
+   día de la carga va con ella. Las usan `submitPedido` y el arreglo de los avisos. */
+function tsVentaEnDia(base, f){ var ms=((base-4*3600000)%86400000+86400000)%86400000; return Math.min(Date.parse(f+'T00:00:00-04:00')+ms, Date.now()); }
+function pagosAlDia(mp, antes, nueva){ return (mp && antes && nueva) ? String(mp).replace(new RegExp('@(\\s*)'+antes+'(?!\\d)','g'), '@$1'+nueva) : mp; }
+function ctaAvMoverTienda(p, f){
+  var antes=contaFecha(p); f=String(f||'');
+  if(!esVentaTienda(p) || !/^\d{4}-\d{2}-\d{2}$/.test(f) || f>diaNegocio() || f===antes) return null;
+  var ts=tsVentaEnDia(Number(p.ts)||Date.now(), f), nueva=isoDeTsBolivia(ts);
+  p.ts=ts; p.metodoPago=pagosAlDia(p.metodoPago, antes, nueva);
+  return persistPedido(p);
+}
+/* Las fotos que Claude leyó como NO comprobante (la nota de venta, el recibo): respaldo del efectivo al partir. */
+function ctaAvRecibos(comps){ return compsArr(comps).filter(function(f){ var o=IAC.res[f]; return o && !o.err && o.cp===false; }); }
+/* ✂️ Partir un pago en el método de la foto + efectivo. El total de lo cobrado no cambia (`mismaPlata`: no es plata nueva). */
+function ctaAvPartir(p, x, c, a, e){
+  a=r2(a); e=r2(e);
+  if(x.envio || !(a>0.005) || !(e>0.005) || Math.abs(a+e-r2(Number(c.monto)||0))>0.005){ toast('Ese pago ya no suma lo mismo: corregilo en Contabilidad → ✏️ Corregir este pago.','err',8000); return null; }
+  var cs=compsArr(c.comps!=null?c.comps:c.comp), rec=ctaAvRecibos(cs), quedan=cs.filter(function(f){ return rec.indexOf(f)<0; });
+  if(!quedan.length){ quedan=cs; rec=[]; }
+  var sg=ctaChoferSugerido(p, c.fecha||contaFecha(p));   // 🚚 §4ok-112 el efectivo del día de la entrega lo tiene el chofer
+  var ef=function(fecha, nota){ return { metodo:'Efectivo', banco:'', monto:e, fecha:fecha, nota:nota, recibio:sg ? sg.ch : '', comps:rec, comp:rec[0]||'' }; };
+  var clon=function(q){ var o=JSON.parse(JSON.stringify(q)); if(!o.fecha) o.fecha=contaFecha(p); return o; };
+  if(c.anticipo){
+    if(mixtoDe(p)){ toast('Este adelanto ya está en dos pagos: corregilo en Contabilidad → ✏️ Corregir este pago.','err',8000); return null; }
+    var ventaAntes=ventaTotal(p), ant=JSON.parse(JSON.stringify(c));
+    ant.anticipo=true; ant.monto=a; ant.fecha=ant.fecha||contaFecha(p); ant.nota=limpiaNota(ant.nota)||limpiaNota(p.nota); ant.comps=quedan; ant.comp=quedan[0]||'';
+    var cobros=cobrosReales(p).map(clon);
+    cobros.push(ef(ant.fecha, ant.nota));   // el 2° método del pago mixto: mismo día y mismo recibo que el adelanto (§4ej)
+    p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(enviosDe(p))), regEnSistema(p));
+    if(!(p.pagado && !((Number(p.acuenta)||0)>0.005))) p.acuenta=r2(a+e);   // «A cuenta» = TODO el adelanto (§4eu); «SÍ, pagado» queda en 0 (§4cb)
+    return aplicarCobros(p, cobros, r2(ventaAntes-a), { mismaPlata:true });
+  }
+  var idx=ctaIdxCobro(p, x.ix, c), reales=cobrosReales(p);
+  if(cobrosDe(p).some(function(q){ return q.sinMonto; }) || idx<0 || idx>=reales.length){ toast('No encontré ese pago: corregilo en Contabilidad → ✏️ Corregir este pago.','err',8000); return null; }
+  var antX=anticipoEscrito(p);
+  if(antX && antX.fecha===c.fecha && limpiaNota(antX.nota)===limpiaNota(c.nota)){ toast('Ese pago es del mismo día y recibo que el adelanto: partilo en Contabilidad → ✏️ Corregir este pago.','err',8000); return null; }
+  var arr=reales.map(clon);
+  arr[idx].monto=a; arr[idx].comps=quedan; arr[idx].comp=quedan[0]||'';
+  arr.splice(idx+1, 0, ef(arr[idx].fecha, arr[idx].nota));
+  return aplicarCobros(p, arr, objetivoCobro(p), { mismaPlata:true });
+}
+/* El arreglo: partir y mover la venta de tienda acá; monto, banco y fecha por «Corregir este pago» (sin abrir la ficha). */
+function ctaAvAplicar(p, x, f){
+  var c=contaPagos(p)[x.ix]; if(!c) return null;
+  if(f.k==='partir') return ctaAvPartir(p, x, c, f.a, f.e);
+  if(f.k==='tienda') return ctaAvMoverTienda(p, f.f);
+  var nota=limpiaNota(c.nota)||limpiaNota(p.nota);
+  if(!nota){ toast('Ese pago no tiene N° de recibo: corregilo en Contabilidad → ✏️ Corregir este pago.','err',8000); return null; }
+  var sv={ I:CTA_EDIT_I, V:CTA_EDIT_V, M:CTA_EDIT_M, B:CTA_EDIT_B, R:CTA_EDIT_R, RA:CTA_EDIT_RAUTO }, pr=null;
+  CTA_EDIT_I=x.ix;
+  CTA_EDIT_V={ fecha:(f.k==='dia' ? f.f : (c.fecha||contaFecha(p))), monto:String(f.k==='monto' ? r2(f.v) : r2(Number(c.monto)||0)), nota:nota };
+  CTA_EDIT_M=(f.k==='banco') ? 'QR' : (metodoBase(c.metodo)||String(c.metodo||''));
+  CTA_EDIT_B=(f.k==='banco') ? f.b : String(c.banco||''); CTA_EDIT_R=limpiaRecibio(c.recibio); CTA_EDIT_RAUTO=null;
+  CTA_AV_SILENCIO=true;
+  try{ pr=ctaGuardarPago(p.id, x.ix, true); }
+  finally{ CTA_AV_SILENCIO=false; CTA_EDIT_I=-1; CTA_EDIT_V=null; CTA_EDIT_M=sv.M; CTA_EDIT_B=sv.B; CTA_EDIT_R=sv.R; CTA_EDIT_RAUTO=sv.RA; }
+  return pr || null;
+}
+function ctaAvArrPregunta(p, x, f){
+  var reg=regEnSistema(p) ? '\n\n⚠️ Ya está cargada en el sistema contable: corregila allá también.' : '';
+  if(f.k==='partir'){ var sg=ctaChoferSugerido(p, x.f);
+    return '✂️ Partir el pago de '+fmtBs(x.monto)+' '+x.met+' del '+fmtFecha(x.f)+' en:\n\n· '+x.met+' '+fmtBs(f.a)+'\n· Efectivo '+fmtBs(f.e)+(sg ? (' (lo recibió el chofer '+sg.ch+')') : '')+
+      '\n\nEl total de la venta y lo que falta cobrar no cambian.'+reg+'\n\n¿Partirlo?'; }
+  if(f.k==='monto'){ var dif=r2(f.v-x.monto), sal=r2((Number(p.saldo)||0)-dif);
+    return '✏️ Corregir el pago de '+fmtBs(x.monto)+' '+x.met+' a '+fmtBs(f.v)+' (lo que dice la foto).\n\n'+
+      (dif<0 ? ('Los '+fmtBs(-dif)+' que se sacan vuelven a «falta cobrar»') : ('Falta cobrar '+fmtBs(dif)+' menos'+(sal<-0.005 ? (': la venta quedaría cobrada de más ('+fmtBs(-sal)+')') : '')))+
+      '. El total de la venta no cambia.'+reg+'\n\n¿Corregirlo?'; }
+  if(f.k==='banco') return '🏦 Pasar el pago de '+fmtBs(x.monto)+' de '+x.met+' a QR '+f.b+' (la foto dice que entró ahí).'+reg+'\n\n¿Cambiarlo?';
+  if(f.k==='dia') return '📅 Poner el pago de '+fmtBs(x.monto)+' '+x.met+' con la fecha de la foto: '+fmtFecha(f.f)+' (estaba el '+fmtFecha(x.f)+').'+reg+'\n\n¿Cambiarla?';
+  if(f.k==='tienda'){ var antes=contaFecha(p);
+    return '📅 Pasar esta venta de tienda al '+fmtFecha(f.f)+' (el día de la foto del pago). Cuenta ese día en Contabilidad y Proyección'+
+      (antes.slice(0,7)!==f.f.slice(0,7) ? (' (pasa de '+mesNombre(antes)+' a '+mesNombre(f.f)+')') : '')+'; lo cobrado el día de la carga va con ella.'+reg+'\n\n¿Pasarla?'; }
+  return '';
+}
+/* Un toque: pregunta, arregla el pago y, con el «sí» de la planilla, cierra el aviso (y cualquier otro abierto del mismo pago). */
+function ctaAvArreglar(avId, pid, key, f, origen, v){
+  var p=findById(pid), x=p ? compsPagosDe(p).filter(function(y){ return ctaAvClave(y)===key; })[0] : null;
+  if(!x){ toast('Ese pago cambió desde el aviso: abrí la venta y miralo.','err',7000); ctaAvRepintar(); return Promise.resolve(false); }
+  var q=ctaAvArrPregunta(p, x, f); if(!q || !confirm(q)) return Promise.resolve(false);
+  var label=ctaAvArrTxt(x, f).replace(/^\S+\s/,'').replace(/^./, function(s){ return s.toLowerCase(); });
+  var pr=ctaAvAplicar(p, x, f); if(!pr || !pr.then){ ctaAvRepintar(); return Promise.resolve(false); }
+  var quien=ctaAvQuien(v, origen);
+  try{ renderCuadreSiActivo(); renderContaSiActiva(); }catch(e){}
+  ctaAvRepintar();
+  return pr.then(function(res){
+    if(!(res && res.ok)){ toast('Quedó anotado en este aparato pero todavía no en la planilla: el aviso se cierra solo cuando llegue y coincida.','err',9000); ctaAvRepintar(); return false; }
+    var ids=avId ? [String(avId)] : [];
+    ctaAvAbiertos('').forEach(function(a){ if(a.k===key && ids.indexOf(a.id)<0) ids.push(a.id); });
+    if(!ids.length){ toast('✓ Listo: '+label+'.','ok',6000); ctaAvRepintar(); return true; }
+    return ctaAvGuardar(ids.map(function(id){ return { id:id, ok:Date.now(), okPor:quien, okArr:label }; })).then(function(){
+      toast('✓ Listo: '+label+'. Contabilidad ve que quedó arreglado.','ok',7000); ctaAvRepintar(); try{ renderMis(); }catch(e){} return true;
+    }, function(e){
+      toast('El pago quedó arreglado, pero no se pudo cerrar el aviso ('+(typeof motivoDeError==='function' ? motivoDeError(e) : String(e))+'): tocá «✓ Ya lo corregí».','err',9000); ctaAvRepintar(); return true;
+    });
+  });
+}
+/* 📅 Las ventas de tienda con el día equivocado, de una vez («botón único» del plan). */
+function ctaAvTiendaLista(L){
+  var refs=ctaAvRefs(), out=[];
+  (L||[]).forEach(function(a){
+    var e=ctaAvEvaluar(a, refs), fx=(e.est==='mal') ? ctaAvArreglos(e.x, e.c) : ((e.x && e.igual && Array.isArray(a.fx)) ? a.fx : []);
+    var f=fx.filter(function(z){ return z.k==='tienda'; })[0]; if(f) out.push({ a:a, x:e.x, f:f });
+  });
+  return out;
+}
+function ctaAvTiendaTodasHtml(L, v){
+  var T=ctaAvTiendaLista(L); if(T.length<2) return '';
+  return '<div class="ctav-todas" id="ctav-todas">📅 <b>'+T.length+' ventas de tienda</b> tienen la foto del pago de OTRO día que el de la carga.'+
+    '<button type="button" class="ah-go ah-go-a" onclick="'+esc('ctaAvTiendaTodas('+JSON.stringify(String(v||''))+')')+'">📅 Pasar las '+T.length+' al día de su foto</button></div>';
+}
+function ctaAvTiendaTodas(v){
+  var T=ctaAvTiendaLista(ctaAvAbiertos(v)); if(!T.length) return Promise.resolve(0);
+  if(!confirm('📅 Pasar estas '+T.length+' ventas de tienda al día de la foto de su pago:\n\n'+T.map(function(t){ return '· '+(t.a.cli||'')+(t.a.nota?(' · nota '+t.a.nota):'')+': '+fmtFechaCorta(contaFecha(t.x.p))+' → '+fmtFechaCorta(t.f.f); }).join('\n')+
+    '\n\nCada una cuenta ese día en Contabilidad y Proyección, y lo cobrado el día de la carga va con ella.\n\n¿Pasarlas?')) return Promise.resolve(0);
+  var quien=ctaAvQuien(v, 'av'), proms=T.map(function(t){
+    var pr=ctaAvMoverTienda(t.x.p, t.f.f);
+    return pr ? pr.then(function(res){ return (res && res.ok) ? { id:t.a.id, ok:Date.now(), okPor:quien, okArr:'pasó la venta al '+fmtFechaCorta(t.f.f) } : null; }, function(){ return null; }) : Promise.resolve(null);
+  });
+  try{ renderContaSiActiva(); }catch(e){}
+  return Promise.all(proms).then(function(R){
+    var ch=R.filter(Boolean);
+    if(!ch.length){ toast('No llegó a la planilla: se reintenta solo. Los avisos se cierran cuando llegue.','err',8000); ctaAvRepintar(); return 0; }
+    return ctaAvGuardar(ch).then(function(){ toast('📅 Listo: '+ch.length+' venta'+(ch.length===1?'':'s')+' de tienda pasada'+(ch.length===1?'':'s')+' al día de su foto.','ok',7000); ctaAvRepintar(); try{ renderMis(); }catch(e){} return ch.length; },
+      function(){ toast('Las ventas se pasaron, pero no se pudieron cerrar los avisos: tocá «✓ Ya lo corregí».','err',8000); ctaAvRepintar(); return ch.length; });
+  });
+}
+/* Con cada lectura buena: lo abierto que ya coincide (o que no es un error) se cierra solo. Una vez cada 10 min como mucho. */
+function ctaAvAutoRevisar(){
+  if(!ctaAvAutoActivo() || !CONNECTED || !iacServidorOk() || CTA_AV_AUTO.corre) return Promise.resolve(0);
+  if(CTA_AV_AUTO.t && Date.now()-CTA_AV_AUTO.t<CTA_AV_AUTO_MS) return Promise.resolve(0);
+  var A=ctaAvAbiertos(''); if(!A.length) return Promise.resolve(0);
+  CTA_AV_AUTO.t=Date.now(); CTA_AV_AUTO.corre=true;
+  return ctaAvTraerLecturas(A).then(function(){
+    var refs=ctaAvRefs(), ch=[];
+    A.forEach(function(a){ var e=ctaAvEvaluar(a, refs); if(e.est==='ok') ch.push({ id:a.id, ok:Date.now(), okPor:'🤖 el panel', au:e.noErr ? 'no_error' : 'coincide' }); });
+    if(!ch.length) return 0;
+    return ctaAvGuardar(ch).then(function(){ ctaAvRepintar(); try{ renderMis(); }catch(e){} return ch.length; });
+  }).catch(function(){ return 0; }).then(function(n){ CTA_AV_AUTO.corre=false; return n; });
+}
+// §4ok-92 fin =========================================================================
 /* ============================================================================
    🔎 (30/10, propuesta 78, elegida por el dueño) EL COMPROBANTE SE LEE AL SUBIRLO.
    La revisión con IA del 26/10 encontró 13 errores de plata de octubre (3 «QR + efectivo» anotados todo QR, una foto de Bs 10 para un
@@ -50506,7 +50949,9 @@ function iasPintarForm(){
   ['1','2'].forEach(function(k){
     var box=document.getElementById('ias-f'+k); if(!box) return;
     var h='';
-    try{ var c=iasEvaluar(iasFormX(+k)); if(c) h=iasHtml(c, iasCtxForm(+k)); }catch(e){ h=''; }
+    try{ var c=iasEvaluar(iasFormX(+k));
+      if(c && tvFotoFechaProponer(c)) c=iasEvaluar(iasFormX(+k));   // 📅 §4ok-93 la venta de tienda toma el día de la foto
+      if(c) h=iasHtml(c, iasCtxForm(+k))+(k==='1' ? tvFotoFechaNotaHtml() : ''); }catch(e){ h=''; }
     if(box._h!==h){ box.innerHTML=h; box._h=h; }
   });
 }
@@ -50626,6 +51071,63 @@ function iasFechaVenta(f){
   try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){}
   iasRepintar(); toast('📅 Fecha de la venta: '+fmtFecha(f)+'.','ok');
 }
+// §4ok-93 ============================================================================
+/* 🏪 (05/11, plan del jueves, 93; dueño: «Me encanta todo») LAS VENTAS DE TIENDA EN TANDA. Charcas carga en tandas semanales (42 ventas
+   en 128 min en octubre): después de cada una el panel saltaba a Contabilidad y había que volver y elegir la tienda otra vez; y 20 de las 26
+   con foto se cargaron 1 a 7 días después y quedaron con el día de la carga.
+   · «💾 Guardar y cargar la próxima» (solo en una venta de tienda NUEVA): guarda por el MISMO camino que «Registrar venta de tienda»
+     (`submitPedido`) y, con el «sí» de la planilla, vuelve al formulario de tienda vacío con la misma tienda y la misma vendedora. La
+     ventana para pasar la venta al grupo sale igual (encima del formulario). Si el guardado no entra (rechazo, cola) es lo de siempre.
+   · 📅 La fecha de la foto: si la IA ya leyó el comprobante del pago (la lectura al subir, §78) y la foto es de un día ANTERIOR a hoy,
+     ese día se pone solo en «Fecha de la venta» (§4nm) y se dice, con un botón para volver a la de antes. Nunca después de hoy, solo en
+     una venta NUEVA (corregir una vieja sigue preguntando) y nunca encima de una fecha que la persona escribió a mano. */
+var TV_PROXIMA=null, TV_FV={ mano:false, auto:'', antes:'' };
+function tvFvLimpiar(){ TV_FV={ mano:false, auto:'', antes:'' }; }
+function tvGuardarProxima(){
+  var b=document.getElementById('f-submit'); if(b && b.disabled) return;
+  if(!VENTA_TIENDA || EDIT_ID){ submitPedido(); return; }
+  TV_PROXIMA={ suc:String((document.getElementById('f-tienda-suc')||{}).value||''), vend:String((document.getElementById('f-vendedor')||{}).value||'').trim() };
+  submitPedido();
+  TV_PROXIMA=null;   // si `submitPedido` no lo tomó (otra cosa abierta), que no quede para el próximo guardado
+}
+function tvProximaSeguir(prox, rec){
+  abrirVentaTienda();
+  var s=document.getElementById('f-tienda-suc'); if(s && prox.suc) s.value=prox.suc;
+  var v=document.getElementById('f-vendedor'); if(v && prox.vend){ v.value=prox.vend; try{ applyVendedorLite(); }catch(e){} }
+  try{ FORM_NUEVO_BASE=formNuevoHuella(); }catch(e){}   // la tienda y la vendedora las puso el panel: no es «un pedido a medio llenar»
+  showWhatsappModal(rec);
+  toast('✓ Venta guardada. Seguís en la venta de tienda'+(prox.suc?(' de '+prox.suc):'')+': cargá la próxima.','ok',6000);
+}
+/* La lectura de la foto dijo otro día: se pone ese día (una vez por venta). Devuelve true si cambió la fecha. */
+function tvFotoFechaProponer(c){
+  if(!VENTA_TIENDA || EDIT_ID || !TV_FV || TV_FV.mano || TV_FV.auto || !c || c.est!=='mal') return false;
+  var m=(c.mot||[]).filter(function(x){ return x.k==='dia'; })[0]; if(!m) return false;
+  var ff=String(m.fFoto||''), hoy=diaNegocio();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(ff) || ff>=hoy) return false;
+  var e=document.getElementById('f-fecha-venta'); if(!e) return false;
+  TV_FV.antes=String(e.value||hoy); TV_FV.auto=ff; e.value=ff; e.classList.remove('err');
+  TV_FV.yo=true; try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){} TV_FV.yo=false;
+  toast('📅 Puse el '+fmtFechaCorta(ff)+' como «Fecha de la venta»: es el día de la foto del pago.','ok',6000);
+  return true;
+}
+function tvFotoFechaNotaHtml(){
+  if(!VENTA_TIENDA || EDIT_ID || !TV_FV || !TV_FV.auto || iasVal('f-fecha-venta')!==TV_FV.auto) return '';
+  return iasLinea('ias-gris', '📅 Puse el <b>'+esc(fmtFechaCorta(TV_FV.auto))+'</b> como «Fecha de la venta»: es el día de la foto del pago.',
+    iasBtn('No, fue el '+esc(fmtFechaCorta(TV_FV.antes||diaNegocio())), 'tvFotoFechaDeshacer()'));
+}
+function tvFotoFechaDeshacer(){
+  var e=document.getElementById('f-fecha-venta'); if(!e) return;
+  var f=String(TV_FV.antes||diaNegocio()); if(f>diaNegocio()) f=diaNegocio();
+  e.value=f; TV_FV.mano=true; TV_FV.auto='';
+  TV_FV.yo=true; try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){} TV_FV.yo=false;
+  iasRepintar(); toast('📅 Fecha de la venta: '+fmtFecha(f)+'.','ok');
+}
+/* La persona cambió la fecha (a mano o con el «Sí» de la pregunta): no se la vuelve a tocar. Lo que pone este bloque no cuenta (`yo`). */
+(function(){
+  var mano=function(e){ if(e && e.target && e.target.id==='f-fecha-venta' && TV_FV && !TV_FV.yo){ TV_FV.mano=true; TV_FV.auto=''; } };
+  document.addEventListener('input', mano, true); document.addEventListener('change', mano, true);
+})();
+// §4ok-93 fin =========================================================================
 /* Cambia un monto, el método, el banco, la fecha…: el aviso se rehace (solo si hay alguna foto subida acá). */
 (function(){
   var t=null, ids={ 'f-acuenta':1, 'f-saldo':1, 'f-cobrado':1, 'f-monto2':1, 'f-envio':1, 'f-fecha-venta':1, 'cta-pago-monto':1, 'cta-pago-fecha':1 };
