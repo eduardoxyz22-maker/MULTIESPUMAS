@@ -19,7 +19,7 @@ Requisitos: solo librería estándar de Python 3. El token de Kommo se lee de la
 variable de entorno KOMMO_TOKEN (NUNCA se escribe en el código ni en el HTML).
 """
 
-import os, sys, json, time, re, argparse, calendar, datetime, shutil
+import os, sys, json, time, re, argparse, calendar, datetime, shutil, unicodedata
 from collections import defaultdict
 from urllib import request as _rq, parse as _ps, error as _er
 
@@ -59,6 +59,24 @@ VENDOR_CFG = {
     "Carola Chavez":  dict(ini="CC", color="#D98300", suc="Central",      metaCierres=35, metaMonto=135000),
     "Jonathan Monje": dict(ini="JM", color="#159A57", suc="Central",      metaCierres=8,  metaMonto=105000),
 }
+def _norm_vend(s):
+    """El nombre sin tildes, en minúscula y con un solo espacio: «Carola Chávez» = «Carola Chavez»."""
+    s = unicodedata.normalize("NFD", s or "")
+    return " ".join("".join(c for c in s if unicodedata.category(c) != "Mn").lower().split())
+
+def vendor_cfg(name):
+    """La fila de VENDOR_CFG de una vendedora aunque Kommo escriba su nombre con otra tilde o mayúscula.
+    (06/11) En noviembre los usuarios de Kommo pasaron a «Nombre - Sucursal» y Carola quedó «Carola Chávez»: con
+    `VENDOR_CFG.get` a secas no se la encontraba y salía con la meta de una vendedora nueva (8 cierres / Bs 20.000)
+    en vez de la suya (35 / Bs 135.000), y la meta del equipo decía 152 en vez de 179."""
+    if name in VENDOR_CFG:
+        return VENDOR_CFG[name]
+    n = _norm_vend(name)
+    for k, v in VENDOR_CFG.items():
+        if _norm_vend(k) == n:
+            return v
+    return None
+
 DEFAULT_COLORS = ["#00B5AD", "#2E6FE0", "#7A5AF0", "#D98300", "#159A57", "#DC4046", "#22A7C9"]
 
 SUC_COLORS = {"Mia Plaza": "#00B5AD", "Buenos Aires": "#2E6FE0", "Central": "#D98300"}
@@ -228,7 +246,7 @@ def detect_suc(vname, lead):
         if "mia" in n or "plaza" in n:   return "Mia Plaza"
         if "buenos" in n or "aires" in n: return "Buenos Aires"
         if "central" in n:                return "Central"
-    cfg = VENDOR_CFG.get(vname)
+    cfg = vendor_cfg(vname)
     return cfg["suc"] if cfg else "Sin sucursal"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -645,7 +663,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     team = []
     for i, name in enumerate(names):
         d = vcur[name]; pv = vprev.get(name, blank_vendor())
-        cfg = VENDOR_CFG.get(name, {})
+        cfg = vendor_cfg(name) or {}
         u24pct = round(d["u24"] / d["leads"] * 100) if d["leads"] else 0
         v_tone = "green" if u24pct >= 70 else "amber" if u24pct >= 40 else "red"
         conv = round(d["cierres"] / d["leads"] * 100, 1) if d["leads"] else 0
@@ -1253,7 +1271,7 @@ def build_wsp(pd):
         rank = sorted(team, key=lambda t: (t["cierres"], t["value"]), reverse=True)
         medals = ["🥇", "🥈", "🥉"] + ["•"] * 10
         rank_lines = "\n".join(
-            f"{medals[i]} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}"
+            f"{medals[i] if t['cierres'] > 0 else '•'} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}"   # (06/11) sin medalla con 0 cierres
             for i, t in enumerate(rank))
         peores_bk = sorted(team, key=lambda t: t["backlog"], reverse=True)[:2]
         bk_txt = " y ".join(f"{t['name'].split()[0]} ({t['backlog']})" for t in peores_bk if t["backlog"] > 0)

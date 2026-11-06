@@ -17285,6 +17285,15 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   de `main`: test_atc_excel 36, test_atc_correo 32, test_rpt 110, test_fabrica_repaso 36, test_vendedores_nuevos 36, test_wa_pedir_hoy 64,
   test_version_nueva 27, test_fabrica_debe 46, test_atc_obligatorio 57, test_asistente 24, test_servidor 414, test_avisa_cuando 52, todas 0 mal.
   El servidor 2026-11-06-a (armazones en el aviso de las 08:45) sigue opcional: hasta que lo implemente, «Cerrar día» muestra la línea gris.
+  **El dueño lo implementó el 06/11 (~16:00 de Bolivia, «ya implemente»)**: el servidor contesta `2026-11-06-a` (consulta `geocode` vacía).
+- 📊 **06/11 — «¿el dashboard ya funciona y da bien?»**: funciona (`test_actualizar_espera` 14/14 sola; la roja de la batería fue la máquina
+  cargada; la última corrida del generador, 05/11 21:11, salió bien; la de las 10:00 de hoy la demora GitHub como siempre). Pero en noviembre
+  los usuarios de Kommo pasaron a «Nombre - Sucursal» y Carola quedó «Carola Chávez»: `VENDOR_CFG.get("Carola Chávez")` no la encontraba y salía
+  con la meta de una vendedora nueva (8 cierres / Bs 20.000 en vez de 35 / 135.000; el equipo 152 en vez de 179). Arreglado con `vendor_cfg`
+  (sin tildes ni mayúsculas) en `detect_suc` y en el armado del equipo; el resumen de WhatsApp ya no le da 🥉 a quien tiene 0 cierres.
+  `test_generar_integridad` §9 (22; 3 rojas contra el de antes). EN LA RAMA, espera «publica» (publicarlo dispara el workflow del panel).
+  Para preguntar al dueño: Kommo dice Fabián = Central (el panel dice Ventura Mall), Isabel = Central y Jonathan = Mia Plaza (en octubre era al
+  revés); el horario con que se mide la respuesta (`sched_for`) va por nombre: Isabel sigue con el de Mia Plaza (9 a 21).
   · `atcHoja(p)` = la plantilla tal cual (4 columnas, el turquesa `1D9DB4`, recuadros, el logo de Heaven y los dibujos del colchón y el somier del
     «esquema», `ATC_IMG_*` sacados del archivo del dueño) llena con la ATC: cliente, fecha (entró), N° ATC al lado de «NRO DE FACTURA» (vacío,
     §4bs), teléfono, fecha de compra con antigüedad, dirección, vendedora, ● COLCHÓN/○ SOMIER/○ CAMABOX (`atcQueEs`, con `pryTipoProd`: una

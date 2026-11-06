@@ -2557,7 +2557,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   de la lista en otra medida y `FD_SON_PRODUCTO` (dueño, 06/11). Un nombre nuevo que el dueño confirme va en `FD_SON_PRODUCTO`. La Tienda Banzer
   tiene el pin del almacén Banzer (dueño: «mismo lugar») y zona Norte; Ventura Mall, zona Sur y el pin de su enlace (06/11).
 - **104c** Los ARMAZONES no cuentan en ningún lado (dueño, 06/11): `^ARMAZON` en `PROD_NO_ES_STOCK` y en `WA_PH_NO_ES_STOCK` del `.gs` (las dos
-  iguales, `test_wa_pedir_hoy`); servidor `2026-11-06-a` solo por eso (opcional, el dueño lo implementa cuando quiera; enlace fijo `faf46c3…`). PUBLICADO con la 06-b (`4138911`). Lo pedido a fábrica con una clave que el stock no usa no arma fila.
+  iguales, `test_wa_pedir_hoy`); servidor `2026-11-06-a` solo por eso: IMPLEMENTADO 06/11 por el dueño (contesta `2026-11-06-a`; enlace fijo `faf46c3…`, 5.991 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 05-a de `893c46c…`). Página PUBLICADA con la 06-b (`4138911`). Lo pedido a fábrica con una clave que el stock no usa no arma fila.
 - **106** el ✅ en lote de «los que vio el GPS» usa `cierreEntAplicar`, nunca `toggleEntregado` en serie. Nada se marca solo.
 - **110** `__destinos__` (`DEST_ID`) en `esFilaSistema`, `REESCRITAS` y `SISTEMA_JUNTA_OPCIONAL`; solo un pedido NUEVO toma el lugar y
   un enlace pegado manda.
@@ -2628,6 +2628,14 @@ para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramienta
 - 🧽 **Bloki según la pestaña, para todos** (dueño: «Según pestaña, todos»): Nuevo pedido/Mis pedidos → vendedor, Contabilidad → contador,
   Administración → casco; en ATC/Bot/Chofer, el de quien eligió ser. `test_bloki` §2.
 - `tests/test_temas_mejoras.js` (92), `tests/test_mejoras_3_10_11.js` (29), `tests/test_mejoras_5_7_9.js` (52). Bitácora §4ni.
+
+## 👥 Los usuarios de Kommo con sucursal y tilde (06/11; en la rama, espera «publica»)
+Desde noviembre Kommo nombra a cada usuario «Nombre - Sucursal» (Isabel Robledo - Central, Jonathan Monje - Mia Plaza, Carola Chávez - Tienda
+Banzer, Fabián Godoy - Central, Andrea Orias - Tienda Banzer): la sucursal del dashboard sale de ese sufijo, no de `VENDOR_CFG`. Carola quedó con
+tilde y `VENDOR_CFG.get` no la encontraba → meta de vendedora nueva (8 / Bs 20.000 en vez de 35 / 135.000; meta del equipo 152 en vez de 179).
+⚠️ Toda búsqueda en `VENDOR_CFG` va por **`vendor_cfg(name)`** (sin tildes ni mayúsculas). El resumen de WhatsApp no da medalla con 0 cierres.
+`sched_for` (horario para medir la respuesta) sigue por NOMBRE (Mirian e Isabel = Mia Plaza 9-21): con Isabel en Central según Kommo, preguntar
+al dueño. `test_generar_integridad` §9.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

@@ -70,6 +70,8 @@ class Falla(Exception):
     pass
 SIN_CONTRATO = False
 
+NOMBRE_ANA = "Ana Prueba - Central"   # el caso 9 la cambia por «Ána Prúeba» (con tildes), como pasó con Carola en Kommo
+
 def fabricar_urlopen(fallar=None):
     """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None."""
     def urlopen(req, timeout=None):
@@ -90,7 +92,7 @@ def fabricar_urlopen(fallar=None):
             body = emb("pipelines", [{"id": 9911, "name": "Ventas", "is_main": True, "_embedded": {"statuses": [
                 {"id": ST_NUEVA, "name": "Nueva consulta"}, {"id": ST_COMPRA, "name": "Compradores"}]}}])
         elif path == "/users":
-            body = emb("users", [{"id": ANA, "name": "Ana Prueba - Central"}, {"id": BETO, "name": "Beto Prueba - Central"}])
+            body = emb("users", [{"id": ANA, "name": NOMBRE_ANA}, {"id": BETO, "name": "Beto Prueba - Central"}])
         elif path == "/leads/custom_fields":
             cfs = [{"id": CANAL, "name": "Canal", "type": "select", "enums": [{"id": 1, "value": "Facebook"}]}]
             if not SIN_CONTRATO: cfs.append({"id": CONTRATO, "name": "Fecha contrato", "type": "date"})
@@ -203,6 +205,25 @@ if pd:
     chk("8b. CRM-07: la venta de las 23:59:59 del último día es de este mes (3 cierres: 1.000 + 500 + 700)", pd["global"]["cierres"] == 3 and pd["global"]["cerrado"] == 2200, pd["global"])
 else:
     chk("8. (el panel con las ventas de borde no se escribió)", False, txt[-300:])
+
+# ── 9 · (06/11) la vendedora con tilde en Kommo sigue siendo la de VENDOR_CFG ─────────────────────────
+# En noviembre Kommo pasó a «Carola Chávez - Tienda Banzer» y VENDOR_CFG dice «Carola Chavez»: no se la encontraba y salía con
+# la meta de una vendedora nueva (8 cierres / Bs 20.000 en vez de 35 / Bs 135.000).
+G.VENDOR_CFG["Ana Prueba"] = dict(ini="AP", color="#123456", suc="Mia Plaza", metaCierres=35, metaMonto=135000)
+NOMBRE_ANA = "Ána Prúeba - Central"
+salio, pd, txt, archivos = correr()
+NOMBRE_ANA = "Ana Prueba - Central"
+del G.VENDOR_CFG["Ana Prueba"]
+if pd:
+    ana = {t["name"]: t for t in pd["team"]}.get("Ána Prúeba", {})
+    chk("9a. «Ána Prúeba» (con tildes en Kommo) lleva la meta de «Ana Prueba» de VENDOR_CFG: 35 cierres / Bs 135.000 (antes 8 / 20.000)",
+        ana.get("metaCierres") == 35 and ana.get("metaMonto") == 135000, {k: ana.get(k) for k in ("metaCierres", "metaMonto", "color")})
+    chk("9b. …y su color y sus iniciales", ana.get("color") == "#123456" and ana.get("ini") == "AP", (ana.get("color"), ana.get("ini")))
+    chk("9c. la sucursal sigue siendo la que dice Kommo después del guion (Central), no la de VENDOR_CFG", ana.get("suc") == "Central", ana.get("suc"))
+    lin = [l for l in (pd.get("wsp") or "").split("\n") if "Beto" in l]
+    chk("9d. en el resumen de WhatsApp, Beto (0 cierres) no lleva medalla", lin and lin[0].startswith("•"), lin)
+else:
+    chk("9. (el panel con la vendedora con tilde no se escribió)", False, txt[-300:])
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())
