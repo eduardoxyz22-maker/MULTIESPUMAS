@@ -9867,7 +9867,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
-      '<td>'+docVentaChip(p)+esc(p.facturarA||(docVentaDe(p)?'':'—'))+'</td>'+
+      '<td>'+(function(){ var c=docVentaChip(p); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
       '<td>'+contaPagosCelda(p)+'</td>'+
@@ -21286,8 +21286,8 @@ function docVentaRequerida(p){ return !!p && !fueraDeConta(p) && !borradorDe(p.i
 function docVentaFalta(p){ return docVentaRequerida(p) && !(docVentaDe(p) && docNumDe(p)); }
 function docVentaChip(p){
   var d=docVentaDe(p), n=docNumDe(p);
-  if(d) return '<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px" title="'+(d==='F'?'Factura':'Nota de remisión')+(n?(' N° '+esc(n)):' sin número')+'">'+(d==='F'?'🧾 Fact. ':'📄 Rem. ')+(n?esc(n):'s/n°')+'</span>';
-  return docVentaFalta(p) ? '<span class="badge b-amber" style="font-size:.62rem;margin-right:4px" title="Falta anotar la factura o la nota de remisión (en la ficha de la venta)">❓ sin factura/remisión</span>' : '';
+  if(d) return '<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="'+(d==='F'?'Factura':'Nota de remisión')+(n?(' N° '+esc(n)):' sin número')+'">'+(d==='F'?'🧾 Fact. ':'📄 Rem. ')+(n?esc(n):'s/n°')+'</span>';
+  return docVentaFalta(p) ? '<span class="badge b-amber" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Falta anotar la factura o la nota de remisión (en la ficha de la venta)">❓ falta fact./rem.</span>' : '';
 }
 /* La fila de la ficha de Contabilidad: elegir y anotar el N°. */
 var CTA_DOC={ id:'', t:'' };

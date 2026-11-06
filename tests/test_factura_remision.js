@@ -129,7 +129,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('5a · «Para hacer» de Contabilidad lo pide en rojo y «Ver» filtra la tabla', r.it && r.it.n === 1 && r.it.sev === 'r' && /sdoc/.test(r.it.fn) && r.filt.join() === 'm1', r);
   chk('5b · el control del cierre del mes lo pone en rojo', r.rojo === 1, r.rojo);
   chk('5c · el «Para hacer» de la vendedora: Maria tiene una, Carola ninguna (ya la anotó) y la lista abre la ficha de Contabilidad', r.vm === 1 && !r.vc && r.abrir === 'showContaModal', r);
-  chk('5d · el chip de la tabla dice «Fact. 7788», el que falta «❓ sin factura/remisión» y uno de octubre nada', /Fact\. 7788/.test(r.chipF) && /sin factura\/remisi/.test(r.chipFalta) && r.chipOct === '', r);
+  chk('5d · el chip de la tabla dice «Fact. 7788», el que falta «❓ falta fact./rem.» y uno de octubre nada', /Fact\. 7788/.test(r.chipF) && /falta fact\.\/rem\./.test(r.chipFalta) && r.chipOct === '', r);
   chk('5e · el Excel lleva al FINAL «FACTURA / REMISIÓN» y su N° (FALTA cuando falta)', r.cab[0] === 'OBSERVACIONES' && r.cab[1] === 'FACTURA / REMISIÓN' && r.cab[2] === 'N° FACTURA / REMISIÓN' &&
       r.f1.join() === 'NOTA DE REMISIÓN,00451' && r.f2.join() === 'FACTURA,7788' && r.fm.join() === 'FALTA,', r);
 

@@ -2666,10 +2666,11 @@ esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + 
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 
 ## 🧾💵🚚 Factura o remisión, el efectivo sin retirar y los recargos por vendedor (§4ol, 06/11; en la rama, espera «publica»; servidor `2026-11-06-b` espera al dueño)
-- 🧾 **Factura o nota de remisión obligatoria** (dueño: *«factura/nota remisión. obligatorio»*): toda VENTA (OC, también de tienda) elige
-  `#f-doc-venta`; con 🧾 Factura, «Facturar a» y NIT obligatorios. Afuera Eduardo, ROHO, ATC, RPT e internos (`docVentaObligatoria`). Va en los
-  productos (`fdoc:'F'|'R'`); `fxPasosEstado` y «Para guardar» piden lo mismo (`docVentaFalta`). Contabilidad: `docVentaChip`, ficha y la columna
-  «FACTURA / REMISIÓN» AL FINAL del Excel. Playwright: `DOCV_PRUEBA`. `tests/test_factura_remision.js`.
+- 🧾 **Factura o nota de remisión obligatoria, la anota la vendedora DESPUÉS, en Contabilidad** (dueño: *«aún no saben qué nro de factura o nota
+  remisión les tocará… que lo puedan colocar en contabilidad»*): el formulario del pedido NO la pide (no volver a ponerla ahí). Fila de la ficha de
+  Contabilidad (`ctaDocHtml`/`ctaDocGuardar`): tipo + N° en los productos (`fdoc`/`fdocn`; `submitPedido` los rescata de `prev`). Obligatoria desde
+  `DOCV_DESDE` (`docVentaFalta`): «Para hacer» de la vendedora (abre la ficha de Contabilidad) y de Contabilidad (filtro `sdoc`), el cierre en rojo,
+  `docVentaChip` y dos columnas al FINAL del Excel. `tests/test_factura_remision.js`.
 - 🚚 **Recargos por vendedor** (dueño eligió «el recargo por entrega»): `exportRecargos` (Contabilidad → ⬇️ Bajar): «Resumen» + una hoja por
   vendedor, las ventas de `contaLista` con recargo; cuentas de `enviosDe`. `tests/test_recargos_vendedor.js`.
 - 💵 **Efectivo sin retirar al dueño** (servidor 06-b, 9:00 y 18:00, `efectivo_sin_retirar` a WA_DUENO): `waEfePendiente_` — el efectivo es de

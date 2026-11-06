@@ -17360,13 +17360,17 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 ### §4ol — 🧾💵🚚 FACTURA O REMISIÓN, EL EFECTIVO SIN RETIRAR Y LOS RECARGOS POR VENDEDOR (06/11; dueño: *«vamos con lo demás · factura/nota remisión. obligatorio · avisar retiros de efectivo pendientes o sin cargar luego de 48 horas (aplica desde noviembre) y que llegue a mi telf · una planilla aparte de "cobro por entrega" pero por cada vendedor»*; en la rama, espera «publica»; servidor `2026-11-06-b` espera que el dueño lo implemente)
 Se le preguntó qué era cada cosa. Contestó: el efectivo «dos veces, 9:00 y 18:00»; el cobro por entrega = «el recargo por entrega»; la factura y
 a quién, «sin preferencia» → quedó lo propuesto.
-- 🧾 **Factura o nota de remisión** (`8de6d04`): en el formulario, arriba de «Facturar a», «¿Con factura o con nota de remisión?» (`#f-doc-venta`,
-  🧾 Factura / 📄 Nota de remisión). Toda VENTA (OC, también la de tienda) lo elige; con factura, «Facturar a» y el NIT/CI no pueden quedar vacíos
-  (asterisco en los dos). No lo piden Eduardo, ROHO, ATC, RPT ni los internos (`docVentaObligatoria`, como el precio): a Eduardo le sale «(opcional)».
-  Va en los productos (`fdoc:'F'|'R'`, `setDocVenta`/`docVentaDe`), vuelve al editar; un pedido viejo sin la marca la pide al editarlo (como el
-  precio). «Para guardar» y los pasos (`fxPasosEstado`[0]) piden lo mismo. Contabilidad: chip en «Facturar a» (`docVentaChip`), fila en la ficha y
-  la columna «FACTURA / REMISIÓN» AL FINAL del Excel. En Playwright apagado salvo `DOCV_PRUEBA`. `tests/test_factura_remision.js` (21; 16 rojas
-  contra `main`). Es lo que separa los retiros FACTURADO / NO FACTURADO (no se cruzan todavía: decírselo si lo pide).
+- 🧾 **Factura o nota de remisión — la anota la VENDEDORA, DESPUÉS, en Contabilidad** (`c8745c6`; la primera vuelta, `8de6d04`, la pedía en el
+  formulario del pedido y el dueño la corrigió: *«los vendedores generan pedido… aún no saben qué nro de factura o nota remisión les tocará…
+  que lo puedan colocar en contabilidad o cuadre y conciliación»* y *«no no me refería que debería hacerlo el vendedor»* (= que lo haga la
+  vendedora, ahí); vio las capturas en https://claude.ai/artifact/6y1Cv4yuTyCnakdfzw68AC). El formulario del pedido quedó COMO ESTABA. En la ficha
+  de la venta de Contabilidad, la fila «Factura o remisión» (`ctaDocHtml`/`ctaDocTipo`/`ctaDocGuardar`): 🧾 Factura / 📄 Nota de remisión + N°;
+  sin tipo o sin N° no se guarda. Va en los productos (`fdoc:'F'|'R'`, `fdocn`); corregir el pedido desde el formulario lo conserva
+  (`submitPedido` lo rescata de `prev`). Obligatorio para las ventas del equipo desde `DOCV_DESDE` (01/11) (`docVentaFalta`: `fueraDeConta` deja afuera
+  ATC, RPT, Eduardo, ROHO e internos): 🔴 en «Para hacer» de la vendedora (Mis pedidos: «Anotá la factura o la nota de remisión», la lista abre
+  `showContaModal`, `MIS_LISTAS.sdoc.abrir`), 🔴 en «Para hacer» de Contabilidad («Ver» = filtro `sdoc`), 🔴 en el control del cierre (Bajar pide la
+  contraseña), chip en «Facturar a» (`docVentaChip`: «Fact. N» / «Rem. N» / «❓ falta fact./rem.») y dos columnas al FINAL del Excel («FACTURA /
+  REMISIÓN» —FALTA si falta— y su N°). `tests/test_factura_remision.js` (14; rojas contra `main`). En el Cuadre no está: si lo pide, va ahí también.
 - 🚚 **Recargos por vendedor** (`321ce51`): Contabilidad → ⬇️ Bajar → «🚚 Recargos por vendedor» (`exportRecargos`, también en el libro de
   arriba): las ventas de la tabla del período (`contaLista`) con recargo; hoja «Resumen» (vendedor, ventas, pactado, cobrado, por cobrar, TOTAL) y
   una hoja por vendedor (un renglón por recargo: ingreso, entrega, OC, nota, cliente, zona, monto, COBRADO/POR COBRAR, día, método, banco, nota del
