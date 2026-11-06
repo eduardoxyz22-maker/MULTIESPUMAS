@@ -17324,6 +17324,14 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   Moreno: SUENA ESSENTIAL +2CM|105X190; ya estaba corregido), «CH1311 CONFORT PLUS … 1.5 PLAZAS» = CH1311 (no está en los Excel de hoy; en la planilla
   ya se usó como Confort Plus 105x190, y sigue la serie CH1301/1302 y CH1312 = 140), total 5 × 960 + 5 × 1.230 = 10.950 = el impreso. Queda la regla
   para la carga automática: nombre + plazas manda sobre el código; el total es Σ cantidad × precio.
+  **Automático** (dueño: *«3 veces al día, cárgalos directo como hoy Y NO NECESITA ESTAR MI PC PRENDIDA NO?»* → no: corre en la nube).
+  `herramientas/pedidos_correo/`: `extraer_pdf.py` (el JSON que deja get_message RAW → PDF + texto), `cargar_pedidos.py` (JSON de pedidos → la
+  planilla; sin `--guardar` solo muestra; saltea lo que ya está por la clave en nota/observaciones; OC = la siguiente del mes como `nextOcMes`;
+  N° del día como `nextNroDia`; total = Σ cant × precio, el impreso se anota si difiere; `cupos_llenos`/`dia_cerrado`/`feriado` → siguiente día
+  hábil, el sábado solo AM, anotado; nunca `forzar`) y `LEEME.md` (remitentes, cómo se arma cada cliente, la regla de Juan Carlos). Probado en
+  seco: 11-048 y 11-049 «ya estaba», uno inventado «se cargaría 11-053», uno sin precio «NO cargado». Tarea programada
+  `trig_01AjxEcAPLdbizzLLhix9aTT` (CRON_TZ=America/La_Paz 47 8,11,15 * * 1-6), primera vuelta sáb 07/11 8:47. ⚠️ Se ejecuta en ESTA sesión:
+  `create_trigger` con sesión nueva y `connectors:["Gmail"]` contestó «the connectors parameter is not available for this organization».
 - 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
   planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta
   en el panel en noviembre tampoco → 0 de verdad. Maria: pasó 6 leads a Compradores el 03/11 entre 17:46 y 19:07, pero los 6 ya estaban cargados en

@@ -2659,7 +2659,11 @@ pedía el sábado 07/11 con la mañana llena —16 de 15—, quedó el lunes 09/
 *«aveces pone mal los codigo de colchones, debes verificar tambien el nombre del producto… y aveces su total el suma mal, lo que vale es el precio
 individual por producto»*): el producto sale del NOMBRE + las plazas (1 = 90x190, 1½ = 105x190, 2 = 140x190, 2½ = 160x190, 3 = 180/200), cruzado con
 el código (CODIGOS, el `cod` de los Excel en `__stock__`, los pedidos anteriores); si no coinciden, gana el nombre y se anota. El total = Σ cantidad ×
-precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06/11 su «CH301» era el CH1301. Nada automático todavía: espera que el dueño decida cómo.
+precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06/11 su «CH301» era el CH1301.
+🤖 **AUTOMÁTICO desde el 06/11** (dueño: *«3 veces al día, cárgalos directo como hoy»*): tarea programada `trig_01AjxEcAPLdbizzLLhix9aTT`, lunes a
+sábado 8:47, 11:47 y 15:47 de Bolivia, que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
+esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
+por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").
