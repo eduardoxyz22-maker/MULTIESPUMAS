@@ -1760,6 +1760,17 @@ html.tema-halloween .fh-t:not(.sel){ background:rgba(255,255,255,.08); border-co
 .clf-vend{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; font-size:.78rem; color:var(--muted); }
 .clf-vend span{ background:#fff; border:1px solid var(--line); border-radius:999px; padding:2px 9px; color:var(--text); }
 .clf-vend b{ font-weight:700; }
+/* §4ok-110 📌 el lugar de entrega guardado (ficha del cliente) y la línea debajo de «Ubicación de Google Maps» */
+.clf-dest{ display:grid; gap:6px; background:#f4fbfa; border:1px solid #cdeae7; border-left:4px solid #00B5AD; border-radius:12px; padding:10px 12px; font-size:.82rem; color:var(--text); }
+.clf-dest-t{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; } .clf-dest-t span{ color:var(--muted); }
+.clf-dest-t select{ font:inherit; padding:2px 6px; border-radius:7px; border:1px solid var(--gray-md); background:#fff; }
+.clf-dest small{ color:var(--muted); font-size:.76rem; } .clf-dest i{ color:#7c4b00; font-style:normal; font-size:.74rem; }
+.clf-dest-g a, .clf-dest-b a{ color:#00736d; font-weight:700; text-decoration:none; margin:0 4px; }
+.clf-dest-l{ list-style:none; margin:0; padding:0; display:grid; gap:5px; }
+.clf-dest-l li{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; align-items:center; background:#fff; border:1px solid #e3eeee; border-radius:9px; padding:6px 9px; }
+.clf-dest-b{ display:flex; gap:6px; align-items:center; } .clf-dest-ok{ background:#00A09A; color:#fff; border-color:#00A09A; }
+.clf-dest-p{ display:flex; gap:6px; flex-wrap:wrap; } .clf-dest-p input{ flex:1; min-width:180px; font:inherit; padding:5px 8px; border-radius:8px; border:1px solid var(--gray-md); }
+.dest-hint{ margin-top:5px; padding:6px 9px; border-radius:8px; background:#f4fbfa; border:1px solid #cdeae7; color:#16302f; font-size:.78rem; line-height:1.35; }
 .clf-tabs{ display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:6px; }
 .clf-tabs button{ width:auto; border:1px solid transparent; background:transparent; border-radius:999px; padding:6px 12px; font:inherit; font-size:.82rem; font-weight:700; color:var(--muted); cursor:pointer; min-height:36px; }
 .clf-tabs button i{ font-style:normal; font-weight:800; font-size:.72rem; background:#eef3f3; border-radius:999px; padding:1px 7px; margin-left:3px; color:var(--muted); }
@@ -2591,6 +2602,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         <div class="field">
           <label class="lb">Ubicación de Google Maps</label>
           <input type="text" id="f-maps" placeholder="Link, coordenadas (-17.749444, -63.104556) o código (5P2Q+PFX)" autocomplete="off">
+          <div id="f-dest-hint" class="dest-hint" hidden></div>
         </div>
       </div>
       <div id="fx-mapa" class="fx-mapa solo-entrega no-print" hidden></div>
@@ -15703,6 +15715,7 @@ function submitPedido(){
     try{ _sinNombre[0].querySelector('.prod-desc').focus(); _sinNombre[0].scrollIntoView({block:'center'}); }catch(e){}
     return;
   }
+  var _destUsado=null; try{ _destUsado=destAplicarAlForm(); }catch(e){ console.error(e); }   // §4ok-110 📌 un pedido NUEVO de un cliente con lugar guardado y sin enlace lo toma
   var vendedor=document.getElementById('f-vendedor').value.trim();
   /* 🏪 En una reposición el «cliente» es la SUCURSAL de destino, y se escribe en su propio
      campo (§4dk): el de cliente está escondido y traería lo que quedó de antes. */
@@ -16765,7 +16778,7 @@ function submitPedido(){
       if(res&&res.ok){
         if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); }
         // Si el servidor le cambió la OC, `aplicarSello` ya lo avisó (9 s): no taparlo con el ✓.
-        if(!(res.pedido && res.pedido.ocCambiada)) toast((isEdit && !_deBorrador)?('Cambios guardados ✓'+(_avisoPlata?(' — '+_avisoPlata):'')):'Pedido enviado al equipo ✓','ok',_avisoPlata?7000:undefined);   // (26/09) el borrador completado es un pedido NUEVO · (27/09) qué pasó con la plata
+        if(!(res.pedido && res.pedido.ocCambiada)) toast((isEdit && !_deBorrador)?('Cambios guardados ✓'+(_avisoPlata?(' — '+_avisoPlata):'')):('Pedido enviado al equipo ✓'+(_destUsado?(' · 📌 va al lugar de entrega guardado de '+(_destUsado.n||'este cliente')):'')),'ok',(_avisoPlata||_destUsado)?7000:undefined);   // (26/09) el borrador completado es un pedido NUEVO · (27/09) qué pasó con la plata
         verificarEcoForm(res.pedido, rec, prev);    // 🔍 lo que se vio vs lo que quedó (§4en); si falta algo, pisa el ✓ con el rojo
         flushPending();
       }
@@ -17570,6 +17583,7 @@ function resetForm(){
   document.getElementById('f-direccion').value='';
   document.getElementById('f-maps').value='';
   zonaAutoLimpiar();                           // 📍 (§4nr, 30)
+  try{ DEST_AUTO.m=''; destHintPintar(); }catch(e){}   // §4ok-110
   segSet('f-pagado','NO');
   var s=document.getElementById('f-saldo'); s.value='0'; s.disabled=false;
   document.getElementById('f-acuenta').value='0';
@@ -17648,6 +17662,7 @@ function editPedido(id){
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-maps').value=rec.maps||'';
   zonaAutoLimpiar();                           // 📍 (§4nr, 30) al editar, la zona guardada manda
+  try{ DEST_AUTO.m=''; destHintPintar(); }catch(e){}   // §4ok-110 (editar un pedido no toma el lugar guardado)
   segSet('f-pagado',rec.pagado?'SI':'NO');
   /* r2 (26/09): `montoForm` lee «1500.125» como miles; con dos decimales como mucho, nunca. */
   document.getElementById('f-saldo').value=r2(rec.saldo);
@@ -20195,8 +20210,9 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || esFilaRetiro(p)); }
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
+var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
@@ -28931,7 +28947,7 @@ function clfPintar(nuevo){
         '<div class="clf-acc">'+(wa ? ('<a class="btn btn-sm clf-wa" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>') : '')+
           (cel ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="'+esc("copyText('"+cel.replace(/'/g,'')+"')")+'">📋 Copiar celular</button>') : '')+
           (D.maps ? ('<a class="btn btn-ghost btn-sm" href="'+esc(D.maps)+'" target="_blank" rel="noopener">📍 Ubicación</a>') : '')+'</div></div>'+
-      '<div class="clf-sts">'+sts+'</div>'+vend+tabs+
+      '<div class="clf-sts">'+sts+'</div>'+vend+clfDestinoHtml(D)+tabs+   // §4ok-110 📌 su lugar de entrega
       '<div class="clf-cuerpo">'+lista+'</div>'+
       '<p class="clf-nota">ℹ️ '+por+' Tocá una fila para abrir ese pedido. Sin RPT, que son de una tienda.</p>'+
       '<div class="modal-actions"><span class="cupv-sp"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div>'+
@@ -28941,6 +28957,223 @@ function clfPintar(nuevo){
   document.getElementById('modal-box').classList.add('clf-box');
   if(sc){ var c2=document.getElementById('modal-box').querySelector('.clf-cuerpo'); if(c2) c2.scrollTop=sc; }
 }
+/* ==========================================================================
+   §4ok-110 📌 EL LUGAR DE ENTREGA DE UN CLIENTE FIJO, UNA SOLA VEZ (05/11, plan del jueves, item 110).
+   32 de 41 entregas de Eduardo van a las bodegas de dos mayoristas y 60 pedidos salían sin pin: no aparecían en el mapa, el recorrido,
+   la sugerencia de camión ni el GPS. En la ficha del cliente, «📌 Guardar como su lugar de entrega» (con un enlace de sus pedidos o uno
+   pegado) lo deja anotado por NOMBRE (normNombre) + VENDEDOR (`talVendKey`); un pedido NUEVO de ese cliente con ese vendedor que se guarda
+   SIN enlace lo toma (como `sucursalElegida` en una RPT): el enlace, y la zona y la dirección si están vacías. Un enlace pegado manda; una
+   dirección escrita distinta también (no se le pone el pin de otro lugar). Editar un pedido no lo toca.
+   · Vive en la fila del sistema `__destinos__` (`DEST_ID`, en `esFilaSistema`; JSON `{v:1, k:[…]}`). Cada lugar es UNA clave (el JSON de
+     ['d', cliente, vendedor, t, enlace, zona, dirección, nombre, vendedor como se escribe]); cambiarlo saca la clave vieja y pone la nueva, y si
+     dos aparatos guardan a la vez manda la más nueva (`t`). Se reescribe entera: va por REESCRITAS (relee, aplica solo lo tocado acá, sello
+     y `juntar`; sin señal, a la cola con sus cambios), como `__talonario__`.
+   ⚠️ El servidor compara el sello de esta fila solo si está en `SISTEMA_JUNTA_OPCIONAL` del `.gs` (todavía no): hasta entonces, dos
+      guardados en el MISMO segundo pueden pisarse un lugar (la página relee antes de escribir).
+   ========================================================================== */
+var DEST_CAMBIOS={}, DEST_VER=0, DEST_MEMO={ k:null, s:null, m:null }, DEST_AUTO={ m:'' }, DEST_TOPE_LETRAS=40000, _destT=null;
+function destClavesDeFila(fila){
+  try{ var o=JSON.parse((fila && fila.observaciones)||'{}')||{}; return Array.isArray(o.k) ? o.k.filter(function(k){ return typeof k==='string' && !!k; }) : []; }catch(e){ return []; }
+}
+function destFilaGuardada(){ return (STATE||[]).filter(function(p){ return p && String(p.id)===DEST_ID; })[0]||null; }
+function destSet(){
+  var f=destFilaGuardada(), k=(f ? (String(f.rev||'')+'|'+String(f.observaciones||'')) : '')+'#'+DEST_VER;
+  if(DEST_MEMO.k===k && DEST_MEMO.s) return DEST_MEMO.s;
+  var s=reescritaAplicar(destClavesDeFila(f), reescritaCambios(DEST_ID, DEST_CAMBIOS));
+  DEST_MEMO={ k:k, s:s, m:null }; return s;
+}
+function destClave(e){ return JSON.stringify(['d', e.c, e.v, Number(e.t)||0, e.m||'', e.z||'', e.d||'', e.n||'', e.vn||'']); }
+function destLeerClave(k){
+  try{ var a=JSON.parse(k); if(!Array.isArray(a) || a[0]!=='d' || !a[1] || !a[2] || !a[4]) return null;
+    return { k:k, c:String(a[1]), v:String(a[2]), t:Number(a[3])||0, m:String(a[4]), z:String(a[5]||''), d:String(a[6]||''), n:String(a[7]||''), vn:String(a[8]||'') }; }catch(e){ return null; }
+}
+function destCliKey(cliente){ return normNombre(String(cliente||'').trim()); }
+/* Cliente + vendedor → el lugar más nuevo. */
+function destMapa(){
+  var s=destSet(); if(DEST_MEMO.m) return DEST_MEMO.m;
+  var M={}; Object.keys(s).forEach(function(k){ var e=destLeerClave(k); if(!e) return; var id=e.c+'|'+e.v; if(!M[id] || e.t>M[id].t || (e.t===M[id].t && e.k>M[id].k)) M[id]=e; });
+  DEST_MEMO.m=M; return M;
+}
+function destDe(cliente, vendedor){
+  var c=destCliKey(cliente), v=talVendKey(vendedor); if(!c || !v || CLF_GENERICO.test(c)) return null;
+  return destMapa()[c+'|'+v]||null;
+}
+function destFilaDe(s){ return filaSistema(DEST_ID, '📌 LUGARES DE ENTREGA DE CLIENTES (no tocar: la lee el panel)', JSON.stringify({ v:1, k:Object.keys(s||{}).sort() })); }
+function destFilaArmar(){ return destFilaDe(destSet()); }
+function destPonerEnState(f){
+  if(!f) return;
+  var c=JSON.parse(JSON.stringify(f)); delete c._cambios;
+  var i=-1; for(var k=0;k<STATE.length;k++) if(STATE[k] && String(STATE[k].id)===DEST_ID){ i=k; break; }
+  if(i>=0) STATE[i]=c; else STATE.push(c);
+  DEST_VER++; try{ saveMirror(); }catch(e){}
+}
+REESCRITAS[DEST_ID]={
+  cambios:function(){ return DEST_CAMBIOS; },
+  claves:function(fila){ return destClavesDeFila(fila); },
+  armar:function(s){ DEST_VER++; return destFilaDe(s); },
+  listo:function(fila){ if(fila && String(fila.id)===DEST_ID) destPonerEnState(fila); destRepintar(); }
+};
+/* Como `talGuardar`: la intención entra a la cola al tocar; con un respiro relee la planilla y manda con sello y `juntar`. */
+function destGuardarFila(){
+  reescritaColaAlDia(DEST_ID, DEST_CAMBIOS);
+  try{ reescritaEncolar(destFilaArmar(), DEST_CAMBIOS); }catch(e){}
+  REESCRITA_ESPERA[DEST_ID]=1;
+  clearTimeout(_destT);
+  _destT=setTimeout(function(){
+    var listo=function(){ delete REESCRITA_ESPERA[DEST_ID]; };
+    var mandar=function(){
+      var cam=reescritaCambios(DEST_ID, DEST_CAMBIOS), fila=reescritaConSello(destFilaArmar());
+      apiSave(fila, { juntar:true }).then(function(res){
+        listo();
+        if(res && res.ok){ var g=(res.pedido && String(res.pedido.id)===DEST_ID) ? res.pedido : fila; destPonerEnState(g); reescritaConfirmada(DEST_ID, cam, g); destRepintar(); }
+        else reescritaEncolar(destFilaArmar(), DEST_CAMBIOS);
+      }, function(){ listo(); reescritaEncolar(destFilaArmar(), DEST_CAMBIOS); });
+    };
+    if(CONNECTED){
+      conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+        if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+        var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===DEST_ID) srv=p; });
+        reescritaRevAnotar(srv); if(srv) destPonerEnState(srv);
+      }, function(){}).then(mandar, mandar);
+    }
+    else { listo(); reescritaEncolar(destFilaArmar(), DEST_CAMBIOS); }
+  }, 700);
+}
+function destRepintar(){
+  try{ var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on') && document.querySelector('#modal-box .clf-dest')) clfPintar(); }catch(e){}
+  try{ destHintPintar(); }catch(e){}
+}
+/* Guardar (o cambiar) el lugar de un cliente con un vendedor. Devuelve el lugar guardado o null. */
+function destGuardar(cliente, vendedor, m, z, d){
+  var c=destCliKey(cliente), v=talVendKey(vendedor), u=normalizaUbicacion(m);
+  if(!c || CLF_GENERICO.test(c) || !v){ toast('Con este nombre de cliente no se puede guardar un lugar: no alcanza para reconocerlo.','err'); return null; }
+  if(!u){ toast('📍 No se entiende el enlace: pegá el de Google Maps (https://…), las coordenadas o el código (5P2Q+PFX).','err',8000); return null; }
+  var antes={}, S=destSet();
+  Object.keys(S).forEach(function(k){ var x=destLeerClave(k); if(x && x.c===c && x.v===v){ antes[k]=DEST_CAMBIOS.hasOwnProperty(k) ? DEST_CAMBIOS[k] : undefined; DEST_CAMBIOS[k]=false; } });
+  var e={ c:c, v:v, t:Date.now(), m:u, z:String(z||'').trim(), d:String(d||'').trim(), n:String(cliente||'').trim(), vn:nombreCanonico(vendedor||'')||String(vendedor||'').trim() };
+  var nk=destClave(e); DEST_CAMBIOS[nk]=true; DEST_VER++;
+  if(JSON.stringify(Object.keys(destSet())).length>DEST_TOPE_LETRAS){   // la celda corta en 50.000 letras: no se guarda a medias
+    delete DEST_CAMBIOS[nk]; Object.keys(antes).forEach(function(k){ if(antes[k]===undefined) delete DEST_CAMBIOS[k]; else DEST_CAMBIOS[k]=antes[k]; }); DEST_VER++;
+    toast('No entran más lugares guardados en la planilla. Avisá a Administración.','err',8000); return null;
+  }
+  destGuardarFila(); destRepintar();
+  return destDe(cliente, vendedor);
+}
+function destQuitar(cliente, vendedor){
+  var c=destCliKey(cliente), v=talVendKey(vendedor), n=0;
+  Object.keys(destSet()).forEach(function(k){ var x=destLeerClave(k); if(x && x.c===c && x.v===v){ DEST_CAMBIOS[k]=false; n++; } });
+  if(!n) return false;
+  DEST_VER++; destGuardarFila(); destRepintar(); return true;
+}
+/* Los lugares de sus pedidos: el mismo punto (mismas coordenadas, con cualquier forma de enlace) va junto; lo más usado primero. */
+function destCandidatos(D){
+  var G={}, L=[];
+  (D.L||[]).forEach(function(p){
+    if(!p || esVentaTienda(p) || !String(p.maps||'').trim()) return;
+    var u=normalizaUbicacion(p.maps); if(!u) return;
+    var c=null; try{ c=coordsDeLink(u); }catch(e){}
+    var k=c ? (Number(c.lat).toFixed(4)+','+Number(c.lng).toFixed(4)) : u;
+    var f=fechaSalida(p)||p.fecha||contaFecha(p)||'';
+    var g=G[k]; if(!g){ g=G[k]={ k:k, m:u, z:'', d:'', n:0, f:'', aprox:esUbicAprox(u) }; L.push(g); }
+    g.n++;
+    if(!g.f || f>g.f){ g.f=f; g.m=u; g.z=String(p.zona||'').trim(); g.d=String(p.direccion||'').trim(); g.aprox=esUbicAprox(u); }
+  });
+  return L.sort(function(a,b){ return (b.n-a.n) || String(b.f).localeCompare(String(a.f)); }).slice(0, 4);
+}
+function destMismo(a, b){
+  if(!a || !b) return false;
+  var ca=null, cb=null; try{ ca=coordsDeLink(a); cb=coordsDeLink(b); }catch(e){}
+  if(ca && cb) return Number(ca.lat).toFixed(4)===Number(cb.lat).toFixed(4) && Number(ca.lng).toFixed(4)===Number(cb.lng).toFixed(4);
+  return String(a).trim()===String(b).trim();
+}
+function destLugarTxt(z, d){ return [z, d].filter(function(x){ return String(x||'').trim(); }).join(' · ') || 'sin dirección escrita'; }
+/* El cuadro de la ficha del cliente. */
+function clfDestinoHtml(D){
+  if(!D || !D.base) return '';
+  var kn=clfNom(D.base);
+  if(!kn || CLF_GENERICO.test(kn)) return '<div class="clf-dest"><b>📌 Lugar de entrega</b><small>Con un nombre así no se puede guardar un lugar: no alcanza para reconocer al cliente.</small></div>';
+  var vb=nombreCanonico(D.base.vendedor||'')||String(D.base.vendedor||'').trim(), vs=D.vOrd.slice();
+  if(vb && vs.indexOf(vb)<0) vs.unshift(vb);
+  if(!vs.length) return '';
+  if(CLF.destFor!==CLF.id){ CLF.destFor=CLF.id; CLF.destV=''; }   // otro cliente: vuelve al vendedor de ese pedido
+  var v=(CLF.destV && vs.indexOf(CLF.destV)>=0) ? CLF.destV : (vs.indexOf(vb)>=0 ? vb : vs[0]);
+  CLF.destV=v;
+  var g=destDe(D.base.cliente, v), C=destCandidatos(D);
+  CLF.destC=C;
+  var vSel=vs.length>1 ? ('<select id="clf-dest-v" onchange="clfDestVend(this.value)" aria-label="Para los pedidos de">'+vs.map(function(x){ return '<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>'; }).join('')+'</select>') : ('<b>'+esc(v)+'</b>');
+  var h='<div class="clf-dest"><div class="clf-dest-t"><b>📌 Lugar de entrega</b><span>para los pedidos de '+vSel+'</span></div>';
+  if(g){
+    h+='<div class="clf-dest-g">✅ Guardado: <b>'+esc(destLugarTxt(g.z, g.d))+'</b>'+(esUbicAprox(g.m)?' <i>≈ aproximada</i>':'')+
+      ' <a href="'+esc(g.m)+'" target="_blank" rel="noopener">📍 Ver</a> <button type="button" class="btn btn-ghost btn-sm" onclick="clfDestQuitar()">Quitar</button></div>'+
+      '<small>Un pedido NUEVO de '+esc(D.nombre)+' con '+esc(v)+' que se guarda sin ubicación va a este lugar. Si se pega un enlace, manda el enlace.</small>';
+  } else h+='<small>Todavía no tiene un lugar guardado. Guardalo y los pedidos nuevos de '+esc(D.nombre)+' con '+esc(v)+' sin ubicación lo toman solos.</small>';
+  var otros=C.filter(function(c){ return !(g && destMismo(c.m, g.m)); });
+  if(otros.length) h+='<ol class="clf-dest-l">'+otros.map(function(c){
+      var i=C.indexOf(c);
+      return '<li><span>📍 <b>'+esc(destLugarTxt(c.z, c.d))+'</b>'+(c.aprox?' <i>≈ aproximada</i>':'')+' <small>· en '+c.n+' pedido'+(c.n===1?'':'s')+(c.f?(' · el último el '+esc(fmtFechaCorta(c.f))):'')+'</small></span>'+
+        '<span class="clf-dest-b"><a href="'+esc(c.m)+'" target="_blank" rel="noopener">Ver</a>'+
+        '<button type="button" class="btn btn-sm clf-dest-ok" onclick="clfDestGuardar('+i+')">📌 Guardar como su lugar de entrega</button></span></li>'; }).join('')+'</ol>';
+  else if(!g) h+='<small>Ningún pedido suyo tiene ubicación.</small>';
+  h+='<div class="clf-dest-p"><input type="text" id="clf-dest-in" placeholder="…o pegá el enlace de Google Maps de su lugar" autocomplete="off">'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="clfDestPegar()">📌 Guardar este enlace</button></div></div>';
+  return h;
+}
+function clfDestVend(v){ CLF.destV=String(v||''); clfPintar(); }
+function clfDestBase(){ var D=clfDatos(CLF.id); return D ? { D:D, cli:D.base.cliente, v:CLF.destV||nombreCanonico(D.base.vendedor||'') } : null; }
+function clfDestGuardar(i){
+  var B=clfDestBase(), c=(CLF.destC||[])[Number(i)]; if(!B || !c) return;
+  var g=destGuardar(B.cli, B.v, c.m, c.z, c.d);
+  if(g) toast('📌 Guardado: los pedidos nuevos de '+(B.D.nombre||B.cli)+' con '+B.v+' sin ubicación van a «'+destLugarTxt(g.z, g.d)+'».','ok',7000);
+}
+function clfDestPegar(){
+  var B=clfDestBase(), inp=document.getElementById('clf-dest-in'), t=String((inp&&inp.value)||'').trim(); if(!B) return;
+  if(!t){ toast('Pegá primero el enlace de Google Maps.','err'); if(inp) inp.focus(); return; }
+  var g=destGuardar(B.cli, B.v, t, B.D.zona, B.D.dir);
+  if(g) toast('📌 Guardado el enlace como el lugar de entrega de '+(B.D.nombre||B.cli)+' con '+B.v+'.','ok',7000);
+}
+function clfDestQuitar(){
+  var B=clfDestBase(); if(!B) return;
+  if(!confirm('¿Quitar el lugar de entrega guardado de '+(B.D.nombre||B.cli)+' con '+B.v+'?\n\nLos pedidos que ya lo tomaron no cambian.')) return;
+  if(destQuitar(B.cli, B.v)) toast('Listo: '+(B.D.nombre||B.cli)+' ya no tiene un lugar guardado con '+B.v+'.','ok');
+}
+/* En el formulario: ¿este pedido toma el lugar guardado? Solo un pedido NUEVO (o un borrador de Kommo que se completa), 📄 OC o 🎧 ATC,
+   sin venta de tienda, sin enlace (o con el que puso esto mismo) y sin una dirección escrita distinta. */
+function destParaForm(){
+  if(VENTA_TIENDA) return null;
+  var tipo=docTipoSel(); if(tipo==='RPT') return null;
+  var nuevo=!EDIT_ID || (typeof borradorDe==='function' && !!borradorDe(EDIT_ID)); if(!nuevo) return null;
+  var fm=document.getElementById('f-maps'), cli=String((document.getElementById('f-cliente')||{}).value||'').trim(), ven=String((document.getElementById('f-vendedor')||{}).value||'').trim();
+  if(!fm || !cli || !ven) return null;
+  var mt=String(fm.value||'').trim(), auto=!!mt && mt===DEST_AUTO.m;
+  if(mt && !auto) return { pegado:true };                                   // un enlace pegado manda
+  var e=destDe(cli, ven); if(!e) return auto ? { quitar:true } : null;
+  var fd=document.getElementById('f-direccion'), dAct=String((fd&&fd.value)||'').trim();
+  if(dAct && normNombre(dAct)!==normNombre(e.d||'')) return { otraDir:true, e:e };
+  return { e:e, auto:auto };
+}
+function destAplicarAlForm(){
+  var r=destParaForm(); if(!r) return null;
+  var fm=document.getElementById('f-maps');
+  if(r.quitar || (r.otraDir && String(fm.value||'').trim()===DEST_AUTO.m && DEST_AUTO.m)){ fm.value=''; DEST_AUTO.m=''; return null; }   // lo puso esto para OTRO cliente
+  if(!r.e || r.otraDir || r.pegado) return null;
+  var e=r.e, fz=document.getElementById('f-zona'), fd=document.getElementById('f-direccion');
+  fm.value=e.m; DEST_AUTO.m=e.m;
+  if(fz && !String(fz.value||'').trim() && e.z) fz.value=e.z;
+  if(fd && !String(fd.value||'').trim() && e.d) fd.value=e.d;
+  return e;
+}
+/* La línea debajo de «Ubicación de Google Maps»: dice ANTES de guardar a dónde va. */
+function destHintPintar(){
+  var el=document.getElementById('f-dest-hint'); if(!el) return;
+  var r=null; try{ r=destParaForm(); }catch(e){ r=null; }
+  var h='';
+  if(r && r.e && !r.otraDir) h='📌 <b>'+esc(r.e.n||'Este cliente')+'</b> tiene su lugar de entrega guardado (<b>'+esc(destLugarTxt(r.e.z, r.e.d))+'</b>): si dejás la ubicación vacía, el pedido va ahí. Si pegás un enlace, manda el enlace.';
+  else if(r && r.otraDir) h='📌 '+esc(r.e.n||'Este cliente')+' tiene un lugar guardado ('+esc(destLugarTxt(r.e.z, r.e.d))+'), pero escribiste otra dirección: no se usa. Pegá la ubicación de esa dirección.';
+  el.hidden=!h; if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+document.addEventListener('input', function(ev){ var t=ev.target; if(t && /^f-(cliente|vendedor|maps|direccion)$/.test(t.id||'')) try{ destHintPintar(); }catch(e){} }, true);
+document.addEventListener('change', function(ev){ var t=ev.target; if(t && /^f-(cliente|vendedor|maps|direccion)$/.test(t.id||'')) try{ destHintPintar(); }catch(e){} }, true);
+/* fin §4ok-110 */
 /* Cada renglón del detalle abre el pedido (la misma ficha que Administración) POR ENCIMA de
    esta pantalla: el modal está en z-index 4000 y el overlay en 3000, así que al cerrar la
    ficha se vuelve acá con la búsqueda intacta. Pedido del dueño (09/09), con la pantalla
