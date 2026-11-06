@@ -2526,7 +2526,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **Decidido por el dueño (30/10, «dejalo así»)**: una venta ya confirmada por el bot que después pasa a «avisa cuándo» NO manda ningún aviso (ni al
   cliente ni a logística). Para la próxima versión del `.gs` quedan 4 detalles menores anotados en la bitácora §4nv.
 
-## 🗓️ El plan del jueves (§4ok, 05-06/11; `PLAN_JUEVES_05-11.json`; EN LA RAMA, espera «publica»; servidor `2026-11-05-a` lo implementa el dueño)
+## 🗓️ El plan del jueves (§4ok, 05-06/11; `PLAN_JUEVES_05-11.json`; PUBLICADO 06/11, `main` = `38d36d6`, versión 2026-11-06-a; servidor `2026-11-05-a` IMPLEMENTADO 06/11 por el dueño, enlace fijo `893c46c…`, 5.991 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 02-a de `39cc0ec…`, 5.133 líneas)
 18 de la revisión del 02/11 (bitácora §4ok). Esperan al dueño: 94, 98, 103, 111, 113, E8, E9. Lo que hay que respetar:
 - **E1** «Kommo sin cargar» del cierre comercial = `borrYaCargada` (la regla de la 81); no contar borradores a mano en otro lado.
 - **E2** Bloki dice «no sé» bajo `ASIS_MIN_PARTE`: una respuesta nueva de `ASIS_AYUDA` comparte más de la mitad de las palabras (sin
