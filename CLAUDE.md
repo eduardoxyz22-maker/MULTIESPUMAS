@@ -2563,6 +2563,12 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   Una plantilla puede llevar `a.viejos`/`a.alts` para el respaldo. 6 plantillas nuevas (bitácora §4ok).
   🚫 **100 (`pago_recibido`) y 109 (`atc_recojo`/`atc_devolucion`) se SACARON** (dueño, 06/11: *«esta no la quiero»*): un pago nuevo y una ATC no
   le mandan nada al cliente, como antes. No volver a ponerlos sin que lo pida.
+- 🧮 **El total se completa solo** (06/11, dueño: *«el usar como total no le veo sentido… debería ir colocándose el total conforme van llenando»*):
+  con todos los precios puestos, «Saldo por cobrar» = suma − «A cuenta» − lo cobrado aparte (`cobradoNoMostrado`) y con «SÍ, pagado» el monto
+  cobrado = la suma (`totalAutoPoner`, desde `pintarTotalProds`). Solo con lo que toca la persona (`TOT_AUTO.toc`; abrir para editar no cambia nada);
+  lo escrito a mano manda (`el._mano`, «Usar la suma» = `totalUsarSuma`); el campo con el foco no se toca. En Playwright apagado salvo `TOT_AUTO_PRUEBA`
+  (queda «Usar como total», que las pruebas de siempre usan). 💵 **Precios en la ficha de Mis pedidos** (`misPrecioHtml`, `misPreciosTotalHtml`;
+  ATC/RPT no). `tests/test_total_solo.js` (20).
 
 ## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; PUBLICADO `4c7af2b`; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
 Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades

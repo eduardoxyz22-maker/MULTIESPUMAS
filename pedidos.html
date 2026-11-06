@@ -8244,6 +8244,7 @@ function pintarProdRpt(){
    sigue mandando "A cuenta + Saldo". El botón la copia a los montos para no tipear. */
 function pintarTotalProds(){
   var cja=document.getElementById('f-prods-total'); if(!cja) return;
+  try{ totalAutoPoner(); }catch(e){}   // 🧮 (06/11) primero el monto, después la caja que lo dice
   var t=0, con=0, sin=0;
   var cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
@@ -8255,10 +8256,97 @@ function pintarTotalProds(){
   // 🏪 En una reposición no hay precios: la caja del total no tiene nada que decir.
   if(!con || docTipoSel()==='RPT'){ cja.style.display='none'; cja.innerHTML=''; return; }
   cja.style.display='block';
+  if(totalAutoVa()){ totalAutoPintar(cja, r2(t), sin); return; }   // 🧮 (06/11) el total se completa solo
   cja.innerHTML='<b>Los ítems suman '+fmtBs(r2(t))+'</b>'+
     (sin?(' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'):'')+
     ' <button type="button" class="btn btn-sm" style="margin-left:8px;padding:3px 10px;font-size:.72rem" onclick="usarTotalProds()">Usar como total</button>';
 }
+/* 🧮 EL TOTAL SE COMPLETA SOLO (06/11, dueño: «el usar como total no le veo sentido que tengan que darle a un botón ahora que tienen
+   obligatorio colocar precio de productos, debería ir colocándose el total conforme van llenando»).
+   · Mientras la vendedora escribe los precios y cantidades (o saca un producto, o cambia «A cuenta»), el monto se llena solo con la suma:
+     «Saldo por cobrar» = suma − «A cuenta» − lo ya cobrado aparte (`cobradoNoMostrado`, la misma cuenta de «Usar como total»), y con
+     «SÍ, pagado» el «Monto total cobrado» = la suma.
+   · Solo cuando TODOS los productos tienen precio (si falta uno, la suma no es el total) y en una venta (📄 OC, también la de tienda).
+   · Solo con lo que toca la PERSONA (`TOT_AUTO.toc`): abrir un pedido para editarlo no le cambia nada; si después le corrige un precio,
+     el saldo sigue a la suma nueva (los pagos quedan como están, §4gh).
+   · Lo escrito a mano manda: si la vendedora escribe un saldo (o un monto cobrado) que no es la suma, ese queda y la caja lo dice con
+     «Usar la suma» (`totalUsarSuma`). Si lo que ya pagó es más que la suma, no toca nada y lo dice.
+   · En Playwright apagado salvo `window.TOT_AUTO_PRUEBA`: las pruebas de siempre llenan los montos a mano y miran «Usar como total». */
+var TOT_AUTO={ toc:false };
+function totalAutoOlvidar(){ TOT_AUTO.toc=false; ['f-saldo','f-cobrado'].forEach(function(id){ var el=document.getElementById(id); if(el) el._mano=false; }); }
+function totalAutoVa(){ return !(navigator.webdriver && !window.TOT_AUTO_PRUEBA); }
+function totalAutoYa(acu){ var pv=EDIT_ID?findById(EDIT_ID):null; return r2(acu+(pv?cobradoNoMostrado(pv, acu):0)); }
+/* Lo que el campo debería decir con la suma de ahora (null = la suma no sirve de total). */
+function totalAutoEsperado(campo){
+  var S=totalItems(); if(S.sin || !S.con || !(S.t>0) || docTipoSel()!=='OC') return null;
+  if(campo==='f-cobrado') return S.t;
+  var v=r2(S.t-totalAutoYa(montoForm('f-acuenta'))); return v< -0.005 ? null : Math.max(0, v);
+}
+function totalItems(){
+  var t=0, con=0, sin=0, cards=document.querySelectorAll('#f-productos .prod-card');
+  for(var i=0;i<cards.length;i++){
+    var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
+    var pr=montoForm(cards[i].querySelector('.prod-precio')), ct=parseInt(cards[i].querySelector('.prod-cant').value,10)||0;
+    if(pr>0){ t+=pr*ct; con++; } else sin++;
+  }
+  return { t:r2(t), con:con, sin:sin };
+}
+function totalAutoPoner(){
+  if(!TOT_AUTO.toc || !totalAutoVa()) return;
+  var si=segVal('f-pagado')==='SI', id=si?'f-cobrado':'f-saldo', el=document.getElementById(id); if(!el || el._mano) return;
+  if(document.activeElement===el) return;   // la está escribiendo: no se la cambia en la mano (vaciarla para escribir otra no la rellena)
+  var v=totalAutoEsperado(id); if(v==null) return;
+  if(Math.abs(montoForm(el)-v)<=0.005 && String(el.value).trim()!=='') return;
+  el.value=r2(v);
+  if(si){ if(typeof pintarMixto==='function') pintarMixto(); } else updateMetodoVisibility();
+}
+function totalAutoPintar(cja, t, sin){
+  var h='<b>Los ítems suman '+fmtBs(t)+'</b>';
+  if(sin){ cja.innerHTML=h+' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'; return; }
+  if(docTipoSel()!=='OC'){ cja.innerHTML=h; return; }
+  var si=segVal('f-pagado')==='SI', acu=montoForm('f-acuenta'), ya=totalAutoYa(acu), aviso='';
+  if(si){
+    var cb=montoForm('f-cobrado');
+    if(String((document.getElementById('f-cobrado')||{}).value||'').trim()!=='' && Math.abs(cb-t)>0.005)
+      aviso='El monto cobrado ('+fmtBs(cb)+') no da con la suma.';
+  } else if(ya>t+0.005){
+    aviso='Lo que ya pagó ('+fmtBs(ya)+') es más que la suma: revisá los precios.';
+  } else {
+    var sal=montoForm('f-saldo');
+    if(Math.abs(r2(ya+sal)-t)>0.005) aviso=(acu>0.005||ya>0.005 ? 'Lo pagado + el saldo ('+fmtBs(r2(ya+sal))+')' : 'El saldo ('+fmtBs(sal)+')')+' no da con la suma.';
+  }
+  cja.innerHTML=h+(aviso
+    ? ' <span class="tot-auto-av" style="color:var(--amber);font-weight:700">· '+aviso+'</span>'+(ya>t+0.005?'':' <button type="button" class="btn btn-sm" style="margin-left:8px;padding:3px 10px;font-size:.72rem" onclick="totalUsarSuma()">Usar la suma</button>')
+    : ' <span class="tot-auto-ok" style="font-weight:600">· '+(si?'es el monto cobrado':'el saldo se completa solo')+' ✓</span>');
+}
+function totalUsarSuma(){
+  var si=segVal('f-pagado')==='SI', el=document.getElementById(si?'f-cobrado':'f-saldo');
+  if(el) el._mano=false;
+  TOT_AUTO.toc=true; totalAutoPoner(); pintarTotalProds();
+}
+/* Quién tocó qué: la persona (eventos de verdad; en una prueba con `TOT_AUTO_PRUEBA`, también los simulados). */
+function totalAutoDePersona(e){ return !!(e && (e.isTrusted || window.TOT_AUTO_PRUEBA)); }
+document.addEventListener('DOMContentLoaded', function(){
+  var box=document.getElementById('f-productos');
+  var marca=function(e){ if(totalAutoDePersona(e)) TOT_AUTO.toc=true; };
+  if(box){
+    box.addEventListener('input', marca, true); box.addEventListener('change', marca, true);
+    box.addEventListener('click', function(e){ if(e.target && e.target.closest && e.target.closest('.prod-del')) marca(e); }, true);
+  }
+  var acu=document.getElementById('f-acuenta');
+  if(acu) acu.addEventListener('input', function(e){ if(!totalAutoDePersona(e)) return; TOT_AUTO.toc=true; pintarTotalProds(); });
+  ['f-saldo','f-cobrado'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input', function(e){
+      if(!totalAutoDePersona(e)) return;
+      var v=totalAutoEsperado(id);
+      el._mano = String(el.value).trim()!=='' && (v==null || Math.abs(montoForm(el)-v)>0.005);   // escribió otra cosa que la suma: manda lo suyo
+      pintarTotalProds();
+    });
+  });
+  var pg=document.getElementById('f-pagado');
+  if(pg) pg.addEventListener('click', function(){ setTimeout(function(){ totalAutoPoner(); pintarTotalProds(); }, 0); });
+});
 /* Copia la suma de los ítems a los montos: lo que ya pagó queda igual y el resto pasa
    a saldo. Si ya está pagado todo, no toca nada. */
 function usarTotalProds(){
@@ -17885,6 +17973,7 @@ function confirmarReemplazoForm(){
 function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
   REPETIR_DE='';                               // 🔁 (§4ok-101)
+  totalAutoOlvidar();                          // 🧮 (06/11) el total que se completa solo empieza de cero
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
@@ -17952,6 +18041,7 @@ function editPedido(id){
   if(!rec) return;
   if(!confirmarReemplazoForm()) return;
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null; REPETIR_DE='';   // 🔁 (§4ok-101)
+  totalAutoOlvidar();   // 🧮 (06/11) abrir para editar no cambia ningún monto: solo lo que la persona toque después
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
@@ -28530,6 +28620,20 @@ function editarDesdeMis(id){
 }
 function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
 /* Ventana flotante de un pedido (vista vendedora): datos + alertas + agregar/editar ubicación. */
+/* 💵 LOS PRECIOS EN LA FICHA DE MIS PEDIDOS (06/11, dueño: «Eduardo en mis pedidos necesita ver los precios de los productos, igual los
+   vendedores»): al lado de cada producto su precio («Bs 510,00», o «Bs 510,00 c/u = Bs 1.020,00» con más de uno) y abajo cuánto suman.
+   Sin precio no se dice nada; una ATC o una RPT no tienen precio (`noSeCobra`). Sale de `prodPrecio`/`prodTotal`, las cuentas de siempre. */
+function misPrecioHtml(x, p){
+  if(noSeCobra(p)) return '';
+  var pr=prodPrecio(x), ct=Number(x && x.cant)||1; if(!(pr>0)) return '';
+  return ' <span class="mis-precio" style="color:var(--teal-dk);font-weight:700;white-space:nowrap">· '+fmtBs(pr)+(ct>1?(' c/u = '+fmtBs(r2(pr*ct))):'')+'</span>';
+}
+function misPreciosTotalHtml(p){
+  if(noSeCobra(p) || !tienePrecios(p)) return '';
+  var falta=((p.productos)||[]).filter(function(x){ return x && prodPrecio(x)<=0; }).length;
+  return '<div class="mis-precios-tot" style="margin-top:6px;font-weight:800;color:var(--teal-dk)">Suman '+fmtBs(prodTotal(p))+
+    (falta?(' <span style="color:var(--amber);font-weight:700">· '+falta+' sin precio</span>'):'')+'</div>';
+}
 function showMisModal(id){
   var p=findById(id); if(!p) return;
   MODAL_KIND='mis';
@@ -28537,6 +28641,7 @@ function showMisModal(id){
   // Solo informativo: la vendedora ve qué marcó logística, pero no puede cambiarlo.
   var prod=(p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>';
+    t+=misPrecioHtml(x, p);   // 💵 (06/11) el precio, para Eduardo y las vendedoras
     if(x.chk==='no')   t='<span style="color:var(--red);font-weight:700">'+t+' — no hay</span>';
     else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 se recoge de '+esc(recogerCorto(x))+'</span>';
     if(x.chk!=='no' && prodSaleTxt(x)) t=t+' <span style="color:#0369a1;font-weight:700">'+esc(prodSaleTxt(x).trim())+'</span>';   // (26/09) Banzer
@@ -28568,7 +28673,7 @@ function showMisModal(id){
                              : row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
     row('Vendedor', vendCell)+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
-    row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
+    row('Productos', prod+misPreciosTotalHtml(p))+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
     row('Cobro', cobro)+
     (envioTotal(p)>0 ? row('🚚 Recargo por entrega', envioResumenHtml(p)) : '')+
     row('Entrega', entrega)+row('Stock', estadoStockBadge(p))+row('Chofer', choferVal)+
@@ -29873,6 +29978,7 @@ function repetirPedido(id){
   (p.productos||[]).forEach(function(x){ if(x && String(x.desc||'').trim()) addProdRow(x.desc, x.medida, x.codigo, x.cant, x.precio); });
   if(!box.children.length) addProdRow();
   try{ refreshDelButtons(); }catch(e){}
+  try{ TOT_AUTO.toc=true; pintarTotalProds(); }catch(e){}   // 🧮 (06/11) un pedido NUEVO con los precios de antes: el saldo sale solo
   try{ zonaAutoLimpiar(); }catch(e){}
   try{ celFormPintar(); }catch(e){}
   try{ renderCupoForm(); }catch(e){}
