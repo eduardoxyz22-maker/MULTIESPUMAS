@@ -2549,6 +2549,9 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **101** `repetirPedido` arma los productos de cero (sin marcas ni ids); `REPETIR_DE` frena guardar sin fecha.
 - **104** `STOCK.fdH` va en leerStock/stockFusionar/stockPodar; todo lo que cierre lo pedido con los Excel pasa por `fdLoteAsignar` y marca
   su día (`fdHMarcar`); no relajar `fdRepasoTramoSeguro` (cerraría dos veces).
+- **104b** «¿Qué es esto?» = lo que `fdEsProducto` no reconoce; además de la lista y los Excel, son productos «+N CM» (`FD_MAS_ALTO`), un producto
+  de la lista en otra medida y `FD_SON_PRODUCTO` (dueño, 06/11). Un nombre nuevo que el dueño confirme va en `FD_SON_PRODUCTO`. La Tienda Banzer
+  tiene el pin del almacén Banzer (dueño: «mismo lugar»); Ventura Mall sigue sin zona ni pin.
 - **106** el ✅ en lote de «los que vio el GPS» usa `cierreEntAplicar`, nunca `toggleEntregado` en serie. Nada se marca solo.
 - **110** `__destinos__` (`DEST_ID`) en `esFilaSistema`, `REESCRITAS` y `SISTEMA_JUNTA_OPCIONAL`; solo un pedido NUEVO toma el lugar y
   un enlace pegado manda.

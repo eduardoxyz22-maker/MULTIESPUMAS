@@ -6418,8 +6418,10 @@ var SUCURSALES=[
   {n:'Carmelo',       z:'Feria',      d:'', m:'https://www.google.com/maps?q=-17.79174000668275,-63.153902622899'},
   /* (02/11) Dos tiendas nuevas (dueño: «Nueva tienda banzer», «Ventura mall»). Sin zona ni pin hasta que el dueño los dé: una zona
      inventada se autocompleta sola y desvía la ruta del chofer (§4dn). ⚠️ «Tienda Banzer» lleva «Tienda» en el nombre A PROPÓSITO:
-     «Banzer» a secas es el ALMACÉN de distribución (de ahí salen camiones) y saldrían dos «Banzer» en «Qué va a dónde» y en la carga. */
-  {n:'Tienda Banzer', z:'',           d:'', m:''},
+     «Banzer» a secas es el ALMACÉN de distribución (de ahí salen camiones) y saldrían dos «Banzer» en «Qué va a dónde» y en la carga.
+     (06/11) El dueño: «la tienda banzer está en el mismo lugar que almacén banzer» → el pin de ALM_UBIC/GPS_DEPOSITOS (el GPS lo midió
+     a 35-44 m, §4ko). La zona sigue vacía hasta que la diga. */
+  {n:'Tienda Banzer', z:'',           d:'', m:'https://www.google.com/maps?q=-17.7197548,-63.1631138'},
   {n:'Ventura Mall',  z:'',           d:'', m:''}
 ];
 function sucursalDe(nombre){
@@ -49710,16 +49712,31 @@ function fdLoteResumen(r){
    ========================================================================== */
 var FD_REPASO_LS='me_fd_repaso', FD_REPASO={ corre:false, ult:null }, FD_REPASO_BASE_DIAS=10;
 var FD_QUE={ fab:'?', nombre:'¿Qué es esto?', corto:'—', ico:'❓' };
-/* ¿Es un producto? De la lista de precios (`CODIGOS`, con las uniones 🔗) o de algún Excel de los almacenes. */
-var FD_CAT={ n:'', s:null };
+/* ¿Es un producto? De la lista de precios (`CODIGOS`, con las uniones 🔗) o de algún Excel de los almacenes.
+   (06/11, §4ok-104b) Y tres más que el dueño confirmó (*«si son productos… los +2 cm son adiciones de altura que se le hace al
+   colchon»*): (1) un colchón con «+N CM» de altura (SUENA ESSENTIAL +2CM); (2) un producto de la lista en una medida que la lista no
+   tiene, o sea una medida especial (ORO ORTOPEDICO 160X198); (3) los nombres de FD_SON_PRODUCTO (SOMIER ESPECIAL TROPICAL). Lo demás
+   («ARMAZONES», «LLEVAR LO QUE NECESITEN») sigue en «❓ ¿Qué es esto?»: no se le reclama a nadie. */
+var FD_CAT={ n:'', s:null, d:null };
+var FD_SON_PRODUCTO=[/^SOMIER ESPECIAL TROPICAL\b/];
+var FD_MAS_ALTO=/\+\s*\d+(?:[.,]\d+)?\s*CM\b/;
 function fdEsProducto(k){
   k=String(k||''); if(!k) return false;
   var n=Object.keys(CODIGOS||{}).length+'|'+JSON.stringify((typeof STOCK!=='undefined' && STOCK && STOCK.a)||{}).length;
   if(FD_CAT.n!==n || !FD_CAT.s){
-    var s={}; stockCatalogo().forEach(function(c){ var kk=stockNorm(c.d)+'|'+stockNorm(c.m); s[kk]=1; s[stockAliasDe(kk)]=1; });
-    FD_CAT={ n:n, s:s };
+    var s={}, d={};
+    stockCatalogo().forEach(function(c){
+      var kk=stockNorm(c.d)+'|'+stockNorm(c.m), al=stockAliasDe(kk); s[kk]=1; s[al]=1;
+      d[stockNorm(c.d)]=1; d[String(al).split('|')[0]]=1;
+    });
+    FD_CAT={ n:n, s:s, d:d };
   }
-  return !!(FD_CAT.s[k] || FD_CAT.s[stockAliasDe(k)] || stockHayEnInventario(k));
+  if(FD_CAT.s[k] || FD_CAT.s[stockAliasDe(k)] || stockHayEnInventario(k)) return true;
+  var nom=stockNorm(k.split('|')[0]);
+  if(!nom) return false;
+  if(FD_MAS_ALTO.test(nom)) return true;                                  // (1) más alto que el de la lista
+  if(FD_CAT.d[nom] || FD_CAT.d[String(stockAliasDe(k)).split('|')[0]]) return true;   // (2) medida especial
+  return FD_SON_PRODUCTO.some(function(re){ return re.test(nom); });       // (3)
 }
 function fdHMarcar(f){ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(f||''))) return; STOCK.fdH=Array.isArray(STOCK.fdH) ? STOCK.fdH : []; if(STOCK.fdH.indexOf(f)<0) STOCK.fdH.push(f); }
 /* ⚠️ ¿Se puede repasar el tramo (A, B]? Lo que el lote del día ya cerró se sabe por las recepciones de lo cerrado, y lo cerrado se poda a

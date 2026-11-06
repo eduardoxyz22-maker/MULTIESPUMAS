@@ -223,8 +223,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   const conUbic=ubic.filter(function(x){ return x.tiene; });
   /* Tiendas Roho tiene ZONA pero no pin: no es tienda propia y sus entregas no van
      siempre al mismo lugar (§4dn). Que siga sin pin es a propósito, no un olvido. */
-  chk('las 6 tiendas propias tienen su ubicación; Tiendas Roho tiene zona pero no pin',
-      conUbic.length===6 && ubic.filter(function(x){return !x.tiene;})[0].n==='Tiendas Roho',
+  /* (06/11) Cambiado a conciencia: la Tienda Banzer tiene el pin del almacén Banzer (dueño: «está en el mismo lugar»); Ventura Mall
+     sigue sin pin hasta que el dueño lo dé (§4dn: nada inventado). */
+  chk('las 7 tiendas con pin (las 6 de siempre + Tienda Banzer); Tiendas Roho y Ventura Mall sin pin',
+      conUbic.length===7 && conUbic.some(function(x){ return x.n==='Tienda Banzer'; }) &&
+      ubic.filter(function(x){return !x.tiene;}).map(function(x){ return x.n; }).join(',')==='Tiendas Roho,Ventura Mall',
       conUbic.map(function(x){return x.n;}).join(' · '));
   chk('⚠️ el mapa las lee todas (si el formato no sirviera, el chofer no las vería)',
       conUbic.every(function(x){ return x.lat!=null && x.lng!=null; }),
