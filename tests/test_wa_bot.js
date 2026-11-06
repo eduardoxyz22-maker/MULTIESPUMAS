@@ -432,7 +432,7 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   chk('son las de WA_TIPOS (y sus «_ubic»), con el mismo nombre, sin repetir', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombresU), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
   const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
-                     alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5,
+                     alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5, efectivo_sin_retirar: 4,   // 💵 (2026-11-06-b)
                      confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));

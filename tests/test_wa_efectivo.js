@@ -1,0 +1,219 @@
+/* 💵 EL EFECTIVO SIN RETIRAR, AL DUEÑO (06/11, servidor 2026-11-06-b). El dueño: *«avisar retiros de efectivo pendientes o sin cargar
+   luego de 48 horas (aplica desde noviembre) y que llegue a mi telf»*; eligió «dos veces, 9:00 y 18:00».
+     1. La regla (`waEfePendiente_`): lo cobrado en efectivo (adelanto, cobros, recargo cobrado) queda en la mano de quien lo recibió (el
+        chofer con «>Nombre», si no la vendedora); cada retiro cubre lo de ESA persona cobrado hasta su día, primero el del mismo monto y
+        después del más viejo; lo que sobra no tapa lo de después; se avisa lo cobrado desde el 01/11 y de hace 2 días o más. Afuera: QR,
+        Eduardo, ROHO, internos, ATC, RPT, borradores, filas del sistema.
+     2. La lectura de los pagos es la de la página: para los mismos pedidos, `waEfePagos_` (.gs) = `contaPagos` (página) en efectivo, y
+        `WA_EFE_FUERA` = `CONTA_EXCLUIR`.
+     3. El envío: a las 9:00 y a las 18:00 `efectivo_sin_retirar` al dueño (WA_DUENO) con 4 datos; una vez por turno; no el domingo; sin
+        WA_DUENO nada; sin nada pendiente nada; un retiro cargado antes del envío lo saca.
+     4. La plantilla está en WA_PLANTILLAS con sus 4 datos y el ejemplo.
+   Datos SINTÉTICOS (el repo es público). Reloj de Bolivia.
+   Se corre:  node tests/test_wa_efectivo.js   (desde la raíz del repo) */
+const fs = require('fs'), vm = require('vm'), path = require('path');
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const GS = process.env.GS || path.resolve('google-apps-script.gs');
+const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.html');
+let PASS = 0, FAIL = 0;
+const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 700)) : ''); };
+
+/* ── El servidor de mentira (como test_wa_bot.js) ── */
+const HDR = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)','ts',
+  '_productos_json','Método pago','Observaciones','Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)','Nota de venta',
+  'A cuenta (Bs)','Facturar a','NIT','N° del día','Verificado','Fotos entrega','Revisión'];
+function hacerPlanilla(filas) {
+  const datos = filas.map(f => f.slice());
+  return {
+    _datos: datos,
+    getLastRow: () => datos.length, getLastColumn: () => (datos[0] || []).length,
+    getDataRange: () => ({ getValues: () => datos.map(f => f.slice()) }),
+    setFrozenRows: () => {}, appendRow: (r) => { datos.push(r.slice()); },
+    deleteRow: (n) => { datos.splice(n - 1, 1); }, deleteRows: (n, k) => { datos.splice(n - 1, k); },
+    getRange: (fila, col, nFilas, nCols) => ({
+      getValue: () => (datos[fila - 1] || [])[col - 1],
+      setValue: (v) => { if (!datos[fila - 1]) datos[fila - 1] = []; datos[fila - 1][col - 1] = v; },
+      getValues: () => { const out = []; for (let i = 0; i < (nFilas || 1); i++) { const f = datos[fila - 1 + i] || [], r = []; for (let j = 0; j < (nCols || 1); j++) r.push(f[col - 1 + j]); out.push(r); } return out; },
+      setValues: (v) => { for (let i = 0; i < v.length; i++) { const r = datos[fila - 1 + i] || (datos[fila - 1 + i] = []); for (let j = 0; j < v[i].length; j++) r[col - 1 + j] = v[i][j]; } },
+      setFontWeight: () => {}, setNumberFormat: () => {}
+    })
+  };
+}
+const RELOJ = { ms: 0 };
+const poner = (txt) => { RELOJ.ms = Date.parse(txt.replace(' ', 'T') + ':00-04:00'); };
+class FakeDate extends Date {
+  constructor(...a) { if (a.length) super(...a); else super(RELOJ.ms); }
+  static now() { return RELOJ.ms; }
+}
+function servidor(props) {
+  const sh = hacerPlanilla([HDR]), hojas = {}, P = Object.assign({}, props || {});
+  const meta = { llamadas: [], responder: null, n: 0 };
+  const triggers = [];
+  const ctx = {
+    console, Date: FakeDate, JSON, Math, Number, String, Array, Object, RegExp, encodeURIComponent,
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({
+      getSheetByName: (n) => n === 'Pedidos' ? sh : (hojas[n] || null),
+      insertSheet: (n) => (hojas[n] = hacerPlanilla([])) }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => P[k] != null ? P[k] : null, setProperty: (k, v) => { P[k] = String(v); },
+      deleteProperty: (k) => { delete P[k]; }, setProperties: (o) => Object.assign(P, o) }) },
+    UrlFetchApp: { fetch: (url, o) => {
+      const body = o.payload ? JSON.parse(o.payload) : null; meta.llamadas.push({ url, o, body });
+      const r = meta.responder ? meta.responder(body, meta.llamadas.length) : null;
+      const code = r ? r.code : 200, txt = r ? JSON.stringify(r.body || {}) : JSON.stringify({ messages: [{ id: 'wamid.' + (++meta.n) }] });
+      return { getResponseCode: () => code, getContentText: () => txt };
+    } },
+    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {}, tryLock() { return true; } }) },
+    CacheService: { getScriptCache: () => ({ get: () => null, put() {}, putAll() {}, remove() {}, removeAll() {} }) },
+    ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (t) => ({ _t: t, setMimeType() { return this; } }) },
+    DriveApp: {}, Utilities: { formatDate: (d) => String(d) },
+    Session: { getScriptTimeZone: () => 'America/La_Paz', getTemporaryActiveUserKey: () => 'ABCDEFGH' },
+    Logger: { log() {} },
+    ScriptApp: {
+      newTrigger: (fn) => ({ timeBased: () => ({ after: (ms) => ({ create: () => { const t = { fn, tipo: 'after', ms, getHandlerFunction: () => fn }; triggers.push(t); return t; } }),
+                                                 everyMinutes: (n) => ({ create: () => { const t = { fn, tipo: 'every', n, getHandlerFunction: () => fn }; triggers.push(t); return t; } }),
+                                                 everyDays: () => ({ atHour: () => ({ create: () => { const t = { fn, tipo: 'daily', getHandlerFunction: () => fn }; triggers.push(t); return t; } }) }) }) }),
+      getProjectTriggers: () => triggers.slice(),
+      deleteTrigger: (t) => { const i = triggers.indexOf(t); if (i >= 0) triggers.splice(i, 1); }
+    }
+  };
+  ctx.globalThis = ctx; vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(GS, 'utf8'), ctx);
+  /* Las filas van directo a la hoja (sin pasar por «guardar»: así no se encolan las confirmaciones de cada pedido). */
+  const cargar = (lista) => { lista.forEach(p => sh._datos.push(ctx.recToRow(p))); };
+  const hoja = () => (hojas['Bot WhatsApp'] ? hojas['Bot WhatsApp']._datos.slice(1) : []);
+  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text) }));
+  const limpiar = () => { meta.llamadas.length = 0; };
+  const lista = () => sh._datos.slice(1).map(f => ctx.rowToRec_(f));
+  return { ctx, sh, P, meta, triggers, cargar, hoja, salen, limpiar, lista, repaso: () => ctx.waRepaso() };
+}
+const ON = { WA_ACTIVO: '1', WA_TOKEN: 'tok-de-mentira', WA_PHONE_ID: '1234567890', WA_LOGISTICA: 'Ernesto:59171000001', WA_DUENO: 'Eduardo:59177000007' };
+
+/* ── Los pedidos ── */
+const TS = (f, h) => Date.parse(f + 'T' + (h || '11:00') + ':00-04:00');
+const V = (id, vend, mp, o) => Object.assign({ id, oc: '11-' + id, vendedor: vend, cliente: 'CLIENTE ' + id.toUpperCase(), fecha: '2026-11-10', turno: 'AM',
+  celular: '70000000', zona: 'Norte', direccion: 'Calle 1', productos: [{ desc: 'COLCHON TITANIO', medida: '140x190', cant: 1, precio: 3000 }],
+  saldo: 0, acuenta: 0, pagado: false, metodoPago: mp, estado: '', entregado: false, vehiculo: '', chofer: '', nota: '9' + id.replace(/\D/g, ''),
+  ts: TS('2026-11-02'), fotos: [], rev: 1 }, o || {});
+const R = (id, entrega, monto, dia, notas) => ({ id: '__ret_' + id + '__', oc: '', vendedor: entrega, chofer: 'Eduardo Añez', cliente: '💵 RETIRO DE EFECTIVO — fila del sistema, NO BORRAR',
+  fecha: '', turno: '', zona: 'FACTURADO', direccion: 'Retiro', productos: [], saldo: 0, acuenta: monto, pagado: false, metodoPago: '', estado: '', entregado: false,
+  nota: notas || '', ts: TS(dia, '12:00'), fotos: [], rev: 1 });
+const FIX = [
+  // Mirian: dos cobros, cada uno con su retiro del mismo monto → nada
+  V('m1', 'Mirian Salazar', '~Efectivo 5440 @2026-10-30 #1971'), V('m2', 'Mirian Salazar', '~Efectivo 2140 @2026-11-03 #1980'),
+  R('m1', 'Mirian Salazar', 5440, '2026-11-03', '2709'), R('m2', 'Mirian Salazar', 2140, '2026-11-03', '2708'),
+  // Maria: 3.410 del 03/11 sin retiro → avisa
+  V('f1', 'Maria Flores', '~Efectivo 3410 @2026-11-03 #1938 %IMG1'),
+  // Mauricio: dos cobros sin retiro → 3.290 en 2 cobros
+  V('u1', 'Mauricio Merida', '~Efectivo 700 @2026-11-03 #2340'), V('u2', 'Mauricio Merida', '~Efectivo 2590 @2026-11-04 #2343'),
+  // Luis Pierre (chofer) cobró en la puerta una venta de Fernando → es de Luis, no de Fernando
+  V('p1', 'Fernando Peinado', '~QR Ganadero 1000 @2026-11-01 #2463 + Efectivo 1860 @2026-11-04 #2464 >Luis Pierre %IMG2'),
+  // Juan Pablo: 5.000 de octubre sin retirar + 900 del 03/11; el retiro de 5.000 del 05/11 es el de octubre → avisa 900
+  V('j1', 'Juan Pablo Paredes', '~Efectivo 5000 @2026-10-20 #2370', { ts: TS('2026-10-20') }), V('j2', 'Juan Pablo Paredes', '~Efectivo 900 @2026-11-03 #2384'),
+  R('j1', 'Juan Pablo Paredes', 5000, '2026-11-05', '429'),
+  // Isabel: 1.000 + 500, retiro de 1.200 → quedan 300 del 03/11
+  V('i1', 'Isabel Robledo', '~Efectivo 1000 @2026-11-02 #7001'), V('i2', 'Isabel Robledo', '~Efectivo 500 @2026-11-03 #7002'), R('i1', 'Isabel Robledo', 1200, '2026-11-04', '1'),
+  // Carola: el retiro es de ANTES del cobro → no lo cubre
+  R('c1', 'Carola Chavez', 900, '2026-11-01', '2'), V('c1', 'Carola Chavez', '~Efectivo 900 @2026-11-02 #8001'),
+  // Jonathan: adelanto «suelto» (A cuenta 800 + «Efectivo %IMG», del día de la venta) y un recargo cobrado en efectivo
+  V('o1', 'Jonathan Monje', 'Efectivo %IMG3', { acuenta: 800, saldo: 2200, ts: TS('2026-11-02') }), V('o2', 'Jonathan Monje', '^Efectivo 50 @2026-11-03 #9100 + ^ 40'),
+  // Andrea: cobrado AYER (05/11) → todavía no
+  V('a1', 'Andrea Orias', '~Efectivo 1500 @2026-11-05 #3001'),
+  // Lo que no cuenta
+  V('x1', 'Maria Flores', '~QR BISA 4000 @2026-11-02 #1939'),                       // QR
+  V('x2', 'Eduardo Añez', '~Efectivo 9000 @2026-11-02 #1'),                         // Eduardo
+  V('x3', 'ROHO', '~Efectivo 9000 @2026-11-02 #2'),                                 // ROHO
+  V('x4', 'ALBA', '~Efectivo 9000 @2026-11-02 #3'),                                 // interno
+  V('x5', 'Maria Flores', '~Efectivo 9000 @2026-11-02 #4', { oc: 'ATC 11-001' }),   // ATC
+  V('x6', 'Maria Flores', '~Efectivo 9000 @2026-11-02 #5', { oc: 'RPT 11-001' }),   // RPT
+  V('x7', 'Maria Flores', '~Efectivo 9000 @2026-11-02 #6', { estado: 'Borrador Kommo', id: 'kommo-77' }),
+  V('x8', 'Fabián Godoy', '~Efectivo 9000 @2026-10-25 #7', { ts: TS('2026-10-25') }),   // de octubre: no se avisa
+  // Mauricio: un cobro de octubre SIN retiro y un retiro de noviembre del mismo monto: se lo lleva ese (no lo de noviembre)
+  V('k1', 'Mauricio Merida', '~Efectivo 400 @2026-10-28 #2330', { ts: TS('2026-10-28') }), R('k1', 'Mauricio Merida', 400, '2026-11-04', '3')
+];
+
+(async () => {
+  console.log('\n── 1. La regla ──');
+  let S = servidor(ON);
+  S.cargar(FIX);
+  const E = S.ctx.waEfePendiente_(S.lista(), '2026-11-06');
+  const de = (n) => E.find(o => o.nombre === n) || null;
+  chk('1a Mirian: cada cobro tiene su retiro del mismo monto → nada', !de('Mirian Salazar'), de('Mirian Salazar'));
+  chk('1b Maria: 3.410 del 03/11 sin retiro', de('Maria Flores') && de('Maria Flores').bs === 3410 && de('Maria Flores').desde === '2026-11-03' && de('Maria Flores').n === 1, de('Maria Flores'));
+  chk('1c Mauricio: 3.290 en 2 cobros desde el 03/11', de('Mauricio Merida') && de('Mauricio Merida').bs === 3290 && de('Mauricio Merida').n === 2, de('Mauricio Merida'));
+  chk('1d el cobro del chofer es de Luis Pierre, no de Fernando (y el QR no cuenta)', de('Luis Pierre') && de('Luis Pierre').bs === 1860 && !de('Fernando Peinado'), [de('Luis Pierre'), de('Fernando Peinado')]);
+  chk('1e Juan Pablo: el retiro de 5.000 es el de octubre (mismo monto) → avisa los 900 de noviembre', de('Juan Pablo Paredes') && de('Juan Pablo Paredes').bs === 900, de('Juan Pablo Paredes'));
+  chk('1f Isabel: un retiro de 1.200 cubre 1.000 + 200 (del más viejo) → quedan 300 del 03/11', de('Isabel Robledo') && de('Isabel Robledo').bs === 300 && de('Isabel Robledo').desde === '2026-11-03', de('Isabel Robledo'));
+  chk('1f2 lo de octubre sin retiro no se avisa (Fabián)', !de('Fabián Godoy'), de('Fabián Godoy'));
+  chk('1f3 un retiro de noviembre que es del mismo monto que un cobro de octubre se lo lleva (Mauricio sigue con 3.290)', de('Mauricio Merida') && de('Mauricio Merida').bs === 3290, de('Mauricio Merida'));
+  chk('1g Carola: un retiro de ANTES del cobro no lo cubre', de('Carola Chavez') && de('Carola Chavez').bs === 900, de('Carola Chavez'));
+  chk('1h Jonathan: el adelanto «suelto» (A cuenta + Efectivo) y el recargo cobrado cuentan; el recargo pactado no', de('Jonathan Monje') && de('Jonathan Monje').bs === 850 && de('Jonathan Monje').n === 2, de('Jonathan Monje'));
+  chk('1i lo cobrado ayer todavía no (48 h)', !de('Andrea Orias'), de('Andrea Orias'));
+  chk('1j afuera: Eduardo, ROHO, internos, ATC, RPT, borradores', !de('Eduardo Añez') && !de('ROHO') && !de('ALBA') && E.every(o => o.bs < 9000), E.map(o => o.nombre + ' ' + o.bs));
+  chk('1k el que más tiene primero', E.length === 7 && E[0].nombre === 'Maria Flores', E.map(o => o.nombre));
+  const E2 = S.ctx.waEfePendiente_(S.lista(), '2026-11-08');
+  chk('1l el domingo 08/11 lo de Andrea (05/11) ya entra', !!E2.find(o => o.nombre === 'Andrea Orias'), E2.map(o => o.nombre));
+
+  console.log('\n── 2. La misma lectura que la página ──');
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const errores = [];
+  const page = await browser.newPage({ viewport: { width: 1200, height: 800 }, timezoneId: 'America/La_Paz' });
+  page.on('pageerror', e => errores.push(e.message));
+  await page.route(/^https?:/, r => r.abort());
+  await page.clock.install({ time: new Date('2026-11-06T10:00:00-04:00') });
+  await page.goto('file://' + PEDIDOS, { waitUntil: 'load' });
+  await page.waitForTimeout(250);
+  const pag = await page.evaluate((fix) => {
+    var out = {};
+    fix.forEach(function (p) { if (String(p.id).indexOf('__') === 0) return;
+      out[p.id] = contaPagos(p).filter(function (c) { return c.metodo === 'Efectivo' && (Number(c.monto) || 0) > 0; })
+        .map(function (c) { return [c.fecha, r2(c.monto), limpiaRecibio(c.recibio)]; }); });
+    return { pagos: out, fuera: CONTA_EXCLUIR.slice() };
+  }, FIX);
+  const srv = {}; FIX.forEach(p => { if (String(p.id).indexOf('__') === 0) return; srv[p.id] = S.ctx.waEfePagos_(S.lista().find(q => q.id === p.id)).map(c => [c.fecha, c.monto, c.recibio]); });
+  const dif = Object.keys(srv).filter(k => JSON.stringify(srv[k]) !== JSON.stringify(pag.pagos[k]));
+  chk('2a los pagos en efectivo que lee el servidor son los que lee la página (contaPagos)', dif.length === 0, dif.map(k => k + ': gs ' + JSON.stringify(srv[k]) + ' · página ' + JSON.stringify(pag.pagos[k])));
+  chk('2b WA_EFE_FUERA = CONTA_EXCLUIR de la página', JSON.stringify(Array.from(S.ctx.WA_EFE_FUERA)) === JSON.stringify(pag.fuera), [S.ctx.WA_EFE_FUERA, pag.fuera]);
+  await browser.close();
+
+  console.log('\n── 3. El envío ──');
+  const efe = () => S.salen().filter(x => x.pl === 'efectivo_sin_retirar');
+  S = servidor(ON); S.cargar(FIX);
+  poner('2026-11-06 08:50'); S.repaso();
+  chk('3a a las 08:50 todavía no', efe().length === 0, S.salen());
+  S.limpiar(); poner('2026-11-06 09:05'); S.repaso();
+  let e = efe();
+  chk('3b a las 09:05 sale UNO al dueño', e.length === 1 && e[0].to === '59177000007', S.salen());
+  chk('3c con 4 datos: el día y la hora, el total, de cuántas personas y la lista', e[0] && e[0].p.length === 4 && /viernes 06\/11, 09:0/.test(e[0].p[0]) && e[0].p[1] === 'Bs 11.510' && e[0].p[2] === '7 personas' && /^Maria Flores Bs 3\.410 desde 03\/11 · Mauricio Merida Bs 3\.290 desde 03\/11 \(2 cobros\)/.test(e[0].p[3]), e[0] && e[0].p);
+  chk('3d ningún dato pasa de 250 letras ni lleva saltos de línea', e[0] && e[0].p.every(t => t.length <= 250 && !/[\r\n]/.test(t)), e[0] && e[0].p.map(t => t.length));
+  S.limpiar(); poner('2026-11-06 09:40'); S.repaso();
+  chk('3e una vez por turno (a las 09:40 no se repite)', efe().length === 0, S.salen());
+  S.limpiar(); poner('2026-11-06 17:55'); S.repaso();
+  chk('3f a las 17:55 todavía no', efe().length === 0);
+  // Antes de las 18: se carga el retiro de Maria → el de las 18 ya no la nombra
+  S.cargar([R('f1', 'Maria Flores', 3410, '2026-11-06')]);
+  S.limpiar(); poner('2026-11-06 18:05'); S.repaso(); e = efe();
+  chk('3g a las 18:05 sale el segundo, con la planilla de ahora (el retiro de Maria ya no la nombra)', e.length === 1 && !/Maria Flores/.test(e[0].p[3]) && e[0].p[2] === '6 personas', e[0] && e[0].p);
+  S.limpiar(); poner('2026-11-08 09:05'); S.repaso();
+  chk('3h el domingo no sale', efe().length === 0, S.salen());
+  const S2 = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1', WA_LOGISTICA: 'Ernesto:59171000001' }); S2.cargar(FIX);
+  poner('2026-11-06 09:05'); S2.repaso();
+  chk('3i sin WA_DUENO no sale', S2.salen().filter(x => x.pl === 'efectivo_sin_retirar').length === 0, S2.salen());
+  const S3 = servidor(ON); S3.cargar(FIX.filter(p => /^[mx]/.test(p.id) || /^__ret_m/.test(p.id)));
+  poner('2026-11-06 09:05'); S3.repaso();
+  chk('3j sin nada pendiente no sale', S3.salen().filter(x => x.pl === 'efectivo_sin_retirar').length === 0, S3.salen());
+  const S4 = servidor(Object.assign({}, ON, { WA_PRUEBA: '59170000099' })); S4.cargar(FIX);
+  poner('2026-11-06 09:05'); S4.repaso();
+  const e4 = S4.salen().filter(x => x.pl === 'efectivo_sin_retirar');
+  chk('3k con WA_PRUEBA va al número de prueba', e4.length === 1 && e4[0].to === '59170000099', e4);
+
+  console.log('\n── 4. La plantilla ──');
+  const pl = Array.from(S.ctx.WA_PLANTILLAS).find(x => x.n === 'efectivo_sin_retirar');
+  chk('4a está en WA_PLANTILLAS con {{1}}…{{4}} y un ejemplo de 4', pl && /\{\{4\}\}/.test(pl.t) && !/\{\{5\}\}/.test(pl.t) && pl.e.length === 4, pl);
+  chk('4b está en WA_TIPOS', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_sin_retirar', S.ctx.WA_TIPOS.ef);
+  const pr = S.ctx.probarEfectivo();
+  chk('4c probarEfectivo() dice lo que diría y a quién, sin mandar nada', /Ahora el aviso diría/.test(pr.lineas[0]) && /Eduardo/.test(pr.lineas[1]), pr.lineas);
+
+  chk('sin errores en la página', errores.length === 0, errores);
+  console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');
+  process.exit(FAIL ? 1 : 0);
+})();
