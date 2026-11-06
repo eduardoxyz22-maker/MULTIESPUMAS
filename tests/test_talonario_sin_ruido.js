@@ -167,7 +167,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     return { n0:n0, vacia:vacia, apagadas:apagadas, noms:noms, sinClave:sinClave, mala:mala, txt:txt, n1:sis?sis.det.length:0, car:car&&(car.t+' | '+car.s), tarjeta:tarjeta?tarjeta.textContent.replace(/\s+/g,' '):'', nChip:nChip,
       texto:texto, xlsM:talEnSistemaTxt(m1), xlsC:talEnSistemaTxt(c2), k:k };
   }); r=D(r, { noms:[], txt:'', car:'', tarjeta:'', texto:'', k:[] });
-  chk('4a. la lista de tiendas arranca VACÍA, apagada sin la contraseña, con las 6 tiendas (sin Tiendas Roho) y cuántas faltan', r.vacia && r.apagadas && r.noms.length===6 && !r.noms.some(function(t){ return /Roho/.test(t); }) && r.noms.some(function(t){ return /Buenos Aires.*2 ventas sin marcar/.test(t); }), r.noms);
+  chk('4a. la lista de tiendas arranca VACÍA, apagada sin la contraseña, con las 8 tiendas (sin Tiendas Roho; desde el 02/11 con la Tienda Banzer y Ventura Mall) y cuántas faltan', r.vacia && r.apagadas && r.noms.length===8 && !r.noms.some(function(t){ return /Roho/.test(t); }) && r.noms.some(function(t){ return /Buenos Aires.*2 ventas sin marcar/.test(t); }), r.noms);
   chk('4b. sin la contraseña (o con una mala) no se tilda', r.sinClave && r.mala, r);
   chk('4c. antes: 3 ventas sin cargar al sistema; con Buenos Aires tildada: 1, y lo dice', r.n0===3 && r.n1===1 && /2 de Buenos Aires no se cuentan: se cargan en otro lado/.test(r.txt), r.txt);
   chk('5a. el control del cierre del mes da lo mismo (1 por cargar) y lo dice', /^1 venta por cargar al sistema/.test(r.car||'') && /2 de Buenos Aires no se cuentan/.test(r.car||''), r.car);
