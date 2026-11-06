@@ -13857,7 +13857,7 @@ function contaPagosHtml(p){
         '</div>'+
         '<div style="margin-top:8px"><label class="lb">Método</label>'+
           '<div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb2).join('')+'</div></div>'+
-        (CTA_EDIT_M==='Efectivo' ? ctaRecibioHtml(p, {edit:true}) : '')+
+        (CTA_EDIT_M==='Efectivo' ? ctaRecibioHtml(p, {edit:true, fecha:(_ev.fecha!=null?_ev.fecha:(c.fecha||contaFecha(p)||todayStr())), c:c}) : '')+   // §4ok-112 con el día y el pago, para el chofer
         (CTA_EDIT_M==='QR' ? ('<div style="margin-top:8px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancosV.map(bb2).join('')+'</div></div>') : '')+
         /* 📎 El comprobante, acá adentro. Antes había que buscar el botón afuera —y para
            el ANTICIPO no existía— así que un pago al que se le olvidaron la captura se
@@ -14122,7 +14122,7 @@ function ctaEditarPago(id, i){
   ctaPagoRecordar();                 // §4fy: abrir o cerrar el editor de OTRO pago no borra el que se está cargando
   if(CTA_EDIT_I===i || i<0){ CTA_EDIT_I=-1; CTA_EDIT_V=null; showContaModal(id); return; }
   var c=contaPagos(p)[i]; if(!c) return;
-  CTA_EDIT_I=i; CTA_EDIT_V=null;
+  CTA_EDIT_I=i; CTA_EDIT_V=null; CTA_EDIT_RAUTO=null;   // §4ok-112
   CTA_EDIT_M=metodoBase(c.metodo)||String(c.metodo||'')||'Efectivo';
   CTA_EDIT_B=c.banco||'';
   CTA_EDIT_R=limpiaRecibio(c.recibio);
@@ -14132,7 +14132,9 @@ function ctaEditarPago(id, i){
    método, así que se llenan primero; tocar «QR» o el banco repintaba la ficha y los volvía a lo
    viejo, y «💾 Guardar» corregía solo el método — el pago del sábado seguía con la fecha de antes.
    Lo mismo que §4fy arregló en el bloque de «Registrar pago» y ctaEditRecibio ya hacía. */
-function ctaEditMetodo(id,m){ ctaEditRecordar(); CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
+function ctaEditMetodo(id,m){ ctaEditRecordar(); var _era=CTA_EDIT_M; CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo'){ CTA_EDIT_R=''; CTA_EDIT_RAUTO=null; }
+  if(m==='Efectivo' && _era!=='Efectivo') ctaEditRecibioAuto(id);   // 🚚 §4ok-112 pasa a efectivo el día de la entrega: con el chofer puesto
+  showContaModal(id); }
 function ctaEditBanco(id,b){ ctaEditRecordar(); CTA_EDIT_B=b; showContaModal(id); }
 /* Los campos del editor. Cuando el gato del comprobante tapa la ficha los inputs ya no
    existen, así que se cae a lo que quedó recordado en CTA_EDIT_V. */
@@ -14171,6 +14173,8 @@ function ctaGuardarPago(id, i, igual){
     memeCompConta(CTA_EDIT_M, {corregir:true, id:id, i:i});
     return;
   }
+  /* 🚚 §4ok-112 un chofer de OTRO camión ese día: se pregunta (solo si cambió quién la tiene) */
+  if(recibio && recibio!==limpiaRecibio(c.recibio)){ var _cxG=ctaChoferCruce(p, f, recibio); if(_cxG && !confirm(_cxG)) return; }
 
   /* 🔢 LA NOTA DE LA VENTA ES EL RECIBO DEL PRIMER PAGO (§4ei). Isabel corrigió el N° del
      pago (17478 → 1748) y la ficha siguió titulada «Nota 17478»: la venta tiene su propio
@@ -14971,30 +14975,131 @@ function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') 
    anotado (`CTA_EDIT_R`). */
 function ctaRecibioHtml(p, opts){
   opts=opts||{};
+  /* 🚚 §4ok-112 el pago en efectivo del día de la entrega viene con el chofer puesto (el que el GPS vio en la casa, si no el del pedido) */
+  var _sug=ctaRecibioAutoPoner(p, opts);
   var actual=String((opts.edit?CTA_EDIT_R:CTA_PAGO.recibio)||'').trim(), esCh=!!actual;
   var fn=opts.edit?'ctaEditRecibio':'ctaSetRecibio';
   var vend=nombreCanonico(p.vendedor)||'la vendedora';
   // Los choferes de HOY (más el de este pedido y el ya anotado): uno que ya no está no se ofrece.
   var lista=choferesParaSelect(p); if(esCh && lista.indexOf(actual)<0) lista=lista.concat([actual]);
-  var primero=String(p.chofer||'').trim(); if(!primero || lista.indexOf(primero)<0) primero=lista[0]||'';
+  if(_sug && lista.indexOf(_sug.ch)<0) lista=lista.concat([_sug.ch]);
+  var primero=(_sug && _sug.ch) || String(p.chofer||'').trim(); if(!primero || lista.indexOf(primero)<0) primero=lista[0]||'';
   var b=function(on,txt,quien){
     return '<button type="button" class="btn btn-sm" style="width:auto;padding:5px 11px;font-size:.76rem;'+
       (on?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+
       '" onclick="'+esc(fn+'('+JSON.stringify(String(p.id))+','+JSON.stringify(quien)+')')+'">'+txt+'</button>';
   };
-  return '<div style="margin-top:8px" id="cta-recibio"><label class="lb">¿Quién recibió la plata?</label>'+
+  return '<div style="margin-top:8px" id="cta-recibio" data-modo="'+(opts.edit?'ed':'pa')+'" data-sug="'+esc(ctaRecibioFirma(p, opts))+'"><label class="lb">¿Quién recibió la plata?</label>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
       b(!esCh,'🧑‍💼 '+esc(vend),'')+
       (primero ? b(esCh,'🚚 El chofer',primero) : '')+
       (esCh ? ('<select id="cta-recibio-sel" onchange="'+esc(fn+'('+JSON.stringify(String(p.id))+',this.value)')+'" style="width:auto;padding:5px 8px;font-size:.8rem">'+
                  lista.map(function(c){ return '<option'+(c===actual?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>') : '')+
     '</div>'+
+    ctaRecibioNotaHtml(p, opts, _sug, actual)+   // §4ok-112 por qué está puesto (o la pista, al corregir)
     (esCh ? ('<div style="font-size:.72rem;color:var(--muted);margin-top:3px">🚚 El efectivo queda <b>en la mano de '+esc(actual)+'</b> hasta que lo rinda a Contabilidad. '+
              'Ese retiro se anota en Cuadre → 💵 Retiro de efectivo (entrega: el chofer · retira: Contabilidad).</div>') : '')+
   '</div>';
 }
-function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); showContaModal(id); }
-function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(quien); showContaModal(id); }
+function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); CTA_PAGO.rEleg=true; showContaModal(id); }   // §4ok-112 lo eligió la persona
+function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(quien); CTA_EDIT_RAUTO=null; showContaModal(id); }
+// §4ok-112 ============================================================================
+/* 🚚 (05/11, plan del jueves, 112) EL CHOFER QUE COBRÓ, PUESTO SOLO Y SIN CRUCES. Octubre: 13 cobros en efectivo de choferes (Bs 39.146);
+   de 8 con chofer asignado, 3 nombran a uno de OTRO camión (Bs 9.866), y 4 cobros del día de la entrega quedaron a nombre de la vendedora
+   (Bs 4.910).
+   · «Registrar pago»: un pago en EFECTIVO con la fecha de la ENTREGA de una venta a domicilio viene con «🚚 El chofer» elegido: el del
+     camión que el GPS vio en la casa del cliente ese día (`gpsLlegadaDe`, solo hoy) y, si no, el del pedido (`p.chofer`, o el de su camión).
+     Dice por qué está puesto; tocar a la vendedora lo saca (`CTA_PAGO.rEleg`: lo eligió la persona, no se vuelve a poner). Cambiar la
+     fecha lo vuelve a mirar. Sin entrega ese día, ni venta de tienda, ATC, RPT o «lo retira el cliente»: la vendedora, como siempre.
+   · «✏️ Corregir este pago»: un pago ya anotado NO cambia de mano solo. Si pasa a efectivo, viene con el chofer (como uno nuevo); si ya era
+     efectivo de la vendedora del día de la entrega, sale la pista «¿lo cobró el chofer? [🚚 Nombre]».
+   · Elegir a mano un chofer de OTRO camión ese día (el del GPS o el del pedido) pregunta antes de guardar. El `>Nombre` va donde siempre
+     (§4eq, `limpiaRecibio`); rinde a Contabilidad (`RETIRA_CHOFER`). */
+var CTA_EDIT_RAUTO=null;   // el chofer que se puso solo al pasar el pago a efectivo en «Corregir» (para decir por qué)
+/* El chofer de un camión un día: el del pedido si va en ese camión; si no, el que más pedidos de ese camión tiene ese día; si no, el primero. */
+function ctaChoferDia(veh, f, p){
+  if(!veh) return '';
+  if(p && vehiculoDe(p)===veh && String(p.chofer||'').trim()) return String(p.chofer).trim();
+  var C={}, best='', bn=0;
+  (STATE||[]).forEach(function(q){
+    if(!q || esFilaSistema(q) || String(q.fecha||'')!==String(f) || vehiculoDe(q)!==veh) return;
+    var c=String(q.chofer||'').trim(); if(!c) return;
+    C[c]=(C[c]||0)+1; if(C[c]>bn){ bn=C[c]; best=c; }
+  });
+  return best || ((VEHICULOS[veh]||[])[0]||'');
+}
+/* El chofer que cobró un pago en efectivo de ESE día, o null: { ch, veh, por:'gps'|'pedido', ll } */
+function ctaChoferSugerido(p, fecha){
+  if(!p || esFilaSistema(p) || noSeCobra(p) || esVentaTienda(p) || !p.fecha || String(fecha||'')!==String(p.fecha)) return null;
+  try{ if(typeof fichaRetira==='function' && fichaRetira(p)) return null; }catch(e){}
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  if(ll && ll.veh){ var cg=ctaChoferDia(ll.veh, p.fecha, p); if(cg) return { ch:cg, veh:ll.veh, por:'gps', ll:ll }; }
+  var ch=String(p.chofer||'').trim(), veh=vehiculoDe(p);
+  if(ch) return { ch:ch, veh:veh, por:'pedido' };
+  if(veh){ var c2=ctaChoferDia(veh, p.fecha, p); if(c2) return { ch:c2, veh:veh, por:'pedido' }; }
+  return null;
+}
+/* ¿El chofer elegido es de OTRO camión que el que fue ese día? Devuelve la pregunta, o '' si no hay nada que preguntar. */
+function ctaChoferCruce(p, fecha, ch){
+  ch=limpiaRecibio(ch); if(!p || !ch || !p.fecha || String(fecha||'')!==String(p.fecha) || noSeCobra(p) || esVentaTienda(p)) return '';
+  var vc=vehiculoDeChofer(ch); if(!vc) return '';          // un chofer sin camión conocido: no se puede saber
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  var ref=(ll && ll.veh) || vehiculoDe(p); if(!ref || ref===vc) return '';
+  if(!(ll && ll.veh) && ch===String(p.chofer||'').trim()) return '';   // el pedido dice ese chofer
+  var deRef=(ref===vehiculoDe(p) && String(p.chofer||'').trim()) || (VEHICULOS[ref]||[]).join(' o ');
+  return '⚠️ ¿'+ch+' recibió esta plata?\n\nEse día el pedido lo llevó el '+ref+(deRef?(' ('+deRef+')'):'')+(ll && ll.veh ? ' — el GPS lo vio en la casa del cliente' : '')+
+    ', y '+ch+' es del '+vc+'.\n\nSi la recibió '+ch+', tocá Aceptar. Si no, Cancelar y elegí al chofer que la cobró.';
+}
+/* Lo pone en el pago nuevo mientras nadie eligió; en «Corregir» no cambia nada (solo devuelve la sugerencia, para la pista). */
+function ctaRecibioAutoPoner(p, opts){
+  opts=opts||{};
+  if(opts.edit) return ctaChoferSugerido(p, opts.fecha);
+  if(CTA_PAGO.metodo!=='Efectivo') return null;
+  var s=ctaChoferSugerido(p, (CTA_PAGO_V && CTA_PAGO_V.fecha!=null) ? CTA_PAGO_V.fecha : todayStr());
+  if(!CTA_PAGO.rEleg) CTA_PAGO.recibio=s ? s.ch : '';
+  return s;
+}
+function ctaRecibioFirma(p, opts){
+  opts=opts||{};
+  var s=opts.edit ? ctaChoferSugerido(p, opts.fecha) : ctaChoferSugerido(p, (CTA_PAGO_V && CTA_PAGO_V.fecha!=null) ? CTA_PAGO_V.fecha : todayStr());
+  return s ? s.ch : '';
+}
+function ctaRecibioPorque(s){
+  return 'es el día de la entrega y '+(s.por==='gps' ? ('el GPS vio el <b>'+esc(s.veh)+'</b> en la casa del cliente') : ('es el chofer del pedido'+(s.veh?(' ('+esc(s.veh)+')'):'')));
+}
+function ctaRecibioNotaHtml(p, opts, s, actual){
+  opts=opts||{};
+  var vend=nombreCanonico(p.vendedor)||'la vendedora', st='font-size:.74rem;color:#7c4b00;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:7px;padding:5px 9px;margin-top:5px';
+  var auto=opts.edit ? CTA_EDIT_RAUTO : ((s && !CTA_PAGO.rEleg) ? s : null);
+  if(auto && actual===auto.ch) return '<div class="ctr-auto" style="'+st+'">🚚 <b>Puesto solo:</b> '+ctaRecibioPorque(auto)+'. Si la recibió '+esc(vend)+', tocá su nombre.</div>';
+  var c=opts.c;
+  if(opts.edit && s && !actual && c && metodoBase(c.metodo)==='Efectivo' && !limpiaRecibio(c.recibio))
+    return '<div class="ctr-pista" style="'+st+';display:flex;gap:8px;align-items:center;flex-wrap:wrap">💡 Este pago es del día de la entrega'+
+      (s.por==='gps' ? (' y el GPS vio el <b>'+esc(s.veh)+'</b> en la casa del cliente') : (s.veh ? (' y el pedido iba en el <b>'+esc(s.veh)+'</b>') : ''))+': ¿lo cobró el chofer?'+
+      '<button type="button" class="btn btn-sm" style="width:auto;padding:4px 10px;font-size:.74rem;background:#fff;border:1px solid var(--amber-border);color:#7c4b00;font-weight:700" onclick="'+
+      esc('ctaEditRecibio('+JSON.stringify(String(p.id))+','+JSON.stringify(s.ch)+')')+'">🚚 '+esc(s.ch)+'</button></div>';
+  return '';
+}
+/* «Corregir» pasó el pago a efectivo: con la fecha del pago, el chofer de ese día (si es el de la entrega). */
+function ctaEditRecibioAuto(id){
+  var p=findById(id); if(!p) return;
+  var c=contaPagos(p)[CTA_EDIT_I]||{}, f=ctaEdVal('cta-ed-fecha','fecha');
+  var s=ctaChoferSugerido(p, f || c.fecha || contaFecha(p));
+  if(s){ CTA_EDIT_R=s.ch; CTA_EDIT_RAUTO=s; }
+}
+/* Cambió la fecha del pago: si la sugerencia de ese día es otra, se repinta (con lo tipeado recordado). */
+document.addEventListener('change', function(e){
+  var t=e && e.target; if(!t || (t.id!=='cta-pago-fecha' && t.id!=='cta-ed-fecha')) return;
+  var edit=(t.id==='cta-ed-fecha'), p=findById(CTA_ULTIMA);
+  var box=document.querySelector('#cta-recibio[data-modo="'+(edit?'ed':'pa')+'"]'); if(!box || !p) return;   // con «Corregir» abierto hay dos (el pago nuevo y el que se corrige)
+  if(!edit && CTA_PAGO.rEleg) return;
+  var s=ctaChoferSugerido(p, t.value);
+  if(String(box.getAttribute('data-sug')||'')===(s ? s.ch : '')) return;
+  if(edit){ ctaEditRecordar(); if(CTA_EDIT_RAUTO && CTA_EDIT_R===CTA_EDIT_RAUTO.ch){ CTA_EDIT_R=s ? s.ch : ''; CTA_EDIT_RAUTO=s; } }
+  else ctaPagoRecordar();
+  showContaModal(p.id);
+}, true);
+// §4ok-112 fin =========================================================================
 /* compTiraHtml llama con un solo argumento (el índice), así que va este puente. */
 function ctaSacarCompIdx(id, i){ ctaSacarComp(id, i); }
 /* i = cuál de las imágenes se quita; sin i, todas. */
@@ -15040,6 +15145,10 @@ function ctaRegistrarPago(id){
     memeCompConta(CTA_PAGO.metodo, {id:id});
     return;
   }
+  /* 🚚 §4ok-112 Quién tiene el efectivo, con la fecha que quedó: puesto solo (nadie eligió) = el chofer de ese día, si es el día de la
+     entrega; elegido a mano = se pregunta si es el chofer de OTRO camión ese día. */
+  if(CTA_PAGO.metodo==='Efectivo' && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
+  else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !confirm(_cxR)) return; }
   var falta=Number(p.saldo)||0;
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
              recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
@@ -15085,7 +15194,7 @@ function ctaRegistrarPago(id){
     /* (25/10, §4ml, auditoría Codex FIN-06) Con `>0.01` un resto de UN centavo se perdía: 1,01 pactado cobrado 0,50 + 0,50 quedaba en
        1,00 pactado y 0 por cobrar. `resto` ya viene redondeado a centavos (`r2`). */
     if(resto>0.009) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
-    CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
+    CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
     /* ⚠️ Y el selector vuelve a «Pago de la venta». `CTA_TIPO` solo se reseteaba al CAMBIAR
        de venta, así que el camino natural —anotar el flete, «volver a la venta», registrar
        el pago— metía el pago de Bs 1.000 como si fuera flete: la venta quedaba «por cobrar»
@@ -15102,7 +15211,7 @@ function ctaRegistrarPago(id){
   if(falta>0.005 && monto>falta+0.005 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
-  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
+  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   fxSello('COBRADO','plata');
   var _prP=aplicarCobros(p, arr);
   sonidoPanel('caja');                          // 🔔 (§4ni, 16) la caja registradora
