@@ -263,5 +263,61 @@ console.log('\n── 100. Un cobro NUEVO le avisa al cliente cuánto recibimos 
   chk('el recargo por entrega pactado se dice aparte', S.ctx.waSaldoPago_({ pagado: true, saldo: 0, metodoPago: '~Efectivo 100 + ^150' }) === 'Tu pedido quedó pagado 🎉 Solo falta el recargo por entrega (Bs 150), al recibir.');
 }
 
+// ══ 109. La ATC: recojo y devolución ═══════════════════════════════════════════════════════════
+console.log('\n── 109. atc_recojo al guardarla y la víspera; atc_devolucion al programar la vuelta ──');
+{
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  const ATC = (o) => ped(Object.assign({ oc: 'ATC 11-012', fecha: '2026-11-09', turno: 'AM', saldo: 0, pagado: true, metodoPago: '', vehiculo: '', chofer: '',
+    productos: [{ desc: 'TITANIO LATEX', medida: '140x190', cant: 1, atc: { mot: 'Hundimiento', det: 'se hunde del lado derecho', tipo: 'gar' } }] }, o));
+  const a = ATC({ id: 'at1', cliente: 'MARIA LOPEZ' });
+  S.guardar(a); pasar(3); S.repaso();
+  let s = S.salen();
+  const r = s.find(x => x.pl === 'atc_recojo');
+  chk('ATC nueva con fecha: atc_recojo al cliente (y la confirmación de una venta NO)', !!r && r.to === '59170111222' && !s.some(x => /^confirmacion_pedido/.test(x.pl)), s.map(x => x.pl));
+  chk('…«Maria · Heaven Colchones · ATC 11-012 · el lunes 09/11 por la mañana · 9:00 y las 12:00 · contacto»: sin productos ni saldo', r && JSON.stringify(r.p) ===
+      JSON.stringify(['Maria', 'Heaven Colchones', 'ATC 11-012', 'el lunes 09/11 por la mañana', '9:00 y las 12:00', 'tu vendedora por el WhatsApp de siempre']), r && r.p);
+  chk('…y logística recibe lo de siempre (pedido nuevo)', s.filter(x => x.pl === 'logistica_pedido_nuevo_v2').length === 2, s.map(x => x.pl));
+  S.limpiar();
+  /* Cambiarle el día del recojo: otro atc_recojo con el día nuevo. */
+  a.fecha = '2026-11-10'; a.turno = 'PM'; S.guardar(a); pasar(3); S.repaso();
+  s = S.salen('atc_recojo');
+  chk('cambió el día del recojo: atc_recojo con «el martes 10/11 por la tarde» (no cambio_entrega)', s.length === 1 && s[0].p[3] === 'el martes 10/11 por la tarde' && !S.salen().some(x => /^cambio_entrega/.test(x.pl)), S.salen().map(x => x.pl));
+  S.limpiar();
+  /* La víspera (lunes 09/11 a las 19:00, es PM): una vez. */
+  poner('2026-11-09 17:05'); S.repaso();
+  chk('lunes 17:05: el recojo es de la tarde, todavía no', S.salen('atc_recojo').length === 0);
+  poner('2026-11-09 19:05'); S.repaso();
+  s = S.salen('atc_recojo');
+  chk('lunes 19:05: la víspera, «mañana, martes 10/11 por la tarde»', s.length === 1 && s[0].p[3] === 'mañana, martes 10/11 por la tarde', S.salen());
+  chk('…anotada como «ATC: recojo (víspera)»', S.hoja().some(f => f[3] === 'ATC: recojo (víspera)' && f[7] === '✅ enviado'));
+  S.limpiar(); poner('2026-11-09 20:00'); S.repaso();
+  chk('…y no se repite', S.salen('atc_recojo').length === 0);
+  /* Se recogió el martes; el viernes logística programa la devolución para el martes 17/11 (la ATC pasa a vivir en ese día). */
+  poner('2026-11-13 11:00');
+  const b = S.leer('at1'); b.fecha = '2026-11-17'; b.turno = 'PM'; b.entregado = false;
+  b.productos = b.productos.map(x => Object.assign({}, x, { atc: Object.assign({}, x.atc, { pdev: '2026-11-17', pturno: 'PM', rec: '2026-11-10' }) }));
+  S.guardar(b); pasar(3); S.repaso();
+  s = S.salen('atc_devolucion');
+  chk('programar la devolución: atc_devolucion «el martes 17/11 por la tarde»', s.length === 1 && s[0].p[2] === 'ATC 11-012' && s[0].p[3] === 'el martes 17/11 por la tarde', S.salen().map(x => x.pl));
+  chk('…y ningún atc_recojo (ya se recogió)', S.salen('atc_recojo').length === 0);
+  S.limpiar(); poner('2026-11-16 19:05'); S.repaso();
+  chk('la víspera de la devolución no repite nada (la devolución se avisa al programarla)', !S.salen().some(x => /^atc_/.test(x.pl)), S.salen().map(x => x.pl));
+}
+{
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  const ATC = (o) => ped(Object.assign({ oc: 'ATC 11-0' + (++nId), fecha: '2026-11-09', saldo: 0, pagado: true, metodoPago: '',
+    productos: [{ desc: 'SOFT', medida: '100x190', cant: 1, atc: { mot: 'Ruido', det: 'hace ruido al moverse' } }] }, o));
+  [ATC({ id: 'ae', vendedor: 'Eduardo Añez' }), ATC({ id: 'ar', vendedor: 'ROHO' }), ATC({ id: 'ai', vendedor: 'FABRICA' }), ATC({ id: 'ac', celular: '' })].forEach(x => S.guardar(x));
+  S.guardar(ped({ id: 'rpt', oc: 'RPT 11-004', cliente: 'Mia Plaza' }));
+  pasar(3); S.repaso();
+  chk('a quién no: Eduardo, ROHO e internos (FABRICA); la RPT tampoco recibe nada', !S.salen().some(x => /^atc_|^confirmacion/.test(x.pl)), S.salen().map(x => x.pl + '→' + x.to));
+  chk('…sin celular queda anotado en la hoja', S.hoja().some(f => f[1] === 'ac' && f[3] === 'ATC: recojo' && /celular/.test(f[8])), S.hoja().map(f => f[1] + ':' + f[3] + ':' + f[8]));
+  chk('waAtcEsDev_: con pdev = la fecha es la devolución; con pdev de otro día (o sin pdev), el recojo',
+      S.ctx.waAtcEsDev_({ fecha: '2026-11-17', productos: [{ atc: { pdev: '2026-11-17' } }] }) === true &&
+      S.ctx.waAtcEsDev_({ fecha: '2026-11-10', productos: [{ atc: { pdev: '2026-11-17' } }] }) === false && S.ctx.waAtcEsDev_({ fecha: '2026-11-10', productos: [{}] }) === false);
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

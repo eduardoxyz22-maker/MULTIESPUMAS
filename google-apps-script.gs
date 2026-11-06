@@ -3032,7 +3032,12 @@ var WA_TIPOS = {
   ci:  { plantilla:'logistica_cierre_falta', txt:'Logística: falta el cierre' },
   /* 💵 §4ok-100 (2026-11-05-a) Al cliente, cada pago NUEVO que se registra: cuánto, cómo y cuánto le queda. `no` = qué regla dice a quién
      no (`waNoClientePago_`: sin la de la fecha ni la de «entregado», justo los pagos que llegan después son los que interesan). */
-  pago:{ plantilla:'pago_recibido', txt:'Pago recibido', cli:true, no:'pago' }
+  pago:{ plantilla:'pago_recibido', txt:'Pago recibido', cli:true, no:'pago' },
+  /* 🛠️ §4ok-109 (2026-11-05-a) La ATC: al cliente, el día del RECOJO (al guardarla con fecha o cambiársela, y la víspera) y el de la
+     DEVOLUCIÓN (al programarla). Sin productos ni saldo. `no:'atc'` = `waNoClienteAtc_`. */
+  atc: { plantilla:'atc_recojo', txt:'ATC: recojo', cli:true, no:'atc' },
+  atcv:{ plantilla:'atc_recojo', txt:'ATC: recojo (víspera)', cli:true, no:'atc' },
+  atd: { plantilla:'atc_devolucion', txt:'ATC: devolución', cli:true, no:'atc' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -3202,6 +3207,7 @@ function waAlGuardar_(viejo, rec, adelanto) {
   else if (adelanto && fV === String(rec.fecha) && fV === waBo_(Date.now()).hoy && tV === 'PM' && turnoNorm_(rec.turno) === 'AM') ev = { id:id, t:'e', de:fV + '|PM' };   // solo HOY: otro día es un cambio común
   else if (fV !== String(rec.fecha) || tV !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + tV };
   if (!ev) return;
+  if (/^ATC\b/i.test(String(rec.oc || '').trim())) ev.atc = waAtcEsDev_(rec) ? 'd' : 'r';   // 🛠️ §4ok-109
   var cola = waColaLeer_(), ya = null, ms = Date.now();
   for (var i = 0; i < cola.length; i++) if (cola[i].id === id) { ya = cola[i]; break; }
   if (ya) {
@@ -3209,6 +3215,7 @@ function waAlGuardar_(viejo, rec, adelanto) {
        (2026-10-14-a) Un cambio que termina adelantado sale «en camino»; uno adelantado que después se mueve, como cambio de día. */
     if (ev.t === 'n') { ya.t = 'n'; delete ya.de; }
     else if (ya.t !== 'n') { if (ev.t === 'e') ya.t = 'e'; else if (ya.t === 'e') ya.t = 'c'; }
+    if (ev.atc) ya.atc = ev.atc; else delete ya.atc;   // 🛠️ §4ok-109 recojo o devolución: lo último
     ya.ms = ms;
   } else { ev.ms = ms; cola.push(ev); }
   waColaGuardar_(cola);
@@ -3320,6 +3327,31 @@ function waPagoAlGuardar_(viejo, rec) {
   if (!cambio) return;
   waPagoColaGuardar_(cola);
   waDespertar_();
+}
+
+/* ============================================================================
+ * 🛠️ §4ok-109 (2026-11-05-a) EL BOT AVISA EL RECOJO Y LA DEVOLUCIÓN DE LA ATC. Desde el 01/10, 19 viajes de ATC (11 recojos, 8
+ * devoluciones) sin ningún aviso: `waNoCliente_` deja afuera las ATC (no son una venta: ni productos ni saldo). Ahora:
+ *   · `atc_recojo` al guardar la ATC con fecha (o cambiarle el día del recojo) y la víspera, con el recordatorio de siempre (17:00 la
+ *     mañana, 19:00 la tarde; una vez, WA_REC; no si ya se le avisó hoy);
+ *   · `atc_devolucion` cuando se programa la devolución (`pdev`: la ATC pasa a vivir en el día de la vuelta, §4dz) o se le cambia el día.
+ * Lo que es cada viaje sale de la página: adentro de los productos va `atc` (§4bq); es la devolución si `atc.pdev` es la fecha del pedido
+ * (`atcViajeDevolucion`). A quién no: `waNoClienteAtc_` = las de `waNoClienteBase_` (Eduardo, ROHO, internos, sin celular) + entregada,
+ * fecha pasada. A logística, lo de siempre (pedido nuevo y cambio).
+ * ========================================================================== */
+function waAtcDe_(p) { var pr = (p && p.productos) || []; for (var i = 0; i < pr.length; i++) if (pr[i] && pr[i].atc) return pr[i].atc; return null; }
+function waAtcEsDev_(p) { var a = waAtcDe_(p); return !!(a && a.pdev && p && String(p.fecha) === String(a.pdev)); }
+function waNoClienteAtc_(p, hoy) {
+  if (!p || !/^ATC\b/i.test(String(p.oc || '').trim())) return { m:'no es una ATC', anotar:false };
+  if (!waEsEntrega_(p)) return { m:'no es un viaje pendiente', anotar:false };
+  var b = waNoClienteBase_(p); if (b) return b;
+  if (String(p.fecha) < hoy) return { m:'la fecha ya pasó', anotar:true };
+  return null;
+}
+/* «hoy, jueves 05/11 por la mañana» · «mañana, …» · «el lunes 09/11 por la tarde». */
+function waAtcCuando_(p, B) {
+  var f = String(p.fecha), cu = waCuandoTxt_(p);
+  return f === B.hoy ? 'hoy, ' + cu : (f === waMasDias_(B.hoy, 1) ? 'mañana, ' + cu : 'el ' + cu);
 }
 
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
@@ -3618,6 +3650,13 @@ function waArmar_(m, recs, cfg, B) {
     if (waPagosLeer_()[kP]) return { saltar:'ese pago ya se le avisó', anotar:false, p:p };
     out.pagoK = kP;
     out.params = [waNombre_(p.cliente), marca, waBs_(cP.monto), waMetodoTxt_(cP), waOc_(p.oc), waSaldoPago_(p), waContactoVend_(p.vendedor)];
+  } else if (m.k === 'atc' || m.k === 'atcv' || m.k === 'atd') {
+    /* 🛠️ §4ok-109 Con la planilla de AHORA: si mientras esperaba pasó de recojo a devolución (o al revés), sale el que corresponde a su evento. */
+    var dev = waAtcEsDev_(p);
+    if (m.k === 'atd' && !dev) return { saltar:'ya no es la devolución (le sacaron el día de la vuelta)', anotar:false, p:p };
+    if (m.k !== 'atd' && dev) return { saltar:'ya es la devolución: el recojo pasó', anotar:false, p:p };
+    if (m.k === 'atcv' && String(p.fecha) !== m.dia) return { saltar:'cambió de día', anotar:false, p:p };
+    out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waAtcCuando_(p, B), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   } else if (m.k === 'conf') out.params = [waNombre_(p.cliente), waOc_(p.oc), marca, waProds_(p), String(p.direccion || '').trim() || 'la dirección que nos diste', waSaldo_(p), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'camb' || m.k === 'enc') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   else if (m.k === 'rec') out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), p.fecha === waMasDias_(B.hoy, 1) ? 'Mañana' : 'El ' + waDiaTxt_(p.fecha).split(' ')[0],
@@ -3729,6 +3768,8 @@ function waRepasoBot_() {
     var cola = waColaLeer_(), quedan = [];
     cola.forEach(function (ev) {
       if (t0 - (Number(ev.ms) || 0) < WA_ESPERA_MS) { quedan.push(ev); if (ev.t === 'n') colaN[ev.id] = 1; return; }
+      /* 🛠️ §4ok-109 Una ATC nueva o que cambió de día: el recojo o la devolución al cliente (la confirmación de siempre no le va). */
+      if (ev.atc && (ev.t === 'n' || ev.t === 'c')) msgs.push({ id:ev.id, k:ev.atc === 'd' ? 'atd' : 'atc', a:'cliente', n:0 });
       if (ev.t === 'n') {
         msgs.push({ id:ev.id, k:'conf', a:'cliente', n:0 });
         cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'ln', a:L.nombre, n:0 }); });
@@ -3792,6 +3833,12 @@ function waRepasoBot_() {
       if (p.fecha !== recDia || recYa[id] || confHoy.ids.indexOf(id) >= 0) continue;   // confirmado hoy: no se repite
       if (colaN[id]) continue;   // (12/10) su confirmación todavía espera en la cola: sale en unos minutos y ya dice el día
       if (recSoloAM && waTurno_(p) === 'PM') continue;   // (12/10) el de la tarde sale a las 19:00
+      /* 🛠️ §4ok-109 La víspera del RECOJO de una ATC (la devolución se avisa al programarla). Lo demás de una ATC, como siempre: nada. */
+      if (/^ATC\b/i.test(String(p.oc || '').trim())) {
+        var noA = waNoClienteAtc_(p, B.hoy);
+        if (!waAtcEsDev_(p) && (!noA || noA.anotar)) msgs.push({ id:id, k:'atcv', a:'cliente', dia:recDia, n:0 });
+        continue;
+      }
       var no = waNoCliente_(p, B.hoy); if (no && !no.anotar) continue;                    // los que no van, ni se anotan
       msgs.push({ id:id, k:'rec', a:'cliente', dia:recDia, n:0 });
     }
@@ -3805,7 +3852,7 @@ function waRepasoBot_() {
     var base = [B.txt, m.id || '', p ? String(p.oc || '') : '', T.txt];
     if (a.saltar) {
       res.saltados++;
-      if (m.k === 'rec') recHechos.push(m.id);
+      if (m.k === 'rec' || m.k === 'atcv') recHechos.push(m.id);
       if (a.anotar) filas.push(base.concat([p ? String(p.cliente || '') : (m.a || ''), '', T.plantilla, '⏭️ no se manda', a.saltar]));
       continue;
     }
@@ -3819,8 +3866,8 @@ function waRepasoBot_() {
     }
     if (r.ok) {
       res.enviados++;
-      if (m.k === 'rec') recHechos.push(m.id);
-      if (m.k === 'conf') confHoy.ids.push(m.id);
+      if (m.k === 'rec' || m.k === 'atcv') recHechos.push(m.id);
+      if (m.k === 'conf' || m.k === 'atc' || m.k === 'atd') confHoy.ids.push(m.id);   // 🛠️ §4ok-109 avisada hoy: la víspera no se repite
       if (a.pagoK) waPagosAnotar_(a.pagoK);   // 💵 §4ok-100 una vez por pago
       filas.push(base.concat([a.para, a.numero, a.plantilla, '✅ enviado', r.id || '']));
     } else if (r.fatal) {
@@ -3831,7 +3878,7 @@ function waRepasoBot_() {
       filas.push(base.concat([a.para, a.numero, a.plantilla, '🔁 se reintenta (' + m.n + ')', r.detalle]));
     } else {
       res.errores++;
-      if (m.k === 'rec') recHechos.push(m.id);
+      if (m.k === 'rec' || m.k === 'atcv') recHechos.push(m.id);
       filas.push(base.concat([a.para, a.numero, a.plantilla, '❌ error', r.detalle]));
     }
   }
@@ -4652,6 +4699,13 @@ var WA_PLANTILLAS = [
   { n:'pago_recibido',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n💵 Recibimos tu pago de *{{3}}* {{4}} para tu pedido *{{5}}* ✅\n{{6}}\n\n💬 ¿Alguna consulta? Escribile a {{7}}\n\n¡Gracias! 🙌',
     e:['Juan', 'Heaven Colchones', 'Bs 500', 'por QR BNB', 'OC 10-412', 'Tu saldo es Bs 1.200.', 'Carola 👉 https://wa.me/59170000000'] },
+  /* 🛠️ §4ok-109 (2026-11-05-a) Mismos datos y orden que la rama `atc` de `waArmar_` (las dos). Sin respaldo: no hay una de antes. */
+  { n:'atc_recojo',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu servicio técnico *{{3}}* 🛠️\n\n🚚 Pasamos a recoger el producto *{{4}}*.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
+    e:['Juan', 'Heaven Colchones', 'ATC 11-012', 'mañana, viernes 06/11 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
+  { n:'atc_devolucion',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu servicio técnico *{{3}}* 🛠️\n\n✅ Tu producto ya está listo: te lo llevamos *{{4}}*.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
+    e:['Juan', 'Heaven Colchones', 'ATC 11-012', 'el martes 17/11 por la tarde', '14:30 y las 18:30', 'Carola 👉 https://wa.me/59170000000'] },
   { n:'pedido_en_camino',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'martes 14/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] }
