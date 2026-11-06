@@ -6420,9 +6420,10 @@ var SUCURSALES=[
      inventada se autocompleta sola y desvía la ruta del chofer (§4dn). ⚠️ «Tienda Banzer» lleva «Tienda» en el nombre A PROPÓSITO:
      «Banzer» a secas es el ALMACÉN de distribución (de ahí salen camiones) y saldrían dos «Banzer» en «Qué va a dónde» y en la carga.
      (06/11) El dueño: «la tienda banzer está en el mismo lugar que almacén banzer» → el pin de ALM_UBIC/GPS_DEPOSITOS (el GPS lo midió
-     a 35-44 m, §4ko). La zona sigue vacía hasta que la diga. */
-  {n:'Tienda Banzer', z:'',           d:'', m:'https://www.google.com/maps?q=-17.7197548,-63.1631138'},
-  {n:'Ventura Mall',  z:'',           d:'', m:''}
+     a 35-44 m, §4ko). Zonas del dueño (06/11): «tienda banzer eso es zona NORTE» y «tienda ventura… está en zona sur», con su enlace
+     de Maps (el servidor lo abrió: -17.8160082,-63.214758, la puerta y no «la cuadra»). */
+  {n:'Tienda Banzer', z:'Norte',      d:'', m:'https://www.google.com/maps?q=-17.7197548,-63.1631138'},
+  {n:'Ventura Mall',  z:'Sur',        d:'', m:'https://www.google.com/maps?q=-17.8160082,-63.214758'}
 ];
 function sucursalDe(nombre){
   var k=normNombre(nombre||''); if(!k) return null;

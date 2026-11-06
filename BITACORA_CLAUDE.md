@@ -17272,6 +17272,10 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   lo de `STOCK.p`/`STOCK.e` con una clave que el stock no usa (había un «Ya pedí 9 ARMAZONES» del 26/10). Proyección ya no los contaba
   (`PRY_NO_UNIDAD`) y el único pedido (10-302) es de ALBA, interno: tampoco estaba en Contabilidad. Servidor **2026-11-06-a** (solo eso;
   volver atrás: ✏️ a la versión anotada Y pegar la 05-a de `893c46c…`). `test_fabrica_repaso` R9 (ejemplo nuevo «CAJA CARTON») y R9c, `test_wa_pedir_hoy` a24-a25.
+- 📍 **06/11 — las dos tiendas nuevas, completas** (dueño: *«tienda banzer eso es zona NORTE»* y *«tienda ventura… está en zona sur»* con su
+  enlace corto de Maps): Tienda Banzer `z:'Norte'` (pin del almacén Banzer); Ventura Mall `z:'Sur'` y `?q=-17.8160082,-63.214758`. Desde acá
+  `maps.app.goo.gl` está bloqueado: el enlace lo abrió NUESTRO servidor (`action:'geocode'`, solo lee, `aprox:false`). Ese camino sirve para
+  la próxima tienda. `test_vendedores_nuevos` §3 y `test_rpt` (8 con pin, solo Tiendas Roho sin) a conciencia.
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 

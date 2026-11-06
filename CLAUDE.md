@@ -2551,7 +2551,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   su día (`fdHMarcar`); no relajar `fdRepasoTramoSeguro` (cerraría dos veces).
 - **104b** «¿Qué es esto?» = lo que `fdEsProducto` no reconoce; además de la lista y los Excel, son productos «+N CM» (`FD_MAS_ALTO`), un producto
   de la lista en otra medida y `FD_SON_PRODUCTO` (dueño, 06/11). Un nombre nuevo que el dueño confirme va en `FD_SON_PRODUCTO`. La Tienda Banzer
-  tiene el pin del almacén Banzer (dueño: «mismo lugar»); Ventura Mall sigue sin zona ni pin.
+  tiene el pin del almacén Banzer (dueño: «mismo lugar») y zona Norte; Ventura Mall, zona Sur y el pin de su enlace (06/11).
 - **104c** Los ARMAZONES no cuentan en ningún lado (dueño, 06/11): `^ARMAZON` en `PROD_NO_ES_STOCK` y en `WA_PH_NO_ES_STOCK` del `.gs` (las dos
   iguales, `test_wa_pedir_hoy`); servidor `2026-11-06-a` solo por eso. Lo pedido a fábrica con una clave que el stock no usa no arma fila.
 - **106** el ✅ en lote de «los que vio el GPS» usa `cierreEntAplicar`, nunca `toggleEntregado` en serie. Nada se marca solo.
