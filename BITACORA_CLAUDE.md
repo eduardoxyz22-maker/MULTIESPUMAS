@@ -17265,6 +17265,13 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   con `?q=-17.7197548,-63.1631138` (= `ALM_UBIC`/`GPS_DEPOSITOS`, el GPS lo midió a 35-44 m), sin `&aprox=1`; zona vacía hasta que la diga, Ventura
   Mall sin nada. ⚠️ El GPS no anota paradas en la puerta de Banzer (§4kq): una RPT a la Tienda Banzer nunca dice «📍 Llegó». `test_vendedores_nuevos`
   §3 y `test_rpt` (7 con pin) cambiados a conciencia.
+- 🧹 **06/11, §4ok-104c — los ARMAZONES fuera de todos lados** (dueño: *«armazones dejalo fuera de todos lados no nos interesa contabilizarlos»*):
+  `^ARMAZON(?:ES)?\b` en `PROD_NO_ES_STOCK` (página) y `WA_PH_NO_ES_STOCK` (.gs, el WhatsApp de las 08:45): la misma puerta que protectores,
+  PANEL y servicios (`esTextoDeTienda`/`esProdDeTienda`) → sin fila de stock, sin Qué producir, sin Semana, sin control del Excel (va a «lo que
+  el stock no usa»). Solo si el nombre EMPIEZA con armazón: «SOMIER … CON ARMAZON» sigue siendo un somier. Además `stockData` y `fdItems` saltean
+  lo de `STOCK.p`/`STOCK.e` con una clave que el stock no usa (había un «Ya pedí 9 ARMAZONES» del 26/10). Proyección ya no los contaba
+  (`PRY_NO_UNIDAD`) y el único pedido (10-302) es de ALBA, interno: tampoco estaba en Contabilidad. Servidor **2026-11-06-a** (solo eso;
+  volver atrás: ✏️ a la versión anotada Y pegar la 05-a de `893c46c…`). `test_fabrica_repaso` R9 (ejemplo nuevo «CAJA CARTON») y R9c, `test_wa_pedir_hoy` a24-a25.
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
