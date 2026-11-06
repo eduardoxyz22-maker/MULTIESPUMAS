@@ -2422,7 +2422,9 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         <!-- 🎧 En una ATC no hay nota de venta: no se está vendiendo nada (§4bt). -->
         <div class="field" id="wrap-nota">
           <label class="lb">N° Nota de venta <span class="req req-lite">*</span></label>
-          <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">        </div>
+          <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">
+          <div id="fx-nota" class="fx-dup fx-nota no-print" hidden></div><!-- §4ok-99: el N° de nota se revisa al salir del campo -->
+        </div>
       </div>
       <div id="fx-dias" class="fx-dias solo-entrega no-print"></div>
 
@@ -5592,6 +5594,9 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .fx-dup{ background:var(--amber-lt); border:1.5px solid var(--amber-border); color:#7c3d00; border-radius:12px; padding:10px 12px; margin:-6px 0 14px; font-size:.84rem; }
 .fx-dup-r{ display:flex; align-items:center; gap:8px; justify-content:space-between; background:#fff; border-radius:9px; padding:6px 8px; margin-top:6px; font-size:.8rem; }
 .fx-dup-r i{ color:var(--muted); } .fx-dup-r .btn{ width:auto; flex:none; }
+/* §4ok-99 el aviso del N° de nota, debajo del campo */
+.fx-nota{ margin:6px 0 0; } .fx-nota[hidden]{ display:none; } .fx-nota .fx-nota-l .btn{ width:auto; margin-left:6px; }
+.fx-nota .fx-nota-r{ margin-top:4px; } .fx-nota .fx-nota-l+.fx-nota-r{ margin-top:8px; } .fx-nota small{ display:block; margin-top:5px; color:#7c3d00; opacity:.85; }
 .prod-reco{font-size:.78rem;font-weight:700;color:#15803d;background:#ecfdf3;border:1px solid #c9eedb;border-radius:8px;padding:5px 9px;margin:6px 0 2px}
 .prod-reco[hidden]{display:none}
 .fx-busca{ position:absolute; z-index:5000; background:#fff; border:1px solid var(--teal-border); border-radius:12px; box-shadow:0 14px 34px rgba(9,72,68,.22); padding:5px; max-height:360px; overflow:auto; }
@@ -17628,7 +17633,7 @@ function resetForm(){
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=proximoDiaEntrega();
   var _fav=document.getElementById('f-avisa'); if(_fav) _fav.checked=false;   // 📦 (propuesta 76)
   var _fvR=document.getElementById('f-fecha-venta'); if(_fvR) _fvR.value='';   // 📅 (§4nm)
-  document.getElementById('f-nota').value='';
+  document.getElementById('f-nota').value='';  try{ notaRevisarOcultar(); }catch(e){}   // §4ok-99
   document.getElementById('f-oc').value='';
   segSet('f-doc-tipo','OC');
   var _frs=document.getElementById('f-rpt-suc'); if(_frs) _frs.value='';
@@ -17694,7 +17699,7 @@ function editPedido(id){
   var _avR=entregaAConfirmar(rec), _favE=document.getElementById('f-avisa');
   if(_favE) _favE.checked=_avR;
   if(_avR) _fe.value=avisaDe(rec);
-  document.getElementById('f-nota').value=rec.nota||'';
+  document.getElementById('f-nota').value=rec.nota||'';  try{ notaRevisarOcultar(); }catch(e){}   // §4ok-99
   document.getElementById('f-oc').value=rec.oc||'';
   segSet('f-doc-tipo', ocTipoDe(rec.oc));
   /* 🏪 En una RPT el destino vive en `cliente` (la sucursal): vuelve a su propio campo. */
@@ -19176,6 +19181,54 @@ function fxDupNotaBuscar(){
   });
   out.sort(function(a,b){ return String(b.p.fecha||'').localeCompare(String(a.p.fecha||'')); });
   return out.slice(0,4);
+}
+/* ============================================================================
+   §4ok-99 (05/11) EL N° DE NOTA SE REVISA AL ESCRIBIRLO. En octubre hubo 15 notas que no seguían el talonario de su vendedor («11111»,
+   «5000», «689» donde iba 789) y 3 números usados en dos ventas del mismo vendedor; solo a Eduardo se le avisaba la repetida
+   (`fxDupNotaBuscar`, §4ja) y el talonario ignora los saltos de más de `HUECO_MAX` (los toma por otro talonario).
+   Al SALIR del campo (no mientras se escribe), en un 📄 OC (también la venta de tienda) y no para Eduardo, ROHO ni los internos:
+   · LEJOS: las últimas `NOTA_ULTIMAS` (6) notas de ESE vendedor (por cuándo se cargaron) siguen juntas (entran en `NOTA_LEJOS`=40) y la
+     nueva queda a más de 40 de todas → aviso ámbar «Tus últimas notas son 2405 a 2408. ¿Seguro que es 407?» con «Sí, es otro talonario»
+     (no vuelve a avisar ese número en esta pestaña). Con menos de 3 notas no se compara.
+   · REPETIDA: el mismo número (`fxNotaClave`) en otra venta suya (no la que se está editando) → se dice con la OC y «👀 Ver».
+   NUNCA frena el guardado: solo avisa. Escribir de nuevo en el campo saca el aviso hasta salir otra vez.
+   ========================================================================== */
+var NOTA_LEJOS=40, NOTA_ULTIMAS=6, NOTA_OK={};
+function notaRevisarDatos(){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  if(docTipoSel()!=='OC') return null;
+  var v=val('f-vendedor'), t=val('f-nota'); if(!v || !t) return null;
+  if(esVendedorLite(v) || mismoVendedor(v,'Eduardo Añez') || esRoho(v) || cliEsInterno(v)) return null;   // Eduardo y ROHO: su regla (§4ja)
+  var clave=fxNotaClave(t), n=notaNumero(t); if(!clave) return null;
+  var mias=(STATE||[]).filter(function(p){
+    return p && !esFilaSistema(p) && !borradorDe(p.id) && !esATC(p.oc) && !esRPT(p.oc) && mismoVendedor(p.vendedor, v) && !(EDIT_ID && String(p.id)===String(EDIT_ID));
+  });
+  var rep=mias.filter(function(p){ return fxNotaClave(p.nota)===clave; }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
+  var ult=mias.filter(function(p){ return notaNumero(p.nota)>0; }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); })
+    .slice(0, NOTA_ULTIMAS).map(function(p){ return notaNumero(p.nota); });
+  var R={ v:v, t:t, n:n, rep:rep, lejos:false, min:0, max:0 };
+  if(n && ult.length>=3){
+    R.min=Math.min.apply(null, ult); R.max=Math.max.apply(null, ult);
+    R.lejos=(R.max-R.min)<=NOTA_LEJOS && ult.every(function(x){ return Math.abs(x-n)>NOTA_LEJOS; }) && !NOTA_OK[normNombre(v)+'|'+n];
+  }
+  return R;
+}
+function notaRevisarPintar(){
+  var el=document.getElementById('fx-nota'); if(!el) return;
+  var R=null; try{ R=notaRevisarDatos(); }catch(e){}
+  var h='';
+  if(R && R.lejos) h+='<div class="fx-nota-l"><b>⚠️ '+(R.min===R.max ? ('Tu última nota es la '+R.min) : ('Tus últimas notas son '+R.min+' a '+R.max))+'. ¿Seguro que es '+esc(String(R.n))+'?</b>'+
+    ' <button type="button" class="btn btn-ghost btn-sm" onclick="notaOtroTalonario()">Sí, es otro talonario</button></div>';
+  if(R && R.rep.length) h+='<div class="fx-nota-r"><b>⚠️ La nota '+esc(R.t)+' ya está en '+(R.rep.length===1 ? 'otra venta tuya' : (R.rep.length+' ventas tuyas'))+':</b>'+
+    R.rep.slice(0,3).map(function(p){ return '<div class="fx-dup-r"><span>'+esc(fxDupTxt({ p:p, porNota:true }))+'</span><button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">👀 Ver</button></div>'; }).join('')+
+    '<small>Si te equivocaste, corregí el número. Si es la misma nota de verdad, guardá igual.</small></div>';
+  el.innerHTML=h; el.hidden=!h;
+}
+function notaRevisarOcultar(){ var el=document.getElementById('fx-nota'); if(el){ el.hidden=true; el.innerHTML=''; } }
+function notaOtroTalonario(){
+  var R=null; try{ R=notaRevisarDatos(); }catch(e){}
+  if(R && R.n) NOTA_OK[normNombre(R.v)+'|'+R.n]=1;
+  notaRevisarPintar();
 }
 function fxDupBuscar(){
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
@@ -52393,6 +52446,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('f-maps').addEventListener('input',fxMapaProgramar);   // 🧰 (§4ih) el mapita
   document.getElementById('f-maps').addEventListener('input',function(){ ZONA_AUTO.tocado=1; });   // 📍 (§4nr, 30) solo lo que pega la persona
   document.getElementById('f-zona').addEventListener('input',zonaAutoEscribio);
+  (function(){ var fn=document.getElementById('f-nota'), fv=document.getElementById('f-vendedor');   // §4ok-99: el N° de nota, al salir del campo
+    if(fn){ fn.addEventListener('blur', notaRevisarPintar); fn.addEventListener('input', notaRevisarOcultar); }
+    if(fv) fv.addEventListener('change', function(){ var el=document.getElementById('fx-nota'); if(el && !el.hidden) notaRevisarPintar(); }); })();
   ['f-celular','f-nit','f-cliente'].forEach(function(id){ document.getElementById(id).addEventListener('input',nxCliProgramar); });   // 👋 (§4js, P1) ¿ya compró? por celular, NIT o nombre
   (function(){ var fc=document.querySelector('#view-form .form-card'); if(fc){ ['input','change','click'].forEach(function(t){ fc.addEventListener(t, fxLadosProgramar); }); } })();   // 🖥️ (§4ig) el pedido en vivo
   window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
