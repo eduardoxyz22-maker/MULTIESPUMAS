@@ -1,7 +1,7 @@
 # Pedidos que llegan por correo → panel
 
 Pedido del dueño (06/11/2026): *«cuando entren pedidos de multi center, juan carlos arce [y ROHO] los cargues en el panel»*,
-*«3 veces al día, cárgalos directo como hoy»*. Lo hace una tarea programada (lunes a sábado, 3 veces por día) que abre una sesión
+*«3 veces al día, cárgalos directo como hoy»*. Lo hace una tarea programada (lunes a sábado a las 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia; el dueño agregó las de 6:47 y 17:47) que abre una sesión
 nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ninguna computadora prendida.
 
 ## Qué hacer en cada vuelta

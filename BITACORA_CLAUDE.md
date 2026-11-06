@@ -17330,7 +17330,8 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   N° del día como `nextNroDia`; total = Σ cant × precio, el impreso se anota si difiere; `cupos_llenos`/`dia_cerrado`/`feriado` → siguiente día
   hábil, el sábado solo AM, anotado; nunca `forzar`) y `LEEME.md` (remitentes, cómo se arma cada cliente, la regla de Juan Carlos). Probado en
   seco: 11-048 y 11-049 «ya estaba», uno inventado «se cargaría 11-053», uno sin precio «NO cargado». Tarea programada
-  `trig_01AjxEcAPLdbizzLLhix9aTT` (CRON_TZ=America/La_Paz 47 8,11,15 * * 1-6), primera vuelta sáb 07/11 8:47. ⚠️ Se ejecuta en ESTA sesión:
+  `trig_01AjxEcAPLdbizzLLhix9aTT` (CRON_TZ=America/La_Paz 47 8,11,15 * * 1-6); enseguida el dueño: *«espera aveces entran pedidos en las tardes a las
+  17::47 añade y tb otra a las 6:47 am por si entro algo en la noche»* → `47 6,8,11,15,17 * * 1-6` (30 por semana), primera vuelta hoy 17:47. ⚠️ Se ejecuta en ESTA sesión:
   `create_trigger` con sesión nueva y `connectors:["Gmail"]` contestó «the connectors parameter is not available for this organization».
 - 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
   planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta

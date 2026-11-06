@@ -2661,7 +2661,7 @@ individual por producto»*): el producto sale del NOMBRE + las plazas (1 = 90x19
 el código (CODIGOS, el `cod` de los Excel en `__stock__`, los pedidos anteriores); si no coinciden, gana el nombre y se anota. El total = Σ cantidad ×
 precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06/11 su «CH301» era el CH1301.
 🤖 **AUTOMÁTICO desde el 06/11** (dueño: *«3 veces al día, cárgalos directo como hoy»*): tarea programada `trig_01AjxEcAPLdbizzLLhix9aTT`, lunes a
-sábado 8:47, 11:47 y 15:47 de Bolivia, que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
+sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 
