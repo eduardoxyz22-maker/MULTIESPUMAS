@@ -31,7 +31,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     window.subirFoto=function(){ window._subidas++; return Promise.resolve({ok:true, fotoId:'FOTOATC'+window._subidas, version:'x'}); };
     window.open=function(u){ window._abiertos.push(String(u)); return null; };
     window.copyText=function(t){ window._copiado.push(String(t)); };
-    try{ localStorage.removeItem('me_atc_correo'); }catch(e){}
+    try{ localStorage.removeItem('me_atc_correo'); localStorage.removeItem('me_atc_correo_v'); }catch(e){}
     STATE=[]; saveMirror();
   });
 
@@ -80,7 +80,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('la ventana dice «✅ ATC guardada»', /ATC guardada/.test(r.titulo), r.titulo);
   chk('📧 trae el correo de la ATC', r.correo, r.modal);
   chk('…ARRIBA del mensaje de WhatsApp (como el Excel de la RPT)', r.antes, r.antes);
-  chk('…el «Para» arranca vacío en una compu nueva', r.para==='', r.para);
+  /* (06/11) Cambiado a conciencia: el dueño dio los seis correos («los correos son para: logistica@…»), así que arranca con ellos. */
+  chk('…el «Para» arranca con los seis correos del dueño en una compu nueva', /^logistica@colchonesheaven\.com, ernesto\.flores@/.test(r.para) && r.para.split(', ').length===6, r.para);
   const oc = await ev(() => STATE.filter(function(p){ return /^JUAN/.test(p.cliente); })[0].oc);
   chk('el asunto dice la ATC, el cliente, el motivo y el producto',
       r.asunto.indexOf(oc.replace(/^ATC\s*/,''))>=0 && /^ATC /.test(r.asunto) && /JUAN PÉREZ & HIJOS/.test(r.asunto) && /Hundimiento/.test(r.asunto) && /TITANIO LATEX 160x190/.test(r.asunto), r.asunto);

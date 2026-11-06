@@ -909,6 +909,10 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   una ATC sale «✅ ATC guardada» con `#atc-correo` ARRIBA del WhatsApp: Para (por compu, `me_atc_correo`; si no, `ATC_CORREO_PARA`, hoy vacío),
   Asunto (`atcCorreoAsunto`) y Mensaje (`atcCorreoTexto`: todo lo de la ATC + enlaces de Drive de las fotos). Copiar / «📧 Abrir en Gmail» /
   «✉️ Otro correo» (`atcCorreoUrl`). El panel NO manda nada. También desde la ficha («📧 Correo de la ATC», `atcCorreoVer`). `tests/test_atc_correo.js` (32).
+- **📄 El formulario de la ATC en Excel** (06/11; dueño mandó `ATC_MODELO.xlsx` y los seis correos; en la rama): `atcHoja` = su «FORMULARIO DE ATENCION
+  AL CLIENTE» lleno (logo y dibujos `ATC_IMG_*`, sin grilla, una hoja), «⬇️ Bajar el Excel de la ATC» en el correo y «⬇️ Excel de la ATC» en la ficha;
+  `ATC_CORREOS` en el «Para» y escritos en el Excel. `buildXlsx` acepta `imgs`, `sinGrilla`, `unaHoja`; un estilo nuevo de Excel = `xsExtra(o)`
+  (se suma al final, los 0-28 no se mueven). El navegador no adjunta: la vendedora baja y adjunta. `tests/test_atc_excel.js` (36).
 - **🛡️🔧 Garantía o contra costo (STC)** (§4lj, 15/10, PUBLICADO `8af3831`; dueño: *«solo es para marcar y filtrar la información al llenar… las recogidas y fechas
   se mantienen»*): `atc.tipo` = `gar`|`stc` (`atcTipo`), OBLIGATORIO en el formulario (`#f-atc-tipo`, en `atcFaltanDe`). El número sigue «ATC …»:
   nada del circuito, estados, cobro ni del bot cambia (con «STC …» el bot del `.gs` lo tomaba como venta). Las viejas quedan «❓ Sin marcar» y se

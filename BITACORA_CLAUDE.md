@@ -17276,6 +17276,26 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   enlace corto de Maps): Tienda Banzer `z:'Norte'` (pin del almacén Banzer); Ventura Mall `z:'Sur'` y `?q=-17.8160082,-63.214758`. Desde acá
   `maps.app.goo.gl` está bloqueado: el enlace lo abrió NUESTRO servidor (`action:'geocode'`, solo lee, `aprox:false`). Ese camino sirve para
   la próxima tienda. `test_vendedores_nuevos` §3 y `test_rpt` (8 con pin, solo Tiendas Roho sin) a conciencia.
+- 📄 **06/11 — el formulario de la ATC en Excel y los seis correos** (dueño: *«habíamos quedado que se generaba el Excel, aparecía el botón de
+  descargar Excel y se juntaba eso directamente al correo… te subí el formato»*; en la bitácora NO estaba: el 02/09 (§4bs) el formato se usó solo
+  para decidir los campos y el 15/10 (§4li) se hizo el mensaje del correo; lo de «Excel con los correos adentro» era la RPT). Mandó `ATC_MODELO.xlsx`
+  (su «FORMULARIO DE ATENCION AL CLIENTE») y los correos: logistica@, ernesto.flores@, daniel.garnica@, jose.rivero@, e.anez@ y eliana.vargas@
+  (todos @colchonesheaven.com). EN LA RAMA, espera «publica».
+  · `atcHoja(p)` = la plantilla tal cual (4 columnas, el turquesa `1D9DB4`, recuadros, el logo de Heaven y los dibujos del colchón y el somier del
+    «esquema», `ATC_IMG_*` sacados del archivo del dueño) llena con la ATC: cliente, fecha (entró), N° ATC al lado de «NRO DE FACTURA» (vacío,
+    §4bs), teléfono, fecha de compra con antigüedad, dirección, vendedora, ● COLCHÓN/○ SOMIER/○ CAMABOX (`atcQueEs`, con `pryTipoProd`: una
+    almohada no marca nada; los radios del papel van como texto), FECHA DE VISITA TECNICA = el recojo (`p.fecha`), comodín ■/□, LINEA/MODELO
+    con la lectura del informe (`atcLineaModelo` ← `atciProdsAtc`), PLAZA (`atcPlazaDe`: el nombre o el ancho 90→1, 105→1 ½, 140→2, 160→2 ½,
+    180-200→3 — puesto por mí, decírselo), el reclamo (tipo, motivo, detalle, observaciones, cuántas fotos), la recepción (lo que se le recoge
+    en SI + la nota), firmas, condiciones ambientales EN BLANCO, y abajo «ENVIAR ESTE FORMULARIO POR CORREO A» con los seis. Sin grilla, una hoja A4.
+  · `buildXlsx` ganó `imgs` (varias por hoja: image<N>.png, image<N>_2.png…; `img` sola sigue igual), `sinGrilla`, `unaHoja` y `xsExtra(o)`:
+    estilos que se SUMAN al final de STYLES_XML cuando un Excel los pide (los 0-28 no se mueven; mismo pedido = mismo índice).
+  · «⬇️ Bajar el Excel de la ATC — adjuntalo al correo» adentro del correo (`atcCorreoHtml`: al guardar y en «📧 Correo de la ATC») y «⬇️ Excel de
+    la ATC» en la ficha (`bajarAtcExcel`, `nombreArchivoAtc` = ATC-<n°>-<cliente>.xlsx). El mensaje dice «Adjunto el formulario en Excel (…)».
+    ⚠️ Un navegador NO puede adjuntar un archivo a Gmail: la vendedora lo baja y lo adjunta (como la RPT).
+  · `ATC_CORREOS` → `ATC_CORREO_PARA` (el «Para»); lo que una compu había escrito antes se olvida UNA vez (`me_atc_correo_v`=2), lo nuevo se
+    recuerda y un «Para» vacío vuelve a la lista. Bloki («¿Cómo mando el correo de una ATC?») dice lo del Excel.
+  · `tests/test_atc_excel.js` (36); `test_atc_correo` §1 cambiado a conciencia (el «Para» ya no arranca vacío).
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
