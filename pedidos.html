@@ -700,6 +700,21 @@ th.sortable:hover{color:var(--teal-dk)}
 .pap-ct::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--pap-ti)}
 .pap-ct b{font-size:16px;font-weight:800;color:var(--pap-ti)}
 .pap-ct[aria-pressed="true"]{border-color:var(--pap-ti);box-shadow:0 0 0 2px var(--pap-ti) inset;background:var(--pap-ti-claro)}
+/* 20/10: las tiendas en 0 con el porqué, y «para clientes de» (lo de PTF y Banzer por la tienda de quien vendió). */
+.pap-ceros{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pap-ceros li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:baseline;font-size:13.5px;color:var(--pap-gris);background:var(--pap-velo);border:1px dashed var(--pap-linea);border-radius:10px;padding:8px 12px}
+.pap-cero-nom{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.pap-cero-nom b{color:#2D2D2D;font-weight:700;font-size:14px}
+.pap-cero-nom i{font-style:normal;font-weight:800;color:#9aa5a4}
+.pap-cero-cli{color:var(--pap-hondo);font-weight:700}
+.pap-cli{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--pap-linea);padding-top:12px}
+.pap-clis{display:flex;flex-wrap:wrap;gap:6px}
+.pap-cl{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:4px 12px;border:1px solid var(--pap-linea);border-radius:999px;background:#fff;font-size:13.5px;font-weight:600}
+.pap-cl b{font-weight:800;color:var(--pap-hondo);font-variant-numeric:tabular-nums}
+.pap-cl-sin{color:var(--pap-gris);border-style:dashed}
+.pap-cli-nota{margin:0;font-size:12.5px;color:var(--pap-gris);max-width:72ch}
+.pap-ldcli{display:flex;gap:6px;margin:0;padding:9px 16px;font-size:13.5px;color:#2D2D2D;background:#fff;border-bottom:1px solid var(--pap-linea)}
+.pap-ldcli b{color:var(--pap-hondo);font-variant-numeric:tabular-nums}
 .pap-ldet{background:#fff;border:1.5px solid var(--c);border-radius:14px;overflow:hidden;box-shadow:var(--pap-sombra-s);scroll-margin-top:calc(var(--pap-ctrl-h) + 10px)}
 .pap-ldcab{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--pap-linea);background:var(--fondo)}
 .pap-ldizq{display:flex;align-items:center;gap:10px 16px}
@@ -789,6 +804,8 @@ th.sortable:hover{color:var(--teal-dk)}
   .pap-ct{justify-content:space-between;padding:6px 12px 6px 10px;gap:6px;font-size:13.5px}
   .pap-ct span{flex:1 1 auto;min-width:0;text-align:left;line-height:1.15}
   .pap-ldacc .pap-btn{flex:1 1 auto}
+  .pap-ceros li{grid-template-columns:minmax(0,1fr);padding:8px 10px;font-size:13px}
+  .pap-ldcli{padding:9px 12px}
 }
 @media (min-width:900px){
   .pap-fcue .pap-filas,.pap-ldet .pap-filas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:-1px}
@@ -3165,6 +3182,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
       <div class="cx-grupos" id="cx-grupos">
         <div class="cx-gr cx-gr-bajar"><span class="cx-gr-t">⬇️ Bajar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
+          <button id="cta-recargos" class="btn btn-primary btn-sm" style="width:auto;background:#b45309" onclick="exportRecargos()" title="Un Excel con el recargo por entrega (el flete que el cliente paga aparte): un resumen y una hoja por vendedor">🚚 Recargos por vendedor</button>
           <button id="cta-productos-mes" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirProductosMes()">📦 Productos del mes</button>
           <button id="nx-cierre-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#1d4ed8" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>
           <button id="comps-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="compsAbrir()">📁 Comprobantes</button>
@@ -6778,7 +6796,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-11-06-a';   // (06/11, 11-06-a) 🧹 los ARMAZONES fuera del WhatsApp de las 08:45 (§4ok-104c); lo demás anda igual con la 05-a · (05/11, 11-05-a) 🗓️ el plan del jueves (§4ok): la página llama a «kommoCierre» (91) y muestra «📍 Usar esta ubicación» (108) solo con esta versión; lo demás anda igual con la 02-a · (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-11-06-e';   // (06/11, 11-06-e) 🗓️ el efectivo del día solo de ventas de noviembre (solo el servidor) · (06/11, 11-06-d) 📅 el efectivo de cada día (lo que ingresó y lo acumulado sin recoger) por WhatsApp (solo el servidor) · (06/11, 11-06-c) 🚚 el efectivo de los choferes sin rendir va a Contabilidad, no al dueño (solo el servidor) · (06/11, 11-06-b) 💵 el WhatsApp del efectivo sin retirar al dueño (solo el servidor: la página anda igual con la 06-a) · (06/11, 11-06-a) 🧹 los ARMAZONES fuera del WhatsApp de las 08:45 (§4ok-104c); lo demás anda igual con la 05-a · (05/11, 11-05-a) 🗓️ el plan del jueves (§4ok): la página llama a «kommoCierre» (91) y muestra «📍 Usar esta ubicación» (108) solo con esta versión; lo demás anda igual con la 02-a · (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -9641,6 +9659,8 @@ function cxHacerDatos(list, R){
   var porQue={}; pst.forEach(function(x){ x.falta.forEach(function(f){ var k=f.replace(/^(el|la) /,'').replace(/ \(.*$/,''); porQue[k]=(porQue[k]||0)+1; }); });
   add({ sev:'r', ic:'🧾', n:pst.length, t:'Pagos sin terminar', s:Object.keys(porQue).map(function(k){ return porQue[k]+' sin '+k; }).join(' · ')+' · completalos antes del cierre', b:'Completar', p:1, fn:'nxPstAbrir()', ok:'Pagos completos (recibo, foto y banco)' });
   var nd=(DUP_IDX&&DUP_IDX.n)||0;
+  var nSdoc=list.filter(docVentaFalta).length;   // 🧾 (06/11) la factura o nota de remisión, obligatoria desde DOCV_DESDE
+  add({ sev:'r', ic:'🧾', n:nSdoc, t:'Sin N° de factura o nota de remisión', s:'obligatorio · anotalo en la ficha de cada venta (🧾 Factura / 📄 Remisión y su N°)', b:'Ver', p:1, fn:"cxTopFiltro('sdoc')", ok:'Todas con su factura o nota de remisión' });
   add({ sev:'r', ic:'👯', n:nd, t:'Pueden estar cargadas dos veces', s:'revisalas antes de facturar · «Son distintas» las saca del aviso', b:'Revisar', p:1, fn:'cxDupAbrir()', ok:'Ninguna venta cargada dos veces' });
   var deb=list.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.005; }).sort(function(a,b){ var x=contaFecha(a), y=contaFecha(b); return x<y?-1:(x>y?1:0); });
   add({ sev:'a', ic:'⏳', n:R.nDebe, t:'Ventas con saldo · '+fmtBs0(R.saldo), s:misNom2(deb)+' · la más vieja primero', b:'Ver quiénes', fn:"abrirPorCobrar('ventas')", ok:'Nada por cobrar' });
@@ -9699,7 +9719,7 @@ function cxTopPintar(list, vSel, R){
     (mks?('<div class="lb-sep">Por marca</div>'+mks+((partes.length>1 && tot>0.009)?('<div class="lb-barra">'+partes.map(function(x){ return '<i style="flex:'+Math.max(0,x.v)+';background:'+x.c+'"></i>'; }).join('')+'</div>'):'')):'')+
     '<div class="lb-acc"><button type="button" class="ah-go ah-go-p" onclick="abrirVentaTienda()">🏪 Venta de tienda</button><button type="button" class="ah-go ah-go-p" onclick="abrirRetiros()">💵 Retiro de efectivo</button>'+
       '<button type="button" class="ah-go" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>'+
-      '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
+      '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="exportRecargos()">🚚 Recargos por vendedor</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
       '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button></div></div>';
   var h=izq+der;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
@@ -9847,7 +9867,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
-      '<td>'+esc(p.facturarA||'—')+'</td>'+
+      '<td>'+(function(){ var c=docVentaChip(p); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
       '<td>'+contaPagosCelda(p)+'</td>'+
@@ -10161,6 +10181,7 @@ function cxChipDef(F){
   /* ✨ (§4mg) Dos filtros más que abre «Para hacer» (no tienen chip propio): cobradas de más y recargos por cobrar. */
   if(F.k==='exc') return { k:'exc', f:function(p){ return excesoCobro(p)>0.005; } };
   if(F.k==='envf') return { k:'envf', f:function(p){ return envioPorCobrar(p)>0.005; } };
+  if(F.k==='sdoc') return { k:'sdoc', f:function(p){ return docVentaFalta(p); } };   // 🧾 (06/11)
   return CX_CHIPS.filter(function(c){ return c.k===F.k; })[0]||null;
 }
 function cxFiltrar(list){ var d=cxChipDef(CX_FILTRO); return d ? (list||[]).filter(d.f) : (list||[]); }
@@ -14934,6 +14955,7 @@ function showContaModal(id){
       row('Entrega', tipoVentaHtml(p))+
       row('Celular', esc(p.celular))+
       row('Productos', prods)+
+      ((esATC(p.oc) || esRPT(p.oc)) ? '' : row('Factura o remisión', ctaDocHtml(p)))+   // 🧾 (06/11) la anota Contabilidad
       row('Facturar a', esc(p.facturarA)||'—')+
       row('NIT', esc(p.nit)||'—')+
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
@@ -15593,7 +15615,7 @@ function exportConta(){
   var list=contaLista(), mayor=contaAmbito()==='mayor';
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','PRECIO UNIT. (Bs)','SUBTOTAL (Bs)','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','TOTAL VENTA (Bs)','SUMA DE PRECIOS (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','PRECIO UNIT. (Bs)','SUBTOTAL (Bs)','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','TOTAL VENTA (Bs)','SUMA DE PRECIOS (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES','FACTURA / REMISIÓN','N° FACTURA / REMISIÓN'].map(function(t){return {v:t,s:H};});   // 🧾 (06/11) al FINAL: no se mueven las de antes
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -15617,14 +15639,15 @@ function exportConta(){
         i===0?{v:contaCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
         i===0?{v:ventaTotal(p),t:'n'}:'', i===0?(tienePrecios(p)?{v:prodTotal(p),t:'n'}:''):'',
         i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
-        i===0?talEnSistemaTxt(p):'', i===0?(p.observaciones||''):''
+        i===0?talEnSistemaTxt(p):'', i===0?(p.observaciones||''):'',
+        i===0?({F:'FACTURA',R:'NOTA DE REMISIÓN'}[docVentaDe(p)]||(docVentaFalta(p)?'FALTA':'')):'', i===0?(docNumDe(p)||(docVentaFalta(p)?'FALTA':'')):''
       ]);
     });
   });
   // La planilla de mayoristas baja como archivo aparte: es para otro control, no se
   // mezcla con la del contador ni se pisan entre ellas en la carpeta de descargas.
   var bytes=buildXlsx([{name:mayor?'Mayoristas':'Contabilidad',
-    cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:16},{w:15},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:16},{w:19},{w:18},{w:18},{w:20},{w:12},{w:36}],
+    cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:16},{w:15},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:16},{w:19},{w:18},{w:18},{w:20},{w:12},{w:36},{w:20},{w:18}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -15638,6 +15661,83 @@ function exportConta(){
   if(_qx) tag+='-SOLO-'+_qx.slice(0,30);
   downloadBlob(bytes,(mayor?'mayoristas-':'contabilidad-')+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de '+(mayor?'mayoristas':'contabilidad')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+(_qx?' · ⚠️ SOLO lo que coincide con la búsqueda, no el período entero':'')+' ✓','ok', _qx?7000:undefined);
+}
+/* ============================================================================
+   🚚 LA PLANILLA DEL RECARGO POR ENTREGA, POR VENDEDOR (06/11, dueño: «una planilla aparte de "cobro por entrega" pero por cada
+   vendedor»; eligió «el recargo por entrega»: el flete que el cliente paga APARTE, `^` en el historial de pagos).
+   · Las MISMAS ventas que la tabla de Ventas (`contaLista`: período, Ingreso/Entrega, vendedor y búsqueda) que tengan recargo.
+   · Un Excel: «Resumen» (una fila por vendedor: ventas, pactado, cobrado, por cobrar y el total) y UNA HOJA POR VENDEDOR con un
+     renglón por recargo (una venta con dos fletes da dos renglones): ingreso, entrega, OC, nota, cliente, zona, monto, cobrado o por
+     cobrar, día del cobro, método, banco, nota del pago, quién tiene el efectivo y si ya se entregó.
+   · Las cuentas son las de siempre: los totales de cada vendedor suman `envioTotal`/`envioCobrado`/`envioPorCobrar` de cada venta, y los
+     renglones salen de `enviosDe` + `envioYaCobrado` (la misma lectura). Ordenado por la fecha del corte de la tabla (`contaFechaBase`:
+     ingreso o entrega agendada), aunque la primera columna diga siempre el día del ingreso.
+   Solo arma el archivo. `tests/test_recargos_vendedor.js`.
+   ========================================================================== */
+function recargosDatos(list){
+  var M={}, orden=[];
+  (list||contaLista()).forEach(function(p){
+    /* (06/11, Fable) Ni ATC ni RPT (no se cobran) ni filas del sistema, aunque lleguen en `list`: `contaLista` ya las saca, esto lo asegura.
+       (Sin `fueraDeConta` a secas: en la vista «Mayoristas» sacaría lo que esa vista sí muestra.) */
+    if(!p || esATC(p.oc) || esRPT(p.oc) || esFilaSistema(p)) return;
+    var env=enviosDe(p); if(!env.length || !(envioTotal(p)>0.005)) return;
+    var nom=nombreCanonico(p.vendedor)||'(sin vendedor)', k=normNombre(nom)||'(sin vendedor)';
+    if(!M[k]){ M[k]={ nombre:nom, ventas:0, pactado:0, cobrado:0, falta:0, filas:[] }; orden.push(k); }
+    var o=M[k]; o.ventas++;
+    o.pactado=r2(o.pactado+envioTotal(p)); o.cobrado=r2(o.cobrado+envioCobrado(p)); o.falta=r2(o.falta+envioPorCobrar(p));   // (06/11, Fable) las cuentas de siempre
+    env.forEach(function(c){ o.filas.push({ p:p, c:c, monto:r2(Number(c.monto)||0), ya:envioYaCobrado(c) }); });
+  });
+  orden.sort(function(a,b){ return M[b].pactado-M[a].pactado || M[a].nombre.localeCompare(M[b].nombre,'es'); });
+  return orden.map(function(k){
+    var o=M[k];
+    o.filas.sort(function(a,b){ var fa=contaFechaBase(a.p), fb=contaFechaBase(b.p); return fa<fb?-1:(fa>fb?1:String(a.p.oc||'').localeCompare(String(b.p.oc||''),'es')); });
+    return o;
+  });
+}
+/* El nombre de una hoja de Excel: hasta 31 letras, sin []:*?/\ y sin repetir otra (Excel no abre un archivo con dos iguales). */
+function recargosHojaNombre(nom, usados){
+  var b=String(nom||'Vendedor').replace(/[\[\]:*?\/\\]/g,' ').replace(/^'+|'+$/g,'').replace(/\s+/g,' ').trim().slice(0,31).trim()||'Vendedor', n=b, i=2;
+  if(/^history$/i.test(b)) b=n='History (vendedor)';   // Excel tiene «History» reservado
+  while(usados[n.toLowerCase()]){ var suf=' ('+(i++)+')'; n=b.slice(0,31-suf.length).trim()+suf; }
+  usados[n.toLowerCase()]=1; return n;
+}
+function exportRecargos(){
+  if(contaAmbito()==='mayor'){ toast('🚚 La planilla de recargos es del equipo de tienda: pasá a «📋 Ventas».','err'); return; }
+  var V=recargosDatos(contaLista());
+  if(!V.length){ toast('🚚 No hay ventas con recargo por entrega en este período'+(typeof cxTopPeriodo==='function'?(' ('+cxTopPeriodo()+')'):'')+'.','err',6000); return; }
+  var H=1, BS=2, num=function(v){ return {v:r2(v), t:'n', s:BS}; };
+  var tot={ ventas:0, pactado:0, cobrado:0, falta:0 };
+  var res=[['VENDEDOR','VENTAS CON RECARGO','PACTADO (Bs)','COBRADO (Bs)','POR COBRAR (Bs)'].map(function(t){ return {v:t,s:H}; })];
+  V.forEach(function(o){
+    res.push([o.nombre, {v:o.ventas,t:'n'}, num(o.pactado), num(o.cobrado), num(o.falta)]);
+    tot.ventas+=o.ventas; tot.pactado=r2(tot.pactado+o.pactado); tot.cobrado=r2(tot.cobrado+o.cobrado); tot.falta=r2(tot.falta+o.falta);
+  });
+  res.push([{v:'TOTAL',s:H}, {v:tot.ventas,t:'n'}, num(tot.pactado), num(tot.cobrado), num(tot.falta)]);
+  res.push([]);
+  res.push([(contaBase()==='entrega'?'Por la fecha de entrega agendada':'Por la fecha de ingreso')+' · '+(typeof cxTopPeriodo==='function'?cxTopPeriodo():'')+' · el recargo es el flete que el cliente paga aparte: no es plata de la venta ni se factura.']);
+  var usados={ 'resumen':1 }, hojas=[{ name:'Resumen', cols:[{w:24},{w:20},{w:16},{w:16},{w:18}], matrix:res }];
+  var cab=['FECHA DE INGRESO','FECHA DE ENTREGA','N° OC','N° NOTA DE VENTA','CLIENTE','ZONA','RECARGO (Bs)','ESTADO','FECHA DEL COBRO','MÉTODO','BANCO','N° NOTA DEL PAGO','EFECTIVO EN MANO DE','ENTREGADO'];
+  V.forEach(function(o){
+    var rows=[cab.map(function(t){ return {v:t,s:H}; })];
+    o.filas.forEach(function(f){
+      var p=f.p, c=f.c, efe=(f.ya && c.metodo==='Efectivo') ? pagoRecibio(c, p) : '';
+      rows.push([ fmtFecha(contaFecha(p))||'', p.fecha?fmtFecha(p.fecha):'', p.oc||'', p.nota||'', p.cliente||'', p.zona||'',
+        num(f.monto), f.ya?'COBRADO':'POR COBRAR', (f.ya && c.fecha)?fmtFecha(c.fecha):'', f.ya?(c.metodo||''):'', f.ya?(c.banco||''):'',
+        f.ya?limpiaNota(c.nota):'', efe, p.entregado?'SÍ':'NO' ]);
+    });
+    rows.push([]);
+    rows.push([{v:'PACTADO',s:H}, num(o.pactado), {v:'COBRADO',s:H}, num(o.cobrado), {v:'POR COBRAR',s:H}, num(o.falta)]);
+    hojas.push({ name:recargosHojaNombre(o.nombre, usados), cols:[{w:16},{w:16},{w:11},{w:16},{w:26},{w:16},{w:14},{w:13},{w:15},{w:12},{w:11},{w:16},{w:20},{w:11}], matrix:rows });
+  });
+  var bytes=buildXlsx(hojas);
+  var modo=segVal('cta-mode')||'mes';
+  var tag = modo==='dia' ? ((document.getElementById('cta-dia')||{}).value||'dia') : modo==='mes' ? ((document.getElementById('cta-mes')||{}).value||'mes') : 'todos';
+  var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  if(vSel) tag+='-'+sinTildes(vSel.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  var _qx=sinTildes(((document.getElementById('cta-search')||{}).value||'').trim().toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(_qx) tag+='-SOLO-'+_qx.slice(0,30);
+  downloadBlob(bytes,'recargos-por-entrega-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('🚚 Recargos por entrega descargados — '+V.length+' vendedor'+(V.length===1?'':'es')+', pactado '+fmtBs(tot.pactado)+' (falta cobrar '+fmtBs(tot.falta)+')'+(_qx?' · ⚠️ SOLO lo que coincide con la búsqueda':'')+' ✓','ok', 7000);
 }
 
 /* ============================================================================
@@ -16909,6 +17009,9 @@ function submitPedido(){
     if(_celE.n.cel){ rec.celular=_celE.n.cel; rec.observaciones=celObsCon(rec.observaciones, _celE.n.otros); }
     setSinWa(rec, _celE.sinWa);
   }
+  /* 🧾 (06/11) La factura o nota de remisión la anota CONTABILIDAD (`fdoc`/`fdocn` en los productos): la vendedora no la ve, y corregir el
+     pedido desde el formulario (que rearma los productos) no se la tiene que llevar. Una ATC o una RPT no la llevan. */
+  if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && (docVentaDe(prev) || docNumDe(prev))) setDocVenta(rec, docVentaDe(prev), docNumDe(prev));
   /* 📅 (§4ok-96) Una vez más que se le mueve la fecha (desde una fecha puesta; también al pasar a «avisa cuándo»). */
   if(isEdit && prev && prev.fecha && String(rec.fecha||'')!==String(prev.fecha) && fmovPuede(rec)) setFmov(rec, fmovDe(prev)+1);
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
@@ -21158,6 +21261,77 @@ function celObligatorio(vend){
 }
 function sinWaDe(p){ return ((p&&p.productos)||[]).some(function(x){ return !!(x && x.sinwa); }); }
 function setSinWa(p, on){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(on) x.sinwa=1; else delete x.sinwa; }); }
+/* ============================================================================
+   🧾 LA FACTURA O LA NOTA DE REMISIÓN DE CADA VENTA SE ANOTA EN CONTABILIDAD (06/11, dueño: «factura/nota remisión. obligatorio» y después:
+   «los vendedores generan pedido… aún no saben qué nro de factura o nota remisión les tocará… que lo puedan colocar en contabilidad»).
+   · NO se elige en el formulario del pedido. La anota la vendedora DESPUÉS (su «Para hacer» le abre la ficha de Contabilidad de esa venta) o
+     Contabilidad: en esa ficha, «🧾 Factura» o «📄 Nota de remisión» + su N° (`ctaDocGuardar`).
+   · Viaja adentro de los productos (`fdoc:'F'|'R'` y `fdocn:'<N°>'`, la convención de `sinwa`/`avisa`): la planilla tiene columnas fijas.
+     Corregir el pedido desde el formulario lo conserva (`submitPedido` lo rescata del pedido anterior).
+   · Obligatorio para las ventas del equipo cargadas desde `DOCV_DESDE` (01/11): `docVentaFalta` (las de Contabilidad: `fueraDeConta` deja
+     afuera ATC, RPT, Eduardo, ROHO e internos). Lo dicen «Para hacer» (🔴, «Ver» filtra la tabla: `sdoc`), la tabla (chip «❓ falta») y el
+     control del cierre del mes (🔴: «Bajar» pide la contraseña, como lo demás en rojo).
+   · Contabilidad: chip en «Facturar a» (`docVentaChip`) y dos columnas AL FINAL del Excel («FALTA» donde falta el tipo o el número).
+     Todavía NO se conecta con la etiqueta FACTURADO / NO FACTURADO de los retiros (esa la elige quien carga el retiro).
+   `tests/test_factura_remision.js`.
+   ========================================================================== */
+var DOCV_TXT={ F:'🧾 Factura', R:'📄 Nota de remisión' };
+var DOCV_DESDE='2026-11-01';
+function docVentaDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && (x.fdoc==='F' || x.fdoc==='R')){ v=x.fdoc; return true; } return false; }); return v; }
+function docNumDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && x.fdocn!=null && String(x.fdocn).trim()){ v=String(x.fdocn).trim(); return true; } return false; }); return v; }
+function setDocVenta(p, v, num){
+  num=String(num==null?'':num).replace(/\s+/g,' ').trim().slice(0,40);
+  ((p&&p.productos)||[]).forEach(function(x){ if(!x) return;
+    if(v==='F' || v==='R') x.fdoc=v; else delete x.fdoc;
+    if(num) x.fdocn=num; else delete x.fdocn; });
+}
+/* ¿Le falta? Solo a una venta del equipo cargada desde DOCV_DESDE (y que tenga productos donde guardarlo). */
+function docVentaRequerida(p){ return !!p && !fueraDeConta(p) && !borradorDe(p.id) && ((p.productos||[]).length>0) && contaFecha(p)>=DOCV_DESDE; }
+function docVentaFalta(p){ return docVentaRequerida(p) && !(docVentaDe(p) && docNumDe(p)); }
+function docVentaChip(p){
+  var d=docVentaDe(p), n=docNumDe(p);
+  /* (06/11, revisión de Fable) Lo que falta va SIEMPRE en ámbar, también con el tipo y sin el número (`setDocVenta` lo permite y una fila
+     tocada a mano en la planilla también): «Para hacer» la cuenta y la tabla no la puede pintar de azul. */
+  if(docVentaFalta(p)) return '<span class="badge b-amber" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Falta anotar la factura o la nota de remisión (en la ficha de la venta)">❓ '+(d ? ((d==='F'?'Fact.':'Rem.')+' sin N°') : 'falta fact./rem.')+'</span>';
+  if(d) return '<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="'+(d==='F'?'Factura':'Nota de remisión')+(n?(' N° '+esc(n)):' sin número')+'">'+(d==='F'?'🧾 Fact. ':'📄 Rem. ')+(n?esc(n):'s/n°')+'</span>';
+  return '';
+}
+/* La fila de la ficha de Contabilidad: elegir y anotar el N°. */
+/* Lo elegido o tipeado y todavía sin guardar (sobrevive a un repintado de la ficha, como un pago a medio cargar, §4fy). `closeModal` lo
+   olvida: si no, al volver a abrir la venta otro día aparecía preseleccionado lo que no se guardó. */
+var CTA_DOC={ id:'', t:'', n:null };
+function ctaDocOlvidar(){ CTA_DOC={ id:'', t:'', n:null }; }
+function ctaDocHtml(p){
+  var mio=(CTA_DOC.id===p.id), d=(mio && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), n=(mio && CTA_DOC.n!=null) ? CTA_DOC.n : docNumDe(p), falta=docVentaFalta(p);
+  var b=function(v){ return '<button type="button" class="btn btn-sm'+(d===v?' btn-primary':'')+'" style="width:auto;'+(d===v?'':'background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" data-v="'+v+'" onclick="ctaDocTipo(\''+esc(p.id)+'\',\''+v+'\')">'+DOCV_TXT[v]+'</button>'; };
+  return '<div id="cta-doc" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+b('F')+b('R')+
+    '<input type="text" id="cta-doc-num" value="'+esc(n)+'" placeholder="N°" maxlength="40" autocomplete="off" style="width:110px" oninput="ctaDocNum(\''+esc(p.id)+'\', this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ctaDocGuardar(\''+esc(p.id)+'\');}">'+
+    '<button type="button" class="btn btn-primary btn-sm" style="width:auto" onclick="ctaDocGuardar(\''+esc(p.id)+'\')">💾 Guardar</button></div>'+
+    (falta ? '<div style="font-size:.74rem;color:var(--amber-dk,#92400e);margin-top:4px">❗ Obligatorio: anotá si va con factura o con nota de remisión y su número.</div>' : '');
+}
+function ctaDocNum(id, v){ if(CTA_DOC.id!==id) CTA_DOC={ id:id, t:'', n:null }; CTA_DOC.n=String(v==null?'':v); }
+function ctaDocTipo(id, v){
+  if(CTA_DOC.id!==id) CTA_DOC={ id:id, t:'', n:null };
+  CTA_DOC.t=v;
+  var w=document.getElementById('cta-doc'); if(!w) return;
+  [].forEach.call(w.querySelectorAll('button[data-v]'), function(x){ var on=x.getAttribute('data-v')===v; x.classList.toggle('btn-primary', on);
+    x.style.background=on?'':'#fff'; x.style.border=on?'':'1px solid var(--gray-md)'; x.style.color=on?'':'var(--text)'; });
+  var e=document.getElementById('cta-doc-num'); if(e) e.focus();
+}
+function ctaDocGuardar(id){
+  var p=findById(id); if(!p) return;
+  var t=(CTA_DOC.id===id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), e=document.getElementById('cta-doc-num'), num=String((e&&e.value)||'').replace(/\s+/g,' ').trim().slice(0,40);
+  if(t!=='F' && t!=='R'){ toast('🧾 Elegí si la venta va con FACTURA o con NOTA DE REMISIÓN.','err'); return; }
+  if(!num){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° de la '+(t==='F'?'factura':'nota de remisión')+'.','err'); return; }
+  if(!(p.productos||[]).length){ toast('Esta venta no tiene productos donde guardarlo.','err'); return; }
+  if(docVentaDe(p)===t && docNumDe(p)===num){ ctaDocOlvidar(); toast('Ya estaba así ✓','ok'); return; }
+  try{ ctaPagoRecordar(); }catch(x){}   // §4fy: guardar esto con un pago a medio cargar no se lo borra
+  setDocVenta(p, t, num); ctaDocOlvidar();
+  persistPedido(p);
+  toast('🧾 '+(t==='F'?'Factura':'Nota de remisión')+' N° '+num+' anotada ✓','ok');
+  showContaModal(id);
+  try{ renderConta(); }catch(x){}
+}
 /* Cómo está el celular del formulario. `her` = el pedido que se edita ya traía ESE celular (sin tocar) y no sirve. */
 function celFormEstado(vend){
   var el=document.getElementById('f-celular'), t=String((el&&el.value)||'').trim();
@@ -28027,7 +28201,7 @@ function misVerLista(k){
   var o=MIS_LISTAS[k]; if(!o) return;
   openModal('<div class="modal-h"><h3>'+esc(o.t)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
     (o.s?('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+esc(o.s)+'</div>'):'')+
-    o.L.map(function(p){ return '<div class="t2-f" onclick="closeModal();showMisModal(\''+esc(String(p.id))+'\')"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+
+    o.L.map(function(p){ return '<div class="t2-f" onclick="closeModal();'+(o.abrir||'showMisModal')+'(\''+esc(String(p.id))+'\')"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+
       esc([p.fecha?fmtFecha(p.fecha):'', ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+(o.m?('<span class="t2-m">'+o.m(p)+'</span>'):'')+'</div>'; }).join('')+'</div>');
 }
 function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} el.classList.remove('ah-destello'); void el.offsetWidth; el.classList.add('ah-destello'); }
@@ -28045,6 +28219,11 @@ function misHacerDatos(v, mine){
   add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
   var M=nxM1Datos(v, false);
   add({ sev:(M.tarde?'r':'a'), ic:'🔔', n:M.faltan, t:'Avisar a los clientes de '+(M.dia===tomorrowStr()?'mañana':nxDiaTxt(M.dia)), s:misNom2(M.L.filter(function(p){ return !nxM1Avisado(p); })), b:'🔔 Avisar', p:1, fn:"NX_M1_ABIERTA=true;renderMis();misIrA('nx-m1')", ok:'Clientes del próximo día avisados' });
+  /* 🧾 (06/11, dueño: lo anota la vendedora, después de cargar el pedido, cuando ya sabe el número) La factura o nota de remisión: la
+     lista abre la ficha de Contabilidad, donde se anota (`ctaDocHtml`). */
+  var sd=(mine||[]).filter(docVentaFalta);
+  MIS_LISTAS.sdoc={ t:'🧾 Sin N° de factura o nota de remisión', s:'Tocá cada venta y anotá si va con factura o con nota de remisión y su número. Es obligatorio.', L:sd, abrir:'showContaModal' };
+  add({ sev:'r', ic:'🧾', n:sd.length, t:'Anotá la factura o la nota de remisión', s:misNom2(sd)+' · obligatorio, cuando ya tengas el número', b:'Anotar', p:1, fn:"misVerLista('sdoc')", ok:'Todas tus ventas con factura o remisión' });
   var fl=q.sinFlete, fBs=0; fl.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
   MIS_LISTAS.flete={ t:'🚚 Recargo por entrega sin reportar', s:'Cuando lo cobres, entrá al pedido y tocá «Cobré el flete» (hay que subir el comprobante).', L:fl, m:function(p){ return fmtBs(envioPorCobrar(p)); } };
   add({ sev:'a', ic:'🚚', n:fl.length, t:'Recargo por entrega sin reportar', s:fmtBs(fBs)+' · '+misNom2(fl), b:'Ver', fn:"misVerLista('flete')", ok:'Recargos reportados' });
@@ -36646,16 +36825,37 @@ function stockTiendasParteLuego(){
        que lo compraron en los últimos `ALM_ZONA_DIAS` (por su pin; sin pin, por su zona escrita), y a Banzer va lo que le falta para su
        parte de lo que hay que tener (`sB × (lo de los clientes + lo que hay)` menos lo que Banzer tiene HOY). Lo que rota poco, lo
        discontinuado y lo de menos de `ALM_MIN_UNID` unidades ubicadas: todo a PTF, como en «📍 Banzer o PTF».
-   Cada fila suma exacto lo que dice «Qué producir» (el resto de los redondeos va al que más tiene).
+     · 👥 PARA CLIENTES DE (20/10): lo de PTF y de Banzer, por la tienda de quien le vendió al cliente (`producirTiendaCliente`): los
+       mismos clientes de `ALM_ZONA_DIAS` + lo vendido sin entregar (`compIds`). SOLO se muestra; no cambia adónde va.
+   Cada fila suma exacto lo que dice «Qué producir». Entre las tiendas (y entre los clientes) se reparte de a una unidad
+   (`producirRepartirParejo`): un plazo más largo nunca le da menos a una tienda.
    ========================================================================== */
 function almLadoFrac(p, Z){
   var pt=almPunto(p); if(pt) return almLado(pt);
   var z=Z[almZonaClave(p.zona)]; return (z && z.n>=ALM_ZONA_MIN) ? { P:z.P/z.n, B:z.B/z.n } : null;
 }
+/* 👥 (20/10, dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*) De qué tienda es quien le vendió al cliente: lo que sale de PTF o
+   Banzer a la casa del cliente se muestra «para clientes de» esa tienda (SOLO para mostrar: no cambia adónde va ni cuánto se pide). Mia Plaza
+   vende casi todo con entrega a domicilio (176 de 186 colchones desde agosto) y en la columna de su local quedaba en 0. Sin tienda, el vendedor
+   (Eduardo; ROHO → Tiendas Roho). */
+function producirTiendaCliente(p){
+  var s=sucursalDeVendedor(p && p.vendedor); if(s) return s;
+  if(stockEsEduardo(p)) return 'Eduardo';
+  var v=String((p && p.vendedor)||'').trim();
+  if(/ROHO/i.test(v)) return 'Tiendas Roho';
+  if(v && cliEsInterno(v)) return 'Pedidos internos';   // ALBA, FABRICA… (`CONTA_INTERNOS`)
+  return v ? v.split(/\s+/).slice(0,2).join(' ') : 'Sin vendedor';
+}
 function producirDestinos(R){
   var hoy=todayStr(), d30=diasAtras(STOCK_VENTANA_MES-1), d90=diasAtras(89), dLado=diasAtras(ALM_ZONA_DIAS-1), Z=almZonas();
-  var T={}, T90={}, L={}, visto={}, porId={};
+  var T={}, T90={}, L={}, C={}, visto={}, visto90={}, vistoC={}, porId={};
   var sumar=function(M, k, n, c){ var m=M[k]||(M[k]={}); m[n]=(m[n]||0)+c; };
+  /* Los clientes, por lado: sin ubicar, mitad y mitad (pesa en los dos). */
+  var cliSumar=function(k, p, c, lado){
+    var m=C[k]||(C[k]={ P:{}, B:{} }), t=producirTiendaCliente(p), fp=lado ? lado.P : 0.5, fb=lado ? lado.B : 0.5;
+    if(fp>0) m.P[t]=(m.P[t]||0)+c*fp;
+    if(fb>0) m.B[t]=(m.B[t]||0)+c*fb;
+  };
   STATE.forEach(function(p){
     if(!p) return;
     if(p.id!=null) porId[p.id]=p;
@@ -36668,7 +36868,7 @@ function producirDestinos(R){
       var suc=(rpt ? sucursalDeRpt(p) : sucursalDeVenta(p)) || 'Otra tienda';
       lin.forEach(function(x){
         var k=stockClave(x); if(!stockEsDemanda(p, k)) return;
-        var c=Number(x.cant)||0; sumar(T90, k, suc, c);
+        var c=Number(x.cant)||0; sumar(T90, k, suc, c); visto90[p.id+'|'+k]=1;
         if(f>=d30){ sumar(T, k, suc, c); visto[p.id+'|'+k]=1; }
       });
       return;
@@ -36680,17 +36880,52 @@ function producirDestinos(R){
       if(lado===null) lado=almLadoFrac(p, Z)||false;
       var c=Number(x.cant)||0, l=L[k]||(L[k]={ P:0, B:0, u:0 });
       l.u+=c; if(lado){ l.P+=c*lado.P; l.B+=c*lado.B; }
+      cliSumar(k, p, c, lado); vistoC[p.id+'|'+k]=1;
     });
   });
-  /* Lo que una tienda pidió por RPT y falta entregarle (está en «vendido sin entregar» del pedido de siempre): va a ESA tienda. */
+  /* Lo que una tienda pidió por RPT y falta entregarle (está en «vendido sin entregar» del pedido de siempre): va a ESA tienda.
+     ⚠️ Cada ventana con su marca: una RPT pendiente de 31 a 90 días ya estaba en T90 (antes se sumaba dos veces).
+     Lo vendido a un cliente y sin entregar también dice de qué tienda es (`C`, solo para mostrar). */
   R.bloques.forEach(function(B){ B.filas.forEach(function(f){
     (f.o.compIds||[]).forEach(function(e){
-      var p=porId[e.id]; if(!p || !esRPT(p.oc) || visto[e.id+'|'+f.o.k]) return;
-      var suc=sucursalDeRpt(p)||'Otra tienda'; sumar(T, f.o.k, suc, e.c); sumar(T90, f.o.k, suc, e.c);
+      var p=porId[e.id], kk=e.id+'|'+f.o.k; if(!p) return;
+      if(!esRPT(p.oc)){
+        if(!esVentaTienda(p) && !vistoC[kk]){ cliSumar(f.o.k, p, e.c, almLadoFrac(p, Z)||false); vistoC[kk]=1; }
+        return;
+      }
+      var suc=sucursalDeRpt(p)||'Otra tienda';
+      if(!visto[kk]) sumar(T, f.o.k, suc, e.c);
+      if(!visto90[kk]) sumar(T90, f.o.k, suc, e.c);
     });
   }); });
-  return { T:T, T90:T90, L:L };
+  return { T:T, T90:T90, L:L, C:C };
 }
+/* Reparte `n` en enteros que suman exacto `n`, de a una unidad, siempre al que más le corresponde por su peso (Sainte-Laguë: W/(2·a+1);
+   empate: más peso, después el nombre). A diferencia del resto mayor (`producirRepartir`), un plazo más largo NUNCA le da menos a nadie:
+   con pesos 1/3/3, el resto mayor daba 1/1/1 con 3 unidades y 0/2/2 con 4 (20/10, revisión de «Qué va a dónde»). */
+function producirRepartirParejo(n, W){
+  var out={}, nom=Object.keys(W||{}).filter(function(x){ return W[x]>0; });
+  if(!(n>0) || !nom.length) return out;
+  nom.sort(function(a,b){ return (W[b]-W[a]) || (a<b?-1:(a>b?1:0)); });
+  nom.forEach(function(x){ out[x]=0; });
+  for(var u=0; u<n; u++){
+    var mej=nom[0], mv=-1;
+    for(var i=0;i<nom.length;i++){ var v=W[nom[i]]/(2*out[nom[i]]+1); if(v>mv*(1+1e-12)){ mv=v; mej=nom[i]; } }
+    out[mej]++;
+  }
+  nom.forEach(function(x){ if(!out[x]) delete out[x]; });
+  return out;
+}
+/* Los pesos de los clientes de un lado (PTF o Banzer); si ese lado no tiene, los de los dos. */
+function producirPesosCli(Cm, lado){
+  if(!Cm) return {};
+  var W={}, ok=false;
+  Object.keys(Cm[lado]||{}).forEach(function(t){ if(Cm[lado][t]>0){ W[t]=Cm[lado][t]; ok=true; } });
+  if(ok) return W;
+  ['P','B'].forEach(function(s){ Object.keys(Cm[s]||{}).forEach(function(t){ if(Cm[s][t]>0) W[t]=(W[t]||0)+Cm[s][t]; }); });
+  return W;
+}
+var PAP_SIN_CLI='Sin datos';
 /* Reparte `n` entre los nombres de `W` en proporción, en enteros que suman exacto `n` (lo que sobra de redondear va al de más resto). */
 function producirRepartir(n, W){
   var out={}, nom=Object.keys(W||{}).filter(function(x){ return W[x]>0; });
@@ -36703,12 +36938,12 @@ function producirRepartir(n, W){
   return out;
 }
 function producirRepartoFila(f, h, porK, D){
-  var o=f.o, n=f[h]||0, out={ n:n, P:0, B:0, T:{}, s:0, porque:'' };
+  var o=f.o, n=f[h]||0, out={ n:n, P:0, B:0, T:{}, s:0, porque:'', CP:{}, CB:{} };
   if(!(n>0)) return out;
   var s=Math.min(n, Math.max(0, (porK[o.k] && porK[o.k][h])||0)), c=n-s;
   if(s>0){
     var W=D.T[o.k]; if(!W || !Object.keys(W).length) W=D.T90[o.k];
-    out.T=(W && Object.keys(W).length) ? producirRepartir(s, W) : { 'Tiendas':s };
+    out.T=(W && Object.keys(W).length) ? producirRepartirParejo(s, W) : { 'Tiendas':s };
     out.s=s;
   }
   if(c>0){
@@ -36720,6 +36955,14 @@ function producirRepartoFila(f, h, porK, D){
       var b=Math.max(0, Math.min(c, Math.round((L.B/ub)*(c+(f.hay||0))-almHoyBanzer(o))));
       out.B=b; out.P=c-b;
     }
+    /* 👥 Para clientes de qué tienda (solo para mostrar): sin clientes del producto, «Sin datos». */
+    var Cm=D.C && D.C[o.k];
+    [['P','CP'],['B','CB']].forEach(function(x){
+      var u=out[x[0]]; if(!(u>0)) return;
+      var r=producirRepartirParejo(u, producirPesosCli(Cm, x[0]));
+      if(!Object.keys(r).length){ r={}; r[PAP_SIN_CLI]=u; }
+      out[x[1]]=r;
+    });
   }
   return out;
 }
@@ -36796,7 +37039,7 @@ function papDatos(forzar){
     var b=stockBloqueDe(o).k; (sinC[b]=sinC[b]||[]).push(stockNombre(o));
   });
   BLOQUES.forEach(function(Q){ Q.sinC=sinC[Q.k]||[]; });
-  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, listo:true, t:Date.now(), viejos:stockCortesViejos(), sinC:sinC, firma:papFirma() };
+  return { hoy:hoy, MS:R.mes, FABS:FABS, TODAS:TODAS, BLOQUES:BLOQUES, D:tp.D, listo:true, t:Date.now(), viejos:stockCortesViejos(), sinC:sinC, firma:papFirma() };
 }
 /* Una huella barata de lo que entra en la cuenta (la planilla y el stock): si una lectura trae lo mismo, no se recalcula. */
 function papFirma(){
@@ -36990,6 +37233,9 @@ function papDetalle(f, p){
   h+='<dt>Vendido sin entregar</dt><dd><b>'+papFmt(f.comp)+'</b></dd>';
   if(p==='tot') h+='<dt>Se arma con</dt><dd>'+esc(papPartesTot(f, 'de').join(' + ') || '0')+'</dd>';
   h+='<dt>Va a</dt><dd><div class="pap-va">'+papDestinos(r).map(function(x){ return '<span>'+x[0]+' '+esc(x[1])+' <b>'+papFmt(x[2])+'</b></span>'; }).join('')+'</div></dd>';
+  var cl={}; [r.CP, r.CB].forEach(function(M){ Object.keys(M||{}).forEach(function(t){ if(M[t]>0) cl[t]=(cl[t]||0)+M[t]; }); });
+  var cls=Object.keys(cl).sort(function(a,b){ return ((a===PAP_SIN_CLI)-(b===PAP_SIN_CLI)) || (cl[b]-cl[a]) || a.localeCompare(b, 'es'); });
+  if(cls.length) h+='<dt>PTF y Banzer, para clientes de</dt><dd><div class="pap-va">'+cls.map(function(t){ return '<span>👥 '+esc(t)+' <b>'+papFmt(cl[t])+'</b></span>'; }).join('')+'</div></dd>';
   if(r.porque && PAP_PORQUE[r.porque]) h+='<dt>Ojo</dt><dd>'+PAP_PORQUE[r.porque]+'</dd>';
   return h+'</dl>';
 }
@@ -37063,11 +37309,15 @@ function papPintarPedir(){
 function papLugares(p){
   var L={ P:{ id:'P', nom:'PTF', largo:'Productos terminados fábrica', ico:'🏭', n:0, c:0, col:PAP_COL.P },
           B:{ id:'B', nom:'Banzer', largo:'Almacén Banzer', ico:'🏪', n:0, c:0, col:PAP_COL.B },
-          T:{ id:'T', nom:'Tiendas', largo:'Todas las tiendas', ico:'🏬', n:0, c:0, col:PAP_COL.T } }, T={};
+          T:{ id:'T', nom:'Tiendas', largo:'Todas las tiendas', ico:'🏬', n:0, c:0, col:PAP_COL.T } }, T={}, CL={};
+  var cli=function(M, lado){ Object.keys(M||{}).forEach(function(t){
+    var u=M[t]; if(!(u>0)) return;
+    var x=CL[t]||(CL[t]={ nom:t, n:0, P:0, B:0, sin:t===PAP_SIN_CLI }); x.n+=u; x[lado]+=u;
+  }); };
   PAP.TODAS.forEach(function(f){
     var r=f.rep[p]; if(!r || !r.n) return;
-    if(r.P){ L.P.n+=r.P; L.P.c++; }
-    if(r.B){ L.B.n+=r.B; L.B.c++; }
+    if(r.P){ L.P.n+=r.P; L.P.c++; cli(r.CP, 'P'); }
+    if(r.B){ L.B.n+=r.B; L.B.c++; cli(r.CB, 'B'); }
     var enT=false;
     Object.keys(r.T||{}).forEach(function(t){
       if(!(r.T[t]>0)) return; enT=true;
@@ -37077,7 +37327,42 @@ function papLugares(p){
     if(enT) L.T.c++;
   });
   var tiendas=Object.keys(T).map(function(k){ return T[k]; }).sort(function(a,b){ return (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
-  return { P:L.P, B:L.B, T:L.T, tiendas:tiendas, todos:[L.P, L.B, L.T].concat(tiendas), total:papSuma(PAP.TODAS, p) };
+  /* «Sin datos» va al final; lo demás, de más a menos. */
+  var clientes=Object.keys(CL).map(function(k){ return CL[k]; }).sort(function(a,b){ return (a.sin-b.sin) || (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
+  var LS={ P:L.P, B:L.B, T:L.T, tiendas:tiendas, todos:[L.P, L.B, L.T].concat(tiendas), total:papSuma(PAP.TODAS, p), clientes:clientes, CL:CL };
+  LS.ceros=papCeros(LS, p);
+  return LS;
+}
+/* Las tiendas que en este plazo no reciben nada para su local, con el porqué: lo de su local en 30 días (venta de tienda que es demanda
+   y almohadas pedidas por RPT: los mismos pesos del reparto) y lo de sus clientes, que sale de PTF o Banzer. */
+function papCeros(LS, p){
+  var D=PAP.D||{}, dem={}, con={}, enPlazo={};
+  Object.keys(D.T||{}).forEach(function(k){ var W=D.T[k]; Object.keys(W).forEach(function(t){ dem[t]=(dem[t]||0)+(W[t]||0); }); });
+  /* ¿Tuvo peso en algún producto que este plazo reparte entre las tiendas? (entonces le tocó 0 por ser poco al lado de las otras) */
+  PAP.TODAS.forEach(function(f){
+    var r=f.rep[p]; if(!r || !(r.s>0)) return;
+    var W=(D.T||{})[f.k]; if(!W || !Object.keys(W).length) W=(D.T90||{})[f.k];
+    Object.keys(W||{}).forEach(function(t){ if(W[t]>0) enPlazo[t]=1; });
+  });
+  LS.tiendas.forEach(function(t){ con[t.nom]=1; });
+  /* La que más clientes tiene, primero (es la que más se extraña). */
+  var cliN=function(nm){ return LS.CL[nm] ? LS.CL[nm].n : 0; };
+  return SUCURSALES.map(function(s){ return s.n; }).filter(function(nm){ return !con[nm]; })
+    .sort(function(a,b){ return (cliN(b)-cliN(a)) || a.localeCompare(b, 'es'); }).map(function(nm){
+    var u=Math.round(dem[nm]||0), c=LS.CL[nm] ? LS.CL[nm].n : 0;
+    var pq=!u ? 'en 30 días su local no vendió nada que se fabrique ni pidió almohadas'
+      : enPlazo[nm] ? 'lo de su local en 30 días ('+u+' u.) es poco al lado de las otras tiendas'
+      : 'lo que movió su local en 30 días ('+u+' u.) no hay que pedirlo en este plazo';
+    return { nom:nm, dem:u, cli:c, porque:pq, clientes:c>0 ? ('sus clientes: '+papFmt(c)+', salen de PTF o Banzer') : '' };
+  });
+}
+function papCliTxt(LSo, sep){
+  return (LSo||[]).map(function(x){ return x.nom+' '+papFmt(x.n); }).join(sep||' · ');
+}
+/* Los clientes de UN depósito ('P' o 'B'), de más a menos. */
+function papCliDe(LS, lado){
+  return LS.clientes.filter(function(x){ return x[lado]>0; }).map(function(x){ return { nom:x.nom, n:x[lado], sin:x.sin }; })
+    .sort(function(a,b){ return (a.sin-b.sin) || (b.n-a.n) || a.nom.localeCompare(b.nom, 'es'); });
 }
 function papCuantoA(f, p, id){
   var r=f.rep[p]; if(!r) return 0;
@@ -37141,6 +37426,10 @@ function papDetalleLugar(l, p){
     '<div class="pap-ldnum">'+papFmt(l.n)+'</div></div>'+
     '<div class="pap-ldacc"><button type="button" class="pap-btn" data-pap-copiar-lugar="'+esc(l.id)+'">📋 Copiar lo de '+esc(l.id==='T'?'las tiendas':l.nom)+'</button>'+
     '<button type="button" class="pap-btn pap-claro" data-pap="lugar-cerrar" aria-label="Cerrar la lista">✕ Cerrar</button></div></div>';
+  if(l.id==='P' || l.id==='B'){
+    var cl=papCliDe(papLugares(p), l.id);
+    if(cl.length) h+='<p class="pap-ldcli">👥 <span>Para clientes de: '+cl.map(function(x){ return esc(x.nom)+' <b>'+papFmt(x.n)+'</b>'; }).join(' · ')+'</span></p>';
+  }
   G.forEach(function(g){
     if(G.length>1 || l.id==='T') h+='<div class="pap-banda" style="--c:'+g.col+'"><span>'+esc(g.et)+'</span><span>'+papFmt(g.n)+'</span></div>';
     h+='<ul class="pap-filas">'+g.filas.map(function(x){ return papFilaLugarHtml(x.f, x.n, p, l.id, g.conMarca); }).join('')+'</ul>';
@@ -37185,15 +37474,28 @@ function papPintarDonde(){
   }
   var deps=[LS.P, LS.B, LS.T].filter(function(l){ return l.n>0; }), PC=papPcts(deps);
   h+=papBarraHtml(LS)+'<div class="pap-lugs">'+deps.map(function(l){ return papFichaDep(l, PC[l.id], LS.tiendas.length); }).join('')+'</div>';
-  if(LS.tiendas.length) h+='<div class="pap-ctiendas"><div class="pap-eti">Cada tienda</div><div class="pap-chips">'+
-    LS.tiendas.map(function(t){ return '<button type="button" class="pap-ct" data-pap-lugar="'+esc(t.id)+'" aria-pressed="'+(PAP_S.lugar===t.id)+'"><span>'+esc(t.nom)+'</span><b>'+papFmt(t.n)+'</b></button>'; }).join('')+'</div></div>';
+  if(LS.tiendas.length || LS.ceros.length){
+    h+='<div class="pap-ctiendas"><div class="pap-eti">Cada tienda · para su local</div>';
+    if(LS.tiendas.length) h+='<div class="pap-chips">'+
+      LS.tiendas.map(function(t){ return '<button type="button" class="pap-ct" data-pap-lugar="'+esc(t.id)+'" aria-pressed="'+(PAP_S.lugar===t.id)+'"><span>'+esc(t.nom)+'</span><b>'+papFmt(t.n)+'</b></button>'; }).join('')+'</div>';
+    /* 20/10: las que no reciben nada para su local también se nombran, con el porqué (si no, parecía que el panel se olvidó de Mia Plaza). */
+    if(LS.ceros.length) h+='<ul class="pap-ceros" aria-label="Tiendas sin nada para su local en este plazo">'+LS.ceros.map(function(z){
+      return '<li><span class="pap-cero-nom"><b>'+esc(z.nom)+'</b><i>0</i></span><span>'+esc(papCap(z.porque))+(z.clientes?'. <b class="pap-cero-cli">'+esc(papCap(z.clientes))+'</b>':'')+'.</span></li>';
+    }).join('')+'</ul>';
+    h+='</div>';
+  }
+  if(LS.clientes.length) h+='<div class="pap-cli"><div class="pap-eti">👥 PTF y Banzer · para clientes de cada tienda</div><div class="pap-clis">'+
+    LS.clientes.map(function(x){ return '<span class="pap-cl'+(x.sin?' pap-cl-sin':'')+'" title="'+esc('PTF '+x.P+' · Banzer '+x.B)+'"><span>'+esc(x.nom)+'</span><b>'+papFmt(x.n)+'</b></span>'; }).join('')+'</div>'+
+    '<p class="pap-cli-nota">Según la tienda de quien le vendió al cliente. Ya están adentro de PTF y Banzer: salen de ahí a la casa del cliente, no van a la tienda.</p></div>';
   h+='<p class="pap-ayuda" style="margin:0">Tocá un lugar para ver qué productos lleva.</p></section>';
   var sel=null; LS.todos.forEach(function(l){ if(l.id===PAP_S.lugar) sel=l; });
   if(sel) h+=papDetalleLugar(sel, p);
   h+='<details class="pap-como" id="pap-tabla-prod"'+(tablaAbierta?' open':'')+'><summary>📊 Ver todo en una tabla, por producto</summary>'+papTablaHtml(p, LS)+'</details>';
   h+='<details class="pap-como" id="pap-como-donde"'+(comoAbierto?' open':'')+'><summary>¿Cómo se reparte?</summary><ul>'+
     '<li>Es lo mismo que se pide a producción, repartido: en cada producto, PTF + Banzer + tiendas = lo que se pide.</li>'+
-    '<li>A cada tienda va lo que ella vendió o pidió de ese producto en los últimos 30 días (si no hay, en 90).</li>'+
+    '<li>A cada tienda, para su local, va lo que ella vendió desde la tienda o pidió de ese producto en los últimos 30 días (si no hay, en 90). Lo que vende con entrega a domicilio no va a la tienda: sale de PTF o Banzer.</li>'+
+    '<li>«👥 Para clientes de» dice, de lo que va a PTF y Banzer, de qué tienda es quien le vendió al cliente (por los clientes de los últimos '+ALM_ZONA_DIAS+' días y lo vendido sin entregar). Solo informa: no cambia adónde va.</li>'+
+    '<li>Una tienda con 0 dice por qué: lo que movió su local no hay que pedirlo en ese plazo, o es poco al lado de las otras.</li>'+
     '<li>Lo de los clientes se reparte entre PTF y Banzer según de qué lado de la línea de logística viven los que lo compraron en los últimos '+ALM_ZONA_DIAS+' días. A Banzer va lo que le falta para su parte, contando lo que ya tiene hoy.</li>'+
     '<li>Lo que se vende poco o tiene pocos datos: lo que no es de una tienda va a PTF. Lo de las tiendas igual va a cada tienda.</li>'+
     '<li>Solo muestra: no marca pedidos ni mueve stock.</li>'+
@@ -37246,8 +37548,14 @@ function papTextoTodo(p){
   var vj=papViejoTxt(); if(vj) L.push(vj);
   [LS.P, LS.B].concat(LS.tiendas).filter(function(l){ return l.n>0; }).forEach(function(l){
     L.push('', papNombreLugarCopia(l)+' ('+papFmt(l.n)+'):');
+    var cl=(l.id==='P' || l.id==='B') ? papCliDe(LS, l.id) : [];
+    if(cl.length) L.push('Para clientes de: '+papCliTxt(cl, ', '));
     papFilasDeLugar(p, l.id).forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
   });
+  if(LS.ceros.length){
+    L.push('', 'NADA PARA SU LOCAL EN ESTE PLAZO:');
+    LS.ceros.forEach(function(z){ L.push('• '+z.nom+': '+z.porque+(z.clientes?' ('+z.clientes+')':'')); });
+  }
   L.push('', 'TOTAL: '+papFmt(LS.total)+' unidades (PTF '+papFmt(LS.P.n)+' · Banzer '+papFmt(LS.B.n)+' · tiendas '+papFmt(LS.T.n)+')');
   return L.join('\n');
 }
@@ -37256,6 +37564,7 @@ function papTextoLugar(id, p){
   if(!l) return '';
   var L=['QUÉ VA A '+(l.tienda?'LA ':'')+papNombreLugarCopia(l), papPlazoLinea(P), papHoyTxt(PAP)+' · de lo que se pide a producción'];
   var vj=papViejoTxt(); if(vj) L.push(vj);
+  if(id==='P' || id==='B'){ var cl=papCliDe(papLugares(p), id); if(cl.length) L.push('Para clientes de: '+papCliTxt(cl, ', ')); }
   papGrupos(p, id).forEach(function(g){
     L.push('', (id==='T' ? 'TIENDA '+g.et.replace(/^🏬 /,'').toUpperCase() : g.et.replace(/^\S+ /,'').toUpperCase())+' ('+papFmt(g.n)+'):');
     g.filas.forEach(function(x){ L.push('• '+x.f.nombre+' ('+papCodTxt(x.f)+'): '+papFmt(x.n)); });
@@ -41896,6 +42205,7 @@ function openModal(html, ancha){
 }
 function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
+  try{ ctaDocOlvidar(); }catch(e){}   // 🧾 (06/11) la factura o remisión elegida y sin guardar no queda para la próxima vez
   ov.classList.remove('on');
   if(document.body.classList.contains('ficha-costado')){ document.body.classList.remove('ficha-costado'); [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); }); }
   try{ [].forEach.call(ov.querySelectorAll('video'), function(x){ x.pause(); }); }catch(e){}   // 🎬 (§4mv) el video no sigue andando escondido
@@ -50199,7 +50509,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-06-b';
+var PANEL_V='2026-11-06-c';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -50907,6 +51217,8 @@ function nxCierreControl(mes){
   (pst.length ? r : ok).push({ n:pst.length, t:pst.length ? (pst.length+' pago'+(pst.length===1?'':'s')+' sin terminar') : 'Pagos completos', s:'sin recibo, sin foto o QR sin banco', b:'Completar', fn:'nxPstAbrir()' });
   (nd ? r : ok).push({ n:nd, t:nd ? (nd+' venta'+(nd===1?'':'s')+' que puede'+(nd===1?'':'n')+' estar cargada'+(nd===1?'':'s')+' dos veces') : 'Ninguna venta cargada dos veces', s:'confirmá que son distintas o borrá la repetida', b:'Revisar', fn:'cxDupAbrir()' });
   (smon.length ? r : ok).push({ n:smon.length, t:smon.length ? (smon.length+' venta'+(smon.length===1?'':'s')+' sin monto anotado') : 'Todas con monto anotado', s:'anotá cuánto entró o cuánto falta', b:'Ver', fn:"closeModal();cxTopFiltro('smon')" });
+  var sdoc=L.filter(docVentaFalta);   // 🧾 (06/11) obligatoria desde DOCV_DESDE
+  (sdoc.length ? r : ok).push({ n:sdoc.length, t:sdoc.length ? (sdoc.length+' venta'+(sdoc.length===1?'':'s')+' sin N° de factura o nota de remisión') : 'Todas con su factura o nota de remisión', s:'obligatorio · anotalo en la ficha de cada venta', b:'Ver', fn:"closeModal();cxTopFiltro('sdoc')" });
   (exc.length ? am : ok).push({ n:exc.length, t:exc.length ? ('Cobradas de más: '+fmtBs0(excBs)) : 'Ninguna cobrada de más', s:exc.length+' venta'+(exc.length===1?'':'s')+' · revisá si se tipeó de más', b:'Ver', fn:"closeModal();cxTopFiltro('exc')" });
   (ef.length ? am : ok).push({ n:ef.length, t:ef.length ? ('Efectivo sin rendir: '+fmtBs0(efBs)) : 'Efectivo rendido', s:ef.slice(0,4).map(function(o){ return String(o.nombre).split(' ')[0]+' '+fmtBs0(o.falta); }).join(' · ')+(ef.length>4?(' y '+(ef.length-4)+' más'):''), b:'Ver el cuadre', fn:"closeModal();segSet('cta-tab','cuadre');setContaTab('cuadre')" });
   (deb.length ? am : ok).push({ n:deb.length, t:deb.length ? (deb.length+' venta'+(deb.length===1?'':'s')+' con saldo: '+fmtBs0(debBs)) : 'Nada por cobrar', s:'pasan al mes que viene como «falta cobrar»', b:'Ver quiénes', fn:"closeModal();abrirPorCobrar('ventas')" });
