@@ -17357,6 +17357,33 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4ol — 🧾💵🚚 FACTURA O REMISIÓN, EL EFECTIVO SIN RETIRAR Y LOS RECARGOS POR VENDEDOR (06/11; dueño: *«vamos con lo demás · factura/nota remisión. obligatorio · avisar retiros de efectivo pendientes o sin cargar luego de 48 horas (aplica desde noviembre) y que llegue a mi telf · una planilla aparte de "cobro por entrega" pero por cada vendedor»*; en la rama, espera «publica»; servidor `2026-11-06-b` espera que el dueño lo implemente)
+Se le preguntó qué era cada cosa. Contestó: el efectivo «dos veces, 9:00 y 18:00»; el cobro por entrega = «el recargo por entrega»; la factura y
+a quién, «sin preferencia» → quedó lo propuesto.
+- 🧾 **Factura o nota de remisión** (`8de6d04`): en el formulario, arriba de «Facturar a», «¿Con factura o con nota de remisión?» (`#f-doc-venta`,
+  🧾 Factura / 📄 Nota de remisión). Toda VENTA (OC, también la de tienda) lo elige; con factura, «Facturar a» y el NIT/CI no pueden quedar vacíos
+  (asterisco en los dos). No lo piden Eduardo, ROHO, ATC, RPT ni los internos (`docVentaObligatoria`, como el precio): a Eduardo le sale «(opcional)».
+  Va en los productos (`fdoc:'F'|'R'`, `setDocVenta`/`docVentaDe`), vuelve al editar; un pedido viejo sin la marca la pide al editarlo (como el
+  precio). «Para guardar» y los pasos (`fxPasosEstado`[0]) piden lo mismo. Contabilidad: chip en «Facturar a» (`docVentaChip`), fila en la ficha y
+  la columna «FACTURA / REMISIÓN» AL FINAL del Excel. En Playwright apagado salvo `DOCV_PRUEBA`. `tests/test_factura_remision.js` (21; 16 rojas
+  contra `main`). Es lo que separa los retiros FACTURADO / NO FACTURADO (no se cruzan todavía: decírselo si lo pide).
+- 🚚 **Recargos por vendedor** (`321ce51`): Contabilidad → ⬇️ Bajar → «🚚 Recargos por vendedor» (`exportRecargos`, también en el libro de
+  arriba): las ventas de la tabla del período (`contaLista`) con recargo; hoja «Resumen» (vendedor, ventas, pactado, cobrado, por cobrar, TOTAL) y
+  una hoja por vendedor (un renglón por recargo: ingreso, entrega, OC, nota, cliente, zona, monto, COBRADO/POR COBRAR, día, método, banco, nota del
+  pago, quién tiene el efectivo, entregado). Las cuentas son `enviosDe`/`envioYaCobrado`. Nombre de hoja ≤ 31 sin []:*?/\. Desde octubre hay solo 5
+  recargos cargados. `tests/test_recargos_vendedor.js` (18).
+- 💵 **El efectivo sin retirar, al dueño** (servidor `2026-11-06-b`, `e291d5b`): a las 9:00 y a las 18:00 (lunes a sábado, no feriados)
+  `efectivo_sin_retirar` a WA_DUENO. Regla (`waEfePendiente_`), probada antes con la planilla real: el efectivo (adelanto, cobros, recargo cobrado:
+  `contaPagos`) es de quien lo recibió (`>chofer` o la vendedora); cada retiro (`__ret_`) cubre lo de ESA persona cobrado hasta su día, primero un
+  cobro del MISMO monto (el más cercano; en la planilla casi todos los retiros son de un cobro entero: Mirian 5.440/2.140) y después del más viejo;
+  lo que sobra no tapa lo de después. Se empareja desde el 01/10 y se avisa lo cobrado desde el 01/11 y de hace 2 días o más (el cobro guarda el
+  día, no la hora). ⚠️ Los «notas» de un retiro NO son las de la venta (son del talonario de retiros: Mirian 2706-2709): no se usan para emparejar.
+  Con la planilla del 06/11 a las 9:05 hubiera dicho: Bs 10.950 de 4 personas (Maria 3.410 desde 03/11, Mauricio 3.290 en 2 cobros, Juan Pablo 2.390
+  en 2 cobros, Luis Pierre 1.860 desde 04/11 — una venta de Fernando que cobró él en la puerta; Juan Pablo retiró Bs 1.860 el 06/11, puede ser ese).
+  `probarEfectivo()` desde el editor dice lo que diría. ⚠️ La lectura copia `parseCobros`/`anticipoDe`/`cobrosDe` de la página: `test_wa_efectivo`
+  (31) compara las dos y `WA_EFE_FUERA` = `CONTA_EXCLUIR`. `test_servidor` §11 y `test_wa_bot` (la plantilla, 4 datos) cambiaron a conciencia.
+  Para que llegue: implementar la 06-b y correr `crearPlantillasWhatsApp` (crea `efectivo_sin_retirar`; Meta la aprueba en minutos u horas).
+
 ### §4oj — 👥 ANDREA ORIAS Y FABIÁN GODOY, Y LAS TIENDAS «TIENDA BANZER» Y «VENTURA MALL» (02/11; dueño: *«añades dos nuevos vendedores Andrea orias y Fabián godoy»* → los dos Heaven, Andrea en la *«Nueva tienda banzer»*, Fabián en *«Ventura mall»*; PUBLICADO 02/11, `main` = `39cc0ec`, versión 2026-11-02-b; servidor `2026-11-02-a` espera que el dueño lo implemente)
 
 **Antes, el mismo día:** el dueño subió desde otra pestaña el stock de §4od (`cea26bd`, arriba). Se verificó: Pages OK, batería de `main`

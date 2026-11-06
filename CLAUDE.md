@@ -2665,6 +2665,18 @@ sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran p
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 
+## 🧾💵🚚 Factura o remisión, el efectivo sin retirar y los recargos por vendedor (§4ol, 06/11; en la rama, espera «publica»; servidor `2026-11-06-b` espera al dueño)
+- 🧾 **Factura o nota de remisión obligatoria** (dueño: *«factura/nota remisión. obligatorio»*): toda VENTA (OC, también de tienda) elige
+  `#f-doc-venta`; con 🧾 Factura, «Facturar a» y NIT obligatorios. Afuera Eduardo, ROHO, ATC, RPT e internos (`docVentaObligatoria`). Va en los
+  productos (`fdoc:'F'|'R'`); `fxPasosEstado` y «Para guardar» piden lo mismo (`docVentaFalta`). Contabilidad: `docVentaChip`, ficha y la columna
+  «FACTURA / REMISIÓN» AL FINAL del Excel. Playwright: `DOCV_PRUEBA`. `tests/test_factura_remision.js`.
+- 🚚 **Recargos por vendedor** (dueño eligió «el recargo por entrega»): `exportRecargos` (Contabilidad → ⬇️ Bajar): «Resumen» + una hoja por
+  vendedor, las ventas de `contaLista` con recargo; cuentas de `enviosDe`. `tests/test_recargos_vendedor.js`.
+- 💵 **Efectivo sin retirar al dueño** (servidor 06-b, 9:00 y 18:00, `efectivo_sin_retirar` a WA_DUENO): `waEfePendiente_` — el efectivo es de
+  quien lo recibió; un retiro cubre lo de esa persona hasta su día (mismo monto primero, después del más viejo); se avisa lo cobrado desde el 01/11
+  (`WA_EFE_DESDE`) y de hace 2 días o más. ⚠️ Copia la lectura de pagos de la página: si cambia `parseCobros`/`anticipoDe`/`cobrosDe`/`contaPagos` o
+  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). Volver atrás: ✏️ a la versión anotada Y pegar la 06-a de `faf46c3…`.
+
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").
 
