@@ -8346,7 +8346,9 @@ function heredarMarcas(nuevos, viejos){
   (viejos||[]).some(function(x){ if(x && x.eT){ reg={ eF:x.eF, eT:x.eT, eQ:x.eQ }; return true; } return false; });
   /* 🏪 (30/10, propuesta 83) …y lo que se decidió de lo que faltó en una RPT (`rpf`): corregirla no tiene que volver a preguntar. */
   var rpf=null; (viejos||[]).some(function(x){ if(x && x.rpf){ rpf=x.rpf; return true; } return false; });
-  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; return x; };
+  /* 📅 (§4ok-96) …y cuántas veces se le movió la fecha (`fmov`): es del pedido, va a todos los renglones. */
+  var fmov=0; (viejos||[]).forEach(function(x){ var n=Number(x && x.fmov)||0; if(n>fmov) fmov=n; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -16319,6 +16321,15 @@ function submitPedido(){
   /* 📦 (30/10, propuesta 76) «El cliente avisa cuándo»: la fecha del formulario es la de VOLVER A LLAMAR (obligatoria, desde mañana) y
      la venta se guarda sin fecha de entrega ni turno: no hay día, domingo, cupo ni camión que validar. Se saltea el bloque de abajo. */
   var _avisa=avisaFormOn(), _avisaF=_avisa ? String(document.getElementById('f-fecha').value||'') : '';
+  /* 📅 (§4ok-96) ✏️ Editar le cambia la fecha a una venta: ¿es otra de relleno? Aceptar = la casilla de la 76, con ese día de volver a llamar. */
+  if(!_avisa && !VENTA_TIENDA && isEdit && prev && !_deBorrador && avisaFormPuede() &&
+     fmovPreguntar(Object.assign({}, prev, { observaciones: document.getElementById('f-obs').value }), String(document.getElementById('f-fecha').value||''))){
+    var _fl96=fmovDiaLlamar(document.getElementById('f-fecha').value), _cav=document.getElementById('f-avisa');
+    if(_cav) _cav.checked=true;
+    avisaFormPintar();
+    document.getElementById('f-fecha').value=_fl96;
+    _avisa=avisaFormOn(); _avisaF=_avisa ? _fl96 : '';
+  }
   if(_avisa){
     var _avErr=avisaFechaError(_avisaF);
     if(_avErr){ toast('📦 '+_avErr,'err'); var feA=document.getElementById('f-fecha'); feA.classList.add('err'); feA.focus(); feA.scrollIntoView({block:'center'}); return; }
@@ -16529,6 +16540,8 @@ function submitPedido(){
     if(_celE.n.cel){ rec.celular=_celE.n.cel; rec.observaciones=celObsCon(rec.observaciones, _celE.n.otros); }
     setSinWa(rec, _celE.sinWa);
   }
+  /* 📅 (§4ok-96) Una vez más que se le mueve la fecha (desde una fecha puesta; también al pasar a «avisa cuándo»). */
+  if(isEdit && prev && prev.fecha && String(rec.fecha||'')!==String(prev.fecha) && fmovPuede(rec)) setFmov(rec, fmovDe(prev)+1);
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
      ⚠️ Va DESPUÉS de armar `rec` y rescatando lo anterior a propósito: los productos que
      salen del formulario son objetos NUEVOS, así que sin este rescate la vendedora
@@ -17170,6 +17183,68 @@ function avisaFechaError(f){
   if(f<=todayStr()) return 'El día de volver a llamar tiene que ser desde mañana.';
   if(f>stockSumarDias(todayStr(), AVISA_MAX_DIAS)) return 'El día de volver a llamar está a más de '+AVISA_MAX_DIAS+' días: revisá el año.';
   return '';
+}
+/* ============================================================================
+   §4ok-96 📅 «¿EL CLIENTE TODAVÍA NO SABE EL DÍA?» CUANDO LA ENTREGA SE CORRE OTRA VEZ (05/11, mejora 96; dueño 02/11: «Me encanta todo»)
+   Medido el 02/11: 10 pendientes con la entrega a 34-82 días de la venta (fechas de relleno), uno por su cuarta fecha; desde el 21/10,
+   14 cambios en 9 de esos clientes = 14 WhatsApp al cliente con fechas que nadie eligió y 28 a logística, y ocupan cupo.
+   · Al cambiar la fecha desde ✏️ Editar (`submitPedido`) o 📅 Reprogramar (`reproConfirmar`) se pregunta si: es la 2ª vez (o más) que
+     se le mueve la fecha, o el día nuevo queda a 14 días o más de hoy Y a más de 30 días de la venta, o las observaciones dicen
+     «confirmará» / «avisará». Aceptar = un toque: pasa a «📦 El cliente avisa cuándo» (la 76: sin fecha ni turno ni camión, `avisa` en
+     los productos, el guardado lleva `av:1` como todos) con el día nuevo como día de volver a llamar. Cancelar = se mueve como siempre.
+   · CUÁNTAS VECES SE MOVIÓ: la fila no guarda historial de fechas, así que va un contador `fmov` adentro de los productos (todos los
+     renglones, como `avisa`); lo suman `reproAplicar` y `submitPedido` cada vez que la fecha cambia (desde una fecha puesta) y lo pasa
+     `heredarMarcas`. Los pedidos de antes arrancan en 0: la pregunta por «2ª vez» sale recién desde su segundo cambio con esta página.
+   · Solo en una venta a domicilio que puede «avisar cuándo» (`fmovPuede`: OC, no entregada, ni ATC, RPT, tienda, borrador ni sistema)
+     y hacia un día que venga (mañana en adelante). Logística moviéndolo en el cierre de entregas («No salió · reprogramar») suma al
+     contador pero no pregunta. Una vez contestado «ya eligió ese día», no se vuelve a preguntar por el mismo día en esta pestaña.
+   · En Playwright apagado (contador y pregunta) salvo `FMOV_PRUEBA`.
+   ========================================================================== */
+var FMOV_DIAS_HOY=14, FMOV_DIAS_VENTA=30, FMOV_YA={};
+/* «confirmará», «avisarán», «confirma/confirmar la fecha», «avisa cuándo», «por confirmar». ⚠️ Sin `\b` al final: en JS «á» no es
+   letra para `\b` y «confirmará » no lo encontraba. */
+var FMOV_NOTA=/(?:^|[^a-zñáéíóú])(confirmar[aá]n?|avisar[aá]n?|confirmar?\s+(?:la\s+)?fecha|avisar?\s+(?:la\s+)?fecha|avisa\s+cu[aá]ndo|por\s+confirmar|a\s+confirmar)(?![a-zñáéíóú])/i;
+function fmovDe(p){ var n=0; ((p&&p.productos)||[]).forEach(function(x){ var v=Number(x&&x.fmov)||0; if(v>n) n=v; }); return n; }
+function setFmov(p, n){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(n>0) x.fmov=n; else delete x.fmov; }); }
+/* En Playwright solo con `window.FMOV_PRUEBA` (el contador y la pregunta): las pruebas de siempre aceptan todos los `confirm` y
+   comparan los productos tal cual. */
+function fmovPuede(p){ if(navigator.webdriver && !window.FMOV_PRUEBA) return false; return !!p && !p.entregado && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && !esATC(p.oc) && !esRPT(p.oc); }
+/* Por qué se pregunta (texto), o '' si no hay que preguntar. `fNueva` = el día al que se lo quiere mover. */
+function fmovPorque(p, fNueva){
+  fNueva=String(fNueva||'');
+  if(!fmovPuede(p) || !p.fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fNueva) || fNueva===String(p.fecha) || fNueva<=todayStr()) return '';
+  if(FMOV_YA[String(p.id)+'|'+fNueva]) return '';
+  var n=fmovDe(p), hoy=todayStr(), venta=contaFecha(p)||hoy;
+  if(n>=1) return 'Es la '+(n+1)+'ª vez que se le cambia la fecha de entrega a este pedido.';
+  if(diasEntre(hoy, fNueva)>=FMOV_DIAS_HOY && diasEntre(venta, fNueva)>FMOV_DIAS_VENTA)
+    return 'El '+fmtFechaCorta(fNueva)+' queda a '+diasEntre(hoy, fNueva)+' días de hoy y a '+diasEntre(venta, fNueva)+' días de la venta ('+fmtFechaCorta(venta)+').';
+  var m=String(p.observaciones||'').match(FMOV_NOTA);
+  if(m) return 'Las observaciones dicen «'+m[1]+'».';
+  return '';
+}
+/* El día de volver a llamar: el día nuevo, dentro de lo que acepta la casilla de la 76 (`avisaFechaError`). */
+function fmovDiaLlamar(fNueva){
+  var tope=stockSumarDias(todayStr(), AVISA_MAX_DIAS);
+  return String(fNueva)>tope ? tope : String(fNueva);
+}
+/* La pregunta. true = el cliente todavía no sabe → «avisa cuándo». Cancelar recuerda la respuesta para ese día. */
+function fmovPreguntar(p, fNueva){
+  var por=fmovPorque(p, fNueva); if(!por) return false;
+  var fl=fmovDiaLlamar(fNueva);
+  var si=confirm('📅 ¿El cliente todavía no sabe el día?\n\n'+por+'\n\n'+
+    'Si todavía no eligió, no le pongas un día de relleno: el bot le manda esa fecha al cliente, a logística le llega el cambio y ocupa cupo del camión.\n\n'+
+    '• Aceptar: todavía no sabe → «📦 El cliente avisa cuándo» (sin día de entrega; volver a llamar el '+fmtFecha(fl)+').\n'+
+    '• Cancelar: ya eligió el '+fmtFecha(fNueva)+' → moverlo a ese día.');
+  if(!si) FMOV_YA[String(p.id)+'|'+String(fNueva)]=1;
+  return si;
+}
+/* 📅 Reprogramar dijo «todavía no sabe»: el pedido pasa a «avisa cuándo» como si se tildara la casilla en ✏️ Editar. */
+function fmovAvisaAplicar(p, fNueva){
+  var fl=fmovDiaLlamar(fNueva);
+  if(p.fecha && fmovPuede(p)) setFmov(p, fmovDe(p)+1);
+  setAvisa(p, fl);
+  p.fecha=''; p.turno=''; p.nroDia=0; p.vehiculo=''; p.chofer='';
+  return persistPedido(p, {});
 }
 function pintarModoTienda(){
   var view=document.getElementById('view-form');
@@ -22704,6 +22779,14 @@ function reproConfirmar(){
   var f=REPRO.fecha, t=REPRO.turno;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí la nueva fecha','err'); return; }
   if(f===p.fecha && t===normTurno(p.turno)){ toast('Es la misma fecha y el mismo turno','err'); return; }
+  /* 📅 (§4ok-96) ¿Otra fecha de relleno? Un toque lo pasa a «el cliente avisa cuándo». */
+  if(fmovPreguntar(p, f)){
+    var _fl=fmovDiaLlamar(f);
+    fmovAvisaAplicar(p, f);
+    toast('📦 Quedó «el cliente avisa cuándo»: sin día de entrega, no ocupa cupo y el bot no le escribe. Volver a llamar el '+fmtFecha(_fl)+'.','ok',7000);
+    reproVolver();
+    return;
+  }
   var avisos=reproAvisos(p,f,t);
   var _saleEnt=entregadoSeMueve(p, f);
   if(_saleEnt && !confirm(entregadoMueveTxt(p, f))) return;   // ✅ (16/10, §4lo)
@@ -22741,7 +22824,7 @@ function entregadoMueveTxt(p, f){
 function reproAplicar(p, f, t, forzar, extra){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
   if(entregadoSeMueve(p, f)) entregadoDeshacer(p);   // ✅ (16/10, §4lo) movido a otro día: no se entregó
-  if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
+  if(f!==p.fecha){ if(p.fecha && fmovPuede(p)) setFmov(p, fmovDe(p)+1); p.fecha=f; p.nroDia=nextNroDia(f); }   // 📅 (§4ok-96) una vez más que se mueve
   p.turno=t;
   atcSeguirViaje(p, _enDev);
   return persistPedido(p, Object.assign({forzar: !!forzar}, extra||{}));   // (14/10) `extra.adelanto`: ver adelantoAlSalir
