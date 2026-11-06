@@ -2651,7 +2651,11 @@ ARCE-JOSE CARLOS COPACABA», PDF con código, cantidad y precio). El PDF se abre
 módulo `email` + `pdftotext`. Se cargan como **Eduardo Añez**, igual que los suyos: Multicenter con cliente «MULTICENTER» (así cuenta como demanda,
 §4gm), la OC en «nota» y el precio de la OC; Copacaba a «TRANSPORTADORA ZONA BIMODAL», sin nota. OC y N° del día como `nextOcMes`/`nextNroDia`.
 Antes de cargar: que no esté la misma OC en «nota». El 06/11 se cargaron 11-048 (OC 33278) y 11-049 (Copacaba Potosí); la OC 33170 del 29/10 NO
-(«solo los de esta semana»). Nada automático todavía: espera que el dueño decida cómo.
+(«solo los de esta semana»). **ROHO** (dueño: *«añade también… los de roho de yessica yrojas@gruporoda.com y de [c]sejas@gruporoda.com»*): OC
+de 9 dígitos en PDF (Provider SKU = nuestro código; «ALMACEN DESTINO … TIENDA n»; «Fecha de entrega» impresa). Las carga Eduardo con cliente «Roho»,
+la OC en «nota», «Tienda N» al empezar «observaciones» y la dirección de la tienda (T1 «Banzer cuarto anillo» Norte · T2 «Virgen de cotoca 2do anillo»
+Este · T3 «Doble vía cuarto anillo» Sur). El 06/11: 11-050 (260012844, T1 entrega 2), 11-051 (260012920, T1, 13/11) y 11-052 (260012946, T2: la OC
+pedía el sábado 07/11 con la mañana llena —16 de 15—, quedó el lunes 09/11). Nada automático todavía: espera que el dueño decida cómo.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

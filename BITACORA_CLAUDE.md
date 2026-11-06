@@ -17313,6 +17313,12 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   **11-049** = Copacaba Potosí, 5 × CH1301 (el PDF dice «CH301») Bs 960 + 5 × CH1311 Bs 1.230 = Bs 10.950, transportadora Bimodal, martes 10/11
   AM (la fecha la puse con el plazo de fábrica: guardado a las 16:18, antes del corte), N° 2. Releídos: uno de cada uno. La OC 33170 no
   (semana pasada). El PDF: `get_message` RAW → el resultado grande queda en un archivo → `email` + `pdftotext`.
+  **ROHO** (dueño, después: *«añade tambien revisar tb los de roho de yessica yrojas@gruporoda.com y de chistofercsejas@gruporoda.com»*; la dirección
+  real es csejas@gruporoda.com, Christopher Sejas). De esta semana: OC 260012826/828/827 (03/11, ya cargadas por Eduardo como 11-015/014/013, cliente
+  «Roho», OC en «nota», «Tienda N»); la 260012826 se partió en E1 (20 CH1331 + 11 CH1332, = 11-015) y la **260012844** E2 (11 CH1332). Cargadas:
+  **11-050** = 260012844 T1, 10/11 AM (el correo decía «pendiente de coordinar», la OC 10/11); **11-051** = 260012920 T1 (Yessica 06/11), 13/11 AM,
+  Bs 7.450; **11-052** = 260012946 T2, la OC pedía el sábado 07/11 pero la mañana ya tenía 16 (cupo 15): lunes 09/11 AM, Bs 2.956. Releídos, sin OC
+  repetidas. Lo de Flavia Ordoñez (OC de los reportes de entregas) NO son pedidos: no se cargan.
 - 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
   planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta
   en el panel en noviembre tampoco → 0 de verdad. Maria: pasó 6 leads a Compradores el 03/11 entre 17:46 y 19:07, pero los 6 ya estaban cargados en
