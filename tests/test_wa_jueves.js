@@ -319,5 +319,62 @@ console.log('\n── 109. atc_recojo al guardarla y la víspera; atc_devolucion
       S.ctx.waAtcEsDev_({ fecha: '2026-11-10', productos: [{ atc: { pdev: '2026-11-17' } }] }) === false && S.ctx.waAtcEsDev_({ fecha: '2026-11-10', productos: [{}] }) === false);
 }
 
+// ══ 102. El vigía de leads ═════════════════════════════════════════════════════════════════════
+console.log('\n── 102. El vigía de leads: < 25 % de la semana pasada → alerta_leads al dueño, una vez; al volver, «volvieron» ──');
+{
+  const DU = Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007', KOMMO_TOKEN: 'k-de-mentira' });
+  const S = servidor(DU);
+  const seg = (txt) => Math.floor(Date.parse(txt.replace(' ', 'T') + ':00-04:00') / 1000);
+  /* Jueves 29/10 de 8 a 18: 2 leads por hora (20). Jueves 05/11: uno a las 8:30 y nada más. */
+  for (let h = 8; h < 18; h++) { S.kommo.leads.push({ id: 1000 + h * 2, created_at: seg('2026-10-29 ' + String(h).padStart(2, '0') + ':10') }); S.kommo.leads.push({ id: 1001 + h * 2, created_at: seg('2026-10-29 ' + String(h).padStart(2, '0') + ':40') }); }
+  S.kommo.leads.push({ id: 5000, created_at: seg('2026-11-05 08:30') });
+  poner('2026-11-05 07:50'); S.repaso();
+  chk('07:50: el vigía no mira (de 8 a 22)', S.kommo.llamadas.length === 0);
+  poner('2026-11-05 09:00'); S.repaso();
+  chk('09:00: cuenta las últimas 3 h y las mismas de hace 7 días (solo lee: GET /leads con filter[created_at])', S.kommo.llamadas.length === 2 && S.kommo.llamadas.every(u => /\/api\/v4\/leads\?limit=250&page=1&filter\[created_at\]\[from\]=\d+&filter\[created_at\]\[to\]=\d+$/.test(u)), S.kommo.llamadas);
+  const est = JSON.parse(S.P.WA_LEADS);
+  chk('…a las 09:00: 1 ahora contra 2 la semana pasada (menos de 8: no alcanza para alertar)', est.n === 1 && est.n7 === 2 && !est.alerta && S.salen('alerta_leads').length === 0, est);
+  S.limpiar(); poner('2026-11-05 09:30'); S.repaso();
+  chk('09:30: no vuelve a contar (una vez por hora)', S.kommo.llamadas.length === 0);
+  poner('2026-11-05 11:02'); S.repaso();
+  const s = S.salen('alerta_leads');
+  chk('11:02: 1 contra 6 → la semana pasada fueron menos de 8: nada', s.length === 0 && JSON.parse(S.P.WA_LEADS).n7 === 6, S.P.WA_LEADS);
+  poner('2026-11-05 13:05'); S.repaso();
+  const s2 = S.salen('alerta_leads');
+  chk('13:05: 0 contra 6 (de 10:05 a 13:05)… sigue sin alcanzar', s2.length === 0, S.P.WA_LEADS);
+  /* Más leads la semana pasada al mediodía. */
+  for (let i = 0; i < 6; i++) S.kommo.leads.push({ id: 6000 + i, created_at: seg('2026-10-29 14:0' + i) });
+  poner('2026-11-05 15:00'); S.repaso();
+  const a = S.salen('alerta_leads');
+  chk('15:00: 0 contra 12 (≥ 8 y menos del 25 %) → alerta_leads a WA_DUENO', a.length === 1 && a[0].to === '59177000007', S.salen());
+  chk('…«de 12:00 a 15:00 · 0 leads · jueves 29/10 · 12 leads»', a[0] && a[0].p.join(' | ') === 'de 12:00 a 15:00 | 0 leads | jueves 29/10 | 12 leads', a[0] && a[0].p);
+  chk('…ni a logística ni a Ernesto/Alba', !S.salen().some(x => x.pl === 'alerta_leads' && x.to !== '59177000007'));
+  S.limpiar(); poner('2026-11-05 16:00'); S.repaso();
+  chk('16:00: sigue sin entrar, pero la alerta no se repite', S.salen('alerta_leads').length === 0 && !!JSON.parse(S.P.WA_LEADS).alerta);
+  /* Vuelven: 5 leads entre las 16 y las 17. */
+  for (let i = 0; i < 5; i++) S.kommo.leads.push({ id: 7000 + i, created_at: seg('2026-11-05 16:1' + i) });
+  poner('2026-11-05 17:01'); S.repaso();
+  const v = S.salen('alerta_leads_volvieron');
+  chk('17:01: 5 contra 12 (más del 25 %) → alerta_leads_volvieron, una vez', v.length === 1 && v[0].p[1] === '5 leads' && !JSON.parse(S.P.WA_LEADS).alerta, S.salen());
+  S.limpiar(); poner('2026-11-05 18:02'); S.repaso();
+  chk('18:02: no se repite', S.salen('alerta_leads_volvieron').length === 0 && S.salen('alerta_leads').length === 0);
+  chk('WA_LEADS no guarda nombres ni números de nadie', !/591|Eduardo/.test(S.P.WA_LEADS), S.P.WA_LEADS);
+}
+{
+  const S = servidor(Object.assign({}, ON, { KOMMO_TOKEN: 'k' }));
+  poner('2026-11-05 15:00'); S.repaso();
+  chk('sin WA_DUENO: ni le pregunta a Kommo', S.kommo.llamadas.length === 0 && !S.P.WA_LEADS);
+  const S2 = servidor(Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007', KOMMO_TOKEN: 'k' }));
+  S2.kommo.falla = true; poner('2026-11-05 15:00'); S2.repaso();
+  chk('Kommo no contesta: no manda nada y lo deja anotado', S2.salen('alerta_leads').length === 0 && /Kommo no contestó/.test(JSON.parse(S2.P.WA_LEADS).err || ''), S2.P.WA_LEADS);
+  const S3 = servidor(Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007' }));
+  poner('2026-11-05 15:00'); S3.repaso();
+  chk('sin KOMMO_TOKEN: no manda nada', S3.salen('alerta_leads').length === 0 && S3.kommo.llamadas.length === 0);
+  const S4 = servidor(Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007', KOMMO_TOKEN: 'k' }));
+  for (let i = 0; i < 600; i++) S4.kommo.leads.push({ id: i, created_at: Math.floor(Date.parse('2026-10-29T13:00:00-04:00') / 1000) + i });
+  poner('2026-11-05 15:00'); S4.repaso();
+  chk('más de 250 leads: pasa de página (250 + 250 + 100 = 600)', JSON.parse(S4.P.WA_LEADS).n7 === 600 && S4.kommo.llamadas.filter(u => /page=3/.test(u)).length === 1, S4.P.WA_LEADS);
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

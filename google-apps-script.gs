@@ -3037,7 +3037,10 @@ var WA_TIPOS = {
      DEVOLUCIÓN (al programarla). Sin productos ni saldo. `no:'atc'` = `waNoClienteAtc_`. */
   atc: { plantilla:'atc_recojo', txt:'ATC: recojo', cli:true, no:'atc' },
   atcv:{ plantilla:'atc_recojo', txt:'ATC: recojo (víspera)', cli:true, no:'atc' },
-  atd: { plantilla:'atc_devolucion', txt:'ATC: devolución', cli:true, no:'atc' }
+  atd: { plantilla:'atc_devolucion', txt:'ATC: devolución', cli:true, no:'atc' },
+  /* 📉 §4ok-102 (2026-11-05-a) Al dueño (WA_DUENO): casi no entran leads a Kommo, y cuando vuelven a entrar. */
+  al:  { plantilla:'alerta_leads', txt:'Dueño: casi no entran leads' },
+  alv: { plantilla:'alerta_leads_volvieron', txt:'Dueño: volvieron a entrar leads' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -3180,6 +3183,8 @@ function waConfig_() {
   c.avisos = []; c.malAv = [];
   leer('WA_AVISOS', c.avisos, c.malAv);        // 📥✅ (2026-10-29-a) opcional: si no está, el Excel y el cierre van a los de WA_PEDIR_HOY
   c.avisosLog = c.avisos.length ? c.avisos : c.pedirHoy;
+  c.dueno = []; c.malDu = [];
+  leer('WA_DUENO', c.dueno, c.malDu);          // 📉🏭 §4ok-102/105 (2026-11-05-a) opcional: el vigía de leads y el reclamo a la fábrica
   c.ok = !!(c.token && c.phone);
   return c;
 }
@@ -3352,6 +3357,65 @@ function waNoClienteAtc_(p, hoy) {
 function waAtcCuando_(p, B) {
   var f = String(p.fecha), cu = waCuandoTxt_(p);
   return f === B.hoy ? 'hoy, ' + cu : (f === waMasDias_(B.hoy, 1) ? 'mañana, ' + cu : 'el ' + cu);
+}
+
+/* ============================================================================
+ * 📉 §4ok-102 (2026-11-05-a) EL VIGÍA DE LEADS. Desde la tarde del 31/10 casi no entraban leads a Kommo (antes 71-123 por día; el
+ * 01/11, 3; el 02/11, 1 hasta las 18:30). El dashboard lo pintaba en ámbar y nadie se enteró.
+ *   · Una vez por hora (`waRepaso` corre cada 5 minutos y el vigía mira si pasó la hora: no hace falta otro disparador), de las 8:00 a
+ *     las 22:59 de Bolivia, cualquier día: cuenta en Kommo (`kGet_`, solo lee) los leads creados en las últimas WA_LEADS_VENTANA_H
+ *     horas y en las MISMAS horas de 7 días antes.
+ *   · Si ahora entró menos del WA_LEADS_UMBRAL (25 %) de lo de la semana pasada, y la semana pasada fueron al menos WA_LEADS_MIN (8):
+ *     `alerta_leads` a WA_DUENO, UNA vez (WA_LEADS.alerta), hasta que vuelvan.
+ *   · Vuelven cuando ya no se cumple lo de arriba y entraron al menos WA_LEADS_VUELVEN (2): `alerta_leads_volvieron`, una vez.
+ *   · Sin WA_DUENO (o sin KOMMO_TOKEN, o si Kommo no contesta) no hace nada; lo último que contó queda en WA_LEADS (sin nombres).
+ * ========================================================================== */
+var WA_LEADS_DESDE = 8, WA_LEADS_HASTA = 23;       // de las 8:00 a las 22:59 de Bolivia
+var WA_LEADS_VENTANA_H = 3, WA_LEADS_UMBRAL = 0.25, WA_LEADS_MIN = 8, WA_LEADS_VUELVEN = 2;
+var WA_LEADS_CADA_MS = 55 * 60000;                 // «cada hora» (con el repaso de 5 minutos, sale entre los 55 y los 60)
+var WA_LEADS_PAGINAS = 8;                          // de a 250: hasta 2.000 leads en 3 horas
+/** Cuántos leads se crearon en Kommo entre dos momentos (ms). null si Kommo no contesta. */
+function waLeadsContar_(desde, hasta) {
+  var n = 0, de = Math.floor(desde / 1000), a = Math.floor(hasta / 1000);
+  for (var pg = 1; pg <= WA_LEADS_PAGINAS; pg++) {
+    var o = kGet_('/leads?limit=250&page=' + pg + '&filter[created_at][from]=' + de + '&filter[created_at][to]=' + a);
+    if (o == null) return null;
+    var L = kEmb_(o, 'leads'); n += L.length;
+    if (L.length < 250) break;
+  }
+  return n;
+}
+function waLeadsGuardar_(st) { try { PropertiesService.getScriptProperties().setProperty('WA_LEADS', JSON.stringify(st)); } catch (e) {} }
+/** Lo llama el repaso (afuera del candado): [] o los mensajes al dueño. */
+function waLeadsVigia_(cfg, B, t0) {
+  if (!cfg.dueno || !cfg.dueno.length) return [];
+  if (B.hora < WA_LEADS_DESDE || B.hora >= WA_LEADS_HASTA) return [];
+  var st = waJsonProp_('WA_LEADS', {}) || {};
+  if (t0 - (Number(st.ts) || 0) < WA_LEADS_CADA_MS) return [];
+  st.ts = t0; waLeadsGuardar_(st);                 // primero: otra vuelta que arranque mientras tanto no cuenta de nuevo
+  var V = WA_LEADS_VENTANA_H * 3600000, S7 = 7 * 86400000;
+  var ahora = waLeadsContar_(t0 - V, t0), antes = ahora == null ? null : waLeadsContar_(t0 - S7 - V, t0 - S7);
+  if (ahora == null || antes == null) { st.err = 'Kommo no contestó (o falta KOMMO_TOKEN)'; waLeadsGuardar_(st); return []; }
+  st.n = ahora; st.n7 = antes; delete st.err;
+  var cae = antes >= WA_LEADS_MIN && ahora < WA_LEADS_UMBRAL * antes, k = '';
+  if (cae && !st.alerta) { st.alerta = t0; k = 'al'; }
+  else if (st.alerta && !cae && ahora >= WA_LEADS_VUELVEN) { delete st.alerta; st.volvio = t0; k = 'alv'; }
+  waLeadsGuardar_(st);
+  if (!k) return [];
+  return cfg.dueno.map(function (L) { return { k:k, a:L.nombre, dia:B.hoy, n:0, ld:{ t:t0, n:ahora, n7:antes } }; });
+}
+/** Los datos de `alerta_leads` / `alerta_leads_volvieron`: las horas, cuántos ahora, el día de hace una semana, cuántos entonces. */
+function waLeadsParams_(ld) {
+  var V = WA_LEADS_VENTANA_H * 3600000, h = function (ms) { return waBo_(ms).txt.slice(6); };
+  var cu = function (n) { n = Number(n) || 0; return n === 1 ? '1 lead' : n + ' leads'; };
+  return ['de ' + h(ld.t - V) + ' a ' + h(ld.t), cu(ld.n), waDiaTxt_(waBo_(ld.t - 7 * 86400000).hoy), cu(ld.n7)];
+}
+/** ▶ Desde el editor: cuenta lo de las últimas 3 horas y lo de hace una semana, SIN mandar nada ni tocar WA_LEADS. */
+function probarVigiaLeads() {
+  var t0 = Date.now(), V = WA_LEADS_VENTANA_H * 3600000, S7 = 7 * 86400000;
+  var r = { ahora:waLeadsContar_(t0 - V, t0), semanaPasada:waLeadsContar_(t0 - S7 - V, t0 - S7), dueno:waConfig_().dueno.map(function (L) { return L.nombre; }), estado:waJsonProp_('WA_LEADS', null) };
+  if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(r, null, 2));
+  return r;
 }
 
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
@@ -3628,10 +3692,10 @@ function waArmar_(m, recs, cfg, B) {
     out.para = String(p.cliente || 'cliente'); out.numero = waCel_(p.celular);
   } else {
     /* 🏭 (2026-10-27-a) «pedir hoy» va a los de WA_PEDIR_HOY; 📥✅ (2026-10-29-a) el Excel y el cierre, a los de WA_AVISOS (o WA_PEDIR_HOY). */
-    var av = m.k === 'ex' || m.k === 'ci';
-    var aQuien = m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : cfg.logistica);
+    var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv';   // 📉 §4ok-102 al dueño
+    var aQuien = m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : (du ? cfg.dueno : cfg.logistica));
     var L = null; for (var i = 0; i < aQuien.length; i++) if (aQuien[i].nombre === m.a) L = aQuien[i];
-    if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : 'WA_LOGISTICA')), anotar:true };
+    if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : (du ? 'WA_DUENO' : 'WA_LOGISTICA'))), anotar:true };
     out.para = L.nombre; out.numero = L.cel;
     if (p && !waEsEntrega_(p)) return { saltar:'ya no es una entrega pendiente', anotar:false, p:p };
     if (p && String(p.fecha) < B.hoy) return { saltar:'la fecha de entrega ya pasó', anotar:false, p:p };   // una venta cargada de atrás
@@ -3680,6 +3744,10 @@ function waArmar_(m, recs, cfg, B) {
     var urg = waPhUrgentes_(lis, B);
     if (!urg.length) return { saltar:'no queda nada sin revisar ni sin pedir para estos días', anotar:false };
     out.params = waPhParams_(urg, B);
+  } else if (m.k === 'al' || m.k === 'alv') {
+    /* 📉 §4ok-102 Lo que contó el vigía en ESE momento (un reintento de minutos después dice lo mismo). */
+    var ld = m.ld || {}; if (!ld.t) return { saltar:'sin datos del vigía', anotar:true };
+    out.params = waLeadsParams_(ld);
   } else if (m.k === 'ex' || m.k === 'ci') {
     /* 📥✅ (2026-10-29-a) Con la planilla de AHORA: un reintento de otro día no dice la verdad, y si ya está hecho, no sale. */
     if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
@@ -3824,6 +3892,8 @@ function waRepasoBot_() {
     if (recs) return recs;
     recs = {}; readAll().forEach(function (p) { recs[p.id] = p; }); return recs;
   };
+  /* 📉 §4ok-102 El vigía de leads: una vez por hora de 8 a 22, AFUERA del candado (le pregunta a Kommo). */
+  try { waLeadsVigia_(cfg, B, t0).forEach(function (m) { msgs.push(m); }); } catch (eV) {}
   confHoy = waJsonProp_('WA_CONF_HOY', {}); if (confHoy.d !== B.hoy) confHoy = { d:B.hoy, ids:[] };
   if (recDia) {
     var ya = waJsonProp_('WA_REC', {}); if (ya.f === recDia) (ya.ids || []).forEach(function (id) { recYa[id] = 1; });
@@ -4706,6 +4776,13 @@ var WA_PLANTILLAS = [
   { n:'atc_devolucion',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu servicio técnico *{{3}}* 🛠️\n\n✅ Tu producto ya está listo: te lo llevamos *{{4}}*.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
     e:['Juan', 'Heaven Colchones', 'ATC 11-012', 'el martes 17/11 por la tarde', '14:30 y las 18:30', 'Carola 👉 https://wa.me/59170000000'] },
+  /* 📉 §4ok-102 (2026-11-05-a) Al dueño. Mismos datos y orden que `waLeadsParams_` (las dos). */
+  { n:'alerta_leads',
+    t:'🤖 📉 *Casi no están entrando leads a Kommo*\n\nEn las últimas 3 horas ({{1}}) entraron *{{2}}*. El {{3}}, a la misma hora, habían entrado *{{4}}*.\n\n👉 Mirá si las campañas de Meta siguen andando y si el WhatsApp sigue conectado a Kommo. Te aviso cuando vuelvan a entrar.',
+    e:['de 11:00 a 14:00', '1 lead', 'jueves 29/10', '23 leads'] },
+  { n:'alerta_leads_volvieron',
+    t:'🤖 📈 *Volvieron a entrar leads a Kommo*\n\nEn las últimas 3 horas ({{1}}) entraron *{{2}}*. El {{3}}, a la misma hora, habían entrado *{{4}}*.\n\n✅ No hace falta hacer nada.',
+    e:['de 15:00 a 18:00', '19 leads', 'jueves 29/10', '23 leads'] },
   { n:'pedido_en_camino',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'martes 14/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] }
