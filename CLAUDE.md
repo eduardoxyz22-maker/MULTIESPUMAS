@@ -2555,12 +2555,14 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **112** un camino nuevo que registre efectivo recalcula el chofer con la fecha del pago (`ctaChoferSugerido`) salvo `rEleg`, y pregunta con
   `ctaChoferCruce`; un efectivo ya registrado nunca cambia de mano solo.
 - **91** escrituras a Kommo por `kPedir_` FUERA del candado; etapa y campos con `kcMeta_`, nunca a mano; un camino nuevo que cree borradores
-  respeta `kcPropios_()`; la página llama a `kommoCierre` solo con servidor ≥ `KC_SERVIDOR`; `KC_INTERNOS` = `WA_INTERNOS` = `CONTA_INTERNOS`.
+  respeta `kcPropios_()`; la página llama a `kommoCierre` solo con servidor ≥ `KC_SERVIDOR`; `KC_INTERNOS` = `CONTA_INTERNOS`.
   APAGADO salvo la propiedad `KOMMO_CIERRE=1` (antes, `probarKommoEscribe` desde el editor).
-- **Bot**: 97 `logistica_hoy_falta` 08:45 (la de las 16:00 ya no sale) · 100 `pago_recibido` · 102 vigía de leads en `waRepaso` → `WA_DUENO`
+- **Bot**: 97 `logistica_hoy_falta` 08:45 (la de las 16:00 ya no sale) · 102 vigía de leads en `waRepaso` → `WA_DUENO`
   (propiedad nueva) · 105 `__reclamo_fab__` (en `esFilaSistema`; Playwright solo `RECLAMO_FAB_PRUEBA`) → `reclamo_fabrica` 10:00 · 108 la
-  ubicación del cliente = `&wa=1` (`esUbicWa`), «Bot WhatsApp» tiene 17 columnas (Q = ubicación) · 109 `atc_recojo`/`atc_devolucion`.
-  Una plantilla puede llevar `a.viejos`/`a.alts` para el respaldo. 9 plantillas nuevas (bitácora §4ok).
+  ubicación del cliente = `&wa=1` (`esUbicWa`), «Bot WhatsApp» tiene 17 columnas (Q = ubicación).
+  Una plantilla puede llevar `a.viejos`/`a.alts` para el respaldo. 6 plantillas nuevas (bitácora §4ok).
+  🚫 **100 (`pago_recibido`) y 109 (`atc_recojo`/`atc_devolucion`) se SACARON** (dueño, 06/11: *«esta no la quiero»*): un pago nuevo y una ATC no
+  le mandan nada al cliente, como antes. No volver a ponerlos sin que lo pida.
 
 ## 📊 MoM B en Proyección + 🎨 arriba del pedido (§4nj, 27/10; PUBLICADO `4c7af2b`; dueño: «C ok, publica las dos»; dueño: «falta el mom en unidades y monto», eligió la B)
 Tocar un vendedor (o Enter) abre debajo su tablita: el mes de comparación a esta altura (o entero), este mes, diferencia y % en ventas, unidades

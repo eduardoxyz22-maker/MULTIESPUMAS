@@ -426,13 +426,13 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const S = servidor(Object.assign({}, ON, { WA_WABA_ID: '2901139558521747' }));
   const T = S.ctx.WA_PLANTILLAS, tipos = S.ctx.WA_TIPOS;
   const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
-  /* §4ok-E (05/11) + las del jueves: logistica_hoy_falta (en vez de logistica_sin_camion_v2), pago_recibido, atc_recojo, atc_devolucion,
+  /* §4ok-E (05/11) + las del jueves: logistica_hoy_falta (en vez de logistica_sin_camion_v2),
      alerta_leads, alerta_leads_volvieron, reclamo_fabrica y las «_ubic» de confirmación y recordatorio (`ubic` en WA_TIPOS). */
   const nombresU = nombres.concat(Object.keys(tipos).map(k => tipos[k].ubic).filter(Boolean)).filter((n, i, a) => a.indexOf(n) === i).sort();
   chk('son las de WA_TIPOS (y sus «_ubic»), con el mismo nombre, sin repetir', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombresU), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
   const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
-                     pago_recibido: 7, atc_recojo: 6, atc_devolucion: 6, alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5,
+                     alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5,
                      confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
