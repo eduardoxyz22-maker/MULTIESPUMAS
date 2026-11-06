@@ -525,6 +525,13 @@ function probarAntesDeImplementar() {
     }
   } catch (e) { ojo('No pude mirar el respaldo de la planilla: ' + motivo(e)); }
 
+  /* §4ok-F (§4ok-91) El cierre de la venta en Kommo: apagado salvo KOMMO_CIERRE = 1. Informa, no frena (no le pregunta nada a Kommo:
+     eso lo hace «probarKommoEscribe», que hay que correr ANTES de prenderlo). */
+  try {
+    if (kcActivo_()) bien('El cierre de las ventas en Kommo está PRENDIDO (KOMMO_CIERRE = 1): cada venta del panel pasa su lead a «Compradores».');
+    else bien('El cierre de las ventas en Kommo está apagado. Para prenderlo: ejecutá «probarKommoEscribe»; si dice ✅, poné la propiedad KOMMO_CIERRE = 1.');
+  } catch (e) { ojo('No pude mirar el cierre de Kommo: ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
@@ -1395,6 +1402,9 @@ function doPostCuerpo_(e) {
   if (action === 'compsCarpeta') return compsCarpeta_(body);
   /* 🤖 (2026-10-26-a) Claude lee las fotos de los comprobantes. Sin candado: no toca «Pedidos» (anota en su hoja aparte). */
   if (action === 'iaComprobantes') return iaComprobantes_(body);
+  /* 📥 §4ok-91 La venta del panel cierra su lead en Kommo. Sin candado: habla con Kommo (§4dt); toma el candado un instante solo para
+     escribir la marca `klead` en la fila (kcCierre_). Apagado salvo KOMMO_CIERRE = 1. */
+  if (action === 'kommoCierre') return jsonOut(kcCierre_(body));
   /* 📖 LEER NO NECESITA CANDADO (§4dt).
      `readAll()` es UN solo `getDataRange().getValues()`: una foto de la planilla en un
      instante, no una lectura fila por fila que se pueda mezclar con un guardado a medias.
@@ -4968,7 +4978,9 @@ function kommoProcesarObj_(ids, origen) {
   /* 📸 (2026-10-29-b) La planilla y los descartados se leen UNA vez para todos los leads (antes, por cada uno). */
   var shPre = getSheet(), snap = kSnapshot_(shPre, true), listos = [], saltados = [], reparar = [];
   var desc = kDescartadosLeer_(), hoyD = kDiaHoy_();
+  var propios = kcPropios_();   // 📥 §4ok-91 los leads que cerró el panel: ya son una venta cargada (aunque la marca `klead` todavía no esté)
   for (var j = 0; j < ids.length; j++) {
+    if (propios[ids[j]] && !snap.cargados[ids[j]]) { saltados.push(ids[j] + ':cerrado desde el panel'); continue; }
     if (snap.cargados[ids[j]]) {
       saltados.push(ids[j] + ':ya estaba');
       /* Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
@@ -5000,8 +5012,10 @@ function kommoProcesarObj_(ids, origen) {
     /* ⚠️ La garantía de «no duplicar», ADENTRO y con la hoja releída AHORA (pudo entrar otro aviso con el mismo lead mientras
        se armaba el borrador). 📸 (2026-10-29-b) Una lectura para todos, y cada fila recién escrita se suma al conjunto. */
     var ya = listos.length ? kSnapshot_(sh, false).cargados : {};
+    var propiosY = listos.length ? kcPropios_() : {};      // 📥 §4ok-91 releído adentro: el panel pudo cerrar el lead mientras tanto
     for (var i = 0; i < listos.length; i++) {
       if (ya[listos[i].id]) { saltados.push(listos[i].id + ':ya estaba'); continue; }
+      if (propiosY[listos[i].id]) { saltados.push(listos[i].id + ':cerrado desde el panel'); continue; }
       listos[i].rec.rev = Date.now();          // (2026-09-30-a) nace sellado: si no, la lectura de lo cambiado no lo ve (§4he)
       sh.appendRow(recToRow(listos[i].rec));
       ya[listos[i].id] = 1;
@@ -5158,6 +5172,357 @@ function probarSnapshotKommo() {
   if (typeof Logger !== 'undefined') Logger.log(msg);
   return msg;
 }
+/* ============================================================================
+ * 📥 §4ok-91 LA VENTA DEL PANEL CIERRA SU LEAD EN KOMMO (dueño, 02/11: «Me encanta todo»)
+ *
+ * Las vendedoras cargaban cada venta dos veces: en el panel y en Kommo (octubre: 146 leads creados a mano y 123 pasados a mano a
+ * «Compradores»; Kommo 123 ventas contra 144 del panel). Ahora, con la venta YA guardada, la página pide `kommoCierre` y acá:
+ *   · se busca el lead ABIERTO de esa vendedora con el mismo celular (los últimos 8 números) y se pasa a «Compradores» con
+ *     `price` = el total de la venta (lo manda la página: `ventaTotal`, una sola cuenta), «Fecha contrato» = el día de la venta y una
+ *     nota con la OC;
+ *   · con dudas (dos leads, ninguno, o sin celular) NO se hace nada solo: se devuelven los últimos leads abiertos de ella para que
+ *     toque cuál es (`lead`); si dice que el cliente vino a la tienda (`crear`), se crea el lead ya en «Compradores» con canal
+ *     «Visita tienda» (con el contacto que ya tenga ese celular, si hay);
+ *   · la fila queda con la marca `klead` (la misma de «Sí, es la misma»: la reconocen la 81 y el cierre comercial).
+ * Reglas:
+ *   · Fuera del candado (§4dt): todo lo que habla con Kommo. El candado se toma un instante, solo para escribir `klead` en la columna
+ *     del JSON de productos (kcMarcar_), sin cambiar el sello (como repararNombreAplicar_) y anotado para la lectura de lo cambiado.
+ *   · Los ids de la etapa y de los campos se LEEN de Kommo (kcMeta_: el embudo KOMMO_EMBUDO, la etapa llamada «Compradores», el
+ *     campo de fecha con «contrato» en el nombre —la misma regla de generar.py— y «Canal»), seis horas en la caché.
+ *   · No duplicar un borrador: el aviso de Kommo de «Compradores» llega por este mismo cambio. La marca se pone ANTES de tocar Kommo
+ *     (y, para un lead nuevo, apenas Kommo contesta) en KOMMO_CIERRE_HECHO ({pedido: {l: lead, t: total, ts, ok}}), y
+ *     kommoProcesarObj_ saltea esos leads («cerrado desde el panel»), afuera y adentro del candado.
+ *   · Idempotente: la misma venta con el mismo total → `ya`; con otro total → solo el precio (`precio`); Kommo no se toca si la venta
+ *     se edita y no cambió el total (la página ni lo pide). Un lead ya unido a OTRA venta del panel no se usa; uno que espera como
+ *     borrador en la bandeja sí (es la misma venta: la 81 la reconoce por el lead).
+ *   · Afuera: ATC, RPT, ventas de tienda, Eduardo, ROHO, pedidos internos (= CONTA_INTERNOS), borradores y filas del sistema.
+ *   · APAGADO salvo la propiedad KOMMO_CIERRE = 1. Antes de prenderlo: ▶️ probarKommoEscribe (el token tiene que dejar escribir).
+ * ========================================================================== */
+var KC_PROP = 'KOMMO_CIERRE_HECHO', KC_TOPE = 120, KC_TOPE_LETRAS = 8000, KC_META_SEG = 21600, KC_CURSO_SEG = 90, KC_ULTIMOS = 12;
+var KC_CERRADOS = { '142':1, '143':1 };     // las etapas fijas de Kommo: «Logrado con éxito» y «Venta perdida»
+var KC_INTERNOS = ['ALBA', 'FABRICA', 'MULTIESPUMA', 'MULTIESPUMAS', 'MORENO', 'ALZER', 'REPOSICION DE ALMACEN'];   // = CONTA_INTERNOS de la página
+function kcActivo_() { return String(kProp_('KOMMO_CIERRE') || '') === '1'; }
+function kcNorm_(t) { return waNorm_(t).replace(/ñ/g, 'n'); }
+function kcCel8_(t) { var d = String(t == null ? '' : t).replace(/\D/g, ''); return d.length >= 7 ? d.slice(-8) : ''; }   // = telClave de la página
+function kcMin_() { return Math.floor(Date.now() / 60000); }
+/** Una llamada a la API de Kommo con su código: {code, o}. code 0 = no hubo respuesta. Nunca revienta. */
+function kPedir_(metodo, path, cuerpo) {
+  var tok = kProp_('KOMMO_TOKEN');
+  if (!tok) return { code:0, o:null, sinToken:true };
+  var op = { method:metodo, muteHttpExceptions:true, headers:{ Authorization:'Bearer ' + tok } };
+  if (cuerpo != null) { op.contentType = 'application/json'; op.payload = JSON.stringify(cuerpo); }
+  try {
+    var r = UrlFetchApp.fetch('https://' + kProp_('KOMMO_SUBDOMAIN', 'eanez') + '.kommo.com/api/v4' + path, op), code = r.getResponseCode(), o = null;
+    try { o = JSON.parse(r.getContentText() || 'null'); } catch (e) { o = null; }
+    return { code:code, o:o };
+  } catch (err) { return { code:0, o:null }; }
+}
+/* El registro de lo que cerró el panel (Propiedades: aguanta 9 KB). */
+function kcHechoLeer_() {
+  try { var o = JSON.parse(prop_(KC_PROP) || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; } catch (e) { return {}; }
+}
+function kcHechoPoner_(id, x) {
+  try {
+    var o = kcHechoLeer_();
+    if (x) o[String(id)] = x; else delete o[String(id)];
+    var ks = Object.keys(o).sort(function (a, b) { return (Number(o[a] && o[a].ts) || 0) - (Number(o[b] && o[b].ts) || 0); });
+    while (ks.length > KC_TOPE || (ks.length > 1 && JSON.stringify(o).length > KC_TOPE_LETRAS)) delete o[ks.shift()];
+    PropertiesService.getScriptProperties().setProperty(KC_PROP, JSON.stringify(o));
+  } catch (e) {}
+}
+/** {lead: 1} de los leads que cerró (o está cerrando) el panel. */
+function kcPropios_() { var o = kcHechoLeer_(), out = {}; for (var k in o) if (o[k] && o[k].l) out[String(o[k].l)] = 1; return out; }
+/** '' = es una venta que cierra un lead; si no, por qué no. */
+function kcNoEs_(rec) {
+  var id = String((rec && rec.id) || '');
+  if (!id || id.indexOf('__') === 0) return 'fila del sistema';
+  if (String(rec.estado || '') === BORRADOR_EST) return 'borrador de Kommo';
+  if (/^(ATC|RPT)\b/i.test(String(rec.oc || '').trim())) return 'ATC o RPT';
+  if (waNorm_(rec.direccion).indexOf('salio de tienda') === 0 || waNorm_(rec.zona) === 'tienda') return 'venta de tienda';
+  var v = kcNorm_(rec.vendedor);
+  if (!v) return 'sin vendedora';
+  if (v.indexOf('eduardo') >= 0) return 'venta de Eduardo';
+  if (v.indexOf('roho') >= 0) return 'pedido de ROHO';
+  var V = ' ' + v.toUpperCase() + ' ';
+  for (var i = 0; i < KC_INTERNOS.length; i++) if (V.indexOf(' ' + KC_INTERNOS[i] + ' ') >= 0) return 'pedido interno';
+  return '';
+}
+function kcKleadDe_(rec) { var a = (rec && rec.productos) || []; for (var i = 0; i < a.length; i++) if (a[i] && a[i].klead) return String(a[i].klead); return ''; }
+function kcFila_(sh, id) {
+  var last = sh.getLastRow();
+  if (last < 2) return null;
+  var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return { fila:i + 2, rec:rowToRec_(sh.getRange(i + 2, 1, 1, HEADERS.length).getValues()[0]) };
+  return null;
+}
+/** Lo que hay que saber de Kommo para escribir, leído de Kommo (no a mano). {error} si falta algo: entonces no se escribe nada. */
+function kcMeta_(fresco) {
+  var cache = null; try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
+  if (!fresco && cache) { try { var c = cache.get('kc_meta'); if (c) return JSON.parse(c); } catch (e) {} }
+  var embudo = String(kProp_('KOMMO_EMBUDO', KOMMO_EMBUDO_DEFAULT));
+  var p = kPedir_('get', '/leads/pipelines');
+  if (p.code !== 200 || !p.o) return { error:'no pude leer los embudos de Kommo (HTTP ' + p.code + ')', code:p.code };
+  var ps = kEmb_(p.o, 'pipelines'), pip = null, i;
+  for (i = 0; i < ps.length; i++) if (String(ps[i].id) === embudo) pip = ps[i];
+  if (!pip) return { error:'no encontré el embudo ' + embudo + ' en Kommo' };
+  var m = { embudo:String(pip.id), embudoNombre:String(pip.name || ''), etapa:'', etapas:{}, fc:'', fcTipo:'', canal:'', canalTienda:'', usuarios:{} };
+  kEmb_(pip, 'statuses').forEach(function (s) { m.etapas[String(s.id)] = String(s.name || ''); if (!m.etapa && kcNorm_(s.name) === 'compradores') m.etapa = String(s.id); });
+  if (!m.etapa) return { error:'no encontré la etapa «Compradores» en el embudo «' + (pip.name || embudo) + '»' };
+  for (var pg = 1; pg <= 4; pg++) {
+    var cf = kPedir_('get', '/leads/custom_fields?limit=250&page=' + pg);
+    if (cf.code === 204) break;
+    if (cf.code !== 200 || !cf.o) { if (pg === 1) return { error:'no pude leer los campos de los leads (HTTP ' + cf.code + ')', code:cf.code }; break; }
+    var lista = kEmb_(cf.o, 'custom_fields');
+    lista.forEach(function (f) {
+      var n = kcNorm_(f.name);
+      if (!m.fc && /contrato/.test(n + ' ' + kcNorm_(f.code)) && (f.type === 'date' || f.type === 'date_time')) { m.fc = String(f.id); m.fcTipo = String(f.type); }
+      if (!m.canal && n === 'canal') {
+        m.canal = String(f.id);
+        (f.enums || []).forEach(function (e) { if (!m.canalTienda && /tienda|visita/.test(kcNorm_(e.value))) m.canalTienda = String(e.id); });
+      }
+    });
+    if (lista.length < 250 || !(cf.o._links && cf.o._links.next)) break;
+  }
+  if (!m.fc) return { error:'no encontré el campo «Fecha contrato» (tipo fecha) de los leads' };
+  var us = kPedir_('get', '/users?limit=250');
+  if (us.code !== 200 || !us.o) return { error:'no pude leer los usuarios de Kommo (HTTP ' + us.code + ')', code:us.code };
+  kEmb_(us.o, 'users').forEach(function (u) { var nom = kcNorm_(String(u.name || '').split(/\s+[-–]\s+/)[0]); if (nom) m.usuarios[nom] = String(u.id); });
+  if (cache) { try { cache.put('kc_meta', JSON.stringify(m), KC_META_SEG); } catch (e) {} }
+  return m;
+}
+/** El usuario de Kommo de la vendedora del panel («Maria Flores» = «Maria Flores - Buenos Aires»). '' si no está o hay dos. */
+function kcUsuario_(m, vend) {
+  var v = kcNorm_(vend);
+  if (!v) return '';
+  if (m.usuarios[v]) return m.usuarios[v];
+  var pal = v.split(' ').filter(function (x) { return x.length > 1; }), hit = '';
+  for (var nom in m.usuarios) {
+    var ws = nom.split(' ');
+    if (pal.length && pal.every(function (w) { return ws.indexOf(w) >= 0; })) { if (hit && hit !== m.usuarios[nom]) return ''; hit = m.usuarios[nom]; }
+  }
+  return hit;
+}
+/** Los teléfonos de un contacto (el campo PHONE de Kommo, o el «Teléfono» del negocio). */
+function kcTels_(c) {
+  var out = [];
+  ((c && c.custom_fields_values) || []).forEach(function (f) {
+    if (String(f.field_code || '') === 'PHONE' || String(f.field_id) === String(KOMMO_CF_TEL)) (f.values || []).forEach(function (v) { if (v && v.value != null) out.push(String(v.value)); });
+  });
+  return out;
+}
+/** {lead: 1} de los leads que YA son otra venta del panel (fila `kommo-<lead>` completada, marca `klead`, o los que cerró el panel
+    para otra venta). Un lead que espera como borrador en la bandeja NO cuenta: es esta misma venta, cargada dos veces. */
+function kcOcupados_(sh, id) {
+  var snap = kSnapshot_(sh, true), out = {}, l, k;
+  for (l in snap.cargados) { var b = snap.borr[l]; if (!(b && b.estado === BORRADOR_EST)) out[l] = 1; }
+  var h = kcHechoLeer_();
+  for (k in h) if (k !== String(id) && h[k] && h[k].l) out[String(h[k].l)] = 1;
+  return out;
+}
+function kcLeadLibre_(m, l, uid, ocupado) {
+  if (!l || !l.id) return false;
+  if (KC_CERRADOS[String(l.status_id)]) return false;
+  if (l.pipeline_id != null && String(l.pipeline_id) !== m.embudo) return false;
+  if (uid && String(l.responsible_user_id) !== String(uid)) return false;
+  return !ocupado[String(l.id)];
+}
+/** Los leads de la vendedora con ese celular, abiertos y libres. {leads, contactos} o {error}. */
+function kcBuscar_(m, uid, cel8, ocupado) {
+  var r = kPedir_('get', '/contacts?query=' + encodeURIComponent(cel8) + '&with=leads&limit=50');
+  if (r.code === 204) return { leads:[], contactos:[] };
+  if (r.code !== 200 || !r.o) return { error:'Kommo no contestó la búsqueda del celular (HTTP ' + r.code + ')' };
+  var ids = [], cts = [];
+  kEmb_(r.o, 'contacts').forEach(function (c) {
+    if (!kcTels_(c).some(function (t) { return kcCel8_(t) === cel8; })) return;   // `query` busca en todo: el celular se mira de nuevo
+    cts.push(String(c.id));
+    kEmb_(c, 'leads').forEach(function (l) { if (ids.indexOf(String(l.id)) < 0) ids.push(String(l.id)); });
+  });
+  if (!ids.length) return { leads:[], contactos:cts };
+  var rl = kPedir_('get', '/leads?' + ids.slice(0, 40).map(function (x) { return 'filter[id][]=' + encodeURIComponent(x); }).join('&') + '&with=contacts&limit=50');
+  if (rl.code === 204) return { leads:[], contactos:cts };
+  if (rl.code !== 200 || !rl.o) return { error:'Kommo no contestó los leads del cliente (HTTP ' + rl.code + ')' };
+  return { leads:kEmb_(rl.o, 'leads').filter(function (l) { return kcLeadLibre_(m, l, uid, ocupado); }), contactos:cts };
+}
+/** Sus últimos leads abiertos (para que toque cuál es). */
+function kcUltimos_(m, uid, ocupado) {
+  if (!uid) return [];
+  var r = kPedir_('get', '/leads?filter[responsible_user_id]=' + encodeURIComponent(uid) + '&filter[pipeline_id]=' + encodeURIComponent(m.embudo) +
+                         '&order[updated_at]=desc&limit=50&with=contacts');
+  if (r.code !== 200 || !r.o) return [];
+  return kEmb_(r.o, 'leads').filter(function (l) { return kcLeadLibre_(m, l, uid, ocupado); });
+}
+/** Lo que la página muestra de cada lead: nombre, etapa, precio, última vez que se tocó, y el contacto (nombre y teléfono). */
+function kcResumen_(m, L) {
+  var cid = {}, ids = [], cts = {};
+  L.forEach(function (l) {
+    var cs = kEmb_(l, 'contacts'), p = cs[0];
+    for (var i = 0; i < cs.length; i++) if (cs[i].is_main) { p = cs[i]; break; }
+    if (p && p.id) { cid[String(l.id)] = String(p.id); if (ids.indexOf(String(p.id)) < 0) ids.push(String(p.id)); }
+  });
+  if (ids.length) {
+    var r = kPedir_('get', '/contacts?' + ids.slice(0, 40).map(function (x) { return 'filter[id][]=' + encodeURIComponent(x); }).join('&') + '&limit=50');
+    if (r.code === 200 && r.o) kEmb_(r.o, 'contacts').forEach(function (c) { cts[String(c.id)] = { n:String(c.name || '').slice(0, 80), t:kcTels_(c)[0] || '' }; });
+  }
+  return L.map(function (l) {
+    var c = cts[cid[String(l.id)]] || {};
+    return { id:String(l.id), n:String(l.name || '').slice(0, 80), et:m.etapas[String(l.status_id)] || '', p:Number(l.price) || 0, u:Number(l.updated_at) || 0,
+             cli:c.n || '', tel:c.t ? String(c.t).replace(/[^\d+ ]/g, '').slice(0, 20) : '' };
+  });
+}
+/** «Fecha contrato» = el día de la venta (`ts`, en Bolivia), a las 12:00 (segundos, como los guarda Kommo). */
+function kcFechaCampo_(m, rec) {
+  var t = Number(rec && rec.ts) || Date.now(), dia = Math.floor((t - 4 * 3600000) / 86400000);
+  return { field_id:Number(m.fc), values:[{ value:Math.floor((dia * 86400000 + 16 * 3600000) / 1000) }] };
+}
+function kcBs_(n) { return 'Bs ' + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function kcNota_(lead, rec, total, soloPrecio) {
+  var txt = (soloPrecio ? '🧾 Total corregido en el panel de pedidos: ' : '🧾 Venta cargada en el panel de pedidos: ') + (rec.oc ? 'OC ' + rec.oc + ' · ' : '') + kcBs_(total);
+  return kPedir_('post', '/leads/' + lead + '/notes', [{ note_type:'common', params:{ text:txt } }]).code;
+}
+/** ADENTRO del candado, un instante: la marca `klead` en los productos de la fila. Sin cambiar el sello; anotada para la lectura de
+    lo cambiado. false = no se pudo (candado ocupado, fila borrada): el registro KOMMO_CIERRE_HECHO cuida igual. */
+function kcMarcar_(id, lead) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return false; }
+  try {
+    var sh = getSheet(), f = kcFila_(sh, id);
+    if (!f) return false;
+    var col = HEADERS.indexOf('_productos_json') + 1, a = [];
+    try { a = JSON.parse(String(sh.getRange(f.fila, col).getValue() || '[]')); } catch (e) { a = []; }
+    if (!Array.isArray(a) || !a.length) return false;
+    var cambia = false;
+    a.forEach(function (x) { if (x && typeof x === 'object' && String(x.klead || '') !== String(lead)) { x.klead = String(lead); cambia = true; } });
+    if (!cambia) return true;
+    var txt = JSON.stringify(a);
+    if (txt.length > CELDA_TOPE) return false;
+    sh.getRange(f.fila, col).setValue(txt);
+    try { getCacheOlvidar_(); recientesAnotar_('r', String(id), Date.now()); } catch (e) {}
+    return true;
+  } finally { lock.releaseLock(); }
+}
+function kcSinPermiso_(code) { return (code === 401 || code === 403) ? ': el token de Kommo no tiene permiso para escribir (ver probarKommoEscribe)' : ''; }
+/** Pasa el lead a «Compradores» con el total, la fecha y la nota (o, `soloPrecio`, le corrige el total). */
+function kcCerrar_(m, rec, id, lead, total, out, soloPrecio) {
+  /* La marca ANTES de tocar Kommo: el aviso de «Compradores» que dispara este mismo cambio ya encuentra la venta cargada. */
+  kcHechoPoner_(id, { l:lead, t:total, ts:kcMin_(), ok:0 });
+  out.klead = kcMarcar_(id, lead);
+  out.lead = lead;
+  var cuerpo = soloPrecio ? { price:total } : { price:total, status_id:Number(m.etapa), pipeline_id:Number(m.embudo), custom_fields_values:[kcFechaCampo_(m, rec)] };
+  var r = kPedir_('patch', '/leads/' + lead, cuerpo);
+  if (r.code !== 200) { out.hecho = 'error'; out.motivo = 'Kommo no aceptó el cambio (HTTP ' + r.code + ')' + kcSinPermiso_(r.code); return out; }   // queda `ok:0`: la próxima vez se reintenta con ese lead
+  kcNota_(lead, rec, total, soloPrecio);
+  kcHechoPoner_(id, { l:lead, t:total, ts:kcMin_(), ok:1 });
+  out.hecho = soloPrecio ? 'precio' : 'cerrado';
+  return out;
+}
+/** El cliente vino a la tienda y no tiene lead: se crea ya en «Compradores», a nombre de la vendedora, con canal «Visita tienda». */
+function kcCrear_(m, rec, id, uid, total, contactos, out) {
+  var cfs = [kcFechaCampo_(m, rec)];
+  if (m.canal && m.canalTienda) cfs.push({ field_id:Number(m.canal), values:[{ enum_id:Number(m.canalTienda) }] });
+  var lead = { name:String(rec.cliente || 'Venta del panel').slice(0, 200), price:total, status_id:Number(m.etapa), pipeline_id:Number(m.embudo),
+               responsible_user_id:Number(uid), custom_fields_values:cfs }, r, nuevo = '';
+  if (contactos.length) {                    // el contacto con ese celular ya existe: se le une, no se duplica
+    lead._embedded = { contacts:[{ id:Number(contactos[0]) }] };
+    r = kPedir_('post', '/leads', [lead]);
+    if (r.code === 200 && r.o) nuevo = String((kEmb_(r.o, 'leads')[0] || {}).id || '');
+  } else {
+    lead._embedded = { contacts:[{ name:String(rec.cliente || '').slice(0, 200), responsible_user_id:Number(uid),
+                                   custom_fields_values:[{ field_code:'PHONE', values:[{ value:String(rec.celular || '').replace(/[^\d+]/g, ''), enum_code:'WORK' }] }] }] };
+    r = kPedir_('post', '/leads/complex', [lead]);
+    if (r.code === 200 && Array.isArray(r.o) && r.o[0]) nuevo = String(r.o[0].id || '');
+  }
+  if (!nuevo) { out.hecho = 'error'; out.motivo = 'Kommo no creó el lead (HTTP ' + (r ? r.code : 0) + ')' + kcSinPermiso_(r ? r.code : 0); return out; }
+  kcHechoPoner_(id, { l:nuevo, t:total, ts:kcMin_(), ok:1 });   // enseguida: el aviso de Kommo de este lead nuevo ya lo encuentra
+  out.klead = kcMarcar_(id, nuevo);
+  kcNota_(nuevo, rec, total, false);
+  out.lead = nuevo; out.hecho = 'creado';
+  return out;
+}
+function kcDudas_(m, uid, ocupado, out, motivo, leads, puedeCrear) {
+  out.hecho = 'dudas'; out.dudas = true; out.motivo = motivo; out.puedeCrear = !!puedeCrear;
+  out.leads = kcResumen_(m, (leads.length ? leads : kcUltimos_(m, uid, ocupado)).slice(0, KC_ULTIMOS));
+  return out;
+}
+/** La acción `kommoCierre` = {id, total, lead?, crear?}. Siempre {ok:true, hecho:'cerrado'|'creado'|'precio'|'ya'|'dudas'|'nada'|'error'|
+    'en_curso', motivo?, lead?, leads?, puedeCrear?, klead?} o {ok:true, apagado:true}. */
+function kcCierre_(body) {
+  var out = { ok:true, version:SCRIPT_VERSION };
+  if (!kcActivo_()) { out.apagado = true; return out; }
+  if (!kProp_('KOMMO_TOKEN')) { out.hecho = 'nada'; out.motivo = 'sin_token'; return out; }
+  var id = String((body && body.id) || '').trim(), total = Math.round(Number(body && body.total) || 0);
+  if (!id) return { ok:false, error:'no id', version:SCRIPT_VERSION };
+  var sh = getSheet(), f = kcFila_(sh, id);
+  if (!f) { out.hecho = 'nada'; out.motivo = 'no_esta'; return out; }
+  var no = kcNoEs_(f.rec);
+  if (no) { out.hecho = 'nada'; out.motivo = no; return out; }
+  if (id.indexOf(BORRADOR_PREF) === 0) { out.hecho = 'ya'; out.lead = id.slice(BORRADOR_PREF.length); return out; }   // vino de Kommo: ya está en «Compradores»
+  if (!(total > 0)) { out.hecho = 'nada'; out.motivo = 'sin_total'; return out; }
+  var cache = null, ck = 'kc_curso_' + id;
+  try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
+  if (cache) { try { if (cache.get(ck)) { out.hecho = 'en_curso'; return out; } cache.put(ck, '1', KC_CURSO_SEG); } catch (e) {} }
+  try { return kcCierreCuerpo_(sh, f.rec, id, total, body || {}, out); }
+  finally { if (cache) { try { cache.remove(ck); } catch (e) {} } }
+}
+function kcCierreCuerpo_(sh, rec, id, total, body, out) {
+  var h = kcHechoLeer_()[id], kl = kcKleadDe_(rec);
+  if (h && h.ok && Math.abs((Number(h.t) || 0) - total) < 0.5) { out.hecho = 'ya'; out.lead = String(h.l); return out; }
+  if (!h && kl) { out.hecho = 'ya'; out.lead = kl; return out; }   // unida a mano («Sí, es la misma») o desde Kommo: nada que hacer
+  var m = kcMeta_(false);
+  if (m.error) { out.hecho = 'error'; out.motivo = m.error + kcSinPermiso_(m.code); return out; }
+  if (h && h.l) return kcCerrar_(m, rec, id, String(h.l), total, out, !!h.ok);   // ya era suya: se pone al día (o se reintenta)
+  var uid = kcUsuario_(m, rec.vendedor), ocupado = kcOcupados_(sh, id), cel8 = kcCel8_(rec.celular);
+  if (body.lead) {                                            // la vendedora tocó cuál es
+    var lead = String(body.lead).replace(/\D/g, ''), rl = kPedir_('get', '/leads/' + lead);
+    if (rl.code !== 200 || !rl.o || !rl.o.id) { out.hecho = 'error'; out.motivo = 'no pude leer ese lead de Kommo (HTTP ' + rl.code + ')'; return out; }
+    if (!kcLeadLibre_(m, rl.o, uid, ocupado)) { out.hecho = 'nada'; out.motivo = 'ese lead ya no se puede usar (cerrado, de otra vendedora o ya es otra venta)'; return out; }
+    return kcCerrar_(m, rec, id, lead, total, out, false);
+  }
+  if (!uid) { out.hecho = 'nada'; out.motivo = 'no encontré a «' + String(rec.vendedor || '') + '» entre los usuarios de Kommo'; return out; }
+  if (!cel8) return kcDudas_(m, uid, ocupado, out, 'sin_celular', [], false);
+  var b = kcBuscar_(m, uid, cel8, ocupado);
+  if (b.error) { out.hecho = 'error'; out.motivo = b.error; return out; }
+  if (b.leads.length === 1) return kcCerrar_(m, rec, id, String(b.leads[0].id), total, out, false);
+  if (b.leads.length > 1) return kcDudas_(m, uid, ocupado, out, 'dos', b.leads, false);
+  if (body.crear) return kcCrear_(m, rec, id, uid, total, b.contactos, out);
+  return kcDudas_(m, uid, ocupado, out, 'ninguno', [], true);
+}
+/** ▶️ §4ok-91 DESDE EL EDITOR, ANTES DE PONER KOMMO_CIERRE = 1: ¿el token de Kommo deja ESCRIBIR?
+    Lee lo que usa el cierre (embudo, etapa «Compradores», «Fecha contrato», «Canal», usuarios) y le hace a UN lead un cambio que no
+    cambia nada: le vuelve a poner el MISMO precio que ya tiene (PATCH /leads/<id> con su propio `price`). El lead es uno de «Compradores»
+    que YA está en la planilla (fila kommo-<lead> o marca klead): así, aunque Kommo avise, el repaso no crea nada. No escribe notas, no
+    mueve de etapa y no toca la planilla. Tiene que decir ✅. */
+function probarKommoEscribe() {
+  var L = [], ok = true;
+  if (!kProp_('KOMMO_TOKEN')) { L.push('❌ Falta la propiedad KOMMO_TOKEN del script.'); ok = false; }
+  else {
+    var m = kcMeta_(true);
+    if (m.error) { L.push('❌ ' + m.error + (m.code === 401 ? ' — el token no sirve (vencido o de otra cuenta).' : '')); ok = false; }
+    else {
+      var etProp = String(kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT));
+      L.push('✅ Embudo «' + m.embudoNombre + '» (' + m.embudo + ') · etapa «Compradores» = ' + m.etapa +
+             (m.etapa !== etProp ? ' ⚠️ distinta de KOMMO_ETAPA (' + etProp + '), la que mira el aviso de los borradores: revisalo antes de prender' : ''));
+      L.push('✅ Campo «Fecha contrato» = ' + m.fc + ' (' + m.fcTipo + ')' + (m.canal ? (' · campo «Canal» = ' + m.canal + (m.canalTienda ? ' con «Visita tienda»' : ' ⚠️ sin la opción «Visita tienda»')) : ' · ⚠️ no encontré el campo «Canal»'));
+      L.push('✅ Usuarios de Kommo: ' + Object.keys(m.usuarios).length);
+      var snap = kSnapshot_(getSheet(), false), lead = null;
+      var r = kPedir_('get', '/leads?filter[statuses][0][pipeline_id]=' + encodeURIComponent(m.embudo) + '&filter[statuses][0][status_id]=' + encodeURIComponent(m.etapa) + '&order[updated_at]=desc&limit=50');
+      if (r.code === 200 && r.o) kEmb_(r.o, 'leads').forEach(function (l) { if (!lead && snap.cargados[String(l.id)]) lead = l; });
+      if (!lead) { L.push('⚠️ No encontré un lead de «Compradores» que ya esté en la planilla para probar la escritura (HTTP ' + r.code + '). Probá más tarde.'); ok = false; }
+      else {
+        var w = kPedir_('patch', '/leads/' + lead.id, { price:Number(lead.price) || 0 });
+        if (w.code === 200) L.push('✅ El token DEJA ESCRIBIR: al lead ' + lead.id + ' se le volvió a poner su mismo precio (' + kcBs_(lead.price) + '). No cambió nada.');
+        else {
+          ok = false;
+          L.push('❌ Kommo NO dejó escribir (HTTP ' + w.code + ')' + ((w.code === 401 || w.code === 403) ? ': la integración «Panel de pedidos» no tiene permiso para modificar leads. ' +
+                 'En Kommo → Configuración → Integraciones → «Panel de pedidos», dale acceso para escribir y generá el token de nuevo (va en la propiedad KOMMO_TOKEN del script y en el secreto KOMMO_TOKEN de GitHub).' : '.'));
+        }
+      }
+    }
+  }
+  L.push(ok ? ('✅ Se puede prender el cierre: propiedad KOMMO_CIERRE = 1 (ahora está ' + (kcActivo_() ? 'PRENDIDO' : 'apagado') + ').') : '❌ Todavía NO poner KOMMO_CIERRE = 1.');
+  if (typeof Logger !== 'undefined') Logger.log(L.join('\n'));
+  return { ok:ok, lineas:L };
+}
+
 /* Todo lo que hay que preguntarle a Kommo para armar un borrador. NO toca la planilla para
    escribir: devuelve el pedido listo, o el motivo por el que no se puede. */
 function borradorDeLead_(leadId) {
