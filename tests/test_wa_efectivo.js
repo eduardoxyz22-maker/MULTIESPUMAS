@@ -135,7 +135,9 @@ const FIX = [
   // (revisión de Fable) Cobros SIN @fecha: el adelanto escrito y un cobro suelto. No son de ningún día, ni en la página ni acá (2a los compara)
   V('q1', 'Maria Flores', '~Efectivo 500 #1'), V('q2', 'Maria Flores', '~QR BISA 100 @2026-11-02 #1 + Efectivo 300 #2'),
   // (revisión de Fable) El mismo vendedor escrito distinto (de octubre: no cambian lo que se avisa; 2c mira que se junten igual que en la página)
-  V('q3', 'JONATHAN  MONJE', '~Efectivo 100 @2026-10-15 #3', { ts: TS('2026-10-15') }), V('q4', 'Fabian Godoy', '~Efectivo 50 @2026-10-16 #4', { ts: TS('2026-10-16') })
+  V('q3', 'JONATHAN  MONJE', '~Efectivo 100 @2026-10-15 #3', { ts: TS('2026-10-15') }), V('q4', 'Fabian Godoy', '~Efectivo 50 @2026-10-16 #4', { ts: TS('2026-10-16') }),
+  // (06-e, dueño: «desde noviembre… lo de octubre ya se recogió») Una venta CARGADA en octubre con el pago anotado en noviembre (como la 10-382): no se avisa
+  V('w1', 'Isabel Robledo', '~Efectivo 777 @2026-11-03 #7099', { ts: TS('2026-10-30'), fecha: '2026-10-31' })
 ];
 
 (async () => {
@@ -158,6 +160,10 @@ const FIX = [
   chk('1j afuera: Eduardo, ROHO, internos, ATC, RPT, borradores', !de('Eduardo Añez') && !de('ROHO') && !de('ALBA') && E.every(o => o.bs < 9000), E.map(o => o.nombre + ' ' + o.bs));
   chk('1k el que más tiene primero', E.length === 7 && E[0].nombre === 'Maria Flores', E.map(o => o.nombre));
   chk('1p 🚚 lo de Luis Pierre (lo recibió en la puerta, «>Luis Pierre») es de chofer; lo de los vendedores no', de('Luis Pierre') && de('Luis Pierre').ch === true && E.filter(o => o.ch).length === 1, E.map(o => o.nombre + (o.ch ? ' (chofer)' : '')));
+  chk('1q 🗓️ una venta cargada en octubre con el pago anotado en noviembre NO se avisa (Isabel sigue con 300, no 1.077)', de('Isabel Robledo') && de('Isabel Robledo').bs === 300 && E.viejas && E.viejas.n === 1 && E.viejas.bs === 777, [de('Isabel Robledo'), E.viejas]);
+  const Sw = servidor(ON); Sw.cargar([V('w2', 'Carola Chavez', '~Efectivo 600 @2026-11-02 #8101', { ts: TS('2026-10-31') }), V('w3', 'Carola Chavez', '~Efectivo 400 @2026-11-03 #8102'), R('w2', 'Carola Chavez', 600, '2026-11-04', '9')]);
+  const Ew = Sw.ctx.waEfePendiente_(Sw.lista(), '2026-11-06');
+  chk('1r …y un retiro por esa plata de octubre se la lleva a ella: lo de noviembre (400) sigue sin recoger', Ew.length === 1 && Ew[0].bs === 400, Ew);
   chk('1m un retiro de noviembre sin nada cobrado antes (Carola, 01/11) queda en «sobra» para probarEfectivo', E.sobra && E.sobra.some(x => x.nombre === 'Carola Chavez' && x.bs === 900 && x.f === '2026-11-01'), E.sobra);
   const S1 = servidor(ON); S1.cargar([V('sf1', 'Maria Flores', 'Efectivo 700 #123', { ts: TS('2026-11-02') })]);
   const E1 = S1.ctx.waEfePendiente_(S1.lista(), '2026-11-06');

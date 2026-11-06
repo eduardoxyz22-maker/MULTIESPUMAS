@@ -17425,6 +17425,12 @@ a quién, «sin preferencia» → quedó lo propuesto.
   retiros) pasaron a `waEfeCuentas_`; `waEfePendiente_` queda igual (la usan las pruebas de la regla y `probarEfectivo`). `efectivo_sin_retirar`
   (PENDING en Meta) ya no se usa. Con la planilla real, el sábado 07/11 a las 9:05: al dueño «Ingresó ayer, viernes 06/11: Bs 0 · Sin recoger:
   Bs 14.960 de 4 vendedores»; a Contabilidad «Bs 1.860 de 1 chofer». `test_wa_efectivo` → 54.
+- 🗓️ **Servidor `2026-11-06-e` (06/11 noche; el dueño, viendo «Maria Flores Bs 3.410: 10-382» en `probarEfectivo`: *«debe avisar desde noviembre…
+  no de octubre, eso ya se recogió… lo que hay pendiente desde el 1ro»*)**. La 10-382 se cargó el 30/10, se entregó el 31/10 y su pago quedó anotado
+  el 03/11: era el ÚNICO cobro de noviembre de una venta de octubre (Bs 3.410). Ahora solo cuentan las ventas CARGADAS desde el 01/11 (`c.v` = día
+  del `ts`); las de octubre siguen en el emparejamiento (un retiro por esa plata se la lleva a ella y no tapa lo de noviembre) y `probarEfectivo`
+  las dice aparte (`viejas`). Con la planilla de las 19:00: sábado 07/11 9:05 → al dueño Bs 11.550 de 3 vendedores; a Contabilidad Bs 1.860 de
+  Luis Pierre. `test_wa_efectivo` → 56 (1q, 1r).
 - 🔎 **Tercera vuelta de Fable (06/11, otra vez sobre el diff de la 06-b)**: ya hechos o verificados — el servidor guarda `fdoc`/`fdocn` (prueba con el
   `.gs` real: `test_factura_conflicto`), la vendedora sin contraseña anota y guarda, `recs` trae las filas `__ret_` (3g), `contaFechaBase` existe, el
   `L` del cierre es la lista del mes (`test_cierre_control`). NO aplica: «la obligación depende del selector Ingreso/Entrega» — `docVentaRequerida` usa

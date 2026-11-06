@@ -2680,11 +2680,12 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   lunes, sábado y domingo: `waEfeTramo_`) y a las 18:00 (lo de hoy), con lo ACUMULADO sin recoger por persona (`waEfeResumen_`: desde cuándo, ⚠️ con
   2 días o más, «(+Bs…)» lo que ingresó), AUNQUE esté en 0. Lo de los VENDEDORES a WA_DUENO (`ef`) y lo que recibió un CHOFER (`>Nombre`, `o.ch`) a la
   propiedad **`WA_CONTABILIDAD`** (`efc`, `waEfeDe_`); sin esa propiedad lo de los choferes no va a nadie (nunca al dueño). `efectivo_sin_retirar`
-  (06-b/c) ya no se usa. `waEfeCuentas_` empareja cobros y retiros — el efectivo es de
+  (06-b/c) ya no se usa. **06-e** (dueño: *«desde noviembre… lo de octubre ya se recogió»*): solo ventas CARGADAS desde el 01/11 (`c.v`); las de
+  octubre siguen solo para emparejar con los retiros. `waEfeCuentas_` empareja cobros y retiros — el efectivo es de
   quien lo recibió; un retiro cubre lo de esa persona hasta su día (mismo monto primero, después del más viejo); se avisa lo cobrado desde el 01/11
   (`WA_EFE_DESDE`) y de hace 2 días o más. ⚠️ Copia la lectura de pagos de la página: si cambia `parseCobros`/`anticipoDe`/`cobrosDe`/`contaPagos` o
   `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
-  `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`; de la 06-d, pegar la 06-c de `68822ae2…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
+  `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`; de la 06-d, pegar la 06-c de `68822ae2…`; de la 06-e, pegar la 06-d de `ca63dd15…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").
