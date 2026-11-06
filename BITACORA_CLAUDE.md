@@ -17319,6 +17319,11 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   **11-050** = 260012844 T1, 10/11 AM (el correo decía «pendiente de coordinar», la OC 10/11); **11-051** = 260012920 T1 (Yessica 06/11), 13/11 AM,
   Bs 7.450; **11-052** = 260012946 T2, la OC pedía el sábado 07/11 pero la mañana ya tenía 16 (cupo 15): lunes 09/11 AM, Bs 2.956. Releídos, sin OC
   repetidas. Lo de Flavia Ordoñez (OC de los reportes de entregas) NO son pedidos: no se cargan.
+  **Juan Carlos Arce** (dueño: *«aveces pone mal los codigo de colchones, debes verificar tambien el nombre del producto… y aveces su total el suma
+  mal lo que vale es el precio individual por producto»*). Revisado 11-049 con esa regla: «CH301 COLCHONES ESSENTIAL DE 1.5 PLAZAS» = CH1301 (el Excel de
+  Moreno: SUENA ESSENTIAL +2CM|105X190; ya estaba corregido), «CH1311 CONFORT PLUS … 1.5 PLAZAS» = CH1311 (no está en los Excel de hoy; en la planilla
+  ya se usó como Confort Plus 105x190, y sigue la serie CH1301/1302 y CH1312 = 140), total 5 × 960 + 5 × 1.230 = 10.950 = el impreso. Queda la regla
+  para la carga automática: nombre + plazas manda sobre el código; el total es Σ cantidad × precio.
 - 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
   planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta
   en el panel en noviembre tampoco → 0 de verdad. Maria: pasó 6 leads a Compradores el 03/11 entre 17:46 y 19:07, pero los 6 ya estaban cargados en

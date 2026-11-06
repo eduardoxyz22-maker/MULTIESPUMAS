@@ -2655,7 +2655,11 @@ Antes de cargar: que no esté la misma OC en «nota». El 06/11 se cargaron 11-0
 de 9 dígitos en PDF (Provider SKU = nuestro código; «ALMACEN DESTINO … TIENDA n»; «Fecha de entrega» impresa). Las carga Eduardo con cliente «Roho»,
 la OC en «nota», «Tienda N» al empezar «observaciones» y la dirección de la tienda (T1 «Banzer cuarto anillo» Norte · T2 «Virgen de cotoca 2do anillo»
 Este · T3 «Doble vía cuarto anillo» Sur). El 06/11: 11-050 (260012844, T1 entrega 2), 11-051 (260012920, T1, 13/11) y 11-052 (260012946, T2: la OC
-pedía el sábado 07/11 con la mañana llena —16 de 15—, quedó el lunes 09/11). Nada automático todavía: espera que el dueño decida cómo.
+pedía el sábado 07/11 con la mañana llena —16 de 15—, quedó el lunes 09/11). ⚠️ **Juan Carlos Arce (Copacaba) se equivoca en los códigos y en el total** (dueño, 06/11:
+*«aveces pone mal los codigo de colchones, debes verificar tambien el nombre del producto… y aveces su total el suma mal, lo que vale es el precio
+individual por producto»*): el producto sale del NOMBRE + las plazas (1 = 90x190, 1½ = 105x190, 2 = 140x190, 2½ = 160x190, 3 = 180/200), cruzado con
+el código (CODIGOS, el `cod` de los Excel en `__stock__`, los pedidos anteriores); si no coinciden, gana el nombre y se anota. El total = Σ cantidad ×
+precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06/11 su «CH301» era el CH1301. Nada automático todavía: espera que el dueño decida cómo.
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").
