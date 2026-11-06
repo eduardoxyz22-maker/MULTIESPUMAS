@@ -2674,13 +2674,17 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   `tests/test_factura_remision.js`, `tests/test_factura_conflicto.js` (página + `.gs`: la vendedora sin contraseña, y la carrera con el formulario abierto).
 - 🚚 **Recargos por vendedor** (dueño eligió «el recargo por entrega»): `exportRecargos` (Contabilidad → ⬇️ Bajar): «Resumen» + una hoja por
   vendedor, las ventas de `contaLista` con recargo; cuentas de `enviosDe`. `tests/test_recargos_vendedor.js`.
-- 💵 **Efectivo sin retirar** (servidor 06-b, 9:00 y 18:00, `efectivo_sin_retirar`; **06-c**, dueño: *«el dinero que reciben los choferes el mensaje
-  debería llegar a contabilidad… no a eduardo»*): lo de los VENDEDORES a WA_DUENO (`ef`) y lo que recibió un CHOFER (`>Nombre`, `o.ch`) a la
-  propiedad **`WA_CONTABILIDAD`** (`efc`, `waEfeDe_`); sin esa propiedad lo de los choferes no va a nadie (nunca al dueño). `waEfePendiente_` — el efectivo es de
+- 💵 **El efectivo de cada día** (servidor 06-b; **06-c**, dueño: *«el dinero que reciben los choferes el mensaje debería llegar a contabilidad… no a
+  eduardo»*; **06-d**, dueño: *«la idea es que cada día llegue el mensaje haciendo recuerdo de cuánto efectivo ingresó y cuánto no se marcó como
+  recogido… cuánto hay acumulado para organizarnos a recoger»*): `efectivo_del_dia` (5 datos) a las 9:00 (lo que ingresó el día hábil anterior; el
+  lunes, sábado y domingo: `waEfeTramo_`) y a las 18:00 (lo de hoy), con lo ACUMULADO sin recoger por persona (`waEfeResumen_`: desde cuándo, ⚠️ con
+  2 días o más, «(+Bs…)» lo que ingresó), AUNQUE esté en 0. Lo de los VENDEDORES a WA_DUENO (`ef`) y lo que recibió un CHOFER (`>Nombre`, `o.ch`) a la
+  propiedad **`WA_CONTABILIDAD`** (`efc`, `waEfeDe_`); sin esa propiedad lo de los choferes no va a nadie (nunca al dueño). `efectivo_sin_retirar`
+  (06-b/c) ya no se usa. `waEfeCuentas_` empareja cobros y retiros — el efectivo es de
   quien lo recibió; un retiro cubre lo de esa persona hasta su día (mismo monto primero, después del más viejo); se avisa lo cobrado desde el 01/11
   (`WA_EFE_DESDE`) y de hace 2 días o más. ⚠️ Copia la lectura de pagos de la página: si cambia `parseCobros`/`anticipoDe`/`cobrosDe`/`contaPagos` o
   `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
-  `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
+  `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`; de la 06-d, pegar la 06-c de `68822ae2…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
 
 ## Campo "Canal" en Kommo
 Campo lista obligatorio que las vendedoras llenan a mano (Facebook, Instagram, Tiktok, Visita tienda, Referido, Cliente antiguo). `detect_channel()` en generar.py devuelve el valor **TAL CUAL** de Kommo (sin renombrar, para coincidir con la lista); el ícono lo pone `channel_icon()` por palabra clave. Fallback: tags (normalizadas) → `created_by` (0 = bot → "Automático (bot)", otro → "Carga manual vendedora").

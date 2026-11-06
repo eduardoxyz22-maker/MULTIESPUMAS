@@ -17414,6 +17414,17 @@ a quién, «sin preferencia» → quedó lo propuesto.
   de 4 vendedores y a Contabilidad Bs 1.860 de Luis Pierre. También: `crearPlantillasWhatsApp` lee «la categoría UTILITY no coincide… MARKETING» como
   «ya existía» (logistica_pedir_hoy, alerta_leads y alerta_leads_volvieron: Meta las pasó a MARKETING; salen igual). La propiedad nueva se crea con
   una función en un archivo aparte (tope de 50 en la pantalla de Propiedades). `test_wa_efectivo` → 49, `test_wa_bot` → 239.
+- 📅 **Servidor `2026-11-06-d` (06/11 ~19:00; el dueño implementó la 06-c, puso WA_CONTABILIDAD y al ver `probarEfectivo` dijo: *«creo que está mal
+  la lógica, la idea es que cada día llegue el mensaje haciendo recuerdo de cuánto efectivo ingresó y cuánto no se marcó como recogido, y así ir
+  viendo cuánto hay acumulado para yo o contabilidad organizarnos a recoger»*)**. Ya no es una alarma de lo de 48 h: es el resumen de cada día.
+  Plantilla nueva **`efectivo_del_dia`** (5 datos: día y hora · de cuándo es lo que ingresó · cuánto ingresó · lo acumulado sin recoger «de N
+  vendedores/choferes» · la lista «⚠️ Nombre Bs X desde dd/mm (+Bs Y)»). A las 9:00 lo que ingresó el día hábil anterior (`waEfeTramo_`: el lunes
+  sábado y domingo —las tiendas abren el domingo—; después de un feriado, también ese día); a las 18:00 lo de hoy. Lo acumulado = todo lo cobrado
+  desde el 01/11 que ningún retiro cubrió, de hoy incluido (`waEfeResumen_`; ⚠️ si la persona tiene efectivo de hace 2 días o más). Sale aunque
+  esté en 0 («Bs 0, todo recogido» · «nada pendiente»). Vendedores al dueño, choferes a Contabilidad (06-c). Las cuentas (emparejar cobros y
+  retiros) pasaron a `waEfeCuentas_`; `waEfePendiente_` queda igual (la usan las pruebas de la regla y `probarEfectivo`). `efectivo_sin_retirar`
+  (PENDING en Meta) ya no se usa. Con la planilla real, el sábado 07/11 a las 9:05: al dueño «Ingresó ayer, viernes 06/11: Bs 0 · Sin recoger:
+  Bs 14.960 de 4 vendedores»; a Contabilidad «Bs 1.860 de 1 chofer». `test_wa_efectivo` → 54.
 - 🔎 **Tercera vuelta de Fable (06/11, otra vez sobre el diff de la 06-b)**: ya hechos o verificados — el servidor guarda `fdoc`/`fdocn` (prueba con el
   `.gs` real: `test_factura_conflicto`), la vendedora sin contraseña anota y guarda, `recs` trae las filas `__ret_` (3g), `contaFechaBase` existe, el
   `L` del cierre es la lista del mes (`test_cierre_control`). NO aplica: «la obligación depende del selector Ingreso/Entrega» — `docVentaRequerida` usa
