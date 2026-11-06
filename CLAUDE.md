@@ -749,8 +749,8 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   `producirRepartoFila`: suma exacto; tiendas por su venta de tienda de 30 días + la RPT pendiente; el resto con la regla de «📍 Banzer o PTF»).
   Solo mira. ⚠️ Clases `pap-*` (no reusar nombres del panel); la cuenta sale de `stockProducirCalc`/`STOCK_TP`, nunca aparte.
   `tests/test_producir_reparto.js` (64).
-  · **👥 Para clientes de cada tienda y las tiendas en 0** (§4lt-d, 20/10; dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*; en la rama, espera
-  «publica»): la columna de una tienda es lo de su LOCAL; Mia Plaza vende casi todo a domicilio (sale de PTF/Banzer). Lo de PTF y Banzer se muestra «para
+  · **👥 Para clientes de cada tienda y las tiendas en 0** (§4lt-d, 20/10; dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*; PUBLICADO
+  06/11 con la 06-c, `51b4896`): la columna de una tienda es lo de su LOCAL; Mia Plaza vende casi todo a domicilio (sale de PTF/Banzer). Lo de PTF y Banzer se muestra «para
   clientes de» la tienda de quien vendió (`producirTiendaCliente`, `D.C`, `r.CP`/`r.CB`, solo para mostrar) y las tiendas sin nada para su local salen con
   «0» y el porqué (`papCeros`). Entre tiendas se reparte con `producirRepartirParejo` (un plazo más largo nunca da menos). ⚠️ NO alargar la ventana de
   pesos para «hacer aparecer» una tienda: le daría unidades que el pedido calculó por otras (backtest: 30/60/90 días dan casi lo mismo).
@@ -2665,7 +2665,7 @@ sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran p
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 
-## 🧾💵🚚 Factura o remisión, el efectivo sin retirar y los recargos por vendedor (§4ol, 06/11; en la rama, espera «publica»; servidor `2026-11-06-b` espera al dueño)
+## 🧾💵🚚 Factura o remisión, el efectivo sin retirar y los recargos por vendedor (§4ol, 06/11; PÁGINA PUBLICADA 06/11, `51b4896`, versión 2026-11-06-c; servidor `2026-11-06-e` lo implementa el dueño, enlace fijo `92714a6…`, 6.263 líneas)
 - 🧾 **Factura o nota de remisión obligatoria, la anota la vendedora DESPUÉS, en Contabilidad** (dueño: *«aún no saben qué nro de factura o nota
   remisión les tocará… que lo puedan colocar en contabilidad»*): el formulario del pedido NO la pide (no volver a ponerla ahí). Fila de la ficha de
   Contabilidad (`ctaDocHtml`/`ctaDocGuardar`): tipo + N° en los productos (`fdoc`/`fdocn`; `submitPedido` los rescata de `prev`). Obligatoria desde

@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4ol — 🧾💵🚚 FACTURA O REMISIÓN, EL EFECTIVO SIN RETIRAR Y LOS RECARGOS POR VENDEDOR (06/11; dueño: *«vamos con lo demás · factura/nota remisión. obligatorio · avisar retiros de efectivo pendientes o sin cargar luego de 48 horas (aplica desde noviembre) y que llegue a mi telf · una planilla aparte de "cobro por entrega" pero por cada vendedor»*; en la rama, espera «publica»; servidor `2026-11-06-b` espera que el dueño lo implemente)
+### §4ol — 🧾💵🚚 FACTURA O REMISIÓN, EL EFECTIVO SIN RETIRAR Y LOS RECARGOS POR VENDEDOR (06/11; dueño: *«vamos con lo demás · factura/nota remisión. obligatorio · avisar retiros de efectivo pendientes o sin cargar luego de 48 horas (aplica desde noviembre) y que llegue a mi telf · una planilla aparte de "cobro por entrega" pero por cada vendedor»*; PÁGINA PUBLICADA 06/11, `51b4896`, versión 2026-11-06-c; servidor `2026-11-06-e` lo implementa el dueño)
 Se le preguntó qué era cada cosa. Contestó: el efectivo «dos veces, 9:00 y 18:00»; el cobro por entrega = «el recargo por entrega»; la factura y
 a quién, «sin preferencia» → quedó lo propuesto.
 - 🧾 **Factura o nota de remisión — la anota la VENDEDORA, DESPUÉS, en Contabilidad** (`c8745c6`; la primera vuelta, `8de6d04`, la pedía en el
@@ -17439,6 +17439,8 @@ a quién, «sin preferencia» → quedó lo propuesto.
   un pedido (`repetirPedido`) arma los productos de cero (no lleva la factura) y Contabilidad copia cada producto entero. Hecho: los recargos por
   vendedor sacan ATC, RPT y filas del sistema aunque lleguen en la lista (sin `fueraDeConta` a secas: sacaría la vista «Mayoristas»).
 
+
+**Publicación (06/11 a la noche, dueño: *«pero si te había dicho que publiques»*)**: `main` = `51b4896`, versión del panel 2026-11-06-c (`PANEL_V` + `panel-version.json`). Sube la página con todo lo de §4ol (factura o remisión en Contabilidad, «Recargos por vendedor») y el .gs 06-e (lo implementa el dueño; con uno anterior la página solo muestra la línea gris de «versión más nueva sin publicar»). También subió §4lt-d («para clientes de cada tienda» y las tiendas en 0 en Pedido a producción), que esperaba «publica» desde el 20/10. Antes de subir: `main` sin cambios propios en pedidos.html/.gs desde `4138911` (lo de `main` = `84e0f3b` salvo §4lt-d), así que se copiaron los dos archivos de la rama. Pruebas: version_nueva 27, factura_remision 19, factura_conflicto 10, recargos_vendedor 19, pap_clientes 30, producir_reparto 65, wa_efectivo 56, todo bien.
 ### §4oj — 👥 ANDREA ORIAS Y FABIÁN GODOY, Y LAS TIENDAS «TIENDA BANZER» Y «VENTURA MALL» (02/11; dueño: *«añades dos nuevos vendedores Andrea orias y Fabián godoy»* → los dos Heaven, Andrea en la *«Nueva tienda banzer»*, Fabián en *«Ventura mall»*; PUBLICADO 02/11, `main` = `39cc0ec`, versión 2026-11-02-b; servidor `2026-11-02-a` espera que el dueño lo implemente)
 
 **Antes, el mismo día:** el dueño subió desde otra pestaña el stock de §4od (`cea26bd`, arriba). Se verificó: Pages OK, batería de `main`
