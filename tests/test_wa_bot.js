@@ -1040,5 +1040,33 @@ console.log('\n── §4ok-E4 · dos celulares en el campo: «-», «/», «,»
   chk('un pedido con «70111222-76543210» recibe la confirmación en el primero', !!c && c.to === '59170111222', S.salen().map(x => x.pl + '→' + x.to));
 }
 
+// ══ §4ok-95 (05/11) El celular va a la planilla SIEMPRE como texto (que no vuelva a quedar «#ERROR!») ══════════════
+console.log('\n── §4ok-95 · el celular se escribe como texto: «+591 …» ya no es una fórmula ──');
+{
+  /* Lo que hace Google con lo que se escribe en una celda: «'…» = texto (y al leer devuelve el valor SIN el «'»); en una columna con
+     formato de TEXTO («@») queda tal cual; si no: «=…» o «+…» = una fórmula que no anda → «#ERROR!», solo cifras = un número. */
+  poner('2026-10-14 10:00');
+  const S = servidor(ON), col = S.ctx.HEADERS.indexOf('Celular'), formatos = [];
+  const gr = S.sh.getRange;
+  S.sh.getRange = function (a) { const r = gr.apply(this, arguments); if (typeof a === 'string') r.setNumberFormat = (f) => { formatos.push(a + '=' + f); }; return r; };
+  const google = (v) => typeof v !== 'string' ? v : v.charAt(0) === "'" ? v.slice(1) : formatos.indexOf('G:G=@') >= 0 ? v : /^[=+]/.test(v) ? '#ERROR!' : /^\d+$/.test(v) ? Number(v) : v;
+  const casos = { a: '+591 70111222', b: '70111222', c: '=70111222', d: '', e: '70111222-76543210', f: '070111222', h: '-70111222' };
+  Object.keys(casos).forEach(k => S.guardar(ped({ id: 'cel' + k, celular: casos[k] })));
+  const fila = (id) => S.sh._datos.find(f => f[0] === id);
+  const enGoogle = (id) => S.ctx.rowToRec_(fila(id).map(google)).celular;
+  chk('la columna «Celular» (G) queda con formato de texto, UNA vez (CEL_TEXTO)', formatos.filter(x => x === 'G:G=@').length === 1 && S.P.CEL_TEXTO === '1', formatos);
+  chk('lo que Google toma como fórmula («+…», «=…», «-…») va con «\'» adelante; lo demás y vacío, tal cual',
+      fila('cela')[col] === "'+591 70111222" && fila('celc')[col] === "'=70111222" && fila('celh')[col] === "'-70111222" && fila('celb')[col] === '70111222' && fila('celd')[col] === '', [fila('cela')[col], fila('celb')[col], fila('celd')[col]]);
+  chk('⚠️ como lo guarda Google: ninguno queda «#ERROR!» ni pierde el 0 de adelante; vuelven tal cual se escribieron',
+      Object.keys(casos).every(k => enGoogle('cel' + k) === casos[k]), Object.keys(casos).map(k => enGoogle('cel' + k)));
+  formatos.length = 0;
+  chk('…y aunque la columna no tuviera el formato, «+591 …» y «=…» no quedan «#ERROR!» (llevan el «\'»)', enGoogle('cela') === '+591 70111222' && enGoogle('celc') === '=70111222', enGoogle('cela'));
+  chk('sin el «\'» (la planilla de prueba lo deja): la lectura lo saca igual', S.leer('cela').celular === '+591 70111222' && S.leer('celc').celular === '=70111222');
+  chk('el eco del guardado trae el celular como se mandó', S.post({ action: 'save', pedido: ped({ id: 'celg', celular: '+591 76543210' }) }).pedido.celular === '+591 76543210');
+  chk('volver a guardar no agrega otro «\'»', (() => { const p = S.leer('cela'); S.guardar(p); return fila('cela')[col] === "'+591 70111222"; })(), fila('cela')[col]);
+  pasar(3); S.repaso();
+  chk('el bot le escribe al «+591 70111222»', S.salen().some(x => x.pl === 'confirmacion_pedido' && x.to === '59170111222') && S.hoja().some(f => f[1] === 'cela' && f[5] === '59170111222'));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

@@ -2019,7 +2019,7 @@ function rowToRec_(r) {
       vendedor: String(r[3] || ''),
       cliente: String(r[4] || ''),
       productos: parseProd(r[14], r[5]),
-      celular: String(r[6] == null ? '' : r[6]),
+      celular: String(r[6] == null ? '' : r[6]).replace(/^'/, ''),   // §4ok-95: el «'» que pone `celTexto_` (Google no lo devuelve; una planilla de prueba sí)
       turno: String(r[7] || ''),
       zona: String(r[8] || ''),
       direccion: String(r[9] || ''),
@@ -2318,6 +2318,7 @@ function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa) {
     }
   }
   getCacheOlvidar_();
+  celColumnaTexto_(sh);   // §4ok-95 la columna «Celular» como texto (una vez)
   /* 🔍 EL ECO ES LA FILA RELEÍDA (§4eo). Antes se devolvía `p` —el objeto recibido— y el
      panel comparaba lo enviado con lo enviado: una escritura mala en la hoja no se veía.
      Ahora se vuelve a leer la fila recién escrita y se devuelve ESO. */
@@ -2385,7 +2386,7 @@ function doDelete(id, rev, body) {
 function recToRow(p) {
   return [
     p.id, p.fecha || '', p.oc || '', p.vendedor || '', p.cliente || '',
-    prodText(p.productos), p.celular || '', p.turno || '', p.zona || '',
+    prodText(p.productos), celTexto_(p.celular), p.turno || '', p.zona || '',
     p.direccion || '', p.maps || '', p.pagado ? 'SÍ' : 'NO',
     Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || []),
     p.metodoPago || '', p.observaciones || '',
@@ -2396,6 +2397,26 @@ function recToRow(p) {
     (p.fotos && p.fotos.length) ? p.fotos.join(' | ') : '',
     Number(p.rev) || 0
   ];
+}
+
+/* §4ok-95 (05/11) EL CELULAR VA SIEMPRE COMO TEXTO. Google toma lo que se escribe en una celda y lo convierte: «+591 7011 1222» o
+   «=…» lo lee como una FÓRMULA y la celda queda «#ERROR!» (3 clientes del 01/10 al 02/11: el número se perdió y el bot no les
+   escribió), un 0 adelante se va y algo con guiones puede volverse una fecha. Dos cosas, las dos:
+   · la columna «Celular» con formato de TEXTO (`celColumnaTexto_`, una vez: queda anotado en CEL_TEXTO), así lo que se escribe
+     de ahí en adelante queda tal cual;
+   · y lo que empieza con «=», «+», «-» o «@» (lo que Google toma como fórmula) va con un «'» adelante: es la marca de «esto es
+     texto» y Google, al leer, devuelve el número SIN el «'». La lectura (`rowToRec_`) lo saca igual, por si alguna vez quedara. */
+function celTexto_(v) {
+  var s = String(v == null ? '' : v);
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+function celColumnaTexto_(sh) {
+  if (prop_('CEL_TEXTO') === '1') return;
+  try {
+    var col = HEADERS.indexOf('Celular') + 1, L = String.fromCharCode(64 + col);
+    sh.getRange(L + ':' + L).setNumberFormat('@');
+    PropertiesService.getScriptProperties().setProperty('CEL_TEXTO', '1');
+  } catch (e) {}
 }
 
 function prodText(prods) {
