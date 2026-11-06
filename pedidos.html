@@ -3182,6 +3182,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
       <div class="cx-grupos" id="cx-grupos">
         <div class="cx-gr cx-gr-bajar"><span class="cx-gr-t">⬇️ Bajar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
+          <button id="cta-recargos" class="btn btn-primary btn-sm" style="width:auto;background:#b45309" onclick="exportRecargos()" title="Un Excel con el recargo por entrega (el flete que el cliente paga aparte): un resumen y una hoja por vendedor">🚚 Recargos por vendedor</button>
           <button id="cta-productos-mes" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirProductosMes()">📦 Productos del mes</button>
           <button id="nx-cierre-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#1d4ed8" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>
           <button id="comps-btn0" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="compsAbrir()">📁 Comprobantes</button>
@@ -9716,7 +9717,7 @@ function cxTopPintar(list, vSel, R){
     (mks?('<div class="lb-sep">Por marca</div>'+mks+((partes.length>1 && tot>0.009)?('<div class="lb-barra">'+partes.map(function(x){ return '<i style="flex:'+Math.max(0,x.v)+';background:'+x.c+'"></i>'; }).join('')+'</div>'):'')):'')+
     '<div class="lb-acc"><button type="button" class="ah-go ah-go-p" onclick="abrirVentaTienda()">🏪 Venta de tienda</button><button type="button" class="ah-go ah-go-p" onclick="abrirRetiros()">💵 Retiro de efectivo</button>'+
       '<button type="button" class="ah-go" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>'+
-      '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
+      '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="exportRecargos()">🚚 Recargos por vendedor</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
       '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button></div></div>';
   var h=izq+der;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
@@ -15655,6 +15656,81 @@ function exportConta(){
   if(_qx) tag+='-SOLO-'+_qx.slice(0,30);
   downloadBlob(bytes,(mayor?'mayoristas-':'contabilidad-')+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de '+(mayor?'mayoristas':'contabilidad')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+(_qx?' · ⚠️ SOLO lo que coincide con la búsqueda, no el período entero':'')+' ✓','ok', _qx?7000:undefined);
+}
+/* ============================================================================
+   🚚 LA PLANILLA DEL RECARGO POR ENTREGA, POR VENDEDOR (06/11, dueño: «una planilla aparte de "cobro por entrega" pero por cada
+   vendedor»; eligió «el recargo por entrega»: el flete que el cliente paga APARTE, `^` en el historial de pagos).
+   · Las MISMAS ventas que la tabla de Ventas (`contaLista`: período, Ingreso/Entrega, vendedor y búsqueda) que tengan recargo.
+   · Un Excel: «Resumen» (una fila por vendedor: ventas, pactado, cobrado, por cobrar y el total) y UNA HOJA POR VENDEDOR con un
+     renglón por recargo (una venta con dos fletes da dos renglones): ingreso, entrega, OC, nota, cliente, zona, monto, cobrado o por
+     cobrar, día del cobro, método, banco, nota del pago, quién tiene el efectivo y si ya se entregó.
+   · Las cuentas son las de siempre (`enviosDe`, `envioYaCobrado`, `envioTotal`/`envioCobrado`/`envioPorCobrar`): nada aparte.
+   Solo arma el archivo. `tests/test_recargos_vendedor.js`.
+   ========================================================================== */
+function recargosDatos(list){
+  var M={}, orden=[];
+  (list||contaLista()).forEach(function(p){
+    var env=enviosDe(p); if(!env.length || !(envioTotal(p)>0.005)) return;
+    var nom=nombreCanonico(p.vendedor)||'(sin vendedor)', k=normNombre(nom)||'(sin vendedor)';
+    if(!M[k]){ M[k]={ nombre:nom, ventas:0, pactado:0, cobrado:0, falta:0, filas:[] }; orden.push(k); }
+    var o=M[k]; o.ventas++;
+    env.forEach(function(c){
+      var monto=r2(Number(c.monto)||0), ya=envioYaCobrado(c);
+      o.pactado=r2(o.pactado+monto);
+      if(ya) o.cobrado=r2(o.cobrado+monto); else o.falta=r2(o.falta+monto);
+      o.filas.push({ p:p, c:c, monto:monto, ya:ya });
+    });
+  });
+  orden.sort(function(a,b){ return M[b].pactado-M[a].pactado || M[a].nombre.localeCompare(M[b].nombre,'es'); });
+  return orden.map(function(k){
+    var o=M[k];
+    o.filas.sort(function(a,b){ var fa=contaFechaBase(a.p), fb=contaFechaBase(b.p); return fa<fb?-1:(fa>fb?1:String(a.p.oc||'').localeCompare(String(b.p.oc||''),'es')); });
+    return o;
+  });
+}
+/* El nombre de una hoja de Excel: hasta 31 letras, sin []:*?/\ y sin repetir otra (Excel no abre un archivo con dos iguales). */
+function recargosHojaNombre(nom, usados){
+  var b=String(nom||'Vendedor').replace(/[\[\]:*?\/\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,31).trim()||'Vendedor', n=b, i=2;
+  while(usados[n.toLowerCase()]){ var suf=' ('+(i++)+')'; n=b.slice(0,31-suf.length).trim()+suf; }
+  usados[n.toLowerCase()]=1; return n;
+}
+function exportRecargos(){
+  if(contaAmbito()==='mayor'){ toast('🚚 La planilla de recargos es del equipo de tienda: pasá a «📋 Ventas».','err'); return; }
+  var V=recargosDatos(contaLista());
+  if(!V.length){ toast('🚚 No hay ventas con recargo por entrega en este período'+(typeof cxTopPeriodo==='function'?(' ('+cxTopPeriodo()+')'):'')+'.','err',6000); return; }
+  var H=1, BS=2, num=function(v){ return {v:r2(v), t:'n', s:BS}; };
+  var tot={ ventas:0, pactado:0, cobrado:0, falta:0 };
+  var res=[['VENDEDOR','VENTAS CON RECARGO','PACTADO (Bs)','COBRADO (Bs)','POR COBRAR (Bs)'].map(function(t){ return {v:t,s:H}; })];
+  V.forEach(function(o){
+    res.push([o.nombre, {v:o.ventas,t:'n'}, num(o.pactado), num(o.cobrado), num(o.falta)]);
+    tot.ventas+=o.ventas; tot.pactado=r2(tot.pactado+o.pactado); tot.cobrado=r2(tot.cobrado+o.cobrado); tot.falta=r2(tot.falta+o.falta);
+  });
+  res.push([{v:'TOTAL',s:H}, {v:tot.ventas,t:'n'}, num(tot.pactado), num(tot.cobrado), num(tot.falta)]);
+  res.push([]);
+  res.push([(contaBase()==='entrega'?'Por la fecha de entrega agendada':'Por la fecha de ingreso')+' · '+(typeof cxTopPeriodo==='function'?cxTopPeriodo():'')+' · el recargo es el flete que el cliente paga aparte: no es plata de la venta ni se factura.']);
+  var usados={ 'resumen':1 }, hojas=[{ name:'Resumen', cols:[{w:24},{w:20},{w:16},{w:16},{w:18}], matrix:res }];
+  var cab=['FECHA DE INGRESO','FECHA DE ENTREGA','N° OC','N° NOTA DE VENTA','CLIENTE','ZONA','RECARGO (Bs)','ESTADO','FECHA DEL COBRO','MÉTODO','BANCO','N° NOTA DEL PAGO','EFECTIVO EN MANO DE','ENTREGADO'];
+  V.forEach(function(o){
+    var rows=[cab.map(function(t){ return {v:t,s:H}; })];
+    o.filas.forEach(function(f){
+      var p=f.p, c=f.c, efe=(f.ya && c.metodo==='Efectivo') ? pagoRecibio(c, p) : '';
+      rows.push([ fmtFecha(contaFecha(p))||'', p.fecha?fmtFecha(p.fecha):'', p.oc||'', p.nota||'', p.cliente||'', p.zona||'',
+        num(f.monto), f.ya?'COBRADO':'POR COBRAR', (f.ya && c.fecha)?fmtFecha(c.fecha):'', f.ya?(c.metodo||''):'', f.ya?(c.banco||''):'',
+        f.ya?limpiaNota(c.nota):'', efe, p.entregado?'SÍ':'NO' ]);
+    });
+    rows.push([]);
+    rows.push([{v:'PACTADO',s:H}, num(o.pactado), {v:'COBRADO',s:H}, num(o.cobrado), {v:'POR COBRAR',s:H}, num(o.falta)]);
+    hojas.push({ name:recargosHojaNombre(o.nombre, usados), cols:[{w:16},{w:16},{w:11},{w:16},{w:26},{w:16},{w:14},{w:13},{w:15},{w:12},{w:11},{w:16},{w:20},{w:11}], matrix:rows });
+  });
+  var bytes=buildXlsx(hojas);
+  var modo=segVal('cta-mode')||'mes';
+  var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia') : modo==='mes' ? (document.getElementById('cta-mes').value||'mes') : 'todos';
+  var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  if(vSel) tag+='-'+sinTildes(vSel.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  var _qx=sinTildes(((document.getElementById('cta-search')||{}).value||'').trim().toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(_qx) tag+='-SOLO-'+_qx.slice(0,30);
+  downloadBlob(bytes,'recargos-por-entrega-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('🚚 Recargos por entrega descargados — '+V.length+' vendedor'+(V.length===1?'':'es')+', pactado '+fmtBs(tot.pactado)+' (falta cobrar '+fmtBs(tot.falta)+')'+(_qx?' · ⚠️ SOLO lo que coincide con la búsqueda':'')+' ✓','ok', 7000);
 }
 
 /* ============================================================================
