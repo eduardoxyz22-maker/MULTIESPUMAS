@@ -2562,7 +2562,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         <div class="field">
           <label class="lb"># Celular <span class="req req-lite">*</span></label>
           <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
-          <!-- 📱 (§4ok-95, 05/11) En una venta a domicilio el celular se guarda en 8 números para que el bot le escriba al cliente. -->
+          <!-- 📱 (§4ok-95, 05/11) En una venta a domicilio el celular se guarda en 8 números para que el bot le escriba al cliente; uno de otro país, con «+» y su código (§4ok-95b, 06/11). -->
           <div id="f-cel-aviso" class="cel-aviso" hidden></div>
           <label class="avc-chk" id="f-sinwa-wrap" hidden><input type="checkbox" id="f-sinwa" onchange="celFormPintar()"> 📵 El cliente no tiene WhatsApp</label>
         </div>
@@ -16047,10 +16047,10 @@ function submitPedido(){
   /* 📱 (§4ok-95) Una venta a domicilio sin un celular de WhatsApp no se guarda, salvo con «📵 El cliente no tiene WhatsApp». */
   var _celE=celFormEstado(vendedor);
   if(_celE.falta && !(_celE.her && UNLOCKED &&
-     confirm('📱 Este pedido ya estaba guardado con el celular «'+_celE.t+'», que no es un celular de WhatsApp (8 números que empiezan con 6 o 7).\n\n'+
+     confirm('📱 Este pedido ya estaba guardado con el celular «'+_celE.t+'», que no es un celular de WhatsApp (8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país).\n\n'+
              'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, con ese número.\nCancelar: corregirlo.'))){
     markErr('f-celular'); celFormPintar();
-    toast('📱 El celular «'+_celE.t+'» no es de WhatsApp: tienen que ser 8 números que empiezan con 6 o 7 (sin +591). Corregilo, o tildá «📵 El cliente no tiene WhatsApp».','err',9000);
+    toast('📱 El celular «'+_celE.t+'» no es de WhatsApp: tienen que ser 8 números que empiezan con 6 o 7 (sin +591), o uno de otro país con «+» y el código del país (+54 9 11 2345 6789). Corregilo, o tildá «📵 El cliente no tiene WhatsApp».','err',9000);
     var _fcE=document.getElementById('f-celular'); if(_fcE){ try{ _fcE.focus(); _fcE.scrollIntoView({block:'center'}); }catch(e){} }
     return;
   }
@@ -20959,6 +20959,7 @@ function buscaCatalogo(x){
 /* Un celular boliviano al que se pueda llamar: 8 dígitos que empiezan en 6 o 7.
    Lo usa el chofer para avisar que está llegando; si está mal, la entrega se cae. */
 function celularUsable(t){
+  if(celExt(t)) return true;   // §4ok-95b (06/11) un número de otro país con su código también se puede llamar
   var d=String(t==null?'':t).replace(/\D/g,'');
   if(d.length>8) d=d.slice(-8);
   return d.length===8 && /^[67]/.test(d);
@@ -20981,6 +20982,36 @@ function celularUsable(t){
 var CEL_SEP=/(?:\s*[\-‐-―−\/,;|\r\n]+\s*|\s+(?:y|o)\s+)/i;
 function celSin591(d){ return String(d||'').replace(/^(?:00)?591(?=[67]\d{7}$)/,''); }
 function celVale(d){ return /^[67]\d{7}$/.test(celSin591(d)); }
+/* §4ok-95b 🌎 UN NÚMERO DE OTRO PAÍS (06/11, dueño: «si inicia con + debería aceptar o con código de área y país. Hay clientes que
+   usan número del extranjero»). Vale como celular de WhatsApp y se guarda con el «+» y el código del país («+5491123456789»):
+   · con «+» o «00» adelante: cualquier país que NO sea Bolivia (591 sigue con la regla de 8 números con 6 o 7), de 10 a 15 números
+     contando el código; si el país está en `CEL_PAISES`, con el largo de los celulares de ESE país (atrapa un número que le falta uno);
+   · SIN «+»: solo con el código de un país de `CEL_PAISES` y su largo. Esa lista no lleva países que empiecen con 6 o 7 (serían un
+     celular de Bolivia mal escrito: «77012345 6»); esos se escriben con el «+». Estados Unidos y Canadá (1): 11 números, y después
+     del 1 no va ni 0 ni 1 (así un NIT de 10 números no pasa por celular).
+   ⚠️ `CEL_PAISES`/`celExt` = `WA_PAISES`/`waCelExt_` del .gs (el bot): `test_wa_pagina` las compara. Un país nuevo va en los dos. */
+var CEL_PAISES={ '1':[11,11], '51':[11,11], '52':[12,13], '54':[12,13], '55':[12,13], '56':[11,11], '57':[12,12], '58':[12,12],
+  '593':[11,12], '595':[12,12], '598':[11,11], '34':[11,11], '39':[11,13], '33':[11,11], '41':[11,11], '44':[12,12], '49':[11,14],
+  '351':[12,12], '81':[11,12], '82':[11,12], '86':[13,13] };
+function celPaisLargo(d){
+  for(var n=3;n>=1;n--){ var r=CEL_PAISES[d.slice(0,n)]; if(r) return (n>1 || /^1[2-9]/.test(d)) ? r : [0,0]; }
+  return null;
+}
+/* '' o los números con el código del país (sin el «+»). */
+function celExt(t){
+  var s=String(t==null?'':t).replace(/[​-‏‪-‮⁦-⁩]/g,'').trim(), d=s.replace(/\D/g,''), mas=/^\+/.test(s);
+  if(/^00/.test(d)){ mas=true; d=d.slice(2); }
+  if(!/^[1-9]/.test(d) || /^591/.test(d) || d.length<10 || d.length>15) return '';
+  var r=celPaisLargo(d);
+  if(!r) return mas ? d : '';
+  return (d.length>=r[0] && d.length<=r[1]) ? d : '';
+}
+/* Un pedazo que es UN celular: Bolivia → los 8 números; otro país → «+» y los números; si no, ''. */
+function celNorm(t){
+  var d=String(t==null?'':t).replace(/\D/g,'');
+  if(celVale(d)) return celSin591(d);
+  var e=celExt(t); return e ? '+'+e : '';
+}
 /* «77012345 - 76543210» → { cel:'77012345', otros:['76543210'] }. Un celular escrito con un guion en el medio («700-12345») es UNO.
    Lo que no sirve y tiene pinta de número (6 o más) queda en `otros` tal como se escribió (un número de otro país, un fijo). */
 function celPartes(t){
@@ -20990,8 +21021,15 @@ function celPartes(t){
   for(var i=0;i<tr.length;i++){
     var a=tr[i], b=tr[i+1];
     if(/^(?:00)?591$/.test(a.d) && b && celVale(b.d)) continue;                       // «+591 - 70012345»: el prefijo solo
-    if(celVale(a.d)){ buenos.push(celSin591(a.d)); continue; }
-    if(b && !celVale(b.d) && celVale(a.d+b.d)){ buenos.push(celSin591(a.d+b.d)); i++; continue; }   // «700-12345»
+    var n=celNorm(a.t); if(n){ buenos.push(n); continue; }
+    /* «700-12345», «+1 305-555-1234», «+54 9 11 2345-6789»: un número escrito con guiones son varios pedazos; se juntan con los
+       que siguen (hasta 3, ninguno un celular entero por su cuenta) y vale el primero que da un celular. */
+    var junto=a.t, j=i+1, hecho='';
+    for(; j<tr.length && j<=i+3; j++){
+      if(celNorm(tr[j].t)) break;
+      junto+=tr[j].d; hecho=celNorm(junto); if(hecho) break;
+    }
+    if(hecho){ buenos.push(hecho); i=j; continue; }
     if(a.d.length>=6) otros.push(a.t);
   }
   var vistos={}, bu=buenos.filter(function(d){ if(vistos[d]) return false; vistos[d]=1; return true; });
@@ -21034,9 +21072,9 @@ function celFormPintar(){
   if(mal){
     cls+=' mal';
     h = o.sinWa ? '📵 Se guarda «'+esc(o.t)+'» tal cual: el bot no le va a escribir a este cliente.'
-                : '📱 «'+esc(o.t)+'» no es un celular de WhatsApp (8 números que empiezan con 6 o 7). Corregilo; si el cliente no tiene WhatsApp, tildá la casilla de abajo.';
+                : '📱 «'+esc(o.t)+'» no es un celular de WhatsApp (8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país: +54 9 11 2345 6789). Corregilo; si el cliente no tiene WhatsApp, tildá la casilla de abajo.';
   } else if(o.aplica && o.n.cel && (o.n.cel!==o.t || o.n.otros.length)){
-    h='✓ Se guarda como <b>'+esc(o.n.cel)+'</b>'+(o.n.otros.length ? (' · el otro número va a Observaciones: «Otro cel: '+esc(o.n.otros.join(', '))+'»') : '')+'.';
+    h='✓ Se guarda como <b>'+esc(o.n.cel)+'</b>'+(/^\+/.test(o.n.cel) ? ' 🌎 (número de otro país)' : '')+(o.n.otros.length ? (' · el otro número va a Observaciones: «Otro cel: '+esc(o.n.otros.join(', '))+'»') : '')+'.';
   }
   av.className=cls; av.hidden=!h; if(av._h!==h){ av.innerHTML=h; av._h=h; }
   if(sw && !mal && sw.checked && o.n.cel) sw.checked=false;   // con un celular que sirve, la marca no va
@@ -28386,7 +28424,8 @@ function misEstadoCard(p, falta){
   if(!noSeCobra(p) && (falta==null?(Number(p.saldo)||0):falta)>0.005 && !p.pagado) return 'debe';
   return 'va';
 }
-/* El chat de WhatsApp con el cliente: 8 dígitos que empiezan con 6 o 7 son un celular de Bolivia (+591). */
+/* El chat de WhatsApp con el cliente: 8 dígitos que empiezan con 6 o 7 son un celular de Bolivia (+591); desde §4ok-95b también un
+   número de otro país con su código (`celExt`, la regla de `waCelExt_` del bot). */
 function misWaCliente(cel){
   var d=misWaCelUno(cel);
   /* §4ok-E4 (05/11) dos celulares separados con «-», «/», «,» o « y »: el primer pedazo que sea ENTERO un celular (la MISMA regla
@@ -28396,17 +28435,18 @@ function misWaCliente(cel){
     /* (§4jd, A2-6) dos celulares en el campo («70012345 / 76543210»): el primero que sea un celular */
     /* (12/10, revisión) con borde a la izquierda: de «775123456» o de un número de otro país salía el celular de OTRA persona */
     var m=String(cel||'').replace(/[\s.\-()]/g,'').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
-    if(!m) return '';
-    d='591'+m[1];
+    if(m) d='591'+m[1];
   }
-  return 'https://wa.me/'+d;
+  if(!d){ var mi=String(cel||'').match(/\+\s*\d[\d\s.\-()]{7,22}\d/); if(mi) d=celExt(mi[0]); }   // §4ok-95b «Cel: +54 9 11 2345 6789»
+  return d ? 'https://wa.me/'+d : '';
 }
 // §4ok-E4 — un pedazo que es UN celular entero ('591…' o ''), y la búsqueda por separadores (= waCelUno_/WA_CEL_CORTES/waCelBuscar_ del .gs)
 function misWaCelUno(t){
   var d=String(t==null?'':t).replace(/[^0-9]/g,'');
   if(/^[67]\d{7}$/.test(d)) return '591'+d;
   if(/^591[67]\d{7}$/.test(d)) return d;
-  return '';
+  if(/^00591[67]\d{7}$/.test(d)) return d.slice(2);
+  return celExt(t);   // §4ok-95b otro país (= waCelExt_)
 }
 var MIS_WA_CORTES=[/\s*[\/,;]+\s*|\s+y\s+/i, /\s+-+\s*|\s*-+\s+/, /-+/];
 function misWaCelBuscar(t,k){

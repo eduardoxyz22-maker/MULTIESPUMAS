@@ -2534,7 +2534,9 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **E3** subir `IAC_PREGUNTA_V` relee SOLO las `cp:false` (`iacReleer_`); un campo nuevo del esquema va también en `required`.
 - **E4** `waCel_` (.gs) y `misWaCliente` (página) son la MISMA regla (`test_wa_pagina` las compara). **95** el celular se escribe con
   `celTexto_` en `recToRow` (nunca crudo); en la página `celPartes` + `celFormFalta` (submitPedido, `fxPasosEstado`, «Para guardar»);
-  «no tiene WhatsApp» = `sinwa` en los productos. Playwright solo `CEL_PRUEBA`.
+  «no tiene WhatsApp» = `sinwa` en los productos. Playwright solo `CEL_PRUEBA`. **95b** 🌎 un número de otro país (con «+»/«00»; sin «+» solo
+  un código de `CEL_PAISES` con su largo) vale y se guarda «+<código><número>»; `CEL_PAISES`/`celExt` = `WA_PAISES`/`waCelExt_` del `.gs`
+  (`test_wa_pagina` las compara): un país nuevo va en los dos.
 - **E5** «fuera de Santa Cruz» = `ubicFueraDeSantaCruz`; frena solo lo escrito o cambiado. **E6** un enlace «cómo llegar» se lee por su
   DESTINO (`coordsDestinoDir` / `.gs` `dirDestino_`); nunca el primer par ni el `@`.
 - **E7** saldos de meses anteriores = `saldosAnteriores`, APARTE, nunca sumados al mes; traer julio-septiembre = cambiar `SALDO_ANT_DESDE`.

@@ -3173,7 +3173,8 @@ function waNorm_(t) {
   return String(t || '').toLowerCase().replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e').replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
     .replace(/[úùüû]/g, 'u').replace(/\s+/g, ' ').trim();
 }
-/** El celular de WhatsApp de Bolivia (591 + 6/7 + 7 números), como `misWaCliente` de la página; '' si no hay uno. */
+/** El celular de WhatsApp de Bolivia (591 + 6/7 + 7 números) o de otro país con su código (§4ok-95b, `waCelExt_`), como `misWaCliente`
+    de la página; '' si no hay uno. */
 function waCel_(cel) {
   var uno = waCelUno_(cel); if (uno) return uno;
   /* §4ok-E4 (05/11) Dos celulares en el campo: «70111222-76543210», «70111222 - 76543210», «70111222 / 76543210», «…, …», «… y …».
@@ -3185,14 +3186,38 @@ function waCel_(cel) {
   /* Con otras palabras alrededor («Cel: 70111222 casa»). (12/10, revisión) Con borde a la IZQUIERDA también: si no, de «775123456» o
      de un número de otro país salía un celular de Bolivia de OTRA persona. */
   var m = String(cel || '').replace(/[\s.\-()]/g, '').match(/(?:^|[^0-9+])(?:\+?591)?([67]\d{7})(?![0-9])/);
-  return m ? '591' + m[1] : '';
+  if (m) return '591' + m[1];
+  var mi = String(cel || '').match(/\+\s*\d[\d\s.\-()]{7,22}\d/);   // §4ok-95b «Cel: +54 9 11 2345 6789»
+  return mi ? waCelExt_(mi[0]) : '';
 }
 /* §4ok-E4 Un pedazo que es UN celular entero (sin mirar lo que lo rodea): '591…' o ''. `misWaCliente` de la página hace lo mismo. */
 function waCelUno_(t) {
   var d = String(t == null ? '' : t).replace(/[^0-9]/g, '');
   if (/^[67]\d{7}$/.test(d)) return '591' + d;
   if (/^591[67]\d{7}$/.test(d)) return d;
-  return '';
+  if (/^00591[67]\d{7}$/.test(d)) return d.slice(2);
+  return waCelExt_(t);
+}
+/* §4ok-95b 🌎 (06/11, dueño: «si inicia con + debería aceptar o con código de área y país. Hay clientes que usan número del
+   extranjero») Un número de OTRO país: los números con el código del país, sin el «+» (como lo pide Meta y como llega `de` en el
+   aviso de Meta), o ''. Con «+» o «00» adelante, cualquier país que no sea Bolivia (591 sigue con los 8 números con 6 o 7), de 10 a 15
+   números con el código, y si el país está en WA_PAISES con el largo de los celulares de ese país. SIN «+», solo un país de WA_PAISES
+   con su largo (la lista no lleva países que empiecen con 6 o 7: serían un celular de Bolivia mal escrito). 1 (EE. UU. y Canadá):
+   11 números y después del 1 ni 0 ni 1. ⚠️ = `CEL_PAISES`/`celExt` de la página (test_wa_pagina las compara). */
+var WA_PAISES = { '1':[11,11], '51':[11,11], '52':[12,13], '54':[12,13], '55':[12,13], '56':[11,11], '57':[12,12], '58':[12,12],
+  '593':[11,12], '595':[12,12], '598':[11,11], '34':[11,11], '39':[11,13], '33':[11,11], '41':[11,11], '44':[12,12], '49':[11,14],
+  '351':[12,12], '81':[11,12], '82':[11,12], '86':[13,13] };
+function waPaisLargo_(d) {
+  for (var n = 3; n >= 1; n--) { var r = WA_PAISES[d.slice(0, n)]; if (r) return (n > 1 || /^1[2-9]/.test(d)) ? r : [0, 0]; }
+  return null;
+}
+function waCelExt_(t) {
+  var s = String(t == null ? '' : t).replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g, '').trim(), d = s.replace(/\D/g, ''), mas = /^\+/.test(s);
+  if (/^00/.test(d)) { mas = true; d = d.slice(2); }
+  if (!/^[1-9]/.test(d) || /^591/.test(d) || d.length < 10 || d.length > 15) return '';
+  var r = waPaisLargo_(d);
+  if (!r) return mas ? d : '';
+  return (d.length >= r[0] && d.length <= r[1]) ? d : '';
 }
 /* §4ok-E4 Los separadores, del más claro al menos claro: «/», «,», «;» y « y »; un guion con espacio de algún lado; un guion pegado. */
 var WA_CEL_CORTES = [/\s*[\/,;]+\s*|\s+y\s+/i, /\s+-+\s*|\s*-+\s+/, /-+/];

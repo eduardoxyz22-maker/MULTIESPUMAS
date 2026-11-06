@@ -138,7 +138,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     const casos = ['70111222-76543210', '70111222 - 76543210', '70111222 -- 76543210', '70111222 -76543210', '70111222- 76543210', '70111222--76543210',
       '70111222 / 76543210', '70111222, 76543210', '70111222 y 76543210', '775123456-76543210', '3345566-76543210', '7011-1222', '+591 7-655-4433',
       '+591 7011-1222 - 76543210', '70111222', '+591 70111222', 'Cel: 70111222', '775123456', '12367123456', '+54 9 11 6712 3456', '3345566', '#ERROR!', '',
-      '7011122276543210', '33445566 y 3456789'];
+      '7011122276543210', '33445566 y 3456789',
+      /* §4ok-95b 🌎 otro país (06/11) */
+      '+5491123456789', '0054 9 11 2345 6789', '5491123456789', '+1 305-555-1234', '1 305 555 1234', '+34 612 34 56 78', '34612345678',
+      '+55 11 91234-5678', '+56 9 8765 4321', '+595 981 123456', '+61 412 345 678', '61412345678', '+54 11 2345 678', '+591 3 3445566',
+      '10234567890', '1023456789', '70111222 / +54 9 11 2345 6789', '+54 9 11 2345-6789 / 70111222', 'Cel: +61 412 345 678',
+      '+5491123456789-70111222', '0059170111222', '77012345 6'];
     const pag = await page.evaluate((c) => c.map(function(x){ return misWaCliente(x); }), casos);
     const gs = casos.map(c => { const n = gctx.waCel_(c); return n ? 'https://wa.me/' + n : ''; });
     const dif = casos.filter((c, i) => pag[i] !== gs[i]).map((c, i) => c);
@@ -150,8 +155,30 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       W('775123456-76543210') === 'https://wa.me/59176543210' && W('3345566-76543210') === 'https://wa.me/59176543210');
     chk('un número solo con guiones («7011-1222», «+591 7-655-4433») sigue entero', W('7011-1222') === 'https://wa.me/59170111222' && W('+591 7-655-4433') === 'https://wa.me/59176554433');
     chk('«+591 7011-1222 - 76543210»: el guion con espacio separa, el pegado no → el primero', W('+591 7011-1222 - 76543210') === 'https://wa.me/59170111222');
-    chk('borde a la izquierda (§4kf): «775123456», «12367123456», «+54 9 11 6712 3456», «7011122276543210» → nada',
-      ['775123456', '12367123456', '+54 9 11 6712 3456', '7011122276543210', '#ERROR!', '33445566 y 3456789'].every(c => W(c) === ''));
+    /* ⚠️ Cambiado a conciencia (§4ok-95b, 06/11): «+54 9 11 6712 3456» y «12367123456» ya no dan «nada»: son un número de Argentina y
+       uno de EE. UU. con su código (el dueño: «Hay clientes que usan número del extranjero»). El borde sigue: nunca un celular de Bolivia. */
+    chk('borde a la izquierda (§4kf): «775123456», «7011122276543210», «77012345 6» → nada; nunca un celular de Bolivia de otra persona',
+      ['775123456', '7011122276543210', '#ERROR!', '33445566 y 3456789', '77012345 6'].every(c => W(c) === '') &&
+      !/wa\.me\/591/.test(W('+54 9 11 6712 3456') + W('12367123456')));
+    console.log('\n── §4ok-95b · 🌎 un número de otro país ──');
+    chk('con «+» o «00» y el código del país: Argentina, EE. UU., España, Brasil, Chile, Paraguay',
+      W('+54 9 11 6712 3456') === 'https://wa.me/5491167123456' && W('+5491123456789') === 'https://wa.me/5491123456789' &&
+      W('0054 9 11 2345 6789') === 'https://wa.me/5491123456789' && W('+1 305-555-1234') === 'https://wa.me/13055551234' &&
+      W('+34 612 34 56 78') === 'https://wa.me/34612345678' && W('+55 11 91234-5678') === 'https://wa.me/5511912345678' &&
+      W('+56 9 8765 4321') === 'https://wa.me/56987654321' && W('+595 981 123456') === 'https://wa.me/595981123456', casos.map(W));
+    chk('sin «+», con el código de un país conocido y su largo', W('5491123456789') === 'https://wa.me/5491123456789' &&
+      W('1 305 555 1234') === 'https://wa.me/13055551234' && W('34612345678') === 'https://wa.me/34612345678' && W('12367123456') === 'https://wa.me/12367123456');
+    chk('un país que no está en la lista vale SOLO con «+» (Australia empieza con 6: sin «+» sería un celular de Bolivia mal escrito)',
+      W('+61 412 345 678') === 'https://wa.me/61412345678' && W('Cel: +61 412 345 678') === 'https://wa.me/61412345678' && W('61412345678') === '');
+    chk('no pasan: a la Argentina le falta un número, un fijo de Bolivia con +591, un NIT de 10 u 11 números que empieza con 10',
+      W('+54 11 2345 678') === '' && W('+591 3 3445566') === '' && W('10234567890') === '' && W('1023456789') === '');
+    chk('con dos números, el primero que sirve (de acá o de afuera) y el 00591 es de Bolivia',
+      W('70111222 / +54 9 11 2345 6789') === 'https://wa.me/59170111222' && W('+54 9 11 2345-6789 / 70111222') === 'https://wa.me/5491123456789' &&
+      W('+5491123456789-70111222') === 'https://wa.me/5491123456789' && W('0059170111222') === 'https://wa.me/59170111222');
+    {
+      const pg = await page.evaluate(() => JSON.stringify(CEL_PAISES));
+      chk('la lista de países de la página (CEL_PAISES) = la del bot (WA_PAISES)', pg === JSON.stringify(gctx.WA_PAISES), pg);
+    }
   }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));

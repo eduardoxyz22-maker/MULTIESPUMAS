@@ -54,7 +54,11 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       mas591: c('+591 70012345'), pegado591: c('59170012345'), esp591: c('591 71012345'), sep591: c('+591-70012345'),
       espacios: c('700 123 45'), unEsp: c('7 6381234'), guionMedio: c('700-12345'), uni: c('‪+59170012345‬'),
       error: c('#ERROR!'), siete: c('7001234'), nueve: c('775123456'), cuatro: c('1234'), cero: c('0'),
-      afuera: c('73312345-+34612345678'), malPrimero: c('7001234-76543210'), repetido: c('70012345 - 70012345')
+      afuera: c('73312345-+34612345678'), malPrimero: c('7001234-76543210'), repetido: c('70012345 - 70012345'),
+      /* §4ok-95b 🌎 (06/11) otro país */
+      arg: c('+54 9 11 2345 6789'), argGuion: c('+54 9 11 2345-6789'), usa: c('+1 305-555-1234'), usaSin: c('1 305 555 1234'), esp00: c('0034 612 345 678'),
+      argSin: c('5491123456789'), aus: c('+61 412 345 678'), ausSin: c('61412345678'), corto: c('+54 11 2345 678'), fijo591: c('+591 3 3445566'),
+      dosPaises: c('+54 9 11 2345 6789 / 70012345'), bolPrimero: c('70012345 - +1 305 555 1234'), nit: c('1023456789')
     };
   });
   chk('1a · dos números con guion: el primero es el celular y el otro queda aparte',
@@ -67,6 +71,12 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('1f · borde a la izquierda: «775123456» no es «75123456»', P.nueve === '|775123456', P.nueve);
   chk('1g · un número de otro país queda como otro, tal como se escribió', P.afuera === '73312345|+34612345678', P.afuera);
   chk('1h · el que sirve gana aunque vaya segundo, y el mismo dos veces es uno', P.malPrimero === '76543210|7001234' && P.repetido === '70012345|', P);
+  chk('1i · 🌎 un número de otro país con «+» o «00» queda con el «+» y el código del país, también escrito con guiones',
+    P.arg === '+5491123456789|' && P.argGuion === '+5491123456789|' && P.usa === '+13055551234|' && P.esp00 === '+34612345678|' && P.aus === '+61412345678|', P);
+  chk('1j · 🌎 sin «+», solo con el código de un país conocido y su largo (Australia empieza con 6: sin «+» no)',
+    P.argSin === '+5491123456789|' && P.usaSin === '+13055551234|' && P.ausSin === '|61412345678', P);
+  chk('1k · 🌎 no pasan: le falta un número, un fijo de Bolivia con +591, un NIT', P.corto === '|+54 11 2345 678' && P.fijo591 === '|+591 3 3445566' && P.nit === '|1023456789', P);
+  chk('1l · 🌎 con dos, el primero que sirve; el de afuera también va a «otro»', P.dosPaises === '+5491123456789|70012345' && P.bolPrimero === '70012345|+13055551234', P);
 
   /* Llena una venta como una vendedora. */
   const llenar = (o) => ev((o) => {
@@ -121,6 +131,16 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   await llenar({ cel: '+591 700 12345' });
   r = await guardar();
   chk('2f · «+591 700 12345» queda «70012345» y Observaciones no cambia', r.guardo && r.ult.celular === '70012345' && r.ult.observaciones === '', r.ult && [r.ult.celular, r.ult.observaciones]);
+
+  await llenar({ cel: '+54 9 11 2345-6789' });
+  e = await estado();
+  chk('2h · 🌎 un número de otro país: avisa cómo se guarda y «Para guardar» queda listo', /Se guarda como \+5491123456789/.test(e.aviso) && /otro país/.test(e.aviso) &&
+    !e.casilla && e.paso === true && e.celDer === 'ok', e);
+  r = await guardar();
+  chk('2i · 🌎 se guarda con el «+» y el código del país, sin la marca «no tiene WhatsApp»', r.guardo && r.ult.celular === '+5491123456789' && !r.ult.productos.some(x => x.sinwa),
+    r.ult && r.ult.celular);
+  const waAfuera = await ev((c) => [misWaCliente(c), nxBotManda({ celular: c, fecha: '2026-11-04', oc: '11-001', vendedor: 'Carola Chavez', productos: [] }), celularUsable(c)], '+5491123456789');
+  chk('2j · 🌎 y el 💬 WhatsApp y el 📞 del chofer lo toman', waAfuera[0] === 'https://wa.me/5491123456789' && waAfuera[2] === true, waAfuera);
 
   await llenar({ cel: '70012345 / 76543210', obs: 'Otro cel: 76543210' });
   r = await guardar();

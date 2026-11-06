@@ -270,8 +270,9 @@ console.log('\n── 5b. Revisión del 12/10: Kommo completado, celular mal esc
   chk('una venta de Kommo ya completada recibe la confirmación y logística el «pedido nuevo» (antes se salteaba por el id kommo-)',
       conf.length === 1 && ln.filter(n => n === 'DE KOMMO').length === 2, s.map(x => x.pl + ':' + x.p[2]));
   chk('lo que sigue como borrador de Kommo no manda nada', !s.some(x => x.p.indexOf('SIGUE BORRADOR') >= 0), s);
-  chk('el celular: un dígito de más o un número de otro país NO arman un celular de otra persona',
-      S.ctx.waCel_('775123456') === '' && S.ctx.waCel_('12367123456') === '' && S.ctx.waCel_('+54 9 11 6712 3456') === '' &&
+  /* ⚠️ Cambiado a conciencia (§4ok-95b, 06/11): un número de otro país con su código ya es su WhatsApp (EE. UU., Argentina); el borde sigue. */
+  chk('el celular: un dígito de más NO arma un celular de otra persona; un número de otro país es el suyo entero',
+      S.ctx.waCel_('775123456') === '' && S.ctx.waCel_('12367123456') === '12367123456' && S.ctx.waCel_('+54 9 11 6712 3456') === '5491167123456' &&
       S.ctx.waCel_('Cel: 70111222') === '59170111222' && S.ctx.waCel_('(591) 70111222') === '59170111222' && S.ctx.waCel_('70111222/76543210') === '59170111222',
       ['775123456', '12367123456', '+54 9 11 6712 3456', 'Cel: 70111222', '(591) 70111222'].map(x => x + '→' + S.ctx.waCel_(x)));
 }
@@ -1046,12 +1047,23 @@ console.log('\n── §4ok-E4 · dos celulares en el campo: «-», «/», «,»
   chk('«70111222, 76543210» y «70111222 y 76543210» → el primero', W('70111222, 76543210') === '59170111222' && W('70111222 y 76543210') === '59170111222');
   chk('si el primero no es celular («3345566-76543210», «775123456-76543210») → el segundo', W('3345566-76543210') === '59176543210' && W('775123456-76543210') === '59176543210');
   chk('un número solo con guiones sigue entero («7011-1222», «+591 7-655-4433»)', W('7011-1222') === '59170111222' && W('+591 7-655-4433') === '59176554433');
-  chk('el borde a la izquierda sigue (§4kf): «775123456», «12367123456», «7011122276543210», «+54 9 11 6712 3456» → nada',
-      W('775123456') === '' && W('12367123456') === '' && W('7011122276543210') === '' && W('+54 9 11 6712 3456') === '');
+  chk('el borde a la izquierda sigue (§4kf): «775123456», «7011122276543210» → nada; «12367123456» y «+54 9 11 6712 3456» son de afuera (§4ok-95b)',
+      W('775123456') === '' && W('7011122276543210') === '' && W('12367123456') === '12367123456' && W('+54 9 11 6712 3456') === '5491167123456');
   poner('2026-10-14 10:00');
   S.guardar(ped({ id: 'e4', celular: '70111222-76543210' })); pasar(3); S.repaso();
   const c = S.salen().find(x => x.pl === 'confirmacion_pedido');
   chk('un pedido con «70111222-76543210» recibe la confirmación en el primero', !!c && c.to === '59170111222', S.salen().map(x => x.pl + '→' + x.to));
+}
+{
+  /* §4ok-95b 🌎 (06/11) Un cliente con un número de otro país: la página lo guarda «+5491123456789» y el bot le escribe a ese número. */
+  poner('2026-10-14 10:00');
+  const S = servidor(ON);
+  S.guardar(ped({ id: 'afuera', celular: '+5491123456789' })); pasar(3); S.repaso();
+  const c = S.salen().find(x => x.pl === 'confirmacion_pedido');
+  chk('🌎 un pedido con «+5491123456789» recibe la confirmación en ese número (con el código del país, sin el «+»)', !!c && c.to === '5491123456789',
+      S.salen().map(x => x.pl + '→' + x.to));
+  const col = S.ctx.HEADERS.indexOf('Celular'), f = S.sh._datos.find(x => x[0] === 'afuera');
+  chk('🌎 …y en la planilla va con el «\'» adelante (si no, Google toma el «+» como fórmula: «#ERROR!»)', f && f[col] === "'+5491123456789", f && f[col]);
 }
 
 // ══ §4ok-95 (05/11) El celular va a la planilla SIEMPRE como texto (que no vuelva a quedar «#ERROR!») ══════════════
