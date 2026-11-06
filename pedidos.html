@@ -502,6 +502,12 @@ th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
 th.sortable:hover{color:var(--teal-dk)}
 .sort-arr{font-size:.7em;opacity:.9;margin-left:1px}
 .maplink{color:var(--teal-dk);font-weight:600;text-decoration:none}
+/* §4ok-108 la ubicación que mandó el cliente por WhatsApp */
+.ubic-wa{display:inline-block;font-size:.72rem;font-weight:700;color:#0b6b3a;background:#e6f6ec;border:1px solid #b7e2c6;border-radius:999px;padding:1px 8px;margin-left:4px}
+.wa-resp-ubi{font-size:.8rem;margin:4px 0;padding:6px 9px;border-radius:8px;background:var(--gray-lt,#f1f3f5)}
+.wa-resp-ubi.ok{background:#e6f6ec;color:#0b6b3a}
+.wa-resp-ubi.otra{background:var(--amber-lt,#fff4dc);color:#7c4b00}
+.wa-resp-ubi-b{margin-left:6px;background:var(--teal,#00B5AD);color:#fff}
 .maplink:hover{text-decoration:underline}
 .empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:.86rem}
 .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
@@ -27922,7 +27928,7 @@ function showMisModal(id){
   var ubicSec=(esVentaTienda(p) && !p.maps) ? '' : '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+   // (26/09) la de tienda no va a ningún lado
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
-      ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
+      ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'+ubicWaTag(p.maps)+'<button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
       : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
@@ -40857,7 +40863,7 @@ function showCargaModal(id){
   var dnum=dayNumMap()[p.id];
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps
-    ? '<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'
+    ? '<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'+ubicWaTag(p.maps)
     : '<span class="badge b-amber">⚠️ sin ubicación</span> <button class="btn btn-sm" style="background:var(--amber);color:#fff;margin-left:6px" onclick="editarUbicacionCarga(\''+p.id+'\')">📍 Agregar</button>';
   var vehTxt=vehiculoDe(p)
     ? ('🚛 <b>'+esc(vehiculoDe(p))+'</b>'+(p.chofer?(' · '+esc(p.chofer)):''))
@@ -41557,7 +41563,7 @@ function showPedidoModal(id){
       recibeHtml+
       '<div class="fl-per">🙋 Cliente '+(contacto||'<span style="color:var(--muted)">sin celular</span>')+
         ((!p.maps && N.mapa) ? (' <a class="fl-btn fl-btn-s p" href="'+esc(N.mapa)+'" target="_blank" rel="noopener">📍 Maps (de la nota)</a>') : '')+
-        (p.maps ? (' <a class="fl-btn fl-btn-s p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Maps</a>') : '')+'</div>'+
+        (p.maps ? (' <a class="fl-btn fl-btn-s p" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Maps</a>'+ubicWaTag(p.maps)) : '')+'</div>'+   // §4ok-108
       '<div class="fl-per">'+(p.maps ? ('<button type="button" class="fl-lnk" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button>')
                 : ('<button type="button" class="fl-btn fl-btn-s a" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>'))+'</div>'+
     '</div>');
@@ -44492,6 +44498,9 @@ function ubicConsulta(p){
 }
 function linkAprox(lat,lng){ return 'https://www.google.com/maps?q='+lat+','+lng+'&aprox=1'; }
 function esUbicAprox(u){ return /[?&]aprox=1/.test(String(u||'')); }
+// §4ok-108 — la ubicación que mandó el CLIENTE por WhatsApp (servidor 2026-11-05-a: `…&wa=1`, el pin exacto que compartió)
+function esUbicWa(u){ return /[?&]wa=1/.test(String(u||'')); }
+function ubicWaTag(u){ return esUbicWa(u) ? ' <span class="ubic-wa" title="El cliente compartió su ubicación por WhatsApp y el bot la guardó en el pedido">📍 la mandó el cliente por WhatsApp</span>' : ''; }
 function guardarEnFila(lista, cb){
   var i=0;
   (function sig(){
@@ -49135,6 +49144,7 @@ function waRespCard(r){
     '<div class="wa-resp-q"><b>'+esc(quien)+'</b> <small>'+esc(waRespHora(r.t))+(r.num?(' · +'+esc(r.num)):'')+'</small></div>'+
     ((r.antes||[]).length ? '<div class="wa-resp-antes">'+r.antes.map(function(x){ return '«'+esc(x)+'»'; }).join('<br>')+'</div>' : '')+
     '<div class="wa-resp-txt">«'+esc(r.txt||'')+'»</div>'+
+    waRespUbicHtml(r)+   // §4ok-108
     waRespIaHtml(r)+
     '<div class="wa-resp-p">'+esc(ped)+'</div>'+
     '<div class="wa-resp-b">'+
@@ -49143,6 +49153,27 @@ function waRespCard(r){
       (r.at ? '<span class="wa-resp-at">✓ '+esc(r.at)+'</span>'
             : '<button type="button" class="btn btn-sm wa-resp-ok" onclick="waRespAtender(\''+esc(r.w)+'\')">✓ Ya lo atendí</button>')+
     '</div></div>';
+}
+// §4ok-108 — EL CLIENTE MANDÓ SU UBICACIÓN (servidor 2026-11-05-a, `r.ubi` = {r, id, link, m}). Si quedó guardada, se dice; si el pedido ya
+// tenía OTRO pin, el servidor no lo pisó: «📍 Usar esta ubicación» la guarda con `guardarUbicacion` (el camino de siempre: durable, aviso
+// de «modificado» si la cambia la vendedora). Ver en Maps primero.
+function waRespUbicHtml(r){
+  var u=r && r.ubi; if(!u || !u.r) return '';
+  var p=u.id ? findById(u.id) : null, ver=u.link ? (' <a href="'+esc(u.link)+'" target="_blank" rel="noopener">ver en Maps ↗</a>') : '';
+  var lejos=u.m!=null ? (' (a '+(u.m>=1000 ? (String(Math.round(u.m/100)/10).replace('.',',')+' km') : (u.m+' m'))+' de la que tenía)') : '';
+  if(u.r==='guardada') return '<div class="wa-resp-ubi ok">📍 Mandó su ubicación: ya quedó en el pedido'+ver+'</div>';
+  if(u.r==='igual') return '<div class="wa-resp-ubi ok">📍 Mandó su ubicación: es la que ya tenía el pedido'+ver+'</div>';
+  if(u.r==='sin_pedido') return '<div class="wa-resp-ubi">📍 Mandó una ubicación, pero no tiene ningún pedido por entregar'+ver+'</div>';
+  var ya=p && String(p.maps||'').trim()===String(u.link||'').trim();
+  return '<div class="wa-resp-ubi otra">📍 Mandó '+(u.r==='ocupado' ? 'su ubicación (la planilla estaba ocupada y no se guardó sola)' : ('OTRA ubicación'+lejos+': no se cambió sola'))+ver+
+    (p && u.link ? (ya ? ' · <b>✓ ya es la del pedido</b>' : (' <button type="button" class="btn btn-sm wa-resp-ubi-b" onclick="waRespUsarUbic(\''+esc(r.w)+'\')">📍 Usar esta ubicación</button>')) : '')+'</div>';
+}
+function waRespUsarUbic(w){
+  var r=(WA_RESP||[]).filter(function(x){ return x && x.w===w; })[0], u=r && r.ubi, p=u && u.id ? findById(u.id) : null;
+  if(!p || !u.link){ toast('No encuentro ese pedido: abrilo y cambiá la ubicación a mano.','err'); return; }
+  if(String(p.maps||'').trim() && !confirm('¿Cambiar la ubicación de '+(p.cliente||'este pedido')+' por la que mandó el cliente por WhatsApp?\n\nLa de ahora: '+p.maps+'\nLa nueva: '+u.link)) return;
+  guardarUbicacion(p, u.link, null, !UNLOCKED && !!getVendedorMem() && mismoVendedor(getVendedorMem(), p.vendedor));
+  try{ waRespPintar(); }catch(e){}
 }
 function waRespHtml(lista, quien, kPleg, hechas){
   hechas=hechas||[];

@@ -3013,9 +3013,11 @@ var WA_RANGO = { AM:['por la mañana', '9:00 y las 12:00'], PM:['por la tarde', 
 var WA_TIPOS = {
   /* (2026-10-12-d) `plantilla` = la «_v2» (con emojis y el contacto de la vendedora); `vieja` = la de antes, con sus `nv` datos (los
      primeros `nv` de los de ahora: el contacto va AL FINAL). Mientras Meta no apruebe la v2, se manda la vieja (waRepaso). */
-  conf:{ plantilla:'confirmacion_pedido_v2', vieja:'confirmacion_pedido', nv:8, txt:'Confirmación', cli:true },
+  /* 📍 §4ok-108 (2026-11-05-a) `ubic` = la misma, pidiendo la ubicación: para un pedido sin pin exacto (vacío o aproximado). Respaldo: la
+     v2 (mismos 9 datos) y después la vieja. */
+  conf:{ plantilla:'confirmacion_pedido_v2', vieja:'confirmacion_pedido', nv:8, txt:'Confirmación', cli:true, ubic:'confirmacion_pedido_ubic' },
   camb:{ plantilla:'cambio_entrega_v2', vieja:'cambio_entrega', nv:5, txt:'Cambio de día', cli:true },
-  rec: { plantilla:'recordatorio_entrega_v2', vieja:'recordatorio_entrega', nv:8, txt:'Recordatorio', cli:true },
+  rec: { plantilla:'recordatorio_entrega_v2', vieja:'recordatorio_entrega', nv:8, txt:'Recordatorio', cli:true, ubic:'recordatorio_entrega_ubic' },
   ln:  { plantilla:'logistica_pedido_nuevo_v2', vieja:'logistica_pedido_nuevo', nv:6, txt:'Logística: nuevo' },
   lc:  { plantilla:'logistica_cambio_v2', vieja:'logistica_cambio', nv:3, txt:'Logística: cambio' },
   /* 🌅 §4ok-97 (2026-11-05-a) 08:45, lo de HOY: sin camión + productos sin revisar o «✗ no hay». Mientras Meta no apruebe la nueva sale la
@@ -3450,6 +3452,104 @@ function waReclamoParams_(R, B) {
           cu(R.cero.length), R.cero.length ? waListaCabe_(R.cero.map(waParam_), ' · ') : '—'];
 }
 
+/* ============================================================================
+ * 📍 §4ok-108 (2026-11-05-a) EL CLIENTE MANDA SU UBICACIÓN POR WHATSAPP Y QUEDA EN EL PEDIDO. 23 entregas a clientes del bot iban sin
+ * pin exacto (19 sin enlace, 4 con la cuadra): sin pin, el GPS no ve la entrega y el chofer da vueltas. Si el cliente mandaba la
+ * ubicación, quedaba como texto en la hoja y nada la pasaba al pedido.
+ *   · El mensaje: de tipo «ubicación» (📎 → Ubicación), o un enlace de Google Maps con el punto (`resolveOne`: uno corto lo abre; uno
+ *     que solo da la zona, aproximado, no sirve). Fuera de Bolivia, no se toma.
+ *   · El pedido: el pendiente MÁS PRÓXIMO de ese número (entrega sin ✅, de hoy en adelante, no RPT ni venta de tienda); si el número
+ *     no coincide con ninguno, el del mensaje que el bot le mandó.
+ *   · Con el candado del panel (`tryLock`: si está ocupado, no espera y queda para «Usar esta ubicación»), relee la fila y:
+ *       – sin ubicación o con una aproximada (`&aprox=1`, §4dh) → guarda `https://www.google.com/maps?q=LAT,LNG&wa=1` («la mandó el
+ *         cliente por WhatsApp»), sella la fila (`rev`, como un guardado: una copia vieja abierta choca y se junta) y la anota en
+ *         BORRADOS_RECIENTES (`recientesAnotar_`: la lectura de lo cambiado la manda);
+ *       – con un pin exacto a ≤ WA_UBIC_MISMA_M (300 m) → nada (ya está);
+ *       – con OTRO pin (más lejos, o un enlace que no se puede medir) → NO lo pisa: queda en las respuestas al bot con «📍 Usar esta
+ *         ubicación» (la página guarda con `guardarUbicacion`, el camino de siempre).
+ *   · La fila «💬 Respondió» dice qué pasó (en el texto y en la columna Q) y el bot le contesta al cliente él mismo (texto libre: el
+ *     cliente acaba de escribir), no Claude.
+ *   · La confirmación y el recordatorio de un pedido sin pin exacto piden la ubicación (`confirmacion_pedido_ubic`,
+ *     `recordatorio_entrega_ubic`; mientras Meta no las apruebe, las de siempre).
+ * ========================================================================== */
+var WA_UBIC_MISMA_M = 300;
+function waSinPin_(maps) { var u = String(maps || '').trim(); return !u || /[?&]aprox=1/.test(u); }
+function waUbicDeMsg_(m) {
+  var c = null, t = String((m && m.type) || '');
+  if (t === 'location') { var L = m.location || {}; c = okCoord(L.latitude, L.longitude); }
+  else if (t === 'text') {
+    var u = String((m.text || {}).body || '').match(/https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]{2,6}\/maps|maps\.google\.[a-z.]{2,6})\S*/i);
+    if (u) { try { var r = resolveOne(u[0].replace(/[)\].,;:!?»"']+$/, '')); if (r && !r.aprox) c = { lat:Number(r.lat), lng:Number(r.lng) }; } catch (e) { c = null; } }
+  }
+  if (!c || !isFinite(c.lat) || !isFinite(c.lng) || c.lat < -23.5 || c.lat > -9.5 || c.lng < -70 || c.lng > -57.4) return null;   // fuera de Bolivia
+  return c;
+}
+function waUbicLink_(c) { return 'https://www.google.com/maps?q=' + Number(c.lat).toFixed(6) + ',' + Number(c.lng).toFixed(6) + '&wa=1'; }
+function waUbicCandidato_(p, hoy) {
+  return !!p && waEsEntrega_(p) && String(p.fecha) >= hoy && !/^RPT\b/i.test(String(p.oc || '').trim());
+}
+/** Guarda la ubicación en el pedido: {r:'guardada'|'igual'|'distinta'|'ocupado'|'sin_pedido', id, oc, link, m (metros a la de antes)}. */
+function waUbicGuardar_(de, loc, ped) {
+  var hoy = waBo_(Date.now()).hoy, recs = readAll(), cand = [];
+  recs.forEach(function (p) { if (waUbicCandidato_(p, hoy) && waCel_(p.celular) === de) cand.push(p); });
+  if (!cand.length && ped && ped.id) recs.forEach(function (p) { if (String(p.id) === String(ped.id) && waUbicCandidato_(p, hoy)) cand.push(p); });
+  if (!cand.length) return { r:'sin_pedido', link:waUbicLink_(loc) };
+  var tu = function (p) { return waTurno_(p) === 'PM' ? 1 : 0; };
+  cand.sort(function (a, b) { return (String(a.fecha) < String(b.fecha) ? -1 : (String(a.fecha) > String(b.fecha) ? 1 : 0)) || (tu(a) - tu(b)) || ((Number(a.nroDia) || 0) - (Number(b.nroDia) || 0)); });
+  var p0 = cand[0], link = waUbicLink_(loc), out = { id:String(p0.id), oc:String(p0.oc || ''), link:link };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) { out.r = 'ocupado'; return out; }
+  try {
+    var sh = getSheet(), last = sh.getLastRow(), fila = -1;
+    var ids = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues() : [];
+    for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === out.id) { fila = i + 2; break; }
+    if (fila < 0) { out.r = 'sin_pedido'; return out; }
+    var row = sh.getRange(fila, 1, 1, HEADERS.length).getValues()[0], q = rowToRec_(row);
+    if (!waUbicCandidato_(q, hoy)) { out.r = 'sin_pedido'; return out; }
+    var maps = String(q.maps || '').trim();
+    if (!waSinPin_(maps)) {
+      var c = extractCoords(maps), d = c ? gpsDistM_(c.lat, c.lng, loc.lat, loc.lng) : null;
+      if (d != null) out.m = Math.round(d);
+      out.r = (d != null && d <= WA_UBIC_MISMA_M) ? 'igual' : 'distinta';
+      return out;
+    }
+    sh.getRange(fila, HEADERS.indexOf('Link Maps') + 1).setValue(link);
+    var ahora = Date.now();
+    sh.getRange(fila, REV_COL).setValue(Math.max((Number(row[REV_COL - 1]) || 0) + 1, ahora));
+    try { getCacheOlvidar_(); recientesAnotar_('r', out.id, ahora); } catch (e) {}
+    out.r = 'guardada'; if (maps) out.antes = 'aprox';
+    return out;
+  } finally { lock.releaseLock(); }
+}
+/* La columna Q de la hoja: «guardada|<id>|<link>|<metros>» (el panel la lee en `waRespuestasLeer_`). */
+function waUbicCol_(ub) { return [ub.r, ub.id || '', ub.link || '', ub.m == null ? '' : ub.m].join('|'); }
+function waUbicDeCol_(v) {
+  var a = String(v || '').split('|'); if (!a[0] || ['guardada', 'igual', 'distinta', 'ocupado', 'sin_pedido'].indexOf(a[0]) < 0) return null;
+  var o = { r:a[0], id:a[1] || '', link:a[2] || '' }; if (a[3] !== '' && a[3] != null) o.m = Number(a[3]);
+  return o;
+}
+function waUbicTxt_(ub) {
+  var oc = ub.oc ? waOc_(ub.oc) : 'su pedido';
+  if (ub.r === 'guardada') return '📍 guardada en ' + oc + (ub.antes ? ' (tenía una aproximada)' : '');
+  if (ub.r === 'igual') return '📍 ' + oc + ' ya tenía esa ubicación';
+  if (ub.r === 'distinta') return '📍 ' + oc + ' ya tenía OTRA ubicación' + (ub.m != null ? ' (a ' + (ub.m >= 1000 ? (Math.round(ub.m / 100) / 10).toString().replace('.', ',') + ' km' : ub.m + ' m') + ')' : '') + ': no se cambió';
+  if (ub.r === 'ocupado') return '📍 la planilla estaba ocupada: no se guardó';
+  return '📍 no tiene ningún pedido pendiente';
+}
+/** Lo que el bot le contesta al cliente que mandó su ubicación (texto libre: lo acaba de escribir). */
+function waUbicResponder_(sh, de, ub, nom) {
+  if (!waActivo_() || !de) return;
+  var cfg = waConfig_(); if (!cfg.ok) return;
+  var oc = ub.oc ? ' *' + waOc_(ub.oc) + '*' : '';
+  var txt = '🤖 _Mensaje automático_\n\n¡Gracias' + (nom ? ' ' + waNombre_(nom) : '') + '! 📍 ' +
+    (ub.r === 'guardada' || ub.r === 'igual' ? 'Ya tenemos tu ubicación para tu pedido' + oc + ': el camión va a ir directo.'
+     : ub.r === 'sin_pedido' ? 'Recibimos tu ubicación, pero no encontramos un pedido tuyo por entregar. Si es para una compra nueva, pasásela a tu vendedora.'
+     : 'Recibimos tu ubicación para tu pedido' + oc + '. Como ya tenía otra anotada, se la pasamos a tu vendedora para que la confirme.');
+  if (cfg.prueba) de = cfg.prueba;
+  var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:txt, preview_url:false } });
+  sh.appendRow([waBo_(Date.now()).txt, ub.id || '', ub.oc || '', 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now()]);
+}
+
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
 function waSalidaLeer_() { var s = waJsonProp_('WA_SALIDA', []); return Array.isArray(s) ? s : []; }
 function waSalidaGuardar_(s) {
@@ -3803,6 +3903,8 @@ function waArmar_(m, recs, cfg, B) {
     }
   }
   out.params = out.params.map(N);
+  /* 📍 §4ok-108 Sin pin exacto, la confirmación y el recordatorio le piden la ubicación (si Meta no aprobó esa, la de siempre). */
+  if (T.ubic && p && waSinPin_(p.maps)) { out.plantilla = T.ubic; out.alts = [[T.plantilla, out.params.length], [T.vieja, T.nv]]; }
   if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
   return out;
 }
@@ -4143,10 +4245,17 @@ function waHookAnotar_(est, resp) {
     var conIa = false;
     try { cfgIa = cfgIa || waConfig_(); conIa = iaParaNumero_(de, cfgIa); } catch (er) {}
     var reac = String(m.type || '') === 'reaction';
-    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, iaCorte_(waHookTxtMsg_(m), 500),
-                  conIa && reac ? '🤖 reacción · ' + waBo_(Date.now()).txt : '', ms,
-                  conIa ? (reac ? '— reacción: no se contesta' : '⏳') : '']);
+    /* 📍 §4ok-108 Una ubicación (o un enlace de Maps): a su pedido pendiente más próximo; la fila dice qué pasó (columna Q) y el bot le
+       contesta él (no Claude): «la guardamos» o «se la pasamos a tu vendedora». */
+    var ub = null, loc = null;
+    try { loc = waUbicDeMsg_(m); if (loc) { ub = waUbicGuardar_(de, loc, ped); if (ub.id) ped = { id:String(ub.id), oc:String(ub.oc || '') }; } } catch (er) { ub = null; }
+    var txtM = ub ? iaCorte_(waHookTxtMsg_(m), 400) + ' · ' + waUbicTxt_(ub) : iaCorte_(waHookTxtMsg_(m), 500);
+    var colM = conIa ? (reac ? '— reacción: no se contesta' : (ub ? '— ubicación: le contestó el bot' : '⏳')) : '';
+    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, txtM,
+                  conIa && (reac || ub) ? '🤖 ' + (ub ? 'ubicación' : 'reacción') + ' · ' + waBo_(Date.now()).txt : '', ms, colM, '', '', '',
+                  ub ? waUbicCol_(ub) : '']);
     fila[w] = sh.getLastRow();
+    if (ub) { try { waUbicResponder_(sh, de, ub, m._nom); } catch (er) {} return; }
     if (conIa) { if (!reac) { hayIa = true; if (numsIa.indexOf(de) < 0) numsIa.push(de); } return; }
     try { waAutoResponder_(sh, de, ped, m._nom); } catch (er) {}
   });
@@ -4167,10 +4276,10 @@ function waHookAnotar_(est, resp) {
    · Respuesta automática (texto libre: Meta lo deja sin plantilla dentro de las 24 h en que el cliente escribió), UNA vez cada
      `WA_AUTO_HORAS` por número: «este número solo manda avisos… escribile a tu vendedora». `WA_AUTORESP`=0 la apaga.
    · El panel las pide con `waRespuestas` (sin candado: es otra hoja) y marca «✓ Ya lo atendí» con `waRespAtendida`. */
-var WA_RESP_COLS = 16, WA_AUTO_HORAS = 12, WA_RESP_DIAS = 7, WA_RESP_MAX = 150;   // 🧠 (2026-10-14-b) 12 → 16: M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
+var WA_RESP_COLS = 17, WA_AUTO_HORAS = 12, WA_RESP_DIAS = 7, WA_RESP_MAX = 150;   // 📍 §4ok-108 (2026-11-05-a) 16 → 17: Q «Ubicación»   // 🧠 (2026-10-14-b) 12 → 16: M «IA», N «Qué quiere», O «Resumen», P «Le contestó»
 function waHookEncabezados_(sh) {
   try {
-    var nom = ['Atendida', 'ms', 'IA', 'Qué quiere', 'Resumen', 'Le contestó'], enc = sh.getRange(1, 11, 1, nom.length).getValues()[0];
+    var nom = ['Atendida', 'ms', 'IA', 'Qué quiere', 'Resumen', 'Le contestó', 'Ubicación'], enc = sh.getRange(1, 11, 1, nom.length).getValues()[0];
     for (var i = 0; i < nom.length; i++) if (String(enc[i] || '') === '') sh.getRange(1, 11 + i).setValue(nom[i]).setFontWeight('bold');
   } catch (er) {}
 }
@@ -4221,6 +4330,7 @@ function waRespuestasLeer_() {
     if (ia.indexOf('🤖 ↓') === 0) { if (junta[num]) junta[num].antes.unshift(String(r[9] || '')); continue; }
     var x = { w:String(r[8] || ''), ms:ms, t:String(r[0] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || ''), num:num,
               txt:String(r[9] || ''), at:String(r[10] || '') };
+    var ubR = waUbicDeCol_(r[16]); if (ubR) x.ubi = ubR;   // 📍 §4ok-108
     if (ia) {
       x.ia = ia; x.cat = String(r[13] || ''); x.res = String(r[14] || ''); x.resp = String(r[15] || ''); x.urg = ia.indexOf('urgente') >= 0; x.antes = [];
       if (ia.charAt(0) !== '—') junta[num] = x;   // una reacción no es el mensaje principal de nadie
@@ -4790,6 +4900,13 @@ var WA_PLANTILLAS = [
   { n:'cambio_entrega_v2',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n📅 Cambió el día de entrega de tu pedido *{{3}}*:\n🚚 Ahora te lo llevamos el *{{4}}*\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No te queda bien? Escribile a {{6}} y lo coordinamos 😉',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'viernes 16/10 por la tarde', '14:30 y las 18:30', 'Carola 👉 https://wa.me/59170000000'] },
+  /* 📍 §4ok-108 (2026-11-05-a) Las mismas dos, pidiendo la ubicación (pedido sin pin exacto). Mismos 9 datos y orden que las v2. */
+  { n:'confirmacion_pedido_ubic',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋\nTe confirmamos tu pedido *{{2}}* de *{{3}}* ✅\n\n🛏️ *Productos:* {{4}}\n📍 *Dirección:* {{5}}\n💵 {{6}}\n\n🚚 *Entrega:* {{7}}\n⏰ El camión pasa entre las {{8}}. Logística te llama una hora antes 📞\n\n📍 *Mandanos tu ubicación por acá* (📎 → Ubicación): así el camión llega directo a tu puerta.\n\n💬 ¿Alguna consulta? Escribile a {{9}}\n\n¡Gracias por tu compra! 🙌',
+    e:['Juan', 'OC 10-412', 'Heaven Colchones', '1 × TITANIO ICE 160x190', 'Calle 1 #23, Barrio Norte', 'Saldo a pagar al recibir: Bs 1.500', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
+  { n:'recordatorio_entrega_ubic',
+    t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu pedido *{{3}}*.\n\n🚚 *{{4}} te llevamos:*\n🛏️ {{5}}\n💵 {{6}}\n\n📅 *Entrega:* {{7}}\n⏰ Entre las {{8}}. Logística te llama una hora antes 📞\n\n📍 *Mandanos tu ubicación por acá* (📎 → Ubicación): así el camión llega directo a tu puerta.\n\n💬 ¿No vas a estar? Escribile a {{9}} para cambiar el día.',
+    e:['Juan', 'Heaven Colchones', 'OC 10-412', 'Mañana', '1 × TITANIO ICE 160x190', 'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },
   { n:'recordatorio_entrega_v2',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}* por tu pedido *{{3}}*.\n\n🚚 *{{4}} te llevamos:*\n🛏️ {{5}}\n💵 {{6}}\n\n📅 *Entrega:* {{7}}\n⏰ Entre las {{8}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{9}} para cambiar el día.',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'Mañana', '1 × TITANIO ICE 160x190', 'Tu compra ya está pagada', 'jueves 15/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] },

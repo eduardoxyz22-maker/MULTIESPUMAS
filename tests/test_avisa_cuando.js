@@ -86,7 +86,8 @@ function servidor(src, props) {
   const leer = (id) => { const f = sh._datos.find(x => x[0] === id); return f ? ctx.rowToRec_(f) : null; };
   const filas = () => sh._datos.slice(1).map(r => ctx.rowToRec_(r));
   const cola = () => { try { return JSON.parse(P.WA_COLA || '[]'); } catch (e) { return []; } };
-  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name.replace(/_v2$/, ''), p: c.body.template.components[0].parameters.map(x => x.text) }));
+  /* 📍 §4ok-108 (05/11, a conciencia) sin pin exacto la confirmación y el recordatorio salen en su variante «_ubic»: acá cuenta lo mismo. */
+  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name.replace(/_(v2|ubic)$/, ''), p: c.body.template.components[0].parameters.map(x => x.text) }));
   return { ctx, sh, P, meta, postTxt, post, guardar, leer, filas, cola, salen, limpiar: () => { meta.llamadas.length = 0; }, version: ctx.SCRIPT_VERSION };
 }
 let nId = 0;

@@ -427,5 +427,90 @@ console.log('\n── 105. 10:00: reclamo_fabrica al dueño y a logística, con 
   chk('guardar la fila __reclamo_fab__: entra, sin sello pedido y sin cola del bot', r.ok && !JSON.parse(S4.P.WA_COLA || '[]').some(e => e.id === '__reclamo_fab__'), r);
 }
 
+// ══ 108. El cliente manda su ubicación ═════════════════════════════════════════════════════════
+console.log('\n── 108. La ubicación del cliente por WhatsApp: a su pedido más próximo, sin pisar un pin exacto; la confirmación la pide ──');
+{
+  poner('2026-11-05 10:00');
+  const S = servidor(Object.assign({}, ON, { WA_HOOK_KEY: 'clave-hook' }));
+  const LNK = (la, ln) => 'https://www.google.com/maps?q=' + la.toFixed(6) + ',' + ln.toFixed(6) + '&wa=1';
+  S.cargar([
+    ped({ id: 'u1', oc: '11-101', celular: '70000101', fecha: '2026-11-06', maps: '', rev: 5 }),
+    ped({ id: 'u1b', oc: '11-102', celular: '70000101', fecha: '2026-11-10', maps: '', rev: 5 }),                                     // el mismo cliente, más adelante
+    ped({ id: 'u0', oc: '11-100', celular: '70000101', fecha: '2026-11-03', maps: '', rev: 5 }),                                      // ya pasó
+    ped({ id: 'u2', oc: '11-103', celular: '70000102', fecha: '2026-11-06', maps: 'https://www.google.com/maps?q=-17.78,-63.17&aprox=1', rev: 5 }),
+    ped({ id: 'u3', oc: '11-104', celular: '70000103', fecha: '2026-11-06', maps: 'https://www.google.com/maps?q=-17.760000,-63.180000', rev: 5 }),
+    ped({ id: 'u4', oc: '11-105', celular: '70000104', fecha: '2026-11-06', maps: 'https://www.google.com/maps?q=-17.760000,-63.180000', rev: 5 }),
+    ped({ id: 'u5', oc: '11-106', celular: '70000105', fecha: '2026-11-06', maps: '', rev: 5 })
+  ]);
+  const ts = String(Math.floor(RELOJ.ms / 1000));
+  const loc = (id, de, la, ln) => S.aviso([{ id: id, from: de, timestamp: ts, type: 'location', location: { latitude: la, longitude: ln, name: 'Mi casa' } }], [{ wa_id: de, profile: { name: 'Juan' } }]);
+  const fila = (w) => S.hoja().find(f => f[8] === w);
+  loc('wamid.L1', '59170000101', -17.77, -63.19);
+  const p1 = S.leer('u1'), f1 = fila('wamid.L1');
+  chk('sin ubicación: queda en su pedido MÁS PRÓXIMO (no el de la semana que viene ni el que ya pasó), con la marca «&wa=1»',
+      p1.maps === LNK(-17.77, -63.19) && S.leer('u1b').maps === '' && S.leer('u0').maps === '', [p1.maps, S.leer('u1b').maps]);
+  chk('…sellada (rev nuevo) y anotada para la lectura de lo cambiado (BORRADOS_RECIENTES)', p1.rev > 5 && JSON.parse(S.P.BORRADOS_RECIENTES || '{}').r.some(x => x[0] === 'u1'), [p1.rev, S.P.BORRADOS_RECIENTES]);
+  chk('…la fila «💬 Respondió» es de ESE pedido y dice qué pasó (texto y columna Q)', f1 && f1[1] === 'u1' && /📍 guardada en OC 11-101/.test(f1[9]) && /^guardada\|u1\|/.test(f1[16]), f1);
+  chk('…y el bot le contesta él: «Ya tenemos tu ubicación…»', S.textos().some(x => x.to === '59170000101' && /Ya tenemos tu ubicación para tu pedido \*OC 11-101\*/.test(x.t)), S.textos());
+  loc('wamid.L2', '59170000102', -17.775, -63.175);
+  chk('con una aproximada (&aprox=1, por la dirección escrita): la reemplaza', S.leer('u2').maps === LNK(-17.775, -63.175) && /tenía una aproximada/.test(fila('wamid.L2')[9]), S.leer('u2').maps);
+  S.limpiar();
+  loc('wamid.L3', '59170000103', -17.77, -63.18);   // ~1,1 km de la que tenía
+  const f3 = fila('wamid.L3');
+  chk('con OTRO pin exacto a más de 300 m: NO lo pisa', S.leer('u3').maps === 'https://www.google.com/maps?q=-17.760000,-63.180000' && S.leer('u3').rev === 5);
+  chk('…queda para «Usar esta ubicación» (columna Q «distinta» con el enlace y los metros)', f3 && /^distinta\|u3\|https:\/\/www\.google\.com\/maps\?q=-17\.770000,-63\.180000&wa=1\|11\d\d$/.test(f3[16]) && /OTRA ubicación \(a 1,1 km\)/.test(f3[9]), f3 && [f3[9], f3[16]]);
+  chk('…y al cliente: «se la pasamos a tu vendedora para que la confirme»', S.textos().some(x => /se la pasamos a tu vendedora/.test(x.t)));
+  loc('wamid.L4', '59170000104', -17.7605, -63.1802);   // a ~60 m
+  chk('con el mismo pin (a menos de 300 m): nada que cambiar', S.leer('u4').rev === 5 && /^igual\|u4/.test(fila('wamid.L4')[16]), fila('wamid.L4')[16]);
+  S.aviso([{ id: 'wamid.L5', from: '59170000105', timestamp: ts, type: 'text', text: { body: 'esta es mi ubicación https://maps.google.com/?q=-17.79,-63.21 gracias' } }]);
+  chk('un enlace de Maps con el punto, escrito en el mensaje: también', S.leer('u5').maps === LNK(-17.79, -63.21), S.leer('u5').maps);
+  loc('wamid.L6', '59170000199', -17.77, -63.19);
+  chk('un número sin pedido pendiente: no toca nada y lo dice', /^sin_pedido\|\|/.test(fila('wamid.L6')[16]) && S.textos().some(x => /no encontramos un pedido tuyo/.test(x.t)), fila('wamid.L6'));
+  loc('wamid.L7', '59170000101', 40.41, -3.70);       // Madrid
+  chk('una ubicación fuera de Bolivia no se toma: queda como un mensaje cualquiera', !fila('wamid.L7')[16] && S.leer('u1').maps === LNK(-17.77, -63.19));
+  const R = S.ctx.waRespuestasLeer_();
+  const r3 = R.find(x => x.w === 'wamid.L3'), r1 = R.find(x => x.w === 'wamid.L1');
+  chk('el panel lo recibe (waRespuestas): `ubi` con qué pasó, el pedido, el enlace y los metros', r3 && r3.ubi && r3.ubi.r === 'distinta' && r3.ubi.id === 'u3' && /&wa=1$/.test(r3.ubi.link) && r3.ubi.m > 1000 && r1 && r1.ubi.r === 'guardada', [r3 && r3.ubi, r1 && r1.ubi]);
+}
+{
+  /* Con Claude prendido: la ubicación la contesta el bot, no Claude. */
+  poner('2026-11-05 10:00');
+  const S = servidor(Object.assign({}, ON, { WA_HOOK_KEY: 'clave-hook', IA_ACTIVA: '1', ANTHROPIC_API_KEY: 'clave-de-mentira', IA_AL_VUELO: '0' }));
+  S.cargar([ped({ id: 'v1', celular: '70000201', fecha: '2026-11-06', maps: '' })]);
+  S.aviso([{ id: 'wamid.I1', from: '59170000201', timestamp: String(Math.floor(RELOJ.ms / 1000)), type: 'location', location: { latitude: -17.77, longitude: -63.19 } }]);
+  const f = S.hoja().find(x => x[8] === 'wamid.I1');
+  chk('con Claude: la fila no queda «⏳» (Claude no la contesta) y no se llama a Claude', f && /^— ubicación/.test(f[12]) && !S.meta.llamadas.some(c => /anthropic/.test(c.url)), f && f[12]);
+  chk('…y el bot le contestó', S.textos().some(x => x.to === '59170000201' && /Ya tenemos tu ubicación/.test(x.t)));
+}
+{
+  /* La confirmación y el recordatorio de un pedido SIN pin exacto piden la ubicación. */
+  poner('2026-11-05 10:00');
+  const S = servidor(ON);
+  S.guardar(ped({ id: 'c1', maps: '' })); S.guardar(ped({ id: 'c2', maps: 'https://www.google.com/maps?q=-17.78,-63.17&aprox=1' })); S.guardar(ped({ id: 'c3' }));
+  pasar(3); S.repaso();
+  const s = S.salen().filter(x => /^confirmacion_pedido/.test(x.pl));
+  chk('sin pin y con uno aproximado: confirmacion_pedido_ubic (9 datos); con pin exacto: la v2 de siempre',
+      s.filter(x => x.pl === 'confirmacion_pedido_ubic').length === 2 && s.filter(x => x.pl === 'confirmacion_pedido_v2').length === 1 && s.every(x => x.p.length === 9), s.map(x => x.pl));
+  S.limpiar();
+  poner('2026-11-05 17:05'); S.repaso();
+  S.limpiar();
+  const S2 = servidor(ON);
+  S2.cargar([ped({ id: 'r1', fecha: '2026-11-06', turno: 'AM', maps: '' }), ped({ id: 'r2', fecha: '2026-11-06', turno: 'AM', celular: '70000302' })]);
+  poner('2026-11-05 17:05'); S2.repaso();
+  const r = S2.salen().filter(x => /^recordatorio_entrega/.test(x.pl));
+  chk('el recordatorio: sin pin → recordatorio_entrega_ubic; con pin → la v2', r.map(x => x.pl).sort().join() === 'recordatorio_entrega_ubic,recordatorio_entrega_v2', r.map(x => x.pl));
+  /* Meta todavía no aprobó la «_ubic»: sale la v2 con los mismos 9; y si tampoco la v2, la vieja con 8. */
+  const S3 = servidor(ON);
+  S3.meta.responder = (b) => b && b.template && /_ubic$/.test(b.template.name) ? { code: 404, body: { error: { code: 132001, message: 'no existe' } } } : null;
+  poner('2026-11-05 10:00'); S3.guardar(ped({ id: 'm1', maps: '' })); pasar(3); S3.repaso();
+  const c = S3.salen().filter(x => /^confirmacion_pedido/.test(x.pl));
+  chk('«_ubic» sin aprobar: sale confirmacion_pedido_v2 con los 9 datos', c.map(x => x.pl + ':' + x.p.length).join() === 'confirmacion_pedido_ubic:9,confirmacion_pedido_v2:9', c.map(x => x.pl));
+  const S4 = servidor(ON);
+  S4.meta.responder = (b) => b && b.template && /_(ubic|v2)$/.test(b.template.name) ? { code: 404, body: { error: { code: 132001, message: 'no existe' } } } : null;
+  poner('2026-11-05 10:00'); S4.guardar(ped({ id: 'm2', maps: '' })); pasar(3); S4.repaso();
+  const c4 = S4.salen().filter(x => /^confirmacion_pedido/.test(x.pl));
+  chk('…y sin la v2 tampoco: la vieja con 8', c4.map(x => x.pl + ':' + x.p.length).join() === 'confirmacion_pedido_ubic:9,confirmacion_pedido_v2:9,confirmacion_pedido:8', c4.map(x => x.pl + ':' + x.p.length));
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

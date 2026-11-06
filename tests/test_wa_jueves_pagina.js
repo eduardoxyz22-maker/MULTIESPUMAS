@@ -103,6 +103,43 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     chk('al terminar el archivo de Excel (existLoteTerminar) se guarda el reclamo nuevo', r.n3 === 2 && (r.atr3 || []).some(t => /SOFT · 100X190/.test(t)), r);
   }
 
+  /* ══ 108 ══ */
+  console.log('\n── 108. La ubicación que mandó el cliente: la ficha lo dice; «📍 Usar esta ubicación» si ya tenía otra ──');
+  const hay108 = await page.evaluate(() => typeof waRespUbicHtml === 'function' && typeof esUbicWa === 'function');
+  chk('existen waRespUbicHtml y esUbicWa (§4ok-108)', hay108);
+  if (hay108) {
+    let r = await page.evaluate(async () => {
+      var WA = 'https://www.google.com/maps?q=-17.770000,-63.190000&wa=1', OTRO = 'https://www.google.com/maps?q=-17.760000,-63.180000';
+      var a = P({ id: 'W1', oc: '11-101', cliente: 'CLIENTE CON PIN DEL BOT', maps: WA }), b = P({ id: 'W2', oc: '11-104', cliente: 'CLIENTE CON OTRO PIN', maps: OTRO });
+      STATE = [a, b]; window.SRV = JSON.parse(JSON.stringify(STATE));
+      showPedidoModal('W1'); await esperar(80);
+      var fichaAdm = (document.getElementById('modal') || {}).innerText || ''; closeModal();
+      showPedidoModal('W2'); await esperar(80);
+      var fichaOtro = (document.getElementById('modal') || {}).innerText || ''; closeModal();
+      showMisModal('W1'); await esperar(80);
+      var fichaMis = (document.getElementById('modal') || {}).innerText || ''; closeModal();
+      WA_RESP = [
+        { w: 'wamid.L3', ms: Date.now(), t: '05/11 10:00', id: 'W2', oc: '11-104', nom: 'Juan', num: '59170000103', txt: '[ubicación] Mi casa (-17.77, -63.18)', at: '',
+          ubi: { r: 'distinta', id: 'W2', link: 'https://www.google.com/maps?q=-17.770000,-63.180000&wa=1', m: 1112 } },
+        { w: 'wamid.L1', ms: Date.now(), t: '05/11 10:00', id: 'W1', oc: '11-101', nom: 'Ana', num: '59170000101', txt: '[ubicación] (-17.77, -63.19)', at: '',
+          ubi: { r: 'guardada', id: 'W1', link: WA } }
+      ];
+      var html = waRespHtml(WA_RESP, '', '', []);
+      var d = document.createElement('div'); d.innerHTML = html; document.body.appendChild(d);
+      var txt = d.innerText, btns = [].map.call(d.querySelectorAll('button'), function (x) { return x.innerText; });
+      window.GUARDADOS = [];
+      waRespUsarUbic('wamid.L3'); await esperar(120);
+      var g = window.GUARDADOS.filter(function (x) { return x.id === 'W2'; }).pop() || {};
+      d.remove();
+      return { fichaAdm: fichaAdm, fichaOtro: fichaOtro, fichaMis: fichaMis, txt: txt, btns: btns, maps: (findById('W2') || {}).maps, guardado: g.maps };
+    });
+    chk('la ficha de Administración dice «📍 la mandó el cliente por WhatsApp» (y la de un pin común, no)', /la mandó el cliente por WhatsApp/.test(r.fichaAdm) && !/la mandó el cliente/.test(r.fichaOtro), r.fichaAdm.slice(0, 300));
+    chk('…y la de Mis pedidos también', /la mandó el cliente por WhatsApp/.test(r.fichaMis));
+    chk('la respuesta al bot: «Mandó OTRA ubicación (a 1,1 km de la que tenía)» con «📍 Usar esta ubicación»; la guardada, «ya quedó en el pedido»',
+        /Mandó OTRA ubicación \(a 1,1 km de la que tenía\)/.test(r.txt) && /ya quedó en el pedido/.test(r.txt) && r.btns.filter(t => /Usar esta ubicación/.test(t)).length === 1, [r.txt.slice(0, 400), r.btns]);
+    chk('«Usar esta ubicación» la guarda en el pedido (guardarUbicacion: va a la planilla)', /q=-17\.770000,-63\.180000&wa=1/.test(r.maps || '') && /q=-17\.770000,-63\.180000&wa=1/.test(r.guardado || ''), r);
+  }
+
   chk('sin errores de la página', errores.length === 0, errores.slice(0, 3));
   console.log(`\n${PASS} bien · ${FAIL} mal`);
   await browser.close();

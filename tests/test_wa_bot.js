@@ -99,7 +99,8 @@ let nId = 0;
 function ped(o) {
   return Object.assign({ id: 'p' + (++nId), fecha: '2026-10-15', oc: '10-0' + (40 + nId), vendedor: 'Carola Chavez', cliente: 'JUAN CARLOS ROCA',
     productos: [{ desc: 'TITANIO LATEX', medida: '140x190', codigo: 'CH1', cant: 1, precio: 3200 }], celular: '70111222', turno: 'PM',
-    zona: 'Equipetrol', direccion: 'Av. Banzer 4to anillo', maps: '', pagado: false, saldo: 1200, ts: RELOJ.ms, metodoPago: 'Efectivo 2000',
+    /* 📍 §4ok-108 (05/11, a conciencia) con un pin exacto: sin pin, la confirmación y el recordatorio salen en su variante «_ubic» (test_wa_jueves §108). */
+    zona: 'Equipetrol', direccion: 'Av. Banzer 4to anillo', maps: 'https://www.google.com/maps?q=-17.75,-63.18', pagado: false, saldo: 1200, ts: RELOJ.ms, metodoPago: 'Efectivo 2000',
     observaciones: '', estado: '', entregado: false, vehiculo: '', chofer: '', garantia: '', nota: '640', acuenta: 2000, facturarA: '', nit: '', rev: 0 }, o || {});
 }
 
