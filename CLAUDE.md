@@ -2556,7 +2556,9 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   `ctaChoferCruce`; un efectivo ya registrado nunca cambia de mano solo.
 - **91** escrituras a Kommo por `kPedir_` FUERA del candado; etapa y campos con `kcMeta_`, nunca a mano; un camino nuevo que cree borradores
   respeta `kcPropios_()`; la página llama a `kommoCierre` solo con servidor ≥ `KC_SERVIDOR`; `KC_INTERNOS` = `CONTA_INTERNOS`.
-  APAGADO salvo la propiedad `KOMMO_CIERRE=1` (antes, `probarKommoEscribe` desde el editor).
+  PRENDIDO desde el 06/11 (`KOMMO_CIERRE=1`; `probarKommoEscribe` ✅). ⚠️ La pantalla de Propiedades del script tiene tope de 50: `KOMMO_CIERRE` se
+  creó desde el archivo aparte `prender_cierre` del proyecto (`prenderKommoCierreUnaVez`/`apagarKommoCierreUnaVez`). Una propiedad NUEVA, igual:
+  una función en un archivo aparte (nombre que no choque con el Código.gs).
 - **Bot**: 97 `logistica_hoy_falta` 08:45 (la de las 16:00 ya no sale) · 102 vigía de leads en `waRepaso` → `WA_DUENO`
   (propiedad nueva) · 105 `__reclamo_fab__` (en `esFilaSistema`; Playwright solo `RECLAMO_FAB_PRUEBA`) → `reclamo_fabrica` 10:00 · 108 la
   ubicación del cliente = `&wa=1` (`esUbicWa`), «Bot WhatsApp» tiene 17 columnas (Q = ubicación).
