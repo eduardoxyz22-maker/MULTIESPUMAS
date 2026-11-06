@@ -5,6 +5,7 @@
    1. Están en la lista de vendedores (formulario, «¿Quién está usando el panel?») y son de Heaven: marca, bancos BISA/Económico.
    2. Cada uno con su tienda: las ventas de tienda y «🏬 recoger de tienda» los ponen en la suya primero.
    3. Las tiendas nuevas están en la lista (RPT, venta de tienda, recoger de tienda, stock de tiendas) SIN zona ni pin inventados.
+      (06/11) Ya con las del dueño: Tienda Banzer en el pin del almacén Banzer, zona Norte; Ventura Mall con su enlace, zona Sur.
    4. ⚠️ «Tienda Banzer» NO es el almacén Banzer: recoger de la tienda no reserva ni descuenta del almacén, la marca se guarda
       «Tienda Banzer» (sin «Tienda Tienda»), y una página sin F5 que la lea igual la toma como tienda.
    5. El bot (.gs): el mismo reparto de marcas que la página y «tu vendedor» para Fabián.
@@ -70,7 +71,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { tb:tb, vm:vm, recoger:recogerTiendas(), tst:tstTiendas(), ops:ops, rpt:sucursalDeRpt({ cliente:'TIENDA BANZER' }), rpt2:sucursalDeRpt({ cliente:'Reposición Ventura Mall' }) };
   });
   chk('«Tienda Banzer» y «Ventura Mall» están en SUCURSALES', !!(r.tb && r.vm), r);
-  chk('⚠️ sin zona ni ubicación hasta que el dueño las dé (una zona inventada desvía la ruta)', r.tb && !r.tb.z && !r.tb.m && r.vm && !r.vm.z && !r.vm.m, r);
+  /* (06/11) Cambiado a conciencia: el dueño dio las dos («la tienda banzer está en el mismo lugar que almacén banzer», «eso es zona NORTE»;
+     Ventura «está en zona sur» con su enlace de Maps). Nada inventado: son sus palabras. */
+  chk('las zonas son las que dio el dueño: Tienda Banzer → Norte, Ventura Mall → Sur', r.tb && r.tb.z==='Norte' && r.vm && r.vm.z==='Sur', r);
+  const rp = await ev(() => { var tb=sucursalDe('Tienda Banzer'), c=coordsDeLink(tb.m), b=ALM_UBIC.filter(function(a){ return a.id==='banzer'; })[0];
+    var vm=sucursalDe('Ventura Mall'), cv=coordsDeLink(vm.m);
+    return { m:tb.m, c:c, b:b ? [b.lat, b.lng] : null, aprox:esUbicAprox(tb.m), cv:cv, aproxV:esUbicAprox(vm.m) }; });
+  chk('la Tienda Banzer tiene el pin del almacén Banzer (el dueño: «está en el mismo lugar»), como puerta y no «la cuadra»',
+    rp.c && rp.b && Math.abs(rp.c.lat-rp.b[0])<1e-6 && Math.abs(rp.c.lng-rp.b[1])<1e-6 && !rp.aprox, rp);
+  chk('Ventura Mall con el pin de su enlace (-17.8160082, -63.214758), al sur de la plaza, como puerta',
+    rp.cv && Math.abs(rp.cv.lat+17.8160082)<1e-6 && Math.abs(rp.cv.lng+63.214758)<1e-6 && rp.cv.lat<-17.7836 && !rp.aproxV, rp);
   chk('se pueden elegir en «¿de qué tienda?» de la venta de tienda', r.ops.indexOf('Tienda Banzer')>=0 && r.ops.indexOf('Ventura Mall')>=0, r.ops.join(' · '));
   chk('…en «🏬 recoger de tienda» y en el stock de las tiendas', r.recoger.indexOf('Tienda Banzer')>=0 && r.tst.indexOf('Ventura Mall')>=0, r.recoger.join(' · '));
   chk('una reposición a «TIENDA BANZER» o a «Ventura Mall» va a la tienda', r.rpt==='Tienda Banzer' && r.rpt2==='Ventura Mall', r);

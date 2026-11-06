@@ -14,6 +14,8 @@
    R7  `fdH` en la celda: se lee, se junta (unión) y se poda a STOCK_DEBE_TOPE_DIAS.
    R8  Una vez por día en cada aparato; con el servidor de antes de la hoja, nada. No es el automático (STOCK_AUTO_ACTIVO sigue false).
    R9  Lo que no es un producto de la lista ni de ningún Excel («ARMAZONES») va aparte: «❓ ¿Qué es esto?», sin reclamo a la fábrica.
+   R9b (06/11, dueño: «si son productos… los +2 cm son adiciones de altura») «+2CM», una medida especial de la lista y SOMIER ESPECIAL
+       TROPICAL SÍ son productos; ARMAZONES y los textos sueltos siguen en «¿Qué es esto?».
    Reloj CLAVADO (jueves 05/11/2026 10:00 de Bolivia). Red cortada, servidor simulado, datos inventados (el repo es público).
    Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_fabrica_repaso.js   ·  `PEDIDOS=<archivo>` corre contra otra página. */
 const { chromium } = require('playwright');
@@ -47,7 +49,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     };
     /* La foto de lo pedido justo después del repaso y ANTES de guardar (al guardar, lo cerrado hace días se poda: `stockPodar`). */
     window.__foto=null; var _g=guardarStock; guardarStock=function(){ if(!window.__foto) window.__foto=JSON.parse(JSON.stringify(STOCK.p||[])); return _g.apply(this, arguments); };
-    var K=_K, K2=_K2, K3=_K3, ARM='ARMAZONES|140X190';
+    var K=_K, K2=_K2, K3=_K3, ARM='CAJA CARTON|140X190';   // (06/11) antes ARMAZONES: desde §4ok-104c no aparece en ningún lado
     window.__ARM=ARM;
     var ya=function(id, k, u, f, esp, extra){ return Object.assign({ id:id, k:k, u:u, fab:'', f:f, arr:f, esp:esp, r:'', ya:1, t:_ts(f,'10:00:00') }, extra||{}); };
     var st=_stock(function(s){
@@ -171,10 +173,51 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
       queTxt:que ? (que.textContent||'') : '', copiar:que ? !!que.querySelector('.fd-copiar') : null, enMoreno:!!(mor && mor.prods.some(function(p){ return p.k===__ARM; })),
       reclamo:fdReclamoTexto('MORENO')||'', ley:/repasa los días que no se miraron/.test(html) };
   });
-  chk('«ARMAZONES» no es un producto de la lista ni de ningún Excel; TITANIO ICE sí', r.es===false && r.esK===true, r);
-  chk('va en su propio grupo, al final', r.ult==='?' && r.arm.indexOf('ARMAZONES|140X190')>=0 && !r.enMoreno, r.fabs);
+  chk('«CAJA CARTON» no es un producto de la lista ni de ningún Excel; TITANIO ICE sí', r.es===false && r.esK===true, r);
+  chk('va en su propio grupo, al final', r.ult==='?' && r.arm.indexOf('CAJA CARTON|140X190')>=0 && !r.enMoreno, { fabs:r.fabs, arm:r.arm, enMoreno:r.enMoreno });
   chk('…«❓ ¿Qué es esto?», que dice qué hacer y SIN «Copiar el reclamo»', /¿Qué es esto\?/.test(r.queTxt) && /no se le reclama a ninguna fábrica/.test(r.queTxt) && r.copiar===false, r.queTxt.slice(0,200));
-  chk('…y no entra en el reclamo a Moreno; la lista dice que se repasa sola', !/ARMAZONES/.test(r.reclamo) && r.ley, r.reclamo.slice(0,200));
+  chk('…y no entra en el reclamo a Moreno; la lista dice que se repasa sola', !/CAJA CARTON/.test(r.reclamo) && r.ley, r.reclamo.slice(0,200));
+
+  console.log('\n── R9b. Lo que el dueño confirmó que SÍ son productos (06/11) ──');
+  r = await ev(() => {
+    var es=function(k){ return fdEsProducto(k); };
+    var ks={ alto:'SUENA ESSENTIAL +2CM|105X190', alto2:'SUENA CONFORT PLUS +2CM|140X190', alto3:'TITANIO ICE + 3 CM|140X190',
+      esp:'ORO ORTOPEDICO|160X198', trop:'SOMIER ESPECIAL TROPICAL|160X190', arm:'ARMAZONES|140X190', llevar:'LLEVAR LO QUE NECESITEN CHARCAS|',
+      inventado:'CAJA DE CARTON|', cm:'ESPUMA 2CM|' };
+    var out={}; Object.keys(ks).forEach(function(n){ out[n]=es(ks[n]); });
+    /* Un «Ya pedí» de un +2CM de Sueña va al bloque de Multiespumas, no a «¿Qué es esto?». */
+    var antes=STOCK.p; STOCK.p=antes.concat([{ id:'y+2', k:ks.alto, u:2, fab:'MULTI', f:'2026-11-03', arr:'2026-11-03', esp:'2026-11-05', r:'', ya:1, t:Date.now() }]);
+    try{ stockOlvidarIndice(); }catch(e){}
+    var L=fdLista(), g=function(f){ return L.filter(function(x){ return x.fab===f; })[0]; };
+    out.enMulti=!!(g('MULTI') && g('MULTI').prods.some(function(p){ return p.k===ks.alto; }));
+    out.enQue=!!(g('?') && g('?').prods.some(function(p){ return p.k===ks.alto; }));
+    STOCK.p=antes; try{ stockOlvidarIndice(); }catch(e){}
+    return out;
+  });
+  chk('«+2CM» es un colchón más alto: es un producto (también «+ 3 CM»)', r.alto && r.alto2 && r.alto3, r);
+  chk('una medida especial de un producto de la lista (ORO ORTOPEDICO 160X198) es un producto', r.esp===true, r);
+  chk('SOMIER ESPECIAL TROPICAL es un producto', r.trop===true, r);
+  chk('ARMAZONES, «LLEVAR LO QUE NECESITEN» y un texto inventado siguen sin serlo («2CM» sin «+», tampoco)', !r.arm && !r.llevar && !r.inventado && !r.cm, r);
+  chk('un «Ya pedí» de un +2CM de Sueña va con Multiespumas, no en «¿Qué es esto?»', r.enMulti && !r.enQue, r);
+
+  console.log('\n── R9c. Los ARMAZONES, en ningún lado (06/11, dueño: «dejalo fuera de todos lados, no nos interesa contabilizarlos») ──');
+  r = await ev(() => {
+    var antes=STOCK.p, cu=STOCK.c && STOCK.c.u, cuAntes=cu ? JSON.parse(JSON.stringify(cu)) : null;
+    STOCK.p=antes.concat([{ id:'y-arm', k:'ARMAZONES|140X190', u:9, fab:'', f:'2026-11-03', arr:'2026-11-03', esp:'2026-11-05', r:'', ya:1, t:Date.now() }]);
+    if(cu) cu['ARMAZON|140X190']=30;
+    try{ stockOlvidarIndice(); }catch(e){}
+    var L=fdLista(), todas=[]; L.forEach(function(g){ g.prods.forEach(function(p){ todas.push(p.k); }); });
+    var d=stockData(), filas=(d.lista||[]).map(function(o){ return o.k; });
+    var out={ fd:todas.filter(function(k){ return /ARMAZ/.test(k); }), stock:filas.filter(function(k){ return /ARMAZ/.test(k); }),
+      tienda:esProdDeTienda({ desc:'ARMAZONES 2.0', medida:'140x190' }), tienda2:esProdDeTienda({ desc:'armazón 1.5', medida:'105x190' }),
+      somier:esProdDeTienda({ desc:'SOMIER TROPICAL CON ARMAZON', medida:'140x190' }), reclamo:/ARMAZ/.test(fdReclamoTexto('MORENO')||'') };
+    STOCK.p=antes; if(cu){ Object.keys(cu).forEach(function(k){ delete cu[k]; }); Object.assign(cu, cuAntes); } try{ stockOlvidarIndice(); }catch(e){}
+    return out;
+  });
+  chk('un renglón ARMAZONES / armazón no cuenta en el stock (la misma puerta que protectores y servicios)', r.tienda && r.tienda2, r);
+  chk('…pero un «SOMIER … CON ARMAZON» sigue siendo un somier', r.somier===false, r);
+  chk('ni el «Ya pedí» ni el Excel de ARMAZONES aparecen en «Lo que nos debe la fábrica», en el reclamo ni en la tabla del stock',
+    !r.fd.length && !r.stock.length && !r.reclamo, r);
 
   chk('sin errores de la página', !errores.length, errores.slice(0, 3));
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

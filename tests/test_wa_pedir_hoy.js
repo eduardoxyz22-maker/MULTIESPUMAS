@@ -121,7 +121,10 @@ const FIX = [
   P('a20', '2026-10-30', 'MDF Y VARIOS', [{ desc: 'MDF 1,5', chk: '' }, { desc: 'VARIOS', chk: '' }, { desc: 'RECOGER FIBRA', chk: '' }, { desc: 'PROTETOR COLCHAO', chk: '' }]),
   P('a21', '2026-10-30', 'CABECERA MDF', { desc: 'CABECERA MDF 160', chk: '' }),               // un mueble de MDF sí se fabrica
   P('a22', '2026-10-31', 'TARDE PM', { chk: '' }, { turno: 'PM' }),
-  P('a23', '2026-11-03', 'PROD TARDE', { chk: 'no', enProd: true, prodF: '2026-11-03' })       // pedido el martes: sale el jueves, ⚠️ tarde
+  P('a23', '2026-11-03', 'PROD TARDE', { chk: 'no', enProd: true, prodF: '2026-11-03' }),      // pedido el martes: sale el jueves, ⚠️ tarde
+  /* (06/11, §4ok-104c) Los ARMAZONES no entran en ningún lado (dueño); un somier «con armazón» sí. */
+  P('a24', '2026-10-30', 'ALBA ARMAZONES', [{ desc: 'ARMAZONES 2.0', medida: '140x190', chk: '' }, { desc: 'ARMAZON 1.5', medida: '105x190', chk: 'no' }]),
+  P('a25', '2026-10-30', 'SOMIER CON ARMAZON', { desc: 'SOMIER TROPICAL CON ARMAZON', chk: '' })
 ];
 
 /* La página con el reloj clavado en esa hora de Bolivia: devuelve lo que dicen `semanaUrgentes` y `semanaPlazos`. */
