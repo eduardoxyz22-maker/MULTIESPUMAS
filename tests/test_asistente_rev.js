@@ -119,7 +119,10 @@ function PREPARAR(){
 
   console.log('\n── 7. El WhatsApp del cliente ──');
   r = await ev(() => ['775123456', '12367123456', '+54 9 11 6712 3456', '70111222', '+591 70111222', '70111222 / 76543210', 'Cel: 70111222'].map(function(x){ return x+'→'+misWaCliente(x); }));
-  chk('un dígito de más u otro país: nada; los celulares de verdad: siguen', /775123456→$/.test(r[0]) && /12367123456→$/.test(r[1]) && /3456→$/.test(r[2]) &&
+  /* ⚠️ Cambiado a conciencia (§4ok-95b, 06/11, dueño: «Hay clientes que usan número del extranjero»): «12367123456» (EE. UU.) y
+     «+54 9 11 6712 3456» (Argentina) ya son el WhatsApp de ESE número con su código. El borde sigue: nunca un celular de Bolivia. */
+  chk('un dígito de más: nada; otro país: su número entero, nunca uno de Bolivia; los celulares de verdad: siguen', /775123456→$/.test(r[0]) &&
+      /12367123456→https:\/\/wa\.me\/12367123456$/.test(r[1]) && /3456→https:\/\/wa\.me\/5491167123456$/.test(r[2]) &&
       /59170111222$/.test(r[3]) && /59170111222$/.test(r[4]) && /59170111222$/.test(r[5]) && /59170111222$/.test(r[6]), r);
 
   console.log('\n── 8. Quién tiene el efectivo, con una vendedora elegida ──');

@@ -99,7 +99,8 @@ let nId = 0;
 function ped(o) {
   return Object.assign({ id: 'p' + (++nId), fecha: '2026-10-15', oc: '10-0' + (40 + nId), vendedor: 'Carola Chavez', cliente: 'JUAN CARLOS ROCA',
     productos: [{ desc: 'TITANIO LATEX', medida: '140x190', codigo: 'CH1', cant: 1, precio: 3200 }], celular: '70111222', turno: 'PM',
-    zona: 'Equipetrol', direccion: 'Av. Banzer 4to anillo', maps: '', pagado: false, saldo: 1200, ts: RELOJ.ms, metodoPago: 'Efectivo 2000',
+    /* 📍 §4ok-108 (05/11, a conciencia) con un pin exacto: sin pin, la confirmación y el recordatorio salen en su variante «_ubic» (test_wa_jueves §108). */
+    zona: 'Equipetrol', direccion: 'Av. Banzer 4to anillo', maps: 'https://www.google.com/maps?q=-17.75,-63.18', pagado: false, saldo: 1200, ts: RELOJ.ms, metodoPago: 'Efectivo 2000',
     observaciones: '', estado: '', entregado: false, vehiculo: '', chofer: '', garantia: '', nota: '640', acuenta: 2000, facturarA: '', nit: '', rev: 0 }, o || {});
 }
 
@@ -245,7 +246,8 @@ console.log('\n── 6. Cuando Meta falla ──');
   S.guardar(ped({ id: 'k1' })); S.guardar(ped({ id: 'k2' })); pasar(3);
   const r = S.repaso();
   chk('token vencido: para en el primer mensaje (no le pega a Meta 6 veces)', S.meta.llamadas.length === 1, S.meta.llamadas.length);
-  chk('…lo demás queda guardado para cuando se arregle', JSON.parse(S.P.WA_SALIDA).length === 6, S.P.WA_SALIDA);
+  /* §4ok-97: a las 10:03 también está abierta la ventana del aviso de las 08:45 (va a la salida junto con lo demás): se cuentan los de los pedidos. */
+  chk('…lo demás queda guardado para cuando se arregle', JSON.parse(S.P.WA_SALIDA).filter(m => m.id === 'k1' || m.id === 'k2').length === 6, S.P.WA_SALIDA);
   chk('…y WA_ULTIMO dice que es el token', /token/i.test(JSON.parse(S.P.WA_ULTIMO).error), S.P.WA_ULTIMO);
 }
 {
@@ -268,8 +270,9 @@ console.log('\n── 5b. Revisión del 12/10: Kommo completado, celular mal esc
   chk('una venta de Kommo ya completada recibe la confirmación y logística el «pedido nuevo» (antes se salteaba por el id kommo-)',
       conf.length === 1 && ln.filter(n => n === 'DE KOMMO').length === 2, s.map(x => x.pl + ':' + x.p[2]));
   chk('lo que sigue como borrador de Kommo no manda nada', !s.some(x => x.p.indexOf('SIGUE BORRADOR') >= 0), s);
-  chk('el celular: un dígito de más o un número de otro país NO arman un celular de otra persona',
-      S.ctx.waCel_('775123456') === '' && S.ctx.waCel_('12367123456') === '' && S.ctx.waCel_('+54 9 11 6712 3456') === '' &&
+  /* ⚠️ Cambiado a conciencia (§4ok-95b, 06/11): un número de otro país con su código ya es su WhatsApp (EE. UU., Argentina); el borde sigue. */
+  chk('el celular: un dígito de más NO arma un celular de otra persona; un número de otro país es el suyo entero',
+      S.ctx.waCel_('775123456') === '' && S.ctx.waCel_('12367123456') === '12367123456' && S.ctx.waCel_('+54 9 11 6712 3456') === '5491167123456' &&
       S.ctx.waCel_('Cel: 70111222') === '59170111222' && S.ctx.waCel_('(591) 70111222') === '59170111222' && S.ctx.waCel_('70111222/76543210') === '59170111222',
       ['775123456', '12367123456', '+54 9 11 6712 3456', 'Cel: 70111222', '(591) 70111222'].map(x => x + '→' + S.ctx.waCel_(x)));
 }
@@ -297,17 +300,20 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   const e = ped({ id: 'm5', cliente: 'VIERNES', fecha: '2026-10-16' });
   [a, b, c, d, e].forEach(x => S.guardar(x));
   pasar(5); S.repaso(); S.limpiar();
-  poner('2026-10-14 15:50'); S.repaso();
-  chk('15:50: nada', S.meta.llamadas.length === 0);
+  /* 🌅 §4ok-97 (05/11, a conciencia) la lista de las 16:00 ya no sale: el aviso a logística es a las 08:45, con lo de HOY. */
   poner('2026-10-14 16:05'); S.repaso();
-  let s = S.salen().filter(x => x.pl === 'logistica_sin_camion');
-  chk('16:05: logistica_sin_camion a Ernesto y a David', s.length === 2 && s.map(x => x.to).sort().join() === '59171000001,59172000002', S.salen());
-  chk('…«2 pedidos del jueves 15/10: ANA GUTIERREZ (Norte), PEDRO VACA (Sur)»', s[0] && s[0].p[0] === '2' && s[0].p[1] === 'jueves 15/10' && s[0].p[2] === 'ANA GUTIERREZ (Norte), PEDRO VACA (Sur)', s[0] && s[0].p);
-  S.limpiar(); poner('2026-10-14 16:40'); S.repaso();
-  chk('a las 16:40 no se repite', S.meta.llamadas.length === 0);
+  chk('16:05: ya no sale ninguna lista a logística (§4ok-97)', !S.salen().some(x => /^logistica_(sin_camion|hoy_falta)/.test(x.pl)), S.salen().map(x => x.pl));
   poner('2026-10-14 17:02'); S.repaso();
-  s = S.salen();
+  let s = S.salen();
   chk('17:02: recordatorio a los del jueves que no confirmó hoy… (todos se confirmaron hoy a las 9: ninguno)', s.length === 0, s);
+  S.limpiar(); poner('2026-10-15 08:40'); S.repaso();
+  chk('jueves 08:40: nada', !S.salen().some(x => /^logistica_/.test(x.pl)), S.salen().map(x => x.pl));
+  poner('2026-10-15 08:50'); S.repaso();
+  s = S.salen().filter(x => x.pl === 'logistica_hoy_falta');
+  chk('jueves 08:50: logistica_hoy_falta a Ernesto y a David', s.length === 2 && s.map(x => x.to).sort().join() === '59171000001,59172000002', S.salen());
+  chk('…«jueves 15/10 · 2 pedidos: ANA GUTIERREZ (Norte), PEDRO VACA (Sur)» (el del viernes no)', s[0] && s[0].p[0] === 'jueves 15/10' && s[0].p[1] === '2 pedidos' && s[0].p[2] === 'ANA GUTIERREZ (Norte), PEDRO VACA (Sur)', s[0] && s[0].p);
+  S.limpiar(); poner('2026-10-15 09:40'); S.repaso();
+  chk('a las 09:40 no se repite', !S.salen().some(x => /^logistica_/.test(x.pl)));
 }
 {
   poner('2026-10-13 11:00');
@@ -364,8 +370,9 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   chk('sábado 19:05: «El martes» (saltea domingo y el feriado del lunes)', s.length === 1 && s[0].pl === 'recordatorio_entrega' && s[0].p[3] === 'El martes' && s[0].p[6] === 'martes 03/11 por la tarde', s);
   S.limpiar();
   S.guardar(ped({ id: 'q2', cliente: 'NUEVO DOMINGO', fecha: '2026-11-03' }));
+  poner('2026-11-01 08:50'); S.repaso();
+  chk('domingo 08:50: no hay aviso «sin camión» a logística (§4ok-97)', !S.salen().some(x => /^logistica_(sin_camion|hoy_falta)/.test(x.pl)), S.salen().map(x => x.pl));
   poner('2026-11-01 16:05'); S.repaso();
-  chk('domingo 16:05: no hay aviso «sin camión» a logística', !S.salen().some(x => x.pl === 'logistica_sin_camion'), S.salen().map(x => x.pl));
   S.limpiar(); poner('2026-11-01 17:05'); S.repaso(); s = S.salen().filter(x => x.pl === 'recordatorio_entrega');
   chk('domingo 17:05: a MARTA no se le repite; a uno nuevo del martes, sí', s.length === 0 || (s.length === 1 && s[0].p[0] === 'Nuevo'), s);
 }
@@ -374,7 +381,9 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   const S = servidor(ON);
   S.guardar(ped({ id: 'z1', fecha: '2026-10-15' })); pasar(5); S.repaso(); S.limpiar();
   poner('2026-10-14 20:10'); S.repaso();
-  chk('si el bot estuvo parado y arranca a las 20:10, ya no manda el «Son las 16:00» ni el recordatorio', S.meta.llamadas.length === 0, S.salen());
+  chk('si el bot estuvo parado y arranca a las 20:10, ya no manda el recordatorio', S.meta.llamadas.length === 0, S.salen());
+  poner('2026-10-15 11:00'); S.repaso();
+  chk('…ni a las 11:00 el aviso de las 08:45 (pasaron las 2 horas)', !S.salen().some(x => /^logistica_/.test(x.pl)), S.salen().map(x => x.pl));
 }
 
 // ══ 8. Prueba, disparadores y probar ═════════════════════════════════════════
@@ -417,16 +426,21 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const S = servidor(Object.assign({}, ON, { WA_WABA_ID: '2901139558521747' }));
   const T = S.ctx.WA_PLANTILLAS, tipos = S.ctx.WA_TIPOS;
   const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
-  chk('son las 10 de WA_TIPOS, con el mismo nombre (27/10: + logistica_pedir_hoy; 29/10: + logistica_excel_falta y logistica_cierre_falta)', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombres), T.map(x => x.n));
+  /* §4ok-E (05/11) + las del jueves: logistica_hoy_falta (en vez de logistica_sin_camion_v2),
+     alerta_leads, alerta_leads_volvieron, reclamo_fabrica y las «_ubic» de confirmación y recordatorio (`ubic` en WA_TIPOS). */
+  const nombresU = nombres.concat(Object.keys(tipos).map(k => tipos[k].ubic).filter(Boolean)).filter((n, i, a) => a.indexOf(n) === i).sort();
+  chk('son las de WA_TIPOS (y sus «_ubic»), con el mismo nombre, sin repetir', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombresU), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
-  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_sin_camion_v2: 3, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3 };
+  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
+                     alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5,
+                     confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
   const r = S.ctx.crearPlantillasWhatsApp();
   const ll = S.meta.llamadas;
-  chk('crear: 10 llamadas a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === 10 && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
-  chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === 9, r);
+  chk('crear: una llamada por plantilla a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === T.length && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
+  chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === T.length - 1, r);
   chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
   const r2 = S.ctx.crearPlantillasWhatsApp();
@@ -492,12 +506,13 @@ console.log('\n── 11. «Sin camión» no parte un nombre; un aviso con otra 
   const noms = ['NOELIA ESCALANTE ZAMORA','DAVID MIRANDA','ERIKA MENACHO','SAMUEL LIMA','ABIGAIL CASTRO LOPEZ','ORDOÑEZ BALDERAS ALBERTO','NAOMI CUELLAR','JUAN PEREZ','MIA PLAZA','ROXANA CONTRERAS LOPEZ','MARIA LUISA GUTIERREZ','PEDRO PABLO VACA DIEZ','CARLOS ANDRES ROJAS'];
   noms.forEach((n, i) => S.guardar(ped({ id: 'sc' + i, cliente: n, zona: 'Norte', fecha: '2026-10-15' })));
   pasar(5); S.repaso(); S.limpiar();
-  poner('2026-10-14 16:05'); S.repaso();
-  const s = S.salen().find(x => x.pl === 'logistica_sin_camion');
+  poner('2026-10-15 08:50'); S.repaso();   // 🌅 §4ok-97: a las 08:45 del día, no a las 16:00 de la víspera
+  const s = S.salen().find(x => x.pl === 'logistica_hoy_falta');
   const lista = s ? s.p[2] : '';
   const m = lista.match(/ y (\d+) más$/), dentro = lista.replace(/ y \d+ más$/, '').split(', ');
   chk('13 sin camión: la lista entra en 250 letras, termina en «y N más» y no parte ningún nombre', s && lista.length <= 250 && !!m && dentro.every(x => noms.some(n => x === n + ' (Norte)')) && dentro.length + Number(m[1]) === 13, lista);
-  chk('…y el total sigue diciendo 13', s && s.p[0] === '13');
+  chk('…y el total sigue diciendo 13', s && s.p[1] === '13 pedidos');
+  chk('…y los 13 productos sin revisar, también enteros y con «y N más»', s && s.p[3] === '13 productos' && s.p[4].length <= 250 && / y \d+ más$/.test(s.p[4]), s && s.p.slice(3));
   const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'buena' }, ON));
   S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
   S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
@@ -1021,6 +1036,62 @@ console.log('\n── 16. El aviso de Meta lee el final de la hoja, no la hoja e
   const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'k', WA_AUTORESP: '0' }, ON)), H2 = S2.ctx.waHoja_();
   S2.ctx.doPost({ parameter: { wa: 'k' }, postData: { contents: JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: '1234567890' }, statuses: [{ id: 'wamid.nada', status: 'read', timestamp: ts }] } }] }] }) } });
   chk('con la hoja vacía (solo el encabezado) no revienta ni agrega nada', H2._datos.length === 1, H2._datos.length);
+}
+
+// ══ §4ok-E4 (05/11) Dos celulares separados con guion: el bot le escribe al primero ══════════════
+console.log('\n── §4ok-E4 · dos celulares en el campo: «-», «/», «,» o « y » ──');
+{
+  const S = servidor(ON), W = S.ctx.waCel_;
+  chk('«70111222-76543210» (pegado), «70111222 - 76543210», «70111222 -- 76543210» → 59170111222',
+      W('70111222-76543210') === '59170111222' && W('70111222 - 76543210') === '59170111222' && W('70111222 -- 76543210') === '59170111222');
+  chk('«70111222, 76543210» y «70111222 y 76543210» → el primero', W('70111222, 76543210') === '59170111222' && W('70111222 y 76543210') === '59170111222');
+  chk('si el primero no es celular («3345566-76543210», «775123456-76543210») → el segundo', W('3345566-76543210') === '59176543210' && W('775123456-76543210') === '59176543210');
+  chk('un número solo con guiones sigue entero («7011-1222», «+591 7-655-4433»)', W('7011-1222') === '59170111222' && W('+591 7-655-4433') === '59176554433');
+  chk('el borde a la izquierda sigue (§4kf): «775123456», «7011122276543210» → nada; «12367123456» y «+54 9 11 6712 3456» son de afuera (§4ok-95b)',
+      W('775123456') === '' && W('7011122276543210') === '' && W('12367123456') === '12367123456' && W('+54 9 11 6712 3456') === '5491167123456');
+  poner('2026-10-14 10:00');
+  S.guardar(ped({ id: 'e4', celular: '70111222-76543210' })); pasar(3); S.repaso();
+  const c = S.salen().find(x => x.pl === 'confirmacion_pedido');
+  chk('un pedido con «70111222-76543210» recibe la confirmación en el primero', !!c && c.to === '59170111222', S.salen().map(x => x.pl + '→' + x.to));
+}
+{
+  /* §4ok-95b 🌎 (06/11) Un cliente con un número de otro país: la página lo guarda «+5491123456789» y el bot le escribe a ese número. */
+  poner('2026-10-14 10:00');
+  const S = servidor(ON);
+  S.guardar(ped({ id: 'afuera', celular: '+5491123456789' })); pasar(3); S.repaso();
+  const c = S.salen().find(x => x.pl === 'confirmacion_pedido');
+  chk('🌎 un pedido con «+5491123456789» recibe la confirmación en ese número (con el código del país, sin el «+»)', !!c && c.to === '5491123456789',
+      S.salen().map(x => x.pl + '→' + x.to));
+  const col = S.ctx.HEADERS.indexOf('Celular'), f = S.sh._datos.find(x => x[0] === 'afuera');
+  chk('🌎 …y en la planilla va con el «\'» adelante (si no, Google toma el «+» como fórmula: «#ERROR!»)', f && f[col] === "'+5491123456789", f && f[col]);
+}
+
+// ══ §4ok-95 (05/11) El celular va a la planilla SIEMPRE como texto (que no vuelva a quedar «#ERROR!») ══════════════
+console.log('\n── §4ok-95 · el celular se escribe como texto: «+591 …» ya no es una fórmula ──');
+{
+  /* Lo que hace Google con lo que se escribe en una celda: «'…» = texto (y al leer devuelve el valor SIN el «'»); en una columna con
+     formato de TEXTO («@») queda tal cual; si no: «=…» o «+…» = una fórmula que no anda → «#ERROR!», solo cifras = un número. */
+  poner('2026-10-14 10:00');
+  const S = servidor(ON), col = S.ctx.HEADERS.indexOf('Celular'), formatos = [];
+  const gr = S.sh.getRange;
+  S.sh.getRange = function (a) { const r = gr.apply(this, arguments); if (typeof a === 'string') r.setNumberFormat = (f) => { formatos.push(a + '=' + f); }; return r; };
+  const google = (v) => typeof v !== 'string' ? v : v.charAt(0) === "'" ? v.slice(1) : formatos.indexOf('G:G=@') >= 0 ? v : /^[=+]/.test(v) ? '#ERROR!' : /^\d+$/.test(v) ? Number(v) : v;
+  const casos = { a: '+591 70111222', b: '70111222', c: '=70111222', d: '', e: '70111222-76543210', f: '070111222', h: '-70111222' };
+  Object.keys(casos).forEach(k => S.guardar(ped({ id: 'cel' + k, celular: casos[k] })));
+  const fila = (id) => S.sh._datos.find(f => f[0] === id);
+  const enGoogle = (id) => S.ctx.rowToRec_(fila(id).map(google)).celular;
+  chk('la columna «Celular» (G) queda con formato de texto, UNA vez (CEL_TEXTO)', formatos.filter(x => x === 'G:G=@').length === 1 && S.P.CEL_TEXTO === '1', formatos);
+  chk('lo que Google toma como fórmula («+…», «=…», «-…») va con «\'» adelante; lo demás y vacío, tal cual',
+      fila('cela')[col] === "'+591 70111222" && fila('celc')[col] === "'=70111222" && fila('celh')[col] === "'-70111222" && fila('celb')[col] === '70111222' && fila('celd')[col] === '', [fila('cela')[col], fila('celb')[col], fila('celd')[col]]);
+  chk('⚠️ como lo guarda Google: ninguno queda «#ERROR!» ni pierde el 0 de adelante; vuelven tal cual se escribieron',
+      Object.keys(casos).every(k => enGoogle('cel' + k) === casos[k]), Object.keys(casos).map(k => enGoogle('cel' + k)));
+  formatos.length = 0;
+  chk('…y aunque la columna no tuviera el formato, «+591 …» y «=…» no quedan «#ERROR!» (llevan el «\'»)', enGoogle('cela') === '+591 70111222' && enGoogle('celc') === '=70111222', enGoogle('cela'));
+  chk('sin el «\'» (la planilla de prueba lo deja): la lectura lo saca igual', S.leer('cela').celular === '+591 70111222' && S.leer('celc').celular === '=70111222');
+  chk('el eco del guardado trae el celular como se mandó', S.post({ action: 'save', pedido: ped({ id: 'celg', celular: '+591 76543210' }) }).pedido.celular === '+591 76543210');
+  chk('volver a guardar no agrega otro «\'»', (() => { const p = S.leer('cela'); S.guardar(p); return fila('cela')[col] === "'+591 70111222"; })(), fila('cela')[col]);
+  pasar(3); S.repaso();
+  chk('el bot le escribe al «+591 70111222»', S.salen().some(x => x.pl === 'confirmacion_pedido' && x.to === '59170111222') && S.hoja().some(f => f[1] === 'cela' && f[5] === '59170111222'));
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

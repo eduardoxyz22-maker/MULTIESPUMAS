@@ -12,7 +12,7 @@
       QR 1.140 + efectivo 110.
    4. El mismo comprobante (mismo N°, con o sin guiones) en otra venta → «Esta foto ya está en la venta 10-050». Lo ya leído de las otras
       fotos sale con `leer:1` (sin gastar).
-   5. Venta de tienda con la foto de otro día → «La foto es del 14/10: ¿la venta fue ese día? [Sí]», que llena «Fecha de la venta».
+   5. Venta de tienda NUEVA con la foto de otro día → «Fecha de la venta» pasa sola a ese día (§4ok-93; antes preguntaba «¿la venta fue ese día? [Sí]»).
    6. El efectivo no se lee. Servidor anterior a 26-a, tope del día: no se muestra nada (y con el tope no se vuelve a pedir enseguida).
    7. NUNCA frena: se guarda mientras lee, y no pasa nada.
    8. Contabilidad, «Registrar pago»: la foto dice menos → «Corregir a 2.000» (sin «Agregar efectivo»).
@@ -197,8 +197,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     if(typeof cancelarVentaTienda==='function'){ VENTA_TIENDA=false; resetForm(); pintarModoTienda(); }
     return out;
   });
-  chk('5a. venta de tienda (hoy 30/10) con la foto del 14/10 → «La foto es del 14/10: ¿la venta fue ese día?» con «Sí»', r5.fv0==='2026-10-30' && /La foto es del 14\/10: ¿la venta fue ese día\?/.test(r5.aviso) && /Sí, fue el 14\/10/.test(r5.aviso), r5);
-  chk('5b. «Sí» llena «Fecha de la venta» con el 14/10 y la foto ya coincide', r5.fv==='2026-10-14' && /La foto coincide/.test(r5.despues), r5);
+  /* (05/11, plan del jueves 93, a conciencia) Una venta de tienda NUEVA ya no pregunta: el día de la foto se pone solo en «Fecha de la
+     venta» y se dice, con «No, fue el…» para volver (tests/test_tienda_tanda.js). Corrigiendo una venta vieja sigue la pregunta. */
+  chk('5a. venta de tienda (hoy 30/10) con la foto del 14/10 → «Fecha de la venta» pasa sola al 14/10 y lo dice («Puse el 14/10…», «No, fue el 30/10»)', r5.fv0==='2026-10-30' && /Puse el 14\/10 como «Fecha de la venta»/.test(r5.aviso) && /No, fue el 30\/10/.test(r5.aviso), r5);
+  chk('5b. queda el 14/10 y la foto ya coincide', r5.fv==='2026-10-14' && /La foto coincide/.test(r5.despues), r5);
 
   /* 6 · lo que no se lee: el efectivo, el servidor de antes, el tope */
   const r6 = await ev(async () => {
