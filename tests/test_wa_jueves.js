@@ -376,5 +376,56 @@ console.log('\n── 102. El vigía de leads: < 25 % de la semana pasada → al
   chk('más de 250 leads: pasa de página (250 + 250 + 100 = 600)', JSON.parse(S4.P.WA_LEADS).n7 === 600 && S4.kommo.llamadas.filter(u => /page=3/.test(u)).length === 1, S4.P.WA_LEADS);
 }
 
+// ══ 105. El reclamo a la fábrica ══════════════════════════════════════════════════════════════
+console.log('\n── 105. 10:00: reclamo_fabrica al dueño y a logística, con la fila __reclamo_fab__ de hoy ──');
+{
+  const DU = Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007, Ernesto:59171000001' });   // Ernesto también en WA_PEDIR_HOY: una vez
+  const S = servidor(DU);
+  const fila = (f, atr, cero) => ({ id: '__reclamo_fab__', fecha: '', oc: '', vendedor: '', cliente: '🏭 RECLAMO A LA FÁBRICA', productos: [], celular: '',
+    observaciones: JSON.stringify({ v: 1, f: f, h: '09:40', atr: atr, cero: cero }), entregado: false, rev: 1, ts: 1 });
+  S.cargar([fila('2026-11-04', ['VIEJO: faltan 1'], [])]);   // la de ayer
+  poner('2026-11-05 09:55'); S.repaso();
+  chk('09:55: nada', S.salen('reclamo_fabrica').length === 0);
+  poner('2026-11-05 10:02'); S.repaso();
+  chk('10:02 con la fila de AYER: no sale (espera la de hoy) y no queda como hecho', S.salen('reclamo_fabrica').length === 0 && JSON.parse(S.P.WA_HECHO).rf !== '2026-11-05', S.P.WA_HECHO);
+  /* Logística sube los Excel a las 10:10: la página deja la fila de hoy. */
+  const i = S.sh._datos.findIndex(f => f[0] === '__reclamo_fab__');
+  S.sh._datos[i] = S.ctx.recToRow(fila('2026-11-05',
+    ['TITANIO ICE · 200X200: faltan 7 de 8, tenía que llegar el 03/10 (33 días)', 'SOFT · 140X190: faltan 4, tenía que llegar el 30/10 (6 días)'],
+    ['NUEVO ECO FLEX · 140X190: 3 vendidos esperando; el más viejo, OC 10-301 para el 28/10']));
+  poner('2026-11-05 10:04'); S.repaso();
+  chk('10:04 (a los 2 minutos de la vuelta anterior): todavía no prueba de nuevo', S.salen('reclamo_fabrica').length === 0);
+  poner('2026-11-05 10:08'); S.repaso();
+  const s = S.salen('reclamo_fabrica');
+  chk('10:08: reclamo_fabrica a Eduardo, Ernesto y Alba (Ernesto una sola vez)', s.length === 3 && s.map(x => x.to).sort().join() === '59171000001,59173000003,59177000007', s.map(x => x.to));
+  chk('…«jueves 05/11 · 2 productos · la lista · 1 producto · la lista»', s[0] && s[0].p[0] === 'jueves 05/11' && s[0].p[1] === '2 productos' &&
+      s[0].p[2] === 'TITANIO ICE · 200X200: faltan 7 de 8, tenía que llegar el 03/10 (33 días) · SOFT · 140X190: faltan 4, tenía que llegar el 30/10 (6 días)' &&
+      s[0].p[3] === '1 producto' && /NUEVO ECO FLEX/.test(s[0].p[4]), s[0] && s[0].p);
+  chk('…y queda hecho por hoy', JSON.parse(S.P.WA_HECHO).rf === '2026-11-05');
+  S.limpiar(); poner('2026-11-05 10:30'); S.repaso();
+  chk('10:30: no se repite', S.salen('reclamo_fabrica').length === 0);
+}
+{
+  const S = servidor(Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007' }));
+  S.cargar([{ id: '__reclamo_fab__', fecha: '', cliente: 'x', productos: [], observaciones: JSON.stringify({ v: 1, f: '2026-11-05', atr: [], cero: [] }), rev: 1, ts: 1 }]);
+  poner('2026-11-05 10:05'); S.repaso();
+  chk('sin nada atrasado: no sale, y queda hecho (no vuelve a probar)', S.salen('reclamo_fabrica').length === 0 && JSON.parse(S.P.WA_HECHO).rf === '2026-11-05');
+  const S2 = servidor(Object.assign({}, ON, { WA_DUENO: 'Eduardo:59177000007' }));
+  S2.cargar([{ id: '__reclamo_fab__', fecha: '', cliente: 'x', productos: [], observaciones: JSON.stringify({ v: 1, f: '2026-11-08', atr: ['A: faltan 1'], cero: [] }), rev: 1, ts: 1 }]);
+  poner('2026-11-08 10:05'); S2.repaso();
+  chk('domingo: no sale', S2.salen('reclamo_fabrica').length === 0);
+  const S3 = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1234567890', WA_LOGISTICA: 'Ernesto:59171000001' });
+  S3.cargar([{ id: '__reclamo_fab__', fecha: '', cliente: 'x', productos: [], observaciones: JSON.stringify({ v: 1, f: '2026-11-05', atr: ['A: faltan 1'], cero: [] }), rev: 1, ts: 1 }]);
+  poner('2026-11-05 10:05'); S3.repaso();
+  chk('sin WA_DUENO ni WA_AVISOS/WA_PEDIR_HOY: no sale (WA_LOGISTICA no recibe el reclamo)', S3.salen('reclamo_fabrica').length === 0);
+  const S4 = servidor(ON);
+  S4.cargar([{ id: '__reclamo_fab__', fecha: '', cliente: 'x', productos: [], observaciones: JSON.stringify({ v: 1, f: '2026-11-05', atr: ['A: faltan 1'], cero: [] }), rev: 1, ts: 1 }]);
+  poner('2026-11-05 10:05'); S4.repaso();
+  chk('sin WA_DUENO: va a los de WA_PEDIR_HOY (Ernesto y Alba)', S4.salen('reclamo_fabrica').map(x => x.to).sort().join() === '59171000001,59173000003', S4.salen());
+  /* La fila del sistema se guarda como cualquier otra del sistema (sin sello: gana el último) y no es un pedido para el bot. */
+  const r = S4.post({ action: 'save', pedido: { id: '__reclamo_fab__', fecha: '', cliente: 'x', productos: [], observaciones: '{"v":1}', rev: 0 } });
+  chk('guardar la fila __reclamo_fab__: entra, sin sello pedido y sin cola del bot', r.ok && !JSON.parse(S4.P.WA_COLA || '[]').some(e => e.id === '__reclamo_fab__'), r);
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exitCode = FAIL ? 1 : 0;

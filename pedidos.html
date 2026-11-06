@@ -20185,7 +20185,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===RECLAMO_FAB_ID || esFilaRetiro(p)); }   // §4ok-105 + RECLAMO_FAB_ID
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
@@ -38726,6 +38726,7 @@ function existLoteTerminar(){
   /* 🏭 (30/10, propuesta 75) Lo pedido a la fábrica se cierra también cuando el archivo termina sin «Usar» el último almacén. */
   var fdR=fdLoteCerrar();
   if(fdR && fdR.cambio){ stockOlvidarIndice(); guardarStock(); try{ fdRepintar(); }catch(e){} }
+  reclamoFabGuardar();   // §4ok-105 el archivo terminó sin «Usar» el último: el reclamo del día igual
   if(!EXIST_LOTE || !EXIST_LOTE.n) { EXIST_LOTE=null; return; }
   var r=existLoteCerrar();
   if(r.cerrados.length || r.anotados.length){ stockOlvidarIndice(); guardarStock(); try{ renderStock(); }catch(e){} }
@@ -40147,7 +40148,7 @@ function confirmarImportExist(){
   STOCK.v=2; if(!(Number(STOCK.v2t)>0)) STOCK.v2t=Date.now();   // desde cuándo esta planilla la escribe una página con el control (Codex H7)
   var stockProm=guardarStock(); closeModal();
   if(EXIST_COLA && EXIST_COLA.length) EXIST_REPINTAR=true;     // ⏳ (§4ls VB-5) se redibuja al terminar el archivo
-  else { EXIST_REPINTAR=false; renderStock(); renderAdmin(); }
+  else { EXIST_REPINTAR=false; renderStock(); renderAdmin(); reclamoFabGuardar(); }   // §4ok-105 terminó el archivo: el reclamo del día para el bot
   EXIST_IMP=null;
   /* 📚 (16/10, §4lp) El archivo con varios almacenes: el próximo, sobre el stock que este acaba de dejar (como subir el Excel que sigue). */
   if(EXIST_COLA && EXIST_COLA.length){ EXIST_IMP=EXIST_COLA.shift(); renderImportExist(); }
@@ -48407,6 +48408,58 @@ function fdLoteCerrar(){
   });
   if(cambio){ stockNormalizarRecepciones(STOCK); stockOlvidarIndice(); }
   return { cambio:cambio, cerrados:out, prod:prod };
+}
+// §4ok-105 — EL RECLAMO DEL DÍA PARA EL BOT (05/11, propuesta 105; servidor 2026-11-05-a). Al terminar los Excel del día, la página deja
+// en la fila del sistema `__reclamo_fab__` lo que el bot le manda a las 10:00 al dueño y a logística (`reclamo_fabrica`): lo pedido a la
+// fábrica que pasó 2 días hábiles de su llegada sin entrar (`fdLista`, la MISMA cuenta de «Lo que nos debe la fábrica») y lo que rota
+// en 0 en PTF y Banzer con ventas esperando (`stockData`, con la más vieja). Solo textos (sin plata ni clientes). Sin sello: gana el último.
+// En Playwright no se guarda salvo `RECLAMO_FAB_PRUEBA` (no se mete en los guardados de las pruebas de siempre).
+var RECLAMO_FAB_ID='__reclamo_fab__', RECLAMO_FAB_MAX=30;
+function reclamoFabDatos(){
+  var hoy=todayStr(), atr=[], cero=[];
+  fdLista().forEach(function(g){
+    var pre=g.fab==='MORENO' ? '' : (g.info.corto+' · ');
+    g.prods.forEach(function(pr){
+      /* lo que falta y tenía que llegar hace 2 días hábiles o más (día hábil + 2 ≤ hoy) */
+      var tarde=pr.items.filter(function(it){ return it.falta>0 && it.esp && diaHabilMas(it.esp, 2)<=hoy; });
+      if(!tarde.length) return;
+      var falta=0, ped=0, esp=tarde.map(function(it){ return it.esp; }).sort()[0];
+      tarde.forEach(function(it){ falta+=it.falta; ped+=it.pedidas; });
+      var d=stockDias(esp, hoy);
+      atr.push({ d:d, t:pre+stockNombreClave(pr.k)+': faltan '+stockUnid(falta)+(ped>falta?(' de '+stockUnid(ped)):'')+', tenía que llegar el '+fmtFechaCorta(esp)+' ('+d+' día'+(d===1?'':'s')+')' });
+    });
+  });
+  try{
+    stockData().lista.forEach(function(o){
+      if(!o || o.descont || o.rotacion==='baja' || !(o.comp>0)) return;
+      var hay=stockHaySalir(o); if(hay==null || hay>0) return;      // sin contar (null) no se reclama
+      var c=(o.compIds||[]).slice().sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); })[0], p=c ? findById(c.id) : null;
+      var fab=fdFabDe(o.k, ''), pre=(fab && fab!=='MORENO') ? (fdFabInfo(fab).corto+' · ') : '';
+      cero.push({ f:(c&&c.f)||'', t:pre+stockNombreClave(o.k)+': '+stockUnid(o.comp)+' vendido'+(o.comp===1?'':'s')+' esperando'+
+        (c ? ('; el más viejo, '+(p ? ocEtiq(p.oc)+' ' : '')+'para el '+fmtFechaCorta(c.f)) : '') });
+    });
+  }catch(e){}
+  atr.sort(function(a,b){ return b.d-a.d; });
+  cero.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
+  var d=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+  return { v:1, f:hoy, h:z(d.getHours())+':'+z(d.getMinutes()),
+           atr:atr.slice(0, RECLAMO_FAB_MAX).map(function(x){ return x.t.slice(0, 160); }), cero:cero.slice(0, RECLAMO_FAB_MAX).map(function(x){ return x.t.slice(0, 160); }) };
+}
+function reclamoFabGuardar(){
+  try{
+    if(navigator.webdriver && !window.RECLAMO_FAB_PRUEBA) return null;
+    if(!CONNECTED) return null;
+    var o=reclamoFabDatos();
+    var vieja=(STATE||[]).filter(function(p){ return p && String(p.id)===RECLAMO_FAB_ID; })[0], ant=null;
+    try{ ant=vieja ? JSON.parse(String(vieja.observaciones||'')) : null; }catch(e){ ant=null; }
+    if(ant && ant.f===o.f && JSON.stringify(ant.atr)===JSON.stringify(o.atr) && JSON.stringify(ant.cero)===JSON.stringify(o.cero)) return null;   // igual que lo guardado
+    var fila=filaSistema(RECLAMO_FAB_ID, '🏭 RECLAMO A LA FÁBRICA (no tocar: lo lee el bot de WhatsApp)', JSON.stringify(o));
+    var rv=Math.max(Number(vieja && vieja.rev)||0, Number(SAVE_REV[RECLAMO_FAB_ID])||0); if(rv) fila.rev=rv;
+    return Promise.resolve().then(function(){ return apiSave(fila); }).then(function(res){
+      if(res && res.ok){ STATE=(STATE||[]).filter(function(p){ return String(p.id)!==RECLAMO_FAB_ID; }); STATE.push(res.pedido || fila); }
+      return res;
+    }, function(){ return null; });
+  }catch(e){ return null; }
 }
 function fdLoteResumen(r){
   if(!r || !r.cerrados || !r.cerrados.length) return '';

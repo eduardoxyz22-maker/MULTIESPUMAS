@@ -3040,7 +3040,9 @@ var WA_TIPOS = {
   atd: { plantilla:'atc_devolucion', txt:'ATC: devolución', cli:true, no:'atc' },
   /* 📉 §4ok-102 (2026-11-05-a) Al dueño (WA_DUENO): casi no entran leads a Kommo, y cuando vuelven a entrar. */
   al:  { plantilla:'alerta_leads', txt:'Dueño: casi no entran leads' },
-  alv: { plantilla:'alerta_leads_volvieron', txt:'Dueño: volvieron a entrar leads' }
+  alv: { plantilla:'alerta_leads_volvieron', txt:'Dueño: volvieron a entrar leads' },
+  /* 🏭 §4ok-105 (2026-11-05-a) A las 10:00 (días hábiles), al dueño y a logística: lo que la fábrica nos debe. */
+  rf:  { plantilla:'reclamo_fabrica', txt:'Reclamo a la fábrica' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -3185,6 +3187,9 @@ function waConfig_() {
   c.avisosLog = c.avisos.length ? c.avisos : c.pedirHoy;
   c.dueno = []; c.malDu = [];
   leer('WA_DUENO', c.dueno, c.malDu);          // 📉🏭 §4ok-102/105 (2026-11-05-a) opcional: el vigía de leads y el reclamo a la fábrica
+  /* 🏭 §4ok-105 El reclamo a la fábrica: al dueño y a los de los avisos de logística (WA_AVISOS, o WA_PEDIR_HOY), sin repetir un número. */
+  c.reclamo = [];
+  c.dueno.concat(c.avisosLog).forEach(function (L) { if (!c.reclamo.some(function (x) { return x.cel === L.cel; })) c.reclamo.push(L); });
   c.ok = !!(c.token && c.phone);
   return c;
 }
@@ -3416,6 +3421,33 @@ function probarVigiaLeads() {
   var r = { ahora:waLeadsContar_(t0 - V, t0), semanaPasada:waLeadsContar_(t0 - S7 - V, t0 - S7), dueno:waConfig_().dueno.map(function (L) { return L.nombre; }), estado:waJsonProp_('WA_LEADS', null) };
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(r, null, 2));
   return r;
+}
+
+/* ============================================================================
+ * 🏭 §4ok-105 (2026-11-05-a) EL RECLAMO A LA FÁBRICA SALE SOLO CADA MAÑANA. Desde el 19/10, 32 de 177 unidades de lo que rota no
+ * salieron de PTF/Banzer; el reclamo («Lo que nos debe la fábrica», `fdHtml`) se copiaba a mano y nadie lo abría.
+ *   · La PÁGINA arma el reclamo al terminar los Excel del día (con su cuenta de siempre: `fdLista`, `stockData`) y lo deja en la fila
+ *     del sistema `__reclamo_fab__` (JSON en «Observaciones»: {v, f, h, atr:[…], cero:[…]}, textos ya armados, sin plata ni clientes).
+ *     El servidor no recalcula el stock: lee la fila de ESE momento.
+ *   · A las 10:00 (días hábiles; hasta WA_VENTANA_H después) `reclamo_fabrica` al dueño (WA_DUENO) y a los de WA_AVISOS (o
+ *     WA_PEDIR_HOY), sin repetir un número. Si la fila de hoy todavía no está, prueba cada 5 minutos hasta que esté. Sin nada atrasado,
+ *     no sale. Solo avisa: no toca el stock ni los pedidos.
+ * ========================================================================== */
+var WA_RECLAMO_ID = '__reclamo_fab__';      // = RECLAMO_FAB_ID de la página
+var WA_HORA_RECLAMO = 10;
+var WA_RECLAMO_REINT_MS = 4.5 * 60000;      // mientras la fila de hoy no está, cada vuelta de 5 minutos
+function waReclamoLeer_(r) {
+  if (!r) return null;
+  var o = null; try { o = JSON.parse(String(r.observaciones || '')); } catch (e) { o = null; }
+  if (!o || typeof o !== 'object') return null;
+  var lim = function (L) { return (Array.isArray(L) ? L : []).map(function (t) { return String(t || '').trim(); }).filter(function (t) { return !!t; }).slice(0, 40); };
+  return { f:String(o.f || ''), h:String(o.h || ''), atr:lim(o.atr), cero:lim(o.cero) };
+}
+/** Los datos de `reclamo_fabrica`: el día, cuántos atrasados, cuáles, cuántos en 0 con ventas esperando, cuáles. */
+function waReclamoParams_(R, B) {
+  var cu = function (k) { return k ? k + ' producto' + (k === 1 ? '' : 's') : 'ninguno ✅'; };
+  return [waDiaTxt_(B.hoy), cu(R.atr.length), R.atr.length ? waListaCabe_(R.atr.map(waParam_), ' · ') : '—',
+          cu(R.cero.length), R.cero.length ? waListaCabe_(R.cero.map(waParam_), ' · ') : '—'];
 }
 
 /* ── Los reintentos (WA_SALIDA): solo QUÉ mensaje y a quién; el texto se rearma con la planilla de ese momento. ── */
@@ -3693,9 +3725,9 @@ function waArmar_(m, recs, cfg, B) {
   } else {
     /* 🏭 (2026-10-27-a) «pedir hoy» va a los de WA_PEDIR_HOY; 📥✅ (2026-10-29-a) el Excel y el cierre, a los de WA_AVISOS (o WA_PEDIR_HOY). */
     var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv';   // 📉 §4ok-102 al dueño
-    var aQuien = m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : (du ? cfg.dueno : cfg.logistica));
+    var aQuien = m.k === 'rf' ? cfg.reclamo : (m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : (du ? cfg.dueno : cfg.logistica)));   // 🏭 §4ok-105
     var L = null; for (var i = 0; i < aQuien.length; i++) if (aQuien[i].nombre === m.a) L = aQuien[i];
-    if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : (du ? 'WA_DUENO' : 'WA_LOGISTICA'))), anotar:true };
+    if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : (du || m.k === 'rf' ? 'WA_DUENO' : 'WA_LOGISTICA'))), anotar:true };
     out.para = L.nombre; out.numero = L.cel;
     if (p && !waEsEntrega_(p)) return { saltar:'ya no es una entrega pendiente', anotar:false, p:p };
     if (p && String(p.fecha) < B.hoy) return { saltar:'la fecha de entrega ya pasó', anotar:false, p:p };   // una venta cargada de atrás
@@ -3744,6 +3776,14 @@ function waArmar_(m, recs, cfg, B) {
     var urg = waPhUrgentes_(lis, B);
     if (!urg.length) return { saltar:'no queda nada sin revisar ni sin pedir para estos días', anotar:false };
     out.params = waPhParams_(urg, B);
+  } else if (m.k === 'rf') {
+    /* 🏭 §4ok-105 Con la fila de AHORA. Si la página todavía no dejó la de hoy (los Excel no se subieron), se espera: el repaso vuelve a
+       probar cada 5 minutos hasta el final de la ventana (`rfEspera`: no cuenta como hecho). */
+    if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
+    var RF = waReclamoLeer_(recs[WA_RECLAMO_ID]);
+    if (!RF || RF.f !== B.hoy) return { saltar:'todavía no está el reclamo de hoy (lo arma el panel al terminar los Excel)', anotar:false, rfEspera:true };
+    if (!RF.atr.length && !RF.cero.length) return { saltar:'hoy no hay nada atrasado para reclamar', anotar:false };
+    out.params = waReclamoParams_(RF, B);
   } else if (m.k === 'al' || m.k === 'alv') {
     /* 📉 §4ok-102 Lo que contó el vigía en ESE momento (un reintento de minutos después dice lo mismo). */
     var ld = m.ld || {}; if (!ld.t) return { saltar:'sin datos del vigía', anotar:true };
@@ -3870,6 +3910,13 @@ function waRepasoBot_() {
       cfg.pedirHoy.forEach(function (L) { msgs.push({ k:'ph', a:L.nombre, dia:B.hoy, n:0 }); });
       hecho.ph = B.hoy; cambio = true;
     }
+    /* 🏭 §4ok-105 10:00 (días hábiles): el reclamo a la fábrica. Se prueba cada 5 minutos hasta que esté la fila de hoy (`hecho.rfT`
+       evita que dos vueltas a la vez lo armen las dos) y se da por hecho recién cuando salió o no había nada (después del envío). */
+    if (cfg.reclamo.length && B.hora >= WA_HORA_RECLAMO && B.hora < WA_HORA_RECLAMO + WA_VENTANA_H && hecho.rf !== B.hoy && waPhHabil_(B.hoy) &&
+        t0 - (Number(hecho.rfT) || 0) >= WA_RECLAMO_REINT_MS) {
+      cfg.reclamo.forEach(function (L) { msgs.push({ k:'rf', a:L.nombre, dia:B.hoy, n:0 }); });
+      hecho.rfT = t0; cambio = true;
+    }
     /* 📥✅ (2026-10-29-a) A las 10:00 el Excel del día; a las 19:00 (sábado 13:30) el cierre de entregas. Si ya está, `waArmar_` no lo manda. */
     var ciH = waCierreHora_(B.hoy);
     if (cfg.avisosLog.length && B.hora >= WA_HORA_EXCEL && B.hora < WA_HORA_EXCEL + WA_VENTANA_H && hecho.ex !== B.hoy && waPhHabil_(B.hoy)) {
@@ -3914,11 +3961,12 @@ function waRepasoBot_() {
     }
   }
   if (!msgs.length) { guardarRes(); return res; }
-  var R2 = planilla(), filas = [], reint = [], recHechos = [], parar = '';
+  var R2 = planilla(), filas = [], reint = [], recHechos = [], parar = '', rfListo = false;
   for (var i = 0; i < msgs.length; i++) {
     var m = msgs[i], T = WA_TIPOS[m.k] || { txt:m.k, plantilla:'' };
     if (parar || Date.now() - t0 > WA_CORRIDA_MS) { reint.push(m); continue; }   // lo que no llegó a salir, a la próxima
     var a = waArmar_(m, R2, cfg, B), p = a.p || (m.id ? R2[m.id] : null);
+    if (m.k === 'rf' && !a.rfEspera) rfListo = true;   // 🏭 §4ok-105 salió, o no había nada: hoy ya está
     var base = [B.txt, m.id || '', p ? String(p.oc || '') : '', T.txt];
     if (a.saltar) {
       res.saltados++;
@@ -3957,6 +4005,10 @@ function waRepasoBot_() {
     if (y.f !== f) y = { f:f, ids:[] };
     recHechos.forEach(function (id) { if (y.ids.indexOf(id) < 0) y.ids.push(id); });
     try { PropertiesService.getScriptProperties().setProperty('WA_REC', JSON.stringify(y)); } catch (e) {}
+  }
+  if (rfListo) {   // 🏭 §4ok-105
+    var l3 = LockService.getScriptLock();
+    try { l3.waitLock(20000); var hRf = waJsonProp_('WA_HECHO', {}); hRf.rf = B.hoy; PropertiesService.getScriptProperties().setProperty('WA_HECHO', JSON.stringify(hRf)); } catch (e) {} finally { try { l3.releaseLock(); } catch (e3) {} }
   }
   if (confHoy.ids.length > 300) confHoy.ids = confHoy.ids.slice(-300);
   try { PropertiesService.getScriptProperties().setProperty('WA_CONF_HOY', JSON.stringify(confHoy)); } catch (e) {}
@@ -4783,6 +4835,11 @@ var WA_PLANTILLAS = [
   { n:'alerta_leads_volvieron',
     t:'🤖 📈 *Volvieron a entrar leads a Kommo*\n\nEn las últimas 3 horas ({{1}}) entraron *{{2}}*. El {{3}}, a la misma hora, habían entrado *{{4}}*.\n\n✅ No hace falta hacer nada.',
     e:['de 15:00 a 18:00', '19 leads', 'jueves 29/10', '23 leads'] },
+  /* 🏭 §4ok-105 (2026-11-05-a) Mismos datos y orden que `waReclamoParams_`. */
+  { n:'reclamo_fabrica',
+    t:'🤖 🏭 *Lo que la fábrica todavía nos debe* ({{1}})\n\n⏰ Pedido y con más de 2 días hábiles de atraso: *{{2}}*\n📋 {{3}}\n\n🛏️ Lo que rota, en 0, con ventas esperando: *{{4}}*\n📋 {{5}}\n\n👉 Reclamalo a la fábrica. El detalle para copiar está en el panel: Stock → 🏭 Lo que nos debe la fábrica.',
+    e:['jueves 05/11', '2 productos', 'TITANIO ICE 200x200: faltan 7 de 8, tenía que llegar el 03/10 (33 días) · SOFT 140x190: faltan 4, tenía que llegar el 30/10 (6 días)',
+       '1 producto', 'NUEVO ECO FLEX 140x190: 3 vendidos esperando; el más viejo, OC 10-301 para el 28/10'] },
   { n:'pedido_en_camino',
     t:'🤖 _Mensaje automático_\n\n¡Hola {{1}}! 👋 Te escribimos de *{{2}}*.\n\n🚚 ¡Tu pedido *{{3}}* ya está cargado y en camino!\nLo adelantamos: te lo entregamos *hoy, {{4}}*, antes de lo agendado.\n⏰ Entre las {{5}}. Logística te llama una hora antes 📞\n\n💬 ¿No vas a estar? Escribile a {{6}} 🙏',
     e:['Juan', 'Heaven Colchones', 'OC 10-412', 'martes 14/10 por la mañana', '9:00 y las 12:00', 'Carola 👉 https://wa.me/59170000000'] }
