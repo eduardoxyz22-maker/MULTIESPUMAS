@@ -2594,14 +2594,24 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
       <div id="fx-camion" class="fx-camion solo-entrega no-print" hidden></div>
 
 
-      <div class="grid2" id="wrap-factura">
-        <div class="field">
-          <label class="lb">🧾 Facturar a <span class="hint">(opcional)</span></label>
-          <input type="text" id="f-facturar" placeholder="Nombre / razón social" autocomplete="off">
+      <div id="wrap-factura">
+        <!-- 🧾 (06/11, dueño: «factura/nota remisión. obligatorio») Toda VENTA dice si va con factura o con nota de remisión (`docVenta*`). -->
+        <div class="field" id="wrap-doc-venta">
+          <label class="lb">🧾 ¿Con factura o con nota de remisión? <span class="req" id="f-doc-venta-req">*</span> <span class="hint" id="f-doc-venta-hint"></span></label>
+          <div class="seg" id="f-doc-venta">
+            <button type="button" data-val="F">🧾 Factura</button>
+            <button type="button" data-val="R">📄 Nota de remisión</button>
+          </div>
         </div>
-        <div class="field">
-          <label class="lb">NIT <span class="hint">(opcional)</span></label>
-          <input type="text" id="f-nit" placeholder="NIT / CI" autocomplete="off" inputmode="numeric">
+        <div class="grid2">
+          <div class="field">
+            <label class="lb">🧾 Facturar a <span class="hint dv-opc">(opcional)</span><span class="req dv-req" hidden>*</span></label>
+            <input type="text" id="f-facturar" placeholder="Nombre / razón social" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="lb">NIT <span class="hint dv-opc">(opcional)</span><span class="req dv-req" hidden>*</span></label>
+            <input type="text" id="f-nit" placeholder="NIT / CI" autocomplete="off" inputmode="numeric">
+          </div>
         </div>
       </div>
 
@@ -9865,7 +9875,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
-      '<td>'+esc(p.facturarA||'—')+'</td>'+
+      '<td>'+docVentaChip(p)+esc(p.facturarA||(docVentaDe(p)?'':'—'))+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
       '<td>'+contaPagosCelda(p)+'</td>'+
@@ -14952,6 +14962,7 @@ function showContaModal(id){
       row('Entrega', tipoVentaHtml(p))+
       row('Celular', esc(p.celular))+
       row('Productos', prods)+
+      row('Factura o remisión', docVentaDe(p) ? DOCV_TXT[docVentaDe(p)] : '<span style="color:var(--muted)">❓ sin marcar</span>')+
       row('Facturar a', esc(p.facturarA)||'—')+
       row('NIT', esc(p.nit)||'—')+
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
@@ -15611,7 +15622,7 @@ function exportConta(){
   var list=contaLista(), mayor=contaAmbito()==='mayor';
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','PRECIO UNIT. (Bs)','SUBTOTAL (Bs)','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','TOTAL VENTA (Bs)','SUMA DE PRECIOS (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','PRECIO UNIT. (Bs)','SUBTOTAL (Bs)','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','TOTAL VENTA (Bs)','SUMA DE PRECIOS (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES','FACTURA / REMISIÓN'].map(function(t){return {v:t,s:H};});   // 🧾 (06/11) al FINAL: no se mueven las de antes
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -15635,14 +15646,15 @@ function exportConta(){
         i===0?{v:contaCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
         i===0?{v:ventaTotal(p),t:'n'}:'', i===0?(tienePrecios(p)?{v:prodTotal(p),t:'n'}:''):'',
         i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
-        i===0?talEnSistemaTxt(p):'', i===0?(p.observaciones||''):''
+        i===0?talEnSistemaTxt(p):'', i===0?(p.observaciones||''):'',
+        i===0?({F:'FACTURA',R:'NOTA DE REMISIÓN'}[docVentaDe(p)]||''):''
       ]);
     });
   });
   // La planilla de mayoristas baja como archivo aparte: es para otro control, no se
   // mezcla con la del contador ni se pisan entre ellas en la carpeta de descargas.
   var bytes=buildXlsx([{name:mayor?'Mayoristas':'Contabilidad',
-    cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:16},{w:15},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:16},{w:19},{w:18},{w:18},{w:20},{w:12},{w:36}],
+    cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:16},{w:15},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:16},{w:19},{w:18},{w:18},{w:20},{w:12},{w:36},{w:20}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -16260,6 +16272,21 @@ function submitPedido(){
     markErr('f-celular'); celFormPintar();
     toast('📱 El celular «'+_celE.t+'» no es de WhatsApp: tienen que ser 8 números que empiezan con 6 o 7 (sin +591), o uno de otro país con «+» y el código del país (+54 9 11 2345 6789). Corregilo, o tildá «📵 El cliente no tiene WhatsApp».','err',9000);
     var _fcE=document.getElementById('f-celular'); if(_fcE){ try{ _fcE.focus(); _fcE.scrollIntoView({block:'center'}); }catch(e){} }
+    return;
+  }
+  /* 🧾 (06/11) Una venta dice si va con factura o con nota de remisión; con factura, a quién y su NIT (`docVentaFalta`). */
+  var _dvF=docVentaFalta(vendedor);
+  if(_dvF){
+    docVentaPintar();
+    if(_dvF.sin){
+      var _wdv=document.getElementById('wrap-doc-venta');
+      if(_wdv){ _wdv.classList.add('seg-err'); setTimeout(function(){ _wdv.classList.remove('seg-err'); },1600); try{ _wdv.scrollIntoView({block:'center'}); }catch(e){} }
+      toast('🧾 Elegí si la venta va con FACTURA o con NOTA DE REMISIÓN: una venta no se guarda sin decirlo.','err',8000);
+    } else {
+      if(_dvF.fac) markErr('f-facturar'); if(_dvF.nit) markErr('f-nit');
+      toast('🧾 Con factura: poné '+(_dvF.fac && _dvF.nit ? 'a quién se factura («Facturar a») y su NIT o CI' : (_dvF.fac ? 'a quién se factura («Facturar a»)' : 'el NIT o CI'))+'. Si no lleva factura, elegí «📄 Nota de remisión».','err',8000);
+      var _fdv=document.getElementById(_dvF.fac ? 'f-facturar' : 'f-nit'); if(_fdv){ try{ _fdv.focus(); _fdv.scrollIntoView({block:'center'}); }catch(e){} }
+    }
     return;
   }
   var _acu=montoForm('f-acuenta');
@@ -17002,6 +17029,8 @@ function submitPedido(){
     if(_celE.n.cel){ rec.celular=_celE.n.cel; rec.observaciones=celObsCon(rec.observaciones, _celE.n.otros); }
     setSinWa(rec, _celE.sinWa);
   }
+  /* 🧾 (06/11) Factura o nota de remisión, adentro de los productos (`fdoc`). Una ATC o una RPT no la llevan. */
+  setDocVenta(rec, docTipoSel()==='OC' ? segVal('f-doc-venta') : '');
   /* 📅 (§4ok-96) Una vez más que se le mueve la fecha (desde una fecha puesta; también al pasar a «avisa cuándo»). */
   if(isEdit && prev && prev.fecha && String(rec.fecha||'')!==String(prev.fecha) && fmovPuede(rec)) setFmov(rec, fmovDe(prev)+1);
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
@@ -17454,6 +17483,7 @@ function applyVendedorLite(){
   var lite=v?esVendedorLite(v.value):false, roho=v?esRoho(v.value):false;
   if(view){ view.classList.toggle('lite-vendedor', lite); view.classList.toggle('roho-vendedor', roho); }
   precioObligPintar();   // 💵 (31/10)
+  try{ docVentaPintar(); }catch(e){}   // 🧾 (06/11)
   /* El tope de fecha es SOLO para pedidos nuevos. Editando (desde Administración) no se
      pone ninguno: hay que poder pasar una entrega a HOY o corregir una fecha que ya pasó,
      y con el `min` puesto el calendario del navegador ni siquiera deja elegirlas.
@@ -17770,6 +17800,7 @@ function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor'
 function pintarDocTipo(limpiar){
   var tipo=docTipoSel(), sinVenta=(tipo!=='OC');
   try{ precioObligPintar(); }catch(e){}   // 💵 (31/10)
+  try{ docVentaPintar(); }catch(e){}       // 🧾 (06/11)
   /* 🎧 Una ATC no es una venta (§4bt) y una RPT tampoco (§4dk): no tienen N° de nota ni
      cobro. `fueraDeConta` ya las deja a las dos fuera de Contabilidad y del Cuadre, así
      que lo que se anotara ahí no aparecería en ningún total. */
@@ -18121,6 +18152,7 @@ function resetForm(){
   addProdRow();
   document.getElementById('f-celular').value='';
   var _fswR=document.getElementById('f-sinwa'); if(_fswR) _fswR.checked=false;   // 📱 (§4ok-95)
+  segSet('f-doc-venta',''); try{ docVentaPintar(); }catch(e){}   // 🧾 (06/11)
   nxCliLimpiar();                              // 👋 (§4js, P1)
   segSet('f-turno','AM');
   var _tHint0=document.getElementById('f-turno-hint'); if(_tHint0) _tHint0.textContent='';
@@ -18201,6 +18233,7 @@ function editPedido(id){
     c.setAttribute('data-orig', String((c.querySelector('.prod-desc')||{}).value||'').trim()+'|'+(_ms && _ms.value==='Otros' ? String((_ot&&_ot.value)||'').trim() : String((_ms&&_ms.value)||''))); } });
   document.getElementById('f-celular').value=rec.celular||'';
   var _fsw=document.getElementById('f-sinwa'); if(_fsw) _fsw.checked=sinWaDe(rec) && !celPartes(rec.celular).cel;   // 📱 (§4ok-95)
+  segSet('f-doc-venta', docVentaDe(rec)); try{ docVentaPintar(); }catch(e){}   // 🧾 (06/11)
   try{ celFormPintar(); }catch(e){}
   /* (27/09, revisión en el celular) SIN TURNO sigue sin turno: `rec.turno||'AM'` dejaba marcado «AM» y guardar la dirección
      le ponía turno AM a un pedido que nadie eligió (la ficha pasaba de «🕗 Sin turno» a «🌅 AM» y el atraso se medía a las 13
@@ -19521,7 +19554,8 @@ function fxDerPintar(){
   if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
   if(!tienda && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
-  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }
+  if(tipo==='OC' && docVentaObligatoria(v)) chk.push(['Factura o remisión', !docVentaFalta(v)]);   // 🧾 (06/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
     var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
     if(!lite) chk.push(['Celular',!!cel]);
@@ -20083,7 +20117,7 @@ function fxPasosEstado(){
   var atcMal=false; try{ atcMal = tipo==='ATC' && atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).length>0; }catch(e){}
   return [
     !!val('f-vendedor') && !!val(tipo==='RPT'?'f-rpt-suc':'f-cliente') && (lite || tipo==='RPT' || (!!val('f-celular') && !celFormFalta(val('f-vendedor')))) &&   // 📱 (§4ok-95) lo mismo que Guardar
-      (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
+      (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal && !docVentaFalta(val('f-vendedor')),   // 🧾 (06/11) lo mismo que Guardar
     prods,
     tienda || (!!val('f-fecha') && !!val('f-zona') && !fxUbicMal()),   // §4ok-E5: la ubicación que Guardar frena (no se entiende o fuera de Santa Cruz)
     tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))
@@ -21251,6 +21285,49 @@ function celObligatorio(vend){
 }
 function sinWaDe(p){ return ((p&&p.productos)||[]).some(function(x){ return !!(x && x.sinwa); }); }
 function setSinWa(p, on){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(on) x.sinwa=1; else delete x.sinwa; }); }
+/* ============================================================================
+   🧾 FACTURA O NOTA DE REMISIÓN, OBLIGATORIO (06/11, dueño: «factura/nota remisión. obligatorio»; con «sin preferencia» quedó lo
+   propuesto: elegir uno de los dos, y con factura «Facturar a» y el NIT también obligatorios).
+   · Toda VENTA (📄 OC, también la venta de tienda) dice si va con 🧾 Factura o con 📄 Nota de remisión. No en una ATC ni en una RPT (no
+     se vende nada), ni para Eduardo y ROHO (`esVendedorLite`) ni en los pedidos internos (`cliEsInterno`), como el precio obligatorio:
+     a ellos el selector les aparece igual, sin asterisco.
+   · Con 🧾 Factura, «Facturar a» y el NIT/CI no pueden quedar vacíos.
+   · Viaja adentro de los productos (`fdoc:'F'|'R'`, la convención de `sinwa`/`avisa`): la planilla tiene columnas fijas. Un pedido viejo
+     no la tiene: al editarlo la vendedora la elige (como el precio, §4oe).
+   · Contabilidad lo muestra en «Facturar a» (tabla, ficha) y al final del Excel («FACTURA / REMISIÓN»). Es lo que separa los retiros
+     FACTURADO / NO FACTURADO.
+   · Lo mismo piden «Para guardar» y los pasos (`fxPasosEstado`, §4mj). En Playwright solo con `window.DOCV_PRUEBA`.
+   ========================================================================== */
+var DOCV_TXT={ F:'🧾 Factura', R:'📄 Nota de remisión' };
+function docVentaChip(p){ var d=docVentaDe(p); return d ? ('<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px" title="'+(d==='F'?'Va con factura':'Va con nota de remisión (sin factura)')+'">'+(d==='F'?'🧾 Factura':'📄 Remisión')+'</span>') : ''; }
+function docVentaDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && (x.fdoc==='F' || x.fdoc==='R')){ v=x.fdoc; return true; } return false; }); return v; }
+function setDocVenta(p, v){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(v==='F' || v==='R') x.fdoc=v; else delete x.fdoc; }); }
+function docVentaObligatoria(vend){
+  if(navigator.webdriver && !window.DOCV_PRUEBA) return false;   // en Playwright solo con `DOCV_PRUEBA`: las pruebas de siempre guardan ventas de ejemplo sin elegirlo
+  return docTipoSel()==='OC' && !esVendedorLite(vend) && !cliEsInterno(vend);
+}
+/* Qué falta: {sin:true} = no eligió · {fac:true, nit:true} = con factura y sin «Facturar a» / NIT. null = nada. */
+function docVentaFalta(vend){
+  var v=(vend==null) ? String((document.getElementById('f-vendedor')||{}).value||'').trim() : vend;
+  if(!docVentaObligatoria(v)) return null;
+  var d=segVal('f-doc-venta');
+  if(d!=='F' && d!=='R') return { sin:true };
+  if(d==='R') return null;
+  var fa=String((document.getElementById('f-facturar')||{}).value||'').trim(), ni=String((document.getElementById('f-nit')||{}).value||'').trim();
+  return (!fa || !ni) ? { fac:!fa, nit:!ni } : null;
+}
+function docVentaPintar(){
+  var w=document.getElementById('wrap-doc-venta'); if(!w) return;
+  var oc=(docTipoSel()==='OC'); w.style.display = oc ? '' : 'none';
+  var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), obl=false;
+  try{ obl=docVentaObligatoria(v); }catch(e){ obl=false; }
+  var r=document.getElementById('f-doc-venta-req'); if(r) r.hidden=!obl;
+  var d=segVal('f-doc-venta'), fac=oc && obl && d==='F';
+  var h=document.getElementById('f-doc-venta-hint');
+  if(h) h.textContent = !oc ? '' : (obl ? (d==='F' ? '— con factura, «Facturar a» y el NIT también' : '') : '(opcional)');
+  var wf=document.getElementById('wrap-factura');
+  if(wf){ [].forEach.call(wf.querySelectorAll('.dv-opc'), function(e){ e.hidden=fac; }); [].forEach.call(wf.querySelectorAll('.dv-req'), function(e){ e.hidden=!fac; }); }
+}
 /* Cómo está el celular del formulario. `her` = el pedido que se edita ya traía ESE celular (sin tocar) y no sirve. */
 function celFormEstado(vend){
   var el=document.getElementById('f-celular'), t=String((el&&el.value)||'').trim();
@@ -54340,6 +54417,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('keydown', visorTeclas);
   initConnUI();
   initSeg('f-turno',function(){ var h=document.getElementById('f-turno-hint'); if(h) h.textContent=''; renderCupoForm(); });   // (27/09) eligió turno: el «no tiene turno» se va
+  initSeg('f-doc-venta',function(){ docVentaPintar(); try{ fxFormPintar(); }catch(e){} });   // 🧾 (06/11) factura o nota de remisión
+  ['f-facturar','f-nit'].forEach(function(id){ var e=document.getElementById(id); if(e) e.addEventListener('input', function(){ e.classList.remove('err'); }); });
+  (function(){ var fv=document.getElementById('f-vendedor'); if(fv){ fv.addEventListener('change', docVentaPintar); fv.addEventListener('input', docVentaPintar); } })();
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
     var fs=document.getElementById('f-saldo'), fa=document.getElementById('f-acuenta');
