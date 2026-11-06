@@ -2422,8 +2422,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         <!-- 🎧 En una ATC no hay nota de venta: no se está vendiendo nada (§4bt). -->
         <div class="field" id="wrap-nota">
           <label class="lb">N° Nota de venta <span class="req req-lite">*</span></label>
-          <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">
-        </div>
+          <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">        </div>
       </div>
       <div id="fx-dias" class="fx-dias solo-entrega no-print"></div>
 
@@ -8781,30 +8780,82 @@ function setContaBase(){
   if(l) l.textContent = contaBase()==='entrega' ? 'fecha de entrega AGENDADA (si se reprograma, cambia)' : 'fecha de ingreso';
   renderConta();
 }
-function contaLista(){
-  var modo=segVal('cta-mode')||'mes';
+/* Lo que filtra la pantalla de Ventas SIN el período: el ámbito (tienda / mayoristas), el vendedor y la búsqueda. Lo usan `contaLista`
+   y los saldos de meses anteriores (§4ok-E7), así los dos miran lo mismo. */
+function contaFiltro(){
   var q=(document.getElementById('cta-search')||{}).value||'';
   q=sinTildes(q);        // 25/09: «maria perez» no encontraba a «María Pérez» (Administración ya lo hacía, §4ew)
   var amb=contaAmbito();
   // En Mayoristas el desplegable de vendedor está escondido: si quedó con una vendedora
   // puesta de antes, se ignora (si no, filtraba a cero y parecía que no había ventas).
   var vend=amb==='mayor' ? '' : ((document.getElementById('cta-vendedor')||{}).value||'').trim().toLowerCase();
-  var list=STATE.filter(function(p){
+  return function(p){
     if(fueraDeConta(p, amb)) return false;
     if(vend && !mismoVendedor(p.vendedor, vend)) return false;
+    if(q){
+      var txt=sinTildes([p.nota,p.oc,p.vendedor,p.cliente,p.celular,p.facturarA,p.nit,p.observaciones,p.metodoPago]
+        .concat((p.productos||[]).map(function(x){ return [x.desc,x.medida,x.codigo].join(' '); }))
+        .join(' '));
+      if(txt.indexOf(q)<0) return false;
+    }
+    return true;
+  };
+}
+function contaLista(){
+  var modo=segVal('cta-mode')||'mes', deEsta=contaFiltro();
+  var list=STATE.filter(function(p){
+    if(!deEsta(p)) return false;
     var f=contaFechaBase(p);
     if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||diaNegocio());
     if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
     return true;
   });
-  if(q) list=list.filter(function(p){
-    var txt=sinTildes([p.nota,p.oc,p.vendedor,p.cliente,p.celular,p.facturarA,p.nit,p.observaciones,p.metodoPago]
-      .concat((p.productos||[]).map(function(x){ return [x.desc,x.medida,x.codigo].join(' '); }))
-      .join(' '));
-    return txt.indexOf(q)>=0;
-  });
   return list.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });   // lo último cargado, arriba
 }
+/* ============================================================================
+   §4ok-E7 (05/11) LOS SALDOS QUE QUEDARON DE MESES ANTERIORES. El control del cierre de octubre decía «N ventas con saldo: pasan al mes
+   que viene como falta cobrar», pero en noviembre no salían en ningún lado: Contabilidad, el Cuadre y «Para hacer» cuentan solo lo del
+   mes (por la fecha de ingreso o de entrega). Con la planilla del 02/11: Maria Bs 6.650 (02/10) y Bs 5.646 (31/10), Jonathan Bs 2.220
+   (30/10). Ahora, en el MES EN CURSO, lo ya entregado de un mes anterior que tiene saldo (> 0,005) sale APARTE como «de meses anteriores»:
+   en la ficha «Falta cobrar» de Ventas y «Por cobrar» del Cuadre, en su lista («Ver quiénes»), en «Para hacer» de Contabilidad y en «Para
+   hacer» de su vendedora. NO se suma a lo vendido ni a «Falta cobrar» del mes (no son ventas del mes). Es la idea de la fila «Cerrados
+   de meses anteriores» del dashboard.
+   · De un mes anterior = por el corte de la pantalla (`contaFechaBase` en Ventas, la fecha de ingreso en el Cuadre, la de entrega en
+     Mis pedidos), así nunca está también en la lista del mes.
+   · Ya entregado = ✅ o la fecha de entrega agendada ya pasó (la regla de siempre: los choferes no marcan). Lo que todavía no se entregó
+     (cargado en octubre para entregar después) no es una deuda vieja: se cobra al entregar.
+   · Solo en el mes en curso (Bolivia, `diaNegocio`): mirar un mes viejo no trae los saldos de antes de él.
+   · ⚠️ Solo lo entregado desde `SALDO_ANT_DESDE` (octubre: el primer mes que se cerró en el panel, con el control del cierre de §4mg).
+     Con la planilla del 02/11 hay además 41 ventas entregadas de julio a septiembre con saldo anotado (Bs 88.090) que nadie marcó pagadas: si son
+     deudas de verdad o pagos que no se anotaron lo decide el dueño; traerlas es cambiar esta fecha y nada más.
+   ========================================================================== */
+var SALDO_ANT_DESDE='2026-10-01';
+function saldoAnteriorEs(p, ini, fechaDe, hoy){
+  if(!p || esFilaSistema(p) || esATC(p.oc) || esRPT(p.oc) || !(contaFaltaCobrar(p)>0.005)) return false;
+  var f=fechaDe(p); if(!f || f>=ini) return false;
+  var fs=fechaSalida(p); if(!fs || fs<SALDO_ANT_DESDE) return false;
+  return !!(p.entregado || fs<=hoy);
+}
+/* deEsta(p) = el filtro de la pantalla; fechaDe(p) = con qué fecha cuenta esa pantalla. Del más viejo al más nuevo. */
+function saldosAnteriores(ym, deEsta, fechaDe){
+  var hoy=diaNegocio(); if(!ym || ym!==hoy.slice(0,7)) return [];
+  var ini=ym+'-01', th=todayStr();
+  return STATE.filter(function(p){ return deEsta(p) && saldoAnteriorEs(p, ini, fechaDe, hoy); })
+    .map(function(p){ return Object.assign(deudaEdad(fechaDe(p), th), { p:p, saldo:r2(contaFaltaCobrar(p)), ant:true }); })
+    .sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
+}
+/* Los de la pantalla de Ventas (solo con «Mes» y el mes en curso). */
+function contaSaldosAnteriores(){
+  if((segVal('cta-mode')||'mes')!=='mes') return [];
+  return saldosAnteriores(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7), contaFiltro(), contaFechaBase);
+}
+/* Los del Cuadre (su vendedor; por la fecha de la venta, como `cuadrePendientes`). */
+function cuadreSaldosAnteriores(){
+  var pe=cuadrePeriodo(), vend=cuadreVendedor(); if(pe.modo!=='mes') return [];
+  return saldosAnteriores(pe.val, function(p){ return !fueraDeConta(p) && cuadreEsDe(p, vend); }, contaFecha);
+}
+/* «+ Bs 12.296 de meses anteriores (2)» para debajo de una ficha. */
+function saldosAnterioresTxt(A){ return A.length ? ('+ '+fmtBs(cuadreSuma(A))+' de meses anteriores ('+A.length+')') : ''; }
 /* "PAGADO · QR Ganadero" / "DEBE" / "A cuenta · Efectivo" — lo que contabilidad necesita leer. */
 /* Los métodos usados, sin montos ni fechas: el detalle va en "Pagos recibidos".
    OJO: NO se puede mostrar `p.metodoPago` crudo, que ahora es el historial entero
@@ -9249,6 +9300,7 @@ function renderContaMetrics(list, vSel){
     if(porCargarSistema(p, _TS)) nCarg++;   // 🔢 (30/10, propuesta 82) sin las tiendas que se cargan en otro lado
   });
   var n=(list||[]).length, porCargar=nCarg, cargFuera=talAfueraTxt(list, _TS), quien=vSel?('de '+vSel):'de todo el equipo';
+  var _ant=[]; try{ _ant=contaSaldosAnteriores(); }catch(e){}   // §4ok-E7
   /* ⚠️ EL BUSCADOR TAMBIÉN FILTRA ESTAS TARJETAS, y tiene que decirlo (§4fv). `contaLista` aplica
      lo que se escribió en «Buscar», así que con «titanio» las cuatro tarjetas mostraban Bs 1.000
      de los Bs 3.000 del mes y seguían diciendo «de todo el equipo». */
@@ -9262,16 +9314,20 @@ function renderContaMetrics(list, vSel){
     mc(exceso>0.005?'var(--amber)':'var(--green)','Ya ingresó', fmtBs(cobrado),
        exceso>0.005 ? ('⚠️ '+fmtBs(exceso)+' de MÁS en '+nExceso+' venta'+(nExceso===1?'':'s')+' — revisalas')
        : vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
-    /* ⏳ (06/10, §4hr) Con saldo, la ficha se TOCA y abre quiénes son (`abrirPorCobrar`). */
+    /* ⏳ (06/10, §4hr) Con saldo, la ficha se TOCA y abre quiénes son (`abrirPorCobrar`).
+       §4ok-E7: lo de meses anteriores va APARTE en la línea de abajo (no suma al número del mes) y también abre la lista. */
     (falta>0.005
       ? mcToca('var(--amber)', 'Falta cobrar', fmtBs(falta),
-          nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas', "abrirPorCobrar('ventas')")
-      : mc('var(--green)', 'Falta cobrar', '✅ Nada', 'no queda saldo pendiente'))+
+          nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas'+(_ant.length?('<br><b>'+esc(saldosAnterioresTxt(_ant))+'</b>'):''), "abrirPorCobrar('ventas')")
+      : (_ant.length
+        ? mcToca('var(--amber)', 'Falta cobrar', '✅ Nada del mes', '<b>'+esc(saldosAnterioresTxt(_ant))+'</b> que siguen sin cobrarse', "abrirPorCobrar('ventas')")
+        : mc('var(--green)', 'Falta cobrar', '✅ Nada', 'no queda saldo pendiente')))+
     mc(porCargar>0?'var(--amber)':'var(--green)','Por cargar al sistema',
        porCargar>0?String(porCargar):'✅ Todo',
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró'+(cargFuera?(' · '+esc(cargFuera)):''))
                    : (cargFuera ? esc(cargFuera) : ('las '+n+' están registradas')));
-  CX_TOP_M={ vendido:vendido, cobrado:cobrado, falta:falta, nDeben:nDeben, n:n, nReg:nReg, nCarg:nCarg, cargFuera:cargFuera, exceso:exceso, nExceso:nExceso };   // ✨ (§4mg) «Para hacer» y el libro de arriba leen ESTO
+  CX_TOP_M={ vendido:vendido, cobrado:cobrado, falta:falta, nDeben:nDeben, n:n, nReg:nReg, nCarg:nCarg, cargFuera:cargFuera, exceso:exceso, nExceso:nExceso,
+    ant:_ant };   // ✨ (§4mg) «Para hacer» y el libro de arriba leen ESTO (§4ok-E7: `ant` = los saldos de meses anteriores)
   renderContaMarcas(list, vSel, vendido);
   try{ cxVivoPintar(list, vSel, { vendido:vendido, cobrado:cobrado, falta:falta, nDeben:nDeben, n:n, nReg:nReg, nCarg:nCarg }); }catch(e){}   // ✨ §4jw A y B
   acomodarFichas();
@@ -9300,7 +9356,7 @@ function porCobrarDatos(origen){
   var hoy=todayStr();
   if(origen==='cuadre'){
     var vc=cuadreVendedor();
-    return { items:cuadrePendientes(), quien:(vc||'todo el equipo'), periodo:cuadrePeriodoTxt(), corte:'por la fecha de la venta' };
+    return { items:cuadrePendientes(), ant:cuadreSaldosAnteriores(), quien:(vc||'todo el equipo'), periodo:cuadrePeriodoTxt(), corte:'por la fecha de la venta' };
   }
   var mayor=(contaAmbito()==='mayor');
   var vv=mayor ? mayoristasTxt() : ((document.getElementById('cta-vendedor')||{}).value||'').trim();
@@ -9308,14 +9364,14 @@ function porCobrarDatos(origen){
   var items=contaLista().map(function(p){ var f=contaFecha(p); return Object.assign(deudaEdad(f, hoy), { p:p, saldo:r2(contaFaltaCobrar(p)) }); })
     .filter(function(x){ return x.saldo>0.005; })
     .sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
-  return { items:items, quien:(vv||(mayor?'mayoristas':'todo el equipo'))+(q?(' · solo lo que coincide con «'+q+'»'):''),
+  return { items:items, ant:contaSaldosAnteriores(), quien:(vv||(mayor?'mayoristas':'todo el equipo'))+(q?(' · solo lo que coincide con «'+q+'»'):''),
            periodo:contaPeriodoTxt(), corte:(contaBase()==='entrega'?'por la entrega agendada':'por la fecha de ingreso') };
 }
 function abrirPorCobrar(origen){
   origen=(origen==='cuadre') ? 'cuadre' : 'ventas';
   POR_COBRAR_VOLVER=null;
-  var D=porCobrarDatos(origen), it=D.items, tot=cuadreSuma(it), n=it.length;
-  var filas=it.map(function(x){
+  var D=porCobrarDatos(origen), it=D.items, tot=cuadreSuma(it), n=it.length, ant=D.ant||[], antTot=cuadreSuma(ant);   // §4ok-E7: `ant` aparte
+  var fila=function(x){
     var p=x.p, col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
     var ref=[p.nota?('nota '+p.nota):'', p.oc?(ocEtiq(p.oc)||''):'', p.celular||''].filter(Boolean).join(' · ');
     return '<tr class="pc-fila" data-id="'+esc(String(p.id))+'" onclick="porCobrarAbrirVenta(\''+origen+'\', this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta para registrar el pago">'+
@@ -9324,18 +9380,24 @@ function abrirPorCobrar(origen){
       '<td><span style="color:'+col+'">'+esc(x.sinF ? 'sin fecha' : (fmtFechaCorta(x.desde)+' · '+deudaEdadTxt(x)))+'</span></td>'+
       '<td style="text-align:right;white-space:nowrap">'+fmtBs(ventaTotal(p))+'</td>'+
       '<td style="text-align:right;white-space:nowrap"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
-  }).join('');
-  var html='<div class="modal-h" style="background:#b45309"><h3>⏳ Falta cobrar · '+fmtBs(tot)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+  };
+  var filas=it.map(fila).join('');
+  var tabla=function(f){ return '<div class="tw" style="max-height:calc(60vh / var(--vz,1));overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Vendedor</th><th>Desde</th>'+
+            '<th style="text-align:right">Venta</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+f+'</tbody></table></div>'; };
+  var mesTxt=mesNombre(diaNegocio().slice(0,7)).replace(/ de \d{4}$/, '');
+  var antHtml=ant.length ? ('<div class="pc-ant" style="margin-top:14px"><div style="font-size:.9rem;font-weight:800;color:#b45309;margin-bottom:4px">🗓️ De meses anteriores · '+fmtBs(antTot)+'</div>'+
+      '<div style="font-size:.78rem;color:var(--muted);margin-bottom:8px"><b>'+ant.length+'</b> venta'+(ant.length===1?'':'s')+' ya entregada'+(ant.length===1?'':'s')+' antes de '+esc(mesTxt)+
+        ' que sigue'+(ant.length===1?'':'n')+' con saldo. Van aparte: no son ventas de '+esc(mesTxt)+' ni suman en el número de arriba.</div>'+tabla(ant.map(fila).join(''))+'</div>') : '';
+  var html='<div class="modal-h" style="background:#b45309"><h3>⏳ Falta cobrar · '+fmtBs(tot)+(ant.length?(' <small style="font-weight:600">+ '+fmtBs(antTot)+' de meses anteriores</small>'):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b" id="pc-lista">'+
       '<div style="font-size:.86rem;margin-bottom:8px"><b>'+n+'</b> venta'+(n===1?'':'s')+' con saldo · '+esc(D.quien)+' · '+esc(D.periodo)+
         ' <span style="color:var(--muted)">('+esc(D.corte)+')</span></div>'+
       (n ? ('<div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">De la más vieja a la más nueva. 👆 Tocá un cliente para abrir su venta y registrar el pago.</div>'+
-            tramosDeudaHtml(it)+
-            '<div class="tw" style="max-height:calc(60vh / var(--vz,1));overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Vendedor</th><th>Desde</th>'+
-            '<th style="text-align:right">Venta</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+filas+'</tbody></table></div>')
-         : '<div class="empty" style="padding:18px 0">✅ No queda nada por cobrar.</div>')+
+            tramosDeudaHtml(it)+tabla(filas))
+         : '<div class="empty" style="padding:18px 0">✅ '+(ant.length ? 'Nada por cobrar de lo de este período.' : 'No queda nada por cobrar.')+'</div>')+
+      antHtml+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
-        (n?('<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarPorCobrar(\''+origen+'\')">📋 Copiar la lista</button>'):'')+
+        ((n||ant.length)?('<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarPorCobrar(\''+origen+'\')">📋 Copiar la lista</button>'):'')+
         '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
     '</div>';
@@ -9346,11 +9408,13 @@ function porCobrarAbrirVenta(origen, id){
   showContaModal(id);
 }
 function copiarPorCobrar(origen){
-  var D=porCobrarDatos(origen), it=D.items;
-  var txt='⏳ *Falta cobrar* · '+D.quien+' · '+D.periodo+': *'+fmtBs(cuadreSuma(it))+'* en '+it.length+' venta'+(it.length===1?'':'s')+'\n'+
-    it.map(function(x){ var p=x.p;
+  var D=porCobrarDatos(origen), it=D.items, ant=D.ant||[];
+  var lin=function(x){ var p=x.p;
       return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
-        (x.sinF ? ' · sin fecha' : (' · desde el '+fmtFechaCorta(x.desde)+' ('+deudaEdadTxt(x, true)+')'))+(p.vendedor?(' · '+p.vendedor):''); }).join('\n');
+        (x.sinF ? ' · sin fecha' : (' · desde el '+fmtFechaCorta(x.desde)+' ('+deudaEdadTxt(x, true)+')'))+(p.vendedor?(' · '+p.vendedor):''); };
+  var txt='⏳ *Falta cobrar* · '+D.quien+' · '+D.periodo+': *'+fmtBs(cuadreSuma(it))+'* en '+it.length+' venta'+(it.length===1?'':'s')+'\n'+
+    it.map(lin).join('\n');
+  if(ant.length) txt+='\n\n🗓️ *De meses anteriores* (ya entregadas, aparte): *'+fmtBs(cuadreSuma(ant))+'* en '+ant.length+' venta'+(ant.length===1?'':'s')+'\n'+ant.map(lin).join('\n');   // §4ok-E7
   copyText(txt);
 }
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
@@ -9412,6 +9476,9 @@ function cxHacerDatos(list, R){
   add({ sev:'r', ic:'👯', n:nd, t:'Pueden estar cargadas dos veces', s:'revisalas antes de facturar · «Son distintas» las saca del aviso', b:'Revisar', p:1, fn:'cxDupAbrir()', ok:'Ninguna venta cargada dos veces' });
   var deb=list.filter(function(p){ return !p.pagado && contaFaltaCobrar(p)>0.005; }).sort(function(a,b){ var x=contaFecha(a), y=contaFecha(b); return x<y?-1:(x>y?1:0); });
   add({ sev:'a', ic:'⏳', n:R.nDebe, t:'Ventas con saldo · '+fmtBs0(R.saldo), s:misNom2(deb)+' · la más vieja primero', b:'Ver quiénes', fn:"abrirPorCobrar('ventas')", ok:'Nada por cobrar' });
+  /* §4ok-E7: lo ya entregado de meses anteriores que sigue con saldo (aparte: no es venta de este mes) */
+  var ant=M.ant||[];
+  add({ sev:'a', ic:'🗓️', n:ant.length, t:'Saldos de meses anteriores · '+fmtBs0(cuadreSuma(ant)), s:misNom2(ant.map(function(x){ return x.p; }))+' · ya entregadas, siguen sin cobrarse', b:'Ver quiénes', fn:"abrirPorCobrar('ventas')" });
   add({ sev:'a', ic:'⚠️', n:M.nExceso||0, t:'Cobradas de más · '+fmtBs0(M.exceso||0), s:'entró más que el total de la venta: revisá si se tipeó de más', b:'Ver', fn:"cxTopFiltro('exc')", ok:'Ninguna cobrada de más' });
   add({ sev:'a', ic:'❓', n:R.nSinMonto, t:'Sin monto anotado', s:'no dicen cuánto se cobró ni cuánto falta: anotá el monto', b:'Ver', fn:"cxTopFiltro('smon')", ok:'Todas tienen monto anotado' });
   var nEnv=list.filter(function(p){ return envioPorCobrar(p)>0.005; }).length;
@@ -9443,7 +9510,8 @@ function cxTopPintar(list, vSel, R){
   var cob=Math.min(M.cobrado, M.vendido), fal=Math.min(M.falta, Math.max(0, M.vendido-cob));
   var tres='<div class="lb-tres"><div><small>Vendido</small><b>'+fmtBs0(M.vendido)+'</b><span>'+M.n+' venta'+(M.n===1?'':'s')+'</span></div>'+
     '<div class="lb-ok"><small>Ya cobrado</small><b>'+fmtBs0(M.cobrado)+'</b><span>'+((M.exceso||0)>0.005?('⚠️ '+fmtBs0(M.exceso)+' de más'):'entró a caja o banco')+'</span></div>'+
-    '<div class="'+(M.falta>0.005?'lb-mal lb-toca':'lb-ok')+'"'+(M.falta>0.005?' onclick="abrirPorCobrar(\'ventas\')" title="Ver quiénes deben"':'')+'><small>Falta cobrar</small><b>'+(M.falta>0.005?fmtBs0(M.falta):'✅ Nada')+'</b><span>'+(M.nDeben ? (M.nDeben+' venta'+(M.nDeben===1?'':'s')+' con saldo') : 'no queda saldo')+'</span></div></div>';
+    '<div class="'+(M.falta>0.005?'lb-mal lb-toca':((M.ant||[]).length?'lb-toca':'lb-ok'))+'"'+((M.falta>0.005||(M.ant||[]).length)?' onclick="abrirPorCobrar(\'ventas\')" title="Ver quiénes deben"':'')+'><small>Falta cobrar</small><b>'+(M.falta>0.005?fmtBs0(M.falta):'✅ Nada')+'</b><span>'+(M.nDeben ? (M.nDeben+' venta'+(M.nDeben===1?'':'s')+' con saldo') : 'no queda saldo')+
+      ((M.ant||[]).length ? (' · '+esc(saldosAnterioresTxt(M.ant))) : '')+'</span></div></div>';   // §4ok-E7
   var barra=M.vendido>0.009 ? ('<div class="lb-barra" title="Cobrado '+fmtBs0(cob)+' · falta '+fmtBs0(fal)+'"><i style="flex:'+Math.max(0,cob)+';background:#16a34a"></i><i style="flex:'+Math.max(0,fal)+';background:#CE2939"></i>'+
     ((M.vendido-cob-fal)>0.5?('<i style="flex:'+(M.vendido-cob-fal)+';background:#cbd5e1"></i>'):'')+'</div>') : '';
   var mks='', K=CX_TOP_MK||{ M:{}, sin:{n:0}, suya:'' }, D={};
@@ -12814,6 +12882,7 @@ function renderCuadre(){
   var pend=cuadrePendientes(), pendTotal=cuadreSuma(pend);
   // El total de TODO el historial, para no perder de vista lo que se debe en general.
   var pendAll=cuadrePendientes(true), pendAllTotal=cuadreSuma(pendAll);
+  var pendAnt=[]; try{ pendAnt=cuadreSaldosAnteriores(); }catch(e){}   // §4ok-E7: lo ya entregado de meses anteriores, aparte
 
   /* ---- diferencia del arqueo ----
      El arqueo solo tiene sentido con "Todos": la caja y el extracto son UNO SOLO,
@@ -12888,8 +12957,10 @@ function renderCuadre(){
            (arqHuerfanos.length?(' · ⚠️ '+arqHuerfanos.map(function(h){ return esc(h.forma)+' '+fmtBs(h.monto); }).join(' + ')+' contado'+(arqHuerfanos.length===1?'':'s')+' a mano sin ningún pago detrás'):''))
       : (pend.length   // ⏳ (06/10, §4hr) se toca y abre quiénes son
           ? mcToca('var(--amber)','Por cobrar',fmtBs(pendTotal),
-              pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt()), "abrirPorCobrar('cuadre')")
-          : mc('var(--green)','Por cobrar','✅ Nada','no queda saldo de '+esc(cuadrePeriodoTxt()))));
+              pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt())+(pendAnt.length?('<br><b>'+esc(saldosAnterioresTxt(pendAnt))+'</b>'):''), "abrirPorCobrar('cuadre')")
+          : (pendAnt.length
+            ? mcToca('var(--amber)','Por cobrar','✅ Nada del mes','<b>'+esc(saldosAnterioresTxt(pendAnt))+'</b> que siguen sin cobrarse', "abrirPorCobrar('cuadre')")
+            : mc('var(--green)','Por cobrar','✅ Nada','no queda saldo de '+esc(cuadrePeriodoTxt())))));
 
   try{ cxFichasVivas(box, 'cxCua'); }catch(e){}   // ✨ §4jw
   // ---- cierre por forma de pago (lo que se tilda contra caja y extracto)
@@ -13157,6 +13228,9 @@ function cuadreTexto(){
   if(_rec>0) L.push('', '🚚 De eso, *'+fmtBs(_rec)+'* son recargos por entrega (flete, no es de la venta)');
   var pend=cuadrePendientes(), pt=cuadreSuma(pend);
   if(pend.length) L.push('', '⏳ Por cobrar de lo vendido en el período: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
+  var _pa=[]; try{ _pa=cuadreSaldosAnteriores(); }catch(e){}   // §4ok-E7
+  if(_pa.length && !pend.length) L.push('');
+  if(_pa.length) L.push('🗓️ Y de meses anteriores (ya entregadas, aparte): *'+fmtBs(cuadreSuma(_pa))+'* en '+_pa.length+' venta'+(_pa.length===1?'':'s'));
   // (06/10, §4hr) «saldo por cobrar» ya va en la línea «⏳ Por cobrar» de arriba: no se repite en «Revisar».
   var al=cuadreAlertas(pagos).filter(function(a){ return a.k!=='cobrar'; });
   if(al.length){ L.push('', '🔎 Revisar:'); al.forEach(function(a){ L.push('   '+a.ico+' '+a.txt.replace(/<[^>]+>/g,'')); }); }
@@ -27315,6 +27389,12 @@ function misHacerDatos(v, mine){
   var dBs=0; deben.forEach(function(p){ dBs=r2(dBs+(Number(p.saldo)||0)); });
   MIS_LISTAS.saldo={ t:'💵 Saldo por cobrar de este mes · '+fmtBs(dBs), L:deben, m:function(p){ return fmtBs(Number(p.saldo)||0); } };
   add({ sev:'a', ic:'💵', n:deben.length, t:'Saldo por cobrar de este mes', s:fmtBs(dBs)+' · '+misNom2(deben), b:'Ver', fn:"misVerLista('saldo')", ok:'Nada por cobrar este mes' });
+  /* §4ok-E7: lo que ya entregó en meses anteriores y sigue con saldo (por la fecha de entrega, como el de arriba; aparte) */
+  var mineIds={}; (mine||[]).forEach(function(p){ mineIds[String(p.id)]=1; });
+  var ant=saldosAnteriores(mes, function(p){ return !!mineIds[String(p.id)]; }, fechaSalida).map(function(x){ return x.p; }), aBs=0;
+  ant.forEach(function(p){ aBs=r2(aBs+contaFaltaCobrar(p)); });
+  MIS_LISTAS.saldoAnt={ t:'🗓️ Saldo de meses anteriores · '+fmtBs(aBs), s:'Ya las entregaste y siguen sin cobrarse. No son ventas de este mes.', L:ant, m:function(p){ return fmtBs(contaFaltaCobrar(p)); } };
+  add({ sev:'a', ic:'🗓️', n:ant.length, t:'Saldo de meses anteriores', s:fmtBs(aBs)+' · '+misNom2(ant)+' · ya entregadas', b:'Ver', fn:"misVerLista('saldoAnt')" });
   try{ var w=waRespDeVend(v); add({ sev:'i', ic:'💬', n:w.length, t:'Clientes que contestaron al bot', s:'leelos y tocá «Ya lo atendí»', b:'Leer', fn:"misIrA('wa-resp-mis')", ok:'Sin respuestas del bot' }); }catch(e){}
   var ord={ r:0, a:1, i:2 }; I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
   I.ok=OK; return I;
