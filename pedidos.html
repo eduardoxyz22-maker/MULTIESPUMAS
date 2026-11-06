@@ -30444,6 +30444,7 @@ function leerStock(p){
       /* 🏭 (30/10, propuesta 75) Lo que los Excel mostraron de cada 🏭 de cliente. SOLO si la copia lo trae: una sin `fd` la escribió una
          página de antes, y la junta le pone el de la base (`stockFusionar`). */
       if(Array.isArray(o.fd)) d.fd=o.fd.filter(function(x){ return x && x.id!=null && x.l; });
+      if(Array.isArray(o.fdH)) d.fdH=o.fdH.filter(function(f){ return /^\d{4}-\d{2}-\d{2}$/.test(String(f||'')); });   // §4ok-104 los días de la hoja ya repasados
       if(Number(o.v)>0) d.v=Number(o.v);
       if(Number(o.v2t)>0) d.v2t=Number(o.v2t);
       if(Number(o.pv)>0) d.pv=Number(o.pv);         // 🧓 (06/10) qué página la escribió (ver STOCK_PV)
@@ -30785,6 +30786,7 @@ function stockPodar(S, hoy){
   stockPodarControl(S, hoy);
   stockPodarAuto(S, hoy);                       // 🏭 (17/10, §4lr) lo anotado por el panel: hasta STOCK_AUTO_DIAS
   fdPodar(S, hoy);                              // 🏭 (30/10, propuesta 75) lo que los Excel mostraron de cada 🏭 de cliente
+  fdHPodar(S, hoy);                             // §4ok-104 los días de la hoja ya repasados (STOCK_DEBE_TOPE_DIAS)
   return S;
 }
 /* 🏭 (30/10, propuesta 75) EL TOPE DE LO PEDIDO QUE NO LLEGÓ. Un «Ya pedí» abierto (sin llegar, `!r`) se guarda hasta STOCK_DEBE_TOPE_DIAS
@@ -31264,6 +31266,7 @@ function stockFusionar(b, m, s, modo){
   out.p=fusPorId(b.p, m.p, s.p, sinBase, fusPedidoFab);
   out.ap=fusAuto(b.ap, m.ap, s.ap);                    // 🏭 (17/10, §4lr) por producto y día
   var apl=[]; [m.apL, s.apL, b.apL].forEach(function(L){ (L||[]).forEach(function(x){ if(apl.indexOf(x)<0) apl.push(x); }); }); if(apl.length) out.apL=apl.slice(0,8);
+  var fdh=[]; [m.fdH, s.fdH, b.fdH].forEach(function(L){ (Array.isArray(L)?L:[]).forEach(function(x){ if(fdh.indexOf(x)<0) fdh.push(x); }); }); if(fdh.length) out.fdH=fdh.sort();   // §4ok-104 lo repasado en cualquiera de las tres queda repasado
   out.h=fusPorId(b.h, m.h, s.h, sinBase)
         .sort(function(x,y){ return (Number(y&&y.ts)||0)-(Number(x&&x.ts)||0); }).slice(0,STOCK_HIST);
   out=JSON.parse(JSON.stringify(out));            // que no comparta objetos con ninguna de las tres
@@ -38979,6 +38982,7 @@ function onExistArchivo(ev){
   Promise.all([relee, f.arrayBuffer().then(xlsxDescomprimir)]).then(function(rs){
     var archivos=rs[1];
     if(rs[0]===false) toast('⚠️ No se pudo leer la planilla: el control compara contra el último corte que tiene este aparato','warn',9000);
+    try{ fdRepasoQuizas(); }catch(e){ console.error(e); }   // §4ok-104 con el primer Excel del día: los días que no se miraron, de la hoja «Historial stock»
     var _filas=xlsxHoja(archivos);
     var L=existLoteDe(_filas, delNombre);
     if(L){
@@ -48446,8 +48450,9 @@ function fdItemsCalc(){
 function fdLista(){
   var its=fdItems(), hoy=todayStr(), G={};
   its.forEach(function(it){
-    var g=G[it.fab]=G[it.fab]||{ fab:it.fab, info:fdFabInfo(it.fab), prods:{} };
-    var pr=g.prods[it.k]=g.prods[it.k]||{ k:it.k, key:it.fab+'|'+it.k, items:[], pedidas:0, llegaron:0, falta:0, atraso:0, fechas:[], cerro:'', espMin:'' };
+    var fab=fdEsProducto(it.k) ? it.fab : '?';   // §4ok-104 lo que no es un producto de la lista ni de ningún Excel, aparte: «¿Qué es esto?»
+    var g=G[fab]=G[fab]||{ fab:fab, info:fab==='?' ? FD_QUE : fdFabInfo(fab), prods:{} };
+    var pr=g.prods[it.k]=g.prods[it.k]||{ k:it.k, key:fab+'|'+it.k, items:[], pedidas:0, llegaron:0, falta:0, atraso:0, fechas:[], cerro:'', espMin:'' };
     pr.items.push(it); pr.pedidas+=it.pedidas; pr.llegaron+=it.llegaron; pr.falta+=it.falta;
     if(it.falta>0){
       if(it.esp && it.esp<hoy) pr.atraso=Math.max(pr.atraso, stockDias(it.esp, hoy));
@@ -48455,7 +48460,7 @@ function fdLista(){
     } else if(it.cerro>pr.cerro) pr.cerro=it.cerro;
     if(pr.fechas.indexOf(it.f)<0) pr.fechas.push(it.f);
   });
-  var orden=['MORENO','MULTI'].concat(Object.keys(G).filter(function(f){ return f!=='MORENO' && f!=='MULTI'; }).sort());
+  var orden=['MORENO','MULTI'].concat(Object.keys(G).filter(function(f){ return f!=='MORENO' && f!=='MULTI' && f!=='?'; }).sort()).concat(['?']);
   return orden.filter(function(f){ return G[f]; }).map(function(f){
     var g=G[f];
     g.prods=Object.keys(g.prods).map(function(k){ var pr=g.prods[k];
@@ -48523,12 +48528,14 @@ function fdHtml(donde){
       (nA?(' · <b class="fd-rojo">'+nA+' atrasado'+(nA===1?'':'s')+'</b>'):'')+'</span></summary>'+
     '<p class="fd-ley">Cada «✓ Ya pedí» y cada pedido de cliente mandado a fabricar (🏭), hasta que llega. Al subir los Excel del día, lo que '+
       'entró en los tres almacenes juntos (PTF, Banzer y Moreno; un pase de un almacén a otro no cuenta) lo cierra solo, empezando por lo más viejo. '+
+      'Con el primer Excel del día también repasa los días que no se miraron (la hoja «Historial stock»). '+
       'Tocá un producto para ver cada pedido.</p>';
   L.forEach(function(g){
     var falta=0, atr=0; g.prods.forEach(function(pr){ falta+=pr.falta; if(pr.falta>0 && pr.atraso>0) atr++; });
     h+='<section class="fd-fab"><div class="fd-fcab"><b>'+g.info.ico+' '+esc(g.info.nombre)+'</b><span>'+(falta ? ('faltan '+stockUnid(falta)) : 'todo llegó')+
         (atr?(' · <b class="fd-rojo">'+atr+' atrasado'+(atr===1?'':'s')+'</b>'):'')+'</span>'+
-        (atr ? ('<button type="button" class="btn btn-sm fd-copiar" data-fab="'+esc(g.fab)+'" onclick="fdCopiarReclamo(this.getAttribute(\'data-fab\'))">📋 Copiar el reclamo para '+esc(g.info.corto)+'</button>') : '')+'</div>'+
+        ((atr && g.fab!=='?') ? ('<button type="button" class="btn btn-sm fd-copiar" data-fab="'+esc(g.fab)+'" onclick="fdCopiarReclamo(this.getAttribute(\'data-fab\'))">📋 Copiar el reclamo para '+esc(g.info.corto)+'</button>') : '')+'</div>'+
+      (g.fab==='?' ? '<p class="fd-ley fd-que">No está en la lista de precios ni en ningún Excel de los almacenes (un texto suelto, un nombre mal escrito como «ARMAZONES», o algo hecho a medida): el Excel no lo puede cerrar solo y no se le reclama a ninguna fábrica. Revisá qué es: si llegó, «✓ Llegó»; si no se pidió, «✕ No se pidió».</p>' : '')+
       '<div class="fd-tabla"><div class="fd-fila fd-th" aria-hidden="true"><span>Producto</span><span>Pedido</span><span>Pedidas</span><span>Llegaron</span><span>Faltan</span><span>Atraso</span></div>'+
       g.prods.slice(0, FD_TODOS[g.fab] ? g.prods.length : FD_TOPE).map(fdProdHtml).join('')+'</div>'+
       (g.prods.length>FD_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm fd-mas" data-fab="'+esc(g.fab)+'" onclick="fdVerTodos(this.getAttribute(\'data-fab\'))">'+
@@ -48709,6 +48716,16 @@ function fdLoteCerrar(){
   var hoy=L.dia, loteId='fl'+huellaId(L.dia+'|'+L.cortes.slice().sort().join(',')), at=L.ats.slice().sort()[0]||stockDetAt(hoy, ''), ts=Date.now();
   /* «✓ Llegó» anotado a mano después del corte anterior: también está dentro de la diferencia (no suma entrada), ya cerró su pedido. */
   if(L.desde) (STOCK.p||[]).forEach(function(q){ if(!q || !Array.isArray(q.recs)) return; q.recs.forEach(function(r){ if(r && !r.an && /^xm:/.test(String(r.id)) && (Number(r.ts)||0)>L.desde && (Number(r.ts)||0)<=ts) L.conocido[q.k]=(L.conocido[q.k]||0)+Math.round(Number(r.u)||0); }); });
+  var _r=fdLoteAsignar(L, loteId, at);
+  /* §4ok-104 El día que el lote miró (con los tres almacenes, o si cerró algo) queda como mirado: el repaso de la hoja no lo vuelve a
+     mirar (lo cerrado se poda a los STOCK_RECIBIDOS_DIAS días y, sin esta marca, lo de ese día parecería sin explicar). */
+  if(_r.cambio || (!!(L.roles.log && L.roles.otro) && !L.sinBase)) fdHMarcar(L.dia);
+  return _r;
+}
+/* La entrada de un lote (`fdLoteProduccion`) a lo pedido ANTES de su corte (`at`), del más viejo al más nuevo. Lo usan el lote del día
+   (`fdLoteCerrar`) y el repaso de los días que no se miraron (`fdRepasoAplicar`, §4ok-104): la MISMA regla. `L.dia` = el día del Excel. */
+function fdLoteAsignar(L, loteId, at){
+  var hoy=L.dia;
   var prod=fdLoteProduccion(L), out=[], cambio=false;
   var its=fdItemsCalc().filter(function(it){ return it.falta>0 && it.at<at; });
   Object.keys(prod).sort().forEach(function(k){
@@ -48743,6 +48760,176 @@ function fdLoteResumen(r){
   var n=Object.keys(ks).length;
   return ' 🏭 Lo que entró cerró solo lo pedido a la fábrica: '+stockUnid(u)+' unidad'+(u===1?'':'es')+' de '+n+' producto'+(n===1?'':'s')+' (lo ves en «Lo que nos debe la fábrica»).';
 }
+/* ============================================================================
+   §4ok-104 «LO QUE NOS DEBE LA FÁBRICA» SE PONE AL DÍA SOLO (05/11, plan del jueves, item 104).
+   El 02/11 había 26 «Ya pedí» abiertos (135 u), todos atrasados, y ≥36 u ya habían entrado entre el 24 y el 29/10 (SOFT 140x190: pedidas 14,
+   los almacenes pasaron de 4 a 23): `fdLoteCerrar` solo mira el lote que se sube EN ESE MOMENTO, y esos días no se subió el archivo de los
+   tres o la página todavía no lo hacía. Ahora, con el primer Excel del día (`onExistArchivo` → `fdRepasoQuizas`, una vez por día en cada
+   aparato), se lee la hoja «Historial stock» (`histStockLeer`) desde el pedido abierto más viejo y, día por día y lo más viejo primero, lo
+   que ENTRÓ entre dos Excel se pasa por la MISMA regla del lote (`fdLoteAsignar` → `fdLoteProduccion`, completo):
+   · entró = lo que había en los almacenes al final del día (la SUMA de todos: un pase de PTF a Banzer o una recogida de Moreno se anulan,
+     «sin traspasos») − lo del día anterior con los MISMOS almacenes + lo que salió entre los dos cortes. Salió = solo lo ENTREGADO (✅, con
+     su `eF`; los turnos con `sfSalidasEntre`, como «📈 Su historia») y las salidas sin pedido: lo que no tiene ✅ no se da por salido (lo
+     seguro: se cierra de menos, nunca de más). Un producto que no figura en ninguno de los dos Excel no «entró».
+   · menos lo que ya se sabe que llegó en ese tiempo (`fdHistConocido`): las recepciones anotadas (el lote de ese día, «✓ Llegó», el control),
+     lo que mostraron los Excel de un 🏭 de cliente (`STOCK.fd`, `prodCu`) y lo sellado a mano, las entradas a mano. Por eso correrlo dos
+     veces, o sobre un día que el lote de ese día ya cerró, no cierra nada de nuevo (y los ids son los mismos en todos los aparatos).
+   · Cada día mirado queda en `STOCK.fdH` (los días, STOCK_DEBE_TOPE_DIAS): no se vuelve a mirar. Va en leerStock/stockFusionar/stockPodar.
+     El lote del día (`fdLoteCerrar`) también marca su día (con los tres almacenes, o si cerró algo).
+   ⚠️ Lo cerrado se poda a los STOCK_RECIBIDOS_DIAS (3) días: después ya no se ve qué cerró el lote de ese día. Por eso solo se repasa un
+     tramo entero de antes del lote del día (FD_LOTE_DESDE, 30/10) o entero de los últimos 3 días (`fdRepasoTramoSeguro`); lo del medio
+     (del 30/10 a hace 4 días, sin marca) se saltea: cerrarlo de nuevo sería cerrar dos veces.
+   ⚠️ NO es el «En producción» automático (`STOCK_AUTO_ACTIVO` sigue false): no anota nada pedido, solo cierra lo que logística marcó.
+   Lo que no es un producto de la lista ni de ningún Excel (un texto suelto, «ARMAZONES») va aparte en la lista: «❓ ¿Qué es esto?».
+   ========================================================================== */
+var FD_REPASO_LS='me_fd_repaso', FD_REPASO={ corre:false, ult:null }, FD_REPASO_BASE_DIAS=10;
+var FD_QUE={ fab:'?', nombre:'¿Qué es esto?', corto:'—', ico:'❓' };
+/* ¿Es un producto? De la lista de precios (`CODIGOS`, con las uniones 🔗) o de algún Excel de los almacenes. */
+var FD_CAT={ n:'', s:null };
+function fdEsProducto(k){
+  k=String(k||''); if(!k) return false;
+  var n=Object.keys(CODIGOS||{}).length+'|'+JSON.stringify((typeof STOCK!=='undefined' && STOCK && STOCK.a)||{}).length;
+  if(FD_CAT.n!==n || !FD_CAT.s){
+    var s={}; stockCatalogo().forEach(function(c){ var kk=stockNorm(c.d)+'|'+stockNorm(c.m); s[kk]=1; s[stockAliasDe(kk)]=1; });
+    FD_CAT={ n:n, s:s };
+  }
+  return !!(FD_CAT.s[k] || FD_CAT.s[stockAliasDe(k)] || stockHayEnInventario(k));
+}
+function fdHMarcar(f){ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(f||''))) return; STOCK.fdH=Array.isArray(STOCK.fdH) ? STOCK.fdH : []; if(STOCK.fdH.indexOf(f)<0) STOCK.fdH.push(f); }
+/* ⚠️ ¿Se puede repasar el tramo (A, B]? Lo que el lote del día ya cerró se sabe por las recepciones de lo cerrado, y lo cerrado se poda a
+   los STOCK_RECIBIDOS_DIAS días (`stockPodar`): un tramo con un día de esos que no está marcado podría tener cierres que ya no se ven, y se
+   cerraría dos veces. Se repasa solo si TODO el tramo es de antes de que existiera el lote del día (FD_LOTE_DESDE, 30/10: lo de octubre que
+   no se cerró) o si todo el tramo es de los últimos STOCK_RECIBIDOS_DIAS días (sus recepciones siguen en la celda). Desde ahora el lote
+   marca los días que mira (`fdHMarcar`). */
+var FD_LOTE_DESDE='2026-10-30';
+function fdRepasoTramoSeguro(A, B, hoy){
+  if(B<FD_LOTE_DESDE) return true;
+  return stockSumarDias(A, 1)>=stockSumarDias(hoy||todayStr(), -STOCK_RECIBIDOS_DIAS);
+}
+function fdHPodar(S, hoy){
+  if(!S || !Array.isArray(S.fdH)) return S;
+  var lim=stockSumarDias(hoy||todayStr(), -STOCK_DEBE_TOPE_DIAS), v={};
+  S.fdH=S.fdH.filter(function(f){ f=String(f||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || f<lim || v[f]) return false; v[f]=1; return true; }).sort();
+  return S;
+}
+/* Los almacenes de un día de la hoja: tiene que estar PTF y uno de donde no salen camiones (Moreno), y se compara solo con un día con los
+   MISMOS almacenes (si no, un almacén que falta un día parecería una salida o una entrada). */
+function fdHistAlms(datos){
+  var ks=Object.keys(datos||{}).filter(function(a){ return datos[a] && typeof datos[a]==='object'; }).sort();
+  var ok=ks.indexOf('PTF')>=0 && ks.some(function(a){ return a!=='PTF' && !almEsSalida(a); });
+  return { ok:ok, clave:ks.join('|') };
+}
+/* Lo que salió entre dos días (los dos incluidos), por producto, día y turno: solo lo entregado (✅). La MISMA forma que `sfSalidas`
+   (lo usa `sfSalidasEntre`). Lo de tienda, lo que se recoge de una tienda y lo de un 🏭 que el panel no sabe que llegó, no. */
+function fdHistSalidas(desde, hasta){
+  var M={};
+  (STATE||[]).forEach(function(p){
+    if(!p || !p.entregado || !stockCuenta(p) || esVentaTienda(p)) return;
+    var tu=stockTurnoLinea(p);
+    (p.productos||[]).forEach(function(x){
+      if(!x || esProdDeTienda(x) || recogeDeTienda(x)) return;
+      var f=String(x.eF||fechaSalida(p)||''); if(!f || f<desde || f>hasta) return;
+      var c=enProduccion(x) ? prodUnidEnStock(x) : Math.max(0, Math.round(Number(x.cant)||0)); if(!(c>0)) return;
+      var k=stockClave(x), mk=M[k]=M[k]||{}, e=mk[f]=mk[f]||{ am:0, pm:0 }; e[tu]+=c;
+    });
+  });
+  return M;
+}
+/* Lo que ya se sabe que llegó entre los dos cortes (t0, t1] (o, sin hora, del día siguiente al primero hasta el segundo). */
+function fdHistConocido(A, t0, B, t1){
+  var c={}, add=function(k, u){ u=Math.round(Number(u)||0); if(k && u>0) c[k]=(c[k]||0)+u; };
+  var enV=function(f, ts){ ts=Number(ts)||0; if(ts) return ts>t0 && ts<=t1; f=String(f||''); return !!f && f>A && f<=B; };
+  (STOCK.p||[]).forEach(function(q){
+    if(!q || q.tipo==='recogida' || !Array.isArray(q.recs)) return;   // una recogida es un pase de Moreno a PTF: en la suma no aparece
+    q.recs.forEach(function(r){ if(r && !r.an && !stockRecLegacy(r) && enV(r.f, r.ts)) add(q.k, r.u); });
+  });
+  var lk={};
+  (STATE||[]).forEach(function(p){
+    if(!p || !stockCuenta(p) || esVentaTienda(p)) return;
+    (p.productos||[]).forEach(function(x){
+      if(!x || !enProduccion(x) || esProdDeTienda(x) || recogeDeTienda(x)) return;
+      var k=stockClave(x); if(x.prodF) lk[fdLineaClave(p, x)]=k;
+      (x.prodCu||[]).forEach(function(e){ if(Array.isArray(e) && enV(e[3], fdCorteTs(e[3], e[4]))) add(k, e[1]); });
+      var m=prodUnidAMano(x); if(m>0 && enV(x.prodR, x.prodRt)) add(k, m);
+    });
+  });
+  (STOCK.fd||[]).forEach(function(x){ if(x && !x.an && lk[x.l] && enV(x.f, 0)) add(lk[x.l], x.u); });
+  (STOCK.e||[]).forEach(function(x){ if(x && !x.de && !x.rec && x.k && enV(x.f, x.ts)) add(x.k, x.u); });   // entradas a mano, sin pedido
+  return c;
+}
+/* El lote de un día de la hoja contra el anterior con los mismos almacenes, con la forma de `FD_LOTE` (completo: los tres). */
+function fdHistLote(A, B){
+  var pA=A.datos.PTF||{}, pB=B.datos.PTF||{}, hA=String(pA.h||''), hB=String(pB.h||'');
+  var t0=fdCorteTs(A.fecha, hA||'23:59:59'), t1=fdCorteTs(B.fecha, hB||'23:59:59');
+  var suma=function(datos){ var s={}; Object.keys(datos).forEach(function(a){ var u=(datos[a]||{}).u||{}; Object.keys(u).forEach(function(k0){ var k=sfHistClave(k0); s[k]=(s[k]||0)+(Number(u[k0])||0); }); }); return s; };
+  var sA=suma(A.datos), sB=suma(B.datos), ks={};
+  Object.keys(sA).forEach(function(k){ ks[k]=1; }); Object.keys(sB).forEach(function(k){ ks[k]=1; });
+  var sal=fdHistSalidas(A.fecha, B.fecha), incA=sfCorteInc(A.fecha, hA, pA.it), incB=sfCorteInc(B.fecha, hB, pB.it), sm={};
+  (STOCK.sm||[]).forEach(function(x){ var ts=Number(x && x.ts)||0, f=String((x && x.f)||'');
+    if(x && !x.an && x.k && (ts ? (ts>t0 && ts<=t1) : (f>A.fecha && f<=B.fecha))) sm[x.k]=(sm[x.k]||0)+Math.round(Number(x.u)||0); });
+  var dif={};
+  Object.keys(ks).forEach(function(k){
+    var e=(sB[k]||0)-(sA[k]||0)+(sal[k] ? sfSalidasEntre(sal[k], A.fecha, incA, B.fecha, incB) : 0)+(sm[k]||0);
+    if(e) dif[k]=e;
+  });
+  return { dia:B.fecha, roles:{ log:1, otro:1 }, dif:dif, conocido:fdHistConocido(A.fecha, t0, B.fecha, t1), sinCam:{}, det:{},
+           cortes:[A.fecha+'@'+hA, B.fecha+'@'+hB], ats:[stockDetAt(B.fecha, hB)], n:1, sinBase:0, mismo:false, desde:t0, hA:hA, hB:hB };
+}
+/* Día por día, lo más viejo primero. `dias` = lo que contesta `histStockLeer` ([{fecha, datos}]). Devuelve lo cerrado y los días mirados. */
+function fdRepasoAplicar(dias, hoy, viejo){
+  hoy=hoy||todayStr();
+  var out={ cerrados:[], marcados:[], saltados:[], cambio:false };
+  var I=(dias||[]).filter(function(d){ return d && /^\d{4}-\d{2}-\d{2}$/.test(String(d.fecha||'')) && String(d.fecha)<hoy && d.datos && typeof d.datos==='object'; })
+    .sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); }).map(function(d){ return { d:d, a:fdHistAlms(d.datos) }; });
+  STOCK.fdH=Array.isArray(STOCK.fdH) ? STOCK.fdH : [];
+  for(var i=0;i<I.length;i++){
+    var B=I[i]; if(!B.a.ok) continue;
+    if(viejo && B.d.fecha<viejo) continue;                     // antes del pedido abierto más viejo no hay nada que cerrar
+    if(STOCK.fdH.indexOf(B.d.fecha)>=0) continue;             // ya mirado
+    var A=null; for(var j=i-1;j>=0;j--){ if(I[j].a.ok && I[j].a.clave===B.a.clave){ A=I[j]; break; } }
+    if(!A){ out.saltados.push({ f:B.d.fecha, por:'sin un día anterior con los mismos almacenes' }); continue; }
+    if(!fdRepasoTramoSeguro(A.d.fecha, B.d.fecha, hoy)){ out.saltados.push({ f:B.d.fecha, por:'lo pudo cerrar el lote de ese día y ya no se ve' }); continue; }
+    var L=fdHistLote(A.d, B.d);
+    var r=fdLoteAsignar(L, 'fh'+huellaId(A.d.fecha+'|'+L.hA+'|'+B.d.fecha+'|'+L.hB), stockDetAt(B.d.fecha, L.hB));
+    if(r.cambio) out.cambio=true;
+    r.cerrados.forEach(function(c){ c.dia=B.d.fecha; out.cerrados.push(c); });
+    STOCK.fdH.push(B.d.fecha); out.marcados.push(B.d.fecha);
+  }
+  fdHPodar(STOCK, hoy);
+  return out;
+}
+function fdRepasoResumen(r){
+  if(!r || !r.cerrados || !r.cerrados.length) return '';
+  var ks={}, u=0, ds=[]; r.cerrados.forEach(function(c){ ks[c.k]=1; u+=c.u; if(ds.indexOf(c.dia)<0) ds.push(c.dia); }); ds.sort();
+  var n=Object.keys(ks).length;
+  return '🏭 Repasé los días que no se habían mirado: lo que entró '+(ds.length===1 ? ('el '+fmtFechaCorta(ds[0])) : ('entre el '+fmtFechaCorta(ds[0])+' y el '+fmtFechaCorta(ds[ds.length-1])))+
+    ' cerró '+stockUnid(u)+' unidad'+(u===1?'':'es')+' de '+n+' producto'+(n===1?'':'s')+' pedido'+(n===1?'':'s')+' a la fábrica (lo ves en «Lo que nos debe la fábrica»).';
+}
+/* Con el primer Excel del día (una vez por día en cada aparato). Solo con el servidor de la hoja (2026-10-09-a) y el stock leído. */
+function fdRepasoQuizas(){
+  try{ if(!STOCK_CARGADO || !CONNECTED || !histServidorListo()) return null; }catch(e){ return null; }
+  var ya=''; try{ ya=localStorage.getItem(FD_REPASO_LS)||''; }catch(e){}
+  if(ya===todayStr()) return null;
+  return fdRepasoHistorial();
+}
+function fdRepasoHistorial(){
+  if(FD_REPASO.corre) return Promise.resolve(null);
+  var hoy=todayStr(), marcar=function(){ try{ localStorage.setItem(FD_REPASO_LS, hoy); }catch(e){} };
+  var ab=fdItemsCalc().filter(function(it){ return it.falta>0 && it.f; });
+  if(!ab.length){ marcar(); return Promise.resolve({ cerrados:[], marcados:[], saltados:[], cambio:false, sinAbiertos:true }); }
+  var viejo=ab.map(function(it){ return it.f; }).sort()[0];
+  FD_REPASO.corre=true;
+  return conTope(apiPost({ action:'histStockLeer', desde:stockSumarDias(viejo, -FD_REPASO_BASE_DIAS), hasta:stockSumarDias(hoy, -1) }), 20000).then(function(res){
+    FD_REPASO.corre=false;
+    if(!(res && res.ok && Array.isArray(res.dias))) return null;            // sin la hoja: se intenta con el próximo Excel
+    marcar();
+    var r=fdRepasoAplicar(res.dias, hoy, viejo); FD_REPASO.ult=r;
+    if(r.cambio || r.marcados.length){ stockOlvidarIndice(); guardarStock(); try{ fdRepintar(); }catch(e){} }
+    if(r.cerrados.length) toast(fdRepasoResumen(r),'ok',10000);
+    return r;
+  }, function(){ FD_REPASO.corre=false; return null; });
+}
+/* fin §4ok-104 */
 /* 🗂️ (muestra 29) Todo el catálogo: modelos en filas, medidas en columnas, cada casilla con lo que hay y el color de la ficha. */
 function sfMedidaNum(m){ var x=String(m||'').match(/(\d+)\s*[xX×*]\s*(\d+)/); return x ? (+x[1])*1000+(+x[2]) : 9e9; }
 function stockCatalogoHtml(lista){
