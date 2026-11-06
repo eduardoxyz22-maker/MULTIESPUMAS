@@ -141,13 +141,14 @@ const gem = (Srv, p) => (typeof Srv.ctx.entregaAConfirmar_ === 'function') ? Srv
   S.P.WA_ACTIVO = '1';
   chk('⚠️ 1e. el portero no cuenta las ventas sin día: con 11 entregas de la mañana y 4 «avisa cuándo», la 12ª entra y la 13ª da «cupos_llenos (12/12)»',
       lleno.every(Boolean) && doce.ok && trece.ok === false && trece.error === 'cupos_llenos' && trece.usados === 12, [doce.ok, trece]);
-  // «sin camión» a las 16:00 y el recordatorio de las 17:00 (los pedidos del próximo día sí; la venta sin día no aparece)
-  S.limpiar(); poner(HOY + ' 16:05'); S.ctx.waRepaso();
-  const sc = S.salen().filter(m => m.pl === 'logistica_sin_camion');
-  chk('⚠️ 1f. 16:00 «sin camión»: lista las 12 entregas del próximo día y NINGUNA venta sin día', sc.length === 2 && sc[0].p[0] === '12' && !/AVISA/.test(sc[0].p[2]), sc.map(m => m.p));
+  // el recordatorio de las 17:00 y «lo de hoy sin camión» de las 08:45 del día (los pedidos de ese día sí; la venta sin día no aparece)
   S.limpiar(); poner(HOY + ' 17:05'); S.ctx.waRepaso();
   const rec = S.salen().filter(m => m.pl === 'recordatorio_entrega');
   chk('⚠️ 1g. 17:00 recordatorio: sale a los clientes de las entregas del próximo día y a NINGUNA venta sin día', rec.length === 12 && rec.every(m => m.to !== S.ctx.waCel_(A1.celular)), rec.length);
+  /* 🌅 §4ok-97 (05/11, a conciencia) el «sin camión» ya no sale a las 16:00 de la víspera: sale a las 08:45 del día, con lo de HOY. */
+  S.limpiar(); poner(PROX + ' 08:50'); S.ctx.waRepaso();
+  const sc = S.salen().filter(m => m.pl === 'logistica_hoy_falta');
+  chk('⚠️ 1f. 08:45 «lo de hoy sin camión»: lista las 12 entregas del día y NINGUNA venta sin día', sc.length === 2 && sc[0].p[1] === '12 pedidos' && !/AVISA/.test(sc[0].p[2]), sc.map(m => m.p));
   // «pedir hoy» y el cierre de las 19:00
   const B = { hoy: HOY, hora: 15.9 };
   const conRev = ped({ fecha: PROX, productos: [PROD({ desc: 'TITANIO LATEX', codigo: 'CH1' })] });   // sin marcar = ⬜ por revisar

@@ -2959,8 +2959,9 @@ function purgeBackups_(folder, keep) {
  * con las 6 plantillas de «Utilidad» que el dueño cargó en Meta:
  *   · al CLIENTE: `confirmacion_pedido` (pedido nuevo), `cambio_entrega` (cambió el día o el turno) y, desde las 17:00,
  *     `recordatorio_entrega` (los del próximo día con camión);
- *   · a LOGÍSTICA, a cada uno por separado: `logistica_pedido_nuevo`, `logistica_cambio` y, desde las 16:00,
- *     `logistica_sin_camion` (los del próximo día que siguen sin camión);
+ *   · a LOGÍSTICA, a cada uno por separado: `logistica_pedido_nuevo`, `logistica_cambio` y, a las 08:45 (§4ok-97, 2026-11-05-a),
+ *     `logistica_hoy_falta` (lo de HOY sin camión y lo de hoy con productos sin revisar o «✗ no hay»; antes, a las 16:00, la lista
+ *     de los del próximo día sin camión: `logistica_sin_camion`);
  *   · (2026-10-27-a) a los de WA_PEDIR_HOY (Ernesto y Alba), media hora antes del corte de producción: `logistica_pedir_hoy`
  *     (lo que hay que revisar o pedir a producción hoy, la lista del botón «Semana» del panel).
  * La marca va DENTRO del mensaje, por el vendedor (Heaven Colchones, Sueña o Multiespumas, como `MARCAS` de la página).
@@ -2992,7 +2993,9 @@ var WA_SALIDA_TOPE_LETRAS = 8000;       // los reintentos pendientes, como mucho
 var WA_LISTA_MAX = 240;                // (2026-10-12-b) «sin camión»: hasta acá entran nombres enteros (Meta corta en 250)
 var WA_REINT_MAX = 3;                   // intentos por mensaje ante un problema pasajero de Meta
 var WA_REINT_MS = 5 * 60000;            // cada cuánto se reintenta
-var WA_HORA_LOGISTICA = 16;             // (dueño, 10/10: «16:00») pedidos sin camión
+/* 🌅 §4ok-97 (2026-11-05-a) El aviso a logística sale a las 08:45 con lo de HOY. A las 16:00 traía casi todo el día siguiente (10 de 11,
+   14 de 15…): el camión se asigna a la mañana. Lo que de verdad faltaba se veía recién al otro día (5 el 19/10, 5 el 23/10, 5 el 30/10). */
+var WA_HORA_SC = 8.75;                  // 08:45 de Bolivia, días hábiles: sin camión + sin revisar o «no hay», solo lo de HOY
 var WA_HORA_RECORDATORIO = 17;          // (dueño, 10/10: «17:00») recordatorio al cliente: desde el 12/10, los de la MAÑANA (y sin turno)
 var WA_HORA_REC_PM = 19;                // (dueño, 12/10: «a las 17 los de la mañana y a las 19 los del turno PM de mañana»)
 var WA_VENTANA_H = 2;                   // si el bot estuvo parado, después de 2 horas ya no se manda el de ese día (dice «Son las 16:00»)
@@ -3015,7 +3018,9 @@ var WA_TIPOS = {
   rec: { plantilla:'recordatorio_entrega_v2', vieja:'recordatorio_entrega', nv:8, txt:'Recordatorio', cli:true },
   ln:  { plantilla:'logistica_pedido_nuevo_v2', vieja:'logistica_pedido_nuevo', nv:6, txt:'Logística: nuevo' },
   lc:  { plantilla:'logistica_cambio_v2', vieja:'logistica_cambio', nv:3, txt:'Logística: cambio' },
-  sc:  { plantilla:'logistica_sin_camion_v2', vieja:'logistica_sin_camion', nv:3, txt:'Logística: sin camión' },
+  /* 🌅 §4ok-97 (2026-11-05-a) 08:45, lo de HOY: sin camión + productos sin revisar o «✗ no hay». Mientras Meta no apruebe la nueva sale la
+     «sin camión» de antes (3 datos: cuántos, el día y la lista) SOLO si hay algo sin camión (`a.viejos`); esa dice «Son las 16:00». */
+  sc:  { plantilla:'logistica_hoy_falta', vieja:'logistica_sin_camion_v2', nv:3, vieja2:'logistica_sin_camion', nv2:3, txt:'Logística: lo de hoy (sin camión o sin revisar)' },
   /* 🚀 (2026-10-14-a, dueño: «un pedido agendado para la tarde que Ernesto carga en la mañana y despacha: que avise al cliente que está
      cargado y en camino»). Mismos datos que `camb`. Mientras Meta no apruebe la nueva, sale el cambio de día de siempre (v2 y después la
      primera): «Ahora te lo llevamos el martes 14/10 por la mañana». */
@@ -3444,6 +3449,47 @@ function waCierreParams_(L, hoy) {
   return [waDiaTxt_(hoy), L.length + ' pedido' + (L.length === 1 ? '' : 's'), lista];
 }
 
+/* ============================================================================
+ * 🌅 §4ok-97 (2026-11-05-a) LO DE HOY QUE FALTA, A LAS 08:45. Dos listas con la planilla de ese momento:
+ *   · los pedidos de HOY sin camión (ni vehículo ni chofer): la misma regla de la lista de las 16:00 (`waEsEntrega_`);
+ *   · los productos de los pedidos de HOY sin revisar el stock (⬜) o con «✗ no hay»: la regla de «Semana» (`waPhEntra_` +
+ *     `waPhLinea_`, la misma de «pedir hoy», que test_wa_pedir_hoy compara con la página).
+ * Sin nada en ninguna de las dos, no sale. Solo avisa.
+ * ========================================================================== */
+function waHoyFalta_(recs, B) {
+  var dias = {}; dias[B.hoy] = 1;
+  var sin = [], rev = [];
+  for (var id in recs) {
+    var q = recs[id];
+    if (!q || String(q.fecha) !== B.hoy || !waEsEntrega_(q)) continue;
+    if (!String(q.vehiculo || '').trim() && !String(q.chofer || '').trim()) sin.push(q);
+    if (waPhEntra_(q, dias)) (q.productos || []).forEach(function (x) { var e = waPhLinea_(q, x, B); if (e === 'rev' || e === 'nohay') rev.push({ p:q, x:x, e:e }); });
+  }
+  var nro = function (a, b) { return (Number(a.nroDia) || 0) - (Number(b.nroDia) || 0); };
+  sin.sort(nro); rev.sort(function (a, b) { return nro(a.p, b.p); });
+  return { sin:sin, rev:rev };
+}
+/* Una lista que entra en un dato (Meta corta en 250): las cosas ENTERAS que caben y «y N más» (como la de «sin camión» de antes). */
+function waListaCabe_(items, sep) {
+  var lista = '', k = 0;
+  for (; k < items.length; k++) {
+    var resto = items.length - k - 1, cola = resto ? ' y ' + resto + ' más' : '';
+    var prueba = (lista ? lista + sep : '') + items[k];
+    if ((prueba + cola).length > WA_LISTA_MAX && lista) break;
+    lista = prueba;
+  }
+  if (k < items.length) lista += ' y ' + (items.length - k) + ' más';
+  return lista;
+}
+/** Los datos de `logistica_hoy_falta`, en orden: el día, cuántos sin camión, cuáles, cuántos productos sin revisar, cuáles. */
+function waHoyFaltaParams_(H, B) {
+  var noms = H.sin.map(function (q) { return waParam_(String(q.cliente || '').trim() + (q.zona ? ' (' + String(q.zona).trim() + ')' : '')); });
+  var prods = H.rev.map(function (l) { return waPhProdTxt_(l.x) + ' (' + waPhCliente_(l.p) + (l.e === 'nohay' ? ' · ✗ no hay' : '') + ')'; });
+  var cuantos = function (k, uno, varios) { return k ? k + ' ' + (k === 1 ? uno : varios) : 'ninguno ✅'; };
+  return [waDiaTxt_(B.hoy), cuantos(H.sin.length, 'pedido', 'pedidos'), noms.length ? waListaCabe_(noms, ', ') : '—',
+          cuantos(H.rev.length, 'producto', 'productos'), prods.length ? waListaCabe_(prods, ', ') : '—'];
+}
+
 function waArmar_(m, recs, cfg, B) {
   var T = WA_TIPOS[m.k], p = null;
   if (!T) return { saltar:'tipo desconocido', anotar:true };
@@ -3461,7 +3507,7 @@ function waArmar_(m, recs, cfg, B) {
     out.para = L.nombre; out.numero = L.cel;
     if (p && !waEsEntrega_(p)) return { saltar:'ya no es una entrega pendiente', anotar:false, p:p };
     if (p && String(p.fecha) < B.hoy) return { saltar:'la fecha de entrega ya pasó', anotar:false, p:p };   // una venta cargada de atrás
-    /* ROHO entra de a muchos desde su Excel: logística no recibe uno por uno (sí aparece a las 16:00 si no tiene camión). */
+    /* ROHO entra de a muchos desde su Excel: logística no recibe uno por uno (sí aparece a las 08:45 si ese día no tiene camión). */
     if (p && waNorm_(p.vendedor).indexOf('roho') >= 0) return { saltar:'pedido de ROHO', anotar:false, p:p };
   }
   if ((m.k === 'camb' || m.k === 'lc') && (String(p.fecha) + '|' + turnoNorm_(p.turno)) === m.de) return { saltar:'volvió al día de antes', anotar:false, p:p };
@@ -3477,22 +3523,13 @@ function waArmar_(m, recs, cfg, B) {
     var de = String(m.de || '').split('|'), antes = { fecha:de[0], turno:de[1] || '' };
     out.params = [waOc_(p.oc), String(p.cliente || '').trim(), 'pasó del ' + waCuandoTxt_(antes) + ' al ' + waCuandoTxt_(p)];
   } else if (m.k === 'sc') {
-    var sin = [];
-    for (var id in recs) { var q = recs[id]; if (q.fecha === m.dia && waEsEntrega_(q) && !String(q.vehiculo || '').trim() && !String(q.chofer || '').trim()) sin.push(q); }
-    if (!sin.length) return { saltar:'ya no queda ninguno sin camión', anotar:false };
-    sin.sort(function (a, b) { return (Number(a.nroDia) || 0) - (Number(b.nroDia) || 0); });
-    /* (2026-10-12-b) Meta corta cada dato en 250 letras (`waParam_`): entran los nombres ENTEROS que caben y el resto va como
-       «y N más». Antes se partía el último a la mitad («ROXANA CONTRERA L…»). */
-    var noms = sin.map(function (q) { return waParam_(String(q.cliente || '').trim() + (q.zona ? ' (' + String(q.zona).trim() + ')' : '')); });
-    var lista = '', k = 0;
-    for (; k < noms.length; k++) {
-      var resto = noms.length - k - 1, cola = resto ? ' y ' + resto + ' más' : '';
-      var prueba = (lista ? lista + ', ' : '') + noms[k];
-      if ((prueba + cola).length > WA_LISTA_MAX && lista) break;
-      lista = prueba;
-    }
-    if (k < noms.length) lista += ' y ' + (noms.length - k) + ' más';
-    out.params = [String(sin.length), waDiaTxt_(m.dia), lista];
+    /* 🌅 §4ok-97 Con la planilla de AHORA y solo lo de HOY: un reintento de otro día ya no dice la verdad. */
+    if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
+    var H = waHoyFalta_(recs, B);
+    if (!H.sin.length && !H.rev.length) return { saltar:'hoy no queda nada sin camión ni sin revisar', anotar:false };
+    out.params = waHoyFaltaParams_(H, B);
+    /* El respaldo (la «sin camión» de antes) solo con algo sin camión: con 0 diría «quedan 0 pedidos sin camión». */
+    out.viejos = H.sin.length ? [String(H.sin.length), waDiaTxt_(B.hoy), out.params[2]] : null;
   } else if (m.k === 'ph') {
     /* 🏭 (2026-10-27-a) Con la planilla de AHORA: un reintento que llega pasado el corte (u otro día) ya no dice la verdad. */
     if (m.dia !== B.hoy || B.hora >= waPhCorte_(B.hoy)) return { saltar:'ya pasó la hora del corte de producción', anotar:true };
@@ -3564,7 +3601,7 @@ function waAnotar_(filas) {
 }
 
 /** ⏱ Cada 5 minutos (y a los ~2 minutos de guardar un pedido): manda lo de la cola, los reintentos y, una vez por día, el
-    aviso de las 16:00 a logística y el recordatorio de las 17:00. Deja un resumen en WA_ULTIMO (sin nombres ni números).
+    aviso de las 08:45 a logística (§4ok-97) y el recordatorio de las 17:00. Deja un resumen en WA_ULTIMO (sin nombres ni números).
     🧠 (2026-10-14-b) Y después, lo que espera a Claude (por si su disparador de una vez no salió), si queda tiempo en esta vuelta. */
 function waRepaso() {
   var t0 = Date.now(), res = waRepasoBot_();
@@ -3603,10 +3640,11 @@ function waRepasoBot_() {
     sal.forEach(function (m) { if (t0 >= (Number(m.prox) || 0)) msgs.push(m); else salQueda.push(m); });
     waSalidaGuardar_(salQueda);
     var hecho = waJsonProp_('WA_HECHO', {}), cambio = false, prox = waProximoDia_(B.hoy);
-    /* 16:00 a logística: los días que se trabaja (no el domingo ni un feriado). */
-    if (B.hora >= WA_HORA_LOGISTICA && B.hora < WA_HORA_LOGISTICA + WA_VENTANA_H && hecho.log !== B.hoy && waDow_(B.hoy) !== 0 && !feriadoGs_(B.hoy)) {
-      cfg.logistica.forEach(function (L) { msgs.push({ k:'sc', a:L.nombre, dia:prox, n:0 }); });
-      hecho.log = B.hoy; cambio = true;
+    /* 🌅 §4ok-97 08:45 a logística, los días que se trabaja (no el domingo ni un feriado): lo de HOY sin camión y sin revisar. La lista de
+       las 16:00 (los del próximo día sin camión) ya no sale. */
+    if (B.hora >= WA_HORA_SC && B.hora < WA_HORA_SC + WA_VENTANA_H && hecho.sc !== B.hoy && waPhHabil_(B.hoy)) {
+      cfg.logistica.forEach(function (L) { msgs.push({ k:'sc', a:L.nombre, dia:B.hoy, n:0 }); });
+      hecho.sc = B.hoy; cambio = true;
     }
     /* 🏭 (2026-10-27-a) Media hora antes del corte de producción, a los de WA_PEDIR_HOY: lo que hay que revisar o pedir hoy. Solo
        hasta el corte: después, lo que se pide ya arranca mañana y la lista sería otra. */
@@ -3666,9 +3704,10 @@ function waRepasoBot_() {
     var r = waEnviar_(cfg, a.numero, a.plantilla, a.params);
     /* (2026-10-12-d) La v2 todavía no está aprobada (o la pausaron): sale la de antes, con sus datos. */
     /* (2026-10-14-a) Y si la de antes tampoco está, la siguiente (`vieja2`): «en camino» → cambio de día v2 → cambio de día. */
-    var alts = [[T.vieja, T.nv], [T.vieja2, T.nv2]];
+    /* §4ok-E `a.alts` = otro orden de respaldo (la «_ubic», §4ok-108); `a.viejos` = otros datos para el respaldo (§4ok-97), o null = sin respaldo. */
+    var alts = a.viejos === null ? [] : (a.alts || [[T.vieja, T.nv], [T.vieja2, T.nv2]]);
     for (var ai = 0; ai < alts.length && !r.ok && alts[ai][0] && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0; ai++) {
-      r = waEnviar_(cfg, a.numero, alts[ai][0], a.params.slice(0, alts[ai][1])); a.plantilla = alts[ai][0];
+      r = waEnviar_(cfg, a.numero, alts[ai][0], (a.viejos || a.params).slice(0, alts[ai][1]).map(waParam_)); a.plantilla = alts[ai][0];
     }
     if (r.ok) {
       res.enviados++;
@@ -4482,9 +4521,11 @@ var WA_PLANTILLAS = [
   { n:'logistica_cambio_v2',
     t:'🤖 🔄 *Cambio de entrega* del pedido {{1}} ({{2}}):\n{{3}}.\n\n👉 Revisá el camión asignado en el panel.',
     e:['OC 10-412', 'JUAN PEREZ', 'pasó del jueves 15/10 por la mañana al viernes 16/10 por la tarde'] },
-  { n:'logistica_sin_camion_v2',
-    t:'🤖 ⏰ Son las 16:00 y quedan *{{1}} pedidos* del {{2}} sin camión 🚚\n\n📋 {{3}}\n\n👉 Asignalos en el panel así la carga se arma a tiempo.',
-    e:['3', 'jueves 15/10', 'JUAN PEREZ (Norte), ANA ROJAS (Centro), MULTICENTER (Equipetrol)'] },
+  /* 🌅 §4ok-97 (2026-11-05-a) Reemplaza a `logistica_sin_camion_v2` (la de las 16:00, que queda en Meta como respaldo). Mismos datos y
+     orden que `waHoyFaltaParams_`. */
+  { n:'logistica_hoy_falta',
+    t:'🤖 🌅 *Buen día. De lo de hoy ({{1}}) todavía falta:*\n\n🚚 Sin camión: *{{2}}*\n📋 {{3}}\n\n📦 Sin revisar el stock o con «✗ no hay»: *{{4}}*\n📋 {{5}}\n\n👉 Asignalos y revisalos en el panel antes de cargar.',
+    e:['jueves 05/11', '2 pedidos', 'JUAN PEREZ (Norte), ANA ROJAS (Centro)', '3 productos', '1× TITANIO ICE 160×190 (JUAN PEREZ), 1× SOMIER ORO 140×190 (ANA ROJAS · ✗ no hay), 1× SOFT 100×190 (LUIS VACA)'] },
   /* 🚀 (2026-10-14-a) Un pedido de la tarde que salió cargado a la mañana. Mismos datos y orden que `cambio_entrega_v2` (es su respaldo). */
   /* 🏭 (2026-10-27-a) Lo que hay que revisar o pedir a producción hoy. Mismos datos y orden que `waPhParams_`. */
   { n:'logistica_pedir_hoy',

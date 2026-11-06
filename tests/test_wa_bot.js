@@ -245,7 +245,8 @@ console.log('\n── 6. Cuando Meta falla ──');
   S.guardar(ped({ id: 'k1' })); S.guardar(ped({ id: 'k2' })); pasar(3);
   const r = S.repaso();
   chk('token vencido: para en el primer mensaje (no le pega a Meta 6 veces)', S.meta.llamadas.length === 1, S.meta.llamadas.length);
-  chk('…lo demás queda guardado para cuando se arregle', JSON.parse(S.P.WA_SALIDA).length === 6, S.P.WA_SALIDA);
+  /* §4ok-97: a las 10:03 también está abierta la ventana del aviso de las 08:45 (va a la salida junto con lo demás): se cuentan los de los pedidos. */
+  chk('…lo demás queda guardado para cuando se arregle', JSON.parse(S.P.WA_SALIDA).filter(m => m.id === 'k1' || m.id === 'k2').length === 6, S.P.WA_SALIDA);
   chk('…y WA_ULTIMO dice que es el token', /token/i.test(JSON.parse(S.P.WA_ULTIMO).error), S.P.WA_ULTIMO);
 }
 {
@@ -297,17 +298,20 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   const e = ped({ id: 'm5', cliente: 'VIERNES', fecha: '2026-10-16' });
   [a, b, c, d, e].forEach(x => S.guardar(x));
   pasar(5); S.repaso(); S.limpiar();
-  poner('2026-10-14 15:50'); S.repaso();
-  chk('15:50: nada', S.meta.llamadas.length === 0);
+  /* 🌅 §4ok-97 (05/11, a conciencia) la lista de las 16:00 ya no sale: el aviso a logística es a las 08:45, con lo de HOY. */
   poner('2026-10-14 16:05'); S.repaso();
-  let s = S.salen().filter(x => x.pl === 'logistica_sin_camion');
-  chk('16:05: logistica_sin_camion a Ernesto y a David', s.length === 2 && s.map(x => x.to).sort().join() === '59171000001,59172000002', S.salen());
-  chk('…«2 pedidos del jueves 15/10: ANA GUTIERREZ (Norte), PEDRO VACA (Sur)»', s[0] && s[0].p[0] === '2' && s[0].p[1] === 'jueves 15/10' && s[0].p[2] === 'ANA GUTIERREZ (Norte), PEDRO VACA (Sur)', s[0] && s[0].p);
-  S.limpiar(); poner('2026-10-14 16:40'); S.repaso();
-  chk('a las 16:40 no se repite', S.meta.llamadas.length === 0);
+  chk('16:05: ya no sale ninguna lista a logística (§4ok-97)', !S.salen().some(x => /^logistica_(sin_camion|hoy_falta)/.test(x.pl)), S.salen().map(x => x.pl));
   poner('2026-10-14 17:02'); S.repaso();
-  s = S.salen();
+  let s = S.salen();
   chk('17:02: recordatorio a los del jueves que no confirmó hoy… (todos se confirmaron hoy a las 9: ninguno)', s.length === 0, s);
+  S.limpiar(); poner('2026-10-15 08:40'); S.repaso();
+  chk('jueves 08:40: nada', !S.salen().some(x => /^logistica_/.test(x.pl)), S.salen().map(x => x.pl));
+  poner('2026-10-15 08:50'); S.repaso();
+  s = S.salen().filter(x => x.pl === 'logistica_hoy_falta');
+  chk('jueves 08:50: logistica_hoy_falta a Ernesto y a David', s.length === 2 && s.map(x => x.to).sort().join() === '59171000001,59172000002', S.salen());
+  chk('…«jueves 15/10 · 2 pedidos: ANA GUTIERREZ (Norte), PEDRO VACA (Sur)» (el del viernes no)', s[0] && s[0].p[0] === 'jueves 15/10' && s[0].p[1] === '2 pedidos' && s[0].p[2] === 'ANA GUTIERREZ (Norte), PEDRO VACA (Sur)', s[0] && s[0].p);
+  S.limpiar(); poner('2026-10-15 09:40'); S.repaso();
+  chk('a las 09:40 no se repite', !S.salen().some(x => /^logistica_/.test(x.pl)));
 }
 {
   poner('2026-10-13 11:00');
@@ -364,8 +368,9 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   chk('sábado 19:05: «El martes» (saltea domingo y el feriado del lunes)', s.length === 1 && s[0].pl === 'recordatorio_entrega' && s[0].p[3] === 'El martes' && s[0].p[6] === 'martes 03/11 por la tarde', s);
   S.limpiar();
   S.guardar(ped({ id: 'q2', cliente: 'NUEVO DOMINGO', fecha: '2026-11-03' }));
+  poner('2026-11-01 08:50'); S.repaso();
+  chk('domingo 08:50: no hay aviso «sin camión» a logística (§4ok-97)', !S.salen().some(x => /^logistica_(sin_camion|hoy_falta)/.test(x.pl)), S.salen().map(x => x.pl));
   poner('2026-11-01 16:05'); S.repaso();
-  chk('domingo 16:05: no hay aviso «sin camión» a logística', !S.salen().some(x => x.pl === 'logistica_sin_camion'), S.salen().map(x => x.pl));
   S.limpiar(); poner('2026-11-01 17:05'); S.repaso(); s = S.salen().filter(x => x.pl === 'recordatorio_entrega');
   chk('domingo 17:05: a MARTA no se le repite; a uno nuevo del martes, sí', s.length === 0 || (s.length === 1 && s[0].p[0] === 'Nuevo'), s);
 }
@@ -374,7 +379,9 @@ console.log('\n── 7. El aviso de las 16:00 y el recordatorio de las 17:00 �
   const S = servidor(ON);
   S.guardar(ped({ id: 'z1', fecha: '2026-10-15' })); pasar(5); S.repaso(); S.limpiar();
   poner('2026-10-14 20:10'); S.repaso();
-  chk('si el bot estuvo parado y arranca a las 20:10, ya no manda el «Son las 16:00» ni el recordatorio', S.meta.llamadas.length === 0, S.salen());
+  chk('si el bot estuvo parado y arranca a las 20:10, ya no manda el recordatorio', S.meta.llamadas.length === 0, S.salen());
+  poner('2026-10-15 11:00'); S.repaso();
+  chk('…ni a las 11:00 el aviso de las 08:45 (pasaron las 2 horas)', !S.salen().some(x => /^logistica_/.test(x.pl)), S.salen().map(x => x.pl));
 }
 
 // ══ 8. Prueba, disparadores y probar ═════════════════════════════════════════
@@ -419,7 +426,7 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
   chk('son las 10 de WA_TIPOS, con el mismo nombre (27/10: + logistica_pedir_hoy; 29/10: + logistica_excel_falta y logistica_cierre_falta)', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombres), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
-  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_sin_camion_v2: 3, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3 };
+  const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
@@ -492,12 +499,13 @@ console.log('\n── 11. «Sin camión» no parte un nombre; un aviso con otra 
   const noms = ['NOELIA ESCALANTE ZAMORA','DAVID MIRANDA','ERIKA MENACHO','SAMUEL LIMA','ABIGAIL CASTRO LOPEZ','ORDOÑEZ BALDERAS ALBERTO','NAOMI CUELLAR','JUAN PEREZ','MIA PLAZA','ROXANA CONTRERAS LOPEZ','MARIA LUISA GUTIERREZ','PEDRO PABLO VACA DIEZ','CARLOS ANDRES ROJAS'];
   noms.forEach((n, i) => S.guardar(ped({ id: 'sc' + i, cliente: n, zona: 'Norte', fecha: '2026-10-15' })));
   pasar(5); S.repaso(); S.limpiar();
-  poner('2026-10-14 16:05'); S.repaso();
-  const s = S.salen().find(x => x.pl === 'logistica_sin_camion');
+  poner('2026-10-15 08:50'); S.repaso();   // 🌅 §4ok-97: a las 08:45 del día, no a las 16:00 de la víspera
+  const s = S.salen().find(x => x.pl === 'logistica_hoy_falta');
   const lista = s ? s.p[2] : '';
   const m = lista.match(/ y (\d+) más$/), dentro = lista.replace(/ y \d+ más$/, '').split(', ');
   chk('13 sin camión: la lista entra en 250 letras, termina en «y N más» y no parte ningún nombre', s && lista.length <= 250 && !!m && dentro.every(x => noms.some(n => x === n + ' (Norte)')) && dentro.length + Number(m[1]) === 13, lista);
-  chk('…y el total sigue diciendo 13', s && s.p[0] === '13');
+  chk('…y el total sigue diciendo 13', s && s.p[1] === '13 pedidos');
+  chk('…y los 13 productos sin revisar, también enteros y con «y N más»', s && s.p[3] === '13 productos' && s.p[4].length <= 250 && / y \d+ más$/.test(s.p[4]), s && s.p.slice(3));
   const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'buena' }, ON));
   S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
   S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
