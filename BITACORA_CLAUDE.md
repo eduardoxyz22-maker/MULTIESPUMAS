@@ -17298,6 +17298,9 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   fabian esta en central pero se ira al ventura cuando abramos, de momento usa el horario de central»*. `sched_for` ahora va por la sucursal
   (Kommo después del guion → `SUC_DE_USUARIO`; si no, `VENDOR_CFG`) con `SCHED_POR_SUC`; VENDOR_CFG: Isabel → Central, Jonathan → Mia Plaza. Lun-sáb
   (no dijo el sábado; preguntar si en Central/Banzer cierran antes). `test_generar_integridad` §10 (29 en total).
+  Después: *«solo banzer y mia plaza atienden domingos. deja banzer los domingos como está predefinido en mia plaza»*. Mia Plaza NO tenía domingo
+  (`SCHED_A` era lun-sáb: el domingo contaba como cerrado): ahora lun-dom 9-21, y Banzer el domingo 9-21 (lun-sáb sigue 8:30-20:30). Central,
+  Buenos Aires y Ventura cierran el domingo. Textos del template al día. `test_generar_integridad` 10g-10i (31).
 - 📊 **06/11 — «¿y es correcto que estén con 0 ventas?»** (captura del dashboard: Maria, Carola, Jonathan, Fabián y Andrea en 0). Cruzado con la
   planilla (leída acá, nada al repo): el dashboard cuenta solo Kommo (Compradores + «Fecha contrato» del mes). Carola, Fabián y Andrea: ninguna venta
   en el panel en noviembre tampoco → 0 de verdad. Maria: pasó 6 leads a Compradores el 03/11 entre 17:46 y 19:07, pero los 6 ya estaban cargados en

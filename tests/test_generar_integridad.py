@@ -248,7 +248,11 @@ if hasattr(G, "SUC_DE_USUARIO"):
     chk("10d. Jonathan (Mia Plaza): 9 a 21 — 8:30 fuera, 20:30 adentro", fuera("Jonathan Monje", 8, 30) is True and fuera("Jonathan Monje", 20, 30) is False)
     chk("10e. Fabián en Ventura Mall usa el horario de Central (8 a 20)", fuera("Fabián Godoy", 8, 15) is False and fuera("Fabián Godoy", 20, 5) is True)
     chk("10f. Maria (Buenos Aires) sigue con el de siempre: lun-vie 9 a 19, sábado 9 a 16", fuera("Maria Flores", 8, 30) is True and fuera("Maria Flores", 18, 30) is False and fuera("Maria Flores", 17, 0, 14) is True)
-    chk("10g. el domingo está cerrado en todas", all(fuera(n, 12, 0, 15) is True for n in ("Isabel Robledo", "Carola Chávez", "Jonathan Monje", "Maria Flores")))
+    chk("10g. el domingo cierran Central, Buenos Aires y Ventura Mall", all(fuera(n, 12, 0, 15) is True for n in ("Isabel Robledo", "Maria Flores", "Fabián Godoy")))
+    chk("10h. «solo banzer y mia plaza atienden domingos»: Mia Plaza el domingo 9 a 21 (12:00 adentro, 8:30 y 21:30 fuera)",
+        fuera("Jonathan Monje", 12, 0, 15) is False and fuera("Jonathan Monje", 8, 30, 15) is True and fuera("Jonathan Monje", 21, 30, 15) is True)
+    chk("10i. …y Banzer el domingo igual que Mia Plaza: 9 a 21 (8:45 fuera, 20:45 adentro), el lunes sigue 8:30 a 20:30",
+        fuera("Carola Chávez", 8, 45, 15) is True and fuera("Carola Chávez", 20, 45, 15) is False and fuera("Carola Chávez", 20, 45) is True)
     G.SUC_DE_USUARIO.clear(); G.SUC_DE_USUARIO.update(_antes)
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
