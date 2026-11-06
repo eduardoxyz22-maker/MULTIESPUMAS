@@ -17104,6 +17104,7 @@ function submitPedido(){
   function after(wasEdit){
     var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
     try{ asisAlGuardar(rec, _tienda); }catch(eA){}   // (12/10) Eduardo: lo que faltó, recién con el pedido YA guardado
+    try{ if(typeof kcTrasGuardar==='function') kcTrasGuardar(rec, prev); }catch(eK){}   // 📥 §4ok-91 la venta cierra su lead en Kommo (lo decide el servidor)
     /* 📥 Si era un borrador de Kommo, ya es un pedido: sale de la bandeja (§4ca).
        Sin esto quedaba en las dos listas y parecía que no se había guardado. */
     if(borradorDe(rec.id)){
@@ -20726,6 +20727,103 @@ function setKlead(p, lead){
 }
 function leadDeBorrador(b){ return String((b&&b.id)||'').indexOf(BORRADOR_PREF)===0
   ? String(b.id).slice(BORRADOR_PREF.length) : ''; }
+/* ============================================================================
+   📥 §4ok-91 LA VENTA DEL PANEL CIERRA SU LEAD EN KOMMO (servidor 2026-11-05-a, acción `kommoCierre`; dueño, 02/11).
+   Con la venta YA guardada en la planilla, la página le pide al servidor que pase a «Compradores» el lead abierto de esa vendedora con
+   el mismo celular, con el total de la venta (`ventaTotal`: la cuenta de siempre, el servidor no la rehace). Lo decide y lo hace el
+   SERVIDOR (busca, mira que no sea otra venta, pone la marca `klead` en la fila); la página solo:
+   · lo pide para una venta (OC; no ATC/RPT, venta de tienda, Eduardo, ROHO, internos ni borradores de Kommo) y, al editar, solo si
+     cambió el total (`kcTrasGuardar`, desde `after` de submitPedido);
+   · con dudas (dos leads, ninguno, sin celular) le muestra a la vendedora sus leads abiertos para que toque cuál es, y «🏬 Vino a la
+     tienda: crear el lead» (`kcDudasMostrar` → `kcElegir` / `kcCrear`); «Ahora no» no hace nada (se vuelve a preguntar la próxima vez
+     que guarde esa venta con otro total);
+   · pone la marca `klead` en su copia (`kcAplicar`), la misma de «Sí, es la misma».
+   APAGADO en el servidor salvo KOMMO_CIERRE = 1: la primera respuesta `apagado` deja de preguntar en esta pestaña (`KC.apagado`). Con un
+   servidor anterior no se llama (`kcServidorOk`). En Playwright, solo con `window.KC_PRUEBA`.
+   ========================================================================== */
+var KC_SERVIDOR='2026-11-05-a';
+var KC={ apagado:false, pend:{} };
+function kcServidorOk(){ return String(SERVER_VER||'')>=KC_SERVIDOR; }
+function kcEnPrueba(){ return !!(typeof navigator!=='undefined' && navigator.webdriver) && !window.KC_PRUEBA; }
+/* La misma regla que `kcNoEs_` del servidor (que la vuelve a mirar con la fila de la planilla). */
+function kcEsVenta(p){
+  if(!p || !p.id || String(p.id).indexOf('__')===0 || esFilaSistema(p)) return false;
+  if(String(p.id).indexOf(BORRADOR_PREF)===0 || String(p.estado||'')===BORRADOR_EST) return false;   // vino de Kommo: su lead ya está en «Compradores»
+  if(esATC(p.oc) || esRPT(p.oc) || esVentaTienda(p)) return false;
+  if(esVendedorLite(p.vendedor) || cliEsInterno(p.vendedor)) return false;
+  return ventaTotal(p)>0.005;
+}
+/* Después de guardar (la fila ya está en la planilla). `prev` = la venta antes de editarla (null si es nueva). */
+function kcTrasGuardar(rec, prev){
+  if(KC.apagado || !CONNECTED || !kcServidorOk() || kcEnPrueba() || !kcEsVenta(rec)) return null;
+  if(prev && Math.abs(ventaTotal(prev)-ventaTotal(rec))<0.005) return null;   // editada sin cambiar el total: Kommo no se toca
+  return kcPedir(rec.id, {});
+}
+function kcPedir(id, extra){
+  var p=findById(id); if(!p) return Promise.resolve(null);
+  var body=Object.assign({ action:'kommoCierre', id:String(id), total:Math.round(ventaTotal(p)) }, extra||{});
+  return apiPost(body).then(function(r){ kcRespuesta(id, r); return r; }).catch(function(){ return null; });
+}
+function kcAplicar(id, lead){
+  var p=findById(id); if(!p || !lead || kleadDe(p)===String(lead)) return;
+  setKlead(p, lead);
+  try{ saveMirror(); }catch(e){}
+}
+function kcCajaId(id){ return 'kc-box-'+String(id).replace(/[^\w-]/g,'_'); }
+function kcRespuesta(id, r){
+  if(!r || !r.ok) return;
+  if(r.apagado){ KC.apagado=true; return; }
+  if(r.lead && /^(cerrado|creado|precio|ya)$/.test(String(r.hecho||''))) kcAplicar(id, r.lead);
+  var caja=document.getElementById(kcCajaId(id));
+  if(r.hecho==='cerrado' || r.hecho==='creado'){
+    var txt='📥 Kommo: la venta quedó en «Compradores»'+(r.hecho==='creado'?' (lead nuevo, «Visita tienda»)':'')+'.';
+    if(caja) caja.outerHTML='<div class="kc-box" id="'+kcCajaId(id)+'" style="margin:0 0 12px;padding:10px 12px;border:1px solid #9fdcd8;border-radius:12px;background:#effaf9;font-size:.86rem">✅ '+esc(txt.replace(/^📥 /,''))+'</div>';
+    toast(txt, 'ok', 6000);
+  }
+  else if(r.hecho==='precio') toast('📥 Kommo: se corrigió el total del lead.', 'ok', 5000);
+  else if(r.hecho==='dudas') kcDudasMostrar(id, r);
+  else if(r.hecho==='error'){
+    if(caja) kcCajaEstado(id, '');
+    toast('📥 Kommo no se pudo actualizar: '+String(r.motivo||'')+'. Se vuelve a intentar la próxima vez que guardes esta venta con otro total.', 'err', 9000);
+  }
+  else if(caja && r.hecho==='nada') kcCajaEstado(id, String(r.motivo||'No se pudo.'));
+}
+function kcDudasHtml(id, r){
+  var p=findById(id)||{}, L=r.leads||[], sid=String(id).replace(/'/g,'');
+  var porque = r.motivo==='dos' ? ('Hay <b>'+L.length+' leads tuyos abiertos</b> con el celular de este cliente: tocá cuál es esta venta.')
+    : r.motivo==='sin_celular' ? 'La venta no tiene celular para buscar su lead: tocá cuál es (tus últimos leads abiertos).'
+    : ('No encontré un lead tuyo abierto con el celular <b>'+esc(p.celular||'')+'</b>. Si el cliente te escribió desde otro número, tocá cuál es:');
+  var fecha=function(s){ s=Number(s)||0; if(!s) return ''; var d=new Date(s*1000); return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2); };
+  var filas=L.map(function(l){
+    var sub=[l.cli && l.cli!==l.n ? l.cli : '', l.tel||'', l.et||'', l.p>0 ? fmtBs(l.p) : '', l.u ? ('tocado el '+fecha(l.u)) : ''].filter(Boolean).join(' · ');
+    return '<button type="button" class="kc-lead" style="display:block;width:100%;text-align:left;margin:0 0 6px;padding:8px 10px;border:1px solid #cfe3e1;border-radius:10px;background:#fff;cursor:pointer;min-height:44px" '+
+      'onclick="kcElegir(\''+sid+'\',\''+String(l.id).replace(/\D/g,'')+'\')"><b>'+esc(l.n||('Lead '+l.id))+'</b>'+(sub?('<br><small style="color:#55706f">'+esc(sub)+'</small>'):'')+'</button>';
+  }).join('') || '<p style="margin:0 0 8px;color:#55706f">No tenés leads abiertos en Kommo.</p>';
+  return '<div class="kc-box" id="'+kcCajaId(id)+'" style="margin:0 0 12px;padding:12px;border:1px solid #9fdcd8;border-radius:12px;background:#effaf9;font-size:.86rem;line-height:1.45">'+
+    '<div style="font-weight:800;margin-bottom:2px">📥 Kommo: ¿cuál es el lead de esta venta?</div>'+
+    '<div style="color:#55706f;margin-bottom:6px">'+esc(p.cliente||'')+' · '+esc(fmtBs(ventaTotal(p)))+'</div>'+
+    '<p style="margin:0 0 8px">'+porque+'</p><div class="kc-leads">'+filas+'</div>'+
+    (r.puedeCrear ? ('<button type="button" class="btn btn-sm" style="width:100%;margin:2px 0 6px" onclick="kcCrear(\''+sid+'\')">🏬 Vino a la tienda: crear el lead en Kommo</button>') : '')+
+    '<div class="kc-estado" style="color:#8a5a00;margin:4px 0" hidden></div>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="kcCerrarCaja(\''+sid+'\')">Ahora no</button></div>';
+}
+function kcDudasMostrar(id, r){
+  KC.pend[id]=r;
+  var html=kcDudasHtml(id, r), viejo=document.getElementById(kcCajaId(id));
+  if(viejo){ viejo.outerHTML=html; return; }
+  var ov=document.getElementById('modal'), cuerpo=ov && ov.classList.contains('on') ? document.querySelector('#modal-box .modal-b') : null;
+  if(cuerpo){ cuerpo.insertAdjacentHTML('afterbegin', html); return; }   // arriba de la ventana de «✅ Pedido guardado», sin taparla
+  openModal('<div class="modal-h"><h3>📥 Kommo</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+html+'</div>');
+}
+function kcCajaEstado(id, txt){
+  var c=document.getElementById(kcCajaId(id)); if(!c) return;
+  [].forEach.call(c.querySelectorAll('button'), function(b){ b.disabled=!!txt && /^⏳/.test(txt); });
+  var e=c.querySelector('.kc-estado'); if(e){ e.textContent=txt||''; e.hidden=!txt; }
+}
+function kcElegir(id, lead){ kcCajaEstado(id, '⏳ Guardando en Kommo…'); return kcPedir(id, { lead:String(lead) }); }
+function kcCrear(id){ kcCajaEstado(id, '⏳ Creando el lead en Kommo…'); return kcPedir(id, { crear:1 }); }
+function kcCerrarCaja(id){ var c=document.getElementById(kcCajaId(id)); if(c) c.remove(); delete KC.pend[id]; }
+/* ======================== fin §4ok-91 ======================== */
 /* ¿Ya hay un pedido cargado a mano que sea esta misma venta? */
 function gemeloDe(b){
   var tel=telClave(b&&b.celular), nom=normNombre((b&&b.cliente)||'');
