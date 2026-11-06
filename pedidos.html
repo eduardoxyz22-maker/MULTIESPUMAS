@@ -49490,6 +49490,7 @@ var RECLAMO_FAB_ID='__reclamo_fab__', RECLAMO_FAB_MAX=30;
 function reclamoFabDatos(){
   var hoy=todayStr(), atr=[], cero=[];
   fdLista().forEach(function(g){
+    if(g.fab==='?') return;   // §4ok-104: lo que no es un producto de la lista ni de ningún Excel no se le reclama a ninguna fábrica
     var pre=g.fab==='MORENO' ? '' : (g.info.corto+' · ');
     g.prods.forEach(function(pr){
       /* lo que falta y tenía que llegar hace 2 días hábiles o más (día hábil + 2 ≤ hoy) */

@@ -64,8 +64,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       STOCK.p = [
         { id: 'q1', k: 'TITANIO ICE|200X200', u: 7, total: 8, f: '2026-09-30', ya: 1, esp: '2026-10-03', fab: 'MORENO', tipo: 'fabrica' },   // 33 días tarde
         { id: 'q2', k: 'SOFT|140X190', u: 4, f: '2026-11-02', ya: 1, esp: '2026-11-04', fab: 'MORENO', tipo: 'fabrica' },                      // 1 día hábil: todavía no
-        { id: 'q3', k: 'SUENA LITE|105X190', u: 2, f: '2026-10-20', ya: 1, esp: '2026-10-23', fab: 'MULTI', tipo: 'fabrica' }                  // de Multiespumas
+        { id: 'q3', k: 'SUENA LITE|105X190', u: 2, f: '2026-10-20', ya: 1, esp: '2026-10-23', fab: 'MULTI', tipo: 'fabrica' },                 // de Multiespumas
+        { id: 'q9', k: 'LLEVAR LO QUE NECESITEN|', u: 1, f: '2026-10-15', ya: 1, esp: '2026-10-18', fab: 'MORENO', tipo: 'fabrica' }           // §4ok-104 «¿Qué es esto?»: no se reclama
       ];
+      fdEsProducto = function (k) { return !/^LLEVAR/.test(k); };   // los de la prueba son inventados: cuentan como productos (hasta el final de la prueba)
       stockOlvidarIndice();
       var sd = stockData;
       stockData = function () { return { lista: [
@@ -79,7 +81,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       return d;
     });
     chk('el día de hoy y la hora', r.f === '2026-11-05' && /^\d{2}:\d{2}$/.test(r.h), r);
-    chk('lo atrasado 2 días hábiles o más, lo más atrasado primero (el de 1 día no; Multiespumas con su nombre)',
+    chk('lo atrasado 2 días hábiles o más, lo más atrasado primero (el de 1 día no; Multiespumas con su nombre; lo de «¿Qué es esto?» no se reclama)',
         r.atr.length === 2 && /^TITANIO ICE · 200X200: faltan 7 de 8, tenía que llegar el 03\/10 \(33 días\)$/.test(r.atr[0]) && /^Multiespumas · SUENA LITE · 105X190: faltan 2, tenía que llegar el 23\/10/.test(r.atr[1]), r.atr);
     chk('lo que rota en 0 con ventas esperando, con la más vieja (sin lo que no rota, lo que hay, lo discontinuado ni lo sin contar)',
         r.cero.length === 1 && r.cero[0] === 'NUEVO ECO FLEX · 140X190: 3 vendidos esperando; el más viejo, OC 10-301 para el 28/10', r.cero);
