@@ -17369,6 +17369,12 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   pedido. Si preferís hablar con una persona, escribile a tu vendedora Carola 👉 wa.me/…». Sin pedido: pide el nombre con el que compró o el
   N° de pedido. Una foto sola o un audio con un texto: queda lo de Claude. Lo que salió va a la columna P (la tarjeta del panel).
 - `test_wa_bot` §15d (11). `probarAntesDeImplementar` pide `iaSoloMedios_`/`iaMedioTxt_`. Versión en `test_servidor` §11 y `test_avisa_cuando` 1a.
+- 🌙 **En la misma 07-d, el cierre del día por vendedor** (dueño, 07/11: *«me refiero a las ventas realizadas hoy… total vendido por vendedor.
+  X productos, x monto»*): {{4}} de `cierre_del_dia` trae a TODOS los que cargaron ventas hoy, de más a menos, «Mirian: 3 prod., Bs 12.300»
+  (antes: los 4 primeros con la cantidad de VENTAS y «otros»); si no entran en `WA_LISTA_MAX` (240), los últimos van juntos «y N más: X prod.,
+  Bs Y». {{2}} suma «· N productos». Productos = la suma de las cantidades de los renglones con producto (`waCdProds_`), todos (también
+  almohadas y protectores). La plantilla de Meta NO cambia (solo los datos). Con la planilla del 07/11 a las 12:00: «Mauricio: 3 prod., Bs 3.780».
+  `test_wa_buen_dia_cierre` 5d, 5f, 5o cambiadas a conciencia + 5k2, 5k3.
 
 ### §4op — 🧾 EL RETIRO QUE ES JUSTO LO ÚLTIMO SIN RECOGER SE LLEVA ESO (07/11; dueño: *«Ya me llegó el mensaje. Si está cargado como "Recogido" o algo así en el panel ya no lo toma en cuenta cierto?»*; servidor `2026-11-07-c` IMPLEMENTADO 07/11 por el dueño (contesta `2026-11-07-c`, 1.816 filas; trae también la 07-a y la 07-b), enlace fijo `aa40393…`, 6.790 líneas; PÁGINA 2026-11-07-e PUBLICADA, `main` = `aa40393`; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`, 6.257 líneas)
 - Lo que saca a alguien del aviso del efectivo es el RETIRO cargado (Contabilidad → 💵 Retiro de efectivo) a su nombre: no hay tilde de

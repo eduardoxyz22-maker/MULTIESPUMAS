@@ -319,15 +319,26 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     const p = (cd()[0] || { p: [] }).p;
     chk('5b a las 21:20 sale UNO, al dueño (WA_DUENO)', cd().length === 1 && cd()[0].to === '59177000007', cd());
     chk('5c {{1}} el día', p[0] === 'martes 10/11', p[0]);
-    chk('5d {{2}} lo cargado HOY del equipo (sin Eduardo, ROHO, internos, ATC, RPT, borradores, filas del sistema ni lo de ayer); el recargo no es de la venta', p[1] === 'Bs 13.500 · 7 ventas', p[1]);
+    chk('5d {{2}} lo cargado HOY del equipo (sin Eduardo, ROHO, internos, ATC, RPT, borradores, filas del sistema ni lo de ayer); el recargo no es de la venta', p[1] === 'Bs 13.500 · 7 ventas · 7 productos', p[1]);
     chk('5e {{3}} por marca (la que más vendió primero; «otros» los que no tienen marca)', p[2] === 'Heaven Bs 6.700 · Sueña Bs 6.500 · otros Bs 300', p[2]);
-    chk('5f {{4}} las 4 que más vendieron y «otros»', p[3] === 'Juan Bs 4.500 (1) · Carola Bs 3.000 (1) · Isabel Bs 2.000 (1) · Mauricio Bs 2.000 (1) · otros Bs 2.000 (3)', p[3]);
+    chk('5f {{4}} (07-d, dueño: «total vendido por vendedor: X productos, x monto») TODOS los que vendieron hoy, de más a menos, con sus productos y su monto',
+        p[3] === 'Juan: 1 prod., Bs 4.500 · Carola: 1 prod., Bs 3.000 · Isabel: 1 prod., Bs 2.000 · Mauricio: 1 prod., Bs 2.000 · Mirian: 1 prod., Bs 1.000 · Maria: 1 prod., Bs 700 · Pedro: 1 prod., Bs 300', p[3]);
     chk('5g {{5}} las entregas de hoy con ✅ (Eduardo también; ni la venta de tienda ni el borrador)', p[4] === '2 de 11 con ✅ · 9 sin marcar', p[4]);
     chk('5h {{6}} Kommo: los leads nuevos de hoy y los sin responder hace más de 1 h (el de las 21:00 todavía no)', p[5] === '31 leads nuevos · 3 sin responder hace más de 1 h', p[5]);
     chk('5i {{7}} el mes, de la foto de hoy de la proyección', p[6] === 'Bs 287.400 vendidos · proyección Bs 1.020.000 (cálculo de las 17:05)', p[6]);
     chk('5j ningún dato con saltos de línea ni de más de 250 letras', p.length === 7 && p.every(t => t.length <= 250 && !/[\r\n\t]/.test(t)), p.map(t => t.length));
     S.limpiar(); poner(HOY + ' 22:30'); S.repaso();
     chk('5k una vez por día (a las 22:30 no se repite)', cd().length === 0, S.salen());
+    // 🛏️ (07-d) Los productos: la suma de las cantidades de los renglones con producto
+    const Bx = S.ctx.waBo_(RELOJ.ms);
+    chk('5k2 los productos de una venta = la suma de las cantidades (2 + 1 = 3; un renglón vacío no cuenta; sin cantidad = 1)',
+        S.ctx.waCdProds_({ productos: [{ desc: 'COLCHON TITANIO', cant: 2 }, { desc: 'ALMOHADA', cant: '1' }, { desc: '', cant: 5 }, { desc: 'SOMIER' }] }) === 4);
+    const muchos = []; for (let i = 0; i < 12; i++) muchos.push({ nombre: 'Vendedor' + String.fromCharCode(65 + i) + ' Apellido', bs: 10000 - i * 500, n: 1, u: i + 1 });
+    const q = S.ctx.waCdParams_({ ventas: { n: 12, bs: 1, u: 78 }, marcas: {}, vend: muchos, ent: { total: 0, con: 0 }, por: {} }, Bx, null, null, null, RELOJ.ms)[3];
+    const m = q.match(/ · y (\d+) más: (\d+) prod\., (Bs [\d.]+)$/), nVis = q.split(' · ').length - 1;
+    chk('5k3 si no entran todos (12 vendedores): los primeros enteros y «y N más: X prod., Bs Y» con la suma de los que faltan, sin pasarse de ' + S.ctx.WA_LISTA_MAX + ' letras',
+        q.length <= S.ctx.WA_LISTA_MAX && !!m && Number(m[1]) === 12 - nVis &&
+        Number(m[2]) === muchos.slice(nVis).reduce((a, o) => a + o.u, 0) && m[3] === S.ctx.waBs_(muchos.slice(nVis).reduce((a, o) => a + o.bs, 0)) && /^VendedorA: 1 prod\., Bs 10\.000 · VendedorB: 2 prod\./.test(q), { q, len: q.length });
     // Sin la foto de hoy
     const S2 = lleno(); const fila = S2.sh._datos.find(f => f[0] === '__pry_hist__'); fila[16] = JSON.stringify({ v: 1, d: { '2026-11-09': PRY.d['2026-11-09'], '2026-10-31': { h: '18:00', v: 1, p: 2 } } });
     poner(HOY + ' 21:20'); S2.repaso();
@@ -340,7 +351,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     // Domingo: con ventas sale; sin nada no
     const D = servidor(ON); kommoLleno(D); D.cargar([P('d1', 'Carola Chavez', { oc: '11-601', ts: TS('2026-11-15', '12:00'), saldo: 800, productos: DOC(9) })]);
     poner('2026-11-15 21:20'); D.repaso();
-    chk('5o el domingo, con una venta de tienda o de las que abren el domingo, sale', D.salen('cierre_del_dia').length === 1 && D.salen('cierre_del_dia')[0].p[1] === 'Bs 800 · 1 venta' && D.salen('cierre_del_dia')[0].p[4] === 'no había entregas', D.salen('cierre_del_dia'));
+    chk('5o el domingo, con una venta de tienda o de las que abren el domingo, sale', D.salen('cierre_del_dia').length === 1 && D.salen('cierre_del_dia')[0].p[1] === 'Bs 800 · 1 venta · 1 producto' && D.salen('cierre_del_dia')[0].p[3] === 'Carola: 1 prod., Bs 800' && D.salen('cierre_del_dia')[0].p[4] === 'no había entregas', D.salen('cierre_del_dia'));
     const V = servidor(ON); V.cargar(FIX); poner('2026-11-16 21:20'); V.repaso();
     chk('5p un día sin ventas cargadas ni entregas no sale (y no queda como error en la hoja)', V.salen('cierre_del_dia').length === 0 && !V.hoja().some(f => f[3] === 'Dueño: cierre del día'), V.salen());
     const W = servidor(Object.assign({}, ON, { WA_DUENO: '' })); W.cargar(FIX); poner(HOY + ' 21:20'); W.repaso();

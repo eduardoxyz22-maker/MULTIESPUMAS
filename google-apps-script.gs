@@ -4415,18 +4415,24 @@ function waCdEntregaHoy_(p, hoy) {
   q.entregado = false;
   return waEsEntrega_(q);
 }
-/** Lo del día: {ventas:{n, bs}, marcas:{Heaven:bs, …}, vend:[{nombre, bs, n}] (de más a menos), ent:{total, con}, por}. */
+/** 🛏️ (2026-11-07-d) Cuántos productos lleva una venta: la suma de las cantidades de sus renglones con producto. */
+function waCdProds_(p) {
+  var u = 0;
+  ((p && p.productos) || []).forEach(function (x) { if (x && String(x.desc || '').trim()) u += Math.max(1, Math.round(Number(x.cant) || 1)); });
+  return u;
+}
+/** Lo del día: {ventas:{n, bs, u}, marcas:{Heaven:bs, …}, vend:[{nombre, bs, n, u}] (de más a menos), ent:{total, con}, por}. */
 function waCdDatos_(lista, B) {
-  var V = { n:0, bs:0 }, marcas = {}, vend = {}, orden = [], ent = { total:0, con:0 }, por = {};
+  var V = { n:0, bs:0, u:0 }, marcas = {}, vend = {}, orden = [], ent = { total:0, con:0 }, por = {};
   (lista || []).forEach(function (p) {
     if (!p) return;
     por[String(p.id)] = p;
     if (waEsVentaConta_(p) && waContaFecha_(p) === B.hoy) {
-      var t = waVentaTotal_(p), mk = waCdMarca_(p.vendedor), k = waEfeNorm_(p.vendedor) || '(sin vendedor)';
-      V.n++; V.bs = waR2_(V.bs + t);
+      var t = waVentaTotal_(p), mk = waCdMarca_(p.vendedor), k = waEfeNorm_(p.vendedor) || '(sin vendedor)', u = waCdProds_(p);
+      V.n++; V.bs = waR2_(V.bs + t); V.u += u;
       marcas[mk] = waR2_((marcas[mk] || 0) + t);
-      if (!vend[k]) { vend[k] = { nombre:waBdNombre_(p.vendedor) || '(sin vendedor)', bs:0, n:0 }; orden.push(k); }
-      vend[k].bs = waR2_(vend[k].bs + t); vend[k].n++;
+      if (!vend[k]) { vend[k] = { nombre:waBdNombre_(p.vendedor) || '(sin vendedor)', bs:0, n:0, u:0 }; orden.push(k); }
+      vend[k].bs = waR2_(vend[k].bs + t); vend[k].n++; vend[k].u += u;
     }
     if (waCdEntregaHoy_(p, B.hoy)) { ent.total++; if (p.entregado) ent.con++; }
   });
@@ -4449,16 +4455,27 @@ function waCdPry_(fila, B) {
     `nuevos` = `waKmNuevosHoy_` (null = sin dato), `fh` = la fila `__pry_hist__`. */
 function waCdParams_(D, B, K, nuevos, fh, ahora) {
   var bs0 = function (n) { return waBs_(Math.round(Number(n) || 0)); };
-  var v = D.ventas, ventas = v.n ? bs0(v.bs) + ' · ' + v.n + ' venta' + (v.n === 1 ? '' : 's') : 'Bs 0 · ninguna venta';
+  var v = D.ventas, ventas = v.n ? bs0(v.bs) + ' · ' + v.n + ' venta' + (v.n === 1 ? '' : 's') + ' · ' + (v.u || 0) + ' producto' + (v.u === 1 ? '' : 's') : 'Bs 0 · ninguna venta';
   var mks = []; WA_MARCAS.forEach(function (g) { mks.push({ k:g.lbl.split(' ')[0], bs:D.marcas[g.lbl.split(' ')[0]] || 0 }); });
   mks.sort(function (a, b) { return b.bs - a.bs; });
   var marcas = v.n ? mks.map(function (x) { return x.k + ' ' + bs0(x.bs); }).concat((D.marcas.otros || 0) > 0.005 ? ['otros ' + bs0(D.marcas.otros)] : []).join(' · ') : 'sin ventas';
-  var top = D.vend.slice(0, 4), resto = D.vend.slice(4), rbs = 0, rn = 0, dup = {};
-  resto.forEach(function (o) { rbs = waR2_(rbs + o.bs); rn += o.n; });
-  var pri = function (o) { return String(o.nombre).split(' ')[0]; };
-  top.forEach(function (o) { var f = waEfeNorm_(pri(o)); dup[f] = (dup[f] || 0) + 1; });
-  var quien = top.map(function (o) { return (dup[waEfeNorm_(pri(o))] > 1 ? o.nombre : pri(o)) + ' ' + bs0(o.bs) + ' (' + o.n + ')'; });
-  if (resto.length) quien.push('otros ' + bs0(rbs) + ' (' + rn + ')');
+  /* 🛏️ (2026-11-07-d) El dueño (07/11): «total vendido por vendedor: X productos, x monto». TODOS los que vendieron hoy, de más a
+     menos, «Mirian: 3 prod., Bs 12.300»; si no entran en el dato (WA_LISTA_MAX), los últimos se juntan en «y N más: X prod., Bs Y». */
+  var dup = {}, pri = function (o) { return String(o.nombre).split(' ')[0]; };
+  D.vend.forEach(function (o) { var f = waEfeNorm_(pri(o)); dup[f] = (dup[f] || 0) + 1; });
+  var item = function (o) { return (dup[waEfeNorm_(pri(o))] > 1 ? o.nombre : pri(o)) + ': ' + (o.u || 0) + ' prod., ' + bs0(o.bs); };
+  var quien = [], k;
+  for (k = 0; k < D.vend.length; k++) {
+    var ru = 0, rbs = 0;
+    for (var j = k + 1; j < D.vend.length; j++) { ru += D.vend[j].u || 0; rbs = waR2_(rbs + D.vend[j].bs); }
+    var cola = k + 1 < D.vend.length ? ' · y ' + (D.vend.length - k - 1) + ' más: ' + ru + ' prod., ' + bs0(rbs) : '';
+    if (quien.length && (quien.concat([item(D.vend[k])]).join(' · ') + cola).length > WA_LISTA_MAX) break;
+    quien.push(item(D.vend[k]));
+  }
+  if (k < D.vend.length) {
+    var mu = 0, mbs = 0; D.vend.slice(k).forEach(function (o) { mu += o.u || 0; mbs = waR2_(mbs + o.bs); });
+    quien.push('y ' + (D.vend.length - k) + ' más: ' + mu + ' prod., ' + bs0(mbs));
+  }
   var e = D.ent, ents = e.total ? (e.con + ' de ' + e.total + ' con ✅' + (e.total - e.con ? ' · ' + (e.total - e.con) + ' sin marcar' : '')) : 'no había entregas';
   var km1 = nuevos == null ? '' : (nuevos === 1 ? '1 lead nuevo' : nuevos + ' leads nuevos');
   var km2 = '';
@@ -5795,6 +5812,8 @@ var WA_PLANTILLAS = [
     t:'🤖 🌙 *Cierre del día* ({{1}})\n\n🛒 Ventas cargadas hoy: *{{2}}*\n🏷️ Por marca: {{3}}\n🧑‍💼 Quién vendió: {{4}}\n🚚 Entregas de hoy: *{{5}}*\n📥 Kommo: {{6}}\n📈 El mes: {{7}}\n\nEl detalle está en el panel: Contabilidad → 📋 Ventas y 📈 Proyección.',
     e:['sábado 07/11', 'Bs 48.900 · 12 ventas', 'Heaven Bs 36.200 · Sueña Bs 12.700', 'Mirian Bs 12.300 (3) · Isabel Bs 9.800 (2) · Carola Bs 8.100 (2) · Mauricio Bs 7.200 (2) · otros Bs 11.500 (3)',
        '22 de 25 con ✅ · 3 sin marcar', '31 leads nuevos · 6 sin responder hace más de 1 h', 'Bs 287.400 vendidos · proyección Bs 1.020.000 (cálculo de las 17:05)'] }
+    /* (2026-11-07-d) Desde la 07-d {{2}} suma «· 17 productos» y {{4}} trae a TODOS: «Mirian: 4 prod., Bs 12.300 · Isabel: 3 prod., Bs 9.800 · …».
+       La plantilla de Meta no cambia (solo cambian los datos). */
 ];
 function waPlantillasCfg_() {
   var c = waConfig_(), waba = prop_('WA_WABA_ID');
