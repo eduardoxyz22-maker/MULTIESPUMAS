@@ -2520,7 +2520,7 @@ correo + el mensaje de **WhatsApp**.
 
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
-**👥 Desde el 02/11/2026 (dueño): Andrea Orias y Fabián Godoy, los dos de Heaven** — Andrea en la **Tienda Banzer** y Fabián en **Ventura Mall**,
+**👥 Desde el 02/11/2026 (dueño): Andrea Orias y Fabián Godoy, los dos de Heaven** — Andrea en la **Tienda Banzer** y Fabián en **Ventura Mall** (desde el 07/11, como dice Kommo, Fabián en Central hasta que abra Ventura, §4oo),
 tiendas nuevas. Un vendedor nuevo va en: `VENDEDORES`, `MARCAS`, `BANCOS_POR_VENDEDOR`, `VENDEDOR_SUCURSAL` (pedidos.html) y en el `.gs`
 `WA_MARCAS` + `WA_VENDEDOR_HOMBRE` (servidor **`2026-11-02-a`**, solo eso; IMPLEMENTADO por el dueño, el 04/11 ya contesta `2026-11-02-a`; volver atrás: ✏️ a la
 versión anotada Y pegar la 30-a de `89ca847…`). Su WhatsApp para el bot: la propiedad `WA_VENDEDORAS` (la pone el dueño).
@@ -2671,6 +2671,9 @@ atienden domingos»*, *«los domingos es de 10 a 16:00 banzer y mia plaza»*): M
 del template lo dice. `test_generar_integridad` §9-10 (31).
 ⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
 suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
+🏪 **El panel usa las mismas sucursales** (§4oo, 07/11, dueño: «Si»; versión 2026-11-07-d): `VENDEDOR_SUCURSAL` = Kommo (Carola → Tienda Banzer,
+Jonathan → Mia Plaza, Isabel y Fabián → Central). ⚠️ Una venta de antes de `VENDEDOR_SUC_DESDE` (01/11) sin la tienda escrita sigue con la de
+entonces (`VENDEDOR_SUCURSAL_ANTES`): `sucursalDeVendedor(v, fecha)` con el día de la venta. Un cambio de tienda futuro = otra fecha y otra lista.
 
 ## 📧 Pedidos de Multicenter y de Copacaba que llegan por correo (06/11; dueño: *«cuando entren pedidos de multi center, juan carlos arce los
 cargues en el panel»* y *«SOLO CARGA los actuales de esta semana»*)
