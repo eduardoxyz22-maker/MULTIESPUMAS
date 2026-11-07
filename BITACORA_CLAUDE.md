@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h; el `.gs` no cambia)
+### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h PUBLICADA 07/11 (`main` = `2c50384`), con los arreglos de las pruebas de §4os; el `.gs` no cambia; batería: lo rojo con la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— pasa solo)
 - **Qué es**: Bloki ya contestaba stock, cupos, entregas, el saldo de un cliente y los códigos. Ahora entiende 17 preguntas más, en los siete
   grupos de la muestra, y las contesta con cuentas que el panel YA tiene: nada se calcula aparte, no gasta IA y SOLO MIRA (no escribe nada).
   Todo vive en el bloque «BLOKI CONTESTA MÁS» (`blokiTipo2` decide qué es; va DESPUÉS de `codigo` y ANTES de cupos/entregas/cliente).

@@ -1637,7 +1637,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
   El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (25). ☁️ El CLOUD en `CODIGOS` (CH2510 90x190 … CH2514 180x190, del dueño) con
   `d:"CLOUD"`: la clave del stock no cambia.
-  💬 **Idea 9: siete grupos más** (§4ot, página 07-h; dueño: *«Idea 9 todas de Bloki»*): mis ventas (= Proyección, a esta altura, meta, la más grande,
+  💬 **Idea 9: siete grupos más** (§4ot, página 07-h PUBLICADA `2c50384`; dueño: *«Idea 9 todas de Bloki»*): mis ventas (= Proyección, a esta altura, meta, la más grande,
   ranking con alcance de todo), cobranza (quiénes deben, efectivo = «Efectivo en tu mano», avisos de Contabilidad, sin factura), mis pedidos (sin stock =
   `semanaLinea`, sin camión/ubicación, «¿cuándo llega el pedido de…?», la semana que viene), productos (precio cobrado de verdad en 60 días, medidas,
   lo más vendido), logística (qué falta cargar = tildes de la Lista de carga, recoger de Moreno, cierre, GPS), «¿qué me falta hacer?» (el «Para hacer»
