@@ -3605,12 +3605,12 @@ function waEfeCuentas_(lista) {
       /* Cuántos se leyeron (desde WA_EFE_EMPAREJA) y cuántos sin monto que se pueda leer: `probarEfectivo` los dice, así un retiro que
          la planilla trae sin número (escrito a mano como texto) no se pierde callado. */
       if (f && f >= WA_EFE_EMPAREJA) { leidos.n++; if (!((Number(p.acuenta) || 0) > 0)) leidos.sinMonto++; }
-      if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, m:Math.round((Number(p.acuenta) || 0) * 100) / 100, nombre:String(p.vendedor || '').replace(/\s+/g, ' ').trim() });
+      if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, m:Math.round((Number(p.acuenta) || 0) * 100) / 100, nombre:String(p.vendedor || '').replace(/\s+/g, ' ').trim(), id:id });
       return;
     }
     if (id.indexOf('__') === 0 || String(p.estado || '') === BORRADOR_EST) return;
     if (/^(ATC|RPT)\b/i.test(String(p.oc || '').trim()) || waEfeFuera_(p.vendedor)) return;
-    waEfePagos_(p).forEach(function (c) {
+    waEfePagos_(p).forEach(function (c, jj) {
       if (!c.fecha) { if (waEfeDia_(p.ts) >= WA_EFE_DESDE) { sinF.n++; sinF.bs = Math.round((sinF.bs + c.monto) * 100) / 100; } return; }
       if (c.fecha < WA_EFE_EMPAREJA) return;
       var quien = c.recibio || String(p.vendedor || '').replace(/\s+/g, ' ').trim() || '(sin vendedor)', k = waEfeNorm_(quien);
@@ -3620,11 +3620,13 @@ function waEfeCuentas_(lista) {
          no se avisa, pero sigue acá para que un retiro por esa plata se lo lleve a él y no tape lo de noviembre. */
       var v = waEfeDia_(p.ts) || c.fecha;
       if (v < WA_EFE_DESDE && c.fecha >= WA_EFE_DESDE) { viejas.n++; viejas.bs = Math.round((viejas.bs + c.monto) * 100) / 100; }
-      (cob[k] = cob[k] || []).push({ f:c.fecha, m:c.monto, cub:0, oc:String(p.oc || '').trim(), ch:!!c.recibio, v:v });
+      (cob[k] = cob[k] || []).push({ f:c.fecha, m:c.monto, cub:0, oc:String(p.oc || '').trim(), ch:!!c.recibio, v:v, id:id, j:jj });
     });
   });
-  for (var k0 in cob) cob[k0].sort(function (a, b) { return a.f < b.f ? -1 : (a.f > b.f ? 1 : 0); });
-  ret.sort(function (a, b) { return a.f < b.f ? -1 : (a.f > b.f ? 1 : 0); });
+  /* (2026-11-07-f) Con desempate fijo —el mismo de `efePareo` en la página (el Cuadre del mes)—: cobros por (día, id del pedido, lugar entre
+     sus cobros en efectivo) y retiros por (día, id). Si no, dos retiros del mismo día podían repartirse distinto acá y en el panel. */
+  for (var k0 in cob) cob[k0].sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : (a.id < b.id ? -1 : a.id > b.id ? 1 : a.j - b.j); });
+  ret.sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); });
   ret.forEach(function (r) {
     var L = cob[r.q] || [], resto = r.m, ex = null;
     for (var i = 0; i < L.length; i++) if (L[i].f <= r.f && Math.abs((L[i].m - L[i].cub) - resto) < 0.005) ex = L[i];   // el del mismo monto más cercano
@@ -3633,16 +3635,20 @@ function waEfeCuentas_(lista) {
        persona tenía sin recoger hasta su día (lo más nuevo hacia atrás), se lleva eso. Sin esto iba primero a lo más viejo: el efectivo de
        octubre que nadie cargó como retiro (el dueño: «lo de octubre ya se recogió») se comía el retiro de noviembre. El 07/11 Mauricio cargó
        Bs 3.290 = sus dos cobros de noviembre (700 + 2.590) y el aviso lo seguía mostrando; Juan Pablo, Bs 4.620 = 990 + 910 + 1.480 + 1.240. */
-    if (resto > 0.005) {
+    /* (2026-11-07-f, el Cuadre del mes del 07/11) La tira puede terminar en CUALQUIER cobro sin recoger, la más nueva primero: el mismo 07/11
+       Mauricio cobró otro de Bs 1.480 después de cargar el retiro de 3.290 (= 700 + 2.590), y como la tira solo podía terminar en el último
+       (1.480 + 2.590 > 3.290) el retiro se iba a lo de octubre y noviembre quedaba entero «en la mano». La MISMA regla en `efePareo` de la
+       página: `tests/test_efe_pareo.js` compara las dos. */
+    for (var e = L.length - 1; e >= 0 && resto > 0.005; e--) {
+      if (L[e].f > r.f || Math.round((L[e].m - L[e].cub) * 100) / 100 <= 0.005) continue;
       var acc = 0, desde = -1;
-      for (var s = L.length - 1; s >= 0; s--) {
-        if (L[s].f > r.f) continue;
+      for (var s = e; s >= 0; s--) {
         var fa = Math.round((L[s].m - L[s].cub) * 100) / 100; if (fa <= 0.005) continue;
         acc = Math.round((acc + fa) * 100) / 100;
         if (Math.abs(acc - resto) < 0.005) { desde = s; break; }
         if (acc > resto) break;
       }
-      if (desde >= 0) { for (var s2 = desde; s2 < L.length; s2++) if (L[s2].f <= r.f) L[s2].cub = L[s2].m; resto = 0; }
+      if (desde >= 0) { for (var s2 = desde; s2 <= e; s2++) L[s2].cub = L[s2].m; resto = 0; }
     }
     for (var j = 0; j < L.length && resto > 0.005; j++) {
       if (L[j].f > r.f) break;
