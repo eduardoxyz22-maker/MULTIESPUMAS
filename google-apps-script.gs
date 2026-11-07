@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-11-07-a';   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-11-07-b';   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -230,7 +230,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-11-07-a';
+  var ESTA_VERSION = '2026-11-07-b';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -260,6 +260,7 @@ function probarAntesDeImplementar() {
     kSnapshot_: typeof kSnapshot_, probarSnapshotKommo: typeof probarSnapshotKommo,   // (2026-10-29-b)
     entregaAConfirmar_: typeof entregaAConfirmar_, avisaDeFila_: typeof avisaDeFila_,   // (2026-10-30-a)
     waBdDatos_: typeof waBdDatos_, waCdDatos_: typeof waCdDatos_, waKmSinResp_: typeof waKmSinResp_, blokiPreguntar_: typeof blokiPreguntar_,   // (2026-11-07-a)
+    waBdDomingo_: typeof waBdDomingo_,   // (2026-11-07-b)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -3112,7 +3113,8 @@ function purgeBackups_(folder, keep) {
  *                     con los de WA_AVISOS/WA_PEDIR_HOY, el reclamo a la fábrica de las 10:00 (reclamo_fabrica). Sin ella, el vigía no
  *                     corre y el reclamo va solo a logística. (2026-11-07-a) Y el cierre del día de las 21:15 (cierre_del_dia).
  *      WA_VENDEDORAS = (la de siempre, §4kl) Carola Chavez:591XXXXXXXX, … — (2026-11-07-a) cada vendedora del EQUIPO que está acá
- *                     recibe el «Buen día» de las 08:30 (vendedora_buen_dia). Eduardo, ROHO y los internos, no.
+ *                     recibe el «Buen día» de las 08:30 (vendedora_buen_dia). Eduardo, ROHO y los internos, no. (2026-11-07-b) El
+ *                     domingo, solo las de Mia Plaza y Tienda Banzer (la tienda la dice su usuario de Kommo, WA_SUC_DOMINGO).
  *      BLOKI_TOPE_DIA = (opcional, 2026-11-07-a) cuántas preguntas por día le puede hacer Bloki a Claude (acción `bloki`); 30 si no está.
  *   Las maneja el script solo (no se tocan): WA_LEADS (§4ok-102,
  *   lo último que contó el vigía, sin nombres), CEL_TEXTO (§4ok-95, la columna «Celular» ya quedó con formato de texto).
@@ -3860,7 +3862,9 @@ function probarBotF_(bien, ojo) {
   if (eq.length) bien('☀️ El «Buen día» de las 08:30 (lunes a sábado) va a ' + eq.length + ' vendedora(s) del equipo de WA_VENDEDORAS: ' + nom(eq) +
                       (todas.length > eq.length ? ' (' + (todas.length - eq.length) + ' de esa lista no son del equipo o están repetidas: Eduardo, ROHO e internos no lo reciben)' : '') + prende + '.');
   else bien('☀️ El «Buen día» de las 08:30 no le llega a nadie: no hay vendedoras del equipo en WA_VENDEDORAS (Carola Chavez:591…, Maria Flores:591…).');
-  if (eq.length && !kProp_('KOMMO_TOKEN')) ojo('Falta KOMMO_TOKEN: en el «Buen día» y en el cierre la línea de Kommo va a decir «sin dato».');
+  if (eq.length) bien('☀️ El domingo (2026-11-07-b) el «Buen día» va solo a las de las tiendas que abren el domingo (' + WA_SUC_DOMINGO.join(', ') +
+                      '): la tienda la dice su usuario de Kommo («Nombre - Sucursal»). Sin Kommo, el domingo no le sale a nadie. ▶️ probarMensajesDelDia un domingo dice a quién.');
+  if (eq.length && !kProp_('KOMMO_TOKEN')) ojo('Falta KOMMO_TOKEN: en el «Buen día» y en el cierre la línea de Kommo va a decir «sin dato», y el domingo el «Buen día» no le sale a nadie.');
   bien(c.dueno.length ? ('🌙 El cierre del día de las 21:15 (cada día con ventas o entregas) va a: ' + nom(c.dueno) + prende + '.')
                       : '🌙 El cierre del día de las 21:15 no le llega a nadie: falta la propiedad WA_DUENO (Eduardo:591…).');
   var u = blokiUsoHoy_(), t = blokiTope_();
@@ -4135,7 +4139,7 @@ function waHoyFaltaParams_(H, B) {
 
 /* ============================================================================
  * ☀️🌙 (2026-11-07-a, ideas 114 y 115; el dueño las aprobó) DOS MENSAJES DEL DÍA, con la planilla de ESE momento.
- *   · 114 «Buen día» (`vendedora_buen_dia`): a las 08:30, de lunes a sábado y no en feriados (`waPhHabil_`), a CADA vendedora del equipo
+ *   · 114 «Buen día» (`vendedora_buen_dia`): a las 08:30, de lunes a sábado y no en feriados (`waPhHabil_`; el domingo, ver 07-b abajo), a CADA vendedora del equipo
  *     que tiene su número en WA_VENDEDORAS (sin Eduardo, ROHO ni los internos: `CONTA_EXCLUIR` + `esVendedorLite` de la página). Lo suyo:
  *     las entregas de HOY sin ✅ (`waEsEntrega_`), lo que queda por cobrar en la puerta en esas (`saldoACobrar`), sus ventas sin el N° de
  *     factura o de remisión (`docVentaFalta`), sus leads de Kommo sin responder y los avisos de Contabilidad abiertos (`__avisos_conta__`,
@@ -4151,9 +4155,17 @@ function waHoyFaltaParams_(H, B) {
  *     contesta (o falta KOMMO_TOKEN), esa línea dice «sin dato» y el mensaje sale igual.
  *   ⚠️ Las cuentas copian las de la página (`ventaTotal`, `saldoACobrar`, `docVentaFalta`, `fueraDeConta`): tests/test_wa_buen_dia_cierre.js
  *      arma los mismos pedidos en la página y acá y las compara. Si cambia una de esas funciones de la página, cambia acá también.
+ *   · ☀️ (2026-11-07-b, dueño 07/11: «Sí, los domingos para los que trabajan domingos») El «Buen día» sale también el DOMINGO, solo a las
+ *     vendedoras de las tiendas que abren el domingo (WA_SUC_DOMINGO: Mia Plaza y Tienda Banzer, de 10 a 16; dueño 06/11). La tienda la
+ *     dice su usuario de Kommo («Jonathan Monje - Mia Plaza»), de la MISMA lectura de los «sin responder» (`waKmLeer_`, una por vuelta):
+ *     el domingo se encolan todas las del equipo (sin red, como siempre) y `waArmar_` saltea a las que no van (`waBdDomingo_`). Si Kommo
+ *     no contesta, si no está su usuario, si su usuario no dice la tienda o hay dos con su nombre: el domingo NO le sale (no se adivina).
+ *     ⚠️ «Banzer» a secas es el ALMACÉN: solo «Tienda Banzer» cuenta. El domingo no sale el camión: «Hoy se entregan» dice «ninguno».
+ *     De lunes a sábado nada cambia (ni depende de Kommo). Un feriado de lunes a sábado sigue sin «Buen día».
  *   Solo avisan: no tocan pedidos, ni Kommo, ni Contabilidad. ▶️ `probarMensajesDelDia()` desde el editor dice lo que dirían ahora.
  * ========================================================================== */
 var WA_HORA_BD = 8.5;                    // 08:30 de Bolivia
+var WA_SUC_DOMINGO = ['MIA PLAZA', 'TIENDA BANZER'];   // ☀️ (2026-11-07-b) las tiendas que abren el domingo (se comparan sin tildes ni mayúsculas, el nombre ENTERO)
 var WA_HORA_CD = 21.25;                  // 21:15 de Bolivia
 var WA_BD_MAX = 6;                       // N° de OC a la vista en una lista; después «y N más»
 var WA_DOCV_DESDE = '2026-11-01';        // = DOCV_DESDE de la página
@@ -4269,10 +4281,19 @@ function waKmSinResp_(ahora) {
     kEmb_(o, 'leads').forEach(function (l) { if (l && l.id != null) resp[String(l.id)] = String(l.responsible_user_id == null ? '' : l.responsible_user_id); });
   }
   var us = kGet_('/users?limit=250'); if (us == null) return null;
-  var usuarios = {}, porUid = {};
-  kEmb_(us, 'users').forEach(function (u) { var nom = kcNorm_(String((u && u.name) || '').split(/\s+[-–]\s+/)[0]); if (nom) usuarios[nom] = String(u.id); });
+  var usuarios = {}, porUid = {}, sucs = {}, nomDe = {}, dos = {};
+  kEmb_(us, 'users').forEach(function (u) {
+    var partes = String((u && u.name) || '').split(/\s+[-–]\s+/), nom = kcNorm_(partes[0]);
+    if (!nom) return;
+    /* ☀️ (2026-11-07-b) La tienda: lo que va después de « - » («Jonathan Monje - Mia Plaza»). Dos usuarios con el MISMO nombre
+       quedan marcados (`dos`): el domingo no se adivina cuál de los dos es. */
+    if (usuarios[nom] && usuarios[nom] !== String(u.id)) dos[nom] = 1;
+    usuarios[nom] = String(u.id);
+    sucs[String(u.id)] = partes.slice(1).join(' - ').replace(/\s+/g, ' ').trim();
+    nomDe[String(u.id)] = nom;
+  });
   sin.forEach(function (x) { x.u = resp[x.l] || ''; (porUid[x.u] = porUid[x.u] || []).push(x); });
-  return { sin:sin, porUid:porUid, usuarios:usuarios };
+  return { sin:sin, porUid:porUid, usuarios:usuarios, sucs:sucs, nomDe:nomDe, dos:dos };
 }
 /** Lo de Kommo, UNA vez por vuelta del bot (queda en `cfg`, que es de esta vuelta). */
 function waKmLeer_(cfg) {
@@ -4314,12 +4335,33 @@ function waBdLista_(items, uno, varios, nada) {
   var vis = items.slice(0, WA_BD_MAX);
   return n + ' ' + (n === 1 ? uno : varios) + ' · ' + vis.join(' · ') + (n > vis.length ? ' y ' + (n - vis.length) + ' más' : '');
 }
+/** ☀️ (2026-11-07-b) ¿Es una tienda que abre el domingo? (WA_SUC_DOMINGO, el nombre entero sin tildes ni mayúsculas: «Banzer» a secas
+    es el almacén y no cuenta). */
+function waSucDomingo_(suc) {
+  var s = kcNorm_(suc);
+  return !!s && WA_SUC_DOMINGO.some(function (x) { return kcNorm_(x) === s; });
+}
+/** ☀️ (2026-11-07-b) El domingo, ¿le sale el «Buen día» a la vendedora V? null = sí; si no, {m:'por qué', anotar}. `K` = `waKmLeer_`
+    (la tienda sale de su usuario de Kommo, «Nombre - Sucursal», buscado como `kcUsuario_`). Nunca se adivina: sin Kommo, sin su usuario,
+    sin la tienda en el nombre o con dos usuarios con su nombre, no le sale (y queda anotado en la hoja). Su tienda cerrada no se anota. */
+function waBdDomingo_(V, K) {
+  if (!K || !K.usuarios) return { m:'es domingo y no pude leer Kommo para saber su tienda', anotar:true };
+  var uid = kcUsuario_({ usuarios:K.usuarios }, V && V.nombre);
+  if (!uid) return { m:'es domingo y no encontré su usuario en Kommo (o hay más de uno que se le parece)', anotar:true };
+  if ((K.dos || {})[(K.nomDe || {})[uid]]) return { m:'es domingo y en Kommo hay dos usuarios con su nombre: no sé cuál es su tienda', anotar:true };
+  var suc = (K.sucs || {})[uid] || '';
+  if (!suc) return { m:'es domingo y su usuario de Kommo no dice la tienda («Nombre - Sucursal»)', anotar:true };
+  if (!waSucDomingo_(suc)) return { m:'es domingo y su tienda (' + suc + ') no abre', anotar:false };
+  return null;
+}
 /** Lo de una vendedora: {V, ent, cob, bs, doc, av, km, por, vacio}. `K` = `waKmLeer_` (null: sin dato de Kommo). */
 function waBdDatos_(lista, V, B, K) {
   var por = {}, mias = [], av = [];
   (lista || []).forEach(function (p) { if (!p) return; por[String(p.id)] = p; if (waBdEsDe_(p.vendedor, V)) mias.push(p); });
   var tu = function (p) { return waTurno_(p) === 'PM' ? 1 : 0; };
-  var ent = mias.filter(function (p) { return waEsEntrega_(p) && String(p.fecha) === B.hoy; })
+  /* ☀️ (2026-11-07-b) El domingo no sale el camión: ninguna entrega (ni lo que haya quedado con fecha de domingo), como un día sin entregas. */
+  var sinCamion = waDow_(B.hoy) === 0;
+  var ent = mias.filter(function (p) { return !sinCamion && waEsEntrega_(p) && String(p.fecha) === B.hoy; })
                 .sort(function (a, b) { return (tu(a) - tu(b)) || ((Number(a.nroDia) || 0) - (Number(b.nroDia) || 0)); });
   var cob = ent.filter(function (p) { return waSaldoACobrar_(p) > 0.005; }), bs = 0;
   cob.forEach(function (p) { bs = waR2_(bs + waSaldoACobrar_(p)); });
@@ -4416,6 +4458,8 @@ function probarMensajesDelDia() {
   L.push('📥 Kommo: ' + (K ? (K.sin.length + ' lead(s) con el último mensaje del cliente sin responder (últimas ' + WA_KM_HORAS + ' h).') : 'sin dato (falta KOMMO_TOKEN o Kommo no contestó).'));
   if (!eq.length) L.push('☀️ El «Buen día» no le llega a nadie: no hay vendedoras del equipo en WA_VENDEDORAS.');
   eq.forEach(function (V) {
+    var dom = waDow_(B.hoy) === 0 ? waBdDomingo_(V, K) : null;   // ☀️ (2026-11-07-b) el domingo, solo las tiendas que abren
+    if (dom) { L.push('☀️ ' + V.nombre + ': ' + dom.m + ', no le saldría.'); return; }
     var D = waBdDatos_(lista, V, B, K);
     L.push('☀️ ' + V.nombre + (D.vacio ? ': no tiene nada pendiente, no le saldría.' : ' diría: ' + waBdParams_(D, B).map(waParam_).join(' | ')));
   });
@@ -4496,7 +4540,10 @@ function waArmar_(m, recs, cfg, B) {
     if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
     var lisD = []; for (var idd in recs) lisD.push(recs[idd]);
     if (m.k === 'bd') {
-      var DB = waBdDatos_(lisD, L, B, waKmLeer_(cfg));
+      /* ☀️ (2026-11-07-b) El domingo, solo las de las tiendas que abren (la tienda, de la MISMA lectura de Kommo de esta vuelta). */
+      var Kb = waKmLeer_(cfg), dom = waDow_(B.hoy) === 0 ? waBdDomingo_(L, Kb) : null;
+      if (dom) return { saltar:dom.m, anotar:dom.anotar };
+      var DB = waBdDatos_(lisD, L, B, Kb);
       if (DB.vacio) return { saltar:'hoy no tiene nada pendiente (ni entregas, ni facturas, ni Kommo, ni avisos de Contabilidad)', anotar:false };
       out.params = waBdParams_(DB, B);
     } else {
@@ -4645,8 +4692,10 @@ function waRepasoBot_() {
       });
     });
     /* ☀️ (2026-11-07-a, idea 114) 08:30, lunes a sábado sin feriados: el «Buen día» a cada vendedora del equipo con su número en
-       WA_VENDEDORAS. A quién se decide acá (sin red: solo las Propiedades); qué le toca, al armar (afuera del candado): sin nada, no sale. */
-    if (B.hora >= WA_HORA_BD && B.hora < WA_HORA_BD + WA_VENTANA_H && hecho.bd !== B.hoy && waPhHabil_(B.hoy)) {
+       WA_VENDEDORAS. A quién se decide acá (sin red: solo las Propiedades); qué le toca, al armar (afuera del candado): sin nada, no sale.
+       ☀️ (2026-11-07-b) Y el DOMINGO: se encolan todas igual (acá no hay red) y `waArmar_` deja solo a las de las tiendas que abren el
+       domingo, con la tienda de su usuario de Kommo (`waBdDomingo_`). Un feriado de lunes a sábado sigue sin «Buen día». */
+    if (B.hora >= WA_HORA_BD && B.hora < WA_HORA_BD + WA_VENTANA_H && hecho.bd !== B.hoy && (waPhHabil_(B.hoy) || waDow_(B.hoy) === 0)) {
       var eqBd = waBdEquipo_();
       if (eqBd.length) { eqBd.forEach(function (V) { msgs.push({ k:'bd', a:V.nombre, dia:B.hoy, n:0 }); }); hecho.bd = B.hoy; cambio = true; }
     }
