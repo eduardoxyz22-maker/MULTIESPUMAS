@@ -17406,6 +17406,7 @@ los tres de la página retomaron con su trabajo sin guardar, que no se había pe
   · 📅 **«Sábado en la tarde» ofrece «Pasarlo al lunes DD/MM a la tarde»** (`obsRevSabMover`/`obsRevMoverAplicar`: el primer día después de ese
   sábado que no es domingo, feriado, día cerrado ni sin tarde; pone fecha y 🌆 PM, NO guarda); `OBS_REV_MOVIDO` evita que el mismo aviso vuelva al
   guardar con lo propuesto. `obsRevUbicarHora` ya no lee «14/11» como «las 11». `test_bloki_preguntas` §9 (74), `test_revisar_obs` §14 (89).
+  · PÁGINA 2026-11-07-c PUBLICADA 07/11 (`main` = `9eedc2f`); servidor `2026-11-07-b` para implementar: enlace fijo `7f283ff…`, 6.775 líneas.
   · Pregunta abierta: Kommo y `VENDEDOR_SUCURSAL` del panel no coinciden (Carola, Jonathan, Isabel, Fabián): ¿se pasan las de Kommo al panel?
   · 💵 El 06/11 a Contabilidad le llegó el efectivo y al dueño no: el servidor contesta `2026-11-06-d`; lo probable es que a las 18:00 todavía
   corría la 06-b/c (al dueño solo con efectivo de 48 h+, y la marca `ef18` del día ya quedó puesta). Con la 06-d sale a los dos desde el 07/11 9:00.
