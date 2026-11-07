@@ -17357,7 +17357,31 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4or — 👔 EL JEFE DEL DUEÑO EN WA_DUENO: TODO MENOS EL EFECTIVO (07/11; dueño: *«para que también le llegue a mi jefe solo coloco su nombre y número al lado del mío, ¿cierto?»* → *«todo menos lo del efectivo»*; servidor `2026-11-07-e` para el dueño; la página solo cambia `SCRIPT_VERSION_ESPERADA`, se publica DESPUÉS de que él implemente)
+### §4os — 🏷️ BLOKI CONTESTA EL CÓDIGO DE UN PRODUCTO (07/11; dueño, con la captura de Bloki diciendo «No tengo esa respuesta todavía» a «cual es el codigo del colchon cloud de 90×190»: *«¿y no que Bloki respondía preguntas?»*; página 2026-11-07-g, va con la `SCRIPT_VERSION_ESPERADA` 07-e)
+- **Por qué no contestaba**: Bloki entiende cuatro preguntas con los números del panel (stock, saldo de un cliente, cupos, entregas) y las
+  preguntas libres van a Claude SOLO con la contraseña de Administración (`blokiClaudePuede`). «El código de…» no era ninguna de las cuatro.
+  Y el CLOUD **no está en la lista de precios** (`CODIGOS`): solo en los Excel (planilla real del 07/11: CH2511 = CLOUD 105x190 en PTF,
+  CH2512 = CLOUD 140x190 en Banzer; en 90x190 no hay ninguno). Tampoco en el histórico del sistema.
+- **Pregunta nueva `codigo`** (`BLOKI_RE.codigo` = «código/códigos/cod», o «¿qué/cuál es el CH…?» con un código conocido, `BLOKI_RE.queEs`):
+  `blokiCodigo` → por el nombre: la lista de precios Y los Excel de los almacenes (lo de los Excel que la lista no tiene, `blokiCodIdx().alm`,
+  con el nombre de `productoDeAlmacen`); si en ninguno, el histórico del sistema (`blokiCodIdx().hist`, `VENTAS_HIST`). Uno → «El código de
+  COLCHON CLOUD 105x190 es CH2511» + de dónde sale + «📦 Ver su stock» (el cuadrito de siempre). Varios → la lista de códigos (`a.cods`,
+  `.bkp-cod`, hasta `BLOKI_LISTA_MAX`). En otra medida → «No tengo colchon cloud en 90x190. Está en:» con el código de cada medida
+  (`out.medCods`). Al revés: «¿qué es el CH1220?» → el producto; uno del histórico → su nombre; uno que no existe → «No encontré el código».
+- **El stock de lo que la lista no tiene**: `blokiProductos` busca en la lista del formulario y, SOLO si ahí no hay nada (ni en otra medida),
+  en los Excel (`blokiCandDe` = el mismo puntaje de siempre sobre otro índice). «¿hay cloud 140?» ya contesta. Lo de la lista no cambió.
+- «90×190» (el signo de multiplicar) se lee 90x190 (`blokiNorm`). `BLOKI_PV` suma CODIGO, COD, PRODUCTO, NOMBRE.
+- **El «no sé» dice qué sí contesta** (`blokiQueSe`, abajo de «No tengo esa respuesta todavía»): el stock o el código de un producto, si
+  hay lugar, qué se entrega y (no a Logística sin la contraseña) cuánto le falta pagar a un cliente; las preguntas libres, Claude con la
+  contraseña de Administración.
+- `tests/test_bloki_codigo.js` (20; 18 rojas contra `63b947d`). `test_bloki_preguntas` 74/0, `test_asis_no_se`, `test_bloki`, `test_asistente` igual.
+- 👔 En el mismo rato: el dueño no podía agregar a su jefe en `WA_DUENO` («no me deja editar, porque ya tiene 50»: la pantalla de Propiedades
+  es de solo lectura con más de 50). Se le pasó por el chat una función CORTA para un archivo aparte (`agregar_jefe` → `agregarJefeUnaVez()`)
+  que lee WA_DUENO y le suma «, Alberto:591…» al FINAL (el dueño sigue primero: el efectivo solo a él) si no está; si WA_DUENO está vacía no
+  escribe. De paso, si `WA_PEDIR_HOY` empieza con «rnesto:» (en su captura le faltaba la E) le pone la E. ⚠️ El número de Alberto NO va al
+  repo (es público): está solo en el chat y en la propiedad.
+
+### §4or — 👔 EL JEFE DEL DUEÑO EN WA_DUENO: TODO MENOS EL EFECTIVO (07/11; dueño: *«para que también le llegue a mi jefe solo coloco su nombre y número al lado del mío, ¿cierto?»* → *«todo menos lo del efectivo»*; servidor `2026-11-07-e` IMPLEMENTADO 07/11 por el dueño (contesta `2026-11-07-e`), enlace fijo `1eb5c58…`, 6.938 líneas; la página 07-g lleva `SCRIPT_VERSION_ESPERADA` 07-e; volver atrás: ✏️ a la versión anotada Y pegar la 07-d de `ff6f932…`)
 - `WA_DUENO` acepta varios («Eduardo:7…, Jefe:7…», separados por coma). A TODOS: el cierre del día de las 21:15 (y el botón «Ver qué vendió
   cada uno» / «productos», `waCdPide_`), el reclamo a la fábrica de las 10:00 y la alerta de leads. El efectivo de los vendedores (9:00 y
   18:00) **solo al PRIMERO** de la lista (`c.duenoEfe` = `c.dueno.slice(0, 1)`, en la cola del efectivo y en `waArmar_`). ⚠️ El dueño va

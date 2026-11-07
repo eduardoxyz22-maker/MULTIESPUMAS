@@ -1623,13 +1623,19 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 
 ## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `9eedc2f`, versión 2026-11-07-c; servidor: la 07-b no se implementó, el dueño implementó directo la `2026-11-07-c` (07/11, §4op) que la trae; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`)
 - ☀️ **`vendedora_buen_dia`** 08:30 lun-sáb hábil a cada vendedora de `WA_VENDEDORAS` (sin Eduardo/ROHO/internos; sin nada pendiente no sale) y
-  👔 `WA_DUENO` puede tener varios (el dueño PRIMERO y su jefe): a todos el cierre, el reclamo y la alerta de leads; el efectivo, solo al primero (§4or, `.gs` 07-e).
+  👔 `WA_DUENO` puede tener varios (el dueño PRIMERO y su jefe): a todos el cierre, el reclamo y la alerta de leads; el efectivo, solo al primero (§4or, `.gs` 07-e
+  IMPLEMENTADO 07/11, enlace fijo `1eb5c58…`, 6.938 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 07-d de `ff6f932…`). Con más de 50 propiedades la pantalla
+  es de solo lectura: el jefe se agrega con una función en un archivo aparte que SUMA al final de WA_DUENO (el número nunca al repo).
   🌙 **`cierre_del_dia`** 21:15 a `WA_DUENO` (desde la 07-d, §4oq: CADA vendedor con «N prod., Bs X», `waCdProds_`, y la v2 con el botón «Ver qué vendió cada uno» → `waCdPide_`/`waCdResponder_` le mandan, como texto, cada vendedor con sus productos sumados y su monto, sin OC ni cliente; también si el dueño escribe «productos»); el mes sale de la última foto de `__pry_hist__`. ⚠️ El `.gs` copia `ventaTotal`, `saldoACobrar`,
   `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`: si cambia uno en la página, cambia en el `.gs` (`test_wa_buen_dia_cierre` compara).
   Kommo «sin responder» = `/events` sin `filter[entity]` (§4ng), la respuesta del bot de Kommo no cuenta, lo dudoso dice «sin dato».
 - 🧽 **Acción `bloki`** (afuera del candado, tope `BLOKI_TOPE_DIA`=30 por día, `IA_ACTIVA` + clave). 💬 En la página, «💬 Preguntame»: stock, saldo
   de un cliente, cupos y entregas con las cuentas del panel (`blokiStock` = `saldoVeredicto`, etc.; «a la mañana» = turno, «mañana» = día); a Claude
   solo con `UNLOCKED` y `servidorTiene('2026-11-07-a')`. Una vendedora ve lo suyo. `tests/test_bloki_preguntas.js` (66).
+  🏷️ **El código de un producto** (§4os, página 07-g; dueño: *«¿y no que Bloki respondía preguntas?»*): «código del cloud 90x190», «¿qué es el CH1220?»
+  (`blokiCodigo`): la lista de precios, los Excel de los almacenes (lo que la lista no tiene, `blokiCodIdx().alm`) y, si en ninguno, el histórico
+  (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
+  El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (20).
 - 📝 **Revisar las observaciones** (`obsRevisar`, al final de `submitPedido`): día/turno, cantidades y plata contra lo cargado; «Corregir» / «Guardar
   igual», nunca frena; calla en lo dudoso. ⚠️ El final de `submitPedido` vive en **`seguirAlGuardar`**: algo nuevo ahí va adentro. `OBS_REV_PRUEBA`.
   `tests/test_revisar_obs.js` (72).

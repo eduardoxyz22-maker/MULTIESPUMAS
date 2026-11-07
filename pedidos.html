@@ -4705,6 +4705,11 @@ body.anu-tiembla > .nav, body.anu-tiembla > .wrap{ animation:ag-sacude .45s cubi
 .bkp-n small{ display:block; font-size:.68rem; color:var(--muted); line-height:1.2; } .bkp-n .bkp-ns{ margin-top:1px; color:#5b6b7d; }
 .bkp-n.ok b{ color:#15803d; } .bkp-n.mal b{ color:var(--red); } .bkp-n.am b{ color:#b45309; }
 .bkp-sub{ color:var(--muted); font-size:.76rem; margin-top:5px; }
+.bkp-cods{ display:grid; gap:4px; margin-top:7px; }
+.bkp-cod{ display:flex; gap:9px; align-items:baseline; background:#fff; border:1px solid var(--gray-md); border-radius:9px; padding:5px 9px; min-width:0; }
+.bkp-cod b{ flex:none; font-family:ui-monospace, Consolas, monospace; font-size:.84rem; color:var(--teal-dk); letter-spacing:.02em; }
+.bkp-cod span{ min-width:0; font-size:.8rem; font-weight:600; }
+.bkp-cod small{ display:block; font-size:.68rem; font-weight:500; color:var(--muted); }
 .bkp-w{ color:#9a5b00; font-size:.76rem; margin-top:5px; font-weight:600; }
 .bkp-li{ max-height:220px; }
 .bkp-opc{ display:grid; gap:4px; margin-top:7px; }
@@ -51546,7 +51551,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-07-f';
+var PANEL_V='2026-11-07-g';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -55098,6 +55103,12 @@ function asisPreguntasHtml(){
      3. 🎟️ CUPOS — «¿hay lugar el sábado?», «cupos de mañana a la tarde»: `cuposUsadosTurno` / `limTurno` (el sábado solo a la mañana;
         domingo, feriado y día cerrado, no sale camión).
      4. 🚚 ENTREGAS — «qué entrego mañana», «mis entregas de hoy»: la lista de ese día (OC, cliente, zona, turno); cada una abre su pedido.
+     4b. 🏷️ CÓDIGOS (07/11, dueño: *«¿y no que Bloki respondía preguntas?»* con «cuál es el código del colchón cloud de 90×190») —
+        «código del titanio ice 140», «¿qué es el CH1220?»: el código de un producto (y al revés). Busca en la lista de precios
+        (`CODIGOS`), en los Excel de los almacenes (`stockIndiceApretado().cod` → `productoDeAlmacen`: lo que la lista no tiene, como el
+        CLOUD) y, si en ninguno de los dos, en el histórico del sistema (`VENTAS_HIST`). Si no está en esa medida, dice en cuáles sí, con
+        su código (`blokiCodigo`, `blokiCodIdx`). Lo del Excel también vale para el STOCK: un producto que la lista no tiene se busca ahí
+        (`blokiProductos` prueba la lista y, si no encuentra nada, los Excel).
    «a la mañana» / «de la tarde» es el TURNO; «mañana» a secas, el DÍA. Días: hoy, mañana, pasado mañana, lunes…domingo (el próximo) y
    dd/mm. Cada respuesta lleva «con los números del panel · no gasta».
    QUIÉN VE QUÉ: una vendedora, solo lo suyo (sus ventas y sus entregas); con la contraseña, o quien entró como Administración,
@@ -55128,6 +55139,8 @@ var BLOKI_RE={
   noEntregas:/\b(cierre|cerrar|cobr\w*|flete|recargo|reprogram\w*|cambi\w*|correo|atc)\b/,
   cliente:/\b(debe|deben|deuda|deudas|adeuda|falta(?:n)?\s+(?:pagar|cobrar)|le\s+falta|le\s+queda|cuanto\s+(?:le\s+)?(?:falta|debe|pago|queda|abono)|ultimo\s+pago|pagos?\s+(?:de|del)|cobrar(?:le)?\s+a)\b/,
   saldoDe:/\bsaldo\s+(?:de|del|a)\b/,
+  codigo:/\b(codigos?|cod)\b/,
+  queEs:/^(?:que|cual)\s+(?:producto\s+)?es\b/,
   oc:/\b\d{2}-\d{3,4}\b/,
   stockFuerte:/\b(stock|saldo|disponibles?|existencias?|inventario)\b/,
   stockDebil:/\b(hay|queda|quedan|tenemos|tienen|tiene|libres?)\b/
@@ -55139,14 +55152,14 @@ var BLOKI_PV=blokiMapa('HAY STOCK SALDO DE DEL EL LA LOS LAS LO LE LES PARA QUE 
   'MEDIDAS MEDIA CM X ALMACEN ALMACENES DEPOSITO PTF BANZER MORENO FABRICA AHORA TODAVIA AUN MAS UNIDAD UNIDADES POR FAVOR PORFA DIME DECIME SABES '+
   'SABE ESTA ESTAN ESTE ESTOS ESAS ESOS ENTREGAR ENTREGA VENDER VENTA VENTAS CLIENTE PEDIDO PEDIDOS HOLA BLOKI VEO VER MIRA MIRAR SABER CONSULTAR '+
   'REVISAR CHE ALGUN ALGUNO ALGUNA ALGO LLEGA LLEGAN PUEDO PODEMOS PUEDE PROGRAMAR AGENDAR MI MIS SU SUS TU TUS ES SON HABRA HABIA QUIERO NECESITO '+
-  'BUSCO CUAL CUALES COMO DONDE TOTAL ALCANZA SALE SALEN');
+  'BUSCO CUAL CUALES COMO DONDE TOTAL ALCANZA SALE SALEN CODIGO CODIGOS COD PRODUCTO PRODUCTOS NOMBRE');
 /* Lo que NO es el nombre de un cliente (en minúsculas, sin tildes) */
 var BLOKI_CV=blokiMapa('cuanto cuanta le les falta faltan pagar pago pagos pago paga pagado debe deben deuda deudas adeuda saldo de del la el los las a al '+
   'que cual es tiene tienen senora senor sra sr don dona cliente clienta mi mis su sus ultimo ultima cobrar cobrarle cobro queda y o con por para me nos '+
   'hay todavia aun ya total venta ventas pedido pedidos compra compras abono abonado dime decime quiero saber ver sabes lic licenciado licenciada ing '+
   'doctor doctora dr dra oc nota');
 function blokiNorm(q){
-  var t=sinTildes(String(q==null?'':q)).replace(/[¿?¡!;:"“”«»()\[\]]/g,' ');
+  var t=sinTildes(String(q==null?'':q).replace(/(\d)\s*[×✕✖]\s*(\d)/g,'$1x$2')).replace(/[¿?¡!;:"“”«»()\[\]]/g,' ');   // «90×190» = 90x190 (07/11)
   t=t.replace(/(\d)[.,](\d)/g,'$1\u0001$2').replace(/[.,]/g,' ').replace(/\u0001/g,'.');   // los decimales quedan con punto
   return t.replace(/\s+/g,' ').trim();
 }
@@ -55229,15 +55242,18 @@ function blokiMedidas(s){
   if(med && med.plz!=null){ med.anchos=BLOKI_PLZ[String(med.plz)]||[]; if(!med.anchos.length) med=null; }
   return { med:med, s:s };
 }
-/* Los productos que nombra la pregunta. `rapido`: solo para saber SI nombra alguno (mientras se escribe), sin la clave del stock. */
-function blokiProductos(r, rapido){
+/* Los productos que nombra la pregunta. `rapido`: solo para saber SI nombra alguno (mientras se escribe), sin la clave del stock.
+   🏷️ (07/11) Primero la lista del formulario; si ahí no hay nada (ni en otra medida), los Excel de los almacenes (`blokiCodIdx().alm`:
+   lo que la lista de precios no tiene, como el CLOUD). `porCod`: para la pregunta del código, sin juntar por la clave del stock. */
+function blokiProductos(r, rapido, porCod){
   var s=' '+String(r||'').toUpperCase()+' ', out={ cands:[], cant:1, med:null, palabras:[], porCodigo:false, medidas:[], nombre:'' };
-  var idx=blokiIdx();
   var mc=/\b([A-Z]{1,5}\d{2,6}[A-Z]?)\b/.exec(s), cod=mc ? mc[1] : '';
-  if(cod && (CODIGOS[cod] || (!rapido && productoDeAlmacen(cod)))){
-    var cx=CODIGOS[cod] ? { code:cod, d:CODIGOS[cod].d, m:CODIGOS[cod].m||'' } : (function(a){ return { code:cod, d:a.d, m:a.m||'' }; })(productoDeAlmacen(cod));
+  var pa=null; if(cod && !CODIGOS[cod]){ try{ pa=productoDeAlmacen(cod); }catch(e){ pa=null; } }   // (07/11) también mientras escribe: «¿qué es el CH2512?»
+  if(cod && (CODIGOS[cod] || pa)){
+    var cx=CODIGOS[cod] ? { code:cod, d:CODIGOS[cod].d, m:CODIGOS[cod].m||'' } : { code:cod, d:pa.d, m:pa.m||'', hist:!!pa.hist };
     out.porCodigo=true;
-    out.cands.push({ k:rapido ? '' : stockInfo({ desc:cx.d, medida:cx.m, codigo:cod }).k, code:cod, d:cx.d, m:cx.m, lbl:blokiLbl(cx), exacto:true });
+    out.cands.push({ k:rapido ? '' : stockInfo({ desc:cx.d, medida:cx.m, codigo:cod }).k, code:cod, d:cx.d, m:cx.m, lbl:blokiLbl(cx), exacto:true,
+      src:CODIGOS[cod] ? 'lista' : (cx.hist ? 'hist' : 'alm'), x1:!!(CODIGOS[cod] && CODIGOS[cod].x) });
     return out;
   }
   var M=blokiMedidas(s); s=M.s; out.med=M.med;
@@ -55245,6 +55261,19 @@ function blokiProductos(r, rapido){
   if(mq){ var n=+mq[1]; if(n>=1 && n<=60){ out.cant=n; var i0=mq.index+mq[0].indexOf(mq[1]); s=s.slice(0, i0)+' '+s.slice(i0+mq[1].length); } }
   var ws=s.split(/\s+/).filter(Boolean).map(blokiSing).filter(function(w){ return w.length>1 && !/^\d/.test(w) && !BLOKI_PV[w]; });
   out.palabras=ws;
+  blokiCandDe(blokiIdx(), ws, out, rapido, porCod, 'lista');
+  if(!out.cands.length && !out.medidas.length){
+    var ci=null; try{ ci=blokiCodIdx(); }catch(e){ ci=null; }
+    if(ci && ci.alm.L.length){
+      var o2={ cands:[], med:out.med, medidas:[], nombre:'' };
+      blokiCandDe(ci.alm, ws, o2, rapido, porCod, 'alm');
+      if(o2.cands.length || o2.medidas.length){ out.cands=o2.cands; out.medidas=o2.medidas; out.nombre=o2.nombre; out.medCods=o2.medCods; }
+    }
+  }
+  return out;
+}
+/* Los candidatos de un índice (`{L, toks}`: la lista del formulario, los Excel o el histórico) para las palabras `ws`. Llena `out`. */
+function blokiCandDe(idx, ws, out, rapido, porCod, src){
   /* las palabras que no son de ningún producto («para JUAN») no cuentan: si ninguna es, no nombra ningún producto */
   var util=ws.filter(function(w){ return idx.toks.some(function(tk){ return blokiVale(w, tk)>0; }); });
   if(!util.length) return out;
@@ -55269,8 +55298,8 @@ function blokiProductos(r, rapido){
   if(out.med && C.length){
     var con=C.filter(function(c){ return blokiMedVale(c.e.m, out.med); });
     if(!con.length){ var sinM=C.filter(function(c){ return !c.e.m; });   // lo que no lleva medida (almohadas NASA) no se descarta por la medida
-      if(!sinM.length){ var vm={}; C.forEach(function(c){ if(c.e.m && c.e.m!=='especial') vm[c.e.m]=1; });
-        out.medidas=Object.keys(vm).sort(function(a,b){ return blokiAncho(a)-blokiAncho(b); }); }
+      if(!sinM.length){ var vm={}, mcod={}; C.forEach(function(c){ if(c.e.m && c.e.m!=='especial'){ vm[c.e.m]=1; (mcod[c.e.m]=mcod[c.e.m]||[]).push(c.e.x.code); } });
+        out.medidas=Object.keys(vm).sort(function(a,b){ return blokiAncho(a)-blokiAncho(b); }); out.medCods=mcod; }
       C=sinM; }
     else C=con;
   }
@@ -55280,10 +55309,37 @@ function blokiProductos(r, rapido){
   var vistos={};
   C.forEach(function(c){
     var x=c.e.x, k=''; try{ k=stockInfo({ desc:x.d, medida:x.m, codigo:x.code }).k; }catch(er){ k=''; }
-    if(!k || k==='|' || vistos[k]) return; vistos[k]=1;
-    out.cands.push({ k:k, code:x.code, d:x.d, m:x.m||'', lbl:blokiLbl(x), exacto:c.exacto });
+    var llave=porCod ? ('c:'+x.code) : k;
+    if(!llave || llave==='|' || vistos[llave]) return; vistos[llave]=1;
+    out.cands.push({ k:(k && k!=='|') ? k : '', code:x.code, d:x.d, m:x.m||'', lbl:blokiLbl(x), exacto:c.exacto, src:src||'lista', x1:c.e.x1 });
   });
   return out;
+}
+/* 🏷️ (07/11) Los códigos que la lista de precios no tiene: los de los Excel de los almacenes (`alm`, con su nombre de `productoDeAlmacen`) y
+   los del histórico del sistema que no están en ningún Excel (`hist`: se vendieron alguna vez; hoy no hay). Se rehace si cambia el stock. */
+var BLOKI_COD_IDX=null;
+function blokiCodIdx(){
+  var de=(typeof STOCK!=='undefined') ? STOCK : null;
+  if(BLOKI_COD_IDX && BLOKI_COD_IDX._de===de) return BLOKI_COD_IDX;
+  var arma=function(){ return { L:[], toks:[], _v:{} }; }, alm=arma(), hist=arma(), ya={};
+  var meter=function(I, x, src){
+    if(!x || !x.code || ya[x.code] || !x.d) return; ya[x.code]=1;
+    var nv=nombreVenta(x.d, x.code), toks=blokiToks(nv);
+    toks.forEach(function(t){ var k=t.t+(t.ab?'.':''); if(!I._v[k]){ I._v[k]=1; I.toks.push(t); } });
+    I.L.push({ x:{ code:x.code, d:x.d, m:x.m||'' }, nv:nv, nu:sinTildes(nv).toUpperCase(), toks:toks, m:normMedida(x.m||''), x1:0, src:src });
+  };
+  if(de){
+    var cods={}; try{ cods=stockIndiceApretado().cod||{}; }catch(e){ cods={}; }
+    Object.keys(cods).sort().forEach(function(c){ if(CODIGOS[c]) return; var a=null; try{ a=productoDeAlmacen(c); }catch(e){ a=null; } if(a) meter(alm, { code:c, d:a.d, m:a.m }, 'alm'); });
+  }
+  var H=ventasHistPorCodigo();
+  Object.keys(H).sort().forEach(function(c){
+    if(CODIGOS[c] || ya[c]) return;
+    var h=H[c], m=normMedida(h.m||'')||normMedida(medidaDeTexto(h.n));
+    if(/MED\.?\s*ESP/i.test(String(h.n||''))){ var mn=normMedida(medidaDeTexto(h.n)); if(mn) m=mn; }
+    var d=nombreSinMedida(h.n)||String(h.n||'').trim(); if(d) meter(hist, { code:c, d:d, m:m }, 'hist');
+  });
+  return (BLOKI_COD_IDX={ alm:alm, hist:hist, _de:de });
 }
 function blokiLbl(x){ return nombreVenta(x.d, x.code)+(x.m?(' '+x.m):''); }
 /* ---------- ¿qué pregunta es? (barato: se llama mientras se escribe) ---------- */
@@ -55292,10 +55348,12 @@ function blokiEntender(q){
   var t=blokiNorm(raw); if(!t) return null;
   if(BLOKI_RE.como.test(t) && asisBuscar(raw).length) return null;     // «¿cómo hago…?» con su respuesta escrita: es de la ayuda
   var D=blokiDia(t), r=D.resto, o={ t:t, raw:raw, dia:D.dia, turno:D.turno, resto:r };
+  if(BLOKI_RE.codigo.test(r)){ o.tipo='codigo'; return o; }               // 🏷️ «código del cloud 90x190»
   if(BLOKI_RE.cupos.test(r)){ o.tipo='cupos'; return o; }
   if(BLOKI_RE.entregas.test(r) && !BLOKI_RE.noEntregas.test(r)){ o.tipo='entregas'; return o; }
   if(BLOKI_RE.cliente.test(r) || (BLOKI_RE.oc.test(r) && /\b(saldo|debe|falta|pago|pagos|cobrar)\b/.test(r))){ o.tipo='cliente'; return o; }
   var P=blokiProductos(r, true);
+  if(P.porCodigo && BLOKI_RE.queEs.test(r) && !BLOKI_RE.stockFuerte.test(r)){ o.tipo='codigo'; return o; }   // 🏷️ «¿qué es el CH1220?»
   if(BLOKI_RE.saldoDe.test(r) && !P.cands.length && !P.porCodigo){ o.tipo='cliente'; return o; }   // «saldo de Juan Pérez»: no es un producto
   if(P.cands.length && (P.porCodigo || BLOKI_RE.stockFuerte.test(r) || BLOKI_RE.stockDebil.test(r))){ o.tipo='stock'; return o; }
   if(BLOKI_RE.stockFuerte.test(r) && (P.palabras.length || P.med)){ o.tipo='stock'; return o; }   // «stock de xyz»: no lo encuentra, y lo dice
@@ -55326,6 +55384,7 @@ function blokiResponder(o){
   if(o.tipo==='entregas') return blokiEntregas(o);
   if(o.tipo==='cliente') return blokiCliente(o);
   if(o.tipo==='stock') return blokiStock(o);
+  if(o.tipo==='codigo') return blokiCodigo(o);
   return null;
 }
 /* ---------- 📦 stock ---------- */
@@ -55344,6 +55403,62 @@ function blokiStock(o){
   return { h:'Encontré '+(P.cands.length>BLOKI_OPC_MAX ? (P.cands.length+' productos') : 'estos')+' con «'+esc(P.nombre.toLowerCase())+'»'+(P.med?(' en '+esc(blokiMedTxt(P.med))):'')+'. ¿Cuál es?',
     opc:L.map(function(c){ return [c.lbl, function(){ blokiContestar(c.lbl+(o.dia?(' · '+saldoDiaTxt(o.dia)):''), function(){ return blokiStockDe(c, o.dia, P.cant, o.turno); }); }]; }),
     sub:P.cands.length>BLOKI_OPC_MAX ? ['… y '+(P.cands.length-BLOKI_OPC_MAX)+' más: decime la medida o el código.'] : [] };
+}
+/* ---------- 🏷️ el código de un producto (y al revés) ---------- */
+var BLOKI_SRC_TXT={ lista:'de la lista de precios', alm:'no está en la lista de precios: sale del Excel del almacén', hist:'del histórico de ventas del sistema: hoy no está en ningún Excel' };
+function blokiCodFila(c){ return { c:c.code, n:c.lbl, s:c.src==='lista' ? '' : (c.src==='alm' ? 'del Excel del almacén' : 'del histórico (hoy no hay)'), x1:!!c.x1 }; }
+function blokiCodStockBtn(a, c, o){
+  if(!c.k || c.src==='hist') return;
+  (a.btns=a.btns||[]).push(['📦 Ver su stock', function(){ blokiContestar('Stock de '+c.lbl, function(){ return blokiStockDe(c, o.dia, 1, o.turno); }); }]);
+}
+function blokiCodigo(o){
+  var P=blokiProductos(o.resto, false, true), a;
+  if(P.porCodigo){                                         // «¿qué es el CH1220?»
+    var c=P.cands[0];
+    a={ h:'<b>'+esc(c.code)+'</b> es <b>'+esc(c.lbl)+'</b>.', sub:[esc(blokiCap(BLOKI_SRC_TXT[c.src]||BLOKI_SRC_TXT.lista))+'.'] };
+    if(CODIGOS[c.code] && CODIGOS[c.code].x) (a.warn=[]).push('Ya no se fabrica: se vende lo que queda.');
+    blokiCodStockBtn(a, c, o); return a;
+  }
+  /* un código que no está en ningún lado */
+  var mc=/\b([a-z]{1,5}\d{2,6}[a-z]?)\b/i.exec(o.resto||'');
+  if(mc){
+    var cu=mc[1].toUpperCase(), hc=ventasHistPorCodigo()[cu];
+    if(hc) return { h:'<b>'+esc(cu)+'</b> es <b>'+esc(hc.n)+'</b>.', sub:[esc(blokiCap(BLOKI_SRC_TXT.hist))+'.'] };
+    return { h:'No encontré el código <b>'+esc(cu)+'</b> ni en la lista de precios ni en los Excel de los almacenes ni en el histórico del sistema.', mal:1 };
+  }
+  /* por el nombre: la lista y los Excel (los dos), y el histórico si en ninguno de los dos */
+  if(!P.cands.length && !P.medidas.length && P.palabras.length){
+    var ci=blokiCodIdx(), o3={ cands:[], med:P.med, medidas:[], nombre:'' };
+    blokiCandDe(ci.hist, P.palabras, o3, false, true, 'hist');
+    if(o3.cands.length || o3.medidas.length){ P.cands=o3.cands; P.medidas=o3.medidas; P.medCods=o3.medCods; P.nombre=o3.nombre; }
+  }
+  else if(P.cands.length && P.cands[0].src==='lista'){     // lo de la lista, y además lo de los Excel con las mismas palabras
+    var o4={ cands:[], med:P.med, medidas:[], nombre:'' };
+    try{ blokiCandDe(blokiCodIdx().alm, P.palabras, o4, false, true, 'alm'); }catch(e){}
+    o4.cands.forEach(function(c){ if(c.exacto && !P.cands.some(function(x){ return x.code===c.code; })) P.cands.push(c); });
+  }
+  if(!P.cands.length){
+    if(!P.palabras.length) return { h:'¿De qué producto? Escribí el nombre y la medida («código del titanio ice 140», «código del oro anatómico 2 plazas») o el código («¿qué es el CH1220?»).' };
+    var nom=esc((P.nombre||P.palabras.join(' ')).toLowerCase());
+    if(P.medidas.length){
+      var mc2=P.medCods||{};
+      return { h:'No tengo <b>'+nom+'</b> en '+esc(blokiMedTxt(P.med))+'. Está en:', mal:1,
+        cods:P.medidas.map(function(m){ return { c:(mc2[m]||[]).join(' · '), n:nom.toUpperCase()+' '+m, s:'' }; }) };
+    }
+    return { h:'No encontré «'+esc((P.palabras.join(' ')||o.raw).toLowerCase())+'» ni en la lista de precios ni en los Excel de los almacenes. Probá con otra palabra del nombre («titanio ice 140»).', mal:1 };
+  }
+  var ex=P.cands.filter(function(c){ return c.exacto; }), L=ex.length ? ex : P.cands;
+  if(L.length===1){
+    var u=L[0];
+    a={ h:'El código de <b>'+esc(u.lbl)+'</b> es <b>'+esc(u.code)+'</b>.', sub:[esc(blokiCap(BLOKI_SRC_TXT[u.src]||BLOKI_SRC_TXT.lista))+'.'] };
+    if(u.x1) (a.warn=[]).push('Ya no se fabrica: se vende lo que queda.');
+    blokiCodStockBtn(a, u, o); return a;
+  }
+  var muchos=L.length>BLOKI_LISTA_MAX;
+  a={ h:'Estos son los códigos de <b>'+esc((P.nombre||'').toLowerCase())+'</b>'+(P.med?(' en '+esc(blokiMedTxt(P.med))):'')+':',
+    cods:L.slice(0, BLOKI_LISTA_MAX).map(blokiCodFila) };
+  if(muchos) a.sub=['… y '+(L.length-BLOKI_LISTA_MAX)+' más: decime el modelo o la medida.'];
+  return a;
 }
 /* El cuadrito del formulario para ESE producto (`saldoVeredicto`, el mismo título, el mismo detalle y los mismos avisos). */
 function blokiStockDe(c, dia, cant, turno){
@@ -55633,12 +55748,19 @@ function blokiPreguntar(qIn){
         btns:blokiClaudePuede() ? [['🤖 Preguntarle a Claude igual', function(){ var it=blokiNuevo(q); blokiClaude(it); blokiChatPintar(true); }]] : [] }, item);
     }
     else if(blokiClaudePuede()) blokiClaude(item);
-    else { item.a={ mal:1, h:'No tengo esa respuesta todavía: la anoté para que la agreguen. Probá con otras palabras o preguntale a Eduardo por WhatsApp.', tag:'la anoté para que la agreguen' };
+    else { item.a={ mal:1, h:'No tengo esa respuesta todavía: la anoté para que la agreguen. Probá con otras palabras o preguntale a Eduardo por WhatsApp.', tag:'la anoté para que la agreguen',
+             sub:[blokiQueSe()] };
            asisPreguntaAnotar(q); }
   }
   asisAyudaLista();
   blokiChatPintar(true);
   if(inp && document.activeElement===inp){ try{ inp.select(); }catch(e){} }
+}
+/* 🏷️ (07/11) Con el «no sé», qué SÍ contesta (el dueño creía que contestaba cualquier cosa): lo de los números del panel, y que lo demás
+   va a Claude solo con la contraseña de Administración. A Logística sin la contraseña no se le ofrece lo que debe un cliente. */
+function blokiQueSe(){
+  return '💡 Con los números del panel te contesto: el stock o el código de un producto, si hay lugar un día, qué se entrega'+(blokiPlataNo() ? '' : ' y cuánto le falta pagar a un cliente')+
+    '. Las preguntas libres las contesta Claude, solo con la contraseña de Administración.';
 }
 var BLOKI_EJ=['¿Hay titanio ice 140 para el jueves?', '¿Hay lugar el sábado?', '¿Qué entrego mañana?', '¿Cuánto le falta pagar a '];
 function blokiEjemplo(i){
@@ -55657,6 +55779,8 @@ function blokiBurbuja(it){
   if(a.nums && a.nums.length) c+='<div class="bkp-nums">'+a.nums.map(blokiNumHtml).join('')+'</div>';
   (a.sub||[]).forEach(function(s){ c+='<div class="bkp-sub">'+s+'</div>'; });
   (a.warn||[]).forEach(function(w){ c+='<div class="bkp-w">'+esc(w)+'</div>'; });
+  if(a.cods && a.cods.length) c+='<div class="bkp-cods">'+a.cods.map(function(r){
+      return '<div class="bkp-cod"><b>'+esc(r.c||'—')+'</b><span>'+esc(r.n)+(r.s?('<small>'+esc(r.s)+'</small>'):'')+(r.x1?'<small>ya no se fabrica</small>':'')+'</span></div>'; }).join('')+'</div>';
   if(a.lista && a.lista.length) c+='<div class="asis-li bkp-li">'+a.lista.map(function(r){
       return '<button type="button" data-id="'+esc(r.id)+'" onclick="asisAbrirPedido(this.getAttribute(\'data-id\')'+(r.ped?',1':'')+')"><i><b>'+esc(r.t)+'</b><small>'+esc(r.s)+'</small></i>'+
         (r.m ? ('<em>'+esc(r.m)+'</em>') : '')+'<u>Abrir ›</u></button>'; }).join('')+'</div>';
