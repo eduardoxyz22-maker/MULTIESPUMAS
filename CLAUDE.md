@@ -1619,7 +1619,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 - ⚠️ Cambiar la lista = cambiar `VEHICULOS` y las pruebas que nombran choferes (`test_choferes_rotan`, `test_camiones_admin`, `test_chofer_efectivo`,
   `test_chofer_cobro_auto`, `test_ficha_mejoras`, `test_nueve_4js`, `test_patio`, `test_plata_borrar`, `test_fabrica_vida`). `tests/test_choferes_rotan.js` (12).
 
-## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `9eedc2f`, versión 2026-11-07-c; servidor `2026-11-07-b` lo implementa el dueño, enlace fijo `7f283ff…`, 6.775 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 06-e de `92714a6…`)
+## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `9eedc2f`, versión 2026-11-07-c; servidor: la 07-b no se implementó, el dueño implementó directo la `2026-11-07-c` (07/11, §4op) que la trae; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`)
 - ☀️ **`vendedora_buen_dia`** 08:30 lun-sáb hábil a cada vendedora de `WA_VENDEDORAS` (sin Eduardo/ROHO/internos; sin nada pendiente no sale) y
   🌙 **`cierre_del_dia`** 21:15 a `WA_DUENO`; el mes sale de la última foto de `__pry_hist__`. ⚠️ El `.gs` copia `ventaTotal`, `saldoACobrar`,
   `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`: si cambia uno en la página, cambia en el `.gs` (`test_wa_buen_dia_cierre` compara).
@@ -2717,7 +2717,7 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   octubre siguen solo para emparejar con los retiros. `waEfeCuentas_` empareja cobros y retiros — el efectivo es de
   quien lo recibió; un retiro cubre lo de esa persona hasta su día (mismo monto primero, después del más viejo); se avisa lo cobrado desde el 01/11
   (`WA_EFE_DESDE`) y de hace 2 días o más. ⚠️ Copia la lectura de pagos de la página: si cambia `parseCobros`/`anticipoDe`/`cobrosDe`/`contaPagos` o
-  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). 🧾 **07-c** (§4op; servidor para el dueño, enlace fijo `aa40393…`, 6.790 líneas; página 07-e PUBLICADA `aa40393`): un retiro que es JUSTO la suma de lo más
+  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). 🧾 **07-c** (§4op; servidor IMPLEMENTADO 07/11 por el dueño, contesta `2026-11-07-c`, enlace fijo `aa40393…`, 6.790 líneas; página 07-e PUBLICADA `aa40393`): un retiro que es JUSTO la suma de lo más
   nuevo sin recoger de esa persona se lleva eso (si no, del más viejo): el efectivo de octubre sin retiro ya no se come el retiro de noviembre. Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
   `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`; de la 06-d, pegar la 06-c de `68822ae2…`; de la 06-e, pegar la 06-d de `ca63dd15…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
 
