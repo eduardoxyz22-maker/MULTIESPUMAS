@@ -1,6 +1,7 @@
 /* 🏷️ BLOKI CONTESTA EL CÓDIGO DE UN PRODUCTO (07/11). El dueño, con la captura de Bloki diciendo «No tengo esa respuesta todavía» a
-   «cual es el codigo del colchon cloud de 90×190»: *«¿y no que Bloki respondía preguntas?»*. Bloki no tenía esa pregunta, y el CLOUD no está
-   en la lista de precios (`CODIGOS`): está solo en los Excel de los almacenes (CH2511 105x190 en PTF, CH2512 140x190 en Banzer).
+   «cual es el codigo del colchon cloud de 90×190»: *«¿y no que Bloki respondía preguntas?»*. Bloki no tenía esa pregunta, y el CLOUD no estaba
+   en la lista de precios (`CODIGOS`): solo en los Excel (CH2511 105x190, CH2512 140x190). Después el dueño mandó la lista del CLOUD (CH2510 90x190 …
+   CH2514 180x190) y entró a `CODIGOS`. Lo que la lista no tiene y los Excel sí se prueba con un producto INVENTADO («NIMBO», CH9101/CH9102).
 
    ⚠️ LO QUE ESTA PRUEBA CUIDA (falla contra lo publicado antes, `63b947d`):
    1. «código de <producto> <medida>»: el código, de la lista de precios o de los Excel de los almacenes (lo que la lista no tiene), con de
@@ -32,13 +33,13 @@ function PREPARAR(){
   STATE=[]; saveMirror();
   var LOG='PRODUCTOS TERMINADOS FAB.', BAN='01-05-025  Almacen Distribucion Banzer';
   var kIce=stockClave({ desc:'TITANIO ICE', medida:'140x190', codigo:'CH1220' });
-  var kC105=stockClaveCruda({ desc:'COLCHON CLOUD', medida:'105x190' }), kC140=stockClaveCruda({ desc:'COLCHON CLOUD', medida:'140x190' });
+  var kC105=stockClaveCruda({ desc:'COLCHON NIMBO', medida:'105x190' }), kC140=stockClaveCruda({ desc:'COLCHON NIMBO', medida:'140x190' });
   var st={ c:{ f:todayStr(), hora:'08:30:00', u:{}, solo0:true, alm:LOG, t:Date.now()-3600000, cod:{} }, e:[], p:[], a:{}, g:{}, al:{}, h:[] };
   st.g[BAN]={ f:todayStr(), hora:'08:30:00', u:{}, solo0:true, cod:{}, t:Date.now()-3600000, rs:{} };
   st.al[LOG]='log'; st.al[BAN]='sale';
   st.c.u[kIce]=3;
-  st.c.u[kC105]=4; st.c.cod.CH2511=kC105;      // CLOUD 105x190: 4 en PTF
-  st.g[BAN].u[kC140]=2; st.g[BAN].cod.CH2512=kC140;   // CLOUD 140x190: 2 en Banzer
+  st.c.u[kC105]=4; st.c.cod.CH9101=kC105;      // NIMBO 105x190 (inventado, solo en el Excel): 4 en PTF
+  st.g[BAN].u[kC140]=2; st.g[BAN].cod.CH9102=kC140;   // NIMBO 140x190: 2 en Banzer
   STOCK=st; STOCK_CARGADO=true; stockOlvidarIndice(); SALDO_CACHE=null;
   window.KC={ c105:kC105, c140:kC140 };
   /* un código del histórico del sistema que no está en la lista ni en los Excel */
@@ -85,18 +86,27 @@ function PREPARAR(){
 
   console.log('\n── 1. El código de un producto ──');
   let r = await ev(() => PREG('cual es el codigo del colchon cloud de 90×190'));
-  chk('la pregunta del dueño: «No tengo cloud en 90x190. Está en:» con el código de cada medida (CH2511 105x190, CH2512 140x190)',
-    /No tengo .*cloud.* en 90x190/i.test(r.t) && r.cods && r.cods.some(c=>/CH2511/.test(c) && /105x190/.test(c)) && r.cods.some(c=>/CH2512/.test(c) && /140x190/.test(c)) &&
-    !/No tengo esa respuesta todavía/.test(r.t), r);
+  chk('la pregunta del dueño: «El código de COLCHON CLOUD 90x190 es CH2510», de la lista de precios',
+    /El código de COLCHON CLOUD 90x190 es CH2510/.test(r.t) && /De la lista de precios/.test(r.t) && !/No tengo esa respuesta todavía/.test(r.t), r);
   chk('…con «con los números del panel · no gasta» (no se anota como «no sabe»)', /no gasta/.test(r.tag), r.tag);
-  r = await ev(() => PREG('código del colchón cloud de 1 plaza y media'));
-  chk('«código del colchón cloud de 1 plaza y media» = CH2511, y dice que no está en la lista de precios (sale del Excel)',
-    /El código de COLCHON CLOUD 105x190 es CH2511/.test(r.t) && /no está en la lista de precios: sale del Excel del almacén/i.test(r.t), r.t);
+  r = await ev(() => PREG('codigo cloud'));
+  chk('«codigo cloud» → los cinco de la lista del dueño (CH2510 90x190 … CH2514 180x190)', (r.cods||[]).length===5 &&
+    [['CH2510','90x190'],['CH2511','105x190'],['CH2512','140x190'],['CH2513','160x190'],['CH2514','180x190']].every(p=>r.cods.some(x=>x.indexOf(p[0])===0 && x.indexOf(p[1])>0)), r);
+  r = await ev(() => PREG('codigo del cloud de 2 plazas y media'));
+  chk('«código del cloud de 2 plazas y media» = CH2513', /El código de COLCHON CLOUD 160x190 es CH2513/.test(r.t), r.t);
+  r = await ev(() => PREG('codigo del cloud 200x200'));
+  chk('«código del cloud 200x200» (no está en la lista del dueño) → «No tengo… Está en:» con las cinco medidas', /No tengo .*cloud.* en 200x200/i.test(r.t) && (r.cods||[]).length===5, r);
+  r = await ev(() => PREG('cual es el codigo del colchon nimbo de 90×190'));
+  chk('lo que solo está en los Excel, en otra medida: «No tengo nimbo en 90x190. Está en:» con el código de cada medida (CH9101 105x190, CH9102 140x190)',
+    /No tengo .*nimbo.* en 90x190/i.test(r.t) && r.cods && r.cods.some(c=>/CH9101/.test(c) && /105x190/.test(c)) && r.cods.some(c=>/CH9102/.test(c) && /140x190/.test(c)), r);
+  r = await ev(() => PREG('código del colchón nimbo de 1 plaza y media'));
+  chk('«código del colchón nimbo de 1 plaza y media» = CH9101, y dice que no está en la lista de precios (sale del Excel)',
+    /El código de COLCHON NIMBO 105x190 es CH9101/.test(r.t) && /no está en la lista de precios: sale del Excel del almacén/i.test(r.t), r.t);
   chk('…con «📦 Ver su stock»', (r.btns||[]).some(b=>/Ver su stock/.test(b)), r.btns);
   r = await ev(() => TOCAR('Ver su stock'));
-  chk('«📦 Ver su stock» contesta el stock del CLOUD 105 (el cuadrito: PTF + Banzer = 4)', /COLCHON CLOUD 105x190/.test(r.t) && (r.nums||[]).some(n=>/^4 .*PTF \+ Banzer/.test(n)), r);
-  r = await ev(() => PREG('codigo cloud'));
-  chk('«codigo cloud» → los dos códigos', (r.cods||[]).length===2 && /Estos son los códigos de/.test(r.t), r);
+  chk('«📦 Ver su stock» contesta el stock del NIMBO 105 (el cuadrito: PTF + Banzer = 4)', /COLCHON NIMBO 105x190/.test(r.t) && (r.nums||[]).some(n=>/^4 .*PTF \+ Banzer/.test(n)), r);
+  r = await ev(() => PREG('codigo nimbo'));
+  chk('«codigo nimbo» → los dos códigos, «del Excel del almacén»', (r.cods||[]).length===2 && /Estos son los códigos de/.test(r.t) && r.cods.every(c=>/del Excel del almacén/.test(c)), r);
   r = await ev(() => PREG('¿Cuál es el código del titanio ice 140?'));
   chk('«código del titanio ice 140» = CH1220, de la lista de precios (sin somieres)', /El código de COLCHON TITANIO ICE 140x190 es CH1220/.test(r.t) && /De la lista de precios/.test(r.t), r.t);
   r = await ev(() => PREG('codigo del oro anatomico 2 plazas'));
@@ -109,8 +119,10 @@ function PREPARAR(){
   console.log('\n── 2. Al revés: qué producto es un código ──');
   r = await ev(() => PREG('¿Qué es el CH1220?'));
   chk('«¿qué es el CH1220?» → COLCHON TITANIO ICE 140x190, de la lista de precios', /CH1220 es COLCHON TITANIO ICE 140x190/.test(r.t) && /De la lista de precios/.test(r.t), r.t);
-  r = await ev(() => PREG('que es el CH2512'));
-  chk('«qué es el CH2512» → COLCHON CLOUD 140x190, del Excel del almacén', /CH2512 es COLCHON CLOUD 140x190/.test(r.t) && /Excel del almacén/.test(r.t), r.t);
+  r = await ev(() => PREG('que es el CH9102'));
+  chk('«qué es el CH9102» → COLCHON NIMBO 140x190, del Excel del almacén', /CH9102 es COLCHON NIMBO 140x190/.test(r.t) && /Excel del almacén/.test(r.t), r.t);
+  r = await ev(() => PREG('que es el CH2510'));
+  chk('«qué es el CH2510» → COLCHON CLOUD 90x190 (el dueño)', /CH2510 es COLCHON CLOUD 90x190/.test(r.t), r.t);
   r = await ev(() => PREG('codigo CH9999'));
   chk('un código que no existe → «No encontré el código CH9999»', /No encontré el código CH9999/.test(r.t), r.t);
   r = await ev(async () => { if(!HIST) return { sin:1 }; return PREG('código '+HIST.c); });
@@ -118,8 +130,8 @@ function PREPARAR(){
     r.sin || (/del histórico de ventas del sistema/i.test(r.t) && !/No encontré/.test(r.t)), r);
 
   console.log('\n── 3. El stock de lo que la lista no tiene, y lo de siempre ──');
-  r = await ev(() => PREG('¿hay cloud 140?'));
-  chk('«¿hay cloud 140?» → el stock del CLOUD 140 (antes: «no tengo esa respuesta»)', /COLCHON CLOUD 140x190/.test(r.t) && (r.nums||[]).some(n=>/^2 .*PTF \+ Banzer/.test(n)), r);
+  r = await ev(() => PREG('¿hay nimbo 140?'));
+  chk('«¿hay nimbo 140?» (solo en los Excel) → su stock (antes: «no tengo esa respuesta»)', /COLCHON NIMBO 140x190/.test(r.t) && (r.nums||[]).some(n=>/^2 .*PTF \+ Banzer/.test(n)), r);
   r = await ev(() => PREG('¿Hay titanio ice 140 para el jueves?'));
   chk('lo de la lista sigue igual: «¿hay titanio ice 140 para el jueves?» contesta UN producto', /COLCHON TITANIO ICE 140x190/.test(r.t) && !(r.opc||[]).length && (r.nums||[]).length>0, r);
   r = await ev(() => ({ a:blokiDia(blokiNorm('titanio 140×190')).resto, b:(blokiEntender('¿hay titanio ice 140×190?')||{}).tipo }));

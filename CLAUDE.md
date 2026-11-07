@@ -1635,7 +1635,8 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   🏷️ **El código de un producto** (§4os, página 07-g; dueño: *«¿y no que Bloki respondía preguntas?»*): «código del cloud 90x190», «¿qué es el CH1220?»
   (`blokiCodigo`): la lista de precios, los Excel de los almacenes (lo que la lista no tiene, `blokiCodIdx().alm`) y, si en ninguno, el histórico
   (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
-  El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (20).
+  El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (25). ☁️ El CLOUD en `CODIGOS` (CH2510 90x190 … CH2514 180x190, del dueño) con
+  `d:"CLOUD"`: la clave del stock no cambia.
 - 📝 **Revisar las observaciones** (`obsRevisar`, al final de `submitPedido`): día/turno, cantidades y plata contra lo cargado; «Corregir» / «Guardar
   igual», nunca frena; calla en lo dudoso. ⚠️ El final de `submitPedido` vive en **`seguirAlGuardar`**: algo nuevo ahí va adentro. `OBS_REV_PRUEBA`.
   `tests/test_revisar_obs.js` (72).

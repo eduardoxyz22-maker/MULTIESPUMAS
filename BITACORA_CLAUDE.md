@@ -17371,10 +17371,15 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - **El stock de lo que la lista no tiene**: `blokiProductos` busca en la lista del formulario y, SOLO si ahí no hay nada (ni en otra medida),
   en los Excel (`blokiCandDe` = el mismo puntaje de siempre sobre otro índice). «¿hay cloud 140?» ya contesta. Lo de la lista no cambió.
 - «90×190» (el signo de multiplicar) se lee 90x190 (`blokiNorm`). `BLOKI_PV` suma CODIGO, COD, PRODUCTO, NOMBRE.
+- ☁️ **El CLOUD entró a la lista de precios** (dueño, mismo rato: *«CH2510 ES EL CLOUD DE 90X190»* y la foto de su lista): `CODIGOS` suma CH2510
+  90x190, CH2511 105x190, CH2512 140x190, CH2513 160x190 y CH2514 180x190, con `d:"CLOUD"` (el nombre del Excel: la clave del stock queda
+  `CLOUD|…`, la misma de antes; `nombreVenta` le pone «COLCHON» en la lista). Sin 200x200 (no estaba en su foto: no se inventa). Comprobado con la
+  planilla real del 07/11: las tres filas de CLOUD de Stock iguales que antes (sin partir), la de 90x190 ahora con CH2510; había un pedido de
+  «COLCHON CLOUD 90X190» cargado SIN código. La marca del CLOUD no se sabe (sigue «❓ Sin fábrica asignada» en «Qué producir», como antes).
 - **El «no sé» dice qué sí contesta** (`blokiQueSe`, abajo de «No tengo esa respuesta todavía»): el stock o el código de un producto, si
   hay lugar, qué se entrega y (no a Logística sin la contraseña) cuánto le falta pagar a un cliente; las preguntas libres, Claude con la
   contraseña de Administración.
-- `tests/test_bloki_codigo.js` (20; 18 rojas contra `63b947d`). `test_bloki_preguntas` 74/0, `test_asis_no_se`, `test_bloki`, `test_asistente` igual.
+- `tests/test_bloki_codigo.js` (25; las del producto que solo está en los Excel usan uno INVENTADO, «NIMBO» CH9101/CH9102). `test_bloki_preguntas` 74/0, `test_asis_no_se`, `test_bloki`, `test_asistente` igual.
 - 👔 En el mismo rato: el dueño no podía agregar a su jefe en `WA_DUENO` («no me deja editar, porque ya tiene 50»: la pantalla de Propiedades
   es de solo lectura con más de 50). Se le pasó por el chat una función CORTA para un archivo aparte (`agregar_jefe` → `agregarJefeUnaVez()`)
   que lee WA_DUENO y le suma «, Alberto:591…» al FINAL (el dueño sigue primero: el efectivo solo a él) si no está; si WA_DUENO está vacía no
